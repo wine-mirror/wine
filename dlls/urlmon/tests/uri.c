@@ -5634,7 +5634,7 @@ static const uri_combine_test uri_combine_tests[] = {
     },
     {   "http://google.com/use/base/path",0,
         "?relative",Uri_CREATE_ALLOW_RELATIVE,
-        0,S_OK,TRUE,
+        0,S_OK,FALSE,
         {
             {"http://google.com/use/base/path?relative",S_OK},
             {"google.com",S_OK},
@@ -6026,7 +6026,7 @@ static const uri_combine_test uri_combine_tests[] = {
     /* Windows doesn't validate the query from the relative Uri. */
     {   "http://google.com/test",0,
         "?Tes%XXt",Uri_CREATE_ALLOW_RELATIVE,
-        0,S_OK,TRUE,
+        0,S_OK,FALSE,
         {
             {"http://google.com/test?Tes%XXt",S_OK},
             {"google.com",S_OK},
@@ -6054,7 +6054,7 @@ static const uri_combine_test uri_combine_tests[] = {
     /* Windows doesn't validate the fragment from the relative Uri. */
     {   "http://google.com/test",0,
         "#Tes%XXt",Uri_CREATE_ALLOW_RELATIVE,
-        0,S_OK,TRUE,
+        0,S_OK,FALSE,
         {
             {"http://google.com/test#Tes%XXt",S_OK},
             {"google.com",S_OK},
@@ -6132,6 +6132,92 @@ static const uri_combine_test uri_combine_tests[] = {
             {Uri_HOST_UNKNOWN,S_OK},
             {0,S_FALSE},
             {URL_SCHEME_FILE,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    /* A '/' is added if the base URI doesn't have a path and the
+     * relative URI doesn't contain a path (since the base URI is
+     * hierarchical.
+     */
+    {   "http://google.com",Uri_CREATE_NO_CANONICALIZE,
+        "?test",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,FALSE,
+        {
+            {"http://google.com/?test",S_OK},
+            {"google.com",S_OK},
+            {"http://google.com/?test",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"/",S_OK},
+            {"/?test",S_OK},
+            {"?test",S_OK},
+            {"http://google.com/?test",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "zip://google.com",Uri_CREATE_NO_CANONICALIZE,
+        "?test",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,FALSE,
+        {
+            {"zip://google.com/?test",S_OK},
+            {"google.com",S_OK},
+            {"zip://google.com/?test",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"/",S_OK},
+            {"/?test",S_OK},
+            {"?test",S_OK},
+            {"zip://google.com/?test",S_OK},
+            {"zip",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_UNKNOWN,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    /* No path is appended since the base URI is opaque. */
+    {   "zip:?testing",0,
+        "?test",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,FALSE,
+        {
+            {"zip:?test",S_OK},
+            {"",S_FALSE},
+            {"zip:?test",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_OK},
+            {"?test",S_OK},
+            {"?test",S_OK},
+            {"zip:?test",S_OK},
+            {"zip",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_UNKNOWN,S_OK},
             {URLZONE_INVALID,E_NOTIMPL}
         }
     }

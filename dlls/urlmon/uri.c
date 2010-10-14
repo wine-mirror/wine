@@ -33,6 +33,8 @@
 #define SKIP_IP_FUTURE_CHECK            0x10
 #define IGNORE_PORT_DELIMITER           0x20
 
+#define RAW_URI_FORCE_PORT_DISP 0x1
+
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
 static const IID IID_IUriObj = {0x4b364760,0x9f51,0x11df,{0x98,0x1c,0x08,0x00,0x20,0x0c,0x9a,0x66}};
@@ -3916,7 +3918,7 @@ static HRESULT validate_components(const UriBuilder *builder, parse_data *data, 
 }
 
 /* Generates a raw uri string using the parse_data. */
-static DWORD generate_raw_uri(const parse_data *data, BSTR uri) {
+static DWORD generate_raw_uri(const parse_data *data, BSTR uri, DWORD flags) {
     DWORD length = 0;
 
     if(data->scheme) {
@@ -3991,7 +3993,7 @@ static DWORD generate_raw_uri(const parse_data *data, BSTR uri) {
                 is_default = TRUE;
         }
 
-        if(!is_default) {
+        if(!is_default || flags & RAW_URI_FORCE_PORT_DISP) {
             if(uri)
                 uri[length] = ':';
             ++length;
@@ -4038,12 +4040,12 @@ static DWORD generate_raw_uri(const parse_data *data, BSTR uri) {
 
 static HRESULT generate_uri(const UriBuilder *builder, const parse_data *data, Uri *uri, DWORD flags) {
     HRESULT hr;
-    DWORD length = generate_raw_uri(data, NULL);
+    DWORD length = generate_raw_uri(data, NULL, 0);
     uri->raw_uri = SysAllocStringLen(NULL, length);
     if(!uri->raw_uri)
         return E_OUTOFMEMORY;
 
-    generate_raw_uri(data, uri->raw_uri);
+    generate_raw_uri(data, uri->raw_uri, 0);
 
     hr = canonicalize_uri(data, uri, flags);
     if(FAILED(hr)) {
@@ -5605,16 +5607,15 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result)
     Uri *ret;
     HRESULT hr;
     parse_data data;
+    DWORD create_flags = 0, len = 0;
+
+    memset(&data, 0, sizeof(parse_data));
 
     /* Base case is when the relative Uri has a scheme name,
      * if it does, then 'result' will contain the same data
      * as the relative Uri.
      */
     if(relative->scheme_start > -1) {
-        DWORD create_flags = 0;
-
-        memset(&data, 0, sizeof(parse_data));
-
         data.uri = SysAllocString(relative->raw_uri);
         if(!data.uri) {
             *result = NULL;
@@ -5642,8 +5643,103 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result)
 
         *result = URI(ret);
     } else {
-        *result = NULL;
-        return E_NOTIMPL;
+        DWORD raw_flags = 0;
+
+        if(base->scheme_start > -1) {
+            data.scheme = base->canon_uri+base->scheme_start;
+            data.scheme_len = base->scheme_len;
+            data.scheme_type = base->scheme_type;
+        } else {
+            data.is_relative = TRUE;
+            data.scheme_type = URL_SCHEME_UNKNOWN;
+            create_flags |= Uri_CREATE_ALLOW_RELATIVE;
+        }
+
+        if(base->authority_start > -1) {
+            if(base->userinfo_start > -1 && base->userinfo_split != 0) {
+                data.username = base->canon_uri+base->userinfo_start;
+                data.username_len = (base->userinfo_split > -1) ? base->userinfo_split : base->userinfo_len;
+            }
+
+            if(base->userinfo_split > -1) {
+                data.password = base->canon_uri+base->userinfo_start+base->userinfo_split+1;
+                data.password_len = base->userinfo_len-base->userinfo_split-1;
+            }
+
+            if(base->host_start > -1) {
+                data.host = base->canon_uri+base->host_start;
+                data.host_len = base->host_len;
+                data.host_type = base->host_type;
+            }
+
+            if(base->has_port) {
+                data.has_port = TRUE;
+                data.port_value = base->port;
+            }
+        } else
+            data.is_opaque = TRUE;
+
+        if(relative->path_start == -1 || !relative->path_len) {
+            if(base->path_start > -1) {
+                data.path = base->canon_uri+base->path_start;
+                data.path_len = base->path_len;
+            } else if((base->path_start == -1 || !base->path_len) && !data.is_opaque) {
+                /* Just set the path as a '/' if the base didn't have
+                 * one and if it's an hierarchical URI.
+                 */
+                static const WCHAR slashW[] = {'/',0};
+                data.path = slashW;
+                data.path_len = 1;
+            }
+
+            if(relative->query_start > -1) {
+                data.query = relative->canon_uri+relative->query_start;
+                data.query_len = relative->query_len;
+            } else if(base->query_start > -1) {
+                data.query = base->canon_uri+base->query_start;
+                data.query_len = base->query_len;
+            }
+        } else {
+            FIXME("Path merging not implemented yet!\n");
+            *result = NULL;
+            return E_NOTIMPL;
+        }
+
+        if(relative->fragment_start > -1) {
+            data.fragment = relative->canon_uri+relative->fragment_start;
+            data.fragment_len = relative->fragment_len;
+        }
+
+        if(flags & URL_DONT_SIMPLIFY)
+            raw_flags |= RAW_URI_FORCE_PORT_DISP;
+
+        len = generate_raw_uri(&data, data.uri, raw_flags);
+        data.uri = SysAllocStringLen(NULL, len);
+        if(!data.uri) {
+            *result = NULL;
+            return E_OUTOFMEMORY;
+        }
+
+        generate_raw_uri(&data, data.uri, raw_flags);
+
+        ret = create_uri_obj();
+        if(!ret) {
+            SysFreeString(data.uri);
+            *result = NULL;
+            return E_OUTOFMEMORY;
+        }
+
+        ret->raw_uri = data.uri;
+        hr = canonicalize_uri(&data, ret, create_flags);
+        if(FAILED(hr)) {
+            IUri_Release(URI(ret));
+            *result = NULL;
+            return hr;
+        }
+
+        apply_default_flags(&create_flags);
+        ret->create_flags = create_flags;
+        *result = URI(ret);
     }
 
     return S_OK;
