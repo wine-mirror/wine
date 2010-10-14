@@ -319,6 +319,34 @@ static void test_get_blob_part(void)
 
     refcount = ID3D10Blob_Release(blob);
     ok(!refcount, "ID3DBlob has %u references left\n", refcount);
+
+    /* check corner cases for D3DStripShader */
+    hr = D3DStripShader(test_blob_part, test_blob_part[6], 0xffffffff, &blob);
+    ok(hr == S_OK, "D3DStripShader failed, got %x, expected %x\n", hr, S_OK);
+
+    refcount = ID3D10Blob_Release(blob);
+    ok(!refcount, "ID3DBlob has %u references left\n", refcount);
+
+    hr = D3DStripShader(test_blob_part, test_blob_part[6], 0, &blob);
+    ok(hr == S_OK, "D3DStripShader failed, got %x, expected %x\n", hr, S_OK);
+
+    refcount = ID3D10Blob_Release(blob);
+    ok(!refcount, "ID3DBlob has %u references left\n", refcount);
+
+    hr = D3DStripShader(NULL, test_blob_part[6], 0, &blob);
+    ok(hr == D3DERR_INVALIDCALL, "D3DStripShader failed, got %x, expected %x\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DStripShader(test_blob_part, 2, 0, &blob);
+    ok(hr == D3DERR_INVALIDCALL, "D3DStripShader failed, got %x, expected %x\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DStripShader(test_blob_part, test_blob_part[6], 0, NULL);
+    ok(hr == E_FAIL, "D3DStripShader failed, got %x, expected %x\n", hr, E_FAIL);
+
+    hr = D3DStripShader(NULL, test_blob_part[6], 0, NULL);
+    ok(hr == E_FAIL, "D3DStripShader failed, got %x, expected %x\n", hr, E_FAIL);
+
+    hr = D3DStripShader(test_blob_part, 0, 0, NULL);
+    ok(hr == E_FAIL, "D3DStripShader failed, got %x, expected %x\n", hr, E_FAIL);
 }
 
 /*
