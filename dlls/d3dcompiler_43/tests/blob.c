@@ -38,6 +38,7 @@
     ((DWORD)(ch2) << 16) | ((DWORD)(ch3) << 24 ))
 #define TAG_DXBC MAKE_TAG('D', 'X', 'B', 'C')
 #define TAG_ISGN MAKE_TAG('I', 'S', 'G', 'N')
+#define TAG_OSGN MAKE_TAG('O', 'S', 'G', 'N')
 
 static void test_create_blob(void)
 {
@@ -166,6 +167,37 @@ static void test_get_blob_part(void)
         hr = D3DGetBlobPart(dword, size, parts[i], 0, &blob2);
 
         if (parts[i] == D3D_BLOB_INPUT_SIGNATURE_BLOB)
+        {
+            ok(hr == S_OK, "D3DGetBlobPart failed, got %x, expected %x\n", hr, S_OK);
+
+            refcount = ID3D10Blob_Release(blob2);
+            ok(!refcount, "ID3DBlob has %u references left\n", refcount);
+        }
+        else
+        {
+            ok(hr == E_FAIL, "D3DGetBlobPart failed, got %x, expected %x\n", hr, E_FAIL);
+        }
+    }
+
+    refcount = ID3D10Blob_Release(blob);
+    ok(!refcount, "ID3DBlob has %u references left\n", refcount);
+
+    /* D3D_BLOB_OUTPUT_SIGNATURE_BLOB */
+    hr = D3DGetBlobPart(test_blob_part, test_blob_part[6], D3D_BLOB_OUTPUT_SIGNATURE_BLOB, 0, &blob);
+    ok(hr == S_OK, "D3DGetBlobPart failed, got %x, expected %x\n", hr, S_OK);
+
+    size = ID3D10Blob_GetBufferSize(blob);
+    ok(size == 88, "GetBufferSize failed, got %lu, expected %u\n", size, 88);
+
+    dword = ((DWORD*)ID3D10Blob_GetBufferPointer(blob));
+    ok(TAG_DXBC == *dword, "DXBC got %#x, expected %#x.\n", *dword, TAG_DXBC);
+    ok(TAG_OSGN == *(dword+9), "OSGN got %#x, expected %#x.\n", *(dword+9), TAG_OSGN);
+
+    for (i = 0; i < sizeof(parts) / sizeof(parts[0]); i++)
+    {
+        hr = D3DGetBlobPart(dword, size, parts[i], 0, &blob2);
+
+        if (parts[i] == D3D_BLOB_OUTPUT_SIGNATURE_BLOB)
         {
             ok(hr == S_OK, "D3DGetBlobPart failed, got %x, expected %x\n", hr, S_OK);
 
