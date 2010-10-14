@@ -1907,8 +1907,11 @@ ImageList_LoadImageW (HINSTANCE hi, LPCWSTR lpbmp, INT cx, INT cGrow,
     }
 
     if (uType == IMAGE_BITMAP) {
-        BITMAP bmp;
-        GetObjectW (handle, sizeof(BITMAP), &bmp);
+        DIBSECTION dib;
+        UINT color;
+
+        if (GetObjectW (handle, sizeof(dib), &dib) == sizeof(BITMAP)) color = ILC_COLOR;
+        else color = dib.dsBm.bmBitsPixel;
 
         /* To match windows behavior, if cx is set to zero and
          the flag DI_DEFAULTSIZE is specified, cx becomes the
@@ -1919,13 +1922,12 @@ ImageList_LoadImageW (HINSTANCE hi, LPCWSTR lpbmp, INT cx, INT cGrow,
             if (uFlags & DI_DEFAULTSIZE)
                 cx = GetSystemMetrics (SM_CXICON);
             else
-                cx = bmp.bmHeight;
+                cx = dib.dsBm.bmHeight;
         }
 
-        nImageCount = bmp.bmWidth / cx;
+        nImageCount = dib.dsBm.bmWidth / cx;
 
-        himl = ImageList_Create (cx, bmp.bmHeight, ILC_MASK | ILC_COLOR,
-                                 nImageCount, cGrow);
+        himl = ImageList_Create (cx, dib.dsBm.bmHeight, ILC_MASK | color, nImageCount, cGrow);
         if (!himl) {
             DeleteObject (handle);
             return NULL;
