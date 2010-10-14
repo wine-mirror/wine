@@ -299,6 +299,26 @@ static void test_get_blob_part(void)
 
     refcount = ID3D10Blob_Release(blob);
     ok(!refcount, "ID3DBlob has %u references left\n", refcount);
+
+    /* D3D_BLOB_XNA_SHADER */
+    hr = D3DGetBlobPart(test_blob_part, test_blob_part[6], D3D_BLOB_XNA_SHADER, 0, &blob);
+    ok(hr == S_OK, "D3DGetBlobPart failed, got %x, expected %x\n", hr, S_OK);
+
+    size = ID3D10Blob_GetBufferSize(blob);
+    ok(size == 68, "GetBufferSize failed, got %lu, expected %u\n", size, 68);
+
+    dword = ((DWORD*)ID3D10Blob_GetBufferPointer(blob));
+    ok(test_blob_part[0] != *dword, "DXBC failed got %#x.\n", *dword);
+
+    for (i = 0; i < sizeof(parts) / sizeof(parts[0]); i++)
+    {
+        /* There isn't a full DXBC blob returned for D3D_BLOB_XNA_SHADER */
+        hr = D3DGetBlobPart(dword, size, parts[i], 0, &blob2);
+        ok(hr == E_FAIL, "D3DGetBlobPart failed, got %x, expected %x\n", hr, E_FAIL);
+    }
+
+    refcount = ID3D10Blob_Release(blob);
+    ok(!refcount, "ID3DBlob has %u references left\n", refcount);
 }
 
 /*
@@ -590,6 +610,10 @@ static void test_get_blob_part2(void)
 
     /* D3D_BLOB_XNA_PREPASS_SHADER */
     hr = D3DGetBlobPart(test_blob_part2, test_blob_part2[6], D3D_BLOB_XNA_PREPASS_SHADER, 0, &blob);
+    ok(hr == E_FAIL, "D3DGetBlobPart failed, got %x, expected %x\n", hr, E_FAIL);
+
+    /* D3D_BLOB_XNA_SHADER */
+    hr = D3DGetBlobPart(test_blob_part2, test_blob_part2[6], D3D_BLOB_XNA_SHADER, 0, &blob);
     ok(hr == E_FAIL, "D3DGetBlobPart failed, got %x, expected %x\n", hr, E_FAIL);
 }
 
