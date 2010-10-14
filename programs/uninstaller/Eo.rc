@@ -24,5 +24,5 @@ LANGUAGE LANG_ESPERANTO, SUBLANG_NEUTRAL
 
 STRINGTABLE {
      IDS_APPNAME, "Wine Programa Malinstalilo"
-     IDS_UNINSTALLFAILED, "Malinstalad-komando '%s' malsukcesis, eble Êar mankas programo.\r\n∆u vi volas forigi la malinstalada 'entry' de la registro ?"
+     IDS_UNINSTALLFAILED, "Malinstalad-komando '%s' malsukcesis, eble Êar mankas programo.\n∆u vi volas forigi la malinstalada 'entry' de la registro ?"
 }

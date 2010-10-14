@@ -25,5 +25,5 @@ LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 
 STRINGTABLE {
      IDS_APPNAME, "Wine - usuwanie programów"
-     IDS_UNINSTALLFAILED, "Nie uda³o siê wykonaæ polecenia '%s', które powinno usun¹æ progam. Byæ mo¿e ju¿ by³ usuniêty.\r\nCzy chcesz usun¹æ jego wpis z tej listy?"
+     IDS_UNINSTALLFAILED, "Nie uda³o siê wykonaæ polecenia '%s', które powinno usun¹æ progam. Byæ mo¿e ju¿ by³ usuniêty.\nCzy chcesz usun¹æ jego wpis z tej listy?"
 }

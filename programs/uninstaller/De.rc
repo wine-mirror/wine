@@ -26,5 +26,5 @@ LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
 STRINGTABLE {
      IDS_APPNAME, "Wine Anwendungsentferner"
-     IDS_UNINSTALLFAILED, "Die Ausführung des Entfernungsbefehls '%s' ist fehlgeschlagen, wahrscheinlich durch eine fehlende, ausführbare Datei.\r\nMöchten Sie, dass der Anwendungseintrag aus der Registry entfernt wird?"
+     IDS_UNINSTALLFAILED, "Die Ausführung des Entfernungsbefehls '%s' ist fehlgeschlagen, wahrscheinlich durch eine fehlende, ausführbare Datei.\nMöchten Sie, dass der Anwendungseintrag aus der Registry entfernt wird?"
 }

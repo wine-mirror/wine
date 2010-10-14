@@ -25,5 +25,5 @@ LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
 
 STRINGTABLE {
      IDS_APPNAME, "Programul de dezinstalare de aplicații Wine"
-     IDS_UNINSTALLFAILED, "Execuția comenzi de dezinstalare '%s' a eșuat, probabil din lipsa fișierului executabil.\r\nDoriți să ștergeți înregistrarea de dezinstalare din registru?"
+     IDS_UNINSTALLFAILED, "Execuția comenzi de dezinstalare '%s' a eșuat, probabil din lipsa fișierului executabil.\nDoriți să ștergeți înregistrarea de dezinstalare din registru?"
 }

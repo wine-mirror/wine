@@ -26,5 +26,5 @@ LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 
 STRINGTABLE {
      IDS_APPNAME, "Wine Odstranjevalec programov"
-     IDS_UNINSTALLFAILED, "Izvedba odstranitvenega ukaza '%s' ni uspela, morda zaradi manjkajoče izvršljive datoteke.\r\nAli želite odstraniti odstranitveni ključ iz registra?"
+     IDS_UNINSTALLFAILED, "Izvedba odstranitvenega ukaza '%s' ni uspela, morda zaradi manjkajoče izvršljive datoteke.\nAli želite odstraniti odstranitveni ključ iz registra?"
 }

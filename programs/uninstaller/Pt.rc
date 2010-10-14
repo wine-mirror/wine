@@ -27,12 +27,12 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 STRINGTABLE {
      IDS_APPNAME, "Desinstalador de Aplicativos Wine"
-     IDS_UNINSTALLFAILED, "Falha ao executar o comando de desinstalação '%s', talvez devido à falta do executável.\r\nDeseja remover a entrada de desinstalação do registro?"
+     IDS_UNINSTALLFAILED, "Falha ao executar o comando de desinstalação '%s', talvez devido à falta do executável.\nDeseja remover a entrada de desinstalação do registro?"
 }
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 STRINGTABLE {
      IDS_APPNAME, "Desinstalador de Aplicações Wine"
-     IDS_UNINSTALLFAILED, "Execução do comando de desinstalação '%s' falhado, talvez devido a faltar o executável.\r\nDeseja remover a entrada de desinstalação do registo ?"
+     IDS_UNINSTALLFAILED, "Execução do comando de desinstalação '%s' falhado, talvez devido a faltar o executável.\nDeseja remover a entrada de desinstalação do registo ?"
 }

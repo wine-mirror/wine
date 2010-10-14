@@ -25,5 +25,5 @@ LANGUAGE LANG_WELSH, SUBLANG_DEFAULT
 
 STRINGTABLE {
      IDS_APPNAME, "Uninstaller Cais Wine"
-     IDS_UNINSTALLFAILED, "Gweithredu uninstall archa '% s' wedi methu, efallai o ganlyniad i ar goll cyflawnadwy.\r\nYdych chi eisiau symud y cofnod uninstall o'r registry?"
+     IDS_UNINSTALLFAILED, "Gweithredu uninstall archa '% s' wedi methu, efallai o ganlyniad i ar goll cyflawnadwy.\nYdych chi eisiau symud y cofnod uninstall o'r registry?"
 }

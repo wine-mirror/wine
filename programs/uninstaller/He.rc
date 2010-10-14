@@ -27,5 +27,5 @@ LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
 
 STRINGTABLE {
      IDS_APPNAME, "מסיר התכניות מ־Wine"
-     IDS_UNINSTALLFAILED, "הפעלת פקודת ההסרה '%s' נכשלה, כנראה עקב חוסר בקובץ הפעלה.\r\nהאם ברצונך להסיר את רשומת ההסרה מרישומי המערכת ?"
+     IDS_UNINSTALLFAILED, "הפעלת פקודת ההסרה '%s' נכשלה, כנראה עקב חוסר בקובץ הפעלה.\nהאם ברצונך להסיר את רשומת ההסרה מרישומי המערכת ?"
 }

@@ -24,5 +24,5 @@ LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
 STRINGTABLE {
      IDS_APPNAME, "Avinstaller programmer"
-     IDS_UNINSTALLFAILED, "Kjøring av avinstalleringskommandoen '%s' feilet, kanskje på grunn av en manglende programfil.\r\nFjerne avinstalleringsoppføringen fra registeret?"
+     IDS_UNINSTALLFAILED, "Kjøring av avinstalleringskommandoen '%s' feilet, kanskje på grunn av en manglende programfil.\nFjerne avinstalleringsoppføringen fra registeret?"
 }
