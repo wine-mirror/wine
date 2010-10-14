@@ -379,6 +379,25 @@ static void test_get_blob_part(void)
 
     refcount = ID3D10Blob_Release(blob);
     ok(!refcount, "ID3DBlob has %u references left\n", refcount);
+
+    /* D3DCOMPILER_STRIP_REFLECTION_DATA */
+    hr = D3DStripShader(test_blob_part, test_blob_part[6], D3DCOMPILER_STRIP_REFLECTION_DATA, &blob);
+    ok(hr == S_OK, "D3DStripShader failed, got %x, expected %x\n", hr, S_OK);
+
+    size = ID3D10Blob_GetBufferSize(blob);
+    ok(size == 516, "GetBufferSize failed, got %lu, expected %u\n", size, 516);
+
+    dword = ((DWORD*)ID3D10Blob_GetBufferPointer(blob));
+    ok(TAG_DXBC == *dword, "DXBC got %#x, expected %#x.\n", *dword, TAG_DXBC);
+    ok(TAG_XNAS == *(dword+14), "XNAS got %#x, expected %#x.\n", *(dword+14), TAG_XNAS);
+    ok(TAG_XNAP == *(dword+33), "XNAP got %#x, expected %#x.\n", *(dword+33), TAG_XNAP);
+    ok(TAG_Aon9 == *(dword+52), "Aon9 got %#x, expected %#x.\n", *(dword+52), TAG_Aon9);
+    ok(TAG_SHDR == *(dword+77), "SHDR got %#x, expected %#x.\n", *(dword+77), TAG_SHDR);
+    ok(TAG_ISGN == *(dword+94), "ISGN got %#x, expected %#x.\n", *(dword+94), TAG_ISGN);
+    ok(TAG_OSGN == *(dword+116), "OSGN got %#x, expected %#x.\n", *(dword+116), TAG_OSGN);
+
+    refcount = ID3D10Blob_Release(blob);
+    ok(!refcount, "ID3DBlob has %u references left\n", refcount);
 }
 
 /*
@@ -694,6 +713,24 @@ static void test_get_blob_part2(void)
 
     hr = D3DGetBlobPart(dword, size, D3D_BLOB_DEBUG_INFO, 0, &blob2);
     ok(hr == E_FAIL, "D3DGetBlobPart failed, got %x, expected %x\n", hr, E_FAIL);
+
+    refcount = ID3D10Blob_Release(blob);
+    ok(!refcount, "ID3DBlob has %u references left\n", refcount);
+
+    /* D3DCOMPILER_STRIP_REFLECTION_DATA */
+    hr = D3DStripShader(test_blob_part2, test_blob_part2[6], D3DCOMPILER_STRIP_REFLECTION_DATA, &blob);
+    ok(hr == S_OK, "D3DStripShader failed, got %x, expected %x\n", hr, S_OK);
+
+    size = ID3D10Blob_GetBufferSize(blob);
+    ok(size == 4735, "GetBufferSize failed, got %lu, expected %u\n", size, 4735);
+
+    dword = ((DWORD*)ID3D10Blob_GetBufferPointer(blob));
+    ok(TAG_DXBC == *dword, "DXBC got %#x, expected %#x.\n", *dword, TAG_DXBC);
+    ok(TAG_ISGN == *(dword+13), "ISGN got %#x, expected %#x.\n", *(dword+13), TAG_ISGN);
+    ok(TAG_OSGN == *(dword+26), "OSGN got %#x, expected %#x.\n", *(dword+26), TAG_OSGN);
+    ok(TAG_PCSG == *(dword+39), "PCSG got %#x, expected %#x.\n", *(dword+39), TAG_PCSG);
+    ok(TAG_SHEX == *(dword+88), "SHEX got %#x, expected %#x.\n", *(dword+88), TAG_SHEX);
+    ok(TAG_SDBG == *(dword+168), "SDBG got %#x, expected %#x.\n", *(dword+168), TAG_SDBG);
 
     refcount = ID3D10Blob_Release(blob);
     ok(!refcount, "ID3DBlob has %u references left\n", refcount);
