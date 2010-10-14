@@ -10,7 +10,7 @@ C_SRCS = \
 	inputlayout.c \
 	shader.c \
 	state.c \
-	texture2d.c \
+	texture.c \
 	utils.c \
 	view.c
 
