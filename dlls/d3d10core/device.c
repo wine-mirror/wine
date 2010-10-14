@@ -1253,6 +1253,13 @@ static const struct IUnknownVtbl d3d10_device_inner_unknown_vtbl =
     d3d10_device_inner_Release,
 };
 
+static void STDMETHODCALLTYPE d3d10_subresource_destroyed(void *parent) {}
+
+const struct wined3d_parent_ops d3d10_subresource_parent_ops =
+{
+    d3d10_subresource_destroyed,
+};
+
 /* IWineD3DDeviceParent IUnknown methods */
 
 static inline struct d3d10_device *device_from_device_parent(IWineD3DDeviceParent *iface)
@@ -1418,10 +1425,20 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateVolume(IWineD3DDeviceParent
         IUnknown *superior, UINT width, UINT height, UINT depth, enum wined3d_format_id format,
         WINED3DPOOL pool, DWORD usage, IWineD3DVolume **volume)
 {
-    FIXME("iface %p, superior %p, width %u, height %u, depth %u, format %#x, pool %#x, usage %#x, volume %p stub!\n",
+    HRESULT hr;
+
+    TRACE("iface %p, superior %p, width %u, height %u, depth %u, format %#x, pool %#x, usage %#x, volume %p.\n",
             iface, superior, width, height, depth, format, pool, usage, volume);
 
-    return E_NOTIMPL;
+    hr = IWineD3DDevice_CreateVolume(device_from_device_parent(iface)->wined3d_device,
+            width, height, depth, usage, format, pool, NULL, &d3d10_subresource_parent_ops, volume);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d volume, hr %#x.\n", hr);
+        return hr;
+    }
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDeviceParent *iface,
