@@ -2873,6 +2873,8 @@ HRESULT DOMDocument_create(const GUID *clsid, IUnknown *pUnkOuter, void **ppObj)
     hr = DOMDocument_create_from_xmldoc(xmldoc, (IXMLDOMDocument3**)ppObj);
     if(FAILED(hr))
     {
+        free_properties(properties_from_xmlDocPtr(xmldoc));
+        heap_free(xmldoc->_private);
         xmlFreeDoc(xmldoc);
         return hr;
     }
