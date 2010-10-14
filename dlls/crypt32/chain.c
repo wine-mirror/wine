@@ -2149,6 +2149,13 @@ static BOOL CRYPT_BuildSimpleChain(const CertificateChainEngine *engine,
     return ret;
 }
 
+static LPCSTR debugstr_filetime(LPFILETIME pTime)
+{
+    if (!pTime)
+        return "(nil)";
+    return wine_dbg_sprintf("%p (%s)", pTime, filetime_to_str(pTime));
+}
+
 static BOOL CRYPT_GetSimpleChainForCert(PCertificateChainEngine engine,
  HCERTSTORE world, PCCERT_CONTEXT cert, LPFILETIME pTime,
  PCERT_SIMPLE_CHAIN *ppChain)
@@ -2156,7 +2163,7 @@ static BOOL CRYPT_GetSimpleChainForCert(PCertificateChainEngine engine,
     BOOL ret = FALSE;
     PCERT_SIMPLE_CHAIN chain;
 
-    TRACE("(%p, %p, %p, %p)\n", engine, world, cert, pTime);
+    TRACE("(%p, %p, %p, %s)\n", engine, world, cert, debugstr_filetime(pTime));
 
     chain = CryptMemAlloc(sizeof(CERT_SIMPLE_CHAIN));
     if (chain)
@@ -2377,7 +2384,8 @@ static PCertificateChain CRYPT_BuildAlternateContextFromChain(
     PCertificateChainEngine engine = (PCertificateChainEngine)hChainEngine;
     PCertificateChain alternate;
 
-    TRACE("(%p, %p, %p, %p)\n", hChainEngine, pTime, hAdditionalStore, chain);
+    TRACE("(%p, %s, %p, %p)\n", hChainEngine, debugstr_filetime(pTime),
+     hAdditionalStore, chain);
 
     /* Always start with the last "lower quality" chain to ensure a consistent
      * order of alternate creation:
@@ -2803,8 +2811,9 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
     BOOL ret;
     PCertificateChain chain = NULL;
 
-    TRACE("(%p, %p, %p, %p, %p, %08x, %p, %p)\n", hChainEngine, pCertContext,
-     pTime, hAdditionalStore, pChainPara, dwFlags, pvReserved, ppChainContext);
+    TRACE("(%p, %p, %s, %p, %p, %08x, %p, %p)\n", hChainEngine, pCertContext,
+     debugstr_filetime(pTime), hAdditionalStore, pChainPara, dwFlags,
+     pvReserved, ppChainContext);
 
     if (ppChainContext)
         *ppChainContext = NULL;
