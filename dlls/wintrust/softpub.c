@@ -24,6 +24,7 @@
 #include "wintrust.h"
 #include "mssip.h"
 #include "softpub.h"
+#include "winnls.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wintrust);
@@ -469,6 +470,98 @@ static CMSG_SIGNER_INFO *WINTRUST_GetSigner(CRYPT_PROVIDER_DATA *data,
     return signerInfo;
 }
 
+static BOOL WINTRUST_GetTimeFromCounterSigner(
+ const CMSG_CMS_SIGNER_INFO *counterSignerInfo, FILETIME *time)
+{
+    DWORD i;
+    BOOL foundTimeStamp = FALSE;
+
+    for (i = 0; !foundTimeStamp && i < counterSignerInfo->AuthAttrs.cAttr; i++)
+    {
+        if (!strcmp(counterSignerInfo->AuthAttrs.rgAttr[i].pszObjId,
+         szOID_RSA_signingTime))
+        {
+            const CRYPT_ATTRIBUTE *attr =
+             &counterSignerInfo->AuthAttrs.rgAttr[i];
+            DWORD j;
+
+            for (j = 0; !foundTimeStamp && j < attr->cValue; j++)
+            {
+                static const DWORD encoding = X509_ASN_ENCODING |
+                 PKCS_7_ASN_ENCODING;
+                DWORD size = sizeof(FILETIME);
+
+                foundTimeStamp = CryptDecodeObjectEx(encoding,
+                 X509_CHOICE_OF_TIME,
+                 attr->rgValue[j].pbData, attr->rgValue[j].cbData, 0, NULL,
+                 time, &size);
+            }
+        }
+    }
+    return foundTimeStamp;
+}
+
+static LPCSTR filetime_to_str(const FILETIME *time)
+{
+    static char date[80];
+    char dateFmt[80]; /* sufficient for all versions of LOCALE_SSHORTDATE */
+    SYSTEMTIME sysTime;
+
+    if (!time) return NULL;
+
+    GetLocaleInfoA(LOCALE_SYSTEM_DEFAULT, LOCALE_SSHORTDATE, dateFmt,
+     sizeof(dateFmt) / sizeof(dateFmt[0]));
+    FileTimeToSystemTime(time, &sysTime);
+    GetDateFormatA(LOCALE_SYSTEM_DEFAULT, 0, &sysTime, dateFmt, date,
+     sizeof(date) / sizeof(date[0]));
+    return date;
+}
+
+static FILETIME WINTRUST_GetTimeFromSigner(const CRYPT_PROVIDER_DATA *data,
+ const CMSG_SIGNER_INFO *signerInfo)
+{
+    DWORD i;
+    FILETIME time;
+    BOOL foundTimeStamp = FALSE;
+
+    for (i = 0; !foundTimeStamp && i < signerInfo->UnauthAttrs.cAttr; i++)
+    {
+        if (!strcmp(signerInfo->UnauthAttrs.rgAttr[i].pszObjId,
+         szOID_RSA_counterSign))
+        {
+            const CRYPT_ATTRIBUTE *attr = &signerInfo->UnauthAttrs.rgAttr[i];
+            DWORD j;
+
+            for (j = 0; j < attr->cValue; j++)
+            {
+                static const DWORD encoding = X509_ASN_ENCODING |
+                 PKCS_7_ASN_ENCODING;
+                CMSG_CMS_SIGNER_INFO *counterSignerInfo;
+                DWORD size;
+                BOOL ret = CryptDecodeObjectEx(encoding, CMS_SIGNER_INFO,
+                 attr->rgValue[j].pbData, attr->rgValue[j].cbData,
+                 CRYPT_DECODE_ALLOC_FLAG, NULL, &counterSignerInfo, &size);
+                if (ret)
+                {
+                    /* FIXME: need to verify countersigner signature too */
+                    foundTimeStamp = WINTRUST_GetTimeFromCounterSigner(
+                     counterSignerInfo, &time);
+                    LocalFree(counterSignerInfo);
+                }
+            }
+        }
+    }
+    if (!foundTimeStamp)
+    {
+        TRACE("returning system time %s\n",
+         filetime_to_str(&data->sftSystemTime));
+        time = data->sftSystemTime;
+    }
+    else
+        TRACE("returning time from message %s\n", filetime_to_str(&time));
+    return time;
+}
+
 static DWORD WINTRUST_SaveSigner(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
 {
     DWORD err;
@@ -479,7 +572,7 @@ static DWORD WINTRUST_SaveSigner(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
         CRYPT_PROVIDER_SGNR sgnr = { sizeof(sgnr), { 0 } };
 
         sgnr.psSigner = signerInfo;
-        sgnr.sftVerifyAsOf = data->sftSystemTime;
+        sgnr.sftVerifyAsOf = WINTRUST_GetTimeFromSigner(data, signerInfo);
         if (!data->psPfns->pfnAddSgnr2Chain(data, FALSE, signerIdx, &sgnr))
             err = GetLastError();
         else
