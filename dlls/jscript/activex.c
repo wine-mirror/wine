@@ -58,7 +58,7 @@ static IInternetHostSecurityManager *get_sec_mgr(script_ctx_t *ctx)
 
 static IUnknown *create_activex_object(script_ctx_t *ctx, const WCHAR *progid)
 {
-    IInternetHostSecurityManager *secmgr;
+    IInternetHostSecurityManager *secmgr = NULL;
     IObjectWithSite *obj_site;
     struct CONFIRMSAFETY cs;
     IClassFactoryEx *cfex;
@@ -76,15 +76,17 @@ static IUnknown *create_activex_object(script_ctx_t *ctx, const WCHAR *progid)
 
     TRACE("GUID %s\n", debugstr_guid(&guid));
 
-    secmgr = get_sec_mgr(ctx);
-    if(!secmgr)
-        return NULL;
+    if(ctx->safeopt & INTERFACE_USES_SECURITY_MANAGER) {
+        secmgr = get_sec_mgr(ctx);
+        if(!secmgr)
+            return NULL;
 
-    policy = 0;
-    hres = IInternetHostSecurityManager_ProcessUrlAction(secmgr, URLACTION_ACTIVEX_RUN, (BYTE*)&policy, sizeof(policy),
-            (BYTE*)&guid, sizeof(GUID), 0, 0);
-    if(FAILED(hres) || policy != URLPOLICY_ALLOW)
-        return NULL;
+        policy = 0;
+        hres = IInternetHostSecurityManager_ProcessUrlAction(secmgr, URLACTION_ACTIVEX_RUN,
+                (BYTE*)&policy, sizeof(policy), (BYTE*)&guid, sizeof(GUID), 0, 0);
+        if(FAILED(hres) || policy != URLPOLICY_ALLOW)
+            return NULL;
+    }
 
     hres = CoGetClassObject(&guid, CLSCTX_INPROC_SERVER|CLSCTX_LOCAL_SERVER, NULL, &IID_IClassFactory, (void**)&cf);
     if(FAILED(hres))
@@ -100,19 +102,21 @@ static IUnknown *create_activex_object(script_ctx_t *ctx, const WCHAR *progid)
     if(FAILED(hres))
         return NULL;
 
-    cs.clsid = guid;
-    cs.pUnk = obj;
-    cs.dwFlags = 0;
-    hres = IInternetHostSecurityManager_QueryCustomPolicy(secmgr, &GUID_CUSTOM_CONFIRMOBJECTSAFETY, &bpolicy, &policy_size,
-            (BYTE*)&cs, sizeof(cs), 0);
-    if(SUCCEEDED(hres)) {
-        policy = policy_size >= sizeof(DWORD) ? *(DWORD*)bpolicy : URLPOLICY_DISALLOW;
-        CoTaskMemFree(bpolicy);
-    }
+    if(secmgr) {
+        cs.clsid = guid;
+        cs.pUnk = obj;
+        cs.dwFlags = 0;
+        hres = IInternetHostSecurityManager_QueryCustomPolicy(secmgr, &GUID_CUSTOM_CONFIRMOBJECTSAFETY,
+                &bpolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
+        if(SUCCEEDED(hres)) {
+            policy = policy_size >= sizeof(DWORD) ? *(DWORD*)bpolicy : URLPOLICY_DISALLOW;
+            CoTaskMemFree(bpolicy);
+        }
 
-    if(FAILED(hres) || policy != URLPOLICY_ALLOW) {
-        IUnknown_Release(obj);
-        return NULL;
+        if(FAILED(hres) || policy != URLPOLICY_ALLOW) {
+            IUnknown_Release(obj);
+            return NULL;
+        }
     }
 
     hres = IUnknown_QueryInterface(obj, &IID_IObjectWithSite, (void**)&obj_site);
@@ -150,7 +154,8 @@ static HRESULT ActiveXObject_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
         return E_NOTIMPL;
     }
 
-    if(ctx->safeopt != (INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER)) {
+    if(ctx->safeopt != (INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER)
+        && ctx->safeopt != INTERFACE_USES_DISPEX) {
         FIXME("Unsupported safeopt %x\n", ctx->safeopt);
         return E_NOTIMPL;
     }
