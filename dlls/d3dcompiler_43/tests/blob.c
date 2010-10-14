@@ -36,10 +36,18 @@
 #define MAKE_TAG(ch0, ch1, ch2, ch3) \
     ((DWORD)(ch0) | ((DWORD)(ch1) << 8) | \
     ((DWORD)(ch2) << 16) | ((DWORD)(ch3) << 24 ))
+#define TAG_Aon9 MAKE_TAG('A', 'o', 'n', '9')
 #define TAG_DXBC MAKE_TAG('D', 'X', 'B', 'C')
 #define TAG_ISGN MAKE_TAG('I', 'S', 'G', 'N')
 #define TAG_OSGN MAKE_TAG('O', 'S', 'G', 'N')
 #define TAG_PCSG MAKE_TAG('P', 'C', 'S', 'G')
+#define TAG_RDEF MAKE_TAG('R', 'D', 'E', 'F')
+#define TAG_SDBG MAKE_TAG('S', 'D', 'B', 'G')
+#define TAG_SHDR MAKE_TAG('S', 'H', 'D', 'R')
+#define TAG_SHEX MAKE_TAG('S', 'H', 'E', 'X')
+#define TAG_STAT MAKE_TAG('S', 'T', 'A', 'T')
+#define TAG_XNAP MAKE_TAG('X', 'N', 'A', 'P')
+#define TAG_XNAS MAKE_TAG('X', 'N', 'A', 'S')
 
 static void test_create_blob(void)
 {
@@ -347,6 +355,30 @@ static void test_get_blob_part(void)
 
     hr = D3DStripShader(test_blob_part, 0, 0, NULL);
     ok(hr == E_FAIL, "D3DStripShader failed, got %x, expected %x\n", hr, E_FAIL);
+
+    /* D3DCOMPILER_STRIP_DEBUG_INFO */
+    hr = D3DStripShader(test_blob_part, test_blob_part[6], D3DCOMPILER_STRIP_DEBUG_INFO, &blob);
+    ok(hr == S_OK, "D3DStripShader failed, got %x, expected %x\n", hr, S_OK);
+
+    size = ID3D10Blob_GetBufferSize(blob);
+    ok(size == 736, "GetBufferSize failed, got %lu, expected %u\n", size, 736);
+
+    dword = ((DWORD*)ID3D10Blob_GetBufferPointer(blob));
+    ok(TAG_DXBC == *dword, "DXBC got %#x, expected %#x.\n", *dword, TAG_DXBC);
+    ok(TAG_XNAS == *(dword+16), "XNAS got %#x, expected %#x.\n", *(dword+16), TAG_XNAS);
+    ok(TAG_XNAP == *(dword+35), "XNAP got %#x, expected %#x.\n", *(dword+35), TAG_XNAP);
+    ok(TAG_Aon9 == *(dword+54), "Aon9 got %#x, expected %#x.\n", *(dword+54), TAG_Aon9);
+    ok(TAG_SHDR == *(dword+79), "SHDR got %#x, expected %#x.\n", *(dword+79), TAG_SHDR);
+    ok(TAG_STAT == *(dword+96), "STAT got %#x, expected %#x.\n", *(dword+96), TAG_STAT);
+    ok(TAG_RDEF == *(dword+127), "RDEF got %#x, expected %#x.\n", *(dword+127), TAG_RDEF);
+    ok(TAG_ISGN == *(dword+149), "ISGN got %#x, expected %#x.\n", *(dword+149), TAG_ISGN);
+    ok(TAG_OSGN == *(dword+171), "OSGN got %#x, expected %#x.\n", *(dword+171), TAG_OSGN);
+
+    hr = D3DGetBlobPart(dword, size, D3D_BLOB_DEBUG_INFO, 0, &blob2);
+    ok(hr == E_FAIL, "D3DGetBlobPart failed, got %x, expected %x\n", hr, E_FAIL);
+
+    refcount = ID3D10Blob_Release(blob);
+    ok(!refcount, "ID3DBlob has %u references left\n", refcount);
 }
 
 /*
@@ -643,6 +675,28 @@ static void test_get_blob_part2(void)
     /* D3D_BLOB_XNA_SHADER */
     hr = D3DGetBlobPart(test_blob_part2, test_blob_part2[6], D3D_BLOB_XNA_SHADER, 0, &blob);
     ok(hr == E_FAIL, "D3DGetBlobPart failed, got %x, expected %x\n", hr, E_FAIL);
+
+    /* D3DCOMPILER_STRIP_DEBUG_INFO */
+    hr = D3DStripShader(test_blob_part2, test_blob_part2[6], D3DCOMPILER_STRIP_DEBUG_INFO, &blob);
+    ok(hr == S_OK, "D3DStripShader failed, got %x, expected %x\n", hr, S_OK);
+
+    size = ID3D10Blob_GetBufferSize(blob);
+    ok(size == 952, "GetBufferSize failed, got %lu, expected %u\n", size, 952);
+
+    dword = ((DWORD*)ID3D10Blob_GetBufferPointer(blob));
+    ok(TAG_DXBC == *dword, "DXBC got %#x, expected %#x.\n", *dword, TAG_DXBC);
+    ok(TAG_RDEF == *(dword+14), "RDEF got %#x, expected %#x.\n", *(dword+14), TAG_RDEF);
+    ok(TAG_ISGN == *(dword+44), "ISGN got %#x, expected %#x.\n", *(dword+44), TAG_ISGN);
+    ok(TAG_OSGN == *(dword+57), "OSGN got %#x, expected %#x.\n", *(dword+57), TAG_OSGN);
+    ok(TAG_PCSG == *(dword+70), "PCSG got %#x, expected %#x.\n", *(dword+70), TAG_PCSG);
+    ok(TAG_SHEX == *(dword+119), "SHEX got %#x, expected %#x.\n", *(dword+119), TAG_SHEX);
+    ok(TAG_STAT == *(dword+199), "STAT got %#x, expected %#x.\n", *(dword+199), TAG_STAT);
+
+    hr = D3DGetBlobPart(dword, size, D3D_BLOB_DEBUG_INFO, 0, &blob2);
+    ok(hr == E_FAIL, "D3DGetBlobPart failed, got %x, expected %x\n", hr, E_FAIL);
+
+    refcount = ID3D10Blob_Release(blob);
+    ok(!refcount, "ID3DBlob has %u references left\n", refcount);
 }
 
 START_TEST(blob)
