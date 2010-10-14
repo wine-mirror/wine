@@ -376,7 +376,7 @@ static HRESULT WINAPI IWineD3DTextureImpl_GetSurfaceLevel(IWineD3DTexture *iface
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DTextureImpl_LockRect(IWineD3DTexture *iface,
+static HRESULT WINAPI IWineD3DTextureImpl_Map(IWineD3DTexture *iface,
         UINT level, WINED3DLOCKED_RECT *locked_rect, const RECT *rect, DWORD flags)
 {
     IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
@@ -391,10 +391,10 @@ static HRESULT WINAPI IWineD3DTextureImpl_LockRect(IWineD3DTexture *iface,
         return WINED3DERR_INVALIDCALL;
     }
 
-    return IWineD3DSurface_LockRect(surface, locked_rect, rect, flags);
+    return IWineD3DSurface_Map(surface, locked_rect, rect, flags);
 }
 
-static HRESULT WINAPI IWineD3DTextureImpl_UnlockRect(IWineD3DTexture *iface, UINT level)
+static HRESULT WINAPI IWineD3DTextureImpl_Unmap(IWineD3DTexture *iface, UINT level)
 {
     IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
     IWineD3DSurface *surface;
@@ -407,7 +407,7 @@ static HRESULT WINAPI IWineD3DTextureImpl_UnlockRect(IWineD3DTexture *iface, UIN
         return WINED3DERR_INVALIDCALL;
     }
 
-    return IWineD3DSurface_UnlockRect(surface);
+    return IWineD3DSurface_Unmap(surface);
 }
 
 static HRESULT WINAPI IWineD3DTextureImpl_AddDirtyRect(IWineD3DTexture *iface, const RECT *dirty_rect)
@@ -460,8 +460,8 @@ static const IWineD3DTextureVtbl IWineD3DTexture_Vtbl =
     /* IWineD3DTexture */
     IWineD3DTextureImpl_GetLevelDesc,
     IWineD3DTextureImpl_GetSurfaceLevel,
-    IWineD3DTextureImpl_LockRect,
-    IWineD3DTextureImpl_UnlockRect,
+    IWineD3DTextureImpl_Map,
+    IWineD3DTextureImpl_Unmap,
     IWineD3DTextureImpl_AddDirtyRect
 };
 

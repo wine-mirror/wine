@@ -205,7 +205,9 @@ static void WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DVOLU
     desc->Depth = volume->currentDesc.Depth;
 }
 
-static HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, WINED3DLOCKED_BOX* pLockedVolume, CONST WINED3DBOX* pBox, DWORD Flags) {
+static HRESULT WINAPI IWineD3DVolumeImpl_Map(IWineD3DVolume *iface,
+        WINED3DLOCKED_BOX *pLockedVolume, const WINED3DBOX *pBox, DWORD Flags)
+{
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     FIXME("(%p) : pBox=%p stub\n", This, pBox);
 
@@ -257,7 +259,8 @@ static HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, WINED3DL
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DVolumeImpl_UnlockBox(IWineD3DVolume *iface) {
+static HRESULT WINAPI IWineD3DVolumeImpl_Unmap(IWineD3DVolume *iface)
+{
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     if (!This->locked)
     {
@@ -321,8 +324,8 @@ static const IWineD3DVolumeVtbl IWineD3DVolume_Vtbl =
     IWineD3DVolumeImpl_GetType,
     /* IWineD3DVolume */
     IWineD3DVolumeImpl_GetDesc,
-    IWineD3DVolumeImpl_LockBox,
-    IWineD3DVolumeImpl_UnlockBox,
+    IWineD3DVolumeImpl_Map,
+    IWineD3DVolumeImpl_Unmap,
     /* Internal interface */
     IWineD3DVolumeImpl_LoadTexture,
 };

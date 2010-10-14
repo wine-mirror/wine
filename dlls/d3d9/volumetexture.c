@@ -348,8 +348,8 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_LockBox(LPDIRECT3DVOLUMETEXTUR
 
     wined3d_mutex_lock();
 
-    hr = IWineD3DVolumeTexture_LockBox(This->wineD3DVolumeTexture, Level, (WINED3DLOCKED_BOX *)pLockedVolume,
-            (const WINED3DBOX *)pBox, Flags);
+    hr = IWineD3DVolumeTexture_Map(This->wineD3DVolumeTexture, Level,
+            (WINED3DLOCKED_BOX *)pLockedVolume, (const WINED3DBOX *)pBox, Flags);
 
     wined3d_mutex_unlock();
 
@@ -364,7 +364,7 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_UnlockBox(LPDIRECT3DVOLUMETEXT
 
     wined3d_mutex_lock();
 
-    hr = IWineD3DVolumeTexture_UnlockBox(This->wineD3DVolumeTexture, Level);
+    hr = IWineD3DVolumeTexture_Unmap(This->wineD3DVolumeTexture, Level);
 
     wined3d_mutex_unlock();
 

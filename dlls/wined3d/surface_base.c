@@ -823,16 +823,18 @@ static IWineD3DSurfaceImpl *surface_convert_format(IWineD3DSurfaceImpl *source, 
     memset(&lock_src, 0, sizeof(lock_src));
     memset(&lock_dst, 0, sizeof(lock_dst));
 
-    hr = IWineD3DSurface_LockRect((IWineD3DSurface *) source, &lock_src, NULL, WINED3DLOCK_READONLY);
-    if(FAILED(hr)) {
-        ERR("Failed to lock the source surface\n");
+    hr = IWineD3DSurface_Map((IWineD3DSurface *)source, &lock_src, NULL, WINED3DLOCK_READONLY);
+    if (FAILED(hr))
+    {
+        ERR("Failed to lock the source surface.\n");
         IWineD3DSurface_Release(ret);
         return NULL;
     }
-    hr = IWineD3DSurface_LockRect(ret, &lock_dst, NULL, WINED3DLOCK_READONLY);
-    if(FAILED(hr)) {
+    hr = IWineD3DSurface_Map(ret, &lock_dst, NULL, WINED3DLOCK_READONLY);
+    if (FAILED(hr))
+    {
         ERR("Failed to lock the dest surface\n");
-        IWineD3DSurface_UnlockRect((IWineD3DSurface *) source);
+        IWineD3DSurface_Unmap((IWineD3DSurface *)source);
         IWineD3DSurface_Release(ret);
         return NULL;
     }
@@ -840,8 +842,8 @@ static IWineD3DSurfaceImpl *surface_convert_format(IWineD3DSurfaceImpl *source, 
     conv->convert(lock_src.pBits, lock_dst.pBits, lock_src.Pitch, lock_dst.Pitch,
                   source->currentDesc.Width, source->currentDesc.Height);
 
-    IWineD3DSurface_UnlockRect(ret);
-    IWineD3DSurface_UnlockRect((IWineD3DSurface *) source);
+    IWineD3DSurface_Unmap(ret);
+    IWineD3DSurface_Unmap((IWineD3DSurface *)source);
 
     return (IWineD3DSurfaceImpl *) ret;
 }
@@ -1093,7 +1095,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
 
     if (src == This)
     {
-        IWineD3DSurface_LockRect(iface, &dlock, NULL, 0);
+        IWineD3DSurface_Map(iface, &dlock, NULL, 0);
         slock = dlock;
         sEntry = This->resource.format;
         dEntry = sEntry;
@@ -1113,7 +1115,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
                     goto release;
                 }
             }
-            IWineD3DSurface_LockRect((IWineD3DSurface *)src, &slock, NULL, WINED3DLOCK_READONLY);
+            IWineD3DSurface_Map((IWineD3DSurface *)src, &slock, NULL, WINED3DLOCK_READONLY);
             sEntry = src->resource.format;
         }
         else
@@ -1121,9 +1123,9 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
             sEntry = dEntry;
         }
         if (DestRect)
-            IWineD3DSurface_LockRect(iface, &dlock, &xdst, 0);
+            IWineD3DSurface_Map(iface, &dlock, &xdst, 0);
         else
-            IWineD3DSurface_LockRect(iface, &dlock, NULL, 0);
+            IWineD3DSurface_Map(iface, &dlock, NULL, 0);
     }
 
     if (!DDBltFx || !(DDBltFx->dwDDFX)) Flags &= ~WINEDDBLT_DDFX;
@@ -1523,8 +1525,8 @@ error:
     }
 
 release:
-    IWineD3DSurface_UnlockRect(iface);
-    if (src && src != This) IWineD3DSurface_UnlockRect((IWineD3DSurface *)src);
+    IWineD3DSurface_Unmap(iface);
+    if (src && src != This) IWineD3DSurface_Unmap((IWineD3DSurface *)src);
     /* Release the converted surface if any */
     if (src && src_surface != (IWineD3DSurface *)src) IWineD3DSurface_Release((IWineD3DSurface *)src);
     return ret;
@@ -1624,8 +1626,8 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
         UnionRect(&lock_union, &lock_src, &lock_dst);
 
         /* Lock the union of the two rectangles */
-        ret = IWineD3DSurface_LockRect(iface, &dlock, &lock_union, 0);
-        if(ret != WINED3D_OK) goto error;
+        ret = IWineD3DSurface_Map(iface, &dlock, &lock_union, 0);
+        if (FAILED(ret)) goto error;
 
         pitch = dlock.Pitch;
         slock.Pitch = dlock.Pitch;
@@ -1638,10 +1640,10 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
     }
     else
     {
-        ret = IWineD3DSurface_LockRect(src_surface, &slock, &lock_src, WINED3DLOCK_READONLY);
-        if(ret != WINED3D_OK) goto error;
-        ret = IWineD3DSurface_LockRect(iface, &dlock, &lock_dst, 0);
-        if(ret != WINED3D_OK) goto error;
+        ret = IWineD3DSurface_Map(src_surface, &slock, &lock_src, WINED3DLOCK_READONLY);
+        if (FAILED(ret)) goto error;
+        ret = IWineD3DSurface_Map(iface, &dlock, &lock_dst, 0);
+        if (FAILED(ret)) goto error;
 
         sbuf = slock.pBits;
         dbuf = dlock.pBits;
@@ -1795,18 +1797,19 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
 error:
     if (src == This)
     {
-        IWineD3DSurface_UnlockRect(iface);
+        IWineD3DSurface_Unmap(iface);
     }
     else
     {
-        IWineD3DSurface_UnlockRect(iface);
-        IWineD3DSurface_UnlockRect(src_surface);
+        IWineD3DSurface_Unmap(iface);
+        IWineD3DSurface_Unmap(src_surface);
     }
 
     return ret;
 }
 
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags)
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_Map(IWineD3DSurface *iface,
+        WINED3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
 

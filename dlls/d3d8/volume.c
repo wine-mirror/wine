@@ -205,7 +205,8 @@ static HRESULT WINAPI IDirect3DVolume8Impl_LockBox(LPDIRECT3DVOLUME8 iface, D3DL
             iface, pLockedVolume, pBox, Flags);
 
     wined3d_mutex_lock();
-    hr = IWineD3DVolume_LockBox(This->wineD3DVolume, (WINED3DLOCKED_BOX *) pLockedVolume, (CONST WINED3DBOX *) pBox, Flags);
+    hr = IWineD3DVolume_Map(This->wineD3DVolume, (WINED3DLOCKED_BOX *)pLockedVolume,
+            (const WINED3DBOX *)pBox, Flags);
     wined3d_mutex_unlock();
 
     return hr;
@@ -218,7 +219,7 @@ static HRESULT WINAPI IDirect3DVolume8Impl_UnlockBox(LPDIRECT3DVOLUME8 iface) {
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    hr = IWineD3DVolume_UnlockBox(This->wineD3DVolume);
+    hr = IWineD3DVolume_Unmap(This->wineD3DVolume);
     wined3d_mutex_unlock();
 
     return hr;

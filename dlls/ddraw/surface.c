@@ -679,11 +679,8 @@ static HRESULT WINAPI ddraw_surface7_Lock(IDirectDrawSurface7 *iface,
         }
     }
 
-    hr = IWineD3DSurface_LockRect(This->WineD3DSurface,
-                                  &LockedRect,
-                                  Rect,
-                                  Flags);
-    if(hr != D3D_OK)
+    hr = IWineD3DSurface_Map(This->WineD3DSurface, &LockedRect, Rect, Flags);
+    if (FAILED(hr))
     {
         LeaveCriticalSection(&ddraw_cs);
         switch(hr)
@@ -744,8 +741,8 @@ static HRESULT WINAPI ddraw_surface7_Unlock(IDirectDrawSurface7 *iface, RECT *pR
     TRACE("iface %p, rect %s.\n", iface, wine_dbgstr_rect(pRect));
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DSurface_UnlockRect(This->WineD3DSurface);
-    if(SUCCEEDED(hr))
+    hr = IWineD3DSurface_Unmap(This->WineD3DSurface);
+    if (SUCCEEDED(hr))
     {
         This->surface_desc.lpSurface = NULL;
     }
@@ -3297,7 +3294,7 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
             /* Copy the main memory texture into the surface that corresponds
              * to the OpenGL texture object. */
 
-            hr = IWineD3DSurface_LockRect(src_surface->WineD3DSurface, &src_rect, NULL, 0);
+            hr = IWineD3DSurface_Map(src_surface->WineD3DSurface, &src_rect, NULL, 0);
             if (FAILED(hr))
             {
                 ERR("Failed to lock source surface, hr %#x.\n", hr);
@@ -3305,11 +3302,11 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
                 return D3DERR_TEXTURE_LOAD_FAILED;
             }
 
-            hr = IWineD3DSurface_LockRect(dst_surface->WineD3DSurface, &dst_rect, NULL, 0);
+            hr = IWineD3DSurface_Map(dst_surface->WineD3DSurface, &dst_rect, NULL, 0);
             if (FAILED(hr))
             {
                 ERR("Failed to lock destination surface, hr %#x.\n", hr);
-                IWineD3DSurface_UnlockRect(src_surface->WineD3DSurface);
+                IWineD3DSurface_Unmap(src_surface->WineD3DSurface);
                 LeaveCriticalSection(&ddraw_cs);
                 return D3DERR_TEXTURE_LOAD_FAILED;
             }
@@ -3319,8 +3316,8 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
             else
                 memcpy(dst_rect.pBits, src_rect.pBits, src_rect.Pitch * src_desc->dwHeight);
 
-            IWineD3DSurface_UnlockRect(src_surface->WineD3DSurface);
-            IWineD3DSurface_UnlockRect(dst_surface->WineD3DSurface);
+            IWineD3DSurface_Unmap(src_surface->WineD3DSurface);
+            IWineD3DSurface_Unmap(dst_surface->WineD3DSurface);
         }
 
         if (src_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_MIPMAP)

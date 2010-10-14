@@ -109,26 +109,8 @@ static void WINAPI IWineGDISurfaceImpl_UnLoad(IWineD3DSurface *iface)
     ERR("(%p): Please report to wine-devel\n", iface);
 }
 
-/*****************************************************************************
- * IWineD3DSurface::LockRect, GDI version
- *
- * Locks the surface and returns a pointer to the surface memory
- *
- * Params:
- *  pLockedRect: Address to return the locking info at
- *  pRect: Rectangle to lock
- *  Flags: Some flags
- *
- * Returns:
- *  WINED3D_OK on success
- *  WINED3DERR_INVALIDCALL on errors
- *
- *****************************************************************************/
-static HRESULT WINAPI
-IWineGDISurfaceImpl_LockRect(IWineD3DSurface *iface,
-                             WINED3DLOCKED_RECT* pLockedRect,
-                             CONST RECT* pRect,
-                             DWORD Flags)
+static HRESULT WINAPI IWineGDISurfaceImpl_Map(IWineD3DSurface *iface,
+        WINED3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
 
@@ -149,29 +131,17 @@ IWineGDISurfaceImpl_LockRect(IWineD3DSurface *iface,
         This->resource.allocatedMemory = This->dib.bitmap_data;
     }
 
-    return IWineD3DBaseSurfaceImpl_LockRect(iface, pLockedRect, pRect, Flags);
+    return IWineD3DBaseSurfaceImpl_Map(iface, pLockedRect, pRect, Flags);
 }
 
-/*****************************************************************************
- * IWineD3DSurface::UnlockRect, GDI version
- *
- * Unlocks a surface. This implementation doesn't do much, except updating
- * the window if the front buffer is unlocked
- *
- * Returns:
- *  WINED3D_OK on success
- *  WINED3DERR_INVALIDCALL on failure
- *
- *****************************************************************************/
-static HRESULT WINAPI
-IWineGDISurfaceImpl_UnlockRect(IWineD3DSurface *iface)
+static HRESULT WINAPI IWineGDISurfaceImpl_Unmap(IWineD3DSurface *iface)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     TRACE("(%p)\n", This);
 
     if (!(This->Flags & SFLAG_LOCKED))
     {
-        WARN("trying to Unlock an unlocked surf@%p\n", This);
+        WARN("Trying to unmap unmapped surfaces %p.\n", iface);
         return WINEDDERR_NOTLOCKED;
     }
 
@@ -278,13 +248,11 @@ static HRESULT WINAPI IWineGDISurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHD
 
     /* Should have a DIB section already */
 
-    /* Lock the surface */
-    hr = IWineD3DSurface_LockRect(iface,
-                                  &lock,
-                                  NULL,
-                                  0);
-    if(FAILED(hr)) {
-        ERR("IWineD3DSurface_LockRect failed with hr = %08x\n", hr);
+    /* Map the surface. */
+    hr = IWineD3DSurface_Map(iface, &lock, NULL, 0);
+    if (FAILED(hr))
+    {
+        ERR("IWineD3DSurface_Map failed, hr %#x.\n", hr);
         /* keep the dib section */
         return hr;
     }
@@ -338,7 +306,7 @@ static HRESULT WINAPI IWineGDISurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC 
     }
 
     /* we locked first, so unlock now */
-    IWineD3DSurface_UnlockRect(iface);
+    IWineD3DSurface_Unmap(iface);
 
     This->Flags &= ~SFLAG_DCINUSE;
 
@@ -466,8 +434,10 @@ static HRESULT WINAPI IWineGDISurfaceImpl_SetMem(IWineD3DSurface *iface, void *M
 
         /* Now free the old memory if any */
         HeapFree(GetProcessHeap(), 0, release);
-    } else if(This->Flags & SFLAG_USERPTR) {
-        /* LockRect and GetDC will re-create the dib section and allocated memory */
+    }
+    else if(This->Flags & SFLAG_USERPTR)
+    {
+        /* Map() and GetDC() will re-create the dib section and allocated memory. */
         This->resource.allocatedMemory = NULL;
         This->Flags &= ~SFLAG_USERPTR;
     }
@@ -504,8 +474,8 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineD3DBaseSurfaceImpl_GetType,
     /* IWineD3DSurface */
     IWineD3DBaseSurfaceImpl_GetDesc,
-    IWineGDISurfaceImpl_LockRect,
-    IWineGDISurfaceImpl_UnlockRect,
+    IWineGDISurfaceImpl_Map,
+    IWineGDISurfaceImpl_Unmap,
     IWineGDISurfaceImpl_GetDC,
     IWineGDISurfaceImpl_ReleaseDC,
     IWineGDISurfaceImpl_Flip,

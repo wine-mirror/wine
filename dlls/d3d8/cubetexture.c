@@ -284,7 +284,8 @@ static HRESULT WINAPI IDirect3DCubeTexture8Impl_LockRect(LPDIRECT3DCUBETEXTURE8 
             iface, FaceType, Level, pLockedRect, pRect, Flags);
 
     wined3d_mutex_lock();
-    hr = IWineD3DCubeTexture_LockRect(This->wineD3DCubeTexture, (WINED3DCUBEMAP_FACES) FaceType, Level, (WINED3DLOCKED_RECT *) pLockedRect, pRect, Flags);
+    hr = IWineD3DCubeTexture_Map(This->wineD3DCubeTexture, (WINED3DCUBEMAP_FACES)FaceType,
+            Level, (WINED3DLOCKED_RECT *)pLockedRect, pRect, Flags);
     wined3d_mutex_unlock();
 
     return hr;
@@ -297,7 +298,7 @@ static HRESULT WINAPI IDirect3DCubeTexture8Impl_UnlockRect(LPDIRECT3DCUBETEXTURE
     TRACE("iface %p, face %#x, level %u.\n", iface, FaceType, Level);
 
     wined3d_mutex_lock();
-    hr = IWineD3DCubeTexture_UnlockRect(This->wineD3DCubeTexture, (WINED3DCUBEMAP_FACES) FaceType, Level);
+    hr = IWineD3DCubeTexture_Unmap(This->wineD3DCubeTexture, (WINED3DCUBEMAP_FACES)FaceType, Level);
     wined3d_mutex_unlock();
 
     return hr;

@@ -2377,12 +2377,12 @@ interface IWineD3DSurface : IWineD3DResource
     void GetDesc(
         [out] WINED3DSURFACE_DESC *desc
     );
-    HRESULT LockRect(
+    HRESULT Map(
         [out] WINED3DLOCKED_RECT *locked_rect,
         [in] const RECT *rect,
         [in] DWORD flags
     );
-    HRESULT UnlockRect(
+    HRESULT Unmap(
     );
     HRESULT GetDC(
         [out] HDC *dc
@@ -2490,12 +2490,12 @@ interface IWineD3DVolume : IWineD3DResource
     void GetDesc(
         [out] WINED3DVOLUME_DESC *desc
     );
-    HRESULT LockBox(
+    HRESULT Map(
         [out] WINED3DLOCKED_BOX *locked_box,
         [in] const WINED3DBOX *box,
         [in] DWORD flags
     );
-    HRESULT UnlockBox(
+    HRESULT Unmap(
     );
     HRESULT LoadTexture(
         [in] int gl_level,
@@ -2551,13 +2551,13 @@ interface IWineD3DTexture : IWineD3DBaseTexture
         [in] UINT level,
         [out] IWineD3DSurface **surface
     );
-    HRESULT LockRect(
+    HRESULT Map(
         [in] UINT level,
         [out] WINED3DLOCKED_RECT *locked_rect,
         [in] const RECT *rect,
         [in] DWORD flags
     );
-    HRESULT UnlockRect(
+    HRESULT Unmap(
         [in] UINT level
     );
     HRESULT AddDirtyRect(
@@ -2581,14 +2581,14 @@ interface IWineD3DCubeTexture : IWineD3DBaseTexture
         [in] UINT level,
         [out] IWineD3DSurface **surface
     );
-    HRESULT LockRect(
+    HRESULT Map(
         [in] WINED3DCUBEMAP_FACES face,
         [in] UINT level,
         [out] WINED3DLOCKED_RECT *locked_rect,
         [in] const RECT *rect,
         [in] DWORD flags
     );
-    HRESULT UnlockRect(
+    HRESULT Unmap(
         [in] WINED3DCUBEMAP_FACES face,
         [in] UINT level
     );
@@ -2613,13 +2613,13 @@ interface IWineD3DVolumeTexture : IWineD3DBaseTexture
         [in] UINT level,
         [out] IWineD3DVolume **volume
     );
-    HRESULT LockBox(
+    HRESULT Map(
         [in] UINT level,
         [out] WINED3DLOCKED_BOX *locked_box,
         [in] const WINED3DBOX *box,
         [in] DWORD flags
     );
-    HRESULT UnlockBox(
+    HRESULT Unmap(
         [in] UINT level
     );
     HRESULT AddDirtyBox(

@@ -233,7 +233,7 @@ static HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D
         }
     }
 
-    hr = IWineD3DSurface_LockRect(This->wineD3DSurface, (WINED3DLOCKED_RECT *) pLockedRect, pRect, Flags);
+    hr = IWineD3DSurface_Map(This->wineD3DSurface, (WINED3DLOCKED_RECT *)pLockedRect, pRect, Flags);
     wined3d_mutex_unlock();
 
     return hr;
@@ -246,7 +246,7 @@ static HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface)
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    hr = IWineD3DSurface_UnlockRect(This->wineD3DSurface);
+    hr = IWineD3DSurface_Unmap(This->wineD3DSurface);
     wined3d_mutex_unlock();
 
     switch(hr)

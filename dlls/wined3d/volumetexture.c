@@ -293,7 +293,7 @@ static HRESULT WINAPI IWineD3DVolumeTextureImpl_GetVolumeLevel(IWineD3DVolumeTex
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DVolumeTextureImpl_LockBox(IWineD3DVolumeTexture *iface,
+static HRESULT WINAPI IWineD3DVolumeTextureImpl_Map(IWineD3DVolumeTexture *iface,
         UINT level, WINED3DLOCKED_BOX *locked_box, const WINED3DBOX *box, DWORD flags)
 {
     IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
@@ -308,10 +308,10 @@ static HRESULT WINAPI IWineD3DVolumeTextureImpl_LockBox(IWineD3DVolumeTexture *i
         return WINED3DERR_INVALIDCALL;
     }
 
-    return IWineD3DVolume_LockBox(volume, locked_box, box, flags);
+    return IWineD3DVolume_Map(volume, locked_box, box, flags);
 }
 
-static HRESULT WINAPI IWineD3DVolumeTextureImpl_UnlockBox(IWineD3DVolumeTexture *iface, UINT level)
+static HRESULT WINAPI IWineD3DVolumeTextureImpl_Unmap(IWineD3DVolumeTexture *iface, UINT level)
 {
     IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
     IWineD3DVolume *volume;
@@ -324,7 +324,7 @@ static HRESULT WINAPI IWineD3DVolumeTextureImpl_UnlockBox(IWineD3DVolumeTexture 
         return WINED3DERR_INVALIDCALL;
     }
 
-    return IWineD3DVolume_UnlockBox(volume);
+    return IWineD3DVolume_Unmap(volume);
 }
 
 static HRESULT WINAPI IWineD3DVolumeTextureImpl_AddDirtyBox(IWineD3DVolumeTexture *iface, const WINED3DBOX *dirty_box)
@@ -378,8 +378,8 @@ static const IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl =
     /* volume texture */
     IWineD3DVolumeTextureImpl_GetLevelDesc,
     IWineD3DVolumeTextureImpl_GetVolumeLevel,
-    IWineD3DVolumeTextureImpl_LockBox,
-    IWineD3DVolumeTextureImpl_UnlockBox,
+    IWineD3DVolumeTextureImpl_Map,
+    IWineD3DVolumeTextureImpl_Unmap,
     IWineD3DVolumeTextureImpl_AddDirtyBox
 };
 

@@ -1268,11 +1268,6 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, const RECT *rect, v
         return;
     }
 
-    /* Activate the surface. Set it up for blitting now, although not necessarily needed for LockRect.
-     * Certain graphics drivers seem to dislike some enabled states when reading from opengl, the blitting usage
-     * should help here. Furthermore unlockrect will need the context set up for blitting. The context manager will find
-     * context->last_was_blit set on the unlock.
-     */
     context = context_acquire(device, This);
     context_apply_blit_state(context, device);
     gl_info = context->gl_info;
@@ -1285,10 +1280,9 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, const RECT *rect, v
      */
     if (surface_is_offscreen(This))
     {
-        /* Locking the primary render target which is not on a swapchain(=offscreen render target).
-         * Read from the back buffer
-         */
-        TRACE("Locking offscreen render target\n");
+        /* Mapping the primary render target which is not on a swapchain.
+         * Read from the back buffer. */
+        TRACE("Mapping offscreen render target.\n");
         glReadBuffer(device->offscreenBuffer);
         srcIsUpsideDown = TRUE;
     }
@@ -1296,7 +1290,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, const RECT *rect, v
     {
         /* Onscreen surfaces are always part of a swapchain */
         GLenum buffer = surface_get_gl_buffer(This);
-        TRACE("Locking %#x buffer\n", buffer);
+        TRACE("Mapping %#x buffer.\n", buffer);
         glReadBuffer(buffer);
         checkGLcall("glReadBuffer");
         srcIsUpsideDown = FALSE;
@@ -1647,7 +1641,9 @@ static void surface_prepare_system_memory(IWineD3DSurfaceImpl *This)
     }
 }
 
-static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
+static HRESULT WINAPI IWineD3DSurfaceImpl_Map(IWineD3DSurface *iface,
+        WINED3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags)
+{
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDeviceImpl *device = This->resource.device;
     const RECT *pass_rect = pRect;
@@ -1746,7 +1742,7 @@ lock_end:
         }
     }
 
-    return IWineD3DBaseSurfaceImpl_LockRect(iface, pLockedRect, pRect, Flags);
+    return IWineD3DBaseSurfaceImpl_Map(iface, pLockedRect, pRect, Flags);
 }
 
 static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fmt, GLenum type, UINT bpp, const BYTE *mem) {
@@ -1846,7 +1842,8 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
     context_release(context);
 }
 
-static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
+static HRESULT WINAPI IWineD3DSurfaceImpl_Unmap(IWineD3DSurface *iface)
+{
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDeviceImpl *device = This->resource.device;
     BOOL fullsurface;
@@ -1917,13 +1914,16 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
                 break;
         }
 
-        if(!fullsurface) {
-            /* Partial rectangle tracking is not commonly implemented, it is only done for render targets. Overwrite
-             * the flags to bring them back into a sane state. INSYSMEM was set before to tell LoadLocation where
-             * to read the rectangle from. Indrawable is set because all modifications from the partial sysmem copy
-             * are written back to the drawable, thus the surface is merged again in the drawable. The sysmem copy is
-             * not fully up to date because only a subrectangle was read in LockRect.
-             */
+        if (!fullsurface)
+        {
+            /* Partial rectangle tracking is not commonly implemented, it is
+             * only done for render targets. Overwrite the flags to bring
+             * them back into a sane state. INSYSMEM was set before to tell
+             * surface_load_location() where to read the rectangle from.
+             * Indrawable is set because all modifications from the partial
+             * sysmem copy are written back to the drawable, thus the surface
+             * is merged again in the drawable. The sysmem copy is not fully
+             * up to date because only a subrectangle was read in Map(). */
             This->Flags &= ~SFLAG_INSYSMEM;
             This->Flags |= SFLAG_INDRAWABLE;
         }
@@ -2031,19 +2031,17 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHD
             This->resource.allocatedMemory = This->dib.bitmap_data;
     }
 
-    /* Lock the surface */
-    hr = IWineD3DSurface_LockRect(iface,
-                                  &lock,
-                                  NULL,
-                                  0);
+    /* Map the surface */
+    hr = IWineD3DSurface_Map(iface, &lock, NULL, 0);
 
-    if(This->Flags & SFLAG_PBO) {
-        /* Sync the DIB with the PBO. This can't be done earlier because LockRect activates the allocatedMemory */
+    /* Sync the DIB with the PBO. This can't be done earlier because Map()
+     * activates the allocatedMemory. */
+    if (This->Flags & SFLAG_PBO)
         memcpy(This->dib.bitmap_data, This->resource.allocatedMemory, This->dib.bitmap_size);
-    }
 
-    if(FAILED(hr)) {
-        ERR("IWineD3DSurface_LockRect failed with hr = %08x\n", hr);
+    if (FAILED(hr))
+    {
+        ERR("IWineD3DSurface_Map failed, hr %#x.\n", hr);
         /* keep the dib section */
         return hr;
     }
@@ -2105,7 +2103,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC 
     }
 
     /* we locked first, so unlock now */
-    IWineD3DSurface_UnlockRect(iface);
+    IWineD3DSurface_Unmap(iface);
 
     This->Flags &= ~SFLAG_DCINUSE;
 
@@ -2649,8 +2647,10 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *M
 
         /* Now free the old memory if any */
         HeapFree(GetProcessHeap(), 0, release);
-    } else if(This->Flags & SFLAG_USERPTR) {
-        /* LockRect and GetDC will re-create the dib section and allocated memory */
+    }
+    else if (This->Flags & SFLAG_USERPTR)
+    {
+        /* Map and GetDC will re-create the dib section and allocated memory. */
         This->resource.allocatedMemory = NULL;
         /* HeapMemory should be NULL already */
         if (This->resource.heapMemory)
@@ -4732,8 +4732,8 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DBaseSurfaceImpl_GetType,
     /* IWineD3DSurface */
     IWineD3DBaseSurfaceImpl_GetDesc,
-    IWineD3DSurfaceImpl_LockRect,
-    IWineD3DSurfaceImpl_UnlockRect,
+    IWineD3DSurfaceImpl_Map,
+    IWineD3DSurfaceImpl_Unmap,
     IWineD3DSurfaceImpl_GetDC,
     IWineD3DSurfaceImpl_ReleaseDC,
     IWineD3DSurfaceImpl_Flip,

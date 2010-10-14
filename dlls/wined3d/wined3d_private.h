@@ -2203,7 +2203,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *d
         const RECT *src_rect, DWORD flags, const WINEDDBLTFX *fx, WINED3DTEXTUREFILTERTYPE filter) DECLSPEC_HIDDEN;
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, DWORD dsty,
         IWineD3DSurface *Source, const RECT *rsrc, DWORD trans) DECLSPEC_HIDDEN;
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKED_RECT *pLockedRect,
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_Map(IWineD3DSurface *iface, WINED3DLOCKED_RECT *pLockedRect,
         const RECT *pRect, DWORD Flags) DECLSPEC_HIDDEN;
 const void *WINAPI IWineD3DBaseSurfaceImpl_GetData(IWineD3DSurface *iface) DECLSPEC_HIDDEN;
 

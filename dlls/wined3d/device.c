@@ -4918,22 +4918,23 @@ static HRESULT IWineD3DDeviceImpl_UpdateVolume(IWineD3DDevice *iface,
     /* TODO: Implement direct loading into the gl volume instead of using memcpy and
      * dirtification to improve loading performance.
      */
-    hr = IWineD3DVolume_LockBox(pSourceVolume, &src, NULL, WINED3DLOCK_READONLY);
-    if(FAILED(hr)) return hr;
-    hr = IWineD3DVolume_LockBox(pDestinationVolume, &dst, NULL, WINED3DLOCK_DISCARD);
-    if(FAILED(hr)) {
-    IWineD3DVolume_UnlockBox(pSourceVolume);
-            return hr;
+    hr = IWineD3DVolume_Map(pSourceVolume, &src, NULL, WINED3DLOCK_READONLY);
+    if (FAILED(hr)) return hr;
+    hr = IWineD3DVolume_Map(pDestinationVolume, &dst, NULL, WINED3DLOCK_DISCARD);
+    if (FAILED(hr))
+    {
+        IWineD3DVolume_Unmap(pSourceVolume);
+        return hr;
     }
 
     memcpy(dst.pBits, src.pBits, ((IWineD3DVolumeImpl *) pDestinationVolume)->resource.size);
 
-    hr = IWineD3DVolume_UnlockBox(pDestinationVolume);
-    if(FAILED(hr)) {
-        IWineD3DVolume_UnlockBox(pSourceVolume);
-    } else {
-        hr = IWineD3DVolume_UnlockBox(pSourceVolume);
-    }
+    hr = IWineD3DVolume_Unmap(pDestinationVolume);
+    if (FAILED(hr))
+        IWineD3DVolume_Unmap(pSourceVolume);
+    else
+        hr = IWineD3DVolume_Unmap(pSourceVolume);
+
     return hr;
 }
 
@@ -5827,7 +5828,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice *ifa
              */
             This->cursorWidth = s->currentDesc.Width;
             This->cursorHeight = s->currentDesc.Height;
-            if (SUCCEEDED(IWineD3DSurface_LockRect(cursor_image, &rect, NULL, WINED3DLOCK_READONLY)))
+            if (SUCCEEDED(IWineD3DSurface_Map(cursor_image, &rect, NULL, WINED3DLOCK_READONLY)))
             {
                 const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
                 const struct wined3d_format *format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM);
@@ -5847,7 +5848,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice *ifa
                 mem = HeapAlloc(GetProcessHeap(), 0, width * height * bpp);
                 for(i = 0; i < height; i++)
                     memcpy(&mem[width * bpp * i], &bits[rect.Pitch * i], width * bpp);
-                IWineD3DSurface_UnlockRect(cursor_image);
+                IWineD3DSurface_Unmap(cursor_image);
 
                 context = context_acquire(This, NULL);
 
@@ -5903,7 +5904,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice *ifa
              * chunks. */
             DWORD *maskBits = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                     (s->currentDesc.Width * s->currentDesc.Height / 8));
-            IWineD3DSurface_LockRect(cursor_image, &lockedRect, NULL,
+            IWineD3DSurface_Map(cursor_image, &lockedRect, NULL,
                     WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY);
             TRACE("width: %u height: %u.\n", s->currentDesc.Width, s->currentDesc.Height);
 
@@ -5912,7 +5913,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice *ifa
             cursorInfo.yHotspot = YHotSpot;
             cursorInfo.hbmMask = CreateBitmap(s->currentDesc.Width, s->currentDesc.Height, 1, 1, maskBits);
             cursorInfo.hbmColor = CreateBitmap(s->currentDesc.Width, s->currentDesc.Height, 1, 32, lockedRect.pBits);
-            IWineD3DSurface_UnlockRect(cursor_image);
+            IWineD3DSurface_Unmap(cursor_image);
             /* Create our cursor and clean up. */
             cursor = CreateIconIndirect(&cursorInfo);
             SetCursor(cursor);
