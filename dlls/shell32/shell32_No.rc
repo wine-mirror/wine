@@ -1,5 +1,6 @@
 /*
  * Copyright 2005-2009 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2010 Trygve Vea <trygve.vea@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,7 +26,7 @@ LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 MENU_001 MENU
 BEGIN
 	MENUITEM "&Store ikoner",	FCIDM_SHVIEW_BIGICON
-	MENUITEM "&Små ikoner",	FCIDM_SHVIEW_SMALLICON
+	MENUITEM "S&må ikoner",	FCIDM_SHVIEW_SMALLICON
 	MENUITEM "&Liste",		FCIDM_SHVIEW_LISTVIEW
 	MENUITEM "&Detaljer",		FCIDM_SHVIEW_REPORTVIEW
 END
@@ -105,7 +106,7 @@ BEGIN
     POPUP "&Vis"
     BEGIN
         MENUITEM "&Store ikoner", FCIDM_SHVIEW_BIGICON
-        MENUITEM "&Små ikoner", FCIDM_SHVIEW_SMALLICON
+        MENUITEM "S&må ikoner", FCIDM_SHVIEW_SMALLICON
         MENUITEM "&Liste", FCIDM_SHVIEW_LISTVIEW
         MENUITEM "&Detaljer", FCIDM_SHVIEW_REPORTVIEW
     END
@@ -182,13 +183,13 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION ""
 FONT 8, "MS Shell Dlg"
 {
- ICON "", 12297, 7, 11, 18, 20, WS_VISIBLE
- LTEXT "Skriv inn navnet på programmet, mappen, dokumentet etter Internett-ressursen du ønsker å åpne.", 12289, 36, 11, 182, 18
- LTEXT "&Åpne:", 12305, 7, 39, 24, 10
- CONTROL "", 12298, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
+ ICON "", IDC_RUNDLG_ICON, 7, 11, 18, 20, WS_VISIBLE
+ LTEXT "Skriv inn navnet på programmet, mappen, dokumentet, eller Internett-ressursen du ønsker å åpne.", IDC_RUNDLG_DESCRIPTION, 36, 11, 182, 18
+ LTEXT "&Åpne:", IDC_RUNDLG_LABEL, 7, 39, 24, 10
+ CONTROL "", IDC_RUNDLG_EDITPATH, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
  DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
  PUSHBUTTON "Avbryt", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
- PUSHBUTTON "&Bla...", 12288, 170, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "&Bla gjennom...", IDC_RUNDLG_BROWSE, 170, 63, 50, 14, WS_TABSTOP
 }
 
 STRINGTABLE
@@ -230,19 +231,19 @@ STRINGTABLE
 	IDS_CREATEFOLDER_CAPTION "Klarte ikke opprette ny mappe"
 	IDS_DELETEITEM_CAPTION "Bekreft filsletting"
 	IDS_DELETEFOLDER_CAPTION "Bekreft sletting av mappe"
-	IDS_DELETEITEM_TEXT "Virkelig slette «%1»?"
-	IDS_DELETEMULTIPLE_TEXT "Virkelig slette disse %1 elementene?"
-	IDS_DELETESELECTED_TEXT "Virkelig slette valgte element(er)??"
-	IDS_TRASHITEM_TEXT "Virkelig legge «%1» i papirkurven?"
-	IDS_TRASHFOLDER_TEXT "Virkelig legge «%1» og alt innholdet i papirkurven?"
-	IDS_TRASHMULTIPLE_TEXT "Virkelig legge disse %1 valgte elementene i papirkurven?"
+	IDS_DELETEITEM_TEXT "Vil du virkelig slette «%1»?"
+	IDS_DELETEMULTIPLE_TEXT "Vil du virkelig slette disse %1 elementene?"
+	IDS_DELETESELECTED_TEXT "Vil du virkelig slette valgte element(er)??"
+	IDS_TRASHITEM_TEXT "Vil du virkelig legge «%1» i papirkurven?"
+	IDS_TRASHFOLDER_TEXT "Vil du virkelig legge «%1» og alt innholdet i papirkurven?"
+	IDS_TRASHMULTIPLE_TEXT "Vil du virkelig legge disse %1 valgte elementene i papirkurven?"
 	IDS_CANTTRASH_TEXT "Elementet «%1» kan ikke legges i papirkurven. Vil du slette det i stedet?"
-	IDS_OVERWRITEFILE_TEXT "This folder already contains a file called '%1'.\n\nDo you want to replace it?"
+	IDS_OVERWRITEFILE_TEXT "Denne mappen inneholder allerede en fil med navn «%1».\n\nVil du erstatte den?"
 	IDS_OVERWRITEFILE_CAPTION "Bekreft overskriving av fil"
-	IDS_OVERWRITEFOLDER_TEXT "This folder already contains a folder named '%1'.\n\n"\
-	    "If the files in the destination folder have the same names as files in the\n"\
-	    "selected folder they will be replaced. Do you still want to move or copy\n"\
-	    "the folder?"
+	IDS_OVERWRITEFOLDER_TEXT "Denne mappen inneholder allerede en mappe med navn «%1».\n\n"\
+	    "Hvis filene i mappen du kopierer til heter det samme som filene i mappen du\n"\
+	    "kopierer fra, vil disse bli erstattet. Ønsker du fortsatt å flytte eller kopiere\n"\
+	    "denne mappen?"
 
         /* message box strings */
         IDS_RESTART_TITLE       "Starte på nytt"
@@ -252,8 +253,8 @@ STRINGTABLE
 
         /* Run File dialog */
         IDS_RUNDLG_ERROR           "Klarte ikke vise Kjør-vinduet (intern feil)"
-        IDS_RUNDLG_BROWSE_ERROR    "Klarte ikke vise Bla-vinduet (intern feil)"
-        IDS_RUNDLG_BROWSE_CAPTION  "Bla"
+        IDS_RUNDLG_BROWSE_ERROR    "Klarte ikke vise Bla gjennom-vinduet (intern feil)"
+        IDS_RUNDLG_BROWSE_CAPTION  "Bla gjennom"
         IDS_RUNDLG_BROWSE_FILTER   "Programfiler\0*.exe\0Alle filer\0*.*\0\0"
 
         /* shell folder path default values */
