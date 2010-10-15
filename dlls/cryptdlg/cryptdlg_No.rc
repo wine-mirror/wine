@@ -2,6 +2,7 @@
  * cryptdlg dll resources (Norwegian Bokmål)
  *
  * Copyright 2010 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2010 Trygve Vea <trygve.vea@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,9 +27,9 @@ LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
 STRINGTABLE
 {
-    IDS_CERT_POLICY "Sertifikatpolitikk"
-    IDS_POLICY_ID "Politikk-ID: "
-    IDS_POLICY_QUALIFIER_INFO "Info om politikkvalifisering"
+    IDS_CERT_POLICY "Sertifikatregel"
+    IDS_POLICY_ID "Regel-ID: "
+    IDS_POLICY_QUALIFIER_INFO "Info om regelkvalifisering"
     IDS_POLICY_QUALIFIER_ID "Kvalifiserings-ID="
     IDS_CPS "CPS" /* Certification Practice Statement */
     IDS_USER_NOTICE "Brukernotis"
