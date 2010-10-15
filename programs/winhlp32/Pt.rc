@@ -72,9 +72,6 @@ MAIN_MENU MENU
    MENUITEM "Sempre &visível", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
    MENUITEM "&Informações...", MNID_HELP_ABOUT
-#ifdef WINELIB
-   MENUITEM "&Sobre o Wine", MNID_HELP_WINE
-#endif
  }
 }
 
@@ -119,9 +116,6 @@ MAIN_MENU MENU
    MENUITEM "Sempre &visível", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
    MENUITEM "&Informações...", MNID_HELP_ABOUT
-#ifdef WINELIB
-   MENUITEM "&Acerca do Wine", MNID_HELP_WINE
-#endif
  }
 }
 

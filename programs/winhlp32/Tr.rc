@@ -63,9 +63,6 @@ MAIN_MENU MENU
    MENUITEM "&Her Zaman Üstte", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
    MENUITEM "&Bilgi...", MNID_HELP_ABOUT
-#ifdef WINELIB
-   MENUITEM "Wine &Hakkýnda", MNID_HELP_WINE
-#endif
  }
 }
 

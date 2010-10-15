@@ -68,9 +68,6 @@ MAIN_MENU MENU
    MENUITEM "Vždy na &vrchu", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
    MENUITEM "&Informace...", MNID_HELP_ABOUT
-#ifdef WINELIB
-   MENUITEM "O &Wine", MNID_HELP_WINE
-#endif
  }
 }
 

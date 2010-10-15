@@ -67,9 +67,6 @@ MAIN_MENU MENU
    MENUITEM "常に手前に表示(&T)", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
    MENUITEM "情報(&I)...", MNID_HELP_ABOUT
-#ifdef WINELIB
-   MENUITEM "Wine について(&A)", MNID_HELP_WINE
-#endif
  }
 }
 
