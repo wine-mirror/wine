@@ -1,7 +1,8 @@
 /*
- * Norwegian Bokm�l resources for MSI
+ * Norwegian Bokmål resources for MSI
  *
- * Copyright 2005-2007 Alexander N. S�rnes <alex@thehandofagony.com>
+ * Copyright 2005-2007 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2010 Trygve Vea <trygve.vea@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,38 +21,40 @@
 
 #include "windef.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
 STRINGTABLE
 {
-	4 "Klarte ikke �pne den oppgitte installasjonspakken. Kontroller filbanen og pr�v igjen."
-	5 "Fant ikke stien '%s'."
-	9 "Sett i disk '%s'"
+	4 "Klarte ikke å åpne den oppgitte installasjonspakken.  Kontroller filbanen og prøv igjen."
+	5 "fant ikke stien '%s'."
+	9 "sett inn disk '%s'"
 	10 "Windows Installer %s\n\n" \
-	"Usage:\n" \
-	"msiexec command {required parameter} [optional parammeter]\n\n" \
-	"Install a product:\n" \
-	"\t/i {package|productcode} [property]\n" \
-	"\t/package {package|productcode} [property]\n" \
-	"\t/a package [property]\n" \
-	"Repair an installation:\n" \
-	"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n" \
-	"Uninstall a product:\n" \
-	"\t/uninstall {package|productcode} [property]\n" \
-	"\t/x {package|productcode} [property]\n" \
-	"Advertise a product:\n" \
-	"\t/j[u|m] package [/t transform] [/g languageid]\n" \
-	"Apply a patch:\n" \
-	"\t/p patchpackage [property]\n" \
-	"\t/p patchpackage /a package [property]\n" \
-	"Log and UI Modifiers for above commands:\n" \
-	"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n" \
+	"Bruk:\n" \
+	"msiexec kommando {obligatorisk parameter} [valgfritt parameter]\n\n" \
+	"Installere et produkt:\n" \
+	"\t/i {pakke|produktkode} [egenskap]\n" \
+	"\t/package {pakke|produktkode} [egenskap]\n" \
+	"\t/a pakke [egenskap]\n" \
+	"Reparere en installasjon:\n" \
+	"\t/f[p|o|e|d|c|a|u|m|s|v] {pakke|produktkode}\n" \
+	"Avinstallere et produkt:\n" \
+	"\t/uninstall {pakke|produktkode} [egenskap]\n" \
+	"\t/x {pakke|produktkode} [egenskap]\n" \
+	"Annonsere et produkt:\n" \
+	"\t/j[u|m] pakke [/t transformere] [/g språk-ID]\n" \
+	"Installer patch:\n" \
+	"\t/p patchpakke [egenskap]\n" \
+	"\t/p patchpakke /a pakke [egenskap]\n" \
+	"Logg og brukergrensesnitt-modifikatorer for overnevnte kommandoer:\n" \
+	"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] loggfil\n" \
 	"\t/q{|n|b|r|f|n+|b+|b-}\n" \
-	"Register MSI Service:\n" \
+	"Registrer MSI-tjeneste:\n" \
 	"\t/y\n" \
-	"Unregister MSI Service:\n" \
+	"Avregistrer MSI-tjeneste:\n" \
 	"\t/z\n" \
-	"Display this help:\n" \
+	"Vis denne hjelpeteksten:\n" \
 	"\t/help\n" \
 	"\t/?\n"
 	11 "Oppgi katalogen som inneholder '%s'."
