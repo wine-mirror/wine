@@ -67,9 +67,6 @@ MAIN_MENU MENU
    MENUITEM "Todi &Visibe", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
    MENUITEM "&Informåcion...", MNID_HELP_ABOUT
-#ifdef WINELIB
-   MENUITEM "Å &dfait di Wine", MNID_HELP_WINE
-#endif
  }
 }
 

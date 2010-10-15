@@ -63,9 +63,6 @@ MAIN_MENU MENU
    MENUITEM "Винаги от&горе", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
    MENUITEM "&Информация...", MNID_HELP_ABOUT
-#ifdef WINELIB
-   MENUITEM "&Относно Wine", MNID_HELP_WINE
-#endif
  }
 }
 

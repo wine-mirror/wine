@@ -65,9 +65,6 @@ MAIN_MENU MENU
    MENUITEM "Mindig &legfelül", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
    MENUITEM "&Információ...", MNID_HELP_ABOUT
-#ifdef WINELIB
-   MENUITEM "&&A Wine-ról", MNID_HELP_WINE
-#endif
  }
 }
 

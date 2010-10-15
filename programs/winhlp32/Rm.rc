@@ -70,9 +70,6 @@ MAIN_MENU MENU
    MENUITEM "Ad�na da&vant", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
    MENUITEM "I&nfuormaziuns", MNID_HELP_ABOUT
-#ifdef WINELIB
-   MENUITEM "Davart &Wine", MNID_HELP_WINE
-#endif
  }
 }
 
