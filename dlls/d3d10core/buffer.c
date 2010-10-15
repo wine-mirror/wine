@@ -131,9 +131,16 @@ static UINT STDMETHODCALLTYPE d3d10_buffer_GetEvictionPriority(ID3D10Buffer *ifa
 
 static HRESULT STDMETHODCALLTYPE d3d10_buffer_Map(ID3D10Buffer *iface, D3D10_MAP map_type, UINT map_flags, void **data)
 {
-    FIXME("iface %p, map_type %u, map_flags %#x, data %p stub!\n", iface, map_type, map_flags, data);
+    struct d3d10_buffer *buffer = (struct d3d10_buffer *)iface;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, map_type %u, map_flags %#x, data %p.\n", iface, map_type, map_flags, data);
+
+    if (map_type != D3D10_MAP_READ_WRITE)
+        FIXME("Ignoring map_type %#x.\n", map_type);
+    if (map_flags)
+        FIXME("Ignoring map_flags %#x.\n", map_flags);
+
+    return IWineD3DBuffer_Map(buffer->wined3d_buffer, 0, 0, (BYTE **)data, 0);
 }
 
 static void STDMETHODCALLTYPE d3d10_buffer_Unmap(ID3D10Buffer *iface)
