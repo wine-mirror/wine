@@ -1,5 +1,6 @@
 /*
- * Copyright 2005-2006 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2005-2006 Alexander N. SÃ¸rnes <alex@thehandofagony.com>
+ * Copyright 2010 Trygve Vea <trygve.vea@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,6 +19,8 @@
 
 #include "wineconsole_res.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
 STRINGTABLE
@@ -30,25 +33,25 @@ IDS_COPY,		"&Kopier"
 IDS_PASTE,		"&Lim inn"
 IDS_SELECTALL,		"Merk &alt"
 IDS_SCROLL,		"&Rull"
-IDS_SEARCH,		"&Søk"
-IDS_FNT_DISPLAY,	"Hvert tegn er %ld piksler bredt og %ld piksler høyt"
+IDS_SEARCH,		"&SÃ¸k"
+IDS_FNT_DISPLAY,	"Hvert tegn er %ld piksler bredt og %ld piksler hÃ¸yt"
 IDS_FNT_PREVIEW,	"Dette er en test"
-IDS_DLG_TIT_DEFAULT,    "Standardinnstillinger"
-IDS_DLG_TIT_CURRENT,    "Gjeldende innstillinger"
-IDS_DLG_TIT_ERROR,	"Oppsettsfeil"
-IDS_DLG_ERR_SBWINSIZE,	"Skjermens hurtigminnestørrelse må være større eller lik vinduets"
+IDS_DLG_TIT_DEFAULT,    "Oppsett - Standardinnstillinger"
+IDS_DLG_TIT_CURRENT,    "Oppsett - Gjeldende innstillinger"
+IDS_DLG_TIT_ERROR,	"Konfigurasjonsfeil"
+IDS_DLG_ERR_SBWINSIZE,	"Skjermens hurtigminnestÃ¸rrelse mÃ¥ vÃ¦re stÃ¸rre eller lik vinduets"
 
-IDS_CMD_INVALID_EVENT_ID   "wineconsole: Klarte ikke lese hendelses-id\n"
+IDS_CMD_INVALID_EVENT_ID   "wineconsole: Klarte ikke lese hendelse-id\n"
 IDS_CMD_INVALID_BACKEND    "wineconsole: Ugyldig motor\n"
-IDS_CMD_INVALID_OPTION     "wineconsole: Ukjent kommandolinjevalg\n"
+IDS_CMD_INVALID_OPTION     "wineconsole: Ukjent kommandolinjeopsjon\n"
 IDS_CMD_ABOUT              "Starter et program i en Wine-konsoll\n"
-IDS_CMD_LAUNCH_FAILED      "wineconsole: Klarte ikke starte programmet «%sx.\n"\
-                           "Kommandoen er ugyldig.\n"
+IDS_CMD_LAUNCH_FAILED      "wineconsole: Klarte ikke Ã¥ starte programmet %s.\n"\
+                           "Ugyldig kommando.\n"
 
 IDS_USAGE_HEADER           "\nBruk:\n  wineconsole [alternativer] <kommando>\n\nAlternativer:\n"
-IDS_USAGE_BACKEND          "  --backend={user|curses}  «user» lager et nyttt vindu, mens «curses»\n"\
-                           "                            prøve å bruke gjeldende terminal som Wine-konsoll\n"
-IDS_USAGE_COMMAND          "  <kommando>                 Wine-programmet som skal kjøres i konsollet\n"
+IDS_USAGE_BACKEND          "  --backend={user|curses}  Â«userÂ» lager et nytt vindu, mens Â«cursesÂ»\n"\
+                           "                            prÃ¸ve Ã¥ bruke gjeldende terminal som Wine-konsoll\n"
+IDS_USAGE_COMMAND          "  <kommando>                Wine-programmet som skal kjÃ¸res i konsollet\n"
 IDS_USAGE_FOOTER           "\nEksempel:\n  wineconsole cmd\nStarter Wine-ledeteksten i et Wine-konsoll\n\n"
 
 END
@@ -58,20 +61,20 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " Innstillinger "
 FONT 8, "MS Shell Dlg"
 {
-	GROUPBOX "Pekerstørrelse", -1, 10, 11, 60, 44, BS_GROUPBOX
+	GROUPBOX "PekerstÃ¸rrelse", -1, 10, 11, 60, 44, BS_GROUPBOX
 	AUTORADIOBUTTON "&Liten", IDC_OPT_CURSOR_SMALL, 14, 23, 44, 10, WS_TABSTOP
 	AUTORADIOBUTTON "&Middels", IDC_OPT_CURSOR_MEDIUM, 14, 33, 44, 10, WS_TABSTOP
 	AUTORADIOBUTTON "&Stor", IDC_OPT_CURSOR_LARGE, 14, 43, 44, 10, WS_TABSTOP
 
-	GROUPBOX "Control", -1, 75, 11, 125, 44, BS_GROUPBOX
-	LTEXT "Popup menu", -1, 79, 23, 40, 10
-	AUTOCHECKBOX "&Control", IDC_OPT_CONF_CTRL, 129, 23, 60, 10, WS_TABSTOP
-	AUTOCHECKBOX "S&hift", IDC_OPT_CONF_SHIFT, 129, 33, 60, 10, WS_TABSTOP
+	GROUPBOX "Kontroll", -1, 75, 11, 125, 44, BS_GROUPBOX
+	LTEXT "Hurtigmeny", -1, 79, 23, 40, 10
+	AUTOCHECKBOX "&Kontroll", IDC_OPT_CONF_CTRL, 129, 23, 60, 10, WS_TABSTOP
+	AUTOCHECKBOX "S&kift", IDC_OPT_CONF_SHIFT, 129, 33, 60, 10, WS_TABSTOP
 	LTEXT "Rask redigering", -1, 79, 43, 50, 10
-	AUTOCHECKBOX "Aktiv&er", IDC_OPT_QUICK_EDIT, 129, 43, 60, 10, WS_TABSTOP
+	AUTOCHECKBOX "aktiv&er", IDC_OPT_QUICK_EDIT, 129, 43, 60, 10, WS_TABSTOP
 
 	GROUPBOX "Kommandohistorikk", -1, 10, 57, 190, 35, BS_GROUPBOX
-	LTEXT "A&ntall huskete kommandoer:", -1, 14, 67, 78, 18
+	LTEXT "A&ntall huskede kommandoer:", -1, 14, 67, 78, 18
 	EDITTEXT IDC_OPT_HIST_SIZE, 92, 69, 31, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_OPT_HIST_SIZE_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
 	AUTOCHECKBOX "Fje&rn doble", IDC_OPT_HIST_NODOUBLE, 130, 67, 50, 18, WS_TABSTOP|BS_MULTILINE
@@ -87,7 +90,7 @@ FONT 8, "MS Shell Dlg"
 	LTEXT "Farg&e", -1, 100, 5, 50, 8
 	CONTROL "", IDC_FNT_COLOR_FG, "WineConColorPreview", 0L, 100, 18, 48, 16
 	CONTROL "", IDC_FNT_COLOR_BK, "WineConColorPreview", 0L, 100, 40, 48, 16
-	LTEXT "&Størrelse", -1, 158, 5, 40, 8
+	LTEXT "&StÃ¸rrelse", -1, 158, 5, 40, 8
 	LISTBOX IDC_FNT_LIST_SIZE, 158, 18, 40, 60, WS_VSCROLL
 	CONTROL "", IDC_FNT_PREVIEW, "WineConFontPreview", 0L, 5, 60, 109, 40
 	LTEXT "", IDC_FNT_FONT_INFO, 128, 76, 80, 18
@@ -102,19 +105,19 @@ FONT 8, "MS Shell Dlg"
 	LTEXT "&Bredde:", -1, 14, 25, 54, 9
 	EDITTEXT IDC_CNF_SB_WIDTH, 68, 23, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_SB_WIDTH_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
-	LTEXT "&Høyde:", -1, 14, 39, 54, 9
+	LTEXT "&HÃ¸yde:", -1, 14, 39, 54, 9
 	EDITTEXT IDC_CNF_SB_HEIGHT, 68, 37, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_SB_HEIGHT_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
 
-	GROUPBOX "Vindustørrelse", -1, 10, 55, 100, 42
+	GROUPBOX "VindustÃ¸rrelse", -1, 10, 55, 100, 42
 	LTEXT "&Bredde:", -1, 14, 69, 54, 9
 	EDITTEXT IDC_CNF_WIN_WIDTH, 68, 67, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_WIN_WIDTH_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
-	LTEXT "Høyd&e:", -1, 14, 83, 54, 9
+	LTEXT "HÃ¸yd&e:", -1, 14, 83, 54, 9
 	EDITTEXT IDC_CNF_WIN_HEIGHT, 68, 81, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_WIN_HEIGHT_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
 
-	GROUPBOX "Slutt på program", -1, 115, 11, 80, 42, BS_GROUPBOX
+	GROUPBOX "Ved programslutt", -1, 115, 11, 80, 42, BS_GROUPBOX
 	AUTOCHECKBOX "&Lukk konsoll", IDC_CNF_CLOSE_EXIT, 119, 25, 75, 20, WS_TABSTOP
 
 	GROUPBOX "Utgave", -1, 115, 55, 80, 42
@@ -127,8 +130,8 @@ CAPTION "Konsoll-parametere"
 FONT 8, "MS Shell Dlg"
 {
 	GROUPBOX "", -1, 10, 10, 120, 31, BS_GROUPBOX
-	AUTORADIOBUTTON "Behold disse innstillingene for kommende økter", IDC_SAV_SAVE, 14, 15, 110, 10, WS_TABSTOP
-	AUTORADIOBUTTON "Endre kun gjeldende økt", IDC_SAV_SESSION, 14, 27, 110, 10, WS_TABSTOP
+	AUTORADIOBUTTON "Behold disse innstillingene for kommende Ã¸kter", IDC_SAV_SAVE, 14, 15, 110, 10, WS_TABSTOP
+	AUTORADIOBUTTON "Endre kun for gjeldende Ã¸kt", IDC_SAV_SESSION, 14, 27, 110, 10, WS_TABSTOP
 
 	PUSHBUTTON "OK", IDOK, 20, 45, 35, 12
 	PUSHBUTTON "Avbryt", IDCANCEL, 65, 45, 35, 12
