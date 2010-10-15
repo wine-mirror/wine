@@ -1053,7 +1053,7 @@ dreg_name:            REG_TEMP
                         }
                     | REG_CONSTINT
                         {
-			  asmparser_message(&asm_ctx, "Line %u: Register i%u is not a valid destination register\n",
+                            asmparser_message(&asm_ctx, "Line %u: Register i%u is not a valid destination register\n",
                                               asm_ctx.line_no, $1);
                             set_parse_status(&asm_ctx, PARSE_WARN);
                         }

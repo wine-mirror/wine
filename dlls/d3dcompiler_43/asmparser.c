@@ -161,8 +161,9 @@ static void asmparser_dcl_input_ps_2(struct asm_parser *This, DWORD usage, DWORD
     }
 }
 
-static void asmparser_dcl_input_unsupported(struct asm_parser *This, DWORD usage, DWORD num,
-					    DWORD mod, const struct shader_reg *reg) {
+static void asmparser_dcl_input_unsupported(struct asm_parser *This,
+        DWORD usage, DWORD num, DWORD mod, const struct shader_reg *reg)
+{
     asmparser_message(This, "Line %u: Input declaration unsupported in this shader version\n", This->line_no);
     set_parse_status(This, PARSE_ERR);
 }
@@ -185,9 +186,9 @@ static void asmparser_dcl_sampler(struct asm_parser *This, DWORD samptype,
     }
 }
 
-static void asmparser_dcl_sampler_unsupported(struct asm_parser *This, DWORD samptype,
-					      DWORD mod, DWORD regnum,
-					      unsigned int line_no) {
+static void asmparser_dcl_sampler_unsupported(struct asm_parser *This,
+        DWORD samptype, DWORD mod, DWORD regnum, unsigned int line_no)
+{
     asmparser_message(This, "Line %u: Sampler declaration unsupported in this shader version\n", This->line_no);
     set_parse_status(This, PARSE_ERR);
 }
@@ -538,7 +539,7 @@ ns */
                 return;
             }
             /* Use the default handling */
-	    break;
+            break;
         case BWRITERSIO_TEXCOORD:
             /* texcoord/texcrd are two instructions present only in PS <= 1.3 and PS 1.4 respectively */
             if(This->shader->version == BWRITERPS_VERSION(1, 4))

@@ -290,7 +290,7 @@ typedef void (*instr_writer)(struct bc_writer *This,
 
 struct bytecode_backend {
     void (*header)(struct bc_writer *This, const struct bwriter_shader *shader,
-		   struct bytecode_buffer *buffer);
+                   struct bytecode_buffer *buffer);
     void (*end)(struct bc_writer *This, const struct bwriter_shader *shader,
                 struct bytecode_buffer *buffer);
     void (*srcreg)(struct bc_writer *This, const struct shader_reg *reg,
