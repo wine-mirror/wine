@@ -2,6 +2,7 @@
  * crypt32 dll resources
  *
  * Copyright (C) 2006-2009 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright (C) 2010 Trygve Vea <trygve.vea@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,14 +27,14 @@ LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
 STRINGTABLE
 {
-    IDS_AUTHORITY_KEY_ID "Identifiserer for autentiseringsnøkkel"
+    IDS_AUTHORITY_KEY_ID "Identifikator for autentiseringsnøkkel"
     IDS_KEY_ATTRIBUTES "Nøkkelegenskaper"
     IDS_KEY_USAGE_RESTRICTION "Begrensning av nøkkelbruk"
     IDS_SUBJECT_ALT_NAME "Alternativt navn for emne"
     IDS_ISSUER_ALT_NAME "Alternativt navn for utsteder"
     IDS_BASIC_CONSTRAINTS "Basisbegrensninger"
     IDS_KEY_USAGE "Nøkkelbruk"
-    IDS_CERT_POLICIES "Sertifikatholdninger"
+    IDS_CERT_POLICIES "Sertifikatregler"
     IDS_SUBJECT_KEY_IDENTIFIER "Identifiserer for emnenøkkel"
     IDS_CRL_REASON_CODE "CRL-grunnkode"
     IDS_CRL_DIST_POINTS "CRL-distribusjonspunkter"
@@ -41,7 +42,7 @@ STRINGTABLE
     IDS_AUTHORITY_INFO_ACCESS "Myndighet-informasjonstilgang"
     IDS_CERT_EXTENSIONS "Sertifikatutvidelser"
     IDS_NEXT_UPDATE_LOCATION "Neste oppdateringsplassering"
-    IDS_YES_OR_NO_TRUST "Ja eller nei tillit"
+    IDS_YES_OR_NO_TRUST "Ja eller nei-tillit"
     IDS_EMAIL_ADDRESS "E-postadresse"
     IDS_UNSTRUCTURED_NAME "Ustrukturert navn"
     IDS_CONTENT_TYPE "Innholdstype"
