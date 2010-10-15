@@ -138,7 +138,9 @@ static HRESULT STDMETHODCALLTYPE d3d10_buffer_Map(ID3D10Buffer *iface, D3D10_MAP
 
 static void STDMETHODCALLTYPE d3d10_buffer_Unmap(ID3D10Buffer *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    TRACE("iface %p.\n", iface);
+
+    IWineD3DBuffer_Unmap(((struct d3d10_buffer *)iface)->wined3d_buffer);
 }
 
 static void STDMETHODCALLTYPE d3d10_buffer_GetDesc(ID3D10Buffer *iface, D3D10_BUFFER_DESC *desc)
