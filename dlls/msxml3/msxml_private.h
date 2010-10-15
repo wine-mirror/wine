@@ -130,6 +130,7 @@ xmlNodePtr xmlNodePtr_from_domnode( IXMLDOMNode *iface, xmlElementType type );
 /* helpers */
 extern xmlChar *xmlChar_from_wchar( LPCWSTR str );
 
+extern void xmldoc_init( xmlDocPtr doc, const GUID *clsid );
 extern LONG xmldoc_add_ref( xmlDocPtr doc );
 extern LONG xmldoc_release( xmlDocPtr doc );
 extern HRESULT xmldoc_add_orphan( xmlDocPtr doc, xmlNodePtr node );

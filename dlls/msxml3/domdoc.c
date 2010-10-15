@@ -393,6 +393,12 @@ static xmlDocPtr doparse(domdoc* This, char *ptr, int len)
     return doc;
 }
 
+void xmldoc_init(xmlDocPtr doc, const GUID *clsid)
+{
+    doc->_private = create_priv();
+    priv_from_xmlDocPtr(doc)->properties = create_properties(clsid);
+}
+
 LONG xmldoc_add_ref(xmlDocPtr doc)
 {
     LONG ref = InterlockedIncrement(&priv_from_xmlDocPtr(doc)->refs);
