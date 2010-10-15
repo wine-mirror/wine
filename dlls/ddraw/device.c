@@ -4364,13 +4364,7 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
         return hr;
     }
     memcpy(LockedIndices, Indices, IndexCount * sizeof(WORD));
-    hr = IWineD3DBuffer_Unmap(This->indexbuffer);
-    if(hr != D3D_OK)
-    {
-        ERR("(%p) IWineD3DBuffer::Unmap failed with hr = %08x\n", This, hr);
-        LeaveCriticalSection(&ddraw_cs);
-        return hr;
-    }
+    IWineD3DBuffer_Unmap(This->indexbuffer);
 
     /* Set the index stream */
     IWineD3DDevice_SetBaseVertexIndex(This->wineD3DDevice, StartVertex);

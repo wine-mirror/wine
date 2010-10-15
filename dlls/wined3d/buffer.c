@@ -1338,7 +1338,7 @@ static HRESULT STDMETHODCALLTYPE buffer_Map(IWineD3DBuffer *iface, UINT offset, 
     return WINED3D_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE buffer_Unmap(IWineD3DBuffer *iface)
+static void STDMETHODCALLTYPE buffer_Unmap(IWineD3DBuffer *iface)
 {
     struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
     ULONG i;
@@ -1351,15 +1351,15 @@ static HRESULT STDMETHODCALLTYPE buffer_Unmap(IWineD3DBuffer *iface)
      * the next call (this will happen if the lock_count is < 0). */
     if (!This->lock_count)
     {
-        TRACE("Unmap called without a previous Map call!\n");
-        return WINED3D_OK;
+        WARN("Unmap called without a previous Map call.\n");
+        return;
     }
 
     if (InterlockedDecrement(&This->lock_count))
     {
         /* Delay loading the buffer until everything is unlocked */
         TRACE("Ignoring unlock\n");
-        return WINED3D_OK;
+        return;
     }
 
     if(!(This->flags & WINED3D_BUFFER_DOUBLEBUFFER) && This->buffer_object)
@@ -1410,8 +1410,6 @@ static HRESULT STDMETHODCALLTYPE buffer_Unmap(IWineD3DBuffer *iface)
     {
         buffer_PreLoad(iface);
     }
-
-    return WINED3D_OK;
 }
 
 static void STDMETHODCALLTYPE buffer_GetDesc(IWineD3DBuffer *iface, WINED3DBUFFER_DESC *desc)
@@ -1520,14 +1518,7 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
 
         memcpy(ptr, data, size);
 
-        hr = IWineD3DBuffer_Unmap((IWineD3DBuffer *)buffer);
-        if (FAILED(hr))
-        {
-            ERR("Failed to unmap buffer, hr %#x\n", hr);
-            buffer_UnLoad((IWineD3DBuffer *)buffer);
-            resource_cleanup((IWineD3DResource *)buffer);
-            return hr;
-        }
+        IWineD3DBuffer_Unmap((IWineD3DBuffer *)buffer);
     }
 
     buffer->maps = HeapAlloc(GetProcessHeap(), 0, sizeof(*buffer->maps));

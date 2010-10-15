@@ -197,15 +197,13 @@ static HRESULT WINAPI d3d8_vertexbuffer_Lock(IDirect3DVertexBuffer8 *iface,
 
 static HRESULT WINAPI d3d8_vertexbuffer_Unlock(IDirect3DVertexBuffer8 *iface)
 {
-    HRESULT hr;
-
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    hr = IWineD3DBuffer_Unmap(((IDirect3DVertexBuffer8Impl *)iface)->wineD3DVertexBuffer);
+    IWineD3DBuffer_Unmap(((IDirect3DVertexBuffer8Impl *)iface)->wineD3DVertexBuffer);
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d8_vertexbuffer_GetDesc(IDirect3DVertexBuffer8 *iface, D3DVERTEXBUFFER_DESC *desc)
@@ -461,15 +459,13 @@ static HRESULT WINAPI d3d8_indexbuffer_Lock(IDirect3DIndexBuffer8 *iface,
 
 static HRESULT WINAPI d3d8_indexbuffer_Unlock(IDirect3DIndexBuffer8 *iface)
 {
-    HRESULT hr;
-
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    hr = IWineD3DBuffer_Unmap(((IDirect3DIndexBuffer8Impl *)iface)->wineD3DIndexBuffer);
+    IWineD3DBuffer_Unmap(((IDirect3DIndexBuffer8Impl *)iface)->wineD3DIndexBuffer);
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d8_indexbuffer_GetDesc(IDirect3DIndexBuffer8 *iface, D3DINDEXBUFFER_DESC *desc)

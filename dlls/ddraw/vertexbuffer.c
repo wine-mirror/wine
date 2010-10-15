@@ -266,15 +266,14 @@ static HRESULT WINAPI
 IDirect3DVertexBufferImpl_Unlock(IDirect3DVertexBuffer7 *iface)
 {
     IDirect3DVertexBufferImpl *This = (IDirect3DVertexBufferImpl *)iface;
-    HRESULT hr;
 
     TRACE("iface %p.\n", iface);
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DBuffer_Unmap(This->wineD3DVertexBuffer);
+    IWineD3DBuffer_Unmap(This->wineD3DVertexBuffer);
     LeaveCriticalSection(&ddraw_cs);
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI
