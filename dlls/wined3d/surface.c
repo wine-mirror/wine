@@ -3680,6 +3680,11 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
 
         if (dstSwapchain && dst_surface == dstSwapchain->front_buffer)
             surface_translate_frontbuffer_coords(dst_surface, context->win_handle, &dst_rect);
+        else if (surface_is_offscreen(dst_surface))
+        {
+            dst_rect.top = dst_surface->currentDesc.Height - dst_rect.top;
+            dst_rect.bottom = dst_surface->currentDesc.Height - dst_rect.bottom;
+        }
 
         if (!device->blitter->blit_supported(gl_info, BLIT_OP_BLIT,
                 &src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format,
