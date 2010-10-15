@@ -2,6 +2,7 @@
  * WineBoot Norwegian Bokmål resources
  *
  * Copyright (C) 2007-2010 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright (C) 2010 Trygve Vea <trygve.vea@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -44,6 +45,6 @@ CAPTION "Wine"
 FONT 8, "MS Shell Dlg"
 BEGIN
     ICON "", IDC_WAITICON, 3, 3, 10, 10
-    LTEXT "Vent mes Wine-oppsettet i «%s» blir oppdatert...",
+    LTEXT "Vent mens Wine-oppsettet i «%s» blir oppdatert...",
           IDC_WAITTEXT, 40, 5, 150, 40, SS_NOPREFIX
 END
