@@ -35,7 +35,8 @@ static void test_GetRandomRgn(void)
     ok( hwnd != 0, "CreateWindow failed\n" );
 
     SetRect(&window_rc, 400, 300, 500, 400);
-    MoveWindow(hwnd, window_rc.left, window_rc.top, window_rc.right - window_rc.left, window_rc.bottom - window_rc.top, FALSE);
+    SetWindowPos(hwnd, HWND_TOPMOST, window_rc.left, window_rc.top,
+                 window_rc.right - window_rc.left, window_rc.bottom - window_rc.top, 0 );
     hdc = GetDC(hwnd);
 
     ret = GetRandomRgn(hdc, hrgn, 1);
