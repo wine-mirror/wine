@@ -1,5 +1,6 @@
 /*
  * Copyright 2005 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2010 Trygve Vea <trygve.vea@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -33,7 +34,7 @@ FONT 8, "MS Shell Dlg"
 	WS_TABSTOP, 20, 90, 60, 10
  CONTROL "&Liggende", IDD_ORIENT_LANDSCAPE, "Button", BS_AUTORADIOBUTTON,
 	 20, 110, 60, 10
- LTEXT "Retninger:", IDD_DUPLEX_NAME, 10, 140, 100, 8 
+ LTEXT "Retning:", IDD_DUPLEX_NAME, 10, 140, 100, 8
  COMBOBOX IDD_DUPLEX, 10, 151, 200, 20, CBS_DROPDOWNLIST | CBS_HASSTRINGS |
         WS_TABSTOP
 }
