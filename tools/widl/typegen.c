@@ -879,6 +879,35 @@ static unsigned int write_procformatstring_type(FILE *file, int indent,
     return size;
 }
 
+static void write_procformatstring_func( FILE *file, int indent,
+                                         const var_t *func, unsigned int *offset )
+{
+    /* emit argument data */
+    if (type_get_function_args(func->type))
+    {
+        const var_t *var;
+        LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
+        {
+            print_file( file, 0, "/* %u (parameter %s) */\n", *offset, var->name );
+            *offset += write_procformatstring_type(file, indent, var->type, var->attrs, FALSE);
+        }
+    }
+
+    /* emit return value data */
+    if (is_void(type_function_get_rettype(func->type)))
+    {
+        print_file(file, 0, "/* %u (void) */\n", *offset);
+        print_file(file, indent, "0x5b,    /* FC_END */\n");
+        print_file(file, indent, "0x5c,    /* FC_PAD */\n");
+        *offset += 2;
+    }
+    else
+    {
+        print_file( file, 0, "/* %u (return value) */\n", *offset );
+        *offset += write_procformatstring_type(file, indent, type_function_get_rettype(func->type), NULL, TRUE);
+    }
+}
+
 static void write_procformatstring_stmts(FILE *file, int indent, const statement_list_t *stmts,
                                          type_pred_t pred, unsigned int *offset)
 {
@@ -894,30 +923,7 @@ static void write_procformatstring_stmts(FILE *file, int indent, const statement
             {
                 const var_t *func = stmt_func->u.var;
                 if (is_local(func->attrs)) continue;
-                /* emit argument data */
-                if (type_get_function_args(func->type))
-                {
-                    const var_t *var;
-                    LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
-                    {
-                        print_file( file, 0, "/* %u (parameter %s) */\n", *offset, var->name );
-                        *offset += write_procformatstring_type(file, indent, var->type, var->attrs, FALSE);
-                    }
-                }
-
-                /* emit return value data */
-                if (is_void(type_function_get_rettype(func->type)))
-                {
-                    print_file( file, 0, "/* %u (void) */\n", *offset );
-                    print_file(file, indent, "0x5b,    /* FC_END */\n");
-                    print_file(file, indent, "0x5c,    /* FC_PAD */\n");
-                    *offset += 2;
-                }
-                else
-                {
-                    print_file( file, 0, "/* %u (return value) */\n", *offset );
-                    *offset += write_procformatstring_type(file, indent, type_function_get_rettype(func->type), NULL, TRUE);
-                }
+                write_procformatstring_func( file, indent, func, offset );
             }
         }
         else if (stmt->type == STMT_LIBRARY)
@@ -3867,29 +3873,11 @@ void write_remoting_arguments(FILE *file, int indent, const var_t *func, const c
 }
 
 
-static unsigned int get_size_procformatstring_type(const type_t *type, const attr_list_t *attrs)
-{
-    return write_procformatstring_type(NULL, 0, type, attrs, FALSE);
-}
-
-
 unsigned int get_size_procformatstring_func(const var_t *func)
 {
-    const var_t *var;
-    unsigned int size = 0;
-
-    /* argument list size */
-    if (type_get_function_args(func->type))
-        LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
-            size += get_size_procformatstring_type(var->type, var->attrs);
-
-    /* return value size */
-    if (is_void(type_function_get_rettype(func->type)))
-        size += 2; /* FC_END and FC_PAD */
-    else
-        size += get_size_procformatstring_type(type_function_get_rettype(func->type), NULL);
-
-    return size;
+    unsigned int offset = 0;
+    write_procformatstring_func( NULL, 0, func, &offset );
+    return offset;
 }
 
 unsigned int get_size_procformatstring(const statement_list_t *stmts, type_pred_t pred)
