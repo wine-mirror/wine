@@ -310,11 +310,14 @@ static void test_InitPathA(CHAR *newdir, CHAR *curDrive, CHAR *otherDrive)
 {
   CHAR tmppath[MAX_PATH], /*path to TEMP */
        tmpstr[MAX_PATH],
-       tmpstr1[MAX_PATH];
+       tmpstr1[MAX_PATH],
+       invalid_dir[MAX_PATH];
+
   DWORD len,len1,drives;
   INT id;
   HANDLE hndl;
   BOOL bRes;
+  UINT unique;
 
   *curDrive = *otherDrive = NOT_A_VALID_DRIVE;
 
@@ -334,11 +337,7 @@ static void test_InitPathA(CHAR *newdir, CHAR *curDrive, CHAR *otherDrive)
   ok(len1==len+1 || broken(len1 == len), /* WinME */
      "GetTempPathA should return string length %d instead of %d\n",len+1,len1);
 
-/* Test GetTmpFileNameA
-   The only test we do here is whether GetTempFileNameA passes or not.
-   We do not thoroughly test this function yet (specifically, whether
-   it behaves correctly when 'unique' is non zero)
-*/
+/* Test GetTmpFileNameA */
   ok((id=GetTempFileNameA(tmppath,"path",0,newdir)),"GetTempFileNameA failed\n");
   sprintf(tmpstr,"pat%.4x.tmp",id & 0xffff);
   sprintf(tmpstr1,"pat%x.tmp",id & 0xffff);
@@ -359,6 +358,24 @@ static void test_InitPathA(CHAR *newdir, CHAR *curDrive, CHAR *otherDrive)
        "GetTempFileNameA returned '%s' which doesn't match '%s' or '%s'. id=%x\n",
        newdir,tmpstr,tmpstr1,id);
     ok(DeleteFileA(newdir),"Couldn't delete the temporary file we just created\n");
+  }
+
+  for(unique=0;unique<3;unique++) {
+    /* Non-existent path */
+    sprintf(invalid_dir, "%s\%s",tmppath,"non_existent_dir_1jwj3y32nb3");
+    SetLastError(0xdeadbeef);
+    todo_wine
+    ok(!GetTempFileNameA(invalid_dir,"tfn",unique,newdir),"GetTempFileNameA should have failed\n");
+    todo_wine
+    ok(GetLastError()==ERROR_DIRECTORY || broken(GetLastError()==ERROR_PATH_NOT_FOUND)/*win98*/,
+    "got %d, expected ERROR_DIRECTORY\n", GetLastError());
+
+    /* Check return value for unique !=0 */
+    if(unique) {
+      ok((GetTempFileNameA(tmppath,"tfn",unique,newdir) == unique),"GetTempFileNameA unexpectedly failed\n");
+      /* if unique != 0, the actual temp files are not created: */
+      ok(!DeleteFileA(newdir) && GetLastError() == ERROR_FILE_NOT_FOUND,"Deleted a file that shouldn't exist!\n");
+    }
   }
 
 /* Find first valid drive letter that is neither newdir[0] nor curDrive */
