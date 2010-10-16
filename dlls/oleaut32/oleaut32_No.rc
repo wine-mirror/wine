@@ -20,6 +20,8 @@
 
 #include "resource.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
 STRINGTABLE
@@ -28,6 +30,6 @@ STRINGTABLE
   IDS_FALSE "Usann"
   IDS_YES   "Ja"
   IDS_NO    "Nei"
-  IDS_ON    "PÕ"
+  IDS_ON    "PÃ¥"
   IDS_OFF   "Av"
 }
