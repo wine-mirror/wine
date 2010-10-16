@@ -6256,6 +6256,28 @@ todo_wine
     ok( found != NULL, "found is NULL, expected a valid hwnd\n" );
 }
 
+static void test_GetLastActivePopup(void)
+{
+    HWND hwndOwner, hwndPopup1, hwndPopup2;
+
+    hwndOwner = CreateWindowExA(0, "MainWindowClass", NULL,
+                                WS_VISIBLE | WS_POPUPWINDOW,
+                                100, 100, 200, 200,
+                                NULL, 0, GetModuleHandle(0), NULL);
+    hwndPopup1 = CreateWindowExA(0, "MainWindowClass", NULL,
+                                 WS_VISIBLE | WS_POPUPWINDOW,
+                                 100, 100, 200, 200,
+                                 hwndOwner, 0, GetModuleHandle(0), NULL);
+    hwndPopup2 = CreateWindowExA(0, "MainWindowClass", NULL,
+                                 WS_VISIBLE | WS_POPUPWINDOW,
+                                 100, 100, 200, 200,
+                                 hwndPopup1, 0, GetModuleHandle(0), NULL);
+    ok( GetLastActivePopup(hwndOwner) == hwndPopup2, "wrong last active popup\n" );
+    DestroyWindow( hwndPopup2 );
+    DestroyWindow( hwndPopup1 );
+    DestroyWindow( hwndOwner );
+}
+
 START_TEST(win)
 {
     HMODULE user32 = GetModuleHandleA( "user32.dll" );
@@ -6329,6 +6351,7 @@ START_TEST(win)
     test_children_zorder(hwndMain);
     test_popup_zorder(hwndMain2, hwndMain, WS_POPUP);
     test_popup_zorder(hwndMain2, hwndMain, 0);
+    test_GetLastActivePopup();
     test_keyboard_input(hwndMain);
     test_mouse_input(hwndMain);
     test_validatergn(hwndMain);
