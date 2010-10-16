@@ -418,6 +418,7 @@ BEGIN
 END
 
 IDD_EXPORT_FORMAT DIALOG 0,0,317,143
+CAPTION "証明書エクスポート ウィザード"
 FONT 8, "MS Shell Dlg"
 BEGIN
   LTEXT "形式を選択してください:", -1, 21,1,195,10
