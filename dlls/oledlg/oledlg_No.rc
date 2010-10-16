@@ -1,5 +1,6 @@
 /*
- * Copyright 2005-2008 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2005-2008 Alexander N. SÃ¸rnes <alex@thehandofagony.com>
+ * Copyright 2010 Trygve Vea <trygve.vea@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,6 +19,8 @@
 
 #include "resource.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
 UIINSERTOBJECT DIALOG  0, 0, 294, 151
@@ -28,7 +31,7 @@ BEGIN
     LISTBOX         IDC_OBJTYPELIST,82,19,131,66,LBS_SORT |
                     LBS_NOINTEGRALHEIGHT | WS_VISIBLE | WS_VSCROLL |
                     WS_TABSTOP
-    LTEXT           "Objekttypee:",IDC_OBJTYPELBL,82,7,53,8,WS_VISIBLE
+    LTEXT           "Objekttype:",IDC_OBJTYPELBL,82,7,53,8,WS_VISIBLE
     DEFPUSHBUTTON   "OK",IDOK,221,7,66,14
     PUSHBUTTON      "Avbryt",IDCANCEL,221,24,66,14
     GROUPBOX        "Resultat",IDC_RESULT,7,103,208,41
@@ -50,9 +53,9 @@ END
 STRINGTABLE
 {
   IDS_RESULTOBJDESC	"Sett inn et nytt %s-objekt i dokumentet"
-  IDS_RESULTFILEOBJDESC	"Sett filens innhold inn som et objekt i dokumentet, sånn at du kan aktivere det ved hjelp av programmet som laget den."
-  IDS_BROWSE            "Bla"
-  IDS_NOTOLEMOD         "Filen ser ikke ut til å være en gyldig OLE-modul. Kunne ikke registrere OLE-kontroller."
+  IDS_RESULTFILEOBJDESC	"Sett filens innhold inn som et objekt i dokumentet, slik at du kan aktivere det ved hjelp av programmet som laget den."
+  IDS_BROWSE            "Bla gjennom"
+  IDS_NOTOLEMOD         "Filen ser ikke ut til Ã¥ vÃ¦re en gyldig OLE-modul.  Kunne ikke registrere OLE-kontroller."
   IDS_NOTOLEMODCAPTION  "Legg til kontroller"
 }
 
@@ -85,11 +88,11 @@ END
 STRINGTABLE
 {
     IDS_PS_PASTE_DATA                     "Setter innholdet fra utklippstavlen inn i dokumentet som %s."
-    IDS_PS_PASTE_OBJECT                   "Setter innholdet fra utklippstavlen inn i dokumentet så du kan aktivere det med %s."
-    IDS_PS_PASTE_OBJECT_AS_ICON           "Setter innholdet fra utklippstavlen inn i dokumentet så du kan aktivere det med  %s.  Det vises som et ikon."
-    IDS_PS_PASTE_LINK_DATA                "Setter innholdet fra utklippstavlen inn i dokumentet som %s. Det kobles til kildefilen så endrer i denne også skjer i dokumentet."
-    IDS_PS_PASTE_LINK_OBJECT              "Setter inn et bilde av utklippstavleinnholdet i dokumentet. Bildet kobles til kildefilen så endringer i denne også skjer i dokumentet ."
-    IDS_PS_PASTE_LINK_OBJECT_AS_ICON      "Setter inn en snarvei som peker til plasseringen av innholdet på utklippstavlen. Snarveien kobles til kildefilen så endringer i denne også skjer i dokumentet."
+    IDS_PS_PASTE_OBJECT                   "Setter innholdet fra utklippstavlen inn i dokumentet sÃ¥ du kan aktivere det med %s."
+    IDS_PS_PASTE_OBJECT_AS_ICON           "Setter innholdet fra utklippstavlen inn i dokumentet sÃ¥ du kan aktivere det med %s.  Det vises som et ikon."
+    IDS_PS_PASTE_LINK_DATA                "Setter innholdet fra utklippstavlen inn i dokumentet som %s.  Det kobles til kildefilen sÃ¥ endringer i denne ogsÃ¥ skjer i dokumentet."
+    IDS_PS_PASTE_LINK_OBJECT              "Setter inn et bilde av utklippstavleinnholdet i dokumentet.  Bildet kobles til kildefilen sÃ¥ endringer i denne ogsÃ¥ skjer i dokumentet."
+    IDS_PS_PASTE_LINK_OBJECT_AS_ICON      "Setter inn en snarvei som peker til plasseringen av innholdet pÃ¥ utklippstavlen.  Snarveien kobles til kildefilen sÃ¥ endringer i denne ogsÃ¥ skjer i dokumentet."
     IDS_PS_NON_OLE                        "Setter innholdet fra utklippstavlen inn i dokumentet."
     IDS_PS_UNKNOWN_TYPE                   "Ukjent type"
     IDS_PS_UNKNOWN_SRC                    "Ukjent kilde"
