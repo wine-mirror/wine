@@ -12,6 +12,7 @@ RC_SRCS = \
 	msrle_En.rc \
 	msrle_Es.rc \
 	msrle_Fr.rc \
+	msrle_He.rc \
 	msrle_Hu.rc \
 	msrle_It.rc \
 	msrle_Ja.rc \
