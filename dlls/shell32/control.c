@@ -817,7 +817,7 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCWSTR wszCmd)
         }
 
         if (applet->info[sp].dwSize) {
-            if (!applet->proc(applet->hWnd, CPL_STARTWPARMSA, sp, (LPARAM)extraPmts))
+            if (!applet->proc(applet->hWnd, CPL_STARTWPARMSW, sp, (LPARAM)extraPmts))
                 applet->proc(applet->hWnd, CPL_DBLCLK, sp, applet->info[sp].lData);
         }
 
