@@ -338,16 +338,6 @@ const char *debug_print_srcreg(const struct shader_reg *reg);
 const char *debug_print_comp(DWORD comp);
 const char *debug_print_opcode(DWORD opcode);
 
-/* Utilities for internal->d3d constant mapping */
-DWORD d3d9_swizzle(DWORD bwriter_swizzle);
-DWORD d3d9_writemask(DWORD bwriter_writemask);
-DWORD d3d9_srcmod(DWORD bwriter_srcmod);
-DWORD d3d9_dstmod(DWORD bwriter_mod);
-DWORD d3d9_comparetype(DWORD bwriter_comparetype);
-DWORD d3d9_sampler(DWORD bwriter_sampler);
-DWORD d3d9_register(DWORD bwriter_register);
-DWORD d3d9_opcode(DWORD bwriter_opcode);
-
 /* Used to signal an incorrect swizzle/writemask */
 #define SWIZZLE_ERR ~0U
 
