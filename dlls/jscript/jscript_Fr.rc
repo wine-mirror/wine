@@ -29,6 +29,7 @@ STRINGTABLE
 {
     IDS_TO_PRIMITIVE        "Erreur lors de la conversion de l'objet vers un type primitif"
     IDS_INVALID_CALL_ARG    "Appel de procédure ou argument invalide"
+    IDS_SUBSCRIPT_OUT_OF_RANGE "Indice hors limites"
     IDS_CREATE_OBJ_ERROR    "Le serveur d'automatisation ne peut créer l'objet"
     IDS_NO_PROPERTY         "Cet objet ne supporte pas cette propriété ou méthode"
     IDS_UNSUPPORTED_ACTION  "Cet objet ne supporte pas cette action"
@@ -45,6 +46,7 @@ STRINGTABLE
     IDS_ILLEGAL_ASSIGN      "Affectation illégale"
     IDS_UNDEFINED           "« | » n'est pas défini"
     IDS_NOT_BOOL            "Objet booléen attendu"
+    IDS_NOT_VBARRAY         "Objet VBArray attendu"
     IDS_JSCRIPT_EXPECTED    "Objet JScript attendu"
     IDS_REGEXP_SYNTAX_ERROR "Erreur de syntaxe dans l'expression rationnelle"
     IDS_URI_INVALID_CHAR    "L'URI à coder contient des caractères invalides"
