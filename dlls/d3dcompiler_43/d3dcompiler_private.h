@@ -39,7 +39,7 @@
 #define D3DERR_INVALIDCALL 0x8876086c
 
 /* TRACE helper functions */
-const char *debug_d3dcompiler_d3d_blob_part(D3D_BLOB_PART part);
+const char *debug_d3dcompiler_d3d_blob_part(D3D_BLOB_PART part) DECLSPEC_HIDDEN;
 
 /* ID3DBlob */
 struct d3dcompiler_blob
@@ -211,16 +211,14 @@ struct asmparser_backend {
                   const struct src_regs *srcs, int expectednsrcs);
 };
 
-struct instruction *alloc_instr(unsigned int srcs);
-BOOL add_instruction(struct bwriter_shader *shader, struct instruction *instr);
-BOOL add_constF(struct bwriter_shader *shader, DWORD reg, float x, float y, float z, float w);
-BOOL add_constI(struct bwriter_shader *shader, DWORD reg, INT x, INT y, INT z, INT w);
-BOOL add_constB(struct bwriter_shader *shader, DWORD reg, BOOL x);
-BOOL record_declaration(struct bwriter_shader *shader, DWORD usage,
-                        DWORD usage_idx, DWORD mod, BOOL output,
-                        DWORD regnum, DWORD writemask, BOOL builtin);
-BOOL record_sampler(struct bwriter_shader *shader, DWORD samptype,
-                    DWORD mod, DWORD regnum);
+struct instruction *alloc_instr(unsigned int srcs) DECLSPEC_HIDDEN;
+BOOL add_instruction(struct bwriter_shader *shader, struct instruction *instr) DECLSPEC_HIDDEN;
+BOOL add_constF(struct bwriter_shader *shader, DWORD reg, float x, float y, float z, float w) DECLSPEC_HIDDEN;
+BOOL add_constI(struct bwriter_shader *shader, DWORD reg, INT x, INT y, INT z, INT w) DECLSPEC_HIDDEN;
+BOOL add_constB(struct bwriter_shader *shader, DWORD reg, BOOL x) DECLSPEC_HIDDEN;
+BOOL record_declaration(struct bwriter_shader *shader, DWORD usage, DWORD usage_idx,
+        DWORD mod, BOOL output, DWORD regnum, DWORD writemask, BOOL builtin) DECLSPEC_HIDDEN;
+BOOL record_sampler(struct bwriter_shader *shader, DWORD samptype, DWORD mod, DWORD regnum) DECLSPEC_HIDDEN;
 
 #define MESSAGEBUFFER_INITIAL_SIZE 256
 
@@ -243,23 +241,23 @@ struct asm_parser {
     unsigned int line_no;
 };
 
-extern struct asm_parser asm_ctx;
+extern struct asm_parser asm_ctx DECLSPEC_HIDDEN;
 
-void create_vs10_parser(struct asm_parser *ret);
-void create_vs11_parser(struct asm_parser *ret);
-void create_vs20_parser(struct asm_parser *ret);
-void create_vs2x_parser(struct asm_parser *ret);
-void create_vs30_parser(struct asm_parser *ret);
-void create_ps10_parser(struct asm_parser *ret);
-void create_ps11_parser(struct asm_parser *ret);
-void create_ps12_parser(struct asm_parser *ret);
-void create_ps13_parser(struct asm_parser *ret);
-void create_ps14_parser(struct asm_parser *ret);
-void create_ps20_parser(struct asm_parser *ret);
-void create_ps2x_parser(struct asm_parser *ret);
-void create_ps30_parser(struct asm_parser *ret);
+void create_vs10_parser(struct asm_parser *ret) DECLSPEC_HIDDEN;
+void create_vs11_parser(struct asm_parser *ret) DECLSPEC_HIDDEN;
+void create_vs20_parser(struct asm_parser *ret) DECLSPEC_HIDDEN;
+void create_vs2x_parser(struct asm_parser *ret) DECLSPEC_HIDDEN;
+void create_vs30_parser(struct asm_parser *ret) DECLSPEC_HIDDEN;
+void create_ps10_parser(struct asm_parser *ret) DECLSPEC_HIDDEN;
+void create_ps11_parser(struct asm_parser *ret) DECLSPEC_HIDDEN;
+void create_ps12_parser(struct asm_parser *ret) DECLSPEC_HIDDEN;
+void create_ps13_parser(struct asm_parser *ret) DECLSPEC_HIDDEN;
+void create_ps14_parser(struct asm_parser *ret) DECLSPEC_HIDDEN;
+void create_ps20_parser(struct asm_parser *ret) DECLSPEC_HIDDEN;
+void create_ps2x_parser(struct asm_parser *ret) DECLSPEC_HIDDEN;
+void create_ps30_parser(struct asm_parser *ret) DECLSPEC_HIDDEN;
 
-struct bwriter_shader *parse_asm_shader(char **messages);
+struct bwriter_shader *parse_asm_shader(char **messages) DECLSPEC_HIDDEN;
 
 #ifdef __GNUC__
 #define PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
@@ -267,8 +265,8 @@ struct bwriter_shader *parse_asm_shader(char **messages);
 #define PRINTF_ATTR(fmt,args)
 #endif
 
-void asmparser_message(struct asm_parser *ctx, const char *fmt, ...) PRINTF_ATTR(2,3);
-void set_parse_status(struct asm_parser *ctx, enum parse_status status);
+void asmparser_message(struct asm_parser *ctx, const char *fmt, ...) PRINTF_ATTR(2,3) DECLSPEC_HIDDEN;
+void set_parse_status(struct asm_parser *ctx, enum parse_status status) DECLSPEC_HIDDEN;
 
 /* A reasonable value as initial size */
 #define BYTECODEBUFFER_INITIAL_SIZE 32
@@ -330,13 +328,13 @@ struct bc_writer {
 };
 
 /* Debug utility routines */
-const char *debug_print_srcmod(DWORD mod);
-const char *debug_print_dstmod(DWORD mod);
-const char *debug_print_shift(DWORD shift);
-const char *debug_print_dstreg(const struct shader_reg *reg);
-const char *debug_print_srcreg(const struct shader_reg *reg);
-const char *debug_print_comp(DWORD comp);
-const char *debug_print_opcode(DWORD opcode);
+const char *debug_print_srcmod(DWORD mod) DECLSPEC_HIDDEN;
+const char *debug_print_dstmod(DWORD mod) DECLSPEC_HIDDEN;
+const char *debug_print_shift(DWORD shift) DECLSPEC_HIDDEN;
+const char *debug_print_dstreg(const struct shader_reg *reg) DECLSPEC_HIDDEN;
+const char *debug_print_srcreg(const struct shader_reg *reg) DECLSPEC_HIDDEN;
+const char *debug_print_comp(DWORD comp) DECLSPEC_HIDDEN;
+const char *debug_print_opcode(DWORD opcode) DECLSPEC_HIDDEN;
 
 /* Used to signal an incorrect swizzle/writemask */
 #define SWIZZLE_ERR ~0U
@@ -564,9 +562,9 @@ typedef enum _BWRITERDECLUSAGE {
 #define T2_REG          4
 #define T3_REG          5
 
-struct bwriter_shader *SlAssembleShader(const char *text, char **messages);
-DWORD SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWORD **result);
-void SlDeleteShader(struct bwriter_shader *shader);
+struct bwriter_shader *SlAssembleShader(const char *text, char **messages) DECLSPEC_HIDDEN;
+DWORD SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWORD **result) DECLSPEC_HIDDEN;
+void SlDeleteShader(struct bwriter_shader *shader) DECLSPEC_HIDDEN;
 
 #define MAKE_TAG(ch0, ch1, ch2, ch3) \
     ((DWORD)(ch0) | ((DWORD)(ch1) << 8) | \
