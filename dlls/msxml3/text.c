@@ -402,7 +402,8 @@ static HRESULT WINAPI domtext_put_text(
     BSTR p)
 {
     domtext *This = impl_from_IXMLDOMText( iface );
-    return IXMLDOMNode_put_text( IXMLDOMNode_from_impl(&This->node), p );
+    TRACE("(%p)->(%s)\n", This, debugstr_w(p));
+    return node_put_text( &This->node, p );
 }
 
 static HRESULT WINAPI domtext_get_specified(

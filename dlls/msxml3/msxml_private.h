@@ -171,6 +171,7 @@ extern HRESULT node_get_previous_sibling(xmlnode*,IXMLDOMNode**);
 extern HRESULT node_get_next_sibling(xmlnode*,IXMLDOMNode**);
 extern HRESULT node_insert_before(xmlnode*,IXMLDOMNode*,const VARIANT*,IXMLDOMNode**);
 extern HRESULT node_replace_child(xmlnode*,IXMLDOMNode*,IXMLDOMNode*,IXMLDOMNode**);
+extern HRESULT node_put_text(xmlnode*,BSTR);
 
 extern HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document);
 

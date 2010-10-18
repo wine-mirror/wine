@@ -745,22 +745,11 @@ static HRESULT WINAPI xmlnode_get_text(
     return S_OK;
 }
 
-static HRESULT WINAPI xmlnode_put_text(
-    IXMLDOMNode *iface,
-    BSTR text)
+HRESULT node_put_text(xmlnode *This, BSTR text)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
     xmlChar *str, *str2;
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(text));
-
-    switch(This->node->type)
-    {
-    case XML_DOCUMENT_NODE:
-        return E_FAIL;
-    default:
-        break;
-    }
 
     str = xmlChar_from_wchar(text);
 
@@ -772,6 +761,14 @@ static HRESULT WINAPI xmlnode_put_text(
     xmlFree(str2);
 
     return S_OK;
+}
+
+static HRESULT WINAPI xmlnode_put_text(
+    IXMLDOMNode *iface,
+    BSTR text)
+{
+    ERR("Should not be called\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI xmlnode_get_specified(

@@ -1113,7 +1113,8 @@ static HRESULT WINAPI domdoc_put_text(
     BSTR text )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_put_text( IXMLDOMNode_from_impl(&This->node), text );
+    TRACE("(%p)->(%s)\n", This, debugstr_w(text));
+    return E_FAIL;
 }
 
 
