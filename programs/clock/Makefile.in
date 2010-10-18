@@ -34,6 +34,7 @@ RC_SRCS = \
 	Ru.rc \
 	Si.rc \
 	Sk.rc \
+	Sr.rc \
 	Sv.rc \
 	Th.rc \
 	Tr.rc \
