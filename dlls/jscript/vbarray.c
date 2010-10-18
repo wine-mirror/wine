@@ -134,8 +134,49 @@ static HRESULT VBArray_lbound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DIS
 static HRESULT VBArray_toArray(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VBArrayInstance *vbarray;
+    jsdisp_t *array;
+    VARIANT *v;
+    int i, size = 1, ubound, lbound;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    vbarray = vbarray_this(vthis);
+    if(!vbarray)
+        return throw_type_error(ctx, ei, IDS_NOT_VBARRAY, NULL);
+
+    for(i=1; i<=SafeArrayGetDim(vbarray->safearray); i++) {
+        SafeArrayGetLBound(vbarray->safearray, i, &lbound);
+        SafeArrayGetUBound(vbarray->safearray, i, &ubound);
+        size *= ubound-lbound+1;
+    }
+
+    hres = SafeArrayAccessData(vbarray->safearray, (void**)&v);
+    if(FAILED(hres))
+        return hres;
+
+    hres = create_array(ctx, 0, &array);
+    if(FAILED(hres)) {
+        SafeArrayUnaccessData(vbarray->safearray);
+        return hres;
+    }
+
+    for(i=0; i<size; i++) {
+        hres = jsdisp_propput_idx(array, i, v, ei, caller);
+        if(FAILED(hres)) {
+            SafeArrayUnaccessData(vbarray->safearray);
+            jsdisp_release(array);
+            return hres;
+        }
+        v++;
+    }
+
+    SafeArrayUnaccessData(vbarray->safearray);
+
+    if(retv)
+        var_set_jsdisp(retv, array);
+    return S_OK;
 }
 
 static HRESULT VBArray_ubound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
