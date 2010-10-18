@@ -83,6 +83,7 @@ DEFINE_EXPECT(ActiveScriptSite_OnScriptError);
 #define DISPID_GLOBAL_TESTTHIS      0x1009
 #define DISPID_GLOBAL_TESTTHIS2     0x100a
 #define DISPID_GLOBAL_INVOKEVERSION 0x100b
+#define DISPID_TEST_CREATEARRAY     0x100c
 
 #define DISPID_TESTOBJ_PROP         0x2000
 
@@ -356,6 +357,11 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         *pid = DISPID_GLOBAL_INVOKEVERSION;
         return S_OK;
     }
+    if(!strcmp_wa(bstrName, "createArray")) {
+        test_grfdex(grfdex, fdexNameCaseSensitive);
+        *pid = DISPID_TEST_CREATEARRAY;
+        return S_OK;
+    }
 
     if(strict_dispid_check)
         ok(0, "unexpected call %s\n", wine_dbgstr_w(bstrName));
@@ -570,6 +576,41 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
 
         return S_OK;
 
+    case DISPID_TEST_CREATEARRAY: {
+        SAFEARRAYBOUND bound[2];
+        VARIANT *data;
+        int i,j;
+
+        ok(wFlags == INVOKE_FUNC, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        todo_wine ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) ==  VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
+
+        bound[0].lLbound = 0;
+        bound[0].cElements = 5;
+        bound[1].lLbound = 2;
+        bound[1].cElements = 2;
+
+        V_VT(pvarRes) = VT_ARRAY|VT_VARIANT;
+        V_ARRAY(pvarRes) = SafeArrayCreate(VT_VARIANT, 2, bound);
+
+        SafeArrayAccessData(V_ARRAY(pvarRes), (void**)&data);
+        for(i=0; i<5; i++) {
+            for(j=2; j<4; j++) {
+                V_VT(data) = VT_I4;
+                V_I4(data) = i*10+j;
+                data++;
+            }
+        }
+        SafeArrayUnaccessData(V_ARRAY(pvarRes));
+
+        return S_OK;
+    }
     }
 
     ok(0, "unexpected call %x\n", id);

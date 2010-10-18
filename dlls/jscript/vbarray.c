@@ -34,6 +34,16 @@ static const WCHAR lboundW[] = {'l','b','o','u','n','d',0};
 static const WCHAR toArrayW[] = {'t','o','A','r','r','a','y',0};
 static const WCHAR uboundW[] = {'u','b','o','u','n','d',0};
 
+static inline VBArrayInstance *vbarray_from_vdisp(vdisp_t *vdisp)
+{
+    return (VBArrayInstance*)vdisp->u.jsdisp;
+}
+
+static inline VBArrayInstance *vbarray_this(vdisp_t *jsthis)
+{
+    return is_vclass(jsthis, JSCLASS_VBARRAY) ? vbarray_from_vdisp(jsthis) : NULL;
+}
+
 static HRESULT VBArray_dimensions(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -85,7 +95,10 @@ static HRESULT VBArray_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
 
 static void VBArray_destructor(jsdisp_t *dispex)
 {
-    heap_free(dispex);
+    VBArrayInstance *vbarray = (VBArrayInstance*)dispex;
+
+    SafeArrayDestroy(vbarray->safearray);
+    heap_free(vbarray);
 }
 
 static const builtin_prop_t VBArray_props[] = {
@@ -131,9 +144,32 @@ static HRESULT alloc_vbarray(script_ctx_t *ctx, jsdisp_t *object_prototype, VBAr
 static HRESULT VBArrayConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
+    VARIANT *arg;
+    VBArrayInstance *vbarray;
+    HRESULT hres;
+
+    TRACE("\n");
 
     switch(flags) {
+    case DISPATCH_METHOD:
+        if(arg_cnt(dp)<1 || V_VT((arg = get_arg(dp, 0)))!=(VT_ARRAY|VT_VARIANT))
+            return throw_type_error(ctx, ei, IDS_NOT_VBARRAY, NULL);
+
+        VariantCopy(retv, arg);
+        break;
+
+    case DISPATCH_CONSTRUCT:
+        if(arg_cnt(dp)<1 || V_VT((arg = get_arg(dp, 0)))!=(VT_ARRAY|VT_VARIANT))
+            return throw_type_error(ctx, ei, IDS_NOT_VBARRAY, NULL);
+
+        hres = alloc_vbarray(ctx, NULL, &vbarray);
+        if(FAILED(hres))
+            return hres;
+        SafeArrayCopy(V_ARRAY(arg), &vbarray->safearray);
+
+        var_set_jsdisp(retv, &vbarray->dispex);
+        break;
+
     default:
         FIXME("unimplemented flags: %x\n", flags);
         return E_NOTIMPL;

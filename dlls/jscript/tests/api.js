@@ -149,6 +149,8 @@ tmp = Object.prototype.toString.call(this);
 ok(tmp === "[object Object]", "toString.call(this) = " + tmp);
 (function () { tmp = Object.prototype.toString.call(arguments); })();
 ok(tmp === "[object Object]", "toString.call(arguments) = " + tmp);
+(tmp = new VBArray(createArray())).f = Object.prototype.toString;
+ok(tmp.f() === "[object Object]", "tmp.f() = " + tmp.f());
 
 ok(Object(1) instanceof Number, "Object(1) is not instance of Number");
 ok(Object("") instanceof String, "Object('') is not instance of String");
@@ -1897,6 +1899,8 @@ exception_test(function() {"test" in nullDisp;}, "TypeError", -2146823281);
 exception_test(function() {new 3;}, "TypeError", -2146827843);
 exception_test(function() {new null;}, "TypeError", -2146823281);
 exception_test(function() {new nullDisp;}, "TypeError", -2146827850);
+exception_test(function() {new VBArray();}, "TypeError", -2146823275);
+exception_test(function() {new VBArray(new VBArray(createArray()));}, "TypeError", -2146823275);
 
 function testThisExcept(func, number) {
     exception_test(function() {func.call(new Object())}, "TypeError", number);
@@ -2243,5 +2247,8 @@ ok(unescape.length == 1, "unescape.length = " + unescape.length);
 
 String.length = 3;
 ok(String.length == 1, "String.length = " + String.length);
+
+var tmp = new VBArray(createArray());
+tmp = new VBArray(VBArray(createArray()));
 
 reportSuccess();
