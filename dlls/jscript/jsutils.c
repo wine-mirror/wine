@@ -633,6 +633,13 @@ HRESULT to_object(script_ctx_t *ctx, VARIANT *v, IDispatch **disp)
 
         *disp = to_disp(dispex);
         break;
+    case VT_ARRAY|VT_VARIANT:
+        hres = create_vbarray(ctx, V_ARRAY(v), &dispex);
+        if(FAILED(hres))
+            return hres;
+
+        *disp = to_disp(dispex);
+        break;
     default:
         FIXME("unsupported vt %d\n", V_VT(v));
         return E_NOTIMPL;

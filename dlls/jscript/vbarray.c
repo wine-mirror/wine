@@ -325,3 +325,18 @@ HRESULT create_vbarray_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsd
     jsdisp_release(&vbarray->dispex);
     return hres;
 }
+
+HRESULT create_vbarray(script_ctx_t *ctx, SAFEARRAY *sa, jsdisp_t **ret)
+{
+    VBArrayInstance *vbarray;
+    HRESULT hres;
+
+    hres = alloc_vbarray(ctx, NULL, &vbarray);
+    if(FAILED(hres))
+        return hres;
+
+    SafeArrayCopy(sa, &vbarray->safearray);
+
+    *ret = &vbarray->dispex;
+    return S_OK;
+}
