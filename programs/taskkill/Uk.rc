@@ -42,4 +42,5 @@ STRINGTABLE
     STRING_SEARCH_FAILED, "Помилка: Не вдалось знайти процес \"%s\".\n"
     STRING_ENUM_FAILED, "Помилка: Неможливо перелічити список процесів.\n"
     STRING_TERMINATE_FAILED, "Помилка: Не вдається завершити процес \"%s\".\n"
+    STRING_SELF_TERMINATION, "Помилка: Самоприпинення процесу не дозволене.\n"
 }
