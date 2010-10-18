@@ -1581,6 +1581,56 @@ INT CDECL MSVCRT_wcscat_s(MSVCRT_wchar_t* dst, MSVCRT_size_t elem, const MSVCRT_
 }
 
 /*********************************************************************
+ *  wcsncat_s (MSVCRT.@)
+ *
+ */
+INT CDECL MSVCRT_wcsncat_s(MSVCRT_wchar_t *dst, MSVCRT_size_t elem,
+        const MSVCRT_wchar_t *src, MSVCRT_size_t count)
+{
+    MSVCRT_size_t srclen;
+    MSVCRT_size_t i;
+    MSVCRT_wchar_t dststart;
+
+    if (src == NULL && count > 0)
+        return MSVCRT_EINVAL;
+    if (dst == NULL)
+        return MSVCRT_EINVAL;
+    if (elem == 0)
+        return MSVCRT_EINVAL;
+
+    for (i = 0; i < elem; i++)
+    {
+        dststart = i;
+        if (dst[i] == '\0')
+            break;
+    }
+    if (dststart == elem)
+        return MSVCRT_EINVAL;
+
+    if (count == MSVCRT__TRUNCATE)
+        srclen = elem - dststart - 1;
+    else
+        srclen = count;
+    for (i = 0; i < srclen; i++)
+    {
+        if (src[i] == '\0')
+        {
+            srclen = i;
+            break;
+        }
+    }
+
+    if (srclen < (elem - dststart))
+    {
+        memcpy(&dst[dststart], src, srclen*sizeof(MSVCRT_wchar_t));
+        dst[srclen] = '\0';
+        return 0;
+    }
+    dst[0] = '\0';
+    return MSVCRT_ERANGE;
+}
+
+/*********************************************************************
  *  _wcstoi64_l (MSVCRT.@)
  *
  * FIXME: locale parameter is ignored

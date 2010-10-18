@@ -52,6 +52,7 @@ static int (__cdecl *pstrcpy_s)(char *dst, size_t len, const char *src);
 static int (__cdecl *pstrcat_s)(char *dst, size_t len, const char *src);
 static int (__cdecl *p_mbsnbcpy_s)(unsigned char * dst, size_t size, const unsigned char * src, size_t count);
 static int (__cdecl *p_wcscpy_s)(wchar_t *wcDest, size_t size, const wchar_t *wcSrc);
+static int (__cdecl *p_wcsncat_s)(wchar_t *dst, size_t elem, const wchar_t *src, size_t count);
 static int (__cdecl *p_wcsupr_s)(wchar_t *str, size_t size);
 static size_t (__cdecl *p_strnlen)(const char *, size_t);
 static __int64 (__cdecl *p_strtoi64)(const char *, char **, int);
@@ -1428,6 +1429,40 @@ static void test__strlwr_s(void)
        buffer);
 }
 
+static void test_wcsncat_s(void)
+{
+    static wchar_t abcW[] = {'a','b','c',0};
+    int ret;
+    wchar_t dst[4];
+    wchar_t src[4];
+
+    if (!p_wcsncat_s)
+    {
+        win_skip("skipping wcsncat_s tests\n");
+        return;
+    }
+
+    memcpy(src, abcW, sizeof(abcW));
+    dst[0] = 0;
+    ret = p_wcsncat_s(NULL, 4, src, 4);
+    ok(ret == EINVAL, "err = %d\n", ret);
+    ret = p_wcsncat_s(dst, 0, src, 4);
+    ok(ret == EINVAL, "err = %d\n", ret);
+    ret = p_wcsncat_s(dst, 0, src, _TRUNCATE);
+    ok(ret == EINVAL, "err = %d\n", ret);
+    ret = p_wcsncat_s(dst, 4, NULL, 0);
+    ok(ret == 0, "err = %d\n", ret);
+
+    dst[0] = 0;
+    ret = p_wcsncat_s(dst, 2, src, 4);
+    ok(ret == ERANGE, "err = %d\n", ret);
+
+    dst[0] = 0;
+    ret = p_wcsncat_s(dst, 2, src, _TRUNCATE);
+    todo_wine ok(ret == 80, "err = %d\n", ret);
+    ok(dst[0] == 'a' && dst[1] == 0, "dst is %s\n", wine_dbgstr_w(dst));
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -1446,6 +1481,7 @@ START_TEST(string)
     pstrcat_s = (void *)GetProcAddress( hMsvcrt,"strcat_s" );
     p_mbsnbcpy_s = (void *)GetProcAddress( hMsvcrt,"_mbsnbcpy_s" );
     p_wcscpy_s = (void *)GetProcAddress( hMsvcrt,"wcscpy_s" );
+    p_wcsncat_s = (void *)GetProcAddress( hMsvcrt,"wcsncat_s" );
     p_wcsupr_s = (void *)GetProcAddress( hMsvcrt,"_wcsupr_s" );
     p_strnlen = (void *)GetProcAddress( hMsvcrt,"strnlen" );
     p_strtoi64 = (void *)GetProcAddress(hMsvcrt, "_strtoi64");
@@ -1491,4 +1527,5 @@ START_TEST(string)
     test_gcvt();
     test__itoa_s();
     test__strlwr_s();
+    test_wcsncat_s();
 }

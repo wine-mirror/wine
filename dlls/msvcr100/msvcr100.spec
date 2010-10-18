@@ -1640,7 +1640,7 @@
 @ cdecl wcsftime(ptr long wstr ptr) msvcrt.wcsftime
 @ cdecl wcslen(wstr) msvcrt.wcslen
 @ cdecl wcsncat(wstr wstr long) msvcrt.wcsncat
-@ stub wcsncat_s
+@ cdecl wcsncat_s(wstr long wstr long) msvcrt.wcsncat_s
 @ cdecl wcsncmp(wstr wstr long) msvcrt.wcsncmp
 @ cdecl wcsncpy(ptr wstr long) msvcrt.wcsncpy
 @ cdecl wcsncpy_s(ptr long wstr long) msvcrt.wcsncpy_s
