@@ -45,10 +45,12 @@ MAKE_FUNCPTR(XcursorLibraryLoadCursor);
 #define OEMRESOURCE
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 
 #include "x11drv.h"
 #include "wine/server.h"
 #include "wine/library.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cursor);
@@ -704,29 +706,67 @@ static const struct
  */
 static Cursor create_xcursor_system_cursor( const ICONINFOEXW *info )
 {
+    static const WCHAR idW[] = {'%','h','u',0};
     const struct system_cursors *cursors;
     unsigned int i;
     Cursor cursor = 0;
     HMODULE module;
+    HKEY key;
+    WCHAR *p, name[MAX_PATH * 2], valueW[64];
+    char valueA[64];
+    DWORD size, ret;
 
     if (!pXcursorLibraryLoadCursor) return 0;
-    if (info->szResName[0]) return 0;  /* only integer resources are supported here */
-    if (!(module = GetModuleHandleW( info->szModName ))) return 0;
+    if (!info->szModName[0]) return 0;
+
+    p = strrchrW( info->szModName, '\\' );
+    strcpyW( name, p ? p + 1 : info->szModName );
+    p = name + strlenW( name );
+    *p++ = ',';
+    if (info->szResName[0]) strcpyW( p, info->szResName );
+    else sprintfW( p, idW, info->wResID );
+    valueA[0] = 0;
+
+    /* @@ Wine registry key: HKCU\Software\Wine\X11 Driver\Cursors */
+    if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\X11 Driver\\Cursors", &key ))
+    {
+        size = sizeof(valueW) / sizeof(WCHAR);
+        ret = RegQueryValueExW( key, name, NULL, NULL, (BYTE *)valueW, &size );
+        RegCloseKey( key );
+        if (!ret)
+        {
+            if (!valueW[0]) return 0; /* force standard cursor */
+            if (!WideCharToMultiByte( CP_UNIXCP, 0, valueW, -1, valueA, sizeof(valueA), NULL, NULL ))
+                valueA[0] = 0;
+            goto done;
+        }
+    }
+
+    if (info->szResName[0]) goto done;  /* only integer resources are supported here */
+    if (!(module = GetModuleHandleW( info->szModName ))) goto done;
 
     for (i = 0; i < sizeof(module_cursors)/sizeof(module_cursors[0]); i++)
         if (GetModuleHandleW( module_cursors[i].name ) == module) break;
-    if (i == sizeof(module_cursors)/sizeof(module_cursors[0])) return 0;
+    if (i == sizeof(module_cursors)/sizeof(module_cursors[0])) goto done;
 
     cursors = module_cursors[i].cursors;
-    for (i = 0; cursors[i].id; i++) if (cursors[i].id == info->wResID) break;
+    for (i = 0; cursors[i].id; i++)
+        if (cursors[i].id == info->wResID)
+        {
+            strcpy( valueA, cursors[i].name );
+            break;
+        }
 
-    if (cursors[i].name)
+done:
+    if (valueA[0])
     {
         wine_tsx11_lock();
-        cursor = pXcursorLibraryLoadCursor( gdi_display, cursors[i].name );
+        cursor = pXcursorLibraryLoadCursor( gdi_display, valueA );
         wine_tsx11_unlock();
-        if (!cursor) WARN( "no library cursor found for %s\n", debugstr_a(cursors[i].name) );
+        if (!cursor) WARN( "no system cursor found for %s mapped to %s\n",
+                           debugstr_w(name), debugstr_a(valueA) );
     }
+    else WARN( "no system cursor found for %s\n", debugstr_w(name) );
     return cursor;
 }
 
