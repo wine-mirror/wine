@@ -596,6 +596,7 @@ extern int dxgrab;
 extern int use_xkb;
 extern int use_take_focus;
 extern int use_primary_selection;
+extern int use_system_cursors;
 extern int usexcomposite;
 extern int managed_mode;
 extern int decorated_mode;

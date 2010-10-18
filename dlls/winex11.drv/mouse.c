@@ -23,6 +23,7 @@
 #include "wine/port.h"
 
 #include <X11/Xlib.h>
+#include <X11/cursorfont.h>
 #include <stdarg.h>
 
 #ifdef SONAME_LIBXCURSOR
@@ -35,11 +36,13 @@ MAKE_FUNCPTR(XcursorImageLoadCursor);
 MAKE_FUNCPTR(XcursorImagesCreate);
 MAKE_FUNCPTR(XcursorImagesDestroy);
 MAKE_FUNCPTR(XcursorImagesLoadCursor);
+MAKE_FUNCPTR(XcursorLibraryLoadCursor);
 # undef MAKE_FUNCPTR
 #endif /* SONAME_LIBXCURSOR */
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#define OEMRESOURCE
 #include "windef.h"
 #include "winbase.h"
 
@@ -120,6 +123,7 @@ void X11DRV_Xcursor_Init(void)
     LOAD_FUNCPTR(XcursorImagesCreate);
     LOAD_FUNCPTR(XcursorImagesDestroy);
     LOAD_FUNCPTR(XcursorImagesLoadCursor);
+    LOAD_FUNCPTR(XcursorLibraryLoadCursor);
 #undef LOAD_FUNCPTR
 #endif /* SONAME_LIBXCURSOR */
 }
@@ -622,6 +626,110 @@ cleanup:
     return cursor;
 }
 
+
+struct system_cursors
+{
+    WORD id;
+    const char *name;
+};
+
+static const struct system_cursors user32_cursors[] =
+{
+    { OCR_NORMAL,      "left_ptr" },
+    { OCR_IBEAM,       "xterm" },
+    { OCR_WAIT,        "watch" },
+    { OCR_CROSS,       "cross" },
+    { OCR_UP,          "center_ptr" },
+    { OCR_SIZE,        "fleur" },
+    { OCR_SIZEALL,     "fleur" },
+    { OCR_ICON,        "icon" },
+    { OCR_SIZENWSE,    "nwse-resize" },
+    { OCR_SIZENESW,    "nesw-resize" },
+    { OCR_SIZEWE,      "ew-resize" },
+    { OCR_SIZENS,      "ns-resize" },
+    { OCR_NO,          "not-allowed" },
+    { OCR_HAND,        "hand2" },
+    { OCR_APPSTARTING, "left_ptr_watch" },
+    { OCR_HELP,        "question_arrow" },
+    { 0 }
+};
+
+static const struct system_cursors comctl32_cursors[] =
+{
+    { 102, "move" },
+    { 104, "copy" },
+    { 105, "left_ptr" },
+    { 106, "row-resize" },
+    { 107, "row-resize" },
+    { 108, "hand2" },
+    { 135, "col-resize" },
+    { 0 }
+};
+
+static const struct system_cursors ole32_cursors[] =
+{
+    { 1, "no-drop" },
+    { 2, "move" },
+    { 3, "copy" },
+    { 4, "alias" },
+    { 0 }
+};
+
+static const struct system_cursors riched20_cursors[] =
+{
+    { 105, "hand2" },
+    { 107, "right_ptr" },
+    { 109, "copy" },
+    { 110, "move" },
+    { 111, "no-drop" },
+    { 0 }
+};
+
+static const struct
+{
+    const struct system_cursors *cursors;
+    WCHAR name[16];
+} module_cursors[] =
+{
+    { user32_cursors, {'u','s','e','r','3','2','.','d','l','l',0} },
+    { comctl32_cursors, {'c','o','m','c','t','l','3','2','.','d','l','l',0} },
+    { ole32_cursors, {'o','l','e','3','2','.','d','l','l',0} },
+    { riched20_cursors, {'r','i','c','h','e','d','2','0','.','d','l','l',0} }
+};
+
+/***********************************************************************
+ *		create_xcursor_system_cursor
+ *
+ * Create an X cursor for a system cursor.
+ */
+static Cursor create_xcursor_system_cursor( const ICONINFOEXW *info )
+{
+    const struct system_cursors *cursors;
+    unsigned int i;
+    Cursor cursor = 0;
+    HMODULE module;
+
+    if (!pXcursorLibraryLoadCursor) return 0;
+    if (info->szResName[0]) return 0;  /* only integer resources are supported here */
+    if (!(module = GetModuleHandleW( info->szModName ))) return 0;
+
+    for (i = 0; i < sizeof(module_cursors)/sizeof(module_cursors[0]); i++)
+        if (GetModuleHandleW( module_cursors[i].name ) == module) break;
+    if (i == sizeof(module_cursors)/sizeof(module_cursors[0])) return 0;
+
+    cursors = module_cursors[i].cursors;
+    for (i = 0; cursors[i].id; i++) if (cursors[i].id == info->wResID) break;
+
+    if (cursors[i].name)
+    {
+        wine_tsx11_lock();
+        cursor = pXcursorLibraryLoadCursor( gdi_display, cursors[i].name );
+        wine_tsx11_unlock();
+        if (!cursor) WARN( "no library cursor found for %s\n", debugstr_a(cursors[i].name) );
+    }
+    return cursor;
+}
+
 #endif /* SONAME_LIBXCURSOR */
 
 
@@ -837,6 +945,15 @@ static Cursor create_cursor( HANDLE handle )
 
     info.cbSize = sizeof(info);
     if (!GetIconInfoExW( handle, &info )) return 0;
+
+#ifdef SONAME_LIBXCURSOR
+    if (use_system_cursors && (cursor = create_xcursor_system_cursor( &info )))
+    {
+        DeleteObject( info.hbmColor );
+        DeleteObject( info.hbmMask );
+        return cursor;
+    }
+#endif
 
     GetObjectW( info.hbmMask, sizeof(bm), &bm );
     if (!info.hbmColor) bm.bmHeight /= 2;

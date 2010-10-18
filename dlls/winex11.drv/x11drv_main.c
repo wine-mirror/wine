@@ -82,6 +82,7 @@ int usexcomposite = 1;
 int use_xkb = 1;
 int use_take_focus = 1;
 int use_primary_selection = 0;
+int use_system_cursors = 1;
 int managed_mode = 1;
 int decorated_mode = 1;
 int private_color_map = 0;
@@ -395,6 +396,9 @@ static void setup_options(void)
 
     if (!get_config_key( hkey, appkey, "UsePrimarySelection", buffer, sizeof(buffer) ))
         use_primary_selection = IS_OPTION_TRUE( buffer[0] );
+
+    if (!get_config_key( hkey, appkey, "UseSystemCursors", buffer, sizeof(buffer) ))
+        use_system_cursors = IS_OPTION_TRUE( buffer[0] );
 
     screen_depth = 0;
     if (!get_config_key( hkey, appkey, "ScreenDepth", buffer, sizeof(buffer) ))
