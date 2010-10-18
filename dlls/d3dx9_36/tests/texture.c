@@ -92,11 +92,6 @@ static void test_D3DXCheckTextureRequirements(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
     ok(width == 1, "Returned width %d, expected %d\n", width, 1);
 
-    width = D3DX_DEFAULT;
-    hr = D3DXCheckTextureRequirements(device, &width, NULL, NULL, 0, NULL, D3DPOOL_DEFAULT);
-    ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
-    ok(width == 256, "Returned width %d, expected %d\n", width, 256);
-
     width = 0xFFFFFFFE;
     hr = D3DXCheckTextureRequirements(device, &width, NULL, NULL, 0, NULL, D3DPOOL_DEFAULT);
     ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
@@ -194,6 +189,87 @@ static void test_D3DXCheckTextureRequirements(IDirect3DDevice9 *device)
     ok(format == expected, "Returned format %u, expected %u\n", format, expected);
 
     IDirect3D9_Release(d3d);
+}
+
+static void test_D3DXCheckCubeTextureRequirements(IDirect3DDevice9 *device)
+{
+    UINT size, mipmaps;
+    D3DFORMAT format;
+    D3DCAPS9 caps;
+    HRESULT hr;
+
+    IDirect3DDevice9_GetDeviceCaps(device, &caps);
+
+    /* general tests */
+    hr = D3DXCheckCubeTextureRequirements(device, NULL, NULL, 0, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckCubeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+
+    hr = D3DXCheckCubeTextureRequirements(device, NULL, NULL, D3DX_DEFAULT, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckCubeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+
+    hr = D3DXCheckCubeTextureRequirements(NULL, NULL, NULL, D3DX_DEFAULT, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCheckCubeTextureRequirements returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    /* size */
+    size = D3DX_DEFAULT;
+    hr = D3DXCheckCubeTextureRequirements(device, &size, NULL, 0, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckCubeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(size == 256, "Returned size %d, expected %d\n", size, 256);
+
+    /* mipmaps */
+    size = 64;
+    mipmaps = 9;
+    hr = D3DXCheckCubeTextureRequirements(device, &size, &mipmaps, 0, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckCubeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(mipmaps == 7, "Returned mipmaps %d, expected %d\n", mipmaps, 7);
+
+    size = 284;
+    mipmaps = 20;
+    hr = D3DXCheckCubeTextureRequirements(device, &size, &mipmaps, 0, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckCubeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(mipmaps == 10, "Returned mipmaps %d, expected %d\n", mipmaps, 10);
+
+    size = 63;
+    mipmaps = 9;
+    hr = D3DXCheckCubeTextureRequirements(device, &size, &mipmaps, 0, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckCubeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(mipmaps == 7, "Returned mipmaps %d, expected %d\n", mipmaps, 7);
+
+    mipmaps = 0;
+    hr = D3DXCheckCubeTextureRequirements(device, NULL, &mipmaps, 0, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckCubeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(mipmaps == 9, "Returned mipmaps %d, expected %d\n", mipmaps, 9);
+
+    /* usage */
+    hr = D3DXCheckCubeTextureRequirements(device, NULL, NULL, D3DUSAGE_WRITEONLY, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCheckCubeTextureRequirements succeeded, but should've failed.\n");
+    hr = D3DXCheckCubeTextureRequirements(device, NULL, NULL, D3DUSAGE_DONOTCLIP, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCheckCubeTextureRequirements succeeded, but should've failed.\n");
+    hr = D3DXCheckCubeTextureRequirements(device, NULL, NULL, D3DUSAGE_POINTS, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCheckCubeTextureRequirements succeeded, but should've failed.\n");
+    hr = D3DXCheckCubeTextureRequirements(device, NULL, NULL, D3DUSAGE_RTPATCHES, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCheckCubeTextureRequirements succeeded, but should've failed.\n");
+    hr = D3DXCheckCubeTextureRequirements(device, NULL, NULL, D3DUSAGE_NPATCHES, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCheckCubeTextureRequirements succeeded, but should've failed.\n");
+
+    /* format */
+    hr = D3DXCheckCubeTextureRequirements(device, NULL, NULL, 0, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckCubeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+
+    format = D3DFMT_UNKNOWN;
+    hr = D3DXCheckCubeTextureRequirements(device, NULL, NULL, 0, &format, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckCubeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(format == D3DFMT_A8R8G8B8, "Returned format %u, expected %u\n", format, D3DFMT_A8R8G8B8);
+
+    format = D3DX_DEFAULT;
+    hr = D3DXCheckCubeTextureRequirements(device, NULL, NULL, 0, &format, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckCubeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(format == D3DFMT_A8R8G8B8, "Returned format %u, expected %u\n", format, D3DFMT_A8R8G8B8);
+
+    format = D3DFMT_R8G8B8;
+    hr = D3DXCheckCubeTextureRequirements(device, NULL, NULL, 0, &format, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckCubeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(format == D3DFMT_X8R8G8B8, "Returned format %u, expected %u\n", format, D3DFMT_X8R8G8B8);
 }
 
 static void test_D3DXCreateTexture(IDirect3DDevice9 *device)
@@ -498,6 +574,7 @@ START_TEST(texture)
     }
 
     test_D3DXCheckTextureRequirements(device);
+    test_D3DXCheckCubeTextureRequirements(device);
     test_D3DXCreateTexture(device);
     test_D3DXFilterTexture(device);
 

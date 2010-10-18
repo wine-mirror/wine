@@ -343,6 +343,46 @@ cleanup:
     return D3D_OK;
 }
 
+HRESULT WINAPI D3DXCheckCubeTextureRequirements(LPDIRECT3DDEVICE9 device,
+                                                UINT *size,
+                                                UINT *miplevels,
+                                                DWORD usage,
+                                                D3DFORMAT *format,
+                                                D3DPOOL pool)
+{
+    D3DCAPS9 caps;
+    UINT s = (size && *size) ? *size : 256;
+    HRESULT hr;
+
+    TRACE("(%p, %p, %p, %u, %p, %u)\n", device, size, miplevels, usage, format, pool);
+
+    if (s == D3DX_DEFAULT)
+        s = 256;
+
+    if (!device || FAILED(IDirect3DDevice9_GetDeviceCaps(device, &caps)))
+        return D3DERR_INVALIDCALL;
+
+    if (!(caps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP))
+        return D3DERR_NOTAVAILABLE;
+
+    /* ensure width/height is power of 2 */
+    if ((caps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP_POW2) && (!is_pow2(s)))
+        s = make_pow2(s);
+
+    hr = D3DXCheckTextureRequirements(device, &s, &s, miplevels, usage, format, pool);
+
+    if (!(caps.TextureCaps & D3DPTEXTURECAPS_MIPCUBEMAP))
+    {
+        if(miplevels)
+            *miplevels = 1;
+    }
+
+    if (size)
+        *size = s;
+
+    return hr;
+}
+
 HRESULT WINAPI D3DXCreateTexture(LPDIRECT3DDEVICE9 pDevice,
                                  UINT width,
                                  UINT height,

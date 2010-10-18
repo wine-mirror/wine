@@ -4,7 +4,7 @@
 @ stdcall D3DXAssembleShaderFromResourceA(long str ptr ptr long ptr ptr)
 @ stdcall D3DXAssembleShaderFromResourceW(long wstr ptr ptr long ptr ptr)
 @ stdcall D3DXBoxBoundProbe(ptr ptr ptr ptr)
-@ stub D3DXCheckCubeTextureRequirements
+@ stdcall D3DXCheckCubeTextureRequirements(ptr ptr ptr long ptr ptr)
 @ stdcall D3DXCheckTextureRequirements(ptr ptr ptr ptr long ptr ptr)
 @ stdcall D3DXCheckVersion(long long)
 @ stub D3DXCheckVolumeTextureRequirements
