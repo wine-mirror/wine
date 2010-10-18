@@ -167,9 +167,9 @@ static const WCHAR WinNT_CV_PrinterPortsW[] = { 'S','o','f','t','w','a','r','e',
                                                 'P','r','i','n','t','e','r','P','o','r','t','s',0};
 
 static const WCHAR DefaultEnvironmentW[] = {'W','i','n','e',0};
-static const WCHAR envname_win40W[] = {'W','i','n','d','o','w','s',' ','4','.','0',0};
+static       WCHAR envname_win40W[] = {'W','i','n','d','o','w','s',' ','4','.','0',0};
 static const WCHAR envname_x64W[] =   {'W','i','n','d','o','w','s',' ','x','6','4',0};
-static const WCHAR envname_x86W[] =   {'W','i','n','d','o','w','s',' ','N','T',' ','x','8','6',0};
+static       WCHAR envname_x86W[] =   {'W','i','n','d','o','w','s',' ','N','T',' ','x','8','6',0};
 static const WCHAR subdir_win40W[] = {'w','i','n','4','0',0};
 static const WCHAR subdir_x64W[] =   {'x','6','4',0};
 static const WCHAR subdir_x86W[] =   {'w','3','2','x','8','6',0};
@@ -212,7 +212,10 @@ static const WCHAR WinPrintW[] = {'W','i','n','P','r','i','n','t',0};
 static const WCHAR deviceW[]  = {'d','e','v','i','c','e',0};
 static const WCHAR devicesW[] = {'d','e','v','i','c','e','s',0};
 static const WCHAR windowsW[] = {'w','i','n','d','o','w','s',0};
-static const WCHAR driver_nt[] = {'w','i','n','e','p','s','.','d','r','v',0};
+static       WCHAR generic_ppdW[] = {'g','e','n','e','r','i','c','.','p','p','d',0};
+static       WCHAR rawW[] = {'R','A','W',0};
+static       WCHAR driver_9x[] = {'w','i','n','e','p','s','1','6','.','d','r','v',0};
+static       WCHAR driver_nt[] = {'w','i','n','e','p','s','.','d','r','v',0};
 static const WCHAR timeout_15_45[] = {',','1','5',',','4','5',0};
 static const WCHAR commaW[] = {',',0};
 static const WCHAR emptyStringW[] = {0};
@@ -380,41 +383,33 @@ WINSPOOL_SetDefaultPrinter(const char *devname, const char *name, BOOL force) {
     }
 }
 
-static BOOL add_printer_driver(const char *name)
+static BOOL add_printer_driver(WCHAR *name)
 {
-    DRIVER_INFO_3A di3a;
+    DRIVER_INFO_3W di3;
 
-    static char driver_9x[]         = "wineps16.drv",
-                driver_nt[]         = "wineps.drv",
-                env_9x[]            = "Windows 4.0",
-                env_nt[]            = "Windows NT x86",
-                data_file[]         = "generic.ppd",
-                default_data_type[] = "RAW";
+    ZeroMemory(&di3, sizeof(DRIVER_INFO_3W));
+    di3.cVersion         = 3;
+    di3.pName            = name;
+    di3.pEnvironment     = envname_x86W;
+    di3.pDriverPath      = driver_nt;
+    di3.pDataFile        = generic_ppdW;
+    di3.pConfigFile      = driver_nt;
+    di3.pDefaultDataType = rawW;
 
-    ZeroMemory(&di3a, sizeof(DRIVER_INFO_3A));
-    di3a.cVersion         = 3;
-    di3a.pName            = (char *)name;
-    di3a.pEnvironment     = env_nt;
-    di3a.pDriverPath      = driver_nt;
-    di3a.pDataFile        = data_file;
-    di3a.pConfigFile      = driver_nt;
-    di3a.pDefaultDataType = default_data_type;
-
-    if (AddPrinterDriverA(NULL, 3, (LPBYTE)&di3a) ||
+    if (AddPrinterDriverW(NULL, 3, (LPBYTE)&di3) ||
         (GetLastError() ==  ERROR_PRINTER_DRIVER_ALREADY_INSTALLED ))
     {
-        di3a.cVersion     = 0;
-        di3a.pEnvironment = env_9x;
-        di3a.pDriverPath  = driver_9x;
-        di3a.pConfigFile  = driver_9x;
-        if (AddPrinterDriverA(NULL, 3, (LPBYTE)&di3a) ||
+        di3.cVersion     = 0;
+        di3.pEnvironment = envname_win40W;
+        di3.pDriverPath  = driver_9x;
+        di3.pConfigFile  = driver_9x;
+        if (AddPrinterDriverW(NULL, 3, (LPBYTE)&di3) ||
             (GetLastError() ==  ERROR_PRINTER_DRIVER_ALREADY_INSTALLED ))
         {
             return TRUE;
         }
     }
-    ERR("Failed adding driver %s (%s): %u\n", debugstr_a(di3a.pDriverPath),
-        debugstr_a(di3a.pEnvironment), GetLastError());
+    ERR("failed with %u for %s (%s)\n", GetLastError(), debugstr_w(di3.pDriverPath), debugstr_w(di3.pEnvironment));
     return FALSE;
 }
 
@@ -434,6 +429,7 @@ static BOOL CUPS_LoadPrinters(void)
     char *port;
     HKEY hkeyPrinter, hkeyPrinters;
     char    loaderror[256];
+    WCHAR   nameW[MAX_PATH];
 
     cupshandle = wine_dlopen(SONAME_LIBCUPS, RTLD_NOW, loaderror, sizeof(loaderror));
     if (!cupshandle) {
@@ -461,6 +457,8 @@ static BOOL CUPS_LoadPrinters(void)
     nrofdests = pcupsGetDests(&dests);
     TRACE("Found %d CUPS %s:\n", nrofdests, (nrofdests == 1) ? "printer" : "printers");
     for (i=0;i<nrofdests;i++) {
+        MultiByteToWideChar(CP_ACP, 0, dests[i].name, -1, nameW, sizeof(nameW) / sizeof(WCHAR));
+
         port = HeapAlloc(GetProcessHeap(), 0, strlen("CUPS:") + strlen(dests[i].name)+1);
         sprintf(port,"CUPS:%s", dests[i].name);
 
@@ -481,7 +479,7 @@ static BOOL CUPS_LoadPrinters(void)
                     share_name[]    = "<share name?>",
                     sep_file[]      = "<sep file?>";
 
-            add_printer_driver(dests[i].name);
+            add_printer_driver(nameW);
 
             memset(&pinfo2a,0,sizeof(pinfo2a));
             pinfo2a.pPrinterName    = dests[i].name;
@@ -523,6 +521,7 @@ PRINTCAP_ParseEntry(const char *pent, BOOL isfirst) {
     BOOL		ret = FALSE, set_default = FALSE;
     char *port = NULL, *env_default;
     HKEY hkeyPrinter, hkeyPrinters;
+    WCHAR devnameW[MAX_PATH];
 
     while (isspace(*pent)) pent++;
     s = strchr(pent,':');
@@ -586,6 +585,9 @@ PRINTCAP_ParseEntry(const char *pent, BOOL isfirst) {
 	ret = FALSE;
         goto end;
     }
+
+    MultiByteToWideChar(CP_ACP, 0, devname, -1, devnameW, sizeof(devnameW) / sizeof(WCHAR));
+
     if(RegOpenKeyA(hkeyPrinters, devname, &hkeyPrinter) == ERROR_SUCCESS) {
         /* Printer already in registry, delete the tag added in WINSPOOL_LoadSystemPrinters
            and continue */
@@ -600,7 +602,7 @@ PRINTCAP_ParseEntry(const char *pent, BOOL isfirst) {
                     share_name[]  = "<share name?>",
                     sep_file[]    = "<sep file?>";
 
-        add_printer_driver(devname);
+        add_printer_driver(devnameW);
 
         memset(&pinfo2a,0,sizeof(pinfo2a));
         pinfo2a.pPrinterName    = devname;
