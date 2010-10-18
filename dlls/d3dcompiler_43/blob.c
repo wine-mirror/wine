@@ -92,7 +92,7 @@ static SIZE_T STDMETHODCALLTYPE d3dcompiler_blob_GetBufferSize(ID3DBlob *iface)
     return blob->size;
 }
 
-const struct ID3D10BlobVtbl d3dcompiler_blob_vtbl =
+static const struct ID3D10BlobVtbl d3dcompiler_blob_vtbl =
 {
     /* IUnknown methods */
     d3dcompiler_blob_QueryInterface,

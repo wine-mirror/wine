@@ -39,8 +39,8 @@ struct mem_file_desc
     unsigned int pos;
 };
 
-struct mem_file_desc current_shader;
-LPD3DINCLUDE current_include;
+static struct mem_file_desc current_shader;
+static ID3DInclude *current_include;
 
 #define INCLUDES_INITIAL_CAPACITY 4
 
@@ -50,15 +50,15 @@ struct loaded_include
     const char *data;
 };
 
-struct loaded_include *includes;
-int includes_capacity, includes_size;
-const char *parent_include;
+static struct loaded_include *includes;
+static int includes_capacity, includes_size;
+static const char *parent_include;
 
-char *wpp_output;
-int wpp_output_capacity, wpp_output_size;
+static char *wpp_output;
+static int wpp_output_capacity, wpp_output_size;
 
-char *wpp_messages;
-int wpp_messages_capacity, wpp_messages_size;
+static char *wpp_messages;
+static int wpp_messages_capacity, wpp_messages_size;
 
 /* Mutex used to guarantee a single invocation
    of the D3DXAssembleShader function (or its variants) at a time.
