@@ -48,4 +48,5 @@ STRINGTABLE
     STRING_DHCP_ENABLED, "DHCP ввімкнено"
     STRING_YES, "Так"
     STRING_NO, "Ні"
+    STRING_DEFAULT_GATEWAY, "Шлюз за замовчуванням"
 }
