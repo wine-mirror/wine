@@ -41,7 +41,8 @@ C_SRCS = \
 	number.c \
 	object.c \
 	regexp.c \
-	string.c
+	string.c \
+	vbarray.c
 
 IDL_TLB_SRCS = jsglobal.idl
 

@@ -2194,6 +2194,14 @@ testFunctions(Function.prototype, [
         ["toString", 0]
     ]);
 
+testFunctions(VBArray.prototype, [
+        ["dimensions", 0],
+        ["getItem", 1],
+        ["lbound", 0],
+        ["toArray", 0],
+        ["ubound", 0]
+    ]);
+
 ok(ActiveXObject.length == 1, "ActiveXObject.length = " + ActiveXObject.length);
 ok(Array.length == 1, "Array.length = " + Array.length);
 ok(Boolean.length == 1, "Boolean.length = " + Boolean.length);

@@ -248,8 +248,9 @@ static HRESULT JSGlobal_ActiveXObject(script_ctx_t *ctx, vdisp_t *jsthis, WORD f
 static HRESULT JSGlobal_VBArray(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    return constructor_call(ctx->vbarray_constr, flags, dp, retv, ei, sp);
 }
 
 static HRESULT JSGlobal_Enumerator(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
@@ -1039,7 +1040,7 @@ static const builtin_prop_t JSGlobal_props[] = {
     {SyntaxErrorW,               JSGlobal_SyntaxError,               PROPF_CONSTR|1},
     {TypeErrorW,                 JSGlobal_TypeError,                 PROPF_CONSTR|1},
     {URIErrorW,                  JSGlobal_URIError,                  PROPF_CONSTR|1},
-    {VBArrayW,                   JSGlobal_VBArray,                   PROPF_METHOD|1},
+    {VBArrayW,                   JSGlobal_VBArray,                   PROPF_CONSTR|1},
     {decodeURIW,                 JSGlobal_decodeURI,                 PROPF_METHOD|1},
     {decodeURIComponentW,        JSGlobal_decodeURIComponent,        PROPF_METHOD|1},
     {encodeURIW,                 JSGlobal_encodeURI,                 PROPF_METHOD|1},
@@ -1103,6 +1104,10 @@ static HRESULT init_constructors(script_ctx_t *ctx, jsdisp_t *object_prototype)
         return hres;
 
     hres = create_string_constr(ctx, object_prototype, &ctx->string_constr);
+    if(FAILED(hres))
+        return hres;
+
+    hres = create_vbarray_constr(ctx, object_prototype, &ctx->vbarray_constr);
     if(FAILED(hres))
         return hres;
 

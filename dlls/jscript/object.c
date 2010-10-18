@@ -52,7 +52,7 @@ static HRESULT Object_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
     static const WCHAR stringW[] = {'S','t','r','i','n','g',0};
     /* Keep in sync with jsclass_t enum */
     static const WCHAR *names[] = {objectW, arrayW, booleanW, dateW, errorW,
-        functionW, NULL, mathW, numberW, objectW, regexpW, stringW, objectW};
+        functionW, NULL, mathW, numberW, objectW, regexpW, stringW, objectW, objectW};
 
     TRACE("\n");
 

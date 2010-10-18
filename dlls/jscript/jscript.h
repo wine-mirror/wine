@@ -84,7 +84,8 @@ typedef enum {
     JSCLASS_OBJECT,
     JSCLASS_REGEXP,
     JSCLASS_STRING,
-    JSCLASS_ARGUMENTS
+    JSCLASS_ARGUMENTS,
+    JSCLASS_VBARRAY
 } jsclass_t;
 
 jsdisp_t *iface_to_jsdisp(IUnknown*);
@@ -304,6 +305,7 @@ struct _script_ctx_t {
     jsdisp_t *object_constr;
     jsdisp_t *regexp_constr;
     jsdisp_t *string_constr;
+    jsdisp_t *vbarray_constr;
 };
 
 void script_release(script_ctx_t*);
@@ -326,6 +328,7 @@ HRESULT create_number_constr(script_ctx_t*,jsdisp_t*,jsdisp_t**);
 HRESULT create_object_constr(script_ctx_t*,jsdisp_t*,jsdisp_t**);
 HRESULT create_regexp_constr(script_ctx_t*,jsdisp_t*,jsdisp_t**);
 HRESULT create_string_constr(script_ctx_t*,jsdisp_t*,jsdisp_t**);
+HRESULT create_vbarray_constr(script_ctx_t*,jsdisp_t*,jsdisp_t**);
 
 IUnknown *create_ax_site(script_ctx_t*);
 
