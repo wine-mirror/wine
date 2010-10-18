@@ -32,3 +32,35 @@ BEGIN
     IDS_CPL_NAME        "Налаштування Інтернету"
     IDS_CPL_INFO        "Налаштувати Wine Internet Browser та пов'язані параметри"
 END
+
+/* "General" propsheet */
+IDD_GENERAL DIALOG  0, 0, 320, 220
+STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+CAPTION "Загальні"
+BEGIN
+
+    GROUPBOX    " Домашня сторінка ", IDC_STATIC, 4, 4, 312, 52
+    LTEXT       "Ви можете вказати адресу, що буде використана як домашня сторінка.",
+                IDC_STATIC, 58, 12, 252, 10
+    EDITTEXT    IDC_HOME_EDIT, 58, 22, 252, 12, WS_VISIBLE | ES_AUTOHSCROLL
+    PUSHBUTTON  "&Поточна сторінка", IDC_HOME_CURRENT, 58, 36, 80, 14
+    PUSHBUTTON  "&За замовчуванням", IDC_HOME_DEFAULT, 144, 36, 80, 14
+    PUSHBUTTON  "По&рожня сторінка", IDC_HOME_BLANK, 230, 36, 80, 14
+
+END
+
+/* "Content" propsheet */
+IDD_CONTENT DIALOG  0, 0, 320, 220
+STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+CAPTION "Вміст"
+BEGIN
+
+    GROUPBOX    " Сертифікати ", IDC_STATIC, 4, 4, 312, 50
+    LTEXT       "Сертифікати використовуються для вашої ідентифікації та для ідентифікації органів сертифікації та видавців.",
+                IDC_STATIC, 58, 14, 252, 18
+    PUSHBUTTON  "Сертифікати...", IDC_CERT, 146, 34, 80, 14
+    PUSHBUTTON	"Видавці...", IDC_CERT_PUBLISHER, 230, 34, 80, 14
+
+END
