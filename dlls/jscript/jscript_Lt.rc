@@ -27,6 +27,7 @@ STRINGTABLE
 {
     IDS_TO_PRIMITIVE        "Klaida keičiant objektą į primityvų tipą"
     IDS_INVALID_CALL_ARG    "Netinkamas kreipinys į procedūrą ar argumentas"
+    IDS_SUBSCRIPT_OUT_OF_RANGE "Indeksas nepatenka į rėžius"
     IDS_CREATE_OBJ_ERROR    "Automatizacijos serveriui nepavyko sukurti objekto"
     IDS_NO_PROPERTY         "Objektas nepalaiko šios savybės ar metodo"
     IDS_UNSUPPORTED_ACTION  "Objektas nepalaiko šio veiksmo"
@@ -43,6 +44,7 @@ STRINGTABLE
     IDS_ILLEGAL_ASSIGN      "Neleistinas priskyrimas"
     IDS_UNDEFINED           "„|“ yra neapibrėžtas"
     IDS_NOT_BOOL            "Tikėtasi loginio objekto"
+    IDS_NOT_VBARRAY         "Tikėtasi VBArray objekto"
     IDS_JSCRIPT_EXPECTED    "Tikėtasi JScript objekto"
     IDS_REGEXP_SYNTAX_ERROR "Sintaksės klaida reguliariajame reiškinyje"
     IDS_URI_INVALID_CHAR    "Koduotiname URI yra netinkamų simbolių"
