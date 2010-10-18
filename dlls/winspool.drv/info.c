@@ -208,7 +208,7 @@ static const WCHAR ProviderW[] = {'P','r','o','v','i','d','e','r',0};
 static const WCHAR Separator_FileW[] = {'S','e','p','a','r','a','t','o','r',' ','F','i','l','e',0};
 static const WCHAR Share_NameW[] = {'S','h','a','r','e',' ','N','a','m','e',0};
 static const WCHAR VersionW[] = {'V','e','r','s','i','o','n',0};
-static const WCHAR WinPrintW[] = {'W','i','n','P','r','i','n','t',0};
+static       WCHAR WinPrintW[] = {'W','i','n','P','r','i','n','t',0};
 static const WCHAR deviceW[]  = {'d','e','v','i','c','e',0};
 static const WCHAR devicesW[] = {'d','e','v','i','c','e','s',0};
 static const WCHAR windowsW[] = {'w','i','n','d','o','w','s',0};
@@ -218,7 +218,7 @@ static       WCHAR driver_9x[] = {'w','i','n','e','p','s','1','6','.','d','r','v
 static       WCHAR driver_nt[] = {'w','i','n','e','p','s','.','d','r','v',0};
 static const WCHAR timeout_15_45[] = {',','1','5',',','4','5',0};
 static const WCHAR commaW[] = {',',0};
-static const WCHAR emptyStringW[] = {0};
+static       WCHAR emptyStringW[] = {0};
 
 static const WCHAR May_Delete_Value[] = {'W','i','n','e','M','a','y','D','e','l','e','t','e','M','e',0};
 
@@ -425,8 +425,8 @@ static BOOL CUPS_LoadPrinters(void)
     int	                  i, nrofdests;
     BOOL                  hadprinter = FALSE, haddefault = FALSE;
     cups_dest_t          *dests;
-    PRINTER_INFO_2A       pinfo2a;
-    char *port;
+    PRINTER_INFO_2W       pi2;
+    WCHAR   *port;
     HKEY hkeyPrinter, hkeyPrinters;
     char    loaderror[256];
     WCHAR   nameW[MAX_PATH];
@@ -457,57 +457,56 @@ static BOOL CUPS_LoadPrinters(void)
     nrofdests = pcupsGetDests(&dests);
     TRACE("Found %d CUPS %s:\n", nrofdests, (nrofdests == 1) ? "printer" : "printers");
     for (i=0;i<nrofdests;i++) {
-        MultiByteToWideChar(CP_ACP, 0, dests[i].name, -1, nameW, sizeof(nameW) / sizeof(WCHAR));
+        MultiByteToWideChar(CP_UNIXCP, 0, dests[i].name, -1, nameW, sizeof(nameW) / sizeof(WCHAR));
 
-        port = HeapAlloc(GetProcessHeap(), 0, strlen("CUPS:") + strlen(dests[i].name)+1);
-        sprintf(port,"CUPS:%s", dests[i].name);
+        port = HeapAlloc(GetProcessHeap(), 0, sizeof(CUPS_Port) + lstrlenW(nameW) * sizeof(WCHAR));
+        lstrcpyW(port, CUPS_Port);
+        lstrcatW(port, nameW);
 
-        TRACE("Printer %d: %s\n", i, dests[i].name);
-        if(RegOpenKeyA(hkeyPrinters, dests[i].name, &hkeyPrinter) == ERROR_SUCCESS) {
+        TRACE("Printer %d: %s\n", i, debugstr_w(nameW));
+        if(RegOpenKeyW(hkeyPrinters, nameW, &hkeyPrinter) == ERROR_SUCCESS) {
             /* Printer already in registry, delete the tag added in WINSPOOL_LoadSystemPrinters
                and continue */
             TRACE("Printer already exists\n");
-            RegSetValueExA(hkeyPrinter, "Port", 0, REG_SZ, (LPBYTE)port, strlen(port) + 1); /* overwrite LPR:* port */
+            /* overwrite old LPR:* port */
+            RegSetValueExW(hkeyPrinter, PortW, 0, REG_SZ, (LPBYTE)port, (lstrlenW(port) + 1) * sizeof(WCHAR));
             RegDeleteValueW(hkeyPrinter, May_Delete_Value);
             RegCloseKey(hkeyPrinter);
         } else {
-            static CHAR data_type[] = "RAW",
-                    print_proc[]    = "WinPrint",
-                    comment[]       = "WINEPS Printer using CUPS",
-                    location[]      = "<physical location of printer>",
-                    params[]        = "<parameters?>",
-                    share_name[]    = "<share name?>",
-                    sep_file[]      = "<sep file?>";
+            static WCHAR comment_cups[]  = {'W','I','N','E','P','S',' ','P','r','i','n','t','e','r',
+                                            ' ','u','s','i','n','g',' ','C','U','P','S',0};
 
             add_printer_driver(nameW);
 
-            memset(&pinfo2a,0,sizeof(pinfo2a));
-            pinfo2a.pPrinterName    = dests[i].name;
-            pinfo2a.pDatatype       = data_type;
-            pinfo2a.pPrintProcessor = print_proc;
-            pinfo2a.pDriverName     = dests[i].name;
-            pinfo2a.pComment        = comment;
-            pinfo2a.pLocation       = location;
-            pinfo2a.pPortName       = port;
-            pinfo2a.pParameters     = params;
-            pinfo2a.pShareName      = share_name;
-            pinfo2a.pSepFile        = sep_file;
+            memset(&pi2, 0, sizeof(PRINTER_INFO_2W));
+            pi2.pPrinterName    = nameW;
+            pi2.pDatatype       = rawW;
+            pi2.pPrintProcessor = WinPrintW;
+            pi2.pDriverName     = nameW;
+            pi2.pComment        = comment_cups;
+            pi2.pLocation       = emptyStringW;
+            pi2.pPortName       = port;
+            pi2.pParameters     = emptyStringW;
+            pi2.pShareName      = emptyStringW;
+            pi2.pSepFile        = emptyStringW;
 
-            if (!AddPrinterA(NULL,2,(LPBYTE)&pinfo2a)) {
+            if (!AddPrinterW(NULL, 2, (LPBYTE)&pi2)) {
                 if (GetLastError() != ERROR_PRINTER_ALREADY_EXISTS)
-                    ERR("printer '%s' not added by AddPrinterA (error %d)\n",dests[i].name,GetLastError());
+                    ERR("printer '%s' not added by AddPrinter (error %d)\n", debugstr_w(nameW), GetLastError());
             }
         }
 	HeapFree(GetProcessHeap(),0,port);
 
         hadprinter = TRUE;
         if (dests[i].is_default) {
-            SetDefaultPrinterA(dests[i].name);
+            SetDefaultPrinterW(nameW);
             haddefault = TRUE;
         }
     }
-    if (hadprinter & !haddefault)
-        SetDefaultPrinterA(dests[0].name);
+    if (hadprinter & !haddefault) {
+        MultiByteToWideChar(CP_UNIXCP, 0, dests[0].name, -1, nameW, sizeof(nameW) / sizeof(WCHAR));
+        SetDefaultPrinterW(nameW);
+    }
     pcupsFreeDests(nrofdests, dests);
     RegCloseKey(hkeyPrinters);
     return hadprinter;
