@@ -1901,6 +1901,9 @@ exception_test(function() {new null;}, "TypeError", -2146823281);
 exception_test(function() {new nullDisp;}, "TypeError", -2146827850);
 exception_test(function() {new VBArray();}, "TypeError", -2146823275);
 exception_test(function() {new VBArray(new VBArray(createArray()));}, "TypeError", -2146823275);
+exception_test(function() {(new VBArray(createArray())).lbound("aaa");}, "RangeError", -2146828279);
+exception_test(function() {(new VBArray(createArray())).lbound(3);}, "RangeError", -2146828279);
+exception_test(function() {tmp = new Object(); tmp.lb = VBArray.prototype.lbound; tmp.lb();}, "TypeError", -2146823275);
 
 function testThisExcept(func, number) {
     exception_test(function() {func.call(new Object())}, "TypeError", number);
@@ -2250,5 +2253,8 @@ ok(String.length == 1, "String.length = " + String.length);
 
 var tmp = new VBArray(createArray());
 tmp = new VBArray(VBArray(createArray()));
+ok(tmp.lbound() == 0, "tmp.lbound() = " + tmp.lbound());
+ok(tmp.lbound(1) == 0, "tmp.lbound(1) = " + tmp.lbound(1));
+ok(tmp.lbound(2, 1) == 2, "tmp.lbound(2, 1) = " + tmp.lbound(2, 1));
 
 reportSuccess();

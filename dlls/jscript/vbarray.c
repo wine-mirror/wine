@@ -61,8 +61,32 @@ static HRESULT VBArray_getItem(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DI
 static HRESULT VBArray_lbound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VBArrayInstance *vbarray;
+    int dim;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    vbarray = vbarray_this(vthis);
+    if(!vbarray)
+        return throw_type_error(ctx, ei, IDS_NOT_VBARRAY, NULL);
+
+    if(arg_cnt(dp)) {
+        hres = to_int32(ctx, get_arg(dp, 0), ei, &dim);
+        if(FAILED(hres))
+            return hres;
+    } else
+        dim = 1;
+
+    hres = SafeArrayGetLBound(vbarray->safearray, dim, &dim);
+    if(hres == DISP_E_BADINDEX)
+        return throw_range_error(ctx, ei, IDS_SUBSCRIPT_OUT_OF_RANGE, NULL);
+    else if(FAILED(hres))
+        return hres;
+
+    if(retv)
+        num_set_val(retv, dim);
+    return S_OK;
 }
 
 static HRESULT VBArray_toArray(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
