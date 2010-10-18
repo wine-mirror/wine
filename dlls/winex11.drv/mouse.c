@@ -470,7 +470,7 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
  *
  * Use Xcursor to create a frame of an X cursor from a Windows one.
  */
-static XcursorImage *create_xcursor_frame( HDC hdc, ICONINFO *iinfo, HANDLE icon,
+static XcursorImage *create_xcursor_frame( HDC hdc, const ICONINFOEXW *iinfo, HANDLE icon,
                                            HBITMAP hbmColor, unsigned char *color_bits, int color_size,
                                            HBITMAP hbmMask, unsigned char *mask_bits, int mask_size,
                                            int width, int height, int istep )
@@ -537,7 +537,7 @@ cleanup:
  *
  * Use Xcursor to create an X cursor from a Windows one.
  */
-static Cursor create_xcursor_cursor( HDC hdc, ICONINFO *iinfo, HANDLE icon, int width, int height )
+static Cursor create_xcursor_cursor( HDC hdc, const ICONINFOEXW *iinfo, HANDLE icon, int width, int height )
 {
     unsigned char *color_bits, *mask_bits;
     HBITMAP hbmColor = 0, hbmMask = 0;
@@ -701,7 +701,7 @@ done:
  *
  * Create an X cursor from a Windows one.
  */
-static Cursor create_xlib_cursor( HDC hdc, ICONINFO *icon, int width, int height )
+static Cursor create_xlib_cursor( HDC hdc, const ICONINFOEXW *icon, int width, int height )
 {
     XColor fg, bg;
     Cursor cursor = None;
@@ -831,13 +831,14 @@ static Cursor create_cursor( HANDLE handle )
 {
     Cursor cursor = 0;
     HDC hdc;
-    ICONINFO info;
+    ICONINFOEXW info;
     BITMAP bm;
 
     if (!handle) return get_empty_cursor();
 
     if (!(hdc = CreateCompatibleDC( 0 ))) return 0;
-    if (!GetIconInfo( handle, &info ))
+    info.cbSize = sizeof(info);
+    if (!GetIconInfoExW( handle, &info ))
     {
         DeleteDC( hdc );
         return 0;
