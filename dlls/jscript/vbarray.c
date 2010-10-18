@@ -47,8 +47,17 @@ static inline VBArrayInstance *vbarray_this(vdisp_t *jsthis)
 static HRESULT VBArray_dimensions(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VBArrayInstance *vbarray;
+
+    TRACE("\n");
+
+    vbarray = vbarray_this(vthis);
+    if(!vbarray)
+        return throw_type_error(ctx, ei, IDS_NOT_VBARRAY, NULL);
+
+    if(retv)
+        num_set_val(retv, SafeArrayGetDim(vbarray->safearray));
+    return S_OK;
 }
 
 static HRESULT VBArray_getItem(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,

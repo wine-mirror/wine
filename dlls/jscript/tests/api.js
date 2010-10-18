@@ -2253,6 +2253,7 @@ ok(String.length == 1, "String.length = " + String.length);
 
 var tmp = new VBArray(createArray());
 tmp = new VBArray(VBArray(createArray()));
+ok(tmp.dimensions() == 2, "tmp.dimensions() = " + tmp.dimensions());
 ok(tmp.lbound() == 0, "tmp.lbound() = " + tmp.lbound());
 ok(tmp.lbound(1) == 0, "tmp.lbound(1) = " + tmp.lbound(1));
 ok(tmp.lbound(2, 1) == 2, "tmp.lbound(2, 1) = " + tmp.lbound(2, 1));
