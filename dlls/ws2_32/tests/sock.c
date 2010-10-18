@@ -1943,6 +1943,17 @@ static void test_select(void)
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
     FD_ZERO(&exceptfds);
+
+    SetLastError(0);
+    ret = select(maxfd+1, 0, 0, 0, &select_timeout);
+    ok ( (ret == SOCKET_ERROR), "expected SOCKET_ERROR, got %i\n", ret);
+    ok ( GetLastError() == WSAEINVAL, "expected WSAEINVAL, got %i\n", ret);
+
+    SetLastError(0);
+    ret = select(maxfd+1, &readfds, &writefds, &exceptfds, &select_timeout);
+    ok ( (ret == SOCKET_ERROR), "expected SOCKET_ERROR, got %i\n", ret);
+    ok ( GetLastError() == WSAEINVAL, "expected WSAEINVAL, got %i\n", ret);
+
     FD_SET(INVALID_SOCKET, &readfds);
     SetLastError(0);
     ret = select(maxfd+1, &readfds, &writefds, &exceptfds, &select_timeout);
