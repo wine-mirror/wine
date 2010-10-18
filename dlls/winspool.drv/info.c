@@ -212,6 +212,9 @@ static const WCHAR WinPrintW[] = {'W','i','n','P','r','i','n','t',0};
 static const WCHAR deviceW[]  = {'d','e','v','i','c','e',0};
 static const WCHAR devicesW[] = {'d','e','v','i','c','e','s',0};
 static const WCHAR windowsW[] = {'w','i','n','d','o','w','s',0};
+static const WCHAR driver_nt[] = {'w','i','n','e','p','s','.','d','r','v',0};
+static const WCHAR timeout_15_45[] = {',','1','5',',','4','5',0};
+static const WCHAR commaW[] = {',',0};
 static const WCHAR emptyStringW[] = {0};
 
 static const WCHAR May_Delete_Value[] = {'W','i','n','e','M','a','y','D','e','l','e','t','e','M','e',0};
@@ -428,8 +431,8 @@ static BOOL CUPS_LoadPrinters(void)
     BOOL                  hadprinter = FALSE, haddefault = FALSE;
     cups_dest_t          *dests;
     PRINTER_INFO_2A       pinfo2a;
-    char   *port,*devline;
-    HKEY hkeyPrinter, hkeyPrinters, hkey;
+    char *port;
+    HKEY hkeyPrinter, hkeyPrinters;
     char    loaderror[256];
 
     cupshandle = wine_dlopen(SONAME_LIBCUPS, RTLD_NOW, loaderror, sizeof(loaderror));
@@ -460,23 +463,6 @@ static BOOL CUPS_LoadPrinters(void)
     for (i=0;i<nrofdests;i++) {
         port = HeapAlloc(GetProcessHeap(), 0, strlen("CUPS:") + strlen(dests[i].name)+1);
         sprintf(port,"CUPS:%s", dests[i].name);
-        /* FIXME: remove extension. Fix gdi32/drivers and comdlg32/printdlg first */
-        devline = HeapAlloc(GetProcessHeap(), 0, sizeof("WINEPS.DRV,,15,45") + strlen(port));
-        sprintf(devline, "WINEPS.DRV,%s", port);
-        WriteProfileStringA("devices", dests[i].name, devline);
-        if(RegCreateKeyW(HKEY_CURRENT_USER, user_printers_reg_key, &hkey) == ERROR_SUCCESS) {
-            RegSetValueExA(hkey, dests[i].name, 0, REG_SZ, (LPBYTE)devline, strlen(devline) + 1);
-            RegCloseKey(hkey);
-        }
-
-        lstrcatA(devline, ",15,45");
-        WriteProfileStringA("PrinterPorts", dests[i].name, devline);
-        if(RegCreateKeyW(HKEY_CURRENT_USER, WinNT_CV_PrinterPortsW, &hkey) == ERROR_SUCCESS) {
-            RegSetValueExA(hkey, dests[i].name, 0, REG_SZ, (LPBYTE)devline, strlen(devline) + 1);
-            RegCloseKey(hkey);
-        }
-
-        HeapFree(GetProcessHeap(), 0, devline);
 
         TRACE("Printer %d: %s\n", i, dests[i].name);
         if(RegOpenKeyA(hkeyPrinters, dests[i].name, &hkeyPrinter) == ERROR_SUCCESS) {
@@ -535,8 +521,8 @@ PRINTCAP_ParseEntry(const char *pent, BOOL isfirst) {
     PRINTER_INFO_2A	pinfo2a;
     char		*e,*s,*name,*prettyname,*devname;
     BOOL		ret = FALSE, set_default = FALSE;
-    char                *port = NULL, *devline,*env_default;
-    HKEY                hkeyPrinter, hkeyPrinters, hkey;
+    char *port = NULL, *env_default;
+    HKEY hkeyPrinter, hkeyPrinters;
 
     while (isspace(*pent)) pent++;
     s = strchr(pent,':');
@@ -594,24 +580,6 @@ PRINTCAP_ParseEntry(const char *pent, BOOL isfirst) {
     port = HeapAlloc(GetProcessHeap(),0,strlen("LPR:")+strlen(name)+1);
     sprintf(port,"LPR:%s",name);
 
-    /* FIXME: remove extension. Fix gdi32/drivers and comdlg32/printdlg first */
-    devline = HeapAlloc(GetProcessHeap(), 0, sizeof("WINEPS.DRV,,15,45") + strlen(port));
-    sprintf(devline, "WINEPS.DRV,%s", port);
-    WriteProfileStringA("devices", devname, devline);
-    if(RegCreateKeyW(HKEY_CURRENT_USER, user_printers_reg_key, &hkey) == ERROR_SUCCESS) {
-        RegSetValueExA(hkey, devname, 0, REG_SZ, (LPBYTE)devline, strlen(devline) + 1);
-        RegCloseKey(hkey);
-    }
-
-    lstrcatA(devline, ",15,45");
-    WriteProfileStringA("PrinterPorts", devname, devline);
-    if(RegCreateKeyW(HKEY_CURRENT_USER, WinNT_CV_PrinterPortsW, &hkey) == ERROR_SUCCESS) {
-        RegSetValueExA(hkey, devname, 0, REG_SZ, (LPBYTE)devline, strlen(devline) + 1);
-        RegCloseKey(hkey);
-    }
-
-    HeapFree(GetProcessHeap(),0,devline);
-    
     if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) !=
        ERROR_SUCCESS) {
         ERR("Can't create Printers key\n");
@@ -2438,6 +2406,46 @@ static HKEY WINSPOOL_OpenDriverReg( LPCVOID pEnvironment)
 }
 
 /*****************************************************************************
+ * set_devices_and_printerports [internal]
+ *
+ * set the [Devices] and [PrinterPorts] entries for a printer.
+ *
+ */
+static void set_devices_and_printerports(PRINTER_INFO_2W *pi)
+{
+    DWORD portlen = lstrlenW(pi->pPortName) * sizeof(WCHAR);
+    WCHAR *devline;
+    HKEY  hkey;
+
+    TRACE("(%p) %s\n", pi, debugstr_w(pi->pPrinterName));
+
+    /* FIXME: the driver must change to "winspool" */
+    devline = HeapAlloc(GetProcessHeap(), 0, sizeof(driver_nt) + portlen + sizeof(timeout_15_45));
+    if (devline) {
+        lstrcpyW(devline, driver_nt);
+        lstrcatW(devline, commaW);
+        lstrcatW(devline, pi->pPortName);
+
+        TRACE("using %s\n", debugstr_w(devline));
+        WriteProfileStringW(devicesW, pi->pPrinterName, devline);
+        if (!RegCreateKeyW(HKEY_CURRENT_USER, user_printers_reg_key, &hkey)) {
+            RegSetValueExW(hkey, pi->pPrinterName, 0, REG_SZ, (LPBYTE)devline,
+                            (lstrlenW(devline) + 1) * sizeof(WCHAR));
+            RegCloseKey(hkey);
+        }
+
+        lstrcatW(devline, timeout_15_45);
+        WriteProfileStringW(PrinterPortsW, pi->pPrinterName, devline);
+        if (!RegCreateKeyW(HKEY_CURRENT_USER, WinNT_CV_PrinterPortsW, &hkey)) {
+            RegSetValueExW(hkey, pi->pPrinterName, 0, REG_SZ, (LPBYTE)devline,
+                            (lstrlenW(devline) + 1) * sizeof(WCHAR));
+            RegCloseKey(hkey);
+        }
+        HeapFree(GetProcessHeap(), 0, devline);
+    }
+}
+
+/*****************************************************************************
  *          AddPrinterW  [WINSPOOL.@]
  */
 HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
@@ -2516,6 +2524,8 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
 	RegCloseKey(hkeyPrinters);
 	return 0;
     }
+
+    set_devices_and_printerports(pi);
     RegSetValueExW(hkeyPrinter, attributesW, 0, REG_DWORD,
 		   (LPBYTE)&pi->Attributes, sizeof(DWORD));
     set_reg_szW(hkeyPrinter, DatatypeW, pi->pDatatype);
