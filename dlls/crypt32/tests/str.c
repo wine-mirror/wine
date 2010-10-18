@@ -480,6 +480,24 @@ static const BYTE encodedQuotedCN[] = { 0x30,0x11,0x31,0x0f,0x30,0x0d,0x06,0x03,
  0x55, 0x04,0x03,0x1e,0x06,0x00,0x22,0x00,0x31,0x00,0x22, };
 static const BYTE encodedMultipleAttrCN[] = { 0x30,0x0e,0x31,0x0c,0x30,0x0a,
  0x06,0x03,0x55,0x04,0x03,0x13,0x03,0x31,0x2b,0x32 };
+static const BYTE encodedCommaCN[] = {
+0x30,0x0e,0x31,0x0c,0x30,0x0a,0x06,0x03,0x55,0x04,0x03,0x13,0x03,0x61,0x2c,
+0x62 };
+static const BYTE encodedEqualCN[] = {
+0x30,0x0e,0x31,0x0c,0x30,0x0a,0x06,0x03,0x55,0x04,0x03,0x13,0x03,0x61,0x3d,
+0x62 };
+static const BYTE encodedLessThanCN[] = {
+0x30,0x0d,0x31,0x0b,0x30,0x09,0x06,0x03,0x55,0x04,0x03,0x1e,0x02,0x00,0x3c
+};
+static const BYTE encodedGreaterThanCN[] = {
+0x30,0x0d,0x31,0x0b,0x30,0x09,0x06,0x03,0x55,0x04,0x03,0x1e,0x02,0x00,0x3e
+};
+static const BYTE encodedHashCN[] = {
+0x30,0x0d,0x31,0x0b,0x30,0x09,0x06,0x03,0x55,0x04,0x03,0x1e,0x02,0x00,0x23
+};
+static const BYTE encodedSemiCN[] = {
+0x30,0x0d,0x31,0x0b,0x30,0x09,0x06,0x03,0x55,0x04,0x03,0x1e,0x02,0x00,0x3b
+};
 
 static const struct StrToNameA namesA[] = {
  { "CN=1", sizeof(encodedSimpleCN), encodedSimpleCN },
@@ -489,6 +507,12 @@ static const struct StrToNameA namesA[] = {
  { "CN=\" 1 \"", sizeof(encodedSpacedCN), encodedSpacedCN },
  { "CN=\"\"\"1\"\"\"", sizeof(encodedQuotedCN), encodedQuotedCN },
  { "CN=\"1+2\"", sizeof(encodedMultipleAttrCN), encodedMultipleAttrCN },
+ { "CN=\"a,b\"", sizeof(encodedCommaCN), encodedCommaCN },
+ { "CN=\"a=b\"", sizeof(encodedEqualCN), encodedEqualCN },
+ { "CN=\"<\"", sizeof(encodedLessThanCN), encodedLessThanCN },
+ { "CN=\">\"", sizeof(encodedGreaterThanCN), encodedGreaterThanCN },
+ { "CN=\"#\"", sizeof(encodedHashCN), encodedHashCN },
+ { "CN=\";\"", sizeof(encodedSemiCN), encodedSemiCN },
 };
 
 static void test_CertStrToNameA(void)
@@ -561,6 +585,12 @@ static const WCHAR multipleAttrCN_W[] = { 'C','N','=','"','1','+','2','"',0 };
 static const WCHAR japaneseCN_W[] = { 'C','N','=',0x226f,0x575b,0 };
 static const BYTE encodedJapaneseCN[] = { 0x30,0x0f,0x31,0x0d,0x30,0x0b,0x06,
  0x03,0x55,0x04,0x03,0x1e,0x04,0x22,0x6f,0x57,0x5b };
+static const WCHAR commaCN_W[] = { 'C','N','=','"','a',',','b','"',0 };
+static const WCHAR equalCN_W[] = { 'C','N','=','"','a','=','b','"',0 };
+static const WCHAR lessThanCN_W[] = { 'C','N','=','"','<','"',0 };
+static const WCHAR greaterThanCN_W[] = { 'C','N','=','"','>','"',0 };
+static const WCHAR hashCN_W[] = { 'C','N','=','"','#','"',0 };
+static const WCHAR semiCN_W[] = { 'C','N','=','"',';','"',0 };
 
 static const struct StrToNameW namesW[] = {
  { simpleCN_W, sizeof(encodedSimpleCN), encodedSimpleCN },
@@ -571,6 +601,12 @@ static const struct StrToNameW namesW[] = {
  { quotedCN_W, sizeof(encodedQuotedCN), encodedQuotedCN },
  { multipleAttrCN_W, sizeof(encodedMultipleAttrCN), encodedMultipleAttrCN },
  { japaneseCN_W, sizeof(encodedJapaneseCN), encodedJapaneseCN },
+ { commaCN_W, sizeof(encodedCommaCN), encodedCommaCN },
+ { equalCN_W, sizeof(encodedEqualCN), encodedEqualCN },
+ { lessThanCN_W, sizeof(encodedLessThanCN), encodedLessThanCN },
+ { greaterThanCN_W, sizeof(encodedGreaterThanCN), encodedGreaterThanCN },
+ { hashCN_W, sizeof(encodedHashCN), encodedHashCN },
+ { semiCN_W, sizeof(encodedSemiCN), encodedSemiCN },
 };
 
 static void test_CertStrToNameW(void)
