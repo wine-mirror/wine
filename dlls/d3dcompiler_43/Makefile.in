@@ -5,7 +5,6 @@ EXTRALIBS = $(LIBWPP)
 
 C_SRCS = \
 	asmparser.c \
-	asmutils.c \
 	blob.c \
 	bytecodewriter.c \
 	compiler.c \
