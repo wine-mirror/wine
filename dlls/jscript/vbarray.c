@@ -63,8 +63,41 @@ static HRESULT VBArray_dimensions(script_ctx_t *ctx, vdisp_t *vthis, WORD flags,
 static HRESULT VBArray_getItem(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VBArrayInstance *vbarray;
+    int i, *indexes, size;
+    VARIANT out;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    vbarray = vbarray_this(vthis);
+    if(!vbarray)
+        return throw_type_error(ctx, ei, IDS_NOT_VBARRAY, NULL);
+
+    size = arg_cnt(dp);
+    if(size < SafeArrayGetDim(vbarray->safearray))
+        return throw_range_error(ctx, ei, IDS_SUBSCRIPT_OUT_OF_RANGE, NULL);
+
+    indexes = heap_alloc(sizeof(int)*size);
+    for(i=0; i<size; i++) {
+        hres = to_int32(ctx, get_arg(dp, i), ei, indexes+i);
+        if(FAILED(hres)) {
+            heap_free(indexes);
+            return hres;
+        }
+    }
+
+    hres = SafeArrayGetElement(vbarray->safearray, indexes, (void*)&out);
+    heap_free(indexes);
+    if(hres == DISP_E_BADINDEX)
+        return throw_range_error(ctx, ei, IDS_SUBSCRIPT_OUT_OF_RANGE, NULL);
+    else if(FAILED(hres))
+        return hres;
+
+    if(retv)
+        hres = VariantCopy(retv, &out);
+
+    return hres;
 }
 
 static HRESULT VBArray_lbound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,

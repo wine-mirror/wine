@@ -1904,6 +1904,8 @@ exception_test(function() {new VBArray(new VBArray(createArray()));}, "TypeError
 exception_test(function() {(new VBArray(createArray())).lbound("aaa");}, "RangeError", -2146828279);
 exception_test(function() {(new VBArray(createArray())).lbound(3);}, "RangeError", -2146828279);
 exception_test(function() {tmp = new Object(); tmp.lb = VBArray.prototype.lbound; tmp.lb();}, "TypeError", -2146823275);
+exception_test(function() {tmp = new Object(); tmp.lb = VBArray.prototype.lbound; tmp.lb();}, "TypeError", -2146823275);
+exception_test(function() {(new VBArray(createArray())).getItem(3);}, "RangeError", -2146828279);
 
 function testThisExcept(func, number) {
     exception_test(function() {func.call(new Object())}, "TypeError", number);
@@ -2259,5 +2261,8 @@ ok(tmp.lbound(1) == 0, "tmp.lbound(1) = " + tmp.lbound(1));
 ok(tmp.lbound(2, 1) == 2, "tmp.lbound(2, 1) = " + tmp.lbound(2, 1));
 ok(tmp.ubound() == 4, "tmp.ubound() = " + tmp.ubound());
 ok(tmp.ubound("2") == 3, "tmp.ubound(\"2\") = " + tmp.ubound("2"));
+ok(tmp.getItem(1, 2) == 3, "tmp.getItem(1, 2) = " + tmp.getItem(1, 2));
+ok(tmp.getItem(2, 3) == 33, "tmp.getItem(2, 3) = " + tmp.getItem(2, 3));
+ok(tmp.getItem(3, 2) == 13, "tmp.getItem(3, 2) = " + tmp.getItem(3, 2));
 
 reportSuccess();
