@@ -26,6 +26,7 @@ STRINGTABLE
 {
     IDS_TO_PRIMITIVE        "Fehler beim umwandeln des Objektes in einen Grundtyp"
     IDS_INVALID_CALL_ARG    "Ungültiger Funktionsaufruf oder Argument"
+    IDS_SUBSCRIPT_OUT_OF_RANGE "Index außerhalb des Bereichs"
     IDS_CREATE_OBJ_ERROR    "Automatisierungsserver konnte das Objekt nicht erstellen"
     IDS_NO_PROPERTY         "Das Objekt unterstützt diese Eigenschaft oder Methode nicht"
     IDS_UNSUPPORTED_ACTION  "Das Objekt unterstützt diese Aktion nicht"
@@ -42,6 +43,7 @@ STRINGTABLE
     IDS_ILLEGAL_ASSIGN      "Unzulässige Zuweisung"
     IDS_UNDEFINED           "'|' nicht definiert"
     IDS_NOT_BOOL            "Boolisches Objekt erwartet"
+    IDS_NOT_VBARRAY         "VBArray Objekt erwartet"
     IDS_JSCRIPT_EXPECTED    "JScript Objekt erwartet"
     IDS_REGEXP_SYNTAX_ERROR "Syntax Fehler in regulärem Ausdruck"
     IDS_URI_INVALID_CHAR    "Zu verschlüsselnde URI enthält ungültige Zeichen"
