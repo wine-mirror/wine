@@ -57,6 +57,7 @@ static FORMATETC *g_expected_fetc = NULL;
 
 static BOOL g_showRunnable = TRUE;
 static BOOL g_isRunning = TRUE;
+static BOOL g_failGetMiscStatus;
 
 #define CHECK_EXPECTED_METHOD(method_name) \
     do { \
@@ -328,8 +329,16 @@ static HRESULT WINAPI OleObject_GetMiscStatus
 )
 {
     CHECK_EXPECTED_METHOD("OleObject_GetMiscStatus");
-    *pdwStatus = DVASPECT_CONTENT;
-    return S_OK;
+    if(!g_failGetMiscStatus)
+    {
+        *pdwStatus = OLEMISC_RECOMPOSEONRESIZE;
+        return S_OK;
+    }
+    else
+    {
+        *pdwStatus = 0x1234;
+        return E_FAIL;
+    }
 }
 
 static HRESULT WINAPI OleObject_SetColorScheme
@@ -899,10 +908,32 @@ static void test_OleLoad(IStorage *pStorage)
         { "OleObject_SetClientSite", 0 },
         { "OleObject_Release", 0 },
         { "OleObject_QueryInterface", 0 },
+        { "OleObject_GetMiscStatus", 0 },
         { "OleObject_Release", 0 },
         { NULL, 0 }
     };
 
+    /* Test once with IOleObject_GetMiscStatus failing */
+    expected_method_list = methods_oleload;
+    g_failGetMiscStatus = TRUE;
+    trace("OleLoad:\n");
+    hr = OleLoad(pStorage, &IID_IOleObject, (IOleClientSite *)0xdeadbeef, (void **)&pObject);
+    ok(hr == S_OK ||
+       broken(hr == E_INVALIDARG), /* win98 and win2k */
+       "OleLoad failed with error 0x%08x\n", hr);
+    if(pObject)
+    {
+        DWORD dwStatus = 0xdeadbeef;
+        hr = IOleObject_GetMiscStatus(pObject, DVASPECT_CONTENT, &dwStatus);
+        ok(hr == E_FAIL, "Got 0x%08x\n", hr);
+        ok(dwStatus == 0x1234, "Got 0x%08x\n", dwStatus);
+
+        IOleObject_Release(pObject);
+        CHECK_NO_EXTRA_METHODS();
+    }
+
+    /* Test again, let IOleObject_GetMiscStatus succeed. */
+    g_failGetMiscStatus = FALSE;
     expected_method_list = methods_oleload;
     trace("OleLoad:\n");
     hr = OleLoad(pStorage, &IID_IOleObject, (IOleClientSite *)0xdeadbeef, (void **)&pObject);
@@ -911,6 +942,11 @@ static void test_OleLoad(IStorage *pStorage)
        "OleLoad failed with error 0x%08x\n", hr);
     if (pObject)
     {
+        DWORD dwStatus = 0xdeadbeef;
+        hr = IOleObject_GetMiscStatus(pObject, DVASPECT_CONTENT, &dwStatus);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(dwStatus == 1, "Got 0x%08x\n", dwStatus);
+
         IOleObject_Release(pObject);
         CHECK_NO_EXTRA_METHODS();
     }

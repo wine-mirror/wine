@@ -1181,13 +1181,12 @@ HRESULT WINAPI OleLoad(
     }
   }
 
-  if (SUCCEEDED(hres))
-    /*
-     * Initialize the object with it's IPersistStorage interface.
-     */
-    hres = IOleObject_QueryInterface(pUnk,
-				     &IID_IPersistStorage,
-				     (void**)&persistStorage);
+  /*
+   * Initialize the object with its IPersistStorage interface.
+   */
+  hres = IOleObject_QueryInterface(pUnk,
+                                   &IID_IPersistStorage,
+                                   (void**)&persistStorage);
 
   if (SUCCEEDED(hres))
   {
