@@ -438,10 +438,24 @@ static HRESULT WINAPI domelem_put_nodeTypedValue(
 
 static HRESULT WINAPI domelem_get_dataType(
     IXMLDOMElement *iface,
-    VARIANT* var1)
+    VARIANT* typename)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    return IXMLDOMNode_get_dataType( IXMLDOMNode_from_impl(&This->node), var1 );
+    xmlChar *pVal = xmlGetNsProp(get_element(This), (const xmlChar*)"dt",
+                                 (const xmlChar*)"urn:schemas-microsoft-com:datatypes");
+
+    TRACE("(%p)->(%p)\n", This, typename);
+
+    V_VT(typename) = VT_NULL;
+
+    if (pVal)
+    {
+        V_VT(typename) = VT_BSTR;
+        V_BSTR(typename) = bstr_from_xmlChar( pVal );
+        xmlFree(pVal);
+    }
+
+    return (V_VT(typename) != VT_NULL) ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI domelem_put_dataType(

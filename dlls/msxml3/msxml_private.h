@@ -172,7 +172,6 @@ extern HRESULT node_get_next_sibling(xmlnode*,IXMLDOMNode**);
 extern HRESULT node_insert_before(xmlnode*,IXMLDOMNode*,const VARIANT*,IXMLDOMNode**);
 extern HRESULT node_replace_child(xmlnode*,IXMLDOMNode*,IXMLDOMNode*,IXMLDOMNode**);
 
-
 extern HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document);
 
 static inline BSTR bstr_from_xmlChar(const xmlChar *str)
@@ -220,6 +219,15 @@ static inline HRESULT return_null_ptr(void **p)
     if(!p)
         return E_INVALIDARG;
     *p = NULL;
+    return S_FALSE;
+}
+
+static inline HRESULT return_null_var(VARIANT *p)
+{
+    if(!p)
+        return E_INVALIDARG;
+
+    V_VT(p) = VT_NULL;
     return S_FALSE;
 }
 

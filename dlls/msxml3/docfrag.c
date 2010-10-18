@@ -430,10 +430,11 @@ static HRESULT WINAPI domfrag_put_nodeTypedValue(
 
 static HRESULT WINAPI domfrag_get_dataType(
     IXMLDOMDocumentFragment *iface,
-    VARIANT* var1)
+    VARIANT* typename)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_get_dataType( IXMLDOMNode_from_impl(&This->node), var1 );
+    TRACE("(%p)->(%p)\n", This, typename);
+    return return_null_var( typename );
 }
 
 static HRESULT WINAPI domfrag_put_dataType(

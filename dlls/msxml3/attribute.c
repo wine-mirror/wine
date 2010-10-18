@@ -422,10 +422,11 @@ static HRESULT WINAPI domattr_put_nodeTypedValue(
 
 static HRESULT WINAPI domattr_get_dataType(
     IXMLDOMAttribute *iface,
-    VARIANT* var1)
+    VARIANT* typename)
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
-    return IXMLDOMNode_get_dataType( IXMLDOMNode_from_impl(&This->node), var1 );
+    TRACE("(%p)->(%p)\n", This, typename);
+    return return_null_var( typename );
 }
 
 static HRESULT WINAPI domattr_put_dataType(

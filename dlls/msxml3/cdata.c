@@ -433,10 +433,11 @@ static HRESULT WINAPI domcdata_put_nodeTypedValue(
 
 static HRESULT WINAPI domcdata_get_dataType(
     IXMLDOMCDATASection *iface,
-    VARIANT* var1)
+    VARIANT* typename)
 {
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
-    return IXMLDOMNode_get_dataType( IXMLDOMNode_from_impl(&This->node), var1 );
+    TRACE("(%p)->(%p)\n", This, typename);
+    return return_null_var( typename );
 }
 
 static HRESULT WINAPI domcdata_put_dataType(

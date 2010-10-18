@@ -1020,45 +1020,8 @@ static HRESULT WINAPI xmlnode_get_dataType(
     IXMLDOMNode *iface,
     VARIANT* dataTypeName)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
-    xmlChar *pVal;
-
-    TRACE("(%p)->(%p)\n", This, dataTypeName);
-
-    if(!dataTypeName)
-        return E_INVALIDARG;
-
-    /* Attribute, CDATA Section, Comment, Document, Document Fragment,
-        Entity, Notation, PI, and Text Node are non-typed. */
-    V_BSTR(dataTypeName) = NULL;
-    V_VT(dataTypeName) = VT_NULL;
-
-    switch ( This->node->type )
-    {
-    case XML_ELEMENT_NODE:
-        pVal = xmlGetNsProp(This->node, (const xmlChar*)"dt",
-                            (const xmlChar*)"urn:schemas-microsoft-com:datatypes");
-        if (pVal)
-        {
-            V_VT(dataTypeName) = VT_BSTR;
-            V_BSTR(dataTypeName) = bstr_from_xmlChar( pVal );
-            xmlFree(pVal);
-        }
-        break;
-    case XML_ENTITY_REF_NODE:
-        FIXME("XML_ENTITY_REF_NODE should return a valid value.\n");
-        break;
-    default:
-        TRACE("Type %d returning NULL\n", This->node->type);
-    }
-
-    /* non-typed nodes return S_FALSE */
-    if(V_VT(dataTypeName) == VT_NULL)
-    {
-        return S_FALSE;
-    }
-
-    return S_OK;
+    ERR("Should not be called\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI xmlnode_put_dataType(

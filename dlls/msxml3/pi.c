@@ -440,10 +440,11 @@ static HRESULT WINAPI dom_pi_put_nodeTypedValue(
 
 static HRESULT WINAPI dom_pi_get_dataType(
     IXMLDOMProcessingInstruction *iface,
-    VARIANT* var1)
+    VARIANT* typename)
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    return IXMLDOMNode_get_dataType( IXMLDOMNode_from_impl(&This->node), var1 );
+    TRACE("(%p)->(%p)\n", This, typename);
+    return return_null_var( typename );
 }
 
 static HRESULT WINAPI dom_pi_put_dataType(
