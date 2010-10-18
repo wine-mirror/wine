@@ -2256,5 +2256,7 @@ tmp = new VBArray(VBArray(createArray()));
 ok(tmp.lbound() == 0, "tmp.lbound() = " + tmp.lbound());
 ok(tmp.lbound(1) == 0, "tmp.lbound(1) = " + tmp.lbound(1));
 ok(tmp.lbound(2, 1) == 2, "tmp.lbound(2, 1) = " + tmp.lbound(2, 1));
+ok(tmp.ubound() == 4, "tmp.ubound() = " + tmp.ubound());
+ok(tmp.ubound("2") == 3, "tmp.ubound(\"2\") = " + tmp.ubound("2"));
 
 reportSuccess();
