@@ -898,8 +898,10 @@ unsigned char * WINAPI LPSAFEARRAY_UserMarshal(ULONG *pFlags, unsigned char *Buf
         VARTYPE vt;
         SAFEARRAY *psa = *ppsa;
         ULONG ulCellCount = SAFEARRAY_GetCellCount(psa);
+        SAFEARRAYBOUND *bound;
         SF_TYPE sftype;
         GUID guid;
+        INT i;
 
         sftype = SAFEARRAY_GetUnionType(psa);
 
@@ -932,7 +934,12 @@ unsigned char * WINAPI LPSAFEARRAY_UserMarshal(ULONG *pFlags, unsigned char *Buf
             Buffer += sizeof(guid);
         }
 
-        memcpy(Buffer, psa->rgsabound, sizeof(psa->rgsabound[0]) * psa->cDims);
+        /* bounds are marshaled in opposite order comparing to storage layout */
+        bound = (SAFEARRAYBOUND*)Buffer;
+        for (i = 0; i < psa->cDims; i++)
+        {
+            memcpy(bound++, &psa->rgsabound[psa->cDims-i-1], sizeof(psa->rgsabound[0]));
+        }
         Buffer += sizeof(psa->rgsabound[0]) * psa->cDims;
 
         *(ULONG *)Buffer = ulCellCount;
