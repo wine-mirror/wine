@@ -34,7 +34,7 @@
 @ stdcall D3DXCreateBox(ptr float float float ptr ptr)
 @ stdcall D3DXCreateBuffer(long ptr)
 @ stub D3DXCreateCompressedAnimationSet
-@ stub D3DXCreateCubeTexture
+@ stdcall D3DXCreateCubeTexture(ptr long long long long long ptr)
 @ stub D3DXCreateCubeTextureFromFileA
 @ stub D3DXCreateCubeTextureFromFileExA
 @ stub D3DXCreateCubeTextureFromFileExW

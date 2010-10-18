@@ -804,3 +804,30 @@ HRESULT WINAPI D3DXCreateTextureFromResourceExW(LPDIRECT3DDEVICE9 device,
 
     return D3DXERR_INVALIDDATA;
 }
+
+HRESULT WINAPI D3DXCreateCubeTexture(LPDIRECT3DDEVICE9 device,
+                                     UINT size,
+                                     UINT miplevels,
+                                     DWORD usage,
+                                     D3DFORMAT format,
+                                     D3DPOOL pool,
+                                     LPDIRECT3DCUBETEXTURE9 *texture)
+{
+    HRESULT hr;
+
+    TRACE("(%p, %u, %u, %#x, %#x, %#x, %p)\n", device, size, miplevels, usage, format,
+        pool, texture);
+
+    if (!device || !texture)
+        return D3DERR_INVALIDCALL;
+
+    hr = D3DXCheckCubeTextureRequirements(device, &size, &miplevels, usage, &format, pool);
+
+    if (FAILED(hr))
+    {
+        TRACE("D3DXCheckCubeTextureRequirements failed\n");
+        return hr;
+    }
+
+    return IDirect3DDevice9_CreateCubeTexture(device, size, miplevels, usage, format, pool, texture, NULL);
+}
