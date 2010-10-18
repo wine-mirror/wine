@@ -830,19 +830,13 @@ done:
 static Cursor create_cursor( HANDLE handle )
 {
     Cursor cursor = 0;
-    HDC hdc;
     ICONINFOEXW info;
     BITMAP bm;
 
     if (!handle) return get_empty_cursor();
 
-    if (!(hdc = CreateCompatibleDC( 0 ))) return 0;
     info.cbSize = sizeof(info);
-    if (!GetIconInfoExW( handle, &info ))
-    {
-        DeleteDC( hdc );
-        return 0;
-    }
+    if (!GetIconInfoExW( handle, &info )) return 0;
 
     GetObjectW( info.hbmMask, sizeof(bm), &bm );
     if (!info.hbmColor) bm.bmHeight /= 2;
@@ -856,11 +850,17 @@ static Cursor create_cursor( HANDLE handle )
 
     if (info.hbmColor)
     {
+        HDC hdc = CreateCompatibleDC( 0 );
+        if (hdc)
+        {
 #ifdef SONAME_LIBXCURSOR
-        if (pXcursorImagesLoadCursor) cursor = create_xcursor_cursor( hdc, &info, handle, bm.bmWidth, bm.bmHeight );
+            if (pXcursorImagesLoadCursor)
+                cursor = create_xcursor_cursor( hdc, &info, handle, bm.bmWidth, bm.bmHeight );
 #endif
-        if (!cursor) cursor = create_xlib_cursor( hdc, &info, bm.bmWidth, bm.bmHeight );
+            if (!cursor) cursor = create_xlib_cursor( hdc, &info, bm.bmWidth, bm.bmHeight );
+        }
         DeleteObject( info.hbmColor );
+        DeleteDC( hdc );
     }
     else
     {
@@ -872,7 +872,6 @@ static Cursor create_cursor( HANDLE handle )
     }
 
     DeleteObject( info.hbmMask );
-    DeleteDC( hdc );
     return cursor;
 }
 
