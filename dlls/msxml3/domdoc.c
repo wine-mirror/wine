@@ -2056,8 +2056,7 @@ static HRESULT WINAPI domdoc_loadXML(
     return hr;
 }
 
-static int XMLCALL domdoc_save_writecallback(void *ctx, const char *buffer,
-                                             int len)
+static int XMLCALL domdoc_save_writecallback(void *ctx, const char *buffer, int len)
 {
     DWORD written = -1;
 
@@ -2075,13 +2074,33 @@ static int XMLCALL domdoc_save_closecallback(void *ctx)
     return CloseHandle(ctx) ? 0 : -1;
 }
 
+static int XMLCALL domdoc_stream_save_writecallback(void *ctx, const char *buffer, int len)
+{
+    ULONG written = 0;
+    HRESULT hr;
+
+    hr = IStream_Write((IStream*)ctx, buffer, len, &written);
+    if (hr != S_OK)
+    {
+        WARN("stream write error: 0x%08x\n", hr);
+        return -1;
+    }
+    else
+        return written;
+}
+
+static int XMLCALL domdoc_stream_save_closecallback(void *ctx)
+{
+    IStream_Release((IStream*)ctx);
+    return 0;
+}
+
 static HRESULT WINAPI domdoc_save(
     IXMLDOMDocument3 *iface,
     VARIANT destination )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    HANDLE handle;
-    xmlSaveCtxtPtr ctx;
+    xmlSaveCtxtPtr ctx = NULL;
     xmlNodePtr xmldecl;
     HRESULT ret = S_OK;
 
@@ -2097,9 +2116,10 @@ static HRESULT WINAPI domdoc_save(
     if(V_VT(&destination) == VT_UNKNOWN)
     {
         IUnknown *pUnk = V_UNKNOWN(&destination);
-        IXMLDOMDocument2 *pDocument;
+        IXMLDOMDocument2 *document;
+        IStream *stream;
 
-        ret = IUnknown_QueryInterface(pUnk, &IID_IXMLDOMDocument3, (void**)&pDocument);
+        ret = IUnknown_QueryInterface(pUnk, &IID_IXMLDOMDocument3, (void**)&document);
         if(ret == S_OK)
         {
             VARIANT_BOOL success;
@@ -2108,40 +2128,53 @@ static HRESULT WINAPI domdoc_save(
             ret = IXMLDOMDocument3_get_xml(iface, &xml);
             if(ret == S_OK)
             {
-                ret = IXMLDOMDocument3_loadXML(pDocument, xml, &success);
+                ret = IXMLDOMDocument3_loadXML(document, xml, &success);
                 SysFreeString(xml);
             }
 
-            IXMLDOMDocument3_Release(pDocument);
+            IXMLDOMDocument3_Release(document);
+            return ret;
         }
 
-        TRACE("ret %d\n", ret);
+        ret = IUnknown_QueryInterface(pUnk, &IID_IStream, (void**)&stream);
+        if(ret == S_OK)
+        {
+            ctx = xmlSaveToIO(domdoc_stream_save_writecallback,
+                domdoc_stream_save_closecallback, stream, NULL, XML_SAVE_NO_DECL);
 
-        return ret;
+            if(!ctx)
+            {
+                IStream_Release(stream);
+                return E_FAIL;
+            }
+        }
     }
-
-    handle = CreateFileW( V_BSTR(&destination), GENERIC_WRITE, 0,
-                          NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
-    if( handle == INVALID_HANDLE_VALUE )
+    else
     {
-        WARN("failed to create file\n");
-        return S_FALSE;
-    }
+        /* save with file path */
+        HANDLE handle = CreateFileW( V_BSTR(&destination), GENERIC_WRITE, 0,
+                                    NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+        if( handle == INVALID_HANDLE_VALUE )
+        {
+            WARN("failed to create file\n");
+            return E_FAIL;
+        }
 
-    /* disable top XML declaration */
-    ctx = xmlSaveToIO(domdoc_save_writecallback, domdoc_save_closecallback,
-                      handle, NULL, XML_SAVE_NO_DECL);
-    if (!ctx)
-    {
-        CloseHandle(handle);
-        return S_FALSE;
+        /* disable top XML declaration */
+        ctx = xmlSaveToIO(domdoc_save_writecallback, domdoc_save_closecallback,
+                          handle, NULL, XML_SAVE_NO_DECL);
+        if (!ctx)
+        {
+            CloseHandle(handle);
+            return E_FAIL;
+        }
     }
 
     xmldecl = xmldoc_unlink_xmldecl(get_doc(This));
     if (xmlSaveDoc(ctx, get_doc(This)) == -1) ret = S_FALSE;
     xmldoc_link_xmldecl(get_doc(This), xmldecl);
 
-    /* will close file through close callback */
+    /* will release resources through close callback */
     xmlSaveClose(ctx);
 
     return ret;
