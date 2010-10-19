@@ -363,6 +363,9 @@ static BYTE encodedHashCN[] = {
 static BYTE encodedSemiCN[] = {
 0x30,0x0d,0x31,0x0b,0x30,0x09,0x06,0x03,0x55,0x04,0x03,0x1e,0x02,0x00,0x3b
 };
+static BYTE encodedNewlineCN[] = {
+0x30,0x11,0x31,0x0f,0x30,0x0d,0x06,0x03,0x55,0x04,0x03,0x1e,0x06,0x00,0x61,
+0x00,0x0a,0x00,0x62 };
 
 static void test_CertNameToStrA(void)
 {
@@ -457,6 +460,9 @@ static void test_CertNameToStrA(void)
     blob.pbData = encodedSemiCN;
     blob.cbData = sizeof(encodedSemiCN);
     test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\";\"", FALSE);
+    blob.pbData = encodedNewlineCN;
+    blob.cbData = sizeof(encodedNewlineCN);
+    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"a\nb\"", FALSE);
 }
 
 static void test_NameToStrConversionW(PCERT_NAME_BLOB pName, DWORD dwStrType,
@@ -499,6 +505,7 @@ static const WCHAR lessThanCN_W[] = { 'C','N','=','"','<','"',0 };
 static const WCHAR greaterThanCN_W[] = { 'C','N','=','"','>','"',0 };
 static const WCHAR hashCN_W[] = { 'C','N','=','"','#','"',0 };
 static const WCHAR semiCN_W[] = { 'C','N','=','"',';','"',0 };
+static const WCHAR newlineCN_W[] = { 'C','N','=','"','a','\n','b','"',0 };
 
 static void test_CertNameToStrW(void)
 {
@@ -594,6 +601,9 @@ static void test_CertNameToStrW(void)
     blob.pbData = encodedSemiCN;
     blob.cbData = sizeof(encodedSemiCN);
     test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, semiCN_W, FALSE);
+    blob.pbData = encodedNewlineCN;
+    blob.cbData = sizeof(encodedNewlineCN);
+    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, newlineCN_W, FALSE);
 }
 
 struct StrToNameA

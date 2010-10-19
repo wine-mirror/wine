@@ -41,6 +41,7 @@ static inline BOOL is_quotable_char(char c)
     case '>':
     case ';':
     case '#':
+    case '\n':
         return TRUE;
     default:
         return FALSE;
