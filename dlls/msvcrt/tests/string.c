@@ -1459,8 +1459,13 @@ static void test_wcsncat_s(void)
 
     dst[0] = 0;
     ret = p_wcsncat_s(dst, 2, src, _TRUNCATE);
-    todo_wine ok(ret == 80, "err = %d\n", ret);
+    ok(ret == STRUNCATE, "err = %d\n", ret);
     ok(dst[0] == 'a' && dst[1] == 0, "dst is %s\n", wine_dbgstr_w(dst));
+
+    memcpy(dst, abcW, sizeof(abcW));
+    dst[3] = 'd';
+    ret = p_wcsncat_s(dst, 4, src, 4);
+    ok(ret == EINVAL, "err = %d\n", ret);
 }
 
 START_TEST(string)

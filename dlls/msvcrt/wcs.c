@@ -1588,8 +1588,8 @@ INT CDECL MSVCRT_wcsncat_s(MSVCRT_wchar_t *dst, MSVCRT_size_t elem,
         const MSVCRT_wchar_t *src, MSVCRT_size_t count)
 {
     MSVCRT_size_t srclen;
-    MSVCRT_size_t i;
     MSVCRT_wchar_t dststart;
+    INT ret = 0;
 
     if (src == NULL && count > 0)
         return MSVCRT_EINVAL;
@@ -1597,34 +1597,33 @@ INT CDECL MSVCRT_wcsncat_s(MSVCRT_wchar_t *dst, MSVCRT_size_t elem,
         return MSVCRT_EINVAL;
     if (elem == 0)
         return MSVCRT_EINVAL;
+    if (count == 0)
+        return 0;
 
-    for (i = 0; i < elem; i++)
+    for (dststart = 0; dststart < elem; dststart++)
     {
-        dststart = i;
-        if (dst[i] == '\0')
+        if (dst[dststart] == '\0')
             break;
     }
     if (dststart == elem)
         return MSVCRT_EINVAL;
 
     if (count == MSVCRT__TRUNCATE)
-        srclen = elem - dststart - 1;
-    else
-        srclen = count;
-    for (i = 0; i < srclen; i++)
     {
-        if (src[i] == '\0')
+        srclen = strlenW(src);
+        if (srclen >= (elem - dststart))
         {
-            srclen = i;
-            break;
+            srclen = elem - dststart - 1;
+            ret = MSVCRT_STRUNCATE;
         }
     }
-
+    else
+        srclen = min(strlenW(src), count);
     if (srclen < (elem - dststart))
     {
         memcpy(&dst[dststart], src, srclen*sizeof(MSVCRT_wchar_t));
         dst[srclen] = '\0';
-        return 0;
+        return ret;
     }
     dst[0] = '\0';
     return MSVCRT_ERANGE;
