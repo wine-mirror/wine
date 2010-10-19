@@ -315,3 +315,5 @@ HRESULT WINAPI AMovieSetupRegisterFilter2( const AMOVIESETUP_FILTER const * pFil
 
 /* Dll Functions */
 BOOL WINAPI STRMBASE_DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv);
+HRESULT WINAPI STRMBASE_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv);
+HRESULT WINAPI STRMBASE_DllCanUnloadNow(void);
