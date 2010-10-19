@@ -263,7 +263,7 @@ static HRESULT invoke_prop_func(jsdisp_t *This, jsdisp_t *jsthis, dispex_prop_t 
     case PROP_BUILTIN: {
         vdisp_t vthis;
 
-        if(flags == DISPATCH_CONSTRUCT && (prop->flags & DISPATCH_METHOD)) {
+        if(flags == DISPATCH_CONSTRUCT && (prop->flags & PROPF_METHOD)) {
             WARN("%s is not a constructor\n", debugstr_w(prop->name));
             return E_INVALIDARG;
         }
@@ -576,6 +576,8 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     memset(&jsexcept, 0, sizeof(jsexcept));
 
     switch(wFlags) {
+    case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
+        wFlags = DISPATCH_METHOD;
     case DISPATCH_METHOD:
     case DISPATCH_CONSTRUCT:
         hres = invoke_prop_func(This, This, prop, wFlags, pdp, pvarRes, &jsexcept, pspCaller);
@@ -940,6 +942,8 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, DIS
     }
 
     memset(ei, 0, sizeof(*ei));
+    if(retv && arg_cnt(dp))
+        flags |= DISPATCH_PROPERTYGET;
 
     if(retv)
         V_VT(retv) = VT_EMPTY;
