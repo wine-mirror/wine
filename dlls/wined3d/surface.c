@@ -4979,10 +4979,6 @@ static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_
             && ((dst_format->Flags & WINED3DFMT_FLAG_FBO_ATTACHABLE) || (dst_usage & WINED3DUSAGE_RENDERTARGET)))
         return FALSE;
 
-    if (!is_identity_fixup(src_format->color_fixup)
-            || !is_identity_fixup(dst_format->color_fixup))
-        return FALSE;
-
     if (!(src_format->id == dst_format->id
             || (is_identity_fixup(src_format->color_fixup)
             && is_identity_fixup(dst_format->color_fixup))))
