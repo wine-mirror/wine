@@ -70,7 +70,7 @@ WINE_DECLARE_DEBUG_CHANNEL(module);
 #endif
 
 /* File view */
-typedef struct file_view
+struct file_view
 {
     struct list   entry;       /* Entry in global view list */
     void         *base;        /* Base address */
@@ -78,7 +78,7 @@ typedef struct file_view
     HANDLE        mapping;     /* Handle to the file mapping */
     unsigned int  protect;     /* Protection for all pages at allocation time */
     BYTE          prot[1];     /* Protection byte for each page */
-} FILE_VIEW;
+};
 
 
 /* Conversion from VPROT_* to Win32 flags */
@@ -196,7 +196,7 @@ static int VIRTUAL_GetUnixProt( BYTE vprot )
 /***********************************************************************
  *           VIRTUAL_DumpView
  */
-static void VIRTUAL_DumpView( FILE_VIEW *view )
+static void VIRTUAL_DumpView( struct file_view *view )
 {
     UINT i, count;
     char *addr = view->base;
@@ -238,7 +238,7 @@ static void VIRTUAL_Dump(void)
 
     TRACE( "Dump of all virtual memory views:\n" );
     server_enter_uninterrupted_section( &csVirtual, &sigset );
-    LIST_FOR_EACH_ENTRY( view, &views_list, FILE_VIEW, entry )
+    LIST_FOR_EACH_ENTRY( view, &views_list, struct file_view, entry )
     {
         VIRTUAL_DumpView( view );
     }
@@ -597,7 +597,7 @@ static NTSTATUS get_vprot_flags( DWORD protect, unsigned int *vprot )
  *	TRUE: Success
  *	FALSE: Failure
  */
-static BOOL VIRTUAL_SetProt( FILE_VIEW *view, /* [in] Pointer to view */
+static BOOL VIRTUAL_SetProt( struct file_view *view, /* [in] Pointer to view */
                              void *base,      /* [in] Starting address */
                              size_t size,     /* [in] Size in bytes */
                              BYTE vprot )     /* [in] Protections to use */
@@ -1403,7 +1403,7 @@ NTSTATUS virtual_create_builtin_view( void *module )
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( module );
     SIZE_T size = nt->OptionalHeader.SizeOfImage;
     IMAGE_SECTION_HEADER *sec;
-    FILE_VIEW *view;
+    struct file_view *view;
     void *base;
     int i;
 
@@ -1438,7 +1438,7 @@ NTSTATUS virtual_create_builtin_view( void *module )
  */
 NTSTATUS virtual_alloc_thread_stack( TEB *teb, SIZE_T reserve_size, SIZE_T commit_size )
 {
-    FILE_VIEW *view;
+    struct file_view *view;
     NTSTATUS status;
     sigset_t sigset;
     SIZE_T size;
@@ -1499,7 +1499,7 @@ void virtual_clear_thread_stack(void)
  */
 NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err )
 {
-    FILE_VIEW *view;
+    struct file_view *view;
     NTSTATUS ret = STATUS_ACCESS_VIOLATION;
     sigset_t sigset;
 
@@ -1538,7 +1538,7 @@ NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err )
  */
 BOOL virtual_handle_stack_fault( void *addr )
 {
-    FILE_VIEW *view;
+    struct file_view *view;
     BOOL ret = FALSE;
 
     RtlEnterCriticalSection( &csVirtual );  /* no need for signal masking inside signal handler */
@@ -1882,7 +1882,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
  */
 NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *size_ptr, ULONG type )
 {
-    FILE_VIEW *view;
+    struct file_view *view;
     char *base;
     sigset_t sigset;
     NTSTATUS status = STATUS_SUCCESS;
@@ -1966,7 +1966,7 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
 NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *size_ptr,
                                         ULONG new_prot, ULONG *old_prot )
 {
-    FILE_VIEW *view;
+    struct file_view *view;
     sigset_t sigset;
     NTSTATUS status = STATUS_SUCCESS;
     char *base;
@@ -2083,7 +2083,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
                                       MEMORY_INFORMATION_CLASS info_class, PVOID buffer,
                                       SIZE_T len, SIZE_T *res_len )
 {
-    FILE_VIEW *view;
+    struct file_view *view;
     char *base, *alloc_base = 0;
     struct list *ptr;
     SIZE_T size = 0;
@@ -2561,7 +2561,7 @@ done:
  */
 NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
 {
-    FILE_VIEW *view;
+    struct file_view *view;
     NTSTATUS status = STATUS_NOT_MAPPED_VIEW;
     sigset_t sigset;
     void *base = ROUND_ADDR( addr, page_mask );
@@ -2598,7 +2598,7 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
 NTSTATUS WINAPI NtFlushVirtualMemory( HANDLE process, LPCVOID *addr_ptr,
                                       SIZE_T *size_ptr, ULONG unknown )
 {
-    FILE_VIEW *view;
+    struct file_view *view;
     NTSTATUS status = STATUS_SUCCESS;
     sigset_t sigset;
     void *addr = ROUND_ADDR( *addr_ptr, page_mask );
