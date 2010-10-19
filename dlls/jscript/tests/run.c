@@ -487,6 +487,9 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         case VT_BOOL:
             V_BSTR(pvarRes) = a2bstr("VT_BOOL");
             break;
+        case VT_ARRAY|VT_VARIANT:
+            V_BSTR(pvarRes) = a2bstr("VT_ARRAY|VT_VARIANT");
+            break;
         default:
             ok(0, "unknown vt %d\n", V_VT(pdp->rgvarg));
             return E_FAIL;

@@ -149,8 +149,8 @@ tmp = Object.prototype.toString.call(this);
 ok(tmp === "[object Object]", "toString.call(this) = " + tmp);
 (function () { tmp = Object.prototype.toString.call(arguments); })();
 ok(tmp === "[object Object]", "toString.call(arguments) = " + tmp);
-(tmp = new VBArray(createArray())).f = Object.prototype.toString;
-ok(tmp.f() === "[object Object]", "tmp.f() = " + tmp.f());
+tmp = Object.prototype.toString.call(new VBArray(createArray()));
+ok(tmp === "[object Object]", "toString.call(new VBArray()) = " + tmp);
 
 ok(Object(1) instanceof Number, "Object(1) is not instance of Number");
 ok(Object("") instanceof String, "Object('') is not instance of String");
@@ -1903,8 +1903,7 @@ exception_test(function() {new VBArray();}, "TypeError", -2146823275);
 exception_test(function() {new VBArray(new VBArray(createArray()));}, "TypeError", -2146823275);
 exception_test(function() {createArray().lbound("aaa");}, "RangeError", -2146828279);
 exception_test(function() {createArray().lbound(3);}, "RangeError", -2146828279);
-exception_test(function() {tmp = new Object(); tmp.lb = VBArray.prototype.lbound; tmp.lb();}, "TypeError", -2146823275);
-exception_test(function() {tmp = new Object(); tmp.lb = VBArray.prototype.lbound; tmp.lb();}, "TypeError", -2146823275);
+exception_test(function() {VBArray.prototype.lbound.call(new Object());}, "TypeError", -2146823275);
 exception_test(function() {createArray().getItem(3);}, "RangeError", -2146828279);
 
 function testThisExcept(func, number) {
@@ -2253,7 +2252,10 @@ ok(unescape.length == 1, "unescape.length = " + unescape.length);
 String.length = 3;
 ok(String.length == 1, "String.length = " + String.length);
 
-var tmp = new VBArray(createArray());
+var tmp = createArray();
+ok(getVT(tmp) == "VT_ARRAY|VT_VARIANT", "getVT(createArray()) = " + getVT(tmp));
+ok(getVT(VBArray(tmp)) == "VT_ARRAY|VT_VARIANT", "getVT(VBArray(tmp)) = " + getVT(VBArray(tmp)));
+tmp = new VBArray(tmp);
 tmp = new VBArray(VBArray(createArray()));
 ok(tmp.dimensions() == 2, "tmp.dimensions() = " + tmp.dimensions());
 ok(tmp.lbound() == 0, "tmp.lbound() = " + tmp.lbound());
@@ -2265,5 +2267,7 @@ ok(tmp.getItem(1, 2) == 3, "tmp.getItem(1, 2) = " + tmp.getItem(1, 2));
 ok(tmp.getItem(2, 3) == 33, "tmp.getItem(2, 3) = " + tmp.getItem(2, 3));
 ok(tmp.getItem(3, 2) == 13, "tmp.getItem(3, 2) = " + tmp.getItem(3, 2));
 ok(tmp.toArray() == "2,3,12,13,22,23,32,33,42,43", "tmp.toArray() = " + tmp.toArray());
+ok(createArray().toArray() == "2,3,12,13,22,23,32,33,42,43",
+        "createArray.toArray()=" + createArray().toArray());
 
 reportSuccess();
