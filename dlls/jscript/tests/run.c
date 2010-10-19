@@ -70,6 +70,7 @@ DEFINE_EXPECT(testobj_prop_d);
 DEFINE_EXPECT(testobj_noprop_d);
 DEFINE_EXPECT(GetItemInfo_testVal);
 DEFINE_EXPECT(ActiveScriptSite_OnScriptError);
+DEFINE_EXPECT(invoke_func);
 
 #define DISPID_GLOBAL_TESTPROPGET   0x1000
 #define DISPID_GLOBAL_TESTPROPPUT   0x1001
@@ -83,7 +84,9 @@ DEFINE_EXPECT(ActiveScriptSite_OnScriptError);
 #define DISPID_GLOBAL_TESTTHIS      0x1009
 #define DISPID_GLOBAL_TESTTHIS2     0x100a
 #define DISPID_GLOBAL_INVOKEVERSION 0x100b
-#define DISPID_TEST_CREATEARRAY     0x100c
+#define DISPID_GLOBAL_CREATEARRAY   0x100c
+#define DISPID_GLOBAL_PROPGETFUNC   0x100d
+#define DISPID_GLOBAL_OBJECT_FLAG   0x100e
 
 #define DISPID_TESTOBJ_PROP         0x2000
 
@@ -236,17 +239,28 @@ static HRESULT WINAPI testObj_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid,
 {
     switch(id) {
     case DISPID_VALUE:
-        CHECK_EXPECT(testobj_value);
-
-        ok(wFlags == INVOKE_PROPERTYGET, "wFlags = %x\n", wFlags);
         ok(pdp != NULL, "pdp == NULL\n");
-        ok(!pdp->rgvarg, "rgvarg != NULL\n");
         ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
-        ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
         ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
         ok(pvarRes != NULL, "pvarRes == NULL\n");
         ok(V_VT(pvarRes) ==  VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
         ok(pei != NULL, "pei == NULL\n");
+
+        switch(wFlags) {
+        case INVOKE_PROPERTYGET:
+            CHECK_EXPECT(testobj_value);
+            ok(!pdp->rgvarg, "rgvarg != NULL\n");
+            ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
+            break;
+        case INVOKE_FUNC:
+            ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
+            break;
+        case INVOKE_FUNC|INVOKE_PROPERTYGET:
+            ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+            break;
+        default:
+            ok(0, "invalid flag (%x)\n", wFlags);
+        }
 
         V_VT(pvarRes) = VT_I4;
         V_I4(pvarRes) = 1;
@@ -359,7 +373,17 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
     }
     if(!strcmp_wa(bstrName, "createArray")) {
         test_grfdex(grfdex, fdexNameCaseSensitive);
-        *pid = DISPID_TEST_CREATEARRAY;
+        *pid = DISPID_GLOBAL_CREATEARRAY;
+        return S_OK;
+    }
+    if(!strcmp_wa(bstrName, "propGetFunc")) {
+        test_grfdex(grfdex, fdexNameCaseSensitive);
+        *pid = DISPID_GLOBAL_PROPGETFUNC;
+        return S_OK;
+    }
+    if(!strcmp_wa(bstrName, "objectFlag")) {
+        test_grfdex(grfdex, fdexNameCaseSensitive);
+        *pid = DISPID_GLOBAL_OBJECT_FLAG;
         return S_OK;
     }
 
@@ -579,7 +603,7 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
 
         return S_OK;
 
-    case DISPID_TEST_CREATEARRAY: {
+    case DISPID_GLOBAL_CREATEARRAY: {
         SAFEARRAYBOUND bound[2];
         VARIANT *data;
         int i,j;
@@ -612,6 +636,78 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         }
         SafeArrayUnaccessData(V_ARRAY(pvarRes));
 
+        return S_OK;
+    }
+
+    case DISPID_GLOBAL_PROPGETFUNC:
+        switch(wFlags) {
+        case INVOKE_FUNC:
+            CHECK_EXPECT(invoke_func);
+            break;
+        case INVOKE_FUNC|INVOKE_PROPERTYGET:
+            ok(pdp->cArgs != 0, "pdp->cArgs = %d\n", pdp->cArgs);
+            ok(pvarRes != NULL, "pdp->pvarRes == NULL\n");
+            break;
+        default:
+            ok(0, "invalid flag (%x)\n", wFlags);
+        }
+
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pei != NULL, "pei == NULL\n");
+
+        if(pvarRes) {
+            ok(V_VT(pvarRes) ==  VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+            V_VT(pvarRes) = VT_I4;
+            V_I4(pvarRes) = pdp->cArgs;
+        }
+
+        return S_OK;
+
+    case DISPID_GLOBAL_OBJECT_FLAG: {
+        IDispatchEx *dispex;
+        BSTR str;
+        HRESULT hres;
+
+        hres = IDispatch_QueryInterface(script_disp, &IID_IDispatchEx, (void**)&dispex);
+        ok(hres == S_OK, "hres = %x\n", hres);
+
+        str = a2bstr("Object");
+        hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &id);
+        SysFreeString(str);
+        ok(hres == S_OK, "hres = %x\n", hres);
+
+        hres = IDispatchEx_InvokeEx(dispex, id, lcid, DISPATCH_METHOD, pdp, NULL, pei, pspCaller);
+        ok(hres == S_OK, "hres = %x\n", hres);
+
+        V_VT(pvarRes) = VT_EMPTY;
+        hres = IDispatchEx_InvokeEx(dispex, id, lcid, DISPATCH_METHOD, pdp, pvarRes, pei, pspCaller);
+        ok(hres == S_OK, "hres = %x\n", hres);
+        ok(V_VT(pvarRes) == VT_DISPATCH, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        VariantClear(pvarRes);
+
+        hres = IDispatchEx_InvokeEx(dispex, id, lcid, DISPATCH_METHOD|DISPATCH_PROPERTYGET, pdp, NULL, pei, pspCaller);
+        ok(hres == S_OK, "hres = %x\n", hres);
+
+        V_VT(pvarRes) = VT_EMPTY;
+        hres = IDispatchEx_InvokeEx(dispex, id, lcid, DISPATCH_CONSTRUCT, pdp, pvarRes, pei, pspCaller);
+        ok(hres == S_OK, "hres = %x\n", hres);
+        ok(V_VT(pvarRes) == VT_DISPATCH, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        VariantClear(pvarRes);
+
+        hres = IDispatchEx_InvokeEx(dispex, id, lcid, DISPATCH_CONSTRUCT, pdp, NULL, pei, pspCaller);
+        ok(hres == S_OK, "hres = %x\n", hres);
+
+        V_VT(pvarRes) = VT_EMPTY;
+        hres = IDispatchEx_InvokeEx(dispex, id, lcid, DISPATCH_CONSTRUCT|DISPATCH_PROPERTYGET, pdp, pvarRes, pei, pspCaller);
+        ok(hres == E_INVALIDARG, "hres = %x\n", hres);
+
+        V_VT(pvarRes) = VT_EMPTY;
+        hres = IDispatchEx_InvokeEx(dispex, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+        ok(hres == S_OK, "hres = %x\n", hres);
+        ok(V_VT(pvarRes) == VT_DISPATCH, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        IDispatchEx_Release(dispex);
         return S_OK;
     }
     }
@@ -1269,6 +1365,24 @@ static void run_tests(void)
     parse_script_a("function f() { var testPropGet; }");
     parse_script_a("(function () { var testPropGet; })();");
     parse_script_a("(function () { eval('var testPropGet;'); })();");
+
+    SET_EXPECT(invoke_func);
+    parse_script_a("ok(propGetFunc() == 0, \"Incorrect propGetFunc value\");");
+    CHECK_CALLED(invoke_func);
+    parse_script_a("ok(propGetFunc(1) == 1, \"Incorrect propGetFunc value\");");
+    parse_script_a("ok(propGetFunc(1, 2) == 2, \"Incorrect propGetFunc value\");");
+    SET_EXPECT(invoke_func);
+    parse_script_a("ok(propGetFunc().toString() == 0, \"Incorrect propGetFunc value\");");
+    CHECK_CALLED(invoke_func);
+    parse_script_a("ok(propGetFunc(1).toString() == 1, \"Incorrect propGetFunc value\");");
+    SET_EXPECT(invoke_func);
+    parse_script_a("propGetFunc(1);");
+    CHECK_CALLED(invoke_func);
+
+    parse_script_a("objectFlag(1).toString();");
+
+    parse_script_a("(function() { var tmp = (function () { return testObj; })()(1);})();");
+    parse_script_a("(function() { var tmp = (function () { return testObj; })()();})();");
 
     parse_script_a("ok((testObj instanceof Object) === false, 'testObj is instance of Object');");
 

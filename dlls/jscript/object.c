@@ -210,7 +210,10 @@ static HRESULT ObjectConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         if(FAILED(hres))
             return hres;
 
-        var_set_jsdisp(retv, obj);
+        if(retv)
+            var_set_jsdisp(retv, obj);
+        else
+            jsdisp_release(obj);
         break;
     }
 
