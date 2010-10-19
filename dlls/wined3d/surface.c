@@ -149,21 +149,10 @@ static inline void cube_coords_float(const RECT *r, UINT w, UINT h, struct float
     f->b = ((r->bottom * 2.0f) / h) - 1.0f;
 }
 
-static void surface_get_blt_info(GLenum target, const RECT *rect_in, GLsizei w, GLsizei h, struct blt_info *info)
+static void surface_get_blt_info(GLenum target, const RECT *rect, GLsizei w, GLsizei h, struct blt_info *info)
 {
     GLfloat (*coords)[3] = info->coords;
-    RECT rect;
     struct float_rect f;
-
-    if (rect_in)
-        rect = *rect_in;
-    else
-    {
-        rect.left = 0;
-        rect.top = h;
-        rect.right = w;
-        rect.bottom = 0;
-    }
 
     switch (target)
     {
@@ -174,20 +163,20 @@ static void surface_get_blt_info(GLenum target, const RECT *rect_in, GLsizei w, 
             info->binding = GL_TEXTURE_BINDING_2D;
             info->bind_target = GL_TEXTURE_2D;
             info->tex_type = tex_2d;
-            coords[0][0] = (float)rect.left / w;
-            coords[0][1] = (float)rect.top / h;
+            coords[0][0] = (float)rect->left / w;
+            coords[0][1] = (float)rect->top / h;
             coords[0][2] = 0.0f;
 
-            coords[1][0] = (float)rect.right / w;
-            coords[1][1] = (float)rect.top / h;
+            coords[1][0] = (float)rect->right / w;
+            coords[1][1] = (float)rect->top / h;
             coords[1][2] = 0.0f;
 
-            coords[2][0] = (float)rect.left / w;
-            coords[2][1] = (float)rect.bottom / h;
+            coords[2][0] = (float)rect->left / w;
+            coords[2][1] = (float)rect->bottom / h;
             coords[2][2] = 0.0f;
 
-            coords[3][0] = (float)rect.right / w;
-            coords[3][1] = (float)rect.bottom / h;
+            coords[3][0] = (float)rect->right / w;
+            coords[3][1] = (float)rect->bottom / h;
             coords[3][2] = 0.0f;
             break;
 
@@ -195,17 +184,17 @@ static void surface_get_blt_info(GLenum target, const RECT *rect_in, GLsizei w, 
             info->binding = GL_TEXTURE_BINDING_RECTANGLE_ARB;
             info->bind_target = GL_TEXTURE_RECTANGLE_ARB;
             info->tex_type = tex_rect;
-            coords[0][0] = rect.left;   coords[0][1] = rect.top;     coords[0][2] = 0.0f;
-            coords[1][0] = rect.right;  coords[1][1] = rect.top;     coords[1][2] = 0.0f;
-            coords[2][0] = rect.left;   coords[2][1] = rect.bottom;  coords[2][2] = 0.0f;
-            coords[3][0] = rect.right;  coords[3][1] = rect.bottom;  coords[3][2] = 0.0f;
+            coords[0][0] = rect->left;  coords[0][1] = rect->top;       coords[0][2] = 0.0f;
+            coords[1][0] = rect->right; coords[1][1] = rect->top;       coords[1][2] = 0.0f;
+            coords[2][0] = rect->left;  coords[2][1] = rect->bottom;    coords[2][2] = 0.0f;
+            coords[3][0] = rect->right; coords[3][1] = rect->bottom;    coords[3][2] = 0.0f;
             break;
 
         case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
             info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
             info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
             info->tex_type = tex_cube;
-            cube_coords_float(&rect, w, h, &f);
+            cube_coords_float(rect, w, h, &f);
 
             coords[0][0] =  1.0f;   coords[0][1] = -f.t;   coords[0][2] = -f.l;
             coords[1][0] =  1.0f;   coords[1][1] = -f.t;   coords[1][2] = -f.r;
@@ -217,7 +206,7 @@ static void surface_get_blt_info(GLenum target, const RECT *rect_in, GLsizei w, 
             info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
             info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
             info->tex_type = tex_cube;
-            cube_coords_float(&rect, w, h, &f);
+            cube_coords_float(rect, w, h, &f);
 
             coords[0][0] = -1.0f;   coords[0][1] = -f.t;   coords[0][2] = f.l;
             coords[1][0] = -1.0f;   coords[1][1] = -f.t;   coords[1][2] = f.r;
@@ -229,7 +218,7 @@ static void surface_get_blt_info(GLenum target, const RECT *rect_in, GLsizei w, 
             info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
             info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
             info->tex_type = tex_cube;
-            cube_coords_float(&rect, w, h, &f);
+            cube_coords_float(rect, w, h, &f);
 
             coords[0][0] = f.l;   coords[0][1] =  1.0f;   coords[0][2] = f.t;
             coords[1][0] = f.r;   coords[1][1] =  1.0f;   coords[1][2] = f.t;
@@ -241,7 +230,7 @@ static void surface_get_blt_info(GLenum target, const RECT *rect_in, GLsizei w, 
             info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
             info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
             info->tex_type = tex_cube;
-            cube_coords_float(&rect, w, h, &f);
+            cube_coords_float(rect, w, h, &f);
 
             coords[0][0] = f.l;   coords[0][1] = -1.0f;   coords[0][2] = -f.t;
             coords[1][0] = f.r;   coords[1][1] = -1.0f;   coords[1][2] = -f.t;
@@ -253,7 +242,7 @@ static void surface_get_blt_info(GLenum target, const RECT *rect_in, GLsizei w, 
             info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
             info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
             info->tex_type = tex_cube;
-            cube_coords_float(&rect, w, h, &f);
+            cube_coords_float(rect, w, h, &f);
 
             coords[0][0] = f.l;   coords[0][1] = -f.t;   coords[0][2] =  1.0f;
             coords[1][0] = f.r;   coords[1][1] = -f.t;   coords[1][2] =  1.0f;
@@ -265,7 +254,7 @@ static void surface_get_blt_info(GLenum target, const RECT *rect_in, GLsizei w, 
             info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
             info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
             info->tex_type = tex_cube;
-            cube_coords_float(&rect, w, h, &f);
+            cube_coords_float(rect, w, h, &f);
 
             coords[0][0] = -f.l;   coords[0][1] = -f.t;   coords[0][2] = -1.0f;
             coords[1][0] = -f.r;   coords[1][1] = -f.t;   coords[1][2] = -1.0f;
@@ -4070,6 +4059,7 @@ static void surface_depth_blt(IWineD3DSurfaceImpl *This, const struct wined3d_gl
     GLint compare_mode = GL_NONE;
     struct blt_info info;
     GLint old_binding = 0;
+    RECT rect;
 
     glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_VIEWPORT_BIT);
 
@@ -4084,7 +4074,8 @@ static void surface_depth_blt(IWineD3DSurfaceImpl *This, const struct wined3d_gl
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     glViewport(0, 0, w, h);
 
-    surface_get_blt_info(target, NULL, w, h, &info);
+    SetRect(&rect, 0, h, w, 0);
+    surface_get_blt_info(target, &rect, w, h, &info);
     GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
     glGetIntegerv(info.binding, &old_binding);
     glBindTexture(info.bind_target, texture);
