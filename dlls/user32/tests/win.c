@@ -6239,15 +6239,31 @@ static void test_rtl_layout(void)
 
 static void test_FindWindowEx(void)
 {
-    HWND found;
+    HWND hwnd, found;
     CHAR title[1];
+
+    hwnd = CreateWindowExA( 0, "MainWindowClass", "caption", WS_POPUP, 0,0,0,0, 0, 0, 0, NULL );
+    ok( hwnd != 0, "CreateWindowExA error %d\n", GetLastError() );
 
     title[0] = 0;
 
     found = FindWindowExA( 0, 0, "MainWindowClass", title );
     ok( found == NULL, "expected a NULL hwnd\n" );
     found = FindWindowExA( 0, 0, "MainWindowClass", NULL );
-    ok( found != NULL, "found is NULL, expected a valid hwnd\n" );
+    ok( found == hwnd, "found is %p, expected a valid hwnd\n", found );
+
+    DestroyWindow( hwnd );
+
+    hwnd = CreateWindowExA( 0, "MainWindowClass", NULL, WS_POPUP, 0,0,0,0, 0, 0, 0, NULL );
+    ok( hwnd != 0, "CreateWindowExA error %d\n", GetLastError() );
+
+    found = FindWindowExA( 0, 0, "MainWindowClass", title );
+    ok( found == hwnd, "found is %p, expected a valid hwnd\n", found );
+    found = FindWindowExA( 0, 0, "MainWindowClass", NULL );
+    ok( found == hwnd, "found is %p, expected a valid hwnd\n", found );
+
+    DestroyWindow( hwnd );
+
     /* test behaviour with a window title that is an empty character */
     found = FindWindowExA( 0, 0, "Shell_TrayWnd", title );
 todo_wine
@@ -6306,6 +6322,9 @@ START_TEST(win)
 
     hhook = SetWindowsHookExA(WH_CBT, cbt_hook_proc, 0, GetCurrentThreadId());
     if (!hhook) win_skip( "Cannot set CBT hook, skipping some tests\n" );
+
+    /* make sure that FindWindow tests are executed first */
+    test_FindWindowEx();
 
     hwndMain = CreateWindowExA(/*WS_EX_TOOLWINDOW*/ 0, "MainWindowClass", "Main window",
                                WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
@@ -6374,7 +6393,6 @@ START_TEST(win)
     test_Expose();
     test_layered_window();
 
-    test_FindWindowEx();
     test_SetForegroundWindow(hwndMain);
     test_shell_window();
     test_handles( hwndMain );
