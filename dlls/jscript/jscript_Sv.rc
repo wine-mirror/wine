@@ -26,6 +26,7 @@ STRINGTABLE
 {
     IDS_TO_PRIMITIVE        "Kunde inte konvertera objekt till primitiv typ"
     IDS_INVALID_CALL_ARG    "Ogiltigt funktionsanrop eller argument"
+    IDS_SUBSCRIPT_OUT_OF_RANGE "Index utanför giltigt intervall"
     IDS_CREATE_OBJ_ERROR    "Automationsservern kunde inte skapa objekt"
     IDS_NO_PROPERTY         "Objektet stöder inte denna egenskap eller metod"
     IDS_UNSUPPORTED_ACTION  "Objektet stöder inte denna handling"
@@ -42,6 +43,7 @@ STRINGTABLE
     IDS_ILLEGAL_ASSIGN      "Ogiltig tilldelning"
     IDS_UNDEFINED           "'|' är odefinierat"
     IDS_NOT_BOOL            "Boolskt objekt förväntades"
+    IDS_NOT_VBARRAY         "VBArray-objekt förväntades"
     IDS_JSCRIPT_EXPECTED    "JScript-objekt förväntades"
     IDS_REGEXP_SYNTAX_ERROR "Syntaxfel i reguljärt uttryck"
     IDS_URI_INVALID_CHAR    "Den URI som ska kodas innehåller ogiltiga tecken"
