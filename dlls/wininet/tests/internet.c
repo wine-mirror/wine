@@ -1129,6 +1129,12 @@ START_TEST(internet)
 {
     HMODULE hdll;
     hdll = GetModuleHandleA("wininet.dll");
+
+    if(!GetProcAddress(hdll, "InternetGetCookieExW")) {
+        win_skip("Too old IE (older than 6.0)\n");
+        return;
+    }
+
     pCreateUrlCacheContainerA = (void*)GetProcAddress(hdll, "CreateUrlCacheContainerA");
     pCreateUrlCacheContainerW = (void*)GetProcAddress(hdll, "CreateUrlCacheContainerW");
     pInternetTimeFromSystemTimeA = (void*)GetProcAddress(hdll, "InternetTimeFromSystemTimeA");

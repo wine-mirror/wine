@@ -1103,6 +1103,11 @@ START_TEST(url)
 {
     int i;
 
+    if(!GetProcAddress(GetModuleHandleA("wininet.dll"), "InternetGetCookieExW")) {
+        win_skip("Too old IE (older than 6.0)\n");
+        return;
+    }
+
     for(i=0; i < sizeof(crack_url_tests)/sizeof(*crack_url_tests); i++)
         test_crack_url(crack_url_tests+i);
 

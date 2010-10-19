@@ -311,6 +311,12 @@ START_TEST(urlcache)
 {
     HMODULE hdll;
     hdll = GetModuleHandleA("wininet.dll");
+
+    if(!GetProcAddress(hdll, "InternetGetCookieExW")) {
+        win_skip("Too old IE (older than 6.0)\n");
+        return;
+    }
+
     pDeleteUrlCacheEntryA = (void*)GetProcAddress(hdll, "DeleteUrlCacheEntryA");
     pUnlockUrlCacheEntryFileA = (void*)GetProcAddress(hdll, "UnlockUrlCacheEntryFileA");
     test_urlcacheA();

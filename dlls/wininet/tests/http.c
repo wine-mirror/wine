@@ -3151,22 +3151,23 @@ START_TEST(http)
 {
     HMODULE hdll;
     hdll = GetModuleHandleA("wininet.dll");
+
+    if(!GetProcAddress(hdll, "InternetGetCookieExW")) {
+        win_skip("Too old IE (older than 6.0)\n");
+        return;
+    }
+
     pInternetSetStatusCallbackA = (void*)GetProcAddress(hdll, "InternetSetStatusCallbackA");
 
-    if (!pInternetSetStatusCallbackA)
-        skip("skipping the InternetReadFile tests\n");
-    else
-    {
-        init_status_tests();
-        InternetReadFile_test(INTERNET_FLAG_ASYNC, &test_data[0]);
-        InternetReadFile_test(0, &test_data[0]);
-        first_connection_to_test_url = TRUE;
-        InternetReadFile_test(INTERNET_FLAG_ASYNC, &test_data[1]);
-        InternetReadFile_test(0, &test_data[1]);
-        InternetReadFileExA_test(INTERNET_FLAG_ASYNC);
-        test_open_url_async();
-        test_async_HttpSendRequestEx();
-    }
+    init_status_tests();
+    InternetReadFile_test(INTERNET_FLAG_ASYNC, &test_data[0]);
+    InternetReadFile_test(0, &test_data[0]);
+    first_connection_to_test_url = TRUE;
+    InternetReadFile_test(INTERNET_FLAG_ASYNC, &test_data[1]);
+    InternetReadFile_test(0, &test_data[1]);
+    InternetReadFileExA_test(INTERNET_FLAG_ASYNC);
+    test_open_url_async();
+    test_async_HttpSendRequestEx();
     InternetOpenRequest_test();
     test_http_cache();
     InternetOpenUrlA_test();
