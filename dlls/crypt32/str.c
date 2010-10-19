@@ -322,7 +322,6 @@ DWORD WINAPI CertNameToStrA(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
                      psz ? psz + ret : NULL, psz ? csz - ret - 1 : 0);
                     ret += chars;
                 }
-                /* FIXME: handle quoting */
                 chars = CertRDNValueToStrA(
                  rdn->rgRDNAttr[j].dwValueType,
                  &rdn->rgRDNAttr[j].Value, psz ? psz + ret : NULL,
@@ -502,7 +501,6 @@ DWORD cert_name_to_str_with_indent(DWORD dwCertEncodingType, DWORD indentLevel,
                      psz ? psz + ret : NULL, psz ? csz - ret - 1 : 0);
                     ret += chars;
                 }
-                /* FIXME: handle quoting */
                 chars = CertRDNValueToStrW(
                  rdn->rgRDNAttr[j].dwValueType,
                  &rdn->rgRDNAttr[j].Value, psz ? psz + ret : NULL,
