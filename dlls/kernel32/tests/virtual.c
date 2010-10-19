@@ -901,26 +901,21 @@ static void test_NtAreMappedFilesTheSame(void)
     ok( status == STATUS_NOT_SAME_DEVICE, "NtAreMappedFilesTheSame returned %x\n", status );
 
     status = pNtAreMappedFilesTheSame( ptr, (void *)0xdeadbeef );
-    todo_wine
     ok( status == STATUS_CONFLICTING_ADDRESSES || status == STATUS_INVALID_ADDRESS,
         "NtAreMappedFilesTheSame returned %x\n", status );
 
     status = pNtAreMappedFilesTheSame( ptr, NULL );
-    todo_wine
     ok( status == STATUS_INVALID_ADDRESS, "NtAreMappedFilesTheSame returned %x\n", status );
 
-    status = pNtAreMappedFilesTheSame( ptr, (void *)0x10000 );
-    todo_wine
+    status = pNtAreMappedFilesTheSame( ptr, (void *)GetProcessHeap() );
     ok( status == STATUS_CONFLICTING_ADDRESSES, "NtAreMappedFilesTheSame returned %x\n", status );
 
     status = pNtAreMappedFilesTheSame( NULL, NULL );
-    todo_wine
     ok( status == STATUS_INVALID_ADDRESS, "NtAreMappedFilesTheSame returned %x\n", status );
 
     ptr2 = VirtualAlloc( NULL, 0x10000, MEM_COMMIT, PAGE_READWRITE );
     ok( ptr2 != NULL, "VirtualAlloc error %u\n", GetLastError() );
     status = pNtAreMappedFilesTheSame( ptr, ptr2 );
-    todo_wine
     ok( status == STATUS_CONFLICTING_ADDRESSES, "NtAreMappedFilesTheSame returned %x\n", status );
     VirtualFree( ptr2, 0, MEM_RELEASE );
 
@@ -933,11 +928,9 @@ static void test_NtAreMappedFilesTheSame(void)
     ok( status == STATUS_NOT_SAME_DEVICE, "NtAreMappedFilesTheSame returned %x\n", status );
     status = pNtAreMappedFilesTheSame( GetModuleHandleA("kernel32.dll"),
                                        GetModuleHandleA("kernel32.dll") );
-    todo_wine
     ok( status == STATUS_SUCCESS, "NtAreMappedFilesTheSame returned %x\n", status );
     status = pNtAreMappedFilesTheSame( GetModuleHandleA("kernel32.dll"),
                                        (char *)GetModuleHandleA("kernel32.dll") + 4096 );
-    todo_wine
     ok( status == STATUS_SUCCESS, "NtAreMappedFilesTheSame returned %x\n", status );
 
     GetSystemDirectoryA( path, MAX_PATH );
@@ -961,6 +954,19 @@ static void test_NtAreMappedFilesTheSame(void)
     status = pNtAreMappedFilesTheSame( ptr, GetModuleHandleA("kernel32.dll") );
     todo_wine
     ok( status == STATUS_SUCCESS, "NtAreMappedFilesTheSame returned %x\n", status );
+
+    file2 = CreateFileA( path, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
+    ok( file2 != INVALID_HANDLE_VALUE, "CreateFile error %u\n", GetLastError() );
+    map2 = CreateFileMappingA( file2, NULL, PAGE_READONLY | SEC_IMAGE, 0, 0, NULL );
+    ok( map2 != 0, "CreateFileMapping error %u\n", GetLastError() );
+    ptr2 = MapViewOfFile( map2, FILE_MAP_READ, 0, 0, 0 );
+    ok( ptr2 != NULL, "MapViewOfFile FILE_MAP_READ error %u\n", GetLastError() );
+    status = pNtAreMappedFilesTheSame( ptr, ptr2 );
+    ok( status == STATUS_SUCCESS, "NtAreMappedFilesTheSame returned %x\n", status );
+    UnmapViewOfFile( ptr2 );
+    CloseHandle( map2 );
+    CloseHandle( file2 );
+
     UnmapViewOfFile( ptr );
     CloseHandle( mapping );
 

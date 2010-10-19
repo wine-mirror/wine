@@ -1013,6 +1013,26 @@ static NTSTATUS allocate_dos_memory( struct file_view **view, unsigned int vprot
 
 
 /***********************************************************************
+ *           stat_mapping_file
+ *
+ * Stat the underlying file for a memory view.
+ */
+static NTSTATUS stat_mapping_file( struct file_view *view, struct stat *st )
+{
+    NTSTATUS status;
+    int unix_fd, needs_close;
+
+    if (!view->mapping) return STATUS_NOT_MAPPED_VIEW;
+    if (!(status = server_get_unix_fd( view->mapping, 0, &unix_fd, &needs_close, NULL, NULL )))
+    {
+        if (fstat( unix_fd, st ) == -1) status = FILE_GetNtStatus();
+        if (needs_close) close( unix_fd );
+    }
+    return status;
+}
+
+
+/***********************************************************************
  *           map_image
  *
  * Map an executable (PE format) image into memory.
@@ -2780,7 +2800,32 @@ NTSTATUS WINAPI NtWriteVirtualMemory( HANDLE process, void *addr, const void *bu
  */
 NTSTATUS WINAPI NtAreMappedFilesTheSame(PVOID addr1, PVOID addr2)
 {
+    struct file_view *view1, *view2;
+    struct stat st1, st2;
+    NTSTATUS status;
+    sigset_t sigset;
+
     TRACE("%p %p\n", addr1, addr2);
 
-    return STATUS_NOT_SAME_DEVICE;
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
+
+    view1 = VIRTUAL_FindView( addr1, 0 );
+    view2 = VIRTUAL_FindView( addr2, 0 );
+
+    if (!view1 || !view2)
+        status = STATUS_INVALID_ADDRESS;
+    else if ((view1->protect & VPROT_VALLOC) || (view2->protect & VPROT_VALLOC))
+        status = STATUS_CONFLICTING_ADDRESSES;
+    else if (!(view1->protect & VPROT_IMAGE) || !(view2->protect & VPROT_IMAGE))
+        status = STATUS_NOT_SAME_DEVICE;
+    else if (view1 == view2)
+        status = STATUS_SUCCESS;
+    else if (!stat_mapping_file( view1, &st1 ) && !stat_mapping_file( view2, &st2 ) &&
+             st1.st_dev == st2.st_dev && st1.st_ino == st2.st_ino)
+        status = STATUS_SUCCESS;
+    else
+        status = STATUS_NOT_SAME_DEVICE;
+
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
+    return status;
 }
