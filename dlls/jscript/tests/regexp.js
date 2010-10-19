@@ -50,6 +50,7 @@ ok(re.lastIndex === 0, "re.lastIndex = " + re.lastIndex);
 m = re.exec(" aabaaa");
 ok(re.lastIndex === 3, "re.lastIndex = " + re.lastIndex);
 ok(m.index === 1, "m.index = " + m.index);
+ok(m.lastIndex == 3, "m.lastIndex = " + m.lastIndex);
 ok(m.input === " aabaaa", "m.input = " + m.input);
 ok(m.length === 1, "m.length = " + m.length);
 ok(m[0] === "aa", "m[0] = " + m[0]);
@@ -194,6 +195,9 @@ ok(typeof(m) === "object", "typeof m is not object");
 ok(m.length === 2, "m.length is not 2");
 ok(m["0"] === "ab", "m[0] is not \"ab\"");
 ok(m["1"] === "ab", "m[1] is not \"ab\"");
+ok(m.index === 3, "m.index = " + m.index);
+ok(m.input === "abcabc", "m.input = " + m.input);
+ok(m.lastIndex === 5, "m.lastIndex = " + m.lastIndex);
 
 m = "abcabcg".match("ab", "g");
 ok(typeof(m) === "object", "typeof m is not object");

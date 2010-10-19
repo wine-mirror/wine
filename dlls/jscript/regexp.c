@@ -3590,6 +3590,7 @@ static HRESULT create_match_array(script_ctx_t *ctx, BSTR input, const match_res
 
     static const WCHAR indexW[] = {'i','n','d','e','x',0};
     static const WCHAR inputW[] = {'i','n','p','u','t',0};
+    static const WCHAR lastIndexW[] = {'l','a','s','t','I','n','d','e','x',0};
     static const WCHAR zeroW[] = {'0',0};
 
     hres = create_array(ctx, parens_cnt+1, &array);
@@ -3614,6 +3615,11 @@ static HRESULT create_match_array(script_ctx_t *ctx, BSTR input, const match_res
         V_VT(&var) = VT_I4;
         V_I4(&var) = result->str-input;
         hres = jsdisp_propput_name(array, indexW, &var, ei, NULL/*FIXME*/);
+        if(FAILED(hres))
+            break;
+
+        V_I4(&var) = result->str-input+result->len;
+        hres = jsdisp_propput_name(array, lastIndexW, &var, ei, NULL/*FIXME*/);
         if(FAILED(hres))
             break;
 
@@ -3918,6 +3924,10 @@ HRESULT create_regexp_var(script_ctx_t *ctx, VARIANT *src_arg, VARIANT *flags_ar
 HRESULT regexp_string_match(script_ctx_t *ctx, jsdisp_t *re, BSTR str,
         VARIANT *retv, jsexcept_t *ei)
 {
+    static const WCHAR indexW[] = {'i','n','d','e','x',0};
+    static const WCHAR inputW[] = {'i','n','p','u','t',0};
+    static const WCHAR lastIndexW[] = {'l','a','s','t','I','n','d','e','x',0};
+
     RegExpInstance *regexp = (RegExpInstance*)re;
     match_result_t *match_result;
     DWORD match_cnt, i, length;
@@ -3983,6 +3993,24 @@ HRESULT regexp_string_match(script_ctx_t *ctx, jsdisp_t *re, BSTR str,
         SysFreeString(V_BSTR(&var));
         if(FAILED(hres))
             break;
+    }
+
+    while(SUCCEEDED(hres)) {
+        V_VT(&var) = VT_I4;
+        V_I4(&var) = match_result[match_cnt-1].str-str;
+        hres = jsdisp_propput_name(array, indexW, &var, ei, NULL/*FIXME*/);
+        if(FAILED(hres))
+            break;
+
+        V_I4(&var) = match_result[match_cnt-1].str-str+match_result[match_cnt-1].len;
+        hres = jsdisp_propput_name(array, lastIndexW, &var, ei, NULL/*FIXME*/);
+        if(FAILED(hres))
+            break;
+
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = str;
+        hres = jsdisp_propput_name(array, inputW, &var, ei, NULL/*FIXME*/);
+        break;
     }
 
     heap_free(match_result);
