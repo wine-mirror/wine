@@ -2065,7 +2065,6 @@ void context_apply_blit_state(struct wined3d_context *context, IWineD3DDeviceImp
 
         if (context->render_offscreen)
         {
-            FIXME("Applying blit state for an offscreen target with ORM_FBO. This should be avoided.\n");
             surface_internal_preload(context->current_rt, SRGB_RGB);
 
             ENTER_GL();
