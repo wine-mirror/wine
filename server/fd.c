@@ -2254,6 +2254,7 @@ DECL_HANDLER(get_handle_unix_name)
             if (name_len <= get_reply_max_size()) set_reply_data( fd->unix_name, name_len );
             else set_error( STATUS_BUFFER_OVERFLOW );
         }
+        else set_error( STATUS_OBJECT_TYPE_MISMATCH );
         release_object( fd );
     }
 }
