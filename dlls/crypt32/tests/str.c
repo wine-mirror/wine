@@ -26,11 +26,6 @@
 
 #include "wine/test.h"
 
-/*#define DUMP_STRINGS*/
-#ifdef DUMP_STRINGS
-#include "wine/debug.h"
-#endif
-
 typedef struct _CertRDNAttrEncoding {
     LPCSTR pszObjId;
     DWORD  dwValueType;
@@ -303,11 +298,8 @@ static void test_CertRDNValueToStrW(void)
          buffer, sizeof(buffer) / sizeof(buffer[0]));
         ok(ret == lstrlenW(attrs[i].str) + 1, "Expected length %d, got %d\n",
          lstrlenW(attrs[i].str) + 1, ret);
-        ok(!lstrcmpW(buffer, attrs[i].str), "Unexpected value\n");
-#ifdef DUMP_STRINGS
-        trace("Expected %s, got %s\n",
+        ok(!lstrcmpW(buffer, attrs[i].str), "Expected %s, got %s\n",
          wine_dbgstr_w(attrs[i].str), wine_dbgstr_w(buffer));
-#endif
     }
 }
 
@@ -489,13 +481,11 @@ static void test_NameToStrConversionW(PCERT_NAME_BLOB pName, DWORD dwStrType,
         ok(i == lstrlenW(expected) + 1, "Expected %d chars, got %d\n",
          lstrlenW(expected) + 1, i);
     if (todo)
-        todo_wine ok(!lstrcmpW(buffer, expected), "Unexpected value\n");
+        todo_wine ok(!lstrcmpW(buffer, expected), "Expected %s, got %s\n",
+         wine_dbgstr_w(expected), wine_dbgstr_w(buffer));
     else
-        ok(!lstrcmpW(buffer, expected), "Unexpected value\n");
-#ifdef DUMP_STRINGS
-    trace("Expected %s, got %s\n",
-     wine_dbgstr_w(expected), wine_dbgstr_w(buffer));
-#endif
+        ok(!lstrcmpW(buffer, expected), "Expected %s, got %s\n",
+         wine_dbgstr_w(expected), wine_dbgstr_w(buffer));
 }
 
 static const WCHAR simpleCN_W[] = { 'C','N','=','1',0 };
