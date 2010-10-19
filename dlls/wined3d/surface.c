@@ -4336,16 +4336,12 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
 
     context = context_acquire(device, This);
     context_apply_blit_state(context, device);
+
+    dst_rect = src_rect;
     if (context->render_offscreen)
     {
-        dst_rect.left = src_rect.left;
-        dst_rect.right = src_rect.right;
-        dst_rect.top = src_rect.bottom;
-        dst_rect.bottom = src_rect.top;
-    }
-    else
-    {
-        dst_rect = src_rect;
+        dst_rect.top = This->currentDesc.Height - dst_rect.top;
+        dst_rect.bottom = This->currentDesc.Height - dst_rect.bottom;
     }
 
     swapchain = This->container.type == WINED3D_CONTAINER_SWAPCHAIN ? This->container.u.swapchain : NULL;
