@@ -61,7 +61,7 @@
 @ stub WerpShowUpsellUI
 @ stub WerpSubmitReportFromStore
 @ stub WerpSvcReportFromMachineQueue
-@ stub WerAddExcludedApplication
+@ stdcall WerAddExcludedApplication(wstr long)
 @ stub WerRemoveExcludedApplication
 @ stub WerReportAddDump
 @ stub WerReportAddFile

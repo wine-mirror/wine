@@ -26,6 +26,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wer);
 
+HRESULT WINAPI WerAddExcludedApplication(PCWSTR exeName, BOOL allUsers)
+{
+    FIXME("(%s, %d) stub\n",debugstr_w(exeName), allUsers);
+    return E_NOTIMPL;
+}
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
