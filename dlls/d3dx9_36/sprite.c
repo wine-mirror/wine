@@ -338,7 +338,7 @@ static HRESULT WINAPI ID3DXSpriteImpl_Flush(LPD3DXSPRITE iface)
 {
     ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
     SPRITEVERTEX *vertices;
-    int i, count, start;
+    int i, count=0, start;
     TRACE("(%p)->(): relay\n", This);
 
     if(!This->ready) return D3DERR_INVALIDCALL;
