@@ -36,8 +36,8 @@
 #include "uuids.h"
 #include "strmif.h"
 
-#include "dllsetup.h"
 #include "qcap_main.h"
+#include "dllsetup.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -77,7 +77,7 @@ static const WCHAR wAudioInMixerProp[] =
 {'A','u','d','i','o','I','n','p','u','t','M','i','x','e','r',' ','P','r','o',
  'p','e','r','t','y',' ','P','a','g','e',0};
  
-static CFactoryTemplate const g_cTemplates[] = {
+FactoryTemplate const g_Templates[] = {
 /*
     {
         wAudioCaptureFilter, 
@@ -147,7 +147,7 @@ static CFactoryTemplate const g_cTemplates[] = {
     }*/
 };
 
-static int g_numTemplates = sizeof(g_cTemplates) / sizeof(g_cTemplates[0]);
+int g_cTemplates = sizeof(g_Templates) / sizeof(g_Templates[0]);
 
 /***********************************************************************
  *    Dll EntryPoint (QCAP.@)
@@ -158,10 +158,10 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     {
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls(hInstDLL);
-            SetupInitializeServers(g_cTemplates, g_numTemplates, TRUE);
+            SetupInitializeServers(g_Templates, g_cTemplates, TRUE);
             break;
         case DLL_PROCESS_DETACH:
-            SetupInitializeServers(g_cTemplates, g_numTemplates, FALSE);
+            SetupInitializeServers(g_Templates, g_cTemplates, FALSE);
             break;
     }
     return TRUE;
@@ -174,7 +174,7 @@ HRESULT WINAPI DllRegisterServer(void)
 {
     TRACE("()\n");
 
-    return SetupRegisterServers(g_cTemplates, g_numTemplates, TRUE);
+    return SetupRegisterServers(g_Templates, g_cTemplates, TRUE);
 }
 
 /***********************************************************************
@@ -184,7 +184,7 @@ HRESULT WINAPI DllUnregisterServer(void)
 {
     TRACE("\n");
 
-    return SetupRegisterServers(g_cTemplates, g_numTemplates, FALSE);
+    return SetupRegisterServers(g_Templates, g_cTemplates, FALSE);
 }
 
 /***********************************************************************
@@ -307,7 +307,7 @@ static const IClassFactoryVtbl DSCF_Vtbl =
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
-    const CFactoryTemplate *pList = g_cTemplates;
+    const FactoryTemplate *pList = g_Templates;
     IClassFactoryImpl *factory;
     int i;
 
@@ -322,13 +322,13 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
         !IsEqualGUID(&IID_IUnknown, riid))
         return E_NOINTERFACE;
 
-    for (i = 0; i < g_numTemplates; i++, pList++)
+    for (i = 0; i < g_cTemplates; i++, pList++)
     {
         if (IsEqualGUID(pList->m_ClsID, rclsid))
             break;
     }
 
-    if (i == g_numTemplates)
+    if (i == g_cTemplates)
     {
         FIXME("%s: no class found.\n", debugstr_guid(rclsid));
         return CLASS_E_CLASSNOTAVAILABLE;

@@ -1,6 +1,7 @@
 MODULE    = strmbase
 
 C_SRCS = \
+	dllfunc.c \
 	enumpins.c \
 	filter.c \
 	mediatype.c \

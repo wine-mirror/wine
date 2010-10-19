@@ -34,6 +34,8 @@
 #include "objbase.h"
 #include "uuids.h"
 
+#include "strmif.h"
+#include "wine/strmbase.h"
 #include "dllsetup.h"
 
 #include "wine/unicode.h"
@@ -101,7 +103,7 @@ err_out:
 /*
  * RegisterAllClasses()
  */
-static HRESULT SetupRegisterAllClasses(const CFactoryTemplate * pList, int num,
+static HRESULT SetupRegisterAllClasses(const FactoryTemplate * pList, int num,
                                        LPCWSTR szFileName, BOOL bRegister)
 {
     HRESULT hr = NOERROR;
@@ -140,51 +142,17 @@ static HRESULT SetupRegisterAllClasses(const CFactoryTemplate * pList, int num,
  * CFactoryTemplate
  *
  ****************************************************************************/
-HRESULT SetupRegisterServers(const CFactoryTemplate * pList, int num,
+HRESULT SetupRegisterServers(const FactoryTemplate * pList, int num,
                              BOOL bRegister)
 {
     static const WCHAR szFileName[] = {'q','c','a','p','.','d','l','l',0};
     HRESULT hr = NOERROR;
-    IFilterMapper2 *pIFM2 = NULL;
 
     /* first register all server classes, just to make sure */
     if (bRegister)
         hr = SetupRegisterAllClasses(pList, num, szFileName, TRUE );
 
-    /* next, register/unregister all filters */
-    if (SUCCEEDED(hr))
-    {
-        hr = CoInitialize(NULL);
-
-        TRACE("Getting IFilterMapper2\r\n");
-        hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER,
-                              &IID_IFilterMapper2, (void **)&pIFM2);
-
-        if (SUCCEEDED(hr))
-        {
-            int i;
-            
-            /* scan through array of CFactoryTemplates registering all filters */
-            for (i = 0; i < num; i++, pList++)
-            {
-                if (pList->m_pAMovieSetup_Filter.dwVersion)
-                {
-                    hr = IFilterMapper2_RegisterFilter(pIFM2, pList->m_ClsID, pList->m_Name, NULL, &CLSID_LegacyAmFilterCategory, NULL, &pList->m_pAMovieSetup_Filter);
-                }
-
-                /* check final error for this pass and break loop if we failed */
-                if (FAILED(hr))
-                    break;
-            }
-
-            /* release interface */
-            IFilterMapper2_Release(pIFM2);
-        }
-
-        /* and clear up */
-        CoFreeUnusedLibraries();
-        CoUninitialize();
-    }
+    hr = AMovieDllRegisterServer2(bRegister);
 
     /* if unregistering, unregister all OLE servers */
     if (SUCCEEDED(hr) && !bRegister)
@@ -202,7 +170,7 @@ HRESULT SetupRegisterServers(const CFactoryTemplate * pList, int num,
  * one defined.
  *
  ****************************************************************************/
-void SetupInitializeServers(const CFactoryTemplate * pList, int num,
+void SetupInitializeServers(const FactoryTemplate * pList, int num,
                             BOOL bLoading)
 {
     int i;
