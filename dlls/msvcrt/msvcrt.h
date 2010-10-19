@@ -544,6 +544,7 @@ struct MSVCRT__stat64 {
 #define MSVCRT_ENOSYS  40
 #define MSVCRT_ENOTEMPTY 41
 #define MSVCRT_EILSEQ    42
+#define MSVCRT_STRUNCATE 80
 
 #define MSVCRT_LC_ALL          0
 #define MSVCRT_LC_COLLATE      1

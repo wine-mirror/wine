@@ -61,6 +61,8 @@
 #  define ENOTEMPTY 41
 #  define EILSEQ    42
 
+#  define STRUNCATE 80
+
 #ifdef __cplusplus
 extern "C" {
 #endif
