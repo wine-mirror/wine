@@ -35,17 +35,4 @@
  ****************************************************************************/
 extern HRESULT SetupRegisterServers(const FactoryTemplate * pList, int num, BOOL bRegister);
 
-/****************************************************************************
- * SetupInitializeServers
- *
- * This function is table driven using the static members of the
- * CFactoryTemplate class defined in the Dll.
- *
- * It calls the initialize function for any class in CFactoryTemplate with
- * one defined.
- *
- ****************************************************************************/
-extern void SetupInitializeServers(const FactoryTemplate * pList, int num,
-                                   BOOL bLoading);
-
 #endif /* _QCAP_DLLSETUP_H_DEFINED */

@@ -159,25 +159,3 @@ HRESULT SetupRegisterServers(const FactoryTemplate * pList, int num,
         hr = SetupRegisterAllClasses(pList, num, szFileName, FALSE);
     return hr;
 }
-
-/****************************************************************************
- * SetupInitializeServers
- *
- * This function is table driven using the static members of the
- * CFactoryTemplate class defined in the Dll.
- *
- * It calls the initialize function for any class in CFactoryTemplate with
- * one defined.
- *
- ****************************************************************************/
-void SetupInitializeServers(const FactoryTemplate * pList, int num,
-                            BOOL bLoading)
-{
-    int i;
-
-    for (i = 0; i < num; i++, pList++)
-    {
-        if (pList->m_lpfnInit)
-            pList->m_lpfnInit(bLoading, pList->m_ClsID);
-    }
-}

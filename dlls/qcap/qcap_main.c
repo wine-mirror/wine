@@ -154,17 +154,7 @@ int g_cTemplates = sizeof(g_Templates) / sizeof(g_Templates[0]);
  */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
-    switch (fdwReason)
-    {
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hInstDLL);
-            SetupInitializeServers(g_Templates, g_cTemplates, TRUE);
-            break;
-        case DLL_PROCESS_DETACH:
-            SetupInitializeServers(g_Templates, g_cTemplates, FALSE);
-            break;
-    }
-    return TRUE;
+    return STRMBASE_DllMain(hInstDLL,fdwReason,lpv);
 }
 
 /***********************************************************************

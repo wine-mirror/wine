@@ -91,3 +91,40 @@ HRESULT WINAPI AMovieDllRegisterServer2(BOOL bRegister)
 
     return hr;
 }
+
+/****************************************************************************
+ * SetupInitializeServers
+ *
+ * This function is table driven using the static members of the
+ * CFactoryTemplate class defined in the Dll.
+ *
+ * It calls the initialize function for any class in CFactoryTemplate with
+ * one defined.
+ *
+ ****************************************************************************/
+static void SetupInitializeServers(const FactoryTemplate * pList, int num,
+                            BOOL bLoading)
+{
+    int i;
+
+    for (i = 0; i < num; i++, pList++)
+    {
+        if (pList->m_lpfnInit)
+            pList->m_lpfnInit(bLoading, pList->m_ClsID);
+    }
+}
+
+BOOL WINAPI STRMBASE_DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
+{
+    switch (fdwReason)
+    {
+        case DLL_PROCESS_ATTACH:
+            DisableThreadLibraryCalls(hInstDLL);
+            SetupInitializeServers(g_Templates, g_cTemplates, TRUE);
+            break;
+        case DLL_PROCESS_DETACH:
+            SetupInitializeServers(g_Templates, g_cTemplates, FALSE);
+            break;
+    }
+    return TRUE;
+}
