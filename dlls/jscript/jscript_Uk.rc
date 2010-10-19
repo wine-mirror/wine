@@ -28,6 +28,7 @@ STRINGTABLE
 {
     IDS_TO_PRIMITIVE        "Помилка конвертування об'єкту в примітивний тип"
     IDS_INVALID_CALL_ARG    "Невірний виклик процедури або аргумент"
+    IDS_SUBSCRIPT_OUT_OF_RANGE "Індекс поза діапазоном"
     IDS_CREATE_OBJ_ERROR    "Сервер автоматизації не може створити об'єкт"
     IDS_NO_PROPERTY         "Об'єкт не підтримує цю властивість чи метод"
     IDS_UNSUPPORTED_ACTION  "Об'єкт не підтримує цю дію"
@@ -44,6 +45,7 @@ STRINGTABLE
     IDS_ILLEGAL_ASSIGN      "Невірне присвоєння"
     IDS_UNDEFINED           "'|' не визначено"
     IDS_NOT_BOOL            "Очікується об'єкт Boolean"
+    IDS_NOT_VBARRAY         "Очікується об'єкт VBArray"
     IDS_JSCRIPT_EXPECTED    "Очікується об'єкт JScript"
     IDS_REGEXP_SYNTAX_ERROR "Синтаксична помилка в регулярному виразі"
     IDS_URI_INVALID_CHAR    "URI, що буде закодований, містить неприпустимі символи"
