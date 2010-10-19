@@ -519,7 +519,23 @@ static HRESULT WINAPI JpegDecoder_Frame_CopyPixels(IWICBitmapFrameDecode *iface,
     UINT data_size;
     UINT max_row_needed;
     jmp_buf jmpbuf;
+    WICRect rect;
     TRACE("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
+
+    if (!prc)
+    {
+        rect.X = 0;
+        rect.Y = 0;
+        rect.Width = This->cinfo.output_width;
+        rect.Height = This->cinfo.output_height;
+        prc = &rect;
+    }
+    else
+    {
+        if (prc->X < 0 || prc->Y < 0 || prc->X+prc->Width > This->cinfo.output_width ||
+            prc->Y+prc->Height > This->cinfo.output_height)
+            return E_INVALIDARG;
+    }
 
     if (This->cinfo.out_color_space == JCS_GRAYSCALE) bpp = 8;
     else if (This->cinfo.out_color_space == JCS_CMYK) bpp = 32;

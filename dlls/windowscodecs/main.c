@@ -53,9 +53,21 @@ HRESULT copy_pixels(UINT bpp, const BYTE *srcbuffer,
 {
     UINT bytesperrow;
     UINT row_offset; /* number of bits into the source rows where the data starts */
+    WICRect rect;
 
-    if (rc->X < 0 || rc->Y < 0 || rc->X+rc->Width > srcwidth || rc->Y+rc->Height > srcheight)
-        return E_INVALIDARG;
+    if (!rc)
+    {
+        rect.X = 0;
+        rect.Y = 0;
+        rect.Width = srcwidth;
+        rect.Height = srcheight;
+        rc = &rect;
+    }
+    else
+    {
+        if (rc->X < 0 || rc->Y < 0 || rc->X+rc->Width > srcwidth || rc->Y+rc->Height > srcheight)
+            return E_INVALIDARG;
+    }
 
     bytesperrow = ((bpp * rc->Width)+7)/8;
 

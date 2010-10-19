@@ -799,12 +799,24 @@ static HRESULT WINAPI TiffFrameDecode_CopyPixels(IWICBitmapFrameDecode *iface,
     HRESULT hr=S_OK;
     BYTE *dst_tilepos;
     UINT bytesperrow;
+    WICRect rect;
 
     TRACE("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
 
-    if (prc->X < 0 || prc->Y < 0 || prc->X+prc->Width > This->decode_info.width ||
-        prc->Y+prc->Height > This->decode_info.height)
-        return E_INVALIDARG;
+    if (!prc)
+    {
+        rect.X = 0;
+        rect.Y = 0;
+        rect.Width = This->decode_info.width;
+        rect.Height = This->decode_info.height;
+        prc = &rect;
+    }
+    else
+    {
+        if (prc->X < 0 || prc->Y < 0 || prc->X+prc->Width > This->decode_info.width ||
+            prc->Y+prc->Height > This->decode_info.height)
+            return E_INVALIDARG;
+    }
 
     bytesperrow = ((This->decode_info.bpp * prc->Width)+7)/8;
 

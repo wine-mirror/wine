@@ -850,11 +850,27 @@ static HRESULT WINAPI FormatConverter_CopyPixels(IWICFormatConverter *iface,
     const WICRect *prc, UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer)
 {
     FormatConverter *This = (FormatConverter*)iface;
+    WICRect rc;
+    HRESULT hr;
     TRACE("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
 
     if (This->source)
+    {
+        if (!prc)
+        {
+            UINT width, height;
+            hr = IWICBitmapSource_GetSize(This->source, &width, &height);
+            if (FAILED(hr)) return hr;
+            rc.X = 0;
+            rc.Y = 0;
+            rc.Width = width;
+            rc.Height = height;
+            prc = &rc;
+        }
+
         return This->dst_format->copy_function(This, prc, cbStride, cbBufferSize,
             pbBuffer, This->src_format->format);
+    }
     else
         return WINCODEC_ERR_NOTINITIALIZED;
 }

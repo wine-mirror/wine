@@ -140,6 +140,7 @@ static HRESULT WINAPI FlipRotator_CopyPixels(IWICBitmapFlipRotator *iface,
     UINT y;
     UINT srcy, srcwidth, srcheight;
     WICRect rc;
+    WICRect rect;
 
     TRACE("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
 
@@ -154,6 +155,18 @@ static HRESULT WINAPI FlipRotator_CopyPixels(IWICBitmapFlipRotator *iface,
 
     hr = IWICBitmapSource_GetSize(This->source, &srcwidth, &srcheight);
     if (FAILED(hr)) return hr;
+
+    if (!prc)
+    {
+        UINT width, height;
+        hr = IWICBitmapSource_GetSize(iface, &width, &height);
+        if (FAILED(hr)) return hr;
+        rect.X = 0;
+        rect.Y = 0;
+        rect.Width = width;
+        rect.Height = height;
+        prc = &rect;
+    }
 
     for (y=prc->Y; y - prc->Y < prc->Height; y++)
     {

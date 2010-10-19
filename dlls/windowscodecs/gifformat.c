@@ -184,9 +184,21 @@ static HRESULT copy_interlaced_pixels(const BYTE *srcbuffer,
     const BYTE *src;
     BYTE *dst;
     UINT y;
+    WICRect rect;
 
-    if (rc->X < 0 || rc->Y < 0 || rc->X+rc->Width > srcwidth || rc->Y+rc->Height > srcheight)
-        return E_INVALIDARG;
+    if (!rc)
+    {
+        rect.X = 0;
+        rect.Y = 0;
+        rect.Width = srcwidth;
+        rect.Height = srcheight;
+        rc = &rect;
+    }
+    else
+    {
+        if (rc->X < 0 || rc->Y < 0 || rc->X+rc->Width > srcwidth || rc->Y+rc->Height > srcheight)
+            return E_INVALIDARG;
+    }
 
     if (dststride < rc->Width)
         return E_INVALIDARG;
