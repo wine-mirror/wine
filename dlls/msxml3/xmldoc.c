@@ -253,7 +253,7 @@ static HRESULT WINAPI bsc_QueryInterface(
         return S_OK;
     }
 
-    FIXME("interface %s not implemented\n", debugstr_guid(riid));
+    TRACE("interface %s not implemented\n", debugstr_guid(riid));
     return E_NOINTERFACE;
 }
 
