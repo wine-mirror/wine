@@ -140,17 +140,6 @@ DWORD WINAPI CertRDNValueToStrA(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
             ret = dst - psz;
         }
         break;
-    case CERT_RDN_UTF8_STRING:
-        if (!psz || !csz)
-            ret = WideCharToMultiByte(CP_UTF8, 0, (LPWSTR)pValue->pbData,
-             pValue->cbData / sizeof(WCHAR) + 1, NULL, 0, NULL, NULL);
-        else
-        {
-            ret = WideCharToMultiByte(CP_UTF8, 0, (LPWSTR)pValue->pbData,
-             pValue->cbData / sizeof(WCHAR) + 1, psz, csz - 1, NULL, NULL);
-            csz -= ret;
-        }
-        break;
     default:
         FIXME("string type %d unimplemented\n", dwValueType);
     }
@@ -218,24 +207,6 @@ DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
             if (needsQuotes && ptr - psz < csz)
                 *ptr++ = '"';
             ret = ptr - psz;
-        }
-        break;
-    case CERT_RDN_UTF8_STRING:
-        if (!psz || !csz)
-            ret = pValue->cbData / sizeof(WCHAR);
-        else
-        {
-            DWORD chars = min(pValue->cbData / sizeof(WCHAR), csz - 1);
-
-            if (chars)
-            {
-                DWORD i;
-
-                for (i = 0; i < chars; i++)
-                    psz[i] = *((LPWSTR)pValue->pbData + i);
-                ret += chars;
-                csz -= chars;
-            }
         }
         break;
     default:
