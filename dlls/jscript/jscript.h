@@ -377,6 +377,12 @@ static inline DOUBLE num_val(const VARIANT *v)
     return V_VT(v) == VT_I4 ? V_I4(v) : V_R8(v);
 }
 
+static inline void num_set_int(VARIANT *v, INT i)
+{
+    V_VT(v) = VT_I4;
+    V_I4(v) = i;
+}
+
 static inline void num_set_val(VARIANT *v, DOUBLE d)
 {
     if(d == (DOUBLE)(INT)d) {

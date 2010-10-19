@@ -56,7 +56,7 @@ static HRESULT VBArray_dimensions(script_ctx_t *ctx, vdisp_t *vthis, WORD flags,
         return throw_type_error(ctx, ei, IDS_NOT_VBARRAY, NULL);
 
     if(retv)
-        num_set_val(retv, SafeArrayGetDim(vbarray->safearray));
+        num_set_int(retv, SafeArrayGetDim(vbarray->safearray));
     return S_OK;
 }
 
@@ -79,6 +79,9 @@ static HRESULT VBArray_getItem(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DI
         return throw_range_error(ctx, ei, IDS_SUBSCRIPT_OUT_OF_RANGE, NULL);
 
     indexes = heap_alloc(sizeof(int)*size);
+    if(!indexes)
+        return E_OUTOFMEMORY;
+
     for(i=0; i<size; i++) {
         hres = to_int32(ctx, get_arg(dp, i), ei, indexes+i);
         if(FAILED(hres)) {
@@ -127,7 +130,7 @@ static HRESULT VBArray_lbound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DIS
         return hres;
 
     if(retv)
-        num_set_val(retv, dim);
+        num_set_int(retv, dim);
     return S_OK;
 }
 
@@ -206,7 +209,7 @@ static HRESULT VBArray_ubound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DIS
         return hres;
 
     if(retv)
-        num_set_val(retv, dim);
+        num_set_int(retv, dim);
     return S_OK;
 }
 
@@ -286,8 +289,8 @@ static HRESULT VBArrayConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD flags
         if(arg_cnt(dp)<1 || V_VT((arg = get_arg(dp, 0)))!=(VT_ARRAY|VT_VARIANT))
             return throw_type_error(ctx, ei, IDS_NOT_VBARRAY, NULL);
 
-        VariantCopy(retv, arg);
-        break;
+        hres = VariantCopy(retv, arg);
+        return hres;
 
     case DISPATCH_CONSTRUCT:
         if(arg_cnt(dp)<1 || V_VT((arg = get_arg(dp, 0)))!=(VT_ARRAY|VT_VARIANT))
@@ -296,7 +299,12 @@ static HRESULT VBArrayConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD flags
         hres = alloc_vbarray(ctx, NULL, &vbarray);
         if(FAILED(hres))
             return hres;
-        SafeArrayCopy(V_ARRAY(arg), &vbarray->safearray);
+
+        hres = SafeArrayCopy(V_ARRAY(arg), &vbarray->safearray);
+        if(FAILED(hres)) {
+            jsdisp_release(&vbarray->dispex);
+            return hres;
+        }
 
         var_set_jsdisp(retv, &vbarray->dispex);
         break;
@@ -335,7 +343,11 @@ HRESULT create_vbarray(script_ctx_t *ctx, SAFEARRAY *sa, jsdisp_t **ret)
     if(FAILED(hres))
         return hres;
 
-    SafeArrayCopy(sa, &vbarray->safearray);
+    hres = SafeArrayCopy(sa, &vbarray->safearray);
+    if(FAILED(hres)) {
+        jsdisp_release(&vbarray->dispex);
+        return hres;
+    }
 
     *ret = &vbarray->dispex;
     return S_OK;
