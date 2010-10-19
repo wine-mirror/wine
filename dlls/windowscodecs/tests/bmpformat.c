@@ -197,6 +197,10 @@ static void test_decode_24bpp(void)
                 ok(SUCCEEDED(hr), "CopyPixels failed, hr=%x\n", hr);
                 ok(!memcmp(imagedata, expected_imagedata, sizeof(imagedata)), "unexpected image data\n");
 
+                hr = IWICBitmapFrameDecode_CopyPixels(framedecode, NULL, 6, sizeof(imagedata), imagedata);
+                ok(SUCCEEDED(hr), "CopyPixels(rect=NULL) failed, hr=%x\n", hr);
+                ok(!memcmp(imagedata, expected_imagedata, sizeof(imagedata)), "unexpected image data\n");
+
                 IWICBitmapFrameDecode_Release(framedecode);
             }
 

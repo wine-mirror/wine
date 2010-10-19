@@ -110,9 +110,21 @@ static HRESULT WINAPI BitmapTestSrc_CopyPixels(IWICBitmapSource *iface,
     UINT bytesperrow;
     UINT srcstride;
     UINT row_offset;
+    WICRect rc;
 
-    if (prc->X < 0 || prc->Y < 0 || prc->X+prc->Width > This->data->width || prc->Y+prc->Height > This->data->height)
-        return E_INVALIDARG;
+    if (!prc)
+    {
+        rc.X = 0;
+        rc.Y = 0;
+        rc.Width = This->data->width;
+        rc.Height = This->data->height;
+        prc = &rc;
+    }
+    else
+    {
+        if (prc->X < 0 || prc->Y < 0 || prc->X+prc->Width > This->data->width || prc->Y+prc->Height > This->data->height)
+            return E_INVALIDARG;
+    }
 
     bytesperrow = ((This->data->bpp * prc->Width)+7)/8;
     srcstride = ((This->data->bpp * This->data->width)+7)/8;
@@ -233,6 +245,27 @@ static void compare_bitmap_data(const struct bitmap_data *expect, IWICBitmapSour
     }
     else
         ok(memcmp(expect->bits, converted_bits, buffersize) == 0, "unexpected pixel data (%s)\n", name);
+
+    /* Test with NULL rectangle - should copy the whole bitmap */
+    hr = IWICBitmapSource_CopyPixels(source, NULL, stride, buffersize, converted_bits);
+    ok(SUCCEEDED(hr), "CopyPixels(%s,rc=NULL) failed, hr=%x\n", name, hr);
+    if (IsEqualGUID(expect->format, &GUID_WICPixelFormat32bppBGR))
+    {
+        /* ignore the padding byte when comparing data */
+        UINT i;
+        BOOL equal=TRUE;
+        const DWORD *a=(const DWORD*)expect->bits, *b=(const DWORD*)converted_bits;
+        for (i=0; i<(buffersize/4); i++)
+            if ((a[i]&0xffffff) != (b[i]&0xffffff))
+            {
+                equal = FALSE;
+                break;
+            }
+        ok(equal, "unexpected pixel data with rc=NULL (%s)\n", name);
+    }
+    else
+        ok(memcmp(expect->bits, converted_bits, buffersize) == 0, "unexpected pixel data with rc=NULL (%s)\n", name);
+
     HeapFree(GetProcessHeap(), 0, converted_bits);
 }
 
