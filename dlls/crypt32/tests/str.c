@@ -443,7 +443,7 @@ static void test_CertNameToStrA(void)
     blob.pbData = encodedQuotedCN;
     blob.cbData = sizeof(encodedQuotedCN);
     test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"\"\"1\"\"\"",
-     TRUE);
+     FALSE);
     blob.pbData = encodedMultipleAttrCN;
     blob.cbData = sizeof(encodedMultipleAttrCN);
     test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"1+2\"", FALSE);
@@ -455,16 +455,16 @@ static void test_CertNameToStrA(void)
     test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"a=b\"", FALSE);
     blob.pbData = encodedLessThanCN;
     blob.cbData = sizeof(encodedLessThanCN);
-    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"<\"", TRUE);
+    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"<\"", FALSE);
     blob.pbData = encodedGreaterThanCN;
     blob.cbData = sizeof(encodedGreaterThanCN);
-    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\">\"", TRUE);
+    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\">\"", FALSE);
     blob.pbData = encodedHashCN;
     blob.cbData = sizeof(encodedHashCN);
-    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"#\"", TRUE);
+    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"#\"", FALSE);
     blob.pbData = encodedSemiCN;
     blob.cbData = sizeof(encodedSemiCN);
-    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\";\"", TRUE);
+    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\";\"", FALSE);
 }
 
 static void test_NameToStrConversionW(PCERT_NAME_BLOB pName, DWORD dwStrType,

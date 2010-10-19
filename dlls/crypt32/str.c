@@ -100,6 +100,46 @@ DWORD WINAPI CertRDNValueToStrA(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
             ret = ptr - psz;
         }
         break;
+    case CERT_RDN_BMP_STRING:
+        len = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)pValue->pbData,
+         pValue->cbData / sizeof(WCHAR), NULL, 0, NULL, NULL);
+        if (pValue->cbData && isspaceW(((LPCWSTR)pValue->pbData)[0]))
+            needsQuotes = TRUE;
+        if (pValue->cbData &&
+         isspaceW(((LPCWSTR)pValue->pbData)[pValue->cbData / sizeof(WCHAR)-1]))
+            needsQuotes = TRUE;
+        for (i = 0; i < pValue->cbData / sizeof(WCHAR); i++)
+        {
+            if (is_quotable_char(((LPCWSTR)pValue->pbData)[i]))
+                needsQuotes = TRUE;
+            if (((LPCWSTR)pValue->pbData)[i] == '"')
+                len += 1;
+        }
+        if (needsQuotes)
+            len += 2;
+        if (!psz || !csz)
+            ret = len;
+        else
+        {
+            char *dst = psz;
+
+            if (needsQuotes)
+                *dst++ = '"';
+            for (i = 0; i < pValue->cbData / sizeof(WCHAR) &&
+             dst - psz < csz; dst++, i++)
+            {
+                LPCWSTR src = (LPCWSTR)pValue->pbData + i;
+
+                WideCharToMultiByte(CP_ACP, 0, src, 1, dst,
+                 csz - (dst - psz) - 1, NULL, NULL);
+                if (*src == '"' && dst - psz < csz - 1)
+                    *(++dst) = '"';
+            }
+            if (needsQuotes && dst - psz < csz)
+                *dst++ = '"';
+            ret = dst - psz;
+        }
+        break;
     case CERT_RDN_UTF8_STRING:
         if (!psz || !csz)
             ret = WideCharToMultiByte(CP_UTF8, 0, (LPWSTR)pValue->pbData,
@@ -146,6 +186,7 @@ DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
     case CERT_RDN_GRAPHIC_STRING:
     case CERT_RDN_VISIBLE_STRING:
     case CERT_RDN_GENERAL_STRING:
+    case CERT_RDN_BMP_STRING:
         len = pValue->cbData;
         if (pValue->cbData && isspace(pValue->pbData[0]))
             needsQuotes = TRUE;
