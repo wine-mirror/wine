@@ -104,7 +104,7 @@ MSICOMPONENT* get_loaded_component( MSIPACKAGE* package, LPCWSTR Component )
 
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
     {
-        if (lstrcmpW(Component,comp->Component)==0)
+        if (!strcmpW( Component, comp->Component ))
             return comp;
     }
     return NULL;
@@ -116,7 +116,7 @@ MSIFEATURE* get_loaded_feature(MSIPACKAGE* package, LPCWSTR Feature )
 
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
-        if (lstrcmpW( Feature, feature->Feature )==0)
+        if (!strcmpW( Feature, feature->Feature ))
             return feature;
     }
     return NULL;
@@ -128,7 +128,7 @@ MSIFILE* get_loaded_file( MSIPACKAGE* package, LPCWSTR key )
 
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
-        if (lstrcmpW( key, file->File )==0)
+        if (!strcmpW( key, file->File ))
             return file;
     }
     return NULL;
@@ -141,7 +141,7 @@ int track_tempfile( MSIPACKAGE *package, LPCWSTR path )
     TRACE("%s\n", debugstr_w(path));
 
     LIST_FOR_EACH_ENTRY( temp, &package->tempfiles, MSITEMPFILE, entry )
-        if (!lstrcmpW( path, temp->Path ))
+        if (!strcmpW( path, temp->Path ))
             return 0;
 
     temp = msi_alloc_zero( sizeof (MSITEMPFILE) );
@@ -160,7 +160,7 @@ MSIFOLDER *get_loaded_folder( MSIPACKAGE *package, LPCWSTR dir )
 
     LIST_FOR_EACH_ENTRY( folder, &package->folders, MSIFOLDER, entry )
     {
-        if (lstrcmpW( dir, folder->Directory )==0)
+        if (!strcmpW( dir, folder->Directory ))
             return folder;
     }
     return NULL;
@@ -262,7 +262,7 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
     if (!name)
         return NULL;
 
-    if (!lstrcmpW(name,cszSourceDir))
+    if (!strcmpW( name, cszSourceDir ))
         name = cszTargetDir;
 
     f = get_loaded_folder( package, name );
@@ -270,7 +270,7 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
         return NULL;
 
     /* special resolving for Target and Source root dir */
-    if (!strcmpW(name,cszTargetDir))
+    if (!strcmpW( name, cszTargetDir ))
     {
         if (!f->ResolvedTarget && !f->Property)
         {
@@ -286,7 +286,7 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
             /* correct misbuilt target dir */
             path = build_directory_name(2, check_path, NULL);
             clean_spaces_from_path( path );
-            if (strcmpiW(path,check_path)!=0)
+            if (strcmpiW( path, check_path ))
                 msi_set_property( package->db, cszTargetDir, path );
             msi_free(check_path);
 
@@ -561,7 +561,7 @@ void ui_actiondata(MSIPACKAGE *package, LPCWSTR action, MSIRECORD * record)
     MSIRECORD * row = 0;
     DWORD size;
 
-    if (!package->LastAction || strcmpW(package->LastAction,action))
+    if (!package->LastAction || strcmpW(package->LastAction, action))
     {
         row = MSI_QueryGetRecord(package->db, Query_t, action);
         if (!row)
@@ -747,7 +747,7 @@ BOOL check_unique_action(const MSIPACKAGE *package, LPCWSTR action)
         return FALSE;
 
     for (i = 0; i < package->script->UniqueActionsCount; i++)
-        if (!strcmpW(package->script->UniqueActions[i],action))
+        if (!strcmpW(package->script->UniqueActions[i], action))
             return TRUE;
 
     return FALSE;

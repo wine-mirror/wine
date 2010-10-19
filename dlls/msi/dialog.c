@@ -578,7 +578,7 @@ static void msi_dialog_update_controls( msi_dialog *dialog, LPCWSTR property )
 
     LIST_FOR_EACH_ENTRY( control, &dialog->controls, msi_control, entry )
     {
-        if ( !lstrcmpW( control->property, property ) && control->update )
+        if ( control->property && !strcmpW( control->property, property ) && control->update )
             control->update( dialog, control );
     }
 }
@@ -601,7 +601,7 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
     ctrl = msi_dialog_find_control( dialog, control );
     if (!ctrl)
         return;
-    if( !lstrcmpW(attribute, szText) )
+    if( !strcmpW( attribute, szText ) )
     {
         font_text = MSI_RecordGetString( rec , 1 );
         font = msi_dialog_get_style( font_text, &text );
@@ -610,7 +610,7 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
         msi_free( font );
         msi_dialog_check_messages( NULL );
     }
-    else if( !lstrcmpW(attribute, szProgress) )
+    else if( !strcmpW( attribute, szProgress ) )
     {
         DWORD func, val;
 
@@ -640,12 +640,12 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
             break;
         }
     }
-    else if ( !lstrcmpW(attribute, szProperty) )
+    else if ( !strcmpW( attribute, szProperty ) )
     {
         MSIFEATURE *feature = msi_seltree_get_selected_feature( ctrl );
         msi_dialog_set_property( dialog->package, ctrl->property, feature->Directory );
     }
-    else if ( !lstrcmpW(attribute, szSelectionPath) )
+    else if ( !strcmpW( attribute, szSelectionPath ) )
     {
         LPWSTR prop = msi_dialog_dup_property( dialog, ctrl->property, TRUE );
         LPWSTR path;
@@ -1368,7 +1368,7 @@ static void msi_dialog_combobox_update( msi_dialog *dialog,
     for (j = 0; j < info->num_items; j++)
     {
         tmp = (LPWSTR) SendMessageW( control->hwnd, CB_GETITEMDATA, j, 0 );
-        if (!lstrcmpW( value, tmp ))
+        if (!strcmpW( value, tmp ))
             break;
     }
 
@@ -1988,7 +1988,7 @@ static UINT msi_dialog_create_radiobutton( MSIRECORD *rec, LPVOID param )
         return ERROR_FUNCTION_FAILED;
     control->handler = msi_dialog_radiogroup_handler;
 
-    if (!lstrcmpW(control->name, group->propval))
+    if (!strcmpW( control->name, group->propval ))
         SendMessageW(control->hwnd, BM_SETCHECK, BST_CHECKED, 0);
 
     prop = MSI_RecordGetString( rec, 1 );
@@ -2258,7 +2258,7 @@ msi_seltree_add_child_features( MSIPACKAGE *package, HWND hwnd,
 
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
-        if ( lstrcmpW( parent, feature->Feature_Parent ) )
+        if ( strcmpW( parent, feature->Feature_Parent ) )
             continue;
 
         if ( !feature->Title )
@@ -2682,7 +2682,7 @@ static void msi_dialog_update_directory_list( msi_dialog *dialog, msi_control *c
         if ( wfd.dwFileAttributes != FILE_ATTRIBUTE_DIRECTORY )
             continue;
 
-        if ( !lstrcmpW( wfd.cFileName, szDot ) || !lstrcmpW( wfd.cFileName, szDotDot ) )
+        if ( !strcmpW( wfd.cFileName, szDot ) || !strcmpW( wfd.cFileName, szDotDot ) )
             continue;
 
         item.mask = LVIF_TEXT;
@@ -2846,7 +2846,7 @@ static void msi_dialog_vcl_add_columns( msi_dialog *dialog, msi_control *control
         begin += end - begin + 1;
 
         /* empty braces or '0' hides the column */ 
-        if ( !num[0] || !lstrcmpW( num, szZero ) )
+        if ( !num[0] || !strcmpW( num, szZero ) )
         {
             count++;
             msi_free( num );
@@ -3151,15 +3151,15 @@ static UINT msi_dialog_set_control_condition( MSIRECORD *rec, LPVOID param )
         TRACE("%s control %s\n", debugstr_w(action), debugstr_w(name));
 
         /* FIXME: case sensitive? */
-        if(!lstrcmpW(action, szHide))
+        if (!strcmpW( action, szHide ))
             ShowWindow(control->hwnd, SW_HIDE);
-        else if(!strcmpW(action, szShow))
+        else if (!strcmpW( action, szShow ))
             ShowWindow(control->hwnd, SW_SHOW);
-        else if(!strcmpW(action, szDisable))
+        else if (!strcmpW( action, szDisable ))
             EnableWindow(control->hwnd, FALSE);
-        else if(!strcmpW(action, szEnable))
+        else if (!strcmpW( action, szEnable ))
             EnableWindow(control->hwnd, TRUE);
-        else if(!strcmpW(action, szDefault))
+        else if (!strcmpW( action, szDefault ))
             SetFocus(control->hwnd);
         else
             FIXME("Unhandled action %s\n", debugstr_w(action));
@@ -4022,11 +4022,11 @@ static UINT error_dialog_handler(MSIPACKAGE *package, LPCWSTR event,
         'M','S','I','E','r','r','o','r','D','i','a','l','o','g','R','e','s','u','l','t',0
     };
 
-    if ( lstrcmpW( event, end_dialog ) )
+    if ( strcmpW( event, end_dialog ) )
         return ERROR_SUCCESS;
 
-    if ( !lstrcmpW( argument, error_abort ) || !lstrcmpW( argument, error_cancel ) ||
-         !lstrcmpW( argument, error_no ) )
+    if ( !strcmpW( argument, error_abort ) || !strcmpW( argument, error_cancel ) ||
+         !strcmpW( argument, error_no ) )
     {
          msi_set_property( package->db, result_prop, error_abort );
     }
@@ -4108,7 +4108,7 @@ UINT msi_spawn_error_dialog( MSIPACKAGE *package, LPWSTR error_dialog, LPWSTR er
     if ( r != ERROR_SUCCESS)
         r = ERROR_SUCCESS;
 
-    if ( !lstrcmpW( result, error_abort ) )
+    if ( !strcmpW( result, error_abort ) )
         r = ERROR_FUNCTION_FAILED;
 
 done:

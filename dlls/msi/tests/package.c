@@ -1166,6 +1166,10 @@ static void test_settargetpath(void)
 
 static void test_condition(void)
 {
+    static const WCHAR cond1[] = {'\"','a',0x30a,'\"','<','\"',0xe5,'\"',0};
+    static const WCHAR cond2[] = {'\"','a',0x30a,'\"','>','\"',0xe5,'\"',0};
+    static const WCHAR cond3[] = {'\"','a',0x30a,'\"','<','>','\"',0xe5,'\"',0};
+    static const WCHAR cond4[] = {'\"','a',0x30a,'\"','=','\"',0xe5,'\"',0};
     MSICONDITION r;
     MSIHANDLE hpkg;
 
@@ -1884,6 +1888,22 @@ static void test_condition(void)
 
     r = MsiEvaluateCondition(hpkg, "A <= X");
     ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
+
+    r = MsiEvaluateConditionW(hpkg, cond1);
+    ok( r == MSICONDITION_TRUE || broken(r == MSICONDITION_FALSE),
+        "wrong return val (%d)\n", r);
+
+    r = MsiEvaluateConditionW(hpkg, cond2);
+    ok( r == MSICONDITION_FALSE || broken(r == MSICONDITION_TRUE),
+        "wrong return val (%d)\n", r);
+
+    r = MsiEvaluateConditionW(hpkg, cond3);
+    ok( r == MSICONDITION_TRUE || broken(r == MSICONDITION_FALSE),
+        "wrong return val (%d)\n", r);
+
+    r = MsiEvaluateConditionW(hpkg, cond4);
+    ok( r == MSICONDITION_FALSE || broken(r == MSICONDITION_TRUE),
+        "wrong return val (%d)\n", r);
 
     MsiCloseHandle( hpkg );
     DeleteFile(msifile);

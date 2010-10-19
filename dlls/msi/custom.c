@@ -594,7 +594,7 @@ static void handle_msi_break( LPCWSTR target )
     if( !GetEnvironmentVariableW( MsiBreak, val, MAX_PATH ))
         return;
 
-    if( lstrcmpiW( val, target ))
+    if( strcmpiW( val, target ))
         return;
 
     msg = msi_alloc( (lstrlenW(format) + 10) * sizeof(WCHAR) );

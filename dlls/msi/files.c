@@ -406,7 +406,7 @@ static BOOL add_wildcard(FILE_LIST *files, LPWSTR source, LPWSTR dest)
 
     LIST_FOR_EACH_ENTRY(file, &files->entry, FILE_LIST, entry)
     {
-        if (lstrcmpW(source, file->source) < 0)
+        if (strcmpW( source, file->source ) < 0)
         {
             list_add_before(&file->entry, &new->entry);
             return TRUE;

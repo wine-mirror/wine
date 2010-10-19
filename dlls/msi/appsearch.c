@@ -796,8 +796,8 @@ static UINT ACTION_RecurseSearchDirectory(MSIPACKAGE *package, LPWSTR *appValue,
         if (hFind != INVALID_HANDLE_VALUE)
         {
             if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY &&
-                lstrcmpW(findData.cFileName, szDot) &&
-                lstrcmpW(findData.cFileName, szDotDot))
+                strcmpW( findData.cFileName, szDot ) &&
+                strcmpW( findData.cFileName, szDotDot ))
             {
                 lstrcpyW(subpath, dir);
                 PathAppendW(subpath, findData.cFileName);
@@ -808,8 +808,8 @@ static UINT ACTION_RecurseSearchDirectory(MSIPACKAGE *package, LPWSTR *appValue,
             while (rc == ERROR_SUCCESS && !*appValue &&
                    FindNextFileW(hFind, &findData) != 0)
             {
-                if (!lstrcmpW(findData.cFileName, szDot) ||
-                    !lstrcmpW(findData.cFileName, szDotDot))
+                if (!strcmpW( findData.cFileName, szDot ) ||
+                    !strcmpW( findData.cFileName, szDotDot ))
                     continue;
 
                 lstrcpyW(subpath, dir);

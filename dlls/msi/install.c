@@ -519,7 +519,7 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
     msi_free(folder->Property);
     folder->Property = build_directory_name(2, szFolderPath, NULL);
 
-    if (lstrcmpiW(path, folder->Property) == 0)
+    if (!strcmpiW( path, folder->Property ))
     {
         /*
          *  Resolved Target has not really changed, so just 
@@ -828,7 +828,7 @@ UINT WINAPI MSI_SetFeatureStateW(MSIPACKAGE* package, LPCWSTR szFeature,
     /* update all the features that are children of this feature */
     LIST_FOR_EACH_ENTRY( child, &package->features, MSIFEATURE, entry )
     {
-        if (lstrcmpW(szFeature, child->Feature_Parent) == 0)
+        if (child->Feature_Parent && !strcmpW( szFeature, child->Feature_Parent ))
             MSI_SetFeatureStateW(package, child->Feature, iState);
     }
     

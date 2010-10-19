@@ -1151,6 +1151,8 @@ static const WCHAR szIntel64[] = {'I','n','t','e','l','6','4',0};
 static const WCHAR szX64[] = {'x','6','4',0};
 static const WCHAR szWow6432NodeCLSID[] = {'W','o','w','6','4','3','2','N','o','d','e','\\','C','L','S','I','D',0};
 static const WCHAR szWow6432Node[] = {'W','o','w','6','4','3','2','N','o','d','e',0};
+static const WCHAR szStreams[] = {'_','S','t','r','e','a','m','s',0};
+static const WCHAR szStorages[] = {'_','S','t','o','r','a','g','e','s',0};
 
 /* memory allocation macro functions */
 static void *msi_alloc( size_t len ) __WINE_ALLOC_SIZE(1);

@@ -983,22 +983,22 @@ static UINT MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
 
     MSIREG_OpenInstallProps(szProduct, context, NULL, &userdata, FALSE);
 
-    if (!lstrcmpW(szAttribute, INSTALLPROPERTY_HELPLINKW) ||
-        !lstrcmpW(szAttribute, INSTALLPROPERTY_HELPTELEPHONEW) ||
-        !lstrcmpW(szAttribute, INSTALLPROPERTY_INSTALLDATEW) ||
-        !lstrcmpW(szAttribute, INSTALLPROPERTY_INSTALLEDPRODUCTNAMEW) ||
-        !lstrcmpW(szAttribute, INSTALLPROPERTY_INSTALLLOCATIONW) ||
-        !lstrcmpW(szAttribute, INSTALLPROPERTY_INSTALLSOURCEW) ||
-        !lstrcmpW(szAttribute, INSTALLPROPERTY_LOCALPACKAGEW) ||
-        !lstrcmpW(szAttribute, INSTALLPROPERTY_PUBLISHERW) ||
-        !lstrcmpW(szAttribute, INSTALLPROPERTY_URLINFOABOUTW) ||
-        !lstrcmpW(szAttribute, INSTALLPROPERTY_URLUPDATEINFOW) ||
-        !lstrcmpW(szAttribute, INSTALLPROPERTY_VERSIONMINORW) ||
-        !lstrcmpW(szAttribute, INSTALLPROPERTY_VERSIONMAJORW) ||
-        !lstrcmpW(szAttribute, INSTALLPROPERTY_VERSIONSTRINGW) ||
-        !lstrcmpW(szAttribute, INSTALLPROPERTY_PRODUCTIDW) ||
-        !lstrcmpW(szAttribute, INSTALLPROPERTY_REGCOMPANYW) ||
-        !lstrcmpW(szAttribute, INSTALLPROPERTY_REGOWNERW))
+    if (!strcmpW( szAttribute, INSTALLPROPERTY_HELPLINKW ) ||
+        !strcmpW( szAttribute, INSTALLPROPERTY_HELPTELEPHONEW ) ||
+        !strcmpW( szAttribute, INSTALLPROPERTY_INSTALLDATEW ) ||
+        !strcmpW( szAttribute, INSTALLPROPERTY_INSTALLEDPRODUCTNAMEW ) ||
+        !strcmpW( szAttribute, INSTALLPROPERTY_INSTALLLOCATIONW ) ||
+        !strcmpW( szAttribute, INSTALLPROPERTY_INSTALLSOURCEW ) ||
+        !strcmpW( szAttribute, INSTALLPROPERTY_LOCALPACKAGEW ) ||
+        !strcmpW( szAttribute, INSTALLPROPERTY_PUBLISHERW ) ||
+        !strcmpW( szAttribute, INSTALLPROPERTY_URLINFOABOUTW ) ||
+        !strcmpW( szAttribute, INSTALLPROPERTY_URLUPDATEINFOW ) ||
+        !strcmpW( szAttribute, INSTALLPROPERTY_VERSIONMINORW ) ||
+        !strcmpW( szAttribute, INSTALLPROPERTY_VERSIONMAJORW ) ||
+        !strcmpW( szAttribute, INSTALLPROPERTY_VERSIONSTRINGW ) ||
+        !strcmpW( szAttribute, INSTALLPROPERTY_PRODUCTIDW ) ||
+        !strcmpW( szAttribute, INSTALLPROPERTY_REGCOMPANYW ) ||
+        !strcmpW( szAttribute, INSTALLPROPERTY_REGOWNERW ))
     {
         if (!prodkey)
         {
@@ -1009,25 +1009,25 @@ static UINT MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
         if (!userdata)
             return ERROR_UNKNOWN_PROPERTY;
 
-        if (!lstrcmpW(szAttribute, INSTALLPROPERTY_INSTALLEDPRODUCTNAMEW))
+        if (!strcmpW( szAttribute, INSTALLPROPERTY_INSTALLEDPRODUCTNAMEW ))
             szAttribute = display_name;
-        else if (!lstrcmpW(szAttribute, INSTALLPROPERTY_VERSIONSTRINGW))
+        else if (!strcmpW( szAttribute, INSTALLPROPERTY_VERSIONSTRINGW ))
             szAttribute = display_version;
 
         val = msi_reg_get_value(userdata, szAttribute, &type);
         if (!val)
             val = empty;
     }
-    else if (!lstrcmpW(szAttribute, INSTALLPROPERTY_INSTANCETYPEW) ||
-             !lstrcmpW(szAttribute, INSTALLPROPERTY_TRANSFORMSW) ||
-             !lstrcmpW(szAttribute, INSTALLPROPERTY_LANGUAGEW) ||
-             !lstrcmpW(szAttribute, INSTALLPROPERTY_PRODUCTNAMEW) ||
-             !lstrcmpW(szAttribute, INSTALLPROPERTY_ASSIGNMENTTYPEW) ||
-             !lstrcmpW(szAttribute, INSTALLPROPERTY_PACKAGECODEW) ||
-             !lstrcmpW(szAttribute, INSTALLPROPERTY_VERSIONW) ||
-             !lstrcmpW(szAttribute, INSTALLPROPERTY_PRODUCTICONW) ||
-             !lstrcmpW(szAttribute, INSTALLPROPERTY_PACKAGENAMEW) ||
-             !lstrcmpW(szAttribute, INSTALLPROPERTY_AUTHORIZED_LUA_APPW))
+    else if (!strcmpW( szAttribute, INSTALLPROPERTY_INSTANCETYPEW ) ||
+             !strcmpW( szAttribute, INSTALLPROPERTY_TRANSFORMSW ) ||
+             !strcmpW( szAttribute, INSTALLPROPERTY_LANGUAGEW ) ||
+             !strcmpW( szAttribute, INSTALLPROPERTY_PRODUCTNAMEW ) ||
+             !strcmpW( szAttribute, INSTALLPROPERTY_ASSIGNMENTTYPEW ) ||
+             !strcmpW( szAttribute, INSTALLPROPERTY_PACKAGECODEW ) ||
+             !strcmpW( szAttribute, INSTALLPROPERTY_VERSIONW ) ||
+             !strcmpW( szAttribute, INSTALLPROPERTY_PRODUCTICONW ) ||
+             !strcmpW( szAttribute, INSTALLPROPERTY_PACKAGENAMEW ) ||
+             !strcmpW( szAttribute, INSTALLPROPERTY_AUTHORIZED_LUA_APPW ))
     {
         if (!prodkey)
         {
@@ -1035,10 +1035,10 @@ static UINT MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
             goto done;
         }
 
-        if (!lstrcmpW(szAttribute, INSTALLPROPERTY_ASSIGNMENTTYPEW))
+        if (!strcmpW( szAttribute, INSTALLPROPERTY_ASSIGNMENTTYPEW ))
             szAttribute = assignment;
 
-        if (!lstrcmpW(szAttribute, INSTALLPROPERTY_PACKAGENAMEW))
+        if (!strcmpW( szAttribute, INSTALLPROPERTY_PACKAGENAMEW ))
         {
             res = RegOpenKeyW(prodkey, sourcelist, &source);
             if (res != ERROR_SUCCESS)
@@ -1061,7 +1061,7 @@ static UINT MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
         }
 
         if (val != empty && type != REG_DWORD &&
-            !lstrcmpW(szAttribute, INSTALLPROPERTY_PACKAGECODEW))
+            !strcmpW( szAttribute, INSTALLPROPERTY_PACKAGECODEW ))
         {
             if (lstrlenW(val) != SQUISH_GUID_SIZE - 1)
                 badconfig = TRUE;
@@ -1324,23 +1324,23 @@ UINT WINAPI MsiGetProductInfoExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
             goto done;
     }
 
-    if (!lstrcmpW(szProperty, INSTALLPROPERTY_HELPLINKW) ||
-        !lstrcmpW(szProperty, INSTALLPROPERTY_HELPTELEPHONEW) ||
-        !lstrcmpW(szProperty, INSTALLPROPERTY_INSTALLDATEW) ||
-        !lstrcmpW(szProperty, INSTALLPROPERTY_INSTALLEDPRODUCTNAMEW) ||
-        !lstrcmpW(szProperty, INSTALLPROPERTY_INSTALLLOCATIONW) ||
-        !lstrcmpW(szProperty, INSTALLPROPERTY_INSTALLSOURCEW) ||
-        !lstrcmpW(szProperty, INSTALLPROPERTY_LOCALPACKAGEW) ||
-        !lstrcmpW(szProperty, INSTALLPROPERTY_PUBLISHERW) ||
-        !lstrcmpW(szProperty, INSTALLPROPERTY_URLINFOABOUTW) ||
-        !lstrcmpW(szProperty, INSTALLPROPERTY_URLUPDATEINFOW) ||
-        !lstrcmpW(szProperty, INSTALLPROPERTY_VERSIONMINORW) ||
-        !lstrcmpW(szProperty, INSTALLPROPERTY_VERSIONMAJORW) ||
-        !lstrcmpW(szProperty, INSTALLPROPERTY_VERSIONSTRINGW) ||
-        !lstrcmpW(szProperty, INSTALLPROPERTY_PRODUCTIDW) ||
-        !lstrcmpW(szProperty, INSTALLPROPERTY_REGCOMPANYW) ||
-        !lstrcmpW(szProperty, INSTALLPROPERTY_REGOWNERW) ||
-        !lstrcmpW(szProperty, INSTALLPROPERTY_INSTANCETYPEW))
+    if (!strcmpW( szProperty, INSTALLPROPERTY_HELPLINKW ) ||
+        !strcmpW( szProperty, INSTALLPROPERTY_HELPTELEPHONEW ) ||
+        !strcmpW( szProperty, INSTALLPROPERTY_INSTALLDATEW ) ||
+        !strcmpW( szProperty, INSTALLPROPERTY_INSTALLEDPRODUCTNAMEW ) ||
+        !strcmpW( szProperty, INSTALLPROPERTY_INSTALLLOCATIONW ) ||
+        !strcmpW( szProperty, INSTALLPROPERTY_INSTALLSOURCEW ) ||
+        !strcmpW( szProperty, INSTALLPROPERTY_LOCALPACKAGEW ) ||
+        !strcmpW( szProperty, INSTALLPROPERTY_PUBLISHERW ) ||
+        !strcmpW( szProperty, INSTALLPROPERTY_URLINFOABOUTW ) ||
+        !strcmpW( szProperty, INSTALLPROPERTY_URLUPDATEINFOW ) ||
+        !strcmpW( szProperty, INSTALLPROPERTY_VERSIONMINORW ) ||
+        !strcmpW( szProperty, INSTALLPROPERTY_VERSIONMAJORW ) ||
+        !strcmpW( szProperty, INSTALLPROPERTY_VERSIONSTRINGW ) ||
+        !strcmpW( szProperty, INSTALLPROPERTY_PRODUCTIDW ) ||
+        !strcmpW( szProperty, INSTALLPROPERTY_REGCOMPANYW ) ||
+        !strcmpW( szProperty, INSTALLPROPERTY_REGOWNERW ) ||
+        !strcmpW( szProperty, INSTALLPROPERTY_INSTANCETYPEW ))
     {
         val = msi_reg_get_value(props, package, &type);
         if (!val)
@@ -1353,9 +1353,9 @@ UINT WINAPI MsiGetProductInfoExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
 
         msi_free(val);
 
-        if (!lstrcmpW(szProperty, INSTALLPROPERTY_INSTALLEDPRODUCTNAMEW))
+        if (!strcmpW( szProperty, INSTALLPROPERTY_INSTALLEDPRODUCTNAMEW ))
             szProperty = displayname;
-        else if (!lstrcmpW(szProperty, INSTALLPROPERTY_VERSIONSTRINGW))
+        else if (!strcmpW( szProperty, INSTALLPROPERTY_VERSIONSTRINGW ))
             szProperty = displayversion;
 
         val = msi_reg_get_value(props, szProperty, &type);
@@ -1364,14 +1364,14 @@ UINT WINAPI MsiGetProductInfoExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
 
         r = msi_copy_outval(val, szValue, pcchValue);
     }
-    else if (!lstrcmpW(szProperty, INSTALLPROPERTY_TRANSFORMSW) ||
-             !lstrcmpW(szProperty, INSTALLPROPERTY_LANGUAGEW) ||
-             !lstrcmpW(szProperty, INSTALLPROPERTY_PRODUCTNAMEW) ||
-             !lstrcmpW(szProperty, INSTALLPROPERTY_PACKAGECODEW) ||
-             !lstrcmpW(szProperty, INSTALLPROPERTY_VERSIONW) ||
-             !lstrcmpW(szProperty, INSTALLPROPERTY_PRODUCTICONW) ||
-             !lstrcmpW(szProperty, INSTALLPROPERTY_PACKAGENAMEW) ||
-             !lstrcmpW(szProperty, INSTALLPROPERTY_AUTHORIZED_LUA_APPW))
+    else if (!strcmpW( szProperty, INSTALLPROPERTY_TRANSFORMSW ) ||
+             !strcmpW( szProperty, INSTALLPROPERTY_LANGUAGEW ) ||
+             !strcmpW( szProperty, INSTALLPROPERTY_PRODUCTNAMEW ) ||
+             !strcmpW( szProperty, INSTALLPROPERTY_PACKAGECODEW ) ||
+             !strcmpW( szProperty, INSTALLPROPERTY_VERSIONW ) ||
+             !strcmpW( szProperty, INSTALLPROPERTY_PRODUCTICONW ) ||
+             !strcmpW( szProperty, INSTALLPROPERTY_PACKAGENAMEW ) ||
+             !strcmpW( szProperty, INSTALLPROPERTY_AUTHORIZED_LUA_APPW ))
     {
         if (!prod && !classes)
             goto done;
@@ -1389,7 +1389,7 @@ UINT WINAPI MsiGetProductInfoExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
 
         r = msi_copy_outval(val, szValue, pcchValue);
     }
-    else if (!lstrcmpW(szProperty, INSTALLPROPERTY_PRODUCTSTATEW))
+    else if (!strcmpW( szProperty, INSTALLPROPERTY_PRODUCTSTATEW ))
     {
         if (dwContext == MSIINSTALLCONTEXT_MACHINE)
         {
@@ -1423,7 +1423,7 @@ UINT WINAPI MsiGetProductInfoExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
 
         r = msi_copy_outval(val, szValue, pcchValue);
     }
-    else if (!lstrcmpW(szProperty, INSTALLPROPERTY_ASSIGNMENTTYPEW))
+    else if (!strcmpW( szProperty, INSTALLPROPERTY_ASSIGNMENTTYPEW ))
     {
         if (!prod && !classes)
             goto done;
@@ -1554,7 +1554,7 @@ UINT WINAPI MsiGetPatchInfoExW(LPCWSTR szPatchCode, LPCWSTR szProductCode,
     if (dwContext == MSIINSTALLCONTEXT_MACHINE && szUserSid)
         return ERROR_INVALID_PARAMETER;
 
-    if (!lstrcmpW(szUserSid, szLocalSid))
+    if (szUserSid && !strcmpW( szUserSid, szLocalSid ))
         return ERROR_INVALID_PARAMETER;
 
     if (MSIREG_OpenUserDataProductKey(szProductCode, dwContext, NULL,
@@ -1575,7 +1575,7 @@ UINT WINAPI MsiGetPatchInfoExW(LPCWSTR szPatchCode, LPCWSTR szProductCode,
     if (res != ERROR_SUCCESS)
         goto done;
 
-    if (!lstrcmpW(szProperty, INSTALLPROPERTY_TRANSFORMSW))
+    if (!strcmpW( szProperty, INSTALLPROPERTY_TRANSFORMSW ))
     {
         if (MSIREG_OpenProductKey(szProductCode, NULL, dwContext,
                                   &prod, FALSE) != ERROR_SUCCESS)
@@ -1594,25 +1594,25 @@ UINT WINAPI MsiGetPatchInfoExW(LPCWSTR szPatchCode, LPCWSTR szProductCode,
                                         &udpatch, FALSE) != ERROR_SUCCESS)
             goto done;
 
-        if (!lstrcmpW(szProperty, INSTALLPROPERTY_LOCALPACKAGEW))
+        if (!strcmpW( szProperty, INSTALLPROPERTY_LOCALPACKAGEW ))
         {
             if (dwContext == MSIINSTALLCONTEXT_USERMANAGED)
                 szProperty = szManagedPackage;
             datakey = udpatch;
         }
-        else if (!lstrcmpW(szProperty, INSTALLPROPERTY_INSTALLDATEW))
+        else if (!strcmpW( szProperty, INSTALLPROPERTY_INSTALLDATEW ))
         {
             datakey = patch;
             szProperty = szInstalled;
         }
-        else if (!lstrcmpW(szProperty, INSTALLPROPERTY_LOCALPACKAGEW))
+        else if (!strcmpW( szProperty, INSTALLPROPERTY_LOCALPACKAGEW ))
         {
             datakey = udpatch;
         }
-        else if (!lstrcmpW(szProperty, INSTALLPROPERTY_UNINSTALLABLEW) ||
-                 !lstrcmpW(szProperty, INSTALLPROPERTY_PATCHSTATEW) ||
-                 !lstrcmpW(szProperty, INSTALLPROPERTY_DISPLAYNAMEW) ||
-                 !lstrcmpW(szProperty, INSTALLPROPERTY_MOREINFOURLW))
+        else if (!strcmpW( szProperty, INSTALLPROPERTY_UNINSTALLABLEW ) ||
+                 !strcmpW( szProperty, INSTALLPROPERTY_PATCHSTATEW ) ||
+                 !strcmpW( szProperty, INSTALLPROPERTY_DISPLAYNAMEW ) ||
+                 !strcmpW( szProperty, INSTALLPROPERTY_MOREINFOURLW ))
         {
             datakey = patch;
         }

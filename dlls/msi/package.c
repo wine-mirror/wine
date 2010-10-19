@@ -511,7 +511,7 @@ static LPWSTR get_fusion_filename(MSIPACKAGE *package)
         index++;
 
         /* verify existence of fusion.dll .Net 3.0 does not install a new one */
-        if (lstrcmpW(ver, name) < 0)
+        if (strcmpW( ver, name ) < 0)
         {
             LPWSTR check;
             size = lstrlenW(windir) + lstrlenW(subdir) + lstrlenW(name) +lstrlenW(fusion) + 3;

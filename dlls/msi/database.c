@@ -79,7 +79,7 @@ static UINT find_open_stream( MSIDATABASE *db, LPCWSTR name, IStream **stm )
             continue;
         }
 
-        if( !lstrcmpW( name, stat.pwcsName ) )
+        if( !strcmpW( name, stat.pwcsName ) )
         {
             TRACE("found %s\n", debugstr_w(name));
             *stm = stream->stm;
@@ -1136,7 +1136,7 @@ static UINT MSI_DatabaseExport( MSIDATABASE *db, LPCWSTR table,
     if (handle == INVALID_HANDLE_VALUE)
         return ERROR_FUNCTION_FAILED;
 
-    if (!lstrcmpW( table, forcecodepage ))
+    if (!strcmpW( table, forcecodepage ))
     {
         r = msi_export_forcecodepage( handle );
         goto done;
@@ -1319,7 +1319,7 @@ static BOOL merge_type_match(LPCWSTR type1, LPCWSTR type2)
         ((type2[0] == 'L') || (type2[0] == 'S')))
         return TRUE;
 
-    return !lstrcmpW(type1, type2);
+    return !strcmpW( type1, type2 );
 }
 
 static UINT merge_verify_colnames(MSIQUERY *dbview, MSIQUERY *mergeview)
@@ -1341,8 +1341,7 @@ static UINT merge_verify_colnames(MSIQUERY *dbview, MSIQUERY *mergeview)
         if (!MSI_RecordGetString(mergerec, i))
             break;
 
-        if (lstrcmpW(MSI_RecordGetString(dbrec, i),
-                     MSI_RecordGetString(mergerec, i)))
+        if (strcmpW( MSI_RecordGetString( dbrec, i ), MSI_RecordGetString( mergerec, i ) ))
         {
             r = ERROR_DATATYPE_MISMATCH;
             goto done;
@@ -1405,8 +1404,7 @@ static UINT merge_verify_primary_keys(MSIDATABASE *db, MSIDATABASE *mergedb,
 
     for (i = 1; i <= count; i++)
     {
-        if (lstrcmpW(MSI_RecordGetString(dbrec, i),
-                     MSI_RecordGetString(mergerec, i)))
+        if (strcmpW( MSI_RecordGetString( dbrec, i ), MSI_RecordGetString( mergerec, i ) ))
         {
             r = ERROR_DATATYPE_MISMATCH;
             goto done;
@@ -1434,7 +1432,7 @@ static LPWSTR get_key_value(MSIQUERY *view, LPCWSTR key, MSIRECORD *rec)
     do
     {
         str = msi_dup_record_field(colnames, ++i);
-        cmp = lstrcmpW(key, str);
+        cmp = strcmpW( key, str );
         msi_free(str);
     } while (cmp);
 

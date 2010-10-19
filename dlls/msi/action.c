@@ -445,7 +445,7 @@ UINT msi_check_patch_applicable( MSIPACKAGE *package, MSISUMMARYINFO *si )
     guids = msi_split_string( guid_list, ';' );
     for ( i = 0; guids[i] && ret != ERROR_SUCCESS; i++ )
     {
-        if (!lstrcmpW( guids[i], product_code ))
+        if (!strcmpW( guids[i], product_code ))
             ret = ERROR_SUCCESS;
     }
     msi_free( guids );
@@ -964,6 +964,9 @@ static UINT ITERATE_CreateFolders(MSIRECORD *row, LPVOID param)
     MSICOMPONENT *comp;
 
     component = MSI_RecordGetString(row, 2);
+    if (!component)
+        return ERROR_SUCCESS;
+
     comp = get_loaded_component(package, component);
     if (!comp)
         return ERROR_SUCCESS;
@@ -1043,6 +1046,9 @@ static UINT ITERATE_RemoveFolders( MSIRECORD *row, LPVOID param )
     MSICOMPONENT *comp;
 
     component = MSI_RecordGetString(row, 2);
+    if (!component)
+        return ERROR_SUCCESS;
+
     comp = get_loaded_component(package, component);
     if (!comp)
         return ERROR_SUCCESS;
@@ -1218,7 +1224,7 @@ static MSIFEATURE *find_feature_by_name( MSIPACKAGE *package, LPCWSTR name )
 
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
-        if ( !lstrcmpW( feature->Feature, name ) )
+        if ( !strcmpW( feature->Feature, name ) )
             return feature;
     }
 
@@ -1515,9 +1521,9 @@ static UINT load_folder( MSIRECORD *row, LPVOID param )
     src_long = folder_split_path( src_short, '|' );
 
     /* check for no-op dirs */
-    if (!lstrcmpW(szDot, tgt_short))
+    if (tgt_short && !strcmpW( szDot, tgt_short ))
         tgt_short = szEmpty;
-    if (!lstrcmpW(szDot, src_short))
+    if (src_short && !strcmpW( szDot, src_short ))
         src_short = szEmpty;
 
     if (!tgt_long)
@@ -1690,13 +1696,13 @@ static BOOL process_state_property(MSIPACKAGE* package, int level,
 
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
-        if (lstrcmpW(property, szRemove) &&
+        if (strcmpW( property, szRemove ) &&
             (feature->Level <= 0 || feature->Level > level))
             continue;
 
         if (!strcmpW(property, szReinstall)) state = feature->Installed;
 
-        if (strcmpiW(override, szAll)==0)
+        if (!strcmpiW( override, szAll ))
             msi_feature_set_state(package, feature, state);
         else
         {
@@ -2310,7 +2316,7 @@ static LPSTR parse_value(MSIPACKAGE *package, LPCWSTR value, DWORD *type,
          else
             ptr=value;
 
-        if (strstrW(value,szMulti))
+        if (strstrW(value, szMulti))
             *type = REG_MULTI_SZ;
 
         /* remove initial delimiter */
@@ -3749,7 +3755,7 @@ static UINT msi_publish_sourcelist(MSIPACKAGE *package, HKEY hkey)
 
     LIST_FOR_EACH_ENTRY(info, &package->sourcelist_info, MSISOURCELISTINFO, entry)
     {
-        if (!lstrcmpW(info->property, INSTALLPROPERTY_LASTUSEDSOURCEW))
+        if (!strcmpW( info->property, INSTALLPROPERTY_LASTUSEDSOURCEW ))
             msi_set_last_used_source(package->ProductCode, NULL, info->context,
                                      info->options, info->value);
         else
@@ -4852,7 +4858,7 @@ static UINT msi_unpublish_product(MSIPACKAGE *package, WCHAR *remove)
         return ERROR_FUNCTION_FAILED;
     }
 
-    if (!lstrcmpW(features[0], szAll))
+    if (!strcmpW( features[0], szAll ))
         full_uninstall = TRUE;
     else
     {
@@ -5783,7 +5789,7 @@ static MSIFILE *msi_find_file( MSIPACKAGE *package, LPCWSTR filename )
 
     LIST_FOR_EACH_ENTRY(file, &package->files, MSIFILE, entry)
     {
-        if (!lstrcmpW(file->File, filename))
+        if (!strcmpW( file->File, filename ))
             return file;
     }
 
@@ -5795,9 +5801,9 @@ static UINT ITERATE_InstallODBCDriver( MSIRECORD *rec, LPVOID param )
     MSIPACKAGE *package = param;
     LPWSTR driver, driver_path, ptr;
     WCHAR outpath[MAX_PATH];
-    MSIFILE *driver_file, *setup_file;
+    MSIFILE *driver_file = NULL, *setup_file = NULL;
     MSIRECORD *uirow;
-    LPCWSTR desc;
+    LPCWSTR desc, file_key;
     DWORD len, usage;
     UINT r = ERROR_SUCCESS;
 
@@ -5810,8 +5816,11 @@ static UINT ITERATE_InstallODBCDriver( MSIRECORD *rec, LPVOID param )
 
     desc = MSI_RecordGetString(rec, 3);
 
-    driver_file = msi_find_file(package, MSI_RecordGetString(rec, 4));
-    setup_file = msi_find_file(package, MSI_RecordGetString(rec, 5));
+    file_key = MSI_RecordGetString( rec, 4 );
+    if (file_key) driver_file = msi_find_file( package, file_key );
+
+    file_key = MSI_RecordGetString( rec, 5 );
+    if (file_key) setup_file = msi_find_file( package, file_key );
 
     if (!driver_file)
     {
@@ -5874,9 +5883,9 @@ static UINT ITERATE_InstallODBCTranslator( MSIRECORD *rec, LPVOID param )
     MSIPACKAGE *package = param;
     LPWSTR translator, translator_path, ptr;
     WCHAR outpath[MAX_PATH];
-    MSIFILE *translator_file, *setup_file;
+    MSIFILE *translator_file = NULL, *setup_file = NULL;
     MSIRECORD *uirow;
-    LPCWSTR desc;
+    LPCWSTR desc, file_key;
     DWORD len, usage;
     UINT r = ERROR_SUCCESS;
 
@@ -5887,8 +5896,11 @@ static UINT ITERATE_InstallODBCTranslator( MSIRECORD *rec, LPVOID param )
 
     desc = MSI_RecordGetString(rec, 3);
 
-    translator_file = msi_find_file(package, MSI_RecordGetString(rec, 4));
-    setup_file = msi_find_file(package, MSI_RecordGetString(rec, 5));
+    file_key = MSI_RecordGetString( rec, 4 );
+    if (file_key) translator_file = msi_find_file( package, file_key );
+
+    file_key = MSI_RecordGetString( rec, 5 );
+    if (file_key) setup_file = msi_find_file( package, file_key );
 
     if (!translator_file)
     {
@@ -6232,7 +6244,7 @@ static UINT env_parse_flags( LPCWSTR *name, LPCWSTR *value, DWORD *flags )
         else if (lstrlenW(*value) >= prefix_len)
         {
             ptr += lstrlenW(ptr) - prefix_len;
-            if (!lstrcmpW(ptr, prefix))
+            if (!strcmpW( ptr, prefix ))
             {
                 if ((ptr-1) > *value && *(ptr-1) == szSemiColon[0])
                 {
@@ -6403,7 +6415,7 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
         if (res != ERROR_SUCCESS)
             goto done;
 
-        if (flags & ENV_ACT_REMOVEMATCH && (!value || !lstrcmpW(data, value)))
+        if (flags & ENV_ACT_REMOVEMATCH && (!value || !strcmpW( data, value )))
         {
             action = 0x4;
             res = RegDeleteValueW(env, name);
@@ -6943,7 +6955,7 @@ static BOOL find_assembly(struct list *assemblies, LPCWSTR file, MSIASSEMBLY **o
 
     LIST_FOR_EACH_ENTRY(assembly, assemblies, MSIASSEMBLY, entry)
     {
-        if (!lstrcmpW(assembly->file->File, file))
+        if (!strcmpW( assembly->file->File, file ))
         {
             *out = assembly;
             return TRUE;

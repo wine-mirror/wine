@@ -2140,7 +2140,7 @@ UINT WINAPI MsiEnumPatchesExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
     if (!szProductCode || !squash_guid(szProductCode, squished_pc))
         return ERROR_INVALID_PARAMETER;
 
-    if (!lstrcmpW(szUserSid, szLocalSid))
+    if (szUserSid && !strcmpW( szUserSid, szLocalSid ))
         return ERROR_INVALID_PARAMETER;
 
     if (dwContext & MSIINSTALLCONTEXT_MACHINE && szUserSid)

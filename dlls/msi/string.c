@@ -162,7 +162,7 @@ static int find_insert_index( const string_table *st, UINT string_id )
     while (low <= high)
     {
         i = (low + high) / 2;
-        c = lstrcmpW( st->strings[string_id].str, st->strings[st->sorted[i]].str );
+        c = strcmpW( st->strings[string_id].str, st->strings[st->sorted[i]].str );
 
         if (c < 0)
             high = i - 1;
@@ -402,7 +402,7 @@ UINT msi_string2idW( const string_table *st, LPCWSTR str, UINT *id )
     while (low <= high)
     {
         i = (low + high) / 2;
-        c = lstrcmpW( str, st->strings[st->sorted[i]].str );
+        c = strcmpW( str, st->strings[st->sorted[i]].str );
 
         if (c < 0)
             high = i - 1;

@@ -68,7 +68,7 @@ static BOOL source_matches_volume(MSIMEDIAINFO *mi, LPCWSTR source_root)
         return FALSE;
     }
 
-    return !lstrcmpW(mi->volume_label, volume_name);
+    return !strcmpW( mi->volume_label, volume_name );
 }
 
 static UINT msi_change_media(MSIPACKAGE *package, MSIMEDIAINFO *mi)
@@ -331,7 +331,7 @@ static INT_PTR cabinet_next_cabinet(FDINOTIFICATIONTYPE fdint,
         goto done;
     }
 
-    if (lstrcmpiW(mi->cabinet, cab))
+    if (strcmpiW( mi->cabinet, cab ))
     {
         ERR("Continuous cabinet does not match the next cabinet in the Media table\n");
         goto done;
@@ -841,7 +841,7 @@ UINT ready_media(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO *mi)
 
     /* check volume matches, change media if not */
     if (mi->volume_label && mi->disk_id > 1 &&
-        lstrcmpW(mi->first_volume, mi->volume_label))
+        strcmpW( mi->first_volume, mi->volume_label ))
     {
         LPWSTR source = msi_dup_property(package->db, cszSourceDir);
         BOOL matches;

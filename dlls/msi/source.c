@@ -592,8 +592,8 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
     if (rc != ERROR_SUCCESS)
         return rc;
 
-    if (!lstrcmpW(szProperty, INSTALLPROPERTY_MEDIAPACKAGEPATHW) ||
-        !lstrcmpW(szProperty, INSTALLPROPERTY_DISKPROMPTW))
+    if (!strcmpW( szProperty, INSTALLPROPERTY_MEDIAPACKAGEPATHW ) ||
+        !strcmpW( szProperty, INSTALLPROPERTY_DISKPROMPTW ))
     {
         rc = OpenMediaSubkey(sourcekey, &media, FALSE);
         if (rc != ERROR_SUCCESS)
@@ -602,14 +602,14 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
             return ERROR_SUCCESS;
         }
 
-        if (!lstrcmpW(szProperty, INSTALLPROPERTY_MEDIAPACKAGEPATHW))
+        if (!strcmpW( szProperty, INSTALLPROPERTY_MEDIAPACKAGEPATHW ))
             szProperty = mediapack;
 
         RegQueryValueExW(media, szProperty, 0, 0, (LPBYTE)szValue, pcchValue);
         RegCloseKey(media);
     }
-    else if (!lstrcmpW(szProperty, INSTALLPROPERTY_LASTUSEDSOURCEW) ||
-             !lstrcmpW(szProperty, INSTALLPROPERTY_LASTUSEDTYPEW))
+    else if (!strcmpW( szProperty, INSTALLPROPERTY_LASTUSEDSOURCEW ) ||
+             !strcmpW( szProperty, INSTALLPROPERTY_LASTUSEDTYPEW ))
     {
         rc = RegQueryValueExW(sourcekey, INSTALLPROPERTY_LASTUSEDSOURCEW,
                               0, 0, NULL, &size);
@@ -630,7 +630,7 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
             return ERROR_SUCCESS;
         }
 
-        if (!lstrcmpW(szProperty, INSTALLPROPERTY_LASTUSEDTYPEW))
+        if (!strcmpW( szProperty, INSTALLPROPERTY_LASTUSEDTYPEW ))
         {
             if (*source != 'n' && *source != 'u' && *source != 'm')
             {
@@ -662,7 +662,7 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
         *pcchValue = lstrlenW(ptr);
         msi_free(source);
     }
-    else if (strcmpW(INSTALLPROPERTY_PACKAGENAMEW, szProperty)==0)
+    else if (!strcmpW( szProperty, INSTALLPROPERTY_PACKAGENAMEW ))
     {
         *pcchValue = *pcchValue * sizeof(WCHAR);
         rc = RegQueryValueExW(sourcekey, INSTALLPROPERTY_PACKAGENAMEW, 0, 0,
@@ -815,22 +815,22 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
     }
 
     property = szProperty;
-    if (!lstrcmpW(szProperty, INSTALLPROPERTY_MEDIAPACKAGEPATHW))
+    if (!strcmpW( szProperty, INSTALLPROPERTY_MEDIAPACKAGEPATHW ))
         property = media_package;
 
     rc = OpenSourceKey(szProduct, &sourcekey, MSICODE_PRODUCT, dwContext, FALSE);
     if (rc != ERROR_SUCCESS)
         return rc;
 
-    if (lstrcmpW(szProperty, INSTALLPROPERTY_LASTUSEDSOURCEW) &&
+    if (strcmpW( szProperty, INSTALLPROPERTY_LASTUSEDSOURCEW ) &&
         dwOptions & (MSISOURCETYPE_NETWORK | MSISOURCETYPE_URL))
     {
         RegCloseKey(sourcekey);
         return ERROR_INVALID_PARAMETER;
     }
 
-    if (!lstrcmpW(szProperty, INSTALLPROPERTY_MEDIAPACKAGEPATHW) ||
-        !lstrcmpW(szProperty, INSTALLPROPERTY_DISKPROMPTW))
+    if (!strcmpW( szProperty, INSTALLPROPERTY_MEDIAPACKAGEPATHW ) ||
+        !strcmpW( szProperty, INSTALLPROPERTY_DISKPROMPTW ))
     {
         rc = OpenMediaSubkey(sourcekey, &media, TRUE);
         if (rc == ERROR_SUCCESS)
@@ -839,7 +839,7 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
             RegCloseKey(media);
         }
     }
-    else if (strcmpW(INSTALLPROPERTY_PACKAGENAMEW, szProperty)==0)
+    else if (!strcmpW( szProperty, INSTALLPROPERTY_PACKAGENAMEW ))
     {
         DWORD size = (lstrlenW(szValue) + 1) * sizeof(WCHAR);
         rc = RegSetValueExW(sourcekey, INSTALLPROPERTY_PACKAGENAMEW, 0,
@@ -847,7 +847,7 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
         if (rc != ERROR_SUCCESS)
             rc = ERROR_UNKNOWN_PROPERTY;
     }
-    else if (!lstrcmpW(szProperty, INSTALLPROPERTY_LASTUSEDSOURCEW))
+    else if (!strcmpW( szProperty, INSTALLPROPERTY_LASTUSEDSOURCEW ))
     {
         if (!(dwOptions & (MSISOURCETYPE_NETWORK | MSISOURCETYPE_URL)))
             rc = ERROR_INVALID_PARAMETER;
