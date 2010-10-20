@@ -2499,11 +2499,12 @@ BOOL getColorBits(const struct wined3d_format *format,
 
     switch (format->id)
     {
+        case WINED3DFMT_B10G10R10A2_UNORM:
+        case WINED3DFMT_R10G10B10A2_UNORM:
         case WINED3DFMT_B8G8R8X8_UNORM:
         case WINED3DFMT_B8G8R8_UNORM:
         case WINED3DFMT_B8G8R8A8_UNORM:
         case WINED3DFMT_R8G8B8A8_UNORM:
-        case WINED3DFMT_B10G10R10A2_UNORM:
         case WINED3DFMT_B5G5R5X1_UNORM:
         case WINED3DFMT_B5G5R5A1_UNORM:
         case WINED3DFMT_B5G6R5_UNORM:
