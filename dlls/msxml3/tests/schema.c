@@ -324,6 +324,7 @@ static void test_collection_refs(void)
     IXMLDOMDocument2 *schema1, *schema2, *schema3;
     IXMLDOMSchemaCollection *cache1, *cache2, *cache3;
     VARIANT_BOOL b;
+    LONG length;
 
     schema1 = create_document(&IID_IXMLDOMDocument2);
     schema2 = create_document(&IID_IXMLDOMDocument2);
@@ -376,8 +377,22 @@ static void test_collection_refs(void)
     if (schema2) todo_wine check_refs(IXMLDOMDocument2, schema2, 1);
     if (schema3) todo_wine check_refs(IXMLDOMDocument2, schema3, 1);
 
-    todo_wine ole_check(IXMLDOMSchemaCollection_addCollection(cache2, cache1));
-    todo_wine ole_check(IXMLDOMSchemaCollection_addCollection(cache3, cache2));
+    ole_expect(IXMLDOMSchemaCollection_addCollection(cache1, NULL), E_POINTER);
+    ole_check(IXMLDOMSchemaCollection_addCollection(cache2, cache1));
+    ole_check(IXMLDOMSchemaCollection_addCollection(cache3, cache2));
+
+    length = -1;
+    ole_check(IXMLDOMSchemaCollection_get_length(cache1, &length));
+    ok(length == 1, "expected length 1, got %i", length);
+
+    length = -1;
+    ole_check(IXMLDOMSchemaCollection_get_length(cache2, &length));
+    ok(length == 2, "expected length 2, got %i", length);
+
+    length = -1;
+    ole_check(IXMLDOMSchemaCollection_get_length(cache3, &length));
+    ok(length == 3, "expected length 3, got %i", length);
+
 
     /* merging collections does not affect the ref count */
     check_refs(IXMLDOMSchemaCollection, cache1, 1);

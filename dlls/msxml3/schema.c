@@ -474,10 +474,31 @@ static HRESULT WINAPI schema_cache_get_namespaceURI(IXMLDOMSchemaCollection *ifa
     return E_NOTIMPL;
 }
 
+static void cache_copy(void* data, void* dest, xmlChar* name)
+{
+    schema_cache* This = (schema_cache*) dest;
+    cache_entry* entry = (cache_entry*) data;
+
+    if (xmlHashLookup(This->cache, name) == NULL)
+    {
+        cache_entry_add_ref(entry);
+        xmlHashAddEntry(This->cache, name, entry);
+    }
+}
+
 static HRESULT WINAPI schema_cache_addCollection(IXMLDOMSchemaCollection *iface, IXMLDOMSchemaCollection *otherCollection)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection(iface);
+    schema_cache* That = impl_from_IXMLDOMSchemaCollection(otherCollection);
+    TRACE("(%p)->(%p)\n", This, That);
+
+    if (!otherCollection)
+        return E_POINTER;
+
+    /* TODO: detect errors while copying & return E_FAIL */
+    xmlHashScan(That->cache, cache_copy, This);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI schema_cache_get__newEnum(IXMLDOMSchemaCollection *iface, IUnknown **ppUnk)
