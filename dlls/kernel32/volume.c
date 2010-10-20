@@ -513,26 +513,29 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
     static const WCHAR fat32W[] = {'F','A','T','3','2',0};
     static const WCHAR ntfsW[] = {'N','T','F','S',0};
     static const WCHAR cdfsW[] = {'C','D','F','S',0};
+    static const WCHAR default_rootW[] = {'\\',0};
 
     WCHAR device[] = {'\\','\\','.','\\','A',':',0};
     HANDLE handle;
+    UNICODE_STRING nt_name;
+    WCHAR *p;
     enum fs_type type = FS_UNKNOWN;
+    BOOL ret = FALSE;
 
-    if (!root)
+    if (!root) root = default_rootW;
+    if (!RtlDosPathNameToNtPathName_U( root, &nt_name, NULL, NULL ))
     {
-        WCHAR path[MAX_PATH];
-        GetCurrentDirectoryW( MAX_PATH, path );
-        device[4] = path[0];
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return FALSE;
     }
-    else
+    /* there must be exactly one backslash in the name, at the end */
+    p = memchrW( nt_name.Buffer + 4, '\\', (nt_name.Length - 4) / sizeof(WCHAR) );
+    if (p != nt_name.Buffer + nt_name.Length / sizeof(WCHAR) - 1)
     {
-        if (!root[0] || root[1] != ':' || root[lstrlenW(root)-1] != '\\' )
-        {
-            SetLastError( ERROR_INVALID_NAME );
-            return FALSE;
-        }
-        device[4] = root[0];
+        SetLastError( ERROR_INVALID_NAME );
+        goto done;
     }
+    device[4] = nt_name.Buffer[4];
 
     /* try to open the device */
 
@@ -566,7 +569,7 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
         }
         CloseHandle( handle );
         TRACE( "%s: found fs type %d\n", debugstr_w(device), type );
-        if (type == FS_ERROR) return FALSE;
+        if (type == FS_ERROR) goto done;
 
         if (label && label_len) VOLUME_GetSuperblockLabel( device, type, superblock, label, label_len );
         if (serial) *serial = VOLUME_GetSuperblockSerial( device, type, superblock );
@@ -581,7 +584,7 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
     case DRIVE_UNKNOWN:
     case DRIVE_NO_ROOT_DIR:
         SetLastError( ERROR_NOT_READY );
-        return FALSE;
+        goto done;
     case DRIVE_REMOVABLE:
     case DRIVE_FIXED:
     case DRIVE_REMOTE:
@@ -618,7 +621,11 @@ fill_fs_info:  /* now fill in the information that depends on the file system ty
         if (flags) *flags = FILE_CASE_PRESERVED_NAMES;
         break;
     }
-    return TRUE;
+    ret = TRUE;
+
+done:
+    RtlFreeUnicodeString( &nt_name );
+    return ret;
 }
 
 
