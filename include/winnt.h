@@ -746,6 +746,9 @@ typedef enum _HEAP_INFORMATION_CLASS {
 
 /* The Win32 register context */
 
+/* i386 context definitions */
+#ifdef __i386__
+
 #define SIZE_OF_80387_REGISTERS      80
 
 typedef struct _FLOATING_SAVE_AREA
@@ -760,9 +763,6 @@ typedef struct _FLOATING_SAVE_AREA
     BYTE    RegisterArea[SIZE_OF_80387_REGISTERS];
     DWORD   Cr0NpxState;
 } FLOATING_SAVE_AREA, *PFLOATING_SAVE_AREA;
-
-/* i386 context definitions */
-#ifdef __i386__
 
 #define MAXIMUM_SUPPORTED_EXTENSION     512
 
