@@ -209,15 +209,31 @@ static DWORD get_mountmgr_drive_type( LPCWSTR root )
 }
 
 /* get the label by reading it from a file at the root of the filesystem */
-static void get_filesystem_label( const WCHAR *device, WCHAR *label, DWORD len )
+static void get_filesystem_label( const UNICODE_STRING *device, WCHAR *label, DWORD len )
 {
+    static const WCHAR labelW[] = {'.','w','i','n','d','o','w','s','-','l','a','b','e','l',0};
     HANDLE handle;
-    WCHAR labelW[] = {'A',':','\\','.','w','i','n','d','o','w','s','-','l','a','b','e','l',0};
+    UNICODE_STRING name;
+    IO_STATUS_BLOCK io;
+    OBJECT_ATTRIBUTES attr;
 
-    labelW[0] = device[4];
-    handle = CreateFileW( labelW, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
-                          OPEN_EXISTING, 0, 0 );
-    if (handle != INVALID_HANDLE_VALUE)
+    label[0] = 0;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &name;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    name.MaximumLength = device->Length + sizeof(labelW);
+    name.Length = name.MaximumLength - sizeof(WCHAR);
+    if (!(name.Buffer = HeapAlloc( GetProcessHeap(), 0, name.MaximumLength ))) return;
+
+    memcpy( name.Buffer, device->Buffer, device->Length );
+    memcpy( name.Buffer + device->Length / sizeof(WCHAR), labelW, sizeof(labelW) );
+    if (!NtOpenFile( &handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                     FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT ))
     {
         char buffer[256], *p;
         DWORD size;
@@ -230,19 +246,34 @@ static void get_filesystem_label( const WCHAR *device, WCHAR *label, DWORD len )
         if (!MultiByteToWideChar( CP_UNIXCP, 0, buffer, -1, label, len ))
             label[len-1] = 0;
     }
-    else label[0] = 0;
+    RtlFreeUnicodeString( &name );
 }
 
 /* get the serial number by reading it from a file at the root of the filesystem */
-static DWORD get_filesystem_serial( const WCHAR *device )
+static DWORD get_filesystem_serial( const UNICODE_STRING *device )
 {
+    static const WCHAR serialW[] = {'.','w','i','n','d','o','w','s','-','s','e','r','i','a','l',0};
     HANDLE handle;
-    WCHAR serialW[] = {'A',':','\\','.','w','i','n','d','o','w','s','-','s','e','r','i','a','l',0};
+    UNICODE_STRING name;
+    IO_STATUS_BLOCK io;
+    OBJECT_ATTRIBUTES attr;
+    DWORD ret = 0;
 
-    serialW[0] = device[4];
-    handle = CreateFileW( serialW, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
-                          OPEN_EXISTING, 0, 0 );
-    if (handle != INVALID_HANDLE_VALUE)
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &name;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    name.MaximumLength = device->Length + sizeof(serialW);
+    name.Length = name.MaximumLength - sizeof(WCHAR);
+    if (!(name.Buffer = HeapAlloc( GetProcessHeap(), 0, name.MaximumLength ))) return 0;
+
+    memcpy( name.Buffer, device->Buffer, device->Length );
+    memcpy( name.Buffer + device->Length / sizeof(WCHAR), serialW, sizeof(serialW) );
+    if (!NtOpenFile( &handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                     FILE_SYNCHRONOUS_IO_NONALERT ))
     {
         char buffer[32];
         DWORD size;
@@ -250,9 +281,10 @@ static DWORD get_filesystem_serial( const WCHAR *device )
         if (!ReadFile( handle, buffer, sizeof(buffer)-1, &size, NULL )) size = 0;
         CloseHandle( handle );
         buffer[size] = 0;
-        return strtoul( buffer, NULL, 16 );
+        ret = strtoul( buffer, NULL, 16 );
     }
-    else return 0;
+    RtlFreeUnicodeString( &name );
+    return ret;
 }
 
 
@@ -377,8 +409,8 @@ static enum fs_type VOLUME_ReadCDSuperblock( HANDLE handle, BYTE *buff )
 /**************************************************************************
  *                              VOLUME_GetSuperblockLabel
  */
-static void VOLUME_GetSuperblockLabel( const WCHAR *device, enum fs_type type, const BYTE *superblock,
-                                       WCHAR *label, DWORD len )
+static void VOLUME_GetSuperblockLabel( const UNICODE_STRING *device, enum fs_type type,
+                                       const BYTE *superblock, WCHAR *label, DWORD len )
 {
     const BYTE *label_ptr = NULL;
     DWORD label_len;
@@ -431,7 +463,8 @@ static void VOLUME_GetSuperblockLabel( const WCHAR *device, enum fs_type type, c
 /**************************************************************************
  *                              VOLUME_GetSuperblockSerial
  */
-static DWORD VOLUME_GetSuperblockSerial( const WCHAR *device, enum fs_type type, const BYTE *superblock )
+static DWORD VOLUME_GetSuperblockSerial( const UNICODE_STRING *device, enum fs_type type,
+                                         const BYTE *superblock )
 {
     switch(type)
     {
@@ -515,7 +548,6 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
     static const WCHAR cdfsW[] = {'C','D','F','S',0};
     static const WCHAR default_rootW[] = {'\\',0};
 
-    WCHAR device[] = {'\\','\\','.','\\','A',':',0};
     HANDLE handle;
     NTSTATUS status;
     UNICODE_STRING nt_name;
@@ -539,7 +571,6 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
         SetLastError( ERROR_INVALID_NAME );
         goto done;
     }
-    device[4] = nt_name.Buffer[4];
 
     /* try to open the device */
 
@@ -585,8 +616,8 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
         TRACE( "%s: found fs type %d\n", debugstr_w(nt_name.Buffer), type );
         if (type == FS_ERROR) goto done;
 
-        if (label && label_len) VOLUME_GetSuperblockLabel( device, type, superblock, label, label_len );
-        if (serial) *serial = VOLUME_GetSuperblockSerial( device, type, superblock );
+        if (label && label_len) VOLUME_GetSuperblockLabel( &nt_name, type, superblock, label, label_len );
+        if (serial) *serial = VOLUME_GetSuperblockSerial( &nt_name, type, superblock );
         goto fill_fs_info;
     }
     else TRACE( "cannot open device %s: err %d\n", debugstr_w(nt_name.Buffer), GetLastError() );
@@ -608,8 +639,8 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
     }
     if (info.DeviceType == FILE_DEVICE_CD_ROM_FILE_SYSTEM) type = FS_ISO9660;
 
-    if (label && label_len) get_filesystem_label( device, label, label_len );
-    if (serial) *serial = get_filesystem_serial( device );
+    if (label && label_len) get_filesystem_label( &nt_name, label, label_len );
+    if (serial) *serial = get_filesystem_serial( &nt_name );
 
 fill_fs_info:  /* now fill in the information that depends on the file system type */
 
