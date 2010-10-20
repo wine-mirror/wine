@@ -517,6 +517,25 @@ static HRESULT WINAPI TgaDecoder_Frame_GetPixelFormat(IWICBitmapFrameDecode *ifa
         case 24:
             memcpy(pPixelFormat, &GUID_WICPixelFormat24bppBGR, sizeof(GUID));
             break;
+        case 32:
+            switch (attribute_type)
+            {
+            case ATTRIBUTE_NO_ALPHA:
+            case ATTRIBUTE_UNDEFINED:
+            case ATTRIBUTE_UNDEFINED_PRESERVE:
+                memcpy(pPixelFormat, &GUID_WICPixelFormat32bppBGR, sizeof(GUID));
+                break;
+            case ATTRIBUTE_ALPHA:
+                memcpy(pPixelFormat, &GUID_WICPixelFormat32bppBGRA, sizeof(GUID));
+                break;
+            case ATTRIBUTE_PALPHA:
+                memcpy(pPixelFormat, &GUID_WICPixelFormat32bppPBGRA, sizeof(GUID));
+                break;
+            default:
+                FIXME("Unhandled 32-bit attribute type %u\n", attribute_type);
+                return E_NOTIMPL;
+            }
+            break;
         default:
             FIXME("Unhandled truecolor depth %u\n", This->header.depth);
             return E_NOTIMPL;
