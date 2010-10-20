@@ -73,12 +73,12 @@ DWORD WINAPI CertRDNValueToStrA(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
         if (pValue->cbData && isspace(pValue->pbData[pValue->cbData - 1]))
             needsQuotes = TRUE;
         for (i = 0; i < pValue->cbData; i++)
-	{
+        {
             if (is_quotable_char(pValue->pbData[i]))
                 needsQuotes = TRUE;
             if (pValue->pbData[i] == '"')
                 len += 1;
-	}
+        }
         if (needsQuotes)
             len += 2;
         if (!psz || !csz)
@@ -158,7 +158,7 @@ DWORD WINAPI CertRDNValueToStrA(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
 DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
  LPWSTR psz, DWORD csz)
 {
-    DWORD ret = 0, len, i;
+    DWORD ret = 0, len, i, strLen;
     BOOL needsQuotes = FALSE;
 
     TRACE("(%d, %p, %p, %d)\n", dwValueType, pValue, psz, csz);
@@ -175,19 +175,18 @@ DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
     case CERT_RDN_GRAPHIC_STRING:
     case CERT_RDN_VISIBLE_STRING:
     case CERT_RDN_GENERAL_STRING:
-    case CERT_RDN_BMP_STRING:
         len = pValue->cbData;
         if (pValue->cbData && isspace(pValue->pbData[0]))
             needsQuotes = TRUE;
         if (pValue->cbData && isspace(pValue->pbData[pValue->cbData - 1]))
             needsQuotes = TRUE;
         for (i = 0; i < pValue->cbData; i++)
-	{
+        {
             if (is_quotable_char(pValue->pbData[i]))
                 needsQuotes = TRUE;
             if (pValue->pbData[i] == '"')
                 len += 1;
-	}
+        }
         if (needsQuotes)
             len += 2;
         if (!psz || !csz)
@@ -202,6 +201,40 @@ DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
             {
                 *ptr = pValue->pbData[i];
                 if (pValue->pbData[i] == '"' && ptr - psz < csz - 1)
+                    *(++ptr) = '"';
+            }
+            if (needsQuotes && ptr - psz < csz)
+                *ptr++ = '"';
+            ret = ptr - psz;
+        }
+        break;
+    case CERT_RDN_BMP_STRING:
+        strLen = len = pValue->cbData / sizeof(WCHAR);
+        if (pValue->cbData && isspace(pValue->pbData[0]))
+            needsQuotes = TRUE;
+        if (pValue->cbData && isspace(pValue->pbData[strLen - 1]))
+            needsQuotes = TRUE;
+        for (i = 0; i < strLen; i++)
+        {
+            if (is_quotable_char(((LPCWSTR)pValue->pbData)[i]))
+                needsQuotes = TRUE;
+            if (((LPCWSTR)pValue->pbData)[i] == '"')
+                len += 1;
+        }
+        if (needsQuotes)
+            len += 2;
+        if (!psz || !csz)
+            ret = len;
+        else
+        {
+            WCHAR *ptr = psz;
+
+            if (needsQuotes)
+                *ptr++ = '"';
+            for (i = 0; i < strLen && ptr - psz < csz; ptr++, i++)
+            {
+                *ptr = ((LPCWSTR)pValue->pbData)[i];
+                if (((LPCWSTR)pValue->pbData)[i] == '"' && ptr - psz < csz - 1)
                     *(++ptr) = '"';
             }
             if (needsQuotes && ptr - psz < csz)

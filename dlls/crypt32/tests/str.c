@@ -570,7 +570,7 @@ static void test_CertNameToStrW(void)
     blob.pbData = encodedQuotedCN;
     blob.cbData = sizeof(encodedQuotedCN);
     test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, quotedCN_W,
-     TRUE);
+     FALSE);
     blob.pbData = encodedMultipleAttrCN;
     blob.cbData = sizeof(encodedMultipleAttrCN);
     test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, multipleAttrCN_W,
@@ -583,17 +583,17 @@ static void test_CertNameToStrW(void)
     test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, equalCN_W, FALSE);
     blob.pbData = encodedLessThanCN;
     blob.cbData = sizeof(encodedLessThanCN);
-    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, lessThanCN_W, TRUE);
+    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, lessThanCN_W, FALSE);
     blob.pbData = encodedGreaterThanCN;
     blob.cbData = sizeof(encodedGreaterThanCN);
     test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, greaterThanCN_W,
-     TRUE);
+     FALSE);
     blob.pbData = encodedHashCN;
     blob.cbData = sizeof(encodedHashCN);
-    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, hashCN_W, TRUE);
+    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, hashCN_W, FALSE);
     blob.pbData = encodedSemiCN;
     blob.cbData = sizeof(encodedSemiCN);
-    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, semiCN_W, TRUE);
+    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, semiCN_W, FALSE);
 }
 
 struct StrToNameA
