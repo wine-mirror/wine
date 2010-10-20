@@ -30,7 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dll);
  *           WinNotify       (WINDEBUG.3)
  *  written without _any_ docu
  */
-void WINAPI WinNotify16(CONTEXT86 *context)
+void WINAPI WinNotify16(CONTEXT *context)
 {
 	FIXME("(AX=%04x):stub.\n", LOWORD(context->Eax));
 	switch (LOWORD(context->Eax))
