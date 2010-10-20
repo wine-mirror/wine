@@ -44,7 +44,16 @@ static const CLSID CLSID_WineTest =
     {0xbc, 0x13, 0x51, 0x6e, 0x92, 0x39, 0xac, 0xe0}
 };
 
+static const IID IID_WineTest =
+{ /* 9474ba1a-258b-490b-bc13-516e9239ace1 */
+    0x9474ba1a,
+    0x258b,
+    0x490b,
+    {0xbc, 0x13, 0x51, 0x6e, 0x92, 0x39, 0xac, 0xe1}
+};
+
 #define TEST_OPTIONAL 0x1
+#define TEST_TODO     0x2
 
 struct expected_method
 {
@@ -58,18 +67,31 @@ static FORMATETC *g_expected_fetc = NULL;
 static BOOL g_showRunnable = TRUE;
 static BOOL g_isRunning = TRUE;
 static BOOL g_failGetMiscStatus;
+static HRESULT g_QIFailsWith;
 
 #define CHECK_EXPECTED_METHOD(method_name) \
     do { \
         trace("%s\n", method_name); \
         ok(expected_method_list->method != NULL, "Extra method %s called\n", method_name); \
+        if (!strcmp(expected_method_list->method, "WINE_EXTRA")) \
+        { \
+            todo_wine ok(0, "Too many method calls.\n"); \
+            break; \
+        } \
         if (expected_method_list->method) \
         { \
             while (expected_method_list->flags & TEST_OPTIONAL && \
                    strcmp(expected_method_list->method, method_name) != 0) \
                 expected_method_list++; \
-            ok(!strcmp(expected_method_list->method, method_name), "Expected %s to be called instead of %s\n", \
-               expected_method_list->method, method_name); \
+            if (expected_method_list->flags & TEST_TODO) \
+                todo_wine \
+                    ok(!strcmp(expected_method_list->method, method_name), \
+                       "Expected %s to be called instead of %s\n", \
+                       expected_method_list->method, method_name); \
+            else \
+                ok(!strcmp(expected_method_list->method, method_name), \
+                   "Expected %s to be called instead of %s\n", \
+                   expected_method_list->method, method_name); \
             expected_method_list++; \
         } \
     } while(0)
@@ -95,6 +117,8 @@ static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, v
         *ppv = cache;
     else if (IsEqualIID(riid, &IID_IRunnableObject) && g_showRunnable)
         *ppv = runnable;
+    else if (IsEqualIID(riid, &IID_WineTest))
+        return g_QIFailsWith;
 
     if(*ppv) {
         IUnknown_AddRef((IUnknown*)*ppv);
@@ -1464,9 +1488,24 @@ static void test_default_handler(void)
     FORMATETC fmtetc;
     IOleInPlaceObject *pInPlaceObj;
     IEnumOLEVERB *pEnumVerbs;
+    DWORD dwRegister;
     static const WCHAR wszUnknown[] = {'U','n','k','n','o','w','n',0};
     static const WCHAR wszHostName[] = {'W','i','n','e',' ','T','e','s','t',' ','P','r','o','g','r','a','m',0};
     static const WCHAR wszDelim[] = {'!',0};
+
+    static const struct expected_method methods_embeddinghelper[] =
+    {
+        { "OleObject_QueryInterface", 0 },
+        { "OleObject_AddRef", 0 },
+        { "OleObject_QueryInterface", 0 },
+        { "OleObject_QueryInterface", TEST_TODO },
+        { "OleObject_QueryInterface", 0 },
+        { "OleObject_QueryInterface", 0 },
+        { "OleObject_QueryInterface", TEST_OPTIONAL }, /* Win95/98/NT4 */
+        { "OleObject_Release", TEST_TODO },
+        { "WINE_EXTRA", TEST_OPTIONAL },
+        { NULL, 0 }
+    };
 
     hr = CoCreateInstance(&CLSID_WineTest, NULL, CLSCTX_INPROC_HANDLER, &IID_IOleObject, (void **)&pObject);
     ok(hr == REGDB_E_CLASSNOTREG, "CoCreateInstance should have failed with REGDB_E_CLASSNOTREG instead of 0x%08x\n", hr);
@@ -1595,6 +1634,45 @@ static void test_default_handler(void)
 
     IRunnableObject_Release(pRunnableObject);
     IOleObject_Release(pObject);
+
+    /* Test failure propagation from delegate ::QueryInterface */
+    hr = CoRegisterClassObject(&CLSID_WineTest, (IUnknown*)&OleObjectCF,
+                               CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &dwRegister);
+    ok_ole_success(hr, "CoRegisterClassObject");
+    if(SUCCEEDED(hr))
+    {
+        expected_method_list = methods_embeddinghelper;
+        hr = OleCreateEmbeddingHelper(&CLSID_WineTest, NULL, EMBDHLP_INPROC_SERVER,
+                                      &OleObjectCF, &IID_IOleObject, (void**)&pObject);
+        ok_ole_success(hr, "OleCreateEmbeddingHelper");
+        if(SUCCEEDED(hr))
+        {
+            IUnknown *punk;
+
+            g_QIFailsWith = E_FAIL;
+            hr = IOleObject_QueryInterface(pObject, &IID_WineTest, (void**)&punk);
+            ok(hr == E_FAIL, "Got 0x%08x\n", hr);
+
+            g_QIFailsWith = E_NOINTERFACE;
+            hr = IOleObject_QueryInterface(pObject, &IID_WineTest, (void**)&punk);
+            ok(hr == E_NOINTERFACE, "Got 0x%08x\n", hr);
+
+            g_QIFailsWith = CO_E_OBJNOTCONNECTED;
+            hr = IOleObject_QueryInterface(pObject, &IID_WineTest, (void**)&punk);
+            ok(hr == CO_E_OBJNOTCONNECTED, "Got 0x%08x\n", hr);
+
+            g_QIFailsWith = 0x87654321;
+            hr = IOleObject_QueryInterface(pObject, &IID_WineTest, (void**)&punk);
+            ok(hr == 0x87654321, "Got 0x%08x\n", hr);
+
+            IOleObject_Release(pObject);
+        }
+
+        CHECK_NO_EXTRA_METHODS();
+
+        hr = CoRevokeClassObject(dwRegister);
+        ok_ole_success(hr, "CoRevokeClassObject");
+    }
 }
 
 static void test_runnable(void)
