@@ -51,6 +51,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 #include <libxml/xpathInternals.h>
 #include <libxml/xmlsave.h>
 #include <libxml/SAX2.h>
+#include <libxml/parserInternals.h>
 
 /* not defined in older versions */
 #define XML_SAVE_FORMAT     1
@@ -321,9 +322,10 @@ static void sax_characters(void *ctx, const xmlChar *ch, int len)
     xmlSAX2Characters(ctx, ch, len);
 }
 
-static xmlDocPtr doparse(domdoc* This, char *ptr, int len)
+static xmlDocPtr doparse(domdoc* This, char *ptr, int len, xmlChar const* encoding)
 {
-    xmlDocPtr doc;
+    xmlDocPtr doc = NULL;
+    xmlParserCtxtPtr pctx;
     static xmlSAXHandler sax_handler = {
         xmlSAX2InternalSubset,          /* internalSubset */
         xmlSAX2IsStandalone,            /* isStandalone */
@@ -358,8 +360,33 @@ static xmlDocPtr doparse(domdoc* This, char *ptr, int len)
         xmlSAX2EndElementNs,            /* endElementNs */
         NULL                            /* TODO: serror */
     };
+    xmlInitParser();
 
-    doc = xmlSAXParseMemoryWithData(&sax_handler, ptr, len, 0, This);
+    pctx = xmlCreateMemoryParserCtxt(ptr, len);
+    if (!pctx)
+    {
+        ERR("Failed to create parser context\n");
+        return NULL;
+    }
+
+	if (pctx->sax) xmlFree(pctx->sax);
+    pctx->sax = &sax_handler;
+	pctx->_private = This;
+    pctx->recovery = 0;
+    pctx->encoding = xmlStrdup(encoding);
+    xmlParseDocument(pctx);
+
+    if (pctx->wellFormed)
+    {
+        doc = pctx->myDoc;
+    }
+    else
+    {
+       xmlFreeDoc(pctx->myDoc);
+       pctx->myDoc = NULL;
+    }
+    pctx->sax = NULL;
+    xmlFreeParserCtxt(pctx);
 
     /* TODO: put this in one of the SAX callbacks */
     /* create first child as a <?xml...?> */
@@ -597,7 +624,7 @@ static HRESULT WINAPI domdoc_IPersistStreamInit_Load(
     len = GlobalSize(hglobal);
     ptr = GlobalLock(hglobal);
     if (len != 0)
-        xmldoc = doparse(This, ptr, len);
+        xmldoc = doparse(This, ptr, len, NULL);
     GlobalUnlock(hglobal);
 
     if (!xmldoc)
@@ -1789,7 +1816,7 @@ static HRESULT domdoc_onDataAvailable(void *obj, char *ptr, DWORD len)
     domdoc *This = obj;
     xmlDocPtr xmldoc;
 
-    xmldoc = doparse(This, ptr, len);
+    xmldoc = doparse(This, ptr, len, NULL);
     if(xmldoc) {
         xmldoc->_private = create_priv();
         return attach_xmldoc(This, xmldoc);
@@ -2017,6 +2044,7 @@ static HRESULT WINAPI domdoc_loadXML(
     VARIANT_BOOL* isSuccessful )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
+    static const xmlChar encoding[] = "UTF-8";
     xmlDocPtr xmldoc = NULL;
     HRESULT hr = S_FALSE, hr2;
     char *str;
@@ -2032,10 +2060,13 @@ static HRESULT WINAPI domdoc_loadXML(
 
         if ( bstrXML && bstr_to_utf8( bstrXML, &str, &len ) )
         {
-            xmldoc = doparse(This, str, len);
+            xmldoc = doparse(This, str, len, encoding);
             heap_free( str );
             if ( !xmldoc )
+            {
                 This->error = E_FAIL;
+                TRACE("failed to parse document\n");
+            }
             else
             {
                 hr = This->error = S_OK;
