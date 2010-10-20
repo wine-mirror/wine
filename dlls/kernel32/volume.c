@@ -568,7 +568,13 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
     p = memchrW( nt_name.Buffer + 4, '\\', (nt_name.Length - 4) / sizeof(WCHAR) );
     if (p != nt_name.Buffer + nt_name.Length / sizeof(WCHAR) - 1)
     {
-        SetLastError( ERROR_INVALID_NAME );
+        /* check if root contains an explicit subdir */
+        if (root[0] && root[1] == ':') root += 2;
+        while (*root == '\\') root++;
+        if (strchrW( root, '\\' ))
+            SetLastError( ERROR_DIR_NOT_ROOT );
+        else
+            SetLastError( ERROR_INVALID_NAME );
         goto done;
     }
 

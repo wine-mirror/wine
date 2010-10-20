@@ -435,7 +435,7 @@ static void test_GetVolumeInformationA(void)
     SetLastError(0xdeadbeef);
     ret = pGetVolumeInformationA(windowsdir, vol_name_buf, vol_name_size,
             &vol_serial_num, &max_comp_len, &fs_flags, fs_name_buf, fs_name_len);
-    todo_wine ok(!ret && (GetLastError()==ERROR_DIR_NOT_ROOT ||
+    ok(!ret && (GetLastError()==ERROR_DIR_NOT_ROOT ||
          broken(GetLastError()==ERROR_BAD_PATHNAME/* win9x */)),
           "GetVolumeInformationA did%s fail, root=%s, last error=%u\n", ret ? " not":"", windowsdir, GetLastError());
     /* A subdir with trailing \ yields DIR_NOT_ROOT instead of INVALID_NAME */
