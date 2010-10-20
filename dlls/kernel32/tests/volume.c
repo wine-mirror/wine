@@ -458,7 +458,7 @@ static void test_GetVolumeInformationA(void)
     /* try again with unique volume name */
     ret = pGetVolumeInformationA(volume, vol_name_buf, vol_name_size,
             &vol_serial_num, &max_comp_len, &fs_flags, fs_name_buf, fs_name_len);
-    todo_wine ok(ret, "GetVolumeInformationA failed, root=%s, last error=%u\n", volume, GetLastError());
+    ok(ret, "GetVolumeInformationA failed, root=%s, last error=%u\n", volume, GetLastError());
 }
 
 /* Test to check that unique volume name from windows dir mount point  */

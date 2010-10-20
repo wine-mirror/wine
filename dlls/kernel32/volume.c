@@ -517,7 +517,10 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
 
     WCHAR device[] = {'\\','\\','.','\\','A',':',0};
     HANDLE handle;
+    NTSTATUS status;
     UNICODE_STRING nt_name;
+    IO_STATUS_BLOCK io;
+    OBJECT_ATTRIBUTES attr;
     WCHAR *p;
     enum fs_type type = FS_UNKNOWN;
     BOOL ret = FALSE;
@@ -539,9 +542,19 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
 
     /* try to open the device */
 
-    handle = CreateFileW( device, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
-                          NULL, OPEN_EXISTING, 0, 0 );
-    if (handle != INVALID_HANDLE_VALUE)
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &nt_name;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    nt_name.Length -= sizeof(WCHAR);  /* without trailing slash */
+    status = NtOpenFile( &handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                         FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
+    nt_name.Length += sizeof(WCHAR);
+
+    if (status == STATUS_SUCCESS)
     {
         BYTE superblock[SUPERBLOCK_SIZE];
         CDROM_TOC toc;
@@ -553,7 +566,7 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
         {
             if (!(toc.TrackData[0].Control & 0x04))  /* audio track */
             {
-                TRACE( "%s: found audio CD\n", debugstr_w(device) );
+                TRACE( "%s: found audio CD\n", debugstr_w(nt_name.Buffer) );
                 if (label) lstrcpynW( label, audiocdW, label_len );
                 if (serial) *serial = VOLUME_GetAudioCDSerial( &toc );
                 CloseHandle( handle );
@@ -568,14 +581,14 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
             if (type == FS_UNKNOWN) type = VOLUME_ReadCDSuperblock( handle, superblock );
         }
         CloseHandle( handle );
-        TRACE( "%s: found fs type %d\n", debugstr_w(device), type );
+        TRACE( "%s: found fs type %d\n", debugstr_w(nt_name.Buffer), type );
         if (type == FS_ERROR) goto done;
 
         if (label && label_len) VOLUME_GetSuperblockLabel( device, type, superblock, label, label_len );
         if (serial) *serial = VOLUME_GetSuperblockSerial( device, type, superblock );
         goto fill_fs_info;
     }
-    else TRACE( "cannot open device %s: err %d\n", debugstr_w(device), GetLastError() );
+    else TRACE( "cannot open device %s: err %d\n", debugstr_w(nt_name.Buffer), GetLastError() );
 
     /* we couldn't open the device, fallback to default strategy */
 
