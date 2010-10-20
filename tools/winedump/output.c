@@ -248,7 +248,7 @@ void  output_c_preamble (void)
 
   if (globals.forward_dll)
     fprintf (cfile,
-           "            DLL = LoadLibraryA(\"%s\");\n"
+           "            hDLL = LoadLibraryA(\"%s\");\n"
            "            TRACE(\"Forwarding DLL (%s) loaded (%%p)\\n\", hDLL);\n",
            globals.forward_dll, globals.forward_dll);
   else
