@@ -59,7 +59,7 @@ static inline struct idtr get_idtr(void)
 }
 
 /* store an operand into a register */
-static void store_reg( CONTEXT86 *context, BYTE regmodrm, const BYTE *addr, int long_op )
+static void store_reg( CONTEXT *context, BYTE regmodrm, const BYTE *addr, int long_op )
 {
     switch((regmodrm >> 3) & 7)
     {
@@ -103,7 +103,7 @@ static void store_reg( CONTEXT86 *context, BYTE regmodrm, const BYTE *addr, int 
  *
  * Return the address of an instruction operand (from the mod/rm byte).
  */
-static BYTE *INSTR_GetOperandAddr( CONTEXT86 *context, BYTE *instr,
+static BYTE *INSTR_GetOperandAddr( CONTEXT *context, BYTE *instr,
                                    int long_addr, int segprefix, int *len )
 {
     int mod, rm, base = 0, index = 0, ss = 0, seg = 0, off;
@@ -258,7 +258,7 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT86 *context, BYTE *instr,
  * Emulate a privileged instruction.
  * Returns exception continuation status.
  */
-static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
+static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     int prefix, segprefix, prefixlen, len, long_op, long_addr;
     BYTE *instr;
@@ -432,7 +432,7 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
 LONG CALLBACK vectored_handler( EXCEPTION_POINTERS *ptrs )
 {
     EXCEPTION_RECORD *record = ptrs->ExceptionRecord;
-    CONTEXT86 *context = ptrs->ContextRecord;
+    CONTEXT *context = ptrs->ContextRecord;
 
     if ((record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION ||
          record->ExceptionCode == EXCEPTION_PRIV_INSTRUCTION))
