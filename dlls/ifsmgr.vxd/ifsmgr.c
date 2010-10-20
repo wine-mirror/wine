@@ -58,11 +58,11 @@ struct win32apireq {
         unsigned short  ar_pad;
 };
 
-static void win32apieq_2_CONTEXT(const struct win32apireq *pIn, CONTEXT86 *pCxt)
+static void win32apieq_2_CONTEXT(const struct win32apireq *pIn, CONTEXT *pCxt)
 {
         memset(pCxt,0,sizeof(*pCxt));
 
-        pCxt->ContextFlags=CONTEXT86_INTEGER|CONTEXT86_CONTROL;
+        pCxt->ContextFlags=CONTEXT_INTEGER|CONTEXT_CONTROL;
         pCxt->Eax = pIn->ar_eax;
         pCxt->Ebx = pIn->ar_ebx;
         pCxt->Ecx = pIn->ar_ecx;
@@ -70,7 +70,7 @@ static void win32apieq_2_CONTEXT(const struct win32apireq *pIn, CONTEXT86 *pCxt)
         pCxt->Esi = pIn->ar_esi;
         pCxt->Edi = pIn->ar_edi;
 
-        /* FIXME: Only partial CONTEXT86_CONTROL */
+        /* FIXME: Only partial CONTEXT_CONTROL */
         pCxt->Ebp = pIn->ar_ebp;
 
         /* FIXME: pIn->ar_proid ignored */
@@ -78,7 +78,7 @@ static void win32apieq_2_CONTEXT(const struct win32apireq *pIn, CONTEXT86 *pCxt)
         /* FIXME: pIn->ar_pad ignored */
 }
 
-static void CONTEXT_2_win32apieq(const CONTEXT86 *pCxt, struct win32apireq *pOut)
+static void CONTEXT_2_win32apieq(const CONTEXT *pCxt, struct win32apireq *pOut)
 {
         memset(pOut,0,sizeof(struct win32apireq));
 
@@ -89,7 +89,7 @@ static void CONTEXT_2_win32apieq(const CONTEXT86 *pCxt, struct win32apireq *pOut
         pOut->ar_esi = pCxt->Esi;
         pOut->ar_edi = pCxt->Edi;
 
-        /* FIXME: Only partial CONTEXT86_CONTROL */
+        /* FIXME: Only partial CONTEXT_CONTROL */
         pOut->ar_ebp = pCxt->Ebp;
 
         /* FIXME: pOut->ar_proid ignored */
@@ -116,7 +116,7 @@ BOOL WINAPI IFSMGR_DeviceIoControl(DWORD dwIoControlCode, LPVOID lpvInBuffer, DW
     case IFS_IOCTL_21:
     case IFS_IOCTL_2F:
         {
-            CONTEXT86 cxt;
+            CONTEXT cxt;
             struct win32apireq *pIn=lpvInBuffer;
             struct win32apireq *pOut=lpvOutBuffer;
 
