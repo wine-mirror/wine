@@ -448,8 +448,24 @@ static HRESULT WINAPI schema_cache_add(IXMLDOMSchemaCollection *iface, BSTR uri,
 
 static HRESULT WINAPI schema_cache_get(IXMLDOMSchemaCollection *iface, BSTR uri, IXMLDOMNode **node)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection(iface);
+    xmlChar* name;
+    cache_entry* entry;
+    TRACE("(%p)->(%s, %p)\n", This, wine_dbgstr_w(uri), node);
+
+    if (!node)
+        return E_POINTER;
+
+    name = xmlChar_from_wchar(uri);
+    entry = (cache_entry*) xmlHashLookup(This->cache, name);
+    heap_free(name);
+
+    /* TODO: this should be read-only */
+    if (entry)
+        return DOMDocument_create_from_xmldoc(entry->doc, (IXMLDOMDocument3**)node);
+
+    *node = NULL;
+    return S_OK;
 }
 
 static HRESULT WINAPI schema_cache_remove(IXMLDOMSchemaCollection *iface, BSTR uri)

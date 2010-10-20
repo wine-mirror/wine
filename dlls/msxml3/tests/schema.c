@@ -368,14 +368,14 @@ static void test_collection_refs(void)
     schema3 = NULL;
 
     /* releasing the original doc does not affect the schema cache */
-    todo_wine ole_check(IXMLDOMSchemaCollection_get(cache1, _bstr_(xdr_schema1_uri), (IXMLDOMNode**)&schema1));
-    todo_wine ole_check(IXMLDOMSchemaCollection_get(cache2, _bstr_(xdr_schema2_uri), (IXMLDOMNode**)&schema2));
-    todo_wine ole_check(IXMLDOMSchemaCollection_get(cache3, _bstr_(xdr_schema3_uri), (IXMLDOMNode**)&schema3));
+    ole_check(IXMLDOMSchemaCollection_get(cache1, _bstr_(xdr_schema1_uri), (IXMLDOMNode**)&schema1));
+    ole_check(IXMLDOMSchemaCollection_get(cache2, _bstr_(xdr_schema2_uri), (IXMLDOMNode**)&schema2));
+    ole_check(IXMLDOMSchemaCollection_get(cache3, _bstr_(xdr_schema3_uri), (IXMLDOMNode**)&schema3));
 
     /* we get a read-only domdoc interface, created just for us */
-    if (schema1) todo_wine check_refs(IXMLDOMDocument2, schema1, 1);
-    if (schema2) todo_wine check_refs(IXMLDOMDocument2, schema2, 1);
-    if (schema3) todo_wine check_refs(IXMLDOMDocument2, schema3, 1);
+    if (schema1) check_refs(IXMLDOMDocument2, schema1, 1);
+    if (schema2) check_refs(IXMLDOMDocument2, schema2, 1);
+    if (schema3) check_refs(IXMLDOMDocument2, schema3, 1);
 
     ole_expect(IXMLDOMSchemaCollection_addCollection(cache1, NULL), E_POINTER);
     ole_check(IXMLDOMSchemaCollection_addCollection(cache2, cache1));
@@ -400,26 +400,26 @@ static void test_collection_refs(void)
     check_refs(IXMLDOMSchemaCollection, cache3, 1);
 
     /* nor does it affect the domdoc instances */
-    if (schema1) todo_wine check_refs(IXMLDOMDocument2, schema1, 1);
-    if (schema2) todo_wine check_refs(IXMLDOMDocument2, schema2, 1);
-    if (schema3) todo_wine check_refs(IXMLDOMDocument2, schema3, 1);
+    if (schema1) check_refs(IXMLDOMDocument2, schema1, 1);
+    if (schema2) check_refs(IXMLDOMDocument2, schema2, 1);
+    if (schema3) check_refs(IXMLDOMDocument2, schema3, 1);
 
-    if (schema1) todo_wine check_ref_expr(IXMLDOMDocument2_Release(schema1), 0);
-    if (schema2) todo_wine check_ref_expr(IXMLDOMDocument2_Release(schema2), 0);
-    if (schema3) todo_wine check_ref_expr(IXMLDOMDocument2_Release(schema3), 0);
+    if (schema1) check_ref_expr(IXMLDOMDocument2_Release(schema1), 0);
+    if (schema2) check_ref_expr(IXMLDOMDocument2_Release(schema2), 0);
+    if (schema3) check_ref_expr(IXMLDOMDocument2_Release(schema3), 0);
     schema1 = NULL;
     schema2 = NULL;
     schema3 = NULL;
 
     /* releasing the domdoc instances doesn't change the cache */
-    todo_wine ole_check(IXMLDOMSchemaCollection_get(cache1, _bstr_(xdr_schema1_uri), (IXMLDOMNode**)&schema1));
-    todo_wine ole_check(IXMLDOMSchemaCollection_get(cache2, _bstr_(xdr_schema2_uri), (IXMLDOMNode**)&schema2));
-    todo_wine ole_check(IXMLDOMSchemaCollection_get(cache3, _bstr_(xdr_schema3_uri), (IXMLDOMNode**)&schema3));
+    ole_check(IXMLDOMSchemaCollection_get(cache1, _bstr_(xdr_schema1_uri), (IXMLDOMNode**)&schema1));
+    ole_check(IXMLDOMSchemaCollection_get(cache2, _bstr_(xdr_schema2_uri), (IXMLDOMNode**)&schema2));
+    ole_check(IXMLDOMSchemaCollection_get(cache3, _bstr_(xdr_schema3_uri), (IXMLDOMNode**)&schema3));
 
     /* we can just get them again */
-    if (schema1) todo_wine check_refs(IXMLDOMDocument2, schema1, 1);
-    if (schema2) todo_wine check_refs(IXMLDOMDocument2, schema2, 1);
-    if (schema3) todo_wine check_refs(IXMLDOMDocument2, schema3, 1);
+    if (schema1) check_refs(IXMLDOMDocument2, schema1, 1);
+    if (schema2) check_refs(IXMLDOMDocument2, schema2, 1);
+    if (schema3) check_refs(IXMLDOMDocument2, schema3, 1);
 
     /* releasing the caches does not affect the domdoc instances */
     check_ref_expr(IXMLDOMSchemaCollection_Release(cache1), 0);
@@ -427,13 +427,13 @@ static void test_collection_refs(void)
     check_ref_expr(IXMLDOMSchemaCollection_Release(cache3), 0);
 
     /* they're just for us */
-    if (schema1) todo_wine check_refs(IXMLDOMDocument2, schema1, 1);
-    if (schema2) todo_wine check_refs(IXMLDOMDocument2, schema2, 1);
-    if (schema3) todo_wine check_refs(IXMLDOMDocument2, schema3, 1);
+    if (schema1) check_refs(IXMLDOMDocument2, schema1, 1);
+    if (schema2) check_refs(IXMLDOMDocument2, schema2, 1);
+    if (schema3) check_refs(IXMLDOMDocument2, schema3, 1);
 
-    if (schema1) todo_wine check_ref_expr(IXMLDOMDocument2_Release(schema1), 0);
-    if (schema2) todo_wine check_ref_expr(IXMLDOMDocument2_Release(schema2), 0);
-    if (schema3) todo_wine check_ref_expr(IXMLDOMDocument2_Release(schema3), 0);
+    if (schema1) check_ref_expr(IXMLDOMDocument2_Release(schema1), 0);
+    if (schema2) check_ref_expr(IXMLDOMDocument2_Release(schema2), 0);
+    if (schema3) check_ref_expr(IXMLDOMDocument2_Release(schema3), 0);
 
     free_bstrs();
 }
@@ -623,6 +623,16 @@ static void test_collection_content(void)
     ole_expect(IXMLDOMSchemaCollection_get_namespaceURI(cache1, 0, NULL), E_POINTER);
     /* pointer is checked first */
     ole_expect(IXMLDOMSchemaCollection_get_namespaceURI(cache1, 3, NULL), E_POINTER);
+
+    schema1 = NULL;
+    /* no error if ns uri does not exist */
+    ole_check(IXMLDOMSchemaCollection_get(cache1, _bstr_(xsd_schema1_uri), (IXMLDOMNode**)&schema1));
+    ok(!schema1, "expected NULL\n");
+    /* a NULL bstr corresponds to no-uri ns */
+    ole_check(IXMLDOMSchemaCollection_get(cache1, NULL, (IXMLDOMNode**)&schema1));
+    ok(!schema1, "expected NULL\n");
+    /* error if return pointer is NULL */
+    ole_expect(IXMLDOMSchemaCollection_get(cache1, _bstr_(xdr_schema1_uri), NULL), E_POINTER);
 
     for (i = 0; i < 3; ++i)
     {
