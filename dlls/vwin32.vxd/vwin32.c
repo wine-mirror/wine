@@ -58,20 +58,20 @@ typedef struct tagMID {
 extern void __wine_call_int_handler( CONTEXT *context, BYTE intnum );
 
 /* Pop a DWORD from the 32-bit stack */
-static inline DWORD stack32_pop( CONTEXT86 *context )
+static inline DWORD stack32_pop( CONTEXT *context )
 {
     DWORD ret = *(DWORD *)context->Esp;
     context->Esp += sizeof(DWORD);
     return ret;
 }
 
-static void DIOCRegs_2_CONTEXT( DIOC_REGISTERS *pIn, CONTEXT86 *pCxt )
+static void DIOCRegs_2_CONTEXT( DIOC_REGISTERS *pIn, CONTEXT *pCxt )
 {
     memset( pCxt, 0, sizeof(*pCxt) );
     /* Note: segment registers == 0 means that CTX_SEG_OFF_TO_LIN
              will interpret 32-bit register contents as linear pointers */
 
-    pCxt->ContextFlags=CONTEXT86_INTEGER|CONTEXT86_CONTROL;
+    pCxt->ContextFlags=CONTEXT_INTEGER|CONTEXT_CONTROL;
     pCxt->Eax = pIn->reg_EAX;
     pCxt->Ebx = pIn->reg_EBX;
     pCxt->Ecx = pIn->reg_ECX;
@@ -79,12 +79,12 @@ static void DIOCRegs_2_CONTEXT( DIOC_REGISTERS *pIn, CONTEXT86 *pCxt )
     pCxt->Esi = pIn->reg_ESI;
     pCxt->Edi = pIn->reg_EDI;
 
-    /* FIXME: Only partial CONTEXT86_CONTROL */
+    /* FIXME: Only partial CONTEXT_CONTROL */
 
     pCxt->EFlags = pIn->reg_Flags & ~0x00020000; /* clear vm86 mode */
 }
 
-static void CONTEXT_2_DIOCRegs( CONTEXT86 *pCxt, DIOC_REGISTERS *pOut )
+static void CONTEXT_2_DIOCRegs( CONTEXT *pCxt, DIOC_REGISTERS *pOut )
 {
     memset( pOut, 0, sizeof(DIOC_REGISTERS) );
 
@@ -95,7 +95,7 @@ static void CONTEXT_2_DIOCRegs( CONTEXT86 *pCxt, DIOC_REGISTERS *pOut )
     pOut->reg_ESI = pCxt->Esi;
     pOut->reg_EDI = pCxt->Edi;
 
-    /* FIXME: Only partial CONTEXT86_CONTROL */
+    /* FIXME: Only partial CONTEXT_CONTROL */
     pOut->reg_Flags = pCxt->EFlags;
 }
 
@@ -117,7 +117,7 @@ BOOL WINAPI VWIN32_DeviceIoControl(DWORD dwIoControlCode,
     case 0x29: /* Int 0x31 call, call it VWIN_DIOC_INT31 ? */
     case VWIN32_DIOC_DOS_DRIVEINFO:
         {
-            CONTEXT86 cxt;
+            CONTEXT cxt;
             DIOC_REGISTERS *pIn  = lpvInBuffer;
             DIOC_REGISTERS *pOut = lpvOutBuffer;
             BYTE intnum = 0;
@@ -178,7 +178,7 @@ BOOL WINAPI VWIN32_DeviceIoControl(DWORD dwIoControlCode,
  *  Programming Secrets".  Parameters from experimentation on real Win98.
  *
  */
-DWORD WINAPI VWIN32_VxDCall( DWORD service, CONTEXT86 *context )
+DWORD WINAPI VWIN32_VxDCall( DWORD service, CONTEXT *context )
 {
     switch ( LOWORD(service) )
     {
