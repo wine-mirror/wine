@@ -147,7 +147,7 @@ static void DOSVM_Int09UpdateKbdStatusFlags(BYTE scan, BOOL extended, BIOSDATA *
  * See http://www.execpc.com/~geezer/osd/kbd/ for a very good description
  * of keyboard mapping modes.
  */
-void WINAPI DOSVM_Int09Handler( CONTEXT86 *context )
+void WINAPI DOSVM_Int09Handler( CONTEXT *context )
 {
   BIOSDATA *data = DOSVM_BiosData();
   BYTE ascii, scan = DOSVM_Int09ReadScan(&ascii);
@@ -210,7 +210,7 @@ void WINAPI DOSVM_Int09Handler( CONTEXT86 *context )
   DOSVM_AcknowledgeIRQ( context );
 }
 
-static void KbdRelay( CONTEXT86 *context, void *data )
+static void KbdRelay( CONTEXT *context, void *data )
 {
   if (kbdinfo.queuelen) {
     /* cleanup operation, called from DOSVM_PIC_ioport_out:

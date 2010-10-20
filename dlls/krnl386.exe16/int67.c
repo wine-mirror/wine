@@ -109,7 +109,7 @@ static void EMS_init(void)
  *
  * Get handle and allocate memory.
  */
-static void EMS_alloc( CONTEXT86 *context )
+static void EMS_alloc( CONTEXT *context )
 {
   int hindex = 1; /* handle zero is reserved for system */
 
@@ -140,7 +140,7 @@ static void EMS_alloc( CONTEXT86 *context )
  *
  * Get/set handle name.
  */
-static void EMS_access_name( CONTEXT86 *context )
+static void EMS_access_name( CONTEXT *context )
 {
   char *ptr;
   int hindex = DX_reg(context);
@@ -220,7 +220,7 @@ static BYTE EMS_map( WORD physical_page, WORD new_hindex, WORD new_logical_page 
  *
  * Map multiple logical pages into physical pages.
  */
-static void EMS_map_multiple( CONTEXT86 *context )
+static void EMS_map_multiple( CONTEXT *context )
 {
   WORD *ptr = PTR_REAL_TO_LIN(context->SegDs, SI_reg(context));
   BYTE  status = 0;
@@ -248,7 +248,7 @@ static void EMS_map_multiple( CONTEXT86 *context )
  *
  * Free memory and release handle.
  */
-static void EMS_free( CONTEXT86 *context )
+static void EMS_free( CONTEXT *context )
 {
   int hindex = DX_reg(context);
   int i;
@@ -282,7 +282,7 @@ static void EMS_free( CONTEXT86 *context )
  *
  * Save physical page mappings into handle specific save area.
  */
-static void EMS_save_context( CONTEXT86 *context )
+static void EMS_save_context( CONTEXT *context )
 {
   WORD h = DX_reg(context);
   int  i;
@@ -301,7 +301,7 @@ static void EMS_save_context( CONTEXT86 *context )
  *
  * Restore physical page mappings from handle specific save area.
  */
-static void EMS_restore_context( CONTEXT86 *context )
+static void EMS_restore_context( CONTEXT *context )
 {
   WORD handle = DX_reg(context);
   int  i;
@@ -324,7 +324,7 @@ static void EMS_restore_context( CONTEXT86 *context )
  *
  * Handler for interrupt 67h EMS routines.
  */
-void WINAPI DOSVM_Int67Handler( CONTEXT86 *context )
+void WINAPI DOSVM_Int67Handler( CONTEXT *context )
 {
   switch AH_reg(context) {
 
@@ -461,7 +461,7 @@ void WINAPI DOSVM_Int67Handler( CONTEXT86 *context )
  *
  * Handler for interrupt 21h IOCTL routine for device "EMMXXXX0".
  */
-void EMS_Ioctl_Handler( CONTEXT86 *context )
+void EMS_Ioctl_Handler( CONTEXT *context )
 {
   assert(AH_reg(context) == 0x44);
 

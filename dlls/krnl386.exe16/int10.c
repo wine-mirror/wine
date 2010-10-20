@@ -812,7 +812,7 @@ static void INT10_InitializeVideoMode( BIOSDATA *data )
  *
  * Handler for VESA functions (int10 function 0x4f).
  */
-static void INT10_HandleVESA( CONTEXT86 *context )
+static void INT10_HandleVESA( CONTEXT *context )
 {
     BIOSDATA *data = DOSVM_BiosData();
 
@@ -977,7 +977,7 @@ static void INT10_HandleVESA( CONTEXT86 *context )
  *
  *      Added additional vga graphic support - 3/99
  */
-void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
+void WINAPI DOSVM_Int10Handler( CONTEXT *context )
 {
     BIOSDATA *data = DOSVM_BiosData();
 

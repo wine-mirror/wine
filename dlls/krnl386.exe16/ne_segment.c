@@ -660,7 +660,7 @@ static BOOL NE_InitDLL( NE_MODULE *pModule )
 {
     SEGTABLEENTRY *pSegTable;
     WORD hInst, ds, heap;
-    CONTEXT86 context;
+    CONTEXT context;
 
     pSegTable = NE_SEG_TABLE( pModule );
 
@@ -787,7 +787,7 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
     }
     else
     {
-        CONTEXT86 context;
+        CONTEXT context;
         WORD args[8];
 
         memset( &context, 0, sizeof(context) );

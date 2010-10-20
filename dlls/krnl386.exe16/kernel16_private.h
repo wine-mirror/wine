@@ -208,7 +208,7 @@ extern BOOL16 GLOBAL_MoveBlock( HGLOBAL16 handle, void *ptr, DWORD size );
 extern HGLOBAL16 GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL16 hOwner, unsigned char selflags );
 
 /* instr.c */
-extern DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT86 *context );
+extern DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context );
 extern LONG CALLBACK INSTR_vectored_handler( EXCEPTION_POINTERS *ptrs );
 
 /* ne_module.c */
@@ -237,7 +237,7 @@ extern void SELECTOR_FreeBlock( WORD sel );
    (wine_ldt_is_system(sel) || (wine_ldt_copy.flags[LOWORD(sel) >> 3] & WINE_LDT_FLAGS_32BIT))
 
 /* relay16.c */
-extern int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT86 *context );
+extern int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT *context );
 
 /* snoop16.c */
 extern void SNOOP16_RegisterDLL(HMODULE16,LPCSTR);

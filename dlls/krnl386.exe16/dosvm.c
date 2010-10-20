@@ -145,7 +145,7 @@ static BOOL DOSVM_HasPendingEvents( void )
  * be called. This is because we may otherwise get a deadlock if
  * another thread is waiting for the same critical section.
  */
-static void DOSVM_SendOneEvent( CONTEXT86 *context )
+static void DOSVM_SendOneEvent( CONTEXT *context )
 {
     LPDOSEVENT event = pending_event;
 
@@ -222,7 +222,7 @@ static void DOSVM_SendOneEvent( CONTEXT86 *context )
  * This routine assumes that caller has already cleared TEB.vm86_pending 
  * and checked that interrupts are enabled.
  */
-void DOSVM_SendQueuedEvents( CONTEXT86 *context )
+void DOSVM_SendQueuedEvents( CONTEXT *context )
 {   
     DWORD old_cs = context->SegCs;
     DWORD old_ip = context->Eip;
@@ -323,7 +323,7 @@ void DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data)
      *  which uses DPMI to thunk down to DOS services) */
     if (irq<0) {
       /* callback event, perform it with dummy context */
-      CONTEXT86 context;
+      CONTEXT context;
       memset(&context,0,sizeof(context));
       (*relay)(&context,data);
     } else {
@@ -410,11 +410,11 @@ static void DOSVM_ProcessMessage(MSG *msg)
  * interrupts and waits until some asynchronous event has been 
  * processed.
  */
-void DOSVM_Wait( CONTEXT86 *waitctx )
+void DOSVM_Wait( CONTEXT *waitctx )
 {
     if (DOSVM_HasPendingEvents())
     {
-        CONTEXT86 context = *waitctx;
+        CONTEXT context = *waitctx;
         
         /*
          * If DOSVM_Wait is called from protected mode we emulate
@@ -594,7 +594,7 @@ static LONG WINAPI exception_handler(EXCEPTION_POINTERS *eptr)
   return EXCEPTION_CONTINUE_SEARCH;
 }
 
-INT DOSVM_Enter( CONTEXT86 *context )
+INT DOSVM_Enter( CONTEXT *context )
 {
   INT ret = 0;
   if (!ISV86(context))
@@ -669,7 +669,7 @@ void DOSVM_PIC_ioport_out( WORD port, BYTE val)
 /***********************************************************************
  *		DOSVM_Enter
  */
-INT DOSVM_Enter( CONTEXT86 *context )
+INT DOSVM_Enter( CONTEXT *context )
 {
     SetLastError( ERROR_NOT_SUPPORTED );
     return -1;
@@ -678,7 +678,7 @@ INT DOSVM_Enter( CONTEXT86 *context )
 /***********************************************************************
  *		DOSVM_Wait
  */
-void DOSVM_Wait( CONTEXT86 *waitctx ) { }
+void DOSVM_Wait( CONTEXT *waitctx ) { }
 
 /***********************************************************************
  *		DOSVM_PIC_ioport_out
@@ -692,7 +692,7 @@ void DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data)
 {
   if (irq<0) {
     /* callback event, perform it with dummy context */
-    CONTEXT86 context;
+    CONTEXT context;
     memset(&context,0,sizeof(context));
     (*relay)(&context,data);
   } else {
@@ -708,7 +708,7 @@ void DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data)
  *
  * This routine should be called by all internal IRQ handlers.
  */
-void WINAPI DOSVM_AcknowledgeIRQ( CONTEXT86 *context )
+void WINAPI DOSVM_AcknowledgeIRQ( CONTEXT *context )
 {
     /*
      * Send EOI to PIC.

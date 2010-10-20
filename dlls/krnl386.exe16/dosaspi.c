@@ -62,7 +62,7 @@ DOSASPI_PostProc( SRB_ExecSCSICmd *lpPRB )
 
 	if( (lpSRB16->cmd.SRB_Flags & SRB_POSTING) && lpSRB16->cmd.SRB_PostProc )
 	{
-		CONTEXT86 ctx;
+		CONTEXT ctx;
 /* The stack should look like this on entry to proc
  * NOTE: the SDK draws the following diagram bass akwards, use this one
  * to avoid being confused.  Remember, the act of pushing something on
@@ -175,7 +175,7 @@ DWORD ASPI_SendASPIDOSCommand(DWORD ptrSRB)
 	return retval;
 }
 
-static void WINAPI ASPI_DOS_func(CONTEXT86 *context)
+static void WINAPI ASPI_DOS_func(CONTEXT *context)
 {
 	WORD *stack = CTX_SEG_OFF_TO_LIN(context, context->SegSs, context->Esp);
 	DWORD ptrSRB = *(DWORD *)&stack[2];
@@ -194,7 +194,7 @@ static void WINAPI ASPI_DOS_func(CONTEXT86 *context)
  *
  * returns the address of a real mode callback to ASPI_DOS_func()
  */
-void DOSVM_ASPIHandler( CONTEXT86 *context )
+void DOSVM_ASPIHandler( CONTEXT *context )
 {
 	FARPROC16 *p = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
 	TRACE("DOS ASPI opening\n");

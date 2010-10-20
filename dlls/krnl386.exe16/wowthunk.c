@@ -42,7 +42,7 @@ WINE_DECLARE_DEBUG_CHANNEL(snoop);
 
 /* symbols exported from relay16.s */
 extern DWORD WINAPI wine_call_to_16( FARPROC16 target, DWORD cbArgs, PEXCEPTION_HANDLER handler );
-extern void WINAPI wine_call_to_16_regs( CONTEXT86 *context, DWORD cbArgs, PEXCEPTION_HANDLER handler );
+extern void WINAPI wine_call_to_16_regs( CONTEXT *context, DWORD cbArgs, PEXCEPTION_HANDLER handler );
 extern void __wine_call_to_16_ret(void);
 extern void CALL32_CBClient_Ret(void);
 extern void CALL32_CBClientEx_Ret(void);

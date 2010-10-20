@@ -50,7 +50,7 @@ static struct
  * - subfunction 0x00 (reset mouse)
  * - subfunction 0x21 (software reset)
  */
-static void INT33_ResetMouse( CONTEXT86 *context )
+static void INT33_ResetMouse( CONTEXT *context )
 {
     memset( &mouse_info, 0, sizeof(mouse_info) );
     
@@ -75,7 +75,7 @@ static void INT33_ResetMouse( CONTEXT86 *context )
  *
  * Handler for int 33h (MS MOUSE).
  */
-void WINAPI DOSVM_Int33Handler( CONTEXT86 *context )
+void WINAPI DOSVM_Int33Handler( CONTEXT *context )
 {
     switch (AX_reg(context))
     {
@@ -199,10 +199,10 @@ typedef struct {
   WORD mask,but,x,y,mx,my;
 } MCALLDATA;
 
-static void MouseRelay(CONTEXT86 *context,void *mdata)
+static void MouseRelay(CONTEXT *context,void *mdata)
 {
   MCALLDATA *data = mdata;
-  CONTEXT86 ctx = *context;
+  CONTEXT ctx = *context;
 
   if (!ISV86(&ctx))
   {

@@ -47,7 +47,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
  *    not currently listed here.
  */
 
-void WINAPI DOSVM_Int16Handler( CONTEXT86 *context )
+void WINAPI DOSVM_Int16Handler( CONTEXT *context )
 {
    BIOSDATA *data = NULL;
    BYTE ascii, scan;
@@ -160,7 +160,7 @@ void WINAPI DOSVM_Int16Handler( CONTEXT86 *context )
  * Return value will always be TRUE and returned keystroke will be
  * removed from buffer.
  */
-int DOSVM_Int16ReadChar(BYTE *ascii, BYTE *scan, CONTEXT86 *waitctx)
+int DOSVM_Int16ReadChar(BYTE *ascii, BYTE *scan, CONTEXT *waitctx)
 {
     BIOSDATA *data = DOSVM_BiosData();
     WORD CurOfs = data->NextKbdCharPtr;

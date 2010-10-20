@@ -77,10 +77,10 @@ static void *strategy_data[NB_SYSTEM_STRATEGIES];
 
 
 /* prototypes */
-static void WINAPI nul_strategy(CONTEXT86*ctx);
-static void WINAPI nul_interrupt(CONTEXT86*ctx);
-static void WINAPI con_strategy(CONTEXT86*ctx);
-static void WINAPI con_interrupt(CONTEXT86*ctx);
+static void WINAPI nul_strategy(CONTEXT*ctx);
+static void WINAPI nul_interrupt(CONTEXT*ctx);
+static void WINAPI con_strategy(CONTEXT*ctx);
+static void WINAPI con_interrupt(CONTEXT*ctx);
 
 /* devices */
 static const WINEDEV devs[] =
@@ -119,7 +119,7 @@ static struct _DOS_LISTOFLISTS * DOSMEM_LOL(void)
 
 
 /* the device implementations */
-static void do_lret(CONTEXT86*ctx)
+static void do_lret(CONTEXT*ctx)
 {
   WORD *stack = CTX_SEG_OFF_TO_LIN(ctx, ctx->SegSs, ctx->Esp);
 
@@ -128,7 +128,7 @@ static void do_lret(CONTEXT86*ctx)
   ctx->Esp  += 2*sizeof(WORD);
 }
 
-static void do_strategy(CONTEXT86*ctx, int id, int extra)
+static void do_strategy(CONTEXT*ctx, int id, int extra)
 {
   REQUEST_HEADER *hdr = CTX_SEG_OFF_TO_LIN(ctx, ctx->SegEs, ctx->Ebx);
   void **hdr_ptr = strategy_data[id];
@@ -149,12 +149,12 @@ static REQUEST_HEADER * get_hdr(int id, void**extra)
   return hdr_ptr ? *hdr_ptr : NULL;
 }
 
-static void WINAPI nul_strategy(CONTEXT86*ctx)
+static void WINAPI nul_strategy(CONTEXT*ctx)
 {
   do_strategy(ctx, SYSTEM_STRATEGY_NUL, 0);
 }
 
-static void WINAPI nul_interrupt(CONTEXT86*ctx)
+static void WINAPI nul_interrupt(CONTEXT*ctx)
 {
   REQUEST_HEADER *hdr = get_hdr(SYSTEM_STRATEGY_NUL, NULL);
   /* eat everything and recycle nothing */
@@ -172,12 +172,12 @@ static void WINAPI nul_interrupt(CONTEXT86*ctx)
   do_lret(ctx);
 }
 
-static void WINAPI con_strategy(CONTEXT86*ctx)
+static void WINAPI con_strategy(CONTEXT*ctx)
 {
   do_strategy(ctx, SYSTEM_STRATEGY_CON, sizeof(int));
 }
 
-static void WINAPI con_interrupt(CONTEXT86*ctx)
+static void WINAPI con_interrupt(CONTEXT*ctx)
 {
   int *scan;
   REQUEST_HEADER *hdr = get_hdr(SYSTEM_STRATEGY_CON,(void **)&scan);

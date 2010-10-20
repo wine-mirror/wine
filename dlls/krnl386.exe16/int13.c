@@ -58,7 +58,7 @@ static BYTE INT13_last_status;
  * Despite what Ralf Brown says, at least functions 0x06 and 0x07 
  * seem to set carry, too.
  */
-static void INT13_SetStatus( CONTEXT86 *context, BYTE status )
+static void INT13_SetStatus( CONTEXT *context, BYTE status )
 {
     INT13_last_status = status;
 
@@ -76,7 +76,7 @@ static void INT13_SetStatus( CONTEXT86 *context, BYTE status )
  *
  * Read floppy disk parameters.
  */
-static void INT13_ReadFloppyParams( CONTEXT86 *context )
+static void INT13_ReadFloppyParams( CONTEXT *context )
 {
 #ifdef linux
     static const BYTE floppy_params[2][13] =
@@ -184,7 +184,7 @@ static void INT13_ReadFloppyParams( CONTEXT86 *context )
  *
  * Handler for int 13h (disk I/O).
  */
-void WINAPI DOSVM_Int13Handler( CONTEXT86 *context )
+void WINAPI DOSVM_Int13Handler( CONTEXT *context )
 {
     TRACE( "AH=%02x\n", AH_reg( context ) );
 

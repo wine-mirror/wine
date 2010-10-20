@@ -338,7 +338,7 @@ __ASM_GLOBAL_FUNC( call_entry_point,
  *
  * Same as relay_call_from_16 but doesn't print any debug information.
  */
-static int relay_call_from_16_no_debug( void *entry_point, unsigned char *args16, CONTEXT86 *context,
+static int relay_call_from_16_no_debug( void *entry_point, unsigned char *args16, CONTEXT *context,
                                         const CALLFROM16 *call )
 {
     unsigned int i, j, nb_args = 0;
@@ -432,7 +432,7 @@ static int relay_call_from_16_no_debug( void *entry_point, unsigned char *args16
  *
  * Replacement for the 16-bit relay functions when relay debugging is on.
  */
-int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT86 *context )
+int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT *context )
 {
     STACK16FRAME *frame;
     WORD ordinal;
@@ -620,7 +620,7 @@ static RELAY_Stack16 *RELAY_GetPointer( DWORD offset )
  * Note: This might be called from signal handler, so the stack
  *       allocation algorithm must be signal safe.
  */
-static void RELAY_MakeShortContext( CONTEXT86 *context )
+static void RELAY_MakeShortContext( CONTEXT *context )
 {
     DWORD offset = offsetof(RELAY_Stack16, stack_top);
     RELAY_Stack16 *stack = RELAY_GetPointer( 0 );
@@ -655,7 +655,7 @@ static void RELAY_MakeShortContext( CONTEXT86 *context )
  * This stub is called by __wine_call_from_16_regs in order to marshall
  * relay parameters.
  */
-static void __stdcall RELAY_RelayStub( DOSRELAY proc, unsigned char *args, CONTEXT86 *context )
+static void __stdcall RELAY_RelayStub( DOSRELAY proc, unsigned char *args, CONTEXT *context )
 {
     if (proc)
     {
@@ -691,7 +691,7 @@ static void __stdcall RELAY_RelayStub( DOSRELAY proc, unsigned char *args, CONTE
  *
  * Restore saved code and stack pointers and release stack block.
  */
-void DOSVM_RelayHandler( CONTEXT86 *context )
+void DOSVM_RelayHandler( CONTEXT *context )
 {
     RELAY_Stack16 *stack = RELAY_GetPointer( context->Esp );
 
@@ -715,7 +715,7 @@ void DOSVM_RelayHandler( CONTEXT86 *context )
  * Modifies the context so that return to context calls DOSRELAY and
  * only after return from DOSRELAY the original context will be returned to.
  */
-void DOSVM_BuildCallFrame( CONTEXT86 *context, DOSRELAY relay, LPVOID data )
+void DOSVM_BuildCallFrame( CONTEXT *context, DOSRELAY relay, LPVOID data )
 {
     WORD  code_sel = DOSVM_dpmi_segments->relay_code_sel;
 

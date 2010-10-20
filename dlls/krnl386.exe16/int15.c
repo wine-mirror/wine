@@ -31,7 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
  *
  * Handler for int 15h
  */
-void WINAPI DOSVM_Int15Handler( CONTEXT86 *context )
+void WINAPI DOSVM_Int15Handler( CONTEXT *context )
 {
     switch(AH_reg(context))
     {

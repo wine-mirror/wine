@@ -52,7 +52,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vxd);
 
-typedef DWORD (WINAPI *VxDCallProc)(DWORD, CONTEXT86 *);
+typedef DWORD (WINAPI *VxDCallProc)(DWORD, CONTEXT *);
 typedef BOOL (WINAPI *DeviceIoProc)(DWORD, LPVOID, DWORD, LPVOID, DWORD, LPDWORD, LPOVERLAPPED);
 
 struct vxd_module
@@ -287,7 +287,7 @@ done:
  *		VxDCall7 (KERNEL32.8)
  *		VxDCall8 (KERNEL32.9)
  */
-void WINAPI __regs_VxDCall( DWORD service, CONTEXT86 *context )
+void WINAPI __regs_VxDCall( DWORD service, CONTEXT *context )
 {
     unsigned int i;
     VxDCallProc proc = NULL;
@@ -321,7 +321,7 @@ DEFINE_REGS_ENTRYPOINT( VxDCall, 1 )
 /***********************************************************************
  *           __wine_vxd_vmm (WPROCS.401)
  */
-void WINAPI __wine_vxd_vmm ( CONTEXT86 *context )
+void WINAPI __wine_vxd_vmm ( CONTEXT *context )
 {
     unsigned service = AX_reg(context);
 
@@ -348,7 +348,7 @@ void WINAPI __wine_vxd_vmm ( CONTEXT86 *context )
 /***********************************************************************
  *           __wine_vxd_pagefile (WPROCS.433)
  */
-void WINAPI __wine_vxd_pagefile( CONTEXT86 *context )
+void WINAPI __wine_vxd_pagefile( CONTEXT *context )
 {
     unsigned	service = AX_reg(context);
 
@@ -394,7 +394,7 @@ void WINAPI __wine_vxd_pagefile( CONTEXT86 *context )
 /***********************************************************************
  *           __wine_vxd_reboot (WPROCS.409)
  */
-void WINAPI __wine_vxd_reboot( CONTEXT86 *context )
+void WINAPI __wine_vxd_reboot( CONTEXT *context )
 {
     unsigned service = AX_reg(context);
 
@@ -415,7 +415,7 @@ void WINAPI __wine_vxd_reboot( CONTEXT86 *context )
 /***********************************************************************
  *           __wine_vxd_vdd (WPROCS.410)
  */
-void WINAPI __wine_vxd_vdd( CONTEXT86 *context )
+void WINAPI __wine_vxd_vdd( CONTEXT *context )
 {
     unsigned service = AX_reg(context);
 
@@ -436,7 +436,7 @@ void WINAPI __wine_vxd_vdd( CONTEXT86 *context )
 /***********************************************************************
  *           __wine_vxd_vmd (WPROCS.412)
  */
-void WINAPI __wine_vxd_vmd( CONTEXT86 *context )
+void WINAPI __wine_vxd_vmd( CONTEXT *context )
 {
     unsigned service = AX_reg(context);
 
@@ -457,7 +457,7 @@ void WINAPI __wine_vxd_vmd( CONTEXT86 *context )
 /***********************************************************************
  *           __wine_vxd_vxdloader (WPROCS.439)
  */
-void WINAPI __wine_vxd_vxdloader( CONTEXT86 *context )
+void WINAPI __wine_vxd_vxdloader( CONTEXT *context )
 {
     unsigned service = AX_reg(context);
 
@@ -499,7 +499,7 @@ void WINAPI __wine_vxd_vxdloader( CONTEXT86 *context )
 /***********************************************************************
  *           __wine_vxd_shell (WPROCS.423)
  */
-void WINAPI __wine_vxd_shell( CONTEXT86 *context )
+void WINAPI __wine_vxd_shell( CONTEXT *context )
 {
     unsigned	service = DX_reg(context);
 
@@ -592,7 +592,7 @@ void WINAPI __wine_vxd_shell( CONTEXT86 *context )
 /***********************************************************************
  *           __wine_vxd_comm (WPROCS.414)
  */
-void WINAPI __wine_vxd_comm( CONTEXT86 *context )
+void WINAPI __wine_vxd_comm( CONTEXT *context )
 {
     unsigned	service = AX_reg(context);
 
@@ -617,7 +617,7 @@ void WINAPI __wine_vxd_comm( CONTEXT86 *context )
 /***********************************************************************
  *           __wine_vxd_timer (WPROCS.405)
  */
-void WINAPI __wine_vxd_timer( CONTEXT86 *context )
+void WINAPI __wine_vxd_timer( CONTEXT *context )
 {
     unsigned service = AX_reg(context);
 
@@ -668,7 +668,7 @@ static DWORD CALLBACK timer_thread( void *arg )
 /***********************************************************************
  *           __wine_vxd_timerapi (WPROCS.1490)
  */
-void WINAPI __wine_vxd_timerapi( CONTEXT86 *context )
+void WINAPI __wine_vxd_timerapi( CONTEXT *context )
 {
     static WORD System_Time_Selector;
 
@@ -702,7 +702,7 @@ void WINAPI __wine_vxd_timerapi( CONTEXT86 *context )
 /***********************************************************************
  *           __wine_vxd_configmg (WPROCS.451)
  */
-void WINAPI __wine_vxd_configmg( CONTEXT86 *context )
+void WINAPI __wine_vxd_configmg( CONTEXT *context )
 {
     unsigned service = AX_reg(context);
 
@@ -723,7 +723,7 @@ void WINAPI __wine_vxd_configmg( CONTEXT86 *context )
 /***********************************************************************
  *           __wine_vxd_enable (WPROCS.455)
  */
-void WINAPI __wine_vxd_enable( CONTEXT86 *context )
+void WINAPI __wine_vxd_enable( CONTEXT *context )
 {
     unsigned service = AX_reg(context);
 
@@ -744,7 +744,7 @@ void WINAPI __wine_vxd_enable( CONTEXT86 *context )
 /***********************************************************************
  *           __wine_vxd_apm (WPROCS.438)
  */
-void WINAPI __wine_vxd_apm( CONTEXT86 *context )
+void WINAPI __wine_vxd_apm( CONTEXT *context )
 {
     unsigned service = AX_reg(context);
 
@@ -814,7 +814,7 @@ void WINAPI __wine_vxd_apm( CONTEXT86 *context )
  * service of the Win32s VxD. (Note that the offset is never reset.)
  *
  */
-void WINAPI __wine_vxd_win32s( CONTEXT86 *context )
+void WINAPI __wine_vxd_win32s( CONTEXT *context )
 {
     switch (AX_reg(context))
     {

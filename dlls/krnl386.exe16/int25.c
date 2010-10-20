@@ -80,7 +80,7 @@ BOOL DOSVM_RawRead(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL f
  *
  * Handler for int 25h (absolute disk read).
  */
-void WINAPI DOSVM_Int25Handler( CONTEXT86 *context )
+void WINAPI DOSVM_Int25Handler( CONTEXT *context )
 {
     WCHAR drivespec[4] = {'A', ':', '\\', 0};
     BYTE *dataptr = CTX_SEG_OFF_TO_LIN( context, context->SegDs, context->Ebx );

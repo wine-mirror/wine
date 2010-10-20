@@ -283,7 +283,7 @@ void WINAPI LogParamError16(UINT16 uErr, FARPROC16 lpfn, LPVOID lpvParam)
 /***********************************************************************
 *	K327 (KERNEL.327)
 */
-void WINAPI HandleParamError( CONTEXT86 *context )
+void WINAPI HandleParamError( CONTEXT *context )
 {
 	UINT16 uErr = LOWORD(context->Ebx);
         FARPROC16 lpfn = (FARPROC16)MAKESEGPTR( context->SegCs, context->Eip );

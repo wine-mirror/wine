@@ -68,7 +68,7 @@ static DWORD TIMER_millis = 0;
  * called. This function will be called even if application has its 
  * own IRQ handler that does not jump to builtin IRQ handler.
  */
-static void TIMER_Relay( CONTEXT86 *context, void *data )
+static void TIMER_Relay( CONTEXT *context, void *data )
 {
     InterlockedDecrement( &TIMER_pending );
 }
@@ -160,10 +160,10 @@ void DOSVM_SetTimer( UINT ticks )
  *
  * DOS interrupt 08h handler (IRQ0 - TIMER).
  */
-void WINAPI DOSVM_Int08Handler( CONTEXT86 *context )
+void WINAPI DOSVM_Int08Handler( CONTEXT *context )
 {
     BIOSDATA *bios_data      = DOSVM_BiosData();
-    CONTEXT86 nested_context = *context;
+    CONTEXT nested_context = *context;
     FARPROC16 int1c_proc     = DOSVM_GetRMHandler( 0x1c );
     
     nested_context.SegCs = SELECTOROF(int1c_proc);

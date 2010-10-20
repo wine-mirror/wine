@@ -60,15 +60,15 @@ typedef struct
     WORD  cdrom_selector;	/* Protected mode selector for CDROM_HEAP */
 } CDROM_HEAP;
 
-static void do_int2f_16( CONTEXT86 *context );
-static void MSCDEX_Handler( CONTEXT86 *context );
+static void do_int2f_16( CONTEXT *context );
+static void MSCDEX_Handler( CONTEXT *context );
 
 /**********************************************************************
  *          DOSVM_Int2fHandler
  *
  * Handler for int 2fh (multiplex).
  */
-void WINAPI DOSVM_Int2fHandler( CONTEXT86 *context )
+void WINAPI DOSVM_Int2fHandler( CONTEXT *context )
 {
     TRACE("Subfunction 0x%X\n", AX_reg(context));
 
@@ -320,7 +320,7 @@ void WINAPI DOSVM_Int2fHandler( CONTEXT86 *context )
 /**********************************************************************
  *         do_int2f_16
  */
-static void do_int2f_16( CONTEXT86 *context )
+static void do_int2f_16( CONTEXT *context )
 {
     DWORD addr;
 
@@ -949,7 +949,7 @@ static void MSCDEX_Request(BYTE *driver_request, BOOL dorealmode)
     MSCDEX_Dump("End", driver_request, dorealmode);
 }
 
-static void MSCDEX_Handler(CONTEXT86* context)
+static void MSCDEX_Handler(CONTEXT* context)
 {
     int        drive, count;
     char*      p;
@@ -1044,8 +1044,8 @@ static void MSCDEX_Handler(CONTEXT86* context)
 }
 
 /* prototypes */
-static void WINAPI cdrom_strategy(CONTEXT86*ctx);
-static void WINAPI cdrom_interrupt(CONTEXT86*ctx);
+static void WINAPI cdrom_strategy(CONTEXT*ctx);
+static void WINAPI cdrom_interrupt(CONTEXT*ctx);
 
 /* device info */
 static const WINEDEV cdromdev =
@@ -1058,7 +1058,7 @@ static const WINEDEV cdromdev =
 static REQUEST_HEADER *cdrom_driver_request;
 
 /* Return to caller */
-static void do_lret(CONTEXT86*ctx)
+static void do_lret(CONTEXT*ctx)
 {
     WORD *stack = CTX_SEG_OFF_TO_LIN(ctx, ctx->SegSs, ctx->Esp);
 
@@ -1067,13 +1067,13 @@ static void do_lret(CONTEXT86*ctx)
     ctx->Esp  += 2*sizeof(WORD);
 }
 
-static void WINAPI cdrom_strategy(CONTEXT86*ctx)
+static void WINAPI cdrom_strategy(CONTEXT*ctx)
 {
     cdrom_driver_request = CTX_SEG_OFF_TO_LIN(ctx, ctx->SegEs, ctx->Ebx);
     do_lret( ctx );
 }
 
-static void WINAPI cdrom_interrupt(CONTEXT86*ctx)
+static void WINAPI cdrom_interrupt(CONTEXT*ctx)
 {
     if (cdrom_driver_request->unit > CDROM_GetHeap()->hdr.units)
         cdrom_driver_request->status = STAT_ERROR | 1; /* unknown unit */

@@ -151,7 +151,7 @@ static LONG WINAPI dpmi_exception_handler(EXCEPTION_POINTERS *eptr)
 /**********************************************************************
  *	    INT_GetRealModeContext
  */
-static void INT_GetRealModeContext( REALMODECALL *call, CONTEXT86 *context )
+static void INT_GetRealModeContext( REALMODECALL *call, CONTEXT *context )
 {
     context->Eax    = call->eax;
     context->Ebx    = call->ebx;
@@ -175,7 +175,7 @@ static void INT_GetRealModeContext( REALMODECALL *call, CONTEXT86 *context )
 /**********************************************************************
  *	    INT_SetRealModeContext
  */
-static void INT_SetRealModeContext( REALMODECALL *call, CONTEXT86 *context )
+static void INT_SetRealModeContext( REALMODECALL *call, CONTEXT *context )
 {
     call->eax = context->Eax;
     call->ebx = context->Ebx;
@@ -376,7 +376,7 @@ __ASM_GLOBAL_FUNC(DPMI_CallRMCB32,
  *
  * This routine does the hard work of calling a callback procedure.
  */
-static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
+static void DPMI_CallRMCBProc( CONTEXT *context, RMCB *rmcb, WORD flag )
 {
     DWORD old_vif = get_vm86_teb_info()->dpmi_vif;
 
@@ -408,7 +408,7 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
             DPMI_CallRMCB32(rmcb, ss, esp, &es, &edi);
         } else {
             /* 16-bit DPMI client */
-            CONTEXT86 ctx = *context;
+            CONTEXT ctx = *context;
             ctx.SegCs = rmcb->proc_sel;
             ctx.Eip   = rmcb->proc_ofs;
             ctx.SegDs = ss;
@@ -434,7 +434,7 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
  *
  * This routine does the hard work of calling a real mode procedure.
  */
-int DPMI_CallRMProc( CONTEXT86 *context, LPWORD stack, int args, int iret )
+int DPMI_CallRMProc( CONTEXT *context, LPWORD stack, int args, int iret )
 {
     LPWORD stack16;
     LPVOID addr = NULL; /* avoid gcc warning */
@@ -540,9 +540,9 @@ callrmproc_again:
 /**********************************************************************
  *	    CallRMInt
  */
-static void DOSVM_CallRMInt( CONTEXT86 *context )
+static void DOSVM_CallRMInt( CONTEXT *context )
 {
-    CONTEXT86 realmode_ctx;
+    CONTEXT realmode_ctx;
     FARPROC16 rm_int = DOSVM_GetRMHandler( BL_reg(context) );
     REALMODECALL *call = CTX_SEG_OFF_TO_LIN( context, 
                                              context->SegEs, 
@@ -569,12 +569,12 @@ static void DOSVM_CallRMInt( CONTEXT86 *context )
 /**********************************************************************
  *	    CallRMProc
  */
-static void DOSVM_CallRMProc( CONTEXT86 *context, int iret )
+static void DOSVM_CallRMProc( CONTEXT *context, int iret )
 {
     REALMODECALL *p = CTX_SEG_OFF_TO_LIN( context, 
                                           context->SegEs, 
                                           context->Edi );
-    CONTEXT86 context16;
+    CONTEXT context16;
 
     TRACE("RealModeCall: EAX=%08x EBX=%08x ECX=%08x EDX=%08x\n",
           p->eax, p->ebx, p->ecx, p->edx);
@@ -595,10 +595,10 @@ static void DOSVM_CallRMProc( CONTEXT86 *context, int iret )
 
 
 /* (see dosmem.c, function DOSMEM_InitDPMI) */
-static void StartPM( CONTEXT86 *context )
+static void StartPM( CONTEXT *context )
 {
     UINT16 cs, ss, ds, es;
-    CONTEXT86 pm_ctx;
+    CONTEXT pm_ctx;
     DWORD psp_ofs = (DWORD)(DOSVM_psp<<4);
     PDB16 *psp = (PDB16 *)psp_ofs;
     HANDLE16 env_seg = psp->environment;
@@ -731,9 +731,9 @@ static int DPMI_FreeRMCB( DWORD address )
  *
  * DPMI Raw Mode Switch handler
  */
-void WINAPI DOSVM_RawModeSwitchHandler( CONTEXT86 *context )
+void WINAPI DOSVM_RawModeSwitchHandler( CONTEXT *context )
 {
-  CONTEXT86 rm_ctx;
+  CONTEXT rm_ctx;
   int ret;
 
   /* initialize real-mode context as per spec */
@@ -792,7 +792,7 @@ void WINAPI DOSVM_RawModeSwitchHandler( CONTEXT86 *context )
 /**********************************************************************
  *	    AllocRMCB
  */
-static void DOSVM_AllocRMCB( CONTEXT86 *context )
+static void DOSVM_AllocRMCB( CONTEXT *context )
 {
     RMCB *NewRMCB = DPMI_AllocRMCB();
 
@@ -818,7 +818,7 @@ static void DOSVM_AllocRMCB( CONTEXT86 *context )
 /**********************************************************************
  *	    FreeRMCB
  */
-static void DOSVM_FreeRMCB( CONTEXT86 *context )
+static void DOSVM_FreeRMCB( CONTEXT *context )
 {
     FIXME("callback address: %04x:%04x\n",
           CX_reg(context), DX_reg(context));
@@ -839,7 +839,7 @@ static BYTE * XMS_Offset( MOVEOFS *ofs )
 /**********************************************************************
  *	    XMS_Handler
  */
-static void XMS_Handler( CONTEXT86 *context )
+static void XMS_Handler( CONTEXT *context )
 {
     switch(AH_reg(context))
     {
@@ -920,7 +920,7 @@ static void XMS_Handler( CONTEXT86 *context )
  *
  * Check if this was really a wrapper call instead of an interrupt.
  */
-BOOL DOSVM_CheckWrappers( CONTEXT86 *context )
+BOOL DOSVM_CheckWrappers( CONTEXT *context )
 {
     if (context->SegCs==DOSVM_dpmi_segments->dpmi_seg) {
         /* This is the protected mode switch */
@@ -956,7 +956,7 @@ BOOL DOSVM_CheckWrappers( CONTEXT86 *context )
  *
  * Handler for int 31h (DPMI).
  */
-void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
+void WINAPI DOSVM_Int31Handler( CONTEXT *context )
 {
     RESET_CFLAG(context);
     switch(AX_reg(context))
