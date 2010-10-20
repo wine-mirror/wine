@@ -72,7 +72,7 @@ typedef enum _SCHEMA_TYPE {
 
 typedef struct _schema_cache
 {
-    const struct IXMLDOMSchemaCollectionVtbl *lpVtbl;
+    const struct IXMLDOMSchemaCollection2Vtbl* lpVtbl;
     xmlHashTablePtr cache;
     LONG ref;
 } schema_cache;
@@ -121,9 +121,9 @@ static LONG cache_entry_release(cache_entry* entry)
     return ref;
 }
 
-static inline schema_cache *impl_from_IXMLDOMSchemaCollection(IXMLDOMSchemaCollection *iface)
+static inline schema_cache* impl_from_IXMLDOMSchemaCollection2(IXMLDOMSchemaCollection2* iface)
 {
-    return (schema_cache *)((char*)iface - FIELD_OFFSET(schema_cache, lpVtbl));
+    return (schema_cache*)((char*)iface - FIELD_OFFSET(schema_cache, lpVtbl));
 }
 
 static inline SCHEMA_TYPE schema_type_from_xmlDocPtr(xmlDocPtr schema)
@@ -221,15 +221,17 @@ static cache_entry* cache_entry_from_xdr_doc(xmlDocPtr doc)
     return entry;
 }
 
-static HRESULT WINAPI schema_cache_QueryInterface(IXMLDOMSchemaCollection *iface, REFIID riid, void** ppvObject)
+static HRESULT WINAPI schema_cache_QueryInterface(IXMLDOMSchemaCollection2* iface,
+                                                  REFIID riid, void** ppvObject)
 {
-    schema_cache *This = impl_from_IXMLDOMSchemaCollection(iface);
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
 
     if ( IsEqualIID(riid, &IID_IUnknown) ||
          IsEqualIID(riid, &IID_IDispatch) ||
-         IsEqualIID(riid, &IID_IXMLDOMSchemaCollection) )
+         IsEqualIID(riid, &IID_IXMLDOMSchemaCollection) ||
+         IsEqualIID(riid, &IID_IXMLDOMSchemaCollection2) )
     {
         *ppvObject = iface;
     }
@@ -239,14 +241,14 @@ static HRESULT WINAPI schema_cache_QueryInterface(IXMLDOMSchemaCollection *iface
         return E_NOINTERFACE;
     }
 
-    IXMLDOMSchemaCollection_AddRef(iface);
+    IXMLDOMSchemaCollection2_AddRef(iface);
 
     return S_OK;
 }
 
-static ULONG WINAPI schema_cache_AddRef(IXMLDOMSchemaCollection *iface)
+static ULONG WINAPI schema_cache_AddRef(IXMLDOMSchemaCollection2* iface)
 {
-    schema_cache *This = impl_from_IXMLDOMSchemaCollection(iface);
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
     LONG ref = InterlockedIncrement(&This->ref);
     TRACE("%p new ref %d\n", This, ref);
     return ref;
@@ -257,9 +259,9 @@ static void cache_free(void* data, xmlChar* name /* ignored */)
     cache_entry_release((cache_entry*)data);
 }
 
-static ULONG WINAPI schema_cache_Release(IXMLDOMSchemaCollection *iface)
+static ULONG WINAPI schema_cache_Release(IXMLDOMSchemaCollection2* iface)
 {
-    schema_cache *This = impl_from_IXMLDOMSchemaCollection(iface);
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
     LONG ref = InterlockedDecrement(&This->ref);
     TRACE("%p new ref %d\n", This, ref);
 
@@ -272,9 +274,10 @@ static ULONG WINAPI schema_cache_Release(IXMLDOMSchemaCollection *iface)
     return ref;
 }
 
-static HRESULT WINAPI schema_cache_GetTypeInfoCount(IXMLDOMSchemaCollection *iface, UINT* pctinfo)
+static HRESULT WINAPI schema_cache_GetTypeInfoCount(IXMLDOMSchemaCollection2* iface,
+                                                    UINT* pctinfo)
 {
-    schema_cache *This = impl_from_IXMLDOMSchemaCollection(iface);
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
 
     TRACE("(%p)->(%p)\n", This, pctinfo);
 
@@ -283,10 +286,10 @@ static HRESULT WINAPI schema_cache_GetTypeInfoCount(IXMLDOMSchemaCollection *ifa
     return S_OK;
 }
 
-static HRESULT WINAPI schema_cache_GetTypeInfo(IXMLDOMSchemaCollection *iface,
+static HRESULT WINAPI schema_cache_GetTypeInfo(IXMLDOMSchemaCollection2* iface,
                                                UINT iTInfo, LCID lcid, ITypeInfo** ppTInfo)
 {
-    schema_cache *This = impl_from_IXMLDOMSchemaCollection(iface);
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
     HRESULT hr;
 
     TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
@@ -296,15 +299,12 @@ static HRESULT WINAPI schema_cache_GetTypeInfo(IXMLDOMSchemaCollection *iface,
     return hr;
 }
 
-static HRESULT WINAPI schema_cache_GetIDsOfNames(IXMLDOMSchemaCollection *iface,
-                                                 REFIID riid,
-                                                 LPOLESTR* rgszNames,
-                                                 UINT cNames,
-                                                 LCID lcid,
-                                                 DISPID* rgDispId)
+static HRESULT WINAPI schema_cache_GetIDsOfNames(IXMLDOMSchemaCollection2* iface,
+                                                 REFIID riid, LPOLESTR* rgszNames,
+                                                 UINT cNames, LCID lcid, DISPID* rgDispId)
 {
-    schema_cache *This = impl_from_IXMLDOMSchemaCollection(iface);
-    ITypeInfo *typeinfo;
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
+    ITypeInfo* typeinfo;
     HRESULT hr;
 
     TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
@@ -323,18 +323,14 @@ static HRESULT WINAPI schema_cache_GetIDsOfNames(IXMLDOMSchemaCollection *iface,
     return hr;
 }
 
-static HRESULT WINAPI schema_cache_Invoke(IXMLDOMSchemaCollection *iface,
-                                          DISPID dispIdMember,
-                                          REFIID riid,
-                                          LCID lcid,
-                                          WORD wFlags,
-                                          DISPPARAMS* pDispParams,
-                                          VARIANT* pVarResult,
-                                          EXCEPINFO* pExcepInfo,
+static HRESULT WINAPI schema_cache_Invoke(IXMLDOMSchemaCollection2* iface,
+                                          DISPID dispIdMember, REFIID riid, LCID lcid,
+                                          WORD wFlags, DISPPARAMS* pDispParams,
+                                          VARIANT* pVarResult, EXCEPINFO* pExcepInfo,
                                           UINT* puArgErr)
 {
-    schema_cache *This = impl_from_IXMLDOMSchemaCollection(iface);
-    ITypeInfo *typeinfo;
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
+    ITypeInfo* typeinfo;
     HRESULT hr;
 
     TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
@@ -351,9 +347,9 @@ static HRESULT WINAPI schema_cache_Invoke(IXMLDOMSchemaCollection *iface,
     return hr;
 }
 
-static HRESULT WINAPI schema_cache_add(IXMLDOMSchemaCollection *iface, BSTR uri, VARIANT var)
+static HRESULT WINAPI schema_cache_add(IXMLDOMSchemaCollection2* iface, BSTR uri, VARIANT var)
 {
-    schema_cache *This = impl_from_IXMLDOMSchemaCollection(iface);
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
     xmlChar* name = xmlChar_from_wchar(uri);
     TRACE("(%p)->(%s, var(vt %x))\n", This, debugstr_w(uri), V_VT(&var));
 
@@ -446,9 +442,10 @@ static HRESULT WINAPI schema_cache_add(IXMLDOMSchemaCollection *iface, BSTR uri,
     return S_OK;
 }
 
-static HRESULT WINAPI schema_cache_get(IXMLDOMSchemaCollection *iface, BSTR uri, IXMLDOMNode **node)
+static HRESULT WINAPI schema_cache_get(IXMLDOMSchemaCollection2* iface, BSTR uri,
+                                       IXMLDOMNode** node)
 {
-    schema_cache* This = impl_from_IXMLDOMSchemaCollection(iface);
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
     xmlChar* name;
     cache_entry* entry;
     TRACE("(%p)->(%s, %p)\n", This, wine_dbgstr_w(uri), node);
@@ -468,9 +465,9 @@ static HRESULT WINAPI schema_cache_get(IXMLDOMSchemaCollection *iface, BSTR uri,
     return S_OK;
 }
 
-static HRESULT WINAPI schema_cache_remove(IXMLDOMSchemaCollection *iface, BSTR uri)
+static HRESULT WINAPI schema_cache_remove(IXMLDOMSchemaCollection2* iface, BSTR uri)
 {
-    schema_cache *This = impl_from_IXMLDOMSchemaCollection(iface);
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
     xmlChar* name = xmlChar_from_wchar(uri);
     TRACE("(%p)->(%s)\n", This, wine_dbgstr_w(uri));
 
@@ -479,9 +476,9 @@ static HRESULT WINAPI schema_cache_remove(IXMLDOMSchemaCollection *iface, BSTR u
     return S_OK;
 }
 
-static HRESULT WINAPI schema_cache_get_length(IXMLDOMSchemaCollection *iface, LONG *length)
+static HRESULT WINAPI schema_cache_get_length(IXMLDOMSchemaCollection2* iface, LONG* length)
 {
-    schema_cache *This = impl_from_IXMLDOMSchemaCollection(iface);
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
     TRACE("(%p)->(%p)\n", This, length);
 
     if (!length)
@@ -498,9 +495,10 @@ static void cache_index(void* data /* ignored */, void* index, xmlChar* name)
         *index_data->out = bstr_from_xmlChar(name);
 }
 
-static HRESULT WINAPI schema_cache_get_namespaceURI(IXMLDOMSchemaCollection *iface, LONG index, BSTR *len)
+static HRESULT WINAPI schema_cache_get_namespaceURI(IXMLDOMSchemaCollection2* iface,
+                                                    LONG index, BSTR* len)
 {
-    schema_cache* This = impl_from_IXMLDOMSchemaCollection(iface);
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
     cache_index_data data = {index,len};
     TRACE("(%p)->(%i, %p)\n", This, index, len);
 
@@ -527,10 +525,11 @@ static void cache_copy(void* data, void* dest, xmlChar* name)
     }
 }
 
-static HRESULT WINAPI schema_cache_addCollection(IXMLDOMSchemaCollection *iface, IXMLDOMSchemaCollection *otherCollection)
+static HRESULT WINAPI schema_cache_addCollection(IXMLDOMSchemaCollection2* iface,
+                                                 IXMLDOMSchemaCollection* otherCollection)
 {
-    schema_cache* This = impl_from_IXMLDOMSchemaCollection(iface);
-    schema_cache* That = impl_from_IXMLDOMSchemaCollection(otherCollection);
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
+    schema_cache* That = impl_from_IXMLDOMSchemaCollection2((IXMLDOMSchemaCollection2*)otherCollection);
     TRACE("(%p)->(%p)\n", This, That);
 
     if (!otherCollection)
@@ -542,14 +541,54 @@ static HRESULT WINAPI schema_cache_addCollection(IXMLDOMSchemaCollection *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI schema_cache_get__newEnum(IXMLDOMSchemaCollection *iface, IUnknown **ppUnk)
+static HRESULT WINAPI schema_cache_get__newEnum(IXMLDOMSchemaCollection2* iface,
+                                                IUnknown** ppUnk)
+{
+    FIXME("stub\n");
+    if (ppUnk)
+        *ppUnk = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI schema_cache_validate(IXMLDOMSchemaCollection2* iface)
 {
     FIXME("stub\n");
     return E_NOTIMPL;
 }
 
-/* TODO: validate? validateOnLoad property? */
-static const struct IXMLDOMSchemaCollectionVtbl schema_vtbl =
+static HRESULT WINAPI schema_cache_put_validateOnLoad(IXMLDOMSchemaCollection2* iface,
+                                                      VARIANT_BOOL validateOnLoad)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI schema_cache_get_validateOnLoad(IXMLDOMSchemaCollection2* iface,
+                                                      VARIANT_BOOL* validateOnLoad)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI schema_cache_getSchema(IXMLDOMSchemaCollection2* iface,
+                                             BSTR namespaceURI, ISchema** schema)
+{
+    FIXME("stub\n");
+    if (schema)
+        *schema = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI schema_cache_getDeclaration(IXMLDOMSchemaCollection2* iface,
+                                                  IXMLDOMNode* node, ISchemaItem** item)
+{
+    FIXME("stub\n");
+    if (item)
+        *item = NULL;
+    return E_NOTIMPL;
+}
+
+static const struct IXMLDOMSchemaCollection2Vtbl schema_cache_vtbl =
 {
     schema_cache_QueryInterface,
     schema_cache_AddRef,
@@ -564,26 +603,31 @@ static const struct IXMLDOMSchemaCollectionVtbl schema_vtbl =
     schema_cache_get_length,
     schema_cache_get_namespaceURI,
     schema_cache_addCollection,
-    schema_cache_get__newEnum
+    schema_cache_get__newEnum,
+    schema_cache_validate,
+    schema_cache_put_validateOnLoad,
+    schema_cache_get_validateOnLoad,
+    schema_cache_getSchema,
+    schema_cache_getDeclaration
 };
 
-HRESULT SchemaCache_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+HRESULT SchemaCache_create(IUnknown* pUnkOuter, void** ppObj)
 {
-    schema_cache *schema = heap_alloc(sizeof(*schema));
-    if (!schema)
+    schema_cache* This = heap_alloc(sizeof(schema_cache));
+    if (!This)
         return E_OUTOFMEMORY;
 
-    schema->lpVtbl = &schema_vtbl;
-    schema->cache = xmlHashCreate(DEFAULT_HASHTABLE_SIZE);
-    schema->ref = 1;
+    This->lpVtbl = &schema_cache_vtbl;
+    This->cache = xmlHashCreate(DEFAULT_HASHTABLE_SIZE);
+    This->ref = 1;
 
-    *ppObj = &schema->lpVtbl;
+    *ppObj = &This->lpVtbl;
     return S_OK;
 }
 
 #else
 
-HRESULT SchemaCache_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+HRESULT SchemaCache_create(IUnknown* pUnkOuter, void** ppObj)
 {
     MESSAGE("This program tried to use a SchemaCache object, but\n"
             "libxml2 support was not present at compile time.\n");
