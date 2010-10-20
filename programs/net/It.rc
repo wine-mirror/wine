@@ -31,8 +31,8 @@ STRINGTABLE
     STRING_USAGE, "La sintassi di questo comando è:\n\nNET [ HELP | START | STOP | USE ]\n"
     STRING_START_USAGE, "Specificare il nome del servizio da avviare.\n"
     STRING_STOP_USAGE, "Specificare il nome del servizio da fermare.\n"
-    STRING_STOP_DEP, "Fermando il servizio dipendente: %s\n"
-    STRING_CANT_STOP, "Impossibile fermare il servizio %s\n"
+    STRING_STOP_DEP, "Interrompendo il servizio dipendente: %s\n"
+    STRING_CANT_STOP, "Impossibile interrompere il servizio %s\n"
     STRING_NO_SCM, "Impossibile ottenere l'handle del gestore del controllo del servizio.\n"
     STRING_NO_SVCHANDLE, "Impossibile ottenere l'handle del servizio.\n"
     STRING_START_SVC, "Il servizio %s sarà avviato.\n"
@@ -44,6 +44,6 @@ STRINGTABLE
     STRING_HELP_USAGE, "La sintassi di questo comando è:\n\nNET HELP comando\n    -o-\nNET comando /HELP\n\n"\
                        "   Comandi disponibili:\n   NET HELP    NET START    NET STOP    NET USE\n"
     STRING_NO_ENTRIES, "Non ci sono elementi nella lista.\n"
-    STRING_USE_HEADER, "\nStato  Locale   Remoto\n---------------------------------------------------------------\n"
+    STRING_USE_HEADER, "\nStato  locale   remoto\n---------------------------------------------------------------\n"
     STRING_USE_ENTRY,  "%s      %S      %S      Risorse aperte: %lu\n"
 }
