@@ -193,6 +193,7 @@ static HRESULT WINAPI TgaDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     LARGE_INTEGER seek;
     tga_footer footer;
     int attribute_bitcount;
+    int mapped_depth=0;
 
     TRACE("(%p,%p,%u)\n", iface, pIStream, cacheOptions);
 
@@ -228,16 +229,19 @@ static HRESULT WINAPI TgaDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     case IMAGETYPE_COLORMAPPED|IMAGETYPE_RLE:
         if (This->header.colormap_type != 1)
             hr = E_FAIL;
+        mapped_depth = This->header.colormap_entrysize;
         break;
     case IMAGETYPE_TRUECOLOR:
     case IMAGETYPE_TRUECOLOR|IMAGETYPE_RLE:
         if (This->header.colormap_type != 0 && This->header.colormap_type != 1)
             hr = E_FAIL;
+        mapped_depth = This->header.depth;
         break;
     case IMAGETYPE_GRAYSCALE:
     case IMAGETYPE_GRAYSCALE|IMAGETYPE_RLE:
         if (This->header.colormap_type != 0)
             hr = E_FAIL;
+        mapped_depth = 0;
         break;
     default:
         hr = E_FAIL;
@@ -253,9 +257,8 @@ static HRESULT WINAPI TgaDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     attribute_bitcount = This->header.image_descriptor & IMAGE_ATTRIBUTE_BITCOUNT_MASK;
 
     if (attribute_bitcount &&
-        !((This->header.image_type & IMAGETYPE_TRUECOLOR) &&
-          ((This->header.depth == 32 && attribute_bitcount == 8) ||
-           (This->header.depth == 16 && attribute_bitcount == 1))))
+        !((mapped_depth == 32 && attribute_bitcount == 8) ||
+          (mapped_depth == 16 && attribute_bitcount == 1)))
         hr = E_FAIL;
 
     if (FAILED(hr))
@@ -573,8 +576,159 @@ static HRESULT WINAPI TgaDecoder_Frame_GetResolution(IWICBitmapFrameDecode *ifac
 static HRESULT WINAPI TgaDecoder_Frame_CopyPalette(IWICBitmapFrameDecode *iface,
     IWICPalette *pIPalette)
 {
-    FIXME("(%p,%p): stub\n", iface, pIPalette);
-    return E_NOTIMPL;
+    TgaDecoder *This = decoder_from_frame(iface);
+    HRESULT hr=S_OK;
+    WICColor colors[256], *color;
+    BYTE *colormap_data;
+    WORD *wcolormap_data;
+    DWORD *dwcolormap_data;
+    LARGE_INTEGER seek;
+    ULONG bytesread;
+    int depth, attribute_bitcount, attribute_type;
+    int i;
+
+    TRACE("(%p,%p)\n", iface, pIPalette);
+
+    if (!This->colormap_length)
+    {
+        WARN("no colormap present in this file\n");
+        return WINCODEC_ERR_PALETTEUNAVAILABLE;
+    }
+
+    if (This->header.colormap_firstentry + This->header.colormap_length > 256)
+    {
+        FIXME("cannot read colormap with %i entries starting at %i\n",
+            This->header.colormap_firstentry + This->header.colormap_length,
+            This->header.colormap_firstentry);
+        return E_FAIL;
+    }
+
+    colormap_data = HeapAlloc(GetProcessHeap(), 0, This->colormap_length);
+    if (!colormap_data) return E_OUTOFMEMORY;
+
+    wcolormap_data = (WORD*)colormap_data;
+    dwcolormap_data = (DWORD*)colormap_data;
+
+    EnterCriticalSection(&This->lock);
+
+    seek.QuadPart = This->colormap_offset;
+    hr = IStream_Seek(This->stream, seek, STREAM_SEEK_SET, NULL);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IStream_Read(This->stream, colormap_data, This->colormap_length, &bytesread);
+        if (SUCCEEDED(hr) && bytesread != This->colormap_length)
+        {
+            WARN("expected %i bytes in colormap, got %i\n", This->colormap_length, bytesread);
+            hr = E_FAIL;
+        }
+    }
+
+    LeaveCriticalSection(&This->lock);
+
+    if (SUCCEEDED(hr))
+    {
+        attribute_bitcount = This->header.image_descriptor & IMAGE_ATTRIBUTE_BITCOUNT_MASK;
+
+        if (attribute_bitcount && This->extension_area_offset)
+            attribute_type = This->extension_area.attributes_type;
+        else if (attribute_bitcount)
+            attribute_type = ATTRIBUTE_ALPHA;
+        else
+            attribute_type = ATTRIBUTE_NO_ALPHA;
+
+        depth = This->header.colormap_entrysize;
+        if (depth == 15)
+        {
+            depth = 16;
+            attribute_type = ATTRIBUTE_NO_ALPHA;
+        }
+
+        memset(colors, 0, sizeof(colors));
+
+        color = &colors[This->header.colormap_firstentry];
+
+        /* Colormap entries can be in any truecolor format, and we have to convert them. */
+        switch (depth)
+        {
+        case 16:
+            switch (attribute_type)
+            {
+            case ATTRIBUTE_NO_ALPHA:
+            case ATTRIBUTE_UNDEFINED:
+            case ATTRIBUTE_UNDEFINED_PRESERVE:
+                for (i=0; i<This->header.colormap_length; i++)
+                {
+                    WORD srcval = wcolormap_data[i];
+                    *color++=0xff000000 | /* constant 255 alpha */
+                             ((srcval << 9) & 0xf80000) | /* r */
+                             ((srcval << 4) & 0x070000) | /* r - 3 bits */
+                             ((srcval << 6) & 0x00f800) | /* g */
+                             ((srcval << 1) & 0x000700) | /* g - 3 bits */
+                             ((srcval << 3) & 0x0000f8) | /* b */
+                             ((srcval >> 2) & 0x000007);  /* b - 3 bits */
+                }
+                break;
+            case ATTRIBUTE_ALPHA:
+            case ATTRIBUTE_PALPHA:
+                for (i=0; i<This->header.colormap_length; i++)
+                {
+                    WORD srcval = wcolormap_data[i];
+                    *color++=((srcval & 0x8000) ? 0xff000000 : 0) | /* alpha */
+                             ((srcval << 9) & 0xf80000) | /* r */
+                             ((srcval << 4) & 0x070000) | /* r - 3 bits */
+                             ((srcval << 6) & 0x00f800) | /* g */
+                             ((srcval << 1) & 0x000700) | /* g - 3 bits */
+                             ((srcval << 3) & 0x0000f8) | /* b */
+                             ((srcval >> 2) & 0x000007);  /* b - 3 bits */
+                }
+                break;
+            default:
+                FIXME("Unhandled 16-bit attribute type %u\n", attribute_type);
+                hr = E_NOTIMPL;
+            }
+            break;
+        case 24:
+            for (i=0; i<This->header.colormap_length; i++)
+            {
+                *color++=0xff000000 | /* alpha */
+                         colormap_data[i*3+2] | /* red */
+                         colormap_data[i*3+1] | /* green */
+                         colormap_data[i*3]; /* blue */
+            }
+            break;
+        case 32:
+            switch (attribute_type)
+            {
+            case ATTRIBUTE_NO_ALPHA:
+            case ATTRIBUTE_UNDEFINED:
+            case ATTRIBUTE_UNDEFINED_PRESERVE:
+                for (i=0; i<This->header.colormap_length; i++)
+                    *color++=dwcolormap_data[i]|0xff000000;
+                break;
+            case ATTRIBUTE_ALPHA:
+                for (i=0; i<This->header.colormap_length; i++)
+                    *color++=dwcolormap_data[i];
+                break;
+            case ATTRIBUTE_PALPHA:
+                /* FIXME: Unpremultiply alpha */
+            default:
+                FIXME("Unhandled 16-bit attribute type %u\n", attribute_type);
+                hr = E_NOTIMPL;
+            }
+            break;
+        default:
+            FIXME("Unhandled truecolor depth %u\n", This->header.depth);
+            hr = E_NOTIMPL;
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, colormap_data);
+
+    if (SUCCEEDED(hr))
+        hr = IWICPalette_InitializeCustom(pIPalette, colors, 256);
+
+    return hr;
 }
 
 static HRESULT TgaDecoder_ReadRLE(TgaDecoder *This, BYTE *imagebits, int datasize)
