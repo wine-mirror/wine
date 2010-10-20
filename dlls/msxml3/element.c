@@ -50,7 +50,7 @@ static inline domelem *impl_from_IXMLDOMElement( IXMLDOMElement *iface )
     return (domelem *)((char*)iface - FIELD_OFFSET(domelem, lpVtbl));
 }
 
-static inline xmlNodePtr get_element( domelem *This )
+static inline xmlNodePtr get_element( const domelem *This )
 {
     return This->node.node;
 }
@@ -705,16 +705,61 @@ static HRESULT WINAPI domelem_getAttributeNode(
 
 static HRESULT WINAPI domelem_setAttributeNode(
     IXMLDOMElement *iface,
-    IXMLDOMAttribute* domAttribute,
-    IXMLDOMAttribute** attributeNode)
+    IXMLDOMAttribute* attribute,
+    IXMLDOMAttribute** old)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
+    xmlChar *name, *value;
+    BSTR nameW, prefix;
+    xmlAttrPtr attr;
+    VARIANT valueW;
+    HRESULT hr;
 
-    FIXME("(%p)->(%p %p)\n", This, domAttribute, attributeNode);
+    FIXME("(%p)->(%p %p): semi-stub\n", This, attribute, old);
 
-    if(!domAttribute) return E_INVALIDARG;
+    if (!attribute) return E_INVALIDARG;
 
-    return E_NOTIMPL;
+    if (old) *old = NULL;
+
+    hr = IXMLDOMAttribute_get_nodeName(attribute, &nameW);
+    if (hr != S_OK) return hr;
+
+    hr = IXMLDOMAttribute_get_nodeValue(attribute, &valueW);
+    if (hr != S_OK)
+    {
+        SysFreeString(nameW);
+        return hr;
+    }
+
+    TRACE("attribute: %s=%s\n", debugstr_w(nameW), debugstr_w(V_BSTR(&valueW)));
+
+    hr = IXMLDOMAttribute_get_prefix(attribute, &prefix);
+    if (hr == S_OK)
+    {
+        FIXME("namespaces not supported: %s\n", debugstr_w(prefix));
+        SysFreeString(prefix);
+    }
+
+    name = xmlChar_from_wchar(nameW);
+    value = xmlChar_from_wchar(V_BSTR(&valueW));
+
+    if (!name || !value)
+    {
+        SysFreeString(nameW);
+        VariantClear(&valueW);
+        heap_free(name);
+        heap_free(value);
+        return E_OUTOFMEMORY;
+    }
+
+    attr = xmlSetNsProp(get_element(This), NULL, name, value);
+
+    SysFreeString(nameW);
+    VariantClear(&valueW);
+    heap_free(name);
+    heap_free(value);
+
+    return attr ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI domelem_removeAttributeNode(

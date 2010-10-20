@@ -6853,20 +6853,29 @@ static void test_setAttributeNode(void)
 
     ret_attr = (void*)0xdeadbeef;
     hr = IXMLDOMElement_setAttributeNode(elem, attr, &ret_attr);
-    todo_wine ok( hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok( ret_attr == NULL, "got %p\n", ret_attr);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    ok( ret_attr == NULL, "got %p\n", ret_attr);
 
     attr2 = NULL;
     hr = IXMLDOMElement_getAttributeNode(elem, _bstr_("attr"), &attr2);
-    todo_wine ok( hr == S_OK, "got 0x%08x\n", hr);
-    if (attr2) IXMLDOMAttribute_Release(attr2);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    IXMLDOMAttribute_Release(attr2);
 
     /* try to add it another time */
     ret_attr = (void*)0xdeadbeef;
     hr = IXMLDOMElement_setAttributeNode(elem, attr, &ret_attr);
     todo_wine ok( hr == E_FAIL, "got 0x%08x\n", hr);
-    ok( ret_attr == (void*)0xdeadbeef, "got %p\n", ret_attr);
+    todo_wine ok( ret_attr == (void*)0xdeadbeef, "got %p\n", ret_attr);
 
+    IXMLDOMElement_Release(elem);
+
+    /* initialy used element is released, attribute still 'has' a container */
+    hr = IXMLDOMDocument_get_documentElement(doc, &elem);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    ret_attr = (void*)0xdeadbeef;
+    hr = IXMLDOMElement_setAttributeNode(elem, attr, &ret_attr);
+    todo_wine ok( hr == E_FAIL, "got 0x%08x\n", hr);
+    todo_wine ok( ret_attr == (void*)0xdeadbeef, "got %p\n", ret_attr);
     IXMLDOMElement_Release(elem);
 
     /* add attribute already attached to another document */
