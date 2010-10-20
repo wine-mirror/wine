@@ -1809,7 +1809,7 @@ BOOL16 WINAPI SetDeskWallPaper16( LPCSTR filename )
 /***********************************************************************
  *		keybd_event (USER.289)
  */
-void WINAPI keybd_event16( CONTEXT86 *context )
+void WINAPI keybd_event16( CONTEXT *context )
 {
     DWORD dwFlags = 0;
 
@@ -1824,7 +1824,7 @@ void WINAPI keybd_event16( CONTEXT86 *context )
 /***********************************************************************
  *		mouse_event (USER.299)
  */
-void WINAPI mouse_event16( CONTEXT86 *context )
+void WINAPI mouse_event16( CONTEXT *context )
 {
     mouse_event( LOWORD(context->Eax), LOWORD(context->Ebx), LOWORD(context->Ecx),
                  LOWORD(context->Edx), MAKELONG(context->Esi, context->Edi) );

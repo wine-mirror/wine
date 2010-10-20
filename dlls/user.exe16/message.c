@@ -243,7 +243,7 @@ static LRESULT call_window_proc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPA
 {
     WNDPROC16 func = arg;
     int index = winproc_to_index( func );
-    CONTEXT86 context;
+    CONTEXT context;
     size_t size = 0;
     struct
     {
