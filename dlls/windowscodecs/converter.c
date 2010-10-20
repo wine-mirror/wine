@@ -47,6 +47,7 @@ enum pixelformat {
     format_16bppGray,
     format_16bppBGR555,
     format_16bppBGR565,
+    format_16bppBGRA5551,
     format_24bppBGR,
     format_32bppBGR,
     format_32bppBGRA,
@@ -523,6 +524,54 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
             return res;
         }
         return S_OK;
+    case format_16bppBGRA5551:
+        if (prc)
+        {
+            HRESULT res;
+            UINT x, y;
+            BYTE *srcdata;
+            UINT srcstride, srcdatasize;
+            const BYTE *srcrow;
+            const WORD *srcpixel;
+            BYTE *dstrow;
+            DWORD *dstpixel;
+
+            srcstride = 2 * prc->Width;
+            srcdatasize = srcstride * prc->Height;
+
+            srcdata = HeapAlloc(GetProcessHeap(), 0, srcdatasize);
+            if (!srcdata) return E_OUTOFMEMORY;
+
+            res = IWICBitmapSource_CopyPixels(This->source, prc, srcstride, srcdatasize, srcdata);
+
+            if (SUCCEEDED(res))
+            {
+                srcrow = srcdata;
+                dstrow = pbBuffer;
+                for (y=0; y<prc->Height; y++) {
+                    srcpixel=(const WORD*)srcrow;
+                    dstpixel=(DWORD*)dstrow;
+                    for (x=0; x<prc->Width; x++) {
+                        WORD srcval;
+                        srcval=*srcpixel++;
+                        *dstpixel++=((srcval & 0x8000) ? 0xff000000 : 0) | /* alpha */
+                                    ((srcval << 9) & 0xf80000) | /* r */
+                                    ((srcval << 4) & 0x070000) | /* r - 3 bits */
+                                    ((srcval << 6) & 0x00f800) | /* g */
+                                    ((srcval << 1) & 0x000700) | /* g - 3 bits */
+                                    ((srcval << 3) & 0x0000f8) | /* b */
+                                    ((srcval >> 2) & 0x000007);  /* b - 3 bits */
+                    }
+                    srcrow += srcstride;
+                    dstrow += cbStride;
+                }
+            }
+
+            HeapFree(GetProcessHeap(), 0, srcdata);
+
+            return res;
+        }
+        return S_OK;
     case format_24bppBGR:
         if (prc)
         {
@@ -727,6 +776,7 @@ static const struct pixelformatinfo supported_formats[] = {
     {format_16bppGray, &GUID_WICPixelFormat16bppGray, NULL},
     {format_16bppBGR555, &GUID_WICPixelFormat16bppBGR555, NULL},
     {format_16bppBGR565, &GUID_WICPixelFormat16bppBGR565, NULL},
+    {format_16bppBGRA5551, &GUID_WICPixelFormat16bppBGRA5551, NULL},
     {format_24bppBGR, &GUID_WICPixelFormat24bppBGR, NULL},
     {format_32bppBGR, &GUID_WICPixelFormat32bppBGR, copypixels_to_32bppBGR},
     {format_32bppBGRA, &GUID_WICPixelFormat32bppBGRA, copypixels_to_32bppBGRA},
