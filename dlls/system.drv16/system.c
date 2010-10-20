@@ -63,7 +63,7 @@ static void CALLBACK SYSTEM_TimerTick( LPVOID arg, DWORD low, DWORD high )
         if ((SYS_Timers[i].ticks -= SYS_TIMER_RATE) <= 0)
         {
             FARPROC16 proc = SYS_Timers[i].callback16;
-            CONTEXT86 context;
+            CONTEXT context;
 
             SYS_Timers[i].ticks += SYS_Timers[i].rate;
 
