@@ -530,6 +530,143 @@ static void test_length(void)
     free_bstrs();
 }
 
+static void test_collection_content(void)
+{
+    IXMLDOMDocument2 *schema1, *schema2, *schema3, *schema4, *schema5;
+    IXMLDOMSchemaCollection *cache1, *cache2;
+    VARIANT_BOOL b;
+    BSTR bstr;
+    BSTR content[5] = {NULL, NULL, NULL, NULL, NULL};
+    LONG length;
+    int i, j;
+
+    schema1 = create_document_version(30, &IID_IXMLDOMDocument2);
+    schema2 = create_document_version(30, &IID_IXMLDOMDocument2);
+    schema3 = create_document_version(30, &IID_IXMLDOMDocument2);
+
+    cache1 = create_cache_version(30, &IID_IXMLDOMSchemaCollection);
+    cache2 = create_cache_version(40, &IID_IXMLDOMSchemaCollection);
+
+    if (!schema1 || !schema2 || !schema3 || !cache1)
+    {
+        if (schema1) IXMLDOMDocument2_Release(schema1);
+        if (schema2) IXMLDOMDocument2_Release(schema2);
+        if (schema3) IXMLDOMDocument2_Release(schema3);
+
+        if (cache1) IXMLDOMSchemaCollection_Release(cache1);
+
+        return;
+    }
+
+    ole_check(IXMLDOMDocument2_loadXML(schema1, _bstr_(xdr_schema1_xml), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML\n");
+
+    ole_check(IXMLDOMDocument2_loadXML(schema2, _bstr_(xdr_schema2_xml), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML\n");
+
+    ole_check(IXMLDOMDocument2_loadXML(schema3, _bstr_(xdr_schema3_xml), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML\n");
+
+    ole_check(IXMLDOMSchemaCollection_add(cache1, _bstr_(xdr_schema1_uri), _variantdoc_(schema1)));
+    ole_check(IXMLDOMSchemaCollection_add(cache1, _bstr_(xdr_schema2_uri), _variantdoc_(schema2)));
+    ole_check(IXMLDOMSchemaCollection_add(cache1, _bstr_(xdr_schema3_uri), _variantdoc_(schema3)));
+
+    length = -1;
+    ole_check(IXMLDOMSchemaCollection_get_length(cache1, &length));
+    ok(length == 3, "expected length 3, got %i\n", length);
+
+    IXMLDOMDocument2_Release(schema1);
+    IXMLDOMDocument2_Release(schema2);
+    IXMLDOMDocument2_Release(schema3);
+
+    if (cache2)
+    {
+        schema1 = create_document_version(40, &IID_IXMLDOMDocument2);
+        schema2 = create_document_version(40, &IID_IXMLDOMDocument2);
+        schema3 = create_document_version(40, &IID_IXMLDOMDocument2);
+        schema4 = create_document_version(40, &IID_IXMLDOMDocument2);
+        schema5 = create_document_version(40, &IID_IXMLDOMDocument2);
+        ole_check(IXMLDOMDocument2_loadXML(schema1, _bstr_(xdr_schema1_xml), &b));
+        ok(b == VARIANT_TRUE, "failed to load XML\n");
+        ole_check(IXMLDOMDocument2_loadXML(schema2, _bstr_(xdr_schema2_xml), &b));
+        ok(b == VARIANT_TRUE, "failed to load XML\n");
+        ole_check(IXMLDOMDocument2_loadXML(schema3, _bstr_(xsd_schema1_xml), &b));
+        ok(b == VARIANT_TRUE, "failed to load XML\n");
+        ole_check(IXMLDOMDocument2_loadXML(schema4, _bstr_(xsd_schema2_xml), &b));
+        ok(b == VARIANT_TRUE, "failed to load XML\n");
+        ole_check(IXMLDOMDocument2_loadXML(schema5, _bstr_(xsd_schema3_xml), &b));
+        ok(b == VARIANT_TRUE, "failed to load XML\n");
+
+        /* combining XDR and XSD schemas in the same cache is fine */
+        ole_check(IXMLDOMSchemaCollection_add(cache2, _bstr_(xdr_schema1_uri), _variantdoc_(schema1)));
+        ole_check(IXMLDOMSchemaCollection_add(cache2, _bstr_(xdr_schema2_uri), _variantdoc_(schema2)));
+        ole_check(IXMLDOMSchemaCollection_add(cache2, _bstr_(xsd_schema1_uri), _variantdoc_(schema3)));
+        ole_check(IXMLDOMSchemaCollection_add(cache2, _bstr_(xsd_schema2_uri), _variantdoc_(schema4)));
+        ole_check(IXMLDOMSchemaCollection_add(cache2, _bstr_(xsd_schema3_uri), _variantdoc_(schema5)));
+
+        length = -1;
+        ole_check(IXMLDOMSchemaCollection_get_length(cache2, &length));
+        ok(length == 5, "expected length 5, got %i\n", length);
+
+        IXMLDOMDocument2_Release(schema1);
+        IXMLDOMDocument2_Release(schema2);
+        IXMLDOMDocument2_Release(schema3);
+        IXMLDOMDocument2_Release(schema4);
+        IXMLDOMDocument2_Release(schema5);
+    }
+
+    bstr = NULL;
+    /* error if index is out of range */
+    ole_expect(IXMLDOMSchemaCollection_get_namespaceURI(cache1, 3, &bstr), E_FAIL);
+    if (bstr) SysFreeString(bstr);
+    /* error if return pointer is NULL */
+    ole_expect(IXMLDOMSchemaCollection_get_namespaceURI(cache1, 0, NULL), E_POINTER);
+    /* pointer is checked first */
+    ole_expect(IXMLDOMSchemaCollection_get_namespaceURI(cache1, 3, NULL), E_POINTER);
+
+    for (i = 0; i < 3; ++i)
+    {
+        bstr = NULL;
+        ole_check(IXMLDOMSchemaCollection_get_namespaceURI(cache1, i, &bstr));
+        ok(bstr != NULL && *bstr, "expected non-empty string\n");
+        content[i] = bstr;
+
+        for (j = 0; j < i; ++j)
+            ok(lstrcmpW(content[j], bstr), "got duplicate entry\n");
+    }
+
+    for (i = 0; i < 3; ++i)
+    {
+        SysFreeString(content[i]);
+        content[i] = NULL;
+    }
+
+    if (cache2)
+    {
+        for (i = 0; i < 5; ++i)
+        {
+            bstr = NULL;
+            ole_check(IXMLDOMSchemaCollection_get_namespaceURI(cache2, i, &bstr));
+            ok(bstr != NULL && *bstr, "expected non-empty string\n");
+
+            for (j = 0; j < i; ++j)
+                ok(lstrcmpW(content[j], bstr), "got duplicate entry\n");
+            content[i] = bstr;
+        }
+
+        for (i = 0; i < 5; ++i)
+        {
+            SysFreeString(content[i]);
+            content[i] = NULL;
+        }
+    }
+
+    IXMLDOMSchemaCollection_Release(cache1);
+    if (cache2) IXMLDOMSchemaCollection_Release(cache2);
+
+    free_bstrs();
+}
+
 START_TEST(schema)
 {
     HRESULT r;
@@ -540,6 +677,7 @@ START_TEST(schema)
     test_schema_refs();
     test_collection_refs();
     test_length();
+    test_collection_content();
 
     CoUninitialize();
 }

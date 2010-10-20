@@ -85,6 +85,12 @@ typedef struct _cache_entry
     LONG ref;
 } cache_entry;
 
+typedef struct _cache_index_data
+{
+    LONG index;
+    BSTR* out;
+} cache_index_data;
+
 static LONG cache_entry_add_ref(cache_entry* entry)
 {
     LONG ref = InterlockedIncrement(&entry->ref);
@@ -468,10 +474,29 @@ static HRESULT WINAPI schema_cache_get_length(IXMLDOMSchemaCollection *iface, LO
     return S_OK;
 }
 
+static void cache_index(void* data /* ignored */, void* index, xmlChar* name)
+{
+    cache_index_data* index_data = (cache_index_data*)index;
+
+    if (index_data->index-- == 0)
+        *index_data->out = bstr_from_xmlChar(name);
+}
+
 static HRESULT WINAPI schema_cache_get_namespaceURI(IXMLDOMSchemaCollection *iface, LONG index, BSTR *len)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection(iface);
+    cache_index_data data = {index,len};
+    TRACE("(%p)->(%i, %p)\n", This, index, len);
+
+    if (!len)
+        return E_POINTER;
+    *len = NULL;
+
+    if (index >= xmlHashSize(This->cache))
+        return E_FAIL;
+
+    xmlHashScan(This->cache, cache_index, &data);
+    return S_OK;
 }
 
 static void cache_copy(void* data, void* dest, xmlChar* name)
