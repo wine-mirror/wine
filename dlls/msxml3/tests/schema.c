@@ -423,6 +423,94 @@ static void test_collection_refs(void)
     free_bstrs();
 }
 
+static void test_length(void)
+{
+    IXMLDOMDocument2 *schema1, *schema2, *schema3;
+    IXMLDOMSchemaCollection *cache;
+    VARIANT_BOOL b;
+    VARIANT v;
+    LONG length;
+
+    schema1 = create_document(&IID_IXMLDOMDocument2);
+    schema2 = create_document(&IID_IXMLDOMDocument2);
+    schema3 = create_document(&IID_IXMLDOMDocument2);
+
+    cache = create_cache(&IID_IXMLDOMSchemaCollection);
+
+    if (!schema1 || !schema2 || !schema3 || !cache)
+    {
+        if (schema1) IXMLDOMDocument2_Release(schema1);
+        if (schema2) IXMLDOMDocument2_Release(schema2);
+        if (schema3) IXMLDOMDocument2_Release(schema3);
+
+        if (cache) IXMLDOMSchemaCollection_Release(cache);
+
+        return;
+    }
+
+    VariantInit(&v);
+
+    ole_check(IXMLDOMDocument2_loadXML(schema1, _bstr_(xdr_schema1_xml), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML\n");
+
+    ole_check(IXMLDOMDocument2_loadXML(schema2, _bstr_(xdr_schema2_xml), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML\n");
+
+    ole_check(IXMLDOMDocument2_loadXML(schema3, _bstr_(xdr_schema3_xml), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML\n");
+
+    ole_expect(IXMLDOMSchemaCollection_get_length(cache, NULL), E_POINTER);
+
+    length = -1;
+    ole_check(IXMLDOMSchemaCollection_get_length(cache, &length));
+    ok(length == 0, "expected length 0, got %i\n", length);
+
+    ole_check(IXMLDOMSchemaCollection_add(cache, _bstr_(xdr_schema1_uri), _variantdoc_(schema1)));
+
+    length = -1;
+    ole_check(IXMLDOMSchemaCollection_get_length(cache, &length));
+    ok(length == 1, "expected length 1, got %i\n", length);
+
+    ole_check(IXMLDOMSchemaCollection_add(cache, _bstr_(xdr_schema2_uri), _variantdoc_(schema2)));
+
+    length = -1;
+    ole_check(IXMLDOMSchemaCollection_get_length(cache, &length));
+    ok(length == 2, "expected length 2, got %i\n", length);
+
+    ole_check(IXMLDOMSchemaCollection_add(cache, _bstr_(xdr_schema3_uri), _variantdoc_(schema3)));
+
+    length = -1;
+    ole_check(IXMLDOMSchemaCollection_get_length(cache, &length));
+    ok(length == 3, "expected length 3, got %i\n", length);
+
+    /* adding with VT_NULL is the same as removing */
+    V_VT(&v) = VT_NULL;
+    ole_check(IXMLDOMSchemaCollection_add(cache, _bstr_(xdr_schema1_uri), v));
+
+    length = -1;
+    ole_check(IXMLDOMSchemaCollection_get_length(cache, &length));
+    ok(length == 2, "expected length 2, got %i\n", length);
+
+    ole_check(IXMLDOMSchemaCollection_add(cache, _bstr_(xdr_schema2_uri), v));
+
+    length = -1;
+    ole_check(IXMLDOMSchemaCollection_get_length(cache, &length));
+    ok(length == 1, "expected length 1, got %i\n", length);
+
+    ole_check(IXMLDOMSchemaCollection_add(cache, _bstr_(xdr_schema3_uri), v));
+
+    length = -1;
+    ole_check(IXMLDOMSchemaCollection_get_length(cache, &length));
+    ok(length == 0, "expected length 0, got %i\n", length);
+
+    IXMLDOMDocument2_Release(schema1);
+    IXMLDOMDocument2_Release(schema2);
+    IXMLDOMDocument2_Release(schema3);
+    IXMLDOMSchemaCollection_Release(cache);
+
+    free_bstrs();
+}
+
 START_TEST(schema)
 {
     HRESULT r;
@@ -432,6 +520,7 @@ START_TEST(schema)
 
     test_schema_refs();
     test_collection_refs();
+    test_length();
 
     CoUninitialize();
 }

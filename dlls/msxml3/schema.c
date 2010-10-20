@@ -347,7 +347,7 @@ static HRESULT WINAPI schema_cache_Invoke(IXMLDOMSchemaCollection *iface,
 
 static HRESULT WINAPI schema_cache_add(IXMLDOMSchemaCollection *iface, BSTR uri, VARIANT var)
 {
-    schema_cache *This = impl_from_IXMLDOMSchemaCollection( iface );
+    schema_cache *This = impl_from_IXMLDOMSchemaCollection(iface);
     xmlChar* name = xmlChar_from_wchar(uri);
     TRACE("(%p)->(%s, var(vt %x))\n", This, debugstr_w(uri), V_VT(&var));
 
@@ -454,8 +454,13 @@ static HRESULT WINAPI schema_cache_remove(IXMLDOMSchemaCollection *iface, BSTR u
 
 static HRESULT WINAPI schema_cache_get_length(IXMLDOMSchemaCollection *iface, LONG *length)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    schema_cache *This = impl_from_IXMLDOMSchemaCollection(iface);
+    TRACE("(%p)->(%p)\n", This, length);
+
+    if (!length)
+        return E_POINTER;
+    *length = xmlHashSize(This->cache);
+    return S_OK;
 }
 
 static HRESULT WINAPI schema_cache_get_namespaceURI(IXMLDOMSchemaCollection *iface, LONG index, BSTR *len)
@@ -497,8 +502,8 @@ static const struct IXMLDOMSchemaCollectionVtbl schema_vtbl =
 
 HRESULT SchemaCache_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 {
-    schema_cache *schema = heap_alloc( sizeof (*schema) );
-    if( !schema )
+    schema_cache *schema = heap_alloc(sizeof(*schema));
+    if (!schema)
         return E_OUTOFMEMORY;
 
     schema->lpVtbl = &schema_vtbl;
