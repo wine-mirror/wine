@@ -102,6 +102,7 @@ DWORD WINAPI CertRDNValueToStrA(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
         }
         break;
     case CERT_RDN_BMP_STRING:
+    case CERT_RDN_UTF8_STRING:
         len = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)pValue->pbData,
          pValue->cbData / sizeof(WCHAR), NULL, 0, NULL, NULL);
         if (pValue->cbData && isspaceW(((LPCWSTR)pValue->pbData)[0]))
@@ -210,6 +211,7 @@ DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
         }
         break;
     case CERT_RDN_BMP_STRING:
+    case CERT_RDN_UTF8_STRING:
         strLen = len = pValue->cbData / sizeof(WCHAR);
         if (pValue->cbData && isspace(pValue->pbData[0]))
             needsQuotes = TRUE;

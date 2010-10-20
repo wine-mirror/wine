@@ -53,6 +53,12 @@ static BYTE bin6[] = { 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x68, 0x6f, 0x73,
  0x74 };
 static BYTE bin7[] = { 0x61, 0x72, 0x69, 0x63, 0x40, 0x63, 0x6f, 0x64,
  0x65, 0x77, 0x65, 0x61, 0x76, 0x65, 0x72, 0x73, 0x2e, 0x63, 0x6f, 0x6d };
+static BYTE bin8[] = {
+0x65,0x00,0x50,0x00,0x4b,0x00,0x49,0x00,0x20,0x00,0x52,0x00,0x6f,0x00,0x6f,
+0x00,0x74,0x00,0x20,0x00,0x43,0x00,0x65,0x00,0x72,0x00,0x74,0x00,0x69,0x00,
+0x66,0x00,0x69,0x00,0x63,0x00,0x61,0x00,0x74,0x00,0x69,0x00,0x6f,0x00,0x6e,
+0x00,0x20,0x00,0x41,0x00,0x75,0x00,0x74,0x00,0x68,0x00,0x6f,0x00,0x72,0x00,
+0x69,0x00,0x74,0x00,0x79,0x00 };
 
 static const BYTE cert[] = 
 {0x30,0x82,0x2,0xbb,0x30,0x82,0x2,0x24,0x2,0x9,0x0,0xe3,0x5a,0x10,0xf1,0xfc,
@@ -216,6 +222,7 @@ static void test_CertRDNValueToStrA(void)
     DWORD i, ret;
     char buffer[2000];
     CERT_RDN_VALUE_BLOB blob = { 0, NULL };
+    static const char ePKI[] = "ePKI Root Certification Authority";
 
     if (!pCertRDNValueToStrA) return;
 
@@ -239,6 +246,14 @@ static void test_CertRDNValueToStrA(void)
         ok(!strcmp(buffer, attrs[i].str), "Expected %s, got %s\n", attrs[i].str,
          buffer);
     }
+    blob.pbData = bin8;
+    blob.cbData = sizeof(bin8);
+    ret = pCertRDNValueToStrA(CERT_RDN_UTF8_STRING, &blob, buffer,
+     sizeof(buffer));
+    ok(ret == strlen(ePKI) + 1 || broken(ret != strlen(ePKI) + 1),
+     "Expected length %d, got %d\n", lstrlenA(ePKI), ret);
+    if (ret == strlen(ePKI) + 1)
+        ok(!strcmp(buffer, ePKI), "Expected %s, got %s\n", ePKI, buffer);
 }
 
 static void test_CertRDNValueToStrW(void)
@@ -254,6 +269,9 @@ static void test_CertRDNValueToStrW(void)
     static const WCHAR localhostW[] = { 'l','o','c','a','l','h','o','s','t',0 };
     static const WCHAR aricW[] = { 'a','r','i','c','@','c','o','d','e','w','e',
      'a','v','e','r','s','.','c','o','m',0 };
+    static const WCHAR ePKIW[] = { 'e','P','K','I',' ','R','o','o','t',' ',
+     'C','e','r','t','i','f','i','c','a','t','i','o','n',' ','A','u','t','h',
+     'o','r','i','t','y',0 };
     CertRDNAttrEncodingW attrs[] = {
      { "2.5.4.6", CERT_RDN_PRINTABLE_STRING,
        { sizeof(bin1), bin1 }, usW },
@@ -269,6 +287,8 @@ static void test_CertRDNValueToStrW(void)
        { sizeof(bin6), bin6 }, localhostW },
      { "1.2.840.113549.1.9.1", CERT_RDN_IA5_STRING,
        { sizeof(bin7), bin7 }, aricW },
+     { "2.5.4.3", CERT_RDN_UTF8_STRING,
+       { sizeof(bin8), bin8 }, ePKIW },
     };
     DWORD i, ret;
     WCHAR buffer[2000];
@@ -301,6 +321,15 @@ static void test_CertRDNValueToStrW(void)
         ok(!lstrcmpW(buffer, attrs[i].str), "Expected %s, got %s\n",
          wine_dbgstr_w(attrs[i].str), wine_dbgstr_w(buffer));
     }
+    blob.pbData = bin8;
+    blob.cbData = sizeof(bin8);
+    ret = pCertRDNValueToStrW(CERT_RDN_UTF8_STRING, &blob, buffer,
+     sizeof(buffer));
+    ok(ret == lstrlenW(ePKIW) + 1 || broken(ret != lstrlenW(ePKIW) + 1),
+     "Expected length %d, got %d\n", lstrlenW(ePKIW), ret);
+    if (ret == lstrlenW(ePKIW) + 1)
+        ok(!lstrcmpW(buffer, ePKIW), "Expected %s, got %s\n",
+         wine_dbgstr_w(ePKIW), wine_dbgstr_w(buffer));
 }
 
 static void test_NameToStrConversionA(PCERT_NAME_BLOB pName, DWORD dwStrType,
