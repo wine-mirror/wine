@@ -63,6 +63,41 @@ typedef struct {
 #define IMAGE_RIGHTTOLEFT 0x10
 #define IMAGE_TOPTOBOTTOM 0x20
 
+typedef struct {
+    DWORD extension_area_offset;
+    DWORD developer_directory_offset;
+    char magic[18];
+} tga_footer;
+
+static const BYTE tga_footer_magic[18] = "TRUEVISION-XFILE.";
+
+typedef struct {
+    WORD size;
+    char author_name[41];
+    char author_comments[324];
+    WORD timestamp[6];
+    char job_name[41];
+    WORD job_timestamp[6];
+    char software_id[41];
+    WORD software_version;
+    char software_version_letter;
+    DWORD key_color;
+    WORD pixel_width;
+    WORD pixel_height;
+    WORD gamma_numerator;
+    WORD gamma_denominator;
+    DWORD color_correction_offset;
+    DWORD thumbnail_offset;
+    DWORD scanline_offset;
+    BYTE attributes_type;
+} tga_extension_area;
+
+#define ATTRIBUTE_NO_ALPHA 0
+#define ATTRIBUTE_UNDEFINED 1
+#define ATTRIBUTE_UNDEFINED_PRESERVE 2
+#define ATTRIBUTE_ALPHA 3
+#define ATTRIBUTE_PALPHA 4
+
 #include "poppack.h"
 
 typedef struct {
@@ -72,6 +107,7 @@ typedef struct {
     BOOL initialized;
     IStream *stream;
     tga_header header;
+    tga_extension_area extension_area;
     BYTE *imagebits;
     BYTE *origin;
     int stride;
@@ -79,6 +115,8 @@ typedef struct {
     ULONG colormap_length;
     ULONG colormap_offset;
     ULONG image_offset;
+    ULONG extension_area_offset;
+    ULONG developer_directory_offset;
     CRITICAL_SECTION lock;
 } TgaDecoder;
 
@@ -153,6 +191,8 @@ static HRESULT WINAPI TgaDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     HRESULT hr=S_OK;
     DWORD bytesread;
     LARGE_INTEGER seek;
+    tga_footer footer;
+    int attribute_bitcount;
 
     TRACE("(%p,%p,%u)\n", iface, pIStream, cacheOptions);
 
@@ -207,8 +247,15 @@ static HRESULT WINAPI TgaDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
         This->header.depth != 24 && This->header.depth != 32)
         hr = E_FAIL;
 
-    if ((This->header.image_descriptor & IMAGE_ATTRIBUTE_BITCOUNT_MASK) > 8 ||
-        (This->header.image_descriptor & 0xc0) != 0)
+    if ((This->header.image_descriptor & 0xc0) != 0)
+        hr = E_FAIL;
+
+    attribute_bitcount = This->header.image_descriptor & IMAGE_ATTRIBUTE_BITCOUNT_MASK;
+
+    if (attribute_bitcount &&
+        !((This->header.image_type & IMAGETYPE_TRUECOLOR) &&
+          ((This->header.depth == 32 && attribute_bitcount == 8) ||
+           (This->header.depth == 16 && attribute_bitcount == 1))))
         hr = E_FAIL;
 
     if (FAILED(hr))
@@ -226,7 +273,49 @@ static HRESULT WINAPI TgaDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
         This->colormap_length = 0;
     This->image_offset = This->colormap_offset + This->colormap_length;
 
-    /* FIXME: Read footer if there is one. */
+    /* Read footer if there is one */
+    seek.QuadPart = -sizeof(tga_footer);
+    hr = IStream_Seek(pIStream, seek, STREAM_SEEK_END, NULL);
+    if (FAILED(hr)) goto end;
+
+    hr = IStream_Read(pIStream, &footer, sizeof(tga_footer), &bytesread);
+    if (SUCCEEDED(hr) && bytesread != sizeof(tga_footer))
+    {
+        TRACE("got only %u footer bytes\n", bytesread);
+        hr = E_FAIL;
+    }
+    if (FAILED(hr)) goto end;
+
+    if (memcmp(footer.magic, tga_footer_magic, sizeof(tga_footer_magic)) == 0)
+    {
+        This->extension_area_offset = footer.extension_area_offset;
+        This->developer_directory_offset = footer.developer_directory_offset;
+    }
+    else
+    {
+        This->extension_area_offset = 0;
+        This->developer_directory_offset = 0;
+    }
+
+    if (This->extension_area_offset)
+    {
+        seek.QuadPart = This->extension_area_offset;
+        hr = IStream_Seek(pIStream, seek, STREAM_SEEK_SET, NULL);
+        if (FAILED(hr)) goto end;
+
+        hr = IStream_Read(pIStream, &This->extension_area, sizeof(tga_extension_area), &bytesread);
+        if (SUCCEEDED(hr) && bytesread != sizeof(tga_extension_area))
+        {
+            TRACE("got only %u extension area bytes\n", bytesread);
+            hr = E_FAIL;
+        }
+        if (SUCCEEDED(hr) && This->extension_area.size < 495)
+        {
+            TRACE("extension area is only %u bytes long\n", This->extension_area.size);
+            hr = E_FAIL;
+        }
+        if (FAILED(hr)) goto end;
+    }
 
     IStream_AddRef(pIStream);
     This->stream = pIStream;
@@ -379,16 +468,18 @@ static HRESULT WINAPI TgaDecoder_Frame_GetPixelFormat(IWICBitmapFrameDecode *ifa
 {
     TgaDecoder *This = decoder_from_frame(iface);
     int attribute_bitcount;
+    byte attribute_type;
 
     TRACE("(%p,%p)\n", iface, pPixelFormat);
 
     attribute_bitcount = This->header.image_descriptor & IMAGE_ATTRIBUTE_BITCOUNT_MASK;
 
-    if (attribute_bitcount)
-    {
-        FIXME("Need to read footer to find meaning of attribute bits\n");
-        return E_NOTIMPL;
-    }
+    if (attribute_bitcount && This->extension_area_offset)
+        attribute_type = This->extension_area.attributes_type;
+    else if (attribute_bitcount)
+        attribute_type = ATTRIBUTE_ALPHA;
+    else
+        attribute_type = ATTRIBUTE_NO_ALPHA;
 
     switch (This->header.image_type & ~IMAGETYPE_RLE)
     {
@@ -407,7 +498,21 @@ static HRESULT WINAPI TgaDecoder_Frame_GetPixelFormat(IWICBitmapFrameDecode *ifa
         switch (This->header.depth)
         {
         case 16:
-            memcpy(pPixelFormat, &GUID_WICPixelFormat16bppBGR555, sizeof(GUID));
+            switch (attribute_type)
+            {
+            case ATTRIBUTE_NO_ALPHA:
+            case ATTRIBUTE_UNDEFINED:
+            case ATTRIBUTE_UNDEFINED_PRESERVE:
+                memcpy(pPixelFormat, &GUID_WICPixelFormat16bppBGR555, sizeof(GUID));
+                break;
+            case ATTRIBUTE_ALPHA:
+            case ATTRIBUTE_PALPHA:
+                memcpy(pPixelFormat, &GUID_WICPixelFormat16bppBGRA5551, sizeof(GUID));
+                break;
+            default:
+                FIXME("Unhandled 16-bit attribute type %u\n", attribute_type);
+                return E_NOTIMPL;
+            }
             break;
         case 24:
             memcpy(pPixelFormat, &GUID_WICPixelFormat24bppBGR, sizeof(GUID));
