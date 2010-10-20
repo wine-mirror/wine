@@ -577,6 +577,63 @@ static HRESULT WINAPI TgaDecoder_Frame_CopyPalette(IWICBitmapFrameDecode *iface,
     return E_NOTIMPL;
 }
 
+static HRESULT TgaDecoder_ReadRLE(TgaDecoder *This, BYTE *imagebits, int datasize)
+{
+    int i=0, j, bytesperpixel;
+    ULONG bytesread;
+    HRESULT hr=S_OK;
+
+    bytesperpixel = This->header.depth / 8;
+
+    while (i<datasize)
+    {
+        BYTE rc;
+        int count, size;
+        BYTE pixeldata[4];
+
+        hr = IStream_Read(This->stream, &rc, 1, &bytesread);
+        if (bytesread != 1) hr = E_FAIL;
+        if (FAILED(hr)) break;
+
+        count = (rc&0x7f)+1;
+        size = count * bytesperpixel;
+
+        if (size + i > datasize)
+        {
+            WARN("RLE packet too large\n");
+            hr = E_FAIL;
+            break;
+        }
+
+        if (rc&0x80)
+        {
+            /* Run-length packet */
+            hr = IStream_Read(This->stream, pixeldata, bytesperpixel, &bytesread);
+            if (bytesread != bytesperpixel) hr = E_FAIL;
+            if (FAILED(hr)) break;
+
+            if (bytesperpixel == 1)
+                memset(&imagebits[i], pixeldata[0], count);
+            else
+            {
+                for (j=0; j<count; j++)
+                    memcpy(&imagebits[i+j*bytesperpixel], pixeldata, bytesperpixel);
+            }
+        }
+        else
+        {
+            /* Raw packet */
+            hr = IStream_Read(This->stream, &imagebits[i], size, &bytesread);
+            if (bytesread != size) hr = E_FAIL;
+            if (FAILED(hr)) break;
+        }
+
+        i += size;
+    }
+
+    return hr;
+}
+
 static HRESULT TgaDecoder_ReadImage(TgaDecoder *This)
 {
     HRESULT hr=S_OK;
@@ -614,8 +671,7 @@ static HRESULT TgaDecoder_ReadImage(TgaDecoder *This)
         {
             if (This->header.image_type & IMAGETYPE_RLE)
             {
-                FIXME("RLE decoding not implemented\n");
-                hr = E_NOTIMPL;
+                hr = TgaDecoder_ReadRLE(This, This->imagebits, datasize);
             }
             else
             {
