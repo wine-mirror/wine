@@ -15,6 +15,7 @@ RC_SRCS = \
 	Nl.rc \
 	Pl.rc \
 	Si.rc \
+	Sr.rc \
 	Sv.rc \
 	Uk.rc
 
