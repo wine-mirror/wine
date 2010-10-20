@@ -1,0 +1,16 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = winegstreamer
+IMPORTS   = strmbase strmiids uuid winmm msacm32 msvfw32 ole32 oleaut32 user32 gdi32 advapi32
+EXTRAINCL = @GSTREAMER_INCL@
+EXTRALIBS = @GSTREAMER_LIBS@ @LIBPTHREAD@
+
+C_SRCS = \
+	main.c
+
+RC_SRCS = \
+	rsrc.rc
+
+@MAKE_DLL_RULES@

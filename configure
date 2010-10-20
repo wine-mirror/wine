@@ -618,6 +618,8 @@ FONTCONFIGINCL
 CUPSINCL
 AUDIOIOLIBS
 ALSALIBS
+GSTREAMER_INCL
+GSTREAMER_LIBS
 ESDLIBS
 ESDINCL
 ESDCONFIG
@@ -779,6 +781,7 @@ with_gphoto
 with_glu
 with_gnutls
 with_gsm
+with_gstreamer
 with_hal
 with_icns
 with_jack
@@ -1468,6 +1471,7 @@ Optional Packages:
   --without-glu           do not use the GLU library
   --without-gnutls        do not use GnuTLS (schannel support)
   --without-gsm           do not use libgsm (GSM 06.10 codec support)
+  --without-gstreamer     do not use GStreamer (codecs support)
   --without-hal           do not use HAL (dynamic device support)
   --without-icns          do not use ICNS icon support
   --without-jack          do not use the Jack sound support
@@ -2583,6 +2587,12 @@ fi
 # Check whether --with-gsm was given.
 if test "${with_gsm+set}" = set; then :
   withval=$with_gsm; if test "x$withval" = "xno"; then ac_cv_header_gsm_h=no; ac_cv_header_gsm_gsm_h=no; fi
+fi
+
+
+# Check whether --with-gstreamer was given.
+if test "${with_gstreamer+set}" = set; then :
+  withval=$with_gstreamer;
 fi
 
 
@@ -10478,6 +10488,80 @@ fi
     CFLAGS="$save_CFLAGS"
 fi
 
+if test "x$with_gstreamer" != "xno"
+then
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    if test "$PKG_CONFIG" != "false"; then
+        ac_gst_incl=""
+        for i in `$PKG_CONFIG --cflags gstreamer-app-0.10 2>/dev/null`
+        do
+            case "$i" in
+                -I*) ac_gst_incl="$ac_gst_incl $i";;
+            esac
+        done
+        ac_gst_libs="`$PKG_CONFIG --libs gstreamer-app-0.10 2>/dev/null`"
+        CPPFLAGS="$CPPFLAGS $ac_gst_incl"
+        ac_fn_c_check_header_mongrel "$LINENO" "gst/app/gstappsink.h" "ac_cv_header_gst_app_gstappsink_h" "$ac_includes_default"
+if test "x$ac_cv_header_gst_app_gstappsink_h" = x""yes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gst_app_buffer_new in -lgstapp-0.10" >&5
+$as_echo_n "checking for gst_app_buffer_new in -lgstapp-0.10... " >&6; }
+if test "${ac_cv_lib_gstapp_0_10_gst_app_buffer_new+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lgstapp-0.10 $ac_gst_libs $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char gst_app_buffer_new ();
+int
+main ()
+{
+return gst_app_buffer_new ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_gstapp_0_10_gst_app_buffer_new=yes
+else
+  ac_cv_lib_gstapp_0_10_gst_app_buffer_new=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gstapp_0_10_gst_app_buffer_new" >&5
+$as_echo "$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" >&6; }
+if test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" = x""yes; then :
+  GSTREAMER_LIBS="$ac_gst_libs"
+
+                 GSTREAMER_INCL="$ac_gst_incl"
+
+fi
+
+fi
+
+
+    fi
+    CPPFLAGS="$ac_save_CPPFLAGS"
+fi
+if test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" != xyes; then :
+  case "x$with_gstreamer" in
+  x)   as_fn_append wine_notices "|gstreamer-0.10 ${notice_platform}development files not found, gstreamer support disabled" ;;
+  xno) ;;
+  *)   as_fn_error $? "gstreamer-0.10 ${notice_platform}development files not found, gstreamer support disabled
+This is an error since --with-gstreamer was requested." "$LINENO" 5  ;;
+esac
+fi
+test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" = xyes || enable_winegstreamer=${enable_winegstreamer:-no}
+
 ALSALIBS=""
 
 if test "$ac_cv_header_sys_asoundlib_h" = "yes" -o "$ac_cv_header_alsa_asoundlib_h" = "yes"
@@ -14941,6 +15025,7 @@ wine_fn_config_dll winecoreaudio.drv enable_winecoreaudio_drv
 wine_fn_config_lib winecrt0
 wine_fn_config_dll wined3d enable_wined3d wined3d
 wine_fn_config_dll wineesd.drv enable_wineesd_drv
+wine_fn_config_dll winegstreamer enable_winegstreamer
 wine_fn_config_dll winejack.drv enable_winejack_drv
 wine_fn_config_dll winejoystick.drv enable_winejoystick_drv
 wine_fn_config_dll winemapi enable_winemapi

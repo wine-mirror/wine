@@ -54,6 +54,7 @@ AC_ARG_WITH(glu,       AS_HELP_STRING([--without-glu],[do not use the GLU librar
 AC_ARG_WITH(gnutls,    AS_HELP_STRING([--without-gnutls],[do not use GnuTLS (schannel support)]))
 AC_ARG_WITH(gsm,       AS_HELP_STRING([--without-gsm],[do not use libgsm (GSM 06.10 codec support)]),
             [if test "x$withval" = "xno"; then ac_cv_header_gsm_h=no; ac_cv_header_gsm_gsm_h=no; fi])
+AC_ARG_WITH(gstreamer, AS_HELP_STRING([--without-gstreamer],[do not use GStreamer (codecs support)]))
 AC_ARG_WITH(hal,       AS_HELP_STRING([--without-hal],[do not use HAL (dynamic device support)]))
 AC_ARG_WITH(icns,      AS_HELP_STRING([--without-icns],[do not use ICNS icon support]),
             [if test "x$withval" = "xno"; then ac_cv_header_icns_h=no; fi])
@@ -1403,6 +1404,31 @@ then
     CFLAGS="$save_CFLAGS"
 fi
 
+dnl **** Check for gstreamer ****
+if test "x$with_gstreamer" != "xno"
+then
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    if test "$PKG_CONFIG" != "false"; then
+        ac_gst_incl=""
+        for i in `$PKG_CONFIG --cflags gstreamer-app-0.10 2>/dev/null`
+        do
+            case "$i" in
+                -I*) ac_gst_incl="$ac_gst_incl $i";;
+            esac
+        done
+        ac_gst_libs="`$PKG_CONFIG --libs gstreamer-app-0.10 2>/dev/null`"
+        CPPFLAGS="$CPPFLAGS $ac_gst_incl"
+        AC_CHECK_HEADER([gst/app/gstappsink.h],
+            [AC_CHECK_LIB(gstapp-0.10,gst_app_buffer_new,
+                [AC_SUBST(GSTREAMER_LIBS,"$ac_gst_libs")
+                 AC_SUBST(GSTREAMER_INCL,"$ac_gst_incl")],,[$ac_gst_libs])])
+    fi
+    CPPFLAGS="$ac_save_CPPFLAGS"
+fi
+WINE_NOTICE_WITH(gstreamer,[test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" != xyes],
+                 [gstreamer-0.10 ${notice_platform}development files not found, gstreamer support disabled])
+test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" = xyes || enable_winegstreamer=${enable_winegstreamer:-no}
+
 dnl **** Check for ALSA 1.x ****
 AC_SUBST(ALSALIBS,"")
 if test "$ac_cv_header_sys_asoundlib_h" = "yes" -o "$ac_cv_header_alsa_asoundlib_h" = "yes"
@@ -2719,6 +2745,7 @@ WINE_CONFIG_DLL(winecoreaudio.drv)
 WINE_CONFIG_LIB(winecrt0)
 WINE_CONFIG_DLL(wined3d,,[wined3d])
 WINE_CONFIG_DLL(wineesd.drv)
+WINE_CONFIG_DLL(winegstreamer)
 WINE_CONFIG_DLL(winejack.drv)
 WINE_CONFIG_DLL(winejoystick.drv)
 WINE_CONFIG_DLL(winemapi)
