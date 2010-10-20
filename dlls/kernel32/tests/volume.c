@@ -324,7 +324,6 @@ static void test_GetVolumeInformationA(void)
     ok(ret, "SetCurrentDirectory: error %d\n", GetLastError());
     ret = pGetVolumeInformationA(Root_Colon, vol_name_buf, vol_name_size, NULL,
             NULL, NULL, fs_name_buf, fs_name_len);
-    todo_wine
     ok(ret, "GetVolumeInformationA root failed, last error %u\n", GetLastError());
 
     /* check for error on no trailing \ when current dir is subdir (windows) of queried drive */
@@ -392,7 +391,7 @@ static void test_GetVolumeInformationA(void)
         /* \ is current on root drive, call succeeds */
         ret = pGetVolumeInformationA(Root_Colon, vol_name_buf, vol_name_size, NULL,
                 NULL, NULL, fs_name_buf, fs_name_len);
-        todo_wine ok(ret, "GetVolumeInformationA failed, last error %u\n", GetLastError());
+        ok(ret, "GetVolumeInformationA failed, last error %u\n", GetLastError());
 
         /* again, SetCurrentDirectory on another drive does not matter */
         ret = SetCurrentDirectory(Root_Slash);
@@ -403,7 +402,7 @@ static void test_GetVolumeInformationA(void)
         /* \ is current on root drive, call succeeds */
         ret = pGetVolumeInformationA(Root_Colon, vol_name_buf, vol_name_size, NULL,
                 NULL, NULL, fs_name_buf, fs_name_len);
-        todo_wine ok(ret, "GetVolumeInformationA failed, last error %u\n", GetLastError());
+        ok(ret, "GetVolumeInformationA failed, last error %u\n", GetLastError());
     }
 
     /* try null root directory to return "root of the current directory"  */
@@ -420,7 +419,7 @@ static void test_GetVolumeInformationA(void)
     SetLastError(0xdeadbeef);
     ret = pGetVolumeInformationA(Root_UNC, vol_name_buf, vol_name_size,
             &vol_serial_num, &max_comp_len, &fs_flags, fs_name_buf, fs_name_len);
-    todo_wine ok(ret || broken(!ret /* win9x */ && GetLastError()==ERROR_BAD_NETPATH),
+    ok(ret || broken(!ret /* win9x */ && GetLastError()==ERROR_BAD_NETPATH),
         "GetVolumeInformationA did%s fail, root=%s, last error=%u\n", ret ? " not":"", Root_UNC, GetLastError());
 
     /* try again with device name space  */
@@ -428,7 +427,7 @@ static void test_GetVolumeInformationA(void)
     SetLastError(0xdeadbeef);
     ret = pGetVolumeInformationA(Root_UNC, vol_name_buf, vol_name_size,
             &vol_serial_num, &max_comp_len, &fs_flags, fs_name_buf, fs_name_len);
-    todo_wine ok(ret || broken(!ret /* win9x */ && GetLastError()==ERROR_BAD_NETPATH),
+    ok(ret || broken(!ret /* win9x */ && GetLastError()==ERROR_BAD_NETPATH),
         "GetVolumeInformationA did%s fail, root=%s, last error=%u\n", ret ? " not":"", Root_UNC, GetLastError());
 
     /* try again with a directory off the root - should generate error  */
