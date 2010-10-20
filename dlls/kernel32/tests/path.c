@@ -364,9 +364,7 @@ static void test_InitPathA(CHAR *newdir, CHAR *curDrive, CHAR *otherDrive)
     /* Non-existent path */
     sprintf(invalid_dir, "%s\%s",tmppath,"non_existent_dir_1jwj3y32nb3");
     SetLastError(0xdeadbeef);
-    todo_wine
     ok(!GetTempFileNameA(invalid_dir,"tfn",unique,newdir),"GetTempFileNameA should have failed\n");
-    todo_wine
     ok(GetLastError()==ERROR_DIRECTORY || broken(GetLastError()==ERROR_PATH_NOT_FOUND)/*win98*/,
     "got %d, expected ERROR_DIRECTORY\n", GetLastError());
 
