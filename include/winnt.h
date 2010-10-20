@@ -746,15 +746,6 @@ typedef enum _HEAP_INFORMATION_CLASS {
 
 /* The Win32 register context */
 
-/* CONTEXT is the CPU-dependent context; it should be used        */
-/* wherever a platform-specific context is needed (e.g. exception */
-/* handling, Win32 register functions). */
-
-/* CONTEXT86 is the i386-specific context; it should be used     */
-/* wherever only a 386 context makes sense (e.g. DOS interrupts, */
-/* Win16 register functions), so that this code can be compiled  */
-/* on all platforms. */
-
 #define SIZE_OF_80387_REGISTERS      80
 
 typedef struct _FLOATING_SAVE_AREA
@@ -770,9 +761,12 @@ typedef struct _FLOATING_SAVE_AREA
     DWORD   Cr0NpxState;
 } FLOATING_SAVE_AREA, *PFLOATING_SAVE_AREA;
 
+/* i386 context definitions */
+#ifdef __i386__
+
 #define MAXIMUM_SUPPORTED_EXTENSION     512
 
-typedef struct _CONTEXT86
+typedef struct _CONTEXT
 {
     DWORD   ContextFlags;
 
@@ -810,35 +804,21 @@ typedef struct _CONTEXT86
     DWORD   SegSs;
 
     BYTE    ExtendedRegisters[MAXIMUM_SUPPORTED_EXTENSION];
-} CONTEXT86;
+} CONTEXT;
 
 #define CONTEXT_X86       0x00010000
 #define CONTEXT_i386      CONTEXT_X86
 #define CONTEXT_i486      CONTEXT_X86
 
-#define CONTEXT86_CONTROL   (CONTEXT_i386 | 0x0001) /* SS:SP, CS:IP, FLAGS, BP */
-#define CONTEXT86_INTEGER   (CONTEXT_i386 | 0x0002) /* AX, BX, CX, DX, SI, DI */
-#define CONTEXT86_SEGMENTS  (CONTEXT_i386 | 0x0004) /* DS, ES, FS, GS */
-#define CONTEXT86_FLOATING_POINT  (CONTEXT_i386 | 0x0008L) /* 387 state */
-#define CONTEXT86_DEBUG_REGISTERS (CONTEXT_i386 | 0x0010L) /* DB 0-3,6,7 */
-#define CONTEXT86_EXTENDED_REGISTERS (CONTEXT_i386 | 0x0020L)
-#define CONTEXT86_FULL (CONTEXT86_CONTROL | CONTEXT86_INTEGER | CONTEXT86_SEGMENTS)
-#define CONTEXT86_ALL (CONTEXT86_CONTROL | CONTEXT86_INTEGER | CONTEXT86_SEGMENTS | \
-        CONTEXT86_FLOATING_POINT | CONTEXT86_DEBUG_REGISTERS | CONTEXT86_EXTENDED_REGISTERS)
-
-/* i386 context definitions */
-#ifdef __i386__
-
-#define CONTEXT_CONTROL         CONTEXT86_CONTROL
-#define CONTEXT_INTEGER         CONTEXT86_INTEGER
-#define CONTEXT_SEGMENTS        CONTEXT86_SEGMENTS
-#define CONTEXT_FLOATING_POINT  CONTEXT86_FLOATING_POINT
-#define CONTEXT_DEBUG_REGISTERS CONTEXT86_DEBUG_REGISTERS
-#define CONTEXT_EXTENDED_REGISTERS CONTEXT86_EXTENDED_REGISTERS
-#define CONTEXT_FULL            CONTEXT86_FULL
-#define CONTEXT_ALL             CONTEXT86_ALL
-
-typedef CONTEXT86 CONTEXT;
+#define CONTEXT_CONTROL   (CONTEXT_i386 | 0x0001) /* SS:SP, CS:IP, FLAGS, BP */
+#define CONTEXT_INTEGER   (CONTEXT_i386 | 0x0002) /* AX, BX, CX, DX, SI, DI */
+#define CONTEXT_SEGMENTS  (CONTEXT_i386 | 0x0004) /* DS, ES, FS, GS */
+#define CONTEXT_FLOATING_POINT  (CONTEXT_i386 | 0x0008L) /* 387 state */
+#define CONTEXT_DEBUG_REGISTERS (CONTEXT_i386 | 0x0010L) /* DB 0-3,6,7 */
+#define CONTEXT_EXTENDED_REGISTERS (CONTEXT_i386 | 0x0020L)
+#define CONTEXT_FULL (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS)
+#define CONTEXT_ALL (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS | \
+        CONTEXT_FLOATING_POINT | CONTEXT_DEBUG_REGISTERS | CONTEXT_EXTENDED_REGISTERS)
 
 #define EXCEPTION_READ_FAULT    0
 #define EXCEPTION_WRITE_FAULT   1
