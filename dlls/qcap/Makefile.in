@@ -3,7 +3,6 @@ IMPORTS   = strmiids strmbase uuid ole32 gdi32 advapi32
 
 C_SRCS = \
 	capturegraph.c \
-	dllsetup.c \
 	enummedia.c \
 	qcap_main.c \
 	v4l.c \

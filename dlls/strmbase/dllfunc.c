@@ -45,6 +45,96 @@ WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 extern const int g_cTemplates;
 extern const FactoryTemplate g_Templates[];
 
+static HINSTANCE g_hInst = NULL;
+
+/*
+ * defines and constants
+ */
+#define MAX_KEY_LEN  260
+
+static WCHAR const clsid_keyname[6] =
+{'C','L','S','I','D',0 };
+static WCHAR const ips32_keyname[15] =
+{'I','n','P','r','o','c','S','e','r','v','e','r','3','2',0};
+static WCHAR const tmodel_keyname[15] =
+{'T','h','r','e','a','d','i','n','g','M','o','d','e','l',0};
+static WCHAR const tmodel_both[] =
+{'B','o','t','h',0};
+
+/*
+ * SetupRegisterClass()
+ */
+static HRESULT SetupRegisterClass(HKEY clsid, LPCWSTR szCLSID,
+                                  LPCWSTR szDescription,
+                                  LPCWSTR szFileName,
+                                  LPCWSTR szServerType,
+                                  LPCWSTR szThreadingModel)
+{
+    HKEY hkey, hsubkey = NULL;
+    LONG ret = RegCreateKeyW(clsid, szCLSID, &hkey);
+    if (ERROR_SUCCESS != ret)
+        return HRESULT_FROM_WIN32(ret);
+
+    /* set description string */
+    ret = RegSetValueW(hkey, NULL, REG_SZ, szDescription,
+                       sizeof(WCHAR) * (lstrlenW(szDescription) + 1));
+    if (ERROR_SUCCESS != ret)
+        goto err_out;
+
+    /* create CLSID\\{"CLSID"}\\"ServerType" key, using key to CLSID\\{"CLSID"}
+       passed back by last call to RegCreateKeyW(). */
+    ret = RegCreateKeyW(hkey,  szServerType, &hsubkey);
+    if (ERROR_SUCCESS != ret)
+        goto err_out;
+
+    /* set server path */
+    ret = RegSetValueW(hsubkey, NULL, REG_SZ, szFileName,
+                       sizeof(WCHAR) * (lstrlenW(szFileName) + 1));
+    if (ERROR_SUCCESS != ret)
+        goto err_out;
+
+    /* set threading model */
+    ret = RegSetValueExW(hsubkey, tmodel_keyname, 0L, REG_SZ,
+                         (const BYTE*)szThreadingModel,
+                         sizeof(WCHAR) * (lstrlenW(szThreadingModel) + 1));
+err_out:
+    if (hsubkey)
+        RegCloseKey(hsubkey);
+    RegCloseKey(hkey);
+    return HRESULT_FROM_WIN32(ret);
+}
+
+/*
+ * RegisterAllClasses()
+ */
+static HRESULT SetupRegisterAllClasses(const FactoryTemplate * pList, int num,
+                                       LPCWSTR szFileName, BOOL bRegister)
+{
+    HRESULT hr = NOERROR;
+    HKEY hkey;
+    OLECHAR szCLSID[CHARS_IN_GUID];
+    LONG i, ret = RegCreateKeyW(HKEY_CLASSES_ROOT, clsid_keyname, &hkey);
+    if (ERROR_SUCCESS != ret)
+        return HRESULT_FROM_WIN32(ret);
+
+    for (i = 0; i < num; i++, pList++)
+    {
+        /* (un)register CLSID and InprocServer32 */
+        hr = StringFromGUID2(pList->m_ClsID, szCLSID, CHARS_IN_GUID);
+        if (SUCCEEDED(hr))
+        {
+            if (bRegister )
+                hr = SetupRegisterClass(hkey, szCLSID,
+                                        pList->m_Name, szFileName,
+                                        ips32_keyname, tmodel_both);
+            else
+                hr = RegDeleteTreeW(hkey, szCLSID);
+        }
+    }
+    RegCloseKey(hkey);
+    return hr;
+}
+
 HRESULT WINAPI AMovieSetupRegisterFilter2( const AMOVIESETUP_FILTER const * pFilter, IFilterMapper2  *pIFM2, BOOL  bRegister)
 {
     if (!pFilter)
@@ -71,6 +161,16 @@ HRESULT WINAPI AMovieDllRegisterServer2(BOOL bRegister)
     HRESULT hr;
     int i;
     IFilterMapper2 *pIFM2 = NULL;
+    WCHAR szFileName[MAX_PATH];
+
+    if (!GetModuleFileNameW(g_hInst, szFileName, MAX_PATH))
+    {
+        ERR("Failed to get module file name for registration\n");
+        return E_FAIL;
+    }
+
+    if (bRegister)
+        hr = SetupRegisterAllClasses(g_Templates, g_cTemplates, szFileName, TRUE );
 
     hr = CoInitialize(NULL);
 
@@ -88,6 +188,10 @@ HRESULT WINAPI AMovieDllRegisterServer2(BOOL bRegister)
     /* and clear up */
     CoFreeUnusedLibraries();
     CoUninitialize();
+
+    /* if unregistering, unregister all OLE servers */
+    if (SUCCEEDED(hr) && !bRegister)
+        hr = SetupRegisterAllClasses(g_Templates, g_cTemplates, szFileName, FALSE);
 
     return hr;
 }
@@ -119,6 +223,7 @@ BOOL WINAPI STRMBASE_DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     switch (fdwReason)
     {
         case DLL_PROCESS_ATTACH:
+            g_hInst = hInstDLL;
             DisableThreadLibraryCalls(hInstDLL);
             SetupInitializeServers(g_Templates, g_cTemplates, TRUE);
             break;

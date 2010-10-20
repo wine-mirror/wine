@@ -37,7 +37,6 @@
 #include "strmif.h"
 
 #include "qcap_main.h"
-#include "dllsetup.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -163,8 +162,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 HRESULT WINAPI DllRegisterServer(void)
 {
     TRACE("()\n");
-
-    return SetupRegisterServers(g_Templates, g_cTemplates, TRUE);
+    return AMovieDllRegisterServer2(TRUE);
 }
 
 /***********************************************************************
@@ -173,8 +171,7 @@ HRESULT WINAPI DllRegisterServer(void)
 HRESULT WINAPI DllUnregisterServer(void)
 {
     TRACE("\n");
-
-    return SetupRegisterServers(g_Templates, g_cTemplates, FALSE);
+    return AMovieDllRegisterServer2(FALSE);
 }
 
 /***********************************************************************
