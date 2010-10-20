@@ -521,6 +521,7 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
     UNICODE_STRING nt_name;
     IO_STATUS_BLOCK io;
     OBJECT_ATTRIBUTES attr;
+    FILE_FS_DEVICE_INFORMATION info;
     WCHAR *p;
     enum fs_type type = FS_UNKNOWN;
     BOOL ret = FALSE;
@@ -592,22 +593,20 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
 
     /* we couldn't open the device, fallback to default strategy */
 
-    switch(GetDriveTypeW( root ))
+    status = NtOpenFile( &handle, 0, &attr, &io, 0, FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
+    if (status != STATUS_SUCCESS)
     {
-    case DRIVE_UNKNOWN:
-    case DRIVE_NO_ROOT_DIR:
-        SetLastError( ERROR_NOT_READY );
+        SetLastError( RtlNtStatusToDosError(status) );
         goto done;
-    case DRIVE_REMOVABLE:
-    case DRIVE_FIXED:
-    case DRIVE_REMOTE:
-    case DRIVE_RAMDISK:
-        type = FS_UNKNOWN;
-        break;
-    case DRIVE_CDROM:
-        type = FS_ISO9660;
-        break;
     }
+    status = NtQueryVolumeInformationFile( handle, &io, &info, sizeof(info), FileFsDeviceInformation );
+    NtClose( handle );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        goto done;
+    }
+    if (info.DeviceType == FILE_DEVICE_CD_ROM_FILE_SYSTEM) type = FS_ISO9660;
 
     if (label && label_len) get_filesystem_label( device, label, label_len );
     if (serial) *serial = get_filesystem_serial( device );
