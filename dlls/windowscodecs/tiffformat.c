@@ -183,6 +183,11 @@ static void tiff_stream_unmap(thandle_t client_data, tdata_t addr, toff_t size)
 
 static TIFF* tiff_open_stream(IStream *stream, const char *mode)
 {
+    LARGE_INTEGER zero;
+
+    zero.QuadPart = 0;
+    IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
+
     return pTIFFClientOpen("<IStream object>", mode, stream, tiff_stream_read,
         tiff_stream_write, tiff_stream_seek, tiff_stream_close,
         tiff_stream_size, tiff_stream_map, tiff_stream_unmap);
