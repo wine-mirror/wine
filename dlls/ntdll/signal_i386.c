@@ -1428,7 +1428,7 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
  * Check if the fault location is a privileged instruction.
  * Based on the instruction emulation code in dlls/kernel/instr.c.
  */
-static inline DWORD is_privileged_instr( CONTEXT86 *context )
+static inline DWORD is_privileged_instr( CONTEXT *context )
 {
     const BYTE *instr;
     unsigned int prefix_count = 0;

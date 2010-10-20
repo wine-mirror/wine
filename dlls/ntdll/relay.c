@@ -444,7 +444,7 @@ static LONGLONG WINAPI relay_call( struct relay_descr *descr, unsigned int idx, 
 #ifdef __i386__
 void WINAPI __regs_relay_call_regs( struct relay_descr *descr, unsigned int idx,
                                     unsigned int orig_eax, unsigned int ret_addr,
-                                    CONTEXT86 *context )
+                                    CONTEXT *context )
 {
     WORD ordinal = LOWORD(idx);
     BYTE nb_args = LOBYTE(HIWORD(idx));
@@ -922,7 +922,7 @@ static void SNOOP_PrintArg(DWORD x)
 
 #define CALLER1REF (*(DWORD*)context->Esp)
 
-void WINAPI __regs_SNOOP_Entry( CONTEXT86 *context )
+void WINAPI __regs_SNOOP_Entry( CONTEXT *context )
 {
 	DWORD		ordinal=0,entry = context->Eip - 5;
 	SNOOP_DLL	*dll = firstdll;
@@ -1015,7 +1015,7 @@ void WINAPI __regs_SNOOP_Entry( CONTEXT86 *context )
 }
 
 
-void WINAPI __regs_SNOOP_Return( CONTEXT86 *context )
+void WINAPI __regs_SNOOP_Return( CONTEXT *context )
 {
 	SNOOP_RETURNENTRY	*ret = (SNOOP_RETURNENTRY*)(context->Eip - 5);
         SNOOP_FUN *fun = &ret->dll->funs[ret->ordinal];
