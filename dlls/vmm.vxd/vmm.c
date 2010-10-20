@@ -120,7 +120,7 @@ static const char * const VMM_Service_Name[N_VMM_SERVICE] =
 
 
 /* Pop a DWORD from the 32-bit stack */
-static inline DWORD stack32_pop( CONTEXT86 *context )
+static inline DWORD stack32_pop( CONTEXT *context )
 {
     DWORD ret = *(DWORD *)context->Esp;
     context->Esp += sizeof(DWORD);
@@ -131,7 +131,7 @@ static inline DWORD stack32_pop( CONTEXT86 *context )
 /***********************************************************************
  *           VxDCall   (VMM.VXD.@)
  */
-DWORD WINAPI VMM_VxDCall( DWORD service, CONTEXT86 *context )
+DWORD WINAPI VMM_VxDCall( DWORD service, CONTEXT *context )
 {
     static int warned;
 
