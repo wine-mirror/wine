@@ -111,6 +111,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_SGN           */ "sgn",
     /* WINED3DSIH_SINCOS        */ "sincos",
     /* WINED3DSIH_SLT           */ "slt",
+    /* WINED3DSIH_SQRT          */ "sqrt",
     /* WINED3DSIH_SUB           */ "sub",
     /* WINED3DSIH_TEX           */ "texld",
     /* WINED3DSIH_TEXBEM        */ "texbem",
