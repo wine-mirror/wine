@@ -461,6 +461,10 @@ static void test_length(void)
 
     ole_expect(IXMLDOMSchemaCollection_get_length(cache, NULL), E_POINTER);
 
+    /* MSDN lies; removing a non-existant entry produces no error */
+    ole_check(IXMLDOMSchemaCollection_remove(cache, NULL));
+    ole_check(IXMLDOMSchemaCollection_remove(cache, _bstr_(xdr_schema1_uri)));
+
     length = -1;
     ole_check(IXMLDOMSchemaCollection_get_length(cache, &length));
     ok(length == 0, "expected length 0, got %i\n", length);
@@ -491,13 +495,13 @@ static void test_length(void)
     ole_check(IXMLDOMSchemaCollection_get_length(cache, &length));
     ok(length == 2, "expected length 2, got %i\n", length);
 
-    ole_check(IXMLDOMSchemaCollection_add(cache, _bstr_(xdr_schema2_uri), v));
+    ole_check(IXMLDOMSchemaCollection_remove(cache, _bstr_(xdr_schema2_uri)));
 
     length = -1;
     ole_check(IXMLDOMSchemaCollection_get_length(cache, &length));
     ok(length == 1, "expected length 1, got %i\n", length);
 
-    ole_check(IXMLDOMSchemaCollection_add(cache, _bstr_(xdr_schema3_uri), v));
+    ole_check(IXMLDOMSchemaCollection_remove(cache, _bstr_(xdr_schema3_uri)));
 
     length = -1;
     ole_check(IXMLDOMSchemaCollection_get_length(cache, &length));

@@ -448,8 +448,13 @@ static HRESULT WINAPI schema_cache_get(IXMLDOMSchemaCollection *iface, BSTR uri,
 
 static HRESULT WINAPI schema_cache_remove(IXMLDOMSchemaCollection *iface, BSTR uri)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    schema_cache *This = impl_from_IXMLDOMSchemaCollection(iface);
+    xmlChar* name = xmlChar_from_wchar(uri);
+    TRACE("(%p)->(%s)\n", This, wine_dbgstr_w(uri));
+
+    xmlHashRemoveEntry(This->cache, name, cache_free);
+    heap_free(name);
+    return S_OK;
 }
 
 static HRESULT WINAPI schema_cache_get_length(IXMLDOMSchemaCollection *iface, LONG *length)
