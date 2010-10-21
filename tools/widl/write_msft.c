@@ -1312,7 +1312,9 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
         case ATTR_BINDABLE:
             funcflags |= 0x4; /* FUNCFLAG_FBINDABLE */
             break;
-        /* FIXME: FUNCFLAG_FDEFAULTBIND */
+        case ATTR_DEFAULTBIND:
+            funcflags |= 0x20; /* FUNCFLAG_FDEFAULTBIND */
+            break;
         case ATTR_DEFAULTCOLLELEM:
             funcflags |= 0x100; /* FUNCFLAG_FDEFAULTCOLLELEM */
             break;
@@ -1373,8 +1375,12 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
         case ATTR_SOURCE:
             funcflags |= 0x2; /* FUNCFLAG_FSOURCE */
             break;
-        /* FIXME: FUNCFLAG_FUIDEFAULT */
-        /* FIXME: FUNCFLAG_FUSESGETLASTERROR */
+        case ATTR_UIDEFAULT:
+            funcflags |= 0x200; /* FUNCFLAG_FUIDEFAULT */
+            break;
+        case ATTR_USESGETLASTERROR:
+            funcflags |= 0x80; /* FUNCFLAG_FUSESGETLASTERROR */
+            break;
         case ATTR_VARARG:
             if (num_optional || num_defaults)
                 warning("add_func_desc: ignoring vararg in function with optional or defaultvalue params\n");
@@ -1612,7 +1618,9 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
         case ATTR_BINDABLE:
             varflags |= 0x04; /* VARFLAG_FBINDABLE */
             break;
-        /* FIXME: VARFLAG_FDEFAULTBIND */
+        case ATTR_DEFAULTBIND:
+            varflags |= 0x20; /* VARFLAG_FDEFAULTBIND */
+            break;
         case ATTR_DEFAULTCOLLELEM:
             varflags |= 0x100; /* VARFLAG_FDEFAULTCOLLELEM */
             break;
@@ -1644,7 +1652,9 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
         case ATTR_SOURCE:
             varflags |= 0x02; /* VARFLAG_FSOURCE */
             break;
-        /* FIXME: VARFLAG_FUIDEFAULT */
+        case ATTR_UIDEFAULT:
+            varflags |= 0x0200; /* VARFLAG_FUIDEFAULT */
+            break;
         default:
             break;
         }
@@ -1869,7 +1879,9 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_
             typeinfo->flags |= 0x10; /* TYPEFLAG_FHIDDEN */
             break;
 
-        /* FIXME: TYPEFLAG_FLICENSED */
+        case ATTR_LICENSED:
+            typeinfo->flags |= 0x04; /* TYPEFLAG_FLICENSED */
+            break;
 
         case ATTR_NONCREATABLE:
             typeinfo->flags &= ~0x2; /* TYPEFLAG_FCANCREATE */
@@ -1885,7 +1897,9 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_
 
         /* FIXME: TYPEFLAG_FPREDCLID */
 
-        /* FIXME: TYPEFLAG_FPROXY */
+        case ATTR_PROXY:
+            typeinfo->flags |= 0x4000; /* TYPEFLAG_FPROXY */
+            break;
 
         /* FIXME: TYPEFLAG_FREPLACEABLE */
 
