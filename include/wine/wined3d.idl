@@ -2606,21 +2606,21 @@ interface IWineD3DCubeTexture : IWineD3DBaseTexture
 interface IWineD3DVolumeTexture : IWineD3DBaseTexture
 {
     HRESULT GetLevelDesc(
-        [in] UINT level,
+        [in] UINT sub_resource_idx,
         [out] WINED3DVOLUME_DESC *desc
     );
     HRESULT GetVolumeLevel(
-        [in] UINT level,
+        [in] UINT sub_resource_idx,
         [out] IWineD3DVolume **volume
     );
     HRESULT Map(
-        [in] UINT level,
+        [in] UINT sub_resource_idx,
         [out] WINED3DLOCKED_BOX *locked_box,
         [in] const WINED3DBOX *box,
         [in] DWORD flags
     );
     HRESULT Unmap(
-        [in] UINT level
+        [in] UINT sub_resource_idx
     );
     HRESULT AddDirtyBox(
         [in] const WINED3DBOX *dirty_box
