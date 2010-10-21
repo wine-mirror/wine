@@ -2569,7 +2569,8 @@ typedef struct _CERT_CHAIN_PARA_NO_EXTRA_FIELDS {
 } CERT_CHAIN_PARA_NO_EXTRA_FIELDS, *PCERT_CHAIN_PARA_NO_EXTRA_FIELDS;
 
 static void CRYPT_VerifyChainRevocation(PCERT_CHAIN_CONTEXT chain,
- LPFILETIME pTime, const CERT_CHAIN_PARA *pChainPara, DWORD chainFlags)
+ LPFILETIME pTime, HCERTSTORE hAdditionalStore,
+ const CERT_CHAIN_PARA *pChainPara, DWORD chainFlags)
 {
     DWORD cContext;
 
@@ -2618,6 +2619,12 @@ static void CRYPT_VerifyChainRevocation(PCERT_CHAIN_CONTEXT chain,
             if (chainFlags & CERT_CHAIN_REVOCATION_ACCUMULATIVE_TIMEOUT)
                 revocationFlags |= CERT_VERIFY_REV_ACCUMULATIVE_TIMEOUT_FLAG;
             revocationPara.pftTimeToUse = pTime;
+            if (hAdditionalStore)
+            {
+                revocationPara.cCertStore = 1;
+                revocationPara.rgCertStore = &hAdditionalStore;
+                revocationPara.hCrlStore = hAdditionalStore;
+            }
             if (pChainPara->cbSize == sizeof(CERT_CHAIN_PARA))
             {
                 revocationPara.dwUrlRetrievalTimeout =
@@ -2855,8 +2862,8 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
         if (!(dwFlags & CERT_CHAIN_RETURN_LOWER_QUALITY_CONTEXTS))
             CRYPT_FreeLowerQualityChains(chain);
         pChain = (PCERT_CHAIN_CONTEXT)chain;
-        if (!pChain->TrustStatus.dwErrorStatus)
-            CRYPT_VerifyChainRevocation(pChain, pTime, pChainPara, dwFlags);
+        CRYPT_VerifyChainRevocation(pChain, pTime, hAdditionalStore,
+         pChainPara, dwFlags);
         CRYPT_CheckUsages(pChain, pChainPara);
         TRACE_(chain)("error status: %08x\n",
          pChain->TrustStatus.dwErrorStatus);
