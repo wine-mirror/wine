@@ -4502,11 +4502,11 @@ IDirect3DDeviceImpl_7_ComputeSphereVisibility(IDirect3DDevice7 *iface,
     if ( hr != DD_OK ) return DDERR_INVALIDPARAMS;
     hr = IDirect3DDeviceImpl_7_GetTransform(iface, D3DTRANSFORMSTATE_VIEW, &temp);
     if ( hr != DD_OK ) return DDERR_INVALIDPARAMS;
-    multiply_matrix_D3D_way(&m, &m, &temp);
+    multiply_matrix(&m, &temp, &m);
 
     hr = IDirect3DDeviceImpl_7_GetTransform(iface, D3DTRANSFORMSTATE_PROJECTION, &temp);
     if ( hr != DD_OK ) return DDERR_INVALIDPARAMS;
-    multiply_matrix_D3D_way(&m, &m, &temp);
+    multiply_matrix(&m, &temp, &m);
 
 /* Left plane */
     vec[0].u1.x = m._14 + m._11;
