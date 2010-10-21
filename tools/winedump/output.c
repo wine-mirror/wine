@@ -330,7 +330,7 @@ void  output_c_symbol (const parsed_symbol *sym)
     return;
   }
 
-  is_void = !strcmp (sym->return_text, "void");
+  is_void = !strcasecmp (sym->return_text, "void");
 
   output_prototype (cfile, sym);
   fputs ("\n{\n", cfile);
