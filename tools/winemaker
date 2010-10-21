@@ -1010,7 +1010,7 @@ sub source_scan_project_file($$$)
         push @local_depends,"$prj_name.so";
         push @local_dlls,$prj_name;
         my $canon=canonize($prj_name);
-        push @{@$target[$T_LDFLAGS]},("-shared","\$(${canon}_MODULE:%=%.spec)");
+        push @{@$target[$T_LDFLAGS]},("-shared","\$(${canon}_MODULE:.dll=.spec)");
     }
 
     @$target[$T_NAME]=$prj_name;
@@ -1504,7 +1504,7 @@ sub source_scan_directory($$$$)
       push @local_depends,"$target_name.so";
       push @local_dlls,$target_name;
       my $canon=canonize($target_name);
-      push @{@$target[$T_LDFLAGS]},("-shared","\$(${canon}_MODULE:%=%.spec)");
+      push @{@$target[$T_LDFLAGS]},("-shared","\$(${canon}_MODULE:.dll=.spec)");
     } else {
       @$target[$T_TYPE]=$opt_target_type;
       push @exe_list,$target;
