@@ -784,6 +784,60 @@ int CDECL MSVCRT__ui64toa_s(unsigned __int64 value, char *str,
     return 0;
 }
 
+/*********************************************************************
+ *  _ultoa_s (MSVCRT.@)
+ */
+int CDECL _ultoa_s(MSVCRT_ulong value, char *str, MSVCRT_size_t size, int radix)
+{
+    MSVCRT_ulong digit;
+    char buffer[33], *pos;
+    size_t len;
+
+    if (!str || !size || radix < 2 || radix > 36)
+    {
+        if (str && size)
+            str[0] = '\0';
+
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    pos = buffer + 32;
+    *pos = '\0';
+
+    do
+    {
+        digit = value % radix;
+        value /= radix;
+
+        if (digit < 10)
+            *--pos = '0' + digit;
+        else
+            *--pos = 'a' + digit - 10;
+    }
+    while (value != 0);
+
+    len = buffer + 33 - pos;
+    if (len > size)
+    {
+        size_t i;
+        char *p = str;
+
+        /* Copy the temporary buffer backwards up to the available number of
+         * characters. */
+
+        for (pos = buffer + 31, i = 0; i < size; i++)
+            *p++ = *pos--;
+
+        str[0] = '\0';
+        *MSVCRT__errno() = MSVCRT_ERANGE;
+        return MSVCRT_ERANGE;
+    }
+
+    memcpy(str, pos, len);
+    return 0;
+}
+
 #define I10_OUTPUT_MAX_PREC 21
 /* Internal structure used by $I10_OUTPUT */
 struct _I10_OUTPUT_DATA {

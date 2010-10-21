@@ -974,7 +974,7 @@
 @ cdecl _ui64tow(int64 ptr long) ntdll._ui64tow
 # stub _ui64tow_s
 @ cdecl _ultoa(long ptr long) ntdll._ultoa
-# stub _ultoa_s
+@ cdecl _ultoa_s(long ptr long long)
 @ cdecl _ultow(long ptr long) ntdll._ultow
 # stub _ultow_s
 @ cdecl _umask(long) MSVCRT__umask

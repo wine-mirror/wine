@@ -63,6 +63,7 @@ static int (__cdecl *pmbstowcs_s)(size_t*,wchar_t*,size_t,const char*,size_t);
 static errno_t (__cdecl *p_gcvt_s)(char*,size_t,double,int);
 static errno_t (__cdecl *p_itoa_s)(int,char*,size_t,int);
 static errno_t (__cdecl *p_strlwr_s)(char*,size_t);
+static errno_t (__cdecl *p_ultoa_s)(__msvcrt_ulong,char*,size_t,int);
 static int *p__mb_cur_max;
 static unsigned char *p_mbctype;
 
@@ -1596,6 +1597,84 @@ static void test__mbsnbcat_s(void)
        "Expected the output buffer string to be \"\\0inosaurdu\" without ending null terminator\n");
 }
 
+static void test__ultoa_s(void)
+{
+    errno_t ret;
+    char buffer[33];
+
+    if (!p_ultoa_s)
+    {
+        win_skip("Skipping _ultoa_s tests\n");
+        return;
+    }
+
+    errno = EBADF;
+    ret = p_ultoa_s(0, NULL, 0, 0);
+    ok(ret == EINVAL, "Expected _ultoa_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+
+    memset(buffer, 'X', sizeof(buffer));
+    errno = EBADF;
+    ret = p_ultoa_s(0, buffer, 0, 0);
+    ok(ret == EINVAL, "Expected _ultoa_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+    ok(buffer[0] == 'X', "Expected the output buffer to be untouched\n");
+
+    memset(buffer, 'X', sizeof(buffer));
+    errno = EBADF;
+    ret = p_ultoa_s(0, buffer, sizeof(buffer), 0);
+    ok(ret == EINVAL, "Expected _ultoa_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+    ok(buffer[0] == '\0', "Expected the output buffer to be null terminated\n");
+
+    memset(buffer, 'X', sizeof(buffer));
+    errno = EBADF;
+    ret = p_ultoa_s(0, buffer, sizeof(buffer), 64);
+    ok(ret == EINVAL, "Expected _ultoa_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+    ok(buffer[0] == '\0', "Expected the output buffer to be null terminated\n");
+
+    memset(buffer, 'X', sizeof(buffer));
+    errno = EBADF;
+    ret = p_ultoa_s(12345678, buffer, 4, 10);
+    ok(ret == ERANGE, "Expected _ultoa_s to return ERANGE, got %d\n", ret);
+    ok(errno == ERANGE, "Expected errno to be ERANGE, got %d\n", errno);
+    ok(!memcmp(buffer, "\000765", 4),
+       "Expected the output buffer to be null terminated with truncated output\n");
+
+    memset(buffer, 'X', sizeof(buffer));
+    errno = EBADF;
+    ret = p_ultoa_s(12345678, buffer, 8, 10);
+    ok(ret == ERANGE, "Expected _ultoa_s to return ERANGE, got %d\n", ret);
+    ok(errno == ERANGE, "Expected errno to be ERANGE, got %d\n", errno);
+    ok(!memcmp(buffer, "\0007654321", 8),
+       "Expected the output buffer to be null terminated with truncated output\n");
+
+    ret = p_ultoa_s(12345678, buffer, 9, 10);
+    ok(ret == 0, "Expected _ultoa_s to return 0, got %d\n", ret);
+    ok(!strcmp(buffer, "12345678"),
+       "Expected output buffer string to be \"12345678\", got \"%s\"\n",
+       buffer);
+
+    ret = p_ultoa_s(43690, buffer, sizeof(buffer), 2);
+    ok(ret == 0, "Expected _ultoa_s to return 0, got %d\n", ret);
+    ok(!strcmp(buffer, "1010101010101010"),
+       "Expected output buffer string to be \"1010101010101010\", got \"%s\"\n",
+       buffer);
+
+    ret = p_ultoa_s(1092009, buffer, sizeof(buffer), 36);
+    ok(ret == 0, "Expected _ultoa_s to return 0, got %d\n", ret);
+    ok(!strcmp(buffer, "nell"),
+       "Expected output buffer string to be \"nell\", got \"%s\"\n",
+       buffer);
+
+    ret = p_ultoa_s(5704, buffer, sizeof(buffer), 18);
+    ok(ret == 0, "Expected _ultoa_s to return 0, got %d\n", ret);
+    ok(!strcmp(buffer, "hag"),
+       "Expected output buffer string to be \"hag\", got \"%s\"\n",
+       buffer);
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -1625,6 +1704,7 @@ START_TEST(string)
     p_gcvt_s = (void *)GetProcAddress(hMsvcrt, "_gcvt_s");
     p_itoa_s = (void *)GetProcAddress(hMsvcrt, "_itoa_s");
     p_strlwr_s = (void *)GetProcAddress(hMsvcrt, "_strlwr_s");
+    p_ultoa_s = (void *)GetProcAddress(hMsvcrt, "_ultoa_s");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
@@ -1663,4 +1743,5 @@ START_TEST(string)
     test__strlwr_s();
     test_wcsncat_s();
     test__mbsnbcat_s();
+    test__ultoa_s();
 }

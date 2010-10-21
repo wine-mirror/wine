@@ -1039,7 +1039,7 @@
 @ cdecl _ui64tow(int64 ptr long) msvcrt._ui64tow
 @ stub _ui64tow_s
 @ cdecl _ultoa(long ptr long) msvcrt._ultoa
-@ stub _ultoa_s
+@ cdecl _ultoa_s(long ptr long long) msvcrt._ultoa_s
 @ cdecl _ultow(long ptr long) msvcrt._ultow
 @ stub _ultow_s
 @ cdecl _umask(long) msvcrt._umask
