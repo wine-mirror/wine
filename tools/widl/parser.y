@@ -195,26 +195,26 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %token tCALLAS tCALLBACK tCASE tCDECL tCHAR tCOCLASS tCODE tCOMMSTATUS
 %token tCONST tCONTEXTHANDLE tCONTEXTHANDLENOSERIALIZE
 %token tCONTEXTHANDLESERIALIZE tCONTROL tCPPQUOTE
-%token tDEFAULT
+%token tDECODE tDEFAULT tDEFAULTBIND
 %token tDEFAULTCOLLELEM
 %token tDEFAULTVALUE
 %token tDEFAULTVTABLE
-%token tDISPLAYBIND
+%token tDISABLECONSISTENCYCHECK tDISPLAYBIND
 %token tDISPINTERFACE
 %token tDLLNAME tDOUBLE tDUAL
-%token tENDPOINT
+%token tENABLEALLOCATE tENCODE tENDPOINT
 %token tENTRY tENUM tERRORSTATUST
 %token tEXPLICITHANDLE tEXTERN
 %token tFALSE
-%token tFASTCALL
-%token tFLOAT
+%token tFASTCALL tFAULTSTATUS
+%token tFLOAT tFORCEALLOCATE
 %token tHANDLE
 %token tHANDLET
 %token tHELPCONTEXT tHELPFILE
 %token tHELPSTRING tHELPSTRINGCONTEXT tHELPSTRINGDLL
 %token tHIDDEN
 %token tHYPER tID tIDEMPOTENT
-%token tIIDIS
+%token tIGNORE tIIDIS
 %token tIMMEDIATEBIND
 %token tIMPLICITHANDLE
 %token tIMPORT tIMPORTLIB
@@ -224,26 +224,28 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %token tINTERFACE
 %token tLCID
 %token tLENGTHIS tLIBRARY
-%token tLOCAL
+%token tLICENSED tLOCAL
 %token tLONG
+%token tMAYBE tMESSAGE
 %token tMETHODS
 %token tMODULE
-%token tNONBROWSABLE
+%token tNOCODE tNONBROWSABLE
 %token tNONCREATABLE
 %token tNONEXTENSIBLE
+%token tNOTIFY tNOTIFYFLAG
 %token tNULL
 %token tOBJECT tODL tOLEAUTOMATION
-%token tOPTIONAL
+%token tOPTIMIZE tOPTIONAL
 %token tOUT
-%token tPASCAL
+%token tPARTIALIGNORE tPASCAL
 %token tPOINTERDEFAULT
 %token tPROPERTIES
 %token tPROPGET tPROPPUT tPROPPUTREF
-%token tPTR
+%token tPROXY tPTR
 %token tPUBLIC
 %token tRANGE
 %token tREADONLY tREF
-%token tREGISTER
+%token tREGISTER tREPRESENTAS
 %token tREQUESTEDIT
 %token tRESTRICTED
 %token tRETVAL
@@ -261,10 +263,10 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %token tTRANSMITAS
 %token tTRUE
 %token tTYPEDEF
-%token tUNION
+%token tUIDEFAULT tUNION
 %token tUNIQUE
 %token tUNSIGNED
-%token tUUID
+%token tUSESGETLASTERROR tUSERMARSHAL tUUID
 %token tV1ENUM
 %token tVARARG
 %token tVERSION
@@ -476,20 +478,29 @@ attribute:					{ $$ = NULL; }
 	| tBROADCAST				{ $$ = make_attr(ATTR_BROADCAST); }
 	| tCALLAS '(' ident ')'			{ $$ = make_attrp(ATTR_CALLAS, $3); }
 	| tCASE '(' expr_list_int_const ')'	{ $$ = make_attrp(ATTR_CASE, $3); }
+	| tCODE					{ $$ = make_attr(ATTR_CODE); }
+	| tCOMMSTATUS				{ $$ = make_attr(ATTR_COMMSTATUS); }
 	| tCONTEXTHANDLE			{ $$ = make_attrv(ATTR_CONTEXTHANDLE, 0); }
 	| tCONTEXTHANDLENOSERIALIZE		{ $$ = make_attrv(ATTR_CONTEXTHANDLE, 0); /* RPC_CONTEXT_HANDLE_DONT_SERIALIZE */ }
 	| tCONTEXTHANDLESERIALIZE		{ $$ = make_attrv(ATTR_CONTEXTHANDLE, 0); /* RPC_CONTEXT_HANDLE_SERIALIZE */ }
 	| tCONTROL				{ $$ = make_attr(ATTR_CONTROL); }
+	| tDECODE				{ $$ = make_attr(ATTR_DECODE); }
 	| tDEFAULT				{ $$ = make_attr(ATTR_DEFAULT); }
+	| tDEFAULTBIND				{ $$ = make_attr(ATTR_DEFAULTBIND); }
 	| tDEFAULTCOLLELEM			{ $$ = make_attr(ATTR_DEFAULTCOLLELEM); }
 	| tDEFAULTVALUE '(' expr_const ')'	{ $$ = make_attrp(ATTR_DEFAULTVALUE, $3); }
 	| tDEFAULTVTABLE			{ $$ = make_attr(ATTR_DEFAULTVTABLE); }
+	| tDISABLECONSISTENCYCHECK		{ $$ = make_attr(ATTR_DISABLECONSISTENCYCHECK); }
 	| tDISPLAYBIND				{ $$ = make_attr(ATTR_DISPLAYBIND); }
 	| tDLLNAME '(' aSTRING ')'		{ $$ = make_attrp(ATTR_DLLNAME, $3); }
 	| tDUAL					{ $$ = make_attr(ATTR_DUAL); }
+	| tENABLEALLOCATE			{ $$ = make_attr(ATTR_ENABLEALLOCATE); }
+	| tENCODE				{ $$ = make_attr(ATTR_ENCODE); }
 	| tENDPOINT '(' str_list ')'		{ $$ = make_attrp(ATTR_ENDPOINT, $3); }
 	| tENTRY '(' expr_const ')'		{ $$ = make_attrp(ATTR_ENTRY, $3); }
 	| tEXPLICITHANDLE			{ $$ = make_attr(ATTR_EXPLICIT_HANDLE); }
+	| tFAULTSTATUS				{ $$ = make_attr(ATTR_FAULTSTATUS); }
+	| tFORCEALLOCATE			{ $$ = make_attr(ATTR_FORCEALLOCATE); }
 	| tHANDLE				{ $$ = make_attr(ATTR_HANDLE); }
 	| tHELPCONTEXT '(' expr_int_const ')'	{ $$ = make_attrp(ATTR_HELPCONTEXT, $3); }
 	| tHELPFILE '(' aSTRING ')'		{ $$ = make_attrp(ATTR_HELPFILE, $3); }
@@ -499,6 +510,7 @@ attribute:					{ $$ = NULL; }
 	| tHIDDEN				{ $$ = make_attr(ATTR_HIDDEN); }
 	| tID '(' expr_int_const ')'		{ $$ = make_attrp(ATTR_ID, $3); }
 	| tIDEMPOTENT				{ $$ = make_attr(ATTR_IDEMPOTENT); }
+	| tIGNORE				{ $$ = make_attr(ATTR_IGNORE); }
 	| tIIDIS '(' expr ')'			{ $$ = make_attrp(ATTR_IIDIS, $3); }
 	| tIMMEDIATEBIND			{ $$ = make_attr(ATTR_IMMEDIATEBIND); }
 	| tIMPLICITHANDLE '(' tHANDLET aIDENTIFIER ')'	{ $$ = make_attrp(ATTR_IMPLICIT_HANDLE, $4); }
@@ -507,25 +519,35 @@ attribute:					{ $$ = NULL; }
 	| tLENGTHIS '(' m_exprs ')'		{ $$ = make_attrp(ATTR_LENGTHIS, $3); }
 	| tLCID	'(' expr_int_const ')'		{ $$ = make_attrp(ATTR_LIBLCID, $3); }
 	| tLCID					{ $$ = make_attr(ATTR_PARAMLCID); }
+	| tLICENSED				{ $$ = make_attr(ATTR_LICENSED); }
 	| tLOCAL				{ $$ = make_attr(ATTR_LOCAL); }
+	| tMAYBE				{ $$ = make_attr(ATTR_MAYBE); }
+	| tMESSAGE				{ $$ = make_attr(ATTR_MESSAGE); }
+	| tNOCODE				{ $$ = make_attr(ATTR_NOCODE); }
 	| tNONBROWSABLE				{ $$ = make_attr(ATTR_NONBROWSABLE); }
 	| tNONCREATABLE				{ $$ = make_attr(ATTR_NONCREATABLE); }
 	| tNONEXTENSIBLE			{ $$ = make_attr(ATTR_NONEXTENSIBLE); }
+	| tNOTIFY				{ $$ = make_attr(ATTR_NOTIFY); }
+	| tNOTIFYFLAG				{ $$ = make_attr(ATTR_NOTIFYFLAG); }
 	| tOBJECT				{ $$ = make_attr(ATTR_OBJECT); }
 	| tODL					{ $$ = make_attr(ATTR_ODL); }
 	| tOLEAUTOMATION			{ $$ = make_attr(ATTR_OLEAUTOMATION); }
+	| tOPTIMIZE '(' aSTRING ')'		{ $$ = make_attrp(ATTR_OPTIMIZE, $3); }
 	| tOPTIONAL                             { $$ = make_attr(ATTR_OPTIONAL); }
 	| tOUT					{ $$ = make_attr(ATTR_OUT); }
+	| tPARTIALIGNORE			{ $$ = make_attr(ATTR_PARTIALIGNORE); }
 	| tPOINTERDEFAULT '(' pointer_type ')'	{ $$ = make_attrv(ATTR_POINTERDEFAULT, $3); }
 	| tPROPGET				{ $$ = make_attr(ATTR_PROPGET); }
 	| tPROPPUT				{ $$ = make_attr(ATTR_PROPPUT); }
 	| tPROPPUTREF				{ $$ = make_attr(ATTR_PROPPUTREF); }
+	| tPROXY				{ $$ = make_attr(ATTR_PROXY); }
 	| tPUBLIC				{ $$ = make_attr(ATTR_PUBLIC); }
 	| tRANGE '(' expr_int_const ',' expr_int_const ')'
 						{ expr_list_t *list = append_expr( NULL, $3 );
 						  list = append_expr( list, $5 );
 						  $$ = make_attrp(ATTR_RANGE, list); }
 	| tREADONLY				{ $$ = make_attr(ATTR_READONLY); }
+	| tREPRESENTAS '(' type ')'		{ $$ = make_attrp(ATTR_REPRESENTAS, $3); }
 	| tREQUESTEDIT				{ $$ = make_attr(ATTR_REQUESTEDIT); }
 	| tRESTRICTED				{ $$ = make_attr(ATTR_RESTRICTED); }
 	| tRETVAL				{ $$ = make_attr(ATTR_RETVAL); }
@@ -536,6 +558,9 @@ attribute:					{ $$ = NULL; }
 	| tSWITCHIS '(' expr ')'		{ $$ = make_attrp(ATTR_SWITCHIS, $3); }
 	| tSWITCHTYPE '(' type ')'		{ $$ = make_attrp(ATTR_SWITCHTYPE, $3); }
 	| tTRANSMITAS '(' type ')'		{ $$ = make_attrp(ATTR_TRANSMITAS, $3); }
+	| tUIDEFAULT				{ $$ = make_attr(ATTR_UIDEFAULT); }
+	| tUSESGETLASTERROR			{ $$ = make_attr(ATTR_USESGETLASTERROR); }
+	| tUSERMARSHAL '(' type ')'		{ $$ = make_attrp(ATTR_USERMARSHAL, $3); }
 	| tUUID '(' uuid_string ')'		{ $$ = make_attrp(ATTR_UUID, $3); }
 	| tV1ENUM				{ $$ = make_attr(ATTR_V1ENUM); }
 	| tVARARG				{ $$ = make_attr(ATTR_VARARG); }
@@ -1983,20 +2008,29 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_CALLAS */              { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "call_as" },
     /* ATTR_CALLCONV */            { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL },
     /* ATTR_CASE */                { 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, "case" },
+    /* ATTR_CODE */                { 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "code" },
+    /* ATTR_COMMSTATUS */          { 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, "comm_status" },
     /* ATTR_CONST */               { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "const" },
     /* ATTR_CONTEXTHANDLE */       { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, "context_handle" },
     /* ATTR_CONTROL */             { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, "control" },
+    /* ATTR_DECODE */              { 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, "decode" },
     /* ATTR_DEFAULT */             { 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, "default" },
+    /* ATTR_DEFAULTBIND */         { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "defaultbind" },
     /* ATTR_DEFAULTCOLLELEM */     { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "defaultcollelem" },
     /* ATTR_DEFAULTVALUE */        { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, "defaultvalue" },
     /* ATTR_DEFAULTVTABLE */       { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, "defaultvtable" },
+ /* ATTR_DISABLECONSISTENCYCHECK */{ 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, "disable_consistency_check" },
     /* ATTR_DISPINTERFACE */       { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL },
     /* ATTR_DISPLAYBIND */         { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "displaybind" },
     /* ATTR_DLLNAME */             { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, "dllname" },
     /* ATTR_DUAL */                { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "dual" },
+    /* ATTR_ENABLEALLOCATE */      { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "enable_allocate" },
+    /* ATTR_ENCODE */              { 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, "encode" },
     /* ATTR_ENDPOINT */            { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "endpoint" },
     /* ATTR_ENTRY */               { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "entry" },
     /* ATTR_EXPLICIT_HANDLE */     { 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "explicit_handle" },
+    /* ATTR_FAULTSTATUS */         { 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, "fault_status" },
+    /* ATTR_FORCEALLOCATE */       { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, "force_allocate" },
     /* ATTR_HANDLE */              { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, "handle" },
     /* ATTR_HELPCONTEXT */         { 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, "helpcontext" },
     /* ATTR_HELPFILE */            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, "helpfile" },
@@ -2006,6 +2040,7 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_HIDDEN */              { 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, "hidden" },
     /* ATTR_ID */                  { 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, "id" },
     /* ATTR_IDEMPOTENT */          { 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "idempotent" },
+    /* ATTR_IGNORE */              { 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, "ignore" },
     /* ATTR_IIDIS */               { 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, "iid_is" },
     /* ATTR_IMMEDIATEBIND */       { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "immediatebind" },
     /* ATTR_IMPLICIT_HANDLE */     { 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "implicit_handle" },
@@ -2014,24 +2049,34 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_INPUTSYNC */           { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "inputsync" },
     /* ATTR_LENGTHIS */            { 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, "length_is" },
     /* ATTR_LIBLCID */             { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, "lcid" },
+    /* ATTR_LICENSED */            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, "licensed" },
     /* ATTR_LOCAL */               { 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "local" },
+    /* ATTR_MAYBE */               { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "maybe" },
+    /* ATTR_MESSAGE */             { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "message" },
+    /* ATTR_NOCODE */              { 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "nocode" },
     /* ATTR_NONBROWSABLE */        { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "nonbrowsable" },
     /* ATTR_NONCREATABLE */        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, "noncreatable" },
     /* ATTR_NONEXTENSIBLE */       { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "nonextensible" },
+    /* ATTR_NOTIFY */              { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "notify" },
+    /* ATTR_NOTIFYFLAG */          { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "notify_flag" },
     /* ATTR_OBJECT */              { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "object" },
     /* ATTR_ODL */                 { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, "odl" },
     /* ATTR_OLEAUTOMATION */       { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "oleautomation" },
+    /* ATTR_OPTIMIZE */            { 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "optimize" },
     /* ATTR_OPTIONAL */            { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, "optional" },
     /* ATTR_OUT */                 { 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, "out" },
     /* ATTR_PARAMLCID */           { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, "lcid" },
+    /* ATTR_PARTIALIGNORE */       { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, "partial_ignore" },
     /* ATTR_POINTERDEFAULT */      { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "pointer_default" },
     /* ATTR_POINTERTYPE */         { 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, "ref, unique or ptr" },
     /* ATTR_PROPGET */             { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "propget" },
     /* ATTR_PROPPUT */             { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "propput" },
     /* ATTR_PROPPUTREF */          { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "propputref" },
+    /* ATTR_PROXY */               { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "proxy" },
     /* ATTR_PUBLIC */              { 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, "public" },
     /* ATTR_RANGE */               { 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, "range" },
     /* ATTR_READONLY */            { 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, "readonly" },
+    /* ATTR_REPRESENTAS */         { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, "represent_as" },
     /* ATTR_REQUESTEDIT */         { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "requestedit" },
     /* ATTR_RESTRICTED */          { 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, "restricted" },
     /* ATTR_RETVAL */              { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, "retval" },
@@ -2042,6 +2087,9 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_SWITCHIS */            { 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, "switch_is" },
     /* ATTR_SWITCHTYPE */          { 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, "switch_type" },
     /* ATTR_TRANSMITAS */          { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, "transmit_as" },
+    /* ATTR_UIDEFAULT */           { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "uidefault" },
+    /* ATTR_USESGETLASTERROR */    { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "usesgetlasterror" },
+    /* ATTR_USERMARSHAL */         { 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, "user_marshal" },
     /* ATTR_UUID */                { 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, "uuid" },
     /* ATTR_V1ENUM */              { 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, "v1_enum" },
     /* ATTR_VARARG */              { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "vararg" },
