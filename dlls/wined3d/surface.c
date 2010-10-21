@@ -3344,6 +3344,89 @@ static void surface_blt_fbo(IWineD3DDeviceImpl *device, const WINED3DTEXTUREFILT
     context_release(context);
 }
 
+static void surface_blt_to_drawable(IWineD3DDeviceImpl *device,
+        WINED3DTEXTUREFILTERTYPE filter, BOOL color_key,
+        IWineD3DSurfaceImpl *src_surface, const RECT *src_rect_in,
+        IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect_in)
+{
+    IWineD3DSwapChainImpl *swapchain = NULL;
+    struct wined3d_context *context;
+    RECT src_rect, dst_rect;
+
+    src_rect = *src_rect_in;
+    dst_rect = *dst_rect_in;
+
+    if (dst_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN)
+        swapchain = dst_surface->container.u.swapchain;
+
+    /* Make sure the surface is up-to-date. This should probably use
+     * surface_load_location() and worry about the destination surface too,
+     * unless we're overwriting it completely. */
+    surface_internal_preload(src_surface, SRGB_RGB);
+
+    /* Activate the destination context, set it up for blitting */
+    context = context_acquire(device, dst_surface);
+    context_apply_blit_state(context, device);
+
+    /* context_apply_blit_state() sets up a flipped (in GL terms) projection
+     * matrix. As a result, we need to skip the flip for onscreen surfaces,
+     * and have to flip for offscreen surfaces instead, to undo the flip done
+     * by the projection matrix. */
+    if (swapchain && dst_surface == swapchain->front_buffer)
+    {
+        surface_translate_frontbuffer_coords(dst_surface, context->win_handle, &dst_rect);
+    }
+    else if (surface_is_offscreen(dst_surface))
+    {
+        dst_rect.top = dst_surface->currentDesc.Height - dst_rect.top;
+        dst_rect.bottom = dst_surface->currentDesc.Height - dst_rect.bottom;
+    }
+
+    device->blitter->set_shader((IWineD3DDevice *)device, src_surface);
+
+    ENTER_GL();
+
+    if (color_key)
+    {
+        glEnable(GL_ALPHA_TEST);
+        checkGLcall("glEnable(GL_ALPHA_TEST)");
+
+        /* When the primary render target uses P8, the alpha component
+         * contains the palette index. Which means that the colorkey is one of
+         * the palette entries. In other cases pixels that should be masked
+         * away have alpha set to 0. */
+        if (primary_render_target_is_p8(device))
+            glAlphaFunc(GL_NOTEQUAL, (float)src_surface->SrcBltCKey.dwColorSpaceLowValue / 256.0f);
+        else
+            glAlphaFunc(GL_NOTEQUAL, 0.0f);
+        checkGLcall("glAlphaFunc");
+    }
+    else
+    {
+        glDisable(GL_ALPHA_TEST);
+        checkGLcall("glDisable(GL_ALPHA_TEST)");
+    }
+
+    draw_textured_quad(src_surface, &src_rect, &dst_rect, filter);
+
+    if (color_key)
+    {
+        glDisable(GL_ALPHA_TEST);
+        checkGLcall("glDisable(GL_ALPHA_TEST)");
+    }
+
+    LEAVE_GL();
+
+    /* Leave the opengl state valid for blitting */
+    device->blitter->unset_shader((IWineD3DDevice *)device);
+
+    if (wined3d_settings.strict_draw_ordering || (swapchain
+            && (dst_surface == swapchain->front_buffer || swapchain->num_contexts > 1)))
+        wglFlush(); /* Flush to ensure ordering across contexts. */
+
+    context_release(context);
+}
+
 /* Do not call while under the GL lock. */
 HRESULT surface_color_fill(IWineD3DSurfaceImpl *s, const RECT *rect, const WINED3DCOLORVALUE *color)
 {
@@ -3611,7 +3694,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
         /* Blit from offscreen surface to render target */
         DWORD oldCKeyFlags = src_surface->CKeyFlags;
         WINEDDCOLORKEY oldBltCKey = src_surface->SrcBltCKey;
-        struct wined3d_context *context;
 
         TRACE("Blt from surface %p to rendertarget %p\n", src_surface, dst_surface);
 
@@ -3668,72 +3750,13 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
             src_surface->CKeyFlags &= ~WINEDDSD_CKSRCBLT;
         }
 
-        /* Now load the surface */
-        surface_internal_preload(src_surface, SRGB_RGB);
-
-        /* Activate the destination context, set it up for blitting */
-        context = context_acquire(device, dst_surface);
-        context_apply_blit_state(context, device);
-
-        if (dstSwapchain && dst_surface == dstSwapchain->front_buffer)
-            surface_translate_frontbuffer_coords(dst_surface, context->win_handle, &dst_rect);
-        else if (surface_is_offscreen(dst_surface))
-        {
-            dst_rect.top = dst_surface->currentDesc.Height - dst_rect.top;
-            dst_rect.bottom = dst_surface->currentDesc.Height - dst_rect.bottom;
-        }
-
-        device->blitter->set_shader((IWineD3DDevice *)device, src_surface);
-
-        ENTER_GL();
-
-        /* This is for color keying */
-        if(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE)) {
-            glEnable(GL_ALPHA_TEST);
-            checkGLcall("glEnable(GL_ALPHA_TEST)");
-
-            /* When the primary render target uses P8, the alpha component contains the palette index.
-             * Which means that the colorkey is one of the palette entries. In other cases pixels that
-             * should be masked away have alpha set to 0. */
-            if (primary_render_target_is_p8(device))
-                glAlphaFunc(GL_NOTEQUAL, (float)src_surface->SrcBltCKey.dwColorSpaceLowValue / 256.0f);
-            else
-                glAlphaFunc(GL_NOTEQUAL, 0.0f);
-            checkGLcall("glAlphaFunc");
-        } else {
-            glDisable(GL_ALPHA_TEST);
-            checkGLcall("glDisable(GL_ALPHA_TEST)");
-        }
-
-        /* Draw a textured quad
-         */
-        draw_textured_quad(src_surface, &src_rect, &dst_rect, Filter);
-
-        if(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE)) {
-            glDisable(GL_ALPHA_TEST);
-            checkGLcall("glDisable(GL_ALPHA_TEST)");
-        }
+        surface_blt_to_drawable(device, Filter, Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE),
+                src_surface, &src_rect, dst_surface, &dst_rect);
 
         /* Restore the color key parameters */
         src_surface->CKeyFlags = oldCKeyFlags;
         src_surface->SrcBltCKey = oldBltCKey;
 
-        LEAVE_GL();
-
-        /* Leave the opengl state valid for blitting */
-        device->blitter->unset_shader((IWineD3DDevice *)device);
-
-        if (wined3d_settings.strict_draw_ordering || (dstSwapchain
-                && (dst_surface == dstSwapchain->front_buffer
-                || dstSwapchain->num_contexts > 1)))
-            wglFlush(); /* Flush to ensure ordering across contexts. */
-
-        context_release(context);
-
-        /* TODO: If the surface is locked often, perform the Blt in software on the memory instead */
-        /* The surface is now in the drawable. On onscreen surfaces or without fbos the texture
-         * is outdated now
-         */
         surface_modify_location(dst_surface, SFLAG_INDRAWABLE, TRUE);
 
         return WINED3D_OK;
@@ -4325,44 +4348,6 @@ void surface_modify_location(IWineD3DSurfaceImpl *surface, DWORD flag, BOOL pers
     }
 }
 
-static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT *rect_in)
-{
-    IWineD3DDeviceImpl *device = This->resource.device;
-    IWineD3DSwapChainImpl *swapchain;
-    struct wined3d_context *context;
-    RECT src_rect, dst_rect;
-
-    surface_get_rect(This, rect_in, &src_rect);
-
-    context = context_acquire(device, This);
-    context_apply_blit_state(context, device);
-
-    dst_rect = src_rect;
-    if (context->render_offscreen)
-    {
-        dst_rect.top = This->currentDesc.Height - dst_rect.top;
-        dst_rect.bottom = This->currentDesc.Height - dst_rect.bottom;
-    }
-
-    swapchain = This->container.type == WINED3D_CONTAINER_SWAPCHAIN ? This->container.u.swapchain : NULL;
-    if (swapchain && This == swapchain->front_buffer)
-        surface_translate_frontbuffer_coords(This, context->win_handle, &dst_rect);
-
-    device->blitter->set_shader((IWineD3DDevice *) device, This);
-
-    ENTER_GL();
-    draw_textured_quad(This, &src_rect, &dst_rect, WINED3DTEXF_POINT);
-    LEAVE_GL();
-
-    device->blitter->unset_shader((IWineD3DDevice *) device);
-
-    if (wined3d_settings.strict_draw_ordering || (swapchain
-            && (This == swapchain->front_buffer || swapchain->num_contexts > 1)))
-        wglFlush(); /* Flush to ensure ordering across contexts. */
-
-    context_release(context);
-}
-
 HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RECT *rect)
 {
     IWineD3DDeviceImpl *device = surface->resource.device;
@@ -4448,7 +4433,10 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
     {
         if (surface->Flags & SFLAG_INTEXTURE)
         {
-            surface_blt_to_drawable(surface, rect);
+            RECT r;
+
+            surface_get_rect(surface, rect, &r);
+            surface_blt_to_drawable(device, WINED3DTEXF_POINT, FALSE, surface, &r, surface, &r);
         }
         else
         {
