@@ -693,7 +693,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     struct schan_transport transport;
     int err;
 
-    TRACE("%p %p %s %d %d %d %p %d %p %p %p %p\n", phCredential, phContext,
+    TRACE("%p %p %s 0x%08x %d %d %p %d %p %p %p %p\n", phCredential, phContext,
      debugstr_w(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
 

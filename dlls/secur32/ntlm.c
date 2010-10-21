@@ -443,7 +443,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
     SEC_CHAR *domain = NULL;
     SEC_CHAR *password = NULL;
 
-    TRACE("%p %p %s %d %d %d %p %d %p %p %p %p\n", phCredential, phContext,
+    TRACE("%p %p %s 0x%08x %d %d %p %d %p %p %p %p\n", phCredential, phContext,
      debugstr_w(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
 

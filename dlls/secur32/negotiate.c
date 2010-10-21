@@ -136,7 +136,7 @@ static SECURITY_STATUS SEC_ENTRY nego_InitializeSecurityContextA(
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %p %s %d %d %d %p %d %p %p %p %p\n", phCredential, phContext,
+    TRACE("%p %p %s 0x%08x %d %d %p %d %p %p %p %p\n", phCredential, phContext,
      debugstr_a(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
     if(phCredential){

@@ -251,7 +251,7 @@ SECURITY_STATUS WINAPI InitializeSecurityContextA(
     PCredHandle cred = NULL;
     PCredHandle ctxt = NULL;
 
-    TRACE("%p %p %s %d %d %d %p %d %p %p %p %p\n", phCredential, phContext,
+    TRACE("%p %p %s 0x%08x %d %d %p %d %p %p %p %p\n", phCredential, phContext,
      debugstr_a(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
 
