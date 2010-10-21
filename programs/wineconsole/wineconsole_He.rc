@@ -1,0 +1,142 @@
+/*
+ * Copyright 2001 Eric Pouech
+ * Copyright 2010 Yaron Shahrabani <sh.yaron@gmail.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "wineconsole_res.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
+
+STRINGTABLE
+BEGIN
+IDS_EDIT,		"ע&ריכה"
+IDS_DEFAULT,		"הגדרת &בררות מחדל"
+IDS_PROPERTIES,		"מ&אפינים"
+IDS_MARK,		"&סימון"
+IDS_COPY,		"ה&עתקה"
+IDS_PASTE,		"ה&דבקה"
+IDS_SELECTALL,		"בחירת ה&כול"
+IDS_SCROLL,		"&גלילה"
+IDS_SEARCH,		"&חיפוש"
+IDS_FNT_DISPLAY,	"כל תו הוא ברוחב %ld פיקסלים על גובה של %ld פיקסלים"
+IDS_FNT_PREVIEW,	"זוהי בדיקה"
+IDS_DLG_TIT_DEFAULT,    "תצורה - הגדרות בררת המחדל"
+IDS_DLG_TIT_CURRENT,    "תצורה - ההגדרות הנוכחיות"
+IDS_DLG_TIT_ERROR,	"שגיאת תצוגה"
+IDS_DLG_ERR_SBWINSIZE,	"גודל מאגר המסך חייב להיות גדול או שווה לזה של החלון"
+
+IDS_CMD_INVALID_EVENT_ID   "wineconsole: Couldn't parse event id\n"
+IDS_CMD_INVALID_BACKEND    "wineconsole: Invalid backend\n"
+IDS_CMD_INVALID_OPTION     "wineconsole: Unrecognized command line option\n"
+IDS_CMD_ABOUT              "Starts a program in a Wine console\n"
+IDS_CMD_LAUNCH_FAILED      "wineconsole: Starting program %s failed.\n"\
+                           "The command is invalid.\n"
+
+IDS_USAGE_HEADER           "\nUsage:\n  wineconsole [options] <command>\n\nOptions:\n"
+IDS_USAGE_BACKEND          "  --backend={user|curses}  Choosing user will spawn a new window, curses will\n"\
+                           "                            try to setup the current terminal as a Wine console\n"
+IDS_USAGE_COMMAND          "  <command>                 The Wine program to launch in the console\n"
+IDS_USAGE_FOOTER           "\nExample:\n  wineconsole cmd\nStarts the Wine command prompt in a Wine console\n\n"
+
+END
+
+IDD_OPTION DIALOG 36, 24, 140, 105
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION " אפשרויות "
+FONT 8, "MS Shell Dlg"
+{
+	GROUPBOX "גודל הסמן", -1, 10, 11, 60, 44, BS_GROUPBOX
+	AUTORADIOBUTTON "&קטן", IDC_OPT_CURSOR_SMALL, 14, 23, 44, 10, WS_TABSTOP
+	AUTORADIOBUTTON "&בינוני", IDC_OPT_CURSOR_MEDIUM, 14, 33, 44, 10, WS_TABSTOP
+	AUTORADIOBUTTON "&גדול", IDC_OPT_CURSOR_LARGE, 14, 43, 44, 10, WS_TABSTOP
+
+	GROUPBOX "שליטה", -1, 75, 11, 125, 44, BS_GROUPBOX
+	LTEXT "התפריט הקובץ", -1, 79, 23, 40, 10
+	AUTOCHECKBOX "&Control", IDC_OPT_CONF_CTRL, 129, 23, 60, 10, WS_TABSTOP
+	AUTOCHECKBOX "S&hift", IDC_OPT_CONF_SHIFT, 129, 33, 60, 10, WS_TABSTOP
+	LTEXT "עריכה מהירה", -1, 79, 43, 50, 10
+	AUTOCHECKBOX "ה&פעלה", IDC_OPT_QUICK_EDIT, 129, 43, 60, 10, WS_TABSTOP
+
+	GROUPBOX "היסטוריית הפקודות", -1, 10, 57, 190, 35, BS_GROUPBOX
+	LTEXT "&מספר הפקודות שנשמרות :", -1, 14, 67, 78, 18
+	EDITTEXT IDC_OPT_HIST_SIZE, 92, 69, 31, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
+	CONTROL "", IDC_OPT_HIST_SIZE_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
+	AUTOCHECKBOX "ה&סרת כפולים", IDC_OPT_HIST_NODOUBLE, 130, 67, 50, 18, WS_TABSTOP|BS_MULTILINE
+}
+
+IDD_FONT DIALOG 36, 24, 140, 105
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION " גופן "
+FONT 8, "MS Shell Dlg"
+{
+	LTEXT "&גופן", -1, 5, 5, 24, 8
+	LISTBOX IDC_FNT_LIST_FONT, 5, 18, 90, 42, LBS_SORT|WS_VSCROLL
+	LTEXT "&צבע", -1, 100, 5, 50, 8
+	CONTROL "", IDC_FNT_COLOR_FG, "WineConColorPreview", 0L, 100, 18, 48, 16
+	CONTROL "", IDC_FNT_COLOR_BK, "WineConColorPreview", 0L, 100, 40, 48, 16
+	LTEXT "&גודל", -1, 158, 5, 40, 8
+	LISTBOX IDC_FNT_LIST_SIZE, 158, 18, 40, 60, WS_VSCROLL
+	CONTROL "", IDC_FNT_PREVIEW, "WineConFontPreview", 0L, 5, 60, 109, 40
+	LTEXT "", IDC_FNT_FONT_INFO, 128, 76, 80, 18
+}
+
+IDD_CONFIG DIALOG 36, 24, 140, 105
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION " תצוגה "
+FONT 8, "MS Shell Dlg"
+{
+	GROUPBOX "אזור האגירה", -1, 10, 11, 100, 42, BS_GROUPBOX
+	LTEXT "&רוחב :", -1, 14, 25, 54, 9
+	EDITTEXT IDC_CNF_SB_WIDTH, 68, 23, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
+	CONTROL "", IDC_CNF_SB_WIDTH_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
+	LTEXT "&גובה :", -1, 14, 39, 54, 9
+	EDITTEXT IDC_CNF_SB_HEIGHT, 68, 37, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
+	CONTROL "", IDC_CNF_SB_HEIGHT_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
+
+	GROUPBOX "גודל החלון", -1, 10, 55, 100, 42
+	LTEXT "&גובה :", -1, 14, 69, 54, 9
+	EDITTEXT IDC_CNF_WIN_WIDTH, 68, 67, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
+	CONTROL "", IDC_CNF_WIN_WIDTH_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
+	LTEXT "&רוחב :", -1, 14, 83, 54, 9
+	EDITTEXT IDC_CNF_WIN_HEIGHT, 68, 81, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
+	CONTROL "", IDC_CNF_WIN_HEIGHT_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
+
+	GROUPBOX "סיום התכנית", -1, 115, 11, 80, 42, BS_GROUPBOX
+	AUTOCHECKBOX "סגירת ה&מסוף", IDC_CNF_CLOSE_EXIT, 119, 25, 72, 20, WS_TABSTOP
+
+	GROUPBOX "מצב עריכה", -1, 115, 55, 80, 42
+	COMBOBOX IDC_CNF_EDITION_MODE, 119, 69, 72, 20, CBS_DROPDOWNLIST|WS_VSCROLL|WS_TABSTOP
+}
+
+IDD_SAVE_SETTINGS DIALOG 20, 20, 170, 60
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "הפרמטרים של המסוף"
+FONT 8, "MS Shell Dlg"
+{
+	GROUPBOX "", -1, 10, 10, 150, 31, BS_GROUPBOX
+	AUTORADIOBUTTON "שמירת הגדרות אלו להפעלות הבאות", IDC_SAV_SAVE, 14, 15, 140, 10, WS_TABSTOP
+	AUTORADIOBUTTON "שינוי בהפעלה הנוכחית בלבד", IDC_SAV_SESSION, 14, 27, 140, 10, WS_TABSTOP
+
+	PUSHBUTTON "שמירה", IDOK, 35, 45, 35, 12
+	PUSHBUTTON "ביטול", IDCANCEL, 80, 45, 35, 12
+}
