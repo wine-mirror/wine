@@ -76,7 +76,6 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 {
     const statement_t *stmt;
     const char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
-    const var_t *var;
     int method_count = 0;
 
     if (!implicit_handle)
@@ -297,15 +296,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         }
 
         /* update proc_offset */
-        if (args)
-        {
-            LIST_FOR_EACH_ENTRY( var, args, const var_t, entry )
-                *proc_offset += get_size_procformatstring_type(var->name, var->type, var->attrs);
-        }
-        if (!is_void(type_function_get_rettype(func->type)))
-            *proc_offset += get_size_procformatstring_type("return value", type_function_get_rettype(func->type), NULL);
-        else
-            *proc_offset += 2; /* FC_END and FC_PAD */
+        *proc_offset += get_size_procformatstring_func( func );
 
         indent--;
         print_client("}\n");
