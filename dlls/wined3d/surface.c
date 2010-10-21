@@ -3642,6 +3642,14 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
             return arbfp_blit_surface(device, src_surface, &src_rect, dst_surface, &dst_rect, BLIT_OP_BLIT, Filter);
         }
 
+        if (!device->blitter->blit_supported(gl_info, BLIT_OP_BLIT,
+                &src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format,
+                &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool, dst_surface->resource.format))
+        {
+            FIXME("Unsupported blit operation falling back to software\n");
+            return WINED3DERR_INVALIDCALL;
+        }
+
         /* Color keying: Check if we have to do a color keyed blt,
          * and if not check if a color key is activated.
          *
@@ -3673,14 +3681,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
         {
             dst_rect.top = dst_surface->currentDesc.Height - dst_rect.top;
             dst_rect.bottom = dst_surface->currentDesc.Height - dst_rect.bottom;
-        }
-
-        if (!device->blitter->blit_supported(gl_info, BLIT_OP_BLIT,
-                &src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format,
-                &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool, dst_surface->resource.format))
-        {
-            FIXME("Unsupported blit operation falling back to software\n");
-            return WINED3DERR_INVALIDCALL;
         }
 
         device->blitter->set_shader((IWineD3DDevice *)device, src_surface);
