@@ -472,7 +472,7 @@ static void update_panestate(ExplorerBrowserImpl *This)
     else
         show_navpane = FALSE;
 
-    if(This->navpane.show ^ show_navpane)
+    if(This->navpane.show != show_navpane)
     {
         update_layout(This);
         size_panes(This);
