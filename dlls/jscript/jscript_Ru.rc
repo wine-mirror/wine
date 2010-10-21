@@ -27,8 +27,10 @@ STRINGTABLE
 {
     IDS_TO_PRIMITIVE        "Ошибка конвертирования объекта в примитивный тип"
     IDS_INVALID_CALL_ARG    "Неверный вызов процедуры или аргумент"
+    IDS_SUBSCRIPT_OUT_OF_RANGE "Индекс вне диапазона"
     IDS_CREATE_OBJ_ERROR    "Сервер автоматизации не может создать объект"
     IDS_NO_PROPERTY         "Объект не поддерживает это свойство или метод"
+    IDS_UNSUPPORTED_ACTION  "Объект не поддерживает это действие"
     IDS_ARG_NOT_OPT         "Отсутствует обязательный аргумент"
     IDS_SYNTAX_ERROR        "Синтаксическая ошибка"
     IDS_SEMICOLON           "Ожидается ';'"
@@ -42,6 +44,7 @@ STRINGTABLE
     IDS_ILLEGAL_ASSIGN      "Неверное присваивание"
     IDS_UNDEFINED           "'|' не определён"
     IDS_NOT_BOOL            "Ожидается объект типа 'bool'"
+    IDS_NOT_VBARRAY         "Ожидается объект типа 'VBArray'"
     IDS_JSCRIPT_EXPECTED    "Ожидается объект типа 'JScript'"
     IDS_REGEXP_SYNTAX_ERROR "Синтаксическая ошибка в регулярном выражении"
     IDS_URI_INVALID_CHAR    "URI содержит неверные символы"
