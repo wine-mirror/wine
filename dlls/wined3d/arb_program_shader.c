@@ -7174,6 +7174,11 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_
             ? dst_surface->container.u.swapchain : NULL;
     if (dst_swapchain && dst_surface == dst_swapchain->front_buffer)
         surface_translate_frontbuffer_coords(dst_surface, context->win_handle, &dst_rect);
+    else if (surface_is_offscreen(dst_surface))
+    {
+        dst_rect.top = dst_surface->currentDesc.Height - dst_rect.top;
+        dst_rect.bottom = dst_surface->currentDesc.Height - dst_rect.bottom;
+    }
 
     arbfp_blit_set((IWineD3DDevice *)device, src_surface);
 
