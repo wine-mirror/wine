@@ -38,6 +38,7 @@ RC_SRCS = \
 	avifile_Ro.rc \
 	avifile_Ru.rc \
 	avifile_Si.rc \
+	avifile_Sr.rc \
 	avifile_Sv.rc \
 	avifile_Tr.rc \
 	avifile_Uk.rc \
