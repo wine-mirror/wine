@@ -71,6 +71,7 @@ RC_SRCS= \
 	wps_En.rc \
 	wps_Es.rc \
 	wps_Fr.rc \
+	wps_He.rc \
 	wps_Hu.rc \
 	wps_It.rc \
 	wps_Ja.rc \
