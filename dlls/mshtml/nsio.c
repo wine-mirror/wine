@@ -1971,25 +1971,28 @@ static nsresult NSAPI nsURI_SetPath(nsIURL *iface, const nsACString *aPath)
 static nsresult NSAPI nsURI_Equals(nsIURL *iface, nsIURI *other, PRBool *_retval)
 {
     nsWineURI *This = NSURI_THIS(iface);
-    nsWineURI *wine_uri;
+    nsWineURI *other_obj;
     nsresult nsres;
+    HRESULT hres;
 
     TRACE("(%p)->(%p %p)\n", This, other, _retval);
 
-    if(This->nsuri)
-        return nsIURI_Equals(This->nsuri, other, _retval);
-
-    nsres = nsIURI_QueryInterface(other, &IID_nsWineURI, (void**)&wine_uri);
+    nsres = nsIURI_QueryInterface(other, &IID_nsWineURI, (void**)&other_obj);
     if(NS_FAILED(nsres)) {
         TRACE("Could not get nsWineURI interface\n");
         *_retval = FALSE;
         return NS_OK;
     }
 
-    *_retval = wine_uri->wine_url && !UrlCompareW(This->wine_url, wine_uri->wine_url, TRUE);
-    nsIURI_Release(NSURI(wine_uri));
+    if(ensure_uri(This) && ensure_uri(other_obj)) {
+        hres = IUri_IsEqual(This->uri, other_obj->uri, _retval);
+        nsres = SUCCEEDED(hres) ? NS_OK : NS_ERROR_FAILURE;
+    }else {
+        nsres = NS_ERROR_UNEXPECTED;
+    }
 
-    return NS_OK;
+    nsIURI_Release(NSURI(other_obj));
+    return nsres;
 }
 
 static nsresult NSAPI nsURI_SchemeIs(nsIURL *iface, const char *scheme, PRBool *_retval)
