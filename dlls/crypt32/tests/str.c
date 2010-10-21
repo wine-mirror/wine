@@ -287,8 +287,6 @@ static void test_CertRDNValueToStrW(void)
        { sizeof(bin6), bin6 }, localhostW },
      { "1.2.840.113549.1.9.1", CERT_RDN_IA5_STRING,
        { sizeof(bin7), bin7 }, aricW },
-     { "2.5.4.3", CERT_RDN_UTF8_STRING,
-       { sizeof(bin8), bin8 }, ePKIW },
     };
     DWORD i, ret;
     WCHAR buffer[2000];
