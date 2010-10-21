@@ -699,9 +699,9 @@
 # stub _mbslwr_l
 # stub _mbslwr_s
 # stub _mbslwr_s_l
-@ cdecl _mbsnbcat (str str long)
+@ cdecl _mbsnbcat(str str long)
 # stub _mbsnbcat_l
-# stub _mbsnbcat_s
+@ cdecl _mbsnbcat_s(str long ptr long)
 # stub _mbsnbcat_s_l
 @ cdecl _mbsnbcmp(str str long)
 # stub _mbsnbcmp_l

@@ -925,7 +925,7 @@
 @ stub _mbslwr_s_l
 @ cdecl _mbsnbcat(str str long) msvcrt._mbsnbcat
 @ stub _mbsnbcat_l
-@ stub _mbsnbcat_s
+@ cdecl _mbsnbcat_s(str long ptr long) msvcrt._mbsnbcat_s
 @ stub _mbsnbcat_s_l
 @ cdecl _mbsnbcmp(str str long) msvcrt._mbsnbcmp
 @ stub _mbsnbcmp_l

@@ -1439,6 +1439,55 @@ unsigned char* CDECL _mbsnbcat(unsigned char* dst, const unsigned char* src, MSV
     return u_strncat(dst, src, len); /* ASCII CP */
 }
 
+int CDECL _mbsnbcat_s(unsigned char *dst, MSVCRT_size_t size, const unsigned char *src, MSVCRT_size_t len)
+{
+    unsigned char *ptr = dst;
+    MSVCRT_size_t i;
+
+    if (!dst && !size && !src && !len)
+        return 0;
+
+    if (!dst || !size || !src)
+    {
+        if (dst && size)
+            *dst = '\0';
+
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    /* Find the null terminator of the destination buffer. */
+    while (size && *ptr)
+        size--, ptr++;
+
+    if (!size)
+    {
+        *dst = '\0';
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    /* If necessary, check that the character preceding the null terminator is
+     * a lead byte and move the pointer back by one for later overwrite. */
+    if (ptr != dst && get_locale()->locinfo->mb_cur_max > 1 && MSVCRT_isleadbyte(*(ptr - 1)))
+        size++, ptr--;
+
+    for (i = 0; *src && i < len; i++)
+    {
+        *ptr++ = *src++;
+        size--;
+
+        if (!size)
+        {
+            *dst = '\0';
+            *MSVCRT__errno() = MSVCRT_ERANGE;
+            return MSVCRT_ERANGE;
+        }
+    }
+
+    *ptr = '\0';
+    return 0;
+}
 
 /*********************************************************************
  *		_mbsncat(MSVCRT.@)

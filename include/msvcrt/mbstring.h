@@ -76,6 +76,7 @@ unsigned char* __cdecl _mbsinc(const unsigned char*);
 size_t         __cdecl _mbslen(const unsigned char*);
 unsigned char* __cdecl _mbslwr(unsigned char*);
 unsigned char* __cdecl _mbsnbcat(unsigned char*,const unsigned char*,size_t);
+errno_t        __cdecl _mbsnbcat_s(unsigned char*,size_t,const unsigned char*,size_t);
 int            __cdecl _mbsnbcmp(const unsigned char*,const unsigned char*,size_t);
 int            __cdecl _mbsnbcoll(const unsigned char*,const unsigned char*,size_t);
 size_t         __cdecl _mbsnbcnt(const unsigned char*,size_t);

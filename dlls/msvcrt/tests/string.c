@@ -50,6 +50,7 @@ static void* (__cdecl *pmemcpy)(void *, const void *, size_t n);
 static int* (__cdecl *pmemcmp)(void *, const void *, size_t n);
 static int (__cdecl *pstrcpy_s)(char *dst, size_t len, const char *src);
 static int (__cdecl *pstrcat_s)(char *dst, size_t len, const char *src);
+static int (__cdecl *p_mbsnbcat_s)(unsigned char *dst, size_t size, const unsigned char *src, size_t count);
 static int (__cdecl *p_mbsnbcpy_s)(unsigned char * dst, size_t size, const unsigned char * src, size_t count);
 static int (__cdecl *p_wcscpy_s)(wchar_t *wcDest, size_t size, const wchar_t *wcSrc);
 static int (__cdecl *p_wcsncat_s)(wchar_t *dst, size_t elem, const wchar_t *src, size_t count);
@@ -1468,6 +1469,133 @@ static void test_wcsncat_s(void)
     ok(ret == EINVAL, "err = %d\n", ret);
 }
 
+static void test__mbsnbcat_s(void)
+{
+    unsigned char dest[16];
+    const unsigned char first[] = "dinosaur";
+    const unsigned char second[] = "duck";
+    int ret;
+
+    if (!p_mbsnbcat_s)
+    {
+        win_skip("Skipping _mbsnbcat_s tests\n");
+        return;
+    }
+
+    /* Test invalid arguments. */
+    ret = p_mbsnbcat_s(NULL, 0, NULL, 0);
+    ok(ret == 0, "Expected _mbsnbcat_s to return 0, got %d\n", ret);
+
+    errno = EBADF;
+    ret = p_mbsnbcat_s(NULL, 10, NULL, 0);
+    ok(ret == EINVAL, "Expected _mbsnbcat_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+
+    errno = EBADF;
+    ret = p_mbsnbcat_s(NULL, 0, NULL, 10);
+    ok(ret == EINVAL, "Expected _mbsnbcat_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+
+    memset(dest, 'X', sizeof(dest));
+    errno = EBADF;
+    ret = p_mbsnbcat_s(dest, 0, NULL, 0);
+    ok(ret == EINVAL, "Expected _mbsnbcat_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+    ok(dest[0] == 'X', "Expected the output buffer to be untouched\n");
+
+    memset(dest, 'X', sizeof(dest));
+    errno = EBADF;
+    ret = p_mbsnbcat_s(dest, 0, second, 0);
+    ok(ret == EINVAL, "Expected _mbsnbcat_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+    ok(dest[0] == 'X', "Expected the output buffer to be untouched\n");
+
+    memset(dest, 'X', sizeof(dest));
+    errno = EBADF;
+    ret = p_mbsnbcat_s(dest, sizeof(dest), NULL, 0);
+    ok(ret == EINVAL, "Expected _mbsnbcat_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+    ok(dest[0] == '\0', "Expected the output buffer to be null terminated\n");
+
+    memset(dest, 'X', sizeof(dest));
+    errno = EBADF;
+    ret = p_mbsnbcat_s(dest, sizeof(dest), NULL, 10);
+    ok(ret == EINVAL, "Expected _mbsnbcat_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+    ok(dest[0] == '\0', "Expected the output buffer to be null terminated\n");
+
+    memset(dest, 'X', sizeof(dest));
+    dest[0] = '\0';
+    ret = p_mbsnbcat_s(dest, sizeof(dest), second, sizeof(second));
+    ok(ret == 0, "Expected _mbsnbcat_s to return 0, got %d\n", ret);
+    ok(!memcmp(dest, second, sizeof(second)),
+       "Expected the output buffer string to be \"duck\"\n");
+
+    /* Test source truncation behavior. */
+    memset(dest, 'X', sizeof(dest));
+    memcpy(dest, first, sizeof(first));
+    ret = p_mbsnbcat_s(dest, sizeof(dest), second, 0);
+    ok(ret == 0, "Expected _mbsnbcat_s to return 0, got %d\n", ret);
+    ok(!memcmp(dest, first, sizeof(first)),
+       "Expected the output buffer string to be \"dinosaur\"\n");
+
+    memset(dest, 'X', sizeof(dest));
+    memcpy(dest, first, sizeof(first));
+    ret = p_mbsnbcat_s(dest, sizeof(dest), second, sizeof(second));
+    ok(ret == 0, "Expected _mbsnbcat_s to return 0, got %d\n", ret);
+    ok(!memcmp(dest, "dinosaurduck", sizeof("dinosaurduck")),
+       "Expected the output buffer string to be \"dinosaurduck\"\n");
+
+    memset(dest, 'X', sizeof(dest));
+    memcpy(dest, first, sizeof(first));
+    ret = p_mbsnbcat_s(dest, sizeof(dest), second, sizeof(second) + 1);
+    ok(ret == 0, "Expected _mbsnbcat_s to return 0, got %d\n", ret);
+    ok(!memcmp(dest, "dinosaurduck", sizeof("dinosaurduck")),
+       "Expected the output buffer string to be \"dinosaurduck\"\n");
+
+    memset(dest, 'X', sizeof(dest));
+    memcpy(dest, first, sizeof(first));
+    ret = p_mbsnbcat_s(dest, sizeof(dest), second, sizeof(second) - 1);
+    ok(ret == 0, "Expected _mbsnbcat_s to return 0, got %d\n", ret);
+    ok(!memcmp(dest, "dinosaurduck", sizeof("dinosaurduck")),
+       "Expected the output buffer string to be \"dinosaurduck\"\n");
+
+    memset(dest, 'X', sizeof(dest));
+    memcpy(dest, first, sizeof(first));
+    ret = p_mbsnbcat_s(dest, sizeof(dest), second, sizeof(second) - 2);
+    ok(ret == 0, "Expected _mbsnbcat_s to return 0, got %d\n", ret);
+    ok(!memcmp(dest, "dinosaurduc", sizeof("dinosaurduc")),
+       "Expected the output buffer string to be \"dinosaurduc\"\n");
+
+    /* Test destination truncation behavior. */
+    memset(dest, 'X', sizeof(dest));
+    memcpy(dest, first, sizeof(first));
+    errno = EBADF;
+    ret = p_mbsnbcat_s(dest, sizeof(first) - 1, second, sizeof(second));
+    ok(ret == EINVAL, "Expected _mbsnbcat_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+    ok(!memcmp(dest, "\0inosaur", sizeof("\0inosaur") - 1),
+       "Expected the output buffer string to be \"\\0inosaur\" without ending null terminator\n");
+
+    memset(dest, 'X', sizeof(dest));
+    memcpy(dest, first, sizeof(first));
+    errno = EBADF;
+    ret = p_mbsnbcat_s(dest, sizeof(first), second, sizeof(second));
+    ok(ret == ERANGE, "Expected _mbsnbcat_s to return ERANGE, got %d\n", ret);
+    ok(errno == ERANGE, "Expected errno to be ERANGE, got %d\n", errno);
+    ok(!memcmp(dest, "\0inosaurd", sizeof("\0inosaurd") - 1),
+       "Expected the output buffer string to be \"\\0inosaurd\" without ending null terminator\n");
+
+    memset(dest, 'X', sizeof(dest));
+    memcpy(dest, first, sizeof(first));
+    errno = EBADF;
+    ret = p_mbsnbcat_s(dest, sizeof(first) + 1, second, sizeof(second));
+    ok(ret == ERANGE, "Expected _mbsnbcat_s to return ERANGE, got %d\n", ret);
+    ok(errno == ERANGE, "Expected errno to be ERANGE, got %d\n", errno);
+    ok(!memcmp(dest, "\0inosaurdu", sizeof("\0inosaurdu") - 1),
+       "Expected the output buffer string to be \"\\0inosaurdu\" without ending null terminator\n");
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -1484,6 +1612,7 @@ START_TEST(string)
     SET(p__mb_cur_max,"__mb_cur_max");
     pstrcpy_s = (void *)GetProcAddress( hMsvcrt,"strcpy_s" );
     pstrcat_s = (void *)GetProcAddress( hMsvcrt,"strcat_s" );
+    p_mbsnbcat_s = (void *)GetProcAddress( hMsvcrt,"_mbsnbcat_s" );
     p_mbsnbcpy_s = (void *)GetProcAddress( hMsvcrt,"_mbsnbcpy_s" );
     p_wcscpy_s = (void *)GetProcAddress( hMsvcrt,"wcscpy_s" );
     p_wcsncat_s = (void *)GetProcAddress( hMsvcrt,"wcsncat_s" );
@@ -1533,4 +1662,5 @@ START_TEST(string)
     test__itoa_s();
     test__strlwr_s();
     test_wcsncat_s();
+    test__mbsnbcat_s();
 }
