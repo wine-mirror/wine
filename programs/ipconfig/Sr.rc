@@ -47,6 +47,7 @@ STRINGTABLE
     STRING_DHCP_ENABLED, "DHCP је омогућен"
     STRING_YES, "Да"
     STRING_NO, "Не"
+    STRING_DEFAULT_GATEWAY, "Подразумевани мрежни пролаз"
 }
 
 LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
@@ -72,4 +73,5 @@ STRINGTABLE
     STRING_DHCP_ENABLED, "DHCP je omogućen"
     STRING_YES, "Da"
     STRING_NO, "Ne"
+    STRING_DEFAULT_GATEWAY, "Podrazumevani mrežni prolaz"
 }
