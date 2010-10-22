@@ -9524,6 +9524,10 @@ static void test_featureparents(void)
     r = add_feature_entry( hdb, "'orion', '', '', '', 2, 1, '', 0" );
     ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
 
+    /* msidbFeatureAttributesUIDisallowAbsent */
+    r = add_feature_entry( hdb, "'lyra', '', '', '', 2, 1, '', 16" );
+    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+
     /* disabled because of install level */
     r = add_feature_entry( hdb, "'waters', '', '', '', 15, 101, '', 9" );
     ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
@@ -9704,6 +9708,13 @@ static void test_featureparents(void)
 
     state = 0xdeadbee;
     action = 0xdeadbee;
+    r = MsiGetFeatureState(hpkg, "lyra", &state, &action);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
+    ok( state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
+    todo_wine ok( action == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", action);
+
+    state = 0xdeadbee;
+    action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "waters", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     ok( state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
@@ -9796,6 +9807,9 @@ static void test_featureparents(void)
     r = MsiSetFeatureState(hpkg, "orion", INSTALLSTATE_ABSENT);
     ok( r == ERROR_SUCCESS, "failed to set feature state: %d\n", r);
 
+    r = MsiSetFeatureState(hpkg, "lyra", INSTALLSTATE_ABSENT);
+    ok( r == ERROR_SUCCESS, "failed to set feature state: %d\n", r);
+
     r = MsiSetFeatureState(hpkg, "nosuchfeature", INSTALLSTATE_ABSENT);
     ok( r == ERROR_UNKNOWN_FEATURE, "Expected ERROR_UNKNOWN_FEATURE, got %u\n", r);
 
@@ -9819,6 +9833,13 @@ static void test_featureparents(void)
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     ok( state == INSTALLSTATE_ABSENT, "Expected orion INSTALLSTATE_ABSENT, got %d\n", state);
     ok( action == INSTALLSTATE_ABSENT, "Expected orion INSTALLSTATE_ABSENT, got %d\n", action);
+
+    state = 0xdeadbee;
+    action = 0xdeadbee;
+    r = MsiGetFeatureState(hpkg, "lyra", &state, &action);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
+    ok( state == INSTALLSTATE_ABSENT, "Expected lyra INSTALLSTATE_ABSENT, got %d\n", state);
+    todo_wine ok( action == INSTALLSTATE_ABSENT, "Expected lyra INSTALLSTATE_ABSENT, got %d\n", action);
 
     state = 0xdeadbee;
     action = 0xdeadbee;
