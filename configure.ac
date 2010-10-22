@@ -1658,17 +1658,6 @@ then
     EXTRACFLAGS="$EXTRACFLAGS -Wpointer-arith"
   fi
 
-  dnl Fortify enables unused result warnings on a gazillion functions, making it useless
-  saved_CFLAGS="$CFLAGS"
-  CFLAGS="$CFLAGS -Werror"
-  AC_CACHE_CHECK([for broken unused result warnings], ac_cv_c_unused_result_warnings,
-      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <unistd.h>]], [[write(2,"a",1)]])],[ac_cv_c_unused_result_warnings=no],[ac_cv_c_unused_result_warnings=yes]))
-  CFLAGS="$saved_CFLAGS"
-  if test "$ac_cv_c_unused_result_warnings" = "yes"
-  then
-    WINE_TRY_CFLAGS([-Wno-unused-result])
-  fi
-
   dnl Enable -Werror for maintainer mode
   if test "x$enable_maintainer_mode" = "xyes"
   then
@@ -1689,6 +1678,19 @@ then
   else
       AC_DEFINE(DECLSPEC_HOTPATCH, [/* */])
   fi
+fi
+
+dnl **** Disable Fortify, it has too many false positives
+
+AC_CACHE_CHECK([for the need to disable Fortify], ac_cv_c_fortify_enabled,
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <string.h>]],
+[[#if defined(__USE_FORTIFY_LEVEL) && __USE_FORTIFY_LEVEL > 0
+#error Fortify enabled
+#endif]])],
+        [ac_cv_c_fortify_enabled=no],[ac_cv_c_fortify_enabled=yes]))
+if test "$ac_cv_c_fortify_enabled" = yes
+then
+    EXTRACFLAGS="$EXTRACFLAGS -D_FORTIFY_SOURCE=0"
 fi
 
 dnl **** Check for underscore on external symbols ****

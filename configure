@@ -12061,63 +12061,6 @@ $as_echo "$ac_cv_c_string_h_warnings" >&6; }
     EXTRACFLAGS="$EXTRACFLAGS -Wpointer-arith"
   fi
 
-    saved_CFLAGS="$CFLAGS"
-  CFLAGS="$CFLAGS -Werror"
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for broken unused result warnings" >&5
-$as_echo_n "checking for broken unused result warnings... " >&6; }
-if test "${ac_cv_c_unused_result_warnings+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <unistd.h>
-int
-main ()
-{
-write(2,"a",1)
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_c_unused_result_warnings=no
-else
-  ac_cv_c_unused_result_warnings=yes
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_unused_result_warnings" >&5
-$as_echo "$ac_cv_c_unused_result_warnings" >&6; }
-  CFLAGS="$saved_CFLAGS"
-  if test "$ac_cv_c_unused_result_warnings" = "yes"
-  then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wno-unused-result" >&5
-$as_echo_n "checking whether the compiler supports -Wno-unused-result... " >&6; }
-if test "${ac_cv_cflags__Wno_unused_result+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -Wno-unused-result"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Wno_unused_result=yes
-else
-  ac_cv_cflags__Wno_unused_result=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wno_unused_result" >&5
-$as_echo "$ac_cv_cflags__Wno_unused_result" >&6; }
-if test $ac_cv_cflags__Wno_unused_result = yes; then :
-  EXTRACFLAGS="$EXTRACFLAGS -Wno-unused-result"
-fi
-  fi
-
     if test "x$enable_maintainer_mode" = "xyes"
   then
       { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror" >&5
@@ -12184,6 +12127,39 @@ $as_echo "#define DECLSPEC_HOTPATCH __attribute__((__ms_hook_prologue__))" >>con
       $as_echo "#define DECLSPEC_HOTPATCH /* */" >>confdefs.h
 
   fi
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for the need to disable Fortify" >&5
+$as_echo_n "checking for the need to disable Fortify... " >&6; }
+if test "${ac_cv_c_fortify_enabled+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <string.h>
+int
+main ()
+{
+#if defined(__USE_FORTIFY_LEVEL) && __USE_FORTIFY_LEVEL > 0
+#error Fortify enabled
+#endif
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_c_fortify_enabled=no
+else
+  ac_cv_c_fortify_enabled=yes
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_fortify_enabled" >&5
+$as_echo "$ac_cv_c_fortify_enabled" >&6; }
+if test "$ac_cv_c_fortify_enabled" = yes
+then
+    EXTRACFLAGS="$EXTRACFLAGS -D_FORTIFY_SOURCE=0"
 fi
 
 
