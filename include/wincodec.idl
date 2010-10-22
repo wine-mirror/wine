@@ -21,6 +21,8 @@ import "propidl.idl";
 import "objidl.idl";
 import "ocidl.idl";
 
+cpp_quote("#define WINCODEC_SDK_VERSION 0x0236")
+
 #define CODEC_FORCE_DWORD 0x7fffffff
 
 typedef enum WICDecodeOptions {
