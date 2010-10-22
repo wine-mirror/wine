@@ -5369,9 +5369,8 @@ static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
     SC_HANDLE hscm, service = NULL;
     LPCWSTR comp, key;
     LPWSTR name = NULL, disp = NULL, load_order = NULL, serv_name = NULL;
-    LPWSTR depends = NULL, pass = NULL;
-    DWORD serv_type, start_type;
-    DWORD err_control;
+    LPWSTR depends = NULL, pass = NULL, args = NULL, image_path = NULL;
+    DWORD serv_type, start_type, err_control;
     SERVICE_DESCRIPTIONW sd = {NULL};
 
     static const WCHAR query[] =
@@ -5400,6 +5399,7 @@ static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
     deformat_string(package, MSI_RecordGetString(rec, 8), &depends);
     deformat_string(package, MSI_RecordGetString(rec, 9), &serv_name);
     deformat_string(package, MSI_RecordGetString(rec, 10), &pass);
+    deformat_string(package, MSI_RecordGetString(rec, 11), &args);
     comp = MSI_RecordGetString(rec, 12);
     deformat_string(package, MSI_RecordGetString(rec, 13), &sd.lpDescription);
 
@@ -5420,9 +5420,21 @@ static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
         goto done;
     }
 
+    if (!args || !args[0]) image_path = file->TargetPath;
+    else
+    {
+        int len = strlenW(file->TargetPath) + strlenW(args) + 2;
+        if (!(image_path = msi_alloc(len * sizeof(WCHAR))))
+            return ERROR_OUTOFMEMORY;
+
+        strcpyW(image_path, file->TargetPath);
+        strcatW(image_path, szSpace);
+        strcatW(image_path, args);
+    }
     service = CreateServiceW(hscm, name, disp, GENERIC_ALL, serv_type,
-                             start_type, err_control, file->TargetPath,
-                             load_order, NULL, depends, serv_name, pass);
+                             start_type, err_control, image_path, load_order,
+                             NULL, depends, serv_name, pass);
+
     if (!service)
     {
         if (GetLastError() != ERROR_SERVICE_EXISTS)
@@ -5434,6 +5446,7 @@ static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
             WARN("failed to set service description %u\n", GetLastError());
     }
 
+    if (image_path != file->TargetPath) msi_free(image_path);
 done:
     CloseServiceHandle(service);
     CloseServiceHandle(hscm);
@@ -5444,6 +5457,7 @@ done:
     msi_free(serv_name);
     msi_free(pass);
     msi_free(depends);
+    msi_free(args);
 
     return ERROR_SUCCESS;
 }

@@ -212,7 +212,7 @@ static const char service_install_dat[] =
     "LoadOrderGroup\tDependencies\tStartName\tPassword\tArguments\tComponent_\tDescription\n"
     "s72\ts255\tL255\ti4\ti4\ti4\tS255\tS255\tS255\tS255\tS255\ts72\tL255\n"
     "ServiceInstall\tServiceInstall\n"
-    "TestService\t[SERVNAME]\t[SERVDISP]\t2\t3\t0\t\t\tTestService\t\t\tservice_comp\t\t";
+    "TestService\t[SERVNAME]\t[SERVDISP]\t2\t3\t0\t\tservice1[~]+group1[~]service2[~]+group2[~][~]\tTestService\t\t-a arg\tservice_comp\tdescription";
 
 static const char service_control_dat[] =
     "ServiceControl\tName\tEvent\tArguments\tWait\tComponent_\n"
