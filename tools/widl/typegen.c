@@ -953,6 +953,25 @@ void write_procformatstring(FILE *file, const statement_list_t *stmts, type_pred
     print_file(file, indent, "\n");
 }
 
+void write_procformatstring_offsets( FILE *file, const type_t *iface )
+{
+    const statement_t *stmt;
+    int indent = 0;
+
+    print_file( file, indent,  "static const unsigned short %s_FormatStringOffsetTable[] =\n",
+                iface->name );
+    print_file( file, indent,  "{\n" );
+    indent++;
+    STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
+    {
+        var_t *func = stmt->u.var;
+        if (is_local( func->attrs )) continue;
+        print_file( file, indent,  "%u,  /* %s */\n", func->procstring_offset, func->name );
+    }
+    indent--;
+    print_file( file, indent,  "};\n\n" );
+}
+
 static int write_base_type(FILE *file, const type_t *type, int convert_to_signed_type, unsigned int *typestring_offset)
 {
     unsigned char fc;

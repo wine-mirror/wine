@@ -610,18 +610,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
 
   count = count_methods(iface);
 
-  /* proc format string offsets */
-  print_proxy( "static const unsigned short %s_FormatStringOffsetTable[] =\n", iface->name );
-  print_proxy( "{\n" );
-  indent++;
-  STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface))
-  {
-      var_t *func = stmt->u.var;
-      if (is_local( func->attrs )) continue;
-      print_proxy( "%u,  /* %s */\n", func->procstring_offset, func->name );
-  }
-  indent--;
-  print_proxy( "};\n\n" );
+  write_procformatstring_offsets( proxy, iface );
 
   /* proxy vtable */
   print_proxy( "static %sCINTERFACE_PROXY_VTABLE(%d) _%sProxyVtbl =\n",
