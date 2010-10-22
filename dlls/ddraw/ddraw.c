@@ -586,21 +586,23 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
     if(cooplevel & DDSCL_SETFOCUSWINDOW)
     {
         /* This isn't compatible with a lot of flags */
-        if(cooplevel & ( DDSCL_MULTITHREADED   |
-                         DDSCL_FPUSETUP        |
-                         DDSCL_FPUPRESERVE     |
-                         DDSCL_ALLOWREBOOT     |
-                         DDSCL_ALLOWMODEX      |
-                         DDSCL_SETDEVICEWINDOW |
-                         DDSCL_NORMAL          |
-                         DDSCL_EXCLUSIVE       |
-                         DDSCL_FULLSCREEN      ) )
+        if(cooplevel & ( DDSCL_MULTITHREADED      |
+                         DDSCL_CREATEDEVICEWINDOW |
+                         DDSCL_FPUSETUP           |
+                         DDSCL_FPUPRESERVE        |
+                         DDSCL_ALLOWREBOOT        |
+                         DDSCL_ALLOWMODEX         |
+                         DDSCL_SETDEVICEWINDOW    |
+                         DDSCL_NORMAL             |
+                         DDSCL_EXCLUSIVE          |
+                         DDSCL_FULLSCREEN         ) )
         {
             TRACE("Called with incompatible flags, returning DDERR_INVALIDPARAMS\n");
             LeaveCriticalSection(&ddraw_cs);
             return DDERR_INVALIDPARAMS;
         }
-        else if( (This->cooperative_level & DDSCL_FULLSCREEN) && window)
+
+        if( (This->cooperative_level & DDSCL_FULLSCREEN) && window )
         {
             TRACE("Setting DDSCL_SETFOCUSWINDOW with an already set window, returning DDERR_HWNDALREADYSET\n");
             LeaveCriticalSection(&ddraw_cs);
@@ -620,6 +622,8 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
             DestroyWindow(This->devicewindow);
             This->devicewindow = NULL;
         }
+
+        return DD_OK;
     }
     /* DDSCL_NORMAL or DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE */
     if(cooplevel & DDSCL_NORMAL)

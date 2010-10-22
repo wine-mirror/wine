@@ -557,6 +557,9 @@ static void testcooperativelevels_normal(void)
     surfacedesc.dwBackBufferCount = 1;
     surfacedesc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
 
+    rc = IDirectDraw_SetCooperativeLevel(lpDD, hwnd, DDSCL_SETFOCUSWINDOW | DDSCL_CREATEDEVICEWINDOW);
+    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_SETFOCUSWINDOW | DDSCL_CREATEDEVICEWINDOW) returned: %x\n",rc);
+
     /* Do some tests with DDSCL_NORMAL mode */
     /* Fullscreen mode + normal mode + exclusive mode */
     rc = IDirectDraw_SetCooperativeLevel(lpDD, hwnd, DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE | DDSCL_NORMAL);
@@ -604,6 +607,10 @@ static void testcooperativelevels_normal(void)
     if(surface && surface != (IDirectDrawSurface *)0xdeadbeef) IDirectDrawSurface_Release(surface);
 
     /* Set the focus window */
+
+    rc = IDirectDraw_SetCooperativeLevel(lpDD, hwnd, DDSCL_SETFOCUSWINDOW | DDSCL_CREATEDEVICEWINDOW);
+    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_SETFOCUSWINDOW | DDSCL_CREATEDEVICEWINDOW) returned: %x\n",rc);
+
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_SETFOCUSWINDOW);
 
