@@ -37,6 +37,7 @@ RC_SRCS = \
 	Pl.rc \
 	Ro.rc \
 	Si.rc \
+	Sr.rc \
 	Sv.rc \
 	Uk.rc \
 	shdocvw.rc
