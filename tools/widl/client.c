@@ -448,8 +448,6 @@ static void init_client(void)
     print_client( "#define DECLSPEC_HIDDEN\n");
     print_client( "#endif\n");
     print_client( "\n");
-    write_exceptions( client );
-    print_client( "\n");
 }
 
 
@@ -503,6 +501,9 @@ static void write_client_routines(const statement_list_t *stmts)
     unsigned int proc_offset = 0;
     int expr_eval_routines;
 
+    write_exceptions( client );
+    print_client( "\n");
+
     write_formatstringsdecl(client, indent, stmts, need_stub);
     expr_eval_routines = write_expr_eval_routines(client, client_token);
     if (expr_eval_routines)
@@ -530,7 +531,7 @@ void write_client(const statement_list_t *stmts)
 
     if (do_win32 && do_win64)
     {
-        fprintf(client, "\n#ifndef _WIN64\n\n");
+        fprintf(client, "#ifndef _WIN64\n\n");
         pointer_size = 4;
         write_client_routines( stmts );
         fprintf(client, "\n#else /* _WIN64 */\n\n");

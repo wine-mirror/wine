@@ -384,22 +384,6 @@ static void init_server(void)
     print_server( "#define DECLSPEC_HIDDEN\n");
     print_server( "#endif\n");
     print_server( "\n");
-    write_exceptions( server );
-    print_server("\n");
-    print_server("struct __server_frame\n");
-    print_server("{\n");
-    print_server("    __DECL_EXCEPTION_FRAME\n");
-    print_server("    MIDL_STUB_MESSAGE _StubMsg;\n");
-    print_server("};\n");
-    print_server("\n");
-    print_server("static int __server_filter( struct __server_frame *__frame )\n");
-    print_server( "{\n");
-    print_server( "    return (__frame->code == STATUS_ACCESS_VIOLATION) ||\n");
-    print_server( "           (__frame->code == STATUS_DATATYPE_MISALIGNMENT) ||\n");
-    print_server( "           (__frame->code == RPC_X_BAD_STUB_DATA) ||\n");
-    print_server( "           (__frame->code == RPC_S_INVALID_BOUND);\n");
-    print_server( "}\n");
-    print_server( "\n");
 }
 
 
@@ -445,6 +429,23 @@ static void write_server_routines(const statement_list_t *stmts)
     unsigned int proc_offset = 0;
     int expr_eval_routines;
 
+    write_exceptions( server );
+    print_server("\n");
+    print_server("struct __server_frame\n");
+    print_server("{\n");
+    print_server("    __DECL_EXCEPTION_FRAME\n");
+    print_server("    MIDL_STUB_MESSAGE _StubMsg;\n");
+    print_server("};\n");
+    print_server("\n");
+    print_server("static int __server_filter( struct __server_frame *__frame )\n");
+    print_server( "{\n");
+    print_server( "    return (__frame->code == STATUS_ACCESS_VIOLATION) ||\n");
+    print_server( "           (__frame->code == STATUS_DATATYPE_MISALIGNMENT) ||\n");
+    print_server( "           (__frame->code == RPC_X_BAD_STUB_DATA) ||\n");
+    print_server( "           (__frame->code == RPC_S_INVALID_BOUND);\n");
+    print_server( "}\n");
+    print_server( "\n");
+
     write_formatstringsdecl(server, indent, stmts, need_stub);
     expr_eval_routines = write_expr_eval_routines(server, server_token);
     if (expr_eval_routines)
@@ -472,7 +473,7 @@ void write_server(const statement_list_t *stmts)
 
     if (do_win32 && do_win64)
     {
-        fprintf(server, "\n#ifndef _WIN64\n\n");
+        fprintf(server, "#ifndef _WIN64\n\n");
         pointer_size = 4;
         write_server_routines( stmts );
         fprintf(server, "\n#else /* _WIN64 */\n\n");
