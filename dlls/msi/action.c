@@ -169,6 +169,98 @@ static const WCHAR szWriteEnvironmentStrings[] =
  * helper functions
  ********************************************************/
 
+void msi_feature_set_state( MSIPACKAGE *package, MSIFEATURE *feature, INSTALLSTATE state )
+{
+    if (!package->ProductCode)
+    {
+        feature->ActionRequest = state;
+        feature->Action = state;
+    }
+    else if (state == INSTALLSTATE_ABSENT)
+    {
+        switch (feature->Installed)
+        {
+            case INSTALLSTATE_ABSENT:
+                feature->ActionRequest = INSTALLSTATE_UNKNOWN;
+                feature->Action = INSTALLSTATE_UNKNOWN;
+                break;
+            default:
+                feature->ActionRequest = state;
+                feature->Action = state;
+        }
+    }
+    else if (state == INSTALLSTATE_SOURCE)
+    {
+        switch (feature->Installed)
+        {
+            case INSTALLSTATE_ABSENT:
+            case INSTALLSTATE_SOURCE:
+                feature->ActionRequest = state;
+                feature->Action = state;
+                break;
+            case INSTALLSTATE_LOCAL:
+                feature->ActionRequest = INSTALLSTATE_LOCAL;
+                feature->Action = INSTALLSTATE_LOCAL;
+                break;
+            default:
+                feature->ActionRequest = INSTALLSTATE_UNKNOWN;
+                feature->Action = INSTALLSTATE_UNKNOWN;
+        }
+    }
+    else
+    {
+        feature->ActionRequest = state;
+        feature->Action = state;
+    }
+    if (feature->Attributes & msidbFeatureAttributesUIDisallowAbsent)
+    {
+        feature->Action = INSTALLSTATE_UNKNOWN;
+    }
+}
+
+void msi_component_set_state( MSIPACKAGE *package, MSICOMPONENT *comp, INSTALLSTATE state )
+{
+    if (!package->ProductCode)
+    {
+        comp->ActionRequest = state;
+        comp->Action = state;
+    }
+    else if (state == INSTALLSTATE_ABSENT)
+    {
+        switch (comp->Installed)
+        {
+            case INSTALLSTATE_LOCAL:
+            case INSTALLSTATE_SOURCE:
+            case INSTALLSTATE_DEFAULT:
+                comp->ActionRequest = state;
+                comp->Action = state;
+                break;
+            default:
+                comp->ActionRequest = INSTALLSTATE_UNKNOWN;
+                comp->Action = INSTALLSTATE_UNKNOWN;
+        }
+    }
+    else if (state == INSTALLSTATE_SOURCE)
+    {
+        if (comp->Installed == INSTALLSTATE_ABSENT ||
+            (comp->Installed == INSTALLSTATE_SOURCE && comp->hasLocalFeature))
+        {
+            comp->ActionRequest = state;
+            comp->Action = state;
+        }
+        else
+        {
+            comp->ActionRequest = INSTALLSTATE_UNKNOWN;
+            comp->Action = INSTALLSTATE_UNKNOWN;
+        }
+    }
+    else
+    {
+        comp->ActionRequest = state;
+        comp->Action = state;
+    }
+}
+
 static void ui_actionstart(MSIPACKAGE *package, LPCWSTR action)
 {
     static const WCHAR Query_t[] = 
