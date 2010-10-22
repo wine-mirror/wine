@@ -5367,9 +5367,8 @@ static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
     MSIRECORD *row;
     MSIFILE *file;
     SC_HANDLE hscm, service = NULL;
-    LPCWSTR comp, depends, pass;
-    LPWSTR name = NULL, disp = NULL;
-    LPCWSTR load_order, serv_name, key;
+    LPCWSTR comp, depends, key;
+    LPWSTR name = NULL, disp = NULL, load_order = NULL, serv_name = NULL, pass = NULL;
     DWORD serv_type, start_type;
     DWORD err_control;
     SERVICE_DESCRIPTIONW sd = {NULL};
@@ -5400,9 +5399,9 @@ static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
     deformat_string(package, MSI_RecordGetString(rec, 3), &disp);
     serv_type = MSI_RecordGetInteger(rec, 4);
     err_control = MSI_RecordGetInteger(rec, 6);
-    load_order = MSI_RecordGetString(rec, 7);
-    serv_name = MSI_RecordGetString(rec, 9);
-    pass = MSI_RecordGetString(rec, 10);
+    deformat_string(package, MSI_RecordGetString(rec, 7), &load_order);
+    deformat_string(package, MSI_RecordGetString(rec, 9), &serv_name);
+    deformat_string(package, MSI_RecordGetString(rec, 10), &pass);
     comp = MSI_RecordGetString(rec, 12);
     deformat_string(package, MSI_RecordGetString(rec, 13), &sd.lpDescription);
 
@@ -5413,7 +5412,6 @@ static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
         ERR("Control query failed!\n");
         goto done;
     }
-
     key = MSI_RecordGetString(row, 6);
 
     file = get_loaded_file(package, key);
@@ -5444,6 +5442,9 @@ done:
     msi_free(name);
     msi_free(disp);
     msi_free(sd.lpDescription);
+    msi_free(load_order);
+    msi_free(serv_name);
+    msi_free(pass);
 
     return ERROR_SUCCESS;
 }
