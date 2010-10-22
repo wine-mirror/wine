@@ -1,0 +1,253 @@
+/*
+ * WineFile
+ * Hebrew Language Support
+ *
+ * Copyright 2000 Martin Fuchs
+ * Copyright 2002 Steven Edwards
+ * Copyright 2002 Alexandre Julliard
+ * Copyright 2010 Yaron Shahrabani <sh.yaron@gmail.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resource.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
+
+/* Menu */
+
+IDM_WINEFILE MENU
+{
+    POPUP "&קובץ"  {
+        MENUITEM "&פתיחה\tEnter",                ID_ACTIVATE
+        MENUITEM "ה&עברה...\tF7",                ID_FILE_MOVE
+        MENUITEM "הע&תקה...\tF8",                ID_FILE_COPY
+        MENUITEM "&בלוח הגזירים...\tF9",        118
+        MENUITEM "&מחיקה\tDel",                ID_FILE_DELETE
+        MENUITEM "&שינוי שם...",                  109
+        MENUITEM "מ&אפייניםs...\tAlt+Enter",   ID_EDIT_PROPERTIES
+        MENUITEM SEPARATOR
+        MENUITEM "&דחיסה...",                119
+        MENUITEM "פ&ריסה...",              120
+        MENUITEM SEPARATOR
+        MENUITEM "הפע&לה...",                     ID_RUN
+        MENUITEM "ה&דפסה...",                   102
+        MENUITEM "שיוך...",                103
+        MENUITEM SEPARATOR
+        MENUITEM "&יצירת תיקייה...",        111
+        MENUITEM "&חיפוש...",                  104
+        MENUITEM "בחירת &קבצים...",            116
+        MENUITEM SEPARATOR
+#ifndef _NO_EXTENSIONS
+        MENUITEM "י&ציאה\tAlt+X",                ID_FILE_EXIT
+#else
+        MENUITEM "י&ציאה",                       ID_FILE_EXIT
+#endif
+    }
+
+    POPUP "&כונן"  {
+        MENUITEM "ה&עתקת כונן...",               201
+        MENUITEM "&תווית הכונן...",              202
+        MENUITEM SEPARATOR
+        MENUITEM "&פרמוט הכונן...",             ID_FORMAT_DISK
+#ifdef _WIN95
+        MENUITEM "י&צירת כונן מערכת...", -1 /*TODO*/
+#endif
+        MENUITEM SEPARATOR
+        MENUITEM "התחבר לכונן &רשת",      ID_CONNECT_NETWORK_DRIVE
+        MENUITEM "&ניתוק כונן רשת",   ID_DISCONNECT_NETWORK_DRIVE
+        MENUITEM SEPARATOR
+        MENUITEM "שיתוף בשם...",                 254
+        MENUITEM "ה&סרת שיתוף...",            255
+        MENUITEM SEPARATOR
+        MENUITEM "&בחירת כונן...",            251
+    }
+
+    POPUP "&תיקיות"  {
+        MENUITEM "הרמה ה&באה\t+",              301
+        MENUITEM "הר&חבת העץ\t*",             302
+        MENUITEM "הרחבת ה&כול\tStrg+*",         303
+        MENUITEM "&צמצום העץ\t-",           304
+        MENUITEM SEPARATOR
+        MENUITEM "&סימון ה&צאצאים",              505
+    }
+
+    POPUP "ת&צוגה"  {
+        MENUITEM "ע&ץ ותיקייה",         413
+        MENUITEM "עץ &בלבד",                  411
+        MENUITEM "Directory &Only",             412
+        MENUITEM SEPARATOR
+        MENUITEM "&פיצול",                      ID_VIEW_SPLIT
+        MENUITEM SEPARATOR
+        MENUITEM "&שם",                       ID_VIEW_NAME
+        MENUITEM "&כל פרטי הקובץ",           ID_VIEW_ALL_ATTRIBUTES, CHECKED
+        MENUITEM "פרטים &חלקיים...",         ID_VIEW_SELECTED_ATTRIBUTES
+        MENUITEM SEPARATOR
+        MENUITEM "&סידור לפי שם",               ID_VIEW_SORT_NAME
+        MENUITEM "סידור לפי &סוג",               ID_VIEW_SORT_TYPE
+        MENUITEM "סידור לפי &גודל",               ID_VIEW_SORT_SIZE
+        MENUITEM "סידור לפי ת&אריך",               ID_VIEW_SORT_DATE
+        MENUITEM SEPARATOR
+        MENUITEM "סינון לפי &...",              ID_VIEW_FILTER
+    }
+
+    POPUP "&אפשרויות"  {
+        MENUITEM "&אישור...",            501
+        MENUITEM "&גופן...",                    ID_SELECT_FONT
+        MENUITEM "הת&אמת סרגל הכלים...",       512
+        MENUITEM SEPARATOR
+        MENUITEM "&סרגל הכלים",                    ID_VIEW_TOOL_BAR, CHECKED
+        MENUITEM "סרגל הכוננים",                   ID_VIEW_DRIVE_BAR, CHECKED
+        MENUITEM "&שורת המצב",                 ID_VIEW_STATUSBAR, CHECKED
+#ifndef _NO_EXTENSIONS
+        MENUITEM "מ&סך מלא\tCtrl+Shift+S",  ID_VIEW_FULLSCREEN
+#endif
+        MENUITEM SEPARATOR
+        MENUITEM "מ&זעור עם ההפעלה",            504
+        MENUITEM "&שמירת השינויים ביציאה",      ID_VIEW_SAVESETTINGS
+    }
+
+
+    POPUP "א&בטחה"  {
+        MENUITEM "&גישה...",                  605
+        MENUITEM "&רישום...",                 606
+        MENUITEM "&בעלים...",                   607
+    }
+
+    POPUP "&חלון"  {
+        MENUITEM "&חלון חדש",                 ID_WINDOW_NEW
+        MENUITEM "Cascading\tCtrl+F5",          ID_WINDOW_CASCADE
+        MENUITEM "פריסה &אנכית",          ID_WINDOW_TILE_HORZ
+        MENUITEM "פריסה &אופקית\tCtrl+F4",   ID_WINDOW_TILE_VERT
+#ifndef _NO_EXTENSIONS
+        MENUITEM "סידור אוטומטי",       ID_WINDOW_AUTOSORT
+#endif
+        MENUITEM "Arrange &Symbols",            ID_WINDOW_ARRANGE
+        MENUITEM "&רענון\tF5",                ID_REFRESH
+    }
+
+    POPUP "ע&זרה"  {
+        MENUITEM "&נושאי העזרה\tF1",            ID_HELP
+        MENUITEM "&חיפוש בעזרה...\tF1",         ID_HELP
+        MENUITEM "&שימוש בעזרה\tF1",             ID_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "על &אודות Winefile...",          ID_ABOUT
+    }
+}
+
+IDD_SELECT_DESTINATION DIALOG 15, 13, 210, 63
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "בחירת יעד"
+FONT 8, "MS Shell Dlg"
+{
+    CONTROL         "", 101, "Static", SS_SIMPLE|SS_NOPREFIX, 3, 6, 162, 10
+    CONTROL         "&נתיב:", -1, "Static", SS_LEFTNOWORDWRAP|WS_GROUP, 3, 18, 60, 10
+    EDITTEXT        201, 3, 29, 134, 12, ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "אישור", 1, 158, 6, 47, 14
+    PUSHBUTTON      "ביטול", 2, 158, 23, 47, 14
+    PUSHBUTTON      "&עיון", 254, 158, 43, 47, 14
+}
+
+IDD_DIALOG_VIEW_TYPE DIALOG 15, 13, 161, 97
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "לפי סוג קובץ"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "&שם:",-1,7,8,22,10
+    EDITTEXT        IDC_VIEW_PATTERN,31,7,63,12,ES_AUTOHSCROLL
+    GROUPBOX        "סוג הקובץ",-1,7,23,87,56
+    CONTROL         "&תיקיות",IDC_VIEW_TYPE_DIRECTORIES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,13,32,70,10
+    CONTROL         "&תכניות",IDC_VIEW_TYPE_PROGRAMS,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,13,43,70,10
+    CONTROL         "&מסמכים",IDC_VIEW_TYPE_DOCUMENTS,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,13,54,70,10
+    CONTROL         "קבצים &אחרים",IDC_VIEW_TYPE_OTHERS,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,13,65,70,10
+    CONTROL         "הצגת קבצים מו&סתרים/קובצי מערכת",IDC_VIEW_TYPE_HIDDEN,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,81,106,9
+    DEFPUSHBUTTON   "אישור",IDOK,104,7,50,14
+    PUSHBUTTON      "ביטול",IDCANCEL,104,24,50,14
+END
+
+IDD_DIALOG_PROPERTIES DIALOG  0, 0, 248, 215
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "מאפיינים עבור %s"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "אישור",IDOK,191,7,50,14
+    PUSHBUTTON      "ביטול",IDCANCEL,191,29,50,14
+    LTEXT           "&שם הקובץ:",-1,7,7,59,9
+    EDITTEXT        IDC_STATIC_PROP_FILENAME,71,7,120,9,ES_READONLY | NOT WS_BORDER | WS_TABSTOP
+    LTEXT           "ה&נתיב המלא:",-1,7,18,59,9
+    EDITTEXT        IDC_STATIC_PROP_PATH,71,18,120,9, ES_READONLY | NOT WS_BORDER | WS_TABSTOP
+    LTEXT           "שינוי אחרון:",-1,7,29,59,9
+    EDITTEXT        IDC_STATIC_PROP_LASTCHANGE,71,29,120,9,ES_READONLY | NOT WS_BORDER | WS_TABSTOP
+    LTEXT           "גרסה:",-1,7,40,59,9
+    EDITTEXT        IDC_STATIC_PROP_VERSION,71,40,120,9,ES_READONLY | NOT WS_BORDER | WS_TABSTOP
+    LTEXT           "&זכויות יוצרים:",-1,7,51,59,9
+    EDITTEXT        IDC_STATIC_PROP_COPYRIGHT,71,51,120,9,ES_READONLY | NOT WS_BORDER | WS_TABSTOP
+    LTEXT           "גודל:",-1,7,62,59,9
+    EDITTEXT        IDC_STATIC_PROP_SIZE,71,62,120,9,ES_READONLY | NOT WS_BORDER | WS_TABSTOP
+    GROUPBOX        "מאפיינים",-1,7,79,158,46
+    CONTROL         "&קריאה בלבד",IDC_CHECK_READONLY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,91,68,9
+    CONTROL         "מו&סתר",IDC_CHECK_HIDDEN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,92,91,68,9
+    CONTROL         "&ארכיון",IDC_CHECK_ARCHIVE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,101,68,9
+    CONTROL         "&מערכת",IDC_CHECK_SYSTEM,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,92,101,68,9
+    CONTROL         "&דחוס",IDC_CHECK_COMPRESSED,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,17,111,68,9
+    GROUPBOX        "&פרטי הגרסה",-1,7,129,234,79
+    LISTBOX         IDC_LIST_PROP_VERSION_TYPES,13,139,107,63,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_LIST_PROP_VERSION_VALUES,123,139,111,63,ES_MULTILINE | ES_READONLY | WS_VSCROLL
+END
+
+
+STRINGTABLE
+{
+    IDS_FONT_SEL_DLG_NAME   "הגדרות הגופן חלות"
+    IDS_FONT_SEL_ERROR      "שגיאה בעת הגדרת הגופן החדש."
+}
+
+STRINGTABLE
+{
+    IDS_WINEFILE            "מנהל הקבצים של Wine"
+    IDS_ERROR               "שגיאה"
+    IDS_ROOT_FS             "root fs"
+    IDS_UNIXFS              "unixfs"
+    IDS_DESKTOP             "שולחן העבודה"
+    IDS_SHELL               "מעטפת"
+    IDS_TITLEFMT            "%s - %s"
+    IDS_NO_IMPL             "לא מוטמע עדיין"
+    IDS_WINE_FILE           "קובץ Wine"
+}
+
+STRINGTABLE
+{
+    IDS_COL_NAME            "שם"
+    IDS_COL_SIZE            "גודל"
+    IDS_COL_CDATE           "ת.יצירה"
+    IDS_COL_ADATE           "ת.גישה"
+    IDS_COL_MDATE           "ת.שינוי"
+    IDS_COL_IDX             "מפתח/Inode"
+    IDS_COL_LINKS           "קישורים"
+    IDS_COL_ATTR            "מאפיינים"
+    IDS_COL_SEC             "אבטחה"
+
+    IDS_FREE_SPACE_FMT      "%s מתוך %s פנויים"
+}
