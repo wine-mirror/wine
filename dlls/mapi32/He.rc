@@ -22,10 +22,12 @@
 
 #include "res.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-   IDS_NO_MAPI_CLIENT, "ωμιηϊ δεγςϊ δγεΰΨμ πλωμδ λιεεο ωΰιο μκ μχεη γεΰΨμ MAPI ξεϊχο."
-   IDS_SEND_MAIL, "ωμιηϊ γεΰΨμ"
+   IDS_NO_MAPI_CLIENT, "Χ©ΧΧ™Χ—Χª Χ”Χ•Χ“ΧΆΧª Χ”Χ“Χ•ΧΧ΄Χ Χ Χ›Χ©ΧΧ” Χ›Χ™Χ•Χ•Χ Χ©ΧΧ™Χ ΧΧ ΧΧ§Χ•Χ— Χ“Χ•ΧΧ΄Χ MAPI ΧΧ•ΧªΧ§Χ."
+   IDS_SEND_MAIL, "Χ©ΧΧ™Χ—Χª Χ“Χ•ΧΧ΄Χ"
 }
