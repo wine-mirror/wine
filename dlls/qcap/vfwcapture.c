@@ -753,16 +753,6 @@ static HRESULT WINAPI VfwPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * 
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI VfwPin_AddRef(IPin * iface)
-{
-    VfwPinImpl *This = (VfwPinImpl *)iface;
-    ULONG refCount = InterlockedIncrement(&This->pin.pin.refCount);
-
-    TRACE("() -> new refcount: %u\n", refCount);
-
-    return refCount;
-}
-
 static ULONG WINAPI
 VfwPin_Release(IPin * iface)
 {
@@ -802,24 +792,6 @@ VfwPin_QueryInternalConnections(IPin * iface, IPin ** apPin, ULONG * cPin)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI VfwPin_EndOfStream(IPin * iface)
-{
-    TRACE("()\n");
-    return E_UNEXPECTED;
-}
-
-static HRESULT WINAPI VfwPin_BeginFlush(IPin * iface)
-{
-    TRACE("(%p)->()\n", iface);
-    return E_UNEXPECTED;
-}
-
-static HRESULT WINAPI VfwPin_EndFlush(IPin * iface)
-{
-    TRACE("(%p)->()\n", iface);
-    return E_UNEXPECTED;
-}
-
 static HRESULT WINAPI
 VfwPin_NewSegment(IPin * iface, REFERENCE_TIME tStart,
                   REFERENCE_TIME tStop, double dRate)
@@ -832,7 +804,7 @@ VfwPin_NewSegment(IPin * iface, REFERENCE_TIME tStart,
 static const IPinVtbl VfwPin_Vtbl =
 {
     VfwPin_QueryInterface,
-    VfwPin_AddRef,
+    BasePinImpl_AddRef,
     VfwPin_Release,
     BaseOutputPinImpl_Connect,
     BaseOutputPinImpl_ReceiveConnection,
@@ -845,8 +817,8 @@ static const IPinVtbl VfwPin_Vtbl =
     BasePinImpl_QueryAccept,
     VfwPin_EnumMediaTypes,
     VfwPin_QueryInternalConnections,
-    VfwPin_EndOfStream,
-    VfwPin_BeginFlush,
-    VfwPin_EndFlush,
+    BaseOutputPinImpl_EndOfStream,
+    BaseOutputPinImpl_BeginFlush,
+    BaseOutputPinImpl_EndFlush,
     VfwPin_NewSegment
 };
