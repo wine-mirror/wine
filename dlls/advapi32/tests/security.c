@@ -1310,14 +1310,18 @@ static void test_token_attr(void)
     ret = GetTokenInformation(Token, TokenDefaultDacl, Dacl, Size, &Size2);
     ok(ret, "GetTokenInformation(TokenDefaultDacl) failed with error %u\n", GetLastError());
     ok(Dacl->DefaultDacl == NULL, "expected NULL, got %p\n", Dacl->DefaultDacl);
-    ok(Size2 == sizeof(TOKEN_DEFAULT_DACL), "got %u expected sizeof(TOKEN_DEFAULT_DACL)\n", Size2);
+    ok(Size2 == sizeof(TOKEN_DEFAULT_DACL) || broken(Size2 == 2*sizeof(TOKEN_DEFAULT_DACL)), /* WoW64 */
+       "got %u expected %u (sizeof(TOKEN_DEFAULT_DACL))\n", Size2, sizeof(TOKEN_DEFAULT_DACL));
 
     Dacl->DefaultDacl = acl;
     ret = SetTokenInformation(Token, TokenDefaultDacl, Dacl, Size);
     ok(ret, "SetTokenInformation(TokenDefaultDacl) failed with error %u\n", GetLastError());
 
-    ret = GetTokenInformation(Token, TokenDefaultDacl, Dacl, Size, &Size2);
-    ok(ret, "GetTokenInformation(TokenDefaultDacl) failed with error %u\n", GetLastError());
+    if (Size2 == sizeof(TOKEN_DEFAULT_DACL)) {
+        ret = GetTokenInformation(Token, TokenDefaultDacl, Dacl, Size, &Size2);
+        ok(ret, "GetTokenInformation(TokenDefaultDacl) failed with error %u\n", GetLastError());
+    } else
+        win_skip("TOKEN_DEFAULT_DACL size too small on WoW64\n");
 
     HeapFree(GetProcessHeap(), 0, Dacl);
     CloseHandle(Token);
