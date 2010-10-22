@@ -5372,6 +5372,7 @@ static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
     LPCWSTR load_order, serv_name, key;
     DWORD serv_type, start_type;
     DWORD err_control;
+    SERVICE_DESCRIPTIONW sd = {NULL};
 
     static const WCHAR query[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R', 'O','M',' ',
@@ -5403,6 +5404,7 @@ static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
     serv_name = MSI_RecordGetString(rec, 9);
     pass = MSI_RecordGetString(rec, 10);
     comp = MSI_RecordGetString(rec, 12);
+    deformat_string(package, MSI_RecordGetString(rec, 13), &sd.lpDescription);
 
     /* fetch the service path */
     row = MSI_QueryGetRecord(package->db, query, comp);
@@ -5430,12 +5432,18 @@ static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
         if (GetLastError() != ERROR_SERVICE_EXISTS)
             ERR("Failed to create service %s: %d\n", debugstr_w(name), GetLastError());
     }
+    else if (sd.lpDescription)
+    {
+        if (!ChangeServiceConfig2W(service, SERVICE_CONFIG_DESCRIPTION, &sd))
+            WARN("failed to set service description %u\n", GetLastError());
+    }
 
 done:
     CloseServiceHandle(service);
     CloseServiceHandle(hscm);
     msi_free(name);
     msi_free(disp);
+    msi_free(sd.lpDescription);
 
     return ERROR_SUCCESS;
 }
