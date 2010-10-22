@@ -32,6 +32,7 @@ RC_SRCS = \
 	rsrc_Ro.rc \
 	rsrc_Ru.rc \
 	rsrc_Si.rc \
+	rsrc_Sr.rc \
 	rsrc_Sv.rc \
 	rsrc_Uk.rc \
 	rsrc_Zh.rc \
