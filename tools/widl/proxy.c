@@ -114,20 +114,6 @@ static void init_proxy(const statement_list_t *stmts)
   print_proxy( "#define DECLSPEC_HIDDEN\n");
   print_proxy( "#endif\n");
   print_proxy( "\n");
-  write_exceptions( proxy );
-  print_proxy( "\n");
-  print_proxy( "struct __proxy_frame\n");
-  print_proxy( "{\n");
-  print_proxy( "    __DECL_EXCEPTION_FRAME\n");
-  print_proxy( "    MIDL_STUB_MESSAGE _StubMsg;\n");
-  print_proxy( "    void             *This;\n");
-  print_proxy( "};\n");
-  print_proxy( "\n");
-  print_proxy("static int __proxy_filter( struct __proxy_frame *__frame )\n");
-  print_proxy( "{\n");
-  print_proxy( "    return (__frame->_StubMsg.dwStubPhase != PROXY_SENDRECEIVE);\n");
-  print_proxy( "}\n");
-  print_proxy( "\n");
 }
 
 static void clear_output_vars( const var_list_t *args )
@@ -775,6 +761,25 @@ static void write_proxy_routines(const statement_list_t *stmts)
 {
   int expr_eval_routines;
   unsigned int proc_offset = 0;
+  char *file_id = proxy_token;
+  int i, count, have_baseiid;
+  type_t **interfaces;
+  const type_t * delegate_to;
+
+  write_exceptions( proxy );
+  print_proxy( "\n");
+  print_proxy( "struct __proxy_frame\n");
+  print_proxy( "{\n");
+  print_proxy( "    __DECL_EXCEPTION_FRAME\n");
+  print_proxy( "    MIDL_STUB_MESSAGE _StubMsg;\n");
+  print_proxy( "    void             *This;\n");
+  print_proxy( "};\n");
+  print_proxy( "\n");
+  print_proxy("static int __proxy_filter( struct __proxy_frame *__frame )\n");
+  print_proxy( "{\n");
+  print_proxy( "    return (__frame->_StubMsg.dwStubPhase != PROXY_SENDRECEIVE);\n");
+  print_proxy( "}\n");
+  print_proxy( "\n");
 
   write_formatstringsdecl(proxy, indent, stmts, need_proxy);
   write_stubdescproto();
@@ -792,42 +797,6 @@ static void write_proxy_routines(const statement_list_t *stmts)
   print_proxy( "\n");
   write_procformatstring(proxy, stmts, need_proxy);
   write_typeformatstring(proxy, stmts, need_proxy);
-
-}
-
-void write_proxies(const statement_list_t *stmts)
-{
-  char *file_id = proxy_token;
-  int i, count, have_baseiid;
-  type_t **interfaces;
-  const type_t * delegate_to;
-
-  if (!do_proxies) return;
-  if (do_everything && !need_proxy_file(stmts)) return;
-
-  init_proxy(stmts);
-  if(!proxy) return;
-
-  if (do_win32 && do_win64)
-  {
-      fprintf(proxy, "\n#ifndef _WIN64\n\n");
-      pointer_size = 4;
-      write_proxy_routines( stmts );
-      fprintf(proxy, "\n#else /* _WIN64 */\n\n");
-      pointer_size = 8;
-      write_proxy_routines( stmts );
-      fprintf(proxy, "#endif /* _WIN64 */\n\n");
-  }
-  else if (do_win32)
-  {
-      pointer_size = 4;
-      write_proxy_routines( stmts );
-  }
-  else if (do_win64)
-  {
-      pointer_size = 8;
-      write_proxy_routines( stmts );
-  }
 
   interfaces = sort_interfaces(stmts, &count);
   fprintf(proxy, "static const CInterfaceProxyVtbl* const _%s_ProxyVtblList[] =\n", file_id);
@@ -901,6 +870,36 @@ void write_proxies(const statement_list_t *stmts)
   fprintf(proxy, "    0,\n");
   fprintf(proxy, "    0\n");
   fprintf(proxy, "};\n");
+}
+
+void write_proxies(const statement_list_t *stmts)
+{
+  if (!do_proxies) return;
+  if (do_everything && !need_proxy_file(stmts)) return;
+
+  init_proxy(stmts);
+  if(!proxy) return;
+
+  if (do_win32 && do_win64)
+  {
+      fprintf(proxy, "\n#ifndef _WIN64\n\n");
+      pointer_size = 4;
+      write_proxy_routines( stmts );
+      fprintf(proxy, "\n#else /* _WIN64 */\n\n");
+      pointer_size = 8;
+      write_proxy_routines( stmts );
+      fprintf(proxy, "\n#endif /* _WIN64 */\n");
+  }
+  else if (do_win32)
+  {
+      pointer_size = 4;
+      write_proxy_routines( stmts );
+  }
+  else if (do_win64)
+  {
+      pointer_size = 8;
+      write_proxy_routines( stmts );
+  }
 
   fclose(proxy);
 }
