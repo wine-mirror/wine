@@ -1626,6 +1626,19 @@ then
   fi
 fi
 
+dnl **** Disable Fortify, it has too many false positives
+
+AC_CACHE_CHECK([for the need to disable Fortify], ac_cv_c_fortify_enabled,
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <string.h>]],
+[[#if defined(__USE_FORTIFY_LEVEL) && __USE_FORTIFY_LEVEL > 0
+#error Fortify enabled
+#endif]])],
+        [ac_cv_c_fortify_enabled=no],[ac_cv_c_fortify_enabled=yes]))
+if test "$ac_cv_c_fortify_enabled" = yes
+then
+    EXTRACFLAGS="$EXTRACFLAGS -D_FORTIFY_SOURCE=0"
+fi
+
 dnl **** Check for underscore on external symbols ****
 
 AC_CACHE_CHECK([whether external symbols need an underscore prefix], ac_cv_c_extern_prefix,
