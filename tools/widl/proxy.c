@@ -579,7 +579,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   /* FIXME: check for [oleautomation], shouldn't generate proxies/stubs if specified */
 
   STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface)) {
-    const var_t *func = stmt->u.var;
+    var_t *func = stmt->u.var;
     if (first_func) {
       fprintf(proxy, "/*****************************************************************************\n");
       fprintf(proxy, " * %s interface\n", iface->name);
@@ -601,6 +601,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
               }
           }
       }
+      func->procstring_offset = *proc_offset;
       gen_proxy(iface, func, idx, *proc_offset);
       gen_stub(iface, func, cname, *proc_offset);
       *proc_offset += get_size_procformatstring_func( func );
@@ -608,6 +609,19 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   }
 
   count = count_methods(iface);
+
+  /* proc format string offsets */
+  print_proxy( "static const unsigned short %s_FormatStringOffsetTable[] =\n", iface->name );
+  print_proxy( "{\n" );
+  indent++;
+  STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface))
+  {
+      var_t *func = stmt->u.var;
+      if (is_local( func->attrs )) continue;
+      print_proxy( "%u,  /* %s */\n", func->procstring_offset, func->name );
+  }
+  indent--;
+  print_proxy( "};\n\n" );
 
   /* proxy vtable */
   print_proxy( "static %sCINTERFACE_PROXY_VTABLE(%d) _%sProxyVtbl =\n",
@@ -626,8 +640,22 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   indent--;
   print_proxy( "}\n");
   indent--;
-  print_proxy( "};\n");
-  fprintf(proxy, "\n\n");
+  print_proxy( "};\n\n");
+
+  /* server info */
+  print_proxy( "static const MIDL_SERVER_INFO %s_ServerInfo =\n", iface->name );
+  print_proxy( "{\n" );
+  indent++;
+  print_proxy( "&Object_StubDesc,\n" );
+  print_proxy( "0,\n" );
+  print_proxy( "__MIDL_ProcFormatString.Format,\n" );
+  print_proxy( "&%s_FormatStringOffsetTable[-3],\n", iface->name );
+  print_proxy( "0,\n" );
+  print_proxy( "0,\n" );
+  print_proxy( "0,\n" );
+  print_proxy( "0\n" );
+  indent--;
+  print_proxy( "};\n\n" );
 
   /* stub vtable */
   print_proxy( "static const PRPC_STUB_FUNCTION %s_table[] =\n", iface->name);
@@ -645,7 +673,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   print_proxy( "{\n");
   indent++;
   print_proxy( "&IID_%s,\n", iface->name);
-  print_proxy( "0,\n");
+  print_proxy( "&%s_ServerInfo,\n", iface->name );
   print_proxy( "%d,\n", count);
   print_proxy( "&%s_table[-3],\n", iface->name);
   indent--;

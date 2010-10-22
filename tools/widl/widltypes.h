@@ -420,6 +420,7 @@ struct _var_t {
   attr_list_t *attrs;
   expr_t *eval;
   enum storage_class stgclass;
+  unsigned int procstring_offset;
 
   struct _loc_info_t loc_info;
 
