@@ -1294,13 +1294,18 @@ static struct regsvr_converter const converter_list[] = {
     { NULL }			/* list terminator */
 };
 
+extern HRESULT WINAPI WIC_DllRegisterServer(void) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI WIC_DllUnregisterServer(void) DECLSPEC_HIDDEN;
+
 HRESULT WINAPI DllRegisterServer(void)
 {
     HRESULT hr;
 
     TRACE("\n");
 
-    hr = register_coclasses(coclass_list);
+    hr = WIC_DllRegisterServer();
+    if (SUCCEEDED(hr))
+        hr = register_coclasses(coclass_list);
     if (SUCCEEDED(hr))
         register_decoders(decoder_list);
     if (SUCCEEDED(hr))
@@ -1316,7 +1321,9 @@ HRESULT WINAPI DllUnregisterServer(void)
 
     TRACE("\n");
 
-    hr = unregister_coclasses(coclass_list);
+    hr = WIC_DllUnregisterServer();
+    if (SUCCEEDED(hr))
+        hr = unregister_coclasses(coclass_list);
     if (SUCCEEDED(hr))
         unregister_decoders(decoder_list);
     if (SUCCEEDED(hr))

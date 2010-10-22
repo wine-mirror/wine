@@ -36,6 +36,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
+extern HRESULT WINAPI WIC_DllGetClassObject(REFCLSID, REFIID, LPVOID *) DECLSPEC_HIDDEN;
+
 typedef struct {
     REFCLSID classid;
     HRESULT (*constructor)(IUnknown*,REFIID,void**);
@@ -174,7 +176,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
     if (info)
         ret = ClassFactoryImpl_Constructor(info, iid, ppv);
     else
-        ret = CLASS_E_CLASSNOTAVAILABLE;
+        ret = WIC_DllGetClassObject(rclsid, iid, ppv);
 
     TRACE("<-- %08X\n", ret);
     return ret;

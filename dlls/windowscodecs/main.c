@@ -32,6 +32,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
+extern BOOL WINAPI WIC_DllMain(HINSTANCE, DWORD, LPVOID) DECLSPEC_HIDDEN;
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
 
@@ -44,7 +46,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             break;
     }
 
-    return TRUE;
+    return WIC_DllMain(hinstDLL, fdwReason, lpvReserved);
 }
 
 HRESULT copy_pixels(UINT bpp, const BYTE *srcbuffer,

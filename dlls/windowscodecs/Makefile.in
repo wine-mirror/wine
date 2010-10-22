@@ -1,7 +1,8 @@
 MODULE    = windowscodecs.dll
 IMPORTLIB = windowscodecs
-IMPORTS   = uuid ole32 shlwapi advapi32
+IMPORTS   = uuid ole32 oleaut32 shlwapi advapi32 rpcrt4
 EXTRAINCL = @PNGINCL@
+EXTRADEFS = -DENTRY_PREFIX=WIC_ -DPROXY_DELEGATION -DREGISTER_PROXY_DLL
 
 C_SRCS = \
 	bmpdecode.c \
@@ -26,5 +27,10 @@ C_SRCS = \
 	ungif.c
 
 RC_SRCS = version.rc
+
+IDL_P_SRCS = \
+	windowscodecs_wincodec.idl
+
+EXTRA_OBJS = dlldata.o
 
 @MAKE_DLL_RULES@
