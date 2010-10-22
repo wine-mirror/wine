@@ -26,6 +26,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wlanapi);
 
+DWORD WINAPI WlanOpenHandle(DWORD clientVersion, PVOID reserved,
+        PDWORD negotiatedVersion, PHANDLE clientHandle)
+{
+    FIXME("(%d, %p, %p, %p) stub\n",clientVersion, reserved, negotiatedVersion, clientHandle);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
