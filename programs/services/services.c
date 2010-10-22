@@ -154,6 +154,25 @@ static DWORD reg_set_string_value(HKEY hKey, LPCWSTR value_name, LPCWSTR string)
     return RegSetValueExW(hKey, value_name, 0, REG_SZ, (const BYTE*)string, sizeof(WCHAR)*(strlenW(string) + 1));
 }
 
+static DWORD reg_set_multisz_value(HKEY hKey, LPCWSTR value_name, LPCWSTR string)
+{
+    const WCHAR *ptr;
+
+    if (!string)
+    {
+        DWORD err;
+        err = RegDeleteValueW(hKey, value_name);
+        if (err != ERROR_FILE_NOT_FOUND)
+            return err;
+
+        return ERROR_SUCCESS;
+    }
+
+    ptr = string;
+    while (*ptr) ptr += strlenW(ptr) + 1;
+    return RegSetValueExW(hKey, value_name, 0, REG_MULTI_SZ, (const BYTE*)string, sizeof(WCHAR)*(ptr - string + 1));
+}
+
 DWORD save_service_config(struct service_entry *entry)
 {
     DWORD err;
@@ -172,6 +191,10 @@ DWORD save_service_config(struct service_entry *entry)
     if ((err = reg_set_string_value(hKey, SZ_OBJECT_NAME, entry->config.lpServiceStartName)) != 0)
         goto cleanup;
     if ((err = reg_set_string_value(hKey, SZ_DESCRIPTION, entry->description)) != 0)
+        goto cleanup;
+    if ((err = reg_set_multisz_value(hKey, SZ_DEPEND_ON_SERVICE, entry->dependOnServices)) != 0)
+        goto cleanup;
+    if ((err = reg_set_multisz_value(hKey, SZ_DEPEND_ON_GROUP, entry->dependOnGroups)) != 0)
         goto cleanup;
     if ((err = RegSetValueExW(hKey, SZ_START, 0, REG_DWORD, (LPBYTE)&entry->config.dwStartType, sizeof(DWORD))) != 0)
         goto cleanup;
