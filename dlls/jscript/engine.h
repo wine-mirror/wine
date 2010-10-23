@@ -165,7 +165,7 @@ typedef struct {
     jsexcept_t ei;
 } return_type_t;
 
-typedef HRESULT (*statement_eval_t)(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
+typedef HRESULT (*statement_eval_t)(script_ctx_t*,statement_t*,return_type_t*,VARIANT*);
 
 struct _statement_t {
     statement_eval_t eval;
@@ -260,22 +260,22 @@ typedef struct {
     statement_t *finally_statement;
 } try_statement_t;
 
-HRESULT block_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
-HRESULT var_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
-HRESULT empty_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
-HRESULT expression_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
-HRESULT if_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
-HRESULT while_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
-HRESULT for_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
-HRESULT forin_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
-HRESULT continue_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
-HRESULT break_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
-HRESULT return_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
-HRESULT with_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
-HRESULT labelled_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
-HRESULT switch_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
-HRESULT throw_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
-HRESULT try_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
+HRESULT block_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*);
+HRESULT var_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*);
+HRESULT empty_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*);
+HRESULT expression_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*);
+HRESULT if_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*);
+HRESULT while_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*);
+HRESULT for_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*);
+HRESULT forin_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*);
+HRESULT continue_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*);
+HRESULT break_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*);
+HRESULT return_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*);
+HRESULT with_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*);
+HRESULT labelled_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*);
+HRESULT switch_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*);
+HRESULT throw_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*);
+HRESULT try_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*);
 
 typedef struct {
     enum {
@@ -298,7 +298,7 @@ typedef struct {
     } u;
 } exprval_t;
 
-typedef HRESULT (*expression_eval_t)(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+typedef HRESULT (*expression_eval_t)(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
 
 struct _expression_t {
     expression_eval_t eval;
@@ -453,62 +453,62 @@ typedef enum {
      EXPR_ASSIGNXOR
 } expression_type_t;
 
-HRESULT function_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT conditional_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT array_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT member_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT new_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT call_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT this_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT identifier_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT literal_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT array_literal_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT property_value_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT function_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT conditional_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT array_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT member_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT new_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT call_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT this_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT identifier_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT literal_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT array_literal_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT property_value_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
 
-HRESULT comma_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT logical_or_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT logical_and_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT binary_or_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT binary_xor_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT binary_and_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT instanceof_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT in_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT add_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT sub_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT mul_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT div_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT mod_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT delete_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT void_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT typeof_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT minus_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT plus_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT post_increment_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT post_decrement_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT pre_increment_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT pre_decrement_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT equal_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT equal2_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT not_equal_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT not_equal2_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT less_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT lesseq_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT greater_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT greatereq_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT binary_negation_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT logical_negation_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT left_shift_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT right_shift_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT right2_shift_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT assign_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT assign_lshift_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT assign_rshift_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT assign_rrshift_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT assign_add_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT assign_sub_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT assign_mul_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT assign_div_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT assign_mod_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT assign_and_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT assign_or_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT assign_xor_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT comma_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT logical_or_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT logical_and_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT binary_or_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT binary_xor_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT binary_and_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT instanceof_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT in_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT add_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT sub_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT mul_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT div_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT mod_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT delete_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT void_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT typeof_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT minus_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT plus_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT post_increment_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT post_decrement_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT pre_increment_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT pre_decrement_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT equal_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT equal2_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT not_equal_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT not_equal2_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT less_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT lesseq_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT greater_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT greatereq_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT binary_negation_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT logical_negation_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT left_shift_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT right_shift_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT right2_shift_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT assign_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT assign_lshift_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT assign_rshift_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT assign_rrshift_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT assign_add_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT assign_sub_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT assign_mul_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT assign_div_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT assign_mod_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT assign_and_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT assign_or_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT assign_xor_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
