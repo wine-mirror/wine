@@ -208,7 +208,6 @@ void ConnectionPoint_Init(ConnectionPoint *cp, ConnectionPointContainer *contain
     cp->sinks = NULL;
     cp->sinks_size = 0;
     cp->iid = riid;
-    cp->next = NULL;
     cp->data = data;
 
     cp->next = container->cp_list;
