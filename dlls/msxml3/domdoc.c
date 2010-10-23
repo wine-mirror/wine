@@ -31,6 +31,7 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "ole2.h"
+#include "olectl.h"
 #include "msxml6.h"
 #include "wininet.h"
 #include "winreg.h"
@@ -79,7 +80,20 @@ typedef struct _domdoc_properties {
     BOOL XPath;
 } domdoc_properties;
 
-typedef struct _domdoc
+typedef struct ConnectionPoint ConnectionPoint;
+typedef struct domdoc domdoc;
+
+struct ConnectionPoint
+{
+    const IConnectionPointVtbl  *lpVtblConnectionPoint;
+    const IID *iid;
+
+    ConnectionPoint *next;
+    IConnectionPointContainer *container;
+    domdoc *doc;
+};
+
+struct domdoc
 {
     xmlnode node;
     const struct IXMLDOMDocument3Vtbl          *lpVtbl;
@@ -106,7 +120,18 @@ typedef struct _domdoc
 
     /* IObjectSafety */
     DWORD safeopt;
-} domdoc;
+
+    /* connection list */
+    ConnectionPoint *cp_list;
+    ConnectionPoint cp_domdocevents;
+    ConnectionPoint cp_propnotif;
+    ConnectionPoint cp_dispatch;
+};
+
+static inline ConnectionPoint *impl_from_IConnectionPoint(IConnectionPoint *iface)
+{
+    return (ConnectionPoint *)((char*)iface - FIELD_OFFSET(ConnectionPoint, lpVtblConnectionPoint));
+}
 
 /*
   In native windows, the whole lifetime management of XMLDOMNodes is
@@ -2797,11 +2822,30 @@ static HRESULT WINAPI ConnectionPointContainer_EnumConnectionPoints(IConnectionP
 }
 
 static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPointContainer *iface,
-        REFIID riid, IConnectionPoint **ppCP)
+        REFIID riid, IConnectionPoint **cp)
 {
     domdoc *This = impl_from_IConnectionPointContainer(iface);
-    FIXME("(%p)->(%s %p): stub\n", This, debugstr_guid(riid), ppCP);
-    return E_NOTIMPL;
+    ConnectionPoint *iter;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), cp);
+
+    *cp = NULL;
+
+    for(iter = This->cp_list; iter; iter = iter->next)
+    {
+        if (IsEqualGUID(iter->iid, riid))
+            *cp = (IConnectionPoint*)&iter->lpVtblConnectionPoint;
+    }
+
+    if (*cp)
+    {
+        IConnectionPoint_AddRef(*cp);
+        return S_OK;
+    }
+
+    FIXME("unsupported riid %s\n", debugstr_guid(riid));
+    return CONNECT_E_NOCONNECTION;
+
 }
 
 static const struct IConnectionPointContainerVtbl ConnectionPointContainerVtbl =
@@ -2812,6 +2856,107 @@ static const struct IConnectionPointContainerVtbl ConnectionPointContainerVtbl =
     ConnectionPointContainer_EnumConnectionPoints,
     ConnectionPointContainer_FindConnectionPoint
 };
+
+/* IConnectionPoint */
+static HRESULT WINAPI ConnectionPoint_QueryInterface(IConnectionPoint *iface,
+                                                     REFIID riid, void **ppv)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv );
+
+    *ppv = NULL;
+
+    if (IsEqualGUID(&IID_IUnknown, riid) ||
+        IsEqualGUID(&IID_IConnectionPoint, riid))
+    {
+        *ppv = iface;
+    }
+
+    if (*ppv)
+    {
+        IConnectionPoint_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ConnectionPoint_AddRef(IConnectionPoint *iface)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+    return IConnectionPointContainer_AddRef(This->container);
+}
+
+static ULONG WINAPI ConnectionPoint_Release(IConnectionPoint *iface)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+    return IConnectionPointContainer_Release(This->container);
+}
+
+static HRESULT WINAPI ConnectionPoint_GetConnectionInterface(IConnectionPoint *iface, IID *pIID)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+    FIXME("(%p)->(%p): stub\n", This, pIID);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPoint_GetConnectionPointContainer(IConnectionPoint *iface,
+        IConnectionPointContainer **ppCPC)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+    FIXME("(%p)->(%p): stub\n", This, ppCPC);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *pUnkSink,
+                                             DWORD *pdwCookie)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+    FIXME("(%p)->(%p %p): stub\n", This, pUnkSink, pdwCookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPoint_Unadvise(IConnectionPoint *iface, DWORD dwCookie)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+    FIXME("(%p)->(%d): stub\n", This, dwCookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPoint_EnumConnections(IConnectionPoint *iface,
+                                                      IEnumConnections **ppEnum)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+    FIXME("(%p)->(%p): stub\n", This, ppEnum);
+    return E_NOTIMPL;
+}
+
+static const IConnectionPointVtbl ConnectionPointVtbl =
+{
+    ConnectionPoint_QueryInterface,
+    ConnectionPoint_AddRef,
+    ConnectionPoint_Release,
+    ConnectionPoint_GetConnectionInterface,
+    ConnectionPoint_GetConnectionPointContainer,
+    ConnectionPoint_Advise,
+    ConnectionPoint_Unadvise,
+    ConnectionPoint_EnumConnections
+};
+
+void ConnectionPoint_Init(ConnectionPoint *cp, struct domdoc *doc, REFIID riid)
+{
+    cp->lpVtblConnectionPoint = &ConnectionPointVtbl;
+    cp->doc = doc;
+    cp->iid = riid;
+    cp->next = NULL;
+
+    cp->next = doc->cp_list;
+    doc->cp_list = cp;
+
+    cp->container = (IConnectionPointContainer*)&doc->lpVtblConnectionPointContainer;
+}
 
 /* xmldoc implementation of IObjectWithSite */
 static HRESULT WINAPI
@@ -2982,6 +3127,12 @@ HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **docu
     doc->site = NULL;
     doc->safeopt = 0;
     doc->bsc = NULL;
+    doc->cp_list = NULL;
+
+    /* events connection points */
+    ConnectionPoint_Init(&doc->cp_dispatch, doc, &IID_IDispatch);
+    ConnectionPoint_Init(&doc->cp_propnotif, doc, &IID_IPropertyNotifySink);
+    ConnectionPoint_Init(&doc->cp_domdocevents, doc, &DIID_XMLDOMDocumentEvents);
 
     init_xmlnode(&doc->node, (xmlNodePtr)xmldoc, (IXMLDOMNode*)&doc->lpVtbl, &domdoc_dispex);
 

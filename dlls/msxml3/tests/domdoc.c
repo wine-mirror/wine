@@ -7100,6 +7100,7 @@ static void test_selectSingleNode(void)
 static void test_events(void)
 {
     IConnectionPointContainer *conn;
+    IConnectionPoint *point;
     IXMLDOMDocument *doc;
     HRESULT hr;
 
@@ -7108,6 +7109,17 @@ static void test_events(void)
 
     hr = IXMLDOMDocument_QueryInterface(doc, &IID_IConnectionPointContainer, (void**)&conn);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IConnectionPointContainer_FindConnectionPoint(conn, &IID_IDispatch, &point);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IConnectionPoint_Release(point);
+    hr = IConnectionPointContainer_FindConnectionPoint(conn, &IID_IPropertyNotifySink, &point);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IConnectionPoint_Release(point);
+    hr = IConnectionPointContainer_FindConnectionPoint(conn, &DIID_XMLDOMDocumentEvents, &point);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IConnectionPoint_Release(point);
+
     IConnectionPointContainer_Release(conn);
 
     IXMLDOMDocument_Release(doc);
