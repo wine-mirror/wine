@@ -2908,11 +2908,17 @@ static HRESULT WINAPI ConnectionPoint_GetConnectionInterface(IConnectionPoint *i
 }
 
 static HRESULT WINAPI ConnectionPoint_GetConnectionPointContainer(IConnectionPoint *iface,
-        IConnectionPointContainer **ppCPC)
+        IConnectionPointContainer **container)
 {
     ConnectionPoint *This = impl_from_IConnectionPoint(iface);
-    FIXME("(%p)->(%p): stub\n", This, ppCPC);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, container);
+
+    if (!container) return E_POINTER;
+
+    *container = This->container;
+    IConnectionPointContainer_AddRef(*container);
+    return S_OK;
 }
 
 static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *pUnkSink,
