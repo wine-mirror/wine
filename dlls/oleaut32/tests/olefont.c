@@ -127,6 +127,9 @@ static void test_QueryInterface(void)
         IFont*  font = NULL;
         LONG ret;
 
+        hres = pOleCreateFontIndirect(NULL, &IID_IFont, NULL);
+        ok(hres == E_POINTER, "got 0x%08x\n", hres);
+
         hres = pOleCreateFontIndirect(NULL, &IID_IFont, &pvObj);
         font = pvObj;
 

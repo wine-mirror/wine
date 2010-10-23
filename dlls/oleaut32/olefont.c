@@ -480,15 +480,6 @@ static HRESULT WINAPI OLEFontImpl_QueryInterface(
   OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%s, %p)\n", this, debugstr_guid(riid), ppvObject);
 
-  /*
-   * Perform a sanity check on the parameters.
-   */
-  if ( (this==0) || (ppvObject==0) )
-    return E_INVALIDARG;
-
-  /*
-   * Initialize the return parameter.
-   */
   *ppvObject = 0;
 
   /*
@@ -1143,7 +1134,7 @@ static HRESULT WINAPI OLEFontImpl_IsEqual(
   INT ret;
   INT left_len,right_len;
 
-  if((iface == NULL) || (pFontOther == NULL))
+  if(pFontOther == NULL)
     return E_POINTER;
   else if (left->description.cySize.s.Lo != right->description.cySize.s.Lo)
     return S_FALSE;
