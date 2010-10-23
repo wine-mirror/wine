@@ -134,7 +134,7 @@ STRINGTABLE
     IDS_PURPOSE_OEM_WHQL "Verifiering av OEM Windows-systemkomponent"
     IDS_PURPOSE_EMBEDDED_NT "Verifiering av inbäddad Windows-systemkomponent"
     IDS_PURPOSE_ROOT_LIST_SIGNER "Signerare av rotlista"
-    IDS_PURPOSE_QUALIFIED_SUBORDINATION "Kvalifierad underordning"
+    IDS_PURPOSE_QUALIFIED_SUBORDINATION "Kvalificerad underordning"
     IDS_PURPOSE_KEY_RECOVERY "Nyckelåterställning"
     IDS_PURPOSE_DOCUMENT_SIGNING "Dokumentsignering"
     IDS_PURPOSE_LIFETIME_SIGNING "Livstidssignering"
