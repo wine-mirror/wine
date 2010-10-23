@@ -67,6 +67,7 @@ dlls/kernel32/nls/winerr_plk.mc.rc
 dlls/kernel32/nls/winerr_ptb.mc.rc
 dlls/kernel32/nls/winerr_ptg.mc.rc
 dlls/kernel32/nls/winerr_rus.mc.rc
+dlls/kernel32/nls/winerr_sve.mc.rc
 dlls/kernel32/nls/winerr_ukr.mc.rc
 dlls/libd3dcompiler.def
 dlls/libd3dx9.def
