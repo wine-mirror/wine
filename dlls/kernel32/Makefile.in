@@ -65,6 +65,7 @@ MC_SRCS = \
 	nls/winerr_ptb.mc \
 	nls/winerr_ptg.mc \
 	nls/winerr_rus.mc \
+	nls/winerr_sve.mc \
 	nls/winerr_ukr.mc
 
 EXTRASUBDIRS = nls
