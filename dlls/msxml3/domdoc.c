@@ -91,6 +91,14 @@ struct ConnectionPoint
     ConnectionPoint *next;
     IConnectionPointContainer *container;
     domdoc *doc;
+
+    union
+    {
+        IUnknown *unk;
+        IDispatch *disp;
+        IPropertyNotifySink *propnotif;
+    } *sinks;
+    DWORD sinks_size;
 };
 
 struct domdoc
@@ -2929,11 +2937,19 @@ static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ConnectionPoint_Unadvise(IConnectionPoint *iface, DWORD dwCookie)
+static HRESULT WINAPI ConnectionPoint_Unadvise(IConnectionPoint *iface, DWORD cookie)
 {
     ConnectionPoint *This = impl_from_IConnectionPoint(iface);
-    FIXME("(%p)->(%d): stub\n", This, dwCookie);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d)\n", This, cookie);
+
+    if (cookie == 0 || cookie > This->sinks_size || !This->sinks[cookie-1].unk)
+        return CONNECT_E_NOCONNECTION;
+
+    IUnknown_Release(This->sinks[cookie-1].unk);
+    This->sinks[cookie-1].unk = NULL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ConnectionPoint_EnumConnections(IConnectionPoint *iface,
@@ -2961,7 +2977,8 @@ void ConnectionPoint_Init(ConnectionPoint *cp, struct domdoc *doc, REFIID riid)
     cp->lpVtblConnectionPoint = &ConnectionPointVtbl;
     cp->doc = doc;
     cp->iid = riid;
-    cp->next = NULL;
+    cp->sinks = NULL;
+    cp->sinks_size = 0;
 
     cp->next = doc->cp_list;
     doc->cp_list = cp;
