@@ -309,6 +309,10 @@ sub parse_makefile($)
             $make{$1} = \@list;
             next;
         }
+        if (/^\s*(TOPSRCDIR|TOPOBJDIR|SRCDIR|VPATH)\s*=\s*(.*)/)
+        {
+            die "Variable $1 in $file.in is obsolete";
+        }
     }
     return %make;
 }
@@ -363,6 +367,14 @@ sub update_makefiles(@)
         if ($rules eq $makerules{"MAKE_DLL_RULES"})
         {
             (my $name = $file) =~ s/^dlls\/(.*)\/Makefile/$1/;
+            if ($name =~ /\./)
+            {
+                die "Invalid MODULE in $file" unless $make{"MODULE"} eq $name;
+            }
+            else
+            {
+                die "Invalid MODULE in $file" unless $make{"MODULE"} eq "$name.dll";
+            }
             my $implib = $make{"IMPORTLIB"} || "";
             my $implib_srcs = defined($make{"IMPLIB_SRCS"}) && join( " ", @{$make{"IMPLIB_SRCS"}} );
             $args .= "," if $implib || $is_win16;
@@ -374,6 +386,14 @@ sub update_makefiles(@)
         elsif ($rules eq $makerules{"MAKE_PROG_RULES"})
         {
             (my $name = $file) =~ s/^programs\/(.*)\/Makefile/$1/;
+            if ($name =~ /\./)
+            {
+                die "Invalid MODULE in $file" unless $make{"MODULE"} eq $name;
+            }
+            else
+            {
+                die "Invalid MODULE in $file" unless $make{"MODULE"} eq "$name.exe";
+            }
             my $install = $dont_install{$name} ? "" : "install";
             $install .= "bin" if $bin_install{$name};
             $args .= "," if $is_win16 || $install;
