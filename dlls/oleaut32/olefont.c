@@ -2131,111 +2131,106 @@ static HRESULT WINAPI OLEFontImpl_IPersistPropertyBag_Load(
     static const WCHAR sAttrUnderline[] = {'U','n','d','e','r','l','i','n','e',0};
     static const WCHAR sAttrItalic[] = {'I','t','a','l','i','c',0};
     static const WCHAR sAttrStrikethrough[] = {'S','t','r','i','k','e','t','h','r','o','u','g','h',0};
-    VARIANT rawAttr;
-    VARIANT valueAttr;
-    HRESULT iRes = S_OK;
     OLEFontImpl *this = impl_from_IPersistPropertyBag(iface);
+    VARIANT value;
+    HRESULT iRes;
 
-    VariantInit(&rawAttr);
-    VariantInit(&valueAttr);
+    VariantInit(&value);
+
+    iRes = IPropertyBag_Read(pPropBag, sAttrName, &value, pErrorLog);
+    if (iRes == S_OK)
+    {
+        iRes = VariantChangeType(&value, &value, 0, VT_BSTR);
+        if (iRes == S_OK)
+            iRes = IFont_put_Name((IFont *)this, V_BSTR(&value));
+    }
+    else if (iRes == E_INVALIDARG)
+        iRes = S_OK;
+
+    VariantClear(&value);
 
     if (iRes == S_OK) {
-        iRes = IPropertyBag_Read(pPropBag, sAttrName, &rawAttr, pErrorLog);
+        iRes = IPropertyBag_Read(pPropBag, sAttrSize, &value, pErrorLog);
         if (iRes == S_OK)
         {
-            iRes = VariantChangeType(&rawAttr, &valueAttr, 0, VT_BSTR);
+            iRes = VariantChangeType(&value, &value, 0, VT_CY);
             if (iRes == S_OK)
-                iRes = IFont_put_Name((IFont *)this, V_BSTR(&valueAttr));
+                iRes = IFont_put_Size((IFont *)this, V_CY(&value));
         }
         else if (iRes == E_INVALIDARG)
             iRes = S_OK;
-        VariantClear(&rawAttr);
-        VariantClear(&valueAttr);
+
+        VariantClear(&value);
     }
 
     if (iRes == S_OK) {
-        iRes = IPropertyBag_Read(pPropBag, sAttrSize, &rawAttr, pErrorLog);
+        iRes = IPropertyBag_Read(pPropBag, sAttrCharset, &value, pErrorLog);
         if (iRes == S_OK)
         {
-            iRes = VariantChangeType(&rawAttr, &valueAttr, 0, VT_CY);
+            iRes = VariantChangeType(&value, &value, 0, VT_I2);
             if (iRes == S_OK)
-                iRes = IFont_put_Size((IFont *)this, V_CY(&valueAttr));
+                iRes = IFont_put_Charset((IFont *)this, V_I2(&value));
         }
         else if (iRes == E_INVALIDARG)
             iRes = S_OK;
-        VariantClear(&rawAttr);
-        VariantClear(&valueAttr);
+
+        VariantClear(&value);
     }
 
     if (iRes == S_OK) {
-        iRes = IPropertyBag_Read(pPropBag, sAttrCharset, &rawAttr, pErrorLog);
+        iRes = IPropertyBag_Read(pPropBag, sAttrWeight, &value, pErrorLog);
         if (iRes == S_OK)
         {
-            iRes = VariantChangeType(&rawAttr, &valueAttr, 0, VT_I2);
+            iRes = VariantChangeType(&value, &value, 0, VT_I2);
             if (iRes == S_OK)
-                iRes = IFont_put_Charset((IFont *)this, V_I2(&valueAttr));
+                iRes = IFont_put_Weight((IFont *)this, V_I2(&value));
         }
         else if (iRes == E_INVALIDARG)
             iRes = S_OK;
-        VariantClear(&rawAttr);
-        VariantClear(&valueAttr);
+
+        VariantClear(&value);
     }
 
     if (iRes == S_OK) {
-        iRes = IPropertyBag_Read(pPropBag, sAttrWeight, &rawAttr, pErrorLog);
+        iRes = IPropertyBag_Read(pPropBag, sAttrUnderline, &value, pErrorLog);
         if (iRes == S_OK)
         {
-            iRes = VariantChangeType(&rawAttr, &valueAttr, 0, VT_I2);
+            iRes = VariantChangeType(&value, &value, 0, VT_BOOL);
             if (iRes == S_OK)
-                iRes = IFont_put_Weight((IFont *)this, V_I2(&valueAttr));
+                iRes = IFont_put_Underline((IFont *)this, V_BOOL(&value));
         }
         else if (iRes == E_INVALIDARG)
             iRes = S_OK;
-        VariantClear(&rawAttr);
-        VariantClear(&valueAttr);
 
+        VariantClear(&value);
     }
 
     if (iRes == S_OK) {
-        iRes = IPropertyBag_Read(pPropBag, sAttrUnderline, &rawAttr, pErrorLog);
+        iRes = IPropertyBag_Read(pPropBag, sAttrItalic, &value, pErrorLog);
         if (iRes == S_OK)
         {
-            iRes = VariantChangeType(&rawAttr, &valueAttr, 0, VT_BOOL);
+            iRes = VariantChangeType(&value, &value, 0, VT_BOOL);
             if (iRes == S_OK)
-                iRes = IFont_put_Underline((IFont *)this, V_BOOL(&valueAttr));
+                iRes = IFont_put_Italic((IFont *)this, V_BOOL(&value));
         }
         else if (iRes == E_INVALIDARG)
             iRes = S_OK;
-        VariantClear(&rawAttr);
-        VariantClear(&valueAttr);
+
+        VariantClear(&value);
     }
 
     if (iRes == S_OK) {
-        iRes = IPropertyBag_Read(pPropBag, sAttrItalic, &rawAttr, pErrorLog);
+        iRes = IPropertyBag_Read(pPropBag, sAttrStrikethrough, &value, pErrorLog);
         if (iRes == S_OK)
         {
-            iRes = VariantChangeType(&rawAttr, &valueAttr, 0, VT_BOOL);
+            iRes = VariantChangeType(&value, &value, 0, VT_BOOL);
             if (iRes == S_OK)
-                iRes = IFont_put_Italic((IFont *)this, V_BOOL(&valueAttr));
+                IFont_put_Strikethrough((IFont *)this, V_BOOL(&value));
         }
         else if (iRes == E_INVALIDARG)
             iRes = S_OK;
-        VariantClear(&rawAttr);
-        VariantClear(&valueAttr);
-    }
 
-    if (iRes == S_OK) {
-        iRes = IPropertyBag_Read(pPropBag, sAttrStrikethrough, &rawAttr, pErrorLog);
-        if (iRes == S_OK)
-        {
-            iRes = VariantChangeType(&rawAttr, &valueAttr, 0, VT_BOOL);
-            if (iRes == S_OK)
-                IFont_put_Strikethrough((IFont *)this, V_BOOL(&valueAttr));
-        }
-        else if (iRes == E_INVALIDARG)
-            iRes = S_OK;
-        VariantClear(&rawAttr);
-        VariantClear(&valueAttr);
+        VariantClear(&value);
     }
 
     if (FAILED(iRes))
