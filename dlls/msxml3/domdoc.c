@@ -2895,11 +2895,16 @@ static ULONG WINAPI ConnectionPoint_Release(IConnectionPoint *iface)
     return IConnectionPointContainer_Release(This->container);
 }
 
-static HRESULT WINAPI ConnectionPoint_GetConnectionInterface(IConnectionPoint *iface, IID *pIID)
+static HRESULT WINAPI ConnectionPoint_GetConnectionInterface(IConnectionPoint *iface, IID *iid)
 {
     ConnectionPoint *This = impl_from_IConnectionPoint(iface);
-    FIXME("(%p)->(%p): stub\n", This, pIID);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, iid);
+
+    if (!iid) return E_POINTER;
+
+    *iid = *This->iid;
+    return S_OK;
 }
 
 static HRESULT WINAPI ConnectionPoint_GetConnectionPointContainer(IConnectionPoint *iface,
