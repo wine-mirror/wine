@@ -82,11 +82,12 @@ typedef struct _domdoc_properties {
 typedef struct _domdoc
 {
     xmlnode node;
-    const struct IXMLDOMDocument3Vtbl *lpVtbl;
-    const struct IPersistStreamInitVtbl   *lpvtblIPersistStreamInit;
-    const struct IObjectWithSiteVtbl  *lpvtblIObjectWithSite;
-    const struct IObjectSafetyVtbl    *lpvtblIObjectSafety;
-    const struct ISupportErrorInfoVtbl *lpvtblISupportErrorInfo;
+    const struct IXMLDOMDocument3Vtbl          *lpVtbl;
+    const struct IPersistStreamInitVtbl        *lpvtblIPersistStreamInit;
+    const struct IObjectWithSiteVtbl           *lpvtblIObjectWithSite;
+    const struct IObjectSafetyVtbl             *lpvtblIObjectSafety;
+    const struct ISupportErrorInfoVtbl         *lpvtblISupportErrorInfo;
+    const struct IConnectionPointContainerVtbl *lpVtblConnectionPointContainer;
     LONG ref;
     VARIANT_BOOL async;
     VARIANT_BOOL validating;
@@ -540,6 +541,11 @@ static inline domdoc *impl_from_ISupportErrorInfo(ISupportErrorInfo *iface)
     return (domdoc *)((char*)iface - FIELD_OFFSET(domdoc, lpvtblISupportErrorInfo));
 }
 
+static inline domdoc *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
+{
+    return (domdoc *)((char*)iface - FIELD_OFFSET(domdoc, lpVtblConnectionPointContainer));
+}
+
 /************************************************************************
  * domdoc implementation of IPersistStream.
  */
@@ -767,6 +773,10 @@ static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument3 *iface, REFIID rii
     else if(node_query_interface(&This->node, riid, ppvObject))
     {
         return *ppvObject ? S_OK : E_NOINTERFACE;
+    }
+    else if (IsEqualGUID( riid, &IID_IConnectionPointContainer ))
+    {
+        *ppvObject = &This->lpVtblConnectionPointContainer;
     }
     else if(IsEqualGUID(&IID_IRunnableObject, riid))
     {
@@ -2758,6 +2768,51 @@ static const struct IXMLDOMDocument3Vtbl domdoc_vtbl =
     domdoc_importNode
 };
 
+/* IConnectionPointContainer */
+static HRESULT WINAPI ConnectionPointContainer_QueryInterface(IConnectionPointContainer *iface,
+                                                              REFIID riid, void **ppv)
+{
+    domdoc *This = impl_from_IConnectionPointContainer(iface);
+    return IXMLDOMDocument3_QueryInterface((IXMLDOMDocument3*)This, riid, ppv);
+}
+
+static ULONG WINAPI ConnectionPointContainer_AddRef(IConnectionPointContainer *iface)
+{
+    domdoc *This = impl_from_IConnectionPointContainer(iface);
+    return IXMLDOMDocument3_AddRef((IXMLDOMDocument3*)This);
+}
+
+static ULONG WINAPI ConnectionPointContainer_Release(IConnectionPointContainer *iface)
+{
+    domdoc *This = impl_from_IConnectionPointContainer(iface);
+    return IXMLDOMDocument3_Release((IXMLDOMDocument3*)This);
+}
+
+static HRESULT WINAPI ConnectionPointContainer_EnumConnectionPoints(IConnectionPointContainer *iface,
+        IEnumConnectionPoints **ppEnum)
+{
+    domdoc *This = impl_from_IConnectionPointContainer(iface);
+    FIXME("(%p)->(%p): stub\n", This, ppEnum);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPointContainer *iface,
+        REFIID riid, IConnectionPoint **ppCP)
+{
+    domdoc *This = impl_from_IConnectionPointContainer(iface);
+    FIXME("(%p)->(%s %p): stub\n", This, debugstr_guid(riid), ppCP);
+    return E_NOTIMPL;
+}
+
+static const struct IConnectionPointContainerVtbl ConnectionPointContainerVtbl =
+{
+    ConnectionPointContainer_QueryInterface,
+    ConnectionPointContainer_AddRef,
+    ConnectionPointContainer_Release,
+    ConnectionPointContainer_EnumConnectionPoints,
+    ConnectionPointContainer_FindConnectionPoint
+};
+
 /* xmldoc implementation of IObjectWithSite */
 static HRESULT WINAPI
 xmldoc_ObjectWithSite_QueryInterface( IObjectWithSite* iface, REFIID riid, void** ppvObject )
@@ -2914,6 +2969,7 @@ HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **docu
     doc->lpvtblIObjectWithSite = &domdocObjectSite;
     doc->lpvtblIObjectSafety = &domdocObjectSafetyVtbl;
     doc->lpvtblISupportErrorInfo = &support_error_vtbl;
+    doc->lpVtblConnectionPointContainer = &ConnectionPointContainerVtbl;
     doc->ref = 1;
     doc->async = VARIANT_TRUE;
     doc->validating = 0;

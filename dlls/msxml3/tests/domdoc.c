@@ -7097,6 +7097,22 @@ static void test_selectSingleNode(void)
     free_bstrs();
 }
 
+static void test_events(void)
+{
+    IConnectionPointContainer *conn;
+    IXMLDOMDocument *doc;
+    HRESULT hr;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+    if (!doc) return;
+
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IConnectionPointContainer, (void**)&conn);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IConnectionPointContainer_Release(conn);
+
+    IXMLDOMDocument_Release(doc);
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -7157,6 +7173,7 @@ START_TEST(domdoc)
     test_get_prefix();
     test_default_properties();
     test_selectSingleNode();
+    test_events();
 
     CoUninitialize();
 }
