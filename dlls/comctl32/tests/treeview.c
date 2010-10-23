@@ -1359,10 +1359,8 @@ static void test_delete_items(void)
 
     if (item_sequence[0]->count == 2)
     {
-todo_wine {
-      ok(msg[0].lParam == (LPARAM)hChild, "expected %p, got %lx\n", hChild, msg[0].lParam);
-      ok(msg[1].lParam == (LPARAM)hRoot, "expected %p, got %lx\n", hRoot, msg[1].lParam);
-}
+      ok(msg[0].lParam == (LPARAM)hChild, "expected %p, got 0x%lx\n", hChild, msg[0].lParam);
+      ok(msg[1].lParam == (LPARAM)hRoot, "expected %p, got 0x%lx\n", hRoot, msg[1].lParam);
     }
 
     ret = SendMessageA(hTree, TVM_GETCOUNT, 0, 0);

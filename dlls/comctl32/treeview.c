@@ -1479,11 +1479,11 @@ TREEVIEW_RemoveItem(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem)
 {
     TRACE("%p, (%s)\n", wineItem, TREEVIEW_ItemName(wineItem));
 
-    TREEVIEW_SendTreeviewNotify(infoPtr, TVN_DELETEITEMW, TVC_UNKNOWN,
-				TVIF_HANDLE | TVIF_PARAM, wineItem, 0);
-
     if (wineItem->firstChild)
 	TREEVIEW_RemoveAllChildren(infoPtr, wineItem);
+
+    TREEVIEW_SendTreeviewNotify(infoPtr, TVN_DELETEITEMW, TVC_UNKNOWN,
+				TVIF_HANDLE | TVIF_PARAM, wineItem, 0);
 
     TREEVIEW_UnlinkItem(wineItem);
 
