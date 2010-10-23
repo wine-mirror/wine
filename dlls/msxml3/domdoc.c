@@ -2986,30 +2986,27 @@ void ConnectionPoint_Init(ConnectionPoint *cp, struct domdoc *doc, REFIID riid)
     cp->container = (IConnectionPointContainer*)&doc->lpVtblConnectionPointContainer;
 }
 
-/* xmldoc implementation of IObjectWithSite */
+/* domdoc implementation of IObjectWithSite */
 static HRESULT WINAPI
-xmldoc_ObjectWithSite_QueryInterface( IObjectWithSite* iface, REFIID riid, void** ppvObject )
+domdoc_ObjectWithSite_QueryInterface( IObjectWithSite* iface, REFIID riid, void** ppvObject )
 {
     domdoc *This = impl_from_IObjectWithSite(iface);
-    return IXMLDocument_QueryInterface( (IXMLDocument *)This, riid, ppvObject );
+    return IXMLDOMDocument3_QueryInterface( (IXMLDOMDocument3 *)This, riid, ppvObject );
 }
 
-static ULONG WINAPI
-xmldoc_ObjectWithSite_AddRef( IObjectWithSite* iface )
+static ULONG WINAPI domdoc_ObjectWithSite_AddRef( IObjectWithSite* iface )
 {
     domdoc *This = impl_from_IObjectWithSite(iface);
-    return IXMLDocument_AddRef((IXMLDocument *)This);
+    return IXMLDOMDocument3_AddRef((IXMLDOMDocument3 *)This);
 }
 
-static ULONG WINAPI
-xmldoc_ObjectWithSite_Release( IObjectWithSite* iface )
+static ULONG WINAPI domdoc_ObjectWithSite_Release( IObjectWithSite* iface )
 {
     domdoc *This = impl_from_IObjectWithSite(iface);
-    return IXMLDocument_Release((IXMLDocument *)This);
+    return IXMLDOMDocument3_Release((IXMLDOMDocument3 *)This);
 }
 
-static HRESULT WINAPI
-xmldoc_GetSite( IObjectWithSite *iface, REFIID iid, void ** ppvSite )
+static HRESULT WINAPI domdoc_ObjectWithSite_GetSite( IObjectWithSite *iface, REFIID iid, void **ppvSite )
 {
     domdoc *This = impl_from_IObjectWithSite(iface);
 
@@ -3021,8 +3018,7 @@ xmldoc_GetSite( IObjectWithSite *iface, REFIID iid, void ** ppvSite )
     return IUnknown_QueryInterface( This->site, iid, ppvSite );
 }
 
-static HRESULT WINAPI
-xmldoc_SetSite( IObjectWithSite *iface, IUnknown *punk )
+static HRESULT WINAPI domdoc_ObjectWithSite_SetSite( IObjectWithSite *iface, IUnknown *punk )
 {
     domdoc *This = impl_from_IObjectWithSite(iface);
 
@@ -3051,70 +3047,70 @@ xmldoc_SetSite( IObjectWithSite *iface, IUnknown *punk )
 
 static const IObjectWithSiteVtbl domdocObjectSite =
 {
-    xmldoc_ObjectWithSite_QueryInterface,
-    xmldoc_ObjectWithSite_AddRef,
-    xmldoc_ObjectWithSite_Release,
-    xmldoc_SetSite,
-    xmldoc_GetSite,
+    domdoc_ObjectWithSite_QueryInterface,
+    domdoc_ObjectWithSite_AddRef,
+    domdoc_ObjectWithSite_Release,
+    domdoc_ObjectWithSite_SetSite,
+    domdoc_ObjectWithSite_GetSite
 };
 
-static HRESULT WINAPI xmldoc_Safety_QueryInterface(IObjectSafety *iface, REFIID riid, void **ppv)
+static HRESULT WINAPI domdoc_Safety_QueryInterface(IObjectSafety *iface, REFIID riid, void **ppv)
 {
     domdoc *This = impl_from_IObjectSafety(iface);
-    return IXMLDocument_QueryInterface( (IXMLDocument *)This, riid, ppv );
+    return IXMLDOMDocument3_QueryInterface( (IXMLDOMDocument3 *)This, riid, ppv );
 }
 
-static ULONG WINAPI xmldoc_Safety_AddRef(IObjectSafety *iface)
+static ULONG WINAPI domdoc_Safety_AddRef(IObjectSafety *iface)
 {
     domdoc *This = impl_from_IObjectSafety(iface);
-    return IXMLDocument_AddRef((IXMLDocument *)This);
+    return IXMLDOMDocument3_AddRef((IXMLDOMDocument3 *)This);
 }
 
-static ULONG WINAPI xmldoc_Safety_Release(IObjectSafety *iface)
+static ULONG WINAPI domdoc_Safety_Release(IObjectSafety *iface)
 {
     domdoc *This = impl_from_IObjectSafety(iface);
-    return IXMLDocument_Release((IXMLDocument *)This);
+    return IXMLDOMDocument3_Release((IXMLDOMDocument3 *)This);
 }
 
 #define SAFETY_SUPPORTED_OPTIONS (INTERFACESAFE_FOR_UNTRUSTED_CALLER|INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_SECURITY_MANAGER)
 
-static HRESULT WINAPI xmldoc_Safety_GetInterfaceSafetyOptions(IObjectSafety *iface, REFIID riid,
-        DWORD *pdwSupportedOptions, DWORD *pdwEnabledOptions)
+static HRESULT WINAPI domdoc_Safety_GetInterfaceSafetyOptions(IObjectSafety *iface, REFIID riid,
+        DWORD *supported, DWORD *enabled)
 {
     domdoc *This = impl_from_IObjectSafety(iface);
 
-    TRACE("(%p)->(%s %p %p)\n", This, debugstr_guid(riid), pdwSupportedOptions, pdwEnabledOptions);
+    TRACE("(%p)->(%s %p %p)\n", This, debugstr_guid(riid), supported, enabled);
 
-    if(!pdwSupportedOptions || !pdwEnabledOptions)
-        return E_POINTER;
+    if(!supported || !enabled) return E_POINTER;
 
-    *pdwSupportedOptions = SAFETY_SUPPORTED_OPTIONS;
-    *pdwEnabledOptions = This->safeopt;
+    *supported = SAFETY_SUPPORTED_OPTIONS;
+    *enabled = This->safeopt;
 
     return S_OK;
 }
 
-static HRESULT WINAPI xmldoc_Safety_SetInterfaceSafetyOptions(IObjectSafety *iface, REFIID riid,
-        DWORD dwOptionSetMask, DWORD dwEnabledOptions)
+static HRESULT WINAPI domdoc_Safety_SetInterfaceSafetyOptions(IObjectSafety *iface, REFIID riid,
+        DWORD mask, DWORD enabled)
 {
     domdoc *This = impl_from_IObjectSafety(iface);
-    TRACE("(%p)->(%s %x %x)\n", This, debugstr_guid(riid), dwOptionSetMask, dwEnabledOptions);
+    TRACE("(%p)->(%s %x %x)\n", This, debugstr_guid(riid), mask, enabled);
 
-    if ((dwOptionSetMask & ~SAFETY_SUPPORTED_OPTIONS) != 0)
+    if ((mask & ~SAFETY_SUPPORTED_OPTIONS) != 0)
         return E_FAIL;
 
-    This->safeopt = dwEnabledOptions & dwOptionSetMask & SAFETY_SUPPORTED_OPTIONS;
+    This->safeopt = enabled & mask & SAFETY_SUPPORTED_OPTIONS;
     return S_OK;
 }
 
-static const IObjectSafetyVtbl domdocObjectSafetyVtbl = {
-    xmldoc_Safety_QueryInterface,
-    xmldoc_Safety_AddRef,
-    xmldoc_Safety_Release,
-    xmldoc_Safety_GetInterfaceSafetyOptions,
-    xmldoc_Safety_SetInterfaceSafetyOptions
-};
+#undef SAFETY_SUPPORTED_OPTIONS
 
+static const IObjectSafetyVtbl domdocObjectSafetyVtbl = {
+    domdoc_Safety_QueryInterface,
+    domdoc_Safety_AddRef,
+    domdoc_Safety_Release,
+    domdoc_Safety_GetInterfaceSafetyOptions,
+    domdoc_Safety_SetInterfaceSafetyOptions
+};
 
 static const tid_t domdoc_iface_tids[] = {
     IXMLDOMNode_tid,
