@@ -1513,7 +1513,7 @@ TREEVIEW_DeleteItem(TREEVIEW_INFO *infoPtr, HTREEITEM wineItem)
     TREEVIEW_ITEM *parent, *prev = NULL;
     BOOL visible = FALSE;
 
-    if (wineItem == TVI_ROOT)
+    if (wineItem == TVI_ROOT || !wineItem)
     {
 	TRACE("TVI_ROOT\n");
 	parent = infoPtr->root;

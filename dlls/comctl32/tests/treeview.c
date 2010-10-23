@@ -42,6 +42,7 @@ static const char *TEST_CALLBACK_TEXT = "callback_text";
 #define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
+static struct msg_sequence *item_sequence[1];
 
 static const struct message FillRootSeq[] = {
     { TVM_INSERTITEM, sent },
@@ -958,6 +959,21 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
                   ok(SendMessage(pHdr->hwndFrom, TVM_GETITEMRECT, TRUE, (LPARAM)&rect), "Failed to get rect for second visible item.\n");
                 }
                 break;
+            case TVN_DELETEITEMA:
+            {
+                struct message item;
+
+                ok(pTreeView->itemNew.mask == 0, "got wrong mask 0x%x\n", pTreeView->itemNew.mask);
+
+                ok(pTreeView->itemOld.mask == (TVIF_HANDLE | TVIF_PARAM), "got wrong mask 0x%x\n", pTreeView->itemOld.mask);
+                ok(pTreeView->itemOld.hItem != NULL, "got %p\n", pTreeView->itemOld.hItem);
+
+                memset(&item, 0, sizeof(item));
+                item.lParam = (LPARAM)pTreeView->itemOld.hItem;
+                add_message(item_sequence, 0, &item);
+
+                break;
+            }
             }
         }
     }
@@ -1324,6 +1340,37 @@ static void test_WM_PAINT(void)
     DestroyWindow(hTree);
 }
 
+static void test_delete_items(void)
+{
+    const struct message *msg;
+    HWND hTree;
+    INT ret;
+
+    hTree = create_treeview_control();
+    fill_tree(hTree);
+
+    /* check delete order */
+    flush_sequences(item_sequence, 1);
+    ret = SendMessage(hTree, TVM_DELETEITEM, 0, 0);
+    ok(ret == TRUE, "got %d\n", ret);
+
+    msg = item_sequence[0]->sequence;
+    ok(item_sequence[0]->count == 2, "expected 2 items, got %d\n", item_sequence[0]->count);
+
+    if (item_sequence[0]->count == 2)
+    {
+todo_wine {
+      ok(msg[0].lParam == (LPARAM)hChild, "expected %p, got %lx\n", hChild, msg[0].lParam);
+      ok(msg[1].lParam == (LPARAM)hRoot, "expected %p, got %lx\n", hRoot, msg[1].lParam);
+}
+    }
+
+    ret = SendMessageA(hTree, TVM_GETCOUNT, 0, 0);
+    ok(ret == 0, "got %d\n", ret);
+
+    DestroyWindow(hTree);
+}
+
 START_TEST(treeview)
 {
     HMODULE hComctl32;
@@ -1348,6 +1395,7 @@ START_TEST(treeview)
         InitCommonControls();
 
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
+    init_msg_sequences(item_sequence, 1);
   
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.cbClsExtra = 0;
@@ -1390,6 +1438,7 @@ START_TEST(treeview)
     test_expandnotify();
     test_TVS_SINGLEEXPAND();
     test_WM_PAINT();
+    test_delete_items();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
