@@ -171,7 +171,7 @@
 171 stdcall -noname SHIsSameObject(ptr ptr)
 172 stdcall -noname IUnknown_GetWindow(ptr ptr)
 173 stdcall -noname IUnknown_SetOwner(ptr ptr)
-174 stdcall -noname IUnknown_SetSite(ptr ptr)
+174 stdcall -ordinal IUnknown_SetSite(ptr ptr)
 175 stdcall -noname IUnknown_GetClassID(ptr ptr)
 176 stdcall -noname IUnknown_QueryService(ptr ptr ptr ptr)
 177 stdcall -noname SHLoadMenuPopup(ptr wstr)
