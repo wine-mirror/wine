@@ -110,74 +110,6 @@ static inline xmlnode *impl_from_IXMLDOMNode( IXMLDOMNode *iface )
     return (xmlnode *)((char*)iface - FIELD_OFFSET(xmlnode, lpVtbl));
 }
 
-static HRESULT WINAPI xmlnode_QueryInterface(
-    IXMLDOMNode *iface,
-    REFIID riid,
-    void** ppvObject )
-{
-    ERR("Should not be called\n");
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI xmlnode_AddRef(
-    IXMLDOMNode *iface )
-{
-    ERR("Should not be called\n");
-    return 2;
-}
-
-static ULONG WINAPI xmlnode_Release(
-    IXMLDOMNode *iface )
-{
-    ERR("Should not be called\n");
-    return 1;
-}
-
-static HRESULT WINAPI xmlnode_GetTypeInfoCount(
-    IXMLDOMNode *iface,
-    UINT* pctinfo )
-{
-    ERR("Should not be called\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI xmlnode_GetTypeInfo(
-    IXMLDOMNode *iface,
-    UINT iTInfo,
-    LCID lcid,
-    ITypeInfo** ppTInfo )
-{
-    ERR("Should not be called\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI xmlnode_GetIDsOfNames(
-    IXMLDOMNode *iface,
-    REFIID riid,
-    LPOLESTR* rgszNames,
-    UINT cNames,
-    LCID lcid,
-    DISPID* rgDispId )
-{
-    ERR("Should not be called\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI xmlnode_Invoke(
-    IXMLDOMNode *iface,
-    DISPID dispIdMember,
-    REFIID riid,
-    LCID lcid,
-    WORD wFlags,
-    DISPPARAMS* pDispParams,
-    VARIANT* pVarResult,
-    EXCEPINFO* pExcepInfo,
-    UINT* puArgErr )
-{
-    ERR("Should not be called\n");
-    return E_NOTIMPL;
-}
-
 HRESULT node_get_nodeName(xmlnode *This, BSTR *name)
 {
     if (!name)
@@ -188,14 +120,6 @@ HRESULT node_get_nodeName(xmlnode *This, BSTR *name)
         return S_FALSE;
 
     return S_OK;
-}
-
-static HRESULT WINAPI xmlnode_get_nodeName(
-    IXMLDOMNode *iface,
-    BSTR* name)
-{
-    ERR("Should not be called\n");
-    return E_NOTIMPL;
 }
 
 HRESULT node_get_content(xmlnode *This, VARIANT *value)
@@ -212,14 +136,6 @@ HRESULT node_get_content(xmlnode *This, VARIANT *value)
 
     TRACE("%p returned %s\n", This, debugstr_w(V_BSTR(value)));
     return S_OK;
-}
-
-static HRESULT WINAPI xmlnode_get_nodeValue(
-    IXMLDOMNode *iface,
-    VARIANT* value)
-{
-    ERR("Should not be called\n");
-    return E_NOTIMPL;
 }
 
 HRESULT node_put_value(xmlnode *This, VARIANT *value)
@@ -241,22 +157,6 @@ HRESULT node_put_value(xmlnode *This, VARIANT *value)
     xmlNodeSetContent(This->node, str);
     heap_free(str);
     return S_OK;
-}
-
-static HRESULT WINAPI xmlnode_put_nodeValue(
-    IXMLDOMNode *iface,
-    VARIANT value)
-{
-    ERR("Should not be called\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI xmlnode_get_nodeType(
-    IXMLDOMNode *iface,
-    DOMNodeType* type)
-{
-    ERR("Should not be called\n");
-    return E_NOTIMPL;
 }
 
 static HRESULT get_node(
@@ -285,14 +185,6 @@ HRESULT node_get_parent(xmlnode *This, IXMLDOMNode **parent)
     return get_node( This, "parent", This->node->parent, parent );
 }
 
-static HRESULT WINAPI xmlnode_get_parentNode(
-    IXMLDOMNode *iface,
-    IXMLDOMNode** parent)
-{
-    ERR("Should not be called\n");
-    return E_NOTIMPL;
-}
-
 HRESULT node_get_child_nodes(xmlnode *This, IXMLDOMNodeList **ret)
 {
     if(!ret)
@@ -305,25 +197,9 @@ HRESULT node_get_child_nodes(xmlnode *This, IXMLDOMNodeList **ret)
     return S_OK;
 }
 
-static HRESULT WINAPI xmlnode_get_childNodes(
-    IXMLDOMNode *iface,
-    IXMLDOMNodeList** childList)
-{
-    ERR("Should not be called\n");
-    return E_NOTIMPL;
-}
-
 HRESULT node_get_first_child(xmlnode *This, IXMLDOMNode **ret)
 {
     return get_node(This, "firstChild", This->node->children, ret);
-}
-
-static HRESULT WINAPI xmlnode_get_firstChild(
-    IXMLDOMNode *iface,
-    IXMLDOMNode** firstChild)
-{
-    ERR("Should not be called\n");
-    return E_NOTIMPL;
 }
 
 HRESULT node_get_last_child(xmlnode *This, IXMLDOMNode **ret)
@@ -331,46 +207,14 @@ HRESULT node_get_last_child(xmlnode *This, IXMLDOMNode **ret)
     return get_node(This, "lastChild", This->node->last, ret);
 }
 
-static HRESULT WINAPI xmlnode_get_lastChild(
-    IXMLDOMNode *iface,
-    IXMLDOMNode** lastChild)
-{
-    ERR("Should not be called\n");
-    return E_NOTIMPL;
-}
-
 HRESULT node_get_previous_sibling(xmlnode *This, IXMLDOMNode **ret)
 {
     return get_node(This, "previous", This->node->prev, ret);
 }
 
-static HRESULT WINAPI xmlnode_get_previousSibling(
-    IXMLDOMNode *iface,
-    IXMLDOMNode** previousSibling)
-{
-    ERR("Should not be called\n");
-    return E_NOTIMPL;
-}
-
 HRESULT node_get_next_sibling(xmlnode *This, IXMLDOMNode **ret)
 {
     return get_node(This, "next", This->node->next, ret);
-}
-
-static HRESULT WINAPI xmlnode_get_nextSibling(
-    IXMLDOMNode *iface,
-    IXMLDOMNode** nextSibling)
-{
-    ERR("Should not be called\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI xmlnode_get_attributes(
-    IXMLDOMNode *iface,
-    IXMLDOMNamedNodeMap** attributeMap)
-{
-    ERR("Should not be called\n");
-    return E_NOTIMPL;
 }
 
 HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT *ref_child,
@@ -440,16 +284,6 @@ HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT 
     return S_OK;
 }
 
-static HRESULT WINAPI xmlnode_insertBefore(
-    IXMLDOMNode *iface,
-    IXMLDOMNode* newChild,
-    VARIANT refChild,
-    IXMLDOMNode** outNewChild)
-{
-    ERR("Should not be called\n");
-    return E_NOTIMPL;
-}
-
 HRESULT node_replace_child(xmlnode *This, IXMLDOMNode *newChild, IXMLDOMNode *oldChild,
         IXMLDOMNode **ret)
 {
@@ -512,16 +346,6 @@ HRESULT node_replace_child(xmlnode *This, IXMLDOMNode *newChild, IXMLDOMNode *ol
     }
 
     return S_OK;
-}
-
-static HRESULT WINAPI xmlnode_replaceChild(
-    IXMLDOMNode *iface,
-    IXMLDOMNode* newChild,
-    IXMLDOMNode* oldChild,
-    IXMLDOMNode** outOldChild)
-{
-    ERR("Should not be called\n");
-    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI xmlnode_removeChild(
@@ -763,14 +587,6 @@ HRESULT node_put_text(xmlnode *This, BSTR text)
     return S_OK;
 }
 
-static HRESULT WINAPI xmlnode_put_text(
-    IXMLDOMNode *iface,
-    BSTR text)
-{
-    ERR("Should not be called\n");
-    return E_NOTIMPL;
-}
-
 static HRESULT WINAPI xmlnode_get_specified(
     IXMLDOMNode *iface,
     VARIANT_BOOL* isSpecified)
@@ -1010,14 +826,6 @@ static HRESULT WINAPI xmlnode_put_nodeTypedValue(
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
     FIXME("%p\n", This);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI xmlnode_get_dataType(
-    IXMLDOMNode *iface,
-    VARIANT* dataTypeName)
-{
-    ERR("Should not be called\n");
     return E_NOTIMPL;
 }
 
@@ -1460,26 +1268,26 @@ static HRESULT WINAPI xmlnode_transformNodeToObject(
 
 static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
 {
-    xmlnode_QueryInterface,
-    xmlnode_AddRef,
-    xmlnode_Release,
-    xmlnode_GetTypeInfoCount,
-    xmlnode_GetTypeInfo,
-    xmlnode_GetIDsOfNames,
-    xmlnode_Invoke,
-    xmlnode_get_nodeName,
-    xmlnode_get_nodeValue,
-    xmlnode_put_nodeValue,
-    xmlnode_get_nodeType,
-    xmlnode_get_parentNode,
-    xmlnode_get_childNodes,
-    xmlnode_get_firstChild,
-    xmlnode_get_lastChild,
-    xmlnode_get_previousSibling,
-    xmlnode_get_nextSibling,
-    xmlnode_get_attributes,
-    xmlnode_insertBefore,
-    xmlnode_replaceChild,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
     xmlnode_removeChild,
     xmlnode_appendChild,
     xmlnode_hasChildNodes,
@@ -1487,12 +1295,12 @@ static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
     xmlnode_cloneNode,
     xmlnode_get_nodeTypeString,
     xmlnode_get_text,
-    xmlnode_put_text,
+    NULL,
     xmlnode_get_specified,
     xmlnode_get_definition,
     xmlnode_get_nodeTypedValue,
     xmlnode_put_nodeTypedValue,
-    xmlnode_get_dataType,
+    NULL,
     xmlnode_put_dataType,
     xmlnode_get_xml,
     xmlnode_transformNode,
