@@ -142,7 +142,7 @@ static void r_verify_reg_wsz(unsigned line, HKEY key, const char *subkey,
         return;
 
     MultiByteToWideChar(CP_ACP, 0, value_name, -1, value_nameW,
-            sizeof(value_nameW));
+            sizeof(value_nameW)/sizeof(value_nameW[0]));
 
     fnd_len = sizeof(fnd_value);
     lr = RegQueryValueExW(fnd_key, value_nameW, NULL, &fnd_type,
