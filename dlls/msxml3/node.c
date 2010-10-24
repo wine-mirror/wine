@@ -587,25 +587,6 @@ HRESULT node_put_text(xmlnode *This, BSTR text)
     return S_OK;
 }
 
-static HRESULT WINAPI xmlnode_get_specified(
-    IXMLDOMNode *iface,
-    VARIANT_BOOL* isSpecified)
-{
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
-    FIXME("(%p)->(%p) stub!\n", This, isSpecified);
-    *isSpecified = VARIANT_TRUE;
-    return S_OK;
-}
-
-static HRESULT WINAPI xmlnode_get_definition(
-    IXMLDOMNode *iface,
-    IXMLDOMNode** definitionNode)
-{
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
-    FIXME("(%p)->(%p)\n", This, definitionNode);
-    return E_NOTIMPL;
-}
-
 static inline BYTE hex_to_byte(xmlChar c)
 {
     if(c <= '9') return c-'0';
@@ -1160,16 +1141,6 @@ static HRESULT WINAPI xmlnode_selectSingleNode(
     return r;
 }
 
-static HRESULT WINAPI xmlnode_get_parsed(
-    IXMLDOMNode *iface,
-    VARIANT_BOOL* isParsed)
-{
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
-    FIXME("(%p)->(%p) stub!\n", This, isParsed);
-    *isParsed = VARIANT_TRUE;
-    return S_OK;
-}
-
 static HRESULT WINAPI xmlnode_get_namespaceURI(
     IXMLDOMNode *iface,
     BSTR* namespaceURI)
@@ -1296,8 +1267,8 @@ static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
     xmlnode_get_nodeTypeString,
     xmlnode_get_text,
     NULL,
-    xmlnode_get_specified,
-    xmlnode_get_definition,
+    NULL,
+    NULL,
     xmlnode_get_nodeTypedValue,
     xmlnode_put_nodeTypedValue,
     NULL,
@@ -1306,7 +1277,7 @@ static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
     xmlnode_transformNode,
     xmlnode_selectNodes,
     xmlnode_selectSingleNode,
-    xmlnode_get_parsed,
+    NULL,
     xmlnode_get_namespaceURI,
     xmlnode_get_prefix,
     xmlnode_get_baseName,
@@ -1696,18 +1667,21 @@ static HRESULT WINAPI unknode_put_text(
 
 static HRESULT WINAPI unknode_get_specified(
     IXMLDOMNode *iface,
-    VARIANT_BOOL* pbool)
+    VARIANT_BOOL* isSpecified)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_get_specified( IXMLDOMNode_from_impl(&This->node), pbool );
+    FIXME("(%p)->(%p) stub!\n", This, isSpecified);
+    *isSpecified = VARIANT_TRUE;
+    return S_OK;
 }
 
 static HRESULT WINAPI unknode_get_definition(
     IXMLDOMNode *iface,
-    IXMLDOMNode** domNode)
+    IXMLDOMNode** definitionNode)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_get_definition( IXMLDOMNode_from_impl(&This->node), domNode );
+    FIXME("(%p)->(%p)\n", This, definitionNode);
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI unknode_get_nodeTypedValue(
@@ -1776,10 +1750,12 @@ static HRESULT WINAPI unknode_selectSingleNode(
 
 static HRESULT WINAPI unknode_get_parsed(
     IXMLDOMNode *iface,
-    VARIANT_BOOL* pbool)
+    VARIANT_BOOL* isParsed)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_get_parsed( IXMLDOMNode_from_impl(&This->node), pbool );
+    FIXME("(%p)->(%p) stub!\n", This, isParsed);
+    *isParsed = VARIANT_TRUE;
+    return S_OK;
 }
 
 static HRESULT WINAPI unknode_get_namespaceURI(
