@@ -964,8 +964,7 @@ void WINSPOOL_LoadSystemPrinters(void)
        printers AddPrinter takes a while.  So we'll tag all printers that
        were automatically added last time around, if they still exist
        we'll leave them be otherwise we'll delete them. */
-    EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 5, NULL, 0, &needed, &num);
-    if(needed) {
+    if (EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 5, NULL, 0, &needed, &num) && needed) {
         PRINTER_INFO_5A* pi = HeapAlloc(GetProcessHeap(), 0, needed);
         if(EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 5, (LPBYTE)pi, needed, &needed, &num)) {
             for(i = 0; i < num; i++) {
