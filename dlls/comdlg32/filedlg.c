@@ -2070,7 +2070,7 @@ static void FILEDLG95_MRU_save_filename(LPCWSTR filename)
     HKEY hkey;
 
     /* get the current executable's name */
-    if(!GetModuleFileNameW(GetModuleHandleW(NULL), module_path, sizeof(module_path))){
+    if(!GetModuleFileNameW(GetModuleHandleW(NULL), module_path, sizeof(module_path)/sizeof(module_path[0]))) {
         WARN("GotModuleFileName failed: %d\n", GetLastError());
         return;
     }
@@ -2157,7 +2157,7 @@ static void FILEDLG95_MRU_load_filename(LPWSTR stored_path)
     WCHAR module_path[MAX_PATH], *module_name;
 
     /* get the current executable's name */
-    if(!GetModuleFileNameW(GetModuleHandleW(NULL), module_path, sizeof(module_path))){
+    if(!GetModuleFileNameW(GetModuleHandleW(NULL), module_path, sizeof(module_path)/sizeof(module_path[0]))) {
         WARN("GotModuleFileName failed: %d\n", GetLastError());
         return;
     }
