@@ -3133,9 +3133,9 @@ static void ComputeSphereVisibility(void)
 static void SetRenderTargetTest(void)
 {
     HRESULT hr;
-    IDirectDrawSurface7 *newrt, *oldrt;
+    IDirectDrawSurface7 *newrt, *failrt, *oldrt;
     D3DVIEWPORT7 vp;
-    DDSURFACEDESC2 ddsd;
+    DDSURFACEDESC2 ddsd, ddsd2;
     DWORD stateblock;
 
     memset(&ddsd, 0, sizeof(ddsd));
@@ -3144,6 +3144,7 @@ static void SetRenderTargetTest(void)
     ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_3DDEVICE;
     ddsd.dwWidth = 64;
     ddsd.dwHeight = 64;
+
     hr = IDirectDraw7_CreateSurface(lpDD, &ddsd, &newrt, NULL);
     ok(hr == DD_OK, "IDirectDraw7_CreateSurface failed, hr=0x%08x\n", hr);
     if(FAILED(hr))
@@ -3151,6 +3152,20 @@ static void SetRenderTargetTest(void)
         skip("Skipping SetRenderTarget test\n");
         return;
     }
+
+    memset(&ddsd2, 0, sizeof(ddsd2));
+    ddsd2.dwSize = sizeof(ddsd2);
+    ddsd2.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    ddsd2.ddsCaps.dwCaps = DDSCAPS_3DDEVICE | DDSCAPS_ZBUFFER;
+    ddsd2.dwWidth = 64;
+    ddsd2.dwHeight = 64;
+    U4(ddsd2).ddpfPixelFormat.dwSize = sizeof(U4(ddsd2).ddpfPixelFormat);
+    U4(ddsd2).ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+    U1(U4(ddsd2).ddpfPixelFormat).dwZBufferBitDepth = 16;
+    U3(U4(ddsd2).ddpfPixelFormat).dwZBitMask = 0x0000FFFF;
+
+    hr = IDirectDraw7_CreateSurface(lpDD, &ddsd2, &failrt, NULL);
+    ok(hr == DD_OK, "IDirectDraw7_CreateSurface failed, hr=0x%08x\n", hr);
 
     memset(&vp, 0, sizeof(vp));
     vp.dwX = 10;
@@ -3164,6 +3179,9 @@ static void SetRenderTargetTest(void)
 
     hr = IDirect3DDevice7_GetRenderTarget(lpD3DDevice, &oldrt);
     ok(hr == DD_OK, "IDirect3DDevice7_GetRenderTarget failed, hr=0x%08x\n", hr);
+
+    hr = IDirect3DDevice7_SetRenderTarget(lpD3DDevice, failrt, 0);
+    todo_wine ok(hr != D3D_OK, "IDirect3DDevice7_SetRenderTarget succeeded\n");
 
     hr = IDirect3DDevice7_SetRenderTarget(lpD3DDevice, newrt, 0);
     ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderTarget failed, hr=0x%08x\n", hr);
@@ -3231,6 +3249,7 @@ static void SetRenderTargetTest(void)
 
     IDirectDrawSurface7_Release(oldrt);
     IDirectDrawSurface7_Release(newrt);
+    IDirectDrawSurface7_Release(failrt);
 }
 
 static UINT expect_message;
