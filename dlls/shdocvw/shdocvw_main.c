@@ -461,3 +461,35 @@ DWORD WINAPI SHRestricted2A(DWORD restriction, LPCSTR url, DWORD reserved)
     heap_free(urlW);
     return res;
 }
+
+/******************************************************************
+ * ImportPrivacySettings (SHDOCVW.@)
+ *
+ * Import global and/or per site privacy preferences from an xml file
+ *
+ * PARAMS
+ *  filename      [I] XML file to use
+ *  pGlobalPrefs  [IO] PTR to a usage flag for the global privacy preferences
+ *  pPerSitePrefs [IO] PTR to a usage flag for the per site privacy preferences
+ *
+ * RETURNS
+ *  Success: TRUE  (the privacy preferences where updated)
+ *  Failure: FALSE (the privacy preferences are unchanged)
+ *
+ * NOTES
+ *  Set the flag to TRUE, when the related privacy preferences in the xml file
+ *  should be used (parsed and overwrite the current settings).
+ *  On return, the flag is TRUE, when the related privacy settings where used
+ *
+ */
+BOOL WINAPI ImportPrivacySettings(LPCWSTR filename, BOOL *pGlobalPrefs, BOOL * pPerSitePrefs)
+{
+    FIXME("(%s, %p->%d, %p->%d): stub\n", debugstr_w(filename),
+        pGlobalPrefs, pGlobalPrefs ? *pGlobalPrefs : 0,
+        pPerSitePrefs, pPerSitePrefs ? *pPerSitePrefs : 0);
+
+    if (pGlobalPrefs) *pGlobalPrefs = FALSE;
+    if (pPerSitePrefs) *pPerSitePrefs = FALSE;
+
+    return TRUE;
+}

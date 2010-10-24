@@ -84,6 +84,7 @@ int          WINAPI RestartDialogEx(HWND,LPCWSTR,DWORD,DWORD);
 BOOL         WINAPI IsUserAnAdmin(void);
 UINT         WINAPI Shell_MergeMenus(HMENU,HMENU,UINT,UINT,UINT,ULONG);
 BOOL         WINAPI Shell_GetImageLists(HIMAGELIST*,HIMAGELIST*);
+BOOL         WINAPI ImportPrivacySettings(LPCWSTR, BOOL*, BOOL*);
 
 #define KF_FLAG_SIMPLE_IDLIST       0x00000100
 #define KF_FLAG_NOT_PARENT_RELATIVE 0x00000200
