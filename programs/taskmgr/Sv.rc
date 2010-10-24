@@ -1,7 +1,7 @@
 /*
  *  Swedish resources for Task Manager
  *
- *  Copyright 2009 Anders Jonsson
+ *  Copyright 2009, 2010 Anders Jonsson
  *
  *
  * This library is free software; you can redistribute it and/or
@@ -164,7 +164,7 @@ BEGIN
             MENUITEM "&Låg",                       ID_PROCESS_PAGE_SETPRIORITY_LOW
 
         END
-        MENUITEM "Set &Affinity...",            ID_PROCESS_PAGE_SETAFFINITY
+        MENUITEM "Ställ in &släktskap...",            ID_PROCESS_PAGE_SETAFFINITY
 	MENUITEM "&Redigera felsökningskanaler...",	ID_PROCESS_PAGE_DEBUGCHANNELS
     END
 END
@@ -217,7 +217,7 @@ BEGIN
     GROUPBOX        "Virtuellt minne (K)",IDC_COMMIT_CHARGE_FRAME,5,166,111,39,0,WS_EX_TRANSPARENT
     GROUPBOX        "Fysiskt minne (K)",IDC_PHYSICAL_MEMORY_FRAME,131,122,111,39,0,WS_EX_TRANSPARENT
     GROUPBOX        "Kernelminne (K)",IDC_KERNEL_MEMORY_FRAME,131,166,111,39,0,WS_EX_TRANSPARENT
-    LTEXT           "Handtag",IDS_TOTALS_HANDLE_COUNT,12,131,27,8
+    LTEXT           "Referenser",IDS_TOTALS_HANDLE_COUNT,12,131,27,8
     LTEXT           "Trådar",IDS_TOTALS_THREAD_COUNT,12,140,27,8
     LTEXT           "Processer",IDS_TOTALS_PROCESS_COUNT,12,149,34,8
     EDITTEXT        IDC_TOTALS_HANDLE_COUNT,65,131,45,8,ES_RIGHT |
@@ -237,7 +237,7 @@ BEGIN
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     LTEXT           "Totalt",IDS_PHYSICAL_MEMORY_TOTAL,137,131,27,8
     LTEXT           "Tillgängligt",IDS_PHYSICAL_MEMORY_AVAILABLE,137,140,35,8
-    LTEXT           "System Cache",IDS_PHYSICAL_MEMORY_SYSTEM_CACHE,137,149,35,8
+    LTEXT           "Systemcache",IDS_PHYSICAL_MEMORY_SYSTEM_CACHE,137,149,35,8
     EDITTEXT        IDC_PHYSICAL_MEMORY_TOTAL,185,131,48,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     EDITTEXT        IDC_PHYSICAL_MEMORY_AVAILABLE,185,140,48,8,ES_RIGHT |
@@ -245,8 +245,8 @@ BEGIN
     EDITTEXT        IDC_PHYSICAL_MEMORY_SYSTEM_CACHE,185,149,48,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     LTEXT           "Totalt",IDS_KERNEL_MEMORY_TOTAL,137,174,27,8
-    LTEXT           "Paged",IDS_KERNEL_MEMORY_PAGED,137,184,30,8
-    LTEXT           "Nonpaged",IDS_KERNEL_MEMORY_NONPAGED,137,193,40,8
+    LTEXT           "Växlat",IDS_KERNEL_MEMORY_PAGED,137,184,30,8
+    LTEXT           "Oväxlat",IDS_KERNEL_MEMORY_NONPAGED,137,193,40,8
     EDITTEXT        IDC_KERNEL_MEMORY_TOTAL,185,174,48,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     EDITTEXT        IDC_KERNEL_MEMORY_PAGED,185,184,48,8,ES_RIGHT |
@@ -278,14 +278,14 @@ END
 
 IDD_AFFINITY_DIALOG DIALOG  0, 0, 231, 154
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Processläktsskap"
+CAPTION "Process-släktskap"
 FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,120,133,50,14
     PUSHBUTTON      "Avbryt",IDCANCEL,174,133,50,14
-    LTEXT           "Inställningen för processläktsskap bestämmer vilka processorer processen tillåts köra på.",
+    LTEXT           "Inställningen för process-släktskap bestämmer vilka processorer processen tillåts köra på.",
                     IDC_STATIC,5,5,220,16
-    CONTROL         "Processor 0",IDC_CPU0,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+    CONTROL         "CPU 0",IDC_CPU0,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     11,28,37,10
 		    CONTROL         "CPU 1",IDC_CPU1,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
                     WS_TABSTOP,11,41,37,10
@@ -360,7 +360,7 @@ BEGIN
     PUSHBUTTON      "Avbryt",IDCANCEL,138,178,50,14
     LTEXT           "Välj kolumner att visas på processidan i aktivitetshanteraren.",
                     IDC_STATIC,7,7,181,17
-    CONTROL         "B&ildnamn",IDC_IMAGENAME,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "&Image name",IDC_IMAGENAME,"Button",BS_AUTOCHECKBOX |
                     WS_DISABLED | WS_TABSTOP,7,28,56,10
     CONTROL         "&PID (Processidentifierare)",IDC_PID,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,39,95,10
@@ -384,26 +384,26 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,138,65,10
     CONTROL         "&Sessions-ID",IDC_SESSIONID,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,149,50,10
-    CONTROL         "Användar&namn",IDC_USERNAME,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "A&nvändare",IDC_USERNAME,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,160,65,10
-    CONTROL         "Sidfels-delt&a",IDC_PAGEFAULTSDELTA,"Button",
+    CONTROL         "Sidfelsdelt&a",IDC_PAGEFAULTSDELTA,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,28,72,10
     CONTROL         "&Virtuell minnesstorlek",IDC_VIRTUALMEMORYSIZE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,39,82,10
     CONTROL         "Pa&ged pool",IDC_PAGEDPOOL,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,107,50,53,10
-    CONTROL         "N&on-paged pool",IDC_NONPAGEDPOOL,"Button",
+    CONTROL         "Väx&lat minne",IDC_NONPAGEDPOOL,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,61,67,10
-    CONTROL         "Basp&rioritet",IDC_BASEPRIORITY,"Button",
+    CONTROL         "Bas-p&rio",IDC_BASEPRIORITY,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,72,55,10
-    CONTROL         "Antal &handtag",IDC_HANDLECOUNT,"Button",BS_AUTOCHECKBOX |
-                    WS_TABSTOP,107,83,59,10
+    CONTROL         "Antal r&eferenser",IDC_HANDLECOUNT,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,107,83,75,10
     CONTROL         "Antal tr&ådar",IDC_THREADCOUNT,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,107,94,59,10
     CONTROL         "GDI-objekt",IDC_GDIOBJECTS,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,107,105,55,10
     CONTROL         "I/O-skrivningar",IDC_IOWRITES,"Button",BS_AUTOCHECKBOX |
-                    WS_TABSTOP,107,116,59,10
+                    WS_TABSTOP,107,116,75,10
     CONTROL         "I/O byte skrivna",IDC_IOWRITEBYTES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,127,65,10
     CONTROL         "I/O övrigt",IDC_IOOTHER,"Button",BS_AUTOCHECKBOX |
@@ -486,4 +486,88 @@ BEGIN
     ID_PROCESS_PAGE_SETPRIORITY_LOW "Ger processen låg prioritet"
     ID_PROCESS_PAGE_DEBUGCHANNELS
                             "Ställer in felsökningskanaler"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_VIEW_LARGE                     "S&tora ikoner"
+    IDS_VIEW_SMALL                     "S&må ikoner"
+    IDS_VIEW_DETAILS                   "&Detaljer"
+    IDS_WINDOWS                        "&Fönster"
+    IDS_VIEW_SELECTCOLUMNS             "&Välj kolumner..."
+    IDS_OPTIONS_SHOW16BITTASKS         "Visa 16-&bitarsaktiviteter"
+    IDS_VIEW_CPUHISTORY                "&CPU-historik"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHALL    "&En graf, alla CPUs"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHPERCPU "En graf &per CPU"
+    IDS_VIEW_SHOWKERNELTIMES           "Visa &kerneltider"
+    IDS_APPLICATIONS                   "Program"
+    IDS_PROCESSES                      "Processer"
+    IDS_PERFORMANCE                    "Prestanda"
+    IDS_STATUS_BAR_CPU_USAGE           "CPU-användning: %3d%%"
+    IDS_STATUS_BAR_PROCESSES           "Processer: %d"
+    IDS_STATUS_BAR_MEMORY_USAGE        "Minne använt: %dK / %dK"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_IMAGENAME         "Image Name"
+    IDS_PID               "PID"
+    IDS_CPUUSAGE          "CPU-användning"
+    IDS_CPUTIME           "CPU-tid"
+    IDS_MEMORYUSAGE       "Minnesanvändning"
+    IDS_MEMORYUSAGEDELTA  "Minnesdelta"
+    IDS_PEAKMEMORYUSAGE   "Högsta minnesanvändning"
+    IDS_PAGEFAULTS        "Sidfel"
+    IDS_USEROBJECTS       "Användarobjekt"
+    IDS_IOREADS           "I/O-läsningar"
+    IDS_IOREADBYTES       "I/O byte lästa"
+    IDS_SESSIONID         "Sessions-ID"
+    IDS_USERNAME          "Användare"
+    IDS_PAGEFAULTSDELTA   "Sidfelsdelta"
+    IDS_VIRTUALMEMORYSIZE "VM-storlek"
+    IDS_PAGEDPOOL         "Växlat minne"
+    IDS_NONPAGEDPOOL      "Oväxlat minne"
+    IDS_BASEPRIORITY      "Bas-prio"
+    IDS_HANDLECOUNT       "Referenser"
+    IDS_THREADCOUNT       "Trådar"
+    IDS_GDIOBJECTS        "GDI-objekt"
+    IDS_IOWRITES          "I/O-skrivningar"
+    IDS_IOWRITEBYTES      "I/O byte skrivna"
+    IDS_IOOTHER           "I/O övrigt"
+    IDS_IOOTHERBYTES      "I/O byte övrigt"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_WARNING_TITLE               "Aktivitetshanterarvarning"
+    IDS_PRIORITY_CHANGE_MESSAGE     "VARNING: Att ändra prioritetsklass på denna process kan\n\
+                                     orsaka oönskade resultat som instabilitet i systemet. Är du\n\
+                                     säker att du vill ändra prioritetsklassen?"
+    IDS_PRIORITY_UNABLE2CHANGE      "Kunde inte ändra prioritet"
+    IDS_TERMINATE_MESSAGE           "VARNING: Att avbryta en process kan orsaka oönskade\n\
+                                     resultat som förlust av data och instabilitet i systemet.\n\
+                                     Processen kommer inte få tillfälle attspara sitt tillstånd\n\
+                                     eller data innan det avbryts. Är du säker du vill\n\
+                                     avbryta processen?"
+    IDS_TERMINATE_UNABLE2TERMINATE  "Kunde inte avbryta process"
+    IDS_DEBUG_MESSAGE               "VARNING: Att felsöka denna process kan leda till förlust av data.\n\
+                                     Är du säker att du vill ansluta felsökaren?"
+    IDS_DEBUG_UNABLE2DEBUG          "Kunde inte felsöka process"
+    IDS_AFFINITY_ERROR_MESSAGE      "Processen måste ha släktskap med minst en processor"
+    IDS_AFFINITY_ERROR_TITLE        "Ogiltigt val"
+    IDS_AFFINITY_UNABLE2ACCESS      "Kan inte komma åt eller sätta process-släktskap"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_SYSTEM_IDLE_PROCESS            "Systemets vänteprocess"
+    IDS_APPLICATION_NOT_RESPONDING     "Svarar inte"
+    IDS_APPLICATION_RUNNING            "Kör"
+    IDS_APPLICATION_TASK               "Aktivitet"
+    IDS_APPLICATION_STATUS             "Status"
+    IDS_DEBUG_CHANNEL                  "Felsökningskanaler"
+    IDS_DEBUG_CHANNEL_FIXME            "Fixme"
+    IDS_DEBUG_CHANNEL_ERR              "Err"
+    IDS_DEBUG_CHANNEL_WARN             "Warn"
+    IDS_DEBUG_CHANNEL_TRACE            "Trace"
 END
