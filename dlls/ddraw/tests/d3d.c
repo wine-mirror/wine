@@ -3593,7 +3593,7 @@ static void BackBuffer3DCreateSurfaceTest(void)
     {
         hr = IDirectDrawSurface_GetSurfaceDesc(surf, &created_ddsd);
         ok(SUCCEEDED(hr), "IDirectDraw_GetSurfaceDesc failed: 0x%08x\n", hr);
-        todo_wine ok(created_ddsd.ddsCaps.dwCaps == expected_caps,
+        ok(created_ddsd.ddsCaps.dwCaps == expected_caps,
            "GetSurfaceDesc returned caps %x, expected %x\n", created_ddsd.ddsCaps.dwCaps,
            expected_caps);
 

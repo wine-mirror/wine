@@ -2916,7 +2916,7 @@ static void SurfaceCapsTest(void)
             hr = IDirectDrawSurface_GetSurfaceDesc(surface1, &desc);
             ok(hr == DD_OK, "IDirectDrawSurface_GetSurfaceDesc failed with %08x\n", hr);
 
-            if (!(create_caps[i] & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE)))
+            if (!(create_caps[i] & DDSCAPS_PRIMARYSURFACE))
                 ok(desc.ddsCaps.dwCaps == expected_caps[i],
                     "GetSurfaceDesc test %d returned caps %x, expected %x\n", i,
                     desc.ddsCaps.dwCaps, expected_caps[i]);
@@ -2971,7 +2971,7 @@ static void SurfaceCapsTest(void)
                 hr = IDirectDrawSurface7_GetSurfaceDesc(surface7, &desc2);
                 ok(hr == DD_OK, "IDirectDrawSurface_GetSurfaceDesc failed with %08x\n", hr);
 
-                if (!(create_caps[i] & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE)))
+                if (!(create_caps[i] & DDSCAPS_PRIMARYSURFACE))
                     ok(desc2.ddsCaps.dwCaps == expected_caps[i],
                         "GetSurfaceDesc test %d returned caps %x, expected %x\n", i,
                         desc2.ddsCaps.dwCaps, expected_caps[i]);

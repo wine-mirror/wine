@@ -3511,10 +3511,15 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
         desc->ddsCaps.dwCaps |= DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY;
     }
 
-    if (desc->ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE))
+    if (desc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
         usage |= WINED3DUSAGE_RENDERTARGET;
         desc->ddsCaps.dwCaps |= DDSCAPS_VISIBLE;
+    }
+
+    if (desc->ddsCaps.dwCaps & DDSCAPS_3DDEVICE)
+    {
+        usage |= WINED3DUSAGE_RENDERTARGET;
     }
 
     if (desc->ddsCaps.dwCaps & (DDSCAPS_OVERLAY))
