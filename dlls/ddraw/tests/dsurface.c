@@ -2852,7 +2852,10 @@ static void SurfaceCapsTest(void)
         0,
         DDSCAPS_TEXTURE | DDSCAPS_ALLOCONLOAD | DDSCAPS_SYSTEMMEMORY,
         DDSCAPS_PRIMARYSURFACE,
-        DDSCAPS_PRIMARYSURFACE | DDSCAPS_SYSTEMMEMORY
+        DDSCAPS_PRIMARYSURFACE | DDSCAPS_SYSTEMMEMORY,
+        DDSCAPS_3DDEVICE,
+        DDSCAPS_ZBUFFER,
+        DDSCAPS_3DDEVICE | DDSCAPS_OFFSCREENPLAIN
     };
     DWORD expected_caps[] = {
         DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM,
@@ -2861,7 +2864,10 @@ static void SurfaceCapsTest(void)
         DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM,
         DDSCAPS_TEXTURE | DDSCAPS_ALLOCONLOAD | DDSCAPS_SYSTEMMEMORY,
         DDSCAPS_PRIMARYSURFACE | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM | DDSCAPS_VISIBLE,
-        DDSCAPS_PRIMARYSURFACE | DDSCAPS_SYSTEMMEMORY | DDSCAPS_VISIBLE
+        DDSCAPS_PRIMARYSURFACE | DDSCAPS_SYSTEMMEMORY | DDSCAPS_VISIBLE,
+        DDSCAPS_3DDEVICE | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM,
+        DDSCAPS_ZBUFFER | DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY,
+        DDSCAPS_3DDEVICE | DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM
     };
     UINT i;
 
@@ -2891,6 +2897,15 @@ static void SurfaceCapsTest(void)
             create.dwWidth = 128;
         }
 
+        if (create.ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
+        {
+            create.dwFlags |= DDSD_PIXELFORMAT;
+            U4(create).ddpfPixelFormat.dwSize = sizeof(U4(create).ddpfPixelFormat);
+            U4(create).ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+            U1(U4(create).ddpfPixelFormat).dwZBufferBitDepth = 16;
+            U3(U4(create).ddpfPixelFormat).dwZBitMask = 0x0000FFFF;
+        }
+
         hr = IDirectDraw_CreateSurface(lpDD, &create, &surface1, NULL);
         ok(hr == DD_OK, "IDirectDraw_CreateSurface failed with %08x\n", hr);
 
@@ -2901,14 +2916,14 @@ static void SurfaceCapsTest(void)
             hr = IDirectDrawSurface_GetSurfaceDesc(surface1, &desc);
             ok(hr == DD_OK, "IDirectDrawSurface_GetSurfaceDesc failed with %08x\n", hr);
 
-            if (!(create_caps[i] & DDSCAPS_PRIMARYSURFACE))
+            if (!(create_caps[i] & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE)))
                 ok(desc.ddsCaps.dwCaps == expected_caps[i],
-                    "GetSurfaceDesc returned caps %x, expected %x\n", desc.ddsCaps.dwCaps,
-                    expected_caps[i]);
+                    "GetSurfaceDesc test %d returned caps %x, expected %x\n", i,
+                    desc.ddsCaps.dwCaps, expected_caps[i]);
             else
                 todo_wine ok(desc.ddsCaps.dwCaps == expected_caps[i],
-                                "GetSurfaceDesc returned caps %x, expected %x\n", desc.ddsCaps.dwCaps,
-                                expected_caps[i]);
+                                "GetSurfaceDesc test %d returned caps %x, expected %x\n", i,
+                                desc.ddsCaps.dwCaps, expected_caps[i]);
 
             IDirectDrawSurface_Release(surface1);
         }
@@ -2937,6 +2952,15 @@ static void SurfaceCapsTest(void)
                 create2.dwWidth = 128;
             }
 
+            if (create2.ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
+            {
+                create2.dwFlags |= DDSD_PIXELFORMAT;
+                U4(create2).ddpfPixelFormat.dwSize = sizeof(U4(create2).ddpfPixelFormat);
+                U4(create2).ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+                U1(U4(create2).ddpfPixelFormat).dwZBufferBitDepth = 16;
+                U3(U4(create2).ddpfPixelFormat).dwZBitMask = 0x0000FFFF;
+            }
+
             hr = IDirectDraw7_CreateSurface(dd7, &create2, &surface7, NULL);
             ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
 
@@ -2947,14 +2971,14 @@ static void SurfaceCapsTest(void)
                 hr = IDirectDrawSurface7_GetSurfaceDesc(surface7, &desc2);
                 ok(hr == DD_OK, "IDirectDrawSurface_GetSurfaceDesc failed with %08x\n", hr);
 
-                if (!(create_caps[i] & DDSCAPS_PRIMARYSURFACE))
+                if (!(create_caps[i] & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE)))
                     ok(desc2.ddsCaps.dwCaps == expected_caps[i],
-                        "GetSurfaceDesc returned caps %x, expected %x\n", desc2.ddsCaps.dwCaps,
-                        expected_caps[i]);
+                        "GetSurfaceDesc test %d returned caps %x, expected %x\n", i,
+                        desc2.ddsCaps.dwCaps, expected_caps[i]);
                 else
                     todo_wine ok(desc2.ddsCaps.dwCaps == expected_caps[i],
-                                    "GetSurfaceDesc returned caps %x, expected %x\n", desc2.ddsCaps.dwCaps,
-                                    expected_caps[i]);
+                                    "GetSurfaceDesc test %d returned caps %x, expected %x\n", i,
+                                    desc2.ddsCaps.dwCaps, expected_caps[i]);
 
                 IDirectDrawSurface7_Release(surface7);
             }
