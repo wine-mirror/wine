@@ -25,6 +25,32 @@
 #include <errno.h>
 #include "wine/test.h"
 
+#define DEFINE_EXPECT(func) \
+    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+
+#define SET_EXPECT(func) \
+    expect_ ## func = TRUE
+
+#define CHECK_EXPECT2(func) \
+    do { \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
+        called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_EXPECT(func) \
+    do { \
+        CHECK_EXPECT2(func); \
+        expect_ ## func = FALSE; \
+    }while(0)
+
+#define CHECK_CALLED(func) \
+    do { \
+        ok(called_ ## func, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
+DEFINE_EXPECT(invalid_parameter_handler);
+
 static _invalid_parameter_handler (__cdecl *p_set_invalid_parameter_handler)(_invalid_parameter_handler);
 typedef int (__cdecl *_INITTERM_E_FN)(void);
 static int (__cdecl *p_initterm_e)(_INITTERM_E_FN *table, _INITTERM_E_FN *end);
@@ -48,6 +74,7 @@ static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
         const wchar_t *function, const wchar_t *file,
         unsigned line, uintptr_t arg)
 {
+    CHECK_EXPECT(invalid_parameter_handler);
     ok(expression == NULL, "expression is not NULL\n");
     ok(function == NULL, "function is not NULL\n");
     ok(file == NULL, "file is not NULL\n");
@@ -223,18 +250,35 @@ static void test__strtoi64(void)
     }
 
     errno = 0xdeadbeef;
+    SET_EXPECT(invalid_parameter_handler);
     res = p_strtoi64(NULL, NULL, 10);
     ok(res == 0, "res != 0\n");
+    CHECK_CALLED(invalid_parameter_handler);
+
+    SET_EXPECT(invalid_parameter_handler);
     res = p_strtoi64("123", NULL, 1);
     ok(res == 0, "res != 0\n");
+    CHECK_CALLED(invalid_parameter_handler);
+
+    SET_EXPECT(invalid_parameter_handler);
     res = p_strtoi64("123", NULL, 37);
     ok(res == 0, "res != 0\n");
+    CHECK_CALLED(invalid_parameter_handler);
+
+    SET_EXPECT(invalid_parameter_handler);
     ures = p_strtoui64(NULL, NULL, 10);
     ok(ures == 0, "res = %d\n", (int)ures);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    SET_EXPECT(invalid_parameter_handler);
     ures = p_strtoui64("123", NULL, 1);
     ok(ures == 0, "res = %d\n", (int)ures);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    SET_EXPECT(invalid_parameter_handler);
     ures = p_strtoui64("123", NULL, 37);
     ok(ures == 0, "res = %d\n", (int)ures);
+    CHECK_CALLED(invalid_parameter_handler);
     ok(errno == 0xdeadbeef, "errno = %x\n", errno);
 }
 
