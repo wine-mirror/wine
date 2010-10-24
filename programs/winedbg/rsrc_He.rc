@@ -1,0 +1,59 @@
+/*
+ * Hebrew Language Support
+ *
+ * Copyright 2008 Mikolaj Zalewski
+ * Copyright 2010 Yaron Shahrabani <sh.yaron@gmail.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resource.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
+
+IDM_DEBUG_POPUP MENU
+BEGIN
+    POPUP ""
+    BEGIN
+        MENUITEM "&ניפוי שגיאות", ID_DEBUG
+    END
+END
+
+IDD_CRASH_DLG DIALOGEX 100, 100, 273, 175
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "שגיאה בתכנית"
+FONT 8, "Tahoma"
+BEGIN
+    LTEXT           "",IDC_STATIC_BG,0,0,273,52,WS_BORDER,0
+    LTEXT           "התכנית %s נתקלה בשגיאה חמורה ועליה להיסגר. \
+                    אנו מתנצלים על אי הנעימות.",
+                    IDC_STATIC_TXT1,27,10,224,30
+    LTEXT           "בעיה זו עלולה להיגרם עקב תקלה בתכנית או מחסור מסוים ב־Wine. \
+                    אולי מוטב לפנות לכתובת http://appdb.winehq.org לקבלת עצות להרצת \
+                    יישום זה.\n\n\
+                    אם תקלה זו אינה קיימת בעת הרצת Windows ולא דווח עליה עדיין, \
+                    ניתן לדווח עליה בכתובת http://bugs.winehq.org.",IDC_STATIC_TXT2,27,60,224,100
+    DEFPUSHBUTTON   "סגירה", IDOK, 205, 151, 60, 16, WS_TABSTOP
+END
+
+STRINGTABLE
+BEGIN
+    IDS_AUTO_CAPTION     "Wine program crash"
+    IDS_INVALID_PARAMS   "Internal errors - invalid parameters received"
+    IDS_UNIDENTIFIED     "(unidentified)"
+END
