@@ -351,7 +351,7 @@ static void create_volatile_environment_registry_key(void)
         set_reg_value( hkey, HomeDriveW, path );
     }
 
-    size = sizeof(path);
+    size = sizeof(path)/sizeof(path[0]);
     if (GetUserNameW( path, &size )) set_reg_value( hkey, UserNameW, path );
 
     set_reg_value( hkey, HomeShareW, EmptyW );
@@ -360,7 +360,7 @@ static void create_volatile_environment_registry_key(void)
     if (SUCCEEDED(hr))
         set_reg_value( hkey, LocalAppDataW, path );
 
-    size = sizeof(computername) - 2;
+    size = (sizeof(computername)/sizeof(WCHAR)) - 2;
     if (GetComputerNameW(&computername[2], &size))
     {
         computername[0] = computername[1] = '\\';
