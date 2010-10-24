@@ -3181,7 +3181,7 @@ static void SetRenderTargetTest(void)
     ok(hr == DD_OK, "IDirect3DDevice7_GetRenderTarget failed, hr=0x%08x\n", hr);
 
     hr = IDirect3DDevice7_SetRenderTarget(lpD3DDevice, failrt, 0);
-    todo_wine ok(hr != D3D_OK, "IDirect3DDevice7_SetRenderTarget succeeded\n");
+    ok(hr != D3D_OK, "IDirect3DDevice7_SetRenderTarget succeeded\n");
 
     hr = IDirect3DDevice7_SetRenderTarget(lpD3DDevice, newrt, 0);
     ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderTarget failed, hr=0x%08x\n", hr);

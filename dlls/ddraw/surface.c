@@ -3517,7 +3517,7 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
         desc->ddsCaps.dwCaps |= DDSCAPS_VISIBLE;
     }
 
-    if (desc->ddsCaps.dwCaps & DDSCAPS_3DDEVICE)
+    if ((desc->ddsCaps.dwCaps & DDSCAPS_3DDEVICE) && !(desc->ddsCaps.dwCaps & DDSCAPS_ZBUFFER))
     {
         usage |= WINED3DUSAGE_RENDERTARGET;
     }
