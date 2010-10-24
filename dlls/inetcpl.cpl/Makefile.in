@@ -19,6 +19,7 @@ RC_SRCS = \
 	cpl_Nl.rc \
 	cpl_Pl.rc \
 	cpl_Si.rc \
+	cpl_Sr.rc \
 	cpl_Sv.rc \
 	cpl_Uk.rc \
 	inetcpl.rc
