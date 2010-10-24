@@ -1992,6 +1992,71 @@ done:
     if (d3d8) IDirect3D8_Release(d3d8);
 }
 
+static void test_ApplyStateBlock(void)
+{
+    D3DPRESENT_PARAMETERS d3dpp;
+    IDirect3DDevice8 *device = NULL;
+    IDirect3D8 *d3d8;
+    HWND hwnd;
+    HRESULT hr;
+    D3DDISPLAYMODE d3ddm;
+    DWORD received, token;
+
+    d3d8 = pDirect3DCreate8( D3D_SDK_VERSION );
+    ok(d3d8 != NULL, "Failed to create IDirect3D8 object\n");
+    hwnd = CreateWindow( "static", "d3d8_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    ok(hwnd != NULL, "Failed to create window\n");
+    if (!d3d8 || !hwnd) goto cleanup;
+
+    IDirect3D8_GetAdapterDisplayMode( d3d8, D3DADAPTER_DEFAULT, &d3ddm );
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.Windowed         = TRUE;
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferWidth  = 800;
+    d3dpp.BackBufferHeight  = 600;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+    d3dpp.EnableAutoDepthStencil = TRUE;
+    d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
+
+    hr = IDirect3D8_CreateDevice( d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
+                                  D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_PUREDEVICE, &d3dpp, &device );
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE || hr == D3DERR_INVALIDCALL,
+       "IDirect3D8_CreateDevice failed with %#x\n", hr);
+    if(!device)
+    {
+        skip("Failed to create a d3d device\n");
+        goto cleanup;
+    }
+
+    IDirect3DDevice8_CreateStateBlock(device, D3DSBT_ALL, &token);
+    ok(token !=0, "received null token\n");
+
+    IDirect3DDevice8_BeginStateBlock(device);
+    IDirect3DDevice8_SetRenderState(device, D3DRS_ZENABLE, TRUE);
+    IDirect3DDevice8_EndStateBlock(device, &token);
+    IDirect3DDevice8_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+
+    hr = IDirect3DDevice8_GetRenderState(device, D3DRS_ZENABLE, &received);
+    ok(hr==D3D_OK, "Expected= D3D_OK, Got= %#x\n", hr);
+    ok(received==FALSE, "Expected = TRUE, received FALSE\n");
+
+    IDirect3DDevice8_ApplyStateBlock(device, 0);
+    ok(hr == D3D_OK, "Expected= D3D_OK, Got= %#x\n", hr);
+    hr = IDirect3DDevice8_GetRenderState(device, D3DRS_ZENABLE, &received);
+    ok(hr==D3D_OK, "Expected= D3D_OK, Got= %#x\n", hr);
+    ok(received==FALSE, "Expected = TRUE, received FALSE\n");
+
+    IDirect3DDevice8_ApplyStateBlock(device, token);
+    ok(hr == D3D_OK, "Expected= D3D_OK, Got= %#x\n", hr);
+    hr = IDirect3DDevice8_GetRenderState(device, D3DRS_ZENABLE, &received);
+    ok(hr==D3D_OK, "Expected= D3D_OK, Got= %#x\n", hr);
+    ok(received==TRUE, "Expected = TRUE, received FALSE\n");
+
+    cleanup:
+    if(device) IDirect3DDevice8_Release(device);
+    if(d3d8) IDirect3D8_Release(d3d8);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -2028,6 +2093,7 @@ START_TEST(device)
         test_shader();
         test_limits();
         test_lights();
+        test_ApplyStateBlock();
         test_render_zero_triangles();
         test_depth_stencil_reset();
         test_wndproc();

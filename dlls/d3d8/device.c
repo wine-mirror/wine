@@ -1354,6 +1354,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_ApplyStateBlock(LPDIRECT3DDEVICE8 ifa
 
     TRACE("iface %p, token %#x.\n", iface, Token);
 
+    if (!Token) return D3D_OK;
+
     wined3d_mutex_lock();
     stateblock = d3d8_get_object(&This->handle_table, Token - 1, D3D8_HANDLE_SB);
     if (!stateblock)
