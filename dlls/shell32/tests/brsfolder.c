@@ -198,7 +198,7 @@ static void test_click_make_new_folder_button(void)
     bi.lpfn = create_new_folder_callback;
     /* Use test folder as the root folder for dialog box */
     MultiByteToWideChar(CP_UTF8, 0, test_folder_path, MAX_PATH,
-        test_folder_pathW, MAX_PATH*sizeof(WCHAR));
+        test_folder_pathW, MAX_PATH);
     SHGetDesktopFolder(&test_folder_object);
     test_folder_object->lpVtbl->ParseDisplayName(test_folder_object, NULL, NULL,
         test_folder_pathW, 0UL, &test_folder_pidl, 0UL);
