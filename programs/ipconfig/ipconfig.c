@@ -289,7 +289,7 @@ static void print_full_information(void)
         {
             WCHAR hostnameW[MAX_HOSTNAME_LEN + 4];
 
-            MultiByteToWideChar(CP_ACP, 0, info->HostName, -1, hostnameW, sizeof(hostnameW));
+            MultiByteToWideChar(CP_ACP, 0, info->HostName, -1, hostnameW, sizeof(hostnameW)/sizeof(hostnameW[0]));
             print_field(STRING_HOSTNAME, hostnameW);
 
             /* FIXME: Output primary DNS suffix. */
