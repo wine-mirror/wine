@@ -1,0 +1,251 @@
+/*
+ * Copyright 2005-2006 Jacek Caban
+ * Copyright 2010 Yaron Shahrabani <sh.yaron@gmail.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "shdoclc.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+    IDS_MESSAGE_BOX_TITLE, "Wine Internet Explorer"
+}
+
+STRINGTABLE
+{
+    IDS_PRINT_HEADER_TEMPLATE "&w&bעמוד &p" /* FIXME: should be "&w&bPage &p of &P" */
+    IDS_PRINT_FOOTER_TEMPLATE "&u&b&d"
+}
+
+IDR_BROWSE_CONTEXT_MENU MENU
+{
+    POPUP "Default"
+    {
+        MENUITEM "ח&זרה",                  IDM_GOBACKWARD
+        MENUITEM "&קדימה",               IDM_GOFORWARD
+        MENUITEM SEPARATOR
+        MENUITEM "שמ&ירת הרקע בשם...", IDM_SAVEBACKGROUND
+        MENUITEM "הגדרה &כרקע",     IDM_SETWALLPAPER
+        MENUITEM "הע&תקת הרקע",       IDM_COPYBACKGROUND
+        MENUITEM "הגדרה כפריט &שולחן עבודה",   IDM_SETDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "ב&חירת הכול",            IDM_SELECTALL
+        MENUITEM "הד&בקה",                 IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "יצירת קיצו&ר דרך",       IDM_CREATESHORTCUT
+        MENUITEM "הוספה למו&עדפים",      IDM_ADDFAVORITES
+        MENUITEM "&צפייה במקור",           IDM_VIEWSOURCE
+        MENUITEM SEPARATOR
+        MENUITEM "&קידוד",              IDM_LANGUAGE
+        MENUITEM SEPARATOR
+        MENUITEM "ה&דפסה",                 IDM_PRINT
+        MENUITEM "&רענון",               _IDM_REFRESH
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "מ&אפיינים",            IDM_PROPERTIES
+    }
+
+    POPUP "Image"
+    {
+        MENUITEM "&פתיחת קישור",               IDM_FOLLOWLINKC
+        MENUITEM "פתיחת קישור ב&חלון חדש", IDM_FOLLOWLINKN
+        MENUITEM "שמירת ה&יעד בשם...",       IDM_SAVETARGET
+        MENUITEM "הד&פסת היעד",            IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "ה&צגת תמונה",            IDM_SHOWPICTURE
+        MENUITEM "&שמירת תמונה בשם...",      IDM_SAVEPICTURE
+        MENUITEM "שליחת תמונה ב&דוא״ל...",       IDM_MP_EMAILPICTURE
+        MENUITEM "הדפסת &תמונה...",        IDM_MP_PRINTPICTURE
+        MENUITEM "מ&עבר לתמונות שלי",       IDM_MP_MYPICS
+        MENUITEM "הגדרה &כרקע",       IDM_SETWALLPAPER
+        MENUITEM "הגדרה כ&פריט שולחן העבודה...",  IDM_SETDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "ג&זירה",                     IDM_CUT
+        MENUITEM "ה&עתקה",                    IDM_COPY
+        MENUITEM "העתקת קיצור ה&דרך",           IDM_COPYSHORTCUT
+        MENUITEM "ה&דבקה",                   IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "הוספה למו&עדפים...",     IDM_ADDFAVORITES
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "מ&אפיינים",              IDM_PROPERTIES
+    }
+
+    POPUP "Control"
+    {
+        MENUITEM "&ביטול",       IDM_UNDO
+        MENUITEM SEPARATOR
+        MENUITEM "ג&זירה",        IDM_CUT
+        MENUITEM "ה&עתקה",       IDM_COPY
+        MENUITEM "ה&דבקה",      IDM_PASTE
+        MENUITEM "&מחיקה",     IDM_DELETE
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "בחירת ה&כול", IDM_SELECTALL
+    }
+
+    POPUP "Table"
+    {
+        POPUP "&בחירה"
+        {
+            MENUITEM "&תא",         IDM_CELLSELECT
+            MENUITEM "&שורה",          IDM_ROWSELECT
+            MENUITEM "&עמודה",       IDM_COLUMNSELECT
+            MENUITEM "&טבלה",        IDM_TABLESELECT
+        }
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "מאפייני ה&תא",  IDM_CELLPROPERTIES
+        MENUITEM "מאפייני ה&טבלה", IDM_TABLEPROPERTIES
+    }
+
+    POPUP "1DSite Select"
+    {
+        MENUITEM "ג&זירה",        IDM_CUT
+        MENUITEM "ה&עתקה",       IDM_COPY
+        MENUITEM "הדבקה",       IDM_PASTE
+        MENUITEM "בחירת ה&כול", IDM_SELECTALL
+        MENUITEM "הד&פסה",      IDM_PRINT
+        MENUITEM SEPARATOR
+    }
+
+    POPUP "Anchor"
+    {
+        MENUITEM "&פתיחה",                IDM_FOLLOWLINKC
+        MENUITEM "פתיחה ב&חלון חדש",  IDM_FOLLOWLINKN
+        MENUITEM "שמירת היעד &בשם...",   IDM_SAVETARGET
+        MENUITEM "ה&דפסת היעד",        IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "גזירה",                  IDM_CUT
+        MENUITEM "ה&עתקה",                IDM_COPY
+        MENUITEM "העתקת קיצור &דרך",       IDM_COPYSHORTCUT
+        MENUITEM "ה&דבקה",               IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "הוספה למו&עדפים...", IDM_ADDFAVORITES
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "מ&אפיינים",          IDM_PROPERTIES
+    }
+
+    POPUP "Context Unknown"
+    {
+        MENUITEM SEPARATOR
+    }
+
+    POPUP "DYNSRC Image"
+    {
+        MENUITEM "&פתיחת הקישור",               IDM_FOLLOWLINKC
+        MENUITEM "פתיחת הקישור ב&חלון חדש", IDM_FOLLOWLINKN
+        MENUITEM "שמירת היעד &בשם...",       IDM_SAVETARGET
+        MENUITEM "הדפ&סת היעד",            IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "ה&צגת תמונה",            IDM_SHOWPICTURE
+        MENUITEM "שמי&רת וידאו בשם...",        IDM_SAVEPICTURE
+        MENUITEM "ה&גדרה כרקע",       IDM_SETWALLPAPER
+        MENUITEM "הגדרה כפריט &שולחן עבודה...",  IDM_SETDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "ג&זירה",                     IDM_CUT
+        MENUITEM "הע&תקה",                    IDM_COPY
+        MENUITEM "העתקת קיצור ד&רך",           IDM_COPYSHORTCUT
+        MENUITEM "ה&דבקה",                   IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "הוספה למו&עדפים...",     IDM_ADDFAVORITES
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "נגינה",                     IDM_DYNSRCPLAY
+        MENUITEM "עצירה",                     IDM_DYNSRCSTOP
+        MENUITEM "מ&אפיינים",              IDM_PROPERTIES
+    }
+
+    POPUP "ART Image"
+    {
+        MENUITEM "&פתיחת הקישור",               IDM_FOLLOWLINKC
+        MENUITEM "פתיחת הקישור ב&חלון חדש", IDM_FOLLOWLINKN
+        MENUITEM "שמירת היעד &בשם...",       IDM_SAVETARGET
+        MENUITEM "הדפ&סת היעד",            IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "ה&צגת התמונה",            IDM_SHOWPICTURE
+        MENUITEM "שמירת התמונה ב&שם...",      IDM_SAVEPICTURE
+        MENUITEM "ה&גדרה כרקע",       IDM_SETWALLPAPER
+        MENUITEM "הגד&רה כפריט שולחן עבודה...",  IDM_SETDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "ג&זירה",                     IDM_CUT
+        MENUITEM "ה&עתקה",                    IDM_COPY
+        MENUITEM "העתקת &קיצור דרך",           IDM_COPYSHORTCUT
+        MENUITEM "ה&דבקה",                   IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "הוספה למו&עדפים...",     IDM_ADDFAVORITES
+        MENUITEM SEPARATOR
+        MENUITEM "נגינה",                     IDM_IMGARTPLAY
+        MENUITEM "עצירה",                     IDM_IMGARTSTOP
+        MENUITEM "חזרה",                   IDM_IMGARTREWIND
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "מ&אפיינים",              IDM_PROPERTIES
+    }
+
+    POPUP "Debug"
+    {
+        MENUITEM "תגיות מעקב",         IDM_TRACETAGS
+        MENUITEM "כשלי משאבים",  IDM_RESOURCEFAILURES
+        MENUITEM "איסוף נתוני מעקב", IDM_DUMPTRACKINGINFO
+        MENUITEM "הפסקה בניפוי השגיאות",        IDM_DEBUGBREAK
+        MENUITEM "תצוגת ניפוי שגיאות",         IDM_DEBUGVIEW
+        MENUITEM "איסוף עץ",          IDM_DUMPTREE
+        MENUITEM "איסוף שורות",         IDM_DUMPLINES
+        MENUITEM "איסוף DisplayTree",   IDM_DUMPDISPLAYTREE
+        MENUITEM "איסוף FormatCaches",  IDM_DUMPFORMATCACHES
+        MENUITEM "איסוף LayoutRects",   IDM_DUMPLAYOUTRECTS
+        MENUITEM "צג הזיכרון",     IDM_MEMORYMONITOR
+        MENUITEM "מחווני ביצועים", IDM_PERFORMANCEMETERS
+        MENUITEM "שמירת HTML",          IDM_SAVEHTML
+        MENUITEM SEPARATOR
+        MENUITEM "תצוגת &עיון",       IDM_BROWSEMODE
+        MENUITEM "תצוגת ע&ריכה",         IDM_EDITMODE
+    }
+
+    POPUP "Vertical Scrollbar"
+    {
+        MENUITEM "גלילה לכאן",  IDM_SCROLL_HERE
+        MENUITEM SEPARATOR
+        MENUITEM "ראש",          IDM_SCROLL_TOP
+        MENUITEM "תחתית",       IDM_SCROLL_BOTTOM
+        MENUITEM SEPARATOR
+        MENUITEM "עמוד למעלה",      IDM_SCROLL_PAGEUP
+        MENUITEM "עמוד למטה",    IDM_SCROLL_PAGEDOWN
+        MENUITEM SEPARATOR
+        MENUITEM "גלילה למעלה",    IDM_SCROLL_UP
+        MENUITEM "גלילה למטה",  IDM_SCROLL_DOWN
+    }
+
+    POPUP "Horizontal Scrollbar"
+    {
+        MENUITEM "גלילה לכאן",  IDM_SCROLL_HERE
+        MENUITEM SEPARATOR
+        MENUITEM "קצה שמאלי",    IDM_SCROLL_LEFTEDGE
+        MENUITEM "קצה ימני",   IDM_SCROLL_RIGHTEDGE
+        MENUITEM SEPARATOR
+        MENUITEM "עמוד שמאלה",    IDM_SCROLL_PAGELEFT
+        MENUITEM "עמוד ימינה",   IDM_SCROLL_PAGERIGHT
+        MENUITEM SEPARATOR
+        MENUITEM "גלילה שמאלה",  IDM_SCROLL_LEFT
+        MENUITEM "גלילה ימינה", IDM_SCROLL_RIGHT
+    }
+}
