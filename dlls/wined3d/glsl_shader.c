@@ -681,34 +681,28 @@ static void reset_program_constant_version(struct wine_rb_entry *entry, void *co
  * Loads the texture dimensions for NP2 fixup into the currently set GLSL program.
  */
 /* GL locking is done by the caller (state handler) */
-static void shader_glsl_load_np2fixup_constants(
-    IWineD3DDevice* device,
-    char usePixelShader,
-    char useVertexShader) {
+static void shader_glsl_load_np2fixup_constants(void *shader_priv,
+        const struct wined3d_gl_info *gl_info, const struct wined3d_state *state)
+{
+    struct shader_glsl_priv *glsl_priv = shader_priv;
+    const struct glsl_shader_prog_link *prog = glsl_priv->glsl_program;
 
-    const IWineD3DDeviceImpl* deviceImpl = (const IWineD3DDeviceImpl*) device;
-    const struct glsl_shader_prog_link* prog = ((struct shader_glsl_priv *)(deviceImpl->shader_priv))->glsl_program;
+    /* No GLSL program set - nothing to do. */
+    if (!prog) return;
 
-    if (!prog) {
-        /* No GLSL program set - nothing to do. */
-        return;
-    }
+    /* NP2 texcoord fixup is (currently) only done for pixelshaders. */
+    if (!use_ps(state)) return;
 
-    if (!usePixelShader) {
-        /* NP2 texcoord fixup is (currently) only done for pixelshaders. */
-        return;
-    }
-
-    if (prog->ps_args.np2_fixup && -1 != prog->np2Fixup_location) {
-        const struct wined3d_gl_info *gl_info = &deviceImpl->adapter->gl_info;
-        const IWineD3DStateBlockImpl* stateBlock = (const IWineD3DStateBlockImpl*) deviceImpl->stateBlock;
+    if (prog->ps_args.np2_fixup && prog->np2Fixup_location != -1)
+    {
         UINT i;
         UINT fixup = prog->ps_args.np2_fixup;
         GLfloat np2fixup_constants[4 * MAX_FRAGMENT_SAMPLERS];
 
-        for (i = 0; fixup; fixup >>= 1, ++i) {
+        for (i = 0; fixup; fixup >>= 1, ++i)
+        {
+            const IWineD3DBaseTextureImpl *tex = state->textures[i];
             const unsigned char idx = prog->np2Fixup_info->idx[i];
-            const IWineD3DBaseTextureImpl *tex = stateBlock->state.textures[i];
             GLfloat *tex_dim = &np2fixup_constants[(idx >> 1) * 4];
 
             if (!tex)
@@ -4619,7 +4613,7 @@ static void shader_glsl_select(const struct wined3d_context *context, BOOL usePS
      * called between selecting the shader and using it, which results in wrong fixup for some frames. */
     if (priv->glsl_program && priv->glsl_program->np2Fixup_info)
     {
-        shader_glsl_load_np2fixup_constants((IWineD3DDevice *)device, usePS, useVS);
+        shader_glsl_load_np2fixup_constants(priv, gl_info, &device->stateBlock->state);
     }
 }
 

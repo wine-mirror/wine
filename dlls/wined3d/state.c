@@ -3614,7 +3614,8 @@ static void sampler_texmatrix(DWORD state, IWineD3DStateBlockImpl *stateblock, s
 static void sampler(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     DWORD sampler = state_id - STATE_SAMPLER(0);
-    DWORD mapped_stage = stateblock->device->texUnitMap[sampler];
+    IWineD3DDeviceImpl *device = stateblock->device;
+    DWORD mapped_stage = device->texUnitMap[sampler];
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_state *state = &stateblock->state;
     union {
@@ -3673,9 +3674,7 @@ static void sampler(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct w
         /* Trigger shader constant reloading (for NP2 texcoord fixup) */
         if (!state->textures[sampler]->baseTexture.pow2Matrix_identity)
         {
-            IWineD3DDeviceImpl *d3ddevice = stateblock->device;
-            d3ddevice->shader_backend->shader_load_np2fixup_constants(
-                (IWineD3DDevice*)d3ddevice, use_ps(state), use_vs(state));
+            device->shader_backend->shader_load_np2fixup_constants(device->shader_priv, gl_info, state);
         }
     }
     else if (mapped_stage < gl_info->limits.textures)
@@ -3691,8 +3690,8 @@ static void sampler(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct w
                 state_alpha(WINED3DRS_COLORKEYENABLE, stateblock, context);
             }
         } /* Otherwise tex_colorop disables the stage */
-        glBindTexture(GL_TEXTURE_2D, stateblock->device->dummyTextureName[sampler]);
-        checkGLcall("glBindTexture(GL_TEXTURE_2D, stateblock->device->dummyTextureName[sampler])");
+        glBindTexture(GL_TEXTURE_2D, device->dummyTextureName[sampler]);
+        checkGLcall("glBindTexture(GL_TEXTURE_2D, device->dummyTextureName[sampler])");
     }
 }
 

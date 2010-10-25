@@ -723,6 +723,7 @@ struct vs_compile_args {
 };
 
 struct wined3d_context;
+struct wined3d_state;
 
 typedef struct {
     void (*shader_handle_instruction)(const struct wined3d_shader_instruction *);
@@ -732,7 +733,8 @@ typedef struct {
     void (*shader_update_float_vertex_constants)(IWineD3DDevice *iface, UINT start, UINT count);
     void (*shader_update_float_pixel_constants)(IWineD3DDevice *iface, UINT start, UINT count);
     void (*shader_load_constants)(const struct wined3d_context *context, char usePS, char useVS);
-    void (*shader_load_np2fixup_constants)(IWineD3DDevice *iface, char usePS, char useVS);
+    void (*shader_load_np2fixup_constants)(void *shader_priv, const struct wined3d_gl_info *gl_info,
+            const struct wined3d_state *state);
     void (*shader_destroy)(IWineD3DBaseShader *iface);
     HRESULT (*shader_alloc_private)(IWineD3DDevice *iface);
     void (*shader_free_private)(IWineD3DDevice *iface);

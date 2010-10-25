@@ -480,20 +480,13 @@ static unsigned int shader_arb_load_constantsF(IWineD3DBaseShaderImpl *This, con
 /**
  * Loads the texture dimensions for NP2 fixup into the currently set ARB_[vertex/fragment]_programs.
  */
-static void shader_arb_load_np2fixup_constants(
-    IWineD3DDevice* device,
-    char usePixelShader,
-    char useVertexShader) {
+static void shader_arb_load_np2fixup_constants(void *shader_priv,
+        const struct wined3d_gl_info *gl_info, const struct wined3d_state *state)
+{
+    const struct shader_arb_priv * priv = shader_priv;
 
-    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl *) device;
-    const struct shader_arb_priv* const priv = (const struct shader_arb_priv *) deviceImpl->shader_priv;
-    IWineD3DStateBlockImpl* stateBlock = deviceImpl->stateBlock;
-    const struct wined3d_gl_info *gl_info = &deviceImpl->adapter->gl_info;
-
-    if (!usePixelShader) {
-        /* NP2 texcoord fixup is (currently) only done for pixelshaders. */
-        return;
-    }
+    /* NP2 texcoord fixup is (currently) only done for pixelshaders. */
+    if (!use_ps(state)) return;
 
     if (priv->compiled_fprog && priv->compiled_fprog->np2fixup_info.super.active) {
         const struct arb_ps_np2fixup_info* const fixup = &priv->compiled_fprog->np2fixup_info;
@@ -501,9 +494,10 @@ static void shader_arb_load_np2fixup_constants(
         WORD active = fixup->super.active;
         GLfloat np2fixup_constants[4 * MAX_FRAGMENT_SAMPLERS];
 
-        for (i = 0; active; active >>= 1, ++i) {
+        for (i = 0; active; active >>= 1, ++i)
+        {
+            const IWineD3DBaseTextureImpl *tex = state->textures[i];
             const unsigned char idx = fixup->super.idx[i];
-            const IWineD3DBaseTextureImpl *tex = stateBlock->state.textures[i];
             GLfloat *tex_dim = &np2fixup_constants[(idx >> 1) * 4];
 
             if (!(active & 1)) continue;
@@ -4574,7 +4568,7 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
 
         /* Force constant reloading for the NP2 fixup (see comment in shader_glsl_select for more info) */
         if (compiled->np2fixup_info.super.active)
-            shader_arb_load_np2fixup_constants((IWineD3DDevice *)This, usePS, useVS);
+            shader_arb_load_np2fixup_constants(priv, gl_info, state);
     }
     else if (gl_info->supported[ARB_FRAGMENT_PROGRAM] && !priv->use_arbfp_fixed_func)
     {
