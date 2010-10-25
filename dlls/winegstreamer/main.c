@@ -64,6 +64,29 @@ void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt)
     TRACE("\t%s\n\t%s\n\t...\n\t%s\n", debugstr_guid(&pmt->majortype), debugstr_guid(&pmt->subtype), debugstr_guid(&pmt->formattype));
 }
 
+DWORD Gstreamer_init(void) {
+    static int inited;
+
+    if (!inited) {
+        char argv0[] = "wine";
+        char argv1[] = "--gst-disable-registry-fork";
+        char **argv = HeapAlloc(GetProcessHeap(), 0, sizeof(char *)*3);
+        int argc = 2;
+        GError *err = NULL;
+        argv[0] = argv0;
+        argv[1] = argv1;
+        argv[2] = NULL;
+        g_thread_impl_init();
+        inited = gst_init_check(&argc, &argv, &err);
+        HeapFree(GetProcessHeap(), 0, argv);
+        if (err) {
+            FIXME("Failed to initialize gstreamer: %s\n", err->message);
+            g_error_free(err);
+        }
+    }
+    return inited;
+}
+
 #define INF_SET_ID(id)            \
     do                            \
     {                             \

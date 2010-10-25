@@ -4,6 +4,7 @@ EXTRAINCL = @GSTREAMER_INCL@
 EXTRALIBS = @GSTREAMER_LIBS@ @LIBPTHREAD@
 
 C_SRCS = \
+	glibthread.c \
 	main.c
 
 RC_SRCS = \

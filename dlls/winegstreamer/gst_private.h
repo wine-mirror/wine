@@ -37,4 +37,7 @@
 
 /* enum media */
 void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt);
+
+void g_thread_impl_init(void);
+DWORD Gstreamer_init(void);
 #endif /* __GST_PRIVATE_INCLUDED__ */
