@@ -875,7 +875,11 @@ LPCVOID NETCON_GetCert(WININET_NETCONNECTION *connection)
 int NETCON_GetCipherStrength(WININET_NETCONNECTION *connection)
 {
 #ifdef SONAME_LIBSSL
+#if defined(OPENSSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER >= 0x0090707f)
+    const SSL_CIPHER *cipher;
+#else
     SSL_CIPHER *cipher;
+#endif
     int bits = 0;
 
     if (!connection->useSSL)
