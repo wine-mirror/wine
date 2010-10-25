@@ -336,7 +336,7 @@ static enum fs_type VOLUME_ReadFATSuperblock( HANDLE handle, BYTE *buff )
         reasonable = num_boot_sectors < total_sectors &&
                      num_fats < 16 &&
                      bytes_per_sector >= 512 && bytes_per_sector % 512 == 0 &&
-                     sectors_per_cluster > 1;
+                     sectors_per_cluster >= 1;
         if (!reasonable) return FS_UNKNOWN;
         sectors =  total_sectors - num_boot_sectors - num_fats * sect_per_fat -
             (num_root_dir_ents * 32 + bytes_per_sector - 1) / bytes_per_sector;
