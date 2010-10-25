@@ -25,6 +25,38 @@ LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_CPL_NAME        "Ustawienia Internetu"
+    IDS_CPL_NAME        "Ustawienia internetowe"
     IDS_CPL_INFO        "Pozwala skonfigurowaæ przegl¹darkê internetow¹ Wine i odpowiadaj¹ce jej ustawienia"
+END
+
+/* "General" propsheet */
+IDD_GENERAL DIALOG  0, 0, 320, 220
+STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+CAPTION "Ogólne"
+BEGIN
+
+    GROUPBOX    " Strona domowa ", IDC_STATIC, 4, 4, 312, 52
+    LTEXT       "Mo¿esz wybraæ adres strony, która bêdzie twoj¹ stron¹ domow¹.",
+                IDC_STATIC, 58, 10, 252, 10
+    EDITTEXT    IDC_HOME_EDIT, 58, 22, 252, 12, WS_VISIBLE | ES_AUTOHSCROLL
+    PUSHBUTTON  "U¿yj &bie¿¹cej", IDC_HOME_CURRENT, 58, 36, 80, 14
+    PUSHBUTTON  "U¿yj d&omyœlnej", IDC_HOME_DEFAULT, 144, 36, 80, 14
+    PUSHBUTTON  "U¿yj pu&stej", IDC_HOME_BLANK, 230, 36, 80, 14
+
+END
+
+/* "Content" propsheet */
+IDD_CONTENT DIALOG  0, 0, 320, 220
+STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+CAPTION "Zawartoœæ"
+BEGIN
+
+    GROUPBOX    " Certyfikaty ", IDC_STATIC, 4, 4, 312, 50
+    LTEXT       "Certyfikaty s¹ u¿ywane do twojej osobistej identyfikacji oraz do identyfikacji wydawców i urzêdów certyfikuj¹cych.",
+                IDC_STATIC, 58, 14, 252, 18
+    PUSHBUTTON  "Certyfikaty...", IDC_CERT, 146, 34, 80, 14
+    PUSHBUTTON	"Wydawcy...", IDC_CERT_PUBLISHER, 230, 34, 80, 14
+
 END
