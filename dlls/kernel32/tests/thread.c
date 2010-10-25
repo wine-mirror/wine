@@ -310,18 +310,18 @@ static VOID test_CreateRemoteThread(void)
     ok(ret == 2, "ret=%u, err=%u\n", ret, GetLastError());
 
     /* thread still suspended, so wait times out */
-    ret = WaitForSingleObject(hEvent, 100);
+    ret = WaitForSingleObject(hEvent, 1000);
     ok(ret == WAIT_TIMEOUT, "wait did not time out, ret=%u\n", ret);
 
     ret = ResumeThread(hThread);
     ok(ret == 1, "ret=%u, err=%u\n", ret, GetLastError());
 
     /* wait that doesn't time out */
-    ret = WaitForSingleObject(hEvent, 100);
+    ret = WaitForSingleObject(hEvent, 1000);
     ok(ret == WAIT_OBJECT_0, "object not signaled, ret=%u\n", ret);
 
     /* wait for thread end */
-    ret = WaitForSingleObject(hThread, 100);
+    ret = WaitForSingleObject(hThread, 1000);
     ok(ret == WAIT_OBJECT_0, "waiting for thread failed, ret=%u\n", ret);
     CloseHandle(hThread);
 
@@ -330,7 +330,7 @@ static VOID test_CreateRemoteThread(void)
                                  threadFunc_CloseHandle,
                                  hRemoteEvent, 0, &tid);
     ok(hThread != NULL, "CreateRemoteThread failed, err=%u\n", GetLastError());
-    ret = WaitForSingleObject(hThread, 100);
+    ret = WaitForSingleObject(hThread, 1000);
     ok(ret == WAIT_OBJECT_0, "waiting for thread failed, ret=%u\n", ret);
     CloseHandle(hThread);
 
@@ -341,7 +341,7 @@ static VOID test_CreateRemoteThread(void)
     ok(hThread != NULL, "CreateRemoteThread failed, err=%u\n", GetLastError());
 
     /* closed handle, so wait times out */
-    ret = WaitForSingleObject(hEvent, 100);
+    ret = WaitForSingleObject(hEvent, 1000);
     ok(ret == WAIT_TIMEOUT, "wait did not time out, ret=%u\n", ret);
 
     /* check that remote SetEvent() failed */
