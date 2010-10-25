@@ -1073,7 +1073,11 @@ const void *netconn_get_certificate( netconn_t *conn )
 int netconn_get_cipher_strength( netconn_t *conn )
 {
 #ifdef SONAME_LIBSSL
+#if defined(OPENSSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER >= 0x0090707f)
+    const SSL_CIPHER *cipher;
+#else
     SSL_CIPHER *cipher;
+#endif
     int bits = 0;
 
     if (!conn->secure) return 0;
