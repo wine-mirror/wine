@@ -21,4 +21,6 @@
 
 #include "d3dcommon.h"
 
+typedef D3D_CBUFFER_TYPE D3D11_CBUFFER_TYPE;
+
 #endif
