@@ -1206,7 +1206,6 @@ static HRESULT WINAPI domdoc_get_definition(
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
     FIXME("(%p)->(%p)\n", This, definitionNode);
     return E_NOTIMPL;
-    return IXMLDOMNode_get_definition( IXMLDOMNode_from_impl(&This->node), definitionNode );
 }
 
 
@@ -1293,7 +1292,6 @@ static HRESULT WINAPI domdoc_get_parsed(
     FIXME("(%p)->(%p) stub!\n", This, isParsed);
     *isParsed = VARIANT_TRUE;
     return S_OK;
-    return IXMLDOMNode_get_parsed( IXMLDOMNode_from_impl(&This->node), isParsed );
 }
 
 
