@@ -455,6 +455,7 @@ done:
     release_transform( transform );
     return ret;
 
-#endif /* HAVE_LCMS */
+#else  /* HAVE_LCMS */
     return FALSE;
+#endif /* HAVE_LCMS */
 }
