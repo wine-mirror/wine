@@ -618,7 +618,7 @@ static void test_collection_content(void)
     bstr = NULL;
     /* error if index is out of range */
     ole_expect(IXMLDOMSchemaCollection_get_namespaceURI(cache1, 3, &bstr), E_FAIL);
-    if (bstr) SysFreeString(bstr);
+    SysFreeString(bstr);
     /* error if return pointer is NULL */
     ole_expect(IXMLDOMSchemaCollection_get_namespaceURI(cache1, 0, NULL), E_POINTER);
     /* pointer is checked first */
