@@ -77,7 +77,7 @@ static void test_setitemheight(DWORD style)
 
     trace("Style %x\n", style);
     GetClientRect(hCombo, &r);
-    expect_rect(r, 0, 0, 100, 24);
+    expect_rect(r, 0, 0, 100, font_height(GetStockObject(SYSTEM_FONT)) + 8);
     SendMessageA(hCombo, CB_GETDROPPEDCONTROLRECT, 0, (LPARAM)&r);
     MapWindowPoints(HWND_DESKTOP, hMainWnd, (LPPOINT)&r, 2);
     todo_wine expect_rect(r, 5, 5, 105, 105);
@@ -112,7 +112,7 @@ static void test_setfont(DWORD style)
     hFont2 = CreateFont(8, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, SYMBOL_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH|FF_DONTCARE, "Marlett");
 
     GetClientRect(hCombo, &r);
-    expect_rect(r, 0, 0, 100, 24);
+    expect_rect(r, 0, 0, 100, font_height(GetStockObject(SYSTEM_FONT)) + 8);
     SendMessageA(hCombo, CB_GETDROPPEDCONTROLRECT, 0, (LPARAM)&r);
     MapWindowPoints(HWND_DESKTOP, hMainWnd, (LPPOINT)&r, 2);
     todo_wine expect_rect(r, 5, 5, 105, 105);
