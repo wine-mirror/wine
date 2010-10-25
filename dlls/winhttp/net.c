@@ -92,7 +92,7 @@ static CRITICAL_SECTION init_ssl_cs = { &init_ssl_cs_debug, -1, 0, 0, 0, 0 };
 static void *libssl_handle;
 static void *libcrypto_handle;
 
-#if defined(OPENSSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER> 0x1000000)
+#if defined(OPENSSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER > 0x10000000)
 static const SSL_METHOD *method;
 #else
 static SSL_METHOD *method;
