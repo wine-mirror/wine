@@ -819,6 +819,16 @@ ULONG WINAPI EventRegister( LPCGUID provider, PENABLECALLBACK callback, PVOID co
 }
 
 /******************************************************************************
+ * EventEnabled [ADVAPI32.@]
+ *
+ */
+BOOLEAN WINAPI EventEnabled( REGHANDLE handle, PCEVENT_DESCRIPTOR descriptor )
+{
+    FIXME("(%s, %p): stub\n", wine_dbgstr_longlong(handle), descriptor);
+    return FALSE;
+}
+
+/******************************************************************************
  * QueryTraceW [ADVAPI32.@]
  */
 ULONG WINAPI QueryTraceW( TRACEHANDLE handle, LPCWSTR sessionname, PEVENT_TRACE_PROPERTIES properties )
