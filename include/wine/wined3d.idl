@@ -2544,21 +2544,21 @@ interface IWineD3DBaseTexture : IWineD3DResource
 interface IWineD3DTexture : IWineD3DBaseTexture
 {
     HRESULT GetLevelDesc(
-        [in] UINT level,
+        [in] UINT sub_resource_idx,
         [out] WINED3DSURFACE_DESC *desc
     );
     HRESULT GetSurfaceLevel(
-        [in] UINT level,
+        [in] UINT sub_resource_idx,
         [out] IWineD3DSurface **surface
     );
     HRESULT Map(
-        [in] UINT level,
+        [in] UINT sub_resource_idx,
         [out] WINED3DLOCKED_RECT *locked_rect,
         [in] const RECT *rect,
         [in] DWORD flags
     );
     HRESULT Unmap(
-        [in] UINT level
+        [in] UINT sub_resource_idx
     );
     HRESULT AddDirtyRect(
         [in] const RECT *dirty_rect
