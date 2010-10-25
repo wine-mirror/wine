@@ -623,6 +623,7 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
             This->devicewindow = NULL;
         }
 
+        LeaveCriticalSection(&ddraw_cs);
         return DD_OK;
     }
     /* DDSCL_NORMAL or DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE */
