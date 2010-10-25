@@ -3,15 +3,15 @@
 #  win95 and winNT dlls import shell32.dll by ordinal)
 # This list was updated to dll version 4.72
 
-   2 stdcall -noname SHChangeNotifyRegister(long long long long long ptr)
+   2 stdcall -ordinal SHChangeNotifyRegister(long long long long long ptr)
    3 stdcall SHDefExtractIconA(str long long ptr ptr long)
-   4 stdcall -noname SHChangeNotifyDeregister(long)
+   4 stdcall -ordinal SHChangeNotifyDeregister(long)
    5 stdcall -noname SHChangeNotifyUpdateEntryList(long long long long)
    6 stdcall SHDefExtractIconW(wstr long long ptr ptr long)
-   9 stub -noname PifMgr_OpenProperties
-  10 stub -noname PifMgr_GetProperties
-  11 stub -noname PifMgr_SetProperties
-  13 stub -noname PifMgr_CloseProperties
+   9 stub -ordinal PifMgr_OpenProperties
+  10 stub -ordinal PifMgr_GetProperties
+  11 stub -ordinal PifMgr_SetProperties
+  13 stub -ordinal PifMgr_CloseProperties
   15 stdcall -noname ILGetDisplayName(ptr ptr)
   16 stdcall -ordinal ILFindLastID(ptr)
   17 stdcall -ordinal ILRemoveLastID(ptr)
@@ -37,14 +37,14 @@
   38 stdcall -noname PathStripPath(ptr) PathStripPathAW
   39 stdcall -noname PathIsUNC(ptr) PathIsUNCAW
   40 stdcall -noname PathIsRelative(ptr) PathIsRelativeAW
-  41 stdcall -noname IsLFNDriveA(str)
-  42 stdcall -noname IsLFNDriveW(wstr)
-  43 stdcall -noname PathIsExe(ptr) PathIsExeAW
+  41 stdcall -ordinal IsLFNDriveA(str)
+  42 stdcall -ordinal IsLFNDriveW(wstr)
+  43 stdcall -ordinal PathIsExe(ptr) PathIsExeAW
   45 stdcall -noname PathFileExists(ptr) PathFileExistsAW
   46 stdcall -noname PathMatchSpec(ptr ptr) PathMatchSpecAW
-  47 stdcall -noname PathMakeUniqueName(ptr long ptr ptr ptr) PathMakeUniqueNameAW
+  47 stdcall -ordinal PathMakeUniqueName(ptr long ptr ptr ptr) PathMakeUniqueNameAW
   48 stdcall -noname PathSetDlgItemPath(long long ptr) PathSetDlgItemPathAW
-  49 stdcall -noname PathQualify(ptr) PathQualifyAW
+  49 stdcall -ordinal PathQualify(ptr) PathQualifyAW
   50 stdcall -noname PathStripToRoot(ptr) PathStripToRootAW
   51 stdcall PathResolve(str long long) PathResolveAW
   52 stdcall -noname PathGetArgs(str) PathGetArgsAW
@@ -54,48 +54,48 @@
   56 stdcall -noname PathUnquoteSpaces(str) PathUnquoteSpacesAW
   57 stdcall -noname PathGetDriveNumber(str) PathGetDriveNumberAW
   58 stdcall -noname ParseField(str long ptr long) ParseFieldAW
-  59 stdcall -noname RestartDialog(long wstr long)
+  59 stdcall -ordinal RestartDialog(long wstr long)
   60 stdcall -noname ExitWindowsDialog(long)
   61 stdcall -noname RunFileDlg(long long long str str long) RunFileDlgAW
-  62 stdcall -noname PickIconDlg(long long long long)
-  63 stdcall -noname GetFileNameFromBrowse(long long long long str str str) GetFileNameFromBrowseAW
-  64 stdcall -noname DriveType(long)
+  62 stdcall -ordinal PickIconDlg(long long long long)
+  63 stdcall -ordinal GetFileNameFromBrowse(long long long long str str str) GetFileNameFromBrowseAW
+  64 stdcall -ordinal DriveType(long)
   65 stdcall -noname InvalidateDriveType(long)
-  66 stdcall -noname IsNetDrive(long)
+  66 stdcall -ordinal IsNetDrive(long)
   67 stdcall -ordinal Shell_MergeMenus(long long long long long long)
-  68 stdcall -noname SHGetSetSettings(ptr long long)
+  68 stdcall -ordinal SHGetSetSettings(ptr long long)
   69 stub -noname SHGetNetResource
   70 stdcall -noname SHCreateDefClassObject(long long long long long)
   71 stdcall -ordinal Shell_GetImageLists(ptr ptr)
-  72 stdcall -noname Shell_GetCachedImageIndex(ptr ptr long) Shell_GetCachedImageIndexAW
-  73 stdcall -noname SHShellFolderView_Message(long long long)
-  74 stdcall -noname SHCreateStdEnumFmtEtc(long ptr ptr)
-  75 stdcall -noname PathYetAnotherMakeUniqueName(ptr wstr wstr wstr)
+  72 stdcall -ordinal Shell_GetCachedImageIndex(ptr ptr long) Shell_GetCachedImageIndexAW
+  73 stdcall -ordinal SHShellFolderView_Message(long long long)
+  74 stdcall -ordinal SHCreateStdEnumFmtEtc(long ptr ptr)
+  75 stdcall -ordinal PathYetAnotherMakeUniqueName(ptr wstr wstr wstr)
   76 stub DragQueryInfo
-  77 stdcall -noname SHMapPIDLToSystemImageListIndex(ptr ptr ptr)
+  77 stdcall -ordinal SHMapPIDLToSystemImageListIndex(ptr ptr ptr)
   78 stdcall -noname OleStrToStrN(str long wstr long) OleStrToStrNAW
   79 stdcall -noname StrToOleStrN(wstr long str long) StrToOleStrNAW
-  83 stdcall -noname CIDLData_CreateFromIDArray(ptr long ptr ptr)
+  83 stdcall -ordinal CIDLData_CreateFromIDArray(ptr long ptr ptr)
   84 stub SHIsBadInterfacePtr
-  85 stdcall -noname OpenRegStream(long str str long) shlwapi.SHOpenRegStreamA
+  85 stdcall -ordinal OpenRegStream(long str str long) shlwapi.SHOpenRegStreamA
   86 stdcall -noname SHRegisterDragDrop(long ptr)
   87 stdcall -noname SHRevokeDragDrop(long)
-  88 stdcall -noname SHDoDragDrop(long ptr ptr long ptr)
-  89 stdcall -noname SHCloneSpecialIDList(long long long)
-  90 stdcall -noname SHFindFiles(ptr ptr)
+  88 stdcall -ordinal SHDoDragDrop(long ptr ptr long ptr)
+  89 stdcall -ordinal SHCloneSpecialIDList(long long long)
+  90 stdcall -ordinal SHFindFiles(ptr ptr)
   91 stub SHFindComputer
-  92 stdcall -noname PathGetShortPath(ptr) PathGetShortPathAW
+  92 stdcall -ordinal PathGetShortPath(ptr) PathGetShortPathAW
   93 stdcall -noname Win32CreateDirectory(wstr ptr) Win32CreateDirectoryAW
   94 stdcall -noname Win32RemoveDirectory(wstr) Win32RemoveDirectoryAW
   95 stdcall -noname SHLogILFromFSIL(ptr)
   96 stdcall -noname StrRetToStrN(ptr long ptr ptr) StrRetToStrNAW
   97 stdcall -noname SHWaitForFileToOpen (long long long)
-  98 stdcall -noname SHGetRealIDL(ptr ptr ptr)
+  98 stdcall -ordinal SHGetRealIDL(ptr ptr ptr)
   99 stdcall -noname SetAppStartingCursor(long long)
- 100 stdcall -noname SHRestricted(long)
+ 100 stdcall -ordinal SHRestricted(long)
 
- 102 stdcall -noname SHCoCreateInstance(wstr ptr long ptr ptr)
- 103 stdcall -noname SignalFileOpen(long)
+ 102 stdcall -ordinal SHCoCreateInstance(wstr ptr long ptr ptr)
+ 103 stdcall -ordinal SignalFileOpen(long)
  104 stdcall -noname FileMenu_DeleteAllItems(long)
  105 stdcall -noname FileMenu_DrawItem(long ptr)
  106 stdcall -noname FileMenu_FindSubMenuByPidl(long ptr)
@@ -111,7 +111,7 @@
  116 stdcall -noname FileMenu_TrackPopupMenuEx(long long long long long long)
  117 stdcall -noname FileMenu_DeleteItemByCmd(long long)
  118 stdcall -noname FileMenu_Destroy(long)
- 119 stdcall -noname IsLFNDrive(ptr) IsLFNDriveAW
+ 119 stdcall -ordinal IsLFNDrive(ptr) IsLFNDriveAW
  120 stdcall -noname FileMenu_AbortInitMenu()
  121 stdcall -noname SHFlushClipboard()
  122 stdcall -private @(long long long str long) shell.dll16.RunDLL_CallEntry16
@@ -121,13 +121,13 @@
  126 stdcall -noname SHOutOfMemoryMessageBox(long long long)
  127 stdcall -noname SHWinHelp(long long long long)
  128 stdcall -noname SHDllGetClassObject(ptr ptr ptr) DllGetClassObject
- 129 stdcall -noname DAD_AutoScroll(long ptr ptr)
+ 129 stdcall -ordinal DAD_AutoScroll(long ptr ptr)
  130 stdcall -noname DAD_DragEnter(long)
- 131 stdcall -noname DAD_DragEnterEx(long int64)
- 132 stdcall -noname DAD_DragLeave()
- 134 stdcall -noname DAD_DragMove(int64)
- 136 stdcall -noname DAD_SetDragImage(long long)
- 137 stdcall -noname DAD_ShowDragImage(long)
+ 131 stdcall -ordinal DAD_DragEnterEx(long int64)
+ 132 stdcall -ordinal DAD_DragLeave()
+ 134 stdcall -ordinal DAD_DragMove(int64)
+ 136 stdcall -ordinal DAD_SetDragImage(long long)
+ 137 stdcall -ordinal DAD_ShowDragImage(long)
  139 stub Desktop_UpdateBriefcaseOnEvent
  140 stdcall -noname FileMenu_DeleteItemByIndex(long long)
  141 stdcall -noname FileMenu_DeleteItemByFirstID(long long)
@@ -136,9 +136,9 @@
  144 stdcall -noname FileMenu_GetItemExtent(long long)
  145 stdcall -noname PathFindOnPath(ptr ptr) PathFindOnPathAW
  146 stdcall -noname RLBuildListOfPaths()
- 147 stdcall -noname SHCLSIDFromString(long long) SHCLSIDFromStringAW
+ 147 stdcall -ordinal SHCLSIDFromString(long long) SHCLSIDFromStringAW
  148 stdcall -noname SHMapIDListToImageListIndexAsync(ptr ptr ptr long ptr ptr ptr ptr ptr)
- 149 stdcall -noname SHFind_InitMenuPopup(long long long long)
+ 149 stdcall -ordinal SHFind_InitMenuPopup(long long long long)
 
  151 stdcall -noname SHLoadOLE(long)
  152 stdcall -ordinal ILGetSize(ptr)
@@ -151,28 +151,28 @@
  159 stdcall -noname PathIsDirectory(ptr) PathIsDirectoryAW
  160 stub SHNetConnectionDialog
  161 stdcall -noname SHRunControlPanel(long long)
- 162 stdcall -noname SHSimpleIDListFromPath(ptr) SHSimpleIDListFromPathAW
+ 162 stdcall -ordinal SHSimpleIDListFromPath(ptr) SHSimpleIDListFromPathAW
  163 stdcall -noname StrToOleStr(wstr str) StrToOleStrAW
- 164 stdcall -noname Win32DeleteFile(str) Win32DeleteFileAW
- 165 stdcall -noname SHCreateDirectory(long ptr)
+ 164 stdcall -ordinal Win32DeleteFile(str) Win32DeleteFileAW
+ 165 stdcall -ordinal SHCreateDirectory(long ptr)
  166 stdcall -noname CallCPLEntry16(long long long long long long)
- 167 stdcall -noname SHAddFromPropSheetExtArray(long long long)
- 168 stdcall -noname SHCreatePropSheetExtArray(long wstr long)
- 169 stdcall -noname SHDestroyPropSheetExtArray(long)
- 170 stdcall -noname SHReplaceFromPropSheetExtArray(long long long long)
- 171 stdcall -noname PathCleanupSpec(ptr ptr)
+ 167 stdcall -ordinal SHAddFromPropSheetExtArray(long long long)
+ 168 stdcall -ordinal SHCreatePropSheetExtArray(long wstr long)
+ 169 stdcall -ordinal SHDestroyPropSheetExtArray(long)
+ 170 stdcall -ordinal SHReplaceFromPropSheetExtArray(long long long long)
+ 171 stdcall -ordinal PathCleanupSpec(ptr ptr)
  172 stdcall -noname SHCreateLinks(long str ptr long ptr)
- 173 stdcall -noname SHValidateUNC(long long long)
- 174 stdcall -noname SHCreateShellFolderViewEx(ptr ptr)
+ 173 stdcall -ordinal SHValidateUNC(long long long)
+ 174 stdcall -ordinal SHCreateShellFolderViewEx(ptr ptr)
  175 stdcall -noname SHGetSpecialFolderPath(long long long long) SHGetSpecialFolderPathAW
- 176 stdcall -noname SHSetInstanceExplorer(long)
+ 176 stdcall -ordinal SHSetInstanceExplorer(long)
  177 stub DAD_SetDragImageFromListView
- 178 stdcall -noname SHObjectProperties(long long wstr wstr)
- 179 stdcall -noname SHGetNewLinkInfoA(str str ptr long long)
- 180 stdcall -noname SHGetNewLinkInfoW(wstr wstr ptr long long)
+ 178 stdcall -ordinal SHObjectProperties(long long wstr wstr)
+ 179 stdcall -ordinal SHGetNewLinkInfoA(str str ptr long long)
+ 180 stdcall -ordinal SHGetNewLinkInfoW(wstr wstr ptr long long)
  181 stdcall -noname RegisterShellHook(long long)
- 182 varargs -noname ShellMessageBoxW(long long wstr wstr long)
- 183 varargs -noname ShellMessageBoxA(long long str str long)
+ 182 varargs -ordinal ShellMessageBoxW(long long wstr wstr long)
+ 183 varargs -ordinal ShellMessageBoxA(long long str str long)
  184 stdcall -noname ArrangeWindows(long long long long long)
  185 stub SHHandleDiskFull
  186 stdcall -noname ILGetDisplayNameEx(ptr ptr ptr long)
@@ -180,12 +180,12 @@
  188 stdcall -noname ShellDDEInit(long)
  189 stdcall -ordinal ILCreateFromPathA(str)
  190 stdcall -ordinal ILCreateFromPathW(wstr)
- 191 stdcall -noname SHUpdateImageA(str long long long)
- 192 stdcall -noname SHUpdateImageW(wstr long long long)
- 193 stdcall -noname SHHandleUpdateImage(ptr)
+ 191 stdcall -ordinal SHUpdateImageA(str long long long)
+ 192 stdcall -ordinal SHUpdateImageW(wstr long long long)
+ 193 stdcall -ordinal SHHandleUpdateImage(ptr)
  194 stdcall -noname SHCreatePropSheetExtArrayEx(long wstr long ptr)
- 195 stdcall -noname SHFree(ptr)
- 196 stdcall -noname SHAlloc(long)
+ 195 stdcall -ordinal SHFree(ptr)
+ 196 stdcall -ordinal SHAlloc(long)
  197 stub SHGlobalDefect
  198 stdcall -noname SHAbortInvokeCommand()
  199 stub SHGetFileIcon
@@ -229,7 +229,7 @@
  521 stdcall -noname SHLockShared(long long)
  522 stdcall -noname SHUnlockShared(ptr)
  523 stdcall -noname SHFreeShared(long long)
- 524 stdcall -noname RealDriveType(long long)
+ 524 stdcall -ordinal RealDriveType(long long)
  525 stub RealDriveTypeFlags
  526 stdcall SHFlushSFCache()
 
@@ -237,8 +237,8 @@
  641 stdcall -noname NTSHChangeNotifyDeregister(long)
 
  643 stub SHChangeNotifyReceive
- 644 stdcall -noname SHChangeNotification_Lock(long long ptr ptr)
- 645 stdcall -noname SHChangeNotification_Unlock(long)
+ 644 stdcall -ordinal SHChangeNotification_Lock(long long ptr ptr)
+ 645 stdcall -ordinal SHChangeNotification_Unlock(long)
  646 stub SHChangeRegistrationReceive
  647 stub ReceiveAddToRecentDocs
  648 stub SHWaitOp_Operate
