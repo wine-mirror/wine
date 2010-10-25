@@ -249,19 +249,6 @@ static BOOL WINAPI IWineD3DVolumeTextureImpl_IsCondNP2(IWineD3DVolumeTexture *if
     return FALSE;
 }
 
-static IWineD3DResourceImpl *volumetexture_get_sub_resource(IWineD3DBaseTextureImpl *texture, UINT sub_resource_idx)
-{
-    UINT sub_count = texture->baseTexture.level_count * texture->baseTexture.layer_count;
-
-    if (sub_resource_idx >= sub_count)
-    {
-        WARN("sub_resource_idx %u >= sub_count %u.\n", sub_resource_idx, sub_count);
-        return NULL;
-    }
-
-    return texture->baseTexture.sub_resources[sub_resource_idx];
-}
-
 static HRESULT WINAPI IWineD3DVolumeTextureImpl_GetLevelDesc(IWineD3DVolumeTexture *iface,
         UINT sub_resource_idx, WINED3DVOLUME_DESC *desc)
 {
@@ -270,7 +257,7 @@ static HRESULT WINAPI IWineD3DVolumeTextureImpl_GetLevelDesc(IWineD3DVolumeTextu
 
     TRACE("iface %p, sub_resource_idx %u, desc %p.\n", iface, sub_resource_idx, desc);
 
-    if (!(volume = (IWineD3DVolume *)volumetexture_get_sub_resource(texture, sub_resource_idx)))
+    if (!(volume = (IWineD3DVolume *)basetexture_get_sub_resource(texture, sub_resource_idx)))
     {
         WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;
@@ -289,7 +276,7 @@ static HRESULT WINAPI IWineD3DVolumeTextureImpl_GetVolumeLevel(IWineD3DVolumeTex
 
     TRACE("iface %p, sub_resource_idx %u, volume %p.\n", iface, sub_resource_idx, volume);
 
-    if (!(v= (IWineD3DVolume *)volumetexture_get_sub_resource(texture, sub_resource_idx)))
+    if (!(v= (IWineD3DVolume *)basetexture_get_sub_resource(texture, sub_resource_idx)))
     {
         WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;
@@ -312,7 +299,7 @@ static HRESULT WINAPI IWineD3DVolumeTextureImpl_Map(IWineD3DVolumeTexture *iface
     TRACE("iface %p, sub_resource_idx %u, locked_box %p, box %p, flags %#x.\n",
             iface, sub_resource_idx, locked_box, box, flags);
 
-    if (!(volume = (IWineD3DVolume *)volumetexture_get_sub_resource(texture, sub_resource_idx)))
+    if (!(volume = (IWineD3DVolume *)basetexture_get_sub_resource(texture, sub_resource_idx)))
     {
         WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;
@@ -328,7 +315,7 @@ static HRESULT WINAPI IWineD3DVolumeTextureImpl_Unmap(IWineD3DVolumeTexture *ifa
 
     TRACE("iface %p, sub_resource_idx %u.\n", iface, sub_resource_idx);
 
-    if (!(volume = (IWineD3DVolume *)volumetexture_get_sub_resource(texture, sub_resource_idx)))
+    if (!(volume = (IWineD3DVolume *)basetexture_get_sub_resource(texture, sub_resource_idx)))
     {
         WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;
@@ -344,7 +331,7 @@ static HRESULT WINAPI IWineD3DVolumeTextureImpl_AddDirtyBox(IWineD3DVolumeTextur
 
     TRACE("iface %p, dirty_box %p.\n", iface, dirty_box);
 
-    if (!(volume = (IWineD3DVolume *)volumetexture_get_sub_resource(texture, 0)))
+    if (!(volume = (IWineD3DVolume *)basetexture_get_sub_resource(texture, 0)))
     {
         WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;

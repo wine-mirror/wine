@@ -333,19 +333,6 @@ static BOOL WINAPI IWineD3DTextureImpl_IsCondNP2(IWineD3DTexture *iface) {
     return This->cond_np2;
 }
 
-static IWineD3DResourceImpl *texture_get_sub_resource(IWineD3DBaseTextureImpl *texture, UINT sub_resource_idx)
-{
-    UINT sub_count = texture->baseTexture.level_count * texture->baseTexture.layer_count;
-
-    if (sub_resource_idx >= sub_count)
-    {
-        WARN("sub_resource_idx %u >= sub_count %u.\n", sub_resource_idx, sub_count);
-        return NULL;
-    }
-
-    return texture->baseTexture.sub_resources[sub_resource_idx];
-}
-
 static HRESULT WINAPI IWineD3DTextureImpl_GetLevelDesc(IWineD3DTexture *iface,
         UINT sub_resource_idx, WINED3DSURFACE_DESC *desc)
 {
@@ -354,7 +341,7 @@ static HRESULT WINAPI IWineD3DTextureImpl_GetLevelDesc(IWineD3DTexture *iface,
 
     TRACE("iface %p, sub_resource_idx %u, desc %p.\n", iface, sub_resource_idx, desc);
 
-    if (!(surface = (IWineD3DSurface *)texture_get_sub_resource(texture, sub_resource_idx)))
+    if (!(surface = (IWineD3DSurface *)basetexture_get_sub_resource(texture, sub_resource_idx)))
     {
         WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;
@@ -373,7 +360,7 @@ static HRESULT WINAPI IWineD3DTextureImpl_GetSurfaceLevel(IWineD3DTexture *iface
 
     TRACE("iface %p, sub_resource_idx %u, surface %p.\n", iface, sub_resource_idx, surface);
 
-    if (!(s = (IWineD3DSurface *)texture_get_sub_resource(texture, sub_resource_idx)))
+    if (!(s = (IWineD3DSurface *)basetexture_get_sub_resource(texture, sub_resource_idx)))
     {
         WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;
@@ -396,7 +383,7 @@ static HRESULT WINAPI IWineD3DTextureImpl_Map(IWineD3DTexture *iface,
     TRACE("iface %p, sub_resource_idx %u, locked_rect %p, rect %s, flags %#x.\n",
             iface, sub_resource_idx, locked_rect, wine_dbgstr_rect(rect), flags);
 
-    if (!(surface = (IWineD3DSurface *)texture_get_sub_resource(texture, sub_resource_idx)))
+    if (!(surface = (IWineD3DSurface *)basetexture_get_sub_resource(texture, sub_resource_idx)))
     {
         WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;
@@ -412,7 +399,7 @@ static HRESULT WINAPI IWineD3DTextureImpl_Unmap(IWineD3DTexture *iface, UINT sub
 
     TRACE("iface %p, sub_resource_idx %u.\n", iface, sub_resource_idx);
 
-    if (!(surface = (IWineD3DSurface *)texture_get_sub_resource(texture, sub_resource_idx)))
+    if (!(surface = (IWineD3DSurface *)basetexture_get_sub_resource(texture, sub_resource_idx)))
     {
         WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;
@@ -428,7 +415,7 @@ static HRESULT WINAPI IWineD3DTextureImpl_AddDirtyRect(IWineD3DTexture *iface, c
 
     TRACE("iface %p, dirty_rect %s.\n", iface, wine_dbgstr_rect(dirty_rect));
 
-    if (!(surface = (IWineD3DSurfaceImpl *)texture_get_sub_resource(texture, 0)))
+    if (!(surface = (IWineD3DSurfaceImpl *)basetexture_get_sub_resource(texture, 0)))
     {
         WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;

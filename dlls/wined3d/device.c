@@ -5007,27 +5007,20 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture(IWineD3DDevice *iface,
         {
             IWineD3DSurface *src_surface;
             IWineD3DSurface *dst_surface;
-            WINED3DCUBEMAP_FACES face;
 
-            for (i = 0; i < level_count; ++i)
+            for (i = 0; i < level_count * 6; ++i)
             {
-                /* Update each cube face. */
-                for (face = WINED3DCUBEMAP_FACE_POSITIVE_X; face <= WINED3DCUBEMAP_FACE_NEGATIVE_Z; ++face)
+                hr = IWineD3DCubeTexture_GetCubeMapSurface((IWineD3DCubeTexture *)src_texture, i, &src_surface);
+                if (FAILED(hr)) ERR("Failed to get src cube sub-resource %u, hr %#x.\n", i, hr);
+                hr = IWineD3DCubeTexture_GetCubeMapSurface((IWineD3DCubeTexture *)dst_texture, i, &dst_surface);
+                if (FAILED(hr)) ERR("Failed to get dst cube sub-resource %u, hr %#x.\n", i, hr);
+                hr = IWineD3DDevice_UpdateSurface(iface, src_surface, NULL, dst_surface, NULL);
+                IWineD3DSurface_Release(dst_surface);
+                IWineD3DSurface_Release(src_surface);
+                if (FAILED(hr))
                 {
-                    hr = IWineD3DCubeTexture_GetCubeMapSurface((IWineD3DCubeTexture *)src_texture,
-                            face, i, &src_surface);
-                    if (FAILED(hr)) ERR("Failed to get src cube surface face %u, level %u, hr %#x.\n", face, i, hr);
-                    hr = IWineD3DCubeTexture_GetCubeMapSurface((IWineD3DCubeTexture *)dst_texture,
-                            face, i, &dst_surface);
-                    if (FAILED(hr)) ERR("Failed to get dst cube surface face %u, level %u, hr %#x.\n", face, i, hr);
-                    hr = IWineD3DDevice_UpdateSurface(iface, src_surface, NULL, dst_surface, NULL);
-                    IWineD3DSurface_Release(dst_surface);
-                    IWineD3DSurface_Release(src_surface);
-                    if (FAILED(hr))
-                    {
-                        WARN("IWineD3DDevice_UpdateSurface failed, hr %#x.\n", hr);
-                        return hr;
-                    }
+                    WARN("IWineD3DDevice_UpdateSurface failed, hr %#x.\n", hr);
+                    return hr;
                 }
             }
             break;

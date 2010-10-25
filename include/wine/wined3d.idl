@@ -2573,24 +2573,21 @@ interface IWineD3DTexture : IWineD3DBaseTexture
 interface IWineD3DCubeTexture : IWineD3DBaseTexture
 {
     HRESULT GetLevelDesc(
-        [in] UINT level,
+        [in] UINT sub_resource_idx,
         [out] WINED3DSURFACE_DESC *desc
     );
     HRESULT GetCubeMapSurface(
-        [in] WINED3DCUBEMAP_FACES face,
-        [in] UINT level,
+        [in] UINT sub_resource_idx,
         [out] IWineD3DSurface **surface
     );
     HRESULT Map(
-        [in] WINED3DCUBEMAP_FACES face,
-        [in] UINT level,
+        [in] UINT sub_resource_idx,
         [out] WINED3DLOCKED_RECT *locked_rect,
         [in] const RECT *rect,
         [in] DWORD flags
     );
     HRESULT Unmap(
-        [in] WINED3DCUBEMAP_FACES face,
-        [in] UINT level
+        [in] UINT sub_resource_idx
     );
     HRESULT AddDirtyRect(
         [in] WINED3DCUBEMAP_FACES face,

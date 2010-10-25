@@ -81,21 +81,17 @@ void basetexture_cleanup(IWineD3DBaseTexture *iface)
     resource_cleanup((IWineD3DResource *)iface);
 }
 
-IWineD3DResourceImpl *basetexture_get_sub_resource(IWineD3DBaseTextureImpl *texture, UINT layer, UINT level)
+IWineD3DResourceImpl *basetexture_get_sub_resource(IWineD3DBaseTextureImpl *texture, UINT sub_resource_idx)
 {
-    if (layer >= texture->baseTexture.layer_count)
+    UINT sub_count = texture->baseTexture.level_count * texture->baseTexture.layer_count;
+
+    if (sub_resource_idx >= sub_count)
     {
-        WARN("layer %u >= layer_count %u.\n", layer, texture->baseTexture.layer_count);
+        WARN("sub_resource_idx %u >= sub_count %u.\n", sub_resource_idx, sub_count);
         return NULL;
     }
 
-    if (level >= texture->baseTexture.level_count)
-    {
-        WARN("level %u >= level_count %u.\n", level, texture->baseTexture.level_count);
-        return NULL;
-    }
-
-    return texture->baseTexture.sub_resources[layer * texture->baseTexture.level_count + level];
+    return texture->baseTexture.sub_resources[sub_resource_idx];
 }
 
 /* A GL context is provided by the caller */

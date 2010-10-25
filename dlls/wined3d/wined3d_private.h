@@ -1916,7 +1916,7 @@ BOOL basetexture_get_dirty(IWineD3DBaseTexture *iface) DECLSPEC_HIDDEN;
 DWORD basetexture_get_level_count(IWineD3DBaseTexture *iface) DECLSPEC_HIDDEN;
 DWORD basetexture_get_lod(IWineD3DBaseTexture *iface) DECLSPEC_HIDDEN;
 IWineD3DResourceImpl *basetexture_get_sub_resource(IWineD3DBaseTextureImpl *texture,
-        UINT layer, UINT level) DECLSPEC_HIDDEN;
+        UINT sub_resource_idx) DECLSPEC_HIDDEN;
 HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, UINT layer_count, UINT level_count,
         WINED3DRESOURCETYPE resource_type, IWineD3DDeviceImpl *device, UINT size, DWORD usage,
         const struct wined3d_format *format, WINED3DPOOL pool, void *parent,
