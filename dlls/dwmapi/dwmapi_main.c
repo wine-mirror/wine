@@ -188,3 +188,13 @@ BOOL WINAPI DwmDefWindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, 
 
     return FALSE;
 }
+
+/**********************************************************************
+ *           DwmGetWindowAttribute         (DWMAPI.@)
+ */
+HRESULT WINAPI DwmGetWindowAttribute(HWND hwnd, DWORD attribute, PVOID pv_attribute, DWORD size)
+{
+    FIXME("(%p %d %p %d) stub\n", hwnd, attribute, pv_attribute, size);
+
+    return E_NOTIMPL;
+}
