@@ -138,10 +138,22 @@ HRESULT node_get_content(xmlnode *This, VARIANT *value)
     return S_OK;
 }
 
+HRESULT node_set_content(xmlnode *This, LPCWSTR value)
+{
+    xmlChar *str;
+
+    str = xmlChar_from_wchar(value);
+    if(!str)
+        return E_OUTOFMEMORY;
+
+    xmlNodeSetContent(This->node, str);
+    heap_free(str);
+    return S_OK;
+}
+
 HRESULT node_put_value(xmlnode *This, VARIANT *value)
 {
     VARIANT string_value;
-    xmlChar *str;
     HRESULT hr;
 
     VariantInit(&string_value);
@@ -151,11 +163,9 @@ HRESULT node_put_value(xmlnode *This, VARIANT *value)
         return hr;
     }
 
-    str = xmlChar_from_wchar(V_BSTR(&string_value));
+    hr = node_set_content(This, V_BSTR(&string_value));
     VariantClear(&string_value);
 
-    xmlNodeSetContent(This->node, str);
-    heap_free(str);
     return S_OK;
 }
 

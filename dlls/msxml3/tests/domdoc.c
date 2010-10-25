@@ -7125,6 +7125,28 @@ static void test_events(void)
     IXMLDOMDocument_Release(doc);
 }
 
+static void test_createProcessingInstruction(void)
+{
+    static const WCHAR bodyW[] = {'t','e','s','t',0};
+    IXMLDOMProcessingInstruction *pi;
+    IXMLDOMDocument *doc;
+    WCHAR buff[10];
+    HRESULT hr;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+    if (!doc) return;
+
+    /* test for BSTR handling, pass broken BSTR */
+    memcpy(&buff[2], bodyW, sizeof(bodyW));
+    /* just a big length */
+    *(DWORD*)buff = 0xf0f0;
+    hr = IXMLDOMDocument_createProcessingInstruction(doc, _bstr_("test"), &buff[2], &pi);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IXMLDOMProcessingInstruction_Release(pi);
+    IXMLDOMDocument_Release(doc);
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -7186,6 +7208,7 @@ START_TEST(domdoc)
     test_default_properties();
     test_selectSingleNode();
     test_events();
+    test_createProcessingInstruction();
 
     CoUninitialize();
 }

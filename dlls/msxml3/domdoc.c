@@ -1597,15 +1597,11 @@ static HRESULT WINAPI domdoc_createProcessingInstruction(
     hr = IXMLDOMDocument3_createNode(iface, type, target, NULL, &node);
     if (hr == S_OK)
     {
-        VARIANT v_data;
         xmlnode *node_obj;
 
         /* this is to bypass check in ::put_data() that blocks "<?xml" PIs */
         node_obj = get_node_obj(node);
-        V_VT(&v_data)   = VT_BSTR;
-        V_BSTR(&v_data) = data;
-
-        hr = node_put_value(node_obj, &v_data);
+        hr = node_set_content(node_obj, data);
 
         IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMProcessingInstruction, (void**)pi);
         IXMLDOMNode_Release(node);

@@ -162,6 +162,7 @@ extern xmlnode *get_node_obj(IXMLDOMNode*);
 
 extern HRESULT node_get_nodeName(xmlnode*,BSTR*);
 extern HRESULT node_get_content(xmlnode*,VARIANT*);
+extern HRESULT node_set_content(xmlnode*,LPCWSTR);
 extern HRESULT node_put_value(xmlnode*,VARIANT*);
 extern HRESULT node_get_parent(xmlnode*,IXMLDOMNode**);
 extern HRESULT node_get_child_nodes(xmlnode*,IXMLDOMNodeList**);
