@@ -43,4 +43,5 @@ STRINGTABLE
     STRING_DHCP_ENABLED, "DHCP w³¹czone"
     STRING_YES, "Tak"
     STRING_NO, "Nie"
+    STRING_DEFAULT_GATEWAY, "Brama domyœlna"
 }
