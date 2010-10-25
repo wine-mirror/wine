@@ -312,6 +312,60 @@ static const strarray* get_translator(struct options *opts)
     return ret;
 }
 
+/* check that file is a library for the correct platform */
+static int check_platform( struct options *opts, const char *file )
+{
+    int ret = 0, fd = open( file, O_RDONLY );
+    if (fd != -1)
+    {
+        unsigned char header[16];
+        if (read( fd, header, sizeof(header) ) == sizeof(header))
+        {
+            /* FIXME: only ELF is supported, platform is not checked beyond 32/64 */
+            if (!memcmp( header, "\177ELF", 4 ))
+            {
+                if (header[4] == 2)  /* 64-bit */
+                    ret = (opts->force_pointer_size == 8 ||
+                           (!opts->force_pointer_size && opts->target_cpu == CPU_x86_64));
+                else
+                    ret = (opts->force_pointer_size == 4 ||
+                           (!opts->force_pointer_size && opts->target_cpu != CPU_x86_64));
+            }
+        }
+        close( fd );
+    }
+    return ret;
+}
+
+static char *get_lib_dir( struct options *opts )
+{
+    static const char *stdlibpath[] = { LIBDIR, "/usr/lib", "/usr/local/lib", "/lib" };
+    unsigned int i;
+
+    for (i = 0; i < sizeof(stdlibpath)/sizeof(stdlibpath[0]); i++)
+    {
+        char *p, *buffer = xmalloc( strlen(stdlibpath[i]) + sizeof("32/libwine.so") );
+        strcpy( buffer, stdlibpath[i] );
+        p = buffer + strlen(buffer);
+        while (p > buffer && p[-1] == '/') p--;
+        strcpy( p, "/libwine.so" );
+        if (check_platform( opts, buffer )) return buffer;
+        if (p > buffer + 2 && (!memcmp( p - 2, "32", 2 ) || !memcmp( p - 2, "64", 2 ))) p -= 2;
+        if (opts->force_pointer_size == 4 || (!opts->force_pointer_size && opts->target_cpu != CPU_x86_64))
+        {
+            strcpy( p, "32/libwine.so" );
+            if (check_platform( opts, buffer )) return buffer;
+        }
+        if (opts->force_pointer_size == 8 || (!opts->force_pointer_size && opts->target_cpu == CPU_x86_64))
+        {
+            strcpy( p, "64/libwine.so" );
+            if (check_platform( opts, buffer )) return buffer;
+        }
+        free( buffer );
+    }
+    return xstrdup( LIBDIR );
+}
+
 static void compile(struct options* opts, const char* lang)
 {
     strarray* comp_args = strarray_alloc();
@@ -578,7 +632,6 @@ static const char *mingw_unicode_hack( struct options *opts )
 
 static void build(struct options* opts)
 {
-    static const char *stdlibpath[] = { DLLDIR, LIBDIR, "/usr/lib", "/usr/local/lib", "/lib" };
     strarray *lib_dirs, *files;
     strarray *spec_args, *link_args;
     char *output_file;
@@ -628,9 +681,10 @@ static void build(struct options* opts)
     /* prepare the linking path */
     if (!opts->wine_objdir)
     {
+        char *lib_dir = get_lib_dir( opts );
         lib_dirs = strarray_dup(opts->lib_dirs);
-	for ( j = 0; j < sizeof(stdlibpath)/sizeof(stdlibpath[0]); j++ )
-	    strarray_add(lib_dirs, stdlibpath[j]);
+        strarray_add( lib_dirs, strmake( "%s/wine", lib_dir ));
+        strarray_add( lib_dirs, lib_dir );
     }
     else
     {
