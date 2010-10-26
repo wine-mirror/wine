@@ -48,7 +48,7 @@
 @ stub SCardLocateCardsW
 @ stub SCardReconnect
 @ stdcall SCardReleaseContext(long)
-@ stub SCardReleaseStartedEvent
+@ stdcall SCardReleaseStartedEvent()
 @ stub SCardRemoveReaderFromGroupA
 @ stub SCardRemoveReaderFromGroupW
 @ stub SCardSetAttrib

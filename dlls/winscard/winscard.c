@@ -115,3 +115,8 @@ LONG WINAPI SCardReleaseContext(SCARDCONTEXT context)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return SCARD_F_INTERNAL_ERROR;
 }
+
+void WINAPI SCardReleaseStartedEvent(void)
+{
+    FIXME("stub\n");
+}

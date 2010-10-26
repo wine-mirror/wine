@@ -129,7 +129,7 @@ LONG        WINAPI SCardLocateCardsByATRW(SCARDCONTEXT,LPSCARD_ATRMASK,DWORD,LPS
 #define     SCardLocateCardsByATR WINELIB_NAME_AW(SCardLocateCardsByATR)
 LONG        WINAPI SCardReconnect(SCARDHANDLE,DWORD,DWORD,DWORD,LPDWORD);
 LONG        WINAPI SCardReleaseContext(SCARDCONTEXT);
-void        WINAPI SCardReleaseStartedEvent(HANDLE);
+void        WINAPI SCardReleaseStartedEvent(void);
 LONG        WINAPI SCardRemoveReaderFromGroupA(SCARDCONTEXT,LPCSTR,LPCSTR);
 LONG        WINAPI SCardRemoveReaderFromGroupW(SCARDCONTEXT,LPCWSTR,LPCWSTR);
 #define     SCardRemoveReaderFromGroup WINELIB_NAME_AW(SCardRemoveReaderFromGroup)
