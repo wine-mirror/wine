@@ -49,3 +49,23 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
     return TRUE;
 }
+
+/***********************************************************************
+ * WerRemoveExcludedApplication (wer.@)
+ *
+ * remove an application from the exclusion list
+ *
+ * PARAMS
+ *  exeName  [i] The application name
+ *  allUsers [i] for all users (TRUE) or for the current user (FALSE)
+ *
+ * RESULTS
+ *  SUCCESS  S_OK
+ *  FAILURE  A HRESULT error code
+ *
+ */
+HRESULT WINAPI WerRemoveExcludedApplication(PCWSTR exeName, BOOL allUsers)
+{
+    FIXME("(%s, %d) :stub\n",debugstr_w(exeName), allUsers);
+    return E_NOTIMPL;
+}

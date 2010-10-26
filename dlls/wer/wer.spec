@@ -62,7 +62,7 @@
 @ stub WerpSubmitReportFromStore
 @ stub WerpSvcReportFromMachineQueue
 @ stdcall WerAddExcludedApplication(wstr long)
-@ stub WerRemoveExcludedApplication
+@ stdcall WerRemoveExcludedApplication(wstr long)
 @ stub WerReportAddDump
 @ stub WerReportAddFile
 @ stub WerReportCloseHandle
