@@ -903,7 +903,7 @@ static BSTR EnsureCorrectEOL(BSTR sInput)
     int nLen;
     int i;
 
-    nLen = lstrlenW(sInput);
+    nLen = SysStringLen(sInput);
     /* Count line endings */
     for(i=0; i < nLen; i++)
     {
@@ -935,7 +935,7 @@ static BSTR EnsureCorrectEOL(BSTR sInput)
         sNew = sInput;
     }
 
-    TRACE("len %d\n", lstrlenW(sNew));
+    TRACE("len %d\n", SysStringLen(sNew));
 
     return sNew;
 }
