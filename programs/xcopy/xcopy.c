@@ -49,6 +49,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(xcopy);
 
 /* Prototypes */
+static int XCOPY_ParseCommandLine(int argc, WCHAR **argvW,
+				  WCHAR *suppliedsource,
+				  WCHAR *supplieddestination, DWORD *flags);
 static int XCOPY_ProcessSourceParm(WCHAR *suppliedsource, WCHAR *stem,
                                    WCHAR *spec, DWORD flags);
 static int XCOPY_ProcessDestParm(WCHAR *supplieddestination, WCHAR *stem,
@@ -108,17 +111,6 @@ int wmain (int argc, WCHAR *argvW[])
     const WCHAR PROMPTSTR1[]  = {'/', 'Y', 0};
     const WCHAR PROMPTSTR2[]  = {'/', 'y', 0};
     const WCHAR COPYCMD[]  = {'C', 'O', 'P', 'Y', 'C', 'M', 'D', 0};
-    const WCHAR EXCLUDE[]  = {'E', 'X', 'C', 'L', 'U', 'D', 'E', ':', 0};
-
-    /*
-     * Parse the command line
-     */
-
-    /* Confirm at least one parameter */
-    if (argc < 2) {
-        XCOPY_wprintf(XCOPY_LoadMessage(STRING_INVPARMS));
-        return RC_INITERROR;
-    }
 
     /* Preinitialize flags based on COPYCMD */
     if (GetEnvironmentVariableW(COPYCMD, copyCmd, MAXSTRING)) {
@@ -134,6 +126,88 @@ int wmain (int argc, WCHAR *argvW[])
        Under wine, if we do not copy hidden files by default then they get
        lose                                                                   */
     flags |= OPT_COPYHIDSYS;
+
+    /*
+     * Parse the command line
+     */
+    if ((rc = XCOPY_ParseCommandLine(argc, argvW, suppliedsource,
+				     supplieddestination, &flags)) != RC_OK) {
+	if (rc == RC_HELP)
+	    return RC_OK;
+	else
+	    return rc;
+    }
+
+    /* Trace out the supplied information */
+    WINE_TRACE("Supplied parameters:\n");
+    WINE_TRACE("Source      : '%s'\n", wine_dbgstr_w(suppliedsource));
+    WINE_TRACE("Destination : '%s'\n", wine_dbgstr_w(supplieddestination));
+
+    /* Extract required information from source specification */
+    rc = XCOPY_ProcessSourceParm(suppliedsource, sourcestem, sourcespec, flags);
+    if (rc != RC_OK) return rc;
+
+    /* Extract required information from destination specification */
+    rc = XCOPY_ProcessDestParm(supplieddestination, destinationstem,
+                               destinationspec, sourcespec, flags);
+    if (rc != RC_OK) return rc;
+
+    /* Trace out the resulting information */
+    WINE_TRACE("Resolved parameters:\n");
+    WINE_TRACE("Source Stem : '%s'\n", wine_dbgstr_w(sourcestem));
+    WINE_TRACE("Source Spec : '%s'\n", wine_dbgstr_w(sourcespec));
+    WINE_TRACE("Dest   Stem : '%s'\n", wine_dbgstr_w(destinationstem));
+    WINE_TRACE("Dest   Spec : '%s'\n", wine_dbgstr_w(destinationspec));
+
+    /* Pause if necessary */
+    if (flags & OPT_PAUSE) {
+        DWORD count;
+        char pausestr[10];
+
+        XCOPY_wprintf(XCOPY_LoadMessage(STRING_PAUSE));
+        ReadFile (GetStdHandle(STD_INPUT_HANDLE), pausestr, sizeof(pausestr),
+                  &count, NULL);
+    }
+
+    /* Now do the hard work... */
+    rc = XCOPY_DoCopy(sourcestem, sourcespec,
+                destinationstem, destinationspec,
+                flags);
+
+    /* Clear up exclude list allocated memory */
+    while (excludeList) {
+        EXCLUDELIST *pos = excludeList;
+        excludeList = excludeList -> next;
+        HeapFree(GetProcessHeap(), 0, pos->name);
+        HeapFree(GetProcessHeap(), 0, pos);
+    }
+
+    /* Finished - print trailer and exit */
+    if (flags & OPT_SIMULATE) {
+        XCOPY_wprintf(XCOPY_LoadMessage(STRING_SIMCOPY), filesCopied);
+    } else if (!(flags & OPT_NOCOPY)) {
+        XCOPY_wprintf(XCOPY_LoadMessage(STRING_COPY), filesCopied);
+    }
+    if (rc == RC_OK && filesCopied == 0) rc = RC_NOFILES;
+    return rc;
+
+}
+
+/* =========================================================================
+   XCOPY_ParseCommandLine - Parses the command line
+   ========================================================================= */
+static int XCOPY_ParseCommandLine(int argc, WCHAR **argvW,
+				  WCHAR *suppliedsource,
+				  WCHAR *supplieddestination, DWORD *pflags)
+{
+    const WCHAR EXCLUDE[]  = {'E', 'X', 'C', 'L', 'U', 'D', 'E', ':', 0};
+    DWORD flags = *pflags;
+
+    /* Confirm at least one parameter */
+    if (argc < 2) {
+        XCOPY_wprintf(XCOPY_LoadMessage(STRING_INVPARMS));
+        return RC_INITERROR;
+    }
 
     /* Skip first arg, which is the program name */
     argvW++;
@@ -241,7 +315,7 @@ int wmain (int argc, WCHAR *argvW[])
             case '-': if (toupper(argvW[0][2])=='Y')
                           flags &= ~OPT_NOPROMPT; break;
             case '?': XCOPY_wprintf(XCOPY_LoadMessage(STRING_HELP));
-                      return RC_OK;
+                      return RC_HELP;
             default:
                 WINE_TRACE("Unhandled parameter '%s'\n", wine_dbgstr_w(*argvW));
                 XCOPY_wprintf(XCOPY_LoadMessage(STRING_INVPARM), *argvW);
@@ -255,59 +329,8 @@ int wmain (int argc, WCHAR *argvW[])
     if (supplieddestination[0] == 0x00)
         lstrcpyW(supplieddestination, wchr_dot);
 
-    /* Trace out the supplied information */
-    WINE_TRACE("Supplied parameters:\n");
-    WINE_TRACE("Source      : '%s'\n", wine_dbgstr_w(suppliedsource));
-    WINE_TRACE("Destination : '%s'\n", wine_dbgstr_w(supplieddestination));
-
-    /* Extract required information from source specification */
-    rc = XCOPY_ProcessSourceParm(suppliedsource, sourcestem, sourcespec, flags);
-    if (rc != RC_OK) return rc;
-
-    /* Extract required information from destination specification */
-    rc = XCOPY_ProcessDestParm(supplieddestination, destinationstem,
-                               destinationspec, sourcespec, flags);
-    if (rc != RC_OK) return rc;
-
-    /* Trace out the resulting information */
-    WINE_TRACE("Resolved parameters:\n");
-    WINE_TRACE("Source Stem : '%s'\n", wine_dbgstr_w(sourcestem));
-    WINE_TRACE("Source Spec : '%s'\n", wine_dbgstr_w(sourcespec));
-    WINE_TRACE("Dest   Stem : '%s'\n", wine_dbgstr_w(destinationstem));
-    WINE_TRACE("Dest   Spec : '%s'\n", wine_dbgstr_w(destinationspec));
-
-    /* Pause if necessary */
-    if (flags & OPT_PAUSE) {
-        DWORD count;
-        char pausestr[10];
-
-        XCOPY_wprintf(XCOPY_LoadMessage(STRING_PAUSE));
-        ReadFile (GetStdHandle(STD_INPUT_HANDLE), pausestr, sizeof(pausestr),
-                  &count, NULL);
-    }
-
-    /* Now do the hard work... */
-    rc = XCOPY_DoCopy(sourcestem, sourcespec,
-                destinationstem, destinationspec,
-                flags);
-
-    /* Clear up exclude list allocated memory */
-    while (excludeList) {
-        EXCLUDELIST *pos = excludeList;
-        excludeList = excludeList -> next;
-        HeapFree(GetProcessHeap(), 0, pos->name);
-        HeapFree(GetProcessHeap(), 0, pos);
-    }
-
-    /* Finished - print trailer and exit */
-    if (flags & OPT_SIMULATE) {
-        XCOPY_wprintf(XCOPY_LoadMessage(STRING_SIMCOPY), filesCopied);
-    } else if (!(flags & OPT_NOCOPY)) {
-        XCOPY_wprintf(XCOPY_LoadMessage(STRING_COPY), filesCopied);
-    }
-    if (rc == RC_OK && filesCopied == 0) rc = RC_NOFILES;
-    return rc;
-
+    *pflags = flags;
+    return RC_OK;
 }
 
 
