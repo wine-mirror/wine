@@ -2134,8 +2134,8 @@ static void pshader_hw_texm3x3pad(const struct wined3d_shader_instruction *ins)
 
 static void pshader_hw_texm3x3tex(const struct wined3d_shader_instruction *ins)
 {
+    struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
     IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl *)shader->baseShader.device;
     SHADER_PARSE_STATE *current_state = &shader->baseShader.parse_state;
     DWORD flags;
     DWORD reg = ins->dst[0].reg.idx;
@@ -2150,7 +2150,7 @@ static void pshader_hw_texm3x3tex(const struct wined3d_shader_instruction *ins)
 
     /* Sample the texture using the calculated coordinates */
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_str);
-    flags = reg < MAX_TEXTURES ? deviceImpl->stateBlock->state.texture_states[reg][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
+    flags = reg < MAX_TEXTURES ? priv->cur_ps_args->super.tex_transform >> reg * WINED3D_PSARGS_TEXTRANSFORM_SHIFT : 0;
     shader_hw_sample(ins, reg, dst_str, dst_name, flags & WINED3DTTFF_PROJECTED ? TEX_PROJ : 0, NULL, NULL);
     current_state->current_row = 0;
 }
