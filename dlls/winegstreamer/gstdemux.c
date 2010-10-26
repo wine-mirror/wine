@@ -74,7 +74,7 @@ struct GSTOutPin {
 
     GstPad *their_src;
     GstPad *my_sink;
-    int isvid;
+    int isaud, isvid;
     AM_MEDIA_TYPE * pmt;
     HANDLE caps_event;
 };
@@ -87,6 +87,63 @@ static const IBaseFilterVtbl GST_Vtbl;
 
 static HRESULT GST_AddPin(GSTImpl *This, const PIN_INFO *piOutput, const AM_MEDIA_TYPE *amt);
 static HRESULT GST_RemoveOutputPins(GSTImpl *This);
+
+static int amt_from_gst_caps_audio(GstCaps *caps, AM_MEDIA_TYPE *amt) {
+    WAVEFORMATEXTENSIBLE *wfe;
+    WAVEFORMATEX *wfx;
+    GstStructure *arg;
+    gint32 depth = 0, bpp = 0;
+    const char *typename;
+    arg = gst_caps_get_structure(caps, 0);
+    typename = gst_structure_get_name(arg);
+    if (!typename)
+        return 0;
+
+    wfe = CoTaskMemAlloc(sizeof(*wfe));
+    wfx = (WAVEFORMATEX*)wfe;
+    amt->majortype = MEDIATYPE_Audio;
+    amt->subtype = MEDIASUBTYPE_PCM;
+    amt->formattype = FORMAT_WaveFormatEx;
+    amt->pbFormat = (BYTE*)wfe;
+    amt->cbFormat = sizeof(*wfe);
+    amt->bFixedSizeSamples = 0;
+    amt->bTemporalCompression = 1;
+    amt->lSampleSize = 0;
+    amt->pUnk = NULL;
+
+    wfx->wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+    if (!gst_structure_get_int(arg, "channels", (INT*)&wfx->nChannels))
+        return 0;
+    if (!gst_structure_get_int(arg, "rate", (INT*)&wfx->nSamplesPerSec))
+        return 0;
+    gst_structure_get_int(arg, "width", &depth);
+    gst_structure_get_int(arg, "depth", &bpp);
+    if (!depth || depth > 32 || depth % 8)
+        depth = bpp;
+    else if (!bpp)
+        bpp = depth;
+    wfe->Samples.wValidBitsPerSample = depth;
+    wfx->wBitsPerSample = bpp;
+    wfx->cbSize = sizeof(*wfe)-sizeof(*wfx);
+    switch (wfx->nChannels) {
+        case 1: wfe->dwChannelMask = KSAUDIO_SPEAKER_MONO; break;
+        case 2: wfe->dwChannelMask = KSAUDIO_SPEAKER_STEREO; break;
+        case 4: wfe->dwChannelMask = KSAUDIO_SPEAKER_SURROUND; break;
+        case 5: wfe->dwChannelMask = (KSAUDIO_SPEAKER_5POINT1 & ~SPEAKER_LOW_FREQUENCY); break;
+        case 6: wfe->dwChannelMask = KSAUDIO_SPEAKER_5POINT1; break;
+        case 8: wfe->dwChannelMask = KSAUDIO_SPEAKER_7POINT1; break;
+        default:
+        wfe->dwChannelMask = 0;
+    }
+    if (!strcmp(typename, "audio/x-raw-float")) {
+        wfe->SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
+        wfx->wBitsPerSample = wfe->Samples.wValidBitsPerSample = 32;
+    } else
+        wfe->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+    wfx->nBlockAlign = wfx->nChannels * wfx->wBitsPerSample/8;
+    wfx->nAvgBytesPerSec = wfx->nSamplesPerSec * wfx->nBlockAlign;
+    return 1;
+}
 
 static int amt_from_gst_caps_video(GstCaps *caps, AM_MEDIA_TYPE *amt) {
     VIDEOINFOHEADER *vih = CoTaskMemAlloc(sizeof(*vih));
@@ -162,7 +219,17 @@ static gboolean accept_caps_sink(GstPad *pad, GstCaps *caps) {
     int ret;
     arg = gst_caps_get_structure(caps, 0);
     typename = gst_structure_get_name(arg);
-    if (!strcmp(typename, "video/x-raw-rgb")
+    if (!strcmp(typename, "audio/x-raw-int") ||
+        !strcmp(typename, "audio/x-raw-float")) {
+        if (!pin->isaud) {
+            ERR("Setting audio caps on non-audio pad?\n");
+            return 0;
+        }
+        ret = amt_from_gst_caps_audio(caps, &amt);
+        FreeMediaType(&amt);
+        TRACE("+%i\n", ret);
+        return ret;
+    } else if (!strcmp(typename, "video/x-raw-rgb")
                || !strcmp(typename, "video/x-raw-yuv")) {
         if (!pin->isvid) {
             ERR("Setting video caps on non-video pad?\n");
@@ -187,7 +254,14 @@ static gboolean setcaps_sink(GstPad *pad, GstCaps *caps) {
     int ret;
     arg = gst_caps_get_structure(caps, 0);
     typename = gst_structure_get_name(arg);
-    if (!strcmp(typename, "video/x-raw-rgb")
+    if (!strcmp(typename, "audio/x-raw-int") ||
+        !strcmp(typename, "audio/x-raw-float")) {
+        if (!pin->isaud) {
+            ERR("Setting audio caps on non-audio pad?\n");
+            return 0;
+        }
+        ret = amt_from_gst_caps_audio(caps, &amt);
+    } else if (!strcmp(typename, "video/x-raw-rgb")
                || !strcmp(typename, "video/x-raw-yuv")) {
         if (!pin->isvid) {
             ERR("Setting video caps on non-video pad?\n");
@@ -495,7 +569,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, gboolean last, GS
     GstPad *mypad;
     GSTOutPin *pin;
     int ret;
-    int isvid = 0;
+    int isvid = 0, isaud = 0;
 
     piOutput.dir = PINDIR_OUTPUT;
     piOutput.pFilter = (IBaseFilter *)This;
@@ -516,7 +590,10 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, gboolean last, GS
     gst_pad_set_acceptcaps_function(mypad, accept_caps_sink);
     gst_pad_set_acceptcaps_function(mypad, setcaps_sink);
 
-    if (!strcmp(typename, "video/x-raw-rgb")
+    if (!strcmp(typename, "audio/x-raw-int") ||
+        !strcmp(typename, "audio/x-raw-float")) {
+        isaud = 1;
+    } else if (!strcmp(typename, "video/x-raw-rgb")
                || !strcmp(typename, "video/x-raw-yuv")) {
         isvid = 1;
     } else {
@@ -532,6 +609,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, gboolean last, GS
     pin = This->ppPins[This->cStreams - 1];
     gst_pad_set_element_private(mypad, pin);
     pin->my_sink = mypad;
+    pin->isaud = isaud;
     pin->isvid = isvid;
 
     ret = gst_pad_link(pad, mypad);
