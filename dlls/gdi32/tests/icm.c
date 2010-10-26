@@ -176,6 +176,127 @@ static void test_SetICMMode( HDC dc )
     DeleteDC( dc );
 }
 
+static CALLBACK INT enum_profiles_callbackA( LPSTR filename, LPARAM lparam )
+{
+    trace("%s\n", filename);
+    return 1;
+}
+
+static void test_EnumICMProfilesA( HDC dc )
+{
+    INT ret;
+
+    ret = EnumICMProfilesA( NULL, NULL, 0 );
+    ok(ret == -1 || broken(ret == 0) /* nt4 */, "expected -1, got %d\n", ret);
+
+    ret = EnumICMProfilesA( dc, NULL, 0 );
+    ok(ret == -1 || broken(ret == 0) /* nt4 */, "expected -1, got %d\n", ret);
+
+    ret = EnumICMProfilesA( dc, enum_profiles_callbackA, 0 );
+    ok(ret == -1 || broken(ret == 0) /* nt4 */, "expected -1, got %d\n", ret);
+}
+
+static CALLBACK INT enum_profiles_callbackW( LPWSTR filename, LPARAM lparam )
+{
+    return 1;
+}
+
+static void test_EnumICMProfilesW( HDC dc )
+{
+    INT ret;
+
+    ret = EnumICMProfilesW( NULL, NULL, 0 );
+    ok(ret == -1 || broken(ret == 0) /* win9x, nt4 */, "expected -1, got %d\n", ret);
+
+    ret = EnumICMProfilesW( dc, NULL, 0 );
+    ok(ret == -1 || broken(ret == 0) /* win9x, nt4 */, "expected -1, got %d\n", ret);
+
+    ret = EnumICMProfilesW( dc, enum_profiles_callbackW, 0 );
+    ok(ret == -1 || broken(ret == 0) /* win9x, nt4 */, "expected -1, got %d\n", ret);
+}
+
+static void test_SetICMProfileA( HDC dc )
+{
+    BOOL ret;
+    char profile[MAX_PATH];
+    DWORD len, error;
+
+    SetLastError( 0xdeadbeef );
+    ret = SetICMProfileA( NULL, NULL );
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("SetICMProfileA is not implemented\n");
+        return;
+    }
+
+    len = sizeof(profile);
+    ret = GetICMProfileA( dc, &len, profile );
+    ok(ret, "GetICMProfileA failed %u\n", GetLastError());
+
+    SetLastError( 0xdeadbeef );
+    ret = SetICMProfileA( NULL, NULL );
+    error = GetLastError();
+    ok(!ret, "SetICMProfileA succeeded\n");
+    ok(error == ERROR_INVALID_PARAMETER || broken(error == 0xdeadbeef) /* win9x */,
+       "expected ERROR_INVALID_PARAMETER, got %u\n", error);
+
+    SetLastError( 0xdeadbeef );
+    ret = SetICMProfileA( NULL, profile );
+    error = GetLastError();
+    ok(!ret, "SetICMProfileA succeeded\n");
+    ok(error == ERROR_INVALID_HANDLE || broken(error == 0xdeadbeef) /* win9x */,
+       "expected ERROR_INVALID_HANDLE, got %u\n", error);
+
+    SetLastError( 0xdeadbeef );
+    ret = SetICMProfileA( dc, NULL );
+    error = GetLastError();
+    ok(!ret, "SetICMProfileA succeeded\n");
+    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error);
+
+    ret = SetICMProfileA( dc, profile );
+    ok(ret, "SetICMProfileA failed %u\n", GetLastError());
+}
+
+static void test_SetICMProfileW( HDC dc )
+{
+    BOOL ret;
+    WCHAR profile[MAX_PATH];
+    DWORD len, error;
+
+    SetLastError( 0xdeadbeef );
+    ret = SetICMProfileW( NULL, NULL );
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("SetICMProfileW is not implemented\n");
+        return;
+    }
+
+    len = sizeof(profile)/sizeof(profile[0]);
+    ret = GetICMProfileW( dc, &len, profile );
+    ok(ret, "GetICMProfileW failed %u\n", GetLastError());
+
+    SetLastError( 0xdeadbeef );
+    ret = SetICMProfileW( NULL, NULL );
+    error = GetLastError();
+    ok(!ret, "SetICMProfileW succeeded\n");
+    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error);
+
+    SetLastError( 0xdeadbeef );
+    ret = SetICMProfileW( NULL, profile );
+    error = GetLastError();
+    ok(!ret, "SetICMProfileW succeeded\n");
+    ok(error == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %u\n", error);
+
+    SetLastError( 0xdeadbeef );
+    ret = SetICMProfileW( dc, NULL );
+    error = GetLastError();
+    ok(!ret, "SetICMProfileW succeeded\n");
+    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error);
+
+    ret = SetICMProfileW( dc, profile );
+    ok(ret, "SetICMProfileW failed %u\n", GetLastError());
+}
+
 START_TEST(icm)
 {
     HDC dc = GetDC( NULL );
@@ -183,6 +304,10 @@ START_TEST(icm)
     test_GetICMProfileA( dc );
     test_GetICMProfileW( dc );
     test_SetICMMode( dc );
+    test_EnumICMProfilesA( dc );
+    test_EnumICMProfilesW( dc );
+    test_SetICMProfileA( dc );
+    test_SetICMProfileW( dc );
 
     ReleaseDC( NULL, dc );
 }

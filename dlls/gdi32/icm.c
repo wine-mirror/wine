@@ -74,11 +74,13 @@ INT CALLBACK enum_profiles_callback( LPWSTR filename, LPARAM lparam )
  */
 INT WINAPI EnumICMProfilesA(HDC hdc, ICMENUMPROCA func, LPARAM lparam)
 {
+    DC *dc;
     INT ret = -1;
-    DC *dc = get_dc_ptr(hdc);
 
     TRACE("%p, %p, 0x%08lx\n", hdc, func, lparam);
-    if (dc)
+
+    if (!func) return -1;
+    if ((dc = get_dc_ptr(hdc)))
     {
         if (dc->funcs->pEnumICMProfiles)
         {
@@ -99,11 +101,13 @@ INT WINAPI EnumICMProfilesA(HDC hdc, ICMENUMPROCA func, LPARAM lparam)
  */
 INT WINAPI EnumICMProfilesW(HDC hdc, ICMENUMPROCW func, LPARAM lparam)
 {
+    DC *dc;
     INT ret = -1;
-    DC *dc = get_dc_ptr(hdc);
 
     TRACE("%p, %p, 0x%08lx\n", hdc, func, lparam);
-    if (dc)
+
+    if (!func) return -1;
+    if ((dc = get_dc_ptr(hdc)))
     {
         if (dc->funcs->pEnumICMProfiles)
         {
@@ -200,6 +204,17 @@ BOOL WINAPI GetLogColorSpaceW(HCOLORSPACE colorspace, LPLOGCOLORSPACEW buffer, D
 BOOL WINAPI SetICMProfileA(HDC hdc, LPSTR filename)
 {
     FIXME("%p %s stub\n", hdc, debugstr_a(filename));
+
+    if (!filename)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if (!hdc)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
     return TRUE;
 }
 
@@ -209,6 +224,17 @@ BOOL WINAPI SetICMProfileA(HDC hdc, LPSTR filename)
 BOOL WINAPI SetICMProfileW(HDC hdc, LPWSTR filename)
 {
     FIXME("%p %s stub\n", hdc, debugstr_w(filename));
+
+    if (!filename)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if (!hdc)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
     return TRUE;
 }
 
