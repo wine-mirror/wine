@@ -11,6 +11,7 @@ RC_SRCS = \
 	iccvid_En.rc \
 	iccvid_Es.rc \
 	iccvid_Fr.rc \
+	iccvid_He.rc \
 	iccvid_Hu.rc \
 	iccvid_It.rc \
 	iccvid_Ja.rc \
