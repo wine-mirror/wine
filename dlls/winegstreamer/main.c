@@ -26,7 +26,6 @@
 #include <gst/app/gstappsrc.h>
 #include <gst/app/gstappbuffer.h>
 
-#include "initguid.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -37,16 +36,74 @@
 
 #include "wine/unicode.h"
 #include "gst_private.h"
+#include "initguid.h"
 #include "gst_guids.h"
 
 static HINSTANCE hInst = NULL;
 
 WINE_DEFAULT_DEBUG_CHANNEL(gstreamer);
 
-FactoryTemplate const g_Templates[] = {
+static const WCHAR wGstreamer_Splitter[] =
+{'G','S','t','r','e','a','m','e','r',' ','s','p','l','i','t','t','e','r',' ','f','i','l','t','e','r',0};
+
+static WCHAR wNull[] = {'\0'};
+
+static const AMOVIESETUP_MEDIATYPE amfMTstream[] =
+{   { &MEDIATYPE_Stream, &WINESUBTYPE_Gstreamer },
+    { &MEDIATYPE_Stream, &MEDIASUBTYPE_NULL },
 };
 
-const int g_cTemplates = 0;
+static const AMOVIESETUP_MEDIATYPE amfMTaudio[] =
+{   { &MEDIATYPE_Audio, &MEDIASUBTYPE_NULL } };
+
+static const AMOVIESETUP_MEDIATYPE amfMTvideo[] =
+{   { &MEDIATYPE_Video, &MEDIASUBTYPE_NULL } };
+
+static const AMOVIESETUP_PIN amfSplitPin[] =
+{   {   wNull,
+        FALSE, FALSE, FALSE, FALSE,
+        &GUID_NULL,
+        NULL,
+        2,
+        amfMTstream
+    },
+    {
+        wNull,
+        FALSE, TRUE, FALSE, FALSE,
+        &GUID_NULL,
+        NULL,
+        1,
+        amfMTaudio
+    },
+    {
+        wNull,
+        FALSE, TRUE, FALSE, FALSE,
+        &GUID_NULL,
+        NULL,
+        1,
+        amfMTvideo
+    }
+};
+
+static const AMOVIESETUP_FILTER amfSplitter =
+{   &CLSID_Gstreamer_Splitter,
+    wGstreamer_Splitter,
+    MERIT_PREFERRED,
+    3,
+    amfSplitPin
+};
+
+FactoryTemplate const g_Templates[] = {
+    {
+        wGstreamer_Splitter,
+        &CLSID_Gstreamer_Splitter,
+        Gstreamer_Splitter_create,
+        NULL,
+        &amfSplitter,
+    },
+};
+
+const int g_cTemplates = sizeof(g_Templates) / sizeof (g_Templates[0]);
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {

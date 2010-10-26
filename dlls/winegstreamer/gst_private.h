@@ -35,8 +35,12 @@
 #include "strmif.h"
 #include "wine/strmbase.h"
 
+#define MEDIATIME_FROM_BYTES(x) ((LONGLONG)(x) * 10000000)
+
 /* enum media */
 void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt);
+
+IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *pUnkOuter, HRESULT *phr);
 
 void g_thread_impl_init(void);
 DWORD Gstreamer_init(void);
