@@ -1,0 +1,7 @@
+TESTDLL   = wer.dll
+IMPORTS   = wer
+
+C_SRCS = \
+	main.c
+
+@MAKE_TEST_RULES@

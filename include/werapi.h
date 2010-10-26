@@ -32,7 +32,9 @@ typedef enum _WER_REGISTER_FILE_TYPE
     WerRegFileTypeMax
 } WER_REGISTER_FILE_TYPE;
 
+HRESULT WINAPI WerAddExcludedApplication(PCWSTR, BOOL);
 HRESULT WINAPI WerRegisterFile(PCWSTR file, WER_REGISTER_FILE_TYPE regfiletype, DWORD flags);
+HRESULT WINAPI WerRemoveExcludedApplication(PCWSTR, BOOL);
 
 #ifdef __cplusplus
 }
