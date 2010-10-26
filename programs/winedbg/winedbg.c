@@ -603,6 +603,12 @@ void dbg_start_interactive(HANDLE hFile)
     dbg_save_internal_vars();
 }
 
+static LONG CALLBACK top_filter( EXCEPTION_POINTERS *ptr )
+{
+    dbg_printf( "winedbg: Internal crash at %p\n", ptr->ExceptionRecord->ExceptionAddress );
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
 struct backend_cpu* be_cpu;
 #ifdef __i386__
 extern struct backend_cpu be_i386;
@@ -643,6 +649,8 @@ int main(int argc, char** argv)
 #endif
     /* Initialize the output */
     dbg_houtput = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    SetUnhandledExceptionFilter( top_filter );
 
     /* Initialize internal vars */
     if (!dbg_load_internal_vars()) return -1;
