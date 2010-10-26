@@ -22,6 +22,7 @@ RC_SRCS = \
 	avifile_En.rc \
 	avifile_Es.rc \
 	avifile_Fr.rc \
+	avifile_He.rc \
 	avifile_Hu.rc \
 	avifile_It.rc \
 	avifile_Ja.rc \
