@@ -1,0 +1,7 @@
+TESTDLL   = faultrep.dll
+IMPORTS   = faultrep advapi32
+
+C_SRCS = \
+	faultrep.c
+
+@MAKE_TEST_RULES@
