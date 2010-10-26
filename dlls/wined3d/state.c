@@ -4644,20 +4644,6 @@ static void vertexdeclaration(DWORD state_id, IWineD3DStateBlockImpl *stateblock
         context->last_was_rhw = FALSE;
         /* This turns off the Z scale trick to 'disable' viewport frustum clipping in rhw mode*/
         device->untransformed = TRUE;
-
-        /* Todo for sw shaders: Vertex Shader output is already transformed, so set up identity matrices
-         * Not needed as long as only hw shaders are supported
-         */
-
-        /* This sets the shader output position correction constants.
-         * TODO: Move to the viewport state
-         */
-        if (useVertexShaderFunction)
-        {
-            GLfloat yoffset = -(63.0f / 64.0f) / stateblock->state.viewport.Height;
-            device->posFixup[1] = context->render_offscreen ? -1.0f : 1.0f;
-            device->posFixup[3] = device->posFixup[1] * yoffset;
-        }
     }
 
     /* Don't have to apply the matrices when vertex shaders are used. When vshaders are turned
@@ -4803,19 +4789,15 @@ static void viewport_miscpart(DWORD state, IWineD3DStateBlockImpl *stateblock, s
     checkGLcall("glViewport");
 }
 
-static void viewport_vertexpart(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void viewport_vertexpart(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    GLfloat yoffset = -(63.0f / 64.0f) / stateblock->state.viewport.Height;
-
-    stateblock->device->posFixup[2] = (63.0f / 64.0f) / stateblock->state.viewport.Width;
-    stateblock->device->posFixup[3] = stateblock->device->posFixup[1] * yoffset;
-
     if(!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION))) {
         transform_projection(STATE_TRANSFORM(WINED3DTS_PROJECTION), stateblock, context);
     }
     if(!isStateDirty(context, STATE_RENDER(WINED3DRS_POINTSCALEENABLE))) {
         state_pscale(STATE_RENDER(WINED3DRS_POINTSCALEENABLE), stateblock, context);
     }
+    /* Update the position fixup. */
     if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT))
         shaderconstant(STATE_VERTEXSHADERCONSTANT, stateblock, context);
 }

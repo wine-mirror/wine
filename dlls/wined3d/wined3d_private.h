@@ -1722,9 +1722,6 @@ struct IWineD3DDeviceImpl
     DWORD ddraw_width, ddraw_height;
     enum wined3d_format_id ddraw_format;
 
-    /* Final position fixup constant */
-    float                       posFixup[4];
-
     /* With register combiners we can skip junk texture stages */
     DWORD                     texUnitMap[MAX_COMBINED_SAMPLERS];
     DWORD                     rev_tex_unit_map[MAX_COMBINED_SAMPLERS];
@@ -2838,6 +2835,21 @@ static inline BOOL shader_is_scalar(const struct wined3d_shader_register *reg)
 
         default:
             return FALSE;
+    }
+}
+
+static inline void shader_get_position_fixup(const struct wined3d_context *context,
+        const struct wined3d_state *state, float *position_fixup)
+{
+    position_fixup[0] = 1.0f;
+    position_fixup[1] = 1.0f;
+    position_fixup[2] = (63.0f / 64.0f) / state->viewport.Width;
+    position_fixup[3] = -(63.0f / 64.0f) / state->viewport.Height;
+
+    if (context->render_offscreen)
+    {
+        position_fixup[1] *= -1.0f;
+        position_fixup[3] *= -1.0f;
     }
 }
 

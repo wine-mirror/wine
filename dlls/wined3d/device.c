@@ -6827,7 +6827,6 @@ HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
     list_init(&device->shaders);
 
     device->surface_alignment = wined3d->dxVersion == 7 ? DDRAW_PITCH_ALIGNMENT : D3D8_PITCH_ALIGNMENT;
-    device->posFixup[0] = 1.0f; /* This is needed to get the x coord unmodified through a MAD. */
 
     /* Get the initial screen setup for ddraw. */
     hr = IWineD3D_GetAdapterDisplayMode((IWineD3D *)wined3d, adapter_idx, &mode);

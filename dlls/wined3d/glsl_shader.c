@@ -733,6 +733,7 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
     IWineD3DDeviceImpl *device = context->swapchain->device;
     IWineD3DStateBlockImpl* stateBlock = device->stateBlock;
     struct shader_glsl_priv *priv = device->shader_priv;
+    float position_fixup[4];
 
     GLhandleARB programId;
     struct glsl_shader_prog_link *prog = priv->glsl_program;
@@ -763,7 +764,8 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
                 stateBlock->changed.vertexShaderConstantsB & vshader->baseShader.reg_maps.boolean_constants);
 
         /* Upload the position fixup params */
-        GL_EXTCALL(glUniform4fvARB(prog->posFixup_location, 1, &device->posFixup[0]));
+        shader_get_position_fixup(context, &stateBlock->state, position_fixup);
+        GL_EXTCALL(glUniform4fvARB(prog->posFixup_location, 1, position_fixup));
         checkGLcall("glUniform4fvARB");
     }
 
