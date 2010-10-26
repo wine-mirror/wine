@@ -24,6 +24,7 @@ RC_SRCS = \
 	credui_Ro.rc \
 	credui_Ru.rc \
 	credui_Si.rc \
+	credui_Sr.rc \
 	credui_Sv.rc \
 	credui_Uk.rc \
 	credui_Zh.rc
