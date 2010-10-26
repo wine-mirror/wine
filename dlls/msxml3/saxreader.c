@@ -1292,7 +1292,7 @@ static void libxmlFatalError(void *ctx, const char *msg, ...)
 {
     saxlocator *This = ctx;
     char message[1024];
-    WCHAR *wszError;
+    WCHAR *error;
     DWORD len;
     va_list args;
 
@@ -1311,22 +1311,25 @@ static void libxmlFatalError(void *ctx, const char *msg, ...)
     va_end(args);
 
     len = MultiByteToWideChar(CP_UNIXCP, 0, message, -1, NULL, 0);
-    wszError = heap_alloc(sizeof(WCHAR)*len);
-    if(wszError)
-        MultiByteToWideChar(CP_UNIXCP, 0, message, -1, wszError, len);
+    error = heap_alloc(sizeof(WCHAR)*len);
+    if(error)
+    {
+        MultiByteToWideChar(CP_UNIXCP, 0, message, -1, error, len);
+        TRACE("fatal error for %p: %s\n", This, debugstr_w(error));
+    }
 
     if(This->vbInterface)
     {
-        BSTR bstrError = SysAllocString(wszError);
+        BSTR bstrError = SysAllocString(error);
         IVBSAXErrorHandler_fatalError(This->saxreader->vberrorHandler,
                 (IVBSAXLocator*)&This->lpVBSAXLocatorVtbl, &bstrError, E_FAIL);
         SysFreeString(bstrError);
     }
     else
         ISAXErrorHandler_fatalError(This->saxreader->errorHandler,
-                (ISAXLocator*)&This->lpSAXLocatorVtbl, wszError, E_FAIL);
+                (ISAXLocator*)&This->lpSAXLocatorVtbl, error, E_FAIL);
 
-    heap_free(wszError);
+    heap_free(error);
 
     xmlStopParser(This->pParserCtxt);
     This->ret = E_FAIL;
