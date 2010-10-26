@@ -126,6 +126,10 @@ struct DataCache
   const IOleCache2Vtbl*       lpvtblIOleCache2;
   const IOleCacheControlVtbl* lpvtblIOleCacheControl;
 
+  /* The sink that is connected to a remote object.
+     The other interfaces are not available by QI'ing the sink and vice-versa */
+  const IAdviseSinkVtbl*      lpvtblIAdviseSink;
+
   /*
    * Reference count of this object
    */
@@ -191,6 +195,11 @@ static inline DataCache *impl_from_IOleCache2( IOleCache2 *iface )
 static inline DataCache *impl_from_IOleCacheControl( IOleCacheControl *iface )
 {
     return (DataCache *)((char*)iface - FIELD_OFFSET(DataCache, lpvtblIOleCacheControl));
+}
+
+static inline DataCache *impl_from_IAdviseSink( IAdviseSink *iface )
+{
+    return (DataCache *)((char*)iface - FIELD_OFFSET(DataCache, lpvtblIAdviseSink));
 }
 
 static const char * debugstr_formatetc(const FORMATETC *formatetc)
@@ -2163,6 +2172,64 @@ static HRESULT WINAPI DataCache_OnStop(
   return E_NOTIMPL;
 }
 
+/************************************************************************
+ *              IAdviseSink methods.
+ * This behaves as an internal object to the data cache.  QI'ing its ptr doesn't
+ * give access to the cache's other interfaces.  We don't maintain a ref count,
+ * the object exists as long as the cache is around.
+ */
+static HRESULT WINAPI DataCache_IAdviseSink_QueryInterface(IAdviseSink *iface, REFIID iid, void **obj)
+{
+    *obj = NULL;
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_IAdviseSink, iid))
+    {
+        *obj = iface;
+    }
+
+    if(*obj)
+    {
+        IAdviseSink_AddRef(iface);
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI DataCache_IAdviseSink_AddRef(IAdviseSink *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI DataCache_IAdviseSink_Release(IAdviseSink *iface)
+{
+    return 1;
+}
+
+static void WINAPI DataCache_OnDataChange(IAdviseSink *iface, FORMATETC *fmt, STGMEDIUM *med)
+{
+    FIXME("stub\n");
+}
+
+static void WINAPI DataCache_OnViewChange(IAdviseSink *iface, DWORD aspect, LONG index)
+{
+    FIXME("stub\n");
+}
+
+static void WINAPI DataCache_OnRename(IAdviseSink *iface, IMoniker *mk)
+{
+    FIXME("stub\n");
+}
+
+static void WINAPI DataCache_OnSave(IAdviseSink *iface)
+{
+    FIXME("stub\n");
+}
+
+static void WINAPI DataCache_OnClose(IAdviseSink *iface)
+{
+    FIXME("stub\n");
+}
+
 /*
  * Virtual function tables for the DataCache class.
  */
@@ -2239,6 +2306,19 @@ static const IOleCacheControlVtbl DataCache_IOleCacheControl_VTable =
   DataCache_OnRun,
   DataCache_OnStop
 };
+
+static const IAdviseSinkVtbl DataCache_IAdviseSink_VTable =
+{
+    DataCache_IAdviseSink_QueryInterface,
+    DataCache_IAdviseSink_AddRef,
+    DataCache_IAdviseSink_Release,
+    DataCache_OnDataChange,
+    DataCache_OnViewChange,
+    DataCache_OnRename,
+    DataCache_OnSave,
+    DataCache_OnClose
+};
+
 
 /******************************************************************************
  *              CreateDataCache        [OLE32.@]
@@ -2338,6 +2418,7 @@ static DataCache* DataCache_Construct(
   newObject->lpvtblIViewObject = &DataCache_IViewObject2_VTable;
   newObject->lpvtblIOleCache2 = &DataCache_IOleCache2_VTable;
   newObject->lpvtblIOleCacheControl = &DataCache_IOleCacheControl_VTable;
+  newObject->lpvtblIAdviseSink = &DataCache_IAdviseSink_VTable;
 
   /*
    * Start with one reference count. The caller of this function
