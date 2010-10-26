@@ -1773,11 +1773,10 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
         MsiCloseHandle( rec );
     }
 
-    if ((!rc) && (gszLogFile[0]) && !((eMessageType & 0xff000000) ==
-                                      INSTALLMESSAGE_PROGRESS))
+    if (!rc && gszLogFile[0] && (eMessageType & 0xff000000) != INSTALLMESSAGE_PROGRESS)
     {
         DWORD write;
-        HANDLE log_file = CreateFileW(gszLogFile,GENERIC_WRITE, 0, NULL,
+        HANDLE log_file = CreateFileW(gszLogFile, GENERIC_WRITE, FILE_SHARE_WRITE, NULL,
                                   OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
         if (log_file != INVALID_HANDLE_VALUE)

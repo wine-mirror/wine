@@ -1775,12 +1775,12 @@ UINT WINAPI MsiEnableLogW(DWORD dwLogMode, LPCWSTR szLogFile, DWORD attributes)
         lstrcpyW(gszLogFile,szLogFile);
         if (!(attributes & INSTALLLOGATTRIBUTES_APPEND))
             DeleteFileW(szLogFile);
-        file = CreateFileW(szLogFile, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS,
-                               FILE_ATTRIBUTE_NORMAL, NULL);
+        file = CreateFileW(szLogFile, GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_ALWAYS,
+                           FILE_ATTRIBUTE_NORMAL, NULL);
         if (file != INVALID_HANDLE_VALUE)
             CloseHandle(file);
         else
-            ERR("Unable to enable log %s\n",debugstr_w(szLogFile));
+            ERR("Unable to enable log %s (%u)\n", debugstr_w(szLogFile), GetLastError());
     }
     else
         gszLogFile[0] = '\0';
