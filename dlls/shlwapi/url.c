@@ -1967,6 +1967,10 @@ static LPCWSTR  URL_ScanID(LPCWSTR start, LPDWORD size, WINE_URL_SCAN_TYPE type)
 	    else
 		cont = FALSE;
 	}
+
+	if(*start != ':')
+	    *size = 0;
+
         break;
 
     case USERPASS:
@@ -2190,7 +2194,7 @@ HRESULT WINAPI UrlGetPartW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut,
 
 	switch (dwPart) {
 	case URL_PART_SCHEME:
-	    if (!pl.szScheme || scheme == URL_SCHEME_UNKNOWN) {
+	    if (!pl.szScheme) {
 	        *pcchOut = 0;
 	        return S_FALSE;
 	    }
