@@ -44,7 +44,7 @@ INSTALLUI_HANDLERW       gUIHandlerW      = NULL;
 INSTALLUI_HANDLER_RECORD gUIHandlerRecord = NULL;
 DWORD                    gUIFilter        = 0;
 LPVOID                   gUIContext       = NULL;
-WCHAR gszLogFile[MAX_PATH];
+WCHAR                   *gszLogFile       = NULL;
 HINSTANCE msi_hInstance;
 
 static WCHAR msi_path[MAX_PATH];
@@ -78,6 +78,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         if (msi_typelib) ITypeLib_Release( msi_typelib );
         msi_dialog_unregister_class();
         msi_free_handle_table();
+        msi_free( gszLogFile );
         break;
     }
     return TRUE;

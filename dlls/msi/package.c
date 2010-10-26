@@ -295,6 +295,7 @@ static void MSI_FreePackage( MSIOBJECTHDR *arg)
 
     msiobj_release( &package->db->hdr );
     free_package_structures(package);
+    CloseHandle( package->log_file );
 }
 
 static UINT create_temp_property_table(MSIPACKAGE *package)
@@ -1121,6 +1122,8 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
 
         if (package->WordCount & msidbSumInfoSourceTypeAdminImage)
             msi_load_admin_properties( package );
+
+        package->log_file = INVALID_HANDLE_VALUE;
     }
 
     return package;
@@ -1551,6 +1554,10 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         msi_adjust_privilege_properties( package );
     }
 
+    if (gszLogFile)
+        package->log_file = CreateFileW( gszLogFile, GENERIC_WRITE, FILE_SHARE_WRITE, NULL,
+                                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
+
     *pPackage = package;
     return ERROR_SUCCESS;
 }
@@ -1657,17 +1664,13 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
         {'S','e','t','P','r','o','g','r','e','s','s',0};
     static const WCHAR szActionText[] =
         {'A','c','t','i','o','n','T','e','x','t',0};
-    DWORD log_type = 0;
     LPWSTR message;
-    DWORD sz;
-    DWORD total_size = 0;
-    INT i;
-    INT rc;
+    DWORD sz, total_size = 0, log_type = 0;
+    INT i, rc = 0;
     char *msg;
     int len;
 
     TRACE("%x\n", eMessageType);
-    rc = 0;
 
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ERROR)
         log_type |= INSTALLLOGMODE_ERROR;
@@ -1773,19 +1776,12 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
         MsiCloseHandle( rec );
     }
 
-    if (!rc && gszLogFile[0] && (eMessageType & 0xff000000) != INSTALLMESSAGE_PROGRESS)
+    if (!rc && package->log_file != INVALID_HANDLE_VALUE &&
+        (eMessageType & 0xff000000) != INSTALLMESSAGE_PROGRESS)
     {
-        DWORD write;
-        HANDLE log_file = CreateFileW(gszLogFile, GENERIC_WRITE, FILE_SHARE_WRITE, NULL,
-                                  OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-        if (log_file != INVALID_HANDLE_VALUE)
-        {
-            SetFilePointer(log_file,0, NULL, FILE_END);
-            WriteFile(log_file,msg,strlen(msg),&write,NULL);
-            WriteFile(log_file,"\n",1,&write,NULL);
-            CloseHandle(log_file);
-        }
+        DWORD written;
+        WriteFile( package->log_file, msg, len - 1, &written, NULL );
+        WriteFile( package->log_file, "\n", 1, &written, NULL );
     }
     msi_free( msg );
     msi_free( message );

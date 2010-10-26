@@ -331,6 +331,7 @@ typedef struct tagMSIPACKAGE
     struct list folders;
     LPWSTR ActionFormat;
     LPWSTR LastAction;
+    HANDLE log_file;
 
     struct list classes;
     struct list extensions;
@@ -879,7 +880,7 @@ extern INSTALLUI_HANDLERW gUIHandlerW;
 extern INSTALLUI_HANDLER_RECORD gUIHandlerRecord;
 extern DWORD gUIFilter;
 extern LPVOID gUIContext;
-extern WCHAR gszLogFile[MAX_PATH];
+extern WCHAR *gszLogFile;
 extern HINSTANCE msi_hInstance;
 
 /* action related functions */
