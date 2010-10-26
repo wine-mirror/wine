@@ -14781,6 +14781,120 @@ methods:
 }
 
 /*****************************************************************************
+ *    IHTMLObjectElement interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f24f-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLObjectElement : IDispatch
+{
+    [propget, id(DISPID_IHTMLOBJECTELEMENT_OBJECT), hidden]
+    HRESULT object([retval, out] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLOBJECTELEMENT_CLASSID), hidden]
+    HRESULT classid([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLOBJECTELEMENT_DATA), hidden]
+    HRESULT data([retval, out] BSTR *p);
+
+    [propputref, id(DISPID_IHTMLOBJECTELEMENT_RECORDSET), hidden]
+    HRESULT recordset([in] IDispatch *v);
+
+    [propget, id(DISPID_IHTMLOBJECTELEMENT_RECORDSET), hidden]
+    HRESULT recordset([retval, out] IDispatch **p);
+
+    [propput, id(DISPID_IHTMLOBJECTELEMENT_ALIGN), displaybind, bindable]
+    HRESULT align([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLOBJECTELEMENT_ALIGN), displaybind, bindable]
+    HRESULT align([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLOBJECTELEMENT_NAME), displaybind, bindable]
+    HRESULT name([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLOBJECTELEMENT_NAME), displaybind, bindable]
+    HRESULT name([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLOBJECTELEMENT_CODEBASE), displaybind, bindable]
+    HRESULT codeBase([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLOBJECTELEMENT_CODEBASE), displaybind, bindable]
+    HRESULT codeBase([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLOBJECTELEMENT_CODETYPE), displaybind, bindable]
+    HRESULT codeType([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLOBJECTELEMENT_CODETYPE), displaybind, bindable]
+    HRESULT codeType([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLOBJECTELEMENT_CODE), displaybind, bindable]
+    HRESULT code([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLOBJECTELEMENT_CODE), displaybind, bindable]
+    HRESULT code([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLOBJECTELEMENT_BASEHREF)]
+    HRESULT BaseHref([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLOBJECTELEMENT_TYPE), displaybind, bindable]
+    HRESULT type([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLOBJECTELEMENT_TYPE), displaybind, bindable]
+    HRESULT type([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLOBJECTELEMENT_FORM)]
+    HRESULT form([retval, out] IHTMLFormElement **p);
+
+    [propput, id(DISPID_IHTMLOBJECTELEMENT_WIDTH)]
+    HRESULT width([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLOBJECTELEMENT_WIDTH)]
+    HRESULT width([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLOBJECTELEMENT_HEIGHT)]
+    HRESULT height([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLOBJECTELEMENT_HEIGHT)]
+    HRESULT height([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLOBJECTELEMENT_READYSTATE), hidden]
+    HRESULT readyState([retval, out] long *p);
+
+    [propput, id(DISPID_IHTMLOBJECTELEMENT_ONREADYSTATECHANGE), displaybind, bindable]
+    HRESULT onreadystatechange([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLOBJECTELEMENT_ONREADYSTATECHANGE), displaybind, bindable]
+    HRESULT onreadystatechange([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLOBJECTELEMENT_ONERROR), displaybind, bindable]
+    HRESULT onerror([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLOBJECTELEMENT_ONERROR), displaybind, bindable]
+    HRESULT onerror([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLOBJECTELEMENT_ALTHTML)]
+    HRESULT altHtml([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLOBJECTELEMENT_ALTHTML)]
+    HRESULT altHtml([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLOBJECTELEMENT_VSPACE)]
+    HRESULT vspace([in] long v);
+
+    [propget, id(DISPID_IHTMLOBJECTELEMENT_VSPACE)]
+    HRESULT vspace([retval, out] long *p);
+
+    [propput, id(DISPID_IHTMLOBJECTELEMENT_HSPACE)]
+    HRESULT hspace([in] long v);
+
+    [propget, id(DISPID_IHTMLOBJECTELEMENT_HSPACE)]
+    HRESULT hspace([retval, out] long *p);
+}
+
+/*****************************************************************************
  *    IHTMLFrameBase interface
  */
 [
