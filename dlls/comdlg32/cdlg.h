@@ -22,7 +22,6 @@
 #define _WINE_DLL_CDLG_H
 
 #include "dlgs.h"
-#include "wownt32.h"
 
 /* Common dialogs implementation globals */
 #define COMDLG32_Atom	((ATOM)0xa000)	/* MS uses this one to identify props */

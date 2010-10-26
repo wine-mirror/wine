@@ -754,7 +754,7 @@ static LRESULT CFn_WMInitDialog(HWND hDlg, LPARAM lParam, LPCHOOSEFONTW lpcf)
         {
             j=SendDlgItemMessageW(hDlg,cmb2,CB_SETCURSEL,j,0);
             SendMessageW(hDlg,WM_COMMAND,cmb2,
-                    MAKELONG(HWND_16(GetDlgItem(hDlg,cmb2)),CBN_SELCHANGE));
+                    MAKELONG(LOWORD(GetDlgItem(hDlg,cmb2)),CBN_SELCHANGE));
         }
     }
     CFn_ReleaseDC(lpcf, hdc);
