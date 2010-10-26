@@ -69,6 +69,8 @@ static BOOL g_isRunning = TRUE;
 static BOOL g_failGetMiscStatus;
 static HRESULT g_QIFailsWith;
 
+static UINT cf_test_1, cf_test_2, cf_test_3;
+
 #define CHECK_EXPECTED_METHOD(method_name) \
     do { \
         trace("%s\n", method_name); \
@@ -1063,6 +1065,8 @@ static HRESULT WINAPI DataObject_QueryInterface(
             REFIID           riid,
             void**           ppvObject)
 {
+    CHECK_EXPECTED_METHOD("DataObject_QueryInterface");
+
     if (IsEqualIID(riid, &IID_IDataObject) || IsEqualIID(riid, &IID_IUnknown))
     {
         *ppvObject = iface;
@@ -1075,12 +1079,14 @@ static HRESULT WINAPI DataObject_QueryInterface(
 static ULONG WINAPI DataObject_AddRef(
             IDataObject*     iface)
 {
+    CHECK_EXPECTED_METHOD("DataObject_AddRef");
     return 2;
 }
 
 static ULONG WINAPI DataObject_Release(
             IDataObject*     iface)
 {
+    CHECK_EXPECTED_METHOD("DataObject_Release");
     return 1;
 }
 
@@ -1145,8 +1151,20 @@ static HRESULT WINAPI DataObject_DAdvise(
         IAdviseSink*     pAdvSink,
         DWORD*           pdwConnection)
 {
+    STGMEDIUM stgmedium;
+
     CHECK_EXPECTED_METHOD("DataObject_DAdvise");
     *pdwConnection = 1;
+
+    if(advf & ADVF_PRIMEFIRST)
+    {
+        ok(pformatetc->cfFormat == cf_test_2, "got %04x\n", pformatetc->cfFormat);
+        stgmedium.tymed = TYMED_HGLOBAL;
+        U(stgmedium).hGlobal = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, 4);
+        stgmedium.pUnkForRelease = NULL;
+        IAdviseSink_OnDataChange(pAdvSink, pformatetc, &stgmedium);
+    }
+
     return S_OK;
 }
 
@@ -1192,6 +1210,7 @@ static void test_data_cache(void)
     IPersistStorage *pPS;
     IViewObject *pViewObject;
     IOleCacheControl *pOleCacheControl;
+    IDataObject *pCacheDataObject;
     FORMATETC fmtetc;
     STGMEDIUM stgmedium;
     DWORD dwConnection;
@@ -1224,6 +1243,19 @@ static void test_data_cache(void)
         { "DataObject_GetData", 0 },
         { "DataObject_GetData", 0 },
         { "DataObject_GetData", 0 },
+        { NULL, 0 }
+    };
+    static const struct expected_method methods_cachethenrun[] =
+    {
+        { "DataObject_DAdvise", 0 },
+        { "DataObject_DAdvise", 0 },
+        { "DataObject_DAdvise", 0 },
+        { "DataObject_QueryGetData", 1 }, /* called by win9x and nt4 */
+        { "DataObject_DAdvise", 0 },
+        { "DataObject_DUnadvise", 0 },
+        { "DataObject_DUnadvise", 0 },
+        { "DataObject_DUnadvise", 0 },
+        { "DataObject_DUnadvise", 0 },
         { NULL, 0 }
     };
 
@@ -1340,6 +1372,7 @@ static void test_data_cache(void)
     fmtetc.dwAspect = DVASPECT_ICON;
     hr = IOleCache_SetData(pOleCache, &fmtetc, &stgmedium, FALSE);
     ok_ole_success(hr, "IOleCache_SetData");
+    ReleaseStgMedium(&stgmedium);
 
     hr = IViewObject_Freeze(pViewObject, DVASPECT_ICON, -1, NULL, &dwFreeze);
     todo_wine {
@@ -1467,8 +1500,73 @@ static void test_data_cache(void)
     CHECK_NO_EXTRA_METHODS();
     }
 
-    IStorage_Release(pStorage);
+    hr = CreateDataCache(NULL, &CLSID_NULL, &IID_IOleCache2, (LPVOID *)&pOleCache);
+    ok_ole_success(hr, "CreateDataCache");
+
+    expected_method_list = methods_cachethenrun;
+
+    hr = IOleCache_QueryInterface(pOleCache, &IID_IDataObject, (LPVOID *)&pCacheDataObject);
+    ok_ole_success(hr, "IOleCache_QueryInterface(IID_IDataObject)");
+    hr = IOleCache_QueryInterface(pOleCache, &IID_IOleCacheControl, (LPVOID *)&pOleCacheControl);
+    ok_ole_success(hr, "IOleCache_QueryInterface(IID_IOleCacheControl)");
+
+    fmtetc.cfFormat = CF_METAFILEPICT;
+    fmtetc.dwAspect = DVASPECT_CONTENT;
+    fmtetc.tymed = TYMED_MFPICT;
+
+    hr = IOleCache_Cache(pOleCache, &fmtetc, 0, &dwConnection);
+    ok_ole_success(hr, "IOleCache_Cache");
+
+    hr = IDataObject_GetData(pCacheDataObject, &fmtetc, &stgmedium);
+    ok(hr == OLE_E_BLANK, "got %08x\n", hr);
+
+    fmtetc.cfFormat = cf_test_1;
+    fmtetc.dwAspect = DVASPECT_CONTENT;
+    fmtetc.tymed = TYMED_HGLOBAL;
+
+    hr = IOleCache_Cache(pOleCache, &fmtetc, 0, &dwConnection);
+    ok(hr == CACHE_S_FORMATETC_NOTSUPPORTED, "got %08x\n", hr);
+
+    hr = IDataObject_GetData(pCacheDataObject, &fmtetc, &stgmedium);
+    ok(hr == OLE_E_BLANK, "got %08x\n", hr);
+
+    fmtetc.cfFormat = cf_test_2;
+    hr = IOleCache_Cache(pOleCache, &fmtetc, ADVF_PRIMEFIRST, &dwConnection);
+    ok(hr == CACHE_S_FORMATETC_NOTSUPPORTED, "got %08x\n", hr);
+
+    hr = IDataObject_GetData(pCacheDataObject, &fmtetc, &stgmedium);
+    ok(hr == OLE_E_BLANK, "got %08x\n", hr);
+
+    hr = IOleCacheControl_OnRun(pOleCacheControl, &DataObject);
+todo_wine
+    ok_ole_success(hr, "IOleCacheControl_OnRun");
+
+    fmtetc.cfFormat = cf_test_3;
+    hr = IOleCache_Cache(pOleCache, &fmtetc, 0, &dwConnection);
+    ok(hr == CACHE_S_FORMATETC_NOTSUPPORTED, "got %08x\n", hr);
+
+    fmtetc.cfFormat = cf_test_1;
+    hr = IDataObject_GetData(pCacheDataObject, &fmtetc, &stgmedium);
+    ok(hr == OLE_E_BLANK, "got %08x\n", hr);
+
+    fmtetc.cfFormat = cf_test_2;
+    hr = IDataObject_GetData(pCacheDataObject, &fmtetc, &stgmedium);
+todo_wine
+    ok(hr == S_OK, "got %08x\n", hr);
     ReleaseStgMedium(&stgmedium);
+
+    fmtetc.cfFormat = cf_test_3;
+    hr = IDataObject_GetData(pCacheDataObject, &fmtetc, &stgmedium);
+    ok(hr == OLE_E_BLANK, "got %08x\n", hr);
+
+    IOleCacheControl_Release(pOleCacheControl);
+    IDataObject_Release(pCacheDataObject);
+    IOleCache_Release(pOleCache);
+
+todo_wine
+    CHECK_NO_EXTRA_METHODS();
+
+    IStorage_Release(pStorage);
 }
 
 static void test_default_handler(void)
@@ -1757,6 +1855,10 @@ START_TEST(ole2)
     IStorage *pStorage;
     STATSTG statstg;
     HRESULT hr;
+
+    cf_test_1 = RegisterClipboardFormatA("cf_winetest_1");
+    cf_test_2 = RegisterClipboardFormatA("cf_winetest_2");
+    cf_test_3 = RegisterClipboardFormatA("cf_winetest_3");
 
     CoInitialize(NULL);
 
