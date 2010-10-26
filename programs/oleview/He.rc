@@ -1,0 +1,223 @@
+/*
+ * OleView (He.rc)
+ * Hebrew Language Support
+ *
+ * Copyright 2006 Piotr Caban
+ * Copyright 2010 Yaron Shahrabani <sh.yaron@gmail.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resource.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
+
+IDM_MENU MENU
+{
+    POPUP "&קובץ"
+    {
+        MENUITEM "&איגוד לקובץ...",    IDM_BIND
+        MENUITEM "צ&פייה ב־TypeLib...",    IDM_TYPELIB
+        MENUITEM SEPARATOR
+        MENUITEM "&תצורת המערכת...",    IDM_SYSCONF
+        MENUITEM "ה&הפעלת עורך רישומי המערכת",    IDM_REGEDIT
+        MENUITEM SEPARATOR
+        MENUITEM "י&ציאה",    IDM_EXIT
+    }
+    POPUP "&עצם"
+    {
+        POPUP "דגלון &CoCreateInstance"
+        {
+            MENUITEM "CLSCTX_&INPROC_SERVER",    IDM_FLAG_INSERV,CHECKED
+            MENUITEM "CLSCTX_INPROC_&HANDLER",    IDM_FLAG_INHANDL
+            MENUITEM "CLSCTX_&LOCAL_SERVER",        IDM_FLAG_LOCSERV,CHECKED
+            MENUITEM "CLSCTX_&REMOTE_SERVER",    IDM_FLAG_REMSERV
+        }
+        MENUITEM SEPARATOR
+        MENUITEM "צפייה בפרטי ה&סוג",    IDM_TYPEINFO, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "יצי&רת מופע",    IDM_CREATEINST, GRAYED
+        MENUITEM "יצירת מופע &ב־...",    IDM_CREATEINSTON, GRAYED
+        MENUITEM "&שחרור מופע",    IDM_RELEASEINST, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "העתקת ה־CLSID ללוח הג&זירים",    IDM_COPYCLSID, GRAYED
+        MENUITEM "העתקת תגית עצם ה־HTML ל&לוח הגזירים", IDM_HTMLTAG, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&צפייה...",    IDM_VIEW, GRAYED
+    }
+    POPUP "&תצוגה"
+    {
+        MENUITEM "מצב &מומחה",    IDM_EXPERT,CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "קטגוריות רכיבים מו&סתרות",    IDM_HIDDEN, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&סרגל כלים",    IDM_TOOLBAR,CHECKED
+        MENUITEM "שורת מ&צב",    IDM_STATUSBAR,CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "&רענון\tF5",    IDM_REFRESH
+    }
+    POPUP "ע&זרה"
+    {
+        MENUITEM "על &אודות OleView",    IDM_ABOUT
+    }
+}
+
+IDM_TYPELIB MENU
+{
+    POPUP "&קובץ"
+    {
+        MENUITEM "שמירה &בשם...",    IDM_SAVEAS
+        MENUITEM "&סגירה",  IDM_CLOSE
+    }
+    POPUP "&תצוגה"
+    {
+        MENUITEM "&קיבוץ לפי סוג", IDM_GROUP
+        MENUITEM SEPARATOR
+        MENUITEM "&סרגל כלים",    IDM_TOOLBAR
+        MENUITEM "&שורת מצב", IDM_STATUSBAR,CHECKED
+    }
+}
+
+STRINGTABLE
+{
+    IDS_APPNAME            "OleView"
+    IDS_APPTITLE           "OleView"
+    IDS_READY              "מוכן"
+    IDS_ABOUT              "OleView - מציג פרטי OLE/COM"
+    IDS_ABOUTVER           "גרסה 1.0"
+    IDS_TYPELIBTITLE       "מציג ITypeLib"
+    IDS_OPEN               "פתיחה"
+    IDS_OPEN_TYPELIB_FILTER "קובצי TypeLib (*.tlb;*.olb;*.dll;*.ocx;*.exe)‏\0*.tlb;*.olb;*.dll;*.ocx;*.exe\0כל הקבצים (*.*)‏\0*.*\0\0"
+
+    IDM_BIND,              "איגוד לקובץ באמצעות מכנה קבצים"
+    IDM_TYPELIB,           "פתיחת קובץ TypeLib וצפייה בתכנים"
+    IDM_SYSCONF,           "שינוי הגדרות ה־COM המבוזר לכלל המערכת"
+    IDM_REGEDIT,           "הפעלת עורך רישומי המערכת של Wine"
+    IDM_EXIT,              "יציאה מהיישום. הצגת בקשה לשמירת השינויים"
+    IDM_CREATEINST,        "יצירת מופע של העצם הנבחר"
+    IDM_CREATEINSTON,      "יצירת מופע של הפריט הנבחר במחשב מסוים"
+    IDM_RELEASEINST,       "שחרור מופע העצם הנבחר"
+    IDM_COPYCLSID,         "העתקת ה־GUID של הפריט הנבחר ללוח הגזירים"
+    IDM_VIEW,              "הצגת המציג עבור הפריט הנבחר"
+    IDM_FLAG_INSERV,       "שימוש ב־CLSCTX_INPROC_SERVER בעת קריאה ל־CoGetClassObject"
+    IDM_FLAG_INHANDL,      "שימוש ב־CLSCTX_INPROC_HANDLER בעת קריאה ל־CoGetClassObject"
+    IDM_FLAG_LOCSERV,      "שימוש ב־CLSCTX_LOCAL_SERVER בעת קריאה ל־CoGetClassObject"
+    IDM_FLAG_REMSERV,      "שימוש ב־CLSCTX_REMOTE_SERVER בעת קריאה ל־CoGetClassObject"
+    IDM_EXPERT,            "החלפה בין מצב התצוגה למומחה לבין מצב תצוגה למתחיל"
+    IDM_HIDDEN,            "החלפת מצב התצוגה של קטגוריות רכיבים שאינן אמורות להופיע"
+    IDM_TOOLBAR,           "הצגה או הסתרה של סרגל הכלים"
+    IDM_STATUSBAR,         "הצגה או הסתרה של שורת המצב"
+    IDM_REFRESH,           "רענון כל הרשימות"
+    IDM_ABOUT,             "הצגת פרטי התכנית, מספר הגרסה וזכויות היוצרים"
+
+    IDM_SAVEAS,            "שמירה כקובץ .IDL או קובץ .H"
+    IDM_CLOSE,             "סגירת החלון"
+    IDM_GROUP,             "קיבוץ פרטי סוגים לפי סוג"
+
+    IDS_TREE_OC,           "ObjectClasses"
+    IDS_TREE_GBCC,         "מקובץ לפי קטגוריית הרכיבים"
+    IDS_TREE_O1O,          "עצמי OLE 1.0"
+    IDS_TREE_CLO,          "עצמי COM מספרייה"
+    IDS_TREE_AO,           "כל העצמים"
+    IDS_TREE_AID,          "מזהי היישומים"
+    IDS_TREE_TL,           "ספריות סוג"
+    IDS_TL_VER,            "גרסה"
+    IDS_TREE_I,            "מנשקים"
+
+    IDS_TAB_REG,           "רישומי המערכת"
+    IDS_TAB_IMPL,          "הטמעה"
+    IDS_TAB_ACTIV,         "הפעלה"
+
+    IDS_CGCOFAIL,          "CoGetClassObject נכשל."
+    IDS_ERROR_UNKN,        "שגיאה בלתי ידוע"
+    IDS_TRUE,              "אמת"
+    IDS_FALSE,             "שקר"
+    IDS_BYTES,             "בתים"
+
+    IDS_ERROR_LOADTYPELIB, "LoadTypeLib( %s ) נכשל ($%x)"
+    IDS_INHERITINTERFACES, "מנשקים שהתקבלו בירושה"
+}
+
+DLG_CREATEINSTON DIALOG 0, 0, 250, 41
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "התחברות למחשב אחר"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "&שם המחשב:", -1, 5, 6, 190, 8
+    EDITTEXT    IDC_MACHINE, 5, 16, 190, 12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "&אישור", IDOK, 200, 5, 45, 14
+    PUSHBUTTON  "&ביטול", IDCANCEL, 200, 22, 45, 14
+}
+
+DLG_SYSCONF DIALOG 0, 0, 170, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "הגדרות המערכת"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "הגדרות המערכת", -1, 5, 6, 160, 8
+    CHECKBOX    "הפעלת COM מ&בוזר", IDC_ENABLEDCOM, 5, 20, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX    "הפעלת חיבורים מ&רחוק (Win95 בלבד)", IDC_ENABLEREMOTE, 5, 35, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    LTEXT   "הגדרות אלו משנות רק את ערכי הרישום.\nאין להן שום השפעה על הביצועים של Wine.", -1, 5, 50, 160, 40
+    DEFPUSHBUTTON   "&OK", IDOK, 70, 80, 45, 14
+    PUSHBUTTON  "&ביטול", IDCANCEL, 120, 80, 45, 14
+}
+
+DLG_DEFAULT_IV DIALOG 0, 0, 280, 50
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "מציג מנשקי בררת המחדל"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "מנשק", -1, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "IID:", -1, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON   "&סגירה", IDCANCEL, 230, 6, 45, 14
+    PUSHBUTTON  "&צפייה בפרטי הסוג", IDC_VIEWTYPEINFO, 6, 31, 70, 14, WS_DISABLED
+}
+
+DLG_IPERSIST_IV DIALOG 0, 0, 280, 29
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "מציג מנשקי ה־IPersist"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "שם המחלקה:", -1, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "CLSID:", -1, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON   "&סגירה", IDCANCEL, 230, 6, 45, 14
+}
+
+DLG_IPERSISTSTREAM_IV DIALOG 0, 0, 280, 68
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "מציג מנשקי ה־IPersistStream"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "שם המחלקה:", -1, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "CLSID:", -1, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON   "&סגירה", IDCANCEL, 230, 6, 45, 14
+    PUSHBUTTON  "&IsDirty", IDC_ISDIRTY_BUTTON, 6, 31, 50, 14
+    LTEXT   "???", IDC_ISDIRTY, 60, 34, 145, 8
+    PUSHBUTTON  "&GetSizeMax", IDC_GETSIZEMAX_BUTTON, 6, 49, 50, 14
+    LTEXT   "???", IDC_GETSIZEMAX, 60, 52, 145, 8
+}
