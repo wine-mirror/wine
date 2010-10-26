@@ -19,6 +19,7 @@ RC_SRCS = \
 	mpr_Eo.rc \
 	mpr_Es.rc \
 	mpr_Fr.rc \
+	mpr_He.rc \
 	mpr_Hu.rc \
 	mpr_It.rc \
 	mpr_Ja.rc \
