@@ -590,14 +590,12 @@ static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
 }
 
 /* GL locking is done by the caller. */
-static void shader_arb_vs_local_constants(const struct wined3d_context *context, IWineD3DDeviceImpl *deviceImpl)
+static void shader_arb_vs_local_constants(const struct arb_vs_compiled_shader *gl_shader,
+        const struct wined3d_context *context, const struct wined3d_state *state)
 {
-    const struct wined3d_gl_info *gl_info = &deviceImpl->adapter->gl_info;
-    const struct wined3d_state *state = &deviceImpl->stateBlock->state;
-    unsigned char i;
-    struct shader_arb_priv *priv = deviceImpl->shader_priv;
-    const struct arb_vs_compiled_shader *gl_shader = priv->compiled_vprog;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     float position_fixup[4];
+    unsigned char i;
 
     /* Upload the position fixup */
     shader_get_position_fixup(context, state, position_fixup);
@@ -633,15 +631,17 @@ static void shader_arb_load_constants(const struct wined3d_context *context, cha
     IWineD3DDeviceImpl *device = context->swapchain->device;
     IWineD3DStateBlockImpl* stateBlock = device->stateBlock;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct shader_arb_priv *priv = device->shader_priv;
 
     if (useVertexShader)
     {
         IWineD3DBaseShaderImpl *vshader = (IWineD3DBaseShaderImpl *)stateBlock->state.vertex_shader;
+        const struct arb_vs_compiled_shader *gl_shader = priv->compiled_vprog;
 
         /* Load DirectX 9 float constants for vertex shader */
         device->highest_dirty_vs_const = shader_arb_load_constantsF(vshader, gl_info, GL_VERTEX_PROGRAM_ARB,
                 device->highest_dirty_vs_const, stateBlock->state.vs_consts_f, context->vshader_const_dirty);
-        shader_arb_vs_local_constants(context, device);
+        shader_arb_vs_local_constants(gl_shader, context, &stateBlock->state);
     }
 
     if (usePixelShader)
@@ -4601,7 +4601,7 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
         glEnable(GL_VERTEX_PROGRAM_ARB);
         checkGLcall("glEnable(GL_VERTEX_PROGRAM_ARB);");
         TRACE("(%p) : Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n", This, priv->current_vprogram_id);
-        shader_arb_vs_local_constants(context, This);
+        shader_arb_vs_local_constants(compiled, context, state);
 
         if(priv->last_vs_color_unclamp != compiled->need_color_unclamp) {
             priv->last_vs_color_unclamp = compiled->need_color_unclamp;
