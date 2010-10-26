@@ -1988,7 +1988,7 @@ static UINT msi_dialog_create_radiobutton( MSIRECORD *rec, LPVOID param )
         return ERROR_FUNCTION_FAILED;
     control->handler = msi_dialog_radiogroup_handler;
 
-    if (!strcmpW( control->name, group->propval ))
+    if (group->propval && !strcmpW( control->name, group->propval ))
         SendMessageW(control->hwnd, BM_SETCHECK, BST_CHECKED, 0);
 
     prop = MSI_RecordGetString( rec, 1 );
