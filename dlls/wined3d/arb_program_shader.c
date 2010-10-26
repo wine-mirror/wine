@@ -522,21 +522,18 @@ static void shader_arb_load_np2fixup_constants(void *shader_priv,
 }
 
 /* GL locking is done by the caller. */
-static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
+static void shader_arb_ps_local_constants(const struct arb_ps_compiled_shader *gl_shader,
+        const struct wined3d_context *context, const struct wined3d_state *state, float rt_height)
 {
-    const struct wined3d_context *context = context_get_current();
-    IWineD3DStateBlockImpl* stateBlock = deviceImpl->stateBlock;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned char i;
-    struct shader_arb_priv *priv = deviceImpl->shader_priv;
-    const struct arb_ps_compiled_shader *gl_shader = priv->compiled_fprog;
 
     for(i = 0; i < gl_shader->numbumpenvmatconsts; i++)
     {
         int texunit = gl_shader->bumpenvmatconst[i].texunit;
 
         /* The state manager takes care that this function is always called if the bump env matrix changes */
-        const float *data = (const float *)&stateBlock->state.texture_states[texunit][WINED3DTSS_BUMPENVMAT00];
+        const float *data = (const float *)&state->texture_states[texunit][WINED3DTSS_BUMPENVMAT00];
         GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB,
                 gl_shader->bumpenvmatconst[i].const_num, data));
 
@@ -547,7 +544,7 @@ static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
              * don't care about them. The pointers are valid for sure because the stateblock is bigger.
              * (they're WINED3DTSS_TEXTURETRANSFORMFLAGS and WINED3DTSS_ADDRESSW, so most likely 0 or NaN
             */
-            const float *scale = (const float *)&stateBlock->state.texture_states[texunit][WINED3DTSS_BUMPENVLSCALE];
+            const float *scale = (const float *)&state->texture_states[texunit][WINED3DTSS_BUMPENVLSCALE];
             GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB,
                     gl_shader->luminanceconst[i].const_num, scale));
         }
@@ -562,8 +559,7 @@ static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
         * ycorrection.w: 0.0
         */
         float val[4];
-        val[0] = context->render_offscreen ? 0.0f
-                : deviceImpl->render_targets[0]->currentDesc.Height;
+        val[0] = context->render_offscreen ? 0.0f : rt_height;
         val[1] = context->render_offscreen ? 1.0f : -1.0f;
         val[2] = 1.0f;
         val[3] = 0.0f;
@@ -578,9 +574,9 @@ static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
         if(gl_shader->int_consts[i] != WINED3D_CONST_NUM_UNUSED)
         {
             float val[4];
-            val[0] = (float)stateBlock->state.ps_consts_i[4 * i];
-            val[1] = (float)stateBlock->state.ps_consts_i[4 * i + 1];
-            val[2] = (float)stateBlock->state.ps_consts_i[4 * i + 2];
+            val[0] = (float)state->ps_consts_i[4 * i];
+            val[1] = (float)state->ps_consts_i[4 * i + 1];
+            val[2] = (float)state->ps_consts_i[4 * i + 2];
             val[3] = -1.0f;
 
             GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->int_consts[i], val));
@@ -647,11 +643,13 @@ static void shader_arb_load_constants(const struct wined3d_context *context, cha
     if (usePixelShader)
     {
         IWineD3DBaseShaderImpl *pshader = (IWineD3DBaseShaderImpl *)stateBlock->state.pixel_shader;
+        const struct arb_ps_compiled_shader *gl_shader = priv->compiled_fprog;
+        float rt_height = device->render_targets[0]->currentDesc.Height;
 
         /* Load DirectX 9 float constants for pixel shader */
         device->highest_dirty_ps_const = shader_arb_load_constantsF(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB,
                 device->highest_dirty_ps_const, stateBlock->state.ps_consts_f, context->pshader_const_dirty);
-        shader_arb_ps_local_constants(device);
+        shader_arb_ps_local_constants(gl_shader, context, &stateBlock->state, rt_height);
     }
 }
 
@@ -4563,7 +4561,8 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
         }
         else
         {
-            shader_arb_ps_local_constants(This);
+            float rt_height = This->render_targets[0]->currentDesc.Height;
+            shader_arb_ps_local_constants(compiled, context, state, rt_height);
         }
 
         /* Force constant reloading for the NP2 fixup (see comment in shader_glsl_select for more info) */
