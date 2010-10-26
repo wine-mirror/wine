@@ -3744,6 +3744,35 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
+    /* Allow more characters when Uri_CREATE_FILE_USE_DOS_PATH is specified */
+    {   "file:///c:/dir\%%61%20%5Fname/file%2A.html", Uri_CREATE_FILE_USE_DOS_PATH, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH
+        |Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE
+        |Uri_HAS_SCHEME, FALSE,
+        {
+            {"file://c:\\dir\%a _name\\file*.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file://c:\\dir\%a _name\\file*.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {".html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"c:\\dir\%a _name\\file*.html",S_OK,FALSE},
+            {"c:\\dir\%a _name\\file*.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file:///c:/dir\%%61%20%5Fname/file%2A.html",S_OK,FALSE},
+            {"file",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {0,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_FILE,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
     {   "file://c|/dir\\index.html", Uri_CREATE_FILE_USE_DOS_PATH, S_OK, FALSE,
         Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH
         |Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE

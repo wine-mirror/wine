@@ -2870,6 +2870,7 @@ static BOOL canonicalize_authority(const parse_data *data, Uri *uri, DWORD flags
  * NOTES:
  *      file://c:/test%20test   -> file:///c:/test%2520test
  *      file://c:/test%3Etest   -> file:///c:/test%253Etest
+ * if Uri_CREATE_FILE_USE_DOS_PATH is not set:
  *      file:///c:/test%20test  -> file:///c:/test%20test
  *      file:///c:/test%test    -> file:///c:/test%25test
  */
@@ -2931,7 +2932,7 @@ static BOOL canonicalize_path_hierarchical(const parse_data *data, Uri *uri,
             WCHAR val;
 
             /* Check if the % represents a valid encoded char, or if it needs encoded. */
-            BOOL force_encode = !check_pct_encoded(&tmp) && is_file;
+            BOOL force_encode = !check_pct_encoded(&tmp) && is_file && !(flags&Uri_CREATE_FILE_USE_DOS_PATH);
             val = decode_pct_val(ptr);
 
             if(force_encode || escape_pct) {
@@ -2940,7 +2941,8 @@ static BOOL canonicalize_path_hierarchical(const parse_data *data, Uri *uri,
                     pct_encode_val(*ptr, uri->canon_uri+uri->canon_len);
                 uri->canon_len += 3;
             } else if((is_unreserved(val) && known_scheme) ||
-                      (is_file && (is_unreserved(val) || is_reserved(val)))) {
+                      (is_file && (is_unreserved(val) || is_reserved(val) ||
+                      (val && flags&Uri_CREATE_FILE_USE_DOS_PATH && !is_forbidden_dos_path_char(val))))) {
                 if(!computeOnly)
                     uri->canon_uri[uri->canon_len] = val;
                 ++uri->canon_len;
