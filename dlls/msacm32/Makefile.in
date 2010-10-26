@@ -18,6 +18,7 @@ RC_SRCS = \
 	msacm_En.rc \
 	msacm_Es.rc \
 	msacm_Fr.rc \
+	msacm_He.rc \
 	msacm_Hu.rc \
 	msacm_It.rc \
 	msacm_Ja.rc \
