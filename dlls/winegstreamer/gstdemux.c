@@ -74,6 +74,7 @@ struct GSTOutPin {
 
     GstPad *their_src;
     GstPad *my_sink;
+    int isvid;
     AM_MEDIA_TYPE * pmt;
     HANDLE caps_event;
 };
@@ -87,23 +88,124 @@ static const IBaseFilterVtbl GST_Vtbl;
 static HRESULT GST_AddPin(GSTImpl *This, const PIN_INFO *piOutput, const AM_MEDIA_TYPE *amt);
 static HRESULT GST_RemoveOutputPins(GSTImpl *This);
 
-static gboolean accept_caps_sink(GstPad *pad, GstCaps *caps) {
+static int amt_from_gst_caps_video(GstCaps *caps, AM_MEDIA_TYPE *amt) {
+    VIDEOINFOHEADER *vih = CoTaskMemAlloc(sizeof(*vih));
+    BITMAPINFOHEADER *bih = &vih->bmiHeader;
     GstStructure *arg;
+    gint32 width = 0, height = 0, nom = 0, denom = 0;
     const char *typename;
     arg = gst_caps_get_structure(caps, 0);
     typename = gst_structure_get_name(arg);
-    FIXME("STUB: Unhandled type \"%s\"\n", typename);
-    return 0;
+    if (!typename)
+        return 0;
+    if (!gst_structure_get_int(arg, "width", &width) ||
+        !gst_structure_get_int(arg, "height", &height) ||
+        !gst_structure_get_fraction(arg, "framerate", &nom, &denom))
+        return 0;
+    amt->formattype = FORMAT_VideoInfo;
+    amt->pbFormat = (BYTE*)vih;
+    amt->cbFormat = sizeof(*vih);
+    amt->bFixedSizeSamples = amt->bTemporalCompression = 1;
+    amt->lSampleSize = 0;
+    amt->pUnk = NULL;
+    ZeroMemory(vih, sizeof(*vih));
+    amt->majortype = MEDIATYPE_Video;
+    if (!strcmp(typename, "video/x-raw-rgb")) {
+        if (!gst_structure_get_int(arg, "bpp", (INT*)&bih->biBitCount))
+            return 0;
+        switch (bih->biBitCount) {
+            case 16: amt->subtype = MEDIASUBTYPE_RGB555; break;
+            case 24: amt->subtype = MEDIASUBTYPE_RGB24; break;
+            case 32: amt->subtype = MEDIASUBTYPE_RGB32; break;
+            default:
+                FIXME("Unknown bpp %u\n", bih->biBitCount);
+                return 0;
+        }
+        bih->biCompression = BI_RGB;
+    } else {
+        amt->subtype = MEDIATYPE_Video;
+        if (!gst_structure_get_fourcc(arg, "format", &amt->subtype.Data1))
+            return 0;
+        switch (amt->subtype.Data1) {
+            case mmioFOURCC('I','4','2','0'):
+            case mmioFOURCC('Y','V','1','2'):
+            case mmioFOURCC('N','V','1','2'):
+            case mmioFOURCC('N','V','2','1'):
+                bih->biBitCount = 12; break;
+            case mmioFOURCC('Y','U','Y','2'):
+            case mmioFOURCC('Y','V','Y','U'):
+                bih->biBitCount = 16; break;
+        }
+        bih->biCompression = amt->subtype.Data1;
+    }
+    bih->biSizeImage = width * height * bih->biBitCount / 8;
+    vih->AvgTimePerFrame = 10000000;
+    vih->AvgTimePerFrame *= denom;
+    vih->AvgTimePerFrame /= nom;
+    vih->rcSource.left = 0;
+    vih->rcSource.right = width;
+    vih->rcSource.top = height;
+    vih->rcSource.bottom = 0;
+    vih->rcTarget = vih->rcSource;
+    bih->biSize = sizeof(*bih);
+    bih->biWidth = width;
+    bih->biHeight = height;
+    bih->biPlanes = 1;
+    return 1;
+}
+
+static gboolean accept_caps_sink(GstPad *pad, GstCaps *caps) {
+    GSTOutPin *pin = gst_pad_get_element_private(pad);
+    AM_MEDIA_TYPE amt;
+    GstStructure *arg;
+    const char *typename;
+    int ret;
+    arg = gst_caps_get_structure(caps, 0);
+    typename = gst_structure_get_name(arg);
+    if (!strcmp(typename, "video/x-raw-rgb")
+               || !strcmp(typename, "video/x-raw-yuv")) {
+        if (!pin->isvid) {
+            ERR("Setting video caps on non-video pad?\n");
+            return 0;
+        }
+        ret = amt_from_gst_caps_video(caps, &amt);
+        FreeMediaType(&amt);
+        TRACE("-%i\n", ret);
+        return ret;
+    } else {
+        FIXME("Unhandled type \"%s\"\n", typename);
+        return 0;
+    }
 }
 
 static gboolean setcaps_sink(GstPad *pad, GstCaps *caps) {
+    GSTOutPin *pin = gst_pad_get_element_private(pad);
+    GSTImpl *This = (GSTImpl *)pin->pin.pin.pinInfo.pFilter;
+    AM_MEDIA_TYPE amt;
     GstStructure *arg;
     const char *typename;
+    int ret;
     arg = gst_caps_get_structure(caps, 0);
     typename = gst_structure_get_name(arg);
-
-    FIXME("STUB: Unhandled type \"%s\"\n", typename);
-    return 0;
+    if (!strcmp(typename, "video/x-raw-rgb")
+               || !strcmp(typename, "video/x-raw-yuv")) {
+        if (!pin->isvid) {
+            ERR("Setting video caps on non-video pad?\n");
+            return 0;
+        }
+        ret = amt_from_gst_caps_video(caps, &amt);
+        if (ret)
+            This->props.cbBuffer = max(This->props.cbBuffer, ((VIDEOINFOHEADER*)amt.pbFormat)->bmiHeader.biSizeImage);
+    } else {
+        FIXME("Unhandled type \"%s\"\n", typename);
+        return 0;
+    }
+    TRACE("Linking returned %i for %s\n", ret, typename);
+    if (!ret)
+        return 0;
+    FreeMediaType(pin->pmt);
+    *pin->pmt = amt;
+    return 1;
 }
 
 static gboolean gst_base_src_perform_seek(GSTImpl *This, GstEvent *event)
@@ -383,12 +485,17 @@ out:
 }
 
 static void init_new_decoded_pad(GstElement *bin, GstPad *pad, gboolean last, GSTImpl *This) {
+    HRESULT hr;
     PIN_INFO piOutput;
     const char *typename;
     char *name;
+    AM_MEDIA_TYPE amt = { };
     GstCaps *caps;
     GstStructure *arg;
     GstPad *mypad;
+    GSTOutPin *pin;
+    int ret;
+    int isvid = 0;
 
     piOutput.dir = PINDIR_OUTPUT;
     piOutput.pFilter = (IBaseFilter *)This;
@@ -409,8 +516,31 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, gboolean last, GS
     gst_pad_set_acceptcaps_function(mypad, accept_caps_sink);
     gst_pad_set_acceptcaps_function(mypad, setcaps_sink);
 
-    FIXME("STUB: Unknown type \'%s\'\n", typename);
-    return;
+    if (!strcmp(typename, "video/x-raw-rgb")
+               || !strcmp(typename, "video/x-raw-yuv")) {
+        isvid = 1;
+    } else {
+        FIXME("Unknown type \'%s\'\n", typename);
+        return;
+    }
+    GST_PAD_CAPS(mypad) = GST_CAPS_ANY;
+    hr = GST_AddPin(This, &piOutput, &amt);
+    if (FAILED(hr)) {
+        ERR("%08x\n", hr);
+        return;
+    }
+    pin = This->ppPins[This->cStreams - 1];
+    gst_pad_set_element_private(mypad, pin);
+    pin->my_sink = mypad;
+    pin->isvid = isvid;
+
+    ret = gst_pad_link(pad, mypad);
+    gst_pad_activate_push(mypad, 1);
+    FIXME("Linking: %i\n", ret);
+    if (ret >= 0) {
+        pin->their_src = pad;
+        gst_object_ref(pin->their_src);
+    }
 }
 
 static void existing_new_pad(GstElement *bin, GstPad *pad, gboolean last, GSTImpl *This) {
