@@ -218,6 +218,7 @@ static void format_error_message_from_id(saxlocator *This, HRESULT hr)
             BSTR bstrMsg = SysAllocString(msg);
             IVBSAXErrorHandler_fatalError(This->saxreader->vberrorHandler,
                     (IVBSAXLocator*)&This->lpVBSAXLocatorVtbl, &bstrMsg, hr);
+            SysFreeString(bstrMsg);
         }
         else
             ISAXErrorHandler_fatalError(This->saxreader->errorHandler,
@@ -1319,6 +1320,7 @@ static void libxmlFatalError(void *ctx, const char *msg, ...)
         BSTR bstrError = SysAllocString(wszError);
         IVBSAXErrorHandler_fatalError(This->saxreader->vberrorHandler,
                 (IVBSAXLocator*)&This->lpVBSAXLocatorVtbl, &bstrError, E_FAIL);
+        SysFreeString(bstrError);
     }
     else
         ISAXErrorHandler_fatalError(This->saxreader->errorHandler,
