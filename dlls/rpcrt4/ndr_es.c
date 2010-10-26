@@ -445,6 +445,12 @@ void RPC_ENTRY NdrMesTypeDecode2(handle_t Handle, const MIDL_TYPE_PICKLING_INFO 
     FIXME("(%p, %p, %p, %p, %p)\n", Handle, pPicklingInfo, pStubDesc, pFormatString, pObject);
 }
 
+void RPC_ENTRY NdrMesTypeEncode2(handle_t Handle, const MIDL_TYPE_PICKLING_INFO *pPicklingInfo,
+    const MIDL_STUB_DESC *pStubDesc, PFORMAT_STRING pFormatString, const void *pObject)
+{
+    FIXME("(%p, %p, %p, %p, %p)\n", Handle, pPicklingInfo, pStubDesc, pFormatString, pObject);
+}
+
 void RPC_ENTRY NdrMesTypeFree2(handle_t Handle, const MIDL_TYPE_PICKLING_INFO *pPicklingInfo,
     const MIDL_STUB_DESC *pStubDesc, PFORMAT_STRING pFormatString, void *pObject)
 {

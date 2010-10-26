@@ -227,7 +227,7 @@
 @ stub NdrMesTypeAlignSize
 @ stdcall NdrMesTypeDecode2(ptr ptr ptr ptr ptr)
 @ stub NdrMesTypeDecode
-@ stub NdrMesTypeEncode2
+@ stdcall NdrMesTypeEncode2(ptr ptr ptr ptr ptr)
 @ stub NdrMesTypeEncode
 @ stdcall NdrMesTypeFree2(ptr ptr ptr ptr ptr)
 @ stdcall NdrNonConformantStringBufferSize(ptr ptr ptr)
