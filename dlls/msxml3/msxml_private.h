@@ -106,6 +106,8 @@ BOOL dispex_query_interface(DispatchEx*,REFIID,void**);
 #include <libxml/parser.h>
 #endif
 
+#include <libxml/xmlerror.h>
+
 /* constructors */
 extern IUnknown         *create_domdoc( xmlNodePtr document );
 extern IUnknown         *create_xmldoc( void );
@@ -140,6 +142,21 @@ extern xmlNodePtr xmldoc_unlink_xmldecl(xmlDocPtr doc);
 
 extern HRESULT XMLElement_create( IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj, BOOL own );
 
+extern void wineXmlCallbackLog(char const* caller, xmlErrorLevel lvl, char const* msg, va_list ap);
+
+#define LIBXML2_LOG_CALLBACK __WINE_PRINTF_ATTR(2,3)
+
+#define LIBXML2_CALLBACK_TRACE(caller, msg, ap) \
+        wineXmlCallbackLog(#caller, XML_ERR_NONE, msg, ap)
+
+#define LIBXML2_CALLBACK_WARN(caller, msg, ap) \
+        wineXmlCallbackLog(#caller, XML_ERR_WARNING, msg, ap)
+
+#define LIBXML2_CALLBACK_ERR(caller, msg, ap) \
+        wineXmlCallbackLog(#caller, XML_ERR_ERROR, msg, ap)
+
+#define LIBXML2_CALLBACK_SERROR(caller, err) \
+        wineXmlCallbackLog(#caller, err->level, err->message, NULL)
 
 /* IXMLDOMNode Internal Structure */
 typedef struct _xmlnode

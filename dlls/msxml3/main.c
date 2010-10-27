@@ -42,6 +42,48 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #ifdef HAVE_LIBXML2
 
+void wineXmlCallbackLog(char const* caller, xmlErrorLevel lvl, char const* msg, va_list ap)
+{
+    char* buf = NULL;
+    int len = 32, needed;
+    enum __wine_debug_class dbcl = __WINE_DBCL_ERR;
+    switch (lvl)
+    {
+        case XML_ERR_NONE:
+            dbcl = __WINE_DBCL_TRACE;
+            break;
+        case XML_ERR_WARNING:
+            dbcl = __WINE_DBCL_WARN;
+            break;
+        default:
+            break;
+    }
+
+    if (ap)
+    {
+        do
+        {
+            heap_free(buf);
+            buf = heap_alloc(len);
+            needed = vsnprintf(buf, len, msg, ap);
+            if (needed == -1)
+                len *= 2;
+            else if (needed >= len)
+                len = needed + 1;
+            else
+                needed = 0;
+        }
+        while (needed);
+
+        wine_dbg_log(dbcl, &__wine_dbch_msxml, caller, buf);
+        heap_free(buf);
+    }
+    else
+    {
+        wine_dbg_log(dbcl, &__wine_dbch_msxml, caller, msg);
+    }
+}
+
 /* Support for loading xml files from a Wine Windows drive */
 static int wineXmlMatchCallback (char const * filename)
 {
@@ -115,7 +157,7 @@ DECL_FUNCPTR(xsltApplyStylesheet);
 DECL_FUNCPTR(xsltCleanupGlobals);
 DECL_FUNCPTR(xsltFreeStylesheet);
 DECL_FUNCPTR(xsltParseStylesheetDoc);
-# undef MAKE_FUNCPTR
+# undef DECL_FUNCPTR
 #endif
 
 static void init_libxslt(void)

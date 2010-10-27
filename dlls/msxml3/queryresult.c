@@ -491,6 +491,11 @@ void XSLPattern_OP_IGEq(xmlXPathParserContextPtr pctx, int nargs)
     xmlFree(arg2);
 }
 
+static void query_serror(void* ctx, xmlErrorPtr err)
+{
+    LIBXML2_CALLBACK_SERROR(queryresult_create, err);
+}
+
 HRESULT queryresult_create(xmlNodePtr node, LPCWSTR szQuery, IXMLDOMNodeList **out)
 {
     queryresult *This = heap_alloc_zero(sizeof(queryresult));
@@ -513,6 +518,7 @@ HRESULT queryresult_create(xmlNodePtr node, LPCWSTR szQuery, IXMLDOMNodeList **o
     This->node = node;
     xmldoc_add_ref(This->node->doc);
 
+    ctxt->error = query_serror;
     ctxt->node = node;
     registerNamespaces(ctxt);
 
@@ -545,7 +551,7 @@ HRESULT queryresult_create(xmlNodePtr node, LPCWSTR szQuery, IXMLDOMNodeList **o
         xmlXPathRegisterFunc(ctxt, (xmlChar const*)"OP_IGEq", XSLPattern_OP_IGEq);
     }
 
-    This->result = xmlXPathEval(str, ctxt);
+    This->result = xmlXPathEvalExpression(str, ctxt);
     if (!This->result || This->result->type != XPATH_NODESET)
     {
         hr = E_FAIL;

@@ -356,6 +356,27 @@ static void sax_characters(void *ctx, const xmlChar *ch, int len)
     xmlSAX2Characters(ctx, ch, len);
 }
 
+static void LIBXML2_LOG_CALLBACK sax_error(void* ctx, char const* msg, ...)
+{
+    va_list ap;
+    va_start(ap, msg);
+    LIBXML2_CALLBACK_ERR(doparse, msg, ap);
+    va_end(ap);
+}
+
+static void LIBXML2_LOG_CALLBACK sax_warning(void* ctx, char const* msg, ...)
+{
+    va_list ap;
+    va_start(ap, msg);
+    LIBXML2_CALLBACK_WARN(doparse, msg, ap);
+    va_end(ap);
+}
+
+static void sax_serror(void* ctx, xmlErrorPtr err)
+{
+    LIBXML2_CALLBACK_SERROR(doparse, err);
+}
+
 static xmlDocPtr doparse(domdoc* This, char *ptr, int len, xmlChar const* encoding)
 {
     xmlDocPtr doc = NULL;
@@ -382,9 +403,9 @@ static xmlDocPtr doparse(domdoc* This, char *ptr, int len, xmlChar const* encodi
         sax_characters,                 /* ignorableWhitespace */
         xmlSAX2ProcessingInstruction,   /* processingInstruction */
         xmlSAX2Comment,                 /* comment */
-        NULL,                           /* TODO: warning */
-        NULL,                           /* TODO: error */
-        NULL,                           /* TODO: fatalError */
+        sax_warning,                    /* warning */
+        sax_error,                      /* error */
+        sax_error,                      /* fatalError */
         xmlSAX2GetParameterEntity,      /* getParameterEntity */
         xmlSAX2CDataBlock,              /* cdataBlock */
         xmlSAX2ExternalSubset,          /* externalSubset */
@@ -392,7 +413,7 @@ static xmlDocPtr doparse(domdoc* This, char *ptr, int len, xmlChar const* encodi
         NULL,                           /* _private */
         xmlSAX2StartElementNs,          /* startElementNs */
         xmlSAX2EndElementNs,            /* endElementNs */
-        NULL                            /* TODO: serror */
+        sax_serror                      /* serror */
     };
     xmlInitParser();
 
@@ -403,9 +424,9 @@ static xmlDocPtr doparse(domdoc* This, char *ptr, int len, xmlChar const* encodi
         return NULL;
     }
 
-	if (pctx->sax) xmlFree(pctx->sax);
+    if (pctx->sax) xmlFree(pctx->sax);
     pctx->sax = &sax_handler;
-	pctx->_private = This;
+    pctx->_private = This;
     pctx->recovery = 0;
     pctx->encoding = xmlStrdup(encoding);
     xmlParseDocument(pctx);
@@ -2417,6 +2438,22 @@ static HRESULT WINAPI domdoc_putref_schemas(
     return hr;
 }
 
+static void LIBXML2_LOG_CALLBACK validate_error(void* ctx, char const* msg, ...)
+{
+    va_list ap;
+    va_start(ap, msg);
+    LIBXML2_CALLBACK_ERR(domdoc_validate, msg, ap);
+    va_end(ap);
+}
+
+static void LIBXML2_LOG_CALLBACK validate_warning(void* ctx, char const* msg, ...)
+{
+    va_list ap;
+    va_start(ap, msg);
+    LIBXML2_CALLBACK_WARN(domdoc_validate, msg, ap);
+    va_end(ap);
+}
+
 static HRESULT WINAPI domdoc_validate(
     IXMLDOMDocument3* iface,
     IXMLDOMParseError** err)
@@ -2435,8 +2472,8 @@ static HRESULT WINAPI domdoc_validate(
     }
 
     vctx = xmlNewValidCtxt();
-    vctx->error = NULL; /* TODO: error callback */
-    vctx->warning = NULL; /* TODO: warning callback */
+    vctx->error = validate_error;
+    vctx->warning = validate_warning;
 
     if (xmlValidateDocument(vctx, get_doc(This)))
     {
