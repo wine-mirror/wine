@@ -1455,32 +1455,103 @@ BOOL WINAPI QueryServiceConfig2W(SC_HANDLE hService, DWORD dwLevel, LPBYTE buffe
  * EnumServicesStatusA [ADVAPI32.@]
  */
 BOOL WINAPI
-EnumServicesStatusA( SC_HANDLE hSCManager, DWORD dwServiceType,
-                     DWORD dwServiceState, LPENUM_SERVICE_STATUSA lpServices,
-                     DWORD cbBufSize, LPDWORD pcbBytesNeeded,
-                     LPDWORD lpServicesReturned, LPDWORD lpResumeHandle )
+EnumServicesStatusA( SC_HANDLE hmngr, DWORD type, DWORD state, LPENUM_SERVICE_STATUSA
+                     services, DWORD size, LPDWORD needed, LPDWORD returned,
+                     LPDWORD resume_handle )
 {
-    FIXME("%p type=%x state=%x %p %x %p %p %p\n", hSCManager,
-          dwServiceType, dwServiceState, lpServices, cbBufSize,
-          pcbBytesNeeded, lpServicesReturned,  lpResumeHandle);
-    SetLastError (ERROR_ACCESS_DENIED);
-    return FALSE;
+    BOOL ret;
+    unsigned int i;
+    ENUM_SERVICE_STATUSW *servicesW = NULL;
+    DWORD sz, n;
+    char *p;
+
+    TRACE("%p 0x%x 0x%x %p %u %p %p %p\n", hmngr, type, state, services, size, needed,
+          returned, resume_handle);
+
+    if (size && !(servicesW = HeapAlloc( GetProcessHeap(), 0, 2 * size )))
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return FALSE;
+    }
+
+    ret = EnumServicesStatusW( hmngr, type, state, servicesW, 2 * size, needed, returned, resume_handle );
+    if (!ret) goto done;
+
+    p = (char *)services + *returned * sizeof(ENUM_SERVICE_STATUSA);
+    n = size - (p - (char *)services);
+    ret = FALSE;
+    for (i = 0; i < *returned; i++)
+    {
+        sz = WideCharToMultiByte( CP_ACP, 0, servicesW[i].lpServiceName, -1, p, n, NULL, NULL );
+        if (!sz) goto done;
+        services[i].lpServiceName = p;
+        p += sz;
+        n -= sz;
+        if (servicesW[i].lpDisplayName)
+        {
+            sz = WideCharToMultiByte( CP_ACP, 0, servicesW[i].lpDisplayName, -1, p, n, NULL, NULL );
+            if (!sz) goto done;
+            services[i].lpDisplayName = p;
+            p += sz;
+            n -= sz;
+        }
+        services[i].ServiceStatus = servicesW[i].ServiceStatus;
+    }
+
+    ret = TRUE;
+
+done:
+    HeapFree( GetProcessHeap(), 0, servicesW );
+    return ret;
 }
 
 /******************************************************************************
  * EnumServicesStatusW [ADVAPI32.@]
  */
 BOOL WINAPI
-EnumServicesStatusW( SC_HANDLE hSCManager, DWORD dwServiceType,
-                     DWORD dwServiceState, LPENUM_SERVICE_STATUSW lpServices,
-                     DWORD cbBufSize, LPDWORD pcbBytesNeeded,
-                     LPDWORD lpServicesReturned, LPDWORD lpResumeHandle )
+EnumServicesStatusW( SC_HANDLE hmngr, DWORD type, DWORD state, LPENUM_SERVICE_STATUSW
+                     services, DWORD size, LPDWORD needed, LPDWORD returned,
+                     LPDWORD resume_handle )
 {
-    FIXME("%p type=%x state=%x %p %x %p %p %p\n", hSCManager,
-          dwServiceType, dwServiceState, lpServices, cbBufSize,
-          pcbBytesNeeded, lpServicesReturned,  lpResumeHandle);
-    SetLastError (ERROR_ACCESS_DENIED);
-    return FALSE;
+    DWORD err, i;
+
+    TRACE("%p 0x%x 0x%x %p %u %p %p %p\n", hmngr, type, state, services, size, needed,
+          returned, resume_handle);
+
+    if (resume_handle)
+        FIXME("resume handle not supported\n");
+
+    if (!hmngr)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+
+    __TRY
+    {
+        err = svcctl_EnumServicesStatusW( hmngr, type, state, (BYTE *)services, size, needed, returned );
+    }
+    __EXCEPT(rpc_filter)
+    {
+        err = map_exception_code( GetExceptionCode() );
+    }
+    __ENDTRY
+
+    if (err != ERROR_SUCCESS)
+    {
+        SetLastError( err );
+        return FALSE;
+    }
+
+    for (i = 0; i < *returned; i++)
+    {
+        /* convert buffer offsets into pointers */
+        services[i].lpServiceName = (WCHAR *)((char *)services + (DWORD_PTR)services[i].lpServiceName);
+        if (services[i].lpDisplayName)
+            services[i].lpDisplayName = (WCHAR *)((char *)services + (DWORD_PTR)services[i].lpDisplayName);
+    }
+
+    return TRUE;
 }
 
 /******************************************************************************

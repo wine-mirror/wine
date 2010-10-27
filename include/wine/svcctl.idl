@@ -122,6 +122,12 @@ typedef struct _SERVICE_FAILURE_ACTIONSW {
 #define SERVICE_CONFIG_REQUIRED_PRIVILEGES_INFO 6
 #define SERVICE_CONFIG_PRESHUTDOWN_INFO         7
 
+typedef struct _ENUM_SERVICE_STATUSW {
+    LPWSTR          lpServiceName;
+    LPWSTR          lpDisplayName;
+    SERVICE_STATUS  ServiceStatus;
+} ENUM_SERVICE_STATUSW, *LPENUM_SERVICE_STATUSW;
+
 cpp_quote("#endif")
 
 typedef [switch_type(DWORD)] union
@@ -220,7 +226,15 @@ typedef [switch_type(DWORD)] union
     DWORD svcctl_EnumDependentServicesW(/* FIXME */);
 
     /* Not compatible with Windows function 0x0e */
-    DWORD svcctl_EnumServicesStatusW(/* FIXME */);
+    DWORD svcctl_EnumServicesStatusW(
+        [in] SC_RPC_HANDLE hmngr,
+        [in] DWORD type,
+        [in] DWORD state,
+        [out,size_is(size)] BYTE *buffer,
+        [in] DWORD size,
+        [out] LPDWORD needed,
+        [out] LPDWORD returned
+    );
 
     /* Compatible with Windows function 0x0f */
     DWORD svcctl_OpenSCManagerW(
