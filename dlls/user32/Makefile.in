@@ -61,6 +61,7 @@ RC_SRCS = \
 	resources/user32_Es.rc \
 	resources/user32_Fi.rc \
 	resources/user32_Fr.rc \
+	resources/user32_He.rc \
 	resources/user32_Hu.rc \
 	resources/user32_It.rc \
 	resources/user32_Ja.rc \
