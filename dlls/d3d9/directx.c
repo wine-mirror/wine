@@ -444,7 +444,7 @@ static UINT WINAPI IDirect3D9ExImpl_GetAdapterModeCountEx(IDirect3D9Ex *iface,
 {
     FIXME("iface %p, adapter %u, filter %p stub!\n", iface, adapter, filter);
 
-    return D3DERR_DRIVERINTERNALERROR;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirect3D9ExImpl_EnumAdapterModesEx(IDirect3D9Ex *iface,
@@ -453,7 +453,7 @@ static HRESULT WINAPI IDirect3D9ExImpl_EnumAdapterModesEx(IDirect3D9Ex *iface,
     FIXME("iface %p, adapter %u, filter %p, mode_idx %u, mode %p stub!\n",
             iface, adapter, filter, mode_idx, mode);
 
-    return D3DERR_DRIVERINTERNALERROR;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirect3D9ExImpl_GetAdapterDisplayModeEx(IDirect3D9Ex *iface,
@@ -462,7 +462,7 @@ static HRESULT WINAPI IDirect3D9ExImpl_GetAdapterDisplayModeEx(IDirect3D9Ex *ifa
     FIXME("iface %p, adapter %u, mode %p, rotation %p stub!\n",
             iface, adapter, mode, rotation);
 
-    return D3DERR_DRIVERINTERNALERROR;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3D9ExImpl_CreateDeviceEx(IDirect3D9Ex *iface,
