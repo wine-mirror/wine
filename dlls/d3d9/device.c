@@ -3242,11 +3242,14 @@ static void setup_fpu(void)
 }
 
 HRESULT device_init(IDirect3DDevice9Impl *device, IWineD3D *wined3d, UINT adapter, D3DDEVTYPE device_type,
-        HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters)
+        HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters, D3DDISPLAYMODEEX *mode)
 {
     WINED3DPRESENT_PARAMETERS *wined3d_parameters;
     UINT i, count = 1;
     HRESULT hr;
+
+    if (mode)
+        FIXME("Ignoring display mode.\n");
 
     device->lpVtbl = &Direct3DDevice9_Vtbl;
     device->device_parent_vtbl = &d3d9_wined3d_device_parent_vtbl;

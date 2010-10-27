@@ -425,7 +425,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3D9Impl_CreateDevice(IDirect3D9Ex
         return E_OUTOFMEMORY;
     }
 
-    hr = device_init(object, This->WineD3D, adapter, device_type, focus_window, flags, parameters);
+    hr = device_init(object, This->WineD3D, adapter, device_type, focus_window, flags, parameters, NULL);
     if (FAILED(hr))
     {
         WARN("Failed to initialize device, hr %#x.\n", hr);
@@ -469,14 +469,32 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3D9ExImpl_CreateDeviceEx(IDirect3
         UINT adapter, D3DDEVTYPE device_type, HWND focus_window, DWORD flags,
         D3DPRESENT_PARAMETERS *parameters, D3DDISPLAYMODEEX *mode, IDirect3DDevice9Ex **device)
 {
-    FIXME("iface %p, adapter %u, device_type %#x, focus_window %p, flags %#x,\n"
-            "parameters %p, mode %p, device %p stub!\n",
-            iface, adapter, device_type, focus_window, flags,
-            parameters, mode, device);
+    IDirect3D9Impl *d3d9 = (IDirect3D9Impl *)iface;
+    IDirect3DDevice9Impl *object;
+    HRESULT hr;
 
-    *device = NULL;
+    TRACE("iface %p, adapter %u, device_type %#x, focus_window %p, flags %#x, parameters %p, mode %p, device %p.\n",
+            iface, adapter, device_type, focus_window, flags, parameters, mode, device);
 
-    return D3DERR_DRIVERINTERNALERROR;
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate device memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = device_init(object, d3d9->WineD3D, adapter, device_type, focus_window, flags, parameters, mode);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize device, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created device %p.\n", object);
+    *device = (IDirect3DDevice9Ex *)object;
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3D9ExImpl_GetAdapterLUID(IDirect3D9Ex *iface, UINT adapter, LUID *luid)

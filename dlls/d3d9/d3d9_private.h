@@ -181,7 +181,7 @@ typedef struct IDirect3DDevice9Impl
 } IDirect3DDevice9Impl;
 
 HRESULT device_init(IDirect3DDevice9Impl *device, IWineD3D *wined3d, UINT adapter, D3DDEVTYPE device_type,
-        HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters) DECLSPEC_HIDDEN;
+        HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters, D3DDISPLAYMODEEX *mode) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirect3DVolume9 implementation structure
