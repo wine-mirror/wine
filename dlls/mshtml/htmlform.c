@@ -188,16 +188,53 @@ static HRESULT WINAPI HTMLFormElement_get_dir(IHTMLFormElement *iface, BSTR *p)
 
 static HRESULT WINAPI HTMLFormElement_put_encoding(IHTMLFormElement *iface, BSTR v)
 {
+    static const WCHAR urlencodedW[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
+        'x','-','w','w','w','-','f','o','r','m','-','u','r','l','e','n','c','o','d','e','d',0};
+    static const WCHAR dataW[] = {'m','u','l','t','i','p','a','r','t','/',
+        'f','o','r','m','-','d','a','t','a',0};
+    static const WCHAR plainW[] = {'t','e','x','t','/','p','l','a','i','n',0};
+
     HTMLFormElement *This = HTMLFORM_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, wine_dbgstr_w(v));
-    return E_NOTIMPL;
+    nsAString encoding_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, wine_dbgstr_w(v));
+
+    if(lstrcmpiW(v, urlencodedW) && lstrcmpiW(v, dataW) && lstrcmpiW(v, plainW)) {
+        WARN("incorrect enctype\n");
+        return E_INVALIDARG;
+    }
+
+    nsAString_InitDepend(&encoding_str, v);
+    nsres = nsIDOMHTMLFormElement_SetEnctype(This->nsform, &encoding_str);
+    nsAString_Finish(&encoding_str);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLFormElement_get_encoding(IHTMLFormElement *iface, BSTR *p)
 {
     HTMLFormElement *This = HTMLFORM_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString encoding_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&encoding_str, NULL);
+    nsres = nsIDOMHTMLFormElement_GetEnctype(This->nsform, &encoding_str);
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *encoding;
+        nsAString_GetData(&encoding_str, &encoding);
+
+        *p = SysAllocString(encoding);
+        if(!*p)
+            return E_OUTOFMEMORY;
+    }else
+        return E_FAIL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLFormElement_put_method(IHTMLFormElement *iface, BSTR v)

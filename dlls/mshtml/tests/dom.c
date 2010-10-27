@@ -2662,6 +2662,40 @@ static void _test_form_put_name(unsigned line, IUnknown *unk, const char *name)
     _test_form_name(line, unk, name);
 }
 
+#define test_form_encoding(f,a) _test_form_encoding(__LINE__,f,a)
+static void _test_form_encoding(unsigned line, IUnknown *unk, const char *ex)
+{
+    IHTMLFormElement *form = _get_form_iface(line, unk);
+    BSTR encoding = (void*)0xdeadbeef;
+    HRESULT hres;
+
+    hres = IHTMLFormElement_get_encoding(form, &encoding);
+    ok_(__FILE__,line)(hres == S_OK, "get_encoding failed: %08x\n", hres);
+    if(ex)
+        ok_(__FILE__,line)(!strcmp_wa(encoding, ex), "encoding=%s, expected %s\n", wine_dbgstr_w(encoding), ex);
+    else
+        ok_(__FILE__,line)(!encoding, "encoding=%p\n", encoding);
+
+    SysFreeString(encoding);
+    IHTMLFormElement_Release(form);
+}
+
+#define test_form_put_encoding(f,r,a) _test_form_put_encoding(__LINE__,f,r,a)
+static void _test_form_put_encoding(unsigned line, IUnknown *unk, HRESULT exp_hres, const char *encoding)
+{
+    IHTMLFormElement *form = _get_form_iface(line, unk);
+    BSTR tmp = a2bstr(encoding);
+    HRESULT hres;
+
+    hres = IHTMLFormElement_put_encoding(form, tmp);
+    ok_(__FILE__,line)(hres == exp_hres, "put_encoding returned: %08x, expected %08x\n", hres, exp_hres);
+    SysFreeString(tmp);
+    IHTMLFormElement_Release(form);
+
+    if(exp_hres == S_OK)
+        _test_form_encoding(line, unk, encoding);
+}
+
 #define get_elem_doc(e) _get_elem_doc(__LINE__,e)
 static IHTMLDocument2 *_get_elem_doc(unsigned line, IUnknown *unk)
 {
@@ -6361,6 +6395,13 @@ static void test_elems2(IHTMLDocument2 *doc)
         test_form_put_method((IUnknown*)elem, S_OK, "post");
         test_form_put_method((IUnknown*)elem, E_INVALIDARG, "put");
         test_form_method((IUnknown*)elem, "post");
+        test_form_name((IUnknown*)elem, NULL);
+        test_form_put_name((IUnknown*)elem, "Name");
+        test_form_encoding((IUnknown*)elem, "application/x-www-form-urlencoded");
+        test_form_put_encoding((IUnknown*)elem, S_OK, "text/plain");
+        test_form_put_encoding((IUnknown*)elem, S_OK, "multipart/form-data");
+        test_form_put_encoding((IUnknown*)elem, E_INVALIDARG, "image/png");
+        test_form_encoding((IUnknown*)elem, "multipart/form-data");
         IHTMLElement_Release(elem);
     }
 
