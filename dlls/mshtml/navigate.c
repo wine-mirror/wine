@@ -706,77 +706,6 @@ static HRESULT read_post_data_stream(nsIInputStream *stream, HGLOBAL *post_data,
     return S_OK;
 }
 
-static void parse_post_data(nsIInputStream *post_data_stream, LPWSTR *headers_ret,
-                            HGLOBAL *post_data_ret, ULONG *post_data_len_ret)
-{
-    ULONG post_data_len;
-    HGLOBAL post_data = NULL;
-    LPWSTR headers = NULL;
-    DWORD headers_len = 0, len;
-    const char *ptr, *ptr2, *post_data_end;
-    HRESULT hres;
-    
-    hres = read_post_data_stream(post_data_stream, &post_data, &post_data_len);
-    if(FAILED(hres)) {
-        FIXME("read_post_data_stream failed: %08x\n", hres);
-        return;
-    }
-
-    ptr = ptr2 = post_data;
-    post_data_end = (const char*)post_data+post_data_len;
-
-    while(ptr < post_data_end && (*ptr != '\r' || ptr[1] != '\n')) {
-        while(ptr < post_data_end && (*ptr != '\r' || ptr[1] != '\n'))
-            ptr++;
-
-        if(!*ptr) {
-            FIXME("*ptr = 0\n");
-            return;
-        }
-
-        ptr += 2;
-
-        if(ptr-ptr2 >= sizeof(CONTENT_LENGTH)
-           && CompareStringA(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
-                             CONTENT_LENGTH, sizeof(CONTENT_LENGTH)-1,
-                             ptr2, sizeof(CONTENT_LENGTH)-1) == CSTR_EQUAL) {
-            ptr2 = ptr;
-            continue;
-        }
-
-        len = MultiByteToWideChar(CP_ACP, 0, ptr2, ptr-ptr2, NULL, 0);
-
-        if(headers)
-            headers = heap_realloc(headers,(headers_len+len+1)*sizeof(WCHAR));
-        else
-            headers = heap_alloc((len+1)*sizeof(WCHAR));
-
-        len = MultiByteToWideChar(CP_ACP, 0, ptr2, ptr-ptr2, headers+headers_len, len);
-        headers_len += len;
-
-        ptr2 = ptr;
-    }
-
-    headers[headers_len] = 0;
-    *headers_ret = headers;
-
-    if(ptr >= post_data_end-2) {
-        GlobalFree(post_data);
-        return;
-    }
-
-    ptr += 2;
-
-    if(headers_len) {
-        post_data_len -= ptr-(const char*)post_data;
-        memmove(post_data, ptr, post_data_len);
-        post_data = GlobalReAlloc(post_data, post_data_len+1, 0);
-    }
-
-    *post_data_ret = post_data;
-    *post_data_len_ret = post_data_len;
-}
-
 HRESULT start_binding(HTMLWindow *window, HTMLDocumentNode *doc, BSCallback *bscallback, IBindCtx *bctx)
 {
     IStream *str = NULL;
@@ -1129,22 +1058,10 @@ static HRESULT nsChannelBSC_init_bindinfo(BSCallback *bsc)
     HRESULT hres;
 
     if(This->nschannel && This->nschannel->post_data_stream) {
-        if(This->nschannel->parse_stream) {
-            WCHAR *headers;
-
-            parse_post_data(This->nschannel->post_data_stream, &headers,
-                    &This->bsc.post_data, &This->bsc.post_data_len);
-
-            hres = parse_headers(headers, &This->nschannel->request_headers);
-            heap_free(headers);
-            if(FAILED(hres))
-                return hres;
-        }else {
-            hres = read_post_data_stream(This->nschannel->post_data_stream,
-                    &This->bsc.post_data, &This->bsc.post_data_len);
-            if(FAILED(hres))
-                return hres;
-        }
+        hres = read_post_data_stream(This->nschannel->post_data_stream,
+                &This->bsc.post_data, &This->bsc.post_data_len);
+        if(FAILED(hres))
+            return hres;
 
         TRACE("post_data = %s\n", debugstr_an(This->bsc.post_data, This->bsc.post_data_len));
     }
@@ -1491,10 +1408,8 @@ HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url,
     }
 
     if(post_data_stream) {
-        parse_post_data(post_data_stream, &callback->bsc.headers, &callback->bsc.post_data,
-                        &callback->bsc.post_data_len);
-        TRACE("headers = %s post_data = %s\n", debugstr_w(callback->bsc.headers),
-              debugstr_an(callback->bsc.post_data, callback->bsc.post_data_len));
+        read_post_data_stream(post_data_stream, &callback->bsc.post_data, &callback->bsc.post_data_len);
+        TRACE("post_data = %s\n", debugstr_an(callback->bsc.post_data, callback->bsc.post_data_len));
     }
 
     hres = CreateAsyncBindCtx(0, STATUSCLB(&callback->bsc), NULL, &bindctx);

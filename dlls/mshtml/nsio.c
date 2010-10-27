@@ -1353,7 +1353,6 @@ static nsresult NSAPI nsUploadChannel_SetUploadStream(nsIUploadChannel *iface,
 
     TRACE("(%p)->(%p %s %d)\n", This, aStream, debugstr_nsacstr(aContentType), aContentLength);
 
-    This->parse_stream = TRUE;
     if(aContentType) {
         nsACString_GetData(aContentType, &content_type);
         if(*content_type) {
@@ -1366,7 +1365,6 @@ static nsresult NSAPI nsUploadChannel_SetUploadStream(nsIUploadChannel *iface,
             set_http_header(&This->request_headers, content_typeW,
                     sizeof(content_typeW)/sizeof(WCHAR), ct, strlenW(ct));
             heap_free(ct);
-            This->parse_stream = FALSE;
         }
     }
 
