@@ -957,6 +957,7 @@ static void _test_window_name(unsigned line, IHTMLWindow2 *window, const char *e
         ok_(__FILE__,line)(!strcmp_wa(name, exname), "name = %s\n", wine_dbgstr_w(name));
     else
         ok_(__FILE__,line)(!name, "name = %s\n", wine_dbgstr_w(name));
+    SysFreeString(name);
 }
 
 #define set_window_name(w,n) _set_window_name(__LINE__,w,n)
@@ -1447,6 +1448,7 @@ static void _test_select_value(unsigned line, IHTMLSelectElement *select, const 
         ok_(__FILE__,line) (!strcmp_wa(val, exval), "unexpected value %s\n", wine_dbgstr_w(val));
     else
         ok_(__FILE__,line) (val == NULL, "val=%s, expected NULL\n", wine_dbgstr_w(val));
+    SysFreeString(val);
 }
 
 #define test_select_set_value(s,v) _test_select_set_value(__LINE__,s,v)
@@ -1470,6 +1472,7 @@ static void _test_select_type(unsigned line, IHTMLSelectElement *select, const c
     hres = IHTMLSelectElement_get_type(select, &type);
     ok_(__FILE__,line) (hres == S_OK, "get_type failed: %08x\n", hres);
     ok_(__FILE__,line) (!strcmp_wa(type, extype), "type=%s, expected %s\n", wine_dbgstr_w(type), extype);
+    SysFreeString(type);
 }
 
 #define test_range_text(r,t) _test_range_text(__LINE__,r,t)
@@ -2573,6 +2576,7 @@ static void _test_form_action(unsigned line, IUnknown *unk, const char *ex)
     else
         ok_(__FILE__,line)(!action, "action=%p\n", action);
 
+    SysFreeString(action);
     IHTMLFormElement_Release(form);
 }
 
@@ -3443,6 +3447,7 @@ static void test_location(IHTMLDocument2 *doc)
     hres = IHTMLLocation_get_pathname(location, &str);
     ok(hres == S_OK, "get_pathname failed: %08x\n", hres);
     ok(!strcmp_wa(str, "blank"), "unexpected pathname %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
 
     hres = IHTMLLocation_get_href(location, NULL);
     ok(hres == E_POINTER, "get_href passed: %08x\n", hres);
@@ -3450,6 +3455,7 @@ static void test_location(IHTMLDocument2 *doc)
     hres = IHTMLLocation_get_href(location, &str);
     ok(hres == S_OK, "get_href failed: %08x\n", hres);
     ok(!strcmp_wa(str, "about:blank"), "unexpected href %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
 
     ref = IHTMLLocation_Release(location);
     ok(!ref, "location chould be destroyed here\n");
@@ -3941,6 +3947,7 @@ static void test_style4(IHTMLStyle4 *style4)
     ok(hres == S_OK, "get_minHeight failed: %08x\n", hres);
     ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
     ok( !strcmp_wa(V_BSTR(&v), "10px"), "expect 10px got (%s)\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
 
     hres = IHTMLStyle4_put_minHeight(style4, vdefault);
     ok(hres == S_OK, "put_minHeight failed: %08x\n", hres);
@@ -4300,6 +4307,7 @@ static void test_default_style(IHTMLStyle *style)
     hres = IHTMLStyle_get_margin(style, &str);
     ok(hres == S_OK, "get_margin failed: %08x\n", hres);
     ok(!strcmp_wa(str, "1px"), "margin = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
 
     hres = IHTMLStyle_put_margin(style, NULL);
     ok(hres == S_OK, "put_margin failed: %08x\n", hres);
@@ -4321,6 +4329,7 @@ static void test_default_style(IHTMLStyle *style)
     ok(hres == S_OK, "get_marginTop failed: %08x\n", hres);
     ok(V_VT(&v) == VT_BSTR, "V_VT(marginTop) = %d\n", V_VT(&v));
     ok(!strcmp_wa(V_BSTR(&v), "6px"), "V_BSTR(marginTop) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
 
     str = NULL;
     hres = IHTMLStyle_get_border(style, &str);
@@ -4776,6 +4785,7 @@ static void test_default_style(IHTMLStyle *style)
     hres = IHTMLStyle_get_paddingLeft(style, &v);
     ok(hres == S_OK, "get_paddingLeft: %08x\n", hres);
     ok(!strcmp_wa(V_BSTR(&v), "10px"), "expecte 10 = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
 
     hres = IHTMLStyle_put_paddingLeft(style, vDefault);
     ok(hres == S_OK, "put_paddingLeft: %08x\n", hres);
