@@ -1659,6 +1659,7 @@ HTMLElement *HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL 
     static const WCHAR wszIFRAME[]   = {'I','F','R','A','M','E',0};
     static const WCHAR wszIMG[]      = {'I','M','G',0};
     static const WCHAR wszINPUT[]    = {'I','N','P','U','T',0};
+    static const WCHAR wszOBJECT[]   = {'O','B','J','E','C','T',0};
     static const WCHAR wszOPTION[]   = {'O','P','T','I','O','N',0};
     static const WCHAR wszSCRIPT[]   = {'S','C','R','I','P','T',0};
     static const WCHAR wszSELECT[]   = {'S','E','L','E','C','T',0};
@@ -1689,6 +1690,8 @@ HTMLElement *HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL 
         ret = HTMLImgElement_Create(doc, nselem);
     else if(!strcmpW(class_name, wszINPUT))
         ret = HTMLInputElement_Create(doc, nselem);
+    else if(!strcmpW(class_name, wszOBJECT))
+        ret = HTMLObjectElement_Create(doc, nselem);
     else if(!strcmpW(class_name, wszOPTION))
         ret = HTMLOptionElement_Create(doc, nselem);
     else if(!strcmpW(class_name, wszSCRIPT))
