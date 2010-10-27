@@ -368,6 +368,7 @@ void MODULE_get_binary_info( HANDLE hfile, struct binary_info *info )
  *  executable file runs under. lpBinaryType can be set to one of the following
  *  values:
  *   SCS_32BIT_BINARY: A Win32 based application
+ *   SCS_64BIT_BINARY: A Win64 based application
  *   SCS_DOS_BINARY: An MS-Dos based application
  *   SCS_WOW_BINARY: A Win16 based application
  *   SCS_PIF_BINARY: A PIF file that executes an MS-Dos based app
@@ -377,7 +378,7 @@ void MODULE_get_binary_info( HANDLE hfile, struct binary_info *info )
  *  To find the binary type, this function reads in the files header information.
  *  If extended header information is not present it will assume that the file
  *  is a DOS executable. If extended header information is present it will
- *  determine if the file is a 16 or 32 bit Windows executable by checking the
+ *  determine if the file is a 16, 32 or 64 bit Windows executable by checking the
  *  flags in the header.
  *
  *  ".com" and ".pif" files are only recognized by their file name extension,
