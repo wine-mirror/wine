@@ -272,15 +272,44 @@ static HRESULT WINAPI HTMLFormElement_get_target(IHTMLFormElement *iface, BSTR *
 static HRESULT WINAPI HTMLFormElement_put_name(IHTMLFormElement *iface, BSTR v)
 {
     HTMLFormElement *This = HTMLFORM_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, wine_dbgstr_w(v));
-    return E_NOTIMPL;
+    nsAString name_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, wine_dbgstr_w(v));
+
+    nsAString_InitDepend(&name_str, v);
+    nsres = nsIDOMHTMLFormElement_SetName(This->nsform, &name_str);
+    nsAString_Finish(&name_str);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLFormElement_get_name(IHTMLFormElement *iface, BSTR *p)
 {
     HTMLFormElement *This = HTMLFORM_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString name_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&name_str, NULL);
+    nsres = nsIDOMHTMLFormElement_GetName(This->nsform, &name_str);
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *name;
+        nsAString_GetData(&name_str, &name);
+
+        if(*name) {
+            *p = SysAllocString(name);
+            if(!*p)
+                return E_OUTOFMEMORY;
+        }else
+            *p = NULL;
+    }else
+        return E_FAIL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLFormElement_put_onsubmit(IHTMLFormElement *iface, VARIANT v)

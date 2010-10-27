@@ -2629,6 +2629,39 @@ static void _test_form_put_method(unsigned line, IUnknown *unk, HRESULT exp_hres
         _test_form_method(line, unk, method);
 }
 
+#define test_form_name(f,a) _test_form_name(__LINE__,f,a)
+static void _test_form_name(unsigned line, IUnknown *unk, const char *ex)
+{
+    IHTMLFormElement *form = _get_form_iface(line, unk);
+    BSTR name = (void*)0xdeadbeef;
+    HRESULT hres;
+
+    hres = IHTMLFormElement_get_name(form, &name);
+    ok_(__FILE__,line)(hres == S_OK, "get_name failed: %08x\n", hres);
+    if(ex)
+        ok_(__FILE__,line)(!strcmp_wa(name, ex), "name=%s, expected %s\n", wine_dbgstr_w(name), ex);
+    else
+        ok_(__FILE__,line)(!name, "name=%p\n", name);
+
+    SysFreeString(name);
+    IHTMLFormElement_Release(form);
+}
+
+#define test_form_put_name(f,a) _test_form_put_name(__LINE__,f,a)
+static void _test_form_put_name(unsigned line, IUnknown *unk, const char *name)
+{
+    IHTMLFormElement *form = _get_form_iface(line, unk);
+    BSTR tmp = a2bstr(name);
+    HRESULT hres;
+
+    hres = IHTMLFormElement_put_name(form, tmp);
+    ok_(__FILE__,line)(hres == S_OK, "put_name failed: %08x\n", hres);
+    SysFreeString(tmp);
+    IHTMLFormElement_Release(form);
+
+    _test_form_name(line, unk, name);
+}
+
 #define get_elem_doc(e) _get_elem_doc(__LINE__,e)
 static IHTMLDocument2 *_get_elem_doc(unsigned line, IUnknown *unk)
 {
