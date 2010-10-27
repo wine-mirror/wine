@@ -415,6 +415,18 @@ static const NodeImplVtbl HTMLObjectElementImplVtbl = {
     HTMLObjectElement_destructor
 };
 
+static const tid_t HTMLObjectElement_iface_tids[] = {
+    HTMLELEMENT_TIDS,
+    IHTMLObjectElement_tid,
+    0
+};
+static dispex_static_data_t HTMLObjectElement_dispex = {
+    NULL,
+    DispHTMLObjectElement_tid,
+    NULL,
+    HTMLObjectElement_iface_tids
+};
+
 HTMLElement *HTMLObjectElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
 {
     HTMLObjectElement *ret = heap_alloc_zero(sizeof(*ret));
@@ -422,6 +434,6 @@ HTMLElement *HTMLObjectElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *
     ret->lpIHTMLObjectElementVtbl = &HTMLObjectElementVtbl;
     ret->element.node.vtbl = &HTMLObjectElementImplVtbl;
 
-    HTMLElement_Init(&ret->element, doc, nselem, NULL);
+    HTMLElement_Init(&ret->element, doc, nselem, &HTMLObjectElement_dispex);
     return &ret->element;
 }

@@ -435,7 +435,7 @@ static const elem_type_info_t elem_type_infos[] = {
     {"IFRAME",    iframe_iids,      &DIID_DispHTMLIFrame},
     {"FORM",      form_iids,        &DIID_DispHTMLFormElement},
     {"FRAME",     frame_iids,       &DIID_DispHTMLFrameElement},
-    {"OBJECT",    object_iids,      NULL}
+    {"OBJECT",    object_iids,      &DIID_DispHTMLObjectElement}
 };
 
 static const char *dbgstr_guid(REFIID riid)
