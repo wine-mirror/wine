@@ -6481,6 +6481,64 @@ static void test_XSLPattern(void)
     if (len)
         expect_list_and_release(list, "E2.E2.D1 E3.E2.D1");
 
+    /* namespace handling */
+    /* no registered namespaces */
+    ole_check(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"), _variantbstr_("")));
+    list = NULL;
+
+    /* prefixes don't need to be registered, you may use them as they are in the doc */
+    todo_wine ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//bar:x"), &list));
+    if (list)
+    {
+        len = 0;
+        ole_check(IXMLDOMNodeList_get_length(list, &len));
+        todo_wine ok(len != 0, "expected filled list\n");
+        if (len)
+            todo_wine expect_list_and_release(list, "E5.E1.E4.E1.E2.D1 E6.E2.E4.E1.E2.D1");
+    }
+
+    /* prefixes must be explicitly specified in the name */
+    todo_wine ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//foo:elem"), &list));
+    if (list)
+    {
+        len = 0;
+        ole_check(IXMLDOMNodeList_get_length(list, &len));
+        todo_wine ok(len == 0, "expected empty list\n");
+        if (len)
+            IXMLDOMNodeList_Release(list);
+    }
+
+    todo_wine ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//foo:c"), &list));
+    if (list)
+    {
+        len = 0;
+        ole_check(IXMLDOMNodeList_get_length(list, &len));
+        todo_wine ok(len != 0, "expected filled list\n");
+        if (len)
+            todo_wine expect_list_and_release(list, "E3.E4.E2.D1");
+    }
+
+    /* explicitly register prefix foo */
+    ole_check(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"), _variantbstr_("xmlns:foo='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'")));
+
+    /* now we get the same behavior as XPath */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//foo:c"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E3.E3.E2.D1 E3.E4.E2.D1");
+
+    /* set prefix foo to some non-existant namespace */
+    ole_check(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"), _variantbstr_("xmlns:foo='urn:non-existant-foo'")));
+
+    /* the registered prefix takes precedence */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//foo:c"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len == 0, "expected empty list\n");
+    if (len)
+        IXMLDOMNodeList_Release(list);
 
     IXMLDOMDocument2_Release(doc);
     free_bstrs();
