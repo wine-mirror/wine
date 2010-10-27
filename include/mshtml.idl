@@ -13094,6 +13094,125 @@ coclass HTMLDocument
 }
 
 /*****************************************************************************
+ *    IHTMLEmbedElement interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f25f-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLEmbedElement : IDispatch
+{
+    [propput, id(DISPID_IHTMLEMBEDELEMENT_HIDDEN)]
+    HRESULT hidden([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLEMBEDELEMENT_HIDDEN)]
+    HRESULT hidden([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLEMBEDELEMENT_PALETTE)]
+    HRESULT palette([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLEMBEDELEMENT_PLUGINSPAGE)]
+    HRESULT pluginspage([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLEMBEDELEMENT_SRC)]
+    HRESULT src([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLEMBEDELEMENT_SRC)]
+    HRESULT src([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLEMBEDELEMENT_UNITS)]
+    HRESULT units([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLEMBEDELEMENT_UNITS)]
+    HRESULT units([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLEMBEDELEMENT_NAME), displaybind, bindable]
+    HRESULT name([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLEMBEDELEMENT_NAME), displaybind, bindable]
+    HRESULT name([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLEMBEDELEMENT_WIDTH)]
+    HRESULT width([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLEMBEDELEMENT_WIDTH)]
+    HRESULT width([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLEMBEDELEMENT_HEIGHT)]
+    HRESULT height([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLEMBEDELEMENT_HEIGHT)]
+    HRESULT height([retval, out] VARIANT *p);
+}
+
+/*****************************************************************************
+ *    DispHTMLEmbedElement dispinterface
+ */
+[
+    hidden,
+    uuid(3050f52e-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLEmbed
+{
+properties:
+methods:
+    WINE_HTMLELEMENT_DISPINTERFACE_DECL;
+
+    [propput, id(DISPID_IHTMLEMBEDELEMENT_HIDDEN)]
+    void hidden(BSTR v);
+
+    [propget, id(DISPID_IHTMLEMBEDELEMENT_HIDDEN)]
+    BSTR hidden();
+
+    [propget, id(DISPID_IHTMLEMBEDELEMENT_PALETTE)]
+    BSTR palette();
+
+    [propget, id(DISPID_IHTMLEMBEDELEMENT_PLUGINSPAGE)]
+    BSTR pluginspage();
+
+    [propput, id(DISPID_IHTMLEMBEDELEMENT_SRC)]
+    void src(BSTR v);
+
+    [propget, id(DISPID_IHTMLEMBEDELEMENT_SRC)]
+    BSTR src();
+
+    [propput, id(DISPID_IHTMLEMBEDELEMENT_UNITS)]
+    void units(BSTR v);
+
+    [propget, id(DISPID_IHTMLEMBEDELEMENT_UNITS)]
+    BSTR units();
+
+    [propput, id(DISPID_IHTMLEMBEDELEMENT_NAME), displaybind, bindable]
+    void name(BSTR v);
+
+    [propget, id(DISPID_IHTMLEMBEDELEMENT_NAME), displaybind, bindable]
+    BSTR name();
+
+    [propput, id(DISPID_IHTMLEMBEDELEMENT_WIDTH)]
+    void width(VARIANT v);
+
+    [propget, id(DISPID_IHTMLEMBEDELEMENT_WIDTH)]
+    VARIANT width();
+
+    [propput, id(DISPID_IHTMLEMBEDELEMENT_HEIGHT)]
+    void height(VARIANT v);
+
+    [propget, id(DISPID_IHTMLEMBEDELEMENT_HEIGHT)]
+    VARIANT height();
+
+    [propput, id(DISPID_IHTMLEMBEDELEMENT2_IE8_SRC)]
+    void ie8_src(BSTR v);
+
+    [propget, id(DISPID_IHTMLEMBEDELEMENT2_IE8_SRC)]
+    BSTR ie8_src();
+
+    [propget, id(DISPID_IHTMLEMBEDELEMENT2_IE8_PLUGINSPAGE)]
+    BSTR ie8_pluginspage();
+}
+
+/*****************************************************************************
  *    IHTMLCommentElement interface
  */
 [
