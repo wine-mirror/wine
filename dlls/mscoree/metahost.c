@@ -249,9 +249,17 @@ static HRESULT WINAPI CLRRuntimeInfo_LoadErrorString(ICLRRuntimeInfo* iface,
 static HRESULT WINAPI CLRRuntimeInfo_LoadLibrary(ICLRRuntimeInfo* iface,
     LPCWSTR pwzDllName, HMODULE *phndModule)
 {
-    FIXME("%p %s %p\n", iface, debugstr_w(pwzDllName), phndModule);
+    WCHAR version[MAX_PATH];
+    HRESULT hr;
+    DWORD cchBuffer;
 
-    return E_NOTIMPL;
+    TRACE("%p %s %p\n", iface, debugstr_w(pwzDllName), phndModule);
+
+    cchBuffer = MAX_PATH;
+    hr = ICLRRuntimeInfo_GetVersionString(iface, version, &cchBuffer);
+    if (FAILED(hr)) return hr;
+
+    return LoadLibraryShim(pwzDllName, version, NULL, phndModule);
 }
 
 static HRESULT WINAPI CLRRuntimeInfo_GetProcAddress(ICLRRuntimeInfo* iface,
@@ -946,4 +954,9 @@ HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
     }
 
     return CLR_E_SHIM_RUNTIME;
+}
+
+HRESULT force_get_runtime_info(ICLRRuntimeInfo **result)
+{
+    return IUnknown_QueryInterface((IUnknown*)&runtimes[0], &IID_ICLRRuntimeInfo, (void**)result);
 }

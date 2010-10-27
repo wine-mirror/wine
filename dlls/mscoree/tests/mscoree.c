@@ -241,7 +241,7 @@ static void test_loadlibraryshim(void)
     }
 
     hr = pLoadLibraryShim(nosuchdll, latest, NULL, &hdll);
-    todo_wine ok(hr == E_HANDLE, "LoadLibraryShim failed, hr=%x\n", hr);
+    ok(hr == E_HANDLE, "LoadLibraryShim failed, hr=%x\n", hr);
     if (SUCCEEDED(hr))
         FreeLibrary(hdll);
 

@@ -48,6 +48,8 @@ typedef struct CLRRuntimeInfo
 extern HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
     DWORD startup_flags, DWORD runtimeinfo_flags, BOOL legacy, ICLRRuntimeInfo **result);
 
+extern HRESULT force_get_runtime_info(ICLRRuntimeInfo **result);
+
 /* Mono 2.6 embedding */
 typedef struct _MonoDomain MonoDomain;
 typedef struct _MonoAssembly MonoAssembly;

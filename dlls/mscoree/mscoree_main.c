@@ -549,10 +549,42 @@ HRESULT WINAPI GetRequestedRuntimeInfo(LPCWSTR pExe, LPCWSTR pwszVersion, LPCWST
 
 HRESULT WINAPI LoadLibraryShim( LPCWSTR szDllName, LPCWSTR szVersion, LPVOID pvReserved, HMODULE * phModDll)
 {
-    FIXME("(%p %s, %p, %p, %p): semi-stub\n", szDllName, debugstr_w(szDllName), szVersion, pvReserved, phModDll);
+    HRESULT ret=S_OK;
+    WCHAR dll_filename[MAX_PATH];
+    WCHAR version[MAX_PATH];
+    static const WCHAR default_version[] = {'v','1','.','1','.','4','3','2','2',0};
+    static const WCHAR slash[] = {'\\',0};
+    DWORD dummy;
 
-    if (phModDll) *phModDll = LoadLibraryW(szDllName);
-    return S_OK;
+    TRACE("(%p %s, %p, %p, %p)\n", szDllName, debugstr_w(szDllName), szVersion, pvReserved, phModDll);
+
+    if (!szDllName || !phModDll)
+        return E_POINTER;
+
+    if (!get_install_root(dll_filename))
+    {
+        ERR("error reading registry key for installroot\n");
+        dll_filename[0] = 0;
+    }
+    else
+    {
+        if (!szVersion)
+        {
+            ret = GetCORVersion(version, MAX_PATH, &dummy);
+            if (SUCCEEDED(ret))
+                szVersion = version;
+            else
+                szVersion = default_version;
+        }
+        strcatW(dll_filename, szVersion);
+        strcatW(dll_filename, slash);
+    }
+
+    strcatW(dll_filename, szDllName);
+
+    *phModDll = LoadLibraryW(dll_filename);
+
+    return *phModDll ? S_OK : E_HANDLE;
 }
 
 HRESULT WINAPI LockClrVersion(FLockClrVersionCallback hostCallback, FLockClrVersionCallback *pBeginHostSetup, FLockClrVersionCallback *pEndHostSetup)
