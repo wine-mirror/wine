@@ -441,6 +441,130 @@ static HRESULT Gstreamer_transform_create(IUnknown *punkout, const CLSID *clsid,
     return S_OK;
 }
 
+static HRESULT WINAPI Gstreamer_YUV_QueryConnect(TransformFilter *iface, const AM_MEDIA_TYPE *amt) {
+    GstTfImpl *This = (GstTfImpl*)iface;
+    TRACE("%p %p\n", This, amt);
+    dump_AM_MEDIA_TYPE(amt);
+
+    if (!IsEqualGUID(&amt->majortype, &MEDIATYPE_Video) ||
+        (!IsEqualGUID(&amt->formattype, &FORMAT_VideoInfo) &&
+         !IsEqualGUID(&amt->formattype, &FORMAT_VideoInfo2)))
+        return S_FALSE;
+    if (memcmp(&amt->subtype.Data2, &MEDIATYPE_Video.Data2, sizeof(GUID) - sizeof(amt->subtype.Data1)))
+        return S_FALSE;
+    switch (amt->subtype.Data1) {
+        case mmioFOURCC('I','4','2','0'):
+        case mmioFOURCC('Y','V','1','2'):
+        case mmioFOURCC('N','V','1','2'):
+        case mmioFOURCC('N','V','2','1'):
+        case mmioFOURCC('Y','U','Y','2'):
+        case mmioFOURCC('Y','V','Y','U'):
+            return S_OK;
+        default:
+            WARN("Unhandled fourcc %s\n", debugstr_an((char*)&amt->subtype.Data1, 4));
+            return S_FALSE;
+    }
+}
+
+static HRESULT WINAPI Gstreamer_YUV_ConnectInput(TransformFilter *tf, PIN_DIRECTION dir, IPin *pin)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI Gstreamer_YUV_SetMediaType(TransformFilter *tf, PIN_DIRECTION dir,  const AM_MEDIA_TYPE *amt) {
+    GstTfImpl *This = (GstTfImpl*)tf;
+    GstCaps *capsin, *capsout;
+    AM_MEDIA_TYPE *outpmt = &This->tf.pmt;
+    HRESULT hr;
+    int avgtime;
+    DWORD width, height;
+
+    if (dir != PINDIR_INPUT)
+        return S_OK;
+
+    if (Gstreamer_YUV_QueryConnect(&This->tf, amt) == S_FALSE || !amt->pbFormat)
+        return E_FAIL;
+
+    FreeMediaType(outpmt);
+    CopyMediaType(outpmt, amt);
+
+    if (IsEqualGUID(&amt->formattype, &FORMAT_VideoInfo)) {
+        VIDEOINFOHEADER *vih = (VIDEOINFOHEADER*)outpmt->pbFormat;
+        avgtime = vih->AvgTimePerFrame;
+        width = vih->bmiHeader.biWidth;
+        height = vih->bmiHeader.biHeight;
+        if ((LONG)vih->bmiHeader.biHeight > 0)
+            vih->bmiHeader.biHeight = -vih->bmiHeader.biHeight;
+        vih->bmiHeader.biBitCount = 24;
+        vih->bmiHeader.biCompression = BI_RGB;
+    } else {
+        VIDEOINFOHEADER2 *vih = (VIDEOINFOHEADER2*)outpmt->pbFormat;
+        avgtime = vih->AvgTimePerFrame;
+        width = vih->bmiHeader.biWidth;
+        height = vih->bmiHeader.biHeight;
+        if ((LONG)vih->bmiHeader.biHeight > 0)
+            vih->bmiHeader.biHeight = -vih->bmiHeader.biHeight;
+        vih->bmiHeader.biBitCount = 24;
+        vih->bmiHeader.biCompression = BI_RGB;
+    }
+    if (!avgtime)
+        avgtime = 10000000 / 30;
+
+    outpmt->subtype = MEDIASUBTYPE_RGB24;
+
+    capsin = gst_caps_new_simple("video/x-raw-yuv",
+                                 "format", GST_TYPE_FOURCC, amt->subtype.Data1,
+                                 "width", G_TYPE_INT, width,
+                                 "height", G_TYPE_INT, height,
+                                 "framerate", GST_TYPE_FRACTION, 10000000, avgtime,
+                                 NULL);
+    capsout = gst_caps_new_simple("video/x-raw-rgb",
+                                  "endianness", G_TYPE_INT, 4321,
+                                  "width", G_TYPE_INT, width,
+                                  "height", G_TYPE_INT, height,
+                                  "framerate", GST_TYPE_FRACTION, 10000000, avgtime,
+                                  "bpp", G_TYPE_INT, 24,
+                                  "depth", G_TYPE_INT, 24,
+                                  "red_mask", G_TYPE_INT, 0xff,
+                                  "green_mask", G_TYPE_INT, 0xff00,
+                                  "blue_mask", G_TYPE_INT, 0xff0000,
+                                   NULL);
+
+    hr = Gstreamer_transform_ConnectInput(This, amt, capsin, capsout);
+    gst_caps_unref(capsin);
+    gst_caps_unref(capsout);
+
+    This->cbBuffer = width * height * 4;
+    return hr;
+}
+
+static const TransformFilterFuncTable Gstreamer_YUV_vtbl = {
+    Gstreamer_transform_DecideBufferSize,
+    Gstreamer_transform_ProcessBegin,
+    Gstreamer_transform_ProcessData,
+    Gstreamer_transform_ProcessEnd,
+    Gstreamer_YUV_QueryConnect,
+    Gstreamer_YUV_SetMediaType,
+    Gstreamer_YUV_ConnectInput,
+    Gstreamer_transform_Cleanup,
+    Gstreamer_transform_EndOfStream,
+    Gstreamer_transform_BeginFlush,
+    Gstreamer_transform_EndFlush,
+    Gstreamer_transform_NewSegment
+};
+
+IUnknown * CALLBACK Gstreamer_YUV_create(IUnknown *punkout, HRESULT *phr)
+{
+    IUnknown *obj = NULL;
+    if (!Gstreamer_init())
+    {
+        *phr = E_FAIL;
+        return NULL;
+    }
+    *phr = Gstreamer_transform_create(punkout, &CLSID_Gstreamer_YUV, "ffmpegcolorspace", &Gstreamer_YUV_vtbl, (LPVOID*)&obj);
+    return obj;
+}
+
 HRESULT WINAPI GSTTf_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
 {
     HRESULT hr;

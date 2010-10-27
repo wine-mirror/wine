@@ -45,6 +45,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(gstreamer);
 
 static const WCHAR wGstreamer_Splitter[] =
 {'G','S','t','r','e','a','m','e','r',' ','s','p','l','i','t','t','e','r',' ','f','i','l','t','e','r',0};
+static const WCHAR wGstreamer_YUV[] =
+{'G','S','t','r','e','a','m','e','r',' ','Y','U','V',' ','f','i','l','t','e','r',0};
 
 static WCHAR wNull[] = {'\0'};
 
@@ -93,6 +95,32 @@ static const AMOVIESETUP_FILTER amfSplitter =
     amfSplitPin
 };
 
+static const AMOVIESETUP_PIN amfYUVPin[] =
+{   {   wNull,
+        FALSE, FALSE, FALSE, FALSE,
+        &GUID_NULL,
+        NULL,
+        1,
+        amfMTvideo
+    },
+    {
+        wNull,
+        FALSE, TRUE, FALSE, FALSE,
+        &GUID_NULL,
+        NULL,
+        1,
+        amfMTvideo
+    },
+};
+
+static const AMOVIESETUP_FILTER amfYUV =
+{   &CLSID_Gstreamer_YUV,
+    wGstreamer_YUV,
+    MERIT_UNLIKELY,
+    2,
+    amfYUVPin
+};
+
 FactoryTemplate const g_Templates[] = {
     {
         wGstreamer_Splitter,
@@ -100,6 +128,13 @@ FactoryTemplate const g_Templates[] = {
         Gstreamer_Splitter_create,
         NULL,
         &amfSplitter,
+    },
+    {
+        wGstreamer_YUV,
+        &CLSID_Gstreamer_YUV,
+        Gstreamer_YUV_create,
+        NULL,
+        &amfYUV,
     },
 };
 
