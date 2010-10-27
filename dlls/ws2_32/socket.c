@@ -6333,7 +6333,8 @@ INT WINAPI WSALookupServiceEnd( HANDLE lookup )
 INT WINAPI WSALookupServiceNextA( HANDLE lookup, DWORD flags, LPDWORD len, LPWSAQUERYSETA results )
 {
     FIXME( "(%p 0x%08x %p %p) Stub!\n", lookup, flags, len, results );
-    return 0;
+    WSASetLastError(WSA_E_NO_MORE);
+    return SOCKET_ERROR;
 }
 
 /***********************************************************************
@@ -6342,7 +6343,8 @@ INT WINAPI WSALookupServiceNextA( HANDLE lookup, DWORD flags, LPDWORD len, LPWSA
 INT WINAPI WSALookupServiceNextW( HANDLE lookup, DWORD flags, LPDWORD len, LPWSAQUERYSETW results )
 {
     FIXME( "(%p 0x%08x %p %p) Stub!\n", lookup, flags, len, results );
-    return 0;
+    WSASetLastError(WSA_E_NO_MORE);
+    return SOCKET_ERROR;
 }
 
 /***********************************************************************
