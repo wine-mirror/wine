@@ -6,6 +6,7 @@ EXTRALIBS = @GSTREAMER_LIBS@ @LIBPTHREAD@
 C_SRCS = \
 	glibthread.c \
 	gstdemux.c \
+	gsttffilter.c \
 	main.c
 
 RC_SRCS = \
