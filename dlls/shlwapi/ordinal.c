@@ -4514,7 +4514,7 @@ HKEY WINAPI SHGetShellKey(DWORD flags, LPCWSTR sub_key, BOOL create)
     else
         size_user = 0;
 
-    path = HeapAlloc(GetProcessHeap(), 0, size_key+size_subkey+size_user);
+    path = HeapAlloc(GetProcessHeap(), 0, size_key+size_subkey+size_user+sizeof(WCHAR));
     if(!path) {
         ERR("Out of memory\n");
         return NULL;
