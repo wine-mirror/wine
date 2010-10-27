@@ -2043,12 +2043,24 @@ static HRESULT internal_parse(
                 SysFreeString(bstrData);
                 break;
             }
+
             if(IUnknown_QueryInterface(V_UNKNOWN(&varInput),
                         &IID_IPersistStream, (void**)&persistStream) == S_OK)
             {
+                hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+                if(hr != S_OK)
+                {
+                    IPersistStream_Release(persistStream);
+                    return hr;
+                }
+
                 hr = IPersistStream_Save(persistStream, stream, TRUE);
                 IPersistStream_Release(persistStream);
-                if(hr != S_OK) break;
+                if(hr != S_OK)
+                {
+                    IStream_Release(stream);
+                    break;
+                }
             }
             if(stream || IUnknown_QueryInterface(V_UNKNOWN(&varInput),
                         &IID_IStream, (void**)&stream) == S_OK)
