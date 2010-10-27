@@ -1240,6 +1240,20 @@ static void _test_textarea_put_readonly(unsigned line, IUnknown *unk, VARIANT_BO
     _test_textarea_readonly(line, unk, b);
 }
 
+#define test_textarea_type(t) _test_textarea_type(__LINE__,t)
+static void _test_textarea_type(unsigned line, IUnknown *unk)
+{
+    IHTMLTextAreaElement *textarea = _get_textarea_iface(line, unk);
+    BSTR type = (void*)0xdeadbeef;
+    HRESULT hres;
+
+    hres = IHTMLTextAreaElement_get_type(textarea, &type);
+    IHTMLTextAreaElement_Release(textarea);
+    ok_(__FILE__,line)(hres == S_OK, "get_type failed: %08x\n", hres);
+    ok_(__FILE__,line)(!strcmp_wa(type, "textarea"), "type = %s, expected textarea\n", wine_dbgstr_w(type));
+    SysFreeString(type);
+}
+
 #define test_comment_text(c,t) _test_comment_text(__LINE__,c,t)
 static void _test_comment_text(unsigned line, IUnknown *unk, const char *extext)
 {
@@ -6380,6 +6394,7 @@ static void test_elems2(IHTMLDocument2 *doc)
         test_textarea_readonly((IUnknown*)elem, VARIANT_FALSE);
         test_textarea_put_readonly((IUnknown*)elem, VARIANT_TRUE);
         test_textarea_put_readonly((IUnknown*)elem, VARIANT_FALSE);
+        test_textarea_type((IUnknown*)elem);
         IHTMLElement_Release(elem);
     }
 
