@@ -202,16 +202,50 @@ static HRESULT WINAPI HTMLFormElement_get_encoding(IHTMLFormElement *iface, BSTR
 
 static HRESULT WINAPI HTMLFormElement_put_method(IHTMLFormElement *iface, BSTR v)
 {
+    static const WCHAR postW[] = {'P','O','S','T',0};
+    static const WCHAR getW[] = {'G','E','T',0};
+
     HTMLFormElement *This = HTMLFORM_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, wine_dbgstr_w(v));
-    return E_NOTIMPL;
+    nsAString method_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, wine_dbgstr_w(v));
+
+    if(lstrcmpiW(v, postW) && lstrcmpiW(v, getW)) {
+        WARN("unrecognized method\n");
+        return E_INVALIDARG;
+    }
+
+    nsAString_InitDepend(&method_str, v);
+    nsres = nsIDOMHTMLFormElement_SetMethod(This->nsform, &method_str);
+    nsAString_Finish(&method_str);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLFormElement_get_method(IHTMLFormElement *iface, BSTR *p)
 {
     HTMLFormElement *This = HTMLFORM_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString method_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&method_str, NULL);
+    nsres = nsIDOMHTMLFormElement_GetMethod(This->nsform, &method_str);
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *method;
+        nsAString_GetData(&method_str, &method);
+
+        *p = SysAllocString(method);
+        if(!*p)
+            return E_OUTOFMEMORY;
+    }else
+        return E_FAIL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLFormElement_get_elements(IHTMLFormElement *iface, IDispatch **p)
