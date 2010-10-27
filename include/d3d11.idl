@@ -22,3 +22,5 @@ import "dxgi.idl";
 import "d3dcommon.idl";
 
 typedef D3D_SRV_DIMENSION D3D11_SRV_DIMENSION;
+
+typedef D3D_PRIMITIVE_TOPOLOGY D3D11_PRIMITIVE_TOPOLOGY;
