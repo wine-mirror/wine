@@ -1298,15 +1298,6 @@ static void libxmlFatalError(void *ctx, const char *msg, ...)
     DWORD len;
     va_list args;
 
-    if(!has_error_handler(This))
-    {
-        xmlStopParser(This->pParserCtxt);
-        This->ret = E_FAIL;
-        return;
-    }
-
-    FIXME("Error handling is not compatible.\n");
-
     va_start(args, msg);
     vsprintf(message, msg, args);
     va_end(args);
@@ -1318,6 +1309,16 @@ static void libxmlFatalError(void *ctx, const char *msg, ...)
         MultiByteToWideChar(CP_UNIXCP, 0, message, -1, error, len);
         TRACE("fatal error for %p: %s\n", This, debugstr_w(error));
     }
+
+    if(!has_error_handler(This))
+    {
+        xmlStopParser(This->pParserCtxt);
+        This->ret = E_FAIL;
+        heap_free(error);
+        return;
+    }
+
+    FIXME("Error handling is not compatible.\n");
 
     if(This->vbInterface)
     {
@@ -1788,7 +1789,7 @@ static HRESULT internal_parseBuffer(saxreader *This, const char *buffer, int siz
     locator->pParserCtxt->userData = locator;
 
     This->isParsing = TRUE;
-    if(xmlParseDocument(locator->pParserCtxt)) hr = E_FAIL;
+    if(xmlParseDocument(locator->pParserCtxt) == -1) hr = E_FAIL;
     else hr = locator->ret;
     This->isParsing = FALSE;
 
