@@ -340,28 +340,36 @@ static int check_platform( struct options *opts, const char *file )
 static char *get_lib_dir( struct options *opts )
 {
     static const char *stdlibpath[] = { LIBDIR, "/usr/lib", "/usr/local/lib", "/lib" };
+    static const char libwine[] = "/libwine.so";
     unsigned int i;
 
     for (i = 0; i < sizeof(stdlibpath)/sizeof(stdlibpath[0]); i++)
     {
-        char *p, *buffer = xmalloc( strlen(stdlibpath[i]) + sizeof("32/libwine.so") );
+        char *p, *buffer = xmalloc( strlen(stdlibpath[i]) + strlen(libwine) + 3 );
         strcpy( buffer, stdlibpath[i] );
         p = buffer + strlen(buffer);
         while (p > buffer && p[-1] == '/') p--;
-        strcpy( p, "/libwine.so" );
-        if (check_platform( opts, buffer )) return buffer;
+        strcpy( p, libwine );
+        if (check_platform( opts, buffer )) goto found;
         if (p > buffer + 2 && (!memcmp( p - 2, "32", 2 ) || !memcmp( p - 2, "64", 2 ))) p -= 2;
         if (opts->force_pointer_size == 4 || (!opts->force_pointer_size && opts->target_cpu != CPU_x86_64))
         {
-            strcpy( p, "32/libwine.so" );
-            if (check_platform( opts, buffer )) return buffer;
+            strcpy( p, "32" );
+            strcat( p, libwine );
+            if (check_platform( opts, buffer )) goto found;
         }
         if (opts->force_pointer_size == 8 || (!opts->force_pointer_size && opts->target_cpu == CPU_x86_64))
         {
-            strcpy( p, "64/libwine.so" );
-            if (check_platform( opts, buffer )) return buffer;
+            strcpy( p, "64" );
+            strcat( p, libwine );
+            if (check_platform( opts, buffer )) goto found;
         }
         free( buffer );
+        continue;
+
+    found:
+        buffer[strlen(buffer) - strlen(libwine)] = 0;
+        return buffer;
     }
     return xstrdup( LIBDIR );
 }
