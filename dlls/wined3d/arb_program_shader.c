@@ -933,7 +933,8 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
     /* oPos, oFog and oPts in D3D */
     static const char * const rastout_reg_names[] = {"TMP_OUT", "result.fogcoord", "result.pointsize"};
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    BOOL pshader = shader_is_pshader_version(This->baseShader.reg_maps.shader_version.type);
+    const struct shader_reg_maps *reg_maps = ins->ctx->reg_maps;
+    BOOL pshader = shader_is_pshader_version(reg_maps->shader_version.type);
     struct shader_arb_ctx_priv *ctx = ins->ctx->backend_data;
 
     *is_color = FALSE;
@@ -947,7 +948,7 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
         case WINED3DSPR_INPUT:
             if (pshader)
             {
-                if(This->baseShader.reg_maps.shader_version.major < 3)
+                if (reg_maps->shader_version.major < 3)
                 {
                     if (!reg->idx) strcpy(register_name, "fragment.color.primary");
                     else strcpy(register_name, "fragment.color.secondary");
@@ -972,7 +973,7 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
                                 sprintf(register_name, "out_of_bounds_%u", idx);
                             }
                         }
-                        else if(This->baseShader.reg_maps.input_registers & 0x0300)
+                        else if (reg_maps->input_registers & 0x0300)
                         {
                             /* There are two ways basically:
                              *
@@ -1036,7 +1037,8 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
                 BOOL aL = FALSE;
                 char rel_reg[50];
                 UINT rel_offset = ((IWineD3DVertexShaderImpl *)This)->rel_offset;
-                if(This->baseShader.reg_maps.shader_version.major < 2) {
+                if (reg_maps->shader_version.major < 2)
+                {
                     sprintf(rel_reg, "A0.x");
                 } else {
                     shader_arb_get_src_param(ins, reg->rel_addr, 0, rel_reg);
@@ -1059,7 +1061,7 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
             }
             else
             {
-                if (This->baseShader.reg_maps.usesrelconstF)
+                if (reg_maps->usesrelconstF)
                     sprintf(register_name, "C[%u]", reg->idx);
                 else
                     sprintf(register_name, "C%u", reg->idx);
@@ -1067,9 +1069,11 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
             break;
 
         case WINED3DSPR_TEXTURE: /* case WINED3DSPR_ADDR: */
-            if (pshader) {
-                if(This->baseShader.reg_maps.shader_version.major == 1 &&
-                   This->baseShader.reg_maps.shader_version.minor <= 3) {
+            if (pshader)
+            {
+                if (reg_maps->shader_version.major == 1
+                        && reg_maps->shader_version.minor <= 3)
+                {
                     /* In ps <= 1.3, Tx is a temporary register as destination to all instructions,
                      * and as source to most instructions. For some instructions it is the texcoord
                      * input. Those instructions know about the special use
@@ -1082,7 +1086,7 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
             }
             else
             {
-                if(This->baseShader.reg_maps.shader_version.major == 1 || ctx->target_version >= NV2)
+                if (reg_maps->shader_version.major == 1 || ctx->target_version >= NV2)
                 {
                     sprintf(register_name, "A%u", reg->idx);
                 }
@@ -1101,7 +1105,7 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
             else
             {
                 if(ctx->cur_ps_args->super.srgb_correction) FIXME("sRGB correction on higher render targets\n");
-                if(This->baseShader.reg_maps.highest_render_target > 0)
+                if (reg_maps->highest_render_target > 0)
                 {
                     sprintf(register_name, "result.color[%u]", reg->idx);
                 }
@@ -1134,7 +1138,7 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
             }
             else
             {
-                if(This->baseShader.reg_maps.shader_version.major < 3)
+                if (reg_maps->shader_version.major < 3)
                 {
                     strcpy(register_name, ctx->texcrd_output[reg->idx]);
                 }
