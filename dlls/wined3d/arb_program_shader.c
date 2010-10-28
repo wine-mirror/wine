@@ -1744,11 +1744,12 @@ static void shader_hw_nop(const struct wined3d_shader_instruction *ins)
 static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    BOOL pshader = shader_is_pshader_version(shader->baseShader.reg_maps.shader_version.type);
+    const struct shader_reg_maps *reg_maps = ins->ctx->reg_maps;
+    BOOL pshader = shader_is_pshader_version(reg_maps->shader_version.type);
     struct shader_arb_ctx_priv *ctx = ins->ctx->backend_data;
-    const char *zero = arb_get_helper_value(shader->baseShader.reg_maps.shader_version.type, ARB_ZERO);
-    const char *one = arb_get_helper_value(shader->baseShader.reg_maps.shader_version.type, ARB_ONE);
-    const char *two = arb_get_helper_value(shader->baseShader.reg_maps.shader_version.type, ARB_TWO);
+    const char *zero = arb_get_helper_value(reg_maps->shader_version.type, ARB_ZERO);
+    const char *one = arb_get_helper_value(reg_maps->shader_version.type, ARB_ONE);
+    const char *two = arb_get_helper_value(reg_maps->shader_version.type, ARB_TWO);
 
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
     char src0_param[256];
@@ -1787,8 +1788,9 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
         shader_addline(buffer, "MUL A0_SHADOW%s, TA, A0_SHADOW;\n", write_mask);
 
         ((struct shader_arb_ctx_priv *)ins->ctx->backend_data)->addr_reg[0] = '\0';
-    } else if (ins->ctx->reg_maps->shader_version.major == 1
-          && !shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type)
+    }
+    else if (reg_maps->shader_version.major == 1
+          && !shader_is_pshader_version(reg_maps->shader_version.type)
           && ins->dst[0].reg.type == WINED3DSPR_ADDR)
     {
         src0_param[0] = '\0';
