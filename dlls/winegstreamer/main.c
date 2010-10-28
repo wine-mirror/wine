@@ -112,6 +112,22 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     return STRMBASE_DllMain(hInstDLL, fdwReason, lpv);
 }
 
+/***********************************************************************
+ *    DllCanUnloadNow
+ */
+HRESULT WINAPI DllCanUnloadNow(void)
+{
+    return STRMBASE_DllCanUnloadNow();
+}
+
+/***********************************************************************
+ *    DllGetClassObject
+ */
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+{
+    return STRMBASE_DllGetClassObject( rclsid, riid, ppv );
+}
+
 /* GStreamer common functions */
 
 void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt)
