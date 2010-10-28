@@ -690,6 +690,119 @@ IUnknown * CALLBACK Gstreamer_YUV_create(IUnknown *punkout, HRESULT *phr)
     return obj;
 }
 
+static HRESULT WINAPI Gstreamer_AudioConvert_QueryConnect(TransformFilter *iface, const AM_MEDIA_TYPE *amt) {
+    GstTfImpl *This = (GstTfImpl*)iface;
+    TRACE("%p %p\n", This, amt);
+    dump_AM_MEDIA_TYPE(amt);
+
+    if (!IsEqualGUID(&amt->majortype, &MEDIATYPE_Audio) ||
+        !IsEqualGUID(&amt->subtype, &MEDIASUBTYPE_PCM) ||
+        !IsEqualGUID(&amt->formattype, &FORMAT_WaveFormatEx))
+        return S_FALSE;
+    return S_OK;
+}
+
+static HRESULT WINAPI Gstreamer_AudioConvert_ConnectInput(TransformFilter *tf, PIN_DIRECTION dir, IPin *pin)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI Gstreamer_AudioConvert_SetMediaType(TransformFilter *tf, PIN_DIRECTION dir, const AM_MEDIA_TYPE *amt) {
+    GstTfImpl *This = (GstTfImpl*)tf;
+    GstCaps *capsin, *capsout;
+    AM_MEDIA_TYPE *outpmt = &This->tf.pmt;
+    WAVEFORMATEX *inwfe;
+    WAVEFORMATEX *outwfe;
+    WAVEFORMATEXTENSIBLE *outwfx;
+    HRESULT hr;
+    int inisfloat = 0, indepth;
+
+    if (dir != PINDIR_INPUT)
+        return S_OK;
+
+    if (Gstreamer_AudioConvert_QueryConnect(&This->tf, amt) == S_FALSE || !amt->pbFormat)
+        return E_FAIL;
+
+    FreeMediaType(outpmt);
+    *outpmt = *amt;
+    outpmt->pUnk = NULL;
+    outpmt->cbFormat = sizeof(WAVEFORMATEXTENSIBLE);
+    outpmt->pbFormat = CoTaskMemAlloc(outpmt->cbFormat);
+
+    inwfe = (WAVEFORMATEX*)amt->pbFormat;
+    indepth = inwfe->wBitsPerSample;
+    if (inwfe->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
+        WAVEFORMATEXTENSIBLE *inwfx = (WAVEFORMATEXTENSIBLE*)inwfe;
+        inisfloat = IsEqualGUID(&inwfx->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT);
+        if (inwfx->Samples.wValidBitsPerSample)
+            indepth = inwfx->Samples.wValidBitsPerSample;
+    }
+
+    capsin = gst_caps_new_simple(inisfloat ? "audio/x-raw-float" : "audio/x-raw-int",
+                                 "endianness", G_TYPE_INT, 1234,
+                                 "width", G_TYPE_INT, inwfe->wBitsPerSample,
+                                 "depth", G_TYPE_INT, indepth,
+                                 "channels", G_TYPE_INT, inwfe->nChannels,
+                                 "rate", G_TYPE_INT, inwfe->nSamplesPerSec,
+                                  NULL);
+
+    outwfe = (WAVEFORMATEX*)outpmt->pbFormat;
+    outwfx = (WAVEFORMATEXTENSIBLE*)outwfe;
+    outwfe->wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+    outwfe->nChannels = 2;
+    outwfe->nSamplesPerSec = inwfe->nSamplesPerSec;
+    outwfe->wBitsPerSample = 16;
+    outwfe->nBlockAlign = outwfe->nChannels * outwfe->wBitsPerSample / 8;
+    outwfe->nAvgBytesPerSec = outwfe->nBlockAlign * outwfe->nSamplesPerSec;
+    outwfe->cbSize = sizeof(*outwfx) - sizeof(*outwfe);
+    outwfx->Samples.wValidBitsPerSample = outwfe->wBitsPerSample;
+    outwfx->dwChannelMask = SPEAKER_FRONT_LEFT|SPEAKER_FRONT_RIGHT;
+    outwfx->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+
+    capsout = gst_caps_new_simple("audio/x-raw-int",
+                                  "endianness", G_TYPE_INT, 1234,
+                                  "width", G_TYPE_INT, outwfe->wBitsPerSample,
+                                  "depth", G_TYPE_INT, outwfx->Samples.wValidBitsPerSample,
+                                  "channels", G_TYPE_INT, outwfe->nChannels,
+                                  "rate", G_TYPE_INT, outwfe->nSamplesPerSec,
+                                   NULL);
+
+    hr = Gstreamer_transform_ConnectInput(This, amt, capsin, capsout);
+    FIXME("%08x\n", hr);
+    gst_caps_unref(capsin);
+    gst_caps_unref(capsout);
+
+    This->cbBuffer = inwfe->nAvgBytesPerSec;
+    return hr;
+}
+
+static const TransformFilterFuncTable Gstreamer_AudioConvert_vtbl = {
+    Gstreamer_transform_DecideBufferSize,
+    Gstreamer_transform_ProcessBegin,
+    Gstreamer_transform_ProcessData,
+    Gstreamer_transform_ProcessEnd,
+    Gstreamer_AudioConvert_QueryConnect,
+    Gstreamer_AudioConvert_SetMediaType,
+    Gstreamer_AudioConvert_ConnectInput,
+    Gstreamer_transform_Cleanup,
+    Gstreamer_transform_EndOfStream,
+    Gstreamer_transform_BeginFlush,
+    Gstreamer_transform_EndFlush,
+    Gstreamer_transform_NewSegment
+};
+
+IUnknown * CALLBACK Gstreamer_AudioConvert_create(IUnknown *punkout, HRESULT *phr)
+{
+    IUnknown *obj = NULL;
+    if (!Gstreamer_init())
+    {
+        *phr = E_FAIL;
+        return NULL;
+    }
+    *phr = Gstreamer_transform_create(punkout, &CLSID_Gstreamer_AudioConvert, "audioconvert", &Gstreamer_AudioConvert_vtbl, (LPVOID*)&obj);
+    return obj;
+}
+
 HRESULT WINAPI GSTTf_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
 {
     HRESULT hr;
