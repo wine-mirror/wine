@@ -156,6 +156,14 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 }
 
 /***********************************************************************
+ *    DllGetClassObject
+ */
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+{
+    return STRMBASE_DllGetClassObject( rclsid, riid, ppv );
+}
+
+/***********************************************************************
  *    DllRegisterServer (QCAP.@)
  */
 HRESULT WINAPI DllRegisterServer(void)
