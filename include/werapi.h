@@ -25,6 +25,9 @@
 extern "C" {
 #endif
 
+
+typedef HANDLE HREPORT;
+
 typedef enum _WER_REGISTER_FILE_TYPE
 {
     WerRegFileTypeUserDocument = 1,
@@ -32,9 +35,34 @@ typedef enum _WER_REGISTER_FILE_TYPE
     WerRegFileTypeMax
 } WER_REGISTER_FILE_TYPE;
 
+typedef struct _WER_REPORT_INFORMATION
+{
+    DWORD   dwSize;
+    HANDLE  hProcess;
+    WCHAR   wzConsentKey[64];
+    WCHAR   wzFriendlyEventName[128];
+    WCHAR   wzApplicationName[128];
+    WCHAR   wzApplicationPath[MAX_PATH];
+    WCHAR   wzDescription[512];
+    HWND    hwndParent;
+} WER_REPORT_INFORMATION, *PWER_REPORT_INFORMATION;
+
+
+typedef enum _WER_REPORT_TYPE
+{
+    WerReportNonCritical = 0,
+    WerReportCritical,
+    WerReportApplicationCrash,
+    WerReportApplicationHang,
+    WerReportKernel,
+    WerReportInvalid
+} WER_REPORT_TYPE;
+
 HRESULT WINAPI WerAddExcludedApplication(PCWSTR, BOOL);
 HRESULT WINAPI WerRegisterFile(PCWSTR file, WER_REGISTER_FILE_TYPE regfiletype, DWORD flags);
 HRESULT WINAPI WerRemoveExcludedApplication(PCWSTR, BOOL);
+HRESULT WINAPI WerReportCloseHandle(HREPORT);
+HRESULT WINAPI WerReportCreate(PCWSTR, WER_REPORT_TYPE, PWER_REPORT_INFORMATION, HREPORT*);
 
 #ifdef __cplusplus
 }
