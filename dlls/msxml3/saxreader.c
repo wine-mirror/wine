@@ -132,6 +132,12 @@ static inline BOOL has_content_handler(const saxlocator *locator)
            (!locator->vbInterface && locator->saxreader->contentHandler);
 }
 
+static inline BOOL has_error_handler(const saxlocator *locator)
+{
+    return (locator->vbInterface && locator->saxreader->vberrorHandler) ||
+          (!locator->vbInterface && locator->saxreader->errorHandler);
+}
+
 static HRESULT namespacePush(saxlocator *locator, int ns)
 {
     if(locator->nsStackLast>=locator->nsStackSize)
@@ -202,8 +208,7 @@ static void format_error_message_from_id(saxlocator *This, HRESULT hr)
     xmlStopParser(This->pParserCtxt);
     This->ret = hr;
 
-    if((This->vbInterface && This->saxreader->vberrorHandler)
-            || (!This->vbInterface && This->saxreader->errorHandler))
+    if(has_error_handler(This))
     {
         WCHAR msg[1024];
         if(!FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM,
@@ -1299,8 +1304,7 @@ static void libxmlFatalError(void *ctx, const char *msg, ...)
     DWORD len;
     va_list args;
 
-    if((This->vbInterface && !This->saxreader->vberrorHandler)
-            || (!This->vbInterface && !This->saxreader->errorHandler))
+    if(!has_error_handler(This))
     {
         xmlStopParser(This->pParserCtxt);
         This->ret = E_FAIL;
