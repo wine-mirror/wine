@@ -1302,8 +1302,9 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
     static const char * const hwrastout_reg_names[] = {"OUT[10]", "OUT[11].x", "OUT[11].y"};
 
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
+    const struct shader_reg_maps *reg_maps = ins->ctx->reg_maps;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
-    char pshader = shader_is_pshader_version(This->baseShader.reg_maps.shader_version.type);
+    char pshader = shader_is_pshader_version(reg_maps->shader_version.type);
 
     *is_color = FALSE;
 
@@ -1324,10 +1325,10 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             }
 
             /* pixel shaders >= 3.0 */
-            if (This->baseShader.reg_maps.shader_version.major >= 3)
+            if (reg_maps->shader_version.major >= 3)
             {
                 DWORD idx = ((IWineD3DPixelShaderImpl *)This)->input_reg_map[reg->idx];
-                unsigned int in_count = vec4_varyings(This->baseShader.reg_maps.shader_version.major, gl_info);
+                unsigned int in_count = vec4_varyings(reg_maps->shader_version.major, gl_info);
 
                 if (reg->rel_addr)
                 {
