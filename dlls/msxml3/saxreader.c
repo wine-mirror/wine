@@ -182,23 +182,17 @@ static BSTR bstr_from_xmlCharN(const xmlChar *buf, int len)
 
 static BSTR QName_from_xmlChar(const xmlChar *prefix, const xmlChar *name)
 {
-    DWORD dLen, dLast;
+    xmlChar *qname;
     BSTR bstr;
 
     if(!name) return NULL;
 
-    if(!prefix || *prefix=='\0')
+    if(!prefix || !*prefix)
         return bstr_from_xmlChar(name);
 
-    dLen = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)prefix, -1, NULL, 0)
-        + MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)name, -1, NULL, 0);
-    bstr = SysAllocStringLen(NULL, dLen-1);
-    if(!bstr)
-        return NULL;
-
-    dLast = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)prefix, -1, bstr, dLen);
-    bstr[dLast-1] = ':';
-    MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)name, -1, &bstr[dLast], dLen-dLast);
+    qname = xmlBuildQName(name, prefix, NULL, 0);
+    bstr = bstr_from_xmlChar(qname);
+    xmlFree(qname);
 
     return bstr;
 }
