@@ -555,6 +555,28 @@ static void test_CleanupPathA(CHAR *origdir, CHAR *curdir)
   ok(RemoveDirectoryA(curdir),"RemoveDirectoryA failed\n");
 }
 
+/* test that short path name functions work regardless of case */
+static void test_ShortPathCase(const char *tmpdir, const char *dirname,
+                               const char *filename)
+{
+    char buf[MAX_PATH], shortbuf[MAX_PATH];
+    HANDLE hndl;
+    int i;
+
+    snprintf(buf,sizeof(buf),"%s\\%s\\%s",tmpdir,dirname,filename);
+    GetShortPathNameA(buf,shortbuf,sizeof(shortbuf));
+    hndl = CreateFileA(shortbuf,GENERIC_READ|GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
+    ok(hndl!=INVALID_HANDLE_VALUE,"CreateFileA failed (%d)\n",GetLastError());
+    CloseHandle(hndl);
+    /* Now for the real test */
+    for(i=0;i<strlen(shortbuf);i++)
+        if (i % 2)
+            shortbuf[i] = toupper(shortbuf[i]);
+    hndl = CreateFileA(shortbuf,GENERIC_READ|GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
+    ok(hndl!=INVALID_HANDLE_VALUE,"CreateFileA failed (%d)\n",GetLastError());
+    CloseHandle(hndl);
+}
+
 /* This routine will test Get(Full|Short|Long)PathNameA */
 static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
 {
@@ -878,6 +900,10 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
     sprintf(tmpstr,"Long File %c",funny_chars[i]);
     test_FunnyChars(curdir,curdir_short,tmpstr,valid,tmpstr1);
   }
+  /* Now try it on mixed case short names */
+  test_ShortPathCase(curdir,SHORTDIR,LONGFILE);
+  test_ShortPathCase(curdir,LONGDIR,SHORTFILE);
+  test_ShortPathCase(curdir,LONGDIR,LONGFILE);
 }
 
 static void test_GetTempPathA(char* tmp_dir)
