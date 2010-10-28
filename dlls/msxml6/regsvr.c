@@ -370,6 +370,14 @@ static struct regsvr_coclass const coclass_list[] = {
     "Msxml2.MXXMLWriter",
     "6.0"
     },
+    {   &CLSID_SAXXMLReader60,
+        "SAX XML Reader 6.0",
+        NULL,
+        "msxml6.dll",
+        "Both",
+        "Msxml2.SAXXMLReader.6.0",
+        "6.0"
+    },
     {   &CLSID_SAXAttributes60,
     "SAX Attribute 6.0",
     NULL,

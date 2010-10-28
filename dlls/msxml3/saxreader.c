@@ -1241,16 +1241,19 @@ static void libxmlSetDocumentLocator(
         xmlSAXLocatorPtr loc)
 {
     saxlocator *This = ctx;
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
-    if(This->vbInterface)
-        hr = IVBSAXContentHandler_putref_documentLocator(
-                This->saxreader->vbcontentHandler,
-                (IVBSAXLocator*)&This->lpVBSAXLocatorVtbl);
-    else
-        hr = ISAXContentHandler_putDocumentLocator(
-                This->saxreader->contentHandler,
-                (ISAXLocator*)&This->lpSAXLocatorVtbl);
+    if(has_content_handler(This))
+    {
+        if(This->vbInterface)
+            hr = IVBSAXContentHandler_putref_documentLocator(
+                    This->saxreader->vbcontentHandler,
+                    (IVBSAXLocator*)&This->lpVBSAXLocatorVtbl);
+        else
+            hr = ISAXContentHandler_putDocumentLocator(
+                    This->saxreader->contentHandler,
+                    (ISAXLocator*)&This->lpSAXLocatorVtbl);
+    }
 
     if(FAILED(hr))
         format_error_message_from_id(This, hr);
