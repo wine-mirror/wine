@@ -5065,11 +5065,12 @@ static inline BOOL get_bool_const(const struct wined3d_shader_instruction *ins, 
 static void get_loop_control_const(const struct wined3d_shader_instruction *ins,
         IWineD3DBaseShaderImpl *This, UINT idx, struct wined3d_shader_loop_control *loop_control)
 {
+    const struct shader_reg_maps *reg_maps = ins->ctx->reg_maps;
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
 
     /* Integer constants can either be a local constant, or they can be stored in the shader
      * type specific compile args. */
-    if (This->baseShader.reg_maps.local_int_consts & (1 << idx))
+    if (reg_maps->local_int_consts & (1 << idx))
     {
         const local_constant *constant;
 
@@ -5092,7 +5093,7 @@ static void get_loop_control_const(const struct wined3d_shader_instruction *ins,
         return;
     }
 
-    switch (This->baseShader.reg_maps.shader_version.type)
+    switch (reg_maps->shader_version.type)
     {
         case WINED3D_SHADER_TYPE_VERTEX:
             /* Count and aL start value are unsigned */
@@ -5109,7 +5110,7 @@ static void get_loop_control_const(const struct wined3d_shader_instruction *ins,
             break;
 
         default:
-            FIXME("Unhandled shader type %#x.\n", This->baseShader.reg_maps.shader_version.type);
+            FIXME("Unhandled shader type %#x.\n", reg_maps->shader_version.type);
             break;
     }
 }
