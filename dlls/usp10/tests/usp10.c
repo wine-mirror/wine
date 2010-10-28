@@ -1306,7 +1306,8 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
  */
 
     HRESULT         hr;
-    WCHAR           teststr1[] = {'T', 'e', 's', 't', 'e', 'a', 'b', ' ', 'a', '\0'};
+    static const WCHAR teststr1[]  = {0x05e9, 'i', 0x05dc, 'n', 0x05d5, 'e', 0x05dd, '.',0};
+    static const BOOL rtl[] = {1, 0, 1, 0, 1, 0, 1, 0};
     void            *String = (WCHAR *) &teststr1;      /* ScriptStringAnalysis needs void */
     int             String_len = (sizeof(teststr1)/sizeof(WCHAR))-1;
     int             Glyphs = String_len * 2 + 16;       /* size of buffer as recommended  */
@@ -1323,6 +1324,7 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
     int             iTrailing;
     int             Cp;                                  /* Character position in string */
     int             X;
+    int             trail,lead;
     BOOL            fTrailing;
 
     /* Test with hdc, this should be a valid test
@@ -1356,75 +1358,110 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
              * returns the beginning of the next character and iTrailing is FALSE.  So for this
              * loop iTrailing will be FALSE in both cases.
              */
-            fTrailing = FALSE;
-            hr = ScriptStringCPtoX(ssa, Cp, fTrailing, &X);
+            hr = ScriptStringCPtoX(ssa, Cp, TRUE, &trail);
             ok(hr == S_OK, "ScriptStringCPtoX should return S_OK not %08x\n", hr);
-            hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
-            ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
-            ok(Cp == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp, Ch, X);
-            ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = %d\n", 
-                                  iTrailing, X);
-            fTrailing = TRUE;
-            hr = ScriptStringCPtoX(ssa, Cp, fTrailing, &X);
+            hr = ScriptStringCPtoX(ssa, Cp, FALSE, &lead);
             ok(hr == S_OK, "ScriptStringCPtoX should return S_OK not %08x\n", hr);
-            hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
-            ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
+            if (rtl[Cp])
+                todo_wine ok(lead > trail, "Leading values should be after trialing for rtl chracters(%i)\n",Cp);
+            else
+                ok(lead < trail, "Trailing values should be after leading for ltr chracters(%i)\n",Cp);
 
-            /*
-             * Check that character position returned by ScriptStringXtoCP in Ch matches the
-             * one input to ScriptStringCPtoX.  This means that the Cp to X position and back
-             * again works
-             */
-            ok(Cp + 1 == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp + 1, Ch, X);
-            ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = %d\n", 
-                                   iTrailing, X);
+            /* move by 1 pixel so that we are not inbetween 2 characters.  That could result in being the lead of a rtl and
+               at the same time the trail of an ltr */
+
+            /* inside the leading edge */
+            X = lead;
+            if (rtl[Cp]) X--; else X++;
+            hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
+            ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
+            if (rtl[Cp]) todo_wine
+            ok(Cp == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp, Ch, trail);
+            if (rtl[Cp]) todo_wine
+            ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = %d\n",
+                                  iTrailing, X);
+
+            /* inside the trailing edge */
+            X = trail;
+            if (rtl[Cp]) X++; else X--;
+            hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
+            ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
+            if (rtl[Cp]) todo_wine
+            ok(Cp == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp, Ch, trail);
+            if (rtl[Cp]) todo_wine
+            ok(iTrailing == TRUE, "ScriptStringXtoCP should return iTrailing = 1 not %d for X = %d\n",
+                                  iTrailing, X);
+
+            /* outside the "trailing" edge */
+            if (Cp < String_len-1)
+            {
+                if (rtl[Cp]) X = lead; else X = trail;
+                X++;
+                hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
+                ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
+                if (rtl[Cp]) todo_wine
+                ok(Cp + 1 == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp + 1, Ch, trail);
+                if (rtl[Cp+1])
+                    todo_wine ok(iTrailing == TRUE, "ScriptStringXtoCP should return iTrailing = 1 not %d for X = %d\n",
+                                          iTrailing, X);
+                else
+                    ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = %d\n",
+                                          iTrailing, X);
+            }
+
+            /* outside the "leading" edge */
+            if (Cp != 0)
+            {
+                if (rtl[Cp]) X = trail; else X = lead;
+                X--;
+                hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
+                ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
+                if (rtl[Cp]) todo_wine
+                ok(Cp - 1 == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp - 1, Ch, trail);
+                if (Cp != 0  && rtl[Cp-1])
+                    todo_wine ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = %d\n",
+                                          iTrailing, X);
+                else
+                    ok(iTrailing == TRUE, "ScriptStringXtoCP should return iTrailing = 1 not %d for X = %d\n",
+                                          iTrailing, X);
+            }
         }
-        /*
-         * This test is to check that if the X position is just inside the trailing edge of the
-         * character then iTrailing will indicate the trailing edge, ie. TRUE
-         */
-        fTrailing = TRUE;
-        Cp = 3;
-        hr = ScriptStringCPtoX(ssa, Cp, fTrailing, &X);
-        ok(hr == S_OK, "ScriptStringCPtoX should return S_OK not %08x\n", hr);
-        X--;                                /* put X just inside the trailing edge */
-        hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
-        ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
-        ok(Cp == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp, Ch, X);
-        ok(iTrailing == TRUE, "ScriptStringXtoCP should return iTrailing = 1 not %d for X = %d\n", 
-                                  iTrailing, X);
 
-        /*
-         * This test is to check that if the X position is just outside the trailing edge of the
-         * character then iTrailing will indicate the leading edge, ie. FALSE, and Ch will indicate
-         * the next character, ie. Cp + 1 
-         */
-        fTrailing = TRUE;
-        Cp = 3;
-        hr = ScriptStringCPtoX(ssa, Cp, fTrailing, &X);
-        ok(hr == S_OK, "ScriptStringCPtoX should return S_OK not %08x\n", hr);
-        X++;                                /* put X just outside the trailing edge */
-        hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
-        ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
-        ok(Cp + 1 == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp + 1, Ch, X);
-        ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = %d\n", 
-                                  iTrailing, X);
+        /* Check beyond the leading boundry of the whole string */
+        if (rtl[0])
+        {
+            /* having a leading rtl character seems to confuse usp */
+            /* this looks to be a windows bug we should emulate */
+            hr = ScriptStringCPtoX(ssa, 0, TRUE, &X);
+            X--;
+            hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
+            ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
+            todo_wine ok(Ch == 1, "ScriptStringXtoCP should return Ch = 1 not %d for X outside leading edge when rtl\n", Ch);
+            todo_wine ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = outside leading edge when rtl\n",
+                                       iTrailing);
+        }
+        else
+        {
+            hr = ScriptStringCPtoX(ssa, 0, FALSE, &X);
+            X--;
+            hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
+            ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
+            ok(Ch == -1, "ScriptStringXtoCP should return Ch = -1 not %d for X outside leading edge\n", Ch);
+            ok(iTrailing == TRUE, "ScriptStringXtoCP should return iTrailing = 1 not %d for X = outside leading edge\n",
+                                       iTrailing);
+        }
 
-        /*
-         * This test is to check that if the X position is just outside the leading edge of the
-         * character then iTrailing will indicate the trailing edge, ie. TRUE, and Ch will indicate
-         * the next character down , ie. Cp - 1 
-         */
-        fTrailing = FALSE;
-        Cp = 3;
-        hr = ScriptStringCPtoX(ssa, Cp, fTrailing, &X);
-        ok(hr == S_OK, "ScriptStringCPtoX should return S_OK not %08x\n", hr);
-        X--;                                /* put X just outside the leading edge */
+        /* Check beyond the end boundry of the whole string */
+        if (rtl[String_len-1])
+            hr = ScriptStringCPtoX(ssa, String_len-1, FALSE, &X);
+        else
+            hr = ScriptStringCPtoX(ssa, String_len-1, TRUE, &X);
+        X++;
         hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
         ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
-        ok(Cp - 1 == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp - 1, Ch, X);
-        ok(iTrailing == TRUE, "ScriptStringXtoCP should return iTrailing = 1 not %d for X = %d\n", 
-                                  iTrailing, X);
+        ok(Ch == String_len, "ScriptStringXtoCP should return Ch = %i not %d for X outside trailing edge\n", String_len, Ch);
+        ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = outside traling edge\n",
+                                   iTrailing);
 
         /*
          * Cleanup the SSA for the next round of tests
@@ -1443,11 +1480,11 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
 
         /*
          * When ScriptStringCPtoX is called with a character position Cp that exceeds the
-         * string length, return E_INVALIDARG.  This also invalidates the ssa so a 
+         * string length, return E_INVALIDARG.  This also invalidates the ssa so a
          * ScriptStringFree should also fail.
          */
         fTrailing = FALSE;
-        Cp = String_len + 1; 
+        Cp = String_len + 1;
         hr = ScriptStringCPtoX(ssa, Cp, fTrailing, &X);
         ok(hr == E_INVALIDARG, "ScriptStringCPtoX should return E_INVALIDARG not %08x\n", hr);
 
