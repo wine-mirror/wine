@@ -5034,13 +5034,14 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
 
 static inline BOOL get_bool_const(const struct wined3d_shader_instruction *ins, IWineD3DBaseShaderImpl *This, DWORD idx)
 {
-    BOOL vshader = shader_is_vshader_version(This->baseShader.reg_maps.shader_version.type);
+    const struct shader_reg_maps *reg_maps = ins->ctx->reg_maps;
+    BOOL vshader = shader_is_vshader_version(reg_maps->shader_version.type);
     WORD bools = 0;
     WORD flag = (1 << idx);
     const local_constant *constant;
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
 
-    if(This->baseShader.reg_maps.local_bool_consts & flag)
+    if (reg_maps->local_bool_consts & flag)
     {
         /* What good is a if(bool) with a hardcoded local constant? I don't know, but handle it */
         LIST_FOR_EACH_ENTRY(constant, &This->baseShader.constantsB, local_constant, entry)
