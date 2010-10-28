@@ -47,6 +47,8 @@ static const WCHAR wGstreamer_Splitter[] =
 {'G','S','t','r','e','a','m','e','r',' ','s','p','l','i','t','t','e','r',' ','f','i','l','t','e','r',0};
 static const WCHAR wGstreamer_YUV[] =
 {'G','S','t','r','e','a','m','e','r',' ','Y','U','V',' ','f','i','l','t','e','r',0};
+static const WCHAR wGstreamer_Mp3[] =
+{'G','S','t','r','e','a','m','e','r',' ','M','p','3',' ','f','i','l','t','e','r',0};
 
 static WCHAR wNull[] = {'\0'};
 
@@ -121,6 +123,32 @@ static const AMOVIESETUP_FILTER amfYUV =
     amfYUVPin
 };
 
+AMOVIESETUP_PIN amfMp3Pin[] =
+{   {   wNull,
+        FALSE, FALSE, FALSE, FALSE,
+        &GUID_NULL,
+        NULL,
+        1,
+        amfMTaudio
+    },
+    {
+        wNull,
+        FALSE, TRUE, FALSE, FALSE,
+        &GUID_NULL,
+        NULL,
+        1,
+        amfMTaudio
+    },
+};
+
+AMOVIESETUP_FILTER const amfMp3 =
+{   &CLSID_Gstreamer_Mp3,
+    wGstreamer_Mp3,
+    MERIT_NORMAL,
+    2,
+    amfMp3Pin
+};
+
 FactoryTemplate const g_Templates[] = {
     {
         wGstreamer_Splitter,
@@ -135,6 +163,13 @@ FactoryTemplate const g_Templates[] = {
         Gstreamer_YUV_create,
         NULL,
         &amfYUV,
+    },
+    {
+        wGstreamer_Mp3,
+        &CLSID_Gstreamer_Mp3,
+        Gstreamer_Mp3_create,
+        NULL,
+        &amfMp3,
     },
 };
 

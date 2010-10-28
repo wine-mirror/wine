@@ -47,6 +47,7 @@
 #include "wine/debug.h"
 
 #include "initguid.h"
+DEFINE_GUID(WMMEDIASUBTYPE_MP3, 0x00000055, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
 
 WINE_DEFAULT_DEBUG_CHANNEL(gstreamer);
 
@@ -439,6 +440,130 @@ static HRESULT Gstreamer_transform_create(IUnknown *punkout, const CLSID *clsid,
     *obj = This;
 
     return S_OK;
+}
+
+static HRESULT WINAPI Gstreamer_Mp3_QueryConnect(TransformFilter *iface, const AM_MEDIA_TYPE *amt) {
+    GstTfImpl *This = (GstTfImpl*)iface;
+    TRACE("%p %p\n", This, amt);
+    dump_AM_MEDIA_TYPE(amt);
+
+    if ( (!IsEqualGUID(&amt->majortype, &MEDIATYPE_Audio) &&
+          !IsEqualGUID(&amt->majortype, &MEDIATYPE_Stream)) ||
+         (!IsEqualGUID(&amt->subtype, &MEDIASUBTYPE_MPEG1AudioPayload) &&
+          !IsEqualGUID(&amt->subtype, &WMMEDIASUBTYPE_MP3))
+        || !IsEqualGUID(&amt->formattype, &FORMAT_WaveFormatEx))
+        return S_FALSE;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI Gstreamer_Mp3_SetMediaType(TransformFilter *tf, PIN_DIRECTION dir, const AM_MEDIA_TYPE *amt) {
+    GstTfImpl *This = (GstTfImpl*)tf;
+    GstCaps *capsin, *capsout;
+    AM_MEDIA_TYPE *outpmt = &This->tf.pmt;
+    WAVEFORMATEX *wfx, *wfxin;
+    HRESULT hr;
+    int layer;
+
+    if (dir != PINDIR_INPUT)
+        return S_OK;
+
+    if (Gstreamer_Mp3_QueryConnect(&This->tf, amt) == S_FALSE || !amt->pbFormat)
+        return VFW_E_TYPE_NOT_ACCEPTED;
+
+    wfxin = (WAVEFORMATEX*)amt->pbFormat;
+    switch (wfxin->wFormatTag) {
+        case WAVE_FORMAT_MPEGLAYER3:
+            layer = 3;
+            break;
+        case WAVE_FORMAT_MPEG: {
+            MPEG1WAVEFORMAT *mpgformat = (MPEG1WAVEFORMAT*)wfxin;
+            layer = mpgformat->fwHeadLayer;
+            break;
+        }
+        default:
+            FIXME("Unhandled tag %x\n", wfxin->wFormatTag);
+            return E_FAIL;
+    }
+
+    FreeMediaType(outpmt);
+    CopyMediaType(outpmt, amt);
+
+    outpmt->subtype = MEDIASUBTYPE_PCM;
+    outpmt->formattype = FORMAT_WaveFormatEx;
+    outpmt->cbFormat = sizeof(*wfx);
+    CoTaskMemFree(outpmt->pbFormat);
+    wfx = CoTaskMemAlloc(outpmt->cbFormat);
+    outpmt->pbFormat = (BYTE*)wfx;
+    wfx->wFormatTag = WAVE_FORMAT_PCM;
+    wfx->wBitsPerSample = 16;
+    wfx->nSamplesPerSec = wfxin->nSamplesPerSec;
+    wfx->nChannels = wfxin->nChannels;
+    wfx->nBlockAlign = wfx->wBitsPerSample * wfx->nChannels / 8;
+    wfx->cbSize = 0;
+    wfx->nAvgBytesPerSec = wfx->nSamplesPerSec * wfx->nBlockAlign;
+
+    capsin = gst_caps_new_simple("audio/mpeg",
+                                 "mpegversion", G_TYPE_INT, 1,
+                                 "layer", G_TYPE_INT, layer,
+                                 "rate", G_TYPE_INT, wfx->nSamplesPerSec,
+                                 "channels", G_TYPE_INT, wfx->nChannels,
+                                 NULL);
+    capsout = gst_caps_new_simple("audio/x-raw-int",
+                                  "endianness", G_TYPE_INT, 1234,
+                                  "signed", G_TYPE_BOOLEAN, 1,
+                                  "width", G_TYPE_INT, 16,
+                                  "depth", G_TYPE_INT, 16,
+                                  "rate", G_TYPE_INT, wfx->nSamplesPerSec,
+                                  "channels", G_TYPE_INT, wfx->nChannels,
+                                   NULL);
+
+    hr = Gstreamer_transform_ConnectInput(This, amt, capsin, capsout);
+    gst_caps_unref(capsin);
+    gst_caps_unref(capsout);
+
+    This->cbBuffer = wfx->nAvgBytesPerSec / 4;
+
+    return hr;
+}
+
+static HRESULT WINAPI Gstreamer_Mp3_ConnectInput(TransformFilter *tf, PIN_DIRECTION dir, IPin *pin)
+{
+    return S_OK;
+}
+
+static const TransformFilterFuncTable Gstreamer_Mp3_vtbl = {
+    Gstreamer_transform_DecideBufferSize,
+    Gstreamer_transform_ProcessBegin,
+    Gstreamer_transform_ProcessData,
+    Gstreamer_transform_ProcessEnd,
+    Gstreamer_Mp3_QueryConnect,
+    Gstreamer_Mp3_SetMediaType,
+    Gstreamer_Mp3_ConnectInput,
+    Gstreamer_transform_Cleanup,
+    Gstreamer_transform_EndOfStream,
+    Gstreamer_transform_BeginFlush,
+    Gstreamer_transform_EndFlush,
+    Gstreamer_transform_NewSegment
+};
+
+IUnknown * CALLBACK Gstreamer_Mp3_create(IUnknown *punkout, HRESULT *phr)
+{
+    const char *plugin;
+    IUnknown *obj = NULL;
+    if (!Gstreamer_init())
+    {
+        *phr = E_FAIL;
+        return NULL;
+    }
+    plugin = Gstreamer_FindMatch("audio/mpeg, mpegversion=(int) 1");
+    if (!plugin)
+    {
+        *phr = E_FAIL;
+        return NULL;
+    }
+    *phr = Gstreamer_transform_create(punkout, &CLSID_Gstreamer_Mp3, plugin, &Gstreamer_Mp3_vtbl, (LPVOID*)&obj);
+    return obj;
 }
 
 static HRESULT WINAPI Gstreamer_YUV_QueryConnect(TransformFilter *iface, const AM_MEDIA_TYPE *amt) {
