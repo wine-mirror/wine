@@ -571,7 +571,7 @@ static void test_ShortPathCase(const char *tmpdir, const char *dirname,
     /* Now for the real test */
     for(i=0;i<strlen(shortbuf);i++)
         if (i % 2)
-            shortbuf[i] = toupper(shortbuf[i]);
+            shortbuf[i] = tolower(shortbuf[i]);
     hndl = CreateFileA(shortbuf,GENERIC_READ|GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
     ok(hndl!=INVALID_HANDLE_VALUE,"CreateFileA failed (%d)\n",GetLastError());
     CloseHandle(hndl);
