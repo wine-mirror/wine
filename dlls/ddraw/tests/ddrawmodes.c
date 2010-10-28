@@ -33,7 +33,7 @@ static LPDIRECTDRAW lpDD = NULL;
 static LPDIRECTDRAWSURFACE lpDDSPrimary = NULL;
 static LPDIRECTDRAWSURFACE lpDDSBack = NULL;
 static WNDCLASS wc;
-static HWND hwnd;
+static HWND hwnd, hwnd2;
 static int modes_cnt;
 static int modes_size;
 static LPDDSURFACEDESC modes;
@@ -54,31 +54,21 @@ static void init_function_pointers(void)
     pDirectDrawEnumerateExW = (void*)GetProcAddress(hmod, "DirectDrawEnumerateExW");
 }
 
-static void createwindow(void)
+static HWND createwindow(void)
 {
-    wc.style = CS_HREDRAW | CS_VREDRAW;
-    wc.lpfnWndProc = DefWindowProcA;
-    wc.cbClsExtra = 0;
-    wc.cbWndExtra = 0;
-    wc.hInstance = GetModuleHandleA(0);
-    wc.hIcon = LoadIconA(wc.hInstance, IDI_APPLICATION);
-    wc.hCursor = LoadCursorA(NULL, IDC_ARROW);
-    wc.hbrBackground = GetStockObject(BLACK_BRUSH);
-    wc.lpszMenuName = NULL;
-    wc.lpszClassName = "TestWindowClass";
-    if(!RegisterClassA(&wc))
-        assert(0);
+    HWND hwnd;
 
     hwnd = CreateWindowExA(0, "TestWindowClass", "TestWindowClass",
         WS_POPUP, 0, 0,
         GetSystemMetrics(SM_CXSCREEN),
         GetSystemMetrics(SM_CYSCREEN),
         NULL, NULL, GetModuleHandleA(0), NULL);
-    assert(hwnd != NULL);
 
     ShowWindow(hwnd, SW_HIDE);
     UpdateWindow(hwnd);
     SetFocus(hwnd);
+
+    return hwnd;
 }
 
 static BOOL createdirectdraw(void)
@@ -546,6 +536,7 @@ static void testdisplaymodes(void)
 
 static void testcooperativelevels_normal(void)
 {
+    BOOL sfw;
     HRESULT rc;
     DDSURFACEDESC surfacedesc;
     IDirectDrawSurface *surface = (IDirectDrawSurface *) 0xdeadbeef;
@@ -561,11 +552,23 @@ static void testcooperativelevels_normal(void)
     ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_SETFOCUSWINDOW | DDSCL_CREATEDEVICEWINDOW) returned: %x\n",rc);
 
     /* Do some tests with DDSCL_NORMAL mode */
+
     /* Fullscreen mode + normal mode + exclusive mode */
+    sfw=FALSE;
+    if(hwnd2)
+        sfw=SetForegroundWindow(hwnd2);
+    else
+        skip("Failed to create the second window\n");
+
     rc = IDirectDraw_SetCooperativeLevel(lpDD, hwnd, DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE | DDSCL_NORMAL);
     todo_wine ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE | DDSCL_NORMAL) returned: %x\n",rc);
+
+    if(sfw)
+        todo_wine ok(GetForegroundWindow()==hwnd,"Expected the main windows (%p) for foreground, received the second one (%p)\n",hwnd, hwnd2);
+
     /* Try creating a double buffered primary in fullscreen + exclusive + normal mode */
     rc = IDirectDraw_CreateSurface(lpDD, &surfacedesc, &surface, NULL);
+
     if (rc == DDERR_UNSUPPORTEDMODE)
         skip("Unsupported mode\n");
     else
@@ -574,12 +577,21 @@ static void testcooperativelevels_normal(void)
         todo_wine ok(surface!=NULL, "Returned NULL surface pointer \n");
     }
     if(surface && surface != (IDirectDrawSurface *)0xdeadbeef) IDirectDrawSurface_Release(surface);
+
     /* Exclusive mode + normal mode */
     rc = IDirectDraw_SetCooperativeLevel(lpDD, hwnd, DDSCL_EXCLUSIVE | DDSCL_NORMAL);
     ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_EXCLUSIVE | DDSCL_NORMAL) returned: %x\n",rc);
+
     /* Fullscreen mode + normal mode */
+    sfw=FALSE;
+    if(hwnd2) sfw=SetForegroundWindow(hwnd2);
+
     rc = IDirectDraw_SetCooperativeLevel(lpDD, hwnd, DDSCL_FULLSCREEN | DDSCL_NORMAL);
     todo_wine ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_FULLSCREEN | DDSCL_NORMAL) returned: %x\n",rc);
+
+    if(sfw)
+        ok(GetForegroundWindow()==hwnd2,"Expected the second windows (%p) for foreground, received the main one (%p)\n",hwnd2, hwnd);
+
     /* Try creating a double buffered primary in fullscreen + normal mode */
     rc = IDirectDraw_CreateSurface(lpDD, &surfacedesc, &surface, NULL);
     if (rc == DDERR_UNSUPPORTEDMODE)
@@ -589,11 +601,19 @@ static void testcooperativelevels_normal(void)
         ok(rc == DDERR_NOEXCLUSIVEMODE, "IDirectDraw_CreateSurface returned %08x\n", rc);
         ok(surface == NULL, "Returned surface pointer is %p\n", surface);
     }
+
     if(surface && surface != (IDirectDrawSurface *)0xdeadbeef) IDirectDrawSurface_Release(surface);
-    /* Normal mode */
+
+    /* switching from Fullscreen mode to Normal mode */
+    sfw=FALSE;
+    if(hwnd2) sfw=SetForegroundWindow(hwnd2);
+
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_NORMAL);
     ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_NORMAL) returned: %x\n",rc);
+
+    if(sfw)
+        ok(GetForegroundWindow()==hwnd2,"Expected the second windows (%p) for foreground, received the main one (%p)\n",hwnd2, hwnd);
 
     /* Try creating a double buffered primary in normal mode */
     rc = IDirectDraw_CreateSurface(lpDD, &surfacedesc, &surface, NULL);
@@ -605,6 +625,17 @@ static void testcooperativelevels_normal(void)
         ok(surface == NULL, "Returned surface pointer is %p\n", surface);
     }
     if(surface && surface != (IDirectDrawSurface *)0xdeadbeef) IDirectDrawSurface_Release(surface);
+
+    /* switching from Normal mode to Fullscreen + Normal mode */
+    sfw=FALSE;
+    if(hwnd2) sfw=SetForegroundWindow(hwnd2);
+
+    rc = IDirectDraw_SetCooperativeLevel(lpDD,
+        hwnd, DDSCL_NORMAL | DDSCL_FULLSCREEN);
+    todo_wine ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_NORMAL | FULLSCREEN) returned: %x\n",rc);
+
+    if(sfw)
+        ok(GetForegroundWindow()==hwnd2,"Expected the second windows (%p) for foreground, received the main one (%p)\n",hwnd2, hwnd);
 
     /* Set the focus window */
 
@@ -681,7 +712,7 @@ static void testcooperativelevels_normal(void)
 
 static void testcooperativelevels_exclusive(void)
 {
-    BOOL success;
+    BOOL sfw, success;
     HRESULT rc;
     RECT window_rect;
 
@@ -702,11 +733,21 @@ static void testcooperativelevels_exclusive(void)
     ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_FULLSCREEN) returned: %x\n",rc);
 
     /* Full screen mode + exclusive mode */
+    sfw=FALSE;
+    if(hwnd2)
+        sfw=SetForegroundWindow(hwnd2);
+    else
+        skip("Failed to create the second window\n");
+
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE);
     ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN) returned: %x\n",rc);
-    GetClientRect(hwnd, &window_rect);
+
+    if(sfw)
+        ok(GetForegroundWindow()==hwnd,"Expected the main windows (%p) for foreground, received the second one (%p)\n",hwnd, hwnd2);
+
     /* rect_before_create is assumed to hold the screen rect */
+    GetClientRect(hwnd, &window_rect);
     rc = EqualRect(&rect_before_create, &window_rect);
     todo_wine ok(rc!=0, "Fullscreen window has wrong size\n");
 
@@ -783,9 +824,36 @@ START_TEST(ddrawmodes)
 {
     init_function_pointers();
 
-    createwindow();
-    if (!createdirectdraw())
+    wc.style = CS_HREDRAW | CS_VREDRAW;
+    wc.lpfnWndProc = DefWindowProcA;
+    wc.cbClsExtra = 0;
+    wc.cbWndExtra = 0;
+    wc.hInstance = GetModuleHandleA(0);
+    wc.hIcon = LoadIconA(wc.hInstance, IDI_APPLICATION);
+    wc.hCursor = LoadCursorA(NULL, IDC_ARROW);
+    wc.hbrBackground = GetStockObject(BLACK_BRUSH);
+    wc.lpszMenuName = NULL;
+    wc.lpszClassName = "TestWindowClass";
+    if (!RegisterClassA(&wc))
+    {
+        skip("RegisterClassA failed\n");
         return;
+    }
+
+    hwnd2=createwindow();
+    hwnd=createwindow();
+
+    if (!hwnd)
+    {
+        skip("Failed to create the main window\n");
+        return;
+    }
+
+    if (!createdirectdraw())
+    {
+        skip("Failed to create the direct draw object\n");
+        return;
+    }
 
     test_DirectDrawEnumerateA();
     test_DirectDrawEnumerateW();
