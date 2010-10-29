@@ -434,6 +434,67 @@ static void test_conditionals(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *
     }
 }
 
+static void test_float_vectors(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geometry,
+        IDirect3DVertexShader9 *vshader_passthru)
+{
+    static struct hlsl_probe_info vec4_indexing_test1_probes[] =
+    {
+        {0, 0, {0.020f, 0.245f, 0.351f, 1.000f}, 0.0001f, "vec4 indexing test 1 failed"}
+    };
+
+    static const char *vec4_indexing_test1_shader =
+        "float4 test(): COLOR                   \
+        {                                       \
+            float4 color;                       \
+            color[0] = 0.020;                   \
+            color[1] = 0.245;                   \
+            color[2] = 0.351;                   \
+            color[3] = 1.0;                     \
+            return color;                       \
+        }";
+
+    static struct hlsl_probe_info vec4_indexing_test2_probes[] =
+    {
+        {0, 0, {0.5f, 0.3f, 0.8f, 0.2f}, 0.0001f, "vec4 indexing test 2 failed"}
+    };
+
+    /* We have this uniform i here so the compiler can't optimize */
+    static const char *vec4_indexing_test2_shader =
+        "uniform int i;                                 \
+        float4 test(): COLOR                            \
+        {                                               \
+            float4 color = float4(0.5, 0.4, 0.3, 0.2);  \
+            color.g = color[i];                         \
+            color.b = 0.8;                              \
+            return color;                               \
+        }";
+
+    ID3DXConstantTable *constants;
+    IDirect3DPixelShader9 *pshader;
+
+    pshader = compile_pixel_shader9(device, vec4_indexing_test1_shader, "ps_2_0", &constants);
+    if (pshader != NULL)
+    {
+        compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry,
+                vec4_indexing_test1_probes, 1, 1, 1, __LINE__);
+
+        IUnknown_Release(constants);
+        IUnknown_Release(pshader);
+    }
+
+    pshader = compile_pixel_shader9(device, vec4_indexing_test2_shader, "ps_2_0", &constants);
+    if (pshader != NULL)
+    {
+        ID3DXConstantTable_SetInt(constants, device, "i", 2);
+
+        compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry,
+                vec4_indexing_test2_probes, 1, 32, 1, __LINE__);
+
+        IUnknown_Release(constants);
+        IUnknown_Release(pshader);
+    }
+}
+
 START_TEST(hlsl)
 {
     D3DCAPS9 caps;
@@ -456,6 +517,7 @@ START_TEST(hlsl)
             test_swizzle(device, quad_geometry, vshader_passthru);
             test_math(device, quad_geometry, vshader_passthru);
             test_conditionals(device, quad_geometry, vshader_passthru);
+            test_float_vectors(device, quad_geometry, vshader_passthru);
         }
     } else skip("no pixel shader support\n");
 
