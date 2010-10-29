@@ -12159,7 +12159,7 @@ fi
 $as_echo "$ac_cv_c_fortify_enabled" >&6; }
 if test "$ac_cv_c_fortify_enabled" = yes
 then
-    EXTRACFLAGS="$EXTRACFLAGS -D_FORTIFY_SOURCE=0"
+    CFLAGS="$CFLAGS -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0"
 fi
 
 

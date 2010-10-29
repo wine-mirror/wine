@@ -1690,7 +1690,7 @@ AC_CACHE_CHECK([for the need to disable Fortify], ac_cv_c_fortify_enabled,
         [ac_cv_c_fortify_enabled=no],[ac_cv_c_fortify_enabled=yes]))
 if test "$ac_cv_c_fortify_enabled" = yes
 then
-    EXTRACFLAGS="$EXTRACFLAGS -D_FORTIFY_SOURCE=0"
+    CFLAGS="$CFLAGS -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0"
 fi
 
 dnl **** Check for underscore on external symbols ****
