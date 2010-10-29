@@ -4630,11 +4630,6 @@ static void vertexdeclaration(DWORD state_id, IWineD3DStateBlockImpl *stateblock
         updateFog = TRUE;
     }
 
-    /* Reapply lighting if it is not scheduled for reapplication already */
-    if(!isStateDirty(context, STATE_RENDER(WINED3DRS_LIGHTING))) {
-        state_lighting(STATE_RENDER(WINED3DRS_LIGHTING), stateblock, context);
-    }
-
     if (transformed) {
         context->last_was_rhw = TRUE;
     } else {
@@ -4676,6 +4671,9 @@ static void vertexdeclaration(DWORD state_id, IWineD3DStateBlockImpl *stateblock
 
         if(!isStateDirty(context, STATE_RENDER(WINED3DRS_COLORVERTEX))) {
             state_colormat(STATE_RENDER(WINED3DRS_COLORVERTEX), stateblock, context);
+        }
+        if(!isStateDirty(context, STATE_RENDER(WINED3DRS_LIGHTING))) {
+            state_lighting(STATE_RENDER(WINED3DRS_LIGHTING), stateblock, context);
         }
 
         if(context->last_was_vshader) {
