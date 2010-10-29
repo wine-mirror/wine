@@ -298,8 +298,7 @@ MSVCRT_size_t CDECL MSVCRT__wcstombs_s_l(MSVCRT_size_t *ret, char *mbstr,
         return 0;
     }
 
-    if(!wcstr || !mbstr) {
-        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+    if (!MSVCRT_CHECK_PMT(wcstr != NULL) || !MSVCRT_CHECK_PMT(mbstr != NULL)) {
         if(mbstr && size)
             mbstr[0] = '\0';
         *MSVCRT__errno() = MSVCRT_EINVAL;
@@ -317,7 +316,7 @@ MSVCRT_size_t CDECL MSVCRT__wcstombs_s_l(MSVCRT_size_t *ret, char *mbstr,
     else if(conv==size && (count==MSVCRT__TRUNCATE || mbstr[conv-1]=='\0'))
         mbstr[conv-1] = '\0';
     else {
-        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+        MSVCRT_INVALID_PMT("mbstr[size] is too small");
         if(size)
             mbstr[0] = '\0';
         *MSVCRT__errno() = MSVCRT_ERANGE;
