@@ -572,8 +572,7 @@ int CDECL strncpy_s(char *dest, MSVCRT_size_t numberOfElements,
     if(!count)
         return 0;
 
-    if(!dest || !src || !numberOfElements) {
-        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+    if (!MSVCRT_CHECK_PMT(dest != NULL) || !MSVCRT_CHECK_PMT(src != NULL) || !MSVCRT_CHECK_PMT(numberOfElements != 0)) {
         *MSVCRT__errno() = MSVCRT_EINVAL;
         return MSVCRT_EINVAL;
     }
@@ -591,7 +590,7 @@ int CDECL strncpy_s(char *dest, MSVCRT_size_t numberOfElements,
         return 0;
     }
 
-    MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+    MSVCRT_INVALID_PMT("dest[numberOfElements] is too small");
     dest[0] = '\0';
     *MSVCRT__errno() = MSVCRT_EINVAL;
     return MSVCRT_EINVAL;
