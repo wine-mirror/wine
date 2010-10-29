@@ -1734,10 +1734,9 @@ lock_end:
     return IWineD3DBaseSurfaceImpl_Map(iface, pLockedRect, pRect, Flags);
 }
 
-static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fmt, GLenum type, UINT bpp, const BYTE *mem) {
-    GLint  prev_store;
-    GLint  prev_rasterpos[4];
-    GLint skipBytes = 0;
+static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This,
+        GLenum fmt, GLenum type, UINT bpp, const BYTE *mem)
+{
     UINT pitch = IWineD3DSurface_GetPitch((IWineD3DSurface *) This);    /* target is argb, 4 byte */
     IWineD3DDeviceImpl *device = This->resource.device;
     const struct wined3d_gl_info *gl_info;
@@ -1763,15 +1762,6 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
         context_set_draw_buffer(context, device->offscreenBuffer);
     }
 
-    glGetIntegerv(GL_PACK_SWAP_BYTES, &prev_store);
-    checkGLcall("glGetIntegerv");
-    glGetIntegerv(GL_CURRENT_RASTER_POSITION, &prev_rasterpos[0]);
-    checkGLcall("glGetIntegerv");
-
-    /* If not fullscreen, we need to skip a number of bytes to find the next row of data */
-    glGetIntegerv(GL_UNPACK_ROW_LENGTH, &skipBytes);
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, This->currentDesc.Width);
-
     glRasterPos3i(This->lockedRect.left, This->lockedRect.top, 1);
     checkGLcall("glRasterPos3i");
 
@@ -1790,6 +1780,9 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
         volatile BYTE read;
         read = This->resource.allocatedMemory[0];
     }
+
+    /* If not fullscreen, we need to skip a number of bytes to find the next row of data */
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, This->currentDesc.Width);
 
     if(This->Flags & SFLAG_PBO) {
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
@@ -1815,12 +1808,8 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
         checkGLcall("glBindBufferARB");
     }
 
-    glRasterPos3iv(&prev_rasterpos[0]);
-    checkGLcall("glRasterPos3iv");
-
-    /* Reset to previous pack row length */
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, skipBytes);
-    checkGLcall("glPixelStorei(GL_UNPACK_ROW_LENGTH)");
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+    checkGLcall("glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)");
 
     LEAVE_GL();
     context_release(context);
