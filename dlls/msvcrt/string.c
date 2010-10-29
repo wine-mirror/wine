@@ -152,8 +152,8 @@ char * CDECL MSVCRT_strtok( char *str, const char *delim )
  */
 char * CDECL MSVCRT_strtok_s(char *str, const char *delim, char **ctx)
 {
-    if(!delim || !ctx || (!str && !*ctx)) {
-        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+    if (!MSVCRT_CHECK_PMT(delim != NULL) || !MSVCRT_CHECK_PMT(ctx != NULL) ||
+        !MSVCRT_CHECK_PMT(str != NULL || *ctx != NULL)) {
         *MSVCRT__errno() = MSVCRT_EINVAL;
         return NULL;
     }
