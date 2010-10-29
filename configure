@@ -10501,8 +10501,47 @@ then
         done
         ac_gst_libs="`$PKG_CONFIG --libs gstreamer-app-0.10 2>/dev/null`"
         CPPFLAGS="$CPPFLAGS $ac_gst_incl"
-        ac_fn_c_check_header_mongrel "$LINENO" "gst/app/gstappsink.h" "ac_cv_header_gst_app_gstappsink_h" "$ac_includes_default"
+        ac_fn_c_check_header_mongrel "$LINENO" "gst/gstpad.h" "ac_cv_header_gst_gstpad_h" "$ac_includes_default"
+if test "x$ac_cv_header_gst_gstpad_h" = x""yes; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "gst/app/gstappsink.h" "ac_cv_header_gst_app_gstappsink_h" "$ac_includes_default"
 if test "x$ac_cv_header_gst_app_gstappsink_h" = x""yes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gst_pad_get_caps_reffed in -lgstreamer-0.10" >&5
+$as_echo_n "checking for gst_pad_get_caps_reffed in -lgstreamer-0.10... " >&6; }
+if test "${ac_cv_lib_gstreamer_0_10_gst_pad_get_caps_reffed+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lgstreamer-0.10  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char gst_pad_get_caps_reffed ();
+int
+main ()
+{
+return gst_pad_get_caps_reffed ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_gstreamer_0_10_gst_pad_get_caps_reffed=yes
+else
+  ac_cv_lib_gstreamer_0_10_gst_pad_get_caps_reffed=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gstreamer_0_10_gst_pad_get_caps_reffed" >&5
+$as_echo "$ac_cv_lib_gstreamer_0_10_gst_pad_get_caps_reffed" >&6; }
+if test "x$ac_cv_lib_gstreamer_0_10_gst_pad_get_caps_reffed" = x""yes; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gst_app_buffer_new in -lgstapp-0.10" >&5
 $as_echo_n "checking for gst_app_buffer_new in -lgstapp-0.10... " >&6; }
 if test "${ac_cv_lib_gstapp_0_10_gst_app_buffer_new+set}" = set; then :
@@ -10542,9 +10581,14 @@ $as_echo "$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" >&6; }
 if test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" = x""yes; then :
   GSTREAMER_LIBS="$ac_gst_libs"
 
-                 GSTREAMER_INCL="$ac_gst_incl"
+                     GSTREAMER_INCL="$ac_gst_incl"
 
 fi
+
+fi
+
+fi
+
 
 fi
 

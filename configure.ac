@@ -1418,10 +1418,12 @@ then
         done
         ac_gst_libs="`$PKG_CONFIG --libs gstreamer-app-0.10 2>/dev/null`"
         CPPFLAGS="$CPPFLAGS $ac_gst_incl"
-        AC_CHECK_HEADER([gst/app/gstappsink.h],
-            [AC_CHECK_LIB(gstapp-0.10,gst_app_buffer_new,
-                [AC_SUBST(GSTREAMER_LIBS,"$ac_gst_libs")
-                 AC_SUBST(GSTREAMER_INCL,"$ac_gst_incl")],,[$ac_gst_libs])])
+        AC_CHECK_HEADER([gst/gstpad.h],
+          [AC_CHECK_HEADER([gst/app/gstappsink.h],
+             [AC_CHECK_LIB(gstreamer-0.10,gst_pad_get_caps_reffed,
+                [AC_CHECK_LIB(gstapp-0.10,gst_app_buffer_new,
+                    [AC_SUBST(GSTREAMER_LIBS,"$ac_gst_libs")
+                     AC_SUBST(GSTREAMER_INCL,"$ac_gst_incl")],,[$ac_gst_libs])])])])
     fi
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
