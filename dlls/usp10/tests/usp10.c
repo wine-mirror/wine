@@ -1363,7 +1363,7 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
             hr = ScriptStringCPtoX(ssa, Cp, FALSE, &lead);
             ok(hr == S_OK, "ScriptStringCPtoX should return S_OK not %08x\n", hr);
             if (rtl[Cp])
-                todo_wine ok(lead > trail, "Leading values should be after trialing for rtl chracters(%i)\n",Cp);
+                ok(lead > trail, "Leading values should be after trialing for rtl chracters(%i)\n",Cp);
             else
                 ok(lead < trail, "Trailing values should be after leading for ltr chracters(%i)\n",Cp);
 
@@ -1375,9 +1375,7 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
             if (rtl[Cp]) X--; else X++;
             hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
             ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
-            if (rtl[Cp]) todo_wine
             ok(Cp == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp, Ch, trail);
-            if (rtl[Cp]) todo_wine
             ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = %d\n",
                                   iTrailing, X);
 
@@ -1386,9 +1384,7 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
             if (rtl[Cp]) X++; else X--;
             hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
             ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
-            if (rtl[Cp]) todo_wine
             ok(Cp == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp, Ch, trail);
-            if (rtl[Cp]) todo_wine
             ok(iTrailing == TRUE, "ScriptStringXtoCP should return iTrailing = 1 not %d for X = %d\n",
                                   iTrailing, X);
 
@@ -1399,10 +1395,9 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
                 X++;
                 hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
                 ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
-                if (rtl[Cp]) todo_wine
                 ok(Cp + 1 == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp + 1, Ch, trail);
                 if (rtl[Cp+1])
-                    todo_wine ok(iTrailing == TRUE, "ScriptStringXtoCP should return iTrailing = 1 not %d for X = %d\n",
+                    ok(iTrailing == TRUE, "ScriptStringXtoCP should return iTrailing = 1 not %d for X = %d\n",
                                           iTrailing, X);
                 else
                     ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = %d\n",
@@ -1416,10 +1411,9 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
                 X--;
                 hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
                 ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
-                if (rtl[Cp]) todo_wine
                 ok(Cp - 1 == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp - 1, Ch, trail);
                 if (Cp != 0  && rtl[Cp-1])
-                    todo_wine ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = %d\n",
+                    ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = %d\n",
                                           iTrailing, X);
                 else
                     ok(iTrailing == TRUE, "ScriptStringXtoCP should return iTrailing = 1 not %d for X = %d\n",
@@ -1436,8 +1430,8 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
             X--;
             hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
             ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
-            todo_wine ok(Ch == 1, "ScriptStringXtoCP should return Ch = 1 not %d for X outside leading edge when rtl\n", Ch);
-            todo_wine ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = outside leading edge when rtl\n",
+            ok(Ch == 1, "ScriptStringXtoCP should return Ch = 1 not %d for X outside leading edge when rtl\n", Ch);
+            ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = outside leading edge when rtl\n",
                                        iTrailing);
         }
         else

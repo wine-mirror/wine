@@ -936,6 +936,7 @@ HRESULT WINAPI ScriptStringCPtoX(SCRIPT_STRING_ANALYSIS ssa, int icp, BOOL fTrai
     int runningX = 0;
     int runningCp = 0;
     StringAnalysis* analysis = ssa;
+    BOOL itemTrailing;
 
     TRACE("(%p), %d, %d, (%p)\n", ssa, icp, fTrailing, pX);
 
@@ -950,15 +951,19 @@ HRESULT WINAPI ScriptStringCPtoX(SCRIPT_STRING_ANALYSIS ssa, int icp, BOOL fTrai
 
     for(i=0; i<analysis->numItems; i++)
     {
+        if (analysis->pItem[i].a.fRTL)
+            itemTrailing = !fTrailing;
+        else
+            itemTrailing = fTrailing;
         for(j=0; j<analysis->glyphs[i].numGlyphs; j++)
         {
-            if(runningCp == icp && fTrailing == FALSE)
+            if(runningCp == icp && itemTrailing == FALSE)
             {
                 *pX = runningX;
                 return S_OK;
             }
             runningX += analysis->glyphs[i].piAdvance[j];
-            if(runningCp == icp && fTrailing == TRUE)
+            if(runningCp == icp && itemTrailing == TRUE)
             {
                 *pX = runningX;
                 return S_OK;
@@ -992,8 +997,16 @@ HRESULT WINAPI ScriptStringXtoCP(SCRIPT_STRING_ANALYSIS ssa, int iX, int* piCh, 
     /* out of range */
     if(iX < 0)
     {
-        *piCh = -1;
-        *piTrailing = TRUE;
+        if (analysis->pItem[0].a.fRTL)
+        {
+            *piCh = 1;
+            *piTrailing = FALSE;
+        }
+        else
+        {
+            *piCh = -1;
+            *piTrailing = TRUE;
+        }
         return S_OK;
     }
 
@@ -1009,6 +1022,9 @@ HRESULT WINAPI ScriptStringXtoCP(SCRIPT_STRING_ANALYSIS ssa, int iX, int* piCh, 
                     *piTrailing = TRUE;
                 else
                     *piTrailing = FALSE;
+
+                if (analysis->pItem[i].a.fRTL)
+                    *piTrailing = !*piTrailing;
                 return S_OK;
             }
             runningX += width;
