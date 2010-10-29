@@ -299,6 +299,14 @@ typedef ULONG_PTR KAFFINITY, *PKAFFINITY;
 # undef  WORDS_BIGENDIAN
 # undef  BITFIELDS_BIGENDIAN
 # undef  ALLOW_UNALIGNED_ACCESS
+#elif defined(__MIPSEB__)
+# define WORDS_BIGENDIAN
+# define BITFIELDS_BIGENDIAN
+# undef  ALLOW_UNALIGNED_ACCESS
+#elif defined(__MIPSEL__)
+# undef  WORDS_BIGENDIAN
+# undef  BITFIELDS_BIGENDIAN
+# undef  ALLOW_UNALIGNED_ACCESS
 #elif !defined(RC_INVOKED) && !defined(__WIDL__) && !defined(__midl)
 # error Unknown CPU architecture!
 #endif
