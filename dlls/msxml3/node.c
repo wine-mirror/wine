@@ -978,63 +978,45 @@ static BSTR EnsureNoEncoding(BSTR sInput)
  * reproduce behaviour exactly.
  *
  */
-static HRESULT WINAPI xmlnode_get_xml(
-    IXMLDOMNode *iface,
-    BSTR* xmlString)
+HRESULT node_get_xml(xmlnode *This, BOOL ensure_eol, BOOL ensure_no_encoding, BSTR *ret)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
-    xmlBufferPtr pXmlBuf;
+    xmlBufferPtr xml_buf;
     xmlNodePtr xmldecl;
-    int nSize;
+    int size;
 
-    TRACE("(%p %d)->(%p)\n", This, This->node->type, xmlString);
-
-    if(!xmlString)
+    if(!ret)
         return E_INVALIDARG;
 
-    *xmlString = NULL;
+    *ret = NULL;
+
+    xml_buf = xmlBufferCreate();
+    if(!xml_buf)
+        return E_OUTOFMEMORY;
 
     xmldecl = xmldoc_unlink_xmldecl( This->node->doc );
 
-    pXmlBuf = xmlBufferCreate();
-    if(pXmlBuf)
-    {
-        nSize = xmlNodeDump(pXmlBuf, This->node->doc, This->node, 0, 1);
-        if(nSize > 0)
-        {
-            const xmlChar *pContent;
-            BSTR bstrContent;
+    size = xmlNodeDump(xml_buf, This->node->doc, This->node, 0, 1);
+    if(size > 0) {
+        const xmlChar *buf_content;
+        BSTR content;
 
-            /* Attribute Nodes return a space in front of their name */
-            pContent = xmlBufferContent(pXmlBuf);
-            if( ((const char*)pContent)[0] == ' ')
-                bstrContent = bstr_from_xmlChar(pContent+1);
-            else
-                bstrContent = bstr_from_xmlChar(pContent);
+        /* Attribute Nodes return a space in front of their name */
+        buf_content = xmlBufferContent(xml_buf);
 
-            switch(This->node->type)
-            {
-                case XML_ELEMENT_NODE:
-                    *xmlString = EnsureCorrectEOL(bstrContent);
-                    break;
-                case XML_DOCUMENT_NODE:
-                    *xmlString = EnsureCorrectEOL(bstrContent);
-                    *xmlString = EnsureNoEncoding(*xmlString);
-                    break;
-                default:
-                    *xmlString = bstrContent;
-            }
-        }
+        content = bstr_from_xmlChar(buf_content + (buf_content[0] == ' ' ? 1 : 0));
+        if(ensure_eol)
+            content = EnsureCorrectEOL(content);
+        if(ensure_no_encoding)
+            content = EnsureNoEncoding(content);
 
-        xmlBufferFree(pXmlBuf);
+        *ret = content;
+    }else {
+        *ret = SysAllocStringLen(NULL, 0);
     }
 
+    xmlBufferFree(xml_buf);
     xmldoc_link_xmldecl( This->node->doc, xmldecl );
-
-    /* Always returns a string. */
-    if(*xmlString == NULL)  *xmlString = SysAllocStringLen( NULL, 0 );
-
-    return S_OK;
+    return *ret ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI xmlnode_transformNode(
@@ -1283,7 +1265,7 @@ static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
     xmlnode_put_nodeTypedValue,
     NULL,
     xmlnode_put_dataType,
-    xmlnode_get_xml,
+    NULL,
     xmlnode_transformNode,
     xmlnode_selectNodes,
     xmlnode_selectSingleNode,
@@ -1731,7 +1713,10 @@ static HRESULT WINAPI unknode_get_xml(
     BSTR* p)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_get_xml( IXMLDOMNode_from_impl(&This->node), p );
+
+    FIXME("(%p)->(%p)\n", This, p);
+
+    return node_get_xml(&This->node, FALSE, FALSE, p);
 }
 
 static HRESULT WINAPI unknode_transformNode(

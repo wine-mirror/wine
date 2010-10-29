@@ -1268,10 +1268,13 @@ static HRESULT WINAPI domdoc_put_dataType(
 
 static HRESULT WINAPI domdoc_get_xml(
     IXMLDOMDocument3 *iface,
-    BSTR* xmlString )
+    BSTR* p)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_get_xml( IXMLDOMNode_from_impl(&This->node), xmlString );
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return node_get_xml(&This->node, TRUE, TRUE, p);
 }
 
 
