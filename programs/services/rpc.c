@@ -1212,6 +1212,110 @@ DWORD svcctl_EnumServicesStatusW(
     return ERROR_SUCCESS;
 }
 
+struct service_entry *find_service_by_group(struct scmdatabase *db, const WCHAR *group)
+{
+    struct service_entry *service;
+    LIST_FOR_EACH_ENTRY(service, &db->services, struct service_entry, entry)
+    {
+        if (service->config.lpLoadOrderGroup && !strcmpiW(group, service->config.lpLoadOrderGroup))
+            return service;
+    }
+    return NULL;
+}
+
+static BOOL match_group(const WCHAR *g1, const WCHAR *g2)
+{
+    if (!g2) return TRUE;
+    if (!g2[0] && (!g1 || !g1[0])) return TRUE;
+    if (g1 && !strcmpW(g1, g2)) return TRUE;
+    return FALSE;
+}
+
+DWORD svcctl_EnumServicesStatusExW(
+    SC_RPC_HANDLE hmngr,
+    DWORD type,
+    DWORD state,
+    BYTE *buffer,
+    DWORD size,
+    LPDWORD needed,
+    LPDWORD returned,
+    LPCWSTR group)
+{
+    DWORD err, sz, total_size, num_services;
+    DWORD_PTR offset;
+    struct sc_manager_handle *manager;
+    struct service_entry *service;
+    ENUM_SERVICE_STATUS_PROCESSW *s;
+
+    WINE_TRACE("(%p, 0x%x, 0x%x, %p, %u, %p, %p, %s)\n", hmngr, type, state, buffer, size,
+               needed, returned, wine_dbgstr_w(group));
+
+    if (!type || !state)
+        return ERROR_INVALID_PARAMETER;
+
+    if ((err = validate_scm_handle(hmngr, SC_MANAGER_ENUMERATE_SERVICE, &manager)) != ERROR_SUCCESS)
+        return err;
+
+    scmdatabase_lock_exclusive(manager->db);
+
+    if (group && !find_service_by_group(manager->db, group))
+    {
+        scmdatabase_unlock(manager->db);
+        return ERROR_SERVICE_DOES_NOT_EXIST;
+    }
+
+    total_size = num_services = 0;
+    LIST_FOR_EACH_ENTRY(service, &manager->db->services, struct service_entry, entry)
+    {
+        if ((service->status.dwServiceType & type) && map_state(service->status.dwCurrentState, state)
+            && match_group(service->config.lpLoadOrderGroup, group))
+        {
+            total_size += sizeof(ENUM_SERVICE_STATUS_PROCESSW);
+            total_size += (strlenW(service->name) + 1) * sizeof(WCHAR);
+            if (service->config.lpDisplayName)
+            {
+                total_size += (strlenW(service->config.lpDisplayName) + 1) * sizeof(WCHAR);
+            }
+            num_services++;
+        }
+    }
+    *returned = 0;
+    *needed = total_size;
+    if (total_size > size)
+    {
+        scmdatabase_unlock(manager->db);
+        return ERROR_MORE_DATA;
+    }
+    s = (ENUM_SERVICE_STATUS_PROCESSW *)buffer;
+    offset = num_services * sizeof(ENUM_SERVICE_STATUS_PROCESSW);
+    LIST_FOR_EACH_ENTRY(service, &manager->db->services, struct service_entry, entry)
+    {
+        if ((service->status.dwServiceType & type) && map_state(service->status.dwCurrentState, state)
+            && match_group(service->config.lpLoadOrderGroup, group))
+        {
+            sz = (strlenW(service->name) + 1) * sizeof(WCHAR);
+            memcpy(buffer + offset, service->name, sz);
+            s->lpServiceName = (WCHAR *)offset; /* store a buffer offset instead of a pointer */
+            offset += sz;
+
+            if (!service->config.lpDisplayName) s->lpDisplayName = NULL;
+            else
+            {
+                sz = (strlenW(service->config.lpDisplayName) + 1) * sizeof(WCHAR);
+                memcpy(buffer + offset, service->config.lpDisplayName, sz);
+                s->lpDisplayName = (WCHAR *)offset;
+                offset += sz;
+            }
+            s->ServiceStatusProcess = service->status;
+            s++;
+        }
+    }
+    *returned = num_services;
+    *needed = 0;
+    scmdatabase_unlock(manager->db);
+    return ERROR_SUCCESS;
+}
+
 DWORD svcctl_QueryServiceObjectSecurity(
     void)
 {

@@ -352,4 +352,15 @@ typedef [switch_type(DWORD)] union
         [in] DWORD cbBufSize,
         [out] LPDWORD pcbBytesNeeded
     );
+
+    DWORD svcctl_EnumServicesStatusExW(
+        [in] SC_RPC_HANDLE hmngr,
+        [in] DWORD type,
+        [in] DWORD state,
+        [out,size_is(size)] BYTE *buffer,
+        [in] DWORD size,
+        [out] LPDWORD needed,
+        [out] LPDWORD returned,
+        [in,unique] LPCWSTR group
+    );
 }

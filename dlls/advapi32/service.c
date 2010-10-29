@@ -1558,31 +1558,125 @@ EnumServicesStatusW( SC_HANDLE hmngr, DWORD type, DWORD state, LPENUM_SERVICE_ST
  * EnumServicesStatusExA [ADVAPI32.@]
  */
 BOOL WINAPI
-EnumServicesStatusExA(SC_HANDLE hSCManager, SC_ENUM_TYPE InfoLevel, DWORD dwServiceType,
-                      DWORD dwServiceState, LPBYTE lpServices, DWORD cbBufSize, LPDWORD pcbBytesNeeded,
-                      LPDWORD lpServicesReturned, LPDWORD lpResumeHandle, LPCSTR pszGroupName)
+EnumServicesStatusExA( SC_HANDLE hmngr, SC_ENUM_TYPE level, DWORD type, DWORD state,
+                       LPBYTE buffer, DWORD size, LPDWORD needed, LPDWORD returned,
+                       LPDWORD resume_handle, LPCSTR group )
 {
-    FIXME("%p level=%d type=%x state=%x %p %x %p %p %p %s\n", hSCManager, InfoLevel,
-          dwServiceType, dwServiceState, lpServices, cbBufSize,
-          pcbBytesNeeded, lpServicesReturned,  lpResumeHandle, debugstr_a(pszGroupName));
-    if (lpServicesReturned) *lpServicesReturned = 0;
-    SetLastError (ERROR_ACCESS_DENIED);
-    return FALSE;
+    BOOL ret;
+    unsigned int i;
+    ENUM_SERVICE_STATUS_PROCESSA *services = (ENUM_SERVICE_STATUS_PROCESSA *)buffer;
+    ENUM_SERVICE_STATUS_PROCESSW *servicesW = NULL;
+    WCHAR *groupW = NULL;
+    DWORD sz, n;
+    char *p;
+
+    TRACE("%p %u 0x%x 0x%x %p %u %p %p %p %s\n", hmngr, level, type, state, buffer,
+          size, needed, returned, resume_handle, debugstr_a(group));
+
+    if (size && !(servicesW = HeapAlloc( GetProcessHeap(), 0, 2 * size )))
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return FALSE;
+    }
+    if (group)
+    {
+        int len = MultiByteToWideChar( CP_ACP, 0, group, -1, NULL, 0 );
+        if (!(groupW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            HeapFree( GetProcessHeap(), 0, servicesW );
+            return FALSE;
+        }
+        MultiByteToWideChar( CP_ACP, 0, group, -1, groupW, len * sizeof(WCHAR) );
+    }
+
+    ret = EnumServicesStatusExW( hmngr, level, type, state, (BYTE *)servicesW, 2 * size,
+                                 needed, returned, resume_handle, groupW );
+    if (!ret) goto done;
+
+    p = (char *)services + *returned * sizeof(ENUM_SERVICE_STATUS_PROCESSA);
+    n = size - (p - (char *)services);
+    ret = FALSE;
+    for (i = 0; i < *returned; i++)
+    {
+        sz = WideCharToMultiByte( CP_ACP, 0, servicesW[i].lpServiceName, -1, p, n, NULL, NULL );
+        if (!sz) goto done;
+        services[i].lpServiceName = p;
+        p += sz;
+        n -= sz;
+        if (servicesW[i].lpDisplayName)
+        {
+            sz = WideCharToMultiByte( CP_ACP, 0, servicesW[i].lpDisplayName, -1, p, n, NULL, NULL );
+            if (!sz) goto done;
+            services[i].lpDisplayName = p;
+            p += sz;
+            n -= sz;
+        }
+        services[i].ServiceStatusProcess = servicesW[i].ServiceStatusProcess;
+    }
+
+    ret = TRUE;
+
+done:
+    HeapFree( GetProcessHeap(), 0, servicesW );
+    HeapFree( GetProcessHeap(), 0, groupW );
+    return ret;
 }
 
 /******************************************************************************
  * EnumServicesStatusExW [ADVAPI32.@]
  */
 BOOL WINAPI
-EnumServicesStatusExW(SC_HANDLE hSCManager, SC_ENUM_TYPE InfoLevel, DWORD dwServiceType,
-                      DWORD dwServiceState, LPBYTE lpServices, DWORD cbBufSize, LPDWORD pcbBytesNeeded,
-                      LPDWORD lpServicesReturned, LPDWORD lpResumeHandle, LPCWSTR pszGroupName)
+EnumServicesStatusExW( SC_HANDLE hmngr, SC_ENUM_TYPE level, DWORD type, DWORD state,
+                       LPBYTE buffer, DWORD size, LPDWORD needed, LPDWORD returned,
+                       LPDWORD resume_handle, LPCWSTR group )
 {
-    FIXME("%p level=%d type=%x state=%x %p %x %p %p %p %s\n", hSCManager, InfoLevel,
-          dwServiceType, dwServiceState, lpServices, cbBufSize,
-          pcbBytesNeeded, lpServicesReturned,  lpResumeHandle, debugstr_w(pszGroupName));
-    SetLastError (ERROR_ACCESS_DENIED);
-    return FALSE;
+    DWORD err, i;
+    ENUM_SERVICE_STATUS_PROCESSW *services = (ENUM_SERVICE_STATUS_PROCESSW *)buffer;
+
+    TRACE("%p %u 0x%x 0x%x %p %u %p %p %p %s\n", hmngr, level, type, state, buffer,
+          size, needed, returned, resume_handle, debugstr_w(group));
+
+    if (resume_handle)
+        FIXME("resume handle not supported\n");
+
+    if (level != SC_ENUM_PROCESS_INFO)
+    {
+        SetLastError( ERROR_INVALID_LEVEL );
+        return FALSE;
+    }
+    if (!hmngr)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+
+    __TRY
+    {
+        err = svcctl_EnumServicesStatusExW( hmngr, type, state, buffer, size, needed,
+                                            returned, group );
+    }
+    __EXCEPT(rpc_filter)
+    {
+        err = map_exception_code( GetExceptionCode() );
+    }
+    __ENDTRY
+
+    if (err != ERROR_SUCCESS)
+    {
+        SetLastError( err );
+        return FALSE;
+    }
+
+    for (i = 0; i < *returned; i++)
+    {
+        /* convert buffer offsets into pointers */
+        services[i].lpServiceName = (WCHAR *)((char *)services + (DWORD_PTR)services[i].lpServiceName);
+        if (services[i].lpDisplayName)
+            services[i].lpDisplayName = (WCHAR *)((char *)services + (DWORD_PTR)services[i].lpDisplayName);
+    }
+
+    return TRUE;
 }
 
 /******************************************************************************
