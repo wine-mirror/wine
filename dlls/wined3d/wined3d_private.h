@@ -573,6 +573,12 @@ struct wined3d_shader_tex_mx
     DWORD texcoord_w[2];
 };
 
+struct wined3d_shader_loop_state
+{
+    UINT current_depth;
+    UINT current_reg;
+};
+
 struct wined3d_shader_context
 {
     IWineD3DBaseShader *shader;
@@ -580,6 +586,7 @@ struct wined3d_shader_context
     const struct shader_reg_maps *reg_maps;
     struct wined3d_shader_buffer *buffer;
     struct wined3d_shader_tex_mx *tex_mx;
+    struct wined3d_shader_loop_state *loop_state;
     void *backend_data;
 };
 
@@ -2747,7 +2754,6 @@ typedef struct IWineD3DBaseShaderClass
     SHADER_LIMITS                   limits;
     DWORD                          *function;
     UINT                            functionLength;
-    UINT                            cur_loop_depth, cur_loop_regno;
     BOOL                            load_local_constsF;
     const struct wined3d_shader_frontend *frontend;
     void *frontend_data;

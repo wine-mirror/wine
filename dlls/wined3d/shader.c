@@ -1190,6 +1190,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, struct wined3d_shader_buffe
     struct wined3d_shader_dst_param dst_param[2];
     struct wined3d_shader_src_param src_param[4];
     struct wined3d_shader_version shader_version;
+    struct wined3d_shader_loop_state loop_state;
     struct wined3d_shader_instruction ins;
     struct wined3d_shader_tex_mx tex_mx;
     struct wined3d_shader_context ctx;
@@ -1198,12 +1199,15 @@ void shader_generate_main(IWineD3DBaseShader *iface, struct wined3d_shader_buffe
 
     /* Initialize current parsing state. */
     tex_mx.current_row = 0;
+    loop_state.current_depth = 0;
+    loop_state.current_reg = 0;
 
     ctx.shader = iface;
     ctx.gl_info = &device->adapter->gl_info;
     ctx.reg_maps = reg_maps;
     ctx.buffer = buffer;
     ctx.tex_mx = &tex_mx;
+    ctx.loop_state = &loop_state;
     ctx.backend_data = backend_ctx;
 
     ins.ctx = &ctx;
