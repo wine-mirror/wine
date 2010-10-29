@@ -947,11 +947,6 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
         return WINEDDERR_SURFACEBUSY;
     }
 
-    if(Filter != WINED3DTEXF_NONE && Filter != WINED3DTEXF_POINT) {
-        /* Can happen when d3d9 apps do a StretchRect call which isn't handled in gl */
-        FIXME("Filters not supported in software blit\n");
-    }
-
     /* First check for the validity of source / destination rectangles.
      * This was verified using a test application + by MSDN. */
 
@@ -1218,6 +1213,14 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
 
         if (!dstwidth || !dstheight) /* hmm... stupid program ? */
             goto release;
+
+        if (Filter != WINED3DTEXF_NONE && Filter != WINED3DTEXF_POINT
+                && (srcwidth != dstwidth || srcheight != dstheight))
+        {
+            /* Can happen when d3d9 apps do a StretchRect call which isn't handled in gl */
+            FIXME("Filter %s not supported in software blit.\n", debug_d3dtexturefiltertype(Filter));
+        }
+
         sbase = (BYTE*)slock.pBits+(xsrc.top*slock.Pitch)+xsrc.left*bpp;
         xinc = (srcwidth << 16) / dstwidth;
         yinc = (srcheight << 16) / dstheight;
