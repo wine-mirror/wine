@@ -1,0 +1,166 @@
+/*
+ * Serbian resources for oleacc
+ *
+ * Copyright 2008 Nikolay Sivov
+ * Copyright 2010 Đorđe Vasiljević
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "oleacc.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_CYRILLIC
+
+STRINGTABLE
+{
+    0 "unknown object" /* undocumented */
+    ROLE_SYSTEM_TITLEBAR    "насловна линија"
+    ROLE_SYSTEM_MENUBAR     "линија менија"
+    ROLE_SYSTEM_SCROLLBAR   "трака за померање"
+    ROLE_SYSTEM_GRIP        "ручка"
+    ROLE_SYSTEM_SOUND       "звук"
+    ROLE_SYSTEM_CURSOR      "курсор"
+    ROLE_SYSTEM_CARET       "курсор"
+    ROLE_SYSTEM_ALERT       "упозорење"
+    ROLE_SYSTEM_WINDOW      "прозор"
+    ROLE_SYSTEM_CLIENT      "клијент"
+    ROLE_SYSTEM_MENUPOPUP   "искачући мени"
+    ROLE_SYSTEM_MENUITEM    "ставка менија"
+    ROLE_SYSTEM_TOOLTIP     "облачић"
+    ROLE_SYSTEM_APPLICATION "програм"
+    ROLE_SYSTEM_DOCUMENT    "документ"
+    ROLE_SYSTEM_PANE        "оквир"
+    ROLE_SYSTEM_CHART       "графикон"
+    ROLE_SYSTEM_DIALOG      "прозорче"
+    ROLE_SYSTEM_BORDER      "граница"
+    ROLE_SYSTEM_GROUPING    "груписање"
+    ROLE_SYSTEM_SEPARATOR   "раздвајач"
+    ROLE_SYSTEM_TOOLBAR     "алатница"
+    ROLE_SYSTEM_STATUSBAR   "линија стања"
+    ROLE_SYSTEM_TABLE        "табела"
+    ROLE_SYSTEM_COLUMNHEADER "заглавље колоне"
+    ROLE_SYSTEM_ROWHEADER    "заглавље реда"
+    ROLE_SYSTEM_COLUMN       "колона"
+    ROLE_SYSTEM_ROW          "ред"
+    ROLE_SYSTEM_CELL         "ћелија"
+    ROLE_SYSTEM_LINK         "веза"
+    ROLE_SYSTEM_HELPBALLOON  "помоћни облачић"
+    ROLE_SYSTEM_CHARACTER    "знак"
+    ROLE_SYSTEM_LIST         "списак"
+    ROLE_SYSTEM_LISTITEM     "списак ставки"
+    ROLE_SYSTEM_OUTLINE      "контура"
+    ROLE_SYSTEM_OUTLINEITEM  "ставка контуре"
+    ROLE_SYSTEM_PAGETAB      "језичак стране"
+    ROLE_SYSTEM_PROPERTYPAGE "својства стране"
+    ROLE_SYSTEM_INDICATOR    "показивач"
+    ROLE_SYSTEM_GRAPHIC      "графика"
+    ROLE_SYSTEM_STATICTEXT   "статичан текст"
+    ROLE_SYSTEM_TEXT         "текст"
+    ROLE_SYSTEM_PUSHBUTTON   "прекидач дугме"
+    ROLE_SYSTEM_CHECKBUTTON  "дугме за означавање"
+    ROLE_SYSTEM_RADIOBUTTON  "искључиво дугме"
+    ROLE_SYSTEM_COMBOBOX     "комбиновани списак"
+    ROLE_SYSTEM_DROPLIST     "падајући мени"
+    ROLE_SYSTEM_PROGRESSBAR  "линија тока"
+    ROLE_SYSTEM_DIAL         "позови"
+    ROLE_SYSTEM_HOTKEYFIELD  "поље за пречице"
+    ROLE_SYSTEM_SLIDER       "клизач"
+    ROLE_SYSTEM_SPINBUTTON   "вртеће дугме"
+    ROLE_SYSTEM_DIAGRAM      "дијаграм"
+    ROLE_SYSTEM_ANIMATION    "анимација"
+    ROLE_SYSTEM_EQUATION     "једначина"
+    ROLE_SYSTEM_BUTTONDROPDOWN "падајуће дугме"
+    ROLE_SYSTEM_BUTTONMENU   "дугме менија"
+    ROLE_SYSTEM_BUTTONDROPDOWNGRID "умрежи падајуће дугме"
+    ROLE_SYSTEM_WHITESPACE   "размак"
+    ROLE_SYSTEM_PAGETABLIST  "списак листова"
+    ROLE_SYSTEM_CLOCK        "часовник"
+    ROLE_SYSTEM_SPLITBUTTON  "дугме за дељење"
+    ROLE_SYSTEM_IPADDRESS    "IP адреса"
+    ROLE_SYSTEM_OUTLINEBUTTON "контура дугме"
+}
+
+LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
+
+STRINGTABLE
+{
+    0 "unknown object" /* undocumented */
+    ROLE_SYSTEM_TITLEBAR    "naslovna linija"
+    ROLE_SYSTEM_MENUBAR     "linija menija"
+    ROLE_SYSTEM_SCROLLBAR   "traka za pomeranje"
+    ROLE_SYSTEM_GRIP        "ručka"
+    ROLE_SYSTEM_SOUND       "zvuk"
+    ROLE_SYSTEM_CURSOR      "kursor"
+    ROLE_SYSTEM_CARET       "kursor"
+    ROLE_SYSTEM_ALERT       "upozorenje"
+    ROLE_SYSTEM_WINDOW      "prozor"
+    ROLE_SYSTEM_CLIENT      "klijent"
+    ROLE_SYSTEM_MENUPOPUP   "iskačući meni"
+    ROLE_SYSTEM_MENUITEM    "stavka menija"
+    ROLE_SYSTEM_TOOLTIP     "oblačić"
+    ROLE_SYSTEM_APPLICATION "program"
+    ROLE_SYSTEM_DOCUMENT    "dokument"
+    ROLE_SYSTEM_PANE        "okvir"
+    ROLE_SYSTEM_CHART       "grafikon"
+    ROLE_SYSTEM_DIALOG      "prozorče"
+    ROLE_SYSTEM_BORDER      "granica"
+    ROLE_SYSTEM_GROUPING    "grupisanje"
+    ROLE_SYSTEM_SEPARATOR   "razdvajač"
+    ROLE_SYSTEM_TOOLBAR     "alatnica"
+    ROLE_SYSTEM_STATUSBAR   "linija stanja"
+    ROLE_SYSTEM_TABLE        "tabela"
+    ROLE_SYSTEM_COLUMNHEADER "zaglavlje kolone"
+    ROLE_SYSTEM_ROWHEADER    "zaglavlje reda"
+    ROLE_SYSTEM_COLUMN       "kolona"
+    ROLE_SYSTEM_ROW          "red"
+    ROLE_SYSTEM_CELL         "ćelija"
+    ROLE_SYSTEM_LINK         "veza"
+    ROLE_SYSTEM_HELPBALLOON  "pomoćni oblačić"
+    ROLE_SYSTEM_CHARACTER    "znak"
+    ROLE_SYSTEM_LIST         "spisak"
+    ROLE_SYSTEM_LISTITEM     "spisak stavki"
+    ROLE_SYSTEM_OUTLINE      "kontura"
+    ROLE_SYSTEM_OUTLINEITEM  "stavka konture"
+    ROLE_SYSTEM_PAGETAB      "jezičak strane"
+    ROLE_SYSTEM_PROPERTYPAGE "svojstva strane"
+    ROLE_SYSTEM_INDICATOR    "pokazivač"
+    ROLE_SYSTEM_GRAPHIC      "grafika"
+    ROLE_SYSTEM_STATICTEXT   "statičan tekst"
+    ROLE_SYSTEM_TEXT         "tekst"
+    ROLE_SYSTEM_PUSHBUTTON   "prekidač dugme"
+    ROLE_SYSTEM_CHECKBUTTON  "dugme za označavanje"
+    ROLE_SYSTEM_RADIOBUTTON  "isključivo dugme"
+    ROLE_SYSTEM_COMBOBOX     "kombinovani spisak"
+    ROLE_SYSTEM_DROPLIST     "padajući meni"
+    ROLE_SYSTEM_PROGRESSBAR  "linija toka"
+    ROLE_SYSTEM_DIAL         "pozovi"
+    ROLE_SYSTEM_HOTKEYFIELD  "polje za prečice"
+    ROLE_SYSTEM_SLIDER       "klizač"
+    ROLE_SYSTEM_SPINBUTTON   "vrteće dugme"
+    ROLE_SYSTEM_DIAGRAM      "dijagram"
+    ROLE_SYSTEM_ANIMATION    "animacija"
+    ROLE_SYSTEM_EQUATION     "jednačina"
+    ROLE_SYSTEM_BUTTONDROPDOWN "padajuće dugme"
+    ROLE_SYSTEM_BUTTONMENU   "dugme menija"
+    ROLE_SYSTEM_BUTTONDROPDOWNGRID "umreži padajuće dugme"
+    ROLE_SYSTEM_WHITESPACE   "razmak"
+    ROLE_SYSTEM_PAGETABLIST  "spisak listova"
+    ROLE_SYSTEM_CLOCK        "časovnik"
+    ROLE_SYSTEM_SPLITBUTTON  "dugme za deljenje"
+    ROLE_SYSTEM_IPADDRESS    "IP adresa"
+    ROLE_SYSTEM_OUTLINEBUTTON "kontura dugme"
+}
