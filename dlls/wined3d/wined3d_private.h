@@ -565,12 +565,21 @@ typedef struct shader_reg_maps
 
 } shader_reg_maps;
 
+/* Keeps track of details for TEX_M#x# instructions which need to maintain
+ * state information between multiple instructions. */
+struct wined3d_shader_tex_mx
+{
+    unsigned int current_row;
+    DWORD texcoord_w[2];
+};
+
 struct wined3d_shader_context
 {
     IWineD3DBaseShader *shader;
     const struct wined3d_gl_info *gl_info;
     const struct shader_reg_maps *reg_maps;
     struct wined3d_shader_buffer *buffer;
+    struct wined3d_shader_tex_mx *tex_mx;
     void *backend_data;
 };
 
@@ -2715,13 +2724,6 @@ typedef struct SHADER_LIMITS {
     unsigned int label;
 } SHADER_LIMITS;
 
-/* Keeps track of details for TEX_M#x# shader opcodes which need to
- * maintain state information between multiple codes */
-typedef struct SHADER_PARSE_STATE {
-    unsigned int current_row;
-    DWORD texcoord_w[2];
-} SHADER_PARSE_STATE;
-
 #ifdef __GNUC__
 #define PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
 #else
@@ -2743,7 +2745,6 @@ typedef struct IWineD3DBaseShaderClass
 {
     LONG                            ref;
     SHADER_LIMITS                   limits;
-    SHADER_PARSE_STATE              parse_state;
     DWORD                          *function;
     UINT                            functionLength;
     UINT                            cur_loop_depth, cur_loop_regno;

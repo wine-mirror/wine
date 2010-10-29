@@ -1191,21 +1191,24 @@ void shader_generate_main(IWineD3DBaseShader *iface, struct wined3d_shader_buffe
     struct wined3d_shader_src_param src_param[4];
     struct wined3d_shader_version shader_version;
     struct wined3d_shader_instruction ins;
+    struct wined3d_shader_tex_mx tex_mx;
     struct wined3d_shader_context ctx;
     const DWORD *ptr = byte_code;
     DWORD i;
 
     /* Initialize current parsing state. */
+    tex_mx.current_row = 0;
+
     ctx.shader = iface;
     ctx.gl_info = &device->adapter->gl_info;
     ctx.reg_maps = reg_maps;
     ctx.buffer = buffer;
+    ctx.tex_mx = &tex_mx;
     ctx.backend_data = backend_ctx;
 
     ins.ctx = &ctx;
     ins.dst = dst_param;
     ins.src = src_param;
-    shader->baseShader.parse_state.current_row = 0;
 
     fe->shader_read_header(fe_data, &ptr, &shader_version);
 

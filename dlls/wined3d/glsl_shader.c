@@ -3327,16 +3327,15 @@ static void shader_glsl_texm3x2pad(const struct wined3d_shader_instruction *ins)
  * Calculate the 1st or 2nd row of a 3-row matrix multiplication. */
 static void shader_glsl_texm3x3pad(const struct wined3d_shader_instruction *ins)
 {
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     DWORD reg = ins->dst[0].reg.idx;
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
-    SHADER_PARSE_STATE* current_state = &shader->baseShader.parse_state;
+    struct wined3d_shader_tex_mx *tex_mx = ins->ctx->tex_mx;
     glsl_src_param_t src0_param;
 
     shader_glsl_add_src_param(ins, &ins->src[0], src_mask, &src0_param);
-    shader_addline(buffer, "tmp0.%c = dot(T%u.xyz, %s);\n", 'x' + current_state->current_row, reg, src0_param.param_str);
-    current_state->texcoord_w[current_state->current_row++] = reg;
+    shader_addline(buffer, "tmp0.%c = dot(T%u.xyz, %s);\n", 'x' + tex_mx->current_row, reg, src0_param.param_str);
+    tex_mx->texcoord_w[tex_mx->current_row++] = reg;
 }
 
 static void shader_glsl_texm3x2tex(const struct wined3d_shader_instruction *ins)
@@ -3361,8 +3360,7 @@ static void shader_glsl_texm3x2tex(const struct wined3d_shader_instruction *ins)
 static void shader_glsl_texm3x3tex(const struct wined3d_shader_instruction *ins)
 {
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    SHADER_PARSE_STATE *current_state = &shader->baseShader.parse_state;
+    struct wined3d_shader_tex_mx *tex_mx = ins->ctx->tex_mx;
     glsl_src_param_t src0_param;
     DWORD reg = ins->dst[0].reg.idx;
     glsl_sample_function_t sample_function;
@@ -3376,7 +3374,7 @@ static void shader_glsl_texm3x3tex(const struct wined3d_shader_instruction *ins)
     /* Sample the texture using the calculated coordinates */
     shader_glsl_gen_sample_code(ins, reg, &sample_function, WINED3DSP_NOSWIZZLE, NULL, NULL, NULL, "tmp0.xyz");
 
-    current_state->current_row = 0;
+    tex_mx->current_row = 0;
 }
 
 /** Process the WINED3DSIO_TEXM3X3 instruction in GLSL
@@ -3384,8 +3382,7 @@ static void shader_glsl_texm3x3tex(const struct wined3d_shader_instruction *ins)
 static void shader_glsl_texm3x3(const struct wined3d_shader_instruction *ins)
 {
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    SHADER_PARSE_STATE *current_state = &shader->baseShader.parse_state;
+    struct wined3d_shader_tex_mx *tex_mx = ins->ctx->tex_mx;
     glsl_src_param_t src0_param;
     char dst_mask[6];
     DWORD reg = ins->dst[0].reg.idx;
@@ -3396,19 +3393,18 @@ static void shader_glsl_texm3x3(const struct wined3d_shader_instruction *ins)
     shader_glsl_get_write_mask(&ins->dst[0], dst_mask);
     shader_addline(ins->ctx->buffer, "vec4(tmp0.xy, dot(T%u.xyz, %s), 1.0)%s);\n", reg, src0_param.param_str, dst_mask);
 
-    current_state->current_row = 0;
+    tex_mx->current_row = 0;
 }
 
 /* Process the WINED3DSIO_TEXM3X3SPEC instruction in GLSL
  * Perform the final texture lookup based on the previous 2 3x3 matrix multiplies */
 static void shader_glsl_texm3x3spec(const struct wined3d_shader_instruction *ins)
 {
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
     DWORD reg = ins->dst[0].reg.idx;
     glsl_src_param_t src0_param;
     glsl_src_param_t src1_param;
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
-    SHADER_PARSE_STATE* current_state = &shader->baseShader.parse_state;
+    struct wined3d_shader_tex_mx *tex_mx = ins->ctx->tex_mx;
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     glsl_sample_function_t sample_function;
 
@@ -3426,17 +3422,16 @@ static void shader_glsl_texm3x3spec(const struct wined3d_shader_instruction *ins
     /* Sample the texture */
     shader_glsl_gen_sample_code(ins, reg, &sample_function, WINED3DSP_NOSWIZZLE, NULL, NULL, NULL, "tmp0.xyz");
 
-    current_state->current_row = 0;
+    tex_mx->current_row = 0;
 }
 
 /* Process the WINED3DSIO_TEXM3X3VSPEC instruction in GLSL
  * Perform the final texture lookup based on the previous 2 3x3 matrix multiplies */
 static void shader_glsl_texm3x3vspec(const struct wined3d_shader_instruction *ins)
 {
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
     DWORD reg = ins->dst[0].reg.idx;
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
-    SHADER_PARSE_STATE* current_state = &shader->baseShader.parse_state;
+    struct wined3d_shader_tex_mx *tex_mx = ins->ctx->tex_mx;
     glsl_src_param_t src0_param;
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     glsl_sample_function_t sample_function;
@@ -3448,7 +3443,7 @@ static void shader_glsl_texm3x3vspec(const struct wined3d_shader_instruction *in
 
     /* Construct the eye-ray vector from w coordinates */
     shader_addline(buffer, "tmp1.xyz = normalize(vec3(gl_TexCoord[%u].w, gl_TexCoord[%u].w, gl_TexCoord[%u].w));\n",
-            current_state->texcoord_w[0], current_state->texcoord_w[1], reg);
+            tex_mx->texcoord_w[0], tex_mx->texcoord_w[1], reg);
     shader_addline(buffer, "tmp0.xyz = -reflect(tmp1.xyz, normalize(tmp0.xyz));\n");
 
     /* Dependent read, not valid with conditional NP2 */
@@ -3457,7 +3452,7 @@ static void shader_glsl_texm3x3vspec(const struct wined3d_shader_instruction *in
     /* Sample the texture using the calculated coordinates */
     shader_glsl_gen_sample_code(ins, reg, &sample_function, WINED3DSP_NOSWIZZLE, NULL, NULL, NULL, "tmp0.xyz");
 
-    current_state->current_row = 0;
+    tex_mx->current_row = 0;
 }
 
 /** Process the WINED3DSIO_TEXBEM instruction in GLSL.

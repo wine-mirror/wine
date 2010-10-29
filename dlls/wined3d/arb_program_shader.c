@@ -2117,8 +2117,7 @@ static void pshader_hw_texm3x2tex(const struct wined3d_shader_instruction *ins)
 
 static void pshader_hw_texm3x3pad(const struct wined3d_shader_instruction *ins)
 {
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    SHADER_PARSE_STATE *current_state = &shader->baseShader.parse_state;
+    struct wined3d_shader_tex_mx *tex_mx = ins->ctx->tex_mx;
     DWORD reg = ins->dst[0].reg.idx;
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
     char src0_name[50], dst_name[50];
@@ -2129,20 +2128,19 @@ static void pshader_hw_texm3x3pad(const struct wined3d_shader_instruction *ins)
      * incrementing ins->dst[0].register_idx numbers. So the pad instruction already knows the final destination
      * register, and this register is uninitialized(otherwise the assembler complains that it is 'redeclared')
      */
-    tmp_reg.idx = reg + 2 - current_state->current_row;
+    tmp_reg.idx = reg + 2 - tex_mx->current_row;
     shader_arb_get_register_name(ins, &tmp_reg, dst_name, &is_color);
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0_name);
     shader_addline(buffer, "DP3 %s.%c, fragment.texcoord[%u], %s;\n",
-                   dst_name, 'x' + current_state->current_row, reg, src0_name);
-    current_state->texcoord_w[current_state->current_row++] = reg;
+                   dst_name, 'x' + tex_mx->current_row, reg, src0_name);
+    tex_mx->texcoord_w[tex_mx->current_row++] = reg;
 }
 
 static void pshader_hw_texm3x3tex(const struct wined3d_shader_instruction *ins)
 {
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    SHADER_PARSE_STATE *current_state = &shader->baseShader.parse_state;
+    struct wined3d_shader_tex_mx *tex_mx = ins->ctx->tex_mx;
     DWORD flags;
     DWORD reg = ins->dst[0].reg.idx;
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
@@ -2158,14 +2156,13 @@ static void pshader_hw_texm3x3tex(const struct wined3d_shader_instruction *ins)
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_str);
     flags = reg < MAX_TEXTURES ? priv->cur_ps_args->super.tex_transform >> reg * WINED3D_PSARGS_TEXTRANSFORM_SHIFT : 0;
     shader_hw_sample(ins, reg, dst_str, dst_name, flags & WINED3DTTFF_PROJECTED ? TEX_PROJ : 0, NULL, NULL);
-    current_state->current_row = 0;
+    tex_mx->current_row = 0;
 }
 
 static void pshader_hw_texm3x3vspec(const struct wined3d_shader_instruction *ins)
 {
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    SHADER_PARSE_STATE *current_state = &shader->baseShader.parse_state;
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
+    struct wined3d_shader_tex_mx *tex_mx = ins->ctx->tex_mx;
     DWORD flags;
     DWORD reg = ins->dst[0].reg.idx;
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
@@ -2182,8 +2179,8 @@ static void pshader_hw_texm3x3vspec(const struct wined3d_shader_instruction *ins
     shader_addline(buffer, "DP3 %s.z, fragment.texcoord[%u], %s;\n", dst_reg, reg, src0_name);
 
     /* Construct the eye-ray vector from w coordinates */
-    shader_addline(buffer, "MOV TB.x, fragment.texcoord[%u].w;\n", current_state->texcoord_w[0]);
-    shader_addline(buffer, "MOV TB.y, fragment.texcoord[%u].w;\n", current_state->texcoord_w[1]);
+    shader_addline(buffer, "MOV TB.x, fragment.texcoord[%u].w;\n", tex_mx->texcoord_w[0]);
+    shader_addline(buffer, "MOV TB.y, fragment.texcoord[%u].w;\n", tex_mx->texcoord_w[1]);
     shader_addline(buffer, "MOV TB.z, fragment.texcoord[%u].w;\n", reg);
 
     /* Calculate reflection vector
@@ -2200,14 +2197,13 @@ static void pshader_hw_texm3x3vspec(const struct wined3d_shader_instruction *ins
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_str);
     flags = reg < MAX_TEXTURES ? priv->cur_ps_args->super.tex_transform >> reg * WINED3D_PSARGS_TEXTRANSFORM_SHIFT : 0;
     shader_hw_sample(ins, reg, dst_str, dst_reg, flags & WINED3DTTFF_PROJECTED ? TEX_PROJ : 0, NULL, NULL);
-    current_state->current_row = 0;
+    tex_mx->current_row = 0;
 }
 
 static void pshader_hw_texm3x3spec(const struct wined3d_shader_instruction *ins)
 {
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    SHADER_PARSE_STATE *current_state = &shader->baseShader.parse_state;
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
+    struct wined3d_shader_tex_mx *tex_mx = ins->ctx->tex_mx;
     DWORD flags;
     DWORD reg = ins->dst[0].reg.idx;
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
@@ -2242,7 +2238,7 @@ static void pshader_hw_texm3x3spec(const struct wined3d_shader_instruction *ins)
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_str);
     flags = reg < MAX_TEXTURES ? priv->cur_ps_args->super.tex_transform >> reg * WINED3D_PSARGS_TEXTRANSFORM_SHIFT : 0;
     shader_hw_sample(ins, reg, dst_str, dst_reg, flags & WINED3DTTFF_PROJECTED ? TEX_PROJ : 0, NULL, NULL);
-    current_state->current_row = 0;
+    tex_mx->current_row = 0;
 }
 
 static void pshader_hw_texdepth(const struct wined3d_shader_instruction *ins)
