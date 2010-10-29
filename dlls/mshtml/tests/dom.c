@@ -48,7 +48,7 @@ static const char elem_test_str[] =
     "<textarea id=\"X\">text text</textarea>"
     "<table id=\"tbl\"><tbody><tr></tr><tr id=\"row2\"><td>td1 text</td><td>td2 text</td></tr></tbody></table>"
     "<script id=\"sc\" type=\"text/javascript\"><!--\nfunction Testing() {}\n// -->\n</script>"
-    "<test /><object></object>"
+    "<test /><object></object><embed />"
     "<img id=\"imgid\" name=\"WineImg\"/>"
     "<iframe src=\"about:blank\" id=\"ifr\"></iframe>"
     "<form id=\"frm\"></form>"
@@ -101,7 +101,8 @@ typedef enum {
     ET_IFRAME,
     ET_FORM,
     ET_FRAME,
-    ET_OBJECT
+    ET_OBJECT,
+    ET_EMBED
 } elem_type_t;
 
 static const IID * const none_iids[] = {
@@ -337,6 +338,18 @@ static const IID * const object_iids[] = {
     NULL
 };
 
+static const IID * const embed_iids[] = {
+    &IID_IHTMLDOMNode,
+    &IID_IHTMLDOMNode2,
+    &IID_IHTMLElement,
+    &IID_IHTMLElement2,
+    &IID_IHTMLElement3,
+    &IID_IHTMLEmbedElement,
+    &IID_IDispatchEx,
+    /* FIXME: No IConnectionPointContainer */
+    NULL
+};
+
 static const IID * const iframe_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLDOMNode2,
@@ -435,7 +448,8 @@ static const elem_type_info_t elem_type_infos[] = {
     {"IFRAME",    iframe_iids,      &DIID_DispHTMLIFrame},
     {"FORM",      form_iids,        &DIID_DispHTMLFormElement},
     {"FRAME",     frame_iids,       &DIID_DispHTMLFrameElement},
-    {"OBJECT",    object_iids,      &DIID_DispHTMLObjectElement}
+    {"OBJECT",    object_iids,      &DIID_DispHTMLObjectElement},
+    {"EMBED",     embed_iids,       &DIID_DispHTMLEmbed}
 };
 
 static const char *dbgstr_guid(REFIID riid)
@@ -5924,6 +5938,7 @@ static void test_elems(IHTMLDocument2 *doc)
         ET_SCRIPT,
         ET_TEST,
         ET_OBJECT,
+        ET_EMBED,
         ET_IMG,
         ET_IFRAME,
         ET_FORM

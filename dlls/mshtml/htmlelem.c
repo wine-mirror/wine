@@ -1654,6 +1654,7 @@ HTMLElement *HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL 
 
     static const WCHAR wszA[]        = {'A',0};
     static const WCHAR wszBODY[]     = {'B','O','D','Y',0};
+    static const WCHAR wszEMBED[]    = {'E','M','B','E','D',0};
     static const WCHAR wszFORM[]     = {'F','O','R','M',0};
     static const WCHAR wszFRAME[]    = {'F','R','A','M','E',0};
     static const WCHAR wszIFRAME[]   = {'I','F','R','A','M','E',0};
@@ -1680,6 +1681,8 @@ HTMLElement *HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL 
         ret = HTMLAnchorElement_Create(doc, nselem);
     else if(!strcmpW(class_name, wszBODY))
         ret = HTMLBodyElement_Create(doc, nselem);
+    else if(!strcmpW(class_name, wszEMBED))
+        ret = HTMLEmbedElement_Create(doc, nselem);
     else if(!strcmpW(class_name, wszFORM))
         ret = HTMLFormElement_Create(doc, nselem);
     else if(!strcmpW(class_name, wszFRAME))
