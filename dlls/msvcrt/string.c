@@ -206,8 +206,7 @@ double CDECL MSVCRT_strtod_l( const char *str, char **end, MSVCRT__locale_t loca
     double ret;
     BOOL found_digit = FALSE;
 
-    if(!str) {
-        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+    if (!MSVCRT_CHECK_PMT(str != NULL)) {
         *MSVCRT__errno() = MSVCRT_EINVAL;
         return 0;
     }
@@ -529,8 +528,8 @@ __int64 CDECL MSVCRT_strtoi64_l(const char *nptr, char **endptr, int base, MSVCR
 
     TRACE("(%s %p %d %p)\n", nptr, endptr, base, locale);
 
-    if(!nptr || base<0 || base>36 || base==1) {
-        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+    if (!MSVCRT_CHECK_PMT(nptr != NULL) || !MSVCRT_CHECK_PMT(base == 0 || base >= 2) ||
+        !MSVCRT_CHECK_PMT(base <= 36)) {
         return 0;
     }
 
@@ -609,8 +608,8 @@ unsigned __int64 CDECL MSVCRT_strtoui64_l(const char *nptr, char **endptr, int b
 
     TRACE("(%s %p %d %p)\n", nptr, endptr, base, locale);
 
-    if(!nptr || base<0 || base>36 || base==1) {
-        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+    if (!MSVCRT_CHECK_PMT(nptr != NULL) || !MSVCRT_CHECK_PMT(base == 0 || base >= 2) ||
+        !MSVCRT_CHECK_PMT(base <= 36)) {
         return 0;
     }
 
