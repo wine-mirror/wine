@@ -1767,8 +1767,6 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
     checkGLcall("glGetIntegerv");
     glGetIntegerv(GL_CURRENT_RASTER_POSITION, &prev_rasterpos[0]);
     checkGLcall("glGetIntegerv");
-    glPixelZoom(1.0f, -1.0f);
-    checkGLcall("glPixelZoom");
 
     /* If not fullscreen, we need to skip a number of bytes to find the next row of data */
     glGetIntegerv(GL_UNPACK_ROW_LENGTH, &skipBytes);
@@ -1816,9 +1814,6 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
         checkGLcall("glBindBufferARB");
     }
-
-    glPixelZoom(1.0f, 1.0f);
-    checkGLcall("glPixelZoom");
 
     glRasterPos3iv(&prev_rasterpos[0]);
     checkGLcall("glRasterPos3iv");
@@ -3053,7 +3048,7 @@ static void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *dst_surface, IWine
     left = src_rect->left;
     right = src_rect->right;
 
-    if (upsidedown)
+    if (!upsidedown)
     {
         top = src_surface->currentDesc.Height - src_rect->top;
         bottom = src_surface->currentDesc.Height - src_rect->bottom;
@@ -3082,19 +3077,19 @@ static void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *dst_surface, IWine
     glBegin(GL_QUADS);
         /* bottom left */
         glTexCoord2f(left, bottom);
-        glVertex2i(0, fbheight);
+        glVertex2i(0, 0);
 
         /* top left */
         glTexCoord2f(left, top);
-        glVertex2i(0, fbheight - dst_rect.bottom - dst_rect.top);
+        glVertex2i(0, dst_rect.bottom - dst_rect.top);
 
         /* top right */
         glTexCoord2f(right, top);
-        glVertex2i(dst_rect.right - dst_rect.left, fbheight - dst_rect.bottom - dst_rect.top);
+        glVertex2i(dst_rect.right - dst_rect.left, dst_rect.bottom - dst_rect.top);
 
         /* bottom right */
         glTexCoord2f(right, bottom);
-        glVertex2i(dst_rect.right - dst_rect.left, fbheight);
+        glVertex2i(dst_rect.right - dst_rect.left, 0);
     glEnd();
     checkGLcall("glEnd and previous");
 
@@ -3140,21 +3135,21 @@ static void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *dst_surface, IWine
 
         glBegin(GL_QUADS);
             /* top left */
-            glTexCoord2f(0.0f, (float)fbheight / (float)src_surface->pow2Height);
-            glVertex2i(0, 0);
-
-            /* bottom left */
             glTexCoord2f(0.0f, 0.0f);
             glVertex2i(0, fbheight);
 
-            /* bottom right */
-            glTexCoord2f((float)fbwidth / (float)src_surface->pow2Width, 0.0f);
-            glVertex2i(fbwidth, src_surface->currentDesc.Height);
+            /* bottom left */
+            glTexCoord2f(0.0f, (float)fbheight / (float)src_surface->pow2Height);
+            glVertex2i(0, 0);
 
-            /* top right */
+            /* bottom right */
             glTexCoord2f((float)fbwidth / (float)src_surface->pow2Width,
                     (float)fbheight / (float)src_surface->pow2Height);
             glVertex2i(fbwidth, 0);
+
+            /* top right */
+            glTexCoord2f((float)fbwidth / (float)src_surface->pow2Width, 0.0f);
+            glVertex2i(fbwidth, fbheight);
         glEnd();
     }
     glDisable(texture_target);
@@ -3368,16 +3363,13 @@ static void surface_blt_to_drawable(IWineD3DDeviceImpl *device,
     context = context_acquire(device, dst_surface);
     context_apply_blit_state(context, device);
 
-    /* context_apply_blit_state() sets up a flipped (in GL terms) projection
-     * matrix. As a result, we need to skip the flip for onscreen surfaces,
-     * and have to flip for offscreen surfaces instead, to undo the flip done
-     * by the projection matrix. */
-    if (swapchain && dst_surface == swapchain->front_buffer)
+    if (!surface_is_offscreen(dst_surface))
     {
-        surface_translate_frontbuffer_coords(dst_surface, context->win_handle, &dst_rect);
-    }
-    else if (surface_is_offscreen(dst_surface))
-    {
+        if (swapchain && dst_surface == swapchain->front_buffer)
+        {
+            surface_translate_frontbuffer_coords(dst_surface, context->win_handle, &dst_rect);
+        }
+
         dst_rect.top = dst_surface->currentDesc.Height - dst_rect.top;
         dst_rect.bottom = dst_surface->currentDesc.Height - dst_rect.bottom;
     }

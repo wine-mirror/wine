@@ -7168,10 +7168,11 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_
      * whereas the real gl drawable size is the size of the window. */
     dst_swapchain = dst_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
             ? dst_surface->container.u.swapchain : NULL;
-    if (dst_swapchain && dst_surface == dst_swapchain->front_buffer)
-        surface_translate_frontbuffer_coords(dst_surface, context->win_handle, &dst_rect);
-    else if (surface_is_offscreen(dst_surface))
+    if (!surface_is_offscreen(dst_surface))
     {
+        if (dst_swapchain && dst_surface == dst_swapchain->front_buffer)
+            surface_translate_frontbuffer_coords(dst_surface, context->win_handle, &dst_rect);
+
         dst_rect.top = dst_surface->currentDesc.Height - dst_rect.top;
         dst_rect.bottom = dst_surface->currentDesc.Height - dst_rect.bottom;
     }

@@ -1622,7 +1622,7 @@ static inline void set_blit_dimension(UINT width, UINT height) {
     checkGLcall("glMatrixMode(GL_PROJECTION)");
     glLoadIdentity();
     checkGLcall("glLoadIdentity()");
-    glOrtho(0, width, height, 0, 0.0, -1.0);
+    glOrtho(0, width, 0, height, 0.0, -1.0);
     checkGLcall("glOrtho");
     glViewport(0, 0, width, height);
     checkGLcall("glViewport");
