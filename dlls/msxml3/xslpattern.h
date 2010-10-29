@@ -33,9 +33,11 @@
 
 #include <libxml/tree.h>
 #include <libxml/xmlstring.h>
+#include <libxml/xpath.h>
 
 typedef struct _parser_param {
     void* yyscanner;
+    xmlXPathContextPtr ctx;
     xmlChar const* in;
     int pos;
     int len;

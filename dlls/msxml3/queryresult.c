@@ -53,7 +53,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 int registerNamespaces(xmlXPathContextPtr ctxt);
 BOOL is_xpathmode(const xmlDocPtr doc);
-xmlChar* XSLPattern_to_XPath(xmlChar const* xslpat_str);
+xmlChar* XSLPattern_to_XPath(xmlXPathContextPtr ctxt, xmlChar const* xslpat_str);
 
 typedef struct _queryresult
 {
@@ -393,7 +393,7 @@ void XSLPattern_invalid(xmlXPathParserContextPtr pctx, int nargs)
 
 #define XSLPATTERN_CHECK_ARGS(n) \
     if (nargs != n) { \
-        FIXME("XSLPattern syntax error: Expected 0 arguments, got %i\n", nargs); \
+        FIXME("XSLPattern syntax error: Expected %i arguments, got %i\n", n, nargs); \
         XSLPattern_invalid(pctx, nargs); \
         return; \
     }
@@ -531,7 +531,7 @@ HRESULT queryresult_create(xmlNodePtr node, LPCWSTR szQuery, IXMLDOMNodeList **o
         xmlChar* tmp;
         int len;
         WARN("Attempting XSLPattern emulation (experimental).\n");
-        tmp = XSLPattern_to_XPath(str);
+        tmp = XSLPattern_to_XPath(ctxt, str);
         len = (xmlStrlen(tmp)+1)*sizeof(xmlChar);
         str = heap_realloc(str, len);
         memcpy(str, tmp, len);

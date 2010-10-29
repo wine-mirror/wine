@@ -151,11 +151,12 @@ ANY                 (.)
 
 %%
 
-xmlChar* XSLPattern_to_XPath(xmlChar const* xslpat_str)
+xmlChar* XSLPattern_to_XPath(xmlXPathContextPtr ctxt, xmlChar const* xslpat_str)
 {
     parser_param p;
     TRACE("(%s)\n", wine_dbgstr_a((char const*)xslpat_str));
     memset(&p, 0, sizeof(parser_param));
+    p.ctx = ctxt;
     p.in = xslpat_str;
     p.len = xmlStrlen(xslpat_str);
 

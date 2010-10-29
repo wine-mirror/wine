@@ -24,15 +24,16 @@
 
 #ifdef HAVE_LIBXML2
 #include "xslpattern.h"
+#include <libxml/xpathInternals.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 
-static const xmlChar NameTest_mod_pre[] = "*[namespace-uri()=namespace::*[local-name()=''] or namespace-uri()=''][local-name()='";
+static const xmlChar NameTest_mod_pre[] = "*[name()='";
 static const xmlChar NameTest_mod_post[] = "']";
 
 #define U(str) BAD_CAST str
-#define DBG(str) wine_dbgstr_a((char const*)str)
+
 %}
 
 %token TOK_Parent TOK_Self TOK_DblFSlash TOK_FSlash TOK_Axis TOK_Colon
@@ -70,16 +71,16 @@ static const xmlChar NameTest_mod_post[] = "']";
     ;
     PrefixedName            : TOK_NCName TOK_Colon TOK_NCName
                             {
-                                TRACE("Got PrefixedName: %s:%s\n", DBG($1), DBG($3));
+                                TRACE("Got PrefixedName: \"%s:%s\"\n", $1, $3);
                                 $$=$1;
-                                $$=xmlStrcat($$, U(":"));
+                                $$=xmlStrcat($$,U(":"));
                                 $$=xmlStrcat($$,$3);
                                 xmlFree($3);
                             }
     ;
     UnprefixedName          : TOK_NCName
                             {
-                                TRACE("Got UnprefixedName: %s\n", DBG($1));
+                                TRACE("Got UnprefixedName: \"%s\"\n", $1);
                                 $$=$1;
                             }
     ;
@@ -93,14 +94,14 @@ static const xmlChar NameTest_mod_post[] = "']";
     ;
     AbsoluteLocationPath    : TOK_FSlash RelativeLocationPath
                             {
-                                TRACE("Got AbsoluteLocationPath: /%s\n", DBG($1));
+                                TRACE("Got AbsoluteLocationPath: \"/%s\"\n", $2);
                                 $$=xmlStrdup(U("/"));
                                 $$=xmlStrcat($$,$2);
                                 xmlFree($2);
                             }
                             | TOK_FSlash
                             {
-                                TRACE("Got AbsoluteLocationPath: /\n");
+                                TRACE("Got AbsoluteLocationPath: \"/\"\n");
                                 $$=xmlStrdup(U("/"));
                             }
                             | AbbreviatedAbsoluteLocationPath
@@ -108,7 +109,7 @@ static const xmlChar NameTest_mod_post[] = "']";
     RelativeLocationPath    : Step
                             | RelativeLocationPath TOK_FSlash Step
                             {
-                                TRACE("Got RelativeLocationPath: %s/%s\n", DBG($1), DBG($3));
+                                TRACE("Got RelativeLocationPath: \"%s/%s\"\n", $1, $3);
                                 $$=$1;
                                 $$=xmlStrcat($$,U("/"));
                                 $$=xmlStrcat($$,$3);
@@ -119,7 +120,7 @@ static const xmlChar NameTest_mod_post[] = "']";
     /* [2.1] Location Steps */
     Step                    : AxisSpecifier NameTest Predicates
                             {
-                                TRACE("Got Step: %s%s%s\n", DBG($1), DBG($2), DBG($3));
+                                TRACE("Got Step: \"%s%s%s\"\n", $1, $2, $3);
                                 $$=$1;
                                 $$=xmlStrcat($$,$2);
                                 xmlFree($2);
@@ -128,14 +129,14 @@ static const xmlChar NameTest_mod_post[] = "']";
                             }
                             | NameTest Predicates
                             {
-                                TRACE("Got Step: %s%s\n", DBG($1), DBG($2));
+                                TRACE("Got Step: \"%s%s\"\n", $1, $2);
                                 $$=$1;
                                 $$=xmlStrcat($$,$2);
                                 xmlFree($2);
                             }
                             | AxisSpecifier NameTest
                             {
-                                TRACE("Got Step: %s%s\n", DBG($1), DBG($2));
+                                TRACE("Got Step: \"%s%s\"\n", $1, $2);
                                 $$=$1;
                                 $$=xmlStrcat($$,$2);
                                 xmlFree($2);
@@ -146,14 +147,14 @@ static const xmlChar NameTest_mod_post[] = "']";
     ;
     AxisSpecifier           : TOK_NCName TOK_Axis
                             {
-                                TRACE("Got AxisSpecifier: %s::\n", DBG($1));
+                                TRACE("Got AxisSpecifier: \"%s::\"\n", $1);
                                 $$=$1;
                                 $$=xmlStrcat($$,U("::"));
                             }
     ;
     Attribute               : '@' TOK_NCName
                             {
-                                TRACE("Got Attribute: @%s\n", DBG($2));
+                                TRACE("Got Attribute: \"@%s\"\n", $2);
                                 $$=xmlStrdup(U("@"));
                                 $$=xmlStrcat($$,$2);
                                 xmlFree($2);
@@ -163,16 +164,34 @@ static const xmlChar NameTest_mod_post[] = "']";
     /* [2.3] Node Tests */
     NameTest                : '*'
                             {
-                                TRACE("Got NameTest: *\n");
+                                TRACE("Got NameTest: \"*\"\n");
                                 $$=xmlStrdup(U("*"));
                             }
                             | TOK_NCName TOK_Colon '*'
                             {
-                                TRACE("Got NameTest: %s:*\n", DBG($1));
+                                TRACE("Got NameTest: \"%s:*\"\n", $1);
                                 $$=$1;
                                 $$=xmlStrcat($$,U(":*"));
                             }
-                            | PrefixedName
+                            | TOK_NCName TOK_Colon TOK_NCName
+                            { /* PrefixedName */
+                                xmlChar const* registeredNsURI = xmlXPathNsLookup(p->ctx, $1);
+                                TRACE("Got PrefixedName: \"%s:%s\"\n", $1, $3);
+
+                                if (registeredNsURI)
+                                    $$=xmlStrdup(U(""));
+                                else
+                                    $$=xmlStrdup(NameTest_mod_pre);
+
+                                $$=xmlStrcat($$,$1);
+                                xmlFree($1);
+                                $$=xmlStrcat($$,U(":"));
+                                $$=xmlStrcat($$,$3);
+                                xmlFree($3);
+
+                                if (!registeredNsURI)
+                                    $$=xmlStrcat($$,NameTest_mod_post);
+                            }
                             | UnprefixedName
                             {
                                 $$=xmlStrdup(NameTest_mod_pre);
@@ -191,7 +210,7 @@ static const xmlChar NameTest_mod_post[] = "']";
     ;
     Predicate               : '[' PredicateExpr ']'
                             {
-                                TRACE("Got Predicate: [%s]\n", DBG($2));
+                                TRACE("Got Predicate: \"[%s]\"\n", $2);
                                 $$=xmlStrdup(U("["));
                                 $$=xmlStrcat($$,$2);
                                 xmlFree($2);
@@ -210,7 +229,7 @@ static const xmlChar NameTest_mod_post[] = "']";
     /* [2.5] Abbreviated Syntax */
     AbbreviatedAbsoluteLocationPath : TOK_DblFSlash RelativeLocationPath
                             {
-                                TRACE("Got AbbreviatedAbsoluteLocationPath: //%s\n", DBG($2));
+                                TRACE("Got AbbreviatedAbsoluteLocationPath: \"//%s\"\n", $2);
                                 $$=xmlStrdup(U("//"));
                                 $$=xmlStrcat($$,$2);
                                 xmlFree($2);
@@ -218,7 +237,7 @@ static const xmlChar NameTest_mod_post[] = "']";
     ;
     AbbreviatedRelativeLocationPath : RelativeLocationPath TOK_DblFSlash Step
                             {
-                                TRACE("Got AbbreviatedRelativeLocationPath: %s//%s\n", DBG($1), DBG($2));
+                                TRACE("Got AbbreviatedRelativeLocationPath: \"%s//%s\"\n", $1, $3);
                                 $$=$1;
                                 $$=xmlStrcat($$,U("//"));
                                 $$=xmlStrcat($$,$3);
@@ -227,12 +246,12 @@ static const xmlChar NameTest_mod_post[] = "']";
     ;
     AbbreviatedStep         : TOK_Parent
                             {
-                                TRACE("Got AbbreviatedStep: ..\n");
+                                TRACE("Got AbbreviatedStep: \"..\"\n");
                                 $$=xmlStrdup(U(".."));
                             }
                             | TOK_Self
                             {
-                                TRACE("Got AbbreviatedStep: .\n");
+                                TRACE("Got AbbreviatedStep: \".\"\n");
                                 $$=xmlStrdup(U("."));
                             }
     ;
@@ -250,7 +269,7 @@ static const xmlChar NameTest_mod_post[] = "']";
     ;
     PrimaryExpr             : '(' Expr ')'
                             {
-                                TRACE("Got PrimaryExpr: (%s)\n", DBG($1));
+                                TRACE("Got PrimaryExpr: \"(%s)\"\n", $1);
                                 $$=xmlStrdup(U("("));
                                 $$=xmlStrcat($$,$2);
                                 xmlFree($2);
@@ -258,7 +277,7 @@ static const xmlChar NameTest_mod_post[] = "']";
                             }
                             | PathExpr '!' FunctionCall
                             {
-                                TRACE("Got PrimaryExpr: %s!%s\n", DBG($1), DBG($3));
+                                TRACE("Got PrimaryExpr: \"%s!%s\"\n", $1, $3);
                                 $$=$1;
                                 $$=xmlStrcat($$,U("/"));
                                 $$=xmlStrcat($$,$3);
@@ -271,7 +290,7 @@ static const xmlChar NameTest_mod_post[] = "']";
     /* [3.2] Function Calls */
     FunctionCall            : QName '(' Arguments ')'
                             {
-                                TRACE("Got FunctionCall: %s(%s)\n", DBG($1), DBG($3));
+                                TRACE("Got FunctionCall: \"%s(%s)\"\n", $1, $3);
                                 $$=$1;
                                 $$=xmlStrcat($$,U("("));
                                 $$=xmlStrcat($$,$3);
@@ -280,7 +299,7 @@ static const xmlChar NameTest_mod_post[] = "']";
                             }
                             | QName '(' ')'
                             {
-                                TRACE("Got FunctionCall: %s()\n", DBG($1));
+                                TRACE("Got FunctionCall: \"%s()\"\n", $1);
                                 $$=$1;
                                 $$=xmlStrcat($$,U("()"));
                             }
@@ -300,7 +319,7 @@ static const xmlChar NameTest_mod_post[] = "']";
     UnionExpr               : PathExpr
                             | UnionExpr '|' PathExpr
                             {
-                                TRACE("Got UnionExpr: %s|%s\n", DBG($1), DBG($3));
+                                TRACE("Got UnionExpr: \"%s|%s\"\n", $1, $3);
                                 $$=$1;
                                 $$=xmlStrcat($$,U("|"));
                                 $$=xmlStrcat($$,$3);
@@ -310,7 +329,7 @@ static const xmlChar NameTest_mod_post[] = "']";
     PathExpr                : LocationPath
                             | FilterExpr TOK_FSlash RelativeLocationPath
                             {
-                                TRACE("Got PathExpr: %s/%s\n", DBG($1), DBG($3));
+                                TRACE("Got PathExpr: \"%s/%s\"\n", $1, $3);
                                 $$=$1;
                                 $$=xmlStrcat($$,U("/"));
                                 $$=xmlStrcat($$,$3);
@@ -318,7 +337,7 @@ static const xmlChar NameTest_mod_post[] = "']";
                             }
                             | FilterExpr TOK_DblFSlash RelativeLocationPath
                             {
-                                TRACE("Got PathExpr: %s//%s\n", DBG($1), DBG($3));
+                                TRACE("Got PathExpr: \"%s//%s\"\n", $1, $3);
                                 $$=$1;
                                 $$=xmlStrcat($$,U("//"));
                                 $$=xmlStrcat($$,$3);
@@ -329,7 +348,7 @@ static const xmlChar NameTest_mod_post[] = "']";
     FilterExpr              : PrimaryExpr
                             | FilterExpr Predicate
                             {
-                                TRACE("Got FilterExpr: %s%s\n", DBG($1), DBG($2));
+                                TRACE("Got FilterExpr: \"%s%s\"\n", $1, $2);
                                 $$=$1;
                                 $$=xmlStrcat($$,$2);
                                 xmlFree($2);
@@ -341,7 +360,7 @@ static const xmlChar NameTest_mod_post[] = "']";
     ;
     BoolOrExpr              : OrExpr TOK_OpOr AndExpr
                             {
-                                TRACE("Got OrExpr: %s or %s\n", DBG($1), DBG($3));
+                                TRACE("Got OrExpr: \"%s $or$ %s\"\n", $1, $3);
                                 $$=$1;
                                 $$=xmlStrcat($$,U(" or "));
                                 $$=xmlStrcat($$,$3);
@@ -353,7 +372,7 @@ static const xmlChar NameTest_mod_post[] = "']";
     ;
     BoolAndExpr             : AndExpr TOK_OpAnd EqualityExpr
                             {
-                                TRACE("Got AndExpr: %s and %s\n", DBG($1), DBG($3));
+                                TRACE("Got AndExpr: \"%s $and$ %s\"\n", $1, $3);
                                 $$=$1;
                                 $$=xmlStrcat($$,U(" and "));
                                 $$=xmlStrcat($$,$3);
@@ -365,7 +384,7 @@ static const xmlChar NameTest_mod_post[] = "']";
     ;
     BoolEqualityExpr        : EqualityExpr TOK_OpEq RelationalExpr
                             {
-                                TRACE("Got EqualityExpr: %s $eq$ %s\n", DBG($1), DBG($3));
+                                TRACE("Got EqualityExpr: \"%s $eq$ %s\"\n", $1, $3);
                                 $$=$1;
                                 $$=xmlStrcat($$,U("="));
                                 $$=xmlStrcat($$,$3);
@@ -373,7 +392,7 @@ static const xmlChar NameTest_mod_post[] = "']";
                             }
                             | EqualityExpr TOK_OpIEq RelationalExpr
                             {
-                                TRACE("Got EqualityExpr: %s $ieq$ %s\n", DBG($1), DBG($3));
+                                TRACE("Got EqualityExpr: \"%s $ieq$ %s\"\n", $1, $3);
                                 $$=xmlStrdup(U("OP_IEq("));
                                 $$=xmlStrcat($$,$1);
                                 xmlFree($1);
@@ -384,7 +403,7 @@ static const xmlChar NameTest_mod_post[] = "']";
                             }
                             | EqualityExpr TOK_OpNEq RelationalExpr
                             {
-                                TRACE("Got EqualityExpr: %s $ne$ %s\n", DBG($1), DBG($3));
+                                TRACE("Got EqualityExpr: \"%s $ne$ %s\"\n", $1, $3);
                                 $$=$1;
                                 $$=xmlStrcat($$,U("!="));
                                 $$=xmlStrcat($$,$3);
@@ -392,7 +411,7 @@ static const xmlChar NameTest_mod_post[] = "']";
                             }
                             | EqualityExpr TOK_OpINEq RelationalExpr
                             {
-                                TRACE("Got EqualityExpr: %s $ine$ %s\n", DBG($1), DBG($3));
+                                TRACE("Got EqualityExpr: \"%s $ine$ %s\"\n", $1, $3);
                                 $$=xmlStrdup(U("OP_INEq("));
                                 $$=xmlStrcat($$,$1);
                                 xmlFree($1);
@@ -407,7 +426,7 @@ static const xmlChar NameTest_mod_post[] = "']";
     ;
     BoolRelationalExpr      : RelationalExpr TOK_OpLt UnaryExpr
                             {
-                                TRACE("Got RelationalExpr: %s $lt$ %s\n", DBG($1), DBG($3));
+                                TRACE("Got RelationalExpr: \"%s $lt$ %s\"\n", $1, $3);
                                 $$=$1;
                                 $$=xmlStrcat($$,U("<"));
                                 $$=xmlStrcat($$,$3);
@@ -415,7 +434,7 @@ static const xmlChar NameTest_mod_post[] = "']";
                             }
                             | RelationalExpr TOK_OpILt UnaryExpr
                             {
-                                TRACE("Got RelationalExpr: %s $ilt$ %s\n", DBG($1), DBG($3));
+                                TRACE("Got RelationalExpr: \"%s $ilt$ %s\"\n", $1, $3);
                                 $$=xmlStrdup(U("OP_ILt("));
                                 $$=xmlStrcat($$,$1);
                                 xmlFree($1);
@@ -426,7 +445,7 @@ static const xmlChar NameTest_mod_post[] = "']";
                             }
                             | RelationalExpr TOK_OpGt UnaryExpr
                             {
-                                TRACE("Got RelationalExpr: %s $gt$ %s\n", DBG($1), DBG($3));
+                                TRACE("Got RelationalExpr: \"%s $gt$ %s\"\n", $1, $3);
                                 $$=$1;
                                 $$=xmlStrcat($$,U(">"));
                                 $$=xmlStrcat($$,$3);
@@ -434,7 +453,7 @@ static const xmlChar NameTest_mod_post[] = "']";
                             }
                             | RelationalExpr TOK_OpIGt UnaryExpr
                             {
-                                TRACE("Got RelationalExpr: %s $igt$ %s\n", DBG($1), DBG($3));
+                                TRACE("Got RelationalExpr: \"%s $igt$ %s\"\n", $1, $3);
                                 $$=xmlStrdup(U("OP_IGt("));
                                 $$=xmlStrcat($$,$1);
                                 xmlFree($1);
@@ -445,7 +464,7 @@ static const xmlChar NameTest_mod_post[] = "']";
                             }
                             | RelationalExpr TOK_OpLEq UnaryExpr
                             {
-                                TRACE("Got RelationalExpr: %s $le$ %s\n", DBG($1), DBG($3));
+                                TRACE("Got RelationalExpr: \"%s $le$ %s\"\n", $1, $3);
                                 $$=$1;
                                 $$=xmlStrcat($$,U("<="));
                                 $$=xmlStrcat($$,$3);
@@ -453,7 +472,7 @@ static const xmlChar NameTest_mod_post[] = "']";
                             }
                             | RelationalExpr TOK_OpILEq UnaryExpr
                             {
-                                TRACE("Got RelationalExpr: %s $ile$ %s\n", DBG($1), DBG($3));
+                                TRACE("Got RelationalExpr: \"%s $ile$ %s\"\n", $1, $3);
                                 $$=xmlStrdup(U("OP_ILEq("));
                                 $$=xmlStrcat($$,$1);
                                 xmlFree($1);
@@ -464,7 +483,7 @@ static const xmlChar NameTest_mod_post[] = "']";
                             }
                             | RelationalExpr TOK_OpGEq UnaryExpr
                             {
-                                TRACE("Got RelationalExpr: %s $ge$ %s\n", DBG($1), DBG($3));
+                                TRACE("Got RelationalExpr: \"%s $ge$ %s\"\n", $1, $3);
                                 $$=$1;
                                 $$=xmlStrcat($$,U(">="));
                                 $$=xmlStrcat($$,$3);
@@ -472,7 +491,7 @@ static const xmlChar NameTest_mod_post[] = "']";
                             }
                             | RelationalExpr TOK_OpIGEq UnaryExpr
                             {
-                                TRACE("Got RelationalExpr: %s $ige$ %s\n", DBG($1), DBG($3));
+                                TRACE("Got RelationalExpr: \"%s $ige$ %s\"\n", $1, $3);
                                 $$=xmlStrdup(U("OP_IGEq("));
                                 $$=xmlStrcat($$,$1);
                                 xmlFree($1);
@@ -489,7 +508,7 @@ static const xmlChar NameTest_mod_post[] = "']";
     ;
     BoolUnaryExpr           : TOK_OpNot UnaryExpr
                             {
-                                TRACE("Got UnaryExpr: $not$ %s\n", DBG($2));
+                                TRACE("Got UnaryExpr: \"$not$ %s\"\n", $2);
                                 $$=xmlStrdup(U(" not("));
                                 $$=xmlStrcat($$,$2);
                                 xmlFree($2);
@@ -497,7 +516,7 @@ static const xmlChar NameTest_mod_post[] = "']";
                             }
                             | TOK_OpAny Expr
                             {
-                                TRACE("Got UnaryExpr: $any$ %s\n", DBG($2));
+                                TRACE("Got UnaryExpr: \"$any$ %s\"\n", $2);
                                 $$=xmlStrdup(U("boolean("));
                                 $$=xmlStrcat($$,$2);
                                 xmlFree($2);
@@ -505,7 +524,7 @@ static const xmlChar NameTest_mod_post[] = "']";
                             }
                             | TOK_OpAll AllExpr
                             {
-                                TRACE("Got UnaryExpr: $all$ %s\n", DBG($2));
+                                TRACE("Got UnaryExpr: \"$all$ %s\"\n", $2);
                                 $$=xmlStrdup(U("not("));
                                 $$=xmlStrcat($$,$2);
                                 xmlFree($2);
@@ -628,6 +647,7 @@ void xslpattern_error(parser_param* param, void const* scanner, char const* msg)
     FIXME("%s:\n"
           "  param {\n"
           "    yyscanner=%p\n"
+          "    ctx=%p\n"
           "    in=\"%s\"\n"
           "    pos=%i\n"
           "    len=%i\n"
@@ -635,8 +655,8 @@ void xslpattern_error(parser_param* param, void const* scanner, char const* msg)
           "    err=%i\n"
           "  }\n"
           "  scanner=%p\n",
-          msg, param->yyscanner, param->in, param->pos, param->len,
-          param->out, ++param->err, scanner);
+          msg, param->yyscanner, param->ctx, param->in, param->pos,
+          param->len, param->out, ++param->err, scanner);
 }
 
 
