@@ -370,6 +370,70 @@ static void test_math(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geo
     }
 }
 
+static void test_conditionals(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geometry,
+        IDirect3DVertexShader9 *vshader_passthru)
+{
+    static struct hlsl_probe_info if_greater_probes[] =
+    {
+        { 0, 0, {0.9f, 0.8f, 0.7f, 0.6f}, 0.0001f, "if greater test failed"},
+        { 5, 0, {0.9f, 0.8f, 0.7f, 0.6f}, 0.0001f, "if greater test failed"},
+        {10, 0, {0.9f, 0.8f, 0.7f, 0.6f}, 0.0001f, "if greater test failed"},
+        {15, 0, {0.9f, 0.8f, 0.7f, 0.6f}, 0.0001f, "if greater test failed"},
+        {25, 0, {0.1f, 0.2f, 0.3f, 0.4f}, 0.0001f, "if greater test failed"},
+        {30, 0, {0.1f, 0.2f, 0.3f, 0.4f}, 0.0001f, "if greater test failed"}
+    };
+
+    static const char *if_greater_shader =
+        "float4 test(float2 pos: TEXCOORD0): COLOR \
+        {                                          \
+            if((pos.x * 32.0) > 20.0)              \
+                return float4(0.1, 0.2, 0.3, 0.4); \
+            else                                   \
+                return float4(0.9, 0.8, 0.7, 0.6); \
+        }";
+
+    static struct hlsl_probe_info ternary_operator_probes[] =
+    {
+        {0, 0, {0.50f, 0.25f, 0.50f, 0.75f}, 0.00001f, "ternary operator test failed"},
+        {1, 0, {0.50f, 0.25f, 0.50f, 0.75f}, 0.00001f, "ternary operator test failed"},
+        {2, 0, {0.50f, 0.25f, 0.50f, 0.75f}, 0.00001f, "ternary operator test failed"},
+        {3, 0, {0.50f, 0.25f, 0.50f, 0.75f}, 0.00001f, "ternary operator test failed"},
+        {4, 0, {0.60f, 0.80f, 0.10f, 0.20f}, 0.00001f, "ternary operator test failed"},
+        {5, 0, {0.60f, 0.80f, 0.10f, 0.20f}, 0.00001f, "ternary operator test failed"},
+        {6, 0, {0.60f, 0.80f, 0.10f, 0.20f}, 0.00001f, "ternary operator test failed"},
+        {7, 0, {0.60f, 0.80f, 0.10f, 0.20f}, 0.00001f, "ternary operator test failed"}
+    };
+
+    static const char *ternary_operator_shader =
+        "float4 test(float2 pos: TEXCOORD0): COLOR                                        \
+        {                                                                                 \
+            return (pos.x < 0.5?float4(0.5, 0.25, 0.5, 0.75):float4(0.6, 0.8, 0.1, 0.2)); \
+        }";
+
+    ID3DXConstantTable *constants;
+    IDirect3DPixelShader9 *pshader;
+
+    pshader = compile_pixel_shader9(device, if_greater_shader, "ps_2_0", &constants);
+    if (pshader != NULL)
+    {
+        compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry,
+                if_greater_probes, 6, 32, 1, __LINE__);
+
+        IUnknown_Release(constants);
+        IUnknown_Release(pshader);
+    }
+
+    pshader = compile_pixel_shader9(device, ternary_operator_shader, "ps_2_0", &constants);
+    if (pshader != NULL)
+    {
+        compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry,
+                ternary_operator_probes, 7, 8, 1, __LINE__);
+
+        IUnknown_Release(constants);
+        IUnknown_Release(pshader);
+    }
+}
+
 START_TEST(hlsl)
 {
     D3DCAPS9 caps;
@@ -391,6 +455,7 @@ START_TEST(hlsl)
         {
             test_swizzle(device, quad_geometry, vshader_passthru);
             test_math(device, quad_geometry, vshader_passthru);
+            test_conditionals(device, quad_geometry, vshader_passthru);
         }
     } else skip("no pixel shader support\n");
 
