@@ -847,6 +847,17 @@ void __cdecl    _wsearchenv(const MSVCRT_wchar_t*, const MSVCRT_wchar_t*, MSVCRT
 MSVCRT_intptr_t __cdecl MSVCRT__spawnvpe(int, const char*, const char* const*, const char* const*);
 void __cdecl MSVCRT__invalid_parameter(const MSVCRT_wchar_t *expr, const MSVCRT_wchar_t *func,
                                        const MSVCRT_wchar_t *file, unsigned int line, MSVCRT_uintptr_t arg);
+
+/* Maybe one day we'll enable the invalid parameter handlers with the full set of information (msvcrXXd)
+ *      #define MSVCRT_INVALID_PMT(x) MSVCRT_call_invalid_parameter_handler(x, __FUNCTION__, __FILE__, __LINE__, 0)
+ *      #define MSVCRT_CHECK_PMT(x)   ((x) ? TRUE : MSVCRT_INVALID_PMT(#x),FALSE)
+ * Until this is done, just keep the same semantics for CHECK_PMT(), but without generating / sending
+ * any information
+ * NB : MSVCRT_call_invalid_parameter_handler is a wrapper around MSVCRT__invalid_parameter in order
+ * to do the Ansi to Unicode transformation
+ */
+#define MSVCRT_INVALID_PMT(x) MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0)
+#define MSVCRT_CHECK_PMT(x)   ((x) || (MSVCRT_INVALID_PMT(0),FALSE))
 #endif
 
 #endif /* __WINE_MSVCRT_H */
