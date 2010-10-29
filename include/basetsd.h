@@ -291,7 +291,11 @@ typedef ULONG_PTR KAFFINITY, *PKAFFINITY;
 # undef  WORDS_BIGENDIAN
 # undef  BITFIELDS_BIGENDIAN
 # undef  ALLOW_UNALIGNED_ACCESS
-#elif defined(__arm__)
+#elif defined(__ARMEB__)
+# define WORDS_BIGENDIAN
+# define BITFIELDS_BIGENDIAN
+# undef  ALLOW_UNALIGNED_ACCESS
+#elif defined(__ARMEL__)
 # undef  WORDS_BIGENDIAN
 # undef  BITFIELDS_BIGENDIAN
 # undef  ALLOW_UNALIGNED_ACCESS
