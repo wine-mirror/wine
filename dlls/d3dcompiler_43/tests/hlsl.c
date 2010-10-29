@@ -327,6 +327,49 @@ static void test_swizzle(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_
     }
 }
 
+static void test_math(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geometry,
+        IDirect3DVertexShader9 *vshader_passthru)
+{
+    /* Tests order of operations */
+    static const float u = 2.5f, v = 0.3f, w = 0.2f, x = 0.7f, y = 0.1f, z = 1.5f;
+
+    static struct hlsl_probe_info order_of_operations_probes[] =
+    {
+        {0, 0, {-12.4300f, 9.8333f, 1.6000f, 34.9999f}, 0.0001f,
+                "order of operations test failed"}
+    };
+
+    static const char *order_of_operations_shader =
+        "float4 test(uniform float u, uniform float v, uniform float w, uniform float x, \
+                     uniform float y, uniform float z): COLOR                            \
+        {                                                                                \
+            return float4(x * y - z / w + --u / -v,                                      \
+                    z * x / y + w / -v,                                                  \
+                    u + v - w,                                                           \
+                    x / y / w);                                                          \
+        }";
+
+    ID3DXConstantTable *constants;
+    IDirect3DPixelShader9 *pshader;
+
+    pshader = compile_pixel_shader9(device, order_of_operations_shader, "ps_2_0", &constants);
+    if (pshader != NULL)
+    {
+        ID3DXConstantTable_SetFloat(constants, device, "$u", u);
+        ID3DXConstantTable_SetFloat(constants, device, "$v", v);
+        ID3DXConstantTable_SetFloat(constants, device, "$w", w);
+        ID3DXConstantTable_SetFloat(constants, device, "$x", x);
+        ID3DXConstantTable_SetFloat(constants, device, "$y", y);
+        ID3DXConstantTable_SetFloat(constants, device, "$z", z);
+
+        compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry,
+                order_of_operations_probes, 1, 1, 1, __LINE__);
+
+        IUnknown_Release(constants);
+        IUnknown_Release(pshader);
+    }
+}
+
 START_TEST(hlsl)
 {
     D3DCAPS9 caps;
@@ -347,6 +390,7 @@ START_TEST(hlsl)
         todo_wine
         {
             test_swizzle(device, quad_geometry, vshader_passthru);
+            test_math(device, quad_geometry, vshader_passthru);
         }
     } else skip("no pixel shader support\n");
 
