@@ -55,7 +55,7 @@ static INT_PTR CALLBACK property_sheet_proc(HWND hwnd, UINT msg, WPARAM wparam, 
         IPropertyPage_Activate(property_page, hwnd, &rect, TRUE);
         IPropertyPage_Show(property_page, SW_SHOW);
 
-        SetWindowLongPtrW(hwnd, DWLP_USER, (LONG)property_page);
+        SetWindowLongPtrW(hwnd, DWLP_USER, (LONG_PTR)property_page);
         return FALSE;
     }
     case WM_DESTROY:
