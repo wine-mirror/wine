@@ -228,15 +228,14 @@ MSVCRT_wchar_t*** CDECL __p___winitenv(void) { return &MSVCRT___winitenv; }
 /*********************************************************************
  *		_get_osplatform (MSVCRT.@)
  */
-int CDECL MSVCRT__get_osplatform(int *ret)
+int CDECL MSVCRT__get_osplatform(int *pValue)
 {
-    if(!ret) {
-        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+    if (!MSVCRT_CHECK_PMT(pValue != NULL)) {
         *MSVCRT__errno() = MSVCRT_EINVAL;
         return MSVCRT_EINVAL;
     }
 
-    *ret = MSVCRT__osplatform;
+    *pValue = MSVCRT__osplatform;
     return 0;
 }
 
