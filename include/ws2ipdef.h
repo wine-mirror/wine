@@ -153,6 +153,11 @@ typedef struct WS(ip_msfilter) {
     struct WS(in_addr) imsf_slist[1];
 } WS(IP_MSFILTER), *WS(PIP_MSFILTER);
 
+typedef struct WS(in_pktinfo) {
+    IN_ADDR ipi_addr;
+    UINT    ipi_ifindex;
+} IN_PKTINFO, *PIN_PKTINFO;
+
 #ifndef USE_WS_PREFIX
 #define IPV6_OPTIONS                    1
 #define IPV6_HDRINCL                    2
