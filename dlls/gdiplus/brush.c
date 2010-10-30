@@ -404,7 +404,7 @@ GpStatus WINGDIPAPI GdipCreateLineBrushI(GDIPCONST GpPoint* startpoint,
     stF.X  = (REAL)startpoint->X;
     stF.Y  = (REAL)startpoint->Y;
     endF.X = (REAL)endpoint->X;
-    endF.X = (REAL)endpoint->Y;
+    endF.Y = (REAL)endpoint->Y;
 
     return GdipCreateLineBrush(&stF, &endF, startcolor, endcolor, wrap, line);
 }
