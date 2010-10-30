@@ -70,6 +70,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(treeview);
 
 typedef struct _TREEITEM    /* HTREEITEM is a _TREEINFO *. */
 {
+  HTREEITEM parent;         /* handle to parent or 0 if at root */
+  HTREEITEM nextSibling;    /* handle to next item in list, 0 if last */
+  HTREEITEM firstChild;     /* handle to first child or 0 if no child */
+
   UINT      callbackMask;
   UINT      state;
   UINT      stateMask;
@@ -82,11 +86,8 @@ typedef struct _TREEITEM    /* HTREEITEM is a _TREEINFO *. */
   LPARAM    lParam;
   int       iIntegral;      /* item height multiplier (1 is normal) */
   int       iLevel;         /* indentation level:0=root level */
-  HTREEITEM parent;         /* handle to parent or 0 if at root */
-  HTREEITEM firstChild;     /* handle to first child or 0 if no child */
   HTREEITEM lastChild;
   HTREEITEM prevSibling;    /* handle to prev item in list, 0 if first */
-  HTREEITEM nextSibling;    /* handle to next item in list, 0 if last */
   RECT      rect;
   LONG      linesOffset;
   LONG      stateOffset;

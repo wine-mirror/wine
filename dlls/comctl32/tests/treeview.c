@@ -1369,6 +1369,57 @@ static void test_delete_items(void)
     DestroyWindow(hTree);
 }
 
+struct _ITEM_DATA
+{
+    HTREEITEM  parent; /* for root value of parent field is unidetified */
+    HTREEITEM  nextsibling;
+    HTREEITEM  firstchild;
+};
+
+static void _check_item(HTREEITEM item, HTREEITEM parent, HTREEITEM nextsibling, HTREEITEM firstchild, int line)
+{
+    struct _ITEM_DATA *data = (struct _ITEM_DATA*)item;
+
+    ok_(__FILE__, line)(data->parent == parent, "parent %p, got %p\n", parent, data->parent);
+    ok_(__FILE__, line)(data->nextsibling == nextsibling, "sibling %p, got %p\n", nextsibling, data->nextsibling);
+    ok_(__FILE__, line)(data->firstchild == firstchild, "firstchild %p, got %p\n", firstchild, data->firstchild);
+}
+
+#define check_item(a, b, c, d) _check_item(a, b, c, d, __LINE__)
+
+static void test_htreeitem_layout(void)
+{
+    TVINSERTSTRUCTA ins;
+    HTREEITEM item1, item2;
+    HWND hTree;
+
+    hTree = create_treeview_control();
+    fill_tree(hTree);
+
+    /* root has some special pointer in parent field */
+    check_item(hRoot, ((struct _ITEM_DATA*)hRoot)->parent, 0, hChild);
+    check_item(hChild, hRoot, 0, 0);
+
+    ins.hParent = hChild;
+    ins.hInsertAfter = TVI_FIRST;
+    item1 = TreeView_InsertItem(hTree, &ins);
+
+    check_item(item1, hChild, 0, 0);
+
+    ins.hParent = hRoot;
+    ins.hInsertAfter = TVI_FIRST;
+    item2 = TreeView_InsertItem(hTree, &ins);
+
+    check_item(item2, hRoot, hChild, 0);
+
+    SendMessage(hTree, TVM_DELETEITEM, 0, (LPARAM)hChild);
+
+    /* without children now */
+    check_item(hRoot, ((struct _ITEM_DATA*)hRoot)->parent, 0, item2);
+
+    DestroyWindow(hTree);
+}
+
 START_TEST(treeview)
 {
     HMODULE hComctl32;
@@ -1437,6 +1488,7 @@ START_TEST(treeview)
     test_TVS_SINGLEEXPAND();
     test_WM_PAINT();
     test_delete_items();
+    test_htreeitem_layout();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
@@ -1461,6 +1513,7 @@ START_TEST(treeview)
 
     /* comctl32 version 6 tests start here */
     test_expandedimage();
+    test_htreeitem_layout();
 
     unload_v6_module(ctx_cookie, hCtx);
 
