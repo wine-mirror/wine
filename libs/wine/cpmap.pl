@@ -23,7 +23,7 @@ use strict;
 
 # base URLs for www.unicode.org files
 my $MAPPINGS = "http://www.unicode.org/Public/MAPPINGS";
-my $UNIDATA = "http://www.unicode.org/Public/5.2.0/ucd";
+my $UNIDATA = "http://www.unicode.org/Public/6.0.0/ucd";
 
 # Sort keys file
 my $SORTKEYS = "http://www.unicode.org/reports/tr10/allkeys.txt";

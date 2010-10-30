@@ -2191,7 +2191,7 @@ static void test_FoldStringW(void)
 
       ok(dst[0] == ch || strchrW(outOfSequenceDigits, ch) ||
          /* Wine (correctly) maps all Unicode 4.0+ digits */
-         isdigitW(ch) || (ch >= 0x24F5 && ch <= 0x24FD) || ch == 0x24FF ||
+         isdigitW(ch) || (ch >= 0x24F5 && ch <= 0x24FD) || ch == 0x24FF || ch == 0x19da ||
          (ch >= 0x1369 && ch <= 0x1371),
          "MAP_FOLDDIGITS: ch %d 0x%04x Expected unchanged got %d\n", ch, ch, dst[0]);
     }
@@ -2691,7 +2691,7 @@ static void test_GetStringTypeW(void)
                                     C1_SPACE | C1_BLANK,
                                     C1_SPACE | C1_BLANK};
 
-    static const WCHAR undefined[] = {0x378, 0x379, 0x65f, 0xfff8, 0xfffe};
+    static const WCHAR undefined[] = {0x378, 0x379, 0x604, 0xfff8, 0xfffe};
 
                                   /* Lu, Ll, Lt */
     static const WCHAR alpha[] = {0x47, 0x67, 0x1c5};
