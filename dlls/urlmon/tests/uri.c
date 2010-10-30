@@ -5693,7 +5693,7 @@ static const uri_combine_test uri_combine_tests[] = {
     },
     {   "http://google.com/path",0,
         "/test/../test/.././testing",Uri_CREATE_ALLOW_RELATIVE,
-        0,S_OK,TRUE,
+        0,S_OK,FALSE,
         {
             {"http://google.com/testing",S_OK},
             {"google.com",S_OK},
@@ -5720,7 +5720,7 @@ static const uri_combine_test uri_combine_tests[] = {
     },
     {   "http://google.com/path",0,
         "/test/../test/.././testing",Uri_CREATE_ALLOW_RELATIVE,
-        URL_DONT_SIMPLIFY,S_OK,TRUE,
+        URL_DONT_SIMPLIFY,S_OK,FALSE,
         {
             {"http://google.com:80/test/../test/.././testing",S_OK},
             {"google.com",S_OK},
@@ -5883,7 +5883,7 @@ static const uri_combine_test uri_combine_tests[] = {
     },
     {   "file:///c:/test/test",0,
         "/testing.mp3",Uri_CREATE_ALLOW_RELATIVE,
-        URL_FILE_USE_PATHURL,S_OK,TRUE,
+        URL_FILE_USE_PATHURL,S_OK,FALSE,
         {
             {"file://c:\\testing.mp3",S_OK},
             {"",S_FALSE},
@@ -5910,7 +5910,7 @@ static const uri_combine_test uri_combine_tests[] = {
     },
     {   "file:///c:/test/test",0,
         "/testing.mp3",Uri_CREATE_ALLOW_RELATIVE,
-        0,S_OK,TRUE,
+        0,S_OK,FALSE,
         {
             {"file:///c:/testing.mp3",S_OK},
             {"",S_FALSE},
@@ -5937,7 +5937,7 @@ static const uri_combine_test uri_combine_tests[] = {
     },
     {   "file://test.com/test/test",0,
         "/testing.mp3",Uri_CREATE_ALLOW_RELATIVE,
-        URL_FILE_USE_PATHURL,S_OK,TRUE,
+        URL_FILE_USE_PATHURL,S_OK,FALSE,
         {
             {"file://\\\\test.com\\testing.mp3",S_OK},
             {"test.com",S_OK},
@@ -6054,7 +6054,7 @@ static const uri_combine_test uri_combine_tests[] = {
     /* Windows validates the path component from the relative Uri. */
     {   "http://google.com/test",0,
         "/Te%XXst",Uri_CREATE_ALLOW_RELATIVE,
-        0,E_INVALIDARG,TRUE
+        0,E_INVALIDARG,FALSE
     },
     /* Windows doesn't validate the query from the relative Uri. */
     {   "http://google.com/test",0,
@@ -6115,7 +6115,7 @@ static const uri_combine_test uri_combine_tests[] = {
     /* Creates an IUri which contains an invalid dos path char. */
     {   "file:///c:/test",0,
         "/test<ing",Uri_CREATE_ALLOW_RELATIVE,
-        URL_FILE_USE_PATHURL,S_OK,TRUE,
+        URL_FILE_USE_PATHURL,S_OK,FALSE,
         {
             {"file://c:\\test<ing",S_OK},
             {"",S_FALSE},
@@ -6143,7 +6143,7 @@ static const uri_combine_test uri_combine_tests[] = {
     /* Appends the path after the drive letter (if any). */
     {   "file:///c:/test",0,
         "/c:/testing",Uri_CREATE_ALLOW_RELATIVE,
-        0,S_OK,TRUE,
+        0,S_OK,FALSE,
         {
             {"file:///c:/c:/testing",S_OK},
             {"",S_FALSE},

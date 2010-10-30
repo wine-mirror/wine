@@ -36,7 +36,8 @@
 #define SKIP_IP_FUTURE_CHECK            0x10
 #define IGNORE_PORT_DELIMITER           0x20
 
-#define RAW_URI_FORCE_PORT_DISP 0x1
+#define RAW_URI_FORCE_PORT_DISP     0x1
+#define RAW_URI_CONVERT_TO_DOS_PATH 0x2
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
@@ -3935,6 +3936,28 @@ static HRESULT validate_components(const UriBuilder *builder, parse_data *data, 
     return S_OK;
 }
 
+static void convert_to_dos_path(const WCHAR *path, DWORD path_len,
+                                WCHAR *output, DWORD *output_len)
+{
+    const WCHAR *ptr = path;
+
+    if(path_len > 3 && *ptr == '/' && is_drive_path(path+1))
+        /* Skip over the leading / before the drive path. */
+        ++ptr;
+
+    for(; ptr < path+path_len; ++ptr) {
+        if(*ptr == '/') {
+            if(output)
+                *output++ = '\\';
+            (*output_len)++;
+        } else {
+            if(output)
+                *output++ = *ptr;
+            (*output_len)++;
+        }
+    }
+}
+
 /* Generates a raw uri string using the parse_data. */
 static DWORD generate_raw_uri(const parse_data *data, BSTR uri, DWORD flags) {
     DWORD length = 0;
@@ -3954,6 +3977,18 @@ static DWORD generate_raw_uri(const parse_data *data, BSTR uri, DWORD flags) {
             uri[length+1] = '/';
         }
         length += 2;
+
+        /* Check if we need to add the "\\" before the host name
+         * of a UNC server name in a DOS path.
+         */
+        if(flags & RAW_URI_CONVERT_TO_DOS_PATH &&
+           data->scheme_type == URL_SCHEME_FILE && data->host) {
+            if(uri) {
+                uri[length] = '\\';
+                uri[length+1] = '\\';
+            }
+            length += 2;
+        }
     }
 
     if(data->username) {
@@ -4031,9 +4066,21 @@ static DWORD generate_raw_uri(const parse_data *data, BSTR uri, DWORD flags) {
     }
 
     if(data->path) {
-        if(uri)
-            memcpy(uri+length, data->path, data->path_len*sizeof(WCHAR));
-        length += data->path_len;
+        if(!data->is_opaque && data->scheme_type == URL_SCHEME_FILE &&
+           flags & RAW_URI_CONVERT_TO_DOS_PATH) {
+            DWORD len = 0;
+
+            if(uri)
+                convert_to_dos_path(data->path, data->path_len, uri+length, &len);
+            else
+                convert_to_dos_path(data->path, data->path_len, NULL, &len);
+
+            length += len;
+        } else {
+            if(uri)
+                memcpy(uri+length, data->path, data->path_len*sizeof(WCHAR));
+            length += data->path_len;
+        }
     }
 
     if(data->query) {
@@ -5672,6 +5719,7 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result)
 
         *result = URI(ret);
     } else {
+        WCHAR *path = NULL;
         DWORD raw_flags = 0;
 
         if(base->scheme_start > -1) {
@@ -5705,7 +5753,7 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result)
                 data.has_port = TRUE;
                 data.port_value = base->port;
             }
-        } else
+        } else if(base->scheme_type != URL_SCHEME_FILE)
             data.is_opaque = TRUE;
 
         if(relative->path_start == -1 || !relative->path_len) {
@@ -5729,9 +5777,78 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result)
                 data.query_len = base->query_len;
             }
         } else {
-            FIXME("Path merging not implemented yet!\n");
-            *result = NULL;
-            return E_NOTIMPL;
+            DWORD path_offset = 0, path_len = 0;
+
+            if(relative->path_len && *(relative->canon_uri+relative->path_start) == '/') {
+                const WCHAR *ptr, **pptr;
+                WCHAR *tmp = NULL;
+                BOOL copy_drive_path = FALSE;
+
+                /* If the relative IUri's path starts with a '/', then we
+                 * don't use the base IUri's path. Unless the base IUri
+                 * is a file URI, in which case it uses the drive path of
+                 * the base IUri (if it has any) in the new path.
+                 */
+                if(base->scheme_type == URL_SCHEME_FILE) {
+                    if(base->path_len > 3 && *(base->canon_uri+base->path_start) == '/' &&
+                       is_drive_path(base->canon_uri+base->path_start+1)) {
+                        path_len += 3;
+                        copy_drive_path = TRUE;
+                    }
+                }
+
+                path_len += relative->path_len;
+
+                path = heap_alloc((path_len+1)*sizeof(WCHAR));
+                if(!path) {
+                    *result = NULL;
+                    return E_OUTOFMEMORY;
+                }
+
+                tmp = path;
+
+                /* Copy the base paths, drive path over. */
+                if(copy_drive_path) {
+                    memcpy(tmp, base->canon_uri+base->path_start, 3*sizeof(WCHAR));
+                    tmp += 3;
+                }
+
+                memcpy(tmp, relative->canon_uri+relative->path_start, relative->path_len*sizeof(WCHAR));
+                path[path_len] = '\0';
+
+                ptr = path;
+                pptr = &ptr;
+                if((data.is_opaque && !parse_path_opaque(pptr, &data, 0)) ||
+                   (!data.is_opaque && !parse_path_hierarchical(pptr, &data, 0))) {
+                    heap_free(path);
+                    *result = NULL;
+                    return E_INVALIDARG;
+                }
+            } else {
+                FIXME("Path merging not implemented yet!\n");
+                *result = NULL;
+                return E_NOTIMPL;
+            }
+
+            /* Check if the dot segments need to be removed from the path. */
+            if(!(flags & URL_DONT_SIMPLIFY) && !data.is_opaque) {
+                DWORD offset = (path_offset > 0) ? path_offset+1 : 0;
+                DWORD new_len = remove_dot_segments(path+offset,path_len-offset);
+
+                if(new_len != path_len) {
+                    WCHAR *tmp = heap_realloc(path, (new_len+1)*sizeof(WCHAR));
+                    if(!tmp) {
+                        heap_free(path);
+                        *result = NULL;
+                        return E_OUTOFMEMORY;
+                    }
+
+                    tmp[new_len] = '\0';
+                    data.path = tmp;
+                    data.path_len = new_len;
+                    path = tmp;
+                }
+            }
         }
 
         if(relative->fragment_start > -1) {
@@ -5741,10 +5858,13 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result)
 
         if(flags & URL_DONT_SIMPLIFY)
             raw_flags |= RAW_URI_FORCE_PORT_DISP;
+        if(flags & URL_FILE_USE_PATHURL)
+            raw_flags |= RAW_URI_CONVERT_TO_DOS_PATH;
 
         len = generate_raw_uri(&data, data.uri, raw_flags);
         data.uri = SysAllocStringLen(NULL, len);
         if(!data.uri) {
+            heap_free(path);
             *result = NULL;
             return E_OUTOFMEMORY;
         }
@@ -5754,9 +5874,15 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result)
         ret = create_uri_obj();
         if(!ret) {
             SysFreeString(data.uri);
+            heap_free(path);
             *result = NULL;
             return E_OUTOFMEMORY;
         }
+
+        if(flags & URL_DONT_SIMPLIFY)
+            create_flags |= Uri_CREATE_NO_CANONICALIZE;
+        if(flags & URL_FILE_USE_PATHURL)
+            create_flags |= Uri_CREATE_FILE_USE_DOS_PATH;
 
         ret->raw_uri = data.uri;
         hr = canonicalize_uri(&data, ret, create_flags);
@@ -5766,9 +5892,14 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result)
             return hr;
         }
 
+        if(flags & URL_DONT_SIMPLIFY)
+            ret->display_modifiers |= URI_DISPLAY_NO_DEFAULT_PORT_AUTH;
+
         apply_default_flags(&create_flags);
         ret->create_flags = create_flags;
         *result = URI(ret);
+
+        heap_free(path);
     }
 
     return S_OK;
