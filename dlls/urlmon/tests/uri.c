@@ -4324,6 +4324,38 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_FILE,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
+    },
+    /* When CreateUri generates an IUri, it still displays the default port in the
+     * authority.
+     */
+    {   "http://google.com:80/", Uri_CREATE_NO_CANONICALIZE, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
+        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
+        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        FALSE,
+        {
+            {"http://google.com:80/",S_OK,FALSE},
+            {"google.com:80",S_OK,FALSE},
+            {"http://google.com:80/",S_OK,FALSE},
+            {"google.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"google.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,FALSE},
+            {"/",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"http://google.com:80/",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,FALSE},
+            {80,S_OK,FALSE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
     }
 };
 
@@ -5745,6 +5777,7 @@ static const uri_combine_test uri_combine_tests[] = {
         URL_DONT_SIMPLIFY,S_OK,TRUE,
         {
             {"http://winehq.org:80/test/testing/abc/../test",S_OK},
+            /* Default port is hidden in the authority. */
             {"winehq.org",S_OK},
             {"http://winehq.org:80/test/testing/abc/../test",S_OK},
             {"winehq.org",S_OK},

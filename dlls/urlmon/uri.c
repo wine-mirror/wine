@@ -26,6 +26,9 @@
 #define UINT_MAX 0xffffffff
 #define USHORT_MAX 0xffff
 
+#define URI_DISPLAY_NO_ABSOLUTE_URI         0x1
+#define URI_DISPLAY_NO_DEFAULT_PORT_AUTH    0x2
+
 #define ALLOW_NULL_TERM_SCHEME          0x01
 #define ALLOW_NULL_TERM_USER_NAME       0x02
 #define ALLOW_NULL_TERM_PASSWORD        0x04
@@ -49,7 +52,7 @@ typedef struct {
     WCHAR           *canon_uri;
     DWORD           canon_size;
     DWORD           canon_len;
-    BOOL            display_absolute;
+    BOOL            display_modifiers;
     DWORD           create_flags;
 
     INT             scheme_start;
@@ -64,6 +67,7 @@ typedef struct {
     DWORD           host_len;
     Uri_HOST_TYPE   host_type;
 
+    INT             port_offset;
     DWORD           port;
     BOOL            has_port;
 
@@ -337,6 +341,17 @@ static inline BOOL is_hexdigit(WCHAR val) {
 
 static inline BOOL is_path_delim(WCHAR val) {
     return (!val || val == '#' || val == '?');
+}
+
+static BOOL is_default_port(URL_SCHEME scheme, DWORD port) {
+    DWORD i;
+
+    for(i = 0; i < sizeof(default_ports)/sizeof(default_ports[0]); ++i) {
+        if(default_ports[i].scheme == scheme && default_ports[i].port)
+            return TRUE;
+    }
+
+    return FALSE;
 }
 
 /* List of schemes types Windows seems to expect to be hierarchical. */
@@ -2775,6 +2790,8 @@ static BOOL canonicalize_port(const parse_data *data, Uri *uri, DWORD flags, BOO
     USHORT default_port = 0;
     DWORD i;
 
+    uri->port_offset = -1;
+
     /* Check if the scheme has a default port. */
     for(i = 0; i < sizeof(default_ports)/sizeof(default_ports[0]); ++i) {
         if(default_ports[i].scheme == data->scheme_type) {
@@ -2795,6 +2812,7 @@ static BOOL canonicalize_port(const parse_data *data, Uri *uri, DWORD flags, BOO
     if(has_default_port && data->has_port && data->port_value == default_port) {
         /* If it's the default port and this flag isn't set, don't do anything. */
         if(flags & Uri_CREATE_NO_CANONICALIZE) {
+            uri->port_offset = uri->canon_len-uri->authority_start;
             if(!computeOnly)
                 uri->canon_uri[uri->canon_len] = ':';
             ++uri->canon_len;
@@ -2814,6 +2832,7 @@ static BOOL canonicalize_port(const parse_data *data, Uri *uri, DWORD flags, BOO
 
         uri->port = default_port;
     } else if(data->has_port) {
+        uri->port_offset = uri->canon_len-uri->authority_start;
         if(!computeOnly)
             uri->canon_uri[uri->canon_len] = ':';
         ++uri->canon_len;
@@ -3146,8 +3165,6 @@ static BOOL canonicalize_path_opaque(const parse_data *data, Uri *uri, DWORD fla
  * URI is opaque it canonicalizes the path of the URI.
  */
 static BOOL canonicalize_hierpart(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
-    uri->display_absolute = TRUE;
-
     if(!data->is_opaque || (data->is_relative && (data->password || data->username))) {
         /* "//" is only added for non-wildcard scheme types.
          *
@@ -3187,6 +3204,7 @@ static BOOL canonicalize_hierpart(const parse_data *data, Uri *uri, DWORD flags,
         uri->authority_start = -1;
         uri->authority_len = 0;
         uri->domain_offset = -1;
+        uri->port_offset = -1;
 
         if(is_hierarchical_scheme(data->scheme_type)) {
             DWORD i;
@@ -3194,7 +3212,7 @@ static BOOL canonicalize_hierpart(const parse_data *data, Uri *uri, DWORD flags,
             /* Absolute URIs aren't displayed for known scheme types
              * which should be hierarchical URIs.
              */
-            uri->display_absolute = FALSE;
+            uri->display_modifiers |= URI_DISPLAY_NO_ABSOLUTE_URI;
 
             /* Windows also sets the port for these (if they have one). */
             for(i = 0; i < sizeof(default_ports)/sizeof(default_ports[0]); ++i) {
@@ -4140,7 +4158,7 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
 
     switch(uriProp) {
     case Uri_PROPERTY_ABSOLUTE_URI:
-        if(!This->display_absolute) {
+        if(This->display_modifiers & URI_DISPLAY_NO_ABSOLUTE_URI) {
             *pbstrProperty = SysAllocStringLen(NULL, 0);
             hres = S_FALSE;
         } else {
@@ -4182,7 +4200,12 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
         break;
     case Uri_PROPERTY_AUTHORITY:
         if(This->authority_start > -1) {
-            *pbstrProperty = SysAllocStringLen(This->canon_uri+This->authority_start, This->authority_len);
+            if(This->port_offset > -1 && is_default_port(This->scheme_type, This->port) &&
+               This->display_modifiers & URI_DISPLAY_NO_DEFAULT_PORT_AUTH)
+                /* Don't include the port in the authority component. */
+                *pbstrProperty = SysAllocStringLen(This->canon_uri+This->authority_start, This->port_offset);
+            else
+                *pbstrProperty = SysAllocStringLen(This->canon_uri+This->authority_start, This->authority_len);
             hres = S_OK;
         } else {
             *pbstrProperty = SysAllocStringLen(NULL, 0);
@@ -4416,7 +4439,7 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
 
     switch(uriProp) {
     case Uri_PROPERTY_ABSOLUTE_URI:
-        if(!This->display_absolute) {
+        if(This->display_modifiers & URI_DISPLAY_NO_ABSOLUTE_URI) {
             *pcchProperty = 0;
             hres = S_FALSE;
         } else {
@@ -4438,7 +4461,13 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
 
         break;
     case Uri_PROPERTY_AUTHORITY:
-        *pcchProperty = This->authority_len;
+        if(This->port_offset > -1 &&
+           This->display_modifiers & URI_DISPLAY_NO_DEFAULT_PORT_AUTH &&
+           is_default_port(This->scheme_type, This->port))
+            /* Only count up until the port in the authority. */
+            *pcchProperty = This->port_offset;
+        else
+            *pcchProperty = This->authority_len;
         hres = (This->authority_start > -1) ? S_OK : S_FALSE;
         break;
     case Uri_PROPERTY_DISPLAY_URI:
@@ -4585,7 +4614,7 @@ static HRESULT WINAPI Uri_HasProperty(IUri *iface, Uri_PROPERTY uriProp, BOOL *p
 
     switch(uriProp) {
     case Uri_PROPERTY_ABSOLUTE_URI:
-        *pfHasProperty = This->display_absolute;
+        *pfHasProperty = !(This->display_modifiers & URI_DISPLAY_NO_ABSOLUTE_URI);
         break;
     case Uri_PROPERTY_AUTHORITY:
         *pfHasProperty = This->authority_start > -1;
@@ -4778,7 +4807,7 @@ static HRESULT WINAPI Uri_GetProperties(IUri *iface, DWORD *pdwProperties)
     /* All URIs have these. */
     *pdwProperties = Uri_HAS_DISPLAY_URI|Uri_HAS_RAW_URI|Uri_HAS_SCHEME|Uri_HAS_HOST_TYPE;
 
-    if(This->display_absolute)
+    if(!(This->display_modifiers & URI_DISPLAY_NO_ABSOLUTE_URI))
         *pdwProperties |= Uri_HAS_ABSOLUTE_URI;
 
     if(This->scheme_start > -1)
