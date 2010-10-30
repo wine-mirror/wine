@@ -434,10 +434,37 @@ static HRESULT WINAPI domelem_get_nodeTypedValue(
 
 static HRESULT WINAPI domelem_put_nodeTypedValue(
     IXMLDOMElement *iface,
-    VARIANT var1)
+    VARIANT value)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    return IXMLDOMNode_put_nodeTypedValue( IXMLDOMNode_from_impl(&This->node), var1 );
+    VARIANT type;
+    HRESULT hr;
+
+    TRACE("(%p)\n", This);
+
+    /* for untyped node coerce to BSTR and set */
+    if (IXMLDOMElement_get_dataType(iface, &type) == S_FALSE)
+    {
+        if (V_VT(&value) != VT_BSTR)
+        {
+            hr = VariantChangeType(&value, &value, 0, VT_BSTR);
+            if (hr == S_OK)
+            {
+                hr = node_set_content(&This->node, V_BSTR(&value));
+                VariantClear(&value);
+            }
+        }
+        else
+            hr = node_set_content(&This->node, V_BSTR(&value));
+    }
+    else
+    {
+        FIXME("not implemented for typed nodes. type %s\n", debugstr_w(V_BSTR(&value)));
+        VariantClear(&type);
+        return E_NOTIMPL;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI domelem_get_dataType(

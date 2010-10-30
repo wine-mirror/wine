@@ -7409,6 +7409,48 @@ static void test_createProcessingInstruction(void)
     IXMLDOMDocument_Release(doc);
 }
 
+static void test_put_nodeTypedValue(void)
+{
+    IXMLDOMDocument *doc;
+    IXMLDOMElement *elem;
+    VARIANT type;
+    HRESULT hr;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+    if (!doc) return;
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("Element"), &elem);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&type) = VT_EMPTY;
+    hr = IXMLDOMElement_get_dataType(elem, &type);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(V_VT(&type) == VT_NULL, "got %d, expected VT_NULL\n", V_VT(&type));
+
+    /* set typed value for untyped node */
+    V_VT(&type) = VT_I1;
+    V_I1(&type) = 1;
+    hr = IXMLDOMElement_put_nodeTypedValue(elem, type);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&type) = VT_EMPTY;
+    hr = IXMLDOMElement_get_dataType(elem, &type);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(V_VT(&type) == VT_NULL, "got %d, expected VT_NULL\n", V_VT(&type));
+
+    /* no type info stored */
+    V_VT(&type) = VT_EMPTY;
+    hr = IXMLDOMElement_get_nodeTypedValue(elem, &type);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&type) == VT_BSTR, "got %d, expected VT_BSTR\n", V_VT(&type));
+    ok(memcmp(V_BSTR(&type), _bstr_("1"), 2*sizeof(WCHAR)) == 0,
+       "got %s, expected \"1\"\n", wine_dbgstr_w(V_BSTR(&type)));
+    VariantClear(&type);
+
+    IXMLDOMDocument_Release(doc);
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -7471,6 +7513,7 @@ START_TEST(domdoc)
     test_selectSingleNode();
     test_events();
     test_createProcessingInstruction();
+    test_put_nodeTypedValue();
 
     CoUninitialize();
 }
