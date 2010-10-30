@@ -1770,6 +1770,8 @@ static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator, B
 /*** SAXXMLReader internal functions ***/
 static HRESULT internal_parseBuffer(saxreader *This, const char *buffer, int size, BOOL vbInterface)
 {
+    xmlCharEncoding encoding = XML_CHAR_ENCODING_NONE;
+    xmlChar *enc_name = NULL;
     saxlocator *locator;
     HRESULT hr;
 
@@ -1777,12 +1779,31 @@ static HRESULT internal_parseBuffer(saxreader *This, const char *buffer, int siz
     if(FAILED(hr))
         return hr;
 
+    if (size >= 4)
+    {
+        const unsigned char *buff = (unsigned char*)buffer;
+
+        encoding = xmlDetectCharEncoding((xmlChar*)buffer, 4);
+        enc_name = (xmlChar*)xmlGetCharEncodingName(encoding);
+        TRACE("detected encoding: %s\n", enc_name);
+        /* skip BOM, parser won't switch encodings and so won't skip it on its own */
+        if ((encoding == XML_CHAR_ENCODING_UTF8) &&
+            buff[0] == 0xEF && buff[1] == 0xBB && buff[2] == 0xBF)
+        {
+            buffer += 3;
+            size -= 3;
+        }
+    }
+
     locator->pParserCtxt = xmlCreateMemoryParserCtxt(buffer, size);
     if(!locator->pParserCtxt)
     {
         ISAXLocator_Release((ISAXLocator*)&locator->lpSAXLocatorVtbl);
         return E_FAIL;
     }
+
+    if (encoding == XML_CHAR_ENCODING_UTF8)
+        locator->pParserCtxt->encoding = xmlStrdup(enc_name);
 
     xmlFree(locator->pParserCtxt->sax);
     locator->pParserCtxt->sax = &locator->saxreader->sax;
