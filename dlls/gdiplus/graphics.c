@@ -3918,6 +3918,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
 {
     HFONT oldfont;
     struct measure_string_args args;
+    HDC temp_hdc=NULL;
 
     TRACE("(%p, %s, %i, %p, %s, %p, %p, %p, %p)\n", graphics,
         debugstr_wn(string, length), length, font, debugstr_rectf(rect), format,
@@ -3928,8 +3929,8 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
 
     if(!graphics->hdc)
     {
-        FIXME("graphics object has no HDC\n");
-        return NotImplemented;
+        temp_hdc = graphics->hdc = CreateCompatibleDC(0);
+        if (!temp_hdc) return OutOfMemory;
     }
 
     if(linesfilled) *linesfilled = 0;
@@ -3953,6 +3954,12 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
         measure_string_callback, &args);
 
     DeleteObject(SelectObject(graphics->hdc, oldfont));
+
+    if (temp_hdc)
+    {
+        graphics->hdc = NULL;
+        DeleteDC(temp_hdc);
+    }
 
     return Ok;
 }
