@@ -1,0 +1,84 @@
+/*
+ * Copyright 2009 Piotr Caban
+ * Copyright 2010 Đorđe Vasiljević
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resource.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_CYRILLIC
+
+STRINGTABLE
+{
+    IDS_TO_PRIMITIVE        "Грешка у претварању објекта у основну врсту"
+    IDS_INVALID_CALL_ARG    "Неважећи поступак позива или аргумента"
+    IDS_SUBSCRIPT_OUT_OF_RANGE "Потпис је ван домета"
+    IDS_CREATE_OBJ_ERROR    "Аутоматизовани сервер не може да створи објекат"
+    IDS_NO_PROPERTY         "Објекат не подржава ово својство или методу"
+    IDS_UNSUPPORTED_ACTION  "Објекат не подржава ову радњу"
+    IDS_ARG_NOT_OPT         "Аргумент је обавезан"
+    IDS_SYNTAX_ERROR        "Грешка у синтакси"
+    IDS_SEMICOLON           "Очекивано ';'"
+    IDS_LBRACKET            "Очекивано '('"
+    IDS_RBRACKET            "Очекивано ')'"
+    IDS_UNTERMINATED_STR    "Незавршена константа ниски"
+    IDS_NOT_FUNC            "Очекивана функција"
+    IDS_NOT_DATE            "„[object]“ није временски објекат"
+    IDS_NOT_NUM             "Очекивани број"
+    IDS_OBJECT_EXPECTED     "Очекивани објекат"
+    IDS_ILLEGAL_ASSIGN      "Недозвољен задатак"
+    IDS_UNDEFINED           "„|“ није одређено"
+    IDS_NOT_BOOL            "Очекивани објекат истинитосне вредности"
+    IDS_NOT_VBARRAY         "VBArray објекат се очекује"
+    IDS_JSCRIPT_EXPECTED    "Очекивани објекат JScript врсте"
+    IDS_REGEXP_SYNTAX_ERROR "Синтаксна грешка у регуларном изразу"
+    IDS_URI_INVALID_CHAR    "URI садржи неисправне знакове"
+    IDS_INVALID_LENGTH      "Низ дужине мора бити коначан позитиван цео број"
+    IDS_ARRAY_EXPECTED      "Очекивани низ објекта"
+}
+
+LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
+
+STRINGTABLE
+{
+    IDS_TO_PRIMITIVE        "Greška u pretvaranju objekta u osnovnu vrstu"
+    IDS_INVALID_CALL_ARG    "Nevažeći postupak poziva ili argumenta"
+    IDS_SUBSCRIPT_OUT_OF_RANGE "Potpis je van dometa"
+    IDS_CREATE_OBJ_ERROR    "Automatizovani server ne može da stvori objekat"
+    IDS_NO_PROPERTY         "Objekat ne podržava ovo svojstvo ili metodu"
+    IDS_UNSUPPORTED_ACTION  "Objekat ne podržava ovu radnju"
+    IDS_ARG_NOT_OPT         "Argument je obavezan"
+    IDS_SYNTAX_ERROR        "Greška u sintaksi"
+    IDS_SEMICOLON           "Očekivano ';'"
+    IDS_LBRACKET            "Očekivano '('"
+    IDS_RBRACKET            "Očekivano ')'"
+    IDS_UNTERMINATED_STR    "Nezavršena konstanta niski"
+    IDS_NOT_FUNC            "Očekivana funkcija"
+    IDS_NOT_DATE            "„[object]“ nije vremenski objekat"
+    IDS_NOT_NUM             "Očekivani broj"
+    IDS_OBJECT_EXPECTED     "Očekivani objekat"
+    IDS_ILLEGAL_ASSIGN      "Nedozvoljen zadatak"
+    IDS_UNDEFINED           "„|“ nije određeno"
+    IDS_NOT_BOOL            "Očekivani objekat istinitosne vrednosti"
+    IDS_NOT_VBARRAY         "VBArray objekat se očekuje"
+    IDS_JSCRIPT_EXPECTED    "Očekivani objekat JScript vrste"
+    IDS_REGEXP_SYNTAX_ERROR "Sintaksna greška u regularnom izrazu"
+    IDS_URI_INVALID_CHAR    "URI sadrži neispravne znakove"
+    IDS_INVALID_LENGTH      "Niz dužine mora biti konačan pozitivan ceo broj"
+    IDS_ARRAY_EXPECTED      "Očekivani niz objekta"
+}
