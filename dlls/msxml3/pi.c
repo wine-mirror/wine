@@ -515,10 +515,11 @@ static HRESULT WINAPI dom_pi_get_namespaceURI(
 
 static HRESULT WINAPI dom_pi_get_prefix(
     IXMLDOMProcessingInstruction *iface,
-    BSTR* p)
+    BSTR* prefix)
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    return IXMLDOMNode_get_prefix( IXMLDOMNode_from_impl(&This->node), p );
+    TRACE("(%p)->(%p)\n", This, prefix);
+    return return_null_bstr( prefix );
 }
 
 static HRESULT WINAPI dom_pi_get_baseName(

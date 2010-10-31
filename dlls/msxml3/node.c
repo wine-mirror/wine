@@ -1151,29 +1151,23 @@ static HRESULT WINAPI xmlnode_get_namespaceURI(
     return *namespaceURI ? S_OK : S_FALSE;
 }
 
-static HRESULT WINAPI xmlnode_get_prefix(
-    IXMLDOMNode *iface,
-    BSTR* prefixString)
+HRESULT node_get_prefix(xmlnode *This, BSTR *prefix)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
     xmlNsPtr *ns;
 
-    TRACE("(%p)->(%p)\n", This, prefixString );
+    if (!prefix) return E_INVALIDARG;
 
-    if(!prefixString)
-        return E_INVALIDARG;
-
-    *prefixString = NULL;
+    *prefix = NULL;
 
     if ((ns = xmlGetNsList(This->node->doc, This->node)))
     {
-        if (ns[0]->prefix) *prefixString = bstr_from_xmlChar( ns[0]->prefix );
+        if (ns[0]->prefix) *prefix = bstr_from_xmlChar( ns[0]->prefix );
         xmlFree(ns);
     }
 
-    TRACE("prefix: %s\n", debugstr_w(*prefixString));
+    TRACE("prefix: %s\n", debugstr_w(*prefix));
 
-    return *prefixString ? S_OK : S_FALSE;
+    return *prefix ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI xmlnode_get_baseName(
@@ -1264,7 +1258,7 @@ static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
     xmlnode_selectSingleNode,
     NULL,
     xmlnode_get_namespaceURI,
-    xmlnode_get_prefix,
+    NULL,
     xmlnode_get_baseName,
     xmlnode_transformNodeToObject,
 };

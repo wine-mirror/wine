@@ -1331,10 +1331,11 @@ static HRESULT WINAPI domdoc_get_namespaceURI(
 
 static HRESULT WINAPI domdoc_get_prefix(
     IXMLDOMDocument3 *iface,
-    BSTR* prefixString )
+    BSTR* prefix )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_get_prefix( IXMLDOMNode_from_impl(&This->node), prefixString );
+    TRACE("(%p)->(%p)\n", This, prefix);
+    return return_null_bstr( prefix );
 }
 
 

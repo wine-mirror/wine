@@ -497,10 +497,11 @@ static HRESULT WINAPI domattr_get_namespaceURI(
 
 static HRESULT WINAPI domattr_get_prefix(
     IXMLDOMAttribute *iface,
-    BSTR* p)
+    BSTR* prefix)
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
-    return IXMLDOMNode_get_prefix( IXMLDOMNode_from_impl(&This->node), p );
+    TRACE("(%p)->(%p)\n", This, prefix);
+    return node_get_prefix( &This->node, prefix );
 }
 
 static HRESULT WINAPI domattr_get_baseName(

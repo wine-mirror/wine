@@ -553,10 +553,11 @@ static HRESULT WINAPI domelem_get_namespaceURI(
 
 static HRESULT WINAPI domelem_get_prefix(
     IXMLDOMElement *iface,
-    BSTR* p)
+    BSTR* prefix)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    return IXMLDOMNode_get_prefix( IXMLDOMNode_from_impl(&This->node), p );
+    TRACE("(%p)->(%p)\n", This, prefix);
+    return node_get_prefix( &This->node, prefix );
 }
 
 static HRESULT WINAPI domelem_get_baseName(

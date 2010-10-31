@@ -505,10 +505,11 @@ static HRESULT WINAPI domfrag_get_namespaceURI(
 
 static HRESULT WINAPI domfrag_get_prefix(
     IXMLDOMDocumentFragment *iface,
-    BSTR* p)
+    BSTR* prefix)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_get_prefix( IXMLDOMNode_from_impl(&This->node), p );
+    TRACE("(%p)->(%p)\n", This, prefix);
+    return return_null_bstr( prefix );
 }
 
 static HRESULT WINAPI domfrag_get_baseName(

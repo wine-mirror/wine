@@ -193,6 +193,7 @@ extern HRESULT node_replace_child(xmlnode*,IXMLDOMNode*,IXMLDOMNode*,IXMLDOMNode
 extern HRESULT node_put_text(xmlnode*,BSTR);
 extern HRESULT node_get_xml(xmlnode*,BOOL,BOOL,BSTR*);
 extern HRESULT node_clone(xmlnode*,VARIANT_BOOL,IXMLDOMNode**);
+extern HRESULT node_get_prefix(xmlnode*,BSTR*);
 
 extern HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document);
 
@@ -250,6 +251,15 @@ static inline HRESULT return_null_var(VARIANT *p)
         return E_INVALIDARG;
 
     V_VT(p) = VT_NULL;
+    return S_FALSE;
+}
+
+static inline HRESULT return_null_bstr(BSTR *p)
+{
+    if(!p)
+        return E_INVALIDARG;
+
+    *p = NULL;
     return S_FALSE;
 }
 

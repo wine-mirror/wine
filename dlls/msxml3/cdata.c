@@ -508,10 +508,11 @@ static HRESULT WINAPI domcdata_get_namespaceURI(
 
 static HRESULT WINAPI domcdata_get_prefix(
     IXMLDOMCDATASection *iface,
-    BSTR* p)
+    BSTR* prefix)
 {
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
-    return IXMLDOMNode_get_prefix( IXMLDOMNode_from_impl(&This->node), p );
+    TRACE("(%p)->(%p)\n", This, prefix);
+    return return_null_bstr( prefix );
 }
 
 static HRESULT WINAPI domcdata_get_baseName(

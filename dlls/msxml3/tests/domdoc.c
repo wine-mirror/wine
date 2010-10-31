@@ -7248,13 +7248,65 @@ static void test_createNode(void)
 
 static void test_get_prefix(void)
 {
-    IXMLDOMDocument *doc;
+    IXMLDOMDocumentFragment *fragment;
+    IXMLDOMCDATASection *cdata;
     IXMLDOMElement *element;
+    IXMLDOMComment *comment;
+    IXMLDOMDocument *doc;
     HRESULT hr;
     BSTR str;
 
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
+
+    /* nodes that can't support prefix */
+    /* 1. document */
+    str = (void*)0xdeadbeef;
+    hr = IXMLDOMDocument_get_prefix(doc, &str);
+    ok( hr == S_FALSE, "got 0x%08x\n", hr);
+    ok( str == 0, "got %p\n", str);
+
+    hr = IXMLDOMDocument_get_prefix(doc, NULL);
+    ok( hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    /* 2. cdata */
+    hr = IXMLDOMDocument_createCDATASection(doc, NULL, &cdata);
+    ok(hr == S_OK, "got %08x\n", hr );
+
+    str = (void*)0xdeadbeef;
+    hr = IXMLDOMCDATASection_get_prefix(cdata, &str);
+    ok(hr == S_FALSE, "got %08x\n", hr);
+    ok( str == 0, "got %p\n", str);
+
+    hr = IXMLDOMCDATASection_get_prefix(cdata, NULL);
+    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+    IXMLDOMCDATASection_Release(cdata);
+
+    /* 3. comment */
+    hr = IXMLDOMDocument_createComment(doc, NULL, &comment);
+    ok(hr == S_OK, "got %08x\n", hr );
+
+    str = (void*)0xdeadbeef;
+    hr = IXMLDOMComment_get_prefix(comment, &str);
+    ok(hr == S_FALSE, "got %08x\n", hr);
+    ok( str == 0, "got %p\n", str);
+
+    hr = IXMLDOMComment_get_prefix(comment, NULL);
+    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+    IXMLDOMComment_Release(comment);
+
+    /* 4. fragment */
+    hr = IXMLDOMDocument_createDocumentFragment(doc, &fragment);
+    ok(hr == S_OK, "got %08x\n", hr );
+
+    str = (void*)0xdeadbeef;
+    hr = IXMLDOMDocumentFragment_get_prefix(fragment, &str);
+    ok(hr == S_FALSE, "got %08x\n", hr);
+    ok( str == 0, "got %p\n", str);
+
+    hr = IXMLDOMDocumentFragment_get_prefix(fragment, NULL);
+    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+    IXMLDOMDocumentFragment_Release(fragment);
 
     /* no prefix */
     hr = IXMLDOMDocument_createElement(doc, _bstr_("elem"), &element);
