@@ -27,6 +27,7 @@ RC_SRCS = \
 	spl_Ro.rc \
 	spl_Ru.rc \
 	spl_Si.rc \
+	spl_Sr.rc \
 	spl_Sv.rc \
 	spl_Uk.rc \
 	spl_Zh.rc
