@@ -44,6 +44,7 @@ RC_SRCS = \
 	wininet_Ro.rc \
 	wininet_Ru.rc \
 	wininet_Si.rc \
+	wininet_Sr.rc \
 	wininet_Sv.rc \
 	wininet_Tr.rc \
 	wininet_Uk.rc \
