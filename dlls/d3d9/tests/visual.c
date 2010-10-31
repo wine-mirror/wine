@@ -11399,6 +11399,129 @@ static void fp_special_test(IDirect3DDevice9 *device)
     IDirect3DPixelShader9_Release(ps);
 }
 
+static void srgbwrite_format_test(IDirect3DDevice9 *device)
+{
+    IDirect3D9 *d3d;
+    IDirect3DSurface9 *rt, *backbuffer;
+    IDirect3DTexture9 *texture;
+    HRESULT hr;
+    int i;
+    DWORD color_rgb = 0x00808080, color_srgb = 0x00bcbcbc, color;
+    static const struct
+    {
+        D3DFORMAT fmt;
+        const char *name;
+    }
+    formats[] =
+    {
+        { D3DFMT_R5G6B5, "D3DFMT_R5G6B5" },
+        { D3DFMT_X8R8G8B8, "D3DFMT_X8R8G8B8" },
+        { D3DFMT_A8R8G8B8, "D3DFMT_A8R8G8B8" },
+        { D3DFMT_A16B16G16R16F, "D3DFMT_A16B16G16R16F" },
+        { D3DFMT_A32B32G32R32F, "D3DFMT_A32B32G32R32F" },
+    };
+    static const struct
+    {
+        float x, y, z;
+        float u, v;
+    }
+    quad[] =
+    {
+        {-1.0f,  -1.0f,  0.1f,   0.0f,   0.0f},
+        {-1.0f,   1.0f,  0.1f,   1.0f,   0.0f},
+        { 1.0f,  -1.0f,  0.1f,   0.0f,   1.0f},
+        { 1.0f,   1.0f,  0.1f,   1.0f,   1.0f}
+    };
+
+    hr = IDirect3DDevice9_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "GetDirect3D failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
+    ok(SUCCEEDED(hr), "SetFVF failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
+    ok(SUCCEEDED(hr), "GetBackBuffer failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_TEXTUREFACTOR, 0x80808080);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+
+    for(i = 0; i < (sizeof(formats) / sizeof(*formats)); i++)
+    {
+        hr = IDirect3DDevice9_CreateTexture(device, 8, 8, 1, D3DUSAGE_RENDERTARGET, formats[i].fmt,
+                                            D3DPOOL_DEFAULT, &texture, NULL);
+        ok(SUCCEEDED(hr), "CreateTexture failed, hr %#x.\n", hr);
+        if(FAILED(hr))
+        {
+            trace("Tex create failed\n");
+            continue;
+        }
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00ff0000, 0.0f, 0);
+        ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);
+
+        hr = IDirect3DTexture9_GetSurfaceLevel(texture, 0, &rt);
+        ok(SUCCEEDED(hr), "GetSurfaceLevel failed, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
+        ok(SUCCEEDED(hr), "SetRenderTarget failed, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x000000ff, 0.0f, 0);
+        ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+        if(SUCCEEDED(hr))
+        {
+            hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SRGBWRITEENABLE, TRUE);
+            ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TFACTOR);
+            ok(SUCCEEDED(hr), "SetTextureStageState failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+            ok(SUCCEEDED(hr), "DrawPrimitive failed, hr %#x.\n", hr);
+
+            hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SRGBWRITEENABLE, FALSE);
+            ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_SetRenderTarget(device, 0, backbuffer);
+            ok(SUCCEEDED(hr), "SetRenderTarget failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) texture);
+            ok(SUCCEEDED(hr), "SetTexture failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+            ok(SUCCEEDED(hr), "SetTextureStageState failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+            ok(SUCCEEDED(hr), "DrawPrimitive failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+            ok(SUCCEEDED(hr), "SetTexture failed, hr %#x.\n", hr);
+
+            hr = IDirect3DDevice9_EndScene(device);
+            ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+        }
+
+        IDirect3DSurface9_Release(rt);
+        IDirect3DTexture9_Release(texture);
+
+        color = getPixelColor(device, 360, 240);
+        if(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+                                    D3DUSAGE_QUERY_SRGBWRITE,
+                                    D3DRTYPE_TEXTURE, formats[i].fmt) == D3D_OK)
+        {
+            /* Big slop for R5G6B5 */
+            ok(color_match(color, color_srgb, 5), "Format %s supports srgb, expected color 0x%08x, got 0x%08x\n",
+                formats[i].name, color_srgb, color);
+        }
+        else
+        {
+            /* Big slop for R5G6B5 */
+            ok(color_match(color, color_rgb, 5), "Format %s does not support srgb, expected color 0x%08x, got 0x%08x\n",
+                formats[i].name, color_rgb, color);
+        }
+
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(SUCCEEDED(hr), "Present failed, hr %#x.\n", hr);
+    }
+
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_DISABLE);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed, hr %#x.\n", hr);
+
+    IDirect3D9_Release(d3d);
+    IDirect3DSurface9_Release(backbuffer);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -11566,6 +11689,7 @@ START_TEST(visual)
     shadow_test(device_ptr);
     fp_special_test(device_ptr);
     depth_bounds_test(device_ptr);
+    srgbwrite_format_test(device_ptr);
 
 cleanup:
     if(device_ptr) {
