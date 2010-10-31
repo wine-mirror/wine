@@ -1,0 +1,178 @@
+/*
+ * Copyright 2003 Ulrich Czekalla for CodeWeavers
+ * Copyright 2010 Đorđe Vasiljević
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resource.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_CYRILLIC
+
+UIINSERTOBJECT DIALOG  0, 0, 294, 151
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Унос објекта"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LISTBOX         IDC_OBJTYPELIST,82,19,131,66,LBS_SORT |
+                    LBS_NOINTEGRALHEIGHT | WS_VISIBLE | WS_VSCROLL |
+                    WS_TABSTOP
+    LTEXT           "Врста објекта:",IDC_OBJTYPELBL,82,7,53,8,WS_VISIBLE
+    DEFPUSHBUTTON   "У реду",IDOK,221,7,66,14
+    PUSHBUTTON      "Откажи",IDCANCEL,221,24,66,14
+    GROUPBOX        "Резултат",IDC_RESULT,7,103,208,41
+    CONTROL         "Направи ново",IDC_CREATENEW,"Button",BS_AUTORADIOBUTTON |
+                    WS_GROUP,7,20,62,10
+    CONTROL         "Направи контролу",IDC_CREATECONTROL,"Button",
+                    BS_AUTORADIOBUTTON | NOT WS_VISIBLE,7,54,62,10
+    CONTROL         "Направи из датотеке",IDC_CREATEFROMFILE,"Button",
+                    BS_AUTORADIOBUTTON,7,37,67,10
+    LTEXT           "",IDC_RESULTDESC,49,112,159,23
+    PUSHBUTTON      "&Додај контролу...",IDC_ADDCONTROL,81,88,63,14,NOT WS_VISIBLE
+    CONTROL         "Прикажи као иконицу",IDC_ASICON,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP | NOT WS_VISIBLE,223,58,64,10
+    PUSHBUTTON      "Потражи...",IDC_BROWSE,83,53,50,14,NOT WS_VISIBLE
+    LTEXT           "Датотека:",IDC_FILELBL,83,27,20,8, NOT WS_VISIBLE
+    EDITTEXT        IDC_FILE,83,37,132,13,ES_AUTOHSCROLL | NOT WS_VISIBLE
+END
+
+STRINGTABLE
+{
+  IDS_RESULTOBJDESC     "Унесите нови %s објекат у документ"
+  IDS_RESULTFILEOBJDESC "Унесите садржај датотеке као објекат у документу како бисте га активирали користећи програм који га је направио."
+  IDS_BROWSE            "Потражи"
+  IDS_NOTOLEMOD         "Датотека није исправан OLE модул. Регистровање OLE контроле није успело."
+  IDS_NOTOLEMODCAPTION  "Додај контролу"
+}
+
+IDD_PASTESPECIAL4 DIALOG 3, 15, 293, 140
+STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Убацивање"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT         "Извор:", -1, 6, 9, 30, 8, WS_VISIBLE | WS_GROUP
+    CONTROL       "&Убаци", IDC_PS_PASTE, "Button", BS_AUTORADIOBUTTON | WS_TABSTOP | WS_GROUP | WS_VISIBLE,
+                  6, 38, 55, 10
+    CONTROL       "Убаци &везу", IDC_PS_PASTELINK, "Button", BS_AUTORADIOBUTTON | WS_VISIBLE,
+                  6, 63, 55, 10
+    LTEXT         "&Као:", -1, 65, 25, 16, 8, WS_VISIBLE | WS_GROUP
+    LISTBOX       IDC_PS_PASTELIST,     65, 36, 153, 57, LBS_NOTIFY | LBS_USETABSTOPS | WS_VSCROLL | WS_BORDER | NOT WS_VISIBLE
+    LISTBOX       IDC_PS_PASTELINKLIST, 65, 36, 153, 57, LBS_NOTIFY | LBS_USETABSTOPS | WS_VSCROLL | WS_BORDER | NOT WS_VISIBLE
+    LISTBOX       IDC_PS_DISPLAYLIST,   65, 36, 153, 57, LBS_NOTIFY | LBS_USETABSTOPS | WS_VSCROLL | WS_BORDER | WS_VISIBLE
+    CONTROL       "У реду", IDOK, "Button", BS_DEFPUSHBUTTON | WS_TABSTOP | WS_GROUP | WS_VISIBLE, 224, 6, 66, 14
+    CONTROL       "Откажи", IDCANCEL, "Button", BS_PUSHBUTTON | WS_TABSTOP | WS_VISIBLE, 224, 23, 66, 14
+    CONTROL       "&Помоћ", IDC_OLEUIHELP, "Button", BS_PUSHBUTTON | WS_TABSTOP | WS_VISIBLE, 224, 42, 66, 14
+    CONTROL       "&Прикажи као иконицу", IDC_PS_DISPLAYASICON, "Button", BS_AUTOCHECKBOX | WS_TABSTOP | WS_VISIBLE, 224, 59, 66, 14
+    CONTROL       "", IDC_PS_ICONDISPLAY, "Static", SS_ICON | WS_VISIBLE, 224, 75, 66, 44
+    CONTROL       "Промени &иконицу...", IDC_PS_CHANGEICON, "Button", BS_PUSHBUTTON | WS_TABSTOP | WS_VISIBLE, 224, 123, 66, 14
+    CONTROL       "", IDC_PS_RESULTIMAGE, "Static", SS_ICON | WS_VISIBLE, 8, 101, 42, 34
+    CONTROL       "<< крајњи текст иде овде >>", IDC_PS_RESULTTEXT, "Static", SS_NOPREFIX | WS_VISIBLE, 54, 100, 159, 35
+    CONTROL       "Резултат", -1, "Button", BS_GROUPBOX | WS_GROUP | WS_VISIBLE, 6, 90, 212, 48
+    CONTROL       "", IDC_PS_SOURCETEXT, "Edit", ES_READONLY | ES_AUTOHSCROLL | WS_VISIBLE, 37, 9, 180, 8
+END
+
+STRINGTABLE
+{
+    IDS_PS_PASTE_DATA                     "Умеће садржај из оставе у документ као %s."
+    IDS_PS_PASTE_OBJECT                   "Умеће садржај из оставе у документ како бисте га могли активирати користећи %s."
+    IDS_PS_PASTE_OBJECT_AS_ICON           "Умеће садржај из оставе у документ како бисте га могли активирати користећи %s.  Биће приказано као иконица."
+    IDS_PS_PASTE_LINK_DATA                "Умеће садржај из оставе у документ као %s.  Подаци су повезани с изворишном датотеком, тако да ће измене датотеке бити рефлектоване у документу."
+    IDS_PS_PASTE_LINK_OBJECT              "Умеће слику из оставе у документ.  Слика је повезана с изворишном датотеком, тако да ће измене датотеке бити рефлектоване у документу."
+    IDS_PS_PASTE_LINK_OBJECT_AS_ICON      "Умеће пречицу која води до локације садржаја оставе.  Пречица је повезана с изворишном датотеком, тако да ће измене бити рефлектоване у документу."
+    IDS_PS_NON_OLE                        "Умеће садржај из оставе у документ."
+    IDS_PS_UNKNOWN_TYPE                   "Непозната врста"
+    IDS_PS_UNKNOWN_SRC                    "Непознат извор"
+    IDS_PS_UNKNOWN_APP                    "програм који га је направио"
+}
+
+LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
+
+UIINSERTOBJECT DIALOG  0, 0, 294, 151
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Unos objekta"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LISTBOX         IDC_OBJTYPELIST,82,19,131,66,LBS_SORT |
+                    LBS_NOINTEGRALHEIGHT | WS_VISIBLE | WS_VSCROLL |
+                    WS_TABSTOP
+    LTEXT           "Vrsta objekta:",IDC_OBJTYPELBL,82,7,53,8,WS_VISIBLE
+    DEFPUSHBUTTON   "U redu",IDOK,221,7,66,14
+    PUSHBUTTON      "Otkaži",IDCANCEL,221,24,66,14
+    GROUPBOX        "Rezultat",IDC_RESULT,7,103,208,41
+    CONTROL         "Napravi novo",IDC_CREATENEW,"Button",BS_AUTORADIOBUTTON |
+                    WS_GROUP,7,20,62,10
+    CONTROL         "Napravi kontrolu",IDC_CREATECONTROL,"Button",
+                    BS_AUTORADIOBUTTON | NOT WS_VISIBLE,7,54,62,10
+    CONTROL         "Napravi iz datoteke",IDC_CREATEFROMFILE,"Button",
+                    BS_AUTORADIOBUTTON,7,37,67,10
+    LTEXT           "",IDC_RESULTDESC,49,112,159,23
+    PUSHBUTTON      "&Dodaj kontrolu...",IDC_ADDCONTROL,81,88,63,14,NOT WS_VISIBLE
+    CONTROL         "Prikaži kao ikonicu",IDC_ASICON,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP | NOT WS_VISIBLE,223,58,64,10
+    PUSHBUTTON      "Potraži...",IDC_BROWSE,83,53,50,14,NOT WS_VISIBLE
+    LTEXT           "Datoteka:",IDC_FILELBL,83,27,20,8, NOT WS_VISIBLE
+    EDITTEXT        IDC_FILE,83,37,132,13,ES_AUTOHSCROLL | NOT WS_VISIBLE
+END
+
+STRINGTABLE
+{
+  IDS_RESULTOBJDESC     "Unesite novi %s objekat u dokument"
+  IDS_RESULTFILEOBJDESC "Unesite sadržaj datoteke kao objekat u dokumentu kako biste ga aktivirali koristeći program koji ga je napravio."
+  IDS_BROWSE            "Potraži"
+  IDS_NOTOLEMOD         "Datoteka nije ispravan OLE modul. Registrovanje OLE kontrole nije uspelo."
+  IDS_NOTOLEMODCAPTION  "Dodaj kontrolu"
+}
+
+IDD_PASTESPECIAL4 DIALOG 3, 15, 293, 140
+STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Ubacivanje"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT         "Izvor:", -1, 6, 9, 30, 8, WS_VISIBLE | WS_GROUP
+    CONTROL       "&Ubaci", IDC_PS_PASTE, "Button", BS_AUTORADIOBUTTON | WS_TABSTOP | WS_GROUP | WS_VISIBLE,
+                  6, 38, 55, 10
+    CONTROL       "Ubaci &vezu", IDC_PS_PASTELINK, "Button", BS_AUTORADIOBUTTON | WS_VISIBLE,
+                  6, 63, 55, 10
+    LTEXT         "&Kao:", -1, 65, 25, 16, 8, WS_VISIBLE | WS_GROUP
+    LISTBOX       IDC_PS_PASTELIST,     65, 36, 153, 57, LBS_NOTIFY | LBS_USETABSTOPS | WS_VSCROLL | WS_BORDER | NOT WS_VISIBLE
+    LISTBOX       IDC_PS_PASTELINKLIST, 65, 36, 153, 57, LBS_NOTIFY | LBS_USETABSTOPS | WS_VSCROLL | WS_BORDER | NOT WS_VISIBLE
+    LISTBOX       IDC_PS_DISPLAYLIST,   65, 36, 153, 57, LBS_NOTIFY | LBS_USETABSTOPS | WS_VSCROLL | WS_BORDER | WS_VISIBLE
+    CONTROL       "U redu", IDOK, "Button", BS_DEFPUSHBUTTON | WS_TABSTOP | WS_GROUP | WS_VISIBLE, 224, 6, 66, 14
+    CONTROL       "Otkaži", IDCANCEL, "Button", BS_PUSHBUTTON | WS_TABSTOP | WS_VISIBLE, 224, 23, 66, 14
+    CONTROL       "&Pomoć", IDC_OLEUIHELP, "Button", BS_PUSHBUTTON | WS_TABSTOP | WS_VISIBLE, 224, 42, 66, 14
+    CONTROL       "&Prikaži kao ikonicu", IDC_PS_DISPLAYASICON, "Button", BS_AUTOCHECKBOX | WS_TABSTOP | WS_VISIBLE, 224, 59, 66, 14
+    CONTROL       "", IDC_PS_ICONDISPLAY, "Static", SS_ICON | WS_VISIBLE, 224, 75, 66, 44
+    CONTROL       "Promeni &ikonicu...", IDC_PS_CHANGEICON, "Button", BS_PUSHBUTTON | WS_TABSTOP | WS_VISIBLE, 224, 123, 66, 14
+    CONTROL       "", IDC_PS_RESULTIMAGE, "Static", SS_ICON | WS_VISIBLE, 8, 101, 42, 34
+    CONTROL       "<< krajnji tekst ide ovde >>", IDC_PS_RESULTTEXT, "Static", SS_NOPREFIX | WS_VISIBLE, 54, 100, 159, 35
+    CONTROL       "Rezultat", -1, "Button", BS_GROUPBOX | WS_GROUP | WS_VISIBLE, 6, 90, 212, 48
+    CONTROL       "", IDC_PS_SOURCETEXT, "Edit", ES_READONLY | ES_AUTOHSCROLL | WS_VISIBLE, 37, 9, 180, 8
+END
+
+STRINGTABLE
+{
+    IDS_PS_PASTE_DATA                     "Umeće sadržaj iz ostave u dokument kao %s."
+    IDS_PS_PASTE_OBJECT                   "Umeće sadržaj iz ostave u dokument kako biste ga mogli aktivirati koristeći %s."
+    IDS_PS_PASTE_OBJECT_AS_ICON           "Umeće sadržaj iz ostave u dokument kako biste ga mogli aktivirati koristeći %s.  Biće prikazano kao ikonica."
+    IDS_PS_PASTE_LINK_DATA                "Umeće sadržaj iz ostave u dokument kao %s.  Podaci su povezani s izvorišnom datotekom, tako da će izmene datoteke biti reflektovane u dokumentu."
+    IDS_PS_PASTE_LINK_OBJECT              "Umeće sliku iz ostave u dokument.  Slika je povezana s izvorišnom datotekom, tako da će izmene datoteke biti reflektovane u dokumentu."
+    IDS_PS_PASTE_LINK_OBJECT_AS_ICON      "Umeće prečicu koja vodi do lokacije sadržaja ostave.  Prečica je povezana s izvorišnom datotekom, tako da će izmene biti reflektovane u dokumentu."
+    IDS_PS_NON_OLE                        "Umeće sadržaj iz ostave u dokument."
+    IDS_PS_UNKNOWN_TYPE                   "Nepoznata vrsta"
+    IDS_PS_UNKNOWN_SRC                    "Nepoznat izvor"
+    IDS_PS_UNKNOWN_APP                    "program koji ga je napravio"
+}
