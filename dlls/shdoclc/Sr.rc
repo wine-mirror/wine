@@ -1,0 +1,480 @@
+/*
+ * Copyright 2005-2006 Jacek Caban
+ * Copyright 2010 Đorđe Vasiljević
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "shdoclc.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_CYRILLIC
+
+STRINGTABLE
+{
+    IDS_MESSAGE_BOX_TITLE, "Wine Internet Explorer"
+}
+
+STRINGTABLE
+{
+    IDS_PRINT_HEADER_TEMPLATE "&w&bСтрана &p од &P"
+    IDS_PRINT_FOOTER_TEMPLATE "&u&b&d"
+}
+
+IDR_BROWSE_CONTEXT_MENU MENU
+{
+    POPUP "Подразумевано"
+    {
+        MENUITEM "&Назад",                                       IDM_GOBACKWARD
+        MENUITEM "Н&апред",                                      IDM_GOFORWARD
+        MENUITEM SEPARATOR
+        MENUITEM "&Сачувај позадину као...",                     IDM_SAVEBACKGROUND
+        MENUITEM "Постави као позадину",                         IDM_SETWALLPAPER
+        MENUITEM "&Умножи позадину",                             IDM_COPYBACKGROUND
+        MENUITEM "Постави као &ставку на радној површини",       IDM_SETDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "Изабери &све",                                 IDM_SELECTALL
+        MENUITEM "&Убаци",                                       IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Направи &пречицу",                             IDM_CREATESHORTCUT
+        MENUITEM "Додај у &омиљене",                             IDM_ADDFAVORITES
+        MENUITEM "&Прикажи извор",                               IDM_VIEWSOURCE
+        MENUITEM SEPARATOR
+        MENUITEM "&Кодни распоред",                              IDM_LANGUAGE
+        MENUITEM SEPARATOR
+        MENUITEM "&Штампај",                                     IDM_PRINT
+        MENUITEM "&Освежи",                                      _IDM_REFRESH
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "&Својства",                                    IDM_PROPERTIES
+    }
+
+    POPUP "Слика"
+    {
+        MENUITEM "&Отвори везу",                                 IDM_FOLLOWLINKC
+        MENUITEM "Отвори везу у &новом прозору",                 IDM_FOLLOWLINKN
+        MENUITEM "Сачувај објекат &као...",                      IDM_SAVETARGET
+        MENUITEM "&Штампај објекат",                             IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "&Прикажи слику",                               IDM_SHOWPICTURE
+        MENUITEM "&Сачувај слику као...",                        IDM_SAVEPICTURE
+        MENUITEM "Пошаљи слику &е-поштом...",                    IDM_MP_EMAILPICTURE
+        MENUITEM "Штампај &слику...",                            IDM_MP_PRINTPICTURE
+        MENUITEM "Пређи на &фотографије",                        IDM_MP_MYPICS
+        MENUITEM "Постави као &позадину",                        IDM_SETWALLPAPER
+        MENUITEM "Постави као &ставку на радној површини...",    IDM_SETDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "&Исеци",                                       IDM_CUT
+        MENUITEM "&Умножи",                                      IDM_COPY
+        MENUITEM "Умножи &пречицу",                              IDM_COPYSHORTCUT
+        MENUITEM "Уб&аци",                                       IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Додај у &омиљене...",                          IDM_ADDFAVORITES
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "&Својства",                                    IDM_PROPERTIES
+    }
+
+    POPUP "Контрола"
+    {
+        MENUITEM "&Опозови",        IDM_UNDO
+        MENUITEM SEPARATOR
+        MENUITEM "&Исеци",          IDM_CUT
+        MENUITEM "&Умножи",         IDM_COPY
+        MENUITEM "Уб&аци",          IDM_PASTE
+        MENUITEM "&Избриши",        IDM_DELETE
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "Изабери &све",    IDM_SELECTALL
+    }
+
+    POPUP "Табела"
+    {
+        POPUP "&Избор"
+        {
+            MENUITEM "&Ћелија",         IDM_CELLSELECT
+            MENUITEM "&Ред",            IDM_ROWSELECT
+            MENUITEM "&Колона",         IDM_COLUMNSELECT
+            MENUITEM "&Табела",         IDM_TABLESELECT
+        }
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "Својства &ћелије",    IDM_CELLPROPERTIES
+        MENUITEM "Својства &табеле",    IDM_TABLEPROPERTIES
+    }
+
+    POPUP "1DSite избор"
+    {
+        MENUITEM "&Исеци",          IDM_CUT
+        MENUITEM "&Умножи",         IDM_COPY
+        MENUITEM "Убаци",           IDM_PASTE
+        MENUITEM "Изабери &све",    IDM_SELECTALL
+        MENUITEM "&Штампај",        IDM_PRINT
+        MENUITEM SEPARATOR
+    }
+
+    POPUP "Везник"
+    {
+        MENUITEM "&Отвори",                    IDM_FOLLOWLINKC
+        MENUITEM "Отвори у &новом прозору",    IDM_FOLLOWLINKN
+        MENUITEM "Сачувај објекат &као...",    IDM_SAVETARGET
+        MENUITEM "&Штампај објекат",           IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "Исеци",                      IDM_CUT
+        MENUITEM "&Умножи",                    IDM_COPY
+        MENUITEM "Умножи &пречицу",            IDM_COPYSHORTCUT
+        MENUITEM "Уб&аци",                     IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Додај у &омиљене...",        IDM_ADDFAVORITES
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "&Својства",                  IDM_PROPERTIES
+    }
+
+    POPUP "Непознат контекст"
+    {
+        MENUITEM SEPARATOR
+    }
+
+    POPUP "DYNSRC слика"
+    {
+        MENUITEM "&Отвори везу",                             IDM_FOLLOWLINKC
+        MENUITEM "Отвори везу у &новом прозору",             IDM_FOLLOWLINKN
+        MENUITEM "Сачувај објекат &као...",                  IDM_SAVETARGET
+        MENUITEM "&Штампај објекат",                         IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "&Прикажи слику",                           IDM_SHOWPICTURE
+        MENUITEM "&Сачувај видео снимак као...",             IDM_SAVEPICTURE
+        MENUITEM "Постави као &позадину",                    IDM_SETWALLPAPER
+        MENUITEM "Постави као &ставку радне површине...",    IDM_SETDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "&Исеци",                                   IDM_CUT
+        MENUITEM "&Умножи",                                  IDM_COPY
+        MENUITEM "Умножи &пречицу",                          IDM_COPYSHORTCUT
+        MENUITEM "Уб&аци",                                   IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Додај у &омиљене...",                      IDM_ADDFAVORITES
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "Репродукуј",                               IDM_DYNSRCPLAY
+        MENUITEM "Заустави",                                 IDM_DYNSRCSTOP
+        MENUITEM "&Својства",                                IDM_PROPERTIES
+    }
+
+    POPUP "ART слика"
+    {
+        MENUITEM "&Отвори везу",                             IDM_FOLLOWLINKC
+        MENUITEM "Отвори везу у &новом прозору",             IDM_FOLLOWLINKN
+        MENUITEM "Сачувај објекат &као...",                  IDM_SAVETARGET
+        MENUITEM "&Штампај објекат",                         IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "&Прикажи слику",                           IDM_SHOWPICTURE
+        MENUITEM "&Сачувај слику као...",                    IDM_SAVEPICTURE
+        MENUITEM "Постави као &позадину",                    IDM_SETWALLPAPER
+        MENUITEM "Постави као &ставку радне површине...",    IDM_SETDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "&Исеци",                                   IDM_CUT
+        MENUITEM "&Умножи",                                  IDM_COPY
+        MENUITEM "Умножи &пречицу",                          IDM_COPYSHORTCUT
+        MENUITEM "Уб&аци",                                   IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Додај у &омиљене...",                      IDM_ADDFAVORITES
+        MENUITEM SEPARATOR
+        MENUITEM "Репродукуј",                               IDM_IMGARTPLAY
+        MENUITEM "Заустави",                                 IDM_IMGARTSTOP
+        MENUITEM "Премотај",                                 IDM_IMGARTREWIND
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "&Својства",                                IDM_PROPERTIES
+    }
+
+    POPUP "Отклањач грешака"
+    {
+        MENUITEM "Пратеће ознаке",                   IDM_TRACETAGS
+        MENUITEM "Неуспеси ресурса",                 IDM_RESOURCEFAILURES
+        MENUITEM "Испиши исправљачке податке",       IDM_DUMPTRACKINGINFO
+        MENUITEM "Прекид",                           IDM_DEBUGBREAK
+        MENUITEM "Приказ",                           IDM_DEBUGVIEW
+        MENUITEM "Испиши стабло",                    IDM_DUMPTREE
+        MENUITEM "Испиши линије",                    IDM_DUMPLINES
+        MENUITEM "Испиши приказно стабло",           IDM_DUMPDISPLAYTREE
+        MENUITEM "Испиши привремену меморију",       IDM_DUMPFORMATCACHES
+        MENUITEM "Испиши распоред правоугаоника",    IDM_DUMPLAYOUTRECTS
+        MENUITEM "Надгледање меморије",              IDM_MEMORYMONITOR
+        MENUITEM "Мерач перформанси",                IDM_PERFORMANCEMETERS
+        MENUITEM "Сачувај HTML",                     IDM_SAVEHTML
+        MENUITEM SEPARATOR
+        MENUITEM "&Разгледање",                      IDM_BROWSEMODE
+        MENUITEM "&Уређивање",                       IDM_EDITMODE
+    }
+
+    POPUP "Усправни клизач"
+    {
+        MENUITEM "Клизај овде",      IDM_SCROLL_HERE
+        MENUITEM SEPARATOR
+        MENUITEM "Врх",              IDM_SCROLL_TOP
+        MENUITEM "Дно",              IDM_SCROLL_BOTTOM
+        MENUITEM SEPARATOR
+        MENUITEM "Нагоре",           IDM_SCROLL_PAGEUP
+        MENUITEM "Надоле",           IDM_SCROLL_PAGEDOWN
+        MENUITEM SEPARATOR
+        MENUITEM "Помери нагоре",    IDM_SCROLL_UP
+        MENUITEM "Помери надоле",    IDM_SCROLL_DOWN
+    }
+
+    POPUP "Водоравни клизач"
+    {
+        MENUITEM "Клизај овде",       IDM_SCROLL_HERE
+        MENUITEM SEPARATOR
+        MENUITEM "Лева ивица",        IDM_SCROLL_LEFTEDGE
+        MENUITEM "Десна ивица",       IDM_SCROLL_RIGHTEDGE
+        MENUITEM SEPARATOR
+        MENUITEM "Налево",            IDM_SCROLL_PAGELEFT
+        MENUITEM "Надесно",           IDM_SCROLL_PAGERIGHT
+        MENUITEM SEPARATOR
+        MENUITEM "Помери налево",     IDM_SCROLL_LEFT
+        MENUITEM "Помери надесно",    IDM_SCROLL_RIGHT
+    }
+}
+
+LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
+
+STRINGTABLE
+{
+    IDS_MESSAGE_BOX_TITLE, "Wine Internet Explorer"
+}
+
+STRINGTABLE
+{
+    IDS_PRINT_HEADER_TEMPLATE "&w&bStrana &p od &P"
+    IDS_PRINT_FOOTER_TEMPLATE "&u&b&d"
+}
+
+IDR_BROWSE_CONTEXT_MENU MENU
+{
+    POPUP "Podrazumevano"
+    {
+        MENUITEM "&Nazad",                                       IDM_GOBACKWARD
+        MENUITEM "N&apred",                                      IDM_GOFORWARD
+        MENUITEM SEPARATOR
+        MENUITEM "&Sačuvaj pozadinu kao...",                     IDM_SAVEBACKGROUND
+        MENUITEM "Postavi kao pozadinu",                         IDM_SETWALLPAPER
+        MENUITEM "&Umnoži pozadinu",                             IDM_COPYBACKGROUND
+        MENUITEM "Postavi kao &stavku na radnoj površini",       IDM_SETDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "Izaberi &sve",                                 IDM_SELECTALL
+        MENUITEM "&Ubaci",                                       IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Napravi &prečicu",                             IDM_CREATESHORTCUT
+        MENUITEM "Dodaj u &omiljene",                            IDM_ADDFAVORITES
+        MENUITEM "&Prikaži izvor",                               IDM_VIEWSOURCE
+        MENUITEM SEPARATOR
+        MENUITEM "&Kodni raspored",                              IDM_LANGUAGE
+        MENUITEM SEPARATOR
+        MENUITEM "&Štampaj",                                     IDM_PRINT
+        MENUITEM "&Osveži",                                      _IDM_REFRESH
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "&Svojstva",                                    IDM_PROPERTIES
+    }
+
+    POPUP "Slika"
+    {
+        MENUITEM "&Otvori vezu",                                 IDM_FOLLOWLINKC
+        MENUITEM "Otvori vezu u &novom prozoru",                 IDM_FOLLOWLINKN
+        MENUITEM "Sačuvaj objekat &kao...",                      IDM_SAVETARGET
+        MENUITEM "&Štampaj objekat",                             IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "&Prikaži sliku",                               IDM_SHOWPICTURE
+        MENUITEM "&Sačuvaj sliku kao...",                        IDM_SAVEPICTURE
+        MENUITEM "Pošalji sliku &e-poštom...",                   IDM_MP_EMAILPICTURE
+        MENUITEM "Štampaj &sliku...",                            IDM_MP_PRINTPICTURE
+        MENUITEM "Pređi na &fotografije",                        IDM_MP_MYPICS
+        MENUITEM "Postavi kao &pozadinu",                        IDM_SETWALLPAPER
+        MENUITEM "Postavi kao &stavku na radnoj površini...",    IDM_SETDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "&Iseci",                                       IDM_CUT
+        MENUITEM "&Umnoži",                                      IDM_COPY
+        MENUITEM "Umnoži &prečicu",                              IDM_COPYSHORTCUT
+        MENUITEM "Ub&aci",                                       IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Dodaj u &omiljene...",                         IDM_ADDFAVORITES
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "&Svojstva",                                    IDM_PROPERTIES
+    }
+
+    POPUP "Kontrola"
+    {
+        MENUITEM "&Opozovi",        IDM_UNDO
+        MENUITEM SEPARATOR
+        MENUITEM "&Iseci",          IDM_CUT
+        MENUITEM "&Umnoži",         IDM_COPY
+        MENUITEM "Ub&aci",          IDM_PASTE
+        MENUITEM "&Izbriši",        IDM_DELETE
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "Izaberi &sve",    IDM_SELECTALL
+    }
+
+    POPUP "Tabela"
+    {
+        POPUP "&Izbor"
+        {
+            MENUITEM "&Ćelija",         IDM_CELLSELECT
+            MENUITEM "&Red",            IDM_ROWSELECT
+            MENUITEM "&Kolona",         IDM_COLUMNSELECT
+            MENUITEM "&Tabela",         IDM_TABLESELECT
+        }
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "Svojstva &ćelije",    IDM_CELLPROPERTIES
+        MENUITEM "Svojstva &tabele",    IDM_TABLEPROPERTIES
+    }
+
+    POPUP "1DSite izbor"
+    {
+        MENUITEM "&Iseci",          IDM_CUT
+        MENUITEM "&Umnoži",         IDM_COPY
+        MENUITEM "Ubaci",           IDM_PASTE
+        MENUITEM "Izaberi &sve",    IDM_SELECTALL
+        MENUITEM "&Štampaj",        IDM_PRINT
+        MENUITEM SEPARATOR
+    }
+
+    POPUP "Veznik"
+    {
+        MENUITEM "&Otvori",                    IDM_FOLLOWLINKC
+        MENUITEM "Otvori u &novom prozoru",    IDM_FOLLOWLINKN
+        MENUITEM "Sačuvaj objekat &kao...",    IDM_SAVETARGET
+        MENUITEM "&Štampaj objekat",           IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "Iseci",                      IDM_CUT
+        MENUITEM "&Umnoži",                    IDM_COPY
+        MENUITEM "Umnoži &prečicu",            IDM_COPYSHORTCUT
+        MENUITEM "Ub&aci",                     IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Dodaj u &omiljene...",       IDM_ADDFAVORITES
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "&Svojstva",                  IDM_PROPERTIES
+    }
+
+    POPUP "Nepoznat kontekst"
+    {
+        MENUITEM SEPARATOR
+    }
+
+    POPUP "DYNSRC slika"
+    {
+        MENUITEM "&Otvori vezu",                             IDM_FOLLOWLINKC
+        MENUITEM "Otvori vezu u &novom prozoru",             IDM_FOLLOWLINKN
+        MENUITEM "Sačuvaj objekat &kao...",                  IDM_SAVETARGET
+        MENUITEM "&Štampaj objekat",                         IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "&Prikaži sliku",                           IDM_SHOWPICTURE
+        MENUITEM "&Sačuvaj video snimak kao...",             IDM_SAVEPICTURE
+        MENUITEM "Postavi kao &pozadinu",                    IDM_SETWALLPAPER
+        MENUITEM "Postavi kao &stavku radne površine...",    IDM_SETDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "&Iseci",                                   IDM_CUT
+        MENUITEM "&Umnoži",                                  IDM_COPY
+        MENUITEM "Umnoži &prečicu",                          IDM_COPYSHORTCUT
+        MENUITEM "Ub&aci",                                   IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Dodaj u &omiljene...",                     IDM_ADDFAVORITES
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "Reprodukuj",                               IDM_DYNSRCPLAY
+        MENUITEM "Zaustavi",                                 IDM_DYNSRCSTOP
+        MENUITEM "&Svojstva",                                IDM_PROPERTIES
+    }
+
+    POPUP "ART slika"
+    {
+        MENUITEM "&Otvori vezu",                             IDM_FOLLOWLINKC
+        MENUITEM "Otvori vezu u &novom prozoru",             IDM_FOLLOWLINKN
+        MENUITEM "Sačuvaj objekat &kao...",                  IDM_SAVETARGET
+        MENUITEM "&Štampaj objekat",                         IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "&Prikaži sliku",                           IDM_SHOWPICTURE
+        MENUITEM "&Sačuvaj sliku kao...",                    IDM_SAVEPICTURE
+        MENUITEM "Postavi kao &pozadinu",                    IDM_SETWALLPAPER
+        MENUITEM "Postavi kao &stavku radne površine...",    IDM_SETDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "&Iseci",                                   IDM_CUT
+        MENUITEM "&Umnoži",                                  IDM_COPY
+        MENUITEM "Umnoži &prečicu",                          IDM_COPYSHORTCUT
+        MENUITEM "Ub&aci",                                   IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Dodaj u &omiljene...",                     IDM_ADDFAVORITES
+        MENUITEM SEPARATOR
+        MENUITEM "Reprodukuj",                               IDM_IMGARTPLAY
+        MENUITEM "Zaustavi",                                 IDM_IMGARTSTOP
+        MENUITEM "Premotaj",                                 IDM_IMGARTREWIND
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "&Svojstva",                                IDM_PROPERTIES
+    }
+
+    POPUP "Otklanjač grešaka"
+    {
+        MENUITEM "Prateće oznake",                   IDM_TRACETAGS
+        MENUITEM "Neuspesi resursa",                 IDM_RESOURCEFAILURES
+        MENUITEM "Ispiši ispravljačke podatke",      IDM_DUMPTRACKINGINFO
+        MENUITEM "Prekid",                           IDM_DEBUGBREAK
+        MENUITEM "Prikaz",                           IDM_DEBUGVIEW
+        MENUITEM "Ispiši stablo",                    IDM_DUMPTREE
+        MENUITEM "Ispiši linije",                    IDM_DUMPLINES
+        MENUITEM "Ispiši prikazno stablo",           IDM_DUMPDISPLAYTREE
+        MENUITEM "Ispiši privremenu memoriju",       IDM_DUMPFORMATCACHES
+        MENUITEM "Ispiši raspored pravougaonika",    IDM_DUMPLAYOUTRECTS
+        MENUITEM "Nadgledanje memorije",             IDM_MEMORYMONITOR
+        MENUITEM "Merač performansi",                IDM_PERFORMANCEMETERS
+        MENUITEM "Sačuvaj HTML",                     IDM_SAVEHTML
+        MENUITEM SEPARATOR
+        MENUITEM "&Razgledanje",                     IDM_BROWSEMODE
+        MENUITEM "&Uređivanje",                      IDM_EDITMODE
+    }
+
+    POPUP "Uspravni klizač"
+    {
+        MENUITEM "Klizaj ovde",      IDM_SCROLL_HERE
+        MENUITEM SEPARATOR
+        MENUITEM "Vrh",              IDM_SCROLL_TOP
+        MENUITEM "Dno",              IDM_SCROLL_BOTTOM
+        MENUITEM SEPARATOR
+        MENUITEM "Nagore",           IDM_SCROLL_PAGEUP
+        MENUITEM "Nadole",           IDM_SCROLL_PAGEDOWN
+        MENUITEM SEPARATOR
+        MENUITEM "Pomeri nagore",    IDM_SCROLL_UP
+        MENUITEM "Pomeri nadole",    IDM_SCROLL_DOWN
+    }
+
+    POPUP "Vodoravni klizač"
+    {
+        MENUITEM "Klizaj ovde",      IDM_SCROLL_HERE
+        MENUITEM SEPARATOR
+        MENUITEM "Leva ivica",       IDM_SCROLL_LEFTEDGE
+        MENUITEM "Desna ivica",      IDM_SCROLL_RIGHTEDGE
+        MENUITEM SEPARATOR
+        MENUITEM "Nalevo",           IDM_SCROLL_PAGELEFT
+        MENUITEM "Nadesno",          IDM_SCROLL_PAGERIGHT
+        MENUITEM SEPARATOR
+        MENUITEM "Pomeri nalevo",    IDM_SCROLL_LEFT
+        MENUITEM "Pomeri nadesno",   IDM_SCROLL_RIGHT
+    }
+}
