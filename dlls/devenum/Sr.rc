@@ -1,0 +1,44 @@
+/*
+ * Serbian resources for Device Enumerator
+ *
+ * Copyright 2002 Robert Shearman
+ * Copyright 2010 Đorđe Vasiljević
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "devenum_private.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_CYRILLIC
+
+STRINGTABLE
+{
+    IDS_DEVENUM_DSDEFAULT  "Подразумевани DirectSound"
+    IDS_DEVENUM_DS         "DirectSound: %s"
+    IDS_DEVENUM_WODEFAULT  "Подразумевани WaveOut уређај"
+    IDS_DEVENUM_MIDEFAULT  "Подразумевани MidiOut уређај"
+}
+
+LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
+
+STRINGTABLE
+{
+    IDS_DEVENUM_DSDEFAULT  "Podrazumevani DirectSound"
+    IDS_DEVENUM_DS         "DirectSound: %s"
+    IDS_DEVENUM_WODEFAULT  "Podrazumevani WaveOut uređaj"
+    IDS_DEVENUM_MIDEFAULT  "Podrazumevani MidiOut uređaj"
+}
