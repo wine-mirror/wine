@@ -449,34 +449,27 @@ static HRESULT WINAPI xmlnode_get_ownerDocument(
     return DOMDocument_create_from_xmldoc(This->node->doc, (IXMLDOMDocument3**)DOMDocument);
 }
 
-static HRESULT WINAPI xmlnode_cloneNode(
-    IXMLDOMNode *iface,
-    VARIANT_BOOL deep,
-    IXMLDOMNode** cloneRoot)
+HRESULT node_clone(xmlnode *This, VARIANT_BOOL deep, IXMLDOMNode **cloneNode)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
-    xmlNodePtr pClone = NULL;
-    IXMLDOMNode *pNode = NULL;
+    IXMLDOMNode *node;
+    xmlNodePtr clone;
 
-    TRACE("(%p)->(%d %p)\n", This, deep, cloneRoot);
+    if(!cloneNode) return E_INVALIDARG;
 
-    if(!cloneRoot)
-        return E_INVALIDARG;
-
-    pClone = xmlCopyNode(This->node, deep ? 1 : 2);
-    if(pClone)
+    clone = xmlCopyNode(This->node, deep ? 1 : 2);
+    if (clone)
     {
-        pClone->doc = This->node->doc;
-        xmldoc_add_orphan(pClone->doc, pClone);
+        clone->doc = This->node->doc;
+        xmldoc_add_orphan(clone->doc, clone);
 
-        pNode = create_node(pClone);
-        if(!pNode)
+        node = create_node(clone);
+        if (!node)
         {
             ERR("Copy failed\n");
             return E_FAIL;
         }
 
-        *cloneRoot = pNode;
+        *cloneNode = node;
     }
     else
     {
@@ -1255,7 +1248,7 @@ static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
     xmlnode_appendChild,
     xmlnode_hasChildNodes,
     xmlnode_get_ownerDocument,
-    xmlnode_cloneNode,
+    NULL,
     xmlnode_get_nodeTypeString,
     xmlnode_get_text,
     NULL,

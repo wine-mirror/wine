@@ -369,10 +369,11 @@ static HRESULT WINAPI domcdata_get_ownerDocument(
 
 static HRESULT WINAPI domcdata_cloneNode(
     IXMLDOMCDATASection *iface,
-    VARIANT_BOOL pbool, IXMLDOMNode** outNode)
+    VARIANT_BOOL deep, IXMLDOMNode** outNode)
 {
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
-    return IXMLDOMNode_cloneNode( IXMLDOMNode_from_impl(&This->node), pbool, outNode );
+    TRACE("(%p)->(%d %p)\n", This, deep, outNode);
+    return node_clone( &This->node, deep, outNode );
 }
 
 static HRESULT WINAPI domcdata_get_nodeTypeString(

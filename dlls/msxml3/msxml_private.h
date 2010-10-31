@@ -192,6 +192,7 @@ extern HRESULT node_insert_before(xmlnode*,IXMLDOMNode*,const VARIANT*,IXMLDOMNo
 extern HRESULT node_replace_child(xmlnode*,IXMLDOMNode*,IXMLDOMNode*,IXMLDOMNode**);
 extern HRESULT node_put_text(xmlnode*,BSTR);
 extern HRESULT node_get_xml(xmlnode*,BOOL,BOOL,BSTR*);
+extern HRESULT node_clone(xmlnode*,VARIANT_BOOL,IXMLDOMNode**);
 
 extern HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document);
 

@@ -376,10 +376,11 @@ static HRESULT WINAPI dom_pi_get_ownerDocument(
 
 static HRESULT WINAPI dom_pi_cloneNode(
     IXMLDOMProcessingInstruction *iface,
-    VARIANT_BOOL pbool, IXMLDOMNode** outNode)
+    VARIANT_BOOL deep, IXMLDOMNode** outNode)
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    return IXMLDOMNode_cloneNode( IXMLDOMNode_from_impl(&This->node), pbool, outNode );
+    TRACE("(%p)->(%d %p)\n", This, deep, outNode);
+    return node_clone( &This->node, deep, outNode );
 }
 
 static HRESULT WINAPI dom_pi_get_nodeTypeString(

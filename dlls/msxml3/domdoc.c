@@ -1174,10 +1174,11 @@ static HRESULT WINAPI domdoc_get_ownerDocument(
 static HRESULT WINAPI domdoc_cloneNode(
     IXMLDOMDocument3 *iface,
     VARIANT_BOOL deep,
-    IXMLDOMNode** cloneRoot)
+    IXMLDOMNode** outNode)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_cloneNode( IXMLDOMNode_from_impl(&This->node), deep, cloneRoot );
+    TRACE("(%p)->(%d %p)\n", This, deep, outNode);
+    return node_clone( &This->node, deep, outNode );
 }
 
 

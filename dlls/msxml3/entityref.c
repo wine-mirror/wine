@@ -360,10 +360,11 @@ static HRESULT WINAPI entityref_get_ownerDocument(
 
 static HRESULT WINAPI entityref_cloneNode(
     IXMLDOMEntityReference *iface,
-    VARIANT_BOOL pbool, IXMLDOMNode** outNode)
+    VARIANT_BOOL deep, IXMLDOMNode** outNode)
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    return IXMLDOMNode_cloneNode( IXMLDOMNode_from_impl(&This->node), pbool, outNode );
+    TRACE("(%p)->(%d %p)\n", This, deep, outNode);
+    return node_clone( &This->node, deep, outNode );
 }
 
 static HRESULT WINAPI entityref_get_nodeTypeString(

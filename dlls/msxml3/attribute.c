@@ -358,10 +358,11 @@ static HRESULT WINAPI domattr_get_ownerDocument(
 
 static HRESULT WINAPI domattr_cloneNode(
     IXMLDOMAttribute *iface,
-    VARIANT_BOOL pbool, IXMLDOMNode** outNode)
+    VARIANT_BOOL deep, IXMLDOMNode** outNode)
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
-    return IXMLDOMNode_cloneNode( IXMLDOMNode_from_impl(&This->node), pbool, outNode );
+    TRACE("(%p)->(%d %p)\n", This, deep, outNode);
+    return node_clone( &This->node, deep, outNode );
 }
 
 static HRESULT WINAPI domattr_get_nodeTypeString(
