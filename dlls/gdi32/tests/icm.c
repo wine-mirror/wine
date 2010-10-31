@@ -189,11 +189,16 @@ static void test_EnumICMProfilesA( HDC dc )
     ret = EnumICMProfilesA( NULL, NULL, 0 );
     ok(ret == -1 || broken(ret == 0) /* nt4 */, "expected -1, got %d\n", ret);
 
-    ret = EnumICMProfilesA( dc, NULL, 0 );
-    ok(ret == -1 || broken(ret == 0) /* nt4 */, "expected -1, got %d\n", ret);
-
     ret = EnumICMProfilesA( dc, enum_profiles_callbackA, 0 );
-    ok(ret == -1 || broken(ret == 0) /* nt4 */, "expected -1, got %d\n", ret);
+    ok(ret == -1 || broken(ret == 0) /* nt4 */ || broken(ret == 1) /* win95 */,
+       "expected -1, got %d\n", ret);
+
+    if (ret != 1)
+    {
+        /* Crashes on Win95 */
+        ret = EnumICMProfilesA( dc, NULL, 0 );
+        ok(ret == -1 || broken(ret == 0) /* nt4 */, "expected -1, got %d\n", ret);
+    }
 }
 
 static CALLBACK INT enum_profiles_callbackW( LPWSTR filename, LPARAM lparam )
@@ -251,7 +256,8 @@ static void test_SetICMProfileA( HDC dc )
     ret = SetICMProfileA( dc, NULL );
     error = GetLastError();
     ok(!ret, "SetICMProfileA succeeded\n");
-    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error);
+    ok(error == ERROR_INVALID_PARAMETER || broken(error == 0xdeadbeef) /* win95 */,
+       "expected ERROR_INVALID_PARAMETER, got %u\n", error);
 
     ret = SetICMProfileA( dc, profile );
     ok(ret, "SetICMProfileA failed %u\n", GetLastError());
