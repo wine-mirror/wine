@@ -3776,7 +3776,7 @@ static HRESULT validate_path(const UriBuilder *builder, parse_data *data, DWORD 
         parse_path_opaque(pptr, data, flags) : parse_path_hierarchical(pptr, data, flags);
 
     if(!valid || (check_len && expected_len != data->path_len)) {
-        TRACE("(%p %p %x): Invalid path componet %s.\n", builder, data, flags,
+        TRACE("(%p %p %x): Invalid path component %s.\n", builder, data, flags,
             debugstr_wn(component, expected_len));
         return INET_E_INVALID_URL;
     }
