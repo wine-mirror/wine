@@ -514,10 +514,11 @@ static HRESULT WINAPI domfrag_get_prefix(
 
 static HRESULT WINAPI domfrag_get_baseName(
     IXMLDOMDocumentFragment *iface,
-    BSTR* p)
+    BSTR* name)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_get_baseName( IXMLDOMNode_from_impl(&This->node), p );
+    FIXME("(%p)->(%p): needs test\n", This, name);
+    return return_null_bstr( name );
 }
 
 static HRESULT WINAPI domfrag_transformNodeToObject(

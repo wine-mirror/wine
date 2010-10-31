@@ -1170,40 +1170,16 @@ HRESULT node_get_prefix(xmlnode *This, BSTR *prefix)
     return *prefix ? S_OK : S_FALSE;
 }
 
-static HRESULT WINAPI xmlnode_get_baseName(
-    IXMLDOMNode *iface,
-    BSTR* nameString)
+HRESULT node_get_base_name(xmlnode *This, BSTR *name)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
-    BSTR str = NULL;
-    HRESULT r = S_FALSE;
+    if (!name) return E_INVALIDARG;
 
-    TRACE("(%p)->(%p)\n", This, nameString );
+    *name = bstr_from_xmlChar(This->node->name);
+    if (!*name) return E_OUTOFMEMORY;
 
-    if ( !nameString )
-        return E_INVALIDARG;
+    TRACE("returning %s\n", debugstr_w(*name));
 
-    switch ( This->node->type )
-    {
-    case XML_ELEMENT_NODE:
-    case XML_ATTRIBUTE_NODE:
-    case XML_PI_NODE:
-        str = bstr_from_xmlChar( This->node->name );
-        r = S_OK;
-        break;
-    case XML_TEXT_NODE:
-    case XML_COMMENT_NODE:
-    case XML_DOCUMENT_NODE:
-        break;
-    default:
-        ERR("Unhandled type %d\n", This->node->type );
-        break;
-    }
-
-    TRACE("returning %08x str = %s\n", r, debugstr_w( str ) );
-
-    *nameString = str;
-    return r;
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnode_transformNodeToObject(
@@ -1259,7 +1235,7 @@ static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
     NULL,
     xmlnode_get_namespaceURI,
     NULL,
-    xmlnode_get_baseName,
+    NULL,
     xmlnode_transformNodeToObject,
 };
 

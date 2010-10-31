@@ -508,10 +508,11 @@ static HRESULT WINAPI entityref_get_prefix(
 
 static HRESULT WINAPI entityref_get_baseName(
     IXMLDOMEntityReference *iface,
-    BSTR* p)
+    BSTR* name)
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    return IXMLDOMNode_get_baseName( IXMLDOMNode_from_impl(&This->node), p );
+    FIXME("(%p)->(%p): needs test\n", This, name);
+    return return_null_bstr( name );
 }
 
 static HRESULT WINAPI entityref_transformNodeToObject(

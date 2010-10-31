@@ -1341,10 +1341,11 @@ static HRESULT WINAPI domdoc_get_prefix(
 
 static HRESULT WINAPI domdoc_get_baseName(
     IXMLDOMDocument3 *iface,
-    BSTR* nameString )
+    BSTR* name )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_get_baseName( IXMLDOMNode_from_impl(&This->node), nameString );
+    TRACE("(%p)->(%p)\n", This, name);
+    return return_null_bstr( name );
 }
 
 

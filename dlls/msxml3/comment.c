@@ -510,10 +510,11 @@ static HRESULT WINAPI domcomment_get_prefix(
 
 static HRESULT WINAPI domcomment_get_baseName(
     IXMLDOMComment *iface,
-    BSTR* p)
+    BSTR* name)
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
-    return IXMLDOMNode_get_baseName( IXMLDOMNode_from_impl(&This->node), p );
+    TRACE("(%p)->(%p)\n", This, name);
+    return return_null_bstr( name );
 }
 
 static HRESULT WINAPI domcomment_transformNodeToObject(

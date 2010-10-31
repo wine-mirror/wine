@@ -506,10 +506,11 @@ static HRESULT WINAPI domattr_get_prefix(
 
 static HRESULT WINAPI domattr_get_baseName(
     IXMLDOMAttribute *iface,
-    BSTR* p)
+    BSTR* name)
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
-    return IXMLDOMNode_get_baseName( IXMLDOMNode_from_impl(&This->node), p );
+    TRACE("(%p)->(%p)\n", This, name);
+    return node_get_base_name( &This->node, name );
 }
 
 static HRESULT WINAPI domattr_transformNodeToObject(

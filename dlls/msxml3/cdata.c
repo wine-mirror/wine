@@ -517,10 +517,11 @@ static HRESULT WINAPI domcdata_get_prefix(
 
 static HRESULT WINAPI domcdata_get_baseName(
     IXMLDOMCDATASection *iface,
-    BSTR* p)
+    BSTR* name)
 {
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
-    return IXMLDOMNode_get_baseName( IXMLDOMNode_from_impl(&This->node), p );
+    FIXME("(%p)->(%p): needs test\n", This, name);
+    return return_null_bstr( name );
 }
 
 static HRESULT WINAPI domcdata_transformNodeToObject(

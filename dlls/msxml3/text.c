@@ -523,10 +523,11 @@ static HRESULT WINAPI domtext_get_prefix(
 
 static HRESULT WINAPI domtext_get_baseName(
     IXMLDOMText *iface,
-    BSTR* p)
+    BSTR* name)
 {
     domtext *This = impl_from_IXMLDOMText( iface );
-    return IXMLDOMNode_get_baseName( IXMLDOMNode_from_impl(&This->node), p );
+    TRACE("(%p)->(%p)\n", This, name);
+    return return_null_bstr( name );
 }
 
 static HRESULT WINAPI domtext_transformNodeToObject(
