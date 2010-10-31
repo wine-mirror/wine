@@ -30,6 +30,7 @@ RC_SRCS = \
 	oledlg_Ro.rc \
 	oledlg_Ru.rc \
 	oledlg_Si.rc \
+	oledlg_Sr.rc \
 	oledlg_Sv.rc \
 	oledlg_Tr.rc \
 	oledlg_Uk.rc \
