@@ -3648,7 +3648,6 @@ static void sampler(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct w
 
         IWineD3DBaseTexture_BindTexture(texture, srgb);
         basetexture_apply_state_changes(texture,
-                state->texture_states[sampler],
                 state->sampler_states[sampler], gl_info);
 
         if (gl_info->supported[EXT_TEXTURE_LOD_BIAS])

@@ -1920,7 +1920,6 @@ typedef struct IWineD3DBaseTextureImpl
 } IWineD3DBaseTextureImpl;
 
 void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
-        const DWORD textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1],
         const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1],
         const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 HRESULT basetexture_bind(IWineD3DBaseTexture *iface, BOOL srgb, BOOL *set_surface_desc) DECLSPEC_HIDDEN;

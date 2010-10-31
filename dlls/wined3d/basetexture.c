@@ -380,7 +380,6 @@ static void apply_wrap(const struct wined3d_gl_info *gl_info, GLenum target,
 
 /* GL locking is done by the caller (state handler) */
 void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
-        const DWORD textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1],
         const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1],
         const struct wined3d_gl_info *gl_info)
 {
@@ -391,7 +390,7 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
     DWORD aniso;
     struct gl_texture *gl_tex;
 
-    TRACE("iface %p, textureStates %p, samplerStates %p\n", iface, textureStates, samplerStates);
+    TRACE("iface %p, samplerStates %p\n", iface, samplerStates);
 
     if(This->baseTexture.is_srgb) {
         gl_tex = &This->baseTexture.texture_srgb;
