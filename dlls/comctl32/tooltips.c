@@ -1840,14 +1840,6 @@ TOOLTIPS_UpdateTipTextT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW
 
 
 static LRESULT
-TOOLTIPS_WindowFromPoint (HWND hwnd, WPARAM wParam, LPARAM lParam)
-{
-    return (LRESULT)WindowFromPoint (*((LPPOINT)lParam));
-}
-
-
-
-static LRESULT
 TOOLTIPS_Create (HWND hwnd)
 {
     TOOLTIPS_INFO *infoPtr;
@@ -2268,8 +2260,7 @@ TOOLTIPS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                                             uMsg == TTM_UPDATETIPTEXTW);
 
 	case TTM_WINDOWFROMPOINT:
-	    return TOOLTIPS_WindowFromPoint (hwnd, wParam, lParam);
-
+	    return (LRESULT)WindowFromPoint (*((LPPOINT)lParam));
 
 	case WM_CREATE:
 	    return TOOLTIPS_Create (hwnd);
