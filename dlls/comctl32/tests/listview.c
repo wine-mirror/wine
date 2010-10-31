@@ -3025,7 +3025,7 @@ static void test_hittest(void)
     horiz = LOWORD(r);
     vert = HIWORD(r);
     ok(bounds.bottom - bounds.top == vert,
-        "Horizontal spacing inconsistent (%d != %d)\n", bounds.bottom - bounds.top, vert);
+        "Vertical spacing inconsistent (%d != %d)\n", bounds.bottom - bounds.top, vert);
     r = SendMessage(hwnd, LVM_GETITEMPOSITION, 0, (LPARAM)&pos);
     expect(TRUE, r);
 
