@@ -1406,9 +1406,7 @@ static void test_data_cache(void)
     DeleteDC(hdcMem);
 
     hr = IOleCacheControl_OnRun(pOleCacheControl, &DataObject);
-    todo_wine {
     ok_ole_success(hr, "IOleCacheControl_OnRun");
-    }
 
     hr = IPersistStorage_Save(pPS, pStorage, TRUE);
     ok_ole_success(hr, "IPersistStorage_Save");
@@ -1424,9 +1422,7 @@ static void test_data_cache(void)
     IOleCache_Release(pOleCache);
     IOleCacheControl_Release(pOleCacheControl);
 
-    todo_wine {
     CHECK_NO_EXTRA_METHODS();
-    }
 
     /* Test with loaded data */
     trace("Testing loaded data with CreateDataCache:\n");
@@ -1538,7 +1534,6 @@ static void test_data_cache(void)
     ok(hr == OLE_E_BLANK, "got %08x\n", hr);
 
     hr = IOleCacheControl_OnRun(pOleCacheControl, &DataObject);
-todo_wine
     ok_ole_success(hr, "IOleCacheControl_OnRun");
 
     fmtetc.cfFormat = cf_test_3;
@@ -1551,7 +1546,6 @@ todo_wine
 
     fmtetc.cfFormat = cf_test_2;
     hr = IDataObject_GetData(pCacheDataObject, &fmtetc, &stgmedium);
-todo_wine
     ok(hr == S_OK, "got %08x\n", hr);
     ReleaseStgMedium(&stgmedium);
 
@@ -1563,7 +1557,6 @@ todo_wine
     IDataObject_Release(pCacheDataObject);
     IOleCache_Release(pOleCache);
 
-todo_wine
     CHECK_NO_EXTRA_METHODS();
 
     IStorage_Release(pStorage);

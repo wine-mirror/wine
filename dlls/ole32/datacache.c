@@ -109,6 +109,10 @@ typedef struct DataCacheEntry
   BOOL dirty;
   /* stream number (-1 if not set ) */
   unsigned short stream_number;
+  /* sink id set when object is running */
+  DWORD sink_id;
+  /* Advise sink flags */
+  DWORD advise_flags;
 } DataCacheEntry;
 
 /****************************************************************************
@@ -156,6 +160,8 @@ struct DataCache
   DWORD last_cache_id;
   /* dirty flag */
   BOOL dirty;
+  /* running object set by OnRun */
+  IDataObject *running_object;
 };
 
 typedef struct DataCache DataCache;
@@ -209,13 +215,16 @@ static const char * debugstr_formatetc(const FORMATETC *formatetc)
         formatetc->lindex, formatetc->tymed);
 }
 
-static void DataCacheEntry_Destroy(DataCacheEntry *cache_entry)
+static void DataCacheEntry_Destroy(DataCache *cache, DataCacheEntry *cache_entry)
 {
     list_remove(&cache_entry->entry);
     if (cache_entry->storage)
         IStorage_Release(cache_entry->storage);
     HeapFree(GetProcessHeap(), 0, cache_entry->fmtetc.ptd);
     ReleaseStgMedium(&cache_entry->stgmedium);
+    if(cache_entry->sink_id)
+        IDataObject_DUnadvise(cache->running_object, cache_entry->sink_id);
+
     HeapFree(GetProcessHeap(), 0, cache_entry);
 }
 
@@ -233,7 +242,7 @@ static void DataCache_Destroy(
   }
 
   LIST_FOR_EACH_ENTRY_SAFE(cache_entry, next_cache_entry, &ptrToDestroy->cache_list, DataCacheEntry, entry)
-    DataCacheEntry_Destroy(cache_entry);
+    DataCacheEntry_Destroy(ptrToDestroy, cache_entry);
 
   if (ptrToDestroy->presentationStorage != NULL)
   {
@@ -309,6 +318,8 @@ static HRESULT DataCache_CreateEntry(DataCache *This, const FORMATETC *formatetc
     (*cache_entry)->id = This->last_cache_id++;
     (*cache_entry)->dirty = TRUE;
     (*cache_entry)->stream_number = -1;
+    (*cache_entry)->sink_id = 0;
+    (*cache_entry)->advise_flags = 0;
     list_add_tail(&This->cache_list, &(*cache_entry)->entry);
     return hr;
 }
@@ -1855,6 +1866,26 @@ static ULONG WINAPI DataCache_IOleCache2_Release(
   return IUnknown_Release(this->outerUnknown);
 }
 
+/*****************************************************************************
+ * setup_sink
+ *
+ * Set up the sink connection to the running object.
+ */
+static HRESULT setup_sink(DataCache *This, DataCacheEntry *cache_entry)
+{
+    HRESULT hr = S_FALSE;
+    DWORD flags;
+
+    /* Clear the ADVFCACHE_* bits.  Native also sets the two highest bits for some reason. */
+    flags = cache_entry->advise_flags & ~(ADVFCACHE_NOHANDLER | ADVFCACHE_FORCEBUILTIN | ADVFCACHE_ONSAVE);
+
+    if(This->running_object)
+        if(!(flags & ADVF_NODATA))
+            hr = IDataObject_DAdvise(This->running_object, &cache_entry->fmtetc, flags,
+                                     (IAdviseSink *)&This->lpvtblIAdviseSink, &cache_entry->sink_id);
+    return hr;
+}
+
 static HRESULT WINAPI DataCache_Cache(
             IOleCache2*     iface,
 	    FORMATETC*      pformatetc,
@@ -1885,7 +1916,11 @@ static HRESULT WINAPI DataCache_Cache(
     hr = DataCache_CreateEntry(This, pformatetc, &cache_entry);
 
     if (SUCCEEDED(hr))
+    {
         *pdwConnection = cache_entry->id;
+        cache_entry->advise_flags = advf;
+        setup_sink(This, cache_entry);
+    }
 
     return hr;
 }
@@ -1902,7 +1937,7 @@ static HRESULT WINAPI DataCache_Uncache(
     LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
         if (cache_entry->id == dwConnection)
         {
-            DataCacheEntry_Destroy(cache_entry);
+            DataCacheEntry_Destroy(This, cache_entry);
             return S_OK;
         }
 
@@ -2031,19 +2066,53 @@ static ULONG WINAPI DataCache_IOleCacheControl_Release(
   return IUnknown_Release(this->outerUnknown);
 }
 
-static HRESULT WINAPI DataCache_OnRun(
-	    IOleCacheControl* iface,
-	    LPDATAOBJECT      pDataObject)
+/************************************************************************
+ * DataCache_OnRun (IOleCacheControl)
+ */
+static HRESULT WINAPI DataCache_OnRun(IOleCacheControl* iface, IDataObject *data_obj)
 {
-  FIXME("stub\n");
-  return E_NOTIMPL;
+    DataCache *This = impl_from_IOleCacheControl(iface);
+    DataCacheEntry *cache_entry;
+
+    TRACE("(%p)->(%p)\n", iface, data_obj);
+
+    if(This->running_object) return S_OK;
+
+    /* No reference is taken on the data object */
+    This->running_object = data_obj;
+
+    LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
+    {
+        setup_sink(This, cache_entry);
+    }
+
+    return S_OK;
 }
 
-static HRESULT WINAPI DataCache_OnStop(
-	    IOleCacheControl* iface)
+/************************************************************************
+ * DataCache_OnStop (IOleCacheControl)
+ */
+static HRESULT WINAPI DataCache_OnStop(IOleCacheControl* iface)
 {
-  FIXME("stub\n");
-  return E_NOTIMPL;
+    DataCache *This = impl_from_IOleCacheControl(iface);
+    DataCacheEntry *cache_entry;
+
+    TRACE("(%p)\n", iface);
+
+    if(!This->running_object) return S_OK;
+
+    LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
+    {
+        if(cache_entry->sink_id)
+        {
+            IDataObject_DUnadvise(This->running_object, cache_entry->sink_id);
+            cache_entry->sink_id = 0;
+        }
+    }
+
+    /* No ref taken in OnRun, so no Release call here */
+    This->running_object = NULL;
+    return S_OK;
 }
 
 /************************************************************************
@@ -2081,7 +2150,9 @@ static ULONG WINAPI DataCache_IAdviseSink_Release(IAdviseSink *iface)
 
 static void WINAPI DataCache_OnDataChange(IAdviseSink *iface, FORMATETC *fmt, STGMEDIUM *med)
 {
-    FIXME("stub\n");
+    DataCache *This = impl_from_IAdviseSink(iface);
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_formatetc(fmt), med);
+    IOleCache_SetData((IOleCache2*)&This->lpvtblIOleCache2, fmt, med, FALSE);
 }
 
 static void WINAPI DataCache_OnViewChange(IAdviseSink *iface, DWORD aspect, LONG index)
@@ -2248,6 +2319,7 @@ static DataCache* DataCache_Construct(
   list_init(&newObject->cache_list);
   newObject->last_cache_id = 1;
   newObject->dirty = FALSE;
+  newObject->running_object = NULL;
 
   return newObject;
 }
