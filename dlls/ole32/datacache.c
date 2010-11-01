@@ -860,9 +860,7 @@ static inline void DataCacheEntry_HandsOffStorage(DataCacheEntry *cache_entry)
 /************************************************************************
  * DataCache_NDIUnknown_QueryInterface (IUnknown)
  *
- * See Windows documentation for more details on IUnknown methods.
- *
- * This version of QueryInterface will not delegate it's implementation
+ * This version of QueryInterface will not delegate its implementation
  * to the outer unknown.
  */
 static HRESULT WINAPI DataCache_NDIUnknown_QueryInterface(
@@ -872,20 +870,11 @@ static HRESULT WINAPI DataCache_NDIUnknown_QueryInterface(
 {
   DataCache *this = impl_from_NDIUnknown(iface);
 
-  /*
-   * Perform a sanity check on the parameters.
-   */
   if ( ppvObject==0 )
     return E_INVALIDARG;
 
-  /*
-   * Initialize the return parameter.
-   */
   *ppvObject = 0;
 
-  /*
-   * Compare the riid with the interface IDs implemented by this object.
-   */
   if (IsEqualIID(&IID_IUnknown, riid))
   {
     *ppvObject = iface;
@@ -914,19 +903,12 @@ static HRESULT WINAPI DataCache_NDIUnknown_QueryInterface(
     *ppvObject = &this->lpvtblIOleCacheControl;
   }
 
-  /*
-   * Check that we obtained an interface.
-   */
   if ((*ppvObject)==0)
   {
     WARN( "() : asking for unsupported interface %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
   }
 
-  /*
-   * Query Interface always increases the reference count by one when it is
-   * successful.
-   */
   IUnknown_AddRef((IUnknown*)*ppvObject);
 
   return S_OK;
@@ -935,9 +917,7 @@ static HRESULT WINAPI DataCache_NDIUnknown_QueryInterface(
 /************************************************************************
  * DataCache_NDIUnknown_AddRef (IUnknown)
  *
- * See Windows documentation for more details on IUnknown methods.
- *
- * This version of QueryInterface will not delegate it's implementation
+ * This version of QueryInterface will not delegate its implementation
  * to the outer unknown.
  */
 static ULONG WINAPI DataCache_NDIUnknown_AddRef(
@@ -950,9 +930,7 @@ static ULONG WINAPI DataCache_NDIUnknown_AddRef(
 /************************************************************************
  * DataCache_NDIUnknown_Release (IUnknown)
  *
- * See Windows documentation for more details on IUnknown methods.
- *
- * This version of QueryInterface will not delegate it's implementation
+ * This version of QueryInterface will not delegate its implementation
  * to the outer unknown.
  */
 static ULONG WINAPI DataCache_NDIUnknown_Release(
@@ -961,14 +939,8 @@ static ULONG WINAPI DataCache_NDIUnknown_Release(
   DataCache *this = impl_from_NDIUnknown(iface);
   ULONG ref;
 
-  /*
-   * Decrease the reference count on this object.
-   */
   ref = InterlockedDecrement(&this->ref);
 
-  /*
-   * If the reference count goes down to 0, perform suicide.
-   */
   if (ref == 0) DataCache_Destroy(this);
 
   return ref;
@@ -981,8 +953,6 @@ static ULONG WINAPI DataCache_NDIUnknown_Release(
 
 /************************************************************************
  * DataCache_IDataObject_QueryInterface (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
  */
 static HRESULT WINAPI DataCache_IDataObject_QueryInterface(
             IDataObject*     iface,
@@ -996,8 +966,6 @@ static HRESULT WINAPI DataCache_IDataObject_QueryInterface(
 
 /************************************************************************
  * DataCache_IDataObject_AddRef (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
  */
 static ULONG WINAPI DataCache_IDataObject_AddRef(
             IDataObject*     iface)
@@ -1009,8 +977,6 @@ static ULONG WINAPI DataCache_IDataObject_AddRef(
 
 /************************************************************************
  * DataCache_IDataObject_Release (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
  */
 static ULONG WINAPI DataCache_IDataObject_Release(
             IDataObject*     iface)
@@ -1024,7 +990,6 @@ static ULONG WINAPI DataCache_IDataObject_Release(
  * DataCache_GetData
  *
  * Get Data from a source dataobject using format pformatetcIn->cfFormat
- * See Windows documentation for more details on GetData.
  */
 static HRESULT WINAPI DataCache_GetData(
 	    IDataObject*     iface,
@@ -1064,8 +1029,6 @@ static HRESULT WINAPI DataCache_QueryGetData(
  * DataCache_EnumFormatEtc (IDataObject)
  *
  * The data cache doesn't implement this method.
- *
- * See Windows documentation for more details on IDataObject methods.
  */
 static HRESULT WINAPI DataCache_GetCanonicalFormatEtc(
 	    IDataObject*     iface,
@@ -1080,8 +1043,6 @@ static HRESULT WINAPI DataCache_GetCanonicalFormatEtc(
  * DataCache_IDataObject_SetData (IDataObject)
  *
  * This method is delegated to the IOleCache2 implementation.
- *
- * See Windows documentation for more details on IDataObject methods.
  */
 static HRESULT WINAPI DataCache_IDataObject_SetData(
 	    IDataObject*     iface,
@@ -1110,8 +1071,6 @@ static HRESULT WINAPI DataCache_IDataObject_SetData(
  * DataCache_EnumFormatEtc (IDataObject)
  *
  * The data cache doesn't implement this method.
- *
- * See Windows documentation for more details on IDataObject methods.
  */
 static HRESULT WINAPI DataCache_EnumFormatEtc(
 	    IDataObject*     iface,
@@ -1126,8 +1085,6 @@ static HRESULT WINAPI DataCache_EnumFormatEtc(
  * DataCache_DAdvise (IDataObject)
  *
  * The data cache doesn't support connections.
- *
- * See Windows documentation for more details on IDataObject methods.
  */
 static HRESULT WINAPI DataCache_DAdvise(
 	    IDataObject*     iface,
@@ -1144,8 +1101,6 @@ static HRESULT WINAPI DataCache_DAdvise(
  * DataCache_DUnadvise (IDataObject)
  *
  * The data cache doesn't support connections.
- *
- * See Windows documentation for more details on IDataObject methods.
  */
 static HRESULT WINAPI DataCache_DUnadvise(
 	    IDataObject*     iface,
@@ -1159,8 +1114,6 @@ static HRESULT WINAPI DataCache_DUnadvise(
  * DataCache_EnumDAdvise (IDataObject)
  *
  * The data cache doesn't support connections.
- *
- * See Windows documentation for more details on IDataObject methods.
  */
 static HRESULT WINAPI DataCache_EnumDAdvise(
 	    IDataObject*     iface,
@@ -1177,8 +1130,6 @@ static HRESULT WINAPI DataCache_EnumDAdvise(
 
 /************************************************************************
  * DataCache_IPersistStorage_QueryInterface (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
  */
 static HRESULT WINAPI DataCache_IPersistStorage_QueryInterface(
             IPersistStorage* iface,
@@ -1192,8 +1143,6 @@ static HRESULT WINAPI DataCache_IPersistStorage_QueryInterface(
 
 /************************************************************************
  * DataCache_IPersistStorage_AddRef (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
  */
 static ULONG WINAPI DataCache_IPersistStorage_AddRef(
             IPersistStorage* iface)
@@ -1205,8 +1154,6 @@ static ULONG WINAPI DataCache_IPersistStorage_AddRef(
 
 /************************************************************************
  * DataCache_IPersistStorage_Release (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
  */
 static ULONG WINAPI DataCache_IPersistStorage_Release(
             IPersistStorage* iface)
@@ -1220,8 +1167,6 @@ static ULONG WINAPI DataCache_IPersistStorage_Release(
  * DataCache_GetClassID (IPersistStorage)
  *
  * The data cache doesn't implement this method.
- *
- * See Windows documentation for more details on IPersistStorage methods.
  */
 static HRESULT WINAPI DataCache_GetClassID(
             IPersistStorage* iface,
@@ -1253,8 +1198,6 @@ static HRESULT WINAPI DataCache_GetClassID(
 
 /************************************************************************
  * DataCache_IsDirty (IPersistStorage)
- *
- * See Windows documentation for more details on IPersistStorage methods.
  */
 static HRESULT WINAPI DataCache_IsDirty(
             IPersistStorage* iface)
@@ -1279,8 +1222,6 @@ static HRESULT WINAPI DataCache_IsDirty(
  *
  * The data cache implementation of IPersistStorage_InitNew simply stores
  * the storage pointer.
- *
- * See Windows documentation for more details on IPersistStorage methods.
  */
 static HRESULT WINAPI DataCache_InitNew(
             IPersistStorage* iface,
@@ -1308,8 +1249,6 @@ static HRESULT WINAPI DataCache_InitNew(
  * actually load anything. Instead, it holds on to the storage pointer
  * and it will load the presentation information when the
  * IDataObject_GetData or IViewObject2_Draw methods are called.
- *
- * See Windows documentation for more details on IPersistStorage methods.
  */
 static HRESULT WINAPI DataCache_Load(
             IPersistStorage* iface,
@@ -1400,8 +1339,6 @@ static HRESULT WINAPI DataCache_Load(
  * information to it, we never have to save anything. However, it is
  * our responsibility to copy the information when saving to a new
  * storage.
- *
- * See Windows documentation for more details on IPersistStorage methods.
  */
 static HRESULT WINAPI DataCache_Save(
             IPersistStorage* iface,
@@ -1466,8 +1403,6 @@ static HRESULT WINAPI DataCache_Save(
  *
  * This method is called to tell the cache to release the storage
  * pointer it's currently holding.
- *
- * See Windows documentation for more details on IPersistStorage methods.
  */
 static HRESULT WINAPI DataCache_SaveCompleted(
             IPersistStorage* iface,
@@ -1477,17 +1412,9 @@ static HRESULT WINAPI DataCache_SaveCompleted(
 
   if (pStgNew)
   {
-  /*
-   * First, make sure we get our hands off any storage we have.
-   */
+    IPersistStorage_HandsOffStorage(iface);
 
-  IPersistStorage_HandsOffStorage(iface);
-
-  /*
-   * Then, attach to the new storage.
-   */
-
-  DataCache_Load(iface, pStgNew);
+    DataCache_Load(iface, pStgNew);
   }
 
   return S_OK;
@@ -1498,8 +1425,6 @@ static HRESULT WINAPI DataCache_SaveCompleted(
  *
  * This method is called to tell the cache to release the storage
  * pointer it's currently holding.
- *
- * See Windows documentation for more details on IPersistStorage methods.
  */
 static HRESULT WINAPI DataCache_HandsOffStorage(
             IPersistStorage* iface)
@@ -1528,8 +1453,6 @@ static HRESULT WINAPI DataCache_HandsOffStorage(
 
 /************************************************************************
  * DataCache_IViewObject2_QueryInterface (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
  */
 static HRESULT WINAPI DataCache_IViewObject2_QueryInterface(
             IViewObject2* iface,
@@ -1543,8 +1466,6 @@ static HRESULT WINAPI DataCache_IViewObject2_QueryInterface(
 
 /************************************************************************
  * DataCache_IViewObject2_AddRef (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
  */
 static ULONG WINAPI DataCache_IViewObject2_AddRef(
             IViewObject2* iface)
@@ -1556,8 +1477,6 @@ static ULONG WINAPI DataCache_IViewObject2_AddRef(
 
 /************************************************************************
  * DataCache_IViewObject2_Release (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
  */
 static ULONG WINAPI DataCache_IViewObject2_Release(
             IViewObject2* iface)
@@ -1572,8 +1491,6 @@ static ULONG WINAPI DataCache_IViewObject2_Release(
  *
  * This method will draw the cached representation of the object
  * to the given device context.
- *
- * See Windows documentation for more details on IViewObject2 methods.
  */
 static HRESULT WINAPI DataCache_Draw(
             IViewObject2*    iface,
@@ -1604,9 +1521,6 @@ static HRESULT WINAPI DataCache_Draw(
 	pfnContinue,
 	dwContinue);
 
-  /*
-   * Sanity check
-   */
   if (lprcBounds==NULL)
     return E_INVALIDARG;
 
@@ -1734,8 +1648,6 @@ static HRESULT WINAPI DataCache_Unfreeze(
  *
  * This sets-up an advisory sink with the data cache. When the object's
  * view changes, this sink is called.
- *
- * See Windows documentation for more details on IViewObject2 methods.
  */
 static HRESULT WINAPI DataCache_SetAdvise(
             IViewObject2*   iface,
@@ -1787,8 +1699,6 @@ static HRESULT WINAPI DataCache_SetAdvise(
  *
  * This method queries the current state of the advise sink
  * installed on the data cache.
- *
- * See Windows documentation for more details on IViewObject2 methods.
  */
 static HRESULT WINAPI DataCache_GetAdvise(
             IViewObject2*   iface,
@@ -1825,8 +1735,6 @@ static HRESULT WINAPI DataCache_GetAdvise(
  * DataCache_GetExtent (IViewObject2)
  *
  * This method retrieves the "natural" size of this cached object.
- *
- * See Windows documentation for more details on IViewObject2 methods.
  */
 static HRESULT WINAPI DataCache_GetExtent(
             IViewObject2*   iface,
@@ -1842,21 +1750,12 @@ static HRESULT WINAPI DataCache_GetExtent(
   TRACE("(%p, %x, %d, %p, %p)\n",
 	iface, dwDrawAspect, lindex, ptd, lpsizel);
 
-  /*
-   * Sanity check
-   */
   if (lpsizel==NULL)
     return E_POINTER;
 
-  /*
-   * Initialize the out parameter.
-   */
   lpsizel->cx = 0;
   lpsizel->cy = 0;
 
-  /*
-   * This flag should be set to -1.
-   */
   if (lindex!=-1)
     FIXME("Unimplemented flag lindex = %d\n", lindex);
 
@@ -1923,8 +1822,6 @@ static HRESULT WINAPI DataCache_GetExtent(
 
 /************************************************************************
  * DataCache_IOleCache2_QueryInterface (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
  */
 static HRESULT WINAPI DataCache_IOleCache2_QueryInterface(
             IOleCache2*     iface,
@@ -1938,8 +1835,6 @@ static HRESULT WINAPI DataCache_IOleCache2_QueryInterface(
 
 /************************************************************************
  * DataCache_IOleCache2_AddRef (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
  */
 static ULONG WINAPI DataCache_IOleCache2_AddRef(
             IOleCache2*     iface)
@@ -1951,8 +1846,6 @@ static ULONG WINAPI DataCache_IOleCache2_AddRef(
 
 /************************************************************************
  * DataCache_IOleCache2_Release (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
  */
 static ULONG WINAPI DataCache_IOleCache2_Release(
             IOleCache2*     iface)
@@ -2105,8 +1998,6 @@ static HRESULT WINAPI DataCache_DiscardCache(
 
 /************************************************************************
  * DataCache_IOleCacheControl_QueryInterface (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
  */
 static HRESULT WINAPI DataCache_IOleCacheControl_QueryInterface(
             IOleCacheControl* iface,
@@ -2120,8 +2011,6 @@ static HRESULT WINAPI DataCache_IOleCacheControl_QueryInterface(
 
 /************************************************************************
  * DataCache_IOleCacheControl_AddRef (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
  */
 static ULONG WINAPI DataCache_IOleCacheControl_AddRef(
             IOleCacheControl* iface)
@@ -2133,8 +2022,6 @@ static ULONG WINAPI DataCache_IOleCacheControl_AddRef(
 
 /************************************************************************
  * DataCache_IOleCacheControl_Release (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
  */
 static ULONG WINAPI DataCache_IOleCacheControl_Release(
             IOleCacheControl* iface)
