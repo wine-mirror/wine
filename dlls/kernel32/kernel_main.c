@@ -31,7 +31,6 @@
 #include "winbase.h"
 #include "wincon.h"
 #include "winternl.h"
-#include "wownt32.h"
 
 #include "wine/library.h"
 #include "kernel_private.h"
