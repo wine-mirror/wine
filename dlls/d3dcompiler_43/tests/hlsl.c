@@ -295,7 +295,7 @@ static void compute_shader_probe9(IDirect3DDevice9 *device, IDirect3DVertexShade
 static void test_swizzle(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geometry,
         IDirect3DVertexShader9 *vshader_passthru)
 {
-    static const struct hlsl_probe_info swizzle_test_probes[] =
+    static const struct hlsl_probe_info probes[] =
     {
        {0, 0, {0.0101f, 0.0303f, 0.0202f, 0.0404f}, 0.0001f, "swizzle_test failed"}
     };
@@ -318,8 +318,8 @@ static void test_swizzle(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_
     {
         set_float4_d3d9(device, constants, "color", 0.0303f, 0.0f, 0.0f, 0.0202f);
 
-        compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry, swizzle_test_probes,
-                1, 1, 1, __LINE__);
+        compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry,
+                probes, sizeof(probes) / sizeof(*probes), 1, 1, __LINE__);
 
         IUnknown_Release(constants);
         IUnknown_Release(pshader);
@@ -332,7 +332,7 @@ static void test_math(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geo
     /* Tests order of operations */
     static const float u = 2.5f, v = 0.3f, w = 0.2f, x = 0.7f, y = 0.1f, z = 1.5f;
 
-    static const struct hlsl_probe_info order_of_operations_probes[] =
+    static const struct hlsl_probe_info probes[] =
     {
         {0, 0, {-12.4300f, 9.8333f, 1.6000f, 34.9999f}, 0.0001f,
                 "order of operations test failed"}
@@ -362,7 +362,7 @@ static void test_math(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geo
         ID3DXConstantTable_SetFloat(constants, device, "$z", z);
 
         compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry,
-                order_of_operations_probes, 1, 1, 1, __LINE__);
+                probes, sizeof(probes) / sizeof(*probes), 1, 1, __LINE__);
 
         IUnknown_Release(constants);
         IUnknown_Release(pshader);
@@ -415,8 +415,8 @@ static void test_conditionals(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *
     pshader = compile_pixel_shader9(device, if_greater_shader, "ps_2_0", &constants);
     if (pshader != NULL)
     {
-        compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry,
-                if_greater_probes, 6, 32, 1, __LINE__);
+        compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry, if_greater_probes,
+                sizeof(if_greater_probes) / sizeof(*if_greater_probes), 32, 1, __LINE__);
 
         IUnknown_Release(constants);
         IUnknown_Release(pshader);
@@ -425,8 +425,8 @@ static void test_conditionals(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *
     pshader = compile_pixel_shader9(device, ternary_operator_shader, "ps_2_0", &constants);
     if (pshader != NULL)
     {
-        compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry,
-                ternary_operator_probes, 7, 8, 1, __LINE__);
+        compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry, ternary_operator_probes,
+                sizeof(ternary_operator_probes) / sizeof(*ternary_operator_probes), 8, 1, __LINE__);
 
         IUnknown_Release(constants);
         IUnknown_Release(pshader);
@@ -474,8 +474,8 @@ static void test_float_vectors(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 
     pshader = compile_pixel_shader9(device, vec4_indexing_test1_shader, "ps_2_0", &constants);
     if (pshader != NULL)
     {
-        compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry,
-                vec4_indexing_test1_probes, 1, 1, 1, __LINE__);
+        compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry, vec4_indexing_test1_probes,
+                sizeof(vec4_indexing_test1_probes) / sizeof(*vec4_indexing_test1_probes), 1, 1, __LINE__);
 
         IUnknown_Release(constants);
         IUnknown_Release(pshader);
@@ -486,8 +486,8 @@ static void test_float_vectors(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 
     {
         ID3DXConstantTable_SetInt(constants, device, "i", 2);
 
-        compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry,
-                vec4_indexing_test2_probes, 1, 32, 1, __LINE__);
+        compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry, vec4_indexing_test2_probes,
+                sizeof(vec4_indexing_test2_probes) / sizeof(*vec4_indexing_test2_probes), 32, 1, __LINE__);
 
         IUnknown_Release(constants);
         IUnknown_Release(pshader);
