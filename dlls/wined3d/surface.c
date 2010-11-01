@@ -3176,15 +3176,29 @@ static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_
  * drawable is limited to the window's client area. The sysmem and texture
  * copies do have the full screen size. Note that GL has a bottom-left
  * origin, while D3D has a top-left origin. */
-void surface_translate_frontbuffer_coords(IWineD3DSurfaceImpl *surface, HWND window, RECT *rect)
+void surface_translate_drawable_coords(IWineD3DSurfaceImpl *surface, HWND window, RECT *rect)
 {
-    POINT offset = {0, surface->currentDesc.Height};
-    RECT windowsize;
+    UINT drawable_height;
 
-    GetClientRect(window, &windowsize);
-    offset.y -= windowsize.bottom - windowsize.top;
-    ScreenToClient(window, &offset);
-    OffsetRect(rect, offset.x, offset.y);
+    if (surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
+            && surface == surface->container.u.swapchain->front_buffer)
+    {
+        POINT offset = {0, 0};
+        RECT windowsize;
+
+        ScreenToClient(window, &offset);
+        OffsetRect(rect, offset.x, offset.y);
+
+        GetClientRect(window, &windowsize);
+        drawable_height = windowsize.bottom - windowsize.top;
+    }
+    else
+    {
+        drawable_height = surface->currentDesc.Height;
+    }
+
+    rect->top = drawable_height - rect->top;
+    rect->bottom = drawable_height - rect->bottom;
 }
 
 static BOOL surface_is_full_rect(IWineD3DSurfaceImpl *surface, const RECT *r)
@@ -3262,11 +3276,7 @@ static void surface_blt_fbo(IWineD3DDeviceImpl *device, const WINED3DTEXTUREFILT
 
         TRACE("Source surface %p is onscreen.\n", src_surface);
 
-        if (buffer == GL_FRONT)
-            surface_translate_frontbuffer_coords(src_surface, context->win_handle, &src_rect);
-
-        src_rect.top = src_surface->currentDesc.Height - src_rect.top;
-        src_rect.bottom = src_surface->currentDesc.Height - src_rect.bottom;
+        surface_translate_drawable_coords(src_surface, context->win_handle, &src_rect);
 
         ENTER_GL();
         context_bind_fbo(context, GL_READ_FRAMEBUFFER, NULL);
@@ -3289,11 +3299,7 @@ static void surface_blt_fbo(IWineD3DDeviceImpl *device, const WINED3DTEXTUREFILT
 
         TRACE("Destination surface %p is onscreen.\n", dst_surface);
 
-        if (buffer == GL_FRONT)
-            surface_translate_frontbuffer_coords(dst_surface, context->win_handle, &dst_rect);
-
-        dst_rect.top = dst_surface->currentDesc.Height - dst_rect.top;
-        dst_rect.bottom = dst_surface->currentDesc.Height - dst_rect.bottom;
+        surface_translate_drawable_coords(dst_surface, context->win_handle, &dst_rect);
 
         ENTER_GL();
         context_bind_fbo(context, GL_DRAW_FRAMEBUFFER, NULL);
@@ -3353,15 +3359,7 @@ static void surface_blt_to_drawable(IWineD3DDeviceImpl *device,
     context_apply_blit_state(context, device);
 
     if (!surface_is_offscreen(dst_surface))
-    {
-        if (swapchain && dst_surface == swapchain->front_buffer)
-        {
-            surface_translate_frontbuffer_coords(dst_surface, context->win_handle, &dst_rect);
-        }
-
-        dst_rect.top = dst_surface->currentDesc.Height - dst_rect.top;
-        dst_rect.bottom = dst_surface->currentDesc.Height - dst_rect.bottom;
-    }
+        surface_translate_drawable_coords(dst_surface, context->win_handle, &dst_rect);
 
     device->blitter->set_shader((IWineD3DDevice *)device, src_surface);
 

@@ -2178,7 +2178,7 @@ void surface_set_container(IWineD3DSurfaceImpl *surface,
         enum wined3d_container_type type, IWineD3DBase *container) DECLSPEC_HIDDEN;
 void surface_set_texture_name(IWineD3DSurfaceImpl *surface, GLuint name, BOOL srgb_name) DECLSPEC_HIDDEN;
 void surface_set_texture_target(IWineD3DSurfaceImpl *surface, GLenum target) DECLSPEC_HIDDEN;
-void surface_translate_frontbuffer_coords(IWineD3DSurfaceImpl *surface, HWND window, RECT *rect) DECLSPEC_HIDDEN;
+void surface_translate_drawable_coords(IWineD3DSurfaceImpl *surface, HWND window, RECT *rect) DECLSPEC_HIDDEN;
 
 /* Predeclare the shared Surface functions */
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_QueryInterface(IWineD3DSurface *iface,

@@ -7153,21 +7153,8 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_
     context = context_acquire(device, dst_surface);
     context_apply_blit_state(context, device);
 
-    /* The coordinates of the ddraw front buffer are always fullscreen ('screen coordinates',
-     * while OpenGL coordinates are window relative.
-     * Also beware of the origin difference(top left vs bottom left).
-     * Also beware that the front buffer's surface size is screen width x screen height,
-     * whereas the real gl drawable size is the size of the window. */
-    dst_swapchain = dst_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
-            ? dst_surface->container.u.swapchain : NULL;
     if (!surface_is_offscreen(dst_surface))
-    {
-        if (dst_swapchain && dst_surface == dst_swapchain->front_buffer)
-            surface_translate_frontbuffer_coords(dst_surface, context->win_handle, &dst_rect);
-
-        dst_rect.top = dst_surface->currentDesc.Height - dst_rect.top;
-        dst_rect.bottom = dst_surface->currentDesc.Height - dst_rect.bottom;
-    }
+        surface_translate_drawable_coords(dst_surface, context->win_handle, &dst_rect);
 
     arbfp_blit_set((IWineD3DDevice *)device, src_surface);
 
@@ -7181,6 +7168,8 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_
     /* Leave the opengl state valid for blitting */
     arbfp_blit_unset((IWineD3DDevice *)device);
 
+    dst_swapchain = dst_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
+            ? dst_surface->container.u.swapchain : NULL;
     if (wined3d_settings.strict_draw_ordering || (dst_swapchain
             && (dst_surface == dst_swapchain->front_buffer
             || dst_swapchain->num_contexts > 1)))
