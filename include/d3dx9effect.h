@@ -351,6 +351,7 @@ DECLARE_INTERFACE_(ID3DXEffectCompiler, ID3DXBaseEffect)
     STDMETHOD(CompileShader)(THIS_ D3DXHANDLE function, LPCSTR target, DWORD flags, LPD3DXBUFFER* shader,
         LPD3DXBUFFER* error_msgs, LPD3DXCONSTANTTABLE* constant_table) PURE;
 };
+#undef INTERFACE
 
 #ifdef __cplusplus
 extern "C" {
