@@ -5679,6 +5679,51 @@ HRESULT WINAPI CreateIUriBuilder(IUri *pIUri, DWORD dwFlags, DWORD_PTR dwReserve
     return S_OK;
 }
 
+/* Merges the base path with the relative path and stores the resulting path
+ * and path len in 'result' and 'result_len'.
+ */
+static HRESULT merge_paths(parse_data *data, const WCHAR *base, DWORD base_len, const WCHAR *relative,
+                           DWORD relative_len, WCHAR **result, DWORD *result_len, DWORD flags)
+{
+    const WCHAR *end = NULL;
+    DWORD base_copy_len = 0;
+    WCHAR *ptr;
+
+    if(base_len) {
+        /* Find the characters the will be copied over from
+         * the base path.
+         */
+        end = str_last_of(base, base+(base_len-1), '/');
+        if(!end && data->scheme_type == URL_SCHEME_FILE)
+            /* Try looking for a '\\'. */
+            end = str_last_of(base, base+(base_len-1), '\\');
+    }
+
+    if(end) {
+        base_copy_len = (end+1)-base;
+        *result = heap_alloc((base_copy_len+relative_len+1)*sizeof(WCHAR));
+    } else
+        *result = heap_alloc((relative_len+1)*sizeof(WCHAR));
+
+    if(!(*result)) {
+        *result_len = 0;
+        return E_OUTOFMEMORY;
+    }
+
+    ptr = *result;
+    if(end) {
+        memcpy(ptr, base, base_copy_len*sizeof(WCHAR));
+        ptr += base_copy_len;
+    }
+
+    memcpy(ptr, relative, relative_len*sizeof(WCHAR));
+    ptr += relative_len;
+    *ptr = '\0';
+
+    *result_len = (ptr-*result);
+    return S_OK;
+}
+
 static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result) {
     Uri *ret;
     HRESULT hr;
@@ -5777,10 +5822,16 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result)
                 data.query_len = base->query_len;
             }
         } else {
+            const WCHAR *ptr, **pptr;
             DWORD path_offset = 0, path_len = 0;
 
+            /* There's two possibilities on what will happen to the path component
+             * of the result IUri. First, if the relative path begins with a '/'
+             * then the resulting path will just be the relative path. Second, if
+             * relative path doesn't begin with a '/' then the base path and relative
+             * path are merged together.
+             */
             if(relative->path_len && *(relative->canon_uri+relative->path_start) == '/') {
-                const WCHAR *ptr, **pptr;
                 WCHAR *tmp = NULL;
                 BOOL copy_drive_path = FALSE;
 
@@ -5815,19 +5866,25 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result)
 
                 memcpy(tmp, relative->canon_uri+relative->path_start, relative->path_len*sizeof(WCHAR));
                 path[path_len] = '\0';
-
-                ptr = path;
-                pptr = &ptr;
-                if((data.is_opaque && !parse_path_opaque(pptr, &data, 0)) ||
-                   (!data.is_opaque && !parse_path_hierarchical(pptr, &data, 0))) {
-                    heap_free(path);
-                    *result = NULL;
-                    return E_INVALIDARG;
-                }
             } else {
-                FIXME("Path merging not implemented yet!\n");
-                *result = NULL;
-                return E_NOTIMPL;
+                /* Merge the base path with the relative path. */
+                hr = merge_paths(&data, base->canon_uri+base->path_start, base->path_len,
+                                 relative->canon_uri+relative->path_start, relative->path_len,
+                                 &path, &path_len, flags);
+                if(FAILED(hr)) {
+                    *result = NULL;
+                    return hr;
+                }
+
+                /* If the resulting IUri is a file URI, the drive path isn't
+                 * reduced out when the dot segments are removed.
+                 */
+                if(path_len >= 3 && data.scheme_type == URL_SCHEME_FILE && !data.host) {
+                    if(*path == '/' && is_drive_path(path+1))
+                        path_offset = 2;
+                    else if(is_drive_path(path))
+                        path_offset = 1;
+                }
             }
 
             /* Check if the dot segments need to be removed from the path. */
@@ -5836,18 +5893,27 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result)
                 DWORD new_len = remove_dot_segments(path+offset,path_len-offset);
 
                 if(new_len != path_len) {
-                    WCHAR *tmp = heap_realloc(path, (new_len+1)*sizeof(WCHAR));
+                    WCHAR *tmp = heap_realloc(path, (path_offset+new_len+1)*sizeof(WCHAR));
                     if(!tmp) {
                         heap_free(path);
                         *result = NULL;
                         return E_OUTOFMEMORY;
                     }
 
-                    tmp[new_len] = '\0';
-                    data.path = tmp;
-                    data.path_len = new_len;
+                    tmp[new_len+offset] = '\0';
                     path = tmp;
+                    path_len = new_len+offset;
                 }
+            }
+
+            /* Make sure the path component is valid. */
+            ptr = path;
+            pptr = &ptr;
+            if((data.is_opaque && !parse_path_opaque(pptr, &data, 0)) ||
+               (!data.is_opaque && !parse_path_hierarchical(pptr, &data, 0))) {
+                heap_free(path);
+                *result = NULL;
+                return E_INVALIDARG;
             }
         }
 

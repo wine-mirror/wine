@@ -5612,7 +5612,7 @@ typedef struct _uri_combine_test {
 static const uri_combine_test uri_combine_tests[] = {
     {   "http://google.com/fun/stuff",0,
         "../not/fun/stuff",Uri_CREATE_ALLOW_RELATIVE,
-        0,S_OK,TRUE,
+        0,S_OK,FALSE,
         {
             {"http://google.com/not/fun/stuff",S_OK},
             {"google.com",S_OK},
@@ -5747,7 +5747,7 @@ static const uri_combine_test uri_combine_tests[] = {
     },
     {   "http://winehq.org/test/abc",0,
         "testing/abc/../test",Uri_CREATE_ALLOW_RELATIVE,
-        0,S_OK,TRUE,
+        0,S_OK,FALSE,
         {
             {"http://winehq.org/test/testing/test",S_OK},
             {"winehq.org",S_OK},
@@ -5774,7 +5774,7 @@ static const uri_combine_test uri_combine_tests[] = {
     },
     {   "http://winehq.org/test/abc",0,
         "testing/abc/../test",Uri_CREATE_ALLOW_RELATIVE,
-        URL_DONT_SIMPLIFY,S_OK,TRUE,
+        URL_DONT_SIMPLIFY,S_OK,FALSE,
         {
             {"http://winehq.org:80/test/testing/abc/../test",S_OK},
             /* Default port is hidden in the authority. */
@@ -5802,7 +5802,7 @@ static const uri_combine_test uri_combine_tests[] = {
     },
     {   "http://winehq.org/test?query",0,
         "testing",Uri_CREATE_ALLOW_RELATIVE,
-        0,S_OK,TRUE,
+        0,S_OK,FALSE,
         {
             {"http://winehq.org/testing",S_OK},
             {"winehq.org",S_OK},
@@ -5829,7 +5829,7 @@ static const uri_combine_test uri_combine_tests[] = {
     },
     {   "http://winehq.org/test#frag",0,
         "testing",Uri_CREATE_ALLOW_RELATIVE,
-        0,S_OK,TRUE,
+        0,S_OK,FALSE,
         {
             {"http://winehq.org/testing",S_OK},
             {"winehq.org",S_OK},
@@ -5856,7 +5856,7 @@ static const uri_combine_test uri_combine_tests[] = {
     },
     {   "testing?query#frag",Uri_CREATE_ALLOW_RELATIVE,
         "test",Uri_CREATE_ALLOW_RELATIVE,
-        0,S_OK,TRUE,
+        0,S_OK,FALSE,
         {
             {"test",S_OK},
             {"",S_FALSE},
@@ -6251,6 +6251,33 @@ static const uri_combine_test uri_combine_tests[] = {
             {Uri_HOST_UNKNOWN,S_OK},
             {0,S_FALSE},
             {URL_SCHEME_UNKNOWN,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "file:///c:/",0,
+        "../testing/test",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,FALSE,
+        {
+            {"file:///c:/testing/test",S_OK},
+            {"",S_FALSE},
+            {"file:///c:/testing/test",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"/c:/testing/test",S_OK},
+            {"/c:/testing/test",S_OK},
+            {"",S_FALSE},
+            {"file:///c:/testing/test",S_OK},
+            {"file",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_FILE,S_OK},
             {URLZONE_INVALID,E_NOTIMPL}
         }
     }
