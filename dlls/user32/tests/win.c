@@ -6266,7 +6266,6 @@ static void test_FindWindowEx(void)
 
     /* test behaviour with a window title that is an empty character */
     found = FindWindowExA( 0, 0, "Shell_TrayWnd", title );
-todo_wine
     ok( found != NULL, "found is NULL, expected a valid hwnd\n" );
     found = FindWindowExA( 0, 0, "Shell_TrayWnd", NULL );
     ok( found != NULL, "found is NULL, expected a valid hwnd\n" );

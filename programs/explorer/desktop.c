@@ -336,7 +336,7 @@ void manage_desktop( WCHAR *arg )
         SetDeskWallPaper( (LPSTR)-1 );
         initialize_display_settings( hwnd );
         initialize_appbar();
-        initialize_systray();
+        initialize_systray( using_root );
 
         if ((shell32 = LoadLibraryA( "shell32.dll" )) &&
             (pShellDDEInit = (void *)GetProcAddress( shell32, (LPCSTR)188)))

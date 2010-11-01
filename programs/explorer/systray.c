@@ -32,9 +32,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(systray);
 
-#define IS_OPTION_FALSE(ch) \
-    ((ch) == 'n' || (ch) == 'N' || (ch) == 'f' || (ch) == 'F' || (ch) == '0')
-
 struct notify_data  /* platform-independent format for NOTIFYICONDATA */
 {
     LONG  hWnd;
@@ -82,7 +79,7 @@ static unsigned int nb_displayed;
 static struct icon **displayed;  /* array of currently displayed icons */
 
 static BOOL hide_systray;
-static int icon_cx, icon_cy;
+static int icon_cx, icon_cy, tray_width;
 
 #define MIN_DISPLAYED 8
 #define ICON_BORDER  2
@@ -99,20 +96,15 @@ static struct icon *get_icon(HWND owner, UINT id)
     return NULL;
 }
 
-/* compute the size of the tray window */
-static SIZE get_window_size(void)
+static RECT get_icon_rect( struct icon *icon )
 {
-    SIZE size;
     RECT rect;
 
-    rect.left = 0;
+    rect.right = tray_width - icon_cx * icon->display;
+    rect.left = rect.right - icon_cx;
     rect.top = 0;
-    rect.right = icon_cx * max( nb_displayed, MIN_DISPLAYED );
     rect.bottom = icon_cy;
-    AdjustWindowRect( &rect, WS_CAPTION, FALSE );
-    size.cx = rect.right - rect.left;
-    size.cy = rect.bottom - rect.top;
-    return size;
+    return rect;
 }
 
 /* Creates tooltip window for icon. */
@@ -143,13 +135,7 @@ static void create_tooltip(struct icon *icon)
     ti.cbSize = sizeof(TTTOOLINFOW);
     ti.hwnd = tray_window;
     ti.lpszText = icon->tiptext;
-    if (icon->display != -1)
-    {
-        ti.rect.left = icon_cx * icon->display;
-        ti.rect.right = icon_cx * (icon->display + 1);
-        ti.rect.top = 0;
-        ti.rect.bottom = icon_cy;
-    }
+    if (icon->display != -1) ti.rect = get_icon_rect( icon );
     SendMessageW(icon->tooltip, TTM_ADDTOOLW, 0, (LPARAM)&ti);
 }
 
@@ -174,13 +160,7 @@ static void update_tooltip_position( struct icon *icon )
     ZeroMemory(&ti, sizeof(ti));
     ti.cbSize = sizeof(TTTOOLINFOW);
     ti.hwnd = tray_window;
-    if (icon->display != -1)
-    {
-        ti.rect.left = icon_cx * icon->display;
-        ti.rect.right = icon_cx * (icon->display + 1);
-        ti.rect.top = 0;
-        ti.rect.bottom = icon_cy;
-    }
+    if (icon->display != -1) ti.rect = get_icon_rect( icon );
     SendMessageW( icon->tooltip, TTM_NEWTOOLRECTW, 0, (LPARAM)&ti );
 }
 
@@ -188,6 +168,7 @@ static void update_tooltip_position( struct icon *icon )
 static struct icon *icon_from_point( int x, int y )
 {
     if (y < 0 || y >= icon_cy) return NULL;
+    x = tray_width - x;
     if (x < 0 || x >= icon_cx * nb_displayed) return NULL;
     return displayed[x / icon_cx];
 }
@@ -197,9 +178,9 @@ static void invalidate_icons( unsigned int start, unsigned int end )
 {
     RECT rect;
 
-    rect.left = start * icon_cx;
+    rect.left = tray_width - (end + 1) * icon_cx;
     rect.top  = 0;
-    rect.right = (end + 1) * icon_cx;
+    rect.right = tray_width - start * icon_cx;
     rect.bottom = icon_cy;
     InvalidateRect( tray_window, &rect, TRUE );
 }
@@ -227,15 +208,7 @@ static BOOL show_icon(struct icon *icon)
     update_tooltip_position( icon );
     invalidate_icons( nb_displayed-1, nb_displayed-1 );
 
-    if (nb_displayed > MIN_DISPLAYED)
-    {
-        SIZE size = get_window_size();
-        SetWindowPos( tray_window, 0, 0, 0, size.cx, size.cy, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE );
-    }
-    else if (nb_displayed == 1)
-    {
-        if (!hide_systray) ShowWindow( tray_window, SW_SHOWNA );
-    }
+    if (nb_displayed == 1 && !hide_systray) ShowWindow( tray_window, SW_SHOWNA );
 
     create_tooltip(icon);
     return TRUE;
@@ -261,15 +234,7 @@ static BOOL hide_icon(struct icon *icon)
     invalidate_icons( icon->display, nb_displayed );
     icon->display = -1;
 
-    if (nb_displayed >= MIN_DISPLAYED)
-    {
-        SIZE size = get_window_size();
-        SetWindowPos( tray_window, 0, 0, 0, size.cx, size.cy, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE );
-    }
-    else if (!nb_displayed)
-    {
-        ShowWindow( tray_window, SW_HIDE );
-    }
+    if (!nb_displayed) ShowWindow( tray_window, SW_HIDE );
 
     update_tooltip_position( icon );
     return TRUE;
@@ -463,6 +428,12 @@ static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 
     case WM_DISPLAYCHANGE:
         if (hide_systray) do_hide_systray();
+        else
+        {
+            tray_width = GetSystemMetrics( SM_CXSCREEN );
+            SetWindowPos( tray_window, 0, 0, GetSystemMetrics( SM_CYSCREEN ) - icon_cy,
+                          tray_width, icon_cy, SWP_NOZORDER | SWP_NOACTIVATE );
+        }
         break;
 
     case WM_TIMER:
@@ -476,12 +447,12 @@ static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
             HDC hdc;
 
             hdc = BeginPaint( hwnd, &ps );
-            for (i = ps.rcPaint.left / icon_cx;
-                 (i < (ps.rcPaint.right + icon_cx - 1) / icon_cx) && (i < nb_displayed);
-                 i++)
+            for (i = 0; i < nb_displayed; i++)
             {
-                DrawIconEx( hdc, i * icon_cx + ICON_BORDER, ICON_BORDER, displayed[i]->image,
-                            icon_cx - 2*ICON_BORDER, icon_cy - 2*ICON_BORDER,
+                RECT dummy, rect = get_icon_rect( displayed[i] );
+                if (IntersectRect( &dummy, &rect, &ps.rcPaint ))
+                    DrawIconEx( hdc, rect.left + ICON_BORDER, rect.top + ICON_BORDER, displayed[i]->image,
+                                icon_cx - 2*ICON_BORDER, icon_cy - 2*ICON_BORDER,
                             0, 0, DI_DEFAULTSIZE|DI_NORMAL);
             }
             EndPaint( hwnd, &ps );
@@ -533,48 +504,24 @@ static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
     return 0;
 }
 
-static BOOL is_systray_hidden(void)
-{
-    const WCHAR show_systray_keyname[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
-                                          'X','1','1',' ','D','r','i','v','e','r',0};
-    const WCHAR show_systray_valuename[] = {'S','h','o','w','S','y','s','t','r','a','y',0};
-    HKEY hkey;
-    BOOL ret = FALSE;
-
-    /* @@ Wine registry key: HKCU\Software\Wine\X11 Driver */
-    if (RegOpenKeyW(HKEY_CURRENT_USER, show_systray_keyname, &hkey) == ERROR_SUCCESS)
-    {
-        WCHAR value[10];
-        DWORD type, size = sizeof(value);
-        if (RegQueryValueExW(hkey, show_systray_valuename, 0, &type, (LPBYTE)&value, &size) == ERROR_SUCCESS)
-        {
-            ret = IS_OPTION_FALSE(value[0]);
-        }
-        RegCloseKey(hkey);
-    }
-    return ret;
-}
-
 /* this function creates the listener window */
-void initialize_systray(void)
+void initialize_systray( BOOL using_root )
 {
     HMODULE x11drv;
-    SIZE size;
     WNDCLASSEXW class;
     static const WCHAR classname[] = {'S','h','e','l','l','_','T','r','a','y','W','n','d',0};
-    static const WCHAR winname[] = {'W','i','n','e',' ','S','y','s','t','e','m',' ','T','r','a','y',0};
 
     if ((x11drv = GetModuleHandleA( "winex11.drv" )))
         wine_notify_icon = (void *)GetProcAddress( x11drv, "wine_notify_icon" );
 
     icon_cx = GetSystemMetrics( SM_CXSMICON ) + 2*ICON_BORDER;
     icon_cy = GetSystemMetrics( SM_CYSMICON ) + 2*ICON_BORDER;
-    hide_systray = is_systray_hidden();
+    hide_systray = using_root;
 
     /* register the systray listener window class */
     ZeroMemory(&class, sizeof(class));
     class.cbSize        = sizeof(class);
-    class.style         = CS_DBLCLKS;
+    class.style         = CS_DBLCLKS | CS_HREDRAW;
     class.lpfnWndProc   = tray_wndproc;
     class.hInstance     = NULL;
     class.hIcon         = LoadIconW(0, (LPCWSTR)IDI_WINLOGO);
@@ -588,9 +535,10 @@ void initialize_systray(void)
         return;
     }
 
-    size = get_window_size();
-    tray_window = CreateWindowW( classname, winname, WS_OVERLAPPED | WS_CAPTION,
-                                 CW_USEDEFAULT, CW_USEDEFAULT, size.cx, size.cy, 0, 0, 0, 0 );
+    tray_width = GetSystemMetrics( SM_CXSCREEN );
+    tray_window = CreateWindowExW( WS_EX_NOACTIVATE, classname, NULL, WS_POPUP,
+                                   0, GetSystemMetrics( SM_CYSCREEN ) - icon_cy,
+                                   tray_width, icon_cy, 0, 0, 0, 0 );
     if (!tray_window)
     {
         WINE_ERR("Could not create tray window\n");
