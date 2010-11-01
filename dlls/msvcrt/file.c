@@ -872,6 +872,22 @@ LONG CDECL MSVCRT__lseek(int fd, LONG offset, int whence)
 }
 
 /*********************************************************************
+ *              _lock_file (MSVCRT.@)
+ */
+void CDECL MSVCRT__lock_file(MSVCRT_FILE *file)
+{
+    FIXME("(%p) stub\n",file);
+}
+
+/*********************************************************************
+ *              _unlock_file (MSVCRT.@)
+ */
+void CDECL MSVCRT__unlock_file(MSVCRT_FILE *file)
+{
+    FIXME("(%p) stub\n",file);
+}
+
+/*********************************************************************
  *		_locking (MSVCRT.@)
  *
  * This is untested; the underlying LockFile doesn't work yet.

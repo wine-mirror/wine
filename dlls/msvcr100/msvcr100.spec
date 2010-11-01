@@ -851,7 +851,7 @@
 @ cdecl _localtime64(ptr) msvcrt._localtime64
 @ cdecl _localtime64_s(ptr ptr) msvcrt._localtime64_s
 @ cdecl _lock(long) msvcrt._lock
-@ stub _lock_file
+@ cdecl _lock_file(ptr) msvcrt._lock_file
 @ cdecl _locking(long long long) msvcrt._locking
 @ cdecl _logb( double ) msvcrt._logb
 @ cdecl -i386 _longjmpex(ptr long) msvcrt._longjmpex
@@ -1213,7 +1213,7 @@
 @ cdecl _unlink(str) msvcrt._unlink
 @ cdecl _unloaddll(long) msvcrt._unloaddll
 @ cdecl _unlock(long) msvcrt._unlock
-@ stub _unlock_file
+@ cdecl _unlock_file(ptr) msvcrt._unlock_file
 @ cdecl _utime32(str ptr) msvcrt._utime32
 @ cdecl _utime64(str ptr) msvcrt._utime64
 @ stub _vcprintf
