@@ -123,3 +123,10 @@ HRESULT WINAPI D3DStripShader(const void *data, SIZE_T data_size, UINT flags, ID
 
     return d3dcompiler_strip_shader(data, data_size, flags, blob);
 }
+
+HRESULT WINAPI D3DReflect(const void *data, SIZE_T data_size, REFIID riid, void **reflector)
+{
+    FIXME("data %p, data_size %lu, riid %s, blob %p stub!\n", data, data_size, debugstr_guid(riid), reflector);
+
+    return E_NOTIMPL;
+}

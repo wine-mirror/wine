@@ -12,6 +12,6 @@
 @ stdcall D3DGetInputSignatureBlob(ptr long ptr)
 @ stdcall D3DGetOutputSignatureBlob(ptr long ptr)
 @ stdcall D3DPreprocess(ptr long str ptr ptr ptr ptr)
-@ stub D3DReflect
+@ stdcall D3DReflect(ptr long ptr ptr)
 @ stub D3DReturnFailure1
 @ stdcall D3DStripShader(ptr long long ptr)

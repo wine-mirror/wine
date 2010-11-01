@@ -77,6 +77,8 @@ HRESULT WINAPI D3DGetOutputSignatureBlob(const void *data, SIZE_T data_size, ID3
 HRESULT WINAPI D3DGetInputAndOutputSignatureBlob(const void *data, SIZE_T data_size, ID3DBlob **blob);
 HRESULT WINAPI D3DGetDebugInfo(const void *data, SIZE_T data_size, ID3DBlob **blob);
 
+HRESULT WINAPI D3DReflect(const void *data, SIZE_T data_size, REFIID riid, void **reflector);
+
 HRESULT WINAPI D3DCreateBlob(SIZE_T data_size, ID3DBlob **blob);
 
 HRESULT WINAPI D3DPreprocess(const void *data, SIZE_T size, const char *filename,
