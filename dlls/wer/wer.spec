@@ -67,7 +67,7 @@
 @ stub WerReportAddFile
 @ stdcall WerReportCloseHandle(ptr)
 @ stdcall WerReportCreate(wstr long ptr ptr)
-@ stub WerReportSetParameter
+@ stdcall WerReportSetParameter(ptr long wstr wstr)
 @ stub WerReportSetUIOption
 @ stub WerReportSubmit
 @ stub WerpGetReportConsent

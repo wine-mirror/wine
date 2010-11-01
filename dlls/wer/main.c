@@ -127,3 +127,26 @@ HRESULT WINAPI WerReportCreate(PCWSTR eventtype, WER_REPORT_TYPE reporttype, PWE
 
     return E_NOTIMPL;
 }
+
+/***********************************************************************
+ * WerReportSetParameter (wer.@)
+ *
+ * Set one of 10 parameter / value pairs for a report handle
+ *
+ * PARAMS
+ *  hreport [i] error reporting handle to add the parameter
+ *  id      [i] parameter to set (WER_P0 upto WER_P9)
+ *  name    [i] optional name of the parameter
+ *  value   [i] value of the parameter
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: A HRESULT error code
+ *
+ */
+HRESULT WINAPI WerReportSetParameter(HREPORT hreport, DWORD id, PCWSTR name, PCWSTR value)
+{
+    FIXME("(%p, %d, %s, %s) :stub\n", hreport, id, debugstr_w(name), debugstr_w(value));
+
+    return E_NOTIMPL;
+}
