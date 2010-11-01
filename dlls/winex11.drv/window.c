@@ -1890,8 +1890,9 @@ void X11DRV_DestroyNotify( HWND hwnd, XEvent *event )
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
 
-    FIXME( "window %p/%lx destroyed from the outside\n", hwnd, data->whole_window );
+    if (!data->embedded) FIXME( "window %p/%lx destroyed from the outside\n", hwnd, data->whole_window );
     destroy_whole_window( display, data, TRUE );
+    if (data->embedded) SendMessageW( hwnd, WM_CLOSE, 0, 0 );
 }
 
 

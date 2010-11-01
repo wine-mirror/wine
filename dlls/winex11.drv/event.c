@@ -72,11 +72,26 @@ extern BOOL ximInComposeMode;
 
 #define DndURL          128   /* KDE drag&drop */
 
+#define XEMBED_EMBEDDED_NOTIFY        0
+#define XEMBED_WINDOW_ACTIVATE        1
+#define XEMBED_WINDOW_DEACTIVATE      2
+#define XEMBED_REQUEST_FOCUS          3
+#define XEMBED_FOCUS_IN               4
+#define XEMBED_FOCUS_OUT              5
+#define XEMBED_FOCUS_NEXT             6
+#define XEMBED_FOCUS_PREV             7
+#define XEMBED_MODALITY_ON            10
+#define XEMBED_MODALITY_OFF           11
+#define XEMBED_REGISTER_ACCELERATOR   12
+#define XEMBED_UNREGISTER_ACCELERATOR 13
+#define XEMBED_ACTIVATE_ACCELERATOR   14
+
   /* Event handlers */
 static void X11DRV_FocusIn( HWND hwnd, XEvent *event );
 static void X11DRV_FocusOut( HWND hwnd, XEvent *event );
 static void X11DRV_Expose( HWND hwnd, XEvent *event );
 static void X11DRV_MapNotify( HWND hwnd, XEvent *event );
+static void X11DRV_ReparentNotify( HWND hwnd, XEvent *event );
 static void X11DRV_ConfigureNotify( HWND hwnd, XEvent *event );
 static void X11DRV_PropertyNotify( HWND hwnd, XEvent *event );
 static void X11DRV_ClientMessage( HWND hwnd, XEvent *event );
@@ -111,7 +126,7 @@ static struct event_handler handlers[MAX_EVENT_HANDLERS] =
     /* UnmapNotify */
     { MapNotify,        X11DRV_MapNotify },
     /* MapRequest */
-    /* ReparentNotify */
+    { ReparentNotify,   X11DRV_ReparentNotify },
     { ConfigureNotify,  X11DRV_ConfigureNotify },
     /* ConfigureRequest */
     /* GravityNotify */
@@ -127,7 +142,7 @@ static struct event_handler handlers[MAX_EVENT_HANDLERS] =
     { MappingNotify,    X11DRV_MappingNotify },
 };
 
-static int nb_event_handlers = 18;  /* change this if you add handlers above */
+static int nb_event_handlers = 19;  /* change this if you add handlers above */
 
 
 /* return the name of an X event */
@@ -814,6 +829,30 @@ static BOOL is_net_wm_state_maximized( Display *display, struct x11drv_win_data 
 
 
 /***********************************************************************
+ *           X11DRV_ReparentNotify
+ */
+static void X11DRV_ReparentNotify( HWND hwnd, XEvent *xev )
+{
+    XReparentEvent *event = &xev->xreparent;
+    struct x11drv_win_data *data;
+
+    if (!(data = X11DRV_get_win_data( hwnd ))) return;
+    if (!data->embedded) return;
+    if (event->parent == root_window)
+    {
+        TRACE( "%p/%lx reparented to root\n", hwnd, data->whole_window );
+        data->embedder = 0;
+        SendMessageW( hwnd, WM_CLOSE, 0, 0 );
+    }
+    else
+    {
+        TRACE( "%p/%lx reparented to %lx\n", hwnd, data->whole_window, event->parent );
+        data->embedder = event->parent;
+    }
+}
+
+
+/***********************************************************************
  *		X11DRV_ConfigureNotify
  */
 void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
@@ -1334,6 +1373,30 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
   }
 }
 
+
+/**********************************************************************
+ *              handle_xembed_protocol
+ */
+static void handle_xembed_protocol( HWND hwnd, XClientMessageEvent *event )
+{
+    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
+
+    if (!data) return;
+
+    switch (event->data.l[1])
+    {
+    case XEMBED_EMBEDDED_NOTIFY:
+        TRACE( "win %p/%lx XEMBED_EMBEDDED_NOTIFY owner %lx\n", hwnd, event->window, event->data.l[3] );
+        data->embedder = event->data.l[3];
+        break;
+    default:
+        TRACE( "win %p/%lx XEMBED message %lu(%lu)\n",
+               hwnd, event->window, event->data.l[1], event->data.l[2] );
+        break;
+    }
+}
+
+
 /**********************************************************************
  *              handle_dnd_protocol
  */
@@ -1366,6 +1429,7 @@ struct client_message_handler
 static const struct client_message_handler client_messages[] =
 {
     { XATOM_WM_PROTOCOLS, handle_wm_protocols },
+    { XATOM__XEMBED,      handle_xembed_protocol },
     { XATOM_DndProtocol,  handle_dnd_protocol },
     { XATOM_XdndEnter,    X11DRV_XDND_EnterEvent },
     { XATOM_XdndPosition, X11DRV_XDND_PositionEvent },

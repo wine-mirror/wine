@@ -309,6 +309,15 @@ static LRESULT WINAPI tray_icon_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
     case WM_TIMER:
         if (!IsWindow( icon->owner )) delete_icon( icon );
         return 0;
+
+    case WM_CLOSE:
+        if (icon->display == -1)
+        {
+            TRACE( "icon %u no longer embedded\n", icon->id );
+            hide_icon( icon );
+            add_to_standalone_tray( icon );
+        }
+        return 0;
     }
     return DefWindowProcW( hwnd, msg, wparam, lparam );
 }
