@@ -1,0 +1,99 @@
+/*
+ * Serbian resources for SETUPAPI
+ *
+ * Copyright 2001 Andreas Mohr
+ * Copyright 2009 Ricardo Filipe
+ * Copyright 2010 Đorđe Vasiljević
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "setupapi_private.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_CYRILLIC
+
+STRINGTABLE
+{
+    IDS_PROMPTDISK   "„%s“ датотека на %s је неопходна"
+    IDS_UNKNOWN      "Непознато"
+    IDS_COPYFROM     "Умножи датотеке из:"
+    IDS_INFO         "Унесите путању где су датотеке смештене, па кликните на дугме „У реду“."
+}
+
+COPYFILEDLGORD DIALOG 20, 20, 208, 105
+STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
+CAPTION "Умножавање датотека..."
+FONT 8, "MS Shell Dlg"
+BEGIN
+    PUSHBUTTON "Откажи", IDCANCEL, 79, 84, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+    LTEXT "Извор:", -1, 7, 7, 77, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
+    LTEXT "", SOURCESTRORD, 7, 18, 194, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
+    LTEXT "Одредиште:", -1, 7, 30, 77, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
+    LTEXT "", DESTSTRORD, 7, 41, 194, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
+    CONTROL "", PROGRESSORD, "setupx_progress", 7, 63, 194, 13, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+END
+
+IDPROMPTFORDISK DIALOG 0, 0, 250, 120
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Потребне датотеке"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT "Убаците инсталациони диск произвођача и проверите\nда ли је испод изабрана исправна јединица", IDC_FILENEEDED, 10, 10, 175, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
+    LTEXT "", IDC_INFO, 10, 50, 175, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
+    LTEXT "Умножи датотеке произвођача из:", IDC_COPYFROM, 10, 90, 175, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
+    CONTROL "", IDC_PATH, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 10, 100, 175, 14
+    PUSHBUTTON "У реду", IDOK, 195, 10, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+    PUSHBUTTON "Откажи", IDCANCEL, 195, 30, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+    PUSHBUTTON "Потражи...", IDC_RUNDLG_BROWSE, 195, 100, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+END
+
+LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
+
+STRINGTABLE
+{
+    IDS_PROMPTDISK   "„%s“ datoteka na %s je neophodna"
+    IDS_UNKNOWN      "Nepoznato"
+    IDS_COPYFROM     "Umnoži datoteke iz:"
+    IDS_INFO         "Unesite putanju gde su datoteke smeštene, pa kliknite na dugme „U redu“."
+}
+
+COPYFILEDLGORD DIALOG 20, 20, 208, 105
+STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
+CAPTION "Umnožavanje datoteka..."
+FONT 8, "MS Shell Dlg"
+BEGIN
+    PUSHBUTTON "Otkaži", IDCANCEL, 79, 84, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+    LTEXT "Izvor:", -1, 7, 7, 77, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
+    LTEXT "", SOURCESTRORD, 7, 18, 194, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
+    LTEXT "Odredište:", -1, 7, 30, 77, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
+    LTEXT "", DESTSTRORD, 7, 41, 194, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
+    CONTROL "", PROGRESSORD, "setupx_progress", 7, 63, 194, 13, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+END
+
+IDPROMPTFORDISK DIALOG 0, 0, 250, 120
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Potrebne datoteke"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT "Ubacite instalacioni disk proizvođača i proverite\nda li je ispod izabrana ispravna jedinica", IDC_FILENEEDED, 10, 10, 175, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
+    LTEXT "", IDC_INFO, 10, 50, 175, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
+    LTEXT "Umnoži datoteke proizvođača iz:", IDC_COPYFROM, 10, 90, 175, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
+    CONTROL "", IDC_PATH, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 10, 100, 175, 14
+    PUSHBUTTON "U redu", IDOK, 195, 10, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+    PUSHBUTTON "Otkaži", IDCANCEL, 195, 30, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+    PUSHBUTTON "Potraži...", IDC_RUNDLG_BROWSE, 195, 100, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+END
