@@ -611,6 +611,85 @@ static const struct IXMLDOMSchemaCollection2Vtbl schema_cache_vtbl =
     schema_cache_getDeclaration
 };
 
+static void LIBXML2_LOG_CALLBACK validate_error(void* ctx, char const* msg, ...)
+{
+    va_list ap;
+    va_start(ap, msg);
+    LIBXML2_CALLBACK_ERR(SchemaCache_validate_tree, msg, ap);
+    va_end(ap);
+}
+
+static void LIBXML2_LOG_CALLBACK validate_warning(void* ctx, char const* msg, ...)
+{
+    va_list ap;
+    va_start(ap, msg);
+    LIBXML2_CALLBACK_WARN(SchemaCache_validate_tree, msg, ap);
+    va_end(ap);
+}
+
+#ifdef HAVE_XMLSCHEMASSETVALIDSTRUCTUREDERRORS
+static void validate_serror(void* ctx, xmlErrorPtr err)
+{
+    LIBXML2_CALLBACK_SERROR(SchemaCache_validate_tree, err);
+}
+#endif
+
+HRESULT SchemaCache_validate_tree(IXMLDOMSchemaCollection2* iface, xmlNodePtr tree)
+{
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
+    cache_entry* entry;
+    xmlChar const* ns = NULL;
+    TRACE("(%p, %p)\n", This, tree);
+
+    if (!tree)
+        return E_POINTER;
+
+    if ((xmlNodePtr)tree->doc == tree)
+    {
+        xmlNodePtr root = xmlDocGetRootElement(tree->doc);
+        if (root && root->ns)
+            ns = root->ns->href;
+    }
+    else if (tree->ns)
+    {
+        ns = tree->ns->href;
+    }
+
+    entry = xmlHashLookup(This->cache, ns);
+    /* TODO: if the ns is not in the cache, and it's a URL,
+     *       do we try to load from that? */
+    if (entry)
+    {
+        if (entry->type == SCHEMA_TYPE_XDR)
+        {
+            FIXME("partial stub: XDR schema support not implemented\n");
+            return S_OK;
+        }
+        else if (entry->type == SCHEMA_TYPE_XSD)
+        {
+            xmlSchemaValidCtxtPtr svctx;
+            int err;
+            /* TODO: if validateOnLoad property is false,
+             *       we probably need to validate the schema here. */
+            svctx = xmlSchemaNewValidCtxt(entry->schema);
+            xmlSchemaSetValidErrors(svctx, validate_error, validate_warning, NULL);
+#ifdef HAVE_XMLSCHEMASSETVALIDSTRUCTUREDERRORS
+            xmlSchemaSetValidStructuredErrors(svctx, validate_serror, NULL);
+#endif
+
+            if ((xmlNodePtr)tree->doc == tree)
+                err = xmlSchemaValidateDoc(svctx, (xmlDocPtr)tree);
+            else
+                err = xmlSchemaValidateOneElement(svctx, tree);
+
+            xmlSchemaFreeValidCtxt(svctx);
+            return err? S_FALSE : S_OK;
+        }
+    }
+
+    return E_FAIL;
+}
+
 HRESULT SchemaCache_create(IUnknown* pUnkOuter, void** ppObj)
 {
     schema_cache* This = heap_alloc(sizeof(schema_cache));
