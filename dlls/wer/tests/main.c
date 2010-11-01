@@ -30,6 +30,7 @@
 #include "werapi.h"
 #include "wine/test.h"
 
+static const WCHAR appcrash[] = {'A','P','P','C','R','A','S','H',0};
 static const WCHAR empty[] = {0};
 static const WCHAR winetest_wer[] = {'w','i','n','e','t','e','s','t','_','w','e','r','.','e','x','e',0};
 
@@ -101,10 +102,108 @@ static void test_WerRemoveExcludedApplication(void)
 
 }
 
+/* #### */
+
+static void  test_WerReportCloseHandle(void)
+{
+    HRESULT hr;
+    HREPORT report;
+
+    report = (void *) 0xdeadbeef;
+    hr = WerReportCreate(appcrash, WerReportCritical, NULL, &report);
+    todo_wine
+    ok(hr == S_OK, "got 0x%x and %p (expected S_OK)\n", hr, report);
+
+    if (!report) {
+        skip("Nothing left to test\n");
+        return;
+    }
+
+    /* close the handle */
+    hr = WerReportCloseHandle(report);
+    ok(hr == S_OK, "got 0x%x for %p (expected S_OK)\n", hr, report);
+
+    /* close the handle again */
+    hr = WerReportCloseHandle(report);
+    ok(hr == E_INVALIDARG, "got 0x%x for %p again (expected E_INVALIDARG)\n", hr, report);
+
+    hr = WerReportCloseHandle(NULL);
+    ok(hr == E_INVALIDARG, "got 0x%x for NULL(expected E_INVALIDARG)\n", hr);
+}
+
+/* #### */
+
+static void  test_WerReportCreate(void)
+{
+    HRESULT hr;
+    HREPORT report;
+    HREPORT table[8];
+    int i;
+
+    report = (void *) 0xdeadbeef;
+    /* test a simple valid case */
+    hr = WerReportCreate(appcrash, WerReportCritical, NULL, &report);
+
+    todo_wine
+    ok(hr == S_OK, "got 0x%x and %p (expected S_OK)\n", hr, report);
+
+    if (!report) {
+        skip("Nothing left to test\n");
+        return;
+    }
+
+    hr = WerReportCloseHandle(report);
+    ok(hr == S_OK, "got 0x%x for %p (expected S_OK)\n", hr, report);
+
+    /* the ptr to store the created handle is always needed */
+    hr = WerReportCreate(appcrash, WerReportCritical, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%x (expected E_INVALIDARG)\n", hr);
+
+    /* the event type must be a valid string */
+    report = (void *) 0xdeadbeef;
+    hr = WerReportCreate(NULL, WerReportCritical, NULL, &report);
+    ok(hr == E_INVALIDARG, "got 0x%x and %p(expected E_INVALIDARG)\n", hr, report);
+
+    report = (void *) 0xdeadbeef;
+    hr = WerReportCreate(empty, WerReportCritical, NULL, &report);
+    ok(hr == E_INVALIDARG, "got 0x%x and %p(expected E_INVALIDARG)\n", hr, report);
+
+    /* WER_REPORT_TYPE is not checked during WerReportCreate */
+    for (i = 0; i <= WerReportInvalid + 1; i++) {
+        report = (void *) 0xdeadbeef;
+        hr = WerReportCreate(appcrash, i, NULL, &report);
+        ok(hr == S_OK, "%d: got 0x%x and %p (expected S_OK)\n", i, hr, report);
+
+        hr = WerReportCloseHandle(report);
+        ok(hr == S_OK, "%d: got 0x%x for %p (expected S_OK)\n", i, hr, report);
+
+    }
+    report = (void *) 0xdeadbeef;
+    hr = WerReportCreate(appcrash, 42, NULL, &report);
+    ok(hr == S_OK, "42: got 0x%x and %p (expected S_OK)\n", hr, report);
+
+    /* multiple active reports are possible */
+    memset(table, 0, sizeof(table));
+    for (i = 0; i < (sizeof(table) / sizeof(table[0]) -1); i++) {
+        report = (void *) 0xdeadbeef;
+        hr = WerReportCreate(appcrash, WerReportCritical, NULL, &table[i]);
+        ok(hr == S_OK, "%02d: got 0x%x and %p (expected S_OK)\n", i, hr, table[i]);
+    }
+
+    while (i > 0) {
+        i--;
+        hr = WerReportCloseHandle(table[i]);
+        ok(hr == S_OK, "got 0x%x for %p (expected S_OK)\n", hr, table[i]);
+    }
+
+}
+
 /* ########################### */
 
 START_TEST(main)
 {
     test_WerAddExcludedApplication();
     test_WerRemoveExcludedApplication();
+    test_WerReportCloseHandle();
+    test_WerReportCreate();
 }
