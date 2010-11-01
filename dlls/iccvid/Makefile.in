@@ -24,6 +24,7 @@ RC_SRCS = \
 	iccvid_Ro.rc \
 	iccvid_Ru.rc \
 	iccvid_Si.rc \
+	iccvid_Sr.rc \
 	iccvid_Sv.rc \
 	iccvid_Tr.rc \
 	iccvid_Uk.rc
