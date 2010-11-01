@@ -2815,5 +2815,12 @@ coclass SAXAttributes40
     interface ISAXAttributes;
 };
 
+/*
+ * Error Codes
+ */
+cpp_quote("#define E_XML_NOTWF              0xC00CE223")
+cpp_quote("#define E_XML_NODTD              0xC00CE224")
+cpp_quote("#define E_XML_INVALID            0xC00CE225")
+cpp_quote("#define E_XML_BUFFERTOOSMALL     0xC00CE226")
 
 } /* Library MSXML */

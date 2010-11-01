@@ -336,4 +336,19 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
     return ret;
 }
 
+/* Error Codes - not defined anywhere in the public headers */
+#define E_XML_ELEMENT_UNDECLARED            0xC00CE00D
+#define E_XML_ELEMENT_ID_NOT_FOUND          0xC00CE00E
+/* ... */
+#define E_XML_EMPTY_NOT_ALLOWED             0xC00CE011
+#define E_XML_ELEMENT_NOT_COMPLETE          0xC00CE012
+#define E_XML_ROOT_NAME_MISMATCH            0xC00CE013
+#define E_XML_INVALID_CONTENT               0xC00CE014
+#define E_XML_ATTRIBUTE_NOT_DEFINED         0xC00CE015
+#define E_XML_ATTRIBUTE_FIXED               0xC00CE016
+#define E_XML_ATTRIBUTE_VALUE               0xC00CE017
+#define E_XML_ILLEGAL_TEXT                  0xC00CE018
+/* ... */
+#define E_XML_REQUIRED_ATTRIBUTE_MISSING    0xC00CE020
+
 #endif /* __MSXML_PRIVATE__ */
