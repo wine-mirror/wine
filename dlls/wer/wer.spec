@@ -65,8 +65,8 @@
 @ stdcall WerRemoveExcludedApplication(wstr long)
 @ stub WerReportAddDump
 @ stub WerReportAddFile
-@ stub WerReportCloseHandle
-@ stub WerReportCreate
+@ stdcall WerReportCloseHandle(ptr)
+@ stdcall WerReportCreate(wstr long ptr ptr)
 @ stub WerReportSetParameter
 @ stub WerReportSetUIOption
 @ stub WerReportSubmit

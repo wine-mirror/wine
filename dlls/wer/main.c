@@ -22,6 +22,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "werapi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wer);
@@ -67,5 +68,62 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 HRESULT WINAPI WerRemoveExcludedApplication(PCWSTR exeName, BOOL allUsers)
 {
     FIXME("(%s, %d) :stub\n",debugstr_w(exeName), allUsers);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ * WerReportCloseHandle (wer.@)
+ *
+ * Close an error reporting handle and free associated resources
+ *
+ * PARAMS
+ *  hreport [i] error reporting handle to close
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: A HRESULT error code
+ *
+ */
+HRESULT WINAPI WerReportCloseHandle(HREPORT hreport)
+{
+    FIXME("(%p) :stub\n", hreport);
+
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ * WerReportCreate (wer.@)
+ *
+ * Create an error report in memory and return a related HANDLE
+ *
+ * PARAMS
+ *  eventtype  [i] a name for the event type
+ *  reporttype [i] what type of report should be created
+ *  reportinfo [i] NULL or a ptr to a struct with some detailed information
+ *  phandle    [o] ptr, where the resulting handle should be saved
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: A HRESULT error code
+ *
+ * NOTES
+ *  The event type must be registered at microsoft. Predefined types are
+ *  "APPCRASH" as the default on Windows, "Crash32" and "Crash64"
+ *
+ */
+HRESULT WINAPI WerReportCreate(PCWSTR eventtype, WER_REPORT_TYPE reporttype, PWER_REPORT_INFORMATION reportinfo, HREPORT *phandle)
+{
+
+    FIXME("(%s, %d, %p, %p) :stub\n", debugstr_w(eventtype), reporttype, reportinfo, phandle);
+    if (reportinfo) {
+        TRACE(".wzFriendlyEventName: %s\n", debugstr_w(reportinfo->wzFriendlyEventName));
+        TRACE(".wzApplicationName: %s\n", debugstr_w(reportinfo->wzApplicationName));
+    }
+
+    if (phandle)  *phandle = NULL;
+    if (!eventtype || !eventtype[0] || !phandle) {
+        return E_INVALIDARG;
+    }
+
     return E_NOTIMPL;
 }
