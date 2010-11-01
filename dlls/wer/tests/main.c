@@ -31,6 +31,7 @@
 #include "wine/test.h"
 
 static const WCHAR appcrash[] = {'A','P','P','C','R','A','S','H',0};
+static const WCHAR backslash[] = {'\\',0};
 static const WCHAR empty[] = {0};
 static const WCHAR winetest_wer[] = {'w','i','n','e','t','e','s','t','_','w','e','r','.','e','x','e',0};
 
@@ -39,14 +40,12 @@ static const WCHAR winetest_wer[] = {'w','i','n','e','t','e','s','t','_','w','e'
 static void test_WerAddExcludedApplication(void)
 {
     HRESULT hr;
+    WCHAR buffer[MAX_PATH];
+    UINT res;
 
     /* clean state */
     hr = WerRemoveExcludedApplication(winetest_wer, FALSE);
-    if (hr == E_NOTIMPL) {
-        skip("Wer*ExcludedApplication not implemented\n");
-        return;
-    }
-    ok((hr == S_OK) || (hr == E_FAIL) || __HRESULT_FROM_WIN32(ERROR_ENVVAR_NOT_FOUND),
+    ok((hr == S_OK) || (hr == E_FAIL) || (hr == __HRESULT_FROM_WIN32(ERROR_ENVVAR_NOT_FOUND)),
         "got 0x%x (expected S_OK, E_FAIL or HRESULT_FROM_WIN32(ERROR_ENVVAR_NOT_FOUND))\n", hr);
 
     hr = WerAddExcludedApplication(NULL, FALSE);
@@ -65,6 +64,27 @@ static void test_WerAddExcludedApplication(void)
     /* cleanup */
     hr = WerRemoveExcludedApplication(winetest_wer, FALSE);
     ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
+
+    /* appname has a path */
+    res = GetWindowsDirectoryW(buffer, sizeof(buffer) / sizeof(buffer[0]));
+    if (res > 0) {
+        /* the last part from the path is added to the inclusion list */
+        hr = WerAddExcludedApplication(buffer, FALSE);
+        ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
+        hr = WerRemoveExcludedApplication(buffer, FALSE);
+        ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
+
+        lstrcatW(buffer, backslash);
+        hr = WerAddExcludedApplication(buffer, FALSE);
+        ok(hr == E_INVALIDARG, "got 0x%x (expected E_INVALIDARG)\n", hr);
+
+        lstrcatW(buffer, winetest_wer);
+        hr = WerAddExcludedApplication(buffer, FALSE);
+        ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
+        hr = WerRemoveExcludedApplication(buffer, FALSE);
+        ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
+    }
+
 }
 
 /* #### */
@@ -72,15 +92,12 @@ static void test_WerAddExcludedApplication(void)
 static void test_WerRemoveExcludedApplication(void)
 {
     HRESULT hr;
+    WCHAR buffer[MAX_PATH];
+    UINT res;
 
     /* clean state */
     hr = WerRemoveExcludedApplication(winetest_wer, FALSE);
-    if (hr == E_NOTIMPL) {
-        skip("Wer*ExcludedApplication not implemented\n");
-        return;
-    }
-
-    ok((hr == S_OK) || (hr == E_FAIL) || __HRESULT_FROM_WIN32(ERROR_ENVVAR_NOT_FOUND),
+    ok((hr == S_OK) || (hr == E_FAIL) || (hr == __HRESULT_FROM_WIN32(ERROR_ENVVAR_NOT_FOUND)),
         "got 0x%x (expected S_OK, E_FAIL or HRESULT_FROM_WIN32(ERROR_ENVVAR_NOT_FOUND))\n", hr);
 
     hr = WerAddExcludedApplication(winetest_wer, FALSE);
@@ -97,9 +114,34 @@ static void test_WerRemoveExcludedApplication(void)
 
     /* app not in the list */
     hr = WerRemoveExcludedApplication(winetest_wer, FALSE);
-    ok((hr == E_FAIL) || __HRESULT_FROM_WIN32(ERROR_ENVVAR_NOT_FOUND),
+    ok((hr == E_FAIL) || (hr == __HRESULT_FROM_WIN32(ERROR_ENVVAR_NOT_FOUND)),
         "got 0x%x (expected E_FAIL or HRESULT_FROM_WIN32(ERROR_ENVVAR_NOT_FOUND))\n", hr);
 
+    /* appname has a path */
+    res = GetWindowsDirectoryW(buffer, sizeof(buffer) / sizeof(buffer[0]));
+    if (res > 0) {
+        hr = WerRemoveExcludedApplication(buffer, FALSE);
+        ok((hr == E_FAIL) || (hr == __HRESULT_FROM_WIN32(ERROR_ENVVAR_NOT_FOUND)),
+            "got 0x%x (expected E_FAIL or HRESULT_FROM_WIN32(ERROR_ENVVAR_NOT_FOUND))\n", hr);
+
+        /* the last part from the path is added to the inclusion list */
+        hr = WerAddExcludedApplication(buffer, FALSE);
+        ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
+        hr = WerRemoveExcludedApplication(buffer, FALSE);
+        ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
+
+        lstrcatW(buffer, backslash);
+        hr = WerAddExcludedApplication(buffer, FALSE);
+        ok(hr == E_INVALIDARG, "got 0x%x (expected E_INVALIDARG)\n", hr);
+        hr = WerRemoveExcludedApplication(buffer, FALSE);
+        ok(hr == E_INVALIDARG, "got 0x%x (expected E_INVALIDARG)\n", hr);
+
+        lstrcatW(buffer, winetest_wer);
+        hr = WerAddExcludedApplication(buffer, FALSE);
+        ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
+        hr = WerRemoveExcludedApplication(buffer, FALSE);
+        ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
+    }
 }
 
 /* #### */
