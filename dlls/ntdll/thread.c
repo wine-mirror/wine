@@ -356,8 +356,11 @@ void exit_thread( int status )
     {
         struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SpareBytes1;
 
-        pthread_join( thread_data->pthread_id, NULL );
-        signal_free_thread( teb );
+        if (thread_data->pthread_id)
+        {
+            pthread_join( thread_data->pthread_id, NULL );
+            signal_free_thread( teb );
+        }
     }
 
     close( ntdll_get_thread_data()->wait_fd[0] );
