@@ -412,9 +412,11 @@
 @ cdecl _findclose(long) MSVCRT__findclose
 @ cdecl _findfirst(str ptr) MSVCRT__findfirst
 @ cdecl _findfirst64(str ptr) MSVCRT__findfirst64
+@ cdecl _findfirst64i32(str ptr) MSVCRT__findfirst64i32
 @ cdecl _findfirsti64(str ptr) MSVCRT__findfirsti64
 @ cdecl _findnext(long ptr) MSVCRT__findnext
 @ cdecl _findnext64(long ptr) MSVCRT__findnext64
+@ cdecl _findnext64i32(long ptr) MSVCRT__findnext64i32
 @ cdecl _findnexti64(long ptr) MSVCRT__findnexti64
 @ cdecl _finite( double )
 @ cdecl _flsbuf(long ptr) MSVCRT__flsbuf

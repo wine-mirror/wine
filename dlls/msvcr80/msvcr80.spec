@@ -461,11 +461,11 @@
 @ stub _findfirst32
 @ stub _findfirst32i64
 @ cdecl _findfirst64(str ptr) msvcrt._findfirst64
-@ stub _findfirst64i32
+@ cdecl _findfirst64i32(str ptr) msvcrt._findfirst64i32
 @ stub _findnext32
 @ stub _findnext32i64
 @ cdecl _findnext64(long ptr) msvcrt._findnext64
-@ stub _findnext64i32
+@ cdecl _findnext64i32(long ptr) msvcrt._findnext64i32
 @ cdecl _finite( double ) msvcrt._finite
 @ cdecl _flsbuf(long ptr) msvcrt._flsbuf
 @ cdecl _flushall() msvcrt._flushall
