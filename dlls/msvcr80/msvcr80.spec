@@ -489,7 +489,7 @@
 @ varargs _fscanf_l(ptr str ptr) msvcrt._fscanf_l
 @ varargs _fscanf_s_l(ptr str ptr) msvcrt._fscanf_s_l
 @ stub _fseek_nolock
-@ stub _fseeki64
+@ cdecl _fseeki64(ptr int64 long) msvcrt._fseeki64
 @ stub _fseeki64_nolock
 @ cdecl _fsopen(str str long) msvcrt._fsopen
 @ stub _fstat32

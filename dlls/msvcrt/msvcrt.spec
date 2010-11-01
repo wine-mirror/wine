@@ -435,7 +435,7 @@
 # stub _fscanf_l
 @ varargs _fscanf_l(ptr str ptr) MSVCRT__fscanf_l
 @ varargs _fscanf_s_l(ptr str ptr) MSVCRT__fscanf_s_l
-# stub _fseeki64
+@ cdecl _fseeki64(ptr int64 long) MSVCRT__fseeki64
 @ cdecl _fsopen(str str long) MSVCRT__fsopen
 @ cdecl _fstat(long ptr) MSVCRT__fstat
 @ cdecl _fstat64(long ptr) MSVCRT__fstat64

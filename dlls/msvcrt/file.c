@@ -942,9 +942,9 @@ int CDECL MSVCRT__locking(int fd, int mode, LONG nbytes)
 }
 
 /*********************************************************************
- *		fseek (MSVCRT.@)
+ *		_fseeki64 (MSVCRT.@)
  */
-int CDECL MSVCRT_fseek(MSVCRT_FILE* file, MSVCRT_long offset, int whence)
+int CDECL MSVCRT__fseeki64(MSVCRT_FILE* file, __int64 offset, int whence)
 {
   /* Flush output if needed */
   if(file->_flag & MSVCRT__IOWRT)
@@ -973,7 +973,15 @@ int CDECL MSVCRT_fseek(MSVCRT_FILE* file, MSVCRT_long offset, int whence)
   }
   /* Clear end of file flag */
   file->_flag &= ~MSVCRT__IOEOF;
-  return (MSVCRT__lseek(file->_file,offset,whence) == -1)?-1:0;
+  return (MSVCRT__lseeki64(file->_file,offset,whence) == -1)?-1:0;
+}
+
+/*********************************************************************
+ *		fseek (MSVCRT.@)
+ */
+int CDECL MSVCRT_fseek(MSVCRT_FILE* file, MSVCRT_long offset, int whence)
+{
+    return MSVCRT__fseeki64( file, offset, whence );
 }
 
 /*********************************************************************
