@@ -209,14 +209,6 @@ static const char * debugstr_formatetc(const FORMATETC *formatetc)
         formatetc->lindex, formatetc->tymed);
 }
 
-/*
- * Prototypes for the methods of the DataCache class.
- */
-static DataCache* DataCache_Construct(REFCLSID  clsid,
-				      LPUNKNOWN pUnkOuter);
-static HRESULT DataCacheEntry_OpenPresStream(DataCacheEntry *cache_entry,
-                                             IStream  **pStm);
-
 static void DataCacheEntry_Destroy(DataCacheEntry *cache_entry)
 {
     list_remove(&cache_entry->entry);
@@ -2314,6 +2306,64 @@ static const IAdviseSinkVtbl DataCache_IAdviseSink_VTable =
     DataCache_OnClose
 };
 
+/*********************************************************
+ * Method implementation for DataCache class.
+ */
+static DataCache* DataCache_Construct(
+  REFCLSID  clsid,
+  LPUNKNOWN pUnkOuter)
+{
+  DataCache* newObject = 0;
+
+  /*
+   * Allocate space for the object.
+   */
+  newObject = HeapAlloc(GetProcessHeap(), 0, sizeof(DataCache));
+
+  if (newObject==0)
+    return newObject;
+
+  /*
+   * Initialize the virtual function table.
+   */
+  newObject->lpVtbl = &DataCache_IDataObject_VTable;
+  newObject->lpvtblNDIUnknown = &DataCache_NDIUnknown_VTable;
+  newObject->lpvtblIPersistStorage = &DataCache_IPersistStorage_VTable;
+  newObject->lpvtblIViewObject = &DataCache_IViewObject2_VTable;
+  newObject->lpvtblIOleCache2 = &DataCache_IOleCache2_VTable;
+  newObject->lpvtblIOleCacheControl = &DataCache_IOleCacheControl_VTable;
+  newObject->lpvtblIAdviseSink = &DataCache_IAdviseSink_VTable;
+
+  /*
+   * Start with one reference count. The caller of this function
+   * must release the interface pointer when it is done.
+   */
+  newObject->ref = 1;
+
+  /*
+   * Initialize the outer unknown
+   * We don't keep a reference on the outer unknown since, the way
+   * aggregation works, our lifetime is at least as large as its
+   * lifetime.
+   */
+  if (pUnkOuter==NULL)
+    pUnkOuter = (IUnknown*)&(newObject->lpvtblNDIUnknown);
+
+  newObject->outerUnknown = pUnkOuter;
+
+  /*
+   * Initialize the other members of the structure.
+   */
+  newObject->sinkAspects = 0;
+  newObject->sinkAdviseFlag = 0;
+  newObject->sinkInterface = 0;
+  newObject->presentationStorage = NULL;
+  list_init(&newObject->cache_list);
+  newObject->last_cache_id = 1;
+  newObject->dirty = FALSE;
+
+  return newObject;
+}
 
 /******************************************************************************
  *              CreateDataCache        [OLE32.@]
@@ -2385,63 +2435,4 @@ HRESULT WINAPI CreateDataCache(
   IUnknown_Release((IUnknown*)&(newCache->lpvtblNDIUnknown));
 
   return hr;
-}
-
-/*********************************************************
- * Method implementation for DataCache class.
- */
-static DataCache* DataCache_Construct(
-  REFCLSID  clsid,
-  LPUNKNOWN pUnkOuter)
-{
-  DataCache* newObject = 0;
-
-  /*
-   * Allocate space for the object.
-   */
-  newObject = HeapAlloc(GetProcessHeap(), 0, sizeof(DataCache));
-
-  if (newObject==0)
-    return newObject;
-
-  /*
-   * Initialize the virtual function table.
-   */
-  newObject->lpVtbl = &DataCache_IDataObject_VTable;
-  newObject->lpvtblNDIUnknown = &DataCache_NDIUnknown_VTable;
-  newObject->lpvtblIPersistStorage = &DataCache_IPersistStorage_VTable;
-  newObject->lpvtblIViewObject = &DataCache_IViewObject2_VTable;
-  newObject->lpvtblIOleCache2 = &DataCache_IOleCache2_VTable;
-  newObject->lpvtblIOleCacheControl = &DataCache_IOleCacheControl_VTable;
-  newObject->lpvtblIAdviseSink = &DataCache_IAdviseSink_VTable;
-
-  /*
-   * Start with one reference count. The caller of this function
-   * must release the interface pointer when it is done.
-   */
-  newObject->ref = 1;
-
-  /*
-   * Initialize the outer unknown
-   * We don't keep a reference on the outer unknown since, the way
-   * aggregation works, our lifetime is at least as large as its
-   * lifetime.
-   */
-  if (pUnkOuter==NULL)
-    pUnkOuter = (IUnknown*)&(newObject->lpvtblNDIUnknown);
-
-  newObject->outerUnknown = pUnkOuter;
-
-  /*
-   * Initialize the other members of the structure.
-   */
-  newObject->sinkAspects = 0;
-  newObject->sinkAdviseFlag = 0;
-  newObject->sinkInterface = 0;
-  newObject->presentationStorage = NULL;
-  list_init(&newObject->cache_list);
-  newObject->last_cache_id = 1;
-  newObject->dirty = FALSE;
-
-  return newObject;
 }
