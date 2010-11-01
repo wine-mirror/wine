@@ -248,7 +248,7 @@ static int colors_match(D3DXCOLOR a, D3DXCOLOR b, float epsilon)
    to see if they are as expected. */
 static void compute_shader_probe9(IDirect3DDevice9 *device, IDirect3DVertexShader9 *vshader,
         IDirect3DPixelShader9 *pshader, IDirect3DVertexBuffer9 *quad_geometry,
-        struct hlsl_probe_info *probes, int count, int width, int height, int line_number)
+        const struct hlsl_probe_info *probes, int count, int width, int height, int line_number)
 {
     IDirect3DSurface9 *render_target;
     IDirect3DSurface9 *readback;
@@ -296,7 +296,7 @@ static void compute_shader_probe9(IDirect3DDevice9 *device, IDirect3DVertexShade
 static void test_swizzle(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geometry,
         IDirect3DVertexShader9 *vshader_passthru)
 {
-    static struct hlsl_probe_info swizzle_test_probes[] =
+    static const struct hlsl_probe_info swizzle_test_probes[] =
     {
        {0, 0, {0.0101f, 0.0303f, 0.0202f, 0.0404f}, 0.0001f, "swizzle_test failed"}
     };
@@ -333,7 +333,7 @@ static void test_math(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geo
     /* Tests order of operations */
     static const float u = 2.5f, v = 0.3f, w = 0.2f, x = 0.7f, y = 0.1f, z = 1.5f;
 
-    static struct hlsl_probe_info order_of_operations_probes[] =
+    static const struct hlsl_probe_info order_of_operations_probes[] =
     {
         {0, 0, {-12.4300f, 9.8333f, 1.6000f, 34.9999f}, 0.0001f,
                 "order of operations test failed"}
@@ -373,7 +373,7 @@ static void test_math(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geo
 static void test_conditionals(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geometry,
         IDirect3DVertexShader9 *vshader_passthru)
 {
-    static struct hlsl_probe_info if_greater_probes[] =
+    static const struct hlsl_probe_info if_greater_probes[] =
     {
         { 0, 0, {0.9f, 0.8f, 0.7f, 0.6f}, 0.0001f, "if greater test failed"},
         { 5, 0, {0.9f, 0.8f, 0.7f, 0.6f}, 0.0001f, "if greater test failed"},
@@ -392,7 +392,7 @@ static void test_conditionals(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *
                 return float4(0.9, 0.8, 0.7, 0.6); \
         }";
 
-    static struct hlsl_probe_info ternary_operator_probes[] =
+    static const struct hlsl_probe_info ternary_operator_probes[] =
     {
         {0, 0, {0.50f, 0.25f, 0.50f, 0.75f}, 0.00001f, "ternary operator test failed"},
         {1, 0, {0.50f, 0.25f, 0.50f, 0.75f}, 0.00001f, "ternary operator test failed"},
@@ -437,7 +437,7 @@ static void test_conditionals(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *
 static void test_float_vectors(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geometry,
         IDirect3DVertexShader9 *vshader_passthru)
 {
-    static struct hlsl_probe_info vec4_indexing_test1_probes[] =
+    static const struct hlsl_probe_info vec4_indexing_test1_probes[] =
     {
         {0, 0, {0.020f, 0.245f, 0.351f, 1.000f}, 0.0001f, "vec4 indexing test 1 failed"}
     };
@@ -453,7 +453,7 @@ static void test_float_vectors(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 
             return color;                       \
         }";
 
-    static struct hlsl_probe_info vec4_indexing_test2_probes[] =
+    static const struct hlsl_probe_info vec4_indexing_test2_probes[] =
     {
         {0, 0, {0.5f, 0.3f, 0.8f, 0.2f}, 0.0001f, "vec4 indexing test 2 failed"}
     };
