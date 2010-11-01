@@ -111,7 +111,6 @@ static void  test_WerReportCloseHandle(void)
 
     report = (void *) 0xdeadbeef;
     hr = WerReportCreate(appcrash, WerReportCritical, NULL, &report);
-    todo_wine
     ok(hr == S_OK, "got 0x%x and %p (expected S_OK)\n", hr, report);
 
     if (!report) {
@@ -143,8 +142,6 @@ static void  test_WerReportCreate(void)
     report = (void *) 0xdeadbeef;
     /* test a simple valid case */
     hr = WerReportCreate(appcrash, WerReportCritical, NULL, &report);
-
-    todo_wine
     ok(hr == S_OK, "got 0x%x and %p (expected S_OK)\n", hr, report);
 
     if (!report) {

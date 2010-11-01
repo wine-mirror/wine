@@ -23,9 +23,43 @@
 #include "windef.h"
 #include "winbase.h"
 #include "werapi.h"
+#include "wine/list.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wer);
+
+typedef struct {
+    struct list entry;
+    WER_REPORT_INFORMATION info;
+    WER_REPORT_TYPE reporttype;
+    WCHAR eventtype[1];
+} report_t;
+
+
+static CRITICAL_SECTION report_table_cs;
+static CRITICAL_SECTION_DEBUG report_table_cs_debug =
+{
+    0, 0, &report_table_cs,
+    { &report_table_cs_debug.ProcessLocksList, &report_table_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": report_table_cs") }
+};
+static CRITICAL_SECTION report_table_cs = { &report_table_cs_debug, -1, 0, 0, 0, 0 };
+
+static struct list report_table = LIST_INIT(report_table);
+
+/***********************************************************************
+ * Memory alloccation helper
+ */
+
+static inline void * __WINE_ALLOC_SIZE(1) heap_alloc_zero(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+}
+
+static inline BOOL heap_free(void *mem)
+{
+    return HeapFree(GetProcessHeap(), 0, mem);
+}
 
 HRESULT WINAPI WerAddExcludedApplication(PCWSTR exeName, BOOL allUsers)
 {
@@ -86,9 +120,29 @@ HRESULT WINAPI WerRemoveExcludedApplication(PCWSTR exeName, BOOL allUsers)
  */
 HRESULT WINAPI WerReportCloseHandle(HREPORT hreport)
 {
-    FIXME("(%p) :stub\n", hreport);
+    report_t * report = (report_t *) hreport;
+    report_t * cursor;
+    BOOL found = FALSE;
 
-    return E_NOTIMPL;
+    TRACE("(%p)\n", hreport);
+    EnterCriticalSection(&report_table_cs);
+    if (report) {
+        LIST_FOR_EACH_ENTRY(cursor, &report_table, report_t, entry)
+        {
+            if (cursor == report) {
+                found = TRUE;
+                list_remove(&report->entry);
+                break;
+            }
+        }
+    }
+    LeaveCriticalSection(&report_table_cs);
+    if (!found)
+        return E_INVALIDARG;
+
+    heap_free(report);
+
+    return S_OK;
 }
 
 /***********************************************************************
@@ -113,8 +167,10 @@ HRESULT WINAPI WerReportCloseHandle(HREPORT hreport)
  */
 HRESULT WINAPI WerReportCreate(PCWSTR eventtype, WER_REPORT_TYPE reporttype, PWER_REPORT_INFORMATION reportinfo, HREPORT *phandle)
 {
+    report_t *report;
+    DWORD len;
 
-    FIXME("(%s, %d, %p, %p) :stub\n", debugstr_w(eventtype), reporttype, reportinfo, phandle);
+    TRACE("(%s, %d, %p, %p)\n", debugstr_w(eventtype), reporttype, reportinfo, phandle);
     if (reportinfo) {
         TRACE(".wzFriendlyEventName: %s\n", debugstr_w(reportinfo->wzFriendlyEventName));
         TRACE(".wzApplicationName: %s\n", debugstr_w(reportinfo->wzApplicationName));
@@ -125,7 +181,28 @@ HRESULT WINAPI WerReportCreate(PCWSTR eventtype, WER_REPORT_TYPE reporttype, PWE
         return E_INVALIDARG;
     }
 
-    return E_NOTIMPL;
+    len = lstrlenW(eventtype) + 1;
+
+    report = heap_alloc_zero(len * sizeof(WCHAR) + sizeof(report_t));
+    if (!report)
+        return __HRESULT_FROM_WIN32(ERROR_OUTOFMEMORY);
+
+    lstrcpyW(report->eventtype, eventtype);
+    report->reporttype = reporttype;
+
+    if (reportinfo) {
+        report->info = *reportinfo;
+    } else {
+        FIXME("build report information from scratch for %p\n", report);
+    }
+
+    EnterCriticalSection(&report_table_cs);
+    list_add_head(&report_table, &report->entry);
+    LeaveCriticalSection(&report_table_cs);
+
+    *phandle = report;
+    TRACE("=> %p\n", report);
+    return S_OK;
 }
 
 /***********************************************************************
