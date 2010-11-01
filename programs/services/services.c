@@ -329,7 +329,7 @@ BOOL validate_service_config(struct service_entry *entry)
         }
         break;
     default:
-        WINE_ERR("Service %s has an unknown service type\n", wine_dbgstr_w(entry->name));
+        WINE_ERR("Service %s has an unknown service type (0x%x)\n", wine_dbgstr_w(entry->name), entry->config.dwServiceType);
         return FALSE;
     }
 
