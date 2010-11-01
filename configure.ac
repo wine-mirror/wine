@@ -1119,6 +1119,8 @@ then
                 [AC_DEFINE(HAVE_XMLREADMEMORY,1,[Define if libxml2 has the xmlReadMemory function])],,$ac_xml_libs)
              AC_CHECK_LIB(xml2, xmlNewDocPI,
                 [AC_DEFINE(HAVE_XMLNEWDOCPI,1,[Define if libxml2 has the xmlNewDocPI function])],,$ac_xml_libs)
+             AC_CHECK_LIB(xml2, xmlSchemaSetValidStructuredErrors,
+                [AC_DEFINE(HAVE_XMLSCHEMASSETVALIDSTRUCTUREDERRORS,1,[Define if libxml2 has the xmlSchemaSetValidStructuredErrors function])],,$ac_xml_libs)
         ])
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
