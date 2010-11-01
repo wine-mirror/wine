@@ -9,6 +9,7 @@ C_SRCS = \
 	bytecodewriter.c \
 	compiler.c \
 	d3dcompiler_43_main.c \
+	reflection.c \
 	utils.c
 
 LEX_SRCS = asmshader.l

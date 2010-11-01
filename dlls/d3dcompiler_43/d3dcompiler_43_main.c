@@ -126,7 +126,23 @@ HRESULT WINAPI D3DStripShader(const void *data, SIZE_T data_size, UINT flags, ID
 
 HRESULT WINAPI D3DReflect(const void *data, SIZE_T data_size, REFIID riid, void **reflector)
 {
+    struct d3dcompiler_shader_reflection *object;
+
     FIXME("data %p, data_size %lu, riid %s, blob %p stub!\n", data, data_size, debugstr_guid(riid), reflector);
 
-    return E_NOTIMPL;
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate D3D compiler shader reflection object memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->vtbl = &d3dcompiler_shader_reflection_vtbl;
+    object->refcount = 1;
+
+    *reflector = (ID3D11ShaderReflection *)object;
+
+    TRACE("Created ID3D11ShaderReflection %p\n", object);
+
+    return S_OK;
 }

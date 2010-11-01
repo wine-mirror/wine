@@ -57,6 +57,14 @@ HRESULT d3dcompiler_blob_init(struct d3dcompiler_blob *blob, SIZE_T data_size) D
 HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, D3D_BLOB_PART part, UINT flags, ID3DBlob **blob) DECLSPEC_HIDDEN;
 HRESULT d3dcompiler_strip_shader(const void *data, SIZE_T data_size, UINT flags, ID3DBlob **blob) DECLSPEC_HIDDEN;
 
+/* ID3D11ShaderReflection */
+extern const struct ID3D11ShaderReflectionVtbl d3dcompiler_shader_reflection_vtbl DECLSPEC_HIDDEN;
+struct d3dcompiler_shader_reflection
+{
+    const struct ID3D11ShaderReflectionVtbl *vtbl;
+    LONG refcount;
+};
+
 /* Shader assembler definitions */
 typedef enum _shader_type {
     ST_VERTEX,
