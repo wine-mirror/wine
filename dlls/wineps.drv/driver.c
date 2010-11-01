@@ -34,7 +34,6 @@
 
 #include "winuser.h"
 #include "wine/wingdi16.h"
-#include "wownt32.h"
 #include "prsht.h"
 #include "psdlg.h"
 
@@ -375,7 +374,7 @@ INT CDECL PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput
     psh.dwSize = sizeof(psh);
     psh.pszCaption = SetupW;
     psh.nPages = 1;
-    psh.hwndParent = HWND_32(hwnd);
+    psh.hwndParent = hwnd;
     psh.u3.phpage = hpsp;
 
     pPropertySheet(&psh);
