@@ -31,9 +31,7 @@ struct vertex
 /* Tells compute_shader_probe* which pixels should be what colors */
 struct hlsl_probe_info
 {
-    /* The x and y coordinate of the point to check.
-       When x < 0, this is the last probe */
-    int x, y;
+    unsigned int x, y;
     /* The expected values in this region */
     D3DXCOLOR c;
     /* The max error for any value */
@@ -215,7 +213,7 @@ static void draw_quad_with_shader9(IDirect3DDevice9 *device, IDirect3DVertexBuff
 }
 
 static void setup_device9(IDirect3DDevice9 *device, IDirect3DSurface9 **render_target,
-        IDirect3DSurface9 **readback, D3DFORMAT format, int width, int height,
+        IDirect3DSurface9 **readback, D3DFORMAT format, unsigned int width, unsigned int height,
         IDirect3DVertexShader9 *vshader, IDirect3DPixelShader9 *pshader)
 {
     HRESULT hr;
@@ -248,7 +246,8 @@ static int colors_match(D3DXCOLOR a, D3DXCOLOR b, float epsilon)
    to see if they are as expected. */
 static void compute_shader_probe9(IDirect3DDevice9 *device, IDirect3DVertexShader9 *vshader,
         IDirect3DPixelShader9 *pshader, IDirect3DVertexBuffer9 *quad_geometry,
-        const struct hlsl_probe_info *probes, int count, int width, int height, int line_number)
+        const struct hlsl_probe_info *probes, unsigned int count,
+        unsigned int width, unsigned int height, unsigned int line_number)
 {
     IDirect3DSurface9 *render_target;
     IDirect3DSurface9 *readback;
@@ -256,7 +255,7 @@ static void compute_shader_probe9(IDirect3DDevice9 *device, IDirect3DVertexShade
     HRESULT hr;
     D3DLOCKED_RECT lr;
     D3DXCOLOR *pbits_data;
-    int i;
+    unsigned int i;
 
     setup_device9(device, &render_target, &readback, D3DFMT_A32B32G32R32F,
             width, height, vshader, pshader);
