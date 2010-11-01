@@ -1034,6 +1034,53 @@ static void test_mru(void)
     ok(ret == TRUE, "RemoveDirectoryA should have succeeded: %d\n", GetLastError());
 }
 
+static UINT_PTR WINAPI test_extension_wndproc(HWND dlg, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    HWND parent = GetParent( dlg);
+    if( msg == WM_NOTIFY) {
+        SetTimer( dlg, 0, 100, 0);
+        PostMessage( parent, WM_COMMAND, IDOK, 0);
+    }
+    if( msg == WM_TIMER) {
+        /* the dialog did not close automatically */
+        KillTimer( dlg, 0);
+        PostMessage( parent, WM_COMMAND, IDCANCEL, 0);
+    }
+    return FALSE;
+}
+
+static void test_extension(void)
+{
+    OPENFILENAME ofn = { sizeof(OPENFILENAME)};
+    char filename[1024] = {0};
+    char curdir[MAX_PATH];
+    char *filename_ptr;
+    const char *test_file_name = "deadbeef";
+    DWORD ret;
+
+    ok(GetCurrentDirectoryA(sizeof(curdir), curdir) != 0, "Failed to get current dir err %d\n", GetLastError());
+
+    /* Ignore .* extension */
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL;
+    ofn.lpstrFile = filename;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.Flags = OFN_EXPLORER | OFN_ENABLEHOOK;
+    ofn.lpstrDefExt = NULL;
+    ofn.lpstrInitialDir = curdir;
+    ofn.lpfnHook = test_extension_wndproc;
+    ofn.nFileExtension = 0;
+    ofn.lpstrFilter = "All Files (*.*)\0*.*\0";
+    strcpy(filename, test_file_name);
+
+    ret = GetSaveFileNameA(&ofn);
+    filename_ptr = ofn.lpstrFile + strlen( ofn.lpstrFile ) - strlen( test_file_name );
+    ok(1 == ret, "expected 1, got %d\n", ret);
+    ok(strlen(ofn.lpstrFile) >= strlen(test_file_name), "Filename %s is too short\n", ofn.lpstrFile );
+    ok( strcmp(filename_ptr, test_file_name) == 0,
+        "Filename is %s, expected %s\n", filename_ptr, test_file_name );
+}
+
 START_TEST(filedlg)
 {
     test_DialogCancel();
@@ -1045,4 +1092,5 @@ START_TEST(filedlg)
     test_getfolderpath();
     test_mru();
     if( resizesupported) test_resizable2();
+    test_extension();
 }
