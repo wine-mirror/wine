@@ -1788,7 +1788,7 @@ static void test_HlinkClone(void)
     hres = IHlink_GetHlinkSite(cloned, &fnd_site, &fnd_data);
     ok(hres == S_OK, "GetHlinkSite failed: %08x\n", hres);
     ok(fnd_site == NULL, "Expected NULL site\n");
-    todo_wine ok(fnd_data == 4, "Expected site data to be 4, was: %d\n", fnd_data);
+    ok(fnd_data == 4, "Expected site data to be 4, was: %d\n", fnd_data);
 
     IHlink_Release(cloned);
     IHlink_Release(hl);

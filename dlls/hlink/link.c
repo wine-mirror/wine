@@ -211,10 +211,11 @@ static HRESULT WINAPI IHlink_fnGetHlinkSite( IHlink* iface,
     TRACE("(%p)->(%p %p)\n", This, ppihlSite, pdwSiteData);
 
     *ppihlSite = This->Site;
-    *pdwSiteData = This->SiteData;
 
-    if (This->Site)
+    if (This->Site) {
         IHlinkSite_AddRef(This->Site);
+        *pdwSiteData = This->SiteData;
+    }
 
     return S_OK;
 }
