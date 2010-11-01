@@ -513,6 +513,17 @@ static void set_focus( Display *display, HWND hwnd, Time time )
 
 
 /**********************************************************************
+ *              handle_manager_message
+ */
+static void handle_manager_message( HWND hwnd, XClientMessageEvent *event )
+{
+    if (hwnd != GetDesktopWindow()) return;
+    if (systray_atom && event->data.l[1] == systray_atom)
+        change_systray_owner( event->display, event->data.l[2] );
+}
+
+
+/**********************************************************************
  *              handle_wm_protocols
  */
 static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
@@ -1428,6 +1439,7 @@ struct client_message_handler
 
 static const struct client_message_handler client_messages[] =
 {
+    { XATOM_MANAGER,      handle_manager_message },
     { XATOM_WM_PROTOCOLS, handle_wm_protocols },
     { XATOM__XEMBED,      handle_xembed_protocol },
     { XATOM_DndProtocol,  handle_dnd_protocol },

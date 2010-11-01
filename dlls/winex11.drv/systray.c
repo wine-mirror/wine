@@ -73,7 +73,7 @@ static BOOL delete_icon( struct tray_icon *icon );
 #define SYSTEM_TRAY_BEGIN_MESSAGE   1
 #define SYSTEM_TRAY_CANCEL_MESSAGE  2
 
-static Atom systray_atom;
+Atom systray_atom = 0;
 
 #define MIN_DISPLAYED 8
 #define ICON_BORDER 2
@@ -427,6 +427,19 @@ static void dock_systray_icon( Display *display, struct tray_icon *icon, Window 
     wine_tsx11_unlock();
 }
 
+/* dock systray windows again with the new owner */
+void change_systray_owner( Display *display, Window systray_window )
+{
+    struct tray_icon *icon;
+
+    ERR( "new owner %lx\n", systray_window );
+    LIST_FOR_EACH_ENTRY( icon, &icon_list, struct tray_icon, entry )
+    {
+        if (icon->display == -1) continue;
+        hide_icon( icon );
+        dock_systray_icon( display, icon, systray_window );
+    }
+}
 
 /* hide a tray icon */
 static BOOL hide_icon( struct tray_icon *icon )
