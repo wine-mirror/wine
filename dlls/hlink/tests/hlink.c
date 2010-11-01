@@ -62,6 +62,9 @@ DEFINE_EXPECT(OnNavigationComplete);
 DEFINE_EXPECT(Enum);
 DEFINE_EXPECT(Reduce);
 
+DEFINE_EXPECT(GetClassID);
+DEFINE_EXPECT(Save);
+
 static const char *debugstr_guid(REFIID riid)
 {
     static char buf[50];
@@ -818,8 +821,9 @@ static ULONG WINAPI Moniker_Release(IMoniker *iface)
 
 static HRESULT WINAPI Moniker_GetClassID(IMoniker *iface, CLSID *pClassID)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(GetClassID);
+    *pClassID = IID_IUnknown; /* not a valid CLSID */
+    return S_OK;
 }
 
 static HRESULT WINAPI Moniker_IsDirty(IMoniker *iface)
@@ -836,8 +840,8 @@ static HRESULT WINAPI Moniker_Load(IMoniker *iface, IStream *pStm)
 
 static HRESULT WINAPI Moniker_Save(IMoniker *iface, IStream *pStm, BOOL fClearDirty)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(Save);
+    return S_OK;
 }
 
 static HRESULT WINAPI Moniker_GetSizeMax(IMoniker *iface, ULARGE_INTEGER *pcbSize)
@@ -1697,6 +1701,124 @@ static void test_HlinkSite(void)
     IHlink_Release(hl);
 }
 
+static void test_HlinkClone(void)
+{
+    HRESULT hres;
+    IHlink *hl, *cloned = NULL;
+    IMoniker *dummy, *fnd_mk;
+    IHlinkSite *fnd_site;
+    WCHAR *fnd_name;
+    DWORD fnd_data;
+    const WCHAR one[] = {'1',0};
+    const WCHAR two[] = {'2',0};
+    const WCHAR name[] = {'a',0};
+
+    hres = HlinkClone(NULL, NULL, NULL, 0, NULL);
+    ok(hres == E_INVALIDARG, "Got wrong failure code: %08x\n", hres);
+
+    hres = HlinkCreateFromString(NULL, NULL, NULL, NULL, 0, NULL,
+            &IID_IHlink, (void**)&hl);
+    ok(hres == S_OK, "HlinkCreateFromString failed: %08x\n", hres);
+
+    hres = HlinkClone(hl, &IID_IHlink, NULL, 0, NULL);
+    ok(hres == E_INVALIDARG, "Got wrong failure code: %08x\n", hres);
+
+    if(0){ /* crash on Windows XP */
+        hres = HlinkClone(hl, NULL, NULL, 0, NULL);
+        ok(hres == E_INVALIDARG, "Got wrong failure code: %08x\n", hres);
+
+        hres = HlinkClone(hl, NULL, NULL, 0, (void**)&cloned);
+        ok(hres == E_INVALIDARG, "Got wrong failure code: %08x\n", hres);
+    }
+
+    hres = HlinkClone(hl, &IID_IHlink, NULL, 0, (void**)&cloned);
+    ok(hres == S_OK, "HlinkClone failed: %08x\n", hres);
+    ok(cloned != NULL, "Didn't get a clone\n");
+    getMonikerRef(cloned, NULL, NULL);
+    IHlink_Release(cloned);
+
+    IHlink_Release(hl);
+
+    SET_EXPECT(Reduce);
+    SET_EXPECT(Enum);
+    hres = HlinkCreateFromMoniker(&hls_ref_Moniker, two, NULL, NULL, 0, NULL, &IID_IHlink, (void**)&hl);
+    todo_wine CHECK_CALLED(Reduce);
+    todo_wine CHECK_CALLED(Enum);
+    ok(hres == S_OK, "HlinkCreateFromMoniker failed: 0x%08x\n", hres);
+    getMonikerRef(hl, &hls_ref_Moniker, two);
+
+    SET_EXPECT(Save);
+    SET_EXPECT(GetClassID);
+    cloned = (IHlink*)0xdeadbeef;
+    hres = HlinkClone(hl, &IID_IHlink, NULL, 0, (void**)&cloned);
+    /* fails because of invalid CLSID given by Moniker_GetClassID */
+    ok(hres == REGDB_E_CLASSNOTREG, "Wrong error code: %08x\n", hres);
+    ok(cloned == NULL, "Shouldn't have gotten a clone\n");
+    CHECK_CALLED(Save);
+    CHECK_CALLED(GetClassID);
+
+    IHlink_Release(hl);
+
+    hres = CreateItemMoniker(one, one, &dummy);
+    ok(hres == S_OK, "CreateItemMoniker failed: 0x%08x\n", hres);
+
+    hres = HlinkCreateFromMoniker(dummy, two, name, &HlinkSite, 17, NULL, &IID_IHlink, (void**)&hl);
+    ok(hres == S_OK, "HlinkCreateFromMoniker failed: 0x%08x\n", hres);
+    getMonikerRef(hl, dummy, two);
+
+    cloned = NULL;
+    hres = HlinkClone(hl, &IID_IHlink, NULL, 0, (void**)&cloned);
+    ok(hres == S_OK, "HlinkClone failed: %08x\n", hres);
+    ok(cloned != NULL, "Should have gotten a clone\n");
+
+    fnd_mk = getMonikerRef(cloned, (IMoniker*)0xFFFFFFFF, two);
+    ok(fnd_mk != NULL, "Expected non-null Moniker\n");
+    ok(fnd_mk != dummy, "Expected a new Moniker to be created\n");
+
+    fnd_name = NULL;
+    hres = IHlink_GetFriendlyName(cloned, HLFNAMEF_DEFAULT, &fnd_name);
+    ok(hres == S_OK, "GetFriendlyName failed: %08x\n", hres);
+    ok(fnd_name != NULL, "Expected friendly name to be non-NULL\n");
+    ok(lstrcmpW(fnd_name, name) == 0, "Expected friendly name to be %s, was %s\n",
+            wine_dbgstr_w(name), wine_dbgstr_w(fnd_name));
+    CoTaskMemFree(fnd_name);
+
+    fnd_site = (IHlinkSite*)0xdeadbeef;
+    fnd_data = 4;
+    hres = IHlink_GetHlinkSite(cloned, &fnd_site, &fnd_data);
+    ok(hres == S_OK, "GetHlinkSite failed: %08x\n", hres);
+    ok(fnd_site == NULL, "Expected NULL site\n");
+    todo_wine ok(fnd_data == 4, "Expected site data to be 4, was: %d\n", fnd_data);
+
+    IHlink_Release(cloned);
+    IHlink_Release(hl);
+
+    hres = HlinkCreateFromMoniker(dummy, NULL, NULL, NULL, 0, NULL, &IID_IHlink, (void**)&hl);
+    ok(hres == S_OK, "HlinkCreateFromMoniker failed: 0x%08x\n", hres);
+    getMonikerRef(hl, dummy, NULL);
+
+    cloned = NULL;
+    hres = HlinkClone(hl, &IID_IHlink, &HlinkSite, 17, (void**)&cloned);
+    ok(hres == S_OK, "HlinkClone failed: %08x\n", hres);
+    ok(cloned != NULL, "Should have gotten a clone\n");
+
+    fnd_mk = getMonikerRef(cloned, (IMoniker*)0xFFFFFFFF, NULL);
+    ok(fnd_mk != NULL, "Expected non-null Moniker\n");
+    ok(fnd_mk != dummy, "Expected a new Moniker to be created\n");
+
+    fnd_site = (IHlinkSite*)0xdeadbeef;
+    fnd_data = 4;
+    hres = IHlink_GetHlinkSite(cloned, &fnd_site, &fnd_data);
+    ok(hres == S_OK, "GetHlinkSite failed: %08x\n", hres);
+    ok(fnd_site == &HlinkSite, "Expected found site to be HlinkSite, was: %p\n", fnd_site);
+    ok(fnd_data == 17, "Expected site data to be 17, was: %d\n", fnd_data);
+
+    IHlink_Release(cloned);
+    IHlink_Release(hl);
+
+    IMoniker_Release(dummy);
+}
+
 START_TEST(hlink)
 {
     CoInitialize(NULL);
@@ -1713,6 +1835,7 @@ START_TEST(hlink)
     test_HlinkMoniker();
     test_HashLink();
     test_HlinkSite();
+    test_HlinkClone();
 
     CoUninitialize();
 }
