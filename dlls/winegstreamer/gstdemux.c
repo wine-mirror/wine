@@ -1387,7 +1387,7 @@ static const IPinVtbl GST_OutputPin_Vtbl = {
     BaseOutputPinImpl_EndOfStream,
     BaseOutputPinImpl_BeginFlush,
     BaseOutputPinImpl_EndFlush,
-    BaseOutputPinImpl_NewSegment
+    BasePinImpl_NewSegment
 };
 
 static const BasePinFuncTable output_BaseFuncTable = {
@@ -1580,6 +1580,7 @@ static HRESULT WINAPI GSTInPin_NewSegment(IPin *iface, REFERENCE_TIME tStart, RE
     GSTInPin *pin = (GSTInPin*)iface;
     GSTImpl *This = (GSTImpl*)pin->pin.pinInfo.pFilter;
 
+    BasePinImpl_NewSegment(iface, tStart, tStop, dRate);
     FIXME("Propagate message on %p\n", This);
     return S_OK;
 }

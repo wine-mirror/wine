@@ -34,6 +34,9 @@ typedef struct BasePin
 	PIN_INFO pinInfo;
 	IPin * pConnectedTo;
 	AM_MEDIA_TYPE mtCurrent;
+	REFERENCE_TIME tStart;
+	REFERENCE_TIME tStop;
+	double dRate;
 
 	const struct BasePinFuncTable* pFuncsTable;
 } BasePin;
@@ -81,9 +84,6 @@ typedef struct BaseInputPin
 
 	const IMemInputPinVtbl * lpVtblMemInput;
 	IMemAllocator * pAllocator;
-	REFERENCE_TIME tStart;
-	REFERENCE_TIME tStop;
-	double dRate;
 	BOOL flushing, end_of_stream;
 	IMemAllocator *preferred_allocator;
 
@@ -110,6 +110,7 @@ HRESULT WINAPI BasePinImpl_QueryId(IPin * iface, LPWSTR * Id);
 HRESULT WINAPI BasePinImpl_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt);
 HRESULT WINAPI BasePinImpl_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum);
 HRESULT WINAPI BasePinImpl_QueryInternalConnections(IPin * iface, IPin ** apPin, ULONG * cPin);
+HRESULT WINAPI BasePinImpl_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
 
 /* Base Output Pin */
 HRESULT WINAPI BaseOutputPinImpl_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv);
@@ -120,7 +121,6 @@ HRESULT WINAPI BaseOutputPinImpl_Disconnect(IPin * iface);
 HRESULT WINAPI BaseOutputPinImpl_EndOfStream(IPin * iface);
 HRESULT WINAPI BaseOutputPinImpl_BeginFlush(IPin * iface);
 HRESULT WINAPI BaseOutputPinImpl_EndFlush(IPin * iface);
-HRESULT WINAPI BaseOutputPinImpl_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
 
 HRESULT WINAPI BaseOutputPinImpl_GetDeliveryBuffer(BaseOutputPin * This, IMediaSample ** ppSample, REFERENCE_TIME * tStart, REFERENCE_TIME * tStop, DWORD dwFlags);
 HRESULT WINAPI BaseOutputPinImpl_Deliver(BaseOutputPin * This, IMediaSample * pSample);

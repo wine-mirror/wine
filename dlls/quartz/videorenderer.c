@@ -455,7 +455,7 @@ static HRESULT WINAPI VideoRenderer_Receive(BaseInputPin* pin, IMediaSample * pS
         IReferenceClock_GetTime(This->filter.pClock, &time);
 
         trefstart = This->filter.rtStreamStart;
-        trefstop = (REFERENCE_TIME)((double)(tStop - tStart) / This->pInputPin->dRate) + This->filter.rtStreamStart;
+        trefstop = (REFERENCE_TIME)((double)(tStop - tStart) / This->pInputPin->pin.dRate) + This->filter.rtStreamStart;
         delta = (LONG)((trefstart-time)/10000);
         This->filter.rtStreamStart = trefstop;
         This->rtLastStop = tStop;

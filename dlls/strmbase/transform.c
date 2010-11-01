@@ -545,5 +545,5 @@ static const IPinVtbl TransformFilter_OutputPin_Vtbl =
     BaseOutputPinImpl_EndOfStream,
     BaseOutputPinImpl_BeginFlush,
     BaseOutputPinImpl_EndFlush,
-    BaseOutputPinImpl_NewSegment
+    BasePinImpl_NewSegment
 };

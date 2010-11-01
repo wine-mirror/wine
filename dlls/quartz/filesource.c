@@ -779,7 +779,7 @@ static const IPinVtbl FileAsyncReaderPin_Vtbl =
     BaseOutputPinImpl_EndOfStream,
     BaseOutputPinImpl_BeginFlush,
     BaseOutputPinImpl_EndFlush,
-    BaseOutputPinImpl_NewSegment
+    BasePinImpl_NewSegment
 };
 
 /* Function called as a helper to IPin_Connect */

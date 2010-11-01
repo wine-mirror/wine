@@ -332,6 +332,19 @@ HRESULT WINAPI BasePinImpl_QueryInternalConnections(IPin * iface, IPin ** apPin,
     return E_NOTIMPL; /* to tell caller that all input pins connected to all output pins */
 }
 
+HRESULT WINAPI BasePinImpl_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
+{
+    BasePin *This = (BasePin *)iface;
+
+    TRACE("(%x%08x, %x%08x, %e)\n", (ULONG)(tStart >> 32), (ULONG)tStart, (ULONG)(tStop >> 32), (ULONG)tStop, dRate);
+
+    This->tStart = tStart;
+    This->tStop = tStop;
+    This->dRate = dRate;
+
+    return S_OK;
+}
+
 /*** OutputPin implementation ***/
 
 HRESULT WINAPI BaseOutputPinImpl_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
@@ -522,15 +535,6 @@ HRESULT WINAPI BaseOutputPinImpl_EndFlush(IPin * iface)
     return E_UNEXPECTED;
 }
 
-HRESULT WINAPI BaseOutputPinImpl_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
-{
-    TRACE("(%p)->(%x%08x, %x%08x, %e)\n", iface, (ULONG)(tStart >> 32), (ULONG)tStart, (ULONG)(tStop >> 32), (ULONG)tStop, dRate);
-
-    /* not supposed to do anything in an output pin */
-
-    return E_UNEXPECTED;
-}
-
 static const IPinVtbl OutputPin_Vtbl =
 {
     BaseOutputPinImpl_QueryInterface,
@@ -550,7 +554,7 @@ static const IPinVtbl OutputPin_Vtbl =
     BaseOutputPinImpl_EndOfStream,
     BaseOutputPinImpl_BeginFlush,
     BaseOutputPinImpl_EndFlush,
-    BaseOutputPinImpl_NewSegment
+    BasePinImpl_NewSegment
 };
 
 HRESULT WINAPI BaseOutputPinImpl_GetDeliveryBuffer(BaseOutputPin *This, IMediaSample ** ppSample, REFERENCE_TIME * tStart, REFERENCE_TIME * tStop, DWORD dwFlags)
@@ -813,6 +817,9 @@ static HRESULT OutputPin_Init(const IPinVtbl *OutputPin_Vtbl, const PIN_INFO * p
     pPinImpl->pin.refCount = 1;
     pPinImpl->pin.pConnectedTo = NULL;
     pPinImpl->pin.pCritSec = pCritSec;
+    pPinImpl->pin.tStart = 0;
+    pPinImpl->pin.tStop = 0;
+    pPinImpl->pin.dRate = 1.0;
     Copy_PinInfo(&pPinImpl->pin.pinInfo, pPinInfo);
     pPinImpl->pin.pFuncsTable = pBaseFuncsTable;
     ZeroMemory(&pPinImpl->pin.mtCurrent, sizeof(AM_MEDIA_TYPE));
@@ -1048,9 +1055,9 @@ HRESULT WINAPI BaseInputPinImpl_NewSegment(IPin * iface, REFERENCE_TIME tStart, 
 
     TRACE("(%x%08x, %x%08x, %e)\n", (ULONG)(tStart >> 32), (ULONG)tStart, (ULONG)(tStop >> 32), (ULONG)tStop, dRate);
 
-    args.tStart = This->tStart = tStart;
-    args.tStop = This->tStop = tStop;
-    args.rate = This->dRate = dRate;
+    args.tStart = This->pin.tStart = tStart;
+    args.tStop = This->pin.tStop = tStop;
+    args.rate = This->pin.dRate = dRate;
 
     return SendFurther( iface, deliver_newsegment, &args, NULL );
 }
@@ -1218,6 +1225,9 @@ static HRESULT InputPin_Init(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPi
     pPinImpl->pin.refCount = 1;
     pPinImpl->pin.pConnectedTo = NULL;
     pPinImpl->pin.pCritSec = pCritSec;
+    pPinImpl->pin.tStart = 0;
+    pPinImpl->pin.tStop = 0;
+    pPinImpl->pin.dRate = 1.0;
     Copy_PinInfo(&pPinImpl->pin.pinInfo, pPinInfo);
     ZeroMemory(&pPinImpl->pin.mtCurrent, sizeof(AM_MEDIA_TYPE));
     pPinImpl->pin.pFuncsTable = pBaseFuncsTable;
@@ -1227,9 +1237,6 @@ static HRESULT InputPin_Init(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPi
     pPinImpl->pAllocator = pPinImpl->preferred_allocator = allocator;
     if (pPinImpl->preferred_allocator)
         IMemAllocator_AddRef(pPinImpl->preferred_allocator);
-    pPinImpl->tStart = 0;
-    pPinImpl->tStop = 0;
-    pPinImpl->dRate = 1.0;
     pPinImpl->pin.lpVtbl = InputPin_Vtbl;
     pPinImpl->lpVtblMemInput = &MemInputPin_Vtbl;
     pPinImpl->flushing = pPinImpl->end_of_stream = 0;

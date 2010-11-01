@@ -792,15 +792,6 @@ VfwPin_QueryInternalConnections(IPin * iface, IPin ** apPin, ULONG * cPin)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI
-VfwPin_NewSegment(IPin * iface, REFERENCE_TIME tStart,
-                  REFERENCE_TIME tStop, double dRate)
-{
-    TRACE("(%p)->(%s, %s, %e)\n", iface, wine_dbgstr_longlong(tStart),
-           wine_dbgstr_longlong(tStop), dRate);
-    return E_UNEXPECTED;
-}
-
 static const IPinVtbl VfwPin_Vtbl =
 {
     VfwPin_QueryInterface,
@@ -820,5 +811,5 @@ static const IPinVtbl VfwPin_Vtbl =
     BaseOutputPinImpl_EndOfStream,
     BaseOutputPinImpl_BeginFlush,
     BaseOutputPinImpl_EndFlush,
-    VfwPin_NewSegment
+    BasePinImpl_NewSegment
 };

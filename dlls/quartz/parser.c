@@ -701,7 +701,7 @@ static const IPinVtbl Parser_OutputPin_Vtbl =
     BaseOutputPinImpl_EndOfStream,
     BaseOutputPinImpl_BeginFlush,
     BaseOutputPinImpl_EndFlush,
-    BaseOutputPinImpl_NewSegment
+    BasePinImpl_NewSegment
 };
 
 static HRESULT WINAPI Parser_PullPin_Disconnect(IPin * iface)
