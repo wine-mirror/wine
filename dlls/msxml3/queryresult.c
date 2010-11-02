@@ -377,24 +377,10 @@ static dispex_static_data_t queryresult_dispex = {
     queryresult_iface_tids
 };
 
-void XSLPattern_invalid(xmlXPathParserContextPtr pctx, int nargs)
-{
-    xmlXPathObjectPtr obj;
-    for (; nargs > 0; --nargs)
-    {
-        obj = valuePop(pctx);
-        xmlXPathFreeObject(obj);
-    }
-
-    obj = xmlMalloc(sizeof(xmlXPathObject));
-    obj->type = XPATH_UNDEFINED;
-    valuePush(pctx,obj);
-}
-
 #define XSLPATTERN_CHECK_ARGS(n) \
     if (nargs != n) { \
         FIXME("XSLPattern syntax error: Expected %i arguments, got %i\n", n, nargs); \
-        XSLPattern_invalid(pctx, nargs); \
+        xmlXPathSetArityError(pctx); \
         return; \
     }
 
@@ -404,7 +390,7 @@ void XSLPattern_index(xmlXPathParserContextPtr pctx, int nargs)
     XSLPATTERN_CHECK_ARGS(0);
 
     xmlXPathPositionFunction(pctx, 0);
-    valuePush(pctx, xmlXPathNewFloat(xmlXPathPopNumber(pctx) - 1.0));
+    xmlXPathReturnNumber(pctx, xmlXPathPopNumber(pctx) - 1.0);
 }
 
 void XSLPattern_end(xmlXPathParserContextPtr pctx, int nargs)
@@ -416,7 +402,7 @@ void XSLPattern_end(xmlXPathParserContextPtr pctx, int nargs)
     pos = xmlXPathPopNumber(pctx);
     xmlXPathLastFunction(pctx, 0);
     last = xmlXPathPopNumber(pctx);
-    valuePush(pctx, xmlXPathNewBoolean(pos == last));
+    xmlXPathReturnBoolean(pctx, pos == last);
 }
 
 void XSLPattern_OP_IEq(xmlXPathParserContextPtr pctx, int nargs)
@@ -426,7 +412,7 @@ void XSLPattern_OP_IEq(xmlXPathParserContextPtr pctx, int nargs)
 
     arg2 = xmlXPathPopString(pctx);
     arg1 = xmlXPathPopString(pctx);
-    valuePush(pctx, xmlXPathNewBoolean(xmlStrcasecmp(arg1, arg2) == 0));
+    xmlXPathReturnBoolean(pctx, xmlStrcasecmp(arg1, arg2) == 0);
     xmlFree(arg1);
     xmlFree(arg2);
 }
@@ -438,7 +424,7 @@ void XSLPattern_OP_INEq(xmlXPathParserContextPtr pctx, int nargs)
 
     arg2 = xmlXPathPopString(pctx);
     arg1 = xmlXPathPopString(pctx);
-    valuePush(pctx, xmlXPathNewBoolean(xmlStrcasecmp(arg1, arg2) != 0));
+    xmlXPathReturnBoolean(pctx, xmlStrcasecmp(arg1, arg2) != 0);
     xmlFree(arg1);
     xmlFree(arg2);
 }
@@ -450,7 +436,7 @@ void XSLPattern_OP_ILt(xmlXPathParserContextPtr pctx, int nargs)
 
     arg2 = xmlXPathPopString(pctx);
     arg1 = xmlXPathPopString(pctx);
-    valuePush(pctx, xmlXPathNewBoolean(xmlStrcasecmp(arg1, arg2) < 0));
+    xmlXPathReturnBoolean(pctx, xmlStrcasecmp(arg1, arg2) < 0);
     xmlFree(arg1);
     xmlFree(arg2);
 }
@@ -462,7 +448,7 @@ void XSLPattern_OP_ILEq(xmlXPathParserContextPtr pctx, int nargs)
 
     arg2 = xmlXPathPopString(pctx);
     arg1 = xmlXPathPopString(pctx);
-    valuePush(pctx, xmlXPathNewBoolean(xmlStrcasecmp(arg1, arg2) <= 0));
+    xmlXPathReturnBoolean(pctx, xmlStrcasecmp(arg1, arg2) <= 0);
     xmlFree(arg1);
     xmlFree(arg2);
 }
@@ -474,7 +460,7 @@ void XSLPattern_OP_IGt(xmlXPathParserContextPtr pctx, int nargs)
 
     arg2 = xmlXPathPopString(pctx);
     arg1 = xmlXPathPopString(pctx);
-    valuePush(pctx, xmlXPathNewBoolean(xmlStrcasecmp(arg1, arg2) > 0));
+    xmlXPathReturnBoolean(pctx, xmlStrcasecmp(arg1, arg2) > 0);
     xmlFree(arg1);
     xmlFree(arg2);
 }
@@ -486,7 +472,7 @@ void XSLPattern_OP_IGEq(xmlXPathParserContextPtr pctx, int nargs)
 
     arg2 = xmlXPathPopString(pctx);
     arg1 = xmlXPathPopString(pctx);
-    valuePush(pctx, xmlXPathNewBoolean(xmlStrcasecmp(arg1, arg2) >= 0));
+    xmlXPathReturnBoolean(pctx, xmlStrcasecmp(arg1, arg2) >= 0);
     xmlFree(arg1);
     xmlFree(arg2);
 }
