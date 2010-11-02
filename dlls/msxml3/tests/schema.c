@@ -383,15 +383,15 @@ static void test_collection_refs(void)
 
     length = -1;
     ole_check(IXMLDOMSchemaCollection_get_length(cache1, &length));
-    ok(length == 1, "expected length 1, got %i", length);
+    ok(length == 1, "expected length 1, got %i\n", length);
 
     length = -1;
     ole_check(IXMLDOMSchemaCollection_get_length(cache2, &length));
-    ok(length == 2, "expected length 2, got %i", length);
+    ok(length == 2, "expected length 2, got %i\n", length);
 
     length = -1;
     ole_check(IXMLDOMSchemaCollection_get_length(cache3, &length));
-    ok(length == 3, "expected length 3, got %i", length);
+    ok(length == 3, "expected length 3, got %i\n", length);
 
 
     /* merging collections does not affect the ref count */
