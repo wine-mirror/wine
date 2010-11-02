@@ -869,7 +869,7 @@
 @ cdecl _putch(long) msvcrt._putch
 @ stub _putch_nolock
 @ cdecl _putenv(str) msvcrt._putenv
-@ stub _putenv_s
+@ cdecl _putenv_s(str str) msvcrt._putenv_s
 @ cdecl _putw(long ptr) msvcrt._putw
 @ stub _putwch
 @ stub _putwch_nolock
@@ -1211,7 +1211,7 @@
 @ stub _wprintf_p_l
 @ stub _wprintf_s_l
 @ cdecl _wputenv(wstr) msvcrt._wputenv
-@ stub _wputenv_s
+@ cdecl _wputenv_s(wstr wstr) msvcrt._wputenv_s
 @ cdecl _wremove(wstr) msvcrt._wremove
 @ cdecl _wrename(wstr wstr) msvcrt._wrename
 @ cdecl _write(long ptr long) msvcrt._write

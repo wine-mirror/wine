@@ -817,7 +817,7 @@
 @ cdecl _purecall()
 @ cdecl _putch(long)
 @ cdecl _putenv(str)
-# stub _putenv_s
+@ cdecl _putenv_s(str str)
 @ cdecl _putw(long ptr) MSVCRT__putw
 # stub _putwch
 @ cdecl _putws(wstr)
@@ -1146,7 +1146,7 @@
 # stub _wprintf_p_l
 # stub _wprintf_s_l
 @ cdecl _wputenv(wstr)
-# stub _wputenv_s
+@ cdecl _wputenv_s(wstr wstr)
 @ cdecl _wremove(wstr)
 @ cdecl _wrename(wstr wstr)
 @ cdecl _write(long ptr long) MSVCRT__write
