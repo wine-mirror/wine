@@ -696,7 +696,7 @@ HRESULT create_IGameStatistics(GameStatisticsImpl** ppStats)
     (*ppStats)->lpVtbl = &GameStatisticsImplVtbl;
     (*ppStats)->ref = 1;
 
-    TRACE("returing coclass: %p\n", *ppStats);
+    TRACE("returning coclass: %p\n", *ppStats);
     return S_OK;
 }
 

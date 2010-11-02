@@ -476,7 +476,7 @@ static void test_length(void)
 
     ole_expect(IXMLDOMSchemaCollection_get_length(cache, NULL), E_POINTER);
 
-    /* MSDN lies; removing a non-existant entry produces no error */
+    /* MSDN lies; removing a nonexistent entry produces no error */
     ole_check(IXMLDOMSchemaCollection_remove(cache, NULL));
     ole_check(IXMLDOMSchemaCollection_remove(cache, _bstr_(xdr_schema1_uri)));
 

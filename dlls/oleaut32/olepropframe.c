@@ -2,7 +2,7 @@
  * Copyright 1999 Corel Corporation
  * Sean Langley
  * Copyright 2010  Geoffrey Hausheer
- * Copyright 2010 Piotr Caban for Codeweavers
+ * Copyright 2010 Piotr Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

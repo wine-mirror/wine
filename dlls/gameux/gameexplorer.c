@@ -381,7 +381,7 @@ static HRESULT GAMEUX_ParseGameDefinition(
 /*******************************************************************************
  * GAMEUX_ParseGDFBinary
  *
- * Helper funtion, loads given binary and parses embed GDF if there's any.
+ * Helper function, loads given binary and parses embed GDF if there's any.
  *
  * Parameters:
  *  GameData                [I/O]   Structure with game's data. Content of field
@@ -534,7 +534,7 @@ HRESULT WINAPI GAMEUX_RegisterGame(LPCWSTR sGDFBinaryPath,
         hr = GAMEUX_WriteRegistryRecord(&GameData);
 
     GAMEUX_uninitGameData(&GameData);
-    TRACE("returing 0x%08x\n", hr);
+    TRACE("returning 0x%08x\n", hr);
     return hr;
 }
 /*******************************************************************************
@@ -574,7 +574,7 @@ static HRESULT GAMEUX_IsGameKeyExist(GAME_INSTALL_SCOPE installScope,
         RegCloseKey(hKey);
     else
     {
-        /* if key does not exist or other error occured, do not return the path */
+        /* if the key does not exist or another error occurred, do not return the path */
         HeapFree(GetProcessHeap(), 0, *lpRegistryPath);
         *lpRegistryPath = NULL;
     }

@@ -414,7 +414,7 @@ static HRESULT _LoadRegistryString(HKEY hRootKey,
 /*******************************************************************************
  * _findGameInstanceId
  *
- * Helper funtion. Searches for instance identifier of given game in given
+ * Helper function. Searches for instance identifier of given game in given
  * installation scope.
  *
  * Parameters:
@@ -638,7 +638,7 @@ static void test_install_uninstall_game(void)
 
         hr = IGameExplorer2_InstallGame(ge2, sExeName, sExePath, GIS_CURRENT_USER);
         ok(SUCCEEDED(hr), "IGameExplorer2::InstallGame failed (error 0x%08x)\n", hr);
-        /* in comparision to AddGame, InstallGame does not return instance ID,
+        /* in comparison to AddGame, InstallGame does not return instance ID,
          * so we need to find it manually */
         _findGameInstanceId(__LINE__, sExeName, GIS_CURRENT_USER, &guid);
 

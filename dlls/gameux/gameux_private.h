@@ -89,7 +89,7 @@ HRESULT WINAPI GAMEUX_RegisterGame(LPCWSTR sGDFBinaryPath,
 /*******************************************************************************
  * GAMEUX_FindGameInstanceId
  *
- * Helper funtion. Searches for instance identifier of given game in given
+ * Helper function. Searches for instance identifier of given game in given
  * installation scope. Implemented in gameexplorer.c
  *
  * Parameters:

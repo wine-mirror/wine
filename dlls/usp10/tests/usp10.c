@@ -1421,7 +1421,7 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
             }
         }
 
-        /* Check beyond the leading boundry of the whole string */
+        /* Check beyond the leading boundary of the whole string */
         if (rtl[0])
         {
             /* having a leading rtl character seems to confuse usp */
@@ -1445,7 +1445,7 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
                                        iTrailing);
         }
 
-        /* Check beyond the end boundry of the whole string */
+        /* Check beyond the end boundary of the whole string */
         if (rtl[String_len-1])
             hr = ScriptStringCPtoX(ssa, String_len-1, FALSE, &X);
         else

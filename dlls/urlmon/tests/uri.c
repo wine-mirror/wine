@@ -3918,7 +3918,7 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
-    /* Dot segements aren't removed. */
+    /* Dot segments aren't removed. */
     {   "file://c:\\dir\\../..\\./index.html", Uri_CREATE_FILE_USE_DOS_PATH, S_OK, FALSE,
         Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH
         |Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE

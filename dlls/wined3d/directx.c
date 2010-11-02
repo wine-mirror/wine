@@ -997,9 +997,9 @@ static const struct driver_version_information driver_version_table[] =
 {
     /* ATI
      * - Radeon HD2x00 (R600) and up supported by current drivers.
-     * - Radeon 9500 (R300) - X1*00 (R5xx) supported upto Catalyst 9.3 (Linux) and 10.2 (XP/Vista/Win7)
-     * - Radeon 7xxx (R100) - 9250 (RV250) supported upto Catalyst 6.11 (XP)
-     * - Rage 128 supported upto XP, latest official build 6.13.3279 dated October 2001 */
+     * - Radeon 9500 (R300) - X1*00 (R5xx) supported up to Catalyst 9.3 (Linux) and 10.2 (XP/Vista/Win7)
+     * - Radeon 7xxx (R100) - 9250 (RV250) supported up to Catalyst 6.11 (XP)
+     * - Rage 128 supported up to XP, latest official build 6.13.3279 dated October 2001 */
     {DRIVER_ATI_RAGE_128PRO,    DRIVER_MODEL_NT5X,  "ati2dvaa.dll", 13, 3279,  0},
     {DRIVER_ATI_R100,           DRIVER_MODEL_NT5X,  "ati2dvag.dll", 14, 10, 6614},
     {DRIVER_ATI_R300,           DRIVER_MODEL_NT5X,  "ati2dvag.dll", 14, 10, 6764},
