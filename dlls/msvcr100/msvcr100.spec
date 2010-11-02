@@ -581,7 +581,7 @@
 @ extern _dstbias msvcrt._dstbias
 @ cdecl _dup(long) msvcrt._dup
 @ cdecl _dup2(long long) msvcrt._dup2
-@ stub _dupenv_s
+@ cdecl _dupenv_s(ptr ptr str) msvcrt._dupenv_s
 @ cdecl _ecvt(double long ptr ptr) msvcrt._ecvt
 @ stub _ecvt_s
 @ cdecl _encoded_null() msvcr90._encoded_null
@@ -1327,7 +1327,7 @@
 @ stub _wctomb_l
 @ stub _wctomb_s_l
 @ stub _wctype
-@ stub _wdupenv_s
+@ cdecl _wdupenv_s(ptr ptr wstr) msvcrt._wdupenv_s
 @ extern _wenviron msvcrt._wenviron
 @ varargs _wexecl(wstr wstr) msvcrt._wexecl
 @ varargs _wexecle(wstr wstr) msvcrt._wexecle

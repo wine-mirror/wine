@@ -212,3 +212,52 @@ int CDECL _wputenv_s(const MSVCRT_wchar_t *name, const MSVCRT_wchar_t *value)
 
     return ret;
 }
+
+/******************************************************************
+ *		_dupenv_s (MSVCRT.@)
+ */
+int _dupenv_s(char **buffer, MSVCRT_size_t *numberOfElements, const char *varname)
+{
+    char*               e;
+    MSVCRT_size_t       sz;
+
+    if (!MSVCRT_CHECK_PMT(buffer != NULL) || !MSVCRT_CHECK_PMT(varname) ||
+        !(e = MSVCRT_getenv(varname)))
+    {
+        return *MSVCRT__errno() = MSVCRT_EINVAL;
+    }
+    sz = strlen(e) + 1;
+    if (!(*buffer = MSVCRT_malloc(sz)))
+    {
+        if (numberOfElements) *numberOfElements = 0;
+        return *MSVCRT__errno() = MSVCRT_ENOMEM;
+    }
+    strcpy(*buffer, e);
+    if (numberOfElements) *numberOfElements = sz;
+    return 0;
+}
+
+/******************************************************************
+ *		_wdupenv_s (MSVCRT.@)
+ */
+int _wdupenv_s(MSVCRT_wchar_t **buffer, MSVCRT_size_t *numberOfElements,
+               const MSVCRT_wchar_t *varname)
+{
+    MSVCRT_wchar_t*     e;
+    MSVCRT_size_t       sz;
+
+    if (!MSVCRT_CHECK_PMT(buffer != NULL) || !MSVCRT_CHECK_PMT(varname) ||
+        !(e = _wgetenv(varname)))
+    {
+        return *MSVCRT__errno() = MSVCRT_EINVAL;
+    }
+    sz = strlenW(e) + 1;
+    if (!(*buffer = MSVCRT_malloc(sz * sizeof(MSVCRT_wchar_t))))
+    {
+        if (numberOfElements) *numberOfElements = 0;
+        return *MSVCRT__errno() = MSVCRT_ENOMEM;
+    }
+    strcpyW(*buffer, e);
+    if (numberOfElements) *numberOfElements = sz;
+    return 0;
+}
