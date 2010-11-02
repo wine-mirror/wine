@@ -1565,7 +1565,7 @@ static NTSTATUS WS2_async_accept( void *arg, IO_STATUS_BLOCK *iosb, NTSTATUS sta
 
         if (status == STATUS_INVALID_HANDLE)
         {
-            FIXME("AcceptEx accepting socket closed but request was not cancelled");
+            FIXME("AcceptEx accepting socket closed but request was not cancelled\n");
             status = STATUS_CANCELLED;
         }
     }
