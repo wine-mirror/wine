@@ -6702,6 +6702,36 @@ static void test_XSLPattern(void)
             expect_list_and_release(list, "P1.E3.E3.D1 C2.E3.E3.D1 T3.E3.E3.D1 E4.E3.E3.D1 E5.E3.E3.D1 E6.E3.E3.D1");
     }
 
+    /* nodeType() */
+    /* XML_ELEMENT_NODE */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//x/node()[nodeType()=1]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E4.E3.E3.D1 E5.E3.E3.D1 E6.E3.E3.D1");
+    /* XML_TEXT_NODE */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//x/node()[nodeType()=3]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "T3.E3.E3.D1");
+    /* XML_PI_NODE */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//x/node()[nodeType()=7]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "P1.E3.E3.D1");
+    /* XML_COMMENT_NODE */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//x/node()[nodeType()=8]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "C2.E3.E3.D1");
+
     /* pi() */
     todo_wine ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("pi()"), &list));
     if (list)

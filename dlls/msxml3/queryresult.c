@@ -405,6 +405,12 @@ void XSLPattern_end(xmlXPathParserContextPtr pctx, int nargs)
     xmlXPathReturnBoolean(pctx, pos == last);
 }
 
+void XSLPattern_nodeType(xmlXPathParserContextPtr pctx, int nargs)
+{
+    XSLPATTERN_CHECK_ARGS(0);
+    xmlXPathReturnNumber(pctx, pctx->context->node->type);
+}
+
 void XSLPattern_OP_IEq(xmlXPathParserContextPtr pctx, int nargs)
 {
     xmlChar *arg1, *arg2;
@@ -528,6 +534,7 @@ HRESULT queryresult_create(xmlNodePtr node, LPCWSTR szQuery, IXMLDOMNodeList **o
 
         xmlXPathRegisterFunc(ctxt, (xmlChar const*)"index", XSLPattern_index);
         xmlXPathRegisterFunc(ctxt, (xmlChar const*)"end", XSLPattern_end);
+        xmlXPathRegisterFunc(ctxt, (xmlChar const*)"nodeType", XSLPattern_nodeType);
 
         xmlXPathRegisterFunc(ctxt, (xmlChar const*)"OP_IEq", XSLPattern_OP_IEq);
         xmlXPathRegisterFunc(ctxt, (xmlChar const*)"OP_INEq", XSLPattern_OP_INEq);
