@@ -33,6 +33,9 @@ static HRESULT WINAPI InPlaceFrame_QueryInterface(IOleInPlaceFrame *iface,
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
         *ppv = INPLACEFRAME(This);
+    }else if(IsEqualGUID(&IID_IOleWindow, riid)) {
+        TRACE("(%p)->(IID_IOleWindow %p)\n", This, ppv);
+        *ppv = INPLACEFRAME(This);
     }else if(IsEqualGUID(&IID_IOleInPlaceUIWindow, riid)) {
         TRACE("(%p)->(IID_IOleInPlaceUIWindow %p)\n", This, ppv);
         *ppv = INPLACEFRAME(This);
