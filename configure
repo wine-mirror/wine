@@ -9244,6 +9244,14 @@ $as_echo "#define HAVE_XMLSCHEMASSETVALIDSTRUCTUREDERRORS 1" >>confdefs.h
 
 fi
 
+             ac_fn_c_check_type "$LINENO" "xmlDocProperties" "ac_cv_type_xmlDocProperties" "#include <libxml/tree.h>
+"
+if test "x$ac_cv_type_xmlDocProperties" = x""yes; then :
+
+$as_echo "#define HAVE_XMLDOC_PROPERTIES 1" >>confdefs.h
+
+fi
+
 
 fi
 

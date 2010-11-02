@@ -1105,6 +1105,9 @@
 /* Define if you have the XKB extension */
 #undef HAVE_XKB
 
+/* Define if libxml2 has the xmlDocProperties enum */
+#undef HAVE_XMLDOC_PROPERTIES
+
 /* Define if libxml2 has the xmlNewDocPI function */
 #undef HAVE_XMLNEWDOCPI
 
