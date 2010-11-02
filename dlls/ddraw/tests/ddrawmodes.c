@@ -578,7 +578,7 @@ static void testcooperativelevels_normal(void)
     else
     {
         todo_wine ok(rc == DD_OK, "IDirectDraw_CreateSurface returned %08x\n", rc);
-        todo_wine ok(surface!=NULL, "Returned NULL surface pointer \n");
+        todo_wine ok(surface!=NULL, "Returned NULL surface pointer\n");
     }
     if(surface && surface != (IDirectDrawSurface *)0xdeadbeef) IDirectDrawSurface_Release(surface);
 
