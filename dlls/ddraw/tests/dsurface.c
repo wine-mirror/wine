@@ -2900,10 +2900,10 @@ static void SurfaceCapsTest(void)
         if (create.ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
         {
             create.dwFlags |= DDSD_PIXELFORMAT;
-            U4(create).ddpfPixelFormat.dwSize = sizeof(U4(create).ddpfPixelFormat);
-            U4(create).ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
-            U1(U4(create).ddpfPixelFormat).dwZBufferBitDepth = 16;
-            U3(U4(create).ddpfPixelFormat).dwZBitMask = 0x0000FFFF;
+            create.ddpfPixelFormat.dwSize = sizeof(create.ddpfPixelFormat);
+            create.ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+            U1(create.ddpfPixelFormat).dwZBufferBitDepth = 16;
+            U3(create.ddpfPixelFormat).dwZBitMask = 0x0000FFFF;
         }
 
         hr = IDirectDraw_CreateSurface(lpDD, &create, &surface1, NULL);
