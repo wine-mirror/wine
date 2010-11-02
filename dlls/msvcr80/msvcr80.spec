@@ -1507,7 +1507,7 @@
 @ cdecl wcsstr(wstr wstr) msvcrt.wcsstr
 @ cdecl wcstod(wstr ptr) msvcrt.wcstod
 @ cdecl wcstok(wstr wstr) msvcrt.wcstok
-@ stub wcstok_s
+@ cdecl wcstok_s(ptr wstr ptr) msvcrt.wcstok_s
 @ cdecl wcstol(wstr ptr long) msvcrt.wcstol
 @ cdecl wcstombs(ptr ptr long) msvcrt.wcstombs
 @ cdecl wcstombs_s(ptr ptr long wstr long) msvcrt.wcstombs_s

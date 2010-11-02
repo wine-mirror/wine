@@ -1368,25 +1368,37 @@ MSVCRT_wchar_t* CDECL MSVCRT_wcspbrk( const MSVCRT_wchar_t* str, const MSVCRT_wc
 }
 
 /*********************************************************************
- *		wcstok  (MSVCRT.@)
+ *		wcstok_s  (MSVCRT.@)
  */
-MSVCRT_wchar_t * CDECL MSVCRT_wcstok( MSVCRT_wchar_t *str, const MSVCRT_wchar_t *delim )
+MSVCRT_wchar_t * CDECL wcstok_s( MSVCRT_wchar_t *str, const MSVCRT_wchar_t *delim,
+                                 MSVCRT_wchar_t **next_token )
 {
-    thread_data_t *data = msvcrt_get_thread_data();
     MSVCRT_wchar_t *ret;
 
-    if (!str)
-        if (!(str = data->wcstok_next)) return NULL;
+    if (!MSVCRT_CHECK_PMT(delim != NULL) || !MSVCRT_CHECK_PMT(next_token != NULL) ||
+        !MSVCRT_CHECK_PMT(str != NULL || *next_token != NULL))
+    {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return NULL;
+    }
+    if (!str) str = *next_token;
 
     while (*str && strchrW( delim, *str )) str++;
     if (!*str) return NULL;
     ret = str++;
     while (*str && !strchrW( delim, *str )) str++;
     if (*str) *str++ = 0;
-    data->wcstok_next = str;
+    *next_token = str;
     return ret;
 }
 
+/*********************************************************************
+ *		wcstok  (MSVCRT.@)
+ */
+MSVCRT_wchar_t * CDECL MSVCRT_wcstok( MSVCRT_wchar_t *str, const MSVCRT_wchar_t *delim )
+{
+    return wcstok_s(str, delim, &msvcrt_get_thread_data()->wcstok_next);
+}
 
 /*********************************************************************
  *		wctomb (MSVCRT.@)
