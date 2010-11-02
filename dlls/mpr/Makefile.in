@@ -35,6 +35,7 @@ RC_SRCS = \
 	mpr_Ro.rc \
 	mpr_Ru.rc \
 	mpr_Si.rc \
+	mpr_Sr.rc \
 	mpr_Sv.rc \
 	mpr_Tr.rc \
 	mpr_Uk.rc \
