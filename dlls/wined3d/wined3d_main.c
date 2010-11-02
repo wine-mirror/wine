@@ -32,6 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 struct wined3d_wndproc
 {
     HWND window;
+    BOOL unicode;
     WNDPROC proc;
     IWineD3DDeviceImpl *device;
 };
@@ -394,6 +395,7 @@ static LRESULT CALLBACK wined3d_wndproc(HWND window, UINT message, WPARAM wparam
 {
     struct wined3d_wndproc *entry;
     IWineD3DDeviceImpl *device;
+    BOOL unicode;
     WNDPROC proc;
 
     wined3d_mutex_lock();
@@ -407,10 +409,11 @@ static LRESULT CALLBACK wined3d_wndproc(HWND window, UINT message, WPARAM wparam
     }
 
     device = entry->device;
+    unicode = entry->unicode;
     proc = entry->proc;
     wined3d_mutex_unlock();
 
-    return device_process_message(device, window, message, wparam, lparam, proc);
+    return device_process_message(device, window, unicode, message, wparam, lparam, proc);
 }
 
 BOOL wined3d_register_window(HWND window, IWineD3DDeviceImpl *device)
@@ -440,7 +443,14 @@ BOOL wined3d_register_window(HWND window, IWineD3DDeviceImpl *device)
 
     entry = &wndproc_table.entries[wndproc_table.count++];
     entry->window = window;
-    entry->proc = (WNDPROC)SetWindowLongPtrW(window, GWLP_WNDPROC, (LONG_PTR)wined3d_wndproc);
+    entry->unicode = IsWindowUnicode(window);
+    /* Set a window proc that matches the window. Some applications (e.g. NoX)
+     * replace the window proc after we've set ours, and expect to be able to
+     * call the previous one (ours) directly, without using CallWindowProc(). */
+    if (entry->unicode)
+        entry->proc = (WNDPROC)SetWindowLongPtrW(window, GWLP_WNDPROC, (LONG_PTR)wined3d_wndproc);
+    else
+        entry->proc = (WNDPROC)SetWindowLongPtrA(window, GWLP_WNDPROC, (LONG_PTR)wined3d_wndproc);
     entry->device = device;
 
     wined3d_mutex_unlock();
@@ -460,8 +470,16 @@ void wined3d_unregister_window(HWND window)
             struct wined3d_wndproc *entry = &wndproc_table.entries[i];
             struct wined3d_wndproc *last = &wndproc_table.entries[--wndproc_table.count];
 
-            if (GetWindowLongPtrW(window, GWLP_WNDPROC) == (LONG_PTR)wined3d_wndproc)
-                SetWindowLongPtrW(window, GWLP_WNDPROC, (LONG_PTR)entry->proc);
+            if (entry->unicode)
+            {
+                if (GetWindowLongPtrW(window, GWLP_WNDPROC) == (LONG_PTR)wined3d_wndproc)
+                    SetWindowLongPtrW(window, GWLP_WNDPROC, (LONG_PTR)entry->proc);
+            }
+            else
+            {
+                if (GetWindowLongPtrA(window, GWLP_WNDPROC) == (LONG_PTR)wined3d_wndproc)
+                    SetWindowLongPtrA(window, GWLP_WNDPROC, (LONG_PTR)entry->proc);
+            }
             if (entry != last) *entry = *last;
             wined3d_mutex_unlock();
 

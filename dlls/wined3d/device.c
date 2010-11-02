@@ -6916,14 +6916,17 @@ void get_drawable_size_backbuffer(struct wined3d_context *context, UINT *width, 
     *height = swapchain->presentParms.BackBufferHeight;
 }
 
-LRESULT device_process_message(IWineD3DDeviceImpl *device, HWND window,
+LRESULT device_process_message(IWineD3DDeviceImpl *device, HWND window, BOOL unicode,
         UINT message, WPARAM wparam, LPARAM lparam, WNDPROC proc)
 {
     if (device->filter_messages)
     {
         TRACE("Filtering message: window %p, message %#x, wparam %#lx, lparam %#lx.\n",
                 window, message, wparam, lparam);
-        return DefWindowProcW(window, message, wparam, lparam);
+        if (unicode)
+            return DefWindowProcW(window, message, wparam, lparam);
+        else
+            return DefWindowProcA(window, message, wparam, lparam);
     }
 
     if (message == WM_DESTROY)
@@ -6935,5 +6938,8 @@ LRESULT device_process_message(IWineD3DDeviceImpl *device, HWND window,
         else ERR("Window %p is not the focus window for device %p.\n", window, device);
     }
 
-    return CallWindowProcW(proc, window, message, wparam, lparam);
+    if (unicode)
+        return CallWindowProcW(proc, window, message, wparam, lparam);
+    else
+        return CallWindowProcA(proc, window, message, wparam, lparam);
 }
