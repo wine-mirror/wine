@@ -291,3 +291,31 @@ HRESULT WINAPI WerReportSetParameter(HREPORT hreport, DWORD id, PCWSTR name, PCW
 
     return E_NOTIMPL;
 }
+
+/***********************************************************************
+ * WerReportSubmit (wer.@)
+ *
+ * Ask the user for permission and send the error report
+ * then kill or restart the application, when requested
+ *
+ * PARAMS
+ *  hreport [i] error reporting handle to send
+ *  consent [i] current transmit permission
+ *  flags   [i] flag to select dialog, transmission snd restart options
+ *  presult [o] ptr, where the transmission result should be saved
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: A HRESULT error code
+ *
+ */
+HRESULT WINAPI WerReportSubmit(HREPORT hreport, WER_CONSENT consent, DWORD flags, PWER_SUBMIT_RESULT presult)
+{
+    FIXME("(%p, %d, 0x%x, %p) :stub\n", hreport, consent, flags, presult);
+
+    if(!presult)
+        return E_INVALIDARG;
+
+    *presult = WerDisabled;
+    return E_NOTIMPL;
+}

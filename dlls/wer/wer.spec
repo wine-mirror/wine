@@ -69,7 +69,7 @@
 @ stdcall WerReportCreate(wstr long ptr ptr)
 @ stdcall WerReportSetParameter(ptr long wstr wstr)
 @ stub WerReportSetUIOption
-@ stub WerReportSubmit
+@ stdcall WerReportSubmit(ptr long long ptr)
 @ stub WerpGetReportConsent
 @ stub WerpIsDisabled
 @ stub WerpOpenUserQueue
