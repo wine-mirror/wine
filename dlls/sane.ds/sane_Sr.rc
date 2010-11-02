@@ -1,0 +1,66 @@
+/*
+ * Serbian resources for Twain
+ *
+ * Copyright 2006 CodeWeavers, Aric Stewart
+ * Copyright 2010 Đorđe Vasiljević
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resource.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_CYRILLIC
+
+IDD_DIALOG1 DIALOG 0, 0, 186, 46
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE | DS_CENTER | DS_SETFOREGROUND
+CAPTION "Претрага"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT   "Претраживање...",IDC_STATIC,5,19,176,8, SS_CENTER
+END
+
+STRINGTABLE
+{
+ 0 ""
+ 1 "px"
+ 2 "b"
+ 3 "мм"
+ 4 "тпи"
+ 5 "%"
+ 6 "нс"
+}
+
+LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
+
+IDD_DIALOG1 DIALOG 0, 0, 186, 46
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE | DS_CENTER | DS_SETFOREGROUND
+CAPTION "Pretraga"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT   "Pretraživanje...",IDC_STATIC,5,19,176,8, SS_CENTER
+END
+
+STRINGTABLE
+{
+ 0 ""
+ 1 "px"
+ 2 "b"
+ 3 "mm"
+ 4 "tpi"
+ 5 "%"
+ 6 "ns"
+}
