@@ -343,7 +343,7 @@ static void test_crack_url(const crack_url_test_t *test)
     ok(!strcmp(scheme, test->exp_scheme), "[%s] Got wrong scheme, expected: %s, got: %s\n",
             test->url, test->exp_scheme, scheme);
 
-    ok(url.nScheme == test->scheme, "[%s] Got wrong nScheme, expected: %d, got: %d",
+    ok(url.nScheme == test->scheme, "[%s] Got wrong nScheme, expected: %d, got: %d\n",
             test->url, test->scheme, url.nScheme);
 
     ok(url.dwHostNameLength == strlen(test->exp_hostname), "[%s] Got wrong hostname length: %d\n",
@@ -398,7 +398,7 @@ static void test_crack_url(const crack_url_test_t *test)
     ok(!lstrcmpW((WCHAR*)scheme, w_str_of(test->exp_scheme)), "[%s] Got wrong scheme, expected: %s, got: %s\n",
             test->url, test->exp_scheme, wine_dbgstr_w((WCHAR*)scheme));
 
-    ok(urlw.nScheme == test->scheme, "[%s] Got wrong nScheme, expected: %d, got: %d",
+    ok(urlw.nScheme == test->scheme, "[%s] Got wrong nScheme, expected: %d, got: %d\n",
             test->url, test->scheme, urlw.nScheme);
 
     ok(urlw.dwHostNameLength == strlen(test->exp_hostname), "[%s] Got wrong hostname length: %d\n",
