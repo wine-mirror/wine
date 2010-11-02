@@ -846,7 +846,7 @@
 # stub _scwprintf_l
 # stub _scwprintf_p_l
 @ cdecl _searchenv(str str ptr)
-# stub _searchenv_s
+@ cdecl _searchenv_s(str str ptr long)
 # stub _seh_longjmp_unwind4
 @ stdcall -i386 _seh_longjmp_unwind(ptr)
 @ cdecl _set_SSE2_enable(long) MSVCRT__set_SSE2_enable
@@ -1154,7 +1154,7 @@
 @ varargs _wscanf_l(wstr ptr) MSVCRT__wscanf_l
 @ varargs _wscanf_s_l(wstr ptr) MSVCRT__wscanf_s_l
 @ cdecl _wsearchenv(wstr wstr ptr)
-# stub _wsearchenv_s
+@ cdecl _wsearchenv_s(wstr wstr ptr long)
 @ cdecl _wsetlocale(long wstr) MSVCRT__wsetlocale
 @ varargs _wsopen (wstr long long) MSVCRT__wsopen
 # stub _wsopen_s

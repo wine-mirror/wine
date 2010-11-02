@@ -1472,6 +1472,78 @@ void CDECL _searchenv(const char* file, const char* env, char *buf)
 }
 
 /*********************************************************************
+ *		_searchenv_s (MSVCRT.@)
+ */
+int CDECL _searchenv_s(const char* file, const char* env, char *buf, MSVCRT_size_t count)
+{
+  char*envVal, *penv;
+  char curPath[MAX_PATH];
+
+  if (!MSVCRT_CHECK_PMT(file != NULL) || !MSVCRT_CHECK_PMT(buf != NULL) ||
+      !MSVCRT_CHECK_PMT(count > 0))
+  {
+      *MSVCRT__errno() = MSVCRT_EINVAL;
+      return MSVCRT_EINVAL;
+  }
+
+  *buf = '\0';
+
+  /* Try CWD first */
+  if (GetFileAttributesA( file ) != INVALID_FILE_ATTRIBUTES)
+  {
+    if (GetFullPathNameA( file, count, buf, NULL )) return 0;
+    msvcrt_set_errno(GetLastError());
+    return 0;
+  }
+
+  /* Search given environment variable */
+  envVal = MSVCRT_getenv(env);
+  if (!envVal)
+  {
+    *MSVCRT__errno() = MSVCRT_ENOENT;
+    return MSVCRT_ENOENT;
+  }
+
+  penv = envVal;
+  TRACE(":searching for %s in paths %s\n", file, envVal);
+
+  do
+  {
+    char *end = penv;
+
+    while(*end && *end != ';') end++; /* Find end of next path */
+    if (penv == end || !*penv)
+    {
+      *MSVCRT__errno() = MSVCRT_ENOENT;
+      return MSVCRT_ENOENT;
+    }
+    memcpy(curPath, penv, end - penv);
+    if (curPath[end - penv] != '/' && curPath[end - penv] != '\\')
+    {
+      curPath[end - penv] = '\\';
+      curPath[end - penv + 1] = '\0';
+    }
+    else
+      curPath[end - penv] = '\0';
+
+    strcat(curPath, file);
+    TRACE("Checking for file %s\n", curPath);
+    if (GetFileAttributesA( curPath ) != INVALID_FILE_ATTRIBUTES)
+    {
+      if (strlen(curPath) + 1 > count)
+      {
+          MSVCRT_INVALID_PMT("buf[count] is too small");
+          *MSVCRT__errno() = MSVCRT_ERANGE;
+          return MSVCRT_ERANGE;
+      }
+      strcpy(buf, curPath);
+      return 0;
+    }
+    penv = *end ? end + 1 : end;
+  } while(1);
+}
+
+/*********************************************************************
  *      _wsearchenv (MSVCRT.@)
  *
  * Unicode version of _searchenv
@@ -1529,6 +1601,78 @@ void CDECL _wsearchenv(const MSVCRT_wchar_t* file, const MSVCRT_wchar_t* env, MS
       strcpyW(buf, curPath);
       msvcrt_set_errno(ERROR_FILE_NOT_FOUND);
       return; /* Found */
+    }
+    penv = *end ? end + 1 : end;
+  } while(1);
+}
+
+/*********************************************************************
+ *		_wsearchenv_s (MSVCRT.@)
+ */
+int CDECL _wsearchenv_s(const MSVCRT_wchar_t* file, const MSVCRT_wchar_t* env,
+                        MSVCRT_wchar_t *buf, MSVCRT_size_t count)
+{
+  MSVCRT_wchar_t*       envVal, *penv;
+  MSVCRT_wchar_t        curPath[MAX_PATH];
+
+  if (!MSVCRT_CHECK_PMT(file != NULL) || !MSVCRT_CHECK_PMT(buf != NULL) ||
+      !MSVCRT_CHECK_PMT(count > 0))
+  {
+      *MSVCRT__errno() = MSVCRT_EINVAL;
+      return MSVCRT_EINVAL;
+  }
+  *buf = '\0';
+
+  /* Try CWD first */
+  if (GetFileAttributesW( file ) != INVALID_FILE_ATTRIBUTES)
+  {
+    if (GetFullPathNameW( file, count, buf, NULL )) return 0;
+    msvcrt_set_errno(GetLastError());
+    return 0;
+  }
+
+  /* Search given environment variable */
+  envVal = _wgetenv(env);
+  if (!envVal)
+  {
+    *MSVCRT__errno() = MSVCRT_ENOENT;
+    return MSVCRT_ENOENT;
+  }
+
+  penv = envVal;
+  TRACE(":searching for %s in paths %s\n", debugstr_w(file), debugstr_w(envVal));
+
+  do
+  {
+    MSVCRT_wchar_t *end = penv;
+
+    while(*end && *end != ';') end++; /* Find end of next path */
+    if (penv == end || !*penv)
+    {
+      *MSVCRT__errno() = MSVCRT_ENOENT;
+      return MSVCRT_ENOENT;
+    }
+    memcpy(curPath, penv, (end - penv) * sizeof(MSVCRT_wchar_t));
+    if (curPath[end - penv] != '/' && curPath[end - penv] != '\\')
+    {
+      curPath[end - penv] = '\\';
+      curPath[end - penv + 1] = '\0';
+    }
+    else
+      curPath[end - penv] = '\0';
+
+    strcatW(curPath, file);
+    TRACE("Checking for file %s\n", debugstr_w(curPath));
+    if (GetFileAttributesW( curPath ) != INVALID_FILE_ATTRIBUTES)
+    {
+      if (strlenW(curPath) + 1 > count)
+      {
+          MSVCRT_INVALID_PMT("buf[count] is too small");
+          *MSVCRT__errno() = MSVCRT_ERANGE;
+          return MSVCRT_ERANGE;
+      }
+      strcpyW(buf, curPath);
+      return 0;
     }
     penv = *end ? end + 1 : end;
   } while(1);
