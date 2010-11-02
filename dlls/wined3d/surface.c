@@ -1765,12 +1765,17 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This,
         GLenum buffer = surface_get_gl_buffer(This);
         TRACE("Unlocking %#x buffer.\n", buffer);
         context_set_draw_buffer(context, buffer);
+
+        surface_translate_drawable_coords(This, context->win_handle, &rect);
+        glPixelZoom(1.0f, -1.0f);
     }
     else
     {
         /* Primary offscreen render target */
         TRACE("Offscreen render target.\n");
         context_set_draw_buffer(context, device->offscreenBuffer);
+
+        glPixelZoom(1.0f, 1.0f);
     }
 
     glRasterPos3i(rect.left, rect.top, 1);
