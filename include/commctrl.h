@@ -199,7 +199,6 @@ typedef struct tagNMCHAR
 #endif
 
 
-/* This is only for Winelib applications. DON't use it wine itself!!! */
 #ifndef SNDMSG
 #ifdef __cplusplus
 #define SNDMSG ::SendMessage
@@ -1058,6 +1057,12 @@ typedef struct tagNMBCHOTITEM
 } NMBCHOTITEM, *LPNMBCHOTITEM;
 
 #define BST_HOT                 0x0200
+
+/* Button control styles for _WIN32_WINNT >= 0x600 */
+#define BS_SPLITBUTTON          0x0000000C
+#define BS_DEFSPLITBUTTON       0x0000000D
+#define BS_COMMANDLINK          0x0000000E
+#define BS_DEFCOMMANDLINK       0x0000000F
 
 /* Toolbar */
 
