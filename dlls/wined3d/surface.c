@@ -1741,6 +1741,17 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This,
     IWineD3DDeviceImpl *device = This->resource.device;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
+    RECT rect;
+    UINT w, h;
+
+    if (This->Flags & SFLAG_LOCKED)
+        rect = This->lockedRect;
+    else
+        SetRect(&rect, 0, 0, This->currentDesc.Width, This->currentDesc.Height);
+
+    mem += rect.top * pitch + rect.left * bpp;
+    w = rect.right - rect.left;
+    h = rect.bottom - rect.top;
 
     /* Activate the correct context for the render target */
     context = context_acquire(device, This);
@@ -1762,7 +1773,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This,
         context_set_draw_buffer(context, device->offscreenBuffer);
     }
 
-    glRasterPos3i(This->lockedRect.left, This->lockedRect.top, 1);
+    glRasterPos3i(rect.left, rect.top, 1);
     checkGLcall("glRasterPos3i");
 
     /* Some drivers(radeon dri, others?) don't like exceptions during
@@ -1789,19 +1800,8 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This,
         checkGLcall("glBindBufferARB");
     }
 
-    /* When the surface is locked we only have to refresh the locked part else we need to update the whole image */
-    if(This->Flags & SFLAG_LOCKED) {
-        glDrawPixels(This->lockedRect.right - This->lockedRect.left,
-                     (This->lockedRect.bottom - This->lockedRect.top)-1,
-                     fmt, type,
-                     mem + bpp * This->lockedRect.left + pitch * This->lockedRect.top);
-        checkGLcall("glDrawPixels");
-    } else {
-        glDrawPixels(This->currentDesc.Width,
-                     This->currentDesc.Height,
-                     fmt, type, mem);
-        checkGLcall("glDrawPixels");
-    }
+    glDrawPixels(w, h, fmt, type, mem);
+    checkGLcall("glDrawPixels");
 
     if(This->Flags & SFLAG_PBO) {
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
