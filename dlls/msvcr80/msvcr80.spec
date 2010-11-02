@@ -885,7 +885,7 @@
 @ cdecl _putenv(str) msvcrt._putenv
 @ cdecl _putenv_s(str str) msvcrt._putenv_s
 @ cdecl _putw(long ptr) msvcrt._putw
-@ stub _putwch
+@ cdecl _putwch(long) msvcrt._putwch
 @ stub _putwch_nolock
 @ cdecl _putws(wstr) msvcrt._putws
 @ stub _pwctype

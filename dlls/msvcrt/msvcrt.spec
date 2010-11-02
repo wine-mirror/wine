@@ -819,7 +819,7 @@
 @ cdecl _putenv(str)
 @ cdecl _putenv_s(str str)
 @ cdecl _putw(long ptr) MSVCRT__putw
-# stub _putwch
+@ cdecl _putwch(long) MSVCRT__putwch
 @ cdecl _putws(wstr)
 # extern _pwctype
 @ cdecl _read(long ptr long) MSVCRT__read

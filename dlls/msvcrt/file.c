@@ -3130,6 +3130,14 @@ int CDECL MSVCRT_putchar(int c)
 }
 
 /*********************************************************************
+ *		_putwch (MSVCRT.@)
+ */
+int CDECL MSVCRT__putwch(int c)
+{
+  return MSVCRT_fputwc(c, MSVCRT_stdout);
+}
+
+/*********************************************************************
  *		puts (MSVCRT.@)
  */
 int CDECL MSVCRT_puts(const char *s)
