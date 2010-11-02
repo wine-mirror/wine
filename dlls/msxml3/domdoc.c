@@ -116,7 +116,7 @@ struct domdoc
     VARIANT_BOOL resolving;
     VARIANT_BOOL preserving;
     domdoc_properties* properties;
-    IXMLDOMSchemaCollection *schema;
+    IXMLDOMSchemaCollection2* schema;
     bsc_t *bsc;
     HRESULT error;
 
@@ -875,7 +875,7 @@ static ULONG WINAPI domdoc_Release(
         if (This->site)
             IUnknown_Release( This->site );
         destroy_xmlnode(&This->node);
-        if(This->schema) IXMLDOMSchemaCollection_Release( This->schema );
+        if(This->schema) IXMLDOMSchemaCollection2_Release(This->schema);
         if (This->stream) IStream_Release(This->stream);
         HeapFree( GetProcessHeap(), 0, This );
     }
@@ -2391,7 +2391,7 @@ static HRESULT WINAPI domdoc_get_schemas(
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
     HRESULT hr = S_FALSE;
-    IXMLDOMSchemaCollection *cur_schema = This->schema;
+    IXMLDOMSchemaCollection2* cur_schema = This->schema;
 
     TRACE("(%p)->(%p)\n", This, var1);
 
@@ -2400,7 +2400,7 @@ static HRESULT WINAPI domdoc_get_schemas(
 
     if(cur_schema)
     {
-        hr = IXMLDOMSchemaCollection_QueryInterface(cur_schema, &IID_IDispatch, (void**)&V_DISPATCH(var1));
+        hr = IXMLDOMSchemaCollection2_QueryInterface(cur_schema, &IID_IDispatch, (void**)&V_DISPATCH(var1));
         if(SUCCEEDED(hr))
             V_VT(var1) = VT_DISPATCH;
     }
@@ -2413,7 +2413,7 @@ static HRESULT WINAPI domdoc_putref_schemas(
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
     HRESULT hr = E_FAIL;
-    IXMLDOMSchemaCollection *new_schema = NULL;
+    IXMLDOMSchemaCollection2* new_schema = NULL;
 
     FIXME("(%p): semi-stub\n", This);
     switch(V_VT(&var1))
@@ -2437,18 +2437,48 @@ static HRESULT WINAPI domdoc_putref_schemas(
 
     if(SUCCEEDED(hr))
     {
-        IXMLDOMSchemaCollection *old_schema = InterlockedExchangePointer((void**)&This->schema, new_schema);
-        if(old_schema) IXMLDOMSchemaCollection_Release(old_schema);
+        IXMLDOMSchemaCollection2* old_schema = InterlockedExchangePointer((void**)&This->schema, new_schema);
+        if(old_schema) IXMLDOMSchemaCollection2_Release(old_schema);
     }
 
     return hr;
+}
+
+static inline BOOL is_wellformed(xmlDocPtr doc)
+{
+#ifdef HAVE_XMLDOC_PROPERTIES
+    return doc->properties & XML_DOC_WELLFORMED;
+#else
+    /* Not a full check, but catches the worst violations */
+    xmlNodePtr child;
+    int root = 0;
+
+    for (child = doc->children; child != NULL; child = child->next)
+    {
+        switch (child->type)
+        {
+        case XML_ELEMENT_NODE:
+            if (++root > 1)
+                return FALSE;
+            break;
+        case XML_TEXT_NODE:
+        case XML_CDATA_SECTION_NODE:
+            return FALSE;
+            break;
+        default:
+            break;
+        }
+    }
+
+    return root == 1;
+#endif
 }
 
 static void LIBXML2_LOG_CALLBACK validate_error(void* ctx, char const* msg, ...)
 {
     va_list ap;
     va_start(ap, msg);
-    LIBXML2_CALLBACK_ERR(domdoc_validate, msg, ap);
+    LIBXML2_CALLBACK_ERR(domdoc_validateNode, msg, ap);
     va_end(ap);
 }
 
@@ -2456,8 +2486,102 @@ static void LIBXML2_LOG_CALLBACK validate_warning(void* ctx, char const* msg, ..
 {
     va_list ap;
     va_start(ap, msg);
-    LIBXML2_CALLBACK_WARN(domdoc_validate, msg, ap);
+    LIBXML2_CALLBACK_WARN(domdoc_validateNode, msg, ap);
     va_end(ap);
+}
+
+static HRESULT WINAPI domdoc_validateNode(
+    IXMLDOMDocument3* iface,
+    IXMLDOMNode* node,
+    IXMLDOMParseError** err)
+{
+    domdoc* This = impl_from_IXMLDOMDocument3(iface);
+    LONG state, err_code = 0;
+    HRESULT hr = S_OK;
+    int validated = 0;
+
+    TRACE("(%p)->(%p, %p)\n", This, node, err);
+    domdoc_get_readyState(iface, &state);
+    if (state != READYSTATE_COMPLETE)
+    {
+        if (err)
+           *err = create_parseError(err_code, NULL, NULL, NULL, 0, 0, 0);
+        return E_PENDING;
+    }
+
+    if (!node)
+    {
+        if (err)
+            *err = create_parseError(err_code, NULL, NULL, NULL, 0, 0, 0);
+        return E_POINTER;
+    }
+
+    if (!get_node_obj(node)->node || get_node_obj(node)->node->doc != get_doc(This))
+    {
+        if (err)
+            *err = create_parseError(err_code, NULL, NULL, NULL, 0, 0, 0);
+        return E_FAIL;
+    }
+
+    if (!is_wellformed(get_doc(This)))
+    {
+        ERR("doc not well-formed");
+        if (err)
+            *err = create_parseError(E_XML_NOTWF, NULL, NULL, NULL, 0, 0, 0);
+        return S_FALSE;
+    }
+
+    /* DTD validation */
+    if (get_doc(This)->intSubset || get_doc(This)->extSubset)
+    {
+        xmlValidCtxtPtr vctx = xmlNewValidCtxt();
+        vctx->error = validate_error;
+        vctx->warning = validate_warning;
+        ++validated;
+
+        if (!((node == (IXMLDOMNode*)iface)?
+              xmlValidateDocument(vctx, get_doc(This)) :
+              xmlValidateElement(vctx, get_doc(This), get_node_obj(node)->node)))
+        {
+            /* TODO: get a real error code here */
+            TRACE("DTD validation failed\n");
+            err_code = E_XML_INVALID;
+            hr = S_FALSE;
+        }
+        xmlFreeValidCtxt(vctx);
+    }
+
+    /* Schema validation */
+    if (hr == S_OK && This->schema != NULL)
+    {
+
+        hr = SchemaCache_validate_tree(This->schema, get_node_obj(node)->node);
+        if (!FAILED(hr))
+        {
+            ++validated;
+            /* TODO: get a real error code here */
+            TRACE("schema validation failed\n");
+            if (hr != S_OK)
+                err_code = E_XML_INVALID;
+        }
+        else
+        {
+            /* not really OK, just didn't find a schema for the ns */
+            hr = S_OK;
+        }
+    }
+
+    if (!validated)
+    {
+        TRACE("no DTD or schema found\n");
+        err_code = E_XML_NODTD;
+        hr = S_FALSE;
+    }
+
+    if (err)
+        *err = create_parseError(err_code, NULL, NULL, NULL, 0, 0, 0);
+
+    return hr;
 }
 
 static HRESULT WINAPI domdoc_validate(
@@ -2465,35 +2589,8 @@ static HRESULT WINAPI domdoc_validate(
     IXMLDOMParseError** err)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    LONG state;
-    xmlValidCtxtPtr vctx;
-
     TRACE("(%p)->(%p)\n", This, err);
-    domdoc_get_readyState(iface, &state);
-    if (state != READYSTATE_COMPLETE)
-    {
-        if (err)
-            *err = create_parseError(0, NULL, NULL, NULL, 0, 0, 0);
-        return E_PENDING;
-    }
-
-    vctx = xmlNewValidCtxt();
-    vctx->error = validate_error;
-    vctx->warning = validate_warning;
-
-    if (xmlValidateDocument(vctx, get_doc(This)))
-    {
-        if (err)
-            *err = create_parseError(0, NULL, NULL, NULL, 0, 0, 0);
-        xmlFreeValidCtxt(vctx);
-        return S_OK;
-    }
-
-    FIXME("partial stub!\n");
-    if (err)
-        *err = create_parseError(0xC00CE223, NULL, NULL, NULL, 0, 0, 0);
-    xmlFreeValidCtxt(vctx);
-    return S_FALSE;
+    return domdoc_validateNode(iface, (IXMLDOMNode*)iface, err);
 }
 
 static HRESULT WINAPI domdoc_setProperty(
@@ -2727,16 +2824,6 @@ static HRESULT WINAPI domdoc_getProperty(
 
     FIXME("Unknown property %s\n", wine_dbgstr_w(p));
     return E_FAIL;
-}
-
-static HRESULT WINAPI domdoc_validateNode(
-    IXMLDOMDocument3* iface,
-    IXMLDOMNode* node,
-    IXMLDOMParseError** error)
-{
-    domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    FIXME("(%p)->(%p %p): stub\n", This, node, error);
-    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI domdoc_importNode(

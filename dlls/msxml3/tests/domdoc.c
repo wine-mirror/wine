@@ -3507,7 +3507,7 @@ static void test_IXMLDOMDocument2(void)
         res = 0;
         ole_check(IXMLDOMParseError_get_errorCode(err, &res));
         /* XML_E_NODTD */
-        todo_wine ok(res == E_XML_NODTD, "got %08x\n", res);
+        ok(res == E_XML_NODTD, "got %08x\n", res);
         IXMLDOMParseError_Release(err);
     }
 
