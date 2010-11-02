@@ -328,6 +328,21 @@ void CDECL MSVCRT_perror(const char* str)
 }
 
 /*********************************************************************
+ *		_wcserror_s (MSVCRT.@)
+ */
+int CDECL _wcserror_s(MSVCRT_wchar_t* buffer, MSVCRT_size_t nc, int err)
+{
+    if (!MSVCRT_CHECK_PMT(buffer != NULL) || !MSVCRT_CHECK_PMT(nc > 0))
+    {
+        _set_errno(MSVCRT_EINVAL);
+        return MSVCRT_EINVAL;
+    }
+    if (err < 0 || err > MSVCRT__sys_nerr) err = MSVCRT__sys_nerr;
+    MultiByteToWideChar(CP_ACP, 0, MSVCRT__sys_errlist[err], -1, buffer, nc);
+    return 0;
+}
+
+/*********************************************************************
  *		_wcserror (MSVCRT.@)
  */
 MSVCRT_wchar_t* CDECL _wcserror(int err)
@@ -336,10 +351,42 @@ MSVCRT_wchar_t* CDECL _wcserror(int err)
 
     if (!data->wcserror_buffer)
         if (!(data->wcserror_buffer = MSVCRT_malloc(256 * sizeof(MSVCRT_wchar_t)))) return NULL;
-
-    if (err < 0 || err > MSVCRT__sys_nerr) err = MSVCRT__sys_nerr;
-    MultiByteToWideChar(CP_ACP, 0, MSVCRT__sys_errlist[err], -1, data->wcserror_buffer, 256);
+    _wcserror_s(data->wcserror_buffer, 256, err);
     return data->wcserror_buffer;
+}
+
+/**********************************************************************
+ *		__wcserror_s	(MSVCRT.@)
+ */
+int CDECL __wcserror_s(MSVCRT_wchar_t* buffer, MSVCRT_size_t nc, const MSVCRT_wchar_t* str)
+{
+    int err;
+    static const WCHAR colonW[] = {':', ' ', '\0'};
+    static const WCHAR nlW[] = {'\n', '\0'};
+    size_t len;
+
+    err = *MSVCRT__errno();
+    if (err < 0 || err > MSVCRT__sys_nerr) err = MSVCRT__sys_nerr;
+
+    len = MultiByteToWideChar(CP_ACP, 0, MSVCRT__sys_errlist[err], -1, NULL, 0) + 1 /* \n */;
+    if (str && *str) len += lstrlenW(str) + 2 /* ': ' */;
+    if (len > nc)
+    {
+        MSVCRT_INVALID_PMT("buffer[nc] is too small");
+        _set_errno(MSVCRT_ERANGE);
+        return MSVCRT_ERANGE;
+    }
+    if (str && *str)
+    {
+        lstrcpyW(buffer, str);
+        lstrcatW(buffer, colonW);
+    }
+    else buffer[0] = '\0';
+    len = lstrlenW(buffer);
+    MultiByteToWideChar(CP_ACP, 0, MSVCRT__sys_errlist[err], -1, buffer + len, 256 - len);
+    lstrcatW(buffer, nlW);
+
+    return 0;
 }
 
 /**********************************************************************
@@ -349,25 +396,12 @@ MSVCRT_wchar_t* CDECL __wcserror(const MSVCRT_wchar_t* str)
 {
     thread_data_t *data = msvcrt_get_thread_data();
     int err;
-    static const WCHAR colonW[] = {':', ' ', '\0'};
-    static const WCHAR nlW[] = {'\n', '\0'};
-    size_t len;
 
     if (!data->wcserror_buffer)
         if (!(data->wcserror_buffer = MSVCRT_malloc(256 * sizeof(MSVCRT_wchar_t)))) return NULL;
 
-    err = data->thread_errno;
-    if (err < 0 || err > MSVCRT__sys_nerr) err = MSVCRT__sys_nerr;
-
-    if (str && *str)
-    {
-        lstrcpyW(data->wcserror_buffer, str);
-        lstrcatW(data->wcserror_buffer, colonW);
-    }
-    else data->wcserror_buffer[0] = '\0';
-    len = lstrlenW(data->wcserror_buffer);
-    MultiByteToWideChar(CP_ACP, 0, MSVCRT__sys_errlist[err], -1, data->wcserror_buffer + len, 256 - len);
-    lstrcatW(data->wcserror_buffer, nlW);
+    err = __wcserror_s(data->wcserror_buffer, 256, str);
+    if (err) FIXME("bad wcserror call (%d)\n", err);
 
     return data->wcserror_buffer;
 }

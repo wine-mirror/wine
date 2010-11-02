@@ -264,7 +264,7 @@
 @ extern __unguarded_readlc_active MSVCRT___unguarded_readlc_active
 @ extern __wargv MSVCRT___wargv
 @ cdecl __wcserror(wstr)
-# stub __wcserror_s
+@ cdecl __wcserror_s(ptr long wstr)
 # stub __wcsncnt
 @ cdecl __wgetmainargs(ptr ptr ptr long ptr)
 @ extern __winitenv MSVCRT___winitenv
@@ -1058,7 +1058,7 @@
 @ cdecl _wcsdup(wstr)
 # stub _wcsdup_dbg
 @ cdecl _wcserror(long)
-# stub _wcserror_s
+@ cdecl _wcserror_s(ptr long long)
 # stub _wcsftime_l
 @ cdecl _wcsicmp(wstr wstr) ntdll._wcsicmp
 # stub _wcsicmp_l

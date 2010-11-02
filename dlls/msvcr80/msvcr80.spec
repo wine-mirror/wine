@@ -307,7 +307,7 @@
 @ stub __vswprintf_l
 @ extern __wargv msvcrt.__wargv
 @ cdecl __wcserror(wstr) msvcrt.__wcserror
-@ stub __wcserror_s
+@ cdecl __wcserror_s(ptr long wstr) msvcrt.__wcserror_s
 @ stub __wcsncnt
 @ cdecl __wgetmainargs(ptr ptr ptr long ptr) msvcrt.__wgetmainargs
 @ extern __winitenv msvcrt.__winitenv
@@ -1138,7 +1138,7 @@
 @ stub _wcscoll_l
 @ cdecl _wcsdup(wstr) msvcrt._wcsdup
 @ cdecl _wcserror(long) msvcrt._wcserror
-@ stub _wcserror_s
+@ cdecl _wcserror_s(ptr long long) msvcrt._wcserror_s
 @ stub _wcsftime_l
 @ cdecl _wcsicmp(wstr wstr) msvcrt._wcsicmp
 @ stub _wcsicmp_l
