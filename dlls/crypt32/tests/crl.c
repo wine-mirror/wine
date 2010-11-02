@@ -408,9 +408,9 @@ static void testFindCRL(void)
     BOOL ret;
 
     if (!store) return;
-    if (!pCertFindCRLInStore)
+    if (!pCertFindCRLInStore || !pCertFindCertificateInCRL)
     {
-        win_skip("CertFindCRLInStore() is not available\n");
+        win_skip("CertFindCRLInStore or CertFindCertificateInCRL not available\n");
         return;
     }
 
@@ -521,7 +521,7 @@ static void testFindCRL(void)
             PCRL_ENTRY entry;
 
             count++;
-            if (CertFindCertificateInCRL(cert, context, 0, NULL, &entry) &&
+            if (pCertFindCertificateInCRL(cert, context, 0, NULL, &entry) &&
              entry)
                 revoked_count++;
         }
@@ -557,7 +557,7 @@ static void testFindCRL(void)
             PCRL_ENTRY entry;
 
             count++;
-            if (CertFindCertificateInCRL(cert, context, 0, NULL, &entry) &&
+            if (pCertFindCertificateInCRL(cert, context, 0, NULL, &entry) &&
              entry)
                 revoked_count++;
         }
@@ -586,7 +586,7 @@ static void testFindCRL(void)
             PCRL_ENTRY entry;
 
             count++;
-            if (CertFindCertificateInCRL(cert, context, 0, NULL, &entry) &&
+            if (pCertFindCertificateInCRL(cert, context, 0, NULL, &entry) &&
              entry)
                 revoked_count++;
         }
@@ -626,7 +626,7 @@ static void testFindCRL(void)
             PCRL_ENTRY entry;
 
             count++;
-            if (CertFindCertificateInCRL(endCert, context, 0, NULL, &entry) &&
+            if (pCertFindCertificateInCRL(endCert, context, 0, NULL, &entry) &&
              entry)
                 revoked_count++;
         }
@@ -646,7 +646,7 @@ static void testFindCRL(void)
             PCRL_ENTRY entry;
 
             count++;
-            if (CertFindCertificateInCRL(endCert, context, 0, NULL, &entry) &&
+            if (pCertFindCertificateInCRL(endCert, context, 0, NULL, &entry) &&
              entry)
                 revoked_count++;
         }
@@ -663,7 +663,7 @@ static void testFindCRL(void)
             PCRL_ENTRY entry;
 
             count++;
-            if (CertFindCertificateInCRL(endCert, context, 0, NULL, &entry) &&
+            if (pCertFindCertificateInCRL(endCert, context, 0, NULL, &entry) &&
              entry)
                 revoked_count++;
         }
@@ -680,7 +680,7 @@ static void testFindCRL(void)
             PCRL_ENTRY entry;
 
             count++;
-            if (CertFindCertificateInCRL(endCert, context, 0, NULL, &entry) &&
+            if (pCertFindCertificateInCRL(endCert, context, 0, NULL, &entry) &&
              entry)
                 revoked_count++;
         }
@@ -697,7 +697,7 @@ static void testFindCRL(void)
             PCRL_ENTRY entry;
 
             count++;
-            if (CertFindCertificateInCRL(rootCert, context, 0, NULL, &entry) &&
+            if (pCertFindCertificateInCRL(rootCert, context, 0, NULL, &entry) &&
              entry)
                 revoked_count++;
         }
@@ -716,7 +716,7 @@ static void testFindCRL(void)
             PCRL_ENTRY entry;
 
             count++;
-            if (CertFindCertificateInCRL(endCert, context, 0, NULL, &entry) &&
+            if (pCertFindCertificateInCRL(endCert, context, 0, NULL, &entry) &&
              entry)
                 revoked_count++;
         }
@@ -734,7 +734,7 @@ static void testFindCRL(void)
             PCRL_ENTRY entry;
 
             count++;
-            if (CertFindCertificateInCRL(endCert, context, 0, NULL, &entry) &&
+            if (pCertFindCertificateInCRL(endCert, context, 0, NULL, &entry) &&
              entry)
                 revoked_count++;
         }

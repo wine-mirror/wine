@@ -3695,7 +3695,7 @@ static void testGetCertChain(void)
     {
         ok(chain->TrustStatus.dwErrorStatus & CERT_TRUST_IS_NOT_VALID_FOR_USAGE,
          "expected CERT_TRUST_IS_NOT_VALID_FOR_USAGE\n");
-        CertFreeCertificateChain(chain);
+        pCertFreeCertificateChain(chain);
     }
     oids[0] = oid_server_auth;
     ret = pCertGetCertificateChain(NULL, cert, &fileTime, store, &para,
@@ -3706,7 +3706,7 @@ static void testGetCertChain(void)
         ok(!(chain->TrustStatus.dwErrorStatus &
          CERT_TRUST_IS_NOT_VALID_FOR_USAGE),
          "didn't expect CERT_TRUST_IS_NOT_VALID_FOR_USAGE\n");
-        CertFreeCertificateChain(chain);
+        pCertFreeCertificateChain(chain);
     }
     oids[1] = one_two_three;
     para.RequestedUsage.Usage.cUsageIdentifier = 2;
@@ -3718,7 +3718,7 @@ static void testGetCertChain(void)
     {
         ok(chain->TrustStatus.dwErrorStatus & CERT_TRUST_IS_NOT_VALID_FOR_USAGE,
          "expected CERT_TRUST_IS_NOT_VALID_FOR_USAGE\n");
-        CertFreeCertificateChain(chain);
+        pCertFreeCertificateChain(chain);
     }
     para.RequestedUsage.dwType = USAGE_MATCH_TYPE_OR;
     ret = pCertGetCertificateChain(NULL, cert, &fileTime, store, &para,
@@ -3729,7 +3729,7 @@ static void testGetCertChain(void)
         ok(!(chain->TrustStatus.dwErrorStatus &
          CERT_TRUST_IS_NOT_VALID_FOR_USAGE),
          "didn't expect CERT_TRUST_IS_NOT_VALID_FOR_USAGE\n");
-        CertFreeCertificateChain(chain);
+        pCertFreeCertificateChain(chain);
     }
     CertCloseStore(store, 0);
     CertFreeCertificateContext(cert);
@@ -4443,7 +4443,7 @@ static void check_ssl_policy(void)
     CertAddEncodedCertificateToStore(testRoot, X509_ASN_ENCODING, chain0_0,
      sizeof(chain0_0), CERT_STORE_ADD_ALWAYS, NULL);
     engineConfig.hExclusiveRoot = testRoot;
-    if (!CertCreateCertificateChainEngine(&engineConfig, &engine))
+    if (!pCertCreateCertificateChainEngine(&engineConfig, &engine))
     {
         skip("Couldn't create chain engine\n");
         return;
@@ -4464,7 +4464,7 @@ static void check_ssl_policy(void)
     sslPolicyPara.fdwChecks |= SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, engine,
      winehqPolicyCheckWithMatchingName, &oct2007, &policyPara);
-    CertFreeCertificateChainEngine(engine);
+    pCertFreeCertificateChainEngine(engine);
     CertCloseStore(testRoot, 0);
     /* Test chain30, which has an invalid critical extension in an intermediate
      * cert, against the SSL policy.
@@ -4553,9 +4553,9 @@ START_TEST(chain)
     pCertVerifyCertificateChainPolicy = (void*)GetProcAddress(hCrypt32, "CertVerifyCertificateChainPolicy");
 
     testCreateCertChainEngine();
-    if (!pCertGetCertificateChain)
+    if (!pCertGetCertificateChain || !pCertFreeCertificateChain)
     {
-        win_skip("CertGetCertificateChain() is not available\n");
+        win_skip("Cert*CertificateChain functions not available\n");
     }
     else
     {
