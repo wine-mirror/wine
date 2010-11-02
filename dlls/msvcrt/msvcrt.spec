@@ -263,7 +263,7 @@
 @ cdecl __unDNameEx(ptr str long ptr ptr ptr long)
 @ extern __unguarded_readlc_active MSVCRT___unguarded_readlc_active
 @ extern __wargv MSVCRT___wargv
-# stub __wcserror
+@ cdecl __wcserror(wstr)
 # stub __wcserror_s
 # stub __wcsncnt
 @ cdecl __wgetmainargs(ptr ptr ptr long ptr)
@@ -1057,7 +1057,7 @@
 # stub _wcscoll_l
 @ cdecl _wcsdup(wstr)
 # stub _wcsdup_dbg
-# stub _wcserror
+@ cdecl _wcserror(long)
 # stub _wcserror_s
 # stub _wcsftime_l
 @ cdecl _wcsicmp(wstr wstr) ntdll._wcsicmp

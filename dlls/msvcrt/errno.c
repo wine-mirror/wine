@@ -27,6 +27,7 @@
 #include "windef.h"
 #include "winternl.h"
 #include "msvcrt.h"
+#include "winnls.h"
 #include "excpt.h"
 #include "wine/debug.h"
 
@@ -324,6 +325,51 @@ void CDECL MSVCRT_perror(const char* str)
     }
     MSVCRT__write( 2, MSVCRT__sys_errlist[err], strlen(MSVCRT__sys_errlist[err]) );
     MSVCRT__write( 2, "\n", 1 );
+}
+
+/*********************************************************************
+ *		_wcserror (MSVCRT.@)
+ */
+MSVCRT_wchar_t* CDECL _wcserror(int err)
+{
+    thread_data_t *data = msvcrt_get_thread_data();
+
+    if (!data->wcserror_buffer)
+        if (!(data->wcserror_buffer = MSVCRT_malloc(256 * sizeof(MSVCRT_wchar_t)))) return NULL;
+
+    if (err < 0 || err > MSVCRT__sys_nerr) err = MSVCRT__sys_nerr;
+    MultiByteToWideChar(CP_ACP, 0, MSVCRT__sys_errlist[err], -1, data->wcserror_buffer, 256);
+    return data->wcserror_buffer;
+}
+
+/**********************************************************************
+ *		__wcserror	(MSVCRT.@)
+ */
+MSVCRT_wchar_t* CDECL __wcserror(const MSVCRT_wchar_t* str)
+{
+    thread_data_t *data = msvcrt_get_thread_data();
+    int err;
+    static const WCHAR colonW[] = {':', ' ', '\0'};
+    static const WCHAR nlW[] = {'\n', '\0'};
+    size_t len;
+
+    if (!data->wcserror_buffer)
+        if (!(data->wcserror_buffer = MSVCRT_malloc(256 * sizeof(MSVCRT_wchar_t)))) return NULL;
+
+    err = data->thread_errno;
+    if (err < 0 || err > MSVCRT__sys_nerr) err = MSVCRT__sys_nerr;
+
+    if (str && *str)
+    {
+        lstrcpyW(data->wcserror_buffer, str);
+        lstrcatW(data->wcserror_buffer, colonW);
+    }
+    else data->wcserror_buffer[0] = '\0';
+    len = lstrlenW(data->wcserror_buffer);
+    MultiByteToWideChar(CP_ACP, 0, MSVCRT__sys_errlist[err], -1, data->wcserror_buffer + len, 256 - len);
+    lstrcatW(data->wcserror_buffer, nlW);
+
+    return data->wcserror_buffer;
 }
 
 /******************************************************************************

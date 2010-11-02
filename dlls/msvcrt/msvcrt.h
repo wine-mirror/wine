@@ -116,6 +116,7 @@ struct __thread_data {
     MSVCRT_wchar_t                 *wasctime_buffer;    /* buffer for wasctime */
     struct MSVCRT_tm                time_buffer;        /* buffer for localtime/gmtime */
     char                           *strerror_buffer;    /* buffer for strerror */
+    MSVCRT_wchar_t                 *wcserror_buffer;    /* buffer for wcserror */
     int                             fpecode;
     MSVCRT_terminate_function       terminate_handler;
     MSVCRT_unexpected_function      unexpected_handler;

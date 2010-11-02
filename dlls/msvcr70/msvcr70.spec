@@ -206,7 +206,7 @@
 @ cdecl __unDNameEx(ptr str long ptr ptr ptr long) msvcrt.__unDNameEx
 @ extern __unguarded_readlc_active msvcrt.__unguarded_readlc_active
 @ extern __wargv msvcrt.__wargv
-@ stub __wcserror
+@ cdecl __wcserror(wstr) msvcrt.__wcserror
 @ cdecl __wgetmainargs(ptr ptr ptr long ptr) msvcrt.__wgetmainargs
 @ extern __winitenv msvcrt.__winitenv
 @ cdecl _abnormal_termination() msvcrt._abnormal_termination
@@ -595,7 +595,7 @@
 @ extern _wcmdln msvcrt._wcmdln
 @ cdecl _wcreat(wstr long) msvcrt._wcreat
 @ cdecl _wcsdup(wstr) msvcrt._wcsdup
-@ stub _wcserror
+@ cdecl _wcserror(long) msvcrt._wcserror
 @ cdecl _wcsicmp(wstr wstr) msvcrt._wcsicmp
 @ cdecl _wcsicoll(wstr wstr) msvcrt._wcsicoll
 @ cdecl _wcslwr(wstr) msvcrt._wcslwr

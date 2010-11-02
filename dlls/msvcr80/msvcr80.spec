@@ -306,7 +306,7 @@
 @ extern __unguarded_readlc_active msvcrt.__unguarded_readlc_active
 @ stub __vswprintf_l
 @ extern __wargv msvcrt.__wargv
-@ stub __wcserror
+@ cdecl __wcserror(wstr) msvcrt.__wcserror
 @ stub __wcserror_s
 @ stub __wcsncnt
 @ cdecl __wgetmainargs(ptr ptr ptr long ptr) msvcrt.__wgetmainargs
@@ -1137,7 +1137,7 @@
 @ cdecl _wcreat(wstr long) msvcrt._wcreat
 @ stub _wcscoll_l
 @ cdecl _wcsdup(wstr) msvcrt._wcsdup
-@ stub _wcserror
+@ cdecl _wcserror(long) msvcrt._wcserror
 @ stub _wcserror_s
 @ stub _wcsftime_l
 @ cdecl _wcsicmp(wstr wstr) msvcrt._wcsicmp
