@@ -28,6 +28,7 @@ RC_SRCS = \
 	msrle_Ro.rc \
 	msrle_Ru.rc \
 	msrle_Si.rc \
+	msrle_Sr.rc \
 	msrle_Sv.rc \
 	msrle_Tr.rc \
 	msrle_Uk.rc
