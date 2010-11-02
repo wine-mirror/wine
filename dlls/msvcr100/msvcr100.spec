@@ -836,7 +836,7 @@
 @ cdecl _itoa(long ptr long) msvcrt._itoa
 @ cdecl _itoa_s(long ptr long long) msvcrt._itoa_s
 @ cdecl _itow(long ptr long) msvcrt._itow
-@ stub _itow_s
+@ cdecl _itow_s(long ptr long long) msvcrt._itow_s
 @ cdecl _j0(double) msvcrt._j0
 @ cdecl _j1(double) msvcrt._j1
 @ cdecl _jn(long double) msvcrt._jn

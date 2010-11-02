@@ -611,7 +611,7 @@
 @ cdecl _itoa(long ptr long) ntdll._itoa
 @ cdecl _itoa_s(long ptr long long)
 @ cdecl _itow(long ptr long) ntdll._itow
-# stub _itow_s
+@ cdecl _itow_s(long ptr long long)
 @ cdecl _j0(double)
 @ cdecl _j1(double)
 @ cdecl _jn(long double)
