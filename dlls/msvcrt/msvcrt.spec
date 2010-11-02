@@ -346,7 +346,7 @@
 # stub _cprintf_s
 # stub _cprintf_s_l
 @ cdecl _cputs(str)
-# stub _cputws
+@ cdecl _cputws(wstr)
 @ cdecl _creat(str long) MSVCRT__creat
 # stub _crtAssertBusy
 # stub _crtBreakAlloc

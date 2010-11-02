@@ -77,6 +77,22 @@ int CDECL _cputs(const char* str)
   return retval;
 }
 
+/*********************************************************************
+ *		_cputws (MSVCRT.@)
+ */
+int CDECL _cputws(const MSVCRT_wchar_t* str)
+{
+  DWORD count;
+  int retval = MSVCRT_EOF;
+
+  LOCK_CONSOLE;
+  if (WriteConsoleW(MSVCRT_console_out, str, lstrlenW(str), &count, NULL)
+      && count == 1)
+    retval = 0;
+  UNLOCK_CONSOLE;
+  return retval;
+}
+
 #define NORMAL_CHAR     0
 #define ALT_CHAR        1
 #define CTRL_CHAR       2

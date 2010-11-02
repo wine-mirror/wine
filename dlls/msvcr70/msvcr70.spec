@@ -261,7 +261,7 @@
 @ cdecl _copysign( double double ) msvcrt._copysign
 @ varargs _cprintf(str) msvcrt._cprintf
 @ cdecl _cputs(str) msvcrt._cputs
-@ stub _cputws
+@ cdecl _cputws(wstr) msvcrt._cputws
 @ cdecl _creat(str long) msvcrt._creat
 @ varargs _cscanf(str) msvcrt._cscanf
 @ cdecl _ctime64(ptr) msvcrt._ctime64

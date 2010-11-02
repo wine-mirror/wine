@@ -551,7 +551,7 @@
 @ stub _cprintf_s
 @ stub _cprintf_s_l
 @ cdecl _cputs(str) msvcrt._cputs
-@ stub _cputws
+@ cdecl _cputws(wstr) msvcrt._cputws
 @ cdecl _creat(str long) msvcrt._creat
 @ cdecl _create_locale(long str) msvcrt._create_locale
 @ stub _crt_debugger_hook
