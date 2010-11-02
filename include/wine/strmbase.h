@@ -311,7 +311,7 @@ typedef struct tagFactoryTemplate {
 } FactoryTemplate;
 
 HRESULT WINAPI AMovieDllRegisterServer2(BOOL bRegister);
-HRESULT WINAPI AMovieSetupRegisterFilter2( const AMOVIESETUP_FILTER const * pFilter, IFilterMapper2  *pIFM2, BOOL  bRegister);
+HRESULT WINAPI AMovieSetupRegisterFilter2(const AMOVIESETUP_FILTER *pFilter, IFilterMapper2  *pIFM2, BOOL  bRegister);
 
 /* Dll Functions */
 BOOL WINAPI STRMBASE_DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv);

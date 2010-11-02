@@ -136,7 +136,7 @@ static HRESULT SetupRegisterAllClasses(const FactoryTemplate * pList, int num,
     return hr;
 }
 
-HRESULT WINAPI AMovieSetupRegisterFilter2( const AMOVIESETUP_FILTER const * pFilter, IFilterMapper2  *pIFM2, BOOL  bRegister)
+HRESULT WINAPI AMovieSetupRegisterFilter2(const AMOVIESETUP_FILTER *pFilter, IFilterMapper2  *pIFM2, BOOL  bRegister)
 {
     if (!pFilter)
         return S_OK;
