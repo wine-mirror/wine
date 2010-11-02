@@ -6550,8 +6550,8 @@ static void test_XSLPattern(void)
     if (len)
         expect_list_and_release(list, "E3.E3.E2.D1 E3.E4.E2.D1");
 
-    /* set prefix foo to some non-existant namespace */
-    ole_check(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"), _variantbstr_("xmlns:foo='urn:non-existant-foo'")));
+    /* set prefix foo to some nonexistent namespace */
+    ole_check(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"), _variantbstr_("xmlns:foo='urn:nonexistent-foo'")));
 
     /* the registered prefix takes precedence */
     ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//foo:c"), &list));
