@@ -31,6 +31,7 @@ RC_SRCS = \
 	msacm_Ro.rc \
 	msacm_Ru.rc \
 	msacm_Si.rc \
+	msacm_Sr.rc \
 	msacm_Sv.rc \
 	msacm_Tr.rc \
 	msacm_Uk.rc \
