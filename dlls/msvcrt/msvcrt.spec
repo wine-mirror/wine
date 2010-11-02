@@ -271,7 +271,7 @@
 @ cdecl _abnormal_termination()
 # stub _abs64
 @ cdecl _access(str long) MSVCRT__access
-# stub _access_s
+@ cdecl _access_s(str long)
 @ extern _acmdln MSVCRT__acmdln
 @ stdcall -arch=i386 _adj_fdiv_m16i(long)
 @ stdcall -arch=i386 _adj_fdiv_m32(long)
@@ -1046,7 +1046,7 @@
 # stub _vwprintf_p_l
 # stub _vwprintf_s_l
 @ cdecl _waccess(wstr long)
-# stub _waccess_s
+@ cdecl _waccess_s(wstr long)
 @ cdecl _wasctime(ptr) MSVCRT__wasctime
 # stub _wasctime_s
 # stub _wassert

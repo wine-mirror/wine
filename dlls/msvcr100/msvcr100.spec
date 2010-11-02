@@ -490,7 +490,7 @@
 @ cdecl _abnormal_termination() msvcrt._abnormal_termination
 @ stub _abs64
 @ cdecl _access(str long) msvcrt._access
-@ stub _access_s
+@ cdecl _access_s(str long) msvcrt._access_s
 @ extern _acmdln msvcrt._acmdln
 @ cdecl _aligned_free(ptr) msvcrt._aligned_free
 @ cdecl _aligned_malloc(long long) msvcrt._aligned_malloc
@@ -1274,7 +1274,7 @@
 @ stub _vwprintf_p_l
 @ stub _vwprintf_s_l
 @ cdecl _waccess(wstr long) msvcrt._waccess
-@ stub _waccess_s
+@ cdecl _waccess_s(wstr long) msvcrt.waccess_s
 @ cdecl _wasctime(ptr) msvcrt._wasctime
 @ stub _wasctime_s
 @ stub _wassert

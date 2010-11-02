@@ -55,6 +55,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* _access() bit flags FIXME: incomplete */
 #define MSVCRT_W_OK      0x02
+#define MSVCRT_R_OK      0x04
 
 /* values for wxflag in file descriptor */
 #define WX_OPEN           0x01
@@ -507,6 +508,21 @@ int CDECL MSVCRT__access(const char *filename, int mode)
 }
 
 /*********************************************************************
+ *		_access_s (MSVCRT.@)
+ */
+int CDECL _access_s(const char *filename, int mode)
+{
+  if (!MSVCRT_CHECK_PMT(filename != NULL) ||
+      !MSVCRT_CHECK_PMT((mode & ~(MSVCRT_R_OK | MSVCRT_W_OK)) == 0))
+  {
+     *MSVCRT__errno() = MSVCRT_EINVAL;
+     return -1;
+  }
+
+  return MSVCRT__access(filename, mode);
+}
+
+/*********************************************************************
  *		_waccess (MSVCRT.@)
  */
 int CDECL _waccess(const MSVCRT_wchar_t *filename, int mode)
@@ -526,6 +542,21 @@ int CDECL _waccess(const MSVCRT_wchar_t *filename, int mode)
     return -1;
   }
   return 0;
+}
+
+/*********************************************************************
+ *		_waccess_s (MSVCRT.@)
+ */
+int CDECL _waccess_s(const MSVCRT_wchar_t *filename, int mode)
+{
+  if (!MSVCRT_CHECK_PMT(filename != NULL) ||
+      !MSVCRT_CHECK_PMT((mode & ~(MSVCRT_R_OK | MSVCRT_W_OK)) == 0))
+  {
+     *MSVCRT__errno() = MSVCRT_EINVAL;
+     return -1;
+  }
+
+  return _waccess(filename, mode);
 }
 
 /*********************************************************************
