@@ -3,6 +3,7 @@
  *
  * Copyright 2010 Nenad Vujic
  *                Paul Vriens
+ * Copyright 2010 Đorđe Vasiljević
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,7 +22,6 @@
 
 #include "resource.h"
 
-/* UTF-8 */
 #pragma code_page(65001)
 
 LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
@@ -30,28 +30,30 @@ IDM_DEBUG_POPUP MENU
 BEGIN
     POPUP ""
     BEGIN
-        MENUITEM "&Debagovanje", ID_DEBUG
+        MENUITEM "&Otklanjač grešaka", ID_DEBUG
     END
 END
 
 IDD_CRASH_DLG DIALOGEX 100, 100, 273, 175
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Greška programa"
+CAPTION "Programska greška"
 FONT 8, "Tahoma"
 BEGIN
     LTEXT           "",IDC_STATIC_BG,0,0,273,52,WS_BORDER,0
-    LTEXT           "Program %s ima ozbiljan problem i mora biti zatvoren. Izvinjavamo se zbog neudobnosti.",
+    LTEXT           "Program %s je naišao na ozbiljan problem i mora \
+                    biti zatvoren. Izvinjavamo se zbog neprijatnosti.",
                     IDC_STATIC_TXT1,27,10,224,30
-    LTEXT           "Ovo može biti problem programa ili disfunkcije u Wine-u. \
-                    Pogledajte http://appdb.winehq.org za savete za pokretanje ove aplikacije.\n\n\
-                    Ako nemate ovaj problem pod Windows i nije prijavljen \
-                    još, možete prijaviti na http://bugs.winehq.org.",IDC_STATIC_TXT2,27,60,224,100
+    LTEXT           "Uzrok ovome može biti problem u programu ili nedostatak u Wine-u. \
+                    Proverite http://appdb.winehq.org za savete o pokretanju \
+                    ovog programa.\n\n\
+                    Ako ovaj problem nije prisutan pod Windows-om i još uvek nije \
+                    prijavljen, prijavite ga na http://bugs.winehq.org.",IDC_STATIC_TXT2,27,60,224,100
     DEFPUSHBUTTON   "Zatvori", IDOK, 205, 151, 60, 16, WS_TABSTOP
 END
 
 STRINGTABLE
 BEGIN
-    IDS_AUTO_CAPTION     "Wine program greška"
-    IDS_INVALID_PARAMS   "Interna greška - loši parametri programa"
-    IDS_UNIDENTIFIED     "(Nedefinisano)"
+    IDS_AUTO_CAPTION     "Pad Wine programa"
+    IDS_INVALID_PARAMS   "Unutrašnje greške — primljeni su neispravni parametri"
+    IDS_UNIDENTIFIED     "(neidentifikovano)"
 END
