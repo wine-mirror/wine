@@ -33,6 +33,7 @@ RC_SRCS = \
 	sane_Ro.rc \
 	sane_Ru.rc \
 	sane_Si.rc \
+	sane_Sr.rc \
 	sane_Sv.rc \
 	sane_Uk.rc \
 	sane_Zh.rc
