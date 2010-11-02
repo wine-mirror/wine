@@ -34,6 +34,13 @@ static const xmlChar NameTest_mod_post[] = "']";
 
 #define U(str) BAD_CAST str
 
+static inline BOOL is_literal(xmlChar const* tok)
+{
+    return (tok && tok[0] && tok[1] &&
+            tok[0]== tok[xmlStrlen(tok)-1] &&
+            (tok[0] == '\'' || tok[0] == '"'));
+}
+
 %}
 
 %token TOK_Parent TOK_Self TOK_DblFSlash TOK_FSlash TOK_Axis TOK_Colon
@@ -53,6 +60,8 @@ static const xmlChar NameTest_mod_post[] = "']";
 %left TOK_OpAnd TOK_OpOr
 %left TOK_OpEq TOK_OpIEq TOK_OpNEq TOK_OpINEq
 %left TOK_OpLt TOK_OpILt TOK_OpGt TOK_OpIGt TOK_OpLEq TOK_OpILEq TOK_OpGEq TOK_OpIGEq
+
+%expect 14
 
 %%
 
@@ -118,7 +127,7 @@ static const xmlChar NameTest_mod_post[] = "']";
                             | AbbreviatedRelativeLocationPath
     ;
     /* [2.1] Location Steps */
-    Step                    : AxisSpecifier NameTest Predicates
+    Step                    : AxisSpecifier NodeTest Predicates
                             {
                                 TRACE("Got Step: \"%s%s%s\"\n", $1, $2, $3);
                                 $$=$1;
@@ -127,21 +136,21 @@ static const xmlChar NameTest_mod_post[] = "']";
                                 $$=xmlStrcat($$,$3);
                                 xmlFree($3);
                             }
-                            | NameTest Predicates
+                            | NodeTest Predicates
                             {
                                 TRACE("Got Step: \"%s%s\"\n", $1, $2);
                                 $$=$1;
                                 $$=xmlStrcat($$,$2);
                                 xmlFree($2);
                             }
-                            | AxisSpecifier NameTest
+                            | AxisSpecifier NodeTest
                             {
                                 TRACE("Got Step: \"%s%s\"\n", $1, $2);
                                 $$=$1;
                                 $$=xmlStrcat($$,$2);
                                 xmlFree($2);
                             }
-                            | NameTest
+                            | NodeTest
                             | Attribute
                             | AbbreviatedStep
     ;
@@ -162,6 +171,9 @@ static const xmlChar NameTest_mod_post[] = "']";
     ;
 
     /* [2.3] Node Tests */
+    NodeTest                : NameTest
+                            | FunctionCall
+    ;
     NameTest                : '*'
                             {
                                 TRACE("Got NameTest: \"*\"\n");
@@ -285,23 +297,96 @@ static const xmlChar NameTest_mod_post[] = "']";
                             }
                             | TOK_Literal
                             | TOK_Number
-                            | FunctionCall
     ;
     /* [3.2] Function Calls */
     FunctionCall            : QName '(' Arguments ')'
                             {
                                 TRACE("Got FunctionCall: \"%s(%s)\"\n", $1, $3);
-                                $$=$1;
-                                $$=xmlStrcat($$,U("("));
-                                $$=xmlStrcat($$,$3);
-                                xmlFree($3);
-                                $$=xmlStrcat($$,U(")"));
+                                if (xmlStrEqual($1,U("ancestor")))
+                                {
+                                    $$=$1;
+                                    $$=xmlStrcat($$,U("::"));
+                                    $$=xmlStrcat($$,$3);
+                                    xmlFree($3);
+                                }
+                                else if (xmlStrEqual($1,U("attribute")))
+                                {
+                                    if (is_literal($3))
+                                    {
+                                        $$=xmlStrdup(U("@*[name()="));
+                                        xmlFree($1);
+                                        $$=xmlStrcat($$,$3);
+                                        xmlFree($3);
+                                        $$=xmlStrcat($$,U("]"));
+                                    }
+                                    else
+                                    {
+                                        /* XML_XPATH_INVALID_TYPE */
+                                        $$=xmlStrdup(U("error(1211, 'Error: attribute("));
+                                        xmlFree($1);
+                                        $$=xmlStrcat($$,$3);
+                                        xmlFree($3);
+                                        $$=xmlStrcat($$,U("): invalid argument')"));
+                                    }
+                                }
+                                else if (xmlStrEqual($1,U("element")))
+                                {
+                                    if (is_literal($3))
+                                    {
+                                        $$=xmlStrdup(U("node()[nodeType()=1][name()="));
+                                        xmlFree($1);
+                                        $$=xmlStrcat($$,$3);
+                                        xmlFree($3);
+                                        $$=xmlStrcat($$,U("]"));
+                                    }
+                                    else
+                                    {
+                                        /* XML_XPATH_INVALID_TYPE */
+                                        $$=xmlStrdup(U("error(1211, 'Error: element("));
+                                        xmlFree($1);
+                                        $$=xmlStrcat($$,$3);
+                                        xmlFree($3);
+                                        $$=xmlStrcat($$,U("): invalid argument')"));
+                                    }
+                                }
+                                else
+                                {
+                                    $$=$1;
+                                    $$=xmlStrcat($$,U("("));
+                                    $$=xmlStrcat($$,$3);
+                                    xmlFree($3);
+                                    $$=xmlStrcat($$,U(")"));
+                                }
                             }
                             | QName '(' ')'
                             {
                                 TRACE("Got FunctionCall: \"%s()\"\n", $1);
-                                $$=$1;
-                                $$=xmlStrcat($$,U("()"));
+                                /* comment() & node() work the same in XPath */
+                                if (xmlStrEqual($1,U("attribute")))
+                                {
+                                    $$=xmlStrdup(U("@*"));
+                                    xmlFree($1);
+                                }
+                                else if (xmlStrEqual($1,U("element")))
+                                {
+                                    $$=xmlStrdup(U("node()[nodeType()=1]"));
+                                    xmlFree($1);
+                                }
+                                else if (xmlStrEqual($1,U("pi")))
+                                {
+                                    $$=xmlStrdup(U("processing-instruction()"));
+                                    xmlFree($1);
+                                }
+                                else if (xmlStrEqual($1,U("textnode")))
+                                {
+                                    $$=xmlStrdup(U("text()"));
+                                    xmlFree($1);
+                                }
+                                else
+                                {
+                                    $$=$1;
+                                    $$=xmlStrcat($$,U("()"));
+                                }
                             }
     ;
     Arguments               : Argument ',' Arguments

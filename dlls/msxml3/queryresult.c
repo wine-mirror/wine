@@ -522,7 +522,6 @@ HRESULT queryresult_create(xmlNodePtr node, LPCWSTR szQuery, IXMLDOMNodeList **o
     {
         xmlChar* tmp;
         int len;
-        WARN("Attempting XSLPattern emulation (experimental).\n");
         tmp = XSLPattern_to_XPath(ctxt, str);
         len = (xmlStrlen(tmp)+1)*sizeof(xmlChar);
         str = heap_realloc(str, len);

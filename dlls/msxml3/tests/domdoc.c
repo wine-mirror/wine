@@ -6571,136 +6571,100 @@ static void test_XSLPattern(void)
     list = NULL;
 
     /* attribute() */
-    todo_wine ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("attribute()"), &list));
-    if (list)
-    {
-        len = 0;
-        ole_check(IXMLDOMNodeList_get_length(list, &len));
-        todo_wine ok(len == 0, "expected empty list\n");
-        if (len)
-            IXMLDOMNodeList_Release(list);
-    }
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("attribute()"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len == 0, "expected empty list\n");
+    if (len)
+        IXMLDOMNodeList_Release(list);
 
-    todo_wine ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("attribute('depth')"), &list));
-    if (list)
-    {
-        len = 0;
-        ole_check(IXMLDOMNodeList_get_length(list, &len));
-        todo_wine ok(len == 0, "expected empty list\n");
-        if (len)
-            IXMLDOMNodeList_Release(list);
-    }
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("attribute('depth')"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len == 0, "expected empty list\n");
+    if (len)
+        IXMLDOMNodeList_Release(list);
 
-    todo_wine ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root/attribute('depth')"), &list));
-    if (list)
-    {
-        len = 0;
-        ole_check(IXMLDOMNodeList_get_length(list, &len));
-        todo_wine ok(len != 0, "expected filled list\n");
-        if (len)
-            todo_wine expect_list_and_release(list, "A'depth'.E3.D1");
-    }
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root/attribute('depth')"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "A'depth'.E3.D1");
 
-    todo_wine ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//x/attribute()"), &list));
-    if (list)
-    {
-        len = 0;
-        ole_check(IXMLDOMNodeList_get_length(list, &len));
-        todo_wine ok(len != 0, "expected filled list\n");
-        if (len)
-            todo_wine expect_list_and_release(list, "A'id'.E3.E3.D1 A'depth'.E3.E3.D1");
-    }
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//x/attribute()"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "A'id'.E3.E3.D1 A'depth'.E3.E3.D1");
 
     list = NULL;
     ole_expect(IXMLDOMDocument2_selectNodes(doc, _bstr_("//x//attribute(id)"), &list), E_FAIL);
     if (list)
         IXMLDOMNodeList_Release(list);
-    todo_wine ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//x//attribute('id')"), &list));
-    if (list)
-    {
-        len = 0;
-        ole_check(IXMLDOMNodeList_get_length(list, &len));
-        todo_wine ok(len != 0, "expected filled list\n");
-        if (len)
-            todo_wine expect_list_and_release(list, "A'id'.E3.E3.D1 A'id'.E4.E3.E3.D1 A'id'.E5.E3.E3.D1 A'id'.E6.E3.E3.D1");
-    }
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//x//attribute('id')"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "A'id'.E3.E3.D1 A'id'.E4.E3.E3.D1 A'id'.E5.E3.E3.D1 A'id'.E6.E3.E3.D1");
 
     /* comment() */
     ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("comment()"), &list));
-    if (list)
-    {
-        len = 0;
-        ole_check(IXMLDOMNodeList_get_length(list, &len));
-        ok(len != 0, "expected filled list\n");
-        if (len)
-            expect_list_and_release(list, "C2.D1");
-    }
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "C2.D1");
 
     ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//comment()"), &list));
-    if (list)
-    {
-        len = 0;
-        ole_check(IXMLDOMNodeList_get_length(list, &len));
-        ok(len != 0, "expected filled list\n");
-        if (len)
-            expect_list_and_release(list, "C2.D1 C1.E3.D1 C2.E3.E3.D1 C2.E4.E3.D1");
-    }
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "C2.D1 C1.E3.D1 C2.E3.E3.D1 C2.E4.E3.D1");
 
     /* element() */
-    todo_wine ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("element()"), &list));
-    if (list)
-    {
-        len = 0;
-        ole_check(IXMLDOMNodeList_get_length(list, &len));
-        todo_wine ok(len != 0, "expected filled list\n");
-        if (len)
-            todo_wine expect_list_and_release(list, "E3.D1");
-    }
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("element()"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E3.D1");
 
-    todo_wine ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root/y/element()"), &list));
-    if (list)
-    {
-        len = 0;
-        ole_check(IXMLDOMNodeList_get_length(list, &len));
-        todo_wine ok(len != 0, "expected filled list\n");
-        if (len)
-            todo_wine expect_list_and_release(list, "E4.E4.E3.D1 E5.E4.E3.D1 E6.E4.E3.D1");
-    }
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root/y/element()"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E4.E4.E3.D1 E5.E4.E3.D1 E6.E4.E3.D1");
 
     list = NULL;
     ole_expect(IXMLDOMDocument2_selectNodes(doc, _bstr_("//element(a)"), &list), E_FAIL);
     if (list)
         IXMLDOMNodeList_Release(list);
-    todo_wine ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//element('a')"), &list));
-    if (list)
-    {
-        len = 0;
-        ole_check(IXMLDOMNodeList_get_length(list, &len));
-        todo_wine ok(len != 0, "expected filled list\n");
-        if (len)
-            todo_wine expect_list_and_release(list, "E4.E3.E3.D1 E4.E4.E3.D1");
-    }
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//element('a')"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E4.E3.E3.D1 E4.E4.E3.D1");
 
     /* node() */
     ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("node()"), &list));
-    if (list)
-    {
-        len = 0;
-        ole_check(IXMLDOMNodeList_get_length(list, &len));
-        ok(len != 0, "expected filled list\n");
-        if (len)
-            expect_list_and_release(list, "P1.D1 C2.D1 E3.D1");
-    }
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "P1.D1 C2.D1 E3.D1");
 
     ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//x/node()"), &list));
-    if (list)
-    {
-        len = 0;
-        ole_check(IXMLDOMNodeList_get_length(list, &len));
-        ok(len != 0, "expected filled list\n");
-        if (len)
-            expect_list_and_release(list, "P1.E3.E3.D1 C2.E3.E3.D1 T3.E3.E3.D1 E4.E3.E3.D1 E5.E3.E3.D1 E6.E3.E3.D1");
-    }
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "P1.E3.E3.D1 C2.E3.E3.D1 T3.E3.E3.D1 E4.E3.E3.D1 E5.E3.E3.D1 E6.E3.E3.D1");
 
     /* nodeType() */
     /* XML_ELEMENT_NODE */
@@ -6733,46 +6697,37 @@ static void test_XSLPattern(void)
         expect_list_and_release(list, "C2.E3.E3.D1");
 
     /* pi() */
-    todo_wine ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("pi()"), &list));
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("pi()"), &list));
     if (list)
     {
         len = 0;
         ole_check(IXMLDOMNodeList_get_length(list, &len));
-        todo_wine ok(len != 0, "expected filled list\n");
+        ok(len != 0, "expected filled list\n");
         if (len)
-            todo_wine expect_list_and_release(list, "P1.D1");
+            expect_list_and_release(list, "P1.D1");
     }
 
-    todo_wine ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//y/pi()"), &list));
-    if (list)
-    {
-        len = 0;
-        ole_check(IXMLDOMNodeList_get_length(list, &len));
-        todo_wine ok(len != 0, "expected filled list\n");
-        if (len)
-            todo_wine expect_list_and_release(list, "P1.E4.E3.D1");
-    }
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//y/pi()"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "P1.E4.E3.D1");
 
     /* textnode() */
-    todo_wine ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root/textnode()"), &list));
-    if (list)
-    {
-        len = 0;
-        ole_check(IXMLDOMNodeList_get_length(list, &len));
-        todo_wine ok(len != 0, "expected filled list\n");
-        if (len)
-            todo_wine expect_list_and_release(list, "T2.E3.D1");
-    }
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root/textnode()"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "T2.E3.D1");
 
-    todo_wine ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root/element()/textnode()"), &list));
-    if (list)
-    {
-        len = 0;
-        ole_check(IXMLDOMNodeList_get_length(list, &len));
-        todo_wine ok(len != 0, "expected filled list\n");
-        if (len)
-            todo_wine expect_list_and_release(list, "T3.E3.E3.D1 T3.E4.E3.D1");
-    }
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root/element()/textnode()"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "T3.E3.E3.D1 T3.E4.E3.D1");
 
     IXMLDOMDocument2_Release(doc);
     free_bstrs();
