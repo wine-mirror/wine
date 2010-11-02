@@ -1,5 +1,6 @@
 MODULE    = wer.dll
 IMPORTLIB = wer
+IMPORTS   = advapi32
 
 C_SRCS = \
 	main.c

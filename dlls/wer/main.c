@@ -1,5 +1,6 @@
 /*
  * Copyright 2010 Louis Lenders
+ * Copyright 2010 Detlef Riekenberg
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,8 +23,10 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "werapi.h"
 #include "wine/list.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wer);
@@ -47,6 +50,11 @@ static CRITICAL_SECTION report_table_cs = { &report_table_cs_debug, -1, 0, 0, 0,
 
 static struct list report_table = LIST_INIT(report_table);
 
+static WCHAR regpath_exclude[] = {'S','o','f','t','w','a','r','e','\\',
+                                  'M','i','c','r','o','s','o','f','t','\\',
+                                  'W','i','n','d','o','w','s',' ','E','r','r','o','r',' ','R','e','p','o','r','t','i','n','g','\\',
+                                  'E','x','c','l','u','d','e','d','A','p','p','l','i','c','a','t','i','o','n','s',0};
+
 /***********************************************************************
  * Memory alloccation helper
  */
@@ -59,12 +67,6 @@ static inline void * __WINE_ALLOC_SIZE(1) heap_alloc_zero(size_t len)
 static inline BOOL heap_free(void *mem)
 {
     return HeapFree(GetProcessHeap(), 0, mem);
-}
-
-HRESULT WINAPI WerAddExcludedApplication(PCWSTR exeName, BOOL allUsers)
-{
-    FIXME("(%s, %d) stub\n",debugstr_w(exeName), allUsers);
-    return E_NOTIMPL;
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
@@ -86,6 +88,47 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 }
 
 /***********************************************************************
+ * WerAddExcludedApplication (wer.@)
+ *
+ * Add an application to the user specific or the system wide exclusion list
+ *
+ * PARAMS
+ *  exeName  [i] The application name
+ *  allUsers [i] for all users (TRUE) or for the current user (FALSE)
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Faulure: A HRESULT error code
+ *
+ */
+HRESULT WINAPI WerAddExcludedApplication(PCWSTR exeName, BOOL allUsers)
+{
+    HKEY hkey;
+    DWORD value = 1;
+    LPWSTR bs;
+
+    TRACE("(%s, %d)\n",debugstr_w(exeName), allUsers);
+    if (!exeName || !exeName[0])
+        return E_INVALIDARG;
+
+    bs = strrchrW(exeName, '\\');
+    if (bs) {
+        bs++;   /* skip the backslash */
+        if (!bs[0]) {
+            return E_INVALIDARG;
+        }
+    } else
+        bs = (LPWSTR) exeName;
+
+    if (!RegCreateKeyW(allUsers ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER, regpath_exclude, &hkey)) {
+        RegSetValueExW(hkey, bs, 0, REG_DWORD, (LPBYTE)&value, sizeof(DWORD));
+        RegCloseKey(hkey);
+        return S_OK;
+    }
+    return E_ACCESSDENIED;
+}
+
+/***********************************************************************
  * WerRemoveExcludedApplication (wer.@)
  *
  * remove an application from the exclusion list
@@ -94,15 +137,36 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  *  exeName  [i] The application name
  *  allUsers [i] for all users (TRUE) or for the current user (FALSE)
  *
- * RESULTS
- *  SUCCESS  S_OK
- *  FAILURE  A HRESULT error code
+ * RETURNS
+ *  Success: S_OK
+ *  Faulure: A HRESULT error code
  *
  */
 HRESULT WINAPI WerRemoveExcludedApplication(PCWSTR exeName, BOOL allUsers)
 {
-    FIXME("(%s, %d) :stub\n",debugstr_w(exeName), allUsers);
-    return E_NOTIMPL;
+    HKEY hkey;
+    LPWSTR bs;
+    LONG lres;
+
+    TRACE("(%s, %d)\n",debugstr_w(exeName), allUsers);
+    if (!exeName || !exeName[0])
+        return E_INVALIDARG;
+
+    bs = strrchrW(exeName, '\\');
+    if (bs) {
+        bs++;   /* skip the backslash */
+        if (!bs[0]) {
+            return E_INVALIDARG;
+        }
+    } else
+        bs = (LPWSTR) exeName;
+
+    if (!RegCreateKeyW(allUsers ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER, regpath_exclude, &hkey)) {
+        lres = RegDeleteValueW(hkey, bs);
+        RegCloseKey(hkey);
+        return lres ? __HRESULT_FROM_WIN32(ERROR_ENVVAR_NOT_FOUND) : S_OK;
+    }
+    return E_ACCESSDENIED;
 }
 
 /***********************************************************************
