@@ -147,7 +147,7 @@ ANY                 (.)
 "!"                         { SYM('!'); }
 {NCName}                    { STR(TOK_NCName); }
 {Number}                    { STR(TOK_Number); }
-{ANY}                       { FIXME("Unexpected character '%s'.",yytext); }
+{ANY}                       { FIXME("Unexpected character '%s'.\n",yytext); }
 
 %%
 
