@@ -2258,7 +2258,11 @@ msi_seltree_add_child_features( MSIPACKAGE *package, HWND hwnd,
 
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
-        if ( strcmpW( parent, feature->Feature_Parent ) )
+        if ( parent && feature->Feature_Parent && strcmpW( parent, feature->Feature_Parent ))
+            continue;
+        else if ( parent && !feature->Feature_Parent )
+            continue;
+        else if ( !parent && feature->Feature_Parent )
             continue;
 
         if ( !feature->Title )
