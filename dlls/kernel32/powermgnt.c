@@ -79,18 +79,6 @@ BOOL WINAPI SetSystemPowerState(BOOL suspend_or_hibernate,
                                   BOOL force_flag)
 {
     WARN("(): stub, harmless.\n");
-    /* suspend_or_hibernate flag: w95 does not support
-       this feature anyway */
-
-    for ( ;0; )
-    {
-        if ( force_flag )
-        {
-        }
-        else
-        {
-        }
-    }
     return TRUE;
 }
 
