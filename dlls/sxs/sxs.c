@@ -42,9 +42,3 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
     return TRUE;
 }
-
-HRESULT WINAPI CreateAssemblyCache(DWORD unimplemented, DWORD dwReserved)
-{
-    FIXME("%u %u stub\n", unimplemented, dwReserved);
-    return E_NOTIMPL;
-}

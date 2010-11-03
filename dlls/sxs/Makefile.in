@@ -1,6 +1,7 @@
 MODULE    = sxs.dll
 
 C_SRCS = \
+	cache.c \
 	sxs.c
 
 @MAKE_DLL_RULES@
