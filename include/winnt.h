@@ -556,6 +556,7 @@ typedef DWORD FLONG;
 #define PROCESSOR_ARM820         2080    /* 0x820 */
 #define PROCESSOR_ARM920         2336    /* 0x920 */
 #define PROCESSOR_ARM_7TDMI      70001
+#define PROCESSOR_OPTIL          18767
 
 #ifdef _WIN64
 #define MAXIMUM_PROCESSORS       64
