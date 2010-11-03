@@ -2651,7 +2651,7 @@ static void delete_reg_key_or_value( HKEY hkey_root, LPCWSTR key, LPCWSTR value,
     {
         if ((res = RegDeleteTreeW( hkey_root, key )))
         {
-            WARN("Failed to delete key %s (%d)\n", debugstr_w(key), res);
+            TRACE("Failed to delete key %s (%d)\n", debugstr_w(key), res);
         }
         return;
     }
@@ -2660,12 +2660,11 @@ static void delete_reg_key_or_value( HKEY hkey_root, LPCWSTR key, LPCWSTR value,
     {
         if ((res = RegDeleteValueW( hkey, value )))
         {
-            WARN("Failed to delete value %s (%d)\n", debugstr_w(value), res);
+            TRACE("Failed to delete value %s (%d)\n", debugstr_w(value), res);
         }
         res = RegQueryInfoKeyW( hkey, NULL, NULL, NULL, &num_subkeys, NULL, NULL, &num_values,
                                 NULL, NULL, NULL, NULL );
         RegCloseKey( hkey );
-
         if (!res && !num_subkeys && !num_values)
         {
             TRACE("Removing empty key %s\n", debugstr_w(key));
@@ -2673,7 +2672,7 @@ static void delete_reg_key_or_value( HKEY hkey_root, LPCWSTR key, LPCWSTR value,
         }
         return;
     }
-    WARN("Failed to open key %s (%d)\n", debugstr_w(key), res);
+    TRACE("Failed to open key %s (%d)\n", debugstr_w(key), res);
 }
 
 
