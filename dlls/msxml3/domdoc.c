@@ -74,6 +74,7 @@ static const WCHAR PropValueXSLPatternW[] = {'X','S','L','P','a','t','t','e','r'
  * We need to preserve this when reloading a document,
  * and also need access to it from the libxml backend. */
 typedef struct _domdoc_properties {
+    VARIANT_BOOL preserving;
     struct list selectNsList;
     xmlChar const* selectNsStr;
     LONG selectNsStr_len;
@@ -114,7 +115,6 @@ struct domdoc
     VARIANT_BOOL async;
     VARIANT_BOOL validating;
     VARIANT_BOOL resolving;
-    VARIANT_BOOL preserving;
     domdoc_properties* properties;
     IXMLDOMSchemaCollection2* schema;
     bsc_t *bsc;
@@ -244,6 +244,7 @@ static domdoc_properties * create_properties(const GUID *clsid)
     domdoc_properties *properties = heap_alloc(sizeof(domdoc_properties));
 
     list_init( &properties->selectNsList );
+    properties->preserving = VARIANT_FALSE;
     properties->selectNsStr = heap_alloc_zero(sizeof(xmlChar));
     properties->selectNsStr_len = 0;
     properties->XPath = FALSE;
@@ -268,6 +269,7 @@ static domdoc_properties* copy_properties(domdoc_properties const* properties)
 
     if (pcopy)
     {
+        pcopy->preserving = properties->preserving;
         pcopy->XPath = properties->XPath;
         pcopy->selectNsStr_len = properties->selectNsStr_len;
         list_init( &pcopy->selectNsList );
@@ -324,6 +326,16 @@ xmlNodePtr xmldoc_unlink_xmldecl(xmlDocPtr doc)
     return node;
 }
 
+BOOL is_preserving_whitespace(xmlNodePtr node)
+{
+    domdoc_properties* properties = NULL;
+    /* during parsing the xmlDoc._private stuff is not there */
+    if (priv_from_xmlDocPtr(node->doc))
+        properties = properties_from_xmlDocPtr(node->doc);
+    return ((properties && properties->preserving == VARIANT_TRUE) ||
+            xmlNodeGetSpacePreserve(node) == 1);
+}
+
 static inline BOOL strn_isspace(xmlChar const* str, int len)
 {
     for (; str && len > 0 && *str; ++str, --len)
@@ -341,17 +353,11 @@ static void sax_characters(void *ctx, const xmlChar *ch, int len)
     pctx = (xmlParserCtxtPtr) ctx;
     This = (domdoc const*) pctx->_private;
 
-    if (!This->preserving)
-    {
-        xmlChar* ws = xmlGetNsProp(pctx->node, BAD_CAST "space", XML_XML_NAMESPACE);
-        if ((!ws || xmlStrcmp(ws, BAD_CAST "preserve") != 0) &&
-            strn_isspace(ch, len))
-        {
-            xmlFree(ws);
-            return;
-        }
-        xmlFree(ws);
-    }
+    /* during domdoc_loadXML() the xmlDocPtr->_private data is not available */
+    if (!This->properties->preserving &&
+        !is_preserving_whitespace(pctx->node) &&
+        strn_isspace(ch, len))
+        return;
 
     xmlSAX2Characters(ctx, ch, len);
 }
@@ -2331,8 +2337,8 @@ static HRESULT WINAPI domdoc_get_preserveWhiteSpace(
     VARIANT_BOOL* isPreserving )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    TRACE("(%p)->(%p: %d)\n", This, isPreserving, This->preserving);
-    *isPreserving = This->preserving;
+    TRACE("(%p)->(%p: %d)\n", This, isPreserving, This->properties->preserving);
+    *isPreserving = This->properties->preserving;
     return S_OK;
 }
 
@@ -2343,7 +2349,7 @@ static HRESULT WINAPI domdoc_put_preserveWhiteSpace(
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
     TRACE("(%p)->(%d)\n", This, isPreserving);
-    This->preserving = isPreserving;
+    This->properties->preserving = isPreserving;
     return S_OK;
 }
 
@@ -3267,7 +3273,6 @@ HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **docu
     doc->async = VARIANT_TRUE;
     doc->validating = 0;
     doc->resolving = 0;
-    doc->preserving = 0;
     doc->properties = properties_from_xmlDocPtr(xmldoc);
     doc->error = S_OK;
     doc->schema = NULL;
