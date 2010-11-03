@@ -47,6 +47,7 @@ RC_SRCS = \
 	oleaut32_Ro.rc \
 	oleaut32_Ru.rc \
 	oleaut32_Si.rc \
+	oleaut32_Sr.rc \
 	oleaut32_Sv.rc \
 	oleaut32_Th.rc \
 	oleaut32_Tr.rc \
