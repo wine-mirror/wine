@@ -1049,6 +1049,8 @@ void fill_cpu_info(void)
             {
                 if (strstr(value, "cx8"))
                     user_shared_data->ProcessorFeatures[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
+                if (strstr(value, "cx16"))
+                    user_shared_data->ProcessorFeatures[PF_COMPARE_EXCHANGE128] = TRUE;
                 if (strstr(value, "mmx"))
                     user_shared_data->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
                 if (strstr(value, "tsc"))
@@ -1061,6 +1063,8 @@ void fill_cpu_info(void)
                     user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE] = TRUE;
                 if (strstr(value, "sse2"))
                     user_shared_data->ProcessorFeatures[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
+                if (strstr(value, "pni"))
+                    user_shared_data->ProcessorFeatures[PF_SSE3_INSTRUCTIONS_AVAILABLE] = TRUE;
                 if (strstr(value, "pae"))
                     user_shared_data->ProcessorFeatures[PF_PAE_ENABLED] = TRUE;
                 if (strstr(value, "ht"))
@@ -1275,11 +1279,13 @@ void fill_cpu_info(void)
                 {
                     cached_sci.Revision |= value;
                     if (strstr(buffer, "CX8"))   user_shared_data->ProcessorFeatures[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
+                    if (strstr(buffer, "CX16"))  user_shared_data->ProcessorFeatures[PF_COMPARE_EXCHANGE128] = TRUE;
                     if (strstr(buffer, "MMX"))   user_shared_data->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
                     if (strstr(buffer, "TSC"))   user_shared_data->ProcessorFeatures[PF_RDTSC_INSTRUCTION_AVAILABLE] = TRUE;
                     if (strstr(buffer, "3DNOW")) user_shared_data->ProcessorFeatures[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = TRUE;
                     if (strstr(buffer, "SSE"))   user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE] = TRUE;
                     if (strstr(buffer, "SSE2"))  user_shared_data->ProcessorFeatures[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
+                    if (strstr(buffer, "SSE3"))  user_shared_data->ProcessorFeatures[PF_SSE3_INSTRUCTIONS_AVAILABLE] = TRUE;
                     if (strstr(buffer, "PAE"))   user_shared_data->ProcessorFeatures[PF_PAE_ENABLED] = TRUE;
                 }
                 break; /* CPU_TYPE_I386 */
