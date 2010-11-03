@@ -159,6 +159,8 @@ extern void wineXmlCallbackLog(char const* caller, xmlErrorLevel lvl, char const
 #define LIBXML2_CALLBACK_SERROR(caller, err) \
         wineXmlCallbackLog(#caller, err->level, err->message, NULL)
 
+extern BOOL is_preserving_whitespace(xmlNodePtr node);
+
 /* IXMLDOMNode Internal Structure */
 typedef struct _xmlnode
 {

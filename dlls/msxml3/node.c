@@ -543,6 +543,90 @@ static HRESULT WINAPI xmlnode_get_nodeTypeString(
     return S_OK;
 }
 
+static inline xmlChar* trim_whitespace(xmlChar* str)
+{
+    xmlChar* ret = str;
+    int len;
+
+    if (!str)
+        return NULL;
+
+    while (*ret && isspace(*ret))
+        ++ret;
+    len = xmlStrlen(ret);
+    while (isspace(ret[len-1]))
+        --len;
+
+    ret = xmlStrndup(ret, len);
+    xmlFree(str);
+    return ret;
+}
+
+static xmlChar* do_get_text(xmlNodePtr node)
+{
+    xmlNodePtr child;
+    xmlChar* str;
+    BOOL preserving = is_preserving_whitespace(node);
+
+    if (!node->children)
+    {
+        str = xmlNodeGetContent(node);
+    }
+    else
+    {
+        xmlElementType prev_type = XML_TEXT_NODE;
+        xmlChar* tmp;
+        str = xmlStrdup(BAD_CAST "");
+        for (child = node->children; child != NULL; child = child->next)
+        {
+            switch (child->type)
+            {
+            case XML_ELEMENT_NODE:
+                tmp = do_get_text(child);
+                break;
+            case XML_TEXT_NODE:
+            case XML_CDATA_SECTION_NODE:
+            case XML_ENTITY_REF_NODE:
+            case XML_ENTITY_NODE:
+                tmp = xmlNodeGetContent(child);
+                break;
+            default:
+                tmp = NULL;
+                break;
+            }
+
+            if (tmp)
+            {
+                if (*tmp)
+                {
+                    if (prev_type == XML_ELEMENT_NODE && child->type == XML_ELEMENT_NODE)
+                        str = xmlStrcat(str, BAD_CAST " ");
+                    str = xmlStrcat(str, tmp);
+                    prev_type = child->type;
+                }
+                xmlFree(tmp);
+            }
+        }
+    }
+
+    switch (node->type)
+    {
+    case XML_ELEMENT_NODE:
+    case XML_TEXT_NODE:
+    case XML_ENTITY_REF_NODE:
+    case XML_ENTITY_NODE:
+    case XML_DOCUMENT_NODE:
+    case XML_DOCUMENT_FRAG_NODE:
+        if (!preserving)
+            str = trim_whitespace(str);
+        break;
+    default:
+        break;
+    }
+
+    return str;
+}
+
 static HRESULT WINAPI xmlnode_get_text(
     IXMLDOMNode *iface,
     BSTR* text)
@@ -556,7 +640,7 @@ static HRESULT WINAPI xmlnode_get_text(
     if ( !text )
         return E_INVALIDARG;
 
-    pContent = xmlNodeGetContent((xmlNodePtr)This->node);
+    pContent = do_get_text((xmlNodePtr)This->node);
     if(pContent)
     {
         str = bstr_from_xmlChar(pContent);
