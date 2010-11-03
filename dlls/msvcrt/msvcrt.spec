@@ -442,6 +442,7 @@
 @ cdecl _fstat(long ptr) MSVCRT__fstat
 @ cdecl _fstat64(long ptr) MSVCRT__fstat64
 @ cdecl _fstati64(long ptr) MSVCRT__fstati64
+@ cdecl -ret64 _ftelli64(ptr) MSVCRT__ftelli64
 @ cdecl _ftime(ptr) MSVCRT__ftime
 @ cdecl _ftime32(ptr) MSVCRT__ftime32
 # stub _ftime32_s

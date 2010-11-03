@@ -2997,14 +2997,14 @@ int CDECL MSVCRT_fsetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
 }
 
 /*********************************************************************
- *		ftell (MSVCRT.@)
+ *		_ftelli64 (MSVCRT.@)
  */
-LONG CDECL MSVCRT_ftell(MSVCRT_FILE* file)
+__int64 CDECL MSVCRT__ftelli64(MSVCRT_FILE* file)
 {
   /* TODO: just call fgetpos and return lower half of result */
   int off=0;
-  MSVCRT_long pos;
-  pos = MSVCRT__tell(file->_file);
+  __int64 pos;
+  pos = _telli64(file->_file);
   if(pos == -1) return -1;
   if(file->_bufsiz)  {
 	if( file->_flag & MSVCRT__IOWRT ) {
@@ -3018,7 +3018,7 @@ LONG CDECL MSVCRT_ftell(MSVCRT_FILE* file)
 				if (file->_ptr[i] == '\n')
 					off--;
 			}
-		        /* Black magic when reading CR at buffer boundary*/
+			/* Black magic when reading CR at buffer boundary*/
 			if(MSVCRT_fdesc[file->_file].wxflag & WX_READCR)
 			  off--;
 
@@ -3026,6 +3026,14 @@ LONG CDECL MSVCRT_ftell(MSVCRT_FILE* file)
 	}
   }
   return off + pos;
+}
+
+/*********************************************************************
+ *		ftell (MSVCRT.@)
+ */
+LONG CDECL MSVCRT_ftell(MSVCRT_FILE* file)
+{
+  return MSVCRT__ftelli64(file);
 }
 
 /*********************************************************************
