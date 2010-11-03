@@ -169,6 +169,7 @@ SRCDIR_INCLUDES = \
 	d3drm.h \
 	d3drmdef.h \
 	d3drmobj.h \
+	d3drmwin.h \
 	d3dtypes.h \
 	d3dvec.inl \
 	d3dx9.h \
