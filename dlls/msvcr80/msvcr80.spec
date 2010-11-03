@@ -535,7 +535,7 @@
 @ cdecl _get_sbh_threshold() msvcrt._get_sbh_threshold
 @ stub _get_terminate
 @ stub _get_timezone
-@ stub _get_tzname
+@ cdecl _get_tzname(ptr str long long) msvcrt._get_tzname
 @ stub _get_unexpected
 @ stub _get_winmajor
 @ stub _get_winminor

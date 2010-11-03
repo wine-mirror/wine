@@ -719,9 +719,43 @@ MSVCRT_long * CDECL MSVCRT___p__timezone(void)
  *  must be large enough.  The size is picked based on observation of
  *  Windows XP.
  */
-static char tzname_std[64] = "";
-static char tzname_dst[64] = "";
+static char tzname_std[64] = "PST";
+static char tzname_dst[64] = "PDT";
 char *MSVCRT__tzname[2] = { tzname_std, tzname_dst };
+
+/*********************************************************************
+ *		_get_tzname (MSVCRT.@)
+ */
+int CDECL MSVCRT__get_tzname(MSVCRT_size_t *ret, char *buf, MSVCRT_size_t bufsize, int index)
+{
+    char *timezone;
+
+    switch(index)
+    {
+    case 0:
+        timezone = tzname_std;
+        break;
+    case 1:
+        timezone = tzname_dst;
+        break;
+    default:
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    if(!ret || (!buf && bufsize > 0) || (buf && !bufsize))
+    {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    *ret = strlen(timezone)+1;
+    if(!buf && !bufsize)
+        return 0;
+
+    strcpy(buf, timezone);
+    return 0;
+}
 
 /*********************************************************************
  *		__p_tzname (MSVCRT.@)
