@@ -212,10 +212,6 @@ void msi_feature_set_state( MSIPACKAGE *package, MSIFEATURE *feature, INSTALLSTA
         feature->ActionRequest = state;
         feature->Action = state;
     }
-    if (feature->Attributes & msidbFeatureAttributesUIDisallowAbsent)
-    {
-        feature->Action = INSTALLSTATE_UNKNOWN;
-    }
 }
 
 void msi_component_set_state( MSIPACKAGE *package, MSICOMPONENT *comp, INSTALLSTATE state )

@@ -5581,7 +5581,7 @@ static void test_states(void)
     r = MsiGetFeatureState(hpkg, "eleven", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     ok( state == INSTALLSTATE_SOURCE, "Expected INSTALLSTATE_SOURCE, got %d\n", state);
-    ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
+    todo_wine ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
 
     state = 0xdeadbee;
     action = 0xdeadbee;
@@ -6534,7 +6534,7 @@ static void test_states(void)
     r = MsiGetFeatureState(hpkg, "eleven", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     ok( state == INSTALLSTATE_SOURCE, "Expected INSTALLSTATE_SOURCE, got %d\n", state);
-    ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
+    todo_wine ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
 
     state = 0xdeadbee;
     action = 0xdeadbee;
@@ -7483,7 +7483,7 @@ static void test_states(void)
     r = MsiGetFeatureState(hpkg, "eleven", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     ok( state == INSTALLSTATE_SOURCE, "Expected INSTALLSTATE_SOURCE, got %d\n", state);
-    ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
+    todo_wine ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
 
     state = 0xdeadbee;
     action = 0xdeadbee;
@@ -9711,7 +9711,7 @@ static void test_featureparents(void)
     r = MsiGetFeatureState(hpkg, "lyra", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     ok( state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
-    todo_wine ok( action == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", action);
+    ok( action == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", action);
 
     state = 0xdeadbee;
     action = 0xdeadbee;
@@ -9839,7 +9839,7 @@ static void test_featureparents(void)
     r = MsiGetFeatureState(hpkg, "lyra", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     ok( state == INSTALLSTATE_ABSENT, "Expected lyra INSTALLSTATE_ABSENT, got %d\n", state);
-    todo_wine ok( action == INSTALLSTATE_ABSENT, "Expected lyra INSTALLSTATE_ABSENT, got %d\n", action);
+    ok( action == INSTALLSTATE_ABSENT, "Expected lyra INSTALLSTATE_ABSENT, got %d\n", action);
 
     state = 0xdeadbee;
     action = 0xdeadbee;
