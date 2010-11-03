@@ -96,6 +96,7 @@ PUBLIC_IDL_H_SRCS = \
 	wincodec.idl \
 	wine/itss.idl \
 	wine/svcctl.idl \
+	winsxs.idl \
 	wtypes.idl \
 	wuapi.idl \
 	xmldom.idl \
