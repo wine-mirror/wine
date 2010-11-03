@@ -5605,7 +5605,6 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result)
 
         data.uri = SysAllocString(relative->raw_uri);
         if(!data.uri) {
-            IUri_Release(URI(ret));
             *result = NULL;
             return E_OUTOFMEMORY;
         }
