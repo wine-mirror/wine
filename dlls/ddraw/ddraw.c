@@ -602,7 +602,7 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
             return DDERR_INVALIDPARAMS;
         }
 
-        if( (This->cooperative_level & DDSCL_FULLSCREEN) && window )
+        if( (This->cooperative_level & DDSCL_EXCLUSIVE) && window )
         {
             TRACE("Setting DDSCL_SETFOCUSWINDOW with an already set window, returning DDERR_HWNDALREADYSET\n");
             LeaveCriticalSection(&ddraw_cs);
@@ -626,76 +626,42 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
         LeaveCriticalSection(&ddraw_cs);
         return DD_OK;
     }
-    /* DDSCL_NORMAL or DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE */
-    if(cooplevel & DDSCL_NORMAL)
+
+    if(cooplevel & DDSCL_EXCLUSIVE)
     {
-        /* Can't coexist with fullscreen or exclusive */
-        if(cooplevel & (DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE) )
+        if( !(cooplevel & DDSCL_FULLSCREEN) || !hwnd )
         {
-            TRACE("(%p) DDSCL_NORMAL is not compative with DDSCL_FULLSCREEN or DDSCL_EXCLUSIVE\n", This);
+            TRACE("(%p) DDSCL_EXCLUSIVE needs DDSCL_FULLSCREEN and a window\n", This);
             LeaveCriticalSection(&ddraw_cs);
             return DDERR_INVALIDPARAMS;
         }
-
-        /* Switching from fullscreen? */
-        if(This->cooperative_level & DDSCL_FULLSCREEN)
-        {
-            This->cooperative_level &= ~DDSCL_FULLSCREEN;
-            This->cooperative_level &= ~DDSCL_EXCLUSIVE;
-            This->cooperative_level &= ~DDSCL_ALLOWMODEX;
-
-            IWineD3DDevice_ReleaseFocusWindow(This->wineD3DDevice);
-        }
-
-        /* Don't override focus windows or private device windows */
-        if( hwnd &&
-            !(This->focuswindow) &&
-            !(This->devicewindow) &&
-            (hwnd != window) )
-        {
-            This->dest_window = hwnd;
-        }
     }
-    else if(cooplevel & DDSCL_FULLSCREEN)
+    else if( !(cooplevel & DDSCL_NORMAL) )
     {
-        /* Needs DDSCL_EXCLUSIVE */
-        if(!(cooplevel & DDSCL_EXCLUSIVE) )
-        {
-            TRACE("(%p) DDSCL_FULLSCREEN needs DDSCL_EXCLUSIVE\n", This);
-            LeaveCriticalSection(&ddraw_cs);
-            return DDERR_INVALIDPARAMS;
-        }
-        /* Need a HWND
-        if(hwnd == 0)
-        {
-            TRACE("(%p) DDSCL_FULLSCREEN needs a HWND\n", This);
-            return DDERR_INVALIDPARAMS;
-        }
-        */
-
-        This->cooperative_level &= ~DDSCL_NORMAL;
-
-        /* Don't override focus windows or private device windows */
-        if( hwnd &&
-            !(This->focuswindow) &&
-            !(This->devicewindow) &&
-            (hwnd != window) )
-        {
-            HRESULT hr = IWineD3DDevice_AcquireFocusWindow(This->wineD3DDevice, hwnd);
-            if (FAILED(hr))
-            {
-                ERR("Failed to acquire focus window, hr %#x.\n", hr);
-                LeaveCriticalSection(&ddraw_cs);
-                return hr;
-            }
-            This->dest_window = hwnd;
-        }
-    }
-    else if(cooplevel & DDSCL_EXCLUSIVE)
-    {
-        TRACE("(%p) DDSCL_EXCLUSIVE needs DDSCL_FULLSCREEN\n", This);
+        TRACE("(%p) SetCooperativeLevel needs at least SetFocusWindow or Exclusive or Normal mode\n", This);
         LeaveCriticalSection(&ddraw_cs);
         return DDERR_INVALIDPARAMS;
+     }
+
+    /* Do we switch from fullscreen to non-fullscreen ? */
+
+    if( !(cooplevel & DDSCL_FULLSCREEN) && (This->cooperative_level & DDSCL_FULLSCREEN) )
+        IWineD3DDevice_ReleaseFocusWindow(This->wineD3DDevice);
+
+    /* Don't override focus windows or private device windows */
+    if( hwnd && !This->focuswindow && !This->devicewindow && (hwnd != window))
+    {
+         if( cooplevel & DDSCL_FULLSCREEN )
+         {
+             HRESULT hr = IWineD3DDevice_AcquireFocusWindow(This->wineD3DDevice, hwnd);
+             if (FAILED(hr))
+             {
+                 ERR("Failed to acquire focus window, hr %#x.\n", hr);
+                 LeaveCriticalSection(&ddraw_cs);
+                 return hr;
+             }
+         }
+         This->dest_window = hwnd;
     }
 
     if(cooplevel & DDSCL_CREATEDEVICEWINDOW)
@@ -736,7 +702,7 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
         WARN("(%p) Unhandled flag DDSCL_FPUSETUP, harmless\n", This);
 
     /* Store the cooperative_level */
-    This->cooperative_level |= cooplevel;
+    This->cooperative_level = cooplevel;
     TRACE("SetCooperativeLevel retuning DD_OK\n");
     LeaveCriticalSection(&ddraw_cs);
     return DD_OK;

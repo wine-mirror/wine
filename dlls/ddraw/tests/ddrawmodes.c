@@ -565,10 +565,10 @@ static void testcooperativelevels_normal(void)
         skip("Failed to create the second window\n");
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD, hwnd, DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE | DDSCL_NORMAL);
-    todo_wine ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE | DDSCL_NORMAL) returned: %x\n",rc);
+    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE | DDSCL_NORMAL) returned: %x\n",rc);
 
     if(sfw)
-        todo_wine ok(GetForegroundWindow()==hwnd,"Expected the main windows (%p) for foreground, received the second one (%p)\n",hwnd, hwnd2);
+        ok(GetForegroundWindow()==hwnd,"Expected the main windows (%p) for foreground, received the second one (%p)\n",hwnd, hwnd2);
 
     /* Try creating a double buffered primary in fullscreen + exclusive + normal mode */
     rc = IDirectDraw_CreateSurface(lpDD, &surfacedesc, &surface, NULL);
@@ -577,8 +577,8 @@ static void testcooperativelevels_normal(void)
         skip("Unsupported mode\n");
     else
     {
-        todo_wine ok(rc == DD_OK, "IDirectDraw_CreateSurface returned %08x\n", rc);
-        todo_wine ok(surface!=NULL, "Returned NULL surface pointer\n");
+        ok(rc == DD_OK, "IDirectDraw_CreateSurface returned %08x\n", rc);
+        ok(surface!=NULL, "Returned NULL surface pointer\n");
     }
     if(surface && surface != (IDirectDrawSurface *)0xdeadbeef) IDirectDrawSurface_Release(surface);
 
@@ -592,13 +592,13 @@ static void testcooperativelevels_normal(void)
     if(hwnd2) sfw=SetForegroundWindow(hwnd2);
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD, hwnd, DDSCL_FULLSCREEN | DDSCL_NORMAL);
-    todo_wine ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_FULLSCREEN | DDSCL_NORMAL) returned: %x\n",rc);
+    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_FULLSCREEN | DDSCL_NORMAL) returned: %x\n",rc);
 
     if(sfw)
         ok(GetForegroundWindow()==hwnd2,"Expected the second windows (%p) for foreground, received the main one (%p)\n",hwnd2, hwnd);
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD, NULL, DDSCL_FULLSCREEN | DDSCL_NORMAL);
-    todo_wine ok(rc==DD_OK, "Expected DD_OK, received %x\n", rc);
+    ok(rc==DD_OK, "Expected DD_OK, received %x\n", rc);
 
     /* Try creating a double buffered primary in fullscreen + normal mode */
     rc = IDirectDraw_CreateSurface(lpDD, &surfacedesc, &surface, NULL);
@@ -645,13 +645,13 @@ static void testcooperativelevels_normal(void)
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_NORMAL | DDSCL_FULLSCREEN);
-    todo_wine ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_NORMAL | FULLSCREEN) returned: %x\n",rc);
+    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_NORMAL | FULLSCREEN) returned: %x\n",rc);
 
     if(sfw)
         ok(GetForegroundWindow()==hwnd2,"Expected the second windows (%p) for foreground, received the main one (%p)\n",hwnd2, hwnd);
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD, NULL, DDSCL_NORMAL | DDSCL_FULLSCREEN);
-    todo_wine ok(rc==DD_OK, "Expected DD_OK, received %x\n", rc);
+    ok(rc==DD_OK, "Expected DD_OK, received %x\n", rc);
 
     /* Set the focus window */
 
@@ -761,7 +761,7 @@ static void testcooperativelevels_exclusive(void)
     /* Full screen mode + exclusive mode */
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD, NULL, DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE);
-    todo_wine ok(rc==DDERR_INVALIDPARAMS, "Expected DDERR_INVALIDPARAMS, received %x\n", rc);
+    ok(rc==DDERR_INVALIDPARAMS, "Expected DDERR_INVALIDPARAMS, received %x\n", rc);
 
     sfw=FALSE;
     if(hwnd2)
