@@ -3358,10 +3358,11 @@ static UINT ITERATE_RegisterTypeLibraries(MSIRECORD *row, LPVOID param)
     }
     comp->Action = INSTALLSTATE_LOCAL;
 
-    file = get_loaded_file( package, comp->KeyPath ); 
-    if (!file)
+    if (!comp->KeyPath || !(file = get_loaded_file( package, comp->KeyPath )))
+    {
+        TRACE("component has no key path\n");
         return ERROR_SUCCESS;
-
+    }
     ui_actiondata( package, szRegisterTypeLibraries, row );
 
     module = LoadLibraryExW( file->TargetPath, NULL, LOAD_LIBRARY_AS_DATAFILE );
