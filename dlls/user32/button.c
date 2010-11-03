@@ -114,7 +114,7 @@ static void UB_Paint( HWND hwnd, HDC hDC, UINT action );
 static void OB_Paint( HWND hwnd, HDC hDC, UINT action );
 static void BUTTON_CheckAutoRadioButton( HWND hwnd );
 
-#define MAX_BTN_TYPE  12
+#define MAX_BTN_TYPE  16
 
 static const WORD maxCheckState[MAX_BTN_TYPE] =
 {
@@ -128,7 +128,7 @@ static const WORD maxCheckState[MAX_BTN_TYPE] =
     BUTTON_UNCHECKED,   /* BS_GROUPBOX */
     BUTTON_UNCHECKED,   /* BS_USERBUTTON */
     BUTTON_CHECKED,     /* BS_AUTORADIOBUTTON */
-    BUTTON_UNCHECKED,   /* Not defined */
+    BUTTON_UNCHECKED,   /* BS_PUSHBOX */
     BUTTON_UNCHECKED    /* BS_OWNERDRAW */
 };
 
@@ -146,7 +146,7 @@ static const pfPaint btnPaintFunc[MAX_BTN_TYPE] =
     GB_Paint,    /* BS_GROUPBOX */
     UB_Paint,    /* BS_USERBUTTON */
     CB_Paint,    /* BS_AUTORADIOBUTTON */
-    NULL,        /* Not defined */
+    NULL,        /* BS_PUSHBOX */
     OB_Paint     /* BS_OWNERDRAW */
 };
 
