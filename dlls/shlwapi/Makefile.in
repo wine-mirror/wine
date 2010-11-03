@@ -41,6 +41,7 @@ RC_SRCS = \
 	shlwapi_Ru.rc \
 	shlwapi_Si.rc \
 	shlwapi_Sk.rc \
+	shlwapi_Sr.rc \
 	shlwapi_Sv.rc \
 	shlwapi_Tr.rc \
 	shlwapi_Uk.rc \
