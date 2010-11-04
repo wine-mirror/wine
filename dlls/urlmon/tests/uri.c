@@ -3108,7 +3108,7 @@ static const uri_properties uri_tests[] = {
             {"",S_FALSE,FALSE}
         },
         {
-            {0,S_OK,FALSE},
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
             {0,S_FALSE,FALSE},
             {URL_SCHEME_FILE,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
@@ -3237,7 +3237,7 @@ static const uri_properties uri_tests[] = {
             {"",S_FALSE,FALSE}
         },
         {
-            {0,S_OK,FALSE},
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
             {0,S_FALSE,FALSE},
             {URL_SCHEME_FILE,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
@@ -3263,7 +3263,7 @@ static const uri_properties uri_tests[] = {
             {"",S_FALSE,FALSE}
         },
         {
-            {0,S_OK,FALSE},
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
             {0,S_FALSE,FALSE},
             {URL_SCHEME_FILE,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
@@ -3289,7 +3289,7 @@ static const uri_properties uri_tests[] = {
             {"",S_FALSE,FALSE}
         },
         {
-            {0,S_OK,FALSE},
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
             {0,S_FALSE,FALSE},
             {URL_SCHEME_FILE,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
@@ -3314,7 +3314,7 @@ static const uri_properties uri_tests[] = {
             {"",S_FALSE,FALSE}
         },
         {
-            {0,S_OK,FALSE},
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
             {0,S_FALSE,FALSE},
             {URL_SCHEME_FILE,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
@@ -3340,7 +3340,7 @@ static const uri_properties uri_tests[] = {
             {"",S_FALSE,FALSE}
         },
         {
-            {0,S_OK,FALSE},
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
             {0,S_FALSE,FALSE},
             {URL_SCHEME_FILE,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
@@ -3365,7 +3365,7 @@ static const uri_properties uri_tests[] = {
             {"",S_FALSE,FALSE}
         },
         {
-            {0,S_OK,FALSE},
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
             {0,S_FALSE,FALSE},
             {URL_SCHEME_FILE,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
@@ -3442,7 +3442,7 @@ static const uri_properties uri_tests[] = {
             {"",S_FALSE,FALSE}
         },
         {
-            {0,S_OK,FALSE},
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
             {0,S_FALSE,FALSE},
             {URL_SCHEME_FILE,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
@@ -3468,7 +3468,7 @@ static const uri_properties uri_tests[] = {
             {"",S_FALSE,FALSE}
         },
         {
-            {0,S_OK,FALSE},
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
             {0,S_FALSE,FALSE},
             {URL_SCHEME_FILE,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
@@ -3494,7 +3494,7 @@ static const uri_properties uri_tests[] = {
             {"",S_FALSE,FALSE}
         },
         {
-            {0,S_OK,FALSE},
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
             {0,S_FALSE,FALSE},
             {URL_SCHEME_FILE,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
@@ -3520,7 +3520,7 @@ static const uri_properties uri_tests[] = {
             {"",S_FALSE,FALSE}
         },
         {
-            {0,S_OK,FALSE},
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
             {0,S_FALSE,FALSE},
             {URL_SCHEME_FILE,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
@@ -3546,7 +3546,7 @@ static const uri_properties uri_tests[] = {
             {"",S_FALSE,FALSE}
         },
         {
-            {0,S_OK,FALSE},
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
             {0,S_FALSE,FALSE},
             {URL_SCHEME_FILE,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
@@ -3703,7 +3703,7 @@ static const uri_properties uri_tests[] = {
             {"",S_FALSE,FALSE}
         },
         {
-            {0,S_OK,FALSE},
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
             {0,S_FALSE,FALSE},
             {URL_SCHEME_ABOUT,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
