@@ -47,6 +47,7 @@ static const IBasicAudioVtbl IBasicAudio_Vtbl;
 static const IReferenceClockVtbl IReferenceClock_Vtbl;
 static const IMediaSeekingVtbl IMediaSeeking_Vtbl;
 static const IAMDirectSoundVtbl IAMDirectSound_Vtbl;
+static const IAMFilterMiscFlagsVtbl IAMFilterMiscFlags_Vtbl;
 
 typedef struct DSoundRenderImpl
 {
@@ -55,6 +56,7 @@ typedef struct DSoundRenderImpl
     const IBasicAudioVtbl *IBasicAudio_vtbl;
     const IReferenceClockVtbl *IReferenceClock_vtbl;
     const IAMDirectSoundVtbl *IAMDirectSound_vtbl;
+    const IAMFilterMiscFlagsVtbl *IAMFilterMiscFlags_vtbl;
     IUnknown *seekthru_unk;
 
     REFERENCE_TIME rtLastStop;
@@ -419,6 +421,7 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
     pDSoundRender->IBasicAudio_vtbl = &IBasicAudio_Vtbl;
     pDSoundRender->IReferenceClock_vtbl = &IReferenceClock_Vtbl;
     pDSoundRender->IAMDirectSound_vtbl = &IAMDirectSound_Vtbl;
+    pDSoundRender->IAMFilterMiscFlags_vtbl = &IAMFilterMiscFlags_Vtbl;
 
     /* construct input pin */
     piInput.dir = PINDIR_INPUT;
@@ -486,6 +489,8 @@ static HRESULT WINAPI DSoundRender_QueryInterface(IBaseFilter * iface, REFIID ri
         return IUnknown_QueryInterface(This->seekthru_unk, riid, ppv);
     else if (IsEqualIID(riid, &IID_IAMDirectSound))
         *ppv = &This->IAMDirectSound_vtbl;
+    else if (IsEqualIID(riid, &IID_IAMFilterMiscFlags))
+        *ppv = &This->IAMFilterMiscFlags_vtbl;
 
     if (*ppv)
     {
@@ -1295,4 +1300,34 @@ static const IAMDirectSoundVtbl IAMDirectSound_Vtbl =
     AMDirectSound_ReleaseSecondaryBufferInterface,
     AMDirectSound_SetFocusWindow,
     AMDirectSound_GetFocusWindow
+};
+
+static DSoundRenderImpl *from_IAMFilterMiscFlags(IAMFilterMiscFlags *iface) {
+    return (DSoundRenderImpl*)((char*)iface - offsetof(DSoundRenderImpl, IAMFilterMiscFlags_vtbl));
+}
+
+static HRESULT WINAPI AMFilterMiscFlags_QueryInterface(IAMFilterMiscFlags *iface, const REFIID riid, void **ppv) {
+    DSoundRenderImpl *This = from_IAMFilterMiscFlags(iface);
+    return IUnknown_QueryInterface((IUnknown*)This, riid, ppv);
+}
+
+static ULONG WINAPI AMFilterMiscFlags_AddRef(IAMFilterMiscFlags *iface) {
+    DSoundRenderImpl *This = from_IAMFilterMiscFlags(iface);
+    return IUnknown_AddRef((IUnknown*)This);
+}
+
+static ULONG WINAPI AMFilterMiscFlags_Release(IAMFilterMiscFlags *iface) {
+    DSoundRenderImpl *This = from_IAMFilterMiscFlags(iface);
+    return IUnknown_Release((IUnknown*)This);
+}
+
+static ULONG WINAPI AMFilterMiscFlags_GetMiscFlags(IAMFilterMiscFlags *iface) {
+    return AM_FILTER_MISC_FLAGS_IS_RENDERER;
+}
+
+static const IAMFilterMiscFlagsVtbl IAMFilterMiscFlags_Vtbl = {
+    AMFilterMiscFlags_QueryInterface,
+    AMFilterMiscFlags_AddRef,
+    AMFilterMiscFlags_Release,
+    AMFilterMiscFlags_GetMiscFlags
 };
