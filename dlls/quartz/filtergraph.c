@@ -201,7 +201,8 @@ typedef struct _IFilterGraphImpl {
     BOOL bUnkOuterValid;
     BOOL bAggregatable;
     GUID timeformatseek;
-    LONGLONG start_time;
+    REFERENCE_TIME start_time;
+    REFERENCE_TIME pause_time;
     LONGLONG position;
     LONGLONG stop_position;
     LONG recursioncount;
@@ -1940,21 +1941,26 @@ static HRESULT WINAPI MediaControl_Run(IMediaControl *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
     TRACE("(%p/%p)->()\n", This, iface);
 
-    if (This->state == State_Running) return S_OK;
 
     EnterCriticalSection(&This->cs);
-    if (This->state == State_Stopped)
-        This->EcCompleteCount = 0;
+    if (This->state == State_Running)
+        goto out;
+    This->EcCompleteCount = 0;
 
     if (This->refClock)
     {
-        IReferenceClock_GetTime(This->refClock, &This->start_time);
-        This->start_time += 500000;
+        REFERENCE_TIME now;
+        IReferenceClock_GetTime(This->refClock, &now);
+        if (This->state == State_Stopped)
+            This->start_time = now + 500000;
+        else
+            This->start_time += now - This->pause_time;
     }
     else This->position = This->start_time = 0;
 
     SendFilterMessage(iface, SendRun, 0);
     This->state = State_Running;
+out:
     LeaveCriticalSection(&This->cs);
     return S_FALSE;
 }
@@ -1963,21 +1969,16 @@ static HRESULT WINAPI MediaControl_Pause(IMediaControl *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
     TRACE("(%p/%p)->()\n", This, iface);
 
-    if (This->state == State_Paused) return S_OK;
-
     EnterCriticalSection(&This->cs);
-    if (This->state == State_Stopped)
-        This->EcCompleteCount = 0;
+    if (This->state == State_Paused)
+        goto out;
 
     if (This->state == State_Running && This->refClock)
-    {
-        LONGLONG time = This->start_time;
-        IReferenceClock_GetTime(This->refClock, &time);
-        This->position += time - This->start_time;
-    }
+        IReferenceClock_GetTime(This->refClock, &This->pause_time);
 
     SendFilterMessage(iface, SendPause, 0);
     This->state = State_Paused;
+out:
     LeaveCriticalSection(&This->cs);
     return S_FALSE;
 }
@@ -5049,6 +5050,9 @@ static HRESULT WINAPI MediaFilter_Pause(IMediaFilter *iface)
 static HRESULT WINAPI MediaFilter_Run(IMediaFilter *iface, REFERENCE_TIME tStart)
 {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaFilter_vtbl, iface);
+    if (tStart)
+        FIXME("Run called with non-null tStart: %x%08x\n",
+              (int)(tStart>>32), (int)tStart);
     return MediaControl_Run((IMediaControl*)&This->IMediaControl_vtbl);
 }
 
