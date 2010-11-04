@@ -2364,11 +2364,21 @@ fail:
 }
 
 static HWND filter_messages;
-static struct
+
+enum message_window
 {
-    HWND window;
+    DEVICE_WINDOW,
+    FOCUS_WINDOW,
+};
+
+struct message
+{
     UINT message;
-} expect_message;
+    enum message_window window;
+};
+
+static const struct message *expect_messages;
+static HWND device_window, focus_window;
 
 struct wndproc_thread_param
 {
@@ -2385,7 +2395,27 @@ static LRESULT CALLBACK test_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM
             todo_wine ok( 0, "Received unexpected message %#x for window %p.\n", message, hwnd);
     }
 
-    if (expect_message.window == hwnd && expect_message.message == message) expect_message.message = 0;
+    if (expect_messages)
+    {
+        HWND w;
+
+        switch (expect_messages->window)
+        {
+            case DEVICE_WINDOW:
+                w = device_window;
+                break;
+
+            case FOCUS_WINDOW:
+                w = focus_window;
+                break;
+
+            default:
+                w = NULL;
+                break;
+        };
+
+        if (hwnd == w && expect_messages->message == message) ++expect_messages;
+    }
 
     return DefWindowProcA(hwnd, message, wparam, lparam);
 }
@@ -2424,7 +2454,6 @@ static DWORD WINAPI wndproc_thread(void *param)
 static void test_wndproc(void)
 {
     struct wndproc_thread_param thread_params;
-    HWND device_window, focus_window, tmp;
     IDirect3DDevice9 *device;
     WNDCLASSA wc = {0};
     IDirect3D9 *d3d9;
@@ -2432,6 +2461,14 @@ static void test_wndproc(void)
     LONG_PTR proc;
     ULONG ref;
     DWORD res, tid;
+    HWND tmp;
+
+    static const struct message messages[] =
+    {
+        {WM_ACTIVATE,           FOCUS_WINDOW},
+        {WM_SETFOCUS,           FOCUS_WINDOW},
+        {0,                     0},
+    };
 
     if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
     {
@@ -2474,10 +2511,9 @@ static void test_wndproc(void)
     ok(tmp == thread_params.dummy_window, "Expected foreground window %p, got %p.\n",
             thread_params.dummy_window, tmp);
 
-    expect_message.window = focus_window;
-    expect_message.message = WM_SETFOCUS;
-
     flush_events();
+
+    expect_messages = messages;
 
     device = create_device(d3d9, device_window, focus_window, FALSE);
     if (!device)
@@ -2486,8 +2522,10 @@ static void test_wndproc(void)
         goto done;
     }
 
-    ok(!expect_message.message, "Expected message %#x for window %p, but didn't receive it.\n",
-            expect_message.message, expect_message.window);
+    ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it.\n",
+            expect_messages->message, expect_messages->window);
+    expect_messages = NULL;
+
     if (0) /* Disabled until we can make this work in a reliable way on Wine. */
     {
         tmp = GetFocus();
@@ -2561,7 +2599,6 @@ done:
 static void test_wndproc_windowed(void)
 {
     struct wndproc_thread_param thread_params;
-    HWND device_window, focus_window, tmp;
     IDirect3DDevice9 *device;
     WNDCLASSA wc = {0};
     IDirect3D9 *d3d9;
@@ -2570,6 +2607,7 @@ static void test_wndproc_windowed(void)
     HRESULT hr;
     ULONG ref;
     DWORD res, tid;
+    HWND tmp;
 
     if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
     {
