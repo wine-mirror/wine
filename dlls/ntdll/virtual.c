@@ -137,6 +137,7 @@ static void *address_space_limit;
 static void *user_space_limit;
 static void *working_set_limit;
 #endif  /* __i386__ */
+static void * const address_space_start = (void *)0x110000;
 
 #define ROUND_ADDR(addr,mask) \
    ((void *)((UINT_PTR)(addr) & ~(UINT_PTR)(mask)))
@@ -726,7 +727,6 @@ struct alloc_area
  */
 static int alloc_reserved_area_callback( void *start, size_t size, void *arg )
 {
-    static void * const address_space_start = (void *)0x110000;
     struct alloc_area *alloc = arg;
     void *end = (char *)start + size;
 
@@ -2072,7 +2072,7 @@ static int get_free_mem_state_callback( void *start, size_t size, void *arg )
         return 0;
     }
 
-    if (info->BaseAddress >= start)
+    if (info->BaseAddress >= start || start <= address_space_start)
     {
         /* it's a real free area */
         info->State             = MEM_FREE;
@@ -2203,17 +2203,22 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
         {
             /* not in a reserved area at all, pretend it's allocated */
 #ifdef __i386__
-            info->State             = MEM_RESERVE;
-            info->Protect           = PAGE_NOACCESS;
-            info->AllocationProtect = PAGE_NOACCESS;
-            info->Type              = MEM_PRIVATE;
-#else
-            info->State             = MEM_FREE;
-            info->Protect           = PAGE_NOACCESS;
-            info->AllocationBase    = 0;
-            info->AllocationProtect = 0;
-            info->Type              = 0;
+            if (base >= (char *)address_space_start)
+            {
+                info->State             = MEM_RESERVE;
+                info->Protect           = PAGE_NOACCESS;
+                info->AllocationProtect = PAGE_NOACCESS;
+                info->Type              = MEM_PRIVATE;
+            }
+            else
 #endif
+            {
+                info->State             = MEM_FREE;
+                info->Protect           = PAGE_NOACCESS;
+                info->AllocationBase    = 0;
+                info->AllocationProtect = 0;
+                info->Type              = 0;
+            }
         }
     }
     else
