@@ -2136,53 +2136,34 @@ typedef HRESULT (WINAPI *fnFoundSeek)(IFilterGraphImpl *This, IMediaSeeking*, DW
 static HRESULT all_renderers_seek(IFilterGraphImpl *This, fnFoundSeek FoundSeek, DWORD_PTR arg) {
     BOOL allnotimpl = TRUE;
     int i;
-    IBaseFilter* pfilter;
-    IEnumPins* pEnum;
     HRESULT hr, hr_return = S_OK;
-    IPin* pPin;
-    DWORD dummy;
-    PIN_DIRECTION dir;
 
     TRACE("(%p)->(%p %08lx)\n", This, FoundSeek, arg);
     /* Send a message to all renderers, they are responsible for broadcasting it further */
 
     for(i = 0; i < This->nFilters; i++)
     {
-        BOOL renderer = TRUE;
-        pfilter = This->ppFiltersInGraph[i];
-        hr = IBaseFilter_EnumPins(pfilter, &pEnum);
-        if (hr != S_OK)
-        {
-            WARN("Enum pins failed %x\n", hr);
+        IMediaSeeking *seek = NULL;
+        IBaseFilter* pfilter = This->ppFiltersInGraph[i];
+        IAMFilterMiscFlags *flags = NULL;
+        ULONG filterflags;
+        IUnknown_QueryInterface(pfilter, &IID_IAMFilterMiscFlags, (void**)&flags);
+        if (!flags)
             continue;
-        }
-        /* Check if it is a source filter */
-        while(IEnumPins_Next(pEnum, 1, &pPin, &dummy) == S_OK)
-        {
-            IPin_QueryDirection(pPin, &dir);
-            IPin_Release(pPin);
-            if (dir != PINDIR_INPUT)
-            {
-                renderer = FALSE;
-                break;
-            }
-        }
-        IEnumPins_Release(pEnum);
-        if (renderer)
-        {
-            IMediaSeeking *seek = NULL;
-            IBaseFilter_QueryInterface(pfilter, &IID_IMediaSeeking, (void**)&seek);
-            if (!seek)
-                continue;
+        filterflags = IAMFilterMiscFlags_GetMiscFlags(flags);
+        IUnknown_Release(flags);
+        if (filterflags != AM_FILTER_MISC_FLAGS_IS_RENDERER)
+            continue;
 
-            hr = FoundSeek(This, seek, arg);
-
-            IMediaSeeking_Release(seek);
-            if (hr_return != E_NOTIMPL)
-                allnotimpl = FALSE;
-            if (hr_return == S_OK || (FAILED(hr) && hr != E_NOTIMPL && SUCCEEDED(hr_return)))
-                hr_return = hr;
-        }
+        IBaseFilter_QueryInterface(pfilter, &IID_IMediaSeeking, (void**)&seek);
+        if (!seek)
+            continue;
+        hr = FoundSeek(This, seek, arg);
+        IMediaSeeking_Release(seek);
+        if (hr_return != E_NOTIMPL)
+            allnotimpl = FALSE;
+        if (hr_return == S_OK || (FAILED(hr) && hr != E_NOTIMPL && SUCCEEDED(hr_return)))
+            hr_return = hr;
     }
 
     if (allnotimpl)
