@@ -179,6 +179,11 @@ HRESULT WINAPI SourceSeekingImpl_GetCurrentPosition(IMediaSeeking * iface, LONGL
 
 HRESULT WINAPI SourceSeekingImpl_ConvertTimeFormat(IMediaSeeking * iface, LONGLONG * pTarget, const GUID * pTargetFormat, LONGLONG Source, const GUID * pSourceFormat)
 {
+    SourceSeeking *This = (SourceSeeking *)iface;
+    if (!pTargetFormat)
+        pTargetFormat = &This->timeformat;
+    if (!pSourceFormat)
+        pSourceFormat = &This->timeformat;
     if (IsEqualIID(pTargetFormat, &TIME_FORMAT_MEDIA_TIME) && IsEqualIID(pSourceFormat, &TIME_FORMAT_MEDIA_TIME))
     {
         *pTarget = Source;
