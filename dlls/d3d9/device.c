@@ -1551,7 +1551,9 @@ static HRESULT WINAPI IDirect3DDevice9Impl_EndStateBlock(IDirect3DDevice9Ex *ifa
     if (!object)
     {
         ERR("Failed to allocate stateblock memory.\n");
+        wined3d_mutex_lock();
         IWineD3DStateBlock_Release(wined3d_stateblock);
+        wined3d_mutex_unlock();
         return E_OUTOFMEMORY;
     }
 
@@ -1559,7 +1561,9 @@ static HRESULT WINAPI IDirect3DDevice9Impl_EndStateBlock(IDirect3DDevice9Ex *ifa
     if (FAILED(hr))
     {
         WARN("Failed to initialize stateblock, hr %#x.\n", hr);
+        wined3d_mutex_lock();
         IWineD3DStateBlock_Release(wined3d_stateblock);
+        wined3d_mutex_unlock();
         HeapFree(GetProcessHeap(), 0, object);
         return hr;
     }
