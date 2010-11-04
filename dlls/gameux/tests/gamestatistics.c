@@ -367,44 +367,44 @@ static void test_gamestatisticsmgr( void )
         CoTaskMemFree(lpName);
 
         hr = IGameStatistics_GetStatistic(gs, 0, 0, &lpName, &lpValue);
-        todo_wine ok(hr == S_OK, "getting statistic failed\n");
-        todo_wine ok(lstrcmpW(lpName, sStatistic00)==0, "getting statistic returned invalid name\n");
-        todo_wine ok(lstrcmpW(lpValue, sValue00)==0, "getting statistic returned invalid value\n");
+        ok(hr == S_OK, "getting statistic failed\n");
+        ok(lstrcmpW(lpName, sStatistic00)==0, "getting statistic returned invalid name\n");
+        ok(lstrcmpW(lpValue, sValue00)==0, "getting statistic returned invalid value\n");
         CoTaskMemFree(lpName);
         CoTaskMemFree(lpValue);
 
         hr = IGameStatistics_GetStatistic(gs, 0, 1, &lpName, &lpValue);
-        todo_wine ok(hr == S_OK, "getting statistic failed\n");
-        todo_wine ok(lstrcmpW(lpName, sStatistic01)==0, "getting statistic returned invalid name\n");
-        todo_wine ok(lstrcmpW(lpValue, sValue01)==0, "getting statistic returned invalid value\n");
+        ok(hr == S_OK, "getting statistic failed\n");
+        ok(lstrcmpW(lpName, sStatistic01)==0, "getting statistic returned invalid name\n");
+        ok(lstrcmpW(lpValue, sValue01)==0, "getting statistic returned invalid value\n");
         CoTaskMemFree(lpName);
         CoTaskMemFree(lpValue);
 
         hr = IGameStatistics_GetStatistic(gs, 1, 0, &lpName, &lpValue);
-        todo_wine ok(hr == S_OK, "getting statistic failed\n");
-        todo_wine ok(lstrcmpW(lpName, sStatistic10)==0, "getting statistic returned invalid name\n");
-        todo_wine ok(lstrcmpW(lpValue, sValue10)==0, "getting statistic returned invalid value\n");
+        ok(hr == S_OK, "getting statistic failed\n");
+        ok(lstrcmpW(lpName, sStatistic10)==0, "getting statistic returned invalid name\n");
+        ok(lstrcmpW(lpValue, sValue10)==0, "getting statistic returned invalid value\n");
         CoTaskMemFree(lpName);
         CoTaskMemFree(lpValue);
 
         hr = IGameStatistics_GetStatistic(gs, 1, 1, &lpName, &lpValue);
-        todo_wine ok(hr == S_OK, "getting statistic failed\n");
-        todo_wine ok(lstrcmpW(lpName, sStatistic11)==0, "getting statistic returned invalid name\n");
-        todo_wine ok(lstrcmpW(lpValue, sValue11)==0, "getting statistic returned invalid value\n");
+        ok(hr == S_OK, "getting statistic failed\n");
+        ok(lstrcmpW(lpName, sStatistic11)==0, "getting statistic returned invalid name\n");
+        ok(lstrcmpW(lpValue, sValue11)==0, "getting statistic returned invalid value\n");
         CoTaskMemFree(lpName);
         CoTaskMemFree(lpValue);
 
         hr = IGameStatistics_GetStatistic(gs, 2, 0, &lpName, &lpValue);
-        todo_wine ok(hr == S_OK, "getting statistic failed\n");
-        todo_wine ok(lstrcmpW(lpName, sStatistic20)==0, "getting statistic returned invalid name\n");
-        todo_wine ok(lstrcmpW(lpValue, sValue20)==0, "getting statistic returned invalid value\n");
+        ok(hr == S_OK, "getting statistic failed\n");
+        ok(lstrcmpW(lpName, sStatistic20)==0, "getting statistic returned invalid name\n");
+        ok(lstrcmpW(lpValue, sValue20)==0, "getting statistic returned invalid value\n");
         CoTaskMemFree(lpName);
         CoTaskMemFree(lpValue);
 
         hr = IGameStatistics_GetStatistic(gs, 2, 1, &lpName, &lpValue);
-        todo_wine ok(hr == S_OK, "getting statistic failed\n");
-        todo_wine ok(lstrcmpW(lpName, sStatistic21)==0, "getting statistic returned invalid name\n");
-        todo_wine ok(lstrcmpW(lpValue, sValue21)==0, "getting statistic returned invalid value\n");
+        ok(hr == S_OK, "getting statistic failed\n");
+        ok(lstrcmpW(lpName, sStatistic21)==0, "getting statistic returned invalid name\n");
+        ok(lstrcmpW(lpValue, sValue21)==0, "getting statistic returned invalid value\n");
         CoTaskMemFree(lpName);
         CoTaskMemFree(lpValue);
 

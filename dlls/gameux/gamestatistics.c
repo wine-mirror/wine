@@ -839,8 +839,49 @@ static HRESULT WINAPI GameStatisticsImpl_GetStatistic(
     LPWSTR *pName,
     LPWSTR *pValue)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    HRESULT hr = S_OK;
+    LONG nLength;
+    GameStatisticsImpl *This = impl_from_IGameStatistics(iface);
+
+    TRACE("%p, %d,%d, %p, %p\n", This, categoryIndex, statIndex, pName, pValue);
+
+    if(!pName || !pValue)
+        return E_INVALIDARG;
+
+    *pName = NULL;
+    *pValue = NULL;
+
+    if(categoryIndex >= MAX_CATEGORIES || statIndex >= MAX_STATS_PER_CATEGORY)
+        hr = E_INVALIDARG;
+
+    if(SUCCEEDED(hr))
+    {
+        nLength = lstrlenW(This->stats.categories[categoryIndex].stats[statIndex].sName);
+        if(nLength != 0)
+        {
+            *pName = CoTaskMemAlloc(sizeof(WCHAR)*(nLength+1));
+            if(!(*pName))
+                hr = E_OUTOFMEMORY;
+            else
+                lstrcpyW(*pName, This->stats.categories[categoryIndex].stats[statIndex].sName);
+        }
+    }
+
+    if(SUCCEEDED(hr))
+    {
+        nLength = lstrlenW(This->stats.categories[categoryIndex].stats[statIndex].sValue);
+        if(nLength != 0)
+        {
+            *pValue = CoTaskMemAlloc(sizeof(WCHAR)*(nLength+1));
+            if(!(*pValue))
+                hr = E_OUTOFMEMORY;
+            else
+                lstrcpyW(*pValue, This->stats.categories[categoryIndex].stats[statIndex].sValue);
+        }
+    }
+
+    TRACE("returning pair; %s => %s\n", debugstr_w(*pName), debugstr_w(*pValue));
+    return hr;
 }
 
 static HRESULT WINAPI GameStatisticsImpl_SetStatistic(
