@@ -519,8 +519,10 @@ static int XCOPY_ProcessDestParm(WCHAR *supplieddestination, WCHAR *stem, WCHAR 
     if (attribs == INVALID_FILE_ATTRIBUTES) {
 
         /* If /I supplied and wildcard copy, assume directory */
-        if (flags & OPT_ASSUMEDIR &&
-            (wcschr(srcspec, '?') || wcschr(srcspec, '*'))) {
+        /* Also if destination ends with backslash */
+        if ((flags & OPT_ASSUMEDIR &&
+            (wcschr(srcspec, '?') || wcschr(srcspec, '*'))) ||
+            (supplieddestination[lstrlenW(supplieddestination)-1] == '\\')) {
 
             isDir = TRUE;
 
