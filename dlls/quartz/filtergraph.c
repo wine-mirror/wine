@@ -99,7 +99,7 @@ static int EventsQueue_PutEvent(EventsQueue* omr, const Event* evt)
 	int old_ring_buffer_size = omr->ring_buffer_size;
 	omr->ring_buffer_size += EVENTS_RING_BUFFER_INCREMENT;
 	TRACE("omr->ring_buffer_size=%d\n",omr->ring_buffer_size);
-	omr->messages = HeapReAlloc(GetProcessHeap(),0,omr->messages, omr->ring_buffer_size * sizeof(Event));
+	omr->messages = CoTaskMemRealloc(omr->messages, omr->ring_buffer_size * sizeof(Event));
 	/* Now we need to rearrange the ring buffer so that the new
 	   buffers just allocated are in between omr->msg_tosave and
 	   omr->msg_toget.
