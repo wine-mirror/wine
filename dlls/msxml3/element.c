@@ -221,7 +221,7 @@ static HRESULT WINAPI domelem_put_nodeValue(
     VARIANT value)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    FIXME("(%p)->(v%d)\n", This, V_VT(&value));
+    TRACE("(%p)->(v%d)\n", This, V_VT(&value));
     return E_FAIL;
 }
 

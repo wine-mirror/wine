@@ -212,7 +212,7 @@ static HRESULT WINAPI domfrag_put_nodeValue(
     VARIANT value)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    FIXME("(%p)->(v%d)\n", This, V_VT(&value));
+    TRACE("(%p)->(v%d)\n", This, V_VT(&value));
     return E_FAIL;
 }
 

@@ -1009,7 +1009,7 @@ static HRESULT WINAPI domdoc_put_nodeValue(
     VARIANT value)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    FIXME("(%p)->(v%d)\n", This, V_VT(&value));
+    TRACE("(%p)->(v%d)\n", This, V_VT(&value));
     return E_FAIL;
 }
 
