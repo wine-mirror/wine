@@ -189,7 +189,7 @@ HRESULT node_put_value(xmlnode *This, VARIANT *value)
     hr = node_set_content(This, V_BSTR(&string_value));
     VariantClear(&string_value);
 
-    return S_OK;
+    return hr;
 }
 
 HRESULT node_put_value_escaped(xmlnode *This, VARIANT *value)
@@ -207,7 +207,7 @@ HRESULT node_put_value_escaped(xmlnode *This, VARIANT *value)
     hr = node_set_content_escaped(This, V_BSTR(&string_value));
     VariantClear(&string_value);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT get_node(
