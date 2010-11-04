@@ -219,14 +219,6 @@ DWORD WINAPI SetQueryNetSessionCount(DWORD arg)
 }
 
 /**********************************************************************
- * OpenURL  (SHDOCVW.@)
- */
-void WINAPI OpenURL(HWND hWnd, HINSTANCE hInst, LPCSTR lpcstrUrl, int nShowCmd)
-{
-    FIXME("%p %p %s %d\n", hWnd, hInst, debugstr_a(lpcstrUrl), nShowCmd);
-}
-
-/**********************************************************************
  * Some forwards (by ordinal) to SHLWAPI
  */
 
