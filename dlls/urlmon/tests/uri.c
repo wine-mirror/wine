@@ -75,8 +75,6 @@ typedef struct _uri_properties {
     DWORD               create_flags;
     HRESULT             create_expected;
     BOOL                create_todo;
-    DWORD               props;
-    BOOL                props_todo;
 
     uri_str_property    str_props[URI_STR_PROPERTY_COUNT];
     uri_dword_property  dword_props[URI_DWORD_PROPERTY_COUNT];
@@ -84,11 +82,6 @@ typedef struct _uri_properties {
 
 static const uri_properties uri_tests[] = {
     {   "http://www.winehq.org/tests/../tests/../..", 0, S_OK, FALSE,
-        /* A flag bitmap containing all the Uri_HAS_* flags that correspond to this uri. */
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|
-        Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://www.winehq.org/",S_OK,FALSE},                      /* ABSOLUTE_URI */
             {"www.winehq.org",S_OK,FALSE},                              /* AUTHORITY */
@@ -114,10 +107,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://winehq.org/tests/.././tests", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|
-        Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://winehq.org/tests",S_OK,FALSE},
             {"winehq.org",S_OK,FALSE},
@@ -143,10 +132,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "HtTp://www.winehq.org/tests/..?query=x&return=y", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_HOST|
-        Uri_HAS_DOMAIN|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://www.winehq.org/?query=x&return=y",S_OK,FALSE},
             {"www.winehq.org",S_OK,FALSE},
@@ -172,10 +157,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "hTTp://us%45r%3Ainfo@examp%4CE.com:80/path/a/b/./c/../%2E%2E/Forbidden'<|> Characters", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_HOST|Uri_HAS_PATH|
-        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_USER_INFO|Uri_HAS_USER_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://usEr%3Ainfo@example.com/path/a/Forbidden'%3C%7C%3E%20Characters",S_OK,FALSE},
             {"usEr%3Ainfo@example.com",S_OK,FALSE},
@@ -201,11 +182,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "ftp://winepass:wine@ftp.winehq.org:9999/dir/foo bar.txt", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_EXTENSION|
-        Uri_HAS_HOST|Uri_HAS_PASSWORD|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_USER_INFO|Uri_HAS_USER_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|
-        Uri_HAS_SCHEME,
-        FALSE,
         {
             {"ftp://winepass:wine@ftp.winehq.org:9999/dir/foo%20bar.txt",S_OK,FALSE},
             {"winepass:wine@ftp.winehq.org:9999",S_OK,FALSE},
@@ -231,9 +207,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "file://c:\\tests\\../tests/foo%20bar.mp3", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|
-        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"file:///c:/tests/foo%2520bar.mp3",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -259,9 +232,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "FILE://localhost/test dir\\../tests/test%20file.README.txt", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|
-        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"file:///tests/test%20file.README.txt",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -287,9 +257,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "urn:nothing:should:happen here", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|
-        Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"urn:nothing:should:happen here",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -315,10 +282,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://127.0.0.1/tests/../test dir/./test.txt", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://127.0.0.1/test%20dir/test.txt",S_OK,FALSE},
             {"127.0.0.1",S_OK,FALSE},
@@ -344,10 +307,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://[fedc:ba98:7654:3210:fedc:ba98:7654:3210]/",S_OK,FALSE},
             {"[fedc:ba98:7654:3210:fedc:ba98:7654:3210]",S_OK,FALSE},
@@ -373,10 +332,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "ftp://[::13.1.68.3]", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"ftp://[::13.1.68.3]/",S_OK,FALSE},
             {"[::13.1.68.3]",S_OK,FALSE},
@@ -402,10 +357,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://[FEDC:BA98:0:0:0:0:0:3210]", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://[fedc:ba98::3210]/",S_OK,FALSE},
             {"[fedc:ba98::3210]",S_OK,FALSE},
@@ -431,10 +382,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "1234://www.winehq.org", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"1234://www.winehq.org/",S_OK,FALSE},
             {"www.winehq.org",S_OK,FALSE},
@@ -461,9 +408,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Test's to make sure the parser/canonicalizer handles implicit file schemes correctly. */
     {   "C:/test/test.mp3", Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|
-        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"file:///C:/test/test.mp3",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -490,10 +434,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Test's to make sure the parser/canonicalizer handles implicit file schemes correctly. */
     {   "\\\\Server/test.mp3", Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_HOST|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"file://server/test.mp3",S_OK,FALSE},
             {"server",S_OK,FALSE},
@@ -519,10 +459,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "www.winehq.org/test", Uri_CREATE_ALLOW_IMPLICIT_WILDCARD_SCHEME, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|
-        Uri_HAS_SCHEME,
-        FALSE,
         {
             {"*:www.winehq.org/test",S_OK,FALSE},
             {"www.winehq.org",S_OK,FALSE},
@@ -549,10 +485,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Valid since the '*' is the only character in the scheme name. */
     {   "*:www.winehq.org/test", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|
-        Uri_HAS_SCHEME,
-        FALSE,
         {
             {"*:www.winehq.org/test",S_OK,FALSE},
             {"www.winehq.org",S_OK,FALSE},
@@ -578,9 +510,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "/../some dir/test.ext", Uri_CREATE_ALLOW_RELATIVE, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|
-        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"/../some dir/test.ext",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -606,9 +535,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "//implicit/wildcard/uri scheme", Uri_CREATE_ALLOW_RELATIVE|Uri_CREATE_ALLOW_IMPLICIT_WILDCARD_SCHEME, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|Uri_HAS_PATH|
-        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"*://implicit/wildcard/uri%20scheme",S_OK,FALSE},
             {"",S_OK,FALSE},
@@ -635,10 +561,6 @@ static const uri_properties uri_tests[] = {
     },
     /* URI is considered opaque since CREATE_NO_CRACK_UNKNOWN_SCHEMES is set and its an unknown scheme. */
     {   "zip://google.com", Uri_CREATE_NO_CRACK_UNKNOWN_SCHEMES, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|
-        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_SCHEME,
-        FALSE,
         {
             {"zip:/.//google.com",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -665,11 +587,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Windows uses the first occurrence of ':' to delimit the userinfo. */
     {   "ftp://user:pass:word@winehq.org/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PASSWORD|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_USER_INFO|Uri_HAS_USER_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|
-        Uri_HAS_SCHEME,
-        FALSE,
         {
             {"ftp://user:pass:word@winehq.org/",S_OK,FALSE},
             {"user:pass:word@winehq.org",S_OK,FALSE},
@@ -696,11 +613,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Make sure % encoded unreserved characters are decoded. */
     {   "ftp://w%49%4Ee:PA%53%53@ftp.google.com/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PASSWORD|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_USER_INFO|Uri_HAS_USER_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|
-        Uri_HAS_SCHEME,
-        FALSE,
         {
             {"ftp://wINe:PASS@ftp.google.com/",S_OK,FALSE},
             {"wINe:PASS@ftp.google.com",S_OK,FALSE},
@@ -727,11 +639,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Make sure % encoded characters which are NOT unreserved are NOT decoded. */
     {   "ftp://w%5D%5Be:PA%7B%7D@ftp.google.com/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PASSWORD|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_USER_INFO|Uri_HAS_USER_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|
-        Uri_HAS_SCHEME,
-        FALSE,
         {
             {"ftp://w%5D%5Be:PA%7B%7D@ftp.google.com/",S_OK,FALSE},
             {"w%5D%5Be:PA%7B%7D@ftp.google.com",S_OK,FALSE},
@@ -758,11 +665,6 @@ static const uri_properties uri_tests[] = {
     },
     /* You're allowed to have an empty password portion in the userinfo section. */
     {   "ftp://empty:@ftp.google.com/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PASSWORD|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_USER_INFO|Uri_HAS_USER_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|
-        Uri_HAS_SCHEME,
-        FALSE,
         {
             {"ftp://empty:@ftp.google.com/",S_OK,FALSE},
             {"empty:@ftp.google.com",S_OK,FALSE},
@@ -789,11 +691,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Make sure forbidden characters in "userinfo" get encoded. */
     {   "ftp://\" \"weird@ftp.google.com/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_USER_INFO|Uri_HAS_USER_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|
-        Uri_HAS_SCHEME,
-        FALSE,
         {
             {"ftp://%22%20%22weird@ftp.google.com/",S_OK,FALSE},
             {"%22%20%22weird@ftp.google.com",S_OK,FALSE},
@@ -820,11 +717,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Make sure the forbidden characters don't get percent encoded. */
     {   "ftp://\" \"weird@ftp.google.com/", Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_USER_INFO|Uri_HAS_USER_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|
-        Uri_HAS_SCHEME,
-        FALSE,
         {
             {"ftp://\" \"weird@ftp.google.com/",S_OK,FALSE},
             {"\" \"weird@ftp.google.com",S_OK,FALSE},
@@ -851,10 +743,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Allowed to have invalid % encoded because its an unknown scheme type. */
     {   "zip://%xy:word@winehq.org/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PASSWORD|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_USER_INFO|Uri_HAS_USER_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"zip://%xy:word@winehq.org/",S_OK,FALSE},
             {"%xy:word@winehq.org",S_OK,FALSE},
@@ -883,10 +771,6 @@ static const uri_properties uri_tests[] = {
      * isn't known.
      */
     {   "zip://%2E:%52%53ord@winehq.org/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PASSWORD|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_USER_INFO|Uri_HAS_USER_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"zip://%2E:%52%53ord@winehq.org/",S_OK,FALSE},
             {"%2E:%52%53ord@winehq.org",S_OK,FALSE},
@@ -912,11 +796,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "ftp://[](),'test':word@winehq.org/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PASSWORD|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_USER_INFO|Uri_HAS_USER_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|
-        Uri_HAS_SCHEME,
-        FALSE,
         {
             {"ftp://[](),'test':word@winehq.org/",S_OK,FALSE},
             {"[](),'test':word@winehq.org",S_OK,FALSE},
@@ -942,10 +821,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "ftp://test?:word@winehq.org/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"ftp://test/?:word@winehq.org/",S_OK,FALSE},
             {"test",S_OK,FALSE},
@@ -971,10 +846,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "ftp://test#:word@winehq.org/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_FRAGMENT|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"ftp://test/#:word@winehq.org/",S_OK,FALSE},
             {"test",S_OK,FALSE},
@@ -1001,10 +872,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Allowed to have a backslash in the userinfo since it's an unknown scheme. */
     {   "zip://test\\:word@winehq.org/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_HOST|
-        Uri_HAS_PASSWORD|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_USER_INFO|Uri_HAS_USER_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"zip://test\\:word@winehq.org/",S_OK,FALSE},
             {"test\\:word@winehq.org",S_OK,FALSE},
@@ -1031,10 +898,6 @@ static const uri_properties uri_tests[] = {
     },
     /* It normalizes IPv4 addresses correctly. */
     {   "http://127.000.000.100/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://127.0.0.100/",S_OK,FALSE},
             {"127.0.0.100",S_OK,FALSE},
@@ -1061,10 +924,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Make sure it normalizes partial IPv4 addresses correctly. */
     {   "http://127.0/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://127.0.0.0/",S_OK,FALSE},
             {"127.0.0.0",S_OK,FALSE},
@@ -1091,10 +950,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Make sure it converts implicit IPv4's correctly. */
     {   "http://123456/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://0.1.226.64/",S_OK,FALSE},
             {"0.1.226.64",S_OK,FALSE},
@@ -1121,10 +976,6 @@ static const uri_properties uri_tests[] = {
     },
     /* UINT_MAX */
     {   "http://4294967295/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://255.255.255.255/",S_OK,FALSE},
             {"255.255.255.255",S_OK,FALSE},
@@ -1151,10 +1002,6 @@ static const uri_properties uri_tests[] = {
     },
     /* UINT_MAX+1 */
     {   "http://4294967296/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://4294967296/",S_OK,FALSE},
             {"4294967296",S_OK,FALSE},
@@ -1181,10 +1028,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Window's doesn't normalize IP address for unknown schemes. */
     {   "1234://4294967295/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"1234://4294967295/",S_OK,FALSE},
             {"4294967295",S_OK,FALSE},
@@ -1211,10 +1054,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Window's doesn't normalize IP address for unknown schemes. */
     {   "1234://127.001/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"1234://127.001/",S_OK,FALSE},
             {"127.001",S_OK,FALSE},
@@ -1240,10 +1079,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://[FEDC:BA98::3210]", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://[fedc:ba98::3210]/",S_OK,FALSE},
             {"[fedc:ba98::3210]",S_OK,FALSE},
@@ -1269,10 +1104,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://[::]", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://[::]/",S_OK,FALSE},
             {"[::]",S_OK,FALSE},
@@ -1298,10 +1129,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://[FEDC:BA98::]", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://[fedc:ba98::]/",S_OK,FALSE},
             {"[fedc:ba98::]",S_OK,FALSE},
@@ -1328,10 +1155,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Valid even with 2 byte elision because it doesn't appear the beginning or end. */
     {   "http://[1::3:4:5:6:7:8]", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://[1:0:3:4:5:6:7:8]/",S_OK,FALSE},
             {"[1:0:3:4:5:6:7:8]",S_OK,FALSE},
@@ -1357,10 +1180,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://[v2.34]/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://[v2.34]/",S_OK,FALSE},
             {"[v2.34]",S_OK,FALSE},
@@ -1387,10 +1206,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Windows ignores ':' if they appear after a '[' on a non-IPLiteral host. */
     {   "http://[xyz:12345.com/test", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://[xyz:12345.com/test",S_OK,FALSE},
             {"[xyz:12345.com",S_OK,FALSE},
@@ -1419,10 +1234,6 @@ static const uri_properties uri_tests[] = {
      * of the host name (respectively).
      */
     {   "ftp://www.[works].com/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"ftp://www.[works].com/",S_OK,FALSE},
             {"www.[works].com",S_OK,FALSE},
@@ -1449,10 +1260,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Considers ':' a delimiter since it appears after the ']'. */
     {   "http://www.google.com]:12345/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://www.google.com]:12345/",S_OK,FALSE},
             {"www.google.com]:12345",S_OK,FALSE},
@@ -1479,10 +1286,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Unknown scheme types can have invalid % encoded data in the hostname. */
     {   "zip://w%XXw%GEw.google.com/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"zip://w%XXw%GEw.google.com/",S_OK,FALSE},
             {"w%XXw%GEw.google.com",S_OK,FALSE},
@@ -1509,10 +1312,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Unknown scheme types hostname doesn't get lower cased. */
     {   "zip://GOOGLE.com/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"zip://GOOGLE.com/",S_OK,FALSE},
             {"GOOGLE.com",S_OK,FALSE},
@@ -1539,10 +1338,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Hostname get's lower cased for known scheme types. */
     {   "http://WWW.GOOGLE.com/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://www.google.com/",S_OK,FALSE},
             {"www.google.com",S_OK,FALSE},
@@ -1571,10 +1366,6 @@ static const uri_properties uri_tests[] = {
      * encoded forms lower cased.
      */
     {   "http://www.%7Cgoogle|.com/", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://www.%7cgoogle%7c.com/",S_OK,FALSE},
             {"www.%7cgoogle%7c.com",S_OK,FALSE},
@@ -1601,10 +1392,6 @@ static const uri_properties uri_tests[] = {
     },
     /* IPv4 addresses attached to IPv6 can be included in elisions. */
     {   "http://[1:2:3:4:5:6:0.0.0.0]", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://[1:2:3:4:5:6::]/",S_OK,FALSE},
             {"[1:2:3:4:5:6::]",S_OK,FALSE},
@@ -1631,10 +1418,6 @@ static const uri_properties uri_tests[] = {
     },
     /* IPv4 addresses get normalized. */
     {   "http://[::001.002.003.000]", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://[::1.2.3.0]/",S_OK,FALSE},
             {"[::1.2.3.0]",S_OK,FALSE},
@@ -1661,10 +1444,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Windows doesn't do anything to IPv6's in unknown schemes. */
     {   "zip://[0001:0:000:0004:0005:0006:001.002.003.000]", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"zip://[0001:0:000:0004:0005:0006:001.002.003.000]/",S_OK,FALSE},
             {"[0001:0:000:0004:0005:0006:001.002.003.000]",S_OK,FALSE},
@@ -1691,10 +1470,6 @@ static const uri_properties uri_tests[] = {
     },
     /* IPv4 address is converted into 2 h16 components. */
     {   "http://[ffff::192.222.111.32]", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://[ffff::c0de:6f20]/",S_OK,FALSE},
             {"[ffff::c0de:6f20]",S_OK,FALSE},
@@ -1721,10 +1496,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Max value for a port. */
     {   "http://google.com:65535", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://google.com:65535/",S_OK,FALSE},
             {"google.com:65535",S_OK,FALSE},
@@ -1750,10 +1521,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "zip://google.com:65536", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"zip://google.com:65536/",S_OK,FALSE},
             {"google.com:65536",S_OK,FALSE},
@@ -1779,10 +1546,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "zip://google.com:65536:25", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"zip://google.com:65536:25/",S_OK,FALSE},
             {"google.com:65536:25",S_OK,FALSE},
@@ -1808,10 +1571,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "zip://[::ffff]:abcd", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"zip://[::ffff]:abcd/",S_OK,FALSE},
             {"[::ffff]:abcd",S_OK,FALSE},
@@ -1837,10 +1596,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "zip://127.0.0.1:abcd", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"zip://127.0.0.1:abcd/",S_OK,FALSE},
             {"127.0.0.1:abcd",S_OK,FALSE},
@@ -1867,9 +1622,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Port is just copied over. */
     {   "http://google.com:00035", Uri_CREATE_NO_CANONICALIZE, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://google.com:00035",S_OK,FALSE},
             {"google.com:00035",S_OK,FALSE},
@@ -1896,9 +1648,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Default port is copied over. */
     {   "http://google.com:80", Uri_CREATE_NO_CANONICALIZE, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://google.com:80",S_OK,FALSE},
             {"google.com:80",S_OK,FALSE},
@@ -1924,10 +1673,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://google.com.uk", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://google.com.uk/",S_OK,FALSE},
             {"google.com.uk",S_OK,FALSE},
@@ -1953,10 +1698,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://google.com.com", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://google.com.com/",S_OK,FALSE},
             {"google.com.com",S_OK,FALSE},
@@ -1982,10 +1723,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://google.uk.1", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://google.uk.1/",S_OK,FALSE},
             {"google.uk.1",S_OK,FALSE},
@@ -2012,10 +1749,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Since foo isn't a recognized 3 character TLD its considered the domain name. */
     {   "http://google.foo.uk", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://google.foo.uk/",S_OK,FALSE},
             {"google.foo.uk",S_OK,FALSE},
@@ -2041,10 +1774,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://.com", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://.com/",S_OK,FALSE},
             {".com",S_OK,FALSE},
@@ -2070,10 +1799,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://.uk", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://.uk/",S_OK,FALSE},
             {".uk",S_OK,FALSE},
@@ -2099,10 +1824,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://www.co.google.com.[]", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://www.co.google.com.[]/",S_OK,FALSE},
             {"www.co.google.com.[]",S_OK,FALSE},
@@ -2128,10 +1849,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://co.uk", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://co.uk/",S_OK,FALSE},
             {"co.uk",S_OK,FALSE},
@@ -2157,10 +1874,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://www.co.google.us.test", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://www.co.google.us.test/",S_OK,FALSE},
             {"www.co.google.us.test",S_OK,FALSE},
@@ -2186,10 +1899,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://gov.uk", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://gov.uk/",S_OK,FALSE},
             {"gov.uk",S_OK,FALSE},
@@ -2215,9 +1924,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "zip://www.google.com\\test", Uri_CREATE_NO_CANONICALIZE, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"zip://www.google.com\\test",S_OK,FALSE},
             {"www.google.com\\test",S_OK,FALSE},
@@ -2243,9 +1949,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "urn:excepts:bad:%XY:encoded", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|
-        Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"urn:excepts:bad:%XY:encoded",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -2274,9 +1977,6 @@ static const uri_properties uri_tests[] = {
      * are decoded and all '%' are encoded.
      */
     {   "file://C:/te%3Es%2Et/tes%t.mp3", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|
-        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"file:///C:/te%253Es%252Et/tes%25t.mp3",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -2305,9 +2005,6 @@ static const uri_properties uri_tests[] = {
      * is decoded and only %'s in front of invalid hex digits are encoded.
      */
     {   "file:///C:/te%3Es%2Et/t%23es%t.mp3", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|
-        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"file:///C:/te%3Es.t/t#es%25t.mp3",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -2334,10 +2031,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Only unreserved percent encoded characters are decoded for known schemes that aren't file. */
     {   "http://[::001.002.003.000]/%3F%23%2E%54/test", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://[::1.2.3.0]/%3F%23.T/test",S_OK,FALSE},
             {"[::1.2.3.0]",S_OK,FALSE},
@@ -2364,9 +2057,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Forbidden characters are always encoded for file URIs. */
     {   "file:///C:/\"test\"/test.mp3", Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|
-        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"file:///C:/%22test%22/test.mp3",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -2393,10 +2083,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Forbidden characters are never encoded for unknown scheme types. */
     {   "1234://4294967295/<|>\" test<|>", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"1234://4294967295/<|>\" test<|>",S_OK,FALSE},
             {"4294967295",S_OK,FALSE},
@@ -2423,10 +2109,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Make sure forbidden characters are percent encoded. */
     {   "http://gov.uk/<|> test<|>", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://gov.uk/%3C%7C%3E%20test%3C%7C%3E",S_OK,FALSE},
             {"gov.uk",S_OK,FALSE},
@@ -2452,10 +2134,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://gov.uk/test/../test2/././../test3/.././././", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://gov.uk/",S_OK,FALSE},
             {"gov.uk",S_OK,FALSE},
@@ -2481,10 +2159,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://gov.uk/test/test2/../../..", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://gov.uk/",S_OK,FALSE},
             {"gov.uk",S_OK,FALSE},
@@ -2510,10 +2184,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://gov.uk/test/test2/../../.", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://gov.uk/",S_OK,FALSE},
             {"gov.uk",S_OK,FALSE},
@@ -2539,9 +2209,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "file://c:\\tests\\../tests\\./.\\..\\foo%20bar.mp3", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|
-        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"file:///c:/foo%2520bar.mp3",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -2568,10 +2235,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Dot removal happens for unknown scheme types. */
     {   "zip://gov.uk/test/test2/../../.", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"zip://gov.uk/",S_OK,FALSE},
             {"gov.uk",S_OK,FALSE},
@@ -2598,10 +2261,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Dot removal doesn't happen if NO_CANONICALIZE is set. */
     {   "http://gov.uk/test/test2/../../.", Uri_CREATE_NO_CANONICALIZE, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://gov.uk/test/test2/../../.",S_OK,FALSE},
             {"gov.uk",S_OK,FALSE},
@@ -2628,10 +2287,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Dot removal doesn't happen for wildcard scheme types. */
     {   "*:gov.uk/test/test2/../../.", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"*:gov.uk/test/test2/../../.",S_OK,FALSE},
             {"gov.uk",S_OK,FALSE},
@@ -2658,9 +2313,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Forbidden characters are encoded for opaque known scheme types. */
     {   "mailto:\"acco<|>unt@example.com\"", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|
-        Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"mailto:%22acco%3C%7C%3Eunt@example.com%22",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -2686,9 +2338,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "news:test.tes<|>t.com", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|
-        Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"news:test.tes%3C%7C%3Et.com",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -2715,9 +2364,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Don't encode forbidden characters. */
     {   "news:test.tes<|>t.com", Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|
-        Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"news:test.tes<|>t.com",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -2744,9 +2390,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Forbidden characters aren't encoded for unknown, opaque URIs. */
     {   "urn:test.tes<|>t.com", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|
-        Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"urn:test.tes<|>t.com",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -2773,9 +2416,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Percent encoded unreserved characters are decoded for known opaque URIs. */
     {   "news:test.%74%65%73%74.com", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|
-        Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"news:test.test.com",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -2802,9 +2442,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Percent encoded characters are still decoded for known scheme types. */
     {   "news:test.%74%65%73%74.com", Uri_CREATE_NO_CANONICALIZE, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|
-        Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"news:test.test.com",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -2831,9 +2468,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Percent encoded characters aren't decoded for unknown scheme types. */
     {   "urn:test.%74%65%73%74.com", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|
-        Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"urn:test.%74%65%73%74.com",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -2860,10 +2494,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Unknown scheme types can have invalid % encoded data in query string. */
     {   "zip://www.winehq.org/tests/..?query=%xx&return=y", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_HOST|
-        Uri_HAS_DOMAIN|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"zip://www.winehq.org/?query=%xx&return=y",S_OK,FALSE},
             {"www.winehq.org",S_OK,FALSE},
@@ -2890,10 +2520,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Known scheme types can have invalid % encoded data with the right flags. */
     {   "http://www.winehq.org/tests/..?query=%xx&return=y", Uri_CREATE_NO_DECODE_EXTRA_INFO, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_HOST|
-        Uri_HAS_DOMAIN|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_PORT|Uri_HAS_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://www.winehq.org/?query=%xx&return=y",S_OK,FALSE},
             {"www.winehq.org",S_OK,FALSE},
@@ -2920,10 +2546,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Forbidden characters in query aren't percent encoded for known scheme types with this flag. */
     {   "http://www.winehq.org/tests/..?query=<|>&return=y", Uri_CREATE_NO_DECODE_EXTRA_INFO, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_HOST|
-        Uri_HAS_DOMAIN|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_PORT|Uri_HAS_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://www.winehq.org/?query=<|>&return=y",S_OK,FALSE},
             {"www.winehq.org",S_OK,FALSE},
@@ -2950,10 +2572,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Forbidden characters in query aren't percent encoded for known scheme types with this flag. */
     {   "http://www.winehq.org/tests/..?query=<|>&return=y", Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_HOST|
-        Uri_HAS_DOMAIN|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_PORT|Uri_HAS_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://www.winehq.org/?query=<|>&return=y",S_OK,FALSE},
             {"www.winehq.org",S_OK,FALSE},
@@ -2980,10 +2598,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Forbidden characters are encoded for known scheme types. */
     {   "http://www.winehq.org/tests/..?query=<|>&return=y", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_HOST|
-        Uri_HAS_DOMAIN|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_PORT|Uri_HAS_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://www.winehq.org/?query=%3C%7C%3E&return=y",S_OK,FALSE},
             {"www.winehq.org",S_OK,FALSE},
@@ -3010,10 +2624,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Forbidden characters are not encoded for unknown scheme types. */
     {   "zip://www.winehq.org/tests/..?query=<|>&return=y", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_HOST|
-        Uri_HAS_DOMAIN|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"zip://www.winehq.org/?query=<|>&return=y",S_OK,FALSE},
             {"www.winehq.org",S_OK,FALSE},
@@ -3040,10 +2650,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Percent encoded, unreserved characters are decoded for known scheme types. */
     {   "http://www.winehq.org/tests/..?query=%30%31&return=y", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_HOST|
-        Uri_HAS_DOMAIN|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_PORT|Uri_HAS_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://www.winehq.org/?query=01&return=y",S_OK,FALSE},
             {"www.winehq.org",S_OK,FALSE},
@@ -3070,10 +2676,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Percent encoded, unreserved characters aren't decoded for unknown scheme types. */
     {   "zip://www.winehq.org/tests/..?query=%30%31&return=y", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_HOST|
-        Uri_HAS_DOMAIN|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"zip://www.winehq.org/?query=%30%31&return=y",S_OK,FALSE},
             {"www.winehq.org",S_OK,FALSE},
@@ -3100,10 +2702,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Percent encoded characters aren't decoded when NO_DECODE_EXTRA_INFO is set. */
     {   "http://www.winehq.org/tests/..?query=%30%31&return=y", Uri_CREATE_NO_DECODE_EXTRA_INFO, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_HOST|
-        Uri_HAS_DOMAIN|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_PORT|Uri_HAS_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://www.winehq.org/?query=%30%31&return=y",S_OK,FALSE},
             {"www.winehq.org",S_OK,FALSE},
@@ -3129,10 +2727,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://www.winehq.org?query=12&return=y", Uri_CREATE_NO_CANONICALIZE, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_HOST|
-        Uri_HAS_DOMAIN|Uri_HAS_PATH_AND_QUERY|Uri_HAS_PORT|Uri_HAS_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://www.winehq.org?query=12&return=y",S_OK,FALSE},
             {"www.winehq.org",S_OK,FALSE},
@@ -3159,10 +2753,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Unknown scheme types can have invalid % encoded data in fragments. */
     {   "zip://www.winehq.org/tests/#Te%xx", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_FRAGMENT|
-        Uri_HAS_HOST|Uri_HAS_DOMAIN|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"zip://www.winehq.org/tests/#Te%xx",S_OK,FALSE},
             {"www.winehq.org",S_OK,FALSE},
@@ -3189,10 +2779,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Forbidden characters in fragment aren't encoded for unknown schemes. */
     {   "zip://www.winehq.org/tests/#Te<|>", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_FRAGMENT|
-        Uri_HAS_HOST|Uri_HAS_DOMAIN|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"zip://www.winehq.org/tests/#Te<|>",S_OK,FALSE},
             {"www.winehq.org",S_OK,FALSE},
@@ -3219,10 +2805,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Forbidden characters in the fragment are percent encoded for known schemes. */
     {   "http://www.winehq.org/tests/#Te<|>", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_FRAGMENT|
-        Uri_HAS_HOST|Uri_HAS_DOMAIN|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://www.winehq.org/tests/#Te%3C%7C%3E",S_OK,FALSE},
             {"www.winehq.org",S_OK,FALSE},
@@ -3249,10 +2831,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Forbidden characters aren't encoded in the fragment with this flag. */
     {   "http://www.winehq.org/tests/#Te<|>", Uri_CREATE_NO_DECODE_EXTRA_INFO, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_FRAGMENT|
-        Uri_HAS_HOST|Uri_HAS_DOMAIN|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://www.winehq.org/tests/#Te<|>",S_OK,FALSE},
             {"www.winehq.org",S_OK,FALSE},
@@ -3279,10 +2857,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Forbidden characters aren't encoded in the fragment with this flag. */
     {   "http://www.winehq.org/tests/#Te<|>", Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_FRAGMENT|
-        Uri_HAS_HOST|Uri_HAS_DOMAIN|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://www.winehq.org/tests/#Te<|>",S_OK,FALSE},
             {"www.winehq.org",S_OK,FALSE},
@@ -3309,10 +2883,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Percent encoded, unreserved characters aren't decoded for known scheme types. */
     {   "zip://www.winehq.org/tests/#Te%30%31%32", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_FRAGMENT|
-        Uri_HAS_HOST|Uri_HAS_DOMAIN|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"zip://www.winehq.org/tests/#Te%30%31%32",S_OK,FALSE},
             {"www.winehq.org",S_OK,FALSE},
@@ -3339,10 +2909,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Percent encoded, unreserved characters are decoded for known schemes. */
     {   "http://www.winehq.org/tests/#Te%30%31%32", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_FRAGMENT|
-        Uri_HAS_HOST|Uri_HAS_DOMAIN|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://www.winehq.org/tests/#Te012",S_OK,FALSE},
             {"www.winehq.org",S_OK,FALSE},
@@ -3369,10 +2935,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Percent encoded, unreserved characters are decoded even if NO_CANONICALIZE is set. */
     {   "http://www.winehq.org/tests/#Te%30%31%32", Uri_CREATE_NO_CANONICALIZE, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_FRAGMENT|
-        Uri_HAS_HOST|Uri_HAS_DOMAIN|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://www.winehq.org/tests/#Te012",S_OK,FALSE},
             {"www.winehq.org",S_OK,FALSE},
@@ -3399,10 +2961,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Percent encoded, unreserved characters aren't decoded when NO_DECODE_EXTRA is set. */
     {   "http://www.winehq.org/tests/#Te%30%31%32", Uri_CREATE_NO_DECODE_EXTRA_INFO, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_FRAGMENT|
-        Uri_HAS_HOST|Uri_HAS_DOMAIN|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://www.winehq.org/tests/#Te%30%31%32",S_OK,FALSE},
             {"www.winehq.org",S_OK,FALSE},
@@ -3429,10 +2987,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Leading/Trailing whitespace is removed. */
     {   "    http://google.com/     ", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://google.com/",S_OK,FALSE},
             {"google.com",S_OK,FALSE},
@@ -3458,10 +3012,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "\t\t\r\nhttp\n://g\noogle.co\rm/\n\n\n", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://google.com/",S_OK,FALSE},
             {"google.com",S_OK,FALSE},
@@ -3487,10 +3037,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://g\noogle.co\rm/\n\n\n", Uri_CREATE_NO_PRE_PROCESS_HTML_URI, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://g%0aoogle.co%0dm/%0A%0A%0A",S_OK,FALSE},
             {"g%0aoogle.co%0dm",S_OK,FALSE},
@@ -3516,10 +3062,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "zip://g\noogle.co\rm/\n\n\n", Uri_CREATE_NO_PRE_PROCESS_HTML_URI, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"zip://g\noogle.co\rm/\n\n\n",S_OK,FALSE},
             {"g\noogle.co\rm",S_OK,FALSE},
@@ -3548,8 +3090,6 @@ static const uri_properties uri_tests[] = {
      * for the absolute URI property since it was declared as an opaque URI.
      */
     {   "file:index.html", 0, S_OK, FALSE,
-        Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY
-        |Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME, FALSE,
         {
             {"",S_FALSE,FALSE},
             {"",S_FALSE,FALSE},
@@ -3576,8 +3116,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Doesn't have an absolute since it's opaque, but gets it port set. */
     {   "http:test.com/index.html", 0, S_OK, FALSE,
-        Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY
-        |Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME, FALSE,
         {
             {"",S_FALSE,FALSE},
             {"",S_FALSE,FALSE},
@@ -3603,8 +3141,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "ftp:test.com/index.html", 0, S_OK, FALSE,
-        Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY
-        |Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME, FALSE,
         {
             {"",S_FALSE,FALSE},
             {"",S_FALSE,FALSE},
@@ -3630,9 +3166,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "file://C|/test.mp3", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|
-        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"file:///C:/test.mp3",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -3658,9 +3191,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "file:///C|/test.mp3", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|
-        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"file:///C:/test.mp3",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -3689,9 +3219,6 @@ static const uri_properties uri_tests[] = {
      * to '\\'.
      */
     {   "file://c:/dir/index.html", Uri_CREATE_FILE_USE_DOS_PATH, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH
-        |Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE
-        |Uri_HAS_SCHEME, FALSE,
         {
             {"file://c:\\dir\\index.html",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -3718,9 +3245,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Extra '/' after "file://" is removed. */
     {   "file:///c:/dir/index.html", Uri_CREATE_FILE_USE_DOS_PATH, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH
-        |Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE
-        |Uri_HAS_SCHEME, FALSE,
         {
             {"file://c:\\dir\\index.html",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -3747,9 +3271,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Allow more characters when Uri_CREATE_FILE_USE_DOS_PATH is specified */
     {   "file:///c:/dir\%%61%20%5Fname/file%2A.html", Uri_CREATE_FILE_USE_DOS_PATH, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH
-        |Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE
-        |Uri_HAS_SCHEME, FALSE,
         {
             {"file://c:\\dir\%a _name\\file*.html",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -3775,9 +3296,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "file://c|/dir\\index.html", Uri_CREATE_FILE_USE_DOS_PATH, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH
-        |Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE
-        |Uri_HAS_SCHEME, FALSE,
         {
             {"file://c:\\dir\\index.html",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -3804,9 +3322,6 @@ static const uri_properties uri_tests[] = {
     },
     /* The backslashes after the scheme name are converted to forward slashes. */
     {   "file:\\\\c:\\dir\\index.html", Uri_CREATE_FILE_USE_DOS_PATH, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH
-        |Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE
-        |Uri_HAS_SCHEME, FALSE,
         {
             {"file://c:\\dir\\index.html",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -3832,9 +3347,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "file:\\\\c:/dir/index.html", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH
-        |Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE
-        |Uri_HAS_SCHEME, FALSE,
         {
             {"file:///c:/dir/index.html",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -3860,10 +3372,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http:\\\\google.com", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://google.com/",S_OK,FALSE},
             {"google.com",S_OK,FALSE},
@@ -3890,10 +3398,6 @@ static const uri_properties uri_tests[] = {
     },
     /* the "\\\\" aren't converted to "//" for unknown scheme types and it's considered opaque. */
     {   "zip:\\\\google.com", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|
-        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_SCHEME|
-        Uri_HAS_HOST_TYPE,
-        FALSE,
         {
             {"zip:\\\\google.com",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -3920,9 +3424,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Dot segments aren't removed. */
     {   "file://c:\\dir\\../..\\./index.html", Uri_CREATE_FILE_USE_DOS_PATH, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH
-        |Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE
-        |Uri_HAS_SCHEME, FALSE,
         {
             {"file://c:\\dir\\..\\..\\.\\index.html",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -3949,9 +3450,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Forbidden characters aren't percent encoded. */
     {   "file://c:\\dir\\i^|ndex.html", Uri_CREATE_FILE_USE_DOS_PATH, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH
-        |Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE
-        |Uri_HAS_SCHEME, FALSE,
         {
             {"file://c:\\dir\\i^|ndex.html",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -3978,8 +3476,6 @@ static const uri_properties uri_tests[] = {
     },
     /* The '\' are still converted to '/' even though it's an opaque file URI. */
     {   "file:c:\\dir\\../..\\index.html", 0, S_OK, FALSE,
-        Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY
-        |Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME, FALSE,
         {
             {"",S_FALSE,FALSE},
             {"",S_FALSE,FALSE},
@@ -4006,8 +3502,6 @@ static const uri_properties uri_tests[] = {
     },
     /* '/' are still converted to '\' even though it's an opaque URI. */
     {   "file:c:/dir\\../..\\index.html", Uri_CREATE_FILE_USE_DOS_PATH, S_OK, FALSE,
-        Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY
-        |Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME, FALSE,
         {
             {"",S_FALSE,FALSE},
             {"",S_FALSE,FALSE},
@@ -4034,8 +3528,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Forbidden characters aren't percent encoded. */
     {   "file:c:\\in^|dex.html", Uri_CREATE_FILE_USE_DOS_PATH, S_OK, FALSE,
-        Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY
-        |Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME, FALSE,
         {
             {"",S_FALSE,FALSE},
             {"",S_FALSE,FALSE},
@@ -4064,10 +3556,6 @@ static const uri_properties uri_tests[] = {
      * userinfo section.
      */
     {   "http://:password@gov.uk", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PASSWORD|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_USER_INFO|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://:password@gov.uk/",S_OK,FALSE},
             {":password@gov.uk",S_OK,FALSE},
@@ -4094,10 +3582,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Has a UserName since the userinfo section doesn't contain a password. */
     {   "http://@gov.uk", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_USER_INFO|Uri_HAS_USER_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://gov.uk/",S_OK,FALSE,"http://@gov.uk/"},
             {"@gov.uk",S_OK,FALSE},
@@ -4124,10 +3608,6 @@ static const uri_properties uri_tests[] = {
     },
     /* ":@" not included in the absolute URI. */
     {   "http://:@gov.uk", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PASSWORD|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_USER_INFO|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://gov.uk/",S_OK,FALSE,"http://:@gov.uk/"},
             {":@gov.uk",S_OK,FALSE},
@@ -4154,10 +3634,6 @@ static const uri_properties uri_tests[] = {
     },
     /* '@' is included because it's an unknown scheme type. */
     {   "zip://@gov.uk", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
-        Uri_HAS_USER_INFO|Uri_HAS_USER_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"zip://@gov.uk/",S_OK,FALSE},
             {"@gov.uk",S_OK,FALSE},
@@ -4184,10 +3660,6 @@ static const uri_properties uri_tests[] = {
     },
     /* ":@" are included because it's an unknown scheme type. */
     {   "zip://:@gov.uk", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
-        Uri_HAS_PASSWORD|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_USER_INFO|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"zip://:@gov.uk/",S_OK,FALSE},
             {":@gov.uk",S_OK,FALSE},
@@ -4213,9 +3685,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "about:blank", 0, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"about:blank",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -4241,9 +3710,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "mk:@MSITStore:C:\\Program Files/AutoCAD 2008\\Help/acad_acg.chm::/WSfacf1429558a55de1a7524c1004e616f8b-322b.htm",0,S_OK,FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|
-        Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"mk:@MSITStore:C:\\Program%20Files/AutoCAD%202008\\Help/acad_acg.chm::/WSfacf1429558a55de1a7524c1004e616f8b-322b.htm",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -4269,9 +3735,6 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "mk:@MSITStore:Z:\\home\\test\\chm\\silqhelp.chm::/thesilqquickstartguide.htm",0,S_OK,FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|
-        Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"mk:@MSITStore:Z:\\home\\test\\chm\\silqhelp.chm::/thesilqquickstartguide.htm",S_OK,FALSE},
             {"",S_FALSE,FALSE},
@@ -4298,9 +3761,6 @@ static const uri_properties uri_tests[] = {
     },
     /* Two '\' are added to the URI when USE_DOS_PATH is set, and it's a UNC path. */
     {   "file://server/dir/index.html", Uri_CREATE_FILE_USE_DOS_PATH, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_HOST|
-        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|
-        Uri_HAS_SCHEME, FALSE,
         {
             {"file://\\\\server\\dir\\index.html",S_OK,FALSE},
             {"server",S_OK,FALSE},
@@ -4329,10 +3789,6 @@ static const uri_properties uri_tests[] = {
      * authority.
      */
     {   "http://google.com:80/", Uri_CREATE_NO_CANONICALIZE, S_OK, FALSE,
-        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
-        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
-        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
-        FALSE,
         {
             {"http://google.com:80/",S_OK,FALSE},
             {"google.com:80",S_OK,FALSE},
@@ -7253,6 +6709,23 @@ static void test_IUri_GetPropertyLength(void) {
     }
 }
 
+static DWORD compute_expected_props(uri_properties *test)
+{
+    DWORD ret = 0, i;
+
+    for(i=Uri_PROPERTY_STRING_START; i <= Uri_PROPERTY_STRING_LAST; i++) {
+        if(test->str_props[i-Uri_PROPERTY_STRING_START].expected == S_OK)
+            ret |= 1<<i;
+    }
+
+    for(i=Uri_PROPERTY_DWORD_START; i <= Uri_PROPERTY_DWORD_LAST; i++) {
+        if(test->dword_props[i-Uri_PROPERTY_DWORD_START].expected == S_OK)
+            ret |= 1<<i;
+    }
+
+    return ret;
+}
+
 static void test_IUri_GetProperties(void) {
     IUri *uri = NULL;
     HRESULT hr;
@@ -7282,34 +6755,20 @@ static void test_IUri_GetProperties(void) {
         }
 
         if(SUCCEEDED(hr)) {
-            DWORD received = 0;
+            DWORD received = 0, expected_props;
             DWORD j;
 
             hr = IUri_GetProperties(uri, &received);
-            if(test.props_todo) {
-                todo_wine {
-                    ok(hr == S_OK, "Error: GetProperties returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
-                }
-            } else {
-                ok(hr == S_OK, "Error: GetProperties returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
-            }
+            ok(hr == S_OK, "Error: GetProperties returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+
+            expected_props = compute_expected_props(&test);
 
             for(j = 0; j <= Uri_PROPERTY_DWORD_LAST; ++j) {
                 /* (1 << j) converts a Uri_PROPERTY to its corresponding Uri_HAS_* flag mask. */
-                if(test.props & (1 << j)) {
-                    if(test.props_todo) {
-                        todo_wine {
-                            ok(received & (1 << j), "Error: Expected flag for property %d on uri_tests[%d].\n", j, i);
-                        }
-                    } else {
-                        ok(received & (1 << j), "Error: Expected flag for property %d on uri_tests[%d].\n", j, i);
-                    }
-                } else {
-                    /* NOTE: Since received is initialized to 0, this test will always pass while
-                     * GetProperties is unimplemented.
-                     */
+                if(expected_props & (1 << j))
+                    ok(received & (1 << j), "Error: Expected flag for property %d on uri_tests[%d].\n", j, i);
+                else
                     ok(!(received & (1 << j)), "Error: Received flag for property %d when not expected on uri_tests[%d].\n", j, i);
-                }
             }
         }
 
@@ -7349,38 +6808,22 @@ static void test_IUri_HasProperty(void) {
         }
 
         if(SUCCEEDED(hr)) {
-            DWORD j;
+            DWORD expected_props, j;
+
+            expected_props = compute_expected_props(&test);
 
             for(j = 0; j <= Uri_PROPERTY_DWORD_LAST; ++j) {
                 /* Assign -1, then explicitly test for TRUE or FALSE later. */
                 BOOL received = -1;
 
                 hr = IUri_HasProperty(uri, j, &received);
-                if(test.props_todo) {
-                    todo_wine {
-                        ok(hr == S_OK, "Error: HasProperty returned 0x%08x, expected 0x%08x for property %d on uri_tests[%d].\n",
-                                hr, S_OK, j, i);
-                    }
+                ok(hr == S_OK, "Error: HasProperty returned 0x%08x, expected 0x%08x for property %d on uri_tests[%d].\n",
+                        hr, S_OK, j, i);
 
-                    /* Check if the property should be true. */
-                    if(test.props & (1 << j)) {
-                        todo_wine {
-                            ok(received == TRUE, "Error: Expected to have property %d on uri_tests[%d].\n", j, i);
-                        }
-                    } else {
-                        todo_wine {
-                            ok(received == FALSE, "Error: Wasn't expecting to have property %d on uri_tests[%d].\n", j, i);
-                        }
-                    }
+                if(expected_props & (1 << j)) {
+                    ok(received == TRUE, "Error: Expected to have property %d on uri_tests[%d].\n", j, i);
                 } else {
-                    ok(hr == S_OK, "Error: HasProperty returned 0x%08x, expected 0x%08x for property %d on uri_tests[%d].\n",
-                            hr, S_OK, j, i);
-
-                    if(test.props & (1 << j)) {
-                        ok(received == TRUE, "Error: Expected to have property %d on uri_tests[%d].\n", j, i);
-                    } else {
-                        ok(received == FALSE, "Error: Wasn't expecting to have property %d on uri_tests[%d].\n", j, i);
-                    }
+                    ok(received == FALSE, "Error: Wasn't expecting to have property %d on uri_tests[%d].\n", j, i);
                 }
             }
         }
