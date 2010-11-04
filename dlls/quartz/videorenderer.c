@@ -829,12 +829,15 @@ static HRESULT WINAPI VideoRenderer_Pause(IBaseFilter * iface)
 
 static HRESULT WINAPI VideoRenderer_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 {
+    HRESULT hr = S_OK;
     VideoRendererImpl *This = (VideoRendererImpl *)iface;
 
     TRACE("(%p/%p)->(%s)\n", This, iface, wine_dbgstr_longlong(tStart));
 
     EnterCriticalSection(&This->filter.csFilter);
-    if (This->filter.state != State_Running)
+    if (This->filter.state == State_Running)
+        goto out;
+    if (This->pInputPin->pin.pConnectedTo)
     {
         if (This->filter.state == State_Stopped)
         {
@@ -845,10 +848,22 @@ static HRESULT WINAPI VideoRenderer_Run(IBaseFilter * iface, REFERENCE_TIME tSta
 
         This->filter.rtStreamStart = tStart;
         This->filter.state = State_Running;
+    } else if (This->filter.filterInfo.pGraph) {
+        IMediaEventSink *pEventSink;
+        hr = IFilterGraph_QueryInterface(This->filter.filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
+        if (SUCCEEDED(hr))
+        {
+            hr = IMediaEventSink_Notify(pEventSink, EC_COMPLETE, S_OK, (LONG_PTR)This);
+            IMediaEventSink_Release(pEventSink);
+        }
+        hr = S_OK;
     }
+    if (SUCCEEDED(hr))
+        This->filter.state = State_Running;
+out:
     LeaveCriticalSection(&This->filter.csFilter);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI VideoRenderer_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState)
@@ -913,7 +928,7 @@ static HRESULT WINAPI VideoRenderer_InputPin_EndOfStream(IPin * iface)
     hr = IFilterGraph_QueryInterface(pFilter->filter.filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
     if (SUCCEEDED(hr))
     {
-        hr = IMediaEventSink_Notify(pEventSink, EC_COMPLETE, S_OK, 0);
+        hr = IMediaEventSink_Notify(pEventSink, EC_COMPLETE, S_OK, (LONG_PTR)pFilter);
         IMediaEventSink_Release(pEventSink);
     }
     MediaSeekingPassThru_EOS(pFilter->seekthru_unk);
