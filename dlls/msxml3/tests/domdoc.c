@@ -6056,8 +6056,11 @@ static void test_TransformWithLoadingLocalFile(void)
 
 static void test_put_nodeValue(void)
 {
+    static const WCHAR jeevesW[] = {'J','e','e','v','e','s',' ','&',' ','W','o','o','s','t','e','r',0};
     IXMLDOMDocument *doc;
+    IXMLDOMText *text;
     IXMLDOMEntityReference *entityref;
+    IXMLDOMAttribute *attr;
     IXMLDOMNode *node;
     HRESULT hr;
     VARIANT data, type;
@@ -6114,6 +6117,28 @@ static void test_put_nodeValue(void)
     ok(hr == E_FAIL, "ret %08x\n", hr );
     IXMLDOMNode_Release(node);
     IXMLDOMEntityReference_Release(entityref);
+
+    /* supported types */
+    hr = IXMLDOMDocument_createTextNode(doc, _bstr_(""), &text);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    V_VT(&data) = VT_BSTR;
+    V_BSTR(&data) = _bstr_("Jeeves & Wooster");
+    hr = IXMLDOMText_put_nodeValue(text, data);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    IXMLDOMText_Release(text);
+
+    hr = IXMLDOMDocument_createAttribute(doc, _bstr_("attr"), &attr);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    V_VT(&data) = VT_BSTR;
+    V_BSTR(&data) = _bstr_("Jeeves & Wooster");
+    hr = IXMLDOMAttribute_put_nodeValue(attr, data);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    hr = IXMLDOMAttribute_get_nodeValue(attr, &data);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    ok(memcmp(V_BSTR(&data), jeevesW, sizeof(jeevesW)) == 0, "got %s\n",
+        wine_dbgstr_w(V_BSTR(&data)));
+    VariantClear(&data);
+    IXMLDOMAttribute_Release(attr);
 
     free_bstrs();
 

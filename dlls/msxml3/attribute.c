@@ -207,7 +207,7 @@ static HRESULT WINAPI domattr_put_nodeValue(
 
     TRACE("(%p)->(v%d)\n", This, V_VT(&value));
 
-    return node_put_value(&This->node, &value);
+    return node_put_value_escaped(&This->node, &value);
 }
 
 static HRESULT WINAPI domattr_get_nodeType(

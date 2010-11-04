@@ -151,6 +151,29 @@ HRESULT node_set_content(xmlnode *This, LPCWSTR value)
     return S_OK;
 }
 
+static HRESULT node_set_content_escaped(xmlnode *This, LPCWSTR value)
+{
+    xmlChar *str, *escaped;
+
+    str = xmlChar_from_wchar(value);
+    if(!str)
+        return E_OUTOFMEMORY;
+
+    escaped = xmlEncodeSpecialChars(NULL, str);
+    if(!escaped)
+    {
+        heap_free(str);
+        return E_OUTOFMEMORY;
+    }
+
+    xmlNodeSetContent(This->node, escaped);
+
+    heap_free(str);
+    xmlFree(escaped);
+
+    return S_OK;
+}
+
 HRESULT node_put_value(xmlnode *This, VARIANT *value)
 {
     VARIANT string_value;
@@ -164,6 +187,24 @@ HRESULT node_put_value(xmlnode *This, VARIANT *value)
     }
 
     hr = node_set_content(This, V_BSTR(&string_value));
+    VariantClear(&string_value);
+
+    return S_OK;
+}
+
+HRESULT node_put_value_escaped(xmlnode *This, VARIANT *value)
+{
+    VARIANT string_value;
+    HRESULT hr;
+
+    VariantInit(&string_value);
+    hr = VariantChangeType(&string_value, value, 0, VT_BSTR);
+    if(FAILED(hr)) {
+        WARN("Couldn't convert to VT_BSTR\n");
+        return hr;
+    }
+
+    hr = node_set_content_escaped(This, V_BSTR(&string_value));
     VariantClear(&string_value);
 
     return S_OK;

@@ -184,6 +184,7 @@ extern HRESULT node_get_nodeName(xmlnode*,BSTR*);
 extern HRESULT node_get_content(xmlnode*,VARIANT*);
 extern HRESULT node_set_content(xmlnode*,LPCWSTR);
 extern HRESULT node_put_value(xmlnode*,VARIANT*);
+extern HRESULT node_put_value_escaped(xmlnode*,VARIANT*);
 extern HRESULT node_get_parent(xmlnode*,IXMLDOMNode**);
 extern HRESULT node_get_child_nodes(xmlnode*,IXMLDOMNodeList**);
 extern HRESULT node_get_first_child(xmlnode*,IXMLDOMNode**);
