@@ -234,11 +234,11 @@ static void test_gamestatisticsmgr( void )
 
     /* this should fail, cause statistics doesn't yet exists */
     hr = IGameStatisticsMgr_GetGameStatistics(gsm, sExeName, GAMESTATS_OPEN_OPENONLY, &dwOpenResult, &gs);
-    todo_wine ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "GetGameStatistics returned unexpected value: 0x%08x\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "GetGameStatistics returned unexpected value: 0x%08x\n", hr);
 
     /* now, allow to create */
     hr = IGameStatisticsMgr_GetGameStatistics(gsm, sExeName, GAMESTATS_OPEN_OPENORCREATE, &dwOpenResult, &gs);
-    todo_wine ok(SUCCEEDED(hr), "GetGameStatistics returned error: 0x%x\n", hr);
+    ok(SUCCEEDED(hr), "GetGameStatistics returned error: 0x%x\n", hr);
     ok(gs!=NULL, "GetGameStatistics did not return valid interface pointer\n");
     if(gs)
     {
@@ -340,8 +340,8 @@ static void test_gamestatisticsmgr( void )
 
         /* try to read written statisticd */
         hr = IGameStatisticsMgr_GetGameStatistics(gsm, sExeName, GAMESTATS_OPEN_OPENORCREATE, &dwOpenResult, &gs);
-        todo_wine ok(SUCCEEDED(hr), "GetGameStatistics returned error: 0x%08x\n", hr);
-        todo_wine ok(dwOpenResult == GAMESTATS_OPEN_OPENED, "GetGameStatistics returned invalid open result: 0x%x\n", dwOpenResult);
+        ok(SUCCEEDED(hr), "GetGameStatistics returned error: 0x%08x\n", hr);
+        ok(dwOpenResult == GAMESTATS_OPEN_OPENED, "GetGameStatistics returned invalid open result: 0x%x\n", dwOpenResult);
         ok(gs!=NULL, "GetGameStatistics did not return valid interface pointer\n");
 
         /* verify values with these which we stored before*/

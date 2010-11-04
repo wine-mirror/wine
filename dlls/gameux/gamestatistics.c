@@ -400,6 +400,247 @@ static HRESULT GAMEUX_getAppIdFromGDFPath(
     return hr;
 }
 /*******************************************************************
+ * GAMEUX_loadGameStatisticsFromFile
+ * Helper function, loads game statistics from file and stores them
+ * in the structure.
+ *
+ * Parameters:
+ *  data                [I/O]   structure containing file name to
+ *                              load and data fields to store data in
+ */
+static HRESULT GAMEUX_loadStatisticsFromFile(struct GAMEUX_STATS *data)
+{
+    static const WCHAR sStatistics[] = {'S','t','a','t','i','s','t','i','c','s',0};
+    static const WCHAR sCategory[] = {'C','a','t','e','g','o','r','y',0};
+    static const WCHAR sIndex[] = {'I','n','d','e','x',0};
+    static const WCHAR sStatistic[] = {'S','t','a','t','i','s','t','i','c',0};
+    static const WCHAR sName[] = {'N','a','m','e',0};
+    static const WCHAR sValue[] = {'V','a','l','u','e',0};
+
+    HRESULT hr = S_OK;
+    IXMLDOMDocument *document = NULL;
+    IXMLDOMElement *root = NULL, *categoryElement, *statisticElement;
+    IXMLDOMNode *categoryNode, *statisticNode;
+    IXMLDOMNodeList *rootChildren = NULL, *categoryChildren;
+    VARIANT vStatsFilePath, vValue;
+    BSTR bstrStatistics = NULL, bstrCategory = NULL, bstrIndex = NULL,
+        bstrStatistic = NULL, bstrName = NULL, bstrValue = NULL;
+    VARIANT_BOOL isSuccessful =  VARIANT_FALSE;
+    int i, j;
+
+    TRACE("(%p)\n", data);
+
+    V_VT(&vStatsFilePath) = VT_BSTR;
+    V_BSTR(&vStatsFilePath) = SysAllocString(data->sStatsFile);
+    if(!V_BSTR(&vStatsFilePath))
+        hr = E_OUTOFMEMORY;
+
+    if(SUCCEEDED(hr))
+        hr = CoCreateInstance(&CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void**)&document);
+
+    if(SUCCEEDED(hr))
+    {
+        bstrStatistics = SysAllocString(sStatistics);
+        if(!bstrStatistics)
+            hr = E_OUTOFMEMORY;
+    }
+
+    if(SUCCEEDED(hr))
+    {
+        bstrCategory = SysAllocString(sCategory);
+        if(!bstrCategory)
+            hr = E_OUTOFMEMORY;
+    }
+
+    if(SUCCEEDED(hr))
+    {
+        bstrIndex = SysAllocString(sIndex);
+        if(!bstrIndex)
+            hr = E_OUTOFMEMORY;
+    }
+
+    if(SUCCEEDED(hr))
+    {
+        bstrStatistic = SysAllocString(sStatistic);
+        if(!bstrStatistic)
+            hr = E_OUTOFMEMORY;
+    }
+
+    if(SUCCEEDED(hr))
+    {
+        bstrName = SysAllocString(sName);
+        if(!bstrName)
+            hr = E_OUTOFMEMORY;
+    }
+
+    if(SUCCEEDED(hr))
+    {
+        bstrValue = SysAllocString(sValue);
+        if(!bstrValue)
+            hr = E_OUTOFMEMORY;
+    }
+
+    if(SUCCEEDED(hr))
+        hr = IXMLDOMDocument_load(document, vStatsFilePath, &isSuccessful);
+
+    if(hr == S_OK && isSuccessful != VARIANT_TRUE)
+        hr = S_FALSE;
+
+    if( hr == S_OK )
+        hr = IXMLDOMDocument_get_documentElement(document, &root);
+
+    if(hr == S_OK)
+        hr = IXMLDOMElement_get_childNodes(root, &rootChildren);
+
+    if(hr == S_OK)
+    {
+        hr = S_OK;
+        while(hr == S_OK)
+        {
+            hr = IXMLDOMNodeList_nextNode(rootChildren, &categoryNode);
+
+            if(hr == S_OK)
+            {
+                hr = IXMLDOMNode_QueryInterface(categoryNode, &IID_IXMLDOMElement, (LPVOID*)&categoryElement);
+
+                if(SUCCEEDED(hr))
+                {
+                    hr = IXMLDOMElement_getAttribute(categoryElement, bstrIndex, &vValue);
+                    if( hr == S_OK && V_VT(&vValue) != VT_BSTR)
+                        hr = E_FAIL;
+
+                    if(SUCCEEDED(hr))
+                    {
+                        i = StrToIntW(V_BSTR(&vValue));
+                        hr = IXMLDOMElement_getAttribute(categoryElement, bstrName, &vValue);
+                        if( hr == S_OK && V_VT(&vValue) != VT_BSTR)
+                            hr = E_FAIL;
+                    }
+
+                    if(SUCCEEDED(hr))
+                    {
+                        lstrcpynW(data->categories[i].sName, V_BSTR(&vValue), MAX_CATEGORY_LENGTH);
+                        TRACE("category %d name %s\n", i, debugstr_w(data->categories[i].sName));
+                        hr = IXMLDOMElement_get_childNodes(categoryElement, &categoryChildren);
+                    }
+
+                    if(SUCCEEDED(hr))
+                    {
+                        hr = S_OK;
+                        while(hr == S_OK)
+                        {
+                            hr = IXMLDOMNodeList_nextNode(categoryChildren, &statisticNode);
+
+                            if(hr == S_OK)
+                            {
+                                hr = IXMLDOMNode_QueryInterface(statisticNode, &IID_IXMLDOMElement, (LPVOID*)&statisticElement);
+
+                                if(SUCCEEDED(hr))
+                                {
+                                    hr = IXMLDOMElement_getAttribute(statisticElement, bstrIndex, &vValue);
+                                    if( hr == S_OK && V_VT(&vValue) != VT_BSTR)
+                                        hr = E_FAIL;
+
+                                    if(SUCCEEDED(hr))
+                                    {
+                                        j = StrToIntW(V_BSTR(&vValue));
+                                        hr = IXMLDOMElement_getAttribute(statisticElement, bstrName, &vValue);
+                                        if( hr == S_OK && V_VT(&vValue) != VT_BSTR)
+                                            hr = E_FAIL;
+                                    }
+
+                                    if(SUCCEEDED(hr))
+                                    {
+                                        lstrcpynW(data->categories[i].stats[j].sName, V_BSTR(&vValue), MAX_NAME_LENGTH);
+                                        hr = IXMLDOMElement_getAttribute(statisticElement, bstrValue, &vValue);
+                                        if( hr == S_OK && V_VT(&vValue) != VT_BSTR)
+                                            hr = E_FAIL;
+                                    }
+
+                                    if(SUCCEEDED(hr))
+                                        lstrcpynW(data->categories[i].stats[j].sValue, V_BSTR(&vValue), MAX_VALUE_LENGTH);
+
+                                    TRACE("  statistic %d name %s value %s\n", j,
+                                            debugstr_w(data->categories[i].stats[j].sName),
+                                            debugstr_w(data->categories[i].stats[j].sValue));
+                                    IXMLDOMElement_Release(statisticElement);
+                                }
+
+                                IXMLDOMNode_Release(statisticNode);
+                            }
+                        }
+
+                        if(SUCCEEDED(hr))
+                            hr = S_OK;
+                    }
+                    IXMLDOMElement_Release(categoryElement);
+                }
+
+                IXMLDOMNode_Release(categoryNode);
+            }
+        }
+        if(SUCCEEDED(hr))
+            hr = S_OK;
+    }
+
+    if(rootChildren) IXMLDOMNodeList_Release(rootChildren);
+    if(root) IXMLDOMElement_Release(root);
+    if(document) IXMLDOMDocument_Release(document);
+
+    SysFreeString(bstrValue);
+    SysFreeString(bstrName);
+    SysFreeString(bstrStatistic);
+    SysFreeString(bstrIndex);
+    SysFreeString(bstrCategory);
+    SysFreeString(bstrStatistics);
+    SysFreeString(V_BSTR(&vStatsFilePath));
+    return hr;
+}
+/*******************************************************************
+ * GAMEUX_loadGameStatistics
+ *
+ * Helper function which loads game statistics associated with game
+ * into interface's internal structures
+ *
+ * Parameters:
+ *  pStats              [O]     structure which will receive data
+ *  sGameId             [I]     application instance Id, stored as string
+ *                              to avoid additional conversions
+ *  openType            [I]     allowed ways of opening statistics
+ *  pOpenResult         [O]     way used to open statistics
+ *
+ */
+static HRESULT GAMEUX_loadGameStatistics(struct GAMEUX_STATS *pStats,
+        LPWSTR sGameId,
+        GAMESTATS_OPEN_TYPE openType,
+        GAMESTATS_OPEN_RESULT* pOpenResult)
+{
+    HRESULT hr;
+    TRACE("(%p, %s, %d, %p)\n", pStats, debugstr_w(sGameId), openType, pOpenResult);
+
+    hr = GAMEUX_buildStatisticsFilePath(sGameId, pStats->sStatsFile);
+
+    hr = GAMEUX_loadStatisticsFromFile(pStats);
+    TRACE("ldstats finished, res: %#x\n", hr);
+    if(hr == S_OK)
+    {
+        *pOpenResult = GAMESTATS_OPEN_OPENED;
+    }
+    else if(hr == S_FALSE && openType == GAMESTATS_OPEN_OPENORCREATE) /* file does not exist */
+    {
+        /* create new statitics, not yet connected with file */
+        TRACE("size: %d\n", sizeof(pStats->categories));
+        ZeroMemory(pStats->categories, sizeof(pStats->categories));
+        *pOpenResult = GAMESTATS_OPEN_CREATED;
+        hr = S_OK;
+    }
+    else
+        hr = HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+
+    TRACE("openResult=%#x ret=%#x\n", *pOpenResult, hr);
+    return hr;
+}
+ /*******************************************************************
  * IGameStatistics implementation
  */
 typedef struct _GameStatisticsImpl
@@ -794,10 +1035,7 @@ static HRESULT STDMETHODCALLTYPE GameStatisticsMgrImpl_GetGameStatistics(
     }
 
     if(SUCCEEDED(hr))
-    {
-        FIXME("loading game statistics not yet implemented\n");
-        hr = E_NOTIMPL;
-    }
+        hr = GAMEUX_loadGameStatistics(&statisticsImpl->stats, lpApplicationId, openType, pOpenResult);
 
     return hr;
 }
