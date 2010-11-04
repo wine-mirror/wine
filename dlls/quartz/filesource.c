@@ -41,6 +41,7 @@ typedef struct AsyncReader
 {
     BaseFilter filter;
     const IFileSourceFilterVtbl * lpVtblFSF;
+    const IAMFilterMiscFlagsVtbl * IAMFilterMiscFlags_vtbl;
 
     IPin * pOutputPin;
     LPOLESTR pszFileName;
@@ -50,6 +51,7 @@ typedef struct AsyncReader
 static const IBaseFilterVtbl AsyncReader_Vtbl;
 static const IFileSourceFilterVtbl FileSource_Vtbl;
 static const IAsyncReaderVtbl FileAsyncReader_Vtbl;
+static const IAMFilterMiscFlagsVtbl IAMFilterMiscFlags_Vtbl;
 
 static HRESULT FileAsyncReader_Construct(HANDLE hFile, IBaseFilter * pBaseFilter, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
 
@@ -369,6 +371,7 @@ HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv)
     BaseFilter_Init(&pAsyncRead->filter, &AsyncReader_Vtbl, &CLSID_AsyncReader, (DWORD_PTR)(__FILE__ ": AsyncReader.csFilter"), &BaseFuncTable);
 
     pAsyncRead->lpVtblFSF = &FileSource_Vtbl;
+    pAsyncRead->IAMFilterMiscFlags_vtbl = &IAMFilterMiscFlags_Vtbl;
     pAsyncRead->pOutputPin = NULL;
 
     pAsyncRead->pszFileName = NULL;
@@ -401,6 +404,8 @@ static HRESULT WINAPI AsyncReader_QueryInterface(IBaseFilter * iface, REFIID rii
         *ppv = This;
     else if (IsEqualIID(riid, &IID_IFileSourceFilter))
         *ppv = &This->lpVtblFSF;
+    else if (IsEqualIID(riid, &IID_IAMFilterMiscFlags))
+        *ppv = &This->IAMFilterMiscFlags_vtbl;
 
     if (*ppv)
     {
@@ -1333,4 +1338,35 @@ static const IAsyncReaderVtbl FileAsyncReader_Vtbl =
     FileAsyncReader_Length,
     FileAsyncReader_BeginFlush,
     FileAsyncReader_EndFlush,
+};
+
+
+static AsyncReader *from_IAMFilterMiscFlags(IAMFilterMiscFlags *iface) {
+    return (AsyncReader*)((char*)iface - offsetof(AsyncReader, IAMFilterMiscFlags_vtbl));
+}
+
+static HRESULT WINAPI AMFilterMiscFlags_QueryInterface(IAMFilterMiscFlags *iface, const REFIID riid, void **ppv) {
+    AsyncReader *This = from_IAMFilterMiscFlags(iface);
+    return IUnknown_QueryInterface((IUnknown*)This, riid, ppv);
+}
+
+static ULONG WINAPI AMFilterMiscFlags_AddRef(IAMFilterMiscFlags *iface) {
+    AsyncReader *This = from_IAMFilterMiscFlags(iface);
+    return IUnknown_AddRef((IUnknown*)This);
+}
+
+static ULONG WINAPI AMFilterMiscFlags_Release(IAMFilterMiscFlags *iface) {
+    AsyncReader *This = from_IAMFilterMiscFlags(iface);
+    return IUnknown_Release((IUnknown*)This);
+}
+
+static ULONG WINAPI AMFilterMiscFlags_GetMiscFlags(IAMFilterMiscFlags *iface) {
+    return AM_FILTER_MISC_FLAGS_IS_SOURCE;
+}
+
+static const IAMFilterMiscFlagsVtbl IAMFilterMiscFlags_Vtbl = {
+    AMFilterMiscFlags_QueryInterface,
+    AMFilterMiscFlags_AddRef,
+    AMFilterMiscFlags_Release,
+    AMFilterMiscFlags_GetMiscFlags
 };
