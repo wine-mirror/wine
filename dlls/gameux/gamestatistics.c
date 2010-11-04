@@ -807,8 +807,29 @@ static HRESULT WINAPI GameStatisticsImpl_GetCategoryTitle(
     WORD categoryIndex,
     LPWSTR *pTitle)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    HRESULT hr = S_OK;
+    LONG nLength;
+    GameStatisticsImpl *This = impl_from_IGameStatistics(iface);
+
+    TRACE("%p, %d, %p\n", This, categoryIndex, pTitle);
+
+    *pTitle = NULL;
+
+    if(!pTitle || categoryIndex >= MAX_CATEGORIES)
+        hr = E_INVALIDARG;
+
+
+    if(SUCCEEDED(hr))
+    {
+        nLength = lstrlenW(This->stats.categories[categoryIndex].sName);
+        if(nLength != 0)
+        {
+            *pTitle = CoTaskMemAlloc(sizeof(WCHAR)*(nLength+1));
+            lstrcpyW(*pTitle, This->stats.categories[categoryIndex].sName);
+        }
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI GameStatisticsImpl_GetStatistic(

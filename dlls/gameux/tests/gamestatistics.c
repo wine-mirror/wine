@@ -346,23 +346,23 @@ static void test_gamestatisticsmgr( void )
 
         /* verify values with these which we stored before*/
         hr = IGameStatistics_GetCategoryTitle(gs, 0, &lpName);
-        todo_wine ok(hr == S_OK, "getting category title failed\n");
-        todo_wine ok(lstrcmpW(lpName, sCategory0)==0, "getting category title returned invalid string (%s)\n", wine_dbgstr_w(lpName));
+        ok(hr == S_OK, "getting category title failed\n");
+        ok(lstrcmpW(lpName, sCategory0)==0, "getting category title returned invalid string (%s)\n", wine_dbgstr_w(lpName));
         CoTaskMemFree(lpName);
 
         hr = IGameStatistics_GetCategoryTitle(gs, 1, &lpName);
-        todo_wine ok(hr == S_OK, "getting category title failed\n");
-        todo_wine ok(lstrcmpW(lpName, sCategory1)==0, "getting category title returned invalid string (%s)\n", wine_dbgstr_w(lpName));
+        ok(hr == S_OK, "getting category title failed\n");
+        ok(lstrcmpW(lpName, sCategory1)==0, "getting category title returned invalid string (%s)\n", wine_dbgstr_w(lpName));
         CoTaskMemFree(lpName);
 
         hr = IGameStatistics_GetCategoryTitle(gs, 2, &lpName);
-        todo_wine ok(hr == S_OK, "getting category title failed\n");
-        todo_wine ok(lstrcmpW(lpName, sCategory2)==0, "getting category title returned invalid string (%s)\n", wine_dbgstr_w(lpName));
+        ok(hr == S_OK, "getting category title failed\n");
+        ok(lstrcmpW(lpName, sCategory2)==0, "getting category title returned invalid string (%s)\n", wine_dbgstr_w(lpName));
         CoTaskMemFree(lpName);
 
         /* check result if category doesn't exists */
         hr = IGameStatistics_GetCategoryTitle(gs, 3, &lpName);
-        todo_wine ok(hr == S_OK, "getting category title failed\n");
+        ok(hr == S_OK, "getting category title failed\n");
         ok(lpName == NULL, "getting category title failed\n");
         CoTaskMemFree(lpName);
 
