@@ -993,8 +993,12 @@ static NTSTATUS allocate_dos_memory( struct file_view **view, unsigned int vprot
         addr = wine_anon_mmap( (void *)page_size, 0x10000 - page_size, unix_prot, 0 );
         if (addr == (void *)page_size)
         {
-            addr = NULL;
-            TRACE( "successfully mapped low 64K range\n" );
+            if (!wine_anon_mmap( NULL, page_size, unix_prot, MAP_FIXED ))
+            {
+                addr = NULL;
+                TRACE( "successfully mapped low 64K range\n" );
+            }
+            else TRACE( "failed to map page 0\n" );
         }
         else
         {
