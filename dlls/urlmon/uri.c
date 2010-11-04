@@ -3810,7 +3810,7 @@ static HRESULT validate_path(const UriBuilder *builder, parse_data *data, DWORD 
 
     if(!valid || (check_len && expected_len != data->path_len)) {
         TRACE("(%p %p %x): Invalid path component %s.\n", builder, data, flags,
-            debugstr_wn(component, expected_len));
+            debugstr_wn(component, check_len ? expected_len : -1) );
         return INET_E_INVALID_URL;
     }
 
