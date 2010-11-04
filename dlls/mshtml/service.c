@@ -237,15 +237,13 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFG
         return E_NOINTERFACE;
     }
 
-    if(IsEqualGUID(&IID_IOleUndoManager, riid)) {
-        TRACE("(%p)->(IID_IOleUndoManager %p)\n", This, ppv);
+    if(IsEqualGUID(&SID_SOleUndoManager, guidService)) {
+        TRACE("SID_SOleUndoManager\n");
 
         if(!This->doc_obj->undomgr)
             This->doc_obj->undomgr = create_undomgr();
 
-        IOleUndoManager_AddRef(This->doc_obj->undomgr);
-        *ppv = This->doc_obj->undomgr;
-        return S_OK;
+        return IOleUndoManager_QueryInterface(This->doc_obj->undomgr, riid, ppv);
     }
 
     if(This->doc_obj->client) {
