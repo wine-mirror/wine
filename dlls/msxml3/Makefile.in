@@ -11,6 +11,7 @@ C_SRCS = \
 	comment.c \
 	dispex.c \
 	docfrag.c \
+	doctype.c \
 	domdoc.c \
 	domimpl.c \
 	element.c \

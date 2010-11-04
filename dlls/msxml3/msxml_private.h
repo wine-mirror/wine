@@ -37,6 +37,7 @@ typedef enum tid_t {
     IXMLDOMDocument_tid,
     IXMLDOMDocument2_tid,
     IXMLDOMDocumentFragment_tid,
+    IXMLDOMDocumentType_tid,
     IXMLDOMElement_tid,
     IXMLDOMEntityReference_tid,
     IXMLDOMImplementation_tid,
@@ -124,6 +125,7 @@ extern IXMLDOMNamedNodeMap *create_nodemap( IXMLDOMNode *node );
 extern IUnknown         *create_doc_Implementation(void);
 extern IUnknown         *create_doc_fragment( xmlNodePtr fragment );
 extern IUnknown         *create_doc_entity_ref( xmlNodePtr entity );
+extern IUnknown         *create_doc_type( xmlNodePtr doctype );
 
 extern HRESULT queryresult_create( xmlNodePtr, LPCWSTR, IXMLDOMNodeList ** );
 

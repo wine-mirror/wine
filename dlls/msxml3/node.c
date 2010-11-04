@@ -1959,6 +1959,9 @@ IXMLDOMNode *create_node( xmlNodePtr node )
     case XML_DOCUMENT_FRAG_NODE:
         pUnk = create_doc_fragment( node );
         break;
+    case XML_DTD_NODE:
+        pUnk = create_doc_type( node );
+        break;
     default: {
         unknode *new_node;
 
