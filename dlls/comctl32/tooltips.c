@@ -1430,7 +1430,7 @@ TOOLTIPS_HitTestT (const TOOLTIPS_INFO *infoPtr, LPTTHITTESTINFOW lptthit,
 
 
 static LRESULT
-TOOLTIPS_NewToolRectT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
+TOOLTIPS_NewToolRectT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti)
 {
     INT nTool;
 
@@ -2212,8 +2212,8 @@ TOOLTIPS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                                       uMsg == TTM_HITTESTW);
 	case TTM_NEWTOOLRECTA:
 	case TTM_NEWTOOLRECTW:
-	    return TOOLTIPS_NewToolRectT (infoPtr, (LPTTTOOLINFOW)lParam,
-                                          uMsg == TTM_NEWTOOLRECTW);
+	    return TOOLTIPS_NewToolRectT (infoPtr, (LPTTTOOLINFOW)lParam);
+
 	case TTM_POP:
 	    return TOOLTIPS_Pop (infoPtr);
 
