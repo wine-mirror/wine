@@ -620,6 +620,7 @@ static HRESULT WINAPI DSoundRender_Run(IBaseFilter * iface, REFERENCE_TIME tStar
     TRACE("(%p/%p)->(%s)\n", This, iface, wine_dbgstr_longlong(tStart));
 
     EnterCriticalSection(&This->filter.csFilter);
+    if (This->pInputPin->pin.pConnectedTo)
     {
         This->filter.rtStreamStart = tStart;
         if (This->filter.state == State_Paused)
@@ -633,9 +634,18 @@ static HRESULT WINAPI DSoundRender_Run(IBaseFilter * iface, REFERENCE_TIME tStar
             This->pInputPin->end_of_stream = 0;
         }
         ResetEvent(This->blocked);
-
-        This->filter.state = State_Running;
+    } else if (This->filter.filterInfo.pGraph) {
+        IMediaEventSink *pEventSink;
+        hr = IFilterGraph_QueryInterface(This->filter.filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
+        if (SUCCEEDED(hr))
+        {
+            hr = IMediaEventSink_Notify(pEventSink, EC_COMPLETE, S_OK, (LONG_PTR)This);
+            IMediaEventSink_Release(pEventSink);
+        }
+        hr = S_OK;
     }
+    if (SUCCEEDED(hr))
+        This->filter.state = State_Running;
     LeaveCriticalSection(&This->filter.csFilter);
 
     return hr;
@@ -802,6 +812,7 @@ static HRESULT WINAPI DSoundRender_InputPin_EndOfStream(IPin * iface)
     BaseInputPin* This = (BaseInputPin*)iface;
     DSoundRenderImpl *me = (DSoundRenderImpl*)This->pin.pinInfo.pFilter;
     IMediaEventSink* pEventSink;
+    BYTE *silence;
     HRESULT hr;
 
     EnterCriticalSection(This->pin.pCritSec);
@@ -815,21 +826,22 @@ static HRESULT WINAPI DSoundRender_InputPin_EndOfStream(IPin * iface)
         return hr;
     }
 
-    hr = IFilterGraph_QueryInterface(me->filter.filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
-    if (SUCCEEDED(hr))
+    silence = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, me->buf_size);
+    if (silence)
     {
-        BYTE * silence;
+        memset(silence, 0, me->buf_size);
+        DSoundRender_SendSampleData(me, silence, me->buf_size);
+        HeapFree(GetProcessHeap(), 0, silence);
+    }
 
-        silence = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, me->buf_size);
-        if (silence)
+    if (me->filter.filterInfo.pGraph)
+    {
+        hr = IFilterGraph_QueryInterface(me->filter.filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
+        if (SUCCEEDED(hr))
         {
-            memset(silence, 0, me->buf_size);
-            DSoundRender_SendSampleData((DSoundRenderImpl*)This->pin.pinInfo.pFilter, silence, me->buf_size);
-            HeapFree(GetProcessHeap(), 0, silence);
+            hr = IMediaEventSink_Notify(pEventSink, EC_COMPLETE, S_OK, (LONG_PTR)me);
+            IMediaEventSink_Release(pEventSink);
         }
-
-        hr = IMediaEventSink_Notify(pEventSink, EC_COMPLETE, S_OK, 0);
-        IMediaEventSink_Release(pEventSink);
     }
     MediaSeekingPassThru_EOS(me->seekthru_unk);
     LeaveCriticalSection(This->pin.pCritSec);
