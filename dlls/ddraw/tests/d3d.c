@@ -3252,11 +3252,11 @@ static void SetRenderTargetTest(void)
     IDirectDrawSurface7_Release(failrt);
 }
 
-static UINT expect_message;
+static const UINT *expect_messages;
 
 static LRESULT CALLBACK test_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
-    if (expect_message && message == expect_message) expect_message = 0;
+    if (expect_messages && message == *expect_messages) ++expect_messages;
 
     return DefWindowProcA(hwnd, message, wparam, lparam);
 }
@@ -3269,6 +3269,13 @@ static void test_wndproc(void)
     HWND window;
     HRESULT hr;
     ULONG ref;
+
+    static const UINT messages[] =
+    {
+        WM_ACTIVATE,
+        WM_SETFOCUS,
+        0,
+    };
 
     hr = pDirectDrawCreateEx(NULL, (void **)&ddraw7, &IID_IDirectDraw7, NULL);
     if (FAILED(hr))
@@ -3288,7 +3295,7 @@ static void test_wndproc(void)
     ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
             (LONG_PTR)test_proc, proc);
 
-    expect_message = WM_SETFOCUS;
+    expect_messages = messages;
 
     hr = IDirectDraw7_SetCooperativeLevel(ddraw7, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
@@ -3298,7 +3305,8 @@ static void test_wndproc(void)
         goto done;
     }
 
-    ok(!expect_message, "Expected message %#x, but didn't receive it.\n", expect_message);
+    ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
+    expect_messages = NULL;
 
     proc = GetWindowLongPtrA(window, GWLP_WNDPROC);
     ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx, got %#lx.\n",
@@ -3342,7 +3350,7 @@ static void test_wndproc(void)
             (LONG_PTR)DefWindowProcA, proc);
 
 done:
-    expect_message = 0;
+    expect_messages = NULL;
     DestroyWindow(window);
     UnregisterClassA("d3d7_test_wndproc_wc", GetModuleHandleA(NULL));
 }
