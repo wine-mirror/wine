@@ -334,19 +334,36 @@ static HRESULT WINAPI NullRenderer_Pause(IBaseFilter * iface)
 
 static HRESULT WINAPI NullRenderer_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 {
+    HRESULT hr = S_OK;
     NullRendererImpl *This = (NullRendererImpl *)iface;
 
     TRACE("(%p/%p)->(%s)\n", This, iface, wine_dbgstr_longlong(tStart));
 
     EnterCriticalSection(&This->filter.csFilter);
+    if (This->filter.state == State_Running)
+        goto out;
+    if (This->pInputPin->pin.pConnectedTo)
     {
         This->filter.rtStreamStart = tStart;
-        This->filter.state = State_Running;
         This->pInputPin->end_of_stream = 0;
     }
+    else if (This->filter.filterInfo.pGraph)
+    {
+        IMediaEventSink *pEventSink;
+        hr = IFilterGraph_QueryInterface(This->filter.filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
+        if (SUCCEEDED(hr))
+        {
+            hr = IMediaEventSink_Notify(pEventSink, EC_COMPLETE, S_OK, (LONG_PTR)This);
+            IMediaEventSink_Release(pEventSink);
+        }
+        hr = S_OK;
+    }
+    if (SUCCEEDED(hr))
+        This->filter.state = State_Running;
+out:
     LeaveCriticalSection(&This->filter.csFilter);
 
-    return S_OK;
+    return hr;
 }
 
 /** IBaseFilter implementation **/
@@ -404,10 +421,10 @@ static HRESULT WINAPI NullRenderer_InputPin_EndOfStream(IPin * iface)
     graph = pNull->filter.filterInfo.pGraph;
     if (graph)
     {
-        hr = IFilterGraph_QueryInterface(((NullRendererImpl*)This->pin.pinInfo.pFilter)->filter.filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
+        hr = IFilterGraph_QueryInterface(pNull->filter.filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
         if (SUCCEEDED(hr))
         {
-            hr = IMediaEventSink_Notify(pEventSink, EC_COMPLETE, S_OK, 0);
+            hr = IMediaEventSink_Notify(pEventSink, EC_COMPLETE, S_OK, (LONG_PTR)pNull);
             IMediaEventSink_Release(pEventSink);
         }
     }
