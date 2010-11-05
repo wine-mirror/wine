@@ -1829,21 +1829,7 @@ static HRESULT ExploreGraph(IFilterGraphImpl* pGraph, IPin* pOutputPin, fnFoundF
 
 static HRESULT WINAPI SendRun(IBaseFilter *pFilter, DWORD_PTR data)
 {
-    LONGLONG time = 0;
-    IReferenceClock *clock = NULL;
-
-    IBaseFilter_GetSyncSource(pFilter, &clock);
-    if (clock)
-    {
-        IReferenceClock_GetTime(clock, &time);
-        if (time)
-            /* Add 50 ms */
-            time += 500000;
-        if (time < 0)
-            time = 0;
-        IReferenceClock_Release(clock);
-    }
-
+    REFERENCE_TIME time = *(REFERENCE_TIME*)data;
     return IBaseFilter_Run(pFilter, time);
 }
 
@@ -1940,7 +1926,6 @@ static HRESULT WINAPI MediaControl_Run(IMediaControl *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
     TRACE("(%p/%p)->()\n", This, iface);
 
-
     EnterCriticalSection(&This->cs);
     if (This->state == State_Running)
         goto out;
@@ -1957,7 +1942,7 @@ static HRESULT WINAPI MediaControl_Run(IMediaControl *iface) {
     }
     else This->start_time = 0;
 
-    SendFilterMessage(iface, SendRun, 0);
+    SendFilterMessage(iface, SendRun, (DWORD_PTR)&This->start_time);
     This->state = State_Running;
 out:
     LeaveCriticalSection(&This->cs);
