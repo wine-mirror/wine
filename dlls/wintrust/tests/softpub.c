@@ -78,6 +78,7 @@ typedef struct _SAFE_PROVIDER_FUNCTIONS
 
 static BOOL (WINAPI * pWTHelperGetKnownUsages)(DWORD action, PCCRYPT_OID_INFO **usages);
 static BOOL (WINAPI * CryptSIPCreateIndirectData_p)(SIP_SUBJECTINFO *, DWORD *, SIP_INDIRECT_DATA *);
+static VOID (WINAPI * CertFreeCertificateChain_p)(PCCERT_CHAIN_CONTEXT);
 
 static void InitFunctionPtrs(void)
 {
@@ -101,6 +102,7 @@ static void InitFunctionPtrs(void)
     }
 
     CRYPT32_GET_PROC(CryptSIPCreateIndirectData)
+    CRYPT32_GET_PROC(CertFreeCertificateChain)
 
 #undef CRYPT32_GET_PROC
 }
@@ -412,6 +414,12 @@ static void testCertTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
     CRYPT_PROVIDER_SGNR sgnr = { sizeof(sgnr), { 0 } };
     HRESULT ret;
 
+    if (!CertFreeCertificateChain_p)
+    {
+        win_skip("CertFreeCertificateChain not found\n");
+        return;
+    }
+
     data.padwTrustStepErrors =
      funcs->pfnAlloc(TRUSTERROR_MAX_STEPS * sizeof(DWORD));
     if (!data.padwTrustStepErrors)
@@ -469,7 +477,7 @@ static void testCertTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
              data.pasSigners[0].pasCertChain[0].dwConfidence);
             CertFreeCertificateContext(
              data.pasSigners[0].pasCertChain[0].pCert);
-            CertFreeCertificateChain(data.pasSigners[0].pChainContext);
+            CertFreeCertificateChain_p(data.pasSigners[0].pChainContext);
             CertFreeCertificateContext(cert);
         }
     }
