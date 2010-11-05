@@ -1,4 +1,5 @@
 MODULE    = sxs.dll
+IMPORTS   = oleaut32 ole32
 
 C_SRCS = \
 	cache.c \
