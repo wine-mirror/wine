@@ -3470,6 +3470,12 @@ static BOOL CheckTextureCapability(struct wined3d_adapter *adapter, const struct
         case WINED3DFMT_D32_FLOAT:
             return TRUE;
 
+        case WINED3DFMT_INTZ:
+            if (gl_info->supported[EXT_PACKED_DEPTH_STENCIL]
+                    || gl_info->supported[ARB_FRAMEBUFFER_OBJECT])
+                return TRUE;
+            return FALSE;
+
         /*****
          *  Not supported everywhere(depends on GL_ATI_envmap_bumpmap or
          *  GL_NV_texture_shader). Emulated by shaders

@@ -130,6 +130,7 @@ static const struct StaticPixelFormatDesc formats[] =
     /* Vendor-specific formats */
     {WINED3DFMT_ATI2N,                      0x0,        0x0,        0x0,        0x0,        1,      0,      0},
     {WINED3DFMT_NVDB,                       0x0,        0x0,        0x0,        0x0,        0,      0,      0},
+    {WINED3DFMT_INTZ,                       0x0,        0x0,        0x0,        0x0,        4,      24,     8},
     {WINED3DFMT_NVHU,                       0x0,        0x0,        0x0,        0x0,        2,      0,      0},
     {WINED3DFMT_NVHS,                       0x0,        0x0,        0x0,        0x0,        2,      0,      0},
 };
@@ -856,6 +857,16 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             GL_LUMINANCE_ALPHA,         GL_UNSIGNED_BYTE,                 0,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,
             ARB_TEXTURE_COMPRESSION_RGTC, NULL},
+    {WINED3DFMT_INTZ,                   GL_DEPTH24_STENCIL8_EXT,          GL_DEPTH24_STENCIL8_EXT,                0,
+            GL_DEPTH_STENCIL_EXT,       GL_UNSIGNED_INT_24_8_EXT,         0,
+            WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_DEPTH
+            | WINED3DFMT_FLAG_STENCIL,
+            EXT_PACKED_DEPTH_STENCIL,   NULL},
+    {WINED3DFMT_INTZ,                   GL_DEPTH24_STENCIL8,              GL_DEPTH24_STENCIL8,                    0,
+            GL_DEPTH_STENCIL,           GL_UNSIGNED_INT_24_8,             0,
+            WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_DEPTH
+            | WINED3DFMT_FLAG_STENCIL,
+            ARB_FRAMEBUFFER_OBJECT,     NULL},
 };
 
 static inline int getFmtIdx(enum wined3d_format_id format_id)
@@ -1720,6 +1731,7 @@ const char *debug_d3dformat(enum wined3d_format_id format_id)
         FMT_TO_STR(WINED3DFMT_B5G5R5A1_UNORM);
         FMT_TO_STR(WINED3DFMT_B8G8R8A8_UNORM);
         FMT_TO_STR(WINED3DFMT_B8G8R8X8_UNORM);
+        FMT_TO_STR(WINED3DFMT_INTZ);
 #undef FMT_TO_STR
         default:
         {
@@ -2546,6 +2558,7 @@ BOOL getDepthStencilBits(const struct wined3d_format *format, short *depthSize, 
         case WINED3DFMT_S8_UINT_D24_FLOAT:
         case WINED3DFMT_D32_UNORM:
         case WINED3DFMT_D32_FLOAT:
+        case WINED3DFMT_INTZ:
             break;
         default:
             FIXME("Unsupported depth/stencil format %s.\n", debug_d3dformat(format->id));
