@@ -194,6 +194,21 @@ HRESULT WINAPI EnumMediaTypes_Construct(BasePin *iface, BasePin_GetMediaType enu
 
 HRESULT WINAPI EnumPins_Construct(BaseFilter *base,  BaseFilter_GetPin receive_pin, BaseFilter_GetPinCount receive_pincount, BaseFilter_GetPinVersion receive_version, IEnumPins ** ppEnum);
 
+/* Quality Control */
+typedef struct QualityControlImpl {
+    const IQualityControlVtbl *lpVtbl;
+    IPin *input;
+    IBaseFilter *self;
+    IQualityControl *tonotify;
+} QualityControlImpl;
+
+void QualityControlImpl_init(QualityControlImpl *This, IPin *input, IBaseFilter *self);
+HRESULT WINAPI QualityControlImpl_QueryInterface(IQualityControl *iface, REFIID riid, void **ppv);
+ULONG WINAPI QualityControlImpl_AddRef(IQualityControl *iface);
+ULONG WINAPI QualityControlImpl_Release(IQualityControl *iface);
+HRESULT WINAPI QualityControlImpl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm);
+HRESULT WINAPI QualityControlImpl_SetSink(IQualityControl *iface, IQualityControl *tonotify);
+
 /* Transform Filter */
 typedef struct TransformFilter
 {

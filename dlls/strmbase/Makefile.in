@@ -6,6 +6,7 @@ C_SRCS = \
 	filter.c \
 	mediatype.c \
 	pin.c \
+	qualitycontrol.c \
 	seeking.c \
 	transform.c
 
