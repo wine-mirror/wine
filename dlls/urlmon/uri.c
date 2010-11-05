@@ -5978,6 +5978,7 @@ HRESULT WINAPI CoInternetCombineIUri(IUri *pBaseUri, IUri *pRelativeUri, DWORD d
                                      IUri **ppCombinedUri, DWORD_PTR dwReserved)
 {
     HRESULT hr;
+    IInternetProtocolInfo *info;
     Uri *relative, *base;
     TRACE("(%p %p %x %p %x)\n", pBaseUri, pRelativeUri, dwCombineFlags, ppCombinedUri, (DWORD)dwReserved);
 
@@ -5998,8 +5999,20 @@ HRESULT WINAPI CoInternetCombineIUri(IUri *pBaseUri, IUri *pRelativeUri, DWORD d
         return E_NOTIMPL;
     }
 
-    hr = combine_uri(base, relative, dwCombineFlags, ppCombinedUri);
-    if(hr == E_NOTIMPL)
-        FIXME("(%p %p %x %p %x): stub\n", pBaseUri, pRelativeUri, dwCombineFlags, ppCombinedUri, (DWORD)dwReserved);
-    return hr;
+    info = get_protocol_info(base->canon_uri);
+    if(info) {
+        WCHAR result[INTERNET_MAX_URL_LENGTH+1];
+        DWORD result_len = 0;
+
+        hr = IInternetProtocolInfo_CombineUrl(info, base->canon_uri, relative->canon_uri, dwCombineFlags,
+                                              result, INTERNET_MAX_URL_LENGTH+1, &result_len, 0);
+        IInternetProtocolInfo_Release(info);
+        if(SUCCEEDED(hr)) {
+            hr = CreateUri(result, Uri_CREATE_ALLOW_RELATIVE, 0, ppCombinedUri);
+            if(SUCCEEDED(hr))
+                return hr;
+        }
+    }
+
+    return combine_uri(base, relative, dwCombineFlags, ppCombinedUri);
 }

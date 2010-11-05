@@ -23,25 +23,62 @@
 #include <stddef.h>
 
 #define COBJMACROS
+#define CONST_VTABLE
 
 #include "windef.h"
 #include "winbase.h"
 #include "urlmon.h"
 #include "shlwapi.h"
+#include "wininet.h"
 
 #define URI_STR_PROPERTY_COUNT Uri_PROPERTY_STRING_LAST+1
 #define URI_DWORD_PROPERTY_COUNT (Uri_PROPERTY_DWORD_LAST - Uri_PROPERTY_DWORD_START)+1
 #define URI_BUILDER_STR_PROPERTY_COUNT 7
 
+#define DEFINE_EXPECT(func) \
+    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+
+#define SET_EXPECT(func) \
+    expect_ ## func = TRUE
+
+#define CHECK_EXPECT(func) \
+    do { \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
+        expect_ ## func = FALSE; \
+        called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_EXPECT2(func) \
+    do { \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
+        called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_CALLED(func) \
+    do { \
+        ok(called_ ## func, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
+DEFINE_EXPECT(CombineUrl);
+
 static HRESULT (WINAPI *pCreateUri)(LPCWSTR, DWORD, DWORD_PTR, IUri**);
 static HRESULT (WINAPI *pCreateUriWithFragment)(LPCWSTR, LPCWSTR, DWORD, DWORD_PTR, IUri**);
 static HRESULT (WINAPI *pCreateIUriBuilder)(IUri*, DWORD, DWORD_PTR, IUriBuilder**);
 static HRESULT (WINAPI *pCoInternetCombineIUri)(IUri*,IUri*,DWORD,IUri**,DWORD_PTR);
+static HRESULT (WINAPI *pCoInternetGetSession)(DWORD,IInternetSession**,DWORD);
 
 static const WCHAR http_urlW[] = { 'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q',
         '.','o','r','g','/',0};
 static const WCHAR http_url_fragW[] = { 'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q',
         '.','o','r','g','/','#','F','r','a','g',0};
+
+static const WCHAR combine_baseW[] = {'w','i','n','e','t','e','s','t',':','?','t',
+        'e','s','t','i','n','g',0};
+static const WCHAR combine_relativeW[] = {'?','t','e','s','t',0};
+static const WCHAR combine_resultW[] = {'z','i','p',':','t','e','s','t',0};
+
+static const WCHAR winetestW[] = {'w','i','n','e','t','e','s','t',0};
 
 typedef struct _uri_create_flag_test {
     DWORD   flags;
@@ -8947,10 +8984,201 @@ static void test_CoInternetCombineIUri(void) {
     }
 }
 
+static HRESULT WINAPI InternetProtocolInfo_QueryInterface(IInternetProtocolInfo *iface,
+                                                          REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI InternetProtocolInfo_AddRef(IInternetProtocolInfo *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI InternetProtocolInfo_Release(IInternetProtocolInfo *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI InternetProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, LPCWSTR pwzUrl,
+        PARSEACTION ParseAction, DWORD dwParseFlags, LPWSTR pwzResult, DWORD cchResult,
+        DWORD *pcchResult, DWORD dwReserved)
+{
+    ok(0, "unexpected call %d\n", ParseAction);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InternetProtocolInfo_CombineUrl(IInternetProtocolInfo *iface,
+        LPCWSTR pwzBaseUrl, LPCWSTR pwzRelativeUrl, DWORD dwCombineFlags,
+        LPWSTR pwzResult, DWORD cchResult, DWORD *pcchResult, DWORD dwReserved)
+{
+    CHECK_EXPECT(CombineUrl);
+    ok(!lstrcmpW(pwzBaseUrl, combine_baseW), "Error: Expected %s, but got %s instead.\n",
+        wine_dbgstr_w(combine_baseW), wine_dbgstr_w(pwzBaseUrl));
+    ok(!lstrcmpW(pwzRelativeUrl, combine_relativeW), "Error: Expected %s, but got %s instead.\n",
+        wine_dbgstr_w(combine_relativeW), wine_dbgstr_w(pwzRelativeUrl));
+    ok(dwCombineFlags == (URL_DONT_SIMPLIFY|URL_FILE_USE_PATHURL|URL_DONT_UNESCAPE_EXTRA_INFO),
+        "Error: Expected 0, but got 0x%08x.\n", dwCombineFlags);
+    ok(cchResult == INTERNET_MAX_URL_LENGTH+1, "Error: Expected %d, but got %d.\n", INTERNET_MAX_URL_LENGTH+1, cchResult);
+
+    memcpy(pwzResult, combine_resultW, sizeof(combine_resultW));
+    *pcchResult = lstrlenW(combine_resultW);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI InternetProtocolInfo_CompareUrl(IInternetProtocolInfo *iface,
+        LPCWSTR pwzUrl1, LPCWSTR pwzUrl2, DWORD dwCompareFlags)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InternetProtocolInfo_QueryInfo(IInternetProtocolInfo *iface,
+        LPCWSTR pwzUrl, QUERYOPTION OueryOption, DWORD dwQueryFlags, LPVOID pBuffer,
+        DWORD cbBuffer, DWORD *pcbBuf, DWORD dwReserved)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IInternetProtocolInfoVtbl InternetProtocolInfoVtbl = {
+    InternetProtocolInfo_QueryInterface,
+    InternetProtocolInfo_AddRef,
+    InternetProtocolInfo_Release,
+    InternetProtocolInfo_ParseUrl,
+    InternetProtocolInfo_CombineUrl,
+    InternetProtocolInfo_CompareUrl,
+    InternetProtocolInfo_QueryInfo
+};
+
+static IInternetProtocolInfo protocol_info = { &InternetProtocolInfoVtbl };
+
+static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IInternetProtocolInfo, riid)) {
+        *ppv = &protocol_info;
+        return S_OK;
+    }
+
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown *pOuter,
+                                        REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
+{
+    ok(0, "unexpected call\n");
+    return S_OK;
+}
+
+static const IClassFactoryVtbl ClassFactoryVtbl = {
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    ClassFactory_CreateInstance,
+    ClassFactory_LockServer
+};
+
+static IClassFactory protocol_cf = { &ClassFactoryVtbl };
+
+static void register_protocols(void)
+{
+    IInternetSession *session;
+    HRESULT hres;
+
+    hres = pCoInternetGetSession(0, &session, 0);
+    ok(hres == S_OK, "CoInternetGetSession failed: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IInternetSession_RegisterNameSpace(session, &protocol_cf, &IID_NULL,
+            winetestW, 0, NULL, 0);
+    ok(hres == S_OK, "RegisterNameSpace failed: %08x\n", hres);
+
+    IInternetSession_Release(session);
+}
+
+static void unregister_protocols(void) {
+    IInternetSession *session;
+    HRESULT hr;
+
+    hr = pCoInternetGetSession(0, &session, 0);
+    ok(hr == S_OK, "CoInternetGetSession failed: 0x%08x\n", hr);
+    if(FAILED(hr))
+        return;
+
+    hr = IInternetSession_UnregisterNameSpace(session, &protocol_cf, winetestW);
+    ok(hr == S_OK, "UnregisterNameSpace failed: 0x%08x\n", hr);
+
+    IInternetSession_Release(session);
+}
+
+static void test_CoInternetCombineIUri_Pluggable(void) {
+    HRESULT hr;
+    IUri *base = NULL;
+
+    register_protocols();
+
+    hr = pCreateUri(combine_baseW, 0, 0, &base);
+    ok(SUCCEEDED(hr), "Error: CreateUri returned 0x%08x.\n", hr);
+    if(SUCCEEDED(hr)) {
+        IUri *relative = NULL;
+
+        hr = pCreateUri(combine_relativeW, Uri_CREATE_ALLOW_RELATIVE, 0, &relative);
+        ok(SUCCEEDED(hr), "Error: CreateUri returned 0x%08x.\n", hr);
+        if(SUCCEEDED(hr)) {
+            IUri *result = NULL;
+
+            SET_EXPECT(CombineUrl);
+
+            hr = pCoInternetCombineIUri(base, relative, URL_DONT_SIMPLIFY|URL_FILE_USE_PATHURL|URL_DONT_UNESCAPE_EXTRA_INFO,
+                                        &result, 0);
+            ok(hr == S_OK, "Error: CoInternetCombineIUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+
+            CHECK_CALLED(CombineUrl);
+
+            if(SUCCEEDED(hr)) {
+                BSTR received = NULL;
+                hr = IUri_GetAbsoluteUri(result, &received);
+                ok(hr == S_OK, "Error: Expected S_OK, but got 0x%08x instead.\n", hr);
+                if(SUCCEEDED(hr)) {
+                    ok(!lstrcmpW(combine_resultW, received), "Error: Expected %s, but got %s.\n",
+                        wine_dbgstr_w(combine_resultW), wine_dbgstr_w(received));
+                }
+                SysFreeString(received);
+            }
+            if(result) IUri_Release(result);
+        }
+        if(relative) IUri_Release(relative);
+    }
+    if(base) IUri_Release(base);
+
+    unregister_protocols();
+}
+
 START_TEST(uri) {
     HMODULE hurlmon;
 
     hurlmon = GetModuleHandle("urlmon.dll");
+    pCoInternetGetSession = (void*) GetProcAddress(hurlmon, "CoInternetGetSession");
     pCreateUri = (void*) GetProcAddress(hurlmon, "CreateUri");
     pCreateUriWithFragment = (void*) GetProcAddress(hurlmon, "CreateUriWithFragment");
     pCreateIUriBuilder = (void*) GetProcAddress(hurlmon, "CreateIUriBuilder");
@@ -9029,4 +9257,7 @@ START_TEST(uri) {
 
     trace("test CoInternetCombineIUri...\n");
     test_CoInternetCombineIUri();
+
+    trace("test CoInternetCombineIUri pluggable...\n");
+    test_CoInternetCombineIUri_Pluggable();
 }
