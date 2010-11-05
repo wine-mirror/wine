@@ -2377,14 +2377,19 @@ static UINT msi_dialog_seltree_handler( msi_dialog *dialog,
     ControlEvent_FireSubscribedEvent( dialog->package, szSelectionDescription, rec );
 
     dir = MSI_RecordGetString( row, 7 );
-    folder = get_loaded_folder( dialog->package, dir );
-    if (!folder)
+    if (dir)
     {
-        r = ERROR_FUNCTION_FAILED;
-        goto done;
+        folder = get_loaded_folder( dialog->package, dir );
+        if (!folder)
+        {
+            r = ERROR_FUNCTION_FAILED;
+            goto done;
+        }
+        MSI_RecordSetStringW( rec, 1, folder->ResolvedTarget );
     }
+    else
+        MSI_RecordSetStringW( rec, 1, NULL );
 
-    MSI_RecordSetStringW( rec, 1, folder->ResolvedTarget );
     ControlEvent_FireSubscribedEvent( dialog->package, szSelectionPath, rec );
 
 done:
