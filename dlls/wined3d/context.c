@@ -1758,7 +1758,7 @@ static void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context *conte
         glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT,
                   GL_TEXTURE_LOD_BIAS_EXT,
                   0.0f);
-        checkGLcall("glTexEnvi GL_TEXTURE_LOD_BIAS_EXT ...");
+        checkGLcall("glTexEnvf GL_TEXTURE_LOD_BIAS_EXT ...");
     }
 
     if (sampler != WINED3D_UNMAPPED_STAGE)

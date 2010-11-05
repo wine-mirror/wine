@@ -425,7 +425,7 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
         D3DCOLORTOGLFLOAT4(state, col);
         TRACE("Setting border color for %u to %x\n", textureDimensions, state);
         glTexParameterfv(textureDimensions, GL_TEXTURE_BORDER_COLOR, &col[0]);
-        checkGLcall("glTexParameteri(..., GL_TEXTURE_BORDER_COLOR, ...)");
+        checkGLcall("glTexParameterfv(..., GL_TEXTURE_BORDER_COLOR, ...)");
         gl_tex->states[WINED3DTEXSTA_BORDERCOLOR] = state;
     }
 

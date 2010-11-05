@@ -3656,7 +3656,7 @@ static void sampler(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct w
             glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT,
                       GL_TEXTURE_LOD_BIAS_EXT,
                       tmpvalue.f);
-            checkGLcall("glTexEnvi(GL_TEXTURE_LOD_BIAS_EXT, ...)");
+            checkGLcall("glTexEnvf(GL_TEXTURE_LOD_BIAS_EXT, ...)");
         }
 
         if (!use_ps(state) && sampler < state->lowest_disabled_stage)
@@ -4387,7 +4387,7 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
         {
             static const GLbyte one = 1;
             GL_EXTCALL(glWeightbvARB(1, &one));
-            checkGLcall("glWeightivARB(gl_info->max_blends, weights)");
+            checkGLcall("glWeightbvARB(gl_info->max_blends, weights)");
         }
     }
 

@@ -842,7 +842,7 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
     glMatrixMode(GL_PROJECTION);
     checkGLcall("glMatrixMode(GL_PROJECTION)");
     glLoadIdentity();
-    checkGLcall("glLoadIndentity()");
+    checkGLcall("glLoadIdentity()");
     glScalef(1.0f / (max_x), 1.0f / (max_y), max_z == 0.0f ? 1.0f : 1.0f / (2.0f * max_z));
     glTranslatef(0.0f, 0.0f, 0.5f);
     checkGLcall("glScalef");
