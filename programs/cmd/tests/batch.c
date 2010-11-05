@@ -25,6 +25,36 @@
 static char workdir[MAX_PATH];
 static DWORD workdir_len;
 
+/* Substitute escaped spaces with real ones */
+static const char* replace_escaped_spaces(const char *data, DWORD size, DWORD *new_size)
+{
+    static const char escaped_space[] = {'@','s','p','a','c','e','@','\0'};
+    const char *a, *b;
+    char *new_data;
+    DWORD len_space = sizeof(escaped_space) -1;
+
+    a = b = data;
+    *new_size = 0;
+
+    new_data = HeapAlloc(GetProcessHeap(), 0, size*sizeof(char));
+    ok(new_data != NULL, "HeapAlloc failed\n");
+    if(!new_data)
+        return NULL;
+
+    while( (b = strstr(a, escaped_space)) )
+    {
+        strncpy(new_data + *new_size, a, b-a + 1);
+        *new_size += b-a + 1;
+        new_data[*new_size - 1] = ' ';
+        a = b + len_space;
+    }
+
+    strncpy(new_data + *new_size, a, strlen(a) + 1);
+    *new_size += strlen(a);
+
+    return new_data;
+}
+
 static BOOL run_cmd(const char *cmd_data, DWORD cmd_size)
 {
     SECURITY_ATTRIBUTES sa = {sizeof(sa), 0, TRUE};
@@ -113,6 +143,7 @@ static const char *compare_line(const char *out_line, const char *out_end, const
 
     static const char pwd_cmd[] = {'@','p','w','d','@'};
     static const char todo_space_cmd[] = {'@','t','o','d','o','_','s','p','a','c','e','@'};
+    static const char space_cmd[] = {'@','s','p','a','c','e','@'};
     static const char or_broken_cmd[] = {'@','o','r','_','b','r','o','k','e','n','@'};
 
     while(exp_ptr < exp_end) {
@@ -132,6 +163,13 @@ static const char *compare_line(const char *out_line, const char *out_end, const
                     && !memcmp(exp_ptr, todo_space_cmd, sizeof(todo_space_cmd))) {
                 exp_ptr += sizeof(todo_space_cmd);
                 todo_wine ok(*out_ptr == ' ', "expected space\n");
+                if(out_ptr < out_end && *out_ptr == ' ')
+                    out_ptr++;
+                continue;
+            }else if(exp_ptr+sizeof(space_cmd) <= exp_end
+                    && !memcmp(exp_ptr, space_cmd, sizeof(space_cmd))) {
+                exp_ptr += sizeof(space_cmd);
+                ok(*out_ptr == ' ', "expected space\n");
                 if(out_ptr < out_end && *out_ptr == ' ')
                     out_ptr++;
                 continue;
@@ -199,11 +237,15 @@ static void test_output(const char *out_data, DWORD out_size, const char *exp_da
 
 static void run_test(const char *cmd_data, DWORD cmd_size, const char *exp_data, DWORD exp_size)
 {
-    const char *out_data;
-    DWORD out_size;
+    const char *out_data, *actual_cmd_data;
+    DWORD out_size, actual_cmd_size;
 
-    if(!run_cmd(cmd_data, cmd_size))
-        return;
+    actual_cmd_data = replace_escaped_spaces(cmd_data, cmd_size, &actual_cmd_size);
+    if(!actual_cmd_size || !actual_cmd_data)
+        goto cleanup;
+
+    if(!run_cmd(actual_cmd_data, actual_cmd_size))
+        goto cleanup;
 
     out_size = map_file("test.out", &out_data);
     if(out_size) {
@@ -212,6 +254,9 @@ static void run_test(const char *cmd_data, DWORD cmd_size, const char *exp_data,
     }
     DeleteFileA("test.out");
     DeleteFileA("test.err");
+
+cleanup:
+    HeapFree(GetProcessHeap(), 0, (LPVOID)actual_cmd_data);
 }
 
 static void run_from_file(char *file_name)

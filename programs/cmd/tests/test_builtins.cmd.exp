@@ -1,7 +1,41 @@
 
-@pwd@>echo Tests for cmd's builtin commands@todo_space@
+@pwd@>echo Tests for cmd's builtin commands@space@
 Tests for cmd's builtin commands
------------- Testing 'echo' --------------
+
+@pwd@>echo ------------ Testing 'echo' [ON] --------------@space@
+------------ Testing 'echo' [ON] --------------
+
+@pwd@>echo word@space@
+word
+
+@pwd@>echo 'singlequotedword'@space@
+'singlequotedword'
+
+@pwd@>echo "doublequotedword"@space@
+"doublequotedword"
+at-echoed-word
+
+@pwd@>echo "/?"@space@
+"/?"
+
+@pwd@>echo.
+
+
+@pwd@>echo .@space@
+.
+
+@pwd@>echo.word
+word
+
+@pwd@>echo .word@space@
+.word
+
+@pwd@>echo word@space@@space@
+word@space@
+
+@pwd@>echo word@space@@space@@space@
+word@space@@space@
+------------ Testing 'echo' [OFF] --------------
 word
 'singlequotedword'
 "doublequotedword"
@@ -11,6 +45,8 @@ at-echoed-word
 .
 word
 .word
+word@space@
+word@space@@space@
 ------------ Testing 'set' --------------
 set "FOO=bar" should not include the quotes in the variable value
 bar

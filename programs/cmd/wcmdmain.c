@@ -1779,8 +1779,11 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
     if (context) handleExpansion(extraSpace, FALSE, NULL, NULL);
     /* Show prompt before batch line IF echo is on and in batch program */
     if (context && echo_mode && extraSpace[0] && (extraSpace[0] != '@')) {
+      const WCHAR spc[]={' ','\0'};
       WCMD_show_prompt();
       WCMD_output_asis(extraSpace);
+      /* I don't know why Windows puts a space here but it does */
+      WCMD_output_asis(spc);
       WCMD_output_asis(newline);
     }
 
