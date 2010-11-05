@@ -53,6 +53,13 @@ static const IBasicVideoVtbl IBasicVideo_VTable;
 static const IVideoWindowVtbl IVideoWindow_VTable;
 static const IPinVtbl VideoRenderer_InputPin_Vtbl;
 static const IAMFilterMiscFlagsVtbl IAMFilterMiscFlags_Vtbl;
+static const IQualityControlVtbl VideoRenderer_QualityControl_Vtbl = {
+    QualityControlImpl_QueryInterface,
+    QualityControlImpl_AddRef,
+    QualityControlImpl_Release,
+    QualityControlImpl_Notify,
+    QualityControlImpl_SetSink
+};
 
 typedef struct VideoRendererImpl
 {
@@ -62,6 +69,7 @@ typedef struct VideoRendererImpl
     const IUnknownVtbl * IInner_vtbl;
     const IAMFilterMiscFlagsVtbl *IAMFilterMiscFlags_vtbl;
     IUnknown *seekthru_unk;
+    QualityControlImpl qcimpl;
 
     BaseInputPin *pInputPin;
 
@@ -622,6 +630,9 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     if (FAILED(hr))
         goto fail;
 
+    QualityControlImpl_init(&pVideoRenderer->qcimpl, (IPin*)pVideoRenderer->pInputPin, (IBaseFilter*)pVideoRenderer);
+    pVideoRenderer->qcimpl.lpVtbl = &VideoRenderer_QualityControl_Vtbl;
+
     if (!CreateRenderingSubsystem(pVideoRenderer))
         return E_FAIL;
 
@@ -671,6 +682,8 @@ static HRESULT WINAPI VideoRendererInner_QueryInterface(IUnknown * iface, REFIID
         return IUnknown_QueryInterface(This->seekthru_unk, riid, ppv);
     else if (IsEqualIID(riid, &IID_IAMFilterMiscFlags))
         *ppv = &This->IAMFilterMiscFlags_vtbl;
+    else if (IsEqualIID(riid, &IID_IQualityControl))
+        *ppv = &This->qcimpl;
 
     if (*ppv)
     {
