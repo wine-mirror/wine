@@ -5868,8 +5868,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice *ifa
                 checkGLcall("glBindTexture");
                 /* Copy the bitmap memory into the cursor texture */
                 glTexImage2D(GL_TEXTURE_2D, 0, intfmt, width, height, 0, gl_format, type, mem);
-                HeapFree(GetProcessHeap(), 0, mem);
                 checkGLcall("glTexImage2D");
+                HeapFree(GetProcessHeap(), 0, mem);
 
                 if (gl_info->supported[APPLE_CLIENT_STORAGE])
                 {
