@@ -44,6 +44,7 @@ static const WCHAR wcsOutputPinName[] = {'o','u','t','p','u','t',' ','p','i','n'
 static const IBaseFilterVtbl TransformFilter_Vtbl;
 static const IPinVtbl TransformFilter_InputPin_Vtbl;
 static const IPinVtbl TransformFilter_OutputPin_Vtbl;
+static const IQualityControlVtbl TransformFilter_QualityControl_Vtbl;
 
 static HRESULT WINAPI TransformFilter_Input_CheckMediaType(BasePin *iface, const AM_MEDIA_TYPE * pmt)
 {
@@ -198,6 +199,10 @@ static HRESULT TransformFilter_Init(const IBaseFilterVtbl *pVtbl, const CLSID* p
 
         if (FAILED(hr))
             ERR("Cannot create output pin (%x)\n", hr);
+        else {
+            QualityControlImpl_init(&pTransformFilter->qcimpl, (IPin*)pTransformFilter->ppPins[0], (IBaseFilter*)pTransformFilter);
+            pTransformFilter->qcimpl.lpVtbl = &TransformFilter_QualityControl_Vtbl;
+        }
     }
     if (FAILED(hr))
     {
@@ -238,6 +243,11 @@ HRESULT WINAPI TransformFilterImpl_QueryInterface(IBaseFilter * iface, REFIID ri
     TransformFilter *This = (TransformFilter *)iface;
     TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppv);
 
+    if (IsEqualIID(riid, &IID_IQualityControl))  {
+        *ppv = (IQualityControl*)&This->qcimpl;
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
     hr = BaseFilterImpl_QueryInterface(iface, riid, ppv);
 
     if (FAILED(hr) && (!IsEqualIID(riid, &IID_IPin) && !IsEqualIID(riid, &IID_IVideoWindow)))
@@ -546,4 +556,22 @@ static const IPinVtbl TransformFilter_OutputPin_Vtbl =
     BaseOutputPinImpl_BeginFlush,
     BaseOutputPinImpl_EndFlush,
     BasePinImpl_NewSegment
+};
+
+HRESULT WINAPI TransformFilter_QualityControlImpl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm) {
+    QualityControlImpl *qc = (QualityControlImpl*)iface;
+    TransformFilter *This = (TransformFilter *)qc->self;
+
+    if (This->pFuncsTable->pfnNotify)
+        return This->pFuncsTable->pfnNotify(This, sender, qm);
+    else
+        return QualityControlImpl_Notify(iface, sender, qm);
+}
+
+static const IQualityControlVtbl TransformFilter_QualityControl_Vtbl = {
+    QualityControlImpl_QueryInterface,
+    QualityControlImpl_AddRef,
+    QualityControlImpl_Release,
+    TransformFilter_QualityControlImpl_Notify,
+    QualityControlImpl_SetSink
 };

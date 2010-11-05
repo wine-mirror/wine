@@ -219,6 +219,7 @@ typedef struct TransformFilter
 	AM_MEDIA_TYPE pmt;
 
 	const struct TransformFilterFuncTable * pFuncsTable;
+	QualityControlImpl qcimpl;
 } TransformFilter;
 
 typedef HRESULT (WINAPI *TransformFilter_DecideBufferSize) (TransformFilter *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest);
@@ -234,6 +235,7 @@ typedef HRESULT (WINAPI *TransformFilter_BeginFlush) (TransformFilter *iface);
 typedef HRESULT (WINAPI *TransformFilter_EndFlush) (TransformFilter *iface);
 typedef HRESULT (WINAPI *TransformFilter_NewSegment) (TransformFilter *iface,
 REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
+typedef HRESULT (WINAPI *TransformFilter_Notify) (TransformFilter *iface, IBaseFilter *sender, Quality qm);
 
 typedef struct TransformFilterFuncTable {
 	/* Required */
@@ -250,6 +252,7 @@ typedef struct TransformFilterFuncTable {
 	TransformFilter_BeginFlush pfnBeginFlush;
 	TransformFilter_EndFlush pfnEndFlush;
 	TransformFilter_NewSegment pfnNewSegment;
+	TransformFilter_Notify pfnNotify;
 } TransformFilterFuncTable;
 
 HRESULT WINAPI TransformFilterImpl_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv);
