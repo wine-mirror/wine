@@ -1356,6 +1356,8 @@ static void set_xembed_flags( Display *display, struct x11drv_win_data *data, un
 {
     unsigned long info[2];
 
+    if (!data->whole_window) return;
+
     info[0] = 0; /* protocol version */
     info[1] = flags;
     wine_tsx11_lock();
@@ -1418,18 +1420,19 @@ static void unmap_window( Display *display, struct x11drv_win_data *data )
  */
 void make_window_embedded( Display *display, struct x11drv_win_data *data )
 {
-    if (data->mapped)
-    {
-        /* the window cannot be mapped before being embedded */
-        unmap_window( display, data );
-        data->embedded = TRUE;
+    BOOL was_mapped = data->mapped;
+    /* the window cannot be mapped before being embedded */
+    if (data->mapped) unmap_window( display, data );
+
+    data->embedded = TRUE;
+    data->managed = TRUE;
+    SetPropA( data->hwnd, managed_prop, (HANDLE)1 );
+    sync_window_style( display, data );
+
+    if (was_mapped)
         map_window( display, data, 0 );
-    }
     else
-    {
-        data->embedded = TRUE;
         set_xembed_flags( display, data, 0 );
-    }
 }
 
 
