@@ -2465,6 +2465,7 @@ static void test_wndproc(void)
 
     static const struct message messages[] =
     {
+        {WM_WINDOWPOSCHANGING,  FOCUS_WINDOW},
         {WM_ACTIVATE,           FOCUS_WINDOW},
         {WM_SETFOCUS,           FOCUS_WINDOW},
         {0,                     0},
