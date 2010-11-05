@@ -432,7 +432,7 @@ void change_systray_owner( Display *display, Window systray_window )
 {
     struct tray_icon *icon;
 
-    ERR( "new owner %lx\n", systray_window );
+    TRACE( "new owner %lx\n", systray_window );
     LIST_FOR_EACH_ENTRY( icon, &icon_list, struct tray_icon, entry )
     {
         if (icon->display == -1) continue;
@@ -444,9 +444,14 @@ void change_systray_owner( Display *display, Window systray_window )
 /* hide a tray icon */
 static BOOL hide_icon( struct tray_icon *icon )
 {
+    struct x11drv_win_data *data;
+
     TRACE( "id=0x%x, hwnd=%p\n", icon->id, icon->owner );
 
     if (!icon->window) return TRUE;  /* already hidden */
+
+    /* make sure we don't try to unmap it, it confuses some systray docks */
+    if ((data = X11DRV_get_win_data( icon->window )) && data->embedded) data->mapped = FALSE;
 
     DestroyWindow(icon->window);
     DestroyWindow(icon->tooltip);
