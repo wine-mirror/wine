@@ -1490,7 +1490,7 @@ UINT CDECL X11DRV_SendInput( UINT count, LPINPUT inputs, int size )
         switch(inputs->type)
         {
         case INPUT_MOUSE:
-            X11DRV_send_mouse_input( 0, inputs->u.mi.dwFlags, inputs->u.mi.dx, inputs->u.mi.dy,
+            X11DRV_send_mouse_input( 0, 0, inputs->u.mi.dwFlags, inputs->u.mi.dx, inputs->u.mi.dy,
                                      inputs->u.mi.mouseData, inputs->u.mi.time,
                                      inputs->u.mi.dwExtraInfo, LLMHF_INJECTED );
             break;

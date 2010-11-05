@@ -228,21 +228,25 @@ void set_window_cursor( HWND hwnd, HCURSOR handle )
  *
  * Update the various window states on a mouse event.
  */
-static void update_mouse_state( HWND hwnd, Window window, int x, int y, unsigned int state, POINT *pt )
+static HWND update_mouse_state( HWND hwnd, Window window, int x, int y, unsigned int state, POINT *pt )
 {
     struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
 
-    if (!data) return;
+    if (!data) return 0;
 
     if (window == data->whole_window)
     {
         x += data->whole_rect.left - data->client_rect.left;
         y += data->whole_rect.top - data->client_rect.top;
     }
-    pt->x = x + data->client_rect.left;
-    pt->y = y + data->client_rect.top;
+    pt->x = x;
+    pt->y = y;
+    if (GetWindowLongW( data->hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
+        pt->x = data->client_rect.right - data->client_rect.left - 1 - pt->x;
+    MapWindowPoints( hwnd, 0, pt, 1 );
 
     cursor_window = hwnd;
+    if (hwnd != GetDesktopWindow()) hwnd = GetAncestor( hwnd, GA_ROOT );
 
     /* update the wine server Z-order */
 
@@ -251,9 +255,8 @@ static void update_mouse_state( HWND hwnd, Window window, int x, int y, unsigned
         !(state & (Button1Mask|Button2Mask|Button3Mask|Button4Mask|Button5Mask|Button6Mask|Button7Mask)))
     {
         RECT rect;
-        SetRect( &rect, x, y, x + 1, y + 1 );
-        if (GetWindowLongW( data->hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
-            mirror_rect( &data->client_rect, &rect );
+        SetRect( &rect, pt->x, pt->y, pt->x + 1, pt->y + 1 );
+        MapWindowPoints( 0, hwnd, (POINT *)&rect, 2 );
 
         SERVER_START_REQ( update_window_zorder )
         {
@@ -266,6 +269,7 @@ static void update_mouse_state( HWND hwnd, Window window, int x, int y, unsigned
         }
         SERVER_END_REQ;
     }
+    return hwnd;
 }
 
 
@@ -298,7 +302,7 @@ static WORD get_key_state(void)
 /***********************************************************************
  *           queue_raw_mouse_message
  */
-static void queue_raw_mouse_message( UINT message, HWND hwnd, DWORD x, DWORD y,
+static void queue_raw_mouse_message( UINT message, HWND top_hwnd, HWND cursor_hwnd, DWORD x, DWORD y,
                                      DWORD data, DWORD time, DWORD extra_info, UINT injected_flags )
 {
     MSLLHOOKSTRUCT hook;
@@ -318,7 +322,7 @@ static void queue_raw_mouse_message( UINT message, HWND hwnd, DWORD x, DWORD y,
     SERVER_START_REQ( send_hardware_message )
     {
         req->id       = (injected_flags & LLMHF_INJECTED) ? 0 : GetCurrentThreadId();
-        req->win      = wine_server_user_handle( hwnd );
+        req->win      = wine_server_user_handle( top_hwnd );
         req->msg      = message;
         req->wparam   = MAKEWPARAM( get_key_state(), data );
         req->lparam   = 0;
@@ -331,10 +335,10 @@ static void queue_raw_mouse_message( UINT message, HWND hwnd, DWORD x, DWORD y,
     }
     SERVER_END_REQ;
 
-    if (hwnd)
+    if (cursor_hwnd)
     {
-        struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
-        if (data && cursor != data->cursor) set_window_cursor( hwnd, cursor );
+        struct x11drv_win_data *data = X11DRV_get_win_data( cursor_hwnd );
+        if (data && cursor != data->cursor) set_window_cursor( cursor_hwnd, cursor );
     }
 }
 
@@ -342,7 +346,7 @@ static void queue_raw_mouse_message( UINT message, HWND hwnd, DWORD x, DWORD y,
 /***********************************************************************
  *		X11DRV_send_mouse_input
  */
-void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
+void X11DRV_send_mouse_input( HWND top_hwnd, HWND cursor_hwnd, DWORD flags, DWORD x, DWORD y,
                               DWORD data, DWORD time, DWORD extra_info, UINT injected_flags )
 {
     POINT pt;
@@ -399,7 +403,7 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
 
     if (flags & MOUSEEVENTF_MOVE)
     {
-        queue_raw_mouse_message( WM_MOUSEMOVE, hwnd, pt.x, pt.y, data, time,
+        queue_raw_mouse_message( WM_MOUSEMOVE, top_hwnd, cursor_hwnd, pt.x, pt.y, data, time,
                                  extra_info, injected_flags );
         if ((injected_flags & LLMHF_INJECTED) &&
             ((flags & MOUSEEVENTF_ABSOLUTE) || x || y))  /* we have to actually move the cursor */
@@ -418,54 +422,58 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
     {
         key_state_table[VK_LBUTTON] |= 0xc0;
         queue_raw_mouse_message( GetSystemMetrics(SM_SWAPBUTTON) ? WM_RBUTTONDOWN : WM_LBUTTONDOWN,
-                                 hwnd, pt.x, pt.y, data, time, extra_info, injected_flags );
+                                 top_hwnd, cursor_hwnd, pt.x, pt.y,
+                                 data, time, extra_info, injected_flags );
     }
     if (flags & MOUSEEVENTF_LEFTUP)
     {
         key_state_table[VK_LBUTTON] &= ~0x80;
         queue_raw_mouse_message( GetSystemMetrics(SM_SWAPBUTTON) ? WM_RBUTTONUP : WM_LBUTTONUP,
-                                 hwnd, pt.x, pt.y, data, time, extra_info, injected_flags );
+                                 top_hwnd, cursor_hwnd, pt.x, pt.y,
+                                 data, time, extra_info, injected_flags );
     }
     if (flags & MOUSEEVENTF_RIGHTDOWN)
     {
         key_state_table[VK_RBUTTON] |= 0xc0;
         queue_raw_mouse_message( GetSystemMetrics(SM_SWAPBUTTON) ? WM_LBUTTONDOWN : WM_RBUTTONDOWN,
-                                 hwnd, pt.x, pt.y, data, time, extra_info, injected_flags );
+                                 top_hwnd, cursor_hwnd, pt.x, pt.y,
+                                 data, time, extra_info, injected_flags );
     }
     if (flags & MOUSEEVENTF_RIGHTUP)
     {
         key_state_table[VK_RBUTTON] &= ~0x80;
         queue_raw_mouse_message( GetSystemMetrics(SM_SWAPBUTTON) ? WM_LBUTTONUP : WM_RBUTTONUP,
-                                 hwnd, pt.x, pt.y, data, time, extra_info, injected_flags );
+                                 top_hwnd, cursor_hwnd, pt.x, pt.y,
+                                 data, time, extra_info, injected_flags );
     }
     if (flags & MOUSEEVENTF_MIDDLEDOWN)
     {
         key_state_table[VK_MBUTTON] |= 0xc0;
-        queue_raw_mouse_message( WM_MBUTTONDOWN, hwnd, pt.x, pt.y, data, time,
-                                 extra_info, injected_flags );
+        queue_raw_mouse_message( WM_MBUTTONDOWN, top_hwnd, cursor_hwnd, pt.x, pt.y,
+                                 data, time, extra_info, injected_flags );
     }
     if (flags & MOUSEEVENTF_MIDDLEUP)
     {
         key_state_table[VK_MBUTTON] &= ~0x80;
-        queue_raw_mouse_message( WM_MBUTTONUP, hwnd, pt.x, pt.y, data, time,
-                                 extra_info, injected_flags );
+        queue_raw_mouse_message( WM_MBUTTONUP, top_hwnd, cursor_hwnd, pt.x, pt.y,
+                                 data, time, extra_info, injected_flags );
     }
     if (flags & MOUSEEVENTF_WHEEL)
     {
-        queue_raw_mouse_message( WM_MOUSEWHEEL, hwnd, pt.x, pt.y, data, time,
-                                 extra_info, injected_flags );
+        queue_raw_mouse_message( WM_MOUSEWHEEL, top_hwnd, cursor_hwnd, pt.x, pt.y,
+                                 data, time, extra_info, injected_flags );
     }
     if (flags & MOUSEEVENTF_XDOWN)
     {
         key_state_table[VK_XBUTTON1 + data - 1] |= 0xc0;
-        queue_raw_mouse_message( WM_XBUTTONDOWN, hwnd, pt.x, pt.y, data, time,
-                                 extra_info, injected_flags );
+        queue_raw_mouse_message( WM_XBUTTONDOWN, top_hwnd, cursor_hwnd, pt.x, pt.y,
+                                 data, time, extra_info, injected_flags );
     }
     if (flags & MOUSEEVENTF_XUP)
     {
         key_state_table[VK_XBUTTON1 + data - 1] &= ~0x80;
-        queue_raw_mouse_message( WM_XBUTTONUP, hwnd, pt.x, pt.y, data, time,
-                                 extra_info, injected_flags );
+        queue_raw_mouse_message( WM_XBUTTONUP, top_hwnd, cursor_hwnd, pt.x, pt.y,
+                                 data, time, extra_info, injected_flags );
     }
 }
 
@@ -1072,7 +1080,7 @@ BOOL CDECL X11DRV_SetCursorPos( INT x, INT y )
     {
         wine_tsx11_unlock();
         /* We still need to generate WM_MOUSEMOVE */
-        queue_raw_mouse_message( WM_MOUSEMOVE, NULL, x, y, 0, GetCurrentTime(), 0, 0 );
+        queue_raw_mouse_message( WM_MOUSEMOVE, 0, 0, x, y, 0, GetCurrentTime(), 0, 0 );
         return TRUE;
     }
 
@@ -1136,9 +1144,9 @@ void X11DRV_ButtonPress( HWND hwnd, XEvent *xev )
     int buttonNum = event->button - 1;
     WORD wData = 0;
     POINT pt;
+    HWND top_hwnd;
 
     if (buttonNum >= NB_BUTTONS) return;
-    if (!hwnd) return;
 
     switch (buttonNum)
     {
@@ -1163,9 +1171,11 @@ void X11DRV_ButtonPress( HWND hwnd, XEvent *xev )
     }
 
     update_user_time( event->time );
-    update_mouse_state( hwnd, event->window, event->x, event->y, event->state, &pt );
+    top_hwnd = update_mouse_state( hwnd, event->window, event->x, event->y, event->state, &pt );
+    if (!top_hwnd) return;
 
-    X11DRV_send_mouse_input( hwnd, button_down_flags[buttonNum] | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,
+    X11DRV_send_mouse_input( top_hwnd, hwnd,
+                             button_down_flags[buttonNum] | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,
                              pt.x, pt.y, wData, EVENT_x11_time_to_win32_time(event->time), 0, 0 );
 }
 
@@ -1179,9 +1189,9 @@ void X11DRV_ButtonRelease( HWND hwnd, XEvent *xev )
     int buttonNum = event->button - 1;
     WORD wData = 0;
     POINT pt;
+    HWND top_hwnd;
 
     if (buttonNum >= NB_BUTTONS || !button_up_flags[buttonNum]) return;
-    if (!hwnd) return;
 
     switch (buttonNum)
     {
@@ -1199,9 +1209,11 @@ void X11DRV_ButtonRelease( HWND hwnd, XEvent *xev )
         break;
     }
 
-    update_mouse_state( hwnd, event->window, event->x, event->y, event->state, &pt );
+    top_hwnd = update_mouse_state( hwnd, event->window, event->x, event->y, event->state, &pt );
+    if (!top_hwnd) return;
 
-    X11DRV_send_mouse_input( hwnd, button_up_flags[buttonNum] | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,
+    X11DRV_send_mouse_input( top_hwnd, hwnd,
+                             button_up_flags[buttonNum] | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,
                              pt.x, pt.y, wData, EVENT_x11_time_to_win32_time(event->time), 0, 0 );
 }
 
@@ -1213,14 +1225,14 @@ void X11DRV_MotionNotify( HWND hwnd, XEvent *xev )
 {
     XMotionEvent *event = &xev->xmotion;
     POINT pt;
+    HWND top_hwnd;
 
     TRACE("hwnd %p, event->is_hint %d\n", hwnd, event->is_hint);
 
-    if (!hwnd) return;
+    top_hwnd = update_mouse_state( hwnd, event->window, event->x, event->y, event->state, &pt );
+    if (!top_hwnd) return;
 
-    update_mouse_state( hwnd, event->window, event->x, event->y, event->state, &pt );
-
-    X11DRV_send_mouse_input( hwnd, MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE,
+    X11DRV_send_mouse_input( top_hwnd, hwnd, MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE,
                              pt.x, pt.y, 0, EVENT_x11_time_to_win32_time(event->time), 0, 0 );
 }
 
@@ -1232,16 +1244,17 @@ void X11DRV_EnterNotify( HWND hwnd, XEvent *xev )
 {
     XCrossingEvent *event = &xev->xcrossing;
     POINT pt;
+    HWND top_hwnd;
 
     TRACE("hwnd %p, event->detail %d\n", hwnd, event->detail);
 
-    if (!hwnd) return;
     if (event->detail == NotifyVirtual || event->detail == NotifyNonlinearVirtual) return;
     if (event->window == x11drv_thread_data()->grab_window) return;
 
     /* simulate a mouse motion event */
-    update_mouse_state( hwnd, event->window, event->x, event->y, event->state, &pt );
+    top_hwnd = update_mouse_state( hwnd, event->window, event->x, event->y, event->state, &pt );
+    if (!top_hwnd) return;
 
-    X11DRV_send_mouse_input( hwnd, MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE,
+    X11DRV_send_mouse_input( top_hwnd, hwnd, MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE,
                              pt.x, pt.y, 0, EVENT_x11_time_to_win32_time(event->time), 0, 0 );
 }
