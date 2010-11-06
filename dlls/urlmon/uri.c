@@ -4731,116 +4731,116 @@ static HRESULT WINAPI Uri_HasProperty(IUri *iface, Uri_PROPERTY uriProp, BOOL *p
 static HRESULT WINAPI Uri_GetAbsoluteUri(IUri *iface, BSTR *pstrAbsoluteUri)
 {
     TRACE("(%p)->(%p)\n", iface, pstrAbsoluteUri);
-    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_ABSOLUTE_URI, pstrAbsoluteUri, 0);
+    return IUri_GetPropertyBSTR(iface, Uri_PROPERTY_ABSOLUTE_URI, pstrAbsoluteUri, 0);
 }
 
 static HRESULT WINAPI Uri_GetAuthority(IUri *iface, BSTR *pstrAuthority)
 {
     TRACE("(%p)->(%p)\n", iface, pstrAuthority);
-    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_AUTHORITY, pstrAuthority, 0);
+    return IUri_GetPropertyBSTR(iface, Uri_PROPERTY_AUTHORITY, pstrAuthority, 0);
 }
 
 static HRESULT WINAPI Uri_GetDisplayUri(IUri *iface, BSTR *pstrDisplayUri)
 {
     TRACE("(%p)->(%p)\n", iface, pstrDisplayUri);
-    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_DISPLAY_URI, pstrDisplayUri, 0);
+    return IUri_GetPropertyBSTR(iface, Uri_PROPERTY_DISPLAY_URI, pstrDisplayUri, 0);
 }
 
 static HRESULT WINAPI Uri_GetDomain(IUri *iface, BSTR *pstrDomain)
 {
     TRACE("(%p)->(%p)\n", iface, pstrDomain);
-    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_DOMAIN, pstrDomain, 0);
+    return IUri_GetPropertyBSTR(iface, Uri_PROPERTY_DOMAIN, pstrDomain, 0);
 }
 
 static HRESULT WINAPI Uri_GetExtension(IUri *iface, BSTR *pstrExtension)
 {
     TRACE("(%p)->(%p)\n", iface, pstrExtension);
-    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_EXTENSION, pstrExtension, 0);
+    return IUri_GetPropertyBSTR(iface, Uri_PROPERTY_EXTENSION, pstrExtension, 0);
 }
 
 static HRESULT WINAPI Uri_GetFragment(IUri *iface, BSTR *pstrFragment)
 {
     TRACE("(%p)->(%p)\n", iface, pstrFragment);
-    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_FRAGMENT, pstrFragment, 0);
+    return IUri_GetPropertyBSTR(iface, Uri_PROPERTY_FRAGMENT, pstrFragment, 0);
 }
 
 static HRESULT WINAPI Uri_GetHost(IUri *iface, BSTR *pstrHost)
 {
     TRACE("(%p)->(%p)\n", iface, pstrHost);
-    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_HOST, pstrHost, 0);
+    return IUri_GetPropertyBSTR(iface, Uri_PROPERTY_HOST, pstrHost, 0);
 }
 
 static HRESULT WINAPI Uri_GetPassword(IUri *iface, BSTR *pstrPassword)
 {
     TRACE("(%p)->(%p)\n", iface, pstrPassword);
-    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_PASSWORD, pstrPassword, 0);
+    return IUri_GetPropertyBSTR(iface, Uri_PROPERTY_PASSWORD, pstrPassword, 0);
 }
 
 static HRESULT WINAPI Uri_GetPath(IUri *iface, BSTR *pstrPath)
 {
     TRACE("(%p)->(%p)\n", iface, pstrPath);
-    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_PATH, pstrPath, 0);
+    return IUri_GetPropertyBSTR(iface, Uri_PROPERTY_PATH, pstrPath, 0);
 }
 
 static HRESULT WINAPI Uri_GetPathAndQuery(IUri *iface, BSTR *pstrPathAndQuery)
 {
     TRACE("(%p)->(%p)\n", iface, pstrPathAndQuery);
-    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_PATH_AND_QUERY, pstrPathAndQuery, 0);
+    return IUri_GetPropertyBSTR(iface, Uri_PROPERTY_PATH_AND_QUERY, pstrPathAndQuery, 0);
 }
 
 static HRESULT WINAPI Uri_GetQuery(IUri *iface, BSTR *pstrQuery)
 {
     TRACE("(%p)->(%p)\n", iface, pstrQuery);
-    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_QUERY, pstrQuery, 0);
+    return IUri_GetPropertyBSTR(iface, Uri_PROPERTY_QUERY, pstrQuery, 0);
 }
 
 static HRESULT WINAPI Uri_GetRawUri(IUri *iface, BSTR *pstrRawUri)
 {
     TRACE("(%p)->(%p)\n", iface, pstrRawUri);
-    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_RAW_URI, pstrRawUri, 0);
+    return IUri_GetPropertyBSTR(iface, Uri_PROPERTY_RAW_URI, pstrRawUri, 0);
 }
 
 static HRESULT WINAPI Uri_GetSchemeName(IUri *iface, BSTR *pstrSchemeName)
 {
     TRACE("(%p)->(%p)\n", iface, pstrSchemeName);
-    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_SCHEME_NAME, pstrSchemeName, 0);
+    return IUri_GetPropertyBSTR(iface, Uri_PROPERTY_SCHEME_NAME, pstrSchemeName, 0);
 }
 
 static HRESULT WINAPI Uri_GetUserInfo(IUri *iface, BSTR *pstrUserInfo)
 {
     TRACE("(%p)->(%p)\n", iface, pstrUserInfo);
-    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_USER_INFO, pstrUserInfo, 0);
+    return IUri_GetPropertyBSTR(iface, Uri_PROPERTY_USER_INFO, pstrUserInfo, 0);
 }
 
 static HRESULT WINAPI Uri_GetUserName(IUri *iface, BSTR *pstrUserName)
 {
     TRACE("(%p)->(%p)\n", iface, pstrUserName);
-    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_USER_NAME, pstrUserName, 0);
+    return IUri_GetPropertyBSTR(iface, Uri_PROPERTY_USER_NAME, pstrUserName, 0);
 }
 
 static HRESULT WINAPI Uri_GetHostType(IUri *iface, DWORD *pdwHostType)
 {
     TRACE("(%p)->(%p)\n", iface, pdwHostType);
-    return Uri_GetPropertyDWORD(iface, Uri_PROPERTY_HOST_TYPE, pdwHostType, 0);
+    return IUri_GetPropertyDWORD(iface, Uri_PROPERTY_HOST_TYPE, pdwHostType, 0);
 }
 
 static HRESULT WINAPI Uri_GetPort(IUri *iface, DWORD *pdwPort)
 {
     TRACE("(%p)->(%p)\n", iface, pdwPort);
-    return Uri_GetPropertyDWORD(iface, Uri_PROPERTY_PORT, pdwPort, 0);
+    return IUri_GetPropertyDWORD(iface, Uri_PROPERTY_PORT, pdwPort, 0);
 }
 
 static HRESULT WINAPI Uri_GetScheme(IUri *iface, DWORD *pdwScheme)
 {
     Uri *This = URI_THIS(iface);
     TRACE("(%p)->(%p)\n", This, pdwScheme);
-    return Uri_GetPropertyDWORD(iface, Uri_PROPERTY_SCHEME, pdwScheme, 0);
+    return IUri_GetPropertyDWORD(iface, Uri_PROPERTY_SCHEME, pdwScheme, 0);
 }
 
 static HRESULT WINAPI Uri_GetZone(IUri *iface, DWORD *pdwZone)
 {
     TRACE("(%p)->(%p)\n", iface, pdwZone);
-    return Uri_GetPropertyDWORD(iface, Uri_PROPERTY_ZONE,pdwZone, 0);
+    return IUri_GetPropertyDWORD(iface, Uri_PROPERTY_ZONE,pdwZone, 0);
 }
 
 static HRESULT WINAPI Uri_GetProperties(IUri *iface, DWORD *pdwProperties)
