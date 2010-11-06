@@ -20,12 +20,13 @@
 
 #include <windows.h>
 #include <commctrl.h>
+#include "msg.h"
 
 #include "resources.h"
 
 #include "wine/test.h"
 
-static HWND parent;
+static HWND parenthwnd;
 static HWND sheethwnd;
 
 static LONG active_page = -1;
@@ -165,7 +166,7 @@ static int CALLBACK disableowner_callback(HWND hwnd, UINT msg, LPARAM lparam)
     {
     case PSCB_INITIALIZED:
       {
-        ok(IsWindowEnabled(parent) == 0, "parent window should be disabled\n");
+        ok(IsWindowEnabled(parenthwnd) == 0, "parent window should be disabled\n");
         PostQuitMessage(0);
         return FALSE;
       }
@@ -198,7 +199,7 @@ static void test_disableowner(void)
     INT_PTR p;
 
     register_parent_wnd_class();
-    parent = CreateWindowA("parent class", "", WS_CAPTION | WS_SYSMENU | WS_VISIBLE, 100, 100, 100, 100, GetDesktopWindow(), NULL, GetModuleHandleA(NULL), 0);
+    parenthwnd = CreateWindowA("parent class", "", WS_CAPTION | WS_SYSMENU | WS_VISIBLE, 100, 100, 100, 100, GetDesktopWindow(), NULL, GetModuleHandleA(NULL), 0);
 
     memset(&psp, 0, sizeof(psp));
     psp.dwSize = sizeof(psp);
@@ -216,15 +217,15 @@ static void test_disableowner(void)
     psh.dwFlags = PSH_USECALLBACK;
     psh.pszCaption = "test caption";
     psh.nPages = 1;
-    psh.hwndParent = parent;
+    psh.hwndParent = parenthwnd;
     U3(psh).phpage = hpsp;
     psh.pfnCallback = disableowner_callback;
 
     p = PropertySheetA(&psh);
     todo_wine
     ok(p == 0, "Expected 0, got %ld\n", p);
-    ok(IsWindowEnabled(parent) != 0, "parent window should be enabled\n");
-    DestroyWindow(parent);
+    ok(IsWindowEnabled(parenthwnd) != 0, "parent window should be enabled\n");
+    DestroyWindow(parenthwnd);
 }
 
 static INT_PTR CALLBACK nav_page_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -525,6 +526,220 @@ static void test_custom_default_button(void)
     DestroyWindow(hdlg);
 }
 
+#define RECEIVER_SHEET_CALLBACK 0
+#define RECEIVER_SHEET_WINPROC  1
+#define RECEIVER_PAGE           2
+
+#define NUM_MSG_SEQUENCES   1
+#define PROPSHEET_SEQ_INDEX 0
+
+static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
+static WNDPROC oldWndProc;
+
+static const struct message property_sheet_seq[] = {
+    { PSCB_PRECREATE, sent|id, 0, 0, RECEIVER_SHEET_CALLBACK },
+    { PSCB_INITIALIZED, sent|id, 0, 0, RECEIVER_SHEET_CALLBACK },
+    { WM_WINDOWPOSCHANGING, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    /*{ WM_NCCALCSIZE, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },*/
+    { WM_WINDOWPOSCHANGED, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_MOVE, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_SIZE, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    /*{ WM_GETTEXT, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_NCCALCSIZE, sent|id|optional, 0, 0, RECEIVER_SHEET_WINPROC },
+    { DM_REPOSITION, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },*/
+    { WM_WINDOWPOSCHANGING, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_WINDOWPOSCHANGING, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_ACTIVATEAPP, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    /*{ WM_NCACTIVATE, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_GETTEXT, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_GETTEXT, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },*/
+    { WM_ACTIVATE, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    /*{ WM_IME_SETCONTEXT, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_IME_NOTIFY, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },*/
+    { WM_SETFOCUS, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_KILLFOCUS, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    /*{ WM_IME_SETCONTEXT, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },*/
+    { WM_PARENTNOTIFY, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_INITDIALOG, sent|id, 0, 0, RECEIVER_PAGE },
+    { WM_WINDOWPOSCHANGING, sent|id, 0, 0, RECEIVER_PAGE },
+    /*{ WM_NCCALCSIZE, sent|id, 0, 0, RECEIVER_PAGE },*/
+    { WM_CHILDACTIVATE, sent|id, 0, 0, RECEIVER_PAGE },
+    { WM_WINDOWPOSCHANGED, sent|id, 0, 0, RECEIVER_PAGE },
+    { WM_MOVE, sent|id, 0, 0, RECEIVER_PAGE },
+    { WM_SIZE, sent|id, 0, 0, RECEIVER_PAGE },
+    { WM_NOTIFY, sent|id, 0, 0, RECEIVER_PAGE },
+    { WM_STYLECHANGING, sent|id|optional, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_STYLECHANGED, sent|id|optional, 0, 0, RECEIVER_SHEET_WINPROC },
+    /*{ WM_GETTEXT, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },*/
+    { WM_SETTEXT, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_SHOWWINDOW, sent|id, 0, 0, RECEIVER_PAGE },
+    /*{ 0x00000401, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { 0x00000400, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },*/
+    { WM_CHANGEUISTATE, sent|id|optional, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_UPDATEUISTATE, sent|id|optional, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_UPDATEUISTATE, sent|id|optional, 0, 0, RECEIVER_PAGE },
+    { WM_SHOWWINDOW, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_WINDOWPOSCHANGING, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    /*{ WM_NCPAINT, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_ERASEBKGND, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },*/
+    { WM_CTLCOLORDLG, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_WINDOWPOSCHANGED, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    /*{ WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_PAINT, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_PAINT, sent|id, 0, 0, RECEIVER_PAGE },
+    { WM_NCPAINT, sent|id, 0, 0, RECEIVER_PAGE },
+    { WM_ERASEBKGND, sent|id, 0, 0, RECEIVER_PAGE },*/
+    { WM_CTLCOLORDLG, sent|id, 0, 0, RECEIVER_PAGE },
+    { WM_CTLCOLORSTATIC, sent|id, 0, 0, RECEIVER_PAGE },
+    { WM_CTLCOLORSTATIC, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_CTLCOLORBTN, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_CTLCOLORBTN, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_CTLCOLORBTN, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    /*{ WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },*/
+    { WM_COMMAND, sent|id|optional, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_NOTIFY, sent|id|optional, 0, 0, RECEIVER_PAGE },
+    { WM_NOTIFY, sent|id|optional, 0, 0, RECEIVER_PAGE },
+    { WM_WINDOWPOSCHANGING, sent|id|optional, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_WINDOWPOSCHANGED, sent|id|optional, 0, 0, RECEIVER_SHEET_WINPROC },
+    /*{ WM_NCACTIVATE, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },*/
+    { WM_ACTIVATE, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_ACTIVATE, sent|id, 0, 0, RECEIVER_PAGE },
+    { WM_ACTIVATEAPP, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_ACTIVATEAPP, sent|id, 0, 0, RECEIVER_PAGE },
+    { WM_DESTROY, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_DESTROY, sent|id, 0, 0, RECEIVER_PAGE },
+    /*{ WM_NCDESTROY, sent|id, 0, 0, RECEIVER_PAGE },
+    { WM_NCDESTROY, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },*/
+    { 0 }
+};
+
+static void save_message(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, INT receiver)
+{
+    struct message msg;
+
+    if (message < WM_USER &&
+        message != WM_GETICON &&
+        message != WM_GETTEXT &&
+        message != WM_IME_SETCONTEXT &&
+        message != WM_IME_NOTIFY &&
+        message != WM_PAINT &&
+        message != WM_ERASEBKGND &&
+        message != WM_SETCURSOR &&
+        (message < WM_NCCREATE || message > WM_NCMBUTTONDBLCLK) &&
+        (message < WM_MOUSEFIRST || message > WM_MOUSEHWHEEL) &&
+        message != 0x90)
+    {
+        /*trace("check_message: %04x, %04x\n", message, receiver);*/
+
+        msg.message = message;
+        msg.flags = sent|wparam|lparam|id;
+        msg.wParam = wParam;
+        msg.lParam = lParam;
+        msg.id = receiver;
+        add_message(sequences, PROPSHEET_SEQ_INDEX, &msg);
+    }
+}
+
+static LRESULT CALLBACK sheet_callback_messages_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    save_message(hwnd, msg, wParam, lParam, RECEIVER_SHEET_WINPROC);
+
+    switch (msg)
+    {
+    case WM_CTLCOLORSTATIC:
+        keybd_event(VK_ESCAPE, 0, 0, 0);
+        break;
+    }
+
+    return CallWindowProc (oldWndProc, hwnd, msg, wParam, lParam);
+}
+
+static int CALLBACK sheet_callback_messages(HWND hwnd, UINT msg, LPARAM lParam)
+{
+    save_message(hwnd, msg, (WPARAM)NULL, lParam, RECEIVER_SHEET_CALLBACK);
+
+    switch (msg)
+    {
+    case PSCB_INITIALIZED:
+        oldWndProc = (WNDPROC)GetWindowLongPtr (hwnd, GWLP_WNDPROC);
+        SetWindowLongPtr (hwnd, GWLP_WNDPROC, (LONG_PTR)&sheet_callback_messages_proc);
+        return TRUE;
+    }
+
+    return TRUE;
+}
+
+static INT_PTR CALLBACK page_dlg_proc_messages(HWND hwnd, UINT msg, WPARAM wParam,
+                                               LPARAM lParam)
+{
+    save_message(hwnd, msg, wParam, lParam, RECEIVER_PAGE);
+
+    return FALSE;
+}
+
+static void test_messages(void)
+{
+    HPROPSHEETPAGE hpsp[1];
+    PROPSHEETPAGEA psp;
+    PROPSHEETHEADERA psh;
+    HWND hdlg;
+
+    init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    memset(&psp, 0, sizeof(psp));
+    psp.dwSize = sizeof(psp);
+    psp.dwFlags = 0;
+    psp.hInstance = GetModuleHandleA(NULL);
+    U(psp).pszTemplate = MAKEINTRESOURCE(IDD_PROP_PAGE_MESSAGE_TEST);
+    U2(psp).pszIcon = NULL;
+    psp.pfnDlgProc = page_dlg_proc_messages;
+    psp.lParam = 0;
+
+    hpsp[0] = CreatePropertySheetPageA(&psp);
+
+    memset(&psh, 0, sizeof(psh));
+    psh.dwSize = sizeof(psh);
+    psh.dwFlags = PSH_NOAPPLYNOW | PSH_WIZARD | PSH_USECALLBACK
+                  /*| PSH_MODELESS */ | PSH_USEICONID;
+    psh.pszCaption = "test caption";
+    psh.nPages = 1;
+    psh.hwndParent = GetDesktopWindow();
+    U3(psh).phpage = hpsp;
+    psh.pfnCallback = sheet_callback_messages;
+
+    hdlg = (HWND)PropertySheetA(&psh);
+    if (hdlg == INVALID_HANDLE_VALUE)
+    {
+        win_skip("comctl32 4.70 needs dwSize adjustment\n");
+        psh.dwSize = sizeof(psh) - sizeof(HBITMAP) - sizeof(HPALETTE) - sizeof(HBITMAP);
+        hdlg = (HWND)PropertySheetA(&psh);
+    }
+    ShowWindow(hdlg,SW_NORMAL);
+
+    ok_sequence(sequences, PROPSHEET_SEQ_INDEX, property_sheet_seq, "property sheet with custom window proc", TRUE);
+
+    DestroyWindow(hdlg);
+}
+
 START_TEST(propsheet)
 {
     test_title();
@@ -533,4 +748,5 @@ START_TEST(propsheet)
     test_wiznavigation();
     test_buttons();
     test_custom_default_button();
+    test_messages();
 }

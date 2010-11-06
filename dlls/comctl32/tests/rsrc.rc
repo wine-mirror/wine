@@ -64,6 +64,13 @@ FONT 8, "MS Shell Dlg"
     LTEXT "This has been a test property sheet!", -1, 10, 6, 170, 8
 }
 
+IDD_PROP_PAGE_MESSAGE_TEST DIALOG DISCARDABLE  0, 0, 339, 179
+STYLE DS_MODALFRAME | DS_3DLOOK | DS_CENTER | WS_CHILD | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Message Test"
+BEGIN
+    LTEXT           "Some Text",-1,115,1,195,24
+END
+
 STRINGTABLE 
 {
     IDS_TBADD1           "abc"
