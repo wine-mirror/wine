@@ -7544,6 +7544,51 @@ static void test_put_nodeTypedValue(void)
     free_bstrs();
 }
 
+static void test_get_xml(void)
+{
+    static const char xmlA[] = "<?xml version=\"1.0\" encoding=\"UTF-16\"?>\r\n<a>test</a>\r\n";
+    IXMLDOMProcessingInstruction *pi;
+    IXMLDOMNode *first;
+    IXMLDOMDocument *doc;
+    VARIANT_BOOL b;
+    VARIANT v;
+    BSTR xml;
+    HRESULT hr;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+    if (!doc) return;
+
+    b = VARIANT_TRUE;
+    hr = IXMLDOMDocument_loadXML( doc, _bstr_("<a>test</a>"), &b );
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok( b == VARIANT_TRUE, "got %d\n", b);
+
+    hr = IXMLDOMDocument_createProcessingInstruction(doc, _bstr_("xml"),
+                             _bstr_("version=\"1.0\" encoding=\"UTF-16\""), &pi);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument_get_firstChild(doc, &first);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    V_UNKNOWN(&v) = (IUnknown*)first;
+    V_VT(&v) = VT_UNKNOWN;
+
+    hr = IXMLDOMDocument_insertBefore(doc, (IXMLDOMNode*)pi, v, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IXMLDOMProcessingInstruction_Release(pi);
+    IXMLDOMNode_Release(first);
+
+    hr = IXMLDOMDocument_get_xml(doc, &xml);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ok(memcmp(xml, _bstr_(xmlA), sizeof(xmlA)*sizeof(WCHAR)) == 0,
+        "got %s, expected %s\n", wine_dbgstr_w(xml), xmlA);
+    SysFreeString(xml);
+
+    IXMLDOMDocument_Release(doc);
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -7607,6 +7652,7 @@ START_TEST(domdoc)
     test_events();
     test_createProcessingInstruction();
     test_put_nodeTypedValue();
+    test_get_xml();
 
     CoUninitialize();
 }

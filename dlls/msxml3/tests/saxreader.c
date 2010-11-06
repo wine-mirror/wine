@@ -584,6 +584,7 @@ static void test_saxreader(void)
     }
     bstrData = SysAllocString(szSimpleXML);
     hr = IXMLDOMDocument_loadXML(domDocument, bstrData, &vBool);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     V_VT(&var) = VT_UNKNOWN;
     V_UNKNOWN(&var) = (IUnknown*)domDocument;
 

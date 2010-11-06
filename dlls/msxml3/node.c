@@ -951,7 +951,7 @@ static HRESULT WINAPI xmlnode_put_dataType(
     return hr;
 }
 
-static BSTR EnsureCorrectEOL(BSTR sInput)
+BSTR EnsureCorrectEOL(BSTR sInput)
 {
     int nNum = 0;
     BSTR sNew;

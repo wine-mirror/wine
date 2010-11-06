@@ -301,6 +301,11 @@ static void free_properties(domdoc_properties* properties)
     }
 }
 
+static BOOL xmldoc_has_decl(xmlDocPtr doc)
+{
+    return doc->children && (xmlStrEqual(doc->children->name, (xmlChar*)"xml") == 1);
+}
+
 /* links a "<?xml" node as a first child */
 void xmldoc_link_xmldecl(xmlDocPtr doc, xmlNodePtr node)
 {
@@ -1282,10 +1287,53 @@ static HRESULT WINAPI domdoc_get_xml(
     BSTR* p)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
+    xmlSaveCtxtPtr ctxt;
+    xmlBufferPtr buf;
+    int options;
+    long ret;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return node_get_xml(&This->node, TRUE, TRUE, p);
+    if(!p)
+        return E_INVALIDARG;
+
+    *p = NULL;
+
+    buf = xmlBufferCreate();
+    if(!buf)
+        return E_OUTOFMEMORY;
+
+    options  = xmldoc_has_decl(get_doc(This)) ? XML_SAVE_NO_DECL : 0;
+    options |= XML_SAVE_FORMAT;
+    ctxt = xmlSaveToBuffer(buf, "UTF-8", options);
+    if(!ctxt)
+    {
+        xmlBufferFree(buf);
+        return E_OUTOFMEMORY;
+    }
+
+    ret = xmlSaveDoc(ctxt, get_doc(This));
+    /* flushes on close */
+    xmlSaveClose(ctxt);
+
+    TRACE("%ld, len=%d\n", ret, xmlBufferLength(buf));
+    if(ret != -1 && xmlBufferLength(buf) > 0)
+    {
+        BSTR content;
+
+        content = bstr_from_xmlChar(xmlBufferContent(buf));
+        content = EnsureCorrectEOL(content);
+
+        *p = content;
+    }
+    else
+    {
+        *p = SysAllocStringLen(NULL, 0);
+    }
+
+    xmlBufferFree(buf);
+
+    return *p ? S_OK : E_OUTOFMEMORY;
 }
 
 
