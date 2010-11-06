@@ -91,6 +91,7 @@ static const WCHAR setUTCMonthW[] = {'s','e','t','U','T','C','M','o','n','t','h'
 static const WCHAR setFullYearW[] = {'s','e','t','F','u','l','l','Y','e','a','r',0};
 static const WCHAR setUTCFullYearW[] = {'s','e','t','U','T','C','F','u','l','l','Y','e','a','r',0};
 static const WCHAR getYearW[] = {'g','e','t','Y','e','a','r',0};
+static const WCHAR setYearW[] = {'s','e','t','Y','e','a','r',0};
 
 static const WCHAR UTCW[] = {'U','T','C',0};
 static const WCHAR parseW[] = {'p','a','r','s','e',0};
@@ -2023,6 +2024,14 @@ static HRESULT Date_getYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    B2.5 */
+static HRESULT Date_setYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static HRESULT Date_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -2074,6 +2083,7 @@ static const builtin_prop_t Date_props[] = {
     {setUTCMinutesW,         Date_setUTCMinutes,         PROPF_METHOD|3},
     {setUTCMonthW,           Date_setUTCMonth,           PROPF_METHOD|2},
     {setUTCSecondsW,         Date_setUTCSeconds,         PROPF_METHOD|2},
+    {setYearW,               Date_setYear,               PROPF_METHOD|1},
     {toDateStringW,          Date_toDateString,          PROPF_METHOD},
     {toGMTStringW,           Date_toGMTString,           PROPF_METHOD},
     {toLocaleDateStringW,    Date_toLocaleDateString,    PROPF_METHOD},

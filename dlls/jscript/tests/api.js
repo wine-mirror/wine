@@ -2136,6 +2136,7 @@ testFunctions(Date.prototype, [
         ["setUTCMinutes", 3],
         ["setUTCMonth", 2],
         ["setUTCSeconds", 2],
+        ["setYear", 1],
         ["toDateString", 0],
         ["toLocaleDateString", 0],
         ["toLocaleString", 0],
