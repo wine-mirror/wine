@@ -1,6 +1,7 @@
 /*
  * Copyright 2010 Nenad Vujic
  *                Paul Vriens
+ * Copyright 2010 Đorđe Vasiljević
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,9 +26,9 @@ LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
 
 MENU_001 MENU
 BEGIN
-        MENUITEM "Velik&e Ikone",    FCIDM_SHVIEW_BIGICON
-        MENUITEM "M&ale ikone",      FCIDM_SHVIEW_SMALLICON
-        MENUITEM "&Lista",           FCIDM_SHVIEW_LISTVIEW
+        MENUITEM "&Velike ikonice",  FCIDM_SHVIEW_BIGICON
+        MENUITEM "&Male ikonice",    FCIDM_SHVIEW_SMALLICON
+        MENUITEM "&Spisak",          FCIDM_SHVIEW_LISTVIEW
         MENUITEM "&Detalji",         FCIDM_SHVIEW_REPORTVIEW
 END
 
@@ -38,38 +39,38 @@ MENU_002 MENU
 BEGIN
         POPUP ""
         BEGIN
-          POPUP "&Pregled"
+          POPUP "&Prikaz"
           BEGIN
-            MENUITEM "Velik&e Ikone",   FCIDM_SHVIEW_BIGICON
-            MENUITEM "M&ale ikone",     FCIDM_SHVIEW_SMALLICON
-            MENUITEM "&Lista",          FCIDM_SHVIEW_LISTVIEW
+            MENUITEM "&Velike ikonice", FCIDM_SHVIEW_BIGICON
+            MENUITEM "&Male ikonice",   FCIDM_SHVIEW_SMALLICON
+            MENUITEM "&Spisak",         FCIDM_SHVIEW_LISTVIEW
             MENUITEM "&Detalji",        FCIDM_SHVIEW_REPORTVIEW
           END
           MENUITEM SEPARATOR
-          POPUP "Sredi &Ikone"
+          POPUP "Poređaj &ikonice"
           BEGIN
-            MENUITEM "po &Imenu",       0x30  /* column 0 */
-            MENUITEM "po &Tipu",        0x32  /* column 2 */
-            MENUITEM "po &Veličini",    0x31  /* ... */
-            MENUITEM "pd &Datumu",      0x33
+            MENUITEM "Po &nazivu",      0x30    /* column 0 */
+            MENUITEM "Po &vrsti",       0x32    /* column 2 */
+            MENUITEM "Po &veličini",    0x31    /* ... */
+            MENUITEM "Po &datumu",      0x33
             MENUITEM SEPARATOR
-            MENUITEM "&Automatski",     FCIDM_SHVIEW_AUTOARRANGE
+            MENUITEM "&Automatski poređaj",    FCIDM_SHVIEW_AUTOARRANGE
           END
-          MENUITEM "Složi po liniji",   FCIDM_SHVIEW_SNAPTOGRID
+          MENUITEM "Poravnaj ikonice",  FCIDM_SHVIEW_SNAPTOGRID
           MENUITEM SEPARATOR
           MENUITEM "Osveži",            FCIDM_SHVIEW_REFRESH
           MENUITEM SEPARATOR
           MENUITEM "Ubaci",             FCIDM_SHVIEW_INSERT
           MENUITEM "Ubaci kao vezu",    FCIDM_SHVIEW_INSERTLINK
           MENUITEM SEPARATOR
-          POPUP "Nov"
+          POPUP "Novo"
           BEGIN
-            MENUITEM "Nov &Folder",     FCIDM_SHVIEW_NEWFOLDER
-            MENUITEM "Nova &Veza",      FCIDM_SHVIEW_NEWLINK
+            MENUITEM "Nova &fascikla",  FCIDM_SHVIEW_NEWFOLDER
+            MENUITEM "Nova &veza",      FCIDM_SHVIEW_NEWLINK
             MENUITEM SEPARATOR
           END
           MENUITEM SEPARATOR
-          MENUITEM "Detalji",           FCIDM_SHVIEW_PROPERTIES
+          MENUITEM "Svojstva",          FCIDM_SHVIEW_PROPERTIES
         END
 END
 
@@ -80,49 +81,49 @@ MENU_SHV_FILE MENU
 BEGIN
         POPUP ""
         BEGIN
-          MENUITEM "&Otvori"           FCIDM_SHVIEW_OPEN
-          MENUITEM "I&straži",         FCIDM_SHVIEW_EXPLORE
+          MENUITEM "&Izaberi"          FCIDM_SHVIEW_OPEN
+          MENUITEM "&Pretraži",        FCIDM_SHVIEW_EXPLORE
           MENUITEM "&Otvori",          FCIDM_SHVIEW_OPEN
           MENUITEM SEPARATOR
-          MENUITEM "I&seci",           FCIDM_SHVIEW_CUT
-          MENUITEM "&Kopiraj",         FCIDM_SHVIEW_COPY
+          MENUITEM "&Iseci",           FCIDM_SHVIEW_CUT
+          MENUITEM "&Umnoži",          FCIDM_SHVIEW_COPY
           MENUITEM SEPARATOR
           MENUITEM "Napravi &vezu",    FCIDM_SHVIEW_CREATELINK
-          MENUITEM "&Obrisi",          FCIDM_SHVIEW_DELETE
-          MENUITEM "&Promeni ime",     FCIDM_SHVIEW_RENAME
+          MENUITEM "Iz&briši",         FCIDM_SHVIEW_DELETE
+          MENUITEM "Pr&eimenuj",       FCIDM_SHVIEW_RENAME
           MENUITEM SEPARATOR
-          MENUITEM "&Detalji",         FCIDM_SHVIEW_PROPERTIES
+          MENUITEM "&Svojstva",        FCIDM_SHVIEW_PROPERTIES
         END
 END
 
 MENU_CPANEL MENU
 BEGIN
-    POPUP "&Fajl"
+    POPUP "&Datoteka"
     BEGIN
         MENUITEM SEPARATOR
-        MENUITEM "I&zlaz", IDM_CPANEL_EXIT
+        MENUITEM "&Izlaz", IDM_CPANEL_EXIT
     END
 
-    POPUP "&Pregled"
+    POPUP "&Prikaz"
     BEGIN
-        MENUITEM "Veli&ke Ikone",    FCIDM_SHVIEW_BIGICON
-        MENUITEM "Ma&le Ikone",      FCIDM_SHVIEW_SMALLICON
-        MENUITEM "&Listing",         FCIDM_SHVIEW_LISTVIEW
+        MENUITEM "&Velike ikonice",  FCIDM_SHVIEW_BIGICON
+        MENUITEM "&Male ikonice",    FCIDM_SHVIEW_SMALLICON
+        MENUITEM "&Spisak",          FCIDM_SHVIEW_LISTVIEW
         MENUITEM "&Detalji",         FCIDM_SHVIEW_REPORTVIEW
     END
 
     POPUP "&Pomoć"
     BEGIN
-        MENUITEM "&O Kontrolnoj tabli...", IDM_CPANEL_ABOUT
+        MENUITEM "&O upravljačkom panelu...", IDM_CPANEL_ABOUT
     END
 END
 
 SHBRSFORFOLDER_MSGBOX DIALOG 15, 40, 188, 192
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
-CAPTION "Nađi Foldere"
+CAPTION "Pretraživanje fascikli"
 FONT 8, "MS Shell Dlg"
 {
- DEFPUSHBUTTON "OK", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ DEFPUSHBUTTON "U redu", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Otkaži", 2, 134, 176, 50, 12, WS_GROUP | WS_TABSTOP
  LTEXT "", IDD_TITLE, 4, 4, 180, 12
  LTEXT "", IDD_STATUS, 4, 25, 180, 12
@@ -134,19 +135,19 @@ FONT 8, "MS Shell Dlg"
 
 SHNEWBRSFORFOLDER_MSGBOX DIALOG 15, 40, 218, 196
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | WS_SIZEBOX | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
-CAPTION "Nađi Foldere"
+CAPTION "Pretraživanje fascikli"
 FONT 8, "MS Shell Dlg"
 {
  LTEXT "", IDD_TITLE, 10, 8, 198, 24
  LTEXT "", IDD_STATUS, 10, 25, 198, 12
- LTEXT "Folder:", IDD_FOLDER, 10, 156, 40, 12
+ LTEXT "Fascikla:", IDD_FOLDER, 10, 156, 40, 12
  CONTROL "", IDD_TREEVIEW, "SysTreeView32",
         TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
         WS_BORDER | WS_TABSTOP,
         12, 38, 194, 105
  EDITTEXT IDD_FOLDERTEXT, 46, 150, 160, 14, WS_BORDER | WS_GROUP | WS_TABSTOP
- PUSHBUTTON "&Napravi folder", IDD_MAKENEWFOLDER, 12, 174, 70, 14, WS_GROUP | WS_TABSTOP
- DEFPUSHBUTTON "OK", IDOK, 102, 174, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "&Napravi novu fasciklu", IDD_MAKENEWFOLDER, 12, 174, 70, 14, WS_GROUP | WS_TABSTOP
+ DEFPUSHBUTTON "U redu", IDOK, 102, 174, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Otkaži", IDCANCEL, 156, 174, 50, 14, WS_GROUP | WS_TABSTOP
 }
 
@@ -165,17 +166,17 @@ FONT 8, "MS Shell Dlg"
 
 SHELL_ABOUT_MSGBOX DIALOG 15, 40, 220, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "O %s"
+CAPTION "O programu %s"
 FONT 10, "MS Shell Dlg"
 {
- DEFPUSHBUTTON "OK", IDOK, 153, 133, 60, 12, WS_TABSTOP
+ DEFPUSHBUTTON "U redu", IDOK, 153, 133, 60, 12, WS_TABSTOP
  PUSHBUTTON "Wine &licenca...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
  LISTBOX IDC_ABOUT_LISTBOX, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
  ICON "", stc1, 10, 10, 30, 30
  LTEXT "", IDC_ABOUT_STATIC_TEXT1, 42, 10, 170, 10
  LTEXT "", IDC_ABOUT_STATIC_TEXT2, 42, 22, 170, 10
- LTEXT "Pokreni kao %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
- LTEXT "Wine vam je omogućio:", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
+ LTEXT "Radi na %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
+ LTEXT "Wine su Vam omogućili:", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
 }
 
 SHELL_RUN_DLG DIALOG 0, 0, 227, 95
@@ -184,119 +185,141 @@ CAPTION ""
 FONT 8, "MS Shell Dlg"
 {
  ICON "", IDC_RUNDLG_ICON, 7, 11, 18, 20, WS_VISIBLE
- LTEXT "Ukucaj ime programa, foldera, fajla ili internet strane, i Wine će otvoriti za tebe.", IDC_RUNDLG_DESCRIPTION, 36, 11, 182, 18
+ LTEXT "Unesite naziv programa, fascikle, dokumenta ili internet resursa, a Wine će ga otvoriti.", IDC_RUNDLG_DESCRIPTION, 36, 11, 182, 18
  LTEXT "&Otvori:", IDC_RUNDLG_LABEL, 7, 39, 24, 10
  CONTROL "", IDC_RUNDLG_EDITPATH, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
- DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
+ DEFPUSHBUTTON "U redu", IDOK, 62, 63, 50, 14, WS_TABSTOP
  PUSHBUTTON "Otkaži", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
- PUSHBUTTON "&Nađi...", IDC_RUNDLG_BROWSE, 170, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "&Razgledaj...", IDC_RUNDLG_BROWSE, 170, 63, 50, 14, WS_TABSTOP
 }
 
 STRINGTABLE
 {
         /* columns in the shellview */
-        IDS_SHV_COLUMN1            "Fajl"
+        IDS_SHV_COLUMN1            "Datoteka"
         IDS_SHV_COLUMN2            "Veličina"
-        IDS_SHV_COLUMN3            "Tip"
+        IDS_SHV_COLUMN3            "Vrsta"
         IDS_SHV_COLUMN4            "Izmenjeno"
-        IDS_SHV_COLUMN5            "Atributi"
+        IDS_SHV_COLUMN5            "Osobine"
         IDS_SHV_COLUMN6            "Veličina"
-        IDS_SHV_COLUMN7            "Veličina dostupna"
-        IDS_SHV_COLUMN8            "Ime"
-        IDS_SHV_COLUMN9            "Komentar"
+        IDS_SHV_COLUMN7            "Dostupno"
+        IDS_SHV_COLUMN8            "Naziv"
+        IDS_SHV_COLUMN9            "Komentari"
         IDS_SHV_COLUMN10           "Vlasnik"
         IDS_SHV_COLUMN11           "Grupa"
-        IDS_SHV_COLUMN_DELFROM     "Original lokacija"
+        IDS_SHV_COLUMN_DELFROM     "Originalna lokacija"
         IDS_SHV_COLUMN_DELDATE     "Datum brisanja"
         IDS_SHV_COL_DOCS           "Dokumenti"
-        IDS_SHV_COL_STATUS         "Status"
+        IDS_SHV_COL_STATUS         "Stanje"
         IDS_SHV_COL_LOCATION       "Lokacija"
         IDS_SHV_COL_MODEL          "Model"
 
         /* special folders */
-        IDS_DESKTOP                "Desktop"
-        IDS_MYCOMPUTER             "Moj kompjuter"
+        IDS_DESKTOP                "Radna površina"
+        IDS_MYCOMPUTER             "Računar"
         IDS_RECYCLEBIN_FOLDER_NAME "Smeće"
-        IDS_CONTROLPANEL           "Kontrolna tabla"
+        IDS_CONTROLPANEL           "Upravljački panel"
 
         /* context menus */
-        IDS_VIEW_LARGE             "Veli&ke Ikone"
-        IDS_VIEW_SMALL             "Ma&le Ikone"
-        IDS_VIEW_LIST              "&Listing"
+        IDS_VIEW_LARGE             "&Velike ikonice"
+        IDS_VIEW_SMALL             "&Male ikonice"
+        IDS_VIEW_LIST              "&Spisak"
         IDS_VIEW_DETAILS           "&Detalji"
         IDS_SELECT                 "Izaberi"
         IDS_OPEN                   "Otvori"
 
-        IDS_CREATEFOLDER_DENIED "Ne mogu napraviti folder: Dozvola odbijena."
-        IDS_CREATEFOLDER_CAPTION "Greška tokom pravljenja foldera"
-        IDS_DELETEITEM_CAPTION "Potvrdi brisanje fajla"
-        IDS_DELETEFOLDER_CAPTION "Potvrdi brisanje foldera"
-        IDS_DELETEITEM_TEXT "Da li ste sigurni da želite da obrišete '%1'?"
-        IDS_DELETEMULTIPLE_TEXT "Da li ste sigurni da želite da obrišete ove %1 fajlove?"
-        IDS_DELETESELECTED_TEXT "Da li ste sigurni da želite da obrišete?"
-        IDS_TRASHITEM_TEXT "Da li ste sigurni da želite da pošaljete '%1' u Smeće?"
-        IDS_TRASHFOLDER_TEXT "Da li ste sigurni da želite da pošaljete '%1' i sav sadrzaj Smeće?"
-        IDS_TRASHMULTIPLE_TEXT "Da li ste sigurni da želite da pošaljete ove %1 fajlove u  Smeće?"
-        IDS_CANTTRASH_TEXT "'%1' ne može biti poslat u Smeće. Da li želite da obrišete ?"
-        IDS_OVERWRITEFILE_TEXT "Ovaj folder sadrži fajl sa tim imenom '%1'.\n\nDa li želite da zamenite?"
-        IDS_OVERWRITEFILE_CAPTION "Potvrdite presnimavanje"
-        IDS_OVERWRITEFOLDER_TEXT "Ovaj folder sadrzi folder sa imenom '%1'.\n\n"\
-            "Ako folderi imaju fajlove sa istim imenima\n"\
-            "oni ce biti presnimljeni. Da li i dalje želite da pomerite/kopirate folder?"
+        IDS_CREATEFOLDER_DENIED "Pravljenje fascikle nije uspelo: nemate odgovarajuću dozvolu."
+        IDS_CREATEFOLDER_CAPTION "Došlo je do greške pri pravljenju fascikle"
+        IDS_DELETEITEM_CAPTION "Potvrda brisanja datoteke"
+        IDS_DELETEFOLDER_CAPTION "Potvrda brisanja fascikle"
+        IDS_DELETEITEM_TEXT "Želite li da izbrišete „%1“?"
+        IDS_DELETEMULTIPLE_TEXT "Želite li da izbrišete ovih %1 stavki?"
+        IDS_DELETESELECTED_TEXT "Želite li da izbrišete izabranu stavku?"
+        IDS_TRASHITEM_TEXT "Želite li da pošaljete „%1“ u smeće?"
+        IDS_TRASHFOLDER_TEXT "Želite li da pošaljete „%1“ i sav njegov sadržaj u smeće?"
+        IDS_TRASHMULTIPLE_TEXT "Želite li da pošaljete ovih %1 stavki u smeće?"
+        IDS_CANTTRASH_TEXT "Stavka „%1“ se ne može poslati u smeće. Želite li da je trajno izbrišete?"
+        IDS_OVERWRITEFILE_TEXT "Ova fascikla već sadrži datoteku pod nazivom „%1“.\n\nŽelite li da je zamenite?"
+        IDS_OVERWRITEFILE_CAPTION "Potvrda zamene datoteke"
+        IDS_OVERWRITEFOLDER_TEXT "Ova fascikla već sadrži fasciklu pod nazivom „%1“.\n\n"\
+            "Ako datoteke u odredišnoj fascikli imaju ista imena kao i datoteke u\n"\
+            "izabranoj fascikli, oni će biti zamenjeni. Želite li da premestite ili umnožite\n"\
+            "fasciklu?"
 
         /* message box strings */
-        IDS_RESTART_TITLE       "Restart"
-        IDS_RESTART_PROMPT      "Da li želite da simulirate Windows restart?"
-        IDS_SHUTDOWN_TITLE      "Ugasi"
-        IDS_SHUTDOWN_PROMPT     "Da li želite da ugasite Wine sesiju ?"
+        IDS_RESTART_TITLE       "Ponovno pokretanje"
+        IDS_RESTART_PROMPT      "Želite li da simulirate ponovno pokretanje Windows-a?"
+        IDS_SHUTDOWN_TITLE      "Gašenje"
+        IDS_SHUTDOWN_PROMPT     "Želite li da izgasite Wine sesiju?"
 
         /* Run File dialog */
-        IDS_RUNDLG_ERROR           "Ne mogu da prikazem Pokreni fajl prozor (interna greška)"
-        IDS_RUNDLG_BROWSE_ERROR    "Ne mogu da prikažem nađi prozor (interna greška)"
-        IDS_RUNDLG_BROWSE_CAPTION  "Nađi"
-        IDS_RUNDLG_BROWSE_FILTER   "Izvršni fajlovi\\0*.exe\\0Svi fajlovi\\0*.*\\0\\0"
+        IDS_RUNDLG_ERROR           "Prikazivanje prozorčeta za pokretanje datoteke nije uspelo (unutrašnja greška)"
+        IDS_RUNDLG_BROWSE_ERROR    "Prikazivanje prozorčeta za razgledanje nije uspelo (unutrašnja greška)"
+        IDS_RUNDLG_BROWSE_CAPTION  "Razgledaj"
+        IDS_RUNDLG_BROWSE_FILTER   "Izvršne datoteke\0*.exe\0Sve datoteke\0*.*\0\0"
 
         /* shell folder path default values */
-        IDS_PROGRAMS                "Start Meni\\Programi"
-        IDS_PERSONAL                "Moji Dokumenti"
-        IDS_FAVORITES               "Favoriti"
-        IDS_STARTUP                 "Start Meni\\Programi\\Početni"
+        IDS_PROGRAMS                "„Start“ meni\\Programi"
+        IDS_PERSONAL                "Dokumenti"
+        IDS_FAVORITES               "Omiljeno"
+        IDS_STARTUP                 "„Start“ meni\\Programi\\Pokretanje"
         IDS_RECENT                  "Skorašnje"
         IDS_SENDTO                  "Pošalji u"
-        IDS_STARTMENU               "Start Meni"
-        IDS_MYMUSIC                 "Moja muzika"
-        IDS_MYVIDEO                 "Moji snimci"
-        IDS_DESKTOPDIRECTORY        "Desktop"
-        IDS_NETHOOD                 "Mreža"
-        IDS_TEMPLATES               "Templates"
-        IDS_APPDATA                 "Podaci programa"
-        IDS_PRINTHOOD               "Mrezna Štampa"
-        IDS_LOCAL_APPDATA           "Lokalna Podešavanja\\Podaci programa"
-        IDS_INTERNET_CACHE          "Lokalna Podešavanja\\Privremeni Internet Fajlovi"
+        IDS_STARTMENU               "„Start“ meni"
+        IDS_MYMUSIC                 "Muzika"
+        IDS_MYVIDEO                 "Video snimci"
+        IDS_DESKTOPDIRECTORY        "Radna površina"
+        IDS_NETHOOD                 "Internet"
+        IDS_TEMPLATES               "Šabloni"
+        IDS_APPDATA                 "Programski podaci"
+        IDS_PRINTHOOD               "Štampači"
+        IDS_LOCAL_APPDATA           "Lokalne postavke\\Programski podaci"
+        IDS_INTERNET_CACHE          "Lokalne postavke\\Privremene internet datoteke"
         IDS_COOKIES                 "Kolačići"
-        IDS_HISTORY                 "Lokalna Podešavanja\\Istorija"
+        IDS_HISTORY                 "Lokalne postavke\\Istorijat"
         IDS_PROGRAM_FILES           "Programi"
-        IDS_MYPICTURES              "Moje Slike"
-        IDS_PROGRAM_FILES_COMMON    "Programi\\Zajednički Fajlovi Programa"
+        IDS_PROGRAM_FILESX86        "Programi (x86)"
+        IDS_MYPICTURES              "Slike"
+        IDS_PROGRAM_FILES_COMMON    "Programi\\Zajedničke datoteke"
+        IDS_PROGRAM_FILES_COMMONX86 "Programi (x86)\\Zajedničke datoteke"
         IDS_COMMON_DOCUMENTS        "Dokumenti"
-        IDS_ADMINTOOLS              "Start Menu\\Programi\\Administrative Tools"
+        IDS_ADMINTOOLS              "„Start“ meni\\Programi\\Administrativne alatke"
         IDS_COMMON_MUSIC            "Muzika"
         IDS_COMMON_PICTURES         "Slike"
-        IDS_COMMON_VIDEO            "Snimci"
-        IDS_CDBURN_AREA             "Lokalna Podešavanja\\Podaci programa\\Microsoft\\CD Burning"
+        IDS_COMMON_VIDEO            "Video snimci"
+        IDS_CDBURN_AREA             "Lokalne postavke\\Programski podaci\\Microsoft\\CD rezanje"
+        IDS_CONTACTS                "Kontakti"
+        IDS_LINKS                   "Veze"
+        IDS_PHOTO_ALBUMS            "Slike\\Pokretni prikazi"
+        IDS_PLAYLISTS               "Muzika\\Spiskovi numera"
+        IDS_PUBLIC_DOWNLOADS        "Prijemi"
+        IDS_PUBLIC_GAME_TASKS       "Microsoft\\Windows\\GameExplorer"
+        IDS_PUBLIC_LIBRARIES        "Microsoft\\Windows\\Biblioteke"
+        IDS_PUBLIC_RINGTONES        "Microsoft\\Windows\\Melodije"
+        IDS_SAMPLE_MUSIC            "Muzika\\Primerci"
+        IDS_SAMPLE_PICTURES         "Slike\\Primerci"
+        IDS_SAMPLE_PLAYLISTS        "Muzika\\Primerci"
+        IDS_SAMPLE_VIDEOS           "Video snimci\\Primerci"
+        IDS_SAVED_GAMES             "Sačuvane igre"
+        IDS_SAVED_SEARCHES          "Pretrage"
+        IDS_USER_PROFILES           "Korisnici"
+        IDS_COMMON_OEM_LINKS        "OEM veze"
+        IDS_DOCUMENTS               "Dokumenti"
+        IDS_DOWNLOADS               "Prijemi"
+        IDS_LOCAL_APPDATA_LOW       "AppData\\LocalLow"
 
-        IDS_NEWFOLDER               "Novi Folder"
+        IDS_NEWFOLDER               "Nova fascikla"
 
-        IDS_CPANEL_TITLE            "Wine Control Panel"
-        IDS_CPANEL_NAME             "Ime"
-        IDS_CPANEL_DESCRIPTION      "Description"
+        IDS_CPANEL_TITLE            "Wine upravljački panel"
+        IDS_CPANEL_NAME             "Naziv"
+        IDS_CPANEL_DESCRIPTION      "Opis"
 
-        IDS_SHLEXEC_NOASSOC         "Nema Windows programa konfigurisanog da otvori ovaj tip fajla."
+        IDS_SHLEXEC_NOASSOC         "Nijedan program nije podešen da otvara ovu vrstu datoteka."
 }
 
 STRINGTABLE
 {
-IDS_LICENSE_CAPTION,            "Wine Licenca"
+IDS_LICENSE_CAPTION,            "Wine licenca"
 IDS_LICENSE,
 "Wine is free software; you can redistribute it and/or \
 modify it under the terms of the GNU Lesser General Public \
@@ -315,9 +338,9 @@ LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_CYRILLIC
 
 MENU_001 MENU
 BEGIN
-    MENUITEM "Велик&е Иконе",    FCIDM_SHVIEW_BIGICON
-    MENUITEM "Мал&е Иконе",      FCIDM_SHVIEW_SMALLICON
-    MENUITEM "&Листа",           FCIDM_SHVIEW_LISTVIEW
+    MENUITEM "&Велике иконице",  FCIDM_SHVIEW_BIGICON
+    MENUITEM "&Мале иконице",    FCIDM_SHVIEW_SMALLICON
+    MENUITEM "&Списак",          FCIDM_SHVIEW_LISTVIEW
     MENUITEM "&Детаљи",          FCIDM_SHVIEW_REPORTVIEW
 END
 
@@ -328,38 +351,38 @@ MENU_002 MENU
 BEGIN
     POPUP ""
     BEGIN
-        POPUP "&Преглед"
+        POPUP "&Приказ"
         BEGIN
-            MENUITEM "Велик&е Иконе",  FCIDM_SHVIEW_BIGICON
-            MENUITEM "Мал&е Иконе",    FCIDM_SHVIEW_SMALLICON
-            MENUITEM "&Листа",         FCIDM_SHVIEW_LISTVIEW
+            MENUITEM "&Велике иконице", FCIDM_SHVIEW_BIGICON
+            MENUITEM "&Мале иконице",  FCIDM_SHVIEW_SMALLICON
+            MENUITEM "&Списак",        FCIDM_SHVIEW_LISTVIEW
             MENUITEM "&Детаљи",        FCIDM_SHVIEW_REPORTVIEW
         END
         MENUITEM SEPARATOR
-        POPUP "Среди &Иконе"
+        POPUP "Поређај &иконице"
         BEGIN
-            MENUITEM "пo &Имену",      0x30    /* column 0 */
-            MENUITEM "по &Типу",       0x32    /* column 2 */
-            MENUITEM "по &Величини",   0x31    /* ... */
-            MENUITEM "по &Датуму",     0x33
+            MENUITEM "По &називу",     0x30    /* column 0 */
+            MENUITEM "По &врсти",      0x32    /* column 2 */
+            MENUITEM "По &величини",   0x31    /* ... */
+            MENUITEM "По &датуму",     0x33
             MENUITEM SEPARATOR
-            MENUITEM "&Аутоматски",    FCIDM_SHVIEW_AUTOARRANGE
+            MENUITEM "&Аутоматски поређај", FCIDM_SHVIEW_AUTOARRANGE
         END
-        MENUITEM "Сложи по линији",    FCIDM_SHVIEW_SNAPTOGRID
+        MENUITEM "Поравнај иконице",   FCIDM_SHVIEW_SNAPTOGRID
         MENUITEM SEPARATOR
         MENUITEM "Освежи",             FCIDM_SHVIEW_REFRESH
         MENUITEM SEPARATOR
         MENUITEM "Убаци",              FCIDM_SHVIEW_INSERT
         MENUITEM "Убаци као везу",     FCIDM_SHVIEW_INSERTLINK
         MENUITEM SEPARATOR
-        POPUP "Нов"
+        POPUP "Ново"
         BEGIN
-            MENUITEM "Нов &Фолдер",    FCIDM_SHVIEW_NEWFOLDER
-            MENUITEM "Новa &Веза",     FCIDM_SHVIEW_NEWLINK
+            MENUITEM "Нова &фасцикла", FCIDM_SHVIEW_NEWFOLDER
+            MENUITEM "Нова &веза",     FCIDM_SHVIEW_NEWLINK
             MENUITEM SEPARATOR
         END
         MENUITEM SEPARATOR
-        MENUITEM "Детаљи",             FCIDM_SHVIEW_PROPERTIES
+        MENUITEM "Својства",           FCIDM_SHVIEW_PROPERTIES
     END
 END
 
@@ -370,47 +393,47 @@ MENU_SHV_FILE MENU
 BEGIN
     POPUP ""
     BEGIN
-        MENUITEM "&Отвори"           FCIDM_SHVIEW_OPEN
-        MENUITEM "И&стражи",         FCIDM_SHVIEW_EXPLORE
+        MENUITEM "&Изабери"          FCIDM_SHVIEW_OPEN
+        MENUITEM "&Претражи",        FCIDM_SHVIEW_EXPLORE
         MENUITEM "&Отвори",          FCIDM_SHVIEW_OPEN
         MENUITEM SEPARATOR
-        MENUITEM "И&сеци",           FCIDM_SHVIEW_CUT
-        MENUITEM "&Копирај",         FCIDM_SHVIEW_COPY
+        MENUITEM "&Исеци",           FCIDM_SHVIEW_CUT
+        MENUITEM "&Умножи",          FCIDM_SHVIEW_COPY
         MENUITEM SEPARATOR
         MENUITEM "Направи &везу",    FCIDM_SHVIEW_CREATELINK
-        MENUITEM "&Обриши",          FCIDM_SHVIEW_DELETE
-        MENUITEM "&Промени Име",     FCIDM_SHVIEW_RENAME
+        MENUITEM "Из&бриши",         FCIDM_SHVIEW_DELETE
+        MENUITEM "Пр&еименуј",       FCIDM_SHVIEW_RENAME
         MENUITEM SEPARATOR
-        MENUITEM "&Детаљи",          FCIDM_SHVIEW_PROPERTIES
+        MENUITEM "&Својства",        FCIDM_SHVIEW_PROPERTIES
     END
 END
 
 MENU_CPANEL MENU
 BEGIN
-    POPUP "&Фајл"
+    POPUP "&Датотека"
     BEGIN
         MENUITEM SEPARATOR
-        MENUITEM "И&злаз", IDM_CPANEL_EXIT
+        MENUITEM "&Излаз", IDM_CPANEL_EXIT
     END
-    POPUP "&Преглед"
+    POPUP "&Приказ"
     BEGIN
-        MENUITEM "Вели&ke Иконе",    FCIDM_SHVIEW_BIGICON
-        MENUITEM "Ма&le Иконе",      FCIDM_SHVIEW_SMALLICON
-        MENUITEM "&Листинг",         FCIDM_SHVIEW_LISTVIEW
+        MENUITEM "&Велике иконице",  FCIDM_SHVIEW_BIGICON
+        MENUITEM "&Мале иконице",    FCIDM_SHVIEW_SMALLICON
+        MENUITEM "&Списак",          FCIDM_SHVIEW_LISTVIEW
         MENUITEM "&Детаљи",          FCIDM_SHVIEW_REPORTVIEW
     END
     POPUP "&Помоћ"
     BEGIN
-        MENUITEM "&O Контролној табли...", IDM_CPANEL_ABOUT
+        MENUITEM "&О управљачком панелу...", IDM_CPANEL_ABOUT
     END
 END
 
 SHBRSFORFOLDER_MSGBOX DIALOG 15, 40, 188, 192
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
-CAPTION "Нађи фолдерe"
+CAPTION "Претраживање фасцикли"
 FONT 8, "MS Shell Dlg"
 {
- DEFPUSHBUTTON "ОK", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ DEFPUSHBUTTON "У реду", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Откажи", 2, 134, 176, 50, 12, WS_GROUP | WS_TABSTOP
  LTEXT "", IDD_TITLE, 4, 4, 180, 12
  LTEXT "", IDD_STATUS, 4, 25, 180, 12
@@ -422,19 +445,19 @@ FONT 8, "MS Shell Dlg"
 
 SHNEWBRSFORFOLDER_MSGBOX DIALOG 15, 40, 218, 196
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | WS_SIZEBOX | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
-CAPTION "Нађи фолдерe"
+CAPTION "Претраживање фасцикли"
 FONT 8, "MS Shell Dlg"
 {
  LTEXT "", IDD_TITLE, 10, 8, 198, 24
  LTEXT "", IDD_STATUS, 10, 25, 198, 12
- LTEXT "Фолдер:", IDD_FOLDER, 10, 156, 40, 12
+ LTEXT "Фасцикла:", IDD_FOLDER, 10, 156, 40, 12
  CONTROL "", IDD_TREEVIEW, "SysTreeView32",
         TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
         WS_BORDER | WS_TABSTOP,
         12, 38, 194, 105
  EDITTEXT IDD_FOLDERTEXT, 46, 150, 160, 14, WS_BORDER | WS_GROUP | WS_TABSTOP
- PUSHBUTTON "&Направи Фолдер", IDD_MAKENEWFOLDER, 12, 174, 70, 14, WS_GROUP | WS_TABSTOP
- DEFPUSHBUTTON "ОK", IDOK, 102, 174, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "&Направи нову фасциклу", IDD_MAKENEWFOLDER, 12, 174, 70, 14, WS_GROUP | WS_TABSTOP
+ DEFPUSHBUTTON "У реду", IDOK, 102, 174, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Откажи", IDCANCEL, 156, 174, 50, 14, WS_GROUP | WS_TABSTOP
 }
 
@@ -453,17 +476,17 @@ FONT 8, "MS Shell Dlg"
 
 SHELL_ABOUT_MSGBOX DIALOG 15, 40, 220, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "O %s"
+CAPTION "О програму %s"
 FONT 10, "MS Shell Dlg"
 {
- DEFPUSHBUTTON "ОK", IDOK, 153, 133, 60, 12, WS_TABSTOP
+ DEFPUSHBUTTON "У реду", IDOK, 153, 133, 60, 12, WS_TABSTOP
  PUSHBUTTON "Wine &лиценца...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
  LISTBOX IDC_ABOUT_LISTBOX, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
  ICON "", stc1, 10, 10, 30, 30
  LTEXT "", IDC_ABOUT_STATIC_TEXT1, 42, 10, 170, 10
  LTEXT "", IDC_ABOUT_STATIC_TEXT2, 42, 22, 170, 10
- LTEXT "Покрени као %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
- LTEXT "Wine вам је омогућио:", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
+ LTEXT "Ради на %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
+ LTEXT "Wine су Вам омогућили:", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
 }
 
 SHELL_RUN_DLG DIALOG 0, 0, 227, 95
@@ -472,119 +495,141 @@ CAPTION ""
 FONT 8, "MS Shell Dlg"
 {
  ICON "", IDC_RUNDLG_ICON, 7, 11, 18, 20, WS_VISIBLE
- LTEXT "Укуцај име програма, фолдерa, фајла или интернет стране, и Wine ће отворити за тебе.", IDC_RUNDLG_DESCRIPTION, 36, 11, 182, 18
+ LTEXT "Унесите назив програма, фасцикле, документа или интернет ресурса, а Wine ће га отворити.", IDC_RUNDLG_DESCRIPTION, 36, 11, 182, 18
  LTEXT "&Отвори:", IDC_RUNDLG_LABEL, 7, 39, 24, 10
  CONTROL "", IDC_RUNDLG_EDITPATH, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
- DEFPUSHBUTTON "ОK", IDOK, 62, 63, 50, 14, WS_TABSTOP
+ DEFPUSHBUTTON "У реду", IDOK, 62, 63, 50, 14, WS_TABSTOP
  PUSHBUTTON "Откажи", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
- PUSHBUTTON "&Нађи...", IDC_RUNDLG_BROWSE, 170, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "&Разгледај...", IDC_RUNDLG_BROWSE, 170, 63, 50, 14, WS_TABSTOP
 }
 
 STRINGTABLE
 {
     /* columns in the shellview */
-    IDS_SHV_COLUMN1               "Фајл"
-    IDS_SHV_COLUMN2               "Величине"
-    IDS_SHV_COLUMN3               "Тип"
+    IDS_SHV_COLUMN1               "Датотека"
+    IDS_SHV_COLUMN2               "Величина"
+    IDS_SHV_COLUMN3               "Врста"
     IDS_SHV_COLUMN4               "Измењено"
-    IDS_SHV_COLUMN5               "Атрибути"
+    IDS_SHV_COLUMN5               "Особине"
     IDS_SHV_COLUMN6               "Величина"
-    IDS_SHV_COLUMN7               "Величина доступна"
-    IDS_SHV_COLUMN8               "Име"
-    IDS_SHV_COLUMN9               "Коментар"
+    IDS_SHV_COLUMN7               "Доступно"
+    IDS_SHV_COLUMN8               "Назив"
+    IDS_SHV_COLUMN9               "Коментари"
     IDS_SHV_COLUMN10              "Власник"
     IDS_SHV_COLUMN11              "Група"
-    IDS_SHV_COLUMN_DELFROM        "Оригинал локација"
+    IDS_SHV_COLUMN_DELFROM        "Оригинална локација"
     IDS_SHV_COLUMN_DELDATE        "Датум брисања"
     IDS_SHV_COL_DOCS              "Документи"
-    IDS_SHV_COL_STATUS            "Статус"
+    IDS_SHV_COL_STATUS            "Стање"
     IDS_SHV_COL_LOCATION          "Локација"
     IDS_SHV_COL_MODEL             "Модел"
 
     /* special folders */
-    IDS_DESKTOP                   "Десктоп"
-    IDS_MYCOMPUTER                "Мој компјутер"
+    IDS_DESKTOP                   "Радна површина"
+    IDS_MYCOMPUTER                "Рачунар"
     IDS_RECYCLEBIN_FOLDER_NAME    "Смеће"
-    IDS_CONTROLPANEL              "Контролна табла"
+    IDS_CONTROLPANEL              "Управљачки панел"
 
     /* context menus */
-    IDS_VIEW_LARGE                "Вели&ke Иконе"
-    IDS_VIEW_SMALL                "Ma&le Иконе"
-    IDS_VIEW_LIST                 "&Листинг"
+    IDS_VIEW_LARGE                "&Велике иконице"
+    IDS_VIEW_SMALL                "&Мале иконице"
+    IDS_VIEW_LIST                 "&Списак"
     IDS_VIEW_DETAILS              "&Детаљи"
     IDS_SELECT                    "Изабери"
     IDS_OPEN                      "Отвори"
 
-    IDS_CREATEFOLDER_DENIED       "Не могу направити фолдер: Дозвола одбијена."
-    IDS_CREATEFOLDER_CAPTION      "Грешка током прављења фолдера"
-    IDS_DELETEITEM_CAPTION        "Потврди брисање фајла"
-    IDS_DELETEFOLDER_CAPTION      "Потврди брисање Фолдерa"
-    IDS_DELETEITEM_TEXT           "Да ли сте сигурни да желите да обришете '%1'?"
-    IDS_DELETEMULTIPLE_TEXT       "Да ли сте сигурни да желите да обришете ове %1 фајлове?"
-    IDS_DELETESELECTED_TEXT       "Да ли сте сигурни да желите да обришете?"
-    IDS_TRASHITEM_TEXT            "Да ли сте сигурни да желите да пошаљете '%1' u смеће?"
-    IDS_TRASHFOLDER_TEXT          "Да ли сте сигурни да желите да пошаљете '%1' и сав садржај у смеће?"
-    IDS_TRASHMULTIPLE_TEXT        "Да ли сте сигурни да желите да пошаљете ове %1 фајлове у смеће?"
-    IDS_CANTTRASH_TEXT            "'%1' не може бити послат у Смеће. Да ли желите да обришете ?"
-    IDS_OVERWRITEFILE_TEXT        "Овај фолдер садржи фајл са именом '%1'.\n\nДа ли желите да замените?"
-    IDS_OVERWRITEFILE_CAPTION     "Потврдите преснимавање"
-    IDS_OVERWRITEFOLDER_TEXT      "Овај фолдер садржи фолдер са именом '%1'.\n\n" \
-        "ако фолдери имају фајлове са истим именима\n" \
-        "они ће бити преснимљени. Да ли желите да померите/копирате фолдер?"
+    IDS_CREATEFOLDER_DENIED       "Прављење фасцикле није успело: немате одговарајућу дозволу."
+    IDS_CREATEFOLDER_CAPTION      "Дошло је до грешке при прављењу фасцикле"
+    IDS_DELETEITEM_CAPTION        "Потврда брисања датотеке"
+    IDS_DELETEFOLDER_CAPTION      "Потврда брисања фасцикле"
+    IDS_DELETEITEM_TEXT           "Желите ли да избришете „%1“?"
+    IDS_DELETEMULTIPLE_TEXT       "Желите ли да избришете ових %1 ставки?"
+    IDS_DELETESELECTED_TEXT       "Желите ли да избришете изабрану ставку?"
+    IDS_TRASHITEM_TEXT            "Желите ли да пошаљете „%1“ у смеће?"
+    IDS_TRASHFOLDER_TEXT          "Желите ли да пошаљете „%1“ и сав његов садржај у смеће?"
+    IDS_TRASHMULTIPLE_TEXT        "Желите ли да пошаљете ових %1 ставки у смеће?"
+    IDS_CANTTRASH_TEXT            "Ставка „%1“ се не може послати у смеће. Желите ли да је трајно избришете?"
+    IDS_OVERWRITEFILE_TEXT        "Ова фасцикла већ садржи датотеку под називом „%1“.\n\nЖелите ли да је замените?"
+    IDS_OVERWRITEFILE_CAPTION     "Потврда замене датотеке"
+    IDS_OVERWRITEFOLDER_TEXT      "Ова фасцикла већ садржи фасциклу под називом „%1“.\n\n"\
+        "Ако датотеке у одредишној фасцикли имају иста имена као и датотеке у\n"\
+        "изабраној фасцикли, они ће бити замењени. Желите ли да преместите или умножите\n"\
+        "фасциклу?"
 
     /* message box strings */
-    IDS_RESTART_TITLE       "Рестарт"
-    IDS_RESTART_PROMPT      "Да ли желите да симулирате Windows рестарт?"
-    IDS_SHUTDOWN_TITLE      "Угаси"
-    IDS_SHUTDOWN_PROMPT     "Да ли желите да угасите Wine сесију?"
+    IDS_RESTART_TITLE       "Поновно покретање"
+    IDS_RESTART_PROMPT      "Желите ли да симулирате поновно покретање Windows-а?"
+    IDS_SHUTDOWN_TITLE      "Гашење"
+    IDS_SHUTDOWN_PROMPT     "Желите ли да изгасите Wine сесију?"
 
     /* Run File dialog */
-    IDS_RUNDLG_ERROR           "Не могу да прикажем Покрени фајл прозор (интерна грешка)"
-    IDS_RUNDLG_BROWSE_ERROR    "Не могу да прикажем нађи прозор (интерна грешка)"
-    IDS_RUNDLG_BROWSE_CAPTION  "Нађи"
-    IDS_RUNDLG_BROWSE_FILTER   "Извршни фајлови\\0*.exe\\0Сви фајлови\\0*.*\\0\\0"
+    IDS_RUNDLG_ERROR           "Приказивање прозорчета за покретање датотеке није успело (унутрашња грешка)"
+    IDS_RUNDLG_BROWSE_ERROR    "Приказивање прозорчета за разгледање није успело (унутрашња грешка)"
+    IDS_RUNDLG_BROWSE_CAPTION  "Разгледај"
+    IDS_RUNDLG_BROWSE_FILTER   "Извршне датотеке\0*.exe\0Све датотеке\0*.*\0\0"
 
     /* shell folder path default values */
-    IDS_PROGRAMS                "Старт Мени\\Програми"
-    IDS_PERSONAL                "Моји документи"
-    IDS_FAVORITES               "Фаворити"
-    IDS_STARTUP                 "Старт Мени\\Програми\\Почетни"
+    IDS_PROGRAMS                "„Старт“ мени\\Програми"
+    IDS_PERSONAL                "Документи"
+    IDS_FAVORITES               "Омиљено"
+    IDS_STARTUP                 "„Старт“ мени\\Програми\\Покретање"
     IDS_RECENT                  "Скорашње"
     IDS_SENDTO                  "Пошаљи у"
-    IDS_STARTMENU               "Старт мени"
-    IDS_MYMUSIC                 "Моја музика"
-    IDS_MYVIDEO                 "Моји снимци"
-    IDS_DESKTOPDIRECTORY        "Десктоп"
-    IDS_NETHOOD                 "Мрежа"
-    IDS_TEMPLATES               "Темплати"
-    IDS_APPDATA                 "Подаци програма"
-    IDS_PRINTHOOD               "Мрежна штампа"
-    IDS_LOCAL_APPDATA           "Локална подешавања\\Подаци програма"
-    IDS_INTERNET_CACHE          "Локална подешавања\\Привремени интернет фајлови"
+    IDS_STARTMENU               "„Старт“ мени"
+    IDS_MYMUSIC                 "Музика"
+    IDS_MYVIDEO                 "Видео снимци"
+    IDS_DESKTOPDIRECTORY        "Радна површина"
+    IDS_NETHOOD                 "Интернет"
+    IDS_TEMPLATES               "Шаблони"
+    IDS_APPDATA                 "Програмски подаци"
+    IDS_PRINTHOOD               "Штампачи"
+    IDS_LOCAL_APPDATA           "Локалне поставке\\Програмски подаци"
+    IDS_INTERNET_CACHE          "Локалне поставке\\Привремене интернет датотеке"
     IDS_COOKIES                 "Колачићи"
-    IDS_HISTORY                 "Локална подешавања\\Историја"
+    IDS_HISTORY                 "Локалне поставке\\Историјат"
     IDS_PROGRAM_FILES           "Програми"
-    IDS_MYPICTURES              "Моје слике"
-    IDS_PROGRAM_FILES_COMMON    "Програми\\Заједнички Фајлови Програма"
+    IDS_PROGRAM_FILESX86        "Програми (x86)"
+    IDS_MYPICTURES              "Слике"
+    IDS_PROGRAM_FILES_COMMON    "Програми\\Заједничке датотеке"
+    IDS_PROGRAM_FILES_COMMONX86 "Програми (x86)\\Заједничке датотеке"
     IDS_COMMON_DOCUMENTS        "Документи"
-    IDS_ADMINTOOLS              "Старт Мени\\Програми\\Администратор Алати"
+    IDS_ADMINTOOLS              "„Старт“ мени\\Програми\\Административне алатке"
     IDS_COMMON_MUSIC            "Музика"
     IDS_COMMON_PICTURES         "Слике"
-    IDS_COMMON_VIDEO            "Снимци"
-    IDS_CDBURN_AREA             "Локална Подешавања\\Подаци програма\\Микрософт\\ЦД резање"
+    IDS_COMMON_VIDEO            "Видео снимци"
+    IDS_CDBURN_AREA             "Локалне поставке\\Програмски подаци\\Microsoft\\ЦД резање"
+    IDS_CONTACTS                "Контакти"
+    IDS_LINKS                   "Везе"
+    IDS_PHOTO_ALBUMS            "Слике\\Покретни прикази"
+    IDS_PLAYLISTS               "Музика\\Спискови нумера"
+    IDS_PUBLIC_DOWNLOADS        "Пријеми"
+    IDS_PUBLIC_GAME_TASKS       "Microsoft\\Windows\\GameExplorer"
+    IDS_PUBLIC_LIBRARIES        "Microsoft\\Windows\\Библиотеке"
+    IDS_PUBLIC_RINGTONES        "Microsoft\\Windows\\Мелодије"
+    IDS_SAMPLE_MUSIC            "Музика\\Примерци"
+    IDS_SAMPLE_PICTURES         "Слике\\Примерци"
+    IDS_SAMPLE_PLAYLISTS        "Музика\\Примерци"
+    IDS_SAMPLE_VIDEOS           "Видео снимци\\Примерци"
+    IDS_SAVED_GAMES             "Сачуване игре"
+    IDS_SAVED_SEARCHES          "Претраге"
+    IDS_USER_PROFILES           "Корисници"
+    IDS_COMMON_OEM_LINKS        "OEM везе"
+    IDS_DOCUMENTS               "Документи"
+    IDS_DOWNLOADS               "Пријеми"
+    IDS_LOCAL_APPDATA_LOW       "AppData\\LocalLow"
 
-    IDS_NEWFOLDER               "Нови фолдер"
+    IDS_NEWFOLDER               "Нова фасцикла"
 
-    IDS_CPANEL_TITLE            "Wine Контролна табла"
-    IDS_CPANEL_NAME             "Име"
+    IDS_CPANEL_TITLE            "Wine управљачки панел"
+    IDS_CPANEL_NAME             "Назив"
     IDS_CPANEL_DESCRIPTION      "Опис"
 
-    IDS_SHLEXEC_NOASSOC         "Нема Windows програма конфигурисаног да отвори овај тип фајла."
+    IDS_SHLEXEC_NOASSOC         "Ниједан програм није подешен да отвара ову врсту датотека."
 }
 
 STRINGTABLE
 {
-IDS_LICENSE_CAPTION,            "Wine Лиценца"
+IDS_LICENSE_CAPTION,            "Wine лиценца"
 IDS_LICENSE,
 "Wine is free software; you can redistribute it and/or \
 modify it under the terms of the GNU Lesser General Public \
