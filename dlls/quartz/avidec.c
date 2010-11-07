@@ -138,6 +138,11 @@ static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
     else
         IMediaSample_SetTime(pOutSample, NULL, NULL);
 
+    if (IMediaSample_GetMediaTime(pSample, &tStart, &tStop) == S_OK)
+        IMediaSample_SetMediaTime(pOutSample, &tStart, &tStop);
+    else
+        IMediaSample_SetMediaTime(pOutSample, NULL, NULL);
+
     LeaveCriticalSection(&This->tf.filter.csFilter);
     hr = BaseOutputPinImpl_Deliver((BaseOutputPin*)This->tf.ppPins[1], pOutSample);
     if (hr != S_OK && hr != VFW_E_NOT_CONNECTED)
