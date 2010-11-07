@@ -1807,6 +1807,7 @@ BOOL CDECL X11DRV_wglDeleteContext(HGLRC hglrc)
         wine_tsx11_unlock();
     }
 
+    free_context(ctx);
     return TRUE;
 }
 

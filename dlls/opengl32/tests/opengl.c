@@ -609,6 +609,11 @@ static void test_deletecontext(HDC hdc)
     HANDLE thread_handle;
     DWORD res, tid;
 
+    SetLastError(0xdeadbeef);
+    res = wglDeleteContext(NULL);
+    ok(res == FALSE, "wglDeleteContext succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected last error to be ERROR_INVALID_HANDLE, got %u\n", GetLastError());
+
     if(!hglrc)
     {
         skip("wglCreateContext failed!\n");
@@ -638,6 +643,12 @@ static void test_deletecontext(HDC hdc)
 
     res = wglDeleteContext(hglrc);
     ok(res == TRUE, "wglDeleteContext failed\n");
+
+    /* Attempting to delete the same context twice should fail. */
+    SetLastError(0xdeadbeef);
+    res = wglDeleteContext(hglrc);
+    ok(res == FALSE, "wglDeleteContext succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected last error to be ERROR_INVALID_HANDLE, got %u\n", GetLastError());
 
     /* WGL makes a context not current when deleting it. This differs from GLX behavior where
      * deletion takes place when the thread becomes not current. */
