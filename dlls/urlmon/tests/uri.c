@@ -3849,6 +3849,110 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
+    },
+    /* For res URIs the host is everything up until the first '/'. */
+    {   "res://C:\\dir\\file.exe/DATA/test.html", 0, S_OK, FALSE,
+        {
+            {"res://C:\\dir\\file.exe/DATA/test.html",S_OK,FALSE},
+            {"C:\\dir\\file.exe",S_OK,FALSE},
+            {"res://C:\\dir\\file.exe/DATA/test.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {".html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"C:\\dir\\file.exe",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/DATA/test.html",S_OK,FALSE},
+            {"/DATA/test.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"res://C:\\dir\\file.exe/DATA/test.html",S_OK,FALSE},
+            {"res",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_RES,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Res URI can contain a '|' in the host name. */
+    {   "res://c:\\di|r\\file.exe/test", 0, S_OK, FALSE,
+        {
+            {"res://c:\\di|r\\file.exe/test",S_OK,FALSE},
+            {"c:\\di|r\\file.exe",S_OK,FALSE},
+            {"res://c:\\di|r\\file.exe/test",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"c:\\di|r\\file.exe",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/test",S_OK,FALSE},
+            {"/test",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"res://c:\\di|r\\file.exe/test",S_OK,FALSE},
+            {"res",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_RES,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE},
+        }
+    },
+    /* Res URIs can have invalid percent encoded values. */
+    {   "res://c:\\dir%xx\\file.exe/test", 0, S_OK, FALSE,
+        {
+            {"res://c:\\dir%xx\\file.exe/test",S_OK,FALSE},
+            {"c:\\dir%xx\\file.exe",S_OK,FALSE},
+            {"res://c:\\dir%xx\\file.exe/test",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"c:\\dir%xx\\file.exe",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/test",S_OK,FALSE},
+            {"/test",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"res://c:\\dir%xx\\file.exe/test",S_OK,FALSE},
+            {"res",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_RES,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Res doesn't get forbidden characters percent encoded in it's path. */
+    {   "res://c:\\test/tes<|>t", 0, S_OK, FALSE,
+        {
+            {"res://c:\\test/tes<|>t",S_OK,FALSE},
+            {"c:\\test",S_OK,FALSE},
+            {"res://c:\\test/tes<|>t",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"c:\\test",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/tes<|>t",S_OK,FALSE},
+            {"/tes<|>t",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"res://c:\\test/tes<|>t",S_OK,FALSE},
+            {"res",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_RES,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
     }
 };
 
@@ -3913,7 +4017,14 @@ static const invalid_uri invalid_uri_tests[] = {
     {"file://c:\\test\"test",Uri_CREATE_FILE_USE_DOS_PATH,FALSE},
     {"file:c:\\test<test",Uri_CREATE_FILE_USE_DOS_PATH,FALSE},
     {"file:c:\\test>test",Uri_CREATE_FILE_USE_DOS_PATH,FALSE},
-    {"file:c:\\test\"test",Uri_CREATE_FILE_USE_DOS_PATH,FALSE}
+    {"file:c:\\test\"test",Uri_CREATE_FILE_USE_DOS_PATH,FALSE},
+    /* res URIs aren't allowed to have forbidden dos path characters in the
+     * hostname.
+     */
+    {"res://c:\\te<st\\test/test",0,FALSE},
+    {"res://c:\\te>st\\test/test",0,FALSE},
+    {"res://c:\\te\"st\\test/test",0,FALSE},
+    {"res://c:\\test/te%xxst",0,FALSE}
 };
 
 typedef struct _uri_equality {

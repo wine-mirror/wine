@@ -1552,8 +1552,11 @@ static BOOL parse_ipv4address(const WCHAR **ptr, parse_data *data, DWORD flags) 
 static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD flags, DWORD extras) {
     const BOOL has_start_bracket = **ptr == '[';
     const BOOL known_scheme = data->scheme_type != URL_SCHEME_UNKNOWN;
+    const BOOL is_res = data->scheme_type == URL_SCHEME_RES;
     BOOL inside_brackets = has_start_bracket;
-    BOOL ignore_col = extras & IGNORE_PORT_DELIMITER;
+
+    /* res URIs don't have ports. */
+    BOOL ignore_col = (extras & IGNORE_PORT_DELIMITER) || is_res;
 
     /* We have to be careful with file schemes. */
     if(data->scheme_type == URL_SCHEME_FILE) {
@@ -1575,7 +1578,11 @@ static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD flags, DWO
 
     data->host = *ptr;
 
-    while(!is_auth_delim(**ptr, known_scheme)) {
+    /* For res URIs, everything before the first '/' is
+     * considered the host.
+     */
+    while((!is_res && !is_auth_delim(**ptr, known_scheme)) ||
+          (is_res && **ptr && **ptr != '/')) {
         if(**ptr == ':' && !ignore_col) {
             /* We can ignore ':' if were inside brackets.*/
             if(!inside_brackets) {
@@ -1599,7 +1606,7 @@ static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD flags, DWO
                     break;
                 }
             }
-        } else if(**ptr == '%' && known_scheme) {
+        } else if(**ptr == '%' && (known_scheme && !is_res)) {
             /* Has to be a legit % encoded value. */
             if(!check_pct_encoded(ptr)) {
                 *ptr = data->host;
@@ -1607,6 +1614,10 @@ static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD flags, DWO
                 return FALSE;
             } else
                 continue;
+        } else if(is_res && is_forbidden_dos_path_char(**ptr)) {
+            *ptr = data->host;
+            data->host = NULL;
+            return FALSE;
         } else if(**ptr == ']')
             inside_brackets = FALSE;
         else if(**ptr == '[')
@@ -1631,7 +1642,7 @@ static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD flags, DWO
         data->host_len = *ptr - data->host;
 
     /* If the host is empty, then it's an unknown host type. */
-    if(data->host_len == 0)
+    if(data->host_len == 0 || is_res)
         data->host_type = Uri_HOST_UNKNOWN;
     else
         data->host_type = Uri_HOST_DNS;
@@ -2913,6 +2924,7 @@ static BOOL canonicalize_path_hierarchical(const parse_data *data, Uri *uri,
     const WCHAR *ptr;
     const BOOL known_scheme = data->scheme_type != URL_SCHEME_UNKNOWN;
     const BOOL is_file = data->scheme_type == URL_SCHEME_FILE;
+    const BOOL is_res = data->scheme_type == URL_SCHEME_RES;
 
     BOOL escape_pct = FALSE;
 
@@ -2961,7 +2973,7 @@ static BOOL canonicalize_path_hierarchical(const parse_data *data, Uri *uri,
     }
 
     for(; ptr < data->path+data->path_len; ++ptr) {
-        if(*ptr == '%') {
+        if(*ptr == '%' && !is_res) {
             const WCHAR *tmp = ptr;
             WCHAR val;
 
@@ -3004,7 +3016,7 @@ static BOOL canonicalize_path_hierarchical(const parse_data *data, Uri *uri,
                     uri->canon_uri[uri->canon_len] = '/';
                 ++uri->canon_len;
             }
-        } else if(known_scheme && !is_unreserved(*ptr) && !is_reserved(*ptr) &&
+        } else if(known_scheme && !is_res && !is_unreserved(*ptr) && !is_reserved(*ptr) &&
                   (!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS) || is_file)) {
             if(is_file && (flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
                 /* Don't escape the character. */
