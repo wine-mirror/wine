@@ -171,7 +171,7 @@ static HRESULT FillBuffer(MPEGSplitterImpl *This, IMediaSample *pCurrentSample)
     Parser_OutputPin * pOutputPin = (Parser_OutputPin*)This->Parser.ppPins[1];
     LONGLONG length = 0;
     LONGLONG pos = BYTES_FROM_MEDIATIME(This->Parser.pInputPin->rtNext);
-    LONGLONG time = This->position;
+    LONGLONG time = This->position, rtstop, rtstart;
     HRESULT hr;
     BYTE *fbuf = NULL;
     DWORD len = IMediaSample_GetActualDataLength(pCurrentSample);
@@ -229,7 +229,28 @@ static HRESULT FillBuffer(MPEGSplitterImpl *This, IMediaSample *pCurrentSample)
 
     TRACE("Media time : %u.%03u\n", (DWORD)(This->position/10000000), (DWORD)((This->position/10000)%1000));
 
-    IMediaSample_SetTime(pCurrentSample, &time, &This->position);
+    if (IMediaSample_IsDiscontinuity(pCurrentSample) == S_OK) {
+        IPin *victim;
+        EnterCriticalSection(&This->Parser.filter.csFilter);
+        pOutputPin->pin.pin.tStart = time;
+        pOutputPin->pin.pin.dRate = This->Parser.sourceSeeking.dRate;
+        hr = IPin_ConnectedTo((IPin *)pOutputPin, &victim);
+        if (hr == S_OK)
+        {
+            hr = IPin_NewSegment(victim, time, This->Parser.sourceSeeking.llStop,
+                                 This->Parser.sourceSeeking.dRate);
+            if (hr != S_OK)
+                FIXME("NewSegment returns %08x\n", hr);
+            IPin_Release(victim);
+        }
+        LeaveCriticalSection(&This->Parser.filter.csFilter);
+        if (hr != S_OK)
+            return hr;
+    }
+    rtstart = (double)(time - pOutputPin->pin.pin.tStart) / pOutputPin->pin.pin.dRate;
+    rtstop = (double)(This->position - pOutputPin->pin.pin.tStart) / pOutputPin->pin.pin.dRate;
+    IMediaSample_SetTime(pCurrentSample, &rtstart, &rtstop);
+    IMediaSample_SetMediaTime(pCurrentSample, &time, &This->position);
 
     hr = BaseOutputPinImpl_Deliver((BaseOutputPin*)&pOutputPin->pin, pCurrentSample);
 
@@ -672,7 +693,6 @@ static HRESULT WINAPI MPEGSplitter_seek(IMediaSeeking *iface)
     if (SUCCEEDED(hr))
     {
         PullPin *pin = This->Parser.pInputPin;
-        IPin *victim = NULL;
 
         TRACE("Moving sound to %08u bytes!\n", (DWORD)bytepos);
 
@@ -682,12 +702,6 @@ static HRESULT WINAPI MPEGSplitter_seek(IMediaSeeking *iface)
         /* Make sure this is done while stopped, BeginFlush takes care of this */
         EnterCriticalSection(&This->Parser.filter.csFilter);
         memcpy(This->header, header, 4);
-        IPin_ConnectedTo(This->Parser.ppPins[1], &victim);
-        if (victim)
-        {
-            IPin_NewSegment(victim, newpos, This->duration, pin->dRate);
-            IPin_Release(victim);
-        }
 
         pin->rtStart = pin->rtCurrent = MEDIATIME_FROM_BYTES(bytepos);
         pin->rtStop = MEDIATIME_FROM_BYTES((REFERENCE_TIME)This->EndOfFile);
@@ -744,7 +758,7 @@ static HRESULT MPEGSplitter_first_request(LPVOID iface)
         pin->rtNext = rtSampleStop;
 
         IMediaSample_SetPreroll(sample, FALSE);
-        IMediaSample_SetDiscontinuity(sample, This->seek);
+        IMediaSample_SetDiscontinuity(sample, TRUE);
         IMediaSample_SetSyncPoint(sample, 1);
         This->seek = 0;
 
