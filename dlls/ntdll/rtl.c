@@ -1323,3 +1323,21 @@ DWORD WINAPI RtlGetThreadErrorMode( void )
 {
     return NtCurrentTeb()->HardErrorDisabled;
 }
+
+/******************************************************************************
+ * RtlGetCurrentTransaction [NTDLL.@]
+ */
+HANDLE WINAPI RtlGetCurrentTransaction(void)
+{
+    FIXME("() :stub\n");
+    return NULL;
+}
+
+/******************************************************************************
+ * RtlSetCurrentTransaction [NTDLL.@]
+ */
+BOOL WINAPI RtlSetCurrentTransaction(HANDLE new_transaction)
+{
+    FIXME("(%p) :stub\n", new_transaction);
+    return FALSE;
+}

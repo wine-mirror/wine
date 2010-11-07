@@ -619,6 +619,7 @@
 @ stdcall RtlGetControlSecurityDescriptor(ptr ptr ptr)
 @ stdcall RtlGetCurrentDirectory_U(long ptr)
 @ stdcall RtlGetCurrentPeb()
+@ stdcall RtlGetCurrentTransaction()
 @ stdcall RtlGetDaclSecurityDescriptor(ptr ptr ptr ptr)
 @ stub RtlGetElementGenericTable
 # @ stub RtlGetElementGenericTableAvl
@@ -825,6 +826,7 @@
 @ stdcall RtlSetCriticalSectionSpinCount(ptr long)
 @ stdcall RtlSetCurrentDirectory_U(ptr)
 @ stdcall RtlSetCurrentEnvironment(wstr ptr)
+@ stdcall RtlSetCurrentTransaction(ptr)
 @ stdcall RtlSetDaclSecurityDescriptor(ptr long ptr long)
 @ stdcall RtlSetEnvironmentVariable(ptr ptr ptr)
 @ stdcall RtlSetGroupSecurityDescriptor(ptr ptr long)
