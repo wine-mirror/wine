@@ -730,7 +730,9 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
             const WCHAR htmW[] = {'.','h','t','m',0};
             const int len_htmW = 4;
 
-            if (work - base.pszSuffix > len_htmW * sizeof(WCHAR)) {
+            if (base.nScheme == URL_SCHEME_HTTP || base.nScheme == URL_SCHEME_HTTPS)
+                manual_search = TRUE;
+            else if (work - base.pszSuffix > len_htmW * sizeof(WCHAR)) {
                 work -= len_htmW;
                 if (strncmpiW(work, htmW, len_htmW) == 0)
                     manual_search = TRUE;
@@ -750,15 +752,15 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
             /* search backwards starting from the current position */
             while (*work != '/' && work > base.pszSuffix + sizeloc)
                 --work;
-            if (work > base.pszSuffix + sizeloc)
-                base.cchSuffix = work - base.pszSuffix + 1;
+            base.cchSuffix = work - base.pszSuffix + 1;
         }else {
             /* search backwards starting from the end of the string */
             work = strrchrW((base.pszSuffix+sizeloc), '/');
             if (work) {
                 len = (DWORD)(work - base.pszSuffix + 1);
                 base.cchSuffix = len;
-            }
+            }else
+                base.cchSuffix = sizeloc;
         }
 
 	/*
@@ -801,6 +803,15 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 		process_case = 4;
 		break;
 	    }
+            if (*mrelative == '#') {
+                if(!(work = strchrW(base.pszSuffix+base.cchSuffix, '#')))
+                    work = (LPWSTR)base.pszSuffix + strlenW(base.pszSuffix);
+
+                memcpy(preliminary, base.pszProtocol, (work-base.pszProtocol)*sizeof(WCHAR));
+                preliminary[work-base.pszProtocol] = '\0';
+                process_case = 1;
+                break;
+            }
             process_case = (*base.pszSuffix == '/' || base.nScheme == URL_SCHEME_MK) ? 5 : 3;
 	    break;
 	}
