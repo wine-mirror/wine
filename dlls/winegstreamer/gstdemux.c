@@ -80,6 +80,7 @@ struct GSTOutPin {
     int isaud, isvid;
     AM_MEDIA_TYPE * pmt;
     HANDLE caps_event;
+    GstSegment *segment;
 };
 
 static const WCHAR wcsInputPinName[] = {'i','n','p','u','t',' ','p','i','n',0};
@@ -376,6 +377,7 @@ static gboolean event_sink(GstPad *pad, GstEvent *event) {
                 FIXME("Ignoring new segment because of format %i\n", format);
                 return 1;
             }
+            gst_segment_set_newsegment_full(pin->segment, update, rate, applied_rate, format, start, stop, pos);
             pos /= 100;
             if (stop > 0)
                 stop /= 100;
@@ -394,6 +396,7 @@ static gboolean event_sink(GstPad *pad, GstEvent *event) {
         case GST_EVENT_FLUSH_STOP:
             if (pin->pin.pin.pConnectedTo)
                 IPin_EndFlush(pin->pin.pin.pConnectedTo);
+            gst_segment_init(pin->segment, GST_FORMAT_TIME);
             return 1;
         default:
             FIXME("%p stub %s\n", event, gst_event_type_get_name(event->type));
@@ -487,7 +490,6 @@ static GstFlowReturn got_data_sink(GstPad *pad, GstBuffer *buf) {
     GSTOutPin *pin = gst_pad_get_element_private(pad);
     GSTImpl *This = (GSTImpl *)pin->pin.pin.pinInfo.pFilter;
     IMediaSample *sample;
-    REFERENCE_TIME tStart, tStop;
     HRESULT hr;
     BOOL freeSamp = FALSE;
 
@@ -520,14 +522,28 @@ static GstFlowReturn got_data_sink(GstPad *pad, GstBuffer *buf) {
         memcpy(ptr, GST_BUFFER_DATA(buf), GST_BUFFER_SIZE(buf));
     }
 
-    if (GST_BUFFER_TIMESTAMP_IS_VALID(buf) &&
-        GST_BUFFER_DURATION_IS_VALID(buf)) {
-        tStart = buf->timestamp / 100;
-        tStop = tStart + buf->duration / 100;
-        IMediaSample_SetTime(sample, &tStart, &tStop);
-    }
-    else
+    if (GST_BUFFER_TIMESTAMP_IS_VALID(buf)) {
+        REFERENCE_TIME rtStart = gst_segment_to_running_time(pin->segment, GST_FORMAT_TIME, buf->timestamp);
+        if (rtStart >= 0)
+            rtStart /= 100;
+
+        if (GST_BUFFER_DURATION_IS_VALID(buf)) {
+            REFERENCE_TIME tStart = buf->timestamp / 100;
+            REFERENCE_TIME tStop = (buf->timestamp + buf->duration) / 100;
+            REFERENCE_TIME rtStop;
+            rtStop = gst_segment_to_running_time(pin->segment, GST_FORMAT_TIME, buf->timestamp + buf->duration);
+            if (rtStop >= 0)
+                rtStop /= 100;
+            IMediaSample_SetTime(sample, &rtStart, rtStop >= 0 ? &rtStop : NULL);
+            IMediaSample_SetMediaTime(sample, &tStart, &tStop);
+        } else {
+            IMediaSample_SetTime(sample, rtStart >= 0 ? &rtStart : NULL, NULL);
+            IMediaSample_SetMediaTime(sample, NULL, NULL);
+        }
+    } else {
         IMediaSample_SetTime(sample, NULL, NULL);
+        IMediaSample_SetMediaTime(sample, NULL, NULL);
+    }
 
     IMediaSample_SetDiscontinuity(sample, GST_BUFFER_FLAG_IS_SET(buf, GST_BUFFER_FLAG_DISCONT));
     IMediaSample_SetPreroll(sample, GST_BUFFER_FLAG_IS_SET(buf, GST_BUFFER_FLAG_PREROLL));
@@ -721,6 +737,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, gboolean last, GS
     FIXME("Linking: %i\n", ret);
     if (ret >= 0) {
         pin->their_src = pad;
+        gst_segment_init(pin->segment, GST_FORMAT_TIME);
         gst_object_ref(pin->their_src);
     }
 }
@@ -752,6 +769,7 @@ static void existing_new_pad(GstElement *bin, GstPad *pad, gboolean last, GSTImp
             ownname = gst_structure_get_name(arg);
             if (!strcmp(typename, ownname) && gst_pad_link(pad, pin->my_sink) >= 0) {
                 pin->their_src = pad;
+                gst_segment_init(pin->segment, GST_FORMAT_TIME);
                 gst_object_ref(pin->their_src);
                 TRACE("Relinked\n");
                 LeaveCriticalSection(&This->filter.csFilter);
@@ -1311,6 +1329,7 @@ static ULONG WINAPI GSTOutPin_Release(IPin *iface) {
         CloseHandle(This->caps_event);
         DeleteMediaType(This->pmt);
         FreeMediaType(&This->pin.pin.mtCurrent);
+        gst_segment_free(This->segment);
         CoTaskMemFree(This);
         return 0;
     }
@@ -1414,6 +1433,7 @@ static HRESULT GST_AddPin(GSTImpl *This, const PIN_INFO *piOutput, const AM_MEDI
         CopyMediaType(pin->pmt, amt);
         pin->pin.pin.pinInfo.pFilter = (LPVOID)This;
         pin->caps_event = CreateEventW(NULL, 0, 0, NULL);
+        pin->segment = gst_segment_new();
         This->cStreams++;
         BaseFilterImpl_IncrementPinVersion((BaseFilter*)This);
     } else
