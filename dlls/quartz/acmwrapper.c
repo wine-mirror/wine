@@ -67,6 +67,7 @@ static HRESULT WINAPI ACMWrapper_Receive(TransformFilter *tf, IMediaSample *pSam
     MMRESULT res;
     HRESULT hr;
     LONGLONG tStart = -1, tStop = -1, tMed;
+    LONGLONG mtStart = -1, mtStop = -1, mtMed;
 
     EnterCriticalSection(&This->tf.filter.csFilter);
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
@@ -80,6 +81,8 @@ static HRESULT WINAPI ACMWrapper_Receive(TransformFilter *tf, IMediaSample *pSam
     preroll = (IMediaSample_IsPreroll(pSample) == S_OK);
 
     IMediaSample_GetTime(pSample, &tStart, &tStop);
+    if (IMediaSample_GetMediaTime(pSample, &mtStart, &mtStop) != S_OK)
+        mtStart = mtStop = -1;
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
 
     /* Prevent discontinuities when codecs 'absorb' data but not give anything back in return */
@@ -94,6 +97,7 @@ static HRESULT WINAPI ACMWrapper_Receive(TransformFilter *tf, IMediaSample *pSam
         WARN("Discontinuity\n");
 
     tMed = tStart;
+    mtMed = mtStart;
 
     TRACE("Sample data ptr = %p, size = %d\n", pbSrcStream, cbSrcStream);
 
@@ -192,6 +196,21 @@ static HRESULT WINAPI ACMWrapper_Receive(TransformFilter *tf, IMediaSample *pSam
             ERR("No valid timestamp found\n");
             IMediaSample_SetTime(pOutSample, NULL, NULL);
         }
+
+        if (mtStart < 0) {
+            IMediaSample_SetMediaTime(pOutSample, NULL, NULL);
+        } else if (ash.cbSrcLengthUsed == cbSrcStream) {
+            IMediaSample_SetMediaTime(pOutSample, &mtStart, &mtStop);
+            mtStart = mtMed = mtStop;
+        } else if (mtStop >= mtStart) {
+            mtMed = mtStop - mtStart;
+            mtMed = mtStart + mtMed * ash.cbSrcLengthUsed / cbSrcStream;
+            IMediaSample_SetMediaTime(pOutSample, &mtStart, &mtMed);
+            mtStart = mtMed;
+        } else {
+            IMediaSample_SetMediaTime(pOutSample, NULL, NULL);
+        }
+
         TRACE("Sample stop time: %u.%03u\n", (DWORD)(tStart/10000000), (DWORD)((tStart/10000)%1000));
 
         LeaveCriticalSection(&This->tf.filter.csFilter);
