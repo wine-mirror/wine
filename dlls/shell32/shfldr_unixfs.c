@@ -1161,6 +1161,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDisplayNameOf(IShellFolder2* i
     LPCITEMIDLIST pidl, SHGDNF uFlags, STRRET* lpName)
 {
     UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder2, iface);
+    SHITEMID emptyIDL = { 0, { 0 } };
     HRESULT hr = S_OK;    
 
     TRACE("(iface=%p, pidl=%p, uFlags=%x, lpName=%p)\n", iface, pidl, uFlags, lpName);
@@ -1184,15 +1185,66 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDisplayNameOf(IShellFolder2* i
                 PathRemoveBackslashW(lpName->u.pOleStr);
                 HeapFree(GetProcessHeap(), 0, pwszDosFileName);
             }
+        } else if (_ILIsValue(pidl)) {
+            STRRET str;
+            PWSTR path, file;
+
+            /* We are looking for the complete path to a file */
+
+            /* Get the complete path for the current folder object */
+            hr = IShellFolder_GetDisplayNameOf(iface, (LPITEMIDLIST)&emptyIDL, uFlags, &str);
+            if (SUCCEEDED(hr)) {
+                hr = StrRetToStrW(&str, NULL, &path);
+                if (SUCCEEDED(hr)) {
+
+                    /* Get the child filename */
+                    hr = IShellFolder_GetDisplayNameOf(iface, pidl, SHGDN_FORPARSING | SHGDN_INFOLDER, &str);
+                    if (SUCCEEDED(hr)) {
+                        hr = StrRetToStrW(&str, NULL, &file);
+                        if (SUCCEEDED(hr)) {
+                            static const WCHAR slashW = '/';
+                            UINT len_path = strlenW(path), len_file = strlenW(file);
+
+                            /* Now, combine them */
+                            lpName->uType = STRRET_WSTR;
+                            lpName->u.pOleStr = SHAlloc( (len_path + len_file + 2)*sizeof(WCHAR) );
+                            lstrcpyW(lpName->u.pOleStr, path);
+                            if (This->m_dwPathMode == PATHMODE_UNIX &&
+                               lpName->u.pOleStr[len_path-1] != slashW) {
+                                lpName->u.pOleStr[len_path] = slashW;
+                                lpName->u.pOleStr[len_path+1] = '\0';
+                            } else
+                                PathAddBackslashW(lpName->u.pOleStr);
+                            lstrcatW(lpName->u.pOleStr, file);
+
+                            CoTaskMemFree(file);
+                        } else
+                            WARN("Failed to convert strret (file)\n");
+                    }
+                    CoTaskMemFree(path);
+                } else
+                    WARN("Failed to convert strret (path)\n");
+            }
         } else {
             IShellFolder *pSubFolder;
-            SHITEMID emptyIDL = { 0, { 0 } };
 
             hr = IShellFolder_BindToObject(iface, pidl, NULL, &IID_IShellFolder, (void**)&pSubFolder);
-            if (FAILED(hr)) return hr;
+            if (SUCCEEDED(hr)) {
+                hr = IShellFolder_GetDisplayNameOf(pSubFolder, (LPITEMIDLIST)&emptyIDL, uFlags, lpName);
+                IShellFolder_Release(pSubFolder);
+            } else if (FAILED(hr) && !_ILIsPidlSimple(pidl)) {
+                LPITEMIDLIST pidl_parent = ILClone(pidl);
+                LPITEMIDLIST pidl_child = ILFindLastID(pidl);
 
-            hr = IShellFolder_GetDisplayNameOf(pSubFolder, (LPITEMIDLIST)&emptyIDL, uFlags, lpName);
-            IShellFolder_Release(pSubFolder);
+                /* Might be a file, try binding to its parent */
+                ILRemoveLastID(pidl_parent);
+                hr = IShellFolder_BindToObject(iface, pidl_parent, NULL, &IID_IShellFolder, (void**)&pSubFolder);
+                if (SUCCEEDED(hr)) {
+                    hr = IShellFolder_GetDisplayNameOf(pSubFolder, pidl_child, uFlags, lpName);
+                    IShellFolder_Release(pSubFolder);
+                }
+                ILFree(pidl_parent);
+            }
         }
     } else {
         WCHAR wszFileName[MAX_PATH];
