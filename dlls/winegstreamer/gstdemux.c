@@ -1643,6 +1643,15 @@ static HRESULT WINAPI GSTInPin_QueryInterface(IPin * iface, REFIID riid, LPVOID 
     return E_NOINTERFACE;
 }
 
+static HRESULT WINAPI GSTInPin_EnumMediaTypes(IPin *iface, IEnumMediaTypes **ppEnum)
+{
+    BasePin *This = (BasePin *)iface;
+
+    TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
+
+    return EnumMediaTypes_Construct(This, BasePinImpl_GetMediaType, BasePinImpl_GetMediaTypeVersion, ppEnum);
+}
+
 static const IPinVtbl GST_InputPin_Vtbl = {
     GSTInPin_QueryInterface,
     BasePinImpl_AddRef,
@@ -1656,7 +1665,7 @@ static const IPinVtbl GST_InputPin_Vtbl = {
     BasePinImpl_QueryDirection,
     BasePinImpl_QueryId,
     GSTInPin_QueryAccept,
-    BasePinImpl_EnumMediaTypes,
+    GSTInPin_EnumMediaTypes,
     BasePinImpl_QueryInternalConnections,
     GSTInPin_EndOfStream,
     GSTInPin_BeginFlush,
