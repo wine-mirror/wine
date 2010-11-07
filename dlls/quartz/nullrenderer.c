@@ -71,7 +71,7 @@ static HRESULT WINAPI NullRenderer_Receive(BaseInputPin *pin, IMediaSample * pSa
 
     TRACE("%p %p\n", pin, pSample);
 
-    if (SUCCEEDED(IMediaSample_GetTime(pSample, &start, &stop)))
+    if (SUCCEEDED(IMediaSample_GetMediaTime(pSample, &start, &stop)))
         MediaSeekingPassThru_RegisterMediaTime(This->seekthru_unk, start);
     EnterCriticalSection(&This->filter.csFilter);
     if (This->pInputPin->flushing || This->pInputPin->end_of_stream)
