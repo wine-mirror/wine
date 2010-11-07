@@ -1196,7 +1196,7 @@
 @ cdecl _wgetdcwd(long wstr long) msvcrt._wgetdcwd
 @ stub _wgetdcwd_nolock
 @ cdecl _wgetenv(wstr) msvcrt._wgetenv
-@ stub _wgetenv_s
+@ cdecl _wgetenv_s(ptr ptr long wstr) msvcrt._wgetenv_s
 @ cdecl _wmakepath(ptr wstr wstr wstr wstr) msvcrt._wmakepath
 @ cdecl _wmakepath_s(ptr long wstr wstr wstr wstr) msvcrt._wmakepath_s
 @ cdecl _wmkdir(wstr) msvcrt._wmkdir

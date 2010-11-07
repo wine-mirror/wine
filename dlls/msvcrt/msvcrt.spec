@@ -1128,7 +1128,7 @@
 @ cdecl _wgetcwd(wstr long)
 @ cdecl _wgetdcwd(long wstr long)
 @ cdecl _wgetenv(wstr)
-# stub _wgetenv_s
+@ cdecl _wgetenv_s(ptr ptr long wstr)
 @ extern _winmajor MSVCRT__winmajor
 @ extern _winminor MSVCRT__winminor
 # stub _winput_s
@@ -1273,7 +1273,7 @@
 @ cdecl getc(ptr) MSVCRT_getc
 @ cdecl getchar() MSVCRT_getchar
 @ cdecl getenv(str) MSVCRT_getenv
-# stub getenv_s
+@ cdecl getenv_s(ptr ptr long str)
 @ cdecl gets(str) MSVCRT_gets
 @ cdecl getwc(ptr) MSVCRT_getwc
 @ cdecl getwchar() MSVCRT_getwchar

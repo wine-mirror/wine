@@ -261,3 +261,58 @@ int _wdupenv_s(MSVCRT_wchar_t **buffer, MSVCRT_size_t *numberOfElements,
     if (numberOfElements) *numberOfElements = sz;
     return 0;
 }
+
+/******************************************************************
+ *		getenv_s (MSVCRT.@)
+ */
+int getenv_s(MSVCRT_size_t *pReturnValue, char* buffer, MSVCRT_size_t numberOfElements, const char *varname)
+{
+    char*       e;
+
+    if (!MSVCRT_CHECK_PMT(pReturnValue != NULL) ||
+        !MSVCRT_CHECK_PMT(!(buffer == NULL && numberOfElements > 0)) ||
+        !MSVCRT_CHECK_PMT(varname != NULL))
+    {
+        return *MSVCRT__errno() = MSVCRT_EINVAL;
+    }
+    if (!(e = MSVCRT_getenv(varname)))
+    {
+        *pReturnValue = 0;
+        return *MSVCRT__errno() = MSVCRT_EINVAL;
+    }
+    *pReturnValue = strlen(e) + 1;
+    if (numberOfElements < *pReturnValue)
+    {
+        return *MSVCRT__errno() = MSVCRT_ERANGE;
+    }
+    strcpy(buffer, e);
+    return 0;
+}
+
+/******************************************************************
+ *		_wgetenv_s (MSVCRT.@)
+ */
+int _wgetenv_s(MSVCRT_size_t *pReturnValue, MSVCRT_wchar_t *buffer, MSVCRT_size_t numberOfElements,
+               const MSVCRT_wchar_t *varname)
+{
+    MSVCRT_wchar_t*     e;
+
+    if (!MSVCRT_CHECK_PMT(pReturnValue != NULL) ||
+        !MSVCRT_CHECK_PMT(!(buffer == NULL && numberOfElements > 0)) ||
+        !MSVCRT_CHECK_PMT(varname != NULL))
+    {
+        return *MSVCRT__errno() = MSVCRT_EINVAL;
+    }
+    if (!(e = _wgetenv(varname)))
+    {
+        *pReturnValue = 0;
+        return *MSVCRT__errno() = MSVCRT_EINVAL;
+    }
+    *pReturnValue = strlenW(e) + 1;
+    if (numberOfElements < *pReturnValue)
+    {
+        return *MSVCRT__errno() = MSVCRT_ERANGE;
+    }
+    strcpyW(buffer, e);
+    return 0;
+}

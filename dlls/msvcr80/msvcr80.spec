@@ -1209,7 +1209,7 @@
 @ cdecl _wgetdcwd(long wstr long) msvcrt._wgetdcwd
 @ stub _wgetdcwd_nolock
 @ cdecl _wgetenv(wstr) msvcrt._wgetenv
-@ stub _wgetenv_s
+@ cdecl _wgetenv_s(ptr ptr long wstr) msvcrt._wgetenv_s
 @ extern _winmajor msvcrt._winmajor
 @ extern _winminor msvcrt._winminor
 @ extern _winver msvcrt._winver
@@ -1339,7 +1339,7 @@
 @ cdecl getc(ptr) msvcrt.getc
 @ cdecl getchar() msvcrt.getchar
 @ cdecl getenv(str) msvcrt.getenv
-@ stub getenv_s
+@ cdecl getenv_s(ptr ptr long str) msvcrt.getenv_s
 @ cdecl gets(str) msvcrt.gets
 @ stub gets_s
 @ cdecl getwc(ptr) msvcrt.getwc
