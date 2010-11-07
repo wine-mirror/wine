@@ -291,7 +291,7 @@ static HRESULT AVISplitter_Receive(AVISplitterImpl *This, IMediaSample *sample, 
 {
     Parser_OutputPin *pin = (Parser_OutputPin *)This->Parser.ppPins[1+streamnumber];
     HRESULT hr;
-    LONGLONG start, stop;
+    LONGLONG start, stop, rtstart, rtstop;
     StreamData *stream = &This->streams[streamnumber];
 
     start = pin->dwSamplesProcessed;
@@ -314,7 +314,29 @@ static HRESULT AVISplitter_Receive(AVISplitterImpl *This, IMediaSample *sample, 
     stop *= 10000000;
     stop /= stream->streamheader.dwRate;
 
-    IMediaSample_SetTime(sample, &start, &stop);
+    if (IMediaSample_IsDiscontinuity(sample) == S_OK) {
+        IPin *victim;
+        EnterCriticalSection(&This->Parser.filter.csFilter);
+        pin->pin.pin.tStart = start;
+        pin->pin.pin.dRate = This->Parser.sourceSeeking.dRate;
+        hr = IPin_ConnectedTo((IPin *)pin, &victim);
+        if (hr == S_OK)
+        {
+            hr = IPin_NewSegment(victim, start, This->Parser.sourceSeeking.llStop,
+                                 This->Parser.sourceSeeking.dRate);
+            if (hr != S_OK)
+                FIXME("NewSegment returns %08x\n", hr);
+            IPin_Release(victim);
+        }
+        LeaveCriticalSection(&This->Parser.filter.csFilter);
+        if (hr != S_OK)
+            return hr;
+    }
+    rtstart = (double)(start - pin->pin.pin.tStart) / pin->pin.pin.dRate;
+    rtstop = (double)(stop - pin->pin.pin.tStart) / pin->pin.pin.dRate;
+    hr = IMediaSample_SetMediaTime(sample, &start, &stop);
+    IMediaSample_SetTime(sample, &rtstart, &rtstop);
+    IMediaSample_SetMediaTime(sample, &start, &stop);
 
     hr = BaseOutputPinImpl_Deliver((BaseOutputPin*)&pin->pin, sample);
 
@@ -425,6 +447,9 @@ static HRESULT AVISplitter_first_request(LPVOID iface)
 
         stream->pos_next = stream->pos;
         stream->index_next = stream->index;
+
+        /* This was sent after stopped->paused or stopped->playing, so set seek */
+        stream->seek = 1;
 
         /* There should be a packet queued from AVISplitter_next_request last time
          * It needs to be done now because this is the only way to ensure that every
@@ -1285,7 +1310,6 @@ static HRESULT WINAPI AVISplitter_seek(IMediaSeeking *iface)
     {
         Parser_OutputPin *pin = (Parser_OutputPin *)This->Parser.ppPins[1+x];
         StreamData *stream = This->streams + x;
-        IPin *victim = NULL;
         LONGLONG wanted_frames;
         DWORD last_keyframe = 0, last_keyframeidx = 0, preroll = 0;
 
@@ -1293,13 +1317,6 @@ static HRESULT WINAPI AVISplitter_seek(IMediaSeeking *iface)
         wanted_frames *= stream->streamheader.dwRate;
         wanted_frames /= 10000000;
         wanted_frames /= stream->streamheader.dwScale;
-
-        IPin_ConnectedTo((IPin *)pin, &victim);
-        if (victim)
-        {
-            IPin_NewSegment(victim, newpos, endpos, pPin->dRate);
-            IPin_Release(victim);
-        }
 
         pin->dwSamplesProcessed = 0;
         stream->index = 0;
