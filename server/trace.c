@@ -1649,7 +1649,6 @@ static void dump_get_console_mode_request( const struct get_console_mode_request
 static void dump_get_console_mode_reply( const struct get_console_mode_reply *req )
 {
     fprintf( stderr, " mode=%d", req->mode );
-    fprintf( stderr, ", is_bare=%d", req->is_bare );
 }
 
 static void dump_set_console_mode_request( const struct set_console_mode_request *req )

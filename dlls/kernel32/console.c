@@ -131,23 +131,6 @@ static void char_info_AtoW( CHAR_INFO *buffer, int count )
     }
 }
 
-static BOOL get_console_mode(HANDLE conin, DWORD* mode, BOOL* bare)
-{
-    BOOL ret;
-
-    SERVER_START_REQ( get_console_mode )
-    {
-        req->handle = console_handle_unmap(conin);
-        if ((ret = !wine_server_call_err( req )))
-        {
-            if (mode) *mode = reply->mode;
-            if (bare) *bare = reply->is_bare;
-        }
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
 static struct termios S_termios;        /* saved termios for bare consoles */
 static BOOL S_termios_raw /* = FALSE */;
 
@@ -1174,7 +1157,7 @@ static enum read_console_input_return read_console_input(HANDLE handle, PINPUT_R
     }
     else
     {
-        if (!get_console_mode(handle, NULL, NULL)) return rci_error;
+        if (!VerifyConsoleIoHandle(handle)) return rci_error;
 
         if (WaitForSingleObject(GetConsoleInputWaitHandle(), timeout) != WAIT_OBJECT_0)
             return rci_timeout;
@@ -2135,7 +2118,18 @@ BOOL WINAPI SetConsoleActiveScreenBuffer(HANDLE hConsoleOutput)
  */
 BOOL WINAPI GetConsoleMode(HANDLE hcon, LPDWORD mode)
 {
-    return get_console_mode(hcon, mode, NULL);
+    BOOL ret;
+
+    SERVER_START_REQ( get_console_mode )
+    {
+        req->handle = console_handle_unmap(hcon);
+        if ((ret = !wine_server_call_err( req )))
+        {
+            if (mode) *mode = reply->mode;
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 

@@ -565,7 +565,7 @@ static void propagate_console_signal( struct console_input *console,
     enum_processes(propagate_console_signal_cb, &csi);
 }
 
-static int get_console_mode( obj_handle_t handle, int *bare )
+static int get_console_mode( obj_handle_t handle )
 {
     struct object *obj;
     int ret = 0;
@@ -575,12 +575,10 @@ static int get_console_mode( obj_handle_t handle, int *bare )
         if (obj->ops == &console_input_ops)
         {
             ret = ((struct console_input *)obj)->mode;
-            *bare = console_input_is_bare((struct console_input *)obj);
         }
         else if (obj->ops == &screen_buffer_ops)
         {
             ret = ((struct screen_buffer *)obj)->mode;
-            *bare = console_input_is_bare(((struct screen_buffer *)obj)->input);
         }
         else
             set_error( STATUS_OBJECT_TYPE_MISMATCH );
@@ -1537,7 +1535,7 @@ DECL_HANDLER(get_console_input_info)
 /* get a console mode (input or output) */
 DECL_HANDLER(get_console_mode)
 {
-    reply->mode = get_console_mode( req->handle, &reply->is_bare );
+    reply->mode = get_console_mode( req->handle );
 }
 
 /* set a console mode (input or output) */

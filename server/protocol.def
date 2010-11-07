@@ -1226,7 +1226,6 @@ struct console_renderer_event
     obj_handle_t handle;        /* handle to the console */
 @REPLY
     int          mode;          /* console mode */
-    int          is_bare;       /* whether the console has an evt_queue */
 @END
 
 

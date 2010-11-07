@@ -976,7 +976,6 @@ C_ASSERT( sizeof(struct get_console_wait_event_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_console_mode_request, handle) == 12 );
 C_ASSERT( sizeof(struct get_console_mode_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_console_mode_reply, mode) == 8 );
-C_ASSERT( FIELD_OFFSET(struct get_console_mode_reply, is_bare) == 12 );
 C_ASSERT( sizeof(struct get_console_mode_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct set_console_mode_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct set_console_mode_request, mode) == 16 );
