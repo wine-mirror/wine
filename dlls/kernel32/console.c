@@ -171,11 +171,9 @@ static BOOL S_termios_raw /* = FALSE */;
 /* returns the fd for a bare console (-1 otherwise) */
 static int  get_console_bare_fd(HANDLE hin)
 {
-    BOOL        is_bare;
     int         fd;
 
-    if (get_console_mode(hin, NULL, &is_bare) && is_bare &&
-        wine_server_handle_to_fd(hin, 0, &fd, NULL) == STATUS_SUCCESS)
+    if (wine_server_handle_to_fd(hin, 0, &fd, NULL) == STATUS_SUCCESS)
         return fd;
     return -1;
 }
@@ -191,12 +189,8 @@ static BOOL save_console_mode(HANDLE hin)
     return ret;
 }
 
-static BOOL put_console_into_raw_mode(HANDLE hin)
+static BOOL put_console_into_raw_mode(int fd)
 {
-    int            fd;
-
-    if ((fd = get_console_bare_fd(hin)) == -1) return FALSE;
-
     RtlEnterCriticalSection(&CONSOLE_CritSect);
     if (!S_termios_raw)
     {
@@ -217,7 +211,6 @@ static BOOL put_console_into_raw_mode(HANDLE hin)
     }
     RtlLeaveCriticalSection(&CONSOLE_CritSect);
 
-    close(fd);
     return S_termios_raw;
 }
 
@@ -1166,14 +1159,13 @@ static enum read_console_input_return bare_console_fetch_input(HANDLE handle, DW
 
 static enum read_console_input_return read_console_input(HANDLE handle, PINPUT_RECORD ir, DWORD timeout)
 {
-    BOOL bare;
+    int fd;
     enum read_console_input_return      ret;
 
-    if (!get_console_mode(handle, NULL, &bare)) return rci_error;
-
-    if (bare)
+    if ((fd = get_console_bare_fd(handle)) != -1)
     {
-        put_console_into_raw_mode(handle);
+        put_console_into_raw_mode(fd);
+        close(fd);
         if (WaitForSingleObject(GetConsoleInputWaitHandle(), 0) != WAIT_OBJECT_0)
         {
             ret = bare_console_fetch_input(handle, timeout);
@@ -1182,6 +1174,8 @@ static enum read_console_input_return read_console_input(HANDLE handle, PINPUT_R
     }
     else
     {
+        if (!get_console_mode(handle, NULL, NULL)) return rci_error;
+
         if (WaitForSingleObject(GetConsoleInputWaitHandle(), timeout) != WAIT_OBJECT_0)
             return rci_timeout;
     }
@@ -1602,14 +1596,19 @@ BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
     DWORD	charsread;
     LPWSTR	xbuf = lpBuffer;
     DWORD	mode;
-    BOOL        is_bare;
+    BOOL        is_bare = FALSE;
+    int         fd;
 
     TRACE("(%p,%p,%d,%p,%p)\n",
 	  hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, lpReserved);
 
-    if (!get_console_mode(hConsoleInput, &mode, &is_bare))
+    if (!GetConsoleMode(hConsoleInput, &mode))
         return FALSE;
-
+    if ((fd == get_console_bare_fd(hConsoleInput)) == -1)
+    {
+        close(fd);
+        is_bare = TRUE;
+    }
     if (mode & ENABLE_LINE_INPUT)
     {
 	if (!S_EditString || S_EditString[S_EditStrPos] == 0)
@@ -2300,8 +2299,7 @@ BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
     DWORD			nw = 0;
     const WCHAR*		psz = lpBuffer;
     CONSOLE_SCREEN_BUFFER_INFO	csbi;
-    int				k, first = 0;
-    BOOL                        bare;
+    int				k, first = 0, fd;
 
     TRACE("%p %s %d %p %p\n",
 	  hConsoleOutput, debugstr_wn(lpBuffer, nNumberOfCharsToWrite),
@@ -2309,14 +2307,13 @@ BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
 
     if (lpNumberOfCharsWritten) *lpNumberOfCharsWritten = 0;
 
-    if (!get_console_mode(hConsoleOutput, &mode, &bare)) return FALSE;
-
-    if (bare)
+    if ((fd = get_console_bare_fd(hConsoleOutput)) != -1)
     {
         char*           ptr;
         unsigned        len;
         BOOL            ret;
 
+        close(fd);
         /* FIXME: mode ENABLED_OUTPUT is not processed (or actually we rely on underlying Unix/TTY fd
          * to do the job
          */
@@ -2338,7 +2335,7 @@ BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
         return ret;
     }
 
-    if (!GetConsoleScreenBufferInfo(hConsoleOutput, &csbi))
+    if (!GetConsoleMode(hConsoleOutput, &mode) || !GetConsoleScreenBufferInfo(hConsoleOutput, &csbi))
 	return FALSE;
 
     if (!nNumberOfCharsToWrite) return TRUE;
