@@ -888,7 +888,8 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
 
     This->gstfilter = gst_element_factory_make("decodebin2", NULL);
     if (!This->gstfilter) {
-        FIXME("Could not make source filter, are gstreamer-plugins-* installed?\n");
+        FIXME("Could not make source filter, are gstreamer-plugins-* installed for %u bits?\n",
+              8 * (int)sizeof(void*));
         return E_FAIL;
     }
     g_signal_connect(This->gstfilter, "new-decoded-pad", G_CALLBACK(existing_new_pad), This);
