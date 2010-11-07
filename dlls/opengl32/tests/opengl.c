@@ -590,13 +590,16 @@ struct wgl_thread_param
     HANDLE test_finished;
     HGLRC hglrc;
     BOOL hglrc_deleted;
+    DWORD last_error;
 };
 
 static DWORD WINAPI wgl_thread(void *param)
 {
     struct wgl_thread_param *p = param;
 
+    SetLastError(0xdeadbeef);
     p->hglrc_deleted = wglDeleteContext(p->hglrc);
+    p->last_error = GetLastError();
     SetEvent(p->test_finished);
 
     return 0;
@@ -638,6 +641,7 @@ static void test_deletecontext(HDC hdc)
     {
         WaitForSingleObject(thread_handle, INFINITE);
         ok(thread_params.hglrc_deleted == FALSE, "Attempt to delete WGL context from another thread passed but should fail!\n");
+        ok(thread_params.last_error == ERROR_BUSY, "Expected last error to be ERROR_BUSY, got %u\n", thread_params.last_error);
     }
     CloseHandle(thread_params.test_finished);
 
