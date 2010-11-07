@@ -2101,8 +2101,8 @@ static nsresult NSAPI nsURI_GetAsciiHost(nsIURL *iface, nsACString *aAsciiHost)
     if(This->nsuri)
         return nsIURI_GetAsciiHost(This->nsuri, aAsciiHost);
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    FIXME("Use Uri_PUNYCODE_IDN_HOST flag\n");
+    return get_uri_string(This, Uri_PROPERTY_HOST, aAsciiHost);
 }
 
 static nsresult NSAPI nsURI_GetOriginCharset(nsIURL *iface, nsACString *aOriginCharset)
