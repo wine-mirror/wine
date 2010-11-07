@@ -1856,14 +1856,14 @@ static HRESULT internal_parseStream(saxreader *This, IStream *stream, BOOL vbInt
         if(hr != S_OK)
             break;
 
-        if(xmlParseChunk(locator->pParserCtxt, data, dataRead, 0)) hr = E_FAIL;
+        if(xmlParseChunk(locator->pParserCtxt, data, dataRead, 0) != XML_ERR_OK) hr = E_FAIL;
         else hr = locator->ret;
 
         if(hr != S_OK) break;
 
         if(dataRead != sizeof(data))
         {
-            if(xmlParseChunk(locator->pParserCtxt, data, 0, 1)) hr = E_FAIL;
+            if(xmlParseChunk(locator->pParserCtxt, data, 0, 1) != XML_ERR_OK) hr = E_FAIL;
             else hr = locator->ret;
 
             break;
