@@ -864,8 +864,9 @@ static ULONG WINAPI domdoc_AddRef(
      IXMLDOMDocument3 *iface )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    TRACE("%p\n", This );
-    return InterlockedIncrement( &This->ref );
+    ULONG ref = InterlockedIncrement( &This->ref );
+    TRACE("(%p)->(%d)\n", This, ref );
+    return ref;
 }
 
 
@@ -873,11 +874,10 @@ static ULONG WINAPI domdoc_Release(
      IXMLDOMDocument3 *iface )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    LONG ref;
+    LONG ref = InterlockedDecrement( &This->ref );
 
-    TRACE("%p\n", This );
+    TRACE("(%p)->(%d)\n", This, ref );
 
-    ref = InterlockedDecrement( &This->ref );
     if ( ref == 0 )
     {
         if(This->bsc)
@@ -888,7 +888,7 @@ static ULONG WINAPI domdoc_Release(
         destroy_xmlnode(&This->node);
         if(This->schema) IXMLDOMSchemaCollection2_Release(This->schema);
         if (This->stream) IStream_Release(This->stream);
-        HeapFree( GetProcessHeap(), 0, This );
+        heap_free(This);
     }
 
     return ref;
