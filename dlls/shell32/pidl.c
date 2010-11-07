@@ -1357,7 +1357,7 @@ HRESULT WINAPI SHGetNameFromIDList(PCIDLIST_ABSOLUTE pidl, SIGDN sigdnName, PWST
     STRRET disp_name;
     HRESULT ret;
 
-    TRACE("%p %d %p\n", pidl, sigdnName, ppszName);
+    TRACE("%p 0x%08x %p\n", pidl, sigdnName, ppszName);
 
     *ppszName = NULL;
     ret = SHBindToParent(pidl, &IID_IShellFolder, (void**)&psfparent, &child_pidl);
