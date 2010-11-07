@@ -411,11 +411,13 @@ static void release_sample(void *data) {
 }
 
 static DWORD CALLBACK push_data(LPVOID iface) {
+    LONGLONG maxlen, curlen;
     GSTImpl *This = iface;
     IMediaSample *buf;
     DWORD_PTR user;
     HRESULT hr;
 
+    IAsyncReader_Length(This->pInputPin.pReader, &maxlen, &curlen);
     TRACE("Starting..\n");
     for (;;) {
         REFERENCE_TIME tStart, tStop;
@@ -428,7 +430,11 @@ static DWORD CALLBACK push_data(LPVOID iface) {
         if (FAILED(hr))
             break;
 
+        if (This->nextofs >= maxlen)
+            break;
         len = IMediaSample_GetSize(buf);
+        if (This->nextofs + len > maxlen)
+            len = maxlen - This->nextofs;
 
         tStart = MEDIATIME_FROM_BYTES(This->nextofs);
         tStop = tStart + MEDIATIME_FROM_BYTES(len);
@@ -451,7 +457,7 @@ static DWORD CALLBACK push_data(LPVOID iface) {
         gstbuf = gst_app_buffer_new(data, IMediaSample_GetActualDataLength(buf), release_sample, buf);
         if (!gstbuf) {
             IMediaSample_Release(buf);
-            return S_OK;
+            break;
         }
         gstbuf->duration = gstbuf->timestamp = -1;
         ret = gst_pad_push(This->my_src, gstbuf);
@@ -468,6 +474,8 @@ static DWORD CALLBACK push_data(LPVOID iface) {
         if (hr != S_OK)
             break;
     }
+
+    gst_pad_push_event(This->my_src, gst_event_new_eos());
 
     TRACE("Almost stopping.. %08x\n", hr);
     do {
@@ -1447,6 +1455,8 @@ static HRESULT GST_RemoveOutputPins(GSTImpl *This) {
     GSTOutPin **ppOldPins = This->ppPins;
     TRACE("(%p)\n", This);
 
+    if (!This->gstfilter)
+        return S_OK;
     gst_element_set_state(This->gstfilter, GST_STATE_NULL);
     gst_pad_unlink(This->my_src, This->their_sink);
     This->my_src = This->their_sink = NULL;
