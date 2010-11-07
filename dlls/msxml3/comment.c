@@ -374,7 +374,11 @@ static HRESULT WINAPI domcomment_get_nodeTypeString(
     BSTR* p)
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
-    return IXMLDOMNode_get_nodeTypeString( IXMLDOMNode_from_impl(&This->node), p );
+    static const WCHAR commentW[] = {'c','o','m','m','e','n','t',0};
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return return_bstr(commentW, p);
 }
 
 static HRESULT WINAPI domcomment_get_text(

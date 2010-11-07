@@ -1190,10 +1190,14 @@ static HRESULT WINAPI domdoc_cloneNode(
 
 static HRESULT WINAPI domdoc_get_nodeTypeString(
     IXMLDOMDocument3 *iface,
-    BSTR* nodeType )
+    BSTR *p)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_get_nodeTypeString( IXMLDOMNode_from_impl(&This->node), nodeType );
+    static const WCHAR documentW[] = {'d','o','c','u','m','e','n','t',0};
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return return_bstr(documentW, p);
 }
 
 

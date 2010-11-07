@@ -388,7 +388,12 @@ static HRESULT WINAPI dom_pi_get_nodeTypeString(
     BSTR* p)
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    return IXMLDOMNode_get_nodeTypeString( IXMLDOMNode_from_impl(&This->node), p );
+    static const WCHAR processinginstructionW[] =
+        {'p','r','o','c','e','s','s','i','n','g','i','n','s','t','r','u','c','t','i','o','n',0};
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return return_bstr(processinginstructionW, p);
 }
 
 static HRESULT WINAPI dom_pi_get_text(

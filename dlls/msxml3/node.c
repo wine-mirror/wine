@@ -521,69 +521,6 @@ HRESULT node_clone(xmlnode *This, VARIANT_BOOL deep, IXMLDOMNode **cloneNode)
     return S_OK;
 }
 
-static HRESULT WINAPI xmlnode_get_nodeTypeString(
-    IXMLDOMNode *iface,
-    BSTR* xmlnodeType)
-{
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
-    const xmlChar *str;
-
-    TRACE("(%p)->(%p)\n", This, xmlnodeType );
-
-    if (!xmlnodeType)
-        return E_INVALIDARG;
-
-    if ( !This->node )
-        return E_FAIL;
-
-    switch( This->node->type )
-    {
-    case XML_ATTRIBUTE_NODE:
-        str = (const xmlChar*) "attribute";
-        break;
-    case XML_CDATA_SECTION_NODE:
-        str = (const xmlChar*) "cdatasection";
-        break;
-    case XML_COMMENT_NODE:
-        str = (const xmlChar*) "comment";
-        break;
-    case XML_DOCUMENT_NODE:
-        str = (const xmlChar*) "document";
-        break;
-    case XML_DOCUMENT_FRAG_NODE:
-        str = (const xmlChar*) "documentfragment";
-        break;
-    case XML_ELEMENT_NODE:
-        str = (const xmlChar*) "element";
-        break;
-    case XML_ENTITY_NODE:
-        str = (const xmlChar*) "entity";
-        break;
-    case XML_ENTITY_REF_NODE:
-        str = (const xmlChar*) "entityreference";
-        break;
-    case XML_NOTATION_NODE:
-        str = (const xmlChar*) "notation";
-        break;
-    case XML_PI_NODE:
-        str = (const xmlChar*) "processinginstruction";
-        break;
-    case XML_TEXT_NODE:
-        str = (const xmlChar*) "text";
-        break;
-    default:
-        FIXME("Unknown node type (%d)\n", This->node->type);
-        str = This->node->name;
-        break;
-    }
-
-    *xmlnodeType = bstr_from_xmlChar( str );
-    if (!*xmlnodeType)
-        return S_FALSE;
-
-    return S_OK;
-}
-
 static inline xmlChar* trim_whitespace(xmlChar* str)
 {
     xmlChar* ret = str;
@@ -1344,7 +1281,7 @@ static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
     xmlnode_hasChildNodes,
     xmlnode_get_ownerDocument,
     NULL,
-    xmlnode_get_nodeTypeString,
+    NULL,
     xmlnode_get_text,
     NULL,
     NULL,
@@ -1726,7 +1663,10 @@ static HRESULT WINAPI unknode_get_nodeTypeString(
     BSTR* p)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_get_nodeTypeString( IXMLDOMNode_from_impl(&This->node), p );
+
+    FIXME("(%p)->(%p)\n", This, p);
+
+    return node_get_nodeName(&This->node, p);
 }
 
 static HRESULT WINAPI unknode_get_text(

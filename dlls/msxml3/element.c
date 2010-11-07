@@ -386,7 +386,11 @@ static HRESULT WINAPI domelem_get_nodeTypeString(
     BSTR* p)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    return IXMLDOMNode_get_nodeTypeString( IXMLDOMNode_from_impl(&This->node), p );
+    static const WCHAR elementW[] = {'e','l','e','m','e','n','t',0};
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return return_bstr(elementW, p);
 }
 
 static HRESULT WINAPI domelem_get_text(

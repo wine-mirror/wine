@@ -372,7 +372,11 @@ static HRESULT WINAPI entityref_get_nodeTypeString(
     BSTR* p)
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    return IXMLDOMNode_get_nodeTypeString( IXMLDOMNode_from_impl(&This->node), p );
+    static const WCHAR entityreferenceW[] = {'e','n','t','i','t','y','r','e','f','e','r','e','n','c','e',0};
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return return_bstr(entityreferenceW, p);
 }
 
 static HRESULT WINAPI entityref_get_text(
