@@ -951,6 +951,10 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_BindToObject(IShellFolder2* iface
     if (_ILIsEmpty(pidl))
         return E_INVALIDARG;
    
+    /* Don't bind to files */
+    if (_ILIsValue(ILFindLastID(pidl)))
+        return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+
     if (IsEqualCLSID(This->m_pCLSID, &CLSID_FolderShortcut)) {
         /* Children of FolderShortcuts are ShellFSFolders on Windows. 
          * Unixfs' counterpart is UnixDosFolder. */
