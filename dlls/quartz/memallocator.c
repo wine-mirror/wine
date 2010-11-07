@@ -703,7 +703,7 @@ static HRESULT WINAPI StdMediaSample2_GetMediaTime(IMediaSample2 * iface, LONGLO
     *pStart = This->tMediaStart;
     *pEnd = This->tMediaEnd;
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI StdMediaSample2_SetMediaTime(IMediaSample2 * iface, LONGLONG * pStart, LONGLONG * pEnd)
