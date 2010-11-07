@@ -166,6 +166,14 @@ static GstFlowReturn got_data(GstPad *pad, GstBuffer *buf) {
     }
     else
         IMediaSample_SetTime(sample, NULL, NULL);
+    if (GST_BUFFER_OFFSET_IS_VALID(buf) &&
+        GST_BUFFER_OFFSET_END_IS_VALID(buf)) {
+        tStart = buf->offset / 100;
+        tStop = buf->offset_end / 100;
+        IMediaSample_SetMediaTime(sample, &tStart, &tStop);
+    }
+    else
+        IMediaSample_SetMediaTime(sample, NULL, NULL);
 
     IMediaSample_SetDiscontinuity(sample, GST_BUFFER_FLAG_IS_SET(buf, GST_BUFFER_FLAG_DISCONT));
     IMediaSample_SetPreroll(sample, GST_BUFFER_FLAG_IS_SET(buf, GST_BUFFER_FLAG_PREROLL));
@@ -231,6 +239,10 @@ static HRESULT WINAPI Gstreamer_transform_ProcessData(TransformFilter *iface, IM
         buf->timestamp = tStart * 100;
         if (hr == S_OK)
             buf->duration = (tStop - tStart)*100;
+    }
+    if (IMediaSample_GetMediaTime(sample, &tStart, &tStop) == S_OK) {
+        buf->offset = tStart * 100;
+        buf->offset_end = tStop * 100;
     }
     if (IMediaSample_IsDiscontinuity(sample) == S_OK)
         GST_BUFFER_FLAG_SET(buf, GST_BUFFER_FLAG_DISCONT);
