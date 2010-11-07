@@ -1023,9 +1023,17 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_CompareIDs(IShellFolder2* iface, 
     firstpidl = ILCloneFirst(pidl1);
     pidl1 = ILGetNext(pidl1);
     pidl2 = ILGetNext(pidl2);
-    
-    hr = IShellFolder2_BindToObject(iface, firstpidl, NULL, &IID_IShellFolder, (LPVOID*)&psf);
-    if (SUCCEEDED(hr)) {
+
+    isEmpty1 = _ILIsEmpty(pidl1);
+    isEmpty2 = _ILIsEmpty(pidl2);
+
+    if (isEmpty1 && isEmpty2)
+        return MAKE_HRESULT(SEVERITY_SUCCESS, 0, 0);
+    else if (isEmpty1)
+        return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (WORD)-1);
+    else if (isEmpty2)
+        return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (WORD)1);
+    else if (SUCCEEDED(IShellFolder2_BindToObject(iface, firstpidl, NULL, &IID_IShellFolder, (void**)&psf))) {
         hr = IShellFolder_CompareIDs(psf, lParam, pidl1, pidl2);
         IShellFolder2_Release(psf);
     }
