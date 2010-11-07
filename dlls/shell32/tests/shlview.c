@@ -1100,6 +1100,49 @@ static void test_GetSetCurrentViewMode(void)
     IShellFolder_Release(desktop);
 }
 
+static void test_IOleCommandTarget(void)
+{
+    IShellFolder *psf_desktop;
+    IShellView *psv;
+    IOleCommandTarget *poct;
+    HRESULT hr;
+
+    hr = SHGetDesktopFolder(&psf_desktop);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+
+    hr = IShellFolder_CreateViewObject(psf_desktop, NULL, &IID_IShellView, (void**)&psv);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        hr = IShellView_QueryInterface(psv, &IID_IOleCommandTarget, (void**)&poct);
+        ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Win95/NT4 */, "Got 0x%08x\n", hr);
+        if(SUCCEEDED(hr))
+        {
+            OLECMD oc;
+
+            hr = IOleCommandTarget_QueryStatus(poct, NULL, 0, NULL, NULL);
+            ok(hr == E_INVALIDARG, "Got 0x%08x\n", hr);
+
+            oc.cmdID = 1;
+            hr = IOleCommandTarget_QueryStatus(poct, NULL, 0, &oc, NULL);
+            ok(hr == OLECMDERR_E_UNKNOWNGROUP, "Got 0x%08x\n", hr);
+
+            oc.cmdID = 1;
+            hr = IOleCommandTarget_QueryStatus(poct, NULL, 1, &oc, NULL);
+            ok(hr == OLECMDERR_E_UNKNOWNGROUP, "Got 0x%08x\n", hr);
+
+            hr = IOleCommandTarget_Exec(poct, NULL, 0, 0, NULL, NULL);
+            ok(hr == OLECMDERR_E_UNKNOWNGROUP, "Got 0x%08x\n", hr);
+
+            IOleCommandTarget_Release(poct);
+        }
+
+        IShellView_Release(psv);
+    }
+
+    IShellFolder_Release(psf_desktop);
+}
+
 START_TEST(shlview)
 {
     OleInitialize(NULL);
@@ -1112,6 +1155,7 @@ START_TEST(shlview)
     test_IShellFolderView();
     test_IOleWindow();
     test_GetSetCurrentViewMode();
+    test_IOleCommandTarget();
 
     OleUninitialize();
 }

@@ -2258,7 +2258,7 @@ static HRESULT WINAPI ISVOleCmdTarget_QueryStatus(
               This, debugstr_guid(pguidCmdGroup), cCmds, prgCmds, pCmdText);
 
     if (!prgCmds)
-        return E_POINTER;
+        return E_INVALIDARG;
     for (i = 0; i < cCmds; i++)
     {
         FIXME("\tprgCmds[%d].cmdID = %d\n", i, prgCmds[i].cmdID);
@@ -2285,6 +2285,8 @@ static HRESULT WINAPI ISVOleCmdTarget_Exec(
 	FIXME("(%p)->(\n\tTarget GUID:%s Command:0x%08x Opt:0x%08x %p %p)\n",
               This, debugstr_guid(pguidCmdGroup), nCmdID, nCmdexecopt, pvaIn, pvaOut);
 
+	if (!pguidCmdGroup)
+	    return OLECMDERR_E_UNKNOWNGROUP;
 	if (IsEqualIID(pguidCmdGroup, &CGID_Explorer) &&
 	   (nCmdID == 0x29) &&
 	   (nCmdexecopt == 4) && pvaOut)
