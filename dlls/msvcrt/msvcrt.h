@@ -861,4 +861,22 @@ void __cdecl MSVCRT__invalid_parameter(const MSVCRT_wchar_t *expr, const MSVCRT_
 #define MSVCRT_CHECK_PMT(x)   ((x) || (MSVCRT_INVALID_PMT(0),FALSE))
 #endif
 
+typedef struct pf_output_t
+{
+    int used;
+    int len;
+    BOOL unicode;
+    union {
+        LPWSTR W;
+        LPSTR  A;
+    } buf;
+    union {
+        LPWSTR W;
+        LPSTR  A;
+    } grow;
+} pf_output;
+
+int pf_vsnprintf( pf_output *out, const WCHAR *format,
+                  MSVCRT__locale_t locale, BOOL valid, __ms_va_list valist );
+
 #endif /* __WINE_MSVCRT_H */
