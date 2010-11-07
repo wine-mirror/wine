@@ -142,6 +142,7 @@ HRESULT node_set_content(xmlnode *This, LPCWSTR value)
 {
     xmlChar *str;
 
+    TRACE("(%p)->(%s)\n", This, debugstr_w(value));
     str = xmlChar_from_wchar(value);
     if(!str)
         return E_OUTOFMEMORY;
@@ -155,6 +156,7 @@ static HRESULT node_set_content_escaped(xmlnode *This, LPCWSTR value)
 {
     xmlChar *str, *escaped;
 
+    TRACE("(%p)->(%s)\n", This, debugstr_w(value));
     str = xmlChar_from_wchar(value);
     if(!str)
         return E_OUTOFMEMORY;
