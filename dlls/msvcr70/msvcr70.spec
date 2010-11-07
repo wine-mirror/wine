@@ -267,7 +267,7 @@
 @ cdecl _ctime64(ptr) msvcrt._ctime64
 @ extern _ctype msvcrt._ctype
 @ cdecl _cwait(ptr long long) msvcrt._cwait
-@ stub _cwprintf
+@ varargs _cwprintf(str) msvcrt._cwprintf
 @ varargs _cwscanf(wstr) msvcrt._cwscanf
 @ extern _daylight msvcrt._daylight
 @ extern _dstbias msvcrt._dstbias

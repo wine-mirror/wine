@@ -361,7 +361,7 @@
 # stub _ctime64_s
 @ extern _ctype MSVCRT__ctype
 @ cdecl _cwait(ptr long long)
-# stub _cwprintf
+@ varargs _cwprintf(wstr)
 # stub _cwprintf_l
 # stub _cwprintf_p
 # stub _cwprintf_p_l
@@ -992,13 +992,13 @@
 @ cdecl _unlock_file(ptr) MSVCRT__unlock_file
 @ cdecl _utime32(str ptr)
 @ cdecl _utime64(str ptr)
-# stub _vcprintf
+@ cdecl _vcprintf(str ptr)
 # stub _vcprintf_l
 # stub _vcprintf_p
 # stub _vcprintf_p_l
 # stub _vcprintf_s
 # stub _vcprintf_s_l
-# stub _vcwprintf
+@ cdecl _vcwprintf(wstr ptr)
 # stub _vcwprintf_l
 # stub _vcwprintf_p
 # stub _vcwprintf_p_l

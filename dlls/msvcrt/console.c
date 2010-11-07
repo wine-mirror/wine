@@ -22,6 +22,7 @@
  */
 
 #include "msvcrt.h"
+#include "winnls.h"
 #include "wincon.h"
 #include "mtdll.h"
 #include "wine/debug.h"
@@ -299,35 +300,89 @@ int CDECL _kbhit(void)
 
 
 /*********************************************************************
+ *		_vcprintf (MSVCRT.@)
+ */
+int CDECL _vcprintf(const char* format, __ms_va_list valist)
+{
+  char buf[2048];
+  LPWSTR formatW = NULL;
+  DWORD sz;
+  pf_output out;
+  int retval;
+
+  out.unicode = FALSE;
+  out.buf.A = out.grow.A = buf;
+  out.used = 0;
+  out.len = sizeof(buf);
+
+  sz = MultiByteToWideChar( CP_ACP, 0, format, -1, NULL, 0 );
+  formatW = HeapAlloc( GetProcessHeap(), 0, sz*sizeof(WCHAR) );
+  MultiByteToWideChar( CP_ACP, 0, format, -1, formatW, sz );
+
+  if ((retval = pf_vsnprintf( &out, formatW, NULL, FALSE, valist )) > 0)
+  {
+      LOCK_CONSOLE;
+      retval = _cputs( out.buf.A );
+      UNLOCK_CONSOLE;
+  }
+  HeapFree( GetProcessHeap(), 0, formatW );
+  if (out.buf.A != buf)
+    MSVCRT_free (out.buf.A);
+  return retval;
+}
+
+/*********************************************************************
  *		_cprintf (MSVCRT.@)
  */
 int CDECL _cprintf(const char* format, ...)
 {
-  char buf[2048], *mem = buf;
-  int written, resize = sizeof(buf), retval;
+  int retval;
   __ms_va_list valist;
 
   __ms_va_start( valist, format );
-  /* There are two conventions for snprintf failing:
-   * Return -1 if we truncated, or
-   * Return the number of bytes that would have been written
-   * The code below handles both cases
-   */
-  while ((written = MSVCRT_vsnprintf( mem, resize, format, valist )) == -1 ||
-          written > resize)
-  {
-    resize = (written == -1 ? resize * 2 : written + 1);
-    if (mem != buf)
-      MSVCRT_free (mem);
-    if (!(mem = MSVCRT_malloc(resize)))
-      return MSVCRT_EOF;
-    __ms_va_start( valist, format );
-  }
+  retval = _vcprintf(format, valist);
   __ms_va_end(valist);
-  LOCK_CONSOLE;
-  retval = _cputs( mem );
-  UNLOCK_CONSOLE;
-  if (mem != buf)
-    MSVCRT_free (mem);
+
+  return retval;
+}
+
+
+/*********************************************************************
+ *		_vcwprintf (MSVCRT.@)
+ */
+int CDECL _vcwprintf(const MSVCRT_wchar_t* format, __ms_va_list valist)
+{
+  MSVCRT_wchar_t buf[2048];
+  pf_output out;
+  int retval;
+
+  out.unicode = TRUE;
+  out.buf.W = out.grow.W = buf;
+  out.used = 0;
+  out.len = sizeof(buf) / sizeof(buf[0]);
+
+  if ((retval = pf_vsnprintf( &out, format, NULL, FALSE, valist )) >= 0)
+  {
+      LOCK_CONSOLE;
+      retval = _cputws( out.buf.W );
+      UNLOCK_CONSOLE;
+  }
+  if (out.buf.W != buf)
+    MSVCRT_free (out.buf.W);
+  return retval;
+}
+
+/*********************************************************************
+ *		_cwprintf (MSVCRT.@)
+ */
+int CDECL _cwprintf(const MSVCRT_wchar_t* format, ...)
+{
+  int retval;
+  __ms_va_list valist;
+
+  __ms_va_start( valist, format );
+  retval = _vcwprintf(format, valist);
+  __ms_va_end(valist);
+
   return retval;
 }
