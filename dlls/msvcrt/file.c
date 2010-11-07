@@ -3333,25 +3333,31 @@ MSVCRT_FILE* CDECL MSVCRT_tmpfile(void)
  */
 int CDECL MSVCRT_vfprintf(MSVCRT_FILE* file, const char *format, __ms_va_list valist)
 {
-  char buf[2048], *mem = buf;
-  int written, resize = sizeof(buf), retval;
-  /* There are two conventions for vsnprintf failing:
-   * Return -1 if we truncated, or
-   * Return the number of bytes that would have been written
-   * The code below handles both cases
-   */
-  while ((written = MSVCRT_vsnprintf(mem, resize, format, valist)) == -1 ||
-          written > resize)
+  char buf[2048];
+  LPWSTR formatW = NULL;
+  DWORD sz;
+  pf_output out;
+  int written, retval;
+
+  out.unicode = FALSE;
+  out.buf.A = out.grow.A = buf;
+  out.used = 0;
+  out.len = sizeof(buf);
+
+  sz = MultiByteToWideChar( CP_ACP, 0, format, -1, NULL, 0 );
+  formatW = HeapAlloc( GetProcessHeap(), 0, sz*sizeof(WCHAR) );
+  MultiByteToWideChar( CP_ACP, 0, format, -1, formatW, sz );
+
+  if ((written = pf_vsnprintf( &out, formatW, NULL, FALSE, valist )) >= 0)
   {
-    resize = (written == -1 ? resize * 2 : written + 1);
-    if (mem != buf)
-      MSVCRT_free (mem);
-    if (!(mem = MSVCRT_malloc(resize)))
-      return MSVCRT_EOF;
+      retval = MSVCRT_fwrite(out.buf.A, sizeof(*out.buf.A), written, file);
   }
-  retval = MSVCRT_fwrite(mem, sizeof(*mem), written, file);
-  if (mem != buf)
-    MSVCRT_free (mem);
+  else retval = -1;
+
+  HeapFree( GetProcessHeap(), 0, formatW );
+
+  if (out.buf.A != out.grow.A)
+    MSVCRT_free (out.buf.A);
   return retval;
 }
 
@@ -3363,21 +3369,22 @@ int CDECL MSVCRT_vfprintf(MSVCRT_FILE* file, const char *format, __ms_va_list va
  */
 int CDECL MSVCRT_vfwprintf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, __ms_va_list valist)
 {
-  MSVCRT_wchar_t buf[2048], *mem = buf;
-  int written, resize = sizeof(buf) / sizeof(MSVCRT_wchar_t), retval;
-  /* See vfprintf comments */
-  while ((written = MSVCRT_vsnwprintf(mem, resize, format, valist)) == -1 ||
-          written > resize)
+  MSVCRT_wchar_t buf[2048];
+  pf_output out;
+  int written, retval;
+
+  out.unicode = TRUE;
+  out.buf.W = out.grow.W = buf;
+  out.used = 0;
+  out.len = sizeof(buf) / sizeof(buf[0]);
+
+  if ((written = pf_vsnprintf( &out, format, NULL, FALSE, valist )) >= 0)
   {
-    resize = (written == -1 ? resize * 2 : written + sizeof(MSVCRT_wchar_t));
-    if (mem != buf)
-      MSVCRT_free (mem);
-    if (!(mem = MSVCRT_malloc(resize*sizeof(*mem))))
-      return MSVCRT_EOF;
+      retval = MSVCRT_fwrite(out.buf.W, sizeof(*out.buf.W), written, file);
   }
-  retval = MSVCRT_fwrite(mem, sizeof(*mem), written, file);
-  if (mem != buf)
-    MSVCRT_free (mem);
+  else retval = -1;
+  if (out.buf.W != out.grow.W)
+    MSVCRT_free (out.buf.W);
   return retval;
 }
 
