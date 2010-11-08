@@ -3374,6 +3374,14 @@ interface IWineD3DDevice : IUnknown
     );
     void ReleaseFocusWindow(
     );
+    void SetupFullscreenWindow(
+        [in] HWND window,
+        [in] UINT w,
+        [in] UINT h
+    );
+    void RestoreFullscreenWindow(
+        [in] HWND window
+    );
 }
 
 IWineD3D * __stdcall WineDirect3DCreate(UINT dxVersion, void *parent);

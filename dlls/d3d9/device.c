@@ -3271,6 +3271,16 @@ HRESULT device_init(IDirect3DDevice9Impl *device, IWineD3D *wined3d, UINT adapte
         return hr;
     }
 
+    if (flags & D3DCREATE_ADAPTERGROUP_DEVICE)
+    {
+        WINED3DCAPS caps;
+
+        IWineD3D_GetDeviceCaps(wined3d, adapter, device_type, &caps);
+        count = caps.NumberOfAdaptersInGroup;
+    }
+
+    if (flags & D3DCREATE_MULTITHREADED) IWineD3DDevice_SetMultithreaded(device->WineD3DDevice);
+
     if (!parameters->Windowed)
     {
         if (!focus_window) focus_window = parameters->hDeviceWindow;
@@ -3281,17 +3291,17 @@ HRESULT device_init(IDirect3DDevice9Impl *device, IWineD3D *wined3d, UINT adapte
             wined3d_mutex_unlock();
             return hr;
         }
+
+        for (i = 0; i < count; ++i)
+        {
+            HWND device_window = parameters[i].hDeviceWindow;
+
+            if (!device_window) device_window = focus_window;
+            IWineD3DDevice_SetupFullscreenWindow(device->WineD3DDevice, device_window,
+                    parameters[i].BackBufferWidth,
+                    parameters[i].BackBufferHeight);
+        }
     }
-
-    if (flags & D3DCREATE_ADAPTERGROUP_DEVICE)
-    {
-        WINED3DCAPS caps;
-
-        IWineD3D_GetDeviceCaps(wined3d, adapter, device_type, &caps);
-        count = caps.NumberOfAdaptersInGroup;
-    }
-
-    if (flags & D3DCREATE_MULTITHREADED) IWineD3DDevice_SetMultithreaded(device->WineD3DDevice);
 
     wined3d_parameters = HeapAlloc(GetProcessHeap(), 0, sizeof(*wined3d_parameters) * count);
     if (!wined3d_parameters)

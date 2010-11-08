@@ -581,13 +581,6 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
     swapchain->win_handle = window;
     swapchain->device_window = window;
 
-    if (!present_parameters->Windowed && window)
-    {
-        device_setup_fullscreen_window(device, window,
-                present_parameters->BackBufferWidth,
-                present_parameters->BackBufferHeight);
-    }
-
     IWineD3D_GetAdapterDisplayMode(device->wined3d, adapter->ordinal, &mode);
     swapchain->orig_width = mode.Width;
     swapchain->orig_height = mode.Height;

@@ -644,24 +644,31 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
      }
 
     /* Do we switch from fullscreen to non-fullscreen ? */
-
-    if( !(cooplevel & DDSCL_FULLSCREEN) && (This->cooperative_level & DDSCL_FULLSCREEN) )
+    if (!(cooplevel & DDSCL_FULLSCREEN) && (This->cooperative_level & DDSCL_FULLSCREEN))
+    {
         IWineD3DDevice_ReleaseFocusWindow(This->wineD3DDevice);
+        IWineD3DDevice_RestoreFullscreenWindow(This->wineD3DDevice, This->dest_window);
+    }
 
     /* Don't override focus windows or private device windows */
-    if( hwnd && !This->focuswindow && !This->devicewindow && (hwnd != window))
+    if (hwnd && !This->focuswindow && !This->devicewindow && (hwnd != window))
     {
-         if( cooplevel & DDSCL_FULLSCREEN )
-         {
-             HRESULT hr = IWineD3DDevice_AcquireFocusWindow(This->wineD3DDevice, hwnd);
-             if (FAILED(hr))
-             {
-                 ERR("Failed to acquire focus window, hr %#x.\n", hr);
-                 LeaveCriticalSection(&ddraw_cs);
-                 return hr;
-             }
-         }
-         This->dest_window = hwnd;
+        if (cooplevel & DDSCL_FULLSCREEN)
+        {
+            WINED3DDISPLAYMODE display_mode;
+            HRESULT hr;
+
+            IWineD3D_GetAdapterDisplayMode(This->wineD3D, WINED3DADAPTER_DEFAULT, &display_mode);
+            IWineD3DDevice_SetupFullscreenWindow(This->wineD3DDevice, hwnd, display_mode.Width, display_mode.Height);
+            hr = IWineD3DDevice_AcquireFocusWindow(This->wineD3DDevice, hwnd);
+            if (FAILED(hr))
+            {
+                ERR("Failed to acquire focus window, hr %#x.\n", hr);
+                LeaveCriticalSection(&ddraw_cs);
+                return hr;
+            }
+        }
+        This->dest_window = hwnd;
     }
 
     if(cooplevel & DDSCL_CREATEDEVICEWINDOW)
@@ -797,6 +804,8 @@ static HRESULT ddraw_set_display_mode(IDirectDraw7 *iface, DWORD Width, DWORD He
     hr = IWineD3DDevice_SetDisplayMode(This->wineD3DDevice,
                                        0, /* First swapchain */
                                        &Mode);
+    IWineD3DDevice_RestoreFullscreenWindow(This->wineD3DDevice, This->dest_window);
+    IWineD3DDevice_SetupFullscreenWindow(This->wineD3DDevice, This->dest_window, Width, Height);
     LeaveCriticalSection(&ddraw_cs);
     switch(hr)
     {

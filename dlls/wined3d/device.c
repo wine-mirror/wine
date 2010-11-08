@@ -1767,8 +1767,9 @@ static LONG fullscreen_exstyle(LONG exstyle)
     return exstyle;
 }
 
-void device_setup_fullscreen_window(IWineD3DDeviceImpl *device, HWND window, UINT w, UINT h)
+static void WINAPI IWineD3DDeviceImpl_SetupFullscreenWindow(IWineD3DDevice *iface, HWND window, UINT w, UINT h)
 {
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
     BOOL filter_messages;
     LONG style, exstyle;
 
@@ -1799,8 +1800,9 @@ void device_setup_fullscreen_window(IWineD3DDeviceImpl *device, HWND window, UIN
     device->filter_messages = filter_messages;
 }
 
-void device_restore_fullscreen_window(IWineD3DDeviceImpl *device, HWND window)
+static void WINAPI IWineD3DDeviceImpl_RestoreFullscreenWindow(IWineD3DDevice *iface, HWND window)
 {
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
     BOOL filter_messages;
     LONG style, exstyle;
 
@@ -6454,7 +6456,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
                 }
 
                 /* switch from windowed to fs */
-                device_setup_fullscreen_window(This, swapchain->device_window,
+                IWineD3DDevice_SetupFullscreenWindow(iface, swapchain->device_window,
                         pPresentationParameters->BackBufferWidth,
                         pPresentationParameters->BackBufferHeight);
             }
@@ -6469,7 +6471,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
         else if (!swapchain->presentParms.Windowed)
         {
             /* Fullscreen -> windowed switch */
-            device_restore_fullscreen_window(This, swapchain->device_window);
+            IWineD3DDevice_RestoreFullscreenWindow(iface, swapchain->device_window);
             IWineD3DDevice_ReleaseFocusWindow(iface);
         }
         swapchain->presentParms.Windowed = pPresentationParameters->Windowed;
@@ -6485,7 +6487,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
          */
         This->style = 0;
         This->exStyle = 0;
-        device_setup_fullscreen_window(This, swapchain->device_window,
+        IWineD3DDevice_SetupFullscreenWindow(iface, swapchain->device_window,
                 pPresentationParameters->BackBufferWidth,
                 pPresentationParameters->BackBufferHeight);
         This->style = style;
@@ -6888,6 +6890,8 @@ static const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_GetSurfaceFromDC,
     IWineD3DDeviceImpl_AcquireFocusWindow,
     IWineD3DDeviceImpl_ReleaseFocusWindow,
+    IWineD3DDeviceImpl_SetupFullscreenWindow,
+    IWineD3DDeviceImpl_RestoreFullscreenWindow,
 };
 
 HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,

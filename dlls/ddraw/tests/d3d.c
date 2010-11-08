@@ -3273,6 +3273,9 @@ static void test_wndproc(void)
     static const UINT messages[] =
     {
         WM_WINDOWPOSCHANGING,
+        WM_MOVE,
+        WM_SIZE,
+        WM_WINDOWPOSCHANGING,
         WM_ACTIVATE,
         WM_SETFOCUS,
         0,

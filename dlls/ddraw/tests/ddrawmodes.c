@@ -779,7 +779,7 @@ static void testcooperativelevels_exclusive(void)
     /* rect_before_create is assumed to hold the screen rect */
     GetClientRect(hwnd, &window_rect);
     rc = EqualRect(&rect_before_create, &window_rect);
-    todo_wine ok(rc!=0, "Fullscreen window has wrong size\n");
+    ok(rc, "Fullscreen window has wrong size.\n");
 
     /* Set the focus window. Should fail */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,

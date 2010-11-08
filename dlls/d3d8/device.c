@@ -2855,7 +2855,9 @@ HRESULT device_init(IDirect3DDevice8Impl *device, IWineD3D *wined3d, UINT adapte
 
     if (!parameters->Windowed)
     {
-        if (!focus_window) focus_window = parameters->hDeviceWindow;
+        HWND device_window = parameters->hDeviceWindow;
+
+        if (!focus_window) focus_window = device_window;
         if (FAILED(hr = IWineD3DDevice_AcquireFocusWindow(device->WineD3DDevice, focus_window)))
         {
             ERR("Failed to acquire focus window, hr %#x.\n", hr);
@@ -2864,6 +2866,11 @@ HRESULT device_init(IDirect3DDevice8Impl *device, IWineD3D *wined3d, UINT adapte
             HeapFree(GetProcessHeap(), 0, device->handle_table.entries);
             return hr;
         }
+
+        if (!device_window) device_window = focus_window;
+        IWineD3DDevice_SetupFullscreenWindow(device->WineD3DDevice, device_window,
+                parameters->BackBufferWidth,
+                parameters->BackBufferHeight);
     }
 
     if (flags & D3DCREATE_MULTITHREADED) IWineD3DDevice_SetMultithreaded(device->WineD3DDevice);

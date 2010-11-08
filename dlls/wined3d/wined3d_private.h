@@ -1773,8 +1773,6 @@ LRESULT device_process_message(IWineD3DDeviceImpl *device, HWND window, BOOL uni
         UINT message, WPARAM wparam, LPARAM lparam, WNDPROC proc) DECLSPEC_HIDDEN;
 void device_resource_add(IWineD3DDeviceImpl *This, IWineD3DResource *resource) DECLSPEC_HIDDEN;
 void device_resource_released(IWineD3DDeviceImpl *This, IWineD3DResource *resource) DECLSPEC_HIDDEN;
-void device_restore_fullscreen_window(IWineD3DDeviceImpl *device, HWND hwnd) DECLSPEC_HIDDEN;
-void device_setup_fullscreen_window(IWineD3DDeviceImpl *device, HWND hwnd, UINT w, UINT h) DECLSPEC_HIDDEN;
 void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
         BOOL use_vshader, struct wined3d_stream_info *stream_info, BOOL *fixup) DECLSPEC_HIDDEN;
 void device_switch_onscreen_ds(IWineD3DDeviceImpl *device, struct wined3d_context *context,
