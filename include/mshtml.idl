@@ -9146,12 +9146,32 @@ interface IHTMLPluginsCollection : IDispatch
 }
 
 [
+    hidden,
+    uuid(3050f54a-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispCPlugins
+{
+ properties:
+methods:
+    [propget, id(DISPID_IHTMLPLUGINSCOLLECTION_LENGTH)]
+    long length();
+
+    [id(DISPID_IHTMLPLUGINSCOLLECTION_REFRESH)]
+    void refresh([defaultvalue(0), in] VARIANT_BOOL reload);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
+    IDispatch *constructor();
+}
+
+[
     noncreatable,
     uuid(3050f3ff-98b5-11cf-bb82-00aa00bdce0b)
 ]
 coclass CPlugins
 {
-    [default]           interface IHTMLPluginsCollection;
+    [default]  dispinterface DispCPlugins;
+               interface IHTMLPluginsCollection;
+               interface IHTMLDOMConstructor;
 }
 
 /*****************************************************************************

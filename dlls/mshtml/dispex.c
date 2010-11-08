@@ -85,6 +85,7 @@ static struct list dispex_data_list = LIST_INIT(dispex_data_list);
 static REFIID tid_ids[] = {
     &IID_NULL,
     &DIID_DispCEventObj,
+    &DIID_DispCPlugins,
     &DIID_DispDOMChildrenCollection,
     &DIID_DispHTMLAnchorElement,
     &DIID_DispHTMLBody,
@@ -150,6 +151,7 @@ static REFIID tid_ids[] = {
     &IID_IHTMLLocation,
     &IID_IHTMLObjectElement,
     &IID_IHTMLOptionElement,
+    &IID_IHTMLPluginsCollection,
     &IID_IHTMLRect,
     &IID_IHTMLScreen,
     &IID_IHTMLScriptElement,

@@ -31,14 +31,167 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+typedef struct HTMLPluginsCollection HTMLPluginsCollection;
+
 typedef struct {
     DispatchEx dispex;
     const IOmNavigatorVtbl  *lpIOmNavigatorVtbl;
 
     LONG ref;
+
+    HTMLPluginsCollection *plugins;
 } OmNavigator;
 
+
 #define OMNAVIGATOR(x)  ((IOmNavigator*) &(x)->lpIOmNavigatorVtbl)
+
+struct HTMLPluginsCollection {
+    DispatchEx dispex;
+    const IHTMLPluginsCollectionVtbl  *lpIHTMLPluginsCollectionVtbl;
+
+    LONG ref;
+
+    OmNavigator *navigator;
+};
+
+#define HTMLPLUGINSCOL(x)  ((IHTMLPluginsCollection*)  &(x)->lpIHTMLPluginsCollectionVtbl)
+
+#define HTMLPLUGINCOL_THIS(iface) DEFINE_THIS(HTMLPluginsCollection, IHTMLPluginsCollection, iface)
+
+static HRESULT WINAPI HTMLPluginsCollection_QueryInterface(IHTMLPluginsCollection *iface, REFIID riid, void **ppv)
+{
+    HTMLPluginsCollection *This = HTMLPLUGINCOL_THIS(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = HTMLPLUGINSCOL(This);
+    }else if(IsEqualGUID(&IID_IHTMLPluginsCollection, riid)) {
+        TRACE("(%p)->(IID_IHTMLPluginCollection %p)\n", This, ppv);
+        *ppv = HTMLPLUGINSCOL(This);
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+        return *ppv ? S_OK : E_NOINTERFACE;
+    }else {
+        *ppv = NULL;
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI HTMLPluginsCollection_AddRef(IHTMLPluginsCollection *iface)
+{
+    HTMLPluginsCollection *This = HTMLPLUGINCOL_THIS(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI HTMLPluginsCollection_Release(IHTMLPluginsCollection *iface)
+{
+    HTMLPluginsCollection *This = HTMLPLUGINCOL_THIS(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        if(This->navigator)
+            This->navigator->plugins = NULL;
+        release_dispex(&This->dispex);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI HTMLPluginsCollection_GetTypeInfoCount(IHTMLPluginsCollection *iface, UINT *pctinfo)
+{
+    HTMLPluginsCollection *This = HTMLPLUGINCOL_THIS(iface);
+    return IDispatchEx_GetTypeInfoCount(DISPATCHEX(&This->dispex), pctinfo);
+}
+
+static HRESULT WINAPI HTMLPluginsCollection_GetTypeInfo(IHTMLPluginsCollection *iface, UINT iTInfo,
+                                              LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLPluginsCollection *This = HTMLPLUGINCOL_THIS(iface);
+    return IDispatchEx_GetTypeInfo(DISPATCHEX(&This->dispex), iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI HTMLPluginsCollection_GetIDsOfNames(IHTMLPluginsCollection *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    HTMLPluginsCollection *This = HTMLPLUGINCOL_THIS(iface);
+    return IDispatchEx_GetIDsOfNames(DISPATCHEX(&This->dispex), riid, rgszNames, cNames, lcid, rgDispId);
+}
+
+static HRESULT WINAPI HTMLPluginsCollection_Invoke(IHTMLPluginsCollection *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLPluginsCollection *This = HTMLPLUGINCOL_THIS(iface);
+    return IDispatchEx_Invoke(DISPATCHEX(&This->dispex), dispIdMember, riid, lcid,
+            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI HTMLPluginsCollection_get_length(IHTMLPluginsCollection *iface, LONG *p)
+{
+    HTMLPluginsCollection *This = HTMLPLUGINCOL_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLPluginsCollection_refresh(IHTMLPluginsCollection *iface, VARIANT_BOOL reload)
+{
+    HTMLPluginsCollection *This = HTMLPLUGINCOL_THIS(iface);
+    FIXME("(%p)->(%x)\n", This, reload);
+    return E_NOTIMPL;
+}
+
+#undef HTMLPLUGINSCOL_THIS
+
+static const IHTMLPluginsCollectionVtbl HTMLPluginsCollectionVtbl = {
+    HTMLPluginsCollection_QueryInterface,
+    HTMLPluginsCollection_AddRef,
+    HTMLPluginsCollection_Release,
+    HTMLPluginsCollection_GetTypeInfoCount,
+    HTMLPluginsCollection_GetTypeInfo,
+    HTMLPluginsCollection_GetIDsOfNames,
+    HTMLPluginsCollection_Invoke,
+    HTMLPluginsCollection_get_length,
+    HTMLPluginsCollection_refresh
+};
+
+static const tid_t HTMLPluginsCollection_iface_tids[] = {
+    IHTMLPluginsCollection_tid,
+    0
+};
+static dispex_static_data_t HTMLPluginsCollection_dispex = {
+    NULL,
+    DispCPlugins_tid,
+    NULL,
+    HTMLPluginsCollection_iface_tids
+};
+
+static HRESULT create_plugins_collection(OmNavigator *navigator, HTMLPluginsCollection **ret)
+{
+    HTMLPluginsCollection *col;
+
+    col = heap_alloc_zero(sizeof(*col));
+    if(!col)
+        return E_OUTOFMEMORY;
+
+    col->lpIHTMLPluginsCollectionVtbl = &HTMLPluginsCollectionVtbl;
+    col->ref = 1;
+    col->navigator = navigator;
+
+    init_dispex(&col->dispex, (IUnknown*)HTMLPLUGINSCOL(col), &HTMLPluginsCollection_dispex);
+
+    *ret = col;
+    return S_OK;
+}
 
 #define OMNAVIGATOR_THIS(iface) DEFINE_THIS(OmNavigator, IOmNavigator, iface)
 
@@ -85,6 +238,10 @@ static ULONG WINAPI OmNavigator_Release(IOmNavigator *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        if(This->plugins) {
+            This->plugins->navigator = NULL;
+            IHTMLPluginsCollection_Release(HTMLPLUGINSCOL(This->plugins));
+        }
         release_dispex(&This->dispex);
         heap_free(This);
     }
@@ -232,8 +389,21 @@ static HRESULT WINAPI OmNavigator_get_mimeTypes(IOmNavigator *iface, IHTMLMimeTy
 static HRESULT WINAPI OmNavigator_get_plugins(IOmNavigator *iface, IHTMLPluginsCollection **p)
 {
     OmNavigator *This = OMNAVIGATOR_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->plugins) {
+        HRESULT hres;
+
+        hres = create_plugins_collection(This, &This->plugins);
+        if(FAILED(hres))
+            return hres;
+    }else {
+        IHTMLPluginsCollection_AddRef(HTMLPLUGINSCOL(This->plugins));
+    }
+
+    *p = HTMLPLUGINSCOL(This->plugins);
+    return S_OK;
 }
 
 static HRESULT WINAPI OmNavigator_get_cookieEnabled(IOmNavigator *iface, VARIANT_BOOL *p)

@@ -3590,6 +3590,26 @@ static void test_location(IHTMLDocument2 *doc)
     ok(!ref, "location chould be destroyed here\n");
 }
 
+static void test_plugins_col(IOmNavigator *nav)
+{
+    IHTMLPluginsCollection *col, *col2;
+    ULONG ref;
+    HRESULT hres;
+
+    hres = IOmNavigator_get_plugins(nav, &col);
+    ok(hres == S_OK, "get_plugins failed: %08x\n", hres);
+
+    hres = IOmNavigator_get_plugins(nav, &col2);
+    ok(hres == S_OK, "get_plugins failed: %08x\n", hres);
+    ok(iface_cmp((IUnknown*)col, (IUnknown*)col2), "col != col2\n");
+    IHTMLPluginsCollection_Release(col2);
+
+    test_disp2((IUnknown*)col, &DIID_DispCPlugins, &IID_IHTMLPluginsCollection, "[object]");
+
+    ref = IHTMLPluginsCollection_Release(col);
+    ok(!ref, "ref=%d\n", ref);
+}
+
 static void test_navigator(IHTMLDocument2 *doc)
 {
     IHTMLWindow2 *window;
@@ -3672,6 +3692,8 @@ static void test_navigator(IHTMLDocument2 *doc)
     }else {
         skip("nonstandard user agent\n");
     }
+
+    test_plugins_col(navigator);
 
     ref = IOmNavigator_Release(navigator);
     ok(!ref, "navigator should be destroyed here\n");
