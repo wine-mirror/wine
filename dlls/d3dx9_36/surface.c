@@ -314,6 +314,15 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(LPDIRECT3DSURFACE9 pDestSurface,
     D3DXIMAGE_INFO imginfo;
     HRESULT hr;
 
+    IWICImagingFactory *factory;
+    IWICBitmapDecoder *decoder;
+    IWICBitmapFrameDecode *bitmapframe;
+    IWICStream *stream;
+
+    const PixelFormatDesc *formatdesc;
+    WICRect wicrect;
+    RECT rect;
+
     TRACE("(%p, %p, %p, %p, %d, %p, %d, %x, %p)\n", pDestSurface, pDestPalette, pDestRect, pSrcData,
         SrcDataSize, pSrcRect, dwFilter, Colorkey, pSrcInfo);
 
@@ -325,109 +334,86 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(LPDIRECT3DSURFACE9 pDestSurface,
     if (FAILED(hr))
         return hr;
 
-    switch (imginfo.ImageFileFormat)
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    if (FAILED(CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, &IID_IWICImagingFactory, (void**)&factory)))
+        goto cleanup_err;
+
+    if (FAILED(IWICImagingFactory_CreateStream(factory, &stream)))
     {
-        case D3DXIFF_BMP:
-        case D3DXIFF_PNG:
-        case D3DXIFF_JPG:
+        IWICImagingFactory_Release(factory);
+        goto cleanup_err;
+    }
+
+    IWICStream_InitializeFromMemory(stream, (BYTE*)pSrcData, SrcDataSize);
+
+    hr = IWICImagingFactory_CreateDecoderFromStream(factory, (IStream*)stream, NULL, 0, &decoder);
+
+    IStream_Release(stream);
+    IWICImagingFactory_Release(factory);
+
+    if (FAILED(hr))
+        goto cleanup_err;
+
+    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &bitmapframe);
+
+    if (FAILED(hr))
+        goto cleanup_bmp;
+
+    if (pSrcRect)
+    {
+        wicrect.X = pSrcRect->left;
+        wicrect.Y = pSrcRect->top;
+        wicrect.Width = pSrcRect->right - pSrcRect->left;
+        wicrect.Height = pSrcRect->bottom - pSrcRect->top;
+    }
+    else
+    {
+        wicrect.X = 0;
+        wicrect.Y = 0;
+        wicrect.Width = imginfo.Width;
+        wicrect.Height = imginfo.Height;
+    }
+
+    SetRect(&rect, 0, 0, wicrect.Width, wicrect.Height);
+
+    formatdesc = get_format_info(imginfo.Format);
+
+    if (formatdesc->format == D3DFMT_UNKNOWN)
+    {
+        FIXME("Unsupported pixel format\n");
+        hr = D3DXERR_INVALIDDATA;
+    }
+    else
+    {
+        BYTE *buffer;
+        DWORD pitch;
+
+        pitch = formatdesc->bytes_per_pixel * wicrect.Width;
+        buffer = HeapAlloc(GetProcessHeap(), 0, pitch * wicrect.Height);
+
+        hr = IWICBitmapFrameDecode_CopyPixels(bitmapframe, &wicrect, pitch,
+                                              pitch * wicrect.Height, buffer);
+
+        if (SUCCEEDED(hr))
         {
-            IWICImagingFactory *factory;
-            IWICBitmapDecoder *decoder;
-            IWICBitmapFrameDecode *bitmapframe;
-            IWICStream *stream;
-
-            const PixelFormatDesc *formatdesc;
-            WICRect wicrect;
-            RECT rect;
-
-            CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
-
-            if (FAILED(CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, &IID_IWICImagingFactory, (void**)&factory)))
-                goto cleanup_err;
-
-            if (FAILED(IWICImagingFactory_CreateStream(factory, &stream)))
-            {
-                IWICImagingFactory_Release(factory);
-                goto cleanup_err;
-            }
-
-            IWICStream_InitializeFromMemory(stream, (BYTE*)pSrcData, SrcDataSize);
-
-            hr = IWICImagingFactory_CreateDecoderFromStream(factory, (IStream*)stream, NULL, 0, &decoder);
-
-            IStream_Release(stream);
-            IWICImagingFactory_Release(factory);
-
-            if (FAILED(hr))
-                goto cleanup_err;
-
-            hr = IWICBitmapDecoder_GetFrame(decoder, 0, &bitmapframe);
-
-            if (FAILED(hr))
-                goto cleanup_bmp;
-
-            if (pSrcRect)
-            {
-                wicrect.X = pSrcRect->left;
-                wicrect.Y = pSrcRect->top;
-                wicrect.Width = pSrcRect->right - pSrcRect->left;
-                wicrect.Height = pSrcRect->bottom - pSrcRect->top;
-            }
-            else
-            {
-                wicrect.X = 0;
-                wicrect.Y = 0;
-                wicrect.Width = imginfo.Width;
-                wicrect.Height = imginfo.Height;
-            }
-
-            SetRect(&rect, 0, 0, wicrect.Width, wicrect.Height);
-
-            formatdesc = get_format_info(imginfo.Format);
-
-            if (formatdesc->format == D3DFMT_UNKNOWN)
-            {
-                FIXME("Unsupported pixel format\n");
-                hr = D3DXERR_INVALIDDATA;
-            }
-            else
-            {
-                BYTE *buffer;
-                DWORD pitch;
-
-                pitch = formatdesc->bytes_per_pixel * wicrect.Width;
-                buffer = HeapAlloc(GetProcessHeap(), 0, pitch * wicrect.Height);
-
-                hr = IWICBitmapFrameDecode_CopyPixels(bitmapframe, &wicrect, pitch,
-                                                      pitch * wicrect.Height, buffer);
-
-                if (SUCCEEDED(hr))
-                {
-                    hr = D3DXLoadSurfaceFromMemory(pDestSurface, pDestPalette, pDestRect,
-                                                   buffer, imginfo.Format, pitch,
-                                                   NULL, &rect, dwFilter, Colorkey);
-                }
-
-                HeapFree(GetProcessHeap(), 0, buffer);
-            }
-
-cleanup_bmp:
-            IWICBitmapFrameDecode_Release(bitmapframe);
-            IWICBitmapDecoder_Release(decoder);
-
-cleanup_err:
-            CoUninitialize();
-
-            if (FAILED(hr))
-                return D3DXERR_INVALIDDATA;
-
-            break;
+            hr = D3DXLoadSurfaceFromMemory(pDestSurface, pDestPalette, pDestRect,
+                                           buffer, imginfo.Format, pitch,
+                                           NULL, &rect, dwFilter, Colorkey);
         }
 
-        default:
-            FIXME("Unsupported image file format\n");
-            return E_NOTIMPL;
+        HeapFree(GetProcessHeap(), 0, buffer);
     }
+
+cleanup_bmp:
+    IWICBitmapFrameDecode_Release(bitmapframe);
+    IWICBitmapDecoder_Release(decoder);
+
+cleanup_err:
+    CoUninitialize();
+
+    if (FAILED(hr))
+        return D3DXERR_INVALIDDATA;
 
     if (pSrcInfo)
         *pSrcInfo = imginfo;
