@@ -278,6 +278,114 @@ static void test_D3DXCheckCubeTextureRequirements(IDirect3DDevice9 *device)
     ok(format == D3DFMT_X8R8G8B8, "Returned format %u, expected %u\n", format, D3DFMT_X8R8G8B8);
 }
 
+static void test_D3DXCheckVolumeTextureRequirements(IDirect3DDevice9 *device)
+{
+    UINT width, height, depth, mipmaps;
+    D3DFORMAT format;
+    D3DCAPS9 caps;
+    HRESULT hr;
+
+    IDirect3DDevice9_GetDeviceCaps(device, &caps);
+
+    if (!(caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP))
+    {
+        skip("No volume textures support\n");
+        return;
+    }
+
+    /* general tests */
+    hr = D3DXCheckVolumeTextureRequirements(device, NULL, NULL, NULL, NULL, 0, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+
+    hr = D3DXCheckVolumeTextureRequirements(device, NULL, NULL, NULL, NULL, D3DX_DEFAULT, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+
+    hr = D3DXCheckVolumeTextureRequirements(NULL, NULL, NULL, NULL, NULL, D3DX_DEFAULT, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    /* width, height, depth */
+    width = height = depth = D3DX_DEFAULT;
+    hr = D3DXCheckVolumeTextureRequirements(device, &width, &height, &depth, NULL, 0, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(width == 256, "Returned width %d, expected %d\n", width, 256);
+    ok(height == 256, "Returned height %d, expected %d\n", height, 256);
+    ok(depth == 1, "Returned depth %d, expected %d\n", depth, 1);
+
+    width = D3DX_DEFAULT;
+    hr = D3DXCheckVolumeTextureRequirements(device, &width, NULL, NULL, NULL, 0, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(width == 256, "Returned width %d, expected %d\n", width, 256);
+
+    width = D3DX_DEFAULT; height = 0; depth = 0;
+    hr = D3DXCheckVolumeTextureRequirements(device, &width, &height, &depth, NULL, 0, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(width == 1, "Returned width %d, expected %d\n", width, 1);
+    ok(height == 1, "Returned height %d, expected %d\n", height, 1);
+    ok(depth == 1, "Returned height %d, expected %d\n", depth, 1);
+
+    width = 0; height = 0; depth = 0;
+    hr = D3DXCheckVolumeTextureRequirements(device, &width, &height, &depth, NULL, 0, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(width == 1, "Returned width %d, expected %d\n", width, 1);
+    ok(height == 1, "Returned height %d, expected %d\n", height, 1);
+    ok(depth == 1, "Returned height %d, expected %d\n", depth, 1);
+
+    width = 0;
+    hr = D3DXCheckVolumeTextureRequirements(device, &width, NULL, NULL, NULL, 0, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(width == 1, "Returned width %d, expected %d\n", width, 1);
+
+    width = 0xFFFFFFFE;
+    hr = D3DXCheckVolumeTextureRequirements(device, &width, NULL, NULL, NULL, 0, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(width == caps.MaxVolumeExtent, "Returned width %d, expected %d\n", width, caps.MaxVolumeExtent);
+
+    /* format */
+    hr = D3DXCheckVolumeTextureRequirements(device, NULL, NULL, NULL, NULL, 0, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+
+    format = D3DFMT_UNKNOWN;
+    hr = D3DXCheckVolumeTextureRequirements(device, NULL, NULL, NULL, NULL, 0, &format, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(format == D3DFMT_A8R8G8B8, "Returned format %u, expected %u\n", format, D3DFMT_A8R8G8B8);
+
+    format = D3DX_DEFAULT;
+    hr = D3DXCheckVolumeTextureRequirements(device, NULL, NULL, NULL, NULL, 0, &format, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(format == D3DFMT_A8R8G8B8, "Returned format %u, expected %u\n", format, D3DFMT_A8R8G8B8);
+
+    format = D3DFMT_R8G8B8;
+    hr = D3DXCheckVolumeTextureRequirements(device, NULL, NULL, NULL, NULL, 0, &format, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(format == D3DFMT_X8R8G8B8, "Returned format %u, expected %u\n", format, D3DFMT_X8R8G8B8);
+
+    /* mipmaps */
+    if (!(caps.TextureCaps & D3DPTEXTURECAPS_MIPVOLUMEMAP))
+    {
+        skip("No volume textures mipmapping support\n");
+        return;
+    }
+
+    width = height = depth = 64;
+    mipmaps = 9;
+    hr = D3DXCheckVolumeTextureRequirements(device, &width, &height, &depth, &mipmaps, 0, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(mipmaps == 7, "Returned mipmaps %d, expected %d\n", mipmaps, 7);
+
+    width = 284;
+    height = 143;
+    depth = 55;
+    mipmaps = 20;
+    hr = D3DXCheckVolumeTextureRequirements(device, &width, &height, &depth, &mipmaps, 0, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(mipmaps == 10, "Returned mipmaps %d, expected %d\n", mipmaps, 10);
+
+    mipmaps = 0;
+    hr = D3DXCheckVolumeTextureRequirements(device, NULL, NULL, NULL, &mipmaps, 0, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(mipmaps == 9, "Returned mipmaps %d, expected %d\n", mipmaps, 9);
+}
+
 static void test_D3DXCreateTexture(IDirect3DDevice9 *device)
 {
     IDirect3DTexture9 *texture;
@@ -581,6 +689,7 @@ START_TEST(texture)
 
     test_D3DXCheckTextureRequirements(device);
     test_D3DXCheckCubeTextureRequirements(device);
+    test_D3DXCheckVolumeTextureRequirements(device);
     test_D3DXCreateTexture(device);
     test_D3DXFilterTexture(device);
 

@@ -383,6 +383,80 @@ HRESULT WINAPI D3DXCheckCubeTextureRequirements(LPDIRECT3DDEVICE9 device,
     return hr;
 }
 
+HRESULT WINAPI D3DXCheckVolumeTextureRequirements(LPDIRECT3DDEVICE9 device,
+                                                  UINT *width,
+                                                  UINT *height,
+                                                  UINT *depth,
+                                                  UINT *miplevels,
+                                                  DWORD usage,
+                                                  D3DFORMAT *format,
+                                                  D3DPOOL pool)
+{
+    D3DCAPS9 caps;
+    UINT w = width ? *width : D3DX_DEFAULT;
+    UINT h = height ? *height : D3DX_DEFAULT;
+    UINT d = (depth && *depth) ? *depth : 1;
+    HRESULT hr;
+
+    TRACE("(%p, %p, %p, %p, %p, %u, %p, %u)\n", device, width, height, depth, miplevels,
+          usage, format, pool);
+
+    if (!device || FAILED(IDirect3DDevice9_GetDeviceCaps(device, &caps)))
+        return D3DERR_INVALIDCALL;
+
+    if (!(caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP))
+        return D3DERR_NOTAVAILABLE;
+
+    hr = D3DXCheckTextureRequirements(device, &w, &h, NULL, usage, format, pool);
+    if (d == D3DX_DEFAULT)
+        d = 1;
+
+    /* ensure width/height is power of 2 */
+    if ((caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP_POW2) &&
+        (!is_pow2(w) || !is_pow2(h) || !is_pow2(d)))
+    {
+        w = make_pow2(w);
+        h = make_pow2(h);
+        d = make_pow2(d);
+    }
+
+    if (w > caps.MaxVolumeExtent)
+        w = caps.MaxVolumeExtent;
+    if (h > caps.MaxVolumeExtent)
+        h = caps.MaxVolumeExtent;
+    if (d > caps.MaxVolumeExtent)
+        d = caps.MaxVolumeExtent;
+
+    if (miplevels)
+    {
+        if (!(caps.TextureCaps & D3DPTEXTURECAPS_MIPVOLUMEMAP))
+            *miplevels = 1;
+        else
+        {
+            UINT max_mipmaps = 1;
+            UINT max_dimen = max(max(w, h), d);
+
+            while (max_dimen > 1)
+            {
+                max_dimen >>= 1;
+                max_mipmaps++;
+            }
+
+            if (*miplevels == 0 || *miplevels > max_mipmaps)
+                *miplevels = max_mipmaps;
+        }
+    }
+
+    if (width)
+        *width = w;
+    if (height)
+        *height = h;
+    if (depth)
+        *depth = d;
+
+    return hr;
+}
+
 HRESULT WINAPI D3DXCreateTexture(LPDIRECT3DDEVICE9 pDevice,
                                  UINT width,
                                  UINT height,
