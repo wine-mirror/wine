@@ -2110,6 +2110,7 @@ void CDECL X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
 {
     struct x11drv_escape_set_drawable escape;
     struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
+    HWND parent;
 
     escape.code        = X11DRV_SET_DRAWABLE;
     escape.mode        = IncludeInferiors;
@@ -2117,6 +2118,15 @@ void CDECL X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
     escape.gl_drawable = 0;
     escape.pixmap      = 0;
     escape.gl_copy     = FALSE;
+
+    escape.dc_rect.left         = win_rect->left - top_rect->left;
+    escape.dc_rect.top          = win_rect->top - top_rect->top;
+    escape.dc_rect.right        = win_rect->right - top_rect->left;
+    escape.dc_rect.bottom       = win_rect->bottom - top_rect->top;
+    escape.drawable_rect.left   = top_rect->left;
+    escape.drawable_rect.top    = top_rect->top;
+    escape.drawable_rect.right  = top_rect->right;
+    escape.drawable_rect.bottom = top_rect->bottom;
 
     if (top == hwnd)
     {
@@ -2134,22 +2144,25 @@ void CDECL X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
     }
     else
     {
-        escape.drawable    = X11DRV_get_client_window( top );
+        /* find the first ancestor that has a drawable */
+        for (parent = hwnd; parent && parent != top; parent = GetAncestor( parent, GA_PARENT ))
+            if ((escape.drawable = X11DRV_get_client_window( parent ))) break;
+
+        if (escape.drawable)
+        {
+            POINT pt = { 0, 0 };
+            MapWindowPoints( top, parent, &pt, 1 );
+            OffsetRect( &escape.dc_rect, pt.x, pt.y );
+            OffsetRect( &escape.drawable_rect, -pt.x, -pt.y );
+        }
+        else escape.drawable = X11DRV_get_client_window( top );
+
         escape.fbconfig_id = data ? data->fbconfig_id : (XID)GetPropA( hwnd, fbconfig_id_prop );
         escape.gl_drawable = data ? data->gl_drawable : (Drawable)GetPropA( hwnd, gl_drawable_prop );
         escape.pixmap      = data ? data->pixmap : (Pixmap)GetPropA( hwnd, pixmap_prop );
         escape.gl_copy     = (escape.gl_drawable != 0);
         if (flags & DCX_CLIPCHILDREN) escape.mode = ClipByChildren;
     }
-
-    escape.dc_rect.left         = win_rect->left - top_rect->left;
-    escape.dc_rect.top          = win_rect->top - top_rect->top;
-    escape.dc_rect.right        = win_rect->right - top_rect->left;
-    escape.dc_rect.bottom       = win_rect->bottom - top_rect->top;
-    escape.drawable_rect.left   = top_rect->left;
-    escape.drawable_rect.top    = top_rect->top;
-    escape.drawable_rect.right  = top_rect->right;
-    escape.drawable_rect.bottom = top_rect->bottom;
 
     ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 }
