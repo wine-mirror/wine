@@ -405,8 +405,9 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(LPDIRECT3DSURFACE9 pDestSurface,
         HeapFree(GetProcessHeap(), 0, buffer);
     }
 
-cleanup_bmp:
     IWICBitmapFrameDecode_Release(bitmapframe);
+
+cleanup_bmp:
     IWICBitmapDecoder_Release(decoder);
 
 cleanup_err:
