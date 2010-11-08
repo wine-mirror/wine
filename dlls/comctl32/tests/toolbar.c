@@ -688,6 +688,17 @@ static int system_font_height(void) {
     return tm.tmHeight;
 }
 
+static int string_width(const CHAR *s) {
+    SIZE sz;
+    HDC hdc;
+
+    hdc = CreateCompatibleDC(NULL);
+    GetTextExtentPoint32A(hdc, s, strlen(s), &sz);
+    DeleteDC(hdc);
+
+    return sz.cx;
+}
+
 typedef struct
 {
     RECT rcClient;
@@ -714,12 +725,17 @@ void tbsize_addbutton(tbsize_result_t *tbsr, int left, int top, int right, int b
     tbsr->nButtons++;
 }
 
+#define STRING0 "A"
+#define STRING1 "MMMMMMMMMMMMM"
+#define STRING2 "Tst"
+
 tbsize_result_t *tbsize_results = NULL;
 
 #define tbsize_results_num 24
 
 static void init_tbsize_results(void) {
     int fontheight = system_font_height();
+    int buttonwidth;
 
     tbsize_results = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, tbsize_results_num*sizeof(tbsize_result_t));
 
@@ -919,26 +935,28 @@ static void init_tbsize_results(void) {
     tbsize_addbutton(&tbsize_results[16], 192,   0, 215,  22);
     tbsize_addbutton(&tbsize_results[16], 215,   0, 238,  22);
 
+    buttonwidth = 7 + string_width(STRING1);
+
     tbsize_results[17] = init_tbsize_result(3, 0, 0, 672, 26, 489, 39);
-    tbsize_addbutton(&tbsize_results[17],   0,   2, 163,  25 + fontheight);
-    tbsize_addbutton(&tbsize_results[17], 163,   2, 330,  25 + fontheight);
-    tbsize_addbutton(&tbsize_results[17], 330,   2, 493,  25 + fontheight);
+    tbsize_addbutton(&tbsize_results[17],   0,   2, buttonwidth,  25 + fontheight);
+    tbsize_addbutton(&tbsize_results[17], buttonwidth,   2, 2*buttonwidth + 4,  25 + fontheight);
+    tbsize_addbutton(&tbsize_results[17], 2*buttonwidth + 4,   2, 3*buttonwidth + 4,  25 + fontheight);
 
     tbsize_results[18] = init_tbsize_result(6, 0, 0, 672, 104, 978, 24);
-    tbsize_addbutton(&tbsize_results[18],   0,   2, 163,  10 + fontheight);
-    tbsize_addbutton(&tbsize_results[18], 163,   2, 326,  10 + fontheight);
-    tbsize_addbutton(&tbsize_results[18], 326,   2, 489,  10 + fontheight);
-    tbsize_addbutton(&tbsize_results[18], 489,   2, 652,  10 + fontheight);
-    tbsize_addbutton(&tbsize_results[18], 652,   2, 819,  10 + fontheight);
-    tbsize_addbutton(&tbsize_results[18], 819,   2, 850,  10 + fontheight);
+    tbsize_addbutton(&tbsize_results[18],   0,   2, buttonwidth,  10 + fontheight);
+    tbsize_addbutton(&tbsize_results[18], buttonwidth,   2, 2*buttonwidth,  10 + fontheight);
+    tbsize_addbutton(&tbsize_results[18], 2*buttonwidth,   2, 3*buttonwidth,  10 + fontheight);
+    tbsize_addbutton(&tbsize_results[18], 3*buttonwidth,   2, 4*buttonwidth,  10 + fontheight);
+    tbsize_addbutton(&tbsize_results[18], 4*buttonwidth,   2, 5*buttonwidth + 4,  10 + fontheight);
+    tbsize_addbutton(&tbsize_results[18], 5*buttonwidth + 4,   2, 5*buttonwidth + 4 + string_width(STRING2) + 11,  10 + fontheight);
 
     tbsize_results[19] = init_tbsize_result(6, 0, 0, 672, 28, 978, 38);
-    tbsize_addbutton(&tbsize_results[19],   0,   0, 163,  22 + fontheight);
-    tbsize_addbutton(&tbsize_results[19], 163,   0, 326,  22 + fontheight);
-    tbsize_addbutton(&tbsize_results[19], 326,   0, 489,  22 + fontheight);
-    tbsize_addbutton(&tbsize_results[19], 489,   0, 652,  22 + fontheight);
-    tbsize_addbutton(&tbsize_results[19], 652,   0, 819,  22 + fontheight);
-    tbsize_addbutton(&tbsize_results[19], 819,   0, 850,  22 + fontheight);
+    tbsize_addbutton(&tbsize_results[19],   0,   0, buttonwidth,  22 + fontheight);
+    tbsize_addbutton(&tbsize_results[19], buttonwidth,   0, 2*buttonwidth,  22 + fontheight);
+    tbsize_addbutton(&tbsize_results[19], 2*buttonwidth,   0, 3*buttonwidth,  22 + fontheight);
+    tbsize_addbutton(&tbsize_results[19], 3*buttonwidth,   0, 4*buttonwidth,  22 + fontheight);
+    tbsize_addbutton(&tbsize_results[19], 4*buttonwidth,   0, 5*buttonwidth + 4,  22 + fontheight);
+    tbsize_addbutton(&tbsize_results[19], 5*buttonwidth + 4,   0, 5*buttonwidth + 4 + string_width(STRING2) + 11,  22 + fontheight);
 
     tbsize_results[20] = init_tbsize_result(3, 0, 0, 672, 100, 239, 102);
     tbsize_addbutton(&tbsize_results[20],   0,   2, 100, 102);
@@ -948,10 +966,10 @@ static void init_tbsize_results(void) {
     tbsize_results[21] = init_tbsize_result(3, 0, 0, 672, 42, 185, 40);
     tbsize_addbutton(&tbsize_results[21],   0,   2,  75,  40);
     tbsize_addbutton(&tbsize_results[21],  75,   2, 118,  40);
-    tbsize_addbutton(&tbsize_results[21], 118,   2, 185,  40);
+    tbsize_addbutton(&tbsize_results[21], 118,   2, 165 + string_width(STRING2),  40);
 
     tbsize_results[22] = init_tbsize_result(1, 0, 0, 672, 42, 67, 40);
-    tbsize_addbutton(&tbsize_results[22],   0,   2,  67,  40);
+    tbsize_addbutton(&tbsize_results[22],   0,   2,  47 + string_width(STRING2),  40);
 
     tbsize_results[23] = init_tbsize_result(2, 0, 0, 672, 42, 67, 41);
     tbsize_addbutton(&tbsize_results[23],   0,   2, 672,  25 + fontheight);
@@ -1025,7 +1043,7 @@ static TBBUTTON buttons3[] = {
     {0, 30, TBSTATE_ENABLED, 0, {0, }, 0, 0},
     {0, 31, TBSTATE_ENABLED, 0, {0, }, 0, 1},
     {0, 32, TBSTATE_ENABLED, BTNS_AUTOSIZE, {0, }, 0, 1},
-    {0, 33, TBSTATE_ENABLED, BTNS_AUTOSIZE, {0, }, 0, (UINT_PTR)"Tst"}
+    {0, 33, TBSTATE_ENABLED, BTNS_AUTOSIZE, {0, }, 0, (UINT_PTR)STRING2}
 };
 
 static void test_sizes(void)
@@ -1111,7 +1129,7 @@ static void test_sizes(void)
     check_sizes();
     SendMessageA(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons3[0]);
     /* TB_ADDSTRING resets the size */
-    SendMessageA(hToolbar, TB_ADDSTRING, 0, (LPARAM)"A\0MMMMMMMMMMMMM\0");
+    SendMessageA(hToolbar, TB_ADDSTRING, 0, (LPARAM) STRING0 "\0" STRING1 "\0");
     check_button_size(hToolbar, 23, 23 + fontheight);
     check_sizes();
     /* TB_SETBUTTONSIZE can be used to crop the text */
@@ -1145,7 +1163,7 @@ static void test_sizes(void)
     CHECK_IMAGELIST(16, 14, 12);
 
     rebuild_toolbar(&hToolbar);
-    SendMessageA(hToolbar, TB_ADDSTRINGA, 0, (LPARAM)"A\0MMMMMMMMMMMMM\0");
+    SendMessageA(hToolbar, TB_ADDSTRINGA, 0, (LPARAM)STRING0 "\0" STRING1 "\0");
     /* the height is increased after a TB_ADDSTRING */
     check_button_size(hToolbar, 23, 23 + fontheight);
     SendMessageA(hToolbar, TB_SETBUTTONSIZE, 0, MAKELONG(100, 100));
@@ -1155,13 +1173,13 @@ static void test_sizes(void)
     SendMessageA(hToolbar, TB_SETBUTTONSIZE, 0, MAKELONG(100, 100));
     /* an BTNS_AUTOSIZE button is also considered when computing the new size */
     SendMessageA(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons3[2]);
-    check_button_size(hToolbar, 163, 23 + fontheight);
+    check_button_size(hToolbar, 7 + string_width(STRING1), 23 + fontheight);
     SendMessageA(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons3[0]);
     check_sizes();
     /* delete button doesn't change the buttons size */
     SendMessageA(hToolbar, TB_DELETEBUTTON, 2, 0);
     SendMessageA(hToolbar, TB_DELETEBUTTON, 1, 0);
-    check_button_size(hToolbar, 163, 23 + fontheight);
+    check_button_size(hToolbar, 7 + string_width(STRING1), 23 + fontheight);
     /* TB_INSERTBUTTONS will */
     SendMessageA(hToolbar, TB_INSERTBUTTON, 1, (LPARAM)&buttons2[0]);
     check_button_size(hToolbar, 23, 22);
@@ -1198,11 +1216,11 @@ static void test_sizes(void)
     ok(SendMessageA(hToolbar, TB_SETIMAGELIST, 0, (LPARAM)himl) == 0, "TB_SETIMAGELIST failed\n");
     check_button_size(hToolbar, 27, 21)
     /* the text is taken into account */
-    SendMessageA(hToolbar, TB_ADDSTRINGA, 0, (LPARAM)"A\0MMMMMMMMMMMMM\0");
+    SendMessageA(hToolbar, TB_ADDSTRINGA, 0, (LPARAM)STRING0 "\0" STRING1 "\0");
     SendMessageA(hToolbar, TB_ADDBUTTONS, 4, (LPARAM)buttons3);
-    check_button_size(hToolbar, 163, 22 + fontheight);
+    check_button_size(hToolbar, 7 + string_width(STRING1), 22 + fontheight);
     ok(SendMessageA(hToolbar, TB_SETIMAGELIST, 0, 0) == (LRESULT)himl, "TB_SETIMAGELIST failed\n");
-    check_button_size(hToolbar, 163, 8 + fontheight);
+    check_button_size(hToolbar, 7 + string_width(STRING1), 8 + fontheight);
     /* the style change also comes into effect */
     check_sizes();
     SetWindowLong(hToolbar, GWL_STYLE, GetWindowLong(hToolbar, GWL_STYLE) | TBSTYLE_FLAT);
@@ -1214,9 +1232,9 @@ static void test_sizes(void)
     ImageList_Destroy(himl2);
 
     SendMessageA(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons3[3]);
-    check_button_size(hToolbar, 27, 23 + fontheight);
+    check_button_size(hToolbar, 7 + string_width(STRING2), 23 + fontheight);
     SendMessageA(hToolbar, TB_DELETEBUTTON, 0, 0);
-    check_button_size(hToolbar, 27, 23 + fontheight);
+    check_button_size(hToolbar, 7 + string_width(STRING2), 23 + fontheight);
 
     rebuild_toolbar(&hToolbar);
 
