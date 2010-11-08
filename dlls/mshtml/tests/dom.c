@@ -5850,6 +5850,8 @@ static void test_stylesheets(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_styleSheets failed: %08x\n", hres);
     ok(col != NULL, "col == NULL\n");
 
+    test_disp2((IUnknown*)col, &DIID_DispHTMLStyleSheetsCollection, &IID_IHTMLStyleSheetsCollection, "[object]");
+
     hres = IHTMLStyleSheetsCollection_get_length(col, &len);
     ok(hres == S_OK, "get_length failed: %08x\n", hres);
     ok(len == 1, "len=%d\n", len);

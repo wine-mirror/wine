@@ -6175,6 +6175,30 @@ interface IHTMLStyleSheetsCollection : IDispatch
 }
 
 /*****************************************************************************
+ *    DispHTMLStyleSheetsCollection dispinterface
+ */
+[
+    hidden,
+    uuid(3050f547-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLStyleSheetsCollection
+{
+properties:
+methods:
+    [propget, id(DISPID_IHTMLSTYLESHEETSCOLLECTION_LENGTH)]
+    long length();
+
+    [propget, id(DISPID_IHTMLSTYLESHEETSCOLLECTION__NEWENUM), hidden, restricted]
+    IUnknown *_newEnum();
+
+    [id(DISPID_IHTMLSTYLESHEETSCOLLECTION_ITEM)]
+    VARIANT item([in] VARIANT *pvarIndex);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
+    IDispatch *constructor();
+}
+
+/*****************************************************************************
  *    IHTMLTxtRange interface
  */
 [
