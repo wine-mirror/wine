@@ -800,7 +800,7 @@ static void X11DRV_MapNotify( HWND hwnd, XEvent *event )
     struct x11drv_win_data *data;
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
-    if (!data->mapped) return;
+    if (!data->mapped || data->embedded) return;
 
     if (!data->managed)
     {
@@ -849,20 +849,47 @@ static void X11DRV_ReparentNotify( HWND hwnd, XEvent *xev )
 {
     XReparentEvent *event = &xev->xreparent;
     struct x11drv_win_data *data;
+    HWND parent, old_parent;
+    DWORD style;
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
     if (!data->embedded) return;
+
+    if (data->whole_window)
+    {
+        if (event->parent == root_window)
+        {
+            TRACE( "%p/%lx reparented to root\n", hwnd, data->whole_window );
+            data->embedder = 0;
+            SendMessageW( hwnd, WM_CLOSE, 0, 0 );
+            return;
+        }
+        data->embedder = event->parent;
+    }
+
+    TRACE( "%p/%lx reparented to %lx\n", hwnd, data->whole_window, event->parent );
+
+    style = GetWindowLongW( hwnd, GWL_STYLE );
     if (event->parent == root_window)
     {
-        TRACE( "%p/%lx reparented to root\n", hwnd, data->whole_window );
-        data->embedder = 0;
-        SendMessageW( hwnd, WM_CLOSE, 0, 0 );
+        parent = GetDesktopWindow();
+        style = (style & ~WS_CHILD) | WS_POPUP;
     }
     else
     {
-        TRACE( "%p/%lx reparented to %lx\n", hwnd, data->whole_window, event->parent );
-        data->embedder = event->parent;
+        if (!(parent = create_foreign_window( event->display, event->parent ))) return;
+        style = (style & ~WS_POPUP) | WS_CHILD;
     }
+
+    ShowWindow( hwnd, SW_HIDE );
+    old_parent = SetParent( hwnd, parent );
+    SetWindowLongW( hwnd, GWL_STYLE, style );
+    SetWindowPos( hwnd, HWND_TOP, event->x, event->y, 0, 0,
+                  SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOCOPYBITS |
+                  ((style & WS_VISIBLE) ? SWP_SHOWWINDOW : 0) );
+
+    /* make old parent destroy itself if it no longer has children */
+    if (old_parent != GetDesktopWindow()) PostMessageW( old_parent, WM_CLOSE, 0, 0 );
 }
 
 
@@ -881,7 +908,10 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
 
     if (!hwnd) return;
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
-    if (!data->mapped || data->iconic || !data->managed) return;
+    if (!data->mapped || data->iconic) return;
+    if (data->whole_window && !data->managed) return;
+    /* ignore synthetic events on foreign windows */
+    if (event->send_event && !data->whole_window) return;
     if (data->configure_serial && (long)(data->configure_serial - event->serial) > 0)
     {
         TRACE( "win %p/%lx event %d,%d,%dx%d ignoring old serial %lu/%lu\n",
@@ -943,6 +973,8 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     cy    = rect.bottom - rect.top;
     flags = SWP_NOACTIVATE | SWP_NOZORDER;
 
+    if (!data->whole_window) flags |= SWP_NOCOPYBITS;  /* we can't copy bits of foreign windows */
+
     if (data->window_rect.left == x && data->window_rect.top == y) flags |= SWP_NOMOVE;
     else
         TRACE( "%p moving from (%d,%d) to (%d,%d)\n",
@@ -973,7 +1005,7 @@ static void X11DRV_GravityNotify( HWND hwnd, XEvent *xev )
     struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
     RECT rect;
 
-    if (!data) return;
+    if (!data || data->whole_window) return;  /* only handle this for foreign windows */
 
     rect.left   = event->x;
     rect.top    = event->y;
