@@ -905,3 +905,34 @@ HRESULT WINAPI D3DXCreateCubeTexture(LPDIRECT3DDEVICE9 device,
 
     return IDirect3DDevice9_CreateCubeTexture(device, size, miplevels, usage, format, pool, texture, NULL);
 }
+
+HRESULT WINAPI D3DXCreateVolumeTexture(LPDIRECT3DDEVICE9 device,
+                                       UINT width,
+                                       UINT height,
+                                       UINT depth,
+                                       UINT miplevels,
+                                       DWORD usage,
+                                       D3DFORMAT format,
+                                       D3DPOOL pool,
+                                       LPDIRECT3DVOLUMETEXTURE9 *texture)
+{
+    HRESULT hr;
+
+    TRACE("(%p, %u, %u, %u, %u, %#x, %#x, %#x, %p)\n", device, width, height, depth,
+          miplevels, usage, format, pool, texture);
+
+    if (!device || !texture)
+        return D3DERR_INVALIDCALL;
+
+    hr = D3DXCheckVolumeTextureRequirements(device, &width, &height, &depth,
+                                            &miplevels, usage, &format, pool);
+
+    if (FAILED(hr))
+    {
+        TRACE("D3DXCheckVolumeTextureRequirements failed\n");
+        return hr;
+    }
+
+    return IDirect3DDevice9_CreateVolumeTexture(device, width, height, depth, miplevels,
+                                                usage, format, pool, texture, NULL);
+}
