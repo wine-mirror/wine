@@ -818,6 +818,8 @@ static BOOL is_net_wm_state_maximized( Display *display, struct x11drv_win_data 
     int format, ret = 0;
     unsigned long i, count, remaining;
 
+    if (!data->whole_window) return FALSE;
+
     wine_tsx11_lock();
     if (!XGetWindowProperty( display, data->whole_window, x11drv_atom(_NET_WM_STATE), 0,
                              65536/sizeof(CARD32), False, XA_ATOM, &type, &format, &count,
@@ -872,6 +874,8 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     struct x11drv_win_data *data;
     RECT rect;
     UINT flags;
+    HWND parent;
+    BOOL root_coords;
     int cx, cy, x = event->x, y = event->y;
 
     if (!hwnd) return;
@@ -887,23 +891,26 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
 
     /* Get geometry */
 
-    if (!event->send_event)  /* normal event, need to map coordinates to the root */
+    parent = GetAncestor( hwnd, GA_PARENT );
+    root_coords = event->send_event;  /* synthetic events are always in root coords */
+
+    if (!root_coords && parent == GetDesktopWindow()) /* normal event, map coordinates to the root */
     {
         Window child;
         wine_tsx11_lock();
-        XTranslateCoordinates( event->display, data->whole_window, root_window,
+        XTranslateCoordinates( event->display, event->window, root_window,
                                0, 0, &x, &y, &child );
         wine_tsx11_unlock();
+        root_coords = TRUE;
     }
     rect.left   = x;
     rect.top    = y;
     rect.right  = x + event->width;
     rect.bottom = y + event->height;
-    OffsetRect( &rect, virtual_screen_rect.left, virtual_screen_rect.top );
+    if (root_coords) OffsetRect( &rect, virtual_screen_rect.left, virtual_screen_rect.top );
     TRACE( "win %p/%lx new X rect %d,%d,%dx%d (event %d,%d,%dx%d)\n",
            hwnd, data->whole_window, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
            event->x, event->y, event->width, event->height );
-    X11DRV_X_to_window_rect( data, &rect );
 
     if (is_net_wm_state_maximized( event->display, data ))
     {
@@ -923,6 +930,9 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
             return;
         }
     }
+
+    X11DRV_X_to_window_rect( data, &rect );
+    if (root_coords) MapWindowPoints( 0, parent, (POINT *)&rect, 2 );
 
     /* Compare what has changed */
 
