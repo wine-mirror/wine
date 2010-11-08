@@ -677,6 +677,17 @@ static void dump_sizes(HWND hToolbar)
 
 #else
 
+static int system_font_height(void) {
+    HDC hDC;
+    TEXTMETRIC tm;
+
+    hDC = CreateCompatibleDC(NULL);
+    GetTextMetrics(hDC, &tm);
+    DeleteDC(NULL);
+
+    return tm.tmHeight;
+}
+
 typedef struct
 {
     RECT rcClient;
@@ -708,6 +719,7 @@ tbsize_result_t *tbsize_results = NULL;
 #define tbsize_results_num 24
 
 static void init_tbsize_results(void) {
+    int fontheight = system_font_height();
 
     tbsize_results = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, tbsize_results_num*sizeof(tbsize_result_t));
 
@@ -882,17 +894,17 @@ static void init_tbsize_results(void) {
     tbsize_addbutton(&tbsize_results[14], 192,   0, 215, 100);
 
     tbsize_results[15] = init_tbsize_result(11, 0, 0, 672, 26, 238, 39);
-    tbsize_addbutton(&tbsize_results[15],   0,   0,  23,  39);
-    tbsize_addbutton(&tbsize_results[15],  23,   0,  46,  39);
-    tbsize_addbutton(&tbsize_results[15],  46,   0,  54,  39);
-    tbsize_addbutton(&tbsize_results[15],  54,   0,  77,  39);
-    tbsize_addbutton(&tbsize_results[15],  77,   0, 100,  39);
-    tbsize_addbutton(&tbsize_results[15], 100,   0, 123,  39);
-    tbsize_addbutton(&tbsize_results[15], 123,   0, 146,  39);
-    tbsize_addbutton(&tbsize_results[15], 146,   0, 169,  39);
-    tbsize_addbutton(&tbsize_results[15], 169,   0, 192,  39);
-    tbsize_addbutton(&tbsize_results[15], 192,   0, 215,  39);
-    tbsize_addbutton(&tbsize_results[15], 215,   0, 238,  39);
+    tbsize_addbutton(&tbsize_results[15],   0,   0,  23,  23 + fontheight);
+    tbsize_addbutton(&tbsize_results[15],  23,   0,  46,  23 + fontheight);
+    tbsize_addbutton(&tbsize_results[15],  46,   0,  54,  23 + fontheight);
+    tbsize_addbutton(&tbsize_results[15],  54,   0,  77,  23 + fontheight);
+    tbsize_addbutton(&tbsize_results[15],  77,   0, 100,  23 + fontheight);
+    tbsize_addbutton(&tbsize_results[15], 100,   0, 123,  23 + fontheight);
+    tbsize_addbutton(&tbsize_results[15], 123,   0, 146,  23 + fontheight);
+    tbsize_addbutton(&tbsize_results[15], 146,   0, 169,  23 + fontheight);
+    tbsize_addbutton(&tbsize_results[15], 169,   0, 192,  23 + fontheight);
+    tbsize_addbutton(&tbsize_results[15], 192,   0, 215,  23 + fontheight);
+    tbsize_addbutton(&tbsize_results[15], 215,   0, 238,  23 + fontheight);
 
     tbsize_results[16] = init_tbsize_result(11, 0, 0, 672, 26, 239, 22);
     tbsize_addbutton(&tbsize_results[16],   0,   0,  23,  22);
@@ -908,25 +920,25 @@ static void init_tbsize_results(void) {
     tbsize_addbutton(&tbsize_results[16], 215,   0, 238,  22);
 
     tbsize_results[17] = init_tbsize_result(3, 0, 0, 672, 26, 489, 39);
-    tbsize_addbutton(&tbsize_results[17],   0,   2, 163,  41);
-    tbsize_addbutton(&tbsize_results[17], 163,   2, 330,  41);
-    tbsize_addbutton(&tbsize_results[17], 330,   2, 493,  41);
+    tbsize_addbutton(&tbsize_results[17],   0,   2, 163,  25 + fontheight);
+    tbsize_addbutton(&tbsize_results[17], 163,   2, 330,  25 + fontheight);
+    tbsize_addbutton(&tbsize_results[17], 330,   2, 493,  25 + fontheight);
 
     tbsize_results[18] = init_tbsize_result(6, 0, 0, 672, 104, 978, 24);
-    tbsize_addbutton(&tbsize_results[18],   0,   2, 163,  26);
-    tbsize_addbutton(&tbsize_results[18], 163,   2, 326,  26);
-    tbsize_addbutton(&tbsize_results[18], 326,   2, 489,  26);
-    tbsize_addbutton(&tbsize_results[18], 489,   2, 652,  26);
-    tbsize_addbutton(&tbsize_results[18], 652,   2, 819,  26);
-    tbsize_addbutton(&tbsize_results[18], 819,   2, 850,  26);
+    tbsize_addbutton(&tbsize_results[18],   0,   2, 163,  10 + fontheight);
+    tbsize_addbutton(&tbsize_results[18], 163,   2, 326,  10 + fontheight);
+    tbsize_addbutton(&tbsize_results[18], 326,   2, 489,  10 + fontheight);
+    tbsize_addbutton(&tbsize_results[18], 489,   2, 652,  10 + fontheight);
+    tbsize_addbutton(&tbsize_results[18], 652,   2, 819,  10 + fontheight);
+    tbsize_addbutton(&tbsize_results[18], 819,   2, 850,  10 + fontheight);
 
     tbsize_results[19] = init_tbsize_result(6, 0, 0, 672, 28, 978, 38);
-    tbsize_addbutton(&tbsize_results[19],   0,   0, 163,  38);
-    tbsize_addbutton(&tbsize_results[19], 163,   0, 326,  38);
-    tbsize_addbutton(&tbsize_results[19], 326,   0, 489,  38);
-    tbsize_addbutton(&tbsize_results[19], 489,   0, 652,  38);
-    tbsize_addbutton(&tbsize_results[19], 652,   0, 819,  38);
-    tbsize_addbutton(&tbsize_results[19], 819,   0, 850,  38);
+    tbsize_addbutton(&tbsize_results[19],   0,   0, 163,  22 + fontheight);
+    tbsize_addbutton(&tbsize_results[19], 163,   0, 326,  22 + fontheight);
+    tbsize_addbutton(&tbsize_results[19], 326,   0, 489,  22 + fontheight);
+    tbsize_addbutton(&tbsize_results[19], 489,   0, 652,  22 + fontheight);
+    tbsize_addbutton(&tbsize_results[19], 652,   0, 819,  22 + fontheight);
+    tbsize_addbutton(&tbsize_results[19], 819,   0, 850,  22 + fontheight);
 
     tbsize_results[20] = init_tbsize_result(3, 0, 0, 672, 100, 239, 102);
     tbsize_addbutton(&tbsize_results[20],   0,   2, 100, 102);
@@ -942,8 +954,8 @@ static void init_tbsize_results(void) {
     tbsize_addbutton(&tbsize_results[22],   0,   2,  67,  40);
 
     tbsize_results[23] = init_tbsize_result(2, 0, 0, 672, 42, 67, 41);
-    tbsize_addbutton(&tbsize_results[23],   0,   2, 672,  41);
-    tbsize_addbutton(&tbsize_results[23],   0,  41, 672,  80);
+    tbsize_addbutton(&tbsize_results[23],   0,   2, 672,  25 + fontheight);
+    tbsize_addbutton(&tbsize_results[23],   0,  25 + fontheight, 672,  48 + 2*fontheight);
 }
 
 static void free_tbsize_results(void) {
@@ -1023,6 +1035,7 @@ static void test_sizes(void)
     TBBUTTONINFO tbinfo;
     int style;
     int i;
+    int fontheight = system_font_height();
 
     init_tbsize_results();
 
@@ -1099,7 +1112,7 @@ static void test_sizes(void)
     SendMessageA(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons3[0]);
     /* TB_ADDSTRING resets the size */
     SendMessageA(hToolbar, TB_ADDSTRING, 0, (LPARAM)"A\0MMMMMMMMMMMMM\0");
-    check_button_size(hToolbar, 23, 39);
+    check_button_size(hToolbar, 23, 23 + fontheight);
     check_sizes();
     /* TB_SETBUTTONSIZE can be used to crop the text */
     SendMessageA(hToolbar, TB_SETBUTTONSIZE, 0, MAKELONG(3, 3));
@@ -1134,7 +1147,7 @@ static void test_sizes(void)
     rebuild_toolbar(&hToolbar);
     SendMessageA(hToolbar, TB_ADDSTRINGA, 0, (LPARAM)"A\0MMMMMMMMMMMMM\0");
     /* the height is increased after a TB_ADDSTRING */
-    check_button_size(hToolbar, 23, 39);
+    check_button_size(hToolbar, 23, 23 + fontheight);
     SendMessageA(hToolbar, TB_SETBUTTONSIZE, 0, MAKELONG(100, 100));
     /* if a string is in the pool, even adding a button without a string resets the size */
     SendMessageA(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons2[0]);
@@ -1142,13 +1155,13 @@ static void test_sizes(void)
     SendMessageA(hToolbar, TB_SETBUTTONSIZE, 0, MAKELONG(100, 100));
     /* an BTNS_AUTOSIZE button is also considered when computing the new size */
     SendMessageA(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons3[2]);
-    check_button_size(hToolbar, 163, 39);
+    check_button_size(hToolbar, 163, 23 + fontheight);
     SendMessageA(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons3[0]);
     check_sizes();
     /* delete button doesn't change the buttons size */
     SendMessageA(hToolbar, TB_DELETEBUTTON, 2, 0);
     SendMessageA(hToolbar, TB_DELETEBUTTON, 1, 0);
-    check_button_size(hToolbar, 163, 39);
+    check_button_size(hToolbar, 163, 23 + fontheight);
     /* TB_INSERTBUTTONS will */
     SendMessageA(hToolbar, TB_INSERTBUTTON, 1, (LPARAM)&buttons2[0]);
     check_button_size(hToolbar, 23, 22);
@@ -1187,9 +1200,9 @@ static void test_sizes(void)
     /* the text is taken into account */
     SendMessageA(hToolbar, TB_ADDSTRINGA, 0, (LPARAM)"A\0MMMMMMMMMMMMM\0");
     SendMessageA(hToolbar, TB_ADDBUTTONS, 4, (LPARAM)buttons3);
-    check_button_size(hToolbar, 163, 38);
+    check_button_size(hToolbar, 163, 22 + fontheight);
     ok(SendMessageA(hToolbar, TB_SETIMAGELIST, 0, 0) == (LRESULT)himl, "TB_SETIMAGELIST failed\n");
-    check_button_size(hToolbar, 163, 24);
+    check_button_size(hToolbar, 163, 8 + fontheight);
     /* the style change also comes into effect */
     check_sizes();
     SetWindowLong(hToolbar, GWL_STYLE, GetWindowLong(hToolbar, GWL_STYLE) | TBSTYLE_FLAT);
@@ -1201,9 +1214,9 @@ static void test_sizes(void)
     ImageList_Destroy(himl2);
 
     SendMessageA(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons3[3]);
-    check_button_size(hToolbar, 27, 39);
+    check_button_size(hToolbar, 27, 23 + fontheight);
     SendMessageA(hToolbar, TB_DELETEBUTTON, 0, 0);
-    check_button_size(hToolbar, 27, 39);
+    check_button_size(hToolbar, 27, 23 + fontheight);
 
     rebuild_toolbar(&hToolbar);
 
