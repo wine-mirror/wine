@@ -216,7 +216,7 @@ int CDECL _wputenv_s(const MSVCRT_wchar_t *name, const MSVCRT_wchar_t *value)
 /******************************************************************
  *		_dupenv_s (MSVCRT.@)
  */
-int _dupenv_s(char **buffer, MSVCRT_size_t *numberOfElements, const char *varname)
+int CDECL _dupenv_s(char **buffer, MSVCRT_size_t *numberOfElements, const char *varname)
 {
     char*               e;
     MSVCRT_size_t       sz;
@@ -240,8 +240,8 @@ int _dupenv_s(char **buffer, MSVCRT_size_t *numberOfElements, const char *varnam
 /******************************************************************
  *		_wdupenv_s (MSVCRT.@)
  */
-int _wdupenv_s(MSVCRT_wchar_t **buffer, MSVCRT_size_t *numberOfElements,
-               const MSVCRT_wchar_t *varname)
+int CDECL _wdupenv_s(MSVCRT_wchar_t **buffer, MSVCRT_size_t *numberOfElements,
+                     const MSVCRT_wchar_t *varname)
 {
     MSVCRT_wchar_t*     e;
     MSVCRT_size_t       sz;
@@ -265,7 +265,7 @@ int _wdupenv_s(MSVCRT_wchar_t **buffer, MSVCRT_size_t *numberOfElements,
 /******************************************************************
  *		getenv_s (MSVCRT.@)
  */
-int getenv_s(MSVCRT_size_t *pReturnValue, char* buffer, MSVCRT_size_t numberOfElements, const char *varname)
+int CDECL getenv_s(MSVCRT_size_t *pReturnValue, char* buffer, MSVCRT_size_t numberOfElements, const char *varname)
 {
     char*       e;
 
@@ -292,8 +292,8 @@ int getenv_s(MSVCRT_size_t *pReturnValue, char* buffer, MSVCRT_size_t numberOfEl
 /******************************************************************
  *		_wgetenv_s (MSVCRT.@)
  */
-int _wgetenv_s(MSVCRT_size_t *pReturnValue, MSVCRT_wchar_t *buffer, MSVCRT_size_t numberOfElements,
-               const MSVCRT_wchar_t *varname)
+int CDECL _wgetenv_s(MSVCRT_size_t *pReturnValue, MSVCRT_wchar_t *buffer, MSVCRT_size_t numberOfElements,
+                     const MSVCRT_wchar_t *varname)
 {
     MSVCRT_wchar_t*     e;
 
