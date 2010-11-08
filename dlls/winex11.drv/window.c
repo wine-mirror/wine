@@ -2371,7 +2371,7 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
     if (thread_data->current_event && thread_data->current_event->xany.window == data->whole_window)
         event_type = thread_data->current_event->type;
 
-    if (event_type != ConfigureNotify && event_type != PropertyNotify)
+    if (event_type != ConfigureNotify && event_type != PropertyNotify && event_type != GravityNotify)
         event_type = 0;  /* ignore other events */
 
     if (data->mapped)

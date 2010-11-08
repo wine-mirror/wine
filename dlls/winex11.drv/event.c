@@ -95,6 +95,7 @@ static void X11DRV_ReparentNotify( HWND hwnd, XEvent *event );
 static void X11DRV_ConfigureNotify( HWND hwnd, XEvent *event );
 static void X11DRV_PropertyNotify( HWND hwnd, XEvent *event );
 static void X11DRV_ClientMessage( HWND hwnd, XEvent *event );
+static void X11DRV_GravityNotify( HWND hwnd, XEvent *event );
 
 struct event_handler
 {
@@ -129,7 +130,7 @@ static struct event_handler handlers[MAX_EVENT_HANDLERS] =
     { ReparentNotify,   X11DRV_ReparentNotify },
     { ConfigureNotify,  X11DRV_ConfigureNotify },
     /* ConfigureRequest */
-    /* GravityNotify */
+    { GravityNotify,    X11DRV_GravityNotify },
     /* ResizeRequest */
     /* CirculateNotify */
     /* CirculateRequest */
@@ -142,7 +143,7 @@ static struct event_handler handlers[MAX_EVENT_HANDLERS] =
     { MappingNotify,    X11DRV_MappingNotify },
 };
 
-static int nb_event_handlers = 19;  /* change this if you add handlers above */
+static int nb_event_handlers = 20;  /* change this if you add handlers above */
 
 
 /* return the name of an X event */
@@ -960,6 +961,34 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
                data->window_rect.bottom - data->window_rect.top, cx, cy );
 
     SetWindowPos( hwnd, 0, x, y, cx, cy, flags );
+}
+
+
+/**********************************************************************
+ *           X11DRV_GravityNotify
+ */
+static void X11DRV_GravityNotify( HWND hwnd, XEvent *xev )
+{
+    XGravityEvent *event = &xev->xgravity;
+    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
+    RECT rect;
+
+    if (!data) return;
+
+    rect.left   = event->x;
+    rect.top    = event->y;
+    rect.right  = rect.left + data->whole_rect.right - data->whole_rect.left;
+    rect.bottom = rect.top + data->whole_rect.bottom - data->whole_rect.top;
+
+    TRACE( "win %p/%lx new X rect %d,%d,%dx%d (event %d,%d)\n",
+           hwnd, data->whole_window, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
+           event->x, event->y );
+
+    X11DRV_X_to_window_rect( data, &rect );
+
+    if (data->window_rect.left != rect.left || data ->window_rect.top != rect.top)
+        SetWindowPos( hwnd, 0, rect.left, rect.top, 0, 0,
+                      SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOCOPYBITS );
 }
 
 
