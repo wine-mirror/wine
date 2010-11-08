@@ -1743,7 +1743,7 @@ static UINT msi_dialog_maskedit_control( msi_dialog *dialog, MSIRECORD *rec )
     font = msi_dialog_get_style( font_mask, &mask );
     if( !mask )
     {
-        ERR("mask template is empty\n");
+        WARN("mask template is empty\n");
         goto end;
     }
 
