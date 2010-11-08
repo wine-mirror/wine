@@ -200,6 +200,12 @@ static void test_D3DXCheckCubeTextureRequirements(IDirect3DDevice9 *device)
 
     IDirect3DDevice9_GetDeviceCaps(device, &caps);
 
+    if (!(caps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP))
+    {
+        skip("No cube textures support\n");
+        return;
+    }
+
     /* general tests */
     hr = D3DXCheckCubeTextureRequirements(device, NULL, NULL, 0, NULL, D3DPOOL_DEFAULT);
     ok(hr == D3D_OK, "D3DXCheckCubeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
