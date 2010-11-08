@@ -1079,6 +1079,17 @@ static void test_queryvirtualmemory(void)
     char stackbuf[42];
     HMODULE module;
 
+    module = GetModuleHandle( "ntdll.dll" );
+    trace("Check flags of the PE header of NTDLL.DLL at %p\n", module);
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), module, MemoryBasicInformation, &mbi, sizeof(MEMORY_BASIC_INFORMATION), &readcount);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( readcount == sizeof(MEMORY_BASIC_INFORMATION), "Expected to read %d bytes, got %ld\n",(int)sizeof(MEMORY_BASIC_INFORMATION),readcount);
+    ok (mbi.AllocationBase == module, "mbi.AllocationBase is 0x%p, expected 0x%p\n", mbi.AllocationBase, module);
+    ok (mbi.AllocationProtect == PAGE_EXECUTE_WRITECOPY, "mbi.AllocationProtect is 0x%x, expected 0x%x\n", mbi.AllocationProtect, PAGE_EXECUTE_WRITECOPY);
+    ok (mbi.State == MEM_COMMIT, "mbi.State is 0x%x, expected 0x%x\n", mbi.State, MEM_COMMIT);
+    ok (mbi.Protect == PAGE_READONLY, "mbi.Protect is 0x%x, expected 0x%x\n", mbi.Protect, PAGE_READONLY);
+    ok (mbi.Type == MEM_IMAGE, "mbi.Type is 0x%x, expected 0x%x\n", mbi.Type, MEM_IMAGE);
+
     trace("Check flags of a function entry in NTDLL.DLL at %p\n", pNtQueryVirtualMemory);
     module = GetModuleHandle( "ntdll.dll" );
     status = pNtQueryVirtualMemory(NtCurrentProcess(), pNtQueryVirtualMemory, MemoryBasicInformation, &mbi, sizeof(MEMORY_BASIC_INFORMATION), &readcount);

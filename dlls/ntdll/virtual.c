@@ -1445,10 +1445,13 @@ NTSTATUS virtual_create_builtin_view( void *module )
 
     if (status) return status;
 
+    /* The PE header is always read-only, no write, no execute. */
+    view->prot[0] = VPROT_COMMITTED | VPROT_READ;
+
     sec = (IMAGE_SECTION_HEADER *)((char *)&nt->OptionalHeader + nt->FileHeader.SizeOfOptionalHeader);
     for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
     {
-        DWORD flags = VPROT_SYSTEM | VPROT_IMAGE | VPROT_COMMITTED;
+        BYTE flags = VPROT_COMMITTED;
 
         if (sec[i].Characteristics & IMAGE_SCN_MEM_EXECUTE) flags |= VPROT_EXEC;
         if (sec[i].Characteristics & IMAGE_SCN_MEM_READ) flags |= VPROT_READ;
