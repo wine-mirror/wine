@@ -5693,7 +5693,6 @@ static void doc_write(IHTMLDocument2 *doc, BOOL ln, const char *text)
     SAFEARRAYBOUND dim;
     SAFEARRAY *sa;
     VARIANT *var;
-    BSTR str;
     HRESULT hres;
 
     dim.lLbound = 0;
@@ -5701,7 +5700,7 @@ static void doc_write(IHTMLDocument2 *doc, BOOL ln, const char *text)
     sa = SafeArrayCreate(VT_VARIANT, 1, &dim);
     SafeArrayAccessData(sa, (void**)&var);
     V_VT(var) = VT_BSTR;
-    V_BSTR(var) = str = a2bstr(text);
+    V_BSTR(var) = a2bstr(text);
     SafeArrayUnaccessData(sa);
 
     if(ln)
@@ -5710,7 +5709,6 @@ static void doc_write(IHTMLDocument2 *doc, BOOL ln, const char *text)
         hres = IHTMLDocument2_write(doc, sa);
     ok(hres == S_OK, "write failed: %08x\n", hres);
 
-    SysFreeString(str);
     SafeArrayDestroy(sa);
 }
 
