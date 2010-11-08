@@ -162,7 +162,7 @@ static void SERIALUI_AddConfItems(HWND hDlg, DWORD id, LPCPARAM2STR table, DWORD
         n = SendMessageA(hControl, CB_ADDSTRING, 0L, (LPARAM)table->data[i].name);
         if(dwVal == table->data[i].val)
 	{
-            SendMessageA(hControl, CB_SETCURSEL, (WPARAM)n, (LPARAM)0);
+            SendMessageA(hControl, CB_SETCURSEL, n, 0);
 	}
     }
 }
