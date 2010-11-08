@@ -203,7 +203,10 @@ for a command line executable,
 for a graphical executable,
 .br
 .B native
-for a native-mode dll.
+for a native-mode dll,
+.br
+.B wince
+for a ce dll.
 .br
 The entry point of a command line executable is a normal C \fBmain\fR
 function. A \fBwmain\fR function can be used instead if you need the

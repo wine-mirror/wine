@@ -165,6 +165,7 @@ static void set_subsystem( const char *subsystem, DLLSPEC *spec )
     if (!strcmp( str, "native" )) spec->subsystem = IMAGE_SUBSYSTEM_NATIVE;
     else if (!strcmp( str, "windows" )) spec->subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
     else if (!strcmp( str, "console" )) spec->subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+    else if (!strcmp( str, "wince" ))   spec->subsystem = IMAGE_SUBSYSTEM_WINDOWS_CE_GUI;
     else if (!strcmp( str, "win16" )) spec->type = SPEC_WIN16;
     else fatal_error( "Invalid subsystem name '%s'\n", subsystem );
     if (major)
@@ -258,7 +259,7 @@ static const char usage_str[] =
 "   -o, --output=NAME         Set the output file name (default: stdout)\n"
 "   -r, --res=RSRC.RES        Load resources from RSRC.RES\n"
 "       --save-temps          Do not delete the generated intermediate files\n"
-"       --subsystem=SUBSYS    Set the subsystem (one of native, windows, console)\n"
+"       --subsystem=SUBSYS    Set the subsystem (one of native, windows, console, wince)\n"
 "   -u, --undefined=SYMBOL    Add an undefined reference to SYMBOL when linking\n"
 "   -v, --verbose             Display the programs invoked\n"
 "       --version             Print the version and exit\n"
