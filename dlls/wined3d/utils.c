@@ -1174,6 +1174,13 @@ static BOOL init_format_texture_info(struct wined3d_gl_info *gl_info)
         if (!gl_info->supported[format_texture_info[i].extension]) continue;
 
         format = &gl_info->formats[fmt_idx];
+
+        /* ARB_texture_rg defines floating point formats, but only if
+         * ARB_texture_float is also supported. */
+        if (!gl_info->supported[ARB_TEXTURE_FLOAT]
+                && (format->Flags & WINED3DFMT_FLAG_FLOAT))
+            continue;
+
         format->glInternal = format_texture_info[i].gl_internal;
         format->glGammaInternal = format_texture_info[i].gl_srgb_internal;
         format->rtInternal = format_texture_info[i].gl_rt_internal;
