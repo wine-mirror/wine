@@ -200,6 +200,14 @@ typedef struct QualityControlImpl {
     IPin *input;
     IBaseFilter *self;
     IQualityControl *tonotify;
+
+    /* Render stuff */
+    IReferenceClock *clock;
+    REFERENCE_TIME last_in_time, last_left, avg_duration, avg_pt, avg_render, start, stop;
+    REFERENCE_TIME current_jitter, current_rstart, current_rstop, clockstart;
+    double avg_rate;
+    LONG64 rendered, dropped;
+    BOOL qos_handled, is_dropped;
 } QualityControlImpl;
 
 void QualityControlImpl_init(QualityControlImpl *This, IPin *input, IBaseFilter *self);
@@ -208,6 +216,13 @@ ULONG WINAPI QualityControlImpl_AddRef(IQualityControl *iface);
 ULONG WINAPI QualityControlImpl_Release(IQualityControl *iface);
 HRESULT WINAPI QualityControlImpl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm);
 HRESULT WINAPI QualityControlImpl_SetSink(IQualityControl *iface, IQualityControl *tonotify);
+
+void QualityControlRender_Start(QualityControlImpl *This, REFERENCE_TIME tStart);
+void QualityControlRender_SetClock(QualityControlImpl *This, IReferenceClock *clock);
+HRESULT QualityControlRender_WaitFor(QualityControlImpl *This, IMediaSample *sample, HANDLE ev);
+void QualityControlRender_DoQOS(QualityControlImpl *priv);
+void QualityControlRender_BeginRender(QualityControlImpl *This);
+void QualityControlRender_EndRender(QualityControlImpl *This);
 
 /* Transform Filter */
 typedef struct TransformFilter
