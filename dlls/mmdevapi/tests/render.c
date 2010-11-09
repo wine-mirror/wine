@@ -208,8 +208,9 @@ static void test_audioclient(IAudioClient *ac)
 
     hr = IAudioClient_SetEventHandle(ac, handle);
     ok(hr == AUDCLNT_E_EVENTHANDLE_NOT_EXPECTED ||
-       hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME) ||
-       hr == HRESULT_FROM_WIN32(ERROR_BAD_PATHNAME) /* Some Vista */
+       broken(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME)) ||
+       broken(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) /* Some 2k8 */ ||
+       broken(hr == HRESULT_FROM_WIN32(ERROR_BAD_PATHNAME)) /* Some Vista */
        , "SetEventHandle returns %08x\n", hr);
 
     hr = IAudioClient_Reset(ac);
