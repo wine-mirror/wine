@@ -1937,8 +1937,10 @@ static HRESULT WINAPI MediaControl_Run(IMediaControl *iface) {
         IReferenceClock_GetTime(This->refClock, &now);
         if (This->state == State_Stopped)
             This->start_time = now + 500000;
-        else
+        else if (This->pause_time >= 0)
             This->start_time += now - This->pause_time;
+        else
+            This->start_time = now;
     }
     else This->start_time = 0;
 
@@ -1957,8 +1959,10 @@ static HRESULT WINAPI MediaControl_Pause(IMediaControl *iface) {
     if (This->state == State_Paused)
         goto out;
 
-    if (This->state == State_Running && This->refClock)
+    if (This->state == State_Running && This->refClock && This->start_time >= 0)
         IReferenceClock_GetTime(This->refClock, &This->pause_time);
+    else
+        This->pause_time = -1;
 
     SendFilterMessage(iface, SendPause, 0);
     This->state = State_Paused;
@@ -2433,10 +2437,10 @@ static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface,
     args.stopflags = dwStopFlags;
     hr = all_renderers_seek(This, found_setposition, (DWORD_PTR)&args);
 
-    if (This->refClock && ((dwCurrentFlags & 0x7) != AM_SEEKING_NoPositioning))
-    {
-        /* Update start time, prevents weird jumps */
-        IReferenceClock_GetTime(This->refClock, &This->start_time);
+    if ((dwCurrentFlags & 0x7) != AM_SEEKING_NoPositioning) {
+        if (This->state == State_Running)
+            FIXME("Seeking while graph is running is not properly supported!\n");
+        This->pause_time = This->start_time = -1;
     }
     LeaveCriticalSection(&This->cs);
 
