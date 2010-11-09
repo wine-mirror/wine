@@ -47,7 +47,8 @@ static int system_font_height;
 
 #define compare(val, exp, format) ok((val) == (exp), #val " value " format " expected " format "\n", (val), (exp));
 
-#define expect_eq(expr, value, type, format) { type ret = expr; ok((value) == ret, #expr " expected " format "  got " format "\n", (value), (ret)); }
+#define expect_eq(line, expr, value, type, format) { type ret = expr;\
+        ok((value) == ret, #expr " expected " format "  got " format " from line %d\n", (value), (ret), line); }
 
 static INT CALLBACK is_font_installed_proc(const LOGFONT *elf, const TEXTMETRIC *ntm, DWORD type, LPARAM lParam)
 {
@@ -685,6 +686,7 @@ static int resize_numtests = 0;
 #define comment(fmt, arg1)
 #define check_client() { \
         RECT r; \
+        int value; \
         const rbresize_test_result_t *res = &resize_results[resize_numtests++]; \
         assert(resize_numtests <= sizeof(resize_results)/sizeof(resize_results[0])); \
         GetWindowRect(hRebar, &r); \
@@ -694,7 +696,8 @@ static int resize_numtests = 0;
         } else { \
             check_rect("client", r, res->rc); \
         } \
-        expect_eq((int)SendMessage(hRebar, RB_GETROWCOUNT, 0, 0), res->iNumRows, int, "%d"); \
+        value = (int)SendMessage(hRebar, RB_GETROWCOUNT, 0, 0); \
+        ok(res->iNumRows == value, "RB_GETROWCOUNT expected %d got %d", res->iNumRows, value); \
         if (res->heightNotify) { \
             RECT rcClient; \
             GetClientRect(hRebar, &rcClient); \
@@ -758,7 +761,7 @@ static void test_resize(void)
     }
 }
 
-static void expect_band_content(HWND hRebar, UINT uBand, INT fStyle, COLORREF clrFore,
+static void expect_band_content_(int line, HWND hRebar, UINT uBand, INT fStyle, COLORREF clrFore,
     COLORREF clrBack, LPCSTR lpText, int iImage, HWND hwndChild,
     INT cxMinChild, INT cyMinChild, INT cx, HBITMAP hbmBack, INT wID,
     INT cyChild, INT cyMaxChild, INT cyIntegral, INT cxIdeal, LPARAM lParam,
@@ -774,27 +777,34 @@ static void expect_band_content(HWND hRebar, UINT uBand, INT fStyle, COLORREF cl
         | RBBIM_SIZE | RBBIM_STYLE | RBBIM_TEXT;
     rb.lpText = buf;
     rb.cch = MAX_PATH;
-    ok(SendMessageA(hRebar, RB_GETBANDINFOA, uBand, (LPARAM)&rb), "RB_GETBANDINFO failed\n");
-    expect_eq(rb.fStyle, fStyle, int, "%x");
-    expect_eq(rb.clrFore, clrFore, COLORREF, "%x");
-    expect_eq(rb.clrBack, clrBack, COLORREF, "%x");
-    expect_eq(strcmp(rb.lpText, lpText), 0, int, "%d");
-    expect_eq(rb.iImage, iImage, int, "%x");
-    expect_eq(rb.hwndChild, hwndChild, HWND, "%p");
-    expect_eq(rb.cxMinChild, cxMinChild, int, "%d");
-    expect_eq(rb.cyMinChild, cyMinChild, int, "%d");
-    expect_eq(rb.cx, cx, int, "%d");
-    expect_eq(rb.hbmBack, hbmBack, HBITMAP, "%p");
-    expect_eq(rb.wID, wID, int, "%d");
+    ok(SendMessageA(hRebar, RB_GETBANDINFOA, uBand, (LPARAM)&rb), "RB_GETBANDINFO failed from line %d\n", line);
+    expect_eq(line, rb.fStyle, fStyle, int, "%x");
+    expect_eq(line, rb.clrFore, clrFore, COLORREF, "%x");
+    expect_eq(line, rb.clrBack, clrBack, COLORREF, "%x");
+    expect_eq(line, strcmp(rb.lpText, lpText), 0, int, "%d");
+    expect_eq(line, rb.iImage, iImage, int, "%x");
+    expect_eq(line, rb.hwndChild, hwndChild, HWND, "%p");
+    expect_eq(line, rb.cxMinChild, cxMinChild, int, "%d");
+    expect_eq(line, rb.cyMinChild, cyMinChild, int, "%d");
+    expect_eq(line, rb.cx, cx, int, "%d");
+    expect_eq(line, rb.hbmBack, hbmBack, HBITMAP, "%p");
+    expect_eq(line, rb.wID, wID, int, "%d");
     /* the values of cyChild, cyMaxChild and cyIntegral can't be read unless the band is RBBS_VARIABLEHEIGHT */
-    expect_eq(rb.cyChild, cyChild, int, "%x");
-    expect_eq(rb.cyMaxChild, cyMaxChild, int, "%x");
-    expect_eq(rb.cyIntegral, cyIntegral, int, "%x");
-    expect_eq(rb.cxIdeal, cxIdeal, int, "%d");
-    expect_eq(rb.lParam, lParam, LPARAM, "%ld");
-    ok( rb.cxHeader == cxHeader || broken(rb.cxHeader == cxHeader_broken),
-        "expected %d for %d\n", cxHeader, rb.cxHeader );
+    expect_eq(line, rb.cyChild, cyChild, int, "%x");
+    expect_eq(line, rb.cyMaxChild, cyMaxChild, int, "%x");
+    expect_eq(line, rb.cyIntegral, cyIntegral, int, "%x");
+    expect_eq(line, rb.cxIdeal, cxIdeal, int, "%d");
+    expect_eq(line, rb.lParam, lParam, LPARAM, "%ld");
+    ok(rb.cxHeader == cxHeader || broken(rb.cxHeader == cxHeader_broken),
+        "expected %d for %d from line %d\n", cxHeader, rb.cxHeader, line);
 }
+
+#define expect_band_content(hRebar, uBand, fStyle, clrFore, clrBack,\
+ lpText, iImage, hwndChild, cxMinChild, cyMinChild, cx, hbmBack, wID,\
+ cyChild, cyMaxChild, cyIntegral, cxIdeal, lParam, cxHeader, cxHeader_broken) \
+ expect_band_content_(__LINE__, hRebar, uBand, fStyle, clrFore, clrBack,\
+ lpText, iImage, hwndChild, cxMinChild, cyMinChild, cx, hbmBack, wID,\
+ cyChild, cyMaxChild, cyIntegral, cxIdeal, lParam, cxHeader, cxHeader_broken)
 
 static void test_bandinfo(void)
 {
