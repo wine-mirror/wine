@@ -939,11 +939,14 @@ static HRESULT WINAPI VideoRenderer_InputPin_EndOfStream(IPin * iface)
     BaseInputPin* This = (BaseInputPin*)iface;
     VideoRendererImpl *pFilter;
     IMediaEventSink* pEventSink;
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
     TRACE("(%p/%p)->()\n", This, iface);
 
+    EnterCriticalSection(This->pin.pCritSec);
     pFilter = (VideoRendererImpl*)This->pin.pinInfo.pFilter;
+    if (This->flushing || This->end_of_stream)
+        goto out;
     hr = IFilterGraph_QueryInterface(pFilter->filter.filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
     if (SUCCEEDED(hr))
     {
@@ -951,6 +954,9 @@ static HRESULT WINAPI VideoRenderer_InputPin_EndOfStream(IPin * iface)
         IMediaEventSink_Release(pEventSink);
     }
     MediaSeekingPassThru_EOS(pFilter->seekthru_unk);
+    This->end_of_stream = 1;
+out:
+    LeaveCriticalSection(This->pin.pCritSec);
 
     return hr;
 }
