@@ -124,7 +124,7 @@
 @ stub D3DXFileCreate
 @ stub D3DXFillCubeTexture
 @ stub D3DXFillCubeTextureTX
-@ stub D3DXFillTexture
+@ stdcall D3DXFillTexture(ptr ptr ptr)
 @ stub D3DXFillTextureTX
 @ stub D3DXFillVolumeTexture
 @ stub D3DXFillVolumeTextureTX
