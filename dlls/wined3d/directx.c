@@ -1102,8 +1102,11 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4600,         "ATI Radeon HD 4600 Series",        DRIVER_ATI_R600,         512 },
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4700,         "ATI Radeon HD 4700 Series",        DRIVER_ATI_R600,         512 },
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4800,         "ATI Radeon HD 4800 Series",        DRIVER_ATI_R600,         512 },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD5400,         "ATI Radeon HD 5400 Series",        DRIVER_ATI_R600,         512 },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD5600,         "ATI Radeon HD 5600 Series",        DRIVER_ATI_R600,         512 },
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD5700,         "ATI Radeon HD 5700 Series",        DRIVER_ATI_R600,         512 },
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD5800,         "ATI Radeon HD 5800 Series",        DRIVER_ATI_R600,         1024},
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD5900,         "ATI Radeon HD 5900 Series",        DRIVER_ATI_R600,         1024},
     /* Intel cards */
     {HW_VENDOR_INTEL,      CARD_INTEL_I830G,               "Intel(R) 82830M Graphics Controller",                       DRIVER_INTEL_GMA800,  32 },
     {HW_VENDOR_INTEL,      CARD_INTEL_I855G,               "Intel(R) 82852/82855 GM/GME Graphics Controller",           DRIVER_INTEL_GMA800,  32 },
@@ -1860,6 +1863,17 @@ static enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info
      * eg HD 4800 is returned for multiple cards, even for RV790 based ones. */
     if (strstr(gl_renderer, "Gallium"))
     {
+        if (strstr(gl_renderer, "HEMLOCK"))
+            return CARD_ATI_RADEON_HD5900;
+        if (strstr(gl_renderer, "CYPRESS"))
+            return CARD_ATI_RADEON_HD5800;
+        if (strstr(gl_renderer, "JUNIPER"))
+            return CARD_ATI_RADEON_HD5700;
+        if (strstr(gl_renderer, "REDWOOD"))
+            return CARD_ATI_RADEON_HD5600;
+        if (strstr(gl_renderer, "CEDAR"))
+            return CARD_ATI_RADEON_HD5400;
+
         /* Radeon R7xx HD4800 - highend */
         if (strstr(gl_renderer, "R700")          /* Radeon R7xx HD48xx generic renderer string */
                 || strstr(gl_renderer, "RV770")  /* Radeon RV770 */

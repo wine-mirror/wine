@@ -1346,12 +1346,15 @@ enum wined3d_pci_device
     CARD_ATI_RADEON_HD4850          = 0x9442,
     CARD_ATI_RADEON_HD4870          = 0x9440,
     CARD_ATI_RADEON_HD4890          = 0x9460,
+    CARD_ATI_RADEON_HD5400          = 0x68f9,
+    CARD_ATI_RADEON_HD5600          = 0x68d8,
     CARD_ATI_RADEON_HD5700          = 0x68BE, /* Picked HD5750 */
     CARD_ATI_RADEON_HD5750          = 0x68BE,
     CARD_ATI_RADEON_HD5770          = 0x68B8,
     CARD_ATI_RADEON_HD5800          = 0x6898, /* Picked HD5850 */
     CARD_ATI_RADEON_HD5850          = 0x6898,
     CARD_ATI_RADEON_HD5870          = 0x6899,
+    CARD_ATI_RADEON_HD5900          = 0x689c,
 
     CARD_NVIDIA_RIVA_128            = 0x0018,
     CARD_NVIDIA_RIVA_TNT            = 0x0020,
