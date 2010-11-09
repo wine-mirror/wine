@@ -959,18 +959,11 @@ static HRESULT WINAPI VideoRenderer_InputPin_BeginFlush(IPin * iface)
 {
     BaseInputPin* This = (BaseInputPin*)iface;
     VideoRendererImpl *pVideoRenderer = (VideoRendererImpl *)This->pin.pinInfo.pFilter;
-    HRESULT hr;
 
     TRACE("(%p/%p)->()\n", This, iface);
 
-    EnterCriticalSection(This->pin.pCritSec);
-    if (pVideoRenderer->filter.state == State_Paused)
-        SetEvent(pVideoRenderer->blocked);
-
-    hr = BaseInputPinImpl_BeginFlush(iface);
-    LeaveCriticalSection(This->pin.pCritSec);
-
-    return hr;
+    SetEvent(pVideoRenderer->blocked);
+    return BaseInputPinImpl_BeginFlush(iface);
 }
 
 static HRESULT WINAPI VideoRenderer_InputPin_EndFlush(IPin * iface)
