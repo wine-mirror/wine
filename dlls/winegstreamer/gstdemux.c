@@ -80,6 +80,7 @@ struct GSTOutPin {
     AM_MEDIA_TYPE * pmt;
     HANDLE caps_event;
     GstSegment *segment;
+    QualityControlImpl qcimpl;
     SourceSeeking seek;
 };
 
@@ -88,6 +89,7 @@ static const IMediaSeekingVtbl GST_Seeking_Vtbl;
 static const IPinVtbl GST_OutputPin_Vtbl;
 static const IPinVtbl GST_InputPin_Vtbl;
 static const IBaseFilterVtbl GST_Vtbl;
+static const IQualityControlVtbl GSTOutPin_QualityControl_Vtbl;
 
 static HRESULT GST_AddPin(GSTImpl *This, const PIN_INFO *piOutput, const AM_MEDIA_TYPE *amt);
 static HRESULT GST_RemoveOutputPins(GSTImpl *This);
@@ -1282,6 +1284,21 @@ static const IMediaSeekingVtbl GST_Seeking_Vtbl =
     SourceSeekingImpl_GetPreroll
 };
 
+static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm) {
+    QualityControlImpl *This = (QualityControlImpl*)iface;
+    GSTOutPin *pin = (GSTOutPin*)This->self;
+    gst_pad_push_event(pin->my_sink, gst_event_new_qos(1000./qm.Proportion, qm.Late*100, qm.TimeStamp*100));
+    return S_OK;
+}
+
+static const IQualityControlVtbl GSTOutPin_QualityControl_Vtbl = {
+    QualityControlImpl_QueryInterface,
+    QualityControlImpl_AddRef,
+    QualityControlImpl_Release,
+    GST_QualityControl_Notify,
+    QualityControlImpl_SetSink
+};
+
 static HRESULT WINAPI GSTOutPin_QueryInterface(IPin *iface, REFIID riid, void **ppv) {
     GSTOutPin *This = (GSTOutPin *)iface;
 
@@ -1295,6 +1312,8 @@ static HRESULT WINAPI GSTOutPin_QueryInterface(IPin *iface, REFIID riid, void **
         *ppv = iface;
     else if (IsEqualIID(riid, &IID_IMediaSeeking))
         *ppv = &This->seek;
+    else if (IsEqualIID(riid, &IID_IQualityControl))
+        *ppv = &This->qcimpl;
 
     if (*ppv) {
         IUnknown_AddRef((IUnknown *)(*ppv));
@@ -1422,6 +1441,8 @@ static HRESULT GST_AddPin(GSTImpl *This, const PIN_INFO *piOutput, const AM_MEDI
         pin->caps_event = CreateEventW(NULL, 0, 0, NULL);
         pin->segment = gst_segment_new();
         This->cStreams++;
+        QualityControlImpl_init(&pin->qcimpl, NULL, (IBaseFilter*)pin);
+        pin->qcimpl.lpVtbl = &GSTOutPin_QualityControl_Vtbl;
         SourceSeeking_Init(&pin->seek, &GST_Seeking_Vtbl, GST_ChangeStop, GST_ChangeCurrent, GST_ChangeRate, &This->filter.csFilter);
         BaseFilterImpl_IncrementPinVersion((BaseFilter*)This);
     } else
