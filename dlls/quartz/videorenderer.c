@@ -380,11 +380,12 @@ static HRESULT WINAPI VideoRenderer_Receive(BaseInputPin* pin, IMediaSample * pS
         return VFW_E_WRONG_STATE;
     }
 
+    if (IMediaSample_GetMediaTime(pSample, &tStart, &tStop) == S_OK)
+        MediaSeekingPassThru_RegisterMediaTime(This->seekthru_unk, tStart);
+
     hr = IMediaSample_GetTime(pSample, &tStart, &tStop);
     if (FAILED(hr))
         ERR("Cannot get sample time (%x)\n", hr);
-    else
-        MediaSeekingPassThru_RegisterMediaTime(This->seekthru_unk, tStart);
 
     if (This->rtLastStop != tStart && This->filter.state == State_Running)
     {
