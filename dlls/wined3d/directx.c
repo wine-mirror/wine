@@ -1405,161 +1405,65 @@ static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *gl_vendor_s
 static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl_info *gl_info,
         const char *gl_renderer)
 {
+    unsigned int i;
+
     if (WINE_D3D10_CAPABLE(gl_info))
     {
-        /* Geforce 400 - highend */
-        if (strstr(gl_renderer, "GTX 480"))
+        static const struct
         {
-            return CARD_NVIDIA_GEFORCE_GTX480;
+            const char *renderer;
+            enum wined3d_pci_device id;
         }
+        cards[] =
+        {
+            {"GTX 480",     CARD_NVIDIA_GEFORCE_GTX480},    /* Geforce 400 - highend */
+            {"GTX 470",     CARD_NVIDIA_GEFORCE_GTX470},    /* Geforce 400 - midend high */
+            {"GTX 465",     CARD_NVIDIA_GEFORCE_GTX465},    /* Geforce 400 - midend */
+            {"GTX 460",     CARD_NVIDIA_GEFORCE_GTX460},    /* Geforce 400 - midend */
+            {"GTS 360M",    CARD_NVIDIA_GEFORCE_GTS350M},   /* Geforce 300 - highend mobile */
+            {"GTS 350M",    CARD_NVIDIA_GEFORCE_GTS350M},   /* Geforce 300 - highend mobile */
+            {"GT 330M",     CARD_NVIDIA_GEFORCE_GT325M},    /* Geforce 300 - midend mobile */
+            {"GT 325M",     CARD_NVIDIA_GEFORCE_GT325M},    /* Geforce 300 - midend mobile */
+            {"GTX 295",     CARD_NVIDIA_GEFORCE_GTX280},    /* Geforce 200 - highend */
+            {"GTX 285",     CARD_NVIDIA_GEFORCE_GTX280},    /* Geforce 200 - highend */
+            {"GTX 280",     CARD_NVIDIA_GEFORCE_GTX280},    /* Geforce 200 - highend */
+            {"GTX 275",     CARD_NVIDIA_GEFORCE_GTX275},    /* Geforce 200 - midend high */
+            {"GTX 260",     CARD_NVIDIA_GEFORCE_GTX260},    /* Geforce 200 - midend */
+            {"GT 240",      CARD_NVIDIA_GEFORCE_GT240},     /* Geforce 200 - midend */
+            {"GT 220",      CARD_NVIDIA_GEFORCE_GT220},     /* Geforce 200 - lowend */
+            {"Geforce 310", CARD_NVIDIA_GEFORCE_210},       /* Geforce 200 - lowend */
+            {"Geforce 305", CARD_NVIDIA_GEFORCE_210},       /* Geforce 200 - lowend */
+            {"Geforce 210", CARD_NVIDIA_GEFORCE_210},       /* Geforce 200 - lowend */
+            {"G 210",       CARD_NVIDIA_GEFORCE_210},       /* Geforce 200 - lowend */
+            {"GTS 250",     CARD_NVIDIA_GEFORCE_9800GT},    /* Geforce 9 - highend / Geforce 200 - midend */
+            {"GTS 150",     CARD_NVIDIA_GEFORCE_9800GT},    /* Geforce 9 - highend / Geforce 200 - midend */
+            {"9800",        CARD_NVIDIA_GEFORCE_9800GT},    /* Geforce 9 - highend / Geforce 200 - midend */
+            {"GT 140",      CARD_NVIDIA_GEFORCE_9600GT},    /* Geforce 9 - midend */
+            {"9600",        CARD_NVIDIA_GEFORCE_9600GT},    /* Geforce 9 - midend */
+            {"GT 130",      CARD_NVIDIA_GEFORCE_9500GT},    /* Geforce 9 - midend low / Geforce 200 - low */
+            {"GT 120",      CARD_NVIDIA_GEFORCE_9500GT},    /* Geforce 9 - midend low / Geforce 200 - low */
+            {"9500",        CARD_NVIDIA_GEFORCE_9500GT},    /* Geforce 9 - midend low / Geforce 200 - low */
+            {"9400",        CARD_NVIDIA_GEFORCE_9400GT},    /* Geforce 9 - lowend */
+            {"9300",        CARD_NVIDIA_GEFORCE_9200},      /* Geforce 9 - lowend low */
+            {"9200",        CARD_NVIDIA_GEFORCE_9200},      /* Geforce 9 - lowend low */
+            {"9100",        CARD_NVIDIA_GEFORCE_9200},      /* Geforce 9 - lowend low */
+            {"G 100",       CARD_NVIDIA_GEFORCE_9200},      /* Geforce 9 - lowend low */
+            {"8800 GTX",    CARD_NVIDIA_GEFORCE_8800GTX},   /* Geforce 8 - highend high */
+            {"8800",        CARD_NVIDIA_GEFORCE_8800GTS},   /* Geforce 8 - highend */
+            {"8600 M",      CARD_NVIDIA_GEFORCE_8600MGT},   /* Geforce 8 - midend mobile */
+            {"8700",        CARD_NVIDIA_GEFORCE_8600GT},    /* Geforce 8 - midend */
+            {"8600",        CARD_NVIDIA_GEFORCE_8600GT},    /* Geforce 8 - midend */
+            {"8500",        CARD_NVIDIA_GEFORCE_8400GS},    /* Geforce 8 - mid-lowend */
+            {"8400",        CARD_NVIDIA_GEFORCE_8400GS},    /* Geforce 8 - mid-lowend */
+            {"8300",        CARD_NVIDIA_GEFORCE_8300GS},    /* Geforce 8 - lowend */
+            {"8200",        CARD_NVIDIA_GEFORCE_8300GS},    /* Geforce 8 - lowend */
+            {"8100",        CARD_NVIDIA_GEFORCE_8300GS},    /* Geforce 8 - lowend */
+        };
 
-        /* Geforce 400 - midend high */
-        if (strstr(gl_renderer, "GTX 470"))
+        for (i = 0; i < sizeof(cards) / sizeof(*cards); ++i)
         {
-            return CARD_NVIDIA_GEFORCE_GTX470;
-        }
-
-        /* Geforce 400 - midend */
-        if (strstr(gl_renderer, "GTX 465"))
-        {
-            return CARD_NVIDIA_GEFORCE_GTX465;
-        }
-
-        /* Geforce 400 - midend */
-        if (strstr(gl_renderer, "GTX 460"))
-        {
-            return CARD_NVIDIA_GEFORCE_GTX460;
-        }
-
-        /* Geforce 300 highend mobile */
-        if (strstr(gl_renderer, "GTS 350M")
-                || strstr(gl_renderer, "GTS 360M"))
-        {
-            return CARD_NVIDIA_GEFORCE_GTS350M;
-        }
-
-        /* Geforce 300 midend mobile (Geforce GT 325M/330M use the same core) */
-        if (strstr(gl_renderer, "GT 325M")
-                || strstr(gl_renderer, "GT 330M"))
-        {
-            return CARD_NVIDIA_GEFORCE_GT325M;
-        }
-
-        /* Geforce 200 - highend */
-        if (strstr(gl_renderer, "GTX 280")
-                || strstr(gl_renderer, "GTX 285")
-                || strstr(gl_renderer, "GTX 295"))
-        {
-            return CARD_NVIDIA_GEFORCE_GTX280;
-        }
-
-        /* Geforce 200 - midend high */
-        if (strstr(gl_renderer, "GTX 275"))
-        {
-            return CARD_NVIDIA_GEFORCE_GTX275;
-        }
-
-        /* Geforce 200 - midend */
-        if (strstr(gl_renderer, "GTX 260"))
-        {
-            return CARD_NVIDIA_GEFORCE_GTX260;
-        }
-        /* Geforce 200 - midend */
-        if (strstr(gl_renderer, "GT 240"))
-        {
-           return CARD_NVIDIA_GEFORCE_GT240;
-        }
-
-        /* Geforce 200 lowend */
-        if (strstr(gl_renderer, "GT 220"))
-        {
-           return CARD_NVIDIA_GEFORCE_GT220;
-        }
-        /* Geforce 200 lowend (Geforce 305/310 use the same core) */
-        if (strstr(gl_renderer, "Geforce 210")
-                || strstr(gl_renderer, "G 210")
-                || strstr(gl_renderer, "Geforce 305")
-                || strstr(gl_renderer, "Geforce 310"))
-        {
-           return CARD_NVIDIA_GEFORCE_210;
-        }
-
-        /* Geforce9 - highend / Geforce 200 - midend (GTS 150/250 are based on the same core) */
-        if (strstr(gl_renderer, "9800")
-                || strstr(gl_renderer, "GTS 150")
-                || strstr(gl_renderer, "GTS 250"))
-        {
-            return CARD_NVIDIA_GEFORCE_9800GT;
-        }
-
-        /* Geforce9 - midend (GT 140 uses the same core as the 9600GT) */
-        if (strstr(gl_renderer, "9600")
-                || strstr(gl_renderer, "GT 140"))
-        {
-            return CARD_NVIDIA_GEFORCE_9600GT;
-        }
-
-        /* Geforce9 - midend low / Geforce 200 - low */
-        if (strstr(gl_renderer, "9500")
-                || strstr(gl_renderer, "GT 120")
-                || strstr(gl_renderer, "GT 130"))
-        {
-            return CARD_NVIDIA_GEFORCE_9500GT;
-        }
-
-        /* Geforce9 - lowend */
-        if (strstr(gl_renderer, "9400"))
-        {
-            return CARD_NVIDIA_GEFORCE_9400GT;
-        }
-
-        /* Geforce9 - lowend low */
-        if (strstr(gl_renderer, "9100")
-                || strstr(gl_renderer, "9200")
-                || strstr(gl_renderer, "9300")
-                || strstr(gl_renderer, "G 100"))
-        {
-            return CARD_NVIDIA_GEFORCE_9200;
-        }
-
-        /* Geforce8 - highend high*/
-        if (strstr(gl_renderer, "8800 GTX"))
-        {
-            return CARD_NVIDIA_GEFORCE_8800GTX;
-        }
-
-        /* Geforce8 - highend */
-        if (strstr(gl_renderer, "8800"))
-        {
-            return CARD_NVIDIA_GEFORCE_8800GTS;
-        }
-
-        /* Geforce8 - midend mobile */
-        if (strstr(gl_renderer, "8600 M"))
-        {
-            return CARD_NVIDIA_GEFORCE_8600MGT;
-        }
-
-        /* Geforce8 - midend */
-        if (strstr(gl_renderer, "8600")
-                || strstr(gl_renderer, "8700"))
-        {
-            return CARD_NVIDIA_GEFORCE_8600GT;
-        }
-
-        /* Geforce8 - mid-lowend */
-        if (strstr(gl_renderer, "8400")
-                || strstr(gl_renderer, "8500"))
-        {
-            return CARD_NVIDIA_GEFORCE_8400GS;
-        }
-
-        /* Geforce8 - lowend */
-        if (strstr(gl_renderer, "8100")
-                || strstr(gl_renderer, "8200")
-                || strstr(gl_renderer, "8300"))
-        {
-            return CARD_NVIDIA_GEFORCE_8300GS;
+            if (strstr(gl_renderer, cards[i].renderer))
+                return cards[i].id;
         }
 
         /* Geforce8-compatible fall back if the GPU is not in the list yet */
@@ -1571,50 +1475,35 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
      */
     if (WINE_D3D9_CAPABLE(gl_info) && gl_info->supported[NV_VERTEX_PROGRAM3])
     {
-        /* Geforce7 - highend */
-        if (strstr(gl_renderer, "7800")
-                || strstr(gl_renderer, "7900")
-                || strstr(gl_renderer, "7950")
-                || strstr(gl_renderer, "Quadro FX 4")
-                || strstr(gl_renderer, "Quadro FX 5"))
+        static const struct
         {
-            return CARD_NVIDIA_GEFORCE_7800GT;
+            const char *renderer;
+            enum wined3d_pci_device id;
+        }
+        cards[] =
+        {
+            {"Quadro FX 5", CARD_NVIDIA_GEFORCE_7800GT},    /* Geforce 7 - highend */
+            {"Quadro FX 4", CARD_NVIDIA_GEFORCE_7800GT},    /* Geforce 7 - highend */
+            {"7950",        CARD_NVIDIA_GEFORCE_7800GT},    /* Geforce 7 - highend */
+            {"7900",        CARD_NVIDIA_GEFORCE_7800GT},    /* Geforce 7 - highend */
+            {"7800",        CARD_NVIDIA_GEFORCE_7800GT},    /* Geforce 7 - highend */
+            {"7700",        CARD_NVIDIA_GEFORCE_7600},      /* Geforce 7 - midend */
+            {"7600",        CARD_NVIDIA_GEFORCE_7600},      /* Geforce 7 - midend */
+            {"7400",        CARD_NVIDIA_GEFORCE_7400},      /* Geforce 7 - lower medium */
+            {"7300",        CARD_NVIDIA_GEFORCE_7300},      /* Geforce 7 - lowend */
+            {"6800",        CARD_NVIDIA_GEFORCE_6800},      /* Geforce 6 - highend */
+            {"6700",        CARD_NVIDIA_GEFORCE_6600GT},    /* Geforce 6 - midend */
+            {"6610",        CARD_NVIDIA_GEFORCE_6600GT},    /* Geforce 6 - midend */
+            {"6600",        CARD_NVIDIA_GEFORCE_6600GT},    /* Geforce 6 - midend */
+        };
+
+        for (i = 0; i < sizeof(cards) / sizeof(*cards); ++i)
+        {
+            if (strstr(gl_renderer, cards[i].renderer))
+                return cards[i].id;
         }
 
-        /* Geforce7 midend */
-        if (strstr(gl_renderer, "7600")
-                || strstr(gl_renderer, "7700"))
-        {
-            return CARD_NVIDIA_GEFORCE_7600;
-        }
-
-        /* Geforce7 lower medium */
-        if (strstr(gl_renderer, "7400"))
-        {
-            return CARD_NVIDIA_GEFORCE_7400;
-        }
-
-        /* Geforce7 lowend */
-        if (strstr(gl_renderer, "7300"))
-        {
-            return CARD_NVIDIA_GEFORCE_7300;
-        }
-
-        /* Geforce6 highend */
-        if (strstr(gl_renderer, "6800"))
-        {
-            return CARD_NVIDIA_GEFORCE_6800;
-        }
-
-        /* Geforce6 - midend */
-        if (strstr(gl_renderer, "6600")
-                || strstr(gl_renderer, "6610")
-                || strstr(gl_renderer, "6700"))
-        {
-            return CARD_NVIDIA_GEFORCE_6600GT;
-        }
-
-        /* Geforce6/7 lowend */
+        /* Geforce 6/7 - lowend */
         return CARD_NVIDIA_GEFORCE_6200; /* Geforce 6100/6150/6200/7300/7400/7500 */
     }
 
