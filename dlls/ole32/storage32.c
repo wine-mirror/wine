@@ -7430,6 +7430,9 @@ HRESULT WINAPI StgCreateStorageEx(const WCHAR* pwcsName, DWORD grfMode, DWORD st
 
     if (stgfmt == STGFMT_STORAGE || stgfmt == STGFMT_DOCFILE)
     {
+        STGOPTIONS defaultOptions = {1, 0, 512};
+
+        if (!pStgOptions) pStgOptions = &defaultOptions;
         return create_storagefile(pwcsName, grfMode, grfAttrs, pStgOptions, riid, ppObjectOpen);
     }
 
