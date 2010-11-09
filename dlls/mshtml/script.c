@@ -874,6 +874,42 @@ IDispatch *script_parse_event(HTMLWindow *window, LPCWSTR text)
     return disp;
 }
 
+HRESULT exec_script(HTMLWindow *window, const WCHAR *code, const WCHAR *lang, VARIANT *ret)
+{
+    ScriptHost *script_host;
+    EXCEPINFO ei;
+    GUID guid;
+    HRESULT hres;
+
+    static const WCHAR delimW[] = {'"',0};
+
+    if(!get_guid_from_language(lang, &guid)) {
+        WARN("Could not find script GUID\n");
+        return CO_E_CLASSSTRING;
+    }
+
+    script_host = get_script_host(window, &guid);
+    if(!script_host) {
+        FIXME("No script host\n");
+        return E_FAIL;
+    }
+
+    if(!script_host->parse) {
+        FIXME("script_host->parse == NULL\n");
+        return E_FAIL;
+    }
+
+    memset(&ei, 0, sizeof(ei));
+    TRACE(">>>\n");
+    hres = IActiveScriptParse64_ParseScriptText(script_host->parse, code, NULL, NULL, delimW, 0, 0, SCRIPTTEXT_ISVISIBLE, ret, &ei);
+    if(SUCCEEDED(hres))
+        TRACE("<<<\n");
+    else
+        WARN("<<< %08x\n", hres);
+
+    return hres;
+}
+
 IDispatch *get_script_disp(ScriptHost *script_host)
 {
     IDispatch *disp;

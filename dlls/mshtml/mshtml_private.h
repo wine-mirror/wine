@@ -856,6 +856,7 @@ void release_script_hosts(HTMLWindow*);
 void connect_scripts(HTMLWindow*);
 void doc_insert_script(HTMLWindow*,nsIDOMHTMLScriptElement*);
 IDispatch *script_parse_event(HTMLWindow*,LPCWSTR);
+HRESULT exec_script(HTMLWindow*,const WCHAR*,const WCHAR*,VARIANT*);
 void set_script_mode(HTMLWindow*,SCRIPTMODE);
 BOOL find_global_prop(HTMLWindow*,BSTR,DWORD,ScriptHost**,DISPID*);
 IDispatch *get_script_disp(ScriptHost*);
