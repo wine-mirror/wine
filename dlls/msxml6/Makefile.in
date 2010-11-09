@@ -1,11 +1,13 @@
 EXTRADEFS = -DCOM_NO_WINDOWS_H
 MODULE    = msxml6.dll
-IMPORTS   = ole32 advapi32
+IMPORTS   = oleaut32 ole32 advapi32
 
 C_SRCS = \
 	main.c \
 	regsvr.c
 
 RC_SRCS = rsrc.rc
+
+IDL_TLB_SRCS = msxml6_tlb.idl
 
 @MAKE_DLL_RULES@

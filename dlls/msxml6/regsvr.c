@@ -438,6 +438,7 @@ static struct progid const progid_list[] = {
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
+    static const WCHAR msxml6W[] = {'m','s','x','m','l','6','.','d','l','l',0};
     HRESULT hr;
 
     TRACE("\n");
@@ -445,6 +446,13 @@ HRESULT WINAPI DllRegisterServer(void)
     hr = register_coclasses(coclass_list);
     if (SUCCEEDED(hr))
 	hr = register_progids(progid_list);
+
+    if (SUCCEEDED(hr))
+    {
+        ITypeLib *tl;
+        hr = LoadTypeLibEx( msxml6W, REGKIND_REGISTER, &tl );
+        if (SUCCEEDED(hr)) ITypeLib_Release( tl );
+    }
 
     return hr;
 }
@@ -461,6 +469,8 @@ HRESULT WINAPI DllUnregisterServer(void)
     hr = unregister_coclasses(coclass_list);
     if (SUCCEEDED(hr))
 	hr = unregister_progids(progid_list);
+    if (SUCCEEDED(hr))
+        hr = UnRegisterTypeLib( &LIBID_MSXML2, 6, 0, LOCALE_SYSTEM_DEFAULT, SYS_WIN32 );
 
     return hr;
 }
