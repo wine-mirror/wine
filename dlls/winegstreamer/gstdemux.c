@@ -1504,7 +1504,7 @@ static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin,
     if (!This->pin.pConnectedTo) {
         ALLOCATOR_PROPERTIES props;
 
-        props.cBuffers = 4;
+        props.cBuffers = 8;
         props.cbBuffer = 16384;
         props.cbAlign = 1;
         props.cbPrefix = 0;
