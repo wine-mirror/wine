@@ -69,6 +69,12 @@ static CRITICAL_SECTION runtime_list_cs = { &runtime_list_cs_debug, -1, 0, 0, 0,
 static HRESULT load_mono(CLRRuntimeInfo *This, loaded_mono **result)
 {
     /* FIXME: stub */
+    if (This->mono_abi_version == -1)
+        MESSAGE("wine: Install the Windows version of Mono to run .NET executables\n");
+
+    if (This->mono_abi_version <= 0)
+        return E_FAIL;
+
     *result = NULL;
 
     return S_OK;
@@ -517,10 +523,15 @@ static void find_runtimes(void)
         }
     }
 
-    runtimes_initialized = 1;
-
     if (!any_runtimes_found)
-        MESSAGE("wine: Install the Windows version of Mono to run .NET executables\n");
+    {
+        /* Report all runtimes are available if Mono isn't installed.
+         * FIXME: Remove this when Mono is properly packaged. */
+        for (i=0; i<NUM_RUNTIMES; i++)
+            runtimes[i].mono_abi_version = -1;
+    }
+
+    runtimes_initialized = 1;
 
 end:
     LeaveCriticalSection(&runtime_list_cs);
