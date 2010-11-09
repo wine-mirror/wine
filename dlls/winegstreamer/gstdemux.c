@@ -517,10 +517,12 @@ static GstFlowReturn got_data_sink(GstPad *pad, GstBuffer *buf) {
     } else {
         BYTE *ptr = NULL;
         hr = BaseOutputPinImpl_GetDeliveryBuffer(&pin->pin, &sample, NULL, NULL, 0);
-        freeSamp = TRUE;
-        if (hr == VFW_E_NOT_CONNECTED)
+        if (hr == VFW_E_NOT_CONNECTED) {
+            gst_buffer_unref(buf);
             return GST_FLOW_NOT_LINKED;
+        }
         if (FAILED(hr)) {
+            gst_buffer_unref(buf);
             ERR("Didn't get a GST_APP_BUFFER, and could not get a delivery buffer (%x), returning GST_FLOW_WRONG_STATE\n", hr);
             return GST_FLOW_WRONG_STATE;
         }
