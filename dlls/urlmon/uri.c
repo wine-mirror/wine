@@ -2973,6 +2973,8 @@ static BOOL canonicalize_path_hierarchical(const parse_data *data, Uri *uri,
     }
 
     for(; ptr < data->path+data->path_len; ++ptr) {
+        BOOL do_default_action = TRUE;
+
         if(*ptr == '%' && !is_res) {
             const WCHAR *tmp = ptr;
             WCHAR val;
@@ -2986,6 +2988,7 @@ static BOOL canonicalize_path_hierarchical(const parse_data *data, Uri *uri,
                 if(!computeOnly)
                     pct_encode_val(*ptr, uri->canon_uri+uri->canon_len);
                 uri->canon_len += 3;
+                do_default_action = FALSE;
             } else if((is_unreserved(val) && known_scheme) ||
                       (is_file && (is_unreserved(val) || is_reserved(val) ||
                       (val && flags&Uri_CREATE_FILE_USE_DOS_PATH && !is_forbidden_dos_path_char(val))))) {
@@ -2995,41 +2998,33 @@ static BOOL canonicalize_path_hierarchical(const parse_data *data, Uri *uri,
 
                 ptr += 2;
                 continue;
-            } else {
-                if(!computeOnly)
-                    uri->canon_uri[uri->canon_len] = *ptr;
-                ++uri->canon_len;
             }
         } else if(*ptr == '/' && is_file && (flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
             /* Convert the '/' back to a '\\'. */
             if(!computeOnly)
                 uri->canon_uri[uri->canon_len] = '\\';
             ++uri->canon_len;
+            do_default_action = FALSE;
         } else if(*ptr == '\\' && known_scheme) {
-            if(is_file && (flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
-                /* Don't convert the '\\' to a '/'. */
-                if(!computeOnly)
-                    uri->canon_uri[uri->canon_len] = *ptr;
-                ++uri->canon_len;
-            } else {
+            if(!(is_file && (flags & Uri_CREATE_FILE_USE_DOS_PATH))) {
+                /* Convert '\\' into a '/'. */
                 if(!computeOnly)
                     uri->canon_uri[uri->canon_len] = '/';
                 ++uri->canon_len;
+                do_default_action = FALSE;
             }
         } else if(known_scheme && !is_res && !is_unreserved(*ptr) && !is_reserved(*ptr) &&
                   (!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS) || is_file)) {
-            if(is_file && (flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
-                /* Don't escape the character. */
-                if(!computeOnly)
-                    uri->canon_uri[uri->canon_len] = *ptr;
-                ++uri->canon_len;
-            } else {
+            if(!(is_file && (flags & Uri_CREATE_FILE_USE_DOS_PATH))) {
                 /* Escape the forbidden character. */
                 if(!computeOnly)
                     pct_encode_val(*ptr, uri->canon_uri+uri->canon_len);
                 uri->canon_len += 3;
+                do_default_action = FALSE;
             }
-        } else {
+        }
+
+        if(do_default_action) {
             if(!computeOnly)
                 uri->canon_uri[uri->canon_len] = *ptr;
             ++uri->canon_len;
@@ -3107,6 +3102,8 @@ static BOOL canonicalize_path_opaque(const parse_data *data, Uri *uri, DWORD fla
     }
 
     for(ptr = data->path; ptr < data->path+data->path_len; ++ptr) {
+        BOOL do_default_action = TRUE;
+
         if(*ptr == '%' && known_scheme) {
             WCHAR val = decode_pct_val(ptr);
 
@@ -3117,47 +3114,31 @@ static BOOL canonicalize_path_opaque(const parse_data *data, Uri *uri, DWORD fla
 
                 ptr += 2;
                 continue;
-            } else {
-                if(!computeOnly)
-                    uri->canon_uri[uri->canon_len] = *ptr;
-                ++uri->canon_len;
             }
         } else if(*ptr == '/' && is_file && (flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
             if(!computeOnly)
                 uri->canon_uri[uri->canon_len] = '\\';
             ++uri->canon_len;
-        } else if(*ptr == '\\' && is_file) {
-            if(!(flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
+            do_default_action = FALSE;
+        } else if(*ptr == '\\') {
+            if(is_file && !(flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
                 /* Convert to a '/'. */
                 if(!computeOnly)
                     uri->canon_uri[uri->canon_len] = '/';
                 ++uri->canon_len;
-            } else {
-                /* Just copy it over. */
-                if(!computeOnly)
-                    uri->canon_uri[uri->canon_len] = *ptr;
-                ++uri->canon_len;
+                do_default_action = FALSE;
             }
         } else if(known_scheme && !is_unreserved(*ptr) && !is_reserved(*ptr) &&
                   !(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS)) {
-            if(is_file && (flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
-                /* Forbidden characters aren't percent encoded for file schemes
-                 * with USE_DOS_PATH set.
-                 */
-                if(!computeOnly)
-                    uri->canon_uri[uri->canon_len] = *ptr;
-                ++uri->canon_len;
-            } else if(data->scheme_type == URL_SCHEME_MK && *ptr == '\\') {
-                /* MK URIs don't get '\\' percent encoded. */
-                if(!computeOnly)
-                    uri->canon_uri[uri->canon_len] = *ptr;
-                ++uri->canon_len;
-            } else {
+            if(!(is_file && (flags & Uri_CREATE_FILE_USE_DOS_PATH))) {
                 if(!computeOnly)
                     pct_encode_val(*ptr, uri->canon_uri+uri->canon_len);
                 uri->canon_len += 3;
+                do_default_action = FALSE;
             }
-        } else {
+        }
+
+        if(do_default_action) {
             if(!computeOnly)
                 uri->canon_uri[uri->canon_len] = *ptr;
             ++uri->canon_len;
