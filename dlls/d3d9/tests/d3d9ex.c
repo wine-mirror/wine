@@ -268,9 +268,12 @@ static void test_get_adapter_displaymode_ex(void)
 
     memset(&startmode, 0, sizeof(startmode));
     startmode.dmSize = sizeof(startmode);
-    startmode.dmFields = DM_DISPLAYORIENTATION;
-    S2(U1(startmode)).dmDisplayOrientation = DMDO_180;
+    retval = pEnumDisplaySettingsExA(NULL, ENUM_CURRENT_SETTINGS, &startmode, 0);
+    ok(retval, "Failed to retrieve current display mode, retval %d.\n", retval);
+    if (!retval) goto out;
 
+    startmode.dmFields = DM_DISPLAYORIENTATION | DM_PELSWIDTH | DM_PELSHEIGHT;
+    S2(U1(startmode)).dmDisplayOrientation = DMDO_180;
     retval = pChangeDisplaySettingsExA(NULL, &startmode, NULL, 0, NULL);
 
     if(retval == DISP_CHANGE_BADMODE)
