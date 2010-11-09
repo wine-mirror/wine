@@ -433,6 +433,12 @@ static HRESULT WINAPI Gstreamer_transform_NewSegment(TransformFilter *iface, REF
     return S_OK;
 }
 
+static HRESULT WINAPI Gstreamer_transform_QOS(TransformFilter *iface, IBaseFilter *sender, Quality qm) {
+    GstTfImpl *This = (GstTfImpl*)iface;
+    gst_pad_push_event(This->my_sink, gst_event_new_qos(1000. / qm.Proportion, qm.Late * 100, qm.TimeStamp * 100));
+    return QualityControlImpl_Notify((IQualityControl*)&iface->qcimpl, sender, qm);
+}
+
 static HRESULT Gstreamer_transform_create(IUnknown *punkout, const CLSID *clsid, const char *name, const TransformFilterFuncTable *vtbl, void **obj)
 {
     GstTfImpl *This;
@@ -556,7 +562,8 @@ static const TransformFilterFuncTable Gstreamer_Mp3_vtbl = {
     Gstreamer_transform_EndOfStream,
     Gstreamer_transform_BeginFlush,
     Gstreamer_transform_EndFlush,
-    Gstreamer_transform_NewSegment
+    Gstreamer_transform_NewSegment,
+    Gstreamer_transform_QOS
 };
 
 IUnknown * CALLBACK Gstreamer_Mp3_create(IUnknown *punkout, HRESULT *phr)
@@ -687,7 +694,8 @@ static const TransformFilterFuncTable Gstreamer_YUV_vtbl = {
     Gstreamer_transform_EndOfStream,
     Gstreamer_transform_BeginFlush,
     Gstreamer_transform_EndFlush,
-    Gstreamer_transform_NewSegment
+    Gstreamer_transform_NewSegment,
+    Gstreamer_transform_QOS
 };
 
 IUnknown * CALLBACK Gstreamer_YUV_create(IUnknown *punkout, HRESULT *phr)
@@ -800,7 +808,8 @@ static const TransformFilterFuncTable Gstreamer_AudioConvert_vtbl = {
     Gstreamer_transform_EndOfStream,
     Gstreamer_transform_BeginFlush,
     Gstreamer_transform_EndFlush,
-    Gstreamer_transform_NewSegment
+    Gstreamer_transform_NewSegment,
+    Gstreamer_transform_QOS
 };
 
 IUnknown * CALLBACK Gstreamer_AudioConvert_create(IUnknown *punkout, HRESULT *phr)
