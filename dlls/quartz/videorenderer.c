@@ -91,7 +91,6 @@ typedef struct VideoRendererImpl
     IUnknown * pUnkOuter;
     BOOL bUnkOuterValid;
     BOOL bAggregatable;
-    REFERENCE_TIME rtLastStop;
     LONG WindowStyle;
 
     /* During pause we can hold a single sample, for use in GetCurrentImage */
@@ -383,27 +382,8 @@ static HRESULT WINAPI VideoRenderer_Receive(BaseInputPin* pin, IMediaSample * pS
     if (IMediaSample_GetMediaTime(pSample, &tStart, &tStop) == S_OK)
         MediaSeekingPassThru_RegisterMediaTime(This->seekthru_unk, tStart);
 
-    hr = IMediaSample_GetTime(pSample, &tStart, &tStop);
-    if (FAILED(hr))
-        ERR("Cannot get sample time (%x)\n", hr);
-
-    if (This->rtLastStop != tStart && This->filter.state == State_Running)
-    {
-        LONG64 delta;
-        delta = tStart - This->rtLastStop;
-        if ((delta < -100000 || delta > 100000) &&
-            IMediaSample_IsDiscontinuity(pSample) == S_FALSE)
-            ERR("Unexpected discontinuity: Last: %u.%03u, tStart: %u.%03u\n",
-                (DWORD)(This->rtLastStop / 10000000),
-                (DWORD)((This->rtLastStop / 10000)%1000),
-                (DWORD)(tStart / 10000000), (DWORD)((tStart / 10000)%1000));
-        This->rtLastStop = tStart;
-    }
-
     /* Preroll means the sample isn't shown, this is used for key frames and things like that */
-    if (IMediaSample_IsPreroll(pSample) == S_OK)
-    {
-        This->rtLastStop = tStop;
+    if (IMediaSample_IsPreroll(pSample) == S_OK) {
         LeaveCriticalSection(&This->filter.csFilter);
         return S_OK;
     }
@@ -436,6 +416,7 @@ static HRESULT WINAPI VideoRenderer_Receive(BaseInputPin* pin, IMediaSample * pS
     SetEvent(This->hEvent);
     if (This->filter.state == State_Paused)
     {
+        VideoRenderer_SendSampleData(This, pbSrcStream, cbSrcStream);
         This->sample_held = pSample;
         LeaveCriticalSection(&This->filter.csFilter);
         WaitForSingleObject(This->blocked, INFINITE);
@@ -452,44 +433,15 @@ static HRESULT WINAPI VideoRenderer_Receive(BaseInputPin* pin, IMediaSample * pS
             LeaveCriticalSection(&This->filter.csFilter);
             return VFW_E_WRONG_STATE;
         }
-    }
-
-    if (This->filter.pClock && This->filter.state == State_Running)
-    {
-        REFERENCE_TIME time, trefstart, trefstop;
-        LONG delta;
-
-        /* Perhaps I <SHOULD> use the reference clock AdviseTime function here
-         * I'm not going to! When I tried, it seemed to generate lag and
-         * it caused instability.
-         */
-        IReferenceClock_GetTime(This->filter.pClock, &time);
-
-        trefstart = This->filter.rtStreamStart;
-        trefstop = (REFERENCE_TIME)((double)(tStop - tStart) / This->pInputPin->pin.dRate) + This->filter.rtStreamStart;
-        delta = (LONG)((trefstart-time)/10000);
-        This->filter.rtStreamStart = trefstop;
-        This->rtLastStop = tStop;
-
-        if (delta > 0)
-        {
-            TRACE("Sleeping for %u ms\n", delta);
-            Sleep(delta);
+    } else {
+        hr = QualityControlRender_WaitFor(&This->qcimpl, pSample, This->blocked);
+        if (hr == S_OK) {
+            QualityControlRender_BeginRender(&This->qcimpl);
+            VideoRenderer_SendSampleData(This, pbSrcStream, cbSrcStream);
+            QualityControlRender_EndRender(&This->qcimpl);
         }
-        else if (time > trefstop)
-        {
-            TRACE("Dropping sample: Time: %u.%03u ms trefstop: %u.%03u ms!\n",
-                  (DWORD)(time / 10000000), (DWORD)((time / 10000)%1000),
-                  (DWORD)(trefstop / 10000000), (DWORD)((trefstop / 10000)%1000) );
-            This->rtLastStop = tStop;
-            LeaveCriticalSection(&This->filter.csFilter);
-            return S_OK;
-        }
+        QualityControlRender_DoQOS(&This->qcimpl);
     }
-    This->rtLastStop = tStop;
-
-    VideoRenderer_SendSampleData(This, pbSrcStream, cbSrcStream);
-
     LeaveCriticalSection(&This->filter.csFilter);
     return S_OK;
 }
@@ -601,7 +553,6 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     pVideoRenderer->init = 0;
     pVideoRenderer->AutoShow = 1;
-    pVideoRenderer->rtLastStop = -1;
     ZeroMemory(&pVideoRenderer->SourceRect, sizeof(RECT));
     ZeroMemory(&pVideoRenderer->DestRect, sizeof(RECT));
     ZeroMemory(&pVideoRenderer->WindowPos, sizeof(RECT));
@@ -846,6 +797,17 @@ static HRESULT WINAPI VideoRenderer_Pause(IBaseFilter * iface)
     return S_OK;
 }
 
+static HRESULT WINAPI VideoRenderer_SetSyncSource(IBaseFilter *iface, IReferenceClock *clock) {
+    VideoRendererImpl *This = (VideoRendererImpl *)iface;
+    HRESULT hr;
+
+    EnterCriticalSection(&This->filter.csFilter);
+    QualityControlRender_SetClock(&This->qcimpl, clock);
+    hr = BaseFilterImpl_SetSyncSource(iface, clock);
+    LeaveCriticalSection(&This->filter.csFilter);
+    return hr;
+}
+
 static HRESULT WINAPI VideoRenderer_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 {
     HRESULT hr = S_OK;
@@ -867,6 +829,7 @@ static HRESULT WINAPI VideoRenderer_Run(IBaseFilter * iface, REFERENCE_TIME tSta
 
         This->filter.rtStreamStart = tStart;
         This->filter.state = State_Running;
+        QualityControlRender_Start(&This->qcimpl, tStart);
     } else if (This->filter.filterInfo.pGraph) {
         IMediaEventSink *pEventSink;
         hr = IFilterGraph_QueryInterface(This->filter.filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
@@ -925,7 +888,7 @@ static const IBaseFilterVtbl VideoRenderer_Vtbl =
     VideoRenderer_Pause,
     VideoRenderer_Run,
     VideoRenderer_GetState,
-    BaseFilterImpl_SetSyncSource,
+    VideoRenderer_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
     BaseFilterImpl_EnumPins,
     VideoRenderer_FindPin,
@@ -984,6 +947,7 @@ static HRESULT WINAPI VideoRenderer_InputPin_EndFlush(IPin * iface)
     if (pVideoRenderer->filter.state == State_Paused)
         ResetEvent(pVideoRenderer->blocked);
 
+    QualityControlRender_Start(&pVideoRenderer->qcimpl, pVideoRenderer->filter.rtStreamStart);
     hr = BaseInputPinImpl_EndFlush(iface);
     LeaveCriticalSection(This->pin.pCritSec);
     MediaSeekingPassThru_ResetMediaTime(pVideoRenderer->seekthru_unk);
