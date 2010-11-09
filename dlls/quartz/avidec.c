@@ -48,6 +48,7 @@ typedef struct AVIDecImpl
     HIC hvid;
     BITMAPINFOHEADER* pBihIn;
     BITMAPINFOHEADER* pBihOut;
+    REFERENCE_TIME late;
 } AVIDecImpl;
 
 static const IBaseFilterVtbl AVIDec_Vtbl;
@@ -58,6 +59,7 @@ static HRESULT WINAPI AVIDec_StartStreaming(TransformFilter* pTransformFilter)
     DWORD result;
 
     TRACE("(%p)->()\n", This);
+    This->late = -1;
 
     result = ICDecompressBegin(This->hvid, This->pBihIn, This->pBihOut);
     if (result != ICERR_OK)
@@ -66,6 +68,36 @@ static HRESULT WINAPI AVIDec_StartStreaming(TransformFilter* pTransformFilter)
 	return E_FAIL;
     }
     return S_OK;
+}
+
+static HRESULT WINAPI AVIDec_EndFlush(TransformFilter *pTransformFilter) {
+    AVIDecImpl* This = (AVIDecImpl*)pTransformFilter;
+    This->late = -1;
+    return S_OK;
+}
+
+static HRESULT WINAPI AVIDec_NotifyDrop(TransformFilter *pTransformFilter, IBaseFilter *sender, Quality qm) {
+    AVIDecImpl *This = (AVIDecImpl*)pTransformFilter;
+
+    EnterCriticalSection(&This->tf.filter.csFilter);
+    if (qm.Late > 0)
+        This->late = qm.Late + qm.TimeStamp;
+    else
+        This->late = -1;
+    LeaveCriticalSection(&This->tf.filter.csFilter);
+    return S_OK;
+}
+
+static int AVIDec_DropSample(AVIDecImpl *This, REFERENCE_TIME tStart) {
+    if (This->late < 0)
+        return 0;
+
+    if (tStart < This->late) {
+        TRACE("Dropping sample\n");
+        return 1;
+    }
+    This->late = -1;
+    return 0;
 }
 
 static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
@@ -80,6 +112,7 @@ static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
     DWORD cbSrcStream;
     LPBYTE pbSrcStream;
     LONGLONG tStart, tStop;
+    DWORD flags = 0;
 
     EnterCriticalSection(&This->tf.filter.csFilter);
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
@@ -123,9 +156,21 @@ static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
         goto error;
     }
 
-    res = ICDecompress(This->hvid, 0, This->pBihIn, pbSrcStream, This->pBihOut, pbDstStream);
+    if (IMediaSample_IsPreroll(pSample) == S_OK)
+        flags |= ICDECOMPRESS_PREROLL;
+    if (IMediaSample_IsSyncPoint(pSample) != S_OK)
+        flags |= ICDECOMPRESS_NOTKEYFRAME;
+    if (IMediaSample_GetTime(pSample, &tStart, NULL) == S_OK &&
+        AVIDec_DropSample(This, tStart))
+        flags |= ICDECOMPRESS_HURRYUP;
+
+    res = ICDecompress(This->hvid, flags, This->pBihIn, pbSrcStream, This->pBihOut, pbDstStream);
     if (res != ICERR_OK)
         ERR("Error occurred during the decompression (%x)\n", res);
+
+    /* Drop sample if its intended to be dropped */
+    if (flags & ICDECOMPRESS_HURRYUP)
+        goto error;
 
     IMediaSample_SetActualDataLength(pOutSample, This->pBihOut->biSizeImage);
 
@@ -338,8 +383,9 @@ static const TransformFilterFuncTable AVIDec_FuncsTable = {
     AVIDec_BreakConnect,
     NULL,
     NULL,
+    AVIDec_EndFlush,
     NULL,
-    NULL
+    AVIDec_NotifyDrop
 };
 
 HRESULT AVIDec_create(IUnknown * pUnkOuter, LPVOID * ppv)
