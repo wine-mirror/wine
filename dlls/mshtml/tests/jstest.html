@@ -31,6 +31,8 @@ function test_select_index() {
     ok(s[2] === null, "s[2] = " + s[2]);
 }
 
+var globalVar = false;
+
 function runTest() {
     obj = new Object();
     ok(obj === window.obj, "obj !== window.obj");
@@ -40,6 +42,10 @@ function runTest() {
     test_removeAttribute(document.getElementById("divid"));
     test_removeAttribute(document.body);
     test_select_index();
+
+    var r = window.execScript("globalVar = true;");
+    ok(r === undefined, "execScript returned " + r);
+    ok(globalVar === true, "globalVar = " + globalVar);
 
     external.reportSuccess();
 }

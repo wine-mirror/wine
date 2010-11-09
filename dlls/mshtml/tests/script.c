@@ -113,7 +113,8 @@ DEFINE_EXPECT(SetScriptState_STARTED);
 DEFINE_EXPECT(SetScriptState_CONNECTED);
 DEFINE_EXPECT(SetScriptState_DISCONNECTED);
 DEFINE_EXPECT(AddNamedItem);
-DEFINE_EXPECT(ParseScriptText);
+DEFINE_EXPECT(ParseScriptText_script);
+DEFINE_EXPECT(ParseScriptText_execScript);
 DEFINE_EXPECT(GetScriptDispatch);
 DEFINE_EXPECT(funcDisp);
 DEFINE_EXPECT(script_divid_d);
@@ -423,7 +424,7 @@ static HRESULT WINAPI scriptDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
         return E_FAIL;
     }
 
-    ok(0, "unexpected call\n");
+    ok(0, "unexpected call %s\n", wine_dbgstr_w(bstrName));
     return E_NOTIMPL;
 }
 
@@ -1732,10 +1733,7 @@ static void test_global_id(void)
     VariantClear(&var);
 }
 
-static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *iface,
-        LPCOLESTR pstrCode, LPCOLESTR pstrItemName, IUnknown *punkContext,
-        LPCOLESTR pstrDelimiter, CTXARG_T dwSourceContextCookie, ULONG ulStartingLine,
-        DWORD dwFlags, VARIANT *pvarResult, EXCEPINFO *pexcepinfo)
+static void test_script_run(void)
 {
     IDispatchEx *document, *dispex;
     IHTMLWindow2 *window;
@@ -1751,8 +1749,6 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
     static const WCHAR documentW[] = {'d','o','c','u','m','e','n','t',0};
     static const WCHAR testW[] = {'t','e','s','t',0};
     static const WCHAR funcW[] = {'f','u','n','c',0};
-
-    CHECK_EXPECT(ParseScriptText);
 
     SET_EXPECT(GetScriptDispatch);
 
@@ -1943,8 +1939,38 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
     test_global_id();
 
     test_security();
+}
 
-    return S_OK;
+static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *iface,
+        LPCOLESTR pstrCode, LPCOLESTR pstrItemName, IUnknown *punkContext,
+        LPCOLESTR pstrDelimiter, CTXARG_T dwSourceContextCookie, ULONG ulStartingLine,
+        DWORD dwFlags, VARIANT *pvarResult, EXCEPINFO *pexcepinfo)
+{
+    ok(!punkContext, "punkContext = %p\n", punkContext);
+    ok(pvarResult != NULL, "pvarResult == NULL\n");
+    ok(pexcepinfo != NULL, "pexcepinfo == NULL\n");
+
+    if(!strcmp_wa(pstrCode, "execScript call")) {
+        CHECK_EXPECT(ParseScriptText_execScript);
+        ok(!pstrItemName, "pstrItemName = %s\n", wine_dbgstr_w(pstrItemName));
+        ok(!strcmp_wa(pstrDelimiter, "\""), "pstrDelimiter = %s\n", wine_dbgstr_w(pstrDelimiter));
+        ok(dwFlags == SCRIPTTEXT_ISVISIBLE, "dwFlags = %x\n", dwFlags);
+
+        V_VT(pvarResult) = VT_I4;
+        V_I4(pvarResult) = 10;
+        return S_OK;
+    }else if(!strcmp_wa(pstrCode, "simple script")) {
+        CHECK_EXPECT(ParseScriptText_script);
+        ok(!strcmp_wa(pstrItemName, "window"), "pstrItemName = %s\n", wine_dbgstr_w(pstrItemName));
+        ok(!strcmp_wa(pstrDelimiter, "</SCRIPT>"), "pstrDelimiter = %s\n", wine_dbgstr_w(pstrDelimiter));
+        ok(dwFlags == (SCRIPTTEXT_ISVISIBLE|SCRIPTTEXT_HOSTMANAGESSOURCE), "dwFlags = %x\n", dwFlags);
+
+        test_script_run();
+        return S_OK;
+    }
+
+    ok(0, "unexpected script %s\n", wine_dbgstr_w(pstrCode));
+    return E_FAIL;
 }
 
 static const IActiveScriptParseVtbl ActiveScriptParseVtbl = {
@@ -2265,6 +2291,38 @@ static const char simple_script_str[] =
     "<script language=\"TestScript\">simple script</script>"
     "</body></html>";
 
+static void test_exec_script(IHTMLDocument2 *doc)
+{
+    IHTMLWindow2 *window;
+    BSTR code, lang;
+    VARIANT v;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_get_parentWindow(doc, &window);
+    ok(hres == S_OK, "get_parentWindow failed: %08x\n", hres);
+
+    code = a2bstr("execScript call");
+    lang = a2bstr("TestScript");
+
+    SET_EXPECT(ParseScriptText_execScript);
+    hres = IHTMLWindow2_execScript(window, code, lang, &v);
+    ok(hres == S_OK, "execScript failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_I4, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == 10, "V_I4(v) = %d\n", V_I4(&v));
+    CHECK_CALLED(ParseScriptText_execScript);
+    SysFreeString(lang);
+
+    lang = a2bstr("invalid");
+    V_VT(&v) = 100;
+    hres = IHTMLWindow2_execScript(window, code, lang, &v);
+    ok(hres == CO_E_CLASSSTRING, "execScript failed: %08x, expected CO_E_CLASSSTRING\n", hres);
+    ok(V_VT(&v) == 100, "V_VT(v) = %d\n", V_VT(&v));
+    SysFreeString(lang);
+    SysFreeString(code);
+
+    IHTMLWindow2_Release(window);
+}
+
 static void test_simple_script(void)
 {
     IHTMLDocument2 *doc;
@@ -2284,7 +2342,7 @@ static void test_simple_script(void)
     SET_EXPECT(SetScriptState_STARTED);
     SET_EXPECT(AddNamedItem);
     SET_EXPECT(SetProperty_ABBREVIATE_GLOBALNAME_RESOLUTION); /* IE8 */
-    SET_EXPECT(ParseScriptText);
+    SET_EXPECT(ParseScriptText_script);
     SET_EXPECT(SetScriptState_CONNECTED);
 
     load_doc(doc, simple_script_str);
@@ -2300,8 +2358,10 @@ static void test_simple_script(void)
     CHECK_CALLED(SetScriptState_STARTED);
     CHECK_CALLED(AddNamedItem);
     CHECK_CALLED_BROKEN(SetProperty_ABBREVIATE_GLOBALNAME_RESOLUTION); /* IE8 */
-    CHECK_CALLED(ParseScriptText);
+    CHECK_CALLED(ParseScriptText_script);
     CHECK_CALLED(SetScriptState_CONNECTED);
+
+    test_exec_script(doc);
 
     if(site)
         IActiveScriptSite_Release(site);
