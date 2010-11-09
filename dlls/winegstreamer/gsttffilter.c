@@ -429,7 +429,7 @@ static HRESULT WINAPI Gstreamer_transform_NewSegment(TransformFilter *iface, REF
     TRACE("%p\n", This);
 
     gst_pad_push_event(This->my_src, gst_event_new_new_segment_full(1,
-                       1.0, dRate, GST_FORMAT_TIME, tStart*100, tStop <= tStart ? -1 : tStop * 100, tStart*100));
+                       1.0, dRate, GST_FORMAT_TIME, 0, tStop <= tStart ? -1 : tStop * 100, tStart*100));
     return S_OK;
 }
 
