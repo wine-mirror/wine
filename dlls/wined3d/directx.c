@@ -1114,7 +1114,8 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_INTEL,      CARD_INTEL_I915G,               "Intel(R) 82915G/GV/910GL Express Chipset Family",           DRIVER_INTEL_GMA900,  64 },
     {HW_VENDOR_INTEL,      CARD_INTEL_I915GM,              "Mobile Intel(R) 915GM/GMS,910GML Express Chipset Family",   DRIVER_INTEL_GMA900,  64 },
     {HW_VENDOR_INTEL,      CARD_INTEL_I945GM,              "Mobile Intel(R) 945GM Express Chipset Family",              DRIVER_INTEL_GMA950,  64 },
-    {HW_VENDOR_INTEL,      CARD_INTEL_X3100,               "Mobile Intel(R) 965 Express Chipset Family",                DRIVER_INTEL_GMA3000, 128}
+    {HW_VENDOR_INTEL,      CARD_INTEL_X3100,               "Mobile Intel(R) 965 Express Chipset Family",                DRIVER_INTEL_GMA3000, 128},
+    {HW_VENDOR_INTEL,      CARD_INTEL_GM45,                "Mobile Intel(R) GM45 Express Chipset Family",               DRIVER_INTEL_GMA3000, 512}
 };
 
 static const struct driver_version_information *get_driver_version_info(enum wined3d_display_driver driver,
@@ -1692,6 +1693,7 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
 static enum wined3d_pci_device select_card_intel(const struct wined3d_gl_info *gl_info,
         const char *gl_renderer)
 {
+    if (strstr(gl_renderer, "GM45")) return CARD_INTEL_GM45;
     if (strstr(gl_renderer, "X3100") || strstr(gl_renderer, "965GM"))
     {
         /* MacOS calls the card GMA X3100, otherwise known as GM965/GL960 */
