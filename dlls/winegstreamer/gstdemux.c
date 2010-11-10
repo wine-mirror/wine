@@ -519,6 +519,7 @@ static GstFlowReturn got_data_sink(GstPad *pad, GstBuffer *buf) {
     } else {
         BYTE *ptr = NULL;
         hr = BaseOutputPinImpl_GetDeliveryBuffer(&pin->pin, &sample, NULL, NULL, 0);
+        freeSamp = TRUE;
         if (hr == VFW_E_NOT_CONNECTED) {
             gst_buffer_unref(buf);
             return GST_FLOW_NOT_LINKED;
