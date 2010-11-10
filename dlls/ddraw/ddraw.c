@@ -647,15 +647,12 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
             && (hwnd != window || !(cooplevel & DDSCL_EXCLUSIVE)))
         IWineD3DDevice_ReleaseFocusWindow(This->wineD3DDevice);
 
-    /* Do we switch from fullscreen to non-fullscreen ? */
-    if (!(cooplevel & DDSCL_FULLSCREEN) && (This->cooperative_level & DDSCL_FULLSCREEN))
+    if ((cooplevel & DDSCL_FULLSCREEN) != (This->cooperative_level & DDSCL_FULLSCREEN) || hwnd != window)
     {
-        IWineD3DDevice_RestoreFullscreenWindow(This->wineD3DDevice, This->dest_window);
-    }
-
-    /* Don't override focus windows or private device windows */
-    if (hwnd && !This->focuswindow && !This->devicewindow && (hwnd != window))
-    {
+        if (This->cooperative_level & DDSCL_FULLSCREEN)
+        {
+            IWineD3DDevice_RestoreFullscreenWindow(This->wineD3DDevice, window);
+        }
         if (cooplevel & DDSCL_FULLSCREEN)
         {
             WINED3DDISPLAYMODE display_mode;
@@ -663,7 +660,6 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
             IWineD3D_GetAdapterDisplayMode(This->wineD3D, WINED3DADAPTER_DEFAULT, &display_mode);
             IWineD3DDevice_SetupFullscreenWindow(This->wineD3DDevice, hwnd, display_mode.Width, display_mode.Height);
         }
-        This->dest_window = hwnd;
     }
 
     if ((cooplevel & DDSCL_EXCLUSIVE)
@@ -677,6 +673,10 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
             return hr;
         }
     }
+
+    /* Don't override focus windows or private device windows */
+    if (hwnd && !This->focuswindow && !This->devicewindow && (hwnd != window))
+        This->dest_window = hwnd;
 
     if(cooplevel & DDSCL_CREATEDEVICEWINDOW)
     {
