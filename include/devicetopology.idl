@@ -35,7 +35,7 @@ cpp_quote("#ifndef E_NOTFOUND")
 cpp_quote("#define E_NOTFOUND HRESULT_FROM_WIN32(ERROR_NOT_FOUND)")
 cpp_quote("#endif")
 
-cpp_quote("#define DEVTOPO_HARDWARE_INITIATED_EVENTCONTEXT 'draH'")
+cpp_quote("#define DEVTOPO_HARDWARE_INITIATED_EVENTCONTEXT 0x64726148 /* 'draH' */")
 cpp_quote("DEFINE_GUID(EVENTCONTEXT_VOLUMESLIDER, 0xe2c2e9de, 0x09b1, 0x4b04,0x84,0xe5, 0x07, 0x93, 0x12, 0x25, 0xee, 0x04);")
 
 cpp_quote("#define _IKsControl_")
