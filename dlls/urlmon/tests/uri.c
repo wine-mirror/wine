@@ -3307,20 +3307,20 @@ static const uri_properties uri_tests[] = {
         }
     },
     /* Allow more characters when Uri_CREATE_FILE_USE_DOS_PATH is specified */
-    {   "file:///c:/dir\%%61%20%5Fname/file%2A.html", Uri_CREATE_FILE_USE_DOS_PATH, S_OK, FALSE,
+    {   "file:///c:/dir\\%%61%20%5Fname/file%2A.html", Uri_CREATE_FILE_USE_DOS_PATH, S_OK, FALSE,
         {
-            {"file://c:\\dir\%a _name\\file*.html",S_OK,FALSE},
+            {"file://c:\\dir\\%a _name\\file*.html",S_OK,FALSE},
             {"",S_FALSE,FALSE},
-            {"file://c:\\dir\%a _name\\file*.html",S_OK,FALSE},
+            {"file://c:\\dir\\%a _name\\file*.html",S_OK,FALSE},
             {"",S_FALSE,FALSE},
             {".html",S_OK,FALSE},
             {"",S_FALSE,FALSE},
             {"",S_FALSE,FALSE},
             {"",S_FALSE,FALSE},
-            {"c:\\dir\%a _name\\file*.html",S_OK,FALSE},
-            {"c:\\dir\%a _name\\file*.html",S_OK,FALSE},
+            {"c:\\dir\\%a _name\\file*.html",S_OK,FALSE},
+            {"c:\\dir\\%a _name\\file*.html",S_OK,FALSE},
             {"",S_FALSE,FALSE},
-            {"file:///c:/dir\%%61%20%5Fname/file%2A.html",S_OK,FALSE},
+            {"file:///c:/dir\\%%61%20%5Fname/file%2A.html",S_OK,FALSE},
             {"file",S_OK,FALSE},
             {"",S_FALSE,FALSE},
             {"",S_FALSE,FALSE}
