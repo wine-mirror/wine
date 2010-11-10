@@ -40,6 +40,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
+HINSTANCE MSXML_hInstance = NULL;
+
 #ifdef HAVE_LIBXML2
 
 void wineXmlCallbackLog(char const* caller, xmlErrorLevel lvl, char const* msg, va_list ap)
@@ -190,6 +192,8 @@ static void init_libxslt(void)
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
+    MSXML_hInstance = hInstDLL;
+
     switch(fdwReason)
     {
     case DLL_PROCESS_ATTACH:

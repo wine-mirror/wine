@@ -98,6 +98,8 @@ typedef struct {
     dispex_dynamic_data_t *dynamic_data;
 } DispatchEx;
 
+extern HINSTANCE MSXML_hInstance;
+
 void init_dispex(DispatchEx*,IUnknown*,dispex_static_data_t*);
 BOOL dispex_query_interface(DispatchEx*,REFIID,void**);
 
