@@ -643,7 +643,8 @@ static DWORD WINAPI MZ_DOSVM( LPVOID lpExtra )
 
       if (GetLastError() == ERROR_NOT_SUPPORTED)
           MESSAGE( "wine: Cannot start DOS application %s\n"
-                   "      because vm86 mode is not supported on this platform.\n",
+                   "      because vm86 mode is not supported on this platform.\n"
+                   "      Try running the application with DOSBox.\n",
                    debugstr_a(env) );
       else
           FIXME( "vm86 mode failed error %u\n", GetLastError() );
