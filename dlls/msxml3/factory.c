@@ -31,7 +31,6 @@
 #include "msxml.h"
 #include "xmldom.h"
 #include "msxml2.h"
-#include "msxml6.h"
 
 /* undef the #define in msxml2 so that we can access the v.2 version
    independent CLSID as well as the v.3 one. */

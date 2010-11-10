@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2005 Vijay Kiran Kamuju
  * Copyright (C) 2008 Alistair Leslie-Hughes
+ * Copyright (C) 2010 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,7 +19,7 @@
  */
 
 #include <msxml2did.h>
-#include <olectl.h>
+#include <idispids.h>
 
 import "unknwn.idl";
 import "objidl.idl";

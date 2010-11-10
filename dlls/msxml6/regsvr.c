@@ -36,7 +36,6 @@
 #include "ole2.h"
 
 #include "initguid.h"
-#include "msxml2.h"
 #include "msxml6.h"
 
 #include "wine/debug.h"
