@@ -120,6 +120,7 @@ static char *DOSMEM_sysmem;
 static DWORD DOSMEM_protect;
 
 static LONG WINAPI dosmem_handler(EXCEPTION_POINTERS* except);
+static void *vectored_handler;
 
 /***********************************************************************
  *           DOSMEM_FillIsrTable
@@ -318,7 +319,7 @@ BOOL DOSMEM_InitDosMemory(void)
                                         DOSMEM_SIZE - DOSMEM_protect,
                                         PAGE_READWRITE, NULL )))
                 ERR("Cannot load access low 1Mb, DOS subsystem unavailable\n");
-            RtlRemoveVectoredExceptionHandler( dosmem_handler );
+            RemoveVectoredExceptionHandler( vectored_handler );
 
             /*
              * Reserve either:
@@ -412,7 +413,7 @@ BOOL DOSMEM_Init(void)
         DOSMEM_sysmem = DOSMEM_dosmem;
     }
 
-    RtlAddVectoredExceptionHandler(FALSE, dosmem_handler);
+    vectored_handler = AddVectoredExceptionHandler(FALSE, dosmem_handler);
     DOSMEM_0000H = GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_sysmem,
                                        DOSMEM_64KB, 0, WINE_LDT_FLAGS_DATA );
     DOSMEM_BiosDataSeg = GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_sysmem + 0x400,
