@@ -32,6 +32,7 @@
 
 static RECT height_change_notify_rect;
 static HWND hMainWnd;
+static int system_font_height;
 
 
 #define check_rect(name, val, exp) ok(val.top == exp.top && val.bottom == exp.bottom && \
@@ -63,6 +64,17 @@ static BOOL is_font_installed(const char *name)
 
     ReleaseDC(0, hdc);
     return ret;
+}
+
+static void init_system_font_height(void) {
+    HDC hDC;
+    TEXTMETRIC tm;
+
+    hDC = CreateCompatibleDC(NULL);
+    GetTextMetrics(hDC, &tm);
+    DeleteDC(NULL);
+
+    system_font_height = tm.tmHeight;
 }
 
 static HWND create_rebar_control(void)
@@ -814,13 +826,13 @@ static void test_bandinfo(void)
     rb.fMask = RBBIM_TEXT;
     rb.lpText = szABC;
     ok(SendMessageA(hRebar, RB_SETBANDINFOA, 0, (LPARAM)&rb), "RB_SETBANDINFO failed\n");
-    expect_band_content(hRebar, 0, 0, 0, GetSysColor(COLOR_3DFACE), "ABC", -1, NULL, 15, 20, 0, NULL, 0, 0xdddddddd, 0xdddddddd, 0xdddddddd, 0, 0, 35, -1);
+    expect_band_content(hRebar, 0, 0, 0, GetSysColor(COLOR_3DFACE), "ABC", -1, NULL, 15, 20, 0, NULL, 0, 0xdddddddd, 0xdddddddd, 0xdddddddd, 0, 0, 3 + 2*system_font_height, -1);
 
     rb.cbSize = REBARBANDINFOA_V6_SIZE;
     rb.fMask = 0;
     ok(SendMessageA(hRebar, RB_INSERTBANDA, 1, (LPARAM)&rb), "RB_INSERTBAND failed\n");
     expect_band_content(hRebar, 1, 0, 0, GetSysColor(COLOR_3DFACE), "", -1, NULL, 0, 0, 0, NULL, 0, 0xdddddddd, 0xdddddddd, 0xdddddddd, 0, 0, 9, -1);
-    expect_band_content(hRebar, 0, 0, 0, GetSysColor(COLOR_3DFACE), "ABC", -1, NULL, 15, 20, 0, NULL, 0, 0xdddddddd, 0xdddddddd, 0xdddddddd, 0, 0, 40, -1);
+    expect_band_content(hRebar, 0, 0, 0, GetSysColor(COLOR_3DFACE), "ABC", -1, NULL, 15, 20, 0, NULL, 0, 0xdddddddd, 0xdddddddd, 0xdddddddd, 0, 0, 8 + 2*system_font_height, -1);
 
     rb.fMask = RBBIM_HEADERSIZE;
     rb.cxHeader = 50;
@@ -839,7 +851,7 @@ static void test_bandinfo(void)
     rb.fStyle = RBBS_VARIABLEHEIGHT;
     rb.lpText = szABC;
     ok(SendMessageA(hRebar, RB_SETBANDINFOA, 0, (LPARAM)&rb), "RB_SETBANDINFO failed\n");
-    expect_band_content(hRebar, 0, RBBS_VARIABLEHEIGHT, 0, GetSysColor(COLOR_3DFACE), "ABC", -1, NULL, 15, 20, 0, NULL, 0, 20, 0x7fffffff, 0, 0, 0, 40, 5);
+    expect_band_content(hRebar, 0, RBBS_VARIABLEHEIGHT, 0, GetSysColor(COLOR_3DFACE), "ABC", -1, NULL, 15, 20, 0, NULL, 0, 20, 0x7fffffff, 0, 0, 0, 8 + 2*system_font_height, 5);
 
     DestroyWindow(hRebar);
 }
@@ -961,6 +973,8 @@ START_TEST(rebar)
     BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
     INITCOMMONCONTROLSEX iccex;
     MSG msg;
+
+    init_system_font_height();
 
     /* LoadLibrary is needed. This file has no references to functions in comctl32 */
     hComctl32 = LoadLibraryA("comctl32.dll");
