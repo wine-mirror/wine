@@ -71,7 +71,6 @@ extern void virtual_init(void);
 extern void virtual_init_threading(void);
 extern void fill_cpu_info(void);
 extern void heap_set_debug_flags( HANDLE handle );
-extern void exceptions_init(void);
 
 /* server support */
 extern timeout_t server_start_time;
