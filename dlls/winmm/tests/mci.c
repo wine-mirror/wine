@@ -489,14 +489,17 @@ static void test_openCloseWAVE(HWND hwnd)
     ok(err==MCIERR_INVALID_DEVICE_NAME || broken(err==MMSYSERR_NOTSUPPORTED/* Win9x */), "mciCommand MCI_SYSINFO nodev installname: %s\n", dbg_mcierr(err));
     ok(!strcmp(buf,"K"), "output buffer %s\n", buf);
 
-    buf[1] = 'L';
+    buf[0] = 0; buf[1] = 'A'; buf[2] = 'j'; buf[3] = 0;
     parm.info.lpstrReturn = buf;
     parm.info.dwRetSize = 2;
-    err = mciSendCommand(1, MCI_INFO, MCI_INFO_PRODUCT, (DWORD_PTR)&parm);
+    err = mciSendCommandA(1, MCI_INFO, MCI_INFO_PRODUCT, (DWORD_PTR)&parm);
     ok(!err, "mciCommand MCI_INFO product: %s\n", dbg_mcierr(err));
-    ok(buf[0] && !buf[1], "info product output buffer %s\n", buf);
+    ok(buf[0] /* && !buf[1] */ && (buf[2] == 'j' || broken(!buf[2])), "info product output buffer %s\n", buf);
+    /* Producing non-ASCII multi-byte output, native forgets to zero-terminate a too small buffer
+     * with SendStringA, while SendStringW works correctly (jap. and chin. locale): ignore buf[1] */
+    /* Bug in 64 bit Vista/w2k8/w7: mciSendStringW is used! (not in xp nor w2k3) */
 
-    buf[0] = 'K';
+    buf[0] = 'K'; buf[1] = 0;
     parm.info.dwRetSize = sizeof(buf);
     err = mciSendCommandW(1, MCI_INFO, 0x07000000, (DWORD_PTR)&parm);
     ok(err==MCIERR_UNRECOGNIZED_KEYWORD || broken(err==MMSYSERR_NOTSUPPORTED/* Win9x */), "mciCommand MCI_INFO other: %s\n", dbg_mcierr(err));
@@ -1123,6 +1126,9 @@ static void test_AutoOpenWAVE(HWND hwnd)
     test_notification(hwnd, "-prior to auto-open-", 0);
 
     err = mciSendString("play tempfile.wav notify", buf, sizeof(buf), hwnd);
+    if(ok_saved==MCIERR_FILE_NOT_FOUND) todo_wine /* same as above */
+    ok(err==MCIERR_NOTIFY_ON_AUTO_OPEN,"mci auto-open play notify returned %s\n", dbg_mcierr(err));
+    else
     ok(err==MCIERR_NOTIFY_ON_AUTO_OPEN,"mci auto-open play notify returned %s\n", dbg_mcierr(err));
 
     if(err) /* FIXME: don't open twice yet, it confuses Wine. */
