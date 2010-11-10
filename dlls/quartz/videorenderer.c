@@ -1413,9 +1413,11 @@ static HRESULT WINAPI Basicvideo_GetVideoPaletteEntries(IBasicVideo *iface,
                                                         LONG *pPalette) {
     ICOM_THIS_MULTI(VideoRendererImpl, IBasicVideo_vtbl, iface);
 
-    FIXME("(%p/%p)->(%d, %d, %p, %p): stub !!!\n", This, iface, StartIndex, Entries, pRetrieved, pPalette);
+    TRACE("(%p/%p)->(%d, %d, %p, %p)\n", This, iface, StartIndex, Entries, pRetrieved, pPalette);
 
-    return S_OK;
+    if (pRetrieved)
+        *pRetrieved = 0;
+    return VFW_E_NO_PALETTE_AVAILABLE;
 }
 
 static HRESULT WINAPI Basicvideo_GetCurrentImage(IBasicVideo *iface,
