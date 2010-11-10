@@ -757,12 +757,6 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, gboolean last, GS
 
 static void existing_new_pad(GstElement *bin, GstPad *pad, gboolean last, GSTImpl *This) {
     int x;
-    GstCaps *caps;
-    GstStructure *arg;
-    const char *typename, *ownname;
-    caps = gst_pad_get_caps_reffed(pad);
-    arg = gst_caps_get_structure(caps, 0);
-    typename = gst_structure_get_name(arg);
 
     if (gst_pad_is_linked(pad))
         return;
@@ -777,10 +771,7 @@ static void existing_new_pad(GstElement *bin, GstPad *pad, gboolean last, GSTImp
     for (x = 0; x < This->cStreams; ++x) {
         GSTOutPin *pin = This->ppPins[x];
         if (!pin->their_src) {
-            caps = gst_pad_get_caps_reffed(pin->my_sink);
-            arg = gst_caps_get_structure(caps, 0);
-            ownname = gst_structure_get_name(arg);
-            if (!strcmp(typename, ownname) && gst_pad_link(pad, pin->my_sink) >= 0) {
+            if (gst_pad_link(pad, pin->my_sink) >= 0) {
                 pin->their_src = pad;
                 gst_segment_init(pin->segment, GST_FORMAT_TIME);
                 gst_object_ref(pin->their_src);
