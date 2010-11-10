@@ -422,6 +422,13 @@ BOOL wined3d_register_window(HWND window, IWineD3DDeviceImpl *device)
 
     wined3d_mutex_lock();
 
+    if (wined3d_find_wndproc(window))
+    {
+        wined3d_mutex_unlock();
+        WARN("Window %p is already registered with wined3d.\n", window);
+        return TRUE;
+    }
+
     if (wndproc_table.size == wndproc_table.count)
     {
         unsigned int new_size = max(1, wndproc_table.size * 2);
