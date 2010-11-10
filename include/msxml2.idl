@@ -632,6 +632,27 @@ interface IXMLDOMDocument2 : IXMLDOMDocument
 }
 
 [
+    local,
+    object,
+    dual,
+    uuid(2933bf96-7b36-11d2-b20e-00c04f983e60),
+    oleautomation,
+]
+interface IXMLDOMDocument3 : IXMLDOMDocument2
+{
+    [id(DISPID_XMLDOM_DOCUMENT3_VALIDATENODE)]
+    HRESULT validateNode(
+        [in] IXMLDOMNode *node,
+        [out, retval] IXMLDOMParseError **error);
+
+    [id(DISPID_XMLDOM_DOCUMENT3_IMPORTNODE)]
+    HRESULT importNode(
+        [in] IXMLDOMNode *node,
+        [in] VARIANT_BOOL deep,
+        [out, retval] IXMLDOMNode **clone);
+}
+
+[
 local,
 object,
 dual,

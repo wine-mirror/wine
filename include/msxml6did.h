@@ -19,9 +19,6 @@
 #ifndef __MSXML6DID_H__
 #define __MSXML6DID_H__
 
-#define DISPID_XMLDOM_DOCUMENT3                0x000000ce
-#define DISPID_XMLDOM_DOCUMENT3_VALIDATENODE   0x000000cf
-#define DISPID_XMLDOM_DOCUMENT3_IMPORTNODE     0x000000d0
-#define DISPID_XMLDOM_DOCUMENT3__TOP           0x000000d1
+#include <msxml2did.h>
 
 #endif /* __MSXML6DID_H__ */
