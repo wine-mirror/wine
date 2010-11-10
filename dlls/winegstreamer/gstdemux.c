@@ -875,6 +875,32 @@ static GstAutoplugSelectResult autoplug_blacklist(GstElement *bin, GstPad *pad, 
     return GST_AUTOPLUG_SELECT_TRY;
 }
 
+static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer data) {
+    GSTImpl *This = data;
+    GError *err = NULL;
+    gchar *dbg_info = NULL;
+    if (GST_MESSAGE_TYPE(msg) & GST_MESSAGE_ERROR) {
+        gst_message_parse_error(msg, &err, &dbg_info);
+        FIXME("%s: %s\n", GST_OBJECT_NAME(msg->src), err->message);
+        WARN("%s\n", dbg_info);
+        SetEvent(This->event);
+    } else if (GST_MESSAGE_TYPE(msg) & GST_MESSAGE_WARNING) {
+        gst_message_parse_warning(msg, &err, &dbg_info);
+        WARN("%s: %s\n", GST_OBJECT_NAME(msg->src), err->message);
+        WARN("%s\n", dbg_info);
+    }
+    if (err)
+        g_error_free(err);
+    g_free(dbg_info);
+    return GST_BUS_DROP;
+}
+
+static void unknown_type(GstElement *bin, GstPad *pad, GstCaps *caps, GSTImpl *This) {
+    gchar *strcaps = gst_caps_to_string(caps);
+    FIXME("Could not find a filter for caps: %s\n", strcaps);
+    g_free(strcaps);
+}
+
 static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTIES *props) {
     GSTImpl *This = (GSTImpl*)pPin->pin.pinInfo.pFilter;
     HRESULT hr;
@@ -891,15 +917,22 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
     This->props = *props;
     IAsyncReader_Length(pPin->pReader, &This->filesize, &avail);
 
+    if (!This->bus) {
+        This->bus = gst_bus_new();
+        gst_bus_set_sync_handler(This->bus, watch_bus, This);
+    }
+
     This->gstfilter = gst_element_factory_make("decodebin2", NULL);
     if (!This->gstfilter) {
         FIXME("Could not make source filter, are gstreamer-plugins-* installed for %u bits?\n",
               8 * (int)sizeof(void*));
         return E_FAIL;
     }
+    gst_element_set_bus(This->gstfilter, This->bus);
     g_signal_connect(This->gstfilter, "new-decoded-pad", G_CALLBACK(existing_new_pad), This);
     g_signal_connect(This->gstfilter, "pad-removed", G_CALLBACK(removed_decoded_pad), This);
     g_signal_connect(This->gstfilter, "autoplug-select", G_CALLBACK(autoplug_blacklist), This);
+    g_signal_connect(This->gstfilter, "unknown-type", G_CALLBACK(unknown_type), This);
 
     This->my_src = gst_pad_new_from_static_template(&src_template, "quartz-src");
     gst_pad_set_getrange_function(This->my_src, request_buffer_src);
@@ -922,6 +955,7 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
 
     /* Add initial pins */
     This->initial = This->discont = 1;
+    ResetEvent(This->event);
     gst_element_set_state(This->gstfilter, GST_STATE_PLAYING);
     gst_pad_set_active(This->my_src, 1);
     WaitForSingleObject(This->event, -1);
@@ -1009,6 +1043,7 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *punkout, HRESULT *phr) {
     This->ppPins = NULL;
     This->push_thread = NULL;
     This->event = CreateEventW(NULL, 0, 0, NULL);
+    This->bus = NULL;
 
     piInput = &This->pInputPin.pin.pinInfo;
     piInput->dir = PINDIR_INPUT;
@@ -1046,6 +1081,10 @@ static void GST_Destroy(GSTImpl *This) {
 
         while (pinref)
             pinref = IPin_Release((IPin *)&This->pInputPin);
+    }
+    if (This->bus) {
+        gst_bus_set_sync_handler(This->bus, NULL, NULL);
+        gst_object_unref(This->bus);
     }
     CoTaskMemFree(This);
 }
@@ -1458,6 +1497,7 @@ static HRESULT GST_RemoveOutputPins(GSTImpl *This) {
 
     if (!This->gstfilter)
         return S_OK;
+    gst_element_set_bus(This->gstfilter, NULL);
     gst_element_set_state(This->gstfilter, GST_STATE_NULL);
     gst_pad_unlink(This->my_src, This->their_sink);
     This->my_src = This->their_sink = NULL;
