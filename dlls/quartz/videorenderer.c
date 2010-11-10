@@ -944,8 +944,10 @@ static HRESULT WINAPI VideoRenderer_InputPin_EndFlush(IPin * iface)
     TRACE("(%p/%p)->()\n", This, iface);
 
     EnterCriticalSection(This->pin.pCritSec);
-    if (pVideoRenderer->filter.state == State_Paused)
+    if (pVideoRenderer->filter.state == State_Paused) {
         ResetEvent(pVideoRenderer->blocked);
+        ResetEvent(pVideoRenderer->hEvent);
+    }
 
     QualityControlRender_Start(&pVideoRenderer->qcimpl, pVideoRenderer->filter.rtStreamStart);
     hr = BaseInputPinImpl_EndFlush(iface);
