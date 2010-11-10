@@ -18,6 +18,7 @@ RC_SRCS = \
 	cpl_Lt.rc \
 	cpl_Nl.rc \
 	cpl_Pl.rc \
+	cpl_Pt.rc \
 	cpl_Si.rc \
 	cpl_Sr.rc \
 	cpl_Sv.rc \
