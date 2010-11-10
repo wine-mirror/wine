@@ -1115,6 +1115,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetUIObjectOf(IShellFolder2* ifac
 {
     UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder2, iface);
     UINT i;
+    HRESULT hr;
     
     TRACE("(iface=%p, hwndOwner=%p, cidl=%d, apidl=%p, riid=%s, prgfInOut=%p, ppv=%p)\n",
         iface, hwndOwner, cidl, apidl, debugstr_guid(riid), prgfInOut, ppvOut);
@@ -1125,6 +1126,12 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetUIObjectOf(IShellFolder2* ifac
     for (i=0; i<cidl; i++) 
         if (!apidl[i]) 
             return E_INVALIDARG;
+
+    if(cidl == 1) {
+        hr = SHELL32_CreateExtensionUIObject(iface, *apidl, riid, ppvOut);
+        if(hr != S_FALSE)
+            return hr;
+    }
     
     if (IsEqualIID(&IID_IContextMenu, riid)) {
         *ppvOut = ISvItemCm_Constructor((IShellFolder*)iface, This->m_pidlLocation, apidl, cidl);

@@ -69,6 +69,8 @@ BOOL HCR_GetFolderAttributes(LPCITEMIDLIST pidlFolder, LPDWORD dwAttributes);
 DWORD WINAPI ParseFieldA(LPCSTR src, DWORD nField, LPSTR dst, DWORD len);
 DWORD WINAPI ParseFieldW(LPCWSTR src, DWORD nField, LPWSTR dst, DWORD len);
 
+BOOL WINAPI GUIDFromStringW(LPCWSTR, LPGUID);
+
 /****************************************************************************
  * Class constructors
  */

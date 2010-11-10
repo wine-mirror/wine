@@ -611,6 +611,90 @@ IShellFolder_fnGetAttributesOf (IShellFolder2 * iface, UINT cidl,
 }
 
 /**************************************************************************
+ * SHELL32_CreateExtensionUIObject (internal)
+ */
+HRESULT SHELL32_CreateExtensionUIObject(IShellFolder2 *iface,
+        LPCITEMIDLIST pidl, REFIID riid, LPVOID *ppvOut)
+{
+    static const WCHAR reg_blockedW[] = {'S','o','f','t','w','a','r','e','\\',
+        'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\',
+        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+        'S','h','e','l','l',' ','E','x','t','e','n','s','i','o','n','s','\\',
+        'B','l','o','c','k','e','d',0};
+    static const WCHAR formatW[] = {'.','%','s','\\','S','h','e','l','l','E','x','\\',
+        '{','%','0','8','x','-','%','0','4','x','-','%','0','4','x','-',
+        '%','0','2','x','%','0','2','x','-','%','0','2','x','%','0','2','x',
+        '%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x','}',0};
+
+    IPersistFile *persist_file;
+    char extensionA[20];
+    WCHAR extensionW[20], buf[MAX_PATH];
+    DWORD size = MAX_PATH;
+    STRRET path;
+    WCHAR *file;
+    GUID guid;
+    HKEY key;
+    HRESULT hr;
+
+
+    if(!_ILGetExtension(pidl, extensionA, 20))
+        return S_FALSE;
+
+    MultiByteToWideChar(CP_ACP, 0, extensionA, -1, extensionW, 20);
+
+    sprintfW(buf, formatW, extensionW, riid->Data1, riid->Data2, riid->Data3,
+            riid->Data4[0], riid->Data4[1], riid->Data4[2], riid->Data4[3],
+            riid->Data4[4], riid->Data4[5], riid->Data4[6], riid->Data4[7]);
+
+    if(RegGetValueW(HKEY_CLASSES_ROOT, buf, NULL, RRF_RT_REG_SZ,
+                NULL, buf, &size) != ERROR_SUCCESS)
+        return S_FALSE;
+
+    if(RegCreateKeyExW(HKEY_LOCAL_MACHINE, reg_blockedW, 0, 0, 0,
+                KEY_READ, NULL, &key, NULL) != ERROR_SUCCESS)
+        return E_FAIL;
+    if(RegQueryValueExW(key, buf, 0, NULL, NULL, NULL)
+            != ERROR_FILE_NOT_FOUND)
+        return E_ACCESSDENIED;
+    RegCloseKey(key);
+
+    if(RegCreateKeyExW(HKEY_CURRENT_USER, reg_blockedW, 0, 0, 0,
+                KEY_READ, NULL, &key, NULL) != ERROR_SUCCESS)
+        return E_FAIL;
+    if(RegQueryValueExW(key, buf, 0, NULL, NULL, NULL)
+            != ERROR_FILE_NOT_FOUND)
+        return E_ACCESSDENIED;
+    RegCloseKey(key);
+
+    if(!GUIDFromStringW(buf, &guid))
+        return E_FAIL;
+
+    hr = CoCreateInstance(&guid, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IPersistFile, (void**)&persist_file);
+    if(FAILED(hr))
+        return hr;
+
+    hr = IShellFolder_GetDisplayNameOf(iface, pidl, SHGDN_FORPARSING, &path);
+    if(SUCCEEDED(hr))
+        hr = StrRetToStrW(&path, NULL, &file);
+    if(FAILED(hr)) {
+        IPersistFile_Release(persist_file);
+        return hr;
+    }
+
+    hr = IPersistFile_Load(persist_file, file, STGM_READ);
+    CoTaskMemFree(file);
+    if(FAILED(hr)) {
+        IPersistFile_Release(persist_file);
+        return hr;
+    }
+
+    hr = IPersistFile_QueryInterface(persist_file, riid, ppvOut);
+    IPersistFile_Release(persist_file);
+    return hr;
+}
+
+/**************************************************************************
 *  IShellFolder_fnGetUIObjectOf
 *
 * PARAMETERS
@@ -650,6 +734,12 @@ IShellFolder_fnGetUIObjectOf (IShellFolder2 * iface,
 
     if (ppvOut) {
         *ppvOut = NULL;
+
+        if(cidl == 1) {
+            hr = SHELL32_CreateExtensionUIObject(iface, *apidl, riid, ppvOut);
+            if(hr != S_FALSE)
+                return hr;
+        }
 
         if (IsEqualIID (riid, &IID_IContextMenu) && (cidl >= 1)) {
             pObj = (LPUNKNOWN) ISvItemCm_Constructor ((IShellFolder *) iface,
