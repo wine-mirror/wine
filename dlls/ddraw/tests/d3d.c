@@ -3263,9 +3263,9 @@ static LRESULT CALLBACK test_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM
 
 static void test_wndproc(void)
 {
+    LONG_PTR proc, ddraw_proc;
     IDirectDraw7 *ddraw7;
     WNDCLASSA wc = {0};
-    LONG_PTR proc;
     HWND window;
     HRESULT hr;
     ULONG ref;
@@ -3356,7 +3356,87 @@ static void test_wndproc(void)
             (LONG_PTR)test_proc, proc);
 
     /* The original window proc is only restored by ddraw if the current
-     * window proc matches the one ddraw set. */
+     * window proc matches the one ddraw set. This also affects switching
+     * from DDSCL_NORMAL to DDSCL_EXCLUSIVE. */
+    hr = pDirectDrawCreateEx(NULL, (void **)&ddraw7, &IID_IDirectDraw7, NULL);
+    if (FAILED(hr))
+    {
+        skip("Failed to create IDirectDraw7 object (%#x), skipping tests.\n", hr);
+        return;
+    }
+
+    proc = GetWindowLongPtrA(window, GWLP_WNDPROC);
+    ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
+            (LONG_PTR)test_proc, proc);
+
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw7, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        IDirectDraw7_Release(ddraw7);
+        goto done;
+    }
+
+    proc = GetWindowLongPtrA(window, GWLP_WNDPROC);
+    ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx, got %#lx.\n",
+            (LONG_PTR)test_proc, proc);
+    ddraw_proc = proc;
+
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw7, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        IDirectDraw7_Release(ddraw7);
+        goto done;
+    }
+
+    proc = GetWindowLongPtrA(window, GWLP_WNDPROC);
+    ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
+            (LONG_PTR)test_proc, proc);
+
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw7, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        IDirectDraw7_Release(ddraw7);
+        goto done;
+    }
+
+    proc = SetWindowLongPtrA(window, GWLP_WNDPROC, (LONG_PTR)DefWindowProcA);
+    ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx, got %#lx.\n",
+            (LONG_PTR)test_proc, proc);
+
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw7, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        IDirectDraw7_Release(ddraw7);
+        goto done;
+    }
+
+    proc = GetWindowLongPtrA(window, GWLP_WNDPROC);
+    ok(proc == (LONG_PTR)DefWindowProcA, "Expected wndproc %#lx, got %#lx.\n",
+            (LONG_PTR)DefWindowProcA, proc);
+
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw7, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        IDirectDraw7_Release(ddraw7);
+        goto done;
+    }
+
+    proc = SetWindowLongPtrA(window, GWLP_WNDPROC, (LONG_PTR)ddraw_proc);
+    ok(proc == (LONG_PTR)DefWindowProcA, "Expected wndproc %#lx, got %#lx.\n",
+            (LONG_PTR)DefWindowProcA, proc);
+
+    ref = IDirectDraw7_Release(ddraw7);
+    ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
+
+    proc = GetWindowLongPtrA(window, GWLP_WNDPROC);
+    ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
+            (LONG_PTR)test_proc, proc);
+
     hr = pDirectDrawCreateEx(NULL, (void **)&ddraw7, &IID_IDirectDraw7, NULL);
     if (FAILED(hr))
     {

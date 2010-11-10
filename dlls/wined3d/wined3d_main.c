@@ -467,35 +467,49 @@ BOOL wined3d_register_window(HWND window, IWineD3DDeviceImpl *device)
 
 void wined3d_unregister_window(HWND window)
 {
-    unsigned int i;
+    struct wined3d_wndproc *entry, *last;
+    LONG_PTR proc;
 
     wined3d_mutex_lock();
-    for (i = 0; i < wndproc_table.count; ++i)
+
+    if (!(entry = wined3d_find_wndproc(window)))
     {
-        if (wndproc_table.entries[i].window == window)
+        wined3d_mutex_unlock();
+        ERR("Window %p is not registered with wined3d.\n", window);
+        return;
+    }
+
+    if (entry->unicode)
+    {
+        proc = GetWindowLongPtrW(window, GWLP_WNDPROC);
+        if (proc != (LONG_PTR)wined3d_wndproc)
         {
-            struct wined3d_wndproc *entry = &wndproc_table.entries[i];
-            struct wined3d_wndproc *last = &wndproc_table.entries[--wndproc_table.count];
-
-            if (entry->unicode)
-            {
-                if (GetWindowLongPtrW(window, GWLP_WNDPROC) == (LONG_PTR)wined3d_wndproc)
-                    SetWindowLongPtrW(window, GWLP_WNDPROC, (LONG_PTR)entry->proc);
-            }
-            else
-            {
-                if (GetWindowLongPtrA(window, GWLP_WNDPROC) == (LONG_PTR)wined3d_wndproc)
-                    SetWindowLongPtrA(window, GWLP_WNDPROC, (LONG_PTR)entry->proc);
-            }
-            if (entry != last) *entry = *last;
             wined3d_mutex_unlock();
-
+            WARN("Not unregistering window %p, window proc %#lx doesn't match wined3d window proc %p.\n",
+                    window, proc, wined3d_wndproc);
             return;
         }
-    }
-    wined3d_mutex_unlock();
 
-    ERR("Window %p is not registered with wined3d.\n", window);
+        SetWindowLongPtrW(window, GWLP_WNDPROC, (LONG_PTR)entry->proc);
+    }
+    else
+    {
+        proc = GetWindowLongPtrA(window, GWLP_WNDPROC);
+        if (proc != (LONG_PTR)wined3d_wndproc)
+        {
+            wined3d_mutex_unlock();
+            WARN("Not unregistering window %p, window proc %#lx doesn't match wined3d window proc %p.\n",
+                    window, proc, wined3d_wndproc);
+            return;
+        }
+
+        SetWindowLongPtrA(window, GWLP_WNDPROC, (LONG_PTR)entry->proc);
+    }
+
+    last = &wndproc_table.entries[--wndproc_table.count];
+    if (entry != last) *entry = *last;
+
+    wined3d_mutex_unlock();
 }
 
 /* At process attach */
