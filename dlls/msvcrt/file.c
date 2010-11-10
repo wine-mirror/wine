@@ -2742,7 +2742,7 @@ int CDECL MSVCRT_fopen_s(MSVCRT_FILE** pFile,
         const char *filename, const char *mode)
 {
     if (!MSVCRT_CHECK_PMT(pFile != NULL) || !MSVCRT_CHECK_PMT(filename != NULL) ||
-        MSVCRT_CHECK_PMT(mode != NULL)) {
+        !MSVCRT_CHECK_PMT(mode != NULL)) {
         *MSVCRT__errno() = MSVCRT_EINVAL;
         return MSVCRT_EINVAL;
     }
@@ -2769,7 +2769,7 @@ int CDECL MSVCRT__wfopen_s(MSVCRT_FILE** pFile, const MSVCRT_wchar_t *filename,
         const MSVCRT_wchar_t *mode)
 {
     if (!MSVCRT_CHECK_PMT(pFile != NULL) || !MSVCRT_CHECK_PMT(filename != NULL) ||
-        MSVCRT_CHECK_PMT(mode != NULL)) {
+        !MSVCRT_CHECK_PMT(mode != NULL)) {
         *MSVCRT__errno() = MSVCRT_EINVAL;
         return MSVCRT_EINVAL;
     }

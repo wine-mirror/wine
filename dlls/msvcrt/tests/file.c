@@ -36,6 +36,17 @@
 
 static HANDLE proc_handles[2];
 
+static int (__cdecl *p_fopen_s)(FILE**, const char*, const char*);
+static int (__cdecl *p__wfopen_s)(FILE**, const wchar_t*, const wchar_t*);
+
+static void init(void)
+{
+    HMODULE hmod = GetModuleHandleA("msvcrt.dll");
+
+    p_fopen_s = (void*)GetProcAddress(hmod, "fopen_s");
+    p__wfopen_s = (void*)GetProcAddress(hmod, "_wfopen_s");
+}
+
 static void test_filbuf( void )
 {
     FILE *fp;
@@ -1201,6 +1212,82 @@ static void test_fopen_fclose_fcloseall( void )
     ok(_unlink(fname3) == 0, "Couldn't unlink file named '%s'\n", fname3);
 }
 
+static void test_fopen_s( void )
+{
+    const char name[] = "empty1";
+    char buff[16];
+    FILE *file;
+    int ret;
+    int len;
+
+    if (!p_fopen_s)
+    {
+        win_skip("Skipping fopen_s test\n");
+        return;
+    }
+    /* testing fopen_s */
+    ret = p_fopen_s(&file, name, "w");
+    ok(ret == 0, "fopen_s failed with %d\n", ret);
+    ok(file != 0, "fopen_s failed to return value\n");
+    fwrite(name, sizeof(name), 1, file);
+
+    ret = fclose(file);
+    ok(ret != EOF, "File failed to close\n");
+
+    file = fopen(name, "r");
+    ok(file != 0, "fopen failed\n");
+    len = fread(buff, 1, sizeof(name), file);
+    ok(len == sizeof(name), "File length supposed to be %d, not %d\n", sizeof(name), len);
+    buff[sizeof(name)] = '\0';
+    ok(strcmp(name, buff) == 0, "File content mismatch! Got %s, expected %s\n", buff, name);
+
+    ret = fclose(file);
+    ok(ret != EOF, "File failed to close\n");
+
+    ok(_unlink(name) == 0, "Couldn't unlink file named '%s'\n", name);
+}
+
+static void test__wfopen_s( void )
+{
+    const char name[] = "empty1";
+    const WCHAR wname[] = {
+       'e','m','p','t','y','1',0
+    };
+    const WCHAR wmode[] = {
+       'w',0
+    };
+    char buff[16];
+    FILE *file;
+    int ret;
+    int len;
+
+    if (!p__wfopen_s)
+    {
+        win_skip("Skipping _wfopen_s test\n");
+        return;
+    }
+    /* testing _wfopen_s */
+    ret = p__wfopen_s(&file, wname, wmode);
+    ok(ret == 0, "_wfopen_s failed with %d\n", ret);
+    ok(file != 0, "_wfopen_s failed to return value\n");
+    fwrite(name, sizeof(name), 1, file);
+
+    ret = fclose(file);
+    ok(ret != EOF, "File failed to close\n");
+
+    file = fopen(name, "r");
+    ok(file != 0, "fopen failed\n");
+    len = fread(buff, 1, sizeof(name), file);
+    ok(len == sizeof(name), "File length supposed to be %d, not %d\n", sizeof(name), len);
+    buff[sizeof(name)] = '\0';
+    ok(strcmp(name, buff) == 0, "File content mismatch! Got %s, expected %s\n", buff, name);
+
+    ret = fclose(file);
+    ok(ret != EOF, "File failed to close\n");
+
+    ok(_unlink(name) == 0, "Couldn't unlink file named '%s'\n", name);
+}
+
 static void test_get_osfhandle(void)
 {
     int fd;
@@ -1424,6 +1511,8 @@ START_TEST(file)
     int arg_c;
     char** arg_v;
 
+    init();
+
     arg_c = winetest_get_mainargs( &arg_v );
 
     /* testing low-level I/O */
@@ -1450,6 +1539,8 @@ START_TEST(file)
     test_filbuf();
     test_fdopen();
     test_fopen_fclose_fcloseall();
+    test_fopen_s();
+    test__wfopen_s();
     test_fileops();
     test_asciimode();
     test_asciimode2();
