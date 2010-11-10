@@ -1180,7 +1180,7 @@ static HRESULT WINAPI GST_GetState(IBaseFilter *iface, DWORD dwMilliSecsTimeout,
     TRACE("(%d, %p)\n", dwMilliSecsTimeout, pState);
 
     if (!This->gstfilter) {
-        pState = State_Stopped;
+        *pState = State_Stopped;
         return S_OK;
     }
 
