@@ -1578,89 +1578,59 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
      * eg HD 4800 is returned for multiple cards, even for RV790 based ones. */
     if (WINE_D3D10_CAPABLE(gl_info))
     {
-        /* Radeon EG CYPRESS XT / PRO HD5800 - highend */
-        if (strstr(gl_renderer, "HD 5800")          /* Radeon EG CYPRESS HD58xx generic renderer string */
-                || strstr(gl_renderer, "HD 5850")   /* Radeon EG CYPRESS XT */
-                || strstr(gl_renderer, "HD 5870"))  /* Radeon EG CYPRESS PRO */
-        {
-            return CARD_ATI_RADEON_HD5800;
-        }
+        unsigned int i;
 
-        /* Radeon EG JUNIPER XT / LE HD5700 - midend */
-        if (strstr(gl_renderer, "HD 5700")          /* Radeon EG JUNIPER HD57xx generic renderer string */
-                || strstr(gl_renderer, "HD 5750")   /* Radeon EG JUNIPER LE */
-                || strstr(gl_renderer, "HD 5770"))  /* Radeon EG JUNIPER XT */
+        static const struct
         {
-            return CARD_ATI_RADEON_HD5700;
+            const char *renderer;
+            enum wined3d_pci_device id;
         }
-
-        /* Radeon R7xx HD4800 - highend */
-        if (strstr(gl_renderer, "HD 4800")          /* Radeon RV7xx HD48xx generic renderer string */
-                || strstr(gl_renderer, "HD 4830")   /* Radeon RV770 */
-                || strstr(gl_renderer, "HD 4850")   /* Radeon RV770 */
-                || strstr(gl_renderer, "HD 4870")   /* Radeon RV770 */
-                || strstr(gl_renderer, "HD 4890"))  /* Radeon RV790 */
+        cards[] =
         {
-            return CARD_ATI_RADEON_HD4800;
-        }
+            /* Evergreen */
+            {"HD 5870", CARD_ATI_RADEON_HD5800},    /* Radeon EG CYPRESS PRO */
+            {"HD 5850", CARD_ATI_RADEON_HD5800},    /* Radeon EG CYPRESS XT */
+            {"HD 5800", CARD_ATI_RADEON_HD5800},    /* Radeon EG CYPRESS HD58xx generic renderer string */
+            {"HD 5770", CARD_ATI_RADEON_HD5700},    /* Radeon EG JUNIPER XT */
+            {"HD 5750", CARD_ATI_RADEON_HD5700},    /* Radeon EG JUNIPER LE */
+            {"HD 5700", CARD_ATI_RADEON_HD5700},    /* Radeon EG JUNIPER HD57xx generic renderer string */
+            /* R700 */
+            {"HD 4890", CARD_ATI_RADEON_HD4800},    /* Radeon RV790 */
+            {"HD 4870", CARD_ATI_RADEON_HD4800},    /* Radeon RV770 */
+            {"HD 4850", CARD_ATI_RADEON_HD4800},    /* Radeon RV770 */
+            {"HD 4830", CARD_ATI_RADEON_HD4800},    /* Radeon RV770 */
+            {"HD 4800", CARD_ATI_RADEON_HD4800},    /* Radeon RV7xx HD48xx generic renderer string */
+            {"HD 4770", CARD_ATI_RADEON_HD4700},    /* Radeon RV740 */
+            {"HD 4700", CARD_ATI_RADEON_HD4700},    /* Radeon RV7xx HD47xx generic renderer string */
+            {"HD 4670", CARD_ATI_RADEON_HD4600},    /* Radeon RV730 */
+            {"HD 4650", CARD_ATI_RADEON_HD4600},    /* Radeon RV730 */
+            {"HD 4600", CARD_ATI_RADEON_HD4600},    /* Radeon RV730 */
+            {"HD 4550", CARD_ATI_RADEON_HD4350},    /* Radeon RV710 */
+            {"HD 4350", CARD_ATI_RADEON_HD4350},    /* Radeon RV710 */
+            /* R600/R700 integrated */
+            {"HD 3300", CARD_ATI_RADEON_HD3200},
+            {"HD 3200", CARD_ATI_RADEON_HD3200},
+            {"HD 3100", CARD_ATI_RADEON_HD3200},
+            /* R600 */
+            {"HD 3870", CARD_ATI_RADEON_HD2900},    /* HD2900/HD3800 - highend */
+            {"HD 3850", CARD_ATI_RADEON_HD2900},    /* HD2900/HD3800 - highend */
+            {"HD 2900", CARD_ATI_RADEON_HD2900},    /* HD2900/HD3800 - highend */
+            {"HD 3830", CARD_ATI_RADEON_HD2600},    /* China-only midend */
+            {"HD 3690", CARD_ATI_RADEON_HD2600},    /* HD2600/HD3600 - midend */
+            {"HD 3650", CARD_ATI_RADEON_HD2600},    /* HD2600/HD3600 - midend */
+            {"HD 2600", CARD_ATI_RADEON_HD2600},    /* HD2600/HD3600 - midend */
+            {"HD 3470", CARD_ATI_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
+            {"HD 3450", CARD_ATI_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
+            {"HD 3430", CARD_ATI_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
+            {"HD 3400", CARD_ATI_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
+            {"HD 2400", CARD_ATI_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
+            {"HD 2350", CARD_ATI_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
+        };
 
-        /* Radeon R740 HD4700 - midend */
-        if (strstr(gl_renderer, "HD 4700")          /* Radeon RV770 */
-                || strstr(gl_renderer, "HD 4770"))  /* Radeon RV740 */
+        for (i = 0; i < sizeof(cards) / sizeof(*cards); ++i)
         {
-            return CARD_ATI_RADEON_HD4700;
-        }
-
-        /* Radeon R730 HD4600 - midend */
-        if (strstr(gl_renderer, "HD 4600")          /* Radeon RV730 */
-                || strstr(gl_renderer, "HD 4650")   /* Radeon RV730 */
-                || strstr(gl_renderer, "HD 4670"))  /* Radeon RV730 */
-        {
-            return CARD_ATI_RADEON_HD4600;
-        }
-
-        /* Radeon R710 HD4500/HD4350 - lowend */
-        if (strstr(gl_renderer, "HD 4350")          /* Radeon RV710 */
-                || strstr(gl_renderer, "HD 4550"))  /* Radeon RV710 */
-        {
-            return CARD_ATI_RADEON_HD4350;
-        }
-
-        /* Radeon R6xx HD2900/HD3800 - highend */
-        if (strstr(gl_renderer, "HD 2900")
-                || strstr(gl_renderer, "HD 3870")
-                || strstr(gl_renderer, "HD 3850"))
-        {
-            return CARD_ATI_RADEON_HD2900;
-        }
-
-        /* Radeon R6xx HD2600/HD3600 - midend; HD3830 is China-only midend */
-        if (strstr(gl_renderer, "HD 2600")
-                || strstr(gl_renderer, "HD 3830")
-                || strstr(gl_renderer, "HD 3690")
-                || strstr(gl_renderer, "HD 3650"))
-        {
-            return CARD_ATI_RADEON_HD2600;
-        }
-
-        /* Radeon R6xx HD2350/HD2400/HD3400 - lowend
-         * Note HD2300=DX9, HD2350=DX10 */
-        if (strstr(gl_renderer, "HD 2350")
-                || strstr(gl_renderer, "HD 2400")
-                || strstr(gl_renderer, "HD 3470")
-                || strstr(gl_renderer, "HD 3450")
-                || strstr(gl_renderer, "HD 3430")
-                || strstr(gl_renderer, "HD 3400"))
-        {
-            return CARD_ATI_RADEON_HD2350;
-        }
-
-        /* Radeon R6xx/R7xx integrated */
-        if (strstr(gl_renderer, "HD 3100")
-                || strstr(gl_renderer, "HD 3200")
-                || strstr(gl_renderer, "HD 3300"))
-        {
-            return CARD_ATI_RADEON_HD3200;
+            if (strstr(gl_renderer, cards[i].renderer))
+                return cards[i].id;
         }
 
         /* Default for when no GPU has been found */
