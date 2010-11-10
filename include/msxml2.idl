@@ -1324,6 +1324,15 @@ coclass DOMDocument40
 }
 
 [
+    uuid(88d96a05-f192-11d4-a65f-0040963251e5)
+]
+coclass DOMDocument60
+{
+    [default] interface IXMLDOMDocument3;
+    [default, source] dispinterface XMLDOMDocumentEvents;
+}
+
+[
     uuid(F6D90F12-9C73-11D3-B32E-00C04F990BB4)
 ]
 coclass FreeThreadedDOMDocument
@@ -1356,6 +1365,15 @@ coclass FreeThreadedDOMDocument30
 coclass FreeThreadedDOMDocument40
 {
     [default] interface IXMLDOMDocument2;
+    [default, source] dispinterface XMLDOMDocumentEvents;
+}
+
+[
+    uuid(88d96a06-f192-11d4-a65f-0040963251e5),
+]
+coclass FreeThreadedDOMDocument60
+{
+    [default] interface IXMLDOMDocument3;
     [default, source] dispinterface XMLDOMDocumentEvents;
 }
 
@@ -1421,7 +1439,15 @@ coclass XMLSchemaCache30
 coclass XMLSchemaCache40
 {
     [default] interface IXMLDOMSchemaCollection2;
-};
+}
+
+[
+    uuid(88d96a07-f192-11d4-a65f-0040963251e5)
+]
+coclass XMLSchemaCache60
+{
+    [default] interface IXMLDOMSchemaCollection2;
+}
 
 [
     uuid(2933BF94-7B36-11d2-B20E-00C04F983E60)
@@ -2744,7 +2770,16 @@ coclass SAXXMLReader40
 {
     [default] interface IVBSAXXMLReader;
     interface ISAXXMLReader;
-};
+}
+
+[
+    uuid(88d96a0c-f192-11d4-a65f-0040963251e5)
+]
+coclass SAXXMLReader60
+{
+    [default] interface IVBSAXXMLReader;
+    interface ISAXXMLReader;
+}
 
 [
     uuid(fc220ad8-a72a-4ee8-926e-0b7ad152a020)
@@ -2804,7 +2839,27 @@ coclass MXXMLWriter40
     interface IVBSAXDTDHandler;
     interface IVBSAXErrorHandler;
     interface IVBSAXLexicalHandler;
-};
+}
+
+[
+    uuid(88d96a0f-f192-11d4-a65f-0040963251e5)
+]
+coclass MXXMLWriter60
+{
+    [default] interface IMXWriter;
+
+    interface ISAXContentHandler;
+    interface ISAXDeclHandler;
+    interface ISAXDTDHandler;
+    interface ISAXErrorHandler;
+    interface ISAXLexicalHandler;
+
+    interface IVBSAXContentHandler;
+    interface IVBSAXDeclHandler;
+    interface IVBSAXDTDHandler;
+    interface IVBSAXErrorHandler;
+    interface IVBSAXLexicalHandler;
+}
 
 [
     uuid(4dd441ad-526d-4a77-9f1b-9841ed802fb0)
@@ -2835,6 +2890,16 @@ coclass SAXAttributes40
     interface IVBSAXAttributes;
     interface ISAXAttributes;
 };
+
+[
+    uuid(88d96a0e-f192-11d4-a65f-0040963251e5)
+]
+coclass SAXAttributes60
+{
+    [default] interface IMXAttributes;
+    interface IVBSAXAttributes;
+    interface ISAXAttributes;
+}
 
 /*
  * Error Codes

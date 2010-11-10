@@ -29,8 +29,6 @@
 
 #include "wine/test.h"
 
-#include "initguid.h"
-
 typedef enum _CH {
     CH_ENDTEST,
     CH_PUTDOCUMENTLOCATOR,
@@ -45,8 +43,6 @@ typedef enum _CH {
     CH_PROCESSINGINSTRUCTION,
     CH_SKIPPEDENTITY
 } CH;
-
-DEFINE_GUID(CLSID_SAXXMLReader60, 0x88d96a0c, 0xf192, 0x11d4, 0xa6,0x5f, 0x00,0x40,0x96,0x32,0x51,0xe5);
 
 static const WCHAR szSimpleXML[] = {
 '<','?','x','m','l',' ','v','e','r','s','i','o','n','=','\"','1','.','0','\"',' ','?','>','\n',
