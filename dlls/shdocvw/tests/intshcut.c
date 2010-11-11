@@ -32,6 +32,7 @@
 #include "shobjidl.h"
 #include "shlguid.h"
 #include "ole2.h"
+#include "mshtml.h"
 #include "initguid.h"
 #include "isguids.h"
 #include "intshcut.h"
@@ -158,6 +159,20 @@ static void check_string_transform(IUniformResourceLocatorA *urlA, LPCSTR input,
     }
 }
 
+static BOOL check_ie(void)
+{
+    IHTMLDocument5 *doc;
+    HRESULT hres;
+
+    hres = CoCreateInstance(&CLSID_HTMLDocument, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+                            &IID_IHTMLDocument5, (void**)&doc);
+    if(FAILED(hres))
+        return FALSE;
+
+    IHTMLDocument5_Release(doc);
+    return TRUE;
+}
+
 static void test_NullURLs(void)
 {
     HRESULT hr;
@@ -210,10 +225,13 @@ static void test_SetURLFlags(void)
 
 static void test_InternetShortcut(void)
 {
-    test_Aggregability();
-    test_QueryInterface();
-    test_NullURLs();
-    test_SetURLFlags();
+    if (check_ie())
+    {
+        test_Aggregability();
+        test_QueryInterface();
+        test_NullURLs();
+        test_SetURLFlags();
+    }
 }
 
 START_TEST(intshcut)
