@@ -58,7 +58,10 @@ typedef struct {
 
 static const IRpcProxyBufferVtbl StdProxy_Vtbl;
 
-#define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
+static inline StdProxyImpl *impl_from_proxy_obj( void *iface )
+{
+    return (StdProxyImpl *)((char*)iface - FIELD_OFFSET(StdProxyImpl, PVtbl));
+}
 
 #if defined(__i386__)
 
@@ -229,7 +232,7 @@ HRESULT StdProxy_Construct(REFIID riid,
 
 static void StdProxy_Destruct(LPRPCPROXYBUFFER iface)
 {
-  ICOM_THIS_MULTI(StdProxyImpl,lpVtbl,iface);
+  StdProxyImpl *This = (StdProxyImpl *)iface;
 
   if (This->pChannel)
     IRpcProxyBuffer_Disconnect(iface);
@@ -245,7 +248,7 @@ static HRESULT WINAPI StdProxy_QueryInterface(LPRPCPROXYBUFFER iface,
                                              REFIID riid,
                                              LPVOID *obj)
 {
-  ICOM_THIS_MULTI(StdProxyImpl,lpVtbl,iface);
+  StdProxyImpl *This = (StdProxyImpl *)iface;
   TRACE("(%p)->QueryInterface(%s,%p)\n",This,debugstr_guid(riid),obj);
 
   if (IsEqualGUID(&IID_IUnknown,riid) ||
@@ -266,7 +269,7 @@ static HRESULT WINAPI StdProxy_QueryInterface(LPRPCPROXYBUFFER iface,
 
 static ULONG WINAPI StdProxy_AddRef(LPRPCPROXYBUFFER iface)
 {
-  ICOM_THIS_MULTI(StdProxyImpl,lpVtbl,iface);
+  StdProxyImpl *This = (StdProxyImpl *)iface;
   TRACE("(%p)->AddRef()\n",This);
 
   return InterlockedIncrement(&This->RefCount);
@@ -275,7 +278,7 @@ static ULONG WINAPI StdProxy_AddRef(LPRPCPROXYBUFFER iface)
 static ULONG WINAPI StdProxy_Release(LPRPCPROXYBUFFER iface)
 {
   ULONG refs;
-  ICOM_THIS_MULTI(StdProxyImpl,lpVtbl,iface);
+  StdProxyImpl *This = (StdProxyImpl *)iface;
   TRACE("(%p)->Release()\n",This);
 
   refs = InterlockedDecrement(&This->RefCount);
@@ -287,7 +290,7 @@ static ULONG WINAPI StdProxy_Release(LPRPCPROXYBUFFER iface)
 static HRESULT WINAPI StdProxy_Connect(LPRPCPROXYBUFFER iface,
                                       LPRPCCHANNELBUFFER pChannel)
 {
-  ICOM_THIS_MULTI(StdProxyImpl,lpVtbl,iface);
+  StdProxyImpl *This = (StdProxyImpl *)iface;
   TRACE("(%p)->Connect(%p)\n",This,pChannel);
 
   This->pChannel = pChannel;
@@ -298,7 +301,7 @@ static HRESULT WINAPI StdProxy_Connect(LPRPCPROXYBUFFER iface,
 
 static VOID WINAPI StdProxy_Disconnect(LPRPCPROXYBUFFER iface)
 {
-  ICOM_THIS_MULTI(StdProxyImpl,lpVtbl,iface);
+  StdProxyImpl *This = (StdProxyImpl *)iface;
   TRACE("(%p)->Disconnect()\n",This);
 
   if (This->base_proxy) IRpcProxyBuffer_Disconnect( This->base_proxy );
@@ -319,7 +322,7 @@ static const IRpcProxyBufferVtbl StdProxy_Vtbl =
 static void StdProxy_GetChannel(LPVOID iface,
                                    LPRPCCHANNELBUFFER *ppChannel)
 {
-  ICOM_THIS_MULTI(StdProxyImpl,PVtbl,iface);
+  StdProxyImpl *This = impl_from_proxy_obj( iface );
   TRACE("(%p)->GetChannel(%p) %s\n",This,ppChannel,This->name);
 
   *ppChannel = This->pChannel;
@@ -328,7 +331,7 @@ static void StdProxy_GetChannel(LPVOID iface,
 static void StdProxy_GetIID(LPVOID iface,
                                const IID **ppiid)
 {
-  ICOM_THIS_MULTI(StdProxyImpl,PVtbl,iface);
+  StdProxyImpl *This = impl_from_proxy_obj( iface );
   TRACE("(%p)->GetIID(%p) %s\n",This,ppiid,This->name);
 
   *ppiid = This->piid;
@@ -338,21 +341,21 @@ HRESULT WINAPI IUnknown_QueryInterface_Proxy(LPUNKNOWN iface,
                                             REFIID riid,
                                             LPVOID *ppvObj)
 {
-  ICOM_THIS_MULTI(StdProxyImpl,PVtbl,iface);
+  StdProxyImpl *This = impl_from_proxy_obj( iface );
   TRACE("(%p)->QueryInterface(%s,%p) %s\n",This,debugstr_guid(riid),ppvObj,This->name);
   return IUnknown_QueryInterface(This->pUnkOuter,riid,ppvObj);
 }
 
 ULONG WINAPI IUnknown_AddRef_Proxy(LPUNKNOWN iface)
 {
-  ICOM_THIS_MULTI(StdProxyImpl,PVtbl,iface);
+  StdProxyImpl *This = impl_from_proxy_obj( iface );
   TRACE("(%p)->AddRef() %s\n",This,This->name);
   return IUnknown_AddRef(This->pUnkOuter);
 }
 
 ULONG WINAPI IUnknown_Release_Proxy(LPUNKNOWN iface)
 {
-  ICOM_THIS_MULTI(StdProxyImpl,PVtbl,iface);
+  StdProxyImpl *This = impl_from_proxy_obj( iface );
   TRACE("(%p)->Release() %s\n",This,This->name);
   return IUnknown_Release(This->pUnkOuter);
 }
