@@ -5896,19 +5896,6 @@ static UINT ACTION_DeleteServices( MSIPACKAGE *package )
     return rc;
 }
 
-static MSIFILE *msi_find_file( MSIPACKAGE *package, LPCWSTR filename )
-{
-    MSIFILE *file;
-
-    LIST_FOR_EACH_ENTRY(file, &package->files, MSIFILE, entry)
-    {
-        if (!strcmpW( file->File, filename ))
-            return file;
-    }
-
-    return NULL;
-}
-
 static UINT ITERATE_InstallODBCDriver( MSIRECORD *rec, LPVOID param )
 {
     MSIPACKAGE *package = param;
@@ -5930,10 +5917,10 @@ static UINT ITERATE_InstallODBCDriver( MSIRECORD *rec, LPVOID param )
     desc = MSI_RecordGetString(rec, 3);
 
     file_key = MSI_RecordGetString( rec, 4 );
-    if (file_key) driver_file = msi_find_file( package, file_key );
+    if (file_key) driver_file = get_loaded_file( package, file_key );
 
     file_key = MSI_RecordGetString( rec, 5 );
-    if (file_key) setup_file = msi_find_file( package, file_key );
+    if (file_key) setup_file = get_loaded_file( package, file_key );
 
     if (!driver_file)
     {
@@ -6010,10 +5997,10 @@ static UINT ITERATE_InstallODBCTranslator( MSIRECORD *rec, LPVOID param )
     desc = MSI_RecordGetString(rec, 3);
 
     file_key = MSI_RecordGetString( rec, 4 );
-    if (file_key) translator_file = msi_find_file( package, file_key );
+    if (file_key) translator_file = get_loaded_file( package, file_key );
 
     file_key = MSI_RecordGetString( rec, 5 );
-    if (file_key) setup_file = msi_find_file( package, file_key );
+    if (file_key) setup_file = get_loaded_file( package, file_key );
 
     if (!translator_file)
     {
@@ -6980,7 +6967,7 @@ static UINT load_assembly(MSIRECORD *rec, LPVOID param)
     assembly->component->Action = assembly->component->ActionRequest;
 
     assembly->feature = find_feature_by_name(list->package, MSI_RecordGetString(rec, 2));
-    assembly->file = msi_find_file(list->package, assembly->component->KeyPath);
+    assembly->file = get_loaded_file(list->package, assembly->component->KeyPath);
 
     if (!assembly->file)
     {
