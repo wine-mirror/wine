@@ -1663,12 +1663,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Map(IWineD3DSurface *iface,
         goto lock_end;
     }
 
-    if (This->Flags & SFLAG_INSYSMEM) {
-        TRACE("Local copy is up to date, not downloading data\n");
-        surface_prepare_system_memory(This); /* Makes sure memory is allocated */
-        goto lock_end;
-    }
-
     /* surface_load_location() does not check if the rectangle specifies
      * the full surface. Most callers don't need that, so do it here. */
     if (pRect && !pRect->top && !pRect->left
