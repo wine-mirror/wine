@@ -156,7 +156,8 @@ static int  get_console_bare_fd(HANDLE hin)
 {
     int         fd;
 
-    if (wine_server_handle_to_fd(hin, 0, &fd, NULL) == STATUS_SUCCESS)
+    if (wine_server_handle_to_fd(wine_server_ptr_handle(console_handle_unmap(hin)),
+                                 0, &fd, NULL) == STATUS_SUCCESS)
         return fd;
     return -1;
 }
@@ -1587,7 +1588,7 @@ BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
 
     if (!GetConsoleMode(hConsoleInput, &mode))
         return FALSE;
-    if ((fd == get_console_bare_fd(hConsoleInput)) == -1)
+    if ((fd = get_console_bare_fd(hConsoleInput)) != -1)
     {
         close(fd);
         is_bare = TRUE;
