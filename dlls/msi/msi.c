@@ -351,7 +351,7 @@ static UINT MSI_ApplyPatchW(LPCWSTR szPatchPackage, LPCWSTR szProductCode, LPCWS
     LPWSTR beg, end, cmd, codes = NULL;
     BOOL succeeded = FALSE;
 
-    static const WCHAR patcheq[] = {'P','A','T','C','H','=',0};
+    static const WCHAR fmt[] = {'%','s',' ','P','A','T','C','H','=','"','%','s','"',0};
     static WCHAR empty[] = {0};
 
     if (!szPatchPackage || !szPatchPackage[0])
@@ -363,18 +363,14 @@ static UINT MSI_ApplyPatchW(LPCWSTR szPatchPackage, LPCWSTR szProductCode, LPCWS
     if (!szCommandLine)
         cmd_ptr = empty;
 
-    size = lstrlenW(cmd_ptr) + lstrlenW(patcheq) + lstrlenW(szPatchPackage) + 1;
+    size = strlenW(cmd_ptr) + strlenW(fmt) + strlenW(szPatchPackage) + 1;
     cmd = msi_alloc(size * sizeof(WCHAR));
     if (!cmd)
     {
         msi_free(codes);
         return ERROR_OUTOFMEMORY;
     }
-
-    lstrcpyW(cmd, cmd_ptr);
-    if (szCommandLine) lstrcatW(cmd, szSpace);
-    lstrcatW(cmd, patcheq);
-    lstrcatW(cmd, szPatchPackage);
+    sprintfW(cmd, fmt, cmd_ptr, szPatchPackage);
 
     if (szProductCode)
         r = MsiConfigureProductExW(szProductCode, INSTALLLEVEL_DEFAULT, INSTALLSTATE_DEFAULT, cmd);
