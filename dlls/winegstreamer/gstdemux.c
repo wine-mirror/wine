@@ -419,7 +419,10 @@ static DWORD CALLBACK push_data(LPVOID iface) {
     DWORD_PTR user;
     HRESULT hr;
 
-    IAsyncReader_Length(This->pInputPin.pReader, &maxlen, &curlen);
+    if (!This->stop)
+        IAsyncReader_Length(This->pInputPin.pReader, &maxlen, &curlen);
+    else
+        maxlen = This->stop;
     TRACE("Starting..\n");
     for (;;) {
         REFERENCE_TIME tStart, tStop;
@@ -816,7 +819,8 @@ static gboolean query_function(GstPad *pad, GstQuery *query) {
         default:
             FIXME("Unhandled query type %i\n", GST_QUERY_TYPE(query));
         case GST_QUERY_URI:
-            return 1;
+        case GST_QUERY_CONVERT:
+            return 0;
     }
 }
 
@@ -830,6 +834,8 @@ static gboolean activate_push(GstPad *pad, gboolean activate) {
             CloseHandle(This->push_thread);
             This->push_thread = NULL;
         }
+        if (This->filter.state == State_Stopped)
+            This->nextofs = This->start;
     } else if (!This->push_thread) {
         TRACE("Activating\n");
         if (This->initial)
@@ -942,8 +948,7 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
         ERR("Returns: %i\n", ret);
         return E_FAIL;
     }
-    This->start = This->nextofs = This->nextpullofs = 0;
-    This->stop = This->filesize;
+    This->start = This->nextofs = This->nextpullofs = This->stop = 0;
 
     /* Add initial pins */
     This->initial = This->discont = 1;
@@ -963,6 +968,8 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
         gst_pad_query_duration(This->ppPins[0]->their_src, &format, &duration);
         for (i = 0; i < This->cStreams; ++i) {
             This->ppPins[i]->seek.llDuration = This->ppPins[i]->seek.llStop = duration / 100;
+            if (!This->ppPins[i]->seek.llDuration)
+                This->ppPins[i]->seek.dwCapabilities = 0;
             WaitForSingleObject(This->ppPins[i]->caps_event, -1);
         }
         hr = S_OK;
@@ -1253,18 +1260,10 @@ static const IBaseFilterVtbl GST_Vtbl = {
 };
 
 static HRESULT WINAPI GST_ChangeCurrent(IMediaSeeking *iface) {
-    GSTOutPin *This = impl_from_IMediaSeeking(iface);
-    GstEvent *ev = gst_event_new_seek(This->seek.dRate, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH, GST_SEEK_TYPE_SET, This->seek.llCurrent * 100, GST_SEEK_TYPE_NONE, -1);
-    TRACE("(%p) going to %i.%i!\n", iface, (int)(This->seek.llCurrent / 10000000), (int)((This->seek.llCurrent / 10000)%1000));
-    gst_pad_push_event(This->my_sink, ev);
     return S_OK;
 }
 
 static HRESULT WINAPI GST_ChangeStop(IMediaSeeking *iface) {
-    GSTOutPin *This = impl_from_IMediaSeeking(iface);
-    GstEvent *ev = gst_event_new_seek(This->seek.dRate, GST_FORMAT_TIME, 0, GST_SEEK_TYPE_NONE, -1, GST_SEEK_TYPE_SET, This->seek.llStop);
-    TRACE("(%p) going to %i.%i!\n", iface, (int)(This->seek.llCurrent / 10000000), (int)((This->seek.llCurrent / 10000)%1000));
-    gst_pad_push_event(This->my_sink, ev);
     return S_OK;
 }
 
@@ -1291,6 +1290,71 @@ static ULONG WINAPI GST_Seeking_Release(IMediaSeeking *iface) {
     return IUnknown_Release((IUnknown *)This);
 }
 
+static HRESULT WINAPI GST_Seeking_GetCurrentPosition(IMediaSeeking *iface, REFERENCE_TIME *pos) {
+    GSTOutPin *This = impl_from_IMediaSeeking(iface);
+    GstFormat format = GST_FORMAT_TIME;
+
+    if (!pos)
+        return E_POINTER;
+
+    if (!This->their_src) {
+        *pos = This->seek.llCurrent;
+        TRACE("Cached value\n");
+        if (This->seek.llDuration)
+            return S_OK;
+        else
+            return E_NOTIMPL;
+    }
+
+    if (!gst_pad_query_position(This->their_src, &format, pos)) {
+        WARN("Could not query position\n");
+        return E_NOTIMPL;
+    }
+    *pos /= 100;
+    return S_OK;
+}
+
+static GstSeekType type_from_flags(DWORD flags) {
+    switch (flags & AM_SEEKING_PositioningBitsMask) {
+    case AM_SEEKING_NoPositioning: return GST_SEEK_TYPE_NONE;
+    case AM_SEEKING_AbsolutePositioning: return GST_SEEK_TYPE_SET;
+    case AM_SEEKING_RelativePositioning: return GST_SEEK_TYPE_CUR;
+    case AM_SEEKING_IncrementalPositioning: return GST_SEEK_TYPE_END;
+    }
+    return GST_SEEK_TYPE_NONE;
+}
+
+
+static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface, REFERENCE_TIME *pCur, DWORD curflags, REFERENCE_TIME *pStop, DWORD stopflags) {
+    HRESULT hr;
+    GSTOutPin *This = impl_from_IMediaSeeking(iface);
+    GstSeekFlags f = 0;
+    GstSeekType curtype, stoptype;
+    GstEvent *e;
+
+    if (!This->seek.llDuration)
+        return E_NOTIMPL;
+
+    hr = SourceSeekingImpl_SetPositions(iface, pCur, curflags, pStop, stopflags);
+    if (!This->their_src)
+        return This->seek.llDuration ? hr : E_NOTIMPL;
+
+    if (curflags & AM_SEEKING_SeekToKeyFrame)
+        f |= GST_SEEK_FLAG_KEY_UNIT;
+    if (curflags & AM_SEEKING_Segment)
+        f |= GST_SEEK_FLAG_SEGMENT;
+    if (!(curflags & AM_SEEKING_NoFlush))
+        f |= GST_SEEK_FLAG_FLUSH;
+
+    curtype = type_from_flags(curflags);
+    stoptype = type_from_flags(stopflags);
+    e = gst_event_new_seek(This->seek.dRate, GST_FORMAT_TIME, f, curtype, pCur ? *pCur * 100 : -1, stoptype, pStop ? *pStop * 100 : -1);
+    if (gst_pad_push_event(This->my_sink, e))
+        return S_OK;
+    else
+        return E_NOTIMPL;
+}
+
 static const IMediaSeekingVtbl GST_Seeking_Vtbl =
 {
     GST_Seeking_QueryInterface,
@@ -1305,9 +1369,9 @@ static const IMediaSeekingVtbl GST_Seeking_Vtbl =
     SourceSeekingImpl_SetTimeFormat,
     SourceSeekingImpl_GetDuration,
     SourceSeekingImpl_GetStopPosition,
-    SourceSeekingImpl_GetCurrentPosition,
+    GST_Seeking_GetCurrentPosition,
     SourceSeekingImpl_ConvertTimeFormat,
-    SourceSeekingImpl_SetPositions,
+    GST_Seeking_SetPositions,
     SourceSeekingImpl_GetPositions,
     SourceSeekingImpl_GetAvailable,
     SourceSeekingImpl_SetRate,
