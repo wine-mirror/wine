@@ -24,7 +24,6 @@
 #include "config.h"
 
 #include <stdarg.h>
-#include <assert.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
