@@ -259,6 +259,42 @@ static BOOL CreateRenderingSubsystem(VideoRendererImpl* This)
     return TRUE;
 }
 
+static void VideoRenderer_AutoShowWindow(VideoRendererImpl *This) {
+    if (!This->init && (!This->WindowPos.right || !This->WindowPos.top))
+    {
+        DWORD style = GetWindowLongW(This->hWnd, GWL_STYLE);
+        DWORD style_ex = GetWindowLongW(This->hWnd, GWL_EXSTYLE);
+
+        if (!This->WindowPos.right)
+        {
+            This->WindowPos.left = This->SourceRect.left;
+            This->WindowPos.right = This->SourceRect.right;
+        }
+        if (!This->WindowPos.bottom)
+        {
+            This->WindowPos.top = This->SourceRect.top;
+            This->WindowPos.bottom = This->SourceRect.bottom;
+        }
+
+        AdjustWindowRectEx(&This->WindowPos, style, TRUE, style_ex);
+
+        TRACE("WindowPos: %d %d %d %d\n", This->WindowPos.left, This->WindowPos.top, This->WindowPos.right, This->WindowPos.bottom);
+        SetWindowPos(This->hWnd, NULL,
+            This->WindowPos.left,
+            This->WindowPos.top,
+            This->WindowPos.right - This->WindowPos.left,
+            This->WindowPos.bottom - This->WindowPos.top,
+            SWP_NOZORDER|SWP_NOMOVE|SWP_DEFERERASE);
+
+        GetClientRect(This->hWnd, &This->DestRect);
+    }
+    else if (!This->init)
+        This->DestRect = This->WindowPos;
+    This->init = TRUE;
+    if (This->AutoShow)
+        ShowWindow(This->hWnd, SW_SHOW);
+}
+
 static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, DWORD size)
 {
     AM_MEDIA_TYPE amt;
@@ -298,41 +334,6 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
     TRACE("biCompression = %s\n", debugstr_an((LPSTR)&(bmiHeader->biCompression), 4));
     TRACE("biSizeImage = %d\n", bmiHeader->biSizeImage);
 
-    if (!This->init)
-    {
-        if (!This->WindowPos.right || !This->WindowPos.top)
-        {
-            DWORD style = GetWindowLongW(This->hWnd, GWL_STYLE);
-            DWORD style_ex = GetWindowLongW(This->hWnd, GWL_EXSTYLE);
-
-            if (!This->WindowPos.right)
-            {
-                This->WindowPos.left = This->SourceRect.left;
-                This->WindowPos.right = This->SourceRect.right;
-            }
-            if (!This->WindowPos.bottom)
-            {
-                This->WindowPos.top = This->SourceRect.top;
-                This->WindowPos.bottom = This->SourceRect.bottom;
-            }
-
-            AdjustWindowRectEx(&This->WindowPos, style, TRUE, style_ex);
-
-            TRACE("WindowPos: %d %d %d %d\n", This->WindowPos.left, This->WindowPos.top, This->WindowPos.right, This->WindowPos.bottom);
-            SetWindowPos(This->hWnd, NULL,
-                This->WindowPos.left,
-                This->WindowPos.top,
-                This->WindowPos.right - This->WindowPos.left,
-                This->WindowPos.bottom - This->WindowPos.top,
-                SWP_NOZORDER|SWP_NOMOVE|SWP_DEFERERASE);
-
-            GetClientRect(This->hWnd, &This->DestRect);
-        }
-        else
-            This->DestRect = This->WindowPos;
-        This->init = TRUE;
-    }
-
     hDC = GetDC(This->hWnd);
 
     if (!hDC) {
@@ -349,8 +350,6 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
                   data, (BITMAPINFO *)bmiHeader, DIB_RGB_COLORS, SRCCOPY);
 
     ReleaseDC(This->hWnd, hDC);
-    if (This->AutoShow)
-        ShowWindow(This->hWnd, SW_SHOW);
 
     return S_OK;
 }
@@ -768,6 +767,9 @@ static HRESULT WINAPI VideoRenderer_Stop(IBaseFilter * iface)
         SetEvent(This->hEvent);
         SetEvent(This->blocked);
         MediaSeekingPassThru_ResetMediaTime(This->seekthru_unk);
+        if (This->AutoShow)
+            /* Black it out */
+            RedrawWindow(This->hWnd, NULL, NULL, RDW_INVALIDATE|RDW_ERASE);
     }
     LeaveCriticalSection(&This->filter.csFilter);
 
@@ -787,6 +789,7 @@ static HRESULT WINAPI VideoRenderer_Pause(IBaseFilter * iface)
         {
             This->pInputPin->end_of_stream = 0;
             ResetEvent(This->hEvent);
+            VideoRenderer_AutoShowWindow(This);
         }
 
         This->filter.state = State_Paused;
@@ -824,6 +827,7 @@ static HRESULT WINAPI VideoRenderer_Run(IBaseFilter * iface, REFERENCE_TIME tSta
         {
             This->pInputPin->end_of_stream = 0;
             ResetEvent(This->hEvent);
+            VideoRenderer_AutoShowWindow(This);
         }
         SetEvent(This->blocked);
 
