@@ -6009,3 +6009,28 @@ HRESULT WINAPI CoInternetCombineIUri(IUri *pBaseUri, IUri *pRelativeUri, DWORD d
 
     return combine_uri(base, relative, dwCombineFlags, ppCombinedUri);
 }
+
+/***********************************************************************
+ *           CoInternetCombineUrlEx (urlmon.@)
+ */
+HRESULT WINAPI CoInternetCombineUrlEx(IUri *pBaseUri, LPCWSTR pwzRelativeUrl, DWORD dwCombineFlags,
+                                      IUri **ppCombinedUri, DWORD_PTR dwReserved)
+{
+    TRACE("(%p %s %x %p %x) stub\n", pBaseUri, debugstr_w(pwzRelativeUrl), dwCombineFlags,
+        ppCombinedUri, (DWORD)dwReserved);
+
+    if(!ppCombinedUri)
+        return E_POINTER;
+
+    if(!pwzRelativeUrl) {
+        *ppCombinedUri = NULL;
+        return E_UNEXPECTED;
+    }
+
+    if(!pBaseUri) {
+        *ppCombinedUri = NULL;
+        return E_INVALIDARG;
+    }
+
+    return E_NOTIMPL;
+}

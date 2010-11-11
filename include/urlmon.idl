@@ -1930,6 +1930,7 @@ cpp_quote("HRESULT WINAPI CreateAsyncBindCtx(DWORD, IBindStatusCallback*, IEnumF
 cpp_quote("HRESULT WINAPI CreateAsyncBindCtxEx(IBindCtx*,DWORD,IBindStatusCallback*,IEnumFORMATETC*,IBindCtx**,DWORD);")
 cpp_quote("HRESULT WINAPI CoInternetCreateSecurityManager(IServiceProvider*,IInternetSecurityManager**,DWORD);")
 cpp_quote("HRESULT WINAPI CoInternetCombineUrl(LPCWSTR,LPCWSTR,DWORD,LPWSTR,DWORD,DWORD*,DWORD);")
+cpp_quote("HRESULT WINAPI CoInternetCombineUrlEx(IUri*,LPCWSTR,DWORD,IUri**,DWORD_PTR);")
 cpp_quote("HRESULT WINAPI CoInternetCompareUrl(LPCWSTR,LPCWSTR,DWORD);")
 cpp_quote("HRESULT WINAPI CoInternetCombineIUri(IUri*,IUri*,DWORD,IUri**,DWORD_PTR);")
 cpp_quote("HRESULT WINAPI CoInternetCreateZoneManager(IServiceProvider*, IInternetZoneManager**, DWORD);")
