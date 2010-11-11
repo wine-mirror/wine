@@ -1882,15 +1882,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Unmap(IWineD3DSurface *iface)
             This->Flags |= SFLAG_INSYSMEM;
         }
 
-        switch(wined3d_settings.rendertargetlock_mode) {
-            case RTL_READTEX:
-                surface_load_location(This, SFLAG_INTEXTURE, NULL /* partial texture loading not supported yet */);
-                /* drop through */
-
-            case RTL_READDRAW:
-                surface_load_location(This, SFLAG_INDRAWABLE, fullsurface ? NULL : &This->dirtyRect);
-                break;
-        }
+        surface_load_location(This, SFLAG_INDRAWABLE, fullsurface ? NULL : &This->dirtyRect);
 
         if (!fullsurface)
         {
@@ -4415,6 +4407,9 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
     }
     else if (flag == SFLAG_INDRAWABLE)
     {
+        if (wined3d_settings.rendertargetlock_mode == RTL_READTEX)
+            surface_load_location(surface, SFLAG_INTEXTURE, NULL);
+
         if (surface->Flags & SFLAG_INTEXTURE)
         {
             RECT r;
