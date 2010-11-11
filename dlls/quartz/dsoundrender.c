@@ -620,6 +620,7 @@ static HRESULT WINAPI DSoundRender_Pause(IBaseFilter * iface)
         if (This->filter.state == State_Stopped)
         {
             This->pInputPin->end_of_stream = 0;
+            ResetEvent(This->state_change);
         }
 
         hr = IDirectSoundBuffer_Stop(This->dsbuffer);
@@ -627,7 +628,6 @@ static HRESULT WINAPI DSoundRender_Pause(IBaseFilter * iface)
             This->filter.state = State_Paused;
 
         ResetEvent(This->blocked);
-        ResetEvent(This->state_change);
     }
     LeaveCriticalSection(&This->filter.csFilter);
 
@@ -856,6 +856,7 @@ static HRESULT WINAPI DSoundRender_InputPin_EndOfStream(IPin * iface)
         }
     }
     MediaSeekingPassThru_EOS(me->seekthru_unk);
+    SetEvent(me->state_change);
     LeaveCriticalSection(This->pin.pCritSec);
 
     return hr;
