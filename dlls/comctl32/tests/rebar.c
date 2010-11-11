@@ -180,6 +180,17 @@ static void dump_sizes(HWND hRebar)
 
 #else
 
+static int string_width(const CHAR *s) {
+    SIZE sz;
+    HDC hdc;
+
+    hdc = CreateCompatibleDC(NULL);
+    GetTextExtentPoint32A(hdc, s, strlen(s), &sz);
+    DeleteDC(hdc);
+
+    return sz.cx;
+}
+
 typedef struct {
     RECT rc;
     DWORD fStyle;
@@ -307,82 +318,82 @@ static void rbsize_results_init(void)
     rbsize_results[12] = rbsize_init(0, 0, 672, 8 + 2*system_font_height, 40, 2, 5);
     rbsize_add_row(&rbsize_results[12], 4 + system_font_height);
     rbsize_add_row(&rbsize_results[12], 4 + system_font_height);
-    rbsize_add_band(&rbsize_results[12], 0, 0, 114, 4 + system_font_height, 0x00, 40);
-    rbsize_add_band(&rbsize_results[12], 114, 0, 184, 4 + system_font_height, 0x00, 70);
-    rbsize_add_band(&rbsize_results[12], 184, 0, 424, 4 + system_font_height, 0x00, 240);
-    rbsize_add_band(&rbsize_results[12], 424, 0, 672, 4 + system_font_height, 0x00, 60);
+    rbsize_add_band(&rbsize_results[12], 0, 0, 87 + string_width("ABC"), 4 + system_font_height, 0x00, 40);
+    rbsize_add_band(&rbsize_results[12], 87 + string_width("ABC"), 0, 157 + string_width("ABC"), 4 + system_font_height, 0x00, 70);
+    rbsize_add_band(&rbsize_results[12], 157 + string_width("ABC"), 0, 397 + string_width("ABC"), 4 + system_font_height, 0x00, 240);
+    rbsize_add_band(&rbsize_results[12], 397 + string_width("ABC"), 0, 672, 4 + system_font_height, 0x00, 60);
     rbsize_add_band(&rbsize_results[12], 0, 4 + system_font_height, 672, 8 + 2*system_font_height, 0x00, 200);
 
     rbsize_results[13] = rbsize_init(0, 0, 672, 8 + 2*system_font_height, 40, 2, 5);
     rbsize_add_row(&rbsize_results[13], 4 + system_font_height);
     rbsize_add_row(&rbsize_results[13], 4 + system_font_height);
-    rbsize_add_band(&rbsize_results[13], 0, 0, 114, 4 + system_font_height, 0x00, 40);
-    rbsize_add_band(&rbsize_results[13], 114, 0, 227, 4 + system_font_height, 0x00, 113);
-    rbsize_add_band(&rbsize_results[13], 227, 0, 424, 4 + system_font_height, 0x00, 197);
-    rbsize_add_band(&rbsize_results[13], 424, 0, 672, 4 + system_font_height, 0x00, 60);
+    rbsize_add_band(&rbsize_results[13], 0, 0, 87 + string_width("ABC"), 4 + system_font_height, 0x00, 40);
+    rbsize_add_band(&rbsize_results[13], 87 + string_width("ABC"), 0, 200 + string_width("ABC"), 4 + system_font_height, 0x00, 113);
+    rbsize_add_band(&rbsize_results[13], 200 + string_width("ABC"), 0, 397 + string_width("ABC"), 4 + system_font_height, 0x00, 197);
+    rbsize_add_band(&rbsize_results[13], 397 + string_width("ABC"), 0, 672, 4 + system_font_height, 0x00, 60);
     rbsize_add_band(&rbsize_results[13], 0, 4 + system_font_height, 672, 8 + 2*system_font_height, 0x00, 200);
 
     rbsize_results[14] = rbsize_init(0, 0, 672, 8 + 2*system_font_height, 40, 2, 5);
     rbsize_add_row(&rbsize_results[14], 4 + system_font_height);
     rbsize_add_row(&rbsize_results[14], 4 + system_font_height);
-    rbsize_add_band(&rbsize_results[14], 0, 0, 114, 4 + system_font_height, 0x00, 40);
-    rbsize_add_band(&rbsize_results[14], 114, 0, 328, 4 + system_font_height, 0x00, 214);
-    rbsize_add_band(&rbsize_results[14], 328, 0, 511, 4 + system_font_height, 0x00, 183);
-    rbsize_add_band(&rbsize_results[14], 511, 0, 672, 4 + system_font_height, 0x00, 161);
+    rbsize_add_band(&rbsize_results[14], 0, 0, 87 + string_width("ABC"), 4 + system_font_height, 0x00, 40);
+    rbsize_add_band(&rbsize_results[14], 87 + string_width("ABC"), 0, 412 - string_width("MMMMMMM"), 4 + system_font_height, 0x00, 325 - string_width("ABC") - string_width("MMMMMMM"));
+    rbsize_add_band(&rbsize_results[14], 412 - string_width("MMMMMMM"), 0, 595 - string_width("MMMMMMM"), 4 + system_font_height, 0x00, 183);
+    rbsize_add_band(&rbsize_results[14], 595 - string_width("MMMMMMM"), 0, 672, 4 + system_font_height, 0x00, 77 + string_width("MMMMMMM"));
     rbsize_add_band(&rbsize_results[14], 0, 4 + system_font_height, 672, 8 + 2*system_font_height, 0x00, 200);
 
     rbsize_results[15] = rbsize_init(0, 0, 672, 8 + 2*system_font_height, 40, 2, 5);
     rbsize_add_row(&rbsize_results[15], 4 + system_font_height);
     rbsize_add_row(&rbsize_results[15], 4 + system_font_height);
-    rbsize_add_band(&rbsize_results[15], 0, 0, 114, 4 + system_font_height, 0x00, 40);
-    rbsize_add_band(&rbsize_results[15], 114, 0, 167, 4 + system_font_height, 0x00, 53);
-    rbsize_add_band(&rbsize_results[15], 167, 0, 511, 4 + system_font_height, 0x00, 344);
-    rbsize_add_band(&rbsize_results[15], 511, 0, 672, 4 + system_font_height, 0x00, 161);
+    rbsize_add_band(&rbsize_results[15], 0, 0, 87 + string_width("ABC"), 4 + system_font_height, 0x00, 40);
+    rbsize_add_band(&rbsize_results[15], 87 + string_width("ABC"), 0, 140 + string_width("ABC"), 4 + system_font_height, 0x00, 53);
+    rbsize_add_band(&rbsize_results[15], 140 + string_width("ABC"), 0, 595 - string_width("MMMMMMM"), 4 + system_font_height, 0x00, 455 - string_width("MMMMMMM") - string_width("ABC"));
+    rbsize_add_band(&rbsize_results[15], 595 - string_width("MMMMMMM"), 0, 672, 4 + system_font_height, 0x00, 77 + string_width("MMMMMMM"));
     rbsize_add_band(&rbsize_results[15], 0, 4 + system_font_height, 672, 8 + 2*system_font_height, 0x00, 200);
 
     rbsize_results[16] = rbsize_init(0, 0, 672, 8 + 2*system_font_height, 40, 2, 5);
     rbsize_add_row(&rbsize_results[16], 4 + system_font_height);
     rbsize_add_row(&rbsize_results[16], 4 + system_font_height);
-    rbsize_add_band(&rbsize_results[16], 0, 0, 114, 4 + system_font_height, 0x00, 40);
-    rbsize_add_band(&rbsize_results[16], 114, 0, 328, 4 + system_font_height, 0x00, 214);
-    rbsize_add_band(&rbsize_results[16], 328, 0, 511, 4 + system_font_height, 0x00, 183);
-    rbsize_add_band(&rbsize_results[16], 511, 0, 672, 4 + system_font_height, 0x00, 161);
+    rbsize_add_band(&rbsize_results[16], 0, 0, 87 + string_width("ABC"), 4 + system_font_height, 0x00, 40);
+    rbsize_add_band(&rbsize_results[16], 87 + string_width("ABC"), 0, 412 - string_width("MMMMMMM"), 4 + system_font_height, 0x00, 325 - string_width("ABC") - string_width("MMMMMMM"));
+    rbsize_add_band(&rbsize_results[16], 412 - string_width("MMMMMMM"), 0, 595 - string_width("MMMMMMM"), 4 + system_font_height, 0x00, 183);
+    rbsize_add_band(&rbsize_results[16], 595 - string_width("MMMMMMM"), 0, 672, 4 + system_font_height, 0x00, 77 + string_width("MMMMMMM"));
     rbsize_add_band(&rbsize_results[16], 0, 4 + system_font_height, 672, 8 + 2*system_font_height, 0x00, 200);
 
     rbsize_results[17] = rbsize_init(0, 0, 672, 8 + 2*system_font_height, 40, 2, 5);
     rbsize_add_row(&rbsize_results[17], 4 + system_font_height);
     rbsize_add_row(&rbsize_results[17], 4 + system_font_height);
-    rbsize_add_band(&rbsize_results[17], 0, 0, 114, 4 + system_font_height, 0x00, 40);
-    rbsize_add_band(&rbsize_results[17], 114, 0, 328, 4 + system_font_height, 0x00, 214);
-    rbsize_add_band(&rbsize_results[17], 328, 0, 511, 4 + system_font_height, 0x00, 183);
-    rbsize_add_band(&rbsize_results[17], 511, 0, 672, 4 + system_font_height, 0x00, 161);
+    rbsize_add_band(&rbsize_results[17], 0, 0, 87 + string_width("ABC"), 4 + system_font_height, 0x00, 40);
+    rbsize_add_band(&rbsize_results[17], 87 + string_width("ABC"), 0, 412 - string_width("MMMMMMM"), 4 + system_font_height, 0x00, 325 - string_width("ABC") - string_width("MMMMMMM"));
+    rbsize_add_band(&rbsize_results[17], 412 - string_width("MMMMMMM"), 0, 595 - string_width("MMMMMMM"), 4 + system_font_height, 0x00, 183);
+    rbsize_add_band(&rbsize_results[17], 595 - string_width("MMMMMMM"), 0, 672, 4 + system_font_height, 0x00, 77 + string_width("MMMMMMM"));
     rbsize_add_band(&rbsize_results[17], 0, 4 + system_font_height, 672, 8 + 2*system_font_height, 0x00, 200);
 
     rbsize_results[18] = rbsize_init(0, 0, 672, 56, 56, 2, 5);
     rbsize_add_row(&rbsize_results[18], 28);
     rbsize_add_row(&rbsize_results[18], 28);
-    rbsize_add_band(&rbsize_results[18], 0, 0, 114, 28, 0x00, 40);
-    rbsize_add_band(&rbsize_results[18], 114, 0, 328, 28, 0x00, 214);
-    rbsize_add_band(&rbsize_results[18], 328, 0, 511, 28, 0x00, 183);
-    rbsize_add_band(&rbsize_results[18], 511, 0, 672, 28, 0x00, 161);
+    rbsize_add_band(&rbsize_results[18], 0, 0, 87 + string_width("ABC"), 28, 0x00, 40);
+    rbsize_add_band(&rbsize_results[18], 87 + string_width("ABC"), 0, 412 - string_width("MMMMMMM"), 28, 0x00, 325 - string_width("ABC") - string_width("MMMMMMM"));
+    rbsize_add_band(&rbsize_results[18], 412 - string_width("MMMMMMM"), 0, 595 - string_width("MMMMMMM"), 28, 0x00, 183);
+    rbsize_add_band(&rbsize_results[18], 595 - string_width("MMMMMMM"), 0, 672, 28, 0x00, 77 + string_width("MMMMMMM"));
     rbsize_add_band(&rbsize_results[18], 0, 28, 672, 56, 0x00, 200);
 
     rbsize_results[19] = rbsize_init(0, 0, 672, 8 + 2*system_font_height, 40, 2, 5);
     rbsize_add_row(&rbsize_results[19], 4 + system_font_height);
     rbsize_add_row(&rbsize_results[19], 4 + system_font_height);
-    rbsize_add_band(&rbsize_results[19], 0, 0, 114, 4 + system_font_height, 0x00, 40);
-    rbsize_add_band(&rbsize_results[19], 114, 0, 328, 4 + system_font_height, 0x00, 214);
-    rbsize_add_band(&rbsize_results[19], 328, 0, 511, 4 + system_font_height, 0x00, 183);
-    rbsize_add_band(&rbsize_results[19], 511, 0, 672, 4 + system_font_height, 0x00, 161);
+    rbsize_add_band(&rbsize_results[19], 0, 0, 87 + string_width("ABC"), 4 + system_font_height, 0x00, 40);
+    rbsize_add_band(&rbsize_results[19], 87 + string_width("ABC"), 0, 412 - string_width("MMMMMMM"), 4 + system_font_height, 0x00, 325 - string_width("ABC") - string_width("MMMMMMM"));
+    rbsize_add_band(&rbsize_results[19], 412 - string_width("MMMMMMM"), 0, 595 - string_width("MMMMMMM"), 4 + system_font_height, 0x00, 183);
+    rbsize_add_band(&rbsize_results[19], 595 - string_width("MMMMMMM"), 0, 672, 4 + system_font_height, 0x00, 77 + string_width("MMMMMMM"));
     rbsize_add_band(&rbsize_results[19], 0, 4 + system_font_height, 672, 8 + 2*system_font_height, 0x00, 200);
 
     rbsize_results[20] = rbsize_init(0, 0, 672, 56, 56, 2, 5);
     rbsize_add_row(&rbsize_results[20], 28);
     rbsize_add_row(&rbsize_results[20], 28);
-    rbsize_add_band(&rbsize_results[20], 0, 0, 114, 28, 0x00, 40);
-    rbsize_add_band(&rbsize_results[20], 114, 0, 328, 28, 0x00, 214);
-    rbsize_add_band(&rbsize_results[20], 328, 0, 511, 28, 0x00, 183);
-    rbsize_add_band(&rbsize_results[20], 511, 0, 672, 28, 0x00, 161);
+    rbsize_add_band(&rbsize_results[20], 0, 0, 87 + string_width("ABC"), 28, 0x00, 40);
+    rbsize_add_band(&rbsize_results[20], 87 + string_width("ABC"), 0, 412 - string_width("MMMMMMM"), 28, 0x00, 325 - string_width("ABC") - string_width("MMMMMMM"));
+    rbsize_add_band(&rbsize_results[20], 412 - string_width("MMMMMMM"), 0,  595 - string_width("MMMMMMM"), 28, 0x00, 183);
+    rbsize_add_band(&rbsize_results[20],  595 - string_width("MMMMMMM"), 0, 672, 28, 0x00, 77 + string_width("MMMMMMM"));
     rbsize_add_band(&rbsize_results[20], 0, 28, 672, 56, 0x00, 200);
 
     rbsize_results[21] = rbsize_init(0, 0, 672, 0, 0, 0, 0);
