@@ -267,7 +267,9 @@ static HRESULT WINAPI Gstreamer_transform_ProcessEnd(TransformFilter *iface) {
     GstTfImpl *This = (GstTfImpl*)iface;
     int ret;
 
+    LeaveCriticalSection(&This->tf.filter.csFilter);
     ret = gst_element_set_state(This->filter, GST_STATE_READY);
+    EnterCriticalSection(&This->tf.filter.csFilter);
     TRACE("Returned: %i\n", ret);
     return S_OK;
 }
