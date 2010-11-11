@@ -447,7 +447,9 @@ NTSTATUS WINAPI RtlRegisterWait(PHANDLE NewWaitObject, HANDLE Object,
         return status;
     }
 
-    status = RtlQueueWorkItem( wait_thread_proc, wait_work_item, Flags & ~WT_EXECUTEONLYONCE );
+    Flags = Flags & (WT_EXECUTEINIOTHREAD | WT_EXECUTEINPERSISTENTTHREAD |
+                     WT_EXECUTELONGFUNCTION | WT_TRANSFER_IMPERSONATION);
+    status = RtlQueueWorkItem( wait_thread_proc, wait_work_item, Flags );
     if (status != STATUS_SUCCESS)
     {
         delete_wait_work_item( wait_work_item );
