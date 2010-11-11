@@ -1655,11 +1655,11 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Map(IWineD3DSurface *iface,
         TRACE("Warning: trying to lock unlockable surf@%p\n", This);
     }
 
-    if (Flags & WINED3DLOCK_DISCARD) {
-        /* Set SFLAG_INSYSMEM, so we'll never try to download the data from the texture. */
-        TRACE("WINED3DLOCK_DISCARD flag passed, marking local copy as up to date\n");
-        surface_prepare_system_memory(This); /* Makes sure memory is allocated */
-        This->Flags |= SFLAG_INSYSMEM;
+    if (Flags & WINED3DLOCK_DISCARD)
+    {
+        TRACE("WINED3DLOCK_DISCARD flag passed, marking SYSMEM as up to date.\n");
+        surface_prepare_system_memory(This);
+        surface_modify_location(This, SFLAG_INSYSMEM, TRUE);
         goto lock_end;
     }
 
