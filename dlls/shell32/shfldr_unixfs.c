@@ -368,8 +368,8 @@ static inline BOOL UNIXFS_is_pidl_of_type(LPCITEMIDLIST pIDL, SHCONTF fFilter) {
  */
 static BOOL UNIXFS_get_unix_path(LPCWSTR pszDosPath, char *pszCanonicalPath)
 {
-    char *pPathTail, *pElement, *pCanonicalTail, szPath[FILENAME_MAX], *pszUnixPath;
-    WCHAR wszDrive[] = { '?', ':', '\\', 0 };
+    char *pPathTail, *pElement, *pCanonicalTail, szPath[FILENAME_MAX], *pszUnixPath, has_failed = 0, mb_path[FILENAME_MAX];
+    WCHAR wszDrive[] = { '?', ':', '\\', 0 }, dospath[PATH_MAX], *dospath_end;
     int cDriveSymlinkLen;
     
     TRACE("(pszDosPath=%s, pszCanonicalPath=%p)\n", debugstr_w(pszDosPath), pszCanonicalPath);
@@ -388,11 +388,26 @@ static BOOL UNIXFS_get_unix_path(LPCWSTR pszDosPath, char *pszCanonicalPath)
     if (szPath[strlen(szPath)-1] != '/') strcat(szPath, "/");
 
     /* Append the part relative to the drive symbolic link target. */
-    pszUnixPath = wine_get_unix_file_name(pszDosPath);
-    if (!pszUnixPath) return FALSE;
+    lstrcpyW(dospath, pszDosPath);
+    dospath_end = dospath + lstrlenW(dospath);
+    while(!(pszUnixPath = wine_get_unix_file_name(dospath))){
+        if(has_failed)
+            *dospath_end = '/';
+        else
+            has_failed = 1;
+        while(*dospath_end != '\\' && *dospath_end != '/')
+            --dospath_end;
+        *dospath_end = '\0';
+    }
     strcat(szPath, pszUnixPath + cDriveSymlinkLen);
     HeapFree(GetProcessHeap(), 0, pszUnixPath);
-    
+
+    if(has_failed && WideCharToMultiByte(CP_UNIXCP, 0, dospath_end + 1, -1,
+                mb_path, FILENAME_MAX, NULL, NULL) > 0){
+        strcat(szPath, "/");
+        strcat(szPath, mb_path);
+    }
+
     /* pCanonicalTail always points to the end of the canonical path constructed
      * thus far. pPathTail points to the still to be processed part of the input
      * path. pElement points to the path element currently investigated.

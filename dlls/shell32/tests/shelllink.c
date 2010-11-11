@@ -204,16 +204,14 @@ static void test_get_set(void)
     /* Test the interaction of SetPath and SetIDList */
     tmp_pidl=NULL;
     r = IShellLinkA_GetIDList(sl, &tmp_pidl);
-    todo_wine ok(r == S_OK, "GetIDList failed (0x%08x)\n", r);
+    ok(r == S_OK, "GetIDList failed (0x%08x)\n", r);
     if (r == S_OK)
     {
         BOOL ret;
 
         strcpy(buffer,"garbage");
         ret = SHGetPathFromIDListA(tmp_pidl, buffer);
-        todo_wine {
         ok(ret, "SHGetPathFromIDListA failed\n");
-        }
         if (ret)
             ok(lstrcmpi(buffer,str)==0, "GetIDList returned '%s'\n", buffer);
         pILFree(tmp_pidl);
@@ -326,11 +324,9 @@ static void test_get_set(void)
     i=0xdeadbeef;
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetIconLocation(sl, buffer, sizeof(buffer), &i);
-    todo_wine {
     ok(r == S_OK, "GetIconLocation failed (0x%08x)\n", r);
-    }
-    ok(*buffer=='\0', "GetIconLocation returned '%s'\n", buffer);
-    ok(i==0, "GetIconLocation returned %d\n", i);
+    todo_wine ok(*buffer=='\0', "GetIconLocation returned '%s'\n", buffer);
+    todo_wine ok(i==0, "GetIconLocation returned %d\n", i);
 
     str="c:\\nonexistent\\file";
     r = IShellLinkA_SetIconLocation(sl, str, 0xbabecafe);
