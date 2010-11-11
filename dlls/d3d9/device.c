@@ -2790,9 +2790,14 @@ static HRESULT WINAPI IDirect3DDevice9ExImpl_GetMaximumFrameLatency(IDirect3DDev
 
 static HRESULT WINAPI IDirect3DDevice9ExImpl_CheckDeviceState(IDirect3DDevice9Ex *iface, HWND dst_window)
 {
-    FIXME("iface %p, dst_window %p stub!\n", iface, dst_window);
+    static int i;
 
-    return WINED3DERR_INVALIDCALL;
+    TRACE("iface %p, dst_window %p stub!\n", iface, dst_window);
+
+    if (!i++)
+        FIXME("iface %p, dst_window %p stub!\n", iface, dst_window);
+
+    return WINED3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DDevice9ExImpl_CreateRenderTargetEx(IDirect3DDevice9Ex *iface,
