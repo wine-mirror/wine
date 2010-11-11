@@ -504,7 +504,7 @@ static void context_apply_fbo_state(struct wined3d_context *context, GLenum targ
 void context_apply_fbo_state_blit(struct wined3d_context *context, GLenum target,
         IWineD3DSurfaceImpl *render_target, IWineD3DSurfaceImpl *depth_stencil, DWORD location)
 {
-    if (surface_is_offscreen(render_target))
+    if (location != SFLAG_INDRAWABLE || surface_is_offscreen(render_target))
     {
         UINT clear_size = (context->gl_info->limits.buffers - 1) * sizeof(*context->blit_targets);
         context->blit_targets[0] = render_target;
