@@ -1924,6 +1924,11 @@ static void test_SetDefaultPrinter(void)
     CHAR    buffer[DEFAULT_PRINTER_SIZE];
     CHAR    org_value[DEFAULT_PRINTER_SIZE];
 
+    if (!default_printer)
+    {
+        skip("There is no default printer installed\n");
+        return;
+    }
 
     if (!pSetDefaultPrinterA)  return;
 	/* only supported on win2k and above */
