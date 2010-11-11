@@ -821,7 +821,7 @@ UINT WINAPI MSI_SetFeatureStateW(MSIPACKAGE* package, LPCWSTR szFeature,
         feature->Attributes & msidbFeatureAttributesDisallowAdvertise)
         return ERROR_FUNCTION_FAILED;
 
-    msi_feature_set_state(package, feature, iState);
+    feature->ActionRequest = iState;
 
     ACTION_UpdateComponentStates(package,szFeature);
 
@@ -917,9 +917,9 @@ UINT MSI_GetFeatureStateW(MSIPACKAGE *package, LPCWSTR szFeature,
         *piInstalled = feature->Installed;
 
     if (piAction)
-        *piAction = feature->Action;
+        *piAction = feature->ActionRequest;
 
-    TRACE("returning %i %i\n", feature->Installed, feature->Action);
+    TRACE("returning %i %i\n", feature->Installed, feature->ActionRequest);
 
     return ERROR_SUCCESS;
 }
