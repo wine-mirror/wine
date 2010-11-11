@@ -396,9 +396,9 @@ static gboolean event_sink(GstPad *pad, GstEvent *event) {
                 IPin_BeginFlush(pin->pin.pin.pConnectedTo);
             return 1;
         case GST_EVENT_FLUSH_STOP:
+            gst_segment_init(pin->segment, GST_FORMAT_TIME);
             if (pin->pin.pin.pConnectedTo)
                 IPin_EndFlush(pin->pin.pin.pConnectedTo);
-            gst_segment_init(pin->segment, GST_FORMAT_TIME);
             return 1;
         default:
             FIXME("%p stub %s\n", event, gst_event_type_get_name(event->type));
@@ -746,12 +746,12 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, gboolean last, GS
     pin->isaud = isaud;
     pin->isvid = isvid;
 
+    gst_segment_init(pin->segment, GST_FORMAT_TIME);
     ret = gst_pad_link(pad, mypad);
     gst_pad_activate_push(mypad, 1);
     FIXME("Linking: %i\n", ret);
     if (ret >= 0) {
         pin->their_src = pad;
-        gst_segment_init(pin->segment, GST_FORMAT_TIME);
         gst_object_ref(pin->their_src);
     }
 }
@@ -772,9 +772,9 @@ static void existing_new_pad(GstElement *bin, GstPad *pad, gboolean last, GSTImp
     for (x = 0; x < This->cStreams; ++x) {
         GSTOutPin *pin = This->ppPins[x];
         if (!pin->their_src) {
+            gst_segment_init(pin->segment, GST_FORMAT_TIME);
             if (gst_pad_link(pad, pin->my_sink) >= 0) {
                 pin->their_src = pad;
-                gst_segment_init(pin->segment, GST_FORMAT_TIME);
                 gst_object_ref(pin->their_src);
                 TRACE("Relinked\n");
                 LeaveCriticalSection(&This->filter.csFilter);
