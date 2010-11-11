@@ -325,8 +325,8 @@ static void test_get_set(void)
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetIconLocation(sl, buffer, sizeof(buffer), &i);
     ok(r == S_OK, "GetIconLocation failed (0x%08x)\n", r);
-    todo_wine ok(*buffer=='\0', "GetIconLocation returned '%s'\n", buffer);
-    todo_wine ok(i==0, "GetIconLocation returned %d\n", i);
+    ok(*buffer=='\0', "GetIconLocation returned '%s'\n", buffer);
+    ok(i==0, "GetIconLocation returned %d\n", i);
 
     str="c:\\nonexistent\\file";
     r = IShellLinkA_SetIconLocation(sl, str, 0xbabecafe);
@@ -868,6 +868,65 @@ static void test_shdefextracticon(void)
     ok(SUCCEEDED(res), "SHDefExtractIconA failed, res=%x\n", res);
 }
 
+static void test_GetIconLocation(void)
+{
+    IShellLinkA *sl;
+    const char *str;
+    char buffer[INFOTIPSIZE], mypath[MAX_PATH];
+    int i;
+    HRESULT r;
+    LPITEMIDLIST pidl;
+
+    r = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IShellLinkA, (LPVOID*)&sl);
+    ok(r == S_OK, "no IID_IShellLinkA (0x%08x)\n", r);
+    if(r != S_OK)
+        return;
+
+    i = 0xdeadbeef;
+    strcpy(buffer, "garbage");
+    r = IShellLinkA_GetIconLocation(sl, buffer, sizeof(buffer), &i);
+    ok(r == S_OK, "GetIconLocation failed (0x%08x)\n", r);
+    ok(*buffer == '\0', "GetIconLocation returned '%s'\n", buffer);
+    ok(i == 0, "GetIconLocation returned %d\n", i);
+
+    str = "c:\\some\\path";
+    r = IShellLinkA_SetPath(sl, str);
+    ok(r == S_FALSE || r == S_OK, "SetPath failed (0x%08x)\n", r);
+
+    i = 0xdeadbeef;
+    strcpy(buffer, "garbage");
+    r = IShellLinkA_GetIconLocation(sl, buffer, sizeof(buffer), &i);
+    ok(r == S_OK, "GetIconLocation failed (0x%08x)\n", r);
+    ok(*buffer == '\0', "GetIconLocation returned '%s'\n", buffer);
+    ok(i == 0, "GetIconLocation returned %d\n", i);
+
+    GetWindowsDirectoryA(mypath, sizeof(mypath) - 12);
+    strcat(mypath, "\\regedit.exe");
+    pidl = path_to_pidl(mypath);
+    r = IShellLinkA_SetIDList(sl, pidl);
+    ok(r == S_OK, "SetPath failed (0x%08x)\n", r);
+
+    i = 0xdeadbeef;
+    strcpy(buffer, "garbage");
+    r = IShellLinkA_GetIconLocation(sl, buffer, sizeof(buffer), &i);
+    ok(r == S_OK, "GetIconLocation failed (0x%08x)\n", r);
+    ok(*buffer == '\0', "GetIconLocation returned '%s'\n", buffer);
+    ok(i == 0, "GetIconLocation returned %d\n", i);
+
+    str = "c:\\nonexistent\\file";
+    r = IShellLinkA_SetIconLocation(sl, str, 0xbabecafe);
+    ok(r == S_OK, "SetIconLocation failed (0x%08x)\n", r);
+
+    i = 0xdeadbeef;
+    r = IShellLinkA_GetIconLocation(sl, buffer, sizeof(buffer), &i);
+    ok(r == S_OK, "GetIconLocation failed (0x%08x)\n", r);
+    ok(lstrcmpi(buffer,str) == 0, "GetIconLocation returned '%s'\n", buffer);
+    ok(i == 0xbabecafe, "GetIconLocation returned %d'\n", i);
+
+    IShellLinkA_Release(sl);
+}
+
 START_TEST(shelllink)
 {
     HRESULT r;
@@ -891,6 +950,7 @@ START_TEST(shelllink)
     test_load_save();
     test_datalink();
     test_shdefextracticon();
+    test_GetIconLocation();
 
     CoUninitialize();
 }

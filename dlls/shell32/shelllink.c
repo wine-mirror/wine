@@ -1593,78 +1593,19 @@ static HRESULT WINAPI IShellLinkA_fnSetShowCmd(IShellLinkA * iface, INT iShowCmd
     return NOERROR;
 }
 
-static HRESULT SHELL_PidlGeticonLocationA(IShellFolder* psf, LPCITEMIDLIST pidl,
-                                          LPSTR pszIconPath, int cchIconPath, int* piIcon)
-{
-    LPCITEMIDLIST pidlLast;
-
-    HRESULT hr = SHBindToParent(pidl, &IID_IShellFolder, (LPVOID*)&psf, &pidlLast);
-
-    if (SUCCEEDED(hr)) {
-	IExtractIconA* pei;
-
-	hr = IShellFolder_GetUIObjectOf(psf, 0, 1, &pidlLast, &IID_IExtractIconA, NULL, (LPVOID*)&pei);
-
-	if (SUCCEEDED(hr)) {
-	    hr = IExtractIconA_GetIconLocation(pei, 0, pszIconPath, MAX_PATH, piIcon, NULL);
-
-	    IExtractIconA_Release(pei);
-	}
-
-	IShellFolder_Release(psf);
-    }
-
-    return hr;
-}
-
 static HRESULT WINAPI IShellLinkA_fnGetIconLocation(IShellLinkA * iface, LPSTR pszIconPath,INT cchIconPath,INT *piIcon)
 {
     IShellLinkImpl *This = (IShellLinkImpl *)iface;
 
     TRACE("(%p)->(%p len=%u iicon=%p)\n", This, pszIconPath, cchIconPath, piIcon);
 
-    pszIconPath[0] = 0;
     *piIcon = This->iIcoNdx;
 
     if (This->sIcoPath)
-    {
         WideCharToMultiByte(CP_ACP, 0, This->sIcoPath, -1, pszIconPath, cchIconPath, NULL, NULL);
-	return S_OK;
-    }
+    else
+        pszIconPath[0] = 0;
 
-    if (This->pPidl || This->sPath)
-    {
-	IShellFolder* pdsk;
-
-	HRESULT hr = SHGetDesktopFolder(&pdsk);
-
-	if (SUCCEEDED(hr))
-        {
-	    /* first look for an icon using the PIDL (if present) */
-	    if (This->pPidl)
-		hr = SHELL_PidlGeticonLocationA(pdsk, This->pPidl, pszIconPath, cchIconPath, piIcon);
-	    else
-		hr = E_FAIL;
-
-	    /* if we couldn't find an icon yet, look for it using the file system path */
-	    if (FAILED(hr) && This->sPath)
-            {
-		LPITEMIDLIST pidl;
-
-		hr = IShellFolder_ParseDisplayName(pdsk, 0, NULL, This->sPath, NULL, &pidl, NULL);
-
-		if (SUCCEEDED(hr)) {
-		    hr = SHELL_PidlGeticonLocationA(pdsk, pidl, pszIconPath, cchIconPath, piIcon);
-
-		    SHFree(pidl);
-		}
-	    }
-
-	    IShellFolder_Release(pdsk);
-	}
-
-	return hr;
-    }
     return S_OK;
 }
 
@@ -1984,78 +1925,19 @@ static HRESULT WINAPI IShellLinkW_fnSetShowCmd(IShellLinkW * iface, INT iShowCmd
     return S_OK;
 }
 
-static HRESULT SHELL_PidlGeticonLocationW(IShellFolder* psf, LPCITEMIDLIST pidl,
-                                          LPWSTR pszIconPath, int cchIconPath, int* piIcon)
-{
-    LPCITEMIDLIST pidlLast;
-
-    HRESULT hr = SHBindToParent(pidl, &IID_IShellFolder, (LPVOID*)&psf, &pidlLast);
-
-    if (SUCCEEDED(hr)) {
-	IExtractIconW* pei;
-
-	hr = IShellFolder_GetUIObjectOf(psf, 0, 1, &pidlLast, &IID_IExtractIconW, NULL, (LPVOID*)&pei);
-
-	if (SUCCEEDED(hr)) {
-	    hr = IExtractIconW_GetIconLocation(pei, 0, pszIconPath, MAX_PATH, piIcon, NULL);
-
-	    IExtractIconW_Release(pei);
-	}
-
-	IShellFolder_Release(psf);
-    }
-
-    return hr;
-}
-
 static HRESULT WINAPI IShellLinkW_fnGetIconLocation(IShellLinkW * iface, LPWSTR pszIconPath,INT cchIconPath,INT *piIcon)
 {
     IShellLinkImpl *This = impl_from_IShellLinkW(iface);
 
     TRACE("(%p)->(%p len=%u iicon=%p)\n", This, pszIconPath, cchIconPath, piIcon);
 
-    pszIconPath[0] = 0;
     *piIcon = This->iIcoNdx;
 
     if (This->sIcoPath)
-    {
 	lstrcpynW(pszIconPath, This->sIcoPath, cchIconPath);
-	return S_OK;
-    }
+    else
+	pszIconPath[0] = 0;
 
-    if (This->pPidl || This->sPath)
-    {
-	IShellFolder* pdsk;
-
-	HRESULT hr = SHGetDesktopFolder(&pdsk);
-
-	if (SUCCEEDED(hr))
-        {
-	    /* first look for an icon using the PIDL (if present) */
-	    if (This->pPidl)
-		hr = SHELL_PidlGeticonLocationW(pdsk, This->pPidl, pszIconPath, cchIconPath, piIcon);
-	    else
-		hr = E_FAIL;
-
-	    /* if we couldn't find an icon yet, look for it using the file system path */
-	    if (FAILED(hr) && This->sPath)
-            {
-		LPITEMIDLIST pidl;
-
-		hr = IShellFolder_ParseDisplayName(pdsk, 0, NULL, This->sPath, NULL, &pidl, NULL);
-
-		if (SUCCEEDED(hr))
-                {
-		    hr = SHELL_PidlGeticonLocationW(pdsk, pidl, pszIconPath, cchIconPath, piIcon);
-
-		    SHFree(pidl);
-		}
-	    }
-
-	    IShellFolder_Release(pdsk);
-	}
-	return hr;
-    }
     return S_OK;
 }
 
