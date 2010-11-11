@@ -1121,6 +1121,8 @@ then
                 [AC_DEFINE(HAVE_XMLNEWDOCPI,1,[Define if libxml2 has the xmlNewDocPI function])],,$ac_xml_libs)
              AC_CHECK_LIB(xml2, xmlSchemaSetValidStructuredErrors,
                 [AC_DEFINE(HAVE_XMLSCHEMASSETVALIDSTRUCTUREDERRORS,1,[Define if libxml2 has the xmlSchemaSetValidStructuredErrors function])],,$ac_xml_libs)
+             AC_CHECK_LIB(xml2, xmlFirstElementChild,
+                [AC_DEFINE(HAVE_XMLFIRSTELEMENTCHILD,1,[Define if libxml2 has the xmlFirstElementChild function])],,$ac_xml_libs)
              AC_CHECK_TYPE([xmlDocProperties],
                 [AC_DEFINE(HAVE_XMLDOC_PROPERTIES,1,[Define if libxml2 has the xmlDocProperties enum])],,[[#include <libxml/tree.h>]])
         ])

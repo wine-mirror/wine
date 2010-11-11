@@ -112,6 +112,18 @@ BOOL dispex_query_interface(DispatchEx*,REFIID,void**);
 
 #include <libxml/xmlerror.h>
 
+#ifndef HAVE_XMLFIRSTELEMENTCHILD
+static inline xmlNodePtr xmlFirstElementChild(xmlNodePtr parent)
+{
+    xmlNodePtr child;
+    for (child = parent->children; child != NULL; child = child->next)
+        if (child->type == XML_ELEMENT_NODE)
+            break;
+
+    return child;
+}
+#endif
+
 /* constructors */
 extern IUnknown         *create_domdoc( xmlNodePtr document );
 extern IUnknown         *create_xmldoc( void );

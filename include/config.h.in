@@ -1108,6 +1108,9 @@
 /* Define if libxml2 has the xmlDocProperties enum */
 #undef HAVE_XMLDOC_PROPERTIES
 
+/* Define if libxml2 has the xmlFirstElementChild function */
+#undef HAVE_XMLFIRSTELEMENTCHILD
+
 /* Define if libxml2 has the xmlNewDocPI function */
 #undef HAVE_XMLNEWDOCPI
 
