@@ -54,8 +54,6 @@ static const WCHAR IDispatchW[] = { 'I','D','i','s','p','a','t','c','h',0};
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 WINE_DECLARE_DEBUG_CHANNEL(olerelay);
 
-#define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
-
 static HRESULT TMarshalDispatchChannel_Create(
     IRpcChannelBuffer *pDelegateChannel, REFIID tmarshal_riid,
     IRpcChannelBuffer **ppChannel);
@@ -405,6 +403,11 @@ typedef struct _TMProxyImpl {
     IRpcProxyBuffer			*dispatch_proxy;
 } TMProxyImpl;
 
+static inline TMProxyImpl *impl_from_IRpcProxyBuffer( IRpcProxyBuffer *iface )
+{
+    return (TMProxyImpl *)((char*)iface - FIELD_OFFSET(TMProxyImpl, lpvtbl2));
+}
+
 static HRESULT WINAPI
 TMProxyImpl_QueryInterface(LPRPCPROXYBUFFER iface, REFIID riid, LPVOID *ppv)
 {
@@ -421,7 +424,7 @@ TMProxyImpl_QueryInterface(LPRPCPROXYBUFFER iface, REFIID riid, LPVOID *ppv)
 static ULONG WINAPI
 TMProxyImpl_AddRef(LPRPCPROXYBUFFER iface)
 {
-    ICOM_THIS_MULTI(TMProxyImpl,lpvtbl2,iface);
+    TMProxyImpl *This = impl_from_IRpcProxyBuffer( iface );
     ULONG refCount = InterlockedIncrement(&This->ref);
 
     TRACE("(%p)->(ref before=%u)\n",This, refCount - 1);
@@ -432,7 +435,7 @@ TMProxyImpl_AddRef(LPRPCPROXYBUFFER iface)
 static ULONG WINAPI
 TMProxyImpl_Release(LPRPCPROXYBUFFER iface)
 {
-    ICOM_THIS_MULTI(TMProxyImpl,lpvtbl2,iface);
+    TMProxyImpl *This = impl_from_IRpcProxyBuffer( iface );
     ULONG refCount = InterlockedDecrement(&This->ref);
 
     TRACE("(%p)->(ref before=%u)\n",This, refCount + 1);
@@ -455,7 +458,7 @@ static HRESULT WINAPI
 TMProxyImpl_Connect(
     LPRPCPROXYBUFFER iface,IRpcChannelBuffer* pRpcChannelBuffer)
 {
-    ICOM_THIS_MULTI(TMProxyImpl, lpvtbl2, iface);
+    TMProxyImpl *This = impl_from_IRpcProxyBuffer( iface );
 
     TRACE("(%p)\n", pRpcChannelBuffer);
 
@@ -483,7 +486,7 @@ TMProxyImpl_Connect(
 static void WINAPI
 TMProxyImpl_Disconnect(LPRPCPROXYBUFFER iface)
 {
-    ICOM_THIS_MULTI(TMProxyImpl, lpvtbl2, iface);
+    TMProxyImpl *This = impl_from_IRpcProxyBuffer( iface );
 
     TRACE("()\n");
 
