@@ -2162,8 +2162,7 @@ static UINT set_file_install_states( MSIPACKAGE *package )
         DWORD file_size;
         LPWSTR p;
 
-        if (!comp)
-            continue;
+        if (!comp->Enabled) continue;
 
         if (file->IsCompressed)
             comp->ForceLocalState = TRUE;
@@ -2264,9 +2263,6 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     ACTION_GetComponentInstallStates(package);
     ACTION_GetFeatureInstallStates(package);
 
-    TRACE("Calculating file install states\n");
-    set_file_install_states( package );
-
     if (!process_overrides( package, msi_get_property_int( package->db, szlevel, 1 ) ))
     {
         TRACE("Evaluating feature conditions\n");
@@ -2290,6 +2286,9 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
         else
             comp->Enabled = TRUE;
     }
+
+    TRACE("Calculating file install states\n");
+    set_file_install_states( package );
 
     msi_set_property( package->db, szCosting, szOne );
     /* set default run level if not set */
