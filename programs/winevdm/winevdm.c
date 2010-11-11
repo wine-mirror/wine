@@ -102,6 +102,30 @@ typedef struct {
 #include "poppack.h"
 
 /***********************************************************************
+ *           start_dos_exe
+ */
+static void start_dos_exe( LPCSTR filename, LPCSTR cmdline )
+{
+    MEMORY_BASIC_INFORMATION mem_info;
+    const char *reason;
+
+    if (VirtualQuery( NULL, &mem_info, sizeof(mem_info) ) && mem_info.State != MEM_FREE)
+    {
+        __wine_load_dos_exe( filename, cmdline );
+        if (GetLastError() == ERROR_NOT_SUPPORTED)
+            reason = "because vm86 mode is not supported on this platform";
+        else
+            reason = wine_dbg_sprintf( "It failed with error code %u", GetLastError() );
+    }
+    else reason = "because the DOS memory range is unavailable";
+
+    WINE_MESSAGE( "winevdm: Cannot start DOS application %s\n", filename );
+    WINE_MESSAGE( "         %s.\n", reason );
+    WINE_MESSAGE( "         Try running this application with DOSBox.\n" );
+    ExitProcess(1);
+}
+
+/***********************************************************************
  *           read_pif_file
  *pif386rec_tu
  * Read a pif file and return the header and possibly the 286 (real mode)
@@ -244,8 +268,7 @@ static VOID pif_cmd( char *filename, char *cmdline)
      * - hot key's
      * - etc.
      */ 
-    __wine_load_dos_exe( progpath, cmdline );
-    return;
+    start_dos_exe( progpath, cmdline );
 }
 
 /***********************************************************************
@@ -382,7 +405,6 @@ int main( int argc, char *argv[] )
     STARTUPINFOA info;
     char *cmdline, *appname, **first_arg;
     char *p;
-    MEMORY_BASIC_INFORMATION mem_info;
 
     if (!argv[1]) usage();
 
@@ -439,15 +461,9 @@ int main( int argc, char *argv[] )
                 pif_cmd( appname, cmdline + 1);
             else
             {
-                if (!VirtualQuery( NULL, &mem_info, sizeof(mem_info) ) || mem_info.State == MEM_FREE)
-                {
-                    WINE_MESSAGE( "winevdm: unable to exec '%s': DOS memory range unavailable\n", appname );
-                    ExitProcess(1);
-                }
-
                 /* try DOS format */
                 /* loader expects arguments to be regular C strings */
-                __wine_load_dos_exe( appname, cmdline + 1 );
+                start_dos_exe( appname, cmdline + 1 );
             }
             /* if we get back here it failed */
             instance = GetLastError();
