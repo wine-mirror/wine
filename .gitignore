@@ -135,6 +135,7 @@ dlls/rpcrt4/tests/server.h
 dlls/rpcrt4/tests/server_c.c
 dlls/rpcrt4/tests/server_s.c
 dlls/shdocvw/shdocvw_v1.tlb
+dlls/shell32/AUTHORS
 dlls/stdole2.tlb/std_ole_v2.tlb
 dlls/stdole32.tlb/std_ole_v1.tlb
 dlls/sti/sti_wia.h
