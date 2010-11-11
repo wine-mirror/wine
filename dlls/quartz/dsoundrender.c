@@ -457,6 +457,19 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
             ERR("Cannot create Direct Sound object (%x)\n", hr);
         else
             hr = IDirectSound_SetCooperativeLevel(pDSoundRender->dsound, GetDesktopWindow(), DSSCL_PRIORITY);
+        if (SUCCEEDED(hr)) {
+            IDirectSoundBuffer *buf;
+            DSBUFFERDESC buf_desc;
+            memset(&buf_desc,0,sizeof(DSBUFFERDESC));
+            buf_desc.dwSize = sizeof(DSBUFFERDESC);
+            buf_desc.dwFlags = DSBCAPS_PRIMARYBUFFER;
+            hr = IDirectSound_CreateSoundBuffer(pDSoundRender->dsound, &buf_desc, &buf, NULL);
+            if (SUCCEEDED(hr)) {
+                IDirectSoundBuffer_Play(buf, 0, 0, DSBPLAY_LOOPING);
+                IUnknown_Release(buf);
+            }
+            hr = S_OK;
+        }
     }
 
     if (SUCCEEDED(hr))
