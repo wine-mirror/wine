@@ -173,6 +173,63 @@ static BOOL check_ie(void)
     return TRUE;
 }
 
+static void test_ReadAndWriteProperties(void)
+{
+    HRESULT hr;
+    IUniformResourceLocatorA *urlA;
+    IPropertySetStorage *pPropSetStg;
+
+    hr = CoCreateInstance(&CLSID_InternetShortcut, NULL, CLSCTX_ALL, &IID_IUniformResourceLocatorA, (void**)&urlA);
+    if (hr == S_OK)
+    {
+        WCHAR iconPath[] = {'f','i','l','e',':','/','/','/','C',':','/','a','r','b','i','t','r','a','r','y','/','i','c','o','n','/','p','a','t','h',0};
+        int iconIndex = 7;
+        IPropertyStorage *pPropStgWrite;
+        IPropertyStorage *pPropStgRead;
+        PROPSPEC ps[2];
+        PROPVARIANT pv[2];
+        PROPVARIANT pvread[2];
+        ps[0].ulKind = PRSPEC_PROPID;
+        ps[0].propid = PID_IS_ICONFILE;
+        ps[1].ulKind = PRSPEC_PROPID;
+        ps[1].propid = PID_IS_ICONINDEX;
+        pv[0].vt = VT_LPWSTR;
+        pv[0].pwszVal = (void *) iconPath;
+        pv[1].vt = VT_I4;
+        pv[1].iVal = iconIndex;
+
+        hr = urlA->lpVtbl->QueryInterface(urlA, &IID_IPropertySetStorage, (void **) &pPropSetStg);
+        ok(hr == S_OK, "Unable to get an IPropertySetStorage, hr=0x%x\n", hr);
+
+        hr = IPropertySetStorage_Open(pPropSetStg, &FMTID_Intshcut, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, &pPropStgWrite);
+        ok(hr == S_OK, "Unable to get an IPropertyStorage for writing, hr=0x%x\n", hr);
+
+        hr = IPropertyStorage_WriteMultiple(pPropStgWrite, 2, ps, pv, 0);
+        ok(hr == S_OK, "Unable to set properties, hr=0x%x\n", hr);
+
+        hr = IPropertyStorage_Commit(pPropStgWrite, STGC_DEFAULT);
+        ok(hr == S_OK, "Failed to commit properties, hr=0x%x\n", hr);
+
+        pPropStgWrite->lpVtbl->Release(pPropStgWrite);
+
+        hr = IPropertySetStorage_Open(pPropSetStg, &FMTID_Intshcut, STGM_READ | STGM_SHARE_EXCLUSIVE, &pPropStgRead);
+        ok(hr == S_OK, "Unable to get an IPropertyStorage for reading, hr=0x%x\n", hr);
+
+        hr = IPropertyStorage_ReadMultiple(pPropStgRead, 2, ps, pvread);
+        ok(hr == S_OK, "Unable to read properties, hr=0x%x\n", hr);
+
+        ok(pvread[1].iVal == iconIndex, "Read wrong icon index: %d\n", pvread[1].iVal);
+
+        ok(lstrcmpW(pvread[0].pwszVal, iconPath) == 0, "Wrong icon path read: %s\n",wine_dbgstr_w(pvread[0].pwszVal));
+
+        IPropertyStorage_Release(pPropStgRead);
+        IPropertySetStorage_Release(pPropSetStg);
+        urlA->lpVtbl->Release(urlA);
+    }
+    else
+        skip("could not create a CLSID_InternetShortcut for property tests, hr=0x%x\n", hr);
+}
+
 static void test_NullURLs(void)
 {
     HRESULT hr;
@@ -231,6 +288,7 @@ static void test_InternetShortcut(void)
         test_QueryInterface();
         test_NullURLs();
         test_SetURLFlags();
+        test_ReadAndWriteProperties();
     }
 }
 
