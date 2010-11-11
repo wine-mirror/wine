@@ -642,11 +642,14 @@ static void make_argb_color(CONST struct argb_conversion_info *info, CONST DWORD
  * Pixels outsize the source rect are blacked out.
  * Works only for ARGB formats with 1 - 4 bytes per pixel.
  */
-static void copy_simple_data(CONST BYTE *src,  UINT  srcpitch, POINT  srcsize, CONST PixelFormatDesc  *srcformat,
-                             BYTE *dest, UINT destpitch, POINT destsize, CONST PixelFormatDesc *destformat)
+static void copy_simple_data(CONST BYTE *src, UINT srcpitch, POINT srcsize,
+                             CONST PixelFormatDesc *srcformat,
+                             BYTE *dest, UINT destpitch, POINT destsize,
+                             CONST PixelFormatDesc *destformat,
+                             D3DCOLOR colorkey)
 {
-    struct argb_conversion_info conv_info;
-    DWORD channels[4];
+    struct argb_conversion_info conv_info, ck_conv_info;
+    DWORD channels[4], pixel;
     UINT minwidth, minheight;
     UINT x, y;
 
@@ -655,6 +658,14 @@ static void copy_simple_data(CONST BYTE *src,  UINT  srcpitch, POINT  srcsize, C
 
     minwidth  = (srcsize.x < destsize.x) ? srcsize.x : destsize.x;
     minheight = (srcsize.y < destsize.y) ? srcsize.y : destsize.y;
+
+    if(colorkey) {
+        /* color keys are always represented in D3DFMT_A8R8G8B8 format */
+        const PixelFormatDesc *ckformatdesc;
+
+        ckformatdesc = get_format_info(D3DFMT_A8R8G8B8);
+        init_argb_conversion_info(srcformat, ckformatdesc, &ck_conv_info);
+    }
 
     for(y = 0;y < minheight;y++) {
         const BYTE *srcptr = src + y *  srcpitch;
@@ -665,6 +676,14 @@ static void copy_simple_data(CONST BYTE *src,  UINT  srcpitch, POINT  srcsize, C
 
             /* recombine the components */
             if(destformat->type == FORMAT_ARGB) make_argb_color(&conv_info, channels, (DWORD*)destptr);
+
+            if(colorkey) {
+                get_relevant_argb_components(&ck_conv_info, *(const DWORD*)srcptr, channels);
+                make_argb_color(&ck_conv_info, channels, &pixel);
+                if(pixel == colorkey)
+                    /* make this pixel transparent */
+                    *(DWORD *)destptr &= ~conv_info.destmask[0];
+            }
 
             srcptr  +=  srcformat->bytes_per_pixel;
             destptr += destformat->bytes_per_pixel;
@@ -685,16 +704,27 @@ static void copy_simple_data(CONST BYTE *src,  UINT  srcpitch, POINT  srcsize, C
  * using a point filter.
  * Works only for ARGB formats with 1 - 4 bytes per pixel.
  */
-static void point_filter_simple_data(CONST BYTE *src,  UINT  srcpitch, POINT  srcsize, CONST PixelFormatDesc  *srcformat,
-                                     BYTE *dest, UINT destpitch, POINT destsize, CONST PixelFormatDesc *destformat)
+static void point_filter_simple_data(CONST BYTE *src, UINT srcpitch, POINT srcsize,
+                                     CONST PixelFormatDesc *srcformat,
+                                     BYTE *dest, UINT destpitch, POINT destsize,
+                                     CONST PixelFormatDesc *destformat,
+                                     D3DCOLOR colorkey)
 {
-    struct argb_conversion_info conv_info;
-    DWORD channels[4];
+    struct argb_conversion_info conv_info, ck_conv_info;
+    DWORD channels[4], pixel;
 
     UINT x, y;
 
     ZeroMemory(channels, sizeof(channels));
     init_argb_conversion_info(srcformat, destformat, &conv_info);
+
+    if(colorkey) {
+        /* color keys are always represented in D3DFMT_A8R8G8B8 format */
+        const PixelFormatDesc *ckformatdesc;
+
+        ckformatdesc = get_format_info(D3DFMT_A8R8G8B8);
+        init_argb_conversion_info(srcformat, ckformatdesc, &ck_conv_info);
+    }
 
     for(y = 0;y < destsize.y;y++) {
         BYTE *destptr = dest + y * destpitch;
@@ -708,6 +738,14 @@ static void point_filter_simple_data(CONST BYTE *src,  UINT  srcpitch, POINT  sr
 
             /* recombine the components */
             if(destformat->type == FORMAT_ARGB) make_argb_color(&conv_info, channels, (DWORD*)destptr);
+
+            if(colorkey) {
+                get_relevant_argb_components(&ck_conv_info, *(const DWORD*)srcptr, channels);
+                make_argb_color(&ck_conv_info, channels, &pixel);
+                if(pixel == colorkey)
+                    /* make this pixel transparent */
+                    *(DWORD *)destptr &= ~conv_info.destmask[0];
+            }
 
             destptr += destformat->bytes_per_pixel;
         }
@@ -797,11 +835,13 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(LPDIRECT3DSURFACE9 pDestSurface,
 
     if((dwFilter & 0xF) == D3DX_FILTER_NONE) {
         copy_simple_data(pSrcMemory, SrcPitch, srcsize, srcformatdesc,
-                         lockrect.pBits, lockrect.Pitch, destsize, destformatdesc);
+                         lockrect.pBits, lockrect.Pitch, destsize, destformatdesc,
+                         Colorkey);
     } else /*if((dwFilter & 0xF) == D3DX_FILTER_POINT) */ {
         /* always apply a point filter until D3DX_FILTER_LINEAR, D3DX_FILTER_TRIANGLE and D3DX_FILTER_BOX are implemented */
         point_filter_simple_data(pSrcMemory, SrcPitch, srcsize, srcformatdesc,
-                                 lockrect.pBits, lockrect.Pitch, destsize, destformatdesc);
+                                 lockrect.pBits, lockrect.Pitch, destsize, destformatdesc,
+                                 Colorkey);
     }
 
     IDirect3DSurface9_UnlockRect(pDestSurface);
