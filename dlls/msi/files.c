@@ -186,7 +186,8 @@ static BOOL installfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
             return FALSE;
 
         msi_file_update_ui(package, f, szInstallFiles);
-        msi_create_directory(package, f->Component->Directory);
+        if (!f->Component->assembly)
+            msi_create_directory(package, f->Component->Directory);
 
         *path = strdupW(f->TargetPath);
         *attrs = f->Attributes;
@@ -210,6 +211,7 @@ static BOOL installfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
 UINT ACTION_InstallFiles(MSIPACKAGE *package)
 {
     MSIMEDIAINFO *mi;
+    MSICOMPONENT *comp;
     UINT rc = ERROR_SUCCESS;
     MSIFILE *file;
 
@@ -234,7 +236,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
             if (rc != ERROR_SUCCESS)
             {
                 ERR("Failed to ready media for %s\n", debugstr_w(file->File));
-                break;
+                goto done;
             }
 
             data.mi = mi;
@@ -247,7 +249,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
             {
                 ERR("Failed to extract cabinet: %s\n", debugstr_w(mi->cabinet));
                 rc = ERROR_INSTALL_FAILURE;
-                break;
+                goto done;
             }
         }
 
@@ -255,11 +257,11 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
         {
             LPWSTR source = resolve_file_source(package, file);
 
-            TRACE("file paths %s to %s\n", debugstr_w(source),
-                  debugstr_w(file->TargetPath));
+            TRACE("copying %s to %s\n", debugstr_w(source), debugstr_w(file->TargetPath));
 
             msi_file_update_ui(package, file, szInstallFiles);
-            msi_create_directory(package, file->Component->Directory);
+            if (!file->Component->assembly)
+                msi_create_directory(package, file->Component->Directory);
 
             rc = copy_install_file(package, file, source);
             if (rc != ERROR_SUCCESS)
@@ -268,19 +270,32 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
                     debugstr_w(file->TargetPath), rc);
                 rc = ERROR_INSTALL_FAILURE;
                 msi_free(source);
-                break;
+                goto done;
             }
-
             msi_free(source);
         }
         else if (file->state != msifs_installed)
         {
             ERR("compressed file wasn't installed (%s)\n", debugstr_w(file->TargetPath));
             rc = ERROR_INSTALL_FAILURE;
-            break;
+            goto done;
+        }
+    }
+    LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
+    {
+        if (comp->Enabled && comp->assembly && !comp->assembly->installed)
+        {
+            rc = install_assembly( package, comp );
+            if (rc != ERROR_SUCCESS)
+            {
+                ERR("Failed to install assembly\n");
+                rc = ERROR_INSTALL_FAILURE;
+                break;
+            }
         }
     }
 
+done:
     msi_free_media_info(mi);
     return rc;
 }

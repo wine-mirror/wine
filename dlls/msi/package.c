@@ -111,6 +111,14 @@ static void free_extension( MSIEXTENSION *ext )
     msi_free( ext );
 }
 
+static void free_assembly( MSIASSEMBLY *assembly )
+{
+    msi_free( assembly->display_name );
+    if (assembly->tempdir) RemoveDirectoryW( assembly->tempdir );
+    msi_free( assembly->tempdir );
+    msi_free( assembly );
+}
+
 static void free_package_structures( MSIPACKAGE *package )
 {
     INT i;
@@ -154,6 +162,7 @@ static void free_package_structures( MSIPACKAGE *package )
         msi_free( comp->Condition );
         msi_free( comp->KeyPath );
         msi_free( comp->FullKeypath );
+        if (comp->assembly) free_assembly( comp->assembly );
         msi_free( comp );
     }
 
@@ -296,6 +305,9 @@ static void MSI_FreePackage( MSIOBJECTHDR *arg)
     msiobj_release( &package->db->hdr );
     free_package_structures(package);
     CloseHandle( package->log_file );
+
+    if (package->cache_net) IAssemblyCache_Release( package->cache_net );
+    if (package->cache_sxs) IAssemblyCache_Release( package->cache_sxs );
 }
 
 static UINT create_temp_property_table(MSIPACKAGE *package)

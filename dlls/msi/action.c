@@ -35,7 +35,6 @@
 #include "shlobj.h"
 #include "objbase.h"
 #include "mscoree.h"
-#include "fusion.h"
 #include "shlwapi.h"
 #include "wine/unicode.h"
 #include "winver.h"
@@ -110,8 +109,6 @@ static const WCHAR szIsolateComponents[] =
     {'I','s','o','l','a','t','e','C','o','m','p','o','n','e','n','t','s',0};
 static const WCHAR szMigrateFeatureStates[] =
     {'M','i','g','r','a','t','e','F','e','a','t','u','r','e','S','t','a','t','e','s',0};
-static const WCHAR szMsiPublishAssemblies[] = 
-    {'M','s','i','P','u','b','l','i','s','h','A','s','s','e','m','b','l','i','e','s',0};
 static const WCHAR szMsiUnpublishAssemblies[] = 
     {'M','s','i','U','n','p','u','b','l','i','s','h','A','s','s','e','m','b','l','i','e','s',0};
 static const WCHAR szInstallODBC[] = 
@@ -1227,6 +1224,7 @@ static UINT load_component( MSIRECORD *row, LPVOID param )
     comp->Installed = INSTALLSTATE_UNKNOWN;
     msi_component_set_state(package, comp, INSTALLSTATE_UNKNOWN);
 
+    comp->assembly = load_assembly( package, comp );
     return ERROR_SUCCESS;
 }
 
@@ -2151,6 +2149,43 @@ static BOOL hash_matches( MSIFILE *file )
     return !memcmp( &hash, &file->hash, sizeof(MSIFILEHASHINFO) );
 }
 
+static WCHAR *get_temp_dir( void )
+{
+    static UINT id;
+    WCHAR tmp[MAX_PATH], dir[MAX_PATH];
+
+    GetTempPathW( MAX_PATH, tmp );
+    for (;;)
+    {
+        if (!GetTempFileNameW( tmp, szMsi, ++id, dir )) return NULL;
+        if (CreateDirectoryW( dir, NULL )) break;
+    }
+    return strdupW( dir );
+}
+
+static void set_target_path( MSIPACKAGE *package, MSIFILE *file )
+{
+    MSIASSEMBLY *assembly = file->Component->assembly;
+
+    TRACE("file %s is named %s\n", debugstr_w(file->File), debugstr_w(file->FileName));
+
+    msi_free( file->TargetPath );
+    if (assembly)
+    {
+        if (!assembly->tempdir) assembly->tempdir = get_temp_dir();
+        file->TargetPath = build_directory_name( 2, assembly->tempdir, file->FileName );
+        track_tempfile( package, file->TargetPath );
+    }
+    else
+    {
+        WCHAR *dir = resolve_folder( package, file->Component->Directory, FALSE, FALSE, TRUE, NULL );
+        file->TargetPath = build_directory_name( 2, dir, file->FileName );
+        msi_free( dir );
+    }
+
+    TRACE("resolves to %s\n", debugstr_w(file->TargetPath));
+}
+
 static UINT set_file_install_states( MSIPACKAGE *package )
 {
     VS_FIXEDFILEINFO *file_version;
@@ -2158,27 +2193,18 @@ static UINT set_file_install_states( MSIPACKAGE *package )
 
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
-        MSICOMPONENT* comp = file->Component;
+        MSICOMPONENT *comp = file->Component;
         DWORD file_size;
-        LPWSTR p;
 
         if (!comp->Enabled) continue;
 
         if (file->IsCompressed)
             comp->ForceLocalState = TRUE;
 
-        /* calculate target */
-        p = resolve_folder(package, comp->Directory, FALSE, FALSE, TRUE, NULL);
-        msi_free(file->TargetPath);
+        set_target_path( package, file );
 
-        TRACE("file %s is named %s\n", debugstr_w(file->File), debugstr_w(file->FileName));
-
-        file->TargetPath = build_directory_name(2, p, file->FileName);
-        msi_free(p);
-
-        TRACE("file %s resolves to %s\n", debugstr_w(file->File), debugstr_w(file->TargetPath));
-
-        if (GetFileAttributesW(file->TargetPath) == INVALID_FILE_ATTRIBUTES)
+        if ((comp->assembly && !comp->assembly->installed) ||
+            GetFileAttributesW(file->TargetPath) == INVALID_FILE_ATTRIBUTES)
         {
             file->state = msifs_missing;
             comp->Cost += file->FileSize;
@@ -6696,481 +6722,6 @@ static UINT ACTION_RemoveEnvironmentStrings( MSIPACKAGE *package )
     msiobj_release( &view->hdr );
 
     return rc;
-}
-
-typedef struct tagMSIASSEMBLY
-{
-    struct list entry;
-    MSICOMPONENT *component;
-    MSIFEATURE *feature;
-    MSIFILE *file;
-    LPWSTR manifest;
-    LPWSTR application;
-    LPWSTR display_name;
-    DWORD attributes;
-    BOOL installed;
-} MSIASSEMBLY;
-
-static HRESULT (WINAPI *pCreateAssemblyCache)(IAssemblyCache **ppAsmCache,
-                                              DWORD dwReserved);
-static HRESULT (WINAPI *pLoadLibraryShim)(LPCWSTR szDllName, LPCWSTR szVersion,
-                                          LPVOID pvReserved, HMODULE *phModDll);
-
-static BOOL init_functionpointers(void)
-{
-    HRESULT hr;
-    HMODULE hfusion;
-    HMODULE hmscoree;
-
-    static const WCHAR szFusion[] = {'f','u','s','i','o','n','.','d','l','l',0};
-
-    hmscoree = LoadLibraryA("mscoree.dll");
-    if (!hmscoree)
-    {
-        WARN("mscoree.dll not available\n");
-        return FALSE;
-    }
-
-    pLoadLibraryShim = (void *)GetProcAddress(hmscoree, "LoadLibraryShim");
-    if (!pLoadLibraryShim)
-    {
-        WARN("LoadLibraryShim not available\n");
-        FreeLibrary(hmscoree);
-        return FALSE;
-    }
-
-    hr = pLoadLibraryShim(szFusion, NULL, NULL, &hfusion);
-    if (FAILED(hr))
-    {
-        WARN("fusion.dll not available\n");
-        FreeLibrary(hmscoree);
-        return FALSE;
-    }
-
-    pCreateAssemblyCache = (void *)GetProcAddress(hfusion, "CreateAssemblyCache");
-
-    FreeLibrary(hmscoree);
-    return TRUE;
-}
-
-static UINT install_assembly(MSIPACKAGE *package, MSIASSEMBLY *assembly,
-                             LPWSTR path)
-{
-    IAssemblyCache *cache;
-    MSIRECORD *uirow;
-    HRESULT hr;
-    UINT r = ERROR_FUNCTION_FAILED;
-
-    TRACE("installing assembly: %s\n", debugstr_w(path));
-
-    uirow = MSI_CreateRecord( 2 );
-    MSI_RecordSetStringW( uirow, 2, assembly->display_name );
-    ui_actiondata( package, szMsiPublishAssemblies, uirow );
-    msiobj_release( &uirow->hdr );
-
-    if (assembly->feature)
-        msi_feature_set_state(package, assembly->feature, INSTALLSTATE_LOCAL);
-
-    if (assembly->manifest)
-        FIXME("Manifest unhandled\n");
-
-    if (assembly->application)
-    {
-        FIXME("Assembly should be privately installed\n");
-        return ERROR_SUCCESS;
-    }
-
-    if (assembly->attributes == msidbAssemblyAttributesWin32)
-    {
-        FIXME("Win32 assemblies not handled\n");
-        return ERROR_SUCCESS;
-    }
-
-    hr = pCreateAssemblyCache(&cache, 0);
-    if (FAILED(hr))
-        goto done;
-
-    hr = IAssemblyCache_InstallAssembly(cache, 0, path, NULL);
-    if (FAILED(hr))
-        ERR("Failed to install assembly: %s %08x\n", debugstr_w(path), hr);
-
-    r = ERROR_SUCCESS;
-
-done:
-    IAssemblyCache_Release(cache);
-    return r;
-}
-
-typedef struct tagASSEMBLY_LIST
-{
-    MSIPACKAGE *package;
-    IAssemblyCache *cache;
-    struct list *assemblies;
-} ASSEMBLY_LIST;
-
-typedef struct tagASSEMBLY_NAME
-{
-    LPWSTR name;
-    LPWSTR version;
-    LPWSTR culture;
-    LPWSTR pubkeytoken;
-} ASSEMBLY_NAME;
-
-static UINT parse_assembly_name(MSIRECORD *rec, LPVOID param)
-{
-    ASSEMBLY_NAME *asmname = param;
-    LPCWSTR name = MSI_RecordGetString(rec, 2);
-    LPWSTR val = msi_dup_record_field(rec, 3);
-
-    static const WCHAR Name[] = {'N','a','m','e',0};
-    static const WCHAR Version[] = {'V','e','r','s','i','o','n',0};
-    static const WCHAR Culture[] = {'C','u','l','t','u','r','e',0};
-    static const WCHAR PublicKeyToken[] = {
-        'P','u','b','l','i','c','K','e','y','T','o','k','e','n',0};
-
-    if (!strcmpiW(name, Name))
-        asmname->name = val;
-    else if (!strcmpiW(name, Version))
-        asmname->version = val;
-    else if (!strcmpiW(name, Culture))
-        asmname->culture = val;
-    else if (!strcmpiW(name, PublicKeyToken))
-        asmname->pubkeytoken = val;
-    else
-        msi_free(val);
-
-    return ERROR_SUCCESS;
-}
-
-static void append_str(LPWSTR *str, DWORD *size, LPCWSTR append)
-{
-    if (!*str)
-    {
-        *size = lstrlenW(append) + 1;
-        *str = msi_alloc((*size) * sizeof(WCHAR));
-        lstrcpyW(*str, append);
-        return;
-    }
-
-    (*size) += lstrlenW(append);
-    *str = msi_realloc(*str, (*size) * sizeof(WCHAR));
-    lstrcatW(*str, append);
-}
-
-static WCHAR *get_assembly_display_name( MSIDATABASE *db, MSICOMPONENT *comp )
-{
-    static const WCHAR separator[] = {',',' ',0};
-    static const WCHAR Version[] = {'V','e','r','s','i','o','n','=',0};
-    static const WCHAR Culture[] = {'C','u','l','t','u','r','e','=',0};
-    static const WCHAR PublicKeyToken[] = {'P','u','b','l','i','c','K','e','y','T','o','k','e','n','=',0};
-    static const WCHAR query[] = {
-        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-        '`','M','s','i','A','s','s','e','m','b','l','y','N','a','m','e','`',' ',
-        'W','H','E','R','E',' ','`','C','o','m','p','o','n','e','n','t','_','`',
-        '=','\'','%','s','\'',0};
-    ASSEMBLY_NAME name;
-    MSIQUERY *view;
-    LPWSTR display_name;
-    DWORD size;
-    UINT r;
-
-    display_name = NULL;
-    memset( &name, 0, sizeof(ASSEMBLY_NAME) );
-
-    r = MSI_OpenQuery( db, &view, query, comp->Component );
-    if (r != ERROR_SUCCESS)
-        return NULL;
-
-    MSI_IterateRecords( view, NULL, parse_assembly_name, &name );
-    msiobj_release( &view->hdr );
-
-    if (!name.name)
-    {
-        ERR("No assembly name specified!\n");
-        return NULL;
-    }
-
-    append_str( &display_name, &size, name.name );
-
-    if (name.version)
-    {
-        append_str( &display_name, &size, separator );
-        append_str( &display_name, &size, Version );
-        append_str( &display_name, &size, name.version );
-    }
-    if (name.culture)
-    {
-        append_str( &display_name, &size, separator );
-        append_str( &display_name, &size, Culture );
-        append_str( &display_name, &size, name.culture );
-    }
-    if (name.pubkeytoken)
-    {
-        append_str( &display_name, &size, separator );
-        append_str( &display_name, &size, PublicKeyToken );
-        append_str( &display_name, &size, name.pubkeytoken );
-    }
-
-    msi_free( name.name );
-    msi_free( name.version );
-    msi_free( name.culture );
-    msi_free( name.pubkeytoken );
-
-    return display_name;
-}
-
-static BOOL check_assembly_installed( MSIDATABASE *db, IAssemblyCache *cache, MSICOMPONENT *comp )
-{
-    ASSEMBLY_INFO asminfo;
-    LPWSTR disp;
-    BOOL found = FALSE;
-    HRESULT hr;
-
-    disp = get_assembly_display_name( db, comp );
-    if (!disp)
-        return FALSE;
-
-    memset( &asminfo, 0, sizeof(ASSEMBLY_INFO) );
-    asminfo.cbAssemblyInfo = sizeof(ASSEMBLY_INFO);
-
-    hr = IAssemblyCache_QueryAssemblyInfo( cache, QUERYASMINFO_FLAG_VALIDATE, disp, &asminfo );
-    if (SUCCEEDED(hr))
-        found = (asminfo.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED);
-
-    msi_free( disp );
-    return found;
-}
-
-static UINT load_assembly(MSIRECORD *rec, LPVOID param)
-{
-    ASSEMBLY_LIST *list = param;
-    MSIASSEMBLY *assembly;
-    LPCWSTR component;
-
-    assembly = msi_alloc_zero(sizeof(MSIASSEMBLY));
-    if (!assembly)
-        return ERROR_OUTOFMEMORY;
-
-    component = MSI_RecordGetString(rec, 1);
-    assembly->component = get_loaded_component(list->package, component);
-    if (!assembly->component)
-        return ERROR_SUCCESS;
-
-    if (assembly->component->ActionRequest != INSTALLSTATE_LOCAL &&
-        assembly->component->ActionRequest != INSTALLSTATE_SOURCE)
-    {
-        TRACE("Component not scheduled for installation: %s\n", debugstr_w(component));
-        assembly->component->Action = assembly->component->Installed;
-        return ERROR_SUCCESS;
-    }
-    assembly->component->Action = assembly->component->ActionRequest;
-
-    assembly->feature = find_feature_by_name(list->package, MSI_RecordGetString(rec, 2));
-    assembly->file = get_loaded_file(list->package, assembly->component->KeyPath);
-
-    if (!assembly->file)
-    {
-        ERR("File %s not found\n", debugstr_w(assembly->component->KeyPath));
-        return ERROR_FUNCTION_FAILED;
-    }
-
-    assembly->manifest = strdupW(MSI_RecordGetString(rec, 3));
-    assembly->application = strdupW(MSI_RecordGetString(rec, 4));
-    assembly->attributes = MSI_RecordGetInteger(rec, 5);
-
-    if (assembly->application)
-    {
-        WCHAR version[24];
-        DWORD size = sizeof(version)/sizeof(WCHAR);
-
-        /* FIXME: we should probably check the manifest file here */
-
-        if (!MsiGetFileVersionW(assembly->file->TargetPath, version, &size, NULL, NULL) &&
-            (!assembly->file->Version || strcmpW(version, assembly->file->Version) >= 0))
-        {
-            assembly->installed = TRUE;
-        }
-    }
-    else
-        assembly->installed = check_assembly_installed(list->package->db,
-                                                       list->cache,
-                                                       assembly->component);
-
-    list_add_head(list->assemblies, &assembly->entry);
-    return ERROR_SUCCESS;
-}
-
-static UINT load_assemblies(MSIPACKAGE *package, struct list *assemblies)
-{
-    IAssemblyCache *cache = NULL;
-    ASSEMBLY_LIST list;
-    MSIQUERY *view;
-    HRESULT hr;
-    UINT r;
-
-    static const WCHAR query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','M','s','i','A','s','s','e','m','b','l','y','`',0};
-
-    r = MSI_DatabaseOpenViewW(package->db, query, &view);
-    if (r != ERROR_SUCCESS)
-        return ERROR_SUCCESS;
-
-    hr = pCreateAssemblyCache(&cache, 0);
-    if (FAILED(hr))
-        return ERROR_FUNCTION_FAILED;
-
-    list.package = package;
-    list.cache = cache;
-    list.assemblies = assemblies;
-
-    r = MSI_IterateRecords(view, NULL, load_assembly, &list);
-    msiobj_release(&view->hdr);
-
-    IAssemblyCache_Release(cache);
-
-    return r;
-}
-
-static void free_assemblies(struct list *assemblies)
-{
-    struct list *item, *cursor;
-
-    LIST_FOR_EACH_SAFE(item, cursor, assemblies)
-    {
-        MSIASSEMBLY *assembly = LIST_ENTRY(item, MSIASSEMBLY, entry);
-
-        list_remove(&assembly->entry);
-        msi_free(assembly->application);
-        msi_free(assembly->manifest);
-        msi_free(assembly->display_name);
-        msi_free(assembly);
-    }
-}
-
-static BOOL find_assembly(struct list *assemblies, LPCWSTR file, MSIASSEMBLY **out)
-{
-    MSIASSEMBLY *assembly;
-
-    LIST_FOR_EACH_ENTRY(assembly, assemblies, MSIASSEMBLY, entry)
-    {
-        if (!strcmpW( assembly->file->File, file ))
-        {
-            *out = assembly;
-            return TRUE;
-        }
-    }
-
-    return FALSE;
-}
-
-static BOOL installassembly_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
-                               LPWSTR *path, DWORD *attrs, PVOID user)
-{
-    MSIASSEMBLY *assembly;
-    WCHAR temppath[MAX_PATH];
-    struct list *assemblies = user;
-    UINT r;
-
-    if (!find_assembly(assemblies, file, &assembly))
-        return FALSE;
-
-    GetTempPathW(MAX_PATH, temppath);
-    PathAddBackslashW(temppath);
-    lstrcatW(temppath, assembly->file->FileName);
-
-    if (action == MSICABEXTRACT_BEGINEXTRACT)
-    {
-        if (assembly->installed)
-            return FALSE;
-
-        *path = strdupW(temppath);
-        *attrs = assembly->file->Attributes;
-    }
-    else if (action == MSICABEXTRACT_FILEEXTRACTED)
-    {
-        assembly->installed = TRUE;
-
-        r = install_assembly(package, assembly, temppath);
-        if (r != ERROR_SUCCESS)
-            ERR("Failed to install assembly\n");
-    }
-
-    return TRUE;
-}
-
-static UINT ACTION_MsiPublishAssemblies( MSIPACKAGE *package )
-{
-    UINT r;
-    struct list assemblies = LIST_INIT(assemblies);
-    MSIASSEMBLY *assembly;
-    MSIMEDIAINFO *mi;
-
-    if (!init_functionpointers() || !pCreateAssemblyCache)
-        return ERROR_FUNCTION_FAILED;
-
-    r = load_assemblies(package, &assemblies);
-    if (r != ERROR_SUCCESS)
-        goto done;
-
-    if (list_empty(&assemblies))
-        goto done;
-
-    mi = msi_alloc_zero(sizeof(MSIMEDIAINFO));
-    if (!mi)
-    {
-        r = ERROR_OUTOFMEMORY;
-        goto done;
-    }
-
-    LIST_FOR_EACH_ENTRY(assembly, &assemblies, MSIASSEMBLY, entry)
-    {
-        if (assembly->installed && !mi->is_continuous)
-            continue;
-
-        if (assembly->file->IsCompressed)
-        {
-            if (assembly->file->disk_id != mi->disk_id || mi->is_continuous)
-            {
-                MSICABDATA data;
-
-                r = ready_media(package, assembly->file, mi);
-                if (r != ERROR_SUCCESS)
-                {
-                    ERR("Failed to ready media\n");
-                    break;
-                }
-
-                data.mi = mi;
-                data.package = package;
-                data.cb = installassembly_cb;
-                data.user = &assemblies;
-
-                if (!msi_cabextract(package, mi, &data))
-                {
-                    ERR("Failed to extract cabinet: %s\n", debugstr_w(mi->cabinet));
-                    r = ERROR_FUNCTION_FAILED;
-                    break;
-                }
-            }
-        }
-        else
-        {
-            LPWSTR source = resolve_file_source(package, assembly->file);
-
-            r = install_assembly(package, assembly, source);
-            if (r != ERROR_SUCCESS)
-                ERR("Failed to install assembly\n");
-
-            msi_free(source);
-        }
-
-        /* FIXME: write Installer assembly reg values */
-    }
-
-done:
-    free_assemblies(&assemblies);
-    return r;
 }
 
 static UINT ACTION_ValidateProductID( MSIPACKAGE *package )
