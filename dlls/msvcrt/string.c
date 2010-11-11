@@ -680,7 +680,8 @@ int CDECL _itoa_s(int value, char *str, MSVCRT_size_t size, int radix)
     char buffer[33], *pos;
     size_t len;
 
-    if (!str || !size || radix < 2 || radix > 36)
+    if (!MSVCRT_CHECK_PMT(str != NULL) || !MSVCRT_CHECK_PMT(size > 0) ||
+        !MSVCRT_CHECK_PMT(radix >= 2) || !MSVCRT_CHECK_PMT(radix <= 36))
     {
         if (str && size)
             str[0] = '\0';
@@ -737,6 +738,7 @@ int CDECL _itoa_s(int value, char *str, MSVCRT_size_t size, int radix)
             *p++ = *pos--;
 
         str[0] = '\0';
+        MSVCRT_INVALID_PMT("str[size] is too small");
         *MSVCRT__errno() = MSVCRT_ERANGE;
         return MSVCRT_ERANGE;
     }
@@ -831,8 +833,8 @@ int CDECL MSVCRT__ui64toa_s(unsigned __int64 value, char *str,
     char buffer[65], *pos;
     int digit;
 
-    if(!str || radix<2 || radix>36) {
-        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+    if (!MSVCRT_CHECK_PMT(str != NULL) || !MSVCRT_CHECK_PMT(size > 0) ||
+        !MSVCRT_CHECK_PMT(radix>=2) || !MSVCRT_CHECK_PMT(radix<=36)) {
         *MSVCRT__errno() = MSVCRT_EINVAL;
         return MSVCRT_EINVAL;
     }
@@ -851,7 +853,7 @@ int CDECL MSVCRT__ui64toa_s(unsigned __int64 value, char *str,
     }while(value != 0);
 
     if(buffer-pos+65 > size) {
-        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+        MSVCRT_INVALID_PMT("str[size] is too small");
         *MSVCRT__errno() = MSVCRT_EINVAL;
         return MSVCRT_EINVAL;
     }

@@ -43,6 +43,13 @@ static char *buf_to_string(const unsigned char *bin, int len, int nr)
     return buf[nr];
 }
 
+static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
+        const wchar_t *function, const wchar_t *file,
+        unsigned line, uintptr_t arg)
+{
+    /* we just ignore handler calls */
+}
+
 #define expect_eq(expr, value, type, format) { type ret = (expr); ok((value) == ret, #expr " expected " format " got " format "\n", value, ret); }
 #define expect_bin(buf, value, len) { ok(memcmp((buf), value, len) == 0, "Binary buffer mismatch - expected %s, got %s\n", buf_to_string((unsigned char *)value, len, 1), buf_to_string((buf), len, 0)); }
 
@@ -66,6 +73,7 @@ static errno_t (__cdecl *p_strlwr_s)(char*,size_t);
 static errno_t (__cdecl *p_ultoa_s)(__msvcrt_ulong,char*,size_t,int);
 static int *p__mb_cur_max;
 static unsigned char *p_mbctype;
+static _invalid_parameter_handler (__cdecl *p_set_invalid_parameter_handler)(_invalid_parameter_handler);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hMsvcrt,y)
 #define SET(x,y) SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y)
@@ -1293,6 +1301,10 @@ static void test__itoa_s(void)
         return;
     }
 
+    if (p_set_invalid_parameter_handler)
+        ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+                "Invalid parameter handler was already set\n");
+
     errno = EBADF;
     ret = p_itoa_s(0, NULL, 0, 0);
     ok(ret == EINVAL, "Expected _itoa_s to return EINVAL, got %d\n", ret);
@@ -1372,6 +1384,9 @@ static void test__itoa_s(void)
     ok(!strcmp(buffer, "-12345678"),
        "Expected output buffer string to be \"-12345678\", got \"%s\"\n",
        buffer);
+    if (p_set_invalid_parameter_handler)
+        ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+                "Cannot reset invalid parameter handler\n");
 }
 
 static void test__strlwr_s(void)
@@ -1705,6 +1720,7 @@ START_TEST(string)
     p_itoa_s = (void *)GetProcAddress(hMsvcrt, "_itoa_s");
     p_strlwr_s = (void *)GetProcAddress(hMsvcrt, "_strlwr_s");
     p_ultoa_s = (void *)GetProcAddress(hMsvcrt, "_ultoa_s");
+    p_set_invalid_parameter_handler = (void *) GetProcAddress(hMsvcrt, "_set_invalid_parameter_handler");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */

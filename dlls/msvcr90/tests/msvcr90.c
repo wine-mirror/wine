@@ -63,6 +63,7 @@ static char **p_sys_errlist;
 static char** (__cdecl *p__sys_errlist)(void);
 static __int64 (__cdecl *p_strtoi64)(const char *, char **, int);
 static unsigned __int64 (__cdecl *p_strtoui64)(const char *, char **, int);
+static errno_t (__cdecl *p_itoa_s)(int,char*,size_t,int);
 
 static void* (WINAPI *pEncodePointer)(void *);
 
@@ -282,6 +283,108 @@ static void test__strtoi64(void)
     ok(errno == 0xdeadbeef, "errno = %x\n", errno);
 }
 
+static void test__itoa_s(void)
+{
+    errno_t ret;
+    char buffer[33];
+
+    if (!p_itoa_s)
+    {
+        win_skip("Skipping _itoa_s tests\n");
+        return;
+    }
+
+    if(!p_set_invalid_parameter_handler) {
+        win_skip("_set_invalid_parameter_handler not found\n");
+        return;
+    }
+
+    /* _itoa_s (on msvcr90) doesn't set errno (in case of errors) while msvcrt does
+     * as we always set errno in our msvcrt implementation, don't test here that errno
+     * isn't changed
+     */
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p_itoa_s(0, NULL, 0, 0);
+    ok(ret == EINVAL, "Expected _itoa_s to return EINVAL, got %d\n", ret);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    memset(buffer, 'X', sizeof(buffer));
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p_itoa_s(0, buffer, 0, 0);
+    ok(ret == EINVAL, "Expected _itoa_s to return EINVAL, got %d\n", ret);
+    ok(buffer[0] == 'X', "Expected the output buffer to be untouched\n");
+    CHECK_CALLED(invalid_parameter_handler);
+
+    memset(buffer, 'X', sizeof(buffer));
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p_itoa_s(0, buffer, sizeof(buffer), 0);
+    ok(ret == EINVAL, "Expected _itoa_s to return EINVAL, got %d\n", ret);
+    ok(buffer[0] == '\0', "Expected the output buffer to be null terminated\n");
+    CHECK_CALLED(invalid_parameter_handler);
+
+    memset(buffer, 'X', sizeof(buffer));
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p_itoa_s(0, buffer, sizeof(buffer), 64);
+    ok(ret == EINVAL, "Expected _itoa_s to return EINVAL, got %d\n", ret);
+    ok(buffer[0] == '\0', "Expected the output buffer to be null terminated\n");
+    CHECK_CALLED(invalid_parameter_handler);
+
+    memset(buffer, 'X', sizeof(buffer));
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p_itoa_s(12345678, buffer, 4, 10);
+    ok(ret == ERANGE, "Expected _itoa_s to return ERANGE, got %d\n", ret);
+    ok(!memcmp(buffer, "\000765", 4),
+       "Expected the output buffer to be null terminated with truncated output\n");
+    CHECK_CALLED(invalid_parameter_handler);
+
+    memset(buffer, 'X', sizeof(buffer));
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p_itoa_s(12345678, buffer, 8, 10);
+    ok(ret == ERANGE, "Expected _itoa_s to return ERANGE, got %d\n", ret);
+    ok(!memcmp(buffer, "\0007654321", 8),
+       "Expected the output buffer to be null terminated with truncated output\n");
+    CHECK_CALLED(invalid_parameter_handler);
+
+    memset(buffer, 'X', sizeof(buffer));
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p_itoa_s(-12345678, buffer, 9, 10);
+    ok(ret == ERANGE, "Expected _itoa_s to return ERANGE, got %d\n", ret);
+    ok(!memcmp(buffer, "\00087654321", 9),
+       "Expected the output buffer to be null terminated with truncated output\n");
+    CHECK_CALLED(invalid_parameter_handler);
+
+    ret = p_itoa_s(12345678, buffer, 9, 10);
+    ok(ret == 0, "Expected _itoa_s to return 0, got %d\n", ret);
+    ok(!strcmp(buffer, "12345678"),
+       "Expected output buffer string to be \"12345678\", got \"%s\"\n",
+       buffer);
+
+    ret = p_itoa_s(43690, buffer, sizeof(buffer), 2);
+    ok(ret == 0, "Expected _itoa_s to return 0, got %d\n", ret);
+    ok(!strcmp(buffer, "1010101010101010"),
+       "Expected output buffer string to be \"1010101010101010\", got \"%s\"\n",
+       buffer);
+
+    ret = p_itoa_s(1092009, buffer, sizeof(buffer), 36);
+    ok(ret == 0, "Expected _itoa_s to return 0, got %d\n", ret);
+    ok(!strcmp(buffer, "nell"),
+       "Expected output buffer string to be \"nell\", got \"%s\"\n",
+       buffer);
+
+    ret = p_itoa_s(5704, buffer, sizeof(buffer), 18);
+    ok(ret == 0, "Expected _itoa_s to return 0, got %d\n", ret);
+    ok(!strcmp(buffer, "hag"),
+       "Expected output buffer string to be \"hag\", got \"%s\"\n",
+       buffer);
+
+    ret = p_itoa_s(-12345678, buffer, sizeof(buffer), 10);
+    ok(ret == 0, "Expected _itoa_s to return 0, got %d\n", ret);
+    ok(!strcmp(buffer, "-12345678"),
+       "Expected output buffer string to be \"-12345678\", got \"%s\"\n",
+       buffer);
+}
+
+
 /* ########## */
 
 START_TEST(msvcr90)
@@ -311,6 +414,7 @@ START_TEST(msvcr90)
     p__sys_errlist = (void *) GetProcAddress(hcrt, "__sys_errlist");
     p_strtoi64 = (void *) GetProcAddress(hcrt, "_strtoi64");
     p_strtoui64 = (void *) GetProcAddress(hcrt, "_strtoui64");
+    p_itoa_s = (void *)GetProcAddress(hcrt, "_itoa_s");
 
     hkernel32 = GetModuleHandleA("kernel32.dll");
     pEncodePointer = (void *) GetProcAddress(hkernel32, "EncodePointer");
@@ -319,4 +423,5 @@ START_TEST(msvcr90)
     test__encode_pointer();
     test_error_messages();
     test__strtoi64();
+    test__itoa_s();
 }
