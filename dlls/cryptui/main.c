@@ -7038,3 +7038,9 @@ BOOL WINAPI CryptUIWizExport(DWORD dwFlags, HWND hwndParent,
     }
     return ret;
 }
+
+BOOL WINAPI CryptUIDlgViewSignerInfoA(CRYPTUI_VIEWSIGNERINFO_STRUCTA *pcvsi)
+{
+    FIXME("%p: stub\n", pcvsi);
+    return FALSE;
+}
