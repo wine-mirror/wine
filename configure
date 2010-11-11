@@ -14241,6 +14241,8 @@ wine_fn_config_symlink ()
 distclean::
 	\$(RM) $ac_link"
 }
+ac_config_links="$ac_config_links dlls/shell32/AUTHORS:AUTHORS"
+wine_fn_config_symlink dlls/shell32/AUTHORS
 ac_config_links="$ac_config_links dlls/wineps.drv/generic.ppd:dlls/wineps.drv/generic.ppd"
 test "$srcdir" = "." || wine_fn_config_symlink dlls/wineps.drv/generic.ppd
 if test "x$enable_fonts" != xno; then
@@ -15583,6 +15585,7 @@ do
   case $ac_config_target in
     "include/config.h") CONFIG_HEADERS="$CONFIG_HEADERS include/config.h" ;;
     "include/stamp-h") CONFIG_COMMANDS="$CONFIG_COMMANDS include/stamp-h" ;;
+    "dlls/shell32/AUTHORS") CONFIG_LINKS="$CONFIG_LINKS dlls/shell32/AUTHORS:AUTHORS" ;;
     "dlls/wineps.drv/generic.ppd") CONFIG_LINKS="$CONFIG_LINKS dlls/wineps.drv/generic.ppd:dlls/wineps.drv/generic.ppd" ;;
     "fonts/marlett.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/marlett.ttf:fonts/marlett.ttf" ;;
     "fonts/symbol.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/symbol.ttf:fonts/symbol.ttf" ;;

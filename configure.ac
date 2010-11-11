@@ -2203,6 +2203,7 @@ AH_BOTTOM([#endif /* WINE_CROSSTEST */])
 
 AC_CONFIG_COMMANDS([include/stamp-h], [echo timestamp > include/stamp-h])
 
+WINE_CONFIG_SYMLINK(dlls/shell32/AUTHORS,AUTHORS)
 WINE_CONFIG_SYMLINK(dlls/wineps.drv/generic.ppd)
 WINE_CONFIG_SYMLINK(fonts/marlett.ttf,,enable_fonts)
 WINE_CONFIG_SYMLINK(fonts/symbol.ttf,,enable_fonts)

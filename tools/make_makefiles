@@ -90,6 +90,7 @@ my @ignores = (
     "Makefile",
     "dlldata.c",
     "dlls/*/*.def",
+    "dlls/shell32/AUTHORS",
     "*/*/tests/*crosstest.exe",
     "*/*/tests/testlist.c",
     "include/config.h",

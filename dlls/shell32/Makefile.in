@@ -108,14 +108,4 @@ SVG_SRCS = \
 	shortcut.svg \
 	trash_file.svg
 
-EXTRA_OBJS = authors.o
-
 @MAKE_DLL_RULES@
-
-authors.c: $(TOPSRCDIR)/AUTHORS
-	(LC_ALL=C; export LC_ALL; echo 'const char * const SHELL_Authors[] = {' && \
-	 sed -e '1,2d' -e 's/\(.*\)/  \"\1\",/' $(TOPSRCDIR)/AUTHORS && \
-	 echo '  0 };') >$@ || ($(RM) $@ && false)
-
-clean::
-	$(RM) authors.c
