@@ -120,27 +120,6 @@ struct ifproxy
   IRpcChannelBuffer *chan; /* channel to object (CS parent->cs) */
 };
 
-/* imported object / proxy manager */
-struct proxy_manager
-{
-  const IMultiQIVtbl *lpVtbl;
-  const IMarshalVtbl *lpVtblMarshal;
-  const IClientSecurityVtbl *lpVtblCliSec;
-  struct apartment *parent; /* owning apartment (RO) */
-  struct list entry;        /* entry in apartment (CS parent->cs) */
-  OXID oxid;                /* object exported ID (RO) */
-  OXID_INFO oxid_info;      /* string binding, ipid of rem unknown and other information (RO) */
-  OID oid;                  /* object ID (RO) */
-  struct list interfaces;   /* imported interfaces (CS cs) */
-  LONG refs;                /* proxy reference count (LOCK) */
-  CRITICAL_SECTION cs;      /* thread safety for this object and children */
-  ULONG sorflags;           /* STDOBJREF flags (RO) */
-  IRemUnknown *remunk;      /* proxy to IRemUnknown used for lifecycle management (CS cs) */
-  HANDLE remoting_mutex;    /* mutex used for synchronizing access to IRemUnknown */
-  MSHCTX dest_context;      /* context used for activating optimisations (LOCK) */
-  void *dest_context_data;  /* reserved context value (LOCK) */
-};
-
 struct apartment
 {
   struct list entry;
@@ -296,8 +275,6 @@ static inline GUID COM_CurrentCausalityId(void)
         CoCreateGuid(&info->causality_id);
     return info->causality_id;
 }
-
-#define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 
 /* helpers for debugging */
 # define DEBUG_SET_CRITSEC_NAME(cs, name) (cs)->DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": " name)
