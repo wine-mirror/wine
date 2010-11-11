@@ -1281,6 +1281,10 @@ static HRESULT WINAPI domdoc_put_dataType(
     return IXMLDOMNode_put_dataType( IXMLDOMNode_from_impl(&This->node), dataTypeName );
 }
 
+static int XMLCALL domdoc_get_xml_writecallback(void *ctx, const char *data, int len)
+{
+    return xmlBufferAdd((xmlBufferPtr)ctx, (xmlChar*)data, len) == 0 ? len : 0;
+}
 
 static HRESULT WINAPI domdoc_get_xml(
     IXMLDOMDocument3 *iface,
@@ -1305,7 +1309,8 @@ static HRESULT WINAPI domdoc_get_xml(
 
     options  = xmldoc_has_decl(get_doc(This)) ? XML_SAVE_NO_DECL : 0;
     options |= XML_SAVE_FORMAT;
-    ctxt = xmlSaveToBuffer(buf, "UTF-8", options);
+    ctxt = xmlSaveToIO(domdoc_get_xml_writecallback, NULL, buf, "UTF-8", options);
+
     if(!ctxt)
     {
         xmlBufferFree(buf);
