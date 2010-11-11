@@ -141,8 +141,8 @@ static HRESULT WINAPI Gstreamer_transform_DecideBufferSize(TransformFilter *tf, 
 
     ppropInputRequest->cbBuffer = This->cbBuffer;
 
-    if (!ppropInputRequest->cBuffers)
-        ppropInputRequest->cBuffers = 1;
+    if (ppropInputRequest->cBuffers < 2)
+        ppropInputRequest->cBuffers = 2;
 
     return IMemAllocator_SetProperties(pAlloc, ppropInputRequest, &actual);
 }
