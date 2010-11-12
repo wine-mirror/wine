@@ -37,7 +37,9 @@ LEX_SRCS = xslpattern.l
 
 BISON_SRCS = xslpattern.y
 
-RC_SRCS = version.rc
+RC_SRCS = \
+	schemas.rc \
+	version.rc
 
 IDL_TLB_SRCS = msxml3_v1.idl
 
