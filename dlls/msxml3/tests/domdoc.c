@@ -794,6 +794,28 @@ static const CHAR szDatatypeXML[] =
 "   </Property>\n"
 "</Properties>";
 
+static const CHAR szOpenSeqXDR[] =
+"<Schema xmlns='urn:schemas-microsoft-com:xml-data'>\n"
+"   <ElementType name='w' content='empty' model='closed'/>\n"
+"   <ElementType name='x' content='empty' model='closed'/>\n"
+"   <ElementType name='y' content='empty' model='closed'/>\n"
+"   <ElementType name='z' content='empty' model='closed'/>\n"
+"   <ElementType name='test' content='eltOnly' model='open' order='seq'>\n"
+"       <element type='x'/>\n"
+"       <group order='seq'>\n"
+"           <element type='x'/>\n"
+"           <element type='y'/>\n"
+"           <element type='z'/>\n"
+"       </group>\n"
+"       <element type='z'/>\n"
+"   </ElementType>\n"
+"</Schema>";
+
+static const CHAR szOpenSeqXML1[] = "<test><x/><x/><y/><z/><z/></test>";
+static const CHAR szOpenSeqXML2[] = "<test><x/><x/><y/><z/><z/><w/></test>";
+static const CHAR szOpenSeqXML3[] = "<test><w/><x/><x/><y/><z/><z/></test>";
+static const CHAR szOpenSeqXML4[] = "<test><x/><x/><y/><z/><z/><v/></test>";
+
 static const WCHAR szNonExistentFile[] = {
     'c', ':', '\\', 'N', 'o', 'n', 'e', 'x', 'i', 's', 't', 'e', 'n', 't', '.', 'x', 'm', 'l', 0
 };
@@ -7460,6 +7482,145 @@ static void test_setAttributeNode(void)
     free_bstrs();
 }
 
+static void test_XDR_schemas(void)
+{
+    IXMLDOMDocument2 *doc, *schema;
+    IXMLDOMSchemaCollection* cache;
+    IXMLDOMParseError* err;
+    VARIANT_BOOL b;
+    VARIANT v;
+    BSTR bstr;
+
+    doc = create_document(&IID_IXMLDOMDocument2);
+    schema = create_document(&IID_IXMLDOMDocument2);
+    cache = create_cache(&IID_IXMLDOMSchemaCollection);
+
+    if (!doc || !schema || !cache)
+    {
+        if (doc)    IXMLDOMDocument2_Release(doc);
+        if (schema) IXMLDOMDocument2_Release(schema);
+        if (cache)  IXMLDOMSchemaCollection_Release(cache);
+
+        return;
+    }
+
+    VariantInit(&v);
+
+    ole_check(IXMLDOMDocument2_loadXML(doc, _bstr_(szOpenSeqXML1), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+
+    ole_check(IXMLDOMDocument2_loadXML(schema, _bstr_(szOpenSeqXDR), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+
+    /* load the schema */
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = NULL;
+    ole_check(IXMLDOMDocument2_QueryInterface(schema, &IID_IDispatch, (void**)&V_DISPATCH(&v)));
+    ok(V_DISPATCH(&v) != NULL, "failed to get IDispatch interface\n");
+    ole_check(IXMLDOMSchemaCollection_add(cache, _bstr_(""), v));
+    VariantClear(&v);
+
+    /* associate the cache to the doc */
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = NULL;
+    ole_check(IXMLDOMSchemaCollection_QueryInterface(cache, &IID_IDispatch, (void**)&V_DISPATCH(&v)));
+    ok(V_DISPATCH(&v) != NULL, "failed to get IDispatch interface\n");
+    ole_check(IXMLDOMDocument2_putref_schemas(doc, v));
+    VariantClear(&v);
+
+    /* validate the doc
+     * only declared elements in the declared order
+     * this is fine */
+    err = NULL;
+    bstr = NULL;
+    todo_wine ole_check(IXMLDOMDocument2_validate(doc, &err));
+    ok(err != NULL, "domdoc_validate() should always set err\n");
+    ole_expect(IXMLDOMParseError_get_reason(err, &bstr), S_FALSE);
+    ok(IXMLDOMParseError_get_reason(err, &bstr) == S_FALSE, "got error: %s\n", wine_dbgstr_w(bstr));
+    if (bstr) SysFreeString(bstr);
+    IXMLDOMParseError_Release(err);
+
+    /* load the next doc */
+    IXMLDOMDocument2_Release(doc);
+    doc = create_document(&IID_IXMLDOMDocument2);
+    ole_check(IXMLDOMDocument2_loadXML(doc, _bstr_(szOpenSeqXML2), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+
+    /* associate the cache to the doc */
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = NULL;
+    ole_check(IXMLDOMSchemaCollection_QueryInterface(cache, &IID_IDispatch, (void**)&V_DISPATCH(&v)));
+    ok(V_DISPATCH(&v) != NULL, "failed to get IDispatch interface\n");
+    ole_check(IXMLDOMDocument2_putref_schemas(doc, v));
+    VariantClear(&v);
+
+    /* validate the doc
+     * declared elements in the declared order, with an extra declared element at the end
+     * this is fine */
+    err = NULL;
+    bstr = NULL;
+    todo_wine ole_check(IXMLDOMDocument2_validate(doc, &err));
+    ok(err != NULL, "domdoc_validate() should always set err\n");
+    ole_expect(IXMLDOMParseError_get_reason(err, &bstr), S_FALSE);
+    ok(IXMLDOMParseError_get_reason(err, &bstr) == S_FALSE, "got error: %s\n", wine_dbgstr_w(bstr));
+    if (bstr) SysFreeString(bstr);
+    IXMLDOMParseError_Release(err);
+
+    /* load the next doc */
+    IXMLDOMDocument2_Release(doc);
+    doc = create_document(&IID_IXMLDOMDocument2);
+    ole_check(IXMLDOMDocument2_loadXML(doc, _bstr_(szOpenSeqXML3), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+
+    /* associate the cache to the doc */
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = NULL;
+    ole_check(IXMLDOMSchemaCollection_QueryInterface(cache, &IID_IDispatch, (void**)&V_DISPATCH(&v)));
+    ok(V_DISPATCH(&v) != NULL, "failed to get IDispatch interface\n");
+    ole_check(IXMLDOMDocument2_putref_schemas(doc, v));
+    VariantClear(&v);
+
+    /* validate the doc
+     * fails, extra elements are only allowed at the end */
+    err = NULL;
+    bstr = NULL;
+    ole_expect(IXMLDOMDocument2_validate(doc, &err), S_FALSE);
+    ok(err != NULL, "domdoc_validate() should always set err\n");
+    todo_wine ok(IXMLDOMParseError_get_reason(err, &bstr) == S_OK, "got error: %s\n", wine_dbgstr_w(bstr));
+    if (bstr) SysFreeString(bstr);
+    IXMLDOMParseError_Release(err);
+
+    /* load the next doc */
+    IXMLDOMDocument2_Release(doc);
+    doc = create_document(&IID_IXMLDOMDocument2);
+    ole_check(IXMLDOMDocument2_loadXML(doc, _bstr_(szOpenSeqXML4), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+
+    /* associate the cache to the doc */
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = NULL;
+    ole_check(IXMLDOMSchemaCollection_QueryInterface(cache, &IID_IDispatch, (void**)&V_DISPATCH(&v)));
+    ok(V_DISPATCH(&v) != NULL, "failed to get IDispatch interface\n");
+    ole_check(IXMLDOMDocument2_putref_schemas(doc, v));
+    VariantClear(&v);
+
+    /* validate the doc
+     * fails, undeclared elements are not allowed */
+    err = NULL;
+    bstr = NULL;
+    ole_expect(IXMLDOMDocument2_validate(doc, &err), S_FALSE);
+    ok(err != NULL, "domdoc_validate() should always set err\n");
+    todo_wine ok(IXMLDOMParseError_get_reason(err, &bstr) == S_OK, "got error: %s\n", wine_dbgstr_w(bstr));
+    if (bstr) SysFreeString(bstr);
+    IXMLDOMParseError_Release(err);
+
+    IXMLDOMDocument2_Release(doc);
+    IXMLDOMDocument2_Release(schema);
+    IXMLDOMSchemaCollection_Release(cache);
+
+    free_bstrs();
+}
+
 static void test_get_dataType(void)
 {
     IXMLDOMDocument2 *doc, *schema;
@@ -7805,6 +7966,7 @@ static void test_get_dataType(void)
     ole_expect(IXMLDOMParseError_get_errorCode(err, &l), S_FALSE);
     ole_expect(IXMLDOMParseError_get_reason(err, &bstr), S_FALSE);
     ok(l == 0, "got %08x : %s\n", l, wine_dbgstr_w(bstr));
+    if (bstr) SysFreeString(bstr);
     IXMLDOMParseError_Release(err);
 
     /* check the data types again */
@@ -8539,6 +8701,7 @@ START_TEST(domdoc)
     test_removeQualifiedItem();
     test_get_ownerDocument();
     test_setAttributeNode();
+    test_XDR_schemas();
     test_get_dataType();
     test_put_dataType();
     test_createNode();
