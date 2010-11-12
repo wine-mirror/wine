@@ -15574,6 +15574,101 @@ methods:
 }
 
 /*****************************************************************************
+ *    IHTMLStyleElement interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f375-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLStyleElement : IDispatch
+{
+    [propput, id(DISPID_IHTMLSTYLEELEMENT_TYPE), displaybind, bindable]
+    HRESULT type([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLEELEMENT_TYPE), displaybind, bindable]
+    HRESULT type([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLSTYLEELEMENT_READYSTATE)]
+    HRESULT readyState([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSTYLEELEMENT_ONREADYSTATECHANGE), displaybind, bindable]
+    HRESULT onreadystatechange([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLEELEMENT_ONREADYSTATECHANGE), displaybind, bindable]
+    HRESULT onreadystatechange([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLSTYLEELEMENT_ONLOAD), displaybind, bindable]
+    HRESULT onload([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLEELEMENT_ONLOAD), displaybind, bindable]
+    HRESULT onload([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLSTYLEELEMENT_ONERROR), displaybind, bindable]
+    HRESULT onerror([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLEELEMENT_ONERROR), displaybind, bindable]
+    HRESULT onerror([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLSTYLEELEMENT_STYLESHEET)]
+    HRESULT styleSheet([retval, out] IHTMLStyleSheet **p);
+
+    [propput, id(DISPID_IHTMLSTYLEELEMENT_DISABLED), displaybind, bindable]
+    HRESULT disabled([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLSTYLEELEMENT_DISABLED), displaybind, bindable]
+    HRESULT disabled([retval, out] VARIANT_BOOL *p);
+
+    [propput, id(DISPID_IHTMLSTYLEELEMENT_MEDIA), displaybind, bindable]
+    HRESULT media([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLEELEMENT_MEDIA), displaybind, bindable]
+    HRESULT media([retval, out] BSTR *p);
+}
+
+/*****************************************************************************
+ *    DispHTMLStyleElement dispinterface
+ */
+[
+    hidden,
+    uuid(3050f511-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLStyleElement
+{
+properties:
+methods:
+    WINE_HTMLELEMENT_DISPINTERFACE_DECL;
+
+    [propput, id(DISPID_IHTMLSTYLEELEMENT_TYPE), displaybind, bindable]
+    void type(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLEELEMENT_TYPE), displaybind, bindable]
+    BSTR type();
+
+    [propput, id(DISPID_IHTMLSTYLEELEMENT_ONLOAD), displaybind, bindable]
+    void onload(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLEELEMENT_ONLOAD), displaybind, bindable]
+    VARIANT onload();
+
+    [propput, id(DISPID_IHTMLSTYLEELEMENT_ONERROR), displaybind, bindable]
+    void onerror(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLEELEMENT_ONERROR), displaybind, bindable]
+    VARIANT onerror();
+
+    [propget, id(DISPID_IHTMLSTYLEELEMENT_STYLESHEET)]
+    IHTMLStyleSheet *styleSheet();
+
+    [propput, id(DISPID_IHTMLSTYLEELEMENT_MEDIA), displaybind, bindable]
+    void media(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLEELEMENT_MEDIA), displaybind, bindable]
+    BSTR media();
+}
+
+/*****************************************************************************
  *    IMarkupContainer interface
  */
 [
