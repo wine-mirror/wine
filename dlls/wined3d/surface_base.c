@@ -197,7 +197,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_IsLost(IWineD3DSurface *iface) {
     TRACE("(%p)\n", This);
 
     /* D3D8 and 9 loose full devices, ddraw only surfaces */
-    return This->Flags & SFLAG_LOST ? WINED3DERR_DEVICELOST : WINED3D_OK;
+    return This->flags & SFLAG_LOST ? WINED3DERR_DEVICELOST : WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_Restore(IWineD3DSurface *iface) {
@@ -205,7 +205,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Restore(IWineD3DSurface *iface) {
     TRACE("(%p)\n", This);
 
     /* So far we don't lose anything :) */
-    This->Flags &= ~SFLAG_LOST;
+    This->flags &= ~SFLAG_LOST;
     return WINED3D_OK;
 }
 
@@ -483,7 +483,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, enum wi
     This->resource.size = wined3d_format_calculate_size(format, This->resource.device->surface_alignment,
             This->pow2Width, This->pow2Height);
 
-    This->Flags |= (WINED3DFMT_D16_LOCKABLE == format_id) ? SFLAG_LOCKABLE : 0;
+    This->flags |= (WINED3DFMT_D16_LOCKABLE == format_id) ? SFLAG_LOCKABLE : 0;
 
     This->resource.format = format;
 
@@ -612,7 +612,7 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface)
         memcpy(This->dib.bitmap_data, This->resource.allocatedMemory,  This->currentDesc.Height * IWineD3DSurface_GetPitch(iface));
     } else {
         /* This is to make LockRect read the gl Texture although memory is allocated */
-        This->Flags &= ~SFLAG_INSYSMEM;
+        This->flags &= ~SFLAG_INSYSMEM;
     }
     This->dib.bitmap_size = b_info->bmiHeader.biSizeImage;
 
@@ -626,7 +626,7 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface)
                   This->palette ? This->palette->hpal : 0,
                   FALSE);
 
-    This->Flags |= SFLAG_DIBSECTION;
+    This->flags |= SFLAG_DIBSECTION;
 
     HeapFree(GetProcessHeap(), 0, This->resource.heapMemory);
     This->resource.heapMemory = NULL;
@@ -941,7 +941,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
             iface, wine_dbgstr_rect(DestRect), src_surface, wine_dbgstr_rect(SrcRect),
             Flags, DDBltFx, debug_d3dtexturefiltertype(Filter));
 
-    if ((This->Flags & SFLAG_LOCKED) || (src && (src->Flags & SFLAG_LOCKED)))
+    if ((This->flags & SFLAG_LOCKED) || (src && (src->flags & SFLAG_LOCKED)))
     {
         WARN(" Surface is busy, returning DDERR_SURFACEBUSY\n");
         return WINEDDERR_SURFACEBUSY;
@@ -1571,7 +1571,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
     TRACE("iface %p, dst_x %u, dst_y %u, src_surface %p, src_rect %s, flags %#x.\n",
             iface, dstx, dsty, src_surface, wine_dbgstr_rect(rsrc), trans);
 
-    if ((This->Flags & SFLAG_LOCKED) || (src->Flags & SFLAG_LOCKED))
+    if ((This->flags & SFLAG_LOCKED) || (src->flags & SFLAG_LOCKED))
     {
         WARN(" Surface is busy, returning DDERR_SURFACEBUSY\n");
         return WINEDDERR_SURFACEBUSY;

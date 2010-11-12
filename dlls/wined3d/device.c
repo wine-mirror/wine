@@ -609,7 +609,7 @@ static void prepare_ds_clear(IWineD3DSurfaceImpl *ds, struct wined3d_context *co
 {
     RECT current_rect, r;
 
-    if (ds->Flags & location)
+    if (ds->flags & location)
         SetRect(&current_rect, 0, 0,
                 ds->ds_current_size.cx,
                 ds->ds_current_size.cy);
@@ -5820,7 +5820,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *
     if (This->depth_stencil)
     {
         if (((IWineD3DSwapChainImpl *)This->swapchains[0])->presentParms.Flags & WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL
-                || This->depth_stencil->Flags & SFLAG_DISCARD)
+                || This->depth_stencil->flags & SFLAG_DISCARD)
         {
             surface_modify_ds_location(This->depth_stencil, SFLAG_DS_DISCARDED,
                     This->depth_stencil->currentDesc.Width,
@@ -6078,7 +6078,8 @@ static HRESULT updateSurfaceDesc(IWineD3DSurfaceImpl *surface, const WINED3DPRES
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
     /* Reallocate proper memory for the front and back buffer and adjust their sizes */
-    if(surface->Flags & SFLAG_DIBSECTION) {
+    if (surface->flags & SFLAG_DIBSECTION)
+    {
         /* Release the DC */
         SelectObject(surface->hDC, surface->dib.holdbitmap);
         DeleteDC(surface->hDC);
@@ -6086,7 +6087,7 @@ static HRESULT updateSurfaceDesc(IWineD3DSurfaceImpl *surface, const WINED3DPRES
         DeleteObject(surface->dib.DIBsection);
         surface->dib.bitmap_data = NULL;
         surface->resource.allocatedMemory = NULL;
-        surface->Flags &= ~SFLAG_DIBSECTION;
+        surface->flags &= ~SFLAG_DIBSECTION;
     }
     surface->currentDesc.Width = pPresentationParameters->BackBufferWidth;
     surface->currentDesc.Height = pPresentationParameters->BackBufferHeight;
@@ -6109,13 +6110,16 @@ static HRESULT updateSurfaceDesc(IWineD3DSurfaceImpl *surface, const WINED3DPRES
         LEAVE_GL();
         context_release(context);
         surface->texture_name = 0;
-        surface->Flags &= ~SFLAG_CLIENT;
+        surface->flags &= ~SFLAG_CLIENT;
     }
-    if(surface->pow2Width != pPresentationParameters->BackBufferWidth ||
-       surface->pow2Height != pPresentationParameters->BackBufferHeight) {
-        surface->Flags |= SFLAG_NONPOW2;
-    } else  {
-        surface->Flags &= ~SFLAG_NONPOW2;
+    if (surface->pow2Width != pPresentationParameters->BackBufferWidth
+            || surface->pow2Height != pPresentationParameters->BackBufferHeight)
+    {
+        surface->flags |= SFLAG_NONPOW2;
+    }
+    else
+    {
+        surface->flags &= ~SFLAG_NONPOW2;
     }
     HeapFree(GetProcessHeap(), 0, surface->resource.heapMemory);
     surface->resource.allocatedMemory = NULL;

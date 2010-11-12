@@ -611,7 +611,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
             if (location == SFLAG_DS_ONSCREEN && This->depth_stencil != This->onscreen_depth_stencil)
                 device_switch_onscreen_ds(This, context, This->depth_stencil);
 
-            if (This->depth_stencil->Flags & location)
+            if (This->depth_stencil->flags & location)
                 SetRect(&current_rect, 0, 0,
                         This->depth_stencil->ds_current_size.cx,
                         This->depth_stencil->ds_current_size.cy);

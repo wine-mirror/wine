@@ -38,7 +38,7 @@ void surface_gdi_cleanup(IWineD3DSurfaceImpl *This)
 {
     TRACE("(%p) : Cleaning up.\n", This);
 
-    if (This->Flags & SFLAG_DIBSECTION)
+    if (This->flags & SFLAG_DIBSECTION)
     {
         /* Release the DC. */
         SelectObject(This->hDC, This->dib.holdbitmap);
@@ -49,7 +49,7 @@ void surface_gdi_cleanup(IWineD3DSurfaceImpl *This)
         This->resource.allocatedMemory = NULL;
     }
 
-    if (This->Flags & SFLAG_USERPTR) IWineD3DSurface_SetMem((IWineD3DSurface *)This, NULL);
+    if (This->flags & SFLAG_USERPTR) IWineD3DSurface_SetMem((IWineD3DSurface *)This, NULL);
     if (This->overlay_dest) list_remove(&This->overlay_entry);
 
     HeapFree(GetProcessHeap(), 0, This->palette9);
@@ -115,13 +115,13 @@ static HRESULT WINAPI IWineGDISurfaceImpl_Map(IWineD3DSurface *iface,
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
 
     /* Already locked? */
-    if(This->Flags & SFLAG_LOCKED)
+    if (This->flags & SFLAG_LOCKED)
     {
         WARN("(%p) Surface already locked\n", This);
         /* What should I return here? */
         return WINED3DERR_INVALIDCALL;
     }
-    This->Flags |= SFLAG_LOCKED;
+    This->flags |= SFLAG_LOCKED;
 
     if(!This->resource.allocatedMemory) {
         /* This happens on gdi surfaces if the application set a user pointer and resets it.
@@ -139,7 +139,7 @@ static HRESULT WINAPI IWineGDISurfaceImpl_Unmap(IWineD3DSurface *iface)
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     TRACE("(%p)\n", This);
 
-    if (!(This->Flags & SFLAG_LOCKED))
+    if (!(This->flags & SFLAG_LOCKED))
     {
         WARN("Trying to unmap unmapped surfaces %p.\n", iface);
         return WINEDDERR_NOTLOCKED;
@@ -155,7 +155,7 @@ static HRESULT WINAPI IWineGDISurfaceImpl_Unmap(IWineD3DSurface *iface)
         }
     }
 
-    This->Flags &= ~SFLAG_LOCKED;
+    This->flags &= ~SFLAG_LOCKED;
     memset(&This->lockedRect, 0, sizeof(RECT));
     return WINED3D_OK;
 }
@@ -225,23 +225,24 @@ static HRESULT WINAPI IWineGDISurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHD
 
     TRACE("(%p)->(%p)\n",This,pHDC);
 
-    if(!(This->Flags & SFLAG_DIBSECTION))
+    if (!(This->flags & SFLAG_DIBSECTION))
     {
         WARN("DC not supported on this surface\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    if(This->Flags & SFLAG_USERPTR) {
+    if (This->flags & SFLAG_USERPTR)
+    {
         ERR("Not supported on surfaces with an application-provided surfaces\n");
         return WINEDDERR_NODC;
     }
 
     /* Give more detailed info for ddraw */
-    if (This->Flags & SFLAG_DCINUSE)
+    if (This->flags & SFLAG_DCINUSE)
         return WINEDDERR_DCALREADYCREATED;
 
     /* Can't GetDC if the surface is locked */
-    if (This->Flags & SFLAG_LOCKED)
+    if (This->flags & SFLAG_LOCKED)
         return WINED3DERR_INVALIDCALL;
 
     memset(&lock, 0, sizeof(lock)); /* To be sure */
@@ -287,7 +288,7 @@ static HRESULT WINAPI IWineGDISurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHD
 
     *pHDC = This->hDC;
     TRACE("returning %p\n",*pHDC);
-    This->Flags |= SFLAG_DCINUSE;
+    This->flags |= SFLAG_DCINUSE;
 
     return WINED3D_OK;
 }
@@ -297,7 +298,7 @@ static HRESULT WINAPI IWineGDISurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC 
 
     TRACE("(%p)->(%p)\n",This,hDC);
 
-    if (!(This->Flags & SFLAG_DCINUSE))
+    if (!(This->flags & SFLAG_DCINUSE))
         return WINEDDERR_NODC;
 
     if (This->hDC !=hDC) {
@@ -308,7 +309,7 @@ static HRESULT WINAPI IWineGDISurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC 
     /* we locked first, so unlock now */
     IWineD3DSurface_Unmap(iface);
 
-    This->Flags &= ~SFLAG_DCINUSE;
+    This->flags &= ~SFLAG_DCINUSE;
 
     return WINED3D_OK;
 }
@@ -322,7 +323,8 @@ static HRESULT WINAPI IWineGDISurfaceImpl_RealizePalette(IWineD3DSurface *iface)
 
     if (!pal) return WINED3D_OK;
 
-    if(This->Flags & SFLAG_DIBSECTION) {
+    if (This->flags & SFLAG_DIBSECTION)
+    {
         TRACE("(%p): Updating the hdc's palette\n", This);
         for (n=0; n<256; n++) {
             col[n].rgbRed   = pal->palents[n].peRed;
@@ -404,7 +406,8 @@ static HRESULT WINAPI IWineGDISurfaceImpl_SetMem(IWineD3DSurface *iface, void *M
         return WINED3DERR_INVALIDCALL;
     }
 
-    if(This->Flags & (SFLAG_LOCKED | SFLAG_DCINUSE)) {
+    if (This->flags & (SFLAG_LOCKED | SFLAG_DCINUSE))
+    {
         WARN("Surface is locked or the HDC is in use\n");
         return WINED3DERR_INVALIDCALL;
     }
@@ -413,7 +416,8 @@ static HRESULT WINAPI IWineGDISurfaceImpl_SetMem(IWineD3DSurface *iface, void *M
         void *release = NULL;
 
         /* Do I have to copy the old surface content? */
-        if(This->Flags & SFLAG_DIBSECTION) {
+        if (This->flags & SFLAG_DIBSECTION)
+        {
                 /* Release the DC. No need to hold the critical section for the update
             * Thread because this thread runs only on front buffers, but this method
             * fails for render targets in the check above.
@@ -425,21 +429,23 @@ static HRESULT WINAPI IWineGDISurfaceImpl_SetMem(IWineD3DSurface *iface, void *M
             This->dib.bitmap_data = NULL;
             This->resource.allocatedMemory = NULL;
             This->hDC = NULL;
-            This->Flags &= ~SFLAG_DIBSECTION;
-        } else if(!(This->Flags & SFLAG_USERPTR)) {
+            This->flags &= ~SFLAG_DIBSECTION;
+        }
+        else if(!(This->flags & SFLAG_USERPTR))
+        {
             release = This->resource.allocatedMemory;
         }
         This->resource.allocatedMemory = Mem;
-        This->Flags |= SFLAG_USERPTR | SFLAG_INSYSMEM;
+        This->flags |= SFLAG_USERPTR | SFLAG_INSYSMEM;
 
         /* Now free the old memory if any */
         HeapFree(GetProcessHeap(), 0, release);
     }
-    else if(This->Flags & SFLAG_USERPTR)
+    else if (This->flags & SFLAG_USERPTR)
     {
         /* Map() and GetDC() will re-create the dib section and allocated memory. */
         This->resource.allocatedMemory = NULL;
-        This->Flags &= ~SFLAG_USERPTR;
+        This->flags &= ~SFLAG_USERPTR;
     }
     return WINED3D_OK;
 }

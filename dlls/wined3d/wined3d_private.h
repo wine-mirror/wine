@@ -2106,8 +2106,7 @@ struct IWineD3DSurfaceImpl
     IWineD3DPaletteImpl       *palette; /* D3D7 style palette handling */
     PALETTEENTRY              *palette9; /* D3D8/9 style palette handling */
 
-    /* TODO: move this off into a management class(maybe!) */
-    DWORD                      Flags;
+    DWORD flags;
 
     UINT                      pow2Width;
     UINT                      pow2Height;

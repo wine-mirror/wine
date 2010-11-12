@@ -154,7 +154,7 @@ static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *
         context2 = context_acquire(This->device, This->back_buffers[0]);
         context_apply_blit_state(context2, device);
 
-        if(backbuffer->Flags & SFLAG_NORMCOORD)
+        if (backbuffer->flags & SFLAG_NORMCOORD)
         {
             tex_left /= src_w;
             tex_right /= src_w;
@@ -273,7 +273,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         cursor.pow2Width = cursor.currentDesc.Width;
         cursor.pow2Height = cursor.currentDesc.Height;
         /* The surface is in the texture */
-        cursor.Flags |= SFLAG_INTEXTURE;
+        cursor.flags |= SFLAG_INTEXTURE;
         /* DDBLT_KEYSRC will cause BltOverride to enable the alpha test with GL_NOTEQUAL, 0.0,
          * which is exactly what we want :-)
          */
@@ -394,8 +394,8 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
                 WINED3DCLEAR_TARGET, 0xff00ffff, 1.0f, 0);
     }
 
-    if (!This->render_to_fbo && ((This->front_buffer->Flags & SFLAG_INSYSMEM)
-            || (This->back_buffers[0]->Flags & SFLAG_INSYSMEM)))
+    if (!This->render_to_fbo && ((This->front_buffer->flags & SFLAG_INSYSMEM)
+            || (This->back_buffers[0]->flags & SFLAG_INSYSMEM)))
     {
         /* Both memory copies of the surfaces are ok, flip them around too instead of dirtifying
          * Doesn't work with render_to_fbo because we're not flipping
@@ -409,11 +409,10 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
 
             /* Tell the front buffer surface that is has been modified. However,
              * the other locations were preserved during that, so keep the flags.
-             * This serves to update the emulated overlay, if any
-             */
-            fbflags = front->Flags;
+             * This serves to update the emulated overlay, if any. */
+            fbflags = front->flags;
             surface_modify_location(front, SFLAG_INDRAWABLE, TRUE);
-            front->Flags = fbflags;
+            front->flags = fbflags;
         }
         else
         {
@@ -438,7 +437,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
     if (This->device->depth_stencil)
     {
         if (This->presentParms.Flags & WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL
-                || This->device->depth_stencil->Flags & SFLAG_DISCARD)
+                || This->device->depth_stencil->flags & SFLAG_DISCARD)
         {
             surface_modify_ds_location(This->device->depth_stencil, SFLAG_DS_DISCARDED,
                     This->device->depth_stencil->currentDesc.Width,
