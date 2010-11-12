@@ -1028,3 +1028,138 @@ HRESULT WINAPI D3DXFillTexture(LPDIRECT3DTEXTURE9 texture,
 
     return D3D_OK;
 }
+
+enum cube_coord
+{
+    XCOORD = 0,
+    XCOORDINV = 1,
+    YCOORD = 2,
+    YCOORDINV = 3,
+    ZERO = 4,
+    ONE = 5
+};
+
+static float get_cube_coord(enum cube_coord coord, unsigned int x, unsigned int y, unsigned int size)
+{
+    switch (coord)
+    {
+        case XCOORD:
+            return x + 0.5f;
+        case XCOORDINV:
+            return size - x - 0.5f;
+        case YCOORD:
+            return y + 0.5f;
+        case YCOORDINV:
+            return size - y - 0.5f;
+        case ZERO:
+            return 0.0f;
+        case ONE:
+            return size;
+       default:
+           ERR("Unexpected coordinate value\n");
+           return 0.0f;
+    }
+}
+
+HRESULT WINAPI D3DXFillCubeTexture(LPDIRECT3DCUBETEXTURE9 texture,
+                                   LPD3DXFILL3D function,
+                                   LPVOID funcdata)
+{
+    DWORD miplevels;
+    DWORD m, i, x, y, c, f, v;
+    D3DSURFACE_DESC desc;
+    D3DLOCKED_RECT lock_rect;
+    D3DXVECTOR4 value;
+    D3DXVECTOR3 coord, size;
+    const PixelFormatDesc *format;
+    BYTE *data, *pos;
+    BYTE byte, mask;
+    float comp_value;
+    const static enum cube_coord coordmap[6][3] =
+        {
+            {ONE, YCOORDINV, XCOORDINV},
+            {ZERO, YCOORDINV, XCOORD},
+            {XCOORD, ONE, YCOORD},
+            {XCOORD, ZERO, YCOORDINV},
+            {XCOORD, YCOORDINV, ONE},
+            {XCOORDINV, YCOORDINV, ZERO}
+        };
+
+    if (texture == NULL || function == NULL)
+        return D3DERR_INVALIDCALL;
+
+    miplevels = IDirect3DBaseTexture9_GetLevelCount(texture);
+
+    for (m = 0; m < miplevels; m++)
+    {
+        if (FAILED(IDirect3DCubeTexture9_GetLevelDesc(texture, m, &desc)))
+            return D3DERR_INVALIDCALL;
+
+        format = get_format_info(desc.Format);
+        if (format->format == D3DFMT_UNKNOWN)
+        {
+            FIXME("Unsupported texture format %#x\n", desc.Format);
+            return D3DERR_INVALIDCALL;
+        }
+
+        for (f = 0; f < 6; f++)
+        {
+            if (FAILED(IDirect3DCubeTexture9_LockRect(texture, f, m, &lock_rect, NULL, D3DLOCK_DISCARD)))
+                return D3DERR_INVALIDCALL;
+
+            size.x = (f == 0) || (f == 1) ? 0.0f : 2.0f / desc.Width;
+            size.y = (f == 2) || (f == 3) ? 0.0f : 2.0f / desc.Width;
+            size.z = (f == 4) || (f == 5) ? 0.0f : 2.0f / desc.Width;
+
+            data = lock_rect.pBits;
+
+            for (y = 0; y < desc.Height; y++)
+            {
+                for (x = 0; x < desc.Width; x++)
+                {
+                    coord.x = get_cube_coord(coordmap[f][0], x, y, desc.Width) / desc.Width * 2.0f - 1.0f;
+                    coord.y = get_cube_coord(coordmap[f][1], x, y, desc.Width) / desc.Width * 2.0f - 1.0f;
+                    coord.z = get_cube_coord(coordmap[f][2], x, y, desc.Width) / desc.Width * 2.0f - 1.0f;
+
+                    function(&value, &coord, &size, funcdata);
+
+                    pos = data + y * lock_rect.Pitch + x * format->bytes_per_pixel;
+
+                    for (i = 0; i < format->bytes_per_pixel; i++)
+                        pos[i] = 0;
+
+                    for (c = 0; c < 4; c++)
+                    {
+                        switch (c)
+                        {
+                            case 0: /* Alpha */
+                                comp_value = value.w;
+                                break;
+                            case 1: /* Red */
+                                comp_value = value.x;
+                                break;
+                            case 2: /* Green */
+                                comp_value = value.y;
+                                break;
+                            case 3: /* Blue */
+                                comp_value = value.z;
+                                break;
+                        }
+
+                        v = comp_value * ((1 << format->bits[c]) - 1) + 0.5f;
+
+                        for (i = 0; i < format->bits[c] + format->shift[c]; i += 8)
+                        {
+                            mask = ((1 << format->bits[c]) - 1) << format->shift[c] >> i;
+                            byte = (v << format->shift[c] >> i) & mask;
+                            pos[i / 8] |= byte;
+                        }
+                    }
+                }
+            }
+            IDirect3DCubeTexture9_UnlockRect(texture, f, m);
+        }
+    }
+
+    return D3D_OK;
+}

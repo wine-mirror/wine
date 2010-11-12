@@ -122,7 +122,7 @@
 @ stub D3DXDisassembleEffect
 @ stub D3DXDisassembleShader
 @ stub D3DXFileCreate
-@ stub D3DXFillCubeTexture
+@ stdcall D3DXFillCubeTexture(ptr ptr ptr)
 @ stub D3DXFillCubeTextureTX
 @ stdcall D3DXFillTexture(ptr ptr ptr)
 @ stub D3DXFillTextureTX

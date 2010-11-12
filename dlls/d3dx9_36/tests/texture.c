@@ -776,6 +776,162 @@ static void test_D3DXFillTexture(IDirect3DDevice9 *device)
     IDirect3DTexture9_Release(tex);
 }
 
+static void WINAPI fillfunc_cube(D3DXVECTOR4 *value, const D3DXVECTOR3 *texcoord,
+                                 const D3DXVECTOR3 *texelsize, void *data)
+{
+    value->x = (texcoord->x + 1.0f) / 2.0f;
+    value->y = (texcoord->y + 1.0f) / 2.0f;
+    value->z = (texcoord->z + 1.0f) / 2.0f;
+    value->w = texelsize->x;
+}
+
+enum cube_coord
+{
+    XCOORD = 0,
+    XCOORDINV = 1,
+    YCOORD = 2,
+    YCOORDINV = 3,
+    ZERO = 4,
+    ONE = 5
+};
+
+static float get_cube_coord(enum cube_coord coord, unsigned int x, unsigned int y, unsigned int size)
+{
+    switch (coord)
+    {
+        case XCOORD:
+            return x + 0.5f;
+        case XCOORDINV:
+            return size - x - 0.5f;
+        case YCOORD:
+            return y + 0.5f;
+        case YCOORDINV:
+            return size - y - 0.5f;
+        case ZERO:
+            return 0.0f;
+        case ONE:
+            return size;
+        default:
+           trace("Unexpected coordinate value\n");
+           return 0.0f;
+    }
+}
+
+static void test_D3DXFillCubeTexture(IDirect3DDevice9 *device)
+{
+    IDirect3DCubeTexture9 *tex;
+    HRESULT hr;
+    D3DLOCKED_RECT lock_rect;
+    DWORD x, y, f, m;
+    DWORD v[4], e[4];
+    DWORD value, expected, size, pitch;
+    enum cube_coord coordmap[6][3] =
+        {
+            {ONE, YCOORDINV, XCOORDINV},
+            {ZERO, YCOORDINV, XCOORD},
+            {XCOORD, ONE, YCOORD},
+            {XCOORD, ZERO, YCOORDINV},
+            {XCOORD, YCOORDINV, ONE},
+            {XCOORDINV, YCOORDINV, ZERO}
+        };
+
+    size = 4;
+    hr = IDirect3DDevice9_CreateCubeTexture(device, size, 0, 0, D3DFMT_A8R8G8B8,
+                                            D3DPOOL_MANAGED, &tex, NULL);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = D3DXFillCubeTexture(tex, fillfunc_cube, NULL);
+        ok(hr == D3D_OK, "D3DXFillCubeTexture returned %#x, expected %#x\n", hr, D3D_OK);
+
+        for (m = 0; m < 3; m++)
+        {
+            for (f = 0; f < 6; f++)
+            {
+                hr = IDirect3DCubeTexture9_LockRect(tex, f, m, &lock_rect, NULL, D3DLOCK_READONLY);
+                ok(hr == D3D_OK, "Couldn't lock the texture, error %#x\n", hr);
+                if (SUCCEEDED(hr))
+                {
+                    pitch = lock_rect.Pitch / sizeof(DWORD);
+                    for (y = 0; y < size; y++)
+                    {
+                        for (x = 0; x < size; x++)
+                        {
+                            value = ((DWORD *)lock_rect.pBits)[y * pitch + x];
+                            v[0] = (value >> 24) & 0xff;
+                            v[1] = (value >> 16) & 0xff;
+                            v[2] = (value >> 8) & 0xff;
+                            v[3] = value & 0xff;
+
+                            e[0] = (f == 0) || (f == 1) ?
+                                0 : (BYTE)(255.0f / size * 2.0f + 0.5f);
+                            e[1] = get_cube_coord(coordmap[f][0], x, y, size) / size * 255.0f + 0.5f;
+                            e[2] = get_cube_coord(coordmap[f][1], x, y, size) / size * 255.0f + 0.5f;
+                            e[3] = get_cube_coord(coordmap[f][2], x, y, size) / size * 255.0f + 0.5f;
+                            expected = e[0] << 24 | e[1] << 16 | e[2] << 8 | e[3];
+
+                            ok(color_match(v, e),
+                               "Texel at face %u (%u, %u) doesn't match: %#x, expected %#x\n",
+                               f, x, y, value, expected);
+                        }
+                    }
+                    IDirect3DCubeTexture9_UnlockRect(tex, f, m);
+                }
+            }
+            size >>= 1;
+        }
+    }
+    else
+        skip("Failed to create texture\n");
+
+    IDirect3DCubeTexture9_Release(tex);
+
+    hr = IDirect3DDevice9_CreateCubeTexture(device, 4, 1, 0, D3DFMT_A1R5G5B5,
+                                            D3DPOOL_MANAGED, &tex, NULL);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = D3DXFillCubeTexture(tex, fillfunc_cube, NULL);
+        ok(hr == D3D_OK, "D3DXFillTexture returned %#x, expected %#x\n", hr, D3D_OK);
+        for (f = 0; f < 6; f++)
+        {
+            hr = IDirect3DCubeTexture9_LockRect(tex, f, 0, &lock_rect, NULL, D3DLOCK_READONLY);
+            ok(hr == D3D_OK, "Couldn't lock the texture, error %#x\n", hr);
+            if (SUCCEEDED(hr))
+            {
+                pitch = lock_rect.Pitch / sizeof(WORD);
+                for (y = 0; y < 4; y++)
+                {
+                    for (x = 0; x < 4; x++)
+                    {
+                        value = ((WORD *)lock_rect.pBits)[y * pitch + x];
+                        v[0] = value >> 15;
+                        v[1] = value >> 10 & 0x1f;
+                        v[2] = value >> 5 & 0x1f;
+                        v[3] = value & 0x1f;
+
+                        e[0] = (f == 0) || (f == 1) ?
+                            0 : (BYTE)(1.0f / size * 2.0f + 0.5f);
+                        e[1] = get_cube_coord(coordmap[f][0], x, y, 4) / 4 * 31.0f + 0.5f;
+                        e[2] = get_cube_coord(coordmap[f][1], x, y, 4) / 4 * 31.0f + 0.5f;
+                        e[3] = get_cube_coord(coordmap[f][2], x, y, 4) / 4 * 31.0f + 0.5f;
+                        expected = e[0] << 15 | e[1] << 10 | e[2] << 5 | e[3];
+
+                        ok(color_match(v, e),
+                           "Texel at face %u (%u, %u) doesn't match: %#x, expected %#x\n",
+                           f, x, y, value, expected);
+                    }
+                }
+                IDirect3DCubeTexture9_UnlockRect(tex, f, 0);
+            }
+        }
+    }
+    else
+        skip("Failed to create texture\n");
+
+    IDirect3DCubeTexture9_Release(tex);
+}
+
 START_TEST(texture)
 {
     HWND wnd;
@@ -813,6 +969,7 @@ START_TEST(texture)
     test_D3DXCreateTexture(device);
     test_D3DXFilterTexture(device);
     test_D3DXFillTexture(device);
+    test_D3DXFillCubeTexture(device);
 
     IDirect3DDevice9_Release(device);
     IDirect3D9_Release(d3d);
