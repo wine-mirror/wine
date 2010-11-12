@@ -1,19 +1,19 @@
 3 stdcall ADsGetObject(wstr ptr ptr)
 4 stdcall ADsBuildEnumerator(ptr ptr)
-5 stub ADsFreeEnumerator
+5 stdcall ADsFreeEnumerator(ptr)
 6 stdcall ADsEnumerateNext(ptr long ptr ptr)
-7 stub ADsBuildVarArrayStr
-8 stub ADsBuildVarArrayInt
+7 stdcall ADsBuildVarArrayStr(ptr long ptr)
+8 stdcall ADsBuildVarArrayInt(ptr long ptr)
 9 stdcall ADsOpenObject(wstr wstr wstr long ptr ptr)
-12 stub ADsSetLastError
+12 stdcall ADsSetLastError(long ptr ptr)
 13 stdcall ADsGetLastError(ptr ptr long ptr long)
-14 stub AllocADsMem
+14 stdcall AllocADsMem(long)
 15 stdcall FreeADsMem(ptr)
-16 stub ReallocADsMem
-17 stub AllocADsStr
-18 stub FreeADsStr
-19 stub ReallocADsStr
-20 stub ADsEncodeBinaryData
+16 stdcall ReallocADsMem(ptr long long)
+17 stdcall AllocADsStr(ptr)
+18 stdcall FreeADsStr(ptr)
+19 stdcall ReallocADsStr(ptr ptr)
+20 stdcall ADsEncodeBinaryData(ptr long ptr)
 21 stub PropVariantToAdsType
 22 stub AdsTypeToPropVariant
 23 stub AdsFreeAdsValues
