@@ -23,6 +23,7 @@
 
 #include "config.h"
 
+#include <assert.h>
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
@@ -51,6 +52,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 #include <libxml/xmlschemas.h>
 #include <libxml/schemasInternals.h>
 #include <libxml/hash.h>
+#include <libxml/parser.h>
+#include <libxml/parserInternals.h>
+#include <libxml/xmlIO.h>
 
 xmlDocPtr XDR_to_XSD_doc(xmlDocPtr xdr_doc, xmlChar const* nsURI);
 
@@ -58,6 +62,11 @@ static const xmlChar XSD_schema[] = "schema";
 static const xmlChar XSD_nsURI[] = "http://www.w3.org/2001/XMLSchema";
 static const xmlChar XDR_schema[] = "Schema";
 static const xmlChar XDR_nsURI[] = "urn:schemas-microsoft-com:xml-data";
+static const xmlChar DT_nsURI[] = "urn:schemas-microsoft-com:datatypes";
+
+static xmlChar const* datatypes_schema = NULL;
+static HGLOBAL datatypes_handle = NULL;
+static HRSRC datatypes_rsrc = NULL;
 
 /* Supported Types:
  * msxml3 - XDR only
@@ -91,6 +100,72 @@ typedef struct _cache_index_data
     LONG index;
     BSTR* out;
 } cache_index_data;
+
+xmlExternalEntityLoader _external_entity_loader = NULL;
+
+static xmlParserInputPtr external_entity_loader(const char *URL, const char *ID,
+                                                xmlParserCtxtPtr ctxt)
+{
+    xmlParserInputPtr input;
+
+    TRACE("(%s, %s, %p)\n", wine_dbgstr_a(URL), wine_dbgstr_a(ID), ctxt);
+
+    assert(MSXML_hInstance != NULL);
+    assert(datatypes_rsrc != NULL);
+    assert(datatypes_handle != NULL);
+    assert(datatypes_schema != NULL);
+
+    /* TODO: if the desired schema is in the cache, load it from there */
+    if (lstrcmpA(URL, "urn:schemas-microsoft-com:datatypes") == 0)
+    {
+        TRACE("loading built-in schema for %s\n", URL);
+        input = xmlNewStringInputStream(ctxt, datatypes_schema);
+    }
+    else
+    {
+        input = _external_entity_loader(URL, ID, ctxt);
+    }
+
+    return input;
+}
+
+void schemasInit(void)
+{
+    int len;
+    char* buf;
+    if (!(datatypes_rsrc = FindResourceA(MSXML_hInstance, "DATATYPES", "XML")))
+    {
+        FIXME("failed to find resource for %s\n", DT_nsURI);
+        return;
+    }
+
+    if (!(datatypes_handle = LoadResource(MSXML_hInstance, datatypes_rsrc)))
+    {
+        FIXME("failed to load resource for %s\n", DT_nsURI);
+        return;
+    }
+    buf = LockResource(datatypes_handle);
+    len = SizeofResource(MSXML_hInstance, datatypes_rsrc) - 1;
+
+    /* Resource is loaded as raw data,
+     * need a null-terminated string */
+    while (buf[len] != '>')
+        buf[len--] = 0;
+    datatypes_schema = BAD_CAST buf;
+
+    if ((void*)xmlGetExternalEntityLoader() != (void*)external_entity_loader)
+    {
+        _external_entity_loader = xmlGetExternalEntityLoader();
+        xmlSetExternalEntityLoader(external_entity_loader);
+    }
+}
+
+void schemasCleanup(void)
+{
+    if (datatypes_handle)
+        FreeResource(datatypes_handle);
+    xmlSetExternalEntityLoader(_external_entity_loader);
+}
 
 static LONG cache_entry_add_ref(cache_entry* entry)
 {
@@ -152,6 +227,34 @@ static inline SCHEMA_TYPE schema_type_from_xmlDocPtr(xmlDocPtr schema)
     return SCHEMA_TYPE_INVALID;
 }
 
+static BOOL link_datatypes(xmlDocPtr schema)
+{
+    xmlNodePtr root, next, child;
+    xmlNsPtr ns;
+
+    assert((void*)xmlGetExternalEntityLoader() == (void*)external_entity_loader);
+    root = xmlDocGetRootElement(schema);
+    if (!root)
+        return FALSE;
+
+    for (ns = root->nsDef; ns != NULL; ns = ns->next)
+    {
+        if (xmlStrEqual(ns->href, DT_nsURI))
+            break;
+    }
+
+    if (!ns)
+        return FALSE;
+
+    next = xmlFirstElementChild(root);
+    child = xmlNewChild(root, NULL, BAD_CAST "import", NULL);
+    if (next) child = xmlAddPrevSibling(next, child);
+    xmlSetProp(child, BAD_CAST "namespace", DT_nsURI);
+    xmlSetProp(child, BAD_CAST "schemaLocation", DT_nsURI);
+
+    return TRUE;
+}
+
 static cache_entry* cache_entry_from_url(char const* url, xmlChar const* nsURI)
 {
     cache_entry* entry = heap_alloc(sizeof(cache_entry));
@@ -190,6 +293,8 @@ static cache_entry* cache_entry_from_xsd_doc(xmlDocPtr doc, xmlChar const* nsURI
     xmlSchemaParserCtxtPtr spctx;
     xmlDocPtr new_doc = xmlCopyDoc(doc, 1);
 
+    link_datatypes(new_doc);
+
     /* TODO: if the nsURI is different from the default xmlns or targetNamespace,
      *       do we need to do something special here? */
     entry->type = SCHEMA_TYPE_XSD;
@@ -218,6 +323,8 @@ static cache_entry* cache_entry_from_xdr_doc(xmlDocPtr doc, xmlChar const* nsURI
     cache_entry* entry = heap_alloc(sizeof(cache_entry));
     xmlSchemaParserCtxtPtr spctx;
     xmlDocPtr new_doc = xmlCopyDoc(doc, 1), xsd_doc = XDR_to_XSD_doc(doc, nsURI);
+
+    link_datatypes(xsd_doc);
 
     entry->type = SCHEMA_TYPE_XDR;
     entry->ref = 0;

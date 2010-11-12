@@ -210,6 +210,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
                             wineXmlReadCallback, wineXmlFileCloseCallback) == -1)
             WARN("Failed to register callbacks\n");
 
+        schemasInit();
 #endif
         init_libxslt();
         DisableThreadLibraryCalls(hInstDLL);
@@ -229,6 +230,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
         xmlRegisterDefaultInputCallbacks();
 
         xmlCleanupParser();
+        schemasCleanup();
 #endif
         release_typelib();
         break;

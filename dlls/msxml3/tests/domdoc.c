@@ -7946,7 +7946,7 @@ static void test_get_dataType(void)
     V_DISPATCH(&v) = NULL;
     ole_check(IXMLDOMDocument2_QueryInterface(schema, &IID_IDispatch, (void**)&V_DISPATCH(&v)));
     ok(V_DISPATCH(&v) != NULL, "failed to get IDispatch interface\n");
-    todo_wine ole_check(IXMLDOMSchemaCollection_add(cache, _bstr_("urn:x-schema:datatype-test-xdr"), v));
+    ole_check(IXMLDOMSchemaCollection_add(cache, _bstr_("urn:x-schema:datatype-test-xdr"), v));
     VariantClear(&v);
 
     /* associate the cache to the doc */
@@ -7961,11 +7961,11 @@ static void test_get_dataType(void)
     err = NULL;
     l = 0;
     bstr = NULL;
-    todo_wine ole_check(IXMLDOMDocument2_validate(doc, &err));
+    ole_check(IXMLDOMDocument2_validate(doc, &err));
     ok(err != NULL, "domdoc_validate() should always set err\n");
-    todo_wine ole_expect(IXMLDOMParseError_get_errorCode(err, &l), S_FALSE);
+    ole_expect(IXMLDOMParseError_get_errorCode(err, &l), S_FALSE);
     ole_expect(IXMLDOMParseError_get_reason(err, &bstr), S_FALSE);
-    todo_wine ok(l == 0, "got %08x : %s\n", l, wine_dbgstr_w(bstr));
+    ok(l == 0, "got %08x : %s\n", l, wine_dbgstr_w(bstr));
     if (bstr) SysFreeString(bstr);
     IXMLDOMParseError_Release(err);
 

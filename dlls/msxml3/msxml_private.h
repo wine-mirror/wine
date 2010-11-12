@@ -110,11 +110,15 @@ BOOL dispex_query_interface(DispatchEx*,REFIID,void**);
 #endif
 
 
+
 #include <libxml/xmlerror.h>
 
+extern void schemasInit(void);
+extern void schemasCleanup(void);
+
 #ifndef HAVE_XMLFIRSTELEMENTCHILD
-static inline xmlNodePtr xmlFirstElementChild(xmlNodePtr parent)
-{
+    static inline xmlNodePtr xmlFirstElementChild(xmlNodePtr parent)
+    {
     xmlNodePtr child;
     for (child = parent->children; child != NULL; child = child->next)
         if (child->type == XML_ELEMENT_NODE)
