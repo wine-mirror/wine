@@ -565,7 +565,7 @@ static void surface_download_data(IWineD3DSurfaceImpl *This, const struct wined3
 
     ENTER_GL();
 
-    if (format->Flags & WINED3DFMT_FLAG_COMPRESSED)
+    if (format->flags & WINED3DFMT_FLAG_COMPRESSED)
     {
         TRACE("(%p) : Calling glGetCompressedTexImageARB level %d, format %#x, type %#x, data %p.\n",
                 This, This->texture_level, format->glFormat, format->glType,
@@ -746,7 +746,7 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, const struct wined3d_
         data = NULL;
     }
 
-    if (format->Flags & WINED3DFMT_FLAG_COMPRESSED)
+    if (format->flags & WINED3DFMT_FLAG_COMPRESSED)
     {
         TRACE("Calling glCompressedTexSubImage2DARB.\n");
 
@@ -843,7 +843,7 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, const struct win
         }
     }
 
-    if (format->Flags & WINED3DFMT_FLAG_COMPRESSED && mem)
+    if (format->flags & WINED3DFMT_FLAG_COMPRESSED && mem)
     {
         GL_EXTCALL(glCompressedTexImage2DARB(This->texture_target, This->texture_level,
                 internal, width, height, 0, This->resource.size, mem));
@@ -1914,7 +1914,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Unmap(IWineD3DSurface *iface)
         This->dirtyRect.right  = 0;
         This->dirtyRect.bottom = 0;
     }
-    else if (This->resource.format->Flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
+    else if (This->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
     {
         FIXME("Depth Stencil buffer locking is not implemented\n");
     }
@@ -3985,7 +3985,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     if (pow2Width > This->currentDesc.Width || pow2Height > This->currentDesc.Height)
     {
         /* TODO: Add support for non power two compressed textures. */
-        if (This->resource.format->Flags & WINED3DFMT_FLAG_COMPRESSED)
+        if (This->resource.format->flags & WINED3DFMT_FLAG_COMPRESSED)
         {
             FIXME("(%p) Compressed non-power-two textures are not supported w(%d) h(%d)\n",
                   This, This->currentDesc.Width, This->currentDesc.Height);
@@ -4497,7 +4497,7 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
             read_from_framebuffer_texture(surface, flag == SFLAG_INSRGBTEX);
         }
         else if (surface->flags & (SFLAG_INSRGBTEX | SFLAG_INTEXTURE)
-                && (surface->resource.format->Flags & attach_flags) == attach_flags
+                && (surface->resource.format->flags & attach_flags) == attach_flags
                 && fbo_blit_supported(gl_info, BLIT_OP_BLIT,
                         NULL, surface->resource.usage, surface->resource.pool, surface->resource.format,
                         NULL, surface->resource.usage, surface->resource.pool, surface->resource.format))
@@ -4934,8 +4934,8 @@ static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_
     if (src_pool == WINED3DPOOL_SYSTEMMEM || dst_pool == WINED3DPOOL_SYSTEMMEM)
         return FALSE;
 
-    if (!((src_format->Flags & WINED3DFMT_FLAG_FBO_ATTACHABLE) || (src_usage & WINED3DUSAGE_RENDERTARGET))
-            && ((dst_format->Flags & WINED3DFMT_FLAG_FBO_ATTACHABLE) || (dst_usage & WINED3DUSAGE_RENDERTARGET)))
+    if (!((src_format->flags & WINED3DFMT_FLAG_FBO_ATTACHABLE) || (src_usage & WINED3DUSAGE_RENDERTARGET))
+            && ((dst_format->flags & WINED3DFMT_FLAG_FBO_ATTACHABLE) || (dst_usage & WINED3DUSAGE_RENDERTARGET)))
         return FALSE;
 
     if (!(src_format->id == dst_format->id

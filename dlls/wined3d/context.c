@@ -2,7 +2,7 @@
  * Context and render target management in wined3d
  *
  * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
- * Copyright 2009 Henri Verbeet for CodeWeavers
+ * Copyright 2009-2010 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -201,7 +201,7 @@ void context_attach_depth_stencil_fbo(struct wined3d_context *context,
 
     if (depth_stencil)
     {
-        DWORD format_flags = depth_stencil->resource.format->Flags;
+        DWORD format_flags = depth_stencil->resource.format->flags;
 
         if (use_render_buffer && depth_stencil->current_renderbuffer)
         {
@@ -2023,8 +2023,8 @@ static BOOL match_depth_stencil_format(const struct wined3d_format *existing,
 {
     short existing_depth, existing_stencil, required_depth, required_stencil;
 
-    if(existing == required) return TRUE;
-    if((existing->Flags & WINED3DFMT_FLAG_FLOAT) != (required->Flags & WINED3DFMT_FLAG_FLOAT)) return FALSE;
+    if (existing == required) return TRUE;
+    if ((existing->flags & WINED3DFMT_FLAG_FLOAT) != (required->flags & WINED3DFMT_FLAG_FLOAT)) return FALSE;
 
     getDepthStencilBits(existing, &existing_depth, &existing_stencil);
     getDepthStencilBits(required, &required_depth, &required_stencil);
@@ -2231,12 +2231,12 @@ static void context_setup_target(IWineD3DDeviceImpl *device,
         {
             /* Disable blending when the alpha mask has changed and when a format doesn't support blending. */
             if ((old->alpha_mask && !new->alpha_mask) || (!old->alpha_mask && new->alpha_mask)
-                    || !(new->Flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
+                    || !(new->flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
             {
                 Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
             }
             /* Update sRGB writing when switching between formats that do/do not support sRGB writing */
-            if ((old->Flags & WINED3DFMT_FLAG_SRGB_WRITE) != (new->Flags & WINED3DFMT_FLAG_SRGB_WRITE))
+            if ((old->flags & WINED3DFMT_FLAG_SRGB_WRITE) != (new->flags & WINED3DFMT_FLAG_SRGB_WRITE))
             {
                 Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_SRGBWRITEENABLE), StateTable);
             }

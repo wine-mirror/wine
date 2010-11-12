@@ -5,7 +5,7 @@
  * Copyright 2002-2004 Raphael Junqueira
  * Copyright 2005 Oliver Stieber
  * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
- * Copyright 2009 Henri Verbeet for CodeWeavers
+ * Copyright 2009-2010 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -60,7 +60,7 @@ HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, UINT layer_count, UIN
     texture->baseTexture.is_srgb = FALSE;
     texture->baseTexture.pow2Matrix_identity = TRUE;
 
-    if (texture->resource.format->Flags & WINED3DFMT_FLAG_FILTERING)
+    if (texture->resource.format->flags & WINED3DFMT_FLAG_FILTERING)
     {
         texture->baseTexture.minMipLookup = minMipLookup;
         texture->baseTexture.magLookup = magLookup;
@@ -517,10 +517,10 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
         gl_tex->states[WINED3DTEXSTA_MAXANISOTROPY] = aniso;
     }
 
-    if (!(This->resource.format->Flags & WINED3DFMT_FLAG_SHADOW)
+    if (!(This->resource.format->flags & WINED3DFMT_FLAG_SHADOW)
             != !gl_tex->states[WINED3DTEXSTA_SHADOW])
     {
-        if (This->resource.format->Flags & WINED3DFMT_FLAG_SHADOW)
+        if (This->resource.format->flags & WINED3DFMT_FLAG_SHADOW)
         {
             glTexParameteri(textureDimensions, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
             glTexParameteri(textureDimensions, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB);

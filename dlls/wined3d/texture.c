@@ -566,7 +566,7 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
         texture->baseTexture.target = GL_TEXTURE_RECTANGLE_ARB;
         texture->cond_np2 = TRUE;
 
-        if(texture->resource.format->Flags & WINED3DFMT_FLAG_FILTERING)
+        if (texture->resource.format->flags & WINED3DFMT_FLAG_FILTERING)
         {
             texture->baseTexture.minMipLookup = minMipLookup_noMip;
         }

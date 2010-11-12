@@ -5,7 +5,7 @@
  * Copyright 2005 Oliver Stieber
  * Copyright 2006 Ivan Gyurdiev
  * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
- * Copyright 2009 Henri Verbeet for CodeWeavers
+ * Copyright 2009-2010 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2113,7 +2113,7 @@ void find_ps_compile_args(const struct wined3d_state *state,
     if (state->render_states[WINED3DRS_SRGBWRITEENABLE])
     {
         IWineD3DSurfaceImpl *rt = device->render_targets[0];
-        if(rt->resource.format->Flags & WINED3DFMT_FLAG_SRGB_WRITE) args->srgb_correction = 1;
+        if (rt->resource.format->flags & WINED3DFMT_FLAG_SRGB_WRITE) args->srgb_correction = 1;
     }
 
     if (shader->baseShader.reg_maps.shader_version.major == 1
@@ -2140,7 +2140,7 @@ void find_ps_compile_args(const struct wined3d_state *state,
         }
         args->color_fixup[i] = texture->resource.format->color_fixup;
 
-        if (texture->resource.format->Flags & WINED3DFMT_FLAG_SHADOW)
+        if (texture->resource.format->flags & WINED3DFMT_FLAG_SHADOW)
             args->shadow |= 1 << i;
 
         /* Flag samplers that need NP2 texcoord fixup. */

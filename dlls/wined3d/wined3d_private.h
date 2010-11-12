@@ -3039,7 +3039,7 @@ struct wined3d_format
     GLint glFormat;
     GLint glType;
     UINT  conv_byte_count;
-    unsigned int Flags;
+    unsigned int flags;
     float heightscale;
     struct color_fixup_desc color_fixup;
     void (*convert)(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height);

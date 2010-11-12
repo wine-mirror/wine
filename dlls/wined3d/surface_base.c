@@ -308,7 +308,7 @@ DWORD WINAPI IWineD3DBaseSurfaceImpl_GetPitch(IWineD3DSurface *iface)
     DWORD ret;
     TRACE("(%p)\n", This);
 
-    if ((format->Flags & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_COMPRESSED)
+    if ((format->flags & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_COMPRESSED)
     {
         /* Since compressed formats are block based, pitch means the amount of
          * bytes to the next row of block rather than the next row of pixels. */
@@ -503,7 +503,7 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface)
     DWORD *masks;
     UINT usage;
 
-    if (!(format->Flags & WINED3DFMT_FLAG_GETDC))
+    if (!(format->flags & WINED3DFMT_FLAG_GETDC))
     {
         WARN("Cannot use GetDC on a %s surface\n", debug_d3dformat(format->id));
         return WINED3DERR_INVALIDCALL;
@@ -1125,7 +1125,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
 
     if (!DDBltFx || !(DDBltFx->dwDDFX)) Flags &= ~WINEDDBLT_DDFX;
 
-    if (sEntry->Flags & dEntry->Flags & WINED3DFMT_FLAG_FOURCC)
+    if (sEntry->flags & dEntry->flags & WINED3DFMT_FLAG_FOURCC)
     {
         if (!DestRect || src == This)
         {
@@ -1657,7 +1657,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
     }
 
     /* Handle compressed surfaces first... */
-    if (sEntry->Flags & dEntry->Flags & WINED3DFMT_FLAG_COMPRESSED)
+    if (sEntry->flags & dEntry->flags & WINED3DFMT_FLAG_COMPRESSED)
     {
         UINT row_block_count;
 
@@ -1683,7 +1683,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
 
         goto error;
     }
-    if ((sEntry->Flags & WINED3DFMT_FLAG_COMPRESSED) && !(dEntry->Flags & WINED3DFMT_FLAG_COMPRESSED))
+    if ((sEntry->flags & WINED3DFMT_FLAG_COMPRESSED) && !(dEntry->flags & WINED3DFMT_FLAG_COMPRESSED))
     {
         /* TODO: Use the libtxc_dxtn.so shared library to do
          * software decompression
@@ -1840,7 +1840,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Map(IWineD3DSurface *iface,
         TRACE("Lock Rect (%p) = l %d, t %d, r %d, b %d\n",
               pRect, pRect->left, pRect->top, pRect->right, pRect->bottom);
 
-        if ((format->Flags & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_COMPRESSED)
+        if ((format->flags & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_COMPRESSED)
         {
             /* Compressed textures are block based, so calculate the offset of
              * the block that contains the top-left pixel of the locked rectangle. */

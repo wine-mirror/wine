@@ -6,7 +6,7 @@
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
  * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
- * Copyright 2009 Henri Verbeet for CodeWeavers
+ * Copyright 2009-2010 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2854,7 +2854,7 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const struct wined
         return FALSE;
 
     /* Float formats need FBOs. If FBOs are used this function isn't called */
-    if (format->Flags & WINED3DFMT_FLAG_FLOAT) return FALSE;
+    if (format->flags & WINED3DFMT_FLAG_FLOAT) return FALSE;
 
     if(cfg->iPixelType == WGL_TYPE_RGBA_ARB) { /* Integer RGBA formats */
         if (!getColorBits(format, &redSize, &greenSize, &blueSize, &alphaSize, &colorBits))
@@ -2898,7 +2898,7 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(const struct wined3
     }
 
     /* Float formats need FBOs. If FBOs are used this function isn't called */
-    if (format->Flags & WINED3DFMT_FLAG_FLOAT) return FALSE;
+    if (format->flags & WINED3DFMT_FLAG_FLOAT) return FALSE;
 
     if ((format->id == WINED3DFMT_D16_LOCKABLE) || (format->id == WINED3DFMT_D32_FLOAT))
         lockable = TRUE;
@@ -2946,8 +2946,8 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface,
     ds_format = wined3d_get_format(&adapter->gl_info, DepthStencilFormat);
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        if ((rt_format->Flags & WINED3DFMT_FLAG_RENDERTARGET)
-                && (ds_format->Flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
+        if ((rt_format->flags & WINED3DFMT_FLAG_RENDERTARGET)
+                && (ds_format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
         {
             TRACE_(d3d_caps)("(%p) : Formats matched\n", This);
             return WINED3D_OK;
@@ -3012,7 +3012,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, U
     format = wined3d_get_format(&adapter->gl_info, SurfaceFormat);
     if (!format) return WINED3DERR_INVALIDCALL;
 
-    if (format->Flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
+    if (format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
     {
         int i, nCfgs;
         const WineD3D_PixelFormat *cfgs;
@@ -3033,7 +3033,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, U
             return WINED3D_OK;
         }
     }
-    else if (format->Flags & WINED3DFMT_FLAG_RENDERTARGET)
+    else if (format->flags & WINED3DFMT_FLAG_RENDERTARGET)
     {
         short redSize, greenSize, blueSize, alphaSize, colorBits;
         int i, nCfgs;
@@ -3078,7 +3078,7 @@ static BOOL CheckBumpMapCapability(struct wined3d_adapter *adapter, const struct
     /* Ask the fixed function pipeline implementation if it can deal
      * with the conversion. If we've got a GL extension giving native
      * support this will be an identity conversion. */
-    return (format->Flags & WINED3DFMT_FLAG_BUMPMAP)
+    return (format->flags & WINED3DFMT_FLAG_BUMPMAP)
             && adapter->fragment_pipe->color_fixup_supported(format->color_fixup);
 }
 
@@ -3094,7 +3094,7 @@ static BOOL CheckDepthStencilCapability(struct wined3d_adapter *adapter,
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
         /* With FBOs WGL limitations do not apply, but the format needs to be FBO attachable */
-        if (ds_format->Flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)) return TRUE;
+        if (ds_format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)) return TRUE;
     }
     else
     {
@@ -3118,7 +3118,7 @@ static BOOL CheckDepthStencilCapability(struct wined3d_adapter *adapter,
 static BOOL CheckFilterCapability(struct wined3d_adapter *adapter, const struct wined3d_format *format)
 {
     /* The flags entry of a format contains the filtering capability */
-    if (format->Flags & WINED3DFMT_FLAG_FILTERING) return TRUE;
+    if (format->flags & WINED3DFMT_FLAG_FILTERING) return TRUE;
 
     return FALSE;
 }
@@ -3128,7 +3128,7 @@ static BOOL CheckRenderTargetCapability(struct wined3d_adapter *adapter,
         const struct wined3d_format *adapter_format, const struct wined3d_format *check_format)
 {
     /* Filter out non-RT formats */
-    if (!(check_format->Flags & WINED3DFMT_FLAG_RENDERTARGET)) return FALSE;
+    if (!(check_format->flags & WINED3DFMT_FLAG_RENDERTARGET)) return FALSE;
     if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER)
     {
         WineD3D_PixelFormat *cfgs = adapter->cfgs;
@@ -3170,7 +3170,7 @@ static BOOL CheckRenderTargetCapability(struct wined3d_adapter *adapter,
 
 static BOOL CheckSrgbReadCapability(struct wined3d_adapter *adapter, const struct wined3d_format *format)
 {
-    return adapter->gl_info.supported[EXT_TEXTURE_SRGB] && (format->Flags & WINED3DFMT_FLAG_SRGB_READ);
+    return adapter->gl_info.supported[EXT_TEXTURE_SRGB] && (format->flags & WINED3DFMT_FLAG_SRGB_READ);
 }
 
 static BOOL CheckSrgbWriteCapability(struct wined3d_adapter *adapter, const struct wined3d_format *format)
@@ -3178,7 +3178,7 @@ static BOOL CheckSrgbWriteCapability(struct wined3d_adapter *adapter, const stru
     /* Only offer SRGB writing on X8R8G8B8/A8R8G8B8 when we use ARB or GLSL shaders as we are
      * doing the color fixup in shaders.
      * Note Windows drivers (at least on the Geforce 8800) also offer this on R5G6B5. */
-    if (format->Flags & WINED3DFMT_FLAG_SRGB_WRITE)
+    if (format->flags & WINED3DFMT_FLAG_SRGB_WRITE)
     {
         int vs_selected_mode;
         int ps_selected_mode;
@@ -3199,7 +3199,7 @@ static BOOL CheckPostPixelShaderBlendingCapability(struct wined3d_adapter *adapt
         const struct wined3d_format *format)
 {
     /* The flags entry of a format contains the post pixel shader blending capability */
-    if (format->Flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING) return TRUE;
+    if (format->flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING) return TRUE;
 
     return FALSE;
 }
@@ -3527,7 +3527,7 @@ static BOOL CheckSurfaceCapability(struct wined3d_adapter *adapter,
 static BOOL CheckVertexTextureCapability(struct wined3d_adapter *adapter,
         const struct wined3d_format *format)
 {
-    return adapter->gl_info.limits.vertex_samplers && (format->Flags & WINED3DFMT_FLAG_VTF);
+    return adapter->gl_info.limits.vertex_samplers && (format->flags & WINED3DFMT_FLAG_VTF);
 }
 
 static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType,
@@ -3845,7 +3845,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                     TRACE_(d3d_caps)("[FAILED] - No depth stencil support\n");
                     return WINED3DERR_NOTAVAILABLE;
                 }
-                if ((format->Flags & WINED3DFMT_FLAG_SHADOW) && !gl_info->supported[ARB_SHADOW])
+                if ((format->flags & WINED3DFMT_FLAG_SHADOW) && !gl_info->supported[ARB_SHADOW])
                 {
                     TRACE_(d3d_caps)("[FAILED] - No shadow sampler support.\n");
                     return WINED3DERR_NOTAVAILABLE;

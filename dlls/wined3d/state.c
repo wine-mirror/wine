@@ -257,7 +257,7 @@ static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock, struct 
          * With blending on we could face a big performance penalty.
          * The d3d9 visual test confirms the behavior. */
         if (context->render_offscreen
-                && !(target->resource.format->Flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
+                && !(target->resource.format->flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
         {
             glDisable(GL_BLEND);
             checkGLcall("glDisable GL_BLEND");

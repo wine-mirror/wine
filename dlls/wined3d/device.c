@@ -9,7 +9,7 @@
  * Copyright 2006-2008 Stefan Dösinger for CodeWeavers
  * Copyright 2006-2008 Henri Verbeet
  * Copyright 2007 Andrew Riedi
- * Copyright 2009 Henri Verbeet for CodeWeavers
+ * Copyright 2009-2010 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -5178,7 +5178,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_ValidateDevice(IWineD3DDevice *iface,
         }
 
         texture = This->stateBlock->state.textures[i];
-        if (!texture || texture->resource.format->Flags & WINED3DFMT_FLAG_FILTERING) continue;
+        if (!texture || texture->resource.format->flags & WINED3DFMT_FLAG_FILTERING) continue;
 
         if (This->stateBlock->state.sampler_states[i][WINED3DSAMP_MAGFILTER] != WINED3DTEXF_POINT)
         {
@@ -5466,7 +5466,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
 
     ENTER_GL();
 
-    if (dst_format->Flags & WINED3DFMT_FLAG_COMPRESSED)
+    if (dst_format->flags & WINED3DFMT_FLAG_COMPRESSED)
     {
         UINT row_length = wined3d_format_calculate_size(src_format, 1, update_w, 1);
         UINT row_count = (update_h + src_format->block_height - 1) / src_format->block_height;
