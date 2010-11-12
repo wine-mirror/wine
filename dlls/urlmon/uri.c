@@ -6028,6 +6028,7 @@ HRESULT WINAPI CoInternetCombineUrlEx(IUri *pBaseUri, LPCWSTR pwzRelativeUrl, DW
     IUri *relative;
     Uri *base;
     HRESULT hr;
+    IInternetProtocolInfo *info;
 
     TRACE("(%p %s %x %p %x) stub\n", pBaseUri, debugstr_w(pwzRelativeUrl), dwCombineFlags,
         ppCombinedUri, (DWORD)dwReserved);
@@ -6051,6 +6052,21 @@ HRESULT WINAPI CoInternetCombineUrlEx(IUri *pBaseUri, LPCWSTR pwzRelativeUrl, DW
         FIXME("(%p %s %x %p %x) Unknown IUri's not supported yet.\n", pBaseUri, debugstr_w(pwzRelativeUrl),
             dwCombineFlags, ppCombinedUri, (DWORD)dwReserved);
         return E_NOTIMPL;
+    }
+
+    info = get_protocol_info(base->canon_uri);
+    if(info) {
+        WCHAR result[INTERNET_MAX_URL_LENGTH+1];
+        DWORD result_len = 0;
+
+        hr = IInternetProtocolInfo_CombineUrl(info, base->canon_uri, pwzRelativeUrl, dwCombineFlags,
+                                              result, INTERNET_MAX_URL_LENGTH+1, &result_len, 0);
+        IInternetProtocolInfo_Release(info);
+        if(SUCCEEDED(hr)) {
+            hr = CreateUri(result, Uri_CREATE_ALLOW_RELATIVE, 0, ppCombinedUri);
+            if(SUCCEEDED(hr))
+                return hr;
+        }
     }
 
     hr = CreateUri(pwzRelativeUrl, Uri_CREATE_ALLOW_RELATIVE, 0, &relative);

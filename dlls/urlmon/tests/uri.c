@@ -9255,8 +9255,6 @@ static void test_CoInternetCombineIUri_Pluggable(void) {
     HRESULT hr;
     IUri *base = NULL;
 
-    register_protocols();
-
     hr = pCreateUri(combine_baseW, 0, 0, &base);
     ok(SUCCEEDED(hr), "Error: CreateUri returned 0x%08x.\n", hr);
     if(SUCCEEDED(hr)) {
@@ -9290,8 +9288,6 @@ static void test_CoInternetCombineIUri_Pluggable(void) {
         if(relative) IUri_Release(relative);
     }
     if(base) IUri_Release(base);
-
-    unregister_protocols();
 }
 
 static void test_CoInternetCombineUrlEx(void) {
@@ -9413,6 +9409,38 @@ static void test_CoInternetCombineUrlEx(void) {
     }
 }
 
+static void test_CoInternetCombineUrlEx_Pluggable(void) {
+    HRESULT hr;
+    IUri *base = NULL;
+
+    hr = pCreateUri(combine_baseW, 0, 0, &base);
+    ok(SUCCEEDED(hr), "Error: CreateUri returned 0x%08x.\n", hr);
+    if(SUCCEEDED(hr)) {
+        IUri *result = NULL;
+
+        SET_EXPECT(CombineUrl);
+
+        hr = pCoInternetCombineUrlEx(base, combine_relativeW, URL_DONT_SIMPLIFY|URL_FILE_USE_PATHURL|URL_DONT_UNESCAPE_EXTRA_INFO,
+                                     &result, 0);
+        ok(hr == S_OK, "Error: CoInternetCombineUrlEx returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+
+        CHECK_CALLED(CombineUrl);
+
+        if(SUCCEEDED(hr)) {
+            BSTR received = NULL;
+            hr = IUri_GetAbsoluteUri(result, &received);
+            ok(hr == S_OK, "Error: Expected S_OK, but got 0x%08x instead.\n", hr);
+            if(SUCCEEDED(hr)) {
+                ok(!lstrcmpW(combine_resultW, received), "Error: Expected %s, but got %s.\n",
+                    wine_dbgstr_w(combine_resultW), wine_dbgstr_w(received));
+            }
+            SysFreeString(received);
+        }
+        if(result) IUri_Release(result);
+    }
+    if(base) IUri_Release(base);
+}
+
 START_TEST(uri) {
     HMODULE hurlmon;
 
@@ -9501,6 +9529,13 @@ START_TEST(uri) {
     trace("test CoInternetCombineUrlEx...\n");
     test_CoInternetCombineUrlEx();
 
+    register_protocols();
+
     trace("test CoInternetCombineIUri pluggable...\n");
     test_CoInternetCombineIUri_Pluggable();
+
+    trace("test CoInternetCombineUrlEx Pluggable...\n");
+    test_CoInternetCombineUrlEx_Pluggable();
+
+    unregister_protocols();
 }
