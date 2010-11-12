@@ -1664,6 +1664,7 @@ HTMLElement *HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL 
     static const WCHAR wszOPTION[]   = {'O','P','T','I','O','N',0};
     static const WCHAR wszSCRIPT[]   = {'S','C','R','I','P','T',0};
     static const WCHAR wszSELECT[]   = {'S','E','L','E','C','T',0};
+    static const WCHAR wszSTYLE[]    = {'S','T','Y','L','E',0};
     static const WCHAR wszTABLE[]    = {'T','A','B','L','E',0};
     static const WCHAR wszTR[]       = {'T','R',0};
     static const WCHAR wszTEXTAREA[] = {'T','E','X','T','A','R','E','A',0};
@@ -1701,6 +1702,8 @@ HTMLElement *HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL 
         ret = HTMLScriptElement_Create(doc, nselem);
     else if(!strcmpW(class_name, wszSELECT))
         ret = HTMLSelectElement_Create(doc, nselem);
+    else if(!strcmpW(class_name, wszSTYLE))
+        ret = HTMLStyleElement_Create(doc, nselem);
     else if(!strcmpW(class_name, wszTABLE))
         ret = HTMLTable_Create(doc, nselem);
     else if(!strcmpW(class_name, wszTR))

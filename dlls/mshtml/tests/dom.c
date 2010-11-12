@@ -376,6 +376,18 @@ static const IID * const form_iids[] = {
     NULL
 };
 
+static const IID * const styleelem_iids[] = {
+    &IID_IHTMLDOMNode,
+    &IID_IHTMLDOMNode2,
+    &IID_IHTMLElement,
+    &IID_IHTMLElement2,
+    &IID_IHTMLElement3,
+    &IID_IHTMLStyleElement,
+    &IID_IDispatchEx,
+    &IID_IConnectionPointContainer,
+    NULL
+};
+
 static const IID * const generic_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLDOMNode2,
@@ -432,7 +444,7 @@ static const elem_type_info_t elem_type_infos[] = {
     {"SELECT",    select_iids,      &DIID_DispHTMLSelectElement},
     {"TEXTAREA",  textarea_iids,    &DIID_DispHTMLTextAreaElement},
     {"OPTION",    option_iids,      &DIID_DispHTMLOptionElement},
-    {"STYLE",     elem_iids,        NULL},
+    {"STYLE",     styleelem_iids,   &DIID_DispHTMLStyleElement},
     {"BLOCKQUOTE",elem_iids,        NULL},
     {"P",         elem_iids,        NULL},
     {"BR",        elem_iids,        NULL},

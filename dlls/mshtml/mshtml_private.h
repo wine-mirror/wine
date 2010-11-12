@@ -90,6 +90,7 @@ typedef struct event_target_t event_target_t;
     XDIID(DispHTMLScriptElement) \
     XDIID(DispHTMLSelectElement) \
     XDIID(DispHTMLStyle) \
+    XDIID(DispHTMLStyleElement) \
     XDIID(DispHTMLStyleSheetsCollection) \
     XDIID(DispHTMLTable) \
     XDIID(DispHTMLTableRow) \
@@ -142,6 +143,7 @@ typedef struct event_target_t event_target_t;
     XIID(IHTMLStyle2) \
     XIID(IHTMLStyle3) \
     XIID(IHTMLStyle4) \
+    XIID(IHTMLStyleElement) \
     XIID(IHTMLStyleSheetsCollection) \
     XIID(IHTMLTable) \
     XIID(IHTMLTableRow) \
@@ -823,6 +825,7 @@ HTMLElement *HTMLEmbedElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
 HTMLElement *HTMLFormElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
 HTMLElement *HTMLFrameElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
 HTMLElement *HTMLIFrame_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
+HTMLElement *HTMLStyleElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
 HTMLElement *HTMLImgElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
 HTMLElement *HTMLInputElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
 HTMLElement *HTMLObjectElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
