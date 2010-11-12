@@ -760,12 +760,12 @@
 @ stdcall NtOpenFile(ptr long ptr ptr long long) ntdll.NtOpenFile
 @ stdcall NtOpenProcess(ptr long ptr ptr) ntdll.NtOpenProcess
 @ stdcall NtOpenProcessToken(long long long) ntdll.NtOpenProcessToken
-@ stub NtOpenProcessTokenEx
+@ stdcall NtOpenProcessTokenEx(long long long ptr) ntdll.NtOpenProcessTokenEx
 @ stdcall NtOpenThread(ptr long ptr ptr) ntdll.NtOpenThread
 @ stdcall NtOpenThreadToken(long long long long) ntdll.NtOpenThreadToken
-@ stub NtOpenThreadTokenEx
+@ stdcall NtOpenThreadTokenEx(long long long long ptr) ntdll.NtOpenThreadTokenEx
 @ stdcall NtQueryDirectoryFile(long long ptr ptr ptr ptr long long long ptr long) ntdll.NtQueryDirectoryFile
-@ stub NtQueryEaFile
+@ stdcall NtQueryEaFile(long ptr ptr long long ptr long ptr long) ntdll.NtQueryEaFile
 @ stdcall NtQueryInformationAtom(long long ptr long ptr) ntdll.NtQueryInformationAtom
 @ stdcall NtQueryInformationFile(long ptr ptr long long) ntdll.NtQueryInformationFile
 @ stdcall NtQueryInformationProcess(long long ptr long ptr) ntdll.NtQueryInformationProcess
@@ -778,7 +778,7 @@
 @ stdcall NtReadFile(long long long long long long long long long) ntdll.NtReadFile
 @ stub NtRequestPort
 @ stdcall NtRequestWaitReplyPort(ptr ptr ptr) ntdll.NtRequestWaitReplyPort
-@ stub NtSetEaFile
+@ stdcall NtSetEaFile(long ptr ptr long) ntdll.NtSetEaFile
 @ stdcall NtSetEvent(long long) ntdll.NtSetEvent
 @ stdcall NtSetInformationFile(long long long long long) ntdll.NtSetInformationFile
 @ stdcall NtSetInformationProcess(long long long long) ntdll.NtSetInformationProcess
@@ -946,8 +946,8 @@
 @ stdcall RtlAreBitsClear(ptr long long) ntdll.RtlAreBitsClear
 @ stdcall RtlAreBitsSet(ptr long long) ntdll.RtlAreBitsSet
 @ stdcall RtlAssert(ptr ptr long long) ntdll.RtlAssert
-@ stub RtlCaptureContext
-@ stub RtlCaptureStackBackTrace
+@ stdcall -register RtlCaptureContext(ptr) ntdll.RtlCaptureContext
+@ stdcall RtlCaptureStackBackTrace(long long ptr ptr) ntdll.RtlCaptureStackBackTrace
 @ stdcall RtlCharToInteger(ptr long ptr) ntdll.RtlCharToInteger
 @ stdcall RtlCheckRegistryKey(long ptr) ntdll.RtlCheckRegistryKey
 @ stdcall RtlClearAllBits(ptr) ntdll.RtlClearAllBits
@@ -957,7 +957,7 @@
 @ stdcall RtlCompareMemoryUlong(ptr long long) ntdll.RtlCompareMemoryUlong
 @ stdcall RtlCompareString(ptr ptr long) ntdll.RtlCompareString
 @ stdcall RtlCompareUnicodeString(ptr ptr long) ntdll.RtlCompareUnicodeString
-@ stub RtlCompressBuffer
+@ stdcall RtlCompressBuffer(long ptr long ptr long long ptr ptr) ntdll.RtlCompressBuffer
 @ stub RtlCompressChunks
 @ stdcall -ret64 RtlConvertLongToLargeInteger(long) ntdll.RtlConvertLongToLargeInteger
 @ stdcall RtlConvertSidToUnicodeString(ptr ptr long) ntdll.RtlConvertSidToUnicodeString
@@ -975,7 +975,7 @@
 @ stub RtlCreateSystemVolumeInformationFolder
 @ stdcall RtlCreateUnicodeString(ptr wstr) ntdll.RtlCreateUnicodeString
 @ stub RtlCustomCPToUnicodeN
-@ stub RtlDecompressBuffer
+@ stdcall RtlDecompressBuffer(long ptr long ptr long ptr) ntdll.RtlDecompressBuffer
 @ stub RtlDecompressChunks
 @ stub RtlDecompressFragment
 @ stub RtlDelete
@@ -998,7 +998,7 @@
 @ stub RtlEnumerateGenericTable
 @ stub RtlEnumerateGenericTableAvl
 @ stub RtlEnumerateGenericTableLikeADirectory
-@ stub RtlEnumerateGenericTableWithoutSplaying
+@ stdcall RtlEnumerateGenericTableWithoutSplaying(ptr ptr) ntdll.RtlEnumerateGenericTableWithoutSplaying
 @ stub RtlEnumerateGenericTableWithoutSplayingAvl
 @ stdcall RtlEqualLuid(ptr ptr) ntdll.RtlEqualLuid
 @ stdcall RtlEqualSid(long long) ntdll.RtlEqualSid
@@ -1033,7 +1033,7 @@
 @ stub RtlGenerate8dot3Name
 @ stdcall RtlGetAce(ptr long ptr) ntdll.RtlGetAce
 @ stub RtlGetCallersAddress
-@ stub RtlGetCompressionWorkSpaceSize
+@ stdcall RtlGetCompressionWorkSpaceSize(long ptr ptr) ntdll.RtlGetCompressionWorkSpaceSize
 @ stdcall RtlGetDaclSecurityDescriptor(ptr ptr ptr ptr) ntdll.RtlGetDaclSecurityDescriptor
 @ stub RtlGetDefaultCodePage
 @ stub RtlGetElementGenericTable
@@ -1041,7 +1041,7 @@
 @ stub RtlGetFirstRange
 @ stdcall RtlGetGroupSecurityDescriptor(ptr ptr ptr) ntdll.RtlGetGroupSecurityDescriptor
 @ stub RtlGetNextRange
-@ stub RtlGetNtGlobalFlags
+@ stdcall RtlGetNtGlobalFlags() ntdll.RtlGetNtGlobalFlags
 @ stdcall RtlGetOwnerSecurityDescriptor(ptr ptr ptr) ntdll.RtlGetOwnerSecurityDescriptor
 @ stdcall RtlGetSaclSecurityDescriptor(ptr ptr ptr ptr) ntdll.RtlGetSaclSecurityDescriptor
 @ stub RtlGetSetBootStatusData
@@ -1069,10 +1069,10 @@
 @ stub RtlIntegerToUnicode
 @ stdcall RtlIntegerToUnicodeString(long long ptr) ntdll.RtlIntegerToUnicodeString
 @ stub RtlInvertRangeList
-@ stub RtlIpv4AddressToStringA
-@ stub RtlIpv4AddressToStringExA
+@ stdcall RtlIpv4AddressToStringA(ptr ptr) ntdll.RtlIpv4AddressToStringA
+@ stdcall RtlIpv4AddressToStringExA(ptr long ptr ptr) ntdll.RtlIpv4AddressToStringExA
 @ stdcall RtlIpv4AddressToStringExW(ptr ptr ptr ptr) ntdll.RtlIpv4AddressToStringExW
-@ stub RtlIpv4AddressToStringW
+@ stdcall RtlIpv4AddressToStringW(ptr ptr) ntdll.RtlIpv4AddressToStringW
 @ stub RtlIpv4StringToAddressA
 @ stub RtlIpv4StringToAddressExA
 @ stdcall RtlIpv4StringToAddressExW(ptr ptr wstr ptr) ntdll.RtlIpv4StringToAddressExW
@@ -1115,7 +1115,7 @@
 @ stub RtlNextUnicodePrefix
 @ stdcall RtlNtStatusToDosError(long) ntdll.RtlNtStatusToDosError
 @ stdcall RtlNtStatusToDosErrorNoTeb(long) ntdll.RtlNtStatusToDosErrorNoTeb
-@ stub RtlNumberGenericTableElements
+@ stdcall RtlNumberGenericTableElements(ptr) ntdll.RtlNumberGenericTableElements
 @ stub RtlNumberGenericTableElementsAvl
 @ stdcall RtlNumberOfClearBits(ptr) ntdll.RtlNumberOfClearBits
 @ stdcall RtlNumberOfSetBits(ptr) ntdll.RtlNumberOfSetBits
@@ -1281,7 +1281,7 @@
 @ stdcall ZwAdjustPrivilegesToken(long long long long long long) ntdll.ZwAdjustPrivilegesToken
 @ stdcall ZwAlertThread(long) ntdll.ZwAlertThread
 @ stdcall ZwAllocateVirtualMemory(long ptr ptr ptr long long) ntdll.ZwAllocateVirtualMemory
-@ stub ZwAssignProcessToJobObject
+@ stdcall ZwAssignProcessToJobObject(long long) ntdll.ZwAssignProcessToJobObject
 @ stdcall ZwCancelIoFile(long ptr) ntdll.ZwCancelIoFile
 @ stdcall ZwCancelTimer(long ptr) ntdll.ZwCancelTimer
 @ stdcall ZwClearEvent(long) ntdll.ZwClearEvent
@@ -1291,7 +1291,7 @@
 @ stdcall ZwCreateDirectoryObject(long long long) ntdll.ZwCreateDirectoryObject
 @ stdcall ZwCreateEvent(long long long long long) ntdll.ZwCreateEvent
 @ stdcall ZwCreateFile(ptr long ptr ptr long long long ptr long long ptr) ntdll.ZwCreateFile
-@ stub ZwCreateJobObject
+@ stdcall ZwCreateJobObject(ptr long ptr) ntdll.ZwCreateJobObject
 @ stdcall ZwCreateKey(ptr long ptr long ptr long long) ntdll.ZwCreateKey
 @ stdcall ZwCreateSection(ptr long ptr ptr long long long) ntdll.ZwCreateSection
 @ stdcall ZwCreateSymbolicLinkObject(ptr long ptr ptr) ntdll.ZwCreateSymbolicLinkObject
@@ -1312,8 +1312,8 @@
 @ stdcall ZwFlushVirtualMemory(long ptr ptr long) ntdll.ZwFlushVirtualMemory
 @ stdcall ZwFreeVirtualMemory(long ptr ptr long) ntdll.ZwFreeVirtualMemory
 @ stdcall ZwFsControlFile(long long long long long long long long long long) ntdll.ZwFsControlFile
-@ stub ZwInitiatePowerAction
-@ stub ZwIsProcessInJob
+@ stdcall ZwInitiatePowerAction(long long long long) ntdll.ZwInitiatePowerAction
+@ stdcall ZwIsProcessInJob(long long) ntdll.ZwIsProcessInJob
 @ stdcall ZwLoadDriver(ptr) ntdll.ZwLoadDriver
 @ stdcall ZwLoadKey(ptr ptr) ntdll.ZwLoadKey
 @ stdcall ZwMakeTemporaryObject(long) ntdll.ZwMakeTemporaryObject
@@ -1322,18 +1322,18 @@
 @ stdcall ZwOpenDirectoryObject(long long long) ntdll.ZwOpenDirectoryObject
 @ stdcall ZwOpenEvent(long long long) ntdll.ZwOpenEvent
 @ stdcall ZwOpenFile(ptr long ptr ptr long long) ntdll.ZwOpenFile
-@ stub ZwOpenJobObject
+@ stdcall ZwOpenJobObject(ptr long ptr) ntdll.ZwOpenJobObject
 @ stdcall ZwOpenKey(ptr long ptr) ntdll.ZwOpenKey
 @ stdcall ZwOpenProcess(ptr long ptr ptr) ntdll.ZwOpenProcess
 @ stdcall ZwOpenProcessToken(long long long) ntdll.ZwOpenProcessToken
-@ stub ZwOpenProcessTokenEx
+@ stdcall ZwOpenProcessTokenEx(long long long ptr) ntdll.ZwOpenProcessTokenEx
 @ stdcall ZwOpenSection(ptr long ptr) ntdll.ZwOpenSection
 @ stdcall ZwOpenSymbolicLinkObject(ptr long ptr) ntdll.ZwOpenSymbolicLinkObject
 @ stdcall ZwOpenThread(ptr long ptr ptr) ntdll.ZwOpenThread
 @ stdcall ZwOpenThreadToken(long long long long) ntdll.ZwOpenThreadToken
-@ stub ZwOpenThreadTokenEx
+@ stdcall ZwOpenThreadTokenEx(long long long long ptr) ntdll.ZwOpenThreadTokenEx
 @ stdcall ZwOpenTimer(ptr long ptr) ntdll.ZwOpenTimer
-@ stub ZwPowerInformation
+@ stdcall ZwPowerInformation(long ptr long ptr long) ntdll.ZwPowerInformation
 @ stdcall ZwPulseEvent(long ptr) ntdll.ZwPulseEvent
 @ stub ZwQueryBootEntryOrder
 @ stub ZwQueryBootOptions
@@ -1341,10 +1341,10 @@
 @ stdcall ZwQueryDefaultUILanguage(ptr) ntdll.ZwQueryDefaultUILanguage
 @ stdcall ZwQueryDirectoryFile(long long ptr ptr ptr ptr long long long ptr long) ntdll.ZwQueryDirectoryFile
 @ stdcall ZwQueryDirectoryObject(long ptr long long long ptr ptr) ntdll.ZwQueryDirectoryObject
-@ stub ZwQueryEaFile
-@ stub ZwQueryFullAttributesFile
+@ stdcall ZwQueryEaFile(long ptr ptr long long ptr long ptr long) ntdll.ZwQueryEaFile
+@ stdcall ZwQueryFullAttributesFile(ptr ptr) ntdll.ZwQueryFullAttributesFile
 @ stdcall ZwQueryInformationFile(long ptr ptr long long) ntdll.ZwQueryInformationFile
-@ stub ZwQueryInformationJobObject
+@ stdcall ZwQueryInformationJobObject(long long ptr long ptr) ntdll.ZwQueryInformationJobObject
 @ stdcall ZwQueryInformationProcess(long long ptr long ptr) ntdll.ZwQueryInformationProcess
 @ stdcall ZwQueryInformationThread(long long ptr long ptr) ntdll.ZwQueryInformationThread
 @ stdcall ZwQueryInformationToken(long long ptr long ptr) ntdll.ZwQueryInformationToken
@@ -1368,10 +1368,10 @@
 @ stub ZwSetBootOptions
 @ stdcall ZwSetDefaultLocale(long long) ntdll.ZwSetDefaultLocale
 @ stdcall ZwSetDefaultUILanguage(long) ntdll.ZwSetDefaultUILanguage
-@ stub ZwSetEaFile
+@ stdcall ZwSetEaFile(long ptr ptr long) ntdll.ZwSetEaFile
 @ stdcall ZwSetEvent(long long) ntdll.ZwSetEvent
 @ stdcall ZwSetInformationFile(long long long long long) ntdll.ZwSetInformationFile
-@ stub ZwSetInformationJobObject
+@ stdcall ZwSetInformationJobObject(long long ptr long) ntdll.ZwSetInformationJobObject
 @ stdcall ZwSetInformationObject(long long ptr long) ntdll.ZwSetInformationObject
 @ stdcall ZwSetInformationProcess(long long long long) ntdll.ZwSetInformationProcess
 @ stdcall ZwSetInformationThread(long long ptr long) ntdll.ZwSetInformationThread
@@ -1381,7 +1381,7 @@
 @ stdcall ZwSetTimer(long ptr ptr ptr long long ptr) ntdll.ZwSetTimer
 @ stdcall ZwSetValueKey(long long long long long long) ntdll.ZwSetValueKey
 @ stdcall ZwSetVolumeInformationFile(long ptr ptr long long) ntdll.ZwSetVolumeInformationFile
-@ stub ZwTerminateJobObject
+@ stdcall ZwTerminateJobObject(long long) ntdll.ZwTerminateJobObject
 @ stdcall ZwTerminateProcess(long long) ntdll.ZwTerminateProcess
 @ stub ZwTranslateFilePath
 @ stdcall ZwUnloadDriver(ptr) ntdll.ZwUnloadDriver
