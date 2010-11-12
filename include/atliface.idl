@@ -76,4 +76,4 @@ cpp_quote("BOOL WINAPI AtlAxWinInit(void);")
 
 cpp_quote("HWND WINAPI AtlAxCreateDialogW(HINSTANCE,LPCWSTR,HWND,DLGPROC,LPARAM);")
 cpp_quote("HWND WINAPI AtlAxCreateDialogA(HINSTANCE,LPCSTR,HWND,DLGPROC,LPARAM);")
-cpp_quote("#define     AtlAxCreateDialog WINELIB_NAME_AW(AtlAxCreateDialog")
+cpp_quote("#define     AtlAxCreateDialog WINELIB_NAME_AW(AtlAxCreateDialog)")
