@@ -191,6 +191,9 @@ static HRESULT WINAPI HTMLWindow2_QueryInterface(IHTMLWindow2 *iface, REFIID rii
     }else if(IsEqualGUID(&IID_IHTMLPrivateWindow, riid)) {
         TRACE("(%p)->(IID_IHTMLPrivateWindow %p)\n", This, ppv);
         *ppv = HTMLPRIVWINDOW(This);
+    }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
+        TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
+        *ppv = SERVPROV(This);
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }
@@ -2114,6 +2117,52 @@ static const IDispatchExVtbl WindowDispExVtbl = {
     WindowDispEx_GetNameSpaceParent
 };
 
+#define SERVPROV_THIS(iface) DEFINE_THIS(HTMLWindow, ServiceProvider, iface)
+
+static HRESULT WINAPI HTMLWindowSP_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
+{
+    HTMLWindow *This = SERVPROV_THIS(iface);
+    return IHTMLWindow2_QueryInterface(HTMLWINDOW2(This), riid, ppv);
+}
+
+static ULONG WINAPI HTMLWindowSP_AddRef(IServiceProvider *iface)
+{
+    HTMLWindow *This = SERVPROV_THIS(iface);
+    return IHTMLWindow2_AddRef(HTMLWINDOW2(This));
+}
+
+static ULONG WINAPI HTMLWindowSP_Release(IServiceProvider *iface)
+{
+    HTMLWindow *This = SERVPROV_THIS(iface);
+    return IHTMLWindow2_Release(HTMLWINDOW2(This));
+}
+
+static HRESULT WINAPI HTMLWindowSP_QueryService(IServiceProvider *iface, REFGUID guidService, REFIID riid, void **ppv)
+{
+    HTMLWindow *This = SERVPROV_THIS(iface);
+
+    if(IsEqualGUID(guidService, &IID_IHTMLWindow2)) {
+        TRACE("IID_IHTMLWindow2\n");
+        return IHTMLWindow2_QueryInterface(HTMLWINDOW2(This), riid, ppv);
+    }
+
+    TRACE("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
+
+    if(!This->doc_obj)
+        return E_NOINTERFACE;
+
+    return IServiceProvider_QueryService(SERVPROV(&This->doc_obj->basedoc), guidService, riid, ppv);
+}
+
+#undef SERVPROV_THIS
+
+static const IServiceProviderVtbl ServiceProviderVtbl = {
+    HTMLWindowSP_QueryInterface,
+    HTMLWindowSP_AddRef,
+    HTMLWindowSP_Release,
+    HTMLWindowSP_QueryService
+};
+
 static const tid_t HTMLWindow_iface_tids[] = {
     IHTMLWindow2_tid,
     IHTMLWindow3_tid,
@@ -2153,6 +2202,7 @@ HRESULT HTMLWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow, HTML
     window->lpHTMLWindow4Vtbl = &HTMLWindow4Vtbl;
     window->lpIHTMLPrivateWindowVtbl = &HTMLPrivateWindowVtbl;
     window->lpIDispatchExVtbl = &WindowDispExVtbl;
+    window->lpServiceProviderVtbl = &ServiceProviderVtbl;
     window->ref = 1;
     window->doc_obj = doc_obj;
 
