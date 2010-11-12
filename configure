@@ -15142,6 +15142,7 @@ wine_fn_config_dll wsock32 enable_wsock32 wsock32
 wine_fn_config_dll wtsapi32 enable_wtsapi32 wtsapi32
 wine_fn_config_dll wuapi enable_wuapi
 wine_fn_config_dll wuaueng enable_wuaueng
+wine_fn_config_dll xapofx1_1 enable_xapofx1_1
 wine_fn_config_dll xinput1_1 enable_xinput1_1
 wine_fn_config_dll xinput1_2 enable_xinput1_2
 wine_fn_config_dll xinput1_3 enable_xinput1_3 xinput
