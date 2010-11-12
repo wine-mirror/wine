@@ -1900,18 +1900,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Unmap(IWineD3DSurface *iface)
     else if (This == device->depth_stencil)
     {
         FIXME("Depth Stencil buffer locking is not implemented\n");
-    } else {
-        /* The rest should be a normal texture */
-        /* Check if the texture is bound, if yes dirtify the sampler to force a re-upload of the texture
-         * Can't load the texture here because PreLoad may destroy and recreate the gl texture, so sampler
-         * states need resetting
-         */
-        if (This->container.type == WINED3D_CONTAINER_TEXTURE)
-        {
-            IWineD3DBaseTextureImpl *texture = This->container.u.texture;
-            if (texture->baseTexture.bindCount)
-                IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(texture->baseTexture.sampler));
-        }
     }
 
     unlock_end:
