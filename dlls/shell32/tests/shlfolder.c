@@ -4218,6 +4218,7 @@ struct ChNotifyTest {
     const char path_2[256];
 } chnotify_tests[] = {
     {"MKDIR", 1, 0, SHCNE_MKDIR, "C:\\shell32_cn_test\\test", ""},
+    {"CREATE", 1, 0, SHCNE_CREATE, "C:\\shell32_cn_test\\test\\file.txt", ""},
     {"RMDIR", 1, 0, SHCNE_RMDIR, "C:\\shell32_cn_test\\test", ""},
 };
 

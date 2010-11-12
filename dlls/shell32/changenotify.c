@@ -243,7 +243,7 @@ static BOOL should_notify( LPCITEMIDLIST changed, LPCITEMIDLIST watched, BOOL su
         return FALSE;
     if (ILIsEqual( watched, changed ) )
         return TRUE;
-    if( sub && ILIsParent( watched, changed, TRUE ) )
+    if( sub && ILIsParent( watched, changed, FALSE ) )
         return TRUE;
     return FALSE;
 }
