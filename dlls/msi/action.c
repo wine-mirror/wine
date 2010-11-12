@@ -2170,7 +2170,7 @@ static void set_target_path( MSIPACKAGE *package, MSIFILE *file )
     TRACE("file %s is named %s\n", debugstr_w(file->File), debugstr_w(file->FileName));
 
     msi_free( file->TargetPath );
-    if (assembly)
+    if (assembly && !assembly->application)
     {
         if (!assembly->tempdir) assembly->tempdir = get_temp_dir();
         file->TargetPath = build_directory_name( 2, assembly->tempdir, file->FileName );

@@ -186,9 +186,10 @@ static BOOL installfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
             return FALSE;
 
         msi_file_update_ui(package, f, szInstallFiles);
-        if (!f->Component->assembly)
+        if (!f->Component->assembly || f->Component->assembly->application)
+        {
             msi_create_directory(package, f->Component->Directory);
-
+        }
         *path = strdupW(f->TargetPath);
         *attrs = f->Attributes;
     }
@@ -268,9 +269,10 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
             TRACE("copying %s to %s\n", debugstr_w(source), debugstr_w(file->TargetPath));
 
             msi_file_update_ui(package, file, szInstallFiles);
-            if (!file->Component->assembly)
+            if (!file->Component->assembly || file->Component->assembly->application)
+            {
                 msi_create_directory(package, file->Component->Directory);
-
+            }
             rc = copy_install_file(package, file, source);
             if (rc != ERROR_SUCCESS)
             {
