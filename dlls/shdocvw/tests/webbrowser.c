@@ -118,6 +118,8 @@ DEFINE_EXPECT(Exec_SETDOWNLOADSTATE_0);
 DEFINE_EXPECT(Exec_SETDOWNLOADSTATE_1);
 DEFINE_EXPECT(Exec_SETPROGRESSMAX);
 DEFINE_EXPECT(Exec_SETPROGRESSPOS);
+DEFINE_EXPECT(Exec_UPDATECOMMANDS);
+DEFINE_EXPECT(Exec_SETTITLE);
 DEFINE_EXPECT(QueryStatus_SETPROGRESSTEXT);
 DEFINE_EXPECT(QueryStatus_STOP);
 DEFINE_EXPECT(DocHost_EnableModeless_TRUE);
@@ -284,6 +286,16 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             default:
                 ok(0, "unexpevted V_I4(pvaIn)=%d\n", V_I4(pvaIn));
             }
+            return S_OK;
+        case OLECMDID_UPDATECOMMANDS:
+            CHECK_EXPECT(Exec_UPDATECOMMANDS);
+            ok(nCmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER, "nCmdexecopts=%08x\n", nCmdexecopt);
+            ok(!pvaIn, "pvaIn != NULL\n");
+            ok(!pvaOut, "pvaOut=%p, expected NULL\n", pvaOut);
+            return S_OK;
+        case OLECMDID_SETTITLE:
+            CHECK_EXPECT(Exec_SETTITLE);
+            /* TODO: test args */
             return S_OK;
         default:
             ok(0, "unexpected nsCmdID %d\n", nCmdID);
@@ -2250,9 +2262,7 @@ static void test_download(DWORD flags)
     SET_EXPECT(Invoke_STATUSTEXTCHANGE);
     SET_EXPECT(SetStatusText);
     SET_EXPECT(EnableModeless_TRUE);
-    if(is_first_load)
-        SET_EXPECT(QueryStatus_STOP);
-    else
+    if(!is_first_load)
         SET_EXPECT(GetHostInfo);
     SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
     SET_EXPECT(Invoke_TITLECHANGE);
@@ -2261,6 +2271,11 @@ static void test_download(DWORD flags)
         SET_EXPECT(GetDropTarget);
     SET_EXPECT(Invoke_PROGRESSCHANGE);
     SET_EXPECT(Invoke_DOCUMENTCOMPLETE);
+
+    SET_EXPECT(UpdateUI);
+    SET_EXPECT(Exec_UPDATECOMMANDS);
+    SET_EXPECT(QueryStatus_STOP);
+
     while(!called_Invoke_DOCUMENTCOMPLETE && GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
@@ -2289,9 +2304,7 @@ static void test_download(DWORD flags)
         todo_wine CHECK_CALLED(EnableModeless_TRUE);
     else
         CLEAR_CALLED(EnableModeless_FALSE); /* IE 8 */
-    if(is_first_load)
-        todo_wine CHECK_CALLED(QueryStatus_STOP);
-    else
+    if(!is_first_load)
         todo_wine CHECK_CALLED(GetHostInfo);
     todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
     todo_wine CHECK_CALLED(Invoke_TITLECHANGE);
@@ -2304,6 +2317,15 @@ static void test_download(DWORD flags)
     is_downloading = FALSE;
 
     test_ready_state(READYSTATE_COMPLETE);
+
+    while(!called_Exec_UPDATECOMMANDS && GetMessage(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    CHECK_CALLED(UpdateUI);
+    CHECK_CALLED(Exec_UPDATECOMMANDS);
+    CLEAR_CALLED(QueryStatus_STOP);
 }
 
 static void test_olecmd(IUnknown *unk, BOOL loaded)
