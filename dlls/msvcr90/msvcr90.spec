@@ -1323,7 +1323,7 @@
 @ cdecl getc(ptr) msvcrt.getc
 @ cdecl getchar() msvcrt.getchar
 @ cdecl getenv(str) msvcrt.getenv
-@ stub getenv_s
+@ cdecl getenv_s(ptr ptr long str) msvcrt.getenv_s
 @ cdecl gets(str) msvcrt.gets
 @ stub gets_s
 @ cdecl getwc(ptr) msvcrt.getwc
