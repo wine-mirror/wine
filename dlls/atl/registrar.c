@@ -743,7 +743,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, LPVOID *ppvObject)
 {
     TRACE("(%s %s %p)\n", debugstr_guid(clsid), debugstr_guid(riid), ppvObject);
 
-    if(IsEqualGUID(&CLSID_ATLRegistrar, clsid)) {
+    if(IsEqualGUID(&CLSID_Registrar, clsid)) {
         *ppvObject = &RegistrarCF;
         return S_OK;
     }
@@ -787,14 +787,14 @@ static HRESULT do_register_dll_server(IRegistrar *pRegistrar, LPCOLESTR wszDll,
 
 static HRESULT do_register_server(BOOL do_register)
 {
-    static const WCHAR CLSID_ATLRegistrarW[] =
-            {'C','L','S','I','D','_','A','T','L','R','e','g','i','s','t','r','a','r',0};
+    static const WCHAR CLSID_RegistrarW[] =
+            {'C','L','S','I','D','_','R','e','g','i','s','t','r','a','r',0};
     static const WCHAR atl_dllW[] = {'a','t','l','.','d','l','l',0};
 
     WCHAR clsid_str[40];
-    const struct _ATL_REGMAP_ENTRY reg_map[] = {{CLSID_ATLRegistrarW, clsid_str}, {NULL,NULL}};
+    const struct _ATL_REGMAP_ENTRY reg_map[] = {{CLSID_RegistrarW, clsid_str}, {NULL,NULL}};
 
-    StringFromGUID2(&CLSID_ATLRegistrar, clsid_str, sizeof(clsid_str)/sizeof(WCHAR));
+    StringFromGUID2(&CLSID_Registrar, clsid_str, sizeof(clsid_str)/sizeof(WCHAR));
     return do_register_dll_server(NULL, atl_dllW, MAKEINTRESOURCEW(101), do_register, reg_map);
 }
 
