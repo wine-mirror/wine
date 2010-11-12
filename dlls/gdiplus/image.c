@@ -1685,6 +1685,8 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
         GdipFree(pbmi);
 
         if (!hbitmap) return GenericError;
+
+        stride = dib_stride;
     }
     else
     {
@@ -1727,7 +1729,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     (*bitmap)->hbitmap = hbitmap;
     (*bitmap)->hdc = NULL;
     (*bitmap)->bits = bits;
-    (*bitmap)->stride = dib_stride;
+    (*bitmap)->stride = stride;
     (*bitmap)->own_bits = own_bits;
 
     /* set format-related flags */
