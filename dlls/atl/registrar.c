@@ -687,8 +687,9 @@ static HRESULT WINAPI RegistrarCF_QueryInterface(IClassFactory *iface, REFIID ri
 {
     TRACE("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppvObject);
 
-    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IRegistrar, riid)) {
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IClassFactory, riid)) {
         *ppvObject = iface;
+        IClassFactory_AddRef( iface );
         return S_OK;
     }
 
@@ -743,10 +744,8 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, LPVOID *ppvObject)
 {
     TRACE("(%s %s %p)\n", debugstr_guid(clsid), debugstr_guid(riid), ppvObject);
 
-    if(IsEqualGUID(&CLSID_Registrar, clsid)) {
-        *ppvObject = &RegistrarCF;
-        return S_OK;
-    }
+    if(IsEqualGUID(&CLSID_Registrar, clsid))
+        return IClassFactory_QueryInterface( &RegistrarCF, riid, ppvObject );
 
     FIXME("Not supported class %s\n", debugstr_guid(clsid));
     return CLASS_E_CLASSNOTAVAILABLE;
