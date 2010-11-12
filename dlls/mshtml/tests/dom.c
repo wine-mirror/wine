@@ -48,7 +48,7 @@ static const char elem_test_str[] =
     "<textarea id=\"X\">text text</textarea>"
     "<table id=\"tbl\"><tbody><tr></tr><tr id=\"row2\"><td>td1 text</td><td>td2 text</td></tr></tbody></table>"
     "<script id=\"sc\" type=\"text/javascript\"><!--\nfunction Testing() {}\n// -->\n</script>"
-    "<test /><object></object><embed />"
+    "<test /><object id=\"objid\" vspace=100></object><embed />"
     "<img id=\"imgid\" name=\"WineImg\"/>"
     "<iframe src=\"about:blank\" id=\"ifr\"></iframe>"
     "<form id=\"frm\"></form>"
@@ -756,6 +756,17 @@ static IHTMLCommentElement *_get_comment_iface(unsigned line, IUnknown *unk)
     return comment;
 }
 
+#define get_object_iface(u) _get_object_iface(__LINE__,u)
+static IHTMLObjectElement *_get_object_iface(unsigned line, IUnknown *unk)
+{
+    IHTMLObjectElement *obj;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLObjectElement, (void**)&obj);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLObjectElement: %08x\n", hres);
+    return obj;
+}
+
 #define test_node_name(u,n) _test_node_name(__LINE__,u,n)
 static void _test_node_name(unsigned line, IUnknown *unk, const char *exname)
 {
@@ -1282,6 +1293,20 @@ static void _test_comment_text(unsigned line, IUnknown *unk, const char *extext)
 
     IHTMLCommentElement_Release(comment);
     SysFreeString(text);
+}
+
+#define test_object_vspace(u,s) _test_object_vspace(__LINE__,u,s)
+static void _test_object_vspace(unsigned line, IUnknown *unk, LONG exl)
+{
+    IHTMLObjectElement *object = _get_object_iface(line, unk);
+    LONG l;
+    HRESULT hres;
+
+    l = 0xdeadbeef;
+    hres = IHTMLObjectElement_get_vspace(object, &l);
+    ok_(__FILE__,line)(hres == S_OK, "get_vspace failed: %08x\n", hres);
+    ok_(__FILE__,line)(l == exl, "vspace=%d, expected %d\n", l, exl);
+    IHTMLObjectElement_Release(object);
 }
 
 #define create_option_elem(d,t,v) _create_option_elem(__LINE__,d,t,v)
@@ -6221,6 +6246,13 @@ static void test_elems(IHTMLDocument2 *doc)
     ok(elem != NULL, "elem == NULL\n");
     if(elem) {
         test_iframe_elem(elem);
+        IHTMLElement_Release(elem);
+    }
+
+    elem = get_doc_elem_by_id(doc, "objid");
+    ok(elem != NULL, "elem == NULL\n");
+    if(elem) {
+        test_object_vspace((IUnknown*)elem, 100);
         IHTMLElement_Release(elem);
     }
 

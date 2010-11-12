@@ -36,6 +36,8 @@ typedef struct {
     HTMLElement element;
 
     const IHTMLObjectElementVtbl *lpIHTMLObjectElementVtbl;
+
+    nsIDOMHTMLObjectElement *nsobject;
 } HTMLObjectElement;
 
 #define HTMLOBJECT(x)  (&(x)->lpIHTMLObjectElementVtbl)
@@ -314,8 +316,19 @@ static HRESULT WINAPI HTMLObjectElement_put_vspace(IHTMLObjectElement *iface, LO
 static HRESULT WINAPI HTMLObjectElement_get_vspace(IHTMLObjectElement *iface, LONG *p)
 {
     HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    PRInt32 vspace;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMHTMLObjectElement_GetVspace(This->nsobject, &vspace);
+    if(NS_FAILED(nsres)) {
+        ERR("GetVspace failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *p = vspace;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLObjectElement_put_hspace(IHTMLObjectElement *iface, LONG v)
@@ -405,6 +418,9 @@ static void HTMLObjectElement_destructor(HTMLDOMNode *iface)
 {
     HTMLObjectElement *This = HTMLOBJECT_NODE_THIS(iface);
 
+    if(This->nsobject)
+        nsIDOMHTMLObjectElement_Release(This->nsobject);
+
     HTMLElement_destructor(&This->element.node);
 }
 
@@ -430,10 +446,16 @@ static dispex_static_data_t HTMLObjectElement_dispex = {
 HTMLElement *HTMLObjectElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
 {
     HTMLObjectElement *ret = heap_alloc_zero(sizeof(*ret));
+    nsresult nsres;
 
     ret->lpIHTMLObjectElementVtbl = &HTMLObjectElementVtbl;
     ret->element.node.vtbl = &HTMLObjectElementImplVtbl;
 
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLObjectElement_dispex);
+
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLObjectElement, (void**)&ret->nsobject);
+    if(NS_FAILED(nsres))
+        ERR("Could not get nsIDOMHTMLObjectElement iface: %08x\n", nsres);
+
     return &ret->element;
 }

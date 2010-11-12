@@ -1640,6 +1640,51 @@ interface nsIDOMHTMLFrameElement : nsIDOMHTMLElement
 
 [
     object,
+    uuid(a6cf90ac-15b3-11d2-932e-00805f8add32),
+    local
+]
+interface nsIDOMHTMLObjectElement : nsIDOMHTMLElement
+{
+    nsresult GetForm(nsIDOMHTMLFormElement **aForm);
+    nsresult GetCode(nsAString *aCode);
+    nsresult SetCode(const nsAString *aCode);
+    nsresult GetAlign(nsAString *aAlign);
+    nsresult SetAlign(const nsAString *aAlign);
+    nsresult GetArchive(nsAString *aArchive);
+    nsresult SetArchive(const nsAString *aArchive);
+    nsresult GetBorder(nsAString *aBorder);
+    nsresult SetBorder(const nsAString *aBorder);
+    nsresult GetCodeBase(nsAString *aCodeBase);
+    nsresult SetCodeBase(const nsAString *aCodeBase);
+    nsresult GetCodeType(nsAString *aCodeType);
+    nsresult SetCodeType(const nsAString *aCodeType);
+    nsresult GetData(nsAString *aData);
+    nsresult SetData(const nsAString *aData);
+    nsresult GetDeclare(PRBool *aDeclare);
+    nsresult SetDeclare(PRBool aDeclare);
+    nsresult GetHeight(nsAString *aHeight);
+    nsresult SetHeight(const nsAString *aHeight);
+    nsresult GetHspace(PRInt32 *aHspace);
+    nsresult SetHspace(PRInt32 aHspace);
+    nsresult GetName(nsAString *aName);
+    nsresult SetName(const nsAString *aName);
+    nsresult GetStandby(nsAString *aStandby);
+    nsresult SetStandby(const nsAString *aStandby);
+    nsresult GetTabIndex(PRInt32 *aTabIndex);
+    nsresult SetTabIndex(PRInt32 aTabIndex);
+    nsresult GetType(nsAString *aType);
+    nsresult SetType(const nsAString *aType);
+    nsresult GetUseMap(nsAString *aUseMap);
+    nsresult SetUseMap(const nsAString *aUseMap);
+    nsresult GetVspace(PRInt32 *aVspace);
+    nsresult SetVspace(PRInt32 aVspace);
+    nsresult GetWidth(nsAString *aWidth);
+    nsresult SetWidth(const nsAString *aWidth);
+    nsresult GetContentDocument(nsIDOMDocument **aContentDocument);
+}
+
+[
+    object,
     uuid(94928ab3-8b63-11d3-989d-001083010e9b),
     local
 ]
