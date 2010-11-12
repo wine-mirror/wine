@@ -59,8 +59,10 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(LPCVOID data, UINT datasize, D3D
     IWICStream *stream;
     HRESULT hr;
     HRESULT initresult;
+    static int warn_once;
 
-    FIXME("(%p, %d, %p): partially implemented\n", data, datasize, info);
+    if (!warn_once++)
+        FIXME("(%p, %d, %p): partially implemented\n", data, datasize, info);
 
     /* TODO: Add support for (or at least detect) TGA, DDS, PPM and DIB */
 
