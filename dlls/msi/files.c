@@ -227,6 +227,14 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
         if (file->state != msifs_missing && !mi->is_continuous && file->state != msifs_overwrite)
             continue;
 
+        if (file->state == msifs_overwrite &&
+            (file->Component->Attributes & msidbComponentAttributesNeverOverwrite))
+        {
+            TRACE("not overwriting %s\n", debugstr_w(file->TargetPath));
+            file->state = msifs_skipped;
+            continue;
+        }
+
         if (file->Sequence > mi->last_sequence || mi->is_continuous ||
             (file->IsCompressed && !mi->is_extracted))
         {
