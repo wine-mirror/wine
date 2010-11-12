@@ -326,7 +326,7 @@ static gboolean gst_base_src_perform_seek(GSTImpl *This, GstEvent *event)
             gst_pad_activate_push(This->my_src, 0);
     }
 
-    TRACE("++++++++++++++++ perform byte seek ------------------\n");
+    This->nextofs = This->start = cur;
 
     /* and prepare to continue streaming */
     if (flush) {
@@ -829,11 +829,15 @@ static gboolean activate_push(GstPad *pad, gboolean activate) {
     EnterCriticalSection(&This->filter.csFilter);
     if (!activate) {
         TRACE("Deactivating\n");
+        if (!This->initial)
+            IAsyncReader_BeginFlush(This->pInputPin.pReader);
         if (This->push_thread) {
             WaitForSingleObject(This->push_thread, -1);
             CloseHandle(This->push_thread);
             This->push_thread = NULL;
         }
+        if (!This->initial)
+            IAsyncReader_EndFlush(This->pInputPin.pReader);
         if (This->filter.state == State_Stopped)
             This->nextofs = This->start;
     } else if (!This->push_thread) {
@@ -968,6 +972,7 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
         gst_pad_query_duration(This->ppPins[0]->their_src, &format, &duration);
         for (i = 0; i < This->cStreams; ++i) {
             This->ppPins[i]->seek.llDuration = This->ppPins[i]->seek.llStop = duration / 100;
+            This->ppPins[i]->seek.llCurrent = 0;
             if (!This->ppPins[i]->seek.llDuration)
                 This->ppPins[i]->seek.dwCapabilities = 0;
             WaitForSingleObject(This->ppPins[i]->caps_event, -1);
@@ -1134,11 +1139,8 @@ static HRESULT WINAPI GST_Stop(IBaseFilter *iface) {
 
     TRACE("()\n");
 
-    if (This->gstfilter) {
-        IAsyncReader_BeginFlush(This->pInputPin.pReader);
+    if (This->gstfilter)
         gst_element_set_state(This->gstfilter, GST_STATE_READY);
-        IAsyncReader_EndFlush(This->pInputPin.pReader);
-    }
     return S_OK;
 }
 
@@ -1313,6 +1315,7 @@ static HRESULT WINAPI GST_Seeking_GetCurrentPosition(IMediaSeeking *iface, REFER
         return E_NOTIMPL;
     }
     *pos /= 100;
+    This->seek.llCurrent = *pos;
     return S_OK;
 }
 
@@ -1339,8 +1342,10 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface, REFERENCE_T
 
     hr = SourceSeekingImpl_SetPositions(iface, pCur, curflags, pStop, stopflags);
     if (!This->their_src)
-        return This->seek.llDuration ? hr : E_NOTIMPL;
+        return hr;
 
+    curtype = type_from_flags(curflags);
+    stoptype = type_from_flags(stopflags);
     if (curflags & AM_SEEKING_SeekToKeyFrame)
         f |= GST_SEEK_FLAG_KEY_UNIT;
     if (curflags & AM_SEEKING_Segment)
@@ -1348,8 +1353,6 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface, REFERENCE_T
     if (!(curflags & AM_SEEKING_NoFlush))
         f |= GST_SEEK_FLAG_FLUSH;
 
-    curtype = type_from_flags(curflags);
-    stoptype = type_from_flags(stopflags);
     e = gst_event_new_seek(This->seek.dRate, GST_FORMAT_TIME, f, curtype, pCur ? *pCur * 100 : -1, stoptype, pStop ? *pStop * 100 : -1);
     if (gst_pad_push_event(This->my_sink, e))
         return S_OK;
