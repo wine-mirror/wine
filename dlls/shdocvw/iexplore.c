@@ -739,10 +739,16 @@ static void WINAPI DocHostContainer_SetURL(DocHost* This, LPCWSTR url)
     SendMessageW(This->frame_hwnd, WM_UPDATEADDRBAR, 0, (LPARAM)url);
 }
 
+static HRESULT DocHostContainer_exec(DocHost* This, const GUID *cmd_group, DWORD cmdid, DWORD execopt, VARIANT *in,
+        VARIANT *out)
+{
+    return S_OK;
+}
 static const IDocHostContainerVtbl DocHostContainerVtbl = {
     DocHostContainer_GetDocObjRect,
     DocHostContainer_SetStatusText,
-    DocHostContainer_SetURL
+    DocHostContainer_SetURL,
+    DocHostContainer_exec
 };
 
 HRESULT InternetExplorer_Create(IUnknown *pOuter, REFIID riid, void **ppv)

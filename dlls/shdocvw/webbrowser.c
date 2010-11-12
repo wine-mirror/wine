@@ -1135,6 +1135,8 @@ static const IServiceProviderVtbl ServiceProviderVtbl =
     WebBrowser_IServiceProvider_QueryService
 };
 
+#define DOCHOST_THIS(iface) DEFINE_THIS2(WebBrowser,doc_host,iface)
+
 static void WINAPI DocHostContainer_GetDocObjRect(DocHost* This, RECT* rc)
 {
     GetClientRect(This->frame_hwnd, rc);
@@ -1150,10 +1152,43 @@ static void WINAPI DocHostContainer_SetURL(DocHost* This, LPCWSTR url)
 
 }
 
+static HRESULT DocHostContainer_exec(DocHost *doc_host, const GUID *cmd_group, DWORD cmdid, DWORD execopt, VARIANT *in,
+        VARIANT *out)
+{
+    WebBrowser *This = DOCHOST_THIS(doc_host);
+    IOleCommandTarget *cmdtrg = NULL;
+    HRESULT hres;
+
+    if(This->client) {
+        hres = IOleClientSite_QueryInterface(This->client, &IID_IOleCommandTarget, (void**)&cmdtrg);
+        if(FAILED(hres))
+            cmdtrg = NULL;
+    }
+
+    if(!cmdtrg && This->container) {
+        hres = IOleContainer_QueryInterface(This->container, &IID_IOleCommandTarget, (void**)&cmdtrg);
+        if(FAILED(hres))
+            cmdtrg = NULL;
+    }
+
+    if(!cmdtrg)
+        return S_OK;
+
+    hres = IOleCommandTarget_Exec(cmdtrg, cmd_group, cmdid, execopt, in, out);
+    IOleCommandTarget_Release(cmdtrg);
+    if(FAILED(hres))
+        FIXME("Exec failed\n");
+
+    return hres;
+}
+
+#undef DOCHOST_THIS
+
 static const IDocHostContainerVtbl DocHostContainerVtbl = {
     DocHostContainer_GetDocObjRect,
     DocHostContainer_SetStatusText,
-    DocHostContainer_SetURL
+    DocHostContainer_SetURL,
+    DocHostContainer_exec
 };
 
 static HRESULT WebBrowser_Create(INT version, IUnknown *pOuter, REFIID riid, void **ppv)
