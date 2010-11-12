@@ -10,7 +10,7 @@
  * Copyright 2006-2008 Stefan Dösinger for CodeWeavers
  * Copyright 2007-2008 Henri Verbeet
  * Copyright 2006-2008 Roderick Colenbrander
- * Copyright 2009 Henri Verbeet for CodeWeavers
+ * Copyright 2009-2010 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1897,7 +1897,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Unmap(IWineD3DSurface *iface)
         This->dirtyRect.right  = 0;
         This->dirtyRect.bottom = 0;
     }
-    else if (This == device->depth_stencil)
+    else if (This->resource.format->Flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
     {
         FIXME("Depth Stencil buffer locking is not implemented\n");
     }
