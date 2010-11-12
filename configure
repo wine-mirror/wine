@@ -15186,6 +15186,7 @@ wine_fn_config_program progman enable_progman install
 wine_fn_config_program reg enable_reg install
 wine_fn_config_program regedit enable_regedit installbin
 wine_fn_config_test programs/regedit/tests regedit.exe_test
+wine_fn_config_program regsvcs enable_regsvcs install
 wine_fn_config_program regsvr32 enable_regsvr32 installbin
 wine_fn_config_program rpcss enable_rpcss install
 wine_fn_config_program rundll.exe16 enable_win16 install
