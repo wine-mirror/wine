@@ -43,7 +43,6 @@ dlls/actxprxy/actxprxy_urlhist.h
 dlls/actxprxy/actxprxy_urlhist_p.c
 dlls/advapi32/svcctl.h
 dlls/advapi32/svcctl_c.c
-dlls/atl/atliface.h
 dlls/d3dcompiler_43/asmshader.tab.c
 dlls/d3dcompiler_43/asmshader.tab.h
 dlls/d3dcompiler_43/asmshader.yy.c
@@ -150,6 +149,7 @@ include/activscp.h
 include/amstream.h
 include/amvideo.h
 include/asptlb.h
+include/atliface.h
 include/audioclient.h
 include/audiopolicy.h
 include/austream.h

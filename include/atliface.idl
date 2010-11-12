@@ -19,7 +19,7 @@
 import "ocidl.idl";
 
 cpp_quote("#ifdef ATL_INITGUID")
-cpp_quote("#include \"initguid.h\"")
+cpp_quote("#include <initguid.h>")
 cpp_quote("#endif")
 
 [

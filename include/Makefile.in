@@ -9,6 +9,7 @@ PUBLIC_IDL_H_SRCS = \
 	amstream.idl \
 	amvideo.idl \
 	asptlb.idl \
+	atliface.idl \
 	audioclient.idl \
 	audiopolicy.idl \
 	austream.idl \
