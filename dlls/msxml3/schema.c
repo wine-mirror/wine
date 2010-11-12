@@ -37,13 +37,13 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 /* We use a chained hashtable, which can hold any number of schemas
- * TODO: XDR schema support
+ * TODO: versioned constructor
  * TODO: grow/shrink hashtable depending on load factor
  * TODO: implement read-only where appropriate
  */
 
 /* This is just the number of buckets, should be prime */
-#define DEFAULT_HASHTABLE_SIZE 31
+#define DEFAULT_HASHTABLE_SIZE 17
 
 #ifdef HAVE_LIBXML2
 
@@ -51,6 +51,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 #include <libxml/xmlschemas.h>
 #include <libxml/schemasInternals.h>
 #include <libxml/hash.h>
+
+xmlDocPtr XDR_to_XSD_doc(xmlDocPtr xdr_doc, xmlChar const* nsURI);
 
 static const xmlChar XSD_schema[] = "schema";
 static const xmlChar XSD_nsURI[] = "http://www.w3.org/2001/XMLSchema";
@@ -114,6 +116,9 @@ static LONG cache_entry_release(cache_entry* entry)
         else /* SCHEMA_TYPE_XDR */
         {
             xmldoc_release(entry->doc);
+            xmldoc_release(entry->schema->doc);
+            entry->schema->doc = NULL;
+            xmlSchemaFree(entry->schema);
             heap_free(entry);
         }
     }
@@ -147,7 +152,7 @@ static inline SCHEMA_TYPE schema_type_from_xmlDocPtr(xmlDocPtr schema)
     return SCHEMA_TYPE_INVALID;
 }
 
-static cache_entry* cache_entry_from_url(char const* url)
+static cache_entry* cache_entry_from_url(char const* url, xmlChar const* nsURI)
 {
     cache_entry* entry = heap_alloc(sizeof(cache_entry));
     xmlSchemaParserCtxtPtr spctx = xmlSchemaNewParserCtxt(url);
@@ -157,6 +162,8 @@ static cache_entry* cache_entry_from_url(char const* url)
     {
         if((entry->schema = xmlSchemaParse(spctx)))
         {
+            /* TODO: if the nsURI is different from the default xmlns or targetNamespace,
+             *       do we need to do something special here? */
             xmldoc_init(entry->schema->doc, &CLSID_DOMDocument40);
             entry->doc = entry->schema->doc;
             xmldoc_add_ref(entry->doc);
@@ -177,12 +184,14 @@ static cache_entry* cache_entry_from_url(char const* url)
     return entry;
 }
 
-static cache_entry* cache_entry_from_xsd_doc(xmlDocPtr doc)
+static cache_entry* cache_entry_from_xsd_doc(xmlDocPtr doc, xmlChar const* nsURI)
 {
     cache_entry* entry = heap_alloc(sizeof(cache_entry));
     xmlSchemaParserCtxtPtr spctx;
     xmlDocPtr new_doc = xmlCopyDoc(doc, 1);
 
+    /* TODO: if the nsURI is different from the default xmlns or targetNamespace,
+     *       do we need to do something special here? */
     entry->type = SCHEMA_TYPE_XSD;
     entry->ref = 0;
     spctx = xmlSchemaNewDocParserCtxt(new_doc);
@@ -204,18 +213,33 @@ static cache_entry* cache_entry_from_xsd_doc(xmlDocPtr doc)
     return entry;
 }
 
-static cache_entry* cache_entry_from_xdr_doc(xmlDocPtr doc)
+static cache_entry* cache_entry_from_xdr_doc(xmlDocPtr doc, xmlChar const* nsURI)
 {
     cache_entry* entry = heap_alloc(sizeof(cache_entry));
-    xmlDocPtr new_doc = xmlCopyDoc(doc, 1);
+    xmlSchemaParserCtxtPtr spctx;
+    xmlDocPtr new_doc = xmlCopyDoc(doc, 1), xsd_doc = XDR_to_XSD_doc(doc, nsURI);
 
-    FIXME("XDR schema support not implemented\n");
     entry->type = SCHEMA_TYPE_XDR;
     entry->ref = 0;
-    entry->schema = NULL;
-    entry->doc = new_doc;
-    xmldoc_init(entry->doc, &CLSID_DOMDocument30);
-    xmldoc_add_ref(entry->doc);
+    spctx = xmlSchemaNewDocParserCtxt(xsd_doc);
+
+    if ((entry->schema = xmlSchemaParse(spctx)))
+    {
+        entry->doc = new_doc;
+        xmldoc_init(entry->schema->doc, &CLSID_DOMDocument30);
+        xmldoc_init(entry->doc, &CLSID_DOMDocument30);
+        xmldoc_add_ref(entry->doc);
+        xmldoc_add_ref(entry->schema->doc);
+    }
+    else
+    {
+        FIXME("failed to parse doc\n");
+        xmlFreeDoc(new_doc);
+        xmlFreeDoc(xsd_doc);
+        heap_free(entry);
+        entry = NULL;
+    }
+    xmlSchemaFreeParserCtxt(spctx);
 
     return entry;
 }
@@ -363,7 +387,7 @@ static HRESULT WINAPI schema_cache_add(IXMLDOMSchemaCollection2* iface, BSTR uri
         case VT_BSTR:
             {
                 xmlChar* url = xmlChar_from_wchar(V_BSTR(&var));
-                cache_entry* entry = cache_entry_from_url((char const*)url);
+                cache_entry* entry = cache_entry_from_url((char const*)url, name);
                 heap_free(url);
 
                 if (entry)
@@ -402,11 +426,11 @@ static HRESULT WINAPI schema_cache_add(IXMLDOMSchemaCollection2* iface, BSTR uri
 
                 if (type == SCHEMA_TYPE_XSD)
                 {
-                    entry = cache_entry_from_xsd_doc(doc);
+                    entry = cache_entry_from_xsd_doc(doc, name);
                 }
                 else if (type == SCHEMA_TYPE_XDR)
                 {
-                    entry = cache_entry_from_xdr_doc(doc);
+                    entry = cache_entry_from_xdr_doc(doc, name);
                 }
                 else
                 {
@@ -654,36 +678,29 @@ HRESULT SchemaCache_validate_tree(IXMLDOMSchemaCollection2* iface, xmlNodePtr tr
         ns = tree->ns->href;
     }
 
-    entry = xmlHashLookup(This->cache, ns);
+    entry = (ns != NULL)? xmlHashLookup(This->cache, ns) :
+                          xmlHashLookup(This->cache, BAD_CAST "");
     /* TODO: if the ns is not in the cache, and it's a URL,
      *       do we try to load from that? */
     if (entry)
     {
-        if (entry->type == SCHEMA_TYPE_XDR)
-        {
-            FIXME("partial stub: XDR schema support not implemented\n");
-            return S_OK;
-        }
-        else if (entry->type == SCHEMA_TYPE_XSD)
-        {
-            xmlSchemaValidCtxtPtr svctx;
-            int err;
-            /* TODO: if validateOnLoad property is false,
-             *       we probably need to validate the schema here. */
-            svctx = xmlSchemaNewValidCtxt(entry->schema);
-            xmlSchemaSetValidErrors(svctx, validate_error, validate_warning, NULL);
+        xmlSchemaValidCtxtPtr svctx;
+        int err;
+        /* TODO: if validateOnLoad property is false,
+         *       we probably need to validate the schema here. */
+        svctx = xmlSchemaNewValidCtxt(entry->schema);
+        xmlSchemaSetValidErrors(svctx, validate_error, validate_warning, NULL);
 #ifdef HAVE_XMLSCHEMASSETVALIDSTRUCTUREDERRORS
             xmlSchemaSetValidStructuredErrors(svctx, validate_serror, NULL);
 #endif
 
-            if ((xmlNodePtr)tree->doc == tree)
-                err = xmlSchemaValidateDoc(svctx, (xmlDocPtr)tree);
-            else
-                err = xmlSchemaValidateOneElement(svctx, tree);
+        if ((xmlNodePtr)tree->doc == tree)
+            err = xmlSchemaValidateDoc(svctx, (xmlDocPtr)tree);
+        else
+            err = xmlSchemaValidateOneElement(svctx, tree);
 
-            xmlSchemaFreeValidCtxt(svctx);
-            return err? S_FALSE : S_OK;
-        }
+        xmlSchemaFreeValidCtxt(svctx);
+        return err? S_FALSE : S_OK;
     }
 
     return E_FAIL;

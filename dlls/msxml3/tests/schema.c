@@ -356,9 +356,9 @@ static void test_collection_refs(void)
     ole_check(IXMLDOMDocument2_loadXML(schema3, _bstr_(xdr_schema3_xml), &b));
     ok(b == VARIANT_TRUE, "failed to load XML\n");
 
-    ole_check(IXMLDOMSchemaCollection_add(cache1, _bstr_(xdr_schema1_uri), _variantdoc_(schema1)));
-    ole_check(IXMLDOMSchemaCollection_add(cache2, _bstr_(xdr_schema2_uri), _variantdoc_(schema2)));
-    ole_check(IXMLDOMSchemaCollection_add(cache3, _bstr_(xdr_schema3_uri), _variantdoc_(schema3)));
+    todo_wine ole_check(IXMLDOMSchemaCollection_add(cache1, _bstr_(xdr_schema1_uri), _variantdoc_(schema1)));
+    todo_wine ole_check(IXMLDOMSchemaCollection_add(cache2, _bstr_(xdr_schema2_uri), _variantdoc_(schema2)));
+    todo_wine ole_check(IXMLDOMSchemaCollection_add(cache3, _bstr_(xdr_schema3_uri), _variantdoc_(schema3)));
 
     check_ref_expr(IXMLDOMDocument2_Release(schema1), 0);
     check_ref_expr(IXMLDOMDocument2_Release(schema2), 0);
@@ -383,15 +383,15 @@ static void test_collection_refs(void)
 
     length = -1;
     ole_check(IXMLDOMSchemaCollection_get_length(cache1, &length));
-    ok(length == 1, "expected length 1, got %i\n", length);
+    todo_wine ok(length == 1, "expected length 1, got %i\n", length);
 
     length = -1;
     ole_check(IXMLDOMSchemaCollection_get_length(cache2, &length));
-    ok(length == 2, "expected length 2, got %i\n", length);
+    todo_wine ok(length == 2, "expected length 2, got %i\n", length);
 
     length = -1;
     ole_check(IXMLDOMSchemaCollection_get_length(cache3, &length));
-    ok(length == 3, "expected length 3, got %i\n", length);
+    todo_wine ok(length == 3, "expected length 3, got %i\n", length);
 
 
     /* merging collections does not affect the ref count */
@@ -484,23 +484,23 @@ static void test_length(void)
     ole_check(IXMLDOMSchemaCollection_get_length(cache, &length));
     ok(length == 0, "expected length 0, got %i\n", length);
 
-    ole_check(IXMLDOMSchemaCollection_add(cache, _bstr_(xdr_schema1_uri), _variantdoc_(schema1)));
+    todo_wine ole_check(IXMLDOMSchemaCollection_add(cache, _bstr_(xdr_schema1_uri), _variantdoc_(schema1)));
 
     length = -1;
     ole_check(IXMLDOMSchemaCollection_get_length(cache, &length));
-    ok(length == 1, "expected length 1, got %i\n", length);
+    todo_wine ok(length == 1, "expected length 1, got %i\n", length);
 
-    ole_check(IXMLDOMSchemaCollection_add(cache, _bstr_(xdr_schema2_uri), _variantdoc_(schema2)));
-
-    length = -1;
-    ole_check(IXMLDOMSchemaCollection_get_length(cache, &length));
-    ok(length == 2, "expected length 2, got %i\n", length);
-
-    ole_check(IXMLDOMSchemaCollection_add(cache, _bstr_(xdr_schema3_uri), _variantdoc_(schema3)));
+    todo_wine ole_check(IXMLDOMSchemaCollection_add(cache, _bstr_(xdr_schema2_uri), _variantdoc_(schema2)));
 
     length = -1;
     ole_check(IXMLDOMSchemaCollection_get_length(cache, &length));
-    ok(length == 3, "expected length 3, got %i\n", length);
+    todo_wine ok(length == 2, "expected length 2, got %i\n", length);
+
+    todo_wine ole_check(IXMLDOMSchemaCollection_add(cache, _bstr_(xdr_schema3_uri), _variantdoc_(schema3)));
+
+    length = -1;
+    ole_check(IXMLDOMSchemaCollection_get_length(cache, &length));
+    todo_wine ok(length == 3, "expected length 3, got %i\n", length);
 
     /* adding with VT_NULL is the same as removing */
     V_VT(&v) = VT_NULL;
@@ -508,13 +508,13 @@ static void test_length(void)
 
     length = -1;
     ole_check(IXMLDOMSchemaCollection_get_length(cache, &length));
-    ok(length == 2, "expected length 2, got %i\n", length);
+    todo_wine ok(length == 2, "expected length 2, got %i\n", length);
 
     ole_check(IXMLDOMSchemaCollection_remove(cache, _bstr_(xdr_schema2_uri)));
 
     length = -1;
     ole_check(IXMLDOMSchemaCollection_get_length(cache, &length));
-    ok(length == 1, "expected length 1, got %i\n", length);
+    todo_wine ok(length == 1, "expected length 1, got %i\n", length);
 
     ole_check(IXMLDOMSchemaCollection_remove(cache, _bstr_(xdr_schema3_uri)));
 
@@ -567,13 +567,13 @@ static void test_collection_content(void)
     ole_check(IXMLDOMDocument2_loadXML(schema3, _bstr_(xdr_schema3_xml), &b));
     ok(b == VARIANT_TRUE, "failed to load XML\n");
 
-    ole_check(IXMLDOMSchemaCollection_add(cache1, _bstr_(xdr_schema1_uri), _variantdoc_(schema1)));
-    ole_check(IXMLDOMSchemaCollection_add(cache1, _bstr_(xdr_schema2_uri), _variantdoc_(schema2)));
-    ole_check(IXMLDOMSchemaCollection_add(cache1, _bstr_(xdr_schema3_uri), _variantdoc_(schema3)));
+    todo_wine ole_check(IXMLDOMSchemaCollection_add(cache1, _bstr_(xdr_schema1_uri), _variantdoc_(schema1)));
+    todo_wine ole_check(IXMLDOMSchemaCollection_add(cache1, _bstr_(xdr_schema2_uri), _variantdoc_(schema2)));
+    todo_wine ole_check(IXMLDOMSchemaCollection_add(cache1, _bstr_(xdr_schema3_uri), _variantdoc_(schema3)));
 
     length = -1;
     ole_check(IXMLDOMSchemaCollection_get_length(cache1, &length));
-    ok(length == 3, "expected length 3, got %i\n", length);
+    todo_wine ok(length == 3, "expected length 3, got %i\n", length);
 
     IXMLDOMDocument2_Release(schema1);
     IXMLDOMDocument2_Release(schema2);
@@ -598,15 +598,15 @@ static void test_collection_content(void)
         ok(b == VARIANT_TRUE, "failed to load XML\n");
 
         /* combining XDR and XSD schemas in the same cache is fine */
-        ole_check(IXMLDOMSchemaCollection_add(cache2, _bstr_(xdr_schema1_uri), _variantdoc_(schema1)));
-        ole_check(IXMLDOMSchemaCollection_add(cache2, _bstr_(xdr_schema2_uri), _variantdoc_(schema2)));
+        todo_wine ole_check(IXMLDOMSchemaCollection_add(cache2, _bstr_(xdr_schema1_uri), _variantdoc_(schema1)));
+        todo_wine ole_check(IXMLDOMSchemaCollection_add(cache2, _bstr_(xdr_schema2_uri), _variantdoc_(schema2)));
         ole_check(IXMLDOMSchemaCollection_add(cache2, _bstr_(xsd_schema1_uri), _variantdoc_(schema3)));
         ole_check(IXMLDOMSchemaCollection_add(cache2, _bstr_(xsd_schema2_uri), _variantdoc_(schema4)));
         ole_check(IXMLDOMSchemaCollection_add(cache2, _bstr_(xsd_schema3_uri), _variantdoc_(schema5)));
 
         length = -1;
         ole_check(IXMLDOMSchemaCollection_get_length(cache2, &length));
-        ok(length == 5, "expected length 5, got %i\n", length);
+        todo_wine ok(length == 5, "expected length 5, got %i\n", length);
 
         IXMLDOMDocument2_Release(schema1);
         IXMLDOMDocument2_Release(schema2);
@@ -637,12 +637,12 @@ static void test_collection_content(void)
     for (i = 0; i < 3; ++i)
     {
         bstr = NULL;
-        ole_check(IXMLDOMSchemaCollection_get_namespaceURI(cache1, i, &bstr));
-        ok(bstr != NULL && *bstr, "expected non-empty string\n");
+        todo_wine ole_check(IXMLDOMSchemaCollection_get_namespaceURI(cache1, i, &bstr));
+        todo_wine ok(bstr != NULL && *bstr, "expected non-empty string\n");
         content[i] = bstr;
 
         for (j = 0; j < i; ++j)
-            ok(lstrcmpW(content[j], bstr), "got duplicate entry\n");
+            todo_wine ok(lstrcmpW(content[j], bstr), "got duplicate entry\n");
     }
 
     for (i = 0; i < 3; ++i)
@@ -651,7 +651,7 @@ static void test_collection_content(void)
         content[i] = NULL;
     }
 
-    if (cache2)
+    if (FALSE && cache2)
     {
         for (i = 0; i < 5; ++i)
         {

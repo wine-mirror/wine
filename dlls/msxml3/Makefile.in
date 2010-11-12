@@ -30,6 +30,7 @@ C_SRCS = \
 	schema.c \
 	text.c \
 	uuid.c \
+	xdr.c \
 	xmldoc.c \
 	xmlelem.c
 
