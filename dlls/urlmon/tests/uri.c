@@ -5201,6 +5201,14 @@ static const uri_builder_remove_test uri_builder_remove_tests[] = {
     }
 };
 
+typedef struct _uri_combine_str_property {
+    const char  *value;
+    HRESULT     expected;
+    BOOL        todo;
+    const char  *broken_value;
+    const char  *value_ex;
+} uri_combine_str_property;
+
 typedef struct _uri_combine_test {
     const char  *base_uri;
     DWORD       base_create_flags;
@@ -5210,8 +5218,8 @@ typedef struct _uri_combine_test {
     HRESULT     expected;
     BOOL        todo;
 
-    uri_str_property    str_props[URI_STR_PROPERTY_COUNT];
-    uri_dword_property  dword_props[URI_DWORD_PROPERTY_COUNT];
+    uri_combine_str_property    str_props[URI_STR_PROPERTY_COUNT];
+    uri_dword_property          dword_props[URI_DWORD_PROPERTY_COUNT];
 } uri_combine_test;
 
 static const uri_combine_test uri_combine_tests[] = {
@@ -5572,16 +5580,16 @@ static const uri_combine_test uri_combine_tests[] = {
         "zip://test.com/cool/../cool/test",0,
         URL_DONT_SIMPLIFY,S_OK,FALSE,
         {
-            {"zip://test.com/cool/test",S_OK},
+            {"zip://test.com/cool/test",S_OK,FALSE,NULL,"zip://test.com/cool/../cool/test"},
             {"test.com",S_OK},
-            {"zip://test.com/cool/test",S_OK},
-            {"test.com",S_OK},
-            {"",S_FALSE},
-            {"",S_FALSE},
+            {"zip://test.com/cool/test",S_OK,FALSE,NULL,"zip://test.com/cool/../cool/test"},
             {"test.com",S_OK},
             {"",S_FALSE},
-            {"/cool/test",S_OK},
-            {"/cool/test",S_OK},
+            {"",S_FALSE},
+            {"test.com",S_OK},
+            {"",S_FALSE},
+            {"/cool/test",S_OK,FALSE,NULL,"/cool/../cool/test"},
+            {"/cool/test",S_OK,FALSE,NULL,"/cool/../cool/test"},
             {"",S_FALSE},
             /* The resulting IUri has the same Raw URI as the relative URI (only IE 8).
              * On IE 7 it reduces the path in the Raw URI.
@@ -5632,12 +5640,12 @@ static const uri_combine_test uri_combine_tests[] = {
         "http://test.com/test#%30test",0,
         URL_DONT_UNESCAPE_EXTRA_INFO,S_OK,FALSE,
         {
-            {"http://test.com/test#0test",S_OK},
+            {"http://test.com/test#0test",S_OK,FALSE,NULL,"http://test.com/test#%30test"},
             {"test.com",S_OK},
-            {"http://test.com/test#0test",S_OK},
+            {"http://test.com/test#0test",S_OK,FALSE,NULL,"http://test.com/test#%30test"},
             {"test.com",S_OK},
             {"",S_FALSE},
-            {"#0test",S_OK},
+            {"#0test",S_OK,FALSE,NULL,"#%30test"},
             {"test.com",S_OK},
             {"",S_FALSE},
             {"/test",S_OK},
@@ -9034,7 +9042,7 @@ static void test_CoInternetCombineIUri(void) {
                     DWORD j;
 
                     for(j = 0; j < sizeof(uri_combine_tests[i].str_props)/sizeof(uri_combine_tests[i].str_props[0]); ++j) {
-                        uri_str_property prop = uri_combine_tests[i].str_props[j];
+                        uri_combine_str_property prop = uri_combine_tests[i].str_props[j];
                         BSTR received;
 
                         hr = IUri_GetPropertyBSTR(result, j, &received, 0);
@@ -9289,6 +9297,7 @@ static void test_CoInternetCombineIUri_Pluggable(void) {
 static void test_CoInternetCombineUrlEx(void) {
     HRESULT hr;
     IUri *base, *result;
+    DWORD i;
 
     base = NULL;
     hr = pCreateUri(http_urlW, 0, 0, &base);
@@ -9317,6 +9326,91 @@ static void test_CoInternetCombineUrlEx(void) {
     ok(hr == E_POINTER, "Error: CoInternetCombineUrlEx returned 0x%08x, expected 0x%08x.\n",
         hr, E_POINTER);
     if(base) IUri_Release(base);
+
+    for(i = 0; i < sizeof(uri_combine_tests)/sizeof(uri_combine_tests[0]); ++i) {
+        LPWSTR baseW = a2w(uri_combine_tests[i].base_uri);
+
+        hr = pCreateUri(baseW, uri_combine_tests[i].base_create_flags, 0, &base);
+        ok(SUCCEEDED(hr), "Error: CreateUri returned 0x%08x on uri_combine_tests[%d].\n", hr, i);
+        if(SUCCEEDED(hr)) {
+            LPWSTR relativeW = a2w(uri_combine_tests[i].relative_uri);
+
+            hr = pCoInternetCombineUrlEx(base, relativeW, uri_combine_tests[i].combine_flags,
+                                         &result, 0);
+            if(uri_combine_tests[i].todo) {
+                todo_wine {
+                    ok(hr == uri_combine_tests[i].expected,
+                        "Error: CoInternetCombineUrlEx returned 0x%08x, expected 0x%08x on uri_combine_tests[%d].\n",
+                        hr, uri_combine_tests[i].expected, i);
+                }
+            } else {
+                ok(hr == uri_combine_tests[i].expected,
+                    "Error: CoInternetCombineUrlEx returned 0x%08x, expected 0x%08x on uri_combine_tests[%d].\n",
+                    hr, uri_combine_tests[i]. expected, i);
+            }
+            if(SUCCEEDED(hr)) {
+                DWORD j;
+
+                for(j = 0; j < sizeof(uri_combine_tests[i].str_props)/sizeof(uri_combine_tests[i].str_props[0]); ++j) {
+                    uri_combine_str_property prop = uri_combine_tests[i].str_props[j];
+                    BSTR received;
+                    LPCSTR value = (prop.value_ex) ? prop.value_ex : prop.value;
+
+                    hr = IUri_GetPropertyBSTR(result, j, &received, 0);
+                    if(prop.todo) {
+                        todo_wine {
+                            ok(hr == prop.expected,
+                                "Error: IUri_GetPropertyBSTR returned 0x%08x, expected 0x%08x on uri_combine_tests[%d].str_props[%d].\n",
+                                hr, prop.expected, i, j);
+                        }
+                        todo_wine {
+                            ok(!strcmp_aw(value, received) ||
+                               broken(prop.broken_value && !strcmp_aw(prop.broken_value, received)),
+                                "Error: Expected %s but got %s instead on uri_combine_tests[%d].str_props[%d].\n",
+                                value, wine_dbgstr_w(received), i, j);
+                        }
+                    } else {
+                        ok(hr == prop.expected,
+                            "Error: IUri_GetPropertyBSTR returned 0x%08x, expected 0x%08x on uri_combine_tests[%d].str_props[%d].\n",
+                            hr, prop.expected, i, j);
+                        ok(!strcmp_aw(value, received) ||
+                           broken(prop.broken_value && !strcmp_aw(prop.broken_value, received)),
+                            "Error: Expected %s but got %s instead on uri_combine_tests[%d].str_props[%d].\n",
+                            value, wine_dbgstr_w(received), i, j);
+                    }
+                    SysFreeString(received);
+                }
+
+                for(j = 0; j < sizeof(uri_combine_tests[i].dword_props)/sizeof(uri_combine_tests[i].dword_props[0]); ++j) {
+                    uri_dword_property prop = uri_combine_tests[i].dword_props[j];
+                    DWORD received;
+
+                    hr = IUri_GetPropertyDWORD(result, j+Uri_PROPERTY_DWORD_START, &received, 0);
+                    if(prop.todo) {
+                        todo_wine {
+                            ok(hr == prop.expected,
+                                "Error: IUri_GetPropertyDWORD returned 0x%08x, expected 0x%08x on uri_combine_tests[%d].dword_props[%d].\n",
+                                hr, prop.expected, i, j);
+                        }
+                        todo_wine {
+                            ok(prop.value == received, "Error: Expected %d, but got %d instead on uri_combine_tests[%d].dword_props[%d].\n",
+                                prop.value, received, i, j);
+                        }
+                    } else {
+                        ok(hr == prop.expected,
+                            "Error: IUri_GetPropertyDWORD returned 0x%08x, expected 0x%08x on uri_combine_tests[%d].dword_props[%d].\n",
+                            hr, prop.expected, i, j);
+                        ok(prop.value == received, "Error: Expected %d, but got %d instead on uri_combine_tests[%d].dword_props[%d].\n",
+                            prop.value, received, i, j);
+                    }
+                }
+            }
+            if(result) IUri_Release(result);
+            heap_free(relativeW);
+        }
+        if(base) IUri_Release(base);
+        heap_free(baseW);
+    }
 }
 
 START_TEST(uri) {

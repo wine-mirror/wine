@@ -39,6 +39,8 @@
 #define RAW_URI_FORCE_PORT_DISP     0x1
 #define RAW_URI_CONVERT_TO_DOS_PATH 0x2
 
+#define COMBINE_URI_FORCE_FLAG_USE  0x1
+
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
 static const IID IID_IUriObj = {0x4b364760,0x9f51,0x11df,{0x98,0x1c,0x08,0x00,0x20,0x0c,0x9a,0x66}};
@@ -5717,7 +5719,7 @@ static HRESULT merge_paths(parse_data *data, const WCHAR *base, DWORD base_len, 
     return S_OK;
 }
 
-static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result) {
+static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result, DWORD extras) {
     Uri *ret;
     HRESULT hr;
     parse_data data;
@@ -5744,8 +5746,15 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result)
             return E_OUTOFMEMORY;
         }
 
+        if(extras & COMBINE_URI_FORCE_FLAG_USE) {
+            if(flags & URL_DONT_SIMPLIFY)
+                create_flags |= Uri_CREATE_NO_CANONICALIZE;
+            if(flags & URL_DONT_UNESCAPE_EXTRA_INFO)
+                create_flags |= Uri_CREATE_NO_DECODE_EXTRA_INFO;
+        }
+
         ret->raw_uri = data.uri;
-        hr = canonicalize_uri(&data, ret, 0);
+        hr = canonicalize_uri(&data, ret, create_flags);
         if(FAILED(hr)) {
             IUri_Release(URI(ret));
             *result = NULL;
@@ -6007,7 +6016,7 @@ HRESULT WINAPI CoInternetCombineIUri(IUri *pBaseUri, IUri *pRelativeUri, DWORD d
         }
     }
 
-    return combine_uri(base, relative, dwCombineFlags, ppCombinedUri);
+    return combine_uri(base, relative, dwCombineFlags, ppCombinedUri, 0);
 }
 
 /***********************************************************************
@@ -6016,6 +6025,10 @@ HRESULT WINAPI CoInternetCombineIUri(IUri *pBaseUri, IUri *pRelativeUri, DWORD d
 HRESULT WINAPI CoInternetCombineUrlEx(IUri *pBaseUri, LPCWSTR pwzRelativeUrl, DWORD dwCombineFlags,
                                       IUri **ppCombinedUri, DWORD_PTR dwReserved)
 {
+    IUri *relative;
+    Uri *base;
+    HRESULT hr;
+
     TRACE("(%p %s %x %p %x) stub\n", pBaseUri, debugstr_w(pwzRelativeUrl), dwCombineFlags,
         ppCombinedUri, (DWORD)dwReserved);
 
@@ -6032,5 +6045,22 @@ HRESULT WINAPI CoInternetCombineUrlEx(IUri *pBaseUri, LPCWSTR pwzRelativeUrl, DW
         return E_INVALIDARG;
     }
 
-    return E_NOTIMPL;
+    base = get_uri_obj(pBaseUri);
+    if(!base) {
+        *ppCombinedUri = NULL;
+        FIXME("(%p %s %x %p %x) Unknown IUri's not supported yet.\n", pBaseUri, debugstr_w(pwzRelativeUrl),
+            dwCombineFlags, ppCombinedUri, (DWORD)dwReserved);
+        return E_NOTIMPL;
+    }
+
+    hr = CreateUri(pwzRelativeUrl, Uri_CREATE_ALLOW_RELATIVE, 0, &relative);
+    if(FAILED(hr)) {
+        *ppCombinedUri = NULL;
+        return hr;
+    }
+
+    hr = combine_uri(base, get_uri_obj(relative), dwCombineFlags, ppCombinedUri, COMBINE_URI_FORCE_FLAG_USE);
+
+    IUri_Release(relative);
+    return hr;
 }
