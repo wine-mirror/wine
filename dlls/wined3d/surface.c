@@ -2443,14 +2443,14 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BO
 
     if (!(This->Flags & flag)) {
         TRACE("Reloading because surface is dirty\n");
-    } else if(/* Reload: gl texture has ck, now no ckey is set OR */
-              ((This->Flags & SFLAG_GLCKEY) && (!(This->CKeyFlags & WINEDDSD_CKSRCBLT))) ||
-              /* Reload: vice versa  OR */
-              ((!(This->Flags & SFLAG_GLCKEY)) && (This->CKeyFlags & WINEDDSD_CKSRCBLT)) ||
-              /* Also reload: Color key is active AND the color key has changed */
-              ((This->CKeyFlags & WINEDDSD_CKSRCBLT) && (
-                (This->glCKey.dwColorSpaceLowValue != This->SrcBltCKey.dwColorSpaceLowValue) ||
-                (This->glCKey.dwColorSpaceHighValue != This->SrcBltCKey.dwColorSpaceHighValue)))) {
+    }
+    /* Reload if either the texture and sysmem have different ideas about the
+     * color key, or the actual key values changed. */
+    else if (!(This->Flags & SFLAG_GLCKEY) != !(This->CKeyFlags & WINEDDSD_CKSRCBLT)
+            || ((This->CKeyFlags & WINEDDSD_CKSRCBLT)
+            && (This->glCKey.dwColorSpaceLowValue != This->SrcBltCKey.dwColorSpaceLowValue
+            || This->glCKey.dwColorSpaceHighValue != This->SrcBltCKey.dwColorSpaceHighValue)))
+    {
         TRACE("Reloading because of color keying\n");
         /* To perform the color key conversion we need a sysmem copy of
          * the surface. Make sure we have it
