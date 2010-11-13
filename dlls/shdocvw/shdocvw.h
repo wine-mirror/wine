@@ -135,9 +135,7 @@ struct DocHost {
 };
 
 struct WebBrowser {
-    /* Interfaces available via WebBrowser object */
-
-    const IWebBrowser2Vtbl              *lpWebBrowser2Vtbl;
+    IWebBrowser2  IWebBrowser2_iface;
     const IOleObjectVtbl                *lpOleObjectVtbl;
     const IOleInPlaceObjectVtbl         *lpOleInPlaceObjectVtbl;
     const IOleControlVtbl               *lpOleControlVtbl;

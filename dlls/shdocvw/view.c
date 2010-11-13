@@ -31,19 +31,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 static HRESULT WINAPI ViewObject_QueryInterface(IViewObject2 *iface, REFIID riid, void **ppv)
 {
     WebBrowser *This = VIEWOBJ_THIS(iface);
-    return IWebBrowser2_QueryInterface(WEBBROWSER(This), riid, ppv);
+    return IWebBrowser2_QueryInterface(&This->IWebBrowser2_iface, riid, ppv);
 }
 
 static ULONG WINAPI ViewObject_AddRef(IViewObject2 *iface)
 {
     WebBrowser *This = VIEWOBJ_THIS(iface);
-    return IWebBrowser2_AddRef(WEBBROWSER(This));
+    return IWebBrowser2_AddRef(&This->IWebBrowser2_iface);
 }
 
 static ULONG WINAPI ViewObject_Release(IViewObject2 *iface)
 {
     WebBrowser *This = VIEWOBJ_THIS(iface);
-    return IWebBrowser2_Release(WEBBROWSER(This));
+    return IWebBrowser2_Release(&This->IWebBrowser2_iface);
 }
 
 static HRESULT WINAPI ViewObject_Draw(IViewObject2 *iface, DWORD dwDrawAspect,
@@ -137,19 +137,19 @@ void WebBrowser_ViewObject_Init(WebBrowser *This)
 static HRESULT WINAPI DataObject_QueryInterface(LPDATAOBJECT iface, REFIID riid, LPVOID * ppvObj)
 {
     WebBrowser *This = DATAOBJ_THIS(iface);
-    return IWebBrowser2_QueryInterface(WEBBROWSER(This), riid, ppvObj);
+    return IWebBrowser2_QueryInterface(&This->IWebBrowser2_iface, riid, ppvObj);
 }
 
 static ULONG WINAPI DataObject_AddRef(LPDATAOBJECT iface)
 {
     WebBrowser *This = DATAOBJ_THIS(iface);
-    return IWebBrowser2_AddRef(WEBBROWSER(This));
+    return IWebBrowser2_AddRef(&This->IWebBrowser2_iface);
 }
 
 static ULONG WINAPI DataObject_Release(LPDATAOBJECT iface)
 {
     WebBrowser *This = DATAOBJ_THIS(iface);
-    return IWebBrowser2_Release(WEBBROWSER(This));
+    return IWebBrowser2_Release(&This->IWebBrowser2_iface);
 }
 
 static HRESULT WINAPI DataObject_GetData(LPDATAOBJECT iface, LPFORMATETC pformatetcIn, STGMEDIUM *pmedium)
