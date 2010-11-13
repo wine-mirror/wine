@@ -46,7 +46,7 @@ CAPTION "Wine"
 FONT 8, "MS Shell Dlg"
 BEGIN
     ICON "", IDC_WAITICON, 3, 3, 10, 10
-    LTEXT "正在更新位于 %s 的 Wine 配置，请稍候……",
+    LTEXT "正在更新位于 %s 的 Wine 配置，请稍候……", /* 译文中“位于”准确性待议 */
           IDC_WAITTEXT, 40, 5, 150, 40, SS_NOPREFIX
 END
 
