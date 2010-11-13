@@ -4,7 +4,7 @@
  *
  * Copyright 2008 Sin-ta Hsiea
  * Copyright 2008 Hongbo Ni <hongbo.at.njstar.com>
- * Copyright 2009 Cheer Xiao <xiaqqaix.at.gmail.com>
+ * Copyright 2009-2010 Cheer Xiao <xiaqqaix.at.gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -46,12 +46,12 @@ BEGIN
     LTEXT           PACKAGE_NAME,IDC_ABT_TITLE_TEXT,105,30,55,30
     LTEXT           PACKAGE_VERSION,IDC_ABT_PANEL_TEXT,160,43,140,8
     CONTROL         "",IDC_ABT_WEB_LINK,"SysLink", LWS_TRANSPARENT, 105,53,106,8
-    LTEXT           "这个函数库是自由软件，你可以\n遵照自由软件基金会出版的\nGNU LGPL 2.1 版或新版的许可\n条款来修改和重新发布这一程序。",
+    LTEXT           "This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
                     IDC_ABT_LICENSE_TEXT,105,64,145,60
     GROUPBOX        " Windows 注册信息 ", IDC_STATIC, 15, 155, 230, 55
-    LTEXT           "姓名:", IDC_STATIC, 22, 171, 40, 20
+    LTEXT           "姓名：", IDC_STATIC, 22, 171, 40, 20
     EDITTEXT        IDC_ABT_OWNER, 75, 171, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
-    LTEXT           "单位:", IDC_STATIC, 22, 185, 50, 20
+    LTEXT           "单位：", IDC_STATIC, 22, 185, 50, 20
     EDITTEXT        IDC_ABT_ORG, 75, 185, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
 
@@ -60,12 +60,12 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " 应用程序设置 ",IDC_STATIC, 8,4,244,210
-    LTEXT           "Wine 可以对不同程序假装成不同版本的 Windows。 “函数库”与“显示”标签将连结到这个标签, 除了调整默认设置, 也能调整个别程序的设置。",
+    LTEXT           "对不同的程序，可以让 Wine 假装成不同版本的 Windows，也可以在“函数库”与“显示”标签页中作不同的设置。",
                     IDC_STATIC,15,20,227,30
     CONTROL         "Applications",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
                     15,50,230,120
     PUSHBUTTON	    "增加程序设置(&A)...",IDC_APP_ADDAPP, 90,174,75,14
-    PUSHBUTTON	    "移除程序设置(&R)",IDC_APP_REMOVEAPP, 170,174,75,14
+    PUSHBUTTON	    "删除程序设置(&R)",IDC_APP_REMOVEAPP, 170,174,75,14
     LTEXT           "&Windows 版本:",IDC_STATIC,17,196,58,8
     COMBOBOX        IDC_WINVER,83,194,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
@@ -75,20 +75,20 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX    " 窗口设置 ",IDC_STATIC,8,4,244,84
-    CONTROL     "允许 DirectX 程序防止光标离开它的窗口(&m)",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
-    CONTROL     "允许窗口管理器装饰窗口(&d)",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
-    CONTROL     "允许窗口管理器控制窗口(&w)",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
-    CONTROL     "虚拟桌面(&d)",IDC_ENABLE_DESKTOP,"Button",
+    CONTROL     "允许 DirectX 程序防止鼠标离开其窗口(&M)",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+    CONTROL     "允许窗口管理器装饰窗口(&D)",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
+    CONTROL     "允许窗口管理器控制窗口(&W)",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
+    CONTROL     "虚拟桌面(&D)",IDC_ENABLE_DESKTOP,"Button",
                 BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
-    LTEXT       "桌面大小(&s):",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
+    LTEXT       "桌面大小(&S):",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
     LTEXT       "X",IDC_DESKTOP_BY,109,70,8,8,WS_DISABLED
     EDITTEXT    IDC_DESKTOP_WIDTH,64,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
     EDITTEXT    IDC_DESKTOP_HEIGHT,117,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
     GROUPBOX    " Direct3D ",IDC_STATIC,8,95,244,49
-    LTEXT       "&Vertex Shader支持:",IDC_STATIC,15,110,80,32
+    LTEXT       "&Vertex Shader 支持:",IDC_STATIC,15,110,80,32
     COMBOBOX    IDC_D3D_VSHADER_MODE,100,108,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL     "允许&Pixel Shader（如果硬件支持）",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
+    CONTROL     "允许 &Pixel Shader（如果硬件支持）",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
 
     GROUPBOX    " 屏幕分辨率(&R) ",IDC_STATIC,8,151,244,63
     CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,187,15
@@ -102,12 +102,12 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " DLL 顶替 ",IDC_STATIC,8,4,244,210
-    LTEXT           "动态链接函数库可以个别设置, 来选择使用 Wine 提供的内建版本, 还是使用取自 Windows 或程序所提供的原装版本。"
+    LTEXT           "对各个动态链接库，可以选择使用 Wine 提供的内建版本，还是使用取自 Windows 或程序所提供的原装版本。"
                     ,IDC_STATIC,16,16,220,32
     LTEXT           "新增函数库顶替(&N):",IDC_STATIC,16,58,100,8
     COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
     PUSHBUTTON      "添加(&A)",IDC_DLLS_ADDDLL, 164,68,82,13
-    LTEXT           "已有的函数库顶替(&o):",IDC_STATIC,16,86,100,8
+    LTEXT           "已有的函数库顶替(&O):",IDC_STATIC,16,86,100,8
     LISTBOX         IDC_DLLS_LIST,16,96,140,112,WS_BORDER | WS_TABSTOP | WS_VSCROLL
     PUSHBUTTON      "编辑(&E)",IDC_DLLS_EDITDLL,164,96,82,14
     PUSHBUTTON      "删除(&R)",IDC_DLLS_REMOVEDLL,164,114,82,14
@@ -121,44 +121,54 @@ BEGIN
     GROUPBOX        " 载入顺序 ",IDC_STATIC,8,4,94,66
     CONTROL         "内建(Wine)(&B)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,75,10
     CONTROL         "原装(Windows)(&N)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,75,10
-    CONTROL         "内建先于原装(&l)",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
-    CONTROL         "原装先于内建(&v)",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
+    CONTROL         "内建先于原装(&L)",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
+    CONTROL         "原装先于内建(&V)",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
     CONTROL         "停用(&D)",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
     DEFPUSHBUTTON   "确定",IDOK,8,74,45,14,WS_GROUP
     PUSHBUTTON      "取消",IDCANCEL,57,74,45,14,WS_GROUP
+END
+
+IDD_DRIVECHOOSE DIALOG  60, 70, 170, 60
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "选择驱动器盘符"
+FONT 9, "MS Shell Dlg"
+BEGIN
+    COMBOBOX IDC_DRIVESA2Z,15,10,75,230,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "确定",IDOK,105,10,45,14,WS_GROUP
+    PUSHBUTTON      "取消",IDCANCEL,105,30,45,14,WS_GROUP
 END
 
 IDD_DRIVECFG DIALOG  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 9, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " 驱动器映射(&m) ",IDC_STATIC,8,4,244,195
+    GROUPBOX        " 驱动器映射(&M) ",IDC_STATIC,8,4,244,195
     LTEXT           "无法连接到挂载管理器。不能修改驱动器配置。", IDC_STATIC_MOUNTMGR_ERROR, 15,30,190,76
     CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
     PUSHBUTTON      "添加(&A)",IDC_BUTTON_ADD,15,98,37,14
     PUSHBUTTON      "删除(&R)",IDC_BUTTON_REMOVE,56,98,37,14
-    PUSHBUTTON      "自动侦测(&d)",IDC_BUTTON_AUTODETECT,197,98,49,14
+    PUSHBUTTON      "自动侦测(&D)",IDC_BUTTON_AUTODETECT,197,98,49,14
 
     /* editing drive details */
-    LTEXT           "路径(&P):",IDC_STATIC_PATH,15,123,20,9
+    LTEXT           "路径(&P)：",IDC_STATIC_PATH,15,123,20,9
     EDITTEXT        IDC_EDIT_PATH,41,120,160,13,ES_AUTOHSCROLL | WS_TABSTOP
     PUSHBUTTON      "浏览(&B)...",IDC_BUTTON_BROWSE_PATH,206,120,40,13
 
     LTEXT           "类型(&T):",IDC_STATIC_TYPE,15,138,21,10
     COMBOBOX        IDC_COMBO_TYPE,41,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    PUSHBUTTON      "显示进阶(&A)",IDC_BUTTON_SHOW_HIDE_ADVANCED,186,135,60,13
-    LTEXT           "De&vice:",IDC_STATIC_DEVICE,15,153,26,9
+    PUSHBUTTON      "显示高级选项(&A)",IDC_BUTTON_SHOW_HIDE_ADVANCED,186,135,60,13
+    LTEXT           "设备(&V)：",IDC_STATIC_DEVICE,15,153,26,9
     EDITTEXT        IDC_EDIT_DEVICE,41,150,160,13,ES_AUTOHSCROLL | WS_TABSTOP
-    PUSHBUTTON      "浏览(&w)...",IDC_BUTTON_BROWSE_DEVICE,206,150,40,13
+    PUSHBUTTON      "浏览(&W)...",IDC_BUTTON_BROWSE_DEVICE,206,150,40,13
 
     LTEXT           "卷标(&L):",IDC_STATIC_LABEL,15,168,29,12
     EDITTEXT        IDC_EDIT_LABEL,45,165,78,13,ES_AUTOHSCROLL | WS_TABSTOP
-    LTEXT           "序列号(&e):",IDC_STATIC_SERIAL,15,183,29,12
+    LTEXT           "序列号(&E):",IDC_STATIC_SERIAL,15,183,29,12
     EDITTEXT        IDC_EDIT_SERIAL,45,180,78,13,ES_AUTOHSCROLL | WS_TABSTOP
 
-    CONTROL         "显示隐藏文件(&d)",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,205,230,8
+    CONTROL         "显示隐藏文件(&D)",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,205,230,8
 END
 
 IDD_AUDIOCFG DIALOG  0, 0, 260, 220
@@ -166,16 +176,16 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " 驱动程序选择 ",IDC_STATIC,8,4,244,160
-    LTEXT           "请选择想要的驱动程序。不选择任何驱动程序将停用音频。 不建议同时选择多个驱动程序。 按下鼠标右键来对驱动程序设置。",IDC_STATIC,15,20,227,30
-    CONTROL         "装置",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,105
+    LTEXT           "请选择想要的驱动程序。不选择任何驱动程序将停用音频。不建议同时选择多个驱动程序。单击鼠标右键即可设置驱动程序。",IDC_STATIC,15,20,227,30
+    CONTROL         "设备",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,105
     PUSHBUTTON      "测试音频(&T)",IDC_AUDIO_TEST,170,50,59,14
-    PUSHBUTTON	    "控制台(&C)",IDC_AUDIO_CONTROL_PANEL,170,70,59,14
+    PUSHBUTTON	    "控制面板(&C)",IDC_AUDIO_CONTROL_PANEL,170,70,59,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,170,244,45
-    LTEXT	    "硬件加速(&H): ",IDC_STATIC,15,180,90,10
+    LTEXT	    "硬件加速(&H)：",IDC_STATIC,15,180,90,10
     COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,178,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "默认采样频率(&S):",IDC_STATIC,15,197,70,8
+    LTEXT           "默认采样频率(&S)：",IDC_STATIC,15,197,70,8 /* 标准译名待求证 */
     COMBOBOX        IDC_DSOUND_RATES,90,195,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "默认采样比特率(&B):",IDC_STATIC,137,197,80,8
+    LTEXT           "默认采样比特率(&B)：",IDC_STATIC,137,197,80,8
     COMBOBOX        IDC_DSOUND_BITS,220,195,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
@@ -184,27 +194,27 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " 外观 ",IDC_STATIC,8,4,244,106
-    LTEXT           "主题(&T):",IDC_STATIC,15,16,130,8
+    LTEXT           "主题(&T)：",IDC_STATIC,15,16,130,8
     COMBOBOX        IDC_THEME_THEMECOMBO,15,24,130,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "安装主题(&I)...",IDC_THEME_INSTALL,152,23,93,14
-    LTEXT           "配色(&C):",IDC_THEME_COLORTEXT,15,40,112,8
+    LTEXT           "配色(&C)：",IDC_THEME_COLORTEXT,15,40,112,8
     COMBOBOX        IDC_THEME_COLORCOMBO,15,48,112,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "大小(&S):",IDC_THEME_SIZETEXT,135,40,110,8
+    LTEXT           "大小(&S)：",IDC_THEME_SIZETEXT,135,40,110,8
     COMBOBOX        IDC_THEME_SIZECOMBO,135,48,110,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "物件(&e):",IDC_STATIC,15,64,112,8
+    LTEXT           "物件(&E)：",IDC_STATIC,15,64,112,8
     COMBOBOX        IDC_SYSPARAM_COMBO,15,74,112,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | CBS_SORT
-    LTEXT           "颜色(&o):",IDC_SYSPARAM_COLOR_TEXT,135,64,25,8,WS_DISABLED
+    LTEXT           "颜色(&O):",IDC_SYSPARAM_COLOR_TEXT,135,64,25,8,WS_DISABLED
     PUSHBUTTON      "",IDC_SYSPARAM_COLOR,135,74,25,13,WS_DISABLED | BS_OWNERDRAW
-    LTEXT           "大小(&z):",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
+    LTEXT           "大小(&Z):",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
     EDITTEXT        IDC_SYSPARAM_SIZE,166,74,23,13,ES_AUTOHSCROLL | WS_TABSTOP | WS_DISABLED
     CONTROL         "",IDC_SYSPARAM_SIZE_UD,UPDOWN_CLASS,UDS_SETBUDDYINT | WS_DISABLED,187,74,15,13
     PUSHBUTTON      "字体(&F)",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
-    GROUPBOX        " 特殊文件夹(&h) ",IDC_STATIC,8,114,244,100
+    GROUPBOX        " 特殊文件夹(&D) ",IDC_STATIC,8,114,244,100
     CONTROL         "Listview",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                      LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
     CONTROL         "映射至(&L):",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
     EDITTEXT         IDC_EDIT_SFPATH,65,195,145,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
-    PUSHBUTTON      "浏览(&r)",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
+    PUSHBUTTON      "浏览(&R)",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
 END
 
 STRINGTABLE
@@ -212,27 +222,27 @@ BEGIN
     IDS_TAB_APPLICATIONS    "应用程序"
     IDS_TAB_DLLS            "函数库"
     IDS_TAB_DRIVES          "驱动器"
-    IDS_CHOOSE_PATH         "请选择 unix 文件夹。"
-    IDS_HIDE_ADVANCED       "隐藏进阶选项(&A)"
-    IDS_SHOW_ADVANCED       "显示进阶选项(&A)"
+    IDS_CHOOSE_PATH         "请选择目标 unix 文件夹。"
+    IDS_HIDE_ADVANCED       "隐藏高级选项(&A)"
+    IDS_SHOW_ADVANCED       "显示高级选项(&A)"
     IDS_NOTHEME             "（无主题）"
     IDS_TAB_GRAPHICS        "显示"
     IDS_TAB_DESKTOP_INTEGRATION "桌面整合"
     IDS_TAB_AUDIO           "音效"
     IDS_TAB_ABOUT           "关于"
     IDS_WINECFG_TITLE       "Wine 设置"
-    IDS_WINECFG_TITLE_APP   "Wine 设置: 针对 %s"
+    IDS_WINECFG_TITLE_APP   "Wine 设置：针对 %s"
     IDS_THEMEFILE           "主题文件 (*.msstyles; *.theme)"
-    IDS_THEMEFILE_SELECT    "选择一个主题文件"
+    IDS_THEMEFILE_SELECT    "选择主题文件"
     IDS_AUDIO_MISSING       "目前在注册表里没有指定音频驱动程序。\n\n已预先帮你选择一个推荐的驱动程序。\n你也可以使用其他可用的驱动程序。\n\n记得点选“应用”使选择生效。"
     IDS_SHELL_FOLDER        "特殊文件夹"
-    IDS_LINKS_TO            "连结至"
+    IDS_LINKS_TO            "映射至"
 END
 
 STRINGTABLE
 BEGIN
     IDS_DLL_WARNING         "不建议对这个函数库更改载入顺序。\n你确定要如此吗？"
-    IDS_DLL_WARNING_CAPTION "警告:系统函数库"
+    IDS_DLL_WARNING_CAPTION "警告：系统函数库"
     IDS_DLL_NATIVE          "原装"
     IDS_DLL_BUILTIN         "内建"
     IDS_DLL_NATIVE_BUILTIN  "原装先于内建"
@@ -240,8 +250,8 @@ BEGIN
     IDS_DLL_DISABLED        "停用"
     IDS_DEFAULT_SETTINGS    "默认设置"
     IDS_EXECUTABLE_FILTER   "Wine 程序 (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
-    IDS_USE_GLOBAL_SETTINGS "使用全域设置"
-    IDS_SELECT_EXECUTABLE   "选择一个可运行程序"
+    IDS_USE_GLOBAL_SETTINGS "使用全局设置"
+    IDS_SELECT_EXECUTABLE   "选择可执行文件"
 END
 
 STRINGTABLE
@@ -253,16 +263,16 @@ END
 STRINGTABLE
 BEGIN
     IDS_DRIVE_UNKNOWN           "自动侦测"
-    IDS_DRIVE_FIXED             "硬盘驱动器"
-    IDS_DRIVE_REMOTE            "网络驱动器"
-    IDS_DRIVE_REMOVABLE         "软盘驱动器"
-    IDS_DRIVE_CDROM             "光盘驱动器"
-    IDS_DRIVE_LETTERS_EXCEEDED  "不能再添加驱动器。\n\n驱动器的盘符必须是英文字母 (A-Z)， 因此最多只允许 26 个。"
+    IDS_DRIVE_FIXED             "本地硬盘"
+    IDS_DRIVE_REMOTE            "网络共享文件夹"
+    IDS_DRIVE_REMOVABLE         "软盘"
+    IDS_DRIVE_CDROM             "CD-ROM"
+    IDS_DRIVE_LETTERS_EXCEEDED  "不能再添加驱动器。\n\n驱动器的盘符必须是英文字母 A-Z， 因此最多只允许 26 个。"
     IDS_SYSTEM_DRIVE_LABEL      "系统驱动器"
-    IDS_CONFIRM_DELETE_C        "你确定要删除 C 盘吗？\n\n大部分的 Windows 程序都假定 C 盘存在， 而没有 C 盘时就会死得很严重。 如果你删除了它， 请记得要重新建立一个!"
+    IDS_CONFIRM_DELETE_C        "你确定要删除 C 盘吗？\n\n大部分 Windows 程序都假定 C 盘存在，在没有它时会死得很难看。如果要继续，请记得重新建立一个！"
     IDS_COL_DRIVELETTER         "盘符"
     IDS_COL_DRIVEMAPPING        "驱动器映射"
-    IDS_NO_DRIVE_C              "你没有 C 盘。 这不是件好事。\n\n请记得点选“驱动器”标签的“添加”来建立一个!\n"
+    IDS_NO_DRIVE_C              "你没有 C 盘。这可不是件好事。\n\n请记得点选“驱动器”标签的“添加”来建立它！\n"
 END
 
 STRINGTABLE
@@ -278,15 +288,15 @@ BEGIN
     IDS_DRIVER_NAS              "NAS 驱动"
     IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) 驱动"
     IDS_DRIVER_COREAUDIO        "CoreAudio 驱动"
-    IDS_OPEN_DRIVER_ERROR       "无法打开 %s !"
+    IDS_OPEN_DRIVER_ERROR       "无法打开 %s！"
     IDS_SOUNDDRIVERS            "音频驱动程序"
-    IDS_DEVICES_WAVEOUT         "Wave 输出装置"
-    IDS_DEVICES_WAVEIN          "Wave 输入装置"
-    IDS_DEVICES_MIDIOUT         "MIDI 输出装置"
-    IDS_DEVICES_MIDIIN          "MIDI 输入装置"
-    IDS_DEVICES_AUX             "辅助装置"
-    IDS_DEVICES_MIXER           "混音器装置"
-    IDS_UNAVAILABLE_DRIVER      "注册表内有已失效的驱动程序。\n\n将 %s 从注册表中删除?"
+    IDS_DEVICES_WAVEOUT         "Wave 输出设备"
+    IDS_DEVICES_WAVEIN          "Wave 输入设备"
+    IDS_DEVICES_MIDIOUT         "MIDI 输出设备"
+    IDS_DEVICES_MIDIIN          "MIDI 输入设备"
+    IDS_DEVICES_AUX             "辅助设备"
+    IDS_DEVICES_MIXER           "混音设备" /* 标准译名待求证 */
+    IDS_UNAVAILABLE_DRIVER      "注册表内有已失效的驱动程序！\n\n将 %s 从注册表中删除?"
     IDS_WARNING                 "警告"
 END
 
@@ -314,12 +324,12 @@ BEGIN
     IDC_SYSPARAMS_APPWORKSPACE      "应用程序工作区"
     IDC_SYSPARAMS_WINDOW_FRAME      "焦点控件框架"
     IDC_SYSPARAMS_ACTIVE_BORDER     "活动窗口边界"
-    IDC_SYSPARAMS_INACTIVE_BORDER   "非活动边界"
+    IDC_SYSPARAMS_INACTIVE_BORDER   "非活动窗口边界"
     IDC_SYSPARAMS_BUTTON_HILIGHT    "控件高亮"
     IDC_SYSPARAMS_BUTTON_LIGHT      "控件光亮"
     IDC_SYSPARAMS_BUTTON_SHADOW     "控件阴影"
     IDC_SYSPARAMS_BUTTON_DARK_SHADOW "控件灰暗"
-    IDC_SYSPARAMS_BUTTON_ALTERNATE  "控件背景 替代"
+    IDC_SYSPARAMS_BUTTON_ALTERNATE  "控件切换背景" /* 待求证 */
     IDC_SYSPARAMS_GRAY_TEXT         "灰色文字"
     IDC_SYSPARAMS_HOT_TRACKING      "鼠标拖选框"
     IDC_SYSPARAMS_ACTIVE_TITLE_GRADIENT "活动窗口标题栏渐进目标色"
