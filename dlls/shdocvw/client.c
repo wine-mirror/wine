@@ -25,20 +25,21 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
-#define CLIENTSITE_THIS(iface) DEFINE_THIS(DocHost, OleClientSite, iface)
+static inline DocHost *impl_from_IOleClientSite(IOleClientSite *iface)
+{
+    return (DocHost*)((char*)iface - FIELD_OFFSET(DocHost, IOleClientSite_iface));
+}
 
 static HRESULT WINAPI ClientSite_QueryInterface(IOleClientSite *iface, REFIID riid, void **ppv)
 {
-    DocHost *This = CLIENTSITE_THIS(iface);
-
-    *ppv = NULL;
+    DocHost *This = impl_from_IOleClientSite(iface);
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = CLIENTSITE(This);
+        *ppv = &This->IOleClientSite_iface;
     }else if(IsEqualGUID(&IID_IOleClientSite, riid)) {
         TRACE("(%p)->(IID_IOleClientSite %p)\n", This, ppv);
-        *ppv = CLIENTSITE(This);
+        *ppv = &This->IOleClientSite_iface;
     }else if(IsEqualGUID(&IID_IOleWindow, riid)) {
         TRACE("(%p)->(IID_IOleWindow %p)\n", This, ppv);
         *ppv = INPLACESITE(This);
@@ -66,33 +67,31 @@ static HRESULT WINAPI ClientSite_QueryInterface(IOleClientSite *iface, REFIID ri
     }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
         TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
         *ppv = SERVPROV(This);
+    }else {
+        *ppv = NULL;
+        WARN("Unsupported interface %s\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
     }
 
-    if(*ppv) {
-        IOleClientSite_AddRef(CLIENTSITE(This));
-        return S_OK;
-    }
-
-    WARN("Unsupported interface %s\n", debugstr_guid(riid));
-
-    return E_NOINTERFACE;
+    IOleClientSite_AddRef((IUnknown*)*ppv);
+    return S_OK;
 }
 
 static ULONG WINAPI ClientSite_AddRef(IOleClientSite *iface)
 {
-    DocHost *This = CLIENTSITE_THIS(iface);
+    DocHost *This = impl_from_IOleClientSite(iface);
     return IDispatch_AddRef(This->disp);
 }
 
 static ULONG WINAPI ClientSite_Release(IOleClientSite *iface)
 {
-    DocHost *This = CLIENTSITE_THIS(iface);
+    DocHost *This = impl_from_IOleClientSite(iface);
     return IDispatch_Release(This->disp);
 }
 
 static HRESULT WINAPI ClientSite_SaveObject(IOleClientSite *iface)
 {
-    DocHost *This = CLIENTSITE_THIS(iface);
+    DocHost *This = impl_from_IOleClientSite(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
@@ -100,40 +99,38 @@ static HRESULT WINAPI ClientSite_SaveObject(IOleClientSite *iface)
 static HRESULT WINAPI ClientSite_GetMoniker(IOleClientSite *iface, DWORD dwAssign,
                                             DWORD dwWhichMoniker, IMoniker **ppmk)
 {
-    DocHost *This = CLIENTSITE_THIS(iface);
+    DocHost *This = impl_from_IOleClientSite(iface);
     FIXME("(%p)->(%d %d %p)\n", This, dwAssign, dwWhichMoniker, ppmk);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ClientSite_GetContainer(IOleClientSite *iface, IOleContainer **ppContainer)
 {
-    DocHost *This = CLIENTSITE_THIS(iface);
+    DocHost *This = impl_from_IOleClientSite(iface);
     FIXME("(%p)->(%p)\n", This, ppContainer);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ClientSite_ShowObject(IOleClientSite *iface)
 {
-    DocHost *This = CLIENTSITE_THIS(iface);
+    DocHost *This = impl_from_IOleClientSite(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ClientSite_OnShowWindow(IOleClientSite *iface, BOOL fShow)
 {
-    DocHost *This = CLIENTSITE_THIS(iface);
+    DocHost *This = impl_from_IOleClientSite(iface);
     FIXME("(%p)->(%x)\n", This, fShow);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ClientSite_RequestNewObjectLayout(IOleClientSite *iface)
 {
-    DocHost *This = CLIENTSITE_THIS(iface);
+    DocHost *This = impl_from_IOleClientSite(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
-
-#undef CLIENTSITE_THIS
 
 static const IOleClientSiteVtbl OleClientSiteVtbl = {
     ClientSite_QueryInterface,
@@ -152,19 +149,19 @@ static const IOleClientSiteVtbl OleClientSiteVtbl = {
 static HRESULT WINAPI InPlaceSite_QueryInterface(IOleInPlaceSite *iface, REFIID riid, void **ppv)
 {
     DocHost *This = INPLACESITE_THIS(iface);
-    return IOleClientSite_QueryInterface(CLIENTSITE(This), riid, ppv);
+    return IOleClientSite_QueryInterface(&This->IOleClientSite_iface, riid, ppv);
 }
 
 static ULONG WINAPI InPlaceSite_AddRef(IOleInPlaceSite *iface)
 {
     DocHost *This = INPLACESITE_THIS(iface);
-    return IOleClientSite_AddRef(CLIENTSITE(This));
+    return IOleClientSite_AddRef(&This->IOleClientSite_iface);
 }
 
 static ULONG WINAPI InPlaceSite_Release(IOleInPlaceSite *iface)
 {
     DocHost *This = INPLACESITE_THIS(iface);
-    return IOleClientSite_Release(CLIENTSITE(This));
+    return IOleClientSite_Release(&This->IOleClientSite_iface);
 }
 
 static HRESULT WINAPI InPlaceSite_GetWindow(IOleInPlaceSite *iface, HWND *phwnd)
@@ -282,8 +279,6 @@ static HRESULT WINAPI InPlaceSite_OnPosRectChange(IOleInPlaceSite *iface,
     return E_NOTIMPL;
 }
 
-#undef INPLACESITE_THIS
-
 static const IOleInPlaceSiteVtbl OleInPlaceSiteVtbl = {
     InPlaceSite_QueryInterface,
     InPlaceSite_AddRef,
@@ -308,19 +303,19 @@ static HRESULT WINAPI OleDocumentSite_QueryInterface(IOleDocumentSite *iface,
                                                      REFIID riid, void **ppv)
 {
     DocHost *This = DOCSITE_THIS(iface);
-    return IOleClientSite_QueryInterface(CLIENTSITE(This), riid, ppv);
+    return IOleClientSite_QueryInterface(&This->IOleClientSite_iface, riid, ppv);
 }
 
 static ULONG WINAPI OleDocumentSite_AddRef(IOleDocumentSite *iface)
 {
     DocHost *This = DOCSITE_THIS(iface);
-    return IOleClientSite_AddRef(CLIENTSITE(This));
+    return IOleClientSite_AddRef(&This->IOleClientSite_iface);
 }
 
 static ULONG WINAPI OleDocumentSite_Release(IOleDocumentSite *iface)
 {
     DocHost *This = DOCSITE_THIS(iface);
-    return IOleClientSite_Release(CLIENTSITE(This));
+    return IOleClientSite_Release(&This->IOleClientSite_iface);
 }
 
 static HRESULT WINAPI OleDocumentSite_ActivateMe(IOleDocumentSite *iface,
@@ -348,8 +343,6 @@ static HRESULT WINAPI OleDocumentSite_ActivateMe(IOleDocumentSite *iface,
     return hres;
 }
 
-#undef DOCSITE_THIS
-
 static const IOleDocumentSiteVtbl OleDocumentSiteVtbl = {
     OleDocumentSite_QueryInterface,
     OleDocumentSite_AddRef,
@@ -362,19 +355,19 @@ static const IOleDocumentSiteVtbl OleDocumentSiteVtbl = {
 static HRESULT WINAPI ClDispatch_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
 {
     DocHost *This = DISP_THIS(iface);
-    return IOleClientSite_QueryInterface(CLIENTSITE(This), riid, ppv);
+    return IOleClientSite_QueryInterface(&This->IOleClientSite_iface, riid, ppv);
 }
 
 static ULONG WINAPI ClDispatch_AddRef(IDispatch *iface)
 {
     DocHost *This = DISP_THIS(iface);
-    return IOleClientSite_AddRef(CLIENTSITE(This));
+    return IOleClientSite_AddRef(&This->IOleClientSite_iface);
 }
 
 static ULONG WINAPI ClDispatch_Release(IDispatch *iface)
 {
     DocHost *This = DISP_THIS(iface);
-    return IOleClientSite_Release(CLIENTSITE(This));
+    return IOleClientSite_Release(&This->IOleClientSite_iface);
 }
 
 static HRESULT WINAPI ClDispatch_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
@@ -458,8 +451,6 @@ static HRESULT WINAPI ClDispatch_Invoke(IDispatch *iface, DISPID dispIdMember, R
     return E_NOTIMPL;
 }
 
-#undef DISP_THIS
-
 static const IDispatchVtbl DispatchVtbl = {
     ClDispatch_QueryInterface,
     ClDispatch_AddRef,
@@ -476,19 +467,19 @@ static HRESULT WINAPI ClServiceProvider_QueryInterface(IServiceProvider *iface, 
                                                        void **ppv)
 {
     DocHost *This = SERVPROV_THIS(iface);
-    return IOleClientSite_QueryInterface(CLIENTSITE(This), riid, ppv);
+    return IOleClientSite_QueryInterface(&This->IOleClientSite_iface, riid, ppv);
 }
 
 static ULONG WINAPI ClServiceProvider_AddRef(IServiceProvider *iface)
 {
     DocHost *This = SERVPROV_THIS(iface);
-    return IOleClientSite_AddRef(CLIENTSITE(This));
+    return IOleClientSite_AddRef(&This->IOleClientSite_iface);
 }
 
 static ULONG WINAPI ClServiceProvider_Release(IServiceProvider *iface)
 {
     DocHost *This = SERVPROV_THIS(iface);
-    return IOleClientSite_Release(CLIENTSITE(This));
+    return IOleClientSite_Release(&This->IOleClientSite_iface);
 }
 
 static HRESULT WINAPI ClServiceProvider_QueryService(IServiceProvider *iface, REFGUID guidService,
@@ -506,8 +497,6 @@ static HRESULT WINAPI ClServiceProvider_QueryService(IServiceProvider *iface, RE
     return E_NOINTERFACE;
 }
 
-#undef SERVPROV_THIS
-
 static const IServiceProviderVtbl ServiceProviderVtbl = {
     ClServiceProvider_QueryInterface,
     ClServiceProvider_AddRef,
@@ -517,7 +506,7 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
 
 void DocHost_ClientSite_Init(DocHost *This)
 {
-    This->lpOleClientSiteVtbl   = &OleClientSiteVtbl;
+    This->IOleClientSite_iface.lpVtbl   = &OleClientSiteVtbl;
     This->lpOleInPlaceSiteVtbl  = &OleInPlaceSiteVtbl;
     This->lpOleDocumentSiteVtbl = &OleDocumentSiteVtbl;
     This->lpDispatchVtbl        = &DispatchVtbl;

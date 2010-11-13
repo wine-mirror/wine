@@ -178,7 +178,7 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
 
     if(!ref) {
         if(This->doc_host)
-            IOleClientSite_Release(CLIENTSITE(This->doc_host));
+            IOleClientSite_Release(&This->doc_host->IOleClientSite_iface);
         if(This->post_data)
             GlobalFree(This->post_data);
         SysFreeString(This->headers);
@@ -254,7 +254,7 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
     set_status_text(This, emptyW);
 
     if(This->doc_host) {
-        IOleClientSite_Release(CLIENTSITE(This->doc_host));
+        IOleClientSite_Release(&This->doc_host->IOleClientSite_iface);
         This->doc_host = NULL;
     }
 
@@ -390,7 +390,7 @@ static BindStatusCallback *create_callback(DocHost *doc_host, LPCWSTR url, PBYTE
     ret->headers = headers ? SysAllocString(headers) : NULL;
 
     ret->doc_host = doc_host;
-    IOleClientSite_AddRef(CLIENTSITE(doc_host));
+    IOleClientSite_AddRef(&doc_host->IOleClientSite_iface);
 
     if(post_data) {
         ret->post_data = GlobalAlloc(0, post_data_len);
@@ -546,7 +546,7 @@ static HRESULT bind_to_object(DocHost *This, IMoniker *mon, LPCWSTR url, IBindCt
         return hres;
 
     IBindCtx_RegisterObjectParam(bindctx, (LPOLESTR)SZ_HTML_CLIENTSITE_OBJECTPARAM,
-                                 (IUnknown*)CLIENTSITE(This));
+                                 (IUnknown*)&This->IOleClientSite_iface);
 
     hres = IMoniker_BindToObject(mon, bindctx, NULL, &IID_IUnknown, (void**)&unk);
     if(SUCCEEDED(hres)) {

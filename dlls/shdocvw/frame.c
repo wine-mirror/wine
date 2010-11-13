@@ -56,13 +56,13 @@ static HRESULT WINAPI InPlaceFrame_QueryInterface(IOleInPlaceFrame *iface,
 static ULONG WINAPI InPlaceFrame_AddRef(IOleInPlaceFrame *iface)
 {
     DocHost *This = INPLACEFRAME_THIS(iface);
-    return IOleClientSite_AddRef(CLIENTSITE(This));
+    return IOleClientSite_AddRef(&This->IOleClientSite_iface);
 }
 
 static ULONG WINAPI InPlaceFrame_Release(IOleInPlaceFrame *iface)
 {
     DocHost *This = INPLACEFRAME_THIS(iface);
-    return IOleClientSite_Release(CLIENTSITE(This));
+    return IOleClientSite_Release(&This->IOleClientSite_iface);
 }
 
 static HRESULT WINAPI InPlaceFrame_GetWindow(IOleInPlaceFrame *iface, HWND *phwnd)

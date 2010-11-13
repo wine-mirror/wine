@@ -93,7 +93,7 @@ typedef struct _IDocHostContainerVtbl
 } IDocHostContainerVtbl;
 
 struct DocHost {
-    const IOleClientSiteVtbl      *lpOleClientSiteVtbl;
+    IOleClientSite      IOleClientSite_iface;
     const IOleInPlaceSiteVtbl     *lpOleInPlaceSiteVtbl;
     const IDocHostUIHandler2Vtbl  *lpDocHostUIHandlerVtbl;
     const IOleDocumentSiteVtbl    *lpOleDocumentSiteVtbl;
@@ -197,7 +197,6 @@ struct InternetExplorer {
 #define CONPTCONT(x)    ((IConnectionPointContainer*)   &(x)->lpConnectionPointContainerVtbl)
 #define OLECMD(x)       ((IOleCommandTarget*)           &(x)->lpOleCommandTargetVtbl)
 
-#define CLIENTSITE(x)   ((IOleClientSite*)              &(x)->lpOleClientSiteVtbl)
 #define INPLACESITE(x)  ((IOleInPlaceSite*)             &(x)->lpOleInPlaceSiteVtbl)
 #define DOCHOSTUI(x)    ((IDocHostUIHandler*)           &(x)->lpDocHostUIHandlerVtbl)
 #define DOCHOSTUI2(x)   ((IDocHostUIHandler2*)          &(x)->lpDocHostUIHandlerVtbl)

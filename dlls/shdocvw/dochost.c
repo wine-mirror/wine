@@ -230,7 +230,7 @@ HRESULT dochost_object_available(DocHost *This, IUnknown *doc)
             TRACE("Got clsid %s\n",
                   IsEqualGUID(&clsid, &CLSID_HTMLDocument) ? "CLSID_HTMLDocument" : debugstr_guid(&clsid));
 
-        hres = IOleObject_SetClientSite(oleobj, CLIENTSITE(This));
+        hres = IOleObject_SetClientSite(oleobj, &This->IOleClientSite_iface);
         if(FAILED(hres))
             FIXME("SetClientSite failed: %08x\n", hres);
 
@@ -367,7 +367,7 @@ void deactivate_document(DocHost *This)
 
         IOleObject_GetClientSite(oleobj, &client_site);
         if(client_site) {
-            if(client_site == CLIENTSITE(This))
+            if(client_site == &This->IOleClientSite_iface)
                 IOleObject_SetClientSite(oleobj, NULL);
             IOleClientSite_Release(client_site);
         }
@@ -408,19 +408,19 @@ static HRESULT WINAPI ClOleCommandTarget_QueryInterface(IOleCommandTarget *iface
         REFIID riid, void **ppv)
 {
     DocHost *This = OLECMD_THIS(iface);
-    return IOleClientSite_QueryInterface(CLIENTSITE(This), riid, ppv);
+    return IOleClientSite_QueryInterface(&This->IOleClientSite_iface, riid, ppv);
 }
 
 static ULONG WINAPI ClOleCommandTarget_AddRef(IOleCommandTarget *iface)
 {
     DocHost *This = OLECMD_THIS(iface);
-    return IOleClientSite_AddRef(CLIENTSITE(This));
+    return IOleClientSite_AddRef(&This->IOleClientSite_iface);
 }
 
 static ULONG WINAPI ClOleCommandTarget_Release(IOleCommandTarget *iface)
 {
     DocHost *This = OLECMD_THIS(iface);
-    return IOleClientSite_Release(CLIENTSITE(This));
+    return IOleClientSite_Release(&This->IOleClientSite_iface);
 }
 
 static HRESULT WINAPI ClOleCommandTarget_QueryStatus(IOleCommandTarget *iface,
@@ -495,19 +495,19 @@ static HRESULT WINAPI DocHostUIHandler_QueryInterface(IDocHostUIHandler2 *iface,
                                                       REFIID riid, void **ppv)
 {
     DocHost *This = DOCHOSTUI_THIS(iface);
-    return IOleClientSite_QueryInterface(CLIENTSITE(This), riid, ppv);
+    return IOleClientSite_QueryInterface(&This->IOleClientSite_iface, riid, ppv);
 }
 
 static ULONG WINAPI DocHostUIHandler_AddRef(IDocHostUIHandler2 *iface)
 {
     DocHost *This = DOCHOSTUI_THIS(iface);
-    return IOleClientSite_AddRef(CLIENTSITE(This));
+    return IOleClientSite_AddRef(&This->IOleClientSite_iface);
 }
 
 static ULONG WINAPI DocHostUIHandler_Release(IDocHostUIHandler2 *iface)
 {
     DocHost *This = DOCHOSTUI_THIS(iface);
-    return IOleClientSite_Release(CLIENTSITE(This));
+    return IOleClientSite_Release(&This->IOleClientSite_iface);
 }
 
 static HRESULT WINAPI DocHostUIHandler_ShowContextMenu(IDocHostUIHandler2 *iface,
@@ -728,19 +728,19 @@ static HRESULT WINAPI PropertyNotifySink_QueryInterface(IPropertyNotifySink *ifa
         REFIID riid, void **ppv)
 {
     DocHost *This = PROPNOTIF_THIS(iface);
-    return IOleClientSite_QueryInterface(CLIENTSITE(This), riid, ppv);
+    return IOleClientSite_QueryInterface(&This->IOleClientSite_iface, riid, ppv);
 }
 
 static ULONG WINAPI PropertyNotifySink_AddRef(IPropertyNotifySink *iface)
 {
     DocHost *This = PROPNOTIF_THIS(iface);
-    return IOleClientSite_AddRef(CLIENTSITE(This));
+    return IOleClientSite_AddRef(&This->IOleClientSite_iface);
 }
 
 static ULONG WINAPI PropertyNotifySink_Release(IPropertyNotifySink *iface)
 {
     DocHost *This = PROPNOTIF_THIS(iface);
-    return IOleClientSite_Release(CLIENTSITE(This));
+    return IOleClientSite_Release(&This->IOleClientSite_iface);
 }
 
 static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, DISPID dispID)
