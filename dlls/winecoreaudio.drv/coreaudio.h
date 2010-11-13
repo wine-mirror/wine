@@ -32,10 +32,13 @@ extern LONG CoreAudio_MixerInit(void);
 extern void CoreAudio_MixerRelease(void);
 
 /* fourcc is in native order, where MSB is the first character. */
-static inline const char* wine_dbgstr_fourcc(unsigned long fourcc)
+static inline const char* wine_dbgstr_fourcc(INT32 fourcc)
 {
     char buf[4] = { (char) (fourcc >> 24), (char) (fourcc >> 16),
                     (char) (fourcc >> 8),  (char) fourcc };
+    /* OSStatus is a signed decimal except in parts of CoreAudio */
+    if ((buf[0] < 32) || (buf[1] < 32) || (buf[2] < 32) || (buf[3] < 32))
+	return wine_dbg_sprintf("%d", fourcc);
     return wine_dbgstr_an(buf, sizeof(buf));
 }
 
