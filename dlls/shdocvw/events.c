@@ -29,7 +29,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 struct ConnectionPoint {
-    const IConnectionPointVtbl *lpConnectionPointVtbl;
+    IConnectionPoint IConnectionPoint_iface;
 
     IConnectionPointContainer *container;
 
@@ -39,37 +39,38 @@ struct ConnectionPoint {
     IID iid;
 };
 
-#define CONPOINT(x)  ((IConnectionPoint*) &(x)->lpConnectionPointVtbl)
-
 /**********************************************************************
  * Implement the IConnectionPointContainer interface
  */
 
-#define CONPTCONT_THIS(iface) DEFINE_THIS(ConnectionPointContainer, ConnectionPointContainer, iface)
+static inline ConnectionPointContainer *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
+{
+    return (ConnectionPointContainer*)((char*)iface - FIELD_OFFSET(ConnectionPointContainer, IConnectionPointContainer_iface));
+}
 
 static HRESULT WINAPI ConnectionPointContainer_QueryInterface(IConnectionPointContainer *iface,
         REFIID riid, LPVOID *ppv)
 {
-    ConnectionPointContainer *This = CONPTCONT_THIS(iface);
+    ConnectionPointContainer *This = impl_from_IConnectionPointContainer(iface);
     return IUnknown_QueryInterface(This->impl, riid, ppv);
 }
 
 static ULONG WINAPI ConnectionPointContainer_AddRef(IConnectionPointContainer *iface)
 {
-    ConnectionPointContainer *This = CONPTCONT_THIS(iface);
+    ConnectionPointContainer *This = impl_from_IConnectionPointContainer(iface);
     return IUnknown_AddRef(This->impl);
 }
 
 static ULONG WINAPI ConnectionPointContainer_Release(IConnectionPointContainer *iface)
 {
-    ConnectionPointContainer *This = CONPTCONT_THIS(iface);
+    ConnectionPointContainer *This = impl_from_IConnectionPointContainer(iface);
     return IUnknown_Release(This->impl);
 }
 
 static HRESULT WINAPI ConnectionPointContainer_EnumConnectionPoints(IConnectionPointContainer *iface,
         LPENUMCONNECTIONPOINTS *ppEnum)
 {
-    ConnectionPointContainer *This = CONPTCONT_THIS(iface);
+    ConnectionPointContainer *This = impl_from_IConnectionPointContainer(iface);
     FIXME("(%p)->(%p)\n", This, ppEnum);
     return E_NOTIMPL;
 }
@@ -77,7 +78,7 @@ static HRESULT WINAPI ConnectionPointContainer_EnumConnectionPoints(IConnectionP
 static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPointContainer *iface,
         REFIID riid, LPCONNECTIONPOINT *ppCP)
 {
-    ConnectionPointContainer *This = CONPTCONT_THIS(iface);
+    ConnectionPointContainer *This = impl_from_IConnectionPointContainer(iface);
 
     if(!ppCP) {
         WARN("ppCP == NULL\n");
@@ -88,13 +89,13 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
 
     if(IsEqualGUID(&DIID_DWebBrowserEvents2, riid)) {
         TRACE("(%p)->(DIID_DWebBrowserEvents2 %p)\n", This, ppCP);
-        *ppCP = CONPOINT(This->wbe2);
+        *ppCP = &This->wbe2->IConnectionPoint_iface;
     }else if(IsEqualGUID(&DIID_DWebBrowserEvents, riid)) {
         TRACE("(%p)->(DIID_DWebBrowserEvents %p)\n", This, ppCP);
-        *ppCP = CONPOINT(This->wbe);
+        *ppCP = &This->wbe->IConnectionPoint_iface;
     }else if(IsEqualGUID(&IID_IPropertyNotifySink, riid)) {
         TRACE("(%p)->(IID_IPropertyNotifySink %p)\n", This, ppCP);
-        *ppCP = CONPOINT(This->pns);
+        *ppCP = &This->pns->IConnectionPoint_iface;
     }
 
     if(*ppCP) {
@@ -106,7 +107,7 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
     return CONNECT_E_NOCONNECTION;
 }
 
-#undef CONPTCONT_THIS
+#undef impl_from_IConnectionPointContainer
 
 static const IConnectionPointContainerVtbl ConnectionPointContainerVtbl =
 {
@@ -122,21 +123,24 @@ static const IConnectionPointContainerVtbl ConnectionPointContainerVtbl =
  * Implement the IConnectionPoint interface
  */
 
-#define CONPOINT_THIS(iface) DEFINE_THIS(ConnectionPoint, ConnectionPoint, iface)
+static inline ConnectionPoint *impl_from_IConnectionPoint(IConnectionPoint *iface)
+{
+    return (ConnectionPoint*)((char*)iface - FIELD_OFFSET(ConnectionPoint, IConnectionPoint_iface));
+}
 
 static HRESULT WINAPI ConnectionPoint_QueryInterface(IConnectionPoint *iface,
                                                      REFIID riid, LPVOID *ppv)
 {
-    ConnectionPoint *This = CONPOINT_THIS(iface);
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
 
     *ppv = NULL;
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = CONPOINT(This);
+        *ppv = &This->IConnectionPoint_iface;
     }else if(IsEqualGUID(&IID_IConnectionPoint, riid)) {
         TRACE("(%p)->(IID_IConnectionPoint %p)\n", This, ppv);
-        *ppv = CONPOINT(This);
+        *ppv = &This->IConnectionPoint_iface;
     }
 
     if(*ppv) {
@@ -150,19 +154,19 @@ static HRESULT WINAPI ConnectionPoint_QueryInterface(IConnectionPoint *iface,
 
 static ULONG WINAPI ConnectionPoint_AddRef(IConnectionPoint *iface)
 {
-    ConnectionPoint *This = CONPOINT_THIS(iface);
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
     return IConnectionPointContainer_AddRef(This->container);
 }
 
 static ULONG WINAPI ConnectionPoint_Release(IConnectionPoint *iface)
 {
-    ConnectionPoint *This = CONPOINT_THIS(iface);
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
     return IConnectionPointContainer_Release(This->container);
 }
 
 static HRESULT WINAPI ConnectionPoint_GetConnectionInterface(IConnectionPoint *iface, IID *pIID)
 {
-    ConnectionPoint *This = CONPOINT_THIS(iface);
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
 
     TRACE("(%p)->(%p)\n", This, pIID);
 
@@ -173,7 +177,7 @@ static HRESULT WINAPI ConnectionPoint_GetConnectionInterface(IConnectionPoint *i
 static HRESULT WINAPI ConnectionPoint_GetConnectionPointContainer(IConnectionPoint *iface,
         IConnectionPointContainer **ppCPC)
 {
-    ConnectionPoint *This = CONPOINT_THIS(iface);
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
 
     TRACE("(%p)->(%p)\n", This, ppCPC);
 
@@ -185,7 +189,7 @@ static HRESULT WINAPI ConnectionPoint_GetConnectionPointContainer(IConnectionPoi
 static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *pUnkSink,
                                              DWORD *pdwCookie)
 {
-    ConnectionPoint *This = CONPOINT_THIS(iface);
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
     IDispatch *disp;
     DWORD i;
     HRESULT hres;
@@ -222,7 +226,7 @@ static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *
 
 static HRESULT WINAPI ConnectionPoint_Unadvise(IConnectionPoint *iface, DWORD dwCookie)
 {
-    ConnectionPoint *This = CONPOINT_THIS(iface);
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
 
     TRACE("(%p)->(%d)\n", This, dwCookie);
 
@@ -238,12 +242,10 @@ static HRESULT WINAPI ConnectionPoint_Unadvise(IConnectionPoint *iface, DWORD dw
 static HRESULT WINAPI ConnectionPoint_EnumConnections(IConnectionPoint *iface,
                                                       IEnumConnections **ppEnum)
 {
-    ConnectionPoint *This = CONPOINT_THIS(iface);
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
     FIXME("(%p)->(%p)\n", This, ppEnum);
     return E_NOTIMPL;
 }
-
-#undef CONPOINT_THIS
 
 static const IConnectionPointVtbl ConnectionPointVtbl =
 {
@@ -273,7 +275,7 @@ static void ConnectionPoint_Create(REFIID riid, ConnectionPoint **cp,
 {
     ConnectionPoint *ret = heap_alloc(sizeof(ConnectionPoint));
 
-    ret->lpConnectionPointVtbl = &ConnectionPointVtbl;
+    ret->IConnectionPoint_iface.lpVtbl = &ConnectionPointVtbl;
 
     ret->sinks = NULL;
     ret->sinks_size = 0;
@@ -299,11 +301,11 @@ static void ConnectionPoint_Destroy(ConnectionPoint *This)
 
 void ConnectionPointContainer_Init(ConnectionPointContainer *This, IUnknown *impl)
 {
-    This->lpConnectionPointContainerVtbl = &ConnectionPointContainerVtbl;
+    This->IConnectionPointContainer_iface.lpVtbl = &ConnectionPointContainerVtbl;
 
-    ConnectionPoint_Create(&DIID_DWebBrowserEvents2, &This->wbe2, CONPTCONT(This));
-    ConnectionPoint_Create(&DIID_DWebBrowserEvents,  &This->wbe,  CONPTCONT(This));
-    ConnectionPoint_Create(&IID_IPropertyNotifySink, &This->pns,  CONPTCONT(This));
+    ConnectionPoint_Create(&DIID_DWebBrowserEvents2, &This->wbe2, &This->IConnectionPointContainer_iface);
+    ConnectionPoint_Create(&DIID_DWebBrowserEvents,  &This->wbe,  &This->IConnectionPointContainer_iface);
+    ConnectionPoint_Create(&IID_IPropertyNotifySink, &This->pns,  &This->IConnectionPointContainer_iface);
 
     This->impl = impl;
 }

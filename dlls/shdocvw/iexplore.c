@@ -722,6 +722,11 @@ static IWebBrowser2 *create_ie_window(LPCSTR cmdline)
     return wb;
 }
 
+static inline InternetExplorer *impl_from_DocHost(DocHost *iface)
+{
+    return (InternetExplorer*)((char*)iface - FIELD_OFFSET(InternetExplorer, doc_host));
+}
+
 static void WINAPI DocHostContainer_GetDocObjRect(DocHost* This, RECT* rc)
 {
     GetClientRect(This->frame_hwnd, rc);
@@ -730,7 +735,7 @@ static void WINAPI DocHostContainer_GetDocObjRect(DocHost* This, RECT* rc)
 
 static HRESULT WINAPI DocHostContainer_SetStatusText(DocHost* This, LPCWSTR text)
 {
-    InternetExplorer* ie = DOCHOST_THIS(This);
+    InternetExplorer* ie = impl_from_DocHost(This);
     return update_ie_statustext(ie, text);
 }
 

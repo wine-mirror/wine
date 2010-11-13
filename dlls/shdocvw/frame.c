@@ -21,53 +21,54 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
-#define INPLACEFRAME_THIS(iface) DEFINE_THIS(DocHost, OleInPlaceFrame, iface)
+static inline DocHost *impl_from_IOleInPlaceFrame(IOleInPlaceFrame *iface)
+{
+    return (DocHost*)((char*)iface - FIELD_OFFSET(DocHost, IOleInPlaceFrame_iface));
+}
 
 static HRESULT WINAPI InPlaceFrame_QueryInterface(IOleInPlaceFrame *iface,
                                                   REFIID riid, void **ppv)
 {
-    DocHost *This = INPLACEFRAME_THIS(iface);
-
-    *ppv = NULL;
+    DocHost *This = impl_from_IOleInPlaceFrame(iface);
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = INPLACEFRAME(This);
+        *ppv = &This->IOleInPlaceFrame_iface;
     }else if(IsEqualGUID(&IID_IOleWindow, riid)) {
         TRACE("(%p)->(IID_IOleWindow %p)\n", This, ppv);
-        *ppv = INPLACEFRAME(This);
+        *ppv = &This->IOleInPlaceFrame_iface;
     }else if(IsEqualGUID(&IID_IOleInPlaceUIWindow, riid)) {
         TRACE("(%p)->(IID_IOleInPlaceUIWindow %p)\n", This, ppv);
-        *ppv = INPLACEFRAME(This);
+        *ppv = &This->IOleInPlaceFrame_iface;
     }else if(IsEqualGUID(&IID_IOleInPlaceFrame, riid)) {
         TRACE("(%p)->(IID_IOleInPlaceFrame %p)\n", This, ppv);
-        *ppv = INPLACEFRAME(This);
+        *ppv = &This->IOleInPlaceFrame_iface;
+    }else {
+        *ppv = NULL;
+        WARN("Unsopported interface %s\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
     }
 
-    if(*ppv) {
-        IOleInPlaceFrame_AddRef(INPLACEFRAME(This));
-        return S_OK;
-    }
 
-    WARN("Unsopported interface %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
 }
 
 static ULONG WINAPI InPlaceFrame_AddRef(IOleInPlaceFrame *iface)
 {
-    DocHost *This = INPLACEFRAME_THIS(iface);
+    DocHost *This = impl_from_IOleInPlaceFrame(iface);
     return IOleClientSite_AddRef(&This->IOleClientSite_iface);
 }
 
 static ULONG WINAPI InPlaceFrame_Release(IOleInPlaceFrame *iface)
 {
-    DocHost *This = INPLACEFRAME_THIS(iface);
+    DocHost *This = impl_from_IOleInPlaceFrame(iface);
     return IOleClientSite_Release(&This->IOleClientSite_iface);
 }
 
 static HRESULT WINAPI InPlaceFrame_GetWindow(IOleInPlaceFrame *iface, HWND *phwnd)
 {
-    DocHost *This = INPLACEFRAME_THIS(iface);
+    DocHost *This = impl_from_IOleInPlaceFrame(iface);
     FIXME("(%p)->(%p)\n", This, phwnd);
     return E_NOTIMPL;
 }
@@ -75,14 +76,14 @@ static HRESULT WINAPI InPlaceFrame_GetWindow(IOleInPlaceFrame *iface, HWND *phwn
 static HRESULT WINAPI InPlaceFrame_ContextSensitiveHelp(IOleInPlaceFrame *iface,
                                                         BOOL fEnterMode)
 {
-    DocHost *This = INPLACEFRAME_THIS(iface);
+    DocHost *This = impl_from_IOleInPlaceFrame(iface);
     FIXME("(%p)->(%x)\n", This, fEnterMode);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI InPlaceFrame_GetBorder(IOleInPlaceFrame *iface, LPRECT lprectBorder)
 {
-    DocHost *This = INPLACEFRAME_THIS(iface);
+    DocHost *This = impl_from_IOleInPlaceFrame(iface);
     FIXME("(%p)->(%p)\n", This, lprectBorder);
     return E_NOTIMPL;
 }
@@ -90,7 +91,7 @@ static HRESULT WINAPI InPlaceFrame_GetBorder(IOleInPlaceFrame *iface, LPRECT lpr
 static HRESULT WINAPI InPlaceFrame_RequestBorderSpace(IOleInPlaceFrame *iface,
                                                       LPCBORDERWIDTHS pborderwidths)
 {
-    DocHost *This = INPLACEFRAME_THIS(iface);
+    DocHost *This = impl_from_IOleInPlaceFrame(iface);
     FIXME("(%p)->(%p)\n", This, pborderwidths);
     return E_NOTIMPL;
 }
@@ -98,7 +99,7 @@ static HRESULT WINAPI InPlaceFrame_RequestBorderSpace(IOleInPlaceFrame *iface,
 static HRESULT WINAPI InPlaceFrame_SetBorderSpace(IOleInPlaceFrame *iface,
                                                   LPCBORDERWIDTHS pborderwidths)
 {
-    DocHost *This = INPLACEFRAME_THIS(iface);
+    DocHost *This = impl_from_IOleInPlaceFrame(iface);
     FIXME("(%p)->(%p)\n", This, pborderwidths);
     return E_NOTIMPL;
 }
@@ -106,7 +107,7 @@ static HRESULT WINAPI InPlaceFrame_SetBorderSpace(IOleInPlaceFrame *iface,
 static HRESULT WINAPI InPlaceFrame_SetActiveObject(IOleInPlaceFrame *iface,
         IOleInPlaceActiveObject *pActiveObject, LPCOLESTR pszObjName)
 {
-    DocHost *This = INPLACEFRAME_THIS(iface);
+    DocHost *This = impl_from_IOleInPlaceFrame(iface);
     FIXME("(%p)->(%p %s)\n", This, pActiveObject, debugstr_w(pszObjName));
     return E_NOTIMPL;
 }
@@ -114,7 +115,7 @@ static HRESULT WINAPI InPlaceFrame_SetActiveObject(IOleInPlaceFrame *iface,
 static HRESULT WINAPI InPlaceFrame_InsertMenus(IOleInPlaceFrame *iface, HMENU hmenuShared,
         LPOLEMENUGROUPWIDTHS lpMenuWidths)
 {
-    DocHost *This = INPLACEFRAME_THIS(iface);
+    DocHost *This = impl_from_IOleInPlaceFrame(iface);
     FIXME("(%p)->(%p %p)\n", This, hmenuShared, lpMenuWidths);
     return E_NOTIMPL;
 }
@@ -122,14 +123,14 @@ static HRESULT WINAPI InPlaceFrame_InsertMenus(IOleInPlaceFrame *iface, HMENU hm
 static HRESULT WINAPI InPlaceFrame_SetMenu(IOleInPlaceFrame *iface, HMENU hmenuShared,
         HOLEMENU holemenu, HWND hwndActiveObject)
 {
-    DocHost *This = INPLACEFRAME_THIS(iface);
+    DocHost *This = impl_from_IOleInPlaceFrame(iface);
     FIXME("(%p)->(%p %p %p)\n", This, hmenuShared, holemenu, hwndActiveObject);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI InPlaceFrame_RemoveMenus(IOleInPlaceFrame *iface, HMENU hmenuShared)
 {
-    DocHost *This = INPLACEFRAME_THIS(iface);
+    DocHost *This = impl_from_IOleInPlaceFrame(iface);
     FIXME("(%p)->(%p)\n", This, hmenuShared);
     return E_NOTIMPL;
 }
@@ -137,14 +138,14 @@ static HRESULT WINAPI InPlaceFrame_RemoveMenus(IOleInPlaceFrame *iface, HMENU hm
 static HRESULT WINAPI InPlaceFrame_SetStatusText(IOleInPlaceFrame *iface,
                                                  LPCOLESTR pszStatusText)
 {
-    DocHost *This = INPLACEFRAME_THIS(iface);
+    DocHost *This = impl_from_IOleInPlaceFrame(iface);
     TRACE("(%p)->(%s)\n", This, debugstr_w(pszStatusText));
     return This->container_vtbl->SetStatusText(This, pszStatusText);
 }
 
 static HRESULT WINAPI InPlaceFrame_EnableModeless(IOleInPlaceFrame *iface, BOOL fEnable)
 {
-    DocHost *This = INPLACEFRAME_THIS(iface);
+    DocHost *This = impl_from_IOleInPlaceFrame(iface);
     FIXME("(%p)->(%x)\n", This, fEnable);
     return E_NOTIMPL;
 }
@@ -152,12 +153,12 @@ static HRESULT WINAPI InPlaceFrame_EnableModeless(IOleInPlaceFrame *iface, BOOL 
 static HRESULT WINAPI InPlaceFrame_TranslateAccelerator(IOleInPlaceFrame *iface, LPMSG lpmsg,
                                                         WORD wID)
 {
-    DocHost *This = INPLACEFRAME_THIS(iface);
+    DocHost *This = impl_from_IOleInPlaceFrame(iface);
     FIXME("(%p)->(%p %d)\n", This, lpmsg, wID);
     return E_NOTIMPL;
 }
 
-#undef INPLACEFRAME_THIS
+#undef impl_from_IOleInPlaceFrame
 
 static const IOleInPlaceFrameVtbl OleInPlaceFrameVtbl = {
     InPlaceFrame_QueryInterface,
@@ -179,5 +180,5 @@ static const IOleInPlaceFrameVtbl OleInPlaceFrameVtbl = {
 
 void DocHost_Frame_Init(DocHost *This)
 {
-    This->lpOleInPlaceFrameVtbl = &OleInPlaceFrameVtbl;
+    This->IOleInPlaceFrame_iface.lpVtbl = &OleInPlaceFrameVtbl;
 }

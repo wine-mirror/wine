@@ -59,7 +59,7 @@ typedef struct ConnectionPoint ConnectionPoint;
 typedef struct DocHost DocHost;
 
 typedef struct {
-    const IConnectionPointContainerVtbl *lpConnectionPointContainerVtbl;
+    IConnectionPointContainer IConnectionPointContainer_iface;
 
     ConnectionPoint *wbe2;
     ConnectionPoint *wbe;
@@ -103,7 +103,7 @@ struct DocHost {
     IServiceProvider    IServiceProvider_iface;
 
     /* Interfaces of InPlaceFrame object */
-    const IOleInPlaceFrameVtbl          *lpOleInPlaceFrameVtbl;
+    IOleInPlaceFrame  IOleInPlaceFrame_iface;
 
     IDispatch *disp;
 
@@ -194,9 +194,6 @@ struct InternetExplorer {
     DocHost doc_host;
 };
 
-#define CONPTCONT(x)    ((IConnectionPointContainer*)   &(x)->lpConnectionPointContainerVtbl)
-#define INPLACEFRAME(x) ((IOleInPlaceFrame*)            &(x)->lpOleInPlaceFrameVtbl)
-
 void WebBrowser_OleObject_Init(WebBrowser*);
 void WebBrowser_ViewObject_Init(WebBrowser*);
 void WebBrowser_Persist_Init(WebBrowser*);
@@ -241,9 +238,6 @@ HRESULT CUrlHistory_Create(IUnknown*,REFIID,void**);
 HRESULT InternetShortcut_Create(IUnknown*,REFIID,void**);
 
 HRESULT TaskbarList_Create(IUnknown*,REFIID,void**);
-
-#define DEFINE_THIS2(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,ifc)))
-#define DEFINE_THIS(cls,ifc,iface) DEFINE_THIS2(cls,lp ## ifc ## Vtbl,iface)
 
 /**********************************************************************
  * Dll lifetime tracking declaration for shdocvw.dll

@@ -86,7 +86,7 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid
         *ppv = &This->IProvideClassInfo2_iface;
     }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
         TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
-        *ppv = CONPTCONT(&This->doc_host.cps);
+        *ppv = &This->doc_host.cps.IConnectionPointContainer_iface;
     }else if(IsEqualGUID(&IID_IViewObject, riid)) {
         TRACE("(%p)->(IID_IViewObject %p)\n", This, ppv);
         *ppv = &This->IViewObject2_iface;
@@ -1104,8 +1104,6 @@ static HRESULT STDMETHODCALLTYPE WBServiceProvider_QueryService(IServiceProvider
     return E_NOINTERFACE;
 }
 
-#undef impl_from_IServiceProvider
-
 static const IServiceProviderVtbl ServiceProviderVtbl =
 {
     WBServiceProvider_QueryInterface,
@@ -1114,7 +1112,10 @@ static const IServiceProviderVtbl ServiceProviderVtbl =
     WBServiceProvider_QueryService
 };
 
-#define DOCHOST_THIS(iface) DEFINE_THIS2(WebBrowser,doc_host,iface)
+static inline WebBrowser *impl_from_DocHost(DocHost *iface)
+{
+    return (WebBrowser*)((char*)iface - FIELD_OFFSET(WebBrowser, doc_host));
+}
 
 static void WINAPI DocHostContainer_GetDocObjRect(DocHost* This, RECT* rc)
 {
@@ -1134,7 +1135,7 @@ static void WINAPI DocHostContainer_SetURL(DocHost* This, LPCWSTR url)
 static HRESULT DocHostContainer_exec(DocHost *doc_host, const GUID *cmd_group, DWORD cmdid, DWORD execopt, VARIANT *in,
         VARIANT *out)
 {
-    WebBrowser *This = DOCHOST_THIS(doc_host);
+    WebBrowser *This = impl_from_DocHost(doc_host);
     IOleCommandTarget *cmdtrg = NULL;
     HRESULT hres;
 
@@ -1160,8 +1161,6 @@ static HRESULT DocHostContainer_exec(DocHost *doc_host, const GUID *cmd_group, D
 
     return hres;
 }
-
-#undef DOCHOST_THIS
 
 static const IDocHostContainerVtbl DocHostContainerVtbl = {
     DocHostContainer_GetDocObjRect,
