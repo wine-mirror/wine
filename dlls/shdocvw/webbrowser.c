@@ -68,31 +68,31 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid
         *ppv = &This->IOleControl_iface;
     }else if(IsEqualGUID(&IID_IPersist, riid)) {
         TRACE("(%p)->(IID_IPersist %p)\n", This, ppv);
-        *ppv = PERSTORAGE(This);
+        *ppv = &This->IPersistStorage_iface;
     }else if(IsEqualGUID(&IID_IPersistStorage, riid)) {
         TRACE("(%p)->(IID_IPersistStorage %p)\n", This, ppv);
-        *ppv = PERSTORAGE(This);
+        *ppv = &This->IPersistStorage_iface;
     }else if(IsEqualGUID(&IID_IPersistMemory, riid)) {
         TRACE("(%p)->(IID_IPersistStorage %p)\n", This, ppv);
-        *ppv = PERMEMORY(This);
+        *ppv = &This->IPersistMemory_iface;
     }else if(IsEqualGUID (&IID_IPersistStreamInit, riid)) {
         TRACE("(%p)->(IID_IPersistStreamInit %p)\n", This, ppv);
-        *ppv = PERSTRINIT(This);
+        *ppv = &This->IPersistStreamInit_iface;
     }else if(IsEqualGUID(&IID_IProvideClassInfo, riid)) {
         TRACE("(%p)->(IID_IProvideClassInfo %p)\n", This, ppv);
-        *ppv = CLASSINFO(This);
+        *ppv = &This->IProvideClassInfo2_iface;
     }else if(IsEqualGUID(&IID_IProvideClassInfo2, riid)) {
         TRACE("(%p)->(IID_IProvideClassInfo2 %p)\n", This, ppv);
-        *ppv = CLASSINFO(This);
+        *ppv = &This->IProvideClassInfo2_iface;
     }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
         TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
         *ppv = CONPTCONT(&This->doc_host.cps);
     }else if(IsEqualGUID(&IID_IViewObject, riid)) {
         TRACE("(%p)->(IID_IViewObject %p)\n", This, ppv);
-        *ppv = VIEWOBJ(This);
+        *ppv = &This->IViewObject2_iface;
     }else if(IsEqualGUID(&IID_IViewObject2, riid)) {
         TRACE("(%p)->(IID_IViewObject2 %p)\n", This, ppv);
-        *ppv = VIEWOBJ2(This);
+        *ppv = &This->IViewObject2_iface;
     }else if(IsEqualGUID(&IID_IOleInPlaceActiveObject, riid)) {
         TRACE("(%p)->(IID_IOleInPlaceActiveObject %p)\n", This, ppv);
         *ppv = &This->IOleInPlaceActiveObject_iface;
@@ -103,7 +103,7 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid
         *ppv = &This->IServiceProvider_iface;
         TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
     }else if(IsEqualGUID(&IID_IDataObject, riid)) {
-        *ppv = DATAOBJECT(This);
+        *ppv = &This->IDataObject_iface;
         TRACE("(%p)->(IID_IDataObject %p)\n", This, ppv);
     }else if(IsEqualGUID(&IID_IQuickActivate, riid)) {
         TRACE("(%p)->(IID_IQuickActivate %p) returning NULL\n", This, ppv);
@@ -1194,7 +1194,6 @@ static HRESULT WebBrowser_Create(INT version, IUnknown *pOuter, REFIID riid, voi
 
     WebBrowser_OleObject_Init(ret);
     WebBrowser_ViewObject_Init(ret);
-    WebBrowser_DataObject_Init(ret);
     WebBrowser_Persist_Init(ret);
     WebBrowser_ClassInfo_Init(ret);
 

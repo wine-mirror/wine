@@ -139,15 +139,15 @@ struct WebBrowser {
     IOleObject               IOleObject_iface;
     IOleInPlaceObject        IOleInPlaceObject_iface;
     IOleControl              IOleControl_iface;
-    const IPersistStorageVtbl           *lpPersistStorageVtbl;
-    const IPersistMemoryVtbl            *lpPersistMemoryVtbl;
-    const IPersistStreamInitVtbl        *lpPersistStreamInitVtbl;
-    const IProvideClassInfo2Vtbl        *lpProvideClassInfoVtbl;
-    const IViewObject2Vtbl              *lpViewObjectVtbl;
+    IPersistStorage          IPersistStorage_iface;
+    IPersistMemory           IPersistMemory_iface;
+    IPersistStreamInit       IPersistStreamInit_iface;
+    IProvideClassInfo2       IProvideClassInfo2_iface;
+    IViewObject2             IViewObject2_iface;
     IOleInPlaceActiveObject  IOleInPlaceActiveObject_iface;
     IOleCommandTarget        IOleCommandTarget_iface;
     IServiceProvider         IServiceProvider_iface;
-    const IDataObjectVtbl               *lpDataObjectVtbl;
+    IDataObject              IDataObject_iface;
     HlinkFrame hlink_frame;
 
     LONG ref;
@@ -194,15 +194,8 @@ struct InternetExplorer {
     DocHost doc_host;
 };
 
-#define PERSTORAGE(x)   ((IPersistStorage*)             &(x)->lpPersistStorageVtbl)
-#define PERMEMORY(x)    ((IPersistMemory*)              &(x)->lpPersistMemoryVtbl)
-#define PERSTRINIT(x)   ((IPersistStreamInit*)          &(x)->lpPersistStreamInitVtbl)
-#define CLASSINFO(x)    ((IProvideClassInfo2*)          &(x)->lpProvideClassInfoVtbl)
 #define CONPTCONT(x)    ((IConnectionPointContainer*)   &(x)->lpConnectionPointContainerVtbl)
-#define VIEWOBJ(x)      ((IViewObject*)                 &(x)->lpViewObjectVtbl);
-#define VIEWOBJ2(x)     ((IViewObject2*)                &(x)->lpViewObjectVtbl);
 #define OLECMD(x)       ((IOleCommandTarget*)           &(x)->lpOleCommandTargetVtbl)
-#define DATAOBJECT(x)   ((IDataObject*)                 &(x)->lpDataObjectVtbl)
 
 #define CLIENTSITE(x)   ((IOleClientSite*)              &(x)->lpOleClientSiteVtbl)
 #define INPLACESITE(x)  ((IOleInPlaceSite*)             &(x)->lpOleInPlaceSiteVtbl)
@@ -220,7 +213,6 @@ struct InternetExplorer {
 
 void WebBrowser_OleObject_Init(WebBrowser*);
 void WebBrowser_ViewObject_Init(WebBrowser*);
-void WebBrowser_DataObject_Init(WebBrowser*);
 void WebBrowser_Persist_Init(WebBrowser*);
 void WebBrowser_ClassInfo_Init(WebBrowser*);
 

@@ -32,30 +32,33 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
  * Implement the IProvideClassInfo2 interface
  */
 
-#define CLASSINFO_THIS(iface) DEFINE_THIS(WebBrowser, ProvideClassInfo, iface)
+static inline WebBrowser *impl_from_IProvideClassInfo2(IProvideClassInfo2 *iface)
+{
+    return (WebBrowser*)((char*)iface - FIELD_OFFSET(WebBrowser, IProvideClassInfo2_iface));
+}
 
 static HRESULT WINAPI ProvideClassInfo_QueryInterface(IProvideClassInfo2 *iface,
         REFIID riid, LPVOID *ppobj)
 {
-    WebBrowser *This = CLASSINFO_THIS(iface);
+    WebBrowser *This = impl_from_IProvideClassInfo2(iface);
     return IWebBrowser_QueryInterface(&This->IWebBrowser2_iface, riid, ppobj);
 }
 
 static ULONG WINAPI ProvideClassInfo_AddRef(IProvideClassInfo2 *iface)
 {
-    WebBrowser *This = CLASSINFO_THIS(iface);
+    WebBrowser *This = impl_from_IProvideClassInfo2(iface);
     return IWebBrowser_AddRef(&This->IWebBrowser2_iface);
 }
 
 static ULONG WINAPI ProvideClassInfo_Release(IProvideClassInfo2 *iface)
 {
-    WebBrowser *This = CLASSINFO_THIS(iface);
+    WebBrowser *This = impl_from_IProvideClassInfo2(iface);
     return IWebBrowser_Release(&This->IWebBrowser2_iface);
 }
 
 static HRESULT WINAPI ProvideClassInfo_GetClassInfo(IProvideClassInfo2 *iface, LPTYPEINFO *ppTI)
 {
-    WebBrowser *This = CLASSINFO_THIS(iface);
+    WebBrowser *This = impl_from_IProvideClassInfo2(iface);
     FIXME("(%p)->(%p)\n", This, ppTI);
     return E_NOTIMPL;
 }
@@ -63,7 +66,7 @@ static HRESULT WINAPI ProvideClassInfo_GetClassInfo(IProvideClassInfo2 *iface, L
 static HRESULT WINAPI ProvideClassInfo_GetGUID(IProvideClassInfo2 *iface,
         DWORD dwGuidKind, GUID *pGUID)
 {
-    WebBrowser *This = CLASSINFO_THIS(iface);
+    WebBrowser *This = impl_from_IProvideClassInfo2(iface);
 
     TRACE("(%p)->(%d %p)\n", This, dwGuidKind, pGUID);
 
@@ -81,8 +84,6 @@ static HRESULT WINAPI ProvideClassInfo_GetGUID(IProvideClassInfo2 *iface,
     return S_OK;
 }
 
-#undef CLASSINFO_THIS
-
 static const IProvideClassInfo2Vtbl ProvideClassInfoVtbl =
 {
     ProvideClassInfo_QueryInterface,
@@ -94,5 +95,5 @@ static const IProvideClassInfo2Vtbl ProvideClassInfoVtbl =
 
 void WebBrowser_ClassInfo_Init(WebBrowser *This)
 {
-    This->lpProvideClassInfoVtbl = &ProvideClassInfoVtbl;
+    This->IProvideClassInfo2_iface.lpVtbl = &ProvideClassInfoVtbl;
 }
