@@ -56,16 +56,16 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid
         *ppv = &This->IWebBrowser2_iface;
     }else if(IsEqualGUID(&IID_IOleObject, riid)) {
         TRACE("(%p)->(IID_IOleObject %p)\n", This, ppv);
-        *ppv = OLEOBJ(This);
+        *ppv = &This->IOleObject_iface;
     }else if(IsEqualGUID(&IID_IOleWindow, riid)) {
         TRACE("(%p)->(IID_IOleWindow %p)\n", This, ppv);
-        *ppv = INPLACEOBJ(This);
+        *ppv = &This->IOleInPlaceObject_iface;
     }else if(IsEqualGUID (&IID_IOleInPlaceObject, riid)) {
         TRACE("(%p)->(IID_IOleInPlaceObject %p)\n", This, ppv);
-        *ppv = INPLACEOBJ(This);
+        *ppv = &This->IOleInPlaceObject_iface;
     }else if(IsEqualGUID(&IID_IOleControl, riid)) {
         TRACE("(%p)->(IID_IOleControl %p)\n", This, ppv);
-        *ppv = CONTROL(This);
+        *ppv = &This->IOleControl_iface;
     }else if(IsEqualGUID(&IID_IPersist, riid)) {
         TRACE("(%p)->(IID_IPersist %p)\n", This, ppv);
         *ppv = PERSTORAGE(This);
@@ -95,12 +95,12 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid
         *ppv = VIEWOBJ2(This);
     }else if(IsEqualGUID(&IID_IOleInPlaceActiveObject, riid)) {
         TRACE("(%p)->(IID_IOleInPlaceActiveObject %p)\n", This, ppv);
-        *ppv = ACTIVEOBJ(This);
+        *ppv = &This->IOleInPlaceActiveObject_iface;
     }else if(IsEqualGUID(&IID_IOleCommandTarget, riid)) {
         TRACE("(%p)->(IID_IOleCommandTarget %p)\n", This, ppv);
-        *ppv = OLECMD(This);
+        *ppv = &This->IOleCommandTarget_iface;
     }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
-        *ppv = SERVPROV(This);
+        *ppv = &This->IServiceProvider_iface;
         TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
     }else if(IsEqualGUID(&IID_IDataObject, riid)) {
         *ppv = DATAOBJECT(This);
@@ -1060,33 +1060,34 @@ static const IWebBrowser2Vtbl WebBrowser2Vtbl =
     WebBrowser_put_Resizable
 };
 
-#define SERVPROV_THIS(iface) DEFINE_THIS(WebBrowser, OleObject, iface)
-/*
- *  IServiceProvider interface.
- */
-static HRESULT WINAPI WebBrowser_IServiceProvider_QueryInterface(IServiceProvider *iface,
+static inline WebBrowser *impl_from_IServiceProvider(IServiceProvider *iface)
+{
+    return (WebBrowser*)((char*)iface - FIELD_OFFSET(WebBrowser, IServiceProvider_iface));
+}
+
+static HRESULT WINAPI WBServiceProvider_QueryInterface(IServiceProvider *iface,
             REFIID riid, LPVOID *ppv)
 {
-    WebBrowser *This = SERVPROV_THIS(iface);
+    WebBrowser *This = impl_from_IServiceProvider(iface);
     return IWebBrowser_QueryInterface(&This->IWebBrowser2_iface, riid, ppv);
 }
 
-static ULONG WINAPI WebBrowser_IServiceProvider_AddRef(IServiceProvider *iface)
+static ULONG WINAPI WBServiceProvider_AddRef(IServiceProvider *iface)
 {
-    WebBrowser *This = SERVPROV_THIS(iface);
+    WebBrowser *This = impl_from_IServiceProvider(iface);
     return IWebBrowser_AddRef(&This->IWebBrowser2_iface);
 }
 
-static ULONG WINAPI WebBrowser_IServiceProvider_Release(IServiceProvider *iface)
+static ULONG WINAPI WBServiceProvider_Release(IServiceProvider *iface)
 {
-    WebBrowser *This = SERVPROV_THIS(iface);
+    WebBrowser *This = impl_from_IServiceProvider(iface);
     return IWebBrowser_Release(&This->IWebBrowser2_iface);
 }
 
-static HRESULT STDMETHODCALLTYPE WebBrowser_IServiceProvider_QueryService(IServiceProvider *iface,
+static HRESULT STDMETHODCALLTYPE WBServiceProvider_QueryService(IServiceProvider *iface,
             REFGUID guidService, REFIID riid, void **ppv)
 {
-    WebBrowser *This = SERVPROV_THIS(iface);
+    WebBrowser *This = impl_from_IServiceProvider(iface);
     static const IID IID_IBrowserService2 =
         {0x68BD21CC,0x438B,0x11d2,{0xA5,0x60,0x00,0xA0,0xC,0x2D,0xBF,0xE8}};
 
@@ -1103,14 +1104,14 @@ static HRESULT STDMETHODCALLTYPE WebBrowser_IServiceProvider_QueryService(IServi
     return E_NOINTERFACE;
 }
 
-#undef SERVPROV_THIS
+#undef impl_from_IServiceProvider
 
 static const IServiceProviderVtbl ServiceProviderVtbl =
 {
-    WebBrowser_IServiceProvider_QueryInterface,
-    WebBrowser_IServiceProvider_AddRef,
-    WebBrowser_IServiceProvider_Release,
-    WebBrowser_IServiceProvider_QueryService
+    WBServiceProvider_QueryInterface,
+    WBServiceProvider_AddRef,
+    WBServiceProvider_Release,
+    WBServiceProvider_QueryService
 };
 
 #define DOCHOST_THIS(iface) DEFINE_THIS2(WebBrowser,doc_host,iface)
@@ -1179,7 +1180,7 @@ static HRESULT WebBrowser_Create(INT version, IUnknown *pOuter, REFIID riid, voi
     ret = heap_alloc_zero(sizeof(WebBrowser));
 
     ret->IWebBrowser2_iface.lpVtbl = &WebBrowser2Vtbl;
-    ret->lpServiceProviderVtbl = &ServiceProviderVtbl;
+    ret->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
     ret->ref = 1;
     ret->version = version;
 

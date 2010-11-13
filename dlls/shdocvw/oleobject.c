@@ -190,9 +190,9 @@ static HRESULT activate_ui(WebBrowser *This, IOleClientSite *active_site)
     IOleInPlaceSite_OnUIActivate(This->inplace);
 
     if(This->doc_host.frame)
-        IOleInPlaceFrame_SetActiveObject(This->doc_host.frame, ACTIVEOBJ(This), wszitem);
+        IOleInPlaceFrame_SetActiveObject(This->doc_host.frame, &This->IOleInPlaceActiveObject_iface, wszitem);
     if(This->uiwindow)
-        IOleInPlaceUIWindow_SetActiveObject(This->uiwindow, ACTIVEOBJ(This), wszitem);
+        IOleInPlaceUIWindow_SetActiveObject(This->uiwindow, &This->IOleInPlaceActiveObject_iface, wszitem);
 
     if(This->doc_host.frame)
         IOleInPlaceFrame_SetMenu(This->doc_host.frame, NULL, NULL, This->shell_embedding_hwnd);
@@ -289,29 +289,32 @@ static void release_client_site(WebBrowser *This)
  * Implement the IOleObject interface for the WebBrowser control
  */
 
-#define OLEOBJ_THIS(iface) DEFINE_THIS(WebBrowser, OleObject, iface)
+static inline WebBrowser *impl_from_IOleObject(IOleObject *iface)
+{
+    return (WebBrowser*)((char*)iface - FIELD_OFFSET(WebBrowser, IOleObject_iface));
+}
 
 static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, void **ppv)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
     return IWebBrowser_QueryInterface(&This->IWebBrowser2_iface, riid, ppv);
 }
 
 static ULONG WINAPI OleObject_AddRef(IOleObject *iface)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
     return IWebBrowser_AddRef(&This->IWebBrowser2_iface);
 }
 
 static ULONG WINAPI OleObject_Release(IOleObject *iface)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
     return IWebBrowser_Release(&This->IWebBrowser2_iface);
 }
 
 static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE pClientSite)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
     IDocHostUIHandler *hostui;
     IOleContainer *container;
     IDispatch *disp;
@@ -367,7 +370,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE
 
 static HRESULT WINAPI OleObject_GetClientSite(IOleObject *iface, LPOLECLIENTSITE *ppClientSite)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
 
     TRACE("(%p)->(%p)\n", This, ppClientSite);
 
@@ -384,7 +387,7 @@ static HRESULT WINAPI OleObject_GetClientSite(IOleObject *iface, LPOLECLIENTSITE
 static HRESULT WINAPI OleObject_SetHostNames(IOleObject *iface, LPCOLESTR szContainerApp,
         LPCOLESTR szContainerObj)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
 
     TRACE("(%p)->(%s, %s)\n", This, debugstr_w(szContainerApp), debugstr_w(szContainerObj));
 
@@ -394,14 +397,14 @@ static HRESULT WINAPI OleObject_SetHostNames(IOleObject *iface, LPCOLESTR szCont
 
 static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
     FIXME("(%p)->(%d)\n", This, dwSaveOption);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_SetMoniker(IOleObject *iface, DWORD dwWhichMoniker, IMoniker* pmk)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
     FIXME("(%p)->(%d, %p)\n", This, dwWhichMoniker, pmk);
     return E_NOTIMPL;
 }
@@ -409,7 +412,7 @@ static HRESULT WINAPI OleObject_SetMoniker(IOleObject *iface, DWORD dwWhichMonik
 static HRESULT WINAPI OleObject_GetMoniker(IOleObject *iface, DWORD dwAssign,
         DWORD dwWhichMoniker, LPMONIKER *ppmk)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
     FIXME("(%p)->(%d, %d, %p)\n", This, dwAssign, dwWhichMoniker, ppmk);
     return E_NOTIMPL;
 }
@@ -417,7 +420,7 @@ static HRESULT WINAPI OleObject_GetMoniker(IOleObject *iface, DWORD dwAssign,
 static HRESULT WINAPI OleObject_InitFromData(IOleObject *iface, LPDATAOBJECT pDataObject,
         BOOL fCreation, DWORD dwReserved)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
     FIXME("(%p)->(%p, %d, %d)\n", This, pDataObject, fCreation, dwReserved);
     return E_NOTIMPL;
 }
@@ -425,7 +428,7 @@ static HRESULT WINAPI OleObject_InitFromData(IOleObject *iface, LPDATAOBJECT pDa
 static HRESULT WINAPI OleObject_GetClipboardData(IOleObject *iface, DWORD dwReserved,
         LPDATAOBJECT *ppDataObject)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
     FIXME("(%p)->(%d, %p)\n", This, dwReserved, ppDataObject);
     return E_NOTIMPL;
 }
@@ -433,7 +436,7 @@ static HRESULT WINAPI OleObject_GetClipboardData(IOleObject *iface, DWORD dwRese
 static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tagMSG* lpmsg,
         LPOLECLIENTSITE pActiveSite, LONG lindex, HWND hwndParent, LPCRECT lprcPosRect)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
 
     TRACE("(%p)->(%d %p %p %d %p %p)\n", This, iVerb, lpmsg, pActiveSite, lindex, hwndParent,
             lprcPosRect);
@@ -464,28 +467,28 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tag
 
 static HRESULT WINAPI OleObject_EnumVerbs(IOleObject *iface, IEnumOLEVERB **ppEnumOleVerb)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
     TRACE("(%p)->(%p)\n", This, ppEnumOleVerb);
     return OleRegEnumVerbs(&CLSID_WebBrowser, ppEnumOleVerb);
 }
 
 static HRESULT WINAPI OleObject_Update(IOleObject *iface)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_IsUpToDate(IOleObject *iface)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_GetUserClassID(IOleObject *iface, CLSID* pClsid)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
     FIXME("(%p)->(%p)\n", This, pClsid);
     return E_NOTIMPL;
 }
@@ -493,14 +496,14 @@ static HRESULT WINAPI OleObject_GetUserClassID(IOleObject *iface, CLSID* pClsid)
 static HRESULT WINAPI OleObject_GetUserType(IOleObject *iface, DWORD dwFormOfType,
         LPOLESTR* pszUserType)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
     TRACE("(%p, %d, %p)\n", This, dwFormOfType, pszUserType);
     return OleRegGetUserType(&CLSID_WebBrowser, dwFormOfType, pszUserType);
 }
 
 static HRESULT WINAPI OleObject_SetExtent(IOleObject *iface, DWORD dwDrawAspect, SIZEL *psizel)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
 
     TRACE("(%p)->(%x %p)\n", This, dwDrawAspect, psizel);
 
@@ -511,7 +514,7 @@ static HRESULT WINAPI OleObject_SetExtent(IOleObject *iface, DWORD dwDrawAspect,
 
 static HRESULT WINAPI OleObject_GetExtent(IOleObject *iface, DWORD dwDrawAspect, SIZEL *psizel)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
 
     TRACE("(%p)->(%x, %p)\n", This, dwDrawAspect, psizel);
 
@@ -523,28 +526,28 @@ static HRESULT WINAPI OleObject_GetExtent(IOleObject *iface, DWORD dwDrawAspect,
 static HRESULT WINAPI OleObject_Advise(IOleObject *iface, IAdviseSink *pAdvSink,
         DWORD* pdwConnection)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
     FIXME("(%p)->(%p, %p)\n", This, pAdvSink, pdwConnection);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_Unadvise(IOleObject *iface, DWORD dwConnection)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
     FIXME("(%p)->(%d)\n", This, dwConnection);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_EnumAdvise(IOleObject *iface, IEnumSTATDATA **ppenumAdvise)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
     FIXME("(%p)->(%p)\n", This, ppenumAdvise);
     return S_OK;
 }
 
 static HRESULT WINAPI OleObject_GetMiscStatus(IOleObject *iface, DWORD dwAspect, DWORD *pdwStatus)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
 
     TRACE("(%p)->(%x, %p)\n", This, dwAspect, pdwStatus);
 
@@ -556,12 +559,10 @@ static HRESULT WINAPI OleObject_GetMiscStatus(IOleObject *iface, DWORD dwAspect,
 
 static HRESULT WINAPI OleObject_SetColorScheme(IOleObject *iface, LOGPALETTE* pLogpal)
 {
-    WebBrowser *This = OLEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleObject(iface);
     FIXME("(%p)->(%p)\n", This, pLogpal);
     return E_NOTIMPL;
 }
-
-#undef OLEOBJ_THIS
 
 static const IOleObjectVtbl OleObjectVtbl =
 {
@@ -595,30 +596,33 @@ static const IOleObjectVtbl OleObjectVtbl =
  * Implement the IOleInPlaceObject interface
  */
 
-#define INPLACEOBJ_THIS(iface) DEFINE_THIS(WebBrowser, OleInPlaceObject, iface)
+static inline WebBrowser *impl_from_IOleInPlaceObject(IOleInPlaceObject *iface)
+{
+    return (WebBrowser*)((char*)iface - FIELD_OFFSET(WebBrowser, IOleInPlaceObject_iface));
+}
 
 static HRESULT WINAPI OleInPlaceObject_QueryInterface(IOleInPlaceObject *iface,
         REFIID riid, LPVOID *ppobj)
 {
-    WebBrowser *This = INPLACEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleInPlaceObject(iface);
     return IWebBrowser_QueryInterface(&This->IWebBrowser2_iface, riid, ppobj);
 }
 
 static ULONG WINAPI OleInPlaceObject_AddRef(IOleInPlaceObject *iface)
 {
-    WebBrowser *This = INPLACEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleInPlaceObject(iface);
     return IWebBrowser_AddRef(&This->IWebBrowser2_iface);
 }
 
 static ULONG WINAPI OleInPlaceObject_Release(IOleInPlaceObject *iface)
 {
-    WebBrowser *This = INPLACEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleInPlaceObject(iface);
     return IWebBrowser_Release(&This->IWebBrowser2_iface);
 }
 
 static HRESULT WINAPI OleInPlaceObject_GetWindow(IOleInPlaceObject *iface, HWND* phwnd)
 {
-    WebBrowser *This = INPLACEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleInPlaceObject(iface);
 
     TRACE("(%p)->(%p)\n", This, phwnd);
 
@@ -629,14 +633,14 @@ static HRESULT WINAPI OleInPlaceObject_GetWindow(IOleInPlaceObject *iface, HWND*
 static HRESULT WINAPI OleInPlaceObject_ContextSensitiveHelp(IOleInPlaceObject *iface,
         BOOL fEnterMode)
 {
-    WebBrowser *This = INPLACEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleInPlaceObject(iface);
     FIXME("(%p)->(%x)\n", This, fEnterMode);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleInPlaceObject_InPlaceDeactivate(IOleInPlaceObject *iface)
 {
-    WebBrowser *This = INPLACEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleInPlaceObject(iface);
     FIXME("(%p)\n", This);
 
     if(This->inplace) {
@@ -649,7 +653,7 @@ static HRESULT WINAPI OleInPlaceObject_InPlaceDeactivate(IOleInPlaceObject *ifac
 
 static HRESULT WINAPI OleInPlaceObject_UIDeactivate(IOleInPlaceObject *iface)
 {
-    WebBrowser *This = INPLACEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleInPlaceObject(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
@@ -657,7 +661,7 @@ static HRESULT WINAPI OleInPlaceObject_UIDeactivate(IOleInPlaceObject *iface)
 static HRESULT WINAPI OleInPlaceObject_SetObjectRects(IOleInPlaceObject *iface,
         LPCRECT lprcPosRect, LPCRECT lprcClipRect)
 {
-    WebBrowser *This = INPLACEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleInPlaceObject(iface);
 
     TRACE("(%p)->(%p %p)\n", This, lprcPosRect, lprcClipRect);
 
@@ -679,12 +683,10 @@ static HRESULT WINAPI OleInPlaceObject_SetObjectRects(IOleInPlaceObject *iface,
 
 static HRESULT WINAPI OleInPlaceObject_ReactivateAndUndo(IOleInPlaceObject *iface)
 {
-    WebBrowser *This = INPLACEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleInPlaceObject(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
-
-#undef INPLACEOBJ_THIS
 
 static const IOleInPlaceObjectVtbl OleInPlaceObjectVtbl =
 {
@@ -703,30 +705,33 @@ static const IOleInPlaceObjectVtbl OleInPlaceObjectVtbl =
  * Implement the IOleControl interface
  */
 
-#define CONTROL_THIS(iface) DEFINE_THIS(WebBrowser, OleControl, iface)
+static inline WebBrowser *impl_from_IOleControl(IOleControl *iface)
+{
+    return (WebBrowser*)((char*)iface - FIELD_OFFSET(WebBrowser, IOleControl_iface));
+}
 
 static HRESULT WINAPI OleControl_QueryInterface(IOleControl *iface,
         REFIID riid, LPVOID *ppobj)
 {
-    WebBrowser *This = CONTROL_THIS(iface);
+    WebBrowser *This = impl_from_IOleControl(iface);
     return IWebBrowser_QueryInterface(&This->IWebBrowser2_iface, riid, ppobj);
 }
 
 static ULONG WINAPI OleControl_AddRef(IOleControl *iface)
 {
-    WebBrowser *This = CONTROL_THIS(iface);
+    WebBrowser *This = impl_from_IOleControl(iface);
     return IWebBrowser_AddRef(&This->IWebBrowser2_iface);
 }
 
 static ULONG WINAPI OleControl_Release(IOleControl *iface)
 {
-    WebBrowser *This = CONTROL_THIS(iface);
+    WebBrowser *This = impl_from_IOleControl(iface);
     return IWebBrowser_Release(&This->IWebBrowser2_iface);
 }
 
 static HRESULT WINAPI OleControl_GetControlInfo(IOleControl *iface, LPCONTROLINFO pCI)
 {
-    WebBrowser *This = CONTROL_THIS(iface);
+    WebBrowser *This = impl_from_IOleControl(iface);
 
     TRACE("(%p)->(%p)\n", This, pCI);
 
@@ -736,14 +741,14 @@ static HRESULT WINAPI OleControl_GetControlInfo(IOleControl *iface, LPCONTROLINF
 
 static HRESULT WINAPI OleControl_OnMnemonic(IOleControl *iface, struct tagMSG *pMsg)
 {
-    WebBrowser *This = CONTROL_THIS(iface);
+    WebBrowser *This = impl_from_IOleControl(iface);
     FIXME("(%p)->(%p)\n", This, pMsg);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DISPID dispID)
 {
-    WebBrowser *This = CONTROL_THIS(iface);
+    WebBrowser *This = impl_from_IOleControl(iface);
 
     TRACE("(%p)->(%d)\n", This, dispID);
 
@@ -767,12 +772,10 @@ static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DIS
 
 static HRESULT WINAPI OleControl_FreezeEvents(IOleControl *iface, BOOL bFreeze)
 {
-    WebBrowser *This = CONTROL_THIS(iface);
+    WebBrowser *This = impl_from_IOleControl(iface);
     FIXME("(%p)->(%x)\n", This, bFreeze);
     return E_NOTIMPL;
 }
-
-#undef CONTROL_THIS
 
 static const IOleControlVtbl OleControlVtbl =
 {
@@ -785,45 +788,48 @@ static const IOleControlVtbl OleControlVtbl =
     OleControl_FreezeEvents
 };
 
-#define ACTIVEOBJ_THIS(iface) DEFINE_THIS(WebBrowser, OleInPlaceActiveObject, iface)
+static inline WebBrowser *impl_from_IOleInPlaceActiveObject(IOleInPlaceActiveObject *iface)
+{
+    return (WebBrowser*)((char*)iface - FIELD_OFFSET(WebBrowser, IOleInPlaceActiveObject_iface));
+}
 
 static HRESULT WINAPI InPlaceActiveObject_QueryInterface(IOleInPlaceActiveObject *iface,
-                                                            REFIID riid, void **ppv)
+        REFIID riid, void **ppv)
 {
-    WebBrowser *This = ACTIVEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleInPlaceActiveObject(iface);
     return IWebBrowser2_QueryInterface(&This->IWebBrowser2_iface, riid, ppv);
 }
 
 static ULONG WINAPI InPlaceActiveObject_AddRef(IOleInPlaceActiveObject *iface)
 {
-    WebBrowser *This = ACTIVEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleInPlaceActiveObject(iface);
     return IWebBrowser2_AddRef(&This->IWebBrowser2_iface);
 }
 
 static ULONG WINAPI InPlaceActiveObject_Release(IOleInPlaceActiveObject *iface)
 {
-    WebBrowser *This = ACTIVEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleInPlaceActiveObject(iface);
     return IWebBrowser2_Release(&This->IWebBrowser2_iface);
 }
 
 static HRESULT WINAPI InPlaceActiveObject_GetWindow(IOleInPlaceActiveObject *iface,
                                                     HWND *phwnd)
 {
-    WebBrowser *This = ACTIVEOBJ_THIS(iface);
-    return IOleInPlaceObject_GetWindow(INPLACEOBJ(This), phwnd);
+    WebBrowser *This = impl_from_IOleInPlaceActiveObject(iface);
+    return IOleInPlaceObject_GetWindow(&This->IOleInPlaceObject_iface, phwnd);
 }
 
 static HRESULT WINAPI InPlaceActiveObject_ContextSensitiveHelp(IOleInPlaceActiveObject *iface,
                                                                BOOL fEnterMode)
 {
-    WebBrowser *This = ACTIVEOBJ_THIS(iface);
-    return IOleInPlaceObject_ContextSensitiveHelp(INPLACEOBJ(This), fEnterMode);
+    WebBrowser *This = impl_from_IOleInPlaceActiveObject(iface);
+    return IOleInPlaceObject_ContextSensitiveHelp(&This->IOleInPlaceObject_iface, fEnterMode);
 }
 
 static HRESULT WINAPI InPlaceActiveObject_TranslateAccelerator(IOleInPlaceActiveObject *iface,
                                                                LPMSG lpmsg)
 {
-    WebBrowser *This = ACTIVEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleInPlaceActiveObject(iface);
     FIXME("(%p)->(%p)\n", This, lpmsg);
     return E_NOTIMPL;
 }
@@ -831,7 +837,7 @@ static HRESULT WINAPI InPlaceActiveObject_TranslateAccelerator(IOleInPlaceActive
 static HRESULT WINAPI InPlaceActiveObject_OnFrameWindowActivate(IOleInPlaceActiveObject *iface,
                                                                 BOOL fActivate)
 {
-    WebBrowser *This = ACTIVEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleInPlaceActiveObject(iface);
     FIXME("(%p)->(%x)\n", This, fActivate);
     return E_NOTIMPL;
 }
@@ -839,7 +845,7 @@ static HRESULT WINAPI InPlaceActiveObject_OnFrameWindowActivate(IOleInPlaceActiv
 static HRESULT WINAPI InPlaceActiveObject_OnDocWindowActivate(IOleInPlaceActiveObject *iface,
                                                               BOOL fActivate)
 {
-    WebBrowser *This = ACTIVEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleInPlaceActiveObject(iface);
     FIXME("(%p)->(%x)\n", This, fActivate);
     return E_NOTIMPL;
 }
@@ -847,7 +853,7 @@ static HRESULT WINAPI InPlaceActiveObject_OnDocWindowActivate(IOleInPlaceActiveO
 static HRESULT WINAPI InPlaceActiveObject_ResizeBorder(IOleInPlaceActiveObject *iface,
         LPCRECT lprcBorder, IOleInPlaceUIWindow *pUIWindow, BOOL fFrameWindow)
 {
-    WebBrowser *This = ACTIVEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleInPlaceActiveObject(iface);
     FIXME("(%p)->(%p %p %x)\n", This, lprcBorder, pUIWindow, fFrameWindow);
     return E_NOTIMPL;
 }
@@ -855,12 +861,10 @@ static HRESULT WINAPI InPlaceActiveObject_ResizeBorder(IOleInPlaceActiveObject *
 static HRESULT WINAPI InPlaceActiveObject_EnableModeless(IOleInPlaceActiveObject *iface,
                                                          BOOL fEnable)
 {
-    WebBrowser *This = ACTIVEOBJ_THIS(iface);
+    WebBrowser *This = impl_from_IOleInPlaceActiveObject(iface);
     FIXME("(%p)->(%x)\n", This, fEnable);
     return E_NOTIMPL;
 }
-
-#undef ACTIVEOBJ_THIS
 
 static const IOleInPlaceActiveObjectVtbl OleInPlaceActiveObjectVtbl = {
     InPlaceActiveObject_QueryInterface,
@@ -875,31 +879,34 @@ static const IOleInPlaceActiveObjectVtbl OleInPlaceActiveObjectVtbl = {
     InPlaceActiveObject_EnableModeless
 };
 
-#define OLECMD_THIS(iface) DEFINE_THIS(WebBrowser, OleCommandTarget, iface)
+static inline WebBrowser *impl_from_IOleCommandTarget(IOleCommandTarget *iface)
+{
+    return (WebBrowser*)((char*)iface - FIELD_OFFSET(WebBrowser, IOleCommandTarget_iface));
+}
 
 static HRESULT WINAPI WBOleCommandTarget_QueryInterface(IOleCommandTarget *iface,
         REFIID riid, void **ppv)
 {
-    WebBrowser *This = OLECMD_THIS(iface);
+    WebBrowser *This = impl_from_IOleCommandTarget(iface);
     return IWebBrowser2_QueryInterface(&This->IWebBrowser2_iface, riid, ppv);
 }
 
 static ULONG WINAPI WBOleCommandTarget_AddRef(IOleCommandTarget *iface)
 {
-    WebBrowser *This = OLECMD_THIS(iface);
+    WebBrowser *This = impl_from_IOleCommandTarget(iface);
     return IWebBrowser2_AddRef(&This->IWebBrowser2_iface);
 }
 
 static ULONG WINAPI WBOleCommandTarget_Release(IOleCommandTarget *iface)
 {
-    WebBrowser *This = OLECMD_THIS(iface);
+    WebBrowser *This = impl_from_IOleCommandTarget(iface);
     return IWebBrowser2_Release(&This->IWebBrowser2_iface);
 }
 
 static HRESULT WINAPI WBOleCommandTarget_QueryStatus(IOleCommandTarget *iface,
         const GUID *pguidCmdGroup, ULONG cCmds, OLECMD prgCmds[], OLECMDTEXT *pCmdText)
 {
-    WebBrowser *This = OLECMD_THIS(iface);
+    WebBrowser *This = impl_from_IOleCommandTarget(iface);
     IOleCommandTarget *cmdtrg;
     HRESULT hres;
 
@@ -926,13 +933,11 @@ static HRESULT WINAPI WBOleCommandTarget_Exec(IOleCommandTarget *iface,
         const GUID *pguidCmdGroup, DWORD nCmdID, DWORD nCmdexecopt, VARIANT *pvaIn,
         VARIANT *pvaOut)
 {
-    WebBrowser *This = OLECMD_THIS(iface);
+    WebBrowser *This = impl_from_IOleCommandTarget(iface);
     FIXME("(%p)->(%s %d %d %p %p)\n", This, debugstr_guid(pguidCmdGroup), nCmdID,
           nCmdexecopt, pvaIn, pvaOut);
     return E_NOTIMPL;
 }
-
-#undef OLECMD_THIS
 
 static const IOleCommandTargetVtbl OleCommandTargetVtbl = {
     WBOleCommandTarget_QueryInterface,
@@ -954,11 +959,11 @@ void WebBrowser_OleObject_Init(WebBrowser *This)
     dpi_y = GetDeviceCaps(hdc, LOGPIXELSY);
     ReleaseDC(0, hdc);
 
-    This->lpOleObjectVtbl              = &OleObjectVtbl;
-    This->lpOleInPlaceObjectVtbl       = &OleInPlaceObjectVtbl;
-    This->lpOleControlVtbl             = &OleControlVtbl;
-    This->lpOleInPlaceActiveObjectVtbl = &OleInPlaceActiveObjectVtbl;
-    This->lpOleCommandTargetVtbl     = &OleCommandTargetVtbl;
+    This->IOleObject_iface.lpVtbl              = &OleObjectVtbl;
+    This->IOleInPlaceObject_iface.lpVtbl       = &OleInPlaceObjectVtbl;
+    This->IOleControl_iface.lpVtbl             = &OleControlVtbl;
+    This->IOleInPlaceActiveObject_iface.lpVtbl = &OleInPlaceActiveObjectVtbl;
+    This->IOleCommandTarget_iface.lpVtbl       = &OleCommandTargetVtbl;
 
     /* Default size is 50x20 pixels, in himetric units */
     This->extent.cx = MulDiv( 50, 2540, dpi_x );

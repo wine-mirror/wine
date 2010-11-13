@@ -135,18 +135,18 @@ struct DocHost {
 };
 
 struct WebBrowser {
-    IWebBrowser2  IWebBrowser2_iface;
-    const IOleObjectVtbl                *lpOleObjectVtbl;
-    const IOleInPlaceObjectVtbl         *lpOleInPlaceObjectVtbl;
-    const IOleControlVtbl               *lpOleControlVtbl;
+    IWebBrowser2             IWebBrowser2_iface;
+    IOleObject               IOleObject_iface;
+    IOleInPlaceObject        IOleInPlaceObject_iface;
+    IOleControl              IOleControl_iface;
     const IPersistStorageVtbl           *lpPersistStorageVtbl;
     const IPersistMemoryVtbl            *lpPersistMemoryVtbl;
     const IPersistStreamInitVtbl        *lpPersistStreamInitVtbl;
     const IProvideClassInfo2Vtbl        *lpProvideClassInfoVtbl;
     const IViewObject2Vtbl              *lpViewObjectVtbl;
-    const IOleInPlaceActiveObjectVtbl   *lpOleInPlaceActiveObjectVtbl;
-    const IOleCommandTargetVtbl         *lpOleCommandTargetVtbl;
-    const IServiceProviderVtbl          *lpServiceProviderVtbl;
+    IOleInPlaceActiveObject  IOleInPlaceActiveObject_iface;
+    IOleCommandTarget        IOleCommandTarget_iface;
+    IServiceProvider         IServiceProvider_iface;
     const IDataObjectVtbl               *lpDataObjectVtbl;
     HlinkFrame hlink_frame;
 
@@ -194,9 +194,6 @@ struct InternetExplorer {
     DocHost doc_host;
 };
 
-#define OLEOBJ(x)       ((IOleObject*)                  &(x)->lpOleObjectVtbl)
-#define INPLACEOBJ(x)   ((IOleInPlaceObject*)           &(x)->lpOleInPlaceObjectVtbl)
-#define CONTROL(x)      ((IOleControl*)                 &(x)->lpOleControlVtbl)
 #define PERSTORAGE(x)   ((IPersistStorage*)             &(x)->lpPersistStorageVtbl)
 #define PERMEMORY(x)    ((IPersistMemory*)              &(x)->lpPersistMemoryVtbl)
 #define PERSTRINIT(x)   ((IPersistStreamInit*)          &(x)->lpPersistStreamInitVtbl)
@@ -204,7 +201,6 @@ struct InternetExplorer {
 #define CONPTCONT(x)    ((IConnectionPointContainer*)   &(x)->lpConnectionPointContainerVtbl)
 #define VIEWOBJ(x)      ((IViewObject*)                 &(x)->lpViewObjectVtbl);
 #define VIEWOBJ2(x)     ((IViewObject2*)                &(x)->lpViewObjectVtbl);
-#define ACTIVEOBJ(x)    ((IOleInPlaceActiveObject*)     &(x)->lpOleInPlaceActiveObjectVtbl)
 #define OLECMD(x)       ((IOleCommandTarget*)           &(x)->lpOleCommandTargetVtbl)
 #define DATAOBJECT(x)   ((IDataObject*)                 &(x)->lpDataObjectVtbl)
 
