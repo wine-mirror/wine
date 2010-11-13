@@ -69,8 +69,8 @@ typedef struct {
 } ConnectionPointContainer;
 
 typedef struct {
-    const IHlinkFrameVtbl    *lpIHlinkFrameVtbl;
-    const ITargetFrame2Vtbl  *lpITargetFrame2Vtbl;
+    IHlinkFrame    IHlinkFrame_iface;
+    ITargetFrame2  ITargetFrame2_iface;
 
     IUnknown *outer;
     DocHost *doc_host;
@@ -196,9 +196,6 @@ struct InternetExplorer {
 
 #define CONPTCONT(x)    ((IConnectionPointContainer*)   &(x)->lpConnectionPointContainerVtbl)
 #define INPLACEFRAME(x) ((IOleInPlaceFrame*)            &(x)->lpOleInPlaceFrameVtbl)
-
-#define HLINKFRAME(x)   ((IHlinkFrame*)                 &(x)->lpIHlinkFrameVtbl)
-#define TARGETFRAME2(x) ((ITargetFrame2*)               &(x)->lpITargetFrame2Vtbl)
 
 void WebBrowser_OleObject_Init(WebBrowser*);
 void WebBrowser_ViewObject_Init(WebBrowser*);
