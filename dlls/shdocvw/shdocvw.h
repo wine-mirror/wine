@@ -94,13 +94,13 @@ typedef struct _IDocHostContainerVtbl
 
 struct DocHost {
     IOleClientSite      IOleClientSite_iface;
-    const IOleInPlaceSiteVtbl     *lpOleInPlaceSiteVtbl;
-    const IDocHostUIHandler2Vtbl  *lpDocHostUIHandlerVtbl;
-    const IOleDocumentSiteVtbl    *lpOleDocumentSiteVtbl;
-    const IOleCommandTargetVtbl   *lpOleCommandTargetVtbl;
-    const IDispatchVtbl           *lpDispatchVtbl;
-    const IPropertyNotifySinkVtbl *lpIPropertyNotifySinkVtbl;
-    const IServiceProviderVtbl    *lpServiceProviderVtbl;
+    IOleInPlaceSite     IOleInPlaceSite_iface;
+    IDocHostUIHandler2  IDocHostUIHandler2_iface;
+    IOleDocumentSite    IOleDocumentSite_iface;
+    IOleCommandTarget   IOleCommandTarget_iface;
+    IDispatch           IDispatch_iface;
+    IPropertyNotifySink IPropertyNotifySink_iface;
+    IServiceProvider    IServiceProvider_iface;
 
     /* Interfaces of InPlaceFrame object */
     const IOleInPlaceFrameVtbl          *lpOleInPlaceFrameVtbl;
@@ -195,16 +195,6 @@ struct InternetExplorer {
 };
 
 #define CONPTCONT(x)    ((IConnectionPointContainer*)   &(x)->lpConnectionPointContainerVtbl)
-#define OLECMD(x)       ((IOleCommandTarget*)           &(x)->lpOleCommandTargetVtbl)
-
-#define INPLACESITE(x)  ((IOleInPlaceSite*)             &(x)->lpOleInPlaceSiteVtbl)
-#define DOCHOSTUI(x)    ((IDocHostUIHandler*)           &(x)->lpDocHostUIHandlerVtbl)
-#define DOCHOSTUI2(x)   ((IDocHostUIHandler2*)          &(x)->lpDocHostUIHandlerVtbl)
-#define DOCSITE(x)      ((IOleDocumentSite*)            &(x)->lpOleDocumentSiteVtbl)
-#define CLDISP(x)       ((IDispatch*)                   &(x)->lpDispatchVtbl)
-#define PROPNOTIF(x)    ((IPropertyNotifySink*)         &(x)->lpIPropertyNotifySinkVtbl)
-#define SERVPROV(x)     ((IServiceProvider*)            &(x)->lpServiceProviderVtbl)
-
 #define INPLACEFRAME(x) ((IOleInPlaceFrame*)            &(x)->lpOleInPlaceFrameVtbl)
 
 #define HLINKFRAME(x)   ((IHlinkFrame*)                 &(x)->lpIHlinkFrameVtbl)
