@@ -832,7 +832,7 @@ HRESULT WINAPI DllRegisterServer(void)
 }
 
 /***********************************************************************
- *              DllRegisterServer (ATL.@)
+ *              DllUnRegisterServer (ATL.@)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
