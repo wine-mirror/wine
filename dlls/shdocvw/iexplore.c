@@ -332,7 +332,7 @@ static void ie_navigate(InternetExplorer* This, LPCWSTR url)
     V_VT(&variant) = VT_BSTR;
     V_BSTR(&variant) = SysAllocString(url);
 
-    IWebBrowser2_Navigate2(WEBBROWSER2(This), &variant, NULL, NULL, NULL, NULL);
+    IWebBrowser2_Navigate2(&This->IWebBrowser2_iface, &variant, NULL, NULL, NULL, NULL);
 
     SysFreeString(V_BSTR(&variant));
 }
@@ -372,7 +372,7 @@ static INT_PTR CALLBACK ie_dialog_open_proc(HWND hwnd, UINT msg, WPARAM wparam, 
                         V_BSTR(&url) = SysAllocStringLen(NULL, len);
 
                         GetWindowTextW(hwndurl, V_BSTR(&url), len + 1);
-                        IWebBrowser2_Navigate2(WEBBROWSER2(This), &url, NULL, NULL, NULL, NULL);
+                        IWebBrowser2_Navigate2(&This->IWebBrowser2_iface, &url, NULL, NULL, NULL, NULL);
 
                         SysFreeString(V_BSTR(&url));
                     }
@@ -530,7 +530,7 @@ static LRESULT iewnd_OnNotify(InternetExplorer *This, WPARAM wparam, LPARAM lpar
             V_VT(&vt) = VT_BSTR;
             V_BSTR(&vt) = SysAllocString(info->szText);
 
-            IWebBrowser2_Navigate2(WEBBROWSER2(This), &vt, NULL, NULL, NULL, NULL);
+            IWebBrowser2_Navigate2(&This->IWebBrowser2_iface, &vt, NULL, NULL, NULL, NULL);
 
             SysFreeString(V_BSTR(&vt));
 
@@ -580,7 +580,7 @@ static LRESULT iewnd_OnCommand(InternetExplorer *This, HWND hwnd, UINT msg, WPAR
             break;
 
         case ID_BROWSE_HOME:
-            IWebBrowser2_GoHome(WEBBROWSER2(This));
+            IWebBrowser2_GoHome(&This->IWebBrowser2_iface);
             break;
 
         case ID_BROWSE_ABOUT:
@@ -761,17 +761,17 @@ HRESULT InternetExplorer_Create(IUnknown *pOuter, REFIID riid, void **ppv)
     ret = heap_alloc_zero(sizeof(InternetExplorer));
     ret->ref = 0;
 
-    ret->doc_host.disp = (IDispatch*)WEBBROWSER2(ret);
-    DocHost_Init(&ret->doc_host, (IDispatch*)WEBBROWSER2(ret), &DocHostContainerVtbl);
+    ret->doc_host.disp = (IDispatch*)&ret->IWebBrowser2_iface;
+    DocHost_Init(&ret->doc_host, (IDispatch*)&ret->IWebBrowser2_iface, &DocHostContainerVtbl);
 
     InternetExplorer_WebBrowser_Init(ret);
 
-    HlinkFrame_Init(&ret->hlink_frame, (IUnknown*)WEBBROWSER2(ret), &ret->doc_host);
+    HlinkFrame_Init(&ret->hlink_frame, (IUnknown*)&ret->IWebBrowser2_iface, &ret->doc_host);
 
     create_frame_hwnd(ret);
     ret->doc_host.frame_hwnd = ret->frame_hwnd;
 
-    hres = IWebBrowser2_QueryInterface(WEBBROWSER2(ret), riid, ppv);
+    hres = IWebBrowser2_QueryInterface(&ret->IWebBrowser2_iface, riid, ppv);
     if(FAILED(hres)) {
         heap_free(ret);
         return hres;

@@ -182,7 +182,7 @@ struct WebBrowser {
 };
 
 struct InternetExplorer {
-    const IWebBrowser2Vtbl *lpWebBrowser2Vtbl;
+    IWebBrowser2 IWebBrowser2_iface;
     HlinkFrame hlink_frame;
 
     LONG ref;
@@ -194,8 +194,6 @@ struct InternetExplorer {
     DocHost doc_host;
 };
 
-#define WEBBROWSER(x)   ((IWebBrowser*)                 &(x)->lpWebBrowser2Vtbl)
-#define WEBBROWSER2(x)  ((IWebBrowser2*)                &(x)->lpWebBrowser2Vtbl)
 #define OLEOBJ(x)       ((IOleObject*)                  &(x)->lpOleObjectVtbl)
 #define INPLACEOBJ(x)   ((IOleInPlaceObject*)           &(x)->lpOleInPlaceObjectVtbl)
 #define CONTROL(x)      ((IOleControl*)                 &(x)->lpOleControlVtbl)
