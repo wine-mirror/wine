@@ -171,7 +171,7 @@ FONT 9, "MS Shell Dlg"
     LTEXT         "系统设置", -1, 5, 6, 160, 8
     CHECKBOX      "启用分布式CO&M", IDC_ENABLEDCOM, 5, 20, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
     CHECKBOX      "启用远程连接(限&Win95)", IDC_ENABLEREMOTE, 5, 35, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
-    LTEXT         "这些设置只改变寄存器值(register values)。\n它对Wine的性能没有影响。", -1, 5, 50, 160, 40
+    LTEXT         "这些设置只改变寄存器值(register values)。\n它对Wine的性能没有影响。", -1, 5, 50, 160, 40 /* 译文待议 */
     DEFPUSHBUTTON "确定(&O)", IDOK, 70, 80, 45, 14
     PUSHBUTTON    "取消(&C)", IDCANCEL, 120, 80, 45, 14
 }
