@@ -3,6 +3,7 @@
  *
  * Copyright 2002 liuspider <liuspider@yahoo.com>
  * Copyright 2008 Hongbo Ni <hongbo.at.njstar.com>
+ * Copyright 2010 Cheer Xiao <xiaqqaix.at.gmail.com>
  * 
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,7 +30,7 @@ LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 STRINGTABLE
 BEGIN
 IDS_EDIT,		"编辑(&E)"
-IDS_DEFAULT,		"设为默认值(&D)"
+IDS_DEFAULT,		"设置默认值(&D)"
 IDS_PROPERTIES,		"属性(&P)"
 IDS_MARK,		"标记(&M)"
 IDS_COPY,		"复制(&C)"
@@ -37,12 +38,26 @@ IDS_PASTE,		"粘贴(&P)"
 IDS_SELECTALL,		"全选(&S)"
 IDS_SCROLL,		"滚动(&R)"
 IDS_SEARCH,		"搜索(&E)"
-IDS_FNT_DISPLAY,	"每个字都是 %ld 个像素宽，%ld 个像素高"
-IDS_FNT_PREVIEW,	"这是一段测试语句"
+IDS_FNT_DISPLAY,	"每个字符都是 %ld 像素宽，%ld 像素高"
+IDS_FNT_PREVIEW,	"This is a test 这是测试"
 IDS_DLG_TIT_DEFAULT,    "配置 - 默认设置"
 IDS_DLG_TIT_CURRENT,    "配置 - 当前设置"
 IDS_DLG_TIT_ERROR,      "配置错误"
-IDS_DLG_ERR_SBWINSIZE,  "屏幕缓存大小必须大于或等于视窗缓存"
+IDS_DLG_ERR_SBWINSIZE,  "屏幕缓冲区大小必须不小于窗口"
+
+IDS_CMD_INVALID_EVENT_ID   "wineconsole: 无法解析事件 id\n"
+IDS_CMD_INVALID_BACKEND    "wineconsole: 无效后端\n"
+IDS_CMD_INVALID_OPTION     "wineconsole: 命令行选项错误\n"
+IDS_CMD_ABOUT              "在 Wine 控制台中运行程序\n"
+IDS_CMD_LAUNCH_FAILED      "wineconsole: 无法启动程序 %s。\n"\
+                           "命令无效。\n"
+
+IDS_USAGE_HEADER           "\n用法：\n  wineconsole [options] <command>\n\n选项：\n"
+IDS_USAGE_BACKEND          "  --backend={user|curses}   选 user 会打开新窗口；选 curses 会试图在当前\n"\
+                           "                            终端中运行 Wine 控制台\n"
+IDS_USAGE_COMMAND          "  <command>                 要在控制台运行的 Wine 程序\n"
+IDS_USAGE_FOOTER           "\n示例：\n  wineconsole cmd\n在 Wine 控制台中运行 Wine 命令行\n\n"
+
 END
 
 IDD_OPTION DIALOG 36, 24, 140, 105
@@ -62,8 +77,8 @@ FONT 9, "MS Shell Dlg"
 	LTEXT "快速编辑", -1, 79, 43, 50, 10
 	AUTOCHECKBOX "启用(&E)", IDC_OPT_QUICK_EDIT, 129, 43, 60, 10, WS_TABSTOP
 
-	GROUPBOX "历史命令", -1, 10, 57, 190, 35, BS_GROUPBOX
-	LTEXT "最大记录命令数:", -1, 14, 67, 78, 18
+	GROUPBOX "命令历史", -1, 10, 57, 190, 35, BS_GROUPBOX
+	LTEXT "最大记录命令数：", -1, 14, 67, 78, 18
 	EDITTEXT IDC_OPT_HIST_SIZE, 92, 69, 31, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_OPT_HIST_SIZE_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
 	AUTOCHECKBOX "删除连续相同的命令(&R)", IDC_OPT_HIST_NODOUBLE, 130, 67, 50, 18, WS_TABSTOP|BS_MULTILINE
@@ -90,36 +105,36 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " 配置 "
 FONT 9, "MS Shell Dlg"
 {
-	GROUPBOX "缓冲区域", -1, 10, 11, 100, 42, BS_GROUPBOX
-	LTEXT "宽度(&W):", -1, 14, 25, 54, 9
+	GROUPBOX "缓冲区", -1, 10, 11, 100, 42, BS_GROUPBOX
+	LTEXT "宽度(&W)：", -1, 14, 25, 54, 9
 	EDITTEXT IDC_CNF_SB_WIDTH, 68, 23, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_SB_WIDTH_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
-	LTEXT "高度(&H):", -1, 14, 39, 54, 9
+	LTEXT "高度(&H)：", -1, 14, 39, 54, 9
 	EDITTEXT IDC_CNF_SB_HEIGHT, 68, 37, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_SB_HEIGHT_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
 
 	GROUPBOX "窗口大小", -1, 10, 55, 100, 42
-	LTEXT "宽度(&I):", -1, 14, 69, 54, 9
+	LTEXT "宽度(&I)：", -1, 14, 69, 54, 9
 	EDITTEXT IDC_CNF_WIN_WIDTH, 68, 67, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_WIN_WIDTH_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
-	LTEXT "高度(&E):", -1, 14, 83, 54, 9
+	LTEXT "高度(&E)：", -1, 14, 83, 54, 9
 	EDITTEXT IDC_CNF_WIN_HEIGHT, 68, 81, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_WIN_HEIGHT_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
 
 	GROUPBOX "当程序退出后", -1, 115, 11, 80, 42, BS_GROUPBOX
-	AUTOCHECKBOX "关闭虚拟终端(&C)", IDC_CNF_CLOSE_EXIT, 119, 25, 75, 20, WS_TABSTOP
+	AUTOCHECKBOX "关闭控制台(&C)", IDC_CNF_CLOSE_EXIT, 119, 25, 75, 20, WS_TABSTOP
 
-	GROUPBOX "Edition", -1, 115, 55, 80, 42
+	GROUPBOX "Edition", -1, 115, 55, 80, 42 /* 待求证 */
 	COMBOBOX IDC_CNF_EDITION_MODE, 119, 69, 75, 20, CBS_DROPDOWNLIST|WS_VSCROLL|WS_TABSTOP
 }
 
 IDD_SAVE_SETTINGS DIALOG 20, 20, 140, 60
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
-CAPTION "虚拟终端运行参数"
+CAPTION "控制台参数"
 FONT 9, "MS Shell Dlg"
 {
 	GROUPBOX "", -1, 10, 10, 120, 31, BS_GROUPBOX
-	AUTORADIOBUTTON "保留当前配置以便下次使用", IDC_SAV_SAVE, 14, 15, 110, 10, WS_TABSTOP
+	AUTORADIOBUTTON "保留当前配置以便以后使用", IDC_SAV_SAVE, 14, 15, 110, 10, WS_TABSTOP
 	AUTORADIOBUTTON "仅修改当前会话", IDC_SAV_SESSION, 14, 27, 110, 10, WS_TABSTOP
 
 	PUSHBUTTON "确定", IDOK, 20, 45, 35, 12
