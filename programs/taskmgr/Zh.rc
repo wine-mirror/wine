@@ -66,7 +66,7 @@ BEGIN
         MENUITEM "大图标(&G)", ID_VIEW_LARGE
         MENUITEM "小图标(&M)", ID_VIEW_SMALL
         MENUITEM "详情列表(&D)", ID_VIEW_DETAILS, CHECKED
-        MENUITEM "选择内容(&S)...", ID_VIEW_SELECTCOLUMNS
+        MENUITEM "选择列项(&S)...", ID_VIEW_SELECTCOLUMNS
         POPUP "&CPU 历史"
         BEGIN
             MENUITEM "一张图显示所有的 &CPU", ID_VIEW_CPUHISTORY_ONEGRAPHALL
@@ -76,7 +76,7 @@ BEGIN
         END
         MENUITEM "显示内核时间(&S)", ID_VIEW_SHOWKERNELTIMES
     END
-    POPUP "视窗(&W)"
+    POPUP "窗口(&W)"
     BEGIN
         MENUITEM "横向平铺(&H)", ID_WINDOWS_TILEHORIZONTALLY
         MENUITEM "纵向平铺(&V)", ID_WINDOWS_TILEVERTICALLY
@@ -153,7 +153,7 @@ BEGIN
 
         MENUITEM "调试(&D)", ID_PROCESS_PAGE_DEBUG
         MENUITEM SEPARATOR
-        POPUP "优先权指定(&P)"
+        POPUP "指定优先权(&P)"
         BEGIN
             MENUITEM "实时(&R)", ID_PROCESS_PAGE_SETPRIORITY_REALTIME
 
@@ -207,7 +207,7 @@ BEGIN
                     LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_OWNERDATA |
                     WS_BORDER | WS_TABSTOP,7,7,233,177
     PUSHBUTTON      "结束进程(&E)",IDC_ENDPROCESS,171,189,69,14
-    CONTROL         "显示所有用户进程(&S)",IDC_SHOWALLPROCESSES,
+    CONTROL         "显示所有用户的进程(&S)",IDC_SHOWALLPROCESSES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,191,111,10
 END
 
@@ -218,12 +218,12 @@ BEGIN
     GROUPBOX        "CPU 用量",IDC_CPU_USAGE_FRAME,5,5,60,54,WS_TABSTOP, WS_EX_TRANSPARENT
     GROUPBOX        "内存用量",IDC_MEM_USAGE_FRAME,5,63,60,54,BS_LEFTTEXT, WS_EX_TRANSPARENT
     GROUPBOX        "总共",IDC_TOTALS_FRAME,5,122,111,39,0,WS_EX_TRANSPARENT
-    GROUPBOX        "正在使用(K)",IDC_COMMIT_CHARGE_FRAME,5,166,111,39,0,WS_EX_TRANSPARENT
-    GROUPBOX        "实际内存(K)",IDC_PHYSICAL_MEMORY_FRAME,131,122,111,39,0,WS_EX_TRANSPARENT
+    GROUPBOX        "虚存总量(K)",IDC_COMMIT_CHARGE_FRAME,5,166,111,39,0,WS_EX_TRANSPARENT /* 标准译名待求证 */
+    GROUPBOX        "物理内存(K)",IDC_PHYSICAL_MEMORY_FRAME,131,122,111,39,0,WS_EX_TRANSPARENT
     GROUPBOX        "内核内存(K)",IDC_KERNEL_MEMORY_FRAME,131,166,111,39,0,WS_EX_TRANSPARENT
-    LTEXT           "指针数",IDS_TOTALS_HANDLE_COUNT,12,131,27,8
-    LTEXT           "线数",IDS_TOTALS_THREAD_COUNT,12,140,27,8
-    LTEXT           "进程数",IDS_TOTALS_PROCESS_COUNT,12,149,34,8
+    LTEXT           "句柄",IDS_TOTALS_HANDLE_COUNT,12,131,27,8
+    LTEXT           "线程",IDS_TOTALS_THREAD_COUNT,12,140,27,8
+    LTEXT           "进程",IDS_TOTALS_PROCESS_COUNT,12,149,34,8
     EDITTEXT        IDC_TOTALS_HANDLE_COUNT,65,131,45,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     EDITTEXT        IDC_TOTALS_THREAD_COUNT,65,140,45,8,ES_RIGHT |
@@ -232,7 +232,7 @@ BEGIN
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     LTEXT           "总共",IDS_COMMIT_CHARGE_TOTAL,12,175,27,8
     LTEXT           "限制",IDS_COMMIT_CHARGE_LIMIT,12,184,15,8
-    LTEXT           "最高",IDS_COMMIT_CHARGE_PEAK,12,193,34,8
+    LTEXT           "峰值",IDS_COMMIT_CHARGE_PEAK,12,193,34,8
     EDITTEXT        IDC_COMMIT_CHARGE_TOTAL,65,174,45,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     EDITTEXT        IDC_COMMIT_CHARGE_LIMIT,65,184,45,8,ES_RIGHT |
@@ -249,7 +249,7 @@ BEGIN
     EDITTEXT        IDC_PHYSICAL_MEMORY_SYSTEM_CACHE,185,149,48,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     LTEXT           "总共",IDS_KERNEL_MEMORY_TOTAL,137,174,27,8
-    LTEXT           "分页",IDS_KERNEL_MEMORY_PAGED,137,184,21,8
+    LTEXT           "已分页",IDS_KERNEL_MEMORY_PAGED,137,184,21,8
     LTEXT           "未分页",IDS_KERNEL_MEMORY_NONPAGED,137,193,34,8
     EDITTEXT        IDC_KERNEL_MEMORY_TOTAL,185,174,48,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
@@ -261,7 +261,7 @@ BEGIN
     GROUPBOX        "内存用量历史",IDC_MEMORY_USAGE_HISTORY_FRAME,74,63,168,54,0,WS_EX_TRANSPARENT
     PUSHBUTTON      "CPU 用量显示",IDC_CPU_USAGE_GRAPH,12,17,47,37,0,
 		    WS_EX_CLIENTEDGE
-    PUSHBUTTON      "内存用量显Ê",IDC_MEM_USAGE_GRAPH,12,75,47,37,0,
+    PUSHBUTTON      "内存用量显示",IDC_MEM_USAGE_GRAPH,12,75,47,37,0,
                     WS_EX_CLIENTEDGE
     PUSHBUTTON      "CPU 用量历史",IDC_CPU_USAGE_HISTORY_GRAPH,81,17,
                     153,37,0,WS_EX_CLIENTEDGE
@@ -287,7 +287,7 @@ FONT 9, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "确定",IDOK,120,133,50,14
     PUSHBUTTON      "取消",IDCANCEL,174,133,50,14
-    LTEXT           "处理器亲和度设置控制各进程使用CPU分配情况.",
+    LTEXT           "处理器亲和度决定了各进程允许运行在哪些 CPU 上。",
                     IDC_STATIC,5,5,220,16
     CONTROL         "CPU 0",IDC_CPU0,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     11,28,37,10
@@ -357,14 +357,14 @@ END
 
 IDD_COLUMNS_DIALOG DIALOG  0, 0, 195, 199
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "选择显示内容"
+CAPTION "选择列项"
 FONT 9, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "确定",IDOK,84,178,50,14
     PUSHBUTTON      "取消",IDCANCEL,138,178,50,14
-    LTEXT           "请选择任务管理器中进程分页的显示内容.",
+    LTEXT           "选择任务管理器中“进程”标签页显示哪些列。",
                     IDC_STATIC,7,7,181,17
-    CONTROL         "程序名称(&I)",IDC_IMAGENAME,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "映像名称(&I)",IDC_IMAGENAME,"Button",BS_AUTOCHECKBOX |
                     WS_DISABLED | WS_TABSTOP,7,28,56,10
     CONTROL         "&PID (进程编号)",IDC_PID,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,39,88,10
@@ -374,45 +374,45 @@ BEGIN
                     WS_TABSTOP,7,61,48,10
     CONTROL         "内存用量(&M)",IDC_MEMORYUSAGE,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,72,63,10
-    CONTROL         "内存用量差(&D)",IDC_MEMORYUSAGEDELTA,"Button",
+    CONTROL         "内存用量差值(&D)",IDC_MEMORYUSAGEDELTA,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,83,82,10
-    CONTROL         "最高内存用(&K)",IDC_PEAKMEMORYUSAGE,"Button",
+    CONTROL         "内存用量峰值(&K)",IDC_PEAKMEMORYUSAGE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,94,82,10
-    CONTROL         "页故障数(&F)",IDC_PAGEFAULTS,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "页错误(&F)",IDC_PAGEFAULTS,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,105,53,10
     CONTROL         "用户对象(&U)",IDC_USEROBJECTS,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,116,62,10
-    CONTROL         "I/O 读取数",IDC_IOREADS,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "I/O 读取",IDC_IOREADS,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,127,49,10
-    CONTROL         "I/O 读取量",IDC_IOREADBYTES,"Button",
+    CONTROL         "I/O 读取字节",IDC_IOREADBYTES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,138,65,10
-    CONTROL         "&Session ID",IDC_SESSIONID,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "会话 ID(&S)",IDC_SESSIONID,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,149,50,10
     CONTROL         "用户名(&N)",IDC_USERNAME,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,160,51,10
-    CONTROL         "页故障差(&A)",IDC_PAGEFAULTSDELTA,"Button",
+    CONTROL         "页错误差值(&A)",IDC_PAGEFAULTSDELTA,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,28,72,10
     CONTROL         "虚拟内存大小(&V)",IDC_VIRTUALMEMORYSIZE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,39,77,10
-    CONTROL         "Pa&ged Pool",IDC_PAGEDPOOL,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "已分页池(&G)",IDC_PAGEDPOOL,"Button",BS_AUTOCHECKBOX | /* 标准译名待求证 */
                     WS_TABSTOP,107,50,53,10
-    CONTROL         "N&on-paged Pool",IDC_NONPAGEDPOOL,"Button",
+    CONTROL         "未分页池(&O)",IDC_NONPAGEDPOOL,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,61,67,10
     CONTROL         "基本优先权(&R)",IDC_BASEPRIORITY,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,72,55,10
-    CONTROL         "指针数(&H)",IDC_HANDLECOUNT,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "句柄数(&H)",IDC_HANDLECOUNT,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,107,83,59,10
-    CONTROL         "线数(&T)",IDC_THREADCOUNT,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "线程数(&T)",IDC_THREADCOUNT,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,107,94,59,10
     CONTROL         "GDI 对象",IDC_GDIOBJECTS,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,107,105,55,10
-    CONTROL         "I/O 写盘数",IDC_IOWRITES,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "I/O 写入",IDC_IOWRITES,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,107,116,49,10
-    CONTROL         "I/O 写盘量",IDC_IOWRITEBYTES,"Button",
+    CONTROL         "I/O 写入字节",IDC_IOWRITEBYTES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,127,65,10
-    CONTROL         "I/O 其他数",IDC_IOOTHER,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "I/O 其他",IDC_IOOTHER,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,107,138,46,10
-    CONTROL         "I/O 其他量",IDC_IOOTHERBYTES,"Button",
+    CONTROL         "I/O 其他字节",IDC_IOOTHERBYTES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,149,65,10
 END
 
@@ -424,19 +424,19 @@ STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "任务管理器"
     IDC_TASKMGR             "任务管理器"
-    IDS_RUNDLG_CAPTION      "产生新任务"
+    IDS_RUNDLG_CAPTION      "创建新任务"
 END
 
 STRINGTABLE
 BEGIN
-    ID_FILE_NEW             "运行新任务"
-    ID_OPTIONS_ALWAYSONTOP  "任务管理器总是在其他视窗的最上面，除非是最小化"
-    ID_OPTIONS_MINIMIZEONUSE "任务管理器使用时最小化"
+    ID_FILE_NEW             "运行新程序"
+    ID_OPTIONS_ALWAYSONTOP  "任务管理器总是在其他窗口的前面，除非是最小化"
+    ID_OPTIONS_MINIMIZEONUSE "执行“转到”后最小化任务管理器"
     ID_OPTIONS_HIDEWHENMINIMIZED "最小化时隐藏任务管理器"
-    ID_VIEW_REFRESH         "强制任务管理器更新显示，不管设置的是什么速度"
+    ID_VIEW_REFRESH         "强制任务管理器立即更新显示，不管设置的更新速度是多少"
     ID_VIEW_LARGE           "用大图标显示任务"
     ID_VIEW_SMALL           "用小图标显示任务"
-    ID_VIEW_DETAILS         "显示每个任务的详细内容"
+    ID_VIEW_DETAILS         "显示每个任务的详细信息"
     ID_VIEW_UPDATESPEED_HIGH "每秒更新显示两次"
     ID_VIEW_UPDATESPEED_NORMAL "每两秒更新显示一次"
     ID_VIEW_UPDATESPEED_LOW "每四秒更新显示一次"
@@ -445,20 +445,20 @@ END
 STRINGTABLE
 BEGIN
     ID_VIEW_UPDATESPEED_PAUSED "不会自动更新"
-    ID_WINDOWS_TILEHORIZONTALLY "在桌面上将所有视窗横向平铺"
-    ID_WINDOWS_TILEVERTICALLY   "在桌面上将所有视窗纵向平铺"
-    ID_WINDOWS_MINIMIZE     "视窗最小化"
-    ID_WINDOWS_MAXIMIZE     "视窗最大化"
-    ID_WINDOWS_CASCADE      "在桌面上按对角线将视窗叠放"
-    ID_WINDOWS_BRINGTOFRONT "将视窗调到最前面，但不激活"
+    ID_WINDOWS_TILEHORIZONTALLY "在桌面上将所有窗口横向平铺"
+    ID_WINDOWS_TILEVERTICALLY   "在桌面上将所有窗口纵向平铺"
+    ID_WINDOWS_MINIMIZE     "最小化窗口"
+    ID_WINDOWS_MAXIMIZE     "最大化窗口"
+    ID_WINDOWS_CASCADE      "在桌面上按对角线叠放窗口"
+    ID_WINDOWS_BRINGTOFRONT "将窗口调到最前面，但不激活"
     ID_HELP_TOPICS          "显示任务管理器帮助内容"
-    ID_HELP_ABOUT           "显示本程序信息，版本及版权"
+    ID_HELP_ABOUT           "显示本程序信息、版本及版权信息"
     ID_FILE_EXIT            "退出任务管理器"
-    ID_OPTIONS_SHOW16BITTASKS         "显示 16-位任务及有关的ntvdm.exe"
-    ID_VIEW_SELECTCOLUMNS             "选择在进程分页的显示内容"
-    ID_VIEW_SHOWKERNELTIMES           "在性能图上显示内核使用时间"
-    ID_VIEW_CPUHISTORY_ONEGRAPHALL    "一张历史图显示所有CPU用量"
-    ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU "每一个CPU有自己的历史图"
+    ID_OPTIONS_SHOW16BITTASKS         "在 ntvdm.exe 下显示相关的 16 位任务"
+    ID_VIEW_SELECTCOLUMNS             "选择在“进程”标签页显示的列项"
+    ID_VIEW_SHOWKERNELTIMES           "在性能图上显示内核时间"
+    ID_VIEW_CPUHISTORY_ONEGRAPHALL    "一张历史图显示所有 CPU 用量"
+    ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU "每一个 CPU 有自己的历史图"
     ID_APPLICATION_PAGE_SWITCHTO      "将任务设为当前任务，并激活"
 END
 
@@ -469,13 +469,13 @@ BEGIN
     ID_RESTORE              "取消任务管理器隐藏状态"
     ID_PROCESS_PAGE_ENDPROCESS     "将进程从系统中删除"
     ID_PROCESS_PAGE_ENDPROCESSTREE "将进程及其附属进程从系统中删除"
-    ID_PROCESS_PAGE_DEBUG          "将调试器接到本进程"
-    ID_PROCESS_PAGE_SETAFFINITY    "控制各进程使用那个处理器"
+    ID_PROCESS_PAGE_DEBUG          "将调试器连接到本进程"
+    ID_PROCESS_PAGE_SETAFFINITY    "控制各进程使用哪些处理器"
     ID_PROCESS_PAGE_SETPRIORITY_REALTIME    "将进程设为实时优先级"
     ID_PROCESS_PAGE_SETPRIORITY_HIGH        "将进程设为高优先级"
-    ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL "将进程设为中等以上优先级"
-    ID_PROCESS_PAGE_SETPRIORITY_NORMAL      "将进程设为中等优先级"
-    ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL "将进程设为中等以下优先级"
+    ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL "将进程设为正常以上优先级"
+    ID_PROCESS_PAGE_SETPRIORITY_NORMAL      "将进程设为正常优先级"
+    ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL "将进程设为正常以下优先级"
     ID_PROCESS_PAGE_SETPRIORITY_LOW          "将进程设为低优先级"
     ID_PROCESS_PAGE_DEBUGCHANNELS			 "控制调试频道"
 END
