@@ -3,6 +3,7 @@
  *
  *  Copyright 2002 liuspider <liuspider@yahoo.com>
  *  Copyright 2008 Hongbo Ni <hongbo.at.njstar.com>
+ *  Copyright 2010 Cheer Xiao <xiaqqaix.at.gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -75,19 +76,19 @@ STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 FONT 9, "MS Shell Dlg"
 CAPTION "页面设置"
 {
-LTEXT    "页眉(&H):", 0x140,   10, 07, 40, 15
+LTEXT    "页眉(&H)：", 0x140,   10, 07, 40, 15
 EDITTEXT IDC_PAGESETUP_HEADERVALUE,   60, 05,110, 12, WS_BORDER | WS_TABSTOP
-LTEXT    "脚注(&F):", 0x142,   10, 24, 40, 15
+LTEXT    "页脚(&F)：", 0x142,   10, 24, 40, 15
 EDITTEXT IDC_PAGESETUP_FOOTERVALUE,   60, 22,110, 12, WS_BORDER | WS_TABSTOP
 
-GROUPBOX "边缘空白(&M):", 0x144,     10, 43,160, 45
-LTEXT    "左(&L):", 0x145,   20, 55, 30, 10, WS_CHILD
+GROUPBOX "边距（毫米）(&M)：", 0x144,     10, 43,160, 45
+LTEXT    "左(&L)：", 0x145,   20, 55, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_LEFTVALUE,     50, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
-LTEXT    "上(&T):", 0x148,    20, 73, 30, 10, WS_CHILD
+LTEXT    "上(&T)：", 0x148,    20, 73, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_TOPVALUE,      50, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
-LTEXT    "右(&R):", 0x14B, 100, 55, 30, 10, WS_CHILD
+LTEXT    "右(&R)：", 0x14B, 100, 55, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_RIGHTVALUE,   130, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
-LTEXT    "下(&B):", 0x14E,100, 73, 30, 10, WS_CHILD
+LTEXT    "下(&B)：", 0x14E,100, 73, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_BOTTOMVALUE,  130, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
 
 DEFPUSHBUTTON "确定", IDOK,                   180,  3, 40, 15, WS_TABSTOP
@@ -95,33 +96,43 @@ PUSHBUTTON    "取消", IDCANCEL,               180, 21, 40, 15, WS_TABSTOP
 PUSHBUTTON    "帮助(&H)", IDHELP,                180, 39, 40, 15, WS_TABSTOP
 }
 
+IDD_OFN_TEMPLATE  DIALOG 50,50,300,15
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_BORDER
+FONT 9, "MS Shell Dlg"
+BEGIN
+  LTEXT "编码：", -1, 5,0, 50,12
+  COMBOBOX IDC_OFN_ENCCOMBO, 53,0, 156,48, WS_CHILD | WS_VSCROLL | CBS_DROPDOWNLIST
+END
+
 STRINGTABLE
 {
 STRING_PAGESETUP_HEADERVALUE,   "&f"
-STRING_PAGESETUP_FOOTERVALUE,   "&p 页"
+STRING_PAGESETUP_FOOTERVALUE,   "第 &p 页"
 
 STRING_NOTEPAD,                 "记事本"
 STRING_ERROR,                   "错误"
 STRING_WARNING,                 "警告"
 STRING_INFO,                    "信息"
 
-STRING_UNTITLED,                "(未命名)"
+STRING_UNTITLED,                "（未命名）"
 
 STRING_ALL_FILES,               "所有文件 (*.*)"
 STRING_TEXT_FILES_TXT,          "文本文件 (*.txt)"
 
-STRING_TOOLARGE,                "记事本不能打开 '%s' 这么大的文件。\n \
-请使用别的编辑器。"
-STRING_NOTEXT,                  "您没有输入任何文本。 \
-\n请输入一些再试"
-STRING_DOESNOTEXIST,            "文件 '%s'\n不存在\n\n \
-您想新建一个文件吗？"
-STRING_NOTSAVED,                "文件 '%s'\n正文已更改\n\n \
-是否保存更改？"
-STRING_NOTFOUND,                "找不到: '%s'"
-STRING_OUT_OF_MEMORY,           "没有足够的内存可以用来完成此项任务。 \
-\n请关闭一些程序后再试。"
+STRING_TOOLARGE,                "记事本不能打开“%s“这么大的文件。\n请使用别的编辑器。"
+STRING_NOTEXT,                  "您没有输入任何文本。\n请输入一些再试。"
+STRING_DOESNOTEXIST,            "文件“%s”不存在。\n\n您想新建一个文件吗？"
+STRING_NOTSAVED,                "文件“%s”已更改。\n\n是否保存更改？"
+STRING_NOTFOUND,                "找不到“%s”。"
+STRING_OUT_OF_MEMORY,           "没有足够的内存可以用来完成此项任务。请关闭一些程序后再试。"
 
+STRING_UNICODE_LE,     "Unicode (UTF-16)"
+STRING_UNICODE_BE,     "Unicode (UTF-16 大尾)"
+
+STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
+此文件包含 Unicode 字符。如果用 %s 编码保存，这些字符将会丢失。\n\
+要保留这些字符，请点“取消”，然后选择一种 Unicode 编码。\n\
+要继续吗？"
 }
 
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
