@@ -1,5 +1,5 @@
 /*
- * comdlg32 (Traditional Chinese Resource)
+ * comdlg32 (Simplified and Traditional Chinese Resource)
  *
  * Copyright 2000 Aric Stewart
  * Copyright 2002 Tisheng Chen
@@ -47,7 +47,7 @@ FONT 9, "MS Shell Dlg"
  LISTBOX 1121, 110, 32, 92, 68, LBS_STANDARD | LBS_OWNERDRAWFIXED | LBS_HASSTRINGS | LBS_DISABLENOSCROLL | WS_TABSTOP
  LTEXT "文件类型(&T):", 1089, 6, 104, 90, 9
  COMBOBOX cmb1, 6, 114, 90, 36, CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_BORDER | WS_VSCROLL | WS_TABSTOP
- LTEXT "驱动器(&v):", 1091, 110, 104, 92, 9
+ LTEXT "驱动器(&V):", 1091, 110, 104, 92, 9
  COMBOBOX cmb2, 110, 114, 92, 68, CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER | WS_VSCROLL | WS_TABSTOP
  DEFPUSHBUTTON "打开", 1, 208, 6, 56, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
  PUSHBUTTON "取消", 2, 208, 24, 56, 14, WS_GROUP | WS_TABSTOP
@@ -69,7 +69,7 @@ FONT 9, "MS Shell Dlg"
  LISTBOX 1121, 110, 32, 92, 68, LBS_STANDARD | LBS_OWNERDRAWFIXED | LBS_HASSTRINGS | LBS_DISABLENOSCROLL | WS_TABSTOP
  LTEXT "文件类型(&T):", 1089, 6, 104, 90, 9
  COMBOBOX cmb1, 6, 114, 90, 36, CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_BORDER | WS_VSCROLL | WS_TABSTOP
- LTEXT "驱动器(&v):", 1091, 110, 104, 92, 9
+ LTEXT "驱动器(&V):", 1091, 110, 104, 92, 9
  COMBOBOX cmb2, 110, 114, 92, 68, CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER | WS_VSCROLL | WS_TABSTOP
  DEFPUSHBUTTON "保存", 1, 208, 6, 56, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
  PUSHBUTTON "取消", 2, 208, 24, 56, 14, WS_GROUP | WS_TABSTOP
@@ -87,17 +87,17 @@ FONT 9, "MS Shell Dlg"
  LTEXT "", 1089, 60, 6, 150, 9
  GROUPBOX "打印范围", grp1, 6, 30, 160, 65, BS_GROUPBOX
  RADIOBUTTON "全部(&A)", rad1, 16, 45, 60, 12
- RADIOBUTTON "选择的范围(&e)", rad2, 16, 60, 60, 12
+ RADIOBUTTON "选中的范围(&E)", rad2, 16, 60, 60, 12
  RADIOBUTTON "页数(&G)", rad3, 16, 75, 60, 12
  DEFPUSHBUTTON "确定", 1, 206, 6, 56, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
  PUSHBUTTON "取消", 2, 206, 24, 56, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "设置(&S)", psh1, 206, 46, 56, 14, WS_GROUP | WS_TABSTOP
- LTEXT "从(&F):", 1090, 60, 80, 30, 9
- LTEXT "到(&T):", 1091, 120, 80, 30, 9
+ LTEXT "从(&F)：", 1090, 60, 80, 30, 9
+ LTEXT "到(&T)：", 1091, 120, 80, 30, 9
  LTEXT "打印质量(&Q):", 1092, 6, 100, 76, 9
  COMBOBOX cmb1, 80, 100, 92, 68, CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER | WS_VSCROLL | WS_TABSTOP
- CHECKBOX "打印到文件(&l):", chx1, 20, 100, 50, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
- CHECKBOX "压小", chx2, 160, 100, 50, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
+ CHECKBOX "打印到文件(&L):", chx1, 20, 100, 50, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
+ CHECKBOX "压小", chx2, 160, 100, 50, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP /* 待求证 */
 }
 
 
@@ -135,7 +135,7 @@ FONT 9, "MS Shell Dlg"
     LTEXT           "字体(&F):",1088 ,6,3,40,9
     COMBOBOX        cmb1, 6,13,94,54,  CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | CBS_DISABLENOSCROLL |
                     CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP | CBS_SIMPLE
-    LTEXT           "字体样式(&y):",1089 ,108,3,44,9
+    LTEXT           "字体样式(&Y):",1089 ,108,3,44,9
     COMBOBOX        cmb2,108,13,64,54, CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | CBS_DISABLENOSCROLL |
                     WS_VSCROLL | WS_TABSTOP | CBS_SIMPLE
     LTEXT           "大小(&S):",1090,179,3,30,9
@@ -146,14 +146,14 @@ FONT 9, "MS Shell Dlg"
     PUSHBUTTON      "应用(&A)", psh3,218,40,40,14,WS_GROUP | WS_TABSTOP
     PUSHBUTTON      "帮助(&H)" , pshHelp,218,57,40,14,WS_GROUP | WS_TABSTOP
     GROUPBOX        "效果",1072,6,72,84,34,WS_GROUP
-    CHECKBOX	    "删除线(&k)", chx1, 10,82,50,10, BS_AUTOCHECKBOX | WS_TABSTOP
+    CHECKBOX	    "删除线(&K)", chx1, 10,82,50,10, BS_AUTOCHECKBOX | WS_TABSTOP
     CHECKBOX 	    "下划线(&U)", chx2, 10,94,50,10, BS_AUTOCHECKBOX
-    LTEXT           "颜色(&C):", 1091 ,6,110,30,9
+    LTEXT           "颜色(&C)：", 1091 ,6,110,30,9
     COMBOBOX        cmb4,6,120,84,100,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS |
 		    CBS_AUTOHSCROLL |  WS_BORDER | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "示例",grp2,98,72,120,36,WS_GROUP
-    CTEXT           "中文字体AaBbYyZz",stc5,103,80,109,24,SS_NOPREFIX | NOT WS_VISIBLE
-    LTEXT           "语言(&i):",stc7,98,114,80,9
+    CTEXT           "中文字体 AaBbYyZz",stc5,103,80,109,24,SS_NOPREFIX | NOT WS_VISIBLE
+    LTEXT           "书写系统(&I):",stc7,98,114,80,9 /* Windows 此处为“语言”，属误译 */
     COMBOBOX        cmb5,98,124,120,90,CBS_DROPDOWNLIST | CBS_HASSTRINGS |
 		    CBS_AUTOHSCROLL |   WS_VSCROLL | WS_TABSTOP
 }
@@ -164,20 +164,20 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "颜色"
 FONT 9, "MS Shell Dlg"
 {
- LTEXT "基本颜色(&B):",   1088, 4,    4,  140, 10
- LTEXT "自定制颜色(&C):",  1089, 4,   106, 140, 10
+ LTEXT "基本颜色(&B)：",   1088, 4,    4,  140, 10
+ LTEXT "自定义颜色(&C)：",  1089, 4,   106, 140, 10
  LTEXT "颜色|纯色(&O)",  1090, 150, 151,  48, 10
- LTEXT   "红(&R):", 726 /*1094*/,249,126,24,10
+ LTEXT   "红(&R)：", 726 /*1094*/,249,126,24,10
  EDITTEXT 706, 275,124,21,12, WS_BORDER | WS_GROUP | WS_TABSTOP
- LTEXT   "绿(&G):",727/*1095*/,249,140,24,10
+ LTEXT   "绿(&G)：",727/*1095*/,249,140,24,10
  EDITTEXT 707, 275,138,21,12, WS_BORDER | WS_GROUP | WS_TABSTOP
- LTEXT   "蓝(&B):",728 /*1096*/,249,154,24,10
+ LTEXT   "蓝(&B)：",728 /*1096*/,249,154,24,10
  EDITTEXT 708, 275,152,21,12, WS_BORDER | WS_GROUP | WS_TABSTOP
- LTEXT  "色调(&E):" ,723 /*1091*/,202,126,22,10
+ LTEXT  "色调(&E)：" ,723 /*1091*/,202,126,22,10
  EDITTEXT 703, 226,124,21,12, WS_BORDER | WS_GROUP | WS_TABSTOP
- LTEXT  "饱和度(&S):" ,724 /*1092*/,202,140,22,10
+ LTEXT  "饱和度(&S)：" ,724 /*1092*/,202,140,22,10
  EDITTEXT 704, 226,138,21,12, WS_BORDER | WS_GROUP | WS_TABSTOP
- LTEXT  "亮度(&L)" ,725 /*1093*/,202,154,22,10
+ LTEXT  "亮度(&L)：" ,725 /*1093*/,202,154,22,10
  EDITTEXT 705, 226,152,21,12, WS_BORDER | WS_GROUP | WS_TABSTOP
  CONTROL "" ,720,"STATIC",SS_SIMPLE|WS_TABSTOP|WS_GROUP,4,14,140,86
  CONTROL "" ,721,"STATIC",SS_SIMPLE|WS_TABSTOP|WS_GROUP,4,116,140,28
@@ -188,7 +188,7 @@ FONT 9, "MS Shell Dlg"
  PUSHBUTTON "取消", 2, 52, 166, 44, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "帮助", pshHelp,100,166, 44, 14
  PUSHBUTTON "添加到自定义颜色(&A)", 712/*1024*/, 152, 166, 142, 14, WS_GROUP | WS_TABSTOP
- PUSHBUTTON "规定自定义颜色(&D)>>", 719/*1025*/,   4, 150, 142, 14, WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "定义自定义颜色(&D) >>", 719/*1025*/,   4, 150, 142, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON  "&i",713,300,200,4,14   /* just a dummy:  'i' is  like  &i  in "sol&id"  */
 }
 
@@ -198,7 +198,7 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "查找"
 FONT 9, "MS Shell Dlg"
 {
- LTEXT "查找(&n):", -1, 4, 8, 42, 8
+ LTEXT "查找(&N)：", -1, 4, 8, 42, 8
  EDITTEXT edt1, 47, 7, 128, 12, ES_AUTOHSCROLL | WS_BORDER | WS_GROUP | WS_TABSTOP
  CHECKBOX "全字匹配(&W)", chx1, 4, 26, 64, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
  CHECKBOX "区分大小写(&C)", chx2, 4, 42, 64, 12, BS_AUTOCHECKBOX | WS_TABSTOP
@@ -217,9 +217,9 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "替换"
 FONT 9, "MS Shell Dlg"
 {
- LTEXT "查找(&n):", -1, 4, 9, 48, 8
+ LTEXT "查找(&N)：", -1, 4, 9, 48, 8
  EDITTEXT edt1, 54, 7, 114, 12, ES_AUTOHSCROLL | WS_BORDER | WS_GROUP | WS_TABSTOP
- LTEXT "替换为(&p):", -1, 4, 26, 48, 8
+ LTEXT "替换为(&P)：", -1, 4, 26, 48, 8
  EDITTEXT edt2, 54, 24, 114, 12, ES_AUTOHSCROLL | WS_BORDER | WS_GROUP | WS_TABSTOP
  CHECKBOX "全字匹配(&W)", chx1, 5, 46, 104, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
  CHECKBOX "区分大小写(&C)", chx2, 5, 62, 59, 12, BS_AUTOCHECKBOX | WS_TABSTOP
@@ -243,33 +243,33 @@ FONT 9, "MS Shell Dlg"
     PUSHBUTTON      "帮助(&H)",  pshHelp,  50, 161, 48,14, WS_GROUP
 
     GROUPBOX        "打印机",        grp4,   8,  4, 272,84, WS_GROUP
-    CONTROL         "打印到文件(&l)", chx1, "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,212,70,64,12
+    CONTROL         "打印到文件(&L)", chx1, "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,212,70,64,12
     PUSHBUTTON      "属性(&P)",    psh2, 212, 17,  60,14, WS_GROUP
-    LTEXT           "名称(&N):",         stc6,  16, 20,  36,8
+    LTEXT           "名称(&N)：",         stc6,  16, 20,  36,8
     COMBOBOX                          cmb4,  52, 18, 152,152,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
-    LTEXT           "状态:",        stc8,  16, 36,  36,10, SS_NOPREFIX
+    LTEXT           "状态：",        stc8,  16, 36,  36,10, SS_NOPREFIX
     LTEXT           "Dummy State",    stc12, 52, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
-    LTEXT           "型号:",          stc7,  16, 48,  36,10, SS_NOPREFIX
+    LTEXT           "型号：",          stc7,  16, 48,  36,10, SS_NOPREFIX
     LTEXT           "Dummy Type",     stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
-    LTEXT           "位置:",         stc10, 16, 60,  36,10, SS_NOPREFIX
+    LTEXT           "位置：",         stc10, 16, 60,  36,10, SS_NOPREFIX
     LTEXT           "Dummy Location", stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
-    LTEXT           "备注:",       stc9,  16, 72,  36,10, SS_NOPREFIX
+    LTEXT           "备注：",       stc9,  16, 72,  36,10, SS_NOPREFIX
     LTEXT           "Dummy Remark",   stc13, 52, 72, 152,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
 
     GROUPBOX        "份数",         grp2, 160, 92, 120,64, WS_GROUP
-    LTEXT           "份数(&C):",stc5,168,108,68,8
+    LTEXT           "份数(&C)：",stc5,168,108,68,8
     ICON            "",               ico3, 162,124,  76,24, WS_GROUP | SS_CENTERIMAGE
-    CONTROL         "自动分页(&o)",   chx2,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,240,130,36,12
+    CONTROL         "逐份打印(&O)",   chx2,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,240,130,36,12
     EDITTEXT                          edt3, 240,106,  32,12, WS_GROUP | ES_NUMBER
 
     GROUPBOX        "打印范围",    grp1,   8,92,  144,64, WS_GROUP
     CONTROL         "全部(&A)",           rad1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,106,64,12
     CONTROL         "页数(&G)",         rad3,"Button",BS_AUTORADIOBUTTON,16,122,36,12
-    CONTROL         "选择的范围(&S)",     rad2,"Button",BS_AUTORADIOBUTTON,16,138,64,12
+    CONTROL         "选中的范围(&S)",     rad2,"Button",BS_AUTORADIOBUTTON,16,138,64,12
     EDITTEXT                          edt1,  74,122,  26,12, WS_GROUP | ES_NUMBER
     EDITTEXT                          edt2, 118,122,  26,12, WS_GROUP | ES_NUMBER
-    RTEXT           "从(&f):",         stc2,  52,124,  20,8
-    RTEXT           "到(&t):",           stc3, 100,124,  16,8
+    RTEXT           "从(&F)：",         stc2,  52,124,  20,8
+    RTEXT           "到(&T)：",           stc3, 100,124,  16,8
 }
 
 PRINT32_SETUP DIALOG  32, 32, 288, 178
@@ -284,21 +284,21 @@ BEGIN
 
     GROUPBOX        "打印机",        grp4,   8,  4, 272,84, WS_GROUP
     PUSHBUTTON      "属性(&P)",    psh2, 212, 17,  60,14, WS_GROUP
-    LTEXT           "名称(&N):",         stc6,  16, 20,  36,8
+    LTEXT           "名称(&N)：",         stc6,  16, 20,  36,8
     COMBOBOX                          cmb1,  52, 18, 152,152,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
-    LTEXT           "状态:",        stc8,  16, 36,  36,10, SS_NOPREFIX
+    LTEXT           "状态：",        stc8,  16, 36,  36,10, SS_NOPREFIX
     LTEXT           "Dummy State",    stc12, 52, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
-    LTEXT           "型号:",          stc7,  16, 48,  36,10, SS_NOPREFIX
+    LTEXT           "型号：",          stc7,  16, 48,  36,10, SS_NOPREFIX
     LTEXT           "Dummy Type",     stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
-    LTEXT           "位置:",         stc10, 16, 60,  36,10, SS_NOPREFIX
+    LTEXT           "位置：",         stc10, 16, 60,  36,10, SS_NOPREFIX
     LTEXT           "Dummy Location", stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
-    LTEXT           "备注:",       stc9,  16, 72,  36,10, SS_NOPREFIX
+    LTEXT           "备注：",       stc9,  16, 72,  36,10, SS_NOPREFIX
     LTEXT           "Dummy Remark",   stc13, 52, 72, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
 
     GROUPBOX        "纸张",          grp2,   8, 92, 164,56, WS_GROUP
-    LTEXT           "纸张大小(&z):",         stc2,  16,108,  36, 8
+    LTEXT           "纸张大小(&Z)：",         stc2,  16,108,  36, 8
     COMBOBOX                          cmb2,  52,106, 112,112,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
-    LTEXT           "纸张来源(&S):",       stc3,  16,128,  36, 8
+    LTEXT           "纸张来源(&S)：",       stc3,  16,128,  36, 8
     COMBOBOX                          cmb3,  52,126, 112,112,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
 
     GROUPBOX        "方向",    grp1, 180, 92, 100,56, WS_GROUP
@@ -316,21 +316,21 @@ BEGIN
   CONTROL "", rct2, "Static", SS_GRAYRECT, 160, 12, 4, 80
   CONTROL "", rct3, "Static", SS_GRAYRECT,  84, 88, 80, 4
   GROUPBOX "纸张", grp2, 8, 96, 224, 56, BS_GROUPBOX
-  LTEXT "大小(&S):", stc2, 16, 112, 36, 8
+  LTEXT "大小(&S)：", stc2, 16, 112, 36, 8
   COMBOBOX cmb2, 64, 110, 160, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
-  LTEXT "来源(&S):", stc3, 16, 132, 36, 8
+  LTEXT "托盘(&T)：", stc3, 16, 132, 36, 8
   COMBOBOX cmb3, 64, 130, 160, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
   GROUPBOX "方向(&O)", grp1, 8, 156, 64, 56, BS_GROUPBOX
   AUTORADIOBUTTON "纵向(&P)", rad1, 16, 170, 52, 12, BS_AUTORADIOBUTTON
   AUTORADIOBUTTON "横向(&L)", rad2, 16, 190, 52, 12, BS_AUTORADIOBUTTON
   GROUPBOX "边距", grp4, 80, 156, 152, 56, BS_GROUPBOX
-  LTEXT "左(&e):", stc15, 88, 172, 21, 8
+  LTEXT "左(&E)：", stc15, 88, 172, 21, 8
   EDITTEXT edt4, 111, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
-  LTEXT "右(&R):", stc16, 159, 172, 27, 8
+  LTEXT "右(&R)：", stc16, 159, 172, 27, 8
   EDITTEXT edt6, 187, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
-  LTEXT "上(&o):", stc17, 88, 192, 21, 8
+  LTEXT "上(&O)：", stc17, 88, 192, 21, 8
   EDITTEXT edt5, 111, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
-  LTEXT "下(&B):", stc18, 159, 192, 23, 8
+  LTEXT "下(&B)：", stc18, 159, 192, 23, 8
   EDITTEXT edt7, 187, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
   DEFPUSHBUTTON "确定", IDOK, 71, 220, 50, 14, BS_PUSHBUTTON
   PUSHBUTTON "取消", IDCANCEL, 126, 220, 50, 14
@@ -342,7 +342,7 @@ STYLE DS_MODALFRAME | DS_CONTEXTHELP | WS_VISIBLE | WS_POPUP | WS_CAPTION | WS_S
 CAPTION "打开"
 FONT 9, "MS Shell Dlg"
 {
-    LTEXT	"搜寻(&I)",IDC_LOOKINSTATIC,4,6,43,8, SS_NOTIFY
+    LTEXT	"浏览(&I)",IDC_LOOKINSTATIC,4,6,43,8, SS_NOTIFY
     COMBOBOX	IDC_LOOKIN,49,3,132,100,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
 
     LTEXT	"" , IDC_TOOLBARSTATIC, 181, 2, 102, 17, NOT WS_GROUP | NOT WS_VISIBLE
@@ -351,10 +351,10 @@ FONT 9, "MS Shell Dlg"
     LTEXT	"文件名(&N):",IDC_FILENAMESTATIC,5,112,46,8, SS_NOTIFY
     EDITTEXT	IDC_FILENAME,54,110,155,12,ES_AUTOHSCROLL
 
-    LTEXT	"文件类型(&t)",IDC_FILETYPESTATIC,5,128,42,8, SS_NOTIFY
+    LTEXT	"文件类型(&T)",IDC_FILETYPESTATIC,5,128,42,8, SS_NOTIFY
     COMBOBOX	IDC_FILETYPE,54,126,155,53,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    CONTROL	"只读(&r)",IDC_OPENREADONLY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,54,145,100,10
+    CONTROL	"以只读方式打开(&R)",IDC_OPENREADONLY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,54,145,100,10
 
     DEFPUSHBUTTON	"打开(&O)",		 IDOK,222,110,50,14
     PUSHBUTTON		"取消",		 IDCANCEL,222,128,50,14
@@ -363,8 +363,8 @@ FONT 9, "MS Shell Dlg"
 
 STRINGTABLE
 {
-    IDS_ABOUTBOX            "关于文件夹选择器(&A)"
-    IDS_DOCUMENTFOLDERS     "文档目录"
+    IDS_ABOUTBOX            "关于文件夹选择器测试(&A)"
+    IDS_DOCUMENTFOLDERS     "文档文件夹"
     IDS_PERSONAL            "我的文档"
     IDS_FAVORITES           "收藏夹"
     IDS_PATH                "系统路径"
@@ -379,11 +379,11 @@ STRINGTABLE
     IDS_LOCALHARDRIVES      "本地硬盘驱动器"
     IDS_FILENOTFOUND        "找不到文件"
     IDS_VERIFYFILE          "请检验是否给予正确的文件名称。"
-    IDS_CREATEFILE          "找不到文件\n是否创建新文件?"
-    IDS_OVERWRITEFILE       "文件已经存在。\n要替换吗?"
-    IDS_INVALID_FILENAME_TITLE "文件名中存在无效的字符"
-    IDS_INVALID_FILENAME    "文件名中不能包含任何一下字符::\n                          / : < > |"
-    IDS_PATHNOTEXISTING     "文件夹不存在"
+    IDS_CREATEFILE          "文件不存在。\n是否创建新文件？"
+    IDS_OVERWRITEFILE       "文件已经存在。\n是否替换？"
+    IDS_INVALID_FILENAME_TITLE "路径中包含无效字符"
+    IDS_INVALID_FILENAME    "文件名中不能包含任何以下字符::\n                          / : < > |"
+    IDS_PATHNOTEXISTING     "路径不存在"
     IDS_FILENOTEXISTING     "文件不存在"
 }
 
@@ -401,21 +401,20 @@ STRINGTABLE
     PD32_PRINT_TITLE       "打印"
 
     PD32_VALUE_UREADABLE                  "数值不可读"
-    PD32_INVALID_PAGE_RANGE               "这个值不在页数范围。\n \
+    PD32_INVALID_PAGE_RANGE               "这个值不在页数范围内。\n \
 请输入一个 %d 和 %d 之间的数。"
-    PD32_FROM_NOT_ABOVE_TO                "'从'项的值不能大于'到'项的值。"
-    PD32_MARGINS_OVERLAP                  "页边距重迭或落于纸外,\n请重新输入页边距。"
-    PD32_NR_OF_COPIES_EMPTY               "'份数' 项不能空."
+    PD32_FROM_NOT_ABOVE_TO                "“从”项的值不能大于“到”项的值。"
+    PD32_MARGINS_OVERLAP                  "页边距重叠或落于纸外。\n请重新输入页边距。"
+    PD32_NR_OF_COPIES_EMPTY               "“份数”项不能空。"
     PD32_TOO_LARGE_COPIES                 "你的打印机不支持这么大的份数。\n \
 请输入一个 1 和 %d 之间的数。"
     PD32_PRINT_ERROR                      "打印机错误。"
     PD32_NO_DEFAULT_PRINTER               "没有默认打印机。"
     PD32_CANT_FIND_PRINTER                "找不到打印机。"
     PD32_OUT_OF_MEMORY                    "内存不够。"
-    PD32_GENERIC_ERROR                    "出现一些错误。"
-    PD32_DRIVER_UNKNOWN                   "找不到打印机驱动器。"
-    PD32_NO_DEVICES                       "在使用与打印机有关功能(页面设置, 打印文件)之前, \
-你必须先装打印机。请装一个打印机再试。"
+    PD32_GENERIC_ERROR                    "出现了错误。"
+    PD32_DRIVER_UNKNOWN                   "找不到打印机驱动程序。"
+    PD32_NO_DEVICES                       "在安装打印机后才能使用和打印机相关的功能。请安装后再试。"
 
     PD32_DEFAULT_PRINTER                  "默认打印机; "
     PD32_NR_OF_DOCUMENTS_IN_QUEUE         "有 %d 个文档正在等待打印"
@@ -428,7 +427,7 @@ STRINGTABLE
     PD32_PRINTER_STATUS_ERROR             "错误; "
     PD32_PRINTER_STATUS_PENDING_DELETION  "等待删除; "
     PD32_PRINTER_STATUS_PAPER_JAM         "卡纸; "
-    PD32_PRINTER_STATUS_PAPER_OUT         "无纸; "
+    PD32_PRINTER_STATUS_PAPER_OUT         "缺纸; "
     PD32_PRINTER_STATUS_MANUAL_FEED       "手动进纸; "
     PD32_PRINTER_STATUS_PAPER_PROBLEM     "纸的问题; "
     PD32_PRINTER_STATUS_OFFLINE           "打印机离线; "
@@ -441,13 +440,13 @@ STRINGTABLE
     PD32_PRINTER_STATUS_PROCESSING        "正在处理; "
     PD32_PRINTER_STATUS_INITIALIZING      "正在启动; "
     PD32_PRINTER_STATUS_WARMING_UP        "预热; "
-    PD32_PRINTER_STATUS_TONER_LOW         "墨低; "
-    PD32_PRINTER_STATUS_NO_TONER          "没墨; "
-    PD32_PRINTER_STATUS_PAGE_PUNT         "页内存超支; "
-    PD32_PRINTER_STATUS_USER_INTERVENTION "用户干预; "
+    PD32_PRINTER_STATUS_TONER_LOW         "墨量低; "
+    PD32_PRINTER_STATUS_NO_TONER          "缺墨; "
+    PD32_PRINTER_STATUS_PAGE_PUNT         "页内存超支; " /* 标准译名待求证 */
+    PD32_PRINTER_STATUS_USER_INTERVENTION "用户中断; "
     PD32_PRINTER_STATUS_OUT_OF_MEMORY     "内存不够; "
     PD32_PRINTER_STATUS_DOOR_OPEN         "打印机盖是打开的; "
-    PD32_PRINTER_STATUS_SERVER_UNKNOWN    "找不到打印服务器; "
+    PD32_PRINTER_STATUS_SERVER_UNKNOWN    "未知的打印服务器; "
     PD32_PRINTER_STATUS_POWER_SAVE        "省电状态; "
 }
 
@@ -461,29 +460,29 @@ STRINGTABLE /* Font styles */
 
 STRINGTABLE /* Color names */
 {
-    IDS_COLOR_BLACK     "黑"
-    IDS_COLOR_MAROON    "Maroon"
-    IDS_COLOR_GREEN     "绿"
-    IDS_COLOR_OLIVE     "Olive"
-    IDS_COLOR_NAVY      "Navy"
-    IDS_COLOR_PURPLE    "紫"
-    IDS_COLOR_TEAL      "Teal"
-    IDS_COLOR_GRAY      "灰"
-    IDS_COLOR_SILVER    "Silver"
-    IDS_COLOR_RED       "红"
-    IDS_COLOR_LIME      "Lime"
-    IDS_COLOR_YELLOW    "黄"
-    IDS_COLOR_BLUE      "蓝"
-    IDS_COLOR_FUCHSIA   "Fuchsia"
-    IDS_COLOR_AQUA      "Aqua"
-    IDS_COLOR_WHITE     "白"
+    IDS_COLOR_BLACK     "黑色"
+    IDS_COLOR_MAROON    "栗色"
+    IDS_COLOR_GREEN     "绿色"
+    IDS_COLOR_OLIVE     "橄榄色"
+    IDS_COLOR_NAVY      "藏青"
+    IDS_COLOR_PURPLE    "紫色"
+    IDS_COLOR_TEAL      "鸭翅绿"
+    IDS_COLOR_GRAY      "灰色"
+    IDS_COLOR_SILVER    "银色"
+    IDS_COLOR_RED       "红色"
+    IDS_COLOR_LIME      "青柠色"
+    IDS_COLOR_YELLOW    "黄色"
+    IDS_COLOR_BLUE      "蓝色"
+    IDS_COLOR_FUCHSIA   "洋红"
+    IDS_COLOR_AQUA      "水绿"
+    IDS_COLOR_WHITE     "白色"
 }
 
 STRINGTABLE
 {
-    IDS_FONT_SIZE   "选择 %d 到 %d 的字号。"
-    IDS_SAVE_BUTTON "保存 (&S)"
-    IDS_SAVE_IN     "保存在 (&I):"
+    IDS_FONT_SIZE   "选择 %d 到 %d 之间的字号。"
+    IDS_SAVE_BUTTON "保存(&S)"
+    IDS_SAVE_IN     "保存在(&I)："
     IDS_SAVE        "保存"
     IDS_SAVE_AS     "另存为"
     IDS_OPEN_FILE   "打开文件"
