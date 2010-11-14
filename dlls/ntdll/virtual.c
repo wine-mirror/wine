@@ -862,6 +862,13 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
     assert( start < view->size );
     assert( start + size <= view->size );
 
+    if (force_exec_prot && !(vprot & VPROT_NOEXEC) && (vprot & VPROT_READ))
+    {
+        TRACE( "forcing exec permission on mapping %p-%p\n",
+               (char *)view->base + start, (char *)view->base + start + size - 1 );
+        prot |= PROT_EXEC;
+    }
+
     /* only try mmap if media is not removable (or if we require write access) */
     if (!removable || shared_write)
     {
