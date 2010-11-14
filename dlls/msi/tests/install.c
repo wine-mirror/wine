@@ -5896,7 +5896,6 @@ static void test_icon_table(void)
     record = MsiCreateRecord(1);
     res = MsiRecordSetStream(record, 1, "icon.ico");
     ok(res == ERROR_SUCCESS, "Failed to add stream data to record: %d\n", res);
-    DeleteFile("icon.ico");
 
     query = "INSERT INTO `Icon` (`Name`, `Data`) VALUES ('testicon', ?)";
     res = run_query(hdb, record, query);
@@ -5904,6 +5903,8 @@ static void test_icon_table(void)
 
     res = MsiCloseHandle(record);
     ok(res == ERROR_SUCCESS, "Failed to close record handle: %d\n", res);
+    /* Delete the icon file after the handle is closed to make sure it's deleted on Win9x */
+    DeleteFileA("icon.ico");
     res = MsiDatabaseCommit(hdb);
     ok(res == ERROR_SUCCESS, "Failed to commit database: %d\n", res);
     res = MsiCloseHandle(hdb);
