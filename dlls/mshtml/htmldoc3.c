@@ -343,8 +343,31 @@ static HRESULT WINAPI HTMLDocument3_createDocumentFragment(IHTMLDocument3 *iface
                                                            IHTMLDocument2 **ppNewDoc)
 {
     HTMLDocument *This = HTMLDOC3_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, ppNewDoc);
-    return E_NOTIMPL;
+    nsIDOMDocumentFragment *doc_frag;
+    HTMLDocumentNode *docnode;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, ppNewDoc);
+
+    if(!This->doc_node->nsdoc) {
+        FIXME("NULL nsdoc\n");
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMHTMLDocument_CreateDocumentFragment(This->doc_node->nsdoc, &doc_frag);
+    if(NS_FAILED(nsres)) {
+        ERR("CreateDocumentFragment failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    hres = create_document_fragment((nsIDOMNode*)doc_frag, This->doc_node, &docnode);
+    nsIDOMDocumentFragment_Release(doc_frag);
+    if(FAILED(hres))
+        return hres;
+
+    *ppNewDoc = HTMLDOC(&docnode->basedoc);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument3_get_parentDocument(IHTMLDocument3 *iface,

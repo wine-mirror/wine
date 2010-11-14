@@ -1930,35 +1930,47 @@ static dispex_static_data_t HTMLDocumentNode_dispex = {
     HTMLDocumentNode_iface_tids
 };
 
+static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLWindow *window)
+{
+    HTMLDocumentNode *doc;
+
+    doc = heap_alloc_zero(sizeof(HTMLDocumentNode));
+    if(!doc)
+        return NULL;
+
+    doc->ref = 1;
+    doc->basedoc.doc_node = doc;
+    doc->basedoc.doc_obj = doc_obj;
+    doc->basedoc.window = window;
+
+    init_dispex(&doc->node.dispex, (IUnknown*)HTMLDOMNODE(&doc->node), &HTMLDocumentNode_dispex);
+    init_doc(&doc->basedoc, (IUnknown*)HTMLDOMNODE(&doc->node), DISPATCHEX(&doc->node.dispex));
+    HTMLDocumentNode_SecMgr_Init(doc);
+
+    init_nsevents(doc);
+
+    list_init(&doc->bindings);
+    list_init(&doc->selection_list);
+    list_init(&doc->range_list);
+
+    return doc;
+}
+
 HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_obj, HTMLWindow *window, HTMLDocumentNode **ret)
 {
     HTMLDocumentNode *doc;
     HRESULT hres;
 
-    doc = heap_alloc_zero(sizeof(HTMLDocumentNode));
+    doc = alloc_doc_node(doc_obj, window);
     if(!doc)
         return E_OUTOFMEMORY;
 
-    doc->basedoc.doc_node = doc;
-    doc->basedoc.doc_obj = doc_obj;
-
-    init_dispex(&doc->node.dispex, (IUnknown*)HTMLDOMNODE(&doc->node), &HTMLDocumentNode_dispex);
-    init_doc(&doc->basedoc, (IUnknown*)HTMLDOMNODE(&doc->node), DISPATCHEX(&doc->node.dispex));
-    HTMLDocumentNode_SecMgr_Init(doc);
-    doc->ref = 1;
-
-    doc->basedoc.window = window;
     if(window == doc_obj->basedoc.window)
         doc->basedoc.cp_container.forward_container = &doc_obj->basedoc.cp_container;
 
     nsIDOMHTMLDocument_AddRef(nsdoc);
     doc->nsdoc = nsdoc;
     init_mutation(doc);
-    init_nsevents(doc);
-
-    list_init(&doc->bindings);
-    list_init(&doc->selection_list);
-    list_init(&doc->range_list);
 
     HTMLDOMNode_Init(doc, &doc->node, (nsIDOMNode*)nsdoc);
     doc->node.vtbl = &HTMLDocumentNodeImplVtbl;
@@ -1971,6 +1983,23 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
     }
 
     *ret = doc;
+    return S_OK;
+}
+
+HRESULT create_document_fragment(nsIDOMNode *nsnode, HTMLDocumentNode *doc_node, HTMLDocumentNode **ret)
+{
+    HTMLDocumentNode *doc_frag;
+
+    doc_frag = alloc_doc_node(doc_node->basedoc.doc_obj, doc_node->basedoc.window);
+    if(!doc_frag)
+        return E_OUTOFMEMORY;
+
+    HTMLDOMNode_Init(doc_node, &doc_frag->node, nsnode);
+    doc_frag->node.vtbl = &HTMLDocumentNodeImplVtbl;
+    doc_frag->node.cp_container = &doc_frag->basedoc.cp_container;
+
+    htmldoc_addref(&doc_frag->basedoc);
+    *ret = doc_frag;
     return S_OK;
 }
 
