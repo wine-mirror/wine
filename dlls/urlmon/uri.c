@@ -6080,3 +6080,41 @@ HRESULT WINAPI CoInternetCombineUrlEx(IUri *pBaseUri, LPCWSTR pwzRelativeUrl, DW
     IUri_Release(relative);
     return hr;
 }
+
+/***********************************************************************
+ *           CoInternetParseIUri (urlmon.@)
+ */
+HRESULT WINAPI CoInternetParseIUri(IUri *pIUri, PARSEACTION ParseAction, DWORD dwFlags,
+                                   LPWSTR pwzResult, DWORD cchResult, DWORD *pcchResult,
+                                   DWORD_PTR dwReserved)
+{
+    HRESULT hr;
+
+    TRACE("(%p %d %x %p %d %p %x)\n", pIUri, ParseAction, dwFlags, pwzResult,
+        cchResult, pcchResult, (DWORD)dwReserved);
+
+    if(!pcchResult)
+        return E_POINTER;
+
+    if(!pwzResult || !pIUri) {
+        *pcchResult = 0;
+        return E_INVALIDARG;
+    }
+
+    switch(ParseAction) {
+    case PARSE_SECURITY_URL:
+    case PARSE_MIME:
+    case PARSE_SERVER:
+    case PARSE_SECURITY_DOMAIN:
+        *pcchResult = 0;
+        hr = E_FAIL;
+        break;
+    default:
+        *pcchResult = 0;
+        hr = E_NOTIMPL;
+        FIXME("(%p %d %x %p %d %p %x) Partial stub.\n", pIUri, ParseAction, dwFlags,
+            pwzResult, cchResult, pcchResult, (DWORD)dwReserved);
+    }
+
+    return hr;
+}

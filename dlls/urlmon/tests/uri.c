@@ -68,6 +68,7 @@ static HRESULT (WINAPI *pCreateIUriBuilder)(IUri*, DWORD, DWORD_PTR, IUriBuilder
 static HRESULT (WINAPI *pCoInternetCombineIUri)(IUri*,IUri*,DWORD,IUri**,DWORD_PTR);
 static HRESULT (WINAPI *pCoInternetGetSession)(DWORD,IInternetSession**,DWORD);
 static HRESULT (WINAPI *pCoInternetCombineUrlEx)(IUri*,LPCWSTR,DWORD,IUri**,DWORD_PTR);
+static HRESULT (WINAPI *pCoInternetParseIUri)(IUri*,PARSEACTION,DWORD,LPWSTR,DWORD,DWORD*,DWORD_PTR);
 
 static const WCHAR http_urlW[] = { 'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q',
         '.','o','r','g','/',0};
@@ -9441,6 +9442,57 @@ static void test_CoInternetCombineUrlEx_Pluggable(void) {
     if(base) IUri_Release(base);
 }
 
+static void test_CoInternetParseIUri_InvalidArgs(void) {
+    HRESULT hr;
+    IUri *uri = NULL;
+    WCHAR tmp[3];
+    DWORD result = -1;
+
+    hr = pCoInternetParseIUri(NULL, PARSE_CANONICALIZE, 0, tmp, 3, &result, 0);
+    ok(hr == E_INVALIDARG, "Error: CoInternetParseIUri returned 0x%08x, expected 0x%08x.\n",
+        hr, E_INVALIDARG);
+    ok(!result, "Error: Expected 'result' to be 0, but was %d.\n", result);
+
+    hr = pCreateUri(http_urlW, 0, 0, &uri);
+    ok(SUCCEEDED(hr), "Error: CreateUri returned 0x%08x.\n", hr);
+    if(SUCCEEDED(hr)) {
+        result = -1;
+        hr = pCoInternetParseIUri(uri, PARSE_CANONICALIZE, 0, NULL, 0, &result, 0);
+        ok(hr == E_INVALIDARG, "Error: CoInternetParseIUri returned 0x%08x, expected 0x%08x.\n",
+            hr, E_INVALIDARG);
+        ok(!result, "Error: Expected 'result' to be 0, but was %d.\n", result);
+
+        hr = pCoInternetParseIUri(uri, PARSE_CANONICALIZE, 0, tmp, 3, NULL, 0);
+        ok(hr == E_POINTER, "Error: CoInternetParseIUri returned 0x%08x, expected 0x%08x.\n",
+            hr, E_POINTER);
+
+        result = -1;
+        hr = pCoInternetParseIUri(uri, PARSE_SECURITY_URL, 0, tmp, 3, &result, 0);
+        ok(hr == E_FAIL, "Error: CoInternetParseIUri returned 0x%08x expected 0x%08x.\n",
+            hr, E_FAIL);
+        ok(!result, "Error: Expected 'result' to be 0, but was %d.\n", result);
+
+        result = -1;
+        hr = pCoInternetParseIUri(uri, PARSE_MIME, 0, tmp, 3, &result, 0);
+        ok(hr == E_FAIL, "Error: CoInternetParseIUri returned 0x%08x, expected 0x%08x.\n",
+            hr, E_FAIL);
+        ok(!result, "Error: Expected 'result' to be 0, but was %d.\n", result);
+
+        result = -1;
+        hr = pCoInternetParseIUri(uri, PARSE_SERVER, 0, tmp, 3, &result, 0);
+        ok(hr == E_FAIL, "Error: CoInternetParseIUri returned 0x%08x, expected 0x%08x.\n",
+            hr, E_FAIL);
+        ok(!result, "Error: Expected 'result' to be 0, but was %d.\n", result);
+
+        result = -1;
+        hr = pCoInternetParseIUri(uri, PARSE_SECURITY_DOMAIN, 0, tmp, 3, &result, 0);
+        ok(hr == E_FAIL, "Error: CoInternetParseIUri returned 0x%08x, expected 0x%08x.\n",
+            hr, E_FAIL);
+        ok(!result, "Error: Expected 'result' to be 0, but was %d.\n", result);
+    }
+    if(uri) IUri_Release(uri);
+}
+
 START_TEST(uri) {
     HMODULE hurlmon;
 
@@ -9451,6 +9503,7 @@ START_TEST(uri) {
     pCreateIUriBuilder = (void*) GetProcAddress(hurlmon, "CreateIUriBuilder");
     pCoInternetCombineIUri = (void*) GetProcAddress(hurlmon, "CoInternetCombineIUri");
     pCoInternetCombineUrlEx = (void*) GetProcAddress(hurlmon, "CoInternetCombineUrlEx");
+    pCoInternetParseIUri = (void*) GetProcAddress(hurlmon, "CoInternetParseIUri");
 
     if(!pCreateUri) {
         win_skip("CreateUri is not present, skipping tests.\n");
@@ -9528,6 +9581,9 @@ START_TEST(uri) {
 
     trace("test CoInternetCombineUrlEx...\n");
     test_CoInternetCombineUrlEx();
+
+    trace("test CoInternetParseIUri Invalid Args...\n");
+    test_CoInternetParseIUri_InvalidArgs();
 
     register_protocols();
 
