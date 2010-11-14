@@ -368,6 +368,9 @@ static HRESULT WINAPI HTMLDOMNode_get_nodeType(IHTMLDOMNode *iface, LONG *p)
     case DOCUMENT_NODE:
         *p = 9;
         break;
+    case DOCUMENT_FRAGMENT_NODE:
+        *p = 11;
+        break;
     default:
         /*
          * FIXME:
