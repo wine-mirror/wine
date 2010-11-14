@@ -1908,12 +1908,32 @@ static HRESULT HTMLDocumentNode_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HT
     return E_NOTIMPL;
 }
 
-#undef HTMLDOCNODE_NODE_THIS
-
 static const NodeImplVtbl HTMLDocumentNodeImplVtbl = {
     HTMLDocumentNode_QI,
     HTMLDocumentNode_destructor,
     HTMLDocumentNode_clone
+};
+
+static HRESULT HTMLDocumentFragment_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
+{
+    HTMLDocumentNode *This = HTMLDOCNODE_NODE_THIS(iface);
+    HTMLDocumentNode *new_node;
+    HRESULT hres;
+
+    hres = create_document_fragment(nsnode, This->node.doc, &new_node);
+    if(FAILED(hres))
+        return hres;
+
+    *ret = &new_node->node;
+    return S_OK;
+}
+
+#undef HTMLDOCNODE_NODE_THIS
+
+static const NodeImplVtbl HTMLDocumentFragmentImplVtbl = {
+    HTMLDocumentNode_QI,
+    HTMLDocumentNode_destructor,
+    HTMLDocumentFragment_clone
 };
 
 static const tid_t HTMLDocumentNode_iface_tids[] = {
@@ -1998,7 +2018,7 @@ HRESULT create_document_fragment(nsIDOMNode *nsnode, HTMLDocumentNode *doc_node,
         return E_OUTOFMEMORY;
 
     HTMLDOMNode_Init(doc_node, &doc_frag->node, nsnode);
-    doc_frag->node.vtbl = &HTMLDocumentNodeImplVtbl;
+    doc_frag->node.vtbl = &HTMLDocumentFragmentImplVtbl;
     doc_frag->node.cp_container = &doc_frag->basedoc.cp_container;
 
     htmldoc_addref(&doc_frag->basedoc);
