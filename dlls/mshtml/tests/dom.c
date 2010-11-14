@@ -69,6 +69,9 @@ static const char frameset_str[] =
     "<frame src=\"about:blank\" name=\"nm1\" id=\"fr1\"><frame src=\"about:blank\" name=\"nm2\" id=\"fr2\">"
     "<frame src=\"about:blank\" id=\"fr3\">"
     "</frameset></html>";
+static const char emptydiv_str[] =
+    "<html><head><title>emptydiv test</title></head>"
+    "<body><div id=\"divid\"></div></body></html>";
 
 static WCHAR characterW[] = {'c','h','a','r','a','c','t','e','r',0};
 static WCHAR texteditW[] = {'t','e','x','t','e','d','i','t',0};
@@ -102,7 +105,8 @@ typedef enum {
     ET_FORM,
     ET_FRAME,
     ET_OBJECT,
-    ET_EMBED
+    ET_EMBED,
+    ET_DIV
 } elem_type_t;
 
 static const IID * const none_iids[] = {
@@ -461,7 +465,8 @@ static const elem_type_info_t elem_type_infos[] = {
     {"FORM",      form_iids,        &DIID_DispHTMLFormElement},
     {"FRAME",     frame_iids,       &DIID_DispHTMLFrameElement},
     {"OBJECT",    object_iids,      &DIID_DispHTMLObjectElement},
-    {"EMBED",     embed_iids,       &DIID_DispHTMLEmbed}
+    {"EMBED",     embed_iids,       &DIID_DispHTMLEmbed},
+    {"DIV",       elem_iids,        NULL}
 };
 
 static const char *dbgstr_guid(REFIID riid)
@@ -2795,6 +2800,19 @@ static IHTMLDocument2 *_get_window_doc(unsigned line, IHTMLWindow2 *window)
     return doc;
 }
 
+#define doc_get_body(d) _doc_get_body(__LINE__,d)
+static IHTMLElement *_doc_get_body(unsigned line, IHTMLDocument2 *doc)
+{
+    IHTMLElement *elem;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_get_body(doc, &elem);
+    ok_(__FILE__,line)(hres == S_OK, "get_body failed: %08x\n", hres);
+    ok_(__FILE__,line)(elem != NULL, "body == NULL\n");
+
+    return elem;
+}
+
 #define test_create_elem(d,t) _test_create_elem(__LINE__,d,t)
 static IHTMLElement *_test_create_elem(unsigned line, IHTMLDocument2 *doc, const char *tag)
 {
@@ -3334,9 +3352,7 @@ static IHTMLTxtRange *test_create_body_range(IHTMLDocument2 *doc)
     IHTMLElement *elem;
     HRESULT hres;
 
-    hres = IHTMLDocument2_get_body(doc, &elem);
-    ok(hres == S_OK, "get_body failed: %08x\n", hres);
-
+    elem = doc_get_body(doc);
     hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLBodyElement, (void**)&body);
     IHTMLElement_Release(elem);
 
@@ -5581,8 +5597,7 @@ static void test_defaults(IHTMLDocument2 *doc)
     HRESULT hres;
     IHTMLElementCollection *collection;
 
-    hres = IHTMLDocument2_get_body(doc, &elem);
-    ok(hres == S_OK, "get_body failed: %08x\n", hres);
+    elem = doc_get_body(doc);
 
     hres = IHTMLDocument2_get_images(doc, NULL);
     ok(hres == E_INVALIDARG, "hres %08x\n", hres);
@@ -6274,8 +6289,7 @@ static void test_elems(IHTMLDocument2 *doc)
         IHTMLElement_Release(elem);
     }
 
-    hres = IHTMLDocument2_get_body(doc, &elem);
-    ok(hres == S_OK, "get_body failed: %08x\n", hres);
+    elem = doc_get_body(doc);
 
     node = get_first_child((IUnknown*)elem);
     ok(node != NULL, "node == NULL\n");
@@ -6524,8 +6538,7 @@ static void test_create_elems(IHTMLDocument2 *doc)
     test_ifaces((IUnknown*)elem, elem_iids);
     test_disp((IUnknown*)elem, &DIID_DispHTMLGenericElement, "[object]");
 
-    hres = IHTMLDocument2_get_body(doc, &body);
-    ok(hres == S_OK, "get_body failed: %08x\n", hres);
+    body = doc_get_body(doc);
     test_node_has_child((IUnknown*)body, VARIANT_FALSE);
 
     node = test_node_append_child((IUnknown*)body, (IUnknown*)elem);
@@ -6940,6 +6953,59 @@ static void test_frameset(IHTMLDocument2 *doc)
     IHTMLElement_Release(elem);
 }
 
+static IHTMLDocument2 *create_docfrag(IHTMLDocument2 *doc)
+{
+    IHTMLDocument2 *frag;
+    IHTMLDocument3 *doc3;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument3, (void**)&doc3);
+    ok(hres == S_OK, "Coult not get IHTMLDocument3 iface: %08x\n", hres);
+
+    hres = IHTMLDocument3_createDocumentFragment(doc3, &frag);
+    IHTMLDocument3_Release(doc3);
+    ok(hres == S_OK, "createDocumentFragment failed: %08x\n", hres);
+    ok(frag != NULL, "frag == NULL\n");
+
+    return frag;
+}
+
+static void test_docfrag(IHTMLDocument2 *doc)
+{
+    IHTMLElement *div, *br;
+    IHTMLElementCollection *col;
+    IHTMLDocument2 *frag;
+    HRESULT hres;
+
+    static const elem_type_t all_types[] = {
+        ET_HTML,
+        ET_HEAD,
+        ET_TITLE,
+        ET_BODY,
+        ET_DIV,
+        ET_BR
+    };
+
+    frag = create_docfrag(doc);
+
+    test_disp((IUnknown*)frag, &DIID_DispHTMLDocument, "[object]");
+
+    br = test_create_elem(doc, "BR");
+    test_node_append_child((IUnknown*)frag, (IUnknown*)br);
+    IHTMLElement_Release(br);
+
+    div = get_elem_by_id(doc, "divid", TRUE);
+    test_node_append_child((IUnknown*)div, (IUnknown*)frag);
+    IHTMLElement_Release(div);
+
+    hres = IHTMLDocument2_get_all(doc, &col);
+    ok(hres == S_OK, "get_all failed: %08x\n", hres);
+    test_elem_collection((IUnknown*)col, all_types, sizeof(all_types)/sizeof(all_types[0]));
+    IHTMLElementCollection_Release(col);
+
+    IHTMLDocument2_Release(frag);
+}
+
 static IHTMLDocument2 *notif_doc;
 static BOOL doc_complete;
 
@@ -7091,6 +7157,7 @@ START_TEST(dom)
     run_domtest(indent_test_str, test_indent);
     run_domtest(cond_comment_str, test_cond_comment);
     run_domtest(frameset_str, test_frameset);
+    run_domtest(emptydiv_str, test_docfrag);
 
     CoUninitialize();
 }

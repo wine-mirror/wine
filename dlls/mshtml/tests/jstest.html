@@ -31,6 +31,14 @@ function test_select_index() {
     ok(s[2] === null, "s[2] = " + s[2]);
 }
 
+function test_createDocumentFragment() {
+    var fragment = document.createDocumentFragment();
+
+    ok(typeof(fragment) === "object", "typeof(fragmend) = " + typeof(fragment));
+    ok(fragment.parentWindow === window, "fragment.parentWindow != window");
+    ok(fragment.nodeName === "#document-fragment", "fragment.nodeName = " + fragment.nodeName);
+}
+
 var globalVar = false;
 
 function runTest() {
@@ -42,6 +50,7 @@ function runTest() {
     test_removeAttribute(document.getElementById("divid"));
     test_removeAttribute(document.body);
     test_select_index();
+    test_createDocumentFragment();
 
     var r = window.execScript("globalVar = true;");
     ok(r === undefined, "execScript returned " + r);
