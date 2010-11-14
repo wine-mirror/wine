@@ -29,6 +29,10 @@ static NTSTATUS (WINAPI * pNtSetInformationProcess)(HANDLE, PROCESSINFOCLASS, PV
 static NTSTATUS (WINAPI * pNtSetInformationThread)(HANDLE, THREADINFOCLASS, PVOID, ULONG);
 static NTSTATUS (WINAPI * pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
 static NTSTATUS (WINAPI * pNtQueryVirtualMemory)(HANDLE, LPCVOID, MEMORY_INFORMATION_CLASS , PVOID , SIZE_T , SIZE_T *);
+static NTSTATUS (WINAPI * pNtCreateSection)(HANDLE*,ACCESS_MASK,const OBJECT_ATTRIBUTES*,const LARGE_INTEGER*,ULONG,ULONG,HANDLE);
+static NTSTATUS (WINAPI * pNtMapViewOfSection)(HANDLE,HANDLE,PVOID*,ULONG,SIZE_T,const LARGE_INTEGER*,SIZE_T*,SECTION_INHERIT,ULONG,ULONG);
+static NTSTATUS (WINAPI * pNtUnmapViewOfSection)(HANDLE,PVOID);
+static NTSTATUS (WINAPI * pNtClose)(HANDLE);
 static BOOL     (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 
 static BOOL is_wow64;
@@ -63,6 +67,10 @@ static BOOL InitFunctionPtrs(void)
     NTDLL_GET_PROC(NtSetInformationThread);
     NTDLL_GET_PROC(NtReadVirtualMemory);
     NTDLL_GET_PROC(NtQueryVirtualMemory);
+    NTDLL_GET_PROC(NtClose);
+    NTDLL_GET_PROC(NtCreateSection);
+    NTDLL_GET_PROC(NtMapViewOfSection);
+    NTDLL_GET_PROC(NtUnmapViewOfSection);
 
     pIsWow64Process = (void *)GetProcAddress(GetModuleHandle("kernel32.dll"), "IsWow64Process");
     if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
@@ -1068,6 +1076,67 @@ static void test_readvirtualmemory(void)
     CloseHandle(process);
 }
 
+static void test_mapprotection(void)
+{
+    HANDLE h;
+    void* addr;
+    MEMORY_BASIC_INFORMATION info;
+    ULONG oldflags, flagsize, flags = MEM_EXECUTE_OPTION_ENABLE;
+    LARGE_INTEGER size, offset;
+    NTSTATUS status;
+    SIZE_T retlen, count;
+    void (*f)(void);
+
+    if (!pNtClose) {
+        skip("No NtClose ... Win98\n");
+        return;
+    }
+    /* Switch to being a noexec unaware process */
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &oldflags, sizeof (oldflags), &flagsize);
+    if (status == STATUS_INVALID_PARAMETER) {
+        skip("Invalid Parameter on ProcessExecuteFlags query?\n");
+        return;
+    }
+    ok( (status == STATUS_SUCCESS) || (status == STATUS_INVALID_INFO_CLASS), "Expected STATUS_SUCCESS, got %08x\n", status);
+    status = pNtSetInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &flags, sizeof(flags) );
+    ok( (status == STATUS_SUCCESS) || (status == STATUS_INVALID_INFO_CLASS), "Expected STATUS_SUCCESS, got %08x\n", status);
+
+    size.u.LowPart  = 0x1000;
+    size.u.HighPart = 0;
+    status = pNtCreateSection ( &h,
+        STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_MAP_EXECUTE,
+        NULL,
+        &size,
+        PAGE_READWRITE,
+        SEC_COMMIT | SEC_NOCACHE,
+        0
+    );
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+
+    offset.u.LowPart  = 0;
+    offset.u.HighPart = 0;
+    count = 0x1000;
+    addr = NULL;
+    status = pNtMapViewOfSection ( h, GetCurrentProcess(), &addr, 0, 0, &offset, &count, ViewShare, 0, PAGE_READWRITE);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    memset (addr, 0xc3, 1); /* lret ... in both i386 and x86_64 */
+    trace("trying to execute code in the readwrite only mapped anon file...\n");
+    f = addr;f();
+    trace("...done.\n");
+
+    status = pNtQueryVirtualMemory( GetCurrentProcess(), addr, MemoryBasicInformation, &info, sizeof(info), &retlen );
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( retlen == sizeof(info), "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok(info.Protect == PAGE_READWRITE, "addr.Protect is not PAGE_READWRITE, but 0x%x\n", info.Protect);
+
+    status = pNtUnmapViewOfSection (GetCurrentProcess(), addr);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    pNtClose (h);
+
+    /* Switch back */
+    pNtSetInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &oldflags, sizeof(oldflags) );
+}
+
 static void test_queryvirtualmemory(void)
 {
     NTSTATUS status;
@@ -1309,8 +1378,12 @@ START_TEST(info)
     /* belongs into it's own file */
     trace("Starting test_readvirtualmemory()\n");
     test_readvirtualmemory();
+
     trace("Starting test_queryvirtualmemory()\n");
     test_queryvirtualmemory();
+
+    trace("Starting test_mapprotection()\n");
+    test_mapprotection();
 
     trace("Starting test_affinity()\n");
     test_affinity();
