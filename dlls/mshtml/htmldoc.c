@@ -140,19 +140,17 @@ static HRESULT WINAPI HTMLDocument_get_body(IHTMLDocument2 *iface, IHTMLElement 
     HTMLDocument *This = HTMLDOC_THIS(iface);
     nsIDOMHTMLElement *nsbody = NULL;
     HTMLDOMNode *node;
-    nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->doc_node->nsdoc) {
-        WARN("NULL nsdoc\n");
-        return E_UNEXPECTED;
-    }
+    if(This->doc_node->nsdoc) {
+        nsresult nsres;
 
-    nsres = nsIDOMHTMLDocument_GetBody(This->doc_node->nsdoc, &nsbody);
-    if(NS_FAILED(nsres)) {
-        TRACE("Could not get body: %08x\n", nsres);
-        return E_UNEXPECTED;
+        nsres = nsIDOMHTMLDocument_GetBody(This->doc_node->nsdoc, &nsbody);
+        if(NS_FAILED(nsres)) {
+            TRACE("Could not get body: %08x\n", nsres);
+            return E_UNEXPECTED;
+        }
     }
 
     if(nsbody) {

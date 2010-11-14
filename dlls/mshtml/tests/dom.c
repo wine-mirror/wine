@@ -6972,7 +6972,7 @@ static IHTMLDocument2 *create_docfrag(IHTMLDocument2 *doc)
 
 static void test_docfrag(IHTMLDocument2 *doc)
 {
-    IHTMLElement *div, *br;
+    IHTMLElement *div, *body, *br;
     IHTMLElementCollection *col;
     IHTMLDocument2 *frag;
     HRESULT hres;
@@ -6989,6 +6989,11 @@ static void test_docfrag(IHTMLDocument2 *doc)
     frag = create_docfrag(doc);
 
     test_disp((IUnknown*)frag, &DIID_DispHTMLDocument, "[object]");
+
+    body = (void*)0xdeadbeef;
+    hres = IHTMLDocument2_get_body(frag, &body);
+    ok(hres == S_OK, "get_body failed: %08x\n", hres);
+    ok(!body, "body != NULL\n");
 
     br = test_create_elem(doc, "BR");
     test_node_append_child((IUnknown*)frag, (IUnknown*)br);
