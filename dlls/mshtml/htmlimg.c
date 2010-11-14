@@ -645,6 +645,7 @@ static HRESULT HTMLImgElement_get_readystate(HTMLDOMNode *iface, BSTR *p)
 static const NodeImplVtbl HTMLImgElementImplVtbl = {
     HTMLImgElement_QI,
     HTMLImgElement_destructor,
+    HTMLElement_clone,
     NULL,
     NULL,
     NULL,

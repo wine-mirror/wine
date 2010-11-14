@@ -187,11 +187,21 @@ static void HTMLDOMTextNode_destructor(HTMLDOMNode *iface)
     HTMLDOMNode_destructor(&This->node);
 }
 
+static HRESULT HTMLDOMTextNode_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
+{
+    HTMLDOMTextNode *This = HTMLTEXT_NODE_THIS(iface);
+
+    *ret = HTMLDOMTextNode_Create(This->node.doc, nsnode);
+    IHTMLDOMNode_AddRef(HTMLDOMNODE(*ret));
+    return S_OK;
+}
+
 #undef HTMLTEXT_NODE_THIS
 
 static const NodeImplVtbl HTMLDOMTextNodeImplVtbl = {
     HTMLDOMTextNode_QI,
-    HTMLDOMTextNode_destructor
+    HTMLDOMTextNode_destructor,
+    HTMLDOMTextNode_clone
 };
 
 static const tid_t HTMLDOMTextNode_iface_tids[] = {

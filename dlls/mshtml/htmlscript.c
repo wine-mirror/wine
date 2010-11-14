@@ -321,6 +321,7 @@ static HRESULT HTMLScriptElement_get_readystate(HTMLDOMNode *iface, BSTR *p)
 static const NodeImplVtbl HTMLScriptElementImplVtbl = {
     HTMLScriptElement_QI,
     HTMLScriptElement_destructor,
+    HTMLElement_clone,
     NULL,
     NULL,
     NULL,

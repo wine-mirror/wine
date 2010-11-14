@@ -444,6 +444,7 @@ static HRESULT HTMLTextAreaElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_
 static const NodeImplVtbl HTMLTextAreaElementImplVtbl = {
     HTMLTextAreaElement_QI,
     HTMLTextAreaElement_destructor,
+    HTMLElement_clone,
     NULL,
     NULL,
     HTMLTextAreaElementImpl_put_disabled,

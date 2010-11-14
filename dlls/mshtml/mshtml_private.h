@@ -513,6 +513,7 @@ HRESULT set_http_header(struct list*,const WCHAR*,int,const WCHAR*,int);
 typedef struct {
     HRESULT (*qi)(HTMLDOMNode*,REFIID,void**);
     void (*destructor)(HTMLDOMNode*);
+    HRESULT (*clone)(HTMLDOMNode*,nsIDOMNode*,HTMLDOMNode**);
     event_target_t **(*get_event_target)(HTMLDOMNode*);
     HRESULT (*call_event)(HTMLDOMNode*,DWORD,BOOL*);
     HRESULT (*put_disabled)(HTMLDOMNode*,VARIANT_BOOL);
@@ -849,6 +850,7 @@ void HTMLDOMNode_destructor(HTMLDOMNode*);
 
 HRESULT HTMLElement_QI(HTMLDOMNode*,REFIID,void**);
 void HTMLElement_destructor(HTMLDOMNode*);
+HRESULT HTMLElement_clone(HTMLDOMNode*,nsIDOMNode*,HTMLDOMNode**);
 
 HRESULT HTMLFrameBase_QI(HTMLFrameBase*,REFIID,void**);
 void HTMLFrameBase_destructor(HTMLFrameBase*);

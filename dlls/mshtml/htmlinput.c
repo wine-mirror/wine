@@ -1193,6 +1193,7 @@ static HRESULT HTMLInputElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BOO
 static const NodeImplVtbl HTMLInputElementImplVtbl = {
     HTMLInputElement_QI,
     HTMLInputElement_destructor,
+    HTMLElement_clone,
     NULL,
     HTMLInputElementImpl_call_event,
     HTMLInputElementImpl_put_disabled,

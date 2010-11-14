@@ -251,7 +251,8 @@ static void HTMLStyleElement_destructor(HTMLDOMNode *iface)
 
 static const NodeImplVtbl HTMLStyleElementImplVtbl = {
     HTMLStyleElement_QI,
-    HTMLStyleElement_destructor
+    HTMLStyleElement_destructor,
+    HTMLElement_clone
 };
 
 static const tid_t HTMLStyleElement_iface_tids[] = {

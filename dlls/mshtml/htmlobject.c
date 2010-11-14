@@ -428,7 +428,8 @@ static void HTMLObjectElement_destructor(HTMLDOMNode *iface)
 
 static const NodeImplVtbl HTMLObjectElementImplVtbl = {
     HTMLObjectElement_QI,
-    HTMLObjectElement_destructor
+    HTMLObjectElement_destructor,
+    HTMLElement_clone
 };
 
 static const tid_t HTMLObjectElement_iface_tids[] = {

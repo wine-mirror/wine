@@ -251,7 +251,8 @@ static void HTMLEmbedElement_destructor(HTMLDOMNode *iface)
 
 static const NodeImplVtbl HTMLEmbedElementImplVtbl = {
     HTMLEmbedElement_QI,
-    HTMLEmbedElement_destructor
+    HTMLEmbedElement_destructor,
+    HTMLElement_clone
 };
 
 static const tid_t HTMLEmbedElement_iface_tids[] = {

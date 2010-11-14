@@ -613,6 +613,7 @@ static HRESULT HTMLSelectElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid
 static const NodeImplVtbl HTMLSelectElementImplVtbl = {
     HTMLSelectElement_QI,
     HTMLSelectElement_destructor,
+    HTMLElement_clone,
     NULL,
     NULL,
     HTMLSelectElementImpl_put_disabled,

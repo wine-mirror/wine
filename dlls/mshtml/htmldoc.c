@@ -1898,11 +1898,19 @@ static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
     destroy_htmldoc(&This->basedoc);
 }
 
+static HRESULT HTMLDocumentNode_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
+{
+    HTMLDocumentNode *This = HTMLDOCNODE_NODE_THIS(iface);
+    FIXME("%p\n", This);
+    return E_NOTIMPL;
+}
+
 #undef HTMLDOCNODE_NODE_THIS
 
 static const NodeImplVtbl HTMLDocumentNodeImplVtbl = {
     HTMLDocumentNode_QI,
-    HTMLDocumentNode_destructor
+    HTMLDocumentNode_destructor,
+    HTMLDocumentNode_clone
 };
 
 static const tid_t HTMLDocumentNode_iface_tids[] = {

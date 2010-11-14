@@ -792,6 +792,7 @@ static event_target_t **HTMLBodyElement_get_event_target(HTMLDOMNode *iface)
 static const NodeImplVtbl HTMLBodyElementImplVtbl = {
     HTMLBodyElement_QI,
     HTMLBodyElement_destructor,
+    HTMLElement_clone,
     HTMLBodyElement_get_event_target
 };
 

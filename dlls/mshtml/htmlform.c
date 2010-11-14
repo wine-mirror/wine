@@ -638,6 +638,7 @@ static HRESULT HTMLFormElement_invoke(HTMLDOMNode *iface,
 static const NodeImplVtbl HTMLFormElementImplVtbl = {
     HTMLFormElement_QI,
     HTMLFormElement_destructor,
+    HTMLElement_clone,
     NULL,
     NULL,
     NULL,

@@ -258,6 +258,7 @@ static HRESULT HTMLFrameElement_bind_to_tree(HTMLDOMNode *iface)
 static const NodeImplVtbl HTMLFrameElementImplVtbl = {
     HTMLFrameElement_QI,
     HTMLFrameElement_destructor,
+    HTMLElement_clone,
     NULL,
     NULL,
     NULL,

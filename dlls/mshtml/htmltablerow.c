@@ -297,7 +297,8 @@ static void HTMLTableRow_destructor(HTMLDOMNode *iface)
 
 static const NodeImplVtbl HTMLTableRowImplVtbl = {
     HTMLTableRow_QI,
-    HTMLTableRow_destructor
+    HTMLTableRow_destructor,
+    HTMLElement_clone
 };
 
 static const tid_t HTMLTableRow_iface_tids[] = {

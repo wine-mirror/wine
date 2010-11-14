@@ -515,7 +515,8 @@ static void HTMLAnchorElement_destructor(HTMLDOMNode *iface)
 
 static const NodeImplVtbl HTMLAnchorElementImplVtbl = {
     HTMLAnchorElement_QI,
-    HTMLAnchorElement_destructor
+    HTMLAnchorElement_destructor,
+    HTMLElement_clone
 };
 
 static const tid_t HTMLAnchorElement_iface_tids[] = {

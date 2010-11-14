@@ -33,6 +33,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 static HTMLDOMNode *get_node_obj(HTMLDocumentNode*,IUnknown*);
+static HTMLDOMNode *create_node(HTMLDocumentNode*,nsIDOMNode*);
 
 typedef struct {
     DispatchEx dispex;
@@ -536,9 +537,10 @@ static HRESULT WINAPI HTMLDOMNode_cloneNode(IHTMLDOMNode *iface, VARIANT_BOOL fD
                                             IHTMLDOMNode **clonedNode)
 {
     HTMLDOMNode *This = HTMLDOMNODE_THIS(iface);
+    HTMLDOMNode *new_node;
     nsIDOMNode *nsnode;
-    HTMLDOMNode *node;
     nsresult nsres;
+    HRESULT hres;
 
     TRACE("(%p)->(%x %p)\n", This, fDeep, clonedNode);
 
@@ -548,9 +550,11 @@ static HRESULT WINAPI HTMLDOMNode_cloneNode(IHTMLDOMNode *iface, VARIANT_BOOL fD
         return E_FAIL;
     }
 
-    node = get_node(This->doc, nsnode, TRUE);
-    IHTMLDOMNode_AddRef(HTMLDOMNODE(node));
-    *clonedNode = HTMLDOMNODE(node);
+    hres = This->vtbl->clone(This, nsnode, &new_node);
+    if(FAILED(hres))
+        return hres;
+
+    *clonedNode = HTMLDOMNODE(new_node);
     return S_OK;
 }
 
@@ -904,9 +908,17 @@ void HTMLDOMNode_destructor(HTMLDOMNode *This)
         release_event_target(This->event_target);
 }
 
+static HRESULT HTMLDOMNode_clone(HTMLDOMNode *This, nsIDOMNode *nsnode, HTMLDOMNode **ret)
+{
+    *ret = create_node(This->doc, nsnode);
+    IHTMLDOMNode_AddRef(HTMLDOMNODE(*ret));
+    return S_OK;
+}
+
 static const NodeImplVtbl HTMLDOMNodeImplVtbl = {
     HTMLDOMNode_QI,
-    HTMLDOMNode_destructor
+    HTMLDOMNode_destructor,
+    HTMLDOMNode_clone
 };
 
 void HTMLDOMNode_Init(HTMLDocumentNode *doc, HTMLDOMNode *node, nsIDOMNode *nsnode)

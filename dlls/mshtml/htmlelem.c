@@ -1601,9 +1601,22 @@ void HTMLElement_destructor(HTMLDOMNode *iface)
     HTMLDOMNode_destructor(&This->node);
 }
 
+HRESULT HTMLElement_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
+{
+    HTMLElement *This = HTMLELEM_NODE_THIS(iface);
+    HTMLElement *new_elem;
+
+    new_elem = HTMLElement_Create(This->node.doc, nsnode, FALSE);
+    IHTMLElement_AddRef(HTMLELEM(new_elem));
+
+    *ret = &new_elem->node;
+    return S_OK;
+}
+
 static const NodeImplVtbl HTMLElementImplVtbl = {
     HTMLElement_QI,
-    HTMLElement_destructor
+    HTMLElement_destructor,
+    HTMLElement_clone
 };
 
 static const tid_t HTMLElement_iface_tids[] = {
