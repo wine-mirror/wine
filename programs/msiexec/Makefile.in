@@ -9,6 +9,18 @@ C_SRCS = \
 
 RC_SRCS = rsrc.rc
 
+MANPAGES = msiexec.man
+
 SVG_SRCS = msiexec.svg
 
 @MAKE_PROG_RULES@
+
+all: $(MANPAGES)
+
+install-man-pages:: $(MANPAGES) $(DESTDIR)$(mandir)/man$(prog_manext)
+	$(INSTALL_DATA) msiexec.man $(DESTDIR)$(mandir)/man$(prog_manext)/msiexec.$(prog_manext)
+
+@WOW64_DISABLE@ install install-lib:: install-man-pages
+
+uninstall::
+	$(RM) $(DESTDIR)$(mandir)/man$(prog_manext)/msiexec.$(prog_manext)
