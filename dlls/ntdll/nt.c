@@ -269,7 +269,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
         0,    /* TokenSandBoxInert */
         0,    /* TokenAuditPolicy */
         0,    /* TokenOrigin */
-        0,    /* TokenElevationType */
+        sizeof(TOKEN_ELEVATION_TYPE), /* TokenElevationType */
         0,    /* TokenLinkedToken */
         sizeof(TOKEN_ELEVATION), /* TokenElevation */
         0,    /* TokenHasRestrictions */
@@ -506,6 +506,13 @@ NTSTATUS WINAPI NtQueryInformationToken(
             }
         }
         SERVER_END_REQ;
+        break;
+    case TokenElevationType:
+        {
+            TOKEN_ELEVATION_TYPE *elevation_type = tokeninfo;
+            FIXME("QueryInformationToken( ..., TokenElevationType, ...) semi-stub\n");
+            *elevation_type = TokenElevationTypeFull;
+        }
         break;
     case TokenElevation:
         {
