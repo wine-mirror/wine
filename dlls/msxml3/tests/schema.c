@@ -642,7 +642,7 @@ static void test_collection_content(void)
         content[i] = bstr;
 
         for (j = 0; j < i; ++j)
-            ok(lstrcmpW(content[j], bstr), "got duplicate entry\n");
+            ok(winetest_strcmpW(content[j], bstr), "got duplicate entry\n");
     }
 
     for (i = 0; i < 3; ++i)
@@ -660,7 +660,7 @@ static void test_collection_content(void)
             ok(bstr != NULL && *bstr, "expected non-empty string\n");
 
             for (j = 0; j < i; ++j)
-                ok(lstrcmpW(content[j], bstr), "got duplicate entry\n");
+                ok(winetest_strcmpW(content[j], bstr), "got duplicate entry\n");
             content[i] = bstr;
         }
 
