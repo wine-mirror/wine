@@ -211,6 +211,13 @@ static HRESULT HTMLFrameElement_get_document(HTMLDOMNode *iface, IDispatch **p)
     return S_OK;
 }
 
+static HRESULT HTMLFrameElement_get_readystate(HTMLDOMNode *iface, BSTR *p)
+{
+    HTMLFrameElement *This = HTMLFRAME_NODE_THIS(iface);
+
+    return IHTMLFrameBase2_get_readyState(HTMLFRAMEBASE2(&This->framebase), p);
+}
+
 static HRESULT HTMLFrameElement_get_dispid(HTMLDOMNode *iface, BSTR name,
         DWORD grfdex, DISPID *pid)
 {
@@ -264,7 +271,7 @@ static const NodeImplVtbl HTMLFrameElementImplVtbl = {
     NULL,
     NULL,
     HTMLFrameElement_get_document,
-    NULL,
+    HTMLFrameElement_get_readystate,
     HTMLFrameElement_get_dispid,
     HTMLFrameElement_invoke,
     HTMLFrameElement_bind_to_tree

@@ -40,7 +40,7 @@ typedef struct {
     nsIDOMHTMLObjectElement *nsobject;
 } HTMLObjectElement;
 
-#define HTMLOBJECT(x)  (&(x)->lpIHTMLObjectElementVtbl)
+#define HTMLOBJECT(x)  ((IHTMLObjectElement*)  &(x)->lpIHTMLObjectElementVtbl)
 
 #define HTMLOBJECT_THIS(iface) DEFINE_THIS(HTMLObjectElement, IHTMLObjectElement, iface)
 
@@ -424,12 +424,25 @@ static void HTMLObjectElement_destructor(HTMLDOMNode *iface)
     HTMLElement_destructor(&This->element.node);
 }
 
+static HRESULT HTMLObjectElement_get_readystate(HTMLDOMNode *iface, BSTR *p)
+{
+    HTMLObjectElement *This = HTMLOBJECT_NODE_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
 #undef HTMLOBJECT_NODE_THIS
 
 static const NodeImplVtbl HTMLObjectElementImplVtbl = {
     HTMLObjectElement_QI,
     HTMLObjectElement_destructor,
-    HTMLElement_clone
+    HTMLElement_clone,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    HTMLObjectElement_get_readystate
 };
 
 static const tid_t HTMLObjectElement_iface_tids[] = {
