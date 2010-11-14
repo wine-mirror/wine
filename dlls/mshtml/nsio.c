@@ -1986,32 +1986,27 @@ static nsresult NSAPI nsURI_GetPath(nsIURL *iface, nsACString *aPath)
 static nsresult NSAPI nsURI_SetPath(nsIURL *iface, const nsACString *aPath)
 {
     nsWineURI *This = NSURI_THIS(iface);
-    const char *path;
+    const char *patha;
+    WCHAR *path;
+    HRESULT hres;
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aPath));
 
-    invalidate_uri(This);
+    if(!ensure_uri_builder(This))
+        return NS_ERROR_UNEXPECTED;
 
-    nsACString_GetData(aPath, &path);
-    if(This->wine_url) {
-        WCHAR new_url[INTERNET_MAX_URL_LENGTH];
-        DWORD size = sizeof(new_url)/sizeof(WCHAR);
-        LPWSTR pathw;
-        HRESULT hres;
+    nsACString_GetData(aPath, &patha);
+    path = heap_strdupAtoW(patha);
+    if(!path)
+        return NS_ERROR_OUT_OF_MEMORY;
 
-        pathw = heap_strdupAtoW(path);
-        hres = UrlCombineW(This->wine_url, pathw, new_url, &size, 0);
-        heap_free(pathw);
-        if(SUCCEEDED(hres))
-            set_wine_url(This, new_url);
-        else
-            WARN("UrlCombine failed: %08x\n", hres);
-    }
+    hres = IUriBuilder_SetPath(This->uri_builder, path);
+    heap_free(path);
+    if(FAILED(hres))
+        return NS_ERROR_UNEXPECTED;
 
-    if(!This->nsuri)
-        return NS_OK;
-
-    return nsIURI_SetPath(This->nsuri, aPath);
+    sync_wine_url(This);
+    return NS_OK;
 }
 
 static nsresult NSAPI nsURI_Equals(nsIURL *iface, nsIURI *other, PRBool *_retval)
