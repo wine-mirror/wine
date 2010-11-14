@@ -1,0 +1,104 @@
+.TH MSIEXEC 1 "November 2010" "@PACKAGE_STRING@" "Wine Programs"
+.SH NAME
+msiexec \- Wine MSI Installer
+.SH SYNOPSIS
+.BR "msiexec "\fIcommand\fR " \fI{required parameter}\fR \fI[optional parameter]\fR"...
+.SH DESCRIPTION
+.B msiexec
+is the Wine MSI installer, which is command line
+compatible with its Microsoft Windows counterpart.
+.SH INSTALL OPTIONS
+.IP "\fl/i {package|productcode} [property=foobar]\fR"
+Install {package|productcode} with property=foobar.
+.IP "\fl/a {package|productcode} [property=foobar]\fR"
+Install {package|productcode} in administrator (network) mode.
+.IP "\fx/x {package|productcode} [property=foobar]\fR"
+Uninstall {package|productcode} with property=foobar.
+.IP "\fx/uninstall {package|productcode} [property=foobar]\fR"
+Same as /x.
+.SH REPAIR OPTIONS
+.IP "\fl/f [p|o|e|d|c|a|u|m|s|v] {package|productcode}\fR"
+Repair an installation. Default options are \'omus\'
+.IP "\flp\fR"
+Reinstall the file if it is missing.
+.IP "\flo\fR"
+Reinstall the file if it is missing or if any older version is installed.
+.IP "\fle\fR"
+Reinstall the file if it is missing, or if the installed version is equal or older.
+.IP "\fld\fR"
+Reinstall the file if it is missing or a different version is installed.
+.IP "\flc\fR"
+Reinstall the file if it is missing or the checksum does not match.
+.IP "\fla\fR"
+Reinstall all files.
+.IP "\flu\fR"
+Rewrite all required user registry entries.
+.IP "\flm\fR"
+Rewrite all required machine registry entries.
+.IP "\fls\fR"
+Overwrite any conflicting shortcuts.
+.IP "\flv\fR"
+Recache the local installation package from the source installation package.
+.SH PATCHING
+.IP "\fx/p {patch} [property=foobar]\fR"
+Apply {patch}. This should not be used with any of the above options.
+.SH UI CONTOL
+.IP "\fx/q{|n|b|r|f}\fR"
+These options allow changing the behavior of the UI when installing MSI packages.
+.IP "\fx/q\fR"
+Show no UI.
+.IP "\fx/qn\fR"
+Same as /q.
+.IP "\fx/qb\fR"
+Show a basic UI.
+.IP "\fx/qr\fR"
+Shows a reduced user UI.
+.IP "\fx/qf\fR"
+Shows a full UI.
+.SH LOGGING
+.IP "\fl/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] {logfile}\fR"
+Enable logging to {logfile}. Defaults are \'iwearmo\'.
+.IP "\fl*\fR"
+Enable all logging options except \'v\' and \'x\'.
+.IP "\fli\fR"
+Log status messages.
+.IP "\flw\fR"
+Log nonfatal warnings.
+.IP "\fle\fR"
+Log all error messages.
+.IP "\fla\fR"
+Log start of actions.
+.IP "\flr\fR"
+Log action specifc records.
+.IP "\flu\fR"
+Log user requests.
+.IP "\flc\fR"
+Log initial UI parameters.
+.IP "\flm\fR"
+Log out of memory errors.
+.IP "\flo\fR"
+Log out of diskspace messages.
+.IP "\flp \fR"
+Log terminal properties.
+.IP "\flv \fR"
+Verbose logging.
+.IP "\flx \fR"
+Log extra debugging messages.
+.IP "\fl+ \fR"
+Append logging to existing file.
+.IP "\fl! \fR"
+Flush each line to log.
+.SH OTHER OPTIONS
+.IP "\fx/h\fR"
+Show help.
+.IP "\fx/j[u|m] {package|productcode} [/t transform] [/g languageid] \fR"
+Advertise {package} optionally with /t {transform} and /g {languageid}.
+.IP "\fx/y\fR"
+Register MSI service.
+.IP "\fx/z\fR"
+Unregister MSI service.
+.IP "\fx/?\fR"
+Same as /h.
+
+.SH "SEE ALSO"
+.BR wine(1),
