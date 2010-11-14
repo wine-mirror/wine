@@ -1693,13 +1693,10 @@ static nsrefcnt NSAPI nsURI_Release(nsIURL *iface)
 static nsresult NSAPI nsURI_GetSpec(nsIURL *iface, nsACString *aSpec)
 {
     nsWineURI *This = NSURI_THIS(iface);
-    char speca[INTERNET_MAX_URL_LENGTH];
 
     TRACE("(%p)->(%p)\n", This, aSpec);
 
-    WideCharToMultiByte(CP_ACP, 0, This->wine_url, -1, speca, sizeof(speca), NULL, NULL);
-    nsACString_SetData(aSpec, speca);
-    return NS_OK;
+    return get_uri_string(This, Uri_PROPERTY_DISPLAY_URI, aSpec);
 }
 
 static nsresult NSAPI nsURI_SetSpec(nsIURL *iface, const nsACString *aSpec)
