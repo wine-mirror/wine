@@ -565,6 +565,11 @@ static HRESULT WINAPI HTMLDocument_get_location(IHTMLDocument2 *iface, IHTMLLoca
 
     TRACE("(%p)->(%p)\n", This, p);
 
+    if(!This->doc_node->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
+    }
+
     return IHTMLWindow2_get_location(HTMLWINDOW2(This->window), p);
 }
 

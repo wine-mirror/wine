@@ -6974,6 +6974,7 @@ static void test_docfrag(IHTMLDocument2 *doc)
 {
     IHTMLElement *div, *body, *br;
     IHTMLElementCollection *col;
+    IHTMLLocation *location;
     IHTMLDocument2 *frag;
     HRESULT hres;
 
@@ -6994,6 +6995,11 @@ static void test_docfrag(IHTMLDocument2 *doc)
     hres = IHTMLDocument2_get_body(frag, &body);
     ok(hres == S_OK, "get_body failed: %08x\n", hres);
     ok(!body, "body != NULL\n");
+
+    location = (void*)0xdeadbeef;
+    hres = IHTMLDocument2_get_location(frag, &location);
+    ok(hres == E_UNEXPECTED, "get_location failed: %08x\n", hres);
+    ok(location == (void*)0xdeadbeef, "location changed\n");
 
     br = test_create_elem(doc, "BR");
     test_node_append_child((IUnknown*)frag, (IUnknown*)br);
