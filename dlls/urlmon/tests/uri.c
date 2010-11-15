@@ -30,6 +30,7 @@
 #include "urlmon.h"
 #include "shlwapi.h"
 #include "wininet.h"
+#include "strsafe.h"
 
 #define URI_STR_PROPERTY_COUNT Uri_PROPERTY_STRING_LAST+1
 #define URI_DWORD_PROPERTY_COUNT (Uri_PROPERTY_DWORD_LAST - Uri_PROPERTY_DWORD_START)+1
@@ -5897,6 +5898,32 @@ static const uri_combine_test uri_combine_tests[] = {
     }
 };
 
+typedef struct _uri_parse_test {
+    const char  *uri;
+    DWORD       uri_flags;
+    PARSEACTION action;
+    DWORD       flags;
+    const char  *property;
+    HRESULT     expected;
+    BOOL        todo;
+} uri_parse_test;
+
+static const uri_parse_test uri_parse_tests[] = {
+    /* PARSE_CANONICALIZE tests. */
+    {"zip://google.com/test<|>",0,PARSE_CANONICALIZE,0,"zip://google.com/test<|>",S_OK,FALSE},
+    {"http://google.com/test<|>",0,PARSE_CANONICALIZE,0,"http://google.com/test%3C%7C%3E",S_OK,FALSE},
+    {"http://google.com/%30%23%3F",0,PARSE_CANONICALIZE,URL_UNESCAPE,"http://google.com/0#?",S_OK,FALSE},
+    {"test <|>",Uri_CREATE_ALLOW_RELATIVE,PARSE_CANONICALIZE,URL_ESCAPE_UNSAFE,"test %3C%7C%3E",S_OK,FALSE},
+    {"test <|>",Uri_CREATE_ALLOW_RELATIVE,PARSE_CANONICALIZE,URL_ESCAPE_SPACES_ONLY,"test%20<|>",S_OK,FALSE},
+    {"test%20<|>",Uri_CREATE_ALLOW_RELATIVE,PARSE_CANONICALIZE,URL_UNESCAPE|URL_ESCAPE_UNSAFE,"test%20%3C%7C%3E",S_OK,FALSE},
+    {"http://google.com/%20",0,PARSE_CANONICALIZE,URL_ESCAPE_PERCENT,"http://google.com/%2520",S_OK,FALSE},
+    {"http://google.com/test/../",Uri_CREATE_NO_CANONICALIZE,PARSE_CANONICALIZE,URL_DONT_SIMPLIFY,"http://google.com/test/../",S_OK,FALSE},
+    {"http://google.com/test/../",Uri_CREATE_NO_CANONICALIZE,PARSE_CANONICALIZE,URL_NO_META,"http://google.com/test/../",S_OK,FALSE},
+    {"http://google.com/test/../",Uri_CREATE_NO_CANONICALIZE,PARSE_CANONICALIZE,0,"http://google.com/",S_OK,FALSE},
+    {"zip://google.com/test/../",Uri_CREATE_NO_CANONICALIZE,PARSE_CANONICALIZE,0,"zip://google.com/",S_OK,FALSE},
+    {"file:///c:/test/../test",Uri_CREATE_NO_CANONICALIZE,PARSE_CANONICALIZE,URL_DONT_SIMPLIFY,"file:///c:/test/../test",S_OK,FALSE}
+};
+
 static inline LPWSTR a2w(LPCSTR str) {
     LPWSTR ret = NULL;
 
@@ -9456,6 +9483,8 @@ static void test_CoInternetParseIUri_InvalidArgs(void) {
     hr = pCreateUri(http_urlW, 0, 0, &uri);
     ok(SUCCEEDED(hr), "Error: CreateUri returned 0x%08x.\n", hr);
     if(SUCCEEDED(hr)) {
+        DWORD expected_len;
+
         result = -1;
         hr = pCoInternetParseIUri(uri, PARSE_CANONICALIZE, 0, NULL, 0, &result, 0);
         ok(hr == E_INVALIDARG, "Error: CoInternetParseIUri returned 0x%08x, expected 0x%08x.\n",
@@ -9489,8 +9518,64 @@ static void test_CoInternetParseIUri_InvalidArgs(void) {
         ok(hr == E_FAIL, "Error: CoInternetParseIUri returned 0x%08x, expected 0x%08x.\n",
             hr, E_FAIL);
         ok(!result, "Error: Expected 'result' to be 0, but was %d.\n", result);
+
+        expected_len = lstrlenW(http_urlW);
+        result = -1;
+        hr = pCoInternetParseIUri(uri, PARSE_CANONICALIZE, 0, tmp, 3, &result, 0);
+        ok(hr == STRSAFE_E_INSUFFICIENT_BUFFER,
+            "Error: CoInternetParseIUri returned 0x%08x, expected 0x%08x.\n",
+            hr, STRSAFE_E_INSUFFICIENT_BUFFER);
+        ok(result == expected_len, "Error: Expected 'result' to be %d, but was %d instead.\n",
+            expected_len, result);
     }
     if(uri) IUri_Release(uri);
+}
+
+static void test_CoInternetParseIUri(void) {
+    DWORD i;
+
+    for(i = 0; i < sizeof(uri_parse_tests)/sizeof(uri_parse_tests[0]); ++i) {
+        HRESULT hr;
+        IUri *uri;
+        LPWSTR uriW;
+        uri_parse_test test = uri_parse_tests[i];
+
+        uriW = a2w(test.uri);
+        hr = pCreateUri(uriW, test.uri_flags, 0, &uri);
+        ok(SUCCEEDED(hr), "Error: CreateUri returned 0x%08x on uri_parse_tests[%d].\n", hr, i);
+        if(SUCCEEDED(hr)) {
+            WCHAR result[INTERNET_MAX_URL_LENGTH+1];
+            DWORD result_len = -1;
+
+            hr = pCoInternetParseIUri(uri, test.action, test.flags, result, INTERNET_MAX_URL_LENGTH+1, &result_len, 0);
+            if(test.todo) {
+                todo_wine {
+                    ok(hr == test.expected,
+                        "Error: CoInternetParseIUri returned 0x%08x, expected 0x%08x on uri_parse_tests[%d].\n",
+                        hr, test.expected, i);
+                }
+            } else {
+                ok(hr == test.expected,
+                    "Error: CoInternetParseIUri returned 0x%08x, expected 0x%08x on uri_parse_tests[%d].\n",
+                    hr, test.expected, i);
+            }
+            if(SUCCEEDED(hr)) {
+                DWORD len = lstrlenA(test.property);
+                ok(!strcmp_aw(test.property, result),
+                    "Error: Expected %s but got %s instead on uri_parse_tests[%d].\n",
+                    test.property, wine_dbgstr_w(result), i);
+                ok(len == result_len,
+                    "Error: Expected %d, but got %d instead on uri_parse_tests[%d].\n",
+                    len, result_len, i);
+            } else {
+                ok(!result_len,
+                    "Error: Expected 'result_len' to be 0, but was %d on uri_parse_tests[%d].\n",
+                    result_len, i);
+            }
+        }
+        if(uri) IUri_Release(uri);
+        heap_free(uriW);
+    }
 }
 
 START_TEST(uri) {
@@ -9584,6 +9669,9 @@ START_TEST(uri) {
 
     trace("test CoInternetParseIUri Invalid Args...\n");
     test_CoInternetParseIUri_InvalidArgs();
+
+    trace("test CoInternetParseIUri...\n");
+    test_CoInternetParseIUri();
 
     register_protocols();
 

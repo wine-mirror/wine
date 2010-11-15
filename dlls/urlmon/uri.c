@@ -23,6 +23,8 @@
 #define NO_SHLWAPI_REG
 #include "shlwapi.h"
 
+#include "strsafe.h"
+
 #define UINT_MAX 0xffffffff
 #define USHORT_MAX 0xffff
 
@@ -6081,6 +6083,109 @@ HRESULT WINAPI CoInternetCombineUrlEx(IUri *pBaseUri, LPCWSTR pwzRelativeUrl, DW
     return hr;
 }
 
+static HRESULT parse_canonicalize(const Uri *uri, DWORD flags, LPWSTR output,
+                                  DWORD output_len, DWORD *result_len)
+{
+    const WCHAR *ptr = NULL;
+    WCHAR *path = NULL;
+    const WCHAR **pptr;
+    WCHAR buffer[INTERNET_MAX_URL_LENGTH+1];
+    DWORD len = 0;
+    BOOL reduce_path;
+
+    /* URL_UNESCAPE only has effect if none of the URL_ESCAPE flags are set. */
+    const BOOL allow_unescape = !(flags & URL_ESCAPE_UNSAFE) &&
+                                !(flags & URL_ESCAPE_SPACES_ONLY) &&
+                                !(flags & URL_ESCAPE_PERCENT);
+
+    /* Check if the dot segments need to be removed from the
+     * path component.
+     */
+    if(uri->scheme_start > -1 && uri->path_start > -1) {
+        ptr = uri->canon_uri+uri->scheme_start+uri->scheme_len+1;
+        pptr = &ptr;
+    }
+    reduce_path = !(flags & URL_NO_META) &&
+                  !(flags & URL_DONT_SIMPLIFY) &&
+                  ptr && check_hierarchical(pptr);
+
+    for(ptr = uri->canon_uri; ptr < uri->canon_uri+uri->canon_len; ++ptr) {
+        BOOL do_default_action = TRUE;
+
+        /* Keep track of the path if we need to remove dot segments from
+         * it later.
+         */
+        if(reduce_path && !path && ptr == uri->canon_uri+uri->path_start)
+            path = buffer+len;
+
+        /* Check if it's time to reduce the path. */
+        if(reduce_path && ptr == uri->canon_uri+uri->path_start+uri->path_len) {
+            DWORD current_path_len = (buffer+len) - path;
+            DWORD new_path_len = remove_dot_segments(path, current_path_len);
+
+            /* Update the current length. */
+            len -= (current_path_len-new_path_len);
+            reduce_path = FALSE;
+        }
+
+        if(*ptr == '%') {
+            const WCHAR decoded = decode_pct_val(ptr);
+            if(decoded) {
+                if(allow_unescape && (flags & URL_UNESCAPE)) {
+                    buffer[len++] = decoded;
+                    ptr += 2;
+                    do_default_action = FALSE;
+                }
+            }
+
+            /* See if %'s needed to encoded. */
+            if(do_default_action && (flags & URL_ESCAPE_PERCENT)) {
+                pct_encode_val(*ptr, buffer+len);
+                len += 3;
+                do_default_action = FALSE;
+            }
+        } else if(*ptr == ' ') {
+            if((flags & URL_ESCAPE_SPACES_ONLY) &&
+               !(flags & URL_ESCAPE_UNSAFE)) {
+                pct_encode_val(*ptr, buffer+len);
+                len += 3;
+                do_default_action = FALSE;
+            }
+        } else if(!is_reserved(*ptr) && !is_unreserved(*ptr)) {
+            if(flags & URL_ESCAPE_UNSAFE) {
+                pct_encode_val(*ptr, buffer+len);
+                len += 3;
+                do_default_action = FALSE;
+            }
+        }
+
+        if(do_default_action)
+            buffer[len++] = *ptr;
+    }
+
+    /* Sometimes the path is the very last component of the IUri, so
+     * see if the dot segments need to be reduced now.
+     */
+    if(reduce_path && path) {
+        DWORD current_path_len = (buffer+len) - path;
+        DWORD new_path_len = remove_dot_segments(path, current_path_len);
+
+        /* Update the current length. */
+        len -= (current_path_len-new_path_len);
+    }
+
+    buffer[len++] = 0;
+
+    /* The null terminator isn't included the length. */
+    *result_len = len-1;
+    if(len > output_len)
+        return STRSAFE_E_INSUFFICIENT_BUFFER;
+    else
+        memcpy(output, buffer, len*sizeof(WCHAR));
+
+    return S_OK;
+}
+
 /***********************************************************************
  *           CoInternetParseIUri (urlmon.@)
  */
@@ -6089,6 +6194,7 @@ HRESULT WINAPI CoInternetParseIUri(IUri *pIUri, PARSEACTION ParseAction, DWORD d
                                    DWORD_PTR dwReserved)
 {
     HRESULT hr;
+    Uri *uri;
 
     TRACE("(%p %d %x %p %d %p %x)\n", pIUri, ParseAction, dwFlags, pwzResult,
         cchResult, pcchResult, (DWORD)dwReserved);
@@ -6102,6 +6208,15 @@ HRESULT WINAPI CoInternetParseIUri(IUri *pIUri, PARSEACTION ParseAction, DWORD d
     }
 
     switch(ParseAction) {
+    case PARSE_CANONICALIZE:
+        if(!(uri = get_uri_obj(pIUri))) {
+            *pcchResult = 0;
+            FIXME("(%p %d %x %p %d %p %x) Unknown IUri's not supported for this action.\n",
+                pIUri, ParseAction, dwFlags, pwzResult, cchResult, pcchResult, (DWORD)dwReserved);
+            return E_NOTIMPL;
+        }
+        hr = parse_canonicalize(uri, dwFlags, pwzResult, cchResult, pcchResult);
+        break;
     case PARSE_SECURITY_URL:
     case PARSE_MIME:
     case PARSE_SERVER:
