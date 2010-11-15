@@ -7537,7 +7537,7 @@ static void test_XDR_schemas(void)
     ok(err != NULL, "domdoc_validate() should always set err\n");
     ole_expect(IXMLDOMParseError_get_reason(err, &bstr), S_FALSE);
     ok(IXMLDOMParseError_get_reason(err, &bstr) == S_FALSE, "got error: %s\n", wine_dbgstr_w(bstr));
-    if (bstr) SysFreeString(bstr);
+    SysFreeString(bstr);
     IXMLDOMParseError_Release(err);
 
     /* load the next doc */
@@ -7563,7 +7563,7 @@ static void test_XDR_schemas(void)
     ok(err != NULL, "domdoc_validate() should always set err\n");
     ole_expect(IXMLDOMParseError_get_reason(err, &bstr), S_FALSE);
     ok(IXMLDOMParseError_get_reason(err, &bstr) == S_FALSE, "got error: %s\n", wine_dbgstr_w(bstr));
-    if (bstr) SysFreeString(bstr);
+    SysFreeString(bstr);
     IXMLDOMParseError_Release(err);
 
     /* load the next doc */
@@ -7587,7 +7587,7 @@ static void test_XDR_schemas(void)
     ole_expect(IXMLDOMDocument2_validate(doc, &err), S_FALSE);
     ok(err != NULL, "domdoc_validate() should always set err\n");
     todo_wine ok(IXMLDOMParseError_get_reason(err, &bstr) == S_OK, "got error: %s\n", wine_dbgstr_w(bstr));
-    if (bstr) SysFreeString(bstr);
+    SysFreeString(bstr);
     IXMLDOMParseError_Release(err);
 
     /* load the next doc */
@@ -7611,7 +7611,7 @@ static void test_XDR_schemas(void)
     ole_expect(IXMLDOMDocument2_validate(doc, &err), S_FALSE);
     ok(err != NULL, "domdoc_validate() should always set err\n");
     todo_wine ok(IXMLDOMParseError_get_reason(err, &bstr) == S_OK, "got error: %s\n", wine_dbgstr_w(bstr));
-    if (bstr) SysFreeString(bstr);
+    SysFreeString(bstr);
     IXMLDOMParseError_Release(err);
 
     IXMLDOMDocument2_Release(doc);
@@ -7966,7 +7966,7 @@ static void test_get_dataType(void)
     ole_expect(IXMLDOMParseError_get_errorCode(err, &l), S_FALSE);
     ole_expect(IXMLDOMParseError_get_reason(err, &bstr), S_FALSE);
     ok(l == 0, "got %08x : %s\n", l, wine_dbgstr_w(bstr));
-    if (bstr) SysFreeString(bstr);
+    SysFreeString(bstr);
     IXMLDOMParseError_Release(err);
 
     /* check the data types again */
