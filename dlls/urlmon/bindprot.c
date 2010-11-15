@@ -510,15 +510,101 @@ static HRESULT WINAPI BindProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUr
         DWORD grfPI, HANDLE *dwReserved)
 {
     BindProtocol *This = PROTOCOL_THIS(iface);
+    IInternetProtocol *protocol = NULL;
+    IInternetProtocolEx *protocolex;
+    IInternetPriority *priority;
+    IServiceProvider *service_provider;
+    BOOL urlmon_protocol = FALSE;
+    CLSID clsid = IID_NULL;
+    LPOLESTR clsid_str;
+    HRESULT hres;
 
     TRACE("(%p)->(%p %p %p %08x %p)\n", This, pUri, pOIProtSink, pOIBindInfo, grfPI, dwReserved);
 
-    if(This->protocol_handler != (IInternetProtocol*)PROTOCOLHANDLER(This)) {
-        FIXME("This->protocol_handler != PROTOCOLHANDLER(This)\n");
-        return E_FAIL;
+    if(!pUri || !pOIProtSink || !pOIBindInfo)
+        return E_INVALIDARG;
+
+    This->pi = grfPI;
+
+    IUri_AddRef(pUri);
+    This->uri = pUri;
+
+    hres = IInternetProtocolSink_QueryInterface(pOIProtSink, &IID_IServiceProvider,
+                                                (void**)&service_provider);
+    if(SUCCEEDED(hres)) {
+        /* FIXME: What's protocol CLSID here? */
+        IServiceProvider_QueryService(service_provider, &IID_IInternetProtocol,
+                &IID_IInternetProtocol, (void**)&protocol);
+        IServiceProvider_Release(service_provider);
     }
 
-    return IInternetProtocolEx_StartEx(PROTOCOLHANDLER(This), pUri, pOIProtSink, pOIBindInfo, grfPI, dwReserved);
+    if(!protocol) {
+        IClassFactory *cf;
+        IUnknown *unk;
+        BSTR raw_uri;
+
+        /* FIXME: Avoid GetRawUri here */
+        hres = IUri_GetRawUri(pUri, &raw_uri);
+        if(FAILED(hres))
+            return hres;
+
+        hres = get_protocol_handler(raw_uri, &clsid, &urlmon_protocol, &cf);
+        SysFreeString(raw_uri);
+        if(FAILED(hres))
+            return hres;
+
+        if(This->from_urlmon) {
+            hres = IClassFactory_CreateInstance(cf, NULL, &IID_IInternetProtocol, (void**)&protocol);
+            IClassFactory_Release(cf);
+            if(FAILED(hres))
+                return hres;
+        }else {
+            hres = IClassFactory_CreateInstance(cf, (IUnknown*)BINDINFO(This),
+                    &IID_IUnknown, (void**)&unk);
+            IClassFactory_Release(cf);
+            if(FAILED(hres))
+                return hres;
+
+            hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocol, (void**)&protocol);
+            IUnknown_Release(unk);
+            if(FAILED(hres))
+                return hres;
+        }
+    }
+
+    StringFromCLSID(&clsid, &clsid_str);
+    IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_PROTOCOLCLASSID, clsid_str);
+    CoTaskMemFree(clsid_str);
+
+    This->protocol = protocol;
+
+    if(urlmon_protocol)
+        IInternetProtocol_QueryInterface(protocol, &IID_IWinInetInfo, (void**)&This->wininet_info);
+
+    set_binding_sink((IInternetProtocol*)PROTOCOLEX(This), pOIProtSink, pOIBindInfo);
+
+    hres = IInternetProtocol_QueryInterface(protocol, &IID_IInternetPriority, (void**)&priority);
+    if(SUCCEEDED(hres)) {
+        IInternetPriority_SetPriority(priority, This->priority);
+        IInternetPriority_Release(priority);
+    }
+
+    hres = IInternetProtocol_QueryInterface(protocol, &IID_IInternetProtocolEx, (void**)&protocolex);
+    if(SUCCEEDED(hres)) {
+        hres = IInternetProtocolEx_StartEx(protocolex, pUri, PROTSINK(This), BINDINFO(This), 0, NULL);
+        IInternetProtocolEx_Release(protocolex);
+    }else {
+        BSTR display_uri;
+
+        hres = IUri_GetDisplayUri(pUri, &display_uri);
+        if(FAILED(hres))
+            return hres;
+
+        hres = IInternetProtocol_Start(protocol, display_uri, PROTSINK(This), BINDINFO(This), 0, 0);
+        SysFreeString(display_uri);
+    }
+
+    return hres;
 }
 
 void set_binding_sink(IInternetProtocol *bind_protocol, IInternetProtocolSink *sink, IInternetBindInfo *bind_info)
@@ -730,102 +816,8 @@ static HRESULT WINAPI ProtocolHandler_StartEx(IInternetProtocolEx *iface, IUri *
         IInternetProtocolSink *pOIProtSink, IInternetBindInfo *pOIBindInfo,
         DWORD grfPI, HANDLE *dwReserved)
 {
-    BindProtocol *This = PROTOCOLHANDLER_THIS(iface);
-    IInternetProtocol *protocol = NULL;
-    IInternetProtocolEx *protocolex;
-    IInternetPriority *priority;
-    IServiceProvider *service_provider;
-    BOOL urlmon_protocol = FALSE;
-    CLSID clsid = IID_NULL;
-    LPOLESTR clsid_str;
-    HRESULT hres;
-
-    TRACE("(%p)->(%p %p %p %08x %p)\n", This, pUri, pOIProtSink, pOIBindInfo, grfPI, dwReserved);
-
-    if(!pUri || !pOIProtSink || !pOIBindInfo)
-        return E_INVALIDARG;
-
-    This->pi = grfPI;
-
-    IUri_AddRef(pUri);
-    This->uri = pUri;
-
-    hres = IInternetProtocolSink_QueryInterface(pOIProtSink, &IID_IServiceProvider,
-                                                (void**)&service_provider);
-    if(SUCCEEDED(hres)) {
-        /* FIXME: What's protocol CLSID here? */
-        IServiceProvider_QueryService(service_provider, &IID_IInternetProtocol,
-                &IID_IInternetProtocol, (void**)&protocol);
-        IServiceProvider_Release(service_provider);
-    }
-
-    if(!protocol) {
-        IClassFactory *cf;
-        IUnknown *unk;
-        BSTR raw_uri;
-
-        /* FIXME: Avoid GetRawUri here */
-        hres = IUri_GetRawUri(pUri, &raw_uri);
-        if(FAILED(hres))
-            return hres;
-
-        hres = get_protocol_handler(raw_uri, &clsid, &urlmon_protocol, &cf);
-        SysFreeString(raw_uri);
-        if(FAILED(hres))
-            return hres;
-
-        if(This->from_urlmon) {
-            hres = IClassFactory_CreateInstance(cf, NULL, &IID_IInternetProtocol, (void**)&protocol);
-            IClassFactory_Release(cf);
-            if(FAILED(hres))
-                return hres;
-        }else {
-            hres = IClassFactory_CreateInstance(cf, (IUnknown*)BINDINFO(This),
-                    &IID_IUnknown, (void**)&unk);
-            IClassFactory_Release(cf);
-            if(FAILED(hres))
-                return hres;
-
-            hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocol, (void**)&protocol);
-            IUnknown_Release(unk);
-            if(FAILED(hres))
-                return hres;
-        }
-    }
-
-    StringFromCLSID(&clsid, &clsid_str);
-    IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_PROTOCOLCLASSID, clsid_str);
-    CoTaskMemFree(clsid_str);
-
-    This->protocol = protocol;
-
-    if(urlmon_protocol)
-        IInternetProtocol_QueryInterface(protocol, &IID_IWinInetInfo, (void**)&This->wininet_info);
-
-    set_binding_sink((IInternetProtocol*)PROTOCOLEX(This), pOIProtSink, pOIBindInfo);
-
-    hres = IInternetProtocol_QueryInterface(protocol, &IID_IInternetPriority, (void**)&priority);
-    if(SUCCEEDED(hres)) {
-        IInternetPriority_SetPriority(priority, This->priority);
-        IInternetPriority_Release(priority);
-    }
-
-    hres = IInternetProtocol_QueryInterface(protocol, &IID_IInternetProtocolEx, (void**)&protocolex);
-    if(SUCCEEDED(hres)) {
-        hres = IInternetProtocolEx_StartEx(protocolex, pUri, PROTSINK(This), BINDINFO(This), 0, NULL);
-        IInternetProtocolEx_Release(protocolex);
-    }else {
-        BSTR display_uri;
-
-        hres = IUri_GetDisplayUri(pUri, &display_uri);
-        if(FAILED(hres))
-            return hres;
-
-        hres = IInternetProtocol_Start(protocol, display_uri, PROTSINK(This), BINDINFO(This), 0, 0);
-        SysFreeString(display_uri);
-    }
-
-    return hres;
+    ERR("Should not be called\n");
+    return E_NOTIMPL;
 }
 
 #undef PROTOCOL_THIS
