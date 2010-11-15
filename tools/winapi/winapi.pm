@@ -391,7 +391,7 @@ sub parse_spec_file($$) {
 		    }
 		}
 	    }
-	} elsif(/^(\d+|@)\s+stub(?:\s+(-arch=(?:$ARCHES)(?:,(?:$ARCHES))*|-noname|-norelay|-i386|-ret16|-ret64|-private))*\s+(\S+)$/) {
+	} elsif(/^(\d+|@)\s+stub(?:\s+(-arch=(?:$ARCHES)(?:,(?:$ARCHES))*|-noname|-norelay|-ordinal|-i386|-ret16|-ret64|-private))*\s+(\S+)$/) {
 	    $ordinal = $1;
 
 	    my $flags = $2;
@@ -440,7 +440,7 @@ sub parse_spec_file($$) {
 	    } else { # if($$function_external_module{$external_name} !~ /$module/) {
 		$$function_external_module{$external_name} .= " & $module";
 	    }
-	} elsif(/^(\d+|@)\s+extern(?:\s+(?:-arch=(?:$ARCHES)(?:,(?:$ARCHES))*|-norelay|-i386|-ret16|-ret64))*\s+(\S+)\s*(\S*)$/) {
+	} elsif(/^(\d+|@)\s+extern(?:\s+(?:-arch=(?:$ARCHES)(?:,(?:$ARCHES))*|-noname|-norelay|-ordinal|-i386|-ret16|-ret64))*\s+(\S+)\s*(\S*)$/) {
 	    $ordinal = $1;
 
 	    my $external_name = $2;
