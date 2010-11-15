@@ -2813,6 +2813,17 @@ static void test_register_typelib(BOOL system_registration)
     DeleteFileA( filenameA );
 }
 
+static void test_LoadTypeLib(void)
+{
+    ITypeLib *tl;
+    HRESULT hres;
+
+    static const WCHAR kernel32_dllW[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
+
+    hres = LoadTypeLib(kernel32_dllW, &tl);
+    ok(hres == TYPE_E_CANTLOADLIBRARY, "LoadTypeLib returned: %08x, expected TYPE_E_CANTLOADLIBRARY\n", hres);
+}
+
 START_TEST(typelib)
 {
     const char *filename;
@@ -2839,5 +2850,5 @@ START_TEST(typelib)
     test_register_typelib(TRUE);
     test_register_typelib(FALSE);
     test_create_typelibs();
-
+    test_LoadTypeLib();
 }
