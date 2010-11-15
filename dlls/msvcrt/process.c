@@ -1031,7 +1031,7 @@ MSVCRT_FILE* CDECL MSVCRT__wpopen(const MSVCRT_wchar_t* command, const MSVCRT_wc
 {
   MSVCRT_FILE *ret;
   BOOL readPipe = TRUE;
-  int textmode, fds[2], fdToDup, fdToOpen, fdStdHandle = -1, fdStdErr = -1;
+  int textmode, fds[2], fdToDup, fdToOpen, fdStdHandle = -1;
   const MSVCRT_wchar_t *p;
   MSVCRT_wchar_t *comspec, *fullcmd;
   unsigned int len;
@@ -1073,13 +1073,6 @@ MSVCRT_FILE* CDECL MSVCRT__wpopen(const MSVCRT_wchar_t* command, const MSVCRT_wc
     goto error;
   if (MSVCRT__dup2(fds[fdToDup], fdToDup) != 0)
     goto error;
-  if (readPipe)
-  {
-    if ((fdStdErr = MSVCRT__dup(MSVCRT_STDERR_FILENO)) == -1)
-      goto error;
-    if (MSVCRT__dup2(fds[fdToDup], MSVCRT_STDERR_FILENO) != 0)
-      goto error;
-  }
 
   MSVCRT__close(fds[fdToDup]);
 
@@ -1106,16 +1099,10 @@ MSVCRT_FILE* CDECL MSVCRT__wpopen(const MSVCRT_wchar_t* command, const MSVCRT_wc
   HeapFree(GetProcessHeap(), 0, fullcmd);
   MSVCRT__dup2(fdStdHandle, fdToDup);
   MSVCRT__close(fdStdHandle);
-  if (readPipe)
-  {
-    MSVCRT__dup2(fdStdErr, MSVCRT_STDERR_FILENO);
-    MSVCRT__close(fdStdErr);
-  }
   return ret;
 
 error:
   if (fdStdHandle != -1) MSVCRT__close(fdStdHandle);
-  if (fdStdErr != -1)    MSVCRT__close(fdStdErr);
   MSVCRT__close(fds[0]);
   MSVCRT__close(fds[1]);
   return NULL;
