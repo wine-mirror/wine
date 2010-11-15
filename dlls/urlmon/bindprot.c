@@ -408,16 +408,21 @@ static HRESULT WINAPI BindProtocol_Start(IInternetProtocolEx *iface, LPCWSTR szU
         DWORD grfPI, HANDLE_PTR dwReserved)
 {
     BindProtocol *This = PROTOCOL_THIS(iface);
+    IUri *uri;
+    HRESULT hres;
 
     TRACE("(%p)->(%s %p %p %08x %lx)\n", This, debugstr_w(szUrl), pOIProtSink,
             pOIBindInfo, grfPI, dwReserved);
 
-    if(This->protocol_handler != (IInternetProtocol*)PROTOCOLHANDLER(This)) {
-        FIXME("This->protocol_handler != PROTOCOLHANDLER(This)\n");
-        return E_FAIL;
-    }
+    hres = CreateUri(szUrl, Uri_CREATE_FILE_USE_DOS_PATH, 0, &uri);
+    if(FAILED(hres))
+        return hres;
 
-    return IInternetProtocolEx_Start(PROTOCOLHANDLER(This), szUrl, pOIProtSink, pOIBindInfo, grfPI, dwReserved);
+    hres = IInternetProtocolEx_StartEx(PROTOCOLEX(This), uri, pOIProtSink, pOIBindInfo,
+            grfPI, (HANDLE*)dwReserved);
+
+    IUri_Release(uri);
+    return hres;
 }
 
 static HRESULT WINAPI BindProtocol_Continue(IInternetProtocolEx *iface, PROTOCOLDATA *pProtocolData)
@@ -591,22 +596,8 @@ static HRESULT WINAPI ProtocolHandler_Start(IInternetProtocolEx *iface, LPCWSTR 
         IInternetProtocolSink *pOIProtSink, IInternetBindInfo *pOIBindInfo,
         DWORD grfPI, HANDLE_PTR dwReserved)
 {
-    BindProtocol *This = PROTOCOLHANDLER_THIS(iface);
-    IUri *uri;
-    HRESULT hres;
-
-    TRACE("(%p)->(%s %p %p %08x %lx)\n", This, debugstr_w(szUrl), pOIProtSink,
-            pOIBindInfo, grfPI, dwReserved);
-
-    hres = CreateUri(szUrl, Uri_CREATE_FILE_USE_DOS_PATH, 0, &uri);
-    if(FAILED(hres))
-        return hres;
-
-    hres = IInternetProtocolEx_StartEx(PROTOCOLHANDLER(This), uri, pOIProtSink, pOIBindInfo,
-            grfPI, (HANDLE*)dwReserved);
-
-    IUri_Release(uri);
-    return hres;
+    ERR("Should not be called\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ProtocolHandler_Continue(IInternetProtocolEx *iface, PROTOCOLDATA *pProtocolData)
