@@ -515,9 +515,9 @@
 @ cdecl _hypot(double double)
 @ cdecl _hypotf(float float)
 @ cdecl _i64toa(int64 ptr long) ntdll._i64toa
-# stub _i64toa_s
+@ cdecl _i64toa_s(int64 ptr long long) _i64toa_s
 @ cdecl _i64tow(int64 ptr long) ntdll._i64tow
-# stub _i64tow_s
+@ cdecl _i64tow_s(int64 ptr long long) _i64tow_s
 @ cdecl _initterm(ptr ptr)
 # stub _initterm_e
 @ stub _inp #(long) -i386

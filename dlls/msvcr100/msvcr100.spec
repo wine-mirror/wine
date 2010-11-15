@@ -731,9 +731,9 @@
 @ cdecl _hypot(double double) msvcrt._hypot
 @ cdecl _hypotf(float float) msvcrt._hypotf
 @ cdecl _i64toa(int64 ptr long) msvcrt._i64toa
-@ stub _i64toa_s
+@ cdecl _i64toa_s(int64 ptr long long) msvcrt._i64toa_s
 @ cdecl _i64tow(int64 ptr long) msvcrt._i64tow
-@ stub _i64tow_s
+@ cdecl _i64tow_s(int64 ptr long long) msvcrt._i64tow_s
 @ stub _initptd
 @ cdecl _initterm(ptr ptr) msvcrt._initterm
 @ cdecl _initterm_e(ptr ptr) msvcr90._initterm_e
