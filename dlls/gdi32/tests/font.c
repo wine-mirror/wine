@@ -1017,16 +1017,28 @@ static void test_GetGlyphIndices(void)
 
     hdc = GetDC(0);
 
+    memset(&lf, 0, sizeof(lf));
+    strcpy(lf.lfFaceName, "System");
+    lf.lfHeight = 16;
+    lf.lfCharSet = ANSI_CHARSET;
+
+    hfont = CreateFontIndirectA(&lf);
     ok(GetTextMetrics(hdc, &textm), "GetTextMetric failed\n");
-    flags |= GGI_MARK_NONEXISTING_GLYPHS;
-    charcount = pGetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
-    ok(charcount == 5, "GetGlyphIndicesW count of glyphs should = 5 not %d\n", charcount);
-    ok((glyphs[4] == 0x001f || glyphs[4] == 0xffff /* Vista */), "GetGlyphIndicesW should have returned a nonexistent char not %04x\n", glyphs[4]);
-    flags = 0;
-    charcount = pGetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
-    ok(charcount == 5, "GetGlyphIndicesW count of glyphs should = 5 not %d\n", charcount);
-    ok(glyphs[4] == textm.tmDefaultChar, "GetGlyphIndicesW should have returned a %04x not %04x\n",
-                    textm.tmDefaultChar, glyphs[4]);
+    if (textm.tmCharSet == ANSI_CHARSET)
+    {
+        flags |= GGI_MARK_NONEXISTING_GLYPHS;
+        charcount = pGetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
+        ok(charcount == 5, "GetGlyphIndicesW count of glyphs should = 5 not %d\n", charcount);
+        ok((glyphs[4] == 0x001f || glyphs[4] == 0xffff /* Vista */), "GetGlyphIndicesW should have returned a nonexistent char not %04x\n", glyphs[4]);
+        flags = 0;
+        charcount = pGetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
+        ok(charcount == 5, "GetGlyphIndicesW count of glyphs should = 5 not %d\n", charcount);
+        ok(glyphs[4] == textm.tmDefaultChar, "GetGlyphIndicesW should have returned a %04x not %04x\n",
+                        textm.tmDefaultChar, glyphs[4]);
+    }
+    else
+        /* FIXME: Write tests for non-ANSI charsets. */
+        skip("GetGlyphIndices System font tests only for ANSI_CHARSET\n");
 
     if(!is_font_installed("Tahoma"))
     {
