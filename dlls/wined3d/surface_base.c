@@ -221,14 +221,14 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetPalette(IWineD3DSurface *iface, IWineD
 
     if (This->palette)
         if (This->resource.usage & WINED3DUSAGE_RENDERTARGET)
-            This->palette->Flags &= ~WINEDDPCAPS_PRIMARYSURFACE;
+            This->palette->flags &= ~WINEDDPCAPS_PRIMARYSURFACE;
 
     This->palette = PalImpl;
 
     if (PalImpl)
     {
         if (This->resource.usage & WINED3DUSAGE_RENDERTARGET)
-            PalImpl->Flags |= WINEDDPCAPS_PRIMARYSURFACE;
+            PalImpl->flags |= WINEDDPCAPS_PRIMARYSURFACE;
 
         return IWineD3DSurface_RealizePalette(iface);
     }

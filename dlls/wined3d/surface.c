@@ -2267,7 +2267,7 @@ void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4], BOOL 
             {
                 table[i][3] = 0x00;
             }
-            else if(pal->Flags & WINEDDPCAPS_ALPHA)
+            else if (pal->flags & WINEDDPCAPS_ALPHA)
             {
                 table[i][3] = pal->palents[i].peFlags;
             }

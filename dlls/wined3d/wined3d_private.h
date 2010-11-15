@@ -2978,7 +2978,7 @@ struct IWineD3DPaletteImpl {
     PALETTEENTRY               palents[256];   /*|               */
     /* This is to store the palette in 'screen format' */
     int                        screen_palents[256];
-    DWORD                      Flags;
+    DWORD flags;
 };
 
 HRESULT wined3d_palette_init(IWineD3DPaletteImpl *palette, IWineD3DDeviceImpl *device,

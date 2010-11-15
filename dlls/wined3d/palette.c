@@ -93,10 +93,10 @@ static HRESULT  WINAPI IWineD3DPaletteImpl_GetEntries(IWineD3DPalette *iface, DW
     TRACE("(%p)->(%08x,%d,%d,%p)\n",This,Flags,Start,Count,PalEnt);
 
     if (Flags) return WINED3DERR_INVALIDCALL; /* unchecked */
-    if (Start + Count > IWineD3DPaletteImpl_Size(This->Flags))
+    if (Start + Count > IWineD3DPaletteImpl_Size(This->flags))
         return WINED3DERR_INVALIDCALL;
 
-    if (This->Flags & WINEDDPCAPS_8BITENTRIES)
+    if (This->flags & WINEDDPCAPS_8BITENTRIES)
     {
         unsigned int i;
         LPBYTE entry = (LPBYTE)PalEnt;
@@ -117,9 +117,10 @@ static HRESULT  WINAPI IWineD3DPaletteImpl_SetEntries(IWineD3DPalette *iface,
     IWineD3DResourceImpl *res;
 
     TRACE("(%p)->(%08x,%d,%d,%p)\n",This,Flags,Start,Count,PalEnt);
-    TRACE("Palette flags: %#x\n", This->Flags);
+    TRACE("Palette flags: %#x.\n", This->flags);
 
-    if (This->Flags & WINEDDPCAPS_8BITENTRIES) {
+    if (This->flags & WINEDDPCAPS_8BITENTRIES)
+    {
         unsigned int i;
         const BYTE* entry = (const BYTE*)PalEnt;
 
@@ -130,7 +131,7 @@ static HRESULT  WINAPI IWineD3DPaletteImpl_SetEntries(IWineD3DPalette *iface,
         memcpy(This->palents+Start, PalEnt, Count * sizeof(PALETTEENTRY));
 
         /* When WINEDDCAPS_ALLOW256 isn't set we need to override entry 0 with black and 255 with white */
-        if(!(This->Flags & WINEDDPCAPS_ALLOW256))
+        if (!(This->flags & WINEDDPCAPS_ALLOW256))
         {
             TRACE("WINEDDPCAPS_ALLOW256 set, overriding palette entry 0 with black and 255 with white\n");
             This->palents[0].peRed = 0;
@@ -171,7 +172,7 @@ static HRESULT  WINAPI IWineD3DPaletteImpl_GetCaps(IWineD3DPalette *iface, DWORD
     IWineD3DPaletteImpl *This = (IWineD3DPaletteImpl *)iface;
     TRACE("(%p)->(%p)\n", This, Caps);
 
-    *Caps = This->Flags;
+    *Caps = This->flags;
     return WINED3D_OK;
 }
 
@@ -204,7 +205,7 @@ HRESULT wined3d_palette_init(IWineD3DPaletteImpl *palette, IWineD3DDeviceImpl *d
     palette->ref = 1;
     palette->parent = parent;
     palette->device = device;
-    palette->Flags = flags;
+    palette->flags = flags;
 
     palette->palNumEntries = IWineD3DPaletteImpl_Size(flags);
     palette->hpal = CreatePalette((const LOGPALETTE *)&palette->palVersion);
