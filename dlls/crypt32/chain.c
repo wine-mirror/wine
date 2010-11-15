@@ -2901,6 +2901,15 @@ VOID WINAPI CertFreeCertificateChain(PCCERT_CHAIN_CONTEXT pChainContext)
     }
 }
 
+PCCERT_CHAIN_CONTEXT WINAPI CertFindChainInStore(HCERTSTORE store,
+ DWORD certEncodingType, DWORD findFlags, DWORD findType,
+ const void *findPara, PCCERT_CHAIN_CONTEXT prevChainContext)
+{
+    FIXME("(%p, %08x, %08x, %d, %p, %p): stub\n", store, certEncodingType,
+     findFlags, findType, findPara, prevChainContext);
+    return NULL;
+}
+
 static void find_element_with_error(PCCERT_CHAIN_CONTEXT chain, DWORD error,
  LONG *iChain, LONG *iElement)
 {
