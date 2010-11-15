@@ -422,17 +422,16 @@ static void WCCURSES_SetFont(struct inner_data* data, const WCHAR* font,
  */
 static void WCCURSES_ScrollV(struct inner_data* data, int delta)
 {
-    int	pos = data->curcfg.win_pos.Y;
+    struct config_data  cfg = data->curcfg;
 
-    pos += delta;
-    if (pos < 0) pos = 0;
-    if (pos > data->curcfg.sb_height - data->curcfg.win_height)
-        pos = data->curcfg.sb_height - data->curcfg.win_height;
-    if (pos != data->curcfg.win_pos.Y)
+    cfg.win_pos.Y += delta;
+    if (cfg.win_pos.Y < 0) cfg.win_pos.Y = 0;
+    if (cfg.win_pos.Y > data->curcfg.sb_height - data->curcfg.win_height)
+        cfg.win_pos.Y = data->curcfg.sb_height - data->curcfg.win_height;
+    if (cfg.win_pos.Y != data->curcfg.win_pos.Y)
     {
-        data->curcfg.win_pos.Y = pos;
         WCCURSES_PosCursor(data);
-        WINECON_NotifyWindowChange(data);
+        WINECON_SetConfig(data, &cfg);
     }
 }
 

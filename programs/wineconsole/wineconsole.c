@@ -82,26 +82,6 @@ static void WINECON_FetchCells(struct inner_data* data, int upd_tp, int upd_bm)
 }
 
 /******************************************************************
- *		WINECON_NotifyWindowChange
- *
- * Inform server that visible window on sb has changed
- */
-void WINECON_NotifyWindowChange(struct inner_data* data)
-{
-    SERVER_START_REQ( set_console_output_info )
-    {
-        req->handle       = wine_server_obj_handle( data->hConOut );
-        req->win_left     = data->curcfg.win_pos.X;
-        req->win_top      = data->curcfg.win_pos.Y;
-        req->win_right    = data->curcfg.win_pos.X + data->curcfg.win_width - 1;
-        req->win_bottom   = data->curcfg.win_pos.Y + data->curcfg.win_height - 1;
-        req->mask         = SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW;
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-}
-
-/******************************************************************
  *		WINECON_SetHistorySize
  *
  *
@@ -402,28 +382,30 @@ void     WINECON_SetConfig(struct inner_data* data, const struct config_data* cf
      * The Change<A><B> actually modify the <B> dimension of <A>.
      */
 #define TstSBfWidth()   (data->curcfg.sb_width != cfg->sb_width)
-#define TstWinWidth()   (data->curcfg.win_width != cfg->win_width)
+#define TstWinHPos()    (data->curcfg.win_width != cfg->win_width || data->curcfg.win_pos.X != cfg->win_pos.X)
 
 #define ChgSBfWidth()   do {c.X = cfg->sb_width; \
                             c.Y = data->curcfg.sb_height;\
                             SetConsoleScreenBufferSize(data->hConOut, c);\
                         } while (0)
-#define ChgWinWidth()   do {pos.Left = pos.Top = 0; \
-                            pos.Right = cfg->win_width - data->curcfg.win_width; \
+#define ChgWinHPos()    do {pos.Left = cfg->win_pos.X - data->curcfg.win_pos.X; \
+                            pos.Top = 0; \
+                            pos.Right = pos.Left + cfg->win_width - data->curcfg.win_width; \
                             pos.Bottom = 0; \
                             SetConsoleWindowInfo(data->hConOut, FALSE, &pos);\
                         } while (0)
 #define TstSBfHeight()  (data->curcfg.sb_height != cfg->sb_height)
-#define TstWinHeight()  (data->curcfg.win_height != cfg->win_height)
+#define TstWinVPos()    (data->curcfg.win_height != cfg->win_height || data->curcfg.win_pos.Y != cfg->win_pos.Y)
 
 /* since we're going to apply height after width is done, we use width as defined 
  * in cfg, and not in data->curcfg because if won't be updated yet */
 #define ChgSBfHeight()  do {c.X = cfg->sb_width; c.Y = cfg->sb_height; \
                             SetConsoleScreenBufferSize(data->hConOut, c); \
                         } while (0)
-#define ChgWinHeight()  do {pos.Left = pos.Top = 0; \
+#define ChgWinVPos()    do {pos.Left = 0; \
+                            pos.Top = cfg->win_pos.Y - data->curcfg.win_pos.Y; \
                             pos.Right = 0; \
-                            pos.Bottom = cfg->win_height - data->curcfg.win_height; \
+                            pos.Bottom = pos.Top + cfg->win_height - data->curcfg.win_height; \
                             SetConsoleWindowInfo(data->hConOut, FALSE, &pos);\
                         } while (0)
 
@@ -434,46 +416,46 @@ void     WINECON_SetConfig(struct inner_data* data, const struct config_data* cf
 
         if (TstSBfWidth())            
         {
-            if (TstWinWidth())
+            if (TstWinHPos())
             {
                 /* we're changing both at the same time, do it in the right order */
                 if (cfg->sb_width >= data->curcfg.win_width)
                 {
-                    ChgSBfWidth(); ChgWinWidth();
+                    ChgSBfWidth(); ChgWinHPos();
                 }
                 else
                 {
-                    ChgWinWidth(); ChgSBfWidth();
+                    ChgWinHPos(); ChgSBfWidth();
                 }
             }
             else ChgSBfWidth();
         }
-        else if (TstWinWidth()) ChgWinWidth();
+        else if (TstWinHPos()) ChgWinHPos();
         if (TstSBfHeight())
         {
-            if (TstWinHeight())
+            if (TstWinVPos())
             {
                 if (cfg->sb_height >= data->curcfg.win_height)
                 {
-                    ChgSBfHeight(); ChgWinHeight();
+                    ChgSBfHeight(); ChgWinVPos();
                 }
                 else
                 {
-                    ChgWinHeight(); ChgSBfHeight();
+                    ChgWinVPos(); ChgSBfHeight();
                 }
             }
             else ChgSBfHeight();
         }
-        else if (TstWinHeight()) ChgWinHeight();
+        else if (TstWinVPos()) ChgWinVPos();
     } while (0);
 #undef TstSBfWidth
-#undef TstWinWidth
+#undef TstWinHPos
 #undef ChgSBfWidth
-#undef ChgWinWidth
+#undef ChgWinHPos
 #undef TstSBfHeight
-#undef TstWinHeight
+#undef TstWinVPos
 #undef ChgSBfHeight
-#undef ChgWinHeight
+#undef ChgWinVPos
 
     data->curcfg.exit_on_die = cfg->exit_on_die;
     if (data->curcfg.edition_mode != cfg->edition_mode)

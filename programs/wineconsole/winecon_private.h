@@ -77,7 +77,6 @@ struct inner_data {
 
 /* from wineconsole.c */
 extern void WINECON_Fatal(const char* msg);
-extern void WINECON_NotifyWindowChange(struct inner_data* data);
 extern int  WINECON_GetHistorySize(HANDLE hConIn);
 extern int  WINECON_GetHistoryMode(HANDLE hConIn);
 extern BOOL WINECON_GetConsoleTitle(HANDLE hConIn, WCHAR* buffer, size_t len);
