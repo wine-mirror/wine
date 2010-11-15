@@ -124,6 +124,7 @@ MAKE_FUNCPTR(wgetch)
 MAKE_FUNCPTR(mouseinterval)
 MAKE_FUNCPTR(mousemask)
 #endif
+MAKE_FUNCPTR(acs_map)
 
 #undef MAKE_FUNCPTR
 
@@ -187,6 +188,7 @@ static BOOL WCCURSES_bind_libcurses(void)
     LOAD_FUNCPTR(mouseinterval)
     LOAD_FUNCPTR(mousemask)
 #endif
+    LOAD_FUNCPTR(acs_map)
 
 #undef LOAD_FUNCPTR
 
@@ -235,6 +237,7 @@ sym_not_found:
 #define waddchnstr p_waddchnstr
 #define wmove p_wmove
 #define wgetch p_wgetch
+#define acs_map (*p_acs_map)
 
 /******************************************************************
  *		WCCURSES_ResizeScreenBuffer
@@ -358,16 +361,80 @@ static void WCCURSES_Refresh(const struct inner_data* data, int tp, int bm)
     int         y;
     CHAR_INFO*	cell;
     DWORD       attr;
-    char        ch;
 
     for (y = tp; y <= bm; y++)
     {
 	cell = &data->cells[y * data->curcfg.sb_width];
         for (x = 0; x < data->curcfg.sb_width; x++)
         {
-            WideCharToMultiByte(CP_UNIXCP, 0, &cell[x].Char.UnicodeChar, 1,
-                                &ch, 1, NULL, NULL);
-            attr = ((BYTE)ch < 32) ? 32 : (BYTE)ch;
+            /* check for some mapping to ACS characters (drawing boxes, arrows) */
+            if ((cell[x].Char.UnicodeChar >= 0x2500 && cell[x].Char.UnicodeChar <= 0x257F) ||
+                (cell[x].Char.UnicodeChar >= 0x2190 && cell[x].Char.UnicodeChar <= 0x21FF))
+            {
+                /* FIXME: we're also mapping heavy and lines item to single lines
+                 * (that's ugly, but that's better than crap)
+                 * Moreover, as the ACS_ macros refer to values in array acs_map[], we
+                 * cannot simply build static tables for the mapping (FIXME: this could be done
+                 * at load time)
+                 */
+                switch (cell[x].Char.UnicodeChar)
+                {
+                case 0x2190: case 0x219E: case 0x21A2: case 0x21A4:
+                case 0x21BC: case 0x21BD: case 0x21D0: case 0x21E6: attr = ACS_LARROW;   break;
+                case 0x2191: case 0x219F: case 0x21A3: case 0x21A5:
+                case 0x21BE: case 0x21BF: case 0x21D1: case 0x21E7: attr = ACS_UARROW;   break;
+                case 0x2192: case 0x21A0: case 0x21A6: case 0x21C0:
+                case 0x21C1: case 0x21D2: case 0x21E8:              attr = ACS_RARROW;   break;
+                case 0x2193: case 0x21A1: case 0x21A7: case 0x21C2:
+                case 0x21C3: case 0x21D3: case 0x21E9:              attr = ACS_DARROW;   break;
+
+                case 0x2500: case 0x2501: case 0x257C: case 0x257E: attr = ACS_HLINE;    break;
+                case 0x2502: case 0x2503: case 0x257D: case 0x257F: attr = ACS_VLINE;    break;
+                case 0x250C: case 0x250D: case 0x250E: case 0x250F: attr = ACS_ULCORNER; break;
+                case 0x2510: case 0x2511: case 0x2512: case 0x2513: attr = ACS_URCORNER; break;
+                case 0x2514: case 0x2515: case 0x2516: case 0x2517: attr = ACS_LLCORNER; break;
+                case 0x2518: case 0x2519: case 0x251A: case 0x251B: attr = ACS_LRCORNER; break;
+                case 0x251C: case 0x251D: case 0x251E: case 0x251F:
+                case 0x2520: case 0x2521: case 0x2522: case 0x2523: attr = ACS_LTEE;     break;
+                case 0x2524: case 0x2525: case 0x2526: case 0x2527:
+                case 0x2528: case 0x2529: case 0x252A: case 0x252B: attr = ACS_RTEE;     break;
+
+                case 0x252C: case 0x252D: case 0x252E: case 0x252F:
+                case 0x2530: case 0x2531: case 0x2532: case 0x2533: attr = ACS_TTEE;     break;
+                case 0x2534: case 0x2535: case 0x2536: case 0x2537:
+                case 0x2538: case 0x2539: case 0x253A: case 0x253B: attr = ACS_BTEE;     break;
+
+                case 0x253C: case 0x253D: case 0x253E: case 0x253F:
+                case 0x2540: case 0x2541: case 0x2542: case 0x2543:
+                case 0x2544: case 0x2545: case 0x2546: case 0x2547:
+                case 0x2548: case 0x2549: case 0x254A: case 0x254B: attr = ACS_PLUS;     break;
+
+                case 0x2550:                                        attr = ACS_HLINE;    break;
+                case 0x2551:                                        attr = ACS_VLINE;    break;
+                case 0x2552: case 0x2553: case 0x2554:              attr = ACS_ULCORNER; break;
+                case 0x2555: case 0x2556: case 0x2557:              attr = ACS_URCORNER; break;
+                case 0x2558: case 0x2559: case 0x255A:              attr = ACS_LLCORNER; break;
+                case 0x255B: case 0x255C: case 0x255D:              attr = ACS_LRCORNER; break;
+                case 0x255E: case 0x255F: case 0x2560:              attr = ACS_LTEE;     break;
+                case 0x2561: case 0x2562: case 0x2563:              attr = ACS_RTEE;     break;
+                case 0x2564: case 0x2565: case 0x2566:              attr = ACS_TTEE;     break;
+                case 0x2567: case 0x2568: case 0x2569:              attr = ACS_BTEE;     break;
+                case 0x256A: case 0x256B: case 0x256C:              attr = ACS_PLUS;     break;
+                default:
+                    WINE_FIXME("Unmapped special character (%x)\n", cell[x].Char.UnicodeChar);
+                    attr = ' ';
+                }
+            }
+            else
+            {
+                char     ch[2];
+
+                if (WideCharToMultiByte(CP_UNIXCP, 0, &cell[x].Char.UnicodeChar, 1,
+                                        ch, sizeof(ch), NULL, NULL) == 1)
+                    attr = ((BYTE)ch[0] < 32) ? 32 : (BYTE)ch[0];
+                else
+                    attr = 32;
+            }
 
             if (cell[x].Attributes & FOREGROUND_RED)       attr |= COLOR_PAIR(COLOR_RED);
             if (cell[x].Attributes & FOREGROUND_BLUE)      attr |= COLOR_PAIR(COLOR_BLUE);
