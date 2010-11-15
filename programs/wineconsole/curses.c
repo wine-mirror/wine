@@ -25,8 +25,6 @@
  *   functions which can be implemented as macros)
  * - finish buffer scrolling (mainly, need to decide of a nice way for 
  *   requesting the UP/DOWN operations
- * - Resizing (unix) terminal does not change (Win32) console size.
- * - Initial console size comes from registry and not from terminal size.
  */
 
 #include "config.h"
@@ -80,6 +78,7 @@ struct inner_data_curse
     int                 allow_scroll;
 };
 
+static CRITICAL_SECTION WCCURSES_CritSect;
 
 static void *nc_handle = NULL;
 
@@ -413,6 +412,18 @@ static void WCCURSES_SetFont(struct inner_data* data, const WCHAR* font,
                             unsigned height, unsigned weight)
 {
     /* FIXME: really not much to do ? */
+}
+
+/******************************************************************
+ *		WCCURSES_Resize
+ *
+ */
+static void WCCURSES_Resize(struct inner_data* data)
+{
+    int width, height;
+
+    getmaxyx(stdscr, height, width);
+    WINECON_ResizeWithContainer(data, width, height);
 }
 
 /******************************************************************
@@ -767,7 +778,12 @@ static unsigned WCCURSES_FillCode(struct inner_data* data, INPUT_RECORD* ir, int
     case KEY_MOUSE:
         numEvent = WCCURSES_FillMouse(ir);
         break;
-        
+#ifdef KEY_RESIZE
+    case KEY_RESIZE:
+        WCCURSES_Resize(data);
+        break;
+#endif
+
     case KEY_MOVE:
     case KEY_NEXT:
     case KEY_OPEN:
@@ -785,9 +801,6 @@ static unsigned WCCURSES_FillCode(struct inner_data* data, INPUT_RECORD* ir, int
     case KEY_SCOMMAND:
     case KEY_SCOPY:
     case KEY_SCREATE:
-#ifdef KEY_RESIZE
-    case KEY_RESIZE:
-#endif
         goto notFound;
 
     case KEY_SDC:
@@ -872,16 +885,20 @@ static DWORD CALLBACK input_thread( void *arg )
         if (pfd[1].revents & (POLLHUP|POLLERR)) break;
         if (!(pfd[0].revents & POLLIN)) continue;
 
-        if ((inchar = wgetch(stdscr)) == ERR) continue;
+        /* we're called from input thread (not main thread), so force unique access */
+        EnterCriticalSection(&WCCURSES_CritSect);
+        if ((inchar = wgetch(stdscr)) != ERR)
+        {
+            WINE_TRACE("Got o%o (0x%x)\n", inchar,inchar);
 
-        WINE_TRACE("Got o%o (0x%x)\n", inchar,inchar);
+            if (inchar >= KEY_MIN && inchar <= KEY_MAX)
+                numEvent = WCCURSES_FillCode(data, ir, inchar);
+            else
+                numEvent = WCCURSES_FillSimpleChar(ir, inchar);
 
-        if (inchar >= KEY_MIN && inchar <= KEY_MAX)
-            numEvent = WCCURSES_FillCode(data, ir, inchar);
-        else
-            numEvent = WCCURSES_FillSimpleChar(ir, inchar);
-
-        if (numEvent) WriteConsoleInputW(data->hConIn, ir, numEvent, &n);
+            if (numEvent) WriteConsoleInputW(data->hConIn, ir, numEvent, &n);
+        }
+        LeaveCriticalSection(&WCCURSES_CritSect);
     }
     close( PRIVATE(data)->sync_pipe[0] );
     return 0;
@@ -924,14 +941,19 @@ static void WCCURSES_DeleteBackend(struct inner_data* data)
  */
 static int WCCURSES_MainLoop(struct inner_data* data)
 {
-    DWORD id;
+    DWORD       id;
+    BOOL        cont = TRUE;
+
+    WCCURSES_Resize(data);
 
     if (pipe( PRIVATE(data)->sync_pipe ) == -1) return 0;
     PRIVATE(data)->input_thread = CreateThread( NULL, 0, input_thread, data, 0, &id );
 
-    while (WaitForSingleObject(data->hSynchro, INFINITE) == WAIT_OBJECT_0)
+    while (cont && WaitForSingleObject(data->hSynchro, INFINITE) == WAIT_OBJECT_0)
     {
-        if (!WINECON_GrabChanges(data)) break;
+        EnterCriticalSection(&WCCURSES_CritSect);
+        cont = WINECON_GrabChanges(data);
+        LeaveCriticalSection(&WCCURSES_CritSect);
     }
 
     close( PRIVATE(data)->sync_pipe[1] );
