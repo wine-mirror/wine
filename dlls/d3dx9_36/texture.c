@@ -1163,3 +1163,101 @@ HRESULT WINAPI D3DXFillCubeTexture(LPDIRECT3DCUBETEXTURE9 texture,
 
     return D3D_OK;
 }
+
+HRESULT WINAPI D3DXFillVolumeTexture(LPDIRECT3DVOLUMETEXTURE9 texture,
+                                     LPD3DXFILL3D function,
+                                     LPVOID funcdata)
+{
+    DWORD miplevels;
+    DWORD m, i, x, y, z, c, v;
+    D3DVOLUME_DESC desc;
+    D3DLOCKED_BOX lock_box;
+    D3DXVECTOR4 value;
+    D3DXVECTOR3 coord, size;
+    const PixelFormatDesc *format;
+    BYTE *data, *pos;
+    BYTE byte, mask;
+    float comp_value;
+
+    if (texture == NULL || function == NULL)
+        return D3DERR_INVALIDCALL;
+
+    miplevels = IDirect3DBaseTexture9_GetLevelCount(texture);
+
+    for (m = 0; m < miplevels; m++)
+    {
+        if (FAILED(IDirect3DVolumeTexture9_GetLevelDesc(texture, m, &desc)))
+            return D3DERR_INVALIDCALL;
+
+        format = get_format_info(desc.Format);
+        if (format->format == D3DFMT_UNKNOWN)
+        {
+            FIXME("Unsupported texture format %#x\n", desc.Format);
+            return D3DERR_INVALIDCALL;
+        }
+
+        if (FAILED(IDirect3DVolumeTexture9_LockBox(texture, m, &lock_box, NULL, D3DLOCK_DISCARD)))
+            return D3DERR_INVALIDCALL;
+
+        size.x = 1.0f / desc.Width;
+        size.y = 1.0f / desc.Height;
+        size.z = 1.0f / desc.Depth;
+
+        data = lock_box.pBits;
+
+        for (z = 0; z < desc.Depth; z++)
+        {
+            /* The callback function expects the coordinates of the center
+               of the texel */
+            coord.z = (z + 0.5f) / desc.Depth;
+
+            for (y = 0; y < desc.Height; y++)
+            {
+                coord.y = (y + 0.5f) / desc.Height;
+
+                for (x = 0; x < desc.Width; x++)
+                {
+                    coord.x = (x + 0.5f) / desc.Width;
+
+                    function(&value, &coord, &size, funcdata);
+
+                    pos = data + z * lock_box.SlicePitch + y * lock_box.RowPitch + x * format->bytes_per_pixel;
+
+                    for (i = 0; i < format->bytes_per_pixel; i++)
+                        pos[i] = 0;
+
+                    for (c = 0; c < 4; c++)
+                    {
+                        switch (c)
+                        {
+                            case 0: /* Alpha */
+                                comp_value = value.w;
+                                break;
+                            case 1: /* Red */
+                                comp_value = value.x;
+                                break;
+                            case 2: /* Green */
+                                comp_value = value.y;
+                                break;
+                            case 3: /* Blue */
+                                comp_value = value.z;
+                                break;
+                        }
+
+                        v = comp_value * ((1 << format->bits[c]) - 1) + 0.5f;
+
+                        for (i = 0; i < format->bits[c] + format->shift[c]; i += 8)
+                        {
+                            mask = ((1 << format->bits[c]) - 1) << format->shift[c] >> i;
+                            byte = (v << format->shift[c] >> i) & mask;
+                            pos[i / 8] |= byte;
+                        }
+                    }
+                }
+            }
+        }
+        IDirect3DVolumeTexture9_UnlockBox(texture, m);
+    }
+
+    return D3D_OK;
+}

@@ -932,6 +932,121 @@ static void test_D3DXFillCubeTexture(IDirect3DDevice9 *device)
     IDirect3DCubeTexture9_Release(tex);
 }
 
+static void WINAPI fillfunc_volume(D3DXVECTOR4 *value, const D3DXVECTOR3 *texcoord,
+                                   const D3DXVECTOR3 *texelsize, void *data)
+{
+    value->x = texcoord->x;
+    value->y = texcoord->y;
+    value->z = texcoord->z;
+    value->w = texelsize->x;
+}
+
+static void test_D3DXFillVolumeTexture(IDirect3DDevice9 *device)
+{
+    IDirect3DVolumeTexture9 *tex;
+    HRESULT hr;
+    D3DLOCKED_BOX lock_box;
+    DWORD x, y, z, m;
+    DWORD v[4], e[4];
+    DWORD value, expected, size, row_pitch, slice_pitch;
+
+    size = 4;
+    hr = IDirect3DDevice9_CreateVolumeTexture(device, size, size, size, 0, 0, D3DFMT_A8R8G8B8,
+                                              D3DPOOL_MANAGED, &tex, NULL);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = D3DXFillVolumeTexture(tex, fillfunc_volume, NULL);
+        ok(hr == D3D_OK, "D3DXFillVolumeTexture returned %#x, expected %#x\n", hr, D3D_OK);
+
+        for (m = 0; m < 3; m++)
+        {
+            hr = IDirect3DVolumeTexture9_LockBox(tex, m, &lock_box, NULL, D3DLOCK_READONLY);
+            ok(hr == D3D_OK, "Couldn't lock the texture, error %#x\n", hr);
+            if (SUCCEEDED(hr))
+            {
+                row_pitch = lock_box.RowPitch / sizeof(DWORD);
+                slice_pitch = lock_box.SlicePitch / sizeof(DWORD);
+                for (z = 0; z < size; z++)
+                {
+                    for (y = 0; y < size; y++)
+                    {
+                        for (x = 0; x < size; x++)
+                        {
+                            value = ((DWORD *)lock_box.pBits)[z * slice_pitch + y * row_pitch + x];
+                            v[0] = (value >> 24) & 0xff;
+                            v[1] = (value >> 16) & 0xff;
+                            v[2] = (value >> 8) & 0xff;
+                            v[3] = value & 0xff;
+
+                            e[0] = 255.0f / size + 0.5f;
+                            e[1] = (x + 0.5f) / size * 255.0f + 0.5f;
+                            e[2] = (y + 0.5f) / size * 255.0f + 0.5f;
+                            e[3] = (z + 0.5f) / size * 255.0f + 0.5f;
+                            expected = e[0] << 24 | e[1] << 16 | e[2] << 8 | e[3];
+
+                            ok(color_match(v, e),
+                               "Texel at (%u, %u, %u) doesn't match: %#x, expected %#x\n",
+                               x, y, z, value, expected);
+                        }
+                    }
+                }
+                IDirect3DVolumeTexture9_UnlockBox(tex, m);
+            }
+            size >>= 1;
+        }
+    }
+    else
+        skip("Failed to create texture\n");
+
+    IDirect3DVolumeTexture9_Release(tex);
+
+    hr = IDirect3DDevice9_CreateVolumeTexture(device, 4, 4, 4, 1, 0, D3DFMT_A1R5G5B5,
+                                              D3DPOOL_MANAGED, &tex, NULL);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = D3DXFillVolumeTexture(tex, fillfunc_volume, NULL);
+        ok(hr == D3D_OK, "D3DXFillTexture returned %#x, expected %#x\n", hr, D3D_OK);
+        hr = IDirect3DVolumeTexture9_LockBox(tex, 0, &lock_box, NULL, D3DLOCK_READONLY);
+        ok(hr == D3D_OK, "Couldn't lock the texture, error %#x\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            row_pitch = lock_box.RowPitch / sizeof(WORD);
+            slice_pitch = lock_box.SlicePitch / sizeof(WORD);
+            for (z = 0; z < 4; z++)
+            {
+                for (y = 0; y < 4; y++)
+                {
+                    for (x = 0; x < 4; x++)
+                    {
+                        value = ((WORD *)lock_box.pBits)[z * slice_pitch + y * row_pitch + x];
+                        v[0] = value >> 15;
+                        v[1] = value >> 10 & 0x1f;
+                        v[2] = value >> 5 & 0x1f;
+                        v[3] = value & 0x1f;
+
+                        e[0] = 1;
+                        e[1] = (x + 0.5f) / 4 * 31.0f + 0.5f;
+                        e[2] = (y + 0.5f) / 4 * 31.0f + 0.5f;
+                        e[3] = (z + 0.5f) / 4 * 31.0f + 0.5f;
+                        expected = e[0] << 15 | e[1] << 10 | e[2] << 5 | e[3];
+
+                        ok(color_match(v, e),
+                           "Texel at (%u, %u, %u) doesn't match: %#x, expected %#x\n",
+                           x, y, z, value, expected);
+                    }
+                }
+            }
+            IDirect3DVolumeTexture9_UnlockBox(tex, 0);
+        }
+    }
+    else
+        skip("Failed to create texture\n");
+
+    IDirect3DVolumeTexture9_Release(tex);
+}
+
 START_TEST(texture)
 {
     HWND wnd;
@@ -970,6 +1085,7 @@ START_TEST(texture)
     test_D3DXFilterTexture(device);
     test_D3DXFillTexture(device);
     test_D3DXFillCubeTexture(device);
+    test_D3DXFillVolumeTexture(device);
 
     IDirect3DDevice9_Release(device);
     IDirect3D9_Release(d3d);
