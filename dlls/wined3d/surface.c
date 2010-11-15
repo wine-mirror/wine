@@ -2583,6 +2583,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, enum
 static HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
 
+    TRACE("iface %p, mem %p.\n", iface, Mem);
+
     if (This->flags & (SFLAG_LOCKED | SFLAG_DCINUSE))
     {
         WARN("Surface is locked or the HDC is in use\n");
