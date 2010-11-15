@@ -74,8 +74,8 @@ HINTERNET get_internet_session(IInternetBindInfo*);
 LPWSTR get_useragent(void);
 void free_session(void);
 
-HRESULT bind_to_storage(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv);
-HRESULT bind_to_object(IMoniker *mon, LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv);
+HRESULT bind_to_storage(IUri*,IBindCtx*,REFIID,void**);
+HRESULT bind_to_object(IMoniker*,IUri*,IBindCtx*,REFIID,void**ppv);
 
 HRESULT create_binding_protocol(BOOL,IInternetProtocolEx**);
 void set_binding_sink(IInternetProtocolEx*,IInternetProtocolSink*,IInternetBindInfo*);

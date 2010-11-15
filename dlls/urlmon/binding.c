@@ -18,6 +18,7 @@
 
 #include "urlmon_main.h"
 #include "winreg.h"
+#include "shlwapi.h"
 
 #include "wine/debug.h"
 
@@ -889,10 +890,9 @@ static ULONG WINAPI Binding_Release(IBinding *iface)
         ReleaseBindInfo(&This->bindinfo);
         This->section.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->section);
+        SysFreeString(This->url);
         heap_free(This->mime);
         heap_free(This->redirect_url);
-        heap_free(This->url);
-
         heap_free(This);
 
         URLMON_UnlockModule();
@@ -1264,7 +1264,7 @@ static HRESULT WINAPI InternetBindInfo_GetBindString(IInternetBindInfo *iface,
         return hres;
     }
     case BINDSTRING_URL: {
-        DWORD size = (strlenW(This->url)+1) * sizeof(WCHAR);
+        DWORD size = (SysStringLen(This->url)+1) * sizeof(WCHAR);
 
         if(!ppwzStr || !pcElFetched)
             return E_INVALIDARG;
@@ -1399,42 +1399,29 @@ static HRESULT get_callback(IBindCtx *pbc, IBindStatusCallback **callback)
     return hres;
 }
 
-static BOOL is_urlmon_protocol(LPCWSTR url)
+static BOOL is_urlmon_protocol(IUri *uri)
 {
-    static const WCHAR wszCdl[] = {'c','d','l'};
-    static const WCHAR wszFile[] = {'f','i','l','e'};
-    static const WCHAR wszFtp[]  = {'f','t','p'};
-    static const WCHAR wszGopher[] = {'g','o','p','h','e','r'};
-    static const WCHAR wszHttp[] = {'h','t','t','p'};
-    static const WCHAR wszHttps[] = {'h','t','t','p','s'};
-    static const WCHAR wszMk[]   = {'m','k'};
+    DWORD scheme;
+    HRESULT hres;
 
-    static const struct {
-        LPCWSTR scheme;
-        int len;
-    } protocol_list[] = {
-        {wszCdl,    sizeof(wszCdl)   /sizeof(WCHAR)},
-        {wszFile,   sizeof(wszFile)  /sizeof(WCHAR)},
-        {wszFtp,    sizeof(wszFtp)   /sizeof(WCHAR)},
-        {wszGopher, sizeof(wszGopher)/sizeof(WCHAR)},
-        {wszHttp,   sizeof(wszHttp)  /sizeof(WCHAR)},
-        {wszHttps,  sizeof(wszHttps) /sizeof(WCHAR)},
-        {wszMk,     sizeof(wszMk)    /sizeof(WCHAR)}
-    };
+    hres = IUri_GetScheme(uri, &scheme);
+    if(FAILED(hres))
+        return FALSE;
 
-    unsigned int i;
-    int len = lstrlenW(url);
-
-    for(i=0; i < sizeof(protocol_list)/sizeof(protocol_list[0]); i++) {
-        if(len >= protocol_list[i].len
-           && !memcmp(url, protocol_list[i].scheme, protocol_list[i].len*sizeof(WCHAR)))
-            return TRUE;
+    switch(scheme) {
+    case URL_SCHEME_FILE:
+    case URL_SCHEME_FTP:
+    case URL_SCHEME_GOPHER:
+    case URL_SCHEME_HTTP:
+    case URL_SCHEME_HTTPS:
+    case URL_SCHEME_MK:
+        return TRUE;
     }
 
     return FALSE;
 }
 
-static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, LPCWSTR url, IBindCtx *pbc,
+static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, IUri *uri, IBindCtx *pbc,
         BOOL to_obj, REFIID riid, Binding **binding)
 {
     Binding *ret;
@@ -1512,11 +1499,15 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, LPCWSTR url, 
     if(!(ret->bindf & BINDF_ASYNCHRONOUS)) {
         ret->bindf |= BINDF_NEEDFILE;
         ret->use_cache_file = TRUE;
-    }else if(!is_urlmon_protocol(url)) {
+    }else if(!is_urlmon_protocol(uri)) {
         ret->bindf |= BINDF_NEEDFILE;
     }
 
-    ret->url = heap_strdupW(url);
+    hres = IUri_GetDisplayUri(uri, &ret->url);
+    if(FAILED(hres)) {
+        IBinding_Release(BINDING(ret));
+        return hres;
+    }
 
     if(binding_ctx) {
         ret->stgmed_buf = binding_ctx->stgmed_buf;
@@ -1543,14 +1534,14 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, LPCWSTR url, 
     return S_OK;
 }
 
-static HRESULT start_binding(IMoniker *mon, Binding *binding_ctx, LPCWSTR url, IBindCtx *pbc,
+static HRESULT start_binding(IMoniker *mon, Binding *binding_ctx, IUri *uri, IBindCtx *pbc,
                              BOOL to_obj, REFIID riid, Binding **ret)
 {
     Binding *binding = NULL;
     HRESULT hres;
     MSG msg;
 
-    hres = Binding_Create(mon, binding_ctx, url, pbc, to_obj, riid, &binding);
+    hres = Binding_Create(mon, binding_ctx, uri, pbc, to_obj, riid, &binding);
     if(FAILED(hres))
         return hres;
 
@@ -1569,7 +1560,7 @@ static HRESULT start_binding(IMoniker *mon, Binding *binding_ctx, LPCWSTR url, I
         report_data(binding, BSCF_FIRSTDATANOTIFICATION | (binding_ctx->download_state == END_DOWNLOAD ? BSCF_LASTDATANOTIFICATION : 0),
                 0, 0);
     }else {
-        hres = IInternetProtocol_Start(binding->protocol, url, PROTSINK(binding),
+        hres = IInternetProtocolEx_StartEx(binding->protocol, uri, PROTSINK(binding),
                  BINDINF(binding), PI_APARTMENTTHREADED|PI_MIMEVERIFICATION, 0);
 
         TRACE("start ret %08x\n", hres);
@@ -1595,7 +1586,7 @@ static HRESULT start_binding(IMoniker *mon, Binding *binding_ctx, LPCWSTR url, I
     return S_OK;
 }
 
-HRESULT bind_to_storage(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)
+HRESULT bind_to_storage(IUri *uri, IBindCtx *pbc, REFIID riid, void **ppv)
 {
     Binding *binding = NULL, *binding_ctx;
     HRESULT hres;
@@ -1604,7 +1595,7 @@ HRESULT bind_to_storage(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)
 
     binding_ctx = get_bctx_binding(pbc);
 
-    hres = start_binding(NULL, binding_ctx, url, pbc, FALSE, riid, &binding);
+    hres = start_binding(NULL, binding_ctx, uri, pbc, FALSE, riid, &binding);
     if(binding_ctx)
         IBinding_Release(BINDING(binding_ctx));
     if(FAILED(hres))
@@ -1626,14 +1617,14 @@ HRESULT bind_to_storage(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)
     return hres;
 }
 
-HRESULT bind_to_object(IMoniker *mon, LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)
+HRESULT bind_to_object(IMoniker *mon, IUri *uri, IBindCtx *pbc, REFIID riid, void **ppv)
 {
     Binding *binding;
     HRESULT hres;
 
     *ppv = NULL;
 
-    hres = start_binding(mon, NULL, url, pbc, TRUE, riid, &binding);
+    hres = start_binding(mon, NULL, uri, pbc, TRUE, riid, &binding);
     if(FAILED(hres))
         return hres;
 
