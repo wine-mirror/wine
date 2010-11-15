@@ -66,7 +66,7 @@ static inline void URLMON_UnlockModule(void) { InterlockedDecrement( &URLMON_ref
 #define DEFINE_THIS(cls,ifc,iface) DEFINE_THIS2(cls,lp ## ifc ## Vtbl,iface)
 
 IInternetProtocolInfo *get_protocol_info(LPCWSTR);
-HRESULT get_protocol_handler(LPCWSTR,CLSID*,BOOL*,IClassFactory**);
+HRESULT get_protocol_handler(IUri*,CLSID*,BOOL*,IClassFactory**);
 IInternetProtocol *get_mime_filter(LPCWSTR);
 BOOL is_registered_protocol(LPCWSTR);
 void register_urlmon_namespace(IClassFactory*,REFIID,LPCWSTR,BOOL);

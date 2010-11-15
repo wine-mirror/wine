@@ -541,15 +541,8 @@ static HRESULT WINAPI BindProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUr
     if(!protocol) {
         IClassFactory *cf;
         IUnknown *unk;
-        BSTR raw_uri;
 
-        /* FIXME: Avoid GetRawUri here */
-        hres = IUri_GetRawUri(pUri, &raw_uri);
-        if(FAILED(hres))
-            return hres;
-
-        hres = get_protocol_handler(raw_uri, &clsid, &urlmon_protocol, &cf);
-        SysFreeString(raw_uri);
+        hres = get_protocol_handler(pUri, &clsid, &urlmon_protocol, &cf);
         if(FAILED(hres))
             return hres;
 
