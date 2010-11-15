@@ -42,7 +42,7 @@ typedef struct {
 
     LONG ref;
 
-    IInternetProtocol *protocol;
+    IInternetProtocolEx *protocol;
 
     BYTE buf[1024*8];
     DWORD size;
@@ -88,7 +88,7 @@ struct Binding {
     LONG ref;
 
     IBindStatusCallback *callback;
-    IInternetProtocol *protocol;
+    IInternetProtocolEx *protocol;
     IServiceProvider *service_provider;
 
     stgmed_buf_t *stgmed_buf;
@@ -427,7 +427,7 @@ static const IUnknownVtbl StgMedUnkVtbl = {
     StgMedUnk_Release
 };
 
-static stgmed_buf_t *create_stgmed_buf(IInternetProtocol *protocol)
+static stgmed_buf_t *create_stgmed_buf(IInternetProtocolEx *protocol)
 {
     stgmed_buf_t *ret = heap_alloc(sizeof(*ret));
 
@@ -1487,7 +1487,7 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, LPCWSTR url, 
         ret->protocol = binding_ctx->protocol;
         IInternetProtocol_AddRef(ret->protocol);
     }else {
-        hres = create_binding_protocol(url, TRUE, &ret->protocol);
+        hres = create_binding_protocol(TRUE, &ret->protocol);
         if(FAILED(hres)) {
             WARN("Could not get protocol handler\n");
             IBinding_Release(BINDING(ret));
