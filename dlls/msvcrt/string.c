@@ -709,11 +709,12 @@ unsigned __int64 CDECL MSVCRT_strtoui64(const char *nptr, char **endptr, int bas
 }
 
 /*********************************************************************
- *  _itoa_s (MSVCRT.@)
+ *  _ltoa_s (MSVCRT.@)
  */
-int CDECL _itoa_s(int value, char *str, MSVCRT_size_t size, int radix)
+int CDECL _ltoa_s(MSVCRT_long value, char *str, MSVCRT_size_t size, int radix)
 {
-    unsigned int val, digit;
+    MSVCRT_ulong val;
+    unsigned int digit;
     int is_negative;
     char buffer[33], *pos;
     size_t len;
@@ -786,11 +787,12 @@ int CDECL _itoa_s(int value, char *str, MSVCRT_size_t size, int radix)
 }
 
 /*********************************************************************
- *  _itow_s (MSVCRT.@)
+ *  _ltow_s (MSVCRT.@)
  */
-int CDECL _itow_s(int value, MSVCRT_wchar_t *str, MSVCRT_size_t size, int radix)
+int CDECL _ltow_s(MSVCRT_long value, MSVCRT_wchar_t *str, MSVCRT_size_t size, int radix)
 {
-    unsigned int val, digit;
+    MSVCRT_ulong val;
+    unsigned int digit;
     int is_negative;
     MSVCRT_wchar_t buffer[33], *pos;
     size_t len;
@@ -860,6 +862,22 @@ int CDECL _itow_s(int value, MSVCRT_wchar_t *str, MSVCRT_size_t size, int radix)
 
     memcpy(str, pos, len * sizeof(MSVCRT_wchar_t));
     return 0;
+}
+
+/*********************************************************************
+ *  _itoa_s (MSVCRT.@)
+ */
+int CDECL _itoa_s(int value, char *str, MSVCRT_size_t size, int radix)
+{
+    return _ltoa_s(value, str, size, radix);
+}
+
+/*********************************************************************
+ *  _itow_s (MSVCRT.@)
+ */
+int CDECL _itow_s(int value, MSVCRT_wchar_t *str, MSVCRT_size_t size, int radix)
+{
+    return _ltow_s(value, str, size, radix);
 }
 
 /*********************************************************************

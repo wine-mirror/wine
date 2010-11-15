@@ -639,9 +639,9 @@
 @ cdecl _lseek(long long long) MSVCRT__lseek
 @ cdecl -ret64 _lseeki64(long int64 long) MSVCRT__lseeki64
 @ cdecl _ltoa(long ptr long) ntdll._ltoa
-# stub _ltoa_s
+@ cdecl _ltoa_s(long ptr long long) ntdll._ltoa_s
 @ cdecl _ltow(long ptr long) ntdll._ltow
-# stub _ltow_s
+@ cdecl _ltow_s(long ptr long long) ntdll._ltow_s
 @ cdecl _makepath(ptr str str str str)
 @ cdecl _makepath_s(ptr long str str str str)
 # stub _malloc_dbg
