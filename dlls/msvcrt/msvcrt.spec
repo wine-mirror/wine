@@ -1384,7 +1384,7 @@
 @ cdecl strftime(str long str ptr) MSVCRT_strftime
 @ cdecl strlen(str) ntdll.strlen
 @ cdecl strncat(str str long) ntdll.strncat
-# stub strncat_s
+@ cdecl strncat_s(str long str long) MSVCRT_strncat_s
 @ cdecl strncmp(str str long) ntdll.strncmp
 @ cdecl strncpy(ptr str long) ntdll.strncpy
 @ cdecl strncpy_s(ptr long str long)

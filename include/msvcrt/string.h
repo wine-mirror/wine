@@ -68,6 +68,7 @@ size_t  __cdecl strcspn(const char*,const char*);
 char*   __cdecl strerror(int);
 size_t  __cdecl strlen(const char*);
 char*   __cdecl strncat(char*,const char*,size_t);
+errno_t __cdecl strncat_s(char*,size_t,const char*,size_t);
 int     __cdecl strncmp(const char*,const char*,size_t);
 char*   __cdecl strncpy(char*,const char*,size_t);
 errno_t __cdecl strncpy_s(char*,size_t,const char*,size_t);

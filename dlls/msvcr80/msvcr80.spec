@@ -1439,7 +1439,7 @@
 @ cdecl strftime(str long str ptr) msvcrt.strftime
 @ cdecl strlen(str) msvcrt.strlen
 @ cdecl strncat(str str long) msvcrt.strncat
-@ stub strncat_s
+@ cdecl strncat_s(str long str long) msvcrt.strncat_s
 @ cdecl strncmp(str str long) msvcrt.strncmp
 @ cdecl strncpy(ptr str long) msvcrt.strncpy
 @ cdecl strncpy_s(ptr long str long) msvcrt.strncpy_s
