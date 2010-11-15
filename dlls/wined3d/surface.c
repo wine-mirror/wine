@@ -2631,10 +2631,13 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *M
         /* HeapMemory should be NULL already */
         if (This->resource.heapMemory)
             ERR("User pointer surface has heap memory allocated.\n");
-        This->flags &= ~SFLAG_USERPTR;
+        This->flags &= ~(SFLAG_USERPTR | SFLAG_INSYSMEM);
 
         if (This->flags & SFLAG_CLIENT)
             surface_release_client_storage(This);
+
+        surface_prepare_system_memory(This);
+        surface_modify_location(This, SFLAG_INSYSMEM, TRUE);
     }
     return WINED3D_OK;
 }
