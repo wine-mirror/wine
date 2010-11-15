@@ -82,6 +82,34 @@ static void WINECON_FetchCells(struct inner_data* data, int upd_tp, int upd_bm)
 }
 
 /******************************************************************
+ *		WINECON_ResizeWithContainer
+ *
+ * For console embedded in a container (e.g. user in a win32 window, or (n)curses
+ * in a TERM, perform resize of console (screen buffer and window) to fit in
+ * (new) container size.
+ */
+void WINECON_ResizeWithContainer(struct inner_data* data, int width, int height)
+{
+    struct config_data  cfg;
+
+    if (data->in_set_config) return;
+
+    cfg = data->curcfg;
+    cfg.win_width  = width;
+    cfg.win_height = height;
+
+    /* auto size screen-buffer if it's now smaller than window */
+    if (cfg.sb_width  < cfg.win_width)  cfg.sb_width = cfg.win_width;
+    if (cfg.sb_height < cfg.win_height) cfg.sb_height = cfg.win_height;
+
+    /* and reset window pos so that we don't display outside of the screen-buffer */
+    if (cfg.win_pos.X + cfg.win_width  > cfg.sb_width)  cfg.win_pos.X = cfg.sb_width  - cfg.win_width;
+    if (cfg.win_pos.Y + cfg.win_height > cfg.sb_height) cfg.win_pos.Y = cfg.sb_height - cfg.win_height;
+
+    WINECON_SetConfig(data, &cfg);
+}
+
+/******************************************************************
  *		WINECON_SetHistorySize
  *
  *
@@ -336,6 +364,8 @@ int	WINECON_GrabChanges(struct inner_data* data)
  */
 void     WINECON_SetConfig(struct inner_data* data, const struct config_data* cfg)
 {
+    if (data->in_set_config) return;
+    data->in_set_config = TRUE;
     if (data->curcfg.cursor_size != cfg->cursor_size ||
         data->curcfg.cursor_visible != cfg->cursor_visible)
     {
@@ -467,6 +497,7 @@ void     WINECON_SetConfig(struct inner_data* data, const struct config_data* cf
      * in order to get data correctly updated
      */
     WINECON_GrabChanges(data);
+    data->in_set_config = FALSE;
 }
 
 /******************************************************************

@@ -778,6 +778,7 @@ static void	WCUSER_Paint(const struct inner_data* data)
 {
     PAINTSTRUCT		ps;
 
+    if (data->in_set_config) return; /* in order to avoid some flicker */
     BeginPaint(data->hWnd, &ps);
     BitBlt(ps.hdc, 0, 0,
            data->curcfg.win_width * data->curcfg.cell_width,
@@ -1329,6 +1330,10 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
         if (!HIWORD(lParam)) return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 	WCUSER_SetMenuDetails(data, GetSystemMenu(data->hWnd, FALSE));
 	break;
+    case WM_SIZE:
+        WINECON_ResizeWithContainer(data, LOWORD(lParam) / data->curcfg.cell_width,
+                                    HIWORD(lParam) / data->curcfg.cell_height);
+        break;
     default:
         return DefWindowProcW(hWnd, uMsg, wParam, lParam);
     }

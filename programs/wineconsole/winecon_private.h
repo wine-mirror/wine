@@ -60,6 +60,7 @@ struct inner_data {
     HANDLE		hSynchro;	/* waitable handle signalled by server when something in server has been modified */
     HWND		hWnd;           /* handle of 'user' window or NULL for 'curses' */
     INT                 nCmdShow;       /* argument of WinMain */
+    BOOL                in_set_config;  /* to handle re-entrant calls to WINECON_SetConfig */
 
     int			(*fnMainLoop)(struct inner_data* data);
     void		(*fnPosCursor)(const struct inner_data* data);
@@ -77,6 +78,7 @@ struct inner_data {
 
 /* from wineconsole.c */
 extern void WINECON_Fatal(const char* msg);
+extern void WINECON_ResizeWithContainer(struct inner_data* data, int width, int height);
 extern int  WINECON_GetHistorySize(HANDLE hConIn);
 extern int  WINECON_GetHistoryMode(HANDLE hConIn);
 extern BOOL WINECON_GetConsoleTitle(HANDLE hConIn, WCHAR* buffer, size_t len);
