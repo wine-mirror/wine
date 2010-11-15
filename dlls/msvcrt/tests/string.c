@@ -1459,6 +1459,10 @@ static void test_wcsncat_s(void)
         return;
     }
 
+    if (p_set_invalid_parameter_handler)
+        ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+                "Invalid parameter handler was already set\n");
+
     memcpy(src, abcW, sizeof(abcW));
     dst[0] = 0;
     ret = p_wcsncat_s(NULL, 4, src, 4);
@@ -1483,6 +1487,10 @@ static void test_wcsncat_s(void)
     dst[3] = 'd';
     ret = p_wcsncat_s(dst, 4, src, 4);
     ok(ret == EINVAL, "err = %d\n", ret);
+
+    if (p_set_invalid_parameter_handler)
+        ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+                "Cannot reset invalid parameter handler\n");
 }
 
 static void test__mbsnbcat_s(void)

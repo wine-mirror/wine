@@ -64,6 +64,7 @@ static char** (__cdecl *p__sys_errlist)(void);
 static __int64 (__cdecl *p_strtoi64)(const char *, char **, int);
 static unsigned __int64 (__cdecl *p_strtoui64)(const char *, char **, int);
 static errno_t (__cdecl *p_itoa_s)(int,char*,size_t,int);
+static int (__cdecl *p_wcsncat_s)(wchar_t *dst, size_t elem, const wchar_t *src, size_t count);
 
 static void* (WINAPI *pEncodePointer)(void *);
 
@@ -384,6 +385,62 @@ static void test__itoa_s(void)
        buffer);
 }
 
+static void test_wcsncat_s(void)
+{
+    static wchar_t abcW[] = {'a','b','c',0};
+    int ret;
+    wchar_t dst[4];
+    wchar_t src[4];
+
+    if (!p_wcsncat_s)
+    {
+        win_skip("skipping wcsncat_s tests\n");
+        return;
+    }
+
+    if(!p_set_invalid_parameter_handler) {
+        win_skip("_set_invalid_parameter_handler not found\n");
+        return;
+    }
+
+    memcpy(src, abcW, sizeof(abcW));
+    dst[0] = 0;
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p_wcsncat_s(NULL, 4, src, 4);
+    ok(ret == EINVAL, "err = %d\n", ret);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p_wcsncat_s(dst, 0, src, 4);
+    ok(ret == EINVAL, "err = %d\n", ret);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p_wcsncat_s(dst, 0, src, _TRUNCATE);
+    ok(ret == EINVAL, "err = %d\n", ret);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    ret = p_wcsncat_s(dst, 4, NULL, 0);
+    ok(ret == 0, "err = %d\n", ret);
+
+    dst[0] = 0;
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p_wcsncat_s(dst, 2, src, 4);
+    ok(ret == ERANGE, "err = %d\n", ret);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    dst[0] = 0;
+    ret = p_wcsncat_s(dst, 2, src, _TRUNCATE);
+    ok(ret == STRUNCATE, "err = %d\n", ret);
+    ok(dst[0] == 'a' && dst[1] == 0, "dst is %s\n", wine_dbgstr_w(dst));
+
+    memcpy(dst, abcW, sizeof(abcW));
+    dst[3] = 'd';
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p_wcsncat_s(dst, 4, src, 4);
+    ok(ret == EINVAL, "err = %d\n", ret);
+    CHECK_CALLED(invalid_parameter_handler);
+}
 
 /* ########## */
 
@@ -415,6 +472,7 @@ START_TEST(msvcr90)
     p_strtoi64 = (void *) GetProcAddress(hcrt, "_strtoi64");
     p_strtoui64 = (void *) GetProcAddress(hcrt, "_strtoui64");
     p_itoa_s = (void *)GetProcAddress(hcrt, "_itoa_s");
+    p_wcsncat_s = (void *)GetProcAddress( hcrt,"wcsncat_s" );
 
     hkernel32 = GetModuleHandleA("kernel32.dll");
     pEncodePointer = (void *) GetProcAddress(hkernel32, "EncodePointer");
@@ -424,4 +482,5 @@ START_TEST(msvcr90)
     test_error_messages();
     test__strtoi64();
     test__itoa_s();
+    test_wcsncat_s();
 }

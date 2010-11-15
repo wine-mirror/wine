@@ -1634,11 +1634,12 @@ INT CDECL MSVCRT_wcsncat_s(MSVCRT_wchar_t *dst, MSVCRT_size_t elem,
     MSVCRT_wchar_t dststart;
     INT ret = 0;
 
-    if (src == NULL && count > 0)
+    if (!MSVCRT_CHECK_PMT(dst != NULL) || !MSVCRT_CHECK_PMT(elem > 0))
+    {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
         return MSVCRT_EINVAL;
-    if (dst == NULL)
-        return MSVCRT_EINVAL;
-    if (elem == 0)
+    }
+    if (!MSVCRT_CHECK_PMT(src != NULL || count == 0))
         return MSVCRT_EINVAL;
     if (count == 0)
         return 0;
@@ -1649,7 +1650,10 @@ INT CDECL MSVCRT_wcsncat_s(MSVCRT_wchar_t *dst, MSVCRT_size_t elem,
             break;
     }
     if (dststart == elem)
+    {
+        MSVCRT_INVALID_PMT("dst[elem] is not NULL terminated\n");
         return MSVCRT_EINVAL;
+    }
 
     if (count == MSVCRT__TRUNCATE)
     {
@@ -1668,6 +1672,7 @@ INT CDECL MSVCRT_wcsncat_s(MSVCRT_wchar_t *dst, MSVCRT_size_t elem,
         dst[srclen] = '\0';
         return ret;
     }
+    MSVCRT_INVALID_PMT("dst[elem] is too small");
     dst[0] = '\0';
     return MSVCRT_ERANGE;
 }
