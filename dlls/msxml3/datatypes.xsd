@@ -37,7 +37,7 @@
         <xsd:restriction base="xsd:base64Binary"/>
     </xsd:simpleType>
 
-    <!-- <xsd:element name="bin.base64" type="dt:bin.base64"/> -->
+    <xsd:element name="bin.base64" type="dt:bin.base64"/>
 
     <xsd:simpleType name="bin.hex">
         <xsd:annotation>
