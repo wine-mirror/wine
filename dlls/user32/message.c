@@ -4230,6 +4230,16 @@ BOOL WINAPI KillSystemTimer( HWND hwnd, UINT_PTR id )
 
 
 /**********************************************************************
+ *		IsGUIThread  (USER32.@)
+ */
+BOOL WINAPI IsGUIThread( BOOL convert )
+{
+    FIXME( "%u: stub\n", convert );
+    return TRUE;
+}
+
+
+/**********************************************************************
  *		GetGUIThreadInfo  (USER32.@)
  */
 BOOL WINAPI GetGUIThreadInfo( DWORD id, GUITHREADINFO *info )

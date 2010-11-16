@@ -4814,6 +4814,7 @@ WINUSERAPI BOOL        WINAPI IsDialogMessageA(HWND,LPMSG);
 WINUSERAPI BOOL        WINAPI IsDialogMessageW(HWND,LPMSG);
 #define                       IsDialogMessage WINELIB_NAME_AW(IsDialogMessage)
 WINUSERAPI UINT        WINAPI IsDlgButtonChecked(HWND,int);
+WINUSERAPI BOOL        WINAPI IsGUIThread(BOOL);
 WINUSERAPI BOOL        WINAPI IsHungAppWindow(HWND);
 WINUSERAPI BOOL        WINAPI IsIconic(HWND);
 WINUSERAPI BOOL        WINAPI IsMenu(HMENU);
