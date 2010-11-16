@@ -4666,7 +4666,7 @@ BOOL WINAPI AddPrintProcessorW(LPWSTR pName, LPWSTR pEnvironment, LPWSTR pPathNa
 {
     FIXME("(%s,%s,%s,%s): stub\n", debugstr_w(pName), debugstr_w(pEnvironment),
           debugstr_w(pPathName), debugstr_w(pPrintProcessorName));
-    return FALSE;
+    return TRUE;
 }
 
 /*****************************************************************************
