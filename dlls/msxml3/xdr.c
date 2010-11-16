@@ -820,11 +820,10 @@ static xmlNodePtr XDR_E_Schema(xmlNodePtr xdr, xmlNodePtr parent, xmlChar const*
 xmlDocPtr XDR_to_XSD_doc(xmlDocPtr xdr_doc, xmlChar const* nsURI)
 {
     xmlDocPtr xsd_doc = xmlNewDoc(NULL);
-    xmlNodePtr root;
 
     TRACE("(%p)\n", xdr_doc);
 
-    root = XDR_E_Schema(get_schema((xmlNodePtr)xdr_doc), (xmlNodePtr)xsd_doc, nsURI);
+    XDR_E_Schema(get_schema((xmlNodePtr)xdr_doc), (xmlNodePtr)xsd_doc, nsURI);
 
     return xsd_doc;
 }
