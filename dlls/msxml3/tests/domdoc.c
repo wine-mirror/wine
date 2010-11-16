@@ -7311,96 +7311,158 @@ static void test_removeQualifiedItem(void)
     free_bstrs();
 }
 
+#define check_default_props(doc) _check_default_props(__LINE__, doc)
+static inline void _check_default_props(int line, IXMLDOMDocument2* doc)
+{
+    VARIANT_BOOL b;
+    VARIANT var;
+    HRESULT hr;
+
+    VariantInit(&var);
+    helper_ole_check(IXMLDOMDocument2_getProperty(doc, _bstr_("SelectionLanguage"), &var));
+    ok_(__FILE__, line)(lstrcmpW(V_BSTR(&var), _bstr_("XSLPattern")) == 0, "expected XSLPattern\n");
+    VariantClear(&var);
+
+    helper_ole_check(IXMLDOMDocument2_getProperty(doc, _bstr_("SelectionNamespaces"), &var));
+    ok_(__FILE__, line)(lstrcmpW(V_BSTR(&var), _bstr_("")) == 0, "expected empty string\n");
+    VariantClear(&var);
+
+    helper_ole_check(IXMLDOMDocument2_get_preserveWhiteSpace(doc, &b));
+    ok_(__FILE__, line)(b == VARIANT_FALSE, "expected FALSE\n");
+
+    hr = IXMLDOMDocument2_get_schemas(doc, &var);
+    ok_(__FILE__, line)(hr == S_FALSE, "got %08x\n", hr);
+    VariantClear(&var);
+}
+
+#define check_set_props(doc) _check_set_props(__LINE__, doc)
+static inline void _check_set_props(int line, IXMLDOMDocument2* doc)
+{
+    VARIANT_BOOL b;
+    VARIANT var;
+
+    VariantInit(&var);
+    helper_ole_check(IXMLDOMDocument2_getProperty(doc, _bstr_("SelectionLanguage"), &var));
+    ok_(__FILE__, line)(lstrcmpW(V_BSTR(&var), _bstr_("XPath")) == 0, "expected XPath\n");
+    VariantClear(&var);
+
+    helper_ole_check(IXMLDOMDocument2_getProperty(doc, _bstr_("SelectionNamespaces"), &var));
+    ok_(__FILE__, line)(lstrcmpW(V_BSTR(&var), _bstr_("xmlns:wi=\'www.winehq.org\'")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    helper_ole_check(IXMLDOMDocument2_get_preserveWhiteSpace(doc, &b));
+    ok_(__FILE__, line)(b == VARIANT_TRUE, "expected TRUE\n");
+
+    helper_ole_check(IXMLDOMDocument2_get_schemas(doc, &var));
+    ok_(__FILE__, line)(V_VT(&var) != VT_NULL, "expected pointer\n");
+    VariantClear(&var);
+}
+
+#define set_props(doc, cache) _set_props(__LINE__, doc, cache)
+static inline void _set_props(int line, IXMLDOMDocument2* doc, IXMLDOMSchemaCollection* cache)
+{
+    VARIANT var;
+
+    VariantInit(&var);
+    helper_ole_check(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionLanguage"), _variantbstr_("XPath")));
+    helper_ole_check(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"), _variantbstr_("xmlns:wi=\'www.winehq.org\'")));
+    helper_ole_check(IXMLDOMDocument2_put_preserveWhiteSpace(doc, VARIANT_TRUE));
+    V_VT(&var) = VT_DISPATCH;
+    V_DISPATCH(&var) = NULL;
+    helper_ole_check(IXMLDOMSchemaCollection_QueryInterface(cache, &IID_IDispatch, (void**)&V_DISPATCH(&var)));
+    ok_(__FILE__, line)(V_DISPATCH(&var) != NULL, "expected pointer\n");
+    helper_ole_check(IXMLDOMDocument2_putref_schemas(doc, var));
+    VariantClear(&var);
+}
+
+#define unset_props(doc) _unset_props(__LINE__, doc)
+static inline void _unset_props(int line, IXMLDOMDocument2* doc)
+{
+    VARIANT var;
+
+    VariantInit(&var);
+    helper_ole_check(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionLanguage"), _variantbstr_("XSLPattern")));
+    helper_ole_check(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"), _variantbstr_("")));
+    helper_ole_check(IXMLDOMDocument2_put_preserveWhiteSpace(doc, VARIANT_FALSE));
+    V_VT(&var) = VT_NULL;
+    helper_ole_check(IXMLDOMDocument2_putref_schemas(doc, var));
+    VariantClear(&var);
+}
+
 static void test_get_ownerDocument(void)
 {
     IXMLDOMDocument *doc1, *doc2, *doc3;
     IXMLDOMDocument2 *doc, *doc_owner;
     IXMLDOMNode *node;
+    IXMLDOMSchemaCollection *cache;
     VARIANT_BOOL b;
     VARIANT var;
-    HRESULT hr;
     BSTR str;
 
     doc = create_document(&IID_IXMLDOMDocument2);
-    if (!doc) return;
+    cache = create_cache(&IID_IXMLDOMSchemaCollection);
+    if (!doc || !cache)
+    {
+        if (doc) IXMLDOMDocument2_Release(doc);
+        if (cache) IXMLDOMSchemaCollection_Release(cache);
+        return;
+    }
 
-    str = SysAllocString( szComplete4 );
-    hr = IXMLDOMDocument_loadXML( doc, str, &b );
-    ok( hr == S_OK, "loadXML failed\n");
-    ok( b == VARIANT_TRUE, "failed to load XML string\n");
-    SysFreeString( str );
+    VariantInit(&var);
 
-    hr = IXMLDOMDocument2_getProperty(doc, _bstr_("SelectionLanguage"), &var);
-    ok( hr == S_OK, "got 0x%08x\n", hr);
-    ok( lstrcmpW(V_BSTR(&var), _bstr_("XSLPattern")) == 0, "expected XSLPattern\n");
-    VariantClear(&var);
+    str = SysAllocString(szComplete4);
+    ole_check(IXMLDOMDocument_loadXML(doc, str, &b));
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+    SysFreeString(str);
 
-    /* set to XPath and check that new instances use it */
-    hr = IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionLanguage"), _variantbstr_("XPath"));
-    ok( hr == S_OK, "got 0x%08x\n", hr);
+    check_default_props(doc);
 
-    hr = IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"), _variantbstr_("xmlns:wi=\'www.winehq.org\'"));
-    ok( hr == S_OK, "got 0x%08x\n", hr);
+    /* set properties and check that new instances use them */
+    set_props(doc, cache);
+    check_set_props(doc);
 
-    hr = IXMLDOMDocument2_get_firstChild(doc, &node);
-    ok( hr == S_OK, "got 0x%08x\n", hr);
+    ole_check(IXMLDOMDocument2_get_firstChild(doc, &node));
+    ole_check(IXMLDOMNode_get_ownerDocument(node, &doc1));
 
-    hr = IXMLDOMNode_get_ownerDocument(node, &doc1);
-    ok( hr == S_OK, "got 0x%08x\n", hr);
-
-    hr = IXMLDOMDocument_QueryInterface(doc1, &IID_IXMLDOMDocument2, (void**)&doc_owner);
-    ok( hr == S_OK, "got 0x%08x\n", hr);
+    /* new interface keeps props */
+    ole_check(IXMLDOMDocument_QueryInterface(doc1, &IID_IXMLDOMDocument2, (void**)&doc_owner));
     ok( doc_owner != doc, "got %p, doc %p\n", doc_owner, doc);
-    hr = IXMLDOMDocument2_getProperty(doc_owner, _bstr_("SelectionNamespaces"), &var);
-    ok( hr == S_OK, "got 0x%08x\n", hr);
-    ok( lstrcmpW(V_BSTR(&var), _bstr_("xmlns:wi=\'www.winehq.org\'")) == 0, "expected previously set value\n");
-    VariantClear(&var);
-
-    hr = IXMLDOMDocument2_getProperty(doc_owner, _bstr_("SelectionLanguage"), &var);
-    ok( hr == S_OK, "got 0x%08x\n", hr);
-    ok( lstrcmpW(V_BSTR(&var), _bstr_("XPath")) == 0, "expected XPath\n");
-    VariantClear(&var);
+    check_set_props(doc_owner);
     IXMLDOMDocument2_Release(doc_owner);
 
-    hr = IXMLDOMNode_get_ownerDocument(node, &doc2);
-    ok( hr == S_OK, "got 0x%08x\n", hr);
+    ole_check(IXMLDOMNode_get_ownerDocument(node, &doc2));
     IXMLDOMNode_Release(node);
 
     ok(doc1 != doc2, "got %p, expected %p. original %p\n", doc2, doc1, doc);
 
     /* reload */
-    str = SysAllocString( szComplete4 );
-    hr = IXMLDOMDocument2_loadXML( doc, str, &b );
-    ok( hr == S_OK, "got 0x%08x\n", hr);
-    ok( b == VARIANT_TRUE, "failed to load XML string\n");
-    SysFreeString( str );
+    str = SysAllocString(szComplete4);
+    ole_check(IXMLDOMDocument2_loadXML(doc, str, &b));
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+    SysFreeString(str);
 
     /* properties retained even after reload */
-    hr = IXMLDOMDocument2_getProperty(doc, _bstr_("SelectionNamespaces"), &var);
-    ok( hr == S_OK, "got 0x%08x\n", hr);
-    ok( lstrcmpW(V_BSTR(&var), _bstr_("xmlns:wi=\'www.winehq.org\'")) == 0, "expected previously set value\n");
-    VariantClear(&var);
+    check_set_props(doc);
 
-    hr = IXMLDOMDocument2_getProperty(doc, _bstr_("SelectionLanguage"), &var);
-    ok( hr == S_OK, "got 0x%08x\n", hr);
-    ok( lstrcmpW(V_BSTR(&var), _bstr_("XPath")) == 0, "expected XPath\n");
-    VariantClear(&var);
-
-    hr = IXMLDOMDocument2_get_firstChild(doc, &node);
-    ok( hr == S_OK, "got 0x%08x\n", hr);
-
-    hr = IXMLDOMNode_get_ownerDocument(node, &doc3);
-    ok( hr == S_OK, "got 0x%08x\n", hr);
+    ole_check(IXMLDOMDocument2_get_firstChild(doc, &node));
+    ole_check(IXMLDOMNode_get_ownerDocument(node, &doc3));
     IXMLDOMNode_Release(node);
 
-    hr = IXMLDOMDocument_QueryInterface(doc3, &IID_IXMLDOMDocument2, (void**)&doc_owner);
-    ok( hr == S_OK, "got 0x%08x\n", hr);
+    ole_check(IXMLDOMDocument_QueryInterface(doc3, &IID_IXMLDOMDocument2, (void**)&doc_owner));
     ok(doc3 != doc1 && doc3 != doc2 && doc_owner != doc, "got %p, (%p, %p, %p)\n", doc3, doc, doc1, doc2);
+    check_set_props(doc_owner);
+
+    /* changing properties for one instance changes them for all */
+    unset_props(doc_owner);
+    check_default_props(doc_owner);
+    check_default_props(doc);
+
 
     IXMLDOMDocument_Release(doc1);
     IXMLDOMDocument_Release(doc2);
     IXMLDOMDocument_Release(doc3);
     IXMLDOMDocument2_Release(doc);
+    IXMLDOMDocument2_Release(doc_owner);
     free_bstrs();
 }
 
