@@ -20,7 +20,7 @@ use strict;
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 #
 
-my $version="0.7.4";
+my $version="0.7.5";
 
 use Cwd;
 use File::Basename;
@@ -2475,7 +2475,11 @@ sub generate_project_files($)
       my $canon=canonize("@$target[$T_NAME]");
       $canon =~ s/_so$//;
 
-      print FILEO "\$(${canon}_MODULE).so: \$(${canon}_OBJS)\n";
+      if (@$target[$T_TYPE] == $TT_DLL) {
+        print FILEO "\$(${canon}_MODULE).so: \$(${canon}_OBJS) \$(${canon}_MODULE:.dll=.spec)\n";
+      } else {
+        print FILEO "\$(${canon}_MODULE).so: \$(${canon}_OBJS)\n";
+      }
       if (@{@$target[$T_SOURCES_CXX]} > 0 or @{@$project_settings[$T_SOURCES_CXX]} > 0) {
         print FILEO "\t\$(CXX)";
       } else {
