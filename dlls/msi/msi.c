@@ -3770,6 +3770,31 @@ UINT WINAPI MsiSetExternalUIRecord( INSTALLUI_HANDLER_RECORD handler,
 }
 
 /***********************************************************************
+ * MsiInstallMissingComponentA     [MSI.@]
+ */
+UINT WINAPI MsiInstallMissingComponentA( LPCSTR product, LPCSTR component, INSTALLSTATE state )
+{
+    UINT r;
+    WCHAR *productW = NULL, *componentW = NULL;
+
+    TRACE("%s, %s, %d\n", debugstr_a(product), debugstr_a(component), state);
+
+    if (product && !(productW = strdupAtoW( product )))
+        return ERROR_OUTOFMEMORY;
+
+    if (component && !(componentW = strdupAtoW( component )))
+    {
+        msi_free( productW );
+        return ERROR_OUTOFMEMORY;
+    }
+
+    r = MsiInstallMissingComponentW( productW, componentW, state );
+    msi_free( productW );
+    msi_free( componentW );
+    return r;
+}
+
+/***********************************************************************
  * MsiInstallMissingComponentW     [MSI.@]
  */
 UINT WINAPI MsiInstallMissingComponentW(LPCWSTR szProduct, LPCWSTR szComponent, INSTALLSTATE eInstallState)
