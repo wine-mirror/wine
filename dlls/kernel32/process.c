@@ -56,6 +56,9 @@ WINE_DECLARE_DEBUG_CHANNEL(file);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 #ifdef __APPLE__
+#include <CoreFoundation/CoreFoundation.h>
+#include <pthread.h>
+#include <unistd.h>
 extern char **__wine_get_main_environment(void);
 #else
 extern char **__wine_main_environ;
@@ -1632,6 +1635,54 @@ static const char *get_alternate_loader( char **ret_env )
     return loader;
 }
 
+#ifdef __APPLE__
+/***********************************************************************
+ *           terminate_main_thread
+ *
+ * On some versions of Mac OS X, the execve system call fails with
+ * ENOTSUP if the process has multiple threads.  Wine is always multi-
+ * threaded on Mac OS X because it specifically reserves the main thread
+ * for use by the system frameworks (see apple_main_thread() in
+ * libs/wine/loader.c).  So, when we need to exec without first forking,
+ * we need to terminate the main thread first.  We do this by installing
+ * a custom run loop source onto the main run loop and signaling it.
+ * The source's "perform" callback is pthread_exit and it will be
+ * executed on the main thread, terminating it.
+ *
+ * Returns TRUE if there's still hope the main thread has terminated or
+ * will soon.  Return FALSE if we've given up.
+ */
+static BOOL terminate_main_thread(void)
+{
+    static int delayms;
+
+    if (!delayms)
+    {
+        CFRunLoopSourceContext source_context = { 0 };
+        CFRunLoopSourceRef source;
+
+        source_context.perform = pthread_exit;
+        if (!(source = CFRunLoopSourceCreate( NULL, 0, &source_context )))
+            return FALSE;
+
+        CFRunLoopAddSource( CFRunLoopGetMain(), source, kCFRunLoopCommonModes );
+        CFRunLoopSourceSignal( source );
+        CFRunLoopWakeUp( CFRunLoopGetMain() );
+        CFRelease( source );
+
+        delayms = 20;
+    }
+
+    if (delayms > 1000)
+        return FALSE;
+
+    usleep(delayms * 1000);
+    delayms *= 2;
+
+    return TRUE;
+}
+#endif
+
 /***********************************************************************
  *           create_process
  *
@@ -1796,7 +1847,18 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         if (wineloader) putenv( wineloader );
         if (unixdir) chdir(unixdir);
 
-        if (argv) wine_exec_wine_binary( loader, argv, getenv("WINELOADER") );
+        if (argv)
+        {
+            do
+            {
+                wine_exec_wine_binary( loader, argv, getenv("WINELOADER") );
+            }
+#ifdef __APPLE__
+            while (errno == ENOTSUP && exec_only && terminate_main_thread());
+#else
+            while (0);
+#endif
+        }
         _exit(1);
     }
 

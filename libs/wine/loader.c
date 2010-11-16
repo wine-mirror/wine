@@ -48,6 +48,8 @@
 #ifdef __APPLE__
 #include <crt_externs.h>
 #define environ (*_NSGetEnviron())
+#include <CoreFoundation/CoreFoundation.h>
+#include <pthread.h>
 #else
 extern char **environ;
 #endif
@@ -668,6 +670,121 @@ static void set_max_limit( int limit )
 }
 
 
+#ifdef __APPLE__
+struct apple_stack_info
+{
+    void *stack;
+    size_t desired_size;
+};
+
+/***********************************************************************
+ *           apple_alloc_thread_stack
+ *
+ * Callback for wine_mmap_enum_reserved_areas to allocate space for
+ * the secondary thread's stack.
+ */
+static int apple_alloc_thread_stack( void *base, size_t size, void *arg )
+{
+    struct apple_stack_info *info = arg;
+
+    /* For mysterious reasons, putting the thread stack at the very top
+     * of the address space causes subsequent execs to fail, even on the
+     * child side of a fork.  Avoid the top 16MB. */
+    char * const limit = (char*)0xff000000;
+    if (base >= limit) return 0;
+    if (size > limit - (char*)base)
+        size = limit - (char*)base;
+    if (size < info->desired_size) return 0;
+    info->stack = wine_anon_mmap( (char *)base + size - info->desired_size,
+                                  info->desired_size, PROT_READ|PROT_WRITE, MAP_FIXED );
+    return (info->stack != (void *)-1);
+}
+
+/***********************************************************************
+ *           apple_create_wine_thread
+ *
+ * Spin off a secondary thread to complete Wine initialization, leaving
+ * the original thread for the Mac frameworks.
+ *
+ * Invoked as a CFRunLoopSource perform callback.
+ */
+static void apple_create_wine_thread( void *init_func )
+{
+    int success = 0;
+    pthread_t thread;
+    pthread_attr_t attr;
+
+    if (!pthread_attr_init( &attr ))
+    {
+        struct apple_stack_info info;
+
+        /* Try to put the new thread's stack in the reserved area.  If this
+         * fails, just let it go wherever.  It'll be a waste of space, but we
+         * can go on. */
+        if (!pthread_attr_getstacksize( &attr, &info.desired_size ) &&
+            wine_mmap_enum_reserved_areas( apple_alloc_thread_stack, &info, 1 ))
+        {
+            wine_mmap_remove_reserved_area( info.stack, info.desired_size, 0 );
+            pthread_attr_setstackaddr( &attr, (char*)info.stack + info.desired_size );
+        }
+
+        if (!pthread_attr_setdetachstate( &attr, PTHREAD_CREATE_JOINABLE ) &&
+            !pthread_create( &thread, &attr, init_func, NULL ))
+            success = 1;
+
+        pthread_attr_destroy( &attr );
+    }
+
+    /* Failure is indicated by returning from wine_init().  Stopping
+     * the run loop allows apple_main_thread() and thus wine_init() to
+     * return. */
+    if (!success)
+        CFRunLoopStop( CFRunLoopGetCurrent() );
+}
+
+
+/***********************************************************************
+ *           apple_main_thread
+ *
+ * Park the process's original thread in a Core Foundation run loop for
+ * use by the Mac frameworks, especially receiving and handling
+ * distributed notifications.  Spin off a new thread for the rest of the
+ * Wine initialization.
+ */
+static void apple_main_thread( void (*init_func)(void) )
+{
+    CFRunLoopSourceContext source_context = { 0 };
+    CFRunLoopSourceRef source;
+
+    /* Give ourselves the best chance of having the distributed notification
+     * center scheduled on this thread's run loop.  In theory, it's scheduled
+     * in the first thread to ask for it. */
+    CFNotificationCenterGetDistributedCenter();
+
+    /* We use this run loop source for two purposes.  First, a run loop exits
+     * if it has no more sources scheduled.  So, we need at least one source
+     * to keep the run loop running.  Second, although it's not critical, it's
+     * preferable for the Wine initialization to not proceed until we know
+     * the run loop is running.  So, we signal our source immediately after
+     * adding it and have its callback spin off the Wine thread. */
+    source_context.info = init_func;
+    source_context.perform = apple_create_wine_thread;
+    source = CFRunLoopSourceCreate( NULL, 0, &source_context );
+
+    if (source)
+    {
+        CFRunLoopAddSource( CFRunLoopGetCurrent(), source, kCFRunLoopCommonModes );
+        CFRunLoopSourceSignal( source );
+        CFRelease( source );
+
+        CFRunLoopRun(); /* Should never return, except on error. */
+    }
+
+    /* If we get here (i.e. return), that indicates failure to our caller. */
+}
+#endif
+
+
 /***********************************************************************
  *           wine_init
  *
@@ -708,7 +825,11 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
 
     if (!ntdll) return;
     if (!(init_func = wine_dlsym( ntdll, "__wine_process_init", error, error_size ))) return;
+#ifdef __APPLE__
+    apple_main_thread( init_func );
+#else
     init_func();
+#endif
 }
 
 
