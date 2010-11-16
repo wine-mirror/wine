@@ -925,12 +925,6 @@ static UINT ITERATE_RemoveFiles(MSIRECORD *row, LPVOID param)
     install_mode = MSI_RecordGetInteger(row, 5);
 
     comp = get_loaded_component(package, component);
-    if (!comp)
-    {
-        ERR("Invalid component: %s\n", debugstr_w(component));
-        return ERROR_FUNCTION_FAILED;
-    }
-
     if (!comp->Enabled)
     {
         TRACE("component is disabled\n");
@@ -941,6 +935,12 @@ static UINT ITERATE_RemoveFiles(MSIRECORD *row, LPVOID param)
     {
         TRACE("Skipping removal due to missing conditions\n");
         comp->Action = comp->Installed;
+        return ERROR_SUCCESS;
+    }
+
+    if (comp->Attributes & msidbComponentAttributesPermanent)
+    {
+        TRACE("permanent component, not removing file\n");
         return ERROR_SUCCESS;
     }
 
@@ -1024,6 +1024,12 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
         if (!file->Component->Enabled)
         {
             TRACE("component is disabled\n");
+            continue;
+        }
+
+        if (file->Component->Attributes & msidbComponentAttributesPermanent)
+        {
+            TRACE("permanent component, not removing file\n");
             continue;
         }
 
