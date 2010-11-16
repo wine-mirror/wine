@@ -5477,8 +5477,8 @@
 @ stub -arch=win64 ?sungetc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAAGXZ
 @ stub -arch=win32 ?sungetc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAEGXZ
 @ stub -arch=win64 ?sungetc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAAGXZ
-@ stub -arch=win32 ?swap@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXAAV12@@Z
-@ stub -arch=win64 ?swap@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXAEAV12@@Z
+@ thiscall -arch=win32 ?swap@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXAAV12@@Z(ptr ptr) msvcp90.?swap@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXAAV12@@Z
+@ cdecl -arch=win64 ?swap@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXAEAV12@@Z (ptr ptr) msvcp90.?swap@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXAEAV12@@Z
 @ stub -arch=win32 ?swap@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEXAAV12@@Z
 @ stub -arch=win64 ?swap@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAAXAEAV12@@Z
 @ stub -arch=win32 ?swap@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXAAV12@@Z
