@@ -101,6 +101,246 @@ typedef struct _cache_index_data
     BSTR* out;
 } cache_index_data;
 
+/* datatypes lookup stuff
+ * generated with help from gperf */
+#define DT_MIN_STR_LEN 2
+#define DT_MAX_STR_LEN 11
+#define DT_MIN_HASH_VALUE 2
+#define DT_MAX_HASH_VALUE 115
+
+static const xmlChar DT_bin_base64[] = "bin.base64";
+static const xmlChar DT_bin_hex[] = "bin.hex";
+static const xmlChar DT_boolean[] = "boolean";
+static const xmlChar DT_char[] = "char";
+static const xmlChar DT_date[] = "date";
+static const xmlChar DT_date_tz[] = "date.tz";
+static const xmlChar DT_dateTime[] = "dateTime";
+static const xmlChar DT_dateTime_tz[] = "dateTime.tz";
+static const xmlChar DT_entity[] = "entity";
+static const xmlChar DT_entities[] = "entities";
+static const xmlChar DT_enumeration[] = "enumeration";
+static const xmlChar DT_fixed_14_4[] = "fixed.14.4";
+static const xmlChar DT_float[] = "float";
+static const xmlChar DT_i1[] = "i1";
+static const xmlChar DT_i2[] = "i2";
+static const xmlChar DT_i4[] = "i4";
+static const xmlChar DT_i8[] = "i8";
+static const xmlChar DT_id[] = "id";
+static const xmlChar DT_idref[] = "idref";
+static const xmlChar DT_idrefs[] = "idrefs";
+static const xmlChar DT_int[] = "int";
+static const xmlChar DT_nmtoken[] = "nmtoken";
+static const xmlChar DT_nmtokens[] = "nmtokens";
+static const xmlChar DT_notation[] = "notation";
+static const xmlChar DT_number[] = "number";
+static const xmlChar DT_r4[] = "r4";
+static const xmlChar DT_r8[] = "r8";
+static const xmlChar DT_string[] = "string";
+static const xmlChar DT_time[] = "time";
+static const xmlChar DT_time_tz[] = "time.tz";
+static const xmlChar DT_ui1[] = "ui1";
+static const xmlChar DT_ui2[] = "ui2";
+static const xmlChar DT_ui4[] = "ui4";
+static const xmlChar DT_ui8[] = "ui8";
+static const xmlChar DT_uri[] = "uri";
+static const xmlChar DT_uuid[] = "uuid";
+
+static DWORD dt_hash( xmlChar const* str, int len /* calculated if -1 */)
+{
+    static const BYTE assoc_values[] =
+    {
+        116, 116, 116, 116, 116, 116, 116, 116, 116, 116,
+        116, 116, 116, 116, 116, 116, 116, 116, 116, 116,
+        116, 116, 116, 116, 116, 116, 116, 116, 116, 116,
+        116, 116, 116, 116, 116, 116, 116, 116, 116, 116,
+        116, 116, 116, 116, 116, 116,  10, 116, 116,  55,
+         45, 116,   5, 116,   0, 116,   0, 116, 116, 116,
+        116, 116, 116, 116, 116,   5,   0,   0,  20,   0,
+          0,  10,   0,   0, 116,   0,   0,   0,  15,   5,
+        116, 116,  10,   0,   0,   0, 116, 116,   0,   0,
+         10, 116, 116, 116, 116, 116, 116,   5,   0,   0,
+         20,   0,   0,  10,   0,   0, 116,   0,   0,   0,
+         15,   5, 116, 116,  10,   0,   0,   0, 116, 116,
+          0,   0,  10, 116, 116, 116, 116, 116, 116, 116,
+        116, 116, 116, 116, 116, 116, 116, 116, 116, 116,
+        116, 116, 116, 116, 116, 116, 116, 116, 116, 116,
+        116, 116, 116, 116, 116, 116, 116, 116, 116, 116,
+        116, 116, 116, 116, 116, 116, 116, 116, 116, 116,
+        116, 116, 116, 116, 116, 116, 116, 116, 116, 116,
+        116, 116, 116, 116, 116, 116, 116, 116, 116, 116,
+        116, 116, 116, 116, 116, 116, 116, 116, 116, 116,
+        116, 116, 116, 116, 116, 116, 116, 116, 116, 116,
+        116, 116, 116, 116, 116, 116, 116, 116, 116, 116,
+        116, 116, 116, 116, 116, 116, 116, 116, 116, 116,
+        116, 116, 116, 116, 116, 116, 116, 116, 116, 116,
+        116, 116, 116, 116, 116, 116, 116, 116, 116, 116,
+        116, 116, 116, 116, 116, 116
+    };
+    DWORD hval = (len == -1)? xmlStrlen(str) : len;
+
+    switch (hval)
+    {
+        default:
+            hval += assoc_values[str[10]];
+            /*FALLTHROUGH*/
+        case 10:
+            hval += assoc_values[str[9]];
+            /*FALLTHROUGH*/
+        case 9:
+            hval += assoc_values[str[8]];
+            /*FALLTHROUGH*/
+        case 8:
+            hval += assoc_values[str[7]];
+            /*FALLTHROUGH*/
+        case 7:
+            hval += assoc_values[str[6]];
+            /*FALLTHROUGH*/
+        case 6:
+            hval += assoc_values[str[5]];
+            /*FALLTHROUGH*/
+        case 5:
+            hval += assoc_values[str[4]];
+            /*FALLTHROUGH*/
+        case 4:
+            hval += assoc_values[str[3]];
+            /*FALLTHROUGH*/
+        case 3:
+            hval += assoc_values[str[2]];
+            /*FALLTHROUGH*/
+        case 2:
+            hval += assoc_values[str[1]];
+            /*FALLTHROUGH*/
+        case 1:
+            hval += assoc_values[str[0]];
+            break;
+    }
+    return hval;
+}
+
+static const xmlChar const* DT_string_table[DT__N_TYPES] =
+{
+    DT_bin_base64,
+    DT_bin_hex,
+    DT_boolean,
+    DT_char,
+    DT_date,
+    DT_date_tz,
+    DT_dateTime,
+    DT_dateTime_tz,
+    DT_entity,
+    DT_entities,
+    DT_enumeration,
+    DT_fixed_14_4,
+    DT_float,
+    DT_i1,
+    DT_i2,
+    DT_i4,
+    DT_i8,
+    DT_id,
+    DT_idref,
+    DT_idrefs,
+    DT_int,
+    DT_nmtoken,
+    DT_nmtokens,
+    DT_notation,
+    DT_number,
+    DT_r4,
+    DT_r8,
+    DT_string,
+    DT_time,
+    DT_time_tz,
+    DT_ui1,
+    DT_ui2,
+    DT_ui4,
+    DT_ui8,
+    DT_uri,
+    DT_uuid
+};
+
+static const XDR_DT DT_lookup_table[] =
+{
+    -1, -1,
+    DT_I8,
+    DT_UI8,
+    DT_TIME,
+    -1, -1,
+    DT_I4,
+    DT_UI4,
+    -1, -1, -1,
+    DT_R8,
+    DT_URI,
+    -1,
+    DT_FLOAT,
+    -1,
+    DT_R4,
+    DT_INT,
+    DT_CHAR,
+    -1,
+    DT_ENTITY,
+    DT_ID,
+    DT_ENTITIES,
+    DT_UUID,
+    -1, -1,
+    DT_TIME_TZ,
+    -1,
+    DT_DATE,
+    -1,
+    DT_NUMBER,
+    DT_BIN_HEX,
+    DT_DATETIME,
+    -1,
+    DT_IDREF,
+    DT_IDREFS,
+    DT_BOOLEAN,
+    -1, -1, -1,
+    DT_STRING,
+    DT_NMTOKEN,
+    DT_NMTOKENS,
+    -1,
+    DT_BIN_BASE64,
+    -1,
+    DT_I2,
+    DT_UI2,
+    -1, -1, -1,
+    DT_DATE_TZ,
+    DT_NOTATION,
+    -1, -1,
+    DT_DATETIME_TZ,
+    DT_I1,
+    DT_UI1,
+    -1, -1,
+    DT_ENUMERATION,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1,
+    DT_FIXED_14_4
+};
+
+XDR_DT dt_get_type(xmlChar const* str, int len /* calculated if -1 */)
+{
+    DWORD hash = dt_hash(str, len);
+    XDR_DT dt = DT_INVALID;
+
+    if (hash <= DT_MAX_HASH_VALUE)
+        dt = DT_lookup_table[hash];
+
+    if (dt != DT_INVALID && xmlStrcasecmp(str, DT_string_table[dt]) == 0)
+        return dt;
+
+    return DT_INVALID;
+}
+
+xmlChar const* dt_get_str(XDR_DT dt)
+{
+    if (dt == DT_INVALID)
+        return NULL;
+
+    return DT_string_table[dt];
+}
+
 xmlExternalEntityLoader _external_entity_loader = NULL;
 
 static xmlParserInputPtr external_entity_loader(const char *URL, const char *ID,

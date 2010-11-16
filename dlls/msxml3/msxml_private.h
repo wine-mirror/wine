@@ -68,6 +68,51 @@ typedef enum tid_t {
     LAST_tid
 } tid_t;
 
+/* The XDR datatypes (urn:schemas-microsoft-com:datatypes)
+ * These are actually valid for XSD schemas as well
+ * See datatypes.xsd
+ */
+typedef enum _XDR_DT {
+    DT_INVALID = -1,
+    DT_BIN_BASE64,
+    DT_BIN_HEX,
+    DT_BOOLEAN,
+    DT_CHAR,
+    DT_DATE,
+    DT_DATE_TZ,
+    DT_DATETIME,
+    DT_DATETIME_TZ,
+    DT_ENTITY,
+    DT_ENTITIES,
+    DT_ENUMERATION,
+    DT_FIXED_14_4,
+    DT_FLOAT,
+    DT_I1,
+    DT_I2,
+    DT_I4,
+    DT_I8,
+    DT_ID,
+    DT_IDREF,
+    DT_IDREFS,
+    DT_INT,
+    DT_NMTOKEN,
+    DT_NMTOKENS,
+    DT_NOTATION,
+    DT_NUMBER,
+    DT_R4,
+    DT_R8,
+    DT_STRING,
+    DT_TIME,
+    DT_TIME_TZ,
+    DT_UI1,
+    DT_UI2,
+    DT_UI4,
+    DT_UI8,
+    DT_URI,
+    DT_UUID
+} XDR_DT;
+#define DT__N_TYPES  (DT_UUID+1)
+
 extern HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo);
 extern void release_typelib(void);
 
@@ -221,6 +266,9 @@ extern HRESULT node_get_base_name(xmlnode*,BSTR*);
 
 extern HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document);
 extern HRESULT SchemaCache_validate_tree(IXMLDOMSchemaCollection2* iface, xmlNodePtr tree);
+
+extern XDR_DT dt_get_type(xmlChar const* str, int len /* calculated if -1 */);
+extern xmlChar const* dt_get_str(XDR_DT dt);
 
 extern BSTR EnsureCorrectEOL(BSTR);
 
