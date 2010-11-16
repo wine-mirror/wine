@@ -60,6 +60,7 @@ static basic_string_char* (WINAPI *p_basic_string_char_assign_cstr_len)(const ch
 static const char* (WINAPI *p_basic_string_char_cstr)(void);
 static const char* (WINAPI *p_basic_string_char_data)(void);
 static size_t (WINAPI *p_basic_string_char_size)(void);
+static void (WINAPI *p_basic_string_char_swap)(basic_string_char*);
 
 static basic_string_wchar* (WINAPI *p_basic_string_wchar_ctor)(void);
 static basic_string_wchar* (WINAPI *p_basic_string_wchar_copy_ctor)(basic_string_wchar*);
@@ -80,6 +81,7 @@ static basic_string_char* (__cdecl *p_basic_string_char_assign_cstr_len)(basic_s
 static const char* (__cdecl *p_basic_string_char_cstr)(basic_string_char*);
 static const char* (__cdecl *p_basic_string_char_data)(basic_string_char*);
 static size_t (__cdecl *p_basic_string_char_size)(basic_string_char*);
+static void (__cdecl *p_basic_string_char_swap)(basic_string_char*, basic_string_char*);
 
 static basic_string_wchar* (__cdecl *p_basic_string_wchar_ctor)(basic_string_wchar*);
 static basic_string_wchar* (__cdecl *p_basic_string_wchar_copy_ctor)(basic_string_wchar*, basic_string_wchar*);
@@ -240,6 +242,8 @@ static BOOL init(void)
                 "?data@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAPEBDXZ");
         p_basic_string_char_size = (void*)GetProcAddress(msvcp,
                 "?size@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KXZ");
+        p_basic_string_char_swap = (void*)GetProcAddress(msvcp,
+                "?swap@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXAEAV12@@Z");
 
         p_basic_string_wchar_ctor = (void*)GetProcAddress(msvcp,
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@XZ");
@@ -279,6 +283,8 @@ static BOOL init(void)
                 "?data@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPBDXZ");
         p_basic_string_char_size = (void*)GetProcAddress(msvcp,
                 "?size@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIXZ");
+        p_basic_string_char_swap = (void*)GetProcAddress(msvcp,
+                "?swap@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXAAV12@@Z");
 
         p_basic_string_wchar_ctor = (void*)GetProcAddress(msvcp,
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@XZ");
@@ -375,6 +381,40 @@ static void test_basic_string_char(void) {
     call_func1(p_basic_string_char_dtor, &str2);
 }
 
+static void test_basic_string_char_swap(void) {
+    basic_string_char str1, str2;
+    char atmp1[32], atmp2[32];
+
+    if(!p_basic_string_char_ctor_cstr || !p_basic_string_char_dtor ||
+            !p_basic_string_char_swap || !p_basic_string_char_cstr) {
+        win_skip("basic_string<char> unavailable\n");
+        return;
+    }
+
+    /* Swap self, local */
+    strcpy(atmp1, "qwerty");
+    call_func2(p_basic_string_char_ctor_cstr, &str1, atmp1);
+    call_func2(p_basic_string_char_swap, &str1, &str1);
+    ok(strcmp(atmp1, (const char *) call_func1(p_basic_string_char_cstr, &str1)) == 0, "Invalid value of str1\n");
+    call_func2(p_basic_string_char_swap, &str1, &str1);
+    ok(strcmp(atmp1, (const char *) call_func1(p_basic_string_char_cstr, &str1)) == 0, "Invalid value of str1\n");
+    call_func1(p_basic_string_char_dtor, &str1);
+
+    /* str1 allocated, str2 local */
+    strcpy(atmp1, "qwerty12345678901234567890");
+    strcpy(atmp2, "asd");
+    call_func2(p_basic_string_char_ctor_cstr, &str1, atmp1);
+    call_func2(p_basic_string_char_ctor_cstr, &str2, atmp2);
+    call_func2(p_basic_string_char_swap, &str1, &str2);
+    ok(strcmp(atmp2, (const char *) call_func1(p_basic_string_char_cstr, &str1)) == 0, "Invalid value of str1\n");
+    ok(strcmp(atmp1, (const char *) call_func1(p_basic_string_char_cstr, &str2)) == 0, "Invalid value of str2\n");
+    call_func2(p_basic_string_char_swap, &str1, &str2);
+    ok(strcmp(atmp1, (const char *) call_func1(p_basic_string_char_cstr, &str1)) == 0, "Invalid value of str1\n");
+    ok(strcmp(atmp2, (const char *) call_func1(p_basic_string_char_cstr, &str2)) == 0, "Invalid value of str2\n");
+    call_func1(p_basic_string_char_dtor, &str1);
+    call_func1(p_basic_string_char_dtor, &str2);
+}
+
 static void test_basic_string_wchar(void) {
     static const wchar_t test[] = { 't','e','s','t',0 };
 
@@ -456,6 +496,7 @@ START_TEST(string)
         return;
 
     test_basic_string_char();
+    test_basic_string_char_swap();
     test_basic_string_wchar();
 
     ok(!invalid_parameter, "invalid_parameter_handler was invoked too many times\n");
