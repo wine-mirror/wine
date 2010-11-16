@@ -611,6 +611,22 @@ static DWORD CALLBACK enum_thread( void *arg )
     BOOL ret;
     MSG msg;
 
+    if (pGetGUIThreadInfo)
+    {
+        GUITHREADINFO info;
+        info.cbSize = sizeof(info);
+        ret = pGetGUIThreadInfo( GetCurrentThreadId(), &info );
+        ok( ret || broken(!ret), /* win9x */
+            "GetGUIThreadInfo failed without message queue\n" );
+        SetLastError( 0xdeadbeef );
+        info.cbSize = sizeof(info) + 1;
+        ret = pGetGUIThreadInfo( GetCurrentThreadId(), &info );
+        ok( !ret, "GetGUIThreadInfo succeeded with wrong size\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER ||
+            broken(GetLastError() == 0xdeadbeef), /* win9x */
+            "wrong error %u\n", GetLastError() );
+    }
+
     PeekMessage( &msg, 0, 0, 0, PM_NOREMOVE );  /* make sure we have a message queue */
 
     count = 0;

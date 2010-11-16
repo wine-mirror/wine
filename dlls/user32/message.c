@@ -2359,6 +2359,7 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
 
     /* find the window to dispatch this mouse message to */
 
+    info.cbSize = sizeof(info);
     GetGUIThreadInfo( GetCurrentThreadId(), &info );
     if (info.hwndCapture)
     {
@@ -4234,6 +4235,12 @@ BOOL WINAPI KillSystemTimer( HWND hwnd, UINT_PTR id )
 BOOL WINAPI GetGUIThreadInfo( DWORD id, GUITHREADINFO *info )
 {
     BOOL ret;
+
+    if (info->cbSize != sizeof(*info))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
 
     SERVER_START_REQ( get_thread_input )
     {

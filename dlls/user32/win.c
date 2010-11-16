@@ -1587,6 +1587,7 @@ static void WIN_SendDestroyMsg( HWND hwnd )
 {
     GUITHREADINFO info;
 
+    info.cbSize = sizeof(info);
     if (GetGUIThreadInfo( GetCurrentThreadId(), &info ))
     {
         if (hwnd == info.hwndCaret) DestroyCaret();
