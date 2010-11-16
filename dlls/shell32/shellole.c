@@ -715,8 +715,35 @@ HRESULT WINAPI SHPropStgCreate(IPropertySetStorage *psstg, REFFMTID fmtid,
 HRESULT WINAPI SHPropStgReadMultiple(IPropertyStorage *pps, UINT uCodePage,
         ULONG cpspec, const PROPSPEC *rgpspec, PROPVARIANT *rgvar)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    STATPROPSETSTG stat;
+    HRESULT hres;
+
+    FIXME("%p %u %u %p %p\n", pps, uCodePage, cpspec, rgpspec, rgvar);
+
+    memset(rgvar, 0, cpspec*sizeof(PROPVARIANT));
+    hres = IPropertyStorage_ReadMultiple(pps, cpspec, rgpspec, rgvar);
+    if(FAILED(hres))
+        return hres;
+
+    if(!uCodePage) {
+        PROPSPEC prop;
+        PROPVARIANT ret;
+
+        prop.ulKind = PRSPEC_PROPID;
+        prop.u.propid = PID_CODEPAGE;
+        hres = IPropertyStorage_ReadMultiple(pps, 1, &prop, &ret);
+        if(FAILED(hres) || ret.vt!=VT_I2)
+            return S_OK;
+
+        uCodePage = ret.u.iVal;
+    }
+
+    hres = IPropertyStorage_Stat(pps, &stat);
+    if(FAILED(hres))
+        return S_OK;
+
+    /* TODO: do something with codepage and stat */
+    return S_OK;
 }
 
 /*************************************************************************
