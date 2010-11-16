@@ -9,6 +9,7 @@ C_SRCS = \
 	generated.c \
 	progman_dde.c \
 	shelllink.c \
+	shellole.c \
 	shellpath.c \
 	shfldr_special.c \
 	shlexec.c \
