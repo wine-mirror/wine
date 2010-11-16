@@ -26,6 +26,7 @@
 #include <string.h>
 
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include "windef.h"
 #include "winbase.h"
@@ -665,8 +666,47 @@ HRESULT WINAPI SHPropStgCreate(IPropertySetStorage *psstg, REFFMTID fmtid,
         const CLSID *pclsid, DWORD grfFlags, DWORD grfMode,
         DWORD dwDisposition, IPropertyStorage **ppstg, UINT *puCodePage)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    PROPSPEC prop;
+    PROPVARIANT ret;
+    HRESULT hres;
+
+    TRACE("%p %s %s %x %x %x %p %p\n", psstg, debugstr_guid(fmtid), debugstr_guid(pclsid),
+            grfFlags, grfMode, dwDisposition, ppstg, puCodePage);
+
+    hres = IPropertySetStorage_Open(psstg, fmtid, grfMode, ppstg);
+
+    switch(dwDisposition) {
+    case CREATE_ALWAYS:
+        if(SUCCEEDED(hres)) {
+            IPropertyStorage_Release(*ppstg);
+            hres = IPropertySetStorage_Delete(psstg, fmtid);
+            if(FAILED(hres))
+                return hres;
+            hres = E_FAIL;
+        }
+
+    case OPEN_ALWAYS:
+    case CREATE_NEW:
+        if(FAILED(hres))
+            hres = IPropertySetStorage_Create(psstg, fmtid, pclsid,
+                    grfFlags, grfMode, ppstg);
+
+    case OPEN_EXISTING:
+        if(FAILED(hres))
+            return hres;
+
+        if(puCodePage) {
+            prop.ulKind = PRSPEC_PROPID;
+            prop.u.propid = PID_CODEPAGE;
+            hres = IPropertyStorage_ReadMultiple(*ppstg, 1, &prop, &ret);
+            if(FAILED(hres) || ret.vt!=VT_I2)
+                *puCodePage = 0;
+            else
+                *puCodePage = ret.u.iVal;
+        }
+    }
+
+    return S_OK;
 }
 
 /*************************************************************************
