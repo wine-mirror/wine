@@ -464,9 +464,10 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetCursorProperties(LPDIRECT3DDEVICE8
     TRACE("iface %p, hotspot_x %u, hotspot_y %u, bitmap %p.\n",
             iface, XHotSpot, YHotSpot, pCursorBitmap);
 
-    if(!pCursorBitmap) {
-        WARN("No cursor bitmap, returning WINED3DERR_INVALIDCALL\n");
-        return WINED3DERR_INVALIDCALL;
+    if (!pCursorBitmap)
+    {
+        WARN("No cursor bitmap, returning D3DERR_INVALIDCALL.\n");
+        return D3DERR_INVALIDCALL;
     }
 
     wined3d_mutex_lock();
@@ -903,11 +904,15 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, ID
     destFormat = winedesc.format;
 
     /* Check that the source and destination formats match */
-    if (srcFormat != destFormat && WINED3DFMT_UNKNOWN != destFormat) {
-        WARN("(%p) source %p format must match the dest %p format, returning WINED3DERR_INVALIDCALL\n", iface, pSourceSurface, pDestinationSurface);
+    if (srcFormat != destFormat && WINED3DFMT_UNKNOWN != destFormat)
+    {
+        WARN("Source %p format must match the dest %p format, returning D3DERR_INVALIDCALL.\n",
+                pSourceSurface, pDestinationSurface);
         wined3d_mutex_unlock();
-        return WINED3DERR_INVALIDCALL;
-    } else if (WINED3DFMT_UNKNOWN == destFormat) {
+        return D3DERR_INVALIDCALL;
+    }
+    else if (WINED3DFMT_UNKNOWN == destFormat)
+    {
         TRACE("(%p) : Converting destination surface from WINED3DFMT_UNKNOWN to the source format\n", iface);
         IWineD3DSurface_SetFormat(Dest->wineD3DSurface, srcFormat);
     }
