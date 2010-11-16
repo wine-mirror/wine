@@ -1039,3 +1039,25 @@ void __thiscall MSVCP_basic_string_char_swap(basic_string_char *this, basic_stri
         str->res = res;
     }
 }
+
+/* ?swap@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXAAV12@@Z */
+/* ?swap@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAXAEAV12@@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_swap, 8)
+void __thiscall MSVCP_basic_string_wchar_swap(basic_string_wchar *this, basic_string_wchar *str)
+{
+    if(this != str) {
+        char tmp[sizeof(this->data)];
+        const size_t size = this->size;
+        const size_t res = this->res;
+
+        memcpy(tmp, this->data.buf, sizeof(this->data));
+        memcpy(this->data.buf, str->data.buf, sizeof(this->data));
+        memcpy(str->data.buf, tmp, sizeof(this->data));
+
+        this->size = str->size;
+        this->res = str->res;
+
+        str->size = size;
+        str->res = res;
+    }
+}
