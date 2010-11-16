@@ -1186,6 +1186,7 @@ sub source_scan_workspace_file($)
             if (/^Project(.*)=\s*"(.*)",\s*"(.*)",\s*"(.*)"/) {
                 $prj_name=$2;
                 $prj_path=$3;
+                if ($prj_path eq "Solution Items") { next; }
                 @components=split /[\/\\]+/, $3;
                 $prj_path=search_from($path, \@components);
                 print "Name: $prj_name\nPath: $prj_path\n";
