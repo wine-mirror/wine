@@ -228,13 +228,15 @@ static DWORD netconn_verify_cert(PCCERT_CONTEXT cert, HCERTSTORE store,
     PCCERT_CHAIN_CONTEXT chain;
     char oid_server_auth[] = szOID_PKIX_KP_SERVER_AUTH;
     char *server_auth[] = { oid_server_auth };
-    DWORD err = ERROR_SUCCESS;
+    DWORD err = ERROR_SUCCESS, chainFlags = 0;
 
     TRACE("verifying %s\n", debugstr_w(server));
     chainPara.RequestedUsage.Usage.cUsageIdentifier = 1;
     chainPara.RequestedUsage.Usage.rgpszUsageIdentifier = server_auth;
-    if ((ret = CertGetCertificateChain(NULL, cert, NULL, store, &chainPara, 0,
-        NULL, &chain)))
+    if (!(security_flags & SECURITY_FLAG_IGNORE_REVOCATION))
+        chainFlags |= CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT;
+    if ((ret = CertGetCertificateChain(NULL, cert, NULL, store, &chainPara,
+        chainFlags, NULL, &chain)))
     {
         if (chain->TrustStatus.dwErrorStatus)
         {
