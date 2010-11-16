@@ -1350,8 +1350,13 @@ static void test_WSAAddressToStringA(void)
     CHAR expect6_1[] = "::1";
     CHAR expect6_2[] = "20ab::1";
     CHAR expect6_3[] = "[20ab::2001]:33274";
+    CHAR expect6_3_nt[] = "20ab::2001@33274";
+    CHAR expect6_3_w2k[] = "20ab::2001";
     CHAR expect6_3_2[] = "[20ab::2001%4660]:33274";
+    CHAR expect6_3_2_nt[] = "4660/20ab::2001@33274";
+    CHAR expect6_3_2_w2k[] = "20ab::2001%4660";
     CHAR expect6_3_3[] = "20ab::2001%4660";
+    CHAR expect6_3_3_nt[] = "4660/20ab::2001";
 
     len = 0;
 
@@ -1454,8 +1459,14 @@ static void test_WSAAddressToStringA(void)
 
     ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
     ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
-    ok( !strcmp( address6, expect6_3 ), "Expected: %s, got: %s\n", expect6_3, address6 );
-    ok( len == sizeof(expect6_3), "Got size %d\n", len);
+    ok( !strcmp( address6, expect6_3 ) ||
+        broken( !strcmp( address6, expect6_3_nt ) ) || /* NT4 */
+        broken( !strcmp( address6, expect6_3_w2k ) ), /* Win2000 */
+        "Expected: %s, got: %s\n", expect6_3, address6 );
+    ok( len == sizeof(expect6_3) ||
+        broken( len == sizeof(expect6_3_nt) ) || /* NT4 */
+        broken( len == sizeof(expect6_3_w2k) ), /* Win2000 */
+        "Got size %d\n", len);
 
     /* Test IPv6 address, port number and scope_id */
     len = sizeof(address6);
@@ -1467,8 +1478,14 @@ static void test_WSAAddressToStringA(void)
 
     ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
     ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
-    ok( !strcmp( address6, expect6_3_2 ), "Expected: %s, got: %s\n", expect6_3_2, address6 );
-    ok( len == sizeof(expect6_3_2), "Got size %d\n", len);
+    ok( !strcmp( address6, expect6_3_2 ) ||
+        broken( !strcmp( address6, expect6_3_2_nt ) ) || /* NT4 */
+        broken( !strcmp( address6, expect6_3_2_w2k ) ), /* Win2000 */
+        "Expected: %s, got: %s\n", expect6_3_2, address6 );
+    ok( len == sizeof(expect6_3_2) ||
+        broken( len == sizeof(expect6_3_2_nt) ) || /* NT4 */
+        broken( len == sizeof(expect6_3_2_w2k) ), /* Win2000 */
+        "Got size %d\n", len);
 
     /* Test IPv6 address and scope_id */
     len = sizeof(address6);
@@ -1480,8 +1497,12 @@ static void test_WSAAddressToStringA(void)
 
     ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
     ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
-    ok( !strcmp( address6, expect6_3_3 ), "Expected: %s, got: %s\n", expect6_3_3, address6 );
-    ok( len == sizeof(expect6_3_3), "Got size %d\n", len);
+    ok( !strcmp( address6, expect6_3_3 ) ||
+        broken( !strcmp( address6, expect6_3_3_nt ) ), /* NT4 */
+        "Expected: %s, got: %s\n", expect6_3_3, address6 );
+    ok( len == sizeof(expect6_3_3) ||
+        broken( len == sizeof(expect6_3_3_nt) ), /* NT4 */
+        "Got size %d\n", len);
 
 end:
     if (v6 != INVALID_SOCKET)
@@ -1513,8 +1534,13 @@ static void test_WSAAddressToStringW(void)
     WCHAR expect6_1[] = {':',':','1',0};
     WCHAR expect6_2[] = {'2','0','a','b',':',':','1',0};
     WCHAR expect6_3[] = {'[','2','0','a','b',':',':','2','0','0','1',']',':','3','3','2','7','4',0};
+    WCHAR expect6_3_nt[] = {'2','0','a','b',':',':','2','0','0','1','@','3','3','2','7','4',0};
+    WCHAR expect6_3_w2k[] = {'2','0','a','b',':',':','2','0','0','1',0};
     WCHAR expect6_3_2[] = {'[','2','0','a','b',':',':','2','0','0','1','%','4','6','6','0',']',':','3','3','2','7','4',0};
+    WCHAR expect6_3_2_nt[] = {'4','6','6','0','/','2','0','a','b',':',':','2','0','0','1','@','3','3','2','7','4',0};
+    WCHAR expect6_3_2_w2k[] = {'2','0','a','b',':',':','2','0','0','1','%','4','6','6','0',0};
     WCHAR expect6_3_3[] = {'2','0','a','b',':',':','2','0','0','1','%','6','5','5','3','4',0};
+    WCHAR expect6_3_3_nt[] = {'6','5','5','3','4','/','2','0','a','b',':',':','2','0','0','1',0};
 
     len = 0;
 
@@ -1619,8 +1645,15 @@ static void test_WSAAddressToStringW(void)
 
     ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
     ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
-    ok( !lstrcmpW( address6, expect6_3 ), "Wrong string returned\n" );
-    ok( len == sizeof(expect6_3)/sizeof(WCHAR), "Got %d\n", len);
+    ok( !lstrcmpW( address6, expect6_3 ) ||
+        broken( !lstrcmpW( address6, expect6_3_nt ) ) || /* NT4 */
+        broken( !lstrcmpW( address6, expect6_3_w2k ) ), /* Win2000 */
+        "Expected: %s, got: %s\n", wine_dbgstr_w(expect6_3),
+        wine_dbgstr_w(address6) );
+    ok( len == sizeof(expect6_3)/sizeof(WCHAR) ||
+        broken(len == sizeof(expect6_3_nt)/sizeof(WCHAR) ) || /* NT4 */
+        broken(len == sizeof(expect6_3_w2k)/sizeof(WCHAR) ), /* Win2000 */
+        "Got %d\n", len);
 
     /* Test IPv6 address, port number and scope_id */
     len = sizeof(address6)/sizeof(WCHAR);
@@ -1632,8 +1665,15 @@ static void test_WSAAddressToStringW(void)
 
     ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
     ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
-    ok( !lstrcmpW( address6, expect6_3_2 ), "Wrong string returned\n" );
-    ok( len == sizeof(expect6_3_2)/sizeof(WCHAR), "Got %d\n", len);
+    ok( !lstrcmpW( address6, expect6_3_2 ) ||
+        broken( !lstrcmpW( address6, expect6_3_2_nt ) ) || /* NT4 */
+        broken( !lstrcmpW( address6, expect6_3_2_w2k ) ), /* Win2000 */
+        "Expected: %s, got: %s\n", wine_dbgstr_w(expect6_3_2),
+        wine_dbgstr_w(address6) );
+    ok( len == sizeof(expect6_3_2)/sizeof(WCHAR) ||
+        broken( len == sizeof(expect6_3_2_nt)/sizeof(WCHAR) ) || /* NT4 */
+        broken( len == sizeof(expect6_3_2_w2k)/sizeof(WCHAR) ), /* Win2000 */
+        "Got %d\n", len);
 
     /* Test IPv6 address and scope_id */
     len = sizeof(address6)/sizeof(WCHAR);
@@ -1645,8 +1685,13 @@ static void test_WSAAddressToStringW(void)
 
     ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
     ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
-    ok( !lstrcmpW( address6, expect6_3_3 ), "Wrong string returned\n" );
-    ok( len == sizeof(expect6_3_3)/sizeof(WCHAR), "Got %d\n", len);
+    ok( !lstrcmpW( address6, expect6_3_3 ) ||
+        broken( !lstrcmpW( address6, expect6_3_3_nt ) ), /* NT4 */
+        "Expected: %s, got: %s\n", wine_dbgstr_w(expect6_3_3),
+        wine_dbgstr_w(address6) );
+    ok( len == sizeof(expect6_3_3)/sizeof(WCHAR) ||
+        broken( len == sizeof(expect6_3_3_nt)/sizeof(WCHAR) ), /* NT4 */
+        "Got %d\n", len);
 
 end:
     if (v6 != INVALID_SOCKET)
