@@ -952,7 +952,7 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     }
 
     if (!(dwFlags & MCI_WAIT)) {
-	return MCI_SendCommandAsync(wDevID, MCI_PLAY, dwFlags, (DWORD_PTR)lpParms, sizeof(LPMCI_PLAY_PARMS));
+	return MCI_SendCommandAsync(wDevID, MCI_PLAY, dwFlags, (DWORD_PTR)lpParms, sizeof(MCI_PLAY_PARMS));
     }
 
     if (lpParms && (dwFlags & MCI_FROM)) {
@@ -1191,8 +1191,6 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     midiOutReset((HMIDIOUT)wmm->hMidi);
 
     dwRet = midiOutClose((HMIDIOUT)wmm->hMidi);
-    /* to restart playing at beginning when it's over */
-    wmm->dwPositionMS = 0;
 
     if (dwFlags & MCI_NOTIFY)
 	oldcb = InterlockedExchangePointer(&wmm->hCallback, NULL);
