@@ -657,3 +657,34 @@ end:
 	GlobalUnlock(hDrop);
 	return i;
 }
+
+/*************************************************************************
+ *  SHPropStgCreate             [SHELL32.685]
+ */
+HRESULT WINAPI SHPropStgCreate(IPropertySetStorage *psstg, REFFMTID fmtid,
+        const CLSID *pclsid, DWORD grfFlags, DWORD grfMode,
+        DWORD dwDisposition, IPropertyStorage **ppstg, UINT *puCodePage)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+/*************************************************************************
+ *  SHPropStgReadMultiple       [SHELL32.688]
+ */
+HRESULT WINAPI SHPropStgReadMultiple(IPropertyStorage *pps, UINT uCodePage,
+        ULONG cpspec, const PROPSPEC *rgpspec, PROPVARIANT *rgvar)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+/*************************************************************************
+ *  SHPropStgWriteMultiple      [SHELL32.689]
+ */
+HRESULT WINAPI SHPropStgWriteMultiple(IPropertyStorage *pps, UINT *uCodePage,
+        ULONG cpspec, const PROPSPEC *rgpspec, PROPVARIANT *rgvar, PROPID propidNameFirst)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}

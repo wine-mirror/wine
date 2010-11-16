@@ -253,6 +253,10 @@
  660 stdcall -noname FileIconInit(long)
  680 stdcall IsUserAnAdmin()
 
+ 685 stdcall SHPropStgCreate(ptr ptr ptr long long long ptr ptr)
+ 688 stdcall SHPropStgReadMultiple(ptr long long ptr ptr)
+ 689 stdcall SHPropStgWriteMultiple(ptr ptr long ptr ptr long)
+
  704 stdcall -noname GUIDFromStringW(wstr ptr)
 
  714 stdcall @(ptr) SHELL32_714 # PathIsTemporaryW
