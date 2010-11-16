@@ -59,6 +59,8 @@ static INT  notifyFormat;
 static BOOL g_is_below_5;
 /* item data passed to LVN_GETDISPINFOA */
 static LVITEMA g_itema;
+/* alter notification code A->W */
+static BOOL g_disp_A_to_W;
 
 static HWND subclass_editbox(HWND hwndListview);
 
@@ -372,6 +374,13 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
               {
                   NMLVDISPINFOA *dispinfo = (NMLVDISPINFOA*)lParam;
                   g_itema = dispinfo->item;
+
+                  if (g_disp_A_to_W && (dispinfo->item.mask & LVIF_TEXT))
+                  {
+                      static const WCHAR testW[] = {'T','E','S','T',0};
+                      dispinfo->hdr.code = LVN_GETDISPINFOW;
+                      memcpy(dispinfo->item.pszText, testW, sizeof(testW));
+                  }
               }
               break;
           case NM_HOVER:
@@ -4538,6 +4547,37 @@ static void test_createdragimage(void)
     DestroyWindow(list);
 }
 
+static void test_dispinfo(void)
+{
+    static const char testA[] = "TEST";
+    WCHAR buff[10];
+    LVITEMA item;
+    HWND hwnd;
+    INT ret;
+
+    hwnd = create_listview_control(LVS_ICON);
+    ok(hwnd != 0, "failed to create listview window\n");
+
+    insert_item(hwnd, 0);
+
+    memset(&item, 0, sizeof(item));
+    item.pszText = LPSTR_TEXTCALLBACKA;
+    ret = SendMessageA(hwnd, LVM_SETITEMTEXTA, 0, (LPARAM)&item);
+    ok(ret, "got %d\n", ret);
+
+    g_disp_A_to_W = TRUE;
+    item.pszText = (char*)buff;
+    item.cchTextMax = sizeof(buff)/sizeof(WCHAR);
+    ret = SendMessageA(hwnd, LVM_GETITEMTEXTA, 0, (LPARAM)&item);
+    ok(ret == sizeof(testA)-1, "got %d, expected 4\n", ret);
+    g_disp_A_to_W = FALSE;
+
+    ok(memcmp(item.pszText, testA, sizeof(testA)) == 0,
+        "got %s, expected %s\n", item.pszText, testA);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -4601,6 +4641,7 @@ START_TEST(listview)
     test_hover();
     test_destroynotify();
     test_createdragimage();
+    test_dispinfo();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {

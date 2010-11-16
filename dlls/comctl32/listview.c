@@ -928,74 +928,104 @@ static BOOL notify_deleteitem(const LISTVIEW_INFO *infoPtr, INT nItem)
   Send notification. depends on dispinfoW having same
   structure as dispinfoA.
   infoPtr : listview struct
-  notificationCode : *Unicode* notification code
+  code : *Unicode* notification code
   pdi : dispinfo structure (can be unicode or ansi)
   isW : TRUE if dispinfo is Unicode
 */
-static BOOL notify_dispinfoT(const LISTVIEW_INFO *infoPtr, UINT notificationCode, LPNMLVDISPINFOW pdi, BOOL isW)
+static BOOL notify_dispinfoT(const LISTVIEW_INFO *infoPtr, UINT code, LPNMLVDISPINFOW pdi, BOOL isW)
 {
-    BOOL bResult = FALSE;
-    BOOL convertToAnsi = FALSE, convertToUnicode = FALSE;
-    INT cchTempBufMax = 0, savCchTextMax = 0;
-    UINT realNotifCode;
-    LPWSTR pszTempBuf = NULL, savPszText = NULL;
+    INT length = 0, ret_length;
+    LPWSTR buffer = NULL, ret_text;
+    BOOL return_ansi = FALSE;
+    BOOL return_unicode = FALSE;
+    BOOL ret;
 
     if ((pdi->item.mask & LVIF_TEXT) && is_text(pdi->item.pszText))
     {
-	convertToAnsi = (isW && infoPtr->notifyFormat == NFR_ANSI);
-	convertToUnicode = (!isW && infoPtr->notifyFormat == NFR_UNICODE);
+	return_unicode = ( isW && infoPtr->notifyFormat == NFR_ANSI);
+	return_ansi    = (!isW && infoPtr->notifyFormat == NFR_UNICODE);
     }
 
-    if (convertToAnsi || convertToUnicode)
+    ret_length = pdi->item.cchTextMax;
+    ret_text = pdi->item.pszText;
+
+    if (return_unicode || return_ansi)
     {
-	if (notificationCode != LVN_GETDISPINFOW)
- 	{
- 	    cchTempBufMax = convertToUnicode ?
+        if (code != LVN_GETDISPINFOW)
+        {
+            length = return_ansi ?
        		MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pdi->item.pszText, -1, NULL, 0):
        		WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, NULL, 0, NULL, NULL);
-	}
- 	else
- 	{
- 	    cchTempBufMax = pdi->item.cchTextMax;
- 	    *pdi->item.pszText = 0; /* make sure we don't process garbage */
- 	}
+        }
+        else
+        {
+            length = pdi->item.cchTextMax;
+            *pdi->item.pszText = 0; /* make sure we don't process garbage */
+        }
 
-	pszTempBuf = Alloc( (convertToUnicode ? sizeof(WCHAR) : sizeof(CHAR)) * cchTempBufMax);
-        if (!pszTempBuf) return FALSE;
+        buffer = Alloc( (return_ansi ? sizeof(WCHAR) : sizeof(CHAR)) * length);
+        if (!buffer) return FALSE;
 
-	if (convertToUnicode)
-	    MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pdi->item.pszText, -1,
-	                        pszTempBuf, cchTempBufMax);
-	else
-	    WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, (LPSTR) pszTempBuf,
-	                        cchTempBufMax, NULL, NULL);
+        if (return_ansi)
+            MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pdi->item.pszText, -1,
+	                        buffer, length);
+        else
+            WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, (LPSTR) buffer,
+	                        length, NULL, NULL);
 
-        savCchTextMax = pdi->item.cchTextMax;
-        savPszText = pdi->item.pszText;
-        pdi->item.pszText = pszTempBuf;
-        pdi->item.cchTextMax = cchTempBufMax;
+        pdi->item.pszText = buffer;
+        pdi->item.cchTextMax = length;
     }
 
     if (infoPtr->notifyFormat == NFR_ANSI)
-	realNotifCode = get_ansi_notification(notificationCode);
-    else
-	realNotifCode = notificationCode;
-    TRACE(" pdi->item=%s\n", debuglvitem_t(&pdi->item, infoPtr->notifyFormat != NFR_ANSI));
-    bResult = notify_hdr(infoPtr, realNotifCode, &pdi->hdr);
+        code = get_ansi_notification(code);
 
-    if (convertToUnicode || convertToAnsi)
+    TRACE(" pdi->item=%s\n", debuglvitem_t(&pdi->item, infoPtr->notifyFormat != NFR_ANSI));
+    ret = notify_hdr(infoPtr, code, &pdi->hdr);
+    TRACE(" resulting code=0x%08x\n", pdi->hdr.code);
+
+    if (return_ansi || return_unicode)
     {
-	if (convertToUnicode) /* note : pointer can be changed by app ! */
- 	    WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, (LPSTR) savPszText,
-                                savCchTextMax, NULL, NULL);
-	else
-	    MultiByteToWideChar(CP_ACP, 0, (LPSTR) pdi->item.pszText, -1,
-	                        savPszText, savCchTextMax);
-        pdi->item.pszText = savPszText; /* restores our buffer */
-        pdi->item.cchTextMax = savCchTextMax;
-        Free (pszTempBuf);
+        if (return_ansi && (pdi->hdr.code == LVN_GETDISPINFOA))
+        {
+            strcpy((char*)ret_text, (char*)pdi->item.pszText);
+        }
+        else if (return_unicode && (pdi->hdr.code == LVN_GETDISPINFOW))
+        {
+            strcpyW(ret_text, pdi->item.pszText);
+        }
+        else if (return_ansi) /* note : pointer can be changed by app ! */
+        {
+	    WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, (LPSTR) ret_text,
+                ret_length, NULL, NULL);
+        }
+        else
+            MultiByteToWideChar(CP_ACP, 0, (LPSTR) pdi->item.pszText, -1,
+                ret_text, ret_length);
+
+        pdi->item.pszText = ret_text; /* restores our buffer */
+        pdi->item.cchTextMax = ret_length;
+
+        Free(buffer);
+        return ret;
     }
-    return bResult;
+
+    /* if dipsinfo holder changed notification code then convert */
+    if (!isW && (pdi->hdr.code == LVN_GETDISPINFOW))
+    {
+        length = WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, NULL, 0, NULL, NULL);
+
+        buffer = Alloc(length * sizeof(CHAR));
+        if (!buffer) return FALSE;
+
+        WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, (LPSTR) buffer,
+                ret_length, NULL, NULL);
+
+        strcpy((LPSTR)pdi->item.pszText, (LPSTR)buffer);
+        Free(buffer);
+    }
+
+    return ret;
 }
 
 static void customdraw_fill(NMLVCUSTOMDRAW *lpnmlvcd, const LISTVIEW_INFO *infoPtr, HDC hdc,
@@ -6490,7 +6520,7 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
 	    if (lpLVItem->mask & LVIF_STATE)
 	        dispInfo.item.stateMask = lpLVItem->stateMask & infoPtr->uCallbackMask;
 	    /* could be zeroed on LVIF_NORECOMPUTE case */
-	    if (dispInfo.item.mask != 0)
+	    if (dispInfo.item.mask)
 	    {
 	        notify_dispinfoT(infoPtr, LVN_GETDISPINFOW, &dispInfo, isW);
 	        dispInfo.item.stateMask = lpLVItem->stateMask;
@@ -6596,7 +6626,7 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     }
 
     /* If we don't have all the requested info, query the application */
-    if (dispInfo.item.mask != 0)
+    if (dispInfo.item.mask)
     {
 	dispInfo.item.iItem = lpLVItem->iItem;
 	dispInfo.item.iSubItem = lpLVItem->iSubItem; /* yes: the original subitem */
