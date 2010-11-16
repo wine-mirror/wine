@@ -325,8 +325,9 @@ static HRESULT WINAPI IDirect3DSurface9Impl_ReleaseDC(LPDIRECT3DSURFACE9 iface, 
     hr = IWineD3DSurface_ReleaseDC(This->wineD3DSurface, hdc);
     wined3d_mutex_unlock();
 
-    switch(hr) {
-        case WINEDDERR_NODC:    return WINED3DERR_INVALIDCALL;
+    switch (hr)
+    {
+        case WINEDDERR_NODC:    return D3DERR_INVALIDCALL;
         default:                return hr;
     }
 }

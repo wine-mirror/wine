@@ -420,9 +420,10 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetCursorProperties(LPDIRECT3DDEVIC
     TRACE("iface %p, hotspot_x %u, hotspot_y %u, bitmap %p.\n",
             iface, XHotSpot, YHotSpot, pCursorBitmap);
 
-    if(!pCursorBitmap) {
-        WARN("No cursor bitmap, returning WINED3DERR_INVALIDCALL\n");
-        return WINED3DERR_INVALIDCALL;
+    if (!pCursorBitmap)
+    {
+        WARN("No cursor bitmap, returning D3DERR_INVALIDCALL.\n");
+        return D3DERR_INVALIDCALL;
     }
 
     wined3d_mutex_lock();
@@ -616,7 +617,7 @@ static HRESULT  WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_Reset(LPDIRECT3DDE
         This->notreset = TRUE;
         wined3d_mutex_unlock();
 
-        return WINED3DERR_INVALIDCALL;
+        return D3DERR_INVALIDCALL;
     }
 
     localParameters.BackBufferWidth                     = pPresentationParameters->BackBufferWidth;
@@ -2717,7 +2718,7 @@ static HRESULT WINAPI IDirect3DDevice9ExImpl_SetConvolutionMonoKernel(IDirect3DD
     FIXME("iface %p, width %u, height %u, rows %p, columns %p stub!\n",
             iface, width, height, rows, columns);
 
-    return WINED3DERR_INVALIDCALL;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirect3DDevice9ExImpl_ComposeRects(IDirect3DDevice9Ex *iface,
@@ -2729,7 +2730,7 @@ static HRESULT WINAPI IDirect3DDevice9ExImpl_ComposeRects(IDirect3DDevice9Ex *if
             iface, src_surface, dst_surface, src_descs, rect_count,
             dst_descs, operation, offset_x, offset_y);
 
-    return WINED3DERR_INVALIDCALL;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirect3DDevice9ExImpl_PresentEx(IDirect3DDevice9Ex *iface,
@@ -2739,28 +2740,28 @@ static HRESULT WINAPI IDirect3DDevice9ExImpl_PresentEx(IDirect3DDevice9Ex *iface
     FIXME("iface %p, src_rect %p, dst_rect %p, dst_window_override %p, dirty_region %p, flags %#x stub!\n",
             iface, src_rect, dst_rect, dst_window_override, dirty_region, flags);
 
-    return WINED3DERR_INVALIDCALL;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirect3DDevice9ExImpl_GetGPUThreadPriority(IDirect3DDevice9Ex *iface, INT *priority)
 {
     FIXME("iface %p, priority %p stub!\n", iface, priority);
 
-    return WINED3DERR_INVALIDCALL;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirect3DDevice9ExImpl_SetGPUThreadPriority(IDirect3DDevice9Ex *iface, INT priority)
 {
     FIXME("iface %p, priority %d stub!\n", iface, priority);
 
-    return WINED3DERR_INVALIDCALL;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirect3DDevice9ExImpl_WaitForVBlank(IDirect3DDevice9Ex *iface, UINT swapchain_idx)
 {
     FIXME("iface %p, swapchain_idx %u stub!\n", iface, swapchain_idx);
 
-    return WINED3DERR_INVALIDCALL;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirect3DDevice9ExImpl_CheckResourceResidency(IDirect3DDevice9Ex *iface,
@@ -2769,14 +2770,14 @@ static HRESULT WINAPI IDirect3DDevice9ExImpl_CheckResourceResidency(IDirect3DDev
     FIXME("iface %p, resources %p, resource_count %u stub!\n",
             iface, resources, resource_count);
 
-    return WINED3DERR_INVALIDCALL;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirect3DDevice9ExImpl_SetMaximumFrameLatency(IDirect3DDevice9Ex *iface, UINT max_latency)
 {
     FIXME("iface %p, max_latency %u stub!\n", iface, max_latency);
 
-    return WINED3DERR_INVALIDCALL;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirect3DDevice9ExImpl_GetMaximumFrameLatency(IDirect3DDevice9Ex *iface, UINT *max_latency)
@@ -2785,7 +2786,7 @@ static HRESULT WINAPI IDirect3DDevice9ExImpl_GetMaximumFrameLatency(IDirect3DDev
 
     *max_latency = 2;
 
-    return WINED3DERR_INVALIDCALL;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirect3DDevice9ExImpl_CheckDeviceState(IDirect3DDevice9Ex *iface, HWND dst_window)
@@ -2797,7 +2798,7 @@ static HRESULT WINAPI IDirect3DDevice9ExImpl_CheckDeviceState(IDirect3DDevice9Ex
     if (!i++)
         FIXME("iface %p, dst_window %p stub!\n", iface, dst_window);
 
-    return WINED3D_OK;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DDevice9ExImpl_CreateRenderTargetEx(IDirect3DDevice9Ex *iface,
@@ -2809,7 +2810,7 @@ static HRESULT WINAPI IDirect3DDevice9ExImpl_CreateRenderTargetEx(IDirect3DDevic
             iface, width, height, format, multisample_type, multisample_quality,
             lockable, surface, shared_handle, usage);
 
-    return WINED3DERR_INVALIDCALL;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirect3DDevice9ExImpl_CreateOffscreenPlainSurfaceEx(IDirect3DDevice9Ex *iface,
@@ -2819,7 +2820,7 @@ static HRESULT WINAPI IDirect3DDevice9ExImpl_CreateOffscreenPlainSurfaceEx(IDire
     FIXME("iface %p, width %u, height %u, format %#x, pool %#x, surface %p, shared_handle %p, usage %#x stub!\n",
             iface, width, height, format, pool, surface, shared_handle, usage);
 
-    return WINED3DERR_INVALIDCALL;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirect3DDevice9ExImpl_CreateDepthStencilSurfaceEx(IDirect3DDevice9Ex *iface,
@@ -2831,7 +2832,7 @@ static HRESULT WINAPI IDirect3DDevice9ExImpl_CreateDepthStencilSurfaceEx(IDirect
             iface, width, height, format, multisample_type, multisample_quality,
             discard, surface, shared_handle, usage);
 
-    return WINED3DERR_INVALIDCALL;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirect3DDevice9ExImpl_ResetEx(IDirect3DDevice9Ex *iface,
@@ -2839,7 +2840,7 @@ static HRESULT WINAPI IDirect3DDevice9ExImpl_ResetEx(IDirect3DDevice9Ex *iface,
 {
     FIXME("iface %p, present_parameters %p, mode %p stub!\n", iface, present_parameters, mode);
 
-    return WINED3DERR_INVALIDCALL;
+    return E_NOTIMPL;
 }
 
 static HRESULT  WINAPI  IDirect3DDevice9ExImpl_GetDisplayModeEx(IDirect3DDevice9Ex *iface,
@@ -2847,7 +2848,7 @@ static HRESULT  WINAPI  IDirect3DDevice9ExImpl_GetDisplayModeEx(IDirect3DDevice9
 {
     FIXME("iface %p, swapchain_idx %u, mode %p, rotation %p stub!\n", iface, swapchain_idx, mode, rotation);
 
-    return WINED3DERR_INVALIDCALL;
+    return E_NOTIMPL;
 }
 
 static const IDirect3DDevice9ExVtbl Direct3DDevice9_Vtbl =
