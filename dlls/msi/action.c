@@ -3245,8 +3245,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
                     '>','=',' ','%','i',' ','O','R','D','E','R',' ','B','Y',' ',
                     '`','D','i','s','k','I','d','`',0};
 
-                file = get_loaded_file(package, comp->KeyPath);
-                if (!file)
+                if (!comp->KeyPath || !(file = get_loaded_file(package, comp->KeyPath)))
                     continue;
 
                 row = MSI_QueryGetRecord(package->db, query, file->Sequence);

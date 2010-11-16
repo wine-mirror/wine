@@ -850,8 +850,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
         }
         feature->Action = feature->ActionRequest;
 
-        file = get_loaded_file( package, comp->KeyPath );
-        if (!file)
+        if (!comp->KeyPath || !(file = get_loaded_file( package, comp->KeyPath )))
         {
             TRACE("COM server not provided, skipping class %s\n", debugstr_w(cls->clsid));
             continue;
