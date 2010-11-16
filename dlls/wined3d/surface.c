@@ -2612,7 +2612,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *M
             This->resource.heapMemory = NULL;
         }
         This->resource.allocatedMemory = Mem;
-        This->flags |= SFLAG_USERPTR | SFLAG_INSYSMEM;
+        This->flags |= SFLAG_USERPTR;
 
         /* Now the surface memory is most up do date. Invalidate drawable and texture */
         surface_modify_location(This, SFLAG_INSYSMEM, TRUE);
