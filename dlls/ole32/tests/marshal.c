@@ -1437,14 +1437,8 @@ static DWORD CALLBACK bad_thread_proc(LPVOID p)
     /* Win9x returns E_NOINTERFACE, whilst NT returns RPC_E_WRONG_THREAD */
     trace("call to proxy's QueryInterface from wrong apartment returned 0x%08x\n", hr);
 
-    /* this statement causes Win9x DCOM to crash during CoUninitialize of
-     * other apartment, so don't test this on Win9x (signified by NT-only
-     * export of CoRegisterSurrogateEx) */
-    if (GetProcAddress(GetModuleHandle("ole32"), "CoRegisterSurrogateEx"))
-        /* now be really bad and release the proxy from the wrong apartment */
-        IUnknown_Release(cf);
-    else
-        skip("skipping test for releasing proxy from wrong apartment that will succeed, but cause a crash during CoUninitialize\n");
+    /* now be really bad and release the proxy from the wrong apartment */
+    IUnknown_Release(cf);
 
     CoUninitialize();
 
@@ -3060,7 +3054,12 @@ START_TEST(marshal)
     int argc;
     char **argv;
 
-    if (!(pCoInitializeEx = (void*)GetProcAddress(hOle32, "CoInitializeEx"))) goto no_test;
+    if (!GetProcAddress(hOle32, "CoRegisterSurrogateEx")) {
+        win_skip("skipping test on win9x\n");
+        return;
+    }
+
+    pCoInitializeEx = (void*)GetProcAddress(hOle32, "CoInitializeEx");
 
     argc = winetest_get_mainargs( &argv );
     if (argc > 2 && (!strcmp(argv[2], "-Embedding")))
@@ -3127,9 +3126,4 @@ START_TEST(marshal)
     test_channel_hook();
 
     CoUninitialize();
-    return;
-
-no_test:
-    trace("You need DCOM95 installed to run this test\n");
-    return;
 }

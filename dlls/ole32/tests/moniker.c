@@ -1998,6 +1998,11 @@ static void test_save_load_filemoniker(void)
 
 START_TEST(moniker)
 {
+    if (!GetProcAddress(GetModuleHandleA("ole32.dll"), "CoRegisterSurrogateEx")) {
+        win_skip("skipping test on win9x\n");
+        return;
+    }
+
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     test_ROT();
