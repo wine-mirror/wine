@@ -341,6 +341,23 @@ xmlChar const* dt_get_str(XDR_DT dt)
     return DT_string_table[dt];
 }
 
+static inline xmlChar const* get_node_nsURI(xmlNodePtr node)
+{
+    return (node->ns != NULL)? node->ns->href : NULL;
+}
+
+static inline cache_entry* get_entry(schema_cache* This, xmlChar const* nsURI)
+{
+    return (!nsURI)? xmlHashLookup(This->cache, BAD_CAST "") :
+                     xmlHashLookup(This->cache, nsURI);
+}
+
+static inline xmlSchemaPtr get_node_schema(schema_cache* This, xmlNodePtr node)
+{
+    cache_entry* entry = get_entry(This, get_node_nsURI(node));
+    return (!entry)? NULL : entry->schema;
+}
+
 xmlExternalEntityLoader _external_entity_loader = NULL;
 
 static xmlParserInputPtr external_entity_loader(const char *URL, const char *ID,
@@ -981,6 +998,40 @@ static const struct IXMLDOMSchemaCollection2Vtbl schema_cache_vtbl =
     schema_cache_getDeclaration
 };
 
+static xmlSchemaElementPtr lookup_schema_elemDecl(xmlSchemaPtr schema, xmlNodePtr node)
+{
+    xmlSchemaElementPtr decl = NULL;
+    xmlChar const* nsURI = get_node_nsURI(node);
+
+    TRACE("(%p, %p)\n", schema, node);
+
+    if (xmlStrEqual(nsURI, schema->targetNamespace))
+        decl = xmlHashLookup(schema->elemDecl, node->name);
+
+    if (!decl && xmlHashSize(schema->schemasImports) > 1)
+    {
+        FIXME("declaration not found in main schema - need to check schema imports!\n");
+        /*xmlSchemaImportPtr import;
+        if (nsURI == NULL)
+            import = xmlHashLookup(schema->schemasImports, XML_SCHEMAS_NO_NAMESPACE);
+        else
+            import = xmlHashLookup(schema->schemasImports, node->ns->href);
+
+        if (import != NULL)
+            decl = xmlHashLookup(import->schema->elemDecl, node->name);*/
+    }
+
+    return decl;
+}
+
+static inline xmlNodePtr lookup_schema_element(xmlSchemaPtr schema, xmlNodePtr node)
+{
+    xmlSchemaElementPtr decl = lookup_schema_elemDecl(schema, node);
+    while (decl != NULL && decl->refDecl != NULL)
+        decl = decl->refDecl;
+    return (decl != NULL)? decl->node : NULL;
+}
+
 static void LIBXML2_LOG_CALLBACK validate_error(void* ctx, char const* msg, ...)
 {
     va_list ap;
@@ -1007,35 +1058,26 @@ static void validate_serror(void* ctx, xmlErrorPtr err)
 HRESULT SchemaCache_validate_tree(IXMLDOMSchemaCollection2* iface, xmlNodePtr tree)
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
-    cache_entry* entry;
-    xmlChar const* ns = NULL;
+    xmlSchemaPtr schema;
+
     TRACE("(%p, %p)\n", This, tree);
 
     if (!tree)
         return E_POINTER;
 
-    if ((xmlNodePtr)tree->doc == tree)
-    {
-        xmlNodePtr root = xmlDocGetRootElement(tree->doc);
-        if (root && root->ns)
-            ns = root->ns->href;
-    }
-    else if (tree->ns)
-    {
-        ns = tree->ns->href;
-    }
+    if (tree->type == XML_DOCUMENT_NODE)
+        tree = xmlDocGetRootElement(tree->doc);
 
-    entry = (ns != NULL)? xmlHashLookup(This->cache, ns) :
-                          xmlHashLookup(This->cache, BAD_CAST "");
+    schema = get_node_schema(This, tree);
     /* TODO: if the ns is not in the cache, and it's a URL,
      *       do we try to load from that? */
-    if (entry)
+    if (schema)
     {
         xmlSchemaValidCtxtPtr svctx;
         int err;
         /* TODO: if validateOnLoad property is false,
          *       we probably need to validate the schema here. */
-        svctx = xmlSchemaNewValidCtxt(entry->schema);
+        svctx = xmlSchemaNewValidCtxt(schema);
         xmlSchemaSetValidErrors(svctx, validate_error, validate_warning, NULL);
 #ifdef HAVE_XMLSCHEMASSETVALIDSTRUCTUREDERRORS
             xmlSchemaSetValidStructuredErrors(svctx, validate_serror, NULL);
@@ -1051,6 +1093,34 @@ HRESULT SchemaCache_validate_tree(IXMLDOMSchemaCollection2* iface, xmlNodePtr tr
     }
 
     return E_FAIL;
+}
+
+XDR_DT SchemaCache_get_node_dt(IXMLDOMSchemaCollection2* iface, xmlNodePtr node)
+{
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
+    xmlSchemaPtr schema = get_node_schema(This, node);
+    XDR_DT dt = DT_INVALID;
+
+    TRACE("(%p, %p)\n", This, node);
+
+    if (node->ns && xmlStrEqual(node->ns->href, DT_nsURI))
+    {
+        dt = dt_get_type(node->name, -1);
+    }
+    else if (schema)
+    {
+        xmlChar* str;
+        xmlNodePtr schema_node = lookup_schema_element(schema, node);
+
+        str = xmlGetNsProp(schema_node, BAD_CAST "dt", DT_nsURI);
+        if (str)
+        {
+            dt = dt_get_type(str, -1);
+            xmlFree(str);
+        }
+    }
+
+    return dt;
 }
 
 HRESULT SchemaCache_create(IUnknown* pUnkOuter, void** ppObj)

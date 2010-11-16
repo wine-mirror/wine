@@ -266,6 +266,7 @@ extern HRESULT node_get_base_name(xmlnode*,BSTR*);
 
 extern HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document);
 extern HRESULT SchemaCache_validate_tree(IXMLDOMSchemaCollection2* iface, xmlNodePtr tree);
+extern XDR_DT  SchemaCache_get_node_dt(IXMLDOMSchemaCollection2* iface, xmlNodePtr node);
 
 extern XDR_DT dt_get_type(xmlChar const* str, int len /* calculated if -1 */);
 extern xmlChar const* dt_get_str(XDR_DT dt);
