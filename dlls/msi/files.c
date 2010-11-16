@@ -66,15 +66,23 @@ static void schedule_install_files(MSIPACKAGE *package)
 
     LIST_FOR_EACH_ENTRY(file, &package->files, MSIFILE, entry)
     {
-        if (file->Component->ActionRequest != INSTALLSTATE_LOCAL || !file->Component->Enabled)
+        MSICOMPONENT *comp = file->Component;
+
+        if (comp->ActionRequest != INSTALLSTATE_LOCAL || !comp->Enabled)
         {
             TRACE("File %s is not scheduled for install\n", debugstr_w(file->File));
+            file->state = msifs_skipped;
+            continue;
+        }
+        comp->Action = INSTALLSTATE_LOCAL;
+        ui_progress( package, 2, file->FileSize, 0, 0 );
 
-            ui_progress(package,2,file->FileSize,0,0);
+        if (file->state == msifs_overwrite &&
+            (comp->Attributes & msidbComponentAttributesNeverOverwrite))
+        {
+            TRACE("not overwriting %s\n", debugstr_w(file->TargetPath));
             file->state = msifs_skipped;
         }
-        else
-            file->Component->Action = INSTALLSTATE_LOCAL;
     }
 }
 
@@ -227,14 +235,6 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
     {
         if (file->state != msifs_missing && !mi->is_continuous && file->state != msifs_overwrite)
             continue;
-
-        if (file->state == msifs_overwrite &&
-            (file->Component->Attributes & msidbComponentAttributesNeverOverwrite))
-        {
-            TRACE("not overwriting %s\n", debugstr_w(file->TargetPath));
-            file->state = msifs_skipped;
-            continue;
-        }
 
         if (file->Sequence > mi->last_sequence || mi->is_continuous ||
             (file->IsCompressed && !mi->is_extracted))
