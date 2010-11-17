@@ -571,7 +571,7 @@
 @ cdecl _i64tow_s(int64 ptr long long) msvcrt._i64tow_s
 @ stub _initptd
 @ cdecl _initterm(ptr ptr) msvcrt._initterm
-@ cdecl _initterm_e(ptr ptr)
+@ cdecl _initterm_e(ptr ptr) msvcrt._initterm_e
 @ stub _inp
 @ stub _inpd
 @ stub _inpw

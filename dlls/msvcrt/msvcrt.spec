@@ -518,7 +518,7 @@
 @ cdecl _i64tow(int64 ptr long) ntdll._i64tow
 @ cdecl _i64tow_s(int64 ptr long long) _i64tow_s
 @ cdecl _initterm(ptr ptr)
-# stub _initterm_e
+@ cdecl _initterm_e(ptr ptr)
 @ stub _inp #(long) -i386
 @ stub _inpd #(long) -i386
 @ stub _inpw #(long) -i386

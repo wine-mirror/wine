@@ -30,8 +30,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcr90);
 
-typedef int (CDECL *_INITTERM_E_FN)(void);
-
 /*********************************************************************
  *  DllMain (MSVCR90.@)
  */
@@ -78,30 +76,6 @@ void * CDECL _encoded_null(void)
     TRACE("\n");
 
     return MSVCR90_encode_pointer(NULL);
-}
-
-/*********************************************************************
- *  _initterm_e (MSVCR90.@)
- *
- * call an array of application initialization functions and report the return value
- */
-int CDECL _initterm_e(_INITTERM_E_FN *table, _INITTERM_E_FN *end)
-{
-    int res = 0;
-
-    TRACE("(%p, %p)\n", table, end);
-
-    while (!res && table < end) {
-        if (*table) {
-            TRACE("calling %p\n", **table);
-            res = (**table)();
-            if (res)
-                TRACE("function %p failed: 0x%x\n", *table, res);
-
-        }
-        table++;
-    }
-    return res;
 }
 
 /*********************************************************************
