@@ -35,6 +35,11 @@
 
 static const char *TEST_CALLBACK_TEXT = "callback_text";
 
+static TVITEMA g_item_expanding, g_item_expanded;
+static BOOL g_get_from_expand;
+static BOOL g_get_rect_in_expand;
+static BOOL g_disp_A_to_W;
+
 #define NUM_MSG_SEQUENCES   2
 #define TREEVIEW_SEQ_INDEX  0
 #define PARENT_SEQ_INDEX    1
@@ -338,12 +343,12 @@ static void test_callback(void)
     TVINSERTSTRUCTA ins;
     TVITEMA tvi;
     CHAR test_string[] = "Test_string";
+    static const CHAR test2A[] = "TEST2";
     CHAR buf[128];
     LRESULT ret;
     HWND hTree;
 
     hTree = create_treeview_control();
-    fill_tree(hTree);
 
     ret = TreeView_DeleteAllItems(hTree);
     ok(ret == TRUE, "ret\n");
@@ -395,6 +400,16 @@ static void test_callback(void)
     ok(ret == TRUE, "Expected GetItem return TRUE, got %ld\n", ret);
     ok(strcmp(tvi.pszText, TEST_CALLBACK_TEXT) == 0, "Item text mismatch %s vs %s\n",
         tvi.pszText, TEST_CALLBACK_TEXT);
+
+    /* notification handler changed A->W */
+    g_disp_A_to_W = TRUE;
+    tvi.hItem = hItem2;
+    memset(buf, 0, sizeof(buf));
+    ret = TreeView_GetItem(hTree, &tvi);
+    ok(ret == TRUE, "got %ld\n", ret);
+    ok(strcmp(tvi.pszText, test2A) == 0, "got %s, expected %s\n",
+        tvi.pszText, test2A);
+    g_disp_A_to_W = FALSE;
 
     DestroyWindow(hTree);
 }
@@ -854,10 +869,6 @@ static void test_get_set_unicodeformat(void)
     DestroyWindow(hTree);
 }
 
-static TVITEMA g_item_expanding, g_item_expanded;
-static BOOL g_get_from_expand;
-static BOOL g_get_rect_in_expand;
-
 static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static LONG defwndproc_counter = 0;
@@ -913,6 +924,14 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
                 if (disp->item.mask & TVIF_TEXT) {
                     lstrcpyn(disp->item.pszText, TEST_CALLBACK_TEXT, disp->item.cchTextMax);
                 }
+
+                if (g_disp_A_to_W && (disp->item.mask & TVIF_TEXT)) {
+                    static const WCHAR testW[] = {'T','E','S','T','2',0};
+
+                    disp->hdr.code = TVN_GETDISPINFOW;
+                    memcpy(disp->item.pszText, testW, sizeof(testW));
+                }
+
                 break;
               }
             case TVN_ENDLABELEDIT: return TRUE;

@@ -728,6 +728,7 @@ TREEVIEW_UpdateDispInfo(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
        wineItem->textWidth = 0;
 
     TREEVIEW_SendRealNotify(infoPtr, callback.hdr.idFrom, (LPARAM)&callback);
+    TRACE("resulting code 0x%08x\n", callback.hdr.code);
 
     /* It may have changed due to a call to SetItem. */
     mask &= wineItem->callbackMask;
@@ -735,7 +736,7 @@ TREEVIEW_UpdateDispInfo(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
     if ((mask & TVIF_TEXT) && callback.item.pszText != wineItem->pszText)
     {
 	/* Instead of copying text into our buffer user specified its own */
-	if (!infoPtr->bNtfUnicode) {
+	if (!infoPtr->bNtfUnicode && (callback.hdr.code == TVN_GETDISPINFOA)) {
 	    LPWSTR newText;
 	    int buflen;
             int len = MultiByteToWideChar( CP_ACP, 0,
@@ -776,7 +777,7 @@ TREEVIEW_UpdateDispInfo(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
     }
     else if (mask & TVIF_TEXT) {
 	/* User put text into our buffer, that is ok unless A string */
-	if (!infoPtr->bNtfUnicode) {
+	if (!infoPtr->bNtfUnicode && (callback.hdr.code == TVN_GETDISPINFOA)) {
 	    LPWSTR newText;
 	    LPWSTR oldText = NULL;
 	    int buflen;
