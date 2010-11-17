@@ -691,7 +691,7 @@ static int apple_alloc_thread_stack( void *base, size_t size, void *arg )
      * of the address space causes subsequent execs to fail, even on the
      * child side of a fork.  Avoid the top 16MB. */
     char * const limit = (char*)0xff000000;
-    if (base >= limit) return 0;
+    if ((char *)base >= limit) return 0;
     if (size > limit - (char*)base)
         size = limit - (char*)base;
     if (size < info->desired_size) return 0;
