@@ -346,14 +346,14 @@ static void lighting_test(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %08x\n", hr);
     }
 
-    color = getPixelColor(device, 160, 360); /* lower left quad - unlit without normals */
-    ok(color == 0x00ff0000, "Unlit quad without normals has color %08x\n", color);
-    color = getPixelColor(device, 160, 120); /* upper left quad - lit without normals */
-    ok(color == 0x00000000, "Lit quad without normals has color %08x\n", color);
-    color = getPixelColor(device, 480, 360); /* lower left quad - unlit with normals */
-    ok(color == 0x000000ff, "Unlit quad with normals has color %08x\n", color);
-    color = getPixelColor(device, 480, 120); /* upper left quad - lit with normals */
-    ok(color == 0x00000000, "Lit quad with normals has color %08x\n", color);
+    color = getPixelColor(device, 160, 360); /* Lower left quad - unlit without normals */
+    ok(color == 0x00ff0000, "Unlit quad without normals has color 0x%08x, expected 0x00ff0000.\n", color);
+    color = getPixelColor(device, 160, 120); /* Upper left quad - lit without normals */
+    ok(color == 0x00000000, "Lit quad without normals has color 0x%08x, expected 0x00000000.\n", color);
+    color = getPixelColor(device, 480, 360); /* Lower left quad - unlit with normals */
+    ok(color == 0x000000ff, "Unlit quad with normals has color 0x%08x, expected 0x000000ff.\n", color);
+    color = getPixelColor(device, 480, 120); /* Upper left quad - lit with normals */
+    ok(color == 0x00000000, "Lit quad with normals has color 0x%08x, expected 0x00000000.\n", color);
 
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
