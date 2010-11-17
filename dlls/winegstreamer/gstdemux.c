@@ -977,6 +977,8 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
     *props = This->props;
     gst_element_set_state(This->gstfilter, GST_STATE_READY);
     gst_element_get_state(This->gstfilter, NULL, NULL, -1);
+    if (This->push_thread)
+        gst_pad_activate_push(This->my_src, 0);
 
     This->initial = 0;
     This->nextofs = This->nextpullofs = 0;
