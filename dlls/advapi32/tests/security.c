@@ -1311,7 +1311,7 @@ static void test_token_attr(void)
     ok(ret, "GetTokenInformation(TokenDefaultDacl) failed with error %u\n", GetLastError());
     ok(Dacl->DefaultDacl == NULL, "expected NULL, got %p\n", Dacl->DefaultDacl);
     ok(Size2 == sizeof(TOKEN_DEFAULT_DACL) || broken(Size2 == 2*sizeof(TOKEN_DEFAULT_DACL)), /* WoW64 */
-       "got %u expected %u (sizeof(TOKEN_DEFAULT_DACL))\n", Size2, sizeof(TOKEN_DEFAULT_DACL));
+       "got %u expected sizeof(TOKEN_DEFAULT_DACL)\n", Size2);
 
     Dacl->DefaultDacl = acl;
     ret = SetTokenInformation(Token, TokenDefaultDacl, Dacl, Size);
