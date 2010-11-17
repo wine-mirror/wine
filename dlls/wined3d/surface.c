@@ -2710,6 +2710,9 @@ void flip_surface(IWineD3DSurfaceImpl *front, IWineD3DSurfaceImpl *back) {
         tmp = back->texture_name_srgb;
         back->texture_name_srgb = front->texture_name_srgb;
         front->texture_name_srgb = tmp;
+
+        resource_unload((IWineD3DResourceImpl *)back);
+        resource_unload((IWineD3DResourceImpl *)front);
     }
 
     {
