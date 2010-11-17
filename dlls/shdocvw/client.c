@@ -415,8 +415,31 @@ static HRESULT WINAPI ControlSite_TranslateAccelerator(IOleControlSite *iface, M
                                                        DWORD grfModifiers)
 {
     DocHost *This = impl_from_IOleControlSite(iface);
-    FIXME("(%p)->(%p, %08x)\n", This, pMsg, grfModifiers);
-    return E_NOTIMPL;
+    IOleObject *wb_obj;
+    IOleClientSite *clientsite;
+    IOleControlSite *controlsite;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p, %08x)\n", This, pMsg, grfModifiers);
+
+    hr = IDispatch_QueryInterface(This->disp, &IID_IOleObject, (void**)&wb_obj);
+    if(SUCCEEDED(hr)) {
+        hr = IOleObject_GetClientSite(wb_obj, &clientsite);
+        if(SUCCEEDED(hr)) {
+            hr = IOleClientSite_QueryInterface(clientsite, &IID_IOleControlSite, (void**)&controlsite);
+            if(SUCCEEDED(hr)) {
+                hr = IOleControlSite_TranslateAccelerator(controlsite, pMsg, grfModifiers);
+                IOleControlSite_Release(controlsite);
+            }
+            IOleClientSite_Release(clientsite);
+        }
+        IOleObject_Release(wb_obj);
+    }
+
+    if(FAILED(hr))
+        return S_FALSE;
+    else
+        return hr;
 }
 
 static HRESULT WINAPI ControlSite_OnFocus(IOleControlSite *iface, BOOL fGotFocus)

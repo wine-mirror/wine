@@ -130,6 +130,8 @@ DEFINE_EXPECT(TranslateUrl);
 DEFINE_EXPECT(ShowUI);
 DEFINE_EXPECT(HideUI);
 DEFINE_EXPECT(RequestUIActivate);
+DEFINE_EXPECT(ControlSite_TranslateAccelerator);
+DEFINE_EXPECT(OnFocus);
 
 static const WCHAR wszItem[] = {'i','t','e','m',0};
 static const WCHAR emptyW[] = {0};
@@ -140,6 +142,7 @@ static IWebBrowser2 *wb;
 static HWND container_hwnd, shell_embedding_hwnd;
 static BOOL is_downloading, is_first_load;
 static HRESULT hr_dochost_TranslateAccelerator = E_NOTIMPL;
+static HRESULT hr_site_TranslateAccelerator = E_NOTIMPL;
 static const char *current_url;
 
 #define DWL_EXPECT_BEFORE_NAVIGATE  0x01
@@ -852,6 +855,85 @@ static const IOleClientSiteVtbl ClientSiteVtbl = {
 
 static IOleClientSite ClientSite = { &ClientSiteVtbl };
 
+static HRESULT WINAPI IOleControlSite_fnQueryInterface(IOleControlSite *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IOleControlSite_fnAddRef(IOleControlSite *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI IOleControlSite_fnRelease(IOleControlSite *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI IOleControlSite_fnOnControlInfoChanged(IOleControlSite* This)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IOleControlSite_fnLockInPlaceActive(IOleControlSite* This,
+                                                          BOOL fLock)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IOleControlSite_fnGetExtendedControl(IOleControlSite* This,
+                                                           IDispatch **ppDisp)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IOleControlSite_fnTransformCoords(IOleControlSite* This,
+                                                        POINTL *pPtlHimetric,
+                                                        POINTF *pPtfContainer,
+                                                        DWORD dwFlags)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IOleControlSite_fnTranslateAccelerator(IOleControlSite* This, MSG *pMsg,
+                                                             DWORD grfModifiers)
+{
+    CHECK_EXPECT(ControlSite_TranslateAccelerator);
+    return hr_site_TranslateAccelerator;
+}
+
+static HRESULT WINAPI IOleControlSite_fnOnFocus(IOleControlSite* This, BOOL fGotFocus)
+{
+    CHECK_EXPECT2(OnFocus);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IOleControlSite_fnShowPropertyFrame(IOleControlSite* This)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static IOleControlSiteVtbl ControlSiteVtbl = {
+    IOleControlSite_fnQueryInterface,
+    IOleControlSite_fnAddRef,
+    IOleControlSite_fnRelease,
+    IOleControlSite_fnOnControlInfoChanged,
+    IOleControlSite_fnLockInPlaceActive,
+    IOleControlSite_fnGetExtendedControl,
+    IOleControlSite_fnTransformCoords,
+    IOleControlSite_fnTranslateAccelerator,
+    IOleControlSite_fnOnFocus,
+    IOleControlSite_fnShowPropertyFrame
+};
+
+static IOleControlSite ControlSite = { &ControlSiteVtbl };
+
 static HRESULT WINAPI InPlaceUIWindow_QueryInterface(IOleInPlaceFrame *iface,
                                                      REFIID riid, void **ppv)
 {
@@ -1433,7 +1515,7 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
     else if(IsEqualGUID(&IID_IDocHostShowUI, riid))
         trace("interface IID_IDocHostShowUI\n");
     else if(IsEqualGUID(&IID_IOleControlSite, riid))
-        trace("interface IID_IOleControlSite\n");
+        *ppv = &ControlSite;
     else if(IsEqualGUID(&IID_IOleCommandTarget, riid))
         trace("interface IID_IOleCommandTarget\n");
 
@@ -1494,6 +1576,7 @@ static void test_DoVerb(IUnknown *unk)
     SET_EXPECT(Frame_SetActiveObject);
     SET_EXPECT(UIWindow_SetActiveObject);
     SET_EXPECT(SetMenu);
+    SET_EXPECT(OnFocus);
 
     hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite,
                              0, (HWND)0xdeadbeef, &rect);
@@ -1510,6 +1593,7 @@ static void test_DoVerb(IUnknown *unk)
     CHECK_CALLED(Frame_SetActiveObject);
     CHECK_CALLED(UIWindow_SetActiveObject);
     CHECK_CALLED(SetMenu);
+    todo_wine CHECK_CALLED(OnFocus);
 
     hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite,
                            0, (HWND)0xdeadbeef, &rect);
@@ -2539,6 +2623,7 @@ static void test_TranslateAccelerator(IUnknown *unk)
         ok(hres == S_OK, "Got 0x%08x\n", hres);
         if(SUCCEEDED(hres)) {
             IDocHostUIHandler2 *dochost;
+            IOleControlSite *doc_controlsite;
             IUnknown *unk_test;
 
             hres = IOleClientSite_QueryInterface(doc_clientsite, &IID_IOleInPlaceFrame, (void**)&unk_test);
@@ -2575,6 +2660,44 @@ static void test_TranslateAccelerator(IUnknown *unk)
 
                 IDocHostUIHandler2_Release(dochost);
             }
+            hres = IOleClientSite_QueryInterface(doc_clientsite, &IID_IOleControlSite, (void**)&doc_controlsite);
+            ok(hres == S_OK, "Got 0x%08x\n", hres);
+            if(SUCCEEDED(hres)) {
+
+                msg_a.message = WM_KEYDOWN;
+                hr_site_TranslateAccelerator = 0xdeadbeef;
+                for(keycode = 0; keycode < 0x100; keycode++) {
+                    msg_a.wParam = keycode;
+                    SET_EXPECT(ControlSite_TranslateAccelerator);
+                    hres = IOleControlSite_TranslateAccelerator(doc_controlsite, &msg_a, 0);
+                    if(keycode == 0x9 || keycode == 0x75)
+                        todo_wine ok(hres == S_OK, "Got 0x%08x (keycode: %04x)\n", hres, keycode);
+                    else
+                        ok(hres == S_FALSE, "Got 0x%08x (keycode: %04x)\n", hres, keycode);
+
+                    CHECK_CALLED(ControlSite_TranslateAccelerator);
+                }
+                msg_a.wParam = VK_LEFT;
+                SET_EXPECT(ControlSite_TranslateAccelerator);
+                hres = IOleControlSite_TranslateAccelerator(doc_controlsite, &msg_a, 0);
+                ok(hres == S_FALSE, "Got 0x%08x (keycode: %04x)\n", hres, keycode);
+                CHECK_CALLED(ControlSite_TranslateAccelerator);
+
+                hr_site_TranslateAccelerator = S_OK;
+                SET_EXPECT(ControlSite_TranslateAccelerator);
+                hres = IOleControlSite_TranslateAccelerator(doc_controlsite, &msg_a, 0);
+                ok(hres == S_OK, "Got 0x%08x (keycode: %04x)\n", hres, keycode);
+                CHECK_CALLED(ControlSite_TranslateAccelerator);
+
+                hr_site_TranslateAccelerator = E_NOTIMPL;
+                SET_EXPECT(ControlSite_TranslateAccelerator);
+                hres = IOleControlSite_TranslateAccelerator(doc_controlsite, &msg_a, 0);
+                ok(hres == S_FALSE, "Got 0x%08x (keycode: %04x)\n", hres, keycode);
+                CHECK_CALLED(ControlSite_TranslateAccelerator);
+
+                IOleControlSite_Release(doc_controlsite);
+            }
+
             IOleClientSite_Release(doc_clientsite);
         }
         IOleObject_Release(obj_doc);
