@@ -55,6 +55,9 @@ static HRESULT WINAPI ClientSite_QueryInterface(IOleClientSite *iface, REFIID ri
     }else if(IsEqualGUID(&IID_IOleDocumentSite, riid)) {
         TRACE("(%p)->(IID_IOleDocumentSite %p)\n", This, ppv);
         *ppv = &This->IOleDocumentSite_iface;
+    }else if(IsEqualGUID(&IID_IOleControlSite, riid)) {
+        TRACE("(%p)->(IID_IOleControlSite %p)\n", This, ppv);
+        *ppv = &This->IOleControlSite_iface;
     }else if(IsEqualGUID(&IID_IOleCommandTarget, riid)) {
         TRACE("(%p)->(IID_IOleCommandTarget %p)\n", This, ppv);
         *ppv = &This->IOleCommandTarget_iface;
@@ -356,6 +359,93 @@ static const IOleDocumentSiteVtbl OleDocumentSiteVtbl = {
     OleDocumentSite_ActivateMe
 };
 
+static inline DocHost *impl_from_IOleControlSite(IOleControlSite *iface)
+{
+    return (DocHost*)((char*)iface - FIELD_OFFSET(DocHost, IOleControlSite_iface));
+}
+
+static HRESULT WINAPI ControlSite_QueryInterface(IOleControlSite *iface, REFIID riid, void **ppv)
+{
+    DocHost *This = impl_from_IOleControlSite(iface);
+    return IOleClientSite_QueryInterface(&This->IOleClientSite_iface, riid, ppv);
+}
+
+static ULONG WINAPI ControlSite_AddRef(IOleControlSite *iface)
+{
+    DocHost *This = impl_from_IOleControlSite(iface);
+    return IOleClientSite_AddRef(&This->IOleClientSite_iface);
+}
+
+static ULONG WINAPI ControlSite_Release(IOleControlSite *iface)
+{
+    DocHost *This = impl_from_IOleControlSite(iface);
+    return IOleClientSite_Release(&This->IOleClientSite_iface);
+}
+
+static HRESULT WINAPI ControlSite_OnControlInfoChanged(IOleControlSite *iface)
+{
+    DocHost *This = impl_from_IOleControlSite(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ControlSite_LockInPlaceActive(IOleControlSite *iface, BOOL fLock)
+{
+    DocHost *This = impl_from_IOleControlSite(iface);
+    FIXME("(%p)->(%d)\n", This, fLock);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ControlSite_GetExtendedControl(IOleControlSite *iface, IDispatch **ppDisp)
+{
+    DocHost *This = impl_from_IOleControlSite(iface);
+    FIXME("(%p)->(%p)\n", This, ppDisp);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ControlSite_TransformCoords(IOleControlSite *iface, POINTL *pPtlHimetric,
+                                                  POINTF *pPtfContainer, DWORD dwFlags)
+{
+    DocHost *This = impl_from_IOleControlSite(iface);
+    FIXME("(%p)->(%p, %p, %08x)\n", This, pPtlHimetric, pPtfContainer, dwFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ControlSite_TranslateAccelerator(IOleControlSite *iface, MSG *pMsg,
+                                                       DWORD grfModifiers)
+{
+    DocHost *This = impl_from_IOleControlSite(iface);
+    FIXME("(%p)->(%p, %08x)\n", This, pMsg, grfModifiers);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ControlSite_OnFocus(IOleControlSite *iface, BOOL fGotFocus)
+{
+    DocHost *This = impl_from_IOleControlSite(iface);
+    FIXME("(%p)->(%d)\n", This, fGotFocus);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ControlSite_ShowPropertyFrame(IOleControlSite *iface)
+{
+    DocHost *This = impl_from_IOleControlSite(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static IOleControlSiteVtbl OleControlSiteVtbl = {
+    ControlSite_QueryInterface,
+    ControlSite_AddRef,
+    ControlSite_Release,
+    ControlSite_OnControlInfoChanged,
+    ControlSite_LockInPlaceActive,
+    ControlSite_GetExtendedControl,
+    ControlSite_TransformCoords,
+    ControlSite_TranslateAccelerator,
+    ControlSite_OnFocus,
+    ControlSite_ShowPropertyFrame
+};
+
 static inline DocHost *impl_from_IDispatch(IDispatch *iface)
 {
     return (DocHost*)((char*)iface - FIELD_OFFSET(DocHost, IDispatch_iface));
@@ -521,6 +611,7 @@ void DocHost_ClientSite_Init(DocHost *This)
     This->IOleClientSite_iface.lpVtbl   = &OleClientSiteVtbl;
     This->IOleInPlaceSite_iface.lpVtbl  = &OleInPlaceSiteVtbl;
     This->IOleDocumentSite_iface.lpVtbl = &OleDocumentSiteVtbl;
+    This->IOleControlSite_iface.lpVtbl  = &OleControlSiteVtbl;
     This->IDispatch_iface.lpVtbl        = &DispatchVtbl;
     This->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
 }

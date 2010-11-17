@@ -97,6 +97,7 @@ struct DocHost {
     IOleInPlaceSite     IOleInPlaceSite_iface;
     IDocHostUIHandler2  IDocHostUIHandler2_iface;
     IOleDocumentSite    IOleDocumentSite_iface;
+    IOleControlSite     IOleControlSite_iface;
     IOleCommandTarget   IOleCommandTarget_iface;
     IDispatch           IDispatch_iface;
     IPropertyNotifySink IPropertyNotifySink_iface;
