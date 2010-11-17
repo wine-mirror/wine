@@ -186,3 +186,70 @@ void CDECL _chkesp(void)
 # endif  /* __GNUC__ */
 
 #endif  /* __i386__ */
+
+/*********************************************************************
+ * Helper function for MSVCRT_qsort_s.
+ *
+ * Based on NTDLL_qsort in dlls/ntdll/misc.c
+ */
+static void MSVCRT_mergesort( void *arr, void *barr, size_t elemsize,
+        int (CDECL *compar)(void *, const void *, const void *),
+        size_t left, size_t right, void *context )
+{
+    if (right>left) {
+        size_t i, j, k, m;
+        m=left+(right-left)/2;
+        MSVCRT_mergesort(arr, barr, elemsize, compar, left, m, context);
+        MSVCRT_mergesort(arr, barr, elemsize, compar, m+1, right, context);
+
+#define X(a,i) ((char*)a+elemsize*(i))
+        for (i=m+1; i>left; i--)
+            memcpy (X(barr,(i-1)),X(arr,(i-1)),elemsize);
+        for (j=m; j<right; j++)
+            memcpy (X(barr,(right+m-j)),X(arr,(j+1)),elemsize);
+
+        /* i=left; j=right; */
+        for (k=left; i<=m && j>m; k++) {
+            if (i==j || compar(context, X(barr,i),X(barr,j))<=0) {
+                memcpy(X(arr,k),X(barr,i),elemsize);
+                i++;
+            } else {
+                memcpy(X(arr,k),X(barr,j),elemsize);
+                j--;
+            }
+        }
+        for (; i<=m; i++, k++)
+            memcpy(X(arr,k),X(barr,i),elemsize);
+        for (; j>m; j--, k++)
+            memcpy(X(arr,k),X(barr,j),elemsize);
+    }
+#undef X
+}
+
+/*********************************************************************
+ * qsort_s (MSVCRT.@)
+ *
+ * Based on NTDLL_qsort in dlls/ntdll/misc.c
+ */
+void CDECL MSVCRT_qsort_s(void *base, MSVCRT_size_t nmemb, MSVCRT_size_t size,
+    int (CDECL *compar)(void *, const void *, const void *), void *context)
+{
+    void *secondarr;
+    const size_t total_size = nmemb*size;
+
+    if (!MSVCRT_CHECK_PMT(base != NULL || (base == NULL && nmemb == 0)) ||
+            !MSVCRT_CHECK_PMT(size > 0) || !MSVCRT_CHECK_PMT(compar != NULL) ||
+            total_size / size != nmemb)
+    {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return;
+    }
+
+    if (nmemb < 2) return;
+
+    secondarr = MSVCRT_malloc(total_size);
+    if (!secondarr)
+        return;
+    MSVCRT_mergesort(base, secondarr, size, compar, 0, nmemb-1, context);
+    MSVCRT_free(secondarr);
+}

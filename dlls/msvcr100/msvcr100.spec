@@ -1550,7 +1550,7 @@
 @ cdecl putwc(long ptr) msvcrt.putwc
 @ cdecl putwchar(long) msvcrt.putwchar
 @ cdecl qsort(ptr long long ptr) msvcrt.qsort
-@ stub qsort_s
+@ cdecl qsort_s(ptr long long ptr ptr) msvcrt.qsort_s
 @ cdecl raise(long) msvcrt.raise
 @ cdecl rand() msvcrt.rand
 @ cdecl rand_s(ptr) msvcrt.rand_s
