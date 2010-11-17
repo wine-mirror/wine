@@ -1237,7 +1237,7 @@ static void test_fopen_s( void )
     file = fopen(name, "r");
     ok(file != 0, "fopen failed\n");
     len = fread(buff, 1, sizeof(name), file);
-    ok(len == sizeof(name), "File length supposed to be %d, not %d\n", sizeof(name), len);
+    ok(len == sizeof(name), "File length is %d\n", len);
     buff[sizeof(name)] = '\0';
     ok(strcmp(name, buff) == 0, "File content mismatch! Got %s, expected %s\n", buff, name);
 
@@ -1278,7 +1278,7 @@ static void test__wfopen_s( void )
     file = fopen(name, "r");
     ok(file != 0, "fopen failed\n");
     len = fread(buff, 1, sizeof(name), file);
-    ok(len == sizeof(name), "File length supposed to be %d, not %d\n", sizeof(name), len);
+    ok(len == sizeof(name), "File length is %d\n", len);
     buff[sizeof(name)] = '\0';
     ok(strcmp(name, buff) == 0, "File content mismatch! Got %s, expected %s\n", buff, name);
 
