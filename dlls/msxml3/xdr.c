@@ -128,7 +128,7 @@ static inline xmlNodePtr get_schema(xmlNodePtr node)
     return xmlDocGetRootElement(node->doc);
 }
 
-static inline const xmlNodePtr get_child(xmlNodePtr node, xmlChar const* name)
+static inline xmlNodePtr get_child(xmlNodePtr node, xmlChar const* name)
 {
     xmlNodePtr child = NULL;
     if (node)
@@ -143,9 +143,9 @@ static inline const xmlNodePtr get_child(xmlNodePtr node, xmlChar const* name)
     return child;
 }
 
-static inline const xmlNodePtr get_child_with_attr(xmlNodePtr node, xmlChar const* name,
-                                                   xmlChar const* attr_ns, xmlChar const* attr_name,
-                                                   xmlChar const* attr_val)
+static inline xmlNodePtr get_child_with_attr(xmlNodePtr node, xmlChar const* name,
+                                             xmlChar const* attr_ns, xmlChar const* attr_name,
+                                             xmlChar const* attr_val)
 {
     xmlChar* str;
     if (node)
