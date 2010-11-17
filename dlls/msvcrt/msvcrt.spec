@@ -434,7 +434,6 @@
 # stub _free_dbg
 # stub _freea
 # stub _freea_s
-# stub _fscanf_l
 @ varargs _fscanf_l(ptr str ptr) MSVCRT__fscanf_l
 @ varargs _fscanf_s_l(ptr str ptr) MSVCRT__fscanf_s_l
 @ cdecl _fseeki64(ptr int64 long) MSVCRT__fseeki64

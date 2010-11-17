@@ -495,7 +495,7 @@
 @ cdecl _putch(long) msvcrt._putch
 @ cdecl _putenv(str) msvcrt._putenv
 @ cdecl _putw(long ptr) msvcrt._putw
-@ stub _putwch
+@ cdecl _putwch(long) msvcrt._putwch
 @ cdecl _putws(wstr) msvcrt._putws
 @ stub _pwctype
 @ cdecl _read(long ptr long) msvcrt._read
