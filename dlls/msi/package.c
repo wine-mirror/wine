@@ -1336,9 +1336,14 @@ static UINT msi_parse_summary( MSISUMMARYINFO *si, MSIPACKAGE *package )
         msi_free( template );
         return ERROR_INSTALL_PLATFORM_UNSUPPORTED;
     }
-
+    p++;
+    if (!*p)
+    {
+        msi_free( template );
+        return ERROR_SUCCESS;
+    }
     count = 1;
-    for (q = ++p; (q = strchrW( q, ',' )); q++) count++;
+    for (q = p; (q = strchrW( q, ',' )); q++) count++;
 
     package->langids = msi_alloc( count * sizeof(LANGID) );
     if (!package->langids)
