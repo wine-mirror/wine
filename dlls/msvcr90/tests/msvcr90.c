@@ -65,10 +65,12 @@ static __int64 (__cdecl *p_strtoi64)(const char *, char **, int);
 static unsigned __int64 (__cdecl *p_strtoui64)(const char *, char **, int);
 static errno_t (__cdecl *p_itoa_s)(int,char*,size_t,int);
 static int (__cdecl *p_wcsncat_s)(wchar_t *dst, size_t elem, const wchar_t *src, size_t count);
+static void (__cdecl *p_qsort_s)(void *, size_t, size_t, int (__cdecl *)(void *, const void *, const void *), void *);
 
 static void* (WINAPI *pEncodePointer)(void *);
 
 static int cb_called[4];
+static int g_qsort_s_context_counter;
 
 /* ########## */
 
@@ -442,6 +444,136 @@ static void test_wcsncat_s(void)
     CHECK_CALLED(invalid_parameter_handler);
 }
 
+/* Based on dlls/ntdll/tests/string.c */
+static __cdecl int intcomparefunc(void *context, const void *a, const void*b)
+{
+    ok (a != b, "must never get the same pointer\n");
+    ++*(int *) context;
+    return (*(int*)a) - (*(int*)b);
+}
+
+static __cdecl int charcomparefunc(void *context, const void *a, const void*b)
+{
+    ok (a != b, "must never get the same pointer\n");
+    ++*(int *) context;
+    return (*(char*)a) - (*(char*)b);
+}
+
+static __cdecl int strcomparefunc(void *context, const void *a, const void*b)
+{
+    ok (a != b, "must never get the same pointer\n");
+    ++*(int *) context;
+    return lstrcmpA(*(char**)a,*(char**)b);
+}
+
+static void test_qsort_s(void)
+{
+    int arr[5] = { 23, 42, 8, 4, 16 };
+    int arr2[5] = { 23, 42, 8, 4, 16 };
+    char carr[5] = { 42, 23, 4, 8, 16 };
+    const char *strarr[7] = {
+    "Hello",
+    "Wine",
+    "World",
+    "!",
+    "Hopefully",
+    "Sorted",
+    "."
+    };
+
+    if(!p_qsort_s) {
+        win_skip("qsort_s not found\n");
+        return;
+    }
+
+    SET_EXPECT(invalid_parameter_handler);
+    p_qsort_s(NULL, 0, 0, NULL, NULL);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    SET_EXPECT(invalid_parameter_handler);
+    p_qsort_s(NULL, 0, 0, intcomparefunc, NULL);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    SET_EXPECT(invalid_parameter_handler);
+    p_qsort_s(NULL, 0, sizeof(int), NULL, NULL);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    SET_EXPECT(invalid_parameter_handler);
+    p_qsort_s(NULL, 1, sizeof(int), intcomparefunc, NULL);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    g_qsort_s_context_counter = 0;
+    p_qsort_s(NULL, 0, sizeof(int), intcomparefunc, NULL);
+    ok(g_qsort_s_context_counter == 0, "callback shouldn't have been called\n");
+
+    /* overflow without side effects, other overflow values crash */
+    g_qsort_s_context_counter = 0;
+    p_qsort_s((void*)arr2, (1 << (8*sizeof(size_t) - 1)) + 1, sizeof(int), intcomparefunc, &g_qsort_s_context_counter);
+    ok(g_qsort_s_context_counter == 0, "callback shouldn't have been called\n");
+    ok(arr2[0] == 23, "should remain unsorted, arr2[0] is %d\n", arr2[0]);
+    ok(arr2[1] == 42, "should remain unsorted, arr2[1] is %d\n", arr2[1]);
+    ok(arr2[2] == 8,  "should remain unsorted, arr2[2] is %d\n", arr2[2]);
+    ok(arr2[3] == 4,  "should remain unsorted, arr2[3] is %d\n", arr2[3]);
+
+    g_qsort_s_context_counter = 0;
+    p_qsort_s((void*)arr, 0, sizeof(int), intcomparefunc, &g_qsort_s_context_counter);
+    ok(g_qsort_s_context_counter == 0, "callback shouldn't have been called\n");
+    ok(arr[0] == 23, "badly sorted, nmemb=0, arr[0] is %d\n", arr[0]);
+    ok(arr[1] == 42, "badly sorted, nmemb=0, arr[1] is %d\n", arr[1]);
+    ok(arr[2] == 8,  "badly sorted, nmemb=0, arr[2] is %d\n", arr[2]);
+    ok(arr[3] == 4,  "badly sorted, nmemb=0, arr[3] is %d\n", arr[3]);
+    ok(arr[4] == 16, "badly sorted, nmemb=0, arr[4] is %d\n", arr[4]);
+
+    g_qsort_s_context_counter = 0;
+    p_qsort_s((void*)arr, 1, sizeof(int), intcomparefunc, &g_qsort_s_context_counter);
+    ok(g_qsort_s_context_counter == 0, "callback shouldn't have been called\n");
+    ok(arr[0] == 23, "badly sorted, nmemb=1, arr[0] is %d\n", arr[0]);
+    ok(arr[1] == 42, "badly sorted, nmemb=1, arr[1] is %d\n", arr[1]);
+    ok(arr[2] == 8,  "badly sorted, nmemb=1, arr[2] is %d\n", arr[2]);
+    ok(arr[3] == 4,  "badly sorted, nmemb=1, arr[3] is %d\n", arr[3]);
+    ok(arr[4] == 16, "badly sorted, nmemb=1, arr[4] is %d\n", arr[4]);
+
+    SET_EXPECT(invalid_parameter_handler);
+    g_qsort_s_context_counter = 0;
+    p_qsort_s((void*)arr, 5, 0, intcomparefunc, &g_qsort_s_context_counter);
+    ok(g_qsort_s_context_counter == 0, "callback shouldn't have been called\n");
+    ok(arr[0] == 23, "badly sorted, size=0, arr[0] is %d\n", arr[0]);
+    ok(arr[1] == 42, "badly sorted, size=0, arr[1] is %d\n", arr[1]);
+    ok(arr[2] == 8,  "badly sorted, size=0, arr[2] is %d\n", arr[2]);
+    ok(arr[3] == 4,  "badly sorted, size=0, arr[3] is %d\n", arr[3]);
+    ok(arr[4] == 16, "badly sorted, size=0, arr[4] is %d\n", arr[4]);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    g_qsort_s_context_counter = 0;
+    p_qsort_s((void*)arr, 5, sizeof(int), intcomparefunc, &g_qsort_s_context_counter);
+    ok(g_qsort_s_context_counter > 0, "callback wasn't called\n");
+    ok(arr[0] == 4,  "badly sorted, arr[0] is %d\n", arr[0]);
+    ok(arr[1] == 8,  "badly sorted, arr[1] is %d\n", arr[1]);
+    ok(arr[2] == 16, "badly sorted, arr[2] is %d\n", arr[2]);
+    ok(arr[3] == 23, "badly sorted, arr[3] is %d\n", arr[3]);
+    ok(arr[4] == 42, "badly sorted, arr[4] is %d\n", arr[4]);
+
+    g_qsort_s_context_counter = 0;
+    p_qsort_s((void*)carr, 5, sizeof(char), charcomparefunc, &g_qsort_s_context_counter);
+    ok(g_qsort_s_context_counter > 0, "callback wasn't called\n");
+    ok(carr[0] == 4,  "badly sorted, carr[0] is %d\n", carr[0]);
+    ok(carr[1] == 8,  "badly sorted, carr[1] is %d\n", carr[1]);
+    ok(carr[2] == 16, "badly sorted, carr[2] is %d\n", carr[2]);
+    ok(carr[3] == 23, "badly sorted, carr[3] is %d\n", carr[3]);
+    ok(carr[4] == 42, "badly sorted, carr[4] is %d\n", carr[4]);
+
+    g_qsort_s_context_counter = 0;
+    p_qsort_s((void*)strarr, 7, sizeof(char*), strcomparefunc, &g_qsort_s_context_counter);
+    ok(g_qsort_s_context_counter > 0, "callback wasn't called\n");
+    ok(!strcmp(strarr[0],"!"),  "badly sorted, strarr[0] is %s\n", strarr[0]);
+    ok(!strcmp(strarr[1],"."),  "badly sorted, strarr[1] is %s\n", strarr[1]);
+    ok(!strcmp(strarr[2],"Hello"),  "badly sorted, strarr[2] is %s\n", strarr[2]);
+    ok(!strcmp(strarr[3],"Hopefully"),  "badly sorted, strarr[3] is %s\n", strarr[3]);
+    ok(!strcmp(strarr[4],"Sorted"),  "badly sorted, strarr[4] is %s\n", strarr[4]);
+    ok(!strcmp(strarr[5],"Wine"),  "badly sorted, strarr[5] is %s\n", strarr[5]);
+    ok(!strcmp(strarr[6],"World"),  "badly sorted, strarr[6] is %s\n", strarr[6]);
+}
+
 /* ########## */
 
 START_TEST(msvcr90)
@@ -473,6 +605,7 @@ START_TEST(msvcr90)
     p_strtoui64 = (void *) GetProcAddress(hcrt, "_strtoui64");
     p_itoa_s = (void *)GetProcAddress(hcrt, "_itoa_s");
     p_wcsncat_s = (void *)GetProcAddress( hcrt,"wcsncat_s" );
+    p_qsort_s = (void *) GetProcAddress(hcrt, "qsort_s");
 
     hkernel32 = GetModuleHandleA("kernel32.dll");
     pEncodePointer = (void *) GetProcAddress(hkernel32, "EncodePointer");
@@ -483,4 +616,5 @@ START_TEST(msvcr90)
     test__strtoi64();
     test__itoa_s();
     test_wcsncat_s();
+    test_qsort_s();
 }
