@@ -35,12 +35,10 @@ function test_createDocumentFragment() {
     var fragment = document.createDocumentFragment();
 
     ok(typeof(fragment) === "object", "typeof(fragmend) = " + typeof(fragment));
-    ok(fragment.parentWindow === window, "fragment.parentWindow != window");
     ok(fragment.nodeType === 11, "fragment.nodeType = " + fragment.nodeType);
     ok(fragment.nodeName === "#document-fragment", "fragment.nodeName = " + fragment.nodeName);
 
     var cloned = fragment.cloneNode(true);
-    ok(cloned.parentWindow === window, "cloned.parentWindow != window");
     ok(cloned.nodeType === 11, "cloned.nodeType = " + cloned.nodeType);
     ok(cloned.nodeName === "#document-fragment", "cloned.nodeName = " + cloned.nodeName);
 }
