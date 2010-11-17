@@ -474,6 +474,7 @@ SRCDIR_INCLUDES = \
 	sspi.h \
 	sti.h \
 	storage.h \
+	strsafe.h \
 	svrapi.h \
 	t2embapi.h \
 	tapi.h \
