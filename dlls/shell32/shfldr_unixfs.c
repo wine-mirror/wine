@@ -390,15 +390,23 @@ static BOOL UNIXFS_get_unix_path(LPCWSTR pszDosPath, char *pszCanonicalPath)
     /* Append the part relative to the drive symbolic link target. */
     lstrcpyW(dospath, pszDosPath);
     dospath_end = dospath + lstrlenW(dospath);
+    /* search for the most valid UNIX path possible, then append missing
+     * path parts */
     while(!(pszUnixPath = wine_get_unix_file_name(dospath))){
-        if(has_failed)
+        if(has_failed){
             *dospath_end = '/';
-        else
-            has_failed = 1;
-        while(*dospath_end != '\\' && *dospath_end != '/')
             --dospath_end;
+        }else
+            has_failed = 1;
+        while(*dospath_end != '\\' && *dospath_end != '/'){
+            --dospath_end;
+            if(dospath_end < dospath)
+                break;
+        }
         *dospath_end = '\0';
     }
+    if(dospath_end < dospath)
+        return FALSE;
     strcat(szPath, pszUnixPath + cDriveSymlinkLen);
     HeapFree(GetProcessHeap(), 0, pszUnixPath);
 

@@ -4062,6 +4062,7 @@ static void test_ParseDisplayNamePBC(void)
         {'F','i','l','e',' ','S','y','s','t','e','m',' ','B','i','n','d',' ','D','a','t','a',0};
     WCHAR adirW[] = {'C',':','\\','f','s','b','d','d','i','r',0};
     WCHAR afileW[] = {'C',':','\\','f','s','b','d','d','i','r','\\','f','i','l','e','.','t','x','t',0};
+    WCHAR afile2W[] = {'C',':','\\','f','s','b','d','d','i','r','\\','s','\\','f','i','l','e','.','t','x','t',0};
     const HRESULT exp_err = HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
 
     IShellFolder *psf;
@@ -4091,6 +4092,9 @@ static void test_ParseDisplayNamePBC(void)
     hres = IShellFolder_ParseDisplayName(psf, NULL, NULL, afileW, NULL, &pidl, NULL);
     ok(hres == exp_err || broken(hres == E_FAIL) /* NT4 */,
             "ParseDisplayName failed with wrong error: 0x%08x\n", hres);
+    hres = IShellFolder_ParseDisplayName(psf, NULL, NULL, afile2W, NULL, &pidl, NULL);
+    ok(hres == exp_err || broken(hres == E_FAIL) /* NT4 */,
+            "ParseDisplayName failed with wrong error: 0x%08x\n", hres);
 
     /* fails on unknown dir with IBindCtx with no IFileSystemBindData */
     hres = CreateBindCtx(0, &pbc);
@@ -4100,6 +4104,9 @@ static void test_ParseDisplayNamePBC(void)
     ok(hres == exp_err || broken(hres == E_FAIL) /* NT4 */,
             "ParseDisplayName failed with wrong error: 0x%08x\n", hres);
     hres = IShellFolder_ParseDisplayName(psf, NULL, pbc, afileW, NULL, &pidl, NULL);
+    ok(hres == exp_err || broken(hres == E_FAIL) /* NT4 */,
+            "ParseDisplayName failed with wrong error: 0x%08x\n", hres);
+    hres = IShellFolder_ParseDisplayName(psf, NULL, pbc, afile2W, NULL, &pidl, NULL);
     ok(hres == exp_err || broken(hres == E_FAIL) /* NT4 */,
             "ParseDisplayName failed with wrong error: 0x%08x\n", hres);
 
@@ -4126,6 +4133,14 @@ static void test_ParseDisplayNamePBC(void)
         ILFree(pidl);
     }
 
+    hres = IShellFolder_ParseDisplayName(psf, NULL, pbc, afile2W, NULL, &pidl, NULL);
+    ok(hres == S_OK || broken(hres == E_FAIL) /* NT4 */,
+            "ParseDisplayName failed: 0x%08x\n", hres);
+    if(SUCCEEDED(hres)){
+        verify_pidl(pidl, afile2W);
+        ILFree(pidl);
+    }
+
     /* set FIND_DATA struct to NULLs */
     pidl = (ITEMIDLIST*)0xdeadbeef;
     fsbdVtbl.GetFindData = fsbd_GetFindData_nul;
@@ -4142,6 +4157,14 @@ static void test_ParseDisplayNamePBC(void)
             "ParseDisplayName failed: 0x%08x\n", hres);
     if(SUCCEEDED(hres)){
         verify_pidl(pidl, afileW);
+        ILFree(pidl);
+    }
+
+    hres = IShellFolder_ParseDisplayName(psf, NULL, pbc, afile2W, NULL, &pidl, NULL);
+    ok(hres == S_OK || broken(hres == E_FAIL) /* NT4 */,
+            "ParseDisplayName failed: 0x%08x\n", hres);
+    if(SUCCEEDED(hres)){
+        verify_pidl(pidl, afile2W);
         ILFree(pidl);
     }
 
@@ -4164,6 +4187,14 @@ static void test_ParseDisplayNamePBC(void)
         ILFree(pidl);
     }
 
+    hres = IShellFolder_ParseDisplayName(psf, NULL, pbc, afile2W, NULL, &pidl, NULL);
+    ok(hres == S_OK || broken(hres == E_FAIL) /* NT4 */,
+            "ParseDisplayName failed: 0x%08x\n", hres);
+    if(SUCCEEDED(hres)){
+        verify_pidl(pidl, afile2W);
+        ILFree(pidl);
+    }
+
     /* set FIND_DATA struct to invalid data */
     pidl = (ITEMIDLIST*)0xdeadbeef;
     fsbdVtbl.GetFindData = fsbd_GetFindData_invalid;
@@ -4183,6 +4214,14 @@ static void test_ParseDisplayNamePBC(void)
         ILFree(pidl);
     }
 
+    hres = IShellFolder_ParseDisplayName(psf, NULL, pbc, afile2W, NULL, &pidl, NULL);
+    ok(hres == S_OK || broken(hres == E_FAIL) /* NT4 */,
+            "ParseDisplayName failed: 0x%08x\n", hres);
+    if(SUCCEEDED(hres)){
+        verify_pidl(pidl, afile2W);
+        ILFree(pidl);
+    }
+
     /* set FIND_DATA struct to valid data */
     pidl = (ITEMIDLIST*)0xdeadbeef;
     fsbdVtbl.GetFindData = fsbd_GetFindData_valid;
@@ -4199,6 +4238,14 @@ static void test_ParseDisplayNamePBC(void)
             "ParseDisplayName failed: 0x%08x\n", hres);
     if(SUCCEEDED(hres)){
         verify_pidl(pidl, afileW);
+        ILFree(pidl);
+    }
+
+    hres = IShellFolder_ParseDisplayName(psf, NULL, pbc, afile2W, NULL, &pidl, NULL);
+    ok(hres == S_OK || broken(hres == E_FAIL) /* NT4 */,
+            "ParseDisplayName failed: 0x%08x\n", hres);
+    if(SUCCEEDED(hres)){
+        verify_pidl(pidl, afile2W);
         ILFree(pidl);
     }
 
