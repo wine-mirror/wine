@@ -620,8 +620,13 @@ static HRESULT WINAPI DocHostUIHandler_TranslateAccelerator(IDocHostUIHandler2 *
         LPMSG lpMsg, const GUID *pguidCmdGroup, DWORD nCmdID)
 {
     DocHost *This = impl_from_IDocHostUIHandler2(iface);
-    FIXME("(%p)->(%p %p %d)\n", This, lpMsg, pguidCmdGroup, nCmdID);
-    return E_NOTIMPL;
+    HRESULT hr = S_FALSE;
+    TRACE("(%p)->(%p %p %d)\n", This, lpMsg, pguidCmdGroup, nCmdID);
+
+    if(This->hostui)
+        hr = IDocHostUIHandler_TranslateAccelerator(This->hostui, lpMsg, pguidCmdGroup, nCmdID);
+
+    return hr;
 }
 
 static HRESULT WINAPI DocHostUIHandler_GetOptionKeyPath(IDocHostUIHandler2 *iface,

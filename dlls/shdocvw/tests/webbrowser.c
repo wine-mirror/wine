@@ -124,8 +124,12 @@ DEFINE_EXPECT(QueryStatus_SETPROGRESSTEXT);
 DEFINE_EXPECT(QueryStatus_STOP);
 DEFINE_EXPECT(DocHost_EnableModeless_TRUE);
 DEFINE_EXPECT(DocHost_EnableModeless_FALSE);
+DEFINE_EXPECT(DocHost_TranslateAccelerator);
 DEFINE_EXPECT(GetDropTarget);
 DEFINE_EXPECT(TranslateUrl);
+DEFINE_EXPECT(ShowUI);
+DEFINE_EXPECT(HideUI);
+DEFINE_EXPECT(RequestUIActivate);
 
 static const WCHAR wszItem[] = {'i','t','e','m',0};
 static const WCHAR emptyW[] = {0};
@@ -135,6 +139,7 @@ static IWebBrowser2 *wb;
 
 static HWND container_hwnd, shell_embedding_hwnd;
 static BOOL is_downloading, is_first_load;
+static HRESULT hr_dochost_TranslateAccelerator = E_NOTIMPL;
 static const char *current_url;
 
 #define DWL_EXPECT_BEFORE_NAVIGATE  0x01
@@ -1140,7 +1145,7 @@ static HRESULT WINAPI InPlaceSite_OnInPlaceDeactivateEx(IOleInPlaceSiteEx *iface
 
 static HRESULT WINAPI InPlaceSite_RequestUIActivate(IOleInPlaceSiteEx *iface)
 {
-    ok(0, "unexpected call\n");
+    CHECK_EXPECT2(RequestUIActivate);
     return S_OK;
 }
 
@@ -1207,13 +1212,13 @@ static HRESULT WINAPI DocHostUIHandler_ShowUI(IDocHostUIHandler2 *iface, DWORD d
         IOleInPlaceActiveObject *pActiveObject, IOleCommandTarget *pCommandTarget,
         IOleInPlaceFrame *pFrame, IOleInPlaceUIWindow *pDoc)
 {
-    ok(0, "unexpected call\n");
+    CHECK_EXPECT(ShowUI);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI DocHostUIHandler_HideUI(IDocHostUIHandler2 *iface)
 {
-    ok(0, "unexpected call\n");
+    CHECK_EXPECT(HideUI);
     return E_NOTIMPL;
 }
 
@@ -1255,8 +1260,12 @@ static HRESULT WINAPI DocHostUIHandler_ResizeBorder(IDocHostUIHandler2 *iface, L
 static HRESULT WINAPI DocHostUIHandler_TranslateAccelerator(IDocHostUIHandler2 *iface, LPMSG lpMsg,
         const GUID *pguidCmdGroup, DWORD nCmdID)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(DocHost_TranslateAccelerator);
+    ok(pguidCmdGroup != NULL, "Got NULL pguidCmdGroup.\n");
+    if(pguidCmdGroup)
+        ok(IsEqualGUID(pguidCmdGroup, &CGID_MSHTML), "Unexpected pguidCmdGroup\n");
+    ok(lpMsg != NULL, "Got NULL lpMsg.\n");
+    return hr_dochost_TranslateAccelerator;
 }
 
 static HRESULT WINAPI DocHostUIHandler_GetOptionKeyPath(IDocHostUIHandler2 *iface,
@@ -2505,6 +2514,75 @@ static void test_QueryInterface(IUnknown *unk)
 
 }
 
+static void test_TranslateAccelerator(IUnknown *unk)
+{
+    IOleObject *obj_doc;
+    IDispatch *disp_doc;
+    HRESULT hres;
+    DWORD keycode;
+    MSG msg_a = {
+        container_hwnd,
+        0, 0, 0,
+        GetTickCount(),
+        {5, 5}
+    };
+
+    test_Navigate2(unk);
+
+    disp_doc = get_document(unk);
+    hres = IDispatch_QueryInterface(disp_doc, &IID_IOleObject, (void**)&obj_doc);
+    ok(hres == S_OK, "Got 0x%08x\n", hres);
+    if(SUCCEEDED(hres)) {
+        IOleClientSite *doc_clientsite;
+
+        hres = IOleObject_GetClientSite(obj_doc, &doc_clientsite);
+        ok(hres == S_OK, "Got 0x%08x\n", hres);
+        if(SUCCEEDED(hres)) {
+            IDocHostUIHandler2 *dochost;
+            IUnknown *unk_test;
+
+            hres = IOleClientSite_QueryInterface(doc_clientsite, &IID_IOleInPlaceFrame, (void**)&unk_test);
+            ok(hres == E_NOINTERFACE, "Got 0x%08x\n", hres);
+            if(SUCCEEDED(hres)) IUnknown_Release(unk_test);
+
+            hres = IOleClientSite_QueryInterface(doc_clientsite, &IID_IDocHostShowUI, (void**)&unk_test);
+            todo_wine ok(hres == S_OK, "Got 0x%08x\n", hres);
+            if(SUCCEEDED(hres)) IUnknown_Release(unk_test);
+
+            hres = IOleClientSite_QueryInterface(doc_clientsite, &IID_IDocHostUIHandler, (void**)&unk_test);
+            ok(hres == S_OK, "Got 0x%08x\n", hres);
+            if(SUCCEEDED(hres)) IUnknown_Release(unk_test);
+
+            hres = IOleClientSite_QueryInterface(doc_clientsite, &IID_IDocHostUIHandler2, (void**)&dochost);
+            ok(hres == S_OK, "Got 0x%08x\n", hres);
+            if(SUCCEEDED(hres)) {
+
+                msg_a.message = WM_KEYDOWN;
+                hr_dochost_TranslateAccelerator = 0xdeadbeef;
+                for(keycode = 0; keycode <= 0x100; keycode++) {
+                    msg_a.wParam = keycode;
+                    SET_EXPECT(DocHost_TranslateAccelerator);
+                    hres = IDocHostUIHandler_TranslateAccelerator(dochost, &msg_a, &CGID_MSHTML, 1234);
+                    ok(hres == 0xdeadbeef, "Got 0x%08x\n", hres);
+                    CHECK_CALLED(DocHost_TranslateAccelerator);
+                }
+                hr_dochost_TranslateAccelerator = E_NOTIMPL;
+
+                SET_EXPECT(DocHost_TranslateAccelerator);
+                hres = IDocHostUIHandler_TranslateAccelerator(dochost, &msg_a, &CGID_MSHTML, 1234);
+                ok(hres == E_NOTIMPL, "Got 0x%08x\n", hres);
+                CHECK_CALLED(DocHost_TranslateAccelerator);
+
+                IDocHostUIHandler2_Release(dochost);
+            }
+            IOleClientSite_Release(doc_clientsite);
+        }
+        IOleObject_Release(obj_doc);
+    }
+
+    IDispatch_Release(disp_doc);
+}
+
 static void test_WebBrowser(BOOL do_download)
 {
     IUnknown *unk = NULL;
@@ -2559,6 +2637,7 @@ static void test_WebBrowser(BOOL do_download)
 
         test_Navigate2(unk);
         test_download(DWL_EXPECT_BEFORE_NAVIGATE);
+        test_TranslateAccelerator(unk);
         doc2 = get_document(unk);
         ok(doc == doc2, "doc != doc2\n");
         IDispatch_Release(doc2);
