@@ -830,8 +830,24 @@ static HRESULT WINAPI InPlaceActiveObject_TranslateAccelerator(IOleInPlaceActive
                                                                LPMSG lpmsg)
 {
     WebBrowser *This = impl_from_IOleInPlaceActiveObject(iface);
-    FIXME("(%p)->(%p)\n", This, lpmsg);
-    return E_NOTIMPL;
+    IOleInPlaceActiveObject *activeobj;
+    HRESULT hr = S_FALSE;
+
+    TRACE("(%p)->(%p)\n", This, lpmsg);
+
+    if(This->doc_host.document) {
+        if(SUCCEEDED(IUnknown_QueryInterface(This->doc_host.document,
+                                             &IID_IOleInPlaceActiveObject,
+                                             (void**)&activeobj))) {
+            hr = IOleInPlaceActiveObject_TranslateAccelerator(activeobj, lpmsg);
+            IOleInPlaceActiveObject_Release(activeobj);
+        }
+    }
+
+    if(SUCCEEDED(hr))
+        return hr;
+    else
+        return S_FALSE;
 }
 
 static HRESULT WINAPI InPlaceActiveObject_OnFrameWindowActivate(IOleInPlaceActiveObject *iface,

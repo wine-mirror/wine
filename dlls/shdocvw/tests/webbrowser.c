@@ -337,6 +337,13 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         default:
             ok(0, "unexpected nCmdID %d of CGID_DocHostCmdPriv\n", nCmdID);
         }
+    }else if(IsEqualGUID(&CGID_DocHostCommandHandler, pguidCmdGroup)) {
+        switch(nCmdID) {
+        case 6041: /* TODO */
+            break;
+        default:
+            ok(0, "unexpected nCmdID %d of CGID_DocHostCommandHandler\n", nCmdID);
+        }
     }else {
         ok(0, "unexpected pguidCmdGroup %s\n", debugstr_guid(pguidCmdGroup));
     }
@@ -2598,8 +2605,48 @@ static void test_QueryInterface(IUnknown *unk)
 
 }
 
+static void test_UIActivate(IUnknown *unk, BOOL activate)
+{
+    IOleDocumentView *docview;
+    IDispatch *disp;
+    HRESULT hres;
+
+    disp = get_document(unk);
+
+    hres = IDispatch_QueryInterface(disp, &IID_IOleDocumentView, (void**)&docview);
+    ok(hres == S_OK, "Got 0x%08x\n", hres);
+    if(SUCCEEDED(hres)) {
+        if(activate) {
+            SET_EXPECT(RequestUIActivate);
+            SET_EXPECT(ShowUI);
+            SET_EXPECT(HideUI);
+            SET_EXPECT(OnFocus);
+        }
+
+        hres = IOleDocumentView_UIActivate(docview, activate);
+        if(activate)
+            todo_wine ok(hres == S_OK, "Got 0x%08x\n", hres);
+        else
+            ok(hres == S_OK, "Got 0x%08x\n", hres);
+
+        if(activate) {
+            todo_wine {
+                CHECK_CALLED(RequestUIActivate);
+                CHECK_CALLED(ShowUI);
+                CHECK_CALLED(HideUI);
+                CHECK_CALLED(OnFocus);
+            }
+        }
+
+        IOleDocumentView_Release(docview);
+    }
+
+    IDispatch_Release(disp);
+}
+
 static void test_TranslateAccelerator(IUnknown *unk)
 {
+    IOleInPlaceActiveObject *pao;
     IOleObject *obj_doc;
     IDispatch *disp_doc;
     HRESULT hres;
@@ -2612,6 +2659,51 @@ static void test_TranslateAccelerator(IUnknown *unk)
     };
 
     test_Navigate2(unk);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleInPlaceActiveObject, (void**)&pao);
+    ok(hres == S_OK, "Got 0x%08x\n", hres);
+    if(SUCCEEDED(hres)) {
+        /* One accelerator that should be handled by mshtml */
+        msg_a.message = WM_KEYDOWN;
+        msg_a.wParam = VK_F1;
+        hres = IOleInPlaceActiveObject_TranslateAccelerator(pao, &msg_a);
+        ok(hres == S_FALSE, "Got 0x%08x (%04x::%02lx)\n", hres, msg_a.message, msg_a.wParam);
+
+        /* And one that should not */
+        msg_a.message = WM_KEYDOWN;
+        msg_a.wParam = VK_F5;
+        hres = IOleInPlaceActiveObject_TranslateAccelerator(pao, &msg_a);
+        ok(hres == S_FALSE, "Got 0x%08x (%04x::%02lx)\n", hres, msg_a.message, msg_a.wParam);
+
+        IOleInPlaceActiveObject_Release(pao);
+    }
+
+    test_UIActivate(unk, TRUE);
+
+    /* Test again after UIActivate */
+    hres = IUnknown_QueryInterface(unk, &IID_IOleInPlaceActiveObject, (void**)&pao);
+    ok(hres == S_OK, "Got 0x%08x\n", hres);
+    if(SUCCEEDED(hres)) {
+        /* One accelerator that should be handled by mshtml */
+        msg_a.message = WM_KEYDOWN;
+        msg_a.wParam = VK_F1;
+        SET_EXPECT(DocHost_TranslateAccelerator);
+        SET_EXPECT(ControlSite_TranslateAccelerator);
+        hres = IOleInPlaceActiveObject_TranslateAccelerator(pao, &msg_a);
+        ok(hres == S_FALSE, "Got 0x%08x (%04x::%02lx)\n", hres, msg_a.message, msg_a.wParam);
+        todo_wine CHECK_CALLED(DocHost_TranslateAccelerator);
+        todo_wine CHECK_CALLED(ControlSite_TranslateAccelerator);
+
+        /* And one that should not */
+        msg_a.message = WM_KEYDOWN;
+        msg_a.wParam = VK_F5;
+        SET_EXPECT(DocHost_TranslateAccelerator);
+        hres = IOleInPlaceActiveObject_TranslateAccelerator(pao, &msg_a);
+        todo_wine ok(hres == S_OK, "Got 0x%08x (%04x::%02lx)\n", hres, msg_a.message, msg_a.wParam);
+        todo_wine CHECK_CALLED(DocHost_TranslateAccelerator);
+
+        IOleInPlaceActiveObject_Release(pao);
+    }
 
     disp_doc = get_document(unk);
     hres = IDispatch_QueryInterface(disp_doc, &IID_IOleObject, (void**)&obj_doc);
@@ -2704,6 +2796,8 @@ static void test_TranslateAccelerator(IUnknown *unk)
     }
 
     IDispatch_Release(disp_doc);
+
+    test_UIActivate(unk, FALSE);
 }
 
 static void test_WebBrowser(BOOL do_download)
