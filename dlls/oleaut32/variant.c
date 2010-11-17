@@ -2186,7 +2186,7 @@ HRESULT WINAPI VarNumFromParseNum(NUMPARSE *pNumprs, BYTE *rgbDig,
     /* Convert the integer part of the number into a UI8 */
     for (i = 0; i < wholeNumberDigits; i++)
     {
-      if (ul64 > (UI8_MAX / 10 - rgbDig[i]))
+      if (ul64 > UI8_MAX / 10 || (ul64 == UI8_MAX / 10 && rgbDig[i] > UI8_MAX % 10))
       {
         TRACE("Overflow multiplying digits\n");
         bOverflow = TRUE;
