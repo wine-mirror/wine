@@ -61,29 +61,35 @@ void wineXmlCallbackLog(char const* caller, xmlErrorLevel lvl, char const* msg, 
             break;
     }
 
-    if (ap)
+    do
     {
-        do
-        {
-            heap_free(buf);
-            buf = heap_alloc(len);
-            needed = vsnprintf(buf, len, msg, ap);
-            if (needed == -1)
-                len *= 2;
-            else if (needed >= len)
-                len = needed + 1;
-            else
-                needed = 0;
-        }
-        while (needed);
-
-        wine_dbg_log(dbcl, &__wine_dbch_msxml, caller, buf);
         heap_free(buf);
+        buf = heap_alloc(len);
+        needed = vsnprintf(buf, len, msg, ap);
+        if (needed == -1)
+            len *= 2;
+        else if (needed >= len)
+            len = needed + 1;
+        else
+            needed = 0;
     }
-    else
+    while (needed);
+
+    wine_dbg_log(dbcl, &__wine_dbch_msxml, caller, "%s", buf);
+    heap_free(buf);
+}
+
+void wineXmlCallbackError(char const* caller, xmlErrorPtr err)
+{
+    enum __wine_debug_class dbcl;
+
+    switch (err->level)
     {
-        wine_dbg_log(dbcl, &__wine_dbch_msxml, caller, msg);
+    case XML_ERR_NONE:    dbcl = __WINE_DBCL_TRACE; break;
+    case XML_ERR_WARNING: dbcl = __WINE_DBCL_WARN; break;
+    default:              dbcl = __WINE_DBCL_ERR; break;
     }
+    wine_dbg_log(dbcl, &__wine_dbch_msxml, caller, "%s", err->message);
 }
 
 /* Support for loading xml files from a Wine Windows drive */

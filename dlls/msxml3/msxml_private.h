@@ -209,6 +209,7 @@ extern xmlNodePtr xmldoc_unlink_xmldecl(xmlDocPtr doc);
 extern HRESULT XMLElement_create( IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj, BOOL own );
 
 extern void wineXmlCallbackLog(char const* caller, xmlErrorLevel lvl, char const* msg, va_list ap);
+extern void wineXmlCallbackError(char const* caller, xmlErrorPtr err);
 
 #define LIBXML2_LOG_CALLBACK __WINE_PRINTF_ATTR(2,3)
 
@@ -221,8 +222,7 @@ extern void wineXmlCallbackLog(char const* caller, xmlErrorLevel lvl, char const
 #define LIBXML2_CALLBACK_ERR(caller, msg, ap) \
         wineXmlCallbackLog(#caller, XML_ERR_ERROR, msg, ap)
 
-#define LIBXML2_CALLBACK_SERROR(caller, err) \
-        wineXmlCallbackLog(#caller, err->level, err->message, NULL)
+#define LIBXML2_CALLBACK_SERROR(caller, err) wineXmlCallbackError(#caller, err)
 
 extern BOOL is_preserving_whitespace(xmlNodePtr node);
 
