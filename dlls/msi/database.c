@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #define COBJMACROS
 #define NONAMELESSUNION
@@ -888,6 +889,8 @@ static UINT MSI_DatabaseImport(MSIDATABASE *db, LPCWSTR folder, LPCWSTR file)
 
     static const WCHAR suminfo[] =
         {'_','S','u','m','m','a','r','y','I','n','f','o','r','m','a','t','i','o','n',0};
+    static const WCHAR forcecodepage[] =
+        {'_','F','o','r','c','e','C','o','d','e','p','a','g','e',0};
 
     TRACE("%p %s %s\n", db, debugstr_w(folder), debugstr_w(file) );
 
@@ -909,6 +912,13 @@ static UINT MSI_DatabaseImport(MSIDATABASE *db, LPCWSTR folder, LPCWSTR file)
     msi_parse_line( &ptr, &columns, &num_columns );
     msi_parse_line( &ptr, &types, &num_types );
     msi_parse_line( &ptr, &labels, &num_labels );
+
+    if (num_columns == 1 && !columns[0][0] && num_labels == 1 && !labels[0][0] &&
+        num_types == 2 && !strcmpW( types[1], forcecodepage ))
+    {
+        r = msi_set_string_table_codepage( db->strings, atoiW( types[0] ) );
+        goto done;
+    }
 
     if (num_columns != num_types)
     {
@@ -1087,13 +1097,13 @@ static UINT msi_export_row( MSIRECORD *row, void *arg )
     return msi_export_record( arg, row, 1 );
 }
 
-static UINT msi_export_forcecodepage( HANDLE handle )
+static UINT msi_export_forcecodepage( HANDLE handle, UINT codepage )
 {
+    static const char fmt[] = "\r\n\r\n%u\t_ForceCodepage\r\n";
+    char data[sizeof(fmt) + 10];
     DWORD sz;
 
-    static const char data[] = "\r\n\r\n0\t_ForceCodepage\r\n";
-
-    FIXME("Read the codepage from the strings table!\n");
+    sprintf( data, fmt, codepage );
 
     sz = lstrlenA(data) + 1;
     if (!WriteFile(handle, data, sz, &sz, NULL))
@@ -1138,7 +1148,8 @@ static UINT MSI_DatabaseExport( MSIDATABASE *db, LPCWSTR table,
 
     if (!strcmpW( table, forcecodepage ))
     {
-        r = msi_export_forcecodepage( handle );
+        UINT codepage = msi_get_string_table_codepage( db->strings );
+        r = msi_export_forcecodepage( handle, codepage );
         goto done;
     }
 

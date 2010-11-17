@@ -58,15 +58,22 @@ struct string_table
     UINT *sorted;       /* index */
 };
 
+static BOOL validate_codepage( UINT codepage )
+{
+    if (codepage != CP_ACP && !IsValidCodePage( codepage ))
+    {
+        WARN("invalid codepage %u\n", codepage);
+        return FALSE;
+    }
+    return TRUE;
+}
+
 static string_table *init_stringtable( int entries, UINT codepage )
 {
     string_table *st;
 
-    if (codepage != CP_ACP && !IsValidCodePage(codepage))
-    {
-        ERR("invalid codepage %d\n", codepage);
+    if (!validate_codepage( codepage ))
         return NULL;
-    }
 
     st = msi_alloc( sizeof (string_table) );
     if( !st )
@@ -670,4 +677,19 @@ err:
     msi_free( pool );
 
     return ret;
+}
+
+UINT msi_get_string_table_codepage( const string_table *st )
+{
+    return st->codepage;
+}
+
+UINT msi_set_string_table_codepage( string_table *st, UINT codepage )
+{
+    if (validate_codepage( codepage ))
+    {
+        st->codepage = codepage;
+        return ERROR_SUCCESS;
+    }
+    return ERROR_FUNCTION_FAILED;
 }

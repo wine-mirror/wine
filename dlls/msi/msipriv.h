@@ -704,6 +704,8 @@ extern const WCHAR *msi_string_lookup_id( const string_table *st, UINT id );
 extern HRESULT msi_init_string_table( IStorage *stg );
 extern string_table *msi_load_string_table( IStorage *stg, UINT *bytes_per_strref );
 extern UINT msi_save_string_table( const string_table *st, IStorage *storage, UINT *bytes_per_strref );
+extern UINT msi_get_string_table_codepage( const string_table *st );
+extern UINT msi_set_string_table_codepage( string_table *st, UINT codepage );
 
 extern BOOL TABLE_Exists( MSIDATABASE *db, LPCWSTR name );
 extern MSICONDITION MSI_DatabaseIsTablePersistent( MSIDATABASE *db, LPCWSTR table );

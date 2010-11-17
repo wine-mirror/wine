@@ -6968,6 +6968,7 @@ static void test_forcecodepage(void)
     UINT r;
 
     DeleteFile(msifile);
+    GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
 
     r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -7005,7 +7006,24 @@ static void test_forcecodepage(void)
 
     read_file_data("forcecodepage.idt", buffer);
     ok(!lstrcmpA(buffer, "\r\n\r\n0\t_ForceCodepage\r\n"),
-       "Expected \"\r\n\r\n0\t_ForceCodepage\r\n\", got \"%s\"", buffer);
+       "Expected \"\r\n\r\n0\t_ForceCodepage\r\n\", got \"%s\"\n", buffer);
+
+    create_file_data("forcecodepage.idt", "\r\n\r\n850\t_ForceCodepage\r\n", 0);
+
+    r = MsiDatabaseImportA(hdb, CURR_DIR, "forcecodepage.idt");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiDatabaseExport(hdb, "_ForceCodepage", CURR_DIR, "forcecodepage.idt");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    read_file_data("forcecodepage.idt", buffer);
+    ok(!lstrcmpA(buffer, "\r\n\r\n850\t_ForceCodepage\r\n"),
+       "Expected \"\r\n\r\n850\t_ForceCodepage\r\n\", got \"%s\"\n", buffer);
+
+    create_file_data("forcecodepage.idt", "\r\n\r\n9999\t_ForceCodepage\r\n", 0);
+
+    r = MsiDatabaseImportA(hdb, CURR_DIR, "forcecodepage.idt");
+    ok(r == ERROR_FUNCTION_FAILED, "Expected ERROR_SUCCESS, got %d\n", r);
 
     MsiCloseHandle(hdb);
     DeleteFileA(msifile);
@@ -8159,10 +8177,7 @@ static void test_dbmerge(void)
 
     GetCurrentDirectoryA(MAX_PATH, buf);
     r = MsiDatabaseImportA(hdb, buf, "codepage.idt");
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     query = "DROP TABLE `One`";
     r = run_query(hdb, 0, query);
