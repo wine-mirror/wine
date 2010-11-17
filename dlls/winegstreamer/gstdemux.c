@@ -1556,6 +1556,7 @@ static HRESULT GST_RemoveOutputPins(GSTImpl *This) {
     gst_element_set_bus(This->gstfilter, NULL);
     gst_element_set_state(This->gstfilter, GST_STATE_NULL);
     gst_pad_unlink(This->my_src, This->their_sink);
+    gst_object_unref(This->my_src);
     This->my_src = This->their_sink = NULL;
 
     for (i = 0; i < This->cStreams; i++) {
