@@ -2709,17 +2709,17 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
 
         msi_free(path);
     }
-
-    TRACE("%s %s -> %d\n", debugstr_w(szProduct), debugstr_w(szFeature), r);
     msi_free(components);
 
     if (missing)
-        return INSTALLSTATE_ADVERTISED;
+        r = INSTALLSTATE_ADVERTISED;
+    else if (source)
+        r = INSTALLSTATE_SOURCE;
+    else
+        r = INSTALLSTATE_LOCAL;
 
-    if (source)
-        return INSTALLSTATE_SOURCE;
-
-    return INSTALLSTATE_LOCAL;
+    TRACE("%s %s -> %d\n", debugstr_w(szProduct), debugstr_w(szFeature), r);
+    return r;
 }
 
 /******************************************************************
