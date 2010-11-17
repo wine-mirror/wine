@@ -9140,7 +9140,7 @@ static HRESULT WINAPI InternetProtocolInfo_CombineUrl(IInternetProtocolInfo *ifa
         wine_dbgstr_w(combine_relativeW), wine_dbgstr_w(pwzRelativeUrl));
     ok(dwCombineFlags == (URL_DONT_SIMPLIFY|URL_FILE_USE_PATHURL|URL_DONT_UNESCAPE_EXTRA_INFO),
         "Error: Expected 0, but got 0x%08x.\n", dwCombineFlags);
-    ok(cchResult == INTERNET_MAX_URL_LENGTH+1, "Error: Expected %d, but got %d.\n", INTERNET_MAX_URL_LENGTH+1, cchResult);
+    ok(cchResult == INTERNET_MAX_URL_LENGTH+1, "Error: Got %d.\n", cchResult);
 
     memcpy(pwzResult, combine_resultW, sizeof(combine_resultW));
     *pcchResult = lstrlenW(combine_resultW);
