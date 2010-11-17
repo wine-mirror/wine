@@ -3541,8 +3541,8 @@ UINT WINAPI MsiReinstallFeatureW( LPCWSTR szProduct, LPCWSTR szFeature,
     LPWSTR ptr;
     DWORD sz;
 
-    FIXME("%s %s %i\n", debugstr_w(szProduct), debugstr_w(szFeature),
-                           dwReinstallMode);
+    FIXME("%s %s 0x%08x\n",
+          debugstr_w(szProduct), debugstr_w(szFeature), dwReinstallMode);
 
     ptr = reinstallmode;
 
