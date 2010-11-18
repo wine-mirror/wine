@@ -94,6 +94,7 @@
 #include "wine/debug.h"
 #include "wine/library.h"
 #include "wine/list.h"
+#include "wine/rbtree.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(menubuilder);
 
@@ -159,6 +160,12 @@ struct xdg_mime_type
     char *mimeType;
     char *glob;
     struct list entry;
+};
+
+struct rb_string_entry
+{
+    char *string;
+    struct wine_rb_entry entry;
 };
 
 DEFINE_GUID(CLSID_WICIcnsEncoder, 0x312fb6f1,0xb767,0x409d,0x8a,0x6d,0x0f,0xc1,0x54,0xd4,0xf0,0x5c);
@@ -227,6 +234,43 @@ static char* heap_printf(const char *format, ...)
     if (!ret) ret = buffer;
     return ret;
 }
+
+static int winemenubuilder_rb_string_compare(const void *key, const struct wine_rb_entry *entry)
+{
+    const struct rb_string_entry *t = WINE_RB_ENTRY_VALUE(entry, const struct rb_string_entry, entry);
+
+    return strcmp((char*)key, t->string);
+}
+
+static void *winemenubuilder_rb_alloc(size_t size)
+{
+    return HeapAlloc(GetProcessHeap(), 0, size);
+}
+
+static void *winemenubuilder_rb_realloc(void *ptr, size_t size)
+{
+    return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
+}
+
+static void winemenubuilder_rb_free(void *ptr)
+{
+    HeapFree(GetProcessHeap(), 0, ptr);
+}
+
+static void winemenubuilder_rb_destroy(struct wine_rb_entry *entry, void *context)
+{
+    struct rb_string_entry *t = WINE_RB_ENTRY_VALUE(entry, struct rb_string_entry, entry);
+    HeapFree(GetProcessHeap(), 0, t->string);
+    HeapFree(GetProcessHeap(), 0, t);
+}
+
+static const struct wine_rb_functions winemenubuilder_rb_functions =
+{
+    winemenubuilder_rb_alloc,
+    winemenubuilder_rb_realloc,
+    winemenubuilder_rb_free,
+    winemenubuilder_rb_string_compare,
+};
 
 static void write_xml_text(FILE *file, const char *text)
 {
@@ -2108,11 +2152,17 @@ static BOOL write_freedesktop_association_entry(const char *desktopPath, const c
 static BOOL generate_associations(const char *xdg_data_home, const char *packages_dir, const char *applications_dir)
 {
     static const WCHAR openW[] = {'o','p','e','n',0};
+    struct wine_rb_tree mimeProgidTree;
     struct list *nativeMimeTypes = NULL;
     LSTATUS ret = 0;
     int i;
     BOOL hasChanged = FALSE;
 
+    if (wine_rb_init(&mimeProgidTree, &winemenubuilder_rb_functions))
+    {
+        WINE_ERR("wine_rb_init failed\n");
+        return FALSE;
+    }
     if (!build_native_mime_types(xdg_data_home, &nativeMimeTypes))
     {
         WINE_ERR("could not build native MIME types\n");
@@ -2154,6 +2204,7 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
             char *friendlyAppNameA = NULL;
             WCHAR *progIdW = NULL;
             char *progIdA = NULL;
+            char *mimeProgId = NULL;
 
             extensionA = wchars_to_utf8_chars(extensionW);
             if (extensionA == NULL)
@@ -2265,6 +2316,30 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
             else
                 goto end; /* no progID => not a file type association */
 
+            /* Do not allow duplicate ProgIDs for a MIME type, it causes unnecessary duplication in Open dialogs */
+            mimeProgId = heap_printf("%s=>%s", mimeTypeA, progIdA);
+            if (mimeProgId)
+            {
+                struct rb_string_entry *entry;
+                if (wine_rb_get(&mimeProgidTree, mimeProgId))
+                {
+                    HeapFree(GetProcessHeap(), 0, mimeProgId);
+                    goto end;
+                }
+                entry = HeapAlloc(GetProcessHeap(), 0, sizeof(struct rb_string_entry));
+                if (!entry)
+                {
+                    WINE_ERR("out of memory allocating rb_string_entry\n");
+                    goto end;
+                }
+                entry->string = mimeProgId;
+                if (wine_rb_put(&mimeProgidTree, mimeProgId, &entry->entry))
+                {
+                    WINE_ERR("error updating rb tree\n");
+                    goto end;
+                }
+            }
+
             if (has_association_changed(extensionW, mimeTypeA, progIdW, friendlyAppNameA, friendlyDocNameW, openWithIconA))
             {
                 char *desktopPath = heap_printf("%s/wine-extension-%s.desktop", applications_dir, &extensionA[1]);
@@ -2300,6 +2375,7 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
             break;
     }
 
+    wine_rb_destroy(&mimeProgidTree, winemenubuilder_rb_destroy, NULL);
     free_native_mime_types(nativeMimeTypes);
     return hasChanged;
 }
