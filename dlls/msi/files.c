@@ -293,7 +293,8 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
     }
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
     {
-        if (comp->Enabled && comp->assembly && !comp->assembly->installed)
+        if (comp->ActionRequest == INSTALLSTATE_LOCAL && comp->Enabled &&
+            comp->assembly && !comp->assembly->installed)
         {
             rc = install_assembly( package, comp );
             if (rc != ERROR_SUCCESS)
