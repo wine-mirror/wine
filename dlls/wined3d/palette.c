@@ -74,25 +74,29 @@ static ULONG  WINAPI IWineD3DPaletteImpl_Release(IWineD3DPalette *iface) {
 }
 
 /* Not called from the vtable */
-static WORD IWineD3DPaletteImpl_Size(DWORD dwFlags)
+static WORD IWineD3DPaletteImpl_Size(DWORD flags)
 {
-    switch (dwFlags & SIZE_BITS) {
+    switch (flags & SIZE_BITS)
+    {
         case WINEDDPCAPS_1BIT: return 2;
         case WINEDDPCAPS_2BIT: return 4;
         case WINEDDPCAPS_4BIT: return 16;
         case WINEDDPCAPS_8BIT: return 256;
         default:
-            FIXME("Unhandled size bits %#x.\n", dwFlags & SIZE_BITS);
+            FIXME("Unhandled size bits %#x.\n", flags & SIZE_BITS);
             return 256;
     }
 }
 
-static HRESULT  WINAPI IWineD3DPaletteImpl_GetEntries(IWineD3DPalette *iface, DWORD Flags, DWORD Start, DWORD Count, PALETTEENTRY *PalEnt) {
+static HRESULT WINAPI IWineD3DPaletteImpl_GetEntries(IWineD3DPalette *iface,
+        DWORD flags, DWORD Start, DWORD Count, PALETTEENTRY *PalEnt)
+{
     IWineD3DPaletteImpl *This = (IWineD3DPaletteImpl *)iface;
 
-    TRACE("(%p)->(%08x,%d,%d,%p)\n",This,Flags,Start,Count,PalEnt);
+    TRACE("iface %p, flags %#x, start %u, count %u, entries %p.\n",
+            iface, flags, Start, Count, PalEnt);
 
-    if (Flags) return WINED3DERR_INVALIDCALL; /* unchecked */
+    if (flags) return WINED3DERR_INVALIDCALL; /* unchecked */
     if (Start + Count > IWineD3DPaletteImpl_Size(This->flags))
         return WINED3DERR_INVALIDCALL;
 
@@ -111,12 +115,13 @@ static HRESULT  WINAPI IWineD3DPaletteImpl_GetEntries(IWineD3DPalette *iface, DW
 }
 
 static HRESULT  WINAPI IWineD3DPaletteImpl_SetEntries(IWineD3DPalette *iface,
-        DWORD Flags, DWORD Start, DWORD Count, const PALETTEENTRY *PalEnt)
+        DWORD flags, DWORD Start, DWORD Count, const PALETTEENTRY *PalEnt)
 {
     IWineD3DPaletteImpl *This = (IWineD3DPaletteImpl *)iface;
     IWineD3DResourceImpl *res;
 
-    TRACE("(%p)->(%08x,%d,%d,%p)\n",This,Flags,Start,Count,PalEnt);
+    TRACE("iface %p, flags %#x, start %u, count %u, entries %p.\n",
+            iface, flags, Start, Count, PalEnt);
     TRACE("Palette flags: %#x.\n", This->flags);
 
     if (This->flags & WINEDDPCAPS_8BITENTRIES)

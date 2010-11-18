@@ -169,11 +169,14 @@ HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetPresentParameters(IWineD3DSwapChain 
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DBaseSwapChainImpl_SetGammaRamp(IWineD3DSwapChain *iface, DWORD Flags, CONST WINED3DGAMMARAMP *pRamp){
-
+HRESULT WINAPI IWineD3DBaseSwapChainImpl_SetGammaRamp(IWineD3DSwapChain *iface,
+        DWORD flags, const WINED3DGAMMARAMP *pRamp)
+{
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     HDC hDC;
-    TRACE("(%p) : pRamp@%p flags(%d)\n", This, pRamp, Flags);
+
+    TRACE("iface %p, flags %#x, ramp %p.\n", iface, flags, pRamp);
+
     hDC = GetDC(This->device_window);
     SetDeviceGammaRamp(hDC, (LPVOID)pRamp);
     ReleaseDC(This->device_window, hDC);

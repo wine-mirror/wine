@@ -10,7 +10,7 @@
  * Copyright 2006-2008 Stefan Dösinger for CodeWeavers
  * Copyright 2007 Henri Verbeet
  * Copyright 2006-2007 Roderick Colenbrander
- * Copyright 2009 Henri Verbeet for CodeWeavers
+ * Copyright 2009-2010 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -111,11 +111,10 @@ ULONG WINAPI IWineD3DBaseSurfaceImpl_AddRef(IWineD3DSurface *iface) {
     return ref;
 }
 
-/* ****************************************************
-   IWineD3DSurface IWineD3DResource parts follow
-   **************************************************** */
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetPrivateData(IWineD3DSurface *iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
-    return resource_set_private_data((IWineD3DResource *)iface, refguid, pData, SizeOfData, Flags);
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetPrivateData(IWineD3DSurface *iface,
+        REFGUID riid, const void *data, DWORD data_size, DWORD flags)
+{
+    return resource_set_private_data((IWineD3DResource *)iface, riid, data, data_size, flags);
 }
 
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetPrivateData(IWineD3DSurface *iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
@@ -163,11 +162,11 @@ void WINAPI IWineD3DBaseSurfaceImpl_GetDesc(IWineD3DSurface *iface, WINED3DSURFA
     desc->height = surface->currentDesc.Height;
 }
 
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetBltStatus(IWineD3DSurface *iface, DWORD Flags)
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetBltStatus(IWineD3DSurface *iface, DWORD flags)
 {
-    TRACE("iface %p, flags %#x.\n", iface, Flags);
+    TRACE("iface %p, flags %#x.\n", iface, flags);
 
-    switch (Flags)
+    switch (flags)
     {
         case WINEDDGBS_CANBLT:
         case WINEDDGBS_ISBLTDONE:
@@ -178,11 +177,14 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetBltStatus(IWineD3DSurface *iface, DWOR
     }
 }
 
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetFlipStatus(IWineD3DSurface *iface, DWORD Flags) {
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetFlipStatus(IWineD3DSurface *iface, DWORD flags)
+{
     /* XXX: DDERR_INVALIDSURFACETYPE */
 
-    TRACE("(%p)->(%08x)\n",iface,Flags);
-    switch (Flags) {
+    TRACE("iface %p, flags %#x.\n", iface, flags);
+
+    switch (flags)
+    {
         case WINEDDGFS_CANFLIP:
         case WINEDDGFS_ISFLIPDONE:
             return WINED3D_OK;
@@ -235,20 +237,23 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetPalette(IWineD3DSurface *iface, IWineD
     else return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD Flags, const WINEDDCOLORKEY *CKey)
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD flags, const WINEDDCOLORKEY *CKey)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-    TRACE("(%p)->(%08x,%p)\n", This, Flags, CKey);
 
-    if (Flags & WINEDDCKEY_COLORSPACE)
+    TRACE("iface %p, flags %#x, color_key %p.\n", iface, flags, CKey);
+
+    if (flags & WINEDDCKEY_COLORSPACE)
     {
-        FIXME(" colorkey value not supported (%08x) !\n", Flags);
+        FIXME(" colorkey value not supported (%08x) !\n", flags);
         return WINED3DERR_INVALIDCALL;
     }
 
     /* Dirtify the surface, but only if a key was changed */
-    if(CKey) {
-        switch (Flags & ~WINEDDCKEY_COLORSPACE) {
+    if (CKey)
+    {
+        switch (flags & ~WINEDDCKEY_COLORSPACE)
+        {
             case WINEDDCKEY_DESTBLT:
                 This->DestBltCKey = *CKey;
                 This->CKeyFlags |= WINEDDSD_CKDESTBLT;
@@ -270,8 +275,10 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD
                 break;
         }
     }
-    else {
-        switch (Flags & ~WINEDDCKEY_COLORSPACE) {
+    else
+    {
+        switch (flags & ~WINEDDCKEY_COLORSPACE)
+        {
             case WINEDDCKEY_DESTBLT:
                 This->CKeyFlags &= ~WINEDDSD_CKDESTBLT;
                 break;
@@ -375,10 +382,11 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetOverlayPosition(IWineD3DSurface *iface
     return hr;
 }
 
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlayZOrder(IWineD3DSurface *iface, DWORD Flags, IWineD3DSurface *Ref) {
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlayZOrder(IWineD3DSurface *iface, DWORD flags, IWineD3DSurface *Ref)
+{
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
 
-    FIXME("iface %p, flags %#x, ref %p stub!\n", iface, Flags, Ref);
+    FIXME("iface %p, flags %#x, ref %p stub!\n", iface, flags, Ref);
 
     if(!(This->resource.usage & WINED3DUSAGE_OVERLAY))
     {
@@ -390,11 +398,13 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlayZOrder(IWineD3DSurface *ifac
 }
 
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, const RECT *SrcRect,
-        IWineD3DSurface *DstSurface, const RECT *DstRect, DWORD Flags, const WINEDDOVERLAYFX *FX)
+        IWineD3DSurface *DstSurface, const RECT *DstRect, DWORD flags, const WINEDDOVERLAYFX *FX)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DSurfaceImpl *Dst = (IWineD3DSurfaceImpl *) DstSurface;
-    TRACE("(%p)->(%p, %p, %p, %08x, %p)\n", This, SrcRect, Dst, DstRect, Flags, FX);
+
+    TRACE("iface %p, src_rect %s, dst_surface %p, dst_rect %s, flags %#x, fx %p.\n",
+            iface, wine_dbgstr_rect(SrcRect), DstSurface, wine_dbgstr_rect(DstRect), flags, FX);
 
     if(!(This->resource.usage & WINED3DUSAGE_OVERLAY))
     {
@@ -423,16 +433,21 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, con
         This->overlay_destrect.bottom = Dst ? Dst->currentDesc.Height : 0;
     }
 
-    if(This->overlay_dest && (This->overlay_dest != Dst || Flags & WINEDDOVER_HIDE)) {
+    if (This->overlay_dest && (This->overlay_dest != Dst || flags & WINEDDOVER_HIDE))
+    {
         list_remove(&This->overlay_entry);
     }
 
-    if(Flags & WINEDDOVER_SHOW) {
-        if(This->overlay_dest != Dst) {
+    if (flags & WINEDDOVER_SHOW)
+    {
+        if (This->overlay_dest != Dst)
+        {
             This->overlay_dest = Dst;
             list_add_tail(&Dst->overlays, &This->overlay_entry);
         }
-    } else if(Flags & WINEDDOVER_HIDE) {
+    }
+    else if (flags & WINEDDOVER_HIDE)
+    {
         /* tests show that the rectangles are erased on hide */
         This->overlay_srcrect.left   = 0; This->overlay_srcrect.top     = 0;
         This->overlay_srcrect.right  = 0; This->overlay_srcrect.bottom  = 0;
@@ -924,7 +939,7 @@ static HRESULT
  *  SrcRect: Source rectangle
  *****************************************************************************/
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *DestRect, IWineD3DSurface *src_surface,
-        const RECT *SrcRect, DWORD Flags, const WINEDDBLTFX *DDBltFx, WINED3DTEXTUREFILTERTYPE Filter)
+        const RECT *SrcRect, DWORD flags, const WINEDDBLTFX *DDBltFx, WINED3DTEXTUREFILTERTYPE Filter)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DSurfaceImpl *src = (IWineD3DSurfaceImpl *)src_surface;
@@ -939,7 +954,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
 
     TRACE("iface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
             iface, wine_dbgstr_rect(DestRect), src_surface, wine_dbgstr_rect(SrcRect),
-            Flags, DDBltFx, debug_d3dtexturefiltertype(Filter));
+            flags, DDBltFx, debug_d3dtexturefiltertype(Filter));
 
     if ((This->flags & SFLAG_LOCKED) || (src && (src->flags & SFLAG_LOCKED)))
     {
@@ -1030,7 +1045,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
             if (clip_vert || clip_horiz)
             {
                 /* Now check if this is a special case or not... */
-                if ((Flags & WINEDDBLT_DDFX)
+                if ((flags & WINEDDBLT_DDFX)
                         || (clip_horiz && xdst.right - xdst.left != xsrc.right - xsrc.left)
                         || (clip_vert && xdst.bottom - xdst.top != xsrc.bottom - xsrc.top))
                 {
@@ -1123,7 +1138,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
             IWineD3DSurface_Map(iface, &dlock, NULL, 0);
     }
 
-    if (!DDBltFx || !(DDBltFx->dwDDFX)) Flags &= ~WINEDDBLT_DDFX;
+    if (!DDBltFx || !(DDBltFx->dwDDFX)) flags &= ~WINEDDBLT_DDFX;
 
     if (sEntry->flags & dEntry->flags & WINED3DFMT_FLAG_FOURCC)
     {
@@ -1146,41 +1161,41 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
     else
         dbuf = (BYTE*)dlock.pBits+(xdst.top*dlock.Pitch)+(xdst.left*bpp);
 
-    if (Flags & WINEDDBLT_WAIT)
+    if (flags & WINEDDBLT_WAIT)
     {
-        Flags &= ~WINEDDBLT_WAIT;
+        flags &= ~WINEDDBLT_WAIT;
     }
-    if (Flags & WINEDDBLT_ASYNC)
+    if (flags & WINEDDBLT_ASYNC)
     {
         static BOOL displayed = FALSE;
         if (!displayed)
             FIXME("Can't handle WINEDDBLT_ASYNC flag right now.\n");
         displayed = TRUE;
-        Flags &= ~WINEDDBLT_ASYNC;
+        flags &= ~WINEDDBLT_ASYNC;
     }
-    if (Flags & WINEDDBLT_DONOTWAIT)
+    if (flags & WINEDDBLT_DONOTWAIT)
     {
         /* WINEDDBLT_DONOTWAIT appeared in DX7 */
         static BOOL displayed = FALSE;
         if (!displayed)
             FIXME("Can't handle WINEDDBLT_DONOTWAIT flag right now.\n");
         displayed = TRUE;
-        Flags &= ~WINEDDBLT_DONOTWAIT;
+        flags &= ~WINEDDBLT_DONOTWAIT;
     }
 
     /* First, all the 'source-less' blits */
-    if (Flags & WINEDDBLT_COLORFILL)
+    if (flags & WINEDDBLT_COLORFILL)
     {
         ret = _Blt_ColorFill(dbuf, dstwidth, dstheight, bpp,
                              dlock.Pitch, DDBltFx->u5.dwFillColor);
-        Flags &= ~WINEDDBLT_COLORFILL;
+        flags &= ~WINEDDBLT_COLORFILL;
     }
 
-    if (Flags & WINEDDBLT_DEPTHFILL)
+    if (flags & WINEDDBLT_DEPTHFILL)
     {
         FIXME("DDBLT_DEPTHFILL needs to be implemented!\n");
     }
-    if (Flags & WINEDDBLT_ROP)
+    if (flags & WINEDDBLT_ROP)
     {
         /* Catch some degenerate cases here */
         switch(DDBltFx->dwROP)
@@ -1199,9 +1214,9 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
                 FIXME("Unsupported raster op: %08x  Pattern: %p\n", DDBltFx->dwROP, DDBltFx->u5.lpDDSPattern);
                 goto error;
         }
-        Flags &= ~WINEDDBLT_ROP;
+        flags &= ~WINEDDBLT_ROP;
     }
-    if (Flags & WINEDDBLT_DDROPS)
+    if (flags & WINEDDBLT_DDROPS)
     {
         FIXME("\tDdraw Raster Ops: %08x  Pattern: %p\n", DDBltFx->dwDDROP, DDBltFx->u5.lpDDSPattern);
     }
@@ -1225,7 +1240,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
         xinc = (srcwidth << 16) / dstwidth;
         yinc = (srcheight << 16) / dstheight;
 
-        if (!Flags)
+        if (!flags)
         {
             /* No effects, we can cheat here */
             if (dstwidth == srcwidth)
@@ -1340,27 +1355,27 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
             LONG dstyinc = dlock.Pitch, dstxinc = bpp;
             DWORD keylow = 0xFFFFFFFF, keyhigh = 0, keymask = 0xFFFFFFFF;
             DWORD destkeylow = 0x0, destkeyhigh = 0xFFFFFFFF, destkeymask = 0xFFFFFFFF;
-            if (Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYDEST | WINEDDBLT_KEYSRCOVERRIDE | WINEDDBLT_KEYDESTOVERRIDE))
+            if (flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYDEST | WINEDDBLT_KEYSRCOVERRIDE | WINEDDBLT_KEYDESTOVERRIDE))
             {
                 /* The color keying flags are checked for correctness in ddraw */
-                if (Flags & WINEDDBLT_KEYSRC)
+                if (flags & WINEDDBLT_KEYSRC)
                 {
                     keylow  = src->SrcBltCKey.dwColorSpaceLowValue;
                     keyhigh = src->SrcBltCKey.dwColorSpaceHighValue;
                 }
-                else  if (Flags & WINEDDBLT_KEYSRCOVERRIDE)
+                else  if (flags & WINEDDBLT_KEYSRCOVERRIDE)
                 {
                     keylow  = DDBltFx->ddckSrcColorkey.dwColorSpaceLowValue;
                     keyhigh = DDBltFx->ddckSrcColorkey.dwColorSpaceHighValue;
                 }
 
-                if (Flags & WINEDDBLT_KEYDEST)
+                if (flags & WINEDDBLT_KEYDEST)
                 {
                     /* Destination color keys are taken from the source surface ! */
                     destkeylow  = src->DestBltCKey.dwColorSpaceLowValue;
                     destkeyhigh = src->DestBltCKey.dwColorSpaceHighValue;
                 }
-                else if (Flags & WINEDDBLT_KEYDESTOVERRIDE)
+                else if (flags & WINEDDBLT_KEYDESTOVERRIDE)
                 {
                     destkeylow  = DDBltFx->ddckDestColorkey.dwColorSpaceLowValue;
                     destkeyhigh = DDBltFx->ddckDestColorkey.dwColorSpaceHighValue;
@@ -1376,10 +1391,10 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
                             | sEntry->green_mask
                             | sEntry->blue_mask;
                 }
-                Flags &= ~(WINEDDBLT_KEYSRC | WINEDDBLT_KEYDEST | WINEDDBLT_KEYSRCOVERRIDE | WINEDDBLT_KEYDESTOVERRIDE);
+                flags &= ~(WINEDDBLT_KEYSRC | WINEDDBLT_KEYDEST | WINEDDBLT_KEYSRCOVERRIDE | WINEDDBLT_KEYDESTOVERRIDE);
             }
 
-            if (Flags & WINEDDBLT_DDFX)
+            if (flags & WINEDDBLT_DDFX)
             {
                 LPBYTE dTopLeft, dTopRight, dBottomLeft, dBottomRight, tmp;
                 LONG tmpxy;
@@ -1391,7 +1406,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
                 if (DDBltFx->dwDDFX & WINEDDBLTFX_ARITHSTRETCHY)
                 {
                     /* I don't think we need to do anything about this flag */
-                    WARN("Flags=DDBLT_DDFX nothing done for WINEDDBLTFX_ARITHSTRETCHY\n");
+                    WARN("flags=DDBLT_DDFX nothing done for WINEDDBLTFX_ARITHSTRETCHY\n");
                 }
                 if (DDBltFx->dwDDFX & WINEDDBLTFX_MIRRORLEFTRIGHT)
                 {
@@ -1416,7 +1431,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
                 if (DDBltFx->dwDDFX & WINEDDBLTFX_NOTEARING)
                 {
                     /* I don't think we need to do anything about this flag */
-                    WARN("Flags=DDBLT_DDFX nothing done for WINEDDBLTFX_NOTEARING\n");
+                    WARN("flags=DDBLT_DDFX nothing done for WINEDDBLTFX_NOTEARING\n");
                 }
                 if (DDBltFx->dwDDFX & WINEDDBLTFX_ROTATE180)
                 {
@@ -1456,10 +1471,10 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
                 if (DDBltFx->dwDDFX & WINEDDBLTFX_ZBUFFERBASEDEST)
                 {
                     /* I don't think we need to do anything about this flag */
-                    WARN("Flags=WINEDDBLT_DDFX nothing done for WINEDDBLTFX_ZBUFFERBASEDEST\n");
+                    WARN("flags=WINEDDBLT_DDFX nothing done for WINEDDBLTFX_ZBUFFERBASEDEST\n");
                 }
                 dbuf = dTopLeft;
-                Flags &= ~(WINEDDBLT_DDFX);
+                flags &= ~(WINEDDBLT_DDFX);
             }
 
 #define COPY_COLORKEY_FX(type) { \
@@ -1513,7 +1528,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
                 }
                 default:
                     FIXME("%s color-keyed blit not implemented for bpp %d!\n",
-                          (Flags & WINEDDBLT_KEYSRC) ? "Source" : "Destination", bpp*8);
+                          (flags & WINEDDBLT_KEYSRC) ? "Source" : "Destination", bpp*8);
                     ret = WINED3DERR_NOTAVAILABLE;
                     goto error;
 #undef COPY_COLORKEY_FX
@@ -1522,9 +1537,9 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
     }
 
 error:
-    if (Flags && FIXME_ON(d3d_surface))
+    if (flags && FIXME_ON(d3d_surface))
     {
-        FIXME("\tUnsupported flags: %08x\n", Flags);
+        FIXME("\tUnsupported flags: %#x.\n", flags);
     }
 
 release:
@@ -1547,7 +1562,7 @@ release:
  *  dsty:
  *  src_surface: Source surface to copy from
  *  rsrc: Source rectangle
- *  trans: Some Flags
+ *  trans: Some flags
  *
  * Returns:
  *  WINED3D_OK on success
@@ -1812,12 +1827,12 @@ error:
 }
 
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_Map(IWineD3DSurface *iface,
-        WINED3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags)
+        WINED3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD flags)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
 
-    TRACE("(%p) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n",
-          This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
+    TRACE("iface %p, locked_rect %p, rect %s, flags %#x.\n",
+            iface, pLockedRect, wine_dbgstr_rect(pRect), flags);
 
     pLockedRect->Pitch = IWineD3DSurface_GetPitch(iface);
 

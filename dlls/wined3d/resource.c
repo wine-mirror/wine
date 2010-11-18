@@ -5,7 +5,7 @@
  * Copyright 2003-2004 Raphael Junqueira
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
- * Copyright 2009 Henri Verbeet for CodeWeavers
+ * Copyright 2009-2010 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -130,22 +130,26 @@ static PrivateData* resource_find_private_data(IWineD3DResourceImpl *This, REFGU
 }
 
 HRESULT resource_set_private_data(IWineD3DResource *iface, REFGUID refguid,
-        const void *pData, DWORD SizeOfData, DWORD Flags)
+        const void *pData, DWORD SizeOfData, DWORD flags)
 {
     IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
     PrivateData *data;
 
-    TRACE("(%p) : %s %p %d %d\n", This, debugstr_guid(refguid), pData, SizeOfData, Flags);
+    TRACE("iface %p, riid %s, data %p, data_size %u, flags %#x.\n",
+            iface, debugstr_guid(refguid), pData, SizeOfData, flags);
+
     resource_free_private_data(iface, refguid);
 
     data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data));
     if (!data) return E_OUTOFMEMORY;
 
     data->tag = *refguid;
-    data->flags = Flags;
+    data->flags = flags;
 
-    if (Flags & WINED3DSPD_IUNKNOWN) {
-        if(SizeOfData != sizeof(IUnknown *)) {
+    if (flags & WINED3DSPD_IUNKNOWN)
+    {
+        if (SizeOfData != sizeof(IUnknown *))
+        {
             WARN("IUnknown data with size %d, returning WINED3DERR_INVALIDCALL\n", SizeOfData);
             HeapFree(GetProcessHeap(), 0, data);
             return WINED3DERR_INVALIDCALL;

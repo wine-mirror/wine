@@ -4,7 +4,7 @@
  * Copyright 2002-2005 Jason Edmeades
  * Copyright 2002-2005 Raphael Junqueira
  * Copyright 2005 Oliver Stieber
- * Copyright 2009 Henri Verbeet for CodeWeavers
+ * Copyright 2009-2010 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -149,8 +149,10 @@ static void * WINAPI IWineD3DVolumeImpl_GetParent(IWineD3DVolume *iface)
     return ((IWineD3DVolumeImpl *)iface)->resource.parent;
 }
 
-static HRESULT WINAPI IWineD3DVolumeImpl_SetPrivateData(IWineD3DVolume *iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
-    return resource_set_private_data((IWineD3DResource *)iface, refguid, pData, SizeOfData, Flags);
+static HRESULT WINAPI IWineD3DVolumeImpl_SetPrivateData(IWineD3DVolume *iface,
+        REFGUID riid, const void *data, DWORD data_size, DWORD flags)
+{
+    return resource_set_private_data((IWineD3DResource *)iface, riid, data, data_size, flags);
 }
 
 static HRESULT WINAPI IWineD3DVolumeImpl_GetPrivateData(IWineD3DVolume *iface, REFGUID  refguid, void* pData, DWORD* pSizeOfData) {
@@ -206,7 +208,7 @@ static void WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DVOLU
 }
 
 static HRESULT WINAPI IWineD3DVolumeImpl_Map(IWineD3DVolume *iface,
-        WINED3DLOCKED_BOX *pLockedVolume, const WINED3DBOX *pBox, DWORD Flags)
+        WINED3DLOCKED_BOX *pLockedVolume, const WINED3DBOX *pBox, DWORD flags)
 {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     FIXME("(%p) : pBox=%p stub\n", This, pBox);
@@ -244,10 +246,7 @@ static HRESULT WINAPI IWineD3DVolumeImpl_Map(IWineD3DVolume *iface,
         This->lockedBox.Back   = pBox->Back;
     }
 
-    if (Flags & (WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY)) {
-      /* Don't dirtify */
-    }
-    else
+    if (!(flags & (WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY)))
     {
         volume_add_dirty_box(iface, &This->lockedBox);
         This->container->baseTexture.texture_rgb.dirty = TRUE;

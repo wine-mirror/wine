@@ -1601,7 +1601,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_CreatePalette(IWineD3DDevice *iface, DWORD Flags,
+static HRESULT WINAPI IWineD3DDeviceImpl_CreatePalette(IWineD3DDevice *iface, DWORD flags,
         const PALETTEENTRY *PalEnt, void *parent, IWineD3DPalette **Palette)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
@@ -1609,7 +1609,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePalette(IWineD3DDevice *iface, DW
     HRESULT hr;
 
     TRACE("iface %p, flags %#x, entries %p, palette %p, parent %p.\n",
-            iface, Flags, PalEnt, Palette, parent);
+            iface, flags, PalEnt, Palette, parent);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -1618,7 +1618,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePalette(IWineD3DDevice *iface, DW
         return E_OUTOFMEMORY;
     }
 
-    hr = wined3d_palette_init(object, This, Flags, PalEnt, parent);
+    hr = wined3d_palette_init(object, This, flags, PalEnt, parent);
     if (FAILED(hr))
     {
         WARN("Failed to initialize palette, hr %#x.\n", hr);
@@ -2451,7 +2451,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSource(IWineD3DDevice *iface,
 static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSourceFreq(IWineD3DDevice *iface,  UINT StreamNumber, UINT Divider) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct wined3d_stream_state *stream;
-    UINT oldFlags, oldFreq;
+    UINT old_flags, oldFreq;
 
     TRACE("iface %p, stream_idx %u, divider %#x.\n", iface, StreamNumber, Divider);
 
@@ -2473,7 +2473,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSourceFreq(IWineD3DDevice *ifa
     }
 
     stream = &This->updateStateBlock->state.streams[StreamNumber];
-    oldFlags = stream->flags;
+    old_flags = stream->flags;
     oldFreq = stream->frequency;
 
     stream->flags = Divider & (WINED3DSTREAMSOURCE_INSTANCEDATA | WINED3DSTREAMSOURCE_INDEXEDDATA);
@@ -2481,7 +2481,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSourceFreq(IWineD3DDevice *ifa
 
     This->updateStateBlock->changed.streamFreq |= 1 << StreamNumber;
 
-    if (stream->frequency != oldFreq || stream->flags != oldFlags)
+    if (stream->frequency != oldFreq || stream->flags != old_flags)
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
 
     return WINED3D_OK;
@@ -3894,7 +3894,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantF(
 /* Do not call while under the GL lock. */
 #define copy_and_next(dest, src, size) memcpy(dest, src, size); dest += (size)
 static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCount,
-        const struct wined3d_stream_info *stream_info, struct wined3d_buffer *dest, DWORD dwFlags,
+        const struct wined3d_stream_info *stream_info, struct wined3d_buffer *dest, DWORD flags,
         DWORD DestFVF)
 {
     const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
@@ -4237,7 +4237,7 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
 
 /* Do not call while under the GL lock. */
 static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, UINT SrcStartIndex, UINT DestIndex,
-        UINT VertexCount, IWineD3DBuffer *pDestBuffer, IWineD3DVertexDeclaration *pVertexDecl, DWORD Flags,
+        UINT VertexCount, IWineD3DBuffer *pDestBuffer, IWineD3DVertexDeclaration *pVertexDecl, DWORD flags,
         DWORD DestFVF)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -4247,7 +4247,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
     BOOL vbo = FALSE, streamWasUP = This->stateBlock->state.user_stream;
     HRESULT hr;
 
-    TRACE("(%p)->(%d,%d,%d,%p,%p,%d\n", This, SrcStartIndex, DestIndex, VertexCount, pDestBuffer, pVertexDecl, Flags);
+    TRACE("(%p)->(%d,%d,%d,%p,%p,%d\n", This, SrcStartIndex, DestIndex, VertexCount, pDestBuffer, pVertexDecl, flags);
 
     if(pVertexDecl) {
         ERR("Output vertex declaration not implemented yet\n");
@@ -4293,7 +4293,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
     }
 
     hr = process_vertices_strided(This, DestIndex, VertexCount, &stream_info,
-            (struct wined3d_buffer *)pDestBuffer, Flags, DestFVF);
+            (struct wined3d_buffer *)pDestBuffer, flags, DestFVF);
 
     context_release(context);
 
@@ -6008,15 +6008,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice *ifa
     return WINED3D_OK;
 }
 
-static void     WINAPI  IWineD3DDeviceImpl_SetCursorPosition(IWineD3DDevice* iface, int XScreenSpace, int YScreenSpace, DWORD Flags) {
+static void WINAPI IWineD3DDeviceImpl_SetCursorPosition(IWineD3DDevice *iface,
+        int XScreenSpace, int YScreenSpace, DWORD flags)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    TRACE("(%p) : SetPos to (%u,%u)\n", This, XScreenSpace, YScreenSpace);
+
+    TRACE("iface %p, x %d, y %d, flags %#x.\n",
+            iface, XScreenSpace, YScreenSpace, flags);
 
     This->xScreenSpace = XScreenSpace;
     This->yScreenSpace = YScreenSpace;
-
-    return;
-
 }
 
 static BOOL     WINAPI  IWineD3DDeviceImpl_ShowCursor(IWineD3DDevice* iface, BOOL bShow) {
@@ -6560,13 +6561,16 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetCreationParameters(IWineD3DDevice 
     return WINED3D_OK;
 }
 
-static void WINAPI IWineD3DDeviceImpl_SetGammaRamp(IWineD3DDevice * iface, UINT iSwapChain, DWORD Flags, CONST WINED3DGAMMARAMP* pRamp) {
+static void WINAPI IWineD3DDeviceImpl_SetGammaRamp(IWineD3DDevice *iface,
+        UINT iSwapChain, DWORD flags, const WINED3DGAMMARAMP *pRamp)
+{
     IWineD3DSwapChain *swapchain;
 
     TRACE("Relaying  to swapchain\n");
 
-    if (IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapchain) == WINED3D_OK) {
-        IWineD3DSwapChain_SetGammaRamp(swapchain, Flags, pRamp);
+    if (IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapchain) == WINED3D_OK)
+    {
+        IWineD3DSwapChain_SetGammaRamp(swapchain, flags, pRamp);
         IWineD3DSwapChain_Release(swapchain);
     }
 }

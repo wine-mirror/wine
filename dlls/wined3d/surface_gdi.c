@@ -110,7 +110,7 @@ static void WINAPI IWineGDISurfaceImpl_UnLoad(IWineD3DSurface *iface)
 }
 
 static HRESULT WINAPI IWineGDISurfaceImpl_Map(IWineD3DSurface *iface,
-        WINED3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags)
+        WINED3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD flags)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
 
@@ -131,7 +131,7 @@ static HRESULT WINAPI IWineGDISurfaceImpl_Map(IWineD3DSurface *iface,
         This->resource.allocatedMemory = This->dib.bitmap_data;
     }
 
-    return IWineD3DBaseSurfaceImpl_Map(iface, pLockedRect, pRect, Flags);
+    return IWineD3DBaseSurfaceImpl_Map(iface, pLockedRect, pRect, flags);
 }
 
 static HRESULT WINAPI IWineGDISurfaceImpl_Unmap(IWineD3DSurface *iface)
@@ -174,10 +174,7 @@ static HRESULT WINAPI IWineGDISurfaceImpl_Unmap(IWineD3DSurface *iface)
  *  WINED3D_OK on success
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IWineGDISurfaceImpl_Flip(IWineD3DSurface *iface,
-                         IWineD3DSurface *override,
-                         DWORD Flags)
+static HRESULT WINAPI IWineGDISurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DSurface *override, DWORD flags)
 {
     IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
     IWineD3DSwapChainImpl *swapchain;

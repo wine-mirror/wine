@@ -2782,13 +2782,14 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterDisplayMode(IWineD3D *iface, UINT A
 
 /* NOTE: due to structure differences between dx8 and dx9 D3DADAPTER_IDENTIFIER,
    and fields being inserted in the middle, a new structure is used in place    */
-static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Adapter, DWORD Flags,
-                                                   WINED3DADAPTER_IDENTIFIER* pIdentifier) {
+static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface,
+        UINT Adapter, DWORD flags, WINED3DADAPTER_IDENTIFIER *pIdentifier)
+{
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     struct wined3d_adapter *adapter;
     size_t len;
 
-    TRACE_(d3d_caps)("(%p}->(Adapter: %d, Flags: %x, pId=%p)\n", This, Adapter, Flags, pIdentifier);
+    TRACE_(d3d_caps)("(%p}->(Adapter: %d, flags: %x, pId=%p)\n", This, Adapter, flags, pIdentifier);
 
     if (Adapter >= IWineD3D_GetAdapterCount(iface)) {
         return WINED3DERR_INVALIDCALL;
@@ -2838,7 +2839,7 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
     pIdentifier->subsystem_id = 0;
     pIdentifier->revision = 0;
     memcpy(&pIdentifier->device_identifier, &IID_D3DDEVICE_D3DUID, sizeof(pIdentifier->device_identifier));
-    pIdentifier->whql_level = (Flags & WINED3DENUM_NO_WHQL_LEVEL) ? 0 : 1;
+    pIdentifier->whql_level = (flags & WINED3DENUM_NO_WHQL_LEVEL) ? 0 : 1;
     memcpy(&pIdentifier->adapter_luid, &adapter->luid, sizeof(pIdentifier->adapter_luid));
     pIdentifier->video_memory = adapter->TextureRam;
 

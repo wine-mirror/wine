@@ -172,7 +172,10 @@ static HRESULT WINAPI IWineGDISwapChainImpl_SetDestWindowOverride(IWineD3DSwapCh
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineGDISwapChainImpl_Present(IWineD3DSwapChain *iface, CONST RECT *pSourceRect, CONST RECT *pDestRect, HWND hDestWindowOverride, CONST RGNDATA *pDirtyRegion, DWORD dwFlags) {
+static HRESULT WINAPI IWineGDISwapChainImpl_Present(IWineD3DSwapChain *iface,
+        const RECT *pSourceRect, const RECT *pDestRect, HWND hDestWindowOverride,
+        const RGNDATA *pDirtyRegion, DWORD flags)
+{
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *) iface;
     IWineD3DSurfaceImpl *front, *back;
 
