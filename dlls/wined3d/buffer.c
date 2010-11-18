@@ -863,71 +863,75 @@ drop_query:
 /* The caller provides a GL context */
 static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined3d_gl_info *gl_info, DWORD flags)
 {
-        BYTE *map;
-        UINT start = 0, len = 0;
+    BYTE *map;
+    UINT start = 0, len = 0;
 
-        ENTER_GL();
-        GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
-        checkGLcall("glBindBufferARB");
+    ENTER_GL();
+
+    /* This potentially invalidates the element array buffer binding, but the
+     * caller always takes care of this. */
+    GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
+    checkGLcall("glBindBufferARB");
+    if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
+    {
+        GLbitfield mapflags;
+        mapflags = GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT;
+        if (flags & WINED3D_BUFFER_DISCARD)
+        {
+            mapflags |= GL_MAP_UNSYNCHRONIZED_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+        }
+        else if (flags & WINED3D_BUFFER_NOSYNC)
+        {
+            mapflags |= GL_MAP_UNSYNCHRONIZED_BIT;
+        }
+        map = GL_EXTCALL(glMapBufferRange(This->buffer_type_hint, 0,
+                    This->resource.size, mapflags));
+        checkGLcall("glMapBufferRange");
+    }
+    else
+    {
+        if (This->flags & WINED3D_BUFFER_APPLESYNC)
+        {
+            DWORD syncflags = 0;
+            if (flags & WINED3D_BUFFER_DISCARD) syncflags |= WINED3DLOCK_DISCARD;
+            if (flags & WINED3D_BUFFER_NOSYNC) syncflags |= WINED3DLOCK_NOOVERWRITE;
+            LEAVE_GL();
+            buffer_sync_apple(This, syncflags, gl_info);
+            ENTER_GL();
+        }
+        map = GL_EXTCALL(glMapBufferARB(This->buffer_type_hint, GL_WRITE_ONLY_ARB));
+        checkGLcall("glMapBufferARB");
+    }
+    if (!map)
+    {
+        LEAVE_GL();
+        ERR("Failed to map opengl buffer\n");
+        return;
+    }
+
+    while (This->modified_areas)
+    {
+        This->modified_areas--;
+        start = This->maps[This->modified_areas].offset;
+        len = This->maps[This->modified_areas].size;
+
+        memcpy(map + start, This->resource.allocatedMemory + start, len);
+
         if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
         {
-            GLbitfield mapflags;
-            mapflags = GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT;
-            if (flags & WINED3D_BUFFER_DISCARD)
-            {
-                mapflags |= GL_MAP_UNSYNCHRONIZED_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
-            }
-            else if (flags & WINED3D_BUFFER_NOSYNC)
-            {
-                mapflags |= GL_MAP_UNSYNCHRONIZED_BIT;
-            }
-            map = GL_EXTCALL(glMapBufferRange(This->buffer_type_hint, 0,
-                                              This->resource.size, mapflags));
-            checkGLcall("glMapBufferRange");
+            GL_EXTCALL(glFlushMappedBufferRange(This->buffer_type_hint, start, len));
+            checkGLcall("glFlushMappedBufferRange");
         }
-        else
+        else if (This->flags & WINED3D_BUFFER_FLUSH)
         {
-            if (This->flags & WINED3D_BUFFER_APPLESYNC)
-            {
-                DWORD syncflags = 0;
-                if (flags & WINED3D_BUFFER_DISCARD) syncflags |= WINED3DLOCK_DISCARD;
-                if (flags & WINED3D_BUFFER_NOSYNC) syncflags |= WINED3DLOCK_NOOVERWRITE;
-                LEAVE_GL();
-                buffer_sync_apple(This, syncflags, gl_info);
-                ENTER_GL();
-            }
-            map = GL_EXTCALL(glMapBufferARB(This->buffer_type_hint, GL_WRITE_ONLY_ARB));
-            checkGLcall("glMapBufferARB");
+            GL_EXTCALL(glFlushMappedBufferRangeAPPLE(This->buffer_type_hint, start, len));
+            checkGLcall("glFlushMappedBufferRangeAPPLE");
         }
-        if (!map)
-        {
-            LEAVE_GL();
-            ERR("Failed to map opengl buffer\n");
-            return;
-        }
+    }
+    GL_EXTCALL(glUnmapBufferARB(This->buffer_type_hint));
+    checkGLcall("glUnmapBufferARB");
 
-        while(This->modified_areas)
-        {
-            This->modified_areas--;
-            start = This->maps[This->modified_areas].offset;
-            len = This->maps[This->modified_areas].size;
-
-            memcpy(map + start, This->resource.allocatedMemory + start, len);
-
-            if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
-            {
-                GL_EXTCALL(glFlushMappedBufferRange(This->buffer_type_hint, start, len));
-                checkGLcall("glFlushMappedBufferRange");
-            }
-            else if (This->flags & WINED3D_BUFFER_FLUSH)
-            {
-                GL_EXTCALL(glFlushMappedBufferRangeAPPLE(This->buffer_type_hint, start, len));
-                checkGLcall("glFlushMappedBufferRangeAPPLE");
-            }
-        }
-        GL_EXTCALL(glUnmapBufferARB(This->buffer_type_hint));
-        checkGLcall("glUnmapBufferARB");
-        LEAVE_GL();
+    LEAVE_GL();
 }
 
 /* Do not call while under the GL lock. */
