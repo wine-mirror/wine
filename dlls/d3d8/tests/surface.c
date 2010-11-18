@@ -320,6 +320,20 @@ static void test_private_data(IDirect3DDevice8 *device)
     ok(ref2 == (ref - 1), "Object reference is %d, expected %d\n", ref2, ref - 1);
 }
 
+static void test_surface_dimensions(IDirect3DDevice8 *device)
+{
+    IDirect3DSurface8 *surface;
+    HRESULT hr;
+
+    hr = IDirect3DDevice8_CreateImageSurface(device, 0, 1, D3DFMT_A8R8G8B8, &surface);
+    ok(hr == D3DERR_INVALIDCALL, "CreateOffscreenPlainSurface returned %#x, expected D3DERR_INVALIDCALL.\n", hr);
+    if (SUCCEEDED(hr)) IDirect3DSurface8_Release(surface);
+
+    hr = IDirect3DDevice8_CreateImageSurface(device, 1, 0, D3DFMT_A8R8G8B8, &surface);
+    ok(hr == D3DERR_INVALIDCALL, "CreateOffscreenPlainSurface returned %#x, expected D3DERR_INVALIDCALL.\n", hr);
+    if (SUCCEEDED(hr)) IDirect3DSurface8_Release(surface);
+}
+
 START_TEST(surface)
 {
     HMODULE d3d8_handle;
@@ -340,6 +354,7 @@ START_TEST(surface)
     test_surface_get_container(device_ptr);
     test_lockrect_invalid(device_ptr);
     test_private_data(device_ptr);
+    test_surface_dimensions(device_ptr);
 
     refcount = IDirect3DDevice8_Release(device_ptr);
     ok(!refcount, "Device has %u references left\n", refcount);
