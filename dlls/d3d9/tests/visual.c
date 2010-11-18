@@ -10613,11 +10613,8 @@ static void depth_bounds_test(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 32, 32,
             MAKEFOURCC('N','V','D','B'), D3DPOOL_DEFAULT, &offscreen_surface, NULL);
-    todo_wine ok(hr != D3D_OK, "Able to create surface, hr = %08x\n", hr);
-    if(offscreen_surface)
-    {
-        IDirect3DSurface9_Release(offscreen_surface);
-    }
+    ok(FAILED(hr), "Able to create surface, hr %#x.\n", hr);
+    if (offscreen_surface) IDirect3DSurface9_Release(offscreen_surface);
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 1.0, 0);
     ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);

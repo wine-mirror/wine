@@ -353,6 +353,7 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
     /* FIXME: Check that the format is supported by the device. */
 
     resource_size = wined3d_format_calculate_size(format, alignment, width, height);
+    if (!resource_size) return WINED3DERR_INVALIDCALL;
 
     /* Look at the implementation and set the correct Vtable. */
     switch (surface_type)
