@@ -110,8 +110,9 @@ static DWORD getPixelColor(IDirect3DDevice9 *device, UINT x, UINT y)
     D3DLOCKED_RECT lockedRect;
     RECT rectToLock = {x, y, x+1, y+1};
 
-    hr = IDirect3DDevice9_CreateRenderTarget(device, 640, 480, D3DFMT_A8R8G8B8, 0, 0, TRUE, &surf, NULL);
-    if(FAILED(hr) || !surf )  /* This is not a test */
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 640, 480,
+            D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &surf, NULL);
+    if (FAILED(hr) || !surf)
     {
         trace("Can't create an offscreen plain surface to read the render target data, hr=%08x\n", hr);
         return 0xdeadbeef;
@@ -125,8 +126,8 @@ static DWORD getPixelColor(IDirect3DDevice9 *device, UINT x, UINT y)
         goto out;
     }
 
-    hr = IDirect3DDevice9_StretchRect(device, target, NULL, surf, NULL, D3DTEXF_POINT);
-    if(FAILED(hr))
+    hr = IDirect3DDevice9_GetRenderTargetData(device, target, surf);
+    if (FAILED(hr))
     {
         trace("Can't read the render target data, hr=%08x\n", hr);
         ret = 0xdeadbeec;
