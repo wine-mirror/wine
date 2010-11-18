@@ -2391,6 +2391,30 @@ static void SizeTest(void)
         dsurface = NULL;
     }
 
+    /* Test 0 height. */
+    memset(&desc, 0, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+    desc.dwWidth = 1;
+    desc.dwHeight = 0;
+    ret = IDirectDraw_CreateSurface(lpDD, &desc, &dsurface, NULL);
+    ok(ret == DDERR_INVALIDPARAMS, "Creating a 0 height surface returned %#x, expected DDERR_INVALIDPARAMS.\n", ret);
+    if (SUCCEEDED(ret)) IDirectDrawSurface_Release(dsurface);
+    dsurface = NULL;
+
+    /* Test 0 width. */
+    memset(&desc, 0, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+    desc.dwWidth = 0;
+    desc.dwHeight = 1;
+    ret = IDirectDraw_CreateSurface(lpDD, &desc, &dsurface, NULL);
+    ok(ret == DDERR_INVALIDPARAMS, "Creating a 0 width surface returned %#x, expected DDERR_INVALIDPARAMS.\n", ret);
+    if (SUCCEEDED(ret)) IDirectDrawSurface_Release(dsurface);
+    dsurface = NULL;
+
     /* Sanity check */
     ZeroMemory(&desc, sizeof(desc));
     desc.dwSize = sizeof(desc);

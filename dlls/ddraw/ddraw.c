@@ -3069,6 +3069,12 @@ static HRESULT CreateSurface(IDirectDraw7 *iface,
         desc2.dwHeight = Mode.Height;
     }
 
+    if (!desc2.dwWidth || !desc2.dwHeight)
+    {
+        LeaveCriticalSection(&ddraw_cs);
+        return DDERR_INVALIDPARAMS;
+    }
+
     /* Mipmap count fixes */
     if(desc2.ddsCaps.dwCaps & DDSCAPS_MIPMAP)
     {
