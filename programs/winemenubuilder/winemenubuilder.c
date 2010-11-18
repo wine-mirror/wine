@@ -52,9 +52,6 @@
  * group.
  *  Clean up fd.o menu icons and .directory files when the menu is deleted
  * in Windows.
- *  Generate icons for file open handlers to go into the "Open with..."
- * list. What does Windows use, the default icon for the .EXE file? It's
- * not in the registry.
  *  Associate applications under HKCR\Applications to open any MIME type
  * (by associating with application/octet-stream, or how?).
  *  Clean up fd.o MIME types when they are deleted in Windows, their icons
