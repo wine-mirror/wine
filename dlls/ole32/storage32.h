@@ -412,7 +412,8 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
 
 SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
                       StorageImpl* This,
-                      BlockChainStream** ppbbChain);
+                      BlockChainStream** ppbbChain,
+                      ULARGE_INTEGER newSize);
 
 /****************************************************************************
  * StgStreamImpl definitions.

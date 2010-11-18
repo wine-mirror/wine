@@ -2489,7 +2489,7 @@ static HRESULT StorageImpl_StreamSetSize(StorageBaseImpl *base, DirRef index,
   }
   else if (bigblock && newsize.QuadPart < LIMIT_TO_USE_SMALL_BLOCK)
   {
-    smallblock = Storage32Impl_BigBlocksToSmallBlocks(This, pbigblock);
+    smallblock = Storage32Impl_BigBlocksToSmallBlocks(This, pbigblock, newsize);
     if (!smallblock)
       return E_FAIL;
   }
@@ -4132,12 +4132,13 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
  */
 SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
                            StorageImpl* This,
-                           BlockChainStream** ppbbChain)
+                           BlockChainStream** ppbbChain,
+                           ULARGE_INTEGER newSize)
 {
     ULARGE_INTEGER size, offset, cbTotalRead;
     ULONG cbRead, cbWritten, sbHeadOfChain = BLOCK_END_OF_CHAIN;
     DirRef streamEntryRef;
-    HRESULT resWrite = S_OK, resRead;
+    HRESULT resWrite = S_OK, resRead = S_OK;
     DirEntry streamEntry;
     BYTE* buffer;
     SmallBlockChainStream* sbTempChain;
@@ -4150,14 +4151,15 @@ SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
     if(!sbTempChain)
         return NULL;
 
+    SmallBlockChainStream_SetSize(sbTempChain, newSize);
     size = BlockChainStream_GetSize(*ppbbChain);
-    SmallBlockChainStream_SetSize(sbTempChain, size);
+    size.QuadPart = min(size.QuadPart, newSize.QuadPart);
 
     offset.u.HighPart = 0;
     offset.u.LowPart = 0;
     cbTotalRead.QuadPart = 0;
     buffer = HeapAlloc(GetProcessHeap(), 0, This->bigBlockSize);
-    do
+    while(cbTotalRead.QuadPart < size.QuadPart)
     {
         resRead = BlockChainStream_ReadAt(*ppbbChain, offset,
                 min(This->bigBlockSize, size.u.LowPart - offset.u.LowPart),
@@ -4183,7 +4185,7 @@ SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
             resRead = STG_E_READFAULT;
             break;
         }
-    }while(cbTotalRead.QuadPart < size.QuadPart);
+    }
     HeapFree(GetProcessHeap(), 0, buffer);
 
     size.u.HighPart = 0;
