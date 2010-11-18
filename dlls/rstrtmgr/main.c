@@ -85,3 +85,21 @@ DWORD WINAPI RmStartSession(DWORD *sessionhandle, DWORD flags, WCHAR sessionkey[
     FIXME("%p, %d, %p stub!\n", sessionhandle, flags, sessionkey);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+/***********************************************************************
+ * RmRestart (rstrtmgr.@)
+ */
+DWORD WINAPI RmRestart(DWORD handle, DWORD flags, void *fnstatus)
+{
+    FIXME("%u, 0x%08x, %p stub!\n", handle, flags, fnstatus);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ * RmEndSession (rstrtmgr.@)
+ */
+DWORD WINAPI RmEndSession(DWORD handle)
+{
+    FIXME("%u stub!\n", handle);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
