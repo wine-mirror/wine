@@ -430,9 +430,7 @@ static const int ws_aiflag_map[][2] =
     MAP_OPTION( AI_PASSIVE ),
     MAP_OPTION( AI_CANONNAME ),
     MAP_OPTION( AI_NUMERICHOST ),
-    /* Linux/UNIX knows a lot more. But Windows only
-     * has 3 as far as I could see. -Marcus
-     */
+    MAP_OPTION( AI_ADDRCONFIG ),
 };
 
 static const int ws_niflag_map[][2] =

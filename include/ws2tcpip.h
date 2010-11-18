@@ -60,9 +60,13 @@ typedef ADDRINFOA ADDRINFO, *LPADDRINFO;
 
 /* Possible Windows flags for getaddrinfo() */
 #ifndef USE_WS_PREFIX
-# define AI_PASSIVE     0x0001
-# define AI_CANONNAME   0x0002
-# define AI_NUMERICHOST 0x0004
+# define AI_PASSIVE                0x00000001
+# define AI_CANONNAME              0x00000002
+# define AI_NUMERICHOST            0x00000004
+# define AI_ADDRCONFIG             0x00000400
+# define AI_NON_AUTHORITATIVE      0x00004000
+# define AI_SECURE                 0x00008000
+# define AI_RETURN_PREFERRED_NAMES 0x00010000
 /* getaddrinfo error codes */
 # define EAI_AGAIN	WSATRY_AGAIN
 # define EAI_BADFLAGS	WSAEINVAL
@@ -74,9 +78,13 @@ typedef ADDRINFOA ADDRINFO, *LPADDRINFO;
 # define EAI_SERVICE	WSATYPE_NOT_FOUND
 # define EAI_SOCKTYPE	WSAESOCKTNOSUPPORT
 #else
-# define WS_AI_PASSIVE     0x0001
-# define WS_AI_CANONNAME   0x0002
-# define WS_AI_NUMERICHOST 0x0004
+# define WS_AI_PASSIVE                0x00000001
+# define WS_AI_CANONNAME              0x00000002
+# define WS_AI_NUMERICHOST            0x00000004
+# define WS_AI_ADDRCONFIG             0x00000400
+# define WS_AI_NON_AUTHORITATIVE      0x00004000
+# define WS_AI_SECURE                 0x00008000
+# define WS_AI_RETURN_PREFERRED_NAMES 0x00010000
 /* getaddrinfo error codes */
 # define WS_EAI_AGAIN	WSATRY_AGAIN
 # define WS_EAI_BADFLAGS	WSAEINVAL
