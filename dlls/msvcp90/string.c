@@ -1092,3 +1092,34 @@ void __thiscall MSVCP_basic_string_wchar_swap(basic_string_wchar *this, basic_st
         str->res = res;
     }
 }
+
+/* ?append@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@ABV12@II@Z */
+/* ?append@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@AEBV12@_K1@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_append_substr, 16)
+basic_string_wchar* __thiscall MSVCP_basic_string_wchar_append_substr(basic_string_wchar *this,
+        basic_string_wchar *append, size_t offset, size_t count)
+{
+    if(append->size < offset)
+        MSVCP__String_base_Xran();
+
+    if(count > append->size-offset)
+        count = append->size-offset;
+
+    if(basic_string_wchar_grow(this, this->size+count, FALSE)) {
+        MSVCP_char_traits_wchar__Copy_s(basic_string_wchar_ptr(this)+this->size,
+                this->res-this->size, basic_string_wchar_ptr(append)+offset, count);
+        basic_string_wchar_eos(this, this->size+count);
+    }
+
+    return this;
+}
+
+/* ?append@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@ABV12@@Z */
+/* ?append@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@AEBV12@@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_append, 8)
+    basic_string_wchar* __thiscall MSVCP_basic_string_wchar_append(
+            basic_string_wchar *this, basic_string_wchar *append)
+{
+    return MSVCP_basic_string_wchar_append_substr(this, append,
+            0, MSVCP_basic_string_wchar_npos);
+}
