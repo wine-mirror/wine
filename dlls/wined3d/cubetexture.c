@@ -500,7 +500,7 @@ HRESULT cubetexture_init(IWineD3DCubeTextureImpl *texture, UINT edge_length, UIN
     texture->lpVtbl = &IWineD3DCubeTexture_Vtbl;
 
     hr = basetexture_init((IWineD3DBaseTextureImpl *)texture, 6, levels,
-            WINED3DRTYPE_CUBETEXTURE, device, 0, usage, format, pool, parent, parent_ops);
+            WINED3DRTYPE_CUBETEXTURE, device, usage, format, pool, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize basetexture, returning %#x\n", hr);

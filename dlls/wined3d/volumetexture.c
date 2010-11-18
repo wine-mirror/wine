@@ -430,7 +430,7 @@ HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT 
     texture->lpVtbl = &IWineD3DVolumeTexture_Vtbl;
 
     hr = basetexture_init((IWineD3DBaseTextureImpl *)texture, 1, levels,
-            WINED3DRTYPE_VOLUMETEXTURE, device, 0, usage, format, pool, parent, parent_ops);
+            WINED3DRTYPE_VOLUMETEXTURE, device, usage, format, pool, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize basetexture, returning %#x.\n", hr);

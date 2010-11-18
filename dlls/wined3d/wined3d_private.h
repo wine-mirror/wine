@@ -1936,7 +1936,7 @@ DWORD basetexture_get_lod(IWineD3DBaseTexture *iface) DECLSPEC_HIDDEN;
 IWineD3DResourceImpl *basetexture_get_sub_resource(IWineD3DBaseTextureImpl *texture,
         UINT sub_resource_idx) DECLSPEC_HIDDEN;
 HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, UINT layer_count, UINT level_count,
-        WINED3DRESOURCETYPE resource_type, IWineD3DDeviceImpl *device, UINT size, DWORD usage,
+        WINED3DRESOURCETYPE resource_type, IWineD3DDeviceImpl *device, DWORD usage,
         const struct wined3d_format *format, WINED3DPOOL pool, void *parent,
         const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 HRESULT basetexture_set_autogen_filter_type(IWineD3DBaseTexture *iface,
