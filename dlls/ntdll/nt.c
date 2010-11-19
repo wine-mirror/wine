@@ -1370,11 +1370,27 @@ NTSTATUS WINAPI NtQuerySystemInformation(
         {
             SYSTEM_PERFORMANCE_INFORMATION spi;
             static BOOL fixme_written = FALSE;
+            FILE *fp;
 
             memset(&spi, 0 , sizeof(spi));
             len = sizeof(spi);
 
             spi.Reserved3 = 0x7fffffff; /* Available paged pool memory? */
+
+            if ((fp = fopen("/proc/uptime", "r")))
+            {
+                double uptime, idle_time;
+
+                fscanf(fp, "%lf %lf", &uptime, &idle_time);
+                fclose(fp);
+                spi.IdleTime.QuadPart = 10000000 * idle_time;
+            }
+            else
+            {
+                static ULONGLONG idle;
+                /* many programs expect IdleTime to change so fake change */
+                spi.IdleTime.QuadPart = ++idle;
+            }
 
             if (Length >= len)
             {
