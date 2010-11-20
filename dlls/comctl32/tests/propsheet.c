@@ -621,12 +621,12 @@ static const struct message property_sheet_seq[] = {
     { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
     { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
     { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },*/
-    { WM_ACTIVATE, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    /*{ WM_ACTIVATE, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
     { WM_ACTIVATE, sent|id, 0, 0, RECEIVER_PAGE },
     { WM_ACTIVATEAPP, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
     { WM_ACTIVATEAPP, sent|id, 0, 0, RECEIVER_PAGE },
     { WM_DESTROY, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
-    { WM_DESTROY, sent|id, 0, 0, RECEIVER_PAGE },
+    { WM_DESTROY, sent|id, 0, 0, RECEIVER_PAGE },*/
     /*{ WM_NCDESTROY, sent|id, 0, 0, RECEIVER_PAGE },
     { WM_NCDESTROY, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },*/
     { 0 }
@@ -662,13 +662,6 @@ static void save_message(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, 
 static LRESULT CALLBACK sheet_callback_messages_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     save_message(hwnd, msg, wParam, lParam, RECEIVER_SHEET_WINPROC);
-
-    switch (msg)
-    {
-    case WM_CTLCOLORSTATIC:
-        keybd_event(VK_ESCAPE, 0, 0, 0);
-        break;
-    }
 
     return CallWindowProc (oldWndProc, hwnd, msg, wParam, lParam);
 }
@@ -719,7 +712,7 @@ static void test_messages(void)
     memset(&psh, 0, sizeof(psh));
     psh.dwSize = sizeof(psh);
     psh.dwFlags = PSH_NOAPPLYNOW | PSH_WIZARD | PSH_USECALLBACK
-                  /*| PSH_MODELESS */ | PSH_USEICONID;
+                  | PSH_MODELESS | PSH_USEICONID;
     psh.pszCaption = "test caption";
     psh.nPages = 1;
     psh.hwndParent = GetDesktopWindow();
