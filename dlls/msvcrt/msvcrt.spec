@@ -1117,6 +1117,7 @@
 @ cdecl _wfindfirst64i32(wstr ptr) MSVCRT__wfindfirst64i32
 @ cdecl _wfindnext(long ptr) MSVCRT__wfindnext
 # stub _wfindnext64
+@ cdecl _wfindnext64i32(long ptr) MSVCRT__wfindnext64i32
 @ cdecl _wfindnexti64(long ptr) MSVCRT__wfindnexti64
 @ cdecl _wfopen(wstr wstr) MSVCRT__wfopen
 @ cdecl _wfopen_s(ptr wstr wstr) MSVCRT__wfopen_s

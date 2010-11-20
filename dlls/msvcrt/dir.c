@@ -557,6 +557,25 @@ int CDECL MSVCRT__wfindnexti64(MSVCRT_intptr_t hand, struct MSVCRT__wfinddatai64
 }
 
 /*********************************************************************
+ *		_wfindnext64i32 (MSVCRT.@)
+ *
+ * Unicode version of _findnext64i32.
+ */
+int CDECL MSVCRT__wfindnext64i32(MSVCRT_intptr_t hand, struct MSVCRT__wfinddata64i32_t * ft)
+{
+  WIN32_FIND_DATAW find_data;
+
+  if (!FindNextFileW((HANDLE)hand, &find_data))
+  {
+    *MSVCRT__errno() = MSVCRT_ENOENT;
+    return -1;
+  }
+
+  msvcrt_wfttofd64i32(&find_data,ft);
+  return 0;
+}
+
+/*********************************************************************
  *		_getcwd (MSVCRT.@)
  *
  * Get the current working directory.
