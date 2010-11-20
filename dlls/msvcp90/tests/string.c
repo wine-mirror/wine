@@ -286,7 +286,7 @@ static BOOL init(void)
         p_basic_string_char_append = (void*)GetProcAddress(msvcp,
                 "?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@AEBV12@@Z");
         p_basic_string_char_append_substr = (void*)GetProcAddress(msvcp,
-                "?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@AEBV12@_K1@Z ");
+                "?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@AEBV12@_K1@Z");
 
         p_basic_string_wchar_ctor = (void*)GetProcAddress(msvcp,
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@XZ");
