@@ -28,7 +28,7 @@ LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
 STRINGTABLE
 {
-   IDS_CPL_TITLE, "Agiungi/Rimuovi Programmi"
+   IDS_CPL_TITLE, "Aggiungi/Rimuovi Programmi"
    IDS_CPL_DESC, "Ti permette di installare nuovi software o di rimuovere quelli presenti dal tuo computer."
    IDS_TAB1_TITLE, "Applicazioni"
 
