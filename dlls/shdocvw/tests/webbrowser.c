@@ -2808,24 +2808,13 @@ static void test_WebBrowser(BOOL do_download)
 
     hres = CoCreateInstance(&CLSID_WebBrowser, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IUnknown, (void**)&unk);
-    if(FAILED(hres)) {
-        win_skip("Could not create WebBrowser, probably too old IE\n");
-        return;
-    }
+    ok(hres == S_OK, "Creating WebBrowser object failed: %08x\n", hres);
 
     is_downloading = FALSE;
     is_first_load = TRUE;
 
     hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
     ok(hres == S_OK, "Could not get IWebBrowser2 iface: %08x\n", hres);
-
-    hres = IWebBrowser2_put_Resizable(wb, VARIANT_TRUE);
-    if(hres == E_NOTIMPL) {
-        win_skip("put_Resizable returned E_NOTIMPL, assuming IE <6\n");
-        IWebBrowser_Release(wb);
-        IUnknown_Release(unk);
-        return;
-    }
 
     test_QueryInterface(unk);
     test_ready_state(READYSTATE_UNINITIALIZED);
@@ -2873,16 +2862,34 @@ static void test_WebBrowser(BOOL do_download)
     ok(ref == 0, "ref=%d, expected 0\n", ref);
 }
 
+static BOOL check_ie(void)
+{
+    IHTMLDocument5 *doc;
+    HRESULT hres;
+
+    hres = CoCreateInstance(&CLSID_HTMLDocument, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IHTMLDocument5, (void**)&doc);
+    if(FAILED(hres))
+      return FALSE;
+
+    IHTMLDocument5_Release(doc);
+    return TRUE;
+}
+
 START_TEST(webbrowser)
 {
-    container_hwnd = create_container_window();
-
     OleInitialize(NULL);
 
-    trace("Testing WebBrowser (no download)...\n");
-    test_WebBrowser(FALSE);
-    trace("Testing WebBrowser...\n");
-    test_WebBrowser(TRUE);
+    if(check_ie()) {
+      container_hwnd = create_container_window();
+
+      trace("Testing WebBrowser (no download)...\n");
+      test_WebBrowser(FALSE);
+      trace("Testing WebBrowser...\n");
+      test_WebBrowser(TRUE);
+    }else {
+      win_skip("Skipping tests on too old IE\n");
+    }
 
     OleUninitialize();
 }
