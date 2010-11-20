@@ -1356,7 +1356,7 @@ static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
          i * sizeof(PROPERTYIDOFFSET));
 
         if (idOffset->dwOffset < sizeof(PROPERTYSECTIONHEADER) ||
-         idOffset->dwOffset >= sectionHdr.cbSection - sizeof(DWORD))
+         idOffset->dwOffset > sectionHdr.cbSection - sizeof(DWORD))
             hr = STG_E_INVALIDPOINTER;
         else
         {
