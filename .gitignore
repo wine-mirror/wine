@@ -246,6 +246,7 @@ loader/wine.man
 loader/wine64
 programs/Makeprog.rules
 programs/msiexec/msiexec.man
+programs/notepad/notepad.man
 programs/rpcss/epm.h
 programs/rpcss/epm_s.c
 programs/rpcss/irot.h
