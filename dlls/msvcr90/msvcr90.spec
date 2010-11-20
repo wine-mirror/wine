@@ -1181,7 +1181,7 @@
 @ stub _wfindfirst32
 @ stub _wfindfirst32i64
 @ stub _wfindfirst64
-@ stub _wfindfirst64i32
+@ cdecl _wfindfirst64i32(wstr ptr) msvcrt._wfindfirst64i32
 @ stub _wfindnext32
 @ stub _wfindnext32i64
 @ stub _wfindnext64
