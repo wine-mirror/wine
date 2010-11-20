@@ -501,15 +501,60 @@ static HRESULT WINAPI PersistFile_Save(IPersistFile *pFile, LPCOLESTR pszFileNam
         if (file != INVALID_HANDLE_VALUE)
         {
             DWORD bytesWritten;
+            char *iconfile;
             char str_header[] = "[InternetShortcut]";
             char str_URL[] = "URL=";
+            char str_ICONFILE[] = "ICONFILE=";
             char str_eol[] = "\r\n";
+            IPropertyStorage *pPropStgRead;
+            PROPSPEC ps[2];
+            PROPVARIANT pvread[2];
+            ps[0].ulKind = PRSPEC_PROPID;
+            ps[0].propid = PID_IS_ICONFILE;
+            ps[1].ulKind = PRSPEC_PROPID;
+            ps[1].propid = PID_IS_ICONINDEX;
 
             WriteFile(file, str_header, lstrlenA(str_header), &bytesWritten, NULL);
             WriteFile(file, str_eol, lstrlenA(str_eol), &bytesWritten, NULL);
             WriteFile(file, str_URL, lstrlenA(str_URL), &bytesWritten, NULL);
             WriteFile(file, url, lstrlenA(url), &bytesWritten, NULL);
             WriteFile(file, str_eol, lstrlenA(str_eol), &bytesWritten, NULL);
+
+            hr = IPropertySetStorage_Open(This->property_set_storage, &FMTID_Intshcut, STGM_READ|STGM_SHARE_EXCLUSIVE, &pPropStgRead);
+            if SUCCEEDED(hr)
+            {
+                hr = IPropertyStorage_ReadMultiple(pPropStgRead, 2, ps, pvread);
+                if SUCCEEDED(hr)
+                {
+                    char indexString[50];
+                    len = WideCharToMultiByte(CP_UTF8, 0, pvread[0].pwszVal, -1, NULL, 0, 0, 0);
+                    iconfile = heap_alloc(len);
+                    if (iconfile != NULL)
+                    {
+                        WideCharToMultiByte(CP_UTF8, 0, pvread[0].pwszVal, -1, iconfile, len, 0, 0);
+                        WriteFile(file, str_ICONFILE, lstrlenA(str_ICONFILE), &bytesWritten, NULL);
+                        WriteFile(file, iconfile, lstrlenA(iconfile), &bytesWritten, NULL);
+                        WriteFile(file, str_eol, lstrlenA(str_eol), &bytesWritten, NULL);
+                    }
+
+                    sprintf(indexString, "ICONINDEX=%d", pvread[1].iVal);
+                    WriteFile(file, indexString, lstrlenA(indexString), &bytesWritten, NULL);
+                    WriteFile(file, str_eol, lstrlenA(str_eol), &bytesWritten, NULL);
+
+                    IPropertyStorage_Release(pPropStgRead);
+                    PropVariantClear(&pvread[0]);
+                    PropVariantClear(&pvread[1]);
+                }
+                else
+                {
+                    TRACE("Unable to read properties.\n");
+                }
+            }
+            else
+            {
+               TRACE("Unable to get the IPropertyStorage.\n");
+            }
+
             CloseHandle(file);
             if (pszFileName == NULL || fRemember)
                 This->isDirty = FALSE;
