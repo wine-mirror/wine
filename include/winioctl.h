@@ -376,6 +376,15 @@ typedef struct _VOLUME_DISK_EXTENTS {
     DISK_EXTENT         Extents[1];
 } VOLUME_DISK_EXTENTS;
 
+typedef struct RETRIEVAL_POINTERS_BUFFER {
+    DWORD         ExtentCount;
+    LARGE_INTEGER StartingVcn;
+    struct {
+        LARGE_INTEGER NextVcn;
+        LARGE_INTEGER Lcn;
+    } Extents[1];
+} RETRIEVAL_POINTERS_BUFFER, *PRETRIEVAL_POINTERS_BUFFER;
+
 /* End: _WIN32_WINNT >= 0x0400 */
 
 /*

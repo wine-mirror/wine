@@ -1495,6 +1495,28 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
         status = STATUS_SUCCESS;
         break;
 
+    case FSCTL_GET_RETRIEVAL_POINTERS:
+    {
+        RETRIEVAL_POINTERS_BUFFER *buffer = (RETRIEVAL_POINTERS_BUFFER *)out_buffer;
+
+        FIXME("stub: FSCTL_GET_RETRIEVAL_POINTERS\n");
+
+        if (out_size >= sizeof(RETRIEVAL_POINTERS_BUFFER))
+        {
+            buffer->ExtentCount                 = 1;
+            buffer->StartingVcn.QuadPart        = 1;
+            buffer->Extents[0].NextVcn.QuadPart = 0;
+            buffer->Extents[0].Lcn.QuadPart     = 0;
+            io->Information = sizeof(RETRIEVAL_POINTERS_BUFFER);
+            status = STATUS_SUCCESS;
+        }
+        else
+        {
+            io->Information = 0;
+            status = STATUS_BUFFER_TOO_SMALL;
+        }
+        break;
+    }
     case FSCTL_PIPE_LISTEN:
     case FSCTL_PIPE_WAIT:
     default:
