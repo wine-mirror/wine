@@ -391,9 +391,9 @@
 @ varargs _cscanf_s(str) msvcrt._cscanf_s
 @ varargs _cscanf_s_l(str ptr) msvcrt._cscanf_s_l
 @ cdecl _ctime32(ptr) msvcrt._ctime32
-@ stub _ctime32_s
+@ cdecl _ctime32_s(str long ptr) msvcrt._ctime32_s
 @ cdecl _ctime64(ptr) msvcrt._ctime64
-@ stub _ctime64_s
+@ cdecl _ctime64_s(str long ptr) msvcrt._ctime64_s
 @ cdecl _cwait(ptr long long) msvcrt._cwait
 @ varargs _cwprintf(wstr) msvcrt._cwprintf
 @ stub _cwprintf_l

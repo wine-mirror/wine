@@ -902,6 +902,28 @@ char * CDECL MSVCRT__ctime64(const MSVCRT___time64_t *time)
 }
 
 /*********************************************************************
+ *		_ctime64_s (MSVCRT.@)
+ */
+int CDECL MSVCRT__ctime64_s(char *res, MSVCRT_size_t len, const MSVCRT___time64_t *time)
+{
+    struct MSVCRT_tm *t;
+    if( !MSVCRT_CHECK_PMT( res != NULL ) || !MSVCRT_CHECK_PMT( len >= 26 ) )
+    {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+    res[0] = '\0';
+    if( !MSVCRT_CHECK_PMT( time != NULL ) || !MSVCRT_CHECK_PMT( time > 0 ) )
+    {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+    t = MSVCRT__localtime64( time );
+    strcpy( res, MSVCRT_asctime( t ) );
+    return 0;
+}
+
+/*********************************************************************
  *		_ctime32 (MSVCRT.@)
  */
 char * CDECL MSVCRT__ctime32(const MSVCRT___time32_t *time)
@@ -910,6 +932,28 @@ char * CDECL MSVCRT__ctime32(const MSVCRT___time32_t *time)
     t = MSVCRT__localtime32( time );
     if (!t) return NULL;
     return MSVCRT_asctime( t );
+}
+
+/*********************************************************************
+ *		_ctime32_s (MSVCRT.@)
+ */
+int CDECL MSVCRT__ctime32_s(char *res, MSVCRT_size_t len, const MSVCRT___time32_t *time)
+{
+    struct MSVCRT_tm *t;
+    if( !MSVCRT_CHECK_PMT( res != NULL ) || !MSVCRT_CHECK_PMT( len >= 26 ) )
+    {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+    res[0] = '\0';
+    if( !MSVCRT_CHECK_PMT( time != NULL ) || !MSVCRT_CHECK_PMT( time > 0 ) )
+    {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+    t = MSVCRT__localtime32( time );
+    strcpy( res, MSVCRT_asctime( t ) );
+    return 0;
 }
 
 /*********************************************************************
