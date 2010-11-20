@@ -46,9 +46,11 @@ typedef struct
     IUniformResourceLocatorA uniformResourceLocatorA;
     IUniformResourceLocatorW uniformResourceLocatorW;
     IPersistFile persistFile;
+    IPropertySetStorage IPropertySetStorage_iface;
 
     LONG refCount;
 
+    IPropertySetStorage *property_set_storage;
     WCHAR *url;
     BOOLEAN isDirty;
     LPOLESTR currentFile;
@@ -69,6 +71,11 @@ static inline InternetShortcut* impl_from_IUniformResourceLocatorW(IUniformResou
 static inline InternetShortcut* impl_from_IPersistFile(IPersistFile *iface)
 {
     return CONTAINING_RECORD(iface, InternetShortcut, persistFile);
+}
+
+static inline InternetShortcut* impl_from_IPropertySetStorage(IPropertySetStorage *iface)
+{
+    return (InternetShortcut*)((char*)iface - FIELD_OFFSET(InternetShortcut, IPropertySetStorage_iface));
 }
 
 static BOOL run_winemenubuilder( const WCHAR *args )
@@ -145,6 +152,8 @@ static HRESULT Unknown_QueryInterface(InternetShortcut *This, REFIID riid, PVOID
         *ppvObject = &This->uniformResourceLocatorW;
     else if (IsEqualGUID(&IID_IPersistFile, riid))
         *ppvObject = &This->persistFile;
+    else if (IsEqualGUID(&IID_IPropertySetStorage, riid))
+        *ppvObject = &This->IPropertySetStorage_iface;
     else if (IsEqualGUID(&IID_IShellLinkA, riid))
     {
         FIXME("The IShellLinkA interface is not yet supported by InternetShortcut\n");
@@ -179,6 +188,7 @@ static ULONG Unknown_Release(InternetShortcut *This)
     {
         CoTaskMemFree(This->url);
         CoTaskMemFree(This->currentFile);
+        IPropertySetStorage_Release(This->property_set_storage);
         heap_free(This);
         SHDOCVW_UnlockModule();
     }
@@ -537,7 +547,77 @@ static HRESULT WINAPI PersistFile_GetCurFile(IPersistFile *pFile, LPOLESTR *ppsz
     return hr;
 }
 
+static HRESULT WINAPI PropertySetStorage_QueryInterface(IPropertySetStorage *iface, REFIID riid, PVOID *ppvObject)
+{
+    InternetShortcut *This = impl_from_IPropertySetStorage(iface);
+    TRACE("(%p)\n", iface);
+    return Unknown_QueryInterface(This, riid, ppvObject);
+}
 
+static ULONG WINAPI PropertySetStorage_AddRef(IPropertySetStorage *iface)
+{
+    InternetShortcut *This = impl_from_IPropertySetStorage(iface);
+    TRACE("(%p)\n", iface);
+    return Unknown_AddRef(This);
+}
+
+static ULONG WINAPI PropertySetStorage_Release(IPropertySetStorage *iface)
+{
+    InternetShortcut *This = impl_from_IPropertySetStorage(iface);
+    TRACE("(%p)\n", iface);
+    return Unknown_Release(This);
+}
+
+static HRESULT WINAPI PropertySetStorage_Create(
+        IPropertySetStorage* iface,
+        REFFMTID rfmtid,
+        const CLSID *pclsid,
+        DWORD grfFlags,
+        DWORD grfMode,
+        IPropertyStorage **ppprstg)
+{
+    InternetShortcut *This = impl_from_IPropertySetStorage(iface);
+    TRACE("(%s, %p, 0x%x, 0x%x, %p)\n", debugstr_guid(rfmtid), pclsid, grfFlags, grfMode, ppprstg);
+
+    return IPropertySetStorage_Create(This->property_set_storage,
+                                      rfmtid,
+                                      pclsid,
+                                      grfFlags,
+                                      grfMode,
+                                      ppprstg);
+}
+
+static HRESULT WINAPI PropertySetStorage_Open(
+        IPropertySetStorage* iface,
+        REFFMTID rfmtid,
+        DWORD grfMode,
+        IPropertyStorage **ppprstg)
+{
+    InternetShortcut *This = impl_from_IPropertySetStorage(iface);
+    TRACE("(%s, 0x%x, %p)\n", debugstr_guid(rfmtid), grfMode, ppprstg);
+
+    /* Note:  The |STGM_SHARE_EXCLUSIVE is to cope with a bug in the implementation.  Should be fixed in ole32. */
+    return IPropertySetStorage_Open(This->property_set_storage,
+                                    rfmtid,
+                                    grfMode|STGM_SHARE_EXCLUSIVE,
+                                    ppprstg);
+}
+
+static HRESULT WINAPI PropertySetStorage_Delete(IPropertySetStorage *iface, REFFMTID rfmtid)
+{
+    InternetShortcut *This = impl_from_IPropertySetStorage(iface);
+    TRACE("(%s)\n", debugstr_guid(rfmtid));
+
+
+    return IPropertySetStorage_Delete(This->property_set_storage,
+                                      rfmtid);
+}
+
+static HRESULT WINAPI PropertySetStorage_Enum(IPropertySetStorage *iface, IEnumSTATPROPSETSTG **ppenum)
+{
+    FIXME("(%p): stub\n", ppenum);
+    return E_NOTIMPL;
+}
 
 static const IUniformResourceLocatorWVtbl uniformResourceLocatorWVtbl = {
     UniformResourceLocatorW_QueryInterface,
@@ -569,6 +649,16 @@ static const IPersistFileVtbl persistFileVtbl = {
     PersistFile_GetCurFile
 };
 
+static const IPropertySetStorageVtbl propertySetStorageVtbl = {
+    PropertySetStorage_QueryInterface,
+    PropertySetStorage_AddRef,
+    PropertySetStorage_Release,
+    PropertySetStorage_Create,
+    PropertySetStorage_Open,
+    PropertySetStorage_Delete,
+    PropertySetStorage_Enum
+};
+
 static InternetShortcut *create_shortcut(void)
 {
     InternetShortcut *newshortcut;
@@ -576,10 +666,31 @@ static InternetShortcut *create_shortcut(void)
     newshortcut = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(InternetShortcut));
     if (newshortcut)
     {
+        HRESULT hr;
+        IPropertyStorage *dummy;
+
         newshortcut->uniformResourceLocatorA.lpVtbl = &uniformResourceLocatorAVtbl;
         newshortcut->uniformResourceLocatorW.lpVtbl = &uniformResourceLocatorWVtbl;
         newshortcut->persistFile.lpVtbl = &persistFileVtbl;
+        newshortcut->IPropertySetStorage_iface.lpVtbl = &propertySetStorageVtbl;
         newshortcut->refCount = 0;
+        hr = StgCreateStorageEx(NULL, STGM_CREATE | STGM_READWRITE | STGM_SHARE_EXCLUSIVE, STGFMT_STORAGE, 0, NULL, NULL, &IID_IPropertySetStorage, (void **) &newshortcut->property_set_storage);
+        if FAILED(hr)
+        {
+            TRACE("Failed to create the storage object needed for the shortcut.\n");
+            heap_free(newshortcut);
+            return NULL;
+        }
+
+        hr = IPropertySetStorage_Create(newshortcut->property_set_storage, &FMTID_Intshcut, NULL, PROPSETFLAG_DEFAULT, STGM_CREATE | STGM_READWRITE | STGM_SHARE_EXCLUSIVE, &dummy);
+        if FAILED(hr)
+        {
+            TRACE("Failed to create the property object needed for the shortcut.\n");
+            IPropertySetStorage_Release(newshortcut->property_set_storage);
+            heap_free(newshortcut);
+            return NULL;
+        }
+        IPropertySetStorage_Release(dummy);
     }
 
     return newshortcut;
