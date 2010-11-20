@@ -1,0 +1,11 @@
+.TH NOTEPAD 1 "November 2010" "@PACKAGE_STRING@" "Wine Programs"
+.SH NAME
+notepad \- Wine text editor
+.SH SYNOPSIS
+.BR "notepad "\fI[text file]\fR "
+.SH DESCRIPTION
+.B notepad
+is the Wine text editor, designed to be compatible with its Microsoft Windows counterpart.
+It supports ANSI, UTF-8 and UTF-16 files, and can read (but not write) files with Unix line endings.
+.SH "SEE ALSO"
+.BR wine(1)

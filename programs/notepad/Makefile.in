@@ -43,6 +43,18 @@ RC_SRCS = \
 	Zh.rc \
 	rsrc.rc
 
+MANPAGES = notepad.man
+
 SVG_SRCS = notepad.svg
 
 @MAKE_PROG_RULES@
+
+all: $(MANPAGES)
+
+install-man-pages:: $(MANPAGES) $(DESTDIR)$(mandir)/man$(prog_manext)
+	$(INSTALL_DATA) notepad.man $(DESTDIR)$(mandir)/man$(prog_manext)/notepad.$(prog_manext)
+
+@WOW64_DISABLE@ install install-lib:: install-man-pages
+
+uninstall::
+	$(RM) $(DESTDIR)$(mandir)/man$(prog_manext)/notepad.$(prog_manext)
