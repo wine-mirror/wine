@@ -617,10 +617,6 @@ static void D3DXPlaneTest(void)
     expectedplane.a = 0.0f; expectedplane.b = 0.0f; expectedplane.c = 0.0f; expectedplane.d = 0.0f;
     D3DXPlaneNormalize(&gotplane, &nulplane);
     expect_plane(expectedplane, gotplane);
-    nulplane.a = 0.0; nulplane.b = 0.0f, nulplane.c = 0.0f; nulplane.d = 4.3f;
-    expectedplane.a = 0.0f; expectedplane.b = 0.0f; expectedplane.c = 0.0f; expectedplane.d = 0.0f;
-    D3DXPlaneNormalize(&gotplane, &nulplane);
-    expect_plane(expectedplane, gotplane);
 
 /*_______________D3DXPlaneTransform____________*/
     expectedplane.a = 49.0f; expectedplane.b = -98.0f; expectedplane.c = 55.0f; expectedplane.d = -165.0f;
