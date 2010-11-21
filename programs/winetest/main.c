@@ -49,6 +49,7 @@ struct wine_test
 
 char *tag = NULL;
 char *description = NULL;
+char *url = NULL;
 char *email = NULL;
 BOOL aborting = FALSE;
 static struct wine_test *wine_tests;
@@ -250,6 +251,8 @@ static void print_version (void)
     xprintf ("    Submitter=%s\n", email );
     if (description)
         xprintf ("    Description=%s\n", description );
+    if (url)
+        xprintf ("    URL=%s\n", url );
     xprintf ("    dwMajorVersion=%u\n    dwMinorVersion=%u\n"
              "    dwBuildNumber=%u\n    PlatformId=%u\n    szCSDVersion=%s\n",
              ver.dwMajorVersion, ver.dwMinorVersion, ver.dwBuildNumber,
@@ -1015,6 +1018,7 @@ usage (void)
 " -o FILE   put report into FILE, do not submit\n"
 " -s FILE   submit FILE, do not run tests\n"
 " -t TAG    include TAG of characters [-.0-9a-zA-Z] in the report\n"
+" -u URL    include TestBot URL in the report\n"
 " -x DIR    Extract tests to DIR (default: .\\wct) and exit\n");
 }
 
@@ -1115,6 +1119,13 @@ int main( int argc, char *argv[] )
                 report (R_ERROR, "invalid char in tag: %c", *cp);
                 usage ();
                 exit (2);
+            }
+            break;
+        case 'u':
+            if (!(url = argv[++i]))
+            {
+                usage();
+                exit( 2 );
             }
             break;
         case 'x':
