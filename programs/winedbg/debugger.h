@@ -351,7 +351,7 @@ extern void             info_win32_class(HWND hWnd, const char* clsName);
 extern void             info_win32_window(HWND hWnd, BOOL detailed);
 extern void             info_win32_processes(void);
 extern void             info_win32_threads(void);
-extern void             info_win32_exceptions(DWORD tid);
+extern void             info_win32_frame_exceptions(DWORD tid);
 extern void             info_win32_virtual(DWORD pid);
 extern void             info_win32_segments(DWORD start, int length);
 extern void             info_wine_dbg_channel(BOOL add, const char* chnl, const char* name);

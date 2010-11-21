@@ -543,11 +543,11 @@ void info_win32_threads(void)
 }
 
 /***********************************************************************
- *           info_win32_exceptions
+ *           info_win32_frame_exceptions
  *
  * Get info on the exception frames of a given thread.
  */
-void info_win32_exceptions(DWORD tid)
+void info_win32_frame_exceptions(DWORD tid)
 {
     struct dbg_thread*  thread;
     void*               next_frame;

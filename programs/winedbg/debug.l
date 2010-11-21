@@ -166,7 +166,7 @@ STRING     \"[^\n"]+\"
 <INITIAL,NOPROCESS>info|inf|in		{ BEGIN(INFO_CMD); return tINFO; }
 <INITIAL>up				{ BEGIN(NOCMD); return tUP; }
 <INITIAL>down|dow|do			{ BEGIN(NOCMD); return tDOWN; }
-<INITIAL>frame|fram|fra|fr		{ BEGIN(NOCMD); return tFRAME; }
+<INITIAL,INFO_CMD>frame|fram|fra|fr	{ BEGIN(NOCMD); return tFRAME; }
 <INITIAL>list|lis|li|l			{ BEGIN(PATH_ACCEPTED); return tLIST; }
 <INITIAL>enable|enabl|enab|ena		{ BEGIN(BD_CMD); return tENABLE;}
 <INITIAL>disable|disabl|disab|disa|dis  { BEGIN(BD_CMD); return tDISABLE; }

@@ -287,8 +287,8 @@ info_command:
     | tINFO '*' tWND expr_rvalue { info_win32_window((HWND)$4, TRUE); }
     | tINFO tPROCESS            { info_win32_processes(); }
     | tINFO tTHREAD             { info_win32_threads(); }
-    | tINFO tEXCEPTION          { info_win32_exceptions(dbg_curr_tid); }
-    | tINFO tEXCEPTION expr_rvalue { info_win32_exceptions($3); }
+    | tINFO tFRAME              { info_win32_frame_exceptions(dbg_curr_tid); }
+    | tINFO tFRAME expr_rvalue  { info_win32_frame_exceptions($3); }
     | tINFO tMAPS               { info_win32_virtual(dbg_curr_pid); }
     | tINFO tMAPS expr_rvalue   { info_win32_virtual($3); }
     ;

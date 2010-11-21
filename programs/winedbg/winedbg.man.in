@@ -366,8 +366,10 @@ Prints information of Window of handle \fBN\fR
 Lists all w-processes in Wine session
 .IP \fBinfo\ thread\fR
 Lists all w-threads in Wine session
-.IP \fBinfo\ exception\fR
-Lists the exception frames (starting from current stack frame)
+.IP \fBinfo\ frame\fR
+Lists the exception frames (starting from current stack frame). You
+can also pass, as optional argument, a thread id (instead of current
+thread) to examine its exception frames.
 .PP
 Debug messages can be turned on and off as you are debugging using
 the \fBset\fR command, but only for channels initialized with the
