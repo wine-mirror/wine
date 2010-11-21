@@ -4343,16 +4343,21 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     if (gl_info->supported[EXT_TEXTURE3D])
     {
         pCaps->TextureCaps |=  WINED3DPTEXTURECAPS_VOLUMEMAP      |
-                               WINED3DPTEXTURECAPS_MIPVOLUMEMAP   |
-                               WINED3DPTEXTURECAPS_VOLUMEMAP_POW2;
+                               WINED3DPTEXTURECAPS_MIPVOLUMEMAP;
+        if (!gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO])
+        {
+            pCaps->TextureCaps |= WINED3DPTEXTURECAPS_VOLUMEMAP_POW2;
+        }
     }
 
     if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
     {
         pCaps->TextureCaps |= WINED3DPTEXTURECAPS_CUBEMAP     |
-                              WINED3DPTEXTURECAPS_MIPCUBEMAP    |
-                              WINED3DPTEXTURECAPS_CUBEMAP_POW2;
-
+                              WINED3DPTEXTURECAPS_MIPCUBEMAP;
+        if (!gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO])
+        {
+            pCaps->TextureCaps |= WINED3DPTEXTURECAPS_CUBEMAP_POW2;
+        }
     }
 
     pCaps->TextureFilterCaps = WINED3DPTFILTERCAPS_MAGFLINEAR       |
