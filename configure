@@ -14823,6 +14823,7 @@ wine_fn_config_dll d3dx9_42 enable_d3dx9_42
 wine_fn_config_dll d3dx9_43 enable_d3dx9_43
 wine_fn_config_dll d3dxof enable_d3dxof d3dxof
 wine_fn_config_test dlls/d3dxof/tests d3dxof_test
+wine_fn_config_dll dbgeng enable_dbgeng dbgeng
 wine_fn_config_dll dbghelp enable_dbghelp dbghelp
 wine_fn_config_dll dciman32 enable_dciman32 dciman32
 wine_fn_config_dll ddeml.dll16 enable_win16
