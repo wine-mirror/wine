@@ -74,9 +74,9 @@ esiste nel cmd di wine.\n"
 "Il comando GOTO trasferisce l'esecuzione ad un'altra istruzione dentro un\n\
 file batch.\n\
 \n\
-L'etichetta che è l'obiettivo di un GOTO può essere lunga fino a 255 caratteri\n\
+L'etichetta di destinazione di un GOTO può essere lunga fino a 255 caratteri\n\
 ma non può includere spazi (questo è differente da altri sistemi\n\
-operativi). Se esistono due o più etichette identiche esistono in un file batch, la\n\
+operativi). Se esistono due o più etichette identiche in un file batch, la\n\
 prima sarà sempre eseguita. Tentare un GOTO verso un'etichetta\n\
 inesistente termina l'esecuzione del file batch.\n\
 \n\
@@ -257,7 +257,7 @@ Inserisci HELP <comando> per maggiori informazioni su ciascuno dei comandi sopra
   WCMD_SYNTAXERR, "Errore di sintassi\n"
   WCMD_FILENOTFOUND, "%s : File non trovato\n"
   WCMD_NOCMDHELP, "Nessun aiuto disponibile per %s\n"
-  WCMD_NOTARGET, "Obiettivo del GOTO non trovato\n"
+  WCMD_NOTARGET, "Destinazione del GOTO non trovata\n"
   WCMD_CURRENTDATE, "La data attuale è  %s\n"
   WCMD_CURRENTTIME, "L'ora attuale è  %s\n"
   WCMD_NEWDATE, "Inserisci una nuova data: "
