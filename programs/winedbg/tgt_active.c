@@ -118,44 +118,18 @@ static unsigned dbg_fetch_context(void)
  * or exception is silently continued(return FALSE)
  * is_debug means the exception is a breakpoint or single step exception
  */
-static unsigned dbg_exception_prolog(BOOL is_debug, BOOL first_chance, const EXCEPTION_RECORD* rec)
+static unsigned dbg_exception_prolog(BOOL is_debug, const EXCEPTION_RECORD* rec)
 {
     ADDRESS64   addr;
     BOOL        is_break;
-    char        hexbuf[MAX_OFFSET_TO_STR_LEN];
 
     memory_get_current_pc(&addr);
     break_suspend_execution();
-    dbg_curr_thread->excpt_record = *rec;
-    dbg_curr_thread->in_exception = TRUE;
-
-    if (!is_debug)
-    {
-        switch (addr.Mode)
-        {
-        case AddrModeFlat:
-            dbg_printf(" in %d-bit code (%s)",
-                       be_cpu->pointer_size * 8,
-                       memory_offset_to_string(hexbuf, addr.Offset, 0));
-            break;
-        case AddrModeReal:
-            dbg_printf(" in vm86 code (%04x:%04x)", addr.Segment, (unsigned) addr.Offset);
-            break;
-        case AddrMode1616:
-            dbg_printf(" in 16-bit code (%04x:%04x)", addr.Segment, (unsigned) addr.Offset);
-            break;
-        case AddrMode1632:
-            dbg_printf(" in segmented 32-bit code (%04x:%08lx)", addr.Segment, (unsigned long) addr.Offset);
-            break;
-        default: dbg_printf(" bad address");
-        }
-	dbg_printf(".\n");
-    }
 
     /* this will resynchronize builtin dbghelp's internal ELF module list */
     SymLoadModule(dbg_curr_process->handle, 0, 0, 0, 0, 0);
 
-    if (is_debug) break_adjust_pc(&addr, rec->ExceptionCode, first_chance, &is_break);
+    if (is_debug) break_adjust_pc(&addr, rec->ExceptionCode, dbg_curr_thread->first_chance, &is_break);
     /*
      * Do a quiet backtrace so that we have an idea of what the situation
      * is WRT the source files.
@@ -285,131 +259,19 @@ static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance
         return DBG_EXCEPTION_NOT_HANDLED;
     }
 
-    if (!is_debug)
+    dbg_curr_thread->excpt_record = *rec;
+    dbg_curr_thread->in_exception = TRUE;
+    dbg_curr_thread->first_chance = first_chance;
+
+    if (!is_debug) info_win32_exception();
+
+    if (rec->ExceptionCode == STATUS_POSSIBLE_DEADLOCK && !DBG_IVAR(BreakOnCritSectTimeOut))
     {
-        /* print some infos */
-        dbg_printf("%s: ",
-                   first_chance ? "First chance exception" : "Unhandled exception");
-        switch (rec->ExceptionCode)
-        {
-        case EXCEPTION_INT_DIVIDE_BY_ZERO:
-            dbg_printf("divide by zero");
-            break;
-        case EXCEPTION_INT_OVERFLOW:
-            dbg_printf("overflow");
-            break;
-        case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
-            dbg_printf("array bounds");
-            break;
-        case EXCEPTION_ILLEGAL_INSTRUCTION:
-            dbg_printf("illegal instruction");
-            break;
-        case EXCEPTION_STACK_OVERFLOW:
-            dbg_printf("stack overflow");
-            break;
-        case EXCEPTION_PRIV_INSTRUCTION:
-            dbg_printf("privileged instruction");
-            break;
-        case EXCEPTION_ACCESS_VIOLATION:
-            if (rec->NumberParameters == 2)
-                dbg_printf("page fault on %s access to 0x%08lx",
-                           rec->ExceptionInformation[0] == EXCEPTION_WRITE_FAULT ? "write" :
-                           rec->ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT ? "execute" : "read",
-                           rec->ExceptionInformation[1]);
-            else
-                dbg_printf("page fault");
-            break;
-        case EXCEPTION_DATATYPE_MISALIGNMENT:
-            dbg_printf("Alignment");
-            break;
-	case DBG_CONTROL_C:
-            dbg_printf("^C");
-            break;
-        case CONTROL_C_EXIT:
-            dbg_printf("^C");
-            break;
-        case STATUS_POSSIBLE_DEADLOCK:
-        {
-            ADDRESS64       addr;
-
-            addr.Mode   = AddrModeFlat;
-            addr.Offset = rec->ExceptionInformation[0];
-
-            dbg_printf("wait failed on critical section ");
-            print_address(&addr, FALSE);
-        }
-        if (!DBG_IVAR(BreakOnCritSectTimeOut))
-        {
-            dbg_printf("\n");
-            return DBG_EXCEPTION_NOT_HANDLED;
-        }
-        break;
-        case EXCEPTION_WINE_STUB:
-        {
-            char dll[32], name[64];
-            memory_get_string(dbg_curr_process,
-                              (void*)rec->ExceptionInformation[0], TRUE, FALSE,
-                              dll, sizeof(dll));
-            if (HIWORD(rec->ExceptionInformation[1]))
-                memory_get_string(dbg_curr_process,
-                                  (void*)rec->ExceptionInformation[1], TRUE, FALSE,
-                                  name, sizeof(name));
-            else
-                sprintf( name, "%ld", rec->ExceptionInformation[1] );
-            dbg_printf("unimplemented function %s.%s called", dll, name);
-        }
-        break;
-        case EXCEPTION_WINE_ASSERTION:
-            dbg_printf("assertion failed");
-            break;
-        case EXCEPTION_VM86_INTx:
-            dbg_printf("interrupt %02lx in vm86 mode", rec->ExceptionInformation[0]);
-            break;
-        case EXCEPTION_VM86_STI:
-            dbg_printf("sti in vm86 mode");
-            break;
-        case EXCEPTION_VM86_PICRETURN:
-            dbg_printf("PIC return in vm86 mode");
-            break;
-	case EXCEPTION_FLT_DENORMAL_OPERAND:
-            dbg_printf("denormal float operand");
-            break;
-	case EXCEPTION_FLT_DIVIDE_BY_ZERO:
-            dbg_printf("divide by zero");
-            break;
-	case EXCEPTION_FLT_INEXACT_RESULT:
-            dbg_printf("inexact float result");
-            break;
-	case EXCEPTION_FLT_INVALID_OPERATION:
-            dbg_printf("invalid float operation");
-            break;
-	case EXCEPTION_FLT_OVERFLOW:
-            dbg_printf("floating point overflow");
-            break;
-	case EXCEPTION_FLT_UNDERFLOW:
-            dbg_printf("floating point underflow");
-            break;
-	case EXCEPTION_FLT_STACK_CHECK:
-            dbg_printf("floating point stack check");
-            break;
-        case CXX_EXCEPTION:
-            if(rec->NumberParameters == 3 && rec->ExceptionInformation[0] == CXX_FRAME_MAGIC)
-                dbg_printf("C++ exception(object = 0x%08lx, type = 0x%08lx)",
-                           rec->ExceptionInformation[1], rec->ExceptionInformation[2]);
-            else
-                dbg_printf("C++ exception with strange parameter count %d or magic 0x%08lx",
-                           rec->NumberParameters, rec->ExceptionInformation[0]);
-            break;
-        default:
-            dbg_printf("0x%08x", rec->ExceptionCode);
-            break;
-        }
-    }
-    if( (rec->ExceptionFlags & EH_STACK_INVALID) ) {
-        dbg_printf( ", invalid program stack" );
+        dbg_curr_thread->in_exception = FALSE;
+        return DBG_EXCEPTION_NOT_HANDLED;
     }
 
-    if (dbg_exception_prolog(is_debug, first_chance, rec))
+    if (dbg_exception_prolog(is_debug, rec))
     {
 	dbg_interactiveP = TRUE;
         return 0;

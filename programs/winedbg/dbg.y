@@ -291,6 +291,7 @@ info_command:
     | tINFO tFRAME expr_rvalue  { info_win32_frame_exceptions($3); }
     | tINFO tMAPS               { info_win32_virtual(dbg_curr_pid); }
     | tINFO tMAPS expr_rvalue   { info_win32_virtual($3); }
+    | tINFO tEXCEPTION          { info_win32_exception(); }
     ;
 
 maintenance_command:

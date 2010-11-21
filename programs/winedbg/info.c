@@ -31,6 +31,7 @@
 #include "winuser.h"
 #include "tlhelp32.h"
 #include "wine/debug.h"
+#include "wine/exception.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
@@ -756,4 +757,160 @@ void info_wine_dbg_channel(BOOL turn_on, const char* cls, const char* name)
     }
     if (!done) dbg_printf("Unable to find debug channel %s\n", name);
     else WINE_TRACE("Changed %d channel instances\n", done);
+}
+
+void info_win32_exception(void)
+{
+    const EXCEPTION_RECORD*     rec;
+    ADDRESS64                   addr;
+    char                        hexbuf[MAX_OFFSET_TO_STR_LEN];
+
+    if (!dbg_curr_thread->in_exception)
+    {
+        dbg_printf("Thread isn't in an exception\n");
+        return;
+    }
+    rec = &dbg_curr_thread->excpt_record;
+    memory_get_current_pc(&addr);
+
+    /* print some infos */
+    dbg_printf("%s: ",
+               dbg_curr_thread->first_chance ? "First chance exception" : "Unhandled exception");
+    switch (rec->ExceptionCode)
+    {
+    case EXCEPTION_BREAKPOINT:
+        dbg_printf("breakpoint");
+        break;
+    case EXCEPTION_SINGLE_STEP:
+        dbg_printf("single step");
+        break;
+    case EXCEPTION_INT_DIVIDE_BY_ZERO:
+        dbg_printf("divide by zero");
+        break;
+    case EXCEPTION_INT_OVERFLOW:
+        dbg_printf("overflow");
+        break;
+    case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
+        dbg_printf("array bounds");
+        break;
+    case EXCEPTION_ILLEGAL_INSTRUCTION:
+        dbg_printf("illegal instruction");
+        break;
+    case EXCEPTION_STACK_OVERFLOW:
+        dbg_printf("stack overflow");
+        break;
+    case EXCEPTION_PRIV_INSTRUCTION:
+        dbg_printf("privileged instruction");
+        break;
+    case EXCEPTION_ACCESS_VIOLATION:
+        if (rec->NumberParameters == 2)
+            dbg_printf("page fault on %s access to 0x%08lx",
+                       rec->ExceptionInformation[0] == EXCEPTION_WRITE_FAULT ? "write" :
+                       rec->ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT ? "execute" : "read",
+                       rec->ExceptionInformation[1]);
+        else
+            dbg_printf("page fault");
+        break;
+    case EXCEPTION_DATATYPE_MISALIGNMENT:
+        dbg_printf("Alignment");
+        break;
+    case DBG_CONTROL_C:
+        dbg_printf("^C");
+        break;
+    case CONTROL_C_EXIT:
+        dbg_printf("^C");
+        break;
+    case STATUS_POSSIBLE_DEADLOCK:
+        {
+            ADDRESS64       recaddr;
+
+            recaddr.Mode   = AddrModeFlat;
+            recaddr.Offset = rec->ExceptionInformation[0];
+
+            dbg_printf("wait failed on critical section ");
+            print_address(&recaddr, FALSE);
+        }
+        break;
+    case EXCEPTION_WINE_STUB:
+        {
+            char dll[32], name[64];
+            memory_get_string(dbg_curr_process,
+                              (void*)rec->ExceptionInformation[0], TRUE, FALSE,
+                              dll, sizeof(dll));
+            if (HIWORD(rec->ExceptionInformation[1]))
+                memory_get_string(dbg_curr_process,
+                                  (void*)rec->ExceptionInformation[1], TRUE, FALSE,
+                                  name, sizeof(name));
+            else
+                sprintf( name, "%ld", rec->ExceptionInformation[1] );
+            dbg_printf("unimplemented function %s.%s called", dll, name);
+        }
+        break;
+    case EXCEPTION_WINE_ASSERTION:
+        dbg_printf("assertion failed");
+        break;
+    case EXCEPTION_VM86_INTx:
+        dbg_printf("interrupt %02lx in vm86 mode", rec->ExceptionInformation[0]);
+        break;
+    case EXCEPTION_VM86_STI:
+        dbg_printf("sti in vm86 mode");
+        break;
+    case EXCEPTION_VM86_PICRETURN:
+        dbg_printf("PIC return in vm86 mode");
+        break;
+    case EXCEPTION_FLT_DENORMAL_OPERAND:
+        dbg_printf("denormal float operand");
+        break;
+    case EXCEPTION_FLT_DIVIDE_BY_ZERO:
+        dbg_printf("divide by zero");
+        break;
+    case EXCEPTION_FLT_INEXACT_RESULT:
+        dbg_printf("inexact float result");
+        break;
+    case EXCEPTION_FLT_INVALID_OPERATION:
+        dbg_printf("invalid float operation");
+        break;
+    case EXCEPTION_FLT_OVERFLOW:
+        dbg_printf("floating point overflow");
+        break;
+    case EXCEPTION_FLT_UNDERFLOW:
+        dbg_printf("floating point underflow");
+        break;
+    case EXCEPTION_FLT_STACK_CHECK:
+        dbg_printf("floating point stack check");
+        break;
+    case CXX_EXCEPTION:
+        if(rec->NumberParameters == 3 && rec->ExceptionInformation[0] == CXX_FRAME_MAGIC)
+            dbg_printf("C++ exception(object = 0x%08lx, type = 0x%08lx)",
+                       rec->ExceptionInformation[1], rec->ExceptionInformation[2]);
+        else
+            dbg_printf("C++ exception with strange parameter count %d or magic 0x%08lx",
+                       rec->NumberParameters, rec->ExceptionInformation[0]);
+        break;
+    default:
+        dbg_printf("0x%08x", rec->ExceptionCode);
+        break;
+    }
+    if (rec->ExceptionFlags & EH_STACK_INVALID)
+        dbg_printf(", invalid program stack");
+
+    switch (addr.Mode)
+    {
+    case AddrModeFlat:
+        dbg_printf(" in %d-bit code (%s)",
+                   be_cpu->pointer_size * 8,
+                   memory_offset_to_string(hexbuf, addr.Offset, 0));
+        break;
+    case AddrModeReal:
+        dbg_printf(" in vm86 code (%04x:%04x)", addr.Segment, (unsigned) addr.Offset);
+        break;
+    case AddrMode1616:
+        dbg_printf(" in 16-bit code (%04x:%04x)", addr.Segment, (unsigned) addr.Offset);
+        break;
+    case AddrMode1632:
+        dbg_printf(" in segmented 32-bit code (%04x:%08lx)", addr.Segment, (unsigned long) addr.Offset);
+        break;
+    default: dbg_printf(" bad address");
+    }
+    dbg_printf(".\n");
 }
