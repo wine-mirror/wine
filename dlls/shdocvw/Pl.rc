@@ -38,7 +38,7 @@ IDR_BROWSE_MAIN_MENU MENU
     {
         POPUP "&Nowe"
         {
-            MENUITEM "&Okno"                  ID_BROWSE_NEW_WINDOW
+            MENUITEM "&Okno",                 ID_BROWSE_NEW_WINDOW
         }
         MENUITEM "&Otwórz...",                    ID_BROWSE_OPEN
         MENUITEM "&Zapisz",                       ID_BROWSE_SAVE
@@ -55,13 +55,13 @@ IDR_BROWSE_MAIN_MENU MENU
     {
         POPUP "&Paski narzêdzi"
         {
-            MENUITEM "Pasek &standardowy"            ID_BROWSE_BAR_STD
-            MENUITEM "&Pasek adresu"             ID_BROWSE_BAR_ADDR
+            MENUITEM "Pasek &standardowy",           ID_BROWSE_BAR_STD
+            MENUITEM "&Pasek adresu",            ID_BROWSE_BAR_ADDR
         }
     }
     POPUP "&Ulubione"
     {
-        MENUITEM "&Dodaj do ulubionych..."         ID_BROWSE_ADDFAV
+        MENUITEM "&Dodaj do ulubionych...",        ID_BROWSE_ADDFAV
         MENUITEM SEPARATOR
     }
     POPUP "&Pomoc"
