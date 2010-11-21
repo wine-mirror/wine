@@ -830,7 +830,7 @@
 @ stub PoRequestPowerIrp
 @ stub PoRequestShutdownEvent
 @ stub PoSetHiberRange
-@ stub PoSetPowerState
+@ stdcall PoSetPowerState(ptr long long)
 @ stub PoSetSystemState
 @ stub PoShutdownBugCheck
 @ stub PoStartNextPowerIrp

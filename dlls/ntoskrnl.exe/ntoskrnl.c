@@ -1541,6 +1541,15 @@ VOID WINAPI READ_REGISTER_BUFFER_UCHAR(PUCHAR Register, PUCHAR Buffer, ULONG Cou
 }
 
 /*****************************************************
+ *           PoSetPowerState   (NTOSKRNL.EXE.@)
+ */
+POWER_STATE WINAPI PoSetPowerState(PDEVICE_OBJECT DeviceObject, POWER_STATE_TYPE Type, POWER_STATE State)
+{
+    FIXME("(%p %u %u) stub\n", DeviceObject, Type, State.DeviceState);
+    return State;
+}
+
+/*****************************************************
  *           DllMain
  */
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
