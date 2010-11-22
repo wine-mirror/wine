@@ -153,8 +153,9 @@ static void test_loadlibraryshim(void)
     const WCHAR gdidll[] = {'g','d','i','3','2','.','d','l','l',0};
     HRESULT hr;
     const WCHAR *latest = NULL;
+    CHAR latestA[MAX_PATH];
     HMODULE hdll;
-    WCHAR dllpath[MAX_PATH];
+    CHAR dllpath[MAX_PATH];
 
     hr = pLoadLibraryShim(fusion, v1_1, NULL, &hdll);
     ok(hr == S_OK || hr == E_HANDLE, "LoadLibraryShim failed, hr=%x\n", hr);
@@ -162,10 +163,10 @@ static void test_loadlibraryshim(void)
     {
         latest = v1_1;
 
-        GetModuleFileNameW(hdll, dllpath, MAX_PATH);
+        GetModuleFileNameA(hdll, dllpath, MAX_PATH);
 
-        todo_wine ok(StrStrIW(dllpath, v1_1) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
-        ok(StrStrIW(dllpath, fusiondll) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
+        todo_wine ok(StrStrIA(dllpath, "v1.1.4322") != 0, "incorrect fusion.dll path %s\n", dllpath);
+        ok(StrStrIA(dllpath, "fusion.dll") != 0, "incorrect fusion.dll path %s\n", dllpath);
 
         FreeLibrary(hdll);
     }
@@ -176,10 +177,10 @@ static void test_loadlibraryshim(void)
     {
         latest = v2_0;
 
-        GetModuleFileNameW(hdll, dllpath, MAX_PATH);
+        GetModuleFileNameA(hdll, dllpath, MAX_PATH);
 
-        todo_wine ok(StrStrIW(dllpath, v2_0) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
-        ok(StrStrIW(dllpath, fusiondll) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
+        todo_wine ok(StrStrIA(dllpath, "v2.0.50727") != 0, "incorrect fusion.dll path %s\n", dllpath);
+        ok(StrStrIA(dllpath, "fusion.dll") != 0, "incorrect fusion.dll path %s\n", dllpath);
 
         FreeLibrary(hdll);
     }
@@ -192,10 +193,10 @@ static void test_loadlibraryshim(void)
         if (!latest)
             latest = v4_0;
 
-        GetModuleFileNameW(hdll, dllpath, MAX_PATH);
+        GetModuleFileNameA(hdll, dllpath, MAX_PATH);
 
-        todo_wine ok(StrStrIW(dllpath, v4_0) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
-        ok(StrStrIW(dllpath, fusiondll) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
+        todo_wine ok(StrStrIA(dllpath, "v4.0.30319") != 0, "incorrect fusion.dll path %s\n", dllpath);
+        ok(StrStrIA(dllpath, "fusion.dll") != 0, "incorrect fusion.dll path %s\n", dllpath);
 
         FreeLibrary(hdll);
     }
@@ -205,15 +206,17 @@ static void test_loadlibraryshim(void)
     if (SUCCEEDED(hr))
         FreeLibrary(hdll);
 
+    WideCharToMultiByte(CP_ACP, 0, latest, -1, latestA, MAX_PATH, NULL, NULL);
+
     hr = pLoadLibraryShim(fusion, NULL, NULL, &hdll);
     ok(hr == S_OK, "LoadLibraryShim failed, hr=%x\n", hr);
     if (SUCCEEDED(hr))
     {
-        GetModuleFileNameW(hdll, dllpath, MAX_PATH);
+        GetModuleFileNameA(hdll, dllpath, MAX_PATH);
 
         if (latest)
-            todo_wine ok(StrStrIW(dllpath, latest) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
-        ok(StrStrIW(dllpath, fusiondll) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
+            todo_wine ok(StrStrIA(dllpath, latestA) != 0, "incorrect fusion.dll path %s\n", dllpath);
+        ok(StrStrIA(dllpath, "fusion.dll") != 0, "incorrect fusion.dll path %s\n", dllpath);
 
         FreeLibrary(hdll);
     }
@@ -222,11 +225,11 @@ static void test_loadlibraryshim(void)
     ok(hr == S_OK, "LoadLibraryShim failed, hr=%x\n", hr);
     if (SUCCEEDED(hr))
     {
-        GetModuleFileNameW(hdll, dllpath, MAX_PATH);
+        GetModuleFileNameA(hdll, dllpath, MAX_PATH);
 
         if (latest)
-            todo_wine ok(StrStrIW(dllpath, latest) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
-        ok(StrStrIW(dllpath, fusiondll) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
+            todo_wine ok(StrStrIA(dllpath, latestA) != 0, "incorrect fusion.dll path %s\n", dllpath);
+        ok(StrStrIA(dllpath, "fusion.dll") != 0, "incorrect fusion.dll path %s\n", dllpath);
 
         FreeLibrary(hdll);
     }
