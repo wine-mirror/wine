@@ -18,6 +18,7 @@
 
 #include "corerror.h"
 #include "mscoree.h"
+#include "shlwapi.h"
 #include "wine/test.h"
 
 static HMODULE hmscoree;
@@ -26,24 +27,6 @@ static HRESULT (WINAPI *pGetCORVersion)(LPWSTR, DWORD, DWORD*);
 static HRESULT (WINAPI *pGetCORSystemDirectory)(LPWSTR, DWORD, DWORD*);
 static HRESULT (WINAPI *pGetRequestedRuntimeInfo)(LPCWSTR, LPCWSTR, LPCWSTR, DWORD, DWORD, LPWSTR, DWORD, DWORD*, LPWSTR, DWORD, DWORD*);
 static HRESULT (WINAPI *pLoadLibraryShim)(LPCWSTR, LPCWSTR, LPVOID, HMODULE*);
-
-static WCHAR tolowerW( WCHAR ch )
-{
-    if (ch >= 'A' && ch <= 'Z') return ch|32;
-    else return ch;
-}
-
-static WCHAR *strstriW( const WCHAR *str, const WCHAR *sub )
-{
-    while (*str)
-    {
-        const WCHAR *p1 = str, *p2 = sub;
-        while (*p1 && *p2 && tolowerW(*p1) == tolowerW(*p2)) { p1++; p2++; }
-        if (!*p2) return (WCHAR *)str;
-        str++;
-    }
-    return NULL;
-}
 
 static BOOL init_functionpointers(void)
 {
@@ -181,8 +164,8 @@ static void test_loadlibraryshim(void)
 
         GetModuleFileNameW(hdll, dllpath, MAX_PATH);
 
-        todo_wine ok(strstriW(dllpath, v1_1) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
-        ok(strstriW(dllpath, fusiondll) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
+        todo_wine ok(StrStrIW(dllpath, v1_1) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
+        ok(StrStrIW(dllpath, fusiondll) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
 
         FreeLibrary(hdll);
     }
@@ -195,8 +178,8 @@ static void test_loadlibraryshim(void)
 
         GetModuleFileNameW(hdll, dllpath, MAX_PATH);
 
-        todo_wine ok(strstriW(dllpath, v2_0) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
-        ok(strstriW(dllpath, fusiondll) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
+        todo_wine ok(StrStrIW(dllpath, v2_0) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
+        ok(StrStrIW(dllpath, fusiondll) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
 
         FreeLibrary(hdll);
     }
@@ -211,8 +194,8 @@ static void test_loadlibraryshim(void)
 
         GetModuleFileNameW(hdll, dllpath, MAX_PATH);
 
-        todo_wine ok(strstriW(dllpath, v4_0) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
-        ok(strstriW(dllpath, fusiondll) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
+        todo_wine ok(StrStrIW(dllpath, v4_0) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
+        ok(StrStrIW(dllpath, fusiondll) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
 
         FreeLibrary(hdll);
     }
@@ -229,8 +212,8 @@ static void test_loadlibraryshim(void)
         GetModuleFileNameW(hdll, dllpath, MAX_PATH);
 
         if (latest)
-            todo_wine ok(strstriW(dllpath, latest) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
-        ok(strstriW(dllpath, fusiondll) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
+            todo_wine ok(StrStrIW(dllpath, latest) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
+        ok(StrStrIW(dllpath, fusiondll) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
 
         FreeLibrary(hdll);
     }
@@ -242,8 +225,8 @@ static void test_loadlibraryshim(void)
         GetModuleFileNameW(hdll, dllpath, MAX_PATH);
 
         if (latest)
-            todo_wine ok(strstriW(dllpath, latest) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
-        ok(strstriW(dllpath, fusiondll) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
+            todo_wine ok(StrStrIW(dllpath, latest) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
+        ok(StrStrIW(dllpath, fusiondll) != 0, "incorrect fusion.dll path %s\n", wine_dbgstr_w(dllpath));
 
         FreeLibrary(hdll);
     }

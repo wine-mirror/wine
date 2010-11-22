@@ -1,4 +1,5 @@
 TESTDLL   = mscoree.dll
+IMPORTS   = shlwapi
 
 C_SRCS = \
 	metahost.c \
