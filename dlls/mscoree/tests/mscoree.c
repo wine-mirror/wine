@@ -149,7 +149,6 @@ static void test_loadlibraryshim(void)
     const WCHAR fusion[] = {'f','u','s','i','o','n',0};
     const WCHAR fusiondll[] = {'f','u','s','i','o','n','.','d','l','l',0};
     const WCHAR nosuchdll[] = {'j','n','v','n','l','.','d','l','l',0};
-    const WCHAR gdipdll[] = {'g','d','i','p','l','u','s','.','d','l','l',0};
     const WCHAR gdidll[] = {'g','d','i','3','2','.','d','l','l',0};
     HRESULT hr;
     const WCHAR *latest = NULL;
@@ -236,11 +235,6 @@ static void test_loadlibraryshim(void)
 
     hr = pLoadLibraryShim(nosuchdll, latest, NULL, &hdll);
     ok(hr == E_HANDLE, "LoadLibraryShim failed, hr=%x\n", hr);
-    if (SUCCEEDED(hr))
-        FreeLibrary(hdll);
-
-    hr = pLoadLibraryShim(gdipdll, latest, NULL, &hdll);
-    todo_wine ok(hr == E_HANDLE, "LoadLibraryShim failed, hr=%x\n", hr);
     if (SUCCEEDED(hr))
         FreeLibrary(hdll);
 
