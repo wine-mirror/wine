@@ -2081,15 +2081,18 @@ static void test_enveloped_msg_open(void)
     SetLastError(0xdeadbeef);
     context = CertCreateCertificateContext(X509_ASN_ENCODING,
      v1CertWithValidPubKey, sizeof(v1CertWithValidPubKey));
-    ok(context != NULL, "CertCreateCertificateContext failed: %08x\n",
-     GetLastError());
-    envelopedInfo.rgpRecipientCert = (PCERT_INFO *)&context->pCertInfo;
-    SetLastError(0xdeadbeef);
-    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_ENVELOPED,
-     &envelopedInfo, NULL, NULL);
-    todo_wine
-    ok(msg != NULL, "CryptMsgOpenToEncode failed: %08x\n", GetLastError());
-    CryptMsgClose(msg);
+    if (context)
+    {
+        envelopedInfo.rgpRecipientCert = (PCERT_INFO *)&context->pCertInfo;
+        SetLastError(0xdeadbeef);
+        msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_ENVELOPED,
+         &envelopedInfo, NULL, NULL);
+        todo_wine
+        ok(msg != NULL, "CryptMsgOpenToEncode failed: %08x\n", GetLastError());
+        CryptMsgClose(msg);
+    }
+    else
+        win_skip("failed to create certificate context, skipping a test\n");
 
     SetLastError(0xdeadbeef);
     ret = pCryptAcquireContextA(&envelopedInfo.hCryptProv, NULL, NULL,
