@@ -1075,7 +1075,7 @@ HRESULT WINAPI D3DXFillCubeTexture(LPDIRECT3DCUBETEXTURE9 texture,
     BYTE *data, *pos;
     BYTE byte, mask;
     float comp_value;
-    const static enum cube_coord coordmap[6][3] =
+    static const enum cube_coord coordmap[6][3] =
         {
             {ONE, YCOORDINV, XCOORDINV},
             {ZERO, YCOORDINV, XCOORD},
