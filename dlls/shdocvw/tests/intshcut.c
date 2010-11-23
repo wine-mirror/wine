@@ -222,6 +222,8 @@ static void test_ReadAndWriteProperties(void)
 
         ok(lstrcmpW(pvread[0].pwszVal, iconPath) == 0, "Wrong icon path read: %s\n",wine_dbgstr_w(pvread[0].pwszVal));
 
+        PropVariantClear(&pvread[0]);
+        PropVariantClear(&pvread[1]);
         IPropertyStorage_Release(pPropStgRead);
         IPropertySetStorage_Release(pPropSetStg);
         urlA->lpVtbl->Release(urlA);
