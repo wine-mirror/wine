@@ -1468,11 +1468,10 @@ static void test_query_volume_information_file(void)
     OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
     UNICODE_STRING nameW;
-    UINT len;
     FILE_FS_VOLUME_INFORMATION *ffvi;
     BYTE buf[sizeof(FILE_FS_VOLUME_INFORMATION) + MAX_PATH * sizeof(WCHAR)];
 
-    len = GetWindowsDirectoryW( path, MAX_PATH );
+    GetWindowsDirectoryW( path, MAX_PATH );
     pRtlDosPathNameToNtPathName_U( path, &nameW, NULL, NULL );
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
