@@ -435,7 +435,29 @@ static HRESULT WINAPI domtext_get_nodeTypedValue(
     VARIANT* var1)
 {
     domtext *This = impl_from_IXMLDOMText( iface );
-    return IXMLDOMNode_get_nodeTypedValue( IXMLDOMNode_from_impl(&This->node), var1 );
+    IXMLDOMNode* parent = NULL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, var1);
+
+    if (!var1)
+        return E_INVALIDARG;
+
+    hr = domtext_get_parentNode(iface, &parent);
+
+    if (hr == S_OK)
+    {
+        hr = IXMLDOMNode_get_nodeTypedValue(parent, var1);
+        IXMLDOMNode_Release(parent);
+    }
+    else
+    {
+        V_VT(var1) = VT_NULL;
+        V_BSTR(var1) = NULL;
+        hr = S_FALSE;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI domtext_put_nodeTypedValue(
@@ -443,24 +465,82 @@ static HRESULT WINAPI domtext_put_nodeTypedValue(
     VARIANT var1)
 {
     domtext *This = impl_from_IXMLDOMText( iface );
-    return IXMLDOMNode_put_nodeTypedValue( IXMLDOMNode_from_impl(&This->node), var1 );
+    IXMLDOMNode* parent = NULL;
+    HRESULT hr;
+
+    TRACE("(%p)->(VARIANT)\n", This);
+
+    hr = domtext_get_parentNode(iface, &parent);
+
+    if (hr == S_OK)
+    {
+        hr = IXMLDOMNode_put_nodeTypedValue(parent, var1);
+        IXMLDOMNode_Release(parent);
+    }
+    else
+    {
+        hr = S_FALSE;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI domtext_get_dataType(
     IXMLDOMText *iface,
-    VARIANT* typename)
+    VARIANT* dtName)
 {
     domtext *This = impl_from_IXMLDOMText( iface );
-    TRACE("(%p)->(%p)\n", This, typename);
-    return return_null_var( typename );
+    IXMLDOMNode* parent = NULL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, dtName);
+
+    if (!dtName)
+        return E_INVALIDARG;
+
+    hr = domtext_get_parentNode(iface, &parent);
+
+    if (hr == S_OK)
+    {
+        hr = IXMLDOMNode_get_dataType(parent, dtName);
+        IXMLDOMNode_Release(parent);
+    }
+    else
+    {
+        V_VT(dtName) = VT_NULL;
+        V_BSTR(dtName) = NULL;
+        hr = S_FALSE;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI domtext_put_dataType(
     IXMLDOMText *iface,
-    BSTR p)
+    BSTR dtName)
 {
     domtext *This = impl_from_IXMLDOMText( iface );
-    return IXMLDOMNode_put_dataType( IXMLDOMNode_from_impl(&This->node), p );
+    IXMLDOMNode* parent = NULL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, dtName);
+
+    if (!dtName)
+        return E_INVALIDARG;
+
+    hr = domtext_get_parentNode(iface, &parent);
+
+    if (hr == S_OK)
+    {
+        hr = IXMLDOMNode_put_dataType(parent, dtName);
+        IXMLDOMNode_Release(parent);
+    }
+    else
+    {
+        hr = S_FALSE;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI domtext_get_xml(

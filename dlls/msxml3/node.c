@@ -852,7 +852,7 @@ static HRESULT WINAPI xmlnode_get_nodeTypedValue(
 
     V_VT(typedValue) = VT_NULL;
 
-    if (This->node->type == XML_TEXT_NODE || This->node->type == XML_ENTITY_REF_NODE)
+    if (This->node->type == XML_ENTITY_REF_NODE)
     {
         VariantInit(&type);
         hres = IXMLDOMNode_get_dataType(This->iface, &type);
