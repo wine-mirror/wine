@@ -26,6 +26,8 @@
 #include "winreg.h"
 #include "winerror.h"
 #include "objbase.h"
+#include "initguid.h"
+#include "wia_lh.h"
 #include "sti.h"
 
 #include "wine/debug.h"
@@ -34,6 +36,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(sti);
 
 extern HRESULT WINAPI STI_DllGetClassObject(REFCLSID, REFIID, LPVOID *) DECLSPEC_HIDDEN;
 extern BOOL WINAPI STI_DllMain(HINSTANCE, DWORD, LPVOID) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI STI_DllRegisterServer(void) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI STI_DllUnregisterServer(void) DECLSPEC_HIDDEN;
 
 typedef HRESULT (*fnCreateInstance)(REFIID riid, IUnknown *pUnkOuter, LPVOID *ppObj);
 
@@ -163,4 +167,20 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
 HRESULT WINAPI DllCanUnloadNow( void )
 {
     return S_FALSE;
+}
+
+/***********************************************************************
+ *           DllRegisterServer (STI.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return STI_DllRegisterServer();
+}
+
+/***********************************************************************
+ *           DllUnRegisterServer (STI.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return STI_DllUnregisterServer();
 }
