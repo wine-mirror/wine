@@ -214,6 +214,87 @@ static const BYTE hash_assoc_values[] =
     116, 116, 116, 116, 116, 116
 };
 
+static void LIBXML2_LOG_CALLBACK parser_error(void* ctx, char const* msg, ...)
+{
+    va_list ap;
+    va_start(ap, msg);
+    LIBXML2_CALLBACK_ERR(Schema_parse, msg, ap);
+    va_end(ap);
+}
+
+static void LIBXML2_LOG_CALLBACK parser_warning(void* ctx, char const* msg, ...)
+{
+    va_list ap;
+    va_start(ap, msg);
+    LIBXML2_CALLBACK_WARN(Schema_parse, msg, ap);
+    va_end(ap);
+}
+
+#ifdef HAVE_XMLSCHEMASSETPARSERSTRUCTUREDERRORS
+static void parser_serror(void* ctx, xmlErrorPtr err)
+{
+    LIBXML2_CALLBACK_SERROR(Schema_parse, err);
+}
+#endif
+
+static inline xmlSchemaPtr Schema_parse(xmlSchemaParserCtxtPtr spctx)
+{
+    TRACE("(%p)\n", spctx);
+
+    xmlSchemaSetParserErrors(spctx, parser_error, parser_warning, NULL);
+#ifdef HAVE_XMLSCHEMASSETPARSERSTRUCTUREDERRORS
+    xmlSchemaSetParserStructuredErrors(spctx, parser_serror, NULL);
+#endif
+
+    return xmlSchemaParse(spctx);
+}
+
+static void LIBXML2_LOG_CALLBACK validate_error(void* ctx, char const* msg, ...)
+{
+    va_list ap;
+    va_start(ap, msg);
+    LIBXML2_CALLBACK_ERR(Schema_validate_tree, msg, ap);
+    va_end(ap);
+}
+
+static void LIBXML2_LOG_CALLBACK validate_warning(void* ctx, char const* msg, ...)
+{
+    va_list ap;
+    va_start(ap, msg);
+    LIBXML2_CALLBACK_WARN(Schema_validate_tree, msg, ap);
+    va_end(ap);
+}
+
+#ifdef HAVE_XMLSCHEMASSETVALIDSTRUCTUREDERRORS
+static void validate_serror(void* ctx, xmlErrorPtr err)
+{
+    LIBXML2_CALLBACK_SERROR(Schema_validate_tree, err);
+}
+#endif
+
+static inline HRESULT Schema_validate_tree(xmlSchemaPtr schema, xmlNodePtr tree)
+{
+    xmlSchemaValidCtxtPtr svctx;
+    int err;
+
+    TRACE("(%p, %p)\n", schema, tree);
+    /* TODO: if validateOnLoad property is false,
+     *       we probably need to validate the schema here. */
+    svctx = xmlSchemaNewValidCtxt(schema);
+    xmlSchemaSetValidErrors(svctx, validate_error, validate_warning, NULL);
+#ifdef HAVE_XMLSCHEMASSETVALIDSTRUCTUREDERRORS
+    xmlSchemaSetValidStructuredErrors(svctx, validate_serror, NULL);
+#endif
+
+    if (tree->type == XML_DOCUMENT_NODE)
+        err = xmlSchemaValidateDoc(svctx, (xmlDocPtr)tree);
+    else
+        err = xmlSchemaValidateOneElement(svctx, tree);
+
+    xmlSchemaFreeValidCtxt(svctx);
+    return err? S_FALSE : S_OK;
+}
+
 static DWORD dt_hash(xmlChar const* str, int len /* calculated if -1 */)
 {
     DWORD hval = (len == -1)? xmlStrlen(str) : len;
@@ -491,14 +572,16 @@ HRESULT dt_validate(XDR_DT dt, xmlChar const* content)
     xmlDocPtr tmp_doc;
     xmlNodePtr node;
     xmlNsPtr ns;
-    xmlSchemaValidCtxtPtr svctx;
-    BOOL valid;
+    HRESULT hr;
+
+    TRACE("(dt:%s, %s)\n", dt_to_str(dt), wine_dbgstr_a((char const*)content));
+
     if (!datatypes_schema)
     {
         xmlSchemaParserCtxtPtr spctx;
         assert(datatypes_src != NULL);
         spctx = xmlSchemaNewMemParserCtxt((char const*)datatypes_src, datatypes_len);
-        datatypes_schema = xmlSchemaParse(spctx);
+        datatypes_schema = Schema_parse(spctx);
         xmlSchemaFreeParserCtxt(spctx);
     }
 
@@ -539,22 +622,20 @@ HRESULT dt_validate(XDR_DT dt, xmlChar const* content)
             assert(datatypes_schema != NULL);
             if (content && xmlStrlen(content))
             {
-                svctx = xmlSchemaNewValidCtxt(datatypes_schema);
                 tmp_doc = xmlNewDoc(NULL);
                 node = xmlNewChild((xmlNodePtr)tmp_doc, NULL, dt_to_str(dt), content);
                 ns = xmlNewNs(node, DT_nsURI, BAD_CAST "dt");
                 xmlSetNs(node, ns);
                 xmlDocSetRootElement(tmp_doc, node);
 
-                valid = !xmlSchemaValidateDoc(svctx, tmp_doc);
-                xmlSchemaFreeValidCtxt(svctx);
+                hr = Schema_validate_tree(datatypes_schema, (xmlNodePtr)tmp_doc);
                 xmlFreeDoc(tmp_doc);
             }
             else
             {   /* probably the node is being created manually and has no content yet */
-                valid = TRUE;
+                hr = S_OK;
             }
-            return valid? S_OK : S_FALSE;
+            return hr;
             break;
         default:
             FIXME("need to handle dt:%s\n", dt_to_str(dt));
@@ -745,7 +826,7 @@ static cache_entry* cache_entry_from_url(char const* url, xmlChar const* nsURI)
     entry->ref = 0;
     if (spctx)
     {
-        if((entry->schema = xmlSchemaParse(spctx)))
+        if((entry->schema = Schema_parse(spctx)))
         {
             /* TODO: if the nsURI is different from the default xmlns or targetNamespace,
              *       do we need to do something special here? */
@@ -783,7 +864,7 @@ static cache_entry* cache_entry_from_xsd_doc(xmlDocPtr doc, xmlChar const* nsURI
     entry->ref = 0;
     spctx = xmlSchemaNewDocParserCtxt(new_doc);
 
-    if ((entry->schema = xmlSchemaParse(spctx)))
+    if ((entry->schema = Schema_parse(spctx)))
     {
         xmldoc_init(entry->schema->doc, &CLSID_DOMDocument40);
         entry->doc = entry->schema->doc;
@@ -812,7 +893,7 @@ static cache_entry* cache_entry_from_xdr_doc(xmlDocPtr doc, xmlChar const* nsURI
     entry->ref = 0;
     spctx = xmlSchemaNewDocParserCtxt(xsd_doc);
 
-    if ((entry->schema = xmlSchemaParse(spctx)))
+    if ((entry->schema = Schema_parse(spctx)))
     {
         entry->doc = new_doc;
         xmldoc_init(entry->schema->doc, &CLSID_DOMDocument30);
@@ -1257,29 +1338,6 @@ static inline xmlNodePtr lookup_schema_element(xmlSchemaPtr schema, xmlNodePtr n
     return (decl != NULL)? decl->node : NULL;
 }
 
-static void LIBXML2_LOG_CALLBACK validate_error(void* ctx, char const* msg, ...)
-{
-    va_list ap;
-    va_start(ap, msg);
-    LIBXML2_CALLBACK_ERR(SchemaCache_validate_tree, msg, ap);
-    va_end(ap);
-}
-
-static void LIBXML2_LOG_CALLBACK validate_warning(void* ctx, char const* msg, ...)
-{
-    va_list ap;
-    va_start(ap, msg);
-    LIBXML2_CALLBACK_WARN(SchemaCache_validate_tree, msg, ap);
-    va_end(ap);
-}
-
-#ifdef HAVE_XMLSCHEMASSETVALIDSTRUCTUREDERRORS
-static void validate_serror(void* ctx, xmlErrorPtr err)
-{
-    LIBXML2_CALLBACK_SERROR(SchemaCache_validate_tree, err);
-}
-#endif
-
 HRESULT SchemaCache_validate_tree(IXMLDOMSchemaCollection2* iface, xmlNodePtr tree)
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
@@ -1297,25 +1355,7 @@ HRESULT SchemaCache_validate_tree(IXMLDOMSchemaCollection2* iface, xmlNodePtr tr
     /* TODO: if the ns is not in the cache, and it's a URL,
      *       do we try to load from that? */
     if (schema)
-    {
-        xmlSchemaValidCtxtPtr svctx;
-        int err;
-        /* TODO: if validateOnLoad property is false,
-         *       we probably need to validate the schema here. */
-        svctx = xmlSchemaNewValidCtxt(schema);
-        xmlSchemaSetValidErrors(svctx, validate_error, validate_warning, NULL);
-#ifdef HAVE_XMLSCHEMASSETVALIDSTRUCTUREDERRORS
-            xmlSchemaSetValidStructuredErrors(svctx, validate_serror, NULL);
-#endif
-
-        if ((xmlNodePtr)tree->doc == tree)
-            err = xmlSchemaValidateDoc(svctx, (xmlDocPtr)tree);
-        else
-            err = xmlSchemaValidateOneElement(svctx, tree);
-
-        xmlSchemaFreeValidCtxt(svctx);
-        return err? S_FALSE : S_OK;
-    }
+        return Schema_validate_tree(schema, tree);
 
     return E_FAIL;
 }
