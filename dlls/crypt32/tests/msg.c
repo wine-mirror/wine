@@ -2159,7 +2159,9 @@ static void test_enveloped_msg_update(void)
         SetLastError(0xdeadbeef);
         ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
         todo_wine
-        ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+        ok(ret ||
+         broken(!ret && GetLastError() == NTE_PERM), /* some NT4 */
+         "CryptMsgUpdate failed: %08x\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
         todo_wine
@@ -2204,7 +2206,9 @@ static void test_enveloped_msg_update(void)
         SetLastError(0xdeadbeef);
         ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
         todo_wine
-        ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+        ok(ret ||
+         broken(!ret && GetLastError() == NTE_PERM), /* some NT4 */
+         "CryptMsgUpdate failed: %08x\n", GetLastError());
         CryptMsgClose(msg);
     }
     SetLastError(0xdeadbeef);
@@ -2242,7 +2246,9 @@ static void test_enveloped_msg_update(void)
         SetLastError(0xdeadbeef);
         ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
         todo_wine
-        ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+        ok(ret ||
+         broken(!ret && GetLastError() == NTE_PERM), /* some NT4 */
+         "CryptMsgUpdate failed: %08x\n", GetLastError());
         CryptMsgClose(msg);
     }
 }
@@ -2863,7 +2869,7 @@ static void test_decode_msg_get_param(void)
 {
     HCRYPTMSG msg;
     HCRYPTPROV hCryptProv;
-    HCRYPTKEY key;
+    HCRYPTKEY key = 0;
     BOOL ret;
     DWORD size = 0, value;
     LPBYTE buf;
@@ -3099,27 +3105,34 @@ static void test_decode_msg_get_param(void)
     SetLastError(0xdeadbeef);
     ret = CryptImportKey(hCryptProv, publicPrivateKeyPair,
      sizeof(publicPrivateKeyPair), 0, 0, &key);
-    ok(ret, "CryptImportKey failed: %08x\n", GetLastError());
+    ok(ret ||
+     broken(!ret && GetLastError() == NTE_PERM), /* WinME and some NT4 */
+     "CryptImportKey failed: %08x\n", GetLastError());
 
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     CryptMsgUpdate(msg, envelopedMessage, sizeof(envelopedMessage), TRUE);
     todo_wine
     check_param("enveloped message before decrypting", msg, CMSG_CONTENT_PARAM,
      envelopedMessage + sizeof(envelopedMessage) - 4, 4);
-    decryptPara.hCryptProv = hCryptProv;
-    SetLastError(0xdeadbeef);
-    ret = CryptMsgControl(msg, 0, CMSG_CTRL_DECRYPT, &decryptPara);
-    todo_wine
-    ok(ret, "CryptMsgControl failed: %08x\n", GetLastError());
-    decryptPara.hCryptProv = 0;
-    SetLastError(0xdeadbeef);
-    ret = CryptMsgControl(msg, 0, CMSG_CTRL_DECRYPT, &decryptPara);
-    todo_wine
-    ok(!ret && GetLastError() == CRYPT_E_ALREADY_DECRYPTED,
-     "expected CRYPT_E_ALREADY_DECRYPTED, got %08x\n", GetLastError());
-    todo_wine
-    check_param("enveloped message", msg, CMSG_CONTENT_PARAM, msgData,
-     sizeof(msgData));
+    if (key)
+    {
+        decryptPara.hCryptProv = hCryptProv;
+        SetLastError(0xdeadbeef);
+        ret = CryptMsgControl(msg, 0, CMSG_CTRL_DECRYPT, &decryptPara);
+        todo_wine
+        ok(ret, "CryptMsgControl failed: %08x\n", GetLastError());
+        decryptPara.hCryptProv = 0;
+        SetLastError(0xdeadbeef);
+        ret = CryptMsgControl(msg, 0, CMSG_CTRL_DECRYPT, &decryptPara);
+        todo_wine
+        ok(!ret && GetLastError() == CRYPT_E_ALREADY_DECRYPTED,
+         "expected CRYPT_E_ALREADY_DECRYPTED, got %08x\n", GetLastError());
+        todo_wine
+        check_param("enveloped message", msg, CMSG_CONTENT_PARAM, msgData,
+         sizeof(msgData));
+    }
+    else
+        win_skip("failed to import a key, skipping tests\n");
     CryptMsgClose(msg);
 
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_ENVELOPED, 0, NULL,
@@ -3130,17 +3143,23 @@ static void test_decode_msg_get_param(void)
     check_param("enveloped bare message before decrypting", msg,
      CMSG_CONTENT_PARAM, envelopedBareMessage +
      sizeof(envelopedBareMessage) - 4, 4);
-    decryptPara.hCryptProv = hCryptProv;
-    SetLastError(0xdeadbeef);
-    ret = CryptMsgControl(msg, 0, CMSG_CTRL_DECRYPT, &decryptPara);
-    todo_wine
-    ok(ret, "CryptMsgControl failed: %08x\n", GetLastError());
-    todo_wine
-    check_param("enveloped bare message", msg, CMSG_CONTENT_PARAM, msgData,
-     sizeof(msgData));
+    if (key)
+    {
+        decryptPara.hCryptProv = hCryptProv;
+        SetLastError(0xdeadbeef);
+        ret = CryptMsgControl(msg, 0, CMSG_CTRL_DECRYPT, &decryptPara);
+        todo_wine
+        ok(ret, "CryptMsgControl failed: %08x\n", GetLastError());
+        todo_wine
+        check_param("enveloped bare message", msg, CMSG_CONTENT_PARAM, msgData,
+         sizeof(msgData));
+    }
+    else
+        win_skip("failed to import a key, skipping tests\n");
     CryptMsgClose(msg);
 
-    CryptDestroyKey(key);
+    if (key)
+        CryptDestroyKey(key);
     CryptReleaseContext(hCryptProv, 0);
 
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
