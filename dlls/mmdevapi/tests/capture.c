@@ -87,7 +87,7 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
     hr = IAudioCaptureClient_GetNextPacketSize(acc, NULL);
     ok(hr == E_POINTER, "IAudioCaptureClient_GetNextPacketSize(NULL) returns %08x\n", hr);
 
-    ok(WaitForSingleObject(handle, 1000) == WAIT_OBJECT_0, "Waiting on event handle failed!\n");
+    ok(WaitForSingleObject(handle, 2000) == WAIT_OBJECT_0, "Waiting on event handle failed!\n");
 
     /* frames can be 0 if no data is available yet.. */
     hr = IAudioCaptureClient_GetNextPacketSize(acc, &frames);
