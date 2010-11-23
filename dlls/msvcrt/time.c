@@ -913,7 +913,7 @@ int CDECL MSVCRT__ctime64_s(char *res, MSVCRT_size_t len, const MSVCRT___time64_
         return MSVCRT_EINVAL;
     }
     res[0] = '\0';
-    if( !MSVCRT_CHECK_PMT( time != NULL ) || !MSVCRT_CHECK_PMT( time > 0 ) )
+    if( !MSVCRT_CHECK_PMT( time != NULL ) || !MSVCRT_CHECK_PMT( *time > 0 ) )
     {
         *MSVCRT__errno() = MSVCRT_EINVAL;
         return MSVCRT_EINVAL;
@@ -946,7 +946,7 @@ int CDECL MSVCRT__ctime32_s(char *res, MSVCRT_size_t len, const MSVCRT___time32_
         return MSVCRT_EINVAL;
     }
     res[0] = '\0';
-    if( !MSVCRT_CHECK_PMT( time != NULL ) || !MSVCRT_CHECK_PMT( time > 0 ) )
+    if( !MSVCRT_CHECK_PMT( time != NULL ) || !MSVCRT_CHECK_PMT( *time > 0 ) )
     {
         *MSVCRT__errno() = MSVCRT_EINVAL;
         return MSVCRT_EINVAL;
