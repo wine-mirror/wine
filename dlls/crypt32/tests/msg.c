@@ -3100,7 +3100,7 @@ static void test_decode_msg_get_param(void)
     check_param("enveloped empty content", msg, CMSG_CONTENT_PARAM, NULL, 0);
     CryptMsgClose(msg);
 
-    CryptAcquireContextA(&hCryptProv, NULL, MS_ENHANCED_PROV_A, PROV_RSA_FULL,
+    pCryptAcquireContextA(&hCryptProv, NULL, MS_ENHANCED_PROV_A, PROV_RSA_FULL,
      CRYPT_VERIFYCONTEXT);
     SetLastError(0xdeadbeef);
     ret = CryptImportKey(hCryptProv, publicPrivateKeyPair,
