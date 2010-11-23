@@ -273,6 +273,7 @@ extern XDR_DT bstr_to_dt(OLECHAR const* bstr, int len /* calculated if -1 */);
 extern xmlChar const* dt_to_str(XDR_DT dt);
 extern OLECHAR const* dt_to_bstr(XDR_DT dt);
 extern XDR_DT element_get_dt(xmlNodePtr node);
+extern HRESULT dt_validate(XDR_DT dt, xmlChar const* content);
 
 extern BSTR EnsureCorrectEOL(BSTR);
 

@@ -42,6 +42,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #ifdef HAVE_LIBXML2
 
+/* TODO: get rid of these and use the enum */
 static const WCHAR szBinBase64[]  = {'b','i','n','.','b','a','s','e','6','4',0};
 static const WCHAR szString[]     = {'s','t','r','i','n','g',0};
 static const WCHAR szNumber[]     = {'n','u','m','b','e','r',0};
@@ -883,78 +884,18 @@ static HRESULT WINAPI xmlnode_put_nodeTypedValue(
 
 static HRESULT WINAPI xmlnode_put_dataType(
     IXMLDOMNode *iface,
-    BSTR dataTypeName)
+    BSTR dtName)
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
-    HRESULT hr = E_FAIL;
 
-    TRACE("(%p)->(%s)\n", This, debugstr_w(dataTypeName));
+    TRACE("(%p)->(%s)\n", This, debugstr_w(dtName));
 
-    if(dataTypeName == NULL)
+    if(!dtName)
         return E_INVALIDARG;
 
-    /* An example of this is. The Text in the node needs to be a 0 or 1 for a boolean type.
-       This applies to changing types (string->bool) or setting a new one
-     */
-    FIXME("Need to Validate the data before allowing a type to be set.\n");
+    FIXME("need to handle node type %i\n", This->node->type);
 
-    /* Check all supported types. */
-    if(lstrcmpiW(dataTypeName,szString) == 0  ||
-       lstrcmpiW(dataTypeName,szNumber) == 0  ||
-       lstrcmpiW(dataTypeName,szUUID) == 0    ||
-       lstrcmpiW(dataTypeName,szInt) == 0     ||
-       lstrcmpiW(dataTypeName,szI4) == 0      ||
-       lstrcmpiW(dataTypeName,szFixed) == 0   ||
-       lstrcmpiW(dataTypeName,szBoolean) == 0 ||
-       lstrcmpiW(dataTypeName,szDateTime) == 0 ||
-       lstrcmpiW(dataTypeName,szDateTimeTZ) == 0 ||
-       lstrcmpiW(dataTypeName,szDate) == 0    ||
-       lstrcmpiW(dataTypeName,szTime) == 0    ||
-       lstrcmpiW(dataTypeName,szTimeTZ) == 0  ||
-       lstrcmpiW(dataTypeName,szI1) == 0      ||
-       lstrcmpiW(dataTypeName,szI2) == 0      ||
-       lstrcmpiW(dataTypeName,szIU1) == 0     ||
-       lstrcmpiW(dataTypeName,szIU2) == 0     ||
-       lstrcmpiW(dataTypeName,szIU4) == 0     ||
-       lstrcmpiW(dataTypeName,szR4) == 0      ||
-       lstrcmpiW(dataTypeName,szR8) == 0      ||
-       lstrcmpiW(dataTypeName,szFloat) == 0   ||
-       lstrcmpiW(dataTypeName,szBinHex) == 0  ||
-       lstrcmpiW(dataTypeName,szBinBase64) == 0)
-    {
-        xmlChar* str = xmlChar_from_wchar(dataTypeName);
-        xmlAttrPtr attr;
-
-        if (!str) return E_OUTOFMEMORY;
-
-        attr = xmlHasNsProp(This->node, (const xmlChar*)"dt",
-                            (const xmlChar*)"urn:schemas-microsoft-com:datatypes");
-        if (attr)
-        {
-            attr = xmlSetNsProp(This->node, attr->ns, (const xmlChar*)"dt", str);
-            hr = S_OK;
-        }
-        else
-        {
-            xmlNsPtr ns = xmlNewNs(This->node, (const xmlChar*)"urn:schemas-microsoft-com:datatypes", (const xmlChar*)"dt");
-            if (ns)
-            {
-                attr = xmlNewNsProp(This->node, ns, (const xmlChar*)"dt", str);
-                if (attr)
-                {
-                    xmlAddChild(This->node, (xmlNodePtr)attr);
-                    hr = S_OK;
-                }
-                else
-                    ERR("Failed to create Attribute\n");
-            }
-            else
-                ERR("Failed to create Namespace\n");
-        }
-        heap_free( str );
-    }
-
-    return hr;
+    return E_FAIL;
 }
 
 BSTR EnsureCorrectEOL(BSTR sInput)

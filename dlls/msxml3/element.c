@@ -38,6 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #ifdef HAVE_LIBXML2
 
+static const xmlChar DT_prefix[] = "dt";
 static const xmlChar DT_nsURI[] = "urn:schemas-microsoft-com:datatypes";
 
 typedef struct _domelem
@@ -823,10 +824,94 @@ static HRESULT WINAPI domelem_get_dataType(
 
 static HRESULT WINAPI domelem_put_dataType(
     IXMLDOMElement *iface,
-    BSTR p)
+    BSTR dtName)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    return IXMLDOMNode_put_dataType( IXMLDOMNode_from_impl(&This->node), p );
+    HRESULT hr = E_FAIL;
+    xmlChar *str;
+    XDR_DT dt;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(dtName));
+
+    if(dtName == NULL)
+        return E_INVALIDARG;
+
+    dt = bstr_to_dt(dtName, -1);
+
+    /* An example of this is. The Text in the node needs to be a 0 or 1 for a boolean type.
+       This applies to changing types (string->bool) or setting a new one
+     */
+    str = xmlNodeGetContent(get_element(This));
+    hr = dt_validate(dt, str);
+    xmlFree(str);
+
+    /* Check all supported types. */
+    if (hr == S_OK)
+    {
+        switch (dt)
+        {
+        case DT_BIN_BASE64:
+        case DT_BIN_HEX:
+        case DT_BOOLEAN:
+        case DT_CHAR:
+        case DT_DATE:
+        case DT_DATE_TZ:
+        case DT_DATETIME:
+        case DT_DATETIME_TZ:
+        case DT_FIXED_14_4:
+        case DT_FLOAT:
+        case DT_I1:
+        case DT_I2:
+        case DT_I4:
+        case DT_I8:
+        case DT_INT:
+        case DT_NMTOKEN:
+        case DT_NMTOKENS:
+        case DT_NUMBER:
+        case DT_R4:
+        case DT_R8:
+        case DT_STRING:
+        case DT_TIME:
+        case DT_TIME_TZ:
+        case DT_UI1:
+        case DT_UI2:
+        case DT_UI4:
+        case DT_UI8:
+        case DT_URI:
+        case DT_UUID:
+            {
+                xmlAttrPtr attr = xmlHasNsProp(get_element(This), DT_prefix, DT_nsURI);
+                if (attr)
+                {
+                    attr = xmlSetNsProp(get_element(This), attr->ns, DT_prefix, dt_to_str(dt));
+                    hr = S_OK;
+                }
+                else
+                {
+                    xmlNsPtr ns = xmlNewNs(get_element(This), DT_nsURI, DT_prefix);
+                    if (ns)
+                    {
+                        attr = xmlNewNsProp(get_element(This), ns, DT_prefix, dt_to_str(dt));
+                        if (attr)
+                        {
+                            xmlAddChild(get_element(This), (xmlNodePtr)attr);
+                            hr = S_OK;
+                        }
+                        else
+                            ERR("Failed to create Attribute\n");
+                    }
+                    else
+                        ERR("Failed to create Namespace\n");
+                }
+            }
+            break;
+        default:
+            FIXME("need to handle dt:%s\n", dt_to_str(dt));
+            break;
+        }
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI domelem_get_xml(

@@ -64,9 +64,11 @@ static const xmlChar XDR_schema[] = "Schema";
 static const xmlChar XDR_nsURI[] = "urn:schemas-microsoft-com:xml-data";
 static const xmlChar DT_nsURI[] = "urn:schemas-microsoft-com:datatypes";
 
-static xmlChar const* datatypes_schema = NULL;
-static HGLOBAL datatypes_handle = NULL;
-static HRSRC datatypes_rsrc = NULL;
+static xmlChar const*   datatypes_src = NULL;
+static int              datatypes_len = 0;
+static HGLOBAL          datatypes_handle = NULL;
+static HRSRC            datatypes_rsrc = NULL;
+static xmlSchemaPtr     datatypes_schema = NULL;
 
 /* Supported Types:
  * msxml3 - XDR only
@@ -484,6 +486,83 @@ OLECHAR const* dt_to_bstr(XDR_DT dt)
     return DT_wstring_table[dt];
 }
 
+HRESULT dt_validate(XDR_DT dt, xmlChar const* content)
+{
+    xmlDocPtr tmp_doc;
+    xmlNodePtr node;
+    xmlNsPtr ns;
+    xmlSchemaValidCtxtPtr svctx;
+    BOOL valid;
+    if (!datatypes_schema)
+    {
+        xmlSchemaParserCtxtPtr spctx;
+        assert(datatypes_src != NULL);
+        spctx = xmlSchemaNewMemParserCtxt((char const*)datatypes_src, datatypes_len);
+        datatypes_schema = xmlSchemaParse(spctx);
+        xmlSchemaFreeParserCtxt(spctx);
+    }
+
+    switch (dt)
+    {
+        case DT_INVALID:
+            return E_FAIL;
+            break;
+        case DT_BIN_BASE64:
+        case DT_BIN_HEX:
+        case DT_BOOLEAN:
+        case DT_CHAR:
+        case DT_DATE:
+        case DT_DATE_TZ:
+        case DT_DATETIME:
+        case DT_DATETIME_TZ:
+        case DT_FIXED_14_4:
+        case DT_FLOAT:
+        case DT_I1:
+        case DT_I2:
+        case DT_I4:
+        case DT_I8:
+        case DT_INT:
+        case DT_NMTOKEN:
+        case DT_NMTOKENS:
+        case DT_NUMBER:
+        case DT_R4:
+        case DT_R8:
+        case DT_STRING:
+        case DT_TIME:
+        case DT_TIME_TZ:
+        case DT_UI1:
+        case DT_UI2:
+        case DT_UI4:
+        case DT_UI8:
+        case DT_URI:
+        case DT_UUID:
+            assert(datatypes_schema != NULL);
+            if (content && xmlStrlen(content))
+            {
+                svctx = xmlSchemaNewValidCtxt(datatypes_schema);
+                tmp_doc = xmlNewDoc(NULL);
+                node = xmlNewChild((xmlNodePtr)tmp_doc, NULL, dt_to_str(dt), content);
+                ns = xmlNewNs(node, DT_nsURI, BAD_CAST "dt");
+                xmlSetNs(node, ns);
+                xmlDocSetRootElement(tmp_doc, node);
+
+                valid = !xmlSchemaValidateDoc(svctx, tmp_doc);
+                xmlSchemaFreeValidCtxt(svctx);
+                xmlFreeDoc(tmp_doc);
+            }
+            else
+            {   /* probably the node is being created manually and has no content yet */
+                valid = TRUE;
+            }
+            return valid? S_OK : S_FALSE;
+            break;
+        default:
+            FIXME("need to handle dt:%s\n", dt_to_str(dt));
+            return S_OK;
+            break;
+    }
+}
+
 static inline xmlChar const* get_node_nsURI(xmlNodePtr node)
 {
     return (node->ns != NULL)? node->ns->href : NULL;
@@ -513,13 +592,13 @@ static xmlParserInputPtr external_entity_loader(const char *URL, const char *ID,
     assert(MSXML_hInstance != NULL);
     assert(datatypes_rsrc != NULL);
     assert(datatypes_handle != NULL);
-    assert(datatypes_schema != NULL);
+    assert(datatypes_src != NULL);
 
     /* TODO: if the desired schema is in the cache, load it from there */
     if (lstrcmpA(URL, "urn:schemas-microsoft-com:datatypes") == 0)
     {
         TRACE("loading built-in schema for %s\n", URL);
-        input = xmlNewStringInputStream(ctxt, datatypes_schema);
+        input = xmlNewStringInputStream(ctxt, datatypes_src);
     }
     else
     {
@@ -551,7 +630,8 @@ void schemasInit(void)
      * need a null-terminated string */
     while (buf[len] != '>')
         buf[len--] = 0;
-    datatypes_schema = BAD_CAST buf;
+    datatypes_src = BAD_CAST buf;
+    datatypes_len = len + 1;
 
     if ((void*)xmlGetExternalEntityLoader() != (void*)external_entity_loader)
     {
@@ -564,6 +644,8 @@ void schemasCleanup(void)
 {
     if (datatypes_handle)
         FreeResource(datatypes_handle);
+    if (datatypes_schema)
+        xmlSchemaFree(datatypes_schema);
     xmlSetExternalEntityLoader(_external_entity_loader);
 }
 
