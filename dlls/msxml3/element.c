@@ -635,7 +635,7 @@ static inline HRESULT VARIANT_from_DT(XDR_DT dt, xmlChar* str, VARIANT* v)
     case DT_IDREF:
     case DT_IDREFS:
     case DT_NOTATION:
-        FIXME("need to handle dt:%s\n", dt_get_str(dt));
+        FIXME("need to handle dt:%s\n", dt_to_str(dt));
         V_VT(v) = VT_BSTR;
         V_BSTR(v) = bstr_from_xmlChar(str);
         if (!V_BSTR(v))
@@ -731,14 +731,14 @@ XDR_DT element_get_dt(xmlNodePtr node)
 
     if (node->ns && xmlStrEqual(node->ns->href, DT_nsURI))
     {
-        dt = dt_get_type(node->name, -1);
+        dt = str_to_dt(node->name, -1);
     }
     else
     {
         xmlChar* pVal = xmlGetNsProp(node, BAD_CAST "dt", DT_nsURI);
         if (pVal)
         {
-            dt = dt_get_type(pVal, -1);
+            dt = str_to_dt(pVal, -1);
             xmlFree(pVal);
         }
         else if (node->doc)
@@ -760,7 +760,7 @@ XDR_DT element_get_dt(xmlNodePtr node)
         }
     }
 
-    TRACE("=> dt:%s\n", dt_get_str(dt));
+    TRACE("=> dt:%s\n", dt_to_str(dt));
     return dt;
 }
 
@@ -806,7 +806,7 @@ static HRESULT WINAPI domelem_get_dataType(
         case DT_URI:
         case DT_UUID:
             V_VT(typename) = VT_BSTR;
-            V_BSTR(typename) = bstr_from_xmlChar(dt_get_str(dt));
+            V_BSTR(typename) = SysAllocString(dt_to_bstr(dt));
 
             if (!V_BSTR(typename))
                 return E_OUTOFMEMORY;

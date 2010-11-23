@@ -268,8 +268,10 @@ extern HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3
 extern HRESULT SchemaCache_validate_tree(IXMLDOMSchemaCollection2* iface, xmlNodePtr tree);
 extern XDR_DT  SchemaCache_get_node_dt(IXMLDOMSchemaCollection2* iface, xmlNodePtr node);
 
-extern XDR_DT dt_get_type(xmlChar const* str, int len /* calculated if -1 */);
-extern xmlChar const* dt_get_str(XDR_DT dt);
+extern XDR_DT str_to_dt(xmlChar const* str, int len /* calculated if -1 */);
+extern XDR_DT bstr_to_dt(OLECHAR const* bstr, int len /* calculated if -1 */);
+extern xmlChar const* dt_to_str(XDR_DT dt);
+extern OLECHAR const* dt_to_bstr(XDR_DT dt);
 extern XDR_DT element_get_dt(xmlNodePtr node);
 
 extern BSTR EnsureCorrectEOL(BSTR);
