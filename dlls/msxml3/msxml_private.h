@@ -270,6 +270,7 @@ extern XDR_DT  SchemaCache_get_node_dt(IXMLDOMSchemaCollection2* iface, xmlNodeP
 
 extern XDR_DT dt_get_type(xmlChar const* str, int len /* calculated if -1 */);
 extern xmlChar const* dt_get_str(XDR_DT dt);
+extern XDR_DT element_get_dt(xmlNodePtr node);
 
 extern BSTR EnsureCorrectEOL(BSTR);
 

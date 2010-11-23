@@ -38,6 +38,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #ifdef HAVE_LIBXML2
 
+static const xmlChar DT_nsURI[] = "urn:schemas-microsoft-com:datatypes";
+
 typedef struct _domelem
 {
     xmlnode node;
@@ -429,12 +431,256 @@ static HRESULT WINAPI domelem_get_definition(
     return E_NOTIMPL;
 }
 
+static inline BYTE hex_to_byte(xmlChar c)
+{
+    if(c <= '9') return c-'0';
+    if(c <= 'F') return c-'A'+10;
+    return c-'a'+10;
+}
+
+static inline BYTE base64_to_byte(xmlChar c)
+{
+    if(c == '+') return 62;
+    if(c == '/') return 63;
+    if(c <= '9') return c-'0'+52;
+    if(c <= 'Z') return c-'A';
+    return c-'a'+26;
+}
+
+static inline HRESULT VARIANT_from_DT(XDR_DT dt, xmlChar* str, VARIANT* v)
+{
+    VARIANT src;
+    HRESULT hr = S_OK;
+    BOOL handled = FALSE;
+
+    VariantInit(&src);
+
+    switch (dt)
+    {
+    case DT_INVALID:
+    case DT_STRING:
+    case DT_NMTOKEN:
+    case DT_NMTOKENS:
+    case DT_NUMBER:
+    case DT_URI:
+    case DT_UUID:
+        {
+            V_VT(v) = VT_BSTR;
+            V_BSTR(v) = bstr_from_xmlChar(str);
+
+            if(!V_BSTR(v))
+                return E_OUTOFMEMORY;
+            handled = TRUE;
+        }
+        break;
+    case DT_DATE:
+    case DT_DATE_TZ:
+    case DT_DATETIME:
+    case DT_DATETIME_TZ:
+    case DT_TIME:
+    case DT_TIME_TZ:
+        {
+            WCHAR *p, *e;
+            SYSTEMTIME st;
+            DOUBLE date = 0.0;
+
+            st.wYear = 1899;
+            st.wMonth = 12;
+            st.wDay = 30;
+            st.wDayOfWeek = st.wHour = st.wMinute = st.wSecond = st.wMilliseconds = 0;
+
+            V_VT(&src) = VT_BSTR;
+            V_BSTR(&src) = bstr_from_xmlChar(str);
+
+            if(!V_BSTR(&src))
+                return E_OUTOFMEMORY;
+
+            p = V_BSTR(&src);
+            e = p + SysStringLen(V_BSTR(&src));
+
+            if(p+4<e && *(p+4)=='-') /* parse date (yyyy-mm-dd) */
+            {
+                st.wYear = atoiW(p);
+                st.wMonth = atoiW(p+5);
+                st.wDay = atoiW(p+8);
+                p += 10;
+
+                if(*p == 'T') p++;
+            }
+
+            if(p+2<e && *(p+2)==':') /* parse time (hh:mm:ss.?) */
+            {
+                st.wHour = atoiW(p);
+                st.wMinute = atoiW(p+3);
+                st.wSecond = atoiW(p+6);
+                p += 8;
+
+                if(*p == '.')
+                {
+                    p++;
+                    while(isdigitW(*p)) p++;
+                }
+            }
+
+            SystemTimeToVariantTime(&st, &date);
+            V_VT(v) = VT_DATE;
+            V_DATE(v) = date;
+
+            if(*p == '+') /* parse timezone offset (+hh:mm) */
+                V_DATE(v) += (DOUBLE)atoiW(p+1)/24 + (DOUBLE)atoiW(p+4)/1440;
+            else if(*p == '-') /* parse timezone offset (-hh:mm) */
+                V_DATE(v) -= (DOUBLE)atoiW(p+1)/24 + (DOUBLE)atoiW(p+4)/1440;
+
+            VariantClear(&src);
+            handled = TRUE;
+        }
+        break;
+    case DT_BIN_HEX:
+        {
+            SAFEARRAYBOUND sab;
+            int i, len;
+
+            len = xmlStrlen(str)/2;
+            sab.lLbound = 0;
+            sab.cElements = len;
+
+            V_VT(v) = (VT_ARRAY|VT_UI1);
+            V_ARRAY(v) = SafeArrayCreate(VT_UI1, 1, &sab);
+
+            if(!V_ARRAY(v))
+                return E_OUTOFMEMORY;
+
+            for(i=0; i<len; i++)
+                ((BYTE*)V_ARRAY(v)->pvData)[i] = (hex_to_byte(str[2*i])<<4)
+                    + hex_to_byte(str[2*i+1]);
+            handled = TRUE;
+        }
+        break;
+    case DT_BIN_BASE64:
+        {
+            SAFEARRAYBOUND sab;
+            int i, len;
+
+            len  = xmlStrlen(str);
+            if(str[len-2] == '=') i = 2;
+            else if(str[len-1] == '=') i = 1;
+            else i = 0;
+
+            sab.lLbound = 0;
+            sab.cElements = len/4*3-i;
+
+            V_VT(v) = (VT_ARRAY|VT_UI1);
+            V_ARRAY(v) = SafeArrayCreate(VT_UI1, 1, &sab);
+
+            if(!V_ARRAY(v))
+                return E_OUTOFMEMORY;
+
+            for(i=0; i<len/4; i++)
+            {
+                ((BYTE*)V_ARRAY(v)->pvData)[3*i] = (base64_to_byte(str[4*i])<<2)
+                    + (base64_to_byte(str[4*i+1])>>4);
+                if(3*i+1 < sab.cElements)
+                    ((BYTE*)V_ARRAY(v)->pvData)[3*i+1] = (base64_to_byte(str[4*i+1])<<4)
+                        + (base64_to_byte(str[4*i+2])>>2);
+                if(3*i+2 < sab.cElements)
+                    ((BYTE*)V_ARRAY(v)->pvData)[3*i+2] = (base64_to_byte(str[4*i+2])<<6)
+                        + base64_to_byte(str[4*i+3]);
+            }
+            handled = TRUE;
+        }
+        break;
+    case DT_BOOLEAN:
+        V_VT(v) = VT_BOOL;
+        break;
+    case DT_FIXED_14_4:
+        V_VT(v) = VT_CY;
+        break;
+    case DT_I1:
+        V_VT(v) = VT_I1;
+        break;
+    case DT_I2:
+        V_VT(v) = VT_I2;
+        break;
+    case DT_I4:
+    case DT_INT:
+        V_VT(v) = VT_I4;
+        break;
+    case DT_I8:
+        V_VT(v) = VT_I8;
+        break;
+    case DT_R4:
+        V_VT(v) = VT_R4;
+        break;
+    case DT_FLOAT:
+    case DT_R8:
+        V_VT(v) = VT_R8;
+        break;
+    case DT_UI1:
+        V_VT(v) = VT_UI1;
+        break;
+    case DT_UI2:
+        V_VT(v) = VT_UI2;
+        break;
+    case DT_UI4:
+        V_VT(v) = VT_UI4;
+        break;
+    case DT_UI8:
+        V_VT(v) = VT_UI8;
+        break;
+    case DT_CHAR:
+    case DT_ENTITY:
+    case DT_ENTITIES:
+    case DT_ENUMERATION:
+    case DT_ID:
+    case DT_IDREF:
+    case DT_IDREFS:
+    case DT_NOTATION:
+        FIXME("need to handle dt:%s\n", dt_get_str(dt));
+        V_VT(v) = VT_BSTR;
+        V_BSTR(v) = bstr_from_xmlChar(str);
+        if (!V_BSTR(v))
+            return E_OUTOFMEMORY;
+        handled = TRUE;
+        break;
+    }
+
+    if (!handled)
+    {
+        V_VT(&src) = VT_BSTR;
+        V_BSTR(&src) = bstr_from_xmlChar(str);
+
+        if(!V_BSTR(&src))
+            return E_OUTOFMEMORY;
+
+        hr = VariantChangeTypeEx(v, &src,
+                MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT),0, V_VT(v));
+        VariantClear(&src);
+    }
+    return hr;
+}
+
 static HRESULT WINAPI domelem_get_nodeTypedValue(
     IXMLDOMElement *iface,
     VARIANT* var1)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    return IXMLDOMNode_get_nodeTypedValue( IXMLDOMNode_from_impl(&This->node), var1 );
+    XDR_DT dt;
+    xmlChar* content;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, var1);
+
+    if(!var1)
+        return E_INVALIDARG;
+
+    V_VT(var1) = VT_NULL;
+
+    dt = element_get_dt(get_element(This));
+    content = xmlNodeGetContent(get_element(This));
+    hr = VARIANT_from_DT(dt, content, var1);
+    xmlFree(content);
+
+    return hr;
 }
 
 static HRESULT WINAPI domelem_put_nodeTypedValue(
@@ -472,25 +718,106 @@ static HRESULT WINAPI domelem_put_nodeTypedValue(
     return hr;
 }
 
+XDR_DT element_get_dt(xmlNodePtr node)
+{
+    XDR_DT dt = DT_INVALID;
+
+    TRACE("(%p)\n", node);
+    if(node->type != XML_ELEMENT_NODE)
+    {
+        FIXME("invalid element node\n");
+        return dt;
+    }
+
+    if (node->ns && xmlStrEqual(node->ns->href, DT_nsURI))
+    {
+        dt = dt_get_type(node->name, -1);
+    }
+    else
+    {
+        xmlChar* pVal = xmlGetNsProp(node, BAD_CAST "dt", DT_nsURI);
+        if (pVal)
+        {
+            dt = dt_get_type(pVal, -1);
+            xmlFree(pVal);
+        }
+        else if (node->doc)
+        {
+            IXMLDOMDocument3* doc = (IXMLDOMDocument3*)create_domdoc((xmlNodePtr)node->doc);
+            if (doc)
+            {
+                VARIANT v;
+                VariantInit(&v);
+
+                if (IXMLDOMDocument3_get_schemas(doc, &v) == S_OK &&
+                    V_VT(&v) == VT_DISPATCH)
+                {
+                    dt = SchemaCache_get_node_dt((IXMLDOMSchemaCollection2*)V_DISPATCH(&v), node);
+                }
+                VariantClear(&v);
+                IXMLDOMDocument3_Release(doc);
+            }
+        }
+    }
+
+    TRACE("=> dt:%s\n", dt_get_str(dt));
+    return dt;
+}
+
 static HRESULT WINAPI domelem_get_dataType(
     IXMLDOMElement *iface,
     VARIANT* typename)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    xmlChar *pVal = xmlGetNsProp(get_element(This), (const xmlChar*)"dt",
-                                 (const xmlChar*)"urn:schemas-microsoft-com:datatypes");
+    XDR_DT dt;
 
     TRACE("(%p)->(%p)\n", This, typename);
 
-    V_VT(typename) = VT_NULL;
+    if (!typename)
+        return E_INVALIDARG;
 
-    if (pVal)
+    dt = element_get_dt(get_element(This));
+    switch (dt)
     {
-        V_VT(typename) = VT_BSTR;
-        V_BSTR(typename) = bstr_from_xmlChar( pVal );
-        xmlFree(pVal);
-    }
+        case DT_BIN_BASE64:
+        case DT_BIN_HEX:
+        case DT_BOOLEAN:
+        case DT_CHAR:
+        case DT_DATE:
+        case DT_DATE_TZ:
+        case DT_DATETIME:
+        case DT_DATETIME_TZ:
+        case DT_FIXED_14_4:
+        case DT_FLOAT:
+        case DT_I1:
+        case DT_I2:
+        case DT_I4:
+        case DT_I8:
+        case DT_INT:
+        case DT_NUMBER:
+        case DT_R4:
+        case DT_R8:
+        case DT_TIME:
+        case DT_TIME_TZ:
+        case DT_UI1:
+        case DT_UI2:
+        case DT_UI4:
+        case DT_UI8:
+        case DT_URI:
+        case DT_UUID:
+            V_VT(typename) = VT_BSTR;
+            V_BSTR(typename) = bstr_from_xmlChar(dt_get_str(dt));
 
+            if (!V_BSTR(typename))
+                return E_OUTOFMEMORY;
+            break;
+        default:
+            /* Other types (DTD equivalents) do not return anything here,
+             * but the pointer part of the VARIANT is set to NULL */
+            V_VT(typename) = VT_NULL;
+            V_BSTR(typename) = NULL;
+            break;
+    }
     return (V_VT(typename) != VT_NULL) ? S_OK : S_FALSE;
 }
 

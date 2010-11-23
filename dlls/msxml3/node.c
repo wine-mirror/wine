@@ -669,6 +669,7 @@ static inline BYTE base64_to_byte(xmlChar c)
     return c-'a'+26;
 }
 
+/* TODO: phasing this version out */
 static inline HRESULT VARIANT_from_xmlChar(xmlChar *str, VARIANT *v, BSTR type)
 {
     if(!type || !lstrcmpiW(type, szString) ||
@@ -850,19 +851,23 @@ static HRESULT WINAPI xmlnode_get_nodeTypedValue(
 
     V_VT(typedValue) = VT_NULL;
 
-    if(This->node->type == XML_ELEMENT_NODE ||
-            This->node->type == XML_TEXT_NODE ||
-            This->node->type == XML_ENTITY_REF_NODE)
+    if (This->node->type == XML_TEXT_NODE || This->node->type == XML_ENTITY_REF_NODE)
+    {
+        VariantInit(&type);
         hres = IXMLDOMNode_get_dataType(This->iface, &type);
 
-    if(hres != S_OK && This->node->type != XML_ELEMENT_NODE)
-        return IXMLDOMNode_get_nodeValue(This->iface, typedValue);
+        if(hres != S_OK)
+            return IXMLDOMNode_get_nodeValue(This->iface, typedValue);
 
-    content = xmlNodeGetContent(This->node);
-    hres = VARIANT_from_xmlChar(content, typedValue,
-            hres==S_OK ? V_BSTR(&type) : NULL);
-    xmlFree(content);
-    VariantClear(&type);
+        content = xmlNodeGetContent(This->node);
+        hres = VARIANT_from_xmlChar(content, typedValue, hres==S_OK ? V_BSTR(&type) : NULL);
+        VariantClear(&type);
+        xmlFree(content);
+    }
+    else
+    {
+        FIXME("need to handle node type %i\n", This->node->type);
+    }
 
     return hres;
 }
