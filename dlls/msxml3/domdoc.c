@@ -198,6 +198,11 @@ BOOL is_xpathmode(const xmlDocPtr doc)
     return properties_from_xmlDocPtr(doc)->XPath;
 }
 
+void set_xpathmode(xmlDocPtr doc, BOOL xpath)
+{
+    properties_from_xmlDocPtr(doc)->XPath = xpath;
+}
+
 int registerNamespaces(xmlXPathContextPtr ctxt)
 {
     int n = 0;
@@ -1766,6 +1771,47 @@ static HRESULT WINAPI domdoc_createEntityReference(
     return hr;
 }
 
+xmlChar* tagName_to_XPath(const BSTR tagName)
+{
+    xmlChar *query, *tmp;
+    static const xmlChar mod_pre[] = "*[local-name()='";
+    static const xmlChar mod_post[] = "']";
+    static const xmlChar prefix[] = "descendant::";
+    const WCHAR *tokBegin, *tokEnd;
+    int len;
+
+    query = xmlStrdup(prefix);
+
+    tokBegin = tagName;
+    while (tokBegin && *tokBegin)
+    {
+        switch (*tokBegin)
+        {
+        case '/':
+            query = xmlStrcat(query, BAD_CAST "/");
+            ++tokBegin;
+            break;
+        case '*':
+            query = xmlStrcat(query, BAD_CAST "*");
+            ++tokBegin;
+            break;
+        default:
+            query = xmlStrcat(query, mod_pre);
+            tokEnd = tokBegin;
+            while (*tokEnd && *tokEnd != '/')
+                ++tokEnd;
+            len = WideCharToMultiByte(CP_UTF8, 0, tokBegin, tokEnd-tokBegin, NULL, 0, NULL, NULL);
+            tmp = xmlMalloc(len);
+            WideCharToMultiByte(CP_UTF8, 0, tokBegin, tokEnd-tokBegin, (char*)tmp, len, NULL, NULL);
+            query = xmlStrncat(query, tmp, len);
+            xmlFree(tmp);
+            tokBegin = tokEnd;
+            query = xmlStrcat(query, mod_post);
+        }
+    }
+
+    return query;
+}
 
 static HRESULT WINAPI domdoc_getElementsByTagName(
     IXMLDOMDocument3 *iface,
@@ -1773,41 +1819,20 @@ static HRESULT WINAPI domdoc_getElementsByTagName(
     IXMLDOMNodeList** resultList )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
+    xmlChar *query;
     HRESULT hr;
+    BOOL XPath;
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_w(tagName), resultList);
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_w(tagName), resultList);
 
     if (!tagName || !resultList) return E_INVALIDARG;
 
-    if (tagName[0] == '*' && tagName[1] == 0)
-    {
-        static const WCHAR formatallW[] = {'/','/','*',0};
-        hr = queryresult_create((xmlNodePtr)get_doc(This), formatallW, resultList);
-    }
-    else
-    {
-        static const WCHAR xpathformat[] =
-            { '/','/','*','[','l','o','c','a','l','-','n','a','m','e','(',')','=','\'' };
-        static const WCHAR closeW[] = { '\'',']',0 };
-
-        LPWSTR pattern;
-        WCHAR *ptr;
-        INT length;
-
-        length = lstrlenW(tagName);
-
-        /* without two WCHARs from format specifier */
-        ptr = pattern = heap_alloc(sizeof(xpathformat) + length*sizeof(WCHAR) + sizeof(closeW));
-
-        memcpy(ptr, xpathformat, sizeof(xpathformat));
-        ptr += sizeof(xpathformat)/sizeof(WCHAR);
-        memcpy(ptr, tagName, length*sizeof(WCHAR));
-        ptr += length;
-        memcpy(ptr, closeW, sizeof(closeW));
-
-        hr = queryresult_create((xmlNodePtr)get_doc(This), pattern, resultList);
-        heap_free(pattern);
-    }
+    XPath = This->properties->XPath;
+    This->properties->XPath = TRUE;
+    query = tagName_to_XPath(tagName);
+    hr = queryresult_create((xmlNodePtr)get_doc(This), query, resultList);
+    xmlFree(query);
+    This->properties->XPath = XPath;
 
     return hr;
 }

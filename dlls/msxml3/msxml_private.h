@@ -190,7 +190,7 @@ extern IUnknown         *create_doc_fragment( xmlNodePtr fragment );
 extern IUnknown         *create_doc_entity_ref( xmlNodePtr entity );
 extern IUnknown         *create_doc_type( xmlNodePtr doctype );
 
-extern HRESULT queryresult_create( xmlNodePtr, LPCWSTR, IXMLDOMNodeList ** );
+extern HRESULT queryresult_create( xmlNodePtr node, xmlChar* szQuery, IXMLDOMNodeList** out );
 
 /* data accessors */
 xmlNodePtr xmlNodePtr_from_domnode( IXMLDOMNode *iface, xmlElementType type );
@@ -225,6 +225,8 @@ extern void wineXmlCallbackError(char const* caller, xmlErrorPtr err);
 #define LIBXML2_CALLBACK_SERROR(caller, err) wineXmlCallbackError(#caller, err)
 
 extern BOOL is_preserving_whitespace(xmlNodePtr node);
+extern BOOL is_xpathmode(const xmlDocPtr doc);
+extern void set_xpathmode(xmlDocPtr doc, BOOL xpath);
 
 /* IXMLDOMNode Internal Structure */
 typedef struct _xmlnode
@@ -276,6 +278,8 @@ extern XDR_DT element_get_dt(xmlNodePtr node);
 extern HRESULT dt_validate(XDR_DT dt, xmlChar const* content);
 
 extern BSTR EnsureCorrectEOL(BSTR);
+
+extern xmlChar* tagName_to_XPath(const BSTR tagName);
 
 static inline BSTR bstr_from_xmlChar(const xmlChar *str)
 {

@@ -2962,9 +2962,8 @@ static void test_getElementsByTagName(void)
     ok( r == S_OK, "ret %08x\n", r );
     r = IXMLDOMNodeList_get_length( node_list, &len );
     ok( r == S_OK, "ret %08x\n", r );
-    todo_wine ok( len == 5, "len %d\n", len );
-
-    IXMLDOMNodeList_Release( node_list );
+    ok( len == 5, "len %d\n", len );
+    expect_list_and_release(node_list, "E1.E2.D1 E2.E2.D1 E3.E2.D1 E4.E2.D1 E1.E4.E2.D1");
     SysFreeString( str );
 
     /* broken query BSTR */
@@ -2975,7 +2974,7 @@ static void test_getElementsByTagName(void)
     ok( r == S_OK, "ret %08x\n", r );
     r = IXMLDOMNodeList_get_length( node_list, &len );
     ok( r == S_OK, "ret %08x\n", r );
-    todo_wine ok( len == 5, "len %d\n", len );
+    ok( len == 5, "len %d\n", len );
     IXMLDOMNodeList_Release( node_list );
 
     IXMLDOMElement_Release(elem);

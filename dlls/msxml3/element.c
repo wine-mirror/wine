@@ -1231,44 +1231,20 @@ static HRESULT WINAPI domelem_getElementsByTagName(
     BSTR tagName, IXMLDOMNodeList** resultList)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    xmlNodePtr element;
+    xmlChar *query;
     HRESULT hr;
+    BOOL XPath;
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_w(tagName), resultList);
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_w(tagName), resultList);
 
     if (!tagName || !resultList) return E_INVALIDARG;
-    if (!(element = get_element(This))) return E_FAIL;
 
-    if (tagName[0] == '*' && tagName[1] == 0)
-    {
-        static const WCHAR formatallW[] = {'/','/','*',0};
-        hr = queryresult_create(element, formatallW, resultList);
-    }
-    else
-    {
-        static const WCHAR xpathformat[] =
-            { '/','/','*','[','l','o','c','a','l','-','n','a','m','e','(',')','=','\'' };
-        static const WCHAR closeW[] = { '\'',']',0 };
-
-        LPWSTR pattern;
-        WCHAR *ptr;
-        INT length;
-
-        length = lstrlenW(tagName);
-
-        /* without two WCHARs from format specifier */
-        ptr = pattern = heap_alloc(sizeof(xpathformat) + length*sizeof(WCHAR) + sizeof(closeW));
-
-        memcpy(ptr, xpathformat, sizeof(xpathformat));
-        ptr += sizeof(xpathformat)/sizeof(WCHAR);
-        memcpy(ptr, tagName, length*sizeof(WCHAR));
-        ptr += length;
-        memcpy(ptr, closeW, sizeof(closeW));
-
-        TRACE("%s\n", debugstr_w(pattern));
-        hr = queryresult_create(element, pattern, resultList);
-        heap_free(pattern);
-    }
+    XPath = is_xpathmode(get_element(This)->doc);
+    set_xpathmode(get_element(This)->doc, TRUE);
+    query = tagName_to_XPath(tagName);
+    hr = queryresult_create(get_element(This), query, resultList);
+    xmlFree(query);
+    set_xpathmode(get_element(This)->doc, XPath);
 
     return hr;
 }

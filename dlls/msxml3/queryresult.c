@@ -52,7 +52,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 #include <libxml/xpathInternals.h>
 
 int registerNamespaces(xmlXPathContextPtr ctxt);
-BOOL is_xpathmode(const xmlDocPtr doc);
 xmlChar* XSLPattern_to_XPath(xmlXPathContextPtr ctxt, xmlChar const* xslpat_str);
 
 typedef struct _queryresult
@@ -488,17 +487,16 @@ static void query_serror(void* ctx, xmlErrorPtr err)
     LIBXML2_CALLBACK_SERROR(queryresult_create, err);
 }
 
-HRESULT queryresult_create(xmlNodePtr node, LPCWSTR szQuery, IXMLDOMNodeList **out)
+HRESULT queryresult_create(xmlNodePtr node, xmlChar* szQuery, IXMLDOMNodeList **out)
 {
     queryresult *This = heap_alloc_zero(sizeof(queryresult));
     xmlXPathContextPtr ctxt = xmlXPathNewContext(node->doc);
-    xmlChar *str = xmlChar_from_wchar(szQuery);
     HRESULT hr;
 
-    TRACE("(%p, %s, %p)\n", node, wine_dbgstr_w(szQuery), out);
+    TRACE("(%p, %s, %p)\n", node, wine_dbgstr_a((char const*)szQuery), out);
 
     *out = NULL;
-    if (This == NULL || ctxt == NULL || str == NULL)
+    if (This == NULL || ctxt == NULL || szQuery == NULL)
     {
         hr = E_OUTOFMEMORY;
         goto cleanup;
@@ -517,16 +515,11 @@ HRESULT queryresult_create(xmlNodePtr node, LPCWSTR szQuery, IXMLDOMNodeList **o
     if (is_xpathmode(This->node->doc))
     {
         xmlXPathRegisterAllFunctions(ctxt);
+        This->result = xmlXPathEvalExpression(szQuery, ctxt);
     }
     else
     {
-        xmlChar* tmp;
-        int len;
-        tmp = XSLPattern_to_XPath(ctxt, str);
-        len = (xmlStrlen(tmp)+1)*sizeof(xmlChar);
-        str = heap_realloc(str, len);
-        memcpy(str, tmp, len);
-        xmlFree(tmp);
+        xmlChar* xslpQuery = XSLPattern_to_XPath(ctxt, szQuery);
 
         xmlXPathRegisterFunc(ctxt, (xmlChar const*)"not", xmlXPathNotFunction);
         xmlXPathRegisterFunc(ctxt, (xmlChar const*)"boolean", xmlXPathBooleanFunction);
@@ -541,9 +534,11 @@ HRESULT queryresult_create(xmlNodePtr node, LPCWSTR szQuery, IXMLDOMNodeList **o
         xmlXPathRegisterFunc(ctxt, (xmlChar const*)"OP_ILEq", XSLPattern_OP_ILEq);
         xmlXPathRegisterFunc(ctxt, (xmlChar const*)"OP_IGt", XSLPattern_OP_IGt);
         xmlXPathRegisterFunc(ctxt, (xmlChar const*)"OP_IGEq", XSLPattern_OP_IGEq);
+
+        This->result = xmlXPathEvalExpression(xslpQuery, ctxt);
+        xmlFree(xslpQuery);
     }
 
-    This->result = xmlXPathEvalExpression(str, ctxt);
     if (!This->result || This->result->type != XPATH_NODESET)
     {
         hr = E_FAIL;
@@ -560,7 +555,6 @@ cleanup:
     if (This != NULL && FAILED(hr))
         IXMLDOMNodeList_Release( (IXMLDOMNodeList*) &This->lpVtbl );
     xmlXPathFreeContext(ctxt);
-    heap_free(str);
     return hr;
 }
 

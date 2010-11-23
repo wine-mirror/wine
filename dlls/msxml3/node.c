@@ -1107,12 +1107,18 @@ static HRESULT WINAPI xmlnode_selectNodes(
     IXMLDOMNodeList** resultList)
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
+    xmlChar* str;
+    HRESULT hr;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(queryString), resultList );
 
     if (!queryString || !resultList) return E_INVALIDARG;
 
-    return queryresult_create( This->node, queryString, resultList );
+    str = xmlChar_from_wchar(queryString);
+    hr = queryresult_create(This->node, str, resultList);
+    heap_free(str);
+
+    return hr;
 }
 
 static HRESULT WINAPI xmlnode_selectSingleNode(
