@@ -109,17 +109,22 @@ static void test_D3DXCheckTextureRequirements(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
     ok(mipmaps == 7, "Returned mipmaps %d, expected %d\n", mipmaps, 7);
 
-    width = 284; height = 137;
-    mipmaps = 20;
-    hr = D3DXCheckTextureRequirements(device, &width, &height, &mipmaps, 0, NULL, D3DPOOL_DEFAULT);
-    ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
-    ok(mipmaps == 9, "Returned mipmaps %d, expected %d\n", mipmaps, 9);
+    if (!(caps.TextureCaps & D3DPTEXTURECAPS_POW2))
+    {
+        width = 284; height = 137;
+        mipmaps = 20;
+        hr = D3DXCheckTextureRequirements(device, &width, &height, &mipmaps, 0, NULL, D3DPOOL_DEFAULT);
+        ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(mipmaps == 9, "Returned mipmaps %d, expected %d\n", mipmaps, 9);
 
-    width = height = 63;
-    mipmaps = 9;
-    hr = D3DXCheckTextureRequirements(device, &width, &height, &mipmaps, 0, NULL, D3DPOOL_DEFAULT);
-    ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
-    ok(mipmaps == 6, "Returned mipmaps %d, expected %d\n", mipmaps, 6);
+        width = height = 63;
+        mipmaps = 9;
+        hr = D3DXCheckTextureRequirements(device, &width, &height, &mipmaps, 0, NULL, D3DPOOL_DEFAULT);
+        ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(mipmaps == 6, "Returned mipmaps %d, expected %d\n", mipmaps, 6);
+    }
+    else
+        skip("Skipping some tests, npot2 textures unsupported\n");
 
     mipmaps = 20;
     hr = D3DXCheckTextureRequirements(device, NULL, NULL, &mipmaps, 0, NULL, D3DPOOL_DEFAULT);
@@ -193,7 +198,7 @@ static void test_D3DXCheckTextureRequirements(IDirect3DDevice9 *device)
 
 static void test_D3DXCheckCubeTextureRequirements(IDirect3DDevice9 *device)
 {
-    UINT size, mipmaps;
+    UINT size, mipmaps, expected;
     D3DFORMAT format;
     D3DCAPS9 caps;
     HRESULT hr;
@@ -231,15 +236,17 @@ static void test_D3DXCheckCubeTextureRequirements(IDirect3DDevice9 *device)
 
     size = 284;
     mipmaps = 20;
+    expected = caps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP_POW2 ? 10 : 9;
     hr = D3DXCheckCubeTextureRequirements(device, &size, &mipmaps, 0, NULL, D3DPOOL_DEFAULT);
     ok(hr == D3D_OK, "D3DXCheckCubeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
-    ok(mipmaps == 10, "Returned mipmaps %d, expected %d\n", mipmaps, 10);
+    ok(mipmaps == expected, "Returned mipmaps %d, expected %d\n", mipmaps, expected);
 
     size = 63;
     mipmaps = 9;
+    expected = caps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP_POW2 ? 7 : 6;
     hr = D3DXCheckCubeTextureRequirements(device, &size, &mipmaps, 0, NULL, D3DPOOL_DEFAULT);
     ok(hr == D3D_OK, "D3DXCheckCubeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
-    ok(mipmaps == 7, "Returned mipmaps %d, expected %d\n", mipmaps, 7);
+    ok(mipmaps == expected, "Returned mipmaps %d, expected %d\n", mipmaps, expected);
 
     mipmaps = 0;
     hr = D3DXCheckCubeTextureRequirements(device, NULL, &mipmaps, 0, NULL, D3DPOOL_DEFAULT);
@@ -280,7 +287,7 @@ static void test_D3DXCheckCubeTextureRequirements(IDirect3DDevice9 *device)
 
 static void test_D3DXCheckVolumeTextureRequirements(IDirect3DDevice9 *device)
 {
-    UINT width, height, depth, mipmaps;
+    UINT width, height, depth, mipmaps, expected;
     D3DFORMAT format;
     D3DCAPS9 caps;
     HRESULT hr;
@@ -376,9 +383,10 @@ static void test_D3DXCheckVolumeTextureRequirements(IDirect3DDevice9 *device)
     height = 143;
     depth = 55;
     mipmaps = 20;
+    expected = caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP_POW2 ? 10 : 9;
     hr = D3DXCheckVolumeTextureRequirements(device, &width, &height, &depth, &mipmaps, 0, NULL, D3DPOOL_DEFAULT);
     ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
-    ok(mipmaps == 10, "Returned mipmaps %d, expected %d\n", mipmaps, 10);
+    ok(mipmaps == expected, "Returned mipmaps %d, expected %d\n", mipmaps, expected);
 
     mipmaps = 0;
     hr = D3DXCheckVolumeTextureRequirements(device, NULL, NULL, NULL, &mipmaps, 0, NULL, D3DPOOL_DEFAULT);
