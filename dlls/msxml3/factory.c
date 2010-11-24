@@ -204,7 +204,6 @@ static HRESULT DOMClassFactory_Create(const GUID *clsid, REFIID riid, void **ppv
     return hres;
 }
 
-static ClassFactory schemacf = { &ClassFactoryVtbl, SchemaCache_create };
 static ClassFactory xmldoccf = { &ClassFactoryVtbl, XMLDocument_create };
 static ClassFactory saxreadcf = { &ClassFactoryVtbl, SAXXMLReader_create };
 static ClassFactory httpreqcf = { &ClassFactoryVtbl, XMLHTTPRequest_create };
@@ -231,7 +230,7 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID riid, void **ppv )
              IsEqualCLSID( rclsid, &CLSID_XMLSchemaCache40 ) ||
              IsEqualCLSID( rclsid, &CLSID_XMLSchemaCache60 ))
     {
-        cf = (IClassFactory*) &schemacf.lpVtbl;
+        return DOMClassFactory_Create(rclsid, riid, ppv, SchemaCache_create);
     }
     else if( IsEqualCLSID( rclsid, &CLSID_XMLDocument ) )
     {

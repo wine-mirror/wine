@@ -29,6 +29,13 @@
 # error You must include config.h to use this header
 #endif
 
+typedef enum {
+    MSXML_DEFAULT = 0,
+    MSXML3 = 30,
+    MSXML4 = 40,
+    MSXML6 = 60
+} MSXML_VERSION;
+
 /* typelibs */
 typedef enum tid_t {
     IXMLDOMAttribute_tid,
@@ -371,10 +378,52 @@ MAKE_FUNCPTR(xsltParseStylesheetDoc);
 extern IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, BSTR srcText,
                                              LONG line, LONG linepos, LONG filepos );
 extern HRESULT DOMDocument_create( const GUID *clsid, IUnknown *pUnkOuter, void **ppObj );
-extern HRESULT SchemaCache_create( IUnknown *pUnkOuter, void **pObj );
+extern HRESULT SchemaCache_create( const GUID *clsid, IUnknown *pUnkOuter, void **ppObj );
 extern HRESULT XMLDocument_create( IUnknown *pUnkOuter, void **pObj );
 extern HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, void **pObj );
 extern HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **pObj);
+
+static inline const CLSID* DOMDocument_version(const MSXML_VERSION v)
+{
+    CLSID const* clsid;
+    switch (v)
+    {
+        case MSXML_DEFAULT:
+            clsid = &CLSID_DOMDocument;
+            break;
+        case MSXML3:
+            clsid = &CLSID_DOMDocument30;
+            break;
+        case MSXML4:
+            clsid = &CLSID_DOMDocument40;
+            break;
+        case MSXML6:
+            clsid = &CLSID_DOMDocument60;
+            break;
+    }
+    return clsid;
+}
+
+static inline const CLSID* SchemaCache_version(const MSXML_VERSION v)
+{
+    CLSID const* clsid;
+    switch (v)
+    {
+        case MSXML_DEFAULT:
+            clsid = &CLSID_XMLSchemaCache;
+            break;
+        case MSXML3:
+            clsid = &CLSID_XMLSchemaCache30;
+            break;
+        case MSXML4:
+            clsid = &CLSID_XMLSchemaCache40;
+            break;
+        case MSXML6:
+            clsid = &CLSID_XMLSchemaCache60;
+            break;
+    }
+    return clsid;
+}
 
 typedef struct bsc_t bsc_t;
 

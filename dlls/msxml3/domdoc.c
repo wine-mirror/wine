@@ -75,6 +75,7 @@ static const WCHAR PropValueXSLPatternW[] = {'X','S','L','P','a','t','t','e','r'
  * We need to preserve this when reloading a document,
  * and also need access to it from the libxml backend. */
 typedef struct _domdoc_properties {
+    MSXML_VERSION version;
     VARIANT_BOOL preserving;
     IXMLDOMSchemaCollection2* schemaCache;
     struct list selectNsList;
@@ -249,20 +250,31 @@ static domdoc_properties * create_properties(const GUID *clsid)
 {
     domdoc_properties *properties = heap_alloc(sizeof(domdoc_properties));
 
-    list_init( &properties->selectNsList );
+    list_init(&properties->selectNsList);
     properties->preserving = VARIANT_FALSE;
     properties->schemaCache = NULL;
     properties->selectNsStr = heap_alloc_zero(sizeof(xmlChar));
     properties->selectNsStr_len = 0;
 
     /* properties that are dependent on object versions */
-    if (IsEqualCLSID( clsid, &CLSID_DOMDocument40 ) ||
-        IsEqualCLSID( clsid, &CLSID_DOMDocument60 ))
+    if (IsEqualCLSID(clsid, &CLSID_DOMDocument30))
     {
+        properties->version = MSXML3;
+        properties->XPath = FALSE;
+    }
+    else if (IsEqualCLSID(clsid, &CLSID_DOMDocument40))
+    {
+        properties->version = MSXML4;
+        properties->XPath = TRUE;
+    }
+    else if (IsEqualCLSID(clsid, &CLSID_DOMDocument60))
+    {
+        properties->version = MSXML6;
         properties->XPath = TRUE;
     }
     else
     {
+        properties->version = MSXML_DEFAULT;
         properties->XPath = FALSE;
     }
 
@@ -279,6 +291,7 @@ static domdoc_properties* copy_properties(domdoc_properties const* properties)
 
     if (pcopy)
     {
+        pcopy->version = properties->version;
         pcopy->preserving = properties->preserving;
         pcopy->schemaCache = properties->schemaCache;
         pcopy->XPath = properties->XPath;
@@ -630,33 +643,34 @@ static inline domdoc *impl_from_IConnectionPointContainer(IConnectionPointContai
 static HRESULT WINAPI domdoc_IPersistStreamInit_QueryInterface(
     IPersistStreamInit *iface, REFIID riid, void **ppvObj)
 {
-    domdoc *this = impl_from_IPersistStreamInit(iface);
-    return IXMLDOMDocument2_QueryInterface((IXMLDOMDocument2 *)this, riid, ppvObj);
+    domdoc* This = impl_from_IPersistStreamInit(iface);
+    return IXMLDOMDocument3_QueryInterface((IXMLDOMDocument3*)&This->lpVtbl, riid, ppvObj);
 }
 
 static ULONG WINAPI domdoc_IPersistStreamInit_AddRef(
     IPersistStreamInit *iface)
 {
-    domdoc *this = impl_from_IPersistStreamInit(iface);
-    return IXMLDOMDocument2_AddRef((IXMLDOMDocument2 *)this);
+    domdoc* This = impl_from_IPersistStreamInit(iface);
+    return IXMLDOMDocument3_AddRef((IXMLDOMDocument3*)&This->lpVtbl);
 }
 
 static ULONG WINAPI domdoc_IPersistStreamInit_Release(
     IPersistStreamInit *iface)
 {
-    domdoc *this = impl_from_IPersistStreamInit(iface);
-    return IXMLDOMDocument2_Release((IXMLDOMDocument2 *)this);
+    domdoc* This = impl_from_IPersistStreamInit(iface);
+    return IXMLDOMDocument3_Release((IXMLDOMDocument3*)&This->lpVtbl);
 }
 
 static HRESULT WINAPI domdoc_IPersistStreamInit_GetClassID(
     IPersistStreamInit *iface, CLSID *classid)
 {
-    TRACE("(%p,%p): stub!\n", iface, classid);
+    domdoc* This = impl_from_IPersistStreamInit(iface);
+    TRACE("(%p)->(%p)\n", This, classid);
 
     if(!classid)
         return E_POINTER;
 
-    *classid = CLSID_DOMDocument2;
+    *classid = *DOMDocument_version(This->properties->version);
 
     return S_OK;
 }
