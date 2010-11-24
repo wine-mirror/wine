@@ -60,6 +60,7 @@
 #include "oleauto.h"
 #include "connpt.h"
 #include "urlmon.h"
+#include "initguid.h"
 #include "wincodec.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"

@@ -1,0 +1,110 @@
+HKCR
+{
+    NoRemove CLSID
+    {
+        ForceRemove '{0000002F-0000-0000-C000-000000000046}' = s 'CLSID_RecordInfo'
+        {
+            InprocServer32 = s '%MODULE%' { val ThreadingModel = s 'Both' }
+        }
+        ForceRemove '{00020420-0000-0000-C000-000000000046}' = s 'PSDispatch'
+        {
+            InprocServer = s 'ole2disp.dll'
+            InprocServer32 = s '%MODULE%' { val ThreadingModel = s 'Both' }
+        }
+        ForceRemove '{00020421-0000-0000-C000-000000000046}' = s 'PSEnumVariant'
+        {
+            InprocServer = s 'ole2disp.dll'
+            InprocServer32 = s '%MODULE%' { val ThreadingModel = s 'Both' }
+        }
+        ForceRemove '{00020422-0000-0000-C000-000000000046}' = s 'PSTypeInfo'
+        {
+            InprocServer = s 'ole2disp.dll'
+            InprocServer32 = s '%MODULE%' { val ThreadingModel = s 'Both' }
+        }
+        ForceRemove '{00020423-0000-0000-C000-000000000046}' = s 'PSTypeLib'
+        {
+            InprocServer = s 'ole2disp.dll'
+            InprocServer32 = s '%MODULE%' { val ThreadingModel = s 'Both' }
+        }
+        ForceRemove '{00020424-0000-0000-C000-000000000046}' = s 'PSOAInterface'
+        {
+            InprocServer = s 'ole2disp.dll'
+            InprocServer32 = s '%MODULE%' { val ThreadingModel = s 'Both' }
+        }
+        ForceRemove '{00020425-0000-0000-C000-000000000046}' = s 'PSTypeComp'
+        {
+            InprocServer = s 'ole2disp.dll'
+            InprocServer32 = s '%MODULE%' { val ThreadingModel = s 'Both' }
+        }
+        ForceRemove '{DF0B3D60-548F-101B-8E65-08002B2BD119}' = s 'PSSupportErrorInfo'
+        {
+            InprocServer = s 'ole2disp.dll'
+            InprocServer32 = s '%MODULE%'
+        }
+        ForceRemove '{0BE35203-8F91-11CE-9DE3-00AA004BB851}' = s 'CLSID_StdFont'
+        {
+            CLSID = s 'Standard Font'
+            InprocServer32 = s '%MODULE%' { val ThreadingModel = s 'Both' }
+            ProgId = s 'StdFont'
+        }
+        ForceRemove '{46763EE0-CAB2-11CE-8C20-00AA0051E5D4}' = s 'Obsolete Font'
+        {
+            CLSID = s 'Obsolete Font'
+            InprocServer32 = s '%MODULE%'
+            ProgId = s 'OldFont'
+        }
+        ForceRemove '{0BE35204-8F91-11CE-9DE3-00AA004BB851}' = s 'CLSID_StdPict'
+        {
+            CLSID = s 'Standard Picture'
+            InprocServer32 = s '%MODULE%' { val ThreadingModel = s 'Apartment' }
+            ProgId = s 'StdPicture'
+        }
+    }
+    NoRemove Interface
+    {
+        '{0000002E-0000-0000-C000-000000000046}'
+        {
+            ProxyStubClsid32 = s '{00020420-0000-0000-C000-000000000046}'
+        }
+        '{00020400-0000-0000-C000-000000000046}'
+        {
+            ProxyStubClsid   = s '{00020420-0000-0000-C000-000000000046}'
+            ProxyStubClsid32 = s '{00020420-0000-0000-C000-000000000046}'
+        }
+        '{00020401-0000-0000-C000-000000000046}'
+        {
+            ProxyStubClsid   = s '{00020422-0000-0000-C000-000000000046}'
+            ProxyStubClsid32 = s '{00020422-0000-0000-C000-000000000046}'
+        }
+        '{00020402-0000-0000-C000-000000000046}'
+        {
+            ProxyStubClsid   = s '{00020423-0000-0000-C000-000000000046}'
+            ProxyStubClsid32 = s '{00020423-0000-0000-C000-000000000046}'
+        }
+        '{00020403-0000-0000-C000-000000000046}'
+        {
+            ProxyStubClsid   = s '{00020425-0000-0000-C000-000000000046}'
+            ProxyStubClsid32 = s '{00020425-0000-0000-C000-000000000046}'
+        }
+        '{00020404-0000-0000-C000-000000000046}'
+        {
+            ProxyStubClsid   = s '{00020421-0000-0000-C000-000000000046}'
+            ProxyStubClsid32 = s '{00020421-0000-0000-C000-000000000046}'
+        }
+        '{00020411-0000-0000-C000-000000000046}'
+        {
+            ProxyStubClsid32 = s '{00020420-0000-0000-C000-000000000046}'
+        }
+        '{00020412-0000-0000-C000-000000000046}'
+        {
+            ProxyStubClsid32 = s '{00020420-0000-0000-C000-000000000046}'
+        }
+        '{DF0B3D60-548F-101B-8E65-08002B2BD119}'
+        {
+            ProxyStubClsid32 = s '{00020420-0000-0000-C000-000000000046}'
+        }
+    }
+    ForceRemove StdFont    { CLSID = s '{0BE35203-8F91-11CE-9DE3-00AA004BB851}' }
+    ForceRemove OldFont    { CLSID = s '{46763EE0-CAB2-11CE-8C20-00AA0051E5D4}' }
+    ForceRemove StdPicture { CLSID = s '{0BE35204-8F91-11CE-9DE3-00AA004BB851}' }
+}
