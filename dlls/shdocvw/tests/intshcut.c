@@ -177,27 +177,28 @@ static void test_ReadAndWriteProperties(void)
 {
     HRESULT hr;
     IUniformResourceLocatorA *urlA;
-    IPropertySetStorage *pPropSetStg;
+    IUniformResourceLocatorA *urlAFromFile;
+    WCHAR fileNameW[] = {'C',':','/','w','i','n','d','o','w','s','/','t','e','m','p','/','t','e','s','t','s','h','o','r','t','c','u','t','.','u','r','l',0};
+    WCHAR iconPath[] = {'f','i','l','e',':','/','/','/','C',':','/','a','r','b','i','t','r','a','r','y','/','i','c','o','n','/','p','a','t','h',0};
+    int iconIndex = 7;
+    char testurl[] = "http://some/bogus/url.html";
+    PROPSPEC ps[2];
+    ps[0].ulKind = PRSPEC_PROPID;
+    ps[0].propid = PID_IS_ICONFILE;
+    ps[1].ulKind = PRSPEC_PROPID;
+    ps[1].propid = PID_IS_ICONINDEX;
 
     hr = CoCreateInstance(&CLSID_InternetShortcut, NULL, CLSCTX_ALL, &IID_IUniformResourceLocatorA, (void**)&urlA);
     if (hr == S_OK)
     {
-        WCHAR iconPath[] = {'f','i','l','e',':','/','/','/','C',':','/','a','r','b','i','t','r','a','r','y','/','i','c','o','n','/','p','a','t','h',0};
-        int iconIndex = 7;
+        IPersistFile *pf;
         IPropertyStorage *pPropStgWrite;
-        IPropertyStorage *pPropStgRead;
-        PROPSPEC ps[2];
+        IPropertySetStorage *pPropSetStg;
         PROPVARIANT pv[2];
-        PROPVARIANT pvread[2];
-        ps[0].ulKind = PRSPEC_PROPID;
-        ps[0].propid = PID_IS_ICONFILE;
-        ps[1].ulKind = PRSPEC_PROPID;
-        ps[1].propid = PID_IS_ICONINDEX;
         pv[0].vt = VT_LPWSTR;
         pv[0].pwszVal = (void *) iconPath;
         pv[1].vt = VT_I4;
         pv[1].iVal = iconIndex;
-
         hr = urlA->lpVtbl->QueryInterface(urlA, &IID_IPropertySetStorage, (void **) &pPropSetStg);
         ok(hr == S_OK, "Unable to get an IPropertySetStorage, hr=0x%x\n", hr);
 
@@ -211,6 +212,49 @@ static void test_ReadAndWriteProperties(void)
         ok(hr == S_OK, "Failed to commit properties, hr=0x%x\n", hr);
 
         pPropStgWrite->lpVtbl->Release(pPropStgWrite);
+
+        /* We need to set a URL -- IPersistFile refuses to save without one. */
+        hr = urlA->lpVtbl->SetURL(urlA, testurl, 0);
+        ok(hr == S_OK, "Failed to set a URL.  hr=0x%x\n", hr);
+
+        /* Write this shortcut out to a file so that we can test reading it in again. */
+        hr = urlA->lpVtbl->QueryInterface(urlA, &IID_IPersistFile, (void **) &pf);
+        ok(hr == S_OK, "Failed to get the IPersistFile for writing.  hr=0x%x\n", hr);
+
+        hr = IPersistFile_Save(pf, fileNameW, TRUE);
+        ok(hr == S_OK, "Failed to save via IPersistFile. hr=0x%x\n", hr);
+
+        IPersistFile_Release(pf);
+        urlA->lpVtbl->Release(urlA);
+        IPropertySetStorage_Release(pPropSetStg);
+    }
+    else
+        skip("could not create a CLSID_InternetShortcut for property tests, hr=0x%x\n", hr);
+
+    hr = CoCreateInstance(&CLSID_InternetShortcut, NULL, CLSCTX_ALL, &IID_IUniformResourceLocatorA, (void**)&urlAFromFile);
+    if (hr == S_OK)
+    {
+        IPropertySetStorage *pPropSetStg;
+        IPropertyStorage *pPropStgRead;
+        PROPVARIANT pvread[2];
+        IPersistFile *pf;
+        LPSTR url = NULL;
+
+        /* Now read that .url file back in. */
+        hr = urlAFromFile->lpVtbl->QueryInterface(urlA, &IID_IPersistFile, (void **) &pf);
+        ok(hr == S_OK, "Failed to get the IPersistFile for reading.  hr=0x%x\n", hr);
+
+        hr = IPersistFile_Load(pf, fileNameW, 0);
+        ok(hr == S_OK, "Failed to load via IPersistFile. hr=0x%x\n", hr);
+        IPersistFile_Release(pf);
+
+
+        hr = urlA->lpVtbl->GetURL(urlAFromFile, &url);
+        ok(lstrcmp(url, testurl) == 0, "Wrong url read from file: %s\n",url);
+
+
+        hr = urlA->lpVtbl->QueryInterface(urlAFromFile, &IID_IPropertySetStorage, (void **) &pPropSetStg);
+        ok(hr == S_OK, "Unable to get an IPropertySetStorage, hr=0x%x\n", hr);
 
         hr = IPropertySetStorage_Open(pPropSetStg, &FMTID_Intshcut, STGM_READ | STGM_SHARE_EXCLUSIVE, &pPropStgRead);
         ok(hr == S_OK, "Unable to get an IPropertyStorage for reading, hr=0x%x\n", hr);
@@ -227,6 +271,7 @@ static void test_ReadAndWriteProperties(void)
         IPropertyStorage_Release(pPropStgRead);
         IPropertySetStorage_Release(pPropSetStg);
         urlA->lpVtbl->Release(urlA);
+        DeleteFileW(fileNameW);
     }
     else
         skip("could not create a CLSID_InternetShortcut for property tests, hr=0x%x\n", hr);
