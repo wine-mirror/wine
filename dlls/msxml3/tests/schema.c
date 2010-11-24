@@ -132,6 +132,276 @@ static const CHAR xsd_schema3_xml[] =
 "   </element>"
 "</schema>";
 
+static const CHAR szDatatypeXDR[] =
+"<Schema xmlns='urn:schemas-microsoft-com:xml-data'\n"
+"        xmlns:dt='urn:schemas-microsoft-com:datatypes'>\n"
+"   <ElementType name='base64Data' content='textOnly' dt:type='bin.base64'/>\n"
+"   <ElementType name='hexData' content='textOnly' dt:type='bin.hex'/>\n"
+"   <ElementType name='boolData' content='textOnly' dt:type='boolean'/>\n"
+"   <ElementType name='charData' content='textOnly' dt:type='char'/>\n"
+"   <ElementType name='dateData' content='textOnly' dt:type='date'/>\n"
+"   <ElementType name='dateTimeData' content='textOnly' dt:type='dateTime'/>\n"
+"   <ElementType name='dateTimeTzData' content='textOnly' dt:type='dateTime.tz'/>\n"
+"   <ElementType name='entityData' content='textOnly' dt:type='entity'/>\n"
+"   <ElementType name='entitiesData' content='textOnly' dt:type='entities'/>\n"
+"   <ElementType name='fixedData' content='textOnly' dt:type='fixed.14.4'/>\n"
+"   <ElementType name='floatData' content='textOnly' dt:type='float'/>\n"
+"   <ElementType name='i1Data' content='textOnly' dt:type='i1'/>\n"
+"   <ElementType name='i2Data' content='textOnly' dt:type='i2'/>\n"
+"   <ElementType name='i4Data' content='textOnly' dt:type='i4'/>\n"
+"   <ElementType name='i8Data' content='textOnly' dt:type='i8'/>\n"
+"   <ElementType name='intData' content='textOnly' dt:type='int'/>\n"
+"   <ElementType name='nmtokData' content='textOnly' dt:type='nmtoken'/>\n"
+"   <ElementType name='nmtoksData' content='textOnly' dt:type='nmtokens'/>\n"
+"   <ElementType name='numData' content='textOnly' dt:type='number'/>\n"
+"   <ElementType name='r4Data' content='textOnly' dt:type='r4'/>\n"
+"   <ElementType name='r8Data' content='textOnly' dt:type='r8'/>\n"
+"   <ElementType name='stringData' content='textOnly' dt:type='string'/>\n"
+"   <ElementType name='timeData' content='textOnly' dt:type='time'/>\n"
+"   <ElementType name='timeTzData' content='textOnly' dt:type='time.tz'/>\n"
+"   <ElementType name='u1Data' content='textOnly' dt:type='ui1'/>\n"
+"   <ElementType name='u2Data' content='textOnly' dt:type='ui2'/>\n"
+"   <ElementType name='u4Data' content='textOnly' dt:type='ui4'/>\n"
+"   <ElementType name='u8Data' content='textOnly' dt:type='ui8'/>\n"
+"   <ElementType name='uriData' content='textOnly' dt:type='uri'/>\n"
+"   <ElementType name='uuidData' content='textOnly' dt:type='uuid'/>\n"
+"\n"
+"   <ElementType name='Name' content='textOnly' dt:type='nmtoken'/>\n"
+"   <ElementType name='Value' content='eltOnly' order='many'>\n"
+"       <element type='base64Data'/>\n"
+"       <element type='hexData'/>\n"
+"       <element type='boolData'/>\n"
+"       <element type='charData'/>\n"
+"       <element type='dateData'/>\n"
+"       <element type='dateTimeData'/>\n"
+"       <element type='dateTimeTzData'/>\n"
+"       <element type='entityData'/>\n"
+"       <element type='entitiesData'/>\n"
+"       <element type='fixedData'/>\n"
+"       <element type='floatData'/>\n"
+"       <element type='i1Data'/>\n"
+"       <element type='i2Data'/>\n"
+"       <element type='i4Data'/>\n"
+"       <element type='i8Data'/>\n"
+"       <element type='intData'/>\n"
+"       <element type='nmtokData'/>\n"
+"       <element type='nmtoksData'/>\n"
+"       <element type='numData'/>\n"
+"       <element type='r4Data'/>\n"
+"       <element type='r8Data'/>\n"
+"       <element type='stringData'/>\n"
+"       <element type='timeData'/>\n"
+"       <element type='timeTzData'/>\n"
+"       <element type='u1Data'/>\n"
+"       <element type='u2Data'/>\n"
+"       <element type='u4Data'/>\n"
+"       <element type='u8Data'/>\n"
+"       <element type='uriData'/>\n"
+"       <element type='uuidData'/>\n"
+"   </ElementType>\n"
+"   <ElementType name='Property' content='eltOnly' order='seq'>\n"
+"       <element type='Name'/>\n"
+"       <element type='Value'/>\n"
+"   </ElementType>\n"
+"   <ElementType name='Properties' content='eltOnly'>\n"
+"       <element type='Property' minOccurs='0' maxOccurs='*'/>\n"
+"   </ElementType>\n"
+"</Schema>";
+
+static const CHAR szDatatypeXML[] =
+"<?xml version='1.0'?>\n"
+"<Properties xmlns='urn:x-schema:datatype-test-xdr'>\n"
+"   <Property>\n"
+"       <Name>testBase64</Name>\n"
+"       <Value>\n"
+"           <base64Data>+HugeNumber+</base64Data>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testHex</Name>\n"
+"       <Value>\n"
+"           <hexData>deadbeef</hexData>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testBool</Name>\n"
+"       <Value>\n"
+"           <boolData>1</boolData>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testChar</Name>\n"
+"       <Value>\n"
+"           <charData>u</charData>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testDate</Name>\n"
+"       <Value>\n"
+"           <dateData>1998-02-01</dateData>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testDateTime</Name>\n"
+"       <Value>\n"
+"           <dateTimeData>1998-02-01T12:34:56</dateTimeData>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testDateTimeTz</Name>\n"
+"       <Value>\n"
+"           <dateTimeTzData>1998-02-01T12:34:56-06:00</dateTimeTzData>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testFixed</Name>\n"
+"       <Value>\n"
+"           <fixedData>3.1416</fixedData>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testFloat</Name>\n"
+"       <Value>\n"
+"           <floatData>3.14159</floatData>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testI1</Name>\n"
+"       <Value>\n"
+"           <i1Data>42</i1Data>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testI2</Name>\n"
+"       <Value>\n"
+"           <i2Data>420</i2Data>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testI4</Name>\n"
+"       <Value>\n"
+"           <i4Data>-420000000</i4Data>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testI8</Name>\n"
+"       <Value>\n"
+"           <i8Data>-4200000000</i8Data>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testInt</Name>\n"
+"       <Value>\n"
+"           <intData>42</intData>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testNmtoken</Name>\n"
+"       <Value>\n"
+"           <nmtokData>tok1</nmtokData>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testNmtokens</Name>\n"
+"       <Value>\n"
+"           <nmtoksData>tok1 tok2 tok3</nmtoksData>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testNumber</Name>\n"
+"       <Value>\n"
+"           <numData>3.14159</numData>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testR4</Name>\n"
+"       <Value>\n"
+"           <r4Data>3.14159265</r4Data>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testR8</Name>\n"
+"       <Value>\n"
+"           <r8Data>3.14159265358979323846</r8Data>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testString</Name>\n"
+"       <Value>\n"
+"           <stringData>foo bar</stringData>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testTime</Name>\n"
+"       <Value>\n"
+"           <timeData>12:34:56</timeData>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testTimeTz</Name>\n"
+"       <Value>\n"
+"           <timeTzData>12:34:56-06:00</timeTzData>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testU1</Name>\n"
+"       <Value>\n"
+"           <u1Data>255</u1Data>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testU2</Name>\n"
+"       <Value>\n"
+"           <u2Data>65535</u2Data>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testU4</Name>\n"
+"       <Value>\n"
+"           <u4Data>4294967295</u4Data>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testU8</Name>\n"
+"       <Value>\n"
+"           <u8Data>18446744073709551615</u8Data>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testURI</Name>\n"
+"       <Value>\n"
+"           <uriData>urn:schemas-microsoft-com:datatypes</uriData>\n"
+"       </Value>\n"
+"   </Property>\n"
+"   <Property>\n"
+"       <Name>testUUID</Name>\n"
+"       <Value>\n"
+"           <uuidData>2933BF81-7B36-11D2-B20E-00C04F983E60</uuidData>\n"
+"       </Value>\n"
+"   </Property>\n"
+"</Properties>";
+
+static const CHAR szOpenSeqXDR[] =
+"<Schema xmlns='urn:schemas-microsoft-com:xml-data'>\n"
+"   <ElementType name='w' content='empty' model='closed'/>\n"
+"   <ElementType name='x' content='empty' model='closed'/>\n"
+"   <ElementType name='y' content='empty' model='closed'/>\n"
+"   <ElementType name='z' content='empty' model='closed'/>\n"
+"   <ElementType name='test' content='eltOnly' model='open' order='seq'>\n"
+"       <element type='x'/>\n"
+"       <group order='seq'>\n"
+"           <element type='x'/>\n"
+"           <element type='y'/>\n"
+"           <element type='z'/>\n"
+"       </group>\n"
+"       <element type='z'/>\n"
+"   </ElementType>\n"
+"</Schema>";
+
+static const CHAR szOpenSeqXML1[] = "<test><x/><x/><y/><z/><z/></test>";
+static const CHAR szOpenSeqXML2[] = "<test><x/><x/><y/><z/><z/><w/></test>";
+static const CHAR szOpenSeqXML3[] = "<test><w/><x/><x/><y/><z/><z/></test>";
+static const CHAR szOpenSeqXML4[] = "<test><x/><x/><y/><z/><z/><v/></test>";
 
 #define check_ref_expr(expr, n) { \
     LONG ref = expr; \
@@ -154,6 +424,17 @@ static const CHAR xsd_schema3_xml[] =
     HRESULT r = expr; \
     ok(r == (expect), #expr " returned %x, expected %x\n", r, expect); \
 }
+
+#define _expect64(expr, str, base, TYPE, CONV) { \
+    TYPE v1 = expr; \
+    TYPE v2 = CONV(str, NULL, base); \
+    ok(v1 == v2, #expr "returned 0x%08x%08x, expected 0x%08x%08x\n", \
+                  (ULONG)((ULONG64)v1 >> 32), (ULONG)((ULONG64)v2 & (ULONG64)0xffffffff), \
+                  (ULONG)((ULONG64)v1 >> 32), (ULONG)((ULONG64)v2 & (ULONG64)0xffffffff)); \
+}
+
+#define expect_int64(expr, x, base) _expect64(expr, #x, base, LONG64, strtoll)
+#define expect_uint64(expr, x, base) _expect64(expr, #x, base, ULONG64, strtoull)
 
 static BSTR alloced_bstrs[256];
 static int alloced_bstrs_count;
@@ -677,6 +958,986 @@ static void test_collection_content(void)
     free_bstrs();
 }
 
+static void test_XDR_schemas(void)
+{
+    IXMLDOMDocument2 *doc, *schema;
+    IXMLDOMSchemaCollection* cache;
+    IXMLDOMParseError* err;
+    VARIANT_BOOL b;
+    VARIANT v;
+    BSTR bstr;
+
+    doc = create_document(&IID_IXMLDOMDocument2);
+    schema = create_document(&IID_IXMLDOMDocument2);
+    cache = create_cache(&IID_IXMLDOMSchemaCollection);
+
+    if (!doc || !schema || !cache)
+    {
+        if (doc)    IXMLDOMDocument2_Release(doc);
+        if (schema) IXMLDOMDocument2_Release(schema);
+        if (cache)  IXMLDOMSchemaCollection_Release(cache);
+
+        return;
+    }
+
+    VariantInit(&v);
+
+    ole_check(IXMLDOMDocument2_loadXML(doc, _bstr_(szOpenSeqXML1), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+
+    ole_check(IXMLDOMDocument2_loadXML(schema, _bstr_(szOpenSeqXDR), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+
+    /* load the schema */
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = NULL;
+    ole_check(IXMLDOMDocument2_QueryInterface(schema, &IID_IDispatch, (void**)&V_DISPATCH(&v)));
+    ok(V_DISPATCH(&v) != NULL, "failed to get IDispatch interface\n");
+    ole_check(IXMLDOMSchemaCollection_add(cache, _bstr_(""), v));
+    VariantClear(&v);
+
+    /* associate the cache to the doc */
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = NULL;
+    ole_check(IXMLDOMSchemaCollection_QueryInterface(cache, &IID_IDispatch, (void**)&V_DISPATCH(&v)));
+    ok(V_DISPATCH(&v) != NULL, "failed to get IDispatch interface\n");
+    ole_check(IXMLDOMDocument2_putref_schemas(doc, v));
+    VariantClear(&v);
+
+    /* validate the doc
+     * only declared elements in the declared order
+     * this is fine */
+    err = NULL;
+    bstr = NULL;
+    ole_check(IXMLDOMDocument2_validate(doc, &err));
+    ok(err != NULL, "domdoc_validate() should always set err\n");
+    ole_expect(IXMLDOMParseError_get_reason(err, &bstr), S_FALSE);
+    ok(IXMLDOMParseError_get_reason(err, &bstr) == S_FALSE, "got error: %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    IXMLDOMParseError_Release(err);
+
+    /* load the next doc */
+    IXMLDOMDocument2_Release(doc);
+    doc = create_document(&IID_IXMLDOMDocument2);
+    ole_check(IXMLDOMDocument2_loadXML(doc, _bstr_(szOpenSeqXML2), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+
+    /* associate the cache to the doc */
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = NULL;
+    ole_check(IXMLDOMSchemaCollection_QueryInterface(cache, &IID_IDispatch, (void**)&V_DISPATCH(&v)));
+    ok(V_DISPATCH(&v) != NULL, "failed to get IDispatch interface\n");
+    ole_check(IXMLDOMDocument2_putref_schemas(doc, v));
+    VariantClear(&v);
+
+    /* validate the doc
+     * declared elements in the declared order, with an extra declared element at the end
+     * this is fine */
+    err = NULL;
+    bstr = NULL;
+    ole_check(IXMLDOMDocument2_validate(doc, &err));
+    ok(err != NULL, "domdoc_validate() should always set err\n");
+    ole_expect(IXMLDOMParseError_get_reason(err, &bstr), S_FALSE);
+    ok(IXMLDOMParseError_get_reason(err, &bstr) == S_FALSE, "got error: %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    IXMLDOMParseError_Release(err);
+
+    /* load the next doc */
+    IXMLDOMDocument2_Release(doc);
+    doc = create_document(&IID_IXMLDOMDocument2);
+    ole_check(IXMLDOMDocument2_loadXML(doc, _bstr_(szOpenSeqXML3), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+
+    /* associate the cache to the doc */
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = NULL;
+    ole_check(IXMLDOMSchemaCollection_QueryInterface(cache, &IID_IDispatch, (void**)&V_DISPATCH(&v)));
+    ok(V_DISPATCH(&v) != NULL, "failed to get IDispatch interface\n");
+    ole_check(IXMLDOMDocument2_putref_schemas(doc, v));
+    VariantClear(&v);
+
+    /* validate the doc
+     * fails, extra elements are only allowed at the end */
+    err = NULL;
+    bstr = NULL;
+    ole_expect(IXMLDOMDocument2_validate(doc, &err), S_FALSE);
+    ok(err != NULL, "domdoc_validate() should always set err\n");
+    todo_wine ok(IXMLDOMParseError_get_reason(err, &bstr) == S_OK, "got error: %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    IXMLDOMParseError_Release(err);
+
+    /* load the next doc */
+    IXMLDOMDocument2_Release(doc);
+    doc = create_document(&IID_IXMLDOMDocument2);
+    ole_check(IXMLDOMDocument2_loadXML(doc, _bstr_(szOpenSeqXML4), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+
+    /* associate the cache to the doc */
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = NULL;
+    ole_check(IXMLDOMSchemaCollection_QueryInterface(cache, &IID_IDispatch, (void**)&V_DISPATCH(&v)));
+    ok(V_DISPATCH(&v) != NULL, "failed to get IDispatch interface\n");
+    ole_check(IXMLDOMDocument2_putref_schemas(doc, v));
+    VariantClear(&v);
+
+    /* validate the doc
+     * fails, undeclared elements are not allowed */
+    err = NULL;
+    bstr = NULL;
+    ole_expect(IXMLDOMDocument2_validate(doc, &err), S_FALSE);
+    ok(err != NULL, "domdoc_validate() should always set err\n");
+    todo_wine ok(IXMLDOMParseError_get_reason(err, &bstr) == S_OK, "got error: %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    IXMLDOMParseError_Release(err);
+
+    IXMLDOMDocument2_Release(doc);
+    IXMLDOMDocument2_Release(schema);
+    IXMLDOMSchemaCollection_Release(cache);
+
+    free_bstrs();
+}
+
+static void test_XDR_datatypes(void)
+{
+    IXMLDOMDocument2 *doc, *schema;
+    IXMLDOMSchemaCollection* cache;
+    IXMLDOMNode* node;
+    IXMLDOMParseError* err;
+    VARIANT_BOOL b;
+    VARIANT v, vtmp;
+    LONG l;
+    BSTR bstr;
+
+    VariantInit(&v);
+
+    doc = create_document(&IID_IXMLDOMDocument2);
+    schema = create_document(&IID_IXMLDOMDocument2);
+    cache = create_cache(&IID_IXMLDOMSchemaCollection);
+
+    if (!doc || !schema || !cache)
+    {
+        if (doc)    IXMLDOMDocument2_Release(doc);
+        if (schema) IXMLDOMDocument2_Release(schema);
+        if (cache)  IXMLDOMSchemaCollection_Release(cache);
+
+        return;
+    }
+
+    ole_check(IXMLDOMDocument2_loadXML(doc, _bstr_(szDatatypeXML), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+
+    ole_check(IXMLDOMDocument2_loadXML(schema, _bstr_(szDatatypeXDR), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+
+    err = NULL;
+    ole_expect(IXMLDOMDocument2_validate(doc, &err), S_FALSE);
+    ok(err != NULL, "domdoc_validate() should always set err\n");
+    ole_check(IXMLDOMParseError_get_errorCode(err, &l));
+    ok(l == E_XML_NODTD, "got %08x\n", l);
+    IXMLDOMParseError_Release(err);
+
+    /* check data types without the schema */
+    node = NULL;
+    memset(&vtmp, -1, sizeof(VARIANT));
+    V_VT(&vtmp) = VT_NULL;
+    V_BSTR(&vtmp) = NULL;
+    memset(&v, -1, sizeof(VARIANT));
+    V_VT(&v) = VT_EMPTY;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testBase64']/Value/base64Data"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    /* when returning VT_NULL, the pointer is set to NULL */
+    ok(memcmp(&v, &vtmp, sizeof(VARIANT)) == 0, "got %p\n", V_BSTR(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testHex']/Value/hexData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testBool']/Value/boolData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testChar']/Value/charData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testDate']/Value/dateData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testDateTime']/Value/dateTimeData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testDateTimeTz']/Value/dateTimeTzData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testFixed']/Value/fixedData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testFloat']/Value/floatData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testI1']/Value/i1Data"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testI2']/Value/i2Data"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testI4']/Value/i4Data"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testI8']/Value/i8Data"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testInt']/Value/intData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testNmtoken']/Value/nmtokData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testNmtokens']/Value/nmtoksData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testNumber']/Value/numData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testR4']/Value/r4Data"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testR8']/Value/r8Data"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testString']/Value/stringData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testTime']/Value/timeData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testTimeTz']/Value/timeTzData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testU1']/Value/u1Data"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testU2']/Value/u2Data"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testU4']/Value/u4Data"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testU8']/Value/u8Data"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testURI']/Value/uriData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testUUID']/Value/uuidData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    /* now load the schema */
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = NULL;
+    ole_check(IXMLDOMDocument2_QueryInterface(schema, &IID_IDispatch, (void**)&V_DISPATCH(&v)));
+    ok(V_DISPATCH(&v) != NULL, "failed to get IDispatch interface\n");
+    ole_check(IXMLDOMSchemaCollection_add(cache, _bstr_("urn:x-schema:datatype-test-xdr"), v));
+    VariantClear(&v);
+
+    /* associate the cache to the doc */
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = NULL;
+    ole_check(IXMLDOMSchemaCollection_QueryInterface(cache, &IID_IDispatch, (void**)&V_DISPATCH(&v)));
+    ok(V_DISPATCH(&v) != NULL, "failed to get IDispatch interface\n");
+    ole_check(IXMLDOMDocument2_putref_schemas(doc, v));
+    VariantClear(&v);
+
+    /* validate the doc */
+    err = NULL;
+    l = 0;
+    bstr = NULL;
+    ole_check(IXMLDOMDocument2_validate(doc, &err));
+    ok(err != NULL, "domdoc_validate() should always set err\n");
+    ole_expect(IXMLDOMParseError_get_errorCode(err, &l), S_FALSE);
+    ole_expect(IXMLDOMParseError_get_reason(err, &bstr), S_FALSE);
+    ok(l == 0, "got %08x : %s\n", l, wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    IXMLDOMParseError_Release(err);
+
+    /* check the data types again */
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testBase64']/Value/base64Data"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("bin.base64")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == (VT_ARRAY|VT_UI1), "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testHex']/Value/hexData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("bin.hex")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == (VT_ARRAY|VT_UI1), "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testBool']/Value/boolData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("boolean")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BOOL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BOOL)
+        ok(V_BOOL(&v) == VARIANT_TRUE, "got %04x\n", V_BOOL(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testChar']/Value/charData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("char")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    todo_wine ok(V_VT(&v) == VT_I4, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_I4)
+        ok(V_I4(&v) == 'u', "got %08x\n", V_I4(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testDate']/Value/dateData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("date")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_DATE, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testDateTime']/Value/dateTimeData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("dateTime")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_DATE, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testDateTimeTz']/Value/dateTimeTzData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("dateTime.tz")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_DATE, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testFixed']/Value/fixedData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("fixed.14.4")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_CY, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testFloat']/Value/floatData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("float")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_R8, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_R8)
+        ok(V_R8(&v) == (double)3.14159, "got %f\n", V_R8(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testI1']/Value/i1Data"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("i1")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_I1, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_I1)
+        ok(V_I1(&v) == 42, "got %i\n", V_I1(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testI2']/Value/i2Data"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("i2")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_I2, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_I2)
+        ok(V_I2(&v) == 420, "got %i\n", V_I2(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testI4']/Value/i4Data"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("i4")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_I4, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_I4)
+        ok(V_I4(&v) == -420000000, "got %i\n", V_I4(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testI8']/Value/i8Data"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("i8")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    /* TODO: which platforms return VT_I8? */
+    todo_wine ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_I8)
+        expect_int64(V_I8(&v), -4200000000, 10);
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testInt']/Value/intData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("int")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_I4, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_I4)
+        ok(V_I4(&v) == 42, "got %i\n", V_I4(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    /* nmtoken does not return a bstr for get_dataType() */
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testNmtoken']/Value/nmtokData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    /* nmtokens does not return a bstr for get_dataType() */
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testNmtokens']/Value/nmtoksData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testNumber']/Value/numData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("number")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testR4']/Value/r4Data"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("r4")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_R4, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_R4)
+        ok(V_R4(&v) == (float)3.14159265, "got %f\n", V_R4(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testR8']/Value/r8Data"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("r8")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_R8, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_R8)
+        todo_wine ok(V_R8(&v) == (double)3.14159265358979323846, "got %.20f\n", V_R8(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    /* dt:string is the default, does not return a bstr for get_dataType() */
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testString']/Value/stringData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_expect(IXMLDOMNode_get_dataType(node, &v), S_FALSE);
+    ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testTime']/Value/timeData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("time")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_DATE, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testTimeTz']/Value/timeTzData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("time.tz")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_DATE, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testU1']/Value/u1Data"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("ui1")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_UI1, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_UI1)
+        ok(V_UI1(&v) == 0xFF, "got %02x\n", V_UI1(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testU2']/Value/u2Data"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("ui2")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_UI2, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_UI2)
+        ok(V_UI2(&v) == 0xFFFF, "got %04x\n", V_UI2(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testU4']/Value/u4Data"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("ui4")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_UI4, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_UI4)
+        ok(V_UI4(&v) == 0xFFFFFFFF, "got %08x\n", V_UI4(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testU8']/Value/u8Data"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("ui8")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    /* TODO: which platforms return VT_UI8? */
+    todo_wine ok(V_VT(&v) == VT_NULL, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_UI8)
+        expect_uint64(V_UI8(&v), 0xFFFFFFFFFFFFFFFF, 16);
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testURI']/Value/uriData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("uri")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    ole_check(IXMLDOMDocument2_selectSingleNode(doc, _bstr_("//Property[Name!text()='testUUID']/Value/uuidData"), &node));
+    ok(node != NULL, "expected node\n");
+    ole_check(IXMLDOMNode_get_dataType(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    if (V_VT(&v) == VT_BSTR)
+        ok(lstrcmpW(V_BSTR(&v), _bstr_("uuid")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    ole_check(IXMLDOMNode_get_nodeTypedValue(node, &v));
+    ok(V_VT(&v) == VT_BSTR, "got variant type %i\n", V_VT(&v));
+    VariantClear(&v);
+    IXMLDOMNode_Release(node);
+
+    ok(IXMLDOMDocument2_Release(schema) == 0, "schema not released\n");
+    ok(IXMLDOMDocument2_Release(doc) == 0, "doc not released\n");
+    ok(IXMLDOMSchemaCollection_Release(cache) == 0, "cache not released\n");
+
+    free_bstrs();
+}
+
 START_TEST(schema)
 {
     HRESULT r;
@@ -688,6 +1949,8 @@ START_TEST(schema)
     test_collection_refs();
     test_length();
     test_collection_content();
+    test_XDR_schemas();
+    test_XDR_datatypes();
 
     CoUninitialize();
 }
