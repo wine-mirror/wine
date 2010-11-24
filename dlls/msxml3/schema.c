@@ -1356,6 +1356,8 @@ HRESULT SchemaCache_validate_tree(IXMLDOMSchemaCollection2* iface, xmlNodePtr tr
      *       do we try to load from that? */
     if (schema)
         return Schema_validate_tree(schema, tree);
+    else
+        WARN("no schema found for xmlns=%s\n", get_node_nsURI(tree));
 
     return E_FAIL;
 }

@@ -2656,9 +2656,15 @@ static HRESULT WINAPI domdoc_validateNode(
         {
             ++validated;
             /* TODO: get a real error code here */
-            TRACE("schema validation failed\n");
-            if (hr != S_OK)
+            if (hr == S_OK)
+            {
+                TRACE("schema validation succeeded\n");
+            }
+            else
+            {
+                ERR("schema validation failed\n");
                 err_code = E_XML_INVALID;
+            }
         }
         else
         {
@@ -2669,7 +2675,7 @@ static HRESULT WINAPI domdoc_validateNode(
 
     if (!validated)
     {
-        TRACE("no DTD or schema found\n");
+        ERR("no DTD or schema found\n");
         err_code = E_XML_NODTD;
         hr = S_FALSE;
     }
