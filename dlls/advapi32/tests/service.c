@@ -335,6 +335,13 @@ static void test_create_delete_svc(void)
     ok(!svc_handle1, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
+    /* Test if ServiceType can be a combined one for drivers */
+    SetLastError(0xdeadbeef);
+    svc_handle1 = CreateServiceA(scm_handle, servicename, NULL, 0, SERVICE_KERNEL_DRIVER | SERVICE_FILE_SYSTEM_DRIVER,
+                                 SERVICE_BOOT_START, 0, pathname, NULL, NULL, NULL, NULL, NULL);
+    ok(!svc_handle1, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
     /* The service already exists (check first, just in case) */
     svc_handle1 = OpenServiceA(scm_handle, spooler, GENERIC_READ);
     if (svc_handle1)
