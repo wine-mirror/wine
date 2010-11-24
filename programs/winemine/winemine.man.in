@@ -1,0 +1,11 @@
+.TH WINEMINE 1 "November 2010" "@PACKAGE_STRING@" "Wine Programs"
+.SH NAME
+winemine \- Wine Minesweeper game
+.SH SYNOPSIS
+.BR winemine
+.SH DESCRIPTION
+.B winemine
+is the Wine Minesweeper game. The object of the game is to try to find all the hidden mines by
+uncovering the tiles to see how many mines each tile is adjacent to, without uncovering a mine.
+.SH "SEE ALSO"
+.BR wine(1)
