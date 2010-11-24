@@ -1,0 +1,13 @@
+.TH WINECFG 1 "November 2010" "@PACKAGE_STRING@" "Wine Programs"
+.SH NAME
+winecfg \- Wine Configuration Editor
+.SH SYNOPSIS
+.BR "winecfg"
+.SH DESCRIPTION
+.B winecfg
+is the Wine configuration editor. It allows you to change several settings, such as DLL load order
+(native versus builtin), enable a virtual desktop, setup disk drives, and change the Wine audio driver,
+among others. Many of these settings can be made on a per application basis, for example, preferring native
+riched20.dll for wordpad.exe, but not for notepad.exe.
+.SH "SEE ALSO"
+.BR wine(1)
