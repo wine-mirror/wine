@@ -821,19 +821,17 @@ static HRESULT WINAPI VideoRenderer_Run(IBaseFilter * iface, REFERENCE_TIME tSta
     EnterCriticalSection(&This->filter.csFilter);
     if (This->filter.state == State_Running)
         goto out;
-    if (This->pInputPin->pin.pConnectedTo)
+    This->filter.rtStreamStart = tStart;
+    QualityControlRender_Start(&This->qcimpl, tStart);
+    if (This->pInputPin->pin.pConnectedTo && (This->filter.state == State_Stopped || !This->pInputPin->end_of_stream))
     {
         if (This->filter.state == State_Stopped)
         {
-            This->pInputPin->end_of_stream = 0;
             ResetEvent(This->hEvent);
             VideoRenderer_AutoShowWindow(This);
+            This->pInputPin->end_of_stream = 0;
         }
         SetEvent(This->blocked);
-
-        This->filter.rtStreamStart = tStart;
-        This->filter.state = State_Running;
-        QualityControlRender_Start(&This->qcimpl, tStart);
     } else if (This->filter.filterInfo.pGraph) {
         IMediaEventSink *pEventSink;
         hr = IFilterGraph_QueryInterface(This->filter.filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
