@@ -3500,6 +3500,19 @@ int CDECL MSVCRT_fprintf(MSVCRT_FILE* file, const char *format, ...)
 }
 
 /*********************************************************************
+ *		fprintf_s (MSVCRT.@)
+ */
+int CDECL MSVCRT_fprintf_s(MSVCRT_FILE* file, const char *format, ...)
+{
+    __ms_va_list valist;
+    int res;
+    __ms_va_start(valist, format);
+    res = MSVCRT_vfprintf_s(file, format, valist);
+    __ms_va_end(valist);
+    return res;
+}
+
+/*********************************************************************
  *		fwprintf (MSVCRT.@)
  */
 int CDECL MSVCRT_fwprintf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, ...)
@@ -3508,6 +3521,19 @@ int CDECL MSVCRT_fwprintf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, ...)
     int res;
     __ms_va_start(valist, format);
     res = MSVCRT_vfwprintf(file, format, valist);
+    __ms_va_end(valist);
+    return res;
+}
+
+/*********************************************************************
+ *		fwprintf_s (MSVCRT.@)
+ */
+int CDECL MSVCRT_fwprintf_s(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, ...)
+{
+    __ms_va_list valist;
+    int res;
+    __ms_va_start(valist, format);
+    res = MSVCRT_vfwprintf_s(file, format, valist);
     __ms_va_end(valist);
     return res;
 }

@@ -1250,7 +1250,7 @@
 @ cdecl fopen(str str) MSVCRT_fopen
 @ cdecl fopen_s(ptr str str) MSVCRT_fopen_s
 @ varargs fprintf(ptr str) MSVCRT_fprintf
-# stub fprintf_s
+@ varargs fprintf_s(ptr str) MSVCRT_fprintf_s
 @ cdecl fputc(long ptr) MSVCRT_fputc
 @ cdecl fputs(str ptr) MSVCRT_fputs
 @ cdecl fputwc(long ptr) MSVCRT_fputwc
@@ -1267,7 +1267,7 @@
 @ cdecl fsetpos(ptr ptr) MSVCRT_fsetpos
 @ cdecl ftell(ptr) MSVCRT_ftell
 @ varargs fwprintf(ptr wstr) MSVCRT_fwprintf
-# stub fwprintf_s
+@ varargs fwprintf_s(ptr wstr) MSVCRT_fwprintf_s
 @ cdecl fwrite(ptr long long ptr) MSVCRT_fwrite
 @ varargs fwscanf(ptr wstr) MSVCRT_fwscanf
 @ varargs fwscanf_s(ptr wstr) MSVCRT_fwscanf_s

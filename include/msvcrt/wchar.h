@@ -295,6 +295,7 @@ wchar_t* __cdecl fgetws(wchar_t*,int,FILE*);
 wint_t   __cdecl fputwc(wint_t,FILE*);
 int      __cdecl fputws(const wchar_t*,FILE*);
 int      __cdecl fwprintf(FILE*,const wchar_t*,...);
+int      __cdecl fwprintf_s(FILE*,const wchar_t*,...);
 int      __cdecl fputws(const wchar_t*,FILE*);
 int      __cdecl fwscanf(FILE*,const wchar_t*,...);
 int      __cdecl fwscanf_s(FILE*,const wchar_t*,...);
