@@ -299,6 +299,41 @@ static HRESULT do_process_key(LPCOLESTR *pstr, HKEY parent_key, strbuf *buf, BOO
                     }
                     break;
                 }
+                case 'b': {
+                    BYTE *bytes;
+                    DWORD count;
+                    DWORD i;
+                    hres = get_word(&iter, buf);
+                    if(FAILED(hres))
+                        break;
+                    count = (lstrlenW(buf->str) + 1) / 2;
+                    bytes = HeapAlloc(GetProcessHeap(), 0, count);
+                    if(bytes == NULL) {
+                        hres = E_OUTOFMEMORY;
+                        break;
+                    }
+                    for(i = 0; i < count && buf->str[2*i]; i++) {
+                        WCHAR digits[3];
+                        if(!isxdigitW(buf->str[2*i]) || !isxdigitW(buf->str[2*i + 1])) {
+                            hres = E_FAIL;
+                            break;
+                        }
+                        digits[0] = buf->str[2*i];
+                        digits[1] = buf->str[2*i + 1];
+                        digits[2] = 0;
+                        bytes[i] = (BYTE) strtoulW(digits, NULL, 16);
+                    }
+                    if(SUCCEEDED(hres)) {
+                        lres = RegSetValueExW(hkey, name.len ? name.str :  NULL, 0, REG_BINARY,
+                            bytes, count);
+                        if(lres != ERROR_SUCCESS) {
+                            WARN("Could not set value of key: 0x%08x\n", lres);
+                            hres = HRESULT_FROM_WIN32(lres);
+                        }
+                    }
+                    HeapFree(GetProcessHeap(), 0, bytes);
+                    break;
+                }
                 default:
                     WARN("Wrong resource type: %s\n", debugstr_w(buf->str));
                     hres = DISP_E_EXCEPTION;

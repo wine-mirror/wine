@@ -47,6 +47,8 @@ static const char textA[] =
 "        val 'dword_unquoted_dec' = d 1 \n"
 "        val 'dword_quoted_hex' = d '0xA' \n"
 "        val 'dword_unquoted_hex' = d 0xA \n"
+"        val 'binary_quoted' = b 'deadbeef' \n"
+"        val 'binary_unquoted' = b deadbeef \n"
 "    } \n"
 "}";
 
@@ -72,6 +74,7 @@ static void test_registrar(void)
         DWORD size;
         LONG lret;
         HKEY key;
+        BYTE bytes[4];
 
         MultiByteToWideChar(CP_ACP, 0, textA, -1, textW, count);
         hr = IRegistrar_StringRegister(registrar, textW);
@@ -99,6 +102,20 @@ static void test_registrar(void)
         lret = RegQueryValueExA(key, "dword_quoted_dec", NULL, NULL, (BYTE*)&dword, &size);
         ok(lret == ERROR_SUCCESS, "RegQueryValueExA failed, error %d\n", lret);
         ok(dword == 1, "quoted dec is not supposed to be %d\n", dword);
+
+        size = 4;
+        lret = RegQueryValueExA(key, "binary_quoted", NULL, NULL, bytes, &size);
+        ok(lret == ERROR_SUCCESS, "RegQueryValueA, failed, error %d\n", lret);
+        ok(bytes[0] = 0xde && bytes[1] == 0xad && bytes[2] == 0xbe && bytes[3] == 0xef,
+            "binary quoted value was not preserved (it's 0x%02X%02X%02X%02X)\n",
+            0xff & bytes[0], 0xff & bytes[1], 0xff & bytes[2], 0xff & bytes[3]);
+
+        size = 4;
+        lret = RegQueryValueExA(key, "binary_unquoted", NULL, NULL, bytes, &size);
+        ok(lret == ERROR_SUCCESS, "RegQueryValueA, failed, error %d\n", lret);
+        ok(bytes[0] = 0xde && bytes[1] == 0xad && bytes[2] == 0xbe && bytes[3] == 0xef,
+            "binary unquoted value was not preserved (it's 0x%02X%02X%02X%02X)\n",
+            0xff & bytes[0], 0xff & bytes[1], 0xff & bytes[2], 0xff & bytes[3]);
 
         hr = IRegistrar_StringUnregister(registrar, textW);
         ok(SUCCEEDED(hr), "IRegistar_StringUnregister failed, hr = 0x%08X\n", hr);
