@@ -1235,7 +1235,7 @@ static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface, IPin *ppinOut)
 
             if (to == NULL)
             {
-                hr = IPin_Connect(ppinOut, pin, NULL);
+                hr = FilterGraph2_ConnectDirect(iface, ppinOut, pin, NULL);
                 if (SUCCEEDED(hr))
                 {
                     TRACE("Connected successfully %p/%p, %08x look if we should render more!\n", ppinOut, pin, hr);
