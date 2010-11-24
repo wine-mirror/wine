@@ -285,15 +285,11 @@ static HRESULT do_process_key(LPCOLESTR *pstr, HKEY parent_key, strbuf *buf, BOO
                     }
                     break;
                 case 'd': {
-                    WCHAR *end;
                     DWORD dw;
-                    if(*iter == '0' && iter[1] == 'x') {
-                        iter += 2;
-                        dw = strtolW(iter, &end, 16);
-                    }else {
-                        dw = strtolW(iter, &end, 10);
-                    }
-                    iter = end;
+                    hres = get_word(&iter, buf);
+                    if(FAILED(hres))
+                        break;
+                    dw = atoiW(buf->str);
                     lres = RegSetValueExW(hkey, name.len ? name.str :  NULL, 0, REG_DWORD,
                             (PBYTE)&dw, sizeof(dw));
                     if(lres != ERROR_SUCCESS) {
