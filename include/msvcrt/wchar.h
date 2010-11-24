@@ -310,6 +310,7 @@ int      __cdecl swscanf(const wchar_t*,const wchar_t*,...);
 int      __cdecl swscanf_s(const wchar_t*,const wchar_t*,...);
 wint_t   __cdecl ungetwc(wint_t,FILE*);
 int      __cdecl vfwprintf(FILE*,const wchar_t*,__ms_va_list);
+int      __cdecl vfwprintf_s(FILE*,const wchar_t*,__ms_va_list);
 int      __cdecl vswprintf(wchar_t*,const wchar_t*,__ms_va_list);
 int      __cdecl vswprintf_s(wchar_t*,size_t,const wchar_t*,__ms_va_list);
 int      __cdecl vwprintf(const wchar_t*,__ms_va_list);

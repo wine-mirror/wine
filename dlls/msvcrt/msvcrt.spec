@@ -1422,9 +1422,9 @@
 @ cdecl ungetwc(long ptr) MSVCRT_ungetwc
 # stub utime
 @ cdecl vfprintf(ptr str ptr) MSVCRT_vfprintf
-# stub vfprintf_s
+@ cdecl vfprintf_s(ptr str ptr) MSVCRT_vfprintf_s
 @ cdecl vfwprintf(ptr wstr ptr) MSVCRT_vfwprintf
-# stub vfwprintf_s
+@ cdecl vfwprintf_s(ptr wstr ptr) MSVCRT_vfwprintf_s
 @ cdecl vprintf(str ptr) MSVCRT_vprintf
 # stub vprintf_s
 # stub vsnprintf

@@ -3362,10 +3362,46 @@ int CDECL MSVCRT_vfprintf(MSVCRT_FILE* file, const char *format, __ms_va_list va
 }
 
 /*********************************************************************
+ *		vfprintf_s (MSVCRT.@)
+ */
+int CDECL MSVCRT_vfprintf_s(MSVCRT_FILE* file, const char *format, __ms_va_list valist)
+{
+  char buf[2048];
+  LPWSTR formatW = NULL;
+  DWORD sz;
+  pf_output out;
+  int written, retval;
+
+  if( !MSVCRT_CHECK_PMT( file != NULL ) )
+  {
+    *MSVCRT__errno() = MSVCRT_EINVAL;
+    return -1;
+  }
+
+  out.unicode = FALSE;
+  out.buf.A = out.grow.A = buf;
+  out.used = 0;
+  out.len = sizeof(buf);
+
+  sz = MultiByteToWideChar( CP_ACP, 0, format, -1, NULL, 0 );
+  formatW = HeapAlloc( GetProcessHeap(), 0, sz*sizeof(WCHAR) );
+  MultiByteToWideChar( CP_ACP, 0, format, -1, formatW, sz );
+
+  if ((written = pf_vsnprintf( &out, formatW, NULL, TRUE, valist )) >= 0)
+  {
+      retval = MSVCRT_fwrite(out.buf.A, sizeof(*out.buf.A), written, file);
+  }
+  else retval = -1;
+
+  HeapFree( GetProcessHeap(), 0, formatW );
+
+  if (out.buf.A != out.grow.A)
+    MSVCRT_free (out.buf.A);
+  return retval;
+}
+
+/*********************************************************************
  *		vfwprintf (MSVCRT.@)
- * FIXME:
- * Is final char included in written (then resize is too big) or not
- * (then we must test for equality too)?
  */
 int CDECL MSVCRT_vfwprintf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, __ms_va_list valist)
 {
@@ -3379,6 +3415,36 @@ int CDECL MSVCRT_vfwprintf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, __ms
   out.len = sizeof(buf) / sizeof(buf[0]);
 
   if ((written = pf_vsnprintf( &out, format, NULL, FALSE, valist )) >= 0)
+  {
+      retval = MSVCRT_fwrite(out.buf.W, sizeof(*out.buf.W), written, file);
+  }
+  else retval = -1;
+  if (out.buf.W != out.grow.W)
+    MSVCRT_free (out.buf.W);
+  return retval;
+}
+
+/*********************************************************************
+ *		vfwprintf_s (MSVCRT.@)
+ */
+int CDECL MSVCRT_vfwprintf_s(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, __ms_va_list valist)
+{
+  MSVCRT_wchar_t buf[2048];
+  pf_output out;
+  int written, retval;
+
+  if( !MSVCRT_CHECK_PMT( file != NULL ) )
+  {
+    *MSVCRT__errno() = MSVCRT_EINVAL;
+    return -1;
+  }
+
+  out.unicode = TRUE;
+  out.buf.W = out.grow.W = buf;
+  out.used = 0;
+  out.len = sizeof(buf) / sizeof(buf[0]);
+
+  if ((written = pf_vsnprintf( &out, format, NULL, TRUE, valist )) >= 0)
   {
       retval = MSVCRT_fwrite(out.buf.W, sizeof(*out.buf.W), written, file);
   }

@@ -1455,9 +1455,9 @@
 @ cdecl ungetc(long ptr) msvcrt.ungetc
 @ cdecl ungetwc(long ptr) msvcrt.ungetwc
 @ cdecl vfprintf(ptr str ptr) msvcrt.vfprintf
-@ stub vfprintf_s
+@ cdecl vfprintf_s(ptr str ptr) msvcrt.vfprintf_s
 @ cdecl vfwprintf(ptr wstr ptr) msvcrt.vfwprintf
-@ stub vfwprintf_s
+@ cdecl vfwprintf_s(ptr wstr ptr) msvcrt.vfwprintf_s
 @ cdecl vprintf(str ptr) msvcrt.vprintf
 @ stub vprintf_s
 @ cdecl vsprintf(ptr str ptr) msvcrt.vsprintf
