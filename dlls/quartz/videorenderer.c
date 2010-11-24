@@ -82,6 +82,7 @@ typedef struct VideoRendererImpl
     BOOL ThreadResult;
     HWND hWnd;
     HWND hWndMsgDrain;
+    HWND hWndOwner;
     BOOL AutoShow;
     RECT SourceRect;
     RECT DestRect;
@@ -555,7 +556,7 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     ZeroMemory(&pVideoRenderer->SourceRect, sizeof(RECT));
     ZeroMemory(&pVideoRenderer->DestRect, sizeof(RECT));
     ZeroMemory(&pVideoRenderer->WindowPos, sizeof(RECT));
-    pVideoRenderer->hWndMsgDrain = NULL;
+    pVideoRenderer->hWndMsgDrain = pVideoRenderer->hWndOwner = NULL;
     pVideoRenderer->WindowStyle = WS_OVERLAPPED;
 
     /* construct input pin */
@@ -1890,7 +1891,8 @@ static HRESULT WINAPI Videowindow_put_Owner(IVideoWindow *iface,
 
     TRACE("(%p/%p)->(%08x)\n", This, iface, (DWORD) Owner);
 
-    SetParent(This->hWnd, (HWND)Owner);
+    This->hWndOwner = (HWND)Owner;
+    SetParent(This->hWnd, This->hWndOwner);
     if (This->WindowStyle & WS_CHILD)
     {
         LONG old = GetWindowLongA(This->hWnd, GWL_STYLE);
@@ -1910,7 +1912,7 @@ static HRESULT WINAPI Videowindow_get_Owner(IVideoWindow *iface,
 
     TRACE("(%p/%p)->(%p)\n", This, iface, Owner);
 
-    *(HWND*)Owner = GetParent(This->hWnd);
+    *(HWND*)Owner = This->hWndOwner;
 
     return S_OK;
 }
@@ -1969,6 +1971,22 @@ static HRESULT WINAPI Videowindow_put_FullScreenMode(IVideoWindow *iface,
     ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
 
     FIXME("(%p/%p)->(%d): stub !!!\n", This, iface, FullScreenMode);
+
+    if (FullScreenMode) {
+        ShowWindow(This->hWnd, SW_HIDE);
+        SetParent(This->hWnd, 0);
+        SetWindowLongA(This->hWnd, GWL_STYLE, WS_POPUP);
+        SetWindowPos(This->hWnd,HWND_TOP,0,0,GetSystemMetrics(SM_CXSCREEN),GetSystemMetrics(SM_CYSCREEN),SWP_SHOWWINDOW);
+        GetWindowRect(This->hWnd, &This->DestRect);
+        This->WindowPos = This->DestRect;
+    } else {
+        ShowWindow(This->hWnd, SW_HIDE);
+        SetParent(This->hWnd, This->hWndOwner);
+        SetWindowLongA(This->hWnd, GWL_STYLE, This->WindowStyle);
+        GetClientRect(This->hWnd, &This->DestRect);
+        SetWindowPos(This->hWnd,0,This->DestRect.left,This->DestRect.top,This->DestRect.right,This->DestRect.bottom,SWP_NOZORDER|SWP_SHOWWINDOW);
+        This->WindowPos = This->DestRect;
+    }
 
     return S_OK;
 }
