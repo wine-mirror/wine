@@ -63,6 +63,8 @@ static size_t (WINAPI *p_basic_string_char_size)(void);
 static void (WINAPI *p_basic_string_char_swap)(basic_string_char*);
 static basic_string_char* (WINAPI *p_basic_string_char_append)(basic_string_char*);
 static basic_string_char* (WINAPI *p_basic_string_char_append_substr)(basic_string_char*, size_t, size_t);
+static int (WINAPI *p_basic_string_char_compare_substr_substr)(size_t, size_t, basic_string_char*, size_t, size_t);
+static int (WINAPI *p_basic_string_char_compare_substr_cstr_len)(size_t, size_t, const char*, size_t);
 
 static basic_string_wchar* (WINAPI *p_basic_string_wchar_ctor)(void);
 static basic_string_wchar* (WINAPI *p_basic_string_wchar_copy_ctor)(basic_string_wchar*);
@@ -87,6 +89,8 @@ static size_t (__cdecl *p_basic_string_char_size)(basic_string_char*);
 static void (__cdecl *p_basic_string_char_swap)(basic_string_char*, basic_string_char*);
 static basic_string_char* (WINAPI *p_basic_string_char_append)(basic_string_char*, basic_string_char*);
 static basic_string_char* (WINAPI *p_basic_string_char_append_substr)(basic_string_char*, basic_string_char*, size_t, size_t);
+static int (WINAPI *p_basic_string_char_compare_substr_substr)(basic_string_char*, size_t, size_t, basic_string_char*, size_t, size_t);
+static int (WINAPI *p_basic_string_char_compare_substr_cstr_len)(basic_string_char*, size_t, size_t, const char*, size_t);
 
 static basic_string_wchar* (__cdecl *p_basic_string_wchar_ctor)(basic_string_wchar*);
 static basic_string_wchar* (__cdecl *p_basic_string_wchar_copy_ctor)(basic_string_wchar*, basic_string_wchar*);
@@ -179,6 +183,46 @@ static inline void* do_call_func4(void *func, void *_this,
     }
     return (void*)retval;
 }
+
+static inline void* do_call_func5(void *func, void *_this,
+        const void *arg1, const void *arg2, const void *arg3, const void *arg4)
+{
+    volatile void* retval = 0;
+    __asm
+    {
+        push ecx
+        push arg1
+        push arg2
+        push arg3
+        push arg4
+        mov ecx, _this
+        call func
+        mov retval, eax
+        pop ecx
+    }
+    return (void*)retval;
+}
+
+static inline void* do_call_func6(void *func, void *_this,
+        const void *arg1, const void *arg2, const void *arg3,
+        const void *arg4, const void *arg5)
+{
+    volatile void* retval = 0;
+    __asm
+    {
+        push ecx
+        push arg1
+        push arg2
+        push arg3
+        push arg4
+        push arg5
+        mov ecx, _this
+        call func
+        mov retval, eax
+        pop ecx
+    }
+    return (void*)retval;
+}
 #else
 static void* do_call_func1(void *func, void *_this)
 {
@@ -229,12 +273,44 @@ static void* do_call_func4(void *func, void *_this,
             );
     return ret;
 }
+
+static void* do_call_func5(void *func, void *_this,
+        const void *arg1, const void *arg2, const void *arg3, const void *arg4)
+{
+    void *ret, *dummy;
+    __asm__ __volatile__ (
+            "pushl %6\n\tpushl %5\n\tpushl %4\n\tpushl %3\n\tcall *%2"
+            : "=a" (ret), "=c" (dummy)
+            : "r" (func), "r" (arg1), "r" (arg2), "m" (arg3), "m" (arg4), "1" (_this)
+            : "edx", "memory"
+            );
+    return ret;
+}
+
+static void* do_call_func6(void *func, void *_this,
+        const void *arg1, const void *arg2, const void *arg3,
+        const void *arg4, const void *arg5)
+{
+    void *ret, *dummy;
+    __asm__ __volatile__ (
+            "pushl %7\n\tpushl %6\n\tpushl %5\n\tpushl %4\n\tpushl %3\n\tcall *%2"
+            : "=a" (ret), "=c" (dummy)
+            : "r" (func), "r" (arg1), "r" (arg2), "m" (arg3), "m" (arg4), "m" (arg5), "1" (_this)
+            : "edx", "memory"
+            );
+    return ret;
+}
 #endif
 
 #define call_func1(func,_this)   do_call_func1(func,_this)
 #define call_func2(func,_this,a) do_call_func2(func,_this,(const void*)a)
 #define call_func3(func,_this,a,b) do_call_func3(func,_this,(const void*)a,(const void*)b)
-#define call_func4(func,_this,a,b,c) do_call_func4(func,_this,(const void*)a,(const void*)b,(const void*)c)
+#define call_func4(func,_this,a,b,c) do_call_func4(func,_this,(const void*)a,\
+        (const void*)b,(const void*)c)
+#define call_func5(func,_this,a,b,c,d) do_call_func5(func,_this,(const void*)a,\
+        (const void*)b,(const void*)c,(const void*)d)
+#define call_func6(func,_this,a,b,c,d,e) do_call_func6(func,_this,(const void*)a,\
+        (const void*)b,(const void*)c,(const void*)d,(const void*)e)
 
 #else
 
@@ -242,6 +318,8 @@ static void* do_call_func4(void *func, void *_this,
 #define call_func2(func,_this,a) func(_this,a)
 #define call_func3(func,_this,a,b) func(_this,a,b)
 #define call_func4(func,_this,a,b,c) func(_this,a,b,c)
+#define call_func5(func,_this,a,b,c,d) func(_this,a,b,c,d)
+#define call_func6(func,_this,a,b,c,d,e) func(_this,a,b,c,d,e)
 
 #endif /* __i386__ */
 
@@ -287,6 +365,10 @@ static BOOL init(void)
                 "?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@AEBV12@@Z");
         p_basic_string_char_append_substr = (void*)GetProcAddress(msvcp,
                 "?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@AEBV12@_K1@Z");
+        p_basic_string_char_compare_substr_substr = (void*)GetProcAddress(msvcp,
+                "?compare@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAH_K0AEBV12@00@Z");
+        p_basic_string_char_compare_substr_cstr_len = (void*)GetProcAddress(msvcp,
+                "?compare@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAH_K0PEBD0@Z");
 
         p_basic_string_wchar_ctor = (void*)GetProcAddress(msvcp,
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@XZ");
@@ -333,6 +415,10 @@ static BOOL init(void)
                 "?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@ABV12@@Z");
         p_basic_string_char_append_substr = (void*)GetProcAddress(msvcp,
                 "?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@ABV12@II@Z");
+        p_basic_string_char_compare_substr_substr = (void*)GetProcAddress(msvcp,
+                "?compare@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEHIIABV12@II@Z");
+        p_basic_string_char_compare_substr_cstr_len = (void*)GetProcAddress(msvcp,
+                "?compare@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEHIIPBDI@Z");
 
         p_basic_string_wchar_ctor = (void*)GetProcAddress(msvcp,
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@XZ");
@@ -499,6 +585,47 @@ static void test_basic_string_char_append(void) {
     call_func1(p_basic_string_char_dtor, &str2);
 }
 
+static void test_basic_string_char_compare(void) {
+    basic_string_char str1, str2;
+    int ret;
+
+    if(!p_basic_string_char_ctor_cstr || !p_basic_string_char_dtor
+            || !p_basic_string_char_compare_substr_substr
+            || !p_basic_string_char_compare_substr_cstr_len) {
+        win_skip("basic_string<char> unavailable\n");
+        return;
+    }
+
+    call_func2(p_basic_string_char_ctor_cstr, &str1, "str1str");
+    call_func2(p_basic_string_char_ctor_cstr, &str2, "str9str");
+
+    ret = (int)call_func6(p_basic_string_char_compare_substr_substr,
+            &str1, 0, 3, &str2, 0, 3);
+    ok(ret == 0, "ret = %d\n", ret);
+    ret = (int)call_func6(p_basic_string_char_compare_substr_substr,
+            &str1, 4, 3, &str2, 4, 10);
+    ok(ret == 0, "ret = %d\n", ret);
+    ret = (int)call_func6(p_basic_string_char_compare_substr_substr,
+            &str1, 1, 3, &str2, 1, 4);
+    ok(ret == -1, "ret = %d\n", ret);
+
+    ret = (int)call_func5(p_basic_string_char_compare_substr_cstr_len,
+            &str1, 0, 1000, "str1str", 7);
+    ok(ret == 0, "ret = %d\n", ret);
+    ret = (int)call_func5(p_basic_string_char_compare_substr_cstr_len,
+            &str1, 1, 2, "tr", 2);
+    ok(ret == 0, "ret = %d\n", ret);
+    ret = (int)call_func5(p_basic_string_char_compare_substr_cstr_len,
+            &str1, 1, 0, "aaa", 0);
+    ok(ret == 0, "ret = %d\n", ret);
+    ret = (int)call_func5(p_basic_string_char_compare_substr_cstr_len,
+            &str1, 1, 0, "aaa", 1);
+    ok(ret == -1, "ret = %d\n", ret);
+
+    call_func1(p_basic_string_char_dtor, &str1);
+    call_func1(p_basic_string_char_dtor, &str2);
+}
+
 static void test_basic_string_wchar(void) {
     static const wchar_t test[] = { 't','e','s','t',0 };
 
@@ -616,6 +743,7 @@ START_TEST(string)
     test_basic_string_char();
     test_basic_string_char_swap();
     test_basic_string_char_append();
+    test_basic_string_char_compare();
     test_basic_string_wchar();
     test_basic_string_wchar_swap();
 
