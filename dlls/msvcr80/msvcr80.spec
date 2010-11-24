@@ -1397,7 +1397,7 @@
 @ cdecl perror(str) msvcrt.perror
 @ cdecl pow(double double) msvcrt.pow
 @ varargs printf(str) msvcrt.printf
-@ stub printf_s
+@ varargs printf_s(str) msvcrt.printf_s
 @ cdecl putc(long ptr) msvcrt.putc
 @ cdecl putchar(long) msvcrt.putchar
 @ cdecl puts(str) msvcrt.puts
@@ -1517,6 +1517,6 @@
 @ cdecl wctomb(ptr long) msvcrt.wctomb
 @ stub wctomb_s
 @ varargs wprintf(wstr) msvcrt.wprintf
-@ stub wprintf_s
+@ varargs wprintf_s(wstr) msvcrt.wprintf_s
 @ varargs wscanf(wstr) msvcrt.wscanf
 @ varargs wscanf_s(wstr) msvcrt.wscanf_s

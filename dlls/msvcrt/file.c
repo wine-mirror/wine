@@ -3526,6 +3526,19 @@ int CDECL MSVCRT_printf(const char *format, ...)
 }
 
 /*********************************************************************
+ *		printf_s (MSVCRT.@)
+ */
+int CDECL MSVCRT_printf_s(const char *format, ...)
+{
+    __ms_va_list valist;
+    int res;
+    __ms_va_start(valist, format);
+    res = MSVCRT_vprintf_s(format, valist);
+    __ms_va_end(valist);
+    return res;
+}
+
+/*********************************************************************
  *		ungetc (MSVCRT.@)
  */
 int CDECL MSVCRT_ungetc(int c, MSVCRT_FILE * file)
@@ -3570,6 +3583,19 @@ int CDECL MSVCRT_wprintf(const MSVCRT_wchar_t *format, ...)
     int res;
     __ms_va_start(valist, format);
     res = MSVCRT_vwprintf(format, valist);
+    __ms_va_end(valist);
+    return res;
+}
+
+/*********************************************************************
+ *		wprintf_s (MSVCRT.@)
+ */
+int CDECL MSVCRT_wprintf_s(const MSVCRT_wchar_t *format, ...)
+{
+    __ms_va_list valist;
+    int res;
+    __ms_va_start(valist, format);
+    res = MSVCRT_vwprintf_s(format, valist);
     __ms_va_end(valist);
     return res;
 }

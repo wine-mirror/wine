@@ -1339,7 +1339,7 @@
 @ cdecl pow(double double) MSVCRT_pow
 @ cdecl -arch=x86_64 powf(float float) MSVCRT_powf
 @ varargs printf(str) MSVCRT_printf
-# stub printf_s
+@ varargs printf_s(str) MSVCRT_printf_s
 @ cdecl putc(long ptr) MSVCRT_putc
 @ cdecl putchar(long) MSVCRT_putchar
 @ cdecl puts(str) MSVCRT_puts
@@ -1470,7 +1470,7 @@
 @ cdecl wctomb(ptr long) MSVCRT_wctomb
 # stub wctomb_s
 @ varargs wprintf(wstr) MSVCRT_wprintf
-# stub wprintf_s
+@ varargs wprintf_s(wstr) MSVCRT_wprintf_s
 @ varargs wscanf(wstr) MSVCRT_wscanf
 @ varargs wscanf_s(wstr) MSVCRT_wscanf_s
 

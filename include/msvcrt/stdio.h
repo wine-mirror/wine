@@ -148,6 +148,7 @@ int    __cdecl getchar(void);
 char*  __cdecl gets(char*);
 void   __cdecl perror(const char*);
 int    __cdecl printf(const char*,...);
+int    __cdecl printf_s(const char*,...);
 int    __cdecl putc(int,FILE*);
 int    __cdecl putchar(int);
 int    __cdecl puts(const char*);
@@ -220,6 +221,7 @@ int      __cdecl vswprintf_s(wchar_t*,size_t,const wchar_t*,__ms_va_list);
 int      __cdecl vwprintf(const wchar_t*,__ms_va_list);
 int      __cdecl vwprintf_s(const wchar_t*,__ms_va_list);
 int      __cdecl wprintf(const wchar_t*,...);
+int      __cdecl wprintf_s(const wchar_t*,...);
 int      __cdecl wscanf(const wchar_t*,...);
 int      __cdecl wscanf_s(const wchar_t*,...);
 #endif /* _WSTDIO_DEFINED */
