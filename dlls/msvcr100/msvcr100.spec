@@ -1274,7 +1274,7 @@
 @ stub _vwprintf_p_l
 @ stub _vwprintf_s_l
 @ cdecl _waccess(wstr long) msvcrt._waccess
-@ cdecl _waccess_s(wstr long) msvcrt.waccess_s
+@ cdecl _waccess_s(wstr long) msvcrt._waccess_s
 @ cdecl _wasctime(ptr) msvcrt._wasctime
 @ stub _wasctime_s
 @ stub _wassert
