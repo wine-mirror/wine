@@ -33,6 +33,18 @@ RC_SRCS = \
 	Zh.rc \
 	rsrc.rc
 
+MANPAGES = winefile.man
+
 SVG_SRCS = winefile.svg
 
 @MAKE_PROG_RULES@
+
+all: $(MANPAGES)
+
+install-man-pages:: $(MANPAGES) $(DESTDIR)$(mandir)/man$(prog_manext)
+	$(INSTALL_DATA) winefile.man $(DESTDIR)$(mandir)/man$(prog_manext)/winefile.$(prog_manext)
+
+@WOW64_DISABLE@ install install-lib:: install-man-pages
+
+uninstall::
+	$(RM) $(DESTDIR)$(mandir)/man$(prog_manext)/winefile.$(prog_manext)
