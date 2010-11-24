@@ -52,6 +52,7 @@ IDR_BROWSE_MAIN_MENU MENU
         MENUITEM "인쇄 미리보기(&W)...",           ID_BROWSE_PRINT_PREVIEW
         MENUITEM SEPARATOR
         MENUITEM "속성(&P)...",              ID_BROWSE_PROPERTIES
+        MENUITEM "닫기(&C)",                      ID_BROWSE_QUIT
     }
     POPUP "보기(&V)"
     {
