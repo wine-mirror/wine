@@ -1426,14 +1426,14 @@
 @ cdecl vfwprintf(ptr wstr ptr) MSVCRT_vfwprintf
 @ cdecl vfwprintf_s(ptr wstr ptr) MSVCRT_vfwprintf_s
 @ cdecl vprintf(str ptr) MSVCRT_vprintf
-# stub vprintf_s
+@ cdecl vprintf_s(str ptr) MSVCRT_vprintf_s
 # stub vsnprintf
 @ cdecl vsprintf(ptr str ptr) MSVCRT_vsprintf
 @ cdecl vsprintf_s(ptr long str ptr) MSVCRT_vsprintf_s
 @ cdecl vswprintf(ptr wstr ptr) MSVCRT_vswprintf
 @ cdecl vswprintf_s(ptr long wstr ptr) MSVCRT_vswprintf_s
 @ cdecl vwprintf(wstr ptr) MSVCRT_vwprintf
-# stub vwprintf_s
+@ cdecl vwprintf_s(wstr ptr) MSVCRT_vwprintf_s
 # stub wcrtomb
 # stub wcrtomb_s
 @ cdecl wcscat(wstr wstr) ntdll.wcscat

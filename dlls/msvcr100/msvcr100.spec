@@ -1621,12 +1621,12 @@
 @ cdecl vfwprintf(ptr wstr ptr) msvcrt.vfwprintf
 @ cdecl vfwprintf_s(ptr wstr ptr) msvcrt.vfwprintf_s
 @ cdecl vprintf(str ptr) msvcrt.vprintf
-@ stub vprintf_s
+@ cdecl vprintf_s(str ptr) msvcrt.vprintf_s
 @ cdecl vsprintf(ptr str ptr) msvcrt.vsprintf
 @ cdecl vsprintf_s(ptr long str ptr) msvcrt.vsprintf_s
 @ cdecl vswprintf_s(ptr long wstr ptr) msvcrt.vswprintf_s
 @ cdecl vwprintf(wstr ptr) msvcrt.vwprintf
-@ stub vwprintf_s
+@ cdecl vwprintf_s(wstr ptr) msvcrt.vwprintf_s
 @ stub wcrtomb
 @ stub wcrtomb_s
 @ cdecl wcscat(wstr wstr) msvcrt.wcscat

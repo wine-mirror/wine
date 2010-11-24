@@ -3463,11 +3463,27 @@ int CDECL MSVCRT_vprintf(const char *format, __ms_va_list valist)
 }
 
 /*********************************************************************
+ *		vprintf_s (MSVCRT.@)
+ */
+int CDECL MSVCRT_vprintf_s(const char *format, __ms_va_list valist)
+{
+  return MSVCRT_vfprintf_s(MSVCRT_stdout,format,valist);
+}
+
+/*********************************************************************
  *		vwprintf (MSVCRT.@)
  */
 int CDECL MSVCRT_vwprintf(const MSVCRT_wchar_t *format, __ms_va_list valist)
 {
   return MSVCRT_vfwprintf(MSVCRT_stdout,format,valist);
+}
+
+/*********************************************************************
+ *		vwprintf_s (MSVCRT.@)
+ */
+int CDECL MSVCRT_vwprintf_s(const MSVCRT_wchar_t *format, __ms_va_list valist)
+{
+  return MSVCRT_vfwprintf_s(MSVCRT_stdout,format,valist);
 }
 
 /*********************************************************************

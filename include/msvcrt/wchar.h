@@ -314,6 +314,7 @@ int      __cdecl vfwprintf_s(FILE*,const wchar_t*,__ms_va_list);
 int      __cdecl vswprintf(wchar_t*,const wchar_t*,__ms_va_list);
 int      __cdecl vswprintf_s(wchar_t*,size_t,const wchar_t*,__ms_va_list);
 int      __cdecl vwprintf(const wchar_t*,__ms_va_list);
+int      __cdecl vwprintf_s(const wchar_t*,__ms_va_list);
 int      __cdecl wprintf(const wchar_t*,...);
 int      __cdecl wscanf(const wchar_t*,...);
 int      __cdecl wscanf_s(const wchar_t*,...);
