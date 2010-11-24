@@ -590,7 +590,6 @@ HRESULT dt_validate(XDR_DT dt, xmlChar const* content)
     {
         case DT_INVALID:
             return E_FAIL;
-            break;
         case DT_BIN_BASE64:
         case DT_BIN_HEX:
         case DT_BOOLEAN:
@@ -637,11 +636,9 @@ HRESULT dt_validate(XDR_DT dt, xmlChar const* content)
                 hr = S_OK;
             }
             return hr;
-            break;
         default:
             FIXME("need to handle dt:%s\n", dt_to_str(dt));
             return S_OK;
-            break;
     }
 }
 
