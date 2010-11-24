@@ -437,7 +437,10 @@ static HRESULT WINAPI Gstreamer_transform_NewSegment(TransformFilter *iface, REF
 
 static HRESULT WINAPI Gstreamer_transform_QOS(TransformFilter *iface, IBaseFilter *sender, Quality qm) {
     GstTfImpl *This = (GstTfImpl*)iface;
-    gst_pad_push_event(This->my_sink, gst_event_new_qos(1000. / qm.Proportion, qm.Late * 100, qm.TimeStamp * 100));
+    REFERENCE_TIME late = qm.Late;
+    if (qm.Late < 0 && -qm.Late > qm.TimeStamp)
+        late = -qm.TimeStamp;
+    gst_pad_push_event(This->my_sink, gst_event_new_qos(1000. / qm.Proportion, late * 100, qm.TimeStamp * 100));
     return QualityControlImpl_Notify((IQualityControl*)&iface->qcimpl, sender, qm);
 }
 

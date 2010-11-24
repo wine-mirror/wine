@@ -1387,7 +1387,10 @@ static const IMediaSeekingVtbl GST_Seeking_Vtbl =
 static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm) {
     QualityControlImpl *This = (QualityControlImpl*)iface;
     GSTOutPin *pin = (GSTOutPin*)This->self;
-    gst_pad_push_event(pin->my_sink, gst_event_new_qos(1000./qm.Proportion, qm.Late*100, qm.TimeStamp*100));
+    REFERENCE_TIME late = qm.Late;
+    if (qm.Late < 0 && -qm.Late > qm.TimeStamp)
+        late = -qm.TimeStamp;
+    gst_pad_push_event(pin->my_sink, gst_event_new_qos(1000./qm.Proportion, late*100, qm.TimeStamp*100));
     return S_OK;
 }
 
