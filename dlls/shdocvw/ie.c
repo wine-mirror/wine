@@ -23,7 +23,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 static inline InternetExplorer *impl_from_IWebBrowser2(IWebBrowser2 *iface)
 {
-    return (InternetExplorer*)((char*)iface - FIELD_OFFSET(InternetExplorer, IWebBrowser2_iface));
+    return CONTAINING_RECORD(iface, InternetExplorer, IWebBrowser2_iface);
 }
 
 static HRESULT WINAPI InternetExplorer_QueryInterface(IWebBrowser2 *iface, REFIID riid, LPVOID *ppv)

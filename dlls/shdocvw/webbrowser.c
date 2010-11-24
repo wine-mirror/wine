@@ -28,7 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 static inline WebBrowser *impl_from_IWebBrowser2(IWebBrowser2 *iface)
 {
-    return (WebBrowser*)((char*)iface - FIELD_OFFSET(WebBrowser, IWebBrowser2_iface));
+    return CONTAINING_RECORD(iface, WebBrowser, IWebBrowser2_iface);
 }
 
 static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid, LPVOID *ppv)
@@ -1062,7 +1062,7 @@ static const IWebBrowser2Vtbl WebBrowser2Vtbl =
 
 static inline WebBrowser *impl_from_IServiceProvider(IServiceProvider *iface)
 {
-    return (WebBrowser*)((char*)iface - FIELD_OFFSET(WebBrowser, IServiceProvider_iface));
+    return CONTAINING_RECORD(iface, WebBrowser, IServiceProvider_iface);
 }
 
 static HRESULT WINAPI WBServiceProvider_QueryInterface(IServiceProvider *iface,
@@ -1114,7 +1114,7 @@ static const IServiceProviderVtbl ServiceProviderVtbl =
 
 static inline WebBrowser *impl_from_DocHost(DocHost *iface)
 {
-    return (WebBrowser*)((char*)iface - FIELD_OFFSET(WebBrowser, doc_host));
+    return CONTAINING_RECORD(iface, WebBrowser, doc_host);
 }
 
 static void WINAPI DocHostContainer_GetDocObjRect(DocHost* This, RECT* rc)

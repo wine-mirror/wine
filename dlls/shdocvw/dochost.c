@@ -404,7 +404,7 @@ void release_dochost_client(DocHost *This)
 
 static inline DocHost *impl_from_IOleCommandTarget(IOleCommandTarget *iface)
 {
-    return (DocHost*)((char*)iface - FIELD_OFFSET(DocHost, IOleCommandTarget_iface));
+    return CONTAINING_RECORD(iface, DocHost, IOleCommandTarget_iface);
 }
 
 static HRESULT WINAPI ClOleCommandTarget_QueryInterface(IOleCommandTarget *iface,
@@ -494,7 +494,7 @@ static const IOleCommandTargetVtbl OleCommandTargetVtbl = {
 
 static inline DocHost *impl_from_IDocHostUIHandler2(IDocHostUIHandler2 *iface)
 {
-    return (DocHost*)((char*)iface - FIELD_OFFSET(DocHost, IDocHostUIHandler2_iface));
+    return CONTAINING_RECORD(iface, DocHost, IDocHostUIHandler2_iface);
 }
 
 static HRESULT WINAPI DocHostUIHandler_QueryInterface(IDocHostUIHandler2 *iface,
@@ -733,7 +733,7 @@ static const IDocHostUIHandler2Vtbl DocHostUIHandler2Vtbl = {
 
 static inline DocHost *impl_from_IPropertyNotifySink(IPropertyNotifySink *iface)
 {
-    return (DocHost*)((char*)iface - FIELD_OFFSET(DocHost, IPropertyNotifySink_iface));
+    return CONTAINING_RECORD(iface, DocHost, IPropertyNotifySink_iface);
 }
 
 static HRESULT WINAPI PropertyNotifySink_QueryInterface(IPropertyNotifySink *iface,

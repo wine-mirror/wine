@@ -30,7 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 static inline WebBrowser *impl_from_IPersistStorage(IPersistStorage *iface)
 {
-    return (WebBrowser*)((char*)iface - FIELD_OFFSET(WebBrowser, IPersistStorage_iface));
+    return CONTAINING_RECORD(iface, WebBrowser, IPersistStorage_iface);
 }
 
 static HRESULT WINAPI PersistStorage_QueryInterface(IPersistStorage *iface,
@@ -114,7 +114,7 @@ static const IPersistStorageVtbl PersistStorageVtbl =
 
 static inline WebBrowser *impl_from_IPersistMemory(IPersistMemory *iface)
 {
-    return (WebBrowser*)((char*)iface - FIELD_OFFSET(WebBrowser, IPersistMemory_iface));
+    return CONTAINING_RECORD(iface, WebBrowser, IPersistMemory_iface);
 }
 
 static HRESULT WINAPI PersistMemory_QueryInterface(IPersistMemory *iface,
@@ -198,7 +198,7 @@ static const IPersistMemoryVtbl PersistMemoryVtbl =
 
 static inline WebBrowser *impl_from_IPersistStreamInit(IPersistStreamInit *iface)
 {
-    return (WebBrowser*)((char*)iface - FIELD_OFFSET(WebBrowser, IPersistStreamInit_iface));
+    return CONTAINING_RECORD(iface, WebBrowser, IPersistStreamInit_iface);
 }
 
 static HRESULT WINAPI PersistStreamInit_QueryInterface(IPersistStreamInit *iface,

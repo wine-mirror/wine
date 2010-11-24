@@ -724,7 +724,7 @@ static IWebBrowser2 *create_ie_window(LPCSTR cmdline)
 
 static inline InternetExplorer *impl_from_DocHost(DocHost *iface)
 {
-    return (InternetExplorer*)((char*)iface - FIELD_OFFSET(InternetExplorer, doc_host));
+    return CONTAINING_RECORD(iface, InternetExplorer, doc_host);
 }
 
 static void WINAPI DocHostContainer_GetDocObjRect(DocHost* This, RECT* rc)

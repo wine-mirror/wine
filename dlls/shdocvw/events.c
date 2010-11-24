@@ -45,7 +45,7 @@ struct ConnectionPoint {
 
 static inline ConnectionPointContainer *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
 {
-    return (ConnectionPointContainer*)((char*)iface - FIELD_OFFSET(ConnectionPointContainer, IConnectionPointContainer_iface));
+    return CONTAINING_RECORD(iface, ConnectionPointContainer, IConnectionPointContainer_iface);
 }
 
 static HRESULT WINAPI ConnectionPointContainer_QueryInterface(IConnectionPointContainer *iface,
@@ -125,7 +125,7 @@ static const IConnectionPointContainerVtbl ConnectionPointContainerVtbl =
 
 static inline ConnectionPoint *impl_from_IConnectionPoint(IConnectionPoint *iface)
 {
-    return (ConnectionPoint*)((char*)iface - FIELD_OFFSET(ConnectionPoint, IConnectionPoint_iface));
+    return CONTAINING_RECORD(iface, ConnectionPoint, IConnectionPoint_iface);
 }
 
 static HRESULT WINAPI ConnectionPoint_QueryInterface(IConnectionPoint *iface,

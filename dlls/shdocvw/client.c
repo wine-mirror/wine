@@ -27,7 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 static inline DocHost *impl_from_IOleClientSite(IOleClientSite *iface)
 {
-    return (DocHost*)((char*)iface - FIELD_OFFSET(DocHost, IOleClientSite_iface));
+    return CONTAINING_RECORD(iface, DocHost, IOleClientSite_iface);
 }
 
 static HRESULT WINAPI ClientSite_QueryInterface(IOleClientSite *iface, REFIID riid, void **ppv)
@@ -149,7 +149,7 @@ static const IOleClientSiteVtbl OleClientSiteVtbl = {
 
 static inline DocHost *impl_from_IOleInPlaceSite(IOleInPlaceSite *iface)
 {
-    return (DocHost*)((char*)iface - FIELD_OFFSET(DocHost, IOleInPlaceSite_iface));
+    return CONTAINING_RECORD(iface, DocHost, IOleInPlaceSite_iface);
 }
 
 static HRESULT WINAPI InPlaceSite_QueryInterface(IOleInPlaceSite *iface, REFIID riid, void **ppv)
@@ -305,7 +305,7 @@ static const IOleInPlaceSiteVtbl OleInPlaceSiteVtbl = {
 
 static inline DocHost *impl_from_IOleDocumentSite(IOleDocumentSite *iface)
 {
-    return (DocHost*)((char*)iface - FIELD_OFFSET(DocHost, IOleDocumentSite_iface));
+    return CONTAINING_RECORD(iface, DocHost, IOleDocumentSite_iface);
 }
 
 static HRESULT WINAPI OleDocumentSite_QueryInterface(IOleDocumentSite *iface,
@@ -361,7 +361,7 @@ static const IOleDocumentSiteVtbl OleDocumentSiteVtbl = {
 
 static inline DocHost *impl_from_IOleControlSite(IOleControlSite *iface)
 {
-    return (DocHost*)((char*)iface - FIELD_OFFSET(DocHost, IOleControlSite_iface));
+    return CONTAINING_RECORD(iface, DocHost, IOleControlSite_iface);
 }
 
 static HRESULT WINAPI ControlSite_QueryInterface(IOleControlSite *iface, REFIID riid, void **ppv)
@@ -471,7 +471,7 @@ static IOleControlSiteVtbl OleControlSiteVtbl = {
 
 static inline DocHost *impl_from_IDispatch(IDispatch *iface)
 {
-    return (DocHost*)((char*)iface - FIELD_OFFSET(DocHost, IDispatch_iface));
+    return CONTAINING_RECORD(iface, DocHost, IDispatch_iface);
 }
 
 static HRESULT WINAPI ClDispatch_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
@@ -585,7 +585,7 @@ static const IDispatchVtbl DispatchVtbl = {
 
 static inline DocHost *impl_from_IServiceProvider(IServiceProvider *iface)
 {
-    return (DocHost*)((char*)iface - FIELD_OFFSET(DocHost, IServiceProvider_iface));
+    return CONTAINING_RECORD(iface, DocHost, IServiceProvider_iface);
 }
 
 static HRESULT WINAPI ClServiceProvider_QueryInterface(IServiceProvider *iface, REFIID riid,

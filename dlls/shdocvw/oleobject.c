@@ -291,7 +291,7 @@ static void release_client_site(WebBrowser *This)
 
 static inline WebBrowser *impl_from_IOleObject(IOleObject *iface)
 {
-    return (WebBrowser*)((char*)iface - FIELD_OFFSET(WebBrowser, IOleObject_iface));
+    return CONTAINING_RECORD(iface, WebBrowser, IOleObject_iface);
 }
 
 static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, void **ppv)
@@ -598,7 +598,7 @@ static const IOleObjectVtbl OleObjectVtbl =
 
 static inline WebBrowser *impl_from_IOleInPlaceObject(IOleInPlaceObject *iface)
 {
-    return (WebBrowser*)((char*)iface - FIELD_OFFSET(WebBrowser, IOleInPlaceObject_iface));
+    return CONTAINING_RECORD(iface, WebBrowser, IOleInPlaceObject_iface);
 }
 
 static HRESULT WINAPI OleInPlaceObject_QueryInterface(IOleInPlaceObject *iface,
@@ -707,7 +707,7 @@ static const IOleInPlaceObjectVtbl OleInPlaceObjectVtbl =
 
 static inline WebBrowser *impl_from_IOleControl(IOleControl *iface)
 {
-    return (WebBrowser*)((char*)iface - FIELD_OFFSET(WebBrowser, IOleControl_iface));
+    return CONTAINING_RECORD(iface, WebBrowser, IOleControl_iface);
 }
 
 static HRESULT WINAPI OleControl_QueryInterface(IOleControl *iface,
@@ -790,7 +790,7 @@ static const IOleControlVtbl OleControlVtbl =
 
 static inline WebBrowser *impl_from_IOleInPlaceActiveObject(IOleInPlaceActiveObject *iface)
 {
-    return (WebBrowser*)((char*)iface - FIELD_OFFSET(WebBrowser, IOleInPlaceActiveObject_iface));
+    return CONTAINING_RECORD(iface, WebBrowser, IOleInPlaceActiveObject_iface);
 }
 
 static HRESULT WINAPI InPlaceActiveObject_QueryInterface(IOleInPlaceActiveObject *iface,
@@ -897,7 +897,7 @@ static const IOleInPlaceActiveObjectVtbl OleInPlaceActiveObjectVtbl = {
 
 static inline WebBrowser *impl_from_IOleCommandTarget(IOleCommandTarget *iface)
 {
-    return (WebBrowser*)((char*)iface - FIELD_OFFSET(WebBrowser, IOleCommandTarget_iface));
+    return CONTAINING_RECORD(iface, WebBrowser, IOleCommandTarget_iface);
 }
 
 static HRESULT WINAPI WBOleCommandTarget_QueryInterface(IOleCommandTarget *iface,

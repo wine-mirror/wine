@@ -23,7 +23,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 static inline DocHost *impl_from_IOleInPlaceFrame(IOleInPlaceFrame *iface)
 {
-    return (DocHost*)((char*)iface - FIELD_OFFSET(DocHost, IOleInPlaceFrame_iface));
+    return CONTAINING_RECORD(iface, DocHost, IOleInPlaceFrame_iface);
 }
 
 static HRESULT WINAPI InPlaceFrame_QueryInterface(IOleInPlaceFrame *iface,

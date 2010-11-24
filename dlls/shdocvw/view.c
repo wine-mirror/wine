@@ -28,7 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 static inline WebBrowser *impl_from_IViewObject2(IViewObject2 *iface)
 {
-    return (WebBrowser*)((char*)iface - FIELD_OFFSET(WebBrowser, IViewObject2_iface));
+    return CONTAINING_RECORD(iface, WebBrowser, IViewObject2_iface);
 }
 
 static HRESULT WINAPI ViewObject_QueryInterface(IViewObject2 *iface, REFIID riid, void **ppv)
@@ -130,7 +130,7 @@ static const IViewObject2Vtbl ViewObjectVtbl = {
 
 static inline WebBrowser *impl_from_IDataObject(IDataObject *iface)
 {
-    return (WebBrowser*)((char*)iface - FIELD_OFFSET(WebBrowser, IDataObject_iface));
+    return CONTAINING_RECORD(iface, WebBrowser, IDataObject_iface);
 }
 
 static HRESULT WINAPI DataObject_QueryInterface(LPDATAOBJECT iface, REFIID riid, LPVOID * ppvObj)

@@ -34,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 static inline WebBrowser *impl_from_IProvideClassInfo2(IProvideClassInfo2 *iface)
 {
-    return (WebBrowser*)((char*)iface - FIELD_OFFSET(WebBrowser, IProvideClassInfo2_iface));
+    return CONTAINING_RECORD(iface, WebBrowser, IProvideClassInfo2_iface);
 }
 
 static HRESULT WINAPI ProvideClassInfo_QueryInterface(IProvideClassInfo2 *iface,

@@ -129,7 +129,7 @@ static HRESULT set_dochost_url(DocHost *This, const WCHAR *url)
 
 static inline BindStatusCallback *impl_from_IBindStatusCallback(IBindStatusCallback *iface)
 {
-    return (BindStatusCallback*)((char*)iface - FIELD_OFFSET(BindStatusCallback, IBindStatusCallback_iface));
+    return CONTAINING_RECORD(iface, BindStatusCallback, IBindStatusCallback_iface);
 }
 
 static HRESULT WINAPI BindStatusCallback_QueryInterface(IBindStatusCallback *iface,
@@ -314,7 +314,7 @@ static const IBindStatusCallbackVtbl BindStatusCallbackVtbl = {
 
 static inline BindStatusCallback *impl_from_IHttpNegotiate(IHttpNegotiate *iface)
 {
-    return (BindStatusCallback*)((char*)iface - FIELD_OFFSET(BindStatusCallback, IHttpNegotiate_iface));
+    return CONTAINING_RECORD(iface, BindStatusCallback, IHttpNegotiate_iface);
 }
 
 static HRESULT WINAPI HttpNegotiate_QueryInterface(IHttpNegotiate *iface,
@@ -882,7 +882,7 @@ HRESULT go_home(DocHost *This)
 
 static inline HlinkFrame *impl_from_IHlinkFrame(IHlinkFrame *iface)
 {
-    return (HlinkFrame*)((char*)iface - FIELD_OFFSET(HlinkFrame, IHlinkFrame_iface));
+    return CONTAINING_RECORD(iface, HlinkFrame, IHlinkFrame_iface);
 }
 
 static HRESULT WINAPI HlinkFrame_QueryInterface(IHlinkFrame *iface, REFIID riid, void **ppv)
@@ -981,7 +981,7 @@ static const IHlinkFrameVtbl HlinkFrameVtbl = {
 
 static inline HlinkFrame *impl_from_ITargetFrame2(ITargetFrame2 *iface)
 {
-    return (HlinkFrame*)((char*)iface - FIELD_OFFSET(HlinkFrame, IHlinkFrame_iface));
+    return CONTAINING_RECORD(iface, HlinkFrame, IHlinkFrame_iface);
 }
 
 static HRESULT WINAPI TargetFrame2_QueryInterface(ITargetFrame2 *iface, REFIID riid, void **ppv)

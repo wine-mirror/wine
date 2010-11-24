@@ -58,17 +58,17 @@ typedef struct
 
 static inline InternetShortcut* impl_from_IUniformResourceLocatorA(IUniformResourceLocatorA *iface)
 {
-    return (InternetShortcut*)((char*)iface - FIELD_OFFSET(InternetShortcut, uniformResourceLocatorA));
+    return CONTAINING_RECORD(iface, InternetShortcut, uniformResourceLocatorA);
 }
 
 static inline InternetShortcut* impl_from_IUniformResourceLocatorW(IUniformResourceLocatorW *iface)
 {
-    return (InternetShortcut*)((char*)iface - FIELD_OFFSET(InternetShortcut, uniformResourceLocatorW));
+    return CONTAINING_RECORD(iface, InternetShortcut, uniformResourceLocatorW);
 }
 
 static inline InternetShortcut* impl_from_IPersistFile(IPersistFile *iface)
 {
-    return (InternetShortcut*)((char*)iface - FIELD_OFFSET(InternetShortcut, persistFile));
+    return CONTAINING_RECORD(iface, InternetShortcut, persistFile);
 }
 
 static BOOL run_winemenubuilder( const WCHAR *args )
