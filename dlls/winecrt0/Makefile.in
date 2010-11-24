@@ -12,6 +12,7 @@ C_SRCS = \
 	exe_wentry.c \
 	exe_wmain.c \
 	init.c \
+	register.c \
 	stub.c
 
 @MAKE_IMPLIB_RULES@
