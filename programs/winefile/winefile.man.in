@@ -1,0 +1,19 @@
+.TH WINEFILE 1 "November 2010" "@PACKAGE_STRING@" "Wine Programs"
+.SH NAME
+winefile \- Wine File Manager
+.SH SYNOPSIS
+.BR "winefile \fl[Unix\ path]\fR"
+
+.BR "winefile \fl[Win32\ path]\fR"
+.SH DESCRIPTION
+.B winefile
+is the Wine file manager, with a similar design to early Microsoft Windows explorer.
+.SH USAGE
+.B You can pass winefile either a Unix or Win32 path, for example:
+
+.B Using a Unix path: winefile /mnt/hda1
+
+.B Using a Win32 path: winefile C:\(rs\(rswindows\(rs\(rs\
+
+.SH "SEE ALSO"
+.BR wine(1)
