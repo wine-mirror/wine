@@ -2078,7 +2078,6 @@ static void test_enveloped_msg_open(void)
          "expected E_INVALIDARG, got %08x\n", GetLastError());
     }
 
-    SetLastError(0xdeadbeef);
     context = CertCreateCertificateContext(X509_ASN_ENCODING,
      v1CertWithValidPubKey, sizeof(v1CertWithValidPubKey));
     if (context)
@@ -2090,23 +2089,21 @@ static void test_enveloped_msg_open(void)
         todo_wine
         ok(msg != NULL, "CryptMsgOpenToEncode failed: %08x\n", GetLastError());
         CryptMsgClose(msg);
+        SetLastError(0xdeadbeef);
+        ret = pCryptAcquireContextA(&envelopedInfo.hCryptProv, NULL, NULL,
+         PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
+        ok(ret, "CryptAcquireContextA failed: %08x\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_ENVELOPED,
+         &envelopedInfo, NULL, NULL);
+        todo_wine
+        ok(msg != NULL, "CryptMsgOpenToEncode failed: %08x\n", GetLastError());
+        CryptMsgClose(msg);
+        CryptReleaseContext(envelopedInfo.hCryptProv, 0);
+        CertFreeCertificateContext(context);
     }
     else
-        win_skip("failed to create certificate context, skipping a test\n");
-
-    SetLastError(0xdeadbeef);
-    ret = pCryptAcquireContextA(&envelopedInfo.hCryptProv, NULL, NULL,
-     PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
-    ok(ret, "CryptAcquireContextA failed: %08x\n", GetLastError());
-    SetLastError(0xdeadbeef);
-    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_ENVELOPED,
-     &envelopedInfo, NULL, NULL);
-    todo_wine
-    ok(msg != NULL, "CryptMsgOpenToEncode failed: %08x\n", GetLastError());
-    CryptMsgClose(msg);
-
-    CryptReleaseContext(envelopedInfo.hCryptProv, 0);
-    CertFreeCertificateContext(context);
+        win_skip("failed to create certificate context, skipping tests\n");
 }
 
 static void test_enveloped_msg_update(void)
