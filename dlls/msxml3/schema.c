@@ -818,38 +818,6 @@ static BOOL link_datatypes(xmlDocPtr schema)
     return TRUE;
 }
 
-static cache_entry* cache_entry_from_url(char const* url, xmlChar const* nsURI)
-{
-    cache_entry* entry = heap_alloc(sizeof(cache_entry));
-    xmlSchemaParserCtxtPtr spctx = xmlSchemaNewParserCtxt(url);
-    entry->type = SCHEMA_TYPE_XSD;
-    entry->ref = 0;
-    if (spctx)
-    {
-        if((entry->schema = Schema_parse(spctx)))
-        {
-            /* TODO: if the nsURI is different from the default xmlns or targetNamespace,
-             *       do we need to do something special here? */
-            xmldoc_init(entry->schema->doc, &CLSID_DOMDocument40);
-            entry->doc = entry->schema->doc;
-            xmldoc_add_ref(entry->doc);
-        }
-        else
-        {
-            heap_free(entry);
-            entry = NULL;
-        }
-        xmlSchemaFreeParserCtxt(spctx);
-    }
-    else
-    {
-        FIXME("schema for nsURI %s not found\n", wine_dbgstr_a(url));
-        heap_free(entry);
-        entry = NULL;
-    }
-    return entry;
-}
-
 static cache_entry* cache_entry_from_xsd_doc(xmlDocPtr doc, xmlChar const* nsURI)
 {
     cache_entry* entry = heap_alloc(sizeof(cache_entry));
@@ -910,6 +878,55 @@ static cache_entry* cache_entry_from_xdr_doc(xmlDocPtr doc, xmlChar const* nsURI
         entry = NULL;
     }
     xmlSchemaFreeParserCtxt(spctx);
+
+    return entry;
+}
+
+static cache_entry* cache_entry_from_url(VARIANT url, xmlChar const* nsURI)
+{
+    cache_entry* entry;
+    IXMLDOMDocument3* domdoc = NULL;
+    xmlDocPtr doc = NULL;
+    HRESULT hr = DOMDocument_create(&CLSID_DOMDocument, NULL, (void**)&domdoc);
+    VARIANT_BOOL b = VARIANT_FALSE;
+    SCHEMA_TYPE type = SCHEMA_TYPE_INVALID;
+
+    if (hr != S_OK)
+    {
+        FIXME("failed to create domdoc\n");
+        return NULL;
+    }
+    assert(domdoc != NULL);
+    assert(V_VT(&url) == VT_BSTR);
+
+    hr = IXMLDOMDocument3_load(domdoc, url, &b);
+    if (hr != S_OK)
+    {
+        ERR("IXMLDOMDocument3_load() returned 0x%08x\n", hr);
+        if (b != VARIANT_TRUE)
+        {
+            FIXME("Failed to load doc at %s\n", wine_dbgstr_w(V_BSTR(&url)));
+            IXMLDOMDocument3_Release(domdoc);
+            return NULL;
+        }
+    }
+    doc = xmlNodePtr_from_domnode((IXMLDOMNode*)domdoc, XML_DOCUMENT_NODE)->doc;
+    type = schema_type_from_xmlDocPtr(doc);
+
+    switch (type)
+    {
+        case SCHEMA_TYPE_XSD:
+            entry = cache_entry_from_xsd_doc(doc, nsURI);
+            break;
+        case SCHEMA_TYPE_XDR:
+            entry = cache_entry_from_xdr_doc(doc, nsURI);
+            break;
+        case SCHEMA_TYPE_INVALID:
+            entry = NULL;
+            FIXME("invalid schema\n");
+            break;
+    }
+    IXMLDOMDocument3_Release(domdoc);
 
     return entry;
 }
@@ -1056,9 +1073,7 @@ static HRESULT WINAPI schema_cache_add(IXMLDOMSchemaCollection2* iface, BSTR uri
 
         case VT_BSTR:
             {
-                xmlChar* url = xmlChar_from_wchar(V_BSTR(&var));
-                cache_entry* entry = cache_entry_from_url((char const*)url, name);
-                heap_free(url);
+                cache_entry* entry = cache_entry_from_url(var, name);
 
                 if (entry)
                 {
