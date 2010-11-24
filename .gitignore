@@ -273,6 +273,7 @@ programs/winedbg/dbg.tab.c
 programs/winedbg/dbg.tab.h
 programs/winedbg/debug.yy.c
 programs/winedbg/winedbg.man
+programs/winemine/winemine.man
 programs/winetest/*_test.exe
 programs/winetest/*_test.rc
 programs/winetest/build.nfo
