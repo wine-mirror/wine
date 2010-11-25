@@ -24,7 +24,6 @@
 #include <winbase.h>
 #include <winerror.h>
 #include <wincrypt.h>
-#include <shlwapi.h>
 #include "wine/test.h"
 
 static const BYTE bigCert[] = {
@@ -324,7 +323,6 @@ static void test_retrieveObjectByUrl(void)
     HCERTSTORE store;
     CRYPT_RETRIEVE_AUX_INFO aux = { 0 };
     FILETIME ft = { 0 };
-    DWORD urllen;
 
     SetLastError(0xdeadbeef);
     ret = CryptRetrieveObjectByUrlA(NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL);
@@ -334,8 +332,7 @@ static void test_retrieveObjectByUrl(void)
        GetLastError(), GetLastError());
 
     make_tmp_file(tmpfile);
-    urllen = sizeof(url);
-    UrlCanonicalizeA(tmpfile, url, &urllen, URL_WININET_COMPATIBILITY);
+    snprintf(url, sizeof(url), "file://%s", tmpfile);
 
     pBlobArray = (CRYPT_BLOB_ARRAY *)0xdeadbeef;
     ret = CryptRetrieveObjectByUrlA(url, NULL, 0, 0, (void **)&pBlobArray,
