@@ -1322,10 +1322,15 @@ static void test_encrypt_message(void)
             ret = CryptEncryptMessage(&para, 0, NULL, blob, sizeof(blob),
              encryptedBlob, &encryptedBlobSize);
 	    todo_wine
-            ok(ret, "CryptEncryptMessage failed: %08x\n", GetLastError());
-	    todo_wine
-            ok(encryptedBlobSize == 55,
-             "unexpected size of encrypted blob %d\n", encryptedBlobSize);
+            ok(ret ||
+             broken(!ret && GetLastError() == NTE_PERM), /* some NT4 */
+             "CryptEncryptMessage failed: %08x\n", GetLastError());
+            if (ret)
+            {
+                todo_wine
+                ok(encryptedBlobSize == 55,
+                 "unexpected size of encrypted blob %d\n", encryptedBlobSize);
+            }
             CryptMemFree(encryptedBlob);
         }
     }
@@ -1345,7 +1350,9 @@ static void test_encrypt_message(void)
             ret = CryptEncryptMessage(&para, 2, certs, blob, sizeof(blob),
              encryptedBlob, &encryptedBlobSize);
 	    todo_wine
-            ok(ret, "CryptEncryptMessage failed: %08x\n", GetLastError());
+            ok(ret ||
+             broken(!ret), /* some Win95 and some NT4 */
+             "CryptEncryptMessage failed: %08x\n", GetLastError());
             CryptMemFree(encryptedBlob);
         }
     }
