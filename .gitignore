@@ -264,6 +264,7 @@ programs/winedbg/debug.yy.c
 programs/winedbg/winedbg.man
 programs/winefile/winefile.man
 programs/winemine/winemine.man
+programs/winepath/winepath.man
 programs/winetest/*_test.exe
 programs/winetest/*_test.rc
 programs/winetest/build.rc

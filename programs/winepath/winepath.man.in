@@ -1,0 +1,32 @@
+.TH WINEPATH 1 "November 2010" "@PACKAGE_STRING@" "Wine Programs"
+.SH NAME
+winepath \- Tool to convert Unix paths to/from Win32 paths
+.SH SYNOPSIS
+.BR "winepath "\fIoption\fR " \fI{path}\fR"
+.SH DESCRIPTION
+.B winepath
+is a tool to convert a Unix path to/from a Win32 (short/long) path.
+compatible with its Microsoft Windows counterpart.
+
+If more than one option is given then the input paths are output in
+all formats specified, in the order long, short, Unix, Windows.
+If no option is given the default output is Unix format.
+.SH OPTIONS
+.IP \-u,\ \-\-unix
+converts a Windows path to a Unix path.
+.IP \-w,\ \\-\-windows
+converts a Unix path to a long Windows path.
+.IP \-l,\ \\-\-long
+converts the short Windows path of an existing file or directory to the long
+format.
+.IP \-s,\ \\-\-short
+converts the long Windows path of an existing file or directory to the short
+format.
+.IP \-0
+separate output with \\0 character, instead of a newline.
+.IP \-h,\ \\-\-help
+shows winepath help message and exit.
+.IP \-v,\ \\-\-version
+shows version information and exit.
+.SH "SEE ALSO"
+.BR wine (1)
