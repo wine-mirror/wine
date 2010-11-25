@@ -254,6 +254,7 @@ programs/rpcss/irot.h
 programs/rpcss/irot_s.c
 programs/services/svcctl.h
 programs/services/svcctl_s.c
+programs/wineboot/wineboot.man
 programs/winecfg/winecfg.man
 programs/winedbg/dbg.tab.c
 programs/winedbg/dbg.tab.h
