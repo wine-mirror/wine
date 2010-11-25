@@ -378,52 +378,56 @@ static HRESULT GetSplitter(MediaDetImpl *This)
     if (FAILED(hr))
         return hr;
 
-    hr = IEnumMoniker_Next(filters, 1, &mon, NULL);
-    IEnumMoniker_Release(filters);
-    if (hr != S_OK)    /* No matches, what do we do?  */
-        return E_NOINTERFACE;
-
-    hr = GetFilterInfo(mon, &clsid, &var);
-    IMoniker_Release(mon);
-    if (FAILED(hr))
-        return hr;
-
-    hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER,
-                          &IID_IBaseFilter, (void **) &splitter);
-    if (FAILED(hr))
+    hr = E_NOINTERFACE;
+    while (IEnumMoniker_Next(filters, 1, &mon, NULL) == S_OK)
     {
+        hr = GetFilterInfo(mon, &clsid, &var);
+        IMoniker_Release(mon);
+        if (FAILED(hr))
+            continue;
+
+        hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER,
+                              &IID_IBaseFilter, (void **) &splitter);
+        if (FAILED(hr))
+        {
+            VariantClear(&var);
+            goto retry;
+        }
+
+        hr = IGraphBuilder_AddFilter(This->graph, splitter,
+                                     V_UNION(&var, bstrVal));
         VariantClear(&var);
-        return hr;
-    }
+        This->splitter = splitter;
+        if (FAILED(hr))
+            goto retry;
 
-    hr = IGraphBuilder_AddFilter(This->graph, splitter,
-                                 V_UNION(&var, bstrVal));
-    VariantClear(&var);
-    if (FAILED(hr))
-    {
-        IBaseFilter_Release(splitter);
-        return hr;
-    }
-    This->splitter = splitter;
+        hr = IBaseFilter_EnumPins(This->source, &pins);
+        if (FAILED(hr))
+            goto retry;
+        IEnumPins_Next(pins, 1, &source_pin, NULL);
+        IEnumPins_Release(pins);
 
-    hr = IBaseFilter_EnumPins(This->source, &pins);
-    if (FAILED(hr))
-        return hr;
-    IEnumPins_Next(pins, 1, &source_pin, NULL);
-    IEnumPins_Release(pins);
+        hr = IBaseFilter_EnumPins(splitter, &pins);
+        if (FAILED(hr))
+        {
+            IPin_Release(source_pin);
+            goto retry;
+        }
+        IEnumPins_Next(pins, 1, &splitter_pin, NULL);
+        IEnumPins_Release(pins);
 
-    hr = IBaseFilter_EnumPins(splitter, &pins);
-    if (FAILED(hr))
-    {
+        hr = IPin_Connect(source_pin, splitter_pin, NULL);
         IPin_Release(source_pin);
-        return hr;
-    }
-    IEnumPins_Next(pins, 1, &splitter_pin, NULL);
-    IEnumPins_Release(pins);
+        IPin_Release(splitter_pin);
+        if (SUCCEEDED(hr))
+            break;
 
-    hr = IPin_Connect(source_pin, splitter_pin, NULL);
-    IPin_Release(source_pin);
-    IPin_Release(splitter_pin);
+retry:
+        IBaseFilter_Release(splitter);
+        This->splitter = NULL;
+    }
+
+    IEnumMoniker_Release(filters);
     if (FAILED(hr))
         return hr;
 
