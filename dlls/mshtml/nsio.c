@@ -2058,6 +2058,9 @@ static nsresult NSAPI nsURI_Clone(nsIURL *iface, nsIURI **_retval)
 
     TRACE("(%p)->(%p)\n", This, _retval);
 
+    if(!ensure_uri(This))
+        return NS_ERROR_UNEXPECTED;
+
     if(This->nsuri) {
         nsres = nsIURI_Clone(This->nsuri, &nsuri);
         if(NS_FAILED(nsres)) {
@@ -2072,12 +2075,9 @@ static nsresult NSAPI nsURI_Clone(nsIURL *iface, nsIURI **_retval)
         return nsres;
     }
 
-    set_wine_url(wine_uri, This->wine_url);
-
-    if(This->uri) {
-        IUri_AddRef(This->uri);
-        wine_uri->uri = This->uri;
-    }
+    wine_uri->uri = This->uri;
+    IUri_AddRef(wine_uri->uri);
+    sync_wine_url(wine_uri);
 
     *_retval = NSURI(wine_uri);
     return NS_OK;
