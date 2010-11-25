@@ -2829,10 +2829,10 @@ static nsresult NSAPI nsIOService_NewFileURI(nsIIOService *iface, nsIFile *aFile
 static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI *aURI,
                                                      nsIChannel **_retval)
 {
-    PARSEDURLW parsed_url = {sizeof(PARSEDURLW)};
     nsChannel *ret;
     nsWineURI *wine_uri;
     nsresult nsres;
+    HRESULT hres;
 
     TRACE("(%p %p)\n", aURI, _retval);
 
@@ -2840,6 +2840,11 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
     if(NS_FAILED(nsres)) {
         TRACE("Could not get nsWineURI: %08x\n", nsres);
         return nsIIOService_NewChannelFromURI(nsio, aURI, _retval);
+    }
+
+    if(!ensure_uri(wine_uri)) {
+        nsIURI_Release(NSURI(wine_uri));
+        return NS_ERROR_UNEXPECTED;
     }
 
     ret = heap_alloc_zero(sizeof(nsChannel));
@@ -2855,8 +2860,10 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
 
     nsIURI_AddRef(aURI);
     ret->original_uri = aURI;
-    ret->url_scheme = wine_uri->wine_url && SUCCEEDED(ParseURLW(wine_uri->wine_url, &parsed_url))
-        ? parsed_url.nScheme : URL_SCHEME_UNKNOWN;
+
+    hres = IUri_GetScheme(wine_uri->uri, &ret->url_scheme);
+    if(FAILED(hres))
+        ret->url_scheme = URL_SCHEME_UNKNOWN;
 
     *_retval = NSCHANNEL(ret);
     return NS_OK;
