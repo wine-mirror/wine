@@ -45,7 +45,9 @@ install install-dev:: $(PROGRAMS) $(MANPAGES) $(INSTALLDIRS)
 	cd $(DESTDIR)$(bindir) && $(RM) winecpp$(EXEEXT) && $(LN_S) winegcc$(EXEEXT) winecpp$(EXEEXT)
 	$(INSTALL_DATA) winegcc.man $(DESTDIR)$(mandir)/man$(prog_manext)/winegcc.$(prog_manext)
 	cd $(DESTDIR)$(mandir)/man$(prog_manext) && $(RM) wineg++.$(prog_manext) && $(LN_S) winegcc.$(prog_manext) wineg++.$(prog_manext)
+	cd $(DESTDIR)$(mandir)/man$(prog_manext) && $(RM) winecpp.$(prog_manext) && $(LN_S) winegcc.$(prog_manext) winecpp.$(prog_manext)
 
 uninstall::
 	$(RM) $(DESTDIR)$(bindir)/winegcc$(EXEEXT) $(DESTDIR)$(bindir)/wineg++$(EXEEXT) $(DESTDIR)$(bindir)/winecpp$(EXEEXT) \
-	      $(DESTDIR)$(mandir)/man$(prog_manext)/winegcc.$(prog_manext) $(DESTDIR)$(mandir)/man$(prog_manext)/wineg++.$(prog_manext)
+	      $(DESTDIR)$(mandir)/man$(prog_manext)/winegcc.$(prog_manext) $(DESTDIR)$(mandir)/man$(prog_manext)/wineg++.$(prog_manext) \
+	      $(DESTDIR)$(mandir)/man$(prog_manext)/winecpp.$(prog_manext)
