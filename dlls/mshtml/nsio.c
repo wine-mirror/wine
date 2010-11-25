@@ -2037,15 +2037,20 @@ static nsresult NSAPI nsURI_SchemeIs(nsIURL *iface, const char *scheme, PRBool *
 {
     nsWineURI *This = NSURI_THIS(iface);
     WCHAR buf[INTERNET_MAX_SCHEME_LENGTH];
-    int len;
+    BSTR scheme_name;
+    HRESULT hres;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_a(scheme), _retval);
 
-    len = MultiByteToWideChar(CP_ACP, 0, scheme, -1, buf, sizeof(buf)/sizeof(WCHAR))-1;
+    if(!ensure_uri(This))
+        return NS_ERROR_UNEXPECTED;
 
-    *_retval = lstrlenW(This->wine_url) > len
-        && This->wine_url[len] == ':'
-        && !memcmp(buf, This->wine_url, len*sizeof(WCHAR));
+    hres = IUri_GetSchemeName(This->uri, &scheme_name);
+    if(FAILED(hres))
+        return NS_ERROR_UNEXPECTED;
+
+    MultiByteToWideChar(CP_ACP, 0, scheme, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    *_retval = !strcmpW(scheme_name, buf);
     return NS_OK;
 }
 
