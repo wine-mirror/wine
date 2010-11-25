@@ -1,0 +1,32 @@
+.TH REGEDIT 1 "November 2010" "@PACKAGE_STRING@" "Wine Programs"
+.SH NAME
+regedit \- Wine registry editor
+.SH SYNOPSIS
+.BR "regedit "\fI[text file]\fR "
+.SH DESCRIPTION
+.B regedit
+is the Wine registry editor, designed to be compatible with its Microsoft Windows counterpart.
+If called without any options, it will start the full GUI editor.
+
+The switches are case\-insensitive and can be prefixed either by '\-' or '/'.
+.SH "OPTIONS"
+.TP
+\fB\-E\fR \fIfile\fR [\fIregpath\fR]
+Exports the content of the specified registry key to the specified \fIfile\fR. It exports
+the whole registry if no key is specified.
+.IP "\-D " regpath
+Deletes the specified registry key.
+.IP \-S
+Run regedit silently (ignored, CLI mode is always silent). This exists for compatability with Windows regedit.
+.IP \-V
+Run regedit in advanced mode (ignored). This exists for compatability with Windows regedit.
+.IP  "\-L " location
+Specifies the location of the system.dat registry file (ignored). This exists for compatability with Windows regedit.
+.IP "\-R " location
+Specifies the location of the user.dat registry file (ignored). This exists for compatability with Windows regedit.
+.IP  \-?
+Prints a help message. Any other options are ignored.
+.IP  \-C \fIfile.reg\fR
+Create registry from \fIfile\fR (unimplemented).
+.SH "SEE ALSO"
+.BR wine(1)
