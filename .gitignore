@@ -271,6 +271,7 @@ programs/services/svcctl.h
 programs/services/svcctl_s.c
 programs/wineboot/wineboot.man
 programs/winecfg/winecfg.man
+programs/wineconsole/wineconsole.man
 programs/winedbg/dbg.tab.c
 programs/winedbg/dbg.tab.h
 programs/winedbg/debug.yy.c
