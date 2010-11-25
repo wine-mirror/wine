@@ -4358,26 +4358,34 @@ static void test_Hide(void)
     ok(hres == S_OK, "Show failed: %08x\n", hres);
 }
 
-static HRESULT create_document(IHTMLDocument2 **doc)
+static IHTMLDocument2 *create_document(void)
 {
-    IHTMLDocument5 *doc5;
+    IHTMLDocument2 *doc;
     HRESULT hres;
 
     hres = CoCreateInstance(&CLSID_HTMLDocument, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
-            &IID_IHTMLDocument2, (void**)doc);
+            &IID_IHTMLDocument2, (void**)&doc);
     ok(hres == S_OK, "CoCreateInstance failed: %08x\n", hres);
     if(FAILED(hres))
-        return hres;
+        return NULL;
 
-    hres = IHTMLDocument2_QueryInterface(*doc, &IID_IHTMLDocument5, (void**)&doc5);
-    if(SUCCEEDED(hres)) {
-        IHTMLDocument5_Release(doc5);
-    }else {
-        win_skip("Could not get IHTMLDocument5, probably too old IE\n");
-        IHTMLDocument2_Release(*doc);
-    }
+    return doc;
+}
 
-    return hres;
+static void release_document(IHTMLDocument2 *doc)
+{
+    IUnknown *unk;
+    ULONG ref;
+    HRESULT hres;
+
+    /* Some broken IEs don't like if the last released reference is IHTMLDocument2 iface.
+     * To workaround it, we release it via IUnknown iface */
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IUnknown, (void**)&unk);
+    ok(hres == S_OK, "Could not get IUnknown iface: %08x\n", hres);
+
+    IHTMLDocument2_Release(doc);
+    ref = IUnknown_Release(unk);
+    ok(!ref, "ref = %d\n", ref);
 }
 
 static void test_Navigate(IHTMLDocument2 *doc)
@@ -4555,16 +4563,12 @@ static void init_test(enum load_state_t ls) {
 static void test_HTMLDocument(BOOL do_load)
 {
     IHTMLDocument2 *doc;
-    HRESULT hres;
-    ULONG ref;
 
     trace("Testing HTMLDocument (%s)...\n", (do_load ? "load" : "no load"));
 
     init_test(do_load ? LD_DOLOAD : LD_NO);
 
-    hres = create_document(&doc);
-    if(FAILED(hres))
-        return;
+    doc = create_document();
     doc_unk = (IUnknown*)doc;
 
     test_QueryInterface(doc);
@@ -4645,27 +4649,20 @@ static void test_HTMLDocument(BOOL do_load)
     view = NULL;
 
     ok(IsWindow(hwnd), "hwnd is destroyed\n");
-
-    ref = IHTMLDocument2_Release(doc);
-    ok(ref == 0, "ref=%d, expected 0\n", ref);
-
+    release_document(doc);
     ok(!IsWindow(hwnd), "hwnd is not destroyed\n");
 }
 
 static void test_HTMLDocument_hlink(void)
 {
     IHTMLDocument2 *doc;
-    HRESULT hres;
-    ULONG ref;
 
     trace("Testing HTMLDocument (hlink)...\n");
 
     init_test(LD_DOLOAD);
     ipsex = TRUE;
 
-    hres = create_document(&doc);
-    if(FAILED(hres))
-        return;
+    doc = create_document();
     doc_unk = (IUnknown*)doc;
 
     test_ViewAdviseSink(doc);
@@ -4696,8 +4693,7 @@ static void test_HTMLDocument_hlink(void)
         IOleDocumentView_Release(view);
     view = NULL;
 
-    ref = IHTMLDocument2_Release(doc);
-    ok(ref == 0, "ref=%d, expected 0\n", ref);
+    release_document(doc);
 }
 
 static void test_cookies(IHTMLDocument2 *doc)
@@ -4768,9 +4764,7 @@ static void test_HTMLDocument_http(void)
     init_test(LD_DOLOAD);
     ipsex = TRUE;
 
-    hres = create_document(&doc);
-    if(FAILED(hres))
-        return;
+    doc = create_document();
     doc_unk = (IUnknown*)doc;
 
     hres = CreateURLMoniker(NULL, http_urlW, &http_mon);
@@ -4804,8 +4798,7 @@ static void test_HTMLDocument_http(void)
         IOleDocumentView_Release(view);
     view = NULL;
 
-    ref = IHTMLDocument2_Release(doc);
-    ok(!ref, "ref=%d, expected 0\n", ref);
+    release_document(doc);
 
     ref = IMoniker_Release(http_mon);
     ok(!ref, "ref=%d, expected 0\n", ref);
@@ -4860,16 +4853,13 @@ static void test_HTMLDocument_StreamLoad(void)
     IOleObject *oleobj;
     DWORD conn;
     HRESULT hres;
-    ULONG ref;
 
     trace("Testing HTMLDocument (IPersistStreamInit)...\n");
 
     init_test(LD_DOLOAD);
     load_from_stream = TRUE;
 
-    hres = create_document(&doc);
-    if(FAILED(hres))
-        return;
+    doc = create_document();
     doc_unk = (IUnknown*)doc;
 
     hres = IUnknown_QueryInterface(doc, &IID_IOleObject, (void**)&oleobj);
@@ -4907,9 +4897,7 @@ static void test_HTMLDocument_StreamLoad(void)
         view = NULL;
     }
 
-
-    ref = IHTMLDocument2_Release(doc);
-    ok(ref == 0, "ref=%d, expected 0\n", ref);
+    release_document(doc);
 }
 
 static void test_HTMLDocument_StreamInitNew(void)
@@ -4918,16 +4906,13 @@ static void test_HTMLDocument_StreamInitNew(void)
     IOleObject *oleobj;
     DWORD conn;
     HRESULT hres;
-    ULONG ref;
 
     trace("Testing HTMLDocument (IPersistStreamInit)...\n");
 
     init_test(LD_DOLOAD);
     load_from_stream = TRUE;
 
-    hres = create_document(&doc);
-    if(FAILED(hres))
-        return;
+    doc = create_document();
     doc_unk = (IUnknown*)doc;
 
     hres = IUnknown_QueryInterface(doc, &IID_IOleObject, (void**)&oleobj);
@@ -4963,9 +4948,7 @@ static void test_HTMLDocument_StreamInitNew(void)
         view = NULL;
     }
 
-
-    ref = IHTMLDocument2_Release(doc);
-    ok(ref == 0, "ref=%d, expected 0\n", ref);
+    release_document(doc);
 }
 
 static void test_edit_uiactivate(IOleObject *oleobj)
@@ -5002,16 +4985,13 @@ static void test_editing_mode(BOOL do_load)
     IOleObject *oleobj;
     DWORD conn;
     HRESULT hres;
-    ULONG ref;
 
     trace("Testing HTMLDocument (edit%s)...\n", do_load ? " load" : "");
 
     init_test(do_load ? LD_DOLOAD : LD_NO);
     call_UIActivate = CallUIActivate_AfterShow;
 
-    hres = create_document(&doc);
-    if(FAILED(hres))
-        return;
+    doc = create_document();
     unk = doc_unk = (IUnknown*)doc;
 
     hres = IUnknown_QueryInterface(doc, &IID_IOleObject, (void**)&oleobj);
@@ -5080,8 +5060,7 @@ static void test_editing_mode(BOOL do_load)
         view = NULL;
     }
 
-    ref = IUnknown_Release(unk);
-    ok(ref == 0, "ref=%d, expected 0\n", ref);
+    release_document(doc);
 }
 
 static void test_UIActivate(BOOL do_load, BOOL use_ipsex, BOOL use_ipsw)
@@ -5090,15 +5069,12 @@ static void test_UIActivate(BOOL do_load, BOOL use_ipsex, BOOL use_ipsw)
     IOleObject *oleobj;
     IOleInPlaceSite *inplacesite;
     HRESULT hres;
-    ULONG ref;
 
     trace("Running OleDocumentView_UIActivate tests (%d %d %d)\n", do_load, use_ipsex, use_ipsw);
 
     init_test(do_load ? LD_DOLOAD : LD_NO);
 
-    hres = create_document(&doc);
-    if(FAILED(hres))
-        return;
+    doc = create_document();
     doc_unk = (IUnknown*)doc;
 
     ipsex = use_ipsex;
@@ -5232,8 +5208,7 @@ static void test_UIActivate(BOOL do_load, BOOL use_ipsex, BOOL use_ipsw)
     IOleDocumentView_Release(view);
     view = NULL;
 
-    ref = IHTMLDocument2_Release(doc);
-    ok(ref == 0, "ref=%d, expected 0\n", ref);
+    release_document(doc);
 }
 
 static void register_protocol(void)
@@ -5258,11 +5233,8 @@ static void test_HTMLDoc_ISupportErrorInfo(void)
     IHTMLDocument2 *doc;
     HRESULT hres;
     ISupportErrorInfo *sinfo;
-    LONG ref;
 
-    hres = create_document(&doc);
-    if(FAILED(hres))
-        return;
+    doc = create_document();
 
     hres = IUnknown_QueryInterface(doc, &IID_ISupportErrorInfo, (void**)&sinfo);
     ok(hres == S_OK, "got %x\n", hres);
@@ -5274,33 +5246,53 @@ static void test_HTMLDoc_ISupportErrorInfo(void)
         IUnknown_Release(sinfo);
     }
 
-    ref = IHTMLDocument2_Release(doc);
-    ok(ref == 0, "ref=%d, expected 0\n", ref);
+    release_document(doc);
 }
 
 static void test_IPersistHistory(void)
 {
     IHTMLDocument2 *doc;
     HRESULT hres;
-    LONG ref;
     IPersistHistory *phist;
 
-    hres = create_document(&doc);
-    if(FAILED(hres))
-        return;
+    doc = create_document();
 
     hres = IUnknown_QueryInterface(doc, &IID_IPersistHistory, (void**)&phist);
     ok(hres == S_OK, "QueryInterface returned %08x, expected S_OK\n", hres);
     if(hres == S_OK)
         IPersistHistory_Release(phist);
 
-    ref = IHTMLDocument2_Release(doc);
-    ok(ref == 0, "ref=%d, expected 0\n", ref);
+    release_document(doc);
+}
+
+static BOOL check_ie(void)
+{
+    IHTMLDocument2 *doc;
+    IHTMLDocument5 *doc5;
+    HRESULT hres;
+
+    doc = create_document();
+    if(!doc)
+        return FALSE;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument5, (void**)&doc5);
+    if(SUCCEEDED(hres))
+        IHTMLDocument5_Release(doc5);
+
+    release_document(doc);
+    return SUCCEEDED(hres);
 }
 
 START_TEST(htmldoc)
 {
     CoInitialize(NULL);
+
+    if(!check_ie()) {
+        CoUninitialize();
+        win_skip("Too old IE\n");
+        return;
+    }
+
     container_hwnd = create_container_window();
     register_protocol();
 
