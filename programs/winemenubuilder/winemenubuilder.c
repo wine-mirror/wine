@@ -2620,7 +2620,7 @@ cleanup:
 
 static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link, BOOL bWait )
 {
-    char *link_name = NULL;
+    char *link_name = NULL, *icon_name = NULL;
     DWORD csidl = -1;
     LPWSTR urlPath;
     char *escaped_urlPath = NULL;
@@ -2629,6 +2629,10 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
     BOOL ret = TRUE;
     int r = -1;
     char *unix_link = NULL;
+    IPropertySetStorage *pPropSetStg;
+    IPropertyStorage *pPropStg;
+    PROPSPEC ps[2];
+    PROPVARIANT pv[2];
 
     if ( !link )
     {
@@ -2671,6 +2675,29 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
         goto cleanup;
     }
 
+    ps[0].ulKind = PRSPEC_PROPID;
+    ps[0].propid = PID_IS_ICONFILE;
+    ps[1].ulKind = PRSPEC_PROPID;
+    ps[1].propid = PID_IS_ICONINDEX;
+
+    hr = url->lpVtbl->QueryInterface(url, &IID_IPropertySetStorage, (void **) &pPropSetStg);
+    if (SUCCEEDED(hr))
+    {
+        hr = IPropertySetStorage_Open(pPropSetStg, &FMTID_Intshcut, STGM_READ | STGM_SHARE_EXCLUSIVE, &pPropStg);
+        if (SUCCEEDED(hr))
+        {
+            hr = IPropertyStorage_ReadMultiple(pPropStg, 2, ps, pv);
+            if (SUCCEEDED(hr))
+            {
+                icon_name = extract_icon( pv[0].pwszVal, pv[1].iVal, NULL, bWait );
+
+                WINE_TRACE("URL icon path: %s icon index: %d icon name: %s\n", wine_dbgstr_w(pv[0].pwszVal), pv[1].iVal, icon_name);
+            }
+            IPropertyStorage_Release(pPropStg);
+        }
+        IPropertySetStorage_Release(pPropSetStg);
+    }
+
     hSem = CreateSemaphoreA( NULL, 1, 1, "winemenubuilder_semaphore");
     if( WAIT_OBJECT_0 != MsgWaitForMultipleObjects( 1, &hSem, FALSE, INFINITE, QS_ALLINPUT ) )
     {
@@ -2689,20 +2716,21 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
         location = heap_printf("%s/%s.desktop", xdg_desktop_dir, lastEntry);
         if (location)
         {
-            r = !write_desktop_entry(NULL, location, lastEntry, "winebrowser", escaped_urlPath, NULL, NULL, NULL);
+            r = !write_desktop_entry(NULL, location, lastEntry, "winebrowser", escaped_urlPath, NULL, NULL, icon_name);
             if (r == 0)
                 chmod(location, 0755);
             HeapFree(GetProcessHeap(), 0, location);
         }
     }
     else
-        r = !write_menu_entry(unix_link, link_name, "winebrowser", escaped_urlPath, NULL, NULL, NULL);
+        r = !write_menu_entry(unix_link, link_name, "winebrowser", escaped_urlPath, NULL, NULL, icon_name);
     ret = (r != 0);
     ReleaseSemaphore(hSem, 1, NULL);
 
 cleanup:
     if (hSem)
         CloseHandle(hSem);
+    HeapFree( GetProcessHeap(), 0, icon_name );
     HeapFree(GetProcessHeap(), 0, link_name);
     CoTaskMemFree( urlPath );
     HeapFree(GetProcessHeap(), 0, escaped_urlPath);
