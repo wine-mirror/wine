@@ -1,0 +1,31 @@
+.TH WINEBOOT 1 "November 2010" "@PACKAGE_STRING@" "Wine Programs"
+.SH NAME
+wineboot \- perform Wine initialization, startup, and shutdown tasks
+.SH SYNOPSIS
+.BR "wineboot "\fI[OPTION]\fR "
+.SH DESCRIPTION
+.B wineboot
+performs the initial creation and setup of a WINEPREFIX for wine(1). It can also perform a simulated
+reboot or shutdown to any applications running within the WINEPREFIX.
+.SH "SEE ALSO"
+.BR wine(1)
+.SH "OPTIONS"
+.IP \-h,\ \-\-help
+Display help message.
+.IP \-e,\ \-\-end\-session
+End the current session cleanly.
+.IP \-f,\ \-\-force
+Force exit for processes that don't exit cleanly
+.IP \-i,\ \-\-init
+Initialize the WINEPREFIX.
+.IP \-k,\  \-\-kill
+Kill running processes without any cleanup.
+.IP \-r,\ \-\-restart
+Restart only, don't do normal startup operations.
+.IP \-s,\ \-\-shutdown
+Shutdown only, don't reboot.
+.IP \-u,\ \-\-update
+Update the WINEPREFIX.
+
+.SH "SEE ALSO"
+.BR wine(1)
