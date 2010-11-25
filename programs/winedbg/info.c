@@ -953,6 +953,10 @@ void info_win32_exception(void)
         if(rec->NumberParameters == 3 && rec->ExceptionInformation[0] == CXX_FRAME_MAGIC)
             dbg_printf("C++ exception(object = 0x%08lx, type = 0x%08lx)",
                        rec->ExceptionInformation[1], rec->ExceptionInformation[2]);
+        else if(rec->NumberParameters == 4 && rec->ExceptionInformation[0] == CXX_FRAME_MAGIC)
+            dbg_printf("C++ exception(object = %p, type = %p, base = %p)",
+                       (void*)rec->ExceptionInformation[1], (void*)rec->ExceptionInformation[2],
+                       (void*)rec->ExceptionInformation[3]);
         else
             dbg_printf("C++ exception with strange parameter count %d or magic 0x%08lx",
                        rec->NumberParameters, rec->ExceptionInformation[0]);
