@@ -909,12 +909,7 @@ unsigned int CDECL _control87(unsigned int newval, unsigned int mask)
  */
 unsigned int CDECL _controlfp(unsigned int newval, unsigned int mask)
 {
-#ifdef __i386__
   return _control87( newval, mask & ~MSVCRT__EM_DENORMAL );
-#else
-  FIXME(":Not Implemented!\n");
-  return 0;
-#endif
 }
 
 /*********************************************************************
@@ -922,21 +917,16 @@ unsigned int CDECL _controlfp(unsigned int newval, unsigned int mask)
  */
 int CDECL _controlfp_s(unsigned int *cur, unsigned int newval, unsigned int mask)
 {
-#ifdef __i386__
-    unsigned int flags;
+    static const unsigned int all_flags = (MSVCRT__MCW_EM | MSVCRT__MCW_IC | MSVCRT__MCW_RC |
+                                           MSVCRT__MCW_PC | MSVCRT__MCW_DN);
 
-    FIXME("(%p %u %u) semi-stub\n", cur, newval, mask);
-
-    flags = _control87( newval, mask & ~MSVCRT__EM_DENORMAL );
-
-    if(cur)
-        *cur = flags;
-
+    if (!MSVCRT_CHECK_PMT(cur != NULL) || !MSVCRT_CHECK_PMT( !(mask & ~all_flags) ))
+    {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+    *cur = _controlfp( newval, mask );
     return 0;
-#else
-    FIXME(":Not Implemented!\n");
-    return 0;
-#endif
 }
 
 /*********************************************************************
