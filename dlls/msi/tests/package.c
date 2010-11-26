@@ -12794,51 +12794,31 @@ static void test_MsiApplyMultiplePatches(void)
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r);
 
     r = pMsiApplyMultiplePatchesA(";", NULL, NULL);
-    todo_wine
-    {
-        if (type == DRIVE_FIXED)
-            ok(r == ERROR_PATH_NOT_FOUND,
-               "Expected ERROR_PATH_NOT_FOUND, got %u\n", r);
-        else
-            ok(r == ERROR_INVALID_NAME,
-               "Expected ERROR_INVALID_NAME, got %u\n", r);
-    }
+    if (type == DRIVE_FIXED)
+        todo_wine ok(r == ERROR_PATH_NOT_FOUND, "Expected ERROR_PATH_NOT_FOUND, got %u\n", r);
+    else
+        ok(r == ERROR_INVALID_NAME, "Expected ERROR_INVALID_NAME, got %u\n", r);
 
     r = pMsiApplyMultiplePatchesA("  ;", NULL, NULL);
-    todo_wine
-    {
-        if (type == DRIVE_FIXED)
-            ok(r == ERROR_PATCH_PACKAGE_OPEN_FAILED,
-               "Expected ERROR_PATCH_PACKAGE_OPEN_FAILED, got %u\n", r);
-        else
-            ok(r == ERROR_INVALID_NAME,
-               "Expected ERROR_INVALID_NAME, got %u\n", r);
-    }
+    if (type == DRIVE_FIXED)
+        todo_wine ok(r == ERROR_PATCH_PACKAGE_OPEN_FAILED, "Expected ERROR_PATCH_PACKAGE_OPEN_FAILED, got %u\n", r);
+    else
+        ok(r == ERROR_INVALID_NAME, "Expected ERROR_INVALID_NAME, got %u\n", r);
 
     r = pMsiApplyMultiplePatchesA(";;", NULL, NULL);
-    todo_wine
-    {
-        if (type == DRIVE_FIXED)
-            ok(r == ERROR_PATH_NOT_FOUND,
-               "Expected ERROR_PATH_NOT_FOUND, got %u\n", r);
-        else
-            ok(r == ERROR_INVALID_NAME,
-               "Expected ERROR_INVALID_NAME, got %u\n", r);
-    }
+    if (type == DRIVE_FIXED)
+        todo_wine ok(r == ERROR_PATH_NOT_FOUND, "Expected ERROR_PATH_NOT_FOUND, got %u\n", r);
+    else
+        ok(r == ERROR_INVALID_NAME, "Expected ERROR_INVALID_NAME, got %u\n", r);
 
     r = pMsiApplyMultiplePatchesA("nosuchpatchpackage;", NULL, NULL);
     todo_wine ok(r == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %u\n", r);
 
     r = pMsiApplyMultiplePatchesA(";nosuchpatchpackage", NULL, NULL);
-    todo_wine
-    {
-        if (type == DRIVE_FIXED)
-            ok(r == ERROR_PATH_NOT_FOUND,
-               "Expected ERROR_PATH_NOT_FOUND, got %u\n", r);
-        else
-            ok(r == ERROR_INVALID_NAME,
-               "Expected ERROR_INVALID_NAME, got %u\n", r);
-    }
+    if (type == DRIVE_FIXED)
+        todo_wine ok(r == ERROR_PATH_NOT_FOUND, "Expected ERROR_PATH_NOT_FOUND, got %u\n", r);
+    else
+        ok(r == ERROR_INVALID_NAME, "Expected ERROR_INVALID_NAME, got %u\n", r);
 
     r = pMsiApplyMultiplePatchesA("nosuchpatchpackage;nosuchpatchpackage", NULL, NULL);
     todo_wine ok(r == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %u\n", r);
