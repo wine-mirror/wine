@@ -792,7 +792,11 @@ case $host_os in
       case $host_cpu in
         *i[[3456789]]86* | x86_64)
           WINE_TRY_CFLAGS([-Wl,--section-start,.interp=0x7bf00400],
-                          [LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7bf00400"])
+                          [case $host_os in
+                           freebsd*)  LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x60000400" ;;
+                           *) LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7bf00400" ;;
+                           esac
+                          ])
           AC_PATH_PROG(PRELINK, prelink, false, [/sbin /usr/sbin $PATH])
           if test "x$PRELINK" = xfalse
           then
