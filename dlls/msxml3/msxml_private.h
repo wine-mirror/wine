@@ -169,8 +169,8 @@ extern void schemasInit(void);
 extern void schemasCleanup(void);
 
 #ifndef HAVE_XMLFIRSTELEMENTCHILD
-    static inline xmlNodePtr xmlFirstElementChild(xmlNodePtr parent)
-    {
+static inline xmlNodePtr wine_xmlFirstElementChild(xmlNodePtr parent)
+{
     xmlNodePtr child;
     for (child = parent->children; child != NULL; child = child->next)
         if (child->type == XML_ELEMENT_NODE)
@@ -178,6 +178,7 @@ extern void schemasCleanup(void);
 
     return child;
 }
+#define xmlFirstElementChild wine_xmlFirstElementChild
 #endif
 
 /* constructors */
