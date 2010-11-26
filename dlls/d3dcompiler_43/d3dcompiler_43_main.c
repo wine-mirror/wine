@@ -127,8 +127,15 @@ HRESULT WINAPI D3DStripShader(const void *data, SIZE_T data_size, UINT flags, ID
 HRESULT WINAPI D3DReflect(const void *data, SIZE_T data_size, REFIID riid, void **reflector)
 {
     struct d3dcompiler_shader_reflection *object;
+    HRESULT hr;
 
-    FIXME("data %p, data_size %lu, riid %s, blob %p stub!\n", data, data_size, debugstr_guid(riid), reflector);
+    TRACE("data %p, data_size %lu, riid %s, blob %p\n", data, data_size, debugstr_guid(riid), reflector);
+
+    if (!IsEqualGUID(riid, &IID_ID3D11ShaderReflection))
+    {
+        WARN("Wrong riid %s, accept only %s!\n", debugstr_guid(riid), debugstr_guid(&IID_ID3D11ShaderReflection));
+        return E_NOINTERFACE;
+    }
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -137,10 +144,15 @@ HRESULT WINAPI D3DReflect(const void *data, SIZE_T data_size, REFIID riid, void 
         return E_OUTOFMEMORY;
     }
 
-    object->vtbl = &d3dcompiler_shader_reflection_vtbl;
-    object->refcount = 1;
+    hr = d3dcompiler_shader_reflection_init(object, data, data_size);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize shader reflection\n");
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
 
-    *reflector = (ID3D11ShaderReflection *)object;
+    *reflector = object;
 
     TRACE("Created ID3D11ShaderReflection %p\n", object);
 

@@ -241,3 +241,37 @@ const struct ID3D11ShaderReflectionVtbl d3dcompiler_shader_reflection_vtbl =
     d3dcompiler_shader_reflection_GetMinFeatureLevel,
     d3dcompiler_shader_reflection_GetThreadGroupSize,
 };
+
+HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_reflection *reflection,
+        const void *data, SIZE_T data_size)
+{
+    struct dxbc src_dxbc;
+    HRESULT hr;
+    unsigned int i;
+
+    reflection->vtbl = &d3dcompiler_shader_reflection_vtbl;
+    reflection->refcount = 1;
+
+    hr = dxbc_parse(data, data_size, &src_dxbc);
+    if (FAILED(hr))
+    {
+        WARN("Failed to parse reflection\n");
+        return hr;
+    }
+
+    for (i = 0; i < src_dxbc.count; ++i)
+    {
+        struct dxbc_section *section = &src_dxbc.sections[i];
+
+        switch (section->tag)
+        {
+            default:
+                FIXME("Unhandled section %s!\n", debugstr_an((const char *)&section->tag, 4));
+                break;
+        }
+    }
+
+    dxbc_destroy(&src_dxbc);
+
+    return hr;
+}
