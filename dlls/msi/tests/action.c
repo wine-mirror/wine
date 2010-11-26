@@ -481,11 +481,52 @@ static const char wrv_registry_dat[] =
     "Registry\tRegistry\n"
     "regdata\t2\tSOFTWARE\\Wine\\msitest\tValue\t[~]one[~]two[~]three\taugustus";
 
+static const char cf_directory_dat[] =
+    "Directory\tDirectory_Parent\tDefaultDir\n"
+    "s72\tS72\tl255\n"
+    "Directory\tDirectory\n"
+    "FIRSTDIR\tMSITESTDIR\tfirst\n"
+    "SECONDDIR\tMSITESTDIR\tsecond\n"
+    "THIRDDIR\tMSITESTDIR\tthird\n"
+    "MSITESTDIR\tProgramFilesFolder\tmsitest\n"
+    "ProgramFilesFolder\tTARGETDIR\t.\n"
+    "TARGETDIR\t\tSourceDir";
+
+static const char cf_component_dat[] =
+    "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+    "s72\tS38\ts72\ti2\tS255\tS72\n"
+    "Component\tComponent\n"
+    "One\t{F8CD42AC-9C38-48FE-8664-B35FD121012A}\tFIRSTDIR\t0\t\tone.txt\n"
+    "Two\t{DE2DB02E-2DDF-4E34-8CF6-DCA13E29DF52}\tSECONDDIR\t0\t\ttwo.txt\n";
+
+static const char cf_feature_dat[] =
+    "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+    "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+    "Feature\tFeature\n"
+    "One\t\tOne\tThe One Feature\t1\t3\tFIRSTDIR\t0\n"
+    "Two\t\tTwo\tThe Two Feature\t1\t3\tSECONDDIR\t0\n";
+
+static const char cf_feature_comp_dat[] =
+    "Feature_\tComponent_\n"
+    "s38\ts72\n"
+    "FeatureComponents\tFeature_\tComponent_\n"
+    "One\tOne\n"
+    "Two\tTwo\n";
+
+static const char cf_file_dat[] =
+    "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+    "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+    "File\tFile\n"
+    "one.txt\tOne\tone.txt\t0\t\t\t0\t1\n"
+    "two.txt\tTwo\ttwo.txt\t0\t\t\t0\t2\n";
+
 static const char cf_create_folders_dat[] =
     "Directory_\tComponent_\n"
     "s72\ts72\n"
     "CreateFolder\tDirectory_\tComponent_\n"
-    "FIRSTDIR\tOne\n";
+    "FIRSTDIR\tOne\n"
+    "SECONDDIR\tTwo\n"
+    "THIRDDIR\tTwo\n";
 
 static const char cf_install_exec_seq_dat[] =
     "Action\tCondition\tSequence\n"
@@ -497,39 +538,7 @@ static const char cf_install_exec_seq_dat[] =
     "FileCost\t\t900\n"
     "RemoveFiles\t\t3500\n"
     "CreateFolders\t\t3700\n"
-    "InstallExecute\t\t3800\n"
-    "TestCreateFolders\t\t3900\n"
-    "InstallFiles\t\t4000\n"
-    "RegisterUser\t\t6000\n"
-    "RegisterProduct\t\t6100\n"
-    "PublishFeatures\t\t6300\n"
-    "PublishProduct\t\t6400\n"
-    "InstallFinalize\t\t6600\n"
-    "InstallInitialize\t\t1500\n"
-    "ProcessComponents\t\t1600\n"
-    "UnpublishFeatures\t\t1800\n"
-    "InstallValidate\t\t1400\n"
-    "LaunchConditions\t\t100\n";
-
-static const char cf_custom_action_dat[] =
-    "Action\tType\tSource\tTarget\tISComments\n"
-    "s72\ti2\tS64\tS0\tS255\n"
-    "CustomAction\tAction\n"
-    "TestCreateFolders\t19\t\tHalts installation\t\n";
-
-static const char rf_install_exec_seq_dat[] =
-    "Action\tCondition\tSequence\n"
-    "s72\tS255\tI2\n"
-    "InstallExecuteSequence\tAction\n"
-    "CostFinalize\t\t1000\n"
-    "ValidateProductID\t\t700\n"
-    "CostInitialize\t\t800\n"
-    "FileCost\t\t900\n"
-    "RemoveFiles\t\t3500\n"
-    "CreateFolders\t\t3600\n"
-    "RemoveFolders\t\t3700\n"
-    "InstallExecute\t\t3800\n"
-    "TestCreateFolders\t\t3900\n"
+    "RemoveFolders\t\t3800\n"
     "InstallFiles\t\t4000\n"
     "RegisterUser\t\t6000\n"
     "RegisterProduct\t\t6100\n"
@@ -1452,28 +1461,13 @@ static const msi_table wrv_tables[] =
 
 static const msi_table cf_tables[] =
 {
-    ADD_TABLE(component),
-    ADD_TABLE(directory),
-    ADD_TABLE(feature),
-    ADD_TABLE(feature_comp),
-    ADD_TABLE(file),
+    ADD_TABLE(cf_component),
+    ADD_TABLE(cf_directory),
+    ADD_TABLE(cf_feature),
+    ADD_TABLE(cf_feature_comp),
+    ADD_TABLE(cf_file),
     ADD_TABLE(cf_create_folders),
     ADD_TABLE(cf_install_exec_seq),
-    ADD_TABLE(cf_custom_action),
-    ADD_TABLE(media),
-    ADD_TABLE(property)
-};
-
-static const msi_table rf_tables[] =
-{
-    ADD_TABLE(component),
-    ADD_TABLE(directory),
-    ADD_TABLE(feature),
-    ADD_TABLE(feature_comp),
-    ADD_TABLE(file),
-    ADD_TABLE(cf_create_folders),
-    ADD_TABLE(rf_install_exec_seq),
-    ADD_TABLE(cf_custom_action),
     ADD_TABLE(media),
     ADD_TABLE(property)
 };
@@ -4610,11 +4604,15 @@ error:
     DeleteFile(msifile);
 }
 
-static void test_create_folder(void)
+static void test_create_remove_folder(void)
 {
     UINT r;
 
-    create_test_files();
+    CreateDirectoryA("msitest", NULL);
+    CreateDirectoryA("msitest\\first", NULL);
+    CreateDirectoryA("msitest\\second", NULL);
+    create_file("msitest\\first\\one.txt", 1000);
+    create_file("msitest\\second\\two.txt", 1000);
     create_database(msifile, cf_tables, sizeof(cf_tables) / sizeof(msi_table));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
@@ -4625,90 +4623,31 @@ static void test_create_folder(void)
         skip("Not enough rights to perform tests\n");
         goto error;
     }
-    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
-    ok(!delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\cabout\\new", FALSE), "Directory created\n");
-    ok(!delete_pf("msitest\\cabout\\four.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\cabout", FALSE), "Directory created\n");
-    ok(!delete_pf("msitest\\changed\\three.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\changed", FALSE), "Directory created\n");
-    ok(!delete_pf("msitest\\first\\two.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\first", FALSE), "Directory created\n");
-    ok(!delete_pf("msitest\\filename", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\one.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\service.exe", TRUE), "File installed\n");
-    ok(!delete_pf("msitest", FALSE), "Directory created\n");
+    ok(pf_exists("msitest\\first\\one.txt"), "file not installed\n");
+    ok(pf_exists("msitest\\first"), "directory not created\n");
+    ok(pf_exists("msitest\\second\\two.txt"), "file not installed\n");
+    ok(pf_exists("msitest\\second"), "directory not created\n");
+    ok(pf_exists("msitest\\third"), "directory not created\n");
+    ok(pf_exists("msitest"), "directory not created\n");
 
-    r = MsiInstallProductA(msifile, "LOCAL=Two");
-    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
-    ok(!delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\cabout\\new", FALSE), "Directory created\n");
-    ok(!delete_pf("msitest\\cabout\\four.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\cabout", FALSE), "Directory created\n");
-    ok(!delete_pf("msitest\\changed\\three.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\changed", FALSE), "Directory created\n");
-    ok(!delete_pf("msitest\\first\\two.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\first", FALSE), "Directory created\n");
-    ok(!delete_pf("msitest\\filename", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\one.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\service.exe", TRUE), "File installed\n");
-    ok(!delete_pf("msitest", FALSE), "Directory created\n");
+    ok(!pf_exists("msitest\\first\\one.txt"), "file not removed\n");
+    ok(!pf_exists("msitest\\first"), "directory not removed\n");
+    ok(!pf_exists("msitest\\second\\two.txt"), "file not removed\n");
+    ok(!pf_exists("msitest\\second"), "directory not removed\n");
+    ok(!pf_exists("msitest\\third"), "directory not removed\n");
+    todo_wine ok(!pf_exists("msitest"), "directory not removed\n");
 
 error:
-    delete_test_files();
-    DeleteFile(msifile);
-}
-
-static void test_remove_folder(void)
-{
-    UINT r;
-
-    create_test_files();
-    create_database(msifile, rf_tables, sizeof(rf_tables) / sizeof(msi_table));
-
-    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
-
-    r = MsiInstallProductA(msifile, NULL);
-    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
-    {
-        skip("Not enough rights to perform tests\n");
-        goto error;
-    }
-    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
-
-    ok(!delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\cabout\\new", FALSE), "Directory created\n");
-    ok(!delete_pf("msitest\\cabout\\four.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\cabout", FALSE), "Directory created\n");
-    ok(!delete_pf("msitest\\changed\\three.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\changed", FALSE), "Directory created\n");
-    ok(!delete_pf("msitest\\first\\two.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\first", FALSE), "Directory created\n");
-    ok(!delete_pf("msitest\\filename", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\one.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\service.exe", TRUE), "File installed\n");
-    ok(!delete_pf("msitest", FALSE), "Directory created\n");
-
-    r = MsiInstallProductA(msifile, "LOCAL=Two");
-    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
-
-    ok(!delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\cabout\\new", FALSE), "Directory created\n");
-    ok(!delete_pf("msitest\\cabout\\four.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\cabout", FALSE), "Directory created\n");
-    ok(!delete_pf("msitest\\changed\\three.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\changed", FALSE), "Directory created\n");
-    ok(!delete_pf("msitest\\first\\two.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\first", FALSE), "Directory created\n");
-    ok(!delete_pf("msitest\\filename", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\one.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\service.exe", TRUE), "File installed\n");
-    ok(!delete_pf("msitest", FALSE), "Directory created\n");
-
-error:
-    delete_test_files();
+    DeleteFileA("msitest\\first\\one.txt");
+    DeleteFileA("msitest\\second\\two.txt");
+    RemoveDirectoryA("msitest\\first");
+    RemoveDirectoryA("msitest\\second");
+    RemoveDirectoryA("msitest");
     DeleteFile(msifile);
 }
 
@@ -5812,8 +5751,7 @@ START_TEST(action)
     test_duplicate_files();
     test_write_registry_values();
     test_envvar();
-    test_create_folder();
-    test_remove_folder();
+    test_create_remove_folder();
     test_start_services();
     test_delete_services();
     test_self_registration();

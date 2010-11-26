@@ -1102,16 +1102,14 @@ static UINT ITERATE_CreateFolders(MSIRECORD *row, LPVOID param)
 
 static UINT ACTION_CreateFolders(MSIPACKAGE *package)
 {
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ',
-         '`','D','i','r','e','c','t','o','r','y','_','`',
-         ' ','F','R','O','M',' ',
-         '`','C','r','e','a','t','e','F','o','l','d','e','r','`',0 };
+    static const WCHAR query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','C','r','e','a','t','e','F','o','l','d','e','r','`',0};
     UINT rc;
     MSIQUERY *view;
 
     /* create all the empty folders specified in the CreateFolder table */
-    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view );
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view );
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
@@ -1183,8 +1181,8 @@ static UINT ITERATE_RemoveFolders( MSIRECORD *row, LPVOID param )
 static UINT ACTION_RemoveFolders( MSIPACKAGE *package )
 {
     static const WCHAR query[] =
-        {'S','E','L','E','C','T',' ', '`','D','i','r','e','c','t','o','r','y','_','`',
-         ' ','F','R','O','M',' ', '`','C','r','e','a','t','e','F','o','l','d','e','r','`',0};
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','C','r','e','a','t','e','F','o','l','d','e','r','`',0};
 
     MSIQUERY *view;
     UINT rc;
