@@ -217,7 +217,7 @@ static void test_EnumICMProfilesW( HDC dc )
     ok(ret == -1 || broken(ret == 0) /* win9x, nt4 */, "expected -1, got %d\n", ret);
 
     ret = EnumICMProfilesW( dc, enum_profiles_callbackW, 0 );
-    ok(ret == -1 || broken(ret == 0) /* win9x, nt4 */, "expected -1, got %d\n", ret);
+    ok(ret == -1 || ret == 1 || broken(ret == 0) /* win9x, nt4 */, "expected -1, got %d\n", ret);
 }
 
 static void test_SetICMProfileA( HDC dc )
