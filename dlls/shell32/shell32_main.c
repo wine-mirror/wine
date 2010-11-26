@@ -675,7 +675,7 @@ DWORD_PTR WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
     INT len;
     LPWSTR temppath = NULL;
     LPCWSTR pathW;
-    DWORD ret;
+    DWORD_PTR ret;
     SHFILEINFOW temppsfi;
 
     if (flags & SHGFI_PIDL)
