@@ -73,7 +73,7 @@ struct msi_control_tag
 
 typedef struct msi_font_tag
 {
-    struct msi_font_tag *next;
+    struct list entry;
     HFONT hfont;
     COLORREF color;
     WCHAR name[1];
@@ -90,7 +90,7 @@ struct msi_dialog_tag
     SIZE size;
     HWND hwnd;
     LPWSTR default_font;
-    msi_font *font_list;
+    struct list fonts;
     struct list controls;
     HWND hWndFocus;
     LPWSTR control_default;
@@ -310,8 +310,7 @@ static UINT msi_dialog_add_font( MSIRECORD *rec, LPVOID param )
     name = MSI_RecordGetString( rec, 1 );
     font = msi_alloc( sizeof *font + strlenW( name )*sizeof (WCHAR) );
     strcpyW( font->name, name );
-    font->next = dialog->font_list;
-    dialog->font_list = font;
+    list_add_head( &dialog->fonts, &font->entry );
 
     font->color = MSI_RecordGetInteger( rec, 4 );
 
@@ -346,9 +345,9 @@ static UINT msi_dialog_add_font( MSIRECORD *rec, LPVOID param )
 
 static msi_font *msi_dialog_find_font( msi_dialog *dialog, LPCWSTR name )
 {
-    msi_font *font;
+    msi_font *font = NULL;
 
-    for( font = dialog->font_list; font; font = font->next )
+    LIST_FOR_EACH_ENTRY( font, &dialog->fonts, msi_font, entry )
         if( !strcmpW( font->name, name ) )  /* FIXME: case sensitive? */
             break;
 
@@ -3853,6 +3852,7 @@ msi_dialog *msi_dialog_create( MSIPACKAGE* package,
     dialog->event_handler = event_handler;
     dialog->finished = 0;
     list_init( &dialog->controls );
+    list_init( &dialog->fonts );
 
     /* verify that the dialog exists */
     rec = msi_get_dialog_record( dialog );
@@ -3969,6 +3969,8 @@ void msi_dialog_do_preview( msi_dialog *dialog )
 
 void msi_dialog_destroy( msi_dialog *dialog )
 {
+    msi_font *font, *next;
+
     if( uiThreadId != GetCurrentThreadId() )
     {
         SendMessageW( hMsiHiddenWindow, WM_MSI_DIALOG_DESTROY, 0, (LPARAM) dialog );
@@ -3995,12 +3997,11 @@ void msi_dialog_destroy( msi_dialog *dialog )
     }
 
     /* destroy the list of fonts */
-    while( dialog->font_list )
+    LIST_FOR_EACH_ENTRY_SAFE( font, next, &dialog->fonts, msi_font, entry )
     {
-        msi_font *t = dialog->font_list;
-        dialog->font_list = t->next;
-        DeleteObject( t->hfont );
-        msi_free( t );
+        list_remove( &font->entry );
+        DeleteObject( font->hfont );
+        msi_free( font );
     }
     msi_free( dialog->default_font );
 
