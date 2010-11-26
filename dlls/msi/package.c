@@ -1328,7 +1328,7 @@ static UINT msi_parse_summary( MSISUMMARYINFO *si, MSIPACKAGE *package )
         package->platform = PLATFORM_INTEL;
     else if (!strcmpW( template, szIntel64 ))
         package->platform = PLATFORM_INTEL64;
-    else if (!strcmpW( template, szX64 ))
+    else if (!strcmpW( template, szX64 ) || !strcmpW( template, szAMD64 ))
         package->platform = PLATFORM_X64;
     else
     {
