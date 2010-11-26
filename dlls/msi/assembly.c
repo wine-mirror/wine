@@ -38,6 +38,7 @@ static BOOL init_function_pointers( void )
 {
     static const WCHAR szFusion[] = {'f','u','s','i','o','n','.','d','l','l',0};
     HMODULE hfusion, hmscoree, hsxs;
+    HRESULT hr;
 
     if (pCreateAssemblyCacheNet) return TRUE;
 
@@ -52,9 +53,10 @@ static BOOL init_function_pointers( void )
         FreeLibrary( hmscoree );
         return FALSE;
     }
-    if (FAILED( pLoadLibraryShim( szFusion, NULL, NULL, &hfusion )))
+    hr = pLoadLibraryShim( szFusion, NULL, NULL, &hfusion );
+    if (FAILED( hr ))
     {
-        WARN("fusion.dll not available\n");
+        WARN("fusion.dll not available 0x%08x\n", hr);
         FreeLibrary( hmscoree );
         return FALSE;
     }
