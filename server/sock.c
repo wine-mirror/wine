@@ -203,7 +203,8 @@ static sock_shutdown_t sock_check_pollhup(void)
     pfd.events = POLLIN;
     pfd.revents = 0;
 
-    n = poll( &pfd, 1, 0 );
+    /* Solaris' poll() sometimes returns nothing if given a 0ms timeout here */
+    n = poll( &pfd, 1, 1 );
     if ( n != 1 ) goto out; /* error or timeout */
     if ( pfd.revents & POLLHUP )
         ret = SOCK_SHUTDOWN_POLLHUP;
