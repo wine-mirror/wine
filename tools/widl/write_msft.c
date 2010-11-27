@@ -2408,24 +2408,9 @@ static void set_lib_flags(msft_typelib_t *typelib)
     return;
 }
 
-static int ctl2_write_chunk(int fd, void *segment, int length)
+static void ctl2_write_segment(msft_typelib_t *typelib, int segment)
 {
-    if (write(fd, segment, length) != length) {
-        close(fd);
-        return 0;
-    }
-    return -1;
-}
-
-static int ctl2_write_segment(msft_typelib_t *typelib, int fd, int segment)
-{
-    if (write(fd, typelib->typelib_segment_data[segment], typelib->typelib_segdir[segment].length)
-        != typelib->typelib_segdir[segment].length) {
-	close(fd);
-	return 0;
-    }
-
-    return -1;
+    put_data(typelib->typelib_segment_data[segment], typelib->typelib_segdir[segment].length);
 }
 
 static void ctl2_finalize_typeinfos(msft_typelib_t *typelib, int filesize)
@@ -2455,7 +2440,7 @@ static int ctl2_finalize_segment(msft_typelib_t *typelib, int filepos, int segme
 }
 
 
-static void ctl2_write_typeinfos(msft_typelib_t *typelib, int fd)
+static void ctl2_write_typeinfos(msft_typelib_t *typelib)
 {
     msft_typeinfo_t *typeinfo;
     int typedata_size;
@@ -2467,21 +2452,21 @@ static void ctl2_write_typeinfos(msft_typelib_t *typelib, int fd)
             typedata_size = typeinfo->func_data[0];
 	if (typeinfo->var_data)
             typedata_size += typeinfo->var_data[0];
-	ctl2_write_chunk(fd, &typedata_size, sizeof(int));
+	put_data(&typedata_size, sizeof(int));
         if (typeinfo->func_data)
-            ctl2_write_chunk(fd, typeinfo->func_data + 1, typeinfo->func_data[0]);
+            put_data(typeinfo->func_data + 1, typeinfo->func_data[0]);
         if (typeinfo->var_data)
-            ctl2_write_chunk(fd, typeinfo->var_data + 1, typeinfo->var_data[0]);
+            put_data(typeinfo->var_data + 1, typeinfo->var_data[0]);
         if (typeinfo->func_indices)
-            ctl2_write_chunk(fd, typeinfo->func_indices, (typeinfo->typeinfo->cElement & 0xffff) * 4);
+            put_data(typeinfo->func_indices, (typeinfo->typeinfo->cElement & 0xffff) * 4);
         if (typeinfo->var_indices)
-            ctl2_write_chunk(fd, typeinfo->var_indices, (typeinfo->typeinfo->cElement >> 16) * 4);
+            put_data(typeinfo->var_indices, (typeinfo->typeinfo->cElement >> 16) * 4);
         if (typeinfo->func_names)
-            ctl2_write_chunk(fd, typeinfo->func_names,   (typeinfo->typeinfo->cElement & 0xffff) * 4);
+            put_data(typeinfo->func_names,   (typeinfo->typeinfo->cElement & 0xffff) * 4);
         if (typeinfo->var_names)
-            ctl2_write_chunk(fd, typeinfo->var_names,   (typeinfo->typeinfo->cElement >> 16) * 4); 
+            put_data(typeinfo->var_names,   (typeinfo->typeinfo->cElement >> 16) * 4);
         if (typeinfo->func_offsets)
-            ctl2_write_chunk(fd, typeinfo->func_offsets, (typeinfo->typeinfo->cElement & 0xffff) * 4);
+            put_data(typeinfo->func_offsets, (typeinfo->typeinfo->cElement & 0xffff) * 4);
         if (typeinfo->var_offsets) {
             int add = 0, i, offset;
             if(typeinfo->func_data)
@@ -2489,24 +2474,17 @@ static void ctl2_write_typeinfos(msft_typelib_t *typelib, int fd)
             for(i = 0; i < (typeinfo->typeinfo->cElement >> 16); i++) {
                 offset = typeinfo->var_offsets[i];
                 offset += add;
-                ctl2_write_chunk(fd, &offset, 4);
+                put_data(&offset, 4);
             }
         }
     }
 }
 
-static int save_all_changes(msft_typelib_t *typelib)
+static void save_all_changes(msft_typelib_t *typelib)
 {
-    int retval;
     int filepos;
-    int fd;
 
     chat("save_all_changes(%p)\n", typelib);
-
-    retval = TYPE_E_IOERROR;
-
-    fd = open(typelib->typelib->filename, O_CREAT | O_WRONLY | O_TRUNC | O_BINARY, 0666);
-    if (fd == -1) return retval;
 
     filepos = sizeof(MSFT_Header) + sizeof(MSFT_SegDir);
     if(typelib->typelib_header.varflags & 0x100) filepos += 4; /* helpstringdll */
@@ -2528,33 +2506,31 @@ static int save_all_changes(msft_typelib_t *typelib)
 
     ctl2_finalize_typeinfos(typelib, filepos);
 
-    if (!ctl2_write_chunk(fd, &typelib->typelib_header, sizeof(typelib->typelib_header))) return retval;
+    byte_swapped = 0;
+    init_output_buffer();
+
+    put_data(&typelib->typelib_header, sizeof(typelib->typelib_header));
     if(typelib->typelib_header.varflags & 0x100)
-        if (!ctl2_write_chunk(fd, &typelib->help_string_dll_offset, sizeof(typelib->help_string_dll_offset)))
-            return retval;
+        put_data(&typelib->help_string_dll_offset, sizeof(typelib->help_string_dll_offset));
 
-    if (!ctl2_write_chunk(fd, typelib->typelib_typeinfo_offsets, typelib->typelib_header.nrtypeinfos * 4)) return retval;
-    if (!ctl2_write_chunk(fd, &typelib->typelib_segdir, sizeof(typelib->typelib_segdir))) return retval;
-    if (!ctl2_write_segment(typelib, fd, MSFT_SEG_TYPEINFO    )) return retval;
-    if (!ctl2_write_segment(typelib, fd, MSFT_SEG_GUIDHASH    )) return retval;
-    if (!ctl2_write_segment(typelib, fd, MSFT_SEG_GUID        )) return retval;
-    if (!ctl2_write_segment(typelib, fd, MSFT_SEG_REFERENCES  )) return retval;
-    if (!ctl2_write_segment(typelib, fd, MSFT_SEG_IMPORTINFO  )) return retval;
-    if (!ctl2_write_segment(typelib, fd, MSFT_SEG_IMPORTFILES )) return retval;
-    if (!ctl2_write_segment(typelib, fd, MSFT_SEG_NAMEHASH    )) return retval;
-    if (!ctl2_write_segment(typelib, fd, MSFT_SEG_NAME        )) return retval;
-    if (!ctl2_write_segment(typelib, fd, MSFT_SEG_STRING      )) return retval;
-    if (!ctl2_write_segment(typelib, fd, MSFT_SEG_TYPEDESC    )) return retval;
-    if (!ctl2_write_segment(typelib, fd, MSFT_SEG_ARRAYDESC   )) return retval;
-    if (!ctl2_write_segment(typelib, fd, MSFT_SEG_CUSTDATA    )) return retval;
-    if (!ctl2_write_segment(typelib, fd, MSFT_SEG_CUSTDATAGUID)) return retval;
+    put_data(typelib->typelib_typeinfo_offsets, typelib->typelib_header.nrtypeinfos * 4);
+    put_data(&typelib->typelib_segdir, sizeof(typelib->typelib_segdir));
+    ctl2_write_segment( typelib, MSFT_SEG_TYPEINFO );
+    ctl2_write_segment( typelib, MSFT_SEG_GUIDHASH );
+    ctl2_write_segment( typelib, MSFT_SEG_GUID );
+    ctl2_write_segment( typelib, MSFT_SEG_REFERENCES );
+    ctl2_write_segment( typelib, MSFT_SEG_IMPORTINFO );
+    ctl2_write_segment( typelib, MSFT_SEG_IMPORTFILES );
+    ctl2_write_segment( typelib, MSFT_SEG_NAMEHASH );
+    ctl2_write_segment( typelib, MSFT_SEG_NAME );
+    ctl2_write_segment( typelib, MSFT_SEG_STRING );
+    ctl2_write_segment( typelib, MSFT_SEG_TYPEDESC );
+    ctl2_write_segment( typelib, MSFT_SEG_ARRAYDESC );
+    ctl2_write_segment( typelib, MSFT_SEG_CUSTDATA );
+    ctl2_write_segment( typelib, MSFT_SEG_CUSTDATAGUID );
 
-    ctl2_write_typeinfos(typelib, fd);
-
-    if (close(fd) == -1) return retval;
-
-    retval = S_OK;
-    return retval;
+    ctl2_write_typeinfos(typelib);
+    flush_output_buffer( typelib->typelib->filename );
 }
 
 int create_msft_typelib(typelib_t *typelib)
