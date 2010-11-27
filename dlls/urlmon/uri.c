@@ -6186,6 +6186,34 @@ static HRESULT parse_canonicalize(const Uri *uri, DWORD flags, LPWSTR output,
     return S_OK;
 }
 
+static HRESULT parse_friendly(IUri *uri, LPWSTR output, DWORD output_len,
+                              DWORD *result_len)
+{
+    HRESULT hr;
+    DWORD display_len;
+    BSTR display;
+
+    hr = IUri_GetPropertyLength(uri, Uri_PROPERTY_DISPLAY_URI, &display_len, 0);
+    if(FAILED(hr)) {
+        *result_len = 0;
+        return hr;
+    }
+
+    *result_len = display_len;
+    if(display_len+1 > output_len)
+        return STRSAFE_E_INSUFFICIENT_BUFFER;
+
+    hr = IUri_GetDisplayUri(uri, &display);
+    if(FAILED(hr)) {
+        *result_len = 0;
+        return hr;
+    }
+
+    memcpy(output, display, (display_len+1)*sizeof(WCHAR));
+    SysFreeString(display);
+    return S_OK;
+}
+
 /***********************************************************************
  *           CoInternetParseIUri (urlmon.@)
  */
@@ -6216,6 +6244,9 @@ HRESULT WINAPI CoInternetParseIUri(IUri *pIUri, PARSEACTION ParseAction, DWORD d
             return E_NOTIMPL;
         }
         hr = parse_canonicalize(uri, dwFlags, pwzResult, cchResult, pcchResult);
+        break;
+    case PARSE_FRIENDLY:
+        hr = parse_friendly(pIUri, pwzResult, cchResult, pcchResult);
         break;
     case PARSE_SECURITY_URL:
     case PARSE_MIME:

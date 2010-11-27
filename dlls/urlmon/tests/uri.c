@@ -5921,7 +5921,11 @@ static const uri_parse_test uri_parse_tests[] = {
     {"http://google.com/test/../",Uri_CREATE_NO_CANONICALIZE,PARSE_CANONICALIZE,URL_NO_META,"http://google.com/test/../",S_OK,FALSE},
     {"http://google.com/test/../",Uri_CREATE_NO_CANONICALIZE,PARSE_CANONICALIZE,0,"http://google.com/",S_OK,FALSE},
     {"zip://google.com/test/../",Uri_CREATE_NO_CANONICALIZE,PARSE_CANONICALIZE,0,"zip://google.com/",S_OK,FALSE},
-    {"file:///c:/test/../test",Uri_CREATE_NO_CANONICALIZE,PARSE_CANONICALIZE,URL_DONT_SIMPLIFY,"file:///c:/test/../test",S_OK,FALSE}
+    {"file:///c:/test/../test",Uri_CREATE_NO_CANONICALIZE,PARSE_CANONICALIZE,URL_DONT_SIMPLIFY,"file:///c:/test/../test",S_OK,FALSE},
+
+    /* PARSE_FRIENDLY tests. */
+    {"http://test@google.com/test#test",0,PARSE_FRIENDLY,0,"http://google.com/test#test",S_OK,FALSE},
+    {"zip://test@google.com/test",0,PARSE_FRIENDLY,0,"zip://test@google.com/test",S_OK,FALSE}
 };
 
 static inline LPWSTR a2w(LPCSTR str) {
