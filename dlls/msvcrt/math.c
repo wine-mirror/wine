@@ -919,13 +919,16 @@ int CDECL _controlfp_s(unsigned int *cur, unsigned int newval, unsigned int mask
 {
     static const unsigned int all_flags = (MSVCRT__MCW_EM | MSVCRT__MCW_IC | MSVCRT__MCW_RC |
                                            MSVCRT__MCW_PC | MSVCRT__MCW_DN);
+    unsigned int val;
 
-    if (!MSVCRT_CHECK_PMT(cur != NULL) || !MSVCRT_CHECK_PMT( !(mask & ~all_flags) ))
+    if (!MSVCRT_CHECK_PMT( !(newval & mask & ~all_flags) ))
     {
+        if (cur) *cur = _controlfp( 0, 0 );  /* retrieve it anyway */
         *MSVCRT__errno() = MSVCRT_EINVAL;
         return MSVCRT_EINVAL;
     }
-    *cur = _controlfp( newval, mask );
+    val = _controlfp( newval, mask );
+    if (cur) *cur = val;
     return 0;
 }
 

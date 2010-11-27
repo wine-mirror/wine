@@ -66,6 +66,7 @@ static unsigned __int64 (__cdecl *p_strtoui64)(const char *, char **, int);
 static errno_t (__cdecl *p_itoa_s)(int,char*,size_t,int);
 static int (__cdecl *p_wcsncat_s)(wchar_t *dst, size_t elem, const wchar_t *src, size_t count);
 static void (__cdecl *p_qsort_s)(void *, size_t, size_t, int (__cdecl *)(void *, const void *, const void *), void *);
+static int (__cdecl *p_controlfp_s)(unsigned int *, unsigned int, unsigned int);
 
 static void* (WINAPI *pEncodePointer)(void *);
 
@@ -574,7 +575,47 @@ static void test_qsort_s(void)
     ok(!strcmp(strarr[6],"World"),  "badly sorted, strarr[6] is %s\n", strarr[6]);
 }
 
-/* ########## */
+static void test_controlfp_s(void)
+{
+    unsigned int cur;
+    int ret;
+
+    if (!p_controlfp_s)
+    {
+        win_skip("_controlfp_s not found\n");
+        return;
+    }
+
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p_controlfp_s( NULL, ~0, ~0 );
+    ok( ret == EINVAL, "wrong result %d\n", ret );
+    CHECK_CALLED(invalid_parameter_handler);
+
+    cur = 0xdeadbeef;
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p_controlfp_s( &cur, ~0, ~0 );
+    ok( ret == EINVAL, "wrong result %d\n", ret );
+    ok( cur != 0xdeadbeef, "value not set\n" );
+    CHECK_CALLED(invalid_parameter_handler);
+
+    cur = 0xdeadbeef;
+    ret = p_controlfp_s( &cur, 0, 0 );
+    ok( !ret, "wrong result %d\n", ret );
+    ok( cur != 0xdeadbeef, "value not set\n" );
+
+    SET_EXPECT(invalid_parameter_handler);
+    cur = 0xdeadbeef;
+    ret = p_controlfp_s( &cur, 0x80000000, 0x80000000 );
+    ok( ret == EINVAL, "wrong result %d\n", ret );
+    ok( cur != 0xdeadbeef, "value not set\n" );
+    CHECK_CALLED(invalid_parameter_handler);
+
+    cur = 0xdeadbeef;
+    /* mask is only checked when setting invalid bits */
+    ret = p_controlfp_s( &cur, 0, 0x80000000 );
+    ok( !ret, "wrong result %d\n", ret );
+    ok( cur != 0xdeadbeef, "value not set\n" );
+}
 
 START_TEST(msvcr90)
 {
@@ -606,6 +647,7 @@ START_TEST(msvcr90)
     p_itoa_s = (void *)GetProcAddress(hcrt, "_itoa_s");
     p_wcsncat_s = (void *)GetProcAddress( hcrt,"wcsncat_s" );
     p_qsort_s = (void *) GetProcAddress(hcrt, "qsort_s");
+    p_controlfp_s = (void *) GetProcAddress(hcrt, "_controlfp_s");
 
     hkernel32 = GetModuleHandleA("kernel32.dll");
     pEncodePointer = (void *) GetProcAddress(hkernel32, "EncodePointer");
@@ -617,4 +659,5 @@ START_TEST(msvcr90)
     test__itoa_s();
     test_wcsncat_s();
     test_qsort_s();
+    test_controlfp_s();
 }
