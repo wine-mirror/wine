@@ -64,6 +64,7 @@ extern void put_word( unsigned short val );
 extern void put_dword( unsigned int val );
 extern void put_qword( unsigned int val );
 extern void put_pword( unsigned int val );
+extern void put_str( int indent, const char *format, ... ) __attribute__((format (printf, 2, 3)));
 extern void align_output( unsigned int align );
 
 /* typelibs expect the minor version to be stored in the higher bits and

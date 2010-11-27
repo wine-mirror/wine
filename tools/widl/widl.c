@@ -69,6 +69,7 @@ static const char usage[] =
 "   --prefix-all=p     Prefix names of client stubs / server functions with 'p'\n"
 "   --prefix-client=p  Prefix names of client stubs with 'p'\n"
 "   --prefix-server=p  Prefix names of server functions with 'p'\n"
+"   -r                 Generate registration script\n"
 "   -s                 Generate server stub\n"
 "   -t                 Generate typelib\n"
 "   -u                 Generate interface identifiers file\n"
@@ -101,6 +102,7 @@ int do_typelib = 0;
 int do_proxies = 0;
 int do_client = 0;
 int do_server = 0;
+int do_regscript = 0;
 int do_idfile = 0;
 int do_dlldata = 0;
 static int no_preprocess = 0;
@@ -122,6 +124,8 @@ char *client_name;
 char *client_token;
 char *server_name;
 char *server_token;
+char *regscript_name;
+char *regscript_token;
 static char *idfile_name;
 static char *idfile_token;
 char *temp_name;
@@ -152,7 +156,7 @@ enum {
 };
 
 static const char short_options[] =
-    "b:cC:d:D:EhH:I:m:No:pP:sS:tT:uU:VW";
+    "b:cC:d:D:EhH:I:m:No:pP:rsS:tT:uU:VW";
 static const struct option long_options[] = {
     { "dlldata", 1, NULL, DLLDATA_OPTION },
     { "dlldata-only", 0, NULL, DLLDATA_ONLY_OPTION },
@@ -284,6 +288,7 @@ static void set_everything(int x)
   do_proxies = x;
   do_client = x;
   do_server = x;
+  do_regscript = x;
   do_idfile = x;
   do_dlldata = x;
 }
@@ -584,6 +589,10 @@ int main(int argc,char *argv[])
     case 'P':
       proxy_name = xstrdup(optarg);
       break;
+    case 'r':
+      do_everything = 0;
+      do_regscript = 1;
+      break;
     case 's':
       do_everything = 0;
       do_server = 1;
@@ -624,13 +633,15 @@ int main(int argc,char *argv[])
   if (!output_name) output_name = dup_basename(input_name, ".idl");
 
   if (!do_everything &&
-      do_header + do_typelib + do_proxies + do_client + do_server + do_idfile + do_dlldata == 1)
+      do_header + do_typelib + do_proxies + do_client +
+      do_server + do_regscript + do_idfile + do_dlldata == 1)
   {
       if (do_header) header_name = output_name;
       else if (do_typelib) typelib_name = output_name;
       else if (do_proxies) proxy_name = output_name;
       else if (do_client) client_name = output_name;
       else if (do_server) server_name = output_name;
+      else if (do_regscript) regscript_name = output_name;
       else if (do_idfile) idfile_name = output_name;
       else if (do_dlldata) dlldata_name = output_name;
   }
@@ -698,6 +709,11 @@ int main(int argc,char *argv[])
     strcat(server_name, "_s.c");
   }
 
+  if (!regscript_name && do_regscript) {
+    regscript_name = dup_basename(input_name, ".idl");
+    strcat(regscript_name, "_r.rgs");
+  }
+
   if (!idfile_name && do_idfile) {
     idfile_name = dup_basename(input_name, ".idl");
     strcat(idfile_name, "_i.c");
@@ -706,6 +722,7 @@ int main(int argc,char *argv[])
   if (do_proxies) proxy_token = dup_basename_token(proxy_name,"_p.c");
   if (do_client) client_token = dup_basename_token(client_name,"_c.c");
   if (do_server) server_token = dup_basename_token(server_name,"_s.c");
+  if (do_regscript) regscript_token = dup_basename_token(regscript_name,"_r.rgs");
 
   add_widl_version_define();
   wpp_add_define("_WIN32", NULL);
@@ -784,6 +801,8 @@ static void rm_tempfile(void)
     unlink(client_name);
   if (do_server)
     unlink(server_name);
+  if (do_regscript)
+    unlink(regscript_name);
   if (do_idfile)
     unlink(idfile_name);
   if (do_proxies)

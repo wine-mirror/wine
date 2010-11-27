@@ -490,7 +490,7 @@ static void gen_stub(type_t *iface, const var_t *func, const char *cas,
   print_proxy("\n");
 }
 
-static int count_methods(type_t *iface)
+int count_methods(const type_t *iface)
 {
     const statement_t *stmt;
     int count = 0;

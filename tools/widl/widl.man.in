@@ -75,6 +75,12 @@ Only generate 32-bit, respectively 64-bit code (the default is to
 generate both 32-bit and 64-bit versions into the same destination
 file).
 .PP
+.B Registration script options:
+.IP "\fB-r\fR"
+Generate a registration script. The default output filename is
+\fIinfile\fB_r.rgs\fR. If the output file name ends in \fB.res\fR, a
+binary resource file containing the script is generated instead.
+.PP
 .B Dlldata file options:
 .IP "\fB--dlldata-only\fI name1 [name2...]"
 Regenerate the dlldata file from scratch using the specified proxy
