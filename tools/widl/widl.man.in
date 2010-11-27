@@ -31,6 +31,10 @@ will print a help message.
 .B General options:
 .IP "\fB-V\fR"
 Print version number and exit.
+.IP "\fB-o, --output=\fIname"
+Set the name of the output file. When generating multiple output
+files, this sets only the base name of the file; the respective output
+files are then named \fIname\fR.h, \fIname\fR_p.c, etc.
 .IP "\fB-b \fIcpu-manufacturer[-kernel]-os\fR"
 Set the target architecture when cross-compiling. The target
 specification is in the standard autoconf format as returned by
@@ -38,38 +42,25 @@ config.sub.
 .PP
 .B Header options:
 .IP "\fB-h\fR"
-Generate header files.
-.IP "\fB-H \fIfile\fR"
-Name of header file to generate. The default header
-filename is \fIinfile\fR.h.
+Generate header files. The default output filename is \fIinfile\fB.h\fR.
 .IP "\fB--oldnames\fR"
 Use old naming conventions.
 .PP
 .B Type library options:
 .IP \fB-t\fR
-Generate a type library.
-.IP "\fB-T \fIfile\fR"
-Define the name of the type library to be generated. 
-The default filename is \fIinfile\fR.tlb.
+Generate a type library. The default output filename is \fIinfile\fB.tlb\fR.
 .IP "\fB-m32, -m64\fR"
 Generate a Win32, respectively Win64, type library.
 .PP
 .B UUID file options:
 .IP "\fB-u\fR"
-Generate a UUID file.
-.IP "\fB-U \fIfile\fR"
-Define the name of the UUID file to be generated. 
-The default filename is \fIinfile\fR_i.c.
+Generate a UUID file. The default output filename is \fIinfile\fB_i.c\fR.
 .PP
 .B Proxy/stub generation options:
 .IP "\fB-c\fR"
-Generate client stub.
-.IP "\fB-C \fIfile\fR"
-Name of client stub file (default is \fIinfile\fR_c.c)
+Generate a client stub file. The default output filename is \fIinfile\fB_c.c\fR.
 .IP "\fB-p\fR"
-Generate proxy.
-.IP "\fB-P \fIfile\fR"
-Name of proxy file (default is \fIinfile\fR_p.c)
+Generate a proxy. The default output filename is \fIinfile\fB_p.c\fR.
 .IP "\fB--prefix-all=\fIprefix\fR"
 Prefix to put on the name of both client and server stubs.
 .IP "\fB--prefix-client=\fIprefix\fR"
@@ -77,17 +68,17 @@ Prefix to put on the name of client stubs.
 .IP "\fB--prefix-server=\fIprefix\fR"
 Prefix to put on the name of server stubs.
 .IP "\fB-s\fR"
-Generate server stub.
-.IP "\fB-S \fIfile\fR"
-Name of server stub file (default is \fIinfile\fR_s.c)
+Generate a server stub file. The default output filename is
+\fIinfile\fB_s.c\fR.
 .IP "\fB--win32, --win64\fR"
 Only generate 32-bit, respectively 64-bit code (the default is to
 generate both 32-bit and 64-bit versions into the same destination
 file).
 .PP
 .B Dlldata file options:
-.IP "\fB--dlldata=\fIfile\fR"
-Name of the dlldata file (default is dlldata.c)
+.IP "\fB--dlldata-only\fI name1 [name2...]"
+Regenerate the dlldata file from scratch using the specified proxy
+names. The default output filename is \fBdlldata.c\fR.
 .PP
 .B Preprocessor options:
 .IP "\fB-I \fIpath\fR"

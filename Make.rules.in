@@ -65,22 +65,22 @@ filter: dummy
 	$(LDPATH) $(WRC) $(RCFLAGS) -o $@ $<
 
 .idl.h:
-	$(WIDL) $(IDLFLAGS) -h -H $@ $<
+	$(WIDL) $(IDLFLAGS) -h -o $@ $<
 
 .idl_c.c:
-	$(WIDL) $(IDLFLAGS) -c -C $@ $<
+	$(WIDL) $(IDLFLAGS) -c -o $@ $<
 
 .idl_i.c:
-	$(WIDL) $(IDLFLAGS) -u -U $@ $<
+	$(WIDL) $(IDLFLAGS) -u -o $@ $<
 
 .idl_p.c:
-	$(WIDL) $(IDLFLAGS) -p -P $@ $<
+	$(WIDL) $(IDLFLAGS) -p -o $@ $<
 
 .idl_s.c:
-	$(WIDL) $(IDLFLAGS) -s -S $@ $<
+	$(WIDL) $(IDLFLAGS) -s -o $@ $<
 
 .idl.tlb:
-	$(WIDL) $(TARGETFLAGS) $(IDLFLAGS) -t -T $@ $<
+	$(WIDL) $(TARGETFLAGS) $(IDLFLAGS) -t -o $@ $<
 
 .c.ln:
 	$(LINT) -c $(ALLLINTFLAGS) $< || ( $(RM) $@ && exit 1 )
@@ -103,7 +103,7 @@ filter: dummy
 # Rules for IDL files
 
 dlldata.c: $(WIDL) Makefile.in
-	$(WIDL) $(IDLFLAGS) --dlldata-only --dlldata=$@ $(IDL_P_SRCS)
+	$(WIDL) $(IDLFLAGS) --dlldata-only -o $@ $(IDL_P_SRCS)
 
 # Rule for linting
 

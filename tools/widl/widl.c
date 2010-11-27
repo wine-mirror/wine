@@ -54,10 +54,8 @@ static const char usage[] =
 "   or: widl [options...] --dlldata-only name1 [name2...]\n"
 "   -b arch            Set the target architecture\n"
 "   -c                 Generate client stub\n"
-"   -C file            Name of client stub file (default is infile_c.c)\n"
 "   -d n               Set debug level to 'n'\n"
 "   -D id[=val]        Define preprocessor identifier id=val\n"
-"   --dlldata=file     Name of the dlldata file (default is dlldata.c)\n"
 "   -E                 Preprocess only\n"
 "   -h                 Generate headers\n"
 "   -H file            Name of header file (default is infile.h)\n"
@@ -66,17 +64,14 @@ static const char usage[] =
 "   -m32, -m64         Set the kind of typelib to build (Win32 or Win64)\n"
 "   -N                 Do not preprocess input\n"
 "   --oldnames         Use old naming conventions\n"
+"   -o, --output=NAME  Set the output file name\n"
 "   -p                 Generate proxy\n"
-"   -P file            Name of proxy file (default is infile_p.c)\n"
 "   --prefix-all=p     Prefix names of client stubs / server functions with 'p'\n"
 "   --prefix-client=p  Prefix names of client stubs with 'p'\n"
 "   --prefix-server=p  Prefix names of server functions with 'p'\n"
 "   -s                 Generate server stub\n"
-"   -S file            Name of server stub file (default is infile_s.c)\n"
 "   -t                 Generate typelib\n"
-"   -T file            Name of typelib file (default is infile.tlb)\n"
 "   -u                 Generate interface identifiers file\n"
-"   -U file            Name of interface identifiers file (default is infile_i.c)\n"
 "   -V                 Print version and exit\n"
 "   -W                 Enable pedantic warnings\n"
 "   --win32            Only generate 32-bit code\n"
@@ -157,12 +152,13 @@ enum {
 };
 
 static const char short_options[] =
-    "b:cC:d:D:EhH:I:m:NpP:sS:tT:uU:VW";
+    "b:cC:d:D:EhH:I:m:No:pP:sS:tT:uU:VW";
 static const struct option long_options[] = {
     { "dlldata", 1, NULL, DLLDATA_OPTION },
     { "dlldata-only", 0, NULL, DLLDATA_ONLY_OPTION },
     { "local-stubs", 1, NULL, LOCAL_STUBS_OPTION },
     { "oldnames", 0, NULL, OLDNAMES_OPTION },
+    { "output", 0, NULL, 'o' },
     { "prefix-all", 1, NULL, PREFIX_ALL_OPTION },
     { "prefix-client", 1, NULL, PREFIX_CLIENT_OPTION },
     { "prefix-server", 1, NULL, PREFIX_SERVER_OPTION },
@@ -486,6 +482,7 @@ int main(int argc,char *argv[])
   int optc;
   int ret = 0;
   int opti = 0;
+  char *output_name = NULL;
 
   signal( SIGTERM, exit_on_signal );
   signal( SIGINT, exit_on_signal );
@@ -577,6 +574,9 @@ int main(int argc,char *argv[])
     case 'N':
       no_preprocess = 1;
       break;
+    case 'o':
+      output_name = xstrdup(optarg);
+      break;
     case 'p':
       do_everything = 0;
       do_proxies = 1;
@@ -619,6 +619,20 @@ int main(int argc,char *argv[])
 
   if(do_everything) {
     set_everything(TRUE);
+  }
+
+  if (!output_name) output_name = dup_basename(input_name, ".idl");
+
+  if (!do_everything &&
+      do_header + do_typelib + do_proxies + do_client + do_server + do_idfile + do_dlldata == 1)
+  {
+      if (do_header) header_name = output_name;
+      else if (do_typelib) typelib_name = output_name;
+      else if (do_proxies) proxy_name = output_name;
+      else if (do_client) client_name = output_name;
+      else if (do_server) server_name = output_name;
+      else if (do_idfile) idfile_name = output_name;
+      else if (do_dlldata) dlldata_name = output_name;
   }
 
   if (!dlldata_name && do_dlldata)
