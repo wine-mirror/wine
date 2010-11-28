@@ -129,6 +129,8 @@ static const WCHAR attrMinHeight[] =
     {'m','i','n','-','h','e','i','g','h','t',0};
 static const WCHAR attrOverflow[] =
     {'o','v','e','r','f','l','o','w',0};
+static const WCHAR attrPadding[] =
+    {'p','a','d','d','i','n','g',0};
 static const WCHAR attrPaddingBottom[] =
     {'p','a','d','d','i','n','g','-','b','o','t','t','o','m',0};
 static const WCHAR attrPaddingLeft[] =
@@ -213,6 +215,7 @@ static const struct{
     {attrMarginTop,            DISPID_IHTMLSTYLE_MARGINTOP},
     {attrMinHeight,            DISPID_IHTMLSTYLE4_MINHEIGHT},
     {attrOverflow,             DISPID_IHTMLSTYLE_OVERFLOW},
+    {attrPadding,              DISPID_IHTMLSTYLE_PADDING},
     {attrPaddingBottom,        DISPID_IHTMLSTYLE_PADDINGBOTTOM},
     {attrPaddingLeft,          DISPID_IHTMLSTYLE_PADDINGLEFT},
     {attrPaddingRight,         DISPID_IHTMLSTYLE_PADDINGRIGHT},
@@ -1416,15 +1419,19 @@ static HRESULT WINAPI HTMLStyle_get_paddingLeft(IHTMLStyle *iface, VARIANT *p)
 static HRESULT WINAPI HTMLStyle_put_padding(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return set_style_attr(This, STYLEID_PADDING, v, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_get_padding(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_style_attr(This, STYLEID_PADDING, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_border(IHTMLStyle *iface, BSTR v)

@@ -4976,6 +4976,22 @@ static void test_default_style(IHTMLStyle *style)
     ok(!V_BSTR(&v), "str=%s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
+    /* padding */
+    hres = IHTMLStyle_get_padding(style, &str);
+    ok(hres == S_OK, "get_padding failed: %08x\n", hres);
+    ok(!str, "padding = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    str = a2bstr("1");
+    hres = IHTMLStyle_put_padding(style, str);
+    ok(hres == S_OK, "put_padding failed: %08x\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLStyle_get_padding(style, &str);
+    ok(hres == S_OK, "get_padding failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "1px"), "padding = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
     /* PaddingLeft */
     hres = IHTMLStyle_get_paddingLeft(style, &vDefault);
     ok(hres == S_OK, "get_paddingLeft: %08x\n", hres);
