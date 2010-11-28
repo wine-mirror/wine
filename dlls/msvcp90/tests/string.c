@@ -60,6 +60,7 @@ static basic_string_char* (WINAPI *p_basic_string_char_assign_cstr_len)(const ch
 static const char* (WINAPI *p_basic_string_char_cstr)(void);
 static const char* (WINAPI *p_basic_string_char_data)(void);
 static size_t (WINAPI *p_basic_string_char_size)(void);
+static size_t (WINAPI *p_basic_string_char_capacity)(void);
 static void (WINAPI *p_basic_string_char_swap)(basic_string_char*);
 static basic_string_char* (WINAPI *p_basic_string_char_append)(basic_string_char*);
 static basic_string_char* (WINAPI *p_basic_string_char_append_substr)(basic_string_char*, size_t, size_t);
@@ -75,6 +76,7 @@ static basic_string_wchar* (WINAPI *p_basic_string_wchar_assign_cstr_len)(const 
 static const wchar_t* (WINAPI *p_basic_string_wchar_cstr)(void);
 static const wchar_t* (WINAPI *p_basic_string_wchar_data)(void);
 static size_t (WINAPI *p_basic_string_wchar_size)(void);
+static size_t (WINAPI *p_basic_string_wchar_capacity)(void);
 static void (WINAPI *p_basic_string_wchar_swap)(basic_string_wchar*);
 #else
 static basic_string_char* (__cdecl *p_basic_string_char_ctor)(basic_string_char*);
@@ -86,6 +88,7 @@ static basic_string_char* (__cdecl *p_basic_string_char_assign_cstr_len)(basic_s
 static const char* (__cdecl *p_basic_string_char_cstr)(basic_string_char*);
 static const char* (__cdecl *p_basic_string_char_data)(basic_string_char*);
 static size_t (__cdecl *p_basic_string_char_size)(basic_string_char*);
+static size_t (__cdecl *p_basic_string_char_capacity)(basic_string_char*);
 static void (__cdecl *p_basic_string_char_swap)(basic_string_char*, basic_string_char*);
 static basic_string_char* (WINAPI *p_basic_string_char_append)(basic_string_char*, basic_string_char*);
 static basic_string_char* (WINAPI *p_basic_string_char_append_substr)(basic_string_char*, basic_string_char*, size_t, size_t);
@@ -101,6 +104,7 @@ static basic_string_wchar* (__cdecl *p_basic_string_wchar_assign_cstr_len)(basic
 static const wchar_t* (__cdecl *p_basic_string_wchar_cstr)(basic_string_wchar*);
 static const wchar_t* (__cdecl *p_basic_string_wchar_data)(basic_string_wchar*);
 static size_t (__cdecl *p_basic_string_wchar_size)(basic_string_wchar*);
+static size_t (__cdecl *p_basic_string_wchar_capacity)(basic_string_wchar*);
 static void (__cdecl *p_basic_string_wchar_swap)(basic_string_wchar*, basic_string_wchar*);
 #endif
 
@@ -359,6 +363,8 @@ static BOOL init(void)
                 "?data@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAPEBDXZ");
         p_basic_string_char_size = (void*)GetProcAddress(msvcp,
                 "?size@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KXZ");
+        p_basic_string_char_capacity = (void*)GetProcAddress(msvcp,
+                "?capacity@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KXZ");
         p_basic_string_char_swap = (void*)GetProcAddress(msvcp,
                 "?swap@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXAEAV12@@Z");
         p_basic_string_char_append = (void*)GetProcAddress(msvcp,
@@ -388,6 +394,8 @@ static BOOL init(void)
                 "?data@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAPEB_WXZ");
         p_basic_string_wchar_size = (void*)GetProcAddress(msvcp,
                 "?size@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KXZ");
+        p_basic_string_wchar_capacity = (void*)GetProcAddress(msvcp,
+                "?capacity@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KXZ");
         p_basic_string_wchar_swap = (void*)GetProcAddress(msvcp,
                 "?swap@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAXAEAV12@@Z");
     } else {
@@ -409,6 +417,8 @@ static BOOL init(void)
                 "?data@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPBDXZ");
         p_basic_string_char_size = (void*)GetProcAddress(msvcp,
                 "?size@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIXZ");
+        p_basic_string_char_capacity = (void*)GetProcAddress(msvcp,
+                "?capacity@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIXZ");
         p_basic_string_char_swap = (void*)GetProcAddress(msvcp,
                 "?swap@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXAAV12@@Z");
         p_basic_string_char_append = (void*)GetProcAddress(msvcp,
@@ -438,6 +448,8 @@ static BOOL init(void)
                 "?data@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEPB_WXZ");
         p_basic_string_wchar_size = (void*)GetProcAddress(msvcp,
                 "?size@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIXZ");
+        p_basic_string_wchar_capacity = (void*)GetProcAddress(msvcp,
+                "?capacity@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIXZ");
         p_basic_string_wchar_swap = (void*)GetProcAddress(msvcp,
                 "?swap@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXAAV12@@Z");
     }
@@ -448,13 +460,13 @@ static BOOL init(void)
 static void test_basic_string_char(void) {
     basic_string_char str1, str2, *pstr;
     const char *str;
-    size_t size;
+    size_t size, capacity;
 
     if(!p_basic_string_char_ctor || !p_basic_string_char_copy_ctor
             || !p_basic_string_char_ctor_cstr || !p_basic_string_char_dtor
             || !p_basic_string_char_erase || !p_basic_string_char_assign_cstr_len
             || !p_basic_string_char_cstr || !p_basic_string_char_data
-            || !p_basic_string_char_size) {
+            || !p_basic_string_char_size || !p_basic_string_char_capacity) {
         win_skip("basic_string<char> unavailable\n");
         return;
     }
@@ -477,6 +489,8 @@ static void test_basic_string_char(void) {
     ok(!memcmp(str, "test", 5), "str = %s\n", str);
     size = (size_t)call_func1(p_basic_string_char_size, &str1);
     ok(size == 4, "size = %lu\n", (unsigned long)size);
+    capacity = (size_t)call_func1(p_basic_string_char_capacity, &str1);
+    ok(capacity >= size, "capacity = %lu < size = %lu\n", (unsigned long)capacity, (unsigned long)size);
 
     pstr = call_func2(p_basic_string_char_copy_ctor, &str2, &str1);
     ok(pstr == &str2, "pstr != &str2\n");
@@ -492,6 +506,8 @@ static void test_basic_string_char(void) {
     ok(!memcmp(str, "tt", 3), "str = %s\n", str);
     size = (size_t)call_func1(p_basic_string_char_size, &str1);
     ok(size == 4, "size = %lu\n", (unsigned long)size);
+    capacity = (size_t)call_func1(p_basic_string_char_capacity, &str1);
+    ok(capacity >= size, "capacity = %lu < size = %lu\n", (unsigned long)capacity, (unsigned long)size);
 
     call_func3(p_basic_string_char_erase, &str2, 1, 100);
     str = call_func1(p_basic_string_char_cstr, &str2);
@@ -500,6 +516,8 @@ static void test_basic_string_char(void) {
     ok(!memcmp(str, "t", 2), "str = %s\n", str);
     size = (size_t)call_func1(p_basic_string_char_size, &str1);
     ok(size == 4, "size = %lu\n", (unsigned long)size);
+    capacity = (size_t)call_func1(p_basic_string_char_capacity, &str1);
+    ok(capacity >= size, "capacity = %lu < size = %lu\n", (unsigned long)capacity, (unsigned long)size);
 
     call_func3(p_basic_string_char_assign_cstr_len, &str2, "test", 4);
     str = call_func1(p_basic_string_char_cstr, &str2);
@@ -631,13 +649,13 @@ static void test_basic_string_wchar(void) {
 
     basic_string_wchar str1, str2, *pstr;
     const wchar_t *str;
-    size_t size;
+    size_t size, capacity;
 
     if(!p_basic_string_wchar_ctor || !p_basic_string_wchar_copy_ctor
             || !p_basic_string_wchar_ctor_cstr || !p_basic_string_wchar_dtor
             || !p_basic_string_wchar_erase || !p_basic_string_wchar_assign_cstr_len
             || !p_basic_string_wchar_cstr || !p_basic_string_wchar_data
-            || !p_basic_string_wchar_size) {
+            || !p_basic_string_wchar_size || !p_basic_string_wchar_capacity) {
         win_skip("basic_string<wchar_t> unavailable\n");
         return;
     }
@@ -660,6 +678,8 @@ static void test_basic_string_wchar(void) {
     ok(!memcmp(str, test, 5*sizeof(wchar_t)), "str = %s\n", wine_dbgstr_w(str));
     size = (size_t)call_func1(p_basic_string_wchar_size, &str1);
     ok(size == 4, "size = %lu\n", (unsigned long)size);
+    capacity = (size_t)call_func1(p_basic_string_wchar_capacity, &str1);
+    ok(capacity >= size, "capacity = %lu < size = %lu\n", (unsigned long)capacity, (unsigned long)size);
 
     memset(&str2, 0, sizeof(basic_string_wchar));
     pstr = call_func2(p_basic_string_wchar_copy_ctor, &str2, &str1);
@@ -676,6 +696,8 @@ static void test_basic_string_wchar(void) {
     ok(str[0]=='t' && str[1]=='t' && str[2]=='\0', "str = %s\n", wine_dbgstr_w(str));
     size = (size_t)call_func1(p_basic_string_wchar_size, &str1);
     ok(size == 4, "size = %lu\n", (unsigned long)size);
+    capacity = (size_t)call_func1(p_basic_string_wchar_capacity, &str1);
+    ok(capacity >= size, "capacity = %lu < size = %lu\n", (unsigned long)capacity, (unsigned long)size);
 
     call_func3(p_basic_string_wchar_erase, &str2, 1, 100);
     str = call_func1(p_basic_string_wchar_cstr, &str2);
@@ -684,6 +706,8 @@ static void test_basic_string_wchar(void) {
     ok(str[0]=='t' && str[1]=='\0', "str = %s\n", wine_dbgstr_w(str));
     size = (size_t)call_func1(p_basic_string_wchar_size, &str1);
     ok(size == 4, "size = %lu\n", (unsigned long)size);
+    capacity = (size_t)call_func1(p_basic_string_wchar_capacity, &str1);
+    ok(capacity >= size, "capacity = %lu < size = %lu\n", (unsigned long)capacity, (unsigned long)size);
 
     call_func3(p_basic_string_wchar_assign_cstr_len, &str2, test, 4);
     str = call_func1(p_basic_string_wchar_cstr, &str2);
