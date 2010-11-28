@@ -101,8 +101,8 @@ typedef struct {
 #include "poppack.h"
 
 typedef struct {
-    const IWICBitmapDecoderVtbl *lpVtbl;
-    const IWICBitmapFrameDecodeVtbl *lpFrameVtbl;
+    IWICBitmapDecoder IWICBitmapDecoder_iface;
+    IWICBitmapFrameDecode IWICBitmapFrameDecode_iface;
     LONG ref;
     BOOL initialized;
     IStream *stream;
@@ -120,15 +120,20 @@ typedef struct {
     CRITICAL_SECTION lock;
 } TgaDecoder;
 
-static inline TgaDecoder *decoder_from_frame(IWICBitmapFrameDecode *iface)
+static inline TgaDecoder *impl_from_IWICBitmapDecoder(IWICBitmapDecoder *iface)
 {
-    return CONTAINING_RECORD(iface, TgaDecoder, lpFrameVtbl);
+    return CONTAINING_RECORD(iface, TgaDecoder, IWICBitmapDecoder_iface);
+}
+
+static inline TgaDecoder *impl_from_IWICBitmapFrameDecode(IWICBitmapFrameDecode *iface)
+{
+    return CONTAINING_RECORD(iface, TgaDecoder, IWICBitmapFrameDecode_iface);
 }
 
 static HRESULT WINAPI TgaDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID iid,
     void **ppv)
 {
-    TgaDecoder *This = (TgaDecoder*)iface;
+    TgaDecoder *This = impl_from_IWICBitmapDecoder(iface);
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
@@ -149,7 +154,7 @@ static HRESULT WINAPI TgaDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID
 
 static ULONG WINAPI TgaDecoder_AddRef(IWICBitmapDecoder *iface)
 {
-    TgaDecoder *This = (TgaDecoder*)iface;
+    TgaDecoder *This = impl_from_IWICBitmapDecoder(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -159,7 +164,7 @@ static ULONG WINAPI TgaDecoder_AddRef(IWICBitmapDecoder *iface)
 
 static ULONG WINAPI TgaDecoder_Release(IWICBitmapDecoder *iface)
 {
-    TgaDecoder *This = (TgaDecoder*)iface;
+    TgaDecoder *This = impl_from_IWICBitmapDecoder(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -187,7 +192,7 @@ static HRESULT WINAPI TgaDecoder_QueryCapability(IWICBitmapDecoder *iface, IStre
 static HRESULT WINAPI TgaDecoder_Initialize(IWICBitmapDecoder *iface, IStream *pIStream,
     WICDecodeOptions cacheOptions)
 {
-    TgaDecoder *This = (TgaDecoder*)iface;
+    TgaDecoder *This = impl_from_IWICBitmapDecoder(iface);
     HRESULT hr=S_OK;
     DWORD bytesread;
     LARGE_INTEGER seek;
@@ -388,7 +393,7 @@ static HRESULT WINAPI TgaDecoder_GetFrameCount(IWICBitmapDecoder *iface,
 static HRESULT WINAPI TgaDecoder_GetFrame(IWICBitmapDecoder *iface,
     UINT index, IWICBitmapFrameDecode **ppIBitmapFrame)
 {
-    TgaDecoder *This = (TgaDecoder*)iface;
+    TgaDecoder *This = impl_from_IWICBitmapDecoder(iface);
     TRACE("(%p,%p)\n", iface, ppIBitmapFrame);
 
     if (!This->initialized) return WINCODEC_ERR_NOTINITIALIZED;
@@ -396,7 +401,7 @@ static HRESULT WINAPI TgaDecoder_GetFrame(IWICBitmapDecoder *iface,
     if (index != 0) return E_INVALIDARG;
 
     IWICBitmapDecoder_AddRef(iface);
-    *ppIBitmapFrame = (IWICBitmapFrameDecode*)&This->lpFrameVtbl;
+    *ppIBitmapFrame = &This->IWICBitmapFrameDecode_iface;
 
     return S_OK;
 }
@@ -443,20 +448,20 @@ static HRESULT WINAPI TgaDecoder_Frame_QueryInterface(IWICBitmapFrameDecode *ifa
 
 static ULONG WINAPI TgaDecoder_Frame_AddRef(IWICBitmapFrameDecode *iface)
 {
-    TgaDecoder *This = decoder_from_frame(iface);
+    TgaDecoder *This = impl_from_IWICBitmapFrameDecode(iface);
     return IUnknown_AddRef((IUnknown*)This);
 }
 
 static ULONG WINAPI TgaDecoder_Frame_Release(IWICBitmapFrameDecode *iface)
 {
-    TgaDecoder *This = decoder_from_frame(iface);
+    TgaDecoder *This = impl_from_IWICBitmapFrameDecode(iface);
     return IUnknown_Release((IUnknown*)This);
 }
 
 static HRESULT WINAPI TgaDecoder_Frame_GetSize(IWICBitmapFrameDecode *iface,
     UINT *puiWidth, UINT *puiHeight)
 {
-    TgaDecoder *This = decoder_from_frame(iface);
+    TgaDecoder *This = impl_from_IWICBitmapFrameDecode(iface);
 
     *puiWidth = This->header.width;
     *puiHeight = This->header.height;
@@ -469,7 +474,7 @@ static HRESULT WINAPI TgaDecoder_Frame_GetSize(IWICBitmapFrameDecode *iface,
 static HRESULT WINAPI TgaDecoder_Frame_GetPixelFormat(IWICBitmapFrameDecode *iface,
     WICPixelFormatGUID *pPixelFormat)
 {
-    TgaDecoder *This = decoder_from_frame(iface);
+    TgaDecoder *This = impl_from_IWICBitmapFrameDecode(iface);
     int attribute_bitcount;
     byte attribute_type;
 
@@ -576,7 +581,7 @@ static HRESULT WINAPI TgaDecoder_Frame_GetResolution(IWICBitmapFrameDecode *ifac
 static HRESULT WINAPI TgaDecoder_Frame_CopyPalette(IWICBitmapFrameDecode *iface,
     IWICPalette *pIPalette)
 {
-    TgaDecoder *This = decoder_from_frame(iface);
+    TgaDecoder *This = impl_from_IWICBitmapFrameDecode(iface);
     HRESULT hr=S_OK;
     WICColor colors[256], *color;
     BYTE *colormap_data;
@@ -863,7 +868,7 @@ static HRESULT TgaDecoder_ReadImage(TgaDecoder *This)
 static HRESULT WINAPI TgaDecoder_Frame_CopyPixels(IWICBitmapFrameDecode *iface,
     const WICRect *prc, UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer)
 {
-    TgaDecoder *This = decoder_from_frame(iface);
+    TgaDecoder *This = impl_from_IWICBitmapFrameDecode(iface);
     HRESULT hr;
 
     TRACE("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
@@ -929,8 +934,8 @@ HRESULT TgaDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(TgaDecoder));
     if (!This) return E_OUTOFMEMORY;
 
-    This->lpVtbl = &TgaDecoder_Vtbl;
-    This->lpFrameVtbl = &TgaDecoder_Frame_Vtbl;
+    This->IWICBitmapDecoder_iface.lpVtbl = &TgaDecoder_Vtbl;
+    This->IWICBitmapFrameDecode_iface.lpVtbl = &TgaDecoder_Frame_Vtbl;
     This->ref = 1;
     This->initialized = FALSE;
     This->stream = NULL;
