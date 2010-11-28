@@ -73,12 +73,11 @@ struct inner_data_curse
     unsigned long       initial_mouse_mask;
     int                 sync_pipe[2];
     HANDLE              input_thread;
+    CRITICAL_SECTION    lock;
     WINDOW*             pad;
     chtype*             line;
     int                 allow_scroll;
 };
-
-static CRITICAL_SECTION WCCURSES_CritSect;
 
 static void *nc_handle = NULL;
 
@@ -953,7 +952,7 @@ static DWORD CALLBACK input_thread( void *arg )
         if (!(pfd[0].revents & POLLIN)) continue;
 
         /* we're called from input thread (not main thread), so force unique access */
-        EnterCriticalSection(&WCCURSES_CritSect);
+        EnterCriticalSection(&PRIVATE(data)->lock);
         if ((inchar = wgetch(stdscr)) != ERR)
         {
             WINE_TRACE("Got o%o (0x%x)\n", inchar,inchar);
@@ -965,7 +964,7 @@ static DWORD CALLBACK input_thread( void *arg )
 
             if (numEvent) WriteConsoleInputW(data->hConIn, ir, numEvent, &n);
         }
-        LeaveCriticalSection(&WCCURSES_CritSect);
+        LeaveCriticalSection(&PRIVATE(data)->lock);
     }
     close( PRIVATE(data)->sync_pipe[0] );
     return 0;
@@ -986,6 +985,7 @@ static void WCCURSES_DeleteBackend(struct inner_data* data)
         WaitForSingleObject( PRIVATE(data)->input_thread, INFINITE );
         CloseHandle( PRIVATE(data)->input_thread );
     }
+    DeleteCriticalSection(&PRIVATE(data)->lock);
 
     delwin(PRIVATE(data)->pad);
 #ifdef HAVE_MOUSEMASK
@@ -1018,9 +1018,9 @@ static int WCCURSES_MainLoop(struct inner_data* data)
 
     while (cont && WaitForSingleObject(data->hSynchro, INFINITE) == WAIT_OBJECT_0)
     {
-        EnterCriticalSection(&WCCURSES_CritSect);
+        EnterCriticalSection(&PRIVATE(data)->lock);
         cont = WINECON_GrabChanges(data);
-        LeaveCriticalSection(&WCCURSES_CritSect);
+        LeaveCriticalSection(&PRIVATE(data)->lock);
     }
 
     close( PRIVATE(data)->sync_pipe[1] );
@@ -1103,6 +1103,7 @@ enum init_return WCCURSES_InitBackend(struct inner_data* data)
         PRIVATE(data)->initial_mouse_mask = mm;
     }
 #endif
+    InitializeCriticalSection(&PRIVATE(data)->lock);
 
     return init_success;
 }
