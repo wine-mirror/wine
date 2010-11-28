@@ -57,7 +57,7 @@ typedef struct
 #include "poppack.h"
 
 typedef struct {
-    const IWICBitmapDecoderVtbl *lpVtbl;
+    IWICBitmapDecoder IWICBitmapDecoder_iface;
     LONG ref;
     BOOL initialized;
     IStream *stream;
@@ -66,16 +66,26 @@ typedef struct {
 } IcoDecoder;
 
 typedef struct {
-    const IWICBitmapFrameDecodeVtbl *lpVtbl;
+    IWICBitmapFrameDecode IWICBitmapFrameDecode_iface;
     LONG ref;
     UINT width, height;
     BYTE *bits;
 } IcoFrameDecode;
 
+static inline IcoDecoder *impl_from_IWICBitmapDecoder(IWICBitmapDecoder *iface)
+{
+    return CONTAINING_RECORD(iface, IcoDecoder, IWICBitmapDecoder_iface);
+}
+
+static inline IcoFrameDecode *impl_from_IWICBitmapFrameDecode(IWICBitmapFrameDecode *iface)
+{
+    return CONTAINING_RECORD(iface, IcoFrameDecode, IWICBitmapFrameDecode_iface);
+}
+
 static HRESULT WINAPI IcoFrameDecode_QueryInterface(IWICBitmapFrameDecode *iface, REFIID iid,
     void **ppv)
 {
-    IcoFrameDecode *This = (IcoFrameDecode*)iface;
+    IcoFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
@@ -98,7 +108,7 @@ static HRESULT WINAPI IcoFrameDecode_QueryInterface(IWICBitmapFrameDecode *iface
 
 static ULONG WINAPI IcoFrameDecode_AddRef(IWICBitmapFrameDecode *iface)
 {
-    IcoFrameDecode *This = (IcoFrameDecode*)iface;
+    IcoFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -108,7 +118,7 @@ static ULONG WINAPI IcoFrameDecode_AddRef(IWICBitmapFrameDecode *iface)
 
 static ULONG WINAPI IcoFrameDecode_Release(IWICBitmapFrameDecode *iface)
 {
-    IcoFrameDecode *This = (IcoFrameDecode*)iface;
+    IcoFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -125,7 +135,7 @@ static ULONG WINAPI IcoFrameDecode_Release(IWICBitmapFrameDecode *iface)
 static HRESULT WINAPI IcoFrameDecode_GetSize(IWICBitmapFrameDecode *iface,
     UINT *puiWidth, UINT *puiHeight)
 {
-    IcoFrameDecode *This = (IcoFrameDecode*)iface;
+    IcoFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
 
     *puiWidth = This->width;
     *puiHeight = This->height;
@@ -159,7 +169,7 @@ static HRESULT WINAPI IcoFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
 static HRESULT WINAPI IcoFrameDecode_CopyPixels(IWICBitmapFrameDecode *iface,
     const WICRect *prc, UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer)
 {
-    IcoFrameDecode *This = (IcoFrameDecode*)iface;
+    IcoFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     TRACE("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
 
     return copy_pixels(32, This->bits, This->width, This->height, This->width * 4,
@@ -392,7 +402,7 @@ end:
 static HRESULT WINAPI IcoDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID iid,
     void **ppv)
 {
-    IcoDecoder *This = (IcoDecoder*)iface;
+    IcoDecoder *This = impl_from_IWICBitmapDecoder(iface);
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
@@ -413,7 +423,7 @@ static HRESULT WINAPI IcoDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID
 
 static ULONG WINAPI IcoDecoder_AddRef(IWICBitmapDecoder *iface)
 {
-    IcoDecoder *This = (IcoDecoder*)iface;
+    IcoDecoder *This = impl_from_IWICBitmapDecoder(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -423,7 +433,7 @@ static ULONG WINAPI IcoDecoder_AddRef(IWICBitmapDecoder *iface)
 
 static ULONG WINAPI IcoDecoder_Release(IWICBitmapDecoder *iface)
 {
-    IcoDecoder *This = (IcoDecoder*)iface;
+    IcoDecoder *This = impl_from_IWICBitmapDecoder(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -449,7 +459,7 @@ static HRESULT WINAPI IcoDecoder_QueryCapability(IWICBitmapDecoder *iface, IStre
 static HRESULT WINAPI IcoDecoder_Initialize(IWICBitmapDecoder *iface, IStream *pIStream,
     WICDecodeOptions cacheOptions)
 {
-    IcoDecoder *This = (IcoDecoder*)iface;
+    IcoDecoder *This = impl_from_IWICBitmapDecoder(iface);
     LARGE_INTEGER seek;
     HRESULT hr;
     ULONG bytesread;
@@ -540,7 +550,7 @@ static HRESULT WINAPI IcoDecoder_GetThumbnail(IWICBitmapDecoder *iface,
 static HRESULT WINAPI IcoDecoder_GetFrameCount(IWICBitmapDecoder *iface,
     UINT *pCount)
 {
-    IcoDecoder *This = (IcoDecoder*)iface;
+    IcoDecoder *This = impl_from_IWICBitmapDecoder(iface);
     TRACE("(%p,%p)\n", iface, pCount);
 
     if (!This->initialized) return WINCODEC_ERR_NOTINITIALIZED;
@@ -554,7 +564,7 @@ static HRESULT WINAPI IcoDecoder_GetFrameCount(IWICBitmapDecoder *iface,
 static HRESULT WINAPI IcoDecoder_GetFrame(IWICBitmapDecoder *iface,
     UINT index, IWICBitmapFrameDecode **ppIBitmapFrame)
 {
-    IcoDecoder *This = (IcoDecoder*)iface;
+    IcoDecoder *This = impl_from_IWICBitmapDecoder(iface);
     IcoFrameDecode *result=NULL;
     LARGE_INTEGER seek;
     ULARGE_INTEGER offset, length;
@@ -586,7 +596,7 @@ static HRESULT WINAPI IcoDecoder_GetFrame(IWICBitmapDecoder *iface,
         goto fail;
     }
 
-    result->lpVtbl = &IcoFrameDecode_Vtbl;
+    result->IWICBitmapFrameDecode_iface.lpVtbl = &IcoFrameDecode_Vtbl;
     result->ref = 1;
     result->bits = NULL;
 
@@ -677,7 +687,7 @@ HRESULT IcoDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(IcoDecoder));
     if (!This) return E_OUTOFMEMORY;
 
-    This->lpVtbl = &IcoDecoder_Vtbl;
+    This->IWICBitmapDecoder_iface.lpVtbl = &IcoDecoder_Vtbl;
     This->ref = 1;
     This->stream = NULL;
     This->initialized = FALSE;
