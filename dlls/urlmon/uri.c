@@ -6265,6 +6265,39 @@ static HRESULT parse_rootdocument(const Uri *uri, LPWSTR output, DWORD output_le
     return S_OK;
 }
 
+static HRESULT parse_document(const Uri *uri, LPWSTR output, DWORD output_len,
+                              DWORD *result_len)
+{
+    DWORD len = 0;
+
+    /* It has to be a known scheme type, but, it can't be a file
+     * scheme. It also has to hierarchical.
+     */
+    if(uri->scheme_type == URL_SCHEME_UNKNOWN ||
+       uri->scheme_type == URL_SCHEME_FILE ||
+       uri->authority_start == -1) {
+        *result_len = 0;
+        if(output_len < 1)
+            return STRSAFE_E_INSUFFICIENT_BUFFER;
+
+        output[0] = 0;
+        return S_OK;
+    }
+
+    if(uri->fragment_start > -1)
+        len = uri->fragment_start;
+    else
+        len = uri->canon_len;
+
+    *result_len = len;
+    if(len+1 > output_len)
+        return STRSAFE_E_INSUFFICIENT_BUFFER;
+
+    memcpy(output, uri->canon_uri, len*sizeof(WCHAR));
+    output[len] = 0;
+    return S_OK;
+}
+
 /***********************************************************************
  *           CoInternetParseIUri (urlmon.@)
  */
@@ -6307,6 +6340,15 @@ HRESULT WINAPI CoInternetParseIUri(IUri *pIUri, PARSEACTION ParseAction, DWORD d
             return E_NOTIMPL;
         }
         hr = parse_rootdocument(uri, pwzResult, cchResult, pcchResult);
+        break;
+    case PARSE_DOCUMENT:
+        if(!(uri = get_uri_obj(pIUri))) {
+            *pcchResult = 0;
+            FIXME("(%p %d %x %p %d %p %x) Unknown IUri's not supported for this action.\n",
+                pIUri, ParseAction, dwFlags, pwzResult, cchResult, pcchResult, (DWORD)dwReserved);
+            return E_NOTIMPL;
+        }
+        hr = parse_document(uri, pwzResult, cchResult, pcchResult);
         break;
     case PARSE_SECURITY_URL:
     case PARSE_MIME:

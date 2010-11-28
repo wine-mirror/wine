@@ -5933,7 +5933,15 @@ static const uri_parse_test uri_parse_tests[] = {
     {"zip://google.com/",0,PARSE_ROOTDOCUMENT,0,"",S_OK,FALSE},
     {"file:///c:/testing/",0,PARSE_ROOTDOCUMENT,0,"",S_OK,FALSE},
     {"file://server/test",0,PARSE_ROOTDOCUMENT,0,"",S_OK,FALSE},
-    {"zip:test/test",0,PARSE_ROOTDOCUMENT,0,"",S_OK,FALSE}
+    {"zip:test/test",0,PARSE_ROOTDOCUMENT,0,"",S_OK,FALSE},
+
+    /* PARSE_DOCUMENT tests. */
+    {"http://test@google.com/test?query#frag",0,PARSE_DOCUMENT,0,"http://test@google.com/test?query",S_OK,FALSE},
+    {"http:testing#frag",0,PARSE_DOCUMENT,0,"",S_OK,FALSE},
+    {"file:///c:/test#frag",0,PARSE_DOCUMENT,0,"",S_OK,FALSE},
+    {"zip://google.com/#frag",0,PARSE_DOCUMENT,0,"",S_OK,FALSE},
+    {"zip:test#frag",0,PARSE_DOCUMENT,0,"",S_OK,FALSE},
+    {"testing#frag",Uri_CREATE_ALLOW_RELATIVE,PARSE_DOCUMENT,0,"",S_OK,FALSE}
 };
 
 static inline LPWSTR a2w(LPCSTR str) {
