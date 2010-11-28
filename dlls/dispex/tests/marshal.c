@@ -140,9 +140,14 @@ static void end_host_object(DWORD tid, HANDLE thread)
 
 typedef struct
 {
-    const IDispatchExVtbl *lpVtbl;
+    IDispatchEx IDispatchEx_iface;
     LONG refs;
 } dispex;
+
+static inline dispex *impl_from_IDispatchEx(IDispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, dispex, IDispatchEx_iface);
+}
 
 static HRESULT WINAPI dispex_QueryInterface(IDispatchEx* iface,
                                             REFIID iid,  void **obj)
@@ -164,7 +169,7 @@ static HRESULT WINAPI dispex_QueryInterface(IDispatchEx* iface,
 
 static ULONG WINAPI dispex_AddRef(IDispatchEx* iface)
 {
-    dispex *This = (dispex *)iface;
+    dispex *This = impl_from_IDispatchEx(iface);
     trace("AddRef\n");
 
     return InterlockedIncrement(&This->refs);
@@ -172,7 +177,7 @@ static ULONG WINAPI dispex_AddRef(IDispatchEx* iface)
 
 static ULONG WINAPI dispex_Release(IDispatchEx* iface)
 {
-    dispex *This = (dispex *)iface;
+    dispex *This = impl_from_IDispatchEx(iface);
     ULONG refs = InterlockedDecrement(&This->refs);
     trace("Release\n");
     if(!refs)
@@ -349,7 +354,7 @@ static IDispatchEx *dispex_create(void)
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if (!This) return NULL;
-    This->lpVtbl = &dispex_vtable;
+    This->IDispatchEx_iface.lpVtbl = &dispex_vtable;
     This->refs = 1;
     return (IDispatchEx *)This;
 }
