@@ -6214,6 +6214,57 @@ static HRESULT parse_friendly(IUri *uri, LPWSTR output, DWORD output_len,
     return S_OK;
 }
 
+static HRESULT parse_rootdocument(const Uri *uri, LPWSTR output, DWORD output_len,
+                                  DWORD *result_len)
+{
+    static const WCHAR colon_slashesW[] = {':','/','/'};
+
+    WCHAR *ptr;
+    DWORD len = 0;
+
+    /* Windows only returns the root document if the URI has an authority
+     * and it's not an unknown scheme type or a file scheme type.
+     */
+    if(uri->authority_start == -1 ||
+       uri->scheme_type == URL_SCHEME_UNKNOWN ||
+       uri->scheme_type == URL_SCHEME_FILE) {
+        *result_len = 0;
+        if(!output_len)
+            return STRSAFE_E_INSUFFICIENT_BUFFER;
+
+        output[0] = 0;
+        return S_OK;
+    }
+
+    len = uri->scheme_len+uri->authority_len;
+    /* For the "://" and '/' which will be added. */
+    len += 4;
+
+    if(len+1 > output_len) {
+        *result_len = len;
+        return STRSAFE_E_INSUFFICIENT_BUFFER;
+    }
+
+    ptr = output;
+    memcpy(ptr, uri->canon_uri+uri->scheme_start, uri->scheme_len*sizeof(WCHAR));
+
+    /* Add the "://". */
+    ptr += uri->scheme_len;
+    memcpy(ptr, colon_slashesW, sizeof(colon_slashesW));
+
+    /* Add the authority. */
+    ptr += sizeof(colon_slashesW)/sizeof(WCHAR);
+    memcpy(ptr, uri->canon_uri+uri->authority_start, uri->authority_len*sizeof(WCHAR));
+
+    /* Add the '/' after the authority. */
+    ptr += uri->authority_len;
+    *ptr = '/';
+    ptr[1] = 0;
+
+    *result_len = len;
+    return S_OK;
+}
+
 /***********************************************************************
  *           CoInternetParseIUri (urlmon.@)
  */
@@ -6247,6 +6298,15 @@ HRESULT WINAPI CoInternetParseIUri(IUri *pIUri, PARSEACTION ParseAction, DWORD d
         break;
     case PARSE_FRIENDLY:
         hr = parse_friendly(pIUri, pwzResult, cchResult, pcchResult);
+        break;
+    case PARSE_ROOTDOCUMENT:
+        if(!(uri = get_uri_obj(pIUri))) {
+            *pcchResult = 0;
+            FIXME("(%p %d %x %p %d %p %x) Unknown IUri's not supported for this action.\n",
+                pIUri, ParseAction, dwFlags, pwzResult, cchResult, pcchResult, (DWORD)dwReserved);
+            return E_NOTIMPL;
+        }
+        hr = parse_rootdocument(uri, pwzResult, cchResult, pcchResult);
         break;
     case PARSE_SECURITY_URL:
     case PARSE_MIME:
