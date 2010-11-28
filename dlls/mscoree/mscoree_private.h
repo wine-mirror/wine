@@ -97,27 +97,27 @@ typedef struct loaded_mono
     HMODULE mono_handle;
     HMODULE glib_handle;
 
-    MonoImage* (*mono_assembly_get_image)(MonoAssembly *assembly);
-    MonoAssembly* (*mono_assembly_open)(const char *filename, MonoImageOpenStatus *status);
-    MonoClass* (*mono_class_from_mono_type)(MonoType *type);
-    MonoClass* (*mono_class_from_name)(MonoImage *image, const char* name_space, const char *name);
-    MonoMethod* (*mono_class_get_method_from_name)(MonoClass *klass, const char *name, int param_count);
-    void (*mono_config_parse)(const char *filename);
-    MonoAssembly* (*mono_domain_assembly_open) (MonoDomain *domain, const char *name);
-    void (*mono_free)(void *);
-    void (*mono_install_assembly_preload_hook)(MonoAssemblyPreLoadFunc func, void *user_data);
-    void (*mono_jit_cleanup)(MonoDomain *domain);
-    int (*mono_jit_exec)(MonoDomain *domain, MonoAssembly *assembly, int argc, char *argv[]);
-    MonoDomain* (*mono_jit_init)(const char *file);
-    int (*mono_jit_set_trace_options)(const char* options);
-    MonoDomain* (*mono_object_get_domain)(MonoObject *obj);
-    MonoObject* (*mono_object_new)(MonoDomain *domain, MonoClass *klass);
-    void* (*mono_object_unbox)(MonoObject *obj);
-    MonoType* (*mono_reflection_type_from_name)(char *name, MonoImage *image);
-    MonoObject* (*mono_runtime_invoke)(MonoMethod *method, void *obj, void **params, MonoObject **exc);
-    void (*mono_runtime_object_init)(MonoObject *this_obj);
-    void (*mono_set_dirs)(const char *assembly_dir, const char *config_dir);
-    char* (*mono_stringify_assembly_name)(MonoAssemblyName *aname);
+    MonoImage* (CDECL *mono_assembly_get_image)(MonoAssembly *assembly);
+    MonoAssembly* (CDECL *mono_assembly_open)(const char *filename, MonoImageOpenStatus *status);
+    MonoClass* (CDECL *mono_class_from_mono_type)(MonoType *type);
+    MonoClass* (CDECL *mono_class_from_name)(MonoImage *image, const char* name_space, const char *name);
+    MonoMethod* (CDECL *mono_class_get_method_from_name)(MonoClass *klass, const char *name, int param_count);
+    void (CDECL *mono_config_parse)(const char *filename);
+    MonoAssembly* (CDECL *mono_domain_assembly_open) (MonoDomain *domain, const char *name);
+    void (CDECL *mono_free)(void *);
+    void (CDECL *mono_install_assembly_preload_hook)(MonoAssemblyPreLoadFunc func, void *user_data);
+    void (CDECL *mono_jit_cleanup)(MonoDomain *domain);
+    int (CDECL *mono_jit_exec)(MonoDomain *domain, MonoAssembly *assembly, int argc, char *argv[]);
+    MonoDomain* (CDECL *mono_jit_init)(const char *file);
+    int (CDECL *mono_jit_set_trace_options)(const char* options);
+    MonoDomain* (CDECL *mono_object_get_domain)(MonoObject *obj);
+    MonoObject* (CDECL *mono_object_new)(MonoDomain *domain, MonoClass *klass);
+    void* (CDECL *mono_object_unbox)(MonoObject *obj);
+    MonoType* (CDECL *mono_reflection_type_from_name)(char *name, MonoImage *image);
+    MonoObject* (CDECL *mono_runtime_invoke)(MonoMethod *method, void *obj, void **params, MonoObject **exc);
+    void (CDECL *mono_runtime_object_init)(MonoObject *this_obj);
+    void (CDECL *mono_set_dirs)(const char *assembly_dir, const char *config_dir);
+    char* (CDECL *mono_stringify_assembly_name)(MonoAssemblyName *aname);
 } loaded_mono;
 
 /* loaded runtime interfaces */
