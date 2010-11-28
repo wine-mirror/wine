@@ -94,7 +94,6 @@ static void update_hostinfo(HTMLDocumentObj *This, DOCHOSTUIINFO *hostinfo)
 static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite *pClientSite)
 {
     HTMLDocument *This = OLEOBJ_THIS(iface);
-    IDocHostUIHandler *pDocHostUIHandler = NULL;
     IOleCommandTarget *cmdtrg = NULL;
     IOleWindow *ole_window;
     BOOL hostui_setup;
@@ -113,7 +112,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
         This->doc_obj->usermode = UNKNOWN_USERMODE;
     }
 
-    if(This->doc_obj->hostui) {
+    if(This->doc_obj->hostui && !This->doc_obj->custom_hostui) {
         IDocHostUIHandler_Release(This->doc_obj->hostui);
         This->doc_obj->hostui = NULL;
     }
@@ -128,17 +127,24 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
 
     hostui_setup = This->doc_obj->hostui_setup;
 
-    hres = IOleObject_QueryInterface(pClientSite, &IID_IDocHostUIHandler, (void**)&pDocHostUIHandler);
-    if(SUCCEEDED(hres)) {
+    if(!This->doc_obj->hostui) {
+        IDocHostUIHandler *uihandler;
+
+        This->doc_obj->custom_hostui = FALSE;
+
+        hres = IOleObject_QueryInterface(pClientSite, &IID_IDocHostUIHandler, (void**)&uihandler);
+        if(SUCCEEDED(hres))
+            This->doc_obj->hostui = uihandler;
+    }
+
+    if(This->doc_obj->hostui) {
         DOCHOSTUIINFO hostinfo;
         LPOLESTR key_path = NULL, override_key_path = NULL;
-        IDocHostUIHandler2 *pDocHostUIHandler2;
-
-        This->doc_obj->hostui = pDocHostUIHandler;
+        IDocHostUIHandler2 *uihandler2;
 
         memset(&hostinfo, 0, sizeof(DOCHOSTUIINFO));
         hostinfo.cbSize = sizeof(DOCHOSTUIINFO);
-        hres = IDocHostUIHandler_GetHostInfo(pDocHostUIHandler, &hostinfo);
+        hres = IDocHostUIHandler_GetHostInfo(This->doc_obj->hostui, &hostinfo);
         if(SUCCEEDED(hres)) {
             TRACE("hostinfo = {%u %08x %08x %s %s}\n",
                     hostinfo.cbSize, hostinfo.dwFlags, hostinfo.dwDoubleClick,
@@ -148,7 +154,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
         }
 
         if(!hostui_setup) {
-            hres = IDocHostUIHandler_GetOptionKeyPath(pDocHostUIHandler, &key_path, 0);
+            hres = IDocHostUIHandler_GetOptionKeyPath(This->doc_obj->hostui, &key_path, 0);
             if(hres == S_OK && key_path) {
                 if(key_path[0]) {
                     /* FIXME: use key_path */
@@ -157,10 +163,10 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
                 CoTaskMemFree(key_path);
             }
 
-            hres = IDocHostUIHandler_QueryInterface(pDocHostUIHandler, &IID_IDocHostUIHandler2,
-                    (void**)&pDocHostUIHandler2);
+            hres = IDocHostUIHandler_QueryInterface(This->doc_obj->hostui, &IID_IDocHostUIHandler2,
+                    (void**)&uihandler2);
             if(SUCCEEDED(hres)) {
-                hres = IDocHostUIHandler2_GetOverrideKeyPath(pDocHostUIHandler2, &override_key_path, 0);
+                hres = IDocHostUIHandler2_GetOverrideKeyPath(uihandler2, &override_key_path, 0);
                 if(hres == S_OK && override_key_path && override_key_path[0]) {
                     if(override_key_path[0]) {
                         /*FIXME: use override_key_path */
@@ -168,13 +174,11 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
                     }
                     CoTaskMemFree(override_key_path);
                 }
-                IDocHostUIHandler2_Release(pDocHostUIHandler2);
+                IDocHostUIHandler2_Release(uihandler2);
             }
 
             This->doc_obj->hostui_setup = TRUE;
         }
-    }else {
-        This->doc_obj->hostui = NULL;
     }
 
     /* Native calls here GetWindow. What is it for?
