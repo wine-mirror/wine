@@ -15058,7 +15058,79 @@ interface IHTMLObjectElement : IDispatch
 }
 
 /*****************************************************************************
- *    DispHTMLObjectElement interface
+ *    IHTMLParamElement interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f83d-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLParamElement : IDispatch
+{
+    [propput, id(DISPID_IHTMLPARAMELEMENT_NAME), displaybind, bindable]
+    HRESULT name([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLPARAMELEMENT_NAME), displaybind, bindable]
+    HRESULT name([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLPARAMELEMENT_VALUE), displaybind, bindable]
+    HRESULT value([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLPARAMELEMENT_VALUE), displaybind, bindable]
+    HRESULT value([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLPARAMELEMENT_TYPE), displaybind, bindable]
+    HRESULT type([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLPARAMELEMENT_TYPE), displaybind, bindable]
+    HRESULT type([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLPARAMELEMENT_VALUETYPE), displaybind, bindable]
+    HRESULT valueType([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLPARAMELEMENT_VALUETYPE), displaybind, bindable]
+    HRESULT valueType([retval, out] BSTR *p);
+}
+
+/*****************************************************************************
+ *    IHTMLParamElement2 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(30510444-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLParamElement2 : IDispatch
+{
+    [propput, id(DISPID_IHTMLPARAMELEMENT2_NAME), displaybind, bindable]
+    HRESULT name([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLPARAMELEMENT2_NAME), displaybind, bindable]
+    HRESULT name([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLPARAMELEMENT2_TYPE), displaybind, bindable]
+    HRESULT type([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLPARAMELEMENT2_TYPE), displaybind, bindable]
+    HRESULT type([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLPARAMELEMENT2_VALUE), displaybind, bindable]
+    HRESULT value([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLPARAMELEMENT2_VALUE), displaybind, bindable]
+    HRESULT value([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLPARAMELEMENT2_IE8_VALUETYPE)]
+    HRESULT valueType([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLPARAMELEMENT2_IE8_VALUETYPE)]
+    HRESULT valueType([retval, out] BSTR *p);
+}
+
+/*****************************************************************************
+ *    DispHTMLObjectElement dispinterface
  */
 [
     hidden,
@@ -15224,6 +15296,50 @@ methods:
 
     [propget, id(DISPID_IHTMLOBJECTELEMENT4_IE8_DATA)]
     BSTR ie8_data();
+}
+
+/*****************************************************************************
+ *    DispHTMLParamElement dispinterface
+ */
+[
+    hidden,
+    uuid(3050f590-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLParamElement
+{
+properties:
+methods:
+    WINE_HTMLELEMENT_DISPINTERFACE_DECL;
+
+    [propput, id(DISPID_IHTMLPARAMELEMENT_NAME), displaybind, bindable]
+    void name(BSTR v);
+
+    [propget, id(DISPID_IHTMLPARAMELEMENT_NAME), displaybind, bindable]
+    BSTR name();
+
+    [propput, id(DISPID_IHTMLPARAMELEMENT_VALUE), displaybind, bindable]
+    void value(BSTR v);
+
+    [propget, id(DISPID_IHTMLPARAMELEMENT_VALUE), displaybind, bindable]
+    BSTR value();
+
+    [propput, id(DISPID_IHTMLPARAMELEMENT_TYPE), displaybind, bindable]
+    void type(BSTR v);
+
+    [propget, id(DISPID_IHTMLPARAMELEMENT_TYPE), displaybind, bindable]
+    BSTR type();
+
+    [propput, id(DISPID_IHTMLPARAMELEMENT_VALUETYPE), displaybind, bindable]
+    void valueType(BSTR v);
+
+    [propget, id(DISPID_IHTMLPARAMELEMENT_VALUETYPE), displaybind, bindable]
+    BSTR valueType();
+
+    [propput, id(DISPID_IHTMLPARAMELEMENT2_IE8_VALUETYPE)]
+    void ie8_valueType(BSTR v);
+
+    [propget, id(DISPID_IHTMLPARAMELEMENT2_IE8_VALUETYPE)]
+    BSTR ie8_valueType();
 }
 
 /*****************************************************************************
