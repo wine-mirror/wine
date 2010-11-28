@@ -36,7 +36,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
 typedef struct {
-    const IWICBitmapDecoderVtbl *lpVtbl;
+    IWICBitmapDecoder IWICBitmapDecoder_iface;
     LONG ref;
     BOOL initialized;
     GifFileType *gif;
@@ -44,16 +44,26 @@ typedef struct {
 } GifDecoder;
 
 typedef struct {
-    const IWICBitmapFrameDecodeVtbl *lpVtbl;
+    IWICBitmapFrameDecode IWICBitmapFrameDecode_iface;
     LONG ref;
     SavedImage *frame;
     GifDecoder *parent;
 } GifFrameDecode;
 
+static inline GifDecoder *impl_from_IWICBitmapDecoder(IWICBitmapDecoder *iface)
+{
+    return CONTAINING_RECORD(iface, GifDecoder, IWICBitmapDecoder_iface);
+}
+
+static inline GifFrameDecode *impl_from_IWICBitmapFrameDecode(IWICBitmapFrameDecode *iface)
+{
+    return CONTAINING_RECORD(iface, GifFrameDecode, IWICBitmapFrameDecode_iface);
+}
+
 static HRESULT WINAPI GifFrameDecode_QueryInterface(IWICBitmapFrameDecode *iface, REFIID iid,
     void **ppv)
 {
-    GifFrameDecode *This = (GifFrameDecode*)iface;
+    GifFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
@@ -76,7 +86,7 @@ static HRESULT WINAPI GifFrameDecode_QueryInterface(IWICBitmapFrameDecode *iface
 
 static ULONG WINAPI GifFrameDecode_AddRef(IWICBitmapFrameDecode *iface)
 {
-    GifFrameDecode *This = (GifFrameDecode*)iface;
+    GifFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -86,7 +96,7 @@ static ULONG WINAPI GifFrameDecode_AddRef(IWICBitmapFrameDecode *iface)
 
 static ULONG WINAPI GifFrameDecode_Release(IWICBitmapFrameDecode *iface)
 {
-    GifFrameDecode *This = (GifFrameDecode*)iface;
+    GifFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -103,7 +113,7 @@ static ULONG WINAPI GifFrameDecode_Release(IWICBitmapFrameDecode *iface)
 static HRESULT WINAPI GifFrameDecode_GetSize(IWICBitmapFrameDecode *iface,
     UINT *puiWidth, UINT *puiHeight)
 {
-    GifFrameDecode *This = (GifFrameDecode*)iface;
+    GifFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     TRACE("(%p,%p,%p)\n", iface, puiWidth, puiHeight);
 
     *puiWidth = This->frame->ImageDesc.Width;
@@ -123,7 +133,7 @@ static HRESULT WINAPI GifFrameDecode_GetPixelFormat(IWICBitmapFrameDecode *iface
 static HRESULT WINAPI GifFrameDecode_GetResolution(IWICBitmapFrameDecode *iface,
     double *pDpiX, double *pDpiY)
 {
-    GifFrameDecode *This = (GifFrameDecode*)iface;
+    GifFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     const GifWord aspect_word = This->parent->gif->SAspectRatio;
     const double aspect = (aspect_word > 0) ? ((aspect_word + 15.0) / 64.0) : 1.0;
     TRACE("(%p,%p,%p)\n", iface, pDpiX, pDpiY);
@@ -137,7 +147,7 @@ static HRESULT WINAPI GifFrameDecode_GetResolution(IWICBitmapFrameDecode *iface,
 static HRESULT WINAPI GifFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
     IWICPalette *pIPalette)
 {
-    GifFrameDecode *This = (GifFrameDecode*)iface;
+    GifFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     WICColor colors[256];
     ColorMapObject *cm = This->frame->ImageDesc.ColorMap;
     int i, trans;
@@ -229,7 +239,7 @@ static HRESULT copy_interlaced_pixels(const BYTE *srcbuffer,
 static HRESULT WINAPI GifFrameDecode_CopyPixels(IWICBitmapFrameDecode *iface,
     const WICRect *prc, UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer)
 {
-    GifFrameDecode *This = (GifFrameDecode*)iface;
+    GifFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     TRACE("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
 
     if (This->frame->ImageDesc.Interlace)
@@ -284,7 +294,7 @@ static const IWICBitmapFrameDecodeVtbl GifFrameDecode_Vtbl = {
 static HRESULT WINAPI GifDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID iid,
     void **ppv)
 {
-    GifDecoder *This = (GifDecoder*)iface;
+    GifDecoder *This = impl_from_IWICBitmapDecoder(iface);
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
@@ -305,7 +315,7 @@ static HRESULT WINAPI GifDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID
 
 static ULONG WINAPI GifDecoder_AddRef(IWICBitmapDecoder *iface)
 {
-    GifDecoder *This = (GifDecoder*)iface;
+    GifDecoder *This = impl_from_IWICBitmapDecoder(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -315,7 +325,7 @@ static ULONG WINAPI GifDecoder_AddRef(IWICBitmapDecoder *iface)
 
 static ULONG WINAPI GifDecoder_Release(IWICBitmapDecoder *iface)
 {
-    GifDecoder *This = (GifDecoder*)iface;
+    GifDecoder *This = impl_from_IWICBitmapDecoder(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -357,7 +367,7 @@ static int _gif_inputfunc(GifFileType *gif, GifByteType *data, int len) {
 static HRESULT WINAPI GifDecoder_Initialize(IWICBitmapDecoder *iface, IStream *pIStream,
     WICDecodeOptions cacheOptions)
 {
-    GifDecoder *This = (GifDecoder*)iface;
+    GifDecoder *This = impl_from_IWICBitmapDecoder(iface);
     LARGE_INTEGER seek;
     int ret;
 
@@ -465,7 +475,7 @@ static HRESULT WINAPI GifDecoder_GetThumbnail(IWICBitmapDecoder *iface,
 static HRESULT WINAPI GifDecoder_GetFrameCount(IWICBitmapDecoder *iface,
     UINT *pCount)
 {
-    GifDecoder *This = (GifDecoder*)iface;
+    GifDecoder *This = impl_from_IWICBitmapDecoder(iface);
     TRACE("(%p,%p)\n", iface, pCount);
 
     if (!This->initialized) return WINCODEC_ERR_NOTINITIALIZED;
@@ -480,7 +490,7 @@ static HRESULT WINAPI GifDecoder_GetFrameCount(IWICBitmapDecoder *iface,
 static HRESULT WINAPI GifDecoder_GetFrame(IWICBitmapDecoder *iface,
     UINT index, IWICBitmapFrameDecode **ppIBitmapFrame)
 {
-    GifDecoder *This = (GifDecoder*)iface;
+    GifDecoder *This = impl_from_IWICBitmapDecoder(iface);
     GifFrameDecode *result;
     TRACE("(%p,%u,%p)\n", iface, index, ppIBitmapFrame);
 
@@ -491,7 +501,7 @@ static HRESULT WINAPI GifDecoder_GetFrame(IWICBitmapDecoder *iface,
     result = HeapAlloc(GetProcessHeap(), 0, sizeof(GifFrameDecode));
     if (!result) return E_OUTOFMEMORY;
 
-    result->lpVtbl = &GifFrameDecode_Vtbl;
+    result->IWICBitmapFrameDecode_iface.lpVtbl = &GifFrameDecode_Vtbl;
     result->ref = 1;
     result->frame = &This->gif->SavedImages[index];
     IWICBitmapDecoder_AddRef(iface);
@@ -533,7 +543,7 @@ HRESULT GifDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(GifDecoder));
     if (!This) return E_OUTOFMEMORY;
 
-    This->lpVtbl = &GifDecoder_Vtbl;
+    This->IWICBitmapDecoder_iface.lpVtbl = &GifDecoder_Vtbl;
     This->ref = 1;
     This->initialized = FALSE;
     This->gif = NULL;
