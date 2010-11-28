@@ -440,15 +440,15 @@ static void test_BindToObject(void)
     WCHAR wszSystemDir[MAX_PATH];
     char szSystemDir[MAX_PATH];
     char buf[MAX_PATH];
-    WCHAR cwd[MAX_PATH];
     WCHAR path[MAX_PATH];
+    CHAR pathA[MAX_PATH];
     HANDLE hfile;
     WCHAR wszMyComputer[] = { 
         ':',':','{','2','0','D','0','4','F','E','0','-','3','A','E','A','-','1','0','6','9','-',
         'A','2','D','8','-','0','8','0','0','2','B','3','0','3','0','9','D','}',0 };
-    static const WCHAR filename_html[] = {'w','i','n','e','t','e','s','t','.','h','t','m','l',0};
-    static const WCHAR filename_txt[] = {'w','i','n','e','t','e','s','t','.','t','x','t',0};
-    static const WCHAR filename_foo[] = {'w','i','n','e','t','e','s','t','.','f','o','o',0};
+    static const CHAR filename_html[] = "winetest.html";
+    static const CHAR filename_txt[] = "winetest.txt";
+    static const CHAR filename_foo[] = "winetest.foo";
 
     /* The following tests shows that BindToObject should fail with E_INVALIDARG if called
      * with an empty pidl. This is tested for Desktop, MyComputer and the FS ShellFolder
@@ -527,35 +527,35 @@ if (0)
         skip("Failed to get current directory, skipping tests.\n");
         return;
     }
-    MultiByteToWideChar(CP_ACP, 0, buf, -1, cwd, MAX_PATH);
 
     SHGetDesktopFolder(&psfDesktop);
 
     /* Attempt BindToObject on files. */
 
     /* .html */
-    lstrcpyW(path, cwd);
-    myPathAddBackslashW(path);
-    lstrcatW(path, filename_html);
-    hfile = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
-    if(hfile != (HANDLE)INVALID_FILE_ATTRIBUTES)
+    lstrcpyA(pathA, buf);
+    lstrcatA(pathA, "\\");
+    lstrcatA(pathA, filename_html);
+    hfile = CreateFileA(pathA, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    if(hfile != INVALID_HANDLE_VALUE)
     {
         CloseHandle(hfile);
+        MultiByteToWideChar(CP_ACP, 0, pathA, -1, path, MAX_PATH);
         hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, path, NULL, &pidl, NULL);
-        ok(hr == S_OK ||
-           broken(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) /* Win98SE */ ||
-           broken(hr == E_FAIL) /* Win95 */,
-           "Got 0x%08x\n", hr);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
         if(SUCCEEDED(hr))
         {
             hr = IShellFolder_BindToObject(psfDesktop, pidl, NULL, &IID_IShellFolder, (void**)&psfChild);
-            ok(hr == S_OK /* Win 7 */ || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) /* WinXP */,
+            ok(hr == S_OK ||
+               hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), /* XP, W2K3 */
                "Got 0x%08x\n", hr);
             if(SUCCEEDED(hr))
             {
                 IPersist *pp;
                 hr = IShellFolder_QueryInterface(psfChild, &IID_IPersist, (void**)&pp);
-                ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* W2K */, "Got 0x%08x\n", hr);
+                ok(hr == S_OK ||
+                   broken(hr == E_NOINTERFACE), /* Win9x, NT4, W2K */
+                   "Got 0x%08x\n", hr);
                 if(SUCCEEDED(hr))
                 {
                     CLSID id;
@@ -569,114 +569,113 @@ if (0)
             }
             pILFree(pidl);
         }
-        DeleteFileW(path);
+        DeleteFileA(pathA);
     }
     else
         win_skip("Failed to create .html testfile.\n");
 
     /* .txt */
-    lstrcpyW(path, cwd);
-    myPathAddBackslashW(path);
-    lstrcatW(path, filename_txt);
-    hfile = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
-    if(hfile != (HANDLE)INVALID_FILE_ATTRIBUTES)
+    lstrcpyA(pathA, buf);
+    lstrcatA(pathA, "\\");
+    lstrcatA(pathA, filename_txt);
+    hfile = CreateFileA(pathA, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    if(hfile != INVALID_HANDLE_VALUE)
     {
         CloseHandle(hfile);
+        MultiByteToWideChar(CP_ACP, 0, pathA, -1, path, MAX_PATH);
         hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, path, NULL, &pidl, NULL);
-        ok(hr == S_OK ||
-           broken(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) /* Win98SE */ ||
-           broken(hr == E_FAIL) /* Win95 */,
-           "Got 0x%08x\n", hr);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
         if(SUCCEEDED(hr))
         {
             hr = IShellFolder_BindToObject(psfDesktop, pidl, NULL, &IID_IShellFolder, (void**)&psfChild);
-            ok(hr == E_FAIL || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)
-               || broken(hr == S_OK) /* W2K */,
+            ok(hr == E_FAIL || /* Vista+ */
+               hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) || /* XP, W2K3 */
+               broken(hr == S_OK), /* Win9x, NT4, W2K */
                "Got 0x%08x\n", hr);
             if(SUCCEEDED(hr)) IShellFolder_Release(psfChild);
             pILFree(pidl);
         }
-        DeleteFileW(path);
+        DeleteFileA(pathA);
     }
     else
         win_skip("Failed to create .txt testfile.\n");
 
     /* .foo */
-    lstrcpyW(path, cwd);
-    myPathAddBackslashW(path);
-    lstrcatW(path, filename_foo);
-    hfile = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
-    if(hfile != (HANDLE)INVALID_FILE_ATTRIBUTES)
+    lstrcpyA(pathA, buf);
+    lstrcatA(pathA, "\\");
+    lstrcatA(pathA, filename_foo);
+    hfile = CreateFileA(pathA, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    if(hfile != INVALID_HANDLE_VALUE)
     {
         CloseHandle(hfile);
+        MultiByteToWideChar(CP_ACP, 0, pathA, -1, path, MAX_PATH);
         hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, path, NULL, &pidl, NULL);
-        ok(hr == S_OK ||
-           broken(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) /* Win98SE */ ||
-           broken(hr == E_FAIL) /* Win95 */,
-           "Got 0x%08x\n", hr);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
         if(SUCCEEDED(hr))
         {
             hr = IShellFolder_BindToObject(psfDesktop, pidl, NULL, &IID_IShellFolder, (void**)&psfChild);
-            ok(hr == E_FAIL || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)
-               || broken(hr == S_OK) /* W2K */,
+            ok(hr == E_FAIL || /* Vista+ */
+               hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) || /* XP, W2K3 */
+               broken(hr == S_OK), /* Win9x, NT4, W2K */
                "Got 0x%08x\n", hr);
             if(SUCCEEDED(hr)) IShellFolder_Release(psfChild);
             pILFree(pidl);
         }
-        DeleteFileW(path);
+        DeleteFileA(pathA);
     }
     else
         win_skip("Failed to create .foo testfile.\n");
 
     /* And on the desktop */
-    if(pSHGetSpecialFolderPathW)
+    if(pSHGetSpecialFolderPathA)
     {
-
-        pSHGetSpecialFolderPathW(NULL, path, CSIDL_DESKTOP, FALSE);
-        myPathAddBackslashW(path);
-        lstrcatW(path, filename_html);
-        hfile = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
-        if(hfile != (HANDLE)INVALID_FILE_ATTRIBUTES)
+        pSHGetSpecialFolderPathA(NULL, pathA, CSIDL_DESKTOP, FALSE);
+        lstrcatA(pathA, "\\");
+        lstrcatA(pathA, filename_html);
+        hfile = CreateFileA(pathA, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+        if(hfile != INVALID_HANDLE_VALUE)
         {
             CloseHandle(hfile);
+            MultiByteToWideChar(CP_ACP, 0, pathA, -1, path, MAX_PATH);
             hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, path, NULL, &pidl, NULL);
-            ok(hr == S_OK || broken(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) /* Win98SE */,
-               "Got 0x%08x\n", hr);
+            ok(hr == S_OK, "Got 0x%08x\n", hr);
             if(SUCCEEDED(hr))
             {
                 hr = IShellFolder_BindToObject(psfDesktop, pidl, NULL, &IID_IShellFolder, (void**)&psfChild);
-                ok(hr == S_OK || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
+                ok(hr == S_OK ||
+                   hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), /* XP, W2K3 */
                    "Got 0x%08x\n", hr);
                 if(SUCCEEDED(hr)) IShellFolder_Release(psfChild);
                 pILFree(pidl);
             }
-            if(!DeleteFileW(path))
+            if(!DeleteFileA(pathA))
                 trace("Failed to delete: %d\n", GetLastError());
 
         }
         else
             win_skip("Failed to create .html testfile.\n");
 
-        pSHGetSpecialFolderPathW(NULL, path, CSIDL_DESKTOP, FALSE);
-        myPathAddBackslashW(path);
-        lstrcatW(path, filename_foo);
-        hfile = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
-        if(hfile != (HANDLE)INVALID_FILE_ATTRIBUTES)
+        pSHGetSpecialFolderPathA(NULL, pathA, CSIDL_DESKTOP, FALSE);
+        lstrcatA(pathA, "\\");
+        lstrcatA(pathA, filename_foo);
+        hfile = CreateFileA(pathA, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+        if(hfile != INVALID_HANDLE_VALUE)
         {
             CloseHandle(hfile);
+            MultiByteToWideChar(CP_ACP, 0, pathA, -1, path, MAX_PATH);
             hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, path, NULL, &pidl, NULL);
-            ok(hr == S_OK || broken(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) /* Win98SE */,
-               "Got 0x%08x\n", hr);
+            ok(hr == S_OK, "Got 0x%08x\n", hr);
             if(SUCCEEDED(hr))
             {
                 hr = IShellFolder_BindToObject(psfDesktop, pidl, NULL, &IID_IShellFolder, (void**)&psfChild);
-                ok(hr == E_FAIL || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)
-                   || broken(hr == S_OK) /* W2K */,
+                ok(hr == E_FAIL || /* Vista+ */
+                   hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) || /* XP, W2K3 */
+                   broken(hr == S_OK), /* Win9x, NT4, W2K */
                    "Got 0x%08x\n", hr);
                 if(SUCCEEDED(hr)) IShellFolder_Release(psfChild);
                 pILFree(pidl);
             }
-            DeleteFileW(path);
+            DeleteFileA(pathA);
         }
         else
             win_skip("Failed to create .foo testfile.\n");
