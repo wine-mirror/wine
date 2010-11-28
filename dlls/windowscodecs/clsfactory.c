@@ -59,15 +59,20 @@ static classinfo wic_classes[] = {
     {0}};
 
 typedef struct {
-    const IClassFactoryVtbl *lpIClassFactoryVtbl;
+    IClassFactory           IClassFactory_iface;
     LONG                    ref;
     classinfo               *info;
 } ClassFactoryImpl;
 
+static inline ClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, ClassFactoryImpl, IClassFactory_iface);
+}
+
 static HRESULT WINAPI ClassFactoryImpl_QueryInterface(IClassFactory *iface,
     REFIID iid, void **ppv)
 {
-    ClassFactoryImpl *This = (ClassFactoryImpl*)iface;
+    ClassFactoryImpl *This = impl_from_IClassFactory(iface);
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
@@ -88,7 +93,7 @@ static HRESULT WINAPI ClassFactoryImpl_QueryInterface(IClassFactory *iface,
 
 static ULONG WINAPI ClassFactoryImpl_AddRef(IClassFactory *iface)
 {
-    ClassFactoryImpl *This = (ClassFactoryImpl*)iface;
+    ClassFactoryImpl *This = impl_from_IClassFactory(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -98,7 +103,7 @@ static ULONG WINAPI ClassFactoryImpl_AddRef(IClassFactory *iface)
 
 static ULONG WINAPI ClassFactoryImpl_Release(IClassFactory *iface)
 {
-    ClassFactoryImpl *This = (ClassFactoryImpl*)iface;
+    ClassFactoryImpl *This = impl_from_IClassFactory(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -112,7 +117,7 @@ static ULONG WINAPI ClassFactoryImpl_Release(IClassFactory *iface)
 static HRESULT WINAPI ClassFactoryImpl_CreateInstance(IClassFactory *iface,
     IUnknown *pUnkOuter, REFIID riid, void **ppv)
 {
-    ClassFactoryImpl *This = (ClassFactoryImpl*)iface;
+    ClassFactoryImpl *This = impl_from_IClassFactory(iface);
 
     return This->info->constructor(pUnkOuter, riid, ppv);
 }
@@ -141,7 +146,7 @@ static HRESULT ClassFactoryImpl_Constructor(classinfo *info, REFIID riid, LPVOID
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(ClassFactoryImpl));
     if (!This) return E_OUTOFMEMORY;
 
-    This->lpIClassFactoryVtbl = &ClassFactoryImpl_Vtbl;
+    This->IClassFactory_iface.lpVtbl = &ClassFactoryImpl_Vtbl;
     This->ref = 1;
     This->info = info;
 
