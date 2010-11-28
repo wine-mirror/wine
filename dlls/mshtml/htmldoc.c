@@ -2087,6 +2087,8 @@ static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
             IAdviseSink_Release(This->view_sink);
         if(This->client)
             IOleObject_SetClientSite(OLEOBJ(&This->basedoc), NULL);
+        if(This->hostui)
+            ICustomDoc_SetUIHandler(CUSTOMDOC(This), NULL);
         if(This->in_place_active)
             IOleInPlaceObjectWindowless_InPlaceDeactivate(INPLACEWIN(&This->basedoc));
         if(This->ipsite)
@@ -2114,8 +2116,31 @@ static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
 static HRESULT WINAPI CustomDoc_SetUIHandler(ICustomDoc *iface, IDocHostUIHandler *pUIHandler)
 {
     HTMLDocumentObj *This = CUSTOMDOC_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pUIHandler);
-    return E_NOTIMPL;
+    IOleCommandTarget *cmdtrg;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, pUIHandler);
+
+    if(This->custom_hostui && This->hostui == pUIHandler)
+        return S_OK;
+
+    This->custom_hostui = TRUE;
+
+    if(This->hostui)
+        IDocHostUIHandler_Release(This->hostui);
+    if(pUIHandler)
+        IDocHostUIHandler_AddRef(pUIHandler);
+    This->hostui = pUIHandler;
+    if(!pUIHandler)
+        return S_OK;
+
+    hres = IDocHostUIHandler_QueryInterface(pUIHandler, &IID_IOleCommandTarget, (void**)&cmdtrg);
+    if(SUCCEEDED(hres)) {
+        FIXME("custom UI handler supports IOleCommandTarget\n");
+        IOleCommandTarget_Release(cmdtrg);
+    }
+
+    return S_OK;
 }
 
 #undef CUSTOMDOC_THIS

@@ -411,6 +411,7 @@ struct HTMLDocumentObj {
 
     IOleClientSite *client;
     IDocHostUIHandler *hostui;
+    BOOL custom_hostui;
     IOleInPlaceSite *ipsite;
     IOleInPlaceFrame *frame;
     IOleInPlaceUIWindow *ip_window;
