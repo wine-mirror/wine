@@ -247,9 +247,6 @@ static void WCEL_InsertChar(WCEL_Context* ctx, WCHAR c)
 {
     WCHAR	buffer[2];
 
-    /* do not insert 0..31 control characters */
-    if (c < ' ' && c != '\t') return;
-
     buffer[0] = c;
     buffer[1] = 0;
     WCEL_InsertString(ctx, buffer);
