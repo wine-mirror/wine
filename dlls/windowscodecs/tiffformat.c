@@ -194,7 +194,7 @@ static TIFF* tiff_open_stream(IStream *stream, const char *mode)
 }
 
 typedef struct {
-    const IWICBitmapDecoderVtbl *lpVtbl;
+    IWICBitmapDecoder IWICBitmapDecoder_iface;
     LONG ref;
     IStream *stream;
     CRITICAL_SECTION lock; /* Must be held when tiff is used or initiailzed is set */
@@ -218,7 +218,7 @@ typedef struct {
 } tiff_decode_info;
 
 typedef struct {
-    const IWICBitmapFrameDecodeVtbl *lpVtbl;
+    IWICBitmapFrameDecode IWICBitmapFrameDecode_iface;
     LONG ref;
     TiffDecoder *parent;
     UINT index;
@@ -228,6 +228,16 @@ typedef struct {
 } TiffFrameDecode;
 
 static const IWICBitmapFrameDecodeVtbl TiffFrameDecode_Vtbl;
+
+static inline TiffDecoder *impl_from_IWICBitmapDecoder(IWICBitmapDecoder *iface)
+{
+    return CONTAINING_RECORD(iface, TiffDecoder, IWICBitmapDecoder_iface);
+}
+
+static inline TiffFrameDecode *impl_from_IWICBitmapFrameDecode(IWICBitmapFrameDecode *iface)
+{
+    return CONTAINING_RECORD(iface, TiffFrameDecode, IWICBitmapFrameDecode_iface);
+}
 
 static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
 {
@@ -423,7 +433,7 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
 static HRESULT WINAPI TiffDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID iid,
     void **ppv)
 {
-    TiffDecoder *This = (TiffDecoder*)iface;
+    TiffDecoder *This = impl_from_IWICBitmapDecoder(iface);
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
@@ -444,7 +454,7 @@ static HRESULT WINAPI TiffDecoder_QueryInterface(IWICBitmapDecoder *iface, REFII
 
 static ULONG WINAPI TiffDecoder_AddRef(IWICBitmapDecoder *iface)
 {
-    TiffDecoder *This = (TiffDecoder*)iface;
+    TiffDecoder *This = impl_from_IWICBitmapDecoder(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -454,7 +464,7 @@ static ULONG WINAPI TiffDecoder_AddRef(IWICBitmapDecoder *iface)
 
 static ULONG WINAPI TiffDecoder_Release(IWICBitmapDecoder *iface)
 {
-    TiffDecoder *This = (TiffDecoder*)iface;
+    TiffDecoder *This = impl_from_IWICBitmapDecoder(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -481,7 +491,7 @@ static HRESULT WINAPI TiffDecoder_QueryCapability(IWICBitmapDecoder *iface, IStr
 static HRESULT WINAPI TiffDecoder_Initialize(IWICBitmapDecoder *iface, IStream *pIStream,
     WICDecodeOptions cacheOptions)
 {
-    TiffDecoder *This = (TiffDecoder*)iface;
+    TiffDecoder *This = impl_from_IWICBitmapDecoder(iface);
     TIFF *tiff;
     HRESULT hr=S_OK;
 
@@ -565,7 +575,7 @@ static HRESULT WINAPI TiffDecoder_GetThumbnail(IWICBitmapDecoder *iface,
 static HRESULT WINAPI TiffDecoder_GetFrameCount(IWICBitmapDecoder *iface,
     UINT *pCount)
 {
-    TiffDecoder *This = (TiffDecoder*)iface;
+    TiffDecoder *This = impl_from_IWICBitmapDecoder(iface);
 
     if (!This->tiff)
     {
@@ -586,7 +596,7 @@ static HRESULT WINAPI TiffDecoder_GetFrameCount(IWICBitmapDecoder *iface,
 static HRESULT WINAPI TiffDecoder_GetFrame(IWICBitmapDecoder *iface,
     UINT index, IWICBitmapFrameDecode **ppIBitmapFrame)
 {
-    TiffDecoder *This = (TiffDecoder*)iface;
+    TiffDecoder *This = impl_from_IWICBitmapDecoder(iface);
     TiffFrameDecode *result;
     int res;
     tiff_decode_info decode_info;
@@ -609,7 +619,7 @@ static HRESULT WINAPI TiffDecoder_GetFrame(IWICBitmapDecoder *iface,
 
         if (result)
         {
-            result->lpVtbl = &TiffFrameDecode_Vtbl;
+            result->IWICBitmapFrameDecode_iface.lpVtbl = &TiffFrameDecode_Vtbl;
             result->ref = 1;
             result->parent = This;
             result->index = index;
@@ -653,7 +663,7 @@ static const IWICBitmapDecoderVtbl TiffDecoder_Vtbl = {
 static HRESULT WINAPI TiffFrameDecode_QueryInterface(IWICBitmapFrameDecode *iface, REFIID iid,
     void **ppv)
 {
-    TiffFrameDecode *This = (TiffFrameDecode*)iface;
+    TiffFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
@@ -676,7 +686,7 @@ static HRESULT WINAPI TiffFrameDecode_QueryInterface(IWICBitmapFrameDecode *ifac
 
 static ULONG WINAPI TiffFrameDecode_AddRef(IWICBitmapFrameDecode *iface)
 {
-    TiffFrameDecode *This = (TiffFrameDecode*)iface;
+    TiffFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -686,7 +696,7 @@ static ULONG WINAPI TiffFrameDecode_AddRef(IWICBitmapFrameDecode *iface)
 
 static ULONG WINAPI TiffFrameDecode_Release(IWICBitmapFrameDecode *iface)
 {
-    TiffFrameDecode *This = (TiffFrameDecode*)iface;
+    TiffFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -703,7 +713,7 @@ static ULONG WINAPI TiffFrameDecode_Release(IWICBitmapFrameDecode *iface)
 static HRESULT WINAPI TiffFrameDecode_GetSize(IWICBitmapFrameDecode *iface,
     UINT *puiWidth, UINT *puiHeight)
 {
-    TiffFrameDecode *This = (TiffFrameDecode*)iface;
+    TiffFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
 
     *puiWidth = This->decode_info.width;
     *puiHeight = This->decode_info.height;
@@ -716,7 +726,7 @@ static HRESULT WINAPI TiffFrameDecode_GetSize(IWICBitmapFrameDecode *iface,
 static HRESULT WINAPI TiffFrameDecode_GetPixelFormat(IWICBitmapFrameDecode *iface,
     WICPixelFormatGUID *pPixelFormat)
 {
-    TiffFrameDecode *This = (TiffFrameDecode*)iface;
+    TiffFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
 
     memcpy(pPixelFormat, This->decode_info.format, sizeof(GUID));
 
@@ -735,7 +745,7 @@ static HRESULT WINAPI TiffFrameDecode_GetResolution(IWICBitmapFrameDecode *iface
 static HRESULT WINAPI TiffFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
     IWICPalette *pIPalette)
 {
-    TiffFrameDecode *This = (TiffFrameDecode*)iface;
+    TiffFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     uint16 *red, *green, *blue;
     WICColor colors[256];
     int color_count, ret, i;
@@ -862,7 +872,7 @@ static HRESULT TiffFrameDecode_ReadTile(TiffFrameDecode *This, UINT tile_x, UINT
 static HRESULT WINAPI TiffFrameDecode_CopyPixels(IWICBitmapFrameDecode *iface,
     const WICRect *prc, UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer)
 {
-    TiffFrameDecode *This = (TiffFrameDecode*)iface;
+    TiffFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     UINT min_tile_x, max_tile_x, min_tile_y, max_tile_y;
     UINT tile_x, tile_y;
     WICRect rc;
@@ -1015,7 +1025,7 @@ HRESULT TiffDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(TiffDecoder));
     if (!This) return E_OUTOFMEMORY;
 
-    This->lpVtbl = &TiffDecoder_Vtbl;
+    This->IWICBitmapDecoder_iface.lpVtbl = &TiffDecoder_Vtbl;
     This->ref = 1;
     This->stream = NULL;
     InitializeCriticalSection(&This->lock);
