@@ -3047,12 +3047,12 @@
 @ stub -arch=win64 ?c_str@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBAPEBGXZ
 @ thiscall -arch=win32 ?c_str@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEPB_WXZ(ptr) MSVCP_basic_string_wchar_c_str
 @ cdecl -arch=win64 ?c_str@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAPEB_WXZ(ptr) MSVCP_basic_string_wchar_c_str
-@ stub -arch=win32 ?capacity@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIXZ
-@ stub -arch=win64 ?capacity@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KXZ
+@ thiscall -arch=win32 ?capacity@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIXZ(ptr) MSVCP_basic_string_char_capacity
+@ cdecl -arch=win64 ?capacity@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KXZ(ptr) MSVCP_basic_string_char_capacity
 @ stub -arch=win32 ?capacity@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIXZ
 @ stub -arch=win64 ?capacity@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA_KXZ
-@ stub -arch=win32 ?capacity@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIXZ
-@ stub -arch=win64 ?capacity@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KXZ
+@ thiscall -arch=win32 ?capacity@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIXZ(ptr) MSVCP_basic_string_wchar_capacity
+@ cdecl -arch=win64 ?capacity@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KXZ(ptr) MSVCP_basic_string_wchar_capacity
 @ stub ?cerr@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A
 @ stub ?cin@std@@3V?$basic_istream@DU?$char_traits@D@std@@@1@A
 @ stub -arch=win32 ?classic@locale@std@@SAABV12@XZ

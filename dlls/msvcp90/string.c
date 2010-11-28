@@ -700,6 +700,15 @@ const char* __thiscall MSVCP_basic_string_char_c_str(basic_string_char *this)
     return basic_string_char_const_ptr(this);
 }
 
+/* ?capacity@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIXZ */
+/* ?capacity@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KXZ */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_capacity, 4)
+size_t __thiscall MSVCP_basic_string_char_capacity(basic_string_char *this)
+{
+    TRACE("%p\n", this);
+    return this->res;
+}
+
 /* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ */
 /* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@XZ */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_ctor, 4)
@@ -1094,6 +1103,15 @@ const wchar_t* __thiscall MSVCP_basic_string_wchar_c_str(basic_string_wchar *thi
 {
     TRACE("%p\n", this);
     return basic_string_wchar_const_ptr(this);
+}
+
+/* ?capacity@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIXZ */
+/* ?capacity@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KXZ */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_capacity, 4)
+size_t __thiscall MSVCP_basic_string_wchar_capacity(basic_string_wchar *this)
+{
+    TRACE("%p\n", this);
+    return this->res;
 }
 
 /* ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@XZ */
