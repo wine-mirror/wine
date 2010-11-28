@@ -2170,6 +2170,8 @@ static const IOleControlSiteVtbl OleControlSiteVtbl = {
 
 static IOleControlSite OleControlSite = { &OleControlSiteVtbl };
 
+static IDocHostUIHandler2 *expect_uihandler_iface;
+
 static HRESULT WINAPI DocHostUIHandler_QueryInterface(IDocHostUIHandler2 *iface, REFIID riid, void **ppv)
 {
     return QueryInterface(riid, ppv);
@@ -2189,12 +2191,14 @@ static HRESULT WINAPI DocHostUIHandler_ShowContextMenu(IDocHostUIHandler2 *iface
         IUnknown *pcmdtReserved, IDispatch *pdicpReserved)
 {
     ok(0, "unexpected call\n");
+    ok(iface == expect_uihandler_iface, "called on unexpected iface\n");
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI DocHostUIHandler_GetHostInfo(IDocHostUIHandler2 *iface, DOCHOSTUIINFO *pInfo)
 {
     CHECK_EXPECT(GetHostInfo);
+    ok(iface == expect_uihandler_iface, "called on unexpected iface\n");
     ok(pInfo != NULL, "pInfo=NULL\n");
     if(pInfo) {
         ok(pInfo->cbSize == sizeof(DOCHOSTUIINFO), "pInfo->cbSize=%u\n", pInfo->cbSize);
@@ -2214,6 +2218,7 @@ static HRESULT WINAPI DocHostUIHandler_ShowUI(IDocHostUIHandler2 *iface, DWORD d
         IOleInPlaceFrame *pFrame, IOleInPlaceUIWindow *pDoc)
 {
     CHECK_EXPECT(ShowUI);
+    ok(iface == expect_uihandler_iface, "called on unexpected iface\n");
 
     if (editmode)
         ok(dwID == DOCHOSTUITYPE_AUTHOR, "dwID=%d, expected DOCHOSTUITYPE_AUTHOR\n", dwID);
@@ -2233,17 +2238,20 @@ static HRESULT WINAPI DocHostUIHandler_ShowUI(IDocHostUIHandler2 *iface, DWORD d
 static HRESULT WINAPI DocHostUIHandler_HideUI(IDocHostUIHandler2 *iface)
 {
     CHECK_EXPECT(HideUI);
+    ok(iface == expect_uihandler_iface, "called on unexpected iface\n");
     return S_OK;
 }
 
 static HRESULT WINAPI DocHostUIHandler_UpdateUI(IDocHostUIHandler2 *iface)
 {
     CHECK_EXPECT(UpdateUI);
+    ok(iface == expect_uihandler_iface, "called on unexpected iface\n");
     return S_OK;
 }
 
 static HRESULT WINAPI DocHostUIHandler_EnableModeless(IDocHostUIHandler2 *iface, BOOL fEnable)
 {
+    ok(iface == expect_uihandler_iface, "called on unexpected iface\n");
     if(fEnable)
         CHECK_EXPECT2(EnableModeless_TRUE);
     else
@@ -2254,6 +2262,7 @@ static HRESULT WINAPI DocHostUIHandler_EnableModeless(IDocHostUIHandler2 *iface,
 static HRESULT WINAPI DocHostUIHandler_OnDocWindowActivate(IDocHostUIHandler2 *iface, BOOL fActivate)
 {
     ok(0, "unexpected call\n");
+    ok(iface == expect_uihandler_iface, "called on unexpected iface\n");
     return E_NOTIMPL;
 }
 
@@ -2261,6 +2270,7 @@ static BOOL expect_OnFrameWindowActivate_fActivate;
 static HRESULT WINAPI DocHostUIHandler_OnFrameWindowActivate(IDocHostUIHandler2 *iface, BOOL fActivate)
 {
     CHECK_EXPECT2(OnFrameWindowActivate);
+    ok(iface == expect_uihandler_iface, "called on unexpected iface\n");
     ok(fActivate == expect_OnFrameWindowActivate_fActivate, "fActivate=%x\n", fActivate);
     return S_OK;
 }
@@ -2276,6 +2286,7 @@ static HRESULT WINAPI DocHostUIHandler_TranslateAccelerator(IDocHostUIHandler2 *
         const GUID *pguidCmdGroup, DWORD nCmdID)
 {
     ok(0, "unexpected call\n");
+    ok(iface == expect_uihandler_iface, "called on unexpected iface\n");
     return E_NOTIMPL;
 }
 
@@ -2283,6 +2294,7 @@ static HRESULT WINAPI DocHostUIHandler_GetOptionKeyPath(IDocHostUIHandler2 *ifac
         LPOLESTR *pchKey, DWORD dw)
 {
     CHECK_EXPECT(GetOptionKeyPath);
+    ok(iface == expect_uihandler_iface, "called on unexpected iface\n");
     ok(pchKey != NULL, "pchKey = NULL\n");
     ok(!dw, "dw=%d, expected 0\n", dw);
     if(pchKey)
@@ -2294,6 +2306,7 @@ static HRESULT WINAPI DocHostUIHandler_GetDropTarget(IDocHostUIHandler2 *iface,
         IDropTarget *pDropTarget, IDropTarget **ppDropTarget)
 {
     CHECK_EXPECT(GetDropTarget);
+    ok(iface == expect_uihandler_iface, "called on unexpected iface\n");
     /* TODO */
     return E_NOTIMPL;
 }
@@ -2301,6 +2314,7 @@ static HRESULT WINAPI DocHostUIHandler_GetDropTarget(IDocHostUIHandler2 *iface,
 static HRESULT WINAPI DocHostUIHandler_GetExternal(IDocHostUIHandler2 *iface, IDispatch **ppDispatch)
 {
     CHECK_EXPECT(GetExternal);
+    ok(iface == expect_uihandler_iface, "called on unexpected iface\n");
     *ppDispatch = &External;
     return S_FALSE;
 }
@@ -2309,6 +2323,7 @@ static HRESULT WINAPI DocHostUIHandler_TranslateUrl(IDocHostUIHandler2 *iface, D
         OLECHAR *pchURLIn, OLECHAR **ppchURLOut)
 {
     CHECK_EXPECT(TranslateUrl);
+    ok(iface == expect_uihandler_iface, "called on unexpected iface\n");
     ok(!dwTranslate, "dwTranslate = %x\n", dwTranslate);
     ok(!strcmp_wa(pchURLIn, "about:blank"), "pchURLIn = %s\n", wine_dbgstr_w(pchURLIn));
     ok(ppchURLOut != NULL, "ppchURLOut == NULL\n");
@@ -2321,6 +2336,7 @@ static HRESULT WINAPI DocHostUIHandler_FilterDataObject(IDocHostUIHandler2 *ifac
         IDataObject **ppPORet)
 {
     ok(0, "unexpected call\n");
+    ok(iface == expect_uihandler_iface, "called on unexpected iface\n");
     return E_NOTIMPL;
 }
 
@@ -2328,6 +2344,7 @@ static HRESULT WINAPI DocHostUIHandler_GetOverrideKeyPath(IDocHostUIHandler2 *if
         LPOLESTR *pchKey, DWORD dw)
 {
     CHECK_EXPECT(GetOverrideKeyPath);
+    ok(iface == expect_uihandler_iface, "called on unexpected iface\n");
     ok(pchKey != NULL, "pchKey = NULL\n");
     if(pchKey)
         ok(!*pchKey, "*pchKey=%p, expected NULL\n", *pchKey);
@@ -2358,6 +2375,47 @@ static const IDocHostUIHandler2Vtbl DocHostUIHandlerVtbl = {
 };
 
 static IDocHostUIHandler2 DocHostUIHandler = { &DocHostUIHandlerVtbl };
+
+static HRESULT WINAPI CustomDocHostUIHandler_QueryInterface(IDocHostUIHandler2 *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IDocHostUIHandler2, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    if(IsEqualGUID(&IID_IOleCommandTarget, riid))
+        return E_NOINTERFACE;
+
+    else if(IsEqualGUID(&IID_IDocHostShowUI, riid))
+        return E_NOINTERFACE; /* TODO */
+
+    ok(0, "unexpected call %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static const IDocHostUIHandler2Vtbl CustomDocHostUIHandlerVtbl = {
+    CustomDocHostUIHandler_QueryInterface,
+    DocHostUIHandler_AddRef,
+    DocHostUIHandler_Release,
+    DocHostUIHandler_ShowContextMenu,
+    DocHostUIHandler_GetHostInfo,
+    DocHostUIHandler_ShowUI,
+    DocHostUIHandler_HideUI,
+    DocHostUIHandler_UpdateUI,
+    DocHostUIHandler_EnableModeless,
+    DocHostUIHandler_OnDocWindowActivate,
+    DocHostUIHandler_OnFrameWindowActivate,
+    DocHostUIHandler_ResizeBorder,
+    DocHostUIHandler_TranslateAccelerator,
+    DocHostUIHandler_GetOptionKeyPath,
+    DocHostUIHandler_GetDropTarget,
+    DocHostUIHandler_GetExternal,
+    DocHostUIHandler_TranslateUrl,
+    DocHostUIHandler_FilterDataObject,
+    DocHostUIHandler_GetOverrideKeyPath
+};
+
+static IDocHostUIHandler2 CustomDocHostUIHandler = { &CustomDocHostUIHandlerVtbl };
 
 static HRESULT WINAPI OleCommandTarget_QueryInterface(IOleCommandTarget *iface,
         REFIID riid, void **ppv)
@@ -3143,6 +3201,21 @@ static void test_ConnectionPointContainer(IHTMLDocument2 *doc)
     test_ConnectionPoint(container, &DIID_HTMLDocumentEvents2);
 
     IConnectionPointContainer_Release(container);
+}
+
+static void set_custom_uihandler(IHTMLDocument2 *doc, IDocHostUIHandler2 *uihandler)
+{
+    ICustomDoc *custom_doc;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_ICustomDoc, (void**)&custom_doc);
+    ok(hres == S_OK, "Could not get ICustomDoc iface: %08x\n", hres);
+
+    expect_uihandler_iface = uihandler;
+
+    hres = ICustomDoc_SetUIHandler(custom_doc, (IDocHostUIHandler*)uihandler);
+    ICustomDoc_Release(custom_doc);
+    ok(hres == S_OK, "SetUIHandler failed: %08x\n", hres);
 }
 
 static void test_Load(IPersistMoniker *persist, IMoniker *mon)
@@ -3938,7 +4011,10 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
 
     if(flags & CLIENTSITE_SETNULL) {
         hres = IOleObject_GetClientSite(oleobj, &clientsite);
-        ok(clientsite == &ClientSite, "clientsite=%p, expected %p\n", clientsite, &ClientSite);
+        if(set_clientsite)
+            ok(clientsite == &ClientSite, "clientsite=%p, expected %p\n", clientsite, &ClientSite);
+        else
+            ok(!clientsite, "clientsite != NULL\n");
 
         hres = IOleObject_SetClientSite(oleobj, NULL);
         ok(hres == S_OK, "SetClientSite failed: %08x\n", hres);
@@ -3949,13 +4025,17 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
     if(flags & CLIENTSITE_DONTSET)
         return;
 
+    if(!expect_uihandler_iface)
+        expect_uihandler_iface = &DocHostUIHandler;
+
     hres = IOleObject_GetClientSite(oleobj, &clientsite);
     ok(hres == S_OK, "GetClientSite failed: %08x\n", hres);
     ok(clientsite == (set_clientsite ? &ClientSite : NULL), "GetClientSite() = %p, expected %p\n",
             clientsite, set_clientsite ? &ClientSite : NULL);
 
     if(!set_clientsite) {
-        SET_EXPECT(GetHostInfo);
+        if(expect_uihandler_iface)
+            SET_EXPECT(GetHostInfo);
         if(flags & CLIENTSITE_EXPECTPATH) {
             SET_EXPECT(GetOptionKeyPath);
             SET_EXPECT(GetOverrideKeyPath);
@@ -3976,7 +4056,8 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
         hres = IOleObject_SetClientSite(oleobj, &ClientSite);
         ok(hres == S_OK, "SetClientSite failed: %08x\n", hres);
 
-        CHECK_CALLED(GetHostInfo);
+        if(expect_uihandler_iface)
+            CHECK_CALLED(GetHostInfo);
         if(flags & CLIENTSITE_EXPECTPATH) {
             CHECK_CALLED(GetOptionKeyPath);
             CHECK_CALLED(GetOverrideKeyPath);
@@ -4558,6 +4639,7 @@ static void init_test(enum load_state_t ls) {
     ipsex = FALSE;
     inplace_deactivated = FALSE;
     navigated_load = FALSE;
+    expect_uihandler_iface = &DocHostUIHandler;
 }
 
 static void test_HTMLDocument(BOOL do_load)
@@ -4586,6 +4668,7 @@ static void test_HTMLDocument(BOOL do_load)
     test_Activate(doc, CLIENTSITE_EXPECTPATH);
 
     if(do_load) {
+        set_custom_uihandler(doc, &CustomDocHostUIHandler);
         test_download(DWL_CSS|DWL_TRYCSS);
         test_GetCurMoniker((IUnknown*)doc, &Moniker, NULL);
     }
@@ -4623,6 +4706,10 @@ static void test_HTMLDocument(BOOL do_load)
     call_UIActivate = CallUIActivate_None;
     test_Activate(doc, CLIENTSITE_SETNULL);
     test_Window(doc, TRUE);
+
+    test_external(doc, TRUE);
+    set_custom_uihandler(doc, NULL);
+    test_external(doc, FALSE);
 
     test_UIDeactivate();
     test_InPlaceDeactivate(doc, TRUE);
@@ -4665,6 +4752,7 @@ static void test_HTMLDocument_hlink(void)
     doc = create_document();
     doc_unk = (IUnknown*)doc;
 
+    set_custom_uihandler(doc, &CustomDocHostUIHandler);
     test_ViewAdviseSink(doc);
     test_ConnectionPointContainer(doc);
     test_GetCurMoniker((IUnknown*)doc, NULL, NULL);
@@ -4878,8 +4966,6 @@ static void test_HTMLDocument_StreamLoad(void)
     test_DoVerb(oleobj);
     test_MSHTML_QueryStatus(doc, OLECMDF_SUPPORTED);
 
-    IOleObject_Release(oleobj);
-
     test_GetCurMoniker((IUnknown*)doc, NULL, NULL);
     test_StreamLoad(doc);
     test_download(DWL_VERBDONE|DWL_TRYCSS);
@@ -4888,10 +4974,20 @@ static void test_HTMLDocument_StreamLoad(void)
     test_UIDeactivate();
     test_InPlaceDeactivate(doc, TRUE);
     SET_EXPECT(Advise_Close);
-    test_Close(doc, FALSE);
+    test_Close(doc, TRUE);
     CHECK_CALLED(Advise_Close);
+    test_external(doc, FALSE);
     test_IsDirty(doc, S_FALSE);
 
+    set_custom_uihandler(doc, &CustomDocHostUIHandler);
+    test_ClientSite(oleobj, CLIENTSITE_SETNULL);
+    test_external(doc, TRUE);
+    test_ClientSite(oleobj, CLIENTSITE_SETNULL|CLIENTSITE_DONTSET);
+    test_external(doc, TRUE);
+    set_custom_uihandler(doc, NULL);
+    test_ClientSite(oleobj, CLIENTSITE_SETNULL|CLIENTSITE_DONTSET);
+
+    IOleObject_Release(oleobj);
     if(view) {
         IOleDocumentView_Release(view);
         view = NULL;
@@ -4907,7 +5003,7 @@ static void test_HTMLDocument_StreamInitNew(void)
     DWORD conn;
     HRESULT hres;
 
-    trace("Testing HTMLDocument (IPersistStreamInit)...\n");
+    trace("Testing HTMLDocument (IPersistStreamInit::InitNew)...\n");
 
     init_test(LD_DOLOAD);
     load_from_stream = TRUE;
@@ -5103,6 +5199,7 @@ static void test_UIActivate(BOOL do_load, BOOL use_ipsex, BOOL use_ipsw)
 
     hres = IOleObject_SetClientSite(oleobj, &ClientSite);
     ok(hres == S_OK, "SetClientSite failed: %08x\n", hres);
+    set_clientsite = TRUE;
 
     CHECK_CALLED(Invoke_AMBIENT_USERMODE);
     CHECK_CALLED(GetHostInfo);
