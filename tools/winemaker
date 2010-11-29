@@ -224,10 +224,6 @@ my $T_LIBRARY_PATH=15;
 # The list of Unix libraries to link with
 my $T_LIBRARIES=16;
 
-##
-# The list of dependencies between targets
-my $T_DEPENDS=17;
-
 
 # The following constants define the recognized types of target
 
@@ -278,7 +274,6 @@ sub target_init($)
   my $target=$_[0];
 
   @$target[$T_TYPE]=$TT_SETTINGS;
-  # leaving $T_INIT undefined
   @$target[$T_FLAGS]=$opt_flags;
   @$target[$T_SOURCES_C]=[];
   @$target[$T_SOURCES_CXX]=[];
