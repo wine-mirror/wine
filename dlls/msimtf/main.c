@@ -60,10 +60,15 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 }
 
 typedef struct {
-    const IClassFactoryVtbl *lpClassFactoryVtbl;
+    IClassFactory IClassFactory_iface;
 
     HRESULT (*cf)(IUnknown*,IUnknown**);
 } ClassFactory;
+
+static inline ClassFactory *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, ClassFactory, IClassFactory_iface);
+}
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface,
         REFIID riid, void **ppv)
@@ -100,7 +105,7 @@ static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
 static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface,
         IUnknown *pOuter, REFIID riid, void **ppv)
 {
-    ClassFactory *This = (ClassFactory*)iface;
+    ClassFactory *This = impl_from_IClassFactory(iface);
     HRESULT ret;
     IUnknown *obj;
     TRACE("(%p, %p, %s, %p)\n", iface, pOuter, debugstr_guid(riid), ppv);
@@ -135,7 +140,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     if(IsEqualGUID(&CLSID_CActiveIMM, rclsid)) {
         static ClassFactory cf = {
-            &ClassFactoryVtbl,
+            { &ClassFactoryVtbl },
             ActiveIMMApp_Constructor,
         };
 
