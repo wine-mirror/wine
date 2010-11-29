@@ -47,8 +47,8 @@ typedef struct nstc_root {
 } nstc_root;
 
 typedef struct {
-    const INameSpaceTreeControl2Vtbl *lpVtbl;
-    const IOleWindowVtbl *lpowVtbl;
+    INameSpaceTreeControl2 INameSpaceTreeControl2_iface;
+    IOleWindow IOleWindow_iface;
     LONG ref;
 
     HWND hwnd_main;
@@ -70,6 +70,16 @@ static const DWORD unsupported_styles =
 static const DWORD unsupported_styles2 =
     NSTCS2_INTERRUPTNOTIFICATIONS | NSTCS2_SHOWNULLSPACEMENU | NSTCS2_DISPLAYPADDING |
     NSTCS2_DISPLAYPINNEDONLY | NTSCS2_NOSINGLETONAUTOEXPAND | NTSCS2_NEVERINSERTNONENUMERATED;
+
+static inline NSTC2Impl *impl_from_INameSpaceTreeControl2(INameSpaceTreeControl2 *iface)
+{
+    return CONTAINING_RECORD(iface, NSTC2Impl, INameSpaceTreeControl2_iface);
+}
+
+static inline NSTC2Impl *impl_from_IOleWindow(IOleWindow *iface)
+{
+    return CONTAINING_RECORD(iface, NSTC2Impl, IOleWindow_iface);
+}
 
 /* Forward declarations */
 static LRESULT CALLBACK tv_wndproc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);
@@ -799,7 +809,7 @@ static HRESULT WINAPI NSTC2_fnQueryInterface(INameSpaceTreeControl2* iface,
                                              REFIID riid,
                                              void **ppvObject)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     TRACE("%p (%s, %p)\n", This, debugstr_guid(riid), ppvObject);
 
     *ppvObject = NULL;
@@ -811,7 +821,7 @@ static HRESULT WINAPI NSTC2_fnQueryInterface(INameSpaceTreeControl2* iface,
     }
     else if(IsEqualIID(riid, &IID_IOleWindow))
     {
-        *ppvObject = &This->lpowVtbl;
+        *ppvObject = &This->IOleWindow_iface;
     }
 
     if(*ppvObject)
@@ -825,7 +835,7 @@ static HRESULT WINAPI NSTC2_fnQueryInterface(INameSpaceTreeControl2* iface,
 
 static ULONG WINAPI NSTC2_fnAddRef(INameSpaceTreeControl2* iface)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("%p - ref %d\n", This, ref);
@@ -835,7 +845,7 @@ static ULONG WINAPI NSTC2_fnAddRef(INameSpaceTreeControl2* iface)
 
 static ULONG WINAPI NSTC2_fnRelease(INameSpaceTreeControl2* iface)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("%p - ref: %d\n", This, ref);
@@ -856,7 +866,7 @@ static HRESULT WINAPI NSTC2_fnInitialize(INameSpaceTreeControl2* iface,
                                          RECT *prc,
                                          NSTCSTYLE nstcsFlags)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     WNDCLASSW wc;
     DWORD window_style, window_ex_style;
     RECT rc;
@@ -915,7 +925,7 @@ static HRESULT WINAPI NSTC2_fnTreeAdvise(INameSpaceTreeControl2* iface,
                                          IUnknown *punk,
                                          DWORD *pdwCookie)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     HRESULT hr;
     TRACE("%p (%p, %p)\n", This, punk, pdwCookie);
 
@@ -938,7 +948,7 @@ static HRESULT WINAPI NSTC2_fnTreeAdvise(INameSpaceTreeControl2* iface,
 static HRESULT WINAPI NSTC2_fnTreeUnadvise(INameSpaceTreeControl2* iface,
                                            DWORD dwCookie)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     TRACE("%p (%x)\n", This, dwCookie);
 
     /* The cookie is ignored. */
@@ -959,7 +969,7 @@ static HRESULT WINAPI NSTC2_fnInsertRoot(INameSpaceTreeControl2* iface,
                                          NSTCROOTSTYLE grfRootStyle,
                                          IShellItemFilter *pif)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     nstc_root *new_root;
     struct list *add_after_entry;
     HTREEITEM add_after_hitem;
@@ -1021,7 +1031,7 @@ static HRESULT WINAPI NSTC2_fnAppendRoot(INameSpaceTreeControl2* iface,
                                          NSTCROOTSTYLE grfRootStyle,
                                          IShellItemFilter *pif)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     UINT root_count;
     TRACE("%p, %p, %x, %x, %p\n",
           This, psiRoot, grfEnumFlags, grfRootStyle, pif);
@@ -1034,7 +1044,7 @@ static HRESULT WINAPI NSTC2_fnAppendRoot(INameSpaceTreeControl2* iface,
 static HRESULT WINAPI NSTC2_fnRemoveRoot(INameSpaceTreeControl2* iface,
                                          IShellItem *psiRoot)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     nstc_root *cursor, *root = NULL;
     TRACE("%p (%p)\n", This, psiRoot);
 
@@ -1071,7 +1081,7 @@ static HRESULT WINAPI NSTC2_fnRemoveRoot(INameSpaceTreeControl2* iface,
 
 static HRESULT WINAPI NSTC2_fnRemoveAllRoots(INameSpaceTreeControl2* iface)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     nstc_root *cur1, *cur2;
     UINT removed = 0;
     TRACE("%p\n", This);
@@ -1091,7 +1101,7 @@ static HRESULT WINAPI NSTC2_fnRemoveAllRoots(INameSpaceTreeControl2* iface)
 static HRESULT WINAPI NSTC2_fnGetRootItems(INameSpaceTreeControl2* iface,
                                            IShellItemArray **ppsiaRootItems)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     IShellFolder *psf;
     LPITEMIDLIST *array;
     nstc_root *root;
@@ -1128,7 +1138,7 @@ static HRESULT WINAPI NSTC2_fnSetItemState(INameSpaceTreeControl2* iface,
                                            NSTCITEMSTATE nstcisMask,
                                            NSTCITEMSTATE nstcisFlags)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     TVITEMEXW tvi;
     HTREEITEM hitem;
 
@@ -1191,7 +1201,7 @@ static HRESULT WINAPI NSTC2_fnGetItemState(INameSpaceTreeControl2* iface,
                                            NSTCITEMSTATE nstcisMask,
                                            NSTCITEMSTATE *pnstcisFlags)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     HTREEITEM hitem;
     TVITEMEXW tvi;
     TRACE("%p (%p, %x, %p)\n", This, psi, nstcisMask, pnstcisFlags);
@@ -1223,7 +1233,7 @@ static HRESULT WINAPI NSTC2_fnGetItemState(INameSpaceTreeControl2* iface,
 static HRESULT WINAPI NSTC2_fnGetSelectedItems(INameSpaceTreeControl2* iface,
                                                IShellItemArray **psiaItems)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     IShellItem *psiselected;
     HRESULT hr;
     TRACE("%p (%p)\n", This, psiaItems);
@@ -1241,7 +1251,7 @@ static HRESULT WINAPI NSTC2_fnGetItemCustomState(INameSpaceTreeControl2* iface,
                                                  IShellItem *psi,
                                                  int *piStateNumber)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     FIXME("stub, %p (%p, %p)\n", This, psi, piStateNumber);
     return E_NOTIMPL;
 }
@@ -1250,7 +1260,7 @@ static HRESULT WINAPI NSTC2_fnSetItemCustomState(INameSpaceTreeControl2* iface,
                                                  IShellItem *psi,
                                                  int iStateNumber)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     FIXME("stub, %p (%p, %d)\n", This, psi, iStateNumber);
     return E_NOTIMPL;
 }
@@ -1258,7 +1268,7 @@ static HRESULT WINAPI NSTC2_fnSetItemCustomState(INameSpaceTreeControl2* iface,
 static HRESULT WINAPI NSTC2_fnEnsureItemVisible(INameSpaceTreeControl2* iface,
                                                 IShellItem *psi)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     HTREEITEM hitem;
 
     TRACE("%p (%p)\n", This, psi);
@@ -1276,7 +1286,7 @@ static HRESULT WINAPI NSTC2_fnEnsureItemVisible(INameSpaceTreeControl2* iface,
 static HRESULT WINAPI NSTC2_fnSetTheme(INameSpaceTreeControl2* iface,
                                        LPCWSTR pszTheme)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     FIXME("stub, %p (%p)\n", This, pszTheme);
     return E_NOTIMPL;
 }
@@ -1286,7 +1296,7 @@ static HRESULT WINAPI NSTC2_fnGetNextItem(INameSpaceTreeControl2* iface,
                                           NSTCGNI nstcgi,
                                           IShellItem **ppsiNext)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     HTREEITEM hitem, hnext;
     UINT tvgn;
     TRACE("%p (%p, %x, %p)\n", This, psi, nstcgi, ppsiNext);
@@ -1330,7 +1340,7 @@ static HRESULT WINAPI NSTC2_fnHitTest(INameSpaceTreeControl2* iface,
                                       POINT *ppt,
                                       IShellItem **ppsiOut)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     HTREEITEM hitem;
     TRACE("%p (%p, %p)\n", This, ppsiOut, ppt);
 
@@ -1356,7 +1366,7 @@ static HRESULT WINAPI NSTC2_fnGetItemRect(INameSpaceTreeControl2* iface,
                                           IShellItem *psi,
                                           RECT *prect)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     HTREEITEM hitem;
     TRACE("%p (%p, %p)\n", This, psi, prect);
 
@@ -1379,7 +1389,7 @@ static HRESULT WINAPI NSTC2_fnGetItemRect(INameSpaceTreeControl2* iface,
 
 static HRESULT WINAPI NSTC2_fnCollapseAll(INameSpaceTreeControl2* iface)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     nstc_root *root;
     TRACE("%p\n", This);
 
@@ -1393,7 +1403,7 @@ static HRESULT WINAPI NSTC2_fnSetControlStyle(INameSpaceTreeControl2* iface,
                                               NSTCSTYLE nstcsMask,
                                               NSTCSTYLE nstcsStyle)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     static const DWORD tv_style_flags =
         NSTCS_HASEXPANDOS | NSTCS_HASLINES | NSTCS_FULLROWSELECT |
         NSTCS_HORIZONTALSCROLL | NSTCS_ROOTHASEXPANDO |
@@ -1448,7 +1458,7 @@ static HRESULT WINAPI NSTC2_fnGetControlStyle(INameSpaceTreeControl2* iface,
                                               NSTCSTYLE nstcsMask,
                                               NSTCSTYLE *pnstcsStyle)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     TRACE("%p (%x, %p)\n", This, nstcsMask, pnstcsStyle);
 
     *pnstcsStyle = (This->style & nstcsMask);
@@ -1460,7 +1470,7 @@ static HRESULT WINAPI NSTC2_fnSetControlStyle2(INameSpaceTreeControl2* iface,
                                                NSTCSTYLE2 nstcsMask,
                                                NSTCSTYLE2 nstcsStyle)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     TRACE("%p (%x, %x)\n", This, nstcsMask, nstcsStyle);
 
     if((nstcsStyle & nstcsMask) & unsupported_styles2)
@@ -1478,7 +1488,7 @@ static HRESULT WINAPI NSTC2_fnGetControlStyle2(INameSpaceTreeControl2* iface,
                                                NSTCSTYLE2 nstcsMask,
                                                NSTCSTYLE2 *pnstcsStyle)
 {
-    NSTC2Impl *This = (NSTC2Impl*)iface;
+    NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
     TRACE("%p (%x, %p)\n", This, nstcsMask, pnstcsStyle);
 
     *pnstcsStyle = (This->style2 & nstcsMask);
@@ -1519,30 +1529,25 @@ static const INameSpaceTreeControl2Vtbl vt_INameSpaceTreeControl2 = {
  * IOleWindow Implementation
  */
 
-static inline NSTC2Impl *impl_from_IOleWindow(IOleWindow *iface)
-{
-    return (NSTC2Impl *)((char*)iface - FIELD_OFFSET(NSTC2Impl, lpowVtbl));
-}
-
 static HRESULT WINAPI IOW_fnQueryInterface(IOleWindow *iface, REFIID riid, void **ppvObject)
 {
     NSTC2Impl *This = impl_from_IOleWindow(iface);
     TRACE("%p\n", This);
-    return NSTC2_fnQueryInterface((INameSpaceTreeControl2*)This, riid, ppvObject);
+    return NSTC2_fnQueryInterface(&This->INameSpaceTreeControl2_iface, riid, ppvObject);
 }
 
 static ULONG WINAPI IOW_fnAddRef(IOleWindow *iface)
 {
     NSTC2Impl *This = impl_from_IOleWindow(iface);
     TRACE("%p\n", This);
-    return NSTC2_fnAddRef((INameSpaceTreeControl2*)This);
+    return NSTC2_fnAddRef(&This->INameSpaceTreeControl2_iface);
 }
 
 static ULONG WINAPI IOW_fnRelease(IOleWindow *iface)
 {
     NSTC2Impl *This = impl_from_IOleWindow(iface);
     TRACE("%p\n", This);
-    return NSTC2_fnRelease((INameSpaceTreeControl2*)This);
+    return NSTC2_fnRelease(&This->INameSpaceTreeControl2_iface);
 }
 
 static HRESULT WINAPI IOW_fnGetWindow(IOleWindow *iface, HWND *phwnd)
@@ -1587,8 +1592,8 @@ HRESULT NamespaceTreeControl_Constructor(IUnknown *pUnkOuter, REFIID riid, void 
 
     nstc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(NSTC2Impl));
     nstc->ref = 1;
-    nstc->lpVtbl = &vt_INameSpaceTreeControl2;
-    nstc->lpowVtbl = &vt_IOleWindow;
+    nstc->INameSpaceTreeControl2_iface.lpVtbl = &vt_INameSpaceTreeControl2;
+    nstc->IOleWindow_iface.lpVtbl = &vt_IOleWindow;
 
     list_init(&nstc->roots);
 
