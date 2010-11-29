@@ -36,14 +36,19 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
 typedef struct {
-    const IWICImagingFactoryVtbl    *lpIWICImagingFactoryVtbl;
+    IWICImagingFactory IWICImagingFactory_iface;
     LONG ref;
 } ImagingFactory;
+
+static inline ImagingFactory *impl_from_IWICImagingFactory(IWICImagingFactory *iface)
+{
+    return CONTAINING_RECORD(iface, ImagingFactory, IWICImagingFactory_iface);
+}
 
 static HRESULT WINAPI ImagingFactory_QueryInterface(IWICImagingFactory *iface, REFIID iid,
     void **ppv)
 {
-    ImagingFactory *This = (ImagingFactory*)iface;
+    ImagingFactory *This = impl_from_IWICImagingFactory(iface);
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
@@ -64,7 +69,7 @@ static HRESULT WINAPI ImagingFactory_QueryInterface(IWICImagingFactory *iface, R
 
 static ULONG WINAPI ImagingFactory_AddRef(IWICImagingFactory *iface)
 {
-    ImagingFactory *This = (ImagingFactory*)iface;
+    ImagingFactory *This = impl_from_IWICImagingFactory(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -74,7 +79,7 @@ static ULONG WINAPI ImagingFactory_AddRef(IWICImagingFactory *iface)
 
 static ULONG WINAPI ImagingFactory_Release(IWICImagingFactory *iface)
 {
-    ImagingFactory *This = (ImagingFactory*)iface;
+    ImagingFactory *This = impl_from_IWICImagingFactory(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -428,7 +433,7 @@ HRESULT ImagingFactory_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** pp
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(ImagingFactory));
     if (!This) return E_OUTOFMEMORY;
 
-    This->lpIWICImagingFactoryVtbl = &ImagingFactory_Vtbl;
+    This->IWICImagingFactory_iface.lpVtbl = &ImagingFactory_Vtbl;
     This->ref = 1;
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
