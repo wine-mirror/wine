@@ -261,6 +261,15 @@ DWORD Gstreamer_init(void) {
             FIXME("Failed to initialize gstreamer: %s\n", err->message);
             g_error_free(err);
         }
+        if (inited) {
+            HINSTANCE newhandle;
+            /* Unloading glib is a bad idea.. it installs atexit handlers,
+             * so never unload the dll after loading */
+            GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+                               (LPCWSTR)hInst, &newhandle);
+            if (!newhandle)
+                ERR("Could not pin module %p\n", hInst);
+        }
     }
     return inited;
 }
