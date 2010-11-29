@@ -55,7 +55,7 @@ static void drawStridedFast(GLenum primitive_type, UINT count, UINT idx_size, co
  */
 
 /* GL locking is done by the caller */
-static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context *context,
+static void drawStridedSlow(IWineD3DDeviceImpl *device, const struct wined3d_context *context,
         const struct wined3d_stream_info *si, UINT NumVertexes, GLenum glPrimType,
         const void *idxData, UINT idxSize, UINT startIdx)
 {
@@ -63,8 +63,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
     const WORD                *pIdxBufS     = NULL;
     const DWORD               *pIdxBufL     = NULL;
     UINT vx_index;
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    const struct wined3d_state *state = &This->stateBlock->state;
+    const struct wined3d_state *state = &device->stateBlock->state;
     const struct wined3d_stream_state *streams = state->streams;
     LONG SkipnStrides = startIdx + state->load_base_vertex_index;
     BOOL pixelShader = use_ps(state);
@@ -166,7 +165,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
     for (textureNo = 0; textureNo < texture_stages; ++textureNo)
     {
         int coordIdx = state->texture_states[textureNo][WINED3DTSS_TEXCOORDINDEX];
-        DWORD texture_idx = This->texUnitMap[textureNo];
+        DWORD texture_idx = device->texUnitMap[textureNo];
 
         if (!gl_info->supported[ARB_MULTITEXTURE] && textureNo > 0)
         {
@@ -238,7 +237,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
             coord_idx = state->texture_states[texture][WINED3DTSS_TEXCOORDINDEX];
             ptr = texCoords[coord_idx] + (SkipnStrides * si->elements[WINED3D_FFP_TEXCOORD0 + coord_idx].stride);
 
-            texture_idx = This->texUnitMap[texture];
+            texture_idx = device->texUnitMap[texture];
             multi_texcoord_funcs[si->elements[WINED3D_FFP_TEXCOORD0 + coord_idx].format->emit_idx](
                     GL_TEXTURE0_ARB + texture_idx, ptr);
         }
@@ -704,7 +703,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
             }
             else
             {
-                drawStridedSlow(iface, context, stream_info, index_count,
+                drawStridedSlow(This, context, stream_info, index_count,
                         glPrimType, idxData, idxSize, StartIdx);
             }
         }
