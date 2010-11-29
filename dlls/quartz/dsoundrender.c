@@ -176,7 +176,7 @@ static HRESULT DSoundRender_GetWritePos(DSoundRenderImpl *This, DWORD *ret_write
         *ret_writepos = writepos;
     } else if (delta_t < 0) {
         REFERENCE_TIME past, min_writepos_t;
-        FIXME("Delta too big %i/%i, overwriting old data or even skipping\n", (int)delta_t / 10000, (int)max_lag / 10000);
+        WARN("Delta too big %i/%i, overwriting old data or even skipping\n", (int)delta_t / 10000, (int)max_lag / 10000);
         if (min_writepos >= playpos)
             min_writepos_t = cur + time_from_pos(This, min_writepos - playpos);
         else
@@ -184,19 +184,19 @@ static HRESULT DSoundRender_GetWritePos(DSoundRenderImpl *This, DWORD *ret_write
         past = min_writepos_t - write_at;
         if (past >= 0) {
             DWORD skipbytes = pos_from_time(This, past);
-            FIXME("Skipping %u bytes\n", skipbytes);
+            WARN("Skipping %u bytes\n", skipbytes);
             *skip = skipbytes;
             *ret_writepos = min_writepos;
         } else {
             DWORD aheadbytes = pos_from_time(This, -past);
-            FIXME("Advancing %u bytes\n", aheadbytes);
+            WARN("Advancing %u bytes\n", aheadbytes);
             *ret_writepos = (min_writepos + aheadbytes) % This->buf_size;
         }
     } else /* delta_t > 0 */ {
         DWORD aheadbytes;
-        FIXME("Delta too big %i/%i, too far ahead\n", (int)delta_t / 10000, (int)max_lag / 10000);
+        WARN("Delta too big %i/%i, too far ahead\n", (int)delta_t / 10000, (int)max_lag / 10000);
         aheadbytes = pos_from_time(This, delta_t);
-        FIXME("Advancing %u bytes\n", aheadbytes);
+        WARN("Advancing %u bytes\n", aheadbytes);
         if (delta_t >= DSoundRenderer_Max_Fill)
             return S_FALSE;
         *ret_writepos = (min_writepos + aheadbytes) % This->buf_size;
