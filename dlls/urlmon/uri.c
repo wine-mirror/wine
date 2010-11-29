@@ -48,7 +48,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 static const IID IID_IUriObj = {0x4b364760,0x9f51,0x11df,{0x98,0x1c,0x08,0x00,0x20,0x0c,0x9a,0x66}};
 
 typedef struct {
-    const IUriVtbl  *lpIUriVtbl;
+    IUri            IUri_iface;
     LONG ref;
 
     BSTR            raw_uri;
@@ -3567,12 +3567,11 @@ static HRESULT set_builder_component(LPWSTR *component, DWORD *component_len, LP
     return S_OK;
 }
 
-#define URI(x)         ((IUri*)  &(x)->lpIUriVtbl)
 #define URIBUILDER(x)  ((IUriBuilder*)  &(x)->lpIUriBuilderVtbl)
 
 static void reset_builder(UriBuilder *builder) {
     if(builder->uri)
-        IUri_Release(URI(builder->uri));
+        IUri_Release(&builder->uri->IUri_iface);
     builder->uri = NULL;
 
     heap_free(builder->fragment);
@@ -4120,18 +4119,21 @@ static HRESULT generate_uri(const UriBuilder *builder, const parse_data *data, U
     return S_OK;
 }
 
-#define URI_THIS(iface) DEFINE_THIS(Uri, IUri, iface)
+static inline Uri* impl_from_IUri(IUri *iface)
+{
+    return CONTAINING_RECORD(iface, Uri, IUri_iface);
+}
 
 static HRESULT WINAPI Uri_QueryInterface(IUri *iface, REFIID riid, void **ppv)
 {
-    Uri *This = URI_THIS(iface);
+    Uri *This = impl_from_IUri(iface);
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = URI(This);
+        *ppv = &This->IUri_iface;
     }else if(IsEqualGUID(&IID_IUri, riid)) {
         TRACE("(%p)->(IID_IUri %p)\n", This, ppv);
-        *ppv = URI(This);
+        *ppv = &This->IUri_iface;
     }else if(IsEqualGUID(&IID_IUriObj, riid)) {
         TRACE("(%p)->(IID_IUriObj %p)\n", This, ppv);
         *ppv = This;
@@ -4148,7 +4150,7 @@ static HRESULT WINAPI Uri_QueryInterface(IUri *iface, REFIID riid, void **ppv)
 
 static ULONG WINAPI Uri_AddRef(IUri *iface)
 {
-    Uri *This = URI_THIS(iface);
+    Uri *This = impl_from_IUri(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -4158,7 +4160,7 @@ static ULONG WINAPI Uri_AddRef(IUri *iface)
 
 static ULONG WINAPI Uri_Release(IUri *iface)
 {
-    Uri *This = URI_THIS(iface);
+    Uri *This = impl_from_IUri(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -4174,7 +4176,7 @@ static ULONG WINAPI Uri_Release(IUri *iface)
 
 static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BSTR *pbstrProperty, DWORD dwFlags)
 {
-    Uri *This = URI_THIS(iface);
+    Uri *This = impl_from_IUri(iface);
     HRESULT hres;
     TRACE("(%p)->(%d %p %x)\n", This, uriProp, pbstrProperty, dwFlags);
 
@@ -4464,7 +4466,7 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
 
 static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, DWORD *pcchProperty, DWORD dwFlags)
 {
-    Uri *This = URI_THIS(iface);
+    Uri *This = impl_from_IUri(iface);
     HRESULT hres;
     TRACE("(%p)->(%d %p %x)\n", This, uriProp, pcchProperty, dwFlags);
 
@@ -4598,7 +4600,7 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
 
 static HRESULT WINAPI Uri_GetPropertyDWORD(IUri *iface, Uri_PROPERTY uriProp, DWORD *pcchProperty, DWORD dwFlags)
 {
-    Uri *This = URI_THIS(iface);
+    Uri *This = impl_from_IUri(iface);
     HRESULT hres;
 
     TRACE("(%p)->(%d %p %x)\n", This, uriProp, pcchProperty, dwFlags);
@@ -4650,7 +4652,7 @@ static HRESULT WINAPI Uri_GetPropertyDWORD(IUri *iface, Uri_PROPERTY uriProp, DW
 
 static HRESULT WINAPI Uri_HasProperty(IUri *iface, Uri_PROPERTY uriProp, BOOL *pfHasProperty)
 {
-    Uri *This = URI_THIS(iface);
+    Uri *This = impl_from_IUri(iface);
     TRACE("(%p)->(%d %p)\n", This, uriProp, pfHasProperty);
 
     if(!pfHasProperty)
@@ -4829,8 +4831,7 @@ static HRESULT WINAPI Uri_GetPort(IUri *iface, DWORD *pdwPort)
 
 static HRESULT WINAPI Uri_GetScheme(IUri *iface, DWORD *pdwScheme)
 {
-    Uri *This = URI_THIS(iface);
-    TRACE("(%p)->(%p)\n", This, pdwScheme);
+    TRACE("(%p)->(%p)\n", iface, pdwScheme);
     return IUri_GetPropertyDWORD(iface, Uri_PROPERTY_SCHEME, pdwScheme, 0);
 }
 
@@ -4842,7 +4843,7 @@ static HRESULT WINAPI Uri_GetZone(IUri *iface, DWORD *pdwZone)
 
 static HRESULT WINAPI Uri_GetProperties(IUri *iface, DWORD *pdwProperties)
 {
-    Uri *This = URI_THIS(iface);
+    Uri *This = impl_from_IUri(iface);
     TRACE("(%p)->(%p)\n", This, pdwProperties);
 
     if(!pdwProperties)
@@ -4890,7 +4891,7 @@ static HRESULT WINAPI Uri_GetProperties(IUri *iface, DWORD *pdwProperties)
 
 static HRESULT WINAPI Uri_IsEqual(IUri *iface, IUri *pUri, BOOL *pfEqual)
 {
-    Uri *This = URI_THIS(iface);
+    Uri *This = impl_from_IUri(iface);
     Uri *other;
 
     TRACE("(%p)->(%p %p)\n", This, pUri, pfEqual);
@@ -4916,8 +4917,6 @@ static HRESULT WINAPI Uri_IsEqual(IUri *iface, IUri *pUri, BOOL *pfEqual)
 
     return S_OK;
 }
-
-#undef URI_THIS
 
 static const IUriVtbl UriVtbl = {
     Uri_QueryInterface,
@@ -4953,7 +4952,7 @@ static const IUriVtbl UriVtbl = {
 static Uri* create_uri_obj(void) {
     Uri *ret = heap_alloc_zero(sizeof(Uri));
     if(ret) {
-        ret->lpIUriVtbl = &UriVtbl;
+        ret->IUri_iface.lpVtbl = &UriVtbl;
         ret->ref = 1;
     }
 
@@ -5041,7 +5040,7 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
     /* Validate and parse the URI into it's components. */
     if(!parse_uri(&data, dwFlags)) {
         /* Encountered an unsupported or invalid URI */
-        IUri_Release(URI(ret));
+        IUri_Release(&ret->IUri_iface);
         *ppURI = NULL;
         return E_INVALIDARG;
     }
@@ -5049,14 +5048,14 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
     /* Canonicalize the URI. */
     hr = canonicalize_uri(&data, ret, dwFlags);
     if(FAILED(hr)) {
-        IUri_Release(URI(ret));
+        IUri_Release(&ret->IUri_iface);
         *ppURI = NULL;
         return hr;
     }
 
     ret->create_flags = dwFlags;
 
-    *ppURI = URI(ret);
+    *ppURI = &ret->IUri_iface;
     return S_OK;
 }
 
@@ -5164,7 +5163,7 @@ static HRESULT build_uri(const UriBuilder *builder, IUri **uri, DWORD create_fla
 
     /* Return the base IUri if no changes have been made and the create_flags match. */
     if(builder->uri && !builder->modified_props && builder->uri->create_flags == create_flags) {
-        *uri = URI(builder->uri);
+        *uri = &builder->uri->IUri_iface;
         IUri_AddRef(*uri);
         return S_OK;
     }
@@ -5183,12 +5182,12 @@ static HRESULT build_uri(const UriBuilder *builder, IUri **uri, DWORD create_fla
 
     hr = generate_uri(builder, &data, ret, create_flags);
     if(FAILED(hr)) {
-        IUri_Release(URI(ret));
+        IUri_Release(&ret->IUri_iface);
         *uri = NULL;
         return hr;
     }
 
-    *uri = URI(ret);
+    *uri = &ret->IUri_iface;
     return S_OK;
 }
 
@@ -5232,7 +5231,7 @@ static ULONG WINAPI UriBuilder_Release(IUriBuilder *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
-        if(This->uri) IUri_Release(URI(This->uri));
+        if(This->uri) IUri_Release(&This->uri->IUri_iface);
         heap_free(This->fragment);
         heap_free(This->host);
         heap_free(This->password);
@@ -5309,7 +5308,7 @@ static HRESULT WINAPI  UriBuilder_GetIUri(IUriBuilder *iface, IUri **ppIUri)
         return E_POINTER;
 
     if(This->uri) {
-        IUri *uri = URI(This->uri);
+        IUri *uri = &This->uri->IUri_iface;
         IUri_AddRef(uri);
         *ppIUri = uri;
     } else
@@ -5758,7 +5757,7 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
         ret->raw_uri = data.uri;
         hr = canonicalize_uri(&data, ret, create_flags);
         if(FAILED(hr)) {
-            IUri_Release(URI(ret));
+            IUri_Release(&ret->IUri_iface);
             *result = NULL;
             return hr;
         }
@@ -5766,7 +5765,7 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
         apply_default_flags(&create_flags);
         ret->create_flags = create_flags;
 
-        *result = URI(ret);
+        *result = &ret->IUri_iface;
     } else {
         WCHAR *path = NULL;
         DWORD raw_flags = 0;
@@ -5957,7 +5956,7 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
         ret->raw_uri = data.uri;
         hr = canonicalize_uri(&data, ret, create_flags);
         if(FAILED(hr)) {
-            IUri_Release(URI(ret));
+            IUri_Release(&ret->IUri_iface);
             *result = NULL;
             return hr;
         }
@@ -5967,7 +5966,7 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
 
         apply_default_flags(&create_flags);
         ret->create_flags = create_flags;
-        *result = URI(ret);
+        *result = &ret->IUri_iface;
 
         heap_free(path);
     }
