@@ -333,12 +333,10 @@ lend:
 
 
 /**************************************************************************
-*   IEnumDMO_Destructor
+*   IEnumDMOImpl_Destructor
 */
-static BOOL IEnumDMO_Destructor(IEnumDMO* iface)
+static BOOL IEnumDMOImpl_Destructor(IEnumDMOImpl* This)
 {
-    IEnumDMOImpl *This = impl_from_IEnumDMO(iface);
-
     TRACE("%p\n", This);
 
     if (This->hkey)
@@ -418,7 +416,7 @@ static IEnumDMO * IEnumDMO_Constructor(
 lerr:
         if(!ret)
         {
-            IEnumDMO_Destructor((IEnumDMO*)lpedmo);
+            IEnumDMOImpl_Destructor(lpedmo);
             HeapFree(GetProcessHeap(),0,lpedmo);
             lpedmo = NULL;
         }
@@ -477,7 +475,7 @@ static ULONG WINAPI IEnumDMO_fnRelease(IEnumDMO * iface)
 
     if (!refCount)
     {
-        IEnumDMO_Destructor((IEnumDMO*)This);
+        IEnumDMOImpl_Destructor(This);
         HeapFree(GetProcessHeap(),0,This);
     }
     return refCount;
