@@ -76,7 +76,7 @@ install install-lib:: wine.inf $(INSTALLDIRS)
 	$(INSTALL_DATA) $(SRCDIR)/wine.desktop $(DESTDIR)$(datadir)/applications/wine.desktop
 	-$(UPDATE_DESKTOP_DATABASE)
 
-install install-dev:: $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+install install-dev:: $(INSTALLDIRS)
 	$(INSTALL_SCRIPT) $(SRCDIR)/winemaker $(DESTDIR)$(bindir)/winemaker
 	$(INSTALL_DATA) winemaker.man $(DESTDIR)$(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
 	$(INSTALL_DATA) winemaker.de.man $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/winemaker.$(prog_manext)
