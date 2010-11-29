@@ -619,6 +619,56 @@ static void test_mmioSetBuffer(char *fname)
     mmioClose(hmmio, 0);
 }
 
+#define FOURCC_XYZ mmioFOURCC('X', 'Y', 'Z', ' ')
+
+static LRESULT CALLBACK mmio_test_IOProc(LPSTR lpMMIOInfo, UINT uMessage, LPARAM lParam1, LPARAM lParam2)
+{
+    LPMMIOINFO lpInfo = (LPMMIOINFO) lpMMIOInfo;
+
+    switch (uMessage)
+    {
+    case MMIOM_OPEN:
+        if (lpInfo->fccIOProc == FOURCC_DOS)
+            lpInfo->fccIOProc = mmioFOURCC('F', 'A', 'I', 'L');
+        return MMSYSERR_NOERROR;
+    case MMIOM_CLOSE:
+        return MMSYSERR_NOERROR;
+    default:
+        return 0;
+    }
+}
+
+static void test_mmioOpen_fourcc(void)
+{
+    char fname[] = "file+name.xyz+one.two";
+
+    LPMMIOPROC lpProc;
+    HMMIO hmmio;
+    MMIOINFO mmio;
+
+    lpProc = mmioInstallIOProc(FOURCC_DOS, mmio_test_IOProc, MMIO_INSTALLPROC);
+    ok(lpProc == mmio_test_IOProc, "mmioInstallIOProc error\n");
+
+    lpProc = mmioInstallIOProc(FOURCC_XYZ, mmio_test_IOProc, MMIO_INSTALLPROC);
+    ok(lpProc == mmio_test_IOProc, "mmioInstallIOProc error\n");
+
+    memset(&mmio, 0, sizeof(mmio));
+    hmmio = mmioOpen(fname, &mmio, MMIO_READ);
+    mmioGetInfo(hmmio, &mmio, 0);
+    ok(hmmio != NULL && mmio.fccIOProc == FOURCC_XYZ, "mmioOpen error %u, got %4.4s\n", mmio.wErrorRet, (LPCSTR)&mmio.fccIOProc);
+    mmioClose(hmmio, 0);
+
+    mmioInstallIOProc(FOURCC_XYZ, NULL, MMIO_REMOVEPROC);
+
+    memset(&mmio, 0, sizeof(mmio));
+    hmmio = mmioOpen(fname, &mmio, MMIO_READ);
+    mmioGetInfo(hmmio, &mmio, 0);
+    ok(hmmio == NULL && mmio.wErrorRet == MMIOERR_FILENOTFOUND, "mmioOpen error %u, got %4.4s\n", mmio.wErrorRet, (LPCSTR)&mmio.fccIOProc);
+    mmioClose(hmmio, 0);
+
+    mmioInstallIOProc(FOURCC_DOS, NULL, MMIO_REMOVEPROC);
+}
+
 START_TEST(mmio)
 {
     char fname[] = "msrle.avi";
@@ -629,4 +679,5 @@ START_TEST(mmio)
     test_mmioOpen(fname);
     test_mmioSetBuffer(NULL);
     test_mmioSetBuffer(fname);
+    test_mmioOpen_fourcc();
 }
