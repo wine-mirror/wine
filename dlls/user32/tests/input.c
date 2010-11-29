@@ -233,7 +233,7 @@ static BOOL do_test( HWND hwnd, int seqnr, const KEV td[] )
         ADDTOINPUTS(td[i])
         strcat(buf, getdesc[td[i]]);
         if(td[i])
-            expmsg[i].message = KbdMessage(td[i], &(expmsg[i].wParam), &(expmsg[i].lParam)); /* see queue_kbd_event() */
+            expmsg[i].message = KbdMessage(td[i], &(expmsg[i].wParam), &(expmsg[i].lParam));
         else
             expmsg[i].message = 0;
     }
