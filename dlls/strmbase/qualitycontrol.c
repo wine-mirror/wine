@@ -157,7 +157,7 @@ HRESULT QualityControlRender_WaitFor(QualityControlImpl *This, IMediaSample *sam
             IReferenceClock_Unadvise(This->clock,  cookie);
         } else
 #endif
-        if (jitter < 0) {
+        if (jitter < -10000) {
             TRACE("Sleeping for %i ms\n", (int)-jitter/10000);
             WaitForSingleObject(ev, -jitter/10000);
         }
@@ -183,7 +183,7 @@ void QualityControlRender_DoQOS(QualityControlImpl *priv)
     REFERENCE_TIME start, stop, jitter, pt, entered, left, duration;
     double rate;
 
-    if (!priv->clock)
+    if (!priv->clock || priv->current_rstart < 0)
         return;
 
     start = priv->current_rstart;
@@ -275,10 +275,10 @@ void QualityControlRender_DoQOS(QualityControlImpl *priv)
             priv->current_jitter += (priv->current_rstop - priv->current_rstart);
         q.Type = (jitter > 0 ? Famine : Flood);
         q.Proportion = (LONG)(1000. / priv->avg_rate);
-        if (q.Proportion < 500)
-            q.Proportion = 500;
-        else if (q.Proportion > 2000)
-            q.Proportion = 2000;
+        if (q.Proportion < 200)
+            q.Proportion = 200;
+        else if (q.Proportion > 5000)
+            q.Proportion = 5000;
         q.Late = priv->current_jitter;
         q.TimeStamp = priv->current_rstart;
         TRACE("Late: %i from %i, rate: %g\n", (int)(q.Late/10000), (int)(q.TimeStamp/10000), 1./priv->avg_rate);
