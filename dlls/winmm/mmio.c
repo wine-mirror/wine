@@ -617,13 +617,13 @@ static HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo, DWORD dwOpenFlags,
     if (refmminfo->fccIOProc == 0 && refmminfo->pIOProc == NULL) {
 	wm->info.fccIOProc = MMIO_ParseExtA(szFileName);
 	/* Handle any unhandled/error case. Assume DOS file */
-	if (wm->info.fccIOProc == 0)
+	if (wm->info.fccIOProc == 0) {
 	    wm->info.fccIOProc = FOURCC_DOS;
-	if (!(wm->ioProc = MMIO_FindProcNode(wm->info.fccIOProc))) {
-	    /* If not found, retry with FOURCC_DOS */
-	    wm->info.fccIOProc = FOURCC_DOS;
-	    if (!(wm->ioProc = MMIO_FindProcNode(wm->info.fccIOProc)))
-		goto error2;
+	    wm->ioProc = &defaultProcs[0];
+	}
+	else if (!(wm->ioProc = MMIO_FindProcNode(wm->info.fccIOProc))) {
+	    /* If not found, assume DOS file */
+	    wm->ioProc = &defaultProcs[0];
 	}
 	wm->bTmpIOProc = FALSE;
     }
@@ -1315,7 +1315,7 @@ MMRESULT WINAPI mmioRenameA(LPCSTR szFileName, LPCSTR szNewFileName,
 
     /* Handle any unhandled/error case from above. Assume DOS file */
     if (!lpmmioinfo || (lpmmioinfo->fccIOProc == 0 && lpmmioinfo->pIOProc == NULL && ioProc == NULL))
-	ioProc = MMIO_FindProcNode(FOURCC_DOS);
+	ioProc = &defaultProcs[0];
     /* if just the four character code is present, look up IO proc */
     else if (lpmmioinfo->pIOProc == NULL)
         ioProc = MMIO_FindProcNode(lpmmioinfo->fccIOProc);
