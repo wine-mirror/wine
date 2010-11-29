@@ -4624,13 +4624,12 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
 }
 
 /* GL locking is done by the caller */
-static void shader_arb_select_depth_blt(IWineD3DDevice *iface, enum tex_types tex_type, const SIZE *ds_mask_size)
+static void shader_arb_select_depth_blt(void *shader_priv, const struct wined3d_gl_info *gl_info,
+        enum tex_types tex_type, const SIZE *ds_mask_size)
 {
     const float mask[] = {0.0f, 0.0f, (float)ds_mask_size->cx, (float)ds_mask_size->cy};
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     BOOL masked = ds_mask_size->cx && ds_mask_size->cy;
-    struct shader_arb_priv *priv = This->shader_priv;
-    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
+    struct shader_arb_priv *priv = shader_priv;
     GLuint *blt_fprogram;
 
     if (!priv->depth_blt_vprogram_id) priv->depth_blt_vprogram_id = create_arb_blt_vertex_program(gl_info);

@@ -4622,13 +4622,11 @@ static void shader_glsl_select(const struct wined3d_context *context, BOOL usePS
 }
 
 /* GL locking is done by the caller */
-static void shader_glsl_select_depth_blt(IWineD3DDevice *iface,
+static void shader_glsl_select_depth_blt(void *shader_priv, const struct wined3d_gl_info *gl_info,
         enum tex_types tex_type, const SIZE *ds_mask_size)
 {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
     BOOL masked = ds_mask_size->cx && ds_mask_size->cy;
-    struct shader_glsl_priv *priv = This->shader_priv;
+    struct shader_glsl_priv *priv = shader_priv;
     GLhandleARB *blt_program;
     GLint loc;
 

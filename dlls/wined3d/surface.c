@@ -4102,8 +4102,8 @@ static void surface_depth_blt(IWineD3DSurfaceImpl *This, const struct wined3d_gl
         if (compare_mode != GL_NONE) glTexParameteri(info.bind_target, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
     }
 
-    device->shader_backend->shader_select_depth_blt((IWineD3DDevice *)device,
-            info.tex_type, &This->ds_current_size);
+    device->shader_backend->shader_select_depth_blt(device->shader_priv,
+            gl_info, info.tex_type, &This->ds_current_size);
 
     glBegin(GL_TRIANGLE_STRIP);
     glTexCoord3fv(info.coords[0]);
