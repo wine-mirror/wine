@@ -79,7 +79,7 @@ static LRESULT CALLBACK mmioDosIOProc(LPMMIOINFO lpmmioinfo, UINT uMessage,
                 lpmmioinfo->adwInfo[0] = OpenFile(szFileName, &ofs, lpmmioinfo->dwFlags & 0xFFFF);
             }
 	    if (lpmmioinfo->adwInfo[0] == HFILE_ERROR)
-		ret = MMIOERR_CANNOTOPEN;
+		ret = MMIOERR_FILENOTFOUND;
 	}
 	break;
 
