@@ -1373,7 +1373,8 @@ static enum wined3d_gl_vendor wined3d_guess_gl_vendor(struct wined3d_gl_info *gl
 
 static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *gl_vendor_string, const char *gl_renderer)
 {
-    if (strstr(gl_vendor_string, "NVIDIA"))
+    if (strstr(gl_vendor_string, "NVIDIA")
+            || strstr(gl_vendor_string, "nouveau"))
         return HW_VENDOR_NVIDIA;
 
     if (strstr(gl_vendor_string, "ATI")
