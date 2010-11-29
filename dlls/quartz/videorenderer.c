@@ -164,12 +164,11 @@ static LRESULT CALLBACK VideoWndProcA(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
     return 0;
 }
 
-static BOOL CreateRenderingWindow(VideoRendererImpl* This)
-{
+static BOOL video_register_windowclass(void) {
     WNDCLASSA winclass;
+    if (wnd_class_registered)
+        return 1;
 
-    TRACE("(%p)->()\n", This);
-    
     winclass.style = 0;
     winclass.lpfnWndProc = VideoWndProcA;
     winclass.cbClsExtra = 0;
@@ -180,17 +179,26 @@ static BOOL CreateRenderingWindow(VideoRendererImpl* This)
     winclass.hbrBackground = GetStockObject(BLACK_BRUSH);
     winclass.lpszMenuName = NULL;
     winclass.lpszClassName = "Wine ActiveMovie Class";
-
-    if (!wnd_class_registered)
+    if (!RegisterClassA(&winclass))
     {
-        if (!RegisterClassA(&winclass))
-        {
-            ERR("Unable to register window %u\n", GetLastError());
-            return FALSE;
-        }
-        wnd_class_registered = TRUE;
+        ERR("Unable to register window class: %u\n", GetLastError());
+        return FALSE;
     }
+    wnd_class_registered = 1;
+    return 1;
+}
 
+void video_unregister_windowclass(void) {
+    if (!wnd_class_registered)
+        return;
+    UnregisterClassA("Wine ActiveMovie Class", NULL);
+}
+
+static BOOL CreateRenderingWindow(VideoRendererImpl* This)
+{
+    TRACE("(%p)->()\n", This);
+    if (!video_register_windowclass())
+        return FALSE;
     This->hWnd = CreateWindowExA(0, "Wine ActiveMovie Class", "Wine ActiveMovie Window", WS_SIZEBOX,
                                  CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL,
                                  NULL, NULL, NULL);

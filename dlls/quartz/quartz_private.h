@@ -67,6 +67,7 @@ HRESULT IEnumRegFiltersImpl_Construct(REGFILTER * pInRegFilters, const ULONG siz
 HRESULT IEnumFiltersImpl_Construct(IBaseFilter ** ppFilters, ULONG nFilters, IEnumFilters ** ppEnum);
 
 extern const char * qzdebugstr_guid(const GUID * id);
+extern void video_unregister_windowclass(void) DECLSPEC_HIDDEN;
 
 BOOL CompareMediaTypes(const AM_MEDIA_TYPE * pmt1, const AM_MEDIA_TYPE * pmt2, BOOL bWildcards);
 void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt);
