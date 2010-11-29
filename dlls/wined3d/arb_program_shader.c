@@ -4644,17 +4644,18 @@ static void shader_arb_select_depth_blt(void *shader_priv, const struct wined3d_
 }
 
 /* GL locking is done by the caller */
-static void shader_arb_deselect_depth_blt(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    struct shader_arb_priv *priv = This->shader_priv;
-    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
+static void shader_arb_deselect_depth_blt(void *shader_priv, const struct wined3d_gl_info *gl_info)
+{
+    struct shader_arb_priv *priv = shader_priv;
 
     if (priv->current_vprogram_id) {
         GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->current_vprogram_id));
         checkGLcall("glBindProgramARB(GL_VERTEX_PROGRAM_ARB, vertexShader->prgId);");
 
-        TRACE("(%p) : Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n", This, priv->current_vprogram_id);
-    } else {
+        TRACE("Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB.\n", priv->current_vprogram_id);
+    }
+    else
+    {
         glDisable(GL_VERTEX_PROGRAM_ARB);
         checkGLcall("glDisable(GL_VERTEX_PROGRAM_ARB)");
     }
@@ -4663,8 +4664,10 @@ static void shader_arb_deselect_depth_blt(IWineD3DDevice *iface) {
         GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id));
         checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, pixelShader->prgId);");
 
-        TRACE("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n", This, priv->current_fprogram_id);
-    } else if(!priv->use_arbfp_fixed_func) {
+        TRACE("Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB.\n", priv->current_fprogram_id);
+    }
+    else if(!priv->use_arbfp_fixed_func)
+    {
         glDisable(GL_FRAGMENT_PROGRAM_ARB);
         checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
     }

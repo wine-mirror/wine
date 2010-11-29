@@ -4121,7 +4121,7 @@ static void surface_depth_blt(IWineD3DSurfaceImpl *This, const struct wined3d_gl
 
     glPopAttrib();
 
-    device->shader_backend->shader_deselect_depth_blt((IWineD3DDevice *)device);
+    device->shader_backend->shader_deselect_depth_blt(device->shader_priv, gl_info);
 }
 
 void surface_modify_ds_location(IWineD3DSurfaceImpl *surface,

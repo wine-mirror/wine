@@ -4651,10 +4651,9 @@ static void shader_glsl_select_depth_blt(void *shader_priv, const struct wined3d
 }
 
 /* GL locking is done by the caller */
-static void shader_glsl_deselect_depth_blt(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
-    struct shader_glsl_priv *priv = This->shader_priv;
+static void shader_glsl_deselect_depth_blt(void *shader_priv, const struct wined3d_gl_info *gl_info)
+{
+    struct shader_glsl_priv *priv = shader_priv;
     GLhandleARB program_id;
 
     program_id = priv->glsl_program ? priv->glsl_program->programId : 0;
