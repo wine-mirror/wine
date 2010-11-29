@@ -160,8 +160,8 @@ static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
         flags |= ICDECOMPRESS_PREROLL;
     if (IMediaSample_IsSyncPoint(pSample) != S_OK)
         flags |= ICDECOMPRESS_NOTKEYFRAME;
-    if (IMediaSample_GetTime(pSample, &tStart, NULL) == S_OK &&
-        AVIDec_DropSample(This, tStart))
+    hr = IMediaSample_GetTime(pSample, &tStart, &tStop);
+    if (hr == S_OK && AVIDec_DropSample(This, tStart))
         flags |= ICDECOMPRESS_HURRYUP;
 
     res = ICDecompress(This->hvid, flags, This->pBihIn, pbSrcStream, This->pBihOut, pbDstStream);
@@ -169,8 +169,10 @@ static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
         ERR("Error occurred during the decompression (%x)\n", res);
 
     /* Drop sample if its intended to be dropped */
-    if (flags & ICDECOMPRESS_HURRYUP)
+    if (flags & ICDECOMPRESS_HURRYUP) {
+        hr = S_OK;
         goto error;
+    }
 
     IMediaSample_SetActualDataLength(pOutSample, This->pBihOut->biSizeImage);
 
@@ -178,8 +180,10 @@ static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
     IMediaSample_SetDiscontinuity(pOutSample, (IMediaSample_IsDiscontinuity(pSample) == S_OK));
     IMediaSample_SetSyncPoint(pOutSample, (IMediaSample_IsSyncPoint(pSample) == S_OK));
 
-    if (IMediaSample_GetTime(pSample, &tStart, &tStop) == S_OK)
+    if (hr == S_OK)
         IMediaSample_SetTime(pOutSample, &tStart, &tStop);
+    else if (hr == VFW_S_NO_STOP_TIME)
+        IMediaSample_SetTime(pOutSample, &tStart, NULL);
     else
         IMediaSample_SetTime(pOutSample, NULL, NULL);
 
