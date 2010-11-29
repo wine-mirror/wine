@@ -528,12 +528,15 @@ static void test_boundsrect_invalid(void)
            "Expected GetBoundsRect to return 0, got %u\n", ret);
 
         ret = GetBoundsRect(hdc, &rect, 0);
-        ok(ret == DCB_RESET,
-           "Expected GetBoundsRect to return DCB_RESET, got %u\n", ret);
-        SetRect(&expect, 0, 0, 0, 0);
-        ok(EqualRect(&rect, &expect),
-           "Expected output rectangle (0,0)-(0,0), got (%d,%d)-(%d,%d)\n",
-           rect.left, rect.top, rect.right, rect.bottom);
+        if (ret != DCB_SET) /* WinME */
+        {
+            ok(ret == DCB_RESET,
+               "Expected GetBoundsRect to return DCB_RESET, got %u\n", ret);
+            SetRect(&expect, 0, 0, 0, 0);
+            ok(EqualRect(&rect, &expect),
+               "Expected output rectangle (0,0)-(0,0), got (%d,%d)-(%d,%d)\n",
+               rect.left, rect.top, rect.right, rect.bottom);
+       }
     }
 
     if (GetBoundsRect(hdc, NULL, 0) == DCB_RESET)
