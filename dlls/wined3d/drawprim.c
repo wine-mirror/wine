@@ -558,11 +558,9 @@ static void remove_vbos(const struct wined3d_gl_info *gl_info,
 }
 
 /* Routine common to the draw primitive and draw indexed primitive routines */
-void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT idxSize, const void *idxData)
+void drawPrimitive(IWineD3DDeviceImpl *device, UINT index_count, UINT StartIdx, UINT idxSize, const void *idxData)
 {
-
-    IWineD3DDeviceImpl           *This = (IWineD3DDeviceImpl *)iface;
-    const struct wined3d_state *state = &This->stateBlock->state;
+    const struct wined3d_state *state = &device->stateBlock->state;
     struct wined3d_context *context;
     unsigned int i;
 
@@ -571,9 +569,9 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
     if (state->render_states[WINED3DRS_COLORWRITEENABLE])
     {
         /* Invalidate the back buffer memory so LockRect will read it the next time */
-        for (i = 0; i < This->adapter->gl_info.limits.buffers; ++i)
+        for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
         {
-            IWineD3DSurfaceImpl *target = This->render_targets[i];
+            IWineD3DSurfaceImpl *target = device->render_targets[i];
             if (target)
             {
                 surface_load_location(target, SFLAG_INDRAWABLE, NULL);
@@ -583,9 +581,9 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
     }
 
     /* Signals other modules that a drawing is in progress and the stateblock finalized */
-    This->isInDraw = TRUE;
+    device->isInDraw = TRUE;
 
-    context = context_acquire(This, This->render_targets[0]);
+    context = context_acquire(device, device->render_targets[0]);
     if (!context->valid)
     {
         context_release(context);
@@ -593,42 +591,39 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
         return;
     }
 
-    context_apply_draw_state(context, This);
+    context_apply_draw_state(context, device);
 
-    if (This->depth_stencil)
+    if (device->depth_stencil)
     {
         /* Note that this depends on the context_acquire() call above to set
-         * This->render_offscreen properly. We don't currently take the
+         * context->render_offscreen properly. We don't currently take the
          * Z-compare function into account, but we could skip loading the
          * depthstencil for D3DCMP_NEVER and D3DCMP_ALWAYS as well. Also note
          * that we never copy the stencil data.*/
         DWORD location = context->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
         if (state->render_states[WINED3DRS_ZWRITEENABLE] || state->render_states[WINED3DRS_ZENABLE])
         {
+            IWineD3DSurfaceImpl *ds = device->depth_stencil;
             RECT current_rect, draw_rect, r;
 
-            if (location == SFLAG_DS_ONSCREEN && This->depth_stencil != This->onscreen_depth_stencil)
-                device_switch_onscreen_ds(This, context, This->depth_stencil);
+            if (location == SFLAG_DS_ONSCREEN && ds != device->onscreen_depth_stencil)
+                device_switch_onscreen_ds(device, context, ds);
 
-            if (This->depth_stencil->flags & location)
-                SetRect(&current_rect, 0, 0,
-                        This->depth_stencil->ds_current_size.cx,
-                        This->depth_stencil->ds_current_size.cy);
+            if (ds->flags & location)
+                SetRect(&current_rect, 0, 0, ds->ds_current_size.cx, ds->ds_current_size.cy);
             else
                 SetRectEmpty(&current_rect);
 
-            device_get_draw_rect(This, &draw_rect);
+            device_get_draw_rect(device, &draw_rect);
 
             IntersectRect(&r, &draw_rect, &current_rect);
             if (!EqualRect(&r, &draw_rect))
-                surface_load_ds_location(This->depth_stencil, context, location);
+                surface_load_ds_location(ds, context, location);
 
             if (state->render_states[WINED3DRS_ZWRITEENABLE])
             {
-                surface_modify_ds_location(This->depth_stencil, location,
-                        This->depth_stencil->ds_current_size.cx,
-                        This->depth_stencil->ds_current_size.cy);
-                surface_modify_location(This->depth_stencil, SFLAG_INDRAWABLE, TRUE);
+                surface_modify_ds_location(ds, location, ds->ds_current_size.cx, ds->ds_current_size.cy);
+                surface_modify_location(ds, SFLAG_INDRAWABLE, TRUE);
             }
         }
     }
@@ -647,12 +642,12 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
     {
         GLenum glPrimType = state->gl_primitive_type;
         BOOL emulation = FALSE;
-        const struct wined3d_stream_info *stream_info = &This->strided_streams;
+        const struct wined3d_stream_info *stream_info = &device->strided_streams;
         struct wined3d_stream_info stridedlcl;
 
         if (!use_vs(state))
         {
-            if (!This->strided_streams.position_transformed && context->num_untracked_materials
+            if (!stream_info->position_transformed && context->num_untracked_materials
                     && state->render_states[WINED3DRS_LIGHTING])
             {
                 static BOOL warned;
@@ -681,12 +676,12 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
 
             if(emulation) {
                 stream_info = &stridedlcl;
-                memcpy(&stridedlcl, &This->strided_streams, sizeof(stridedlcl));
+                memcpy(&stridedlcl, &device->strided_streams, sizeof(stridedlcl));
                 remove_vbos(context->gl_info, state, &stridedlcl);
             }
         }
 
-        if (This->useDrawStridedSlow || emulation)
+        if (device->useDrawStridedSlow || emulation)
         {
             /* Immediate mode drawing */
             if (use_vs(state))
@@ -703,11 +698,11 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
             }
             else
             {
-                drawStridedSlow(This, context, stream_info, index_count,
+                drawStridedSlow(device, context, stream_info, index_count,
                         glPrimType, idxData, idxSize, StartIdx);
             }
         }
-        else if (This->instancedDraw)
+        else if (device->instancedDraw)
         {
             /* Instancing emulation with mixing immediate mode and arrays */
             drawStridedInstanced(context->gl_info, state, stream_info,
@@ -722,9 +717,9 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
     /* Finished updating the screen, restore lock */
     LEAVE_GL();
 
-    for(i = 0; i < This->num_buffer_queries; i++)
+    for(i = 0; i < device->num_buffer_queries; ++i)
     {
-        wined3d_event_query_issue(This->buffer_queries[i], This);
+        wined3d_event_query_issue(device->buffer_queries[i], device);
     }
 
     if (wined3d_settings.strict_draw_ordering) wglFlush(); /* Flush to ensure ordering across contexts. */
@@ -734,7 +729,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
     TRACE("Done all gl drawing\n");
 
     /* Control goes back to the device, stateblock values may change again */
-    This->isInDraw = FALSE;
+    device->isInDraw = FALSE;
 }
 
 static void normalize_normal(float *n) {

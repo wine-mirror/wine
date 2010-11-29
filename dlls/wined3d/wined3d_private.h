@@ -920,7 +920,7 @@ struct wined3d_stream_info
  */
 
 /* Routine common to the draw primitive and draw indexed primitive routines */
-void drawPrimitive(IWineD3DDevice *iface, UINT index_count,
+void drawPrimitive(IWineD3DDeviceImpl *device, UINT index_count,
         UINT start_idx, UINT idxBytes, const void *idxData) DECLSPEC_HIDDEN;
 DWORD get_flexible_vertex_size(DWORD d3dvtVertexType) DECLSPEC_HIDDEN;
 

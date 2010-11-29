@@ -4797,7 +4797,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitive(IWineD3DDevice *iface, UI
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
     }
     /* Account for the loading offset due to index buffers. Instead of reloading all sources correct it with the startvertex parameter */
-    drawPrimitive(iface, vertex_count, StartVertex /* start_idx */, 0 /* indxSize */, NULL /* indxData */);
+    drawPrimitive(This, vertex_count, StartVertex /* start_idx */, 0 /* indxSize */, NULL /* indxData */);
     return WINED3D_OK;
 }
 
@@ -4845,7 +4845,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *if
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
     }
 
-    drawPrimitive(iface, index_count, startIndex, idxStride,
+    drawPrimitive(This, index_count, startIndex, idxStride,
             vbo ? NULL : index_buffer->resource.allocatedMemory);
 
     return WINED3D_OK;
@@ -4880,7 +4880,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, 
     /* TODO: Only mark dirty if drawing from a different UP address */
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
 
-    drawPrimitive(iface, vertex_count, 0 /* start_idx */, 0 /* indxSize*/, NULL /* indxData */);
+    drawPrimitive(This, vertex_count, 0 /* start_idx */, 0 /* indxSize*/, NULL /* indxData */);
 
     /* MSDN specifies stream zero settings must be set to NULL */
     stream->buffer = NULL;
@@ -4932,7 +4932,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
 
-    drawPrimitive(iface, index_count, 0 /* start_idx */, idxStride, pIndexData);
+    drawPrimitive(This, index_count, 0 /* start_idx */, idxStride, pIndexData);
 
     /* MSDN specifies stream zero settings and index buffer must be set to NULL */
     stream->buffer = NULL;
@@ -4963,7 +4963,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveStrided(IWineD3DDevice *if
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
     This->stateBlock->state.base_vertex_index = 0;
     This->up_strided = DrawPrimStrideData;
-    drawPrimitive(iface, vertex_count, 0, 0, NULL);
+    drawPrimitive(This, vertex_count, 0, 0, NULL);
     This->up_strided = NULL;
     return WINED3D_OK;
 }
@@ -4984,7 +4984,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveStrided(IWineD3DDev
     This->stateBlock->state.user_stream = TRUE;
     This->stateBlock->state.base_vertex_index = 0;
     This->up_strided = DrawPrimStrideData;
-    drawPrimitive(iface, vertex_count, 0 /* start_idx */, idxSize, pIndexData);
+    drawPrimitive(This, vertex_count, 0 /* start_idx */, idxSize, pIndexData);
     This->up_strided = NULL;
     return WINED3D_OK;
 }
