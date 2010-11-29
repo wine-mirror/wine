@@ -2370,7 +2370,7 @@ static void SizeTest(void)
     desc.ddsCaps.dwCaps |= DDSCAPS_OFFSCREENPLAIN;
     desc.dwWidth = 128;
     ret = IDirectDraw_CreateSurface(lpDD, &desc, &dsurface, NULL);
-    ok(ret == DDERR_INVALIDPARAMS, "Creating an offscreen plain surface without hight info returned %08x\n", ret);
+    ok(ret == DDERR_INVALIDPARAMS, "Creating an offscreen plain surface without height info returned %08x\n", ret);
     if(dsurface)
     {
         IDirectDrawSurface_Release(dsurface);
