@@ -93,7 +93,7 @@ static void test_ldap_search_extW( LDAP *ld )
 
     timelimit = 20;
     ret = ldap_search_extW( ld, base, LDAP_SCOPE_SUBTREE, filter, NULL, 0, NULL, NULL, timelimit, 0, &message );
-    if (ret == LDAP_SERVER_DOWN)
+    if (ret == LDAP_SERVER_DOWN || ret == LDAP_UNAVAILABLE)
     {
         skip("test server can't be reached\n");
         return;
