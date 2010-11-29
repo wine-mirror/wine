@@ -93,7 +93,7 @@ typedef struct {
 } Uri;
 
 typedef struct {
-    const IUriBuilderVtbl  *lpIUriBuilderVtbl;
+    IUriBuilder IUriBuilder_iface;
     LONG ref;
 
     Uri *uri;
@@ -3567,8 +3567,6 @@ static HRESULT set_builder_component(LPWSTR *component, DWORD *component_len, LP
     return S_OK;
 }
 
-#define URIBUILDER(x)  ((IUriBuilder*)  &(x)->lpIUriBuilderVtbl)
-
 static void reset_builder(UriBuilder *builder) {
     if(builder->uri)
         IUri_Release(&builder->uri->IUri_iface);
@@ -5191,18 +5189,21 @@ static HRESULT build_uri(const UriBuilder *builder, IUri **uri, DWORD create_fla
     return S_OK;
 }
 
-#define URIBUILDER_THIS(iface) DEFINE_THIS(UriBuilder, IUriBuilder, iface)
+static inline UriBuilder* impl_from_IUriBuilder(IUriBuilder *iface)
+{
+    return CONTAINING_RECORD(iface, UriBuilder, IUriBuilder_iface);
+}
 
 static HRESULT WINAPI UriBuilder_QueryInterface(IUriBuilder *iface, REFIID riid, void **ppv)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = URIBUILDER(This);
+        *ppv = &This->IUriBuilder_iface;
     }else if(IsEqualGUID(&IID_IUriBuilder, riid)) {
-        TRACE("(%p)->(IID_IUri %p)\n", This, ppv);
-        *ppv = URIBUILDER(This);
+        TRACE("(%p)->(IID_IUriBuilder %p)\n", This, ppv);
+        *ppv = &This->IUriBuilder_iface;
     }else {
         TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
@@ -5215,7 +5216,7 @@ static HRESULT WINAPI UriBuilder_QueryInterface(IUriBuilder *iface, REFIID riid,
 
 static ULONG WINAPI UriBuilder_AddRef(IUriBuilder *iface)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -5225,7 +5226,7 @@ static ULONG WINAPI UriBuilder_AddRef(IUriBuilder *iface)
 
 static ULONG WINAPI UriBuilder_Release(IUriBuilder *iface)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -5250,7 +5251,7 @@ static HRESULT WINAPI UriBuilder_CreateUriSimple(IUriBuilder *iface,
                                                  DWORD_PTR    dwReserved,
                                                  IUri       **ppIUri)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     HRESULT hr;
     TRACE("(%p)->(%d %d %p)\n", This, dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
 
@@ -5266,7 +5267,7 @@ static HRESULT WINAPI UriBuilder_CreateUri(IUriBuilder *iface,
                                            DWORD_PTR    dwReserved,
                                            IUri       **ppIUri)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     HRESULT hr;
     TRACE("(%p)->(0x%08x %d %d %p)\n", This, dwCreateFlags, dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
 
@@ -5287,7 +5288,7 @@ static HRESULT WINAPI UriBuilder_CreateUriWithFlags(IUriBuilder *iface,
                                          DWORD_PTR    dwReserved,
                                          IUri       **ppIUri)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     HRESULT hr;
     TRACE("(%p)->(0x%08x 0x%08x %d %d %p)\n", This, dwCreateFlags, dwUriBuilderFlags,
         dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
@@ -5301,7 +5302,7 @@ static HRESULT WINAPI UriBuilder_CreateUriWithFlags(IUriBuilder *iface,
 
 static HRESULT WINAPI  UriBuilder_GetIUri(IUriBuilder *iface, IUri **ppIUri)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     TRACE("(%p)->(%p)\n", This, ppIUri);
 
     if(!ppIUri)
@@ -5319,7 +5320,7 @@ static HRESULT WINAPI  UriBuilder_GetIUri(IUriBuilder *iface, IUri **ppIUri)
 
 static HRESULT WINAPI UriBuilder_SetIUri(IUriBuilder *iface, IUri *pIUri)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     TRACE("(%p)->(%p)\n", This, pIUri);
 
     if(pIUri) {
@@ -5351,7 +5352,7 @@ static HRESULT WINAPI UriBuilder_SetIUri(IUriBuilder *iface, IUri *pIUri)
 
 static HRESULT WINAPI UriBuilder_GetFragment(IUriBuilder *iface, DWORD *pcchFragment, LPCWSTR *ppwzFragment)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     TRACE("(%p)->(%p %p)\n", This, pcchFragment, ppwzFragment);
 
     if(!This->uri || This->uri->fragment_start == -1 || This->modified_props & Uri_HAS_FRAGMENT)
@@ -5363,7 +5364,7 @@ static HRESULT WINAPI UriBuilder_GetFragment(IUriBuilder *iface, DWORD *pcchFrag
 
 static HRESULT WINAPI UriBuilder_GetHost(IUriBuilder *iface, DWORD *pcchHost, LPCWSTR *ppwzHost)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     TRACE("(%p)->(%p %p)\n", This, pcchHost, ppwzHost);
 
     if(!This->uri || This->uri->host_start == -1 || This->modified_props & Uri_HAS_HOST)
@@ -5381,7 +5382,7 @@ static HRESULT WINAPI UriBuilder_GetHost(IUriBuilder *iface, DWORD *pcchHost, LP
 
 static HRESULT WINAPI UriBuilder_GetPassword(IUriBuilder *iface, DWORD *pcchPassword, LPCWSTR *ppwzPassword)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     TRACE("(%p)->(%p %p)\n", This, pcchPassword, ppwzPassword);
 
     if(!This->uri || This->uri->userinfo_split == -1 || This->modified_props & Uri_HAS_PASSWORD)
@@ -5395,7 +5396,7 @@ static HRESULT WINAPI UriBuilder_GetPassword(IUriBuilder *iface, DWORD *pcchPass
 
 static HRESULT WINAPI UriBuilder_GetPath(IUriBuilder *iface, DWORD *pcchPath, LPCWSTR *ppwzPath)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     TRACE("(%p)->(%p %p)\n", This, pcchPath, ppwzPath);
 
     if(!This->uri || This->uri->path_start == -1 || This->modified_props & Uri_HAS_PATH)
@@ -5407,7 +5408,7 @@ static HRESULT WINAPI UriBuilder_GetPath(IUriBuilder *iface, DWORD *pcchPath, LP
 
 static HRESULT WINAPI UriBuilder_GetPort(IUriBuilder *iface, BOOL *pfHasPort, DWORD *pdwPort)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     TRACE("(%p)->(%p %p)\n", This, pfHasPort, pdwPort);
 
     if(!pfHasPort) {
@@ -5428,7 +5429,7 @@ static HRESULT WINAPI UriBuilder_GetPort(IUriBuilder *iface, BOOL *pfHasPort, DW
 
 static HRESULT WINAPI UriBuilder_GetQuery(IUriBuilder *iface, DWORD *pcchQuery, LPCWSTR *ppwzQuery)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     TRACE("(%p)->(%p %p)\n", This, pcchQuery, ppwzQuery);
 
     if(!This->uri || This->uri->query_start == -1 || This->modified_props & Uri_HAS_QUERY)
@@ -5440,7 +5441,7 @@ static HRESULT WINAPI UriBuilder_GetQuery(IUriBuilder *iface, DWORD *pcchQuery, 
 
 static HRESULT WINAPI UriBuilder_GetSchemeName(IUriBuilder *iface, DWORD *pcchSchemeName, LPCWSTR *ppwzSchemeName)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     TRACE("(%p)->(%p %p)\n", This, pcchSchemeName, ppwzSchemeName);
 
     if(!This->uri || This->uri->scheme_start == -1 || This->modified_props & Uri_HAS_SCHEME_NAME)
@@ -5452,7 +5453,7 @@ static HRESULT WINAPI UriBuilder_GetSchemeName(IUriBuilder *iface, DWORD *pcchSc
 
 static HRESULT WINAPI UriBuilder_GetUserName(IUriBuilder *iface, DWORD *pcchUserName, LPCWSTR *ppwzUserName)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     TRACE("(%p)->(%p %p)\n", This, pcchUserName, ppwzUserName);
 
     if(!This->uri || This->uri->userinfo_start == -1 || This->uri->userinfo_split == 0 ||
@@ -5474,7 +5475,7 @@ static HRESULT WINAPI UriBuilder_GetUserName(IUriBuilder *iface, DWORD *pcchUser
 
 static HRESULT WINAPI UriBuilder_SetFragment(IUriBuilder *iface, LPCWSTR pwzNewValue)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
     return set_builder_component(&This->fragment, &This->fragment_len, pwzNewValue, '#',
                                  &This->modified_props, Uri_HAS_FRAGMENT);
@@ -5482,7 +5483,7 @@ static HRESULT WINAPI UriBuilder_SetFragment(IUriBuilder *iface, LPCWSTR pwzNewV
 
 static HRESULT WINAPI UriBuilder_SetHost(IUriBuilder *iface, LPCWSTR pwzNewValue)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
 
     /* Host name can't be set to NULL. */
@@ -5495,7 +5496,7 @@ static HRESULT WINAPI UriBuilder_SetHost(IUriBuilder *iface, LPCWSTR pwzNewValue
 
 static HRESULT WINAPI UriBuilder_SetPassword(IUriBuilder *iface, LPCWSTR pwzNewValue)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
     return set_builder_component(&This->password, &This->password_len, pwzNewValue, 0,
                                  &This->modified_props, Uri_HAS_PASSWORD);
@@ -5503,7 +5504,7 @@ static HRESULT WINAPI UriBuilder_SetPassword(IUriBuilder *iface, LPCWSTR pwzNewV
 
 static HRESULT WINAPI UriBuilder_SetPath(IUriBuilder *iface, LPCWSTR pwzNewValue)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
     return set_builder_component(&This->path, &This->path_len, pwzNewValue, 0,
                                  &This->modified_props, Uri_HAS_PATH);
@@ -5511,7 +5512,7 @@ static HRESULT WINAPI UriBuilder_SetPath(IUriBuilder *iface, LPCWSTR pwzNewValue
 
 static HRESULT WINAPI UriBuilder_SetPort(IUriBuilder *iface, BOOL fHasPort, DWORD dwNewValue)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     TRACE("(%p)->(%d %d)\n", This, fHasPort, dwNewValue);
 
     This->has_port = fHasPort;
@@ -5522,7 +5523,7 @@ static HRESULT WINAPI UriBuilder_SetPort(IUriBuilder *iface, BOOL fHasPort, DWOR
 
 static HRESULT WINAPI UriBuilder_SetQuery(IUriBuilder *iface, LPCWSTR pwzNewValue)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
     return set_builder_component(&This->query, &This->query_len, pwzNewValue, '?',
                                  &This->modified_props, Uri_HAS_QUERY);
@@ -5530,7 +5531,7 @@ static HRESULT WINAPI UriBuilder_SetQuery(IUriBuilder *iface, LPCWSTR pwzNewValu
 
 static HRESULT WINAPI UriBuilder_SetSchemeName(IUriBuilder *iface, LPCWSTR pwzNewValue)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
 
     /* Only set the scheme name if it's not NULL or empty. */
@@ -5543,7 +5544,7 @@ static HRESULT WINAPI UriBuilder_SetSchemeName(IUriBuilder *iface, LPCWSTR pwzNe
 
 static HRESULT WINAPI UriBuilder_SetUserName(IUriBuilder *iface, LPCWSTR pwzNewValue)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
     return set_builder_component(&This->username, &This->username_len, pwzNewValue, 0,
                                  &This->modified_props, Uri_HAS_USER_NAME);
@@ -5555,7 +5556,7 @@ static HRESULT WINAPI UriBuilder_RemoveProperties(IUriBuilder *iface, DWORD dwPr
                                  Uri_HAS_PASSWORD|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_QUERY|
                                  Uri_HAS_USER_INFO|Uri_HAS_USER_NAME;
 
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     TRACE("(%p)->(0x%08x)\n", This, dwPropertyMask);
 
     if(dwPropertyMask & ~accepted_flags)
@@ -5591,7 +5592,7 @@ static HRESULT WINAPI UriBuilder_RemoveProperties(IUriBuilder *iface, DWORD dwPr
 
 static HRESULT WINAPI UriBuilder_HasBeenModified(IUriBuilder *iface, BOOL *pfModified)
 {
-    UriBuilder *This = URIBUILDER_THIS(iface);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
     TRACE("(%p)->(%p)\n", This, pfModified);
 
     if(!pfModified)
@@ -5600,8 +5601,6 @@ static HRESULT WINAPI UriBuilder_HasBeenModified(IUriBuilder *iface, BOOL *pfMod
     *pfModified = This->modified_props > 0;
     return S_OK;
 }
-
-#undef URIBUILDER_THIS
 
 static const IUriBuilderVtbl UriBuilderVtbl = {
     UriBuilder_QueryInterface,
@@ -5648,7 +5647,7 @@ HRESULT WINAPI CreateIUriBuilder(IUri *pIUri, DWORD dwFlags, DWORD_PTR dwReserve
     if(!ret)
         return E_OUTOFMEMORY;
 
-    ret->lpIUriBuilderVtbl = &UriBuilderVtbl;
+    ret->IUriBuilder_iface.lpVtbl = &UriBuilderVtbl;
     ret->ref = 1;
 
     if(pIUri) {
@@ -5671,7 +5670,7 @@ HRESULT WINAPI CreateIUriBuilder(IUri *pIUri, DWORD dwFlags, DWORD_PTR dwReserve
         }
     }
 
-    *ppIUriBuilder = URIBUILDER(ret);
+    *ppIUriBuilder = &ret->IUriBuilder_iface;
     return S_OK;
 }
 
