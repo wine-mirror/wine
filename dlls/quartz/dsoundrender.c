@@ -342,8 +342,10 @@ static HRESULT WINAPI DSoundRender_Receive(BaseInputPin *pin, IMediaSample * pSa
     if (IMediaSample_GetMediaTime(pSample, &tStart, &tStop) == S_OK)
         MediaSeekingPassThru_RegisterMediaTime(This->seekthru_unk, tStart);
     hr = IMediaSample_GetTime(pSample, &tStart, &tStop);
-    if (FAILED(hr))
+    if (FAILED(hr)) {
         ERR("Cannot get sample time (%x)\n", hr);
+        tStart = tStop = -1;
+    }
 
     IMediaSample_IsDiscontinuity(pSample);
 
