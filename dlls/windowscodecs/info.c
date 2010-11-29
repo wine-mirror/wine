@@ -65,16 +65,21 @@ static HRESULT ComponentInfo_GetStringValue(HKEY classkey, LPCWSTR value,
 }
 
 typedef struct {
-    const IWICBitmapDecoderInfoVtbl *lpIWICBitmapDecoderInfoVtbl;
+    IWICBitmapDecoderInfo IWICBitmapDecoderInfo_iface;
     LONG ref;
     HKEY classkey;
     CLSID clsid;
 } BitmapDecoderInfo;
 
+static inline BitmapDecoderInfo *impl_from_IWICBitmapDecoderInfo(IWICBitmapDecoderInfo *iface)
+{
+    return CONTAINING_RECORD(iface, BitmapDecoderInfo, IWICBitmapDecoderInfo_iface);
+}
+
 static HRESULT WINAPI BitmapDecoderInfo_QueryInterface(IWICBitmapDecoderInfo *iface, REFIID iid,
     void **ppv)
 {
-    BitmapDecoderInfo *This = (BitmapDecoderInfo*)iface;
+    BitmapDecoderInfo *This = impl_from_IWICBitmapDecoderInfo(iface);
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
@@ -98,7 +103,7 @@ static HRESULT WINAPI BitmapDecoderInfo_QueryInterface(IWICBitmapDecoderInfo *if
 
 static ULONG WINAPI BitmapDecoderInfo_AddRef(IWICBitmapDecoderInfo *iface)
 {
-    BitmapDecoderInfo *This = (BitmapDecoderInfo*)iface;
+    BitmapDecoderInfo *This = impl_from_IWICBitmapDecoderInfo(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -108,7 +113,7 @@ static ULONG WINAPI BitmapDecoderInfo_AddRef(IWICBitmapDecoderInfo *iface)
 
 static ULONG WINAPI BitmapDecoderInfo_Release(IWICBitmapDecoderInfo *iface)
 {
-    BitmapDecoderInfo *This = (BitmapDecoderInfo*)iface;
+    BitmapDecoderInfo *This = impl_from_IWICBitmapDecoderInfo(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -132,7 +137,7 @@ static HRESULT WINAPI BitmapDecoderInfo_GetComponentType(IWICBitmapDecoderInfo *
 
 static HRESULT WINAPI BitmapDecoderInfo_GetCLSID(IWICBitmapDecoderInfo *iface, CLSID *pclsid)
 {
-    BitmapDecoderInfo *This = (BitmapDecoderInfo*)iface;
+    BitmapDecoderInfo *This = impl_from_IWICBitmapDecoderInfo(iface);
     TRACE("(%p,%p)\n", iface, pclsid);
 
     if (!pclsid)
@@ -221,7 +226,7 @@ static HRESULT WINAPI BitmapDecoderInfo_GetDeviceModels(IWICBitmapDecoderInfo *i
 static HRESULT WINAPI BitmapDecoderInfo_GetMimeTypes(IWICBitmapDecoderInfo *iface,
     UINT cchMimeTypes, WCHAR *wzMimeTypes, UINT *pcchActual)
 {
-    BitmapDecoderInfo *This = (BitmapDecoderInfo*)iface;
+    BitmapDecoderInfo *This = impl_from_IWICBitmapDecoderInfo(iface);
 
     TRACE("(%p,%u,%p,%p)\n", iface, cchMimeTypes, wzMimeTypes, pcchActual);
 
@@ -274,7 +279,7 @@ static HRESULT WINAPI BitmapDecoderInfo_MatchesMimeType(IWICBitmapDecoderInfo *i
 static HRESULT WINAPI BitmapDecoderInfo_GetPatterns(IWICBitmapDecoderInfo *iface,
     UINT cbSizePatterns, WICBitmapPattern *pPatterns, UINT *pcPatterns, UINT *pcbPatternsActual)
 {
-    BitmapDecoderInfo *This = (BitmapDecoderInfo*)iface;
+    BitmapDecoderInfo *This = impl_from_IWICBitmapDecoderInfo(iface);
     UINT pattern_count=0, patterns_size=0;
     WCHAR subkeyname[11];
     LONG res;
@@ -446,7 +451,7 @@ end:
 static HRESULT WINAPI BitmapDecoderInfo_CreateInstance(IWICBitmapDecoderInfo *iface,
     IWICBitmapDecoder **ppIBitmapDecoder)
 {
-    BitmapDecoderInfo *This = (BitmapDecoderInfo*)iface;
+    BitmapDecoderInfo *This = impl_from_IWICBitmapDecoderInfo(iface);
 
     TRACE("(%p,%p)\n", iface, ppIBitmapDecoder);
 
@@ -494,7 +499,7 @@ static HRESULT BitmapDecoderInfo_Constructor(HKEY classkey, REFCLSID clsid, IWIC
         return E_OUTOFMEMORY;
     }
 
-    This->lpIWICBitmapDecoderInfoVtbl = &BitmapDecoderInfo_Vtbl;
+    This->IWICBitmapDecoderInfo_iface.lpVtbl = &BitmapDecoderInfo_Vtbl;
     This->ref = 1;
     This->classkey = classkey;
     memcpy(&This->clsid, clsid, sizeof(CLSID));
@@ -504,16 +509,21 @@ static HRESULT BitmapDecoderInfo_Constructor(HKEY classkey, REFCLSID clsid, IWIC
 }
 
 typedef struct {
-    const IWICBitmapEncoderInfoVtbl *lpIWICBitmapEncoderInfoVtbl;
+    IWICBitmapEncoderInfo IWICBitmapEncoderInfo_iface;
     LONG ref;
     HKEY classkey;
     CLSID clsid;
 } BitmapEncoderInfo;
 
+static inline BitmapEncoderInfo *impl_from_IWICBitmapEncoderInfo(IWICBitmapEncoderInfo *iface)
+{
+    return CONTAINING_RECORD(iface, BitmapEncoderInfo, IWICBitmapEncoderInfo_iface);
+}
+
 static HRESULT WINAPI BitmapEncoderInfo_QueryInterface(IWICBitmapEncoderInfo *iface, REFIID iid,
     void **ppv)
 {
-    BitmapEncoderInfo *This = (BitmapEncoderInfo*)iface;
+    BitmapEncoderInfo *This = impl_from_IWICBitmapEncoderInfo(iface);
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
@@ -537,7 +547,7 @@ static HRESULT WINAPI BitmapEncoderInfo_QueryInterface(IWICBitmapEncoderInfo *if
 
 static ULONG WINAPI BitmapEncoderInfo_AddRef(IWICBitmapEncoderInfo *iface)
 {
-    BitmapEncoderInfo *This = (BitmapEncoderInfo*)iface;
+    BitmapEncoderInfo *This = impl_from_IWICBitmapEncoderInfo(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -547,7 +557,7 @@ static ULONG WINAPI BitmapEncoderInfo_AddRef(IWICBitmapEncoderInfo *iface)
 
 static ULONG WINAPI BitmapEncoderInfo_Release(IWICBitmapEncoderInfo *iface)
 {
-    BitmapEncoderInfo *This = (BitmapEncoderInfo*)iface;
+    BitmapEncoderInfo *This = impl_from_IWICBitmapEncoderInfo(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -571,7 +581,7 @@ static HRESULT WINAPI BitmapEncoderInfo_GetComponentType(IWICBitmapEncoderInfo *
 
 static HRESULT WINAPI BitmapEncoderInfo_GetCLSID(IWICBitmapEncoderInfo *iface, CLSID *pclsid)
 {
-    BitmapEncoderInfo *This = (BitmapEncoderInfo*)iface;
+    BitmapEncoderInfo *This = impl_from_IWICBitmapEncoderInfo(iface);
     TRACE("(%p,%p)\n", iface, pclsid);
 
     if (!pclsid)
@@ -660,7 +670,7 @@ static HRESULT WINAPI BitmapEncoderInfo_GetDeviceModels(IWICBitmapEncoderInfo *i
 static HRESULT WINAPI BitmapEncoderInfo_GetMimeTypes(IWICBitmapEncoderInfo *iface,
     UINT cchMimeTypes, WCHAR *wzMimeTypes, UINT *pcchActual)
 {
-    BitmapEncoderInfo *This = (BitmapEncoderInfo*)iface;
+    BitmapEncoderInfo *This = impl_from_IWICBitmapEncoderInfo(iface);
 
     TRACE("(%p,%u,%p,%p)\n", iface, cchMimeTypes, wzMimeTypes, pcchActual);
 
@@ -713,7 +723,7 @@ static HRESULT WINAPI BitmapEncoderInfo_MatchesMimeType(IWICBitmapEncoderInfo *i
 static HRESULT WINAPI BitmapEncoderInfo_CreateInstance(IWICBitmapEncoderInfo *iface,
     IWICBitmapEncoder **ppIBitmapEncoder)
 {
-    BitmapEncoderInfo *This = (BitmapEncoderInfo*)iface;
+    BitmapEncoderInfo *This = impl_from_IWICBitmapEncoderInfo(iface);
 
     TRACE("(%p,%p)\n", iface, ppIBitmapEncoder);
 
@@ -759,7 +769,7 @@ static HRESULT BitmapEncoderInfo_Constructor(HKEY classkey, REFCLSID clsid, IWIC
         return E_OUTOFMEMORY;
     }
 
-    This->lpIWICBitmapEncoderInfoVtbl = &BitmapEncoderInfo_Vtbl;
+    This->IWICBitmapEncoderInfo_iface.lpVtbl = &BitmapEncoderInfo_Vtbl;
     This->ref = 1;
     This->classkey = classkey;
     memcpy(&This->clsid, clsid, sizeof(CLSID));
@@ -769,16 +779,21 @@ static HRESULT BitmapEncoderInfo_Constructor(HKEY classkey, REFCLSID clsid, IWIC
 }
 
 typedef struct {
-    const IWICFormatConverterInfoVtbl *lpIWICFormatConverterInfoVtbl;
+    IWICFormatConverterInfo IWICFormatConverterInfo_iface;
     LONG ref;
     HKEY classkey;
     CLSID clsid;
 } FormatConverterInfo;
 
+static inline FormatConverterInfo *impl_from_IWICFormatConverterInfo(IWICFormatConverterInfo *iface)
+{
+    return CONTAINING_RECORD(iface, FormatConverterInfo, IWICFormatConverterInfo_iface);
+}
+
 static HRESULT WINAPI FormatConverterInfo_QueryInterface(IWICFormatConverterInfo *iface, REFIID iid,
     void **ppv)
 {
-    FormatConverterInfo *This = (FormatConverterInfo*)iface;
+    FormatConverterInfo *This = impl_from_IWICFormatConverterInfo(iface);
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
@@ -801,7 +816,7 @@ static HRESULT WINAPI FormatConverterInfo_QueryInterface(IWICFormatConverterInfo
 
 static ULONG WINAPI FormatConverterInfo_AddRef(IWICFormatConverterInfo *iface)
 {
-    FormatConverterInfo *This = (FormatConverterInfo*)iface;
+    FormatConverterInfo *This = impl_from_IWICFormatConverterInfo(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -811,7 +826,7 @@ static ULONG WINAPI FormatConverterInfo_AddRef(IWICFormatConverterInfo *iface)
 
 static ULONG WINAPI FormatConverterInfo_Release(IWICFormatConverterInfo *iface)
 {
-    FormatConverterInfo *This = (FormatConverterInfo*)iface;
+    FormatConverterInfo *This = impl_from_IWICFormatConverterInfo(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -835,7 +850,7 @@ static HRESULT WINAPI FormatConverterInfo_GetComponentType(IWICFormatConverterIn
 
 static HRESULT WINAPI FormatConverterInfo_GetCLSID(IWICFormatConverterInfo *iface, CLSID *pclsid)
 {
-    FormatConverterInfo *This = (FormatConverterInfo*)iface;
+    FormatConverterInfo *This = impl_from_IWICFormatConverterInfo(iface);
     TRACE("(%p,%p)\n", iface, pclsid);
 
     if (!pclsid)
@@ -896,7 +911,7 @@ static HRESULT WINAPI FormatConverterInfo_GetPixelFormats(IWICFormatConverterInf
 static HRESULT WINAPI FormatConverterInfo_CreateInstance(IWICFormatConverterInfo *iface,
     IWICFormatConverter **ppIFormatConverter)
 {
-    FormatConverterInfo *This = (FormatConverterInfo*)iface;
+    FormatConverterInfo *This = impl_from_IWICFormatConverterInfo(iface);
 
     TRACE("(%p,%p)\n", iface, ppIFormatConverter);
 
@@ -907,7 +922,7 @@ static HRESULT WINAPI FormatConverterInfo_CreateInstance(IWICFormatConverterInfo
 static BOOL ConverterSupportsFormat(IWICFormatConverterInfo *iface, const WCHAR *formatguid)
 {
     LONG res;
-    FormatConverterInfo *This = (FormatConverterInfo*)iface;
+    FormatConverterInfo *This = impl_from_IWICFormatConverterInfo(iface);
     HKEY formats_key, guid_key;
 
     /* Avoid testing using IWICFormatConverter_GetPixelFormats because that
@@ -951,7 +966,7 @@ static HRESULT FormatConverterInfo_Constructor(HKEY classkey, REFCLSID clsid, IW
         return E_OUTOFMEMORY;
     }
 
-    This->lpIWICFormatConverterInfoVtbl = &FormatConverterInfo_Vtbl;
+    This->IWICFormatConverterInfo_iface.lpVtbl = &FormatConverterInfo_Vtbl;
     This->ref = 1;
     This->classkey = classkey;
     memcpy(&This->clsid, clsid, sizeof(CLSID));
@@ -1032,12 +1047,17 @@ HRESULT CreateComponentInfo(REFCLSID clsid, IWICComponentInfo **ppIInfo)
 }
 
 typedef struct {
-    const IEnumUnknownVtbl *IEnumUnknown_Vtbl;
+    IEnumUnknown IEnumUnknown_iface;
     LONG ref;
     struct list objects;
     struct list *cursor;
     CRITICAL_SECTION lock; /* Must be held when reading or writing cursor */
 } ComponentEnum;
+
+static inline ComponentEnum *impl_from_IEnumUnknown(IEnumUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, ComponentEnum, IEnumUnknown_iface);
+}
 
 typedef struct {
     struct list entry;
@@ -1049,7 +1069,7 @@ static const IEnumUnknownVtbl ComponentEnumVtbl;
 static HRESULT WINAPI ComponentEnum_QueryInterface(IEnumUnknown *iface, REFIID iid,
     void **ppv)
 {
-    ComponentEnum *This = (ComponentEnum*)iface;
+    ComponentEnum *This = impl_from_IEnumUnknown(iface);
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
@@ -1070,7 +1090,7 @@ static HRESULT WINAPI ComponentEnum_QueryInterface(IEnumUnknown *iface, REFIID i
 
 static ULONG WINAPI ComponentEnum_AddRef(IEnumUnknown *iface)
 {
-    ComponentEnum *This = (ComponentEnum*)iface;
+    ComponentEnum *This = impl_from_IEnumUnknown(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -1080,7 +1100,7 @@ static ULONG WINAPI ComponentEnum_AddRef(IEnumUnknown *iface)
 
 static ULONG WINAPI ComponentEnum_Release(IEnumUnknown *iface)
 {
-    ComponentEnum *This = (ComponentEnum*)iface;
+    ComponentEnum *This = impl_from_IEnumUnknown(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
     ComponentEnumItem *cursor, *cursor2;
 
@@ -1105,7 +1125,7 @@ static ULONG WINAPI ComponentEnum_Release(IEnumUnknown *iface)
 static HRESULT WINAPI ComponentEnum_Next(IEnumUnknown *iface, ULONG celt,
     IUnknown **rgelt, ULONG *pceltFetched)
 {
-    ComponentEnum *This = (ComponentEnum*)iface;
+    ComponentEnum *This = impl_from_IEnumUnknown(iface);
     int num_fetched=0;
     ComponentEnumItem *item;
     HRESULT hr=S_OK;
@@ -1134,7 +1154,7 @@ static HRESULT WINAPI ComponentEnum_Next(IEnumUnknown *iface, ULONG celt,
 
 static HRESULT WINAPI ComponentEnum_Skip(IEnumUnknown *iface, ULONG celt)
 {
-    ComponentEnum *This = (ComponentEnum*)iface;
+    ComponentEnum *This = impl_from_IEnumUnknown(iface);
     int i;
     HRESULT hr=S_OK;
 
@@ -1156,7 +1176,7 @@ static HRESULT WINAPI ComponentEnum_Skip(IEnumUnknown *iface, ULONG celt)
 
 static HRESULT WINAPI ComponentEnum_Reset(IEnumUnknown *iface)
 {
-    ComponentEnum *This = (ComponentEnum*)iface;
+    ComponentEnum *This = impl_from_IEnumUnknown(iface);
 
     TRACE("(%p)\n", iface);
 
@@ -1168,7 +1188,7 @@ static HRESULT WINAPI ComponentEnum_Reset(IEnumUnknown *iface)
 
 static HRESULT WINAPI ComponentEnum_Clone(IEnumUnknown *iface, IEnumUnknown **ppenum)
 {
-    ComponentEnum *This = (ComponentEnum*)iface;
+    ComponentEnum *This = impl_from_IEnumUnknown(iface);
     ComponentEnum *new_enum;
     ComponentEnumItem *old_item, *new_item;
     HRESULT ret=S_OK;
@@ -1181,7 +1201,7 @@ static HRESULT WINAPI ComponentEnum_Clone(IEnumUnknown *iface, IEnumUnknown **pp
         return E_OUTOFMEMORY;
     }
 
-    new_enum->IEnumUnknown_Vtbl = &ComponentEnumVtbl;
+    new_enum->IEnumUnknown_iface.lpVtbl = &ComponentEnumVtbl;
     new_enum->ref = 1;
     new_enum->cursor = NULL;
     list_init(&new_enum->objects);
@@ -1252,7 +1272,7 @@ HRESULT CreateComponentEnumerator(DWORD componentTypes, DWORD options, IEnumUnkn
         return E_OUTOFMEMORY;
     }
 
-    This->IEnumUnknown_Vtbl = &ComponentEnumVtbl;
+    This->IEnumUnknown_iface.lpVtbl = &ComponentEnumVtbl;
     This->ref = 1;
     list_init(&This->objects);
     InitializeCriticalSection(&This->lock);
