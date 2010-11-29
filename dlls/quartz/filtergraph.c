@@ -200,6 +200,7 @@ typedef struct _IFilterGraphImpl {
     IUnknown * pUnkOuter;
     BOOL bUnkOuterValid;
     BOOL bAggregatable;
+    BOOL defaultclock;
     GUID timeformatseek;
     REFERENCE_TIME start_time;
     REFERENCE_TIME pause_time;
@@ -754,17 +755,38 @@ static HRESULT WINAPI FilterGraph2_Disconnect(IFilterGraph2 *iface, IPin *ppin)
 static HRESULT WINAPI FilterGraph2_SetDefaultSyncSource(IFilterGraph2 *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
     IReferenceClock *pClock = NULL;
-    HRESULT hr;
+    HRESULT hr = S_OK;
+    int i;
 
-    TRACE("(%p/%p)->() semi-stub\n", iface, This);
+    TRACE("(%p/%p)->() live sources not handled properly!\n", iface, This);
 
-    hr = CoCreateInstance(&CLSID_SystemClock, NULL, CLSCTX_INPROC_SERVER, &IID_IReferenceClock, (LPVOID*)&pClock);
+    EnterCriticalSection(&This->cs);
+
+    for (i = 0; i < This->nFilters; ++i)
+    {
+        DWORD miscflags;
+        IAMFilterMiscFlags *flags = NULL;
+        IUnknown_QueryInterface(This->ppFiltersInGraph[i], &IID_IAMFilterMiscFlags, (void**)&flags);
+        if (!flags)
+            continue;
+        miscflags = IAMFilterMiscFlags_GetMiscFlags(flags);
+        IUnknown_Release(flags);
+        if (miscflags == AM_FILTER_MISC_FLAGS_IS_RENDERER)
+            IUnknown_QueryInterface(This->ppFiltersInGraph[i], &IID_IReferenceClock, (void**)&pClock);
+        if (pClock)
+            break;
+    }
+
+    if (!pClock)
+        hr = CoCreateInstance(&CLSID_SystemClock, NULL, CLSCTX_INPROC_SERVER, &IID_IReferenceClock, (LPVOID*)&pClock);
 
     if (SUCCEEDED(hr))
     {
         hr = IMediaFilter_SetSyncSource((IMediaFilter*)&(This->IMediaFilter_vtbl), pClock);
+        This->defaultclock = TRUE;
         IReferenceClock_Release(pClock);
     }
+    LeaveCriticalSection(&This->cs);
 
     return hr;
 }
@@ -1930,6 +1952,9 @@ static HRESULT WINAPI MediaControl_Run(IMediaControl *iface) {
     if (This->state == State_Running)
         goto out;
     This->EcCompleteCount = 0;
+
+    if (This->defaultclock && !This->refClock)
+        IFilterGraph2_SetDefaultSyncSource((IFilterGraph2*)This);
 
     if (This->refClock)
     {
@@ -5075,6 +5100,7 @@ static HRESULT WINAPI MediaFilter_SetSyncSource(IMediaFilter *iface, IReferenceC
             This->refClock = pClock;
             if (This->refClock)
                 IReferenceClock_AddRef(This->refClock);
+            This->defaultclock = FALSE;
 
             if (This->HandleEcClockChanged)
             {
@@ -5428,6 +5454,7 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     fimpl->pUnkOuter = pUnkOuter;
     fimpl->bUnkOuterValid = FALSE;
     fimpl->bAggregatable = FALSE;
+    fimpl->defaultclock = TRUE;
     fimpl->IInner_vtbl = &IInner_VTable;
     fimpl->IFilterGraph2_vtbl = &IFilterGraph2_VTable;
     fimpl->IMediaControl_vtbl = &IMediaControl_VTable;
@@ -5490,7 +5517,6 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
         CoTaskMemFree(fimpl);
         return hr;
     }
-    IFilterGraph2_SetDefaultSyncSource((IFilterGraph2*)fimpl);
 
     *ppObj = fimpl;
     return S_OK;
