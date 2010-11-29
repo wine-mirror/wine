@@ -35,7 +35,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
 typedef struct {
-    const IWICPaletteVtbl *lpIWICPaletteVtbl;
+    IWICPalette IWICPalette_iface;
     LONG ref;
     UINT count;
     WICColor *colors;
@@ -43,10 +43,15 @@ typedef struct {
     CRITICAL_SECTION lock; /* must be held when count, colors, or type is accessed */
 } PaletteImpl;
 
+static inline PaletteImpl *impl_from_IWICPalette(IWICPalette *iface)
+{
+    return CONTAINING_RECORD(iface, PaletteImpl, IWICPalette_iface);
+}
+
 static HRESULT WINAPI PaletteImpl_QueryInterface(IWICPalette *iface, REFIID iid,
     void **ppv)
 {
-    PaletteImpl *This = (PaletteImpl*)iface;
+    PaletteImpl *This = impl_from_IWICPalette(iface);
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
@@ -67,7 +72,7 @@ static HRESULT WINAPI PaletteImpl_QueryInterface(IWICPalette *iface, REFIID iid,
 
 static ULONG WINAPI PaletteImpl_AddRef(IWICPalette *iface)
 {
-    PaletteImpl *This = (PaletteImpl*)iface;
+    PaletteImpl *This = impl_from_IWICPalette(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -77,7 +82,7 @@ static ULONG WINAPI PaletteImpl_AddRef(IWICPalette *iface)
 
 static ULONG WINAPI PaletteImpl_Release(IWICPalette *iface)
 {
-    PaletteImpl *This = (PaletteImpl*)iface;
+    PaletteImpl *This = impl_from_IWICPalette(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -103,7 +108,7 @@ static HRESULT WINAPI PaletteImpl_InitializePredefined(IWICPalette *iface,
 static HRESULT WINAPI PaletteImpl_InitializeCustom(IWICPalette *iface,
     WICColor *pColors, UINT colorCount)
 {
-    PaletteImpl *This = (PaletteImpl*)iface;
+    PaletteImpl *This = impl_from_IWICPalette(iface);
     WICColor *new_colors;
 
     TRACE("(%p,%p,%u)\n", iface, pColors, colorCount);
@@ -147,7 +152,7 @@ static HRESULT WINAPI PaletteImpl_InitializeFromPalette(IWICPalette *iface,
 static HRESULT WINAPI PaletteImpl_GetType(IWICPalette *iface,
     WICBitmapPaletteType *pePaletteType)
 {
-    PaletteImpl *This = (PaletteImpl*)iface;
+    PaletteImpl *This = impl_from_IWICPalette(iface);
 
     TRACE("(%p,%p)\n", iface, pePaletteType);
 
@@ -162,7 +167,7 @@ static HRESULT WINAPI PaletteImpl_GetType(IWICPalette *iface,
 
 static HRESULT WINAPI PaletteImpl_GetColorCount(IWICPalette *iface, UINT *pcCount)
 {
-    PaletteImpl *This = (PaletteImpl*)iface;
+    PaletteImpl *This = impl_from_IWICPalette(iface);
 
     TRACE("(%p,%p)\n", iface, pcCount);
 
@@ -178,7 +183,7 @@ static HRESULT WINAPI PaletteImpl_GetColorCount(IWICPalette *iface, UINT *pcCoun
 static HRESULT WINAPI PaletteImpl_GetColors(IWICPalette *iface, UINT colorCount,
     WICColor *pColors, UINT *pcActualColors)
 {
-    PaletteImpl *This = (PaletteImpl*)iface;
+    PaletteImpl *This = impl_from_IWICPalette(iface);
 
     TRACE("(%p,%i,%p,%p)\n", iface, colorCount, pColors, pcActualColors);
 
@@ -199,7 +204,7 @@ static HRESULT WINAPI PaletteImpl_GetColors(IWICPalette *iface, UINT colorCount,
 
 static HRESULT WINAPI PaletteImpl_IsBlackWhite(IWICPalette *iface, BOOL *pfIsBlackWhite)
 {
-    PaletteImpl *This = (PaletteImpl*)iface;
+    PaletteImpl *This = impl_from_IWICPalette(iface);
 
     TRACE("(%p,%p)\n", iface, pfIsBlackWhite);
 
@@ -217,7 +222,7 @@ static HRESULT WINAPI PaletteImpl_IsBlackWhite(IWICPalette *iface, BOOL *pfIsBla
 
 static HRESULT WINAPI PaletteImpl_IsGrayscale(IWICPalette *iface, BOOL *pfIsGrayscale)
 {
-    PaletteImpl *This = (PaletteImpl*)iface;
+    PaletteImpl *This = impl_from_IWICPalette(iface);
 
     TRACE("(%p,%p)\n", iface, pfIsGrayscale);
 
@@ -242,7 +247,7 @@ static HRESULT WINAPI PaletteImpl_IsGrayscale(IWICPalette *iface, BOOL *pfIsGray
 
 static HRESULT WINAPI PaletteImpl_HasAlpha(IWICPalette *iface, BOOL *pfHasAlpha)
 {
-    PaletteImpl *This = (PaletteImpl*)iface;
+    PaletteImpl *This = impl_from_IWICPalette(iface);
     int i;
 
     TRACE("(%p,%p)\n", iface, pfHasAlpha);
@@ -286,7 +291,7 @@ HRESULT PaletteImpl_Create(IWICPalette **palette)
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(PaletteImpl));
     if (!This) return E_OUTOFMEMORY;
 
-    This->lpIWICPaletteVtbl = &PaletteImpl_Vtbl;
+    This->IWICPalette_iface.lpVtbl = &PaletteImpl_Vtbl;
     This->ref = 1;
     This->count = 0;
     This->colors = NULL;
