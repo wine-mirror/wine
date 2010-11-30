@@ -760,7 +760,7 @@ typedef struct {
             const struct wined3d_state *state);
     void (*shader_destroy)(IWineD3DBaseShader *iface);
     HRESULT (*shader_alloc_private)(IWineD3DDeviceImpl *device);
-    void (*shader_free_private)(IWineD3DDevice *iface);
+    void (*shader_free_private)(IWineD3DDeviceImpl *device);
     BOOL (*shader_dirtifyable_constants)(IWineD3DDevice *iface);
     void (*shader_get_caps)(const struct wined3d_gl_info *gl_info, struct shader_caps *caps);
     BOOL (*shader_color_fixup_supported)(struct color_fixup_desc fixup);

@@ -4871,10 +4871,10 @@ fail:
 }
 
 /* Context activation is done by the caller. */
-static void shader_glsl_free(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
-    struct shader_glsl_priv *priv = This->shader_priv;
+static void shader_glsl_free(IWineD3DDeviceImpl *device)
+{
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    struct shader_glsl_priv *priv = device->shader_priv;
     int i;
 
     ENTER_GL();
@@ -4897,8 +4897,8 @@ static void shader_glsl_free(IWineD3DDevice *iface) {
     HeapFree(GetProcessHeap(), 0, priv->stack);
     shader_buffer_free(&priv->shader_buffer);
 
-    HeapFree(GetProcessHeap(), 0, This->shader_priv);
-    This->shader_priv = NULL;
+    HeapFree(GetProcessHeap(), 0, device->shader_priv);
+    device->shader_priv = NULL;
 }
 
 static BOOL shader_glsl_dirty_const(IWineD3DDevice *iface) {

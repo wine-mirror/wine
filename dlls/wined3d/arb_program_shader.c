@@ -4770,10 +4770,10 @@ static void release_signature(struct wine_rb_entry *entry, void *context)
 }
 
 /* Context activation is done by the caller. */
-static void shader_arb_free(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
-    struct shader_arb_priv *priv = This->shader_priv;
+static void shader_arb_free(IWineD3DDeviceImpl *device)
+{
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    struct shader_arb_priv *priv = device->shader_priv;
     int i;
 
     ENTER_GL();
@@ -4794,7 +4794,7 @@ static void shader_arb_free(IWineD3DDevice *iface) {
     LEAVE_GL();
 
     wine_rb_destroy(&priv->signature_tree, release_signature, NULL);
-    HeapFree(GetProcessHeap(), 0, This->shader_priv);
+    HeapFree(GetProcessHeap(), 0, device->shader_priv);
 }
 
 static BOOL shader_arb_dirty_const(IWineD3DDevice *iface) {

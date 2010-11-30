@@ -2056,7 +2056,7 @@ err_out:
         This->frag_pipe->free_private(iface);
     }
     if (This->shader_priv) {
-        This->shader_backend->shader_free_private(iface);
+        This->shader_backend->shader_free_private(This);
     }
     return hr;
 }
@@ -2187,7 +2187,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
     /* Destroy the shader backend. Note that this has to happen after all shaders are destroyed. */
     This->blitter->free_private(iface);
     This->frag_pipe->free_private(iface);
-    This->shader_backend->shader_free_private(iface);
+    This->shader_backend->shader_free_private(This);
 
     /* Release the buffers (with sanity checks)*/
     if (This->onscreen_depth_stencil)
@@ -6201,7 +6201,7 @@ static void delete_opengl_contexts(IWineD3DDevice *iface, IWineD3DSwapChainImpl 
 
     This->blitter->free_private(iface);
     This->frag_pipe->free_private(iface);
-    This->shader_backend->shader_free_private(iface);
+    This->shader_backend->shader_free_private(This);
     destroy_dummy_textures(This, gl_info);
 
     context_release(context);
@@ -6255,7 +6255,7 @@ static HRESULT create_primary_opengl_context(IWineD3DDevice *iface, IWineD3DSwap
     if (FAILED(hr))
     {
         ERR("Failed to allocate fragment pipe private data, hr %#x.\n", hr);
-        This->shader_backend->shader_free_private(iface);
+        This->shader_backend->shader_free_private(This);
         goto err;
     }
 
@@ -6264,7 +6264,7 @@ static HRESULT create_primary_opengl_context(IWineD3DDevice *iface, IWineD3DSwap
     {
         ERR("Failed to allocate blitter private data, hr %#x.\n", hr);
         This->frag_pipe->free_private(iface);
-        This->shader_backend->shader_free_private(iface);
+        This->shader_backend->shader_free_private(This);
         goto err;
     }
 
