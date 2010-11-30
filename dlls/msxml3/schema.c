@@ -38,7 +38,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 /* We use a chained hashtable, which can hold any number of schemas
- * TODO: versioned constructor
  * TODO: grow/shrink hashtable depending on load factor
  * TODO: implement read-only where appropriate
  */

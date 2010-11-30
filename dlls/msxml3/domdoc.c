@@ -294,6 +294,8 @@ static domdoc_properties* copy_properties(domdoc_properties const* properties)
         pcopy->version = properties->version;
         pcopy->preserving = properties->preserving;
         pcopy->schemaCache = properties->schemaCache;
+        if (pcopy->schemaCache)
+            IXMLDOMSchemaCollection2_AddRef(pcopy->schemaCache);
         pcopy->XPath = properties->XPath;
         pcopy->selectNsStr_len = properties->selectNsStr_len;
         list_init( &pcopy->selectNsList );
