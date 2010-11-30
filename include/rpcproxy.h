@@ -289,22 +289,11 @@ ULONG WINAPI CStdStubBuffer2_Release(IRpcStubBuffer *This) \
 #endif
 
 #ifdef WINE_REGISTER_DLL
-
-#define WINE_DO_REGISTER_DLL(pfl, clsid) \
-    HRESULT hr = NdrDllRegisterProxy( hProxyDll, (pfl), (clsid) ); \
-    if (SUCCEEDED(hr)) hr = __wine_register_resources( hProxyDll, clsid ); \
-    return hr
-
-#define WINE_DO_UNREGISTER_DLL(pfl, clsid) \
-    HRESULT hr = __wine_unregister_resources( hProxyDll, clsid ); \
-    if (SUCCEEDED(hr)) hr = NdrDllUnregisterProxy( hProxyDll, (pfl), (clsid) ); \
-    return hr
-
+# define WINE_DO_REGISTER_DLL(pfl, clsid) return __wine_register_resources( hProxyDll, (clsid) )
+# define WINE_DO_UNREGISTER_DLL(pfl, clsid) return __wine_unregister_resources( hProxyDll, (clsid) )
 #else
-
-#define WINE_DO_REGISTER_DLL(pfl, clsid)   return NdrDllRegisterProxy( hProxyDll, (pfl), (clsid) )
-#define WINE_DO_UNREGISTER_DLL(pfl, clsid) return NdrDllUnregisterProxy( hProxyDll, (pfl), (clsid) )
-
+# define WINE_DO_REGISTER_DLL(pfl, clsid)   return NdrDllRegisterProxy( hProxyDll, (pfl), (clsid) )
+# define WINE_DO_UNREGISTER_DLL(pfl, clsid) return NdrDllUnregisterProxy( hProxyDll, (pfl), (clsid) )
 #endif
 
 
