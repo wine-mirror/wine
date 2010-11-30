@@ -1732,12 +1732,12 @@ sub fix_file_and_directory_names($)
           next if ($new_name !~ /(^makefile|\.(c|cpp|h|rc))$/i);
 
           # Only all lowercase extensions are supported (because of
-          # rules like '.c.o:'.
+          # rules like '.c.o:').
           $new_name =~ s/\.C$/.c/;
           $new_name =~ s/\.cpp$/.cpp/i;
           $warn=1 if ($new_name =~ s/\.cxx$/.cpp/i);
           $new_name =~ s/\.rc$/.rc/i;
-          # And this last one is to avoid confusion then running make
+          # And this last one is to avoid confusion when running make
           $warn=1 if ($new_name =~ s/^makefile$/makefile.win/i);
       }
 
@@ -1748,7 +1748,7 @@ sub fix_file_and_directory_names($)
           $new_name=lc $new_name;
       }
 
-      # autoconf and make don't support these characters well
+      # make doesn't support these characters well
       $new_name =~ s/[ \$]/_/g;
 
       # And finally, perform the renaming
@@ -1791,6 +1791,7 @@ sub search_from($$)
   my $path=$_[1];
   my $real_path="";
 
+  $dirname =~ s/(\.\/)+//;
   if ($dirname eq "" or $dirname eq "." or $dirname eq "./") {
     $dirname=cwd;
   } elsif ($dirname !~ m+^/+) {
@@ -1860,7 +1861,7 @@ sub get_real_include_name($$$$$)
   my $project=$_[3];
   my $target=$_[4];
 
-  if ($filename =~ /^([a-zA-Z]:)?[\/]/ or $filename =~ /^[a-zA-Z]:[\/]?/) {
+  if ($filename =~ /^([a-zA-Z]:)?[\/\\]/ or $filename =~ /^[a-zA-Z]:[\/\\]?/) {
     # This is not a relative path, we cannot make any check
     my $warning="path:$filename";
     if (!defined $warnings{$warning}) {
