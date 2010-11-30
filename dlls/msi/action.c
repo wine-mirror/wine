@@ -764,7 +764,27 @@ static UINT msi_apply_transforms( MSIPACKAGE *package )
         if (xforms[i][0] == ':')
             r = msi_apply_substorage_transform( package, package->db, xforms[i] );
         else
-            r = MSI_DatabaseApplyTransformW( package->db, xforms[i], 0 );
+        {
+            WCHAR *transform;
+
+            if (!PathIsRelativeW( xforms[i] )) transform = xforms[i];
+            else
+            {
+                WCHAR *p = strrchrW( package->PackagePath, '\\' );
+                DWORD len = p - package->PackagePath + 1;
+
+                if (!(transform = msi_alloc( (len + strlenW( xforms[i] ) + 1) * sizeof(WCHAR)) ))
+                {
+                    msi_free( xforms );
+                    msi_free( xform_list );
+                    return ERROR_OUTOFMEMORY;
+                }
+                memcpy( transform, package->PackagePath, len * sizeof(WCHAR) );
+                memcpy( transform + len, xforms[i], (strlenW( xforms[i] ) + 1) * sizeof(WCHAR) );
+            }
+            r = MSI_DatabaseApplyTransformW( package->db, transform, 0 );
+            if (transform != xforms[i]) msi_free( transform );
+        }
     }
 
     msi_free( xforms );
