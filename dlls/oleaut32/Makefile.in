@@ -58,6 +58,10 @@ IDL_P_SRCS = \
 	oleaut32_oaidl.idl \
 	oleaut32_ocidl.idl
 
+IDL_R_SRCS = \
+	oleaut32_oaidl.idl \
+	oleaut32_ocidl.idl
+
 EXTRA_OBJS = dlldata.o
 
 @MAKE_DLL_RULES@
