@@ -27,6 +27,22 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
+struct private_data
+{
+    struct list entry;
+
+    GUID tag;
+    DWORD flags; /* DDSPD_* */
+
+    union
+    {
+        void *data;
+        IUnknown *object;
+    } ptr;
+
+    DWORD size;
+};
+
 HRESULT resource_init(IWineD3DResource *iface, WINED3DRESOURCETYPE resource_type,
         IWineD3DDeviceImpl *device, UINT size, DWORD usage, const struct wined3d_format *format,
         WINED3DPOOL pool, void *parent, const struct wined3d_parent_ops *parent_ops)
@@ -80,8 +96,8 @@ HRESULT resource_init(IWineD3DResource *iface, WINED3DRESOURCETYPE resource_type
 void resource_cleanup(IWineD3DResource *iface)
 {
     IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
+    struct private_data *data;
     struct list *e1, *e2;
-    PrivateData *data;
     HRESULT hr;
 
     TRACE("(%p) Cleaning up resource\n", This);
@@ -90,8 +106,9 @@ void resource_cleanup(IWineD3DResource *iface)
         WineD3DAdapterChangeGLRam(This->resource.device, -This->resource.size);
     }
 
-    LIST_FOR_EACH_SAFE(e1, e2, &This->resource.privateData) {
-        data = LIST_ENTRY(e1, PrivateData, entry);
+    LIST_FOR_EACH_SAFE(e1, e2, &This->resource.privateData)
+    {
+        data = LIST_ENTRY(e1, struct private_data, entry);
         hr = resource_free_private_data(iface, &data->tag);
         if(hr != WINED3D_OK) {
             ERR("Failed to free private data when destroying resource %p, hr = %08x\n", This, hr);
@@ -111,15 +128,15 @@ void resource_unload(IWineD3DResourceImpl *resource)
             resource->resource.resourceType);
 }
 
-static PrivateData* resource_find_private_data(IWineD3DResourceImpl *This, REFGUID tag)
+static struct private_data *resource_find_private_data(IWineD3DResourceImpl *This, REFGUID tag)
 {
-    PrivateData *data;
+    struct private_data *data;
     struct list *entry;
 
     TRACE("Searching for private data %s\n", debugstr_guid(tag));
     LIST_FOR_EACH(entry, &This->resource.privateData)
     {
-        data = LIST_ENTRY(entry, PrivateData, entry);
+        data = LIST_ENTRY(entry, struct private_data, entry);
         if (IsEqualGUID(&data->tag, tag)) {
             TRACE("Found %p\n", data);
             return data;
@@ -133,7 +150,7 @@ HRESULT resource_set_private_data(IWineD3DResource *iface, REFGUID refguid,
         const void *pData, DWORD SizeOfData, DWORD flags)
 {
     IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
-    PrivateData *data;
+    struct private_data *data;
 
     TRACE("iface %p, riid %s, data %p, data_size %u, flags %#x.\n",
             iface, debugstr_guid(refguid), pData, SizeOfData, flags);
@@ -177,7 +194,7 @@ HRESULT resource_set_private_data(IWineD3DResource *iface, REFGUID refguid,
 HRESULT resource_get_private_data(IWineD3DResource *iface, REFGUID refguid, void *pData, DWORD *pSizeOfData)
 {
     IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
-    PrivateData *data;
+    struct private_data *data;
 
     TRACE("(%p) : %p %p %p\n", This, refguid, pData, pSizeOfData);
     data = resource_find_private_data(This, refguid);
@@ -208,7 +225,7 @@ HRESULT resource_get_private_data(IWineD3DResource *iface, REFGUID refguid, void
 HRESULT resource_free_private_data(IWineD3DResource *iface, REFGUID refguid)
 {
     IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
-    PrivateData *data;
+    struct private_data *data;
 
     TRACE("(%p) : %s\n", This, debugstr_guid(refguid));
     data = resource_find_private_data(This, refguid);
