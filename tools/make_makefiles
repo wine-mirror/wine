@@ -304,7 +304,7 @@ sub parse_makefile($)
             $make{$1} = $2;
             next;
         }
-        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_[CHIPS]_SRCS|IDL_TLB_SRCS|IMPLIB_SRCS|C_SRCS|MC_SRCS|RC_SRCS|SVG_SRCS|MANPAGES|PROGRAMS)\s*=\s*(.*)/)
+        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_[CHIPRS]_SRCS|IDL_TLB_SRCS|IMPLIB_SRCS|C_SRCS|MC_SRCS|RC_SRCS|SVG_SRCS|MANPAGES|PROGRAMS)\s*=\s*(.*)/)
         {
             my @list = split(/\s+/, $2);
             $make{$1} = \@list;

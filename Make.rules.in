@@ -29,7 +29,7 @@ CLEAN_TARGETS = $(IDL_GEN_C_SRCS) $(IDL_GEN_HEADERS) $(IDL_TLB_SRCS:.idl=.tlb) $
                 $(BISON_SRCS:.y=.tab.c) $(BISON_SRCS:.y=.tab.h) $(LEX_SRCS:.l=.yy.c) $(MC_SRCS:.mc=.mc.rc)
 
 OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(IDL_GEN_C_SRCS:.c=.o) \
-       $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.mc.res) $(EXTRA_OBJS)
+       $(IDL_R_SRCS:.idl=_r.res) $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.mc.res) $(EXTRA_OBJS)
 
 CROSSOBJS = $(OBJS:.o=.cross.o)
 LINTS  = $(C_SRCS:.c=.ln)
@@ -41,7 +41,7 @@ filter: dummy
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .mc.rc .res .idl .tlb .h .y .l .tab.c .tab.h .yy.c .ok .man.in .man _c.c _i.c _p.c _s.c .cross.o @MAINTAINER_MODE@ .sfd .ttf .svg .ico .bmp
+.SUFFIXES: .mc .rc .mc.rc .res .idl .tlb .h .y .l .tab.c .tab.h .yy.c .ok .man.in .man _c.c _i.c _p.c _s.c _r.res .cross.o @MAINTAINER_MODE@ .sfd .ttf .svg .ico .bmp
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
@@ -75,6 +75,9 @@ filter: dummy
 
 .idl_p.c:
 	$(WIDL) $(IDLFLAGS) -p -o $@ $<
+
+.idl_r.res:
+	$(WIDL) $(IDLFLAGS) -r -o $@ $<
 
 .idl_s.c:
 	$(WIDL) $(IDLFLAGS) -s -o $@ $<
@@ -129,7 +132,7 @@ winapi_check:: dummy
 
 DEPEND_SRCS = $(C_SRCS) $(RC_SRCS) $(MC_SRCS) \
               $(IDL_H_SRCS) $(IDL_C_SRCS) $(IDL_I_SRCS) $(IDL_P_SRCS) $(IDL_S_SRCS) \
-              $(IDL_GEN_C_SRCS) $(IDL_TLB_SRCS) $(IDL_TLB_SRCS:.idl=.tlb) \
+              $(IDL_GEN_C_SRCS) $(IDL_R_SRCS:.idl=_r.res) $(IDL_TLB_SRCS) $(IDL_TLB_SRCS:.idl=.tlb) \
               $(BISON_SRCS) $(LEX_SRCS) $(EXTRA_SRCS)
 
 depend: dummy
@@ -160,7 +163,7 @@ install install-lib install-dev uninstall::
 
 $(MC_SRCS:.mc=.mc.rc): $(WMC)
 
-$(IDL_GEN_HEADERS) $(IDL_GEN_C_SRCS) $(IDL_TLB_SRCS:.idl=.tlb): $(WIDL)
+$(IDL_GEN_HEADERS) $(IDL_GEN_C_SRCS) $(IDL_TLB_SRCS:.idl=.tlb) $(IDL_R_SRCS:.idl=_r.res): $(WIDL)
 
 $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.mc.res): $(WRC)
 
