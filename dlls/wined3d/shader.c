@@ -1514,7 +1514,7 @@ static void shader_none_select_depth_blt(void *shader_priv, const struct wined3d
         enum tex_types tex_type, const SIZE *ds_mask_size) {}
 static void shader_none_deselect_depth_blt(void *shader_priv, const struct wined3d_gl_info *gl_info) {}
 static void shader_none_update_float_vertex_constants(IWineD3DDeviceImpl *device, UINT start, UINT count) {}
-static void shader_none_update_float_pixel_constants(IWineD3DDevice *iface, UINT start, UINT count) {}
+static void shader_none_update_float_pixel_constants(IWineD3DDeviceImpl *device, UINT start, UINT count) {}
 static void shader_none_load_constants(const struct wined3d_context *context, char usePS, char useVS) {}
 static void shader_none_load_np2fixup_constants(void *shader_priv,
         const struct wined3d_gl_info *gl_info, const struct wined3d_state *state) {}

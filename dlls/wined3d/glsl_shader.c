@@ -878,16 +878,15 @@ static void shader_glsl_update_float_vertex_constants(IWineD3DDeviceImpl *device
     }
 }
 
-static void shader_glsl_update_float_pixel_constants(IWineD3DDevice *iface, UINT start, UINT count)
+static void shader_glsl_update_float_pixel_constants(IWineD3DDeviceImpl *device, UINT start, UINT count)
 {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    struct shader_glsl_priv *priv = This->shader_priv;
+    struct shader_glsl_priv *priv = device->shader_priv;
     struct constant_heap *heap = &priv->pconst_heap;
     UINT i;
 
     for (i = start; i < count + start; ++i)
     {
-        if (!This->stateBlock->changed.pixelShaderConstantsF[i])
+        if (!device->stateBlock->changed.pixelShaderConstantsF[i])
             update_heap_entry(heap, i, heap->size++, priv->next_constant_version);
         else
             update_heap_entry(heap, i, heap->positions[i], priv->next_constant_version);

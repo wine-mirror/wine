@@ -3861,7 +3861,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantF(
 
     if (!This->isRecordingState)
     {
-        This->shader_backend->shader_update_float_pixel_constants(iface, start, count);
+        This->shader_backend->shader_update_float_pixel_constants(This, start, count);
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADERCONSTANT);
     }
 
