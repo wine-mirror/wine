@@ -761,8 +761,9 @@ static void parse_file( INCL_FILE *pFile, int src )
         return;
     }
 
-    /* don't try to open .tlb files */
-    if (strendswith( pFile->name, ".tlb" ))
+    /* don't try to open .tlb or .res files */
+    if (strendswith( pFile->name, ".tlb" ) ||
+        strendswith( pFile->name, ".res" ))
     {
         pFile->filename = xstrdup( pFile->name );
         return;
@@ -885,9 +886,14 @@ static int output_src( FILE *file, INCL_FILE *pFile, int *column )
                 free( name );
                 suffix++;
             }
+
+            name = strmake( "%s_r.res", obj );
+            if (find_src_file( name )) *column += fprintf( file, " %s", name );
+            free( name );
+
             *column += fprintf( file, ": %s", pFile->filename );
         }
-        else if (!strcmp( ext, "tlb" ))
+        else if (!strcmp( ext, "tlb" ) || !strcmp( ext, "res" ))
         {
             return 0;  /* nothing to do for typelib files */
         }
