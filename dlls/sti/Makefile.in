@@ -12,6 +12,9 @@ RC_SRCS = rsrc.rc
 IDL_P_SRCS = \
 	sti_wia.idl
 
+IDL_R_SRCS = \
+	sti_wia.idl
+
 EXTRA_OBJS = dlldata.o
 
 @MAKE_DLL_RULES@
