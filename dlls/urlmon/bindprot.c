@@ -40,16 +40,18 @@ struct BindProtocol {
     const IInternetProtocolSinkVtbl  *lpIInternetProtocolSinkVtbl;
     const IWinInetHttpInfoVtbl       *lpIWinInetHttpInfoVtbl;
 
-    const IInternetProtocolVtbl *lpIInternetProtocolHandlerVtbl;
-
     LONG ref;
 
     IInternetProtocol *protocol;
-    IInternetProtocol *protocol_handler;
     IInternetBindInfo *bind_info;
     IInternetProtocolSink *protocol_sink;
     IServiceProvider *service_provider;
     IWinInetInfo *wininet_info;
+
+    struct {
+        IInternetProtocol IInternetProtocol_iface;
+    } default_protocol_handler;
+    IInternetProtocol *protocol_handler;
 
     LONG priority;
 
@@ -233,7 +235,7 @@ static HRESULT handle_mime_filter(BindProtocol *This, IInternetProtocol *mime_fi
     if(FAILED(hres))
         return hres;
 
-    hres = create_protocol_proxy(PROTOCOLHANDLER(This), This->protocol_sink, &filter_proxy);
+    hres = create_protocol_proxy(&This->default_protocol_handler.IInternetProtocol_iface, This->protocol_sink, &filter_proxy);
     if(FAILED(hres)) {
         IInternetProtocolSink_Release(protocol_sink);
         return hres;
@@ -381,7 +383,7 @@ static ULONG WINAPI BindProtocol_Release(IInternetProtocolEx *iface)
             IInternetProtocol_Release(This->protocol);
         if(This->bind_info)
             IInternetBindInfo_Release(This->bind_info);
-        if(This->protocol_handler && This->protocol_handler != PROTOCOLHANDLER(This))
+        if(This->protocol_handler && This->protocol_handler != &This->default_protocol_handler.IInternetProtocol_iface)
             IInternetProtocol_Release(This->protocol_handler);
         if(This->filter_proxy)
             IInternetProtocol_Release(PROTOCOL(This->filter_proxy));
@@ -651,7 +653,10 @@ static const IInternetProtocolExVtbl BindProtocolVtbl = {
     BindProtocol_StartEx
 };
 
-#define PROTOCOLHANDLER_THIS(iface) DEFINE_THIS(BindProtocol, IInternetProtocolHandler, iface)
+static inline BindProtocol *impl_from_IInternetProtocol(IInternetProtocol *iface)
+{
+    return CONTAINING_RECORD(iface, BindProtocol, default_protocol_handler.IInternetProtocol_iface);
+}
 
 static HRESULT WINAPI ProtocolHandler_QueryInterface(IInternetProtocol *iface, REFIID riid, void **ppv)
 {
@@ -661,13 +666,13 @@ static HRESULT WINAPI ProtocolHandler_QueryInterface(IInternetProtocol *iface, R
 
 static ULONG WINAPI ProtocolHandler_AddRef(IInternetProtocol *iface)
 {
-    BindProtocol *This = PROTOCOLHANDLER_THIS(iface);
+    BindProtocol *This = impl_from_IInternetProtocol(iface);
     return IInternetProtocolEx_AddRef(PROTOCOLEX(This));
 }
 
 static ULONG WINAPI ProtocolHandler_Release(IInternetProtocol *iface)
 {
-    BindProtocol *This = PROTOCOLHANDLER_THIS(iface);
+    BindProtocol *This = impl_from_IInternetProtocol(iface);
     return IInternetProtocolEx_Release(PROTOCOLEX(This));
 }
 
@@ -681,7 +686,7 @@ static HRESULT WINAPI ProtocolHandler_Start(IInternetProtocol *iface, LPCWSTR sz
 
 static HRESULT WINAPI ProtocolHandler_Continue(IInternetProtocol *iface, PROTOCOLDATA *pProtocolData)
 {
-    BindProtocol *This = PROTOCOLHANDLER_THIS(iface);
+    BindProtocol *This = impl_from_IInternetProtocol(iface);
     HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, pProtocolData);
@@ -695,7 +700,7 @@ static HRESULT WINAPI ProtocolHandler_Continue(IInternetProtocol *iface, PROTOCO
 static HRESULT WINAPI ProtocolHandler_Abort(IInternetProtocol *iface, HRESULT hrReason,
         DWORD dwOptions)
 {
-    BindProtocol *This = PROTOCOLHANDLER_THIS(iface);
+    BindProtocol *This = impl_from_IInternetProtocol(iface);
 
     TRACE("(%p)->(%08x %08x)\n", This, hrReason, dwOptions);
 
@@ -707,7 +712,7 @@ static HRESULT WINAPI ProtocolHandler_Abort(IInternetProtocol *iface, HRESULT hr
 
 static HRESULT WINAPI ProtocolHandler_Terminate(IInternetProtocol *iface, DWORD dwOptions)
 {
-    BindProtocol *This = PROTOCOLHANDLER_THIS(iface);
+    BindProtocol *This = impl_from_IInternetProtocol(iface);
 
     TRACE("(%p)->(%08x)\n", This, dwOptions);
 
@@ -733,14 +738,14 @@ static HRESULT WINAPI ProtocolHandler_Terminate(IInternetProtocol *iface, DWORD 
 
 static HRESULT WINAPI ProtocolHandler_Suspend(IInternetProtocol *iface)
 {
-    BindProtocol *This = PROTOCOLHANDLER_THIS(iface);
+    BindProtocol *This = impl_from_IInternetProtocol(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ProtocolHandler_Resume(IInternetProtocol *iface)
 {
-    BindProtocol *This = PROTOCOLHANDLER_THIS(iface);
+    BindProtocol *This = impl_from_IInternetProtocol(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
@@ -748,7 +753,7 @@ static HRESULT WINAPI ProtocolHandler_Resume(IInternetProtocol *iface)
 static HRESULT WINAPI ProtocolHandler_Read(IInternetProtocol *iface, void *pv,
         ULONG cb, ULONG *pcbRead)
 {
-    BindProtocol *This = PROTOCOLHANDLER_THIS(iface);
+    BindProtocol *This = impl_from_IInternetProtocol(iface);
     ULONG read = 0;
     HRESULT hres = S_OK;
 
@@ -782,14 +787,14 @@ static HRESULT WINAPI ProtocolHandler_Read(IInternetProtocol *iface, void *pv,
 static HRESULT WINAPI ProtocolHandler_Seek(IInternetProtocol *iface, LARGE_INTEGER dlibMove,
         DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
 {
-    BindProtocol *This = PROTOCOLHANDLER_THIS(iface);
+    BindProtocol *This = impl_from_IInternetProtocol(iface);
     FIXME("(%p)->(%d %d %p)\n", This, dlibMove.u.LowPart, dwOrigin, plibNewPosition);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ProtocolHandler_LockRequest(IInternetProtocol *iface, DWORD dwOptions)
 {
-    BindProtocol *This = PROTOCOLHANDLER_THIS(iface);
+    BindProtocol *This = impl_from_IInternetProtocol(iface);
 
     TRACE("(%p)->(%08x)\n", This, dwOptions);
 
@@ -798,14 +803,12 @@ static HRESULT WINAPI ProtocolHandler_LockRequest(IInternetProtocol *iface, DWOR
 
 static HRESULT WINAPI ProtocolHandler_UnlockRequest(IInternetProtocol *iface)
 {
-    BindProtocol *This = PROTOCOLHANDLER_THIS(iface);
+    BindProtocol *This = impl_from_IInternetProtocol(iface);
 
     TRACE("(%p)\n", This);
 
     return IInternetProtocol_UnlockRequest(This->protocol);
 }
-
-#undef PROTOCOL_THIS
 
 static const IInternetProtocolVtbl InternetProtocolHandlerVtbl = {
     ProtocolHandler_QueryInterface,
@@ -1342,14 +1345,15 @@ HRESULT create_binding_protocol(BOOL from_urlmon, IInternetProtocolEx **protocol
     ret->lpInternetPriorityVtbl         = &InternetPriorityVtbl;
     ret->lpServiceProviderVtbl          = &ServiceProviderVtbl;
     ret->lpIInternetProtocolSinkVtbl    = &InternetProtocolSinkVtbl;
-    ret->lpIInternetProtocolHandlerVtbl = &InternetProtocolHandlerVtbl;
     ret->lpIWinInetHttpInfoVtbl         = &WinInetHttpInfoVtbl;
+
+    ret->default_protocol_handler.IInternetProtocol_iface.lpVtbl = &InternetProtocolHandlerVtbl;
 
     ret->ref = 1;
     ret->from_urlmon = from_urlmon;
     ret->apartment_thread = GetCurrentThreadId();
     ret->notif_hwnd = get_notif_hwnd();
-    ret->protocol_handler = PROTOCOLHANDLER(ret);
+    ret->protocol_handler = &ret->default_protocol_handler.IInternetProtocol_iface;
     InitializeCriticalSection(&ret->section);
 
     URLMON_LockModule();
