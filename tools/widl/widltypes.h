@@ -135,6 +135,7 @@ enum attr_type
     ATTR_PARTIALIGNORE,
     ATTR_POINTERDEFAULT,
     ATTR_POINTERTYPE,
+    ATTR_PROGID,
     ATTR_PROPGET,
     ATTR_PROPPUT,
     ATTR_PROPPUTREF,
@@ -152,6 +153,7 @@ enum attr_type
     ATTR_STRING,
     ATTR_SWITCHIS,
     ATTR_SWITCHTYPE,
+    ATTR_THREADING,
     ATTR_TRANSMITAS,
     ATTR_UIDEFAULT,
     ATTR_USERMARSHAL,
@@ -160,6 +162,7 @@ enum attr_type
     ATTR_V1ENUM,
     ATTR_VARARG,
     ATTR_VERSION,
+    ATTR_VIPROGID,
     ATTR_WIREMARSHAL
 };
 
@@ -238,6 +241,15 @@ enum statement_type
     STMT_IMPORT,
     STMT_IMPORTLIB,
     STMT_CPPQUOTE
+};
+
+enum threading_type
+{
+    THREADING_APARTMENT = 1,
+    THREADING_NEUTRAL,
+    THREADING_SINGLE,
+    THREADING_FREE,
+    THREADING_BOTH
 };
 
 enum type_basic_type

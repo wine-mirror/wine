@@ -239,7 +239,7 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %token tOUT
 %token tPARTIALIGNORE tPASCAL
 %token tPOINTERDEFAULT
-%token tPROPERTIES
+%token tPROGID tPROPERTIES
 %token tPROPGET tPROPPUT tPROPPUTREF
 %token tPROXY tPTR
 %token tPUBLIC
@@ -260,7 +260,7 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %token tSTRICTCONTEXTHANDLE
 %token tSTRING tSTRUCT
 %token tSWITCH tSWITCHIS tSWITCHTYPE
-%token tTRANSMITAS
+%token tTHREADING tTRANSMITAS
 %token tTRUE
 %token tTYPEDEF
 %token tUIDEFAULT tUNION
@@ -269,9 +269,10 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %token tUSESGETLASTERROR tUSERMARSHAL tUUID
 %token tV1ENUM
 %token tVARARG
-%token tVERSION
+%token tVERSION tVIPROGID
 %token tVOID
 %token tWCHAR tWIREMARSHAL
+%token tAPARTMENT tNEUTRAL tSINGLE tFREE tBOTH
 
 %type <attr> attribute type_qualifier function_specifier
 %type <attr_list> m_attributes attributes attrib_list m_type_qual_list
@@ -299,7 +300,7 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %type <declarator> m_abstract_declarator abstract_declarator abstract_declarator_no_direct abstract_direct_declarator
 %type <declarator_list> declarator_list struct_declarator_list
 %type <type> coclass coclasshdr coclassdef
-%type <num> pointer_type version
+%type <num> pointer_type threading_type version
 %type <str> libraryhdr callconv cppquote importlib import t_ident
 %type <uuid> uuid_string
 %type <import> import_start
@@ -538,6 +539,7 @@ attribute:					{ $$ = NULL; }
 	| tOUT					{ $$ = make_attr(ATTR_OUT); }
 	| tPARTIALIGNORE			{ $$ = make_attr(ATTR_PARTIALIGNORE); }
 	| tPOINTERDEFAULT '(' pointer_type ')'	{ $$ = make_attrv(ATTR_POINTERDEFAULT, $3); }
+	| tPROGID '(' aSTRING ')'		{ $$ = make_attrp(ATTR_PROGID, $3); }
 	| tPROPGET				{ $$ = make_attr(ATTR_PROPGET); }
 	| tPROPPUT				{ $$ = make_attr(ATTR_PROPPUT); }
 	| tPROPPUTREF				{ $$ = make_attr(ATTR_PROPPUTREF); }
@@ -559,6 +561,7 @@ attribute:					{ $$ = NULL; }
 	| tSWITCHIS '(' expr ')'		{ $$ = make_attrp(ATTR_SWITCHIS, $3); }
 	| tSWITCHTYPE '(' type ')'		{ $$ = make_attrp(ATTR_SWITCHTYPE, $3); }
 	| tTRANSMITAS '(' type ')'		{ $$ = make_attrp(ATTR_TRANSMITAS, $3); }
+	| tTHREADING '(' threading_type ')'	{ $$ = make_attrv(ATTR_THREADING, $3); }
 	| tUIDEFAULT				{ $$ = make_attr(ATTR_UIDEFAULT); }
 	| tUSESGETLASTERROR			{ $$ = make_attr(ATTR_USESGETLASTERROR); }
 	| tUSERMARSHAL '(' type ')'		{ $$ = make_attrp(ATTR_USERMARSHAL, $3); }
@@ -566,6 +569,7 @@ attribute:					{ $$ = NULL; }
 	| tV1ENUM				{ $$ = make_attr(ATTR_V1ENUM); }
 	| tVARARG				{ $$ = make_attr(ATTR_VARARG); }
 	| tVERSION '(' version ')'		{ $$ = make_attrv(ATTR_VERSION, $3); }
+	| tVIPROGID '(' aSTRING ')'		{ $$ = make_attrp(ATTR_VIPROGID, $3); }
 	| tWIREMARSHAL '(' type ')'		{ $$ = make_attrp(ATTR_WIREMARSHAL, $3); }
 	| pointer_type				{ $$ = make_attrv(ATTR_POINTERTYPE, $1); }
 	;
@@ -1067,6 +1071,14 @@ struct_declarator_list:
 init_declarator:
 	  declarator				{ $$ = $1; }
 	| declarator '=' expr_const		{ $$ = $1; $1->var->eval = $3; }
+	;
+
+threading_type:
+	  tAPARTMENT				{ $$ = THREADING_APARTMENT; }
+	| tNEUTRAL				{ $$ = THREADING_NEUTRAL; }
+	| tSINGLE				{ $$ = THREADING_SINGLE; }
+	| tFREE					{ $$ = THREADING_FREE; }
+	| tBOTH					{ $$ = THREADING_BOTH; }
 	;
 
 pointer_type:
@@ -2070,6 +2082,7 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_PARTIALIGNORE */       { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, "partial_ignore" },
     /* ATTR_POINTERDEFAULT */      { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "pointer_default" },
     /* ATTR_POINTERTYPE */         { 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, "ref, unique or ptr" },
+    /* ATTR_PROGID */              { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, "progid" },
     /* ATTR_PROPGET */             { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "propget" },
     /* ATTR_PROPPUT */             { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "propput" },
     /* ATTR_PROPPUTREF */          { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "propputref" },
@@ -2087,6 +2100,7 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_STRING */              { 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, "string" },
     /* ATTR_SWITCHIS */            { 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, "switch_is" },
     /* ATTR_SWITCHTYPE */          { 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, "switch_type" },
+    /* ATTR_THREADING */           { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, "threading" },
     /* ATTR_TRANSMITAS */          { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, "transmit_as" },
     /* ATTR_UIDEFAULT */           { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "uidefault" },
     /* ATTR_USESGETLASTERROR */    { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "usesgetlasterror" },
@@ -2095,6 +2109,7 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_V1ENUM */              { 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, "v1_enum" },
     /* ATTR_VARARG */              { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "vararg" },
     /* ATTR_VERSION */             { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, "version" },
+    /* ATTR_VIPROGID */            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, "vi_progid" },
     /* ATTR_WIREMARSHAL */         { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, "wire_marshal" },
 };
 
