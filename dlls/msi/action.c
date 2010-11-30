@@ -6844,6 +6844,101 @@ static UINT ACTION_SetODBCFolders( MSIPACKAGE *package )
     return ERROR_SUCCESS;
 }
 
+static UINT ITERATE_RemoveExistingProducts( MSIRECORD *rec, LPVOID param )
+{
+    MSIPACKAGE *package = param;
+    const WCHAR *property = MSI_RecordGetString( rec, 1 );
+    WCHAR *value;
+
+    if ((value = msi_dup_property( package->db, property )))
+    {
+        FIXME("remove %s\n", debugstr_w(value));
+        msi_free( value );
+    }
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_RemoveExistingProducts( MSIPACKAGE *package )
+{
+    UINT r;
+    MSIQUERY *view;
+
+    static const WCHAR query[] =
+        {'S','E','L','E','C','T',' ','A','c','t','i','o','n','P','r','o','p','e','r','t','y',
+         ' ','F','R','O','M',' ','U','p','g','r','a','d','e',0};
+
+    r = MSI_DatabaseOpenViewW( package->db, query, &view );
+    if (r == ERROR_SUCCESS)
+    {
+        r = MSI_IterateRecords( view, NULL, ITERATE_RemoveExistingProducts, package );
+        msiobj_release( &view->hdr );
+    }
+    return ERROR_SUCCESS;
+}
+
+static UINT ITERATE_MigrateFeatureStates( MSIRECORD *rec, LPVOID param )
+{
+    MSIPACKAGE *package = param;
+    int attributes = MSI_RecordGetInteger( rec, 5 );
+
+    if (attributes & msidbUpgradeAttributesMigrateFeatures)
+    {
+        const WCHAR *upgrade_code = MSI_RecordGetString( rec, 1 );
+        const WCHAR *version_min = MSI_RecordGetString( rec, 2 );
+        const WCHAR *version_max = MSI_RecordGetString( rec, 3 );
+        const WCHAR *language = MSI_RecordGetString( rec, 4 );
+        HKEY hkey;
+        UINT r;
+
+        if (package->Context == MSIINSTALLCONTEXT_MACHINE)
+        {
+            r = MSIREG_OpenClassesUpgradeCodesKey( upgrade_code, &hkey, FALSE );
+            if (r != ERROR_SUCCESS)
+                return ERROR_SUCCESS;
+        }
+        else
+        {
+            r = MSIREG_OpenUserUpgradeCodesKey( upgrade_code, &hkey, FALSE );
+            if (r != ERROR_SUCCESS)
+                return ERROR_SUCCESS;
+        }
+        RegCloseKey( hkey );
+
+        FIXME("migrate feature states from %s version min %s version max %s language %s\n",
+              debugstr_w(upgrade_code), debugstr_w(version_min),
+              debugstr_w(version_max), debugstr_w(language));
+    }
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_MigrateFeatureStates( MSIPACKAGE *package )
+{
+    UINT r;
+    MSIQUERY *view;
+
+    static const WCHAR query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','U','p','g','r','a','d','e',0};
+
+    if (msi_get_property_int( package->db, szInstalled, 0 ))
+    {
+        TRACE("product is installed, skipping action\n");
+        return ERROR_SUCCESS;
+    }
+    if (msi_get_property_int( package->db, szPreselected, 0 ))
+    {
+        TRACE("Preselected property is set, not migrating feature states\n");
+        return ERROR_SUCCESS;
+    }
+
+    r = MSI_DatabaseOpenViewW( package->db, query, &view );
+    if (r == ERROR_SUCCESS)
+    {
+        r = MSI_IterateRecords( view, NULL, ITERATE_MigrateFeatureStates, package );
+        msiobj_release( &view->hdr );
+    }
+    return ERROR_SUCCESS;
+}
+
 static UINT msi_unimplemented_action_stub( MSIPACKAGE *package,
                                            LPCSTR action, LPCWSTR table )
 {
@@ -6887,12 +6982,6 @@ static UINT ACTION_IsolateComponents( MSIPACKAGE *package )
     return msi_unimplemented_action_stub( package, "IsolateComponents", table );
 }
 
-static UINT ACTION_MigrateFeatureStates( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = { 'U','p','g','r','a','d','e',0 };
-    return msi_unimplemented_action_stub( package, "MigrateFeatureStates", table );
-}
-
 static UINT ACTION_MsiUnpublishAssemblies( MSIPACKAGE *package )
 {
     static const WCHAR table[] = {
@@ -6922,12 +7011,6 @@ static UINT ACTION_InstallSFPCatalogFile( MSIPACKAGE *package )
 {
     static const WCHAR table[] = { 'S','F','P','C','a','t','a','l','o','g',0 };
     return msi_unimplemented_action_stub( package, "InstallSFPCatalogFile", table );
-}
-
-static UINT ACTION_RemoveExistingProducts( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = { 'U','p','g','r','a','d','e',0 };
-    return msi_unimplemented_action_stub( package, "RemoveExistingProducts", table );
 }
 
 typedef UINT (*STANDARDACTIONHANDLER)(MSIPACKAGE*);
