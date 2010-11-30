@@ -7707,6 +7707,7 @@ static void test_removefiles(void)
     MSIHANDLE hpkg;
     UINT r;
     MSIHANDLE hdb;
+    INSTALLSTATE installed, action;
 
     hdb = create_package_db();
     ok ( hdb, "failed to create package database\n" );
@@ -7741,6 +7742,9 @@ static void test_removefiles(void)
     r = add_component_entry( hdb, "'carbon', '', 'TARGETDIR', 0, '', 'carbon_file'" );
     ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
 
+    r = add_component_entry( hdb, "'oxygen', '', 'TARGETDIR', 0, '0', 'oxygen_file'" );
+    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+
     r = create_feature_components_table( hdb );
     ok( r == ERROR_SUCCESS, "cannot create FeatureComponents table: %d\n", r );
 
@@ -7760,6 +7764,9 @@ static void test_removefiles(void)
     ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
 
     r = add_feature_components_entry( hdb, "'one', 'carbon'" );
+    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
+
+    r = add_feature_components_entry( hdb, "'one', 'oxygen'" );
     ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
 
     r = create_file_table( hdb );
@@ -7783,6 +7790,9 @@ static void test_removefiles(void)
     r = add_file_entry( hdb, "'carbon_file', 'carbon', 'carbon.txt', 0, '', '1033', 16384, 1" );
     ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
 
+    r = add_file_entry( hdb, "'oxygen_file', 'oxygen', 'oxygen.txt', 0, '', '1033', 16384, 1" );
+    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
+
     r = create_remove_file_table( hdb );
     ok( r == ERROR_SUCCESS, "cannot create Remove File table: %d\n", r);
 
@@ -7803,17 +7813,27 @@ static void test_removefiles(void)
     create_test_file( "beryllium.txt" );
     create_test_file( "boron.txt" );
     create_test_file( "carbon.txt" );
+    create_test_file( "oxygen.txt" );
 
     r = MsiSetProperty( hpkg, "TARGETDIR", CURR_DIR );
     ok( r == ERROR_SUCCESS, "set property failed\n");
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
+    r = MsiGetComponentState( hpkg, "oxygen", &installed, &action );
+    ok( r == ERROR_UNKNOWN_COMPONENT, "expected ERROR_UNKNOWN_COMPONENT, got %u\n", r );
+
     r = MsiDoAction( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
 
     r = MsiDoAction( hpkg, "FileCost");
     ok( r == ERROR_SUCCESS, "cost finalize failed\n");
+
+    installed = action = 0xdeadbeef;
+    r = MsiGetComponentState( hpkg, "oxygen", &installed, &action );
+    ok( r == ERROR_SUCCESS, "failed to get component state %u\n", r );
+    ok( installed == INSTALLSTATE_UNKNOWN, "expected INSTALLSTATE_UNKNOWN, got %d\n", installed );
+    ok( action == INSTALLSTATE_UNKNOWN, "expected INSTALLSTATE_UNKNOWN, got %d\n", action );
 
     r = MsiDoAction( hpkg, "CostFinalize");
     ok( r == ERROR_SUCCESS, "cost finalize failed\n");
@@ -7839,8 +7859,29 @@ static void test_removefiles(void)
     r = MsiSetComponentState( hpkg, "carbon", INSTALLSTATE_SOURCE );
     ok( r == ERROR_SUCCESS, "failed to set component state: %d\n", r);
 
+    installed = action = 0xdeadbeef;
+    r = MsiGetComponentState( hpkg, "oxygen", &installed, &action );
+    ok( r == ERROR_SUCCESS, "failed to get component state %u\n", r );
+    ok( installed == INSTALLSTATE_UNKNOWN, "expected INSTALLSTATE_UNKNOWN, got %d\n", installed );
+    ok( action == INSTALLSTATE_UNKNOWN, "expected INSTALLSTATE_UNKNOWN, got %d\n", action );
+
+    r = MsiSetComponentState( hpkg, "oxygen", INSTALLSTATE_ABSENT );
+    ok( r == ERROR_SUCCESS, "failed to set component state: %d\n", r);
+
+    installed = action = 0xdeadbeef;
+    r = MsiGetComponentState( hpkg, "oxygen", &installed, &action );
+    ok( r == ERROR_SUCCESS, "failed to get component state %u\n", r );
+    ok( installed == INSTALLSTATE_UNKNOWN, "expected INSTALLSTATE_UNKNOWN, got %d\n", installed );
+    ok( action == INSTALLSTATE_UNKNOWN, "expected INSTALLSTATE_UNKNOWN, got %d\n", action );
+
     r = MsiDoAction( hpkg, "RemoveFiles");
     ok( r == ERROR_SUCCESS, "remove files failed\n");
+
+    installed = action = 0xdeadbeef;
+    r = MsiGetComponentState( hpkg, "oxygen", &installed, &action );
+    ok( r == ERROR_SUCCESS, "failed to get component state %u\n", r );
+    ok( installed == INSTALLSTATE_UNKNOWN, "expected INSTALLSTATE_UNKNOWN, got %d\n", installed );
+    ok( action == INSTALLSTATE_UNKNOWN, "expected INSTALLSTATE_UNKNOWN, got %d\n", action );
 
     ok(DeleteFileA("hydrogen.txt"), "Expected hydrogen.txt to exist\n");
     ok(DeleteFileA("lithium.txt"), "Expected lithium.txt to exist\n");    
@@ -7848,6 +7889,7 @@ static void test_removefiles(void)
     ok(DeleteFileA("carbon.txt"), "Expected carbon.txt to exist\n");
     ok(DeleteFileA("helium.txt"), "Expected helium.txt to exist\n");
     ok(DeleteFileA("boron.txt"), "Expected boron.txt to exist\n");
+    ok(DeleteFileA("oxygen.txt"), "Expected oxygen.txt to exist\n");
 
     MsiCloseHandle( hpkg );
     DeleteFileA(msifile);

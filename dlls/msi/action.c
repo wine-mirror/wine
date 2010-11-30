@@ -1220,7 +1220,8 @@ static UINT load_component( MSIRECORD *row, LPVOID param )
     comp->KeyPath = msi_dup_record_field( row, 6 );
 
     comp->Installed = INSTALLSTATE_UNKNOWN;
-    msi_component_set_state(package, comp, INSTALLSTATE_UNKNOWN);
+    comp->Action = INSTALLSTATE_UNKNOWN;
+    comp->ActionRequest = INSTALLSTATE_UNKNOWN;
 
     comp->assembly = load_assembly( package, comp );
     return ERROR_SUCCESS;
@@ -1733,7 +1734,7 @@ static void ACTION_GetComponentInstallStates(MSIPACKAGE *package)
 
     LIST_FOR_EACH_ENTRY(comp, &package->components, MSICOMPONENT, entry)
     {
-        if (!comp->ComponentId)
+        if (!comp->Enabled || !comp->ComponentId)
             continue;
 
         if (state != INSTALLSTATE_LOCAL && state != INSTALLSTATE_DEFAULT)
@@ -1928,6 +1929,8 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         /* features with components that have compressed files are made local */
         LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )
         {
+            if (!cl->component->Enabled) continue;
+
             if (cl->component->ForceLocalState &&
                 feature->ActionRequest == INSTALLSTATE_SOURCE)
             {
@@ -1939,6 +1942,8 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )
         {
             component = cl->component;
+
+            if (!component->Enabled) continue;
 
             switch (feature->ActionRequest)
             {
@@ -1970,6 +1975,8 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
 
     LIST_FOR_EACH_ENTRY( component, &package->components, MSICOMPONENT, entry )
     {
+        if (!component->Enabled) continue;
+
         /* check if it's local or source */
         if (!(component->Attributes & msidbComponentAttributesOptional) &&
              (component->hasLocalFeature || component->hasSourceFeature))
@@ -2008,6 +2015,8 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
 
     LIST_FOR_EACH_ENTRY( component, &package->components, MSICOMPONENT, entry )
     {
+        if (!component->Enabled) continue;
+
         if (component->ActionRequest == INSTALLSTATE_DEFAULT)
         {
             TRACE("%s was default, setting to local\n", debugstr_w(component->Component));
@@ -2283,6 +2292,18 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
         msiobj_release(&view->hdr);
     }
 
+    TRACE("Evaluating component conditions\n");
+    LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
+    {
+        if (MSI_EvaluateConditionW( package, comp->Condition ) == MSICONDITION_FALSE)
+        {
+            TRACE("Disabling component %s\n", debugstr_w(comp->Component));
+            comp->Enabled = FALSE;
+        }
+        else
+            comp->Enabled = TRUE;
+    }
+
     /* read components states from the registry */
     ACTION_GetComponentInstallStates(package);
     ACTION_GetFeatureInstallStates(package);
@@ -2297,18 +2318,6 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
             rc = MSI_IterateRecords( view, NULL, ITERATE_CostFinalizeConditions, package );
             msiobj_release( &view->hdr );
         }
-    }
-    TRACE("Evaluating component conditions\n");
-
-    LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
-    {
-        if (MSI_EvaluateConditionW( package, comp->Condition ) == MSICONDITION_FALSE)
-        {
-            TRACE("Disabling component %s\n", debugstr_w(comp->Component));
-            comp->Enabled = FALSE;
-        }
-        else
-            comp->Enabled = TRUE;
     }
 
     TRACE("Calculating file install states\n");

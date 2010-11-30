@@ -658,13 +658,12 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
     {
         MSICOMPONENT* component = cl->component;
     
+        if (!component->Enabled) continue;
+
         TRACE("MODIFYING(%i): Component %s (Installed %i, Action %i, Request %i)\n",
             newstate, debugstr_w(component->Component), component->Installed, 
             component->Action, component->ActionRequest);
         
-        if (!component->Enabled)
-            continue;
- 
         if (newstate == INSTALLSTATE_LOCAL)
             msi_component_set_state(package, component, INSTALLSTATE_LOCAL);
         else 
