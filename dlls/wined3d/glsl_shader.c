@@ -4818,9 +4818,9 @@ static const struct wine_rb_functions wined3d_glsl_program_rb_functions =
     glsl_program_key_compare,
 };
 
-static HRESULT shader_glsl_alloc(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
+static HRESULT shader_glsl_alloc(IWineD3DDeviceImpl *device)
+{
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct shader_glsl_priv *priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_glsl_priv));
     SIZE_T stack_size = wined3d_log2i(max(gl_info->limits.glsl_vs_float_constants,
             gl_info->limits.glsl_ps_float_constants)) + 1;
@@ -4858,7 +4858,7 @@ static HRESULT shader_glsl_alloc(IWineD3DDevice *iface) {
 
     priv->next_constant_version = 1;
 
-    This->shader_priv = priv;
+    device->shader_priv = priv;
     return WINED3D_OK;
 
 fail:

@@ -4744,8 +4744,8 @@ static const struct wine_rb_functions sig_tree_functions =
     sig_tree_compare
 };
 
-static HRESULT shader_arb_alloc(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+static HRESULT shader_arb_alloc(IWineD3DDeviceImpl *device)
+{
     struct shader_arb_priv *priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*priv));
     if(wine_rb_init(&priv->signature_tree, &sig_tree_functions) == -1)
     {
@@ -4753,7 +4753,7 @@ static HRESULT shader_arb_alloc(IWineD3DDevice *iface) {
         HeapFree(GetProcessHeap(), 0, priv);
         return E_OUTOFMEMORY;
     }
-    This->shader_priv = priv;
+    device->shader_priv = priv;
     return WINED3D_OK;
 }
 

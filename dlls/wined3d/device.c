@@ -1963,7 +1963,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
     if (This->depth_stencil)
         IWineD3DSurface_AddRef((IWineD3DSurface *)This->depth_stencil);
 
-    hr = This->shader_backend->shader_alloc_private(iface);
+    hr = This->shader_backend->shader_alloc_private(This);
     if(FAILED(hr)) {
         TRACE("Shader private data couldn't be allocated\n");
         goto err_out;
@@ -6244,7 +6244,7 @@ static HRESULT create_primary_opengl_context(IWineD3DDevice *iface, IWineD3DSwap
     create_dummy_textures(This);
     context_release(context);
 
-    hr = This->shader_backend->shader_alloc_private(iface);
+    hr = This->shader_backend->shader_alloc_private(This);
     if (FAILED(hr))
     {
         ERR("Failed to allocate shader private data, hr %#x.\n", hr);
