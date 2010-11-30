@@ -41,24 +41,6 @@ HKCR
             InprocServer = s 'ole2disp.dll'
             InprocServer32 = s '%MODULE%'
         }
-        ForceRemove '{0BE35203-8F91-11CE-9DE3-00AA004BB851}' = s 'CLSID_StdFont'
-        {
-            CLSID = s 'Standard Font'
-            InprocServer32 = s '%MODULE%' { val ThreadingModel = s 'Both' }
-            ProgId = s 'StdFont'
-        }
-        ForceRemove '{46763EE0-CAB2-11CE-8C20-00AA0051E5D4}' = s 'Obsolete Font'
-        {
-            CLSID = s 'Obsolete Font'
-            InprocServer32 = s '%MODULE%'
-            ProgId = s 'OldFont'
-        }
-        ForceRemove '{0BE35204-8F91-11CE-9DE3-00AA004BB851}' = s 'CLSID_StdPict'
-        {
-            CLSID = s 'Standard Picture'
-            InprocServer32 = s '%MODULE%' { val ThreadingModel = s 'Apartment' }
-            ProgId = s 'StdPicture'
-        }
     }
     NoRemove Interface
     {
@@ -104,7 +86,4 @@ HKCR
             ProxyStubClsid32 = s '{00020420-0000-0000-C000-000000000046}'
         }
     }
-    ForceRemove StdFont    { CLSID = s '{0BE35203-8F91-11CE-9DE3-00AA004BB851}' }
-    ForceRemove OldFont    { CLSID = s '{46763EE0-CAB2-11CE-8C20-00AA0051E5D4}' }
-    ForceRemove StdPicture { CLSID = s '{0BE35204-8F91-11CE-9DE3-00AA004BB851}' }
 }
