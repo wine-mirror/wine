@@ -624,6 +624,13 @@ sub source_scan_project_file($$$)
                     } elsif (/^GX$/) {
                         # Enable Exception Handling
                         $prj_target_cflags.="-fexceptions ";
+                    } elsif (/^Gd$/) {
+                        # use cdecl calling convention (default)
+                    } elsif (/^Gr$/) {
+                        # use fastcall calling convention
+                    } elsif (/^Gz$/) {
+                        # use stdcall calling convention
+                        $prj_target_cflags.="-mrtd ";
                     } elsif (/^Z[d7iI]$/) {
                         # Debug Info
                         $prj_target_cflags.="-g ";
