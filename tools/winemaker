@@ -1810,7 +1810,11 @@ sub search_from($$)
       $real_path.="./";
     } elsif ($component eq "..") {
       # Go up one level
-      $dirname=dirname($dirname) . "/";
+      if ($dirname =~ /\.\.\/$/) {
+        $dirname.="../";
+      } else {
+        $dirname=dirname($dirname) . "/";
+      }
       $real_path.="../";
     } else {
       # The file/directory may have been renamed before. Also try to
