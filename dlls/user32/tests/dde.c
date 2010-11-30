@@ -2043,12 +2043,6 @@ static void test_DdeCreateStringHandle(void)
     dde_inst = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = DdeInitializeW(&dde_inst, client_ddeml_callback, APPCMD_CLIENTONLY, 0);
-    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-    {
-        win_skip("DdeInitializeW is unimplemented\n");
-        return;
-    }
-
     ok(ret == DMLERR_INVALIDPARAMETER, "DdeInitializeW should fail, but got %04x instead\n", ret);
     ok(DdeGetLastError(dde_inst) == DMLERR_INVALIDPARAMETER, "expected DMLERR_INVALIDPARAMETER\n");
 
@@ -2696,6 +2690,7 @@ START_TEST(dde)
     char buffer[MAX_PATH];
     STARTUPINFO startup;
     PROCESS_INFORMATION proc;
+    DWORD dde_inst = 0xdeadbeef;
 
     argc = winetest_get_mainargs(&argv);
     if (argc == 3)
@@ -2713,6 +2708,14 @@ START_TEST(dde)
     }
 
     test_initialisation();
+
+    SetLastError(0xdeadbeef);
+    DdeInitializeW(&dde_inst, client_ddeml_callback, APPCMD_CLIENTONLY, 0);
+    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("Skipping tests on win9x because of brokenness\n");
+        return;
+    }
 
     ZeroMemory(&startup, sizeof(STARTUPINFO));
     sprintf(buffer, "%s dde ddeml", argv[0]);
