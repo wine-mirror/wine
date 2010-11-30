@@ -52,6 +52,12 @@
 #define WINED3D_QUIRK_NV_CLIP_BROKEN            0x00000010
 #define WINED3D_QUIRK_FBO_TEX_UPDATE            0x00000020
 
+typedef struct IWineD3DStateBlockImpl IWineD3DStateBlockImpl;
+typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
+typedef struct IWineD3DPaletteImpl    IWineD3DPaletteImpl;
+typedef struct IWineD3DDeviceImpl     IWineD3DDeviceImpl;
+typedef struct IWineD3DSwapChainImpl  IWineD3DSwapChainImpl;
+
 /* Texture format fixups */
 
 enum fixup_channel_source
@@ -747,7 +753,7 @@ typedef struct {
     void (*shader_select_depth_blt)(void *shader_priv, const struct wined3d_gl_info *gl_info,
             enum tex_types tex_type, const SIZE *ds_mask_size);
     void (*shader_deselect_depth_blt)(void *shader_priv, const struct wined3d_gl_info *gl_info);
-    void (*shader_update_float_vertex_constants)(IWineD3DDevice *iface, UINT start, UINT count);
+    void (*shader_update_float_vertex_constants)(IWineD3DDeviceImpl *device, UINT start, UINT count);
     void (*shader_update_float_pixel_constants)(IWineD3DDevice *iface, UINT start, UINT count);
     void (*shader_load_constants)(const struct wined3d_context *context, char usePS, char useVS);
     void (*shader_load_np2fixup_constants)(void *shader_priv, const struct wined3d_gl_info *gl_info,
@@ -847,13 +853,6 @@ do {                                                                            
         TRACE( #name "=(data:%p, stride:%d, format:%#x, vbo %d, stream %u)\n", \
         si->elements[name].data, si->elements[name].stride, si->elements[name].format->id, \
         si->elements[name].buffer_object, si->elements[name].stream_idx); } while(0)
-
-/* Advance declaration of structures to satisfy compiler */
-typedef struct IWineD3DStateBlockImpl IWineD3DStateBlockImpl;
-typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
-typedef struct IWineD3DPaletteImpl    IWineD3DPaletteImpl;
-typedef struct IWineD3DDeviceImpl     IWineD3DDeviceImpl;
-typedef struct IWineD3DSwapChainImpl  IWineD3DSwapChainImpl;
 
 /* Global variables */
 extern const float identity[16] DECLSPEC_HIDDEN;
