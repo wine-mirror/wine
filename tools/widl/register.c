@@ -47,6 +47,20 @@ static const char *format_uuid( const UUID *uuid )
     return buffer;
 }
 
+static const char *get_coclass_threading( const type_t *class )
+{
+    static const char * const models[] =
+    {
+        NULL,
+        "Apartment", /* THREADING_APARTMENT */
+        "Neutral",   /* THREADING_NEUTRAL */
+        "Single",    /* THREADING_SINGLE */
+        "Free",      /* THREADING_FREE */
+        "Both",      /* THREADING_BOTH */
+    };
+    return models[get_attrv( class->attrs, ATTR_THREADING )];
+}
+
 static int write_interface( const type_t *iface )
 {
     const UUID *uuid = get_attrp( iface->attrs, ATTR_UUID );
@@ -79,6 +93,93 @@ static int write_interfaces( const statement_list_t *stmts )
     return count;
 }
 
+static int write_coclass( const type_t *class )
+{
+    const UUID *uuid = get_attrp( class->attrs, ATTR_UUID );
+    const char *descr = get_attrp( class->attrs, ATTR_HELPSTRING );
+    const char *progid = get_attrp( class->attrs, ATTR_PROGID );
+    const char *vi_progid = get_attrp( class->attrs, ATTR_VIPROGID );
+    const char *threading = get_coclass_threading( class );
+
+    if (!uuid) return 0;
+    if (!descr) descr = class->name;
+
+    put_str( indent, "ForceRemove '%s' = s '%s'\n", format_uuid( uuid ), descr );
+    put_str( indent++, "{\n" );
+    if (threading) put_str( indent, "InprocServer32 = s '%%MODULE%%' { val ThreadingModel = s '%s' }\n",
+                            threading );
+    if (progid || vi_progid) put_str( indent, "CLSID = s '%s'\n", descr );
+    if (progid) put_str( indent, "ProgId = s '%s'\n", progid );
+    if (vi_progid) put_str( indent, "VersionIndependentProgId = s '%s'\n", vi_progid );
+    put_str( --indent, "}\n" );
+    return 1;
+}
+
+static void write_coclasses( const statement_list_t *stmts, const UUID *typelib_uuid )
+{
+    const statement_t *stmt;
+
+    if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
+    {
+        if (stmt->type == STMT_TYPE)
+        {
+            const type_t *type = stmt->u.type;
+            if (type_get_type(type) == TYPE_COCLASS) write_coclass( type );
+        }
+        else if (stmt->type == STMT_LIBRARY)
+        {
+            const UUID *uuid = get_attrp( stmt->u.lib->attrs, ATTR_UUID );
+            write_coclasses( stmt->u.lib->stmts, uuid );
+        }
+    }
+}
+
+static int write_progid( const type_t *class )
+{
+    const UUID *uuid = get_attrp( class->attrs, ATTR_UUID );
+    const char *descr = get_attrp( class->attrs, ATTR_HELPSTRING );
+    const char *progid = get_attrp( class->attrs, ATTR_PROGID );
+    const char *vi_progid = get_attrp( class->attrs, ATTR_VIPROGID );
+
+    if (!uuid) return 0;
+    if (!descr) descr = vi_progid ? vi_progid : progid;
+
+    if (progid)
+    {
+        put_str( indent, "ForceRemove '%s' = s '%s'\n", progid, descr );
+        put_str( indent++, "{\n" );
+        put_str( indent, "CLSID = s '%s'\n", format_uuid( uuid ) );
+        put_str( --indent, "}\n" );
+    }
+    if (vi_progid)
+    {
+        put_str( indent, "ForceRemove '%s' = s '%s'\n", vi_progid, descr );
+        put_str( indent++, "{\n" );
+        put_str( indent, "CLSID = s '%s'\n", format_uuid( uuid ) );
+        if (progid) put_str( indent, "CurVer = s '%s'\n", progid );
+        put_str( --indent, "}\n" );
+    }
+    return 1;
+}
+
+static void write_progids( const statement_list_t *stmts )
+{
+    const statement_t *stmt;
+
+    if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
+    {
+        if (stmt->type == STMT_TYPE)
+        {
+            const type_t *type = stmt->u.type;
+            if (type_get_type(type) == TYPE_COCLASS) write_progid( type );
+        }
+        else if (stmt->type == STMT_LIBRARY)
+        {
+            write_progids( stmt->u.lib->stmts );
+        }
+    }
+}
+
 /* put a string into the resource file */
 static inline void put_string( const char *str )
 {
@@ -107,17 +208,19 @@ void write_regscript( const statement_list_t *stmts )
     count = write_interfaces( stmts );
     put_str( --indent, "}\n" );
 
+    put_str( indent, "NoRemove CLSID\n" );
+    put_str( indent++, "{\n" );
     if (count)
     {
-        put_str( indent, "NoRemove CLSID\n" );
-        put_str( indent++, "{\n" );
         put_str( indent, "ForceRemove '%%CLSID_PSFactoryBuffer%%' = s 'PSFactoryBuffer'\n" );
         put_str( indent++, "{\n" );
         put_str( indent, "InprocServer32 = s '%%MODULE%%' { val ThreadingModel = s 'Both' }\n" );
         put_str( --indent, "}\n" );
-        put_str( --indent, "}\n" );
     }
+    write_coclasses( stmts, NULL );
+    put_str( --indent, "}\n" );
 
+    write_progids( stmts );
     put_str( --indent, "}\n" );
 
     if (strendswith( regscript_name, ".res" ))  /* create a binary resource file */
