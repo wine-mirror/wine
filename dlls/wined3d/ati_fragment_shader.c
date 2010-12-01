@@ -1054,7 +1054,8 @@ static const struct StateEntryTemplate atifs_fragmentstate_template[] = {
 };
 
 /* Context activation is done by the caller. */
-static void atifs_enable(IWineD3DDevice *iface, BOOL enable) {
+static void atifs_enable(BOOL enable)
+{
     ENTER_GL();
     if(enable) {
         glEnable(GL_FRAGMENT_SHADER_ATI);

@@ -621,10 +621,11 @@ static void nvrc_texfactor(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
 }
 
 /* Context activation is done by the caller. */
-static void nvrc_enable(IWineD3DDevice *iface, BOOL enable) { }
+static void nvrc_enable(BOOL enable) {}
 
 /* Context activation is done by the caller. */
-static void nvts_enable(IWineD3DDevice *iface, BOOL enable) {
+static void nvts_enable(BOOL enable)
+{
     ENTER_GL();
     if(enable) {
         glEnable(GL_TEXTURE_SHADER_NV);

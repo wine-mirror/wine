@@ -8,7 +8,7 @@
  * Copyright 2005 Oliver Stieber
  * Copyright 2006 Henri Verbeet
  * Copyright 2006-2008 Stefan Dösinger for CodeWeavers
- * Copyright 2009 Henri Verbeet for CodeWeavers
+ * Copyright 2009-2010 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -5654,7 +5654,7 @@ static const struct StateEntryTemplate ffp_fragmentstate_template[] = {
 };
 
 /* Context activation is done by the caller. */
-static void ffp_enable(IWineD3DDevice *iface, BOOL enable) { }
+static void ffp_enable(BOOL enable) {}
 
 static void ffp_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *pCaps)
 {

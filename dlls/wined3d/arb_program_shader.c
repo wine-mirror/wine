@@ -5447,7 +5447,8 @@ struct arbfp_ffp_desc
 };
 
 /* Context activation is done by the caller. */
-static void arbfp_enable(IWineD3DDevice *iface, BOOL enable) {
+static void arbfp_enable(BOOL enable)
+{
     ENTER_GL();
     if(enable) {
         glEnable(GL_FRAGMENT_PROGRAM_ARB);

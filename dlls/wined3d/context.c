@@ -1572,7 +1572,7 @@ struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain,
 
     LEAVE_GL();
 
-    device->frag_pipe->enable_extension((IWineD3DDevice *)device, TRUE);
+    device->frag_pipe->enable_extension(TRUE);
 
     TRACE("Created context %p.\n", ret);
 
@@ -1840,8 +1840,7 @@ static void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context *conte
     Context_MarkStateDirty(context, STATE_VIEWPORT, StateTable);
     Context_MarkStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION), StateTable);
 
-
-    This->frag_pipe->enable_extension((IWineD3DDevice *) This, FALSE);
+    This->frag_pipe->enable_extension(FALSE);
 }
 
 /*****************************************************************************
@@ -2130,7 +2129,7 @@ void context_apply_clear_state(struct wined3d_context *context, IWineD3DDeviceIm
 
     if (context->last_was_blit)
     {
-        device->frag_pipe->enable_extension((IWineD3DDevice *)device, TRUE);
+        device->frag_pipe->enable_extension(TRUE);
     }
 
     /* Blending and clearing should be orthogonal, but tests on the nvidia
@@ -2189,7 +2188,7 @@ void context_apply_draw_state(struct wined3d_context *context, IWineD3DDeviceImp
 
     if (context->last_was_blit)
     {
-        device->frag_pipe->enable_extension((IWineD3DDevice *)device, TRUE);
+        device->frag_pipe->enable_extension(TRUE);
     }
 
     ENTER_GL();
@@ -2287,7 +2286,7 @@ struct wined3d_context *context_acquire(IWineD3DDeviceImpl *device, IWineD3DSurf
     if (context != current_context)
     {
         if (!context_set_current(context)) ERR("Failed to activate the new context.\n");
-        else device->frag_pipe->enable_extension((IWineD3DDevice *)device, !context->last_was_blit);
+        else device->frag_pipe->enable_extension(!context->last_was_blit);
 
         if (context->vshader_const_dirty)
         {
