@@ -82,6 +82,24 @@ typedef struct _CRYPT_DIGESTED_DATA
 BOOL CRYPT_AsnEncodePKCSDigestedData(const CRYPT_DIGESTED_DATA *digestedData,
  void *pvData, DWORD *pcbData);
 
+typedef struct _CRYPT_ENCRYPTED_CONTENT_INFO
+{
+    LPSTR                      contentType;
+    CRYPT_ALGORITHM_IDENTIFIER contentEncryptionAlgorithm;
+    CRYPT_DATA_BLOB            encryptedContent;
+} CRYPT_ENCRYPTED_CONTENT_INFO;
+
+typedef struct _CRYPT_ENVELOPED_DATA
+{
+    DWORD                          version;
+    DWORD                          cRecipientInfo;
+    PCMSG_KEY_TRANS_RECIPIENT_INFO rgRecipientInfo;
+    CRYPT_ENCRYPTED_CONTENT_INFO   encryptedContentInfo;
+} CRYPT_ENVELOPED_DATA;
+
+BOOL CRYPT_AsnEncodePKCSEnvelopedData(const CRYPT_ENVELOPED_DATA *envelopedData,
+ void *pvData, DWORD *pcbData);
+
 typedef struct _CRYPT_SIGNED_INFO
 {
     DWORD                 version;

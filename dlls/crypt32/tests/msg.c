@@ -2248,11 +2248,9 @@ static void test_enveloped_msg_encoding(void)
      "CryptMsgOpenToEncode failed: %08x\n", GetLastError());
     if (msg)
     {
-        todo_wine
         check_param("enveloped empty bare content", msg,
          CMSG_BARE_CONTENT_PARAM, envelopedEmptyBareContent,
          sizeof(envelopedEmptyBareContent));
-        todo_wine
         check_param("enveloped empty content", msg, CMSG_CONTENT_PARAM,
          envelopedEmptyContent, sizeof(envelopedEmptyContent));
         CryptMsgClose(msg);

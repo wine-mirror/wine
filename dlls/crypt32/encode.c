@@ -4293,6 +4293,61 @@ BOOL CRYPT_AsnEncodeCMSSignedInfo(CRYPT_SIGNED_INFO *signedInfo, void *pvData,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_AsnEncodeRecipientInfo(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    const CMSG_KEY_TRANS_RECIPIENT_INFO *info = pvStructInfo;
+    struct AsnEncodeSequenceItem items[] = {
+     { &info->dwVersion, CRYPT_AsnEncodeInt, 0 },
+     { &info->RecipientId.u.IssuerSerialNumber,
+       CRYPT_AsnEncodeIssuerSerialNumber, 0 },
+     { &info->KeyEncryptionAlgorithm,
+       CRYPT_AsnEncodeAlgorithmIdWithNullParams, 0 },
+     { &info->EncryptedKey, CRYPT_AsnEncodeOctets, 0 },
+    };
+
+    return CRYPT_AsnEncodeSequence(dwCertEncodingType, items,
+     sizeof(items) / sizeof(items[0]), dwFlags, pEncodePara, pbEncoded,
+     pcbEncoded);
+}
+
+static BOOL WINAPI CRYPT_AsnEncodeEncryptedContentInfo(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    const CRYPT_ENCRYPTED_CONTENT_INFO *info = pvStructInfo;
+    struct AsnEncodeTagSwappedItem swapped = { ASN_CONTEXT | 0,
+     &info->encryptedContent, CRYPT_AsnEncodeOctets };
+    struct AsnEncodeSequenceItem items[] = {
+     { info->contentType, CRYPT_AsnEncodeOid, 0 },
+     { &info->contentEncryptionAlgorithm,
+       CRYPT_AsnEncodeAlgorithmIdWithNullParams, 0 },
+     { &swapped, CRYPT_AsnEncodeSwapTag, 0 },
+    };
+
+    return CRYPT_AsnEncodeSequence(dwCertEncodingType, items,
+     sizeof(items) / sizeof(items[0]), dwFlags, pEncodePara, pbEncoded,
+     pcbEncoded);
+}
+
+BOOL CRYPT_AsnEncodePKCSEnvelopedData(const CRYPT_ENVELOPED_DATA *envelopedData,
+ void *pvData, DWORD *pcbData)
+{
+    struct DERSetDescriptor recipientInfosSet = { envelopedData->cRecipientInfo,
+     envelopedData->rgRecipientInfo, sizeof(CMSG_KEY_TRANS_RECIPIENT_INFO), 0,
+     CRYPT_AsnEncodeRecipientInfo };
+    struct AsnEncodeSequenceItem items[] = {
+     { &envelopedData->version, CRYPT_AsnEncodeInt, 0 },
+     { &recipientInfosSet, CRYPT_DEREncodeItemsAsSet, 0 },
+     { &envelopedData->encryptedContentInfo,
+       CRYPT_AsnEncodeEncryptedContentInfo, 0 },
+    };
+
+    return CRYPT_AsnEncodeSequence(X509_ASN_ENCODING, items,
+     sizeof(items) / sizeof(items[0]), 0, NULL, pvData, pcbData);
+}
+
 static CryptEncodeObjectExFunc CRYPT_GetBuiltinEncoder(DWORD dwCertEncodingType,
  LPCSTR lpszStructType)
 {

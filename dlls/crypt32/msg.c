@@ -1785,9 +1785,58 @@ static void CEnvelopedEncodeMsg_Close(HCRYPTMSG hCryptMsg)
 static BOOL CEnvelopedEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
  DWORD dwIndex, void *pvData, DWORD *pcbData)
 {
-    FIXME("(%p, %d, %d, %p, %p): stub\n", hCryptMsg, dwParamType, dwIndex,
-     pvData, pcbData);
-    return FALSE;
+    CEnvelopedEncodeMsg *msg = hCryptMsg;
+    BOOL ret = FALSE;
+
+    switch (dwParamType)
+    {
+    case CMSG_BARE_CONTENT_PARAM:
+        if (msg->base.streamed)
+            SetLastError(E_INVALIDARG);
+        else
+        {
+            char oid_rsa_data[] = szOID_RSA_data;
+            CRYPT_ENVELOPED_DATA envelopedData = {
+             CMSG_ENVELOPED_DATA_PKCS_1_5_VERSION, msg->cRecipientInfo,
+             msg->recipientInfo, { oid_rsa_data, msg->algo, msg->data }
+            };
+
+            ret = CRYPT_AsnEncodePKCSEnvelopedData(&envelopedData, pvData,
+             pcbData);
+        }
+        break;
+    case CMSG_CONTENT_PARAM:
+    {
+        CRYPT_CONTENT_INFO info;
+
+        ret = CryptMsgGetParam(hCryptMsg, CMSG_BARE_CONTENT_PARAM, 0, NULL,
+         &info.Content.cbData);
+        if (ret)
+        {
+            info.Content.pbData = CryptMemAlloc(info.Content.cbData);
+            if (info.Content.pbData)
+            {
+                ret = CryptMsgGetParam(hCryptMsg, CMSG_BARE_CONTENT_PARAM, 0,
+                 info.Content.pbData, &info.Content.cbData);
+                if (ret)
+                {
+                    char oid_rsa_enveloped[] = szOID_RSA_envelopedData;
+
+                    info.pszObjId = oid_rsa_enveloped;
+                    ret = CryptEncodeObjectEx(X509_ASN_ENCODING,
+                     PKCS_CONTENT_INFO, &info, 0, NULL, pvData, pcbData);
+                }
+                CryptMemFree(info.Content.pbData);
+            }
+            else
+                ret = FALSE;
+        }
+        break;
+    }
+    default:
+        SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+    }
+    return ret;
 }
 
 static BOOL CEnvelopedEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
