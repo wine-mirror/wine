@@ -190,8 +190,12 @@ static void HTMLDOMTextNode_destructor(HTMLDOMNode *iface)
 static HRESULT HTMLDOMTextNode_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
 {
     HTMLDOMTextNode *This = HTMLTEXT_NODE_THIS(iface);
+    HRESULT hres;
 
-    *ret = HTMLDOMTextNode_Create(This->node.doc, nsnode);
+    hres = HTMLDOMTextNode_Create(This->node.doc, nsnode, ret);
+    if(FAILED(hres))
+        return hres;
+
     IHTMLDOMNode_AddRef(HTMLDOMNODE(*ret));
     return S_OK;
 }
@@ -217,21 +221,28 @@ static dispex_static_data_t HTMLDOMTextNode_dispex = {
     HTMLDOMTextNode_iface_tids
 };
 
-HTMLDOMNode *HTMLDOMTextNode_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode)
+HRESULT HTMLDOMTextNode_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNode **node)
 {
     HTMLDOMTextNode *ret;
     nsresult nsres;
 
     ret = heap_alloc_zero(sizeof(*ret));
+    if(!ret)
+        return E_OUTOFMEMORY;
+
     ret->node.vtbl = &HTMLDOMTextNodeImplVtbl;
     ret->lpIHTMLDOMTextNodeVtbl = &HTMLDOMTextNodeVtbl;
+
+    nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMText, (void**)&ret->nstext);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMText iface: %08x\n", nsres);
+        heap_free(ret);
+        return E_FAIL;
+    }
 
     init_dispex(&ret->node.dispex, (IUnknown*)HTMLTEXT(ret), &HTMLDOMTextNode_dispex);
     HTMLDOMNode_Init(doc, &ret->node, nsnode);
 
-    nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMText, (void**)&ret->nstext);
-    if(NS_FAILED(nsres))
-        ERR("Could not get nsIDOMText iface: %08x\n", nsres);
-
-    return &ret->node;
+    *node = &ret->node;
+    return S_OK;
 }

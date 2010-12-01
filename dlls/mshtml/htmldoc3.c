@@ -108,6 +108,7 @@ static HRESULT WINAPI HTMLDocument3_createTextNode(IHTMLDocument3 *iface, BSTR t
     HTMLDOMNode *node;
     nsAString text_str;
     nsresult nsres;
+    HRESULT hres;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(text), newTextNode);
 
@@ -124,8 +125,10 @@ static HRESULT WINAPI HTMLDocument3_createTextNode(IHTMLDocument3 *iface, BSTR t
         return E_FAIL;
     }
 
-    node = HTMLDOMTextNode_Create(This->doc_node, (nsIDOMNode*)nstext);
+    hres = HTMLDOMTextNode_Create(This->doc_node, (nsIDOMNode*)nstext, &node);
     nsIDOMElement_Release(nstext);
+    if(FAILED(hres))
+        return hres;
 
     *newTextNode = HTMLDOMNODE(node);
     IHTMLDOMNode_AddRef(HTMLDOMNODE(node));

@@ -125,9 +125,10 @@ static HRESULT WINAPI HTMLDocument5_createComment(IHTMLDocument5 *iface, BSTR bs
 {
     HTMLDocument *This = HTMLDOC5_THIS(iface);
     nsIDOMComment *nscomment;
-    HTMLDOMNode *node;
+    HTMLElement *elem;
     nsAString str;
     nsresult nsres;
+    HRESULT hres;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(bstrdata), ppRetNode);
 
@@ -144,11 +145,13 @@ static HRESULT WINAPI HTMLDocument5_createComment(IHTMLDocument5 *iface, BSTR bs
         return E_FAIL;
     }
 
-    node = &HTMLCommentElement_Create(This->doc_node, (nsIDOMNode*)nscomment)->node;
+    hres = HTMLCommentElement_Create(This->doc_node, (nsIDOMNode*)nscomment, &elem);
     nsIDOMElement_Release(nscomment);
+    if(FAILED(hres))
+        return hres;
 
-    *ppRetNode = HTMLDOMNODE(node);
-    IHTMLDOMNode_AddRef(HTMLDOMNODE(node));
+    *ppRetNode = HTMLDOMNODE(&elem->node);
+    IHTMLDOMNode_AddRef(HTMLDOMNODE(&elem->node));
     return S_OK;
 }
 

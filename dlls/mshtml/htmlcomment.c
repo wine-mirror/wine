@@ -185,9 +185,13 @@ static dispex_static_data_t HTMLCommentElement_dispex = {
     HTMLCommentElement_iface_tids
 };
 
-HTMLElement *HTMLCommentElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode)
+HRESULT HTMLCommentElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLElement **elem)
 {
-    HTMLCommentElement *ret = heap_alloc_zero(sizeof(*ret));
+    HTMLCommentElement *ret;
+
+    ret = heap_alloc_zero(sizeof(*ret));
+    if(!ret)
+        return E_OUTOFMEMORY;
 
     ret->element.node.vtbl = &HTMLCommentElementImplVtbl;
     ret->lpIHTMLCommentElementVtbl = &HTMLCommentElementVtbl;
@@ -197,5 +201,6 @@ HTMLElement *HTMLCommentElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode
     nsIDOMNode_AddRef(nsnode);
     ret->element.node.nsnode = nsnode;
 
-    return &ret->element;
+    *elem = &ret->element;
+    return S_OK;
 }

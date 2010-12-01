@@ -818,10 +818,10 @@ HRESULT get_node_text(HTMLDOMNode*,BSTR*);
 
 HRESULT create_nselem(HTMLDocumentNode*,const WCHAR*,nsIDOMHTMLElement**);
 
-HTMLDOMNode *HTMLDOMTextNode_Create(HTMLDocumentNode*,nsIDOMNode*);
+HRESULT HTMLDOMTextNode_Create(HTMLDocumentNode*,nsIDOMNode*,HTMLDOMNode**);
 
 HTMLElement *HTMLElement_Create(HTMLDocumentNode*,nsIDOMNode*,BOOL);
-HTMLElement *HTMLCommentElement_Create(HTMLDocumentNode*,nsIDOMNode*);
+HRESULT HTMLCommentElement_Create(HTMLDocumentNode*,nsIDOMNode*,HTMLElement**);
 HTMLElement *HTMLAnchorElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
 HTMLElement *HTMLBodyElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
 HTMLElement *HTMLEmbedElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);

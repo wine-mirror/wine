@@ -33,7 +33,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 static HTMLDOMNode *get_node_obj(HTMLDocumentNode*,IUnknown*);
-static HTMLDOMNode *create_node(HTMLDocumentNode*,nsIDOMNode*);
+static HRESULT create_node(HTMLDocumentNode*,nsIDOMNode*,HTMLDOMNode**);
 
 typedef struct {
     DispatchEx dispex;
@@ -962,7 +962,12 @@ void HTMLDOMNode_destructor(HTMLDOMNode *This)
 
 static HRESULT HTMLDOMNode_clone(HTMLDOMNode *This, nsIDOMNode *nsnode, HTMLDOMNode **ret)
 {
-    *ret = create_node(This->doc, nsnode);
+    HRESULT hres;
+
+    hres = create_node(This->doc, nsnode, ret);
+    if(FAILED(hres))
+        return hres;
+
     IHTMLDOMNode_AddRef(HTMLDOMNODE(*ret));
     return S_OK;
 }
@@ -988,32 +993,45 @@ void HTMLDOMNode_Init(HTMLDocumentNode *doc, HTMLDOMNode *node, nsIDOMNode *nsno
     doc->nodes = node;
 }
 
-static HTMLDOMNode *create_node(HTMLDocumentNode *doc, nsIDOMNode *nsnode)
+static HRESULT create_node(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNode **ret)
 {
-    HTMLDOMNode *ret;
     PRUint16 node_type;
+    HRESULT hres;
 
     nsIDOMNode_GetNodeType(nsnode, &node_type);
 
     switch(node_type) {
     case ELEMENT_NODE:
-        ret = &HTMLElement_Create(doc, nsnode, FALSE)->node;
+        *ret = &HTMLElement_Create(doc, nsnode, FALSE)->node;
         break;
     case TEXT_NODE:
-        ret = HTMLDOMTextNode_Create(doc, nsnode);
+        hres = HTMLDOMTextNode_Create(doc, nsnode, ret);
+        if(FAILED(hres))
+            return hres;
         break;
-    case COMMENT_NODE:
-        ret = &HTMLCommentElement_Create(doc, nsnode)->node;
+    case COMMENT_NODE: {
+        HTMLElement *comment;
+        hres = HTMLCommentElement_Create(doc, nsnode, &comment);
+        if(FAILED(hres))
+            return hres;
+        *ret = &comment->node;
         break;
-    default:
-        ret = heap_alloc_zero(sizeof(HTMLDOMNode));
-        ret->vtbl = &HTMLDOMNodeImplVtbl;
-        HTMLDOMNode_Init(doc, ret, nsnode);
+    }
+    default: {
+        HTMLDOMNode *node;
+
+        node = heap_alloc_zero(sizeof(HTMLDOMNode));
+        if(!node)
+            return E_OUTOFMEMORY;
+
+        node->vtbl = &HTMLDOMNodeImplVtbl;
+        HTMLDOMNode_Init(doc, node, nsnode);
+        *ret = node;
+    }
     }
 
-    TRACE("type %d ret %p\n", node_type, ret);
-
-    return ret;
+    TRACE("type %d ret %p\n", node_type, *ret);
+    return S_OK;
 }
 
 /*
@@ -1037,8 +1055,7 @@ HRESULT get_node(HTMLDocumentNode *This, nsIDOMNode *nsnode, BOOL create, HTMLDO
         return S_OK;
     }
 
-    *ret = create_node(This, nsnode);
-    return *ret ? S_OK : E_OUTOFMEMORY;
+    return create_node(This, nsnode, ret);
 }
 
 /*
