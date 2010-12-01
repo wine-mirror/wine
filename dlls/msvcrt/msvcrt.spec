@@ -481,7 +481,7 @@
 # stub _get_winminor
 # stub _get_winver
 # stub _get_wpgmptr
-@ stub _get_terminate
+@ cdecl _get_terminate() MSVCRT__get_terminate
 @ cdecl _get_tzname(ptr str long long) MSVCRT__get_tzname
 @ stub _get_unexpected
 @ cdecl _getch()

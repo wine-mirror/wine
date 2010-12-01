@@ -533,7 +533,7 @@
 @ stub _get_printf_count_output
 @ stub _get_purecall_handler
 @ cdecl _get_sbh_threshold() msvcrt._get_sbh_threshold
-@ stub _get_terminate
+@ cdecl _get_terminate() msvcrt._get_terminate
 @ stub _get_timezone
 @ cdecl _get_tzname(ptr str long long) msvcrt._get_tzname
 @ stub _get_unexpected

@@ -1026,6 +1026,16 @@ MSVCRT_terminate_function CDECL MSVCRT_set_terminate(MSVCRT_terminate_function f
 }
 
 /******************************************************************
+ *              _get_terminate (MSVCRT.@)
+ */
+MSVCRT_terminate_function CDECL MSVCRT__get_terminate(void)
+{
+    thread_data_t *data = msvcrt_get_thread_data();
+    TRACE("returning %p\n", data->terminate_handler);
+    return data->terminate_handler;
+}
+
+/******************************************************************
  *		?set_unexpected@@YAP6AXXZP6AXXZ@Z (MSVCRT.@)
  *
  * Install a handler to be called when unexpected() is called.
