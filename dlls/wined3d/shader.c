@@ -399,17 +399,8 @@ static void shader_record_register_usage(IWineD3DBaseShaderImpl *shader, struct 
         case WINED3DSPR_CONST:
             if (reg->rel_addr)
             {
-                if (shader_type != WINED3D_SHADER_TYPE_PIXEL)
-                {
-                    if (reg->idx < ((IWineD3DVertexShaderImpl *)shader)->min_rel_offset)
-                    {
-                        ((IWineD3DVertexShaderImpl *)shader)->min_rel_offset = reg->idx;
-                    }
-                    if (reg->idx > ((IWineD3DVertexShaderImpl *)shader)->max_rel_offset)
-                    {
-                        ((IWineD3DVertexShaderImpl *)shader)->max_rel_offset = reg->idx;
-                    }
-                }
+                if (reg->idx < reg_maps->min_rel_offset) reg_maps->min_rel_offset = reg->idx;
+                if (reg->idx > reg_maps->max_rel_offset) reg_maps->max_rel_offset = reg->idx;
                 reg_maps->usesrelconstF = TRUE;
             }
             else
@@ -1904,21 +1895,21 @@ HRESULT vertexshader_init(IWineD3DVertexShaderImpl *shader, IWineD3DDeviceImpl *
 
     if (device->vs_selected_mode == SHADER_ARB
             && (gl_info->quirks & WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT)
-            && shader->min_rel_offset <= shader->max_rel_offset)
+            && reg_maps->min_rel_offset <= reg_maps->max_rel_offset)
     {
-        if (shader->max_rel_offset - shader->min_rel_offset > 127)
+        if (reg_maps->max_rel_offset - reg_maps->min_rel_offset > 127)
         {
             FIXME("The difference between the minimum and maximum relative offset is > 127.\n");
             FIXME("Which this OpenGL implementation does not support. Try using GLSL.\n");
-            FIXME("Min: %d, Max: %d.\n", shader->min_rel_offset, shader->max_rel_offset);
+            FIXME("Min: %u, Max: %u.\n", reg_maps->min_rel_offset, reg_maps->max_rel_offset);
         }
-        else if (shader->max_rel_offset - shader->min_rel_offset > 63)
+        else if (reg_maps->max_rel_offset - reg_maps->min_rel_offset > 63)
         {
-            shader->rel_offset = shader->min_rel_offset + 63;
+            shader->rel_offset = reg_maps->min_rel_offset + 63;
         }
-        else if (shader->max_rel_offset > 63)
+        else if (reg_maps->max_rel_offset > 63)
         {
-            shader->rel_offset = shader->min_rel_offset;
+            shader->rel_offset = reg_maps->min_rel_offset;
         }
         else
         {

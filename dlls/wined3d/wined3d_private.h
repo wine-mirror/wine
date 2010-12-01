@@ -568,7 +568,7 @@ typedef struct shader_reg_maps
     /* Whether or not loops are used in this shader, and nesting depth */
     unsigned loop_depth;
     unsigned highest_render_target;
-
+    UINT min_rel_offset, max_rel_offset;
 } shader_reg_maps;
 
 /* Keeps track of details for TEX_M#x# instructions which need to maintain
@@ -2868,8 +2868,6 @@ typedef struct IWineD3DVertexShaderImpl {
 
     /* Vertex shader attributes. */
     struct wined3d_shader_attribute attributes[MAX_ATTRIBS];
-
-    UINT                       min_rel_offset, max_rel_offset;
     UINT                       rel_offset;
 } IWineD3DVertexShaderImpl;
 
