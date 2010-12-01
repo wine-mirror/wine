@@ -489,9 +489,21 @@ static HRESULT WINAPI AsyncReader_Run(IBaseFilter * iface, REFERENCE_TIME tStart
 
 static HRESULT WINAPI AsyncReader_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
 {
-    FIXME("(%s, %p)\n", debugstr_w(Id), ppPin);
+    AsyncReader *This = (AsyncReader *)iface;
+    TRACE("(%s, %p)\n", debugstr_w(Id), ppPin);
 
-    return E_NOTIMPL;
+    if (!Id || !ppPin)
+        return E_POINTER;
+
+    if (strcmpW(Id, wszOutputPinName))
+    {
+        *ppPin = NULL;
+        return VFW_E_NOT_FOUND;
+    }
+
+    *ppPin = (IPin*)This->pOutputPin;
+    IUnknown_AddRef(*ppPin);
+    return S_OK;
 }
 
 static const IBaseFilterVtbl AsyncReader_Vtbl =
