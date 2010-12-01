@@ -1114,20 +1114,21 @@ static void atifs_get_caps(const struct wined3d_gl_info *gl_info, struct fragmen
     caps->MaxSimultaneousTextures = 6;
 }
 
-static HRESULT atifs_alloc(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+static HRESULT atifs_alloc(IWineD3DDeviceImpl *device)
+{
     struct atifs_private_data *priv;
 
-    This->fragment_priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct atifs_private_data));
-    if(!This->fragment_priv) {
+    device->fragment_priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct atifs_private_data));
+    if (!device->fragment_priv)
+    {
         ERR("Out of memory\n");
         return E_OUTOFMEMORY;
     }
-    priv = This->fragment_priv;
+    priv = device->fragment_priv;
     if (wine_rb_init(&priv->fragment_shaders, &wined3d_ffp_frag_program_rb_functions) == -1)
     {
         ERR("Failed to initialize rbtree.\n");
-        HeapFree(GetProcessHeap(), 0, This->fragment_priv);
+        HeapFree(GetProcessHeap(), 0, device->fragment_priv);
         return E_OUTOFMEMORY;
     }
     return WINED3D_OK;

@@ -693,7 +693,7 @@ static void nvrc_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct
     pCaps->MaxSimultaneousTextures = gl_info->limits.textures;
 }
 
-static HRESULT nvrc_fragment_alloc(IWineD3DDevice *iface) { return WINED3D_OK; }
+static HRESULT nvrc_fragment_alloc(IWineD3DDeviceImpl *device) { return WINED3D_OK; }
 /* Context activation is done by the caller. */
 static void nvrc_fragment_free(IWineD3DDevice *iface) {}
 

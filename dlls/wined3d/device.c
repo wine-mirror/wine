@@ -1968,7 +1968,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
         TRACE("Shader private data couldn't be allocated\n");
         goto err_out;
     }
-    hr = This->frag_pipe->alloc_private(iface);
+    hr = This->frag_pipe->alloc_private(This);
     if(FAILED(hr)) {
         TRACE("Fragment pipeline private data couldn't be allocated\n");
         goto err_out;
@@ -6251,7 +6251,7 @@ static HRESULT create_primary_opengl_context(IWineD3DDevice *iface, IWineD3DSwap
         goto err;
     }
 
-    hr = This->frag_pipe->alloc_private(iface);
+    hr = This->frag_pipe->alloc_private(This);
     if (FAILED(hr))
     {
         ERR("Failed to allocate fragment pipe private data, hr %#x.\n", hr);

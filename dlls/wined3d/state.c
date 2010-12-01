@@ -5696,7 +5696,7 @@ static void ffp_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct 
     pCaps->MaxSimultaneousTextures = gl_info->limits.textures;
 }
 
-static HRESULT ffp_fragment_alloc(IWineD3DDevice *iface) { return WINED3D_OK; }
+static HRESULT ffp_fragment_alloc(IWineD3DDeviceImpl *device) { return WINED3D_OK; }
 static void ffp_fragment_free(IWineD3DDevice *iface) {}
 static BOOL ffp_color_fixup_supported(struct color_fixup_desc fixup)
 {

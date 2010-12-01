@@ -5460,24 +5460,27 @@ static void arbfp_enable(BOOL enable)
     LEAVE_GL();
 }
 
-static HRESULT arbfp_alloc(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+static HRESULT arbfp_alloc(IWineD3DDeviceImpl *device)
+{
     struct shader_arb_priv *priv;
     /* Share private data between the shader backend and the pipeline replacement, if both
      * are the arb implementation. This is needed to figure out whether ARBfp should be disabled
      * if no pixel shader is bound or not
      */
-    if(This->shader_backend == &arb_program_shader_backend) {
-        This->fragment_priv = This->shader_priv;
-    } else {
-        This->fragment_priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_arb_priv));
-        if(!This->fragment_priv) return E_OUTOFMEMORY;
+    if (device->shader_backend == &arb_program_shader_backend)
+    {
+        device->fragment_priv = device->shader_priv;
     }
-    priv = This->fragment_priv;
+    else
+    {
+        device->fragment_priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_arb_priv));
+        if (!device->fragment_priv) return E_OUTOFMEMORY;
+    }
+    priv = device->fragment_priv;
     if (wine_rb_init(&priv->fragment_shaders, &wined3d_ffp_frag_program_rb_functions) == -1)
     {
         ERR("Failed to initialize rbtree.\n");
-        HeapFree(GetProcessHeap(), 0, This->fragment_priv);
+        HeapFree(GetProcessHeap(), 0, device->fragment_priv);
         return E_OUTOFMEMORY;
     }
     priv->use_arbfp_fixed_func = TRUE;
