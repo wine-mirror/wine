@@ -72,6 +72,94 @@ static const DWORD shader_with_ctab_constants[] = {
     0x656e6957, 0x6f727020, 0x7463656a, 0xababab00,                         /* Creator name string          */
     0x0000ffff};                                                            /* END                          */
 
+static const DWORD ctab_basic[] = {                  /* 0123456789ABCDEF */
+    0xfffe0200, 0x0052fffe, 0x42415443, 0x0000001c,  /* ......R.CTAB.... */
+    0x00000113, 0xfffe0200, 0x00000006, 0x0000001c,  /* ................ */
+    0x00000100, 0x0000010c, 0x00000094, 0x00080002,  /* ................ */
+    0x00000001, 0x00000098, 0x00000000, 0x000000a8,  /* ................ */
+    0x00060002, 0x00000001, 0x000000ac, 0x00000000,  /* ................ */
+    0x000000bc, 0x00070002, 0x00000001, 0x000000c0,  /* ................ */
+    0x00000000, 0x000000d0, 0x00040002, 0x00000001,  /* ................ */
+    0x000000d4, 0x00000000, 0x000000e4, 0x00050002,  /* ................ */
+    0x00000001, 0x000000e8, 0x00000000, 0x000000f8,  /* ................ */
+    0x00000002, 0x00000004, 0x000000fc, 0x00000000,  /* ................ */
+    0xabab0062, 0x00010000, 0x00010001, 0x00000001,  /* b............... */
+    0x00000000, 0xabab0066, 0x00030000, 0x00010001,  /* ....f........... */
+    0x00000001, 0x00000000, 0xab003466, 0x00030001,  /* ........f4...... */
+    0x00040001, 0x00000001, 0x00000000, 0xabab0069,  /* ............i... */
+    0x00020000, 0x00010001, 0x00000001, 0x00000000,  /* ................ */
+    0xab003469, 0x00020001, 0x00040001, 0x00000001,  /* i4.............. */
+    0x00000000, 0x0070766d, 0x00030003, 0x00040004,  /* ....mvp......... */
+    0x00000001, 0x00000000, 0x325f7376, 0x4d00305f,  /* ........vs_2_0.M */
+    0x6f726369, 0x74666f73, 0x29522820, 0x534c4820,  /* icrosoft.(R).HLS */
+    0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970,  /* L.Shader.Compile */
+    0x2e392072, 0x392e3932, 0x332e3235, 0x00313131,  /* r.9.29.952.3111. */
+    0x0000ffff};                                     /* END              */
+
+static const D3DXCONSTANT_DESC ctab_basic_expected[] = {
+    {"mvp", D3DXRS_FLOAT4, 0, 4, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 4, 4, 1, 0, 64, 0},
+    {"i", D3DXRS_FLOAT4, 4, 1, D3DXPC_SCALAR, D3DXPT_INT, 1, 1, 1, 0, 4, 0},
+    {"i4", D3DXRS_FLOAT4, 5, 1, D3DXPC_VECTOR, D3DXPT_INT, 1, 4, 1, 0, 16, 0},
+    {"f", D3DXRS_FLOAT4, 6, 1, D3DXPC_SCALAR, D3DXPT_FLOAT, 1, 1, 1, 0, 4, 0},
+    {"f4", D3DXRS_FLOAT4, 7, 1, D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 4, 1, 0, 16, 0}};
+
+static const DWORD ctab_matrices[] = {               /* 0123456789ABCDEF */
+    0xfffe0300, 0x003afffe, 0x42415443, 0x0000001c,  /* ......:.CTAB.... */
+    0x000000b3, 0xfffe0300, 0x00000003, 0x0000001c,  /* ................ */
+    0x00000100, 0x000000ac, 0x00000058, 0x00070002,  /* ........X....... */
+    0x00000001, 0x00000064, 0x00000000, 0x00000074,  /* ....d.......t... */
+    0x00000002, 0x00000004, 0x00000080, 0x00000000,  /* ................ */
+    0x00000090, 0x00040002, 0x00000003, 0x0000009c,  /* ................ */
+    0x00000000, 0x74616d66, 0x33786972, 0xab003178,  /* ....fmatrix3x1.. */
+    0x00030003, 0x00010003, 0x00000001, 0x00000000,  /* ................ */
+    0x74616d66, 0x34786972, 0xab003478, 0x00030003,  /* fmatrix4x4...... */
+    0x00040004, 0x00000001, 0x00000000, 0x74616d69,  /* ............imat */
+    0x32786972, 0xab003378, 0x00020003, 0x00030002,  /* rix2x3.......... */
+    0x00000001, 0x00000000, 0x335f7376, 0x4d00305f,  /* ........vs_3_0.M */
+    0x6f726369, 0x74666f73, 0x29522820, 0x534c4820,  /* icrosoft.(R).HLS */
+    0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970,  /* L.Shader.Compile */
+    0x2e392072, 0x392e3932, 0x332e3235, 0x00313131,  /* r.9.29.952.3111. */
+    0x0000ffff};                                     /* END              */
+
+static const D3DXCONSTANT_DESC ctab_matrices_expected[] = {
+    {"fmatrix4x4", D3DXRS_FLOAT4, 0, 4, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 4, 4, 1, 0, 64, 0},
+    {"imatrix2x3", D3DXRS_FLOAT4, 4, 3, D3DXPC_MATRIX_COLUMNS, D3DXPT_INT, 2, 3, 1, 0, 24, 0},
+    {"fmatrix3x1", D3DXRS_FLOAT4, 7, 1, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 3, 1, 1, 0, 12, 0}};
+
+static const DWORD ctab_arrays[] = {                 /* 0123456789ABCDEF */
+    0xfffe0200, 0x005cfffe, 0x42415443, 0x0000001c,  /* ......\.CTAB.... */
+    0x0000013b, 0xfffe0200, 0x00000006, 0x0000001c,  /* ;............... */
+    0x00000100, 0x00000134, 0x00000094, 0x000e0002,  /* ....4........... */
+    0x00000002, 0x0000009c, 0x00000000, 0x000000ac,  /* ................ */
+    0x00100002, 0x00000002, 0x000000b8, 0x00000000,  /* ................ */
+    0x000000c8, 0x00080002, 0x00000004, 0x000000d0,  /* ................ */
+    0x00000000, 0x000000e0, 0x00000002, 0x00000008,  /* ................ */
+    0x000000ec, 0x00000000, 0x000000fc, 0x000c0002,  /* ................ */
+    0x00000002, 0x00000108, 0x00000000, 0x00000118,  /* ................ */
+    0x00120002, 0x00000001, 0x00000124, 0x00000000,  /* ........$....... */
+    0x72726162, 0xab007961, 0x00010000, 0x00010001,  /* barray.......... */
+    0x00000002, 0x00000000, 0x63657662, 0x61727261,  /* ........bvecarra */
+    0xabab0079, 0x00010001, 0x00030001, 0x00000003,  /* y............... */
+    0x00000000, 0x72726166, 0xab007961, 0x00030000,  /* ....farray...... */
+    0x00010001, 0x00000004, 0x00000000, 0x78746d66,  /* ............fmtx */
+    0x61727261, 0xabab0079, 0x00030003, 0x00040004,  /* array........... */
+    0x00000002, 0x00000000, 0x63657666, 0x61727261,  /* ........fvecarra */
+    0xabab0079, 0x00030001, 0x00040001, 0x00000002,  /* y............... */
+    0x00000000, 0x63657669, 0x61727261, 0xabab0079,  /* ....ivecarray... */
+    0x00020001, 0x00040001, 0x00000001, 0x00000000,  /* ................ */
+    0x325f7376, 0x4d00305f, 0x6f726369, 0x74666f73,  /* vs_2_0.Microsoft */
+    0x29522820, 0x534c4820, 0x6853204c, 0x72656461,  /* .(R).HLSL.Shader */
+    0x6d6f4320, 0x656c6970, 0x2e392072, 0x392e3932,  /* .Compiler.9.29.9 */
+    0x332e3235, 0x00313131, 0x0000ffff};             /* 52.3111.  END    */
+
+static const D3DXCONSTANT_DESC ctab_arrays_expected[] = {
+    {"fmtxarray", D3DXRS_FLOAT4, 0, 8, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 4, 4, 2, 0, 128, 0},
+    {"farray", D3DXRS_FLOAT4, 8, 4, D3DXPC_SCALAR, D3DXPT_FLOAT, 1, 1, 4, 0, 16, 0},
+    {"fvecarray", D3DXRS_FLOAT4, 12, 2, D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 4, 2, 0, 32, 0},
+    {"barray", D3DXRS_FLOAT4, 14, 2, D3DXPC_SCALAR, D3DXPT_BOOL, 1, 1, 2, 0, 8, 0},
+    {"bvecarray", D3DXRS_FLOAT4, 16, 2, D3DXPC_VECTOR, D3DXPT_BOOL, 1, 3, 3, 0, 36, 0},
+    {"ivecarray", D3DXRS_FLOAT4, 18, 1, D3DXPC_VECTOR, D3DXPT_INT, 1, 4, 1, 0, 16, 0}};
+
 static void test_get_shader_size(void)
 {
     UINT shader_size, expected;
@@ -264,10 +352,82 @@ static void test_get_shader_constant_table_ex(void)
     }
 }
 
+static void test_constant_table(const char *test_name, const DWORD *ctable_fn,
+        const D3DXCONSTANT_DESC *expecteds, UINT count)
+{
+    UINT i;
+    ID3DXConstantTable *ctable;
+
+    HRESULT res;
+
+    /* Get the constant table from the shader itself */
+    res = D3DXGetShaderConstantTable(ctable_fn, &ctable);
+    ok(res == D3D_OK, "D3DXGetShaderConstantTable failed on %p: got %08x\n", test_name, res);
+
+    for (i = 0; i < count; i++)
+    {
+        const D3DXCONSTANT_DESC *expected = &expecteds[i];
+        D3DXHANDLE const_handle;
+        D3DXCONSTANT_DESC actual;
+        UINT pCount = 1;
+
+        const_handle = ID3DXConstantTable_GetConstantByName(ctable, NULL, expected->Name);
+
+        ID3DXConstantTable_GetConstantDesc(ctable, const_handle, &actual, &pCount);
+        ok(pCount == 1, "Got more or less descriptions: %d\n", pCount);
+
+        ok(strcmp(actual.Name, expected->Name) == 0,
+           "%s in %s: Got different names: Got %s, expected %s\n", expected->Name,
+           test_name, actual.Name, expected->Name);
+        ok(actual.RegisterSet == expected->RegisterSet,
+           "%s in %s: Got different register sets: Got %d, expected %d\n",
+           expected->Name, test_name, actual.RegisterSet, expected->RegisterSet);
+        ok(actual.RegisterIndex == expected->RegisterIndex,
+           "%s in %s: Got different register indices: Got %d, expected %d\n",
+           expected->Name, test_name, actual.RegisterIndex, expected->RegisterIndex);
+        ok(actual.RegisterCount == expected->RegisterCount,
+           "%s in %s: Got different register counts: Got %d, expected %d\n",
+           expected->Name, test_name, actual.RegisterCount, expected->RegisterCount);
+        ok(actual.Class == expected->Class,
+           "%s in %s: Got different classes: Got %d, expected %d\n", expected->Name,
+           test_name, actual.Class, expected->Class);
+        ok(actual.Type == expected->Type,
+           "%s in %s: Got different types: Got %d, expected %d\n", expected->Name,
+           test_name, actual.Type, expected->Type);
+        ok(actual.Rows == expected->Rows && actual.Columns == expected->Columns,
+           "%s in %s: Got different dimensions: Got (%d, %d), expected (%d, %d)\n",
+           expected->Name, test_name, actual.Rows, actual.Columns, expected->Rows,
+           expected->Columns);
+        ok(actual.Elements == expected->Elements,
+           "%s in %s: Got different element count: Got %d, expected %d\n",
+           expected->Name, test_name, actual.Elements, expected->Elements);
+        ok(actual.StructMembers == expected->StructMembers,
+           "%s in %s: Got different struct member count: Got %d, expected %d\n",
+           expected->Name, test_name, actual.StructMembers, expected->StructMembers);
+        ok(actual.Bytes == expected->Bytes,
+           "%s in %s: Got different byte count: Got %d, expected %d\n",
+           expected->Name, test_name, actual.Bytes, expected->Bytes);
+    }
+
+    /* Finally, release the constant table */
+    ID3DXConstantTable_Release(ctable);
+}
+
+static void test_constant_tables(void)
+{
+    test_constant_table("test_basic", ctab_basic, ctab_basic_expected,
+            sizeof(ctab_basic_expected)/sizeof(*ctab_basic_expected));
+    test_constant_table("test_matrices", ctab_matrices, ctab_matrices_expected,
+            sizeof(ctab_matrices_expected)/sizeof(*ctab_matrices_expected));
+    test_constant_table("test_arrays", ctab_arrays, ctab_arrays_expected,
+            sizeof(ctab_arrays_expected)/sizeof(*ctab_arrays_expected));
+}
+
 START_TEST(shader)
 {
     test_get_shader_size();
     test_get_shader_version();
     test_find_shader_comment();
     test_get_shader_constant_table_ex();
+    test_constant_tables();
 }
