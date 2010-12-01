@@ -34,6 +34,67 @@
 #include "mshtml_private.h"
 #include "htmlevent.h"
 
+static const WCHAR aW[]        = {'A',0};
+static const WCHAR bodyW[]     = {'B','O','D','Y',0};
+static const WCHAR embedW[]    = {'E','M','B','E','D',0};
+static const WCHAR formW[]     = {'F','O','R','M',0};
+static const WCHAR frameW[]    = {'F','R','A','M','E',0};
+static const WCHAR iframeW[]   = {'I','F','R','A','M','E',0};
+static const WCHAR imgW[]      = {'I','M','G',0};
+static const WCHAR inputW[]    = {'I','N','P','U','T',0};
+static const WCHAR objectW[]   = {'O','B','J','E','C','T',0};
+static const WCHAR optionW[]   = {'O','P','T','I','O','N',0};
+static const WCHAR scriptW[]   = {'S','C','R','I','P','T',0};
+static const WCHAR selectW[]   = {'S','E','L','E','C','T',0};
+static const WCHAR styleW[]    = {'S','T','Y','L','E',0};
+static const WCHAR tableW[]    = {'T','A','B','L','E',0};
+static const WCHAR textareaW[] = {'T','E','X','T','A','R','E','A',0};
+static const WCHAR trW[]       = {'T','R',0};
+
+typedef struct {
+    const WCHAR *name;
+    HTMLElement *(*constructor)(HTMLDocumentNode*,nsIDOMHTMLElement*);
+} tag_desc_t;
+
+static const tag_desc_t tag_descs[] = {
+    {aW,         HTMLAnchorElement_Create},
+    {bodyW,      HTMLBodyElement_Create},
+    {embedW,     HTMLEmbedElement_Create},
+    {formW,      HTMLFormElement_Create},
+    {frameW,     HTMLFrameElement_Create},
+    {iframeW,    HTMLIFrame_Create},
+    {imgW,       HTMLImgElement_Create},
+    {inputW,     HTMLInputElement_Create},
+    {objectW,    HTMLObjectElement_Create},
+    {optionW,    HTMLOptionElement_Create},
+    {scriptW,    HTMLScriptElement_Create},
+    {selectW,    HTMLSelectElement_Create},
+    {styleW,     HTMLStyleElement_Create},
+    {tableW,     HTMLTable_Create},
+    {textareaW,  HTMLTextAreaElement_Create},
+    {trW,        HTMLTableRow_Create}
+};
+
+static const tag_desc_t *get_tag_desc(const WCHAR *tag_name)
+{
+    DWORD min=0, max=sizeof(tag_descs)/sizeof(*tag_descs)-1, i;
+    int r;
+
+    while(min <= max) {
+        i = (min+max)/2;
+        r = strcmpW(tag_name, tag_descs[i].name);
+        if(!r)
+            return tag_descs+i;
+
+        if(r < 0)
+            max = i-1;
+        else
+            min = i+1;
+    }
+
+    return NULL;
+}
+
 typedef struct
 {
     DispatchEx dispex;
@@ -1663,24 +1724,9 @@ HTMLElement *HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL 
     HTMLElement *ret = NULL;
     nsAString class_name_str;
     const PRUnichar *class_name;
+    const tag_desc_t *tag;
     nsresult nsres;
 
-    static const WCHAR wszA[]        = {'A',0};
-    static const WCHAR wszBODY[]     = {'B','O','D','Y',0};
-    static const WCHAR wszEMBED[]    = {'E','M','B','E','D',0};
-    static const WCHAR wszFORM[]     = {'F','O','R','M',0};
-    static const WCHAR wszFRAME[]    = {'F','R','A','M','E',0};
-    static const WCHAR wszIFRAME[]   = {'I','F','R','A','M','E',0};
-    static const WCHAR wszIMG[]      = {'I','M','G',0};
-    static const WCHAR wszINPUT[]    = {'I','N','P','U','T',0};
-    static const WCHAR wszOBJECT[]   = {'O','B','J','E','C','T',0};
-    static const WCHAR wszOPTION[]   = {'O','P','T','I','O','N',0};
-    static const WCHAR wszSCRIPT[]   = {'S','C','R','I','P','T',0};
-    static const WCHAR wszSELECT[]   = {'S','E','L','E','C','T',0};
-    static const WCHAR wszSTYLE[]    = {'S','T','Y','L','E',0};
-    static const WCHAR wszTABLE[]    = {'T','A','B','L','E',0};
-    static const WCHAR wszTR[]       = {'T','R',0};
-    static const WCHAR wszTEXTAREA[] = {'T','E','X','T','A','R','E','A',0};
 
     nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMHTMLElement, (void**)&nselem);
     if(NS_FAILED(nsres))
@@ -1691,42 +1737,12 @@ HTMLElement *HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL 
 
     nsAString_GetData(&class_name_str, &class_name);
 
-    if(!strcmpW(class_name, wszA))
-        ret = HTMLAnchorElement_Create(doc, nselem);
-    else if(!strcmpW(class_name, wszBODY))
-        ret = HTMLBodyElement_Create(doc, nselem);
-    else if(!strcmpW(class_name, wszEMBED))
-        ret = HTMLEmbedElement_Create(doc, nselem);
-    else if(!strcmpW(class_name, wszFORM))
-        ret = HTMLFormElement_Create(doc, nselem);
-    else if(!strcmpW(class_name, wszFRAME))
-        ret = HTMLFrameElement_Create(doc, nselem);
-    else if(!strcmpW(class_name, wszIFRAME))
-        ret = HTMLIFrame_Create(doc, nselem);
-    else if(!strcmpW(class_name, wszIMG))
-        ret = HTMLImgElement_Create(doc, nselem);
-    else if(!strcmpW(class_name, wszINPUT))
-        ret = HTMLInputElement_Create(doc, nselem);
-    else if(!strcmpW(class_name, wszOBJECT))
-        ret = HTMLObjectElement_Create(doc, nselem);
-    else if(!strcmpW(class_name, wszOPTION))
-        ret = HTMLOptionElement_Create(doc, nselem);
-    else if(!strcmpW(class_name, wszSCRIPT))
-        ret = HTMLScriptElement_Create(doc, nselem);
-    else if(!strcmpW(class_name, wszSELECT))
-        ret = HTMLSelectElement_Create(doc, nselem);
-    else if(!strcmpW(class_name, wszSTYLE))
-        ret = HTMLStyleElement_Create(doc, nselem);
-    else if(!strcmpW(class_name, wszTABLE))
-        ret = HTMLTable_Create(doc, nselem);
-    else if(!strcmpW(class_name, wszTR))
-        ret = HTMLTableRow_Create(doc, nselem);
-    else if(!strcmpW(class_name, wszTEXTAREA))
-        ret = HTMLTextAreaElement_Create(doc, nselem);
-    else if(use_generic)
+    tag = get_tag_desc(class_name);
+    if(tag) {
+        ret = tag->constructor(doc, nselem);
+    }else if(use_generic) {
         ret = HTMLGenericElement_Create(doc, nselem);
-
-    if(!ret) {
+    }else {
         ret = heap_alloc_zero(sizeof(HTMLElement));
         HTMLElement_Init(ret, doc, nselem, &HTMLElement_dispex);
         ret->node.vtbl = &HTMLElementImplVtbl;
