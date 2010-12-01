@@ -1218,7 +1218,8 @@ static void test_GetDIBits_selected_DIB(UINT bpp)
     BITMAPINFO * info2;
     void * bits;
     void * bits2;
-    UINT dib_size;
+    UINT dib_size, dib32_size;
+    DWORD pixel;
     HDC dib_dc, dc;
     HBITMAP old_bmp;
     BOOL equalContents;
@@ -1254,6 +1255,7 @@ static void test_GetDIBits_selected_DIB(UINT bpp)
     dib = CreateDIBSection(NULL, info, DIB_RGB_COLORS, &bits, NULL, 0);
     assert(dib);
     dib_size = bpp * (info->bmiHeader.biWidth * info->bmiHeader.biHeight) / 8;
+    dib32_size = 32 * (info->bmiHeader.biWidth * info->bmiHeader.biHeight) / 8;
 
     /* Set the bits of the DIB section */
     for (i=0; i < dib_size; i++)
@@ -1265,7 +1267,7 @@ static void test_GetDIBits_selected_DIB(UINT bpp)
     dib_dc = CreateCompatibleDC(NULL);
     old_bmp = SelectObject(dib_dc, dib);
     dc = CreateCompatibleDC(NULL);
-    bits2 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dib_size);
+    bits2 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dib32_size);
     assert(bits2);
 
     /* Copy the DIB attributes but not the color table */
@@ -1299,6 +1301,15 @@ static void test_GetDIBits_selected_DIB(UINT bpp)
         }
     }
     ok(equalContents, "GetDIBits with %d bpp DIB selected in DC: Invalid DIB bits\n",bpp);
+
+    /* Map into a 32bit-DIB */
+    info2->bmiHeader.biBitCount = 32;
+    res = GetDIBits(dc, dib, 0, info->bmiHeader.biHeight, bits2, info2, DIB_RGB_COLORS);
+    ok(res, "GetDIBits failed\n");
+
+    /* Check if last pixel was set */
+    pixel = ((DWORD *)bits2)[info->bmiHeader.biWidth * info->bmiHeader.biHeight - 1];
+    ok(pixel != 0, "Pixel: 0x%08x\n", pixel);
 
     HeapFree(GetProcessHeap(), 0, bits2);
     DeleteDC(dc);
