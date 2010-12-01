@@ -1146,7 +1146,7 @@ struct fragment_pipeline
     void (*enable_extension)(BOOL enable);
     void (*get_caps)(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps);
     HRESULT (*alloc_private)(IWineD3DDeviceImpl *device);
-    void (*free_private)(IWineD3DDevice *iface);
+    void (*free_private)(IWineD3DDeviceImpl *device);
     BOOL (*color_fixup_supported)(struct color_fixup_desc fixup);
     const struct StateEntryTemplate *states;
     BOOL ffp_proj_control;

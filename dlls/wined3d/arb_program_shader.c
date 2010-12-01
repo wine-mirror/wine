@@ -5501,15 +5501,16 @@ static void arbfp_free_ffpshader(struct wine_rb_entry *entry, void *context)
 }
 
 /* Context activation is done by the caller. */
-static void arbfp_free(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    struct shader_arb_priv *priv = This->fragment_priv;
+static void arbfp_free(IWineD3DDeviceImpl *device)
+{
+    struct shader_arb_priv *priv = device->fragment_priv;
 
-    wine_rb_destroy(&priv->fragment_shaders, arbfp_free_ffpshader, &This->adapter->gl_info);
+    wine_rb_destroy(&priv->fragment_shaders, arbfp_free_ffpshader, &device->adapter->gl_info);
     priv->use_arbfp_fixed_func = FALSE;
 
-    if(This->shader_backend != &arb_program_shader_backend) {
-        HeapFree(GetProcessHeap(), 0, This->fragment_priv);
+    if (device->shader_backend != &arb_program_shader_backend)
+    {
+        HeapFree(GetProcessHeap(), 0, device->fragment_priv);
     }
 }
 

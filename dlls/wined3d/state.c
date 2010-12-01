@@ -5697,7 +5697,7 @@ static void ffp_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct 
 }
 
 static HRESULT ffp_fragment_alloc(IWineD3DDeviceImpl *device) { return WINED3D_OK; }
-static void ffp_fragment_free(IWineD3DDevice *iface) {}
+static void ffp_fragment_free(IWineD3DDeviceImpl *device) {}
 static BOOL ffp_color_fixup_supported(struct color_fixup_desc fixup)
 {
     if (TRACE_ON(d3d))

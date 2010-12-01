@@ -695,7 +695,7 @@ static void nvrc_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct
 
 static HRESULT nvrc_fragment_alloc(IWineD3DDeviceImpl *device) { return WINED3D_OK; }
 /* Context activation is done by the caller. */
-static void nvrc_fragment_free(IWineD3DDevice *iface) {}
+static void nvrc_fragment_free(IWineD3DDeviceImpl *device) {}
 
 /* Two fixed function pipeline implementations using GL_NV_register_combiners and
  * GL_NV_texture_shader. The nvts_fragment_pipeline assumes that both extensions

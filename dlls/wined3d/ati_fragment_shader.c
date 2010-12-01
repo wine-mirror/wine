@@ -1149,14 +1149,14 @@ static void atifs_free_ffpshader(struct wine_rb_entry *entry, void *context)
 }
 
 /* Context activation is done by the caller. */
-static void atifs_free(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    struct atifs_private_data *priv = This->fragment_priv;
+static void atifs_free(IWineD3DDeviceImpl *device)
+{
+    struct atifs_private_data *priv = device->fragment_priv;
 
-    wine_rb_destroy(&priv->fragment_shaders, atifs_free_ffpshader, This);
+    wine_rb_destroy(&priv->fragment_shaders, atifs_free_ffpshader, device);
 
     HeapFree(GetProcessHeap(), 0, priv);
-    This->fragment_priv = NULL;
+    device->fragment_priv = NULL;
 }
 
 static BOOL atifs_color_fixup_supported(struct color_fixup_desc fixup)
