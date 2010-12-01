@@ -1461,6 +1461,101 @@ static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
     return msg;
 }
 
+typedef struct _CMSG_ENVELOPED_ENCODE_INFO_WITH_CMS
+{
+    DWORD                       cbSize;
+    HCRYPTPROV_LEGACY           hCryptProv;
+    CRYPT_ALGORITHM_IDENTIFIER  ContentEncryptionAlgorithm;
+    void                       *pvEncryptionAuxInfo;
+    DWORD                       cRecipients;
+    PCERT_INFO                 *rgpRecipientCert;
+    PCMSG_RECIPIENT_ENCODE_INFO rgCmsRecipients;
+    DWORD                       cCertEncoded;
+    PCERT_BLOB                  rgCertEncoded;
+    DWORD                       cCrlEncoded;
+    PCRL_BLOB                   rgCrlEncoded;
+    DWORD                       cAttrCertEncoded;
+    PCERT_BLOB                  rgAttrCertEncoded;
+    DWORD                       cUnprotectedAttr;
+    PCRYPT_ATTRIBUTE            rgUnprotectedAttr;
+} CMSG_ENVELOPED_ENCODE_INFO_WITH_CMS, *PCMSG_ENVELOPED_ENCODE_INFO_WITH_CMS;
+
+typedef struct _CEnvelopedEncodeMsg
+{
+    CryptMsgBase                   base;
+    HCRYPTPROV                     prov;
+} CEnvelopedEncodeMsg;
+
+static void CEnvelopedEncodeMsg_Close(HCRYPTMSG hCryptMsg)
+{
+    CEnvelopedEncodeMsg *msg = hCryptMsg;
+
+    if (msg->base.open_flags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG)
+        CryptReleaseContext(msg->prov, 0);
+}
+
+static BOOL CEnvelopedEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
+ DWORD dwIndex, void *pvData, DWORD *pcbData)
+{
+    FIXME("(%p, %d, %d, %p, %p): stub\n", hCryptMsg, dwParamType, dwIndex,
+     pvData, pcbData);
+    return FALSE;
+}
+
+static BOOL CEnvelopedEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
+ DWORD cbData, BOOL fFinal)
+{
+    FIXME("(%p, %p, %d, %d): stub\n", hCryptMsg, pbData, cbData, fFinal);
+    return FALSE;
+}
+
+static HCRYPTMSG CEnvelopedEncodeMsg_Open(DWORD dwFlags,
+ const void *pvMsgEncodeInfo, LPCSTR pszInnerContentObjID,
+ PCMSG_STREAM_INFO pStreamInfo)
+{
+    CEnvelopedEncodeMsg *msg;
+    const CMSG_ENVELOPED_ENCODE_INFO_WITH_CMS *info = pvMsgEncodeInfo;
+    HCRYPTPROV prov;
+    ALG_ID algID;
+
+    if (info->cbSize != sizeof(CMSG_ENVELOPED_ENCODE_INFO) &&
+     info->cbSize != sizeof(CMSG_ENVELOPED_ENCODE_INFO_WITH_CMS))
+    {
+        SetLastError(E_INVALIDARG);
+        return NULL;
+    }
+    if (info->cbSize == sizeof(CMSG_ENVELOPED_ENCODE_INFO_WITH_CMS))
+        FIXME("CMS fields unsupported\n");
+    if (!(algID = CertOIDToAlgId(info->ContentEncryptionAlgorithm.pszObjId)))
+    {
+        SetLastError(CRYPT_E_UNKNOWN_ALGO);
+        return NULL;
+    }
+    if (info->cRecipients && !info->rgpRecipientCert)
+    {
+        SetLastError(E_INVALIDARG);
+        return NULL;
+    }
+    if (info->hCryptProv)
+        prov = info->hCryptProv;
+    else
+    {
+        prov = CRYPT_GetDefaultProvider();
+        dwFlags &= ~CMSG_CRYPT_RELEASE_CONTEXT_FLAG;
+    }
+    msg = CryptMemAlloc(sizeof(CEnvelopedEncodeMsg));
+    if (msg)
+    {
+        CryptMsgBase_Init((CryptMsgBase *)msg, dwFlags, pStreamInfo,
+         CEnvelopedEncodeMsg_Close, CEnvelopedEncodeMsg_GetParam,
+         CEnvelopedEncodeMsg_Update, CRYPT_DefaultMsgControl);
+        msg->prov = prov;
+    }
+    if (!msg && (dwFlags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG))
+        CryptReleaseContext(prov, 0);
+    return msg;
+}
+
 HCRYPTMSG WINAPI CryptMsgOpenToEncode(DWORD dwMsgEncodingType, DWORD dwFlags,
  DWORD dwMsgType, const void *pvMsgEncodeInfo, LPSTR pszInnerContentObjID,
  PCMSG_STREAM_INFO pStreamInfo)
@@ -1490,7 +1585,8 @@ HCRYPTMSG WINAPI CryptMsgOpenToEncode(DWORD dwMsgEncodingType, DWORD dwFlags,
          pszInnerContentObjID, pStreamInfo);
         break;
     case CMSG_ENVELOPED:
-        FIXME("unimplemented for type CMSG_ENVELOPED\n");
+        msg = CEnvelopedEncodeMsg_Open(dwFlags, pvMsgEncodeInfo,
+         pszInnerContentObjID, pStreamInfo);
         break;
     case CMSG_SIGNED_AND_ENVELOPED:
     case CMSG_ENCRYPTED:

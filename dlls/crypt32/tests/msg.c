@@ -2043,7 +2043,6 @@ static void test_enveloped_msg_open(void)
     SetLastError(0xdeadbeef);
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_ENVELOPED,
      &envelopedInfo, NULL, NULL);
-    todo_wine
     ok(!msg && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
 
@@ -2051,7 +2050,6 @@ static void test_enveloped_msg_open(void)
     SetLastError(0xdeadbeef);
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_ENVELOPED,
      &envelopedInfo, NULL, NULL);
-    todo_wine
     ok(!msg &&
      (GetLastError() == CRYPT_E_UNKNOWN_ALGO ||
       GetLastError() == E_INVALIDARG), /* Win9x */
@@ -2061,7 +2059,6 @@ static void test_enveloped_msg_open(void)
     SetLastError(0xdeadbeef);
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_ENVELOPED,
      &envelopedInfo, NULL, NULL);
-    todo_wine
     ok(msg != NULL ||
      broken(!msg), /* Win9x */
      "CryptMsgOpenToEncode failed: %08x\n", GetLastError());
@@ -2073,7 +2070,6 @@ static void test_enveloped_msg_open(void)
         SetLastError(0xdeadbeef);
         msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_ENVELOPED,
          &envelopedInfo, NULL, NULL);
-        todo_wine
         ok(!msg && GetLastError() == E_INVALIDARG,
          "expected E_INVALIDARG, got %08x\n", GetLastError());
     }
@@ -2086,7 +2082,6 @@ static void test_enveloped_msg_open(void)
         SetLastError(0xdeadbeef);
         msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_ENVELOPED,
          &envelopedInfo, NULL, NULL);
-        todo_wine
         ok(msg != NULL, "CryptMsgOpenToEncode failed: %08x\n", GetLastError());
         CryptMsgClose(msg);
         SetLastError(0xdeadbeef);
@@ -2096,7 +2091,6 @@ static void test_enveloped_msg_open(void)
         SetLastError(0xdeadbeef);
         msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_ENVELOPED,
          &envelopedInfo, NULL, NULL);
-        todo_wine
         ok(msg != NULL, "CryptMsgOpenToEncode failed: %08x\n", GetLastError());
         CryptMsgClose(msg);
         CryptReleaseContext(envelopedInfo.hCryptProv, 0);
@@ -2117,7 +2111,6 @@ static void test_enveloped_msg_update(void)
     SetLastError(0xdeadbeef);
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_ENVELOPED,
      &envelopedInfo, NULL, NULL);
-    todo_wine
     ok(msg != NULL ||
      broken(!msg), /* Win9x */
      "CryptMsgOpenToEncode failed: %08x\n", GetLastError());
@@ -2142,7 +2135,6 @@ static void test_enveloped_msg_update(void)
     SetLastError(0xdeadbeef);
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_ENVELOPED,
      &envelopedInfo, NULL, NULL);
-    todo_wine
     ok(msg != NULL ||
      broken(!msg), /* Win9x */
      "CryptMsgOpenToEncode failed: %08x\n", GetLastError());
@@ -2169,7 +2161,6 @@ static void test_enveloped_msg_update(void)
     SetLastError(0xdeadbeef);
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, CMSG_DETACHED_FLAG,
      CMSG_ENVELOPED, &envelopedInfo, NULL, NULL);
-    todo_wine
     ok(msg != NULL ||
      broken(!msg), /* Win9x */
      "CryptMsgOpenToEncode failed: %08x\n", GetLastError());
@@ -2189,7 +2180,6 @@ static void test_enveloped_msg_update(void)
     SetLastError(0xdeadbeef);
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, CMSG_DETACHED_FLAG,
      CMSG_ENVELOPED, &envelopedInfo, NULL, NULL);
-    todo_wine
     ok(msg != NULL ||
      broken(!msg), /* Win9x */
      "CryptMsgOpenToEncode failed: %08x\n", GetLastError());
@@ -2211,7 +2201,6 @@ static void test_enveloped_msg_update(void)
     SetLastError(0xdeadbeef);
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_ENVELOPED,
      &envelopedInfo, NULL, &streamInfo);
-    todo_wine
     ok(msg != NULL ||
      broken(!msg), /* Win9x */
      "CryptMsgOpenToEncode failed: %08x\n", GetLastError());
@@ -2230,7 +2219,6 @@ static void test_enveloped_msg_update(void)
     SetLastError(0xdeadbeef);
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_ENVELOPED,
      &envelopedInfo, NULL, &streamInfo);
-    todo_wine
     ok(msg != NULL ||
      broken(!msg), /* Win9x */
      "CryptMsgOpenToEncode failed: %08x\n", GetLastError());
@@ -2269,15 +2257,16 @@ static void test_enveloped_msg_encoding(void)
     SetLastError(0xdeadbeef);
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_ENVELOPED,
      &envelopedInfo, NULL, NULL);
-    todo_wine
     ok(msg != NULL ||
      broken(!msg), /* Win9x */
      "CryptMsgOpenToEncode failed: %08x\n", GetLastError());
     if (msg)
     {
+        todo_wine
         check_param("enveloped empty bare content", msg,
          CMSG_BARE_CONTENT_PARAM, envelopedEmptyBareContent,
          sizeof(envelopedEmptyBareContent));
+        todo_wine
         check_param("enveloped empty content", msg, CMSG_CONTENT_PARAM,
          envelopedEmptyContent, sizeof(envelopedEmptyContent));
         CryptMsgClose(msg);
