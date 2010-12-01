@@ -259,7 +259,11 @@ static HRESULT WINAPI ACMWrapper_SetMediaType(TransformFilter *tf, PIN_DIRECTION
         (IsEqualIID(&pmt->formattype, &FORMAT_WaveFormatEx)))
     {
         HACMSTREAM drv;
+        WAVEFORMATEX *wfx = (WAVEFORMATEX*)pmt->pbFormat;
         AM_MEDIA_TYPE* outpmt = &This->tf.pmt;
+
+        if (!wfx || wfx->wFormatTag == WAVE_FORMAT_PCM || wfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+            return VFW_E_TYPE_NOT_ACCEPTED;
         FreeMediaType(outpmt);
 
         This->pWfIn = (LPWAVEFORMATEX)pmt->pbFormat;
