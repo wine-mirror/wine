@@ -1483,15 +1483,303 @@ typedef struct _CMSG_ENVELOPED_ENCODE_INFO_WITH_CMS
 typedef struct _CEnvelopedEncodeMsg
 {
     CryptMsgBase                   base;
+    CRYPT_ALGORITHM_IDENTIFIER     algo;
     HCRYPTPROV                     prov;
+    HCRYPTKEY                      key;
+    DWORD                          cRecipientInfo;
+    CMSG_KEY_TRANS_RECIPIENT_INFO *recipientInfo;
+    CRYPT_DATA_BLOB                data;
 } CEnvelopedEncodeMsg;
+
+static BOOL CRYPT_ConstructAlgorithmId(CRYPT_ALGORITHM_IDENTIFIER *out,
+ const CRYPT_ALGORITHM_IDENTIFIER *in)
+{
+    out->pszObjId = CryptMemAlloc(strlen(in->pszObjId) + 1);
+    if (out->pszObjId)
+    {
+        strcpy(out->pszObjId, in->pszObjId);
+        return CRYPT_ConstructBlob(&out->Parameters, &in->Parameters);
+    }
+    else
+        return FALSE;
+}
+
+static BOOL CRYPT_ConstructBitBlob(CRYPT_BIT_BLOB *out, const CRYPT_BIT_BLOB *in)
+{
+    out->cbData = in->cbData;
+    out->cUnusedBits = in->cUnusedBits;
+    if (out->cbData)
+    {
+        out->pbData = CryptMemAlloc(out->cbData);
+        if (out->pbData)
+            memcpy(out->pbData, in->pbData, out->cbData);
+        else
+            return FALSE;
+    }
+    else
+        out->pbData = NULL;
+    return TRUE;
+}
+
+static BOOL CRYPT_GenKey(CMSG_CONTENT_ENCRYPT_INFO *info, ALG_ID algID)
+{
+    static HCRYPTOIDFUNCSET set = NULL;
+    PFN_CMSG_GEN_CONTENT_ENCRYPT_KEY genKeyFunc = NULL;
+    HCRYPTOIDFUNCADDR hFunc;
+    BOOL ret;
+
+    if (!set)
+        set = CryptInitOIDFunctionSet(CMSG_OID_GEN_CONTENT_ENCRYPT_KEY_FUNC, 0);
+    CryptGetOIDFunctionAddress(set, X509_ASN_ENCODING,
+     info->ContentEncryptionAlgorithm.pszObjId, 0, (void **)&genKeyFunc, &hFunc);
+    if (genKeyFunc)
+    {
+        ret = genKeyFunc(info, 0, NULL);
+        CryptFreeOIDFunctionAddress(hFunc, 0);
+    }
+    else
+        ret = CryptGenKey(info->hCryptProv, algID, CRYPT_EXPORTABLE,
+         &info->hContentEncryptKey);
+    return ret;
+}
+
+static BOOL WINAPI CRYPT_ExportKeyTrans(
+ PCMSG_CONTENT_ENCRYPT_INFO pContentEncryptInfo,
+ PCMSG_KEY_TRANS_RECIPIENT_ENCODE_INFO pKeyTransEncodeInfo,
+ PCMSG_KEY_TRANS_ENCRYPT_INFO pKeyTransEncryptInfo,
+ DWORD dwFlags, void *pvReserved)
+{
+    CERT_PUBLIC_KEY_INFO keyInfo;
+    HCRYPTKEY expKey;
+    BOOL ret;
+
+    ret = CRYPT_ConstructAlgorithmId(&keyInfo.Algorithm,
+        &pKeyTransEncodeInfo->KeyEncryptionAlgorithm);
+    if (ret)
+        CRYPT_ConstructBitBlob(&keyInfo.PublicKey,
+         &pKeyTransEncodeInfo->RecipientPublicKey);
+
+    if (ret)
+        ret = CryptImportPublicKeyInfo(pKeyTransEncodeInfo->hCryptProv,
+         X509_ASN_ENCODING, &keyInfo, &expKey);
+    if (ret)
+    {
+        BYTE *keyBlob;
+        DWORD size;
+
+        ret = CryptExportKey(pContentEncryptInfo->hContentEncryptKey, expKey,
+         SIMPLEBLOB, 0, NULL, &size);
+        keyBlob = CryptMemAlloc(size);
+        if (keyBlob)
+        {
+            ret = CryptExportKey(pContentEncryptInfo->hContentEncryptKey,
+             expKey, SIMPLEBLOB, 0, keyBlob, &size);
+            if (ret)
+            {
+                DWORD head = sizeof(BLOBHEADER) + sizeof(ALG_ID);
+
+                pKeyTransEncryptInfo->EncryptedKey.pbData =
+                 CryptMemAlloc(size - head);
+                if (pKeyTransEncryptInfo->EncryptedKey.pbData)
+                {
+                    DWORD i, k = 0;
+
+                    pKeyTransEncryptInfo->EncryptedKey.cbData = size - head;
+                    for (i = size - 1; i >= head; --i, ++k)
+                        pKeyTransEncryptInfo->EncryptedKey.pbData[k] =
+                         keyBlob[i];
+                }
+                else
+                    ret = FALSE;
+            }
+            CryptMemFree(keyBlob);
+        }
+        else
+            ret = FALSE;
+        CryptDestroyKey(expKey);
+    }
+
+    CryptMemFree(keyInfo.Algorithm.pszObjId);
+    CryptMemFree(keyInfo.Algorithm.Parameters.pbData);
+    return ret;
+}
+
+static BOOL CRYPT_ExportEncryptedKey(CMSG_CONTENT_ENCRYPT_INFO *info, DWORD i,
+ CRYPT_DATA_BLOB *key)
+{
+    static HCRYPTOIDFUNCSET set = NULL;
+    PFN_CMSG_EXPORT_KEY_TRANS exportKeyFunc = NULL;
+    HCRYPTOIDFUNCADDR hFunc = NULL;
+    CMSG_KEY_TRANS_RECIPIENT_ENCODE_INFO *encodeInfo =
+     info->rgCmsRecipients[i].u.pKeyTrans;
+    CMSG_KEY_TRANS_ENCRYPT_INFO encryptInfo;
+    BOOL ret;
+
+    memset(&encryptInfo, 0, sizeof(encryptInfo));
+    encryptInfo.cbSize = sizeof(encryptInfo);
+    encryptInfo.dwRecipientIndex = i;
+    ret = CRYPT_ConstructAlgorithmId(&encryptInfo.KeyEncryptionAlgorithm,
+     &encodeInfo->KeyEncryptionAlgorithm);
+
+    if (!set)
+        set = CryptInitOIDFunctionSet(CMSG_OID_EXPORT_KEY_TRANS_FUNC, 0);
+    CryptGetOIDFunctionAddress(set, X509_ASN_ENCODING,
+     encryptInfo.KeyEncryptionAlgorithm.pszObjId, 0, (void **)&exportKeyFunc,
+     &hFunc);
+    if (!exportKeyFunc)
+        exportKeyFunc = CRYPT_ExportKeyTrans;
+    if (ret)
+    {
+        ret = exportKeyFunc(info, encodeInfo, &encryptInfo, 0, NULL);
+        if (ret)
+        {
+            key->cbData = encryptInfo.EncryptedKey.cbData;
+            key->pbData = encryptInfo.EncryptedKey.pbData;
+        }
+    }
+    if (hFunc)
+        CryptFreeOIDFunctionAddress(hFunc, 0);
+
+    CryptMemFree(encryptInfo.KeyEncryptionAlgorithm.pszObjId);
+    CryptMemFree(encryptInfo.KeyEncryptionAlgorithm.Parameters.pbData);
+    return ret;
+}
+
+static BOOL CContentEncryptInfo_Construct(CMSG_CONTENT_ENCRYPT_INFO *info,
+ const CMSG_ENVELOPED_ENCODE_INFO_WITH_CMS *in, HCRYPTPROV prov)
+{
+    BOOL ret;
+
+    info->cbSize = sizeof(CMSG_CONTENT_ENCRYPT_INFO);
+    info->hCryptProv = prov;
+    ret = CRYPT_ConstructAlgorithmId(&info->ContentEncryptionAlgorithm,
+     &in->ContentEncryptionAlgorithm);
+    info->pvEncryptionAuxInfo = in->pvEncryptionAuxInfo;
+    info->cRecipients = in->cRecipients;
+    if (ret)
+    {
+        info->rgCmsRecipients = CryptMemAlloc(in->cRecipients *
+         sizeof(CMSG_RECIPIENT_ENCODE_INFO));
+        if (info->rgCmsRecipients)
+        {
+            DWORD i;
+
+            for (i = 0; ret && i < in->cRecipients; ++i)
+            {
+                CMSG_KEY_TRANS_RECIPIENT_ENCODE_INFO *encodeInfo;
+                CERT_INFO *cert = in->rgpRecipientCert[i];
+
+                info->rgCmsRecipients[i].dwRecipientChoice =
+                 CMSG_KEY_TRANS_RECIPIENT;
+                encodeInfo = CryptMemAlloc(sizeof(*encodeInfo));
+                info->rgCmsRecipients[i].u.pKeyTrans = encodeInfo;
+                if (encodeInfo)
+                {
+                    encodeInfo->cbSize = sizeof(*encodeInfo);
+                    ret = CRYPT_ConstructAlgorithmId(
+                     &encodeInfo->KeyEncryptionAlgorithm,
+                     &cert->SubjectPublicKeyInfo.Algorithm);
+                    encodeInfo->pvKeyEncryptionAuxInfo = NULL;
+                    encodeInfo->hCryptProv = prov;
+                    if (ret)
+                        ret = CRYPT_ConstructBitBlob(
+                         &encodeInfo->RecipientPublicKey,
+                         &cert->SubjectPublicKeyInfo.PublicKey);
+                    if (ret)
+                        ret = CRYPT_ConstructBlob(
+                         &encodeInfo->RecipientId.u.IssuerSerialNumber.Issuer,
+                         &cert->Issuer);
+                    if (ret)
+                        ret = CRYPT_ConstructBlob(
+                         &encodeInfo->RecipientId.u.IssuerSerialNumber.SerialNumber,
+                         &cert->SerialNumber);
+                }
+                else
+                    ret = FALSE;
+            }
+        }
+        else
+            ret = FALSE;
+    }
+    info->pfnAlloc = CryptMemAlloc;
+    info->pfnFree = CryptMemFree;
+    return ret;
+}
+
+static void CContentEncryptInfo_Free(CMSG_CONTENT_ENCRYPT_INFO *info)
+{
+    CryptMemFree(info->ContentEncryptionAlgorithm.pszObjId);
+    CryptMemFree(info->ContentEncryptionAlgorithm.Parameters.pbData);
+    if (info->rgCmsRecipients)
+    {
+        DWORD i;
+
+        for (i = 0; i < info->cRecipients; ++i)
+        {
+            CMSG_KEY_TRANS_RECIPIENT_ENCODE_INFO *encodeInfo =
+             info->rgCmsRecipients[i].u.pKeyTrans;
+
+            CryptMemFree(encodeInfo->KeyEncryptionAlgorithm.pszObjId);
+            CryptMemFree(encodeInfo->KeyEncryptionAlgorithm.Parameters.pbData);
+            CryptMemFree(encodeInfo->RecipientPublicKey.pbData);
+            CryptMemFree(
+             encodeInfo->RecipientId.u.IssuerSerialNumber.Issuer.pbData);
+            CryptMemFree(
+             encodeInfo->RecipientId.u.IssuerSerialNumber.SerialNumber.pbData);
+            CryptMemFree(encodeInfo);
+        }
+        CryptMemFree(info->rgCmsRecipients);
+    }
+}
+
+static BOOL CRecipientInfo_Construct(CMSG_KEY_TRANS_RECIPIENT_INFO *info,
+ const CERT_INFO *cert, CRYPT_DATA_BLOB *key)
+{
+    BOOL ret;
+
+    info->dwVersion = CMSG_KEY_TRANS_PKCS_1_5_VERSION;
+    info->RecipientId.dwIdChoice = CERT_ID_ISSUER_SERIAL_NUMBER;
+    ret = CRYPT_ConstructBlob(&info->RecipientId.u.IssuerSerialNumber.Issuer,
+     &cert->Issuer);
+    if (ret)
+        ret = CRYPT_ConstructBlob(
+         &info->RecipientId.u.IssuerSerialNumber.SerialNumber,
+         &cert->SerialNumber);
+    if (ret)
+        ret = CRYPT_ConstructAlgorithmId(&info->KeyEncryptionAlgorithm,
+         &cert->SubjectPublicKeyInfo.Algorithm);
+    info->EncryptedKey.cbData = key->cbData;
+    info->EncryptedKey.pbData = key->pbData;
+    return ret;
+}
+
+static void CRecipientInfo_Free(CMSG_KEY_TRANS_RECIPIENT_INFO *info)
+{
+    CryptMemFree(info->RecipientId.u.IssuerSerialNumber.Issuer.pbData);
+    CryptMemFree(info->RecipientId.u.IssuerSerialNumber.SerialNumber.pbData);
+    CryptMemFree(info->KeyEncryptionAlgorithm.pszObjId);
+    CryptMemFree(info->KeyEncryptionAlgorithm.Parameters.pbData);
+    CryptMemFree(info->EncryptedKey.pbData);
+}
 
 static void CEnvelopedEncodeMsg_Close(HCRYPTMSG hCryptMsg)
 {
     CEnvelopedEncodeMsg *msg = hCryptMsg;
 
+    CryptMemFree(msg->algo.pszObjId);
+    CryptMemFree(msg->algo.Parameters.pbData);
     if (msg->base.open_flags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG)
         CryptReleaseContext(msg->prov, 0);
+    CryptDestroyKey(msg->key);
+    if (msg->recipientInfo)
+    {
+        DWORD i;
+
+        for (i = 0; i < msg->cRecipientInfo; ++i)
+            CRecipientInfo_Free(&msg->recipientInfo[i]);
+        CryptMemFree(msg->recipientInfo);
+    }
+    CryptMemFree(msg->data.pbData);
 }
 
 static BOOL CEnvelopedEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
@@ -1546,10 +1834,48 @@ static HCRYPTMSG CEnvelopedEncodeMsg_Open(DWORD dwFlags,
     msg = CryptMemAlloc(sizeof(CEnvelopedEncodeMsg));
     if (msg)
     {
+        CRYPT_DATA_BLOB encryptedKey = { 0, NULL };
+        CMSG_CONTENT_ENCRYPT_INFO encryptInfo;
+        BOOL ret;
+        DWORD i;
+
         CryptMsgBase_Init((CryptMsgBase *)msg, dwFlags, pStreamInfo,
          CEnvelopedEncodeMsg_Close, CEnvelopedEncodeMsg_GetParam,
          CEnvelopedEncodeMsg_Update, CRYPT_DefaultMsgControl);
+        ret = CRYPT_ConstructAlgorithmId(&msg->algo,
+         &info->ContentEncryptionAlgorithm);
         msg->prov = prov;
+        msg->data.cbData = 0;
+        msg->data.pbData = NULL;
+        msg->cRecipientInfo = info->cRecipients;
+        msg->recipientInfo = CryptMemAlloc(info->cRecipients *
+         sizeof(CMSG_KEY_TRANS_RECIPIENT_INFO));
+        if (!msg->recipientInfo)
+            ret = FALSE;
+        memset(&encryptInfo, 0, sizeof(encryptInfo));
+        if (ret)
+        {
+            ret = CContentEncryptInfo_Construct(&encryptInfo, info, prov);
+            if (ret)
+            {
+                ret = CRYPT_GenKey(&encryptInfo, algID);
+                if (ret)
+                    msg->key = encryptInfo.hContentEncryptKey;
+            }
+        }
+        for (i = 0; ret && i < msg->cRecipientInfo; ++i)
+        {
+            ret = CRYPT_ExportEncryptedKey(&encryptInfo, i, &encryptedKey);
+            if (ret)
+                ret = CRecipientInfo_Construct(&msg->recipientInfo[i],
+                 info->rgpRecipientCert[i], &encryptedKey);
+        }
+        CContentEncryptInfo_Free(&encryptInfo);
+        if (!ret)
+        {
+            CryptMsgClose(msg);
+            msg = NULL;
+        }
     }
     if (!msg && (dwFlags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG))
         CryptReleaseContext(prov, 0);
