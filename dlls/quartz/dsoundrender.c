@@ -154,13 +154,13 @@ static HRESULT DSoundRender_GetWritePos(DSoundRenderImpl *This, DWORD *ret_write
         IReferenceClock_GetTime(This->filter.pClock, &cur);
         cur -= This->filter.rtStreamStart;
     } else
-        cur = -1;
+        write_at = -1;
 
     if (writepos == min_writepos)
         max_lag = 0;
 
     *skip = 0;
-    if (cur < 0 || write_at < 0) {
+    if (write_at < 0) {
         *ret_writepos = writepos;
         goto end;
     }
