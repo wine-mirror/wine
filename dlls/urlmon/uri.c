@@ -6298,6 +6298,64 @@ static HRESULT parse_document(const Uri *uri, LPWSTR output, DWORD output_len,
     return S_OK;
 }
 
+static HRESULT parse_path_from_url(const Uri *uri, LPWSTR output, DWORD output_len,
+                                   DWORD *result_len)
+{
+    const WCHAR *path_ptr;
+    WCHAR buffer[INTERNET_MAX_URL_LENGTH+1];
+    WCHAR *ptr;
+
+    if(uri->scheme_type != URL_SCHEME_FILE) {
+        *result_len = 0;
+        if(output_len > 0)
+            output[0] = 0;
+        return E_INVALIDARG;
+    }
+
+    ptr = buffer;
+    if(uri->host_start > -1) {
+        static const WCHAR slash_slashW[] = {'\\','\\'};
+
+        memcpy(ptr, slash_slashW, sizeof(slash_slashW));
+        ptr += sizeof(slash_slashW)/sizeof(WCHAR);
+        memcpy(ptr, uri->canon_uri+uri->host_start, uri->host_len*sizeof(WCHAR));
+        ptr += uri->host_len;
+    }
+
+    path_ptr = uri->canon_uri+uri->path_start;
+    if(uri->path_len > 3 && *path_ptr == '/' && is_drive_path(path_ptr+1))
+        /* Skip past the '/' in front of the drive path. */
+        ++path_ptr;
+
+    for(; path_ptr < uri->canon_uri+uri->path_start+uri->path_len; ++path_ptr, ++ptr) {
+        BOOL do_default_action = TRUE;
+
+        if(*path_ptr == '%') {
+            const WCHAR decoded = decode_pct_val(path_ptr);
+            if(decoded) {
+                *ptr = decoded;
+                path_ptr += 2;
+                do_default_action = FALSE;
+            }
+        } else if(*path_ptr == '/') {
+            *ptr = '\\';
+            do_default_action = FALSE;
+        }
+
+        if(do_default_action)
+            *ptr = *path_ptr;
+    }
+
+    *ptr = 0;
+
+    *result_len = ptr-buffer;
+    if(*result_len+1 > output_len)
+        return STRSAFE_E_INSUFFICIENT_BUFFER;
+
+    memcpy(output, buffer, (*result_len+1)*sizeof(WCHAR));
+    return S_OK;
+}
+
 /***********************************************************************
  *           CoInternetParseIUri (urlmon.@)
  */
@@ -6349,6 +6407,15 @@ HRESULT WINAPI CoInternetParseIUri(IUri *pIUri, PARSEACTION ParseAction, DWORD d
             return E_NOTIMPL;
         }
         hr = parse_document(uri, pwzResult, cchResult, pcchResult);
+        break;
+    case PARSE_PATH_FROM_URL:
+        if(!(uri = get_uri_obj(pIUri))) {
+            *pcchResult = 0;
+            FIXME("(%p %d %x %p %d %p %x) Unknown IUri's not supported for this action.\n",
+                pIUri, ParseAction, dwFlags, pwzResult, cchResult, pcchResult, (DWORD)dwReserved);
+            return E_NOTIMPL;
+        }
+        hr = parse_path_from_url(uri, pwzResult, cchResult, pcchResult);
         break;
     case PARSE_SECURITY_URL:
     case PARSE_MIME:

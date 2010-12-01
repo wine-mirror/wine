@@ -5941,7 +5941,14 @@ static const uri_parse_test uri_parse_tests[] = {
     {"file:///c:/test#frag",0,PARSE_DOCUMENT,0,"",S_OK,FALSE},
     {"zip://google.com/#frag",0,PARSE_DOCUMENT,0,"",S_OK,FALSE},
     {"zip:test#frag",0,PARSE_DOCUMENT,0,"",S_OK,FALSE},
-    {"testing#frag",Uri_CREATE_ALLOW_RELATIVE,PARSE_DOCUMENT,0,"",S_OK,FALSE}
+    {"testing#frag",Uri_CREATE_ALLOW_RELATIVE,PARSE_DOCUMENT,0,"",S_OK,FALSE},
+
+    /* PARSE_PATH_FROM_URL tests. */
+    {"file:///c:/test.mp3",0,PARSE_PATH_FROM_URL,0,"c:\\test.mp3",S_OK,FALSE},
+    {"file:///c:/t<|>est.mp3",0,PARSE_PATH_FROM_URL,0,"c:\\t<|>est.mp3",S_OK,FALSE},
+    {"file:///c:/te%XX t/",0,PARSE_PATH_FROM_URL,0,"c:\\te%XX t\\",S_OK,FALSE},
+    {"file://server/test",0,PARSE_PATH_FROM_URL,0,"\\\\server\\test",S_OK,FALSE},
+    {"http://google.com/",0,PARSE_PATH_FROM_URL,0,"",E_INVALIDARG,FALSE}
 };
 
 static inline LPWSTR a2w(LPCSTR str) {
