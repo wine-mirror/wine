@@ -175,6 +175,10 @@ typedef struct
 }
 
 [
+    helpstring("Wine OLE DB Row Server"),
+    threading(both),
+    progid("WINEDBROWPRX.AsServer.1"),
+    vi_progid("WINEDBROWPRX.AsServer"),
     uuid(38248178-cf6d-11de-abe5-000c2916d865)
 ]
 coclass wine_row_server
@@ -183,6 +187,10 @@ coclass wine_row_server
 }
 
 [
+    helpstring("Wine OLE DB Row Proxy"),
+    threading(both),
+    progid("WINEDBROWPRX.AsProxy.1"),
+    vi_progid("WINEDBROWPRX.AsProxy"),
     uuid(38248179-cf6d-11de-abe5-000c2916d865)
 ]
 coclass wine_row_proxy
@@ -191,6 +199,10 @@ coclass wine_row_proxy
 }
 
 [
+    helpstring("Wine OLE DB Rowset Server"),
+    threading(both),
+    progid("WINEDBRSTPRX.AsServer.1"),
+    vi_progid("WINEDBRSTPRX.AsServer"),
     uuid(3824817a-cf6d-11de-abe5-000c2916d865)
 ]
 coclass wine_rowset_server
@@ -199,6 +211,10 @@ coclass wine_rowset_server
 }
 
 [
+    helpstring("Wine OLE DB Rowset Proxy"),
+    threading(both),
+    progid("WINEDBRSTPRX.AsProxy.1"),
+    vi_progid("WINEDBRSTPRX.AsProxy"),
     uuid(3824817b-cf6d-11de-abe5-000c2916d865)
 ]
 coclass wine_rowset_proxy

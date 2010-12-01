@@ -43,6 +43,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(oledb);
 extern BOOL WINAPI msdaps_DllMain(HINSTANCE, DWORD, LPVOID) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI msdaps_DllGetClassObject(REFCLSID, REFIID, LPVOID *) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI msdaps_DllCanUnloadNow(void) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI msdaps_DllRegisterServer(void) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI msdaps_DllUnregisterServer(void) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  *              DllMain
@@ -165,4 +167,20 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, LPVOID *obj)
 HRESULT WINAPI DllCanUnloadNow(void)
 {
     return msdaps_DllCanUnloadNow();
+}
+
+/***********************************************************************
+ *                DllRegisterServer
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return msdaps_DllRegisterServer();
+}
+
+/***********************************************************************
+ *                DllUnregisterServer
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return msdaps_DllUnregisterServer();
 }
