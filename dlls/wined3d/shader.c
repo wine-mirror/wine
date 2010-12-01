@@ -1521,7 +1521,7 @@ static void shader_none_load_np2fixup_constants(void *shader_priv,
 static void shader_none_destroy(IWineD3DBaseShader *iface) {}
 static HRESULT shader_none_alloc(IWineD3DDeviceImpl *device) {return WINED3D_OK;}
 static void shader_none_free(IWineD3DDeviceImpl *device) {}
-static BOOL shader_none_dirty_const(IWineD3DDevice *iface) {return FALSE;}
+static BOOL shader_none_dirty_const(void) {return FALSE;}
 
 static void shader_none_get_caps(const struct wined3d_gl_info *gl_info, struct shader_caps *caps)
 {

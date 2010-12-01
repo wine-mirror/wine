@@ -4797,7 +4797,8 @@ static void shader_arb_free(IWineD3DDeviceImpl *device)
     HeapFree(GetProcessHeap(), 0, device->shader_priv);
 }
 
-static BOOL shader_arb_dirty_const(IWineD3DDevice *iface) {
+static BOOL shader_arb_dirty_const(void)
+{
     return TRUE;
 }
 

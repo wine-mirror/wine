@@ -1410,7 +1410,7 @@ struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain,
     ret->hdc = hdc;
     ret->pixel_format = pixel_format;
 
-    if (device->shader_backend->shader_dirtifyable_constants((IWineD3DDevice *)device))
+    if (device->shader_backend->shader_dirtifyable_constants())
     {
         /* Create the dirty constants array and initialize them to dirty */
         ret->vshader_const_dirty = HeapAlloc(GetProcessHeap(), 0,
