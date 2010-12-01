@@ -663,19 +663,27 @@ static dispex_static_data_t HTMLFormElement_dispex = {
     HTMLFormElement_iface_tids
 };
 
-HTMLElement *HTMLFormElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
+HRESULT HTMLFormElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
 {
-    HTMLFormElement *ret = heap_alloc_zero(sizeof(HTMLFormElement));
+    HTMLFormElement *ret;
     nsresult nsres;
+
+    ret = heap_alloc_zero(sizeof(HTMLFormElement));
+    if(!ret)
+        return E_OUTOFMEMORY;
 
     ret->lpHTMLFormElementVtbl = &HTMLFormElementVtbl;
     ret->element.node.vtbl = &HTMLFormElementImplVtbl;
 
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLFormElement, (void**)&ret->nsform);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMHTMLFormElement interface: %08x\n", nsres);
+        heap_free(ret);
+        return E_FAIL;
+    }
+
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLFormElement_dispex);
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLFormElement, (void**)&ret->nsform);
-    if(NS_FAILED(nsres))
-        ERR("Could not get nsIDOMHTMLFormElement interface: %08x\n", nsres);
-
-    return &ret->element;
+    *elem = &ret->element;
+    return S_OK;
 }

@@ -1212,21 +1212,28 @@ static dispex_static_data_t HTMLInputElement_dispex = {
     HTMLInputElement_iface_tids
 };
 
-HTMLElement *HTMLInputElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
+HRESULT HTMLInputElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
 {
-    HTMLInputElement *ret = heap_alloc_zero(sizeof(HTMLInputElement));
+    HTMLInputElement *ret;
     nsresult nsres;
+
+    ret = heap_alloc_zero(sizeof(HTMLInputElement));
+    if(!ret)
+        return E_OUTOFMEMORY;
 
     ret->lpHTMLInputElementVtbl = &HTMLInputElementVtbl;
     ret->lpHTMLInputTextElementVtbl = &HTMLInputTextElementVtbl;
     ret->element.node.vtbl = &HTMLInputElementImplVtbl;
 
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLInputElement, (void**)&ret->nsinput);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMHTMLInputElement interface: %08x\n", nsres);
+        heap_free(ret);
+        return E_FAIL;
+    }
+
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLInputElement_dispex);
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLInputElement,
-                                             (void**)&ret->nsinput);
-    if(NS_FAILED(nsres))
-        ERR("Could not get nsIDOMHTMLInputElement interface: %08x\n", nsres);
-
-    return &ret->element;
+    *elem = &ret->element;
+    return S_OK;
 }

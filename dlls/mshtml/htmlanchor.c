@@ -534,19 +534,27 @@ static dispex_static_data_t HTMLAnchorElement_dispex = {
     HTMLAnchorElement_iface_tids
 };
 
-HTMLElement *HTMLAnchorElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
+HRESULT HTMLAnchorElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
 {
-    HTMLAnchorElement *ret = heap_alloc_zero(sizeof(HTMLAnchorElement));
+    HTMLAnchorElement *ret;
     nsresult nsres;
+
+    ret = heap_alloc_zero(sizeof(HTMLAnchorElement));
+    if(!ret)
+        return E_OUTOFMEMORY;
 
     ret->lpHTMLAnchorElementVtbl = &HTMLAnchorElementVtbl;
     ret->element.node.vtbl = &HTMLAnchorElementImplVtbl;
 
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLAnchorElement, (void**)&ret->nsanchor);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMHTMLAnchorElement iface: %08x\n", nsres);
+        heap_free(ret);
+        return E_FAIL;
+    }
+
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLAnchorElement_dispex);
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLAnchorElement, (void**)&ret->nsanchor);
-    if(NS_FAILED(nsres))
-        ERR("Could not get nsIDOMHTMLAnchorElement iface: %08x\n", nsres);
-
-    return &ret->element;
+    *elem = &ret->element;
+    return S_OK;
 }

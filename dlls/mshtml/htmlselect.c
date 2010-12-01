@@ -636,20 +636,28 @@ static dispex_static_data_t HTMLSelectElement_dispex = {
     HTMLSelectElement_tids
 };
 
-HTMLElement *HTMLSelectElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
+HRESULT HTMLSelectElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
 {
-    HTMLSelectElement *ret = heap_alloc_zero(sizeof(HTMLSelectElement));
+    HTMLSelectElement *ret;
     nsresult nsres;
+
+    ret = heap_alloc_zero(sizeof(HTMLSelectElement));
+    if(!ret)
+        return E_OUTOFMEMORY;
 
     ret->lpHTMLSelectElementVtbl = &HTMLSelectElementVtbl;
     ret->element.node.vtbl = &HTMLSelectElementImplVtbl;
 
-    HTMLElement_Init(&ret->element, doc, nselem, &HTMLSelectElement_dispex);
-
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLSelectElement,
                                              (void**)&ret->nsselect);
-    if(NS_FAILED(nsres))
+    if(NS_FAILED(nsres)) {
         ERR("Could not get nsIDOMHTMLSelectElement interfce: %08x\n", nsres);
+        heap_free(ret);
+        return E_FAIL;
+    }
 
-    return &ret->element;
+    HTMLElement_Init(&ret->element, doc, nselem, &HTMLSelectElement_dispex);
+
+    *elem = &ret->element;
+    return S_OK;
 }

@@ -314,19 +314,27 @@ static dispex_static_data_t HTMLTableRow_dispex = {
     HTMLTableRow_iface_tids
 };
 
-HTMLElement *HTMLTableRow_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
+HRESULT HTMLTableRow_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
 {
-    HTMLTableRow *ret = heap_alloc_zero(sizeof(HTMLTableRow));
+    HTMLTableRow *ret;
     nsresult nsres;
+
+    ret = heap_alloc_zero(sizeof(HTMLTableRow));
+    if(!ret)
+        return E_OUTOFMEMORY;
 
     ret->lpHTMLTableRowVtbl = &HTMLTableRowVtbl;
     ret->element.node.vtbl = &HTMLTableRowImplVtbl;
 
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLTableRowElement, (void**)&ret->nsrow);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMHTMLTableRowElement iface: %08x\n", nsres);
+        heap_free(ret);
+        return E_OUTOFMEMORY;
+    }
+
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLTableRow_dispex);
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLTableRowElement, (void**)&ret->nsrow);
-    if(NS_FAILED(nsres))
-        ERR("Could not get nsIDOMHTMLTableRowElement iface: %08x\n", nsres);
-
-    return &ret->element;
+    *elem = &ret->element;
+    return S_OK;
 }

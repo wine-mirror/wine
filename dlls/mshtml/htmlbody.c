@@ -812,24 +812,29 @@ static dispex_static_data_t HTMLBodyElement_dispex = {
     HTMLBodyElement_iface_tids
 };
 
-HTMLElement *HTMLBodyElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
+HRESULT HTMLBodyElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
 {
-    HTMLBodyElement *ret = heap_alloc_zero(sizeof(HTMLBodyElement));
+    HTMLBodyElement *ret;
     nsresult nsres;
 
-    TRACE("(%p)->(%p)\n", ret, nselem);
+    ret = heap_alloc_zero(sizeof(HTMLBodyElement));
+    if(!ret)
+        return E_OUTOFMEMORY;
 
     ret->lpHTMLBodyElementVtbl = &HTMLBodyElementVtbl;
     ret->textcont.element.node.vtbl = &HTMLBodyElementImplVtbl;
+
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLBodyElement, (void**)&ret->nsbody);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsDOMHTMLBodyElement: %08x\n", nsres);
+        heap_free(ret);
+        return E_OUTOFMEMORY;
+    }
 
     HTMLTextContainer_Init(&ret->textcont, doc, nselem, &HTMLBodyElement_dispex);
 
     ConnectionPoint_Init(&ret->cp_propnotif, &ret->textcont.element.cp_container, &IID_IPropertyNotifySink, NULL);
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLBodyElement,
-                                             (void**)&ret->nsbody);
-    if(NS_FAILED(nsres))
-        ERR("Could not get nsDOMHTMLBodyElement: %08x\n", nsres);
-
-    return &ret->textcont.element;
+    *elem = &ret->textcont.element;
+    return S_OK;
 }

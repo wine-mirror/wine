@@ -267,13 +267,18 @@ static dispex_static_data_t HTMLStyleElement_dispex = {
     HTMLStyleElement_iface_tids
 };
 
-HTMLElement *HTMLStyleElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
+HRESULT HTMLStyleElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
 {
-    HTMLStyleElement *ret = heap_alloc_zero(sizeof(*ret));
+    HTMLStyleElement *ret;
+
+    ret = heap_alloc_zero(sizeof(*ret));
+    if(!ret)
+        return E_OUTOFMEMORY;
 
     ret->lpIHTMLStyleElementVtbl = &HTMLStyleElementVtbl;
     ret->element.node.vtbl = &HTMLStyleElementImplVtbl;
 
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLStyleElement_dispex);
-    return &ret->element;
+    *elem = &ret->element;
+    return S_OK;
 }

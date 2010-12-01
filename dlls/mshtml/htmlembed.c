@@ -267,13 +267,18 @@ static dispex_static_data_t HTMLEmbedElement_dispex = {
     HTMLEmbedElement_iface_tids
 };
 
-HTMLElement *HTMLEmbedElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
+HRESULT HTMLEmbedElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
 {
-    HTMLEmbedElement *ret = heap_alloc_zero(sizeof(*ret));
+    HTMLEmbedElement *ret;
+
+    ret = heap_alloc_zero(sizeof(*ret));
+    if(!ret)
+        return E_OUTOFMEMORY;
 
     ret->lpIHTMLEmbedElementVtbl = &HTMLEmbedElementVtbl;
     ret->element.node.vtbl = &HTMLEmbedElementImplVtbl;
 
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLEmbedElement_dispex);
-    return &ret->element;
+    *elem = &ret->element;
+    return S_OK;
 }

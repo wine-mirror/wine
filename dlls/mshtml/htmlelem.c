@@ -53,7 +53,7 @@ static const WCHAR trW[]       = {'T','R',0};
 
 typedef struct {
     const WCHAR *name;
-    HTMLElement *(*constructor)(HTMLDocumentNode*,nsIDOMHTMLElement*);
+    HRESULT (*constructor)(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**);
 } tag_desc_t;
 
 static const tag_desc_t tag_descs[] = {
@@ -1742,8 +1742,7 @@ HRESULT HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL use_g
 
     tag = get_tag_desc(class_name);
     if(tag) {
-        elem = tag->constructor(doc, nselem);
-        hres = elem ? S_OK : E_OUTOFMEMORY;
+        hres = tag->constructor(doc, nselem, &elem);
     }else if(use_generic) {
         hres = HTMLGenericElement_Create(doc, nselem, &elem);
     }else {

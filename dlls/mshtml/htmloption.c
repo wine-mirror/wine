@@ -356,21 +356,29 @@ static dispex_static_data_t HTMLOptionElement_dispex = {
     HTMLOptionElement_iface_tids
 };
 
-HTMLElement *HTMLOptionElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
+HRESULT HTMLOptionElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
 {
-    HTMLOptionElement *ret = heap_alloc_zero(sizeof(HTMLOptionElement));
+    HTMLOptionElement *ret;
     nsresult nsres;
+
+    ret = heap_alloc_zero(sizeof(HTMLOptionElement));
+    if(!ret)
+        return E_OUTOFMEMORY;
 
     ret->lpHTMLOptionElementVtbl = &HTMLOptionElementVtbl;
     ret->element.node.vtbl = &HTMLOptionElementImplVtbl;
 
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLOptionElement, (void**)&ret->nsoption);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMHTMLOptionElement interface: %08x\n", nsres);
+        heap_free(ret);
+        return E_FAIL;
+    }
+
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLOptionElement_dispex);
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLOptionElement, (void**)&ret->nsoption);
-    if(NS_FAILED(nsres))
-        ERR("Could not get nsIDOMHTMLOptionElement interface: %08x\n", nsres);
-
-    return &ret->element;
+    *elem = &ret->element;
+    return S_OK;
 }
 
 #define HTMLOPTFACTORY_THIS(iface) DEFINE_THIS(HTMLOptionElementFactory, HTMLOptionElementFactory, iface)

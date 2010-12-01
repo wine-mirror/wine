@@ -464,20 +464,28 @@ static dispex_static_data_t HTMLTextAreaElement_dispex = {
     HTMLTextAreaElement_iface_tids
 };
 
-HTMLElement *HTMLTextAreaElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
+HRESULT HTMLTextAreaElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
 {
-    HTMLTextAreaElement *ret = heap_alloc_zero(sizeof(HTMLTextAreaElement));
+    HTMLTextAreaElement *ret;
     nsresult nsres;
+
+    ret = heap_alloc_zero(sizeof(HTMLTextAreaElement));
+    if(!ret)
+        return E_OUTOFMEMORY;
 
     ret->lpHTMLTextAreaElementVtbl = &HTMLTextAreaElementVtbl;
     ret->element.node.vtbl = &HTMLTextAreaElementImplVtbl;
 
-    HTMLElement_Init(&ret->element, doc, nselem, &HTMLTextAreaElement_dispex);
-
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLTextAreaElement,
                                              (void**)&ret->nstextarea);
-    if(NS_FAILED(nsres))
+    if(NS_FAILED(nsres)) {
         ERR("Could not get nsDOMHTMLInputElement: %08x\n", nsres);
+        heap_free(ret);
+        return E_FAIL;
+    }
 
-    return &ret->element;
+    HTMLElement_Init(&ret->element, doc, nselem, &HTMLTextAreaElement_dispex);
+
+    *elem = &ret->element;
+    return S_OK;
 }

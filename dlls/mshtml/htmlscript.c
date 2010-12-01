@@ -343,19 +343,27 @@ static dispex_static_data_t HTMLScriptElement_dispex = {
     HTMLScriptElement_iface_tids
 };
 
-HTMLElement *HTMLScriptElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
+HRESULT HTMLScriptElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
 {
-    HTMLScriptElement *ret = heap_alloc_zero(sizeof(HTMLScriptElement));
+    HTMLScriptElement *ret;
     nsresult nsres;
+
+    ret = heap_alloc_zero(sizeof(HTMLScriptElement));
+    if(!ret)
+        return E_OUTOFMEMORY;
 
     ret->lpHTMLScriptElementVtbl = &HTMLScriptElementVtbl;
     ret->element.node.vtbl = &HTMLScriptElementImplVtbl;
 
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLScriptElement, (void**)&ret->nsscript);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMHTMLScriptElement: %08x\n", nsres);
+        heap_free(ret);
+        return E_FAIL;
+    }
+
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLScriptElement_dispex);
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLScriptElement, (void**)&ret->nsscript);
-    if(NS_FAILED(nsres))
-        ERR("Could not get nsIDOMHTMLScriptElement: %08x\n", nsres);
-
-    return &ret->element;
+    *elem = &ret->element;
+    return S_OK;
 }

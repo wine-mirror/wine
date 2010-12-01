@@ -666,21 +666,29 @@ static dispex_static_data_t HTMLImgElement_dispex = {
     HTMLImgElement_iface_tids
 };
 
-HTMLElement *HTMLImgElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
+HRESULT HTMLImgElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
 {
-    HTMLImgElement *ret = heap_alloc_zero(sizeof(HTMLImgElement));
+    HTMLImgElement *ret;
     nsresult nsres;
+
+    ret = heap_alloc_zero(sizeof(HTMLImgElement));
+    if(!ret)
+        return E_OUTOFMEMORY;
 
     ret->lpHTMLImgElementVtbl = &HTMLImgElementVtbl;
     ret->element.node.vtbl = &HTMLImgElementImplVtbl;
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLImageElement, (void**)&ret->nsimg);
-    if(NS_FAILED(nsres))
+    if(NS_FAILED(nsres)) {
         ERR("Could not get nsIDOMHTMLImageElement: %08x\n", nsres);
+        heap_free(ret);
+        return E_FAIL;
+    }
 
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLImgElement_dispex);
 
-    return &ret->element;
+    *elem = &ret->element;
+    return S_OK;
 }
 
 #define HTMLIMGFACTORY_THIS(iface) DEFINE_THIS(HTMLImageElementFactory, HTMLImageElementFactory, iface)

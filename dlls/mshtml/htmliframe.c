@@ -270,16 +270,19 @@ static dispex_static_data_t HTMLIFrame_dispex = {
     HTMLIFrame_iface_tids
 };
 
-HTMLElement *HTMLIFrame_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
+HRESULT HTMLIFrame_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
 {
     HTMLIFrame *ret;
 
     ret = heap_alloc_zero(sizeof(HTMLIFrame));
+    if(!ret)
+        return E_OUTOFMEMORY;
 
     ret->lpIHTMLIFrameElementVtbl = &HTMLIFrameElementVtbl;
     ret->framebase.element.node.vtbl = &HTMLIFrameImplVtbl;
 
     HTMLFrameBase_Init(&ret->framebase, doc, nselem, &HTMLIFrame_dispex);
 
-    return &ret->framebase.element;
+    *elem = &ret->framebase.element;
+    return S_OK;
 }

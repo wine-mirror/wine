@@ -571,21 +571,28 @@ static dispex_static_data_t HTMLTable_dispex = {
     HTMLTable_iface_tids
 };
 
-HTMLElement *HTMLTable_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
+HRESULT HTMLTable_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
 {
-    HTMLTable *ret = heap_alloc_zero(sizeof(HTMLTable));
+    HTMLTable *ret;
     nsresult nsres;
+
+    ret = heap_alloc_zero(sizeof(HTMLTable));
+    if(!ret)
+        return E_OUTOFMEMORY;
 
     ret->element.node.vtbl = &HTMLTableImplVtbl;
     ret->lpHTMLTableVtbl = &HTMLTableVtbl;
 
-    HTMLElement_Init(&ret->element, doc, nselem, &HTMLTable_dispex);
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLTableElement, (void**)&ret->nstable);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMHTMLTableElement iface: %08x\n", nsres);
+        heap_free(ret);
+        return E_FAIL;
+    }
 
+    HTMLElement_Init(&ret->element, doc, nselem, &HTMLTable_dispex);
     ConnectionPoint_Init(&ret->cp, &ret->element.cp_container, &DIID_HTMLTableEvents, NULL);
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLTableElement, (void**)&ret->nstable);
-    if(NS_FAILED(nsres))
-        ERR("Could not get nsIDOMHTMLTableElement iface: %08x\n", nsres);
-
-    return &ret->element;
+    *elem = &ret->element;
+    return S_OK;
 }
