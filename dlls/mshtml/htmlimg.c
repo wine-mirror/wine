@@ -820,10 +820,11 @@ static HRESULT WINAPI HTMLImageElementFactory_create(IHTMLImageElementFactory *i
     if(FAILED(hres))
         return hres;
 
-    elem = HTMLElement_Create(This->window->doc, (nsIDOMNode*)nselem, FALSE);
-    if(!elem) {
+    hres = HTMLElement_Create(This->window->doc, (nsIDOMNode*)nselem, FALSE, &elem);
+    nsIDOMHTMLElement_Release(nselem);
+    if(FAILED(hres)) {
         ERR("HTMLElement_Create failed\n");
-        return E_FAIL;
+        return hres;
     }
 
     hres = IHTMLElement_QueryInterface(HTMLELEM(elem), &IID_IHTMLImgElement, (void**)&img);
@@ -831,8 +832,6 @@ static HRESULT WINAPI HTMLImageElementFactory_create(IHTMLImageElementFactory *i
         ERR("IHTMLElement_QueryInterface failed: 0x%08x\n", hres);
         return hres;
     }
-
-    nsIDOMHTMLElement_Release(nselem);
 
     l = var_to_size(&width);
     if(l)

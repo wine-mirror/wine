@@ -1666,10 +1666,13 @@ HRESULT HTMLElement_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **
 {
     HTMLElement *This = HTMLELEM_NODE_THIS(iface);
     HTMLElement *new_elem;
+    HRESULT hres;
 
-    new_elem = HTMLElement_Create(This->node.doc, nsnode, FALSE);
+    hres = HTMLElement_Create(This->node.doc, nsnode, FALSE, &new_elem);
+    if(FAILED(hres))
+        return hres;
+
     IHTMLElement_AddRef(HTMLELEM(new_elem));
-
     *ret = &new_elem->node;
     return S_OK;
 }
@@ -1718,19 +1721,19 @@ void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMHTMLElemen
     ConnectionPointContainer_Init(&This->cp_container, (IUnknown*)HTMLELEM(This));
 }
 
-HTMLElement *HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL use_generic)
+HRESULT HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL use_generic, HTMLElement **ret)
 {
     nsIDOMHTMLElement *nselem;
-    HTMLElement *ret = NULL;
     nsAString class_name_str;
     const PRUnichar *class_name;
     const tag_desc_t *tag;
+    HTMLElement *elem;
     nsresult nsres;
-
+    HRESULT hres;
 
     nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMHTMLElement, (void**)&nselem);
     if(NS_FAILED(nsres))
-        return NULL;
+        return E_FAIL;
 
     nsAString_Init(&class_name_str, NULL);
     nsIDOMHTMLElement_GetTagName(nselem, &class_name_str);
@@ -1739,21 +1742,30 @@ HTMLElement *HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL 
 
     tag = get_tag_desc(class_name);
     if(tag) {
-        ret = tag->constructor(doc, nselem);
+        elem = tag->constructor(doc, nselem);
+        hres = elem ? S_OK : E_OUTOFMEMORY;
     }else if(use_generic) {
-        ret = HTMLGenericElement_Create(doc, nselem);
+        hres = HTMLGenericElement_Create(doc, nselem, &elem);
     }else {
-        ret = heap_alloc_zero(sizeof(HTMLElement));
-        HTMLElement_Init(ret, doc, nselem, &HTMLElement_dispex);
-        ret->node.vtbl = &HTMLElementImplVtbl;
+        elem = heap_alloc_zero(sizeof(HTMLElement));
+        if(elem) {
+            HTMLElement_Init(elem, doc, nselem, &HTMLElement_dispex);
+            elem->node.vtbl = &HTMLElementImplVtbl;
+            hres = S_OK;
+        }else {
+            hres = E_OUTOFMEMORY;
+        }
     }
 
-    TRACE("%s ret %p\n", debugstr_w(class_name), ret);
+    TRACE("%s ret %p\n", debugstr_w(class_name), elem);
 
     nsIDOMElement_Release(nselem);
     nsAString_Finish(&class_name_str);
+    if(FAILED(hres))
+        return hres;
 
-    return ret;
+    *ret = elem;
+    return S_OK;
 }
 
 /* interface IHTMLFiltersCollection */

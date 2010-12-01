@@ -820,7 +820,7 @@ HRESULT create_nselem(HTMLDocumentNode*,const WCHAR*,nsIDOMHTMLElement**);
 
 HRESULT HTMLDOMTextNode_Create(HTMLDocumentNode*,nsIDOMNode*,HTMLDOMNode**);
 
-HTMLElement *HTMLElement_Create(HTMLDocumentNode*,nsIDOMNode*,BOOL);
+HRESULT HTMLElement_Create(HTMLDocumentNode*,nsIDOMNode*,BOOL,HTMLElement**);
 HRESULT HTMLCommentElement_Create(HTMLDocumentNode*,nsIDOMNode*,HTMLElement**);
 HTMLElement *HTMLAnchorElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
 HTMLElement *HTMLBodyElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
@@ -838,7 +838,7 @@ HTMLElement *HTMLSelectElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
 HTMLElement *HTMLTable_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
 HTMLElement *HTMLTableRow_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
 HTMLElement *HTMLTextAreaElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
-HTMLElement *HTMLGenericElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*);
+HRESULT HTMLGenericElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**);
 
 void HTMLDOMNode_Init(HTMLDocumentNode*,HTMLDOMNode*,nsIDOMNode*);
 void HTMLElement_Init(HTMLElement*,HTMLDocumentNode*,nsIDOMHTMLElement*,dispex_static_data_t*);

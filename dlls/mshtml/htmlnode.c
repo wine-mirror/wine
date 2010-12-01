@@ -1001,9 +1001,14 @@ static HRESULT create_node(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNod
     nsIDOMNode_GetNodeType(nsnode, &node_type);
 
     switch(node_type) {
-    case ELEMENT_NODE:
-        *ret = &HTMLElement_Create(doc, nsnode, FALSE)->node;
+    case ELEMENT_NODE: {
+        HTMLElement *elem;
+        hres = HTMLElement_Create(doc, nsnode, FALSE, &elem);
+        if(FAILED(hres))
+            return hres;
+        *ret = &elem->node;
         break;
+    }
     case TEXT_NODE:
         hres = HTMLDOMTextNode_Create(doc, nsnode, ret);
         if(FAILED(hres))
