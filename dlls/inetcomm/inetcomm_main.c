@@ -27,6 +27,9 @@
 #include "winnt.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "ocidl.h"
+#include "rpcproxy.h"
+#include "initguid.h"
 #include "mimeole.h"
 
 #include "inetcomm_private.h"
@@ -34,6 +37,8 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(inetcomm);
+
+static HINSTANCE instance;
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -47,6 +52,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         return FALSE;
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hinstDLL);
+        instance = hinstDLL;
         if (!InternetTransport_RegisterClass(hinstDLL))
             return FALSE;
         MimeInternational_Construct(&international);
@@ -198,4 +204,20 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 HRESULT WINAPI DllCanUnloadNow(void)
 {
     return S_FALSE;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (INETCOMM.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( instance, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (INETCOMM.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( instance, NULL );
 }

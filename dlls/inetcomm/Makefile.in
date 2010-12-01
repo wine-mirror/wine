@@ -9,7 +9,8 @@ C_SRCS = \
 	mimeintl.c \
 	mimeole.c \
 	pop3transport.c \
-	regsvr.c \
 	smtptransport.c
+
+IDL_R_SRCS = inetcomm.idl
 
 @MAKE_DLL_RULES@
