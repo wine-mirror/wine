@@ -2065,6 +2065,7 @@ static void test_sh_path_prepare(void)
     HRESULT res;
     CHAR path[MAX_PATH];
     CHAR UNICODE_PATH_A[MAX_PATH];
+    BOOL UsedDefaultChar;
 
     if(!pSHPathPrepareForWriteA)
     {
@@ -2156,7 +2157,19 @@ static void test_sh_path_prepare(void)
         win_skip("Skipping SHPathPrepareForWriteW tests\n");
         return;
     }
-    WideCharToMultiByte(CP_ACP, 0, UNICODE_PATH, -1, UNICODE_PATH_A, sizeof(UNICODE_PATH_A), NULL, NULL);
+
+    SetLastError(0xdeadbeef);
+    UsedDefaultChar = FALSE;
+    if (WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS, UNICODE_PATH, -1, UNICODE_PATH_A, sizeof(UNICODE_PATH_A), NULL, &UsedDefaultChar) == 0)
+    {
+        win_skip("Could not convert Unicode path name to multibyte (%d)\n", GetLastError());
+        return;
+    }
+    if (UsedDefaultChar)
+    {
+        win_skip("Could not find unique multibyte representation for directory name using default codepage\n");
+        return;
+    }
 
     /* unicode directory doesn't exist, SHPPFW_NONE */
     RemoveDirectoryA(UNICODE_PATH_A);
