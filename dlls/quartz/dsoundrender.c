@@ -141,7 +141,7 @@ static HRESULT DSoundRender_GetWritePos(DSoundRenderImpl *This, DWORD *ret_write
     WAVEFORMATEX *wfx = (WAVEFORMATEX*)This->pInputPin->pin.mtCurrent.pbFormat;
     DWORD writepos, min_writepos, playpos;
     REFERENCE_TIME max_lag = 50 * 10000;
-    REFERENCE_TIME min_lag = 1 * 10000;
+    REFERENCE_TIME min_lag = 25 * 10000;
     REFERENCE_TIME cur, writepos_t, delta_t;
 
     DSoundRender_UpdatePositions(This, &writepos, &min_writepos);
@@ -157,7 +157,7 @@ static HRESULT DSoundRender_GetWritePos(DSoundRenderImpl *This, DWORD *ret_write
         cur = -1;
 
     if (writepos == min_writepos)
-        max_lag = min_lag;
+        max_lag = 0;
 
     *skip = 0;
     if (cur < 0 || write_at < 0) {
