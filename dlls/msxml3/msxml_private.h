@@ -384,46 +384,28 @@ extern HRESULT XMLDocument_create( IUnknown *pUnkOuter, void **pObj );
 extern HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, void **pObj );
 extern HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **pObj);
 
-static inline const CLSID* DOMDocument_version(const MSXML_VERSION v)
+static inline const CLSID* DOMDocument_version(MSXML_VERSION v)
 {
-    CLSID const* clsid;
     switch (v)
     {
-        case MSXML_DEFAULT:
-            clsid = &CLSID_DOMDocument;
-            break;
-        case MSXML3:
-            clsid = &CLSID_DOMDocument30;
-            break;
-        case MSXML4:
-            clsid = &CLSID_DOMDocument40;
-            break;
-        case MSXML6:
-            clsid = &CLSID_DOMDocument60;
-            break;
+    default:
+    case MSXML_DEFAULT: return &CLSID_DOMDocument;
+    case MSXML3: return &CLSID_DOMDocument30;
+    case MSXML4: return &CLSID_DOMDocument40;
+    case MSXML6: return &CLSID_DOMDocument60;
     }
-    return clsid;
 }
 
-static inline const CLSID* SchemaCache_version(const MSXML_VERSION v)
+static inline const CLSID* SchemaCache_version(MSXML_VERSION v)
 {
-    CLSID const* clsid;
     switch (v)
     {
-        case MSXML_DEFAULT:
-            clsid = &CLSID_XMLSchemaCache;
-            break;
-        case MSXML3:
-            clsid = &CLSID_XMLSchemaCache30;
-            break;
-        case MSXML4:
-            clsid = &CLSID_XMLSchemaCache40;
-            break;
-        case MSXML6:
-            clsid = &CLSID_XMLSchemaCache60;
-            break;
+    default:
+    case MSXML_DEFAULT: return &CLSID_XMLSchemaCache;
+    case MSXML3: return &CLSID_XMLSchemaCache30;
+    case MSXML4: return &CLSID_XMLSchemaCache40;
+    case MSXML6: return &CLSID_XMLSchemaCache60;
     }
-    return clsid;
 }
 
 typedef struct bsc_t bsc_t;
