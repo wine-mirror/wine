@@ -150,9 +150,9 @@ static void test_query_interface(void)
     RELEASE_EXPECT(ppb, 1);
     QI_SUCCEED(pDSRender, IID_IMediaPosition, pMediaPosition);
     RELEASE_EXPECT(pMediaPosition, 1);
+    }
     QI_SUCCEED(pDSRender, IID_IQualityControl, pQualityControl);
     RELEASE_EXPECT(pQualityControl, 1);
-    }
 }
 
 static void test_pin(IPin *pin)
