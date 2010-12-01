@@ -2279,6 +2279,8 @@ static const WCHAR CERT_TRUST_PUB_AUTHENTICODE_FLAGS_VALUE_NAME[] =
  "CertDllVerifyCertificateChainPolicy"
 #define URL_OID_GET_OBJECT_URL_FUNC    "UrlDllGetObjectUrl"
 #define TIME_VALID_OID_GET_OBJECT_FUNC "TimeValidDllGetObject"
+#define CMSG_OID_GEN_CONTENT_ENCRYPT_KEY_FUNC "CryptMsgDllGenContentEncryptKey"
+#define CMSG_OID_EXPORT_KEY_TRANS_FUNC        "CryptMsgDllExportKeyTrans"
 
 #define CRYPT_OID_REGPATH "Software\\Microsoft\\Cryptography\\OID"
 #define CRYPT_OID_REG_ENCODING_TYPE_PREFIX "EncodingType "
@@ -3777,6 +3779,41 @@ typedef struct _CMSG_CMS_RECIPIENT_INFO {
 #define CMSG_KEY_TRANS_CMS_VERSION      CMSG_ENVELOPED_RECIPIENT_V2
 #define CMSG_KEY_AGREE_VERSION          CMSG_ENVELOPED_RECIPIENT_V3
 #define CMSG_MAIL_LIST_VERSION          CMSG_ENVELOPED_RECIPIENT_V4
+
+typedef void * (WINAPI *PFN_CMSG_ALLOC)(size_t cb);
+typedef void   (WINAPI *PFN_CMSG_FREE)(void *pv);
+
+typedef struct _CMSG_CONTENT_ENCRYPT_INFO {
+    DWORD                       cbSize;
+    HCRYPTPROV                  hCryptProv;
+    CRYPT_ALGORITHM_IDENTIFIER  ContentEncryptionAlgorithm;
+    void                       *pvEncryptionAuxInfo;
+    DWORD                       cRecipients;
+    PCMSG_RECIPIENT_ENCODE_INFO rgCmsRecipients;
+    PFN_CMSG_ALLOC              pfnAlloc;
+    PFN_CMSG_FREE               pfnFree;
+    DWORD                       dwEncryptFlags;
+    HCRYPTKEY                   hContentEncryptKey;
+    DWORD                       dwFlags;
+} CMSG_CONTENT_ENCRYPT_INFO, *PCMSG_CONTENT_ENCRYPT_INFO;
+
+typedef struct _CMSG_KEY_TRANS_ENCRYPT_INFO {
+    DWORD                       cbSize;
+    DWORD                       dwRecipientIndex;
+    CRYPT_ALGORITHM_IDENTIFIER  KeyEncryptionAlgorithm;
+    CRYPT_DATA_BLOB             EncryptedKey;
+    DWORD                       dwFlags;
+} CMSG_KEY_TRANS_ENCRYPT_INFO, *PCMSG_KEY_TRANS_ENCRYPT_INFO;
+
+typedef BOOL (WINAPI *PFN_CMSG_GEN_CONTENT_ENCRYPT_KEY)(
+ PCMSG_CONTENT_ENCRYPT_INFO pContentEncryptInfo, DWORD dwFlags,
+ void *pvReserved);
+
+typedef BOOL (WINAPI *PFN_CMSG_EXPORT_KEY_TRANS)(
+ PCMSG_CONTENT_ENCRYPT_INFO pContentEncryptInfo,
+ PCMSG_KEY_TRANS_RECIPIENT_ENCODE_INFO pKeyTransEncodeInfo,
+ PCMSG_KEY_TRANS_ENCRYPT_INFO pKeyTransEncryptInfo,
+ DWORD dwFlags, void *pvReserved);
 
 /* CryptMsgGetAndVerifySigner flags */
 #define CMSG_TRUSTED_SIGNER_FLAG   0x1
