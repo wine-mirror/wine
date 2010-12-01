@@ -86,7 +86,7 @@ typedef int (*__cdecl MSVCRT__onexit_t)(void);
 typedef void (__cdecl *MSVCRT_invalid_parameter_handler)(const MSVCRT_wchar_t*, const MSVCRT_wchar_t*, const MSVCRT_wchar_t*, unsigned, MSVCRT_uintptr_t);
 typedef void (__cdecl *MSVCRT_purecall_handler)(void);
 
-typedef struct {long double x;} MSVCRT__LDOUBLE;
+typedef struct {ULONG x80[3];} MSVCRT__LDOUBLE; /* Intel 80 bit FP format has sizeof() 12 */
 
 struct MSVCRT_tm {
     int tm_sec;
