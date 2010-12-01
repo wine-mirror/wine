@@ -146,7 +146,9 @@ static HRESULT DSoundRender_GetWritePos(DSoundRenderImpl *This, DWORD *ret_write
 
     DSoundRender_UpdatePositions(This, &writepos, &min_writepos);
     playpos = This->last_playpos;
-    if (This->filter.pClock == (IReferenceClock*)&This->IReferenceClock_vtbl) {
+    if (This->filter.state == State_Paused) {
+        write_at = cur = -1;
+    } else if (This->filter.pClock == (IReferenceClock*)&This->IReferenceClock_vtbl) {
         max_lag = min_lag;
         cur = This->play_time + time_from_pos(This, playpos);
         cur -= This->filter.rtStreamStart;
@@ -226,12 +228,10 @@ static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, REFERENCE_TIM
         DWORD writepos, skip = 0, free, size1, size2, ret;
         BYTE *buf1, *buf2;
 
-        if (This->filter.state == State_Running)
-            hr = DSoundRender_GetWritePos(This, &writepos, tStart, &free, &skip);
-        else
-            hr = S_FALSE;
+        hr = DSoundRender_GetWritePos(This, &writepos, tStart, &free, &skip);
 
         if (hr != S_OK) {
+            SetEvent(This->state_change);
             This->in_loop = 1;
             LeaveCriticalSection(&This->filter.csFilter);
             ret = WaitForSingleObject(This->blocked, 10);
@@ -251,7 +251,7 @@ static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, REFERENCE_TIM
         if (skip)
             FIXME("Sample dropped %u of %u bytes\n", skip, size);
         if (skip >= size)
-            return S_OK;
+            break;
         data += skip;
         size -= skip;
 
@@ -362,7 +362,6 @@ static HRESULT WINAPI DSoundRender_Receive(BaseInputPin *pin, IMediaSample * pSa
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
     TRACE("Sample data ptr = %p, size = %d\n", pbSrcStream, cbSrcStream);
 
-    SetEvent(This->state_change);
     hr = DSoundRender_SendSampleData(This, tStart, tStop, pbSrcStream, cbSrcStream);
     LeaveCriticalSection(&This->filter.csFilter);
     return hr;
