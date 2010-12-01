@@ -386,6 +386,12 @@ HDDEDATA WINAPI DdeClientTransaction16(LPVOID pData, DWORD cbData, HCONV hConv,
                                        HSZ hszItem, UINT16 wFmt, UINT16 wType,
                                        DWORD dwTimeout, LPDWORD pdwResult)
 {
+    if (cbData != (DWORD)-1)
+    {
+        /* pData is not a pointer if cbData is -1, so we linearize the address
+         * here rather than in the calling code. */
+        pData = MapSL((SEGPTR)pData);
+    }
     return DdeClientTransaction(pData, cbData, hConv, hszItem,
                                 wFmt, wType, dwTimeout, pdwResult);
 }
