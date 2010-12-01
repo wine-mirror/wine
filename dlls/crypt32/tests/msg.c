@@ -2118,16 +2118,13 @@ static void test_enveloped_msg_update(void)
     {
         SetLastError(0xdeadbeef);
         ret = CryptMsgUpdate(msg, NULL, 0, FALSE);
-        todo_wine
         ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
          "expected CRYPT_E_MSG_ERROR, got %08x\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
-        todo_wine
         ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
-        todo_wine
         ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
          "expected CRYPT_E_MSG_ERROR, got %08x\n", GetLastError());
         CryptMsgClose(msg);
@@ -2142,18 +2139,15 @@ static void test_enveloped_msg_update(void)
     {
         SetLastError(0xdeadbeef);
         ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
-        todo_wine
         ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
          "expected CRYPT_E_MSG_ERROR, got %08x\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
-        todo_wine
         ok(ret ||
          broken(!ret && GetLastError() == NTE_PERM), /* some NT4 */
          "CryptMsgUpdate failed: %08x\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
-        todo_wine
         ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
          "expected CRYPT_E_MSG_ERROR, got %08x\n", GetLastError());
         CryptMsgClose(msg);
@@ -2168,12 +2162,10 @@ static void test_enveloped_msg_update(void)
     {
         SetLastError(0xdeadbeef);
         ret = CryptMsgUpdate(msg, NULL, 0, FALSE);
-        todo_wine
         ok(!ret && GetLastError() == E_INVALIDARG,
          "expected E_INVALIDARG, got %08x\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
-        todo_wine
         ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
         CryptMsgClose(msg);
     }
@@ -2187,12 +2179,10 @@ static void test_enveloped_msg_update(void)
     {
         SetLastError(0xdeadbeef);
         ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
-        todo_wine
         ok(!ret && GetLastError() == E_INVALIDARG,
          "expected E_INVALIDARG, got %08x\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
-        todo_wine
         ok(ret ||
          broken(!ret && GetLastError() == NTE_PERM), /* some NT4 */
          "CryptMsgUpdate failed: %08x\n", GetLastError());
@@ -2208,11 +2198,9 @@ static void test_enveloped_msg_update(void)
     {
         SetLastError(0xdeadbeef);
         ret = CryptMsgUpdate(msg, NULL, 0, FALSE);
-        todo_wine
         ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
-        todo_wine
         ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
         CryptMsgClose(msg);
     }
@@ -2226,11 +2214,9 @@ static void test_enveloped_msg_update(void)
     {
         SetLastError(0xdeadbeef);
         ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
-        todo_wine
         ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
-        todo_wine
         ok(ret ||
          broken(!ret && GetLastError() == NTE_PERM), /* some NT4 */
          "CryptMsgUpdate failed: %08x\n", GetLastError());

@@ -1793,8 +1793,70 @@ static BOOL CEnvelopedEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
 static BOOL CEnvelopedEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
  DWORD cbData, BOOL fFinal)
 {
-    FIXME("(%p, %p, %d, %d): stub\n", hCryptMsg, pbData, cbData, fFinal);
-    return FALSE;
+    CEnvelopedEncodeMsg *msg = hCryptMsg;
+    BOOL ret = FALSE;
+
+    if (msg->base.state == MsgStateFinalized)
+        SetLastError(CRYPT_E_MSG_ERROR);
+    else if (msg->base.streamed)
+    {
+        FIXME("streamed stub\n");
+        msg->base.state = fFinal ? MsgStateFinalized : MsgStateUpdated;
+        ret = TRUE;
+    }
+    else
+    {
+        if (!fFinal)
+        {
+            if (msg->base.open_flags & CMSG_DETACHED_FLAG)
+                SetLastError(E_INVALIDARG);
+            else
+                SetLastError(CRYPT_E_MSG_ERROR);
+        }
+        else
+        {
+            if (cbData)
+            {
+                DWORD dataLen = cbData;
+
+                msg->data.cbData = cbData;
+                msg->data.pbData = CryptMemAlloc(cbData);
+                if (msg->data.pbData)
+                {
+                    memcpy(msg->data.pbData, pbData, cbData);
+                    ret = CryptEncrypt(msg->key, 0, TRUE, 0, msg->data.pbData,
+                     &dataLen, msg->data.cbData);
+                    msg->data.cbData = dataLen;
+                    if (dataLen > cbData)
+                    {
+                        msg->data.pbData = CryptMemRealloc(msg->data.pbData,
+                         dataLen);
+                        if (msg->data.pbData)
+                        {
+                            dataLen = cbData;
+                            ret = CryptEncrypt(msg->key, 0, TRUE, 0,
+                             msg->data.pbData, &dataLen, msg->data.cbData);
+                        }
+                        else
+                            ret = FALSE;
+                    }
+                    if (!ret)
+                        CryptMemFree(msg->data.pbData);
+                }
+                else
+                    ret = FALSE;
+                if (!ret)
+                {
+                    msg->data.cbData = 0;
+                    msg->data.pbData = NULL;
+                }
+            }
+            else
+                ret = TRUE;
+            msg->base.state = MsgStateFinalized;
+        }
+    }
+    return ret;
 }
 
 static HCRYPTMSG CEnvelopedEncodeMsg_Open(DWORD dwFlags,
