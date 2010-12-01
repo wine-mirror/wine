@@ -994,10 +994,11 @@ static HRESULT parse_ctab_constant_type(const D3DXSHADER_TYPEINFO *type, ctab_co
     constant->desc.Type = type->Type;
     constant->desc.Rows = type->Rows;
     constant->desc.Columns = type->Columns;
+    constant->desc.Elements = type->Elements;
     constant->desc.StructMembers = type->StructMembers;
 
-    TRACE("class = %d, type = %d, rows = %d, columns = %d, struct_members = %d\n",
-          constant->desc.Class, constant->desc.Type,
+    TRACE("class = %d, type = %d, rows = %d, columns = %d, elements = %d, struct_members = %d\n",
+          constant->desc.Class, constant->desc.Type, constant->desc.Elements,
           constant->desc.Rows, constant->desc.Columns, constant->desc.StructMembers);
 
     if ((constant->desc.Class == D3DXPC_STRUCT) && constant->desc.StructMembers)
@@ -1095,11 +1096,24 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD* byte_code,
         object->constants[i].desc.Name = object->ctab + constant_info[i].Name;
         object->constants[i].desc.RegisterSet = constant_info[i].RegisterSet;
         object->constants[i].desc.RegisterIndex = constant_info[i].RegisterIndex;
-        object->constants[i].desc.RegisterCount = 0;
+        object->constants[i].desc.RegisterCount = constant_info[i].RegisterCount;
+        object->constants[i].desc.DefaultValue = object->ctab + constant_info[i].DefaultValue;
+
         hr = parse_ctab_constant_type((LPD3DXSHADER_TYPEINFO)(object->ctab + constant_info[i].TypeInfo),
              &object->constants[i]);
         if (hr != D3D_OK)
             goto error;
+
+        if (constant_info[i].RegisterSet != D3DXRS_FLOAT4)
+            FIXME("Don't know how to calculate Bytes for non D3DXRS_FLOAT4 constants\n");
+
+        /* D3DXRS_FLOAT4 has a base size of 4 (not taking into account dimensions and element count) */
+        object->constants[i].desc.Bytes = 4;
+
+        /* Take into account dimensions and elements */
+        object->constants[i].desc.Bytes *= object->constants[i].desc.Elements;
+        object->constants[i].desc.Bytes *= object->constants[i].desc.Rows *
+                object->constants[i].desc.Columns;
     }
 
     *constant_table = (LPD3DXCONSTANTTABLE)object;
