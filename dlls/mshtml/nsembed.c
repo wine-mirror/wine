@@ -1128,9 +1128,11 @@ static nsresult NSAPI nsContextMenuListener_OnShowContextMenu(nsIContextMenuList
 {
     NSContainer *This = NSCML_THIS(iface);
     nsIDOMMouseEvent *event;
+    HTMLDOMNode *node;
     POINT pt;
     DWORD dwID = CONTEXT_MENU_DEFAULT;
     nsresult nsres;
+    HRESULT hres;
 
     TRACE("(%p)->(%08x %p %p)\n", This, aContextFlags, aEvent, aNode);
 
@@ -1166,8 +1168,11 @@ static nsresult NSAPI nsContextMenuListener_OnShowContextMenu(nsIContextMenuList
         FIXME("aContextFlags=%08x\n", aContextFlags);
     };
 
-    show_context_menu(This->doc, dwID, &pt, (IDispatch*)HTMLDOMNODE(get_node(This->doc->basedoc.doc_node, aNode, TRUE)));
+    hres = get_node(This->doc->basedoc.doc_node, aNode, TRUE, &node);
+    if(FAILED(hres))
+        return NS_ERROR_FAILURE;
 
+    show_context_menu(This->doc, dwID, &pt, (IDispatch*)HTMLDOMNODE(node));
     return NS_OK;
 }
 

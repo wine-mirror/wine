@@ -138,6 +138,7 @@ static HRESULT WINAPI HTMLDocument3_get_documentElement(IHTMLDocument3 *iface, I
     nsIDOMElement *nselem = NULL;
     HTMLDOMNode *node;
     nsresult nsres;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -157,15 +158,17 @@ static HRESULT WINAPI HTMLDocument3_get_documentElement(IHTMLDocument3 *iface, I
         return E_FAIL;
     }
 
-    if(nselem) {
-        node = get_node(This->doc_node, (nsIDOMNode *)nselem, TRUE);
-        nsIDOMElement_Release(nselem);
-        IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)p);
-    }else {
+    if(!nselem) {
         *p = NULL;
+        return S_OK;
     }
 
-    return S_OK;
+    hres = get_node(This->doc_node, (nsIDOMNode *)nselem, TRUE, &node);
+    nsIDOMElement_Release(nselem);
+    if(FAILED(hres))
+        return hres;
+
+    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)p);
 }
 
 static HRESULT WINAPI HTMLDocument3_uniqueID(IHTMLDocument3 *iface, BSTR *p)
@@ -464,6 +467,7 @@ static HRESULT WINAPI HTMLDocument3_getElementById(IHTMLDocument3 *iface, BSTR v
     nsIDOMNodeList *nsnode_list;
     nsAString id_str;
     nsresult nsres;
+    HRESULT hres;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(v), pel);
 
@@ -528,15 +532,17 @@ static HRESULT WINAPI HTMLDocument3_getElementById(IHTMLDocument3 *iface, BSTR v
         nsnode = nsnode_by_name ? nsnode_by_name : nsnode_by_id;
 
     if(nsnode) {
-        node = get_node(This->doc_node, nsnode, TRUE);
+        hres = get_node(This->doc_node, nsnode, TRUE, &node);
         nsIDOMNode_Release(nsnode);
 
-        IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)pel);
+        if(SUCCEEDED(hres))
+            hres = IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)pel);
     }else {
         *pel = NULL;
+        hres = S_OK;
     }
 
-    return S_OK;
+    return hres;
 }
 
 

@@ -110,7 +110,9 @@ static HRESULT WINAPI HTMLDocument_get_all(IHTMLDocument2 *iface, IHTMLElementCo
 {
     HTMLDocument *This = HTMLDOC_THIS(iface);
     nsIDOMElement *nselem = NULL;
+    HTMLDOMNode *node;
     nsresult nsres;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -125,14 +127,16 @@ static HRESULT WINAPI HTMLDocument_get_all(IHTMLDocument2 *iface, IHTMLElementCo
         return E_FAIL;
     }
 
-    if(nselem) {
-        *p = create_all_collection(get_node(This->doc_node, (nsIDOMNode*)nselem, TRUE), TRUE);
-        nsIDOMElement_Release(nselem);
-    }else {
+    if(!nselem) {
         *p = NULL;
+        return S_OK;
     }
 
-    return S_OK;
+    hres = get_node(This->doc_node, (nsIDOMNode*)nselem, TRUE, &node);
+    if(SUCCEEDED(hres))
+        *p = create_all_collection(node, TRUE);
+    nsIDOMElement_Release(nselem);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLDocument_get_body(IHTMLDocument2 *iface, IHTMLElement **p)
@@ -140,6 +144,7 @@ static HRESULT WINAPI HTMLDocument_get_body(IHTMLDocument2 *iface, IHTMLElement 
     HTMLDocument *This = HTMLDOC_THIS(iface);
     nsIDOMHTMLElement *nsbody = NULL;
     HTMLDOMNode *node;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -153,17 +158,17 @@ static HRESULT WINAPI HTMLDocument_get_body(IHTMLDocument2 *iface, IHTMLElement 
         }
     }
 
-    if(nsbody) {
-        node = get_node(This->doc_node, (nsIDOMNode*)nsbody, TRUE);
-        nsIDOMHTMLElement_Release(nsbody);
-
-        IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)p);
-    }else {
+    if(!nsbody) {
         *p = NULL;
+        return S_OK;
     }
 
-    TRACE("*p = %p\n", *p);
-    return S_OK;
+    hres = get_node(This->doc_node, (nsIDOMNode*)nsbody, TRUE, &node);
+    nsIDOMHTMLElement_Release(nsbody);
+    if(FAILED(hres))
+        return hres;
+
+    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)p);
 }
 
 static HRESULT WINAPI HTMLDocument_get_activeElement(IHTMLDocument2 *iface, IHTMLElement **p)

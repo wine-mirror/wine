@@ -1190,6 +1190,7 @@ static HRESULT WINAPI HTMLTxtRange_parentElement(IHTMLTxtRange *iface, IHTMLElem
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
     nsIDOMNode *nsnode, *tmp;
     HTMLDOMNode *node;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, parent);
 
@@ -1205,8 +1206,10 @@ static HRESULT WINAPI HTMLTxtRange_parentElement(IHTMLTxtRange *iface, IHTMLElem
         return S_OK;
     }
 
-    node = get_node(This->doc, nsnode, TRUE);
+    hres = get_node(This->doc, nsnode, TRUE, &node);
     nsIDOMNode_Release(nsnode);
+    if(FAILED(hres))
+        return hres;
 
     return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)parent);
 }

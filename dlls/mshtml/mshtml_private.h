@@ -857,7 +857,7 @@ HRESULT HTMLElement_clone(HTMLDOMNode*,nsIDOMNode*,HTMLDOMNode**);
 HRESULT HTMLFrameBase_QI(HTMLFrameBase*,REFIID,void**);
 void HTMLFrameBase_destructor(HTMLFrameBase*);
 
-HTMLDOMNode *get_node(HTMLDocumentNode*,nsIDOMNode*,BOOL);
+HRESULT get_node(HTMLDocumentNode*,nsIDOMNode*,BOOL,HTMLDOMNode**);
 void release_nodes(HTMLDocumentNode*);
 
 void release_script_hosts(HTMLWindow*);

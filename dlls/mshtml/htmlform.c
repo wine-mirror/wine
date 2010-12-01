@@ -47,6 +47,7 @@ static HRESULT htmlform_item(HTMLFormElement *This, int i, IDispatch **ret)
     nsIDOMNode *item;
     HTMLDOMNode *node;
     nsresult nsres;
+    HRESULT hres;
 
     nsres = nsIDOMHTMLFormElement_GetElements(This->nsform, &elements);
     if(NS_FAILED(nsres)) {
@@ -62,9 +63,9 @@ static HRESULT htmlform_item(HTMLFormElement *This, int i, IDispatch **ret)
     }
 
     if(item) {
-        node = get_node(This->element.node.doc, item, TRUE);
-        if(!node)
-            return E_OUTOFMEMORY;
+        hres = get_node(This->element.node.doc, item, TRUE, &node);
+        if(FAILED(hres))
+            return hres;
 
         IHTMLDOMNode_AddRef(HTMLDOMNODE(node));
         nsIDOMNode_Release(item);

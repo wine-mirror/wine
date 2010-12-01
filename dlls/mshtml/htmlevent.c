@@ -905,12 +905,18 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode
     nsIDOMNode *parent, *nsnode;
     HTMLDOMNode *node;
     PRUint16 node_type;
+    HRESULT hres;
 
     TRACE("(%p) %s\n", doc, debugstr_w(event_info[eid].name));
 
     prev_event = doc->basedoc.window->event;
-    if(set_event)
-        event_obj = create_event(get_node(doc, target, TRUE), eid, nsevent);
+    if(set_event) {
+        hres = get_node(doc, target, TRUE, &node);
+        if(FAILED(hres))
+            return;
+
+        event_obj = create_event(node, eid, nsevent);
+    }
     doc->basedoc.window->event = event_obj;
 
     nsIDOMNode_GetNodeType(target, &node_type);
@@ -920,8 +926,8 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode
     switch(node_type) {
     case ELEMENT_NODE:
         do {
-            node = get_node(doc, nsnode, FALSE);
-            if(node)
+            hres = get_node(doc, nsnode, FALSE, &node);
+            if(SUCCEEDED(hres) && node)
                 call_event_handlers(doc, event_obj, *get_node_event_target(node), node->cp_container, eid,
                         (IDispatch*)HTMLDOMNODE(node));
 
@@ -947,8 +953,8 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode
 
             nsres = nsIDOMHTMLDocument_GetBody(doc->nsdoc, &nsbody);
             if(NS_SUCCEEDED(nsres) && nsbody) {
-                node = get_node(doc, (nsIDOMNode*)nsbody, FALSE);
-                if(node)
+                hres = get_node(doc, (nsIDOMNode*)nsbody, FALSE, &node);
+                if(SUCCEEDED(hres) && node)
                     call_event_handlers(doc, event_obj, *get_node_event_target(node), node->cp_container,
                             eid, (IDispatch*)HTMLDOMNODE(node));
                 nsIDOMHTMLElement_Release(nsbody);
@@ -1225,6 +1231,7 @@ void check_event_attr(HTMLDocumentNode *doc, nsIDOMElement *nselem)
     HTMLDOMNode *node;
     int i;
     nsresult nsres;
+    HRESULT hres;
 
     nsAString_Init(&attr_value_str, NULL);
     nsAString_Init(&attr_name_str, NULL);
@@ -1241,8 +1248,9 @@ void check_event_attr(HTMLDocumentNode *doc, nsIDOMElement *nselem)
 
             disp = script_parse_event(doc->basedoc.window, attr_value);
             if(disp) {
-                node = get_node(doc, (nsIDOMNode*)nselem, TRUE);
-                set_event_handler_disp(get_node_event_target(node), node->nsnode, node->doc, i, disp);
+                hres = get_node(doc, (nsIDOMNode*)nselem, TRUE, &node);
+                if(SUCCEEDED(hres))
+                    set_event_handler_disp(get_node_event_target(node), node->nsnode, node->doc, i, disp);
                 IDispatch_Release(disp);
             }
         }

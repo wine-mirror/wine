@@ -275,14 +275,15 @@ static void bind_to_tree(HTMLDocumentNode *doc, nsISupports *nsiface)
     nsIDOMNode *nsnode;
     HTMLDOMNode *node;
     nsresult nsres;
+    HRESULT hres;
 
     nsres = nsISupports_QueryInterface(nsiface, &IID_nsIDOMNode, (void**)&nsnode);
     if(NS_FAILED(nsres))
         return;
 
-    node = get_node(doc, nsnode, TRUE);
+    hres = get_node(doc, nsnode, TRUE, &node);
     nsIDOMNode_Release(nsnode);
-    if(!node) {
+    if(FAILED(hres)) {
         ERR("Could not get node\n");
         return;
     }

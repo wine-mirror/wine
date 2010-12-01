@@ -466,6 +466,7 @@ static HRESULT WINAPI HTMLOptionElementFactory_create(IHTMLOptionElementFactory 
 {
     HTMLOptionElementFactory *This = HTMLOPTFACTORY_THIS(iface);
     nsIDOMHTMLElement *nselem;
+    HTMLDOMNode *node;
     HRESULT hres;
 
     static const PRUnichar optionW[] = {'O','P','T','I','O','N',0};
@@ -484,9 +485,13 @@ static HRESULT WINAPI HTMLOptionElementFactory_create(IHTMLOptionElementFactory 
     if(FAILED(hres))
         return hres;
 
-    hres = IHTMLDOMNode_QueryInterface(HTMLDOMNODE(get_node(This->window->doc, (nsIDOMNode*)nselem, TRUE)),
-            &IID_IHTMLOptionElement, (void**)optelem);
+    hres = get_node(This->window->doc, (nsIDOMNode*)nselem, TRUE, &node);
     nsIDOMHTMLElement_Release(nselem);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node),
+            &IID_IHTMLOptionElement, (void**)optelem);
 
     if(V_VT(&text) == VT_BSTR)
         IHTMLOptionElement_put_text(*optelem, V_BSTR(&text));

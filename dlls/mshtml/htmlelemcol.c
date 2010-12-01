@@ -480,6 +480,7 @@ static void create_all_list(HTMLDocumentNode *doc, HTMLDOMNode *elem, elem_vecto
     nsIDOMNode *iter;
     PRUint32 list_len = 0, i;
     nsresult nsres;
+    HRESULT hres;
 
     nsres = nsIDOMNode_GetChildNodes(elem->nsnode, &nsnode_list);
     if(NS_FAILED(nsres)) {
@@ -499,7 +500,13 @@ static void create_all_list(HTMLDocumentNode *doc, HTMLDOMNode *elem, elem_vecto
         }
 
         if(is_elem_node(iter)) {
-            HTMLDOMNode *node = get_node(doc, iter, TRUE);
+            HTMLDOMNode *node;
+
+            hres = get_node(doc, iter, TRUE, &node);
+            if(FAILED(hres)) {
+                FIXME("get_node failed: %08x\n", hres);
+                continue;
+            }
 
             elem_vector_add(buf, HTMLELEM_NODE_THIS(node));
             create_all_list(doc, node, buf);
@@ -524,7 +531,9 @@ IHTMLElementCollection *create_all_collection(HTMLDOMNode *node, BOOL include_ro
 IHTMLElementCollection *create_collection_from_nodelist(HTMLDocumentNode *doc, IUnknown *unk, nsIDOMNodeList *nslist)
 {
     PRUint32 length = 0, i;
+    HTMLDOMNode *node;
     elem_vector_t buf;
+    HRESULT hres;
 
     nsIDOMNodeList_GetLength(nslist, &length);
 
@@ -537,8 +546,12 @@ IHTMLElementCollection *create_collection_from_nodelist(HTMLDocumentNode *doc, I
 
         for(i=0; i<length; i++) {
             nsIDOMNodeList_Item(nslist, i, &nsnode);
-            if(is_elem_node(nsnode))
-                buf.buf[buf.len++] = HTMLELEM_NODE_THIS(get_node(doc, nsnode, TRUE));
+            if(is_elem_node(nsnode)) {
+                hres = get_node(doc, nsnode, TRUE, &node);
+                if(FAILED(hres))
+                    continue;
+                buf.buf[buf.len++] = HTMLELEM_NODE_THIS(node);
+            }
             nsIDOMNode_Release(nsnode);
         }
 
@@ -554,6 +567,8 @@ IHTMLElementCollection *create_collection_from_htmlcol(HTMLDocumentNode *doc, IU
 {
     PRUint32 length = 0, i;
     elem_vector_t buf;
+    HTMLDOMNode *node;
+    HRESULT hres = S_OK;
 
     nsIDOMHTMLCollection_GetLength(nscol, &length);
 
@@ -565,11 +580,19 @@ IHTMLElementCollection *create_collection_from_htmlcol(HTMLDocumentNode *doc, IU
 
         for(i=0; i<length; i++) {
             nsIDOMHTMLCollection_Item(nscol, i, &nsnode);
-            buf.buf[i] = HTMLELEM_NODE_THIS(get_node(doc, nsnode, TRUE));
+            hres = get_node(doc, nsnode, TRUE, &node);
             nsIDOMNode_Release(nsnode);
+            if(FAILED(hres))
+                break;
+            buf.buf[i] = HTMLELEM_NODE_THIS(node);
         }
     }else {
         buf.buf = NULL;
+    }
+
+    if(FAILED(hres)) {
+        heap_free(buf.buf);
+        return NULL;
     }
 
     return HTMLElementCollection_Create(unk, buf.buf, buf.len);

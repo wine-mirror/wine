@@ -47,6 +47,7 @@ static HRESULT htmlselect_item(HTMLSelectElement *This, int i, IDispatch **ret)
     nsIDOMHTMLOptionsCollection *nscol;
     nsIDOMNode *nsnode;
     nsresult nsres;
+    HRESULT hres;
 
     nsres = nsIDOMHTMLSelectElement_GetOptions(This->nsselect, &nscol);
     if(NS_FAILED(nsres)) {
@@ -64,12 +65,10 @@ static HRESULT htmlselect_item(HTMLSelectElement *This, int i, IDispatch **ret)
     if(nsnode) {
         HTMLDOMNode *node;
 
-        node = get_node(This->element.node.doc, nsnode, TRUE);
+        hres = get_node(This->element.node.doc, nsnode, TRUE, &node);
         nsIDOMNode_Release(nsnode);
-        if(!node) {
-            ERR("Could not find node\n");
-            return E_FAIL;
-        }
+        if(FAILED(hres))
+            return hres;
 
         IHTMLDOMNode_AddRef(HTMLDOMNODE(node));
         *ret = (IDispatch*)HTMLDOMNODE(node);
