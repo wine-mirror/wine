@@ -52,6 +52,7 @@ C_SRCS = \
 	main.c \
 	mutation.c \
 	navigate.c \
+	npplugin.c \
 	nsembed.c \
 	nsevents.c \
 	nsio.c \

@@ -520,12 +520,3 @@ const char *debugstr_variant(const VARIANT *v)
         return wine_dbg_sprintf("{vt %d}", V_VT(v));
     }
 }
-
-/***********************************************************************
- *          NP_GetEntryPoints (npmshtml.@)
- */
-INT16 WINAPI NP_GetEntryPoints(void *funcs)
-{
-    FIXME("(%p)\n", funcs);
-    return 1;
-}
