@@ -39,6 +39,8 @@ struct drive_info
     ino_t ino;
 };
 
+extern NTSTATUS close_handle( HANDLE );
+
 /* exceptions */
 extern void wait_suspend( CONTEXT *context );
 extern NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *context );
