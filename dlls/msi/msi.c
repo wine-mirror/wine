@@ -1980,6 +1980,11 @@ INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR szProduct)
     if (lstrlenW(szProduct) != GUID_SIZE - 1)
         return INSTALLSTATE_INVALIDARG;
 
+    if (szProduct[0] != '{' || szProduct[37] != '}')
+        return INSTALLSTATE_UNKNOWN;
+
+    SetLastError( ERROR_SUCCESS );
+
     if (MSIREG_OpenProductKey(szProduct, NULL, MSIINSTALLCONTEXT_USERMANAGED,
                               &prodkey, FALSE) != ERROR_SUCCESS &&
         MSIREG_OpenProductKey(szProduct, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
@@ -2628,6 +2633,8 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
 
     if (!squash_guid( szProduct, squishProduct ))
         return INSTALLSTATE_INVALIDARG;
+
+    SetLastError( ERROR_SUCCESS );
 
     if (MSIREG_OpenFeaturesKey(szProduct, MSIINSTALLCONTEXT_USERMANAGED,
                                &hkey, FALSE) != ERROR_SUCCESS &&
