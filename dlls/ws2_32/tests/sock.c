@@ -1801,8 +1801,9 @@ static void test_WSAStringToAddressA(void)
 static void test_WSAStringToAddressW(void)
 {
     INT ret, len;
-    SOCKADDR_IN sockaddr;
+    SOCKADDR_IN sockaddr, *sin;
     SOCKADDR_IN6 sockaddr6;
+    SOCKADDR_STORAGE sockaddr_storage;
     int GLE;
 
     WCHAR address1[] = { '0','.','0','.','0','.','0', 0 };
@@ -1865,6 +1866,20 @@ static void test_WSAStringToAddressW(void)
     ok( (ret == 0 && sockaddr.sin_addr.s_addr == 0xffffffff && sockaddr.sin_port == 0xffff) || 
         (ret == SOCKET_ERROR && (GLE == ERROR_INVALID_PARAMETER || GLE == WSAEINVAL)),
         "WSAStringToAddressW() failed unexpectedly: %d\n", GLE );
+
+    /* Test with a larger buffer than necessary */
+    len = sizeof(sockaddr_storage);
+    sin = (SOCKADDR_IN *)&sockaddr_storage;
+    sin->sin_port = 0;
+    sin->sin_addr.s_addr = 0;
+
+    ret = WSAStringToAddressW( address5, AF_INET, NULL, (SOCKADDR*)sin, &len );
+    ok( (ret == 0 && sin->sin_addr.s_addr == 0xffffffff && sin->sin_port == 0xffff) ||
+        (ret == SOCKET_ERROR && (GLE == ERROR_INVALID_PARAMETER || GLE == WSAEINVAL)),
+        "WSAStringToAddressW() failed unexpectedly: %d\n", GLE );
+    ok( len == sizeof(SOCKADDR_IN) ||
+        broken(len == sizeof(SOCKADDR_STORAGE)) /* NT4/2k */,
+        "unexpected length %d\n", len );
 
     len = sizeof(sockaddr6);
     memset(&sockaddr6, 0, len);

@@ -5953,6 +5953,7 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
             res = WSAEFAULT;
             break;
         }
+        *lpAddressLength = sizeof(SOCKADDR_IN);
         memset(lpAddress, 0, sizeof(SOCKADDR_IN));
 
         ((LPSOCKADDR_IN)lpAddress)->sin_family = AF_INET;
@@ -5990,6 +5991,7 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
             break;
         }
 #ifdef HAVE_INET_PTON
+        *lpAddressLength = sizeof(SOCKADDR_IN6);
         memset(lpAddress, 0, sizeof(SOCKADDR_IN6));
 
         ((LPSOCKADDR_IN6)lpAddress)->sin6_family = WS_AF_INET6;
