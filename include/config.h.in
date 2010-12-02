@@ -54,6 +54,9 @@
 /* Define to 1 if you have the `chsize' function. */
 #undef HAVE_CHSIZE
 
+/* Define to 1 if you have the <CL/opencl.h> header file. */
+#undef HAVE_CL_OPENCL_H
+
 /* Define to 1 if you have the <CoreAudio/CoreAudio.h> header file. */
 #undef HAVE_COREAUDIO_COREAUDIO_H
 
@@ -579,6 +582,9 @@
 
 /* Define to 1 if you have the <OpenAL/al.h> header file. */
 #undef HAVE_OPENAL_AL_H
+
+/* Define to 1 if you have the <OpenCL/opencl.h> header file. */
+#undef HAVE_OPENCL_OPENCL_H
 
 /* Define if OpenGL is present on the system */
 #undef HAVE_OPENGL

@@ -70,6 +70,8 @@ AC_ARG_WITH(nas,       AS_HELP_STRING([--without-nas],[do not use the NAS sound 
             [if test "x$withval" = "xno"; then ac_cv_header_audio_audiolib_h=no; fi])
 AC_ARG_WITH(openal,    AS_HELP_STRING([--without-openal],[do not use OpenAL]),
             [if test "x$withval" = "xno"; then ac_cv_header_AL_al_h=no; ac_cv_header_OpenAL_al_h=no; fi])
+AC_ARG_WITH(opencl,    AS_HELP_STRING([--without-opencl],[do not use OpenCL]),
+            [if test "x$withval" = "xno"; then ac_cv_header_CL_opencl_h=no; ac_cv_header_OpenCL_opencl_h=no; fi])
 AC_ARG_WITH(opengl,    AS_HELP_STRING([--without-opengl],[do not use OpenGL]))
 AC_ARG_WITH(openssl,   AS_HELP_STRING([--without-openssl],[do not use OpenSSL]),
             [if test "x$withval" = "xno"; then ac_cv_header_openssl_err_h=no; ac_cv_header_openssl_ssl_h=no; fi])
@@ -370,12 +372,14 @@ AC_CHECK_HEADERS(\
 	AL/al.h \
 	AudioToolbox/AudioConverter.h \
 	AudioUnit/AudioUnit.h \
+	CL/opencl.h \
 	Carbon/Carbon.h \
 	CoreAudio/CoreAudio.h \
 	DiskArbitration/DiskArbitration.h \
 	IOKit/IOKitLib.h \
 	IOKit/hid/IOHIDLib.h \
 	OpenAL/al.h \
+	OpenCL/opencl.h \
 	alias.h \
 	alsa/asoundlib.h \
 	arpa/inet.h \
@@ -1096,6 +1100,15 @@ fi
 WINE_ERROR_WITH(x,[test "x$XLIB" = "x"],[X ${notice_platform}development files not found. Wine will be built
 without X support, which probably isn't what you want. You will need
 to install ${notice_platform}development packages of Xlib/Xfree86 at the very least.])
+
+dnl **** Check for OpenCL ****
+if test "$ac_cv_header_CL_opencl_h" = "yes" -o "$ac_cv_header_OpenCL_opencl_h" = "yes"
+then
+    AC_CHECK_LIB(OpenCL,clGetPlatformInfo,[AC_SUBST(LIBOPENCL,["-lOpenCL"])])
+fi
+WINE_NOTICE_WITH(opencl,[test "x$ac_cv_lib_OpenCL_clGetPlatformInfo" != xyes],
+                 [OpenCL ${notice_platform}development files not found, OpenCL won't be supported.])
+test "x$ac_cv_lib_OpenCL_clGetPlatformInfo" != xyes && enable_opencl=${enable_opencl:-no}
 
 dnl **** Check for libxml2 ****
 
@@ -2633,6 +2646,7 @@ WINE_CONFIG_DLL(olesvr.dll16,enable_win16)
 WINE_CONFIG_DLL(olesvr32,,[olesvr32])
 WINE_CONFIG_DLL(olethk32)
 WINE_CONFIG_DLL(openal32)
+WINE_CONFIG_DLL(opencl)
 WINE_CONFIG_DLL(opengl32,,[opengl32])
 WINE_CONFIG_TEST(dlls/opengl32/tests)
 WINE_CONFIG_DLL(pdh,,[pdh])

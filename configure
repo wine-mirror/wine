@@ -640,6 +640,7 @@ HALINCL
 XSLTINCL
 XML2INCL
 XML2LIBS
+LIBOPENCL
 NASLIBS
 X_EXTRA_LIBS
 X_LIBS
@@ -790,6 +791,7 @@ with_ldap
 with_mpg123
 with_nas
 with_openal
+with_opencl
 with_opengl
 with_openssl
 with_oss
@@ -1480,6 +1482,7 @@ Optional Packages:
   --without-mpg123        do not use the mpg123 library
   --without-nas           do not use the NAS sound support
   --without-openal        do not use OpenAL
+  --without-opencl        do not use OpenCL
   --without-opengl        do not use OpenGL
   --without-openssl       do not use OpenSSL
   --without-oss           do not use the OSS sound support
@@ -2641,6 +2644,12 @@ fi
 # Check whether --with-openal was given.
 if test "${with_openal+set}" = set; then :
   withval=$with_openal; if test "x$withval" = "xno"; then ac_cv_header_AL_al_h=no; ac_cv_header_OpenAL_al_h=no; fi
+fi
+
+
+# Check whether --with-opencl was given.
+if test "${with_opencl+set}" = set; then :
+  withval=$with_opencl; if test "x$withval" = "xno"; then ac_cv_header_CL_opencl_h=no; ac_cv_header_OpenCL_opencl_h=no; fi
 fi
 
 
@@ -5759,12 +5768,14 @@ for ac_header in \
 	AL/al.h \
 	AudioToolbox/AudioConverter.h \
 	AudioUnit/AudioUnit.h \
+	CL/opencl.h \
 	Carbon/Carbon.h \
 	CoreAudio/CoreAudio.h \
 	DiskArbitration/DiskArbitration.h \
 	IOKit/IOKitLib.h \
 	IOKit/hid/IOHIDLib.h \
 	OpenAL/al.h \
+	OpenCL/opencl.h \
 	alias.h \
 	alsa/asoundlib.h \
 	arpa/inet.h \
@@ -9051,6 +9062,60 @@ to install ${notice_platform}development packages of Xlib/Xfree86 at the very le
 Use the --without-x option if you really want this." "$LINENO" 5  ;;
 esac
 fi
+
+if test "$ac_cv_header_CL_opencl_h" = "yes" -o "$ac_cv_header_OpenCL_opencl_h" = "yes"
+then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for clGetPlatformInfo in -lOpenCL" >&5
+$as_echo_n "checking for clGetPlatformInfo in -lOpenCL... " >&6; }
+if test "${ac_cv_lib_OpenCL_clGetPlatformInfo+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lOpenCL  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char clGetPlatformInfo ();
+int
+main ()
+{
+return clGetPlatformInfo ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_OpenCL_clGetPlatformInfo=yes
+else
+  ac_cv_lib_OpenCL_clGetPlatformInfo=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_OpenCL_clGetPlatformInfo" >&5
+$as_echo "$ac_cv_lib_OpenCL_clGetPlatformInfo" >&6; }
+if test "x$ac_cv_lib_OpenCL_clGetPlatformInfo" = x""yes; then :
+  LIBOPENCL="-lOpenCL"
+
+fi
+
+fi
+if test "x$ac_cv_lib_OpenCL_clGetPlatformInfo" != xyes; then :
+  case "x$with_opencl" in
+  x)   as_fn_append wine_notices "|OpenCL ${notice_platform}development files not found, OpenCL won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "OpenCL ${notice_platform}development files not found, OpenCL won't be supported.
+This is an error since --with-opencl was requested." "$LINENO" 5  ;;
+esac
+fi
+test "x$ac_cv_lib_OpenCL_clGetPlatformInfo" != xyes && enable_opencl=${enable_opencl:-no}
 
 
 XML2LIBS=""
@@ -15056,6 +15121,7 @@ wine_fn_config_dll olesvr.dll16 enable_win16
 wine_fn_config_dll olesvr32 enable_olesvr32 olesvr32
 wine_fn_config_dll olethk32 enable_olethk32
 wine_fn_config_dll openal32 enable_openal32
+wine_fn_config_dll opencl enable_opencl
 wine_fn_config_dll opengl32 enable_opengl32 opengl32
 wine_fn_config_test dlls/opengl32/tests opengl32_test
 wine_fn_config_dll pdh enable_pdh pdh
