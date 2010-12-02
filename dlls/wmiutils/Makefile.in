@@ -3,7 +3,8 @@ IMPORTS   = oleaut32 ole32 advapi32
 
 C_SRCS = \
 	main.c \
-	regsvr.c \
 	statuscode.c
+
+IDL_R_SRCS = wmiutils.idl
 
 @MAKE_DLL_RULES@
