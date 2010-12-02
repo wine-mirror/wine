@@ -1970,6 +1970,7 @@ static inline WORD get_fpu_cw(void)
 
 static void test_fpu_setup(void)
 {
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
     D3DPRESENT_PARAMETERS present_parameters;
     IDirect3DDevice8 *device;
     D3DDISPLAYMODE d3ddm;
@@ -2032,6 +2033,7 @@ static void test_fpu_setup(void)
 done:
     if (window) DestroyWindow(window);
     if (d3d8) IDirect3D8_Release(d3d8);
+#endif
 }
 
 static void test_ApplyStateBlock(void)
@@ -2121,9 +2123,7 @@ START_TEST(device)
         }
         IDirect3D8_Release(d3d8);
 
-#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
         test_fpu_setup();
-#endif
         test_display_modes();
         test_shader_versions();
         test_swapchain();

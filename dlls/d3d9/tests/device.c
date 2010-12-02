@@ -2811,6 +2811,7 @@ static inline WORD get_fpu_cw(void)
 
 static void test_fpu_setup(void)
 {
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
     D3DPRESENT_PARAMETERS present_parameters;
     IDirect3DDevice9 *device;
     HWND window = NULL;
@@ -2868,6 +2869,7 @@ static void test_fpu_setup(void)
 done:
     if (window) DestroyWindow(window);
     if (d3d9) IDirect3D9_Release(d3d9);
+#endif
 }
 
 START_TEST(device)
@@ -2891,9 +2893,7 @@ START_TEST(device)
         }
         IDirect3D9_Release(d3d9);
 
-#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
         test_fpu_setup();
-#endif
         test_multi_device();
         test_display_formats();
         test_display_modes();
