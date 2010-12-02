@@ -163,6 +163,14 @@ typedef struct tagMSIPATCHINFO
     MSIPATCHSTATE state;
 } MSIPATCHINFO;
 
+typedef struct tagMSIBINARY
+{
+    struct list entry;
+    WCHAR *source;
+    WCHAR *tmpfile;
+    HMODULE module;
+} MSIBINARY;
+
 typedef struct _column_info
 {
     LPCWSTR table;
@@ -330,6 +338,7 @@ typedef struct tagMSIPACKAGE
     struct list files;
     struct list tempfiles;
     struct list folders;
+    struct list binaries;
     LPWSTR ActionFormat;
     LPWSTR LastAction;
     HANDLE log_file;

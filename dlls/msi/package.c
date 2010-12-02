@@ -284,6 +284,20 @@ static void free_package_structures( MSIPACKAGE *package )
         msi_free( patch );
     }
 
+    LIST_FOR_EACH_SAFE( item, cursor, &package->binaries )
+    {
+        MSIBINARY *binary = LIST_ENTRY( item, MSIBINARY, entry );
+
+        list_remove( &binary->entry );
+        if (binary->module)
+            FreeLibrary( binary->module );
+        if (!DeleteFileW( binary->tmpfile ))
+            ERR("failed to delete %s (%u)\n", debugstr_w(binary->tmpfile), GetLastError());
+        msi_free( binary->source );
+        msi_free( binary->tmpfile );
+        msi_free( binary );
+    }
+
     msi_free( package->BaseURL );
     msi_free( package->PackagePath );
     msi_free( package->ProductCode );
@@ -1059,6 +1073,7 @@ static MSIPACKAGE *msi_alloc_package( void )
         list_init( &package->sourcelist_info );
         list_init( &package->sourcelist_media );
         list_init( &package->patches );
+        list_init( &package->binaries );
     }
 
     return package;
