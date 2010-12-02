@@ -19,3 +19,6 @@
 @ stub com_ms_osp_ospmrshl_copyToExternal
 @ stub com_ms_osp_ospmrshl_releaseByValExternal
 @ stub com_ms_osp_ospmrshl_toJava
+
+#Wine extension for Mozilla plugin support
+@ stdcall NP_GetEntryPoints(ptr)

@@ -2607,6 +2607,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 10,Microsoft.NET\Framework\v3.0\windows communication foundation,servicemodelreg.exe
 10,Microsoft.NET\Framework\v4.0.30319,ngen.exe
 10,Microsoft.NET\Framework\v4.0.30319,fusion.dll
+11,gecko\plugin,npmshtml.dll
 11,wbem,mofcomp.exe
 16422,Internet Explorer,iexplore.exe
 11,,*

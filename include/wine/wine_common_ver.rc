@@ -111,6 +111,9 @@ FILESUBTYPE    WINE_FILESUBTYPE
 #ifdef WINE_OLESELFREGISTER
 	    VALUE "OLESelfRegister", ""
 #endif
+#ifdef WINE_MIMETYPE
+            VALUE "MIMEType", WINE_MIMETYPE
+#endif
 	}
     }
     BLOCK "VarFileInfo"

@@ -244,6 +244,8 @@ static void set_environment(LPCWSTR gre_path)
     static const WCHAR nspr_log_modulesW[] =
         {'N','S','P','R','_','L','O','G','_','M','O','D','U','L','E','S',0};
     static const WCHAR debug_formatW[] = {'a','l','l',':','%','d',0};
+    static const WCHAR moz_plugin_pathW[] = {'M','O','Z','_','P','L','U','G','I','N','_','P','A','T','H',0};
+    static const WCHAR gecko_pluginW[] = {'\\','g','e','c','k','o','\\','p','l','u','g','i','n',0};
 
     /* We have to modify PATH as XPCOM loads other DLLs from this directory. */
     GetEnvironmentVariableW(pathW, path_env, sizeof(path_env)/sizeof(WCHAR));
@@ -263,6 +265,12 @@ static void set_environment(LPCWSTR gre_path)
 
     sprintfW(buf, debug_formatW, debug_level);
     SetEnvironmentVariableW(nspr_log_modulesW, buf);
+
+    len = GetSystemDirectoryW(path_env, (sizeof(path_env)-sizeof(gecko_pluginW))/sizeof(WCHAR)+1);
+    if(len) {
+        strcpyW(path_env+len, gecko_pluginW);
+        SetEnvironmentVariableW(moz_plugin_pathW, path_env);
+    }
 }
 
 static BOOL load_xpcom(const PRUnichar *gre_path)

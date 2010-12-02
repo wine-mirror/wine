@@ -15022,6 +15022,7 @@ wine_fn_config_dll nddeapi enable_nddeapi nddeapi
 wine_fn_config_dll netapi32 enable_netapi32 netapi32
 wine_fn_config_test dlls/netapi32/tests netapi32_test
 wine_fn_config_dll newdev enable_newdev newdev
+wine_fn_config_dll npmshtml enable_npmshtml
 wine_fn_config_dll ntdll enable_ntdll ntdll
 wine_fn_config_test dlls/ntdll/tests ntdll_test
 wine_fn_config_dll ntdsapi enable_ntdsapi ntdsapi
