@@ -3,8 +3,9 @@ IMPORTS   = strmiids uuid ole32 advapi32
 
 C_SRCS = \
 	factory.c \
-	objsel.c \
-	regsvr.c
+	objsel.c
+
+IDL_R_SRCS = objsel_classes.idl
 
 RC_SRCS = objsel.rc
 

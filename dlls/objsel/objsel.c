@@ -19,6 +19,7 @@
  */
 
 #include "objsel_private.h"
+#include "rpcproxy.h"
 
 #include "wine/debug.h"
 
@@ -66,6 +67,24 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 HRESULT WINAPI DllCanUnloadNow(void)
 {
     return dll_refs != 0 ? S_FALSE : S_OK;
+}
+
+
+/***********************************************************************
+ *		DllRegisterServer (OBJSEL.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( hInstance, NULL );
+}
+
+
+/***********************************************************************
+ *		DllUnregisterServer (OBJSEL.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( hInstance, NULL );
 }
 
 
