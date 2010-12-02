@@ -348,6 +348,22 @@ NTSTATUS WINAPI NtDuplicateObject( HANDLE source_process, HANDLE source,
     return ret;
 }
 
+/* Everquest 2 / Pirates of the Burning Sea hooks NtClose, so we need a wrapper */
+NTSTATUS close_handle( HANDLE handle )
+{
+    NTSTATUS ret;
+    int fd = server_remove_fd_from_cache( handle );
+
+    SERVER_START_REQ( close_handle )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    if (fd != -1) close( fd );
+    return ret;
+}
+
 /**************************************************************************
  *                 NtClose				[NTDLL.@]
  *
@@ -362,17 +378,7 @@ NTSTATUS WINAPI NtDuplicateObject( HANDLE source_process, HANDLE source,
  */
 NTSTATUS WINAPI NtClose( HANDLE Handle )
 {
-    NTSTATUS ret;
-    int fd = server_remove_fd_from_cache( Handle );
-
-    SERVER_START_REQ( close_handle )
-    {
-        req->handle = wine_server_obj_handle( Handle );
-        ret = wine_server_call( req );
-    }
-    SERVER_END_REQ;
-    if (fd != -1) close( fd );
-    return ret;
+    return close_handle( Handle );
 }
 
 /*

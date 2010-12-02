@@ -444,7 +444,7 @@ static void delete_view( struct file_view *view ) /* [in] View */
 {
     if (!(view->protect & VPROT_SYSTEM)) unmap_area( view->base, view->size );
     list_remove( &view->entry );
-    if (view->mapping) NtClose( view->mapping );
+    if (view->mapping) close_handle( view->mapping );
     RtlFreeHeap( virtual_heap, 0, view );
 }
 
