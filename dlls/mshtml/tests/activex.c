@@ -659,7 +659,7 @@ static IHTMLDocument2 *create_document(void)
     return doc;
 }
 
-static IHTMLDocument2 *create_doc(const char *str)
+static IHTMLDocument2 *create_doc(const char *str, BOOL *b)
 {
     IHTMLDocument2 *doc;
     MSG msg;
@@ -669,7 +669,7 @@ static IHTMLDocument2 *create_doc(const char *str)
     doc_load_string(doc, str);
     do_advise((IUnknown*)doc, &IID_IPropertyNotifySink, (IUnknown*)&PropertyNotifySink);
 
-    while(!doc_complete && GetMessage(&msg, NULL, 0, 0)) {
+    while((!doc_complete || (b && !*b)) && GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
@@ -690,9 +690,13 @@ static void test_object_ax(void)
 {
     IHTMLDocument2 *doc;
 
+    /*
+     * We pump messages until both document is loaded and plugin instance is created.
+     * Pumping until document is loaded should be enough, but Gecko loads plugins
+     * asynchronously and until we'll work around it, we need this hack.
+     */
     SET_EXPECT(CreateInstance);
-    doc = create_doc(object_ax_str);
-    todo_wine
+    doc = create_doc(object_ax_str, &called_CreateInstance);
     CHECK_CALLED(CreateInstance);
 
     release_doc(doc);

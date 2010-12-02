@@ -148,6 +148,8 @@ typedef nsISupports nsITransferable;
 typedef nsISupports nsIDOMHTMLHeadElement;
 typedef nsISupports nsIDOMFileList;
 typedef nsISupports nsIControllers;
+typedef nsISupports nsIPluginInstanceOwner;
+typedef nsISupports nsIPluginStreamListener;
 
 [
     object,
@@ -3018,3 +3020,76 @@ typedef struct _NPPrint {
         NPEmbedPrint embedPrint;
     } print;
 } NPPrint;
+
+typedef HRGN NPRegion;
+
+[
+    object,
+    uuid(84994340-e120-4051-824f-d4ee8aef1a3e),
+    local
+]
+interface nsIPluginInstance : nsISupports
+{
+    typedef void *JSContext;
+    typedef void *JSObject;
+
+    nsresult Initialize(nsIPluginInstanceOwner *aOwner, const char *aMIMEType);
+    nsresult Start();
+    nsresult Stop();
+    nsresult SetWindow(NPWindow *aWindow);
+    nsresult NewStreamToPlugin(nsIPluginStreamListener **aListener);
+    nsresult NewStreamFromPlugin(const char *aType, const char *aTarget, nsIOutputStream **aResult);
+    nsresult Print(NPPrint *aPlatformPrint);
+    nsresult HandleEvent(void *aEvent, PRInt16 *aHandled);
+    nsresult InvalidateRect(NPRect *aRect);
+    nsresult InvalidateRegion(NPRegion aRegion);
+    nsresult ForceRedraw();
+    nsresult GetMIMEType(const char **aValue);
+    nsresult GetJSContext(JSContext **aJSContext);
+    nsresult GetOwner(nsIPluginInstanceOwner **aOwner);
+    nsresult SetOwner(nsIPluginInstanceOwner *aOwner);
+    nsresult ShowStatus(const char *aMessage);
+    nsresult InvalidateOwner();
+    nsresult GetJSObject(JSContext *cx, JSObject **_retval);
+    nsresult GetFormValue(nsAString *aFormValue);
+    nsresult PushPopupsEnabledState(PRBool aEnabled);
+    nsresult PopPopupsEnabledState();
+    nsresult GetPluginAPIVersion(PRUint16 *aPluginAPIVersion);
+    nsresult DefineJavaProperties();
+    nsresult ShouldCache(PRBool *_retval);
+    nsresult IsWindowless(PRBool *_retval);
+    nsresult IsTransparent(PRBool *_retval);
+    nsresult GetValueFromPlugin(NPPVariable variable, void *aValue);
+    nsresult GetDrawingModel(PRInt32 *_retval);
+}
+
+[
+    object,
+    uuid(6d827df5-b5cd-416c-85cb-3cdd05c7aed1),
+    local
+]
+interface nsIPluginTagInfo : nsISupports
+{
+    typedef enum {
+        nsPluginTagType_Unknown,
+        nsPluginTagType_Embed,
+        nsPluginTagType_Object,
+        nsPluginTagType_Applet
+    }  nsPluginTagType;
+
+    nsresult GetAttributes(PRUint16 *aCount, const char ***aNames, const char ***aValues);
+    nsresult GetAttribute(const char *aName, const char **aResult);
+    nsresult GetTagType(nsPluginTagType *aTagType);
+    nsresult GetTagText(const char **aTagText);
+    nsresult GetParameters(PRUint16 *aCount, const char ***aNames, const char ***aValues);
+    nsresult GetParameter(const char *aName, const char **aResult);
+    nsresult GetDocumentBase(const char **aDocumentBase);
+    nsresult GetDocumentEncoding(const char **aDocumentEncoding);
+    nsresult GetAlignment(const char **aElignment);
+    nsresult GetWidth(PRUint32 *aWidth);
+    nsresult GetHeight(PRUint32 *aHeight);
+    nsresult GetBorderVertSpace(PRUint32 *aBorderVertSpace);
+    nsresult GetBorderHorizSpace(PRUint32 *aBorderHorizSpace);
+    nsresult GetUniqueID(PRUint32 *aUniqueID);
+    nsresult GetDOMElement(nsIDOMElement **aDOMElement);
+}
