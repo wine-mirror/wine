@@ -2492,7 +2492,7 @@ char * CDECL MSVCRT_fgets(char *s, int size, MSVCRT_FILE* file)
  */
 MSVCRT_wint_t CDECL MSVCRT_fgetwc(MSVCRT_FILE* file)
 {
-  char c;
+  int c;
 
   if (!(MSVCRT_fdesc[file->_file].wxflag & WX_TEXT))
     {
