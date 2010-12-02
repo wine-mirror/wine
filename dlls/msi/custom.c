@@ -391,6 +391,7 @@ static MSIBINARY *create_temp_binary( MSIPACKAGE *package, LPCWSTR source, BOOL 
     if (file == INVALID_HANDLE_VALUE)
     {
         msiobj_release( &row->hdr );
+        msi_free( binary );
         return NULL;
     }
     do
