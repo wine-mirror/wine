@@ -459,6 +459,7 @@ static HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct
     const DWORD *ptr = byte_code;
 
     memset(reg_maps, 0, sizeof(*reg_maps));
+    reg_maps->min_rel_offset = ~0U;
 
     /* get_registers_used() is called on every compile on some 1.x shaders,
      * which can result in stacking up a collection of local constants.
