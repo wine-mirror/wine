@@ -26,6 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "ole2.h"
+#include "rpcproxy.h"
 
 #include "initguid.h"
 #include "msdaguid.h"
@@ -36,11 +37,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(oledb);
 
+static HINSTANCE instance;
+
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID lpv)
 {
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
+        instance = hinst;
         DisableThreadLibraryCalls(hinst);
         break;
 
@@ -141,4 +145,20 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **obj)
 HRESULT WINAPI DllCanUnloadNow(void)
 {
     return S_FALSE;
+}
+
+/***********************************************************************
+ *		DllRegisterServer
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( instance, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( instance, NULL );
 }
