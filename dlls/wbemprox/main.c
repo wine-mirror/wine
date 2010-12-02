@@ -27,11 +27,14 @@
 #include "winbase.h"
 #include "objbase.h"
 #include "wbemcli.h"
+#include "rpcproxy.h"
 
 #include "wbemprox_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wbemprox);
+
+static HINSTANCE instance;
 
 typedef HRESULT (*fnCreateInstance)( IUnknown *pUnkOuter, LPVOID *ppObj );
 
@@ -120,6 +123,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         case DLL_WINE_PREATTACH:
             return FALSE;    /* prefer native version */
         case DLL_PROCESS_ATTACH:
+            instance = hinstDLL;
             DisableThreadLibraryCalls(hinstDLL);
             break;
         case DLL_PROCESS_DETACH:
@@ -143,7 +147,26 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
     return IClassFactory_QueryInterface( cf, iid, ppv );
 }
 
+/***********************************************************************
+ *              DllCanUnloadNow (WBEMPROX.@)
+ */
 HRESULT WINAPI DllCanUnloadNow( void )
 {
     return S_FALSE;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (WBEMPROX.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( instance, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (WBEMPROX.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( instance, NULL );
 }
