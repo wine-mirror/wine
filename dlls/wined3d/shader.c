@@ -1852,7 +1852,6 @@ HRESULT vertexshader_init(IWineD3DVertexShaderImpl *shader, IWineD3DDeviceImpl *
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct shader_reg_maps *reg_maps = &shader->baseShader.reg_maps;
     unsigned int i;
     HRESULT hr;
@@ -1893,30 +1892,6 @@ HRESULT vertexshader_init(IWineD3DVertexShaderImpl *shader, IWineD3DDeviceImpl *
     }
 
     vertexshader_set_limits(shader);
-
-    if (device->vs_selected_mode == SHADER_ARB
-            && (gl_info->quirks & WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT)
-            && reg_maps->min_rel_offset <= reg_maps->max_rel_offset)
-    {
-        if (reg_maps->max_rel_offset - reg_maps->min_rel_offset > 127)
-        {
-            FIXME("The difference between the minimum and maximum relative offset is > 127.\n");
-            FIXME("Which this OpenGL implementation does not support. Try using GLSL.\n");
-            FIXME("Min: %u, Max: %u.\n", reg_maps->min_rel_offset, reg_maps->max_rel_offset);
-        }
-        else if (reg_maps->max_rel_offset - reg_maps->min_rel_offset > 63)
-        {
-            shader->rel_offset = reg_maps->min_rel_offset + 63;
-        }
-        else if (reg_maps->max_rel_offset > 63)
-        {
-            shader->rel_offset = reg_maps->min_rel_offset;
-        }
-        else
-        {
-            shader->rel_offset = 0;
-        }
-    }
 
     shader->baseShader.load_local_constsF = shader->baseShader.reg_maps.usesrelconstF
             && !list_empty(&shader->baseShader.constantsF);

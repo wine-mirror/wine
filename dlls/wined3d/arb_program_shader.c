@@ -78,47 +78,6 @@ static void shader_arb_dump_program_source(const char *source)
     HeapFree(GetProcessHeap(), 0, tmp);
 }
 
-/* GL locking for state handlers is done by the caller. */
-static BOOL need_rel_addr_const(IWineD3DBaseShaderImpl *shader, const struct wined3d_gl_info *gl_info)
-{
-    if (shader->baseShader.reg_maps.shader_version.type == WINED3D_SHADER_TYPE_VERTEX)
-    {
-        if (((IWineD3DVertexShaderImpl *)shader)->rel_offset) return TRUE;
-    }
-    if (!shader->baseShader.reg_maps.usesmova) return FALSE;
-    return !gl_info->supported[NV_VERTEX_PROGRAM2_OPTION];
-}
-
-/* Returns TRUE if result.clip from GL_NV_vertex_program2 should be used and FALSE otherwise */
-static inline BOOL use_nv_clip(const struct wined3d_gl_info *gl_info)
-{
-    return gl_info->supported[NV_VERTEX_PROGRAM2_OPTION]
-            && !(gl_info->quirks & WINED3D_QUIRK_NV_CLIP_BROKEN);
-}
-
-static BOOL need_helper_const(IWineD3DBaseShaderImpl *shader, const struct wined3d_gl_info *gl_info)
-{
-    if (need_rel_addr_const(shader, gl_info)) return TRUE;
-    if (!gl_info->supported[NV_VERTEX_PROGRAM]) return TRUE; /* Need to init colors. */
-    if (gl_info->quirks & WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT) return TRUE; /* Load the immval offset. */
-    if (gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W) return TRUE; /* Have to init texcoords. */
-    if (!use_nv_clip(gl_info)) return TRUE; /* Init the clip texcoord */
-    if (shader->baseShader.reg_maps.usesnrm) return TRUE; /* 0.0 */
-    if (shader->baseShader.reg_maps.usesrcp) return TRUE; /* EPS */
-    return FALSE;
-}
-
-static unsigned int reserved_vs_const(IWineD3DBaseShaderImpl *shader, const struct wined3d_gl_info *gl_info)
-{
-    unsigned int ret = 1;
-    /* We use one PARAM for the pos fixup, and in some cases one to load
-     * some immediate values into the shader
-     */
-    if(need_helper_const(shader, gl_info)) ret++;
-    if(need_rel_addr_const(shader, gl_info)) ret++;
-    return ret;
-}
-
 enum arb_helper_value
 {
     ARB_ZERO,
@@ -335,6 +294,7 @@ struct arb_pshader_private {
 struct arb_vshader_private {
     struct arb_vs_compiled_shader   *gl_shaders;
     UINT                            num_gl_shaders, shader_array_size;
+    UINT rel_offset;
 };
 
 struct shader_arb_priv
@@ -355,9 +315,46 @@ struct shader_arb_priv
     DWORD ps_sig_number;
 };
 
-/********************************************************
- * ARB_[vertex/fragment]_program helper functions follow
- ********************************************************/
+/* GL locking for state handlers is done by the caller. */
+static BOOL need_rel_addr_const(IWineD3DBaseShaderImpl *shader, const struct wined3d_gl_info *gl_info)
+{
+    if (shader->baseShader.reg_maps.shader_version.type == WINED3D_SHADER_TYPE_VERTEX)
+    {
+        const struct arb_vshader_private *shader_data = shader->baseShader.backend_data;
+        if (shader_data->rel_offset) return TRUE;
+    }
+    if (!shader->baseShader.reg_maps.usesmova) return FALSE;
+    return !gl_info->supported[NV_VERTEX_PROGRAM2_OPTION];
+}
+
+/* Returns TRUE if result.clip from GL_NV_vertex_program2 should be used and FALSE otherwise */
+static inline BOOL use_nv_clip(const struct wined3d_gl_info *gl_info)
+{
+    return gl_info->supported[NV_VERTEX_PROGRAM2_OPTION]
+            && !(gl_info->quirks & WINED3D_QUIRK_NV_CLIP_BROKEN);
+}
+
+static BOOL need_helper_const(IWineD3DBaseShaderImpl *shader, const struct wined3d_gl_info *gl_info)
+{
+    if (need_rel_addr_const(shader, gl_info)) return TRUE;
+    if (!gl_info->supported[NV_VERTEX_PROGRAM]) return TRUE; /* Need to init colors. */
+    if (gl_info->quirks & WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT) return TRUE; /* Load the immval offset. */
+    if (gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W) return TRUE; /* Have to init texcoords. */
+    if (!use_nv_clip(gl_info)) return TRUE; /* Init the clip texcoord */
+    if (shader->baseShader.reg_maps.usesnrm) return TRUE; /* 0.0 */
+    if (shader->baseShader.reg_maps.usesrcp) return TRUE; /* EPS */
+    return FALSE;
+}
+
+static unsigned int reserved_vs_const(IWineD3DBaseShaderImpl *shader, const struct wined3d_gl_info *gl_info)
+{
+    unsigned int ret = 1;
+    /* We use one PARAM for the pos fixup, and in some cases one to load
+     * some immediate values into the shader. */
+    if (need_helper_const(shader, gl_info)) ++ret;
+    if (need_rel_addr_const(shader, gl_info)) ++ret;
+    return ret;
+}
 
 /* Loads floating point constants into the currently set ARB_vertex/fragment_program.
  * When constant_list == NULL, it will load all the constants.
@@ -1032,9 +1029,10 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
         case WINED3DSPR_CONST:
             if (!pshader && reg->rel_addr)
             {
+                const struct arb_vshader_private *shader_data = This->baseShader.backend_data;
+                UINT rel_offset = shader_data->rel_offset;
                 BOOL aL = FALSE;
                 char rel_reg[50];
-                UINT rel_offset = ((IWineD3DVertexShaderImpl *)This)->rel_offset;
                 if (reg_maps->shader_version.major < 2)
                 {
                     sprintf(rel_reg, "A0.x");
@@ -1752,7 +1750,9 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
     char src0_param[256];
 
-    if(ins->handler_idx == WINED3DSIH_MOVA) {
+    if (ins->handler_idx == WINED3DSIH_MOVA)
+    {
+        const struct arb_vshader_private *shader_data = shader->baseShader.backend_data;
         char write_mask[6];
         const char *offset = arb_get_helper_value(WINED3D_SHADER_TYPE_VERTEX, ARB_VS_REL_OFFSET);
 
@@ -1779,7 +1779,7 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
         shader_addline(buffer, "ABS TA%s, %s;\n", write_mask, src0_param);
         shader_addline(buffer, "ADD TA%s, TA, rel_addr_const.x;\n", write_mask);
         shader_addline(buffer, "FLR TA%s, TA;\n", write_mask);
-        if (((IWineD3DVertexShaderImpl *)shader)->rel_offset)
+        if (shader_data->rel_offset)
         {
             shader_addline(buffer, "ADD TA%s, TA, %s;\n", write_mask, offset);
         }
@@ -1791,8 +1791,10 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
           && !shader_is_pshader_version(reg_maps->shader_version.type)
           && ins->dst[0].reg.type == WINED3DSPR_ADDR)
     {
+        const struct arb_vshader_private *shader_data = shader->baseShader.backend_data;
         src0_param[0] = '\0';
-        if (((IWineD3DVertexShaderImpl *)shader)->rel_offset)
+
+        if (shader_data->rel_offset)
         {
             const char *offset = arb_get_helper_value(WINED3D_SHADER_TYPE_VERTEX, ARB_VS_REL_OFFSET);
             shader_arb_get_src_param(ins, &ins->src[0], 0, src0_param);
@@ -4063,6 +4065,7 @@ static void init_output_registers(IWineD3DVertexShaderImpl *shader, DWORD sig_nu
 static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This, struct wined3d_shader_buffer *buffer,
         const struct arb_vs_compile_args *args, struct arb_vs_compiled_shader *compiled)
 {
+    const struct arb_vshader_private *shader_data = This->baseShader.backend_data;
     const shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
     CONST DWORD *function = This->baseShader.function;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)This->baseShader.device;
@@ -4104,8 +4107,9 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This, struct
     if(need_helper_const((IWineD3DBaseShaderImpl *) This, gl_info)) {
         shader_addline(buffer, "PARAM helper_const = { 0.0, 1.0, 2.0, %1.10f};\n", eps);
     }
-    if(need_rel_addr_const((IWineD3DBaseShaderImpl *) This, gl_info)) {
-        shader_addline(buffer, "PARAM rel_addr_const = { 0.5, %d.0, 0.0, 0.0 };\n", This->rel_offset);
+    if (need_rel_addr_const((IWineD3DBaseShaderImpl *) This, gl_info))
+    {
+        shader_addline(buffer, "PARAM rel_addr_const = { 0.5, %d.0, 0.0, 0.0 };\n", shader_data->rel_offset);
         shader_addline(buffer, "TEMP A0_SHADOW;\n");
     }
 
@@ -4328,7 +4332,25 @@ static struct arb_vs_compiled_shader *find_arb_vshader(IWineD3DVertexShaderImpl 
 
     if (!shader->baseShader.backend_data)
     {
+        const struct shader_reg_maps *reg_maps = &shader->baseShader.reg_maps;
+
         shader->baseShader.backend_data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*shader_data));
+        shader_data = shader->baseShader.backend_data;
+
+        if ((gl_info->quirks & WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT)
+                && reg_maps->min_rel_offset <= reg_maps->max_rel_offset)
+        {
+            if (reg_maps->max_rel_offset - reg_maps->min_rel_offset > 127)
+            {
+                FIXME("The difference between the minimum and maximum relative offset is > 127.\n");
+                FIXME("Which this OpenGL implementation does not support. Try using GLSL.\n");
+                FIXME("Min: %u, Max: %u.\n", reg_maps->min_rel_offset, reg_maps->max_rel_offset);
+            }
+            else if (reg_maps->max_rel_offset - reg_maps->min_rel_offset > 63)
+                shader_data->rel_offset = reg_maps->min_rel_offset + 63;
+            else if (reg_maps->max_rel_offset > 63)
+                shader_data->rel_offset = reg_maps->min_rel_offset;
+        }
     }
     shader_data = shader->baseShader.backend_data;
 

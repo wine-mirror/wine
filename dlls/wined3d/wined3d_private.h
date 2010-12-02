@@ -2868,7 +2868,6 @@ typedef struct IWineD3DVertexShaderImpl {
 
     /* Vertex shader attributes. */
     struct wined3d_shader_attribute attributes[MAX_ATTRIBS];
-    UINT                       rel_offset;
 } IWineD3DVertexShaderImpl;
 
 void find_vs_compile_args(const struct wined3d_state *state,
