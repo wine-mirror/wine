@@ -316,11 +316,11 @@ struct shader_arb_priv
 };
 
 /* GL locking for state handlers is done by the caller. */
-static BOOL need_rel_addr_const(IWineD3DVertexShaderImpl *shader, const struct wined3d_gl_info *gl_info)
+static BOOL need_rel_addr_const(const struct arb_vshader_private *shader_data,
+        const struct shader_reg_maps *reg_maps, const struct wined3d_gl_info *gl_info)
 {
-    const struct arb_vshader_private *shader_data = shader->baseShader.backend_data;
     if (shader_data->rel_offset) return TRUE;
-    if (!shader->baseShader.reg_maps.usesmova) return FALSE;
+    if (!reg_maps->usesmova) return FALSE;
     return !gl_info->supported[NV_VERTEX_PROGRAM2_OPTION];
 }
 
@@ -333,7 +333,8 @@ static inline BOOL use_nv_clip(const struct wined3d_gl_info *gl_info)
 
 static BOOL need_helper_const(IWineD3DVertexShaderImpl *shader, const struct wined3d_gl_info *gl_info)
 {
-    if (need_rel_addr_const(shader, gl_info)) return TRUE;
+    if (need_rel_addr_const(shader->baseShader.backend_data,
+            &shader->baseShader.reg_maps, gl_info)) return TRUE;
     if (!gl_info->supported[NV_VERTEX_PROGRAM]) return TRUE; /* Need to init colors. */
     if (gl_info->quirks & WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT) return TRUE; /* Load the immval offset. */
     if (gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W) return TRUE; /* Have to init texcoords. */
@@ -349,7 +350,8 @@ static unsigned int reserved_vs_const(IWineD3DVertexShaderImpl *shader, const st
     /* We use one PARAM for the pos fixup, and in some cases one to load
      * some immediate values into the shader. */
     if (need_helper_const(shader, gl_info)) ++ret;
-    if (need_rel_addr_const(shader, gl_info)) ++ret;
+    if (need_rel_addr_const(shader->baseShader.backend_data,
+            &shader->baseShader.reg_maps, gl_info)) ++ret;
     return ret;
 }
 
@@ -4106,7 +4108,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This, struct
     {
         shader_addline(buffer, "PARAM helper_const = { 0.0, 1.0, 2.0, %1.10f};\n", eps);
     }
-    if (need_rel_addr_const(This, gl_info))
+    if (need_rel_addr_const(shader_data, reg_maps, gl_info))
     {
         shader_addline(buffer, "PARAM rel_addr_const = { 0.5, %d.0, 0.0, 0.0 };\n", shader_data->rel_offset);
         shader_addline(buffer, "TEMP A0_SHADOW;\n");
