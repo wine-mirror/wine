@@ -982,7 +982,7 @@ static BOOL notify_dispinfoT(const LISTVIEW_INFO *infoPtr, UINT code, LPNMLVDISP
 
     TRACE(" pdi->item=%s\n", debuglvitem_t(&pdi->item, infoPtr->notifyFormat != NFR_ANSI));
     ret = notify_hdr(infoPtr, code, &pdi->hdr);
-    TRACE(" resulting code=0x%08x\n", pdi->hdr.code);
+    TRACE(" resulting code=%d\n", pdi->hdr.code);
 
     if (return_ansi || return_unicode)
     {
@@ -1011,7 +1011,7 @@ static BOOL notify_dispinfoT(const LISTVIEW_INFO *infoPtr, UINT code, LPNMLVDISP
     }
 
     /* if dipsinfo holder changed notification code then convert */
-    if (!isW && (pdi->hdr.code == LVN_GETDISPINFOW))
+    if (!isW && (pdi->hdr.code == LVN_GETDISPINFOW) && (pdi->item.mask & LVIF_TEXT))
     {
         length = WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, NULL, 0, NULL, NULL);
 
@@ -6472,6 +6472,7 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
 	return FALSE;
 
     if (lpLVItem->mask == 0) return TRUE;
+    TRACE("mask=%x\n", lpLVItem->mask);
 
     /* make a local copy */
     isubitem = lpLVItem->iSubItem;
@@ -8901,10 +8902,10 @@ static HWND LISTVIEW_SetToolTips( LISTVIEW_INFO *infoPtr, HWND hwndNewToolTip)
  * RETURN:
  *    Old Unicode Format
  */
-static BOOL LISTVIEW_SetUnicodeFormat( LISTVIEW_INFO *infoPtr, BOOL fUnicode)
+static BOOL LISTVIEW_SetUnicodeFormat( LISTVIEW_INFO *infoPtr, BOOL unicode)
 {
   SHORT rc = infoPtr->notifyFormat;
-  infoPtr->notifyFormat = (fUnicode) ? NFR_UNICODE : NFR_ANSI;
+  infoPtr->notifyFormat = (unicode) ? NFR_UNICODE : NFR_ANSI;
   return rc == NFR_UNICODE;
 }
 
@@ -9322,6 +9323,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
                                        (WPARAM)infoPtr->hwndSelf, NF_QUERY);
   /* on error defaulting to ANSI notifications */
   if (infoPtr->notifyFormat == 0) infoPtr->notifyFormat = NFR_ANSI;
+  TRACE("notify format=%d\n", infoPtr->notifyFormat);
 
   if ((infoPtr->uView == LV_VIEW_DETAILS) && (lpcs->style & WS_VISIBLE))
   {
