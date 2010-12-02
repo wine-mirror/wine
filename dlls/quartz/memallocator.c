@@ -661,8 +661,13 @@ static HRESULT WINAPI StdMediaSample2_SetMediaType(IMediaSample2 * iface, AM_MED
     TRACE("(%p)->(%p)\n", iface, pMediaType);
 
     if (This->props.pMediaType)
+    {
         FreeMediaType(This->props.pMediaType);
-    else if (!(This->props.pMediaType = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE))))
+        This->props.pMediaType = NULL;
+    }
+    if (!pMediaType)
+        return S_FALSE;
+    if (!(This->props.pMediaType = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE))))
         return E_OUTOFMEMORY;
 
     return CopyMediaType(This->props.pMediaType, pMediaType);
