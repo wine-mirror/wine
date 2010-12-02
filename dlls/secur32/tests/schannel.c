@@ -625,6 +625,7 @@ static void test_communication(void)
     status = pAcquireCredentialsHandleA(NULL, (SEC_CHAR *)UNISP_NAME, SECPKG_CRED_OUTBOUND, NULL,
         &cred, NULL, NULL, &cred_handle, NULL);
     ok(status == SEC_E_OK, "AcquireCredentialsHandleA failed: %08x\n", status);
+    if (status != SEC_E_OK) return;
 
     /* Initialize the connection */
     init_buffers(&buffers[0], 4, buf_size);
