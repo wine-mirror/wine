@@ -21,11 +21,14 @@
 #include "hlink_private.h"
 
 #include "winreg.h"
+#include "rpcproxy.h"
 #include "hlguids.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hlink);
+
+static HINSTANCE instance;
 
 typedef HRESULT (CALLBACK *LPFNCREATEINSTANCE)(IUnknown*, REFIID, LPVOID*);
 
@@ -42,6 +45,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     switch (fdwReason)
     {
     case DLL_PROCESS_ATTACH:
+        instance = hinstDLL;
         DisableThreadLibraryCalls(hinstDLL);
         break;
     case DLL_PROCESS_DETACH:
@@ -576,46 +580,18 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
     return IClassFactory_QueryInterface(pcf, iid, ppv);
 }
 
-static HRESULT register_clsid(LPCGUID guid)
-{
-    static const WCHAR clsid[] =
-        {'C','L','S','I','D','\\',0};
-    static const WCHAR ips[] =
-        {'\\','I','n','p','r','o','c','S','e','r','v','e','r','3','2',0};
-    static const WCHAR hlink[] =
-        {'h','l','i','n','k','.','d','l','l',0};
-    static const WCHAR threading_model[] =
-        {'T','h','r','e','a','d','i','n','g','M','o','d','e','l',0};
-    static const WCHAR apartment[] =
-        {'A','p','a','r','t','m','e','n','t',0};
-    WCHAR path[80];
-    HKEY key = NULL;
-    LONG r;
-
-    lstrcpyW(path, clsid);
-    StringFromGUID2(guid, &path[6], 80);
-    lstrcatW(path, ips);
-    r = RegCreateKeyW(HKEY_CLASSES_ROOT, path, &key);
-    if (r != ERROR_SUCCESS)
-        return E_FAIL;
-
-    RegSetValueExW(key, NULL, 0, REG_SZ, (const BYTE *)hlink, sizeof hlink);
-    RegSetValueExW(key, threading_model, 0, REG_SZ, (const BYTE *)apartment, sizeof apartment);
-    RegCloseKey(key);
-
-    return S_OK;
-}
-
 /***********************************************************************
- *             DllRegisterServer (HLINK.@)
+ *		DllRegisterServer (HLINK.@)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    HRESULT r;
+    return __wine_register_resources( instance, NULL );
+}
 
-    r = register_clsid(&CLSID_StdHlink);
-    if (SUCCEEDED(r))
-        r = register_clsid(&CLSID_StdHlinkBrowseContext);
-
-    return S_OK;
+/***********************************************************************
+ *		DllUnregisterServer (HLINK.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( instance, NULL );
 }
