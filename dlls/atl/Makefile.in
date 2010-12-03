@@ -7,6 +7,6 @@ C_SRCS = \
 	atl_main.c \
 	registrar.c
 
-RC_SRCS = rsrc.rc
+IDL_R_SRCS = atl_classes.idl
 
 @MAKE_DLL_RULES@

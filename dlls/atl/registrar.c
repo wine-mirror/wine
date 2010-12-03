@@ -789,6 +789,58 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, LPVOID *ppvObject)
 
 extern HINSTANCE hInst;
 
+/* this is a copy of the winecrt0 registration code that creates the registrar directly, */
+/* since we can't do it through ole32 until it has been registered */
+
+struct reg_info
+{
+    IRegistrar  *registrar;
+    BOOL         do_register;
+    HRESULT      result;
+};
+
+static IRegistrar *create_registrar( HMODULE inst, struct reg_info *info )
+{
+    info->result = Registrar_create( NULL, &IID_IRegistrar, (void**)&info->registrar );
+    if (SUCCEEDED( info->result ))
+    {
+        static const WCHAR moduleW[] = {'M','O','D','U','L','E',0};
+        WCHAR str[MAX_PATH];
+
+        GetModuleFileNameW( hInst, str, MAX_PATH );
+        IRegistrar_AddReplacement( info->registrar, moduleW, str );
+    }
+    return info->registrar;
+}
+
+static BOOL CALLBACK register_resource( HMODULE module, LPCWSTR type, LPWSTR name, LONG_PTR arg )
+{
+    struct reg_info *info = (struct reg_info *)arg;
+    WCHAR *buffer;
+    HRSRC rsrc = FindResourceW( module, name, type );
+    char *str = LoadResource( module, rsrc );
+    DWORD lenW, lenA = SizeofResource( module, rsrc );
+
+    if (!str) return FALSE;
+    if (!info->registrar && !create_registrar( module, info )) return FALSE;
+    lenW = MultiByteToWideChar( CP_UTF8, 0, str, lenA, NULL, 0 ) + 1;
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, lenW * sizeof(WCHAR) )))
+    {
+        info->result = E_OUTOFMEMORY;
+        return FALSE;
+    }
+    MultiByteToWideChar( CP_UTF8, 0, str, lenA, buffer, lenW );
+    buffer[lenW - 1] = 0;
+
+    if (info->do_register)
+        info->result = IRegistrar_StringRegister( info->registrar, buffer );
+    else
+        info->result = IRegistrar_StringUnregister( info->registrar, buffer );
+
+    HeapFree( GetProcessHeap(), 0, buffer );
+    return SUCCEEDED(info->result);
+}
+
 static HRESULT do_register_dll_server(IRegistrar *pRegistrar, LPCOLESTR wszDll,
                                       LPCOLESTR wszId, BOOL do_register,
                                       const struct _ATL_REGMAP_ENTRY* pMapEntries)
@@ -820,19 +872,6 @@ static HRESULT do_register_dll_server(IRegistrar *pRegistrar, LPCOLESTR wszDll,
     return hres;
 }
 
-static HRESULT do_register_server(BOOL do_register)
-{
-    static const WCHAR CLSID_RegistrarW[] =
-            {'C','L','S','I','D','_','R','e','g','i','s','t','r','a','r',0};
-    static const WCHAR atl_dllW[] = {'a','t','l','.','d','l','l',0};
-
-    WCHAR clsid_str[40];
-    const struct _ATL_REGMAP_ENTRY reg_map[] = {{CLSID_RegistrarW, clsid_str}, {NULL,NULL}};
-
-    StringFromGUID2(&CLSID_Registrar, clsid_str, sizeof(clsid_str)/sizeof(WCHAR));
-    return do_register_dll_server(NULL, atl_dllW, MAKEINTRESOURCEW(101), do_register, reg_map);
-}
-
 /***********************************************************************
  *           AtlModuleUpdateRegistryFromResourceD         [ATL.@]
  *
@@ -858,13 +897,21 @@ HRESULT WINAPI AtlModuleUpdateRegistryFromResourceD(_ATL_MODULEW* pM, LPCOLESTR 
     return do_register_dll_server(pReg, module_name, lpszRes, bRegister, pMapEntries);
 }
 
+static const WCHAR regtypeW[] = {'W','I','N','E','_','R','E','G','I','S','T','R','Y',0};
+
 /***********************************************************************
  *              DllRegisterServer (ATL.@)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    TRACE("\n");
-    return do_register_server(TRUE);
+    struct reg_info info;
+
+    info.registrar = NULL;
+    info.do_register = TRUE;
+    info.result = S_OK;
+    EnumResourceNamesW( hInst, regtypeW, register_resource, (LONG_PTR)&info );
+    if (info.registrar) IRegistrar_Release( info.registrar );
+    return info.result;
 }
 
 /***********************************************************************
@@ -872,8 +919,14 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    TRACE("\n");
-    return do_register_server(FALSE);
+    struct reg_info info;
+
+    info.registrar = NULL;
+    info.do_register = FALSE;
+    info.result = S_OK;
+    EnumResourceNamesW( hInst, regtypeW, register_resource, (LONG_PTR)&info );
+    if (info.registrar) IRegistrar_Release( info.registrar );
+    return info.result;
 }
 
 /***********************************************************************

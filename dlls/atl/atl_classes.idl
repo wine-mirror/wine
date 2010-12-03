@@ -1,5 +1,7 @@
 /*
- * Copyright 2005 Jacek Caban
+ * COM Classes for ATL
+ *
+ * Copyright 2010 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,5 +18,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/* @makedep: atl.rgs */
-101 REGISTRY atl.rgs
+[
+    helpstring("Registrar Class"),
+    progid("ATL.Registrar"),
+    threading(both),
+    uuid(44ec053a-400f-11d0-9dcd-00a0c90391d3)
+]
+coclass Registrar { interface IRegistrar; }
