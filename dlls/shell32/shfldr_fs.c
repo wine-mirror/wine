@@ -1232,12 +1232,34 @@ ISFHelper_fnAddFolder (ISFHelper * iface, HWND hwnd, LPCWSTR pwszName,
 
     bRes = CreateDirectoryW (wszNewDir, NULL);
     if (bRes) {
-        SHChangeNotify (SHCNE_MKDIR, SHCNF_PATHW, wszNewDir, NULL);
+        LPITEMIDLIST relPidl;
 
-        hres = S_OK;
+        lstrcpyW(wszNewDir, pwszName);
 
-        if (ppidlOut)
-                hres = _ILCreateFromPathW(wszNewDir, ppidlOut);
+        hres = IShellFolder_ParseDisplayName((IShellFolder*)&This->lpvtblShellFolder,
+                hwnd, NULL, wszNewDir, NULL, &relPidl, NULL);
+
+        if (SUCCEEDED(hres)) {
+            LPITEMIDLIST fullPidl;
+
+            fullPidl = ILCombine(This->pidlRoot, relPidl);
+
+            if (fullPidl) {
+                SHChangeNotify(SHCNE_MKDIR, SHCNF_IDLIST, fullPidl, NULL);
+                ILFree(fullPidl);
+
+                if (ppidlOut)
+                    *ppidlOut = relPidl;
+                else
+                    ILFree(relPidl);
+            } else {
+                WARN("failed to combine %s into a full PIDL\n", wine_dbgstr_w(pwszName));
+                ILFree(relPidl);
+            }
+
+        } else
+            WARN("failed to parse %s into a PIDL\n", wine_dbgstr_w(pwszName));
+
     } else {
         WCHAR wszText[128 + MAX_PATH];
         WCHAR wszTempText[128];
