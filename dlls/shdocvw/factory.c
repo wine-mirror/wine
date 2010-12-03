@@ -34,19 +34,20 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 /**********************************************************************
  * Implement the WebBrowser class factory
- *
- * (Based on implementation in ddraw/main.c)
  */
-
-#define FACTORY(x) ((IClassFactory*) &(x)->lpClassFactoryVtbl)
 
 typedef struct
 {
     /* IUnknown fields */
-    const IClassFactoryVtbl *lpClassFactoryVtbl;
+    IClassFactory IClassFactory_iface;
     HRESULT (*cf)(LPUNKNOWN, REFIID, LPVOID *);
     LONG ref;
 } IClassFactoryImpl;
+
+static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, IClassFactoryImpl, IClassFactory_iface);
+}
 
 
 /**********************************************************************
@@ -131,28 +132,28 @@ static const IClassFactoryVtbl WBCF_Vtbl =
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 {
-    static IClassFactoryImpl WB1ClassFactory = {&WBCF_Vtbl, WebBrowserV1_Create};
-    static IClassFactoryImpl WB2ClassFactory = {&WBCF_Vtbl, WebBrowserV2_Create};
-    static IClassFactoryImpl CUHClassFactory = {&WBCF_Vtbl, CUrlHistory_Create};
-    static IClassFactoryImpl ISCClassFactory = {&WBCF_Vtbl, InternetShortcut_Create};
-    static IClassFactoryImpl TBLClassFactory = {&WBCF_Vtbl, TaskbarList_Create};
+    static IClassFactoryImpl WB1ClassFactory = {{&WBCF_Vtbl}, WebBrowserV1_Create};
+    static IClassFactoryImpl WB2ClassFactory = {{&WBCF_Vtbl}, WebBrowserV2_Create};
+    static IClassFactoryImpl CUHClassFactory = {{&WBCF_Vtbl}, CUrlHistory_Create};
+    static IClassFactoryImpl ISCClassFactory = {{&WBCF_Vtbl}, InternetShortcut_Create};
+    static IClassFactoryImpl TBLClassFactory = {{&WBCF_Vtbl}, TaskbarList_Create};
 
     TRACE("\n");
 
     if(IsEqualGUID(&CLSID_WebBrowser, rclsid))
-        return IClassFactory_QueryInterface(FACTORY(&WB2ClassFactory), riid, ppv);
+        return IClassFactory_QueryInterface(&WB2ClassFactory.IClassFactory_iface, riid, ppv);
 
     if(IsEqualGUID(&CLSID_WebBrowser_V1, rclsid))
-        return IClassFactory_QueryInterface(FACTORY(&WB1ClassFactory), riid, ppv);
+        return IClassFactory_QueryInterface(&WB1ClassFactory.IClassFactory_iface, riid, ppv);
 
     if(IsEqualGUID(&CLSID_CUrlHistory, rclsid))
-        return IClassFactory_QueryInterface(FACTORY(&CUHClassFactory), riid, ppv);
+        return IClassFactory_QueryInterface(&CUHClassFactory.IClassFactory_iface, riid, ppv);
 
     if(IsEqualGUID(&CLSID_InternetShortcut, rclsid))
-        return IClassFactory_QueryInterface(FACTORY(&ISCClassFactory), riid, ppv);
+        return IClassFactory_QueryInterface(&ISCClassFactory.IClassFactory_iface, riid, ppv);
 
     if(IsEqualGUID(&CLSID_TaskbarList, rclsid))
-        return IClassFactory_QueryInterface(FACTORY(&TBLClassFactory), riid, ppv);
+        return IClassFactory_QueryInterface(&TBLClassFactory.IClassFactory_iface, riid, ppv);
 
     /* As a last resort, figure if the CLSID belongs to a 'Shell Instance Object' */
     return SHDOCVW_GetShellInstanceObjectClassObject(rclsid, riid, ppv);
@@ -163,11 +164,12 @@ HRESULT register_class_object(BOOL do_reg)
     HRESULT hres;
 
     static DWORD cookie;
-    static IClassFactoryImpl IEClassFactory = {&WBCF_Vtbl, InternetExplorer_Create};
+    static IClassFactoryImpl IEClassFactory = {{&WBCF_Vtbl}, InternetExplorer_Create};
 
     if(do_reg) {
-        hres = CoRegisterClassObject(&CLSID_InternetExplorer, (IUnknown*)FACTORY(&IEClassFactory),
-                                     CLSCTX_SERVER, REGCLS_MULTIPLEUSE|REGCLS_SUSPENDED, &cookie);
+        hres = CoRegisterClassObject(&CLSID_InternetExplorer,
+                                     (IUnknown*)&IEClassFactory.IClassFactory_iface, CLSCTX_SERVER,
+                                     REGCLS_MULTIPLEUSE|REGCLS_SUSPENDED, &cookie);
         if (FAILED(hres)) {
             ERR("failed to register object %08x\n", hres);
             return hres;
