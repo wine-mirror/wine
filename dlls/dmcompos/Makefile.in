@@ -6,8 +6,9 @@ C_SRCS = \
 	chordmaptrack.c \
 	composer.c \
 	dmcompos_main.c \
-	regsvr.c \
 	signposttrack.c
+
+IDL_R_SRCS = dmcompos.idl
 
 RC_SRCS = version.rc
 

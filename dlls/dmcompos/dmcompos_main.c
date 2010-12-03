@@ -21,9 +21,11 @@
 #include "wine/port.h"
 
 #include "dmcompos_private.h"
+#include "rpcproxy.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmcompos);
 
+static HINSTANCE instance;
 LONG DMCOMPOS_refCount = 0;
 
 typedef struct {
@@ -289,6 +291,7 @@ static IClassFactoryImpl SignPostTrack_CF = {&SignPostTrackCF_Vtbl};
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 	if (fdwReason == DLL_PROCESS_ATTACH) 	{
+            instance = hinstDLL;
             DisableThreadLibraryCalls(hinstDLL);
 		/* FIXME: Initialisation */
 	}
@@ -343,6 +346,21 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv) {
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
+/***********************************************************************
+ *		DllRegisterServer (DMCOMPOS.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( instance, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (DMCOMPOS.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( instance, NULL );
+}
 
 /******************************************************************
  *		Helper functions
