@@ -142,7 +142,7 @@ static int write_progid( const type_t *class )
     const char *vi_progid = get_attrp( class->attrs, ATTR_VIPROGID );
 
     if (!uuid) return 0;
-    if (!descr) descr = vi_progid ? vi_progid : progid;
+    if (!descr) descr = class->name;
 
     if (progid)
     {
