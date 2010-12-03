@@ -133,6 +133,7 @@ static HRESULT SendFurther( IPin *from, SendPinFunc fnMiddle, LPVOID arg, SendPi
         hr_local = fnEnd( from, arg );
         hr_return = updatehres( hr_return, hr_local );
     }
+    IEnumPins_Release(enumpins);
 
 out:
     if (pin_info.pFilter)
