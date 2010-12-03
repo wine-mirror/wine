@@ -3,10 +3,11 @@ IMPORTS   = dxguid uuid ole32 advapi32
 
 C_SRCS = \
 	dmscript_main.c \
-	regsvr.c \
 	script.c \
 	scripttrack.c
 
-RC_SRCS = version.rc
+IDL_R_SRCS = dmscript.idl
+
+RC_SRCS = rsrc.rc
 
 @MAKE_DLL_RULES@
