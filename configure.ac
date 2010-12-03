@@ -702,6 +702,7 @@ case $host_os in
     AC_SUBST(SECURITYLIB,"-framework Security -framework CoreFoundation")
     AC_SUBST(COREFOUNDATIONLIB,"-framework CoreFoundation")
     AC_SUBST(IOKITLIB,"-framework IOKit -framework CoreFoundation")
+    AC_SUBST(QUICKTIMELIB,"-framework QuickTime -framework ApplicationServices -framework CoreVideo")
     AC_SUBST(LDEXECFLAGS,["-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00000000,-segaddr,WINE_SHAREDHEAP,0x7f000000"])
     if test "$ac_cv_header_DiskArbitration_DiskArbitration_h" = "yes"
     then
@@ -731,6 +732,7 @@ case $host_os in
         AC_CHECK_FUNCS(IOHIDManagerCreate)
         LIBS="$ac_save_LIBS"
     fi
+    enable_wineqtdecoder=${enable_wineqtdecoder:-yes}
     case $host_cpu in
       *powerpc*)
         LDDLLFLAGS="$LDDLLFLAGS -read_only_relocs warning"  dnl FIXME
@@ -838,6 +840,7 @@ case $host_os in
     ;;
 esac
 
+enable_wineqtdecoder=${enable_wineqtdecoder:-no}
 enable_winequartz_drv=${enable_winequartz_drv:-no}
 
 if test "$LIBEXT" = "a"; then
@@ -2794,6 +2797,7 @@ WINE_CONFIG_DLL(winenas.drv)
 WINE_CONFIG_DLL(wineoss.drv)
 WINE_CONFIG_DLL(wineps.drv)
 WINE_CONFIG_DLL(wineps16.drv16,enable_win16)
+WINE_CONFIG_DLL(wineqtdecoder)
 WINE_CONFIG_DLL(winequartz.drv)
 WINE_CONFIG_DLL(winex11.drv)
 WINE_CONFIG_DLL(wing.dll16,enable_win16)

@@ -1,0 +1,9 @@
+MODULE    = wineqtdecoder.dll
+IMPORTS   = strmiids strmbase uuid ole32 advapi32
+EXTRALIBS = @QUICKTIMELIB@
+
+C_SRCS = \
+	main.c \
+	qtvdecoder.c
+
+@MAKE_DLL_RULES@

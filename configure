@@ -657,6 +657,7 @@ FRAMEWORK_OPENAL
 COREAUDIO
 DISKARBITRATIONLIB
 LDEXECFLAGS
+QUICKTIMELIB
 IOKITLIB
 COREFOUNDATIONLIB
 SECURITYLIB
@@ -6518,6 +6519,8 @@ fi
 
     IOKITLIB="-framework IOKit -framework CoreFoundation"
 
+    QUICKTIMELIB="-framework QuickTime -framework ApplicationServices -framework CoreVideo"
+
     LDEXECFLAGS="-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00000000,-segaddr,WINE_SHAREDHEAP,0x7f000000"
 
     if test "$ac_cv_header_DiskArbitration_DiskArbitration_h" = "yes"
@@ -6564,6 +6567,7 @@ done
 
         LIBS="$ac_save_LIBS"
     fi
+    enable_wineqtdecoder=${enable_wineqtdecoder:-yes}
     case $host_cpu in
       *powerpc*)
         LDDLLFLAGS="$LDDLLFLAGS -read_only_relocs warning"          ;;
@@ -7031,6 +7035,7 @@ $as_echo "$ac_cv_c_dll_hpux" >&6; }
     ;;
 esac
 
+enable_wineqtdecoder=${enable_wineqtdecoder:-no}
 enable_winequartz_drv=${enable_winequartz_drv:-no}
 
 if test "$LIBEXT" = "a"; then
@@ -15270,6 +15275,7 @@ wine_fn_config_dll winenas.drv enable_winenas_drv
 wine_fn_config_dll wineoss.drv enable_wineoss_drv
 wine_fn_config_dll wineps.drv enable_wineps_drv
 wine_fn_config_dll wineps16.drv16 enable_win16
+wine_fn_config_dll wineqtdecoder enable_wineqtdecoder
 wine_fn_config_dll winequartz.drv enable_winequartz_drv
 wine_fn_config_dll winex11.drv enable_winex11_drv
 wine_fn_config_dll wing.dll16 enable_win16
