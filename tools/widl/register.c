@@ -65,9 +65,14 @@ static int write_interface( const type_t *iface )
 {
     const UUID *uuid = get_attrp( iface->attrs, ATTR_UUID );
 
-    if (!type_iface_get_inherit( iface )) return 0;
-    if (!need_proxy( iface )) return 0;
     if (!uuid) return 0;
+    if (!is_object( iface )) return 0;
+    if (!type_iface_get_inherit(iface)) /* special case for IUnknown */
+    {
+        put_str( indent, "ForceRemove '%s' = s '%s'\n", format_uuid( uuid ), iface->name );
+        return 0;
+    }
+    if (is_local( iface->attrs )) return 0;
     put_str( indent, "ForceRemove '%s' = s '%s'\n", format_uuid( uuid ), iface->name );
     put_str( indent, "{\n" );
     indent++;
