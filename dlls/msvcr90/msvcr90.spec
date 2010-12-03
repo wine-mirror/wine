@@ -1139,7 +1139,7 @@
 @ stub _wcsncoll_l
 @ cdecl _wcsnicmp(wstr wstr long) msvcrt._wcsnicmp
 @ stub _wcsnicmp_l
-@ stub _wcsnicoll
+@ cdecl _wcsnicoll(wstr wstr long) msvcrt._wcsnicoll
 @ stub _wcsnicoll_l
 @ cdecl _wcsnset(wstr long long) msvcrt._wcsnset
 @ stub _wcsnset_s

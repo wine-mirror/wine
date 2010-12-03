@@ -601,7 +601,7 @@
 @ cdecl _wcslwr(wstr) msvcrt._wcslwr
 @ stub _wcsncoll
 @ cdecl _wcsnicmp(wstr wstr long) msvcrt._wcsnicmp
-@ stub _wcsnicoll
+@ cdecl _wcsnicoll(wstr wstr long) msvcrt._wcsnicoll
 @ cdecl _wcsnset(wstr long long) msvcrt._wcsnset
 @ cdecl _wcsrev(wstr) msvcrt._wcsrev
 @ cdecl _wcsset(wstr long) msvcrt._wcsset

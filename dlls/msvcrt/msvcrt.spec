@@ -1073,7 +1073,7 @@
 # stub _wcsncoll_l
 @ cdecl _wcsnicmp(wstr wstr long) ntdll._wcsnicmp
 # stub _wcsnicmp_l
-@ stub _wcsnicoll #(wstr wstr long)
+@ cdecl _wcsnicoll(wstr wstr long)
 # stub _wcsnicoll_l
 @ cdecl _wcsnset(wstr long long) MSVCRT__wcsnset
 # stub _wcsnset_s
