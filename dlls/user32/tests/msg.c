@@ -11581,6 +11581,7 @@ static void test_dbcs_wm_char(void)
     ok( !PeekMessageA( &msg, hwnd, 0, 0, PM_REMOVE ), "got message %x\n", msg.message );
 
     DestroyWindow(hwnd);
+    DestroyWindow(hwnd2);
 }
 
 #define ID_LISTBOX 0x000f
