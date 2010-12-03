@@ -19,9 +19,11 @@
  */
 
 #include "dmime_private.h"
+#include "rpcproxy.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 
+static HINSTANCE instance;
 LONG DMIME_refCount = 0;
 
 typedef struct {
@@ -735,6 +737,7 @@ static IClassFactoryImpl WaveTrack_CF = {&WaveTrackCF_Vtbl};
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 	if (fdwReason == DLL_PROCESS_ATTACH) {
+                instance = hinstDLL;
 		DisableThreadLibraryCalls(hinstDLL);
 		/* FIXME: Initialisation */
 	}
@@ -825,4 +828,20 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 	
     WARN("(%s, %s, %p): no interface found.\n", debugstr_dmguid(rclsid), debugstr_dmguid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (DMIME.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( instance, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (DMIME.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( instance, NULL );
 }

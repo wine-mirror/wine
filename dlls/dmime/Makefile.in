@@ -10,7 +10,6 @@ C_SRCS = \
 	markertrack.c \
 	paramcontroltrack.c \
 	performance.c \
-	regsvr.c \
 	segment.c \
 	segmentstate.c \
 	segtriggertrack.c \
@@ -19,6 +18,8 @@ C_SRCS = \
 	tempotrack.c \
 	timesigtrack.c \
 	wavetrack.c
+
+IDL_R_SRCS = dmime.idl
 
 RC_SRCS = version.rc
 
