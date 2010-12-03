@@ -2637,7 +2637,7 @@ static HRESULT WINAPI domdoc_validateNode(
 
     if (!is_wellformed(get_doc(This)))
     {
-        ERR("doc not well-formed");
+        ERR("doc not well-formed\n");
         if (err)
             *err = create_parseError(E_XML_NOTWF, NULL, NULL, NULL, 0, 0, 0);
         return S_FALSE;
