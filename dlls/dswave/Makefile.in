@@ -3,8 +3,9 @@ IMPORTS   = dxguid uuid ole32 advapi32
 
 C_SRCS = \
 	dswave.c \
-	dswave_main.c \
-	regsvr.c
+	dswave_main.c
+
+IDL_R_SRCS = dswave.idl
 
 RC_SRCS = version.rc
 
