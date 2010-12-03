@@ -5,8 +5,9 @@ C_SRCS = \
 	band.c \
 	bandtrack.c \
 	dmband_main.c \
-	dmutils.c \
-	regsvr.c
+	dmutils.c
+
+IDL_R_SRCS = dmband.idl
 
 RC_SRCS = version.rc
 

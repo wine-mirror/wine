@@ -18,9 +18,11 @@
  */
 
 #include "dmband_private.h"
+#include "rpcproxy.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmband);
 
+static HINSTANCE instance;
 LONG DMBAND_refCount = 0;
 
 typedef struct {
@@ -137,6 +139,7 @@ static IClassFactoryImpl BandTrack_CF = {&BandTrackCF_Vtbl};
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 	if (fdwReason == DLL_PROCESS_ATTACH) {
+            instance = hinstDLL;
             DisableThreadLibraryCalls(hinstDLL);
 		/* FIXME: Initialisation */
 	} else if (fdwReason == DLL_PROCESS_DETACH) {
@@ -179,4 +182,20 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 	
     WARN("(%s, %s, %p): no interface found.\n", debugstr_dmguid(rclsid), debugstr_dmguid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (DMBAND.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( instance, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (DMBAND.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( instance, NULL );
 }
