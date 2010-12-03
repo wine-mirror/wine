@@ -1980,8 +1980,6 @@ sub fix_file($$$)
   }
 
   print "  $filename\n";
-  #FIXME:assuming that because there is a .bak file, this is what we want is
-  #probably flawed. Or is it???
   if (! -e "$filename.bak") {
     if (!copy("$filename","$filename.bak")) {
       print STDERR "error: unable to make a backup of $filename:\n";
