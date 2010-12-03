@@ -137,11 +137,11 @@ static DWORD WINAPI SystemClockAdviseThread(LPVOID lpParam) {
 outrefresh:
     LeaveCriticalSection(&This->safe);
     
-    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
+    while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
       /** if hwnd we suppose that is a windows event ... */
       if  (NULL != msg.hwnd) {
 	TranslateMessage(&msg);
-	DispatchMessageA(&msg);
+	DispatchMessageW(&msg);
       } else {
 	switch (msg.message) {	    
 	case WM_QUIT:
@@ -178,7 +178,7 @@ static BOOL SystemClockPostMessageToAdviseThread(SystemClockImpl* This, UINT iMs
     SetThreadPriority(This->adviseThread, THREAD_PRIORITY_TIME_CRITICAL);
     This->adviseThreadActive = TRUE;
     while(1) {
-      res = PostThreadMessageA(This->adviseThreadId, iMsg, 0, 0);
+      res = PostThreadMessageW(This->adviseThreadId, iMsg, 0, 0);
       /* Let the thread creates its message queue (with MsgWaitForMultipleObjects call) by yielding and retrying */
       if (!res && (GetLastError() == ERROR_INVALID_THREAD_ID))
 	Sleep(0);
@@ -187,7 +187,7 @@ static BOOL SystemClockPostMessageToAdviseThread(SystemClockImpl* This, UINT iMs
     }
     return res;
   }
-  return PostThreadMessageA(This->adviseThreadId, iMsg, 0, 0);
+  return PostThreadMessageW(This->adviseThreadId, iMsg, 0, 0);
 }
 
 static ULONG WINAPI SystemClockImpl_AddRef(IReferenceClock* iface) {
