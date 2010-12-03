@@ -827,7 +827,7 @@ static int resize_numtests = 0;
             check_rect("client", r, res->rc); \
         } \
         value = (int)SendMessage(hRebar, RB_GETROWCOUNT, 0, 0); \
-        ok(res->iNumRows == value, "RB_GETROWCOUNT expected %d got %d", res->iNumRows, value); \
+        ok(res->iNumRows == value, "RB_GETROWCOUNT expected %d got %d\n", res->iNumRows, value); \
         if (res->heightNotify) { \
             RECT rcClient; \
             GetClientRect(hRebar, &rcClient); \
