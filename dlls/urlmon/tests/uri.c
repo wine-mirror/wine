@@ -5972,7 +5972,13 @@ static const uri_parse_test uri_parse_tests[] = {
     {"http://google.com.uk/",0,PARSE_DOMAIN,0,"google.com.uk",S_OK,FALSE},
     {"http://google.com.com/",0,PARSE_DOMAIN,0,"com.com",S_OK,FALSE},
     {"test/test",Uri_CREATE_ALLOW_RELATIVE,PARSE_DOMAIN,0,"",S_OK,FALSE},
-    {"file://server/test",0,PARSE_DOMAIN,0,"",S_OK,FALSE}
+    {"file://server/test",0,PARSE_DOMAIN,0,"",S_OK,FALSE},
+
+    /* PARSE_LOCATION and PARSE_ANCHOR tests. */
+    {"http://google.com/test#Test",0,PARSE_ANCHOR,0,"#Test",S_OK,FALSE},
+    {"http://google.com/test#Test",0,PARSE_LOCATION,0,"#Test",S_OK,FALSE},
+    {"test",Uri_CREATE_ALLOW_RELATIVE,PARSE_ANCHOR,0,"",S_OK,FALSE},
+    {"test",Uri_CREATE_ALLOW_RELATIVE,PARSE_LOCATION,0,"",S_OK,FALSE}
 };
 
 static inline LPWSTR a2w(LPCSTR str) {
