@@ -20,7 +20,7 @@
 
 #include "version.h"
 
-#define WINE_OLESELFREGISTER
 #define WINE_FILENAME_STR "shell32.dll"
+#define WINE_EXTRAVALUES VALUE "OLESelfRegister",""
 
-#include <wine/wine_common_ver.rc>
+#include "wine/wine_common_ver.rc"
