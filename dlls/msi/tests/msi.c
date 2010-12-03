@@ -958,7 +958,8 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA("{6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D}", "feature");
     error = GetLastError();
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
-    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS || broken(error == ERROR_ALREADY_EXISTS) /* win2k */,
+       "expected ERROR_SUCCESS, got %u\n", error);
 
     /* same length as guid, but random */
     SetLastError(0xdeadbeef);
