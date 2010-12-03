@@ -17,3 +17,9 @@
  */
 
 #include "wia_lh.idl"
+
+[
+    threading(both),
+    uuid(b323f8e0-2e68-11d0-90ea-00aa0060f86c)
+]
+coclass StillImage { interface IStillImageW; }

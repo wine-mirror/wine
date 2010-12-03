@@ -7,8 +7,6 @@ C_SRCS = \
 	sti.c \
 	sti_main.c
 
-RC_SRCS = rsrc.rc
-
 IDL_P_SRCS = \
 	sti_wia.idl
 
