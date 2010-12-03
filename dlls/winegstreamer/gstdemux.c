@@ -533,10 +533,10 @@ static GstFlowReturn got_data_sink(GstPad *pad, GstBuffer *buf) {
             return GST_FLOW_WRONG_STATE;
         }
         FIXME("Did not get a GST_APP_BUFFER, creating a sample\n");
-        IMediaSample_SetActualDataLength(sample, GST_BUFFER_SIZE(buf));
         IMediaSample_GetPointer(sample, &ptr);
         memcpy(ptr, GST_BUFFER_DATA(buf), GST_BUFFER_SIZE(buf));
     }
+    IMediaSample_SetActualDataLength(sample, GST_BUFFER_SIZE(buf));
 
     if (GST_BUFFER_TIMESTAMP_IS_VALID(buf)) {
         REFERENCE_TIME rtStart = gst_segment_to_running_time(pin->segment, GST_FORMAT_TIME, buf->timestamp);

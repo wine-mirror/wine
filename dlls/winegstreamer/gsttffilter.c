@@ -178,6 +178,7 @@ static GstFlowReturn got_data(GstPad *pad, GstBuffer *buf) {
     IMediaSample_SetDiscontinuity(sample, GST_BUFFER_FLAG_IS_SET(buf, GST_BUFFER_FLAG_DISCONT));
     IMediaSample_SetPreroll(sample, GST_BUFFER_FLAG_IS_SET(buf, GST_BUFFER_FLAG_PREROLL));
     IMediaSample_SetSyncPoint(sample, !GST_BUFFER_FLAG_IS_SET(buf, GST_BUFFER_FLAG_DELTA_UNIT));
+    IMediaSample_SetActualDataLength(sample, GST_BUFFER_SIZE(buf));
 
     hr = BaseOutputPinImpl_Deliver((BaseOutputPin*)This->tf.ppPins[1], sample);
     gst_buffer_unref(buf);
