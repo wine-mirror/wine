@@ -678,7 +678,8 @@ static ULONG WINAPI VideoRendererInner_Release(IUnknown * iface)
     {
         IPin *pConnectedTo;
 
-        DestroyWindow(This->hWnd);
+        if (This->hWnd)
+            SendMessageW(This->hWnd, WM_CLOSE, 0, 0);
         PostThreadMessageA(This->ThreadID, WM_QUIT, 0, 0);
         WaitForSingleObject(This->hThread, INFINITE);
         CloseHandle(This->hThread);
