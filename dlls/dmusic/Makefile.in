@@ -10,8 +10,9 @@ C_SRCS = \
 	download.c \
 	downloadedinstrument.c \
 	instrument.c \
-	port.c \
-	regsvr.c
+	port.c
+
+IDL_R_SRCS = dmusic.idl
 
 RC_SRCS = version.rc
 
