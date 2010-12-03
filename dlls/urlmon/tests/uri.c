@@ -5948,7 +5948,15 @@ static const uri_parse_test uri_parse_tests[] = {
     {"file:///c:/t<|>est.mp3",0,PARSE_PATH_FROM_URL,0,"c:\\t<|>est.mp3",S_OK,FALSE},
     {"file:///c:/te%XX t/",0,PARSE_PATH_FROM_URL,0,"c:\\te%XX t\\",S_OK,FALSE},
     {"file://server/test",0,PARSE_PATH_FROM_URL,0,"\\\\server\\test",S_OK,FALSE},
-    {"http://google.com/",0,PARSE_PATH_FROM_URL,0,"",E_INVALIDARG,FALSE}
+    {"http://google.com/",0,PARSE_PATH_FROM_URL,0,"",E_INVALIDARG,FALSE},
+
+    /* PARSE_URL_FROM_PATH tests. */
+    /* This function almost seems to useless (just returns the absolute uri). */
+    {"test.com",Uri_CREATE_ALLOW_RELATIVE,PARSE_URL_FROM_PATH,0,"test.com",S_OK,FALSE},
+    {"/test/test",Uri_CREATE_ALLOW_RELATIVE,PARSE_URL_FROM_PATH,0,"/test/test",S_OK,FALSE},
+    {"file://c:\\test\\test",Uri_CREATE_FILE_USE_DOS_PATH,PARSE_URL_FROM_PATH,0,"file://c:\\test\\test",S_OK,FALSE},
+    {"file:c:/test",0,PARSE_URL_FROM_PATH,0,"",S_OK,FALSE},
+    {"http:google.com/",0,PARSE_URL_FROM_PATH,0,"",S_OK,FALSE}
 };
 
 static inline LPWSTR a2w(LPCSTR str) {
