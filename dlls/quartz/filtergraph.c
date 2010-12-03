@@ -269,6 +269,9 @@ static HRESULT WINAPI FilterGraphInner_QueryInterface(IUnknown * iface,
     } else if (IsEqualGUID(&IID_IFilterMapper2, riid)) {
         *ppvObj = This->pFilterMapper2;
         TRACE("   returning IFilterMapper2 interface from aggregated filtermapper (%p)\n", *ppvObj);
+    } else if (IsEqualGUID(&IID_IFilterMapper3, riid)) {
+        *ppvObj = This->pFilterMapper2;
+        TRACE("   returning IFilterMapper3 interface from aggregated filtermapper (%p)\n", *ppvObj);
     } else {
         *ppvObj = NULL;
 	FIXME("unknown interface %s\n", debugstr_guid(riid));
