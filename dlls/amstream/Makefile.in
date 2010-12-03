@@ -5,8 +5,9 @@ C_SRCS = \
 	amstream.c \
 	main.c \
 	mediastream.c \
-	mediastreamfilter.c \
-	regsvr.c
+	mediastreamfilter.c
+
+IDL_R_SRCS = amstream_classes.idl
 
 RC_SRCS = version.rc
 
