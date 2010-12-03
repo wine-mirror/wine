@@ -2,7 +2,7 @@ MODULE    = ole32.dll
 IMPORTLIB = ole32
 IMPORTS   = uuid advapi32 user32 gdi32 rpcrt4
 EXTRADEFS = -D_OLE32_ -DCOM_NO_WINDOWS_H \
-    -DENTRY_PREFIX=OLE32_ -DPROXY_CLSID=CLSID_PSFactoryBuffer -DREGISTER_PROXY_DLL
+    -DENTRY_PREFIX=OLE32_ -DPROXY_CLSID=CLSID_PSFactoryBuffer -DWINE_REGISTER_DLL
 
 C_SRCS = \
 	antimoniker.c \
@@ -34,7 +34,6 @@ C_SRCS = \
 	oleobj.c \
 	oleproxy.c \
 	pointermoniker.c \
-	regsvr.c \
 	rpc.c \
 	stg_prop.c \
 	stg_stream.c \
@@ -48,6 +47,12 @@ IDL_C_SRCS = \
 	irot.idl
 
 IDL_P_SRCS = \
+	dcom.idl \
+	ole32_objidl.idl \
+	ole32_oleidl.idl \
+	ole32_unknwn.idl
+
+IDL_R_SRCS = \
 	dcom.idl \
 	ole32_objidl.idl \
 	ole32_oleidl.idl \

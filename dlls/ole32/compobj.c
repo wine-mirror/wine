@@ -59,7 +59,9 @@
 #include "ctxtcall.h"
 #include "dde.h"
 
+#include "initguid.h"
 #include "compobj_private.h"
+#include "moniker.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -4168,4 +4170,18 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
     return TRUE;
 }
 
-/* NOTE: DllRegisterServer and DllUnregisterServer are in regsvr.c */
+/***********************************************************************
+ *		DllRegisterServer (OLE32.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return OLE32_DllRegisterServer();
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (OLE32.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return OLE32_DllUnregisterServer();
+}

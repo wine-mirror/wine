@@ -2483,8 +2483,8 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 
 [RegisterDllsSection]
 ;;some dlls have to be registered first
-11,,ole32.dll,1
 11,,atl.dll,1
+11,,ole32.dll,1
 11,,oleaut32.dll,1
 11,,shell32.dll,1
 
