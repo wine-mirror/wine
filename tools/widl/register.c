@@ -146,14 +146,14 @@ static int write_progid( const type_t *class )
 
     if (progid)
     {
-        put_str( indent, "ForceRemove '%s' = s '%s'\n", progid, descr );
+        put_str( indent, "'%s' = s '%s'\n", progid, descr );
         put_str( indent++, "{\n" );
         put_str( indent, "CLSID = s '%s'\n", format_uuid( uuid ) );
         put_str( --indent, "}\n" );
     }
     if (vi_progid)
     {
-        put_str( indent, "ForceRemove '%s' = s '%s'\n", vi_progid, descr );
+        put_str( indent, "'%s' = s '%s'\n", vi_progid, descr );
         put_str( indent++, "{\n" );
         put_str( indent, "CLSID = s '%s'\n", format_uuid( uuid ) );
         if (progid) put_str( indent, "CurVer = s '%s'\n", progid );
