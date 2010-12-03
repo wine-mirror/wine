@@ -359,7 +359,7 @@ static void CDECL NPP_LostFocus(NPP instance)
 }
 
 /***********************************************************************
- *          NP_GetEntryPoints (npmshtml.@)
+ *          NP_GetEntryPoints (mshtml.@)
  */
 NPError WINAPI NP_GetEntryPoints(NPPluginFuncs* funcs)
 {
