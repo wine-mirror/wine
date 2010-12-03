@@ -12,8 +12,9 @@ C_SRCS = \
 	mixer.c \
 	primary.c \
 	propset.c \
-	regsvr.c \
 	sound3d.c
+
+IDL_R_SRCS = dsound_classes.idl
 
 RC_SRCS = version.rc
 

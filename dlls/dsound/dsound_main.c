@@ -49,6 +49,7 @@
 #include "dsound.h"
 #include "dsconf.h"
 #include "ks.h"
+#include "rpcproxy.h"
 #include "initguid.h"
 #include "ksmedia.h"
 #include "dsdriver.h"
@@ -99,6 +100,7 @@ int ds_default_sample_rate = 44100;
 int ds_default_bits_per_sample = 16;
 static int ds_default_playback;
 static int ds_default_capture;
+static HINSTANCE instance;
 
 /*
  * Get a config key from either the app-specific or the default config
@@ -669,6 +671,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
             INIT_GUID(DSOUND_renderer_guids[i], 0xbd6dd71a, 0x3deb, 0x11d1, 0xb1, 0x71, 0x00, 0xc0, 0x4f, 0xc2, 0x00, 0x00 + i);
             INIT_GUID(DSOUND_capture_guids[i],  0xbd6dd71b, 0x3deb, 0x11d1, 0xb1, 0x71, 0x00, 0xc0, 0x4f, 0xc2, 0x00, 0x00 + i);
         }
+        instance = hInstDLL;
         DisableThreadLibraryCalls(hInstDLL);
         /* Increase refcount on dsound by 1 */
         GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCWSTR)hInstDLL, &hInstDLL);
@@ -681,4 +684,20 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
         break;
     }
     return TRUE;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (DSOUND.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( instance, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (DSOUND.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( instance, NULL );
 }
