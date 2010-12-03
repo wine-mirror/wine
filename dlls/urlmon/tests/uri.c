@@ -5956,7 +5956,11 @@ static const uri_parse_test uri_parse_tests[] = {
     {"/test/test",Uri_CREATE_ALLOW_RELATIVE,PARSE_URL_FROM_PATH,0,"/test/test",S_OK,FALSE},
     {"file://c:\\test\\test",Uri_CREATE_FILE_USE_DOS_PATH,PARSE_URL_FROM_PATH,0,"file://c:\\test\\test",S_OK,FALSE},
     {"file:c:/test",0,PARSE_URL_FROM_PATH,0,"",S_OK,FALSE},
-    {"http:google.com/",0,PARSE_URL_FROM_PATH,0,"",S_OK,FALSE}
+    {"http:google.com/",0,PARSE_URL_FROM_PATH,0,"",S_OK,FALSE},
+
+    /* PARSE_SCHEMA tests. */
+    {"http://google.com/test",0,PARSE_SCHEMA,0,"http",S_OK,FALSE},
+    {"test",Uri_CREATE_ALLOW_RELATIVE,PARSE_SCHEMA,0,"",S_OK,FALSE}
 };
 
 static inline LPWSTR a2w(LPCSTR str) {

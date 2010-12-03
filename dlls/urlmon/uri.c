@@ -6385,6 +6385,35 @@ static HRESULT parse_url_from_path(IUri *uri, LPWSTR output, DWORD output_len,
     return S_OK;
 }
 
+static HRESULT parse_schema(IUri *uri, LPWSTR output, DWORD output_len,
+                            DWORD *result_len)
+{
+    HRESULT hr;
+    DWORD len;
+    BSTR received;
+
+    hr = IUri_GetPropertyLength(uri, Uri_PROPERTY_SCHEME_NAME, &len, 0);
+    if(FAILED(hr)) {
+        *result_len = 0;
+        return hr;
+    }
+
+    *result_len = len;
+    if(len+1 > output_len)
+        return STRSAFE_E_INSUFFICIENT_BUFFER;
+
+    hr = IUri_GetSchemeName(uri, &received);
+    if(FAILED(hr)) {
+        *result_len = 0;
+        return hr;
+    }
+
+    memcpy(output, received, (len+1)*sizeof(WCHAR));
+    SysFreeString(received);
+
+    return S_OK;
+}
+
 /***********************************************************************
  *           CoInternetParseIUri (urlmon.@)
  */
@@ -6448,6 +6477,9 @@ HRESULT WINAPI CoInternetParseIUri(IUri *pIUri, PARSEACTION ParseAction, DWORD d
         break;
     case PARSE_URL_FROM_PATH:
         hr = parse_url_from_path(pIUri, pwzResult, cchResult, pcchResult);
+        break;
+    case PARSE_SCHEMA:
+        hr = parse_schema(pIUri, pwzResult, cchResult, pcchResult);
         break;
     case PARSE_SECURITY_URL:
     case PARSE_MIME:
