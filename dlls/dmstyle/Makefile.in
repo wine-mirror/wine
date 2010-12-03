@@ -9,9 +9,10 @@ C_SRCS = \
 	dmutils.c \
 	motiftrack.c \
 	mutetrack.c \
-	regsvr.c \
 	style.c \
 	styletrack.c
+
+IDL_R_SRCS = dmstyle.idl
 
 RC_SRCS = version.rc
 
