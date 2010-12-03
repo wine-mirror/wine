@@ -3,9 +3,10 @@ IMPORTS   = dxguid uuid ole32 advapi32
 
 C_SRCS = \
 	dmsynth_main.c \
-	regsvr.c \
 	synth.c \
 	synthsink.c
+
+IDL_R_SRCS = dmsynth.idl
 
 RC_SRCS = version.rc
 
