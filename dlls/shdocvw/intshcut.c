@@ -750,7 +750,7 @@ void WINAPI OpenURL(HWND hWnd, HINSTANCE hInst, LPCSTR lpcstrUrl, int nShowCmd)
             ici.hwndParent = hWnd;
 
             if FAILED(UniformResourceLocatorW_InvokeCommand(&shortcut->uniformResourceLocatorW, (PURLINVOKECOMMANDINFOW) &ici))
-                    TRACE("failed to open URL: %s\n.",debugstr_a(lpcstrUrl));
+                    TRACE("failed to open URL: %s\n", debugstr_a(lpcstrUrl));
         }
 
         heap_free(shortcut);
