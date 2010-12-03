@@ -1,13 +1,14 @@
-The Wine maintenance release 1.2.1 is now available.
+The Wine maintenance release 1.2.2 is now available.
 
 What's new in this release (see below for details):
+  - Support for animated cursors.
   - Translation updates.
   - Various bug fixes.
 
 The source is available from the following locations:
 
-  http://ibiblio.org/pub/linux/system/emulators/wine/wine-1.2.1.tar.bz2
-  http://prdownloads.sourceforge.net/wine/wine-1.2.1.tar.bz2
+  http://ibiblio.org/pub/linux/system/emulators/wine/wine-1.2.2.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-1.2.2.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -23,360 +24,264 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.2.1:
+Bugs fixed in 1.2.2:
 
-   3975  FILE: printing does not work as expected
-  13344  DPP 3.4.1.1 - Images with "Fit to window" corrupted
-  16047  Garena client crashes in WSASendTo
-  16998  WISO Sparbuch crashes at startup
-  18864  IW2: Edge of Chaos launcher pagefaults on startup
-  19070  hh.exe should exit immediately if not given a file to open (appinstall)
-  19560  Street Fighter IV : launcher crashes
-  21295  Painkiller and Painkiller Black Edition cannot accept CD Key submission preventing installation
-  22021  Switching pages in ElsterFormular 2009/2010 needs much time
-  22536  Office 2010 installation crashed
-  22881  Custom-decorated windows not movable with Openbox (affects steam, wow...)
-  22994  Far Cry installer quits
-  23085  Printing in notepad displays "Page &p" instead of actual page number.
-  23340  Winscard : test program : unimplemented function winscard.dll.SCardIsValidContext and winscard.dll.SCardReleaseContext
-  23453  Worms Armageddon cannot send text in WormNET
-  23477  WoW Cataclysm Beta needs KERNEL32.SetFileValidData
-  23578  Team Fortress 2: Significant lag disrupts gameplay...
-  23678  Crystal Cubes: fonts not drawn correctly
-  23704  winhelp failed to load any help file
-  23707  stack overflow when destroying a window whose owner is itself
-  23762  wineboot aborts if "Terminate Process" is clicked
-  23772  The bug in NtQueryInformationProcess with ProcessInformationClass = ProcessDebugObjectHandle
-  23810  16-bit setup program can't find its files
-  23907  Winecfg should not allow resolutions lower than 640x480 amount
-  23936  pressing enter in passpack's search box has no effect
-  23940  SetWindowPos does not work for other process windows
-  23953  qemu.exe exhausts file descriptors
-  24046  Keypressing in listview can result in infinite hang
-  24068  Crash in dbghelp (WoW)
-  24072  winepath: Add -0 option
-  24161  Anzio version 16.2 fails with ntdll exception
-  24180  crash in dnsbench.exe
-  24193  ptrace protection in Ubuntu 10.10 breaks debuggers (affects winedbg, wow, ...)
-  24226  Broken Sword II gives fatal error on startup
-  24425  err:module:find_forwarded_export function not found for forward 'krnl386.exe16.GetProcessDword'
-  24441  Fix the detection of the number of CPUs for OpenBSD.
+  16281  Support for animated cursors is not implemented
+  17436  mRemote does not work
+  17875  GetTempFileName with unique != 0 broken
+  18958  Adobe Reader 9 has a divide by zero error during install
+  21096  utorrent drops error 12157 when using a https tracker
+  23285  Animated mouse pointer invisible in 3D mode in Ice Cream Tycoon
+  23355  Ring-Protech CD/DVD Protection fails
+  24470  winegcc: 32-bit libs are not found with -m32 on 64-bit host
+  24606  Office 2007 crashes at open/save file dialogs because of Fortify (not a Wine bug)
+  24627  ProPresenter 4.0.0.1 for Windows doesn't startup
+  24673  iexplore: Error when using SSL
+  24714  ProteoWizard: Unhandled marshal type 7
+  24773  It is possible to click behind certain modal dialogs in Worms Armageddon, leading to loss of focus and crashes
+  24871  Floppy diskette label and serial number not reported
+  24952  dlls/user32/button.c handles incorrectly unknown button types
+  25057  Magic Workstation: mwsplay.exe crashes when launching it
+  25238  Wine is missing manpages for some built-in applications
+  25339  make install-dev target broken for empty directory structures
 
 ----------------------------------------------------------------
 
-Changes since 1.2:
+Changes since 1.2.1:
 
-Alexandre Julliard (17):
-      comctl32: Fix positioning of toolbars that have the WS_BORDER style.
-      winebuild: Add more checks to protect against corrupted resource files.
-      server: Try to use /proc/pid/mem to read process memory since it should be faster.
-      rpcrt4: Don't align the buffer after reading the conformance, we need to read the variance first.
-      include: Don't install tlb files, they are platform-dependent.
-      configure: Send the flex error output to config.log.
-      winex11: Fix handling of the lpDx array in ExtTextOut for the non-Xrender case.
-      gdi32: Replicate a Windows bug in StretchDIBits for top-down bitmaps in the non-stretching case.
-      winex11: Sending a move/resize client message to the root requires a SubstructureRedirect mask too.
-      ntdll: Fix the protection state of writable sections.
-      krnl386.exe: Remove 16 suffix on Get/SetProcessDword since there's no 32-bit version.
-      ws2_32: Fail when select is called with an invalid fd.
-      server: Make the fd passing code slightly more portable.
-      ntdll: Add support for retrieving the server pid from the socket credentials.
-      ntdll: Add a workaround for Ubuntu's stupid ptrace breakage.
-      winex11: Force setting the cursor again on the first mouse event in case the initial setting failed.
+Akihiro Sagawa (3):
+      cryptui: Add Japanese translation.
+      crypt32: Add Japanese translation.
+      cryptui: Update Japanese translation.
+
+Aleksey Bragin (1):
+      msi: Fix freed memory access and fix freeing of invalid pointer.
+
+Alexandre Julliard (16):
+      user32: Fix a DC leak in DrawIconEx.
+      mshtml: Try installing Gecko from the global data dir too.
+      wininet: Load X509_STORE_CTX_get_ex_data from libcrypto not libssl.
+      winhlp32: Use a standard About dialog, with the proper icon.
+      wine.inf: Add a few more common functions to be excluded from relay traces.
+      kernel32: Use RtlDosPathNameToNtPathName_U to validate the path in GetVolumeInformationW.
+      configure: Disable Fortify if it's enabled by default, it's too broken.
+      configure: More aggressive disabling of Fortify.
+      kernel32: Fix a FAT format sanity check for floppies.
+      winegcc: Detect the appropriate lib directory for 32/64 cross-builds.
+      winegcc: Fix the lib dir detection.
+      winedbg: Don't start another instance of the debugger when it crashes.
+      ntdll: Don't call vectored exception handlers under the critical section.
+      winapi: Add support for more spec entry flags.
+      shell32: Store the raw AUTHORS file in resources instead of trying to convert to a C array.
       Updated the authors list.
 
-Amine Khaldi (2):
-      mpr: Fix Bulgarian translation.
-      shdoclc: Fix Spanish translation.
+Amine Khaldi (4):
+      mpr: Fix translations.
+      shlwapi: Fix translations.
+      xcopy: Fix translations.
+      comdlg32: Fix translations.
 
-Anders Jonsson (15):
-      README: Update Swedish translation.
-      mapi32: Add Swedish translation.
-      cryptui: Add Swedish translation.
-      xcopy: Add Swedish translation.
-      start: Add Swedish translation.
-      reg: Add Swedish translation.
-      jscript: Add Swedish translation.
-      credui: Update Swedish translation.
-      setupapi: Update Swedish translation.
-      wininet: Update Swedish translation.
-      shell32: Update Swedish translation.
-      devenum: Add Swedish translation.
-      user32: Update Swedish translation.
-      oleacc: Add Swedish translation.
-      winecfg: Update Swedish translation.
+Anders Jonsson (10):
+      cryptui: Fix typos in English resources.
+      winmm: Fix typo in English, Slovak resources.
+      winmm: Add Swedish translation.
+      cryptdlg: Add Swedish translation.
+      crypt32: Update Swedish translation.
+      net: Add Swedish translation.
+      progman: Fix typos in Swedish translation.
+      kernel32: Add Swedish translation.
+      cryptui: Fix typo in Swedish translation.
+      taskmgr: Update Swedish translation.
 
-Andrew Nguyen (2):
-      ntdll: Fix the status code for ProcessDebugObjectHandle class in NtQueryInformationProcess when the debugger is absent.
-      krnl386.exe: Fix last error check for DOS compatibility hack.
+Andrew Eikum (1):
+      hlink: Implement HLINKGETREF flags handling.
 
-André Hentschel (7):
-      winebuild: Don't segfault when run without arguments.
-      winecfg: Improve German view.
-      winecfg: Sync German keyboard shortcuts.
-      comdlg32: Fix German font dialog.
-      comdlg32: Fix German shortcut conflict.
-      winhlp32: Update translations.
-      winedbg: Fix typo in German translation.
+André Hentschel (5):
+      krnl386: Mention DOSBox.
+      user32: Don't paint new button styles instead of crashing.
+      widl: Fix for typelib generation when unaligned access to memory is not allowed.
+      crypt32: Fix German translation.
+      cryptui: Fix German translation.
 
-Aurimas Fišeras (1):
-      taskmgr: Update Lithuanian translation.
+Austin English (13):
+      msiexec: Add a manpage.
+      notepad: Add a manpage.
+      regsvr32: Add a manpage.
+      winemine: Add a manpage.
+      winefile: Add a manpage.
+      winecfg: Add a manpage.
+      wineboot: Add a manpage.
+      wineconsole: Add a manpage.
+      regedit: Add a manpage.
+      winepath: Add a manpage.
+      winegcc: Symlink winegcc manpage to winecpp.
+      tools: Fix install-dev target.
+      appwiz.cpl: Fix Italian translation.
 
-Austin English (4):
-      Remove references to wineprefixcreate.
-      winscard: Add stubs for SCardIsValidContext/SCardReleaseContext.
-      kernel32: Add stub for SetFileValidData.
-      ntdll: Check for __FreeBSD_kernel__, remove redundant ifdef's, make FIXME's consistent.
-
-Brad Smith (1):
-      ntll: Fix the detection of the number of CPUs for OpenBSD.
-
-Cheer Xiao (7):
-      oleview: Update simplified Chinese translation.
-      regedit: Update simplified Chinese translation.
-      uninstaller: Update simplified Chinese translation.
-      view: Update simplified Chinese translation.
-      wineboot: Update simplified Chinese translation.
-      winemine: Update simplified Chinese translation.
-      wordpad: Update simplified Chinese translation.
+Cheer Xiao (8):
+      comdlg32: Update Simplified Chinese translation.
+      oleview: Update Simplified Chinese translation.
+      taskmgr: Update Simplified Chinese translation.
+      winebot: Update Simplified Chinese translation.
+      wineconsole: Update Simplified Chinese translation.
+      winhlp32: Update Simplified Chinese translation.
+      wordpad: Update Simplified Chinese translation.
+      notepad: Update Simplified Chinese translation.
 
 Damjan Jovanovic (1):
-      notepad: Substitute the page number in the footer.
+      comdlg32: Fix a stack overflow.
 
 Dan Kegel (1):
-      kernel32: Add error text for WSAECONNREFUSED.
+      ws2_32: Null select() should fail with WSAEINVAL.
 
-Davide Pizzetti (6):
-      winecfg: Italian translation update.
-      winedbg: Italian translation update.
-      xcopy: Italian translation update.
-      wordpad: Italian translation update.
-      xcopy: Italian translation update.
-      wineboot: Italian translation update.
+Davide Pizzetti (1):
+      net: Italian translation update.
 
-Detlef Riekenberg (2):
-      winhelp.exe16: Add missing separator after command name.
-      wineps: Use winspool.drv for job management.
+Detlef Riekenberg (1):
+      shell32: We have a Unicode parameter when launching a CPL.
 
-Dmitry Timoshkov (6):
-      winex11: Remember last window that had the XIC focus and use it in ToUnicode() to make dead keys work more reliably.
-      gdi32: Make sure that all the glyph metrics are transformed before caching them.
-      user32: Protect from setting as a window owner one of its successors.
-      user32: Properly pack the WM_WINE_SETWINDOWPOS internal message.
-      winex11.drv: Avoid copying window bits if the window didn't move.
-      winex11.drv: Avoid copying invalid window bits.
+Dmitry Timoshkov (3):
+      oleaut32: Handle VT_DATE in serialize_param()/deserialize_param().
+      kernel32: Truncate the reported by GlobalMemoryStatus() memory limits for Win9x versions too.
+      user32: FindWindow() should treat an empty title same way as NULL.
 
-Eric Pouech (1):
-      dbghelp: Fix regression with prevented StackWalk on i386 CPU to be called with a NULL context.
+Erich Hoover (3):
+      user32: Prepare for multi-frame storing of icons and cursors.
+      user32: Add support for multiple frames in cursor format.
+      winex11: Add support for animated cursors in X11 driver.
 
-Francois Gouget (7):
-      wine.inf: Let winebrowser handle the ftp URLs.
-      xcopy: Remove spaces before '\n's in the Korean translation.
-      start: Remove spaces before '\n's in the Portuguese translation.
-      programs: Remove spaces before '\n's in the Swedish translation.
-      shell32: Remove spaces before '\n's in the Serbian translation.
-      appwiz.cpl: Remove a space before an ellipsis in the Norwegian translation.
-      shdoclc: Remove a space before an ellipsis in the Italian translation.
+Eryk Wieliczko (1):
+      comdlg32: GetSaveFileName: Don't append .* extension.
 
-Frédéric Delanoy (1):
-      start: Fix French translation.
+Francois Gouget (1):
+      configure: Load wine lower in memory on FreeBSD to leave more space for mmap() and malloc().
+
+Gerald Pfeifer (1):
+      user32: Fix error handling in BITMAP_Load.
 
 Hans Leidekker (3):
-      dnsapi: Remove the critical section around res_query.
-      winecfg: Update Windows 7 version to Service Pack 1.
-      msi: Treat empty string as NULL in MsiGetSummaryInformationW.
+      advapi32: Fix handling of zero account and domain size parameters in LookupAccountSid.
+      advapi32: Fix a buffer size query in LsaLookupSids.
+      ntdll: Add a stub implementation of FSCTL_GET_RETRIEVAL_POINTERS.
 
-Harald Hoyer (1):
-      preloader: Fix moving of auxiliary values.
+Henri Verbeet (1):
+      krnl386.exe: Return the default value if the section wasn't found in GetPrivateProfileString16().
 
-Howell Tam (1):
-      ws2_32: Wrapped WSASendTo/WSARecvFrom with a different function name.
+Hwang YunSong (5):
+      winmm: Update Korean resource.
+      shlwapi: Update Korean resource.
+      kernel32: Update Korean resource.
+      taskmgr: Update Korean resource.
+      winhlp32: Update Korean resource.
 
-Huw Davies (2):
-      rpcrt4: Add a missing STUBLESS_INITOUT case.
-      winspool.drv: Allow for spaces in either the printer name or the spool file.
-
-Hwang YunSong (2):
-      start: Update Korean resource.
-      xcopy: Update Korean resource.
-
-Igor Paliychuk (28):
-      appwiz.cpl: Add Ukrainian translation.
-      winecfg: Add Ukrainian translation.
-      regedit: Add Ukrainian translation.
-      oleview: Add Ukrainian translation.
-      shell32: Update Ukrainian translation.
-      taskmgr: Add Ukrainian translation.
-      notepad: Add Ukrainian translation.
-      cryptui: Add Ukrainian translation.
-      winedbg: Add Ukrainian translation.
-      net: Add Ukrainian translation.
-      progman: Add Ukrainian translation.
-      wineboot: Add Ukrainian translation.
-      browseui: Add Ukrainian translation.
-      notepad: Ukrainian translation fix.
-      gphoto2.ds: Add Ukrainian translation.
-      jscript: Add Ukrainian translation.
-      progman: Ukrainian translation fix.
-      sane.ds: Add Ukrainian translation.
-      winspool.drv: Add Ukrainian translation.
-      wineconsole: Add Ukrainian translation.
-      cmdlgtst: Add Ukrainian translation.
-      start: Add Ukrainian translation.
-      cmd: Add Ukrainian translation.
-      taskmgr: Fixed Ukrainian translation.
-      comdlg32: Ukrainian translation update.
-      crypt32: Ukrainian translation update.
-      comdlg32: Fixed Russian standard dialog sizes.
-      comdlg32: Fixed Ukrainian standard dialog sizes.
+Igor Paliychuk (1):
+      README: Added Ukrainian version.
 
 Jacek Caban (1):
-      widl: Define _WIN32 by default.
+      mshtml: Try installing Gecko from hardcoded '/usr/share/wine/gecko/' location.
 
-Jerome Leclanche (2):
-      winepath: Add a -0 option to use null character as separator.
-      gdi32: Properly set ERROR_NOACCESS when GetObject receives invalid arguments.
+Juan Lang (7):
+      wininet: Don't make use of OpenSSL's security checks, as crypt32 also verifies certificate chain.
+      wininet: Store WININET_NETCONNECTION * in SSL context.
+      wininet: Store security flags in WININET_NETCONNECTION.
+      wininet: Don't retrieve a certificate that isn't used.
+      wininet: Don't call SSL_connect until initialization is complete.
+      wininet: Honor security flags when verifying certificates.
+      wininet: More completely implement querying INTERNET_OPTION_SECURITY_FLAGS.
 
-Jose Rostagno (2):
-      notepad: Fix Spanish translation.
-      cmd: Fix Spanish translation.
+Jörg Höhle (1):
+      kernel32/tests: GetVolumeInformationA X: succeeds iff drive's default dir is root.
 
-Juan Lang (1):
-      iphlpapi: Don't overwrite last IPv4 address with first IPv6 address.
+Lauri Kenttä (1):
+      shlwapi: Update Finnish translation.
 
-Ken Thomases (1):
-      winex11: Pass window property to server in 64KB chunks.
+Louis Lenders (3):
+      kernel32: Fix GetTempFileName with invalid path.
+      ws2_32: Return SOCKET_ERROR in stubbed WSALookupServiceNext, to prevent apps from looping forever.
+      rpcrt4: Add stub for NdrMesTypeEncode2.
 
-Lauri Kenttä (4):
-      user32: Update Finnish translation.
-      wininet: Update Finnish translation.
-      msi: Update Finnish translation.
-      comdlg32: Update Finnish translation.
-
-Louis Lenders (2):
-      kernel32: Change SetHandleCount to match behaviour on versions >WINNT.
-      wine.inf.in: Add registry key under HKLM\%CurrentVersion%\Policies\System.
-
-Luca Bennati (41):
-      winecfg: Fix Italian translation.
-      taskmgr: Fix Italian translation.
-      winhlp32: Fix Italian translation.
-      wineconsole: Fix Italian translation.
-      crypt32: Update Italian translation.
-      wldap32: Update Italian translation.
-      cmd: Update Italian translation.
-      winecfg: Update Italian translation.
-      devenum: Update Italian translation.
-      user32: Update Italian translation.
-      winecfg: Fix Italian translation.
-      crypt32: Update Italian translation.
-      avifil32: Update Italian translation.
-      cryptdlg: Update Italian translation.
-      hhctrl.ocx: Update Italian translation.
-      winecfg: Update Italian translation.
-      iccvid: Update Italian translation.
-      wininet: Update Italian translation.
-      wineps.drv: Update Italian translation.
-      shdoclc: Update Italian translation.
-      oledlg: Update Italian translation.
-      comdlg32: Update Italian translation.
-      msvfw32: Update Italian translation.
-      wineconsole: Update Italian translation.
-      wordpad: Update Italian translation.
-      notepad: Update Italian translation.
-      regeedit: Update Italian translation.
-      winecfg: Fix Italian translation.
-      reg: Update Italian translation.
-      winemine: Update Italian translation.
-      cmdlgtst: Update Italian translation.
+Luca Bennati (7):
+      cryptui: Update Italian translation.
+      cryptui: Update Italian translation.
+      shlwapi: Update Italian translation.
+      winmm: Update Italian translation.
+      mpr: Update Italian translation.
       xcopy: Fix Italian translation.
-      start: Fix Italian translation.
-      winefile: Update Italian translation.
-      msrle32: Update Italian translation.
-      oleaut32: Update Italian translation.
-      browseui: Convert Italian translation to UTF-8.
-      serialui: Update Italian translation.
-      comctl32: Update Italian translation.
-      msacm32: Update Italian translation.
-      kernel32: Update Italian translation.
+      cmd: Fix Italian translation.
 
-Maarten Lankhorst (2):
-      mmdevapi: Blacklist portaudio.
-      winmm: Fix fd leak on restarting timer.
+Marcus Meissner (4):
+      winspool.drv: Check return value of EnumPrintersA.
+      ntdll: Check and fix PE header protections.
+      ntdll: Fixed file view mapping in regards to no-exec.
+      winex11.drv: Do not include XFORM.eDx and eDy into font hashing/caching.
 
-Marcus Meissner (2):
-      gdi32: Rebuild font hash after changing the matrix.
-      ntdll: Set correct protection flags on sections in builtin DLLs.
+Michael Stefaniuc (1):
+      user32: Simplify the error handling in BITMAP_Load().
 
-Matt 'Murph' Finnicum (1):
-      imm32: Set size of OSVERSIONINFOA before calling GetVersionExA.
+Paul Vriens (40):
+      clock: Add the Serbian (Latin and Cyrillic) translation.
+      notepad: Add the Serbian (Latin and Cyrillic) translation.
+      uninstaller: Add the Serbian (Latin and Cyrillic) translation.
+      wineboot: Add the Serbian Cyrillic and fix the Latin translation.
+      avifil32: Add the Serbian (Latin and Cyrillic) translation.
+      browseui: Add the Serbian (Latin and Cyrillic) translation.
+      comdlg32: Add the Serbian (Cyrillic) translation.
+      winspool.drv: Add the Serbian (Latin and Cyrillic) translation.
+      write: Add the Serbian (Latin and Cyrillic) translation.
+      wldap32: Add the Serbian (Latin and Cyrillic) translation.
+      credui: Add the Serbian (Latin and Cyrillic) translation.
+      oleacc: Add the Serbian (Latin and Cyrillic) translation.
+      hhctrl.ocx: Add the Serbian (Latin and Cyrillic) translation.
+      cryptdlg: Add the Serbian (Latin and Cyrillic) translation.
+      devenum: Add the Serbian (Latin and Cyrillic) translation.
+      gphoto2.ds: Add the Serbian (Latin and Cyrillic) translation.
+      shdoclc: Add the Serbian (Latin and Cyrillic) translation.
+      wininet: Add the Serbian (Latin and Cyrillic) translation.
+      oledlg: Add the Serbian (Latin and Cyrillic) translation.
+      localspl: Add the Serbian (Latin and Cyrillic) translation.
+      xcopy: Add the Serbian (Latin and Cyrillic) translation.
+      iccvid: Add the Serbian (Latin and Cyrillic) translation.
+      localui: Add the Serbian (Latin and Cyrillic) translation.
+      setupapi: Add the Serbian (Latin and Cyrillic) translation.
+      winedbg: Update Serbian (Latin) translations.
+      winedbg: Add the Serbian (Cyrillic) translation.
+      mapi32: Add the Serbian (Latin and Cyrillic) translation.
+      mpr: Add the Serbian (Latin and Cyrillic) translation.
+      msacm32: Add the Serbian (Latin and Cyrillic) translation.
+      msrle32: Add the Serbian (Latin and Cyrillic) translation.
+      serialui: Add the Serbian (Latin and Cyrillic) translation.
+      sane.ds: Add the Serbian (Latin and Cyrillic) translation.
+      oleaut32: Add the Serbian (Latin and Cyrillic) translation.
+      msvidc32: Add the Serbian (Latin and Cyrillic) translation.
+      msvfw32: Add the Serbian (Latin and Cyrillic) translation.
+      shlwapi: Add the Serbian (Latin and Cyrillic) translation.
+      msi: Update Serbian (Latin and Cyrillic) translations.
+      user32: Update Serbian (Latin and Cyrillic) translations.
+      appwiz.cpl: Update Serbian (Latin and Cyrillic) translations.
+      comctl32: Update Serbian (Latin and Cyrillic) translations.
 
-Michael Stefaniuc (2):
-      cmd: Remove stray ';' from the resource files.
-      winhlp32: Move from a per resource to a global LANGUAGE setting.
+Trygve Vea (9):
+      crypt32: Updated Norwegian translation.
+      cryptdlg: Updated Norwegian translation.
+      user32: Updated Norwegian translation.
+      wineboot: Updated Norwegian translation.
+      wineps.drv: Updated Norwegian translation.
+      msi: Updated Norwegian translation.
+      wineconsole: Updated Norwegian translation.
+      oledlg: Updated Norwegian translation.
+      oleaut32: Updated Norwegian translation.
 
-Nikolay Sivov (1):
-      comctl32/listview: Fix infinite loop case for full item range as a first search range.
-
-Octavian Voicu (1):
-      wined3d: Add missing ckey, fx, and pal directdraw caps.
-
-Owen Rudge (2):
-      fusion: Install assemblies into correct directory for architecture.
-      fusion: Implement IAssemblyNameImpl_GetDisplayName more completely.
-
-Paul Vriens (17):
-      comctl32: Add the Serbian (Latin) translation.
-      msi: Add the Serbian (Latin) translation.
-      msi: Add the Serbian (Cyrillic) translation.
-      comctl32: Add the Serbian (Cyrillic) translation.
-      appwiz.cpl: Add the Serbian (Latin) translation.
-      comctl32: Use the Cyrillic 'O' in the Serbian translation.
-      appwiz.cpl: Add the Serbian (Cyrillic) translation.
-      comdlg32: Add the Serbian (Latin) translation.
-      shell32: Add the Serbian (Latin) translation.
-      user32: Add the Serbian (Latin) translation.
-      winhlp32: Add the Serbian (Latin) translation.
-      shell32: Add the Serbian (Cyrillic) translation.
-      shell32: Fix the Serbian (Latin) translation.
-      winecfg: Add the Serbian (Latin) translation.
-      user32: Add the Serbian (Cyrillic) translation.
-      cmd: Add the Swedish translation.
-      user32: Fix a typo.
-
-Peter Rosin (1):
-      winepath: Adhere to the requested separator on failure.
-
-Sven Baars (2):
-      user32: Fix the Dutch translation.
-      kernel32: Update the Dutch translation.
-
-Travis Athougies (1):
-      wpp: Fixed bug in preventing add_text_to_macro from handling macros over 1 kb large.
-
-Vincent Povirk (3):
-      wineboot: Query windows from all desktops when --end-session --kill is used.
-      wineboot: Don't abort shutdown if we have to terminate a process.
-      winecfg: Don't allow virtual desktops smaller than 640x480.
+Vijay Kiran Kamuju (1):
+      tools: Add trailing semicolon to MimeType in wine.desktop.
 
 Vladimir Panteleev (1):
-      user32: Fix VK_RETURN handling in IsDialogMessage for dialogs without an IDOK.
+      user32: Update last active popup for all parents.
 
 Wolfram Sang (1):
-      hhctrl: Add check for no filename.
+      user32: Check for valid pointer in CreateIconFromResource.
 
-Yaron Shahrabani (5):
-      notepad: Add Persian translation.
-      clock: Added Hebrew translation.
-      wineboot: Added Hebrew translation.
-      regedit: Added Hebrew translation.
-      clock: Updated Hebrew translation.
-
-Łukasz Wojniłowicz (4):
-      oleacc: Update the Polish translation.
-      appwiz.cpl: Update the Polish translation.
-      wineps: Update the Polish translation.
-      oledlg: Update the Polish translation.
+Yaron Shahrabani (1):
+      kernel32: heb.nls: Made some corrections.
 
 --
 Alexandre Julliard
