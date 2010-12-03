@@ -98,7 +98,7 @@ typedef struct VideoRendererImpl
     IMediaSample *sample_held;
 } VideoRendererImpl;
 
-static LRESULT CALLBACK VideoWndProcA(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK VideoWndProcW(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     VideoRendererImpl* pVideoRenderer = (VideoRendererImpl*)GetWindowLongPtrW(hwnd, 0);
     LPRECT lprect = (LPRECT)lParam;
@@ -130,7 +130,7 @@ static LRESULT CALLBACK VideoWndProcA(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
             case WM_RBUTTONDBLCLK:
             case WM_RBUTTONDOWN:
             case WM_RBUTTONUP:
-                PostMessageA(pVideoRenderer->hWndMsgDrain, uMsg, wParam, lParam);
+                PostMessageW(pVideoRenderer->hWndMsgDrain, uMsg, wParam, lParam);
                 break;
             default:
                 break;
@@ -159,18 +159,21 @@ static LRESULT CALLBACK VideoWndProcA(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
                 pVideoRenderer->DestRect.bottom - pVideoRenderer->DestRect.top);
             return TRUE;
         default:
-            return DefWindowProcA(hwnd, uMsg, wParam, lParam);
+            return DefWindowProcW(hwnd, uMsg, wParam, lParam);
     }
     return 0;
 }
 
+static const WCHAR classnameW[] = { 'W','i','n','e',' ','A','c','t','i','v','e','M','o','v','i','e',' ','C','l','a','s','s',0 };
+static const WCHAR windownameW[] = { 'A','c','t','i','v','e','M','o','v','i','e',' ','W','i','n','d','o','w',0 };
+
 static BOOL video_register_windowclass(void) {
-    WNDCLASSA winclass;
+    WNDCLASSW winclass;
     if (wnd_class_registered)
         return 1;
 
     winclass.style = 0;
-    winclass.lpfnWndProc = VideoWndProcA;
+    winclass.lpfnWndProc = VideoWndProcW;
     winclass.cbClsExtra = 0;
     winclass.cbWndExtra = sizeof(VideoRendererImpl*);
     winclass.hInstance = NULL;
@@ -178,8 +181,8 @@ static BOOL video_register_windowclass(void) {
     winclass.hCursor = NULL;
     winclass.hbrBackground = GetStockObject(BLACK_BRUSH);
     winclass.lpszMenuName = NULL;
-    winclass.lpszClassName = "Wine ActiveMovie Class";
-    if (!RegisterClassA(&winclass))
+    winclass.lpszClassName = classnameW;
+    if (!RegisterClassW(&winclass))
     {
         ERR("Unable to register window class: %u\n", GetLastError());
         return FALSE;
@@ -191,7 +194,7 @@ static BOOL video_register_windowclass(void) {
 void video_unregister_windowclass(void) {
     if (!wnd_class_registered)
         return;
-    UnregisterClassA("Wine ActiveMovie Class", NULL);
+    UnregisterClassW(classnameW, NULL);
 }
 
 static BOOL CreateRenderingWindow(VideoRendererImpl* This)
@@ -199,7 +202,7 @@ static BOOL CreateRenderingWindow(VideoRendererImpl* This)
     TRACE("(%p)->()\n", This);
     if (!video_register_windowclass())
         return FALSE;
-    This->hWnd = CreateWindowExA(0, "Wine ActiveMovie Class", "Wine ActiveMovie Window", WS_SIZEBOX,
+    This->hWnd = CreateWindowExW(0, classnameW, windownameW, WS_SIZEBOX,
                                  CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL,
                                  NULL, NULL, NULL);
 
@@ -232,10 +235,10 @@ static DWORD WINAPI MessageLoop(LPVOID lpParameter)
     This->ThreadResult = TRUE;
     SetEvent(This->hEvent);
 
-    while ((fGotMessage = GetMessageA(&msg, NULL, 0, 0)) != 0 && fGotMessage != -1) 
+    while ((fGotMessage = GetMessageW(&msg, NULL, 0, 0)) != 0 && fGotMessage != -1)
     {
         TranslateMessage(&msg); 
-        DispatchMessageA(&msg); 
+        DispatchMessageW(&msg);
     }
 
     TRACE("End of message loop\n");
@@ -680,7 +683,7 @@ static ULONG WINAPI VideoRendererInner_Release(IUnknown * iface)
 
         if (This->hWnd)
             SendMessageW(This->hWnd, WM_CLOSE, 0, 0);
-        PostThreadMessageA(This->ThreadID, WM_QUIT, 0, 0);
+        PostThreadMessageW(This->ThreadID, WM_QUIT, 0, 0);
         WaitForSingleObject(This->hThread, INFINITE);
         CloseHandle(This->hThread);
         CloseHandle(This->hEvent);
@@ -1662,14 +1665,14 @@ static HRESULT WINAPI Videowindow_put_WindowStyle(IVideoWindow *iface,
     ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
     LONG old;
 
-    old = GetWindowLongA(This->hWnd, GWL_STYLE);
+    old = GetWindowLongW(This->hWnd, GWL_STYLE);
 
     TRACE("(%p/%p)->(%x -> %x)\n", This, iface, old, WindowStyle);
 
     if (WindowStyle & (WS_DISABLED|WS_HSCROLL|WS_ICONIC|WS_MAXIMIZE|WS_MINIMIZE|WS_VSCROLL))
         return E_INVALIDARG;
 
-    SetWindowLongA(This->hWnd, GWL_STYLE, WindowStyle);
+    SetWindowLongW(This->hWnd, GWL_STYLE, WindowStyle);
     SetWindowPos(This->hWnd,0,0,0,0,0,SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOZORDER);
     This->WindowStyle = WindowStyle;
 
@@ -1693,7 +1696,7 @@ static HRESULT WINAPI Videowindow_put_WindowStyleEx(IVideoWindow *iface,
 
     TRACE("(%p/%p)->(%d)\n", This, iface, WindowStyleEx);
 
-    if (!SetWindowLongA(This->hWnd, GWL_EXSTYLE, WindowStyleEx))
+    if (!SetWindowLongW(This->hWnd, GWL_EXSTYLE, WindowStyleEx))
         return E_FAIL;
 
     return S_OK;
@@ -1705,7 +1708,7 @@ static HRESULT WINAPI Videowindow_get_WindowStyleEx(IVideoWindow *iface,
 
     TRACE("(%p/%p)->(%p)\n", This, iface, WindowStyleEx);
 
-    *WindowStyleEx = GetWindowLongA(This->hWnd, GWL_EXSTYLE);
+    *WindowStyleEx = GetWindowLongW(This->hWnd, GWL_EXSTYLE);
 
     return S_OK;
 }
@@ -1904,10 +1907,10 @@ static HRESULT WINAPI Videowindow_put_Owner(IVideoWindow *iface,
     SetParent(This->hWnd, This->hWndOwner);
     if (This->WindowStyle & WS_CHILD)
     {
-        LONG old = GetWindowLongA(This->hWnd, GWL_STYLE);
+        LONG old = GetWindowLongW(This->hWnd, GWL_STYLE);
         if (old != This->WindowStyle)
         {
-            SetWindowLongA(This->hWnd, GWL_STYLE, This->WindowStyle);
+            SetWindowLongW(This->hWnd, GWL_STYLE, This->WindowStyle);
             SetWindowPos(This->hWnd,0,0,0,0,0,SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOZORDER);
         }
     }
@@ -1984,14 +1987,14 @@ static HRESULT WINAPI Videowindow_put_FullScreenMode(IVideoWindow *iface,
     if (FullScreenMode) {
         ShowWindow(This->hWnd, SW_HIDE);
         SetParent(This->hWnd, 0);
-        SetWindowLongA(This->hWnd, GWL_STYLE, WS_POPUP);
+        SetWindowLongW(This->hWnd, GWL_STYLE, WS_POPUP);
         SetWindowPos(This->hWnd,HWND_TOP,0,0,GetSystemMetrics(SM_CXSCREEN),GetSystemMetrics(SM_CYSCREEN),SWP_SHOWWINDOW);
         GetWindowRect(This->hWnd, &This->DestRect);
         This->WindowPos = This->DestRect;
     } else {
         ShowWindow(This->hWnd, SW_HIDE);
         SetParent(This->hWnd, This->hWndOwner);
-        SetWindowLongA(This->hWnd, GWL_STYLE, This->WindowStyle);
+        SetWindowLongW(This->hWnd, GWL_STYLE, This->WindowStyle);
         GetClientRect(This->hWnd, &This->DestRect);
         SetWindowPos(This->hWnd,0,This->DestRect.left,This->DestRect.top,This->DestRect.right,This->DestRect.bottom,SWP_NOZORDER|SWP_SHOWWINDOW);
         This->WindowPos = This->DestRect;
@@ -2036,7 +2039,7 @@ static HRESULT WINAPI Videowindow_NotifyOwnerMessage(IVideoWindow *iface,
 
     TRACE("(%p/%p)->(%08lx, %d, %08lx, %08lx)\n", This, iface, hwnd, uMsg, wParam, lParam);
 
-    if (!PostMessageA(This->hWnd, uMsg, wParam, lParam))
+    if (!PostMessageW(This->hWnd, uMsg, wParam, lParam))
         return E_FAIL;
     
     return S_OK;
