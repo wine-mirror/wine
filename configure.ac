@@ -719,6 +719,11 @@ case $host_os in
         AC_DEFINE_UNQUOTED(HAVE_OPENAL,1,[Define to 1 if OpenAL is available])
         ac_cv_lib_openal=yes
     fi
+    if test "$ac_cv_header_OpenCL_opencl_h" = "yes"
+    then
+        AC_SUBST(LIBOPENCL,"-framework OpenCL")
+        ac_cv_lib_OpenCL_clGetPlatformInfo=yes
+    fi
     if test "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes"
     then
         ac_save_LIBS="$LIBS"
@@ -1102,7 +1107,7 @@ without X support, which probably isn't what you want. You will need
 to install ${notice_platform}development packages of Xlib/Xfree86 at the very least.])
 
 dnl **** Check for OpenCL ****
-if test "$ac_cv_header_CL_opencl_h" = "yes" -o "$ac_cv_header_OpenCL_opencl_h" = "yes"
+if test "$ac_cv_header_CL_opencl_h" = "yes"
 then
     AC_CHECK_LIB(OpenCL,clGetPlatformInfo,[AC_SUBST(LIBOPENCL,["-lOpenCL"])])
 fi

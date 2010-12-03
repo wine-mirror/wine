@@ -640,7 +640,6 @@ HALINCL
 XSLTINCL
 XML2INCL
 XML2LIBS
-LIBOPENCL
 NASLIBS
 X_EXTRA_LIBS
 X_LIBS
@@ -653,6 +652,7 @@ CROSSCC
 CROSSTEST_DISABLE
 PRELINK
 CARBONLIB
+LIBOPENCL
 FRAMEWORK_OPENAL
 COREAUDIO
 DISKARBITRATIONLIB
@@ -6541,6 +6541,12 @@ _ACEOF
 
         ac_cv_lib_openal=yes
     fi
+    if test "$ac_cv_header_OpenCL_opencl_h" = "yes"
+    then
+        LIBOPENCL="-framework OpenCL"
+
+        ac_cv_lib_OpenCL_clGetPlatformInfo=yes
+    fi
     if test "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes"
     then
         ac_save_LIBS="$LIBS"
@@ -9063,7 +9069,7 @@ Use the --without-x option if you really want this." "$LINENO" 5  ;;
 esac
 fi
 
-if test "$ac_cv_header_CL_opencl_h" = "yes" -o "$ac_cv_header_OpenCL_opencl_h" = "yes"
+if test "$ac_cv_header_CL_opencl_h" = "yes"
 then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for clGetPlatformInfo in -lOpenCL" >&5
 $as_echo_n "checking for clGetPlatformInfo in -lOpenCL... " >&6; }
