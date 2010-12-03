@@ -18,9 +18,11 @@
  */
 
 #include "dmloader_private.h"
+#include "rpcproxy.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmloader);
 
+static HINSTANCE instance;
 LONG dwDirectMusicContainer = 0;
 LONG dwDirectMusicLoader = 0;
 
@@ -29,6 +31,7 @@ LONG dwDirectMusicLoader = 0;
  */
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 	if (fdwReason == DLL_PROCESS_ATTACH) {
+                instance = hinstDLL;
 		DisableThreadLibraryCalls(hinstDLL);
 		/* FIXME: Initialisation */
 	} else if (fdwReason == DLL_PROCESS_DETACH) {
@@ -66,4 +69,20 @@ HRESULT WINAPI DllGetClassObject (REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 	
     WARN(": no class found\n");
     return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (DMLOADER.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( instance, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (DMLOADER.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( instance, NULL );
 }

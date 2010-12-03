@@ -7,8 +7,9 @@ C_SRCS = \
 	debug.c \
 	dmloader_main.c \
 	loader.c \
-	loaderstream.c \
-	regsvr.c
+	loaderstream.c
+
+IDL_R_SRCS = dmloader.idl
 
 RC_SRCS = version.rc
 
