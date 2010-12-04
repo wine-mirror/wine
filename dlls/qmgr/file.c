@@ -213,20 +213,25 @@ static DWORD CALLBACK copyProgressCallback(LARGE_INTEGER totalSize,
 
 typedef struct
 {
-    const IBindStatusCallbackVtbl *lpVtbl;
+    IBindStatusCallback IBindStatusCallback_iface;
     BackgroundCopyFileImpl *file;
     LONG ref;
 } DLBindStatusCallback;
 
+static inline DLBindStatusCallback *impl_from_IBindStatusCallback(IBindStatusCallback *iface)
+{
+    return CONTAINING_RECORD(iface, DLBindStatusCallback, IBindStatusCallback_iface);
+}
+
 static ULONG WINAPI DLBindStatusCallback_AddRef(IBindStatusCallback *iface)
 {
-    DLBindStatusCallback *This = (DLBindStatusCallback *) iface;
+    DLBindStatusCallback *This = impl_from_IBindStatusCallback(iface);
     return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI DLBindStatusCallback_Release(IBindStatusCallback *iface)
 {
-    DLBindStatusCallback *This = (DLBindStatusCallback *) iface;
+    DLBindStatusCallback *This = impl_from_IBindStatusCallback(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     if (ref == 0)
@@ -243,12 +248,12 @@ static HRESULT WINAPI DLBindStatusCallback_QueryInterface(
     REFIID riid,
     void **ppvObject)
 {
-    DLBindStatusCallback *This = (DLBindStatusCallback *) iface;
+    DLBindStatusCallback *This = impl_from_IBindStatusCallback(iface);
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IBindStatusCallback))
     {
-        *ppvObject = &This->lpVtbl;
+        *ppvObject = &This->IBindStatusCallback_iface;
         DLBindStatusCallback_AddRef(iface);
         return S_OK;
     }
@@ -304,7 +309,7 @@ static HRESULT WINAPI DLBindStatusCallback_OnProgress(
     ULONG statusCode,
     LPCWSTR statusText)
 {
-    DLBindStatusCallback *This = (DLBindStatusCallback *) iface;
+    DLBindStatusCallback *This = impl_from_IBindStatusCallback(iface);
     BackgroundCopyFileImpl *file = This->file;
     BackgroundCopyJobImpl *job = file->owner;
     ULONG64 diff;
@@ -359,7 +364,7 @@ static DLBindStatusCallback *DLBindStatusCallbackConstructor(
     if (!This)
         return NULL;
 
-    This->lpVtbl = &DLBindStatusCallback_Vtbl;
+    This->IBindStatusCallback_iface.lpVtbl = &DLBindStatusCallback_Vtbl;
     IBackgroundCopyFile_AddRef((IBackgroundCopyFile *) file);
     This->file = file;
     This->ref = 1;
@@ -369,7 +374,7 @@ static DLBindStatusCallback *DLBindStatusCallbackConstructor(
 BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job)
 {
     static const WCHAR prefix[] = {'B','I','T', 0};
-    IBindStatusCallback *callbackObj;
+    DLBindStatusCallback *callbackObj;
     WCHAR tmpDir[MAX_PATH];
     WCHAR tmpName[MAX_PATH];
     HRESULT hr;
@@ -390,7 +395,7 @@ BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job)
         return FALSE;
     }
 
-    callbackObj = (IBindStatusCallback *) DLBindStatusCallbackConstructor(file);
+    callbackObj = DLBindStatusCallbackConstructor(file);
     if (!callbackObj)
     {
         ERR("Out of memory\n");
@@ -412,8 +417,9 @@ BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job)
     transitionJobState(job, BG_JOB_STATE_QUEUED, BG_JOB_STATE_TRANSFERRING);
 
     DeleteUrlCacheEntryW(file->info.RemoteName);
-    hr = URLDownloadToFileW(NULL, file->info.RemoteName, tmpName, 0, callbackObj);
-    IBindStatusCallback_Release(callbackObj);
+    hr = URLDownloadToFileW(NULL, file->info.RemoteName, tmpName, 0,
+                            &callbackObj->IBindStatusCallback_iface);
+    IBindStatusCallback_Release(&callbackObj->IBindStatusCallback_iface);
     if (hr == INET_E_DOWNLOAD_FAILURE)
     {
         TRACE("URLDownload failed, trying local file copy\n");
