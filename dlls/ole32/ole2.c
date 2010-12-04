@@ -812,12 +812,17 @@ static HRESULT EnumOLEVERB_Construct(HKEY hkeyVerb, ULONG index, IEnumOLEVERB **
 
 typedef struct
 {
-    const IEnumOLEVERBVtbl *lpvtbl;
+    IEnumOLEVERB IEnumOLEVERB_iface;
     LONG ref;
 
     HKEY hkeyVerb;
     ULONG index;
 } EnumOLEVERB;
+
+static inline EnumOLEVERB *impl_from_IEnumOLEVERB(IEnumOLEVERB *iface)
+{
+    return CONTAINING_RECORD(iface, EnumOLEVERB, IEnumOLEVERB_iface);
+}
 
 static HRESULT WINAPI EnumOLEVERB_QueryInterface(
     IEnumOLEVERB *iface, REFIID riid, void **ppv)
@@ -836,7 +841,7 @@ static HRESULT WINAPI EnumOLEVERB_QueryInterface(
 static ULONG WINAPI EnumOLEVERB_AddRef(
     IEnumOLEVERB *iface)
 {
-    EnumOLEVERB *This = (EnumOLEVERB *)iface;
+    EnumOLEVERB *This = impl_from_IEnumOLEVERB(iface);
     TRACE("()\n");
     return InterlockedIncrement(&This->ref);
 }
@@ -844,7 +849,7 @@ static ULONG WINAPI EnumOLEVERB_AddRef(
 static ULONG WINAPI EnumOLEVERB_Release(
     IEnumOLEVERB *iface)
 {
-    EnumOLEVERB *This = (EnumOLEVERB *)iface;
+    EnumOLEVERB *This = impl_from_IEnumOLEVERB(iface);
     LONG refs = InterlockedDecrement(&This->ref);
     TRACE("()\n");
     if (!refs)
@@ -859,7 +864,7 @@ static HRESULT WINAPI EnumOLEVERB_Next(
     IEnumOLEVERB *iface, ULONG celt, LPOLEVERB rgelt,
     ULONG *pceltFetched)
 {
-    EnumOLEVERB *This = (EnumOLEVERB *)iface;
+    EnumOLEVERB *This = impl_from_IEnumOLEVERB(iface);
     HRESULT hr = S_OK;
 
     TRACE("(%d, %p, %p)\n", celt, rgelt, pceltFetched);
@@ -946,7 +951,7 @@ static HRESULT WINAPI EnumOLEVERB_Next(
 static HRESULT WINAPI EnumOLEVERB_Skip(
     IEnumOLEVERB *iface, ULONG celt)
 {
-    EnumOLEVERB *This = (EnumOLEVERB *)iface;
+    EnumOLEVERB *This = impl_from_IEnumOLEVERB(iface);
 
     TRACE("(%d)\n", celt);
 
@@ -957,7 +962,7 @@ static HRESULT WINAPI EnumOLEVERB_Skip(
 static HRESULT WINAPI EnumOLEVERB_Reset(
     IEnumOLEVERB *iface)
 {
-    EnumOLEVERB *This = (EnumOLEVERB *)iface;
+    EnumOLEVERB *This = impl_from_IEnumOLEVERB(iface);
 
     TRACE("()\n");
 
@@ -969,7 +974,7 @@ static HRESULT WINAPI EnumOLEVERB_Clone(
     IEnumOLEVERB *iface,
     IEnumOLEVERB **ppenum)
 {
-    EnumOLEVERB *This = (EnumOLEVERB *)iface;
+    EnumOLEVERB *This = impl_from_IEnumOLEVERB(iface);
     HKEY hkeyVerb;
     TRACE("(%p)\n", ppenum);
     if (!DuplicateHandle(GetCurrentProcess(), This->hkeyVerb, GetCurrentProcess(), (HANDLE *)&hkeyVerb, 0, FALSE, DUPLICATE_SAME_ACCESS))
@@ -996,12 +1001,12 @@ static HRESULT EnumOLEVERB_Construct(HKEY hkeyVerb, ULONG index, IEnumOLEVERB **
         RegCloseKey(hkeyVerb);
         return E_OUTOFMEMORY;
     }
-    This->lpvtbl = &EnumOLEVERB_VTable;
+    This->IEnumOLEVERB_iface.lpVtbl = &EnumOLEVERB_VTable;
     This->ref = 1;
     This->index = index;
     This->hkeyVerb = hkeyVerb;
-    *ppenum = (IEnumOLEVERB *)&This->lpvtbl;
-    return S_OK;    
+    *ppenum = &This->IEnumOLEVERB_iface;
+    return S_OK;
 }
 
 /***********************************************************************
