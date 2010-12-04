@@ -56,12 +56,17 @@ static HRESULT EnumOleSTATDATA_Construct(OleAdviseHolderImpl *pOleAdviseHolder, 
 
 typedef struct
 {
-    const IEnumSTATDATAVtbl *lpvtbl;
+    IEnumSTATDATA IEnumSTATDATA_iface;
     LONG ref;
 
     ULONG index;
     OleAdviseHolderImpl *pOleAdviseHolder;
 } EnumOleSTATDATA;
+
+static inline EnumOleSTATDATA *impl_from_IEnumSTATDATA(IEnumSTATDATA *iface)
+{
+    return CONTAINING_RECORD(iface, EnumOleSTATDATA, IEnumSTATDATA_iface);
+}
 
 static HRESULT WINAPI EnumOleSTATDATA_QueryInterface(
     IEnumSTATDATA *iface, REFIID riid, void **ppv)
@@ -80,7 +85,7 @@ static HRESULT WINAPI EnumOleSTATDATA_QueryInterface(
 static ULONG WINAPI EnumOleSTATDATA_AddRef(
     IEnumSTATDATA *iface)
 {
-    EnumOleSTATDATA *This = (EnumOleSTATDATA *)iface;
+    EnumOleSTATDATA *This = impl_from_IEnumSTATDATA(iface);
     TRACE("()\n");
     return InterlockedIncrement(&This->ref);
 }
@@ -88,7 +93,7 @@ static ULONG WINAPI EnumOleSTATDATA_AddRef(
 static ULONG WINAPI EnumOleSTATDATA_Release(
     IEnumSTATDATA *iface)
 {
-    EnumOleSTATDATA *This = (EnumOleSTATDATA *)iface;
+    EnumOleSTATDATA *This = impl_from_IEnumSTATDATA(iface);
     LONG refs = InterlockedDecrement(&This->ref);
     TRACE("()\n");
     if (!refs)
@@ -103,7 +108,7 @@ static HRESULT WINAPI EnumOleSTATDATA_Next(
     IEnumSTATDATA *iface, ULONG celt, LPSTATDATA rgelt,
     ULONG *pceltFetched)
 {
-    EnumOleSTATDATA *This = (EnumOleSTATDATA *)iface;
+    EnumOleSTATDATA *This = impl_from_IEnumSTATDATA(iface);
     HRESULT hr = S_OK;
 
     TRACE("(%d, %p, %p)\n", celt, rgelt, pceltFetched);
@@ -140,7 +145,7 @@ static HRESULT WINAPI EnumOleSTATDATA_Next(
 static HRESULT WINAPI EnumOleSTATDATA_Skip(
     IEnumSTATDATA *iface, ULONG celt)
 {
-    EnumOleSTATDATA *This = (EnumOleSTATDATA *)iface;
+    EnumOleSTATDATA *This = impl_from_IEnumSTATDATA(iface);
 
     TRACE("(%d)\n", celt);
 
@@ -161,7 +166,7 @@ static HRESULT WINAPI EnumOleSTATDATA_Skip(
 static HRESULT WINAPI EnumOleSTATDATA_Reset(
     IEnumSTATDATA *iface)
 {
-    EnumOleSTATDATA *This = (EnumOleSTATDATA *)iface;
+    EnumOleSTATDATA *This = impl_from_IEnumSTATDATA(iface);
 
     TRACE("()\n");
 
@@ -173,7 +178,7 @@ static HRESULT WINAPI EnumOleSTATDATA_Clone(
     IEnumSTATDATA *iface,
     IEnumSTATDATA **ppenum)
 {
-    EnumOleSTATDATA *This = (EnumOleSTATDATA *)iface;
+    EnumOleSTATDATA *This = impl_from_IEnumSTATDATA(iface);
     return EnumOleSTATDATA_Construct(This->pOleAdviseHolder, This->index, ppenum);
 }
 
@@ -193,13 +198,13 @@ static HRESULT EnumOleSTATDATA_Construct(OleAdviseHolderImpl *pOleAdviseHolder, 
     EnumOleSTATDATA *This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if (!This)
         return E_OUTOFMEMORY;
-    This->lpvtbl = &EnumOleSTATDATA_VTable;
+    This->IEnumSTATDATA_iface.lpVtbl = &EnumOleSTATDATA_VTable;
     This->ref = 1;
     This->index = index;
     This->pOleAdviseHolder = pOleAdviseHolder;
     IOleAdviseHolder_AddRef((IOleAdviseHolder *)pOleAdviseHolder);
-    *ppenum = (IEnumSTATDATA *)&This->lpvtbl;
-    return S_OK;    
+    *ppenum = &This->IEnumSTATDATA_iface;
+    return S_OK;
 }
 
 /**************************************************************************
