@@ -45,17 +45,22 @@ typedef struct _tagASMNAME
 
 typedef struct
 {
-    const IAssemblyEnumVtbl *lpIAssemblyEnumVtbl;
+    IAssemblyEnum IAssemblyEnum_iface;
 
     struct list assemblies;
     struct list *iter;
     LONG ref;
 } IAssemblyEnumImpl;
 
+static inline IAssemblyEnumImpl *impl_from_IAssemblyEnum(IAssemblyEnum *iface)
+{
+    return CONTAINING_RECORD(iface, IAssemblyEnumImpl, IAssemblyEnum_iface);
+}
+
 static HRESULT WINAPI IAssemblyEnumImpl_QueryInterface(IAssemblyEnum *iface,
                                                        REFIID riid, LPVOID *ppobj)
 {
-    IAssemblyEnumImpl *This = (IAssemblyEnumImpl *)iface;
+    IAssemblyEnumImpl *This = impl_from_IAssemblyEnum(iface);
 
     TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), ppobj);
 
@@ -75,7 +80,7 @@ static HRESULT WINAPI IAssemblyEnumImpl_QueryInterface(IAssemblyEnum *iface,
 
 static ULONG WINAPI IAssemblyEnumImpl_AddRef(IAssemblyEnum *iface)
 {
-    IAssemblyEnumImpl *This = (IAssemblyEnumImpl *)iface;
+    IAssemblyEnumImpl *This = impl_from_IAssemblyEnum(iface);
     ULONG refCount = InterlockedIncrement(&This->ref);
 
     TRACE("(%p)->(ref before = %u)\n", This, refCount - 1);
@@ -85,7 +90,7 @@ static ULONG WINAPI IAssemblyEnumImpl_AddRef(IAssemblyEnum *iface)
 
 static ULONG WINAPI IAssemblyEnumImpl_Release(IAssemblyEnum *iface)
 {
-    IAssemblyEnumImpl *This = (IAssemblyEnumImpl *)iface;
+    IAssemblyEnumImpl *This = impl_from_IAssemblyEnum(iface);
     ULONG refCount = InterlockedDecrement(&This->ref);
     struct list *item, *cursor;
 
@@ -113,7 +118,7 @@ static HRESULT WINAPI IAssemblyEnumImpl_GetNextAssembly(IAssemblyEnum *iface,
                                                         IAssemblyName **ppName,
                                                         DWORD dwFlags)
 {
-    IAssemblyEnumImpl *asmenum = (IAssemblyEnumImpl *)iface;
+    IAssemblyEnumImpl *asmenum = impl_from_IAssemblyEnum(iface);
     ASMNAME *asmname;
 
     TRACE("(%p, %p, %p, %d)\n", iface, pvReserved, ppName, dwFlags);
@@ -135,7 +140,7 @@ static HRESULT WINAPI IAssemblyEnumImpl_GetNextAssembly(IAssemblyEnum *iface,
 
 static HRESULT WINAPI IAssemblyEnumImpl_Reset(IAssemblyEnum *iface)
 {
-    IAssemblyEnumImpl *asmenum = (IAssemblyEnumImpl *)iface;
+    IAssemblyEnumImpl *asmenum = impl_from_IAssemblyEnum(iface);
 
     TRACE("(%p)\n", iface);
 
@@ -431,7 +436,7 @@ HRESULT WINAPI CreateAssemblyEnum(IAssemblyEnum **pEnum, IUnknown *pUnkReserved,
     if (!asmenum)
         return E_OUTOFMEMORY;
 
-    asmenum->lpIAssemblyEnumVtbl = &AssemblyEnumVtbl;
+    asmenum->IAssemblyEnum_iface.lpVtbl = &AssemblyEnumVtbl;
     asmenum->ref = 1;
     list_init(&asmenum->assemblies);
 
@@ -446,7 +451,7 @@ HRESULT WINAPI CreateAssemblyEnum(IAssemblyEnum **pEnum, IUnknown *pUnkReserved,
     }
 
     asmenum->iter = list_head(&asmenum->assemblies);
-    *pEnum = (IAssemblyEnum *)asmenum;
+    *pEnum = &asmenum->IAssemblyEnum_iface;
 
     return S_OK;
 }
