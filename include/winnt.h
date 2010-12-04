@@ -4239,6 +4239,12 @@ typedef enum {
     WinEnterpriseReadonlyControllersSid         = 74,
     WinAccountReadonlyControllersSid            = 75,
     WinBuiltinEventLogReadersGroup              = 76,
+    WinNewEnterpriseReadonlyControllersSid      = 77,
+    WinBuiltinCertSvcDComAccessGroup            = 78,
+    WinMediumPlusLabelSid                       = 79,
+    WinLocalLogonSid                            = 80,
+    WinConsoleLogonSid                          = 81,
+    WinThisOrganizationCertificateSid           = 82,
 } WELL_KNOWN_SID_TYPE;
 
 /*
