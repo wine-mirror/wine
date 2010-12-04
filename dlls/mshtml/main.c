@@ -172,10 +172,15 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
  */
 typedef HRESULT (*CreateInstanceFunc)(IUnknown*,REFIID,void**);
 typedef struct {
-    const IClassFactoryVtbl *lpVtbl;
+    IClassFactory IClassFactory_iface;
     LONG ref;
     CreateInstanceFunc fnCreateInstance;
 } ClassFactory;
+
+static inline ClassFactory *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, ClassFactory, IClassFactory_iface);
+}
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFGUID riid, void **ppvObject)
 {
@@ -192,7 +197,7 @@ static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFGUID 
 
 static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
 {
-    ClassFactory *This = (ClassFactory*)iface;
+    ClassFactory *This = impl_from_IClassFactory(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
     TRACE("(%p) ref = %u\n", This, ref);
     return ref;
@@ -200,7 +205,7 @@ static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
 
 static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
 {
-    ClassFactory *This = (ClassFactory*)iface;
+    ClassFactory *This = impl_from_IClassFactory(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref = %u\n", This, ref);
@@ -215,7 +220,7 @@ static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
 static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown *pUnkOuter,
         REFIID riid, void **ppvObject)
 {
-    ClassFactory *This = (ClassFactory*)iface;
+    ClassFactory *This = impl_from_IClassFactory(iface);
     return This->fnCreateInstance(pUnkOuter, riid, ppvObject);
 }
 
@@ -240,11 +245,11 @@ static HRESULT ClassFactory_Create(REFIID riid, void **ppv, CreateInstanceFunc f
     ClassFactory *ret = heap_alloc(sizeof(ClassFactory));
     HRESULT hres;
 
-    ret->lpVtbl = &HTMLClassFactoryVtbl;
+    ret->IClassFactory_iface.lpVtbl = &HTMLClassFactoryVtbl;
     ret->ref = 0;
     ret->fnCreateInstance = fnCreateInstance;
 
-    hres = IClassFactory_QueryInterface((IClassFactory*)ret, riid, ppv);
+    hres = IClassFactory_QueryInterface(&ret->IClassFactory_iface, riid, ppv);
     if(FAILED(hres)) {
         heap_free(ret);
         *ppv = NULL;
