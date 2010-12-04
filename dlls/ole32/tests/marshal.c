@@ -1697,9 +1697,14 @@ static void test_proxy_interfaces(void)
 
 typedef struct
 {
-    const IUnknownVtbl *lpVtbl;
+    IUnknown IUnknown_iface;
     ULONG refs;
 } HeapUnknown;
+
+static inline HeapUnknown *impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, HeapUnknown, IUnknown_iface);
+}
 
 static HRESULT WINAPI HeapUnknown_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
 {
@@ -1715,13 +1720,13 @@ static HRESULT WINAPI HeapUnknown_QueryInterface(IUnknown *iface, REFIID riid, v
 
 static ULONG WINAPI HeapUnknown_AddRef(IUnknown *iface)
 {
-    HeapUnknown *This = (HeapUnknown *)iface;
+    HeapUnknown *This = impl_from_IUnknown(iface);
     return InterlockedIncrement((LONG*)&This->refs);
 }
 
 static ULONG WINAPI HeapUnknown_Release(IUnknown *iface)
 {
-    HeapUnknown *This = (HeapUnknown *)iface;
+    HeapUnknown *This = impl_from_IUnknown(iface);
     ULONG refs = InterlockedDecrement((LONG*)&This->refs);
     if (!refs) HeapFree(GetProcessHeap(), 0, This);
     return refs;
@@ -1744,7 +1749,7 @@ static void test_proxybuffer(REFIID riid)
     CLSID clsid;
     HeapUnknown *pUnkOuter = HeapAlloc(GetProcessHeap(), 0, sizeof(*pUnkOuter));
 
-    pUnkOuter->lpVtbl = &HeapUnknown_Vtbl;
+    pUnkOuter->IUnknown_iface.lpVtbl = &HeapUnknown_Vtbl;
     pUnkOuter->refs = 1;
 
     hr = CoGetPSClsid(riid, &clsid);
@@ -1753,13 +1758,13 @@ static void test_proxybuffer(REFIID riid)
     hr = CoGetClassObject(&clsid, CLSCTX_INPROC_SERVER, NULL, &IID_IPSFactoryBuffer, (LPVOID*)&psfb);
     ok_ole_success(hr, CoGetClassObject);
 
-    hr = IPSFactoryBuffer_CreateProxy(psfb, (IUnknown*)pUnkOuter, riid, &proxy, &lpvtbl);
+    hr = IPSFactoryBuffer_CreateProxy(psfb, &pUnkOuter->IUnknown_iface, riid, &proxy, &lpvtbl);
     ok_ole_success(hr, IPSFactoryBuffer_CreateProxy);
     ok(lpvtbl != NULL, "IPSFactoryBuffer_CreateProxy succeeded, but returned a NULL vtable!\n");
 
     /* release our reference to the outer unknown object - the PS factory
      * buffer will have AddRef's it in the CreateProxy call */
-    refs = IUnknown_Release((IUnknown *)pUnkOuter);
+    refs = IUnknown_Release(&pUnkOuter->IUnknown_iface);
     ok(refs == 1, "Ref count of outer unknown should have been 1 instead of %d\n", refs);
 
     refs = IPSFactoryBuffer_Release(psfb);
