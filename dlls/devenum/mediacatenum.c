@@ -36,18 +36,23 @@ static ULONG WINAPI DEVENUM_IPropertyBag_AddRef(LPPROPERTYBAG iface);
 
 typedef struct
 {
-    const IPropertyBagVtbl *lpVtbl;
+    IPropertyBag IPropertyBag_iface;
     LONG ref;
     HKEY hkey;
 } RegPropBagImpl;
 
+
+static inline RegPropBagImpl *impl_from_IPropertyBag(IPropertyBag *iface)
+{
+    return CONTAINING_RECORD(iface, RegPropBagImpl, IPropertyBag_iface);
+}
 
 static HRESULT WINAPI DEVENUM_IPropertyBag_QueryInterface(
     LPPROPERTYBAG iface,
     REFIID riid,
     LPVOID *ppvObj)
 {
-    RegPropBagImpl *This = (RegPropBagImpl *)iface;
+    RegPropBagImpl *This = impl_from_IPropertyBag(iface);
 
     TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppvObj);
 
@@ -70,7 +75,7 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_QueryInterface(
  */
 static ULONG WINAPI DEVENUM_IPropertyBag_AddRef(LPPROPERTYBAG iface)
 {
-    RegPropBagImpl *This = (RegPropBagImpl *)iface;
+    RegPropBagImpl *This = impl_from_IPropertyBag(iface);
 
     TRACE("(%p)->() AddRef from %d\n", iface, This->ref);
 
@@ -82,7 +87,7 @@ static ULONG WINAPI DEVENUM_IPropertyBag_AddRef(LPPROPERTYBAG iface)
  */
 static ULONG WINAPI DEVENUM_IPropertyBag_Release(LPPROPERTYBAG iface)
 {
-    RegPropBagImpl *This = (RegPropBagImpl *)iface;
+    RegPropBagImpl *This = impl_from_IPropertyBag(iface);
     ULONG ref;
 
     TRACE("(%p)->() ReleaseThis->ref from %d\n", iface, This->ref);
@@ -105,7 +110,7 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Read(
     LPVOID pData = NULL;
     DWORD received;
     DWORD type = 0;
-    RegPropBagImpl *This = (RegPropBagImpl *)iface;
+    RegPropBagImpl *This = impl_from_IPropertyBag(iface);
     HRESULT res = S_OK;
     LONG reswin32;
 
@@ -212,7 +217,7 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Write(
     LPCOLESTR pszPropName,
     VARIANT* pVar)
 {
-    RegPropBagImpl *This = (RegPropBagImpl *)iface;
+    RegPropBagImpl *This = impl_from_IPropertyBag(iface);
     LPVOID lpData = NULL;
     DWORD cbData = 0;
     DWORD dwType = 0;
@@ -277,10 +282,10 @@ static HRESULT DEVENUM_IPropertyBag_Construct(HANDLE hkey, IPropertyBag **ppBag)
     RegPropBagImpl * rpb = CoTaskMemAlloc(sizeof(RegPropBagImpl));
     if (!rpb)
         return E_OUTOFMEMORY;
-    rpb->lpVtbl = &IPropertyBag_Vtbl;
+    rpb->IPropertyBag_iface.lpVtbl = &IPropertyBag_Vtbl;
     rpb->ref = 1;
     rpb->hkey = hkey;
-    *ppBag = (IPropertyBag*)rpb;
+    *ppBag = &rpb->IPropertyBag_iface;
     DEVENUM_LockModule();
     return S_OK;
 }
