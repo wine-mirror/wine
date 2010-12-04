@@ -656,18 +656,23 @@ HRESULT WINAPI SHGetItemFromObject(IUnknown *punk, REFIID riid, void **ppv)
  * IShellItemArray implementation
  */
 typedef struct {
-    const IShellItemArrayVtbl *lpVtbl;
+    IShellItemArray IShellItemArray_iface;
     LONG ref;
 
     IShellItem **array;
     DWORD item_count;
 } IShellItemArrayImpl;
 
+static inline IShellItemArrayImpl *impl_from_IShellItemArray(IShellItemArray *iface)
+{
+    return CONTAINING_RECORD(iface, IShellItemArrayImpl, IShellItemArray_iface);
+}
+
 static HRESULT WINAPI IShellItemArray_fnQueryInterface(IShellItemArray *iface,
                                                        REFIID riid,
                                                        void **ppvObject)
 {
-    IShellItemArrayImpl *This = (IShellItemArrayImpl *)iface;
+    IShellItemArrayImpl *This = impl_from_IShellItemArray(iface);
     TRACE("%p (%s, %p)\n", This, shdebugstr_guid(riid), ppvObject);
 
     *ppvObject = NULL;
@@ -688,7 +693,7 @@ static HRESULT WINAPI IShellItemArray_fnQueryInterface(IShellItemArray *iface,
 
 static ULONG WINAPI IShellItemArray_fnAddRef(IShellItemArray *iface)
 {
-    IShellItemArrayImpl *This = (IShellItemArrayImpl *)iface;
+    IShellItemArrayImpl *This = impl_from_IShellItemArray(iface);
     LONG ref = InterlockedIncrement(&This->ref);
     TRACE("%p - ref %d\n", This, ref);
 
@@ -697,7 +702,7 @@ static ULONG WINAPI IShellItemArray_fnAddRef(IShellItemArray *iface)
 
 static ULONG WINAPI IShellItemArray_fnRelease(IShellItemArray *iface)
 {
-    IShellItemArrayImpl *This = (IShellItemArrayImpl *)iface;
+    IShellItemArrayImpl *This = impl_from_IShellItemArray(iface);
     LONG ref = InterlockedDecrement(&This->ref);
     TRACE("%p - ref %d\n", This, ref);
 
@@ -723,7 +728,7 @@ static HRESULT WINAPI IShellItemArray_fnBindToHandler(IShellItemArray *iface,
                                                       REFIID riid,
                                                       void **ppvOut)
 {
-    IShellItemArrayImpl *This = (IShellItemArrayImpl *)iface;
+    IShellItemArrayImpl *This = impl_from_IShellItemArray(iface);
     FIXME("Stub: %p (%p, %s, %s, %p)\n",
           This, pbc, shdebugstr_guid(bhid), shdebugstr_guid(riid), ppvOut);
 
@@ -735,7 +740,7 @@ static HRESULT WINAPI IShellItemArray_fnGetPropertyStore(IShellItemArray *iface,
                                                          REFIID riid,
                                                          void **ppv)
 {
-    IShellItemArrayImpl *This = (IShellItemArrayImpl *)iface;
+    IShellItemArrayImpl *This = impl_from_IShellItemArray(iface);
     FIXME("Stub: %p (%x, %s, %p)\n", This, flags, shdebugstr_guid(riid), ppv);
 
     return E_NOTIMPL;
@@ -746,7 +751,7 @@ static HRESULT WINAPI IShellItemArray_fnGetPropertyDescriptionList(IShellItemArr
                                                                    REFIID riid,
                                                                    void **ppv)
 {
-    IShellItemArrayImpl *This = (IShellItemArrayImpl *)iface;
+    IShellItemArrayImpl *This = impl_from_IShellItemArray(iface);
     FIXME("Stub: %p (%p, %s, %p)\n",
           This, keyType, shdebugstr_guid(riid), ppv);
 
@@ -758,7 +763,7 @@ static HRESULT WINAPI IShellItemArray_fnGetAttributes(IShellItemArray *iface,
                                                       SFGAOF sfgaoMask,
                                                       SFGAOF *psfgaoAttribs)
 {
-    IShellItemArrayImpl *This = (IShellItemArrayImpl *)iface;
+    IShellItemArrayImpl *This = impl_from_IShellItemArray(iface);
     FIXME("Stub: %p (%x, %x, %p)\n", This, AttribFlags, sfgaoMask, psfgaoAttribs);
 
     return E_NOTIMPL;
@@ -767,7 +772,7 @@ static HRESULT WINAPI IShellItemArray_fnGetAttributes(IShellItemArray *iface,
 static HRESULT WINAPI IShellItemArray_fnGetCount(IShellItemArray *iface,
                                                  DWORD *pdwNumItems)
 {
-    IShellItemArrayImpl *This = (IShellItemArrayImpl *)iface;
+    IShellItemArrayImpl *This = impl_from_IShellItemArray(iface);
     TRACE("%p (%p)\n", This, pdwNumItems);
 
     *pdwNumItems = This->item_count;
@@ -779,7 +784,7 @@ static HRESULT WINAPI IShellItemArray_fnGetItemAt(IShellItemArray *iface,
                                                   DWORD dwIndex,
                                                   IShellItem **ppsi)
 {
-    IShellItemArrayImpl *This = (IShellItemArrayImpl *)iface;
+    IShellItemArrayImpl *This = impl_from_IShellItemArray(iface);
     TRACE("%p (%x, %p)\n", This, dwIndex, ppsi);
 
     /* zero indexed */
@@ -795,7 +800,7 @@ static HRESULT WINAPI IShellItemArray_fnGetItemAt(IShellItemArray *iface,
 static HRESULT WINAPI IShellItemArray_fnEnumItems(IShellItemArray *iface,
                                                   IEnumShellItems **ppenumShellItems)
 {
-    IShellItemArrayImpl *This = (IShellItemArrayImpl *)iface;
+    IShellItemArrayImpl *This = impl_from_IShellItemArray(iface);
     FIXME("Stub: %p (%p)\n", This, ppenumShellItems);
 
     return E_NOTIMPL;
@@ -829,12 +834,12 @@ static HRESULT IShellItemArray_Constructor(IUnknown *pUnkOuter, REFIID riid, voi
         return E_OUTOFMEMORY;
 
     This->ref = 1;
-    This->lpVtbl = &vt_IShellItemArray;
+    This->IShellItemArray_iface.lpVtbl = &vt_IShellItemArray;
     This->array = NULL;
     This->item_count = 0;
 
-    ret = IShellItemArray_QueryInterface((IShellItemArray*)This, riid, ppv);
-    IShellItemArray_Release((IShellItemArray*)This);
+    ret = IShellItemArray_QueryInterface(&This->IShellItemArray_iface, riid, ppv);
+    IShellItemArray_Release(&This->IShellItemArray_iface);
 
     return ret;
 }
@@ -875,7 +880,7 @@ HRESULT WINAPI SHCreateShellItemArray(PCIDLIST_ABSOLUTE pidlParent,
         {
             This->array = array;
             This->item_count = cidl;
-            *ppsiItemArray = (IShellItemArray*)This;
+            *ppsiItemArray = &This->IShellItemArray_iface;
 
             return ret;
         }
