@@ -483,13 +483,21 @@ static const WCHAR PROGRESS_CLASSW[] = { 'm','s','c','t','l','s','_',
 #define PBM_GETPOS          (WM_USER+8)
 #define PBM_SETBARCOLOR     (WM_USER+9)
 #define PBM_SETMARQUEE      (WM_USER+10)
+#define PBM_GETSTEP         (WM_USER+13)
 #define PBM_GETBKCOLOR      (WM_USER+14)
 #define PBM_GETBARCOLOR     (WM_USER+15)
+#define PBM_SETSTATE        (WM_USER+16)
+#define PBM_GETSTATE        (WM_USER+17)
 #define PBM_SETBKCOLOR      CCM_SETBKCOLOR
 
 #define PBS_SMOOTH          0x01
 #define PBS_VERTICAL        0x04
 #define PBS_MARQUEE         0x08
+#define PBS_SMOOTHREVERSE   0x10
+
+#define PBST_NORMAL         1
+#define PBST_ERROR          2
+#define PBST_PAUSED         3
 
 typedef struct
 {
