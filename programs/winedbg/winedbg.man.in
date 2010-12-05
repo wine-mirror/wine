@@ -185,6 +185,11 @@ Adds a watch command (on write) at address \fBN\fR (on 4 bytes).
 .IP \fBwatch\ <id>\fR
 Adds a watch command (on write) at the address of symbol
 \fB<id>\fR. Size depends on size of \fB<id>\fR.
+.IP \fBrwatch\ *\ N\fR
+Adds a watch command (on read) at address \fBN\fR (on 4 bytes).
+.IP \fBrwatch\ <id>\fR
+Adds a watch command (on read) at the address of symbol
+\fB<id>\fR. Size depends on size of \fB<id>\fR.
 .IP \fBinfo\ break\fR
 Lists all (break|watch)-points (with their state).
 .PP

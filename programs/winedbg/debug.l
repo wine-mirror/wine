@@ -203,6 +203,7 @@ STRING     \"[^\n"]+\"
 <INITIAL,INFO_CMD,BD_CMD>break|brea|bre|br|b	{ BEGIN(NOCMD); return tBREAK; }
 <INITIAL,INFO_CMD,BD_CMD>hbreak|hbrea|hbre|hbr|hb { BEGIN(NOCMD); return tHBREAK; }
 <INITIAL>watch|watc|wat			{ BEGIN(NOCMD); return tWATCH; }
+<INITIAL>rwatch|rwatc|rwat		{ BEGIN(NOCMD); return tRWATCH; }
 <INITIAL>whatis|whati|what		{ BEGIN(NOCMD); return tWHATIS; }
 <INITIAL,NOPROCESS>run|ru|r     	{ BEGIN(ASTRING_EXPECTED); return tRUN;}
 <INITIAL>detach|detac|deta|det   	{ BEGIN(NOCMD); return tDETACH; }

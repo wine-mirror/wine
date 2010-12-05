@@ -415,14 +415,14 @@ static void break_add_watch(const struct dbg_lvalue* lvalue, BOOL is_write)
  *
  * Adds a watch point from an address (stored in a lvalue)
  */
-void break_add_watch_from_lvalue(const struct dbg_lvalue* lvalue)
+void break_add_watch_from_lvalue(const struct dbg_lvalue* lvalue,BOOL is_write)
 {
     struct dbg_lvalue   lval;
 
     types_extract_as_address(lvalue, &lval.addr);
     lval.type.id = dbg_itype_none;
 
-    break_add_watch(&lval, TRUE);
+    break_add_watch(&lval, is_write);
 }
 
 /***********************************************************************
@@ -430,14 +430,14 @@ void break_add_watch_from_lvalue(const struct dbg_lvalue* lvalue)
  *
  * Add a watchpoint from a symbol name
  */
-void	break_add_watch_from_id(const char *name)
+void	break_add_watch_from_id(const char *name, BOOL is_write)
 {
     struct dbg_lvalue    lvalue;
 
     switch (symbol_get_lvalue(name, -1, &lvalue, TRUE))
     {
     case sglv_found:
-        break_add_watch(&lvalue, 1);
+        break_add_watch(&lvalue, is_write);
         break;
     case sglv_unknown:
         dbg_printf("Unable to add watchpoint\n");

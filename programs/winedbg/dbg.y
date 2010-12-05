@@ -52,7 +52,7 @@ static void parser(const char*);
 }
 
 %token tCONT tPASS tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tALL tINFO tUP tDOWN
-%token tENABLE tDISABLE tBREAK tHBREAK tWATCH tDELETE tSET tPRINT tEXAM
+%token tENABLE tDISABLE tBREAK tHBREAK tWATCH tRWATCH tDELETE tSET tPRINT tEXAM
 %token tABORT tECHO
 %token tCLASS tMAPS tSTACK tSEGMENTS tSYMBOL tREGS tALLREGS tWND tLOCAL tEXCEPTION
 %token tPROCESS tTHREAD tEOL tEOF
@@ -250,9 +250,12 @@ break_command:
     ;
 
 watch_command:
-      tWATCH '*' expr_lvalue    { break_add_watch_from_lvalue(&$3); }
-    | tWATCH identifier         { break_add_watch_from_id($2); }
+      tWATCH '*' expr_lvalue    { break_add_watch_from_lvalue(&$3, TRUE); }
+    | tWATCH identifier         { break_add_watch_from_id($2, TRUE); }
+    | tRWATCH '*' expr_lvalue   { break_add_watch_from_lvalue(&$3, FALSE); }
+    | tRWATCH identifier        { break_add_watch_from_id($2, FALSE); }
     ;
+
 
 display_command:
       tDISPLAY     	       	{ display_print(); }
