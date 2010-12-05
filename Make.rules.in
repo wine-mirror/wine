@@ -140,6 +140,21 @@ depend: dummy
 
 .PHONY: depend
 
+# Rules for man pages
+
+MANPAGES = $(MANPAGE) $(EXTRA_MANPAGES)
+
+all: $(MANPAGES)
+
+install-man-pages:: $(MANPAGE) $(DESTDIR)$(mandir)/man$(prog_manext)
+	$(INSTALL_DATA) $(MANPAGE) $(DESTDIR)$(mandir)/man$(prog_manext)/$(MANPAGE:.man=).$(prog_manext)
+
+uninstall-man-pages::
+	$(RM) $(DESTDIR)$(mandir)/man$(prog_manext)/$(MANPAGE:.man=).$(prog_manext)
+
+install:: @WOW64_DISABLE@ $(MANPAGE:%=install-man-pages)
+uninstall:: @WOW64_DISABLE@ $(MANPAGE:%=uninstall-man-pages)
+
 # Rules for cleaning
 
 $(EXTRASUBDIRS:%=%/__clean__): dummy

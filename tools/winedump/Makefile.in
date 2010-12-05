@@ -1,7 +1,7 @@
 DEFS      = -D__WINESRC__ $(EXTRADEFS)
 
 PROGRAMS = winedump$(EXEEXT)
-MANPAGES = winedump.man
+MANPAGE  = winedump.man
 
 C_SRCS = \
 	debug.c \
@@ -26,17 +26,16 @@ C_SRCS = \
 
 INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
 
-all: $(PROGRAMS) $(MANPAGES)
+all: $(PROGRAMS)
 
 @MAKE_RULES@
 
 winedump$(EXEEXT): $(OBJS)
 	$(CC) $(CFLAGS) -o winedump$(EXEEXT) $(OBJS) $(LIBPORT) $(LDFLAGS)
 
-install install-dev:: $(PROGRAMS) $(MANPAGES) $(INSTALLDIRS)
+install:: $(PROGRAMS) $(DESTDIR)$(bindir)
 	$(INSTALL_PROGRAM) winedump$(EXEEXT) $(DESTDIR)$(bindir)/winedump$(EXEEXT)
-	$(INSTALL_DATA) winedump.man $(DESTDIR)$(mandir)/man$(prog_manext)/winedump.$(prog_manext)
 	$(INSTALL_SCRIPT) $(srcdir)/function_grep.pl $(DESTDIR)$(bindir)/function_grep.pl
 
 uninstall::
-	$(RM) $(DESTDIR)$(bindir)/function_grep.pl $(DESTDIR)$(bindir)/winedump$(EXEEXT) $(DESTDIR)$(mandir)/man$(prog_manext)/winedump.$(prog_manext)
+	$(RM) $(DESTDIR)$(bindir)/function_grep.pl $(DESTDIR)$(bindir)/winedump$(EXEEXT)

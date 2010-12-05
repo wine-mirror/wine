@@ -1,7 +1,7 @@
 DEFS      = -D__WINESRC__ $(EXTRADEFS)
 
 PROGRAMS = winebuild$(EXEEXT)
-MANPAGES = winebuild.man
+MANPAGE  = winebuild.man
 
 C_SRCS = \
 	import.c \
@@ -16,16 +16,15 @@ C_SRCS = \
 
 INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
 
-all: $(PROGRAMS) $(MANPAGES)
+all: $(PROGRAMS)
 
 @MAKE_RULES@
 
 winebuild$(EXEEXT): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBPORT) $(LDFLAGS)
 
-install install-dev:: $(PROGRAMS) $(MANPAGES) $(INSTALLDIRS)
+install:: $(PROGRAMS) $(DESTDIR)$(bindir)
 	$(INSTALL_PROGRAM) winebuild$(EXEEXT) $(DESTDIR)$(bindir)/winebuild$(EXEEXT)
-	$(INSTALL_DATA) winebuild.man $(DESTDIR)$(mandir)/man$(prog_manext)/winebuild.$(prog_manext)
 
 uninstall::
-	$(RM) $(DESTDIR)$(bindir)/winebuild$(EXEEXT) $(DESTDIR)$(mandir)/man$(prog_manext)/winebuild.$(prog_manext)
+	$(RM) $(DESTDIR)$(bindir)/winebuild$(EXEEXT)

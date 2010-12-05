@@ -76,6 +76,7 @@ my %modules16 =
 my @ignores = (
     "*.[oa]",
     "*.fake",
+    "*.man",
     "*.ok",
     "*.res",
     "*.so",
@@ -304,7 +305,7 @@ sub parse_makefile($)
             $make{$1} = $2;
             next;
         }
-        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_[CHIPRS]_SRCS|IDL_TLB_SRCS|IMPLIB_SRCS|C_SRCS|MC_SRCS|RC_SRCS|SVG_SRCS|MANPAGES|PROGRAMS)\s*=\s*(.*)/)
+        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_[CHIPRS]_SRCS|IDL_TLB_SRCS|IMPLIB_SRCS|C_SRCS|MC_SRCS|RC_SRCS|SVG_SRCS|PROGRAMS)\s*=\s*(.*)/)
         {
             my @list = split(/\s+/, $2);
             $make{$1} = \@list;
@@ -533,10 +534,6 @@ sub update_gitignore(@)
     {
         my %makefile = %{$makefiles{$make}};
         my $dir = $makefile{"=dir"};
-        if (defined $makefile{"MANPAGES"})
-        {
-            push @ignores, map { $dir . $_; } @{$makefile{"MANPAGES"}};
-        }
         if (defined $makefile{"PROGRAMS"})
         {
             push @ignores, map { s/\$\(EXEEXT\)//; $dir . $_; } @{$makefile{"PROGRAMS"}};

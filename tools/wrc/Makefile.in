@@ -1,6 +1,6 @@
 DEFS      = -D__WINESRC__ -DINCLUDEDIR="\"$(includedir)\"" $(EXTRADEFS)
 PROGRAMS = wrc$(EXEEXT) wrc-installed
-MANPAGES = wrc.man
+MANPAGE  = wrc.man
 
 C_SRCS = \
 	dumpres.c \
@@ -17,7 +17,7 @@ BISON_SRCS = parser.y
 
 INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
 
-all: $(PROGRAMS) $(MANPAGES)
+all: $(PROGRAMS)
 
 @MAKE_RULES@
 
@@ -27,9 +27,8 @@ wrc$(EXEEXT): $(OBJS) $(LIBWPP)
 wrc-installed: $(OBJS) $(LIBWPP)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWPP) $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(LDRPATH_INSTALL)
 
-install install-dev:: wrc-installed $(MANPAGES) $(INSTALLDIRS)
-	$(INSTALL_DATA) wrc.man $(DESTDIR)$(mandir)/man$(prog_manext)/wrc.$(prog_manext)
+install:: wrc-installed $(DESTDIR)$(bindir)
 	$(INSTALL_PROGRAM) wrc-installed $(DESTDIR)$(bindir)/wrc$(EXEEXT)
 
 uninstall::
-	$(RM) $(DESTDIR)$(bindir)/wrc$(EXEEXT) $(DESTDIR)$(mandir)/man$(prog_manext)/wrc.$(prog_manext)
+	$(RM) $(DESTDIR)$(bindir)/wrc$(EXEEXT)

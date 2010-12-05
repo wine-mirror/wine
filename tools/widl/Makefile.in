@@ -1,7 +1,7 @@
 DEFS      = -D__WINESRC__ $(EXTRADEFS)
 
 PROGRAMS = widl$(EXEEXT)
-MANPAGES = widl.man
+MANPAGE  = widl.man
 
 C_SRCS = \
 	client.c \
@@ -23,16 +23,15 @@ BISON_SRCS = parser.y
 
 INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
 
-all: $(PROGRAMS) $(MANPAGES)
+all: $(PROGRAMS)
 
 @MAKE_RULES@
 
 widl$(EXEEXT): $(OBJS) $(LIBWPP)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWPP) $(LIBPORT) $(LDFLAGS)
 
-install install-dev:: $(PROGRAMS) $(MANPAGES) $(INSTALLDIRS)
+install:: $(PROGRAMS) $(DESTDIR)$(bindir)
 	$(INSTALL_PROGRAM) widl$(EXEEXT) $(DESTDIR)$(bindir)/widl$(EXEEXT)
-	$(INSTALL_DATA) widl.man $(DESTDIR)$(mandir)/man$(prog_manext)/widl.$(prog_manext)
 
 uninstall::
-	$(RM) $(DESTDIR)$(bindir)/widl$(EXEEXT) $(DESTDIR)$(mandir)/man$(prog_manext)/widl.$(prog_manext)
+	$(RM) $(DESTDIR)$(bindir)/widl$(EXEEXT)

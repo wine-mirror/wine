@@ -13,8 +13,9 @@ PROGRAMS = \
 	wine-installed \
 	wine-preloader
 
-MANPAGES = \
-	wine.man \
+MANPAGE = wine.man
+
+EXTRA_MANPAGES = \
 	wine.de.man \
 	wine.fr.man
 
@@ -24,7 +25,7 @@ INSTALLDIRS = \
 	$(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext) \
 	$(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)
 
-all: $(MAIN_BINARY) wine-installed $(EXTRA_BINARIES) $(MANPAGES)
+all: $(MAIN_BINARY) wine-installed $(EXTRA_BINARIES)
 
 @MAKE_RULES@
 
@@ -48,15 +49,11 @@ $(EXTRA_BINARIES:%=__install__%): $(EXTRA_BINARIES) $(DESTDIR)$(bindir) dummy
 install install-lib:: wine-installed $(DESTDIR)$(bindir) $(EXTRA_BINARIES:%=__install__%)
 	$(INSTALL_PROGRAM) wine-installed $(DESTDIR)$(bindir)/$(MAIN_BINARY)
 
-@WOW64_DISABLE@ install install-lib:: install-man-pages
-
-install-man-pages: $(MANPAGES) $(INSTALLDIRS) dummy
-	$(INSTALL_DATA) wine.man $(DESTDIR)$(mandir)/man$(prog_manext)/wine.$(prog_manext)
+install-man-pages:: $(EXTRA_MANPAGES) $(INSTALLDIRS) dummy
 	$(INSTALL_DATA) wine.de.man $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/wine.$(prog_manext)
 	$(INSTALL_DATA) wine.fr.man $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/wine.$(prog_manext)
 
 uninstall::
 	-cd $(DESTDIR)$(bindir) && $(RM) $(MAIN_BINARY) $(EXTRA_BINARIES)
-	$(RM) $(DESTDIR)$(mandir)/man$(prog_manext)/wine.$(prog_manext)
 	$(RM) $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/wine.$(prog_manext)
 	$(RM) $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/wine.$(prog_manext)

@@ -1,7 +1,7 @@
 DEFS      = -D__WINESRC__ $(EXTRADEFS)
 
 PROGRAMS = wmc$(EXEEXT) wmc-installed
-MANPAGES = wmc.man
+MANPAGE  = wmc.man
 
 C_SRCS = \
 	lang.c \
@@ -14,7 +14,7 @@ BISON_SRCS = mcy.y
 
 INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
 
-all: $(PROGRAMS) $(MANPAGES)
+all: $(PROGRAMS)
 
 @MAKE_RULES@
 
@@ -24,9 +24,8 @@ wmc$(EXEEXT): $(OBJS)
 wmc-installed: $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(LDRPATH_INSTALL)
 
-install install-dev:: wmc-installed $(MANPAGES) $(INSTALLDIRS)
-	$(INSTALL_DATA) wmc.man $(DESTDIR)$(mandir)/man$(prog_manext)/wmc.$(prog_manext)
+install:: wmc-installed $(DESTDIR)$(bindir)
 	$(INSTALL_PROGRAM) wmc-installed $(DESTDIR)$(bindir)/wmc$(EXEEXT)
 
 uninstall::
-	$(RM) $(DESTDIR)$(bindir)/wmc$(EXEEXT) $(DESTDIR)$(mandir)/man$(prog_manext)/wmc.$(prog_manext)
+	$(RM) $(DESTDIR)$(bindir)/wmc$(EXEEXT)
