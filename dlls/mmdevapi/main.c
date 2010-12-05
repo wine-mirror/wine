@@ -342,15 +342,20 @@ HRESULT WINAPI DllCanUnloadNow(void)
 typedef HRESULT (*FnCreateInstance)(REFIID riid, LPVOID *ppobj);
 
 typedef struct {
-    const IClassFactoryVtbl *lpVtbl;
+    IClassFactory IClassFactory_iface;
     REFCLSID rclsid;
     FnCreateInstance pfnCreateInstance;
 } IClassFactoryImpl;
 
+static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, IClassFactoryImpl, IClassFactory_iface);
+}
+
 static HRESULT WINAPI
 MMCF_QueryInterface(LPCLASSFACTORY iface, REFIID riid, LPVOID *ppobj)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), ppobj);
     if (ppobj == NULL)
         return E_POINTER;
@@ -382,7 +387,7 @@ static HRESULT WINAPI MMCF_CreateInstance(
     REFIID riid,
     LPVOID *ppobj)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     TRACE("(%p, %p, %s, %p)\n", This, pOuter, debugstr_guid(riid), ppobj);
 
     if (pOuter)
@@ -398,7 +403,7 @@ static HRESULT WINAPI MMCF_CreateInstance(
 
 static HRESULT WINAPI MMCF_LockServer(LPCLASSFACTORY iface, BOOL dolock)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     FIXME("(%p, %d) stub!\n", This, dolock);
     return S_OK;
 }
@@ -412,7 +417,7 @@ static const IClassFactoryVtbl MMCF_Vtbl = {
 };
 
 static IClassFactoryImpl MMDEVAPI_CF[] = {
-    { &MMCF_Vtbl, &CLSID_MMDeviceEnumerator, (FnCreateInstance)MMDevEnum_Create }
+    { { &MMCF_Vtbl }, &CLSID_MMDeviceEnumerator, (FnCreateInstance)MMDevEnum_Create }
 };
 
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
@@ -436,7 +441,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     for (i = 0; i < sizeof(MMDEVAPI_CF)/sizeof(MMDEVAPI_CF[0]); ++i)
     {
         if (IsEqualGUID(rclsid, MMDEVAPI_CF[i].rclsid)) {
-            IUnknown_AddRef((IClassFactory*) &MMDEVAPI_CF[i]);
+            IUnknown_AddRef(&MMDEVAPI_CF[i].IClassFactory_iface);
             *ppv = &MMDEVAPI_CF[i];
             return S_OK;
         }
