@@ -2379,13 +2379,18 @@ HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
 typedef struct
 {
     /* IUnknown fields */
-    const IClassFactoryVtbl    *lpVtbl;
-    LONG                        ref;
+    IClassFactory IClassFactory_iface;
+    LONG          ref;
 } IClassFactoryImpl;
+
+static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
+{
+       return CONTAINING_RECORD(iface, IClassFactoryImpl, IClassFactory_iface);
+}
 
 static HRESULT WINAPI
 SPCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+	IClassFactoryImpl *This = impl_from_IClassFactory(iface);
 
 	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
@@ -2393,12 +2398,12 @@ SPCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 
 static ULONG WINAPI
 SPCF_AddRef(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+	IClassFactoryImpl *This = impl_from_IClassFactory(iface);
 	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI SPCF_Release(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+	IClassFactoryImpl *This = impl_from_IClassFactory(iface);
 	/* static class, won't be  freed */
 	return InterlockedDecrement(&This->ref);
 }
@@ -2412,7 +2417,7 @@ static HRESULT WINAPI SPCF_CreateInstance(
 }
 
 static HRESULT WINAPI SPCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+	IClassFactoryImpl *This = impl_from_IClassFactory(iface);
 	FIXME("(%p)->(%d),stub!\n",This,dolock);
 	return S_OK;
 }
@@ -2424,6 +2429,6 @@ static const IClassFactoryVtbl SPCF_Vtbl = {
 	SPCF_CreateInstance,
 	SPCF_LockServer
 };
-static IClassFactoryImpl STDPIC_CF = {&SPCF_Vtbl, 1 };
+static IClassFactoryImpl STDPIC_CF = {{&SPCF_Vtbl}, 1 };
 
 void _get_STDPIC_CF(LPVOID *ppv) { *ppv = &STDPIC_CF; }

@@ -2444,13 +2444,18 @@ static void OLEFontImpl_Destroy(OLEFontImpl* fontDesc)
 typedef struct
 {
     /* IUnknown fields */
-    const IClassFactoryVtbl    *lpVtbl;
-    LONG                        ref;
+    IClassFactory IClassFactory_iface;
+    LONG          ref;
 } IClassFactoryImpl;
+
+static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
+{
+        return CONTAINING_RECORD(iface, IClassFactoryImpl, IClassFactory_iface);
+}
 
 static HRESULT WINAPI
 SFCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+	IClassFactoryImpl *This = impl_from_IClassFactory(iface);
 
 	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
@@ -2458,12 +2463,12 @@ SFCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 
 static ULONG WINAPI
 SFCF_AddRef(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+	IClassFactoryImpl *This = impl_from_IClassFactory(iface);
 	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI SFCF_Release(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+	IClassFactoryImpl *This = impl_from_IClassFactory(iface);
 	/* static class, won't be  freed */
 	return InterlockedDecrement(&This->ref);
 }
@@ -2476,7 +2481,7 @@ static HRESULT WINAPI SFCF_CreateInstance(
 }
 
 static HRESULT WINAPI SFCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+	IClassFactoryImpl *This = impl_from_IClassFactory(iface);
 	FIXME("(%p)->(%d),stub!\n",This,dolock);
 	return S_OK;
 }
@@ -2488,6 +2493,6 @@ static const IClassFactoryVtbl SFCF_Vtbl = {
 	SFCF_CreateInstance,
 	SFCF_LockServer
 };
-static IClassFactoryImpl STDFONT_CF = {&SFCF_Vtbl, 1 };
+static IClassFactoryImpl STDFONT_CF = {{&SFCF_Vtbl}, 1 };
 
 void _get_STDFONT_CF(LPVOID *ppv) { *ppv = &STDFONT_CF; }
