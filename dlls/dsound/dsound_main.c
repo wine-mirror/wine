@@ -506,15 +506,20 @@ DirectSoundCaptureEnumerateW(
 typedef  HRESULT (*FnCreateInstance)(REFIID riid, LPVOID *ppobj);
  
 typedef struct {
-    const IClassFactoryVtbl *lpVtbl;
+    IClassFactory IClassFactory_iface;
     REFCLSID rclsid;
     FnCreateInstance pfnCreateInstance;
 } IClassFactoryImpl;
 
+static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, IClassFactoryImpl, IClassFactory_iface);
+}
+
 static HRESULT WINAPI
 DSCF_QueryInterface(LPCLASSFACTORY iface, REFIID riid, LPVOID *ppobj)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), ppobj);
     if (ppobj == NULL)
         return E_POINTER;
@@ -546,7 +551,7 @@ static HRESULT WINAPI DSCF_CreateInstance(
     REFIID riid,
     LPVOID *ppobj)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     TRACE("(%p, %p, %s, %p)\n", This, pOuter, debugstr_guid(riid), ppobj);
 
     if (pOuter)
@@ -562,7 +567,7 @@ static HRESULT WINAPI DSCF_CreateInstance(
  
 static HRESULT WINAPI DSCF_LockServer(LPCLASSFACTORY iface, BOOL dolock)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     FIXME("(%p, %d) stub!\n", This, dolock);
     return S_OK;
 }
@@ -576,13 +581,13 @@ static const IClassFactoryVtbl DSCF_Vtbl = {
 };
 
 static IClassFactoryImpl DSOUND_CF[] = {
-    { &DSCF_Vtbl, &CLSID_DirectSound, (FnCreateInstance)DSOUND_Create },
-    { &DSCF_Vtbl, &CLSID_DirectSound8, (FnCreateInstance)DSOUND_Create8 },
-    { &DSCF_Vtbl, &CLSID_DirectSoundCapture, (FnCreateInstance)DSOUND_CaptureCreate },
-    { &DSCF_Vtbl, &CLSID_DirectSoundCapture8, (FnCreateInstance)DSOUND_CaptureCreate8 },
-    { &DSCF_Vtbl, &CLSID_DirectSoundFullDuplex, (FnCreateInstance)DSOUND_FullDuplexCreate },
-    { &DSCF_Vtbl, &CLSID_DirectSoundPrivate, (FnCreateInstance)IKsPrivatePropertySetImpl_Create },
-    { NULL, NULL, NULL }
+    { { &DSCF_Vtbl }, &CLSID_DirectSound, (FnCreateInstance)DSOUND_Create },
+    { { &DSCF_Vtbl }, &CLSID_DirectSound8, (FnCreateInstance)DSOUND_Create8 },
+    { { &DSCF_Vtbl }, &CLSID_DirectSoundCapture, (FnCreateInstance)DSOUND_CaptureCreate },
+    { { &DSCF_Vtbl }, &CLSID_DirectSoundCapture8, (FnCreateInstance)DSOUND_CaptureCreate8 },
+    { { &DSCF_Vtbl }, &CLSID_DirectSoundFullDuplex, (FnCreateInstance)DSOUND_FullDuplexCreate },
+    { { &DSCF_Vtbl }, &CLSID_DirectSoundPrivate, (FnCreateInstance)IKsPrivatePropertySetImpl_Create },
+    { { NULL }, NULL, NULL }
 };
 
 /*******************************************************************************
@@ -622,7 +627,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 
     while (NULL != DSOUND_CF[i].rclsid) {
         if (IsEqualGUID(rclsid, DSOUND_CF[i].rclsid)) {
-            DSCF_AddRef((IClassFactory*) &DSOUND_CF[i]);
+            DSCF_AddRef(&DSOUND_CF[i].IClassFactory_iface);
             *ppv = &DSOUND_CF[i];
             return S_OK;
         }
