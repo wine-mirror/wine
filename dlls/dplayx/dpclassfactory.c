@@ -43,13 +43,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 typedef struct
 {
     /* IUnknown fields */
-    const IClassFactoryVtbl    *lpVtbl;
-    LONG                        ref;
+    IClassFactory IClassFactory_iface;
+    LONG          ref;
 } IClassFactoryImpl;
+
+static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, IClassFactoryImpl, IClassFactory_iface);
+}
 
 static HRESULT WINAPI
 DP_and_DPL_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-        IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+        IClassFactoryImpl *This = impl_from_IClassFactory(iface);
 
         FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
 
@@ -58,12 +63,12 @@ DP_and_DPL_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 
 static ULONG WINAPI
 DP_and_DPL_AddRef(LPCLASSFACTORY iface) {
-        IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+        IClassFactoryImpl *This = impl_from_IClassFactory(iface);
         return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI DP_and_DPL_Release(LPCLASSFACTORY iface) {
-        IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+        IClassFactoryImpl *This = impl_from_IClassFactory(iface);
         /* static class (reference starts @ 1), won't ever be freed */
         return InterlockedDecrement(&This->ref);
 }
@@ -71,7 +76,7 @@ static ULONG WINAPI DP_and_DPL_Release(LPCLASSFACTORY iface) {
 static HRESULT WINAPI DP_and_DPL_CreateInstance(
         LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
 ) {
-        IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+        IClassFactoryImpl *This = impl_from_IClassFactory(iface);
 
         TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
 
@@ -88,7 +93,7 @@ static HRESULT WINAPI DP_and_DPL_CreateInstance(
 }
 
 static HRESULT WINAPI DP_and_DPL_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-        IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+        IClassFactoryImpl *This = impl_from_IClassFactory(iface);
         FIXME("(%p)->(%d),stub!\n",This,dolock);
         return S_OK;
 }
@@ -101,7 +106,7 @@ static const IClassFactoryVtbl DP_and_DPL_Vtbl = {
         DP_and_DPL_LockServer
 };
 
-static IClassFactoryImpl DP_and_DPL_CF = {&DP_and_DPL_Vtbl, 1 };
+static IClassFactoryImpl DP_and_DPL_CF = {{&DP_and_DPL_Vtbl}, 1 };
 
 
 /*******************************************************************************
