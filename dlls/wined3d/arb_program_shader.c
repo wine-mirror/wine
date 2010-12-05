@@ -344,15 +344,14 @@ static BOOL need_helper_const(const struct arb_vshader_private *shader_data,
     return FALSE;
 }
 
-static unsigned int reserved_vs_const(IWineD3DVertexShaderImpl *shader, const struct wined3d_gl_info *gl_info)
+static unsigned int reserved_vs_const(const struct arb_vshader_private *shader_data,
+        const struct shader_reg_maps *reg_maps, const struct wined3d_gl_info *gl_info)
 {
     unsigned int ret = 1;
     /* We use one PARAM for the pos fixup, and in some cases one to load
      * some immediate values into the shader. */
-    if (need_helper_const(shader->baseShader.backend_data,
-            &shader->baseShader.reg_maps, gl_info)) ++ret;
-    if (need_rel_addr_const(shader->baseShader.backend_data,
-            &shader->baseShader.reg_maps, gl_info)) ++ret;
+    if (need_helper_const(shader_data, reg_maps, gl_info)) ++ret;
+    if (need_rel_addr_const(shader_data, reg_maps, gl_info)) ++ret;
     return ret;
 }
 
@@ -725,6 +724,7 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
     }
     else
     {
+        const struct arb_vshader_private *shader_data = This->baseShader.backend_data;
         max_constantsF = gl_info->limits.arb_vs_native_constants;
         /* 96 is the minimum MAX_PROGRAM_ENV_PARAMETERS_ARB value.
          * Also prevents max_constantsF from becoming less than 0 and
@@ -735,7 +735,7 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
         if(This->baseShader.reg_maps.usesrelconstF) {
             DWORD highest_constf = 0, clip_limit;
 
-            max_constantsF -= reserved_vs_const((IWineD3DVertexShaderImpl *)This, gl_info);
+            max_constantsF -= reserved_vs_const(shader_data, reg_maps, gl_info);
             max_constantsF -= count_bits(This->baseShader.reg_maps.integer_constants);
 
             for(i = 0; i < This->baseShader.limits.constant_float; i++)
