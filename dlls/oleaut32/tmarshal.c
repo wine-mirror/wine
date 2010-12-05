@@ -1526,12 +1526,17 @@ static HRESULT WINAPI ProxyIDispatch_Invoke(LPDISPATCH iface, DISPID dispIdMembe
 
 typedef struct
 {
-    const IRpcChannelBufferVtbl *lpVtbl;
+    IRpcChannelBuffer     IRpcChannelBuffer_iface;
     LONG                  refs;
     /* the IDispatch-derived interface we are handling */
-	IID                   tmarshal_iid;
+    IID                   tmarshal_iid;
     IRpcChannelBuffer    *pDelegateChannel;
 } TMarshalDispatchChannel;
+
+static inline TMarshalDispatchChannel *impl_from_IRpcChannelBuffer(IRpcChannelBuffer *iface)
+{
+    return CONTAINING_RECORD(iface, TMarshalDispatchChannel, IRpcChannelBuffer_iface);
+}
 
 static HRESULT WINAPI TMarshalDispatchChannel_QueryInterface(LPRPCCHANNELBUFFER iface, REFIID riid, LPVOID *ppv)
 {
@@ -1547,13 +1552,13 @@ static HRESULT WINAPI TMarshalDispatchChannel_QueryInterface(LPRPCCHANNELBUFFER 
 
 static ULONG WINAPI TMarshalDispatchChannel_AddRef(LPRPCCHANNELBUFFER iface)
 {
-    TMarshalDispatchChannel *This = (TMarshalDispatchChannel *)iface;
+    TMarshalDispatchChannel *This = impl_from_IRpcChannelBuffer(iface);
     return InterlockedIncrement(&This->refs);
 }
 
 static ULONG WINAPI TMarshalDispatchChannel_Release(LPRPCCHANNELBUFFER iface)
 {
-    TMarshalDispatchChannel *This = (TMarshalDispatchChannel *)iface;
+    TMarshalDispatchChannel *This = impl_from_IRpcChannelBuffer(iface);
     ULONG ref;
 
     ref = InterlockedDecrement(&This->refs);
@@ -1567,7 +1572,7 @@ static ULONG WINAPI TMarshalDispatchChannel_Release(LPRPCCHANNELBUFFER iface)
 
 static HRESULT WINAPI TMarshalDispatchChannel_GetBuffer(LPRPCCHANNELBUFFER iface, RPCOLEMESSAGE* olemsg, REFIID riid)
 {
-    TMarshalDispatchChannel *This = (TMarshalDispatchChannel *)iface;
+    TMarshalDispatchChannel *This = impl_from_IRpcChannelBuffer(iface);
     TRACE("(%p, %s)\n", olemsg, debugstr_guid(riid));
     /* Note: we are pretending to invoke a method on the interface identified
      * by tmarshal_iid so that we can re-use the IDispatch proxy/stub code
@@ -1577,28 +1582,28 @@ static HRESULT WINAPI TMarshalDispatchChannel_GetBuffer(LPRPCCHANNELBUFFER iface
 
 static HRESULT WINAPI TMarshalDispatchChannel_SendReceive(LPRPCCHANNELBUFFER iface, RPCOLEMESSAGE *olemsg, ULONG *pstatus)
 {
-    TMarshalDispatchChannel *This = (TMarshalDispatchChannel *)iface;
+    TMarshalDispatchChannel *This = impl_from_IRpcChannelBuffer(iface);
     TRACE("(%p, %p)\n", olemsg, pstatus);
     return IRpcChannelBuffer_SendReceive(This->pDelegateChannel, olemsg, pstatus);
 }
 
 static HRESULT WINAPI TMarshalDispatchChannel_FreeBuffer(LPRPCCHANNELBUFFER iface, RPCOLEMESSAGE* olemsg)
 {
-    TMarshalDispatchChannel *This = (TMarshalDispatchChannel *)iface;
+    TMarshalDispatchChannel *This = impl_from_IRpcChannelBuffer(iface);
     TRACE("(%p)\n", olemsg);
     return IRpcChannelBuffer_FreeBuffer(This->pDelegateChannel, olemsg);
 }
 
 static HRESULT WINAPI TMarshalDispatchChannel_GetDestCtx(LPRPCCHANNELBUFFER iface, DWORD* pdwDestContext, void** ppvDestContext)
 {
-    TMarshalDispatchChannel *This = (TMarshalDispatchChannel *)iface;
+    TMarshalDispatchChannel *This = impl_from_IRpcChannelBuffer(iface);
     TRACE("(%p,%p)\n", pdwDestContext, ppvDestContext);
     return IRpcChannelBuffer_GetDestCtx(This->pDelegateChannel, pdwDestContext, ppvDestContext);
 }
 
 static HRESULT WINAPI TMarshalDispatchChannel_IsConnected(LPRPCCHANNELBUFFER iface)
 {
-    TMarshalDispatchChannel *This = (TMarshalDispatchChannel *)iface;
+    TMarshalDispatchChannel *This = impl_from_IRpcChannelBuffer(iface);
     TRACE("()\n");
     return IRpcChannelBuffer_IsConnected(This->pDelegateChannel);
 }
@@ -1623,13 +1628,13 @@ static HRESULT TMarshalDispatchChannel_Create(
     if (!This)
         return E_OUTOFMEMORY;
 
-    This->lpVtbl = &TMarshalDispatchChannelVtbl;
+    This->IRpcChannelBuffer_iface.lpVtbl = &TMarshalDispatchChannelVtbl;
     This->refs = 1;
     IRpcChannelBuffer_AddRef(pDelegateChannel);
     This->pDelegateChannel = pDelegateChannel;
     This->tmarshal_iid = *tmarshal_riid;
 
-    *ppChannel = (IRpcChannelBuffer *)&This->lpVtbl;
+    *ppChannel = &This->IRpcChannelBuffer_iface;
     return S_OK;
 }
 
