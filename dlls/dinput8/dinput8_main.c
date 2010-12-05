@@ -94,11 +94,16 @@ HRESULT WINAPI DECLSPEC_HOTPATCH DirectInput8Create(HINSTANCE hinst, DWORD dwVer
 typedef struct
 {
     /* IUnknown fields */
-    const IClassFactoryVtbl    *lpVtbl;
+    IClassFactory IClassFactory_iface;
 } IClassFactoryImpl;
 
+static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, IClassFactoryImpl, IClassFactory_iface);
+}
+
 static HRESULT WINAPI DI8CF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     FIXME("%p %s %p\n",This,debugstr_guid(riid),ppobj);
     return E_NOINTERFACE;
 }
@@ -114,7 +119,7 @@ static ULONG WINAPI DI8CF_Release(LPCLASSFACTORY iface) {
 }
 
 static HRESULT WINAPI DI8CF_CreateInstance(LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj) {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
 
     TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
     if( IsEqualGUID( &IID_IDirectInput8A, riid ) || IsEqualGUID( &IID_IDirectInput8W, riid ) || IsEqualGUID( &IID_IUnknown, riid )) {
@@ -143,7 +148,7 @@ static const IClassFactoryVtbl DI8CF_Vtbl = {
     DI8CF_CreateInstance,
     DI8CF_LockServer
 };
-static IClassFactoryImpl DINPUT8_CF = { &DI8CF_Vtbl };
+static IClassFactoryImpl DINPUT8_CF = { { &DI8CF_Vtbl } };
 
 
 /***********************************************************************
