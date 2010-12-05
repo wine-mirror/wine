@@ -470,7 +470,11 @@ L\"			{
 <tklstr>\\r		addwchar('\r');
 <tklstr>\\t		addwchar('\t');
 <tklstr>\\v		addwchar('\v');
-<tklstr>\\.		addwchar(yytext[1]);
+<tklstr>\\.		{
+			    if (yytext[1] & 0x80)
+                                parser_error("Invalid char %u in wide string", (unsigned char)yytext[1]);
+			    addwchar(yytext[1]);
+			}
 <tklstr>\\\r\n		addwchar(yytext[2]); line_number++; char_number = 1;
 <tklstr>\"\"		addwchar('\"');		/* "bla""bla"  -> "bla\"bla" */
 <tklstr>\\\"\"		addwchar('\"');		/* "bla\""bla" -> "bla\"bla" */
@@ -478,7 +482,11 @@ L\"			{
 <tklstr>[^\\\n\"]+	{
 				char *yptr = yytext;
 				while(*yptr)	/* FIXME: codepage translation */
-					addwchar(*yptr++ & 0xff);
+                                {
+                                    if (*yptr & 0x80)
+                                        parser_error("Invalid char %u in wide string", (unsigned char)*yptr);
+                                    addwchar(*yptr++ & 0xff);
+                                }
 			}
 <tklstr>\n		parser_error("Unterminated string");
 
