@@ -60,14 +60,19 @@ typedef HRESULT (CALLBACK *LPFNCREATEINSTANCE)(IUnknown*, REFIID, LPVOID*);
 
 typedef struct
 {
-    const IClassFactoryVtbl *lpVtbl;
-    LPFNCREATEINSTANCE      lpfnCI;
+    IClassFactory      IClassFactory_iface;
+    LPFNCREATEINSTANCE lpfnCI;
 } CFImpl;
+
+static inline CFImpl *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, CFImpl, IClassFactory_iface);
+}
 
 static HRESULT WINAPI infosoftcf_fnQueryInterface ( LPCLASSFACTORY iface,
         REFIID riid, LPVOID *ppvObj)
 {
-    CFImpl *This = (CFImpl *)iface;
+    CFImpl *This = impl_from_IClassFactory(iface);
 
     TRACE("(%p)->(%s)\n",This,debugstr_guid(riid));
 
@@ -97,7 +102,7 @@ static ULONG WINAPI infosoftcf_fnRelease(LPCLASSFACTORY iface)
 static HRESULT WINAPI infosoftcf_fnCreateInstance( LPCLASSFACTORY iface,
         LPUNKNOWN pUnkOuter, REFIID riid, LPVOID *ppvObject)
 {
-    CFImpl *This = (CFImpl *)iface;
+    CFImpl *This = impl_from_IClassFactory(iface);
 
     TRACE("%p->(%p,%s,%p)\n", This, pUnkOuter, debugstr_guid(riid), ppvObject);
 
@@ -121,7 +126,7 @@ static const IClassFactoryVtbl infosoft_cfvt =
     infosoftcf_fnLockServer
 };
 
-static CFImpl wb_cf = { &infosoft_cfvt, wb_Constructor };
+static CFImpl wb_cf = { { &infosoft_cfvt }, wb_Constructor };
 
 /***********************************************************************
  *             DllGetClassObject (INFOSOFT.@)
@@ -137,7 +142,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
     *ppv = NULL;
 
     if (IsEqualIID(rclsid, &CLSID_wb_Neutral))
-        pcf = (IClassFactory*) &wb_cf;
+        pcf = &wb_cf.IClassFactory_iface;
     else
         return CLASS_E_CLASSNOTAVAILABLE;
 
