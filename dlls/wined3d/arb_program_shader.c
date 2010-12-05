@@ -3097,13 +3097,11 @@ static void shader_hw_label(const struct wined3d_shader_instruction *ins)
     shader_addline(buffer, "l%u:\n", ins->src[0].reg.idx);
 }
 
-static void vshader_add_footer(IWineD3DVertexShaderImpl *This, struct wined3d_shader_buffer *buffer,
-        const struct arb_vs_compile_args *args, struct shader_arb_ctx_priv *priv_ctx)
+static void vshader_add_footer(struct shader_arb_ctx_priv *priv_ctx,
+        const struct arb_vshader_private *shader_data, const struct arb_vs_compile_args *args,
+        const struct shader_reg_maps *reg_maps, const struct wined3d_gl_info *gl_info,
+        struct wined3d_shader_buffer *buffer)
 {
-    const struct arb_vshader_private *shader_data = This->baseShader.backend_data;
-    const shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)This->baseShader.device;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     unsigned int i;
 
     /* The D3DRS_FOGTABLEMODE render state defines if the shader-generated fog coord is used
@@ -3200,7 +3198,8 @@ static void shader_hw_ret(const struct wined3d_shader_instruction *ins)
 
     if(vshader)
     {
-        if(priv->in_main_func) vshader_add_footer((IWineD3DVertexShaderImpl *) shader, buffer, priv->cur_vs_args, priv);
+        if (priv->in_main_func) vshader_add_footer(priv, shader->baseShader.backend_data,
+                priv->cur_vs_args, ins->ctx->reg_maps, ins->ctx->gl_info, buffer);
     }
 
     shader_addline(buffer, "RET;\n");
@@ -4183,7 +4182,8 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This, struct
     /* Base Shader Body */
     shader_generate_main((IWineD3DBaseShader *)This, buffer, reg_maps, function, &priv_ctx);
 
-    if(!priv_ctx.footer_written) vshader_add_footer(This, buffer, args, &priv_ctx);
+    if (!priv_ctx.footer_written) vshader_add_footer(&priv_ctx,
+            shader_data, args, reg_maps, gl_info, buffer);
 
     shader_addline(buffer, "END\n");
 
