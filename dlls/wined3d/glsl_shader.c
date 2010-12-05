@@ -951,25 +951,29 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         }
         else
         {
-            if(This->baseShader.reg_maps.usesrelconstF) {
-                /* Subtract the other potential uniforms from the max available (bools, ints, and 1 row of projection matrix).
-                 * Subtract another uniform for immediate values, which have to be loaded via uniform by the driver as well.
-                 * The shader code only uses 0.5, 2.0, 1.0, 128 and -128 in vertex shader code, so one vec4 should be enough
-                 * (Unfortunately the Nvidia driver doesn't store 128 and -128 in one float).
+            if (reg_maps->usesrelconstF)
+            {
+                /* Subtract the other potential uniforms from the max
+                 * available (bools, ints, and 1 row of projection matrix).
+                 * Subtract another uniform for immediate values, which have
+                 * to be loaded via uniform by the driver as well. The shader
+                 * code only uses 0.5, 2.0, 1.0, 128 and -128 in vertex
+                 * shader code, so one vec4 should be enough. (Unfortunately
+                 * the Nvidia driver doesn't store 128 and -128 in one float).
                  *
-                 * Writing gl_ClipVertex requires one uniform for each clipplane as well.
-                 */
+                 * Writing gl_ClipVertex requires one uniform for each
+                 * clipplane as well. */
                 max_constantsF = gl_info->limits.glsl_vs_float_constants - 3;
                 if(ctx_priv->cur_vs_args->clip_enabled)
                 {
                     max_constantsF -= gl_info->limits.clipplanes;
                 }
-                max_constantsF -= count_bits(This->baseShader.reg_maps.integer_constants);
+                max_constantsF -= count_bits(reg_maps->integer_constants);
                 /* Strictly speaking a bool only uses one scalar, but the nvidia(Linux) compiler doesn't pack them properly,
                  * so each scalar requires a full vec4. We could work around this by packing the booleans ourselves, but
                  * for now take this into account when calculating the number of available constants
                  */
-                max_constantsF -= count_bits(This->baseShader.reg_maps.boolean_constants);
+                max_constantsF -= count_bits(reg_maps->boolean_constants);
                 /* Set by driver quirks in directx.c */
                 max_constantsF -= gl_info->reserved_glsl_constants;
             }
@@ -985,10 +989,10 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     /* Always declare the full set of constants, the compiler can remove the unused ones because d3d doesn't(yet)
      * support indirect int and bool constant addressing. This avoids problems if the app uses e.g. i0 and i9.
      */
-    if (This->baseShader.limits.constant_int > 0 && This->baseShader.reg_maps.integer_constants)
+    if (This->baseShader.limits.constant_int > 0 && reg_maps->integer_constants)
         shader_addline(buffer, "uniform ivec4 %cI[%u];\n", prefix, This->baseShader.limits.constant_int);
 
-    if (This->baseShader.limits.constant_bool > 0 && This->baseShader.reg_maps.boolean_constants)
+    if (This->baseShader.limits.constant_bool > 0 && reg_maps->boolean_constants)
         shader_addline(buffer, "uniform bool %cB[%u];\n", prefix, This->baseShader.limits.constant_bool);
 
     if (!pshader)

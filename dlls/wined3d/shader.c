@@ -1864,7 +1864,7 @@ HRESULT vertexshader_init(IWineD3DVertexShaderImpl *shader, IWineD3DDeviceImpl *
         return hr;
     }
 
-    map = shader->baseShader.reg_maps.input_registers;
+    map = reg_maps->input_registers;
     for (i = 0; map; map >>= 1, ++i)
     {
         if (!(map & 1) || !shader->baseShader.input_signature[i].semantic_name) continue;
@@ -1886,7 +1886,7 @@ HRESULT vertexshader_init(IWineD3DVertexShaderImpl *shader, IWineD3DDeviceImpl *
 
     vertexshader_set_limits(shader);
 
-    shader->baseShader.load_local_constsF = shader->baseShader.reg_maps.usesrelconstF
+    shader->baseShader.load_local_constsF = reg_maps->usesrelconstF
             && !list_empty(&shader->baseShader.constantsF);
 
     return WINED3D_OK;

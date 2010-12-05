@@ -732,11 +732,12 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
         if (max_constantsF < 96)
             max_constantsF = gl_info->limits.arb_vs_float_constants;
 
-        if(This->baseShader.reg_maps.usesrelconstF) {
+        if (reg_maps->usesrelconstF)
+        {
             DWORD highest_constf = 0, clip_limit;
 
             max_constantsF -= reserved_vs_const(shader_data, reg_maps, gl_info);
-            max_constantsF -= count_bits(This->baseShader.reg_maps.integer_constants);
+            max_constantsF -= count_bits(reg_maps->integer_constants);
 
             for(i = 0; i < This->baseShader.limits.constant_float; i++)
             {
@@ -821,7 +822,8 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
      * local constants do not declare the loaded constants as an array because ARB compilers usually
      * do not optimize unused constants away
      */
-    if(This->baseShader.reg_maps.usesrelconstF) {
+    if (reg_maps->usesrelconstF)
+    {
         /* Need to PARAM the environment parameters (constants) so we can use relative addressing */
         shader_addline(buffer, "PARAM C[%d] = { program.env[0..%d] };\n",
                     max_constantsF, max_constantsF - 1);
@@ -830,7 +832,8 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
             DWORD idx, mask;
             idx = i >> 5;
             mask = 1 << (i & 0x1f);
-            if(!shader_constant_is_local(This, i) && (This->baseShader.reg_maps.constf[idx] & mask)) {
+            if (!shader_constant_is_local(This, i) && (reg_maps->constf[idx] & mask))
+            {
                 shader_addline(buffer, "PARAM C%d = program.env[%d];\n",i, i);
             }
         }
@@ -3588,7 +3591,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This, struct 
         priv_ctx.target_version = ARB;
     }
 
-    if(This->baseShader.reg_maps.highest_render_target > 0)
+    if (reg_maps->highest_render_target > 0)
     {
         shader_addline(buffer, "OPTION ARB_draw_buffers;\n");
     }
@@ -4169,8 +4172,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This, struct
             const char *one = arb_get_helper_value(WINED3D_SHADER_TYPE_VERTEX, ARB_ONE);
             for(i = 0; i < min(8, MAX_REG_TEXCRD); i++)
             {
-                if (This->baseShader.reg_maps.texcoord_mask[i]
-                        && This->baseShader.reg_maps.texcoord_mask[i] != WINED3DSP_WRITEMASK_ALL)
+                if (reg_maps->texcoord_mask[i] && reg_maps->texcoord_mask[i] != WINED3DSP_WRITEMASK_ALL)
                     shader_addline(buffer, "MOV result.texcoord[%u].w, %s\n", i, one);
             }
         }
