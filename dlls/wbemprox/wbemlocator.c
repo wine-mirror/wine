@@ -35,13 +35,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(wbemprox);
 
 typedef struct
 {
-    const IWbemLocatorVtbl *vtbl;
+    IWbemLocator IWbemLocator_iface;
     LONG refs;
 } wbem_locator;
 
 static inline wbem_locator *impl_from_IWbemLocator( IWbemLocator *iface )
 {
-    return (wbem_locator *)((char *)iface - FIELD_OFFSET( wbem_locator, vtbl ));
+    return CONTAINING_RECORD(iface, wbem_locator, IWbemLocator_iface);
 }
 
 static ULONG WINAPI wbem_locator_AddRef(
@@ -120,10 +120,10 @@ HRESULT WbemLocator_create( IUnknown *pUnkOuter, LPVOID *ppObj )
     wl = HeapAlloc( GetProcessHeap(), 0, sizeof(*wl) );
     if (!wl) return E_OUTOFMEMORY;
 
-    wl->vtbl = &wbem_locator_vtbl;
+    wl->IWbemLocator_iface.lpVtbl = &wbem_locator_vtbl;
     wl->refs = 1;
 
-    *ppObj = &wl->vtbl;
+    *ppObj = &wl->IWbemLocator_iface;
 
     TRACE("returning iface %p\n", *ppObj);
     return S_OK;
