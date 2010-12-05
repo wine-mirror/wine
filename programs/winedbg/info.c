@@ -49,7 +49,7 @@ void print_help(void)
             "subset of the commands that gdb accepts.",
             "The commands currently are:",
             "  help                                   quit",
-            "  break [*<addr>]                        watch *<addr>",
+            "  break [*<addr>]                        watch | rwatch *<addr>",
             "  delete break bpnum                     disable bpnum",
             "  enable bpnum                           condition <bpnum> [<expr>]",
             "  finish                                 cont [N]",
