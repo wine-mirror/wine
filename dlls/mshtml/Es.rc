@@ -33,23 +33,6 @@ STRINGTABLE
 {
     IDS_HTMLDISABLED    "El renderizado HTML está actualmente deshabilitado."
     IDS_HTMLDOCUMENT    "Documento HTML"
-    IDS_DOWNLOADING     "Descargando..."
-    IDS_INSTALLING      "Instalando..."
-}
-
-ID_DWL_DIALOG DIALOG  0, 0, 260, 95
-STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Instalador de Gecko de Wine"
-FONT 8, "MS Shell Dlg"
-{
-    LTEXT "Wine no pudo encontrar el paquete Gecko, que necesitan las aplicaciones que incrustan HTML " \
-          "para funcionar correctamente. Wine puede descargarlo automáticamente e instalarlo para usted.\n\n" \
-          "Nota: Se recomienda utilizar el paquete para su distribución si está disponible. " \
-          "Consulte http://wiki.winehq.org/Gecko para más detalles.",
-          ID_DWL_STATUS, 10, 10, 240, 50, SS_LEFT
-    CONTROL "Progreso", ID_DWL_PROGRESS, PROGRESS_CLASSA, WS_BORDER|PBS_SMOOTH, 10, 50, 240, 12
-    DEFPUSHBUTTON "&Instalar", ID_DWL_INSTALL, 200, 70, 50, 15, WS_GROUP | WS_TABSTOP
-    PUSHBUTTON "&Cancelar", IDCANCEL, 140, 70, 50, 15, WS_GROUP | WS_TABSTOP
 }
 
 IDD_HYPERLINK DIALOG 0, 0, 250, 65

@@ -30,24 +30,7 @@ STRINGTABLE
 {
     IDS_HTMLDISABLED    "HTML-visning är inte aktiverad."
     IDS_HTMLDOCUMENT    "HTML-dokument"
-    IDS_DOWNLOADING     "Hämtar..."
-    IDS_INSTALLING      "Installerar..."
 }
-
-ID_DWL_DIALOG DIALOG  0, 0, 260, 95
-STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Wine Gecko Installationsprogram"
-FONT 8, "MS Shell Dlg"
-{
-    LTEXT "Wine kunde inte hitta paketet Gecko vilket krävs för att program med inbäddad HTML " \
-          "ska fungera korrekt. Wine kan hämta och installera det automatiskt åt dig.\n\n" \
-          "Obs: Du rekommenderas att använda din distributions paket i stället. Se http://wiki.winehq.org/Gecko för mer information.",
-          ID_DWL_STATUS, 10, 10, 240, 50, SS_LEFT
-    CONTROL "Förlopp", ID_DWL_PROGRESS, PROGRESS_CLASSA, WS_BORDER|PBS_SMOOTH, 10, 40, 240, 12
-    DEFPUSHBUTTON "&Installera", ID_DWL_INSTALL, 200, 70, 50, 15, WS_GROUP | WS_TABSTOP
-    PUSHBUTTON "&Avbryt", IDCANCEL, 140, 70, 50, 15, WS_GROUP | WS_TABSTOP
-}
-
 
 IDD_HYPERLINK DIALOG 0, 0, 250, 65
 STYLE DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU

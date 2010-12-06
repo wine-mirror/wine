@@ -232,6 +232,44 @@ static void register_nscontainer_class(void)
     nscontainer_class = RegisterClassExW(&wndclass);
 }
 
+static BOOL install_wine_gecko(BOOL silent)
+{
+    PROCESS_INFORMATION pi;
+    STARTUPINFOW si;
+    WCHAR app[MAX_PATH];
+    WCHAR *args;
+    LONG len;
+    BOOL ret;
+
+    static const WCHAR controlW[] = {'\\','c','o','n','t','r','o','l','.','e','x','e',0};
+    static const WCHAR argsW[] =
+        {' ','a','p','p','w','i','z','.','c','p','l',' ','i','n','s','t','a','l','l','_','g','e','c','k','o',0};
+
+    len = GetSystemDirectoryW(app, MAX_PATH-sizeof(controlW)/sizeof(WCHAR));
+    memcpy(app+len, controlW, sizeof(controlW));
+
+    args = heap_alloc(len*sizeof(WCHAR) + sizeof(controlW) + sizeof(argsW));
+    if(!args)
+        return FALSE;
+
+    memcpy(args, app, len*sizeof(WCHAR) + sizeof(controlW));
+    memcpy(args + len + sizeof(controlW)/sizeof(WCHAR)-1, argsW, sizeof(argsW));
+
+    TRACE("starting %s\n", debugstr_w(args));
+
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+    ret = CreateProcessW(app, args, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    heap_free(args);
+    if (ret) {
+        CloseHandle(pi.hThread);
+        WaitForSingleObject(pi.hProcess, INFINITE);
+        CloseHandle(pi.hProcess);
+    }
+
+    return ret;
+}
+
 static void set_environment(LPCWSTR gre_path)
 {
     WCHAR path_env[MAX_PATH], buf[20];
