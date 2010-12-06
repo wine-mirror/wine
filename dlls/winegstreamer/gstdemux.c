@@ -1179,6 +1179,10 @@ static HRESULT WINAPI GST_Run(IBaseFilter *iface, REFERENCE_TIME tStart) {
     if (!This->gstfilter)
         return VFW_E_NOT_CONNECTED;
 
+    EnterCriticalSection(&This->filter.csFilter);
+    This->filter.rtStreamStart = tStart;
+    LeaveCriticalSection(&This->filter.csFilter);
+
     gst_element_get_state(This->gstfilter, &now, NULL, -1);
     if (now == GST_STATE_PLAYING)
         return S_OK;
