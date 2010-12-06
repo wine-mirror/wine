@@ -1,0 +1,7 @@
+MODULE    = netsh.exe
+APPMODE   = -mconsole -municode
+EXTRADEFS = -DWINE_NO_UNICODE_MACROS
+
+C_SRCS = netsh.c
+
+@MAKE_PROG_RULES@
