@@ -123,6 +123,9 @@ static HRESULT WINAPI PHClientSite_QueryInterface(IOleClientSite *iface, REFIID 
     }else if(IsEqualGUID(&IID_IOleInPlaceSiteEx, riid)) {
         TRACE("(%p)->(IID_IOleInPlaceSiteEx %p)\n", This, ppv);
         *ppv = &This->IOleInPlaceSiteEx_iface;
+    }else if(IsEqualGUID(&IID_IOleControlSite, riid)) {
+        TRACE("(%p)->(IID_IOleControlSite %p)\n", This, ppv);
+        *ppv = &This->IOleControlSite_iface;
     }else {
         WARN("Unsupported interface %s\n", debugstr_guid(riid));
         *ppv = NULL;
@@ -545,6 +548,91 @@ static const IOleInPlaceSiteExVtbl OleInPlaceSiteExVtbl = {
     PHInPlaceSiteEx_RequestUIActivate
 };
 
+static inline PluginHost *impl_from_IOleControlSite(IOleControlSite *iface)
+{
+    return CONTAINING_RECORD(iface, PluginHost, IOleControlSite_iface);
+}
+
+static HRESULT WINAPI PHControlSite_QueryInterface(IOleControlSite *iface, REFIID riid, void **ppv)
+{
+    PluginHost *This = impl_from_IOleControlSite(iface);
+    return IOleClientSite_QueryInterface(&This->IOleClientSite_iface, riid, ppv);
+}
+
+static ULONG WINAPI PHControlSite_AddRef(IOleControlSite *iface)
+{
+    PluginHost *This = impl_from_IOleControlSite(iface);
+    return IOleClientSite_AddRef(&This->IOleClientSite_iface);
+}
+
+static ULONG WINAPI PHControlSite_Release(IOleControlSite *iface)
+{
+    PluginHost *This = impl_from_IOleControlSite(iface);
+    return IOleClientSite_Release(&This->IOleClientSite_iface);
+}
+
+static HRESULT WINAPI PHControlSite_OnControlInfoChanged(IOleControlSite *iface)
+{
+    PluginHost *This = impl_from_IOleControlSite(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHControlSite_LockInPlaceActive(IOleControlSite *iface, BOOL fLock)
+{
+    PluginHost *This = impl_from_IOleControlSite(iface);
+    FIXME("(%p)->(%x)\n", This, fLock);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHControlSite_GetExtendedControl(IOleControlSite *iface, IDispatch **ppDisp)
+{
+    PluginHost *This = impl_from_IOleControlSite(iface);
+    FIXME("(%p)->(%p)\n", This, ppDisp);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHControlSite_TransformCoords(IOleControlSite *iface, POINTL *pPtlHimetric, POINTF *pPtfContainer, DWORD dwFlags)
+{
+    PluginHost *This = impl_from_IOleControlSite(iface);
+    FIXME("(%p)->(%p %p %x)\n", This, pPtlHimetric, pPtfContainer, dwFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHControlSite_TranslateAccelerator(IOleControlSite *iface, MSG *pMsg, DWORD grfModifiers)
+{
+    PluginHost *This = impl_from_IOleControlSite(iface);
+    FIXME("(%p)->(%x)\n", This, grfModifiers);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHControlSite_OnFocus(IOleControlSite *iface, BOOL fGotFocus)
+{
+    PluginHost *This = impl_from_IOleControlSite(iface);
+    FIXME("(%p)->(%x)\n", This, fGotFocus);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHControlSite_ShowPropertyFrame(IOleControlSite *iface)
+{
+    PluginHost *This = impl_from_IOleControlSite(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static const IOleControlSiteVtbl OleControlSiteVtbl = {
+    PHControlSite_QueryInterface,
+    PHControlSite_AddRef,
+    PHControlSite_Release,
+    PHControlSite_OnControlInfoChanged,
+    PHControlSite_LockInPlaceActive,
+    PHControlSite_GetExtendedControl,
+    PHControlSite_TransformCoords,
+    PHControlSite_TranslateAccelerator,
+    PHControlSite_OnFocus,
+    PHControlSite_ShowPropertyFrame
+};
+
 HRESULT create_plugin_host(IUnknown *unk, PluginHost **ret)
 {
     PluginHost *host;
@@ -558,6 +646,7 @@ HRESULT create_plugin_host(IUnknown *unk, PluginHost **ret)
     host->IPropertyNotifySink_iface.lpVtbl = &PropertyNotifySinkVtbl;
     host->IDispatch_iface.lpVtbl           = &DispatchVtbl;
     host->IOleInPlaceSiteEx_iface.lpVtbl   = &OleInPlaceSiteExVtbl;
+    host->IOleControlSite_iface.lpVtbl     = &OleControlSiteVtbl;
 
     host->ref = 1;
 
