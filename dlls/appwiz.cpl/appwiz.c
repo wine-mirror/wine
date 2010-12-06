@@ -44,6 +44,7 @@
 #include <commdlg.h>
 #include <cpl.h>
 
+#include "appwiz.h"
 #include "res.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(appwizcpl);
@@ -71,7 +72,7 @@ typedef struct APPINFO {
 } APPINFO;
 
 static struct APPINFO *AppInfo = NULL;
-static HINSTANCE hInst;
+HINSTANCE hInst;
 
 static WCHAR btnRemove[MAX_STRING_LEN];
 static WCHAR btnModifyRemove[MAX_STRING_LEN];
@@ -953,6 +954,19 @@ static void StartApplet(HWND hWnd)
     PropertySheetW (&psh);
 }
 
+static LONG start_params(const WCHAR *params)
+{
+    static const WCHAR install_geckoW[] = {'i','n','s','t','a','l','l','_','g','e','c','k','o',0};
+
+    if(!strcmpW(params, install_geckoW)) {
+        install_wine_gecko();
+        return TRUE;
+    }
+
+    WARN("unknown param %s\n", debugstr_w(params));
+    return FALSE;
+}
+
 /******************************************************************************
  * Name       : CPlApplet
  * Description: Entry point for Control Panel applets
@@ -978,6 +992,9 @@ LONG CALLBACK CPlApplet(HWND hwndCPL, UINT message, LPARAM lParam1, LPARAM lPara
 
         case CPL_GETCOUNT:
             return 1;
+
+        case CPL_STARTWPARMSW:
+            return start_params((const WCHAR *)lParam2);
 
         case CPL_INQUIRE:
         {

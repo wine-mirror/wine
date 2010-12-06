@@ -1,7 +1,9 @@
 MODULE    = appwiz.cpl
-IMPORTS   = comctl32 advapi32 shell32 user32 comdlg32
+IMPORTS   = uuid urlmon advpack comctl32 advapi32 shell32 user32 comdlg32
+EXTRADEFS = -DINSTALL_DATADIR="\"$(datadir)\""
 
 C_SRCS = \
+	addons.c \
 	appwiz.c
 
 RC_SRCS = \
