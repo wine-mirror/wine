@@ -6057,6 +6057,23 @@ static void test_package_validation(void)
     ok(!delete_pf("msitest\\maximus", TRUE), "file exists\n");
     ok(!delete_pf("msitest", FALSE), "directory exists\n");
 
+    if (GetSystemDefaultLangID() == MAKELANGID( LANG_ENGLISH, SUBLANG_ENGLISH_US ))
+    {
+        DeleteFile(msifile);
+        create_database_template(msifile, pv_tables, sizeof(pv_tables)/sizeof(msi_table), 100, "Intel;9");
+        r = MsiInstallProductA(msifile, NULL);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+        ok(delete_pf("msitest\\maximus", TRUE), "file does not exist\n");
+        ok(delete_pf("msitest", FALSE), "directory does not exist\n");
+
+        DeleteFile(msifile);
+        create_database_template(msifile, pv_tables, sizeof(pv_tables)/sizeof(msi_table), 100, "Intel;1024");
+        r = MsiInstallProductA(msifile, NULL);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+        ok(delete_pf("msitest\\maximus", TRUE), "file does not exist\n");
+        ok(delete_pf("msitest", FALSE), "directory does not exist\n");
+    }
+
     DeleteFile(msifile);
     create_database_template(msifile, pv_tables, sizeof(pv_tables)/sizeof(msi_table), 100, "Intel32;0");
 

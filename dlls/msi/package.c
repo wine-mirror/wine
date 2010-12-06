@@ -1402,7 +1402,17 @@ static UINT validate_package( MSIPACKAGE *package )
     }
     for (i = 0; i < package->num_langids; i++)
     {
-        if (!package->langids[i] || IsValidLocale( package->langids[i], LCID_INSTALLED ))
+        LANGID langid = package->langids[i];
+
+        if (PRIMARYLANGID( langid ) == LANG_NEUTRAL)
+        {
+            langid = MAKELANGID( PRIMARYLANGID( GetSystemDefaultLangID() ), SUBLANGID( langid ) );
+        }
+        if (SUBLANGID( langid ) == SUBLANG_NEUTRAL)
+        {
+            langid = MAKELANGID( PRIMARYLANGID( langid ), SUBLANGID( GetSystemDefaultLangID() ) );
+        }
+        if (IsValidLocale( langid, LCID_INSTALLED ))
             return ERROR_SUCCESS;
     }
     return ERROR_INSTALL_LANGUAGE_UNSUPPORTED;
