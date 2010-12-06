@@ -35,42 +35,43 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 typedef struct {
     HTMLElement element;
 
-    const IHTMLInputElementVtbl *lpHTMLInputElementVtbl;
+    IHTMLInputElement IHTMLInputElement_iface;
     const IHTMLInputTextElementVtbl *lpHTMLInputTextElementVtbl;
 
     nsIDOMHTMLInputElement *nsinput;
 } HTMLInputElement;
 
-#define HTMLINPUT(x)      ((IHTMLInputElement*)      &(x)->lpHTMLInputElementVtbl)
+static inline HTMLInputElement *impl_from_IHTMLInputElement(IHTMLInputElement *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLInputElement, IHTMLInputElement_iface);
+}
 #define HTMLINPUTTEXT(x)  (&(x)->lpHTMLInputTextElementVtbl)
-
-#define HTMLINPUT_THIS(iface) DEFINE_THIS(HTMLInputElement, HTMLInputElement, iface)
 
 static HRESULT WINAPI HTMLInputElement_QueryInterface(IHTMLInputElement *iface,
                                                          REFIID riid, void **ppv)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
 
     return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->element.node), riid, ppv);
 }
 
 static ULONG WINAPI HTMLInputElement_AddRef(IHTMLInputElement *iface)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
 
     return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->element.node));
 }
 
 static ULONG WINAPI HTMLInputElement_Release(IHTMLInputElement *iface)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
 
     return IHTMLDOMNode_Release(HTMLDOMNODE(&This->element.node));
 }
 
 static HRESULT WINAPI HTMLInputElement_GetTypeInfoCount(IHTMLInputElement *iface, UINT *pctinfo)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
 
     return IDispatchEx_GetTypeInfoCount(DISPATCHEX(&This->element.node.dispex), pctinfo);
 }
@@ -78,7 +79,7 @@ static HRESULT WINAPI HTMLInputElement_GetTypeInfoCount(IHTMLInputElement *iface
 static HRESULT WINAPI HTMLInputElement_GetTypeInfo(IHTMLInputElement *iface, UINT iTInfo,
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
 
     return IDispatchEx_GetTypeInfo(DISPATCHEX(&This->element.node.dispex), iTInfo, lcid, ppTInfo);
 }
@@ -87,7 +88,7 @@ static HRESULT WINAPI HTMLInputElement_GetIDsOfNames(IHTMLInputElement *iface, R
                                                 LPOLESTR *rgszNames, UINT cNames,
                                                 LCID lcid, DISPID *rgDispId)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
 
     return IDispatchEx_GetIDsOfNames(DISPATCHEX(&This->element.node.dispex), riid, rgszNames,
             cNames, lcid, rgDispId);
@@ -97,7 +98,7 @@ static HRESULT WINAPI HTMLInputElement_Invoke(IHTMLInputElement *iface, DISPID d
                             REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
 
     return IDispatchEx_Invoke(DISPATCHEX(&This->element.node.dispex), dispIdMember, riid, lcid, wFlags,
             pDispParams, pVarResult, pExcepInfo, puArgErr);
@@ -105,7 +106,7 @@ static HRESULT WINAPI HTMLInputElement_Invoke(IHTMLInputElement *iface, DISPID d
 
 static HRESULT WINAPI HTMLInputElement_put_type(IHTMLInputElement *iface, BSTR v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     nsAString type_str;
     nsresult nsres;
 
@@ -128,7 +129,7 @@ static HRESULT WINAPI HTMLInputElement_put_type(IHTMLInputElement *iface, BSTR v
 
 static HRESULT WINAPI HTMLInputElement_get_type(IHTMLInputElement *iface, BSTR *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     nsAString type_str;
     const PRUnichar *type;
     nsresult nsres;
@@ -153,7 +154,7 @@ static HRESULT WINAPI HTMLInputElement_get_type(IHTMLInputElement *iface, BSTR *
 
 static HRESULT WINAPI HTMLInputElement_put_value(IHTMLInputElement *iface, BSTR v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     nsAString val_str;
     nsresult nsres;
 
@@ -170,7 +171,7 @@ static HRESULT WINAPI HTMLInputElement_put_value(IHTMLInputElement *iface, BSTR 
 
 static HRESULT WINAPI HTMLInputElement_get_value(IHTMLInputElement *iface, BSTR *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     nsAString value_str;
     const PRUnichar *value = NULL;
     nsresult nsres;
@@ -195,7 +196,7 @@ static HRESULT WINAPI HTMLInputElement_get_value(IHTMLInputElement *iface, BSTR 
 
 static HRESULT WINAPI HTMLInputElement_put_name(IHTMLInputElement *iface, BSTR v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     nsAString name_str;
     nsresult nsres;
 
@@ -214,7 +215,7 @@ static HRESULT WINAPI HTMLInputElement_put_name(IHTMLInputElement *iface, BSTR v
 
 static HRESULT WINAPI HTMLInputElement_get_name(IHTMLInputElement *iface, BSTR *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     nsAString name_str;
     const PRUnichar *name;
     nsresult nsres;
@@ -239,21 +240,21 @@ static HRESULT WINAPI HTMLInputElement_get_name(IHTMLInputElement *iface, BSTR *
 
 static HRESULT WINAPI HTMLInputElement_put_status(IHTMLInputElement *iface, VARIANT_BOOL v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%x)\n", This, v);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_status(IHTMLInputElement *iface, VARIANT_BOOL *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_disabled(IHTMLInputElement *iface, VARIANT_BOOL v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     nsresult nsres;
 
     TRACE("(%p)->(%x)\n", This, v);
@@ -267,7 +268,7 @@ static HRESULT WINAPI HTMLInputElement_put_disabled(IHTMLInputElement *iface, VA
 
 static HRESULT WINAPI HTMLInputElement_get_disabled(IHTMLInputElement *iface, VARIANT_BOOL *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     PRBool disabled = FALSE;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -280,42 +281,42 @@ static HRESULT WINAPI HTMLInputElement_get_disabled(IHTMLInputElement *iface, VA
 
 static HRESULT WINAPI HTMLInputElement_get_form(IHTMLInputElement *iface, IHTMLFormElement **p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_size(IHTMLInputElement *iface, LONG v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%d)\n", This, v);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_size(IHTMLInputElement *iface, LONG *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_maxLength(IHTMLInputElement *iface, LONG v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%d)\n", This, v);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_maxLength(IHTMLInputElement *iface, LONG *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_select(IHTMLInputElement *iface)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     nsresult nsres;
 
     TRACE("(%p)\n", This);
@@ -331,84 +332,84 @@ static HRESULT WINAPI HTMLInputElement_select(IHTMLInputElement *iface)
 
 static HRESULT WINAPI HTMLInputElement_put_onchange(IHTMLInputElement *iface, VARIANT v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_onchange(IHTMLInputElement *iface, VARIANT *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_onselect(IHTMLInputElement *iface, VARIANT v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_onselect(IHTMLInputElement *iface, VARIANT *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_defaultValue(IHTMLInputElement *iface, BSTR v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_defaultValue(IHTMLInputElement *iface, BSTR *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_readOnly(IHTMLInputElement *iface, VARIANT_BOOL v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%x)\n", This, v);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_readOnly(IHTMLInputElement *iface, VARIANT_BOOL *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_createTextRange(IHTMLInputElement *iface, IHTMLTxtRange **range)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, range);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_indeterminate(IHTMLInputElement *iface, VARIANT_BOOL v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%x)\n", This, v);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_indeterminate(IHTMLInputElement *iface, VARIANT_BOOL *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_defaultChecked(IHTMLInputElement *iface, VARIANT_BOOL v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     nsresult nsres;
 
     TRACE("(%p)->(%x)\n", This, v);
@@ -424,7 +425,7 @@ static HRESULT WINAPI HTMLInputElement_put_defaultChecked(IHTMLInputElement *ifa
 
 static HRESULT WINAPI HTMLInputElement_get_defaultChecked(IHTMLInputElement *iface, VARIANT_BOOL *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     PRBool default_checked = FALSE;
     nsresult nsres;
 
@@ -442,7 +443,7 @@ static HRESULT WINAPI HTMLInputElement_get_defaultChecked(IHTMLInputElement *ifa
 
 static HRESULT WINAPI HTMLInputElement_put_checked(IHTMLInputElement *iface, VARIANT_BOOL v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     nsresult nsres;
 
     TRACE("(%p)->(%x)\n", This, v);
@@ -458,7 +459,7 @@ static HRESULT WINAPI HTMLInputElement_put_checked(IHTMLInputElement *iface, VAR
 
 static HRESULT WINAPI HTMLInputElement_get_checked(IHTMLInputElement *iface, VARIANT_BOOL *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     PRBool checked;
     nsresult nsres;
 
@@ -477,63 +478,63 @@ static HRESULT WINAPI HTMLInputElement_get_checked(IHTMLInputElement *iface, VAR
 
 static HRESULT WINAPI HTMLInputElement_put_border(IHTMLInputElement *iface, VARIANT v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_border(IHTMLInputElement *iface, VARIANT *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_vspace(IHTMLInputElement *iface, LONG v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%d)\n", This, v);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_vspace(IHTMLInputElement *iface, LONG *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_hspace(IHTMLInputElement *iface, LONG v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%d)\n", This, v);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_hspace(IHTMLInputElement *iface, LONG *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_alt(IHTMLInputElement *iface, BSTR v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_alt(IHTMLInputElement *iface, BSTR *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_src(IHTMLInputElement *iface, BSTR v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     nsAString nsstr;
     nsresult nsres;
 
@@ -550,7 +551,7 @@ static HRESULT WINAPI HTMLInputElement_put_src(IHTMLInputElement *iface, BSTR v)
 
 static HRESULT WINAPI HTMLInputElement_get_src(IHTMLInputElement *iface, BSTR *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     const PRUnichar *src;
     nsAString src_str;
     nsresult nsres;
@@ -574,173 +575,171 @@ static HRESULT WINAPI HTMLInputElement_get_src(IHTMLInputElement *iface, BSTR *p
 
 static HRESULT WINAPI HTMLInputElement_put_lowsrc(IHTMLInputElement *iface, BSTR v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_lowsrc(IHTMLInputElement *iface, BSTR *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_vrml(IHTMLInputElement *iface, BSTR v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_vrml(IHTMLInputElement *iface, BSTR *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_dynsrc(IHTMLInputElement *iface, BSTR v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_dynsrc(IHTMLInputElement *iface, BSTR *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_readyState(IHTMLInputElement *iface, BSTR *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_complete(IHTMLInputElement *iface, VARIANT_BOOL *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_loop(IHTMLInputElement *iface, VARIANT v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_loop(IHTMLInputElement *iface, VARIANT *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_align(IHTMLInputElement *iface, BSTR v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_align(IHTMLInputElement *iface, BSTR *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_onload(IHTMLInputElement *iface, VARIANT v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_onload(IHTMLInputElement *iface, VARIANT *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_onerror(IHTMLInputElement *iface, VARIANT v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_onerror(IHTMLInputElement *iface, VARIANT *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_onabort(IHTMLInputElement *iface, VARIANT v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_onabort(IHTMLInputElement *iface, VARIANT *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_width(IHTMLInputElement *iface, LONG v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%d)\n", This, v);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_width(IHTMLInputElement *iface, LONG *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_height(IHTMLInputElement *iface, LONG v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%d)\n", This, v);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_height(IHTMLInputElement *iface, LONG *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_start(IHTMLInputElement *iface, BSTR v)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_start(IHTMLInputElement *iface, BSTR *p)
 {
-    HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
-
-#undef HTMLINPUT_THIS
 
 static const IHTMLInputElementVtbl HTMLInputElementVtbl = {
     HTMLInputElement_QueryInterface,
@@ -876,7 +875,7 @@ static HRESULT WINAPI HTMLInputTextElement_get_type(IHTMLInputTextElement *iface
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLInputElement_get_type(HTMLINPUT(This), p);
+    return IHTMLInputElement_get_type(&This->IHTMLInputElement_iface, p);
 }
 
 static HRESULT WINAPI HTMLInputTextElement_put_value(IHTMLInputTextElement *iface, BSTR v)
@@ -885,7 +884,7 @@ static HRESULT WINAPI HTMLInputTextElement_put_value(IHTMLInputTextElement *ifac
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    return IHTMLInputElement_put_value(HTMLINPUT(This), v);
+    return IHTMLInputElement_put_value(&This->IHTMLInputElement_iface, v);
 }
 
 static HRESULT WINAPI HTMLInputTextElement_get_value(IHTMLInputTextElement *iface, BSTR *p)
@@ -894,7 +893,7 @@ static HRESULT WINAPI HTMLInputTextElement_get_value(IHTMLInputTextElement *ifac
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLInputElement_get_value(HTMLINPUT(This), p);
+    return IHTMLInputElement_get_value(&This->IHTMLInputElement_iface, p);
 }
 
 static HRESULT WINAPI HTMLInputTextElement_put_name(IHTMLInputTextElement *iface, BSTR v)
@@ -903,7 +902,7 @@ static HRESULT WINAPI HTMLInputTextElement_put_name(IHTMLInputTextElement *iface
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    return IHTMLInputElement_put_name(HTMLINPUT(This), v);
+    return IHTMLInputElement_put_name(&This->IHTMLInputElement_iface, v);
 }
 
 static HRESULT WINAPI HTMLInputTextElement_get_name(IHTMLInputTextElement *iface, BSTR *p)
@@ -912,7 +911,7 @@ static HRESULT WINAPI HTMLInputTextElement_get_name(IHTMLInputTextElement *iface
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLInputElement_get_name(HTMLINPUT(This), p);
+    return IHTMLInputElement_get_name(&This->IHTMLInputElement_iface, p);
 }
 
 static HRESULT WINAPI HTMLInputTextElement_put_status(IHTMLInputTextElement *iface, VARIANT v)
@@ -935,7 +934,7 @@ static HRESULT WINAPI HTMLInputTextElement_put_disabled(IHTMLInputTextElement *i
 
     TRACE("(%p)->(%x)\n", This, v);
 
-    return IHTMLInputElement_put_disabled(HTMLINPUT(This), v);
+    return IHTMLInputElement_put_disabled(&This->IHTMLInputElement_iface, v);
 }
 
 static HRESULT WINAPI HTMLInputTextElement_get_disabled(IHTMLInputTextElement *iface, VARIANT_BOOL *p)
@@ -944,7 +943,7 @@ static HRESULT WINAPI HTMLInputTextElement_get_disabled(IHTMLInputTextElement *i
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLInputElement_get_disabled(HTMLINPUT(This), p);
+    return IHTMLInputElement_get_disabled(&This->IHTMLInputElement_iface, p);
 }
 
 static HRESULT WINAPI HTMLInputTextElement_get_form(IHTMLInputTextElement *iface, IHTMLFormElement **p)
@@ -953,7 +952,7 @@ static HRESULT WINAPI HTMLInputTextElement_get_form(IHTMLInputTextElement *iface
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLInputElement_get_form(HTMLINPUT(This), p);
+    return IHTMLInputElement_get_form(&This->IHTMLInputElement_iface, p);
 }
 
 static HRESULT WINAPI HTMLInputTextElement_put_defaultValue(IHTMLInputTextElement *iface, BSTR v)
@@ -962,7 +961,7 @@ static HRESULT WINAPI HTMLInputTextElement_put_defaultValue(IHTMLInputTextElemen
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    return IHTMLInputElement_put_defaultValue(HTMLINPUT(This), v);
+    return IHTMLInputElement_put_defaultValue(&This->IHTMLInputElement_iface, v);
 }
 
 static HRESULT WINAPI HTMLInputTextElement_get_defaultValue(IHTMLInputTextElement *iface, BSTR *p)
@@ -971,7 +970,7 @@ static HRESULT WINAPI HTMLInputTextElement_get_defaultValue(IHTMLInputTextElemen
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLInputElement_get_defaultValue(HTMLINPUT(This), p);
+    return IHTMLInputElement_get_defaultValue(&This->IHTMLInputElement_iface, p);
 }
 
 static HRESULT WINAPI HTMLInputTextElement_put_size(IHTMLInputTextElement *iface, LONG v)
@@ -980,7 +979,7 @@ static HRESULT WINAPI HTMLInputTextElement_put_size(IHTMLInputTextElement *iface
 
     TRACE("(%p)->(%d)\n", This, v);
 
-    return IHTMLInputElement_put_size(HTMLINPUT(This), v);
+    return IHTMLInputElement_put_size(&This->IHTMLInputElement_iface, v);
 }
 
 static HRESULT WINAPI HTMLInputTextElement_get_size(IHTMLInputTextElement *iface, LONG *p)
@@ -989,7 +988,7 @@ static HRESULT WINAPI HTMLInputTextElement_get_size(IHTMLInputTextElement *iface
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLInputElement_get_size(HTMLINPUT(This), p);
+    return IHTMLInputElement_get_size(&This->IHTMLInputElement_iface, p);
 }
 
 static HRESULT WINAPI HTMLInputTextElement_put_maxLength(IHTMLInputTextElement *iface, LONG v)
@@ -998,7 +997,7 @@ static HRESULT WINAPI HTMLInputTextElement_put_maxLength(IHTMLInputTextElement *
 
     TRACE("(%p)->(%d)\n", This, v);
 
-    return IHTMLInputElement_put_maxLength(HTMLINPUT(This), v);
+    return IHTMLInputElement_put_maxLength(&This->IHTMLInputElement_iface, v);
 }
 
 static HRESULT WINAPI HTMLInputTextElement_get_maxLength(IHTMLInputTextElement *iface, LONG *p)
@@ -1007,7 +1006,7 @@ static HRESULT WINAPI HTMLInputTextElement_get_maxLength(IHTMLInputTextElement *
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLInputElement_get_maxLength(HTMLINPUT(This), p);
+    return IHTMLInputElement_get_maxLength(&This->IHTMLInputElement_iface, p);
 }
 
 static HRESULT WINAPI HTMLInputTextElement_select(IHTMLInputTextElement *iface)
@@ -1016,7 +1015,7 @@ static HRESULT WINAPI HTMLInputTextElement_select(IHTMLInputTextElement *iface)
 
     TRACE("(%p)\n", This);
 
-    return IHTMLInputElement_select(HTMLINPUT(This));
+    return IHTMLInputElement_select(&This->IHTMLInputElement_iface);
 }
 
 static HRESULT WINAPI HTMLInputTextElement_put_onchange(IHTMLInputTextElement *iface, VARIANT v)
@@ -1025,7 +1024,7 @@ static HRESULT WINAPI HTMLInputTextElement_put_onchange(IHTMLInputTextElement *i
 
     TRACE("(%p)->()\n", This);
 
-    return IHTMLInputElement_put_onchange(HTMLINPUT(This), v);
+    return IHTMLInputElement_put_onchange(&This->IHTMLInputElement_iface, v);
 }
 
 static HRESULT WINAPI HTMLInputTextElement_get_onchange(IHTMLInputTextElement *iface, VARIANT *p)
@@ -1034,7 +1033,7 @@ static HRESULT WINAPI HTMLInputTextElement_get_onchange(IHTMLInputTextElement *i
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLInputElement_get_onchange(HTMLINPUT(This), p);
+    return IHTMLInputElement_get_onchange(&This->IHTMLInputElement_iface, p);
 }
 
 static HRESULT WINAPI HTMLInputTextElement_put_onselect(IHTMLInputTextElement *iface, VARIANT v)
@@ -1043,7 +1042,7 @@ static HRESULT WINAPI HTMLInputTextElement_put_onselect(IHTMLInputTextElement *i
 
     TRACE("(%p)->()\n", This);
 
-    return IHTMLInputElement_put_onselect(HTMLINPUT(This), v);
+    return IHTMLInputElement_put_onselect(&This->IHTMLInputElement_iface, v);
 }
 
 static HRESULT WINAPI HTMLInputTextElement_get_onselect(IHTMLInputTextElement *iface, VARIANT *p)
@@ -1052,7 +1051,7 @@ static HRESULT WINAPI HTMLInputTextElement_get_onselect(IHTMLInputTextElement *i
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLInputElement_get_onselect(HTMLINPUT(This), p);
+    return IHTMLInputElement_get_onselect(&This->IHTMLInputElement_iface, p);
 }
 
 static HRESULT WINAPI HTMLInputTextElement_put_readOnly(IHTMLInputTextElement *iface, VARIANT_BOOL v)
@@ -1061,7 +1060,7 @@ static HRESULT WINAPI HTMLInputTextElement_put_readOnly(IHTMLInputTextElement *i
 
     TRACE("(%p)->(%x)\n", This, v);
 
-    return IHTMLInputElement_put_readOnly(HTMLINPUT(This), v);
+    return IHTMLInputElement_put_readOnly(&This->IHTMLInputElement_iface, v);
 }
 
 static HRESULT WINAPI HTMLInputTextElement_get_readOnly(IHTMLInputTextElement *iface, VARIANT_BOOL *p)
@@ -1070,7 +1069,7 @@ static HRESULT WINAPI HTMLInputTextElement_get_readOnly(IHTMLInputTextElement *i
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLInputElement_get_readOnly(HTMLINPUT(This), p);
+    return IHTMLInputElement_get_readOnly(&This->IHTMLInputElement_iface, p);
 }
 
 static HRESULT WINAPI HTMLInputTextElement_createTextRange(IHTMLInputTextElement *iface, IHTMLTxtRange **range)
@@ -1079,10 +1078,8 @@ static HRESULT WINAPI HTMLInputTextElement_createTextRange(IHTMLInputTextElement
 
     TRACE("(%p)->(%p)\n", This, range);
 
-    return IHTMLInputElement_createTextRange(HTMLINPUT(This), range);
+    return IHTMLInputElement_createTextRange(&This->IHTMLInputElement_iface, range);
 }
-
-#undef HTMLINPUT_THIS
 
 static const IHTMLInputTextElementVtbl HTMLInputTextElementVtbl = {
     HTMLInputTextElement_QueryInterface,
@@ -1128,13 +1125,13 @@ static HRESULT HTMLInputElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = HTMLINPUT(This);
+        *ppv = &This->IHTMLInputElement_iface;
     }else if(IsEqualGUID(&IID_IDispatch, riid)) {
         TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = HTMLINPUT(This);
+        *ppv = &This->IHTMLInputElement_iface;
     }else if(IsEqualGUID(&IID_IHTMLInputElement, riid)) {
         TRACE("(%p)->(IID_IHTMLInputElement %p)\n", This, ppv);
-        *ppv = HTMLINPUT(This);
+        *ppv = &This->IHTMLInputElement_iface;
     }else if(IsEqualGUID(&IID_IHTMLInputTextElement, riid)) {
         TRACE("(%p)->(IID_IHTMLInputTextElement %p)\n", This, ppv);
         *ppv = HTMLINPUTTEXT(This);
@@ -1179,13 +1176,13 @@ static HRESULT HTMLInputElementImpl_call_event(HTMLDOMNode *iface, eventid_t eid
 static HRESULT HTMLInputElementImpl_put_disabled(HTMLDOMNode *iface, VARIANT_BOOL v)
 {
     HTMLInputElement *This = HTMLINPUT_NODE_THIS(iface);
-    return IHTMLInputElement_put_disabled(HTMLINPUT(This), v);
+    return IHTMLInputElement_put_disabled(&This->IHTMLInputElement_iface, v);
 }
 
 static HRESULT HTMLInputElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BOOL *p)
 {
     HTMLInputElement *This = HTMLINPUT_NODE_THIS(iface);
-    return IHTMLInputElement_get_disabled(HTMLINPUT(This), p);
+    return IHTMLInputElement_get_disabled(&This->IHTMLInputElement_iface, p);
 }
 
 #undef HTMLINPUT_NODE_THIS
@@ -1221,7 +1218,7 @@ HRESULT HTMLInputElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem
     if(!ret)
         return E_OUTOFMEMORY;
 
-    ret->lpHTMLInputElementVtbl = &HTMLInputElementVtbl;
+    ret->IHTMLInputElement_iface.lpVtbl = &HTMLInputElementVtbl;
     ret->lpHTMLInputTextElementVtbl = &HTMLInputTextElementVtbl;
     ret->element.node.vtbl = &HTMLInputElementImplVtbl;
 
