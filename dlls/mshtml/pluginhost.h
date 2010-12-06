@@ -25,6 +25,7 @@ typedef struct {
     IDispatch            IDispatch_iface;
     IOleInPlaceSiteEx    IOleInPlaceSiteEx_iface;
     IOleControlSite      IOleControlSite_iface;
+    IBindHost            IBindHost_iface;
 
     LONG ref;
 

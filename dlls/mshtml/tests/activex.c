@@ -97,6 +97,7 @@ static const REFIID pluginhost_iids[] = {
     &IID_IOleInPlaceSite,
     &IID_IOleInPlaceSiteEx,
     &IID_IOleControlSite,
+    &IID_IBindHost,
     NULL
 };
 

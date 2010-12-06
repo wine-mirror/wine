@@ -126,6 +126,9 @@ static HRESULT WINAPI PHClientSite_QueryInterface(IOleClientSite *iface, REFIID 
     }else if(IsEqualGUID(&IID_IOleControlSite, riid)) {
         TRACE("(%p)->(IID_IOleControlSite %p)\n", This, ppv);
         *ppv = &This->IOleControlSite_iface;
+    }else if(IsEqualGUID(&IID_IBindHost, riid)) {
+        TRACE("(%p)->(IID_IBindHost %p)\n", This, ppv);
+        *ppv = &This->IBindHost_iface;
     }else {
         WARN("Unsupported interface %s\n", debugstr_guid(riid));
         *ppv = NULL;
@@ -633,6 +636,61 @@ static const IOleControlSiteVtbl OleControlSiteVtbl = {
     PHControlSite_ShowPropertyFrame
 };
 
+static inline PluginHost *impl_from_IBindHost(IBindHost *iface)
+{
+    return CONTAINING_RECORD(iface, PluginHost, IBindHost_iface);
+}
+
+static HRESULT WINAPI PHBindHost_QueryInterface(IBindHost *iface, REFIID riid, void **ppv)
+{
+    PluginHost *This = impl_from_IBindHost(iface);
+    return IOleClientSite_QueryInterface(&This->IOleClientSite_iface, riid, ppv);
+}
+
+static ULONG WINAPI PHBindHost_AddRef(IBindHost *iface)
+{
+    PluginHost *This = impl_from_IBindHost(iface);
+    return IOleClientSite_AddRef(&This->IOleClientSite_iface);
+}
+
+static ULONG WINAPI PHBindHost_Release(IBindHost *iface)
+{
+    PluginHost *This = impl_from_IBindHost(iface);
+    return IOleClientSite_Release(&This->IOleClientSite_iface);
+}
+
+static HRESULT WINAPI PHBindHost_CreateMoniker(IBindHost *iface, LPOLESTR szName, IBindCtx *pBC, IMoniker **ppmk, DWORD dwReserved)
+{
+    PluginHost *This = impl_from_IBindHost(iface);
+    FIXME("(%p)->(%s %p %p %x)\n", This, debugstr_w(szName), pBC, ppmk, dwReserved);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHBindHost_MonikerBindToStorage(IBindHost *iface, IMoniker *pMk, IBindCtx *pBC,
+        IBindStatusCallback *pBSC, REFIID riid, void **ppvObj)
+{
+    PluginHost *This = impl_from_IBindHost(iface);
+    FIXME("(%p)->(%p %p %p %s %p)\n", This, pMk, pBC, pBSC, debugstr_guid(riid), ppvObj);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHBindHost_MonikerBindToObject(IBindHost *iface, IMoniker *pMk, IBindCtx *pBC,
+        IBindStatusCallback *pBSC, REFIID riid, void **ppvObj)
+{
+    PluginHost *This = impl_from_IBindHost(iface);
+    FIXME("(%p)->(%p %p %p %s %p)\n", This, pMk, pBC, pBSC, debugstr_guid(riid), ppvObj);
+    return E_NOTIMPL;
+}
+
+static const IBindHostVtbl BindHostVtbl = {
+    PHBindHost_QueryInterface,
+    PHBindHost_AddRef,
+    PHBindHost_Release,
+    PHBindHost_CreateMoniker,
+    PHBindHost_MonikerBindToStorage,
+    PHBindHost_MonikerBindToObject
+};
+
 HRESULT create_plugin_host(IUnknown *unk, PluginHost **ret)
 {
     PluginHost *host;
@@ -647,6 +705,7 @@ HRESULT create_plugin_host(IUnknown *unk, PluginHost **ret)
     host->IDispatch_iface.lpVtbl           = &DispatchVtbl;
     host->IOleInPlaceSiteEx_iface.lpVtbl   = &OleInPlaceSiteExVtbl;
     host->IOleControlSite_iface.lpVtbl     = &OleControlSiteVtbl;
+    host->IBindHost_iface.lpVtbl           = &BindHostVtbl;
 
     host->ref = 1;
 
