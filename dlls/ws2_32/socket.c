@@ -171,9 +171,9 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 
 /*
- * The actual definition of WSASendTo/WSARecvFrom, wrapped in a different
- * function name, so that internal calls from ws2_32 itself will not trigger
- * programs like Garena, which hooks WSASendTo/WSARecvFrom calls.
+ * The actual definition of WSASendTo, wrapped in a different function name
+ * so that internal calls from ws2_32 itself will not trigger programs like
+ * Garena, which hooks WSASendTo/WSARecvFrom calls.
  */
 static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                        LPDWORD lpNumberOfBytesSent, DWORD dwFlags,
@@ -181,11 +181,16 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                        LPWSAOVERLAPPED lpOverlapped,
                        LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine );
 
-static int WS2_recvfrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
-                         LPDWORD lpNumberOfBytesRecvd, LPDWORD lpFlags,
-                         struct WS_sockaddr *lpFrom,
-                         LPINT lpFromlen, LPWSAOVERLAPPED lpOverlapped,
-                         LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine );
+/*
+ * Internal fundamental receive function, essentially WSARecvFrom with an
+ * additional parameter to support message control headers.
+ */
+static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
+                          LPDWORD lpNumberOfBytesRecvd, LPDWORD lpFlags,
+                          struct WS_sockaddr *lpFrom,
+                          LPINT lpFromlen, LPWSAOVERLAPPED lpOverlapped,
+                          LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine,
+                          LPWSABUF lpControlBuffer );
 
 /* critical section to protect some non-reentrant net function */
 static CRITICAL_SECTION csWSgetXXXbyYYY;
@@ -261,6 +266,8 @@ typedef struct ws2_async
         int *ptr;    /* for recv operations */
     }                                   addrlen;
     DWORD                               flags;
+    DWORD                              *lpFlags;
+    WSABUF                             *control;
     unsigned int                        n_iovecs;
     unsigned int                        first_iovec;
     struct iovec                        iovec[1];
@@ -375,6 +382,9 @@ static const int ws_ip_map[][2] =
 #endif
     MAP_OPTION( IP_TOS ),
     MAP_OPTION( IP_TTL ),
+#ifdef IP_PKTINFO
+    MAP_OPTION( IP_PKTINFO ),
+#endif
 };
 
 static const int ws_ipv6_map[][2] =
@@ -467,6 +477,75 @@ static const int ws_eai_map[][2] =
 };
 
 static const char magic_loopback_addr[] = {127, 12, 34, 56};
+
+#ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
+static inline WSACMSGHDR *fill_control_message(int level, int type, WSACMSGHDR *current, ULONG *maxsize, void *data, int len)
+{
+    ULONG msgsize = sizeof(WSACMSGHDR) + WSA_CMSG_ALIGN(len);
+    char *ptr = (char *) current + sizeof(WSACMSGHDR);
+
+    /* Make sure there is at least enough room for this entry */
+    if (msgsize > *maxsize)
+        return NULL;
+    *maxsize -= msgsize;
+    /* Fill in the entry */
+    current->cmsg_len = sizeof(WSACMSGHDR) + len;
+    current->cmsg_level = level;
+    current->cmsg_type = type;
+    memcpy(ptr, data, len);
+    /* Return the pointer to where next entry should go */
+    return (WSACMSGHDR *) (ptr + WSA_CMSG_ALIGN(len));
+}
+
+static inline int convert_control_headers(struct msghdr *hdr, WSABUF *control)
+{
+#ifdef IP_PKTINFO
+    WSACMSGHDR *cmsg_win = (WSACMSGHDR *) control->buf, *ptr;
+    ULONG ctlsize = control->len;
+    struct cmsghdr *cmsg_unix;
+
+    ptr = cmsg_win;
+    /* Loop over all the headers, converting as appropriate */
+    for (cmsg_unix = CMSG_FIRSTHDR(hdr); cmsg_unix != NULL; cmsg_unix = CMSG_NXTHDR(hdr, cmsg_unix))
+    {
+        switch(cmsg_unix->cmsg_level)
+        {
+            case IPPROTO_IP:
+                switch(cmsg_unix->cmsg_type)
+                {
+                    case IP_PKTINFO:
+                    {
+                        /* Convert the Unix IP_PKTINFO structure to the Windows version */
+                        struct in_pktinfo *data_unix = (struct in_pktinfo *) CMSG_DATA(cmsg_unix);
+                        struct WS_in_pktinfo data_win;
+
+                        memcpy(&data_win.ipi_addr,&data_unix->ipi_addr.s_addr,4); /* 4 bytes = 32 address bits */
+                        data_win.ipi_ifindex = data_unix->ipi_ifindex;
+                        ptr = fill_control_message(WS_IPPROTO_IP, WS_IP_PKTINFO, ptr, &ctlsize,
+                                                   (void*)&data_win, sizeof(data_win));
+                        if (!ptr) goto error;
+                    }   break;
+                    default:
+                        FIXME("Unhandled IPPROTO_IP message header type %d\n", cmsg_unix->cmsg_type);
+                        break;
+                }
+                break;
+            default:
+                FIXME("Unhandled message header level %d\n", cmsg_unix->cmsg_level);
+                break;
+        }
+    }
+
+error:
+    /* Set the length of the returned control headers */
+    control->len = (ptr == NULL ? 0 : (char*)ptr - (char*)cmsg_win);
+    return (ptr != NULL);
+#else /* IP_PKTINFO */
+    control->len = 0;
+    return 1;
+#endif /* IP_PKTINFO */
+}
+#endif /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
 /* ----------------------------------- error handling */
 
@@ -1411,6 +1490,9 @@ static void WINAPI ws2_async_apc( void *arg, IO_STATUS_BLOCK *iosb, ULONG reserv
  */
 static int WS2_recv( int fd, struct ws2_async *wsa )
 {
+#ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
+    char pktbuf[512];
+#endif
     struct msghdr hdr;
     union generic_unix_sockaddr unix_sockaddr;
     int n;
@@ -1431,13 +1513,29 @@ static int WS2_recv( int fd, struct ws2_async *wsa )
     hdr.msg_accrights = NULL;
     hdr.msg_accrightslen = 0;
 #else
-    hdr.msg_control = NULL;
-    hdr.msg_controllen = 0;
+    hdr.msg_control = pktbuf;
+    hdr.msg_controllen = sizeof(pktbuf);
     hdr.msg_flags = 0;
 #endif
 
     if ( (n = recvmsg(fd, &hdr, wsa->flags)) == -1 )
         return -1;
+
+#ifdef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
+    if (wsa->control)
+    {
+        ERR("Message control headers cannot be properly supported on this system.\n");
+        control->len = 0;
+    }
+#else
+    if (wsa->control && !convert_control_headers(&hdr, wsa->control))
+    {
+        WARN("Application passed insufficient room for control headers.\n");
+        *wsa->lpFlags |= WS_MSG_CTRUNC;
+        errno = EMSGSIZE;
+        return -1;
+    }
+#endif
 
     /* if this socket is connected and lpFrom is not NULL, Linux doesn't give us
      * msg_name and msg_namelen from recvmsg, but it does set msg_namelen to zero.
@@ -1914,8 +2012,10 @@ static BOOL WINAPI WS2_AcceptEx(SOCKET listener, SOCKET acceptor, PVOID dest, DW
 
         wsa->read->hSocket     = wsa->accept_socket;
         wsa->read->flags       = 0;
+        wsa->read->lpFlags     = &wsa->read->flags;
         wsa->read->addr        = NULL;
         wsa->read->addrlen.ptr = NULL;
+        wsa->read->control     = NULL;
         wsa->read->n_iovecs    = 1;
         wsa->read->first_iovec = 0;
         wsa->read->iovec[0].iov_base = wsa->buf;
@@ -1959,6 +2059,29 @@ static void WINAPI WS2_GetAcceptExSockaddrs(PVOID buffer, DWORD data_size, DWORD
 
     *remote_addr_len = *(int *) cbuf;
     *remote_addr = (struct WS_sockaddr *)(cbuf + sizeof(int));
+}
+
+/***********************************************************************
+ *     WSARecvMsg
+ *
+ * Perform a receive operation that is capable of returning message
+ * control headers.  It is important to note that the WSAMSG parameter
+ * must remain valid throughout the operation, even when an overlapped
+ * receive is performed.
+ */
+static int WINAPI WS2_WSARecvMsg( SOCKET s, LPWSAMSG msg, LPDWORD lpNumberOfBytesRecvd,
+                                  LPWSAOVERLAPPED lpOverlapped,
+                                  LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
+{
+    if (!msg)
+    {
+        SetLastError( WSAEFAULT );
+        return SOCKET_ERROR;
+    }
+
+    return WS2_recv_base( s, msg->lpBuffers, msg->dwBufferCount, lpNumberOfBytesRecvd,
+                          &msg->dwFlags, msg->name, &msg->namelen,
+                          lpOverlapped, lpCompletionRoutine, &msg->Control );
 }
 
 /***********************************************************************
@@ -2213,6 +2336,8 @@ static BOOL WINAPI WS2_ConnectEx(SOCKET s, const struct WS_sockaddr* name, int n
             wsa->addr        = NULL;
             wsa->addrlen.val = 0;
             wsa->flags       = 0;
+            wsa->lpFlags     = &wsa->flags;
+            wsa->control     = NULL;
             wsa->n_iovecs    = sendBuf ? 1 : 0;
             wsa->first_iovec = 0;
             wsa->completion_func = NULL;
@@ -2674,6 +2799,9 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         case WS_IP_MULTICAST_LOOP:
         case WS_IP_MULTICAST_TTL:
         case WS_IP_OPTIONS:
+#ifdef IP_PKTINFO
+        case WS_IP_PKTINFO:
+#endif
         case WS_IP_TOS:
         case WS_IP_TTL:
             if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
@@ -3199,7 +3327,8 @@ INT WINAPI WSAIoctl(SOCKET s,
         }
         else if ( IsEqualGUID(&wsarecvmsg_guid, lpvInBuffer) )
         {
-            FIXME("SIO_GET_EXTENSION_FUNCTION_POINTER: unimplemented WSARecvMsg\n");
+            *(LPFN_WSARECVMSG *)lpbOutBuffer = WS2_WSARecvMsg;
+            return 0;
         }
         else if ( IsEqualGUID(&wsasendmsg_guid, lpvInBuffer) )
         {
@@ -3459,7 +3588,7 @@ int WINAPI WS_recv(SOCKET s, char *buf, int len, int flags)
     wsabuf.len = len;
     wsabuf.buf = buf;
 
-    if ( WS2_recvfrom(s, &wsabuf, 1, &n, &dwFlags, NULL, NULL, NULL, NULL) == SOCKET_ERROR )
+    if ( WS2_recv_base(s, &wsabuf, 1, &n, &dwFlags, NULL, NULL, NULL, NULL, NULL) == SOCKET_ERROR )
         return SOCKET_ERROR;
     else
         return n;
@@ -3477,7 +3606,7 @@ int WINAPI WS_recvfrom(SOCKET s, char *buf, INT len, int flags,
     wsabuf.len = len;
     wsabuf.buf = buf;
 
-    if ( WS2_recvfrom(s, &wsabuf, 1, &n, &dwFlags, from, fromlen, NULL, NULL) == SOCKET_ERROR )
+    if ( WS2_recv_base(s, &wsabuf, 1, &n, &dwFlags, from, fromlen, NULL, NULL, NULL) == SOCKET_ERROR )
         return SOCKET_ERROR;
     else
         return n;
@@ -3743,6 +3872,8 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     wsa->addr        = (struct WS_sockaddr *)to;
     wsa->addrlen.val = tolen;
     wsa->flags       = dwFlags;
+    wsa->lpFlags     = &wsa->flags;
+    wsa->control     = NULL;
     wsa->n_iovecs    = dwBufferCount;
     wsa->first_iovec = 0;
     for ( i = 0; i < dwBufferCount; i++ )
@@ -4139,6 +4270,9 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         case WS_IP_MULTICAST_LOOP:
         case WS_IP_MULTICAST_TTL:
         case WS_IP_OPTIONS:
+#ifdef IP_PKTINFO
+        case WS_IP_PKTINFO:
+#endif
         case WS_IP_TOS:
         case WS_IP_TTL:
             convert_sockopt(&level, &optname);
@@ -5514,15 +5648,16 @@ int WINAPI WSARecv(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                    LPWSAOVERLAPPED lpOverlapped,
                    LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
-    return WS2_recvfrom(s, lpBuffers, dwBufferCount, NumberOfBytesReceived, lpFlags,
-                       NULL, NULL, lpOverlapped, lpCompletionRoutine);
+    return WS2_recv_base(s, lpBuffers, dwBufferCount, NumberOfBytesReceived, lpFlags,
+                       NULL, NULL, lpOverlapped, lpCompletionRoutine, NULL);
 }
 
-static int WS2_recvfrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
-                         LPDWORD lpNumberOfBytesRecvd, LPDWORD lpFlags, struct WS_sockaddr *lpFrom,
-                         LPINT lpFromlen, LPWSAOVERLAPPED lpOverlapped,
-                         LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
-
+static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
+                          LPDWORD lpNumberOfBytesRecvd, LPDWORD lpFlags,
+                          struct WS_sockaddr *lpFrom,
+                          LPINT lpFromlen, LPWSAOVERLAPPED lpOverlapped,
+                          LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine,
+                          LPWSABUF lpControlBuffer )
 {
     unsigned int i, options;
     int n, fd, err;
@@ -5548,8 +5683,10 @@ static int WS2_recvfrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 
     wsa->hSocket     = SOCKET2HANDLE(s);
     wsa->flags       = *lpFlags;
+    wsa->lpFlags     = lpFlags;
     wsa->addr        = lpFrom;
     wsa->addrlen.ptr = lpFromlen;
+    wsa->control     = lpControlBuffer;
     wsa->n_iovecs    = dwBufferCount;
     wsa->first_iovec = 0;
     for (i = 0; i < dwBufferCount; i++)
@@ -5683,10 +5820,10 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                         LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
 
 {
-    return WS2_recvfrom( s, lpBuffers, dwBufferCount,
+    return WS2_recv_base( s, lpBuffers, dwBufferCount,
                 lpNumberOfBytesRecvd, lpFlags,
                 lpFrom, lpFromlen,
-                lpOverlapped, lpCompletionRoutine );
+                lpOverlapped, lpCompletionRoutine, NULL );
 }
 
 /***********************************************************************
