@@ -28,16 +28,27 @@ WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 typedef struct {
     Protocol base;
 
-    const IInternetProtocolExVtbl*lpIInternetProtocolExVtbl;
-    const IInternetPriorityVtbl  *lpInternetPriorityVtbl;
-    const IWinInetHttpInfoVtbl   *lpWinInetHttpInfoVtbl;
+    IInternetProtocolEx IInternetProtocolEx_iface;
+    IInternetPriority   IInternetPriority_iface;
+    IWinInetHttpInfo    IWinInetHttpInfo_iface;
 
     LONG ref;
 } FtpProtocol;
 
-#define PROTOCOLEX(x)    ((IInternetProtocolEx*)&(x)->lpIInternetProtocolExVtbl)
-#define PRIORITY(x)      ((IInternetPriority*)  &(x)->lpInternetPriorityVtbl)
-#define INETHTTPINFO(x)  ((IWinInetHttpInfo*)   &(x)->lpWinInetHttpInfoVtbl)
+static inline FtpProtocol *impl_from_IInternetProtocolEx(IInternetProtocolEx *iface)
+{
+    return CONTAINING_RECORD(iface, FtpProtocol, IInternetProtocolEx_iface);
+}
+
+static inline FtpProtocol *impl_from_IInternetPriority(IInternetPriority *iface)
+{
+    return CONTAINING_RECORD(iface, FtpProtocol, IInternetPriority_iface);
+}
+static inline FtpProtocol *impl_from_IWinInetHttpInfo(IWinInetHttpInfo *iface)
+
+{
+    return CONTAINING_RECORD(iface, FtpProtocol, IWinInetHttpInfo_iface);
+}
 
 #define ASYNCPROTOCOL_THIS(iface) DEFINE_THIS2(FtpProtocol, base, iface)
 
@@ -97,34 +108,32 @@ static const ProtocolVtbl AsyncProtocolVtbl = {
     FtpProtocol_close_connection
 };
 
-#define PROTOCOL_THIS(iface) DEFINE_THIS(FtpProtocol, IInternetProtocolEx, iface)
-
 static HRESULT WINAPI FtpProtocol_QueryInterface(IInternetProtocolEx *iface, REFIID riid, void **ppv)
 {
-    FtpProtocol *This = PROTOCOL_THIS(iface);
+    FtpProtocol *This = impl_from_IInternetProtocolEx(iface);
 
     *ppv = NULL;
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = PROTOCOLEX(This);
+        *ppv = &This->IInternetProtocolEx_iface;
     }else if(IsEqualGUID(&IID_IInternetProtocolRoot, riid)) {
         TRACE("(%p)->(IID_IInternetProtocolRoot %p)\n", This, ppv);
-        *ppv = PROTOCOLEX(This);
+        *ppv = &This->IInternetProtocolEx_iface;
     }else if(IsEqualGUID(&IID_IInternetProtocol, riid)) {
         TRACE("(%p)->(IID_IInternetProtocol %p)\n", This, ppv);
-        *ppv = PROTOCOLEX(This);
+        *ppv = &This->IInternetProtocolEx_iface;
     }else if(IsEqualGUID(&IID_IInternetProtocolEx, riid)) {
         TRACE("(%p)->(IID_IInternetProtocolEx %p)\n", This, ppv);
-        *ppv = PROTOCOLEX(This);
+        *ppv = &This->IInternetProtocolEx_iface;
     }else if(IsEqualGUID(&IID_IInternetPriority, riid)) {
         TRACE("(%p)->(IID_IInternetPriority %p)\n", This, ppv);
-        *ppv = PRIORITY(This);
+        *ppv = &This->IInternetPriority_iface;
     }else if(IsEqualGUID(&IID_IWinInetInfo, riid)) {
         TRACE("(%p)->(IID_IWinInetInfo %p)\n", This, ppv);
-        *ppv = INETHTTPINFO(This);
+        *ppv = &This->IWinInetHttpInfo_iface;
     }else if(IsEqualGUID(&IID_IWinInetHttpInfo, riid)) {
         TRACE("(%p)->(IID_IWinInetHttpInfo %p)\n", This, ppv);
-        *ppv = INETHTTPINFO(This);
+        *ppv = &This->IWinInetHttpInfo_iface;
     }
 
     if(*ppv) {
@@ -138,7 +147,7 @@ static HRESULT WINAPI FtpProtocol_QueryInterface(IInternetProtocolEx *iface, REF
 
 static ULONG WINAPI FtpProtocol_AddRef(IInternetProtocolEx *iface)
 {
-    FtpProtocol *This = PROTOCOL_THIS(iface);
+    FtpProtocol *This = impl_from_IInternetProtocolEx(iface);
     LONG ref = InterlockedIncrement(&This->ref);
     TRACE("(%p) ref=%d\n", This, ref);
     return ref;
@@ -146,7 +155,7 @@ static ULONG WINAPI FtpProtocol_AddRef(IInternetProtocolEx *iface)
 
 static ULONG WINAPI FtpProtocol_Release(IInternetProtocolEx *iface)
 {
-    FtpProtocol *This = PROTOCOL_THIS(iface);
+    FtpProtocol *This = impl_from_IInternetProtocolEx(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -165,7 +174,7 @@ static HRESULT WINAPI FtpProtocol_Start(IInternetProtocolEx *iface, LPCWSTR szUr
         IInternetProtocolSink *pOIProtSink, IInternetBindInfo *pOIBindInfo,
         DWORD grfPI, HANDLE_PTR dwReserved)
 {
-    FtpProtocol *This = PROTOCOL_THIS(iface);
+    FtpProtocol *This = impl_from_IInternetProtocolEx(iface);
     IUri *uri;
     HRESULT hres;
 
@@ -176,8 +185,8 @@ static HRESULT WINAPI FtpProtocol_Start(IInternetProtocolEx *iface, LPCWSTR szUr
     if(FAILED(hres))
         return hres;
 
-    hres = IInternetProtocolEx_StartEx(PROTOCOLEX(This), uri, pOIProtSink, pOIBindInfo,
-            grfPI, (HANDLE*)dwReserved);
+    hres = IInternetProtocolEx_StartEx(&This->IInternetProtocolEx_iface, uri, pOIProtSink,
+            pOIBindInfo, grfPI, (HANDLE*)dwReserved);
 
     IUri_Release(uri);
     return hres;
@@ -185,7 +194,7 @@ static HRESULT WINAPI FtpProtocol_Start(IInternetProtocolEx *iface, LPCWSTR szUr
 
 static HRESULT WINAPI FtpProtocol_Continue(IInternetProtocolEx *iface, PROTOCOLDATA *pProtocolData)
 {
-    FtpProtocol *This = PROTOCOL_THIS(iface);
+    FtpProtocol *This = impl_from_IInternetProtocolEx(iface);
 
     TRACE("(%p)->(%p)\n", This, pProtocolData);
 
@@ -195,7 +204,7 @@ static HRESULT WINAPI FtpProtocol_Continue(IInternetProtocolEx *iface, PROTOCOLD
 static HRESULT WINAPI FtpProtocol_Abort(IInternetProtocolEx *iface, HRESULT hrReason,
         DWORD dwOptions)
 {
-    FtpProtocol *This = PROTOCOL_THIS(iface);
+    FtpProtocol *This = impl_from_IInternetProtocolEx(iface);
 
     TRACE("(%p)->(%08x %08x)\n", This, hrReason, dwOptions);
 
@@ -204,7 +213,7 @@ static HRESULT WINAPI FtpProtocol_Abort(IInternetProtocolEx *iface, HRESULT hrRe
 
 static HRESULT WINAPI FtpProtocol_Terminate(IInternetProtocolEx *iface, DWORD dwOptions)
 {
-    FtpProtocol *This = PROTOCOL_THIS(iface);
+    FtpProtocol *This = impl_from_IInternetProtocolEx(iface);
 
     TRACE("(%p)->(%08x)\n", This, dwOptions);
 
@@ -214,14 +223,14 @@ static HRESULT WINAPI FtpProtocol_Terminate(IInternetProtocolEx *iface, DWORD dw
 
 static HRESULT WINAPI FtpProtocol_Suspend(IInternetProtocolEx *iface)
 {
-    FtpProtocol *This = PROTOCOL_THIS(iface);
+    FtpProtocol *This = impl_from_IInternetProtocolEx(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI FtpProtocol_Resume(IInternetProtocolEx *iface)
 {
-    FtpProtocol *This = PROTOCOL_THIS(iface);
+    FtpProtocol *This = impl_from_IInternetProtocolEx(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
@@ -229,7 +238,7 @@ static HRESULT WINAPI FtpProtocol_Resume(IInternetProtocolEx *iface)
 static HRESULT WINAPI FtpProtocol_Read(IInternetProtocolEx *iface, void *pv,
         ULONG cb, ULONG *pcbRead)
 {
-    FtpProtocol *This = PROTOCOL_THIS(iface);
+    FtpProtocol *This = impl_from_IInternetProtocolEx(iface);
 
     TRACE("(%p)->(%p %u %p)\n", This, pv, cb, pcbRead);
 
@@ -239,14 +248,14 @@ static HRESULT WINAPI FtpProtocol_Read(IInternetProtocolEx *iface, void *pv,
 static HRESULT WINAPI FtpProtocol_Seek(IInternetProtocolEx *iface, LARGE_INTEGER dlibMove,
         DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
 {
-    FtpProtocol *This = PROTOCOL_THIS(iface);
+    FtpProtocol *This = impl_from_IInternetProtocolEx(iface);
     FIXME("(%p)->(%d %d %p)\n", This, dlibMove.u.LowPart, dwOrigin, plibNewPosition);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI FtpProtocol_LockRequest(IInternetProtocolEx *iface, DWORD dwOptions)
 {
-    FtpProtocol *This = PROTOCOL_THIS(iface);
+    FtpProtocol *This = impl_from_IInternetProtocolEx(iface);
 
     TRACE("(%p)->(%08x)\n", This, dwOptions);
 
@@ -255,7 +264,7 @@ static HRESULT WINAPI FtpProtocol_LockRequest(IInternetProtocolEx *iface, DWORD 
 
 static HRESULT WINAPI FtpProtocol_UnlockRequest(IInternetProtocolEx *iface)
 {
-    FtpProtocol *This = PROTOCOL_THIS(iface);
+    FtpProtocol *This = impl_from_IInternetProtocolEx(iface);
 
     TRACE("(%p)\n", This);
 
@@ -266,7 +275,7 @@ static HRESULT WINAPI FtpProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUri
         IInternetProtocolSink *pOIProtSink, IInternetBindInfo *pOIBindInfo,
         DWORD grfPI, HANDLE *dwReserved)
 {
-    FtpProtocol *This = PROTOCOL_THIS(iface);
+    FtpProtocol *This = impl_from_IInternetProtocolEx(iface);
     DWORD scheme = 0;
     HRESULT hres;
 
@@ -279,9 +288,9 @@ static HRESULT WINAPI FtpProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUri
     if(scheme != URL_SCHEME_FTP)
         return MK_E_SYNTAX;
 
-    return protocol_start(&This->base, (IInternetProtocol*)PROTOCOLEX(This), pUri, pOIProtSink, pOIBindInfo);
+    return protocol_start(&This->base, (IInternetProtocol*)&This->IInternetProtocolEx_iface, pUri,
+                          pOIProtSink, pOIBindInfo);
 }
-#undef PROTOCOL_THIS
 
 static const IInternetProtocolExVtbl FtpProtocolVtbl = {
     FtpProtocol_QueryInterface,
@@ -300,29 +309,27 @@ static const IInternetProtocolExVtbl FtpProtocolVtbl = {
     FtpProtocol_StartEx
 };
 
-#define PRIORITY_THIS(iface) DEFINE_THIS(FtpProtocol, InternetPriority, iface)
-
 static HRESULT WINAPI FtpPriority_QueryInterface(IInternetPriority *iface, REFIID riid, void **ppv)
 {
-    FtpProtocol *This = PRIORITY_THIS(iface);
-    return IInternetProtocolEx_QueryInterface(PROTOCOLEX(This), riid, ppv);
+    FtpProtocol *This = impl_from_IInternetPriority(iface);
+    return IInternetProtocolEx_QueryInterface(&This->IInternetProtocolEx_iface, riid, ppv);
 }
 
 static ULONG WINAPI FtpPriority_AddRef(IInternetPriority *iface)
 {
-    FtpProtocol *This = PRIORITY_THIS(iface);
-    return IInternetProtocolEx_AddRef(PROTOCOLEX(This));
+    FtpProtocol *This = impl_from_IInternetPriority(iface);
+    return IInternetProtocolEx_AddRef(&This->IInternetProtocolEx_iface);
 }
 
 static ULONG WINAPI FtpPriority_Release(IInternetPriority *iface)
 {
-    FtpProtocol *This = PRIORITY_THIS(iface);
-    return IInternetProtocolEx_Release(PROTOCOLEX(This));
+    FtpProtocol *This = impl_from_IInternetPriority(iface);
+    return IInternetProtocolEx_Release(&This->IInternetProtocolEx_iface);
 }
 
 static HRESULT WINAPI FtpPriority_SetPriority(IInternetPriority *iface, LONG nPriority)
 {
-    FtpProtocol *This = PRIORITY_THIS(iface);
+    FtpProtocol *This = impl_from_IInternetPriority(iface);
 
     TRACE("(%p)->(%d)\n", This, nPriority);
 
@@ -332,15 +339,13 @@ static HRESULT WINAPI FtpPriority_SetPriority(IInternetPriority *iface, LONG nPr
 
 static HRESULT WINAPI FtpPriority_GetPriority(IInternetPriority *iface, LONG *pnPriority)
 {
-    FtpProtocol *This = PRIORITY_THIS(iface);
+    FtpProtocol *This = impl_from_IInternetPriority(iface);
 
     TRACE("(%p)->(%p)\n", This, pnPriority);
 
     *pnPriority = This->base.priority;
     return S_OK;
 }
-
-#undef PRIORITY_THIS
 
 static const IInternetPriorityVtbl FtpPriorityVtbl = {
     FtpPriority_QueryInterface,
@@ -350,30 +355,28 @@ static const IInternetPriorityVtbl FtpPriorityVtbl = {
     FtpPriority_GetPriority
 };
 
-#define INETINFO_THIS(iface) DEFINE_THIS(FtpProtocol, WinInetHttpInfo, iface)
-
 static HRESULT WINAPI HttpInfo_QueryInterface(IWinInetHttpInfo *iface, REFIID riid, void **ppv)
 {
-    FtpProtocol *This = INETINFO_THIS(iface);
-    return IInternetProtocolEx_QueryInterface(PROTOCOLEX(This), riid, ppv);
+    FtpProtocol *This = impl_from_IWinInetHttpInfo(iface);
+    return IInternetProtocolEx_QueryInterface(&This->IInternetProtocolEx_iface, riid, ppv);
 }
 
 static ULONG WINAPI HttpInfo_AddRef(IWinInetHttpInfo *iface)
 {
-    FtpProtocol *This = INETINFO_THIS(iface);
-    return IInternetProtocolEx_AddRef(PROTOCOLEX(This));
+    FtpProtocol *This = impl_from_IWinInetHttpInfo(iface);
+    return IInternetProtocolEx_AddRef(&This->IInternetProtocolEx_iface);
 }
 
 static ULONG WINAPI HttpInfo_Release(IWinInetHttpInfo *iface)
 {
-    FtpProtocol *This = INETINFO_THIS(iface);
-    return IInternetProtocolEx_Release(PROTOCOLEX(This));
+    FtpProtocol *This = impl_from_IWinInetHttpInfo(iface);
+    return IInternetProtocolEx_Release(&This->IInternetProtocolEx_iface);
 }
 
 static HRESULT WINAPI HttpInfo_QueryOption(IWinInetHttpInfo *iface, DWORD dwOption,
         void *pBuffer, DWORD *pcbBuffer)
 {
-    FtpProtocol *This = INETINFO_THIS(iface);
+    FtpProtocol *This = impl_from_IWinInetHttpInfo(iface);
     FIXME("(%p)->(%x %p %p)\n", This, dwOption, pBuffer, pcbBuffer);
     return E_NOTIMPL;
 }
@@ -381,12 +384,10 @@ static HRESULT WINAPI HttpInfo_QueryOption(IWinInetHttpInfo *iface, DWORD dwOpti
 static HRESULT WINAPI HttpInfo_QueryInfo(IWinInetHttpInfo *iface, DWORD dwOption,
         void *pBuffer, DWORD *pcbBuffer, DWORD *pdwFlags, DWORD *pdwReserved)
 {
-    FtpProtocol *This = INETINFO_THIS(iface);
+    FtpProtocol *This = impl_from_IWinInetHttpInfo(iface);
     FIXME("(%p)->(%x %p %p %p %p)\n", This, dwOption, pBuffer, pcbBuffer, pdwFlags, pdwReserved);
     return E_NOTIMPL;
 }
-
-#undef INETINFO_THIS
 
 static const IWinInetHttpInfoVtbl WinInetHttpInfoVtbl = {
     HttpInfo_QueryInterface,
@@ -407,12 +408,12 @@ HRESULT FtpProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
     ret = heap_alloc_zero(sizeof(FtpProtocol));
 
     ret->base.vtbl = &AsyncProtocolVtbl;
-    ret->lpIInternetProtocolExVtbl = &FtpProtocolVtbl;
-    ret->lpInternetPriorityVtbl    = &FtpPriorityVtbl;
-    ret->lpWinInetHttpInfoVtbl     = &WinInetHttpInfoVtbl;
+    ret->IInternetProtocolEx_iface.lpVtbl = &FtpProtocolVtbl;
+    ret->IInternetPriority_iface.lpVtbl   = &FtpPriorityVtbl;
+    ret->IWinInetHttpInfo_iface.lpVtbl    = &WinInetHttpInfoVtbl;
     ret->ref = 1;
 
-    *ppobj = PROTOCOLEX(ret);
-    
+    *ppobj = &ret->IInternetProtocolEx_iface;
+
     return S_OK;
 }
