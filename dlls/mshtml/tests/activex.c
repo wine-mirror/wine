@@ -87,6 +87,27 @@ static const char object_ax_str[] =
     "</object>"
     "</body></html>";
 
+static const REFIID pluginhost_iids[] = {
+    &IID_IOleClientSite,
+    &IID_IAdviseSink,
+    &IID_IAdviseSinkEx,
+    &IID_IPropertyNotifySink,
+    &IID_IDispatch,
+    NULL
+};
+
+static const char *dbgstr_guid(REFIID riid)
+{
+    static char buf[50];
+
+    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
+            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
+            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
+
+    return buf;
+}
+
 static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
 {
     IUnknown *unk1, *unk2;
@@ -100,6 +121,21 @@ static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
     IUnknown_Release(unk2);
 
     return unk1 == unk2;
+}
+
+#define test_ifaces(i,ids) _test_ifaces(__LINE__,i,ids)
+static void _test_ifaces(unsigned line, IUnknown *iface, REFIID *iids)
+{
+    const IID * const *piid;
+    IUnknown *unk;
+    HRESULT hres;
+
+     for(piid = iids; *piid; piid++) {
+        hres = IDispatch_QueryInterface(iface, *piid, (void**)&unk);
+        ok_(__FILE__,line) (hres == S_OK, "Could not get %s interface: %08x\n", dbgstr_guid(*piid), hres);
+        if(SUCCEEDED(hres))
+            IUnknown_Release(unk);
+    }
 }
 
 static HRESULT ax_qi(REFIID,void**);
@@ -210,6 +246,7 @@ static HRESULT WINAPI QuickActivate_QuickActivate(IQuickActivate *iface, QACONTA
        "container->pClientSite != container->pAdviseSink\n");
     ok(iface_cmp((IUnknown*)container->pClientSite, (IUnknown*)container->pPropertyNotifySink),
        "container->pClientSite != container->pPropertyNotifySink\n");
+    test_ifaces((IUnknown*)container->pClientSite, pluginhost_iids);
 
     return S_OK;
 }

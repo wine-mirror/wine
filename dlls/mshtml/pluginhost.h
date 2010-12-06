@@ -22,6 +22,7 @@ typedef struct {
     IOleClientSite       IOleClientSite_iface;
     IAdviseSinkEx        IAdviseSinkEx_iface;
     IPropertyNotifySink  IPropertyNotifySink_iface;
+    IDispatch            IDispatch_iface;
 
     LONG ref;
 

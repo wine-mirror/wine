@@ -111,6 +111,9 @@ static HRESULT WINAPI PHClientSite_QueryInterface(IOleClientSite *iface, REFIID 
     }else if(IsEqualGUID(&IID_IPropertyNotifySink, riid)) {
         TRACE("(%p)->(IID_IPropertyNotifySink %p)\n", This, ppv);
         *ppv = &This->IPropertyNotifySink_iface;
+    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
+        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        *ppv = &This->IDispatch_iface;
     }else {
         WARN("Unsupported interface %s\n", debugstr_guid(riid));
         *ppv = NULL;
@@ -318,6 +321,70 @@ static const IPropertyNotifySinkVtbl PropertyNotifySinkVtbl = {
     PHPropertyNotifySink_OnRequestEdit
 };
 
+static inline PluginHost *impl_from_IDispatch(IDispatch *iface)
+{
+    return CONTAINING_RECORD(iface, PluginHost, IDispatch_iface);
+}
+
+static HRESULT WINAPI PHDispatch_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
+{
+    PluginHost *This = impl_from_IDispatch(iface);
+    return IOleClientSite_QueryInterface(&This->IOleClientSite_iface, riid, ppv);
+}
+
+static ULONG WINAPI PHDispatch_AddRef(IDispatch *iface)
+{
+    PluginHost *This = impl_from_IDispatch(iface);
+    return IOleClientSite_AddRef(&This->IOleClientSite_iface);
+}
+
+static ULONG WINAPI PHDispatch_Release(IDispatch *iface)
+{
+    PluginHost *This = impl_from_IDispatch(iface);
+    return IOleClientSite_Release(&This->IOleClientSite_iface);
+}
+
+static HRESULT WINAPI PHDispatch_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
+{
+    PluginHost *This = impl_from_IDispatch(iface);
+    FIXME("(%p)->(%p)\n", This, pctinfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHDispatch_GetTypeInfo(IDispatch *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    PluginHost *This = impl_from_IDispatch(iface);
+    FIXME("(%p)->(%d %d %p)\n", This, iTInfo, lcid, ppTInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHDispatch_GetIDsOfNames(IDispatch *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    PluginHost *This = impl_from_IDispatch(iface);
+    FIXME("(%p)->(%s %p %d %d %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHDispatch_Invoke(IDispatch *iface, DISPID dispid,  REFIID riid, LCID lcid,
+        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    PluginHost *This = impl_from_IDispatch(iface);
+    FIXME("(%p)->(%d %x %p %p)\n", This, dispid, wFlags, pDispParams, pVarResult);
+    return E_NOTIMPL;
+}
+
+static const IDispatchVtbl DispatchVtbl = {
+    PHDispatch_QueryInterface,
+    PHDispatch_AddRef,
+    PHDispatch_Release,
+    PHDispatch_GetTypeInfoCount,
+    PHDispatch_GetTypeInfo,
+    PHDispatch_GetIDsOfNames,
+    PHDispatch_Invoke
+};
+
 HRESULT create_plugin_host(IUnknown *unk, PluginHost **ret)
 {
     PluginHost *host;
@@ -329,6 +396,7 @@ HRESULT create_plugin_host(IUnknown *unk, PluginHost **ret)
     host->IOleClientSite_iface.lpVtbl      = &OleClientSiteVtbl;
     host->IAdviseSinkEx_iface.lpVtbl       = &AdviseSinkExVtbl;
     host->IPropertyNotifySink_iface.lpVtbl = &PropertyNotifySinkVtbl;
+    host->IDispatch_iface.lpVtbl           = &DispatchVtbl;
 
     host->ref = 1;
 
