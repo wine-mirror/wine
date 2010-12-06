@@ -184,6 +184,7 @@ typedef struct _IFilterGraphImpl {
     int filterCapacity;
     LONG nameIndex;
     IReferenceClock *refClock;
+    IBaseFilter *refClockProvider;
     EventsQueue evqueue;
     HANDLE hEventCompletion;
     int CompletionStatus;
@@ -484,6 +485,12 @@ static HRESULT WINAPI FilterGraph2_RemoveFilter(IFilterGraph2 *iface, IBaseFilte
             IEnumPins *penumpins = NULL;
             FILTER_STATE state;
 
+            if (This->defaultclock && This->refClockProvider == pFilter)
+            {
+                IMediaFilter_SetSyncSource((IMediaFilter*)&This->IMediaFilter_vtbl, NULL);
+                This->defaultclock = 1;
+            }
+
             TRACE("Removing filter %s\n", debugstr_w(This->pFilterNames[i]));
             IBaseFilter_GetState(pFilter, 0, &state);
             if (state == State_Running)
@@ -781,7 +788,12 @@ static HRESULT WINAPI FilterGraph2_SetDefaultSyncSource(IFilterGraph2 *iface) {
     }
 
     if (!pClock)
+    {
         hr = CoCreateInstance(&CLSID_SystemClock, NULL, CLSCTX_INPROC_SERVER, &IID_IReferenceClock, (LPVOID*)&pClock);
+        This->refClockProvider = NULL;
+    }
+    else
+        This->refClockProvider = This->ppFiltersInGraph[i];
 
     if (SUCCEEDED(hr))
     {
@@ -5485,6 +5497,7 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     fimpl->notif.disabled = FALSE;
     fimpl->nRenderers = 0;
     fimpl->EcCompleteCount = 0;
+    fimpl->refClockProvider = NULL;
     fimpl->state = State_Stopped;
     EventsQueue_Init(&fimpl->evqueue);
     InitializeCriticalSection(&fimpl->cs);
