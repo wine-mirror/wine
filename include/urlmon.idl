@@ -1829,6 +1829,28 @@ interface IUriBuilder: IUnknown
 cpp_quote("HRESULT WINAPI CreateIUriBuilder(IUri*,DWORD,DWORD_PTR,IUriBuilder**);")
 
 /*****************************************************************************
+ * IUriBuilderFactory interface
+ */
+[
+    local,
+    object,
+    uuid(e982ce48-0b96-440c-bc37-0c869b27a29e),
+    pointer_default(unique)
+]
+interface IUriBuilderFactory : IUnknown
+{
+    HRESULT CreateInitializedIUriBuilder(
+        [in]  DWORD dwFlags,
+        [in]  DWORD_PTR dwReserved,
+        [out] IUriBuilder **ppIUriBuilder);
+
+    HRESULT CreateIUriBuilder(
+        [in]  DWORD dwFlags,
+        [in]  DWORD_PTR dwReserved,
+        [out] IUriBuilder **ppIUriBuilder);
+};
+
+/*****************************************************************************
  * IInternetProtocolEx interface
  */
 [
