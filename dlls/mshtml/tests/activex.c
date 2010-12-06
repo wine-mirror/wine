@@ -57,6 +57,8 @@
     }while(0)
 
 DEFINE_EXPECT(CreateInstance);
+DEFINE_EXPECT(FreezeEvents_TRUE);
+DEFINE_EXPECT(FreezeEvents_FALSE);
 
 static HWND container_hwnd;
 
@@ -83,6 +85,73 @@ static const char object_ax_str[] =
     "<param name=\"param_name\" value=\"param_value\">"
     "</object>"
     "</body></html>";
+
+static HRESULT ax_qi(REFIID,void**);
+
+static HRESULT WINAPI OleControl_QueryInterface(IOleControl *iface, REFIID riid, void **ppv)
+{
+    return ax_qi(riid, ppv);
+}
+
+static ULONG WINAPI OleControl_AddRef(IOleControl *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI OleControl_Release(IOleControl *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI OleControl_GetControlInfo(IOleControl *iface, CONTROLINFO *pCI)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleControl_OnMnemonic(IOleControl *iface, MSG *mMsg)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DISPID dispID)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleControl_FreezeEvents(IOleControl *iface, BOOL bFreeze)
+{
+    if(bFreeze)
+        CHECK_EXPECT2(FreezeEvents_TRUE);
+    else
+        CHECK_EXPECT2(FreezeEvents_FALSE);
+    return S_OK;
+}
+
+static const IOleControlVtbl OleControlVtbl = {
+    OleControl_QueryInterface,
+    OleControl_AddRef,
+    OleControl_Release,
+    OleControl_GetControlInfo,
+    OleControl_OnMnemonic,
+    OleControl_OnAmbientPropertyChange,
+    OleControl_FreezeEvents
+};
+
+static IOleControl OleControl = { &OleControlVtbl };
+
+static HRESULT ax_qi(REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IOleControl)) {
+        *ppv = &OleControl;
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
 {
@@ -117,9 +186,12 @@ static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
 static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **ppv)
 {
     CHECK_EXPECT(CreateInstance);
+
     ok(!outer, "outer = %p\n", outer);
     ok(IsEqualGUID(riid, &IID_IUnknown), "riid = %s\n", debugstr_guid(riid));
-    return E_OUTOFMEMORY;
+
+    *ppv = &OleControl;
+    return S_OK;
 }
 
 static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
@@ -696,8 +768,16 @@ static void test_object_ax(void)
      * asynchronously and until we'll work around it, we need this hack.
      */
     SET_EXPECT(CreateInstance);
+    SET_EXPECT(FreezeEvents_TRUE);
+    SET_EXPECT(FreezeEvents_FALSE);
+
     doc = create_doc(object_ax_str, &called_CreateInstance);
+
     CHECK_CALLED(CreateInstance);
+    todo_wine
+    CHECK_CALLED(FreezeEvents_TRUE);
+    todo_wine
+    CHECK_CALLED(FreezeEvents_FALSE);
 
     release_doc(doc);
 }
