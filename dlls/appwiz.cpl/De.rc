@@ -1,7 +1,8 @@
 /*
 * Add/Remove Programs German resources
 *
-* Copyright 2009 André Hentschel
+* Copyright 2009-2010 André Hentschel
+* Copyright 2005 Henning Gerhardt
 *
 * This library is free software; you can redistribute it and/or
 * modify it under the terms of the GNU Lesser General Public
@@ -41,6 +42,12 @@ STRINGTABLE
 
    IDS_REMOVE, "&Entfernen..."
    IDS_MODIFY_REMOVE, "Än&dern/Entfernen..."
+}
+
+STRINGTABLE
+{
+    IDS_DOWNLOADING   "Lade herunter..."
+    IDS_INSTALLING    "Installiere..."
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
@@ -84,4 +91,20 @@ FONT 8, "MS Shell Dlg"
  CONTROL "", IDC_INFO_README, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 80, 136, 8
  CONTROL "", IDC_INFO_UPDATES, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 90, 136, 8
  CONTROL "", IDC_INFO_COMMENTS, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 100, 136, 8
+}
+
+ID_DWL_DIALOG DIALOG  0, 0, 260, 95
+STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Wine-Gecko-Installation"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT "Wine kann das Gecko-Paket nicht finden. Es wird von Programmen mit eingebettetem HTML benötigt, " \
+          "damit diese richtig funktionieren.\n" \
+          "Wine kann das Paket für Sie herunterladen und installieren.\n\n" \
+          "Hinweis: Es wird empfohlen das Paket ihrer Distribution zu verwenden. " \
+          "Weitere Hinweise finden Sie unter http://wiki.winehq.org/Gecko",
+          ID_DWL_STATUS, 10, 10, 240, 50, SS_LEFT
+    CONTROL "Fortschritt", ID_DWL_PROGRESS, PROGRESS_CLASSA, WS_BORDER|PBS_SMOOTH, 10, 50, 240, 12
+    DEFPUSHBUTTON "&Installieren", ID_DWL_INSTALL, 200, 70, 50, 15, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Abbrechen", IDCANCEL, 140, 70, 50, 15, WS_GROUP | WS_TABSTOP
 }

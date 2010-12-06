@@ -43,6 +43,12 @@ STRINGTABLE
    IDS_MODIFY_REMOVE, "&Modificar/Quitar..."
 }
 
+STRINGTABLE
+{
+    IDS_DOWNLOADING     "Descargando..."
+    IDS_INSTALLING      "Instalando..."
+}
+
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Instalar/Desinstalar"

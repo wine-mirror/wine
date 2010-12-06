@@ -7,10 +7,12 @@ C_SRCS = \
 	appwiz.c
 
 RC_SRCS = \
+	Bg.rc \
 	Da.rc \
 	De.rc \
 	En.rc \
 	Es.rc \
+	Fi.rc \
 	Fr.rc \
 	He.rc \
 	Hu.rc \
@@ -27,6 +29,7 @@ RC_SRCS = \
 	Si.rc \
 	Sr.rc \
 	Sv.rc \
+	Tr.rc \
 	Uk.rc \
 	Zh.rc \
 	appwiz.rc

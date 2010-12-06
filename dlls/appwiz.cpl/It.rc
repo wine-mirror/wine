@@ -2,7 +2,7 @@
 * Add/Remove Programs Italian resources
 *
 * Copyright 2001-2002, 2008 Owen Rudge
-* Copyright 2009 Luca Bennati
+* Copyright 2009-2010 Luca Bennati
 *
 * This library is free software; you can redistribute it and/or
 * modify it under the terms of the GNU Lesser General Public
@@ -42,6 +42,12 @@ STRINGTABLE
 
    IDS_REMOVE, "&Rimuovi..."
    IDS_MODIFY_REMOVE, "&Modifica/Rimuovi..."
+}
+
+STRINGTABLE
+{
+    IDS_DOWNLOADING     "Scaricando..."
+    IDS_INSTALLING      "Installando..."
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
@@ -84,4 +90,18 @@ FONT 8, "MS Shell Dlg"
  CONTROL "", IDC_INFO_README, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 80, 136, 8
  CONTROL "", IDC_INFO_UPDATES, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 90, 136, 8
  CONTROL "", IDC_INFO_COMMENTS, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 100, 136, 8
+}
+
+ID_DWL_DIALOG DIALOG  0, 0, 260, 95
+STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Installer di Wine Gecko"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT "Wine non ha trovato un pacchetto Gecko che è necessario per applicazioni che incorporano HTML " \
+          "per funzionare correttamente. Wine può automaticamente scaricarlo ed installarlo per te.\n\n" \
+          "Nota: è raccomandato usare i pacchetti delle distribuzioni. Leggi http://wiki.winehq.org/Gecko per i dettagli.",
+          ID_DWL_STATUS, 10, 10, 240, 50, SS_LEFT
+    CONTROL "Avanzamento", ID_DWL_PROGRESS, PROGRESS_CLASSA, WS_BORDER|PBS_SMOOTH, 10, 40, 240, 12
+    DEFPUSHBUTTON "&Installa", ID_DWL_INSTALL, 200, 70, 50, 15, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Annulla", IDCANCEL, 140, 70, 50, 15, WS_GROUP | WS_TABSTOP
 }
