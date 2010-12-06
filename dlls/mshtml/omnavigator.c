@@ -35,15 +35,17 @@ typedef struct HTMLPluginsCollection HTMLPluginsCollection;
 
 typedef struct {
     DispatchEx dispex;
-    const IOmNavigatorVtbl  *lpIOmNavigatorVtbl;
+    IOmNavigator IOmNavigator_iface;
 
     LONG ref;
 
     HTMLPluginsCollection *plugins;
 } OmNavigator;
 
-
-#define OMNAVIGATOR(x)  ((IOmNavigator*) &(x)->lpIOmNavigatorVtbl)
+static inline OmNavigator *impl_from_IOmNavigator(IOmNavigator *iface)
+{
+    return CONTAINING_RECORD(iface, OmNavigator, IOmNavigator_iface);
+}
 
 struct HTMLPluginsCollection {
     DispatchEx dispex;
@@ -193,20 +195,18 @@ static HRESULT create_plugins_collection(OmNavigator *navigator, HTMLPluginsColl
     return S_OK;
 }
 
-#define OMNAVIGATOR_THIS(iface) DEFINE_THIS(OmNavigator, IOmNavigator, iface)
-
 static HRESULT WINAPI OmNavigator_QueryInterface(IOmNavigator *iface, REFIID riid, void **ppv)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
 
     *ppv = NULL;
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = OMNAVIGATOR(This);
+        *ppv = &This->IOmNavigator_iface;
     }else if(IsEqualGUID(&IID_IOmNavigator, riid)) {
         TRACE("(%p)->(IID_IOmNavigator %p)\n", This, ppv);
-        *ppv = OMNAVIGATOR(This);
+        *ppv = &This->IOmNavigator_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }
@@ -222,7 +222,7 @@ static HRESULT WINAPI OmNavigator_QueryInterface(IOmNavigator *iface, REFIID rii
 
 static ULONG WINAPI OmNavigator_AddRef(IOmNavigator *iface)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -232,7 +232,7 @@ static ULONG WINAPI OmNavigator_AddRef(IOmNavigator *iface)
 
 static ULONG WINAPI OmNavigator_Release(IOmNavigator *iface)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -251,7 +251,7 @@ static ULONG WINAPI OmNavigator_Release(IOmNavigator *iface)
 
 static HRESULT WINAPI OmNavigator_GetTypeInfoCount(IOmNavigator *iface, UINT *pctinfo)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
     FIXME("(%p)->(%p)\n", This, pctinfo);
     return E_NOTIMPL;
 }
@@ -259,7 +259,7 @@ static HRESULT WINAPI OmNavigator_GetTypeInfoCount(IOmNavigator *iface, UINT *pc
 static HRESULT WINAPI OmNavigator_GetTypeInfo(IOmNavigator *iface, UINT iTInfo,
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
 
     return IDispatchEx_GetTypeInfo(DISPATCHEX(&This->dispex), iTInfo, lcid, ppTInfo);
 }
@@ -268,7 +268,7 @@ static HRESULT WINAPI OmNavigator_GetIDsOfNames(IOmNavigator *iface, REFIID riid
                                                 LPOLESTR *rgszNames, UINT cNames,
                                                 LCID lcid, DISPID *rgDispId)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
 
     return IDispatchEx_GetIDsOfNames(DISPATCHEX(&This->dispex), riid, rgszNames, cNames, lcid, rgDispId);
 }
@@ -277,7 +277,7 @@ static HRESULT WINAPI OmNavigator_Invoke(IOmNavigator *iface, DISPID dispIdMembe
                             REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
 
     return IDispatchEx_Invoke(DISPATCHEX(&This->dispex), dispIdMember, riid, lcid, wFlags, pDispParams,
             pVarResult, pExcepInfo, puArgErr);
@@ -285,7 +285,7 @@ static HRESULT WINAPI OmNavigator_Invoke(IOmNavigator *iface, DISPID dispIdMembe
 
 static HRESULT WINAPI OmNavigator_get_appCodeName(IOmNavigator *iface, BSTR *p)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
 
     static const WCHAR mozillaW[] = {'M','o','z','i','l','l','a',0};
 
@@ -297,7 +297,7 @@ static HRESULT WINAPI OmNavigator_get_appCodeName(IOmNavigator *iface, BSTR *p)
 
 static HRESULT WINAPI OmNavigator_get_appName(IOmNavigator *iface, BSTR *p)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
 
     static const WCHAR app_nameW[] =
         {'M','i','c','r','o','s','o','f','t',' ',
@@ -315,7 +315,7 @@ static HRESULT WINAPI OmNavigator_get_appName(IOmNavigator *iface, BSTR *p)
 
 static HRESULT WINAPI OmNavigator_get_appVersion(IOmNavigator *iface, BSTR *p)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
 
     char user_agent[512];
     DWORD size;
@@ -344,7 +344,7 @@ static HRESULT WINAPI OmNavigator_get_appVersion(IOmNavigator *iface, BSTR *p)
 
 static HRESULT WINAPI OmNavigator_get_userAgent(IOmNavigator *iface, BSTR *p)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
     char user_agent[512];
     DWORD size;
     HRESULT hres;
@@ -367,28 +367,28 @@ static HRESULT WINAPI OmNavigator_get_userAgent(IOmNavigator *iface, BSTR *p)
 
 static HRESULT WINAPI OmNavigator_javaEnabled(IOmNavigator *iface, VARIANT_BOOL *enabled)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
     FIXME("(%p)->(%p)\n", This, enabled);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OmNavigator_taintEnabled(IOmNavigator *iface, VARIANT_BOOL *enabled)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
     FIXME("(%p)->(%p)\n", This, enabled);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OmNavigator_get_mimeTypes(IOmNavigator *iface, IHTMLMimeTypesCollection **p)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OmNavigator_get_plugins(IOmNavigator *iface, IHTMLPluginsCollection **p)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -408,21 +408,21 @@ static HRESULT WINAPI OmNavigator_get_plugins(IOmNavigator *iface, IHTMLPluginsC
 
 static HRESULT WINAPI OmNavigator_get_cookieEnabled(IOmNavigator *iface, VARIANT_BOOL *p)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OmNavigator_get_opsProfile(IOmNavigator *iface, IHTMLOpsProfile **p)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OmNavigator_toString(IOmNavigator *iface, BSTR *String)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
 
     static const WCHAR objectW[] = {'[','o','b','j','e','c','t',']',0};
 
@@ -437,35 +437,35 @@ static HRESULT WINAPI OmNavigator_toString(IOmNavigator *iface, BSTR *String)
 
 static HRESULT WINAPI OmNavigator_get_cpuClass(IOmNavigator *iface, BSTR *p)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OmNavigator_get_systemLanguage(IOmNavigator *iface, BSTR *p)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OmNavigator_get_browserLanguage(IOmNavigator *iface, BSTR *p)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OmNavigator_get_userLanguage(IOmNavigator *iface, BSTR *p)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OmNavigator_get_platform(IOmNavigator *iface, BSTR *p)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
 
 #ifdef _WIN64
     static const WCHAR platformW[] = {'W','i','n','6','4',0};
@@ -481,33 +481,31 @@ static HRESULT WINAPI OmNavigator_get_platform(IOmNavigator *iface, BSTR *p)
 
 static HRESULT WINAPI OmNavigator_get_appMinorVersion(IOmNavigator *iface, BSTR *p)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OmNavigator_get_connectionSpeed(IOmNavigator *iface, LONG *p)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OmNavigator_get_onLine(IOmNavigator *iface, VARIANT_BOOL *p)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OmNavigator_get_userProfile(IOmNavigator *iface, IHTMLOpsProfile **p)
 {
-    OmNavigator *This = OMNAVIGATOR_THIS(iface);
+    OmNavigator *This = impl_from_IOmNavigator(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
-
-#undef OMNAVIGATOR_THIS
 
 static const IOmNavigatorVtbl OmNavigatorVtbl = {
     OmNavigator_QueryInterface,
@@ -555,10 +553,10 @@ IOmNavigator *OmNavigator_Create(void)
     OmNavigator *ret;
 
     ret = heap_alloc_zero(sizeof(*ret));
-    ret->lpIOmNavigatorVtbl = &OmNavigatorVtbl;
+    ret->IOmNavigator_iface.lpVtbl = &OmNavigatorVtbl;
     ret->ref = 1;
 
-    init_dispex(&ret->dispex, (IUnknown*)OMNAVIGATOR(ret), &OmNavigator_dispex);
+    init_dispex(&ret->dispex, (IUnknown*)&ret->IOmNavigator_iface, &OmNavigator_dispex);
 
-    return OMNAVIGATOR(ret);
+    return &ret->IOmNavigator_iface;
 }
