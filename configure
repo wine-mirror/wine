@@ -15390,6 +15390,7 @@ wine_fn_config_program winhelp.exe16 enable_win16 install
 wine_fn_config_program winhlp32 enable_winhlp32 install
 wine_fn_config_program winoldap.mod16 enable_win16 install
 wine_fn_config_program winver enable_winver install
+wine_fn_config_program wmic enable_wmic install
 wine_fn_config_program wordpad enable_wordpad install
 wine_fn_config_program write enable_write install
 wine_fn_config_program wscript enable_wscript install
