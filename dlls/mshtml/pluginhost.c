@@ -63,7 +63,7 @@ static void activate_plugin(PluginHost *host)
 
         container.pClientSite = &host->IOleClientSite_iface;
         container.dwAmbientFlags = QACONTAINER_SUPPORTSMNEMONICS|QACONTAINER_MESSAGEREFLECT|QACONTAINER_USERMODE;
-        container.pAdviseSink = NULL; /* FIXME */
+        container.pAdviseSink = &host->IAdviseSinkEx_iface;
         container.pPropertyNotifySink = NULL; /* FIXME */
 
         hres = IQuickActivate_QuickActivate(quick_activate, &container, &control);
@@ -102,6 +102,12 @@ static HRESULT WINAPI PHClientSite_QueryInterface(IOleClientSite *iface, REFIID 
     }else if(IsEqualGUID(&IID_IOleClientSite, riid)) {
         TRACE("(%p)->(IID_IOleClientSite %p)\n", This, ppv);
         *ppv = &This->IOleClientSite_iface;
+    }else if(IsEqualGUID(&IID_IAdviseSink, riid)) {
+        TRACE("(%p)->(IID_IAdviseSink %p)\n", This, ppv);
+        *ppv = &This->IAdviseSinkEx_iface;
+    }else if(IsEqualGUID(&IID_IAdviseSinkEx, riid)) {
+        TRACE("(%p)->(IID_IAdviseSinkEx %p)\n", This, ppv);
+        *ppv = &This->IAdviseSinkEx_iface;
     }else {
         WARN("Unsupported interface %s\n", debugstr_guid(riid));
         *ppv = NULL;
@@ -193,6 +199,77 @@ static const IOleClientSiteVtbl OleClientSiteVtbl = {
     PHClientSite_RequestNewObjectLayout
 };
 
+static inline PluginHost *impl_from_IAdviseSinkEx(IAdviseSinkEx *iface)
+{
+    return CONTAINING_RECORD(iface, PluginHost, IAdviseSinkEx_iface);
+}
+
+static HRESULT WINAPI PHAdviseSinkEx_QueryInterface(IAdviseSinkEx *iface, REFIID riid, void **ppv)
+{
+    PluginHost *This = impl_from_IAdviseSinkEx(iface);
+    return IOleClientSite_QueryInterface(&This->IOleClientSite_iface, riid, ppv);
+}
+
+static ULONG WINAPI PHAdviseSinkEx_AddRef(IAdviseSinkEx *iface)
+{
+    PluginHost *This = impl_from_IAdviseSinkEx(iface);
+    return IOleClientSite_AddRef(&This->IOleClientSite_iface);
+}
+
+static ULONG WINAPI PHAdviseSinkEx_Release(IAdviseSinkEx *iface)
+{
+    PluginHost *This = impl_from_IAdviseSinkEx(iface);
+    return IOleClientSite_Release(&This->IOleClientSite_iface);
+}
+
+static void WINAPI PHAdviseSinkEx_OnDataChange(IAdviseSinkEx *iface, FORMATETC *pFormatetc, STGMEDIUM *pStgMedium)
+{
+    PluginHost *This = impl_from_IAdviseSinkEx(iface);
+    FIXME("(%p)->(%p %p)\n", This, pFormatetc, pStgMedium);
+}
+
+static void WINAPI PHAdviseSinkEx_OnViewChange(IAdviseSinkEx *iface, DWORD dwAspect, LONG lindex)
+{
+    PluginHost *This = impl_from_IAdviseSinkEx(iface);
+    FIXME("(%p)->(%d %d)\n", This, dwAspect, lindex);
+}
+
+static void WINAPI PHAdviseSinkEx_OnRename(IAdviseSinkEx *iface, IMoniker *pmk)
+{
+    PluginHost *This = impl_from_IAdviseSinkEx(iface);
+    FIXME("(%p)->(%p)\n", This, pmk);
+}
+
+static void WINAPI PHAdviseSinkEx_OnSave(IAdviseSinkEx *iface)
+{
+    PluginHost *This = impl_from_IAdviseSinkEx(iface);
+    FIXME("(%p)\n", This);
+}
+
+static void WINAPI PHAdviseSinkEx_OnClose(IAdviseSinkEx *iface)
+{
+    PluginHost *This = impl_from_IAdviseSinkEx(iface);
+    FIXME("(%p)\n", This);
+}
+
+static void WINAPI PHAdviseSinkEx_OnViewStatusChange(IAdviseSinkEx *iface, DWORD dwViewStatus)
+{
+    PluginHost *This = impl_from_IAdviseSinkEx(iface);
+    FIXME("(%p)->(%d)\n", This, dwViewStatus);
+}
+
+static const IAdviseSinkExVtbl AdviseSinkExVtbl = {
+    PHAdviseSinkEx_QueryInterface,
+    PHAdviseSinkEx_AddRef,
+    PHAdviseSinkEx_Release,
+    PHAdviseSinkEx_OnDataChange,
+    PHAdviseSinkEx_OnViewChange,
+    PHAdviseSinkEx_OnRename,
+    PHAdviseSinkEx_OnSave,
+    PHAdviseSinkEx_OnClose,
+    PHAdviseSinkEx_OnViewStatusChange
+};
+
 HRESULT create_plugin_host(IUnknown *unk, PluginHost **ret)
 {
     PluginHost *host;
@@ -202,6 +279,7 @@ HRESULT create_plugin_host(IUnknown *unk, PluginHost **ret)
         return E_OUTOFMEMORY;
 
     host->IOleClientSite_iface.lpVtbl = &OleClientSiteVtbl;
+    host->IAdviseSinkEx_iface.lpVtbl  = &AdviseSinkExVtbl;
 
     host->ref = 1;
 

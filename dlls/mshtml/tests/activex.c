@@ -87,6 +87,21 @@ static const char object_ax_str[] =
     "</object>"
     "</body></html>";
 
+static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
+{
+    IUnknown *unk1, *unk2;
+
+    if(iface1 == iface2)
+        return TRUE;
+
+    IUnknown_QueryInterface(iface1, &IID_IUnknown, (void**)&unk1);
+    IUnknown_Release(unk1);
+    IUnknown_QueryInterface(iface2, &IID_IUnknown, (void**)&unk2);
+    IUnknown_Release(unk2);
+
+    return unk1 == unk2;
+}
+
 static HRESULT ax_qi(REFIID,void**);
 
 static HRESULT WINAPI OleControl_QueryInterface(IOleControl *iface, REFIID riid, void **ppv)
@@ -165,7 +180,6 @@ static HRESULT WINAPI QuickActivate_QuickActivate(IQuickActivate *iface, QACONTA
     ok(container != NULL, "container == NULL\n");
     ok(container->cbSize == sizeof(*container), "container->cbSize = %d\n", container->cbSize);
     ok(container->pClientSite != NULL, "container->pClientSite == NULL\n");
-    todo_wine
     ok(container->pAdviseSink != NULL, "container->pAdviseSink == NULL\n");
     todo_wine
     ok(container->pPropertyNotifySink != NULL, "container->pPropertyNotifySink == NULL\n");
@@ -192,6 +206,9 @@ static HRESULT WINAPI QuickActivate_QuickActivate(IQuickActivate *iface, QACONTA
     ok(!control->dwEventCookie, "control->dwEventCookie = %x\n", control->dwEventCookie);
     ok(!control->dwPropNotifyCookie, "control->dwPropNotifyCookie = %x\n", control->dwPropNotifyCookie);
     ok(!control->dwPointerActivationPolicy, "control->dwPointerActivationPolicy = %x\n", control->dwPointerActivationPolicy);
+
+    ok(iface_cmp((IUnknown*)container->pClientSite, (IUnknown*)container->pAdviseSink),
+       "container->pClientSite != container->pAdviseSink\n");
 
     return S_OK;
 }
