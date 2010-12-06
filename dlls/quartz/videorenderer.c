@@ -832,9 +832,9 @@ static HRESULT WINAPI VideoRenderer_Run(IBaseFilter * iface, REFERENCE_TIME tSta
     TRACE("(%p/%p)->(%s)\n", This, iface, wine_dbgstr_longlong(tStart));
 
     EnterCriticalSection(&This->filter.csFilter);
+    This->filter.rtStreamStart = tStart;
     if (This->filter.state == State_Running)
         goto out;
-    This->filter.rtStreamStart = tStart;
     QualityControlRender_Start(&This->qcimpl, tStart);
     if (This->pInputPin->pin.pConnectedTo && (This->filter.state == State_Stopped || !This->pInputPin->end_of_stream))
     {

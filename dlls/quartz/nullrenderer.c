@@ -345,11 +345,11 @@ static HRESULT WINAPI NullRenderer_Run(IBaseFilter * iface, REFERENCE_TIME tStar
     TRACE("(%p/%p)->(%s)\n", This, iface, wine_dbgstr_longlong(tStart));
 
     EnterCriticalSection(&This->filter.csFilter);
+    This->filter.rtStreamStart = tStart;
     if (This->filter.state == State_Running)
         goto out;
     if (This->pInputPin->pin.pConnectedTo)
     {
-        This->filter.rtStreamStart = tStart;
         This->pInputPin->end_of_stream = 0;
     }
     else if (This->filter.filterInfo.pGraph)

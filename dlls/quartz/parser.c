@@ -304,6 +304,7 @@ HRESULT WINAPI Parser_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
     {
         HRESULT hr_any = VFW_E_NOT_CONNECTED;
 
+        This->filter.rtStreamStart = tStart;
         if (This->filter.state == State_Running || This->filter.state == State_Paused)
         {
             This->filter.state = State_Running;
@@ -311,8 +312,6 @@ HRESULT WINAPI Parser_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
             LeaveCriticalSection(&pin->thread_lock);
             return S_OK;
         }
-
-        This->filter.rtStreamStart = tStart;
 
         for (i = 1; i < (This->cStreams + 1); i++)
         {
