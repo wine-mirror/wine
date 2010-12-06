@@ -26,6 +26,7 @@ typedef struct {
     IOleInPlaceSiteEx    IOleInPlaceSiteEx_iface;
     IOleControlSite      IOleControlSite_iface;
     IBindHost            IBindHost_iface;
+    IServiceProvider     IServiceProvider_iface;
 
     LONG ref;
 

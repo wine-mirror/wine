@@ -129,6 +129,9 @@ static HRESULT WINAPI PHClientSite_QueryInterface(IOleClientSite *iface, REFIID 
     }else if(IsEqualGUID(&IID_IBindHost, riid)) {
         TRACE("(%p)->(IID_IBindHost %p)\n", This, ppv);
         *ppv = &This->IBindHost_iface;
+    }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
+        TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
+        *ppv = &This->IServiceProvider_iface;
     }else {
         WARN("Unsupported interface %s\n", debugstr_guid(riid));
         *ppv = NULL;
@@ -691,6 +694,43 @@ static const IBindHostVtbl BindHostVtbl = {
     PHBindHost_MonikerBindToObject
 };
 
+static inline PluginHost *impl_from_IServiceProvider(IServiceProvider *iface)
+{
+    return CONTAINING_RECORD(iface, PluginHost, IServiceProvider_iface);
+}
+
+static HRESULT WINAPI PHServiceProvider_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
+{
+    PluginHost *This = impl_from_IServiceProvider(iface);
+    return IOleClientSite_QueryInterface(&This->IOleClientSite_iface, riid, ppv);
+}
+
+static ULONG WINAPI PHServiceProvider_AddRef(IServiceProvider *iface)
+{
+    PluginHost *This = impl_from_IServiceProvider(iface);
+    return IOleClientSite_AddRef(&This->IOleClientSite_iface);
+}
+
+static ULONG WINAPI PHServiceProvider_Release(IServiceProvider *iface)
+{
+    PluginHost *This = impl_from_IServiceProvider(iface);
+    return IOleClientSite_Release(&This->IOleClientSite_iface);
+}
+
+static HRESULT WINAPI PHServiceProvider_QueryService(IServiceProvider *iface, REFGUID guidService, REFIID riid, void **ppv)
+{
+    PluginHost *This = impl_from_IServiceProvider(iface);
+    FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static const IServiceProviderVtbl ServiceProviderVtbl = {
+    PHServiceProvider_QueryInterface,
+    PHServiceProvider_AddRef,
+    PHServiceProvider_Release,
+    PHServiceProvider_QueryService
+};
+
 HRESULT create_plugin_host(IUnknown *unk, PluginHost **ret)
 {
     PluginHost *host;
@@ -706,6 +746,7 @@ HRESULT create_plugin_host(IUnknown *unk, PluginHost **ret)
     host->IOleInPlaceSiteEx_iface.lpVtbl   = &OleInPlaceSiteExVtbl;
     host->IOleControlSite_iface.lpVtbl     = &OleControlSiteVtbl;
     host->IBindHost_iface.lpVtbl           = &BindHostVtbl;
+    host->IServiceProvider_iface.lpVtbl    = &ServiceProviderVtbl;
 
     host->ref = 1;
 
