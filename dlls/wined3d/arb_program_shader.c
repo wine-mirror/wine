@@ -3488,12 +3488,12 @@ static void init_ps_input(const IWineD3DPixelShaderImpl *This, const struct arb_
 }
 
 /* GL locking is done by the caller */
-static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This, struct wined3d_shader_buffer *buffer,
+static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
+        const struct wined3d_gl_info *gl_info, struct wined3d_shader_buffer *buffer,
         const struct arb_ps_compile_args *args, struct arb_ps_compiled_shader *compiled)
 {
     const struct wined3d_shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
     CONST DWORD *function = This->baseShader.function;
-    const struct wined3d_gl_info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
     const local_constant *lconst;
     GLuint retval;
     char fragcolor[16];
@@ -4233,6 +4233,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
 static struct arb_ps_compiled_shader *find_arb_pshader(IWineD3DPixelShaderImpl *shader, const struct arb_ps_compile_args *args)
 {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)shader->baseShader.device;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     UINT i;
     DWORD new_size;
     struct arb_ps_compiled_shader *new_array;
@@ -4242,7 +4243,6 @@ static struct arb_ps_compiled_shader *find_arb_pshader(IWineD3DPixelShaderImpl *
 
     if (!shader->baseShader.backend_data)
     {
-        const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
         struct shader_arb_priv *priv = device->shader_priv;
 
         shader->baseShader.backend_data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*shader_data));
@@ -4304,8 +4304,8 @@ static struct arb_ps_compiled_shader *find_arb_pshader(IWineD3DPixelShaderImpl *
         return 0;
     }
 
-    ret = shader_arb_generate_pshader(shader, &buffer, args,
-                                      &shader_data->gl_shaders[shader_data->num_gl_shaders]);
+    ret = shader_arb_generate_pshader(shader, gl_info, &buffer, args,
+            &shader_data->gl_shaders[shader_data->num_gl_shaders]);
     shader_buffer_free(&buffer);
     shader_data->gl_shaders[shader_data->num_gl_shaders].prgId = ret;
 
