@@ -24,6 +24,8 @@ typedef struct {
     LONG ref;
 
     IUnknown *plugin_unk;
+    HWND hwnd;
 } PluginHost;
 
 HRESULT create_plugin_host(IUnknown*,PluginHost**);
+void update_plugin_window(PluginHost*,HWND,const RECT*);

@@ -36,6 +36,57 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+static void activate_plugin(PluginHost *host)
+{
+    IClientSecurity *client_security;
+    IQuickActivate *quick_activate;
+    HRESULT hres;
+
+    if(!host->plugin_unk)
+        return;
+
+    /* Note native calls QI on plugin for an undocumented IID and CLSID_HTMLDocument */
+
+    /* FIXME: call FreezeEvents(TRUE) */
+
+    hres = IUnknown_QueryInterface(host->plugin_unk, &IID_IClientSecurity, (void**)&client_security);
+    if(SUCCEEDED(hres)) {
+        FIXME("Handle IClientSecurity\n");
+        IClientSecurity_Release(client_security);
+        return;
+    }
+
+    hres = IUnknown_QueryInterface(host->plugin_unk, &IID_IQuickActivate, (void**)&quick_activate);
+    if(SUCCEEDED(hres)) {
+        QACONTAINER container = {sizeof(container)};
+        QACONTROL control = {sizeof(control)};
+
+        container.pClientSite = &host->IOleClientSite_iface;
+        container.dwAmbientFlags = QACONTAINER_SUPPORTSMNEMONICS|QACONTAINER_MESSAGEREFLECT|QACONTAINER_USERMODE;
+        container.pAdviseSink = NULL; /* FIXME */
+        container.pPropertyNotifySink = NULL; /* FIXME */
+
+        hres = IQuickActivate_QuickActivate(quick_activate, &container, &control);
+        if(FAILED(hres))
+            FIXME("QuickActivate failed: %08x\n", hres);
+    }else {
+        FIXME("No IQuickActivate\n");
+    }
+}
+
+void update_plugin_window(PluginHost *host, HWND hwnd, const RECT *rect)
+{
+    if(!hwnd || (host->hwnd && host->hwnd != hwnd)) {
+        FIXME("unhandled hwnd\n");
+        return;
+    }
+
+    if(!host->hwnd) {
+        host->hwnd = hwnd;
+        activate_plugin(host);
+    }
+}
+
 static inline PluginHost *impl_from_IOleClientSite(IOleClientSite *iface)
 {
     return CONTAINING_RECORD(iface, PluginHost, IOleClientSite_iface);

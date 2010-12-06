@@ -303,8 +303,16 @@ static NPError CDECL NPP_Destroy(NPP instance, NPSavedData **save)
 
 static NPError CDECL NPP_SetWindow(NPP instance, NPWindow *window)
 {
-    FIXME("(%p %p)\n", instance, window);
-    return NPERR_GENERIC_ERROR;
+    PluginHost *host = instance->pdata;
+    RECT pos_rect = {0, 0, window->width, window->height};
+
+    TRACE("(%p %p)\n", instance, window);
+
+    if(!host)
+        return NPERR_GENERIC_ERROR;
+
+    update_plugin_window(host, window->window, &pos_rect);
+    return NPERR_NO_ERROR;
 }
 
 static NPError CDECL NPP_NewStream(NPP instance, NPMIMEType type, NPStream *stream, NPBool seekable, UINT16 *stype)
