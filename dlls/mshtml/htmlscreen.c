@@ -33,27 +33,28 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 typedef struct {
     DispatchEx dispex;
-    const IHTMLScreenVtbl *lpIHTMLScreenVtbl;
+    IHTMLScreen IHTMLScreen_iface;
 
     LONG ref;
 } HTMLScreen;
 
-#define HTMLSCREEN(x)  ((IHTMLScreen*)  &(x)->lpIHTMLScreenVtbl)
-
-#define HTMLSCREEN_THIS(iface) DEFINE_THIS(HTMLScreen, IHTMLScreen, iface)
+static inline HTMLScreen *impl_from_IHTMLScreen(IHTMLScreen *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLScreen, IHTMLScreen_iface);
+}
 
 static HRESULT WINAPI HTMLScreen_QueryInterface(IHTMLScreen *iface, REFIID riid, void **ppv)
 {
-    HTMLScreen *This = HTMLSCREEN_THIS(iface);
+    HTMLScreen *This = impl_from_IHTMLScreen(iface);
 
     *ppv = NULL;
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = HTMLSCREEN(This);
+        *ppv = &This->IHTMLScreen_iface;
     }else if(IsEqualGUID(&IID_IHTMLScreen, riid)) {
         TRACE("(%p)->(IID_IHTMLScreen %p)\n", This, ppv);
-        *ppv = HTMLSCREEN(This);
+        *ppv = &This->IHTMLScreen_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }
@@ -69,7 +70,7 @@ static HRESULT WINAPI HTMLScreen_QueryInterface(IHTMLScreen *iface, REFIID riid,
 
 static ULONG WINAPI HTMLScreen_AddRef(IHTMLScreen *iface)
 {
-    HTMLScreen *This = HTMLSCREEN_THIS(iface);
+    HTMLScreen *This = impl_from_IHTMLScreen(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -79,7 +80,7 @@ static ULONG WINAPI HTMLScreen_AddRef(IHTMLScreen *iface)
 
 static ULONG WINAPI HTMLScreen_Release(IHTMLScreen *iface)
 {
-    HTMLScreen *This = HTMLSCREEN_THIS(iface);
+    HTMLScreen *This = impl_from_IHTMLScreen(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -94,7 +95,7 @@ static ULONG WINAPI HTMLScreen_Release(IHTMLScreen *iface)
 
 static HRESULT WINAPI HTMLScreen_GetTypeInfoCount(IHTMLScreen *iface, UINT *pctinfo)
 {
-    HTMLScreen *This = HTMLSCREEN_THIS(iface);
+    HTMLScreen *This = impl_from_IHTMLScreen(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
@@ -102,7 +103,7 @@ static HRESULT WINAPI HTMLScreen_GetTypeInfoCount(IHTMLScreen *iface, UINT *pcti
 static HRESULT WINAPI HTMLScreen_GetTypeInfo(IHTMLScreen *iface, UINT iTInfo,
         LCID lcid, ITypeInfo **ppTInfo)
 {
-    HTMLScreen *This = HTMLSCREEN_THIS(iface);
+    HTMLScreen *This = impl_from_IHTMLScreen(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
@@ -110,7 +111,7 @@ static HRESULT WINAPI HTMLScreen_GetTypeInfo(IHTMLScreen *iface, UINT iTInfo,
 static HRESULT WINAPI HTMLScreen_GetIDsOfNames(IHTMLScreen *iface, REFIID riid,
         LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    HTMLScreen *This = HTMLSCREEN_THIS(iface);
+    HTMLScreen *This = impl_from_IHTMLScreen(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
@@ -119,14 +120,14 @@ static HRESULT WINAPI HTMLScreen_Invoke(IHTMLScreen *iface, DISPID dispIdMember,
         REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
         VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    HTMLScreen *This = HTMLSCREEN_THIS(iface);
+    HTMLScreen *This = impl_from_IHTMLScreen(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLScreen_get_colorDepth(IHTMLScreen *iface, LONG *p)
 {
-    HTMLScreen *This = HTMLSCREEN_THIS(iface);
+    HTMLScreen *This = impl_from_IHTMLScreen(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -136,21 +137,21 @@ static HRESULT WINAPI HTMLScreen_get_colorDepth(IHTMLScreen *iface, LONG *p)
 
 static HRESULT WINAPI HTMLScreen_put_bufferDepth(IHTMLScreen *iface, LONG v)
 {
-    HTMLScreen *This = HTMLSCREEN_THIS(iface);
+    HTMLScreen *This = impl_from_IHTMLScreen(iface);
     FIXME("(%p)->(%d)\n", This, v);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLScreen_get_bufferDepth(IHTMLScreen *iface, LONG *p)
 {
-    HTMLScreen *This = HTMLSCREEN_THIS(iface);
+    HTMLScreen *This = impl_from_IHTMLScreen(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLScreen_get_width(IHTMLScreen *iface, LONG *p)
 {
-    HTMLScreen *This = HTMLSCREEN_THIS(iface);
+    HTMLScreen *This = impl_from_IHTMLScreen(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -160,7 +161,7 @@ static HRESULT WINAPI HTMLScreen_get_width(IHTMLScreen *iface, LONG *p)
 
 static HRESULT WINAPI HTMLScreen_get_height(IHTMLScreen *iface, LONG *p)
 {
-    HTMLScreen *This = HTMLSCREEN_THIS(iface);
+    HTMLScreen *This = impl_from_IHTMLScreen(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -170,40 +171,38 @@ static HRESULT WINAPI HTMLScreen_get_height(IHTMLScreen *iface, LONG *p)
 
 static HRESULT WINAPI HTMLScreen_put_updateInterval(IHTMLScreen *iface, LONG v)
 {
-    HTMLScreen *This = HTMLSCREEN_THIS(iface);
+    HTMLScreen *This = impl_from_IHTMLScreen(iface);
     FIXME("(%p)->(%d)\n", This, v);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLScreen_get_updateInterval(IHTMLScreen *iface, LONG *p)
 {
-    HTMLScreen *This = HTMLSCREEN_THIS(iface);
+    HTMLScreen *This = impl_from_IHTMLScreen(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLScreen_get_availHeight(IHTMLScreen *iface, LONG *p)
 {
-    HTMLScreen *This = HTMLSCREEN_THIS(iface);
+    HTMLScreen *This = impl_from_IHTMLScreen(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLScreen_get_availWidth(IHTMLScreen *iface, LONG *p)
 {
-    HTMLScreen *This = HTMLSCREEN_THIS(iface);
+    HTMLScreen *This = impl_from_IHTMLScreen(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLScreen_get_fontSmoothingEnabled(IHTMLScreen *iface, VARIANT_BOOL *p)
 {
-    HTMLScreen *This = HTMLSCREEN_THIS(iface);
+    HTMLScreen *This = impl_from_IHTMLScreen(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
-
-#undef HTMLSCREEN_THIS
 
 static const IHTMLScreenVtbl HTMLSreenVtbl = {
     HTMLScreen_QueryInterface,
@@ -244,11 +243,11 @@ HRESULT HTMLScreen_Create(IHTMLScreen **ret)
     if(!screen)
         return E_OUTOFMEMORY;
 
-    screen->lpIHTMLScreenVtbl = &HTMLSreenVtbl;
+    screen->IHTMLScreen_iface.lpVtbl = &HTMLSreenVtbl;
     screen->ref = 1;
 
-    init_dispex(&screen->dispex, (IUnknown*)HTMLSCREEN(screen), &HTMLScreen_dispex);
+    init_dispex(&screen->dispex, (IUnknown*)&screen->IHTMLScreen_iface, &HTMLScreen_dispex);
 
-    *ret = HTMLSCREEN(screen);
+    *ret = &screen->IHTMLScreen_iface;
     return S_OK;
 }
