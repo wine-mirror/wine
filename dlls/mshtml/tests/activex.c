@@ -59,6 +59,7 @@
 DEFINE_EXPECT(CreateInstance);
 DEFINE_EXPECT(FreezeEvents_TRUE);
 DEFINE_EXPECT(FreezeEvents_FALSE);
+DEFINE_EXPECT(QuickActivate);
 
 static HWND container_hwnd;
 
@@ -142,10 +143,91 @@ static const IOleControlVtbl OleControlVtbl = {
 
 static IOleControl OleControl = { &OleControlVtbl };
 
+static HRESULT WINAPI QuickActivate_QueryInterface(IQuickActivate *iface, REFIID riid, void **ppv)
+{
+    return ax_qi(riid, ppv);
+}
+
+static ULONG WINAPI QuickActivate_AddRef(IQuickActivate *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI QuickActivate_Release(IQuickActivate *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI QuickActivate_QuickActivate(IQuickActivate *iface, QACONTAINER *container, QACONTROL *control)
+{
+    CHECK_EXPECT(QuickActivate);
+
+    ok(container != NULL, "container == NULL\n");
+    ok(container->cbSize == sizeof(*container), "container->cbSize = %d\n", container->cbSize);
+    ok(container->pClientSite != NULL, "container->pClientSite == NULL\n");
+    todo_wine
+    ok(container->pAdviseSink != NULL, "container->pAdviseSink == NULL\n");
+    todo_wine
+    ok(container->pPropertyNotifySink != NULL, "container->pPropertyNotifySink == NULL\n");
+    ok(!container->pUnkEventSink, "container->pUnkEventSink != NULL\n");
+    ok(container->dwAmbientFlags == (QACONTAINER_SUPPORTSMNEMONICS|QACONTAINER_MESSAGEREFLECT|QACONTAINER_USERMODE),
+       "container->dwAmbientFlags = %x\n", container->dwAmbientFlags);
+    ok(!container->colorFore, "container->colorFore == 0\n"); /* FIXME */
+    todo_wine
+    ok(container->colorBack, "container->colorBack == 0\n"); /* FIXME */
+    todo_wine
+    ok(container->pFont != NULL, "container->pFont == NULL\n");
+    todo_wine
+    ok(container->pUndoMgr != NULL, "container->pUndoMgr == NULL\n");
+    ok(!container->dwAppearance, "container->dwAppearance = %x\n", container->dwAppearance);
+    ok(!container->lcid, "container->lcid = %x\n", container->lcid);
+    ok(!container->hpal, "container->hpal = %p\n", container->hpal);
+    ok(!container->pBindHost, "container->pBindHost != NULL\n");
+    ok(!container->pOleControlSite, "container->pOleControlSite != NULL\n");
+    ok(!container->pServiceProvider, "container->pServiceProvider != NULL\n");
+
+    ok(control->cbSize == sizeof(*control), "control->cbSize = %d\n", control->cbSize);
+    ok(!control->dwMiscStatus, "control->dwMiscStatus = %x\n", control->dwMiscStatus);
+    ok(!control->dwViewStatus, "control->dwViewStatus = %x\n", control->dwViewStatus);
+    ok(!control->dwEventCookie, "control->dwEventCookie = %x\n", control->dwEventCookie);
+    ok(!control->dwPropNotifyCookie, "control->dwPropNotifyCookie = %x\n", control->dwPropNotifyCookie);
+    ok(!control->dwPointerActivationPolicy, "control->dwPointerActivationPolicy = %x\n", control->dwPointerActivationPolicy);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI QuickActivate_SetContentExtent(IQuickActivate *iface, LPSIZEL pSizel)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI QuickActivate_GetContentExtent(IQuickActivate *iface, LPSIZEL pSizel)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IQuickActivateVtbl QuickActivateVtbl = {
+    QuickActivate_QueryInterface,
+    QuickActivate_AddRef,
+    QuickActivate_Release,
+    QuickActivate_QuickActivate,
+    QuickActivate_GetContentExtent,
+    QuickActivate_SetContentExtent
+};
+
+static IQuickActivate QuickActivate = { &QuickActivateVtbl };
+
 static HRESULT ax_qi(REFIID riid, void **ppv)
 {
     if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IOleControl)) {
         *ppv = &OleControl;
+        return S_OK;
+    }
+
+    if(IsEqualGUID(riid, &IID_IQuickActivate)) {
+        *ppv = &QuickActivate;
         return S_OK;
     }
 
@@ -769,6 +851,7 @@ static void test_object_ax(void)
      */
     SET_EXPECT(CreateInstance);
     SET_EXPECT(FreezeEvents_TRUE);
+    SET_EXPECT(QuickActivate);
     SET_EXPECT(FreezeEvents_FALSE);
 
     doc = create_doc(object_ax_str, &called_CreateInstance);
@@ -776,6 +859,7 @@ static void test_object_ax(void)
     CHECK_CALLED(CreateInstance);
     todo_wine
     CHECK_CALLED(FreezeEvents_TRUE);
+    CHECK_CALLED(QuickActivate);
     todo_wine
     CHECK_CALLED(FreezeEvents_FALSE);
 
