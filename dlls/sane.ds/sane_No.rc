@@ -1,7 +1,7 @@
 /*
- * Norwegian Bokmål resources for Twain
+ * Norwegian BokmÃ¥l resources for Twain
  *
- * Copyright 2006 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2006 Alexander N. SÃ¸rnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,8 @@
  */
 
 #include "resource.h"
+
+#pragma code_page(65001)
 
 LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
