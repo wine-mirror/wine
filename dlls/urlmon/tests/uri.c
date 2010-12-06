@@ -9067,6 +9067,96 @@ static void test_IUriBuilder_Misc(void) {
     if(uri) IUri_Release(uri);
 }
 
+static void test_IUriBuilderFactory(void) {
+    HRESULT hr;
+    IUri *uri;
+    IUriBuilderFactory *factory;
+    IUriBuilder *builder;
+
+    hr = pCreateUri(http_urlW, 0, 0, &uri);
+    ok(SUCCEEDED(hr), "Error: CreateUri returned 0x%08x.\n", hr);
+    if(SUCCEEDED(hr)) {
+        factory = NULL;
+        hr = IUri_QueryInterface(uri, &IID_IUriBuilderFactory, (void**)&factory);
+        ok(hr == S_OK, "Error: Expected S_OK, but got 0x%08x.\n", hr);
+        ok(factory != NULL, "Error: Expected 'factory' to not be NULL.\n");
+
+        if(SUCCEEDED(hr)) {
+            builder = (void*) 0xdeadbeef;
+            hr = IUriBuilderFactory_CreateInitializedIUriBuilder(factory, 10, 0, &builder);
+            ok(hr == E_INVALIDARG, "Error: CreateInitializedIUriBuilder returned 0x%08x, expected 0x%08x.\n",
+                hr, E_INVALIDARG);
+            ok(!builder, "Error: Expected 'builder' to be NULL, but was %p.\n", builder);
+
+            builder = (void*) 0xdeadbeef;
+            hr = IUriBuilderFactory_CreateInitializedIUriBuilder(factory, 0, 10, &builder);
+            ok(hr == E_INVALIDARG, "Error: CreateInitializedIUriBuilder returned 0x%08x, expected 0x%08x.\n",
+                hr, E_INVALIDARG);
+            ok(!builder, "Error: Expected 'builder' to be NULL, but was %p.\n", builder);
+
+            hr = IUriBuilderFactory_CreateInitializedIUriBuilder(factory, 0, 0, NULL);
+            ok(hr == E_POINTER, "Error: CreateInitializedIUriBuilder returned 0x%08x, expected 0x%08x.\n",
+                hr, E_POINTER);
+
+            builder = NULL;
+            hr = IUriBuilderFactory_CreateInitializedIUriBuilder(factory, 0, 0, &builder);
+            ok(hr == S_OK, "Error: CreateInitializedIUriBuilder returned 0x%08x, expected 0x%08x.\n",
+                hr, S_OK);
+            if(SUCCEEDED(hr)) {
+                IUri *tmp = (void*) 0xdeadbeef;
+                LPCWSTR result;
+                DWORD result_len;
+
+                /* Seems microsoft had a bit of mixup naming this function. It
+                 * returns an uninitialized IUriBuilder.
+                 */
+                hr = IUriBuilder_GetIUri(builder, &tmp);
+                ok(hr == S_OK, "Error: GetIUri returned 0x%08x, expected 0x%08x.\n",
+                    hr, S_OK);
+                ok(!tmp, "Error: Expected 'tmp' to be NULL, but was %p instead.\n", tmp);
+
+                hr = IUriBuilder_GetHost(builder, &result_len, &result);
+                ok(hr == S_FALSE, "Error: GetHost returned 0x%08x, expected 0x%08x.\n",
+                    hr, S_FALSE);
+            }
+            if(builder) IUriBuilder_Release(builder);
+
+            builder = (void*) 0xdeadbeef;
+            hr = IUriBuilderFactory_CreateIUriBuilder(factory, 10, 0, &builder);
+            ok(hr == E_INVALIDARG, "Error: CreateIUriBuilder returned 0x%08x, expected 0x%08x.\n",
+                hr, E_INVALIDARG);
+            ok(!builder, "Error: Expected 'builder' to be NULL, but was %p.\n", builder);
+
+            builder = (void*) 0xdeadbeef;
+            hr = IUriBuilderFactory_CreateIUriBuilder(factory, 0, 10, &builder);
+            ok(hr == E_INVALIDARG, "Error: CreateIUriBuilder returned 0x%08x, expected 0x%08x.\n",
+                hr, E_INVALIDARG);
+            ok(!builder, "Error: Expected 'builder' to be NULL, but was %p.\n", builder);
+
+            hr = IUriBuilderFactory_CreateIUriBuilder(factory, 0, 0, NULL);
+            ok(hr == E_POINTER, "Error: CreateIUriBuilder returned 0x%08x, expected 0x%08x.\n",
+                hr, E_POINTER);
+
+            builder = NULL;
+            hr = IUriBuilderFactory_CreateIUriBuilder(factory, 0, 0, &builder);
+            ok(hr == S_OK, "Error: CreateIUriBuilder returned 0x%08x, expected 0x%08x.\n",
+                hr, S_OK);
+            if(SUCCEEDED(hr)) {
+                IUri *tmp = NULL;
+
+                hr = IUriBuilder_GetIUri(builder, &tmp);
+                ok(hr == S_OK, "Error: GetIUri return 0x%08x, expected 0x%08x.\n",
+                    hr, S_OK);
+                ok(tmp == uri, "Error: Expected tmp to be %p, but was %p.\n", uri, tmp);
+                if(uri) IUri_Release(uri);
+            }
+            if(builder) IUriBuilder_Release(builder);
+        }
+        if(factory) IUriBuilderFactory_Release(factory);
+    }
+    if(uri) IUri_Release(uri);
+}
+
 static void test_CoInternetCombineIUri(void) {
     HRESULT hr;
     IUri *base, *relative, *result;
@@ -9717,6 +9807,9 @@ START_TEST(uri) {
 
     trace("test IUriBuilder miscellaneous...\n");
     test_IUriBuilder_Misc();
+
+    trace("test IUriBuilderFactory...\n");
+    test_IUriBuilderFactory();
 
     trace("test CoInternetCombineIUri...\n");
     test_CoInternetCombineIUri();

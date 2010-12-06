@@ -48,7 +48,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 static const IID IID_IUriObj = {0x4b364760,0x9f51,0x11df,{0x98,0x1c,0x08,0x00,0x20,0x0c,0x9a,0x66}};
 
 typedef struct {
-    IUri            IUri_iface;
+    IUri                IUri_iface;
+    IUriBuilderFactory  IUriBuilderFactory_iface;
+
     LONG ref;
 
     BSTR            raw_uri;
@@ -4122,6 +4124,13 @@ static inline Uri* impl_from_IUri(IUri *iface)
     return CONTAINING_RECORD(iface, Uri, IUri_iface);
 }
 
+static inline void destory_uri_obj(Uri *This)
+{
+    SysFreeString(This->raw_uri);
+    heap_free(This->canon_uri);
+    heap_free(This);
+}
+
 static HRESULT WINAPI Uri_QueryInterface(IUri *iface, REFIID riid, void **ppv)
 {
     Uri *This = impl_from_IUri(iface);
@@ -4132,6 +4141,9 @@ static HRESULT WINAPI Uri_QueryInterface(IUri *iface, REFIID riid, void **ppv)
     }else if(IsEqualGUID(&IID_IUri, riid)) {
         TRACE("(%p)->(IID_IUri %p)\n", This, ppv);
         *ppv = &This->IUri_iface;
+    }else if(IsEqualGUID(&IID_IUriBuilderFactory, riid)) {
+        TRACE("(%p)->(IID_IUriBuilderFactory %p)\n", This, riid);
+        *ppv = &This->IUriBuilderFactory_iface;
     }else if(IsEqualGUID(&IID_IUriObj, riid)) {
         TRACE("(%p)->(IID_IUriObj %p)\n", This, ppv);
         *ppv = This;
@@ -4163,11 +4175,8 @@ static ULONG WINAPI Uri_Release(IUri *iface)
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if(!ref) {
-        SysFreeString(This->raw_uri);
-        heap_free(This->canon_uri);
-        heap_free(This);
-    }
+    if(!ref)
+        destory_uri_obj(This);
 
     return ref;
 }
@@ -4947,10 +4956,108 @@ static const IUriVtbl UriVtbl = {
     Uri_IsEqual
 };
 
+static inline Uri* impl_from_IUriBuilderFactory(IUriBuilderFactory *iface)
+{
+    return CONTAINING_RECORD(iface, Uri, IUriBuilderFactory_iface);
+}
+
+static HRESULT WINAPI UriBuilderFactory_QueryInterface(IUriBuilderFactory *iface, REFIID riid, void **ppv)
+{
+    Uri *This = impl_from_IUriBuilderFactory(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IUriBuilderFactory_iface;
+    }else if(IsEqualGUID(&IID_IUriBuilderFactory, riid)) {
+        TRACE("(%p)->(IID_IUriBuilderFactory %p)\n", This, ppv);
+        *ppv = &This->IUriBuilderFactory_iface;
+    }else if(IsEqualGUID(&IID_IUri, riid)) {
+        TRACE("(%p)->(IID_IUri %p)\n", This, ppv);
+        *ppv = &This->IUri_iface;
+    }else {
+        TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI UriBuilderFactory_AddRef(IUriBuilderFactory *iface)
+{
+    Uri *This = impl_from_IUriBuilderFactory(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI UriBuilderFactory_Release(IUriBuilderFactory *iface)
+{
+    Uri *This = impl_from_IUriBuilderFactory(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref)
+        destory_uri_obj(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI UriBuilderFactory_CreateInitializedIUriBuilder(IUriBuilderFactory *iface,
+                                                              DWORD dwFlags,
+                                                              DWORD_PTR dwReserved,
+                                                              IUriBuilder **ppIUriBuilder)
+{
+    Uri *This = impl_from_IUriBuilderFactory(iface);
+    TRACE("(%p)->(%08x %08x %p)\n", This, dwFlags, (DWORD)dwReserved, ppIUriBuilder);
+
+    if(!ppIUriBuilder)
+        return E_POINTER;
+
+    if(dwFlags || dwReserved) {
+        *ppIUriBuilder = NULL;
+        return E_INVALIDARG;
+    }
+
+    return CreateIUriBuilder(NULL, 0, 0, ppIUriBuilder);
+}
+
+static HRESULT WINAPI UriBuilderFactory_CreateIUriBuilder(IUriBuilderFactory *iface,
+                                                   DWORD dwFlags,
+                                                   DWORD_PTR dwReserved,
+                                                   IUriBuilder **ppIUriBuilder)
+{
+    Uri *This = impl_from_IUriBuilderFactory(iface);
+    TRACE("(%p)->(%08x %08x %p)\n", This, dwFlags, (DWORD)dwReserved, ppIUriBuilder);
+
+    if(!ppIUriBuilder)
+        return E_POINTER;
+
+    if(dwFlags || dwReserved) {
+        *ppIUriBuilder = NULL;
+        return E_INVALIDARG;
+    }
+
+    return CreateIUriBuilder(&This->IUri_iface, 0, 0, ppIUriBuilder);
+}
+
+static const IUriBuilderFactoryVtbl UriBuilderFactoryVtbl = {
+    UriBuilderFactory_QueryInterface,
+    UriBuilderFactory_AddRef,
+    UriBuilderFactory_Release,
+    UriBuilderFactory_CreateInitializedIUriBuilder,
+    UriBuilderFactory_CreateIUriBuilder
+};
+
 static Uri* create_uri_obj(void) {
     Uri *ret = heap_alloc_zero(sizeof(Uri));
     if(ret) {
         ret->IUri_iface.lpVtbl = &UriVtbl;
+        ret->IUriBuilderFactory_iface.lpVtbl = &UriBuilderFactoryVtbl;
         ret->ref = 1;
     }
 
