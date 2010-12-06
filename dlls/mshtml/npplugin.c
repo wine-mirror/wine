@@ -29,6 +29,7 @@
 #include "shlobj.h"
 
 #include "mshtml_private.h"
+#include "pluginhost.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -268,8 +269,16 @@ static NPError CDECL NPP_New(NPMIMEType pluginType, NPP instance, UINT16 mode, I
 
     obj = create_activex_object(window, nselem);
     if(obj) {
-        FIXME("Embed objet %p\n", obj);
+        PluginHost *host;
+        HRESULT hres;
+
+        hres = create_plugin_host(obj, &host);
+        nsIDOMElement_Release(nselem);
         IUnknown_Release(obj);
+        if(SUCCEEDED(hres))
+            instance->pdata = host;
+        else
+            err = NPERR_GENERIC_ERROR;
     }else {
         err = NPERR_GENERIC_ERROR;
     }
@@ -280,8 +289,16 @@ static NPError CDECL NPP_New(NPMIMEType pluginType, NPP instance, UINT16 mode, I
 
 static NPError CDECL NPP_Destroy(NPP instance, NPSavedData **save)
 {
-    FIXME("(%p %p)\n", instance, save);
-    return NPERR_GENERIC_ERROR;
+    PluginHost *host = instance->pdata;
+
+    TRACE("(%p %p)\n", instance, save);
+
+    if(!host)
+        return NPERR_GENERIC_ERROR;
+
+    IOleClientSite_Release(&host->IOleClientSite_iface);
+    instance->pdata = NULL;
+    return NPERR_NO_ERROR;
 }
 
 static NPError CDECL NPP_SetWindow(NPP instance, NPWindow *window)

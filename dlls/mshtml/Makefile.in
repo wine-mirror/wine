@@ -62,6 +62,7 @@ C_SRCS = \
 	olewnd.c \
 	omnavigator.c \
 	persist.c \
+	pluginhost.c \
 	protocol.c \
 	script.c \
 	secmgr.c \
