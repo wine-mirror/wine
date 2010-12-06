@@ -317,7 +317,7 @@ struct shader_arb_priv
 
 /* GL locking for state handlers is done by the caller. */
 static BOOL need_rel_addr_const(const struct arb_vshader_private *shader_data,
-        const struct shader_reg_maps *reg_maps, const struct wined3d_gl_info *gl_info)
+        const struct wined3d_shader_reg_maps *reg_maps, const struct wined3d_gl_info *gl_info)
 {
     if (shader_data->rel_offset) return TRUE;
     if (!reg_maps->usesmova) return FALSE;
@@ -332,7 +332,7 @@ static inline BOOL use_nv_clip(const struct wined3d_gl_info *gl_info)
 }
 
 static BOOL need_helper_const(const struct arb_vshader_private *shader_data,
-        const struct shader_reg_maps *reg_maps, const struct wined3d_gl_info *gl_info)
+        const struct wined3d_shader_reg_maps *reg_maps, const struct wined3d_gl_info *gl_info)
 {
     if (need_rel_addr_const(shader_data, reg_maps, gl_info)) return TRUE;
     if (!gl_info->supported[NV_VERTEX_PROGRAM]) return TRUE; /* Need to init colors. */
@@ -345,7 +345,7 @@ static BOOL need_helper_const(const struct arb_vshader_private *shader_data,
 }
 
 static unsigned int reserved_vs_const(const struct arb_vshader_private *shader_data,
-        const struct shader_reg_maps *reg_maps, const struct wined3d_gl_info *gl_info)
+        const struct wined3d_shader_reg_maps *reg_maps, const struct wined3d_gl_info *gl_info)
 {
     unsigned int ret = 1;
     /* We use one PARAM for the pos fixup, and in some cases one to load
@@ -694,8 +694,9 @@ static DWORD *local_const_mapping(IWineD3DBaseShaderImpl *This)
 }
 
 /* Generate the variable & register declarations for the ARB_vertex_program output target */
-static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const shader_reg_maps *reg_maps,
-        struct wined3d_shader_buffer *buffer, const struct wined3d_gl_info *gl_info, DWORD *lconst_map,
+static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface,
+        const struct wined3d_shader_reg_maps *reg_maps, struct wined3d_shader_buffer *buffer,
+        const struct wined3d_gl_info *gl_info, DWORD *lconst_map,
         DWORD *num_clipplanes, struct shader_arb_ctx_priv *ctx)
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
@@ -931,7 +932,7 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
     /* oPos, oFog and oPts in D3D */
     static const char * const rastout_reg_names[] = {"TMP_OUT", "result.fogcoord", "result.pointsize"};
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    const struct shader_reg_maps *reg_maps = ins->ctx->reg_maps;
+    const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
     BOOL pshader = shader_is_pshader_version(reg_maps->shader_version.type);
     struct shader_arb_ctx_priv *ctx = ins->ctx->backend_data;
 
@@ -1743,7 +1744,7 @@ static void shader_hw_nop(const struct wined3d_shader_instruction *ins)
 static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    const struct shader_reg_maps *reg_maps = ins->ctx->reg_maps;
+    const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
     BOOL pshader = shader_is_pshader_version(reg_maps->shader_version.type);
     struct shader_arb_ctx_priv *ctx = ins->ctx->backend_data;
     const char *zero = arb_get_helper_value(reg_maps->shader_version.type, ARB_ZERO);
@@ -3099,7 +3100,7 @@ static void shader_hw_label(const struct wined3d_shader_instruction *ins)
 
 static void vshader_add_footer(struct shader_arb_ctx_priv *priv_ctx,
         const struct arb_vshader_private *shader_data, const struct arb_vs_compile_args *args,
-        const struct shader_reg_maps *reg_maps, const struct wined3d_gl_info *gl_info,
+        const struct wined3d_shader_reg_maps *reg_maps, const struct wined3d_gl_info *gl_info,
         struct wined3d_shader_buffer *buffer)
 {
     unsigned int i;
@@ -3490,7 +3491,7 @@ static void init_ps_input(const IWineD3DPixelShaderImpl *This, const struct arb_
 static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This, struct wined3d_shader_buffer *buffer,
         const struct arb_ps_compile_args *args, struct arb_ps_compiled_shader *compiled)
 {
-    const shader_reg_maps* reg_maps = &This->baseShader.reg_maps;
+    const struct wined3d_shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
     CONST DWORD *function = This->baseShader.function;
     const struct wined3d_gl_info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
     const local_constant *lconst;
@@ -4070,7 +4071,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This, struct
         const struct arb_vs_compile_args *args, struct arb_vs_compiled_shader *compiled)
 {
     const struct arb_vshader_private *shader_data = This->baseShader.backend_data;
-    const shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
+    const struct wined3d_shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
     CONST DWORD *function = This->baseShader.function;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)This->baseShader.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -4337,7 +4338,7 @@ static struct arb_vs_compiled_shader *find_arb_vshader(IWineD3DVertexShaderImpl 
 
     if (!shader->baseShader.backend_data)
     {
-        const struct shader_reg_maps *reg_maps = &shader->baseShader.reg_maps;
+        const struct wined3d_shader_reg_maps *reg_maps = &shader->baseShader.reg_maps;
 
         shader->baseShader.backend_data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*shader_data));
         shader_data = shader->baseShader.backend_data;
@@ -5058,7 +5059,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
 
 static inline BOOL get_bool_const(const struct wined3d_shader_instruction *ins, IWineD3DBaseShaderImpl *This, DWORD idx)
 {
-    const struct shader_reg_maps *reg_maps = ins->ctx->reg_maps;
+    const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
     BOOL vshader = shader_is_vshader_version(reg_maps->shader_version.type);
     WORD bools = 0;
     WORD flag = (1 << idx);
@@ -5089,7 +5090,7 @@ static inline BOOL get_bool_const(const struct wined3d_shader_instruction *ins, 
 static void get_loop_control_const(const struct wined3d_shader_instruction *ins,
         IWineD3DBaseShaderImpl *This, UINT idx, struct wined3d_shader_loop_control *loop_control)
 {
-    const struct shader_reg_maps *reg_maps = ins->ctx->reg_maps;
+    const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
 
     /* Integer constants can either be a local constant, or they can be stored in the shader

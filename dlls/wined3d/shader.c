@@ -348,7 +348,7 @@ static inline void set_bitmap_bit(DWORD *bitmap, DWORD bit)
     bitmap[idx] |= (1 << shift);
 }
 
-static void shader_record_register_usage(IWineD3DBaseShaderImpl *shader, struct shader_reg_maps *reg_maps,
+static void shader_record_register_usage(IWineD3DBaseShaderImpl *shader, struct wined3d_shader_reg_maps *reg_maps,
         const struct wined3d_shader_register *reg, enum wined3d_shader_type shader_type)
 {
     switch (reg->type)
@@ -449,7 +449,7 @@ static unsigned int get_instr_extra_regcount(enum WINED3D_SHADER_INSTRUCTION_HAN
 
 /* Note that this does not count the loop register as an address register. */
 static HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3d_shader_frontend *fe,
-        struct shader_reg_maps *reg_maps, struct wined3d_shader_signature_element *input_signature,
+        struct wined3d_shader_reg_maps *reg_maps, struct wined3d_shader_signature_element *input_signature,
         struct wined3d_shader_signature_element *output_signature, const DWORD *byte_code, DWORD constf_size)
 {
     IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
@@ -830,7 +830,7 @@ static HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct
     return WINED3D_OK;
 }
 
-unsigned int shader_find_free_input_register(const struct shader_reg_maps *reg_maps, unsigned int max)
+unsigned int shader_find_free_input_register(const struct wined3d_shader_reg_maps *reg_maps, unsigned int max)
 {
     DWORD map = 1 << max;
     map |= map - 1;
@@ -1164,7 +1164,7 @@ void shader_dump_src_param(const struct wined3d_shader_src_param *param,
 /* Shared code in order to generate the bulk of the shader string.
  * NOTE: A description of how to parse tokens can be found on MSDN. */
 void shader_generate_main(IWineD3DBaseShader *iface, struct wined3d_shader_buffer *buffer,
-        const shader_reg_maps *reg_maps, const DWORD *byte_code, void *backend_ctx)
+        const struct wined3d_shader_reg_maps *reg_maps, const DWORD *byte_code, void *backend_ctx)
 {
     IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)shader->baseShader.device;
@@ -1579,7 +1579,7 @@ static HRESULT shader_get_function(IWineD3DBaseShaderImpl *shader, void *data, U
 static HRESULT shader_set_function(IWineD3DBaseShaderImpl *shader, const DWORD *byte_code,
         const struct wined3d_shader_signature *output_signature, DWORD float_const_count)
 {
-    struct shader_reg_maps *reg_maps = &shader->baseShader.reg_maps;
+    struct wined3d_shader_reg_maps *reg_maps = &shader->baseShader.reg_maps;
     const struct wined3d_shader_frontend *fe;
     HRESULT hr;
 
@@ -1845,7 +1845,7 @@ HRESULT vertexshader_init(IWineD3DVertexShaderImpl *shader, IWineD3DDeviceImpl *
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    struct shader_reg_maps *reg_maps = &shader->baseShader.reg_maps;
+    struct wined3d_shader_reg_maps *reg_maps = &shader->baseShader.reg_maps;
     unsigned int i;
     HRESULT hr;
     WORD map;
@@ -2317,7 +2317,7 @@ HRESULT pixelshader_init(IWineD3DPixelShaderImpl *shader, IWineD3DDeviceImpl *de
     return WINED3D_OK;
 }
 
-void pixelshader_update_samplers(struct shader_reg_maps *reg_maps, IWineD3DBaseTexture * const *textures)
+void pixelshader_update_samplers(struct wined3d_shader_reg_maps *reg_maps, IWineD3DBaseTexture * const *textures)
 {
     WINED3DSAMPLER_TEXTURE_TYPE *sampler_type = reg_maps->sampler_type;
     unsigned int i;

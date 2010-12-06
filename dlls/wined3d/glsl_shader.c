@@ -907,7 +907,7 @@ static unsigned int vec4_varyings(DWORD shader_major, const struct wined3d_gl_in
 /** Generate the variable & register declarations for the GLSL output target */
 static void shader_generate_glsl_declarations(const struct wined3d_context *context,
         struct wined3d_shader_buffer *buffer, IWineD3DBaseShader *iface,
-        const shader_reg_maps *reg_maps, struct shader_glsl_ctx_priv *ctx_priv)
+        const struct wined3d_shader_reg_maps *reg_maps, struct shader_glsl_ctx_priv *ctx_priv)
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
@@ -1304,7 +1304,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
     static const char * const hwrastout_reg_names[] = {"OUT[10]", "OUT[11].x", "OUT[11].y"};
 
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    const struct shader_reg_maps *reg_maps = ins->ctx->reg_maps;
+    const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     char pshader = shader_is_pshader_version(reg_maps->shader_version.type);
 
@@ -3631,7 +3631,7 @@ static void shader_glsl_dp2add(const struct wined3d_shader_instruction *ins)
 }
 
 static void shader_glsl_input_pack(IWineD3DPixelShader *iface, struct wined3d_shader_buffer *buffer,
-        const struct wined3d_shader_signature_element *input_signature, const struct shader_reg_maps *reg_maps,
+        const struct wined3d_shader_signature_element *input_signature, const struct wined3d_shader_reg_maps *reg_maps,
         enum vertexprocessing_mode vertexprocessing)
 {
     unsigned int i;
@@ -3733,9 +3733,12 @@ static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const struc
     HeapFree(GetProcessHeap(), 0, entry);
 }
 
-static void handle_ps3_input(struct wined3d_shader_buffer *buffer, const struct wined3d_gl_info *gl_info, const DWORD *map,
-        const struct wined3d_shader_signature_element *input_signature, const struct shader_reg_maps *reg_maps_in,
-        const struct wined3d_shader_signature_element *output_signature, const struct shader_reg_maps *reg_maps_out)
+static void handle_ps3_input(struct wined3d_shader_buffer *buffer,
+        const struct wined3d_gl_info *gl_info, const DWORD *map,
+        const struct wined3d_shader_signature_element *input_signature,
+        const struct wined3d_shader_reg_maps *reg_maps_in,
+        const struct wined3d_shader_signature_element *output_signature,
+        const struct wined3d_shader_reg_maps *reg_maps_out)
 {
     unsigned int i, j;
     const char *semantic_name_in;
@@ -3957,7 +3960,7 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
         struct wined3d_shader_buffer *buffer, IWineD3DPixelShaderImpl *This,
         const struct ps_compile_args *args, struct ps_np2fixup_info *np2fixup_info)
 {
-    const struct shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
+    const struct wined3d_shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     CONST DWORD *function = This->baseShader.function;
     struct shader_glsl_ctx_priv priv_ctx;
@@ -4061,7 +4064,7 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
         struct wined3d_shader_buffer *buffer, IWineD3DVertexShaderImpl *This,
         const struct vs_compile_args *args)
 {
-    const struct shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
+    const struct wined3d_shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     CONST DWORD *function = This->baseShader.function;
     struct shader_glsl_ctx_priv priv_ctx;
