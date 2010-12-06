@@ -20,14 +20,16 @@
 
 #include "resource.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
 
 IDD_DIALOG1 DIALOG 0, 0, 186, 46
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE | DS_CENTER | DS_SETFOREGROUND
-CAPTION "Bildinl‰sning"
+CAPTION "Bildinl√§sning"
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT   "L‰ser in bild... var god v‰nta",IDC_STATIC,5,19,176,8, SS_CENTER
+    LTEXT   "L√§ser in bild... var god v√§nta",IDC_STATIC,5,19,176,8, SS_CENTER
 END
 
 STRINGTABLE
