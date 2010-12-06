@@ -35,47 +35,48 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 typedef struct {
     HTMLElement element;
 
-    const IHTMLAnchorElementVtbl *lpHTMLAnchorElementVtbl;
+    IHTMLAnchorElement IHTMLAnchorElement_iface;
 
     nsIDOMHTMLAnchorElement *nsanchor;
 } HTMLAnchorElement;
 
-#define HTMLANCHOR(x)  (&(x)->lpHTMLAnchorElementVtbl)
-
-#define HTMLANCHOR_THIS(iface) DEFINE_THIS(HTMLAnchorElement, HTMLAnchorElement, iface)
+static inline HTMLAnchorElement *impl_from_IHTMLAnchorElement(IHTMLAnchorElement *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLAnchorElement, IHTMLAnchorElement_iface);
+}
 
 static HRESULT WINAPI HTMLAnchorElement_QueryInterface(IHTMLAnchorElement *iface,
         REFIID riid, void **ppv)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
 
     return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->element.node), riid, ppv);
 }
 
 static ULONG WINAPI HTMLAnchorElement_AddRef(IHTMLAnchorElement *iface)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
 
     return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->element.node));
 }
 
 static ULONG WINAPI HTMLAnchorElement_Release(IHTMLAnchorElement *iface)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
 
     return IHTMLDOMNode_Release(HTMLDOMNODE(&This->element.node));
 }
 
 static HRESULT WINAPI HTMLAnchorElement_GetTypeInfoCount(IHTMLAnchorElement *iface, UINT *pctinfo)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     return IDispatchEx_GetTypeInfoCount(DISPATCHEX(&This->element.node.dispex), pctinfo);
 }
 
 static HRESULT WINAPI HTMLAnchorElement_GetTypeInfo(IHTMLAnchorElement *iface, UINT iTInfo,
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     return IDispatchEx_GetTypeInfo(DISPATCHEX(&This->element.node.dispex), iTInfo, lcid, ppTInfo);
 }
 
@@ -83,7 +84,7 @@ static HRESULT WINAPI HTMLAnchorElement_GetIDsOfNames(IHTMLAnchorElement *iface,
                                                 LPOLESTR *rgszNames, UINT cNames,
                                                 LCID lcid, DISPID *rgDispId)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     return IDispatchEx_GetIDsOfNames(DISPATCHEX(&This->element.node.dispex), riid, rgszNames, cNames, lcid, rgDispId);
 }
 
@@ -91,21 +92,21 @@ static HRESULT WINAPI HTMLAnchorElement_Invoke(IHTMLAnchorElement *iface, DISPID
                             REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     return IDispatchEx_Invoke(DISPATCHEX(&This->element.node.dispex), dispIdMember, riid, lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_href(IHTMLAnchorElement *iface, BSTR v)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_get_href(IHTMLAnchorElement *iface, BSTR *p)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     nsAString href_str;
     nsresult nsres;
     HRESULT hres;
@@ -130,189 +131,189 @@ static HRESULT WINAPI HTMLAnchorElement_get_href(IHTMLAnchorElement *iface, BSTR
 
 static HRESULT WINAPI HTMLAnchorElement_put_target(IHTMLAnchorElement *iface, BSTR v)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_get_target(IHTMLAnchorElement *iface, BSTR *p)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_rel(IHTMLAnchorElement *iface, BSTR v)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_get_rel(IHTMLAnchorElement *iface, BSTR *p)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_rev(IHTMLAnchorElement *iface, BSTR v)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_get_rev(IHTMLAnchorElement *iface, BSTR *p)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_urn(IHTMLAnchorElement *iface, BSTR v)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_get_urn(IHTMLAnchorElement *iface, BSTR *p)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_Methods(IHTMLAnchorElement *iface, BSTR v)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_get_Methods(IHTMLAnchorElement *iface, BSTR *p)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_name(IHTMLAnchorElement *iface, BSTR v)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_get_name(IHTMLAnchorElement *iface, BSTR *p)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_host(IHTMLAnchorElement *iface, BSTR v)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_get_host(IHTMLAnchorElement *iface, BSTR *p)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_hostname(IHTMLAnchorElement *iface, BSTR v)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_get_hostname(IHTMLAnchorElement *iface, BSTR *p)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_pathname(IHTMLAnchorElement *iface, BSTR v)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_get_pathname(IHTMLAnchorElement *iface, BSTR *p)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_port(IHTMLAnchorElement *iface, BSTR v)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_get_port(IHTMLAnchorElement *iface, BSTR *p)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_protocol(IHTMLAnchorElement *iface, BSTR v)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_get_protocol(IHTMLAnchorElement *iface, BSTR *p)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_search(IHTMLAnchorElement *iface, BSTR v)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%p)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_get_search(IHTMLAnchorElement *iface, BSTR *p)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_hash(IHTMLAnchorElement *iface, BSTR v)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_get_hash(IHTMLAnchorElement *iface, BSTR *p)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_onblur(IHTMLAnchorElement *iface, VARIANT v)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
 
     TRACE("(%p)->()\n", This);
 
@@ -321,7 +322,7 @@ static HRESULT WINAPI HTMLAnchorElement_put_onblur(IHTMLAnchorElement *iface, VA
 
 static HRESULT WINAPI HTMLAnchorElement_get_onblur(IHTMLAnchorElement *iface, VARIANT *p)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -330,7 +331,7 @@ static HRESULT WINAPI HTMLAnchorElement_get_onblur(IHTMLAnchorElement *iface, VA
 
 static HRESULT WINAPI HTMLAnchorElement_put_onfocus(IHTMLAnchorElement *iface, VARIANT v)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
 
     TRACE("(%p)->()\n", This);
 
@@ -339,7 +340,7 @@ static HRESULT WINAPI HTMLAnchorElement_put_onfocus(IHTMLAnchorElement *iface, V
 
 static HRESULT WINAPI HTMLAnchorElement_get_onfocus(IHTMLAnchorElement *iface, VARIANT *p)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -348,7 +349,7 @@ static HRESULT WINAPI HTMLAnchorElement_get_onfocus(IHTMLAnchorElement *iface, V
 
 static HRESULT WINAPI HTMLAnchorElement_put_accessKey(IHTMLAnchorElement *iface, BSTR v)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
@@ -357,7 +358,7 @@ static HRESULT WINAPI HTMLAnchorElement_put_accessKey(IHTMLAnchorElement *iface,
 
 static HRESULT WINAPI HTMLAnchorElement_get_accessKey(IHTMLAnchorElement *iface, BSTR *p)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -366,28 +367,28 @@ static HRESULT WINAPI HTMLAnchorElement_get_accessKey(IHTMLAnchorElement *iface,
 
 static HRESULT WINAPI HTMLAnchorElement_get_protocolLong(IHTMLAnchorElement *iface, BSTR *p)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_get_mimeType(IHTMLAnchorElement *iface, BSTR *p)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_get_nameProp(IHTMLAnchorElement *iface, BSTR *p)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_tabIndex(IHTMLAnchorElement *iface, short v)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
 
     TRACE("(%p)->()\n", This);
 
@@ -396,7 +397,7 @@ static HRESULT WINAPI HTMLAnchorElement_put_tabIndex(IHTMLAnchorElement *iface, 
 
 static HRESULT WINAPI HTMLAnchorElement_get_tabIndex(IHTMLAnchorElement *iface, short *p)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -405,7 +406,7 @@ static HRESULT WINAPI HTMLAnchorElement_get_tabIndex(IHTMLAnchorElement *iface, 
 
 static HRESULT WINAPI HTMLAnchorElement_focus(IHTMLAnchorElement *iface)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
 
     TRACE("(%p)\n", This);
 
@@ -414,14 +415,12 @@ static HRESULT WINAPI HTMLAnchorElement_focus(IHTMLAnchorElement *iface)
 
 static HRESULT WINAPI HTMLAnchorElement_blur(IHTMLAnchorElement *iface)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_THIS(iface);
+    HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
 
     TRACE("(%p)\n", This);
 
     return IHTMLElement2_blur(HTMLELEM2(&This->element));
 }
-
-#undef HTMLANCHOR_THIS
 
 static const IHTMLAnchorElementVtbl HTMLAnchorElementVtbl = {
     HTMLAnchorElement_QueryInterface,
@@ -484,13 +483,13 @@ static HRESULT HTMLAnchorElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = HTMLANCHOR(This);
+        *ppv = &This->IHTMLAnchorElement_iface;
     }else if(IsEqualGUID(&IID_IDispatch, riid)) {
         TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = HTMLANCHOR(This);
+        *ppv = &This->IHTMLAnchorElement_iface;
     }else if(IsEqualGUID(&IID_IHTMLAnchorElement, riid)) {
         TRACE("(%p)->(IID_IHTMLAnchorElement %p)\n", This, ppv);
-        *ppv = HTMLANCHOR(This);
+        *ppv = &This->IHTMLAnchorElement_iface;
     }
 
     if(*ppv) {
@@ -543,7 +542,7 @@ HRESULT HTMLAnchorElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nsele
     if(!ret)
         return E_OUTOFMEMORY;
 
-    ret->lpHTMLAnchorElementVtbl = &HTMLAnchorElementVtbl;
+    ret->IHTMLAnchorElement_iface.lpVtbl = &HTMLAnchorElementVtbl;
     ret->element.node.vtbl = &HTMLAnchorElementImplVtbl;
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLAnchorElement, (void**)&ret->nsanchor);
