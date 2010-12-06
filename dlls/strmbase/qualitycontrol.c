@@ -148,18 +148,11 @@ HRESULT QualityControlRender_WaitFor(QualityControlImpl *This, IMediaSample *sam
         now -= This->clockstart;
 
         jitter = now - start;
-#if 0
-        /* AdviseTime is bugged, so don't use it at all */
-        if (jitter < -200000) {
+        if (jitter <= -10000) {
             DWORD_PTR cookie;
-            IReferenceClock_AdviseTime(This->clock, clockstart, start, ev, &cookie);
+            IReferenceClock_AdviseTime(This->clock, This->clockstart, start, (HEVENT)ev, &cookie);
             WaitForSingleObject(ev, INFINITE);
-            IReferenceClock_Unadvise(This->clock,  cookie);
-        } else
-#endif
-        if (jitter < -10000) {
-            TRACE("Sleeping for %i ms\n", (int)-jitter/10000);
-            WaitForSingleObject(ev, -jitter/10000);
+            IReferenceClock_Unadvise(This->clock, cookie);
         }
     }
     else
