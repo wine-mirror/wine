@@ -114,6 +114,15 @@ static HRESULT WINAPI PHClientSite_QueryInterface(IOleClientSite *iface, REFIID 
     }else if(IsEqualGUID(&IID_IDispatch, riid)) {
         TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
         *ppv = &This->IDispatch_iface;
+    }else if(IsEqualGUID(&IID_IOleWindow, riid)) {
+        TRACE("(%p)->(IID_IOleWindow %p)\n", This, ppv);
+        *ppv = &This->IOleInPlaceSiteEx_iface;
+    }else if(IsEqualGUID(&IID_IOleInPlaceSite, riid)) {
+        TRACE("(%p)->(IID_IOleInPlaceSite %p)\n", This, ppv);
+        *ppv = &This->IOleInPlaceSiteEx_iface;
+    }else if(IsEqualGUID(&IID_IOleInPlaceSiteEx, riid)) {
+        TRACE("(%p)->(IID_IOleInPlaceSiteEx %p)\n", This, ppv);
+        *ppv = &This->IOleInPlaceSiteEx_iface;
     }else {
         WARN("Unsupported interface %s\n", debugstr_guid(riid));
         *ppv = NULL;
@@ -385,6 +394,157 @@ static const IDispatchVtbl DispatchVtbl = {
     PHDispatch_Invoke
 };
 
+static inline PluginHost *impl_from_IOleInPlaceSiteEx(IOleInPlaceSiteEx *iface)
+{
+    return CONTAINING_RECORD(iface, PluginHost, IOleInPlaceSiteEx_iface);
+}
+
+static HRESULT WINAPI PHInPlaceSite_QueryInterface(IOleInPlaceSiteEx *iface, REFIID riid, void **ppv)
+{
+    PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
+    return IOleClientSite_QueryInterface(&This->IOleClientSite_iface, riid, ppv);
+}
+
+static ULONG WINAPI PHInPlaceSite_AddRef(IOleInPlaceSiteEx *iface)
+{
+    PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
+    return IOleClientSite_AddRef(&This->IOleClientSite_iface);
+}
+
+static ULONG WINAPI PHInPlaceSite_Release(IOleInPlaceSiteEx *iface)
+{
+    PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
+    return IOleClientSite_Release(&This->IOleClientSite_iface);
+}
+
+static HRESULT WINAPI PHInPlaceSite_GetWindow(IOleInPlaceSiteEx *iface, HWND *phwnd)
+{
+    PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
+    FIXME("(%p)->(%p)\n", This, phwnd);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHInPlaceSite_ContextSensitiveHelp(IOleInPlaceSiteEx *iface, BOOL fEnterMode)
+{
+    PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
+    FIXME("(%p)->(%x)\n", This, fEnterMode);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHInPlaceSite_CanInPlaceActivate(IOleInPlaceSiteEx *iface)
+{
+    PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHInPlaceSite_OnInPlaceActivate(IOleInPlaceSiteEx *iface)
+{
+    PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHInPlaceSite_OnUIActivate(IOleInPlaceSiteEx *iface)
+{
+    PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHInPlaceSite_GetWindowContext(IOleInPlaceSiteEx *iface,
+        IOleInPlaceFrame **ppFrame, IOleInPlaceUIWindow **ppDoc, RECT *lprcPosRect,
+        RECT *lprcClipRect, OLEINPLACEFRAMEINFO *frame_info)
+{
+    PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
+    FIXME("(%p)->(%p %p %p %p %p)\n", This, ppFrame, ppDoc, lprcPosRect, lprcClipRect, frame_info);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHInPlaceSite_Scroll(IOleInPlaceSiteEx *iface, SIZE scrollExtent)
+{
+    PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
+    FIXME("(%p)->({%d %d})\n", This, scrollExtent.cx, scrollExtent.cy);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHInPlaceSite_OnUIDeactivate(IOleInPlaceSiteEx *iface, BOOL fUndoable)
+{
+    PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
+    FIXME("(%p)->(%x)\n", This, fUndoable);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHInPlaceSite_OnInPlaceDeactivate(IOleInPlaceSiteEx *iface)
+{
+    PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHInPlaceSite_DiscardUndoState(IOleInPlaceSiteEx *iface)
+{
+    PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHInPlaceSite_DeactivateAndUndo(IOleInPlaceSiteEx *iface)
+{
+    PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHInPlaceSite_OnPosRectChange(IOleInPlaceSiteEx *iface, LPCRECT lprcPosRect)
+{
+    PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
+    FIXME("(%p)->(%p)\n", This, lprcPosRect);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHInPlaceSiteEx_OnInPlaceActivateEx(IOleInPlaceSiteEx *iface, BOOL *pfNoRedraw, DWORD dwFlags)
+{
+    PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
+    FIXME("(%p)->(%p %x)\n", This, pfNoRedraw, dwFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHInPlaceSiteEx_OnInPlaceDeactivateEx(IOleInPlaceSiteEx *iface, BOOL fNoRedraw)
+{
+    PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
+    FIXME("(%p)->(%x)\n", This, fNoRedraw);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHInPlaceSiteEx_RequestUIActivate(IOleInPlaceSiteEx *iface)
+{
+    PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static const IOleInPlaceSiteExVtbl OleInPlaceSiteExVtbl = {
+    PHInPlaceSite_QueryInterface,
+    PHInPlaceSite_AddRef,
+    PHInPlaceSite_Release,
+    PHInPlaceSite_GetWindow,
+    PHInPlaceSite_ContextSensitiveHelp,
+    PHInPlaceSite_CanInPlaceActivate,
+    PHInPlaceSite_OnInPlaceActivate,
+    PHInPlaceSite_OnUIActivate,
+    PHInPlaceSite_GetWindowContext,
+    PHInPlaceSite_Scroll,
+    PHInPlaceSite_OnUIDeactivate,
+    PHInPlaceSite_OnInPlaceDeactivate,
+    PHInPlaceSite_DiscardUndoState,
+    PHInPlaceSite_DeactivateAndUndo,
+    PHInPlaceSite_OnPosRectChange,
+    PHInPlaceSiteEx_OnInPlaceActivateEx,
+    PHInPlaceSiteEx_OnInPlaceDeactivateEx,
+    PHInPlaceSiteEx_RequestUIActivate
+};
+
 HRESULT create_plugin_host(IUnknown *unk, PluginHost **ret)
 {
     PluginHost *host;
@@ -397,6 +557,7 @@ HRESULT create_plugin_host(IUnknown *unk, PluginHost **ret)
     host->IAdviseSinkEx_iface.lpVtbl       = &AdviseSinkExVtbl;
     host->IPropertyNotifySink_iface.lpVtbl = &PropertyNotifySinkVtbl;
     host->IDispatch_iface.lpVtbl           = &DispatchVtbl;
+    host->IOleInPlaceSiteEx_iface.lpVtbl   = &OleInPlaceSiteExVtbl;
 
     host->ref = 1;
 

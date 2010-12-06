@@ -93,6 +93,9 @@ static const REFIID pluginhost_iids[] = {
     &IID_IAdviseSinkEx,
     &IID_IPropertyNotifySink,
     &IID_IDispatch,
+    &IID_IOleWindow,
+    &IID_IOleInPlaceSite,
+    &IID_IOleInPlaceSiteEx,
     NULL
 };
 

@@ -23,6 +23,7 @@ typedef struct {
     IAdviseSinkEx        IAdviseSinkEx_iface;
     IPropertyNotifySink  IPropertyNotifySink_iface;
     IDispatch            IDispatch_iface;
+    IOleInPlaceSiteEx    IOleInPlaceSiteEx_iface;
 
     LONG ref;
 
