@@ -1085,6 +1085,182 @@ static void test_so_reuseaddr(void)
     closesocket(s2);
 }
 
+#define IP_PKTINFO_LEN (sizeof(WSACMSGHDR) + WSA_CMSG_ALIGN(sizeof(struct in_pktinfo)))
+
+static void test_ip_pktinfo(void)
+{
+    ULONG addresses[2] = {inet_addr("127.0.0.1"), htonl(INADDR_ANY)};
+    char recvbuf[10], pktbuf[512], msg[] = "HELLO";
+    struct sockaddr_in s1addr, s2addr, s3addr;
+    GUID WSARecvMsg_GUID = WSAID_WSARECVMSG;
+    LPFN_WSARECVMSG pWSARecvMsg = NULL;
+    unsigned int rc, foundhdr, yes = 1;
+    DWORD dwBytes, dwSize, dwFlags;
+    socklen_t addrlen;
+    WSACMSGHDR *cmsg;
+    WSAOVERLAPPED ov;
+    WSABUF iovec[1];
+    SOCKET s1, s2;
+    WSAMSG hdr;
+    int i, err;
+
+    memset(&ov, 0, sizeof(ov));
+    ov.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    if (ov.hEvent == INVALID_HANDLE_VALUE)
+    {
+        skip("Could not create event object, some tests will be skipped. errno = %d\n", GetLastError());
+        return;
+    }
+
+    memset(&hdr, 0x00, sizeof(hdr));
+    s1addr.sin_family = AF_INET;
+    s1addr.sin_port   = htons(0);
+    /* Note: s1addr.sin_addr is set below */
+    iovec[0].buf      = recvbuf;
+    iovec[0].len      = sizeof(recvbuf);
+    hdr.name          = (struct sockaddr*)&s3addr;
+    hdr.namelen       = sizeof(s3addr);
+    hdr.lpBuffers     = &iovec[0];
+    hdr.dwBufferCount = 1;
+    hdr.Control.buf   = pktbuf;
+    /* Note: hdr.Control.len is set below */
+    hdr.dwFlags       = 0;
+
+    for (i=0;i<sizeof(addresses)/sizeof(UINT32);i++)
+    {
+        s1addr.sin_addr.s_addr = addresses[i];
+
+        /* Build "server" side socket */
+        s1=socket(AF_INET, SOCK_DGRAM, 0);
+        if (s1 == INVALID_SOCKET)
+        {
+            skip("socket() failed error, some tests skipped: %d\n", WSAGetLastError());
+            goto cleanup;
+        }
+
+        /* Obtain the WSARecvMsg function */
+        WSAIoctl(s1, SIO_GET_EXTENSION_FUNCTION_POINTER, &WSARecvMsg_GUID, sizeof(WSARecvMsg_GUID),
+                 &pWSARecvMsg, sizeof(pWSARecvMsg), &dwBytes, NULL, NULL);
+        if (!pWSARecvMsg)
+        {
+            win_skip("WSARecvMsg is unsupported, some tests will be skipped.\n");
+            closesocket(s1);
+            goto cleanup;
+        }
+
+        /* Setup the server side socket */
+        rc=bind(s1, (struct sockaddr*)&s1addr, sizeof(s1addr));
+        ok(rc != SOCKET_ERROR, "bind() failed error: %d\n", WSAGetLastError());
+        rc=setsockopt(s1, IPPROTO_IP, IP_PKTINFO, (const char*)&yes, sizeof(yes));
+        ok(rc == 0, "failed to set IPPROTO_IP flag IP_PKTINFO!\n");
+
+        /* Build "client" side socket */
+        addrlen = sizeof(s2addr);
+        if (getsockname(s1, (struct sockaddr *) &s2addr, &addrlen) != 0)
+        {
+            skip("Failed to call getsockname, some tests skipped: %d\n", WSAGetLastError());
+            closesocket(s1);
+            goto cleanup;
+        }
+        s2addr.sin_addr.s_addr = addresses[0]; /* Always target the local adapter address */
+        s2=socket(AF_INET, SOCK_DGRAM, 0);
+        if (s2 == INVALID_SOCKET)
+        {
+            skip("socket() failed error, some tests skipped: %d\n", WSAGetLastError());
+            closesocket(s1);
+            goto cleanup;
+        }
+
+        /* Test an empty message header */
+        rc=pWSARecvMsg(s1, NULL, NULL, NULL, NULL);
+        err=WSAGetLastError();
+        ok(rc == SOCKET_ERROR && err == WSAEFAULT, "WSARecvMsg() failed error: %d (ret = %d)\n", err, rc);
+
+        /*
+         * Send a packet from the client to the server and test for specifying
+         * a short control header.
+         */
+        rc=sendto(s2, msg, sizeof(msg), 0, (struct sockaddr*)&s2addr, sizeof(s2addr));
+        ok(rc == sizeof(msg), "sendto() failed error: %d\n", WSAGetLastError());
+        hdr.Control.len = 1;
+        rc=pWSARecvMsg(s1, &hdr, &dwSize, NULL, NULL);
+        err=WSAGetLastError();
+        ok(rc == SOCKET_ERROR && err == WSAEMSGSIZE && (hdr.dwFlags & MSG_CTRUNC),
+           "WSARecvMsg() failed error: %d (ret: %d, flags: %d)\n", err, rc, hdr.dwFlags);
+        hdr.dwFlags = 0; /* Reset flags */
+
+        /* Perform another short control header test, this time with an overlapped receive */
+        hdr.Control.len = 1;
+        rc=pWSARecvMsg(s1, &hdr, NULL, &ov, NULL);
+        err=WSAGetLastError();
+        ok(rc != 0 && err == WSA_IO_PENDING, "WSARecvMsg() failed error: %d\n", err);
+        rc=sendto(s2, msg, sizeof(msg), 0, (struct sockaddr*)&s2addr, sizeof(s2addr));
+        ok(rc == sizeof(msg), "sendto() failed error: %d\n", WSAGetLastError());
+        if (WaitForSingleObject(ov.hEvent, 100) != WAIT_OBJECT_0)
+        {
+            skip("Server side did not receive packet, some tests skipped.\n");
+            closesocket(s2);
+            closesocket(s1);
+            continue;
+        }
+        dwFlags = 0;
+        WSAGetOverlappedResult(s1, &ov, NULL, FALSE, &dwFlags);
+        ok(dwFlags == 0,
+           "WSAGetOverlappedResult() returned unexpected flags %d!\n", dwFlags);
+        ok(hdr.dwFlags == MSG_CTRUNC,
+           "WSARecvMsg() overlapped operation set unexpected flags %d.\n", hdr.dwFlags);
+        hdr.dwFlags = 0; /* Reset flags */
+
+        /*
+         * Setup an overlapped receive, send a packet, then wait for the packet to be retrieved
+         * on the server end and check that the returned packet matches what was sent.
+         */
+        hdr.Control.len = sizeof(pktbuf);
+        rc=pWSARecvMsg(s1, &hdr, NULL, &ov, NULL);
+        err=WSAGetLastError();
+        ok(rc != 0 && err == WSA_IO_PENDING, "WSARecvMsg() failed error: %d\n", err);
+        ok(hdr.Control.len == sizeof(pktbuf),
+           "WSARecvMsg() control length mismatch (%d != sizeof pktbuf).\n", hdr.Control.len);
+        rc=sendto(s2, msg, sizeof(msg), 0, (struct sockaddr*)&s2addr, sizeof(s2addr));
+        ok(rc == sizeof(msg), "sendto() failed error: %d\n", WSAGetLastError());
+        if (WaitForSingleObject(ov.hEvent, 100) != WAIT_OBJECT_0)
+        {
+            skip("Server side did not receive packet, some tests skipped.\n");
+            closesocket(s2);
+            closesocket(s1);
+            continue;
+        }
+        dwSize = 0;
+        WSAGetOverlappedResult(s1, &ov, &dwSize, FALSE, NULL);
+        ok(dwSize == sizeof(msg),
+           "WSARecvMsg() buffer length does not match transmitted data!\n");
+        ok(strncmp(iovec[0].buf, msg, sizeof(msg)) == 0,
+           "WSARecvMsg() buffer does not match transmitted data!\n");
+        ok(hdr.Control.len == IP_PKTINFO_LEN,
+           "WSARecvMsg() control length mismatch (%d != %d).\n", hdr.Control.len, IP_PKTINFO_LEN);
+
+        /* Test for the expected IP_PKTINFO return information. */
+        foundhdr = FALSE;
+        for (cmsg = WSA_CMSG_FIRSTHDR(&hdr); cmsg != NULL; cmsg = WSA_CMSG_NXTHDR(&hdr, cmsg))
+        {
+            if (cmsg->cmsg_level == IPPROTO_IP && cmsg->cmsg_type == IP_PKTINFO)
+            {
+                struct in_pktinfo *pi = (struct in_pktinfo *)WSA_CMSG_DATA(cmsg);
+
+                ok(pi->ipi_addr.s_addr == s2addr.sin_addr.s_addr, "destination ip mismatch!\n");
+                foundhdr = TRUE;
+            }
+        }
+        ok(foundhdr, "IP_PKTINFO header information was not returned!\n");
+
+        closesocket(s2);
+        closesocket(s1);
+    }
+
+cleanup:
+    CloseHandle(ov.hEvent);
+}
+
 /************* Array containing the tests to run **********/
 
 #define STD_STREAM_SOCKET \
@@ -4422,6 +4598,7 @@ START_TEST( sock )
 
     test_set_getsockopt();
     test_so_reuseaddr();
+    test_ip_pktinfo();
     test_extendedSocketOptions();
 
     for (i = 0; i < NUM_TESTS; i++)
