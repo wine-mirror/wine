@@ -21,6 +21,7 @@ typedef struct HTMLObjectElement HTMLObjectElement;
 typedef struct {
     IOleClientSite       IOleClientSite_iface;
     IAdviseSinkEx        IAdviseSinkEx_iface;
+    IPropertyNotifySink  IPropertyNotifySink_iface;
 
     LONG ref;
 

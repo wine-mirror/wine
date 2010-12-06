@@ -181,7 +181,6 @@ static HRESULT WINAPI QuickActivate_QuickActivate(IQuickActivate *iface, QACONTA
     ok(container->cbSize == sizeof(*container), "container->cbSize = %d\n", container->cbSize);
     ok(container->pClientSite != NULL, "container->pClientSite == NULL\n");
     ok(container->pAdviseSink != NULL, "container->pAdviseSink == NULL\n");
-    todo_wine
     ok(container->pPropertyNotifySink != NULL, "container->pPropertyNotifySink == NULL\n");
     ok(!container->pUnkEventSink, "container->pUnkEventSink != NULL\n");
     ok(container->dwAmbientFlags == (QACONTAINER_SUPPORTSMNEMONICS|QACONTAINER_MESSAGEREFLECT|QACONTAINER_USERMODE),
@@ -209,6 +208,8 @@ static HRESULT WINAPI QuickActivate_QuickActivate(IQuickActivate *iface, QACONTA
 
     ok(iface_cmp((IUnknown*)container->pClientSite, (IUnknown*)container->pAdviseSink),
        "container->pClientSite != container->pAdviseSink\n");
+    ok(iface_cmp((IUnknown*)container->pClientSite, (IUnknown*)container->pPropertyNotifySink),
+       "container->pClientSite != container->pPropertyNotifySink\n");
 
     return S_OK;
 }

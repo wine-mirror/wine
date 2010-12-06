@@ -64,7 +64,7 @@ static void activate_plugin(PluginHost *host)
         container.pClientSite = &host->IOleClientSite_iface;
         container.dwAmbientFlags = QACONTAINER_SUPPORTSMNEMONICS|QACONTAINER_MESSAGEREFLECT|QACONTAINER_USERMODE;
         container.pAdviseSink = &host->IAdviseSinkEx_iface;
-        container.pPropertyNotifySink = NULL; /* FIXME */
+        container.pPropertyNotifySink = &host->IPropertyNotifySink_iface;
 
         hres = IQuickActivate_QuickActivate(quick_activate, &container, &control);
         if(FAILED(hres))
@@ -108,6 +108,9 @@ static HRESULT WINAPI PHClientSite_QueryInterface(IOleClientSite *iface, REFIID 
     }else if(IsEqualGUID(&IID_IAdviseSinkEx, riid)) {
         TRACE("(%p)->(IID_IAdviseSinkEx %p)\n", This, ppv);
         *ppv = &This->IAdviseSinkEx_iface;
+    }else if(IsEqualGUID(&IID_IPropertyNotifySink, riid)) {
+        TRACE("(%p)->(IID_IPropertyNotifySink %p)\n", This, ppv);
+        *ppv = &This->IPropertyNotifySink_iface;
     }else {
         WARN("Unsupported interface %s\n", debugstr_guid(riid));
         *ppv = NULL;
@@ -270,6 +273,51 @@ static const IAdviseSinkExVtbl AdviseSinkExVtbl = {
     PHAdviseSinkEx_OnViewStatusChange
 };
 
+static inline PluginHost *impl_from_IPropertyNotifySink(IPropertyNotifySink *iface)
+{
+    return CONTAINING_RECORD(iface, PluginHost, IPropertyNotifySink_iface);
+}
+
+static HRESULT WINAPI PHPropertyNotifySink_QueryInterface(IPropertyNotifySink *iface, REFIID riid, void **ppv)
+{
+    PluginHost *This = impl_from_IPropertyNotifySink(iface);
+    return IOleClientSite_QueryInterface(&This->IOleClientSite_iface, riid, ppv);
+}
+
+static ULONG WINAPI PHPropertyNotifySink_AddRef(IPropertyNotifySink *iface)
+{
+    PluginHost *This = impl_from_IPropertyNotifySink(iface);
+    return IOleClientSite_AddRef(&This->IOleClientSite_iface);
+}
+
+static ULONG WINAPI PHPropertyNotifySink_Release(IPropertyNotifySink *iface)
+{
+    PluginHost *This = impl_from_IPropertyNotifySink(iface);
+    return IOleClientSite_Release(&This->IOleClientSite_iface);
+}
+
+static HRESULT WINAPI PHPropertyNotifySink_OnChanged(IPropertyNotifySink *iface, DISPID dispID)
+{
+    PluginHost *This = impl_from_IPropertyNotifySink(iface);
+    FIXME("(%p)->(%d)\n", This, dispID);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHPropertyNotifySink_OnRequestEdit(IPropertyNotifySink *iface, DISPID dispID)
+{
+    PluginHost *This = impl_from_IPropertyNotifySink(iface);
+    FIXME("(%p)->(%d)\n", This, dispID);
+    return E_NOTIMPL;
+}
+
+static const IPropertyNotifySinkVtbl PropertyNotifySinkVtbl = {
+    PHPropertyNotifySink_QueryInterface,
+    PHPropertyNotifySink_AddRef,
+    PHPropertyNotifySink_Release,
+    PHPropertyNotifySink_OnChanged,
+    PHPropertyNotifySink_OnRequestEdit
+};
+
 HRESULT create_plugin_host(IUnknown *unk, PluginHost **ret)
 {
     PluginHost *host;
@@ -278,8 +326,9 @@ HRESULT create_plugin_host(IUnknown *unk, PluginHost **ret)
     if(!host)
         return E_OUTOFMEMORY;
 
-    host->IOleClientSite_iface.lpVtbl = &OleClientSiteVtbl;
-    host->IAdviseSinkEx_iface.lpVtbl  = &AdviseSinkExVtbl;
+    host->IOleClientSite_iface.lpVtbl      = &OleClientSiteVtbl;
+    host->IAdviseSinkEx_iface.lpVtbl       = &AdviseSinkExVtbl;
+    host->IPropertyNotifySink_iface.lpVtbl = &PropertyNotifySinkVtbl;
 
     host->ref = 1;
 
