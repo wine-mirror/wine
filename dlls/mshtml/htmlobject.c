@@ -35,47 +35,48 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 typedef struct {
     HTMLElement element;
 
-    const IHTMLObjectElementVtbl *lpIHTMLObjectElementVtbl;
+    IHTMLObjectElement IHTMLObjectElement_iface;
 
     nsIDOMHTMLObjectElement *nsobject;
 } HTMLObjectElement;
 
-#define HTMLOBJECT(x)  ((IHTMLObjectElement*)  &(x)->lpIHTMLObjectElementVtbl)
-
-#define HTMLOBJECT_THIS(iface) DEFINE_THIS(HTMLObjectElement, IHTMLObjectElement, iface)
+static inline HTMLObjectElement *impl_from_IHTMLObjectElement(IHTMLObjectElement *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLObjectElement, IHTMLObjectElement_iface);
+}
 
 static HRESULT WINAPI HTMLObjectElement_QueryInterface(IHTMLObjectElement *iface,
         REFIID riid, void **ppv)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
 
     return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->element.node), riid, ppv);
 }
 
 static ULONG WINAPI HTMLObjectElement_AddRef(IHTMLObjectElement *iface)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
 
     return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->element.node));
 }
 
 static ULONG WINAPI HTMLObjectElement_Release(IHTMLObjectElement *iface)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
 
     return IHTMLDOMNode_Release(HTMLDOMNODE(&This->element.node));
 }
 
 static HRESULT WINAPI HTMLObjectElement_GetTypeInfoCount(IHTMLObjectElement *iface, UINT *pctinfo)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     return IDispatchEx_GetTypeInfoCount(DISPATCHEX(&This->element.node.dispex), pctinfo);
 }
 
 static HRESULT WINAPI HTMLObjectElement_GetTypeInfo(IHTMLObjectElement *iface, UINT iTInfo,
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     return IDispatchEx_GetTypeInfo(DISPATCHEX(&This->element.node.dispex), iTInfo, lcid, ppTInfo);
 }
 
@@ -83,7 +84,7 @@ static HRESULT WINAPI HTMLObjectElement_GetIDsOfNames(IHTMLObjectElement *iface,
                                                 LPOLESTR *rgszNames, UINT cNames,
                                                 LCID lcid, DISPID *rgDispId)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     return IDispatchEx_GetIDsOfNames(DISPATCHEX(&This->element.node.dispex), riid, rgszNames, cNames, lcid, rgDispId);
 }
 
@@ -91,231 +92,231 @@ static HRESULT WINAPI HTMLObjectElement_Invoke(IHTMLObjectElement *iface, DISPID
                             REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     return IDispatchEx_Invoke(DISPATCHEX(&This->element.node.dispex), dispIdMember, riid, lcid, wFlags, pDispParams,
             pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI HTMLObjectElement_get_object(IHTMLObjectElement *iface, IDispatch **p)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_get_classid(IHTMLObjectElement *iface, BSTR *p)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_get_data(IHTMLObjectElement *iface, BSTR *p)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_put_recordset(IHTMLObjectElement *iface, IDispatch *v)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%p)\n", This, v);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_get_recordset(IHTMLObjectElement *iface, IDispatch **p)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_put_align(IHTMLObjectElement *iface, BSTR v)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_get_align(IHTMLObjectElement *iface, BSTR *p)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_put_name(IHTMLObjectElement *iface, BSTR v)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_get_name(IHTMLObjectElement *iface, BSTR *p)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_put_codeBase(IHTMLObjectElement *iface, BSTR v)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_get_codeBase(IHTMLObjectElement *iface, BSTR *p)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_put_codeType(IHTMLObjectElement *iface, BSTR v)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_get_codeType(IHTMLObjectElement *iface, BSTR *p)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_put_code(IHTMLObjectElement *iface, BSTR v)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_get_code(IHTMLObjectElement *iface, BSTR *p)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_get_BaseHref(IHTMLObjectElement *iface, BSTR *p)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_put_type(IHTMLObjectElement *iface, BSTR v)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_get_type(IHTMLObjectElement *iface, BSTR *p)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_get_form(IHTMLObjectElement *iface, IHTMLFormElement **p)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_put_width(IHTMLObjectElement *iface, VARIANT v)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_get_width(IHTMLObjectElement *iface, VARIANT *p)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_put_height(IHTMLObjectElement *iface, VARIANT v)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_get_height(IHTMLObjectElement *iface, VARIANT *p)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_get_readyState(IHTMLObjectElement *iface, LONG *p)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_put_onreadystatechange(IHTMLObjectElement *iface, VARIANT v)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_get_onreadystatechange(IHTMLObjectElement *iface, VARIANT *p)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_put_onerror(IHTMLObjectElement *iface, VARIANT v)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_get_onerror(IHTMLObjectElement *iface, VARIANT *p)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_put_altHtml(IHTMLObjectElement *iface, BSTR v)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_get_altHtml(IHTMLObjectElement *iface, BSTR *p)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_put_vspace(IHTMLObjectElement *iface, LONG v)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%d)\n", This, v);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_get_vspace(IHTMLObjectElement *iface, LONG *p)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     PRInt32 vspace;
     nsresult nsres;
 
@@ -333,19 +334,17 @@ static HRESULT WINAPI HTMLObjectElement_get_vspace(IHTMLObjectElement *iface, LO
 
 static HRESULT WINAPI HTMLObjectElement_put_hspace(IHTMLObjectElement *iface, LONG v)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%d)\n", This, v);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLObjectElement_get_hspace(IHTMLObjectElement *iface, LONG *p)
 {
-    HTMLObjectElement *This = HTMLOBJECT_THIS(iface);
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
-
-#undef HTMLOBJECT_THIS
 
 static const IHTMLObjectElementVtbl HTMLObjectElementVtbl = {
     HTMLObjectElement_QueryInterface,
@@ -399,13 +398,13 @@ static HRESULT HTMLObjectElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = HTMLOBJECT(This);
+        *ppv = &This->IHTMLObjectElement_iface;
     }else if(IsEqualGUID(&IID_IDispatch, riid)) {
         TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = HTMLOBJECT(This);
+        *ppv = &This->IHTMLObjectElement_iface;
     }else if(IsEqualGUID(&IID_IHTMLObjectElement, riid)) {
         TRACE("(%p)->(IID_IHTMLObjectElement %p)\n", This, ppv);
-        *ppv = HTMLOBJECT(This);
+        *ppv = &This->IHTMLObjectElement_iface;
     }else {
         return HTMLElement_QI(&This->element.node, riid, ppv);
     }
@@ -466,7 +465,7 @@ HRESULT HTMLObjectElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nsele
     if(!ret)
         return E_OUTOFMEMORY;
 
-    ret->lpIHTMLObjectElementVtbl = &HTMLObjectElementVtbl;
+    ret->IHTMLObjectElement_iface.lpVtbl = &HTMLObjectElementVtbl;
     ret->element.node.vtbl = &HTMLObjectElementImplVtbl;
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLObjectElement, (void**)&ret->nsobject);
