@@ -33,6 +33,7 @@
 #include "winerror.h"
 
 #include "ole2.h"
+#include "rpcproxy.h"
 #include "uuids.h"
 
 #include "d3dxof_private.h"
@@ -42,6 +43,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dxof);
 
+static HINSTANCE instance;
 static LONG dll_ref = 0;
 
 /* For the moment, do nothing here. */
@@ -49,6 +51,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
     switch(fdwReason) {
         case DLL_PROCESS_ATTACH:
+            instance = hInstDLL;
             DisableThreadLibraryCalls(hInstDLL);
 	    break;
 	case DLL_PROCESS_DETACH:
@@ -223,4 +226,20 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 HRESULT WINAPI DllCanUnloadNow(void)
 {
     return dll_ref != 0 ? S_FALSE : S_OK;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (D3DXOF.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( instance, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (D3DXOF.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( instance, NULL );
 }
