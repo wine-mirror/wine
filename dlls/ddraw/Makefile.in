@@ -12,11 +12,12 @@ C_SRCS = \
 	material.c \
 	palette.c \
 	parent.c \
-	regsvr.c \
 	surface.c \
 	utils.c \
 	vertexbuffer.c \
 	viewport.c
+
+IDL_R_SRCS = ddraw_classes.idl
 
 RC_SRCS = version.rc
 

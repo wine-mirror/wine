@@ -29,6 +29,7 @@
 
 #define DDRAW_INIT_GUID
 #include "ddraw_private.h"
+#include "rpcproxy.h"
 
 #include "wine/exception.h"
 #include "winreg.h"
@@ -52,6 +53,8 @@ static CRITICAL_SECTION_DEBUG ddraw_cs_debug =
     0, 0, { (DWORD_PTR)(__FILE__ ": ddraw_cs") }
 };
 CRITICAL_SECTION ddraw_cs = { &ddraw_cs_debug, -1, 0, 0, 0, 0 };
+
+static HINSTANCE instance;
 
 /* value of ForceRefreshRate */
 DWORD force_refresh_rate = 0;
@@ -730,6 +733,23 @@ HRESULT WINAPI DllCanUnloadNow(void)
     return S_FALSE;
 }
 
+
+/***********************************************************************
+ *		DllRegisterServer (DDRAW.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( instance, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (DDRAW.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( instance, NULL );
+}
+
 /*******************************************************************************
  * DestroyCallback
  *
@@ -896,6 +916,7 @@ DllMain(HINSTANCE hInstDLL,
             RegCloseKey( hkey );
         }
 
+        instance = hInstDLL;
         DisableThreadLibraryCalls(hInstDLL);
     }
     else if (Reason == DLL_PROCESS_DETACH)
