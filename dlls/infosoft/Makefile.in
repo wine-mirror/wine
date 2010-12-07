@@ -6,4 +6,7 @@ C_SRCS = \
 	infosoft_main.c \
 	wordbreaker.c
 
+IDL_H_SRCS = infosoft.idl
+IDL_R_SRCS = infosoft.idl
+
 @MAKE_DLL_RULES@
