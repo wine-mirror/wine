@@ -526,7 +526,7 @@ static HRESULT WINAPI PersistFile_Load(IPersistFile *pFile, LPCOLESTR pszFileNam
                     TRACE("Failed to store the iconindex to our property storage.  hr = 0x%x\n", hr);
                 }
 
-                CoTaskMemFree(iconfile);
+                CoTaskMemFree(iconindexstring);
             }
 
             IPropertyStorage_Release(pPropStg);
