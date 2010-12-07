@@ -4,7 +4,8 @@ IMPORTS   = dxguid uuid ddraw ole32 advapi32
 C_SRCS = \
 	ddraw.c \
 	main.c \
-	regsvr.c \
 	surface.c
+
+IDL_R_SRCS = ddrawex.idl
 
 @MAKE_DLL_RULES@

@@ -27,6 +27,8 @@
 
 #include "winbase.h"
 #include "wingdi.h"
+#include "objbase.h"
+#include "rpcproxy.h"
 
 #include "ddraw.h"
 
@@ -35,6 +37,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddrawex);
 
+static HINSTANCE instance;
 
 /*******************************************************************************
  * IDirectDrawClassFactory::QueryInterface
@@ -296,14 +299,32 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 
 
 /***********************************************************************
- * DllMain (DDRAWEX.0)
- *
- ***********************************************************************/
-BOOL WINAPI
-DllMain(HINSTANCE hInstDLL,
-        DWORD Reason,
-        LPVOID lpv)
+ * DllMain
+ */
+BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD reason, LPVOID lpv)
 {
-    TRACE("(%p,%x,%p)\n", hInstDLL, Reason, lpv);
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        instance = hInstDLL;
+        DisableThreadLibraryCalls( hInstDLL );
+        break;
+    }
     return TRUE;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (DDRAWEX.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( instance, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (DDRAWEX.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( instance, NULL );
 }
