@@ -358,13 +358,18 @@ HRESULT WINAPI SHGetDesktopFolder(IShellFolder **psf)
 
 typedef struct
 {
-    const IClassFactoryVtbl    *lpVtbl;
+    IClassFactory               IClassFactory_iface;
     LONG                        ref;
     CLSID			*rclsid;
     LPFNCREATEINSTANCE		lpfnCI;
     const IID *			riidInst;
     LONG *			pcRefDll; /* pointer to refcounter in external dll (ugrrr...) */
 } IDefClFImpl;
+
+static inline IDefClFImpl *impl_from_IClassFactory(IClassFactory *iface)
+{
+	return CONTAINING_RECORD(iface, IDefClFImpl, IClassFactory_iface);
+}
 
 static const IClassFactoryVtbl dclfvt;
 
@@ -378,7 +383,7 @@ static IClassFactory * IDefClF_fnConstructor(LPFNCREATEINSTANCE lpfnCI, PLONG pc
 
 	lpclf = HeapAlloc(GetProcessHeap(),0,sizeof(IDefClFImpl));
 	lpclf->ref = 1;
-	lpclf->lpVtbl = &dclfvt;
+	lpclf->IClassFactory_iface.lpVtbl = &dclfvt;
 	lpclf->lpfnCI = lpfnCI;
 	lpclf->pcRefDll = pcRefDll;
 
@@ -394,7 +399,7 @@ static IClassFactory * IDefClF_fnConstructor(LPFNCREATEINSTANCE lpfnCI, PLONG pc
 static HRESULT WINAPI IDefClF_fnQueryInterface(
   LPCLASSFACTORY iface, REFIID riid, LPVOID *ppvObj)
 {
-	IDefClFImpl *This = (IDefClFImpl *)iface;
+	IDefClFImpl *This = impl_from_IClassFactory(iface);
 
 	TRACE("(%p)->(%s)\n",This,shdebugstr_guid(riid));
 
@@ -414,7 +419,7 @@ static HRESULT WINAPI IDefClF_fnQueryInterface(
  */
 static ULONG WINAPI IDefClF_fnAddRef(LPCLASSFACTORY iface)
 {
-	IDefClFImpl *This = (IDefClFImpl *)iface;
+	IDefClFImpl *This = impl_from_IClassFactory(iface);
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
 	TRACE("(%p)->(count=%u)\n", This, refCount - 1);
@@ -426,9 +431,9 @@ static ULONG WINAPI IDefClF_fnAddRef(LPCLASSFACTORY iface)
  */
 static ULONG WINAPI IDefClF_fnRelease(LPCLASSFACTORY iface)
 {
-	IDefClFImpl *This = (IDefClFImpl *)iface;
+	IDefClFImpl *This = impl_from_IClassFactory(iface);
 	ULONG refCount = InterlockedDecrement(&This->ref);
-	
+
 	TRACE("(%p)->(count=%u)\n", This, refCount + 1);
 
 	if (!refCount)
@@ -447,7 +452,7 @@ static ULONG WINAPI IDefClF_fnRelease(LPCLASSFACTORY iface)
 static HRESULT WINAPI IDefClF_fnCreateInstance(
   LPCLASSFACTORY iface, LPUNKNOWN pUnkOuter, REFIID riid, LPVOID *ppvObject)
 {
-	IDefClFImpl *This = (IDefClFImpl *)iface;
+	IDefClFImpl *This = impl_from_IClassFactory(iface);
 
 	TRACE("%p->(%p,%s,%p)\n",This,pUnkOuter,shdebugstr_guid(riid),ppvObject);
 
@@ -468,7 +473,7 @@ static HRESULT WINAPI IDefClF_fnCreateInstance(
  */
 static HRESULT WINAPI IDefClF_fnLockServer(LPCLASSFACTORY iface, BOOL fLock)
 {
-	IDefClFImpl *This = (IDefClFImpl *)iface;
+	IDefClFImpl *This = impl_from_IClassFactory(iface);
 	TRACE("%p->(0x%x), not implemented\n",This, fLock);
 	return E_NOTIMPL;
 }
