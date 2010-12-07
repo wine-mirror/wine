@@ -8,9 +8,10 @@ C_SRCS = \
 	dpnet_main.c \
 	lobbiedapp.c \
 	peer.c \
-	regsvr.c \
 	server.c \
 	threadpool.c
+
+IDL_R_SRCS = dpnet.idl
 
 RC_SRCS = version.rc
 
