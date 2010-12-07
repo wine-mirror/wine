@@ -7361,32 +7361,83 @@ BOOL WINAPI GetJobW(HANDLE hPrinter, DWORD JobId, DWORD Level, LPBYTE pJob,
 }
 
 /*****************************************************************************
- *          schedule_lpr
+ *          schedule_pipe
  */
-static BOOL schedule_lpr(LPCWSTR printer_name, LPCWSTR filename)
+static BOOL schedule_pipe(LPCWSTR cmd, LPCWSTR filename)
 {
-    char *unixname, *queue, *cmd;
-    char fmt[] = "lpr -P'%s' '%s'";
+#ifdef HAVE_FORK
+    char *unixname, *cmdA;
     DWORD len;
-    int r;
+    int fds[2] = {-1, -1}, file_fd = -1, no_read;
+    BOOL ret = FALSE;
+    char buf[1024];
 
     if(!(unixname = wine_get_unix_file_name(filename)))
         return FALSE;
 
-    len = WideCharToMultiByte(CP_ACP, 0, printer_name, -1, NULL, 0, NULL, NULL);
-    queue = HeapAlloc(GetProcessHeap(), 0, len);
-    WideCharToMultiByte(CP_ACP, 0, printer_name, -1, queue, len, NULL, NULL);
+    len = WideCharToMultiByte(CP_UNIXCP, 0, cmd, -1, NULL, 0, NULL, NULL);
+    cmdA = HeapAlloc(GetProcessHeap(), 0, len);
+    WideCharToMultiByte(CP_UNIXCP, 0, cmd, -1, cmdA, len, NULL, NULL);
 
-    cmd = HeapAlloc(GetProcessHeap(), 0, strlen(unixname) + len + sizeof(fmt) - 5);
-    sprintf(cmd, fmt, queue, unixname);
+    TRACE("printing with: %s\n", cmdA);
 
-    TRACE("printing with: %s\n", cmd);
-    r = system(cmd);
+    if((file_fd = open(unixname, O_RDONLY)) == -1)
+        goto end;
+
+    if (pipe(fds))
+    {
+        ERR("pipe() failed!\n");
+        goto end;
+    }
+
+    if (fork() == 0)
+    {
+        close(0);
+        dup2(fds[0], 0);
+        close(fds[1]);
+
+        /* reset signals that we previously set to SIG_IGN */
+        signal(SIGPIPE, SIG_DFL);
+        signal(SIGCHLD, SIG_DFL);
+
+        execl("/bin/sh", "/bin/sh", "-c", cmdA, NULL);
+        _exit(1);
+    }
+
+    while((no_read = read(file_fd, buf, sizeof(buf))) > 0)
+        write(fds[1], buf, no_read);
+
+    ret = TRUE;
+
+end:
+    if(file_fd != -1) close(file_fd);
+    if(fds[0] != -1) close(fds[0]);
+    if(fds[1] != -1) close(fds[1]);
+
+    HeapFree(GetProcessHeap(), 0, cmdA);
+    HeapFree(GetProcessHeap(), 0, unixname);
+    return ret;
+#else
+    return FALSE;
+#endif
+}
+
+/*****************************************************************************
+ *          schedule_lpr
+ */
+static BOOL schedule_lpr(LPCWSTR printer_name, LPCWSTR filename)
+{
+    WCHAR *cmd;
+    const WCHAR fmtW[] = {'l','p','r',' ','-','P','\'','%','s','\'',0};
+    BOOL r;
+
+    cmd = HeapAlloc(GetProcessHeap(), 0, strlenW(printer_name) * sizeof(WCHAR) + sizeof(fmtW));
+    sprintfW(cmd, fmtW, printer_name);
+
+    r = schedule_pipe(cmd, filename);
 
     HeapFree(GetProcessHeap(), 0, cmd);
-    HeapFree(GetProcessHeap(), 0, queue);
-    HeapFree(GetProcessHeap(), 0, unixname);
-    return (r == 0);
+    return r;
 }
 
 /*****************************************************************************
@@ -7516,68 +7567,6 @@ static BOOL schedule_file(LPCWSTR filename)
         return r;
     }
     return FALSE;
-}
-
-/*****************************************************************************
- *          schedule_pipe
- */
-static BOOL schedule_pipe(LPCWSTR cmd, LPCWSTR filename)
-{
-#ifdef HAVE_FORK
-    char *unixname, *cmdA;
-    DWORD len;
-    int fds[2] = {-1, -1}, file_fd = -1, no_read;
-    BOOL ret = FALSE;
-    char buf[1024];
-
-    if(!(unixname = wine_get_unix_file_name(filename)))
-        return FALSE;
-
-    len = WideCharToMultiByte(CP_UNIXCP, 0, cmd, -1, NULL, 0, NULL, NULL);
-    cmdA = HeapAlloc(GetProcessHeap(), 0, len);
-    WideCharToMultiByte(CP_UNIXCP, 0, cmd, -1, cmdA, len, NULL, NULL);
-
-    TRACE("printing with: %s\n", cmdA);
-
-    if((file_fd = open(unixname, O_RDONLY)) == -1)
-        goto end;
-
-    if (pipe(fds))
-    {
-        ERR("pipe() failed!\n"); 
-        goto end;
-    }
-
-    if (fork() == 0)
-    {
-        close(0);
-        dup2(fds[0], 0);
-        close(fds[1]);
-
-        /* reset signals that we previously set to SIG_IGN */
-        signal(SIGPIPE, SIG_DFL);
-        signal(SIGCHLD, SIG_DFL);
-
-        execl("/bin/sh", "/bin/sh", "-c", cmdA, NULL);
-        _exit(1);
-    }
-
-    while((no_read = read(file_fd, buf, sizeof(buf))) > 0)
-        write(fds[1], buf, no_read);
-
-    ret = TRUE;
-
-end:
-    if(file_fd != -1) close(file_fd);
-    if(fds[0] != -1) close(fds[0]);
-    if(fds[1] != -1) close(fds[1]);
-
-    HeapFree(GetProcessHeap(), 0, cmdA);
-    HeapFree(GetProcessHeap(), 0, unixname);
-    return ret;
-#else
-    return FALSE;
-#endif
 }
 
 /*****************************************************************************
