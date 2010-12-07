@@ -3,8 +3,9 @@ IMPORTLIB = dinput8
 IMPORTS   = uuid dxguid dinput ole32 advapi32
 
 C_SRCS = \
-	dinput8_main.c \
-	regsvr.c
+	dinput8_main.c
+
+IDL_R_SRCS = dinput8.idl
 
 RC_SRCS = version.rc
 
