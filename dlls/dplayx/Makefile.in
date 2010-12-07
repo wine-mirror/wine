@@ -12,8 +12,9 @@ C_SRCS = \
 	dplayx_messages.c \
 	dplobby.c \
 	lobbysp.c \
-	name_server.c \
-	regsvr.c
+	name_server.c
+
+IDL_R_SRCS = dplayx.idl
 
 RC_SRCS = version.rc
 
