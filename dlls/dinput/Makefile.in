@@ -13,10 +13,11 @@ C_SRCS = \
 	joystick_linuxinput.c \
 	joystick_osx.c \
 	keyboard.c \
-	mouse.c \
-	regsvr.c
+	mouse.c
 
 IMPLIB_SRCS = data_formats.c
+
+IDL_R_SRCS = dinput_classes.idl
 
 RC_SRCS = version.rc
 

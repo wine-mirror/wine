@@ -44,6 +44,8 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winerror.h"
+#include "objbase.h"
+#include "rpcproxy.h"
 #include "dinput_private.h"
 #include "device_private.h"
 
@@ -881,6 +883,22 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 
     FIXME("(%s,%s,%p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (DINPUT.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( DINPUT_instance, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (DINPUT.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( DINPUT_instance, NULL );
 }
 
 /******************************************************************************
