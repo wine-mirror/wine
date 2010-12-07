@@ -241,7 +241,7 @@ static void test_ReadAndWriteProperties(void)
         LPSTR url = NULL;
 
         /* Now read that .url file back in. */
-        hr = urlAFromFile->lpVtbl->QueryInterface(urlA, &IID_IPersistFile, (void **) &pf);
+        hr = urlAFromFile->lpVtbl->QueryInterface(urlAFromFile, &IID_IPersistFile, (void **) &pf);
         ok(hr == S_OK, "Failed to get the IPersistFile for reading.  hr=0x%x\n", hr);
 
         hr = IPersistFile_Load(pf, fileNameW, 0);
@@ -249,11 +249,11 @@ static void test_ReadAndWriteProperties(void)
         IPersistFile_Release(pf);
 
 
-        hr = urlA->lpVtbl->GetURL(urlAFromFile, &url);
+        hr = urlAFromFile->lpVtbl->GetURL(urlAFromFile, &url);
         ok(lstrcmp(url, testurl) == 0, "Wrong url read from file: %s\n",url);
 
 
-        hr = urlA->lpVtbl->QueryInterface(urlAFromFile, &IID_IPropertySetStorage, (void **) &pPropSetStg);
+        hr = urlAFromFile->lpVtbl->QueryInterface(urlAFromFile, &IID_IPropertySetStorage, (void **) &pPropSetStg);
         ok(hr == S_OK, "Unable to get an IPropertySetStorage, hr=0x%x\n", hr);
 
         hr = IPropertySetStorage_Open(pPropSetStg, &FMTID_Intshcut, STGM_READ | STGM_SHARE_EXCLUSIVE, &pPropStgRead);
@@ -270,7 +270,7 @@ static void test_ReadAndWriteProperties(void)
         PropVariantClear(&pvread[1]);
         IPropertyStorage_Release(pPropStgRead);
         IPropertySetStorage_Release(pPropSetStg);
-        urlA->lpVtbl->Release(urlA);
+        urlAFromFile->lpVtbl->Release(urlAFromFile);
         DeleteFileW(fileNameW);
     }
     else
