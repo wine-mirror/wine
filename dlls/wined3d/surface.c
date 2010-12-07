@@ -1119,9 +1119,12 @@ static void WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface)
 /* Context activation is done by the caller. */
 static void surface_remove_pbo(IWineD3DSurfaceImpl *This, const struct wined3d_gl_info *gl_info)
 {
-    This->resource.heapMemory = HeapAlloc(GetProcessHeap() ,0 , This->resource.size + RESOURCE_ALIGNMENT);
-    This->resource.allocatedMemory =
-            (BYTE *)(((ULONG_PTR) This->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
+    if (!This->resource.heapMemory)
+    {
+        This->resource.heapMemory = HeapAlloc(GetProcessHeap(), 0, This->resource.size + RESOURCE_ALIGNMENT);
+        This->resource.allocatedMemory =
+                (BYTE *)(((ULONG_PTR)This->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
+    }
 
     ENTER_GL();
     GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
