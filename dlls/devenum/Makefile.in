@@ -8,6 +8,8 @@ C_SRCS = \
 	mediacatenum.c \
 	parsedisplayname.c
 
+IDL_R_SRCS = devenum_classes.idl
+
 RC_SRCS = \
 	Cs.rc \
 	Cy.rc \
