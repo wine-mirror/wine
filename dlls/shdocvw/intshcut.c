@@ -416,23 +416,32 @@ static DWORD get_profile_string(LPCWSTR lpAppName, LPCWSTR lpKeyName,
                                 LPCWSTR lpFileName, WCHAR **rString )
 {
     DWORD r = 0;
-    DWORD len=128;
+    DWORD len = 128;
+    WCHAR *buffer;
 
-    *rString = CoTaskMemAlloc(len*sizeof(WCHAR));
-    if (rString != NULL)
+    buffer = CoTaskMemAlloc(len * sizeof(*buffer));
+    if (buffer != NULL)
     {
-        r = GetPrivateProfileStringW(lpAppName, lpKeyName, NULL, *rString, len, lpFileName);
+        r = GetPrivateProfileStringW(lpAppName, lpKeyName, NULL, buffer, len, lpFileName);
         while (r == len-1)
         {
-            CoTaskMemFree(rString);
+            WCHAR *realloc_buf;
+
             len *= 2;
-            rString = CoTaskMemAlloc(len*sizeof(WCHAR));
-            if (rString == NULL)
-                break;
-            r = GetPrivateProfileStringW(lpAppName, lpKeyName, NULL, *rString, len, lpFileName);
+            realloc_buf = CoTaskMemRealloc(buffer, len * sizeof(*buffer));
+            if (realloc_buf == NULL)
+            {
+                CoTaskMemFree(buffer);
+                *rString = NULL;
+                return 0;
+            }
+            buffer = realloc_buf;
+
+            r = GetPrivateProfileStringW(lpAppName, lpKeyName, NULL, buffer, len, lpFileName);
         }
     }
 
+    *rString = buffer;
     return r;
 }
 
@@ -456,12 +465,17 @@ static HRESULT WINAPI PersistFile_Load(IPersistFile *pFile, LPCOLESTR pszFileNam
 
         r = get_profile_string(str_header, str_URL, pszFileName, &url);
 
-        if (r == 0)
+        if (url == NULL)
+        {
+            hr = E_OUTOFMEMORY;
+            CoTaskMemFree(filename);
+        }
+        else if (r == 0)
         {
             hr = E_FAIL;
             CoTaskMemFree(filename);
         }
-        else if (url != NULL)
+        else
         {
             hr = S_OK;
             CoTaskMemFree(This->currentFile);
@@ -469,11 +483,6 @@ static HRESULT WINAPI PersistFile_Load(IPersistFile *pFile, LPCOLESTR pszFileNam
             CoTaskMemFree(This->url);
             This->url = url;
             This->isDirty = FALSE;
-        }
-        else
-        {
-            hr = E_OUTOFMEMORY;
-            CoTaskMemFree(filename);
         }
 
         /* Now we're going to read in the iconfile and iconindex.
