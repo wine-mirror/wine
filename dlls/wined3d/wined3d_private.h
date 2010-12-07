@@ -2760,7 +2760,7 @@ typedef struct IWineD3DBaseShaderClass
     struct wined3d_shader_signature_element output_signature[MAX_REG_OUTPUT];
 
     /* Pointer to the parent device */
-    IWineD3DDevice *device;
+    struct IWineD3DDeviceImpl *device;
     struct list     shader_list_entry;
 
 } IWineD3DBaseShaderClass;

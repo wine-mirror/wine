@@ -1328,7 +1328,7 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
     const char *tex_type;
     BOOL np2_fixup = FALSE;
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
+    IWineD3DDeviceImpl *device = This->baseShader.device;
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
     const char *mod;
     BOOL pshader = shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type);
@@ -3899,7 +3899,7 @@ static void init_output_registers(IWineD3DVertexShaderImpl *shader, DWORD sig_nu
         "result.texcoord[0]", "result.texcoord[1]", "result.texcoord[2]", "result.texcoord[3]",
         "result.texcoord[4]", "result.texcoord[5]", "result.texcoord[6]", "result.texcoord[7]"
     };
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) shader->baseShader.device;
+    IWineD3DDeviceImpl *device = shader->baseShader.device;
     IWineD3DBaseShaderClass *baseshader = &shader->baseShader;
     const struct wined3d_shader_signature_element *sig;
     const char *semantic_name;
@@ -4162,7 +4162,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
      */
     if (!gl_info->supported[NV_VERTEX_PROGRAM])
     {
-        IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)This->baseShader.device;
+        IWineD3DDeviceImpl *device = This->baseShader.device;
         const char *color_init = arb_get_helper_value(WINED3D_SHADER_TYPE_VERTEX, ARB_0001);
         shader_addline(buffer, "MOV result.color.secondary, %s;\n", color_init);
 
@@ -4232,7 +4232,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
 /* GL locking is done by the caller */
 static struct arb_ps_compiled_shader *find_arb_pshader(IWineD3DPixelShaderImpl *shader, const struct arb_ps_compile_args *args)
 {
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)shader->baseShader.device;
+    IWineD3DDeviceImpl *device = shader->baseShader.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     UINT i;
     DWORD new_size;
@@ -4327,14 +4327,15 @@ static inline BOOL vs_args_equal(const struct arb_vs_compile_args *stored, const
 
 static struct arb_vs_compiled_shader *find_arb_vshader(IWineD3DVertexShaderImpl *shader, const struct arb_vs_compile_args *args)
 {
+    IWineD3DDeviceImpl *device = shader->baseShader.device;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    DWORD use_map = device->strided_streams.use_map;
     UINT i;
     DWORD new_size;
     struct arb_vs_compiled_shader *new_array;
-    DWORD use_map = ((IWineD3DDeviceImpl *)shader->baseShader.device)->strided_streams.use_map;
     struct wined3d_shader_buffer buffer;
     struct arb_vshader_private *shader_data;
     GLuint ret;
-    const struct wined3d_gl_info *gl_info = &((IWineD3DDeviceImpl *)shader->baseShader.device)->adapter->gl_info;
 
     if (!shader->baseShader.backend_data)
     {
@@ -4412,9 +4413,10 @@ static struct arb_vs_compiled_shader *find_arb_vshader(IWineD3DVertexShaderImpl 
 static void find_arb_ps_compile_args(const struct wined3d_state *state,
         IWineD3DPixelShaderImpl *shader, struct arb_ps_compile_args *args)
 {
+    IWineD3DDeviceImpl *device = shader->baseShader.device;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     int i;
     WORD int_skip;
-    const struct wined3d_gl_info *gl_info = &((IWineD3DDeviceImpl *)shader->baseShader.device)->adapter->gl_info;
 
     find_ps_compile_args(state, shader, &args->super);
 
@@ -4431,7 +4433,7 @@ static void find_arb_ps_compile_args(const struct wined3d_state *state,
      * is quite expensive because it forces the driver to disable early Z discards. It is cheaper to
      * duplicate the shader than have a no-op KIL instruction in every shader
      */
-    if ((!((IWineD3DDeviceImpl *)shader->baseShader.device)->vs_clipping) && use_vs(state)
+    if (!device->vs_clipping && use_vs(state)
             && state->render_states[WINED3DRS_CLIPPING]
             && state->render_states[WINED3DRS_CLIPPLANEENABLE])
         args->clip = 1;
@@ -4466,10 +4468,10 @@ static void find_arb_ps_compile_args(const struct wined3d_state *state,
 static void find_arb_vs_compile_args(const struct wined3d_state *state,
         IWineD3DVertexShaderImpl *shader, struct arb_vs_compile_args *args)
 {
+    IWineD3DDeviceImpl *device = shader->baseShader.device;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     int i;
     WORD int_skip;
-    IWineD3DDeviceImpl *dev = (IWineD3DDeviceImpl *)shader->baseShader.device;
-    const struct wined3d_gl_info *gl_info = &dev->adapter->gl_info;
 
     find_vs_compile_args(state, shader, &args->super);
 
@@ -4485,7 +4487,7 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
     else
     {
         args->ps_signature = ~0;
-        if(!dev->vs_clipping)
+        if (!device->vs_clipping)
         {
             args->clip.boolclip.clip_texcoord = ffp_clip_emul(state) ? gl_info->limits.texture_stages : 0;
         }
@@ -4508,9 +4510,9 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
             args->clip.boolclip.bools |= ( 1 << i);
     }
 
-    args->vertex.samplers[0] = dev->texUnitMap[MAX_FRAGMENT_SAMPLERS + 0];
-    args->vertex.samplers[1] = dev->texUnitMap[MAX_FRAGMENT_SAMPLERS + 1];
-    args->vertex.samplers[2] = dev->texUnitMap[MAX_FRAGMENT_SAMPLERS + 2];
+    args->vertex.samplers[0] = device->texUnitMap[MAX_FRAGMENT_SAMPLERS + 0];
+    args->vertex.samplers[1] = device->texUnitMap[MAX_FRAGMENT_SAMPLERS + 1];
+    args->vertex.samplers[2] = device->texUnitMap[MAX_FRAGMENT_SAMPLERS + 2];
     args->vertex.samplers[3] = 0;
 
     /* Skip if unused or local */
@@ -4701,7 +4703,7 @@ static void shader_arb_deselect_depth_blt(void *shader_priv, const struct wined3
 
 static void shader_arb_destroy(IWineD3DBaseShader *iface) {
     IWineD3DBaseShaderImpl *baseShader = (IWineD3DBaseShaderImpl *) iface;
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)baseShader->baseShader.device;
+    IWineD3DDeviceImpl *device = baseShader->baseShader.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
     if (shader_is_pshader_version(baseShader->baseShader.reg_maps.shader_version.type))

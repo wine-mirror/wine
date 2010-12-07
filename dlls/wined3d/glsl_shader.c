@@ -910,7 +910,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         const struct wined3d_shader_reg_maps *reg_maps, struct shader_glsl_ctx_priv *ctx_priv)
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
+    IWineD3DDeviceImpl *device = This->baseShader.device;
     const struct wined3d_state *state = &device->stateBlock->state;
     const struct ps_compile_args *ps_args = ctx_priv->cur_ps_args;
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -3019,7 +3019,7 @@ static void shader_glsl_ret(const struct wined3d_shader_instruction *ins)
 static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl *)shader->baseShader.device;
+    IWineD3DDeviceImpl *device = shader->baseShader.device;
     DWORD shader_version = WINED3D_SHADER_VERSION(ins->ctx->reg_maps->shader_version.major,
             ins->ctx->reg_maps->shader_version.minor);
     glsl_sample_function_t sample_function;
@@ -3032,7 +3032,7 @@ static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
      * 2.0+: Use provided sampler source. */
     if (shader_version < WINED3D_SHADER_VERSION(2,0)) sampler_idx = ins->dst[0].reg.idx;
     else sampler_idx = ins->src[1].reg.idx;
-    texture = deviceImpl->stateBlock->state.textures[sampler_idx];
+    texture = device->stateBlock->state.textures[sampler_idx];
 
     if (shader_version < WINED3D_SHADER_VERSION(1,4))
     {
@@ -3109,7 +3109,7 @@ static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
 static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
+    IWineD3DDeviceImpl *device = This->baseShader.device;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     glsl_sample_function_t sample_function;
     glsl_src_param_t coord_param, dx_param, dy_param;
@@ -3126,7 +3126,7 @@ static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
     }
 
     sampler_idx = ins->src[1].reg.idx;
-    texture = deviceImpl->stateBlock->state.textures[sampler_idx];
+    texture = device->stateBlock->state.textures[sampler_idx];
     if (texture && texture->baseTexture.target == GL_TEXTURE_RECTANGLE_ARB)
         sample_flags |= WINED3D_GLSL_SAMPLE_RECT;
 
@@ -3142,7 +3142,7 @@ static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
 static void shader_glsl_texldl(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
+    IWineD3DDeviceImpl *device = This->baseShader.device;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     glsl_sample_function_t sample_function;
     glsl_src_param_t coord_param, lod_param;
@@ -3152,7 +3152,7 @@ static void shader_glsl_texldl(const struct wined3d_shader_instruction *ins)
     IWineD3DBaseTextureImpl *texture;
 
     sampler_idx = ins->src[1].reg.idx;
-    texture = deviceImpl->stateBlock->state.textures[sampler_idx];
+    texture = device->stateBlock->state.textures[sampler_idx];
     if (texture && texture->baseTexture.target == GL_TEXTURE_RECTANGLE_ARB)
         sample_flags |= WINED3D_GLSL_SAMPLE_RECT;
 
@@ -4135,7 +4135,7 @@ static GLhandleARB find_glsl_pshader(const struct wined3d_context *context,
         struct wined3d_shader_buffer *buffer, IWineD3DPixelShaderImpl *shader,
         const struct ps_compile_args *args, const struct ps_np2fixup_info **np2fixup_info)
 {
-    struct wined3d_state *state = &((IWineD3DDeviceImpl *)shader->baseShader.device)->stateBlock->state;
+    struct wined3d_state *state = &shader->baseShader.device->stateBlock->state;
     UINT i;
     DWORD new_size;
     struct glsl_ps_compiled_shader *new_array;
@@ -4216,7 +4216,7 @@ static GLhandleARB find_glsl_vshader(const struct wined3d_context *context,
     UINT i;
     DWORD new_size;
     struct glsl_vs_compiled_shader *new_array;
-    DWORD use_map = ((IWineD3DDeviceImpl *)shader->baseShader.device)->strided_streams.use_map;
+    DWORD use_map = shader->baseShader.device->strided_streams.use_map;
     struct glsl_vshader_private *shader_data;
     GLhandleARB ret;
 
@@ -4671,7 +4671,7 @@ static void shader_glsl_deselect_depth_blt(void *shader_priv, const struct wined
 static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
     const struct list *linked_programs;
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *) iface;
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)This->baseShader.device;
+    IWineD3DDeviceImpl *device = This->baseShader.device;
     struct shader_glsl_priv *priv = device->shader_priv;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;

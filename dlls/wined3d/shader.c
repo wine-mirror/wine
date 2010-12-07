@@ -302,7 +302,7 @@ static void shader_init(struct IWineD3DBaseShaderClass *shader, IWineD3DDeviceIm
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     shader->ref = 1;
-    shader->device = (IWineD3DDevice *)device;
+    shader->device = device;
     shader->parent = parent;
     shader->parent_ops = parent_ops;
     list_init(&shader->linked_programs);
@@ -1167,7 +1167,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, struct wined3d_shader_buffe
         const struct wined3d_shader_reg_maps *reg_maps, const DWORD *byte_code, void *backend_ctx)
 {
     IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)shader->baseShader.device;
+    IWineD3DDeviceImpl *device = shader->baseShader.device;
     const struct wined3d_shader_frontend *fe = shader->baseShader.frontend;
     void *fe_data = shader->baseShader.frontend_data;
     struct wined3d_shader_src_param dst_rel_addr[2];
@@ -1479,7 +1479,7 @@ static void shader_cleanup(IWineD3DBaseShader *iface)
 {
     IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
 
-    ((IWineD3DDeviceImpl *)shader->baseShader.device)->shader_backend->shader_destroy(iface);
+    shader->baseShader.device->shader_backend->shader_destroy(iface);
     HeapFree(GetProcessHeap(), 0, shader->baseShader.reg_maps.constf);
     HeapFree(GetProcessHeap(), 0, shader->baseShader.function);
     shader_delete_constant_list(&shader->baseShader.constantsF);
@@ -1688,7 +1688,7 @@ static HRESULT STDMETHODCALLTYPE vertexshader_SetLocalConstantsF(IWineD3DVertexS
         UINT start_idx, const float *src_data, UINT count)
 {
     IWineD3DVertexShaderImpl *shader =(IWineD3DVertexShaderImpl *)iface;
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)shader->baseShader.device;
+    IWineD3DDeviceImpl *device = shader->baseShader.device;
     UINT i, end_idx;
 
     TRACE("iface %p, start_idx %u, src_data %p, count %u.\n", iface, start_idx, src_data, count);
@@ -1734,7 +1734,7 @@ void find_vs_compile_args(const struct wined3d_state *state,
             == WINED3DFOG_NONE ? VS_FOG_COORD : VS_FOG_Z;
     args->clip_enabled = state->render_states[WINED3DRS_CLIPPING]
             && state->render_states[WINED3DRS_CLIPPLANEENABLE];
-    args->swizzle_map = ((IWineD3DDeviceImpl *)shader->baseShader.device)->strided_streams.swizzle_map;
+    args->swizzle_map = shader->baseShader.device->strided_streams.swizzle_map;
 }
 
 static BOOL match_usage(BYTE usage1, BYTE usage_idx1, BYTE usage2, BYTE usage_idx2)
@@ -1771,7 +1771,7 @@ static void vertexshader_set_limits(IWineD3DVertexShaderImpl *shader)
 {
     DWORD shader_version = WINED3D_SHADER_VERSION(shader->baseShader.reg_maps.shader_version.major,
             shader->baseShader.reg_maps.shader_version.minor);
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)shader->baseShader.device;
+    IWineD3DDeviceImpl *device = shader->baseShader.device;
 
     shader->baseShader.limits.texcoord = 0;
     shader->baseShader.limits.attributes = 16;
@@ -2066,7 +2066,7 @@ static const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl =
 void find_ps_compile_args(const struct wined3d_state *state,
         IWineD3DPixelShaderImpl *shader, struct ps_compile_args *args)
 {
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)shader->baseShader.device;
+    IWineD3DDeviceImpl *device = shader->baseShader.device;
     IWineD3DBaseTextureImpl *texture;
     UINT i;
 
