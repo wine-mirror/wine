@@ -213,7 +213,7 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
         else
         {
             TRACE("Stream %u isn't UP, %p\n", element->input_slot, buffer);
-            data = buffer_get_memory((IWineD3DBuffer *)buffer, &This->adapter->gl_info, &buffer_object);
+            data = buffer_get_memory(buffer, &This->adapter->gl_info, &buffer_object);
 
             /* Can't use vbo's if the base vertex index is negative. OpenGL doesn't accept negative offsets
              * (or rather offsets bigger than the vbo, because the pointer is unsigned), so use system memory

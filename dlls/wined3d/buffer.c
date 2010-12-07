@@ -4,7 +4,7 @@
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
  * Copyright 2007-2010 Stefan Dösinger for CodeWeavers
- * Copyright 2009 Henri Verbeet for CodeWeavers
+ * Copyright 2009-2010 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -611,24 +611,23 @@ static inline void fixup_transformed_pos(float *p)
 }
 
 /* Context activation is done by the caller. */
-const BYTE *buffer_get_memory(IWineD3DBuffer *iface, const struct wined3d_gl_info *gl_info, GLuint *buffer_object)
+const BYTE *buffer_get_memory(struct wined3d_buffer *buffer,
+        const struct wined3d_gl_info *gl_info, GLuint *buffer_object)
 {
-    struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
-
-    *buffer_object = This->buffer_object;
-    if (!This->buffer_object)
+    *buffer_object = buffer->buffer_object;
+    if (!buffer->buffer_object)
     {
-        if (This->flags & WINED3D_BUFFER_CREATEBO)
+        if (buffer->flags & WINED3D_BUFFER_CREATEBO)
         {
-            buffer_create_buffer_object(This, gl_info);
-            This->flags &= ~WINED3D_BUFFER_CREATEBO;
-            if (This->buffer_object)
+            buffer_create_buffer_object(buffer, gl_info);
+            buffer->flags &= ~WINED3D_BUFFER_CREATEBO;
+            if (buffer->buffer_object)
             {
-                *buffer_object = This->buffer_object;
+                *buffer_object = buffer->buffer_object;
                 return NULL;
             }
         }
-        return This->resource.allocatedMemory;
+        return buffer->resource.allocatedMemory;
     }
     else
     {
