@@ -1724,19 +1724,7 @@ lock_end:
     }
 
     if (!(flags & (WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY)))
-    {
         surface_add_dirty_rect(This, pRect);
-
-        if (This->container.type == WINED3D_CONTAINER_TEXTURE)
-        {
-            TRACE("Making container dirty.\n");
-            IWineD3DBaseTexture_SetDirty((IWineD3DBaseTexture *)This->container.u.texture, TRUE);
-        }
-        else
-        {
-            TRACE("Surface is standalone, no need to dirty the container\n");
-        }
-    }
 
     return IWineD3DBaseSurfaceImpl_Map(iface, pLockedRect, pRect, flags);
 }
