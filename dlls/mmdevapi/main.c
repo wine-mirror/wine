@@ -37,6 +37,7 @@
 
 #include "ole2.h"
 #include "olectl.h"
+#include "rpcproxy.h"
 #include "propsys.h"
 #include "initguid.h"
 #include "propkeydef.h"
@@ -314,6 +315,8 @@ static void load_libopenal(void)
 
 #endif /*HAVE_OPENAL*/
 
+static HINSTANCE instance;
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
@@ -321,6 +324,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     switch (fdwReason)
     {
         case DLL_PROCESS_ATTACH:
+            instance = hinstDLL;
             DisableThreadLibraryCalls(hinstDLL);
 #ifdef HAVE_OPENAL
             load_libopenal();
@@ -451,4 +455,20 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     WARN("(%s, %s, %p): no class found.\n", debugstr_guid(rclsid),
          debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (MMDEVAPI.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( instance, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (MMDEVAPI.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( instance, NULL );
 }

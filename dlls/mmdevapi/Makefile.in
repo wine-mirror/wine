@@ -6,7 +6,8 @@ C_SRCS = \
 	audio.c \
 	audiovolume.c \
 	devenum.c \
-	main.c \
-	regsvr.c
+	main.c
+
+IDL_R_SRCS = mmdevapi_classes.idl
 
 @MAKE_DLL_RULES@
