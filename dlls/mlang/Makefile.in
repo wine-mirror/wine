@@ -5,7 +5,8 @@ DELAYIMPORTS = oleaut32
 EXTRADEFS = -DCOM_NO_WINDOWS_H
 
 C_SRCS = \
-	mlang.c \
-	regsvr.c
+	mlang.c
+
+IDL_R_SRCS = mlang_classes.idl
 
 @MAKE_DLL_RULES@
