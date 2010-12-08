@@ -26,6 +26,7 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "ole2.h"
+#include "rpcproxy.h"
 
 #include "initguid.h"
 #include "vfw.h"
@@ -220,4 +221,20 @@ BOOL WINAPI DllMain(HINSTANCE hInstDll, DWORD fdwReason, LPVOID lpvReserved)
   };
 
   return TRUE;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (AVIFIL32.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( AVIFILE_hModule, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (AVIFIL32.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( AVIFILE_hModule, NULL );
 }

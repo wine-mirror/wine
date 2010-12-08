@@ -1,0 +1,11 @@
+HKCR
+{
+    NoRemove CLSID
+    {
+        '{00020000-0000-0000-C000-000000000046}' { InprocServer = s 'avifile.dll' }
+        '{00020001-0000-0000-C000-000000000046}' { InprocServer = s 'avifile.dll' }
+        '{00020003-0000-0000-C000-000000000046}' { InprocServer = s 'avifile.dll' }
+        '{0002000d-0000-0000-C000-000000000046}' { InprocServer = s 'avifile.dll' }
+        '{0002000f-0000-0000-C000-000000000046}' { InprocServer = s 'avifile.dll' }
+    }
+}
