@@ -7,8 +7,9 @@ C_SRCS = \
 	aclsource.c \
 	browseui_main.c \
 	compcatcachedaemon.c \
-	progressdlg.c \
-	regsvr.c
+	progressdlg.c
+
+IDL_R_SRCS = browseui_classes.idl
 
 RC_SRCS = \
 	rsrc_Da.rc \

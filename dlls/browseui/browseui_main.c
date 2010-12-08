@@ -32,6 +32,7 @@
 #include "winreg.h"
 #include "shlwapi.h"
 #include "shlguid.h"
+#include "rpcproxy.h"
 
 #include "browseui.h"
 
@@ -233,4 +234,20 @@ HRESULT WINAPI DllInstall(BOOL bInstall, LPCWSTR cmdline)
 {
     FIXME("(%s, %s): stub\n", bInstall ? "TRUE" : "FALSE", debugstr_w(cmdline));
     return S_OK;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (BROWSEUI.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( BROWSEUI_hinstance, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (BROWSEUI.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( BROWSEUI_hinstance, NULL );
 }
