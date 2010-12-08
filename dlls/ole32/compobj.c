@@ -3742,26 +3742,26 @@ HRESULT WINAPI CoRegisterChannelHook(REFGUID guidExtension, IChannelHook *pChann
 
 typedef struct Context
 {
-    const IComThreadingInfoVtbl *lpVtbl;
-    const IContextCallbackVtbl  *lpCallbackVtbl;
-    const IObjContextVtbl  *lpContextVtbl;
+    IComThreadingInfo IComThreadingInfo_iface;
+    IContextCallback IContextCallback_iface;
+    IObjContext IObjContext_iface;
     LONG refs;
     APTTYPE apttype;
 } Context;
 
 static inline Context *impl_from_IComThreadingInfo( IComThreadingInfo *iface )
 {
-        return (Context *)((char*)iface - FIELD_OFFSET(Context, lpVtbl));
+        return CONTAINING_RECORD(iface, Context, IComThreadingInfo_iface);
 }
 
 static inline Context *impl_from_IContextCallback( IContextCallback *iface )
 {
-        return (Context *)((char*)iface - FIELD_OFFSET(Context, lpCallbackVtbl));
+        return CONTAINING_RECORD(iface, Context, IContextCallback_iface);
 }
 
 static inline Context *impl_from_IObjContext( IObjContext *iface )
 {
-        return (Context *)((char*)iface - FIELD_OFFSET(Context, lpContextVtbl));
+        return CONTAINING_RECORD(iface, Context, IObjContext_iface);
 }
 
 static HRESULT Context_QueryInterface(Context *iface, REFIID riid, LPVOID *ppv)
@@ -3771,15 +3771,15 @@ static HRESULT Context_QueryInterface(Context *iface, REFIID riid, LPVOID *ppv)
     if (IsEqualIID(riid, &IID_IComThreadingInfo) ||
         IsEqualIID(riid, &IID_IUnknown))
     {
-        *ppv = &iface->lpVtbl;
+        *ppv = &iface->IComThreadingInfo_iface;
     }
     else if (IsEqualIID(riid, &IID_IContextCallback))
     {
-        *ppv = &iface->lpCallbackVtbl;
+        *ppv = &iface->IContextCallback_iface;
     }
     else if (IsEqualIID(riid, &IID_IObjContext))
     {
-        *ppv = &iface->lpContextVtbl;
+        *ppv = &iface->IObjContext_iface;
     }
 
     if (*ppv)
@@ -4056,9 +4056,9 @@ HRESULT WINAPI CoGetObjectContext(REFIID riid, void **ppv)
     if (!context)
         return E_OUTOFMEMORY;
 
-    context->lpVtbl = &Context_Threading_Vtbl;
-    context->lpCallbackVtbl = &Context_Callback_Vtbl;
-    context->lpContextVtbl = &Context_Object_Vtbl;
+    context->IComThreadingInfo_iface.lpVtbl = &Context_Threading_Vtbl;
+    context->IContextCallback_iface.lpVtbl = &Context_Callback_Vtbl;
+    context->IObjContext_iface.lpVtbl = &Context_Object_Vtbl;
     context->refs = 1;
     if (apt->multi_threaded)
         context->apttype = APTTYPE_MTA;
@@ -4067,8 +4067,8 @@ HRESULT WINAPI CoGetObjectContext(REFIID riid, void **ppv)
     else
         context->apttype = APTTYPE_STA;
 
-    hr = IUnknown_QueryInterface((IUnknown *)&context->lpVtbl, riid, ppv);
-    IUnknown_Release((IUnknown *)&context->lpVtbl);
+    hr = IUnknown_QueryInterface((IUnknown *)&context->IComThreadingInfo_iface, riid, ppv);
+    IUnknown_Release((IUnknown *)&context->IComThreadingInfo_iface);
 
     return hr;
 }
