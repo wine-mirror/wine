@@ -34,14 +34,19 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
 typedef struct PropertyBag {
-    const IPropertyBag2Vtbl *lpVtbl;
+    IPropertyBag2 IPropertyBag2_iface;
     LONG ref;
 } PropertyBag;
+
+static inline PropertyBag *impl_from_IPropertyBag2(IPropertyBag2 *iface)
+{
+    return CONTAINING_RECORD(iface, PropertyBag, IPropertyBag2_iface);
+}
 
 static HRESULT WINAPI PropertyBag_QueryInterface(IPropertyBag2 *iface, REFIID iid,
     void **ppv)
 {
-    PropertyBag *This = (PropertyBag*)iface;
+    PropertyBag *This = impl_from_IPropertyBag2(iface);
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
@@ -63,7 +68,7 @@ static HRESULT WINAPI PropertyBag_QueryInterface(IPropertyBag2 *iface, REFIID ii
 
 static ULONG WINAPI PropertyBag_AddRef(IPropertyBag2 *iface)
 {
-    PropertyBag *This = (PropertyBag*)iface;
+    PropertyBag *This = impl_from_IPropertyBag2(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -73,7 +78,7 @@ static ULONG WINAPI PropertyBag_AddRef(IPropertyBag2 *iface)
 
 static ULONG WINAPI PropertyBag_Release(IPropertyBag2 *iface)
 {
-    PropertyBag *This = (PropertyBag*)iface;
+    PropertyBag *This = impl_from_IPropertyBag2(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -138,10 +143,10 @@ extern HRESULT CreatePropertyBag2(IPropertyBag2 **ppPropertyBag2)
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(PropertyBag));
     if (!This) return E_OUTOFMEMORY;
 
-    This->lpVtbl = &PropertyBag_Vtbl;
+    This->IPropertyBag2_iface.lpVtbl = &PropertyBag_Vtbl;
     This->ref = 1;
 
-    *ppPropertyBag2 = (IPropertyBag2*)This;
+    *ppPropertyBag2 = &This->IPropertyBag2_iface;
 
     return S_OK;
 }
