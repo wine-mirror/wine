@@ -26,14 +26,16 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
-#include "objbase.h"
+#include "ole2.h"
 #include "rpcproxy.h"
 #include "atliface.h"
 
 static const WCHAR ole32W[] = {'o','l','e','3','2','.','d','l','l',0};
+static const WCHAR oleaut32W[] = {'o','l','e','a','u','t','3','2','.','d','l','l',0};
 static const WCHAR regtypeW[] = {'W','I','N','E','_','R','E','G','I','S','T','R','Y',0};
 static const WCHAR moduleW[] = {'M','O','D','U','L','E',0};
 static const WCHAR clsidW[] = {'C','L','S','I','D','_','P','S','F','a','c','t','o','r','y','B','u','f','f','e','r',0};
+static const WCHAR typelibW[] = {'T','Y','P','E','L','I','B',0};
 
 struct reg_info
 {
@@ -45,14 +47,17 @@ struct reg_info
 };
 
 static HMODULE ole32;
+static HMODULE oleaut32;
 static HRESULT (WINAPI *pCoInitialize)(LPVOID);
 static void (WINAPI *pCoUninitialize)(void);
 static HRESULT (WINAPI *pCoCreateInstance)(REFCLSID,LPUNKNOWN,DWORD,REFIID,LPVOID*);
 static INT (WINAPI *pStringFromGUID2)(REFGUID,LPOLESTR,INT);
+static HRESULT (WINAPI *pLoadTypeLibEx)(LPCOLESTR,REGKIND,ITypeLib**);
+static HRESULT (WINAPI *pUnRegisterTypeLib)(REFGUID,WORD,WORD,LCID,SYSKIND);
 
 static IRegistrar *create_registrar( HMODULE inst, struct reg_info *info )
 {
-    if (!ole32)
+    if (!pStringFromGUID2)
     {
         if (!(ole32 = LoadLibraryW( ole32W )) ||
             !(pCoInitialize = (void *)GetProcAddress( ole32, "CoInitialize" )) ||
@@ -111,6 +116,40 @@ static BOOL CALLBACK register_resource( HMODULE module, LPCWSTR type, LPWSTR nam
     return SUCCEEDED(info->result);
 }
 
+static HRESULT register_typelib( HMODULE module, BOOL do_register )
+{
+    WCHAR name[MAX_PATH];
+    ITypeLib *typelib;
+    HRESULT ret;
+
+    if (!pUnRegisterTypeLib)
+    {
+        if (!(oleaut32 = LoadLibraryW( oleaut32W )) ||
+            !(pLoadTypeLibEx = (void *)GetProcAddress( oleaut32, "LoadTypeLibEx" )) ||
+            !(pUnRegisterTypeLib = (void *)GetProcAddress( oleaut32, "UnRegisterTypeLib" )))
+            return E_FAIL;
+    }
+    GetModuleFileNameW( module, name, MAX_PATH );
+    if (do_register)
+    {
+        ret = pLoadTypeLibEx( name, REGKIND_REGISTER, &typelib );
+    }
+    else
+    {
+        ret = pLoadTypeLibEx( name, REGKIND_NONE, &typelib );
+        if (SUCCEEDED( ret ))
+        {
+            TLIBATTR *attr;
+            ITypeLib_GetLibAttr( typelib, &attr );
+            ret = pUnRegisterTypeLib( &attr->guid, attr->wMajorVerNum, attr->wMinorVerNum,
+                                      attr->lcid, attr->syskind );
+            ITypeLib_ReleaseTLibAttr( typelib, attr );
+        }
+    }
+    if (SUCCEEDED( ret )) ITypeLib_Release( typelib );
+    return ret;
+}
+
 HRESULT __wine_register_resources( HMODULE module, const CLSID *clsid )
 {
     struct reg_info info;
@@ -122,6 +161,8 @@ HRESULT __wine_register_resources( HMODULE module, const CLSID *clsid )
     info.result = S_OK;
     EnumResourceNamesW( module, regtypeW, register_resource, (LONG_PTR)&info );
     if (info.registrar) IRegistrar_Release( info.registrar );
+    if (SUCCEEDED(info.result) && FindResourceW( module, MAKEINTRESOURCEW(1), typelibW ))
+        info.result = register_typelib( module, TRUE );
     if (info.uninit) pCoUninitialize();
     return info.result;
 }
@@ -137,6 +178,8 @@ HRESULT __wine_unregister_resources( HMODULE module, const CLSID *clsid )
     info.result = S_OK;
     EnumResourceNamesW( module, regtypeW, register_resource, (LONG_PTR)&info );
     if (info.registrar) IRegistrar_Release( info.registrar );
+    if (SUCCEEDED(info.result) && FindResourceW( module, MAKEINTRESOURCEW(1), typelibW ))
+        info.result = register_typelib( module, FALSE );
     if (info.uninit) pCoUninitialize();
     return info.result;
 }
