@@ -1525,7 +1525,7 @@ static int WS2_recv( int fd, struct ws2_async *wsa )
     if (wsa->control)
     {
         ERR("Message control headers cannot be properly supported on this system.\n");
-        control->len = 0;
+        wsa->control->len = 0;
     }
 #else
     if (wsa->control && !convert_control_headers(&hdr, wsa->control))
