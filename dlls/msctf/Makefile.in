@@ -11,8 +11,9 @@ C_SRCS = \
 	langbarmgr.c \
 	msctf.c \
 	range.c \
-	regsvr.c \
 	threadmgr.c
+
+IDL_R_SRCS = msctf_classes.idl
 
 RC_SRCS = \
 	version.rc

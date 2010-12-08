@@ -33,6 +33,7 @@
 #include "shlwapi.h"
 #include "shlguid.h"
 #include "comcat.h"
+#include "rpcproxy.h"
 #include "msctf.h"
 
 #include "msctf_internal.h"
@@ -551,6 +552,22 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, LPVOID *ppvOut)
         }
     FIXME("CLSID %s not supported\n", debugstr_guid(clsid));
     return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (MSCTF.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( MSCTF_hinstance, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (MSCTF.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( MSCTF_hinstance, NULL );
 }
 
 /***********************************************************************
