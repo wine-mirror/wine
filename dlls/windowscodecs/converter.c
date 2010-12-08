@@ -66,7 +66,7 @@ struct pixelformatinfo {
 };
 
 typedef struct FormatConverter {
-    const IWICFormatConverterVtbl *lpVtbl;
+    IWICFormatConverter IWICFormatConverter_iface;
     LONG ref;
     IWICBitmapSource *source;
     const struct pixelformatinfo *dst_format, *src_format;
@@ -75,6 +75,11 @@ typedef struct FormatConverter {
     WICBitmapPaletteType palette_type;
     CRITICAL_SECTION lock; /* must be held when initialized */
 } FormatConverter;
+
+static inline FormatConverter *impl_from_IWICFormatConverter(IWICFormatConverter *iface)
+{
+    return CONTAINING_RECORD(iface, FormatConverter, IWICFormatConverter_iface);
+}
 
 static void make_grayscale_palette(WICColor *colors, UINT num_colors)
 {
@@ -799,7 +804,7 @@ static const struct pixelformatinfo *get_formatinfo(const WICPixelFormatGUID *fo
 static HRESULT WINAPI FormatConverter_QueryInterface(IWICFormatConverter *iface, REFIID iid,
     void **ppv)
 {
-    FormatConverter *This = (FormatConverter*)iface;
+    FormatConverter *This = impl_from_IWICFormatConverter(iface);
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
@@ -822,7 +827,7 @@ static HRESULT WINAPI FormatConverter_QueryInterface(IWICFormatConverter *iface,
 
 static ULONG WINAPI FormatConverter_AddRef(IWICFormatConverter *iface)
 {
-    FormatConverter *This = (FormatConverter*)iface;
+    FormatConverter *This = impl_from_IWICFormatConverter(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -832,7 +837,7 @@ static ULONG WINAPI FormatConverter_AddRef(IWICFormatConverter *iface)
 
 static ULONG WINAPI FormatConverter_Release(IWICFormatConverter *iface)
 {
-    FormatConverter *This = (FormatConverter*)iface;
+    FormatConverter *This = impl_from_IWICFormatConverter(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -851,7 +856,7 @@ static ULONG WINAPI FormatConverter_Release(IWICFormatConverter *iface)
 static HRESULT WINAPI FormatConverter_GetSize(IWICFormatConverter *iface,
     UINT *puiWidth, UINT *puiHeight)
 {
-    FormatConverter *This = (FormatConverter*)iface;
+    FormatConverter *This = impl_from_IWICFormatConverter(iface);
 
     TRACE("(%p,%p,%p)\n", iface, puiWidth, puiHeight);
 
@@ -864,7 +869,7 @@ static HRESULT WINAPI FormatConverter_GetSize(IWICFormatConverter *iface,
 static HRESULT WINAPI FormatConverter_GetPixelFormat(IWICFormatConverter *iface,
     WICPixelFormatGUID *pPixelFormat)
 {
-    FormatConverter *This = (FormatConverter*)iface;
+    FormatConverter *This = impl_from_IWICFormatConverter(iface);
 
     TRACE("(%p,%p): stub\n", iface, pPixelFormat);
 
@@ -879,7 +884,7 @@ static HRESULT WINAPI FormatConverter_GetPixelFormat(IWICFormatConverter *iface,
 static HRESULT WINAPI FormatConverter_GetResolution(IWICFormatConverter *iface,
     double *pDpiX, double *pDpiY)
 {
-    FormatConverter *This = (FormatConverter*)iface;
+    FormatConverter *This = impl_from_IWICFormatConverter(iface);
 
     TRACE("(%p,%p,%p): stub\n", iface, pDpiX, pDpiY);
 
@@ -899,7 +904,7 @@ static HRESULT WINAPI FormatConverter_CopyPalette(IWICFormatConverter *iface,
 static HRESULT WINAPI FormatConverter_CopyPixels(IWICFormatConverter *iface,
     const WICRect *prc, UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer)
 {
-    FormatConverter *This = (FormatConverter*)iface;
+    FormatConverter *This = impl_from_IWICFormatConverter(iface);
     WICRect rc;
     HRESULT hr;
     TRACE("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
@@ -929,7 +934,7 @@ static HRESULT WINAPI FormatConverter_Initialize(IWICFormatConverter *iface,
     IWICBitmapSource *pISource, REFWICPixelFormatGUID dstFormat, WICBitmapDitherType dither,
     IWICPalette *pIPalette, double alphaThresholdPercent, WICBitmapPaletteType paletteTranslate)
 {
-    FormatConverter *This = (FormatConverter*)iface;
+    FormatConverter *This = impl_from_IWICFormatConverter(iface);
     const struct pixelformatinfo *srcinfo, *dstinfo;
     static INT fixme=0;
     GUID srcFormat;
@@ -989,7 +994,7 @@ static HRESULT WINAPI FormatConverter_CanConvert(IWICFormatConverter *iface,
     REFWICPixelFormatGUID srcPixelFormat, REFWICPixelFormatGUID dstPixelFormat,
     BOOL *pfCanConvert)
 {
-    FormatConverter *This = (FormatConverter*)iface;
+    FormatConverter *This = impl_from_IWICFormatConverter(iface);
     const struct pixelformatinfo *srcinfo, *dstinfo;
 
     TRACE("(%p,%s,%s,%p)\n", iface, debugstr_guid(srcPixelFormat),
@@ -1037,7 +1042,7 @@ HRESULT FormatConverter_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** p
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(FormatConverter));
     if (!This) return E_OUTOFMEMORY;
 
-    This->lpVtbl = &FormatConverter_Vtbl;
+    This->IWICFormatConverter_iface.lpVtbl = &FormatConverter_Vtbl;
     This->ref = 1;
     This->source = NULL;
     InitializeCriticalSection(&This->lock);
