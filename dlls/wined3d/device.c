@@ -2050,7 +2050,7 @@ err_out:
         This->stateBlock = NULL;
     }
     if (This->blit_priv) {
-        This->blitter->free_private(iface);
+        This->blitter->free_private(This);
     }
     if (This->fragment_priv) {
         This->frag_pipe->free_private(This);
@@ -2185,7 +2185,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
     }
 
     /* Destroy the shader backend. Note that this has to happen after all shaders are destroyed. */
-    This->blitter->free_private(iface);
+    This->blitter->free_private(This);
     This->frag_pipe->free_private(This);
     This->shader_backend->shader_free_private(This);
 
@@ -6199,7 +6199,7 @@ static void delete_opengl_contexts(IWineD3DDevice *iface, IWineD3DSwapChainImpl 
     }
     LEAVE_GL();
 
-    This->blitter->free_private(iface);
+    This->blitter->free_private(This);
     This->frag_pipe->free_private(This);
     This->shader_backend->shader_free_private(This);
     destroy_dummy_textures(This, gl_info);

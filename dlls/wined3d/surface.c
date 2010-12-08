@@ -4734,7 +4734,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
 
 static HRESULT ffp_blit_alloc(IWineD3DDeviceImpl *device) { return WINED3D_OK; }
 /* Context activation is done by the caller. */
-static void ffp_blit_free(IWineD3DDevice *iface) { }
+static void ffp_blit_free(IWineD3DDeviceImpl *device) { }
 
 /* This function is used in case of 8bit paletted textures using GL_EXT_paletted_texture */
 /* Context activation is done by the caller. */
@@ -4871,7 +4871,7 @@ static HRESULT cpu_blit_alloc(IWineD3DDeviceImpl *device)
 }
 
 /* Context activation is done by the caller. */
-static void cpu_blit_free(IWineD3DDevice *iface)
+static void cpu_blit_free(IWineD3DDeviceImpl *device)
 {
 }
 

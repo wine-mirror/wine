@@ -6514,8 +6514,8 @@ static HRESULT arbfp_blit_alloc(IWineD3DDeviceImpl *device)
 }
 
 /* Context activation is done by the caller. */
-static void arbfp_blit_free(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
+static void arbfp_blit_free(IWineD3DDeviceImpl *device)
+{
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct arbfp_blit_priv *priv = device->blit_priv;
 
