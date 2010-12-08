@@ -36,14 +36,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(infosoft);
 
 typedef struct tag_wordbreaker_impl
 {
-    const IWordBreakerVtbl *lpVtbl;
+    IWordBreaker IWordBreaker_iface;
     LONG ref;
 } wordbreaker_impl;
+
+static inline wordbreaker_impl *impl_from_IWordBreaker(IWordBreaker *iface)
+{
+    return CONTAINING_RECORD(iface, wordbreaker_impl, IWordBreaker_iface);
+}
 
 static HRESULT WINAPI wb_QueryInterface( IWordBreaker *iface,
         REFIID riid, LPVOID *ppvObj)
 {
-    wordbreaker_impl *This = (wordbreaker_impl *)iface;
+    wordbreaker_impl *This = impl_from_IWordBreaker(iface);
 
     TRACE("(%p)->(%s)\n",This,debugstr_guid(riid));
 
@@ -62,13 +67,13 @@ static HRESULT WINAPI wb_QueryInterface( IWordBreaker *iface,
 
 static ULONG WINAPI wb_AddRef( IWordBreaker *iface )
 {
-    wordbreaker_impl *This = (wordbreaker_impl *)iface;
+    wordbreaker_impl *This = impl_from_IWordBreaker(iface);
     return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI wb_Release(IWordBreaker *iface)
 {
-    wordbreaker_impl *This = (wordbreaker_impl *)iface;
+    wordbreaker_impl *This = impl_from_IWordBreaker(iface);
     LONG refcount;
 
     refcount = InterlockedDecrement(&This->ref);
@@ -190,9 +195,9 @@ HRESULT WINAPI wb_Constructor(IUnknown* pUnkOuter, REFIID riid, LPVOID *ppvObjec
         return E_OUTOFMEMORY;
 
     This->ref = 1;
-    This->lpVtbl = &wordbreaker_vtbl;
+    This->IWordBreaker_iface.lpVtbl = &wordbreaker_vtbl;
 
-    wb = (IWordBreaker*) This;
+    wb = &This->IWordBreaker_iface;
 
     return IWordBreaker_QueryInterface(wb, riid, ppvObject);
 }
