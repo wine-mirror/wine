@@ -1550,6 +1550,15 @@ POWER_STATE WINAPI PoSetPowerState(PDEVICE_OBJECT DeviceObject, POWER_STATE_TYPE
 }
 
 /*****************************************************
+ *           IoWMIRegistrationControl   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoWMIRegistrationControl(PDEVICE_OBJECT DeviceObject, ULONG Action)
+{
+    FIXME("(%p %u ) stub\n", DeviceObject, Action);
+    return STATUS_SUCCESS;
+}
+
+/*****************************************************
  *           DllMain
  */
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )

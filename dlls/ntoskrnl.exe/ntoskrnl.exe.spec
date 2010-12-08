@@ -485,7 +485,7 @@
 @ stub IoWMIQueryAllDataMultiple
 @ stub IoWMIQuerySingleInstance
 @ stub IoWMIQuerySingleInstanceMultiple
-@ stub IoWMIRegistrationControl
+@ stdcall IoWMIRegistrationControl(ptr long)
 @ stub IoWMISetNotificationCallback
 @ stub IoWMISetSingleInstance
 @ stub IoWMISetSingleItem
