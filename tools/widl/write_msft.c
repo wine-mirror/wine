@@ -849,6 +849,12 @@ static int encode_type(
 	*alignment = 8;
 	break;
 
+    case VT_DECIMAL:
+        *encoded_type = default_type;
+        *width = 16;
+        *alignment = 8;
+        break;
+
     case VT_VOID:
 	*encoded_type = 0x80000000 | (VT_EMPTY << 16) | vt;
 	*width = 0;
