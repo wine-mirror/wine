@@ -29,7 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 
 typedef struct IEnumPinsImpl
 {
-    const IEnumPinsVtbl * lpVtbl;
+    IEnumPins IEnumPins_iface;
     LONG refCount;
     ULONG uIndex;
     BaseFilter *base;
@@ -38,6 +38,11 @@ typedef struct IEnumPinsImpl
     BaseFilter_GetPinVersion receive_version;
     DWORD Version;
 } IEnumPinsImpl;
+
+static inline IEnumPinsImpl *impl_from_IEnumPins(IEnumPins *iface)
+{
+    return CONTAINING_RECORD(iface, IEnumPinsImpl, IEnumPins_iface);
+}
 
 static const struct IEnumPinsVtbl IEnumPinsImpl_Vtbl;
 
@@ -54,7 +59,7 @@ HRESULT WINAPI EnumPins_Construct(BaseFilter *base,  BaseFilter_GetPin receive_p
         *ppEnum = NULL;
         return E_OUTOFMEMORY;
     }
-    pEnumPins->lpVtbl = &IEnumPinsImpl_Vtbl;
+    pEnumPins->IEnumPins_iface.lpVtbl = &IEnumPinsImpl_Vtbl;
     pEnumPins->refCount = 1;
     pEnumPins->uIndex = 0;
     pEnumPins->receive_pin = receive_pin;
@@ -62,7 +67,7 @@ HRESULT WINAPI EnumPins_Construct(BaseFilter *base,  BaseFilter_GetPin receive_p
     pEnumPins->receive_version = receive_version;
     pEnumPins->base = base;
     IBaseFilter_AddRef((IBaseFilter*)base);
-    *ppEnum = (IEnumPins *)(&pEnumPins->lpVtbl);
+    *ppEnum = &pEnumPins->IEnumPins_iface;
     pEnumPins->Version = receive_version(base);
 
     TRACE("Created new enumerator (%p)\n", *ppEnum);
@@ -93,7 +98,7 @@ static HRESULT WINAPI IEnumPinsImpl_QueryInterface(IEnumPins * iface, REFIID rii
 
 static ULONG WINAPI IEnumPinsImpl_AddRef(IEnumPins * iface)
 {
-    IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
+    IEnumPinsImpl *This = impl_from_IEnumPins(iface);
     ULONG refCount = InterlockedIncrement(&This->refCount);
 
     TRACE("(%p)->() AddRef from %d\n", This, refCount - 1);
@@ -103,7 +108,7 @@ static ULONG WINAPI IEnumPinsImpl_AddRef(IEnumPins * iface)
 
 static ULONG WINAPI IEnumPinsImpl_Release(IEnumPins * iface)
 {
-    IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
+    IEnumPinsImpl *This = impl_from_IEnumPins(iface);
     ULONG refCount = InterlockedDecrement(&This->refCount);
 
     TRACE("(%p)->() Release from %d\n", This, refCount + 1);
@@ -120,7 +125,7 @@ static ULONG WINAPI IEnumPinsImpl_Release(IEnumPins * iface)
 
 static HRESULT WINAPI IEnumPinsImpl_Next(IEnumPins * iface, ULONG cPins, IPin ** ppPins, ULONG * pcFetched)
 {
-    IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
+    IEnumPinsImpl *This = impl_from_IEnumPins(iface);
     HRESULT hr = S_OK;
     ULONG i = 0;
 
@@ -161,7 +166,7 @@ static HRESULT WINAPI IEnumPinsImpl_Next(IEnumPins * iface, ULONG cPins, IPin **
 
 static HRESULT WINAPI IEnumPinsImpl_Skip(IEnumPins * iface, ULONG cPins)
 {
-    IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
+    IEnumPinsImpl *This = impl_from_IEnumPins(iface);
 
     TRACE("(%u)\n", cPins);
 
@@ -177,7 +182,7 @@ static HRESULT WINAPI IEnumPinsImpl_Skip(IEnumPins * iface, ULONG cPins)
 
 static HRESULT WINAPI IEnumPinsImpl_Reset(IEnumPins * iface)
 {
-    IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
+    IEnumPinsImpl *This = impl_from_IEnumPins(iface);
 
     TRACE("IEnumPinsImpl::Reset()\n");
     This->Version = This->receive_version(This->base);
@@ -189,7 +194,7 @@ static HRESULT WINAPI IEnumPinsImpl_Reset(IEnumPins * iface)
 static HRESULT WINAPI IEnumPinsImpl_Clone(IEnumPins * iface, IEnumPins ** ppEnum)
 {
     HRESULT hr;
-    IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
+    IEnumPinsImpl *This = impl_from_IEnumPins(iface);
 
     TRACE("(%p)\n", ppEnum);
 
