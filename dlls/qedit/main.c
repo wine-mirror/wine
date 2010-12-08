@@ -18,14 +18,18 @@
  */
 
 #include "qedit_private.h"
+#include "rpcproxy.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(qedit);
+
+static HINSTANCE instance;
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
     switch(fdwReason) {
         case DLL_PROCESS_ATTACH:
+            instance = hInstDLL;
             DisableThreadLibraryCalls(hInstDLL);
             break;
         case DLL_PROCESS_DETACH:
@@ -182,4 +186,20 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 
     *ppv = &(factory->ITF_IClassFactory);
     return S_OK;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (QEDIT.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( instance, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (QEDIT.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( instance, NULL );
 }

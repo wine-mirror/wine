@@ -4,7 +4,8 @@ IMPORTS   = strmiids uuid oleaut32 ole32 advapi32
 C_SRCS = \
 	main.c \
 	mediadet.c \
-	regsvr.c \
 	samplegrabber.c
+
+IDL_R_SRCS = qedit_classes.idl
 
 @MAKE_DLL_RULES@
