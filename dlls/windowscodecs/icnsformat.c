@@ -76,7 +76,7 @@ static void *load_libicns(void)
 }
 
 typedef struct IcnsEncoder {
-    const IWICBitmapEncoderVtbl *lpVtbl;
+    IWICBitmapEncoder IWICBitmapEncoder_iface;
     LONG ref;
     IStream *stream;
     icns_family_t *icns_family;
@@ -86,8 +86,13 @@ typedef struct IcnsEncoder {
     CRITICAL_SECTION lock;
 } IcnsEncoder;
 
+static inline IcnsEncoder *impl_from_IWICBitmapEncoder(IWICBitmapEncoder *iface)
+{
+    return CONTAINING_RECORD(iface, IcnsEncoder, IWICBitmapEncoder_iface);
+}
+
 typedef struct IcnsFrameEncode {
-    const IWICBitmapFrameEncodeVtbl *lpVtbl;
+    IWICBitmapFrameEncode IWICBitmapFrameEncode_iface;
     IcnsEncoder *encoder;
     LONG ref;
     BOOL initialized;
@@ -99,10 +104,15 @@ typedef struct IcnsFrameEncode {
     BOOL committed;
 } IcnsFrameEncode;
 
+static inline IcnsFrameEncode *impl_from_IWICBitmapFrameEncode(IWICBitmapFrameEncode *iface)
+{
+    return CONTAINING_RECORD(iface, IcnsFrameEncode, IWICBitmapFrameEncode_iface);
+}
+
 static HRESULT WINAPI IcnsFrameEncode_QueryInterface(IWICBitmapFrameEncode *iface, REFIID iid,
     void **ppv)
 {
-    IcnsFrameEncode *This = (IcnsFrameEncode*)iface;
+    IcnsFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
@@ -110,7 +120,7 @@ static HRESULT WINAPI IcnsFrameEncode_QueryInterface(IWICBitmapFrameEncode *ifac
     if (IsEqualIID(&IID_IUnknown, iid) ||
         IsEqualIID(&IID_IWICBitmapFrameEncode, iid))
     {
-        *ppv = &This->lpVtbl;
+        *ppv = &This->IWICBitmapFrameEncode_iface;
     }
     else
     {
@@ -124,7 +134,7 @@ static HRESULT WINAPI IcnsFrameEncode_QueryInterface(IWICBitmapFrameEncode *ifac
 
 static ULONG WINAPI IcnsFrameEncode_AddRef(IWICBitmapFrameEncode *iface)
 {
-    IcnsFrameEncode *This = (IcnsFrameEncode*)iface;
+    IcnsFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -134,7 +144,7 @@ static ULONG WINAPI IcnsFrameEncode_AddRef(IWICBitmapFrameEncode *iface)
 
 static ULONG WINAPI IcnsFrameEncode_Release(IWICBitmapFrameEncode *iface)
 {
-    IcnsFrameEncode *This = (IcnsFrameEncode*)iface;
+    IcnsFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -160,7 +170,7 @@ static ULONG WINAPI IcnsFrameEncode_Release(IWICBitmapFrameEncode *iface)
 static HRESULT WINAPI IcnsFrameEncode_Initialize(IWICBitmapFrameEncode *iface,
     IPropertyBag2 *pIEncoderOptions)
 {
-    IcnsFrameEncode *This = (IcnsFrameEncode*)iface;
+    IcnsFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
     HRESULT hr = S_OK;
 
     TRACE("(%p,%p)\n", iface, pIEncoderOptions);
@@ -182,7 +192,7 @@ end:
 static HRESULT WINAPI IcnsFrameEncode_SetSize(IWICBitmapFrameEncode *iface,
     UINT uiWidth, UINT uiHeight)
 {
-    IcnsFrameEncode *This = (IcnsFrameEncode*)iface;
+    IcnsFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
     HRESULT hr = S_OK;
 
     TRACE("(%p,%u,%u)\n", iface, uiWidth, uiHeight);
@@ -206,7 +216,7 @@ end:
 static HRESULT WINAPI IcnsFrameEncode_SetResolution(IWICBitmapFrameEncode *iface,
     double dpiX, double dpiY)
 {
-    IcnsFrameEncode *This = (IcnsFrameEncode*)iface;
+    IcnsFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
     HRESULT hr = S_OK;
 
     TRACE("(%p,%0.2f,%0.2f)\n", iface, dpiX, dpiY);
@@ -227,7 +237,7 @@ end:
 static HRESULT WINAPI IcnsFrameEncode_SetPixelFormat(IWICBitmapFrameEncode *iface,
     WICPixelFormatGUID *pPixelFormat)
 {
-    IcnsFrameEncode *This = (IcnsFrameEncode*)iface;
+    IcnsFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
     HRESULT hr = S_OK;
 
     TRACE("(%p,%s)\n", iface, debugstr_guid(pPixelFormat));
@@ -271,7 +281,7 @@ static HRESULT WINAPI IcnsFrameEncode_SetThumbnail(IWICBitmapFrameEncode *iface,
 static HRESULT WINAPI IcnsFrameEncode_WritePixels(IWICBitmapFrameEncode *iface,
     UINT lineCount, UINT cbStride, UINT cbBufferSize, BYTE *pbPixels)
 {
-    IcnsFrameEncode *This = (IcnsFrameEncode*)iface;
+    IcnsFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
     HRESULT hr = S_OK;
     UINT i;
     int ret;
@@ -341,7 +351,7 @@ end:
 static HRESULT WINAPI IcnsFrameEncode_WriteSource(IWICBitmapFrameEncode *iface,
     IWICBitmapSource *pIBitmapSource, WICRect *prc)
 {
-    IcnsFrameEncode *This = (IcnsFrameEncode*)iface;
+    IcnsFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
     HRESULT hr;
     WICRect rc;
     WICPixelFormatGUID guid;
@@ -408,7 +418,7 @@ end:
 
 static HRESULT WINAPI IcnsFrameEncode_Commit(IWICBitmapFrameEncode *iface)
 {
-    IcnsFrameEncode *This = (IcnsFrameEncode*)iface;
+    IcnsFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
     icns_element_t *icns_element = NULL;
     icns_image_t mask;
     icns_element_t *mask_element = NULL;
@@ -519,7 +529,7 @@ static const IWICBitmapFrameEncodeVtbl IcnsEncoder_FrameVtbl = {
 static HRESULT WINAPI IcnsEncoder_QueryInterface(IWICBitmapEncoder *iface, REFIID iid,
     void **ppv)
 {
-    IcnsEncoder *This = (IcnsEncoder*)iface;
+    IcnsEncoder *This = impl_from_IWICBitmapEncoder(iface);
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
@@ -541,7 +551,7 @@ static HRESULT WINAPI IcnsEncoder_QueryInterface(IWICBitmapEncoder *iface, REFII
 
 static ULONG WINAPI IcnsEncoder_AddRef(IWICBitmapEncoder *iface)
 {
-    IcnsEncoder *This = (IcnsEncoder*)iface;
+    IcnsEncoder *This = impl_from_IWICBitmapEncoder(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -551,7 +561,7 @@ static ULONG WINAPI IcnsEncoder_AddRef(IWICBitmapEncoder *iface)
 
 static ULONG WINAPI IcnsEncoder_Release(IWICBitmapEncoder *iface)
 {
-    IcnsEncoder *This = (IcnsEncoder*)iface;
+    IcnsEncoder *This = impl_from_IWICBitmapEncoder(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -573,7 +583,7 @@ static ULONG WINAPI IcnsEncoder_Release(IWICBitmapEncoder *iface)
 static HRESULT WINAPI IcnsEncoder_Initialize(IWICBitmapEncoder *iface,
     IStream *pIStream, WICBitmapEncoderCacheOption cacheOption)
 {
-    IcnsEncoder *This = (IcnsEncoder*)iface;
+    IcnsEncoder *This = impl_from_IWICBitmapEncoder(iface);
     int ret;
     HRESULT hr = S_OK;
 
@@ -644,7 +654,7 @@ static HRESULT WINAPI IcnsEncoder_SetPreview(IWICBitmapEncoder *iface, IWICBitma
 static HRESULT WINAPI IcnsEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
     IWICBitmapFrameEncode **ppIFrameEncode, IPropertyBag2 **ppIEncoderOptions)
 {
-    IcnsEncoder *This = (IcnsEncoder*)iface;
+    IcnsEncoder *This = impl_from_IWICBitmapEncoder(iface);
     HRESULT hr = S_OK;
     IcnsFrameEncode *frameEncode = NULL;
 
@@ -668,7 +678,7 @@ static HRESULT WINAPI IcnsEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
         hr = E_OUTOFMEMORY;
         goto end;
     }
-    frameEncode->lpVtbl = &IcnsEncoder_FrameVtbl;
+    frameEncode->IWICBitmapFrameEncode_iface.lpVtbl = &IcnsEncoder_FrameVtbl;
     frameEncode->encoder = This;
     frameEncode->ref = 1;
     frameEncode->initialized = FALSE;
@@ -677,7 +687,7 @@ static HRESULT WINAPI IcnsEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
     memset(&frameEncode->icns_image, 0, sizeof(icns_image_t));
     frameEncode->lines_written = 0;
     frameEncode->committed = FALSE;
-    *ppIFrameEncode = (IWICBitmapFrameEncode*)frameEncode;
+    *ppIFrameEncode = &frameEncode->IWICBitmapFrameEncode_iface;
     This->outstanding_commits++;
     IUnknown_AddRef((IUnknown*)This);
 
@@ -689,7 +699,7 @@ end:
 
 static HRESULT WINAPI IcnsEncoder_Commit(IWICBitmapEncoder *iface)
 {
-    IcnsEncoder *This = (IcnsEncoder*)iface;
+    IcnsEncoder *This = impl_from_IWICBitmapEncoder(iface);
     icns_byte_t *buffer = NULL;
     icns_size_t buffer_size;
     int ret;
@@ -772,7 +782,7 @@ HRESULT IcnsEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(IcnsEncoder));
     if (!This) return E_OUTOFMEMORY;
 
-    This->lpVtbl = &IcnsEncoder_Vtbl;
+    This->IWICBitmapEncoder_iface.lpVtbl = &IcnsEncoder_Vtbl;
     This->ref = 1;
     This->stream = NULL;
     This->icns_family = NULL;
