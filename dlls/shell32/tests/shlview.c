@@ -136,26 +136,31 @@ static void verify_msgs_in_(struct msg_sequence *seq, const UINT *msgs,
 
 /* dummy IDataObject implementation */
 typedef struct {
-    const IDataObjectVtbl *lpVtbl;
+    IDataObject IDataObject_iface;
     LONG ref;
 } IDataObjectImpl;
 
 static const IDataObjectVtbl IDataObjectImpl_Vtbl;
+
+static inline IDataObjectImpl *impl_from_IDataObject(IDataObject *iface)
+{
+    return CONTAINING_RECORD(iface, IDataObjectImpl, IDataObject_iface);
+}
 
 static IDataObject* IDataObjectImpl_Construct(void)
 {
     IDataObjectImpl *obj;
 
     obj = HeapAlloc(GetProcessHeap(), 0, sizeof(*obj));
-    obj->lpVtbl = &IDataObjectImpl_Vtbl;
+    obj->IDataObject_iface.lpVtbl = &IDataObjectImpl_Vtbl;
     obj->ref = 1;
 
-    return (IDataObject*)obj;
+    return &obj->IDataObject_iface;
 }
 
 static HRESULT WINAPI IDataObjectImpl_QueryInterface(IDataObject *iface, REFIID riid, void **ppvObj)
 {
-    IDataObjectImpl *This = (IDataObjectImpl *)iface;
+    IDataObjectImpl *This = impl_from_IDataObject(iface);
 
     if (IsEqualIID(riid, &IID_IUnknown) ||
         IsEqualIID(riid, &IID_IDataObject))
@@ -174,13 +179,13 @@ static HRESULT WINAPI IDataObjectImpl_QueryInterface(IDataObject *iface, REFIID 
 
 static ULONG WINAPI IDataObjectImpl_AddRef(IDataObject * iface)
 {
-    IDataObjectImpl *This = (IDataObjectImpl *)iface;
+    IDataObjectImpl *This = impl_from_IDataObject(iface);
     return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI IDataObjectImpl_Release(IDataObject * iface)
 {
-    IDataObjectImpl *This = (IDataObjectImpl *)iface;
+    IDataObjectImpl *This = impl_from_IDataObject(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     if (!ref)
@@ -258,28 +263,33 @@ static const IDataObjectVtbl IDataObjectImpl_Vtbl =
 
 /* dummy IShellBrowser implementation */
 typedef struct {
-    const IShellBrowserVtbl *lpVtbl;
+    IShellBrowser IShellBrowser_iface;
     LONG ref;
 } IShellBrowserImpl;
 
 static const IShellBrowserVtbl IShellBrowserImpl_Vtbl;
+
+static inline IShellBrowserImpl *impl_from_IShellBrowser(IShellBrowser *iface)
+{
+    return CONTAINING_RECORD(iface, IShellBrowserImpl, IShellBrowser_iface);
+}
 
 static IShellBrowser* IShellBrowserImpl_Construct(void)
 {
     IShellBrowserImpl *browser;
 
     browser = HeapAlloc(GetProcessHeap(), 0, sizeof(*browser));
-    browser->lpVtbl = &IShellBrowserImpl_Vtbl;
+    browser->IShellBrowser_iface.lpVtbl = &IShellBrowserImpl_Vtbl;
     browser->ref = 1;
 
-    return (IShellBrowser*)browser;
+    return &browser->IShellBrowser_iface;
 }
 
 static HRESULT WINAPI IShellBrowserImpl_QueryInterface(IShellBrowser *iface,
                                             REFIID riid,
                                             LPVOID *ppvObj)
 {
-    IShellBrowserImpl *This = (IShellBrowserImpl *)iface;
+    IShellBrowserImpl *This = impl_from_IShellBrowser(iface);
 
     *ppvObj = NULL;
 
@@ -301,13 +311,13 @@ static HRESULT WINAPI IShellBrowserImpl_QueryInterface(IShellBrowser *iface,
 
 static ULONG WINAPI IShellBrowserImpl_AddRef(IShellBrowser * iface)
 {
-    IShellBrowserImpl *This = (IShellBrowserImpl *)iface;
+    IShellBrowserImpl *This = impl_from_IShellBrowser(iface);
     return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI IShellBrowserImpl_Release(IShellBrowser * iface)
 {
-    IShellBrowserImpl *This = (IShellBrowserImpl *)iface;
+    IShellBrowserImpl *This = impl_from_IShellBrowser(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     if (!ref)
