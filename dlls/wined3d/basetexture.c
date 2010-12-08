@@ -237,13 +237,14 @@ void basetexture_generate_mipmaps(IWineD3DBaseTexture *iface)
     FIXME("iface %p stub!\n", iface);
 }
 
-BOOL basetexture_set_dirty(IWineD3DBaseTexture *iface, BOOL dirty)
+BOOL basetexture_set_dirty(IWineD3DBaseTextureImpl *texture, BOOL dirty)
 {
     BOOL old;
-    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-    old = This->baseTexture.texture_rgb.dirty || This->baseTexture.texture_srgb.dirty;
-    This->baseTexture.texture_rgb.dirty = dirty;
-    This->baseTexture.texture_srgb.dirty = dirty;
+
+    old = texture->baseTexture.texture_rgb.dirty || texture->baseTexture.texture_srgb.dirty;
+    texture->baseTexture.texture_rgb.dirty = dirty;
+    texture->baseTexture.texture_srgb.dirty = dirty;
+
     return old;
 }
 
@@ -293,7 +294,7 @@ HRESULT basetexture_bind(IWineD3DBaseTexture *iface, BOOL srgb, BOOL *set_surfac
         gl_tex->states[WINED3DTEXSTA_MAXANISOTROPY] = 1;
         gl_tex->states[WINED3DTEXSTA_SRGBTEXTURE]   = 0;
         gl_tex->states[WINED3DTEXSTA_SHADOW]        = FALSE;
-        IWineD3DBaseTexture_SetDirty(iface, TRUE);
+        basetexture_set_dirty(This, TRUE);
         isNewTexture = TRUE;
 
         if(This->resource.usage & WINED3DUSAGE_AUTOGENMIPMAP) {

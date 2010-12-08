@@ -2525,9 +2525,6 @@ interface IWineD3DBaseTexture : IWineD3DResource
     );
     void GenerateMipSubLevels(
     );
-    BOOL SetDirty(
-        BOOL dirty
-    );
     HRESULT BindTexture(
         [in] BOOL srgb
     );

@@ -261,11 +261,6 @@ static void WINAPI IWineD3DTextureImpl_GenerateMipSubLevels(IWineD3DTexture *ifa
     basetexture_generate_mipmaps((IWineD3DBaseTexture *)iface);
 }
 
-/* Internal function, No d3d mapping */
-static BOOL WINAPI IWineD3DTextureImpl_SetDirty(IWineD3DTexture *iface, BOOL dirty) {
-    return basetexture_set_dirty((IWineD3DBaseTexture *)iface, dirty);
-}
-
 /* Context activation is done by the caller. */
 static HRESULT WINAPI IWineD3DTextureImpl_BindTexture(IWineD3DTexture *iface, BOOL srgb) {
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
@@ -449,7 +444,6 @@ static const IWineD3DTextureVtbl IWineD3DTexture_Vtbl =
     IWineD3DTextureImpl_SetAutoGenFilterType,
     IWineD3DTextureImpl_GetAutoGenFilterType,
     IWineD3DTextureImpl_GenerateMipSubLevels,
-    IWineD3DTextureImpl_SetDirty,
     IWineD3DTextureImpl_BindTexture,
     IWineD3DTextureImpl_IsCondNP2,
     /* IWineD3DTexture */

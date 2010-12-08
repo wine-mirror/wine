@@ -1925,7 +1925,7 @@ HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, UINT layer_count, UIN
         const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 HRESULT basetexture_set_autogen_filter_type(IWineD3DBaseTexture *iface,
         WINED3DTEXTUREFILTERTYPE filter_type) DECLSPEC_HIDDEN;
-BOOL basetexture_set_dirty(IWineD3DBaseTexture *iface, BOOL dirty) DECLSPEC_HIDDEN;
+BOOL basetexture_set_dirty(IWineD3DBaseTextureImpl *texture, BOOL dirty) DECLSPEC_HIDDEN;
 DWORD basetexture_set_lod(IWineD3DBaseTexture *iface, DWORD new_lod) DECLSPEC_HIDDEN;
 void basetexture_unload(IWineD3DBaseTexture *iface) DECLSPEC_HIDDEN;
 
