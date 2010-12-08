@@ -1445,6 +1445,9 @@ coclass DOMDocument40
 }
 
 [
+    helpstring("XML DOM Document 6.0"),
+    progid("Msxml2.DOMDocument.6.0"),
+    threading(both),
     uuid(88d96a05-f192-11d4-a65f-0040963251e5)
 ]
 coclass DOMDocument60
@@ -1490,6 +1493,9 @@ coclass FreeThreadedDOMDocument40
 }
 
 [
+    helpstring("Free threaded XML DOM Document 6.0"),
+    progid("Msxml2.FreeThreadedDOMDocument.6.0"),
+    threading(both),
     uuid(88d96a06-f192-11d4-a65f-0040963251e5),
 ]
 coclass FreeThreadedDOMDocument60
@@ -1531,6 +1537,9 @@ coclass XMLHTTP40
 }
 
 [
+    helpstring("XML HTTP 6.0"),
+    progid("Msxml2.XMLHTTP.6.0"),
+    threading(apartment),
     uuid(88d96a0a-f192-11d4-a65f-0040963251e5)
 ]
 coclass XMLHTTP60
@@ -1563,6 +1572,9 @@ coclass ServerXMLHTTP40
 }
 
 [
+    helpstring("Server XML HTTP 6.0"),
+    progid("Msxml2.ServerXMLHTTP.6.0"),
+    threading(apartment),
     uuid(88d96a0b-f192-11d4-a65f-0040963251e5)
 ]
 coclass ServerXMLHTTP60
@@ -1603,6 +1615,9 @@ coclass XMLSchemaCache40
 }
 
 [
+    helpstring("XML Schema Cache 6.0"),
+    progid("Msxml2.XMLSchemaCache.6.0"),
+    threading(both),
     uuid(88d96a07-f192-11d4-a65f-0040963251e5)
 ]
 coclass XMLSchemaCache60
@@ -1643,6 +1658,9 @@ coclass XSLTemplate40
 }
 
 [
+    helpstring("XSL Template 6.0"),
+    progid("Msxml2.XSLTemplate.6.0"),
+    threading(both),
     uuid(88d96a08-f192-11d4-a65f-0040963251e5)
 ]
 coclass XSLTemplate60
@@ -3136,6 +3154,9 @@ coclass SAXXMLReader40
 }
 
 [
+    helpstring("SAX XML Reader 6.0"),
+    progid("Msxml2.SAXXMLReader.6.0"),
+    threading(both),
     uuid(88d96a0c-f192-11d4-a65f-0040963251e5)
 ]
 coclass SAXXMLReader60
@@ -3205,6 +3226,9 @@ coclass MXHTMLWriter40
 }
 
 [
+    helpstring("MXHTMLWriter 6.0"),
+    progid("Msxml2.MXHTMLWriter.6.0"),
+    threading(both),
     uuid(88d96a10-f192-11d4-a65f-0040963251e5)
 ]
 coclass MXHTMLWriter60
@@ -3285,6 +3309,9 @@ coclass MXXMLWriter40
 }
 
 [
+    helpstring("MXXMLWriter 6.0"),
+    progid("Msxml2.MXXMLWriter.6.0"),
+    threading(both),
     uuid(88d96a0f-f192-11d4-a65f-0040963251e5)
 ]
 coclass MXXMLWriter60
@@ -3323,6 +3350,9 @@ coclass MXNamespaceManager40
 }
 
 [
+    helpstring("MXNamespaceManager 6.0"),
+    progid("Msxml2.MXNamespaceManager.6.0"),
+    threading(both),
     uuid(88d96a11-f192-11d4-a65f-0040963251e5)
 ]
 coclass MXNamespaceManager60
@@ -3362,6 +3392,9 @@ coclass SAXAttributes40
 }
 
 [
+    helpstring("SAXAttributes 6.0"),
+    progid("Msxml2.SAXAttributes.6.0"),
+    threading(both),
     uuid(88d96a0e-f192-11d4-a65f-0040963251e5)
 ]
 coclass SAXAttributes60

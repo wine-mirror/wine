@@ -3,11 +3,11 @@ MODULE    = msxml6.dll
 IMPORTS   = oleaut32 ole32 advapi32
 
 C_SRCS = \
-	main.c \
-	regsvr.c
+	main.c
 
 RC_SRCS = rsrc.rc
 
+IDL_R_SRCS   = msxml6_tlb.idl
 IDL_TLB_SRCS = msxml6_tlb.idl
 
 @MAKE_DLL_RULES@
