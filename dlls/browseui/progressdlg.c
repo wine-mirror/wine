@@ -59,7 +59,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(browseui);
 #define WM_DLG_DESTROY  (WM_APP+2)  /* DestroyWindow must be called from the owning thread */
 
 typedef struct tagProgressDialog {
-    const IProgressDialogVtbl *vtbl;
+    IProgressDialog IProgressDialog_iface;
     LONG refCount;
     CRITICAL_SECTION cs;
     HWND hwnd;
@@ -73,6 +73,11 @@ typedef struct tagProgressDialog {
     ULONGLONG ullTotal;
     HWND hwndDisabledParent;    /* For modal dialog: the parent that need to be re-enabled when the dialog ends */
 } ProgressDialog;
+
+static inline ProgressDialog *impl_from_IProgressDialog(IProgressDialog *iface)
+{
+    return CONTAINING_RECORD(iface, ProgressDialog, IProgressDialog_iface);
+}
 
 static void set_buffer(LPWSTR *buffer, LPCWSTR string)
 {
@@ -260,7 +265,7 @@ static void ProgressDialog_Destructor(ProgressDialog *This)
 
 static HRESULT WINAPI ProgressDialog_QueryInterface(IProgressDialog *iface, REFIID iid, LPVOID *ppvOut)
 {
-    ProgressDialog *This = (ProgressDialog *)iface;
+    ProgressDialog *This = impl_from_IProgressDialog(iface);
     *ppvOut = NULL;
 
     if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_IProgressDialog))
@@ -280,13 +285,13 @@ static HRESULT WINAPI ProgressDialog_QueryInterface(IProgressDialog *iface, REFI
 
 static ULONG WINAPI ProgressDialog_AddRef(IProgressDialog *iface)
 {
-    ProgressDialog *This = (ProgressDialog *)iface;
+    ProgressDialog *This = impl_from_IProgressDialog(iface);
     return InterlockedIncrement(&This->refCount);
 }
 
 static ULONG WINAPI ProgressDialog_Release(IProgressDialog *iface)
 {
-    ProgressDialog *This = (ProgressDialog *)iface;
+    ProgressDialog *This = impl_from_IProgressDialog(iface);
     ULONG ret;
 
     ret = InterlockedDecrement(&This->refCount);
@@ -297,7 +302,7 @@ static ULONG WINAPI ProgressDialog_Release(IProgressDialog *iface)
 
 static HRESULT WINAPI ProgressDialog_StartProgressDialog(IProgressDialog *iface, HWND hwndParent, IUnknown *punkEnableModeless, DWORD dwFlags, LPCVOID reserved)
 {
-    ProgressDialog *This = (ProgressDialog *)iface;
+    ProgressDialog *This = impl_from_IProgressDialog(iface);
     struct create_params params;
     HANDLE hThread;
 
@@ -341,7 +346,7 @@ static HRESULT WINAPI ProgressDialog_StartProgressDialog(IProgressDialog *iface,
 
 static HRESULT WINAPI ProgressDialog_StopProgressDialog(IProgressDialog *iface)
 {
-    ProgressDialog *This = (ProgressDialog *)iface;
+    ProgressDialog *This = impl_from_IProgressDialog(iface);
 
     EnterCriticalSection(&This->cs);
     if (This->hwnd)
@@ -353,7 +358,7 @@ static HRESULT WINAPI ProgressDialog_StopProgressDialog(IProgressDialog *iface)
 
 static HRESULT WINAPI ProgressDialog_SetTitle(IProgressDialog *iface, LPCWSTR pwzTitle)
 {
-    ProgressDialog *This = (ProgressDialog *)iface;
+    ProgressDialog *This = impl_from_IProgressDialog(iface);
     HWND hwnd;
 
     TRACE("(%p, %s)\n", This, wine_dbgstr_w(pwzTitle));
@@ -378,13 +383,13 @@ static HRESULT WINAPI ProgressDialog_SetAnimation(IProgressDialog *iface, HINSTA
 
 static BOOL WINAPI ProgressDialog_HasUserCancelled(IProgressDialog *iface)
 {
-    ProgressDialog *This = (ProgressDialog *)iface;
+    ProgressDialog *This = impl_from_IProgressDialog(iface);
     return This->isCancelled;
 }
 
 static HRESULT WINAPI ProgressDialog_SetProgress64(IProgressDialog *iface, ULONGLONG ullCompleted, ULONGLONG ullTotal)
 {
-    ProgressDialog *This = (ProgressDialog *)iface;
+    ProgressDialog *This = impl_from_IProgressDialog(iface);
     HWND hwnd;
 
     TRACE("(%p, 0x%s, 0x%s)\n", This, wine_dbgstr_longlong(ullCompleted), wine_dbgstr_longlong(ullTotal));
@@ -409,7 +414,7 @@ static HRESULT WINAPI ProgressDialog_SetProgress(IProgressDialog *iface, DWORD d
 
 static HRESULT WINAPI ProgressDialog_SetLine(IProgressDialog *iface, DWORD dwLineNum, LPCWSTR pwzLine, BOOL bPath, LPCVOID reserved)
 {
-    ProgressDialog *This = (ProgressDialog *)iface;
+    ProgressDialog *This = impl_from_IProgressDialog(iface);
     HWND hwnd;
 
     TRACE("(%p, %d, %s, %d)\n", This, dwLineNum, wine_dbgstr_w(pwzLine), bPath);
@@ -435,7 +440,7 @@ static HRESULT WINAPI ProgressDialog_SetLine(IProgressDialog *iface, DWORD dwLin
 
 static HRESULT WINAPI ProgressDialog_SetCancelMsg(IProgressDialog *iface, LPCWSTR pwzMsg, LPCVOID reserved)
 {
-    ProgressDialog *This = (ProgressDialog *)iface;
+    ProgressDialog *This = impl_from_IProgressDialog(iface);
     HWND hwnd;
 
     TRACE("(%p, %s)\n", This, wine_dbgstr_w(pwzMsg));
@@ -457,7 +462,7 @@ static HRESULT WINAPI ProgressDialog_SetCancelMsg(IProgressDialog *iface, LPCWST
 
 static HRESULT WINAPI ProgressDialog_Timer(IProgressDialog *iface, DWORD dwTimerAction, LPCVOID reserved)
 {
-    ProgressDialog *This = (ProgressDialog *)iface;
+    ProgressDialog *This = impl_from_IProgressDialog(iface);
 
     FIXME("(%p, %d, %p) - stub\n", This, dwTimerAction, reserved);
 
@@ -495,7 +500,7 @@ HRESULT ProgressDialog_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     if (This == NULL)
         return E_OUTOFMEMORY;
 
-    This->vtbl = &ProgressDialogVtbl;
+    This->IProgressDialog_iface.lpVtbl = &ProgressDialogVtbl;
     This->refCount = 1;
     InitializeCriticalSection(&This->cs);
 
