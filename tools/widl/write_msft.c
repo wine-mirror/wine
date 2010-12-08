@@ -2014,6 +2014,12 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
     if (-1 < interface->typelib_idx)
         return;
 
+    if (!interface->details.iface)
+    {
+        error( "interface %s is referenced but not defined\n", interface->name );
+        return;
+    }
+
     if (is_attr(interface->attrs, ATTR_DISPINTERFACE))
         return add_dispinterface_typeinfo(typelib, interface);
 
