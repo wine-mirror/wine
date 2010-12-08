@@ -105,8 +105,8 @@ static void httprequest_setreadystate(httprequest *This, READYSTATE state)
 
 struct BindStatusCallback
 {
-    const IBindStatusCallbackVtbl *lpBindStatusCallbackVtbl;
-    const IHttpNegotiateVtbl      *lpHttpNegotiateVtbl;
+    IBindStatusCallback IBindStatusCallback_iface;
+    IHttpNegotiate      IHttpNegotiate_iface;
     LONG ref;
 
     IBinding *binding;
@@ -121,12 +121,12 @@ struct BindStatusCallback
 
 static inline BindStatusCallback *impl_from_IBindStatusCallback( IBindStatusCallback *iface )
 {
-    return (BindStatusCallback *)((char*)iface - FIELD_OFFSET(BindStatusCallback, lpBindStatusCallbackVtbl));
+    return CONTAINING_RECORD(iface, BindStatusCallback, IBindStatusCallback_iface);
 }
 
 static inline BindStatusCallback *impl_from_IHttpNegotiate( IHttpNegotiate *iface )
 {
-    return (BindStatusCallback *)((char*)iface - FIELD_OFFSET(BindStatusCallback, lpHttpNegotiateVtbl));
+    return CONTAINING_RECORD(iface, BindStatusCallback, IHttpNegotiate_iface);
 }
 
 void BindStatusCallback_Detach(BindStatusCallback *bsc)
@@ -135,7 +135,7 @@ void BindStatusCallback_Detach(BindStatusCallback *bsc)
     {
         if (bsc->binding) IBinding_Abort(bsc->binding);
         bsc->request = NULL;
-        IBindStatusCallback_Release((IBindStatusCallback*)bsc);
+        IBindStatusCallback_Release(&bsc->IBindStatusCallback_iface);
     }
 }
 
@@ -151,11 +151,11 @@ static HRESULT WINAPI BindStatusCallback_QueryInterface(IBindStatusCallback *ifa
     if (IsEqualGUID(&IID_IUnknown, riid) ||
         IsEqualGUID(&IID_IBindStatusCallback, riid))
     {
-        *ppv = &This->lpBindStatusCallbackVtbl;
+        *ppv = &This->IBindStatusCallback_iface;
     }
     else if (IsEqualGUID(&IID_IHttpNegotiate, riid))
     {
-        *ppv = &This->lpHttpNegotiateVtbl;
+        *ppv = &This->IHttpNegotiate_iface;
     }
     else if (IsEqualGUID(&IID_IServiceProvider, riid) ||
              IsEqualGUID(&IID_IBindStatusCallbackEx, riid) ||
@@ -344,19 +344,19 @@ static HRESULT WINAPI BSCHttpNegotiate_QueryInterface(IHttpNegotiate *iface,
         REFIID riid, void **ppv)
 {
     BindStatusCallback *This = impl_from_IHttpNegotiate(iface);
-    return IBindStatusCallback_QueryInterface((IBindStatusCallback*)This, riid, ppv);
+    return IBindStatusCallback_QueryInterface(&This->IBindStatusCallback_iface, riid, ppv);
 }
 
 static ULONG WINAPI BSCHttpNegotiate_AddRef(IHttpNegotiate *iface)
 {
     BindStatusCallback *This = impl_from_IHttpNegotiate(iface);
-    return IBindStatusCallback_AddRef((IBindStatusCallback*)This);
+    return IBindStatusCallback_AddRef(&This->IBindStatusCallback_iface);
 }
 
 static ULONG WINAPI BSCHttpNegotiate_Release(IHttpNegotiate *iface)
 {
     BindStatusCallback *This = impl_from_IHttpNegotiate(iface);
-    return IBindStatusCallback_Release((IBindStatusCallback*)This);
+    return IBindStatusCallback_Release(&This->IBindStatusCallback_iface);
 }
 
 static HRESULT WINAPI BSCHttpNegotiate_BeginningTransaction(IHttpNegotiate *iface,
@@ -433,8 +433,8 @@ static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback *
         return E_OUTOFMEMORY;
     }
 
-    bsc->lpBindStatusCallbackVtbl = &BindStatusCallbackVtbl;
-    bsc->lpHttpNegotiateVtbl = &BSCHttpNegotiateVtbl;
+    bsc->IBindStatusCallback_iface.lpVtbl = &BindStatusCallbackVtbl;
+    bsc->IHttpNegotiate_iface.lpVtbl = &BSCHttpNegotiateVtbl;
     bsc->ref = 1;
     bsc->request = This;
     bsc->binding = NULL;
@@ -465,7 +465,7 @@ static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback *
             FIXME("unsupported body data type %d\n", V_VT(body));
     }
 
-    hr = RegisterBindStatusCallback(pbc, (IBindStatusCallback*)bsc, NULL, 0);
+    hr = RegisterBindStatusCallback(pbc, &bsc->IBindStatusCallback_iface, NULL, 0);
     if (hr == S_OK)
     {
         IMoniker *moniker;
@@ -484,7 +484,7 @@ static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback *
 
     if (FAILED(hr))
     {
-        IBindStatusCallback_Release((IBindStatusCallback*)bsc);
+        IBindStatusCallback_Release(&bsc->IBindStatusCallback_iface);
         bsc = NULL;
     }
 
