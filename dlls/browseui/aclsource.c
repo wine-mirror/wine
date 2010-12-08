@@ -43,10 +43,15 @@
 WINE_DEFAULT_DEBUG_CHANNEL(browseui);
 
 typedef struct tagACLMulti {
-    const IACList2Vtbl *acl2Vtbl;
+    IACList2 IACList2_iface;
     LONG refCount;
     DWORD dwOptions;
 } ACLShellSource;
+
+static inline ACLShellSource *impl_from_IACList2(IACList2 *iface)
+{
+    return CONTAINING_RECORD(iface, ACLShellSource, IACList2_iface);
+}
 
 static void ACLShellSource_Destructor(ACLShellSource *This)
 {
@@ -56,7 +61,7 @@ static void ACLShellSource_Destructor(ACLShellSource *This)
 
 static HRESULT WINAPI ACLShellSource_QueryInterface(IACList2 *iface, REFIID iid, LPVOID *ppvOut)
 {
-    ACLShellSource *This = (ACLShellSource *)iface;
+    ACLShellSource *This = impl_from_IACList2(iface);
     *ppvOut = NULL;
 
     if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_IACList2) ||
@@ -77,13 +82,13 @@ static HRESULT WINAPI ACLShellSource_QueryInterface(IACList2 *iface, REFIID iid,
 
 static ULONG WINAPI ACLShellSource_AddRef(IACList2 *iface)
 {
-    ACLShellSource *This = (ACLShellSource *)iface;
+    ACLShellSource *This = impl_from_IACList2(iface);
     return InterlockedIncrement(&This->refCount);
 }
 
 static ULONG WINAPI ACLShellSource_Release(IACList2 *iface)
 {
-    ACLShellSource *This = (ACLShellSource *)iface;
+    ACLShellSource *This = impl_from_IACList2(iface);
     ULONG ret;
 
     ret = InterlockedDecrement(&This->refCount);
@@ -94,7 +99,7 @@ static ULONG WINAPI ACLShellSource_Release(IACList2 *iface)
 
 static HRESULT WINAPI ACLShellSource_Expand(IACList2 *iface, LPCWSTR wstr)
 {
-    ACLShellSource *This = (ACLShellSource *)iface;
+    ACLShellSource *This = impl_from_IACList2(iface);
     FIXME("STUB:(%p) %s\n",This,debugstr_w(wstr));
     return E_NOTIMPL;
 }
@@ -103,7 +108,7 @@ static HRESULT WINAPI ACLShellSource_Expand(IACList2 *iface, LPCWSTR wstr)
 static HRESULT WINAPI ACLShellSource_GetOptions(IACList2 *iface,
     DWORD *pdwFlag)
 {
-    ACLShellSource *This = (ACLShellSource *)iface;
+    ACLShellSource *This = impl_from_IACList2(iface);
     *pdwFlag = This->dwOptions;
     return S_OK;
 }
@@ -111,7 +116,7 @@ static HRESULT WINAPI ACLShellSource_GetOptions(IACList2 *iface,
 static HRESULT WINAPI ACLShellSource_SetOptions(IACList2 *iface,
     DWORD dwFlag)
 {
-    ACLShellSource *This = (ACLShellSource *)iface;
+    ACLShellSource *This = impl_from_IACList2(iface);
     This->dwOptions = dwFlag;
     return S_OK;
 }
@@ -138,7 +143,7 @@ HRESULT ACLShellSource_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     if (This == NULL)
         return E_OUTOFMEMORY;
 
-    This->acl2Vtbl = &ACLMulti_ACList2Vtbl;
+    This->IACList2_iface.lpVtbl = &ACLMulti_ACList2Vtbl;
     This->refCount = 1;
 
     TRACE("returning %p\n", This);
