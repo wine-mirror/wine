@@ -44,10 +44,15 @@
 WINE_DEFAULT_DEBUG_CHANNEL(browseui);
 
 typedef struct tagCCCD {
-    const IRunnableTaskVtbl *vtbl;
+    IRunnableTask IRunnableTask_iface;
     LONG refCount;
     CRITICAL_SECTION cs;
 } CompCatCacheDaemon;
+
+static inline CompCatCacheDaemon *impl_from_IRunnableTask(IRunnableTask *iface)
+{
+    return CONTAINING_RECORD(iface, CompCatCacheDaemon, IRunnableTask_iface);
+}
 
 static void CompCatCacheDaemon_Destructor(CompCatCacheDaemon *This)
 {
@@ -59,7 +64,7 @@ static void CompCatCacheDaemon_Destructor(CompCatCacheDaemon *This)
 
 static HRESULT WINAPI CompCatCacheDaemon_QueryInterface(IRunnableTask *iface, REFIID iid, LPVOID *ppvOut)
 {
-    CompCatCacheDaemon *This = (CompCatCacheDaemon *)iface;
+    CompCatCacheDaemon *This = impl_from_IRunnableTask(iface);
     *ppvOut = NULL;
 
     if (IsEqualIID(iid, &IID_IRunnableTask) || IsEqualIID(iid, &IID_IUnknown))
@@ -79,13 +84,13 @@ static HRESULT WINAPI CompCatCacheDaemon_QueryInterface(IRunnableTask *iface, RE
 
 static ULONG WINAPI CompCatCacheDaemon_AddRef(IRunnableTask *iface)
 {
-    CompCatCacheDaemon *This = (CompCatCacheDaemon *)iface;
+    CompCatCacheDaemon *This = impl_from_IRunnableTask(iface);
     return InterlockedIncrement(&This->refCount);
 }
 
 static ULONG WINAPI CompCatCacheDaemon_Release(IRunnableTask *iface)
 {
-    CompCatCacheDaemon *This = (CompCatCacheDaemon *)iface;
+    CompCatCacheDaemon *This = impl_from_IRunnableTask(iface);
     ULONG ret;
 
     ret = InterlockedDecrement(&This->refCount);
@@ -146,7 +151,7 @@ HRESULT CompCatCacheDaemon_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     if (This == NULL)
         return E_OUTOFMEMORY;
 
-    This->vtbl = &CompCatCacheDaemonVtbl;
+    This->IRunnableTask_iface.lpVtbl = &CompCatCacheDaemonVtbl;
     This->refCount = 1;
     InitializeCriticalSection(&This->cs);
 
