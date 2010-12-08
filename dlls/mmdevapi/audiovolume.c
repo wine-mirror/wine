@@ -54,9 +54,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 static const IAudioEndpointVolumeExVtbl AEVImpl_Vtbl;
 
 typedef struct AEVImpl {
-    const IAudioEndpointVolumeExVtbl *lpVtbl;
+    IAudioEndpointVolumeEx IAudioEndpointVolumeEx_iface;
     LONG ref;
 } AEVImpl;
+
+static inline AEVImpl *impl_from_IAudioEndpointVolumeEx(IAudioEndpointVolumeEx *iface)
+{
+    return CONTAINING_RECORD(iface, AEVImpl, IAudioEndpointVolumeEx_iface);
+}
 
 HRESULT AudioEndpointVolume_Create(MMDevice *parent, IAudioEndpointVolume **ppv)
 {
@@ -65,7 +70,7 @@ HRESULT AudioEndpointVolume_Create(MMDevice *parent, IAudioEndpointVolume **ppv)
     *ppv = (IAudioEndpointVolume*)This;
     if (!This)
         return E_OUTOFMEMORY;
-    This->lpVtbl = &AEVImpl_Vtbl;
+    This->IAudioEndpointVolumeEx_iface.lpVtbl = &AEVImpl_Vtbl;
     This->ref = 1;
     return S_OK;
 }
@@ -77,7 +82,7 @@ static void AudioEndpointVolume_Destroy(AEVImpl *This)
 
 static HRESULT WINAPI AEV_QueryInterface(IAudioEndpointVolumeEx *iface, REFIID riid, void **ppv)
 {
-    AEVImpl *This = (AEVImpl*)iface;
+    AEVImpl *This = impl_from_IAudioEndpointVolumeEx(iface);
     TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), ppv);
     if (!ppv)
         return E_POINTER;
@@ -95,7 +100,7 @@ static HRESULT WINAPI AEV_QueryInterface(IAudioEndpointVolumeEx *iface, REFIID r
 
 static ULONG WINAPI AEV_AddRef(IAudioEndpointVolumeEx *iface)
 {
-    AEVImpl *This = (AEVImpl*)iface;
+    AEVImpl *This = impl_from_IAudioEndpointVolumeEx(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
     TRACE("(%p) new ref %u\n", This, ref);
     return ref;
@@ -103,7 +108,7 @@ static ULONG WINAPI AEV_AddRef(IAudioEndpointVolumeEx *iface)
 
 static ULONG WINAPI AEV_Release(IAudioEndpointVolumeEx *iface)
 {
-    AEVImpl *This = (AEVImpl*)iface;
+    AEVImpl *This = impl_from_IAudioEndpointVolumeEx(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
     TRACE("(%p) new ref %u\n", This, ref);
     if (!ref)
