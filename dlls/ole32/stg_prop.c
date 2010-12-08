@@ -152,7 +152,7 @@ static HRESULT create_EnumSTATPROPSTG(PropertyStorage_impl *, IEnumSTATPROPSTG**
  */
 struct tagPropertyStorage_impl
 {
-    const IPropertyStorageVtbl *vtbl;
+    IPropertyStorage IPropertyStorage_iface;
     LONG ref;
     CRITICAL_SECTION cs;
     IStream *stm;
@@ -171,6 +171,11 @@ struct tagPropertyStorage_impl
     struct dictionary *propid_to_prop;
 };
 
+static inline PropertyStorage_impl *impl_from_IPropertyStorage(IPropertyStorage *iface)
+{
+    return CONTAINING_RECORD(iface, PropertyStorage_impl, IPropertyStorage_iface);
+}
+
 /************************************************************************
  * IPropertyStorage_fnQueryInterface (IPropertyStorage)
  */
@@ -179,7 +184,7 @@ static HRESULT WINAPI IPropertyStorage_fnQueryInterface(
     REFIID riid,
     void** ppvObject)
 {
-    PropertyStorage_impl *This = (PropertyStorage_impl *)iface;
+    PropertyStorage_impl *This = impl_from_IPropertyStorage(iface);
 
     TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), ppvObject);
 
@@ -205,7 +210,7 @@ static HRESULT WINAPI IPropertyStorage_fnQueryInterface(
 static ULONG WINAPI IPropertyStorage_fnAddRef(
     IPropertyStorage *iface)
 {
-    PropertyStorage_impl *This = (PropertyStorage_impl *)iface;
+    PropertyStorage_impl *This = impl_from_IPropertyStorage(iface);
     return InterlockedIncrement(&This->ref);
 }
 
@@ -215,7 +220,7 @@ static ULONG WINAPI IPropertyStorage_fnAddRef(
 static ULONG WINAPI IPropertyStorage_fnRelease(
     IPropertyStorage *iface)
 {
-    PropertyStorage_impl *This = (PropertyStorage_impl *)iface;
+    PropertyStorage_impl *This = impl_from_IPropertyStorage(iface);
     ULONG ref;
 
     ref = InterlockedDecrement(&This->ref);
@@ -293,7 +298,7 @@ static HRESULT WINAPI IPropertyStorage_fnReadMultiple(
     const PROPSPEC rgpspec[],
     PROPVARIANT rgpropvar[])
 {
-    PropertyStorage_impl *This = (PropertyStorage_impl *)iface;
+    PropertyStorage_impl *This = impl_from_IPropertyStorage(iface);
     HRESULT hr = S_OK;
     ULONG i;
 
@@ -551,7 +556,7 @@ static HRESULT WINAPI IPropertyStorage_fnWriteMultiple(
     const PROPVARIANT rgpropvar[],
     PROPID propidNameFirst)
 {
-    PropertyStorage_impl *This = (PropertyStorage_impl *)iface;
+    PropertyStorage_impl *This = impl_from_IPropertyStorage(iface);
     HRESULT hr = S_OK;
     ULONG i;
 
@@ -650,7 +655,7 @@ static HRESULT WINAPI IPropertyStorage_fnDeleteMultiple(
     ULONG cpspec,
     const PROPSPEC rgpspec[])
 {
-    PropertyStorage_impl *This = (PropertyStorage_impl *)iface;
+    PropertyStorage_impl *This = impl_from_IPropertyStorage(iface);
     ULONG i;
     HRESULT hr;
 
@@ -696,7 +701,7 @@ static HRESULT WINAPI IPropertyStorage_fnReadPropertyNames(
     const PROPID rgpropid[],
     LPOLESTR rglpwstrName[])
 {
-    PropertyStorage_impl *This = (PropertyStorage_impl *)iface;
+    PropertyStorage_impl *This = impl_from_IPropertyStorage(iface);
     ULONG i;
     HRESULT hr = S_FALSE;
 
@@ -736,7 +741,7 @@ static HRESULT WINAPI IPropertyStorage_fnWritePropertyNames(
     const PROPID rgpropid[],
     const LPOLESTR rglpwstrName[])
 {
-    PropertyStorage_impl *This = (PropertyStorage_impl *)iface;
+    PropertyStorage_impl *This = impl_from_IPropertyStorage(iface);
     ULONG i;
     HRESULT hr;
 
@@ -769,7 +774,7 @@ static HRESULT WINAPI IPropertyStorage_fnDeletePropertyNames(
     ULONG cpropid,
     const PROPID rgpropid[])
 {
-    PropertyStorage_impl *This = (PropertyStorage_impl *)iface;
+    PropertyStorage_impl *This = impl_from_IPropertyStorage(iface);
     ULONG i;
     HRESULT hr;
 
@@ -805,7 +810,7 @@ static HRESULT WINAPI IPropertyStorage_fnCommit(
     IPropertyStorage* iface,
     DWORD grfCommitFlags)
 {
-    PropertyStorage_impl *This = (PropertyStorage_impl *)iface;
+    PropertyStorage_impl *This = impl_from_IPropertyStorage(iface);
     HRESULT hr;
 
     TRACE("(%p, 0x%08x)\n", iface, grfCommitFlags);
@@ -828,7 +833,7 @@ static HRESULT WINAPI IPropertyStorage_fnRevert(
     IPropertyStorage* iface)
 {
     HRESULT hr;
-    PropertyStorage_impl *This = (PropertyStorage_impl *)iface;
+    PropertyStorage_impl *This = impl_from_IPropertyStorage(iface);
 
     TRACE("%p\n", iface);
 
@@ -853,7 +858,7 @@ static HRESULT WINAPI IPropertyStorage_fnEnum(
     IPropertyStorage* iface,
     IEnumSTATPROPSTG** ppenum)
 {
-    PropertyStorage_impl *This = (PropertyStorage_impl *)iface;
+    PropertyStorage_impl *This = impl_from_IPropertyStorage(iface);
     return create_EnumSTATPROPSTG(This, ppenum);
 }
 
@@ -877,7 +882,7 @@ static HRESULT WINAPI IPropertyStorage_fnSetClass(
     IPropertyStorage* iface,
     REFCLSID clsid)
 {
-    PropertyStorage_impl *This = (PropertyStorage_impl *)iface;
+    PropertyStorage_impl *This = impl_from_IPropertyStorage(iface);
 
     TRACE("%p, %s\n", iface, debugstr_guid(clsid));
 
@@ -899,7 +904,7 @@ static HRESULT WINAPI IPropertyStorage_fnStat(
     IPropertyStorage* iface,
     STATPROPSETSTG* statpsstg)
 {
-    PropertyStorage_impl *This = (PropertyStorage_impl *)iface;
+    PropertyStorage_impl *This = impl_from_IPropertyStorage(iface);
     STATSTG stat;
     HRESULT hr;
 
@@ -1979,7 +1984,7 @@ static HRESULT PropertyStorage_BaseConstruct(IStream *stm,
     if (!*pps)
         return E_OUTOFMEMORY;
 
-    (*pps)->vtbl = &IPropertyStorage_Vtbl;
+    (*pps)->IPropertyStorage_iface.lpVtbl = &IPropertyStorage_Vtbl;
     (*pps)->ref = 1;
     InitializeCriticalSection(&(*pps)->cs);
     (*pps)->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": PropertyStorage_impl.cs");
@@ -2013,7 +2018,7 @@ static HRESULT PropertyStorage_ConstructFromStream(IStream *stm,
         hr = PropertyStorage_ReadFromStream(ps);
         if (SUCCEEDED(hr))
         {
-            *pps = (IPropertyStorage *)ps;
+            *pps = &ps->IPropertyStorage_iface;
             TRACE("PropertyStorage %p constructed\n", ps);
             hr = S_OK;
         }
@@ -2047,7 +2052,7 @@ static HRESULT PropertyStorage_ConstructEmpty(IStream *stm,
             ps->codePage = CP_UNICODE;
         ps->locale = LOCALE_SYSTEM_DEFAULT;
         TRACE("Code page is %d, locale is %d\n", ps->codePage, ps->locale);
-        *pps = (IPropertyStorage *)ps;
+        *pps = &ps->IPropertyStorage_iface;
         TRACE("PropertyStorage %p constructed\n", ps);
         hr = S_OK;
     }
