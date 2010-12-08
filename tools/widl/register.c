@@ -90,15 +90,13 @@ static int write_interfaces( const statement_list_t *stmts )
 
     if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
     {
-        if (stmt->type == STMT_LIBRARY)
-            count += write_interfaces( stmt->u.lib->stmts );
-        else if (stmt->type == STMT_TYPE && type_get_type( stmt->u.type ) == TYPE_INTERFACE)
+        if (stmt->type == STMT_TYPE && type_get_type( stmt->u.type ) == TYPE_INTERFACE)
             count += write_interface( stmt->u.type );
     }
     return count;
 }
 
-static int write_coclass( const type_t *class )
+static int write_coclass( const type_t *class, const typelib_t *typelib )
 {
     const UUID *uuid = get_attrp( class->attrs, ATTR_UUID );
     const char *descr = get_attrp( class->attrs, ATTR_HELPSTRING );
@@ -107,20 +105,27 @@ static int write_coclass( const type_t *class )
     const char *threading = get_coclass_threading( class );
 
     if (!uuid) return 0;
+    if (typelib && !threading) return 0;
     if (!descr) descr = class->name;
 
     put_str( indent, "ForceRemove '%s' = s '%s'\n", format_uuid( uuid ), descr );
     put_str( indent++, "{\n" );
     if (threading) put_str( indent, "InprocServer32 = s '%%MODULE%%' { val ThreadingModel = s '%s' }\n",
                             threading );
-    if (progid || vi_progid) put_str( indent, "CLSID = s '%s'\n", descr );
     if (progid) put_str( indent, "ProgId = s '%s'\n", progid );
+    if (typelib)
+    {
+        const UUID *typelib_uuid = get_attrp( typelib->attrs, ATTR_UUID );
+        const unsigned int version = get_attrv( typelib->attrs, ATTR_VERSION );
+        put_str( indent, "TypeLib = s '%s'\n", format_uuid( typelib_uuid ));
+        put_str( indent, "Version = s '%u.%u'\n", MAJORVERSION(version), MINORVERSION(version) );
+    }
     if (vi_progid) put_str( indent, "VersionIndependentProgId = s '%s'\n", vi_progid );
     put_str( --indent, "}\n" );
     return 1;
 }
 
-static void write_coclasses( const statement_list_t *stmts, const UUID *typelib_uuid )
+static void write_coclasses( const statement_list_t *stmts, const typelib_t *typelib )
 {
     const statement_t *stmt;
 
@@ -129,12 +134,12 @@ static void write_coclasses( const statement_list_t *stmts, const UUID *typelib_
         if (stmt->type == STMT_TYPE)
         {
             const type_t *type = stmt->u.type;
-            if (type_get_type(type) == TYPE_COCLASS) write_coclass( type );
+            if (type_get_type(type) == TYPE_COCLASS) write_coclass( type, typelib );
         }
         else if (stmt->type == STMT_LIBRARY)
         {
-            const UUID *uuid = get_attrp( stmt->u.lib->attrs, ATTR_UUID );
-            write_coclasses( stmt->u.lib->stmts, uuid );
+            const typelib_t *lib = stmt->u.lib;
+            write_coclasses( lib->stmts, lib );
         }
     }
 }
