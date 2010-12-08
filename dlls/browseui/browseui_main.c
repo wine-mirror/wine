@@ -60,10 +60,15 @@ static const struct {
 
 typedef struct tagClassFactory
 {
-    const IClassFactoryVtbl *vtbl;
+    IClassFactory IClassFactory_iface;
     LONG   ref;
     LPFNCONSTRUCTOR ctor;
 } ClassFactory;
+
+static inline ClassFactory *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, ClassFactory, IClassFactory_iface);
+}
 
 static void ClassFactory_Destructor(ClassFactory *This)
 {
@@ -87,13 +92,13 @@ static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID r
 
 static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
 {
-    ClassFactory *This = (ClassFactory *)iface;
+    ClassFactory *This = impl_from_IClassFactory(iface);
     return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
 {
-    ClassFactory *This = (ClassFactory *)iface;
+    ClassFactory *This = impl_from_IClassFactory(iface);
     ULONG ret = InterlockedDecrement(&This->ref);
 
     if (ret == 0)
@@ -103,7 +108,7 @@ static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
 
 static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown *punkOuter, REFIID iid, LPVOID *ppvOut)
 {
-    ClassFactory *This = (ClassFactory *)iface;
+    ClassFactory *This = impl_from_IClassFactory(iface);
     HRESULT ret;
     IUnknown *obj;
 
@@ -118,7 +123,7 @@ static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown
 
 static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL fLock)
 {
-    ClassFactory *This = (ClassFactory *)iface;
+    ClassFactory *This = impl_from_IClassFactory(iface);
 
     TRACE("(%p)->(%x)\n", This, fLock);
 
@@ -144,7 +149,7 @@ static const IClassFactoryVtbl ClassFactoryVtbl = {
 static HRESULT ClassFactory_Constructor(LPFNCONSTRUCTOR ctor, LPVOID *ppvOut)
 {
     ClassFactory *This = heap_alloc(sizeof(ClassFactory));
-    This->vtbl = &ClassFactoryVtbl;
+    This->IClassFactory_iface.lpVtbl = &ClassFactoryVtbl;
     This->ref = 1;
     This->ctor = ctor;
     *ppvOut = This;
