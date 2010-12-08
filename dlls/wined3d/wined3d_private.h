@@ -1175,7 +1175,7 @@ enum blit_operation
  * already under the GL lock. */
 struct blit_shader
 {
-    HRESULT (*alloc_private)(IWineD3DDevice *iface);
+    HRESULT (*alloc_private)(IWineD3DDeviceImpl *device);
     void (*free_private)(IWineD3DDevice *iface);
     HRESULT (*set_shader)(IWineD3DDevice *iface, IWineD3DSurfaceImpl *surface);
     void (*unset_shader)(IWineD3DDevice *iface);

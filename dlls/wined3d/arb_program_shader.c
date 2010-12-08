@@ -6503,8 +6503,8 @@ struct arbfp_blit_priv {
     GLuint palette_texture;
 };
 
-static HRESULT arbfp_blit_alloc(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
+static HRESULT arbfp_blit_alloc(IWineD3DDeviceImpl *device)
+{
     device->blit_priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct arbfp_blit_priv));
     if(!device->blit_priv) {
         ERR("Out of memory\n");

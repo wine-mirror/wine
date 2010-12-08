@@ -4732,7 +4732,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_DrawOverlay
 };
 
-static HRESULT ffp_blit_alloc(IWineD3DDevice *iface) { return WINED3D_OK; }
+static HRESULT ffp_blit_alloc(IWineD3DDeviceImpl *device) { return WINED3D_OK; }
 /* Context activation is done by the caller. */
 static void ffp_blit_free(IWineD3DDevice *iface) { }
 
@@ -4865,7 +4865,7 @@ const struct blit_shader ffp_blit =  {
     ffp_blit_color_fill
 };
 
-static HRESULT cpu_blit_alloc(IWineD3DDevice *iface)
+static HRESULT cpu_blit_alloc(IWineD3DDeviceImpl *device)
 {
     return WINED3D_OK;
 }

@@ -1973,7 +1973,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
         TRACE("Fragment pipeline private data couldn't be allocated\n");
         goto err_out;
     }
-    hr = This->blitter->alloc_private(iface);
+    hr = This->blitter->alloc_private(This);
     if(FAILED(hr)) {
         TRACE("Blitter private data couldn't be allocated\n");
         goto err_out;
@@ -6259,7 +6259,7 @@ static HRESULT create_primary_opengl_context(IWineD3DDevice *iface, IWineD3DSwap
         goto err;
     }
 
-    hr = This->blitter->alloc_private(iface);
+    hr = This->blitter->alloc_private(This);
     if (FAILED(hr))
     {
         ERR("Failed to allocate blitter private data, hr %#x.\n", hr);
