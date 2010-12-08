@@ -230,10 +230,6 @@ static BOOL WINAPI IWineD3DVolumeTextureImpl_SetDirty(IWineD3DVolumeTexture *ifa
     return basetexture_set_dirty((IWineD3DBaseTexture *)iface, dirty);
 }
 
-static BOOL WINAPI IWineD3DVolumeTextureImpl_GetDirty(IWineD3DVolumeTexture *iface) {
-    return basetexture_get_dirty((IWineD3DBaseTexture *)iface);
-}
-
 /* Context activation is done by the caller. */
 static HRESULT WINAPI IWineD3DVolumeTextureImpl_BindTexture(IWineD3DVolumeTexture *iface, BOOL srgb)
 {
@@ -370,7 +366,6 @@ static const IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl =
     IWineD3DVolumeTextureImpl_GetAutoGenFilterType,
     IWineD3DVolumeTextureImpl_GenerateMipSubLevels,
     IWineD3DVolumeTextureImpl_SetDirty,
-    IWineD3DVolumeTextureImpl_GetDirty,
     /* not in d3d */
     IWineD3DVolumeTextureImpl_BindTexture,
     IWineD3DVolumeTextureImpl_IsCondNP2,

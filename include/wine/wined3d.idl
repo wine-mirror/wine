@@ -2528,8 +2528,6 @@ interface IWineD3DBaseTexture : IWineD3DResource
     BOOL SetDirty(
         BOOL dirty
     );
-    BOOL GetDirty(
-    );
     HRESULT BindTexture(
         [in] BOOL srgb
     );

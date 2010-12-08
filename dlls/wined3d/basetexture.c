@@ -247,12 +247,6 @@ BOOL basetexture_set_dirty(IWineD3DBaseTexture *iface, BOOL dirty)
     return old;
 }
 
-BOOL basetexture_get_dirty(IWineD3DBaseTexture *iface)
-{
-    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-    return This->baseTexture.texture_rgb.dirty || This->baseTexture.texture_srgb.dirty;
-}
-
 /* Context activation is done by the caller. */
 HRESULT basetexture_bind(IWineD3DBaseTexture *iface, BOOL srgb, BOOL *set_surface_desc)
 {
