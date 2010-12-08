@@ -26,7 +26,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 typedef struct IEnumFiltersImpl
 {
-    const IEnumFiltersVtbl * lpVtbl;
+    IEnumFilters IEnumFilters_iface;
     LONG refCount;
     IBaseFilter ** ppFilters;
     int nFilters;
@@ -34,6 +34,11 @@ typedef struct IEnumFiltersImpl
 } IEnumFiltersImpl;
 
 static const struct IEnumFiltersVtbl IEnumFiltersImpl_Vtbl;
+
+static inline IEnumFiltersImpl *impl_from_IEnumFilters(IEnumFilters *iface)
+{
+    return CONTAINING_RECORD(iface, IEnumFiltersImpl, IEnumFilters_iface);
+}
 
 HRESULT IEnumFiltersImpl_Construct(IBaseFilter ** ppFilters, ULONG nFilters, IEnumFilters ** ppEnum)
 {
@@ -50,7 +55,7 @@ HRESULT IEnumFiltersImpl_Construct(IBaseFilter ** ppFilters, ULONG nFilters, IEn
         return E_OUTOFMEMORY;
     }
 
-    pEnumFilters->lpVtbl = &IEnumFiltersImpl_Vtbl;
+    pEnumFilters->IEnumFilters_iface.lpVtbl = &IEnumFiltersImpl_Vtbl;
     pEnumFilters->refCount = 1;
     pEnumFilters->uIndex = 0;
     pEnumFilters->nFilters = nFilters;
@@ -63,7 +68,7 @@ HRESULT IEnumFiltersImpl_Construct(IBaseFilter ** ppFilters, ULONG nFilters, IEn
 
     memcpy(pEnumFilters->ppFilters, ppFilters, nFilters * sizeof(IBaseFilter*));
 
-    *ppEnum = (IEnumFilters *)(&pEnumFilters->lpVtbl);
+    *ppEnum = &pEnumFilters->IEnumFilters_iface;
     return S_OK;
 }
 
@@ -91,7 +96,7 @@ static HRESULT WINAPI IEnumFiltersImpl_QueryInterface(IEnumFilters * iface, REFI
 
 static ULONG WINAPI IEnumFiltersImpl_AddRef(IEnumFilters * iface)
 {
-    IEnumFiltersImpl *This = (IEnumFiltersImpl *)iface;
+    IEnumFiltersImpl *This = impl_from_IEnumFilters(iface);
     ULONG refCount = InterlockedIncrement(&This->refCount);
 
     TRACE("(%p)->()\n", iface);
@@ -101,7 +106,7 @@ static ULONG WINAPI IEnumFiltersImpl_AddRef(IEnumFilters * iface)
 
 static ULONG WINAPI IEnumFiltersImpl_Release(IEnumFilters * iface)
 {
-    IEnumFiltersImpl *This = (IEnumFiltersImpl *)iface;
+    IEnumFiltersImpl *This = impl_from_IEnumFilters(iface);
     ULONG refCount = InterlockedDecrement(&This->refCount);
 
     TRACE("(%p)->()\n", iface);
@@ -120,7 +125,7 @@ static HRESULT WINAPI IEnumFiltersImpl_Next(IEnumFilters * iface, ULONG cFilters
 {
     ULONG cFetched; 
     ULONG i;
-    IEnumFiltersImpl *This = (IEnumFiltersImpl *)iface;
+    IEnumFiltersImpl *This = impl_from_IEnumFilters(iface);
 
     cFetched = min(This->nFilters, This->uIndex + cFilters) - This->uIndex;
 
@@ -147,7 +152,7 @@ static HRESULT WINAPI IEnumFiltersImpl_Next(IEnumFilters * iface, ULONG cFilters
 
 static HRESULT WINAPI IEnumFiltersImpl_Skip(IEnumFilters * iface, ULONG cFilters)
 {
-    IEnumFiltersImpl *This = (IEnumFiltersImpl *)iface;
+    IEnumFiltersImpl *This = impl_from_IEnumFilters(iface);
 
     TRACE("(%p)->(%u)\n", iface, cFilters);
 
@@ -161,7 +166,7 @@ static HRESULT WINAPI IEnumFiltersImpl_Skip(IEnumFilters * iface, ULONG cFilters
 
 static HRESULT WINAPI IEnumFiltersImpl_Reset(IEnumFilters * iface)
 {
-    IEnumFiltersImpl *This = (IEnumFiltersImpl *)iface;
+    IEnumFiltersImpl *This = impl_from_IEnumFilters(iface);
 
     TRACE("(%p)->()\n", iface);
 
@@ -172,7 +177,7 @@ static HRESULT WINAPI IEnumFiltersImpl_Reset(IEnumFilters * iface)
 static HRESULT WINAPI IEnumFiltersImpl_Clone(IEnumFilters * iface, IEnumFilters ** ppEnum)
 {
     HRESULT hr;
-    IEnumFiltersImpl *This = (IEnumFiltersImpl *)iface;
+    IEnumFiltersImpl *This = impl_from_IEnumFilters(iface);
 
     TRACE("(%p)->(%p)\n", iface, ppEnum);
 
