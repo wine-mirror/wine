@@ -33,7 +33,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(qedit);
 
 typedef struct MediaDetImpl {
-    const IMediaDetVtbl *MediaDet_Vtbl;
+    IMediaDet IMediaDet_iface;
     LONG refCount;
     IGraphBuilder *graph;
     IBaseFilter *source;
@@ -42,6 +42,11 @@ typedef struct MediaDetImpl {
     LONG cur_stream;
     IPin *cur_pin;
 } MediaDetImpl;
+
+static inline MediaDetImpl *impl_from_IMediaDet(IMediaDet *iface)
+{
+    return CONTAINING_RECORD(iface, MediaDetImpl, IMediaDet_iface);
+}
 
 static void MD_cleanup(MediaDetImpl *This)
 {
@@ -59,7 +64,7 @@ static void MD_cleanup(MediaDetImpl *This)
 
 static ULONG WINAPI MediaDet_AddRef(IMediaDet* iface)
 {
-    MediaDetImpl *This = (MediaDetImpl *)iface;
+    MediaDetImpl *This = impl_from_IMediaDet(iface);
     ULONG refCount = InterlockedIncrement(&This->refCount);
     TRACE("(%p)->() AddRef from %d\n", This, refCount - 1);
     return refCount;
@@ -67,7 +72,7 @@ static ULONG WINAPI MediaDet_AddRef(IMediaDet* iface)
 
 static ULONG WINAPI MediaDet_Release(IMediaDet* iface)
 {
-    MediaDetImpl *This = (MediaDetImpl *)iface;
+    MediaDetImpl *This = impl_from_IMediaDet(iface);
     ULONG refCount = InterlockedDecrement(&This->refCount);
     TRACE("(%p)->() Release from %d\n", This, refCount + 1);
 
@@ -84,7 +89,7 @@ static ULONG WINAPI MediaDet_Release(IMediaDet* iface)
 static HRESULT WINAPI MediaDet_QueryInterface(IMediaDet* iface, REFIID riid,
                                               void **ppvObject)
 {
-    MediaDetImpl *This = (MediaDetImpl *)iface;
+    MediaDetImpl *This = impl_from_IMediaDet(iface);
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
 
     if (IsEqualIID(riid, &IID_IUnknown) ||
@@ -100,21 +105,21 @@ static HRESULT WINAPI MediaDet_QueryInterface(IMediaDet* iface, REFIID riid,
 
 static HRESULT WINAPI MediaDet_get_Filter(IMediaDet* iface, IUnknown **pVal)
 {
-    MediaDetImpl *This = (MediaDetImpl *)iface;
+    MediaDetImpl *This = impl_from_IMediaDet(iface);
     FIXME("(%p)->(%p): not implemented!\n", This, pVal);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI MediaDet_put_Filter(IMediaDet* iface, IUnknown *newVal)
 {
-    MediaDetImpl *This = (MediaDetImpl *)iface;
+    MediaDetImpl *This = impl_from_IMediaDet(iface);
     FIXME("(%p)->(%p): not implemented!\n", This, newVal);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI MediaDet_get_OutputStreams(IMediaDet* iface, LONG *pVal)
 {
-    MediaDetImpl *This = (MediaDetImpl *)iface;
+    MediaDetImpl *This = impl_from_IMediaDet(iface);
     IEnumPins *pins;
     IPin *pin;
     HRESULT hr;
@@ -158,7 +163,7 @@ static HRESULT WINAPI MediaDet_get_OutputStreams(IMediaDet* iface, LONG *pVal)
 
 static HRESULT WINAPI MediaDet_get_CurrentStream(IMediaDet* iface, LONG *pVal)
 {
-    MediaDetImpl *This = (MediaDetImpl *)iface;
+    MediaDetImpl *This = impl_from_IMediaDet(iface);
     TRACE("(%p)\n", This);
 
     if (!pVal)
@@ -211,7 +216,7 @@ static HRESULT SetCurPin(MediaDetImpl *This, LONG strm)
 
 static HRESULT WINAPI MediaDet_put_CurrentStream(IMediaDet* iface, LONG newVal)
 {
-    MediaDetImpl *This = (MediaDetImpl *)iface;
+    MediaDetImpl *This = impl_from_IMediaDet(iface);
     HRESULT hr;
 
     TRACE("(%p)->(%d)\n", This, newVal);
@@ -237,28 +242,28 @@ static HRESULT WINAPI MediaDet_put_CurrentStream(IMediaDet* iface, LONG newVal)
 
 static HRESULT WINAPI MediaDet_get_StreamType(IMediaDet* iface, GUID *pVal)
 {
-    MediaDetImpl *This = (MediaDetImpl *)iface;
+    MediaDetImpl *This = impl_from_IMediaDet(iface);
     FIXME("(%p)->(%p): not implemented!\n", This, debugstr_guid(pVal));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI MediaDet_get_StreamTypeB(IMediaDet* iface, BSTR *pVal)
 {
-    MediaDetImpl *This = (MediaDetImpl *)iface;
+    MediaDetImpl *This = impl_from_IMediaDet(iface);
     FIXME("(%p)->(%p): not implemented!\n", This, pVal);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI MediaDet_get_StreamLength(IMediaDet* iface, double *pVal)
 {
-    MediaDetImpl *This = (MediaDetImpl *)iface;
+    MediaDetImpl *This = impl_from_IMediaDet(iface);
     FIXME("(%p): stub!\n", This);
     return VFW_E_INVALIDMEDIATYPE;
 }
 
 static HRESULT WINAPI MediaDet_get_Filename(IMediaDet* iface, BSTR *pVal)
 {
-    MediaDetImpl *This = (MediaDetImpl *)iface;
+    MediaDetImpl *This = impl_from_IMediaDet(iface);
     IFileSourceFilter *file;
     LPOLESTR name;
     HRESULT hr;
@@ -437,7 +442,7 @@ retry:
 static HRESULT WINAPI MediaDet_put_Filename(IMediaDet* iface, BSTR newVal)
 {
     static const WCHAR reader[] = {'R','e','a','d','e','r',0};
-    MediaDetImpl *This = (MediaDetImpl *)iface;
+    MediaDetImpl *This = impl_from_IMediaDet(iface);
     IGraphBuilder *gb;
     IBaseFilter *bf;
     HRESULT hr;
@@ -476,7 +481,7 @@ static HRESULT WINAPI MediaDet_GetBitmapBits(IMediaDet* iface,
                                              LONG *pBufferSize, char *pBuffer,
                                              LONG Width, LONG Height)
 {
-    MediaDetImpl *This = (MediaDetImpl *)iface;
+    MediaDetImpl *This = impl_from_IMediaDet(iface);
     FIXME("(%p)->(%f %p %p %d %d): not implemented!\n", This, StreamTime, pBufferSize, pBuffer,
           Width, Height);
     return E_NOTIMPL;
@@ -486,7 +491,7 @@ static HRESULT WINAPI MediaDet_WriteBitmapBits(IMediaDet* iface,
                                                double StreamTime, LONG Width,
                                                LONG Height, BSTR Filename)
 {
-    MediaDetImpl *This = (MediaDetImpl *)iface;
+    MediaDetImpl *This = impl_from_IMediaDet(iface);
     FIXME("(%p)->(%f %d %d %p): not implemented!\n", This, StreamTime, Width, Height, Filename);
     return E_NOTIMPL;
 }
@@ -494,7 +499,7 @@ static HRESULT WINAPI MediaDet_WriteBitmapBits(IMediaDet* iface,
 static HRESULT WINAPI MediaDet_get_StreamMediaType(IMediaDet* iface,
                                                    AM_MEDIA_TYPE *pVal)
 {
-    MediaDetImpl *This = (MediaDetImpl *)iface;
+    MediaDetImpl *This = impl_from_IMediaDet(iface);
     IEnumMediaTypes *types;
     AM_MEDIA_TYPE *pmt;
     HRESULT hr;
@@ -528,14 +533,14 @@ static HRESULT WINAPI MediaDet_get_StreamMediaType(IMediaDet* iface,
 static HRESULT WINAPI MediaDet_GetSampleGrabber(IMediaDet* iface,
                                                 ISampleGrabber **ppVal)
 {
-    MediaDetImpl *This = (MediaDetImpl *)iface;
+    MediaDetImpl *This = impl_from_IMediaDet(iface);
     FIXME("(%p)->(%p): not implemented!\n", This, ppVal);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI MediaDet_get_FrameRate(IMediaDet* iface, double *pVal)
 {
-    MediaDetImpl *This = (MediaDetImpl *)iface;
+    MediaDetImpl *This = impl_from_IMediaDet(iface);
     AM_MEDIA_TYPE mt;
     VIDEOINFOHEADER *vh;
     HRESULT hr;
@@ -565,7 +570,7 @@ static HRESULT WINAPI MediaDet_get_FrameRate(IMediaDet* iface, double *pVal)
 static HRESULT WINAPI MediaDet_EnterBitmapGrabMode(IMediaDet* iface,
                                                    double SeekTime)
 {
-    MediaDetImpl *This = (MediaDetImpl *)iface;
+    MediaDetImpl *This = impl_from_IMediaDet(iface);
     FIXME("(%p)->(%f): not implemented!\n", This, SeekTime);
     return E_NOTIMPL;
 }
@@ -609,7 +614,7 @@ HRESULT MediaDet_create(IUnknown * pUnkOuter, LPVOID * ppv) {
     ZeroMemory(obj, sizeof(MediaDetImpl));
 
     obj->refCount = 1;
-    obj->MediaDet_Vtbl = &IMediaDet_VTable;
+    obj->IMediaDet_iface.lpVtbl = &IMediaDet_VTable;
     obj->graph = NULL;
     obj->source = NULL;
     obj->splitter = NULL;
