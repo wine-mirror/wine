@@ -536,8 +536,61 @@ BOOL WINAPI CryptEncryptMessage(PCRYPT_ENCRYPT_MESSAGE_PARA pEncryptPara,
  const BYTE *pbToBeEncrypted, DWORD cbToBeEncrypted, BYTE *pbEncryptedBlob,
  DWORD *pcbEncryptedBlob)
 {
-    FIXME("(%p, %d, %p, %p, %d, %p, %p): stub\n", pEncryptPara, cRecipientCert,
+    BOOL ret = TRUE;
+    DWORD i;
+    PCERT_INFO *certInfo = NULL;
+    CMSG_ENVELOPED_ENCODE_INFO envelopedInfo;
+    HCRYPTMSG msg = 0;
+
+    TRACE("(%p, %d, %p, %p, %d, %p, %p)\n", pEncryptPara, cRecipientCert,
      rgpRecipientCert, pbToBeEncrypted, cbToBeEncrypted, pbEncryptedBlob,
      pcbEncryptedBlob);
-    return FALSE;
+
+    if (pEncryptPara->cbSize != sizeof(CRYPT_ENCRYPT_MESSAGE_PARA) ||
+     GET_CMSG_ENCODING_TYPE(pEncryptPara->dwMsgEncodingType) !=
+     PKCS_7_ASN_ENCODING)
+    {
+        *pcbEncryptedBlob = 0;
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+
+    memset(&envelopedInfo, 0, sizeof(envelopedInfo));
+    envelopedInfo.cbSize = sizeof(envelopedInfo);
+    envelopedInfo.hCryptProv = pEncryptPara->hCryptProv;
+    envelopedInfo.ContentEncryptionAlgorithm =
+     pEncryptPara->ContentEncryptionAlgorithm;
+    envelopedInfo.pvEncryptionAuxInfo = pEncryptPara->pvEncryptionAuxInfo;
+
+    if (cRecipientCert)
+    {
+        certInfo = CryptMemAlloc(sizeof(PCERT_INFO) * cRecipientCert);
+        if (certInfo)
+        {
+            for (i = 0; i < cRecipientCert; ++i)
+                certInfo[i] = rgpRecipientCert[i]->pCertInfo;
+            envelopedInfo.cRecipients = cRecipientCert;
+            envelopedInfo.rgpRecipientCert = certInfo;
+        }
+        else
+            ret = FALSE;
+    }
+
+    if (ret)
+        msg = CryptMsgOpenToEncode(pEncryptPara->dwMsgEncodingType, 0,
+         CMSG_ENVELOPED, &envelopedInfo, NULL, NULL);
+    if (msg)
+    {
+        ret = CryptMsgUpdate(msg, pbToBeEncrypted, cbToBeEncrypted, TRUE);
+        if (ret)
+            ret = CryptMsgGetParam(msg, CMSG_CONTENT_PARAM, 0, pbEncryptedBlob,
+             pcbEncryptedBlob);
+        CryptMsgClose(msg);
+    }
+    else
+        ret = FALSE;
+
+    CryptMemFree(certInfo);
+    if (!ret) *pcbEncryptedBlob = 0;
+    return ret;
 }

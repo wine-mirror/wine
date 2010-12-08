@@ -1225,10 +1225,8 @@ static void test_encrypt_message(void)
     encryptedBlobSize = 255;
     ret = CryptEncryptMessage(&para, 0, NULL, NULL, 0, NULL,
      &encryptedBlobSize);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
-    todo_wine
     ok(!encryptedBlobSize, "unexpected size %d\n", encryptedBlobSize);
     para.cbSize = sizeof(para);
     para.dwMsgEncodingType = X509_ASN_ENCODING;
@@ -1236,23 +1234,19 @@ static void test_encrypt_message(void)
     encryptedBlobSize = 255;
     ret = CryptEncryptMessage(&para, 0, NULL, NULL, 0, NULL,
      &encryptedBlobSize);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
-    todo_wine
     ok(!encryptedBlobSize, "unexpected size %d\n", encryptedBlobSize);
     para.dwMsgEncodingType = PKCS_7_ASN_ENCODING;
     SetLastError(0xdeadbeef);
     encryptedBlobSize = 255;
     ret = CryptEncryptMessage(&para, 0, NULL, NULL, 0, NULL,
      &encryptedBlobSize);
-    todo_wine
     ok(!ret &&
      (GetLastError() == CRYPT_E_UNKNOWN_ALGO ||
       GetLastError() == E_INVALIDARG), /* Win9x */
      "expected CRYPT_E_UNKNOWN_ALGO or E_INVALIDARG, got %08x\n",
      GetLastError());
-    todo_wine
     ok(!encryptedBlobSize, "unexpected size %d\n", encryptedBlobSize);
 
     para.hCryptProv = hCryptProv;
@@ -1262,7 +1256,6 @@ static void test_encrypt_message(void)
     encryptedBlobSize = 0;
     ret = CryptEncryptMessage(&para, 0, NULL, NULL, 0, NULL,
      &encryptedBlobSize);
-    todo_wine
     ok(ret ||
      broken(!ret) /* Win9x */,
      "CryptEncryptMessage failed: %08x\n", GetLastError());
@@ -1274,9 +1267,7 @@ static void test_encrypt_message(void)
             SetLastError(0xdeadbeef);
             ret = CryptEncryptMessage(&para, 0, NULL, NULL, 0, encryptedBlob,
              &encryptedBlobSize);
-	    todo_wine
             ok(ret, "CryptEncryptMessage failed: %08x\n", GetLastError());
-            todo_wine
 	    ok(encryptedBlobSize == sizeof(encryptedMessage),
              "unexpected size of encrypted blob %d\n", encryptedBlobSize);
             ok(!memcmp(encryptedBlob, encryptedMessage, encryptedBlobSize),
@@ -1289,7 +1280,6 @@ static void test_encrypt_message(void)
     encryptedBlobSize = 0;
     ret = CryptEncryptMessage(&para, 2, certs, NULL, 0, NULL,
      &encryptedBlobSize);
-    todo_wine
     ok(ret, "CryptEncryptMessage failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -1299,7 +1289,6 @@ static void test_encrypt_message(void)
             SetLastError(0xdeadbeef);
             ret = CryptEncryptMessage(&para, 2, certs, NULL, 0, encryptedBlob,
              &encryptedBlobSize);
-	    todo_wine
             ok(ret, "CryptEncryptMessage failed: %08x\n", GetLastError());
             CryptMemFree(encryptedBlob);
         }
@@ -1309,7 +1298,6 @@ static void test_encrypt_message(void)
     encryptedBlobSize = 0;
     ret = CryptEncryptMessage(&para, 0, NULL, blob, sizeof(blob), NULL,
      &encryptedBlobSize);
-    todo_wine
     ok(ret ||
      broken(!ret) /* Win9x */,
      "CryptEncryptMessage failed: %08x\n", GetLastError());
@@ -1321,13 +1309,11 @@ static void test_encrypt_message(void)
             SetLastError(0xdeadbeef);
             ret = CryptEncryptMessage(&para, 0, NULL, blob, sizeof(blob),
              encryptedBlob, &encryptedBlobSize);
-	    todo_wine
             ok(ret ||
              broken(!ret && GetLastError() == NTE_PERM), /* some NT4 */
              "CryptEncryptMessage failed: %08x\n", GetLastError());
             if (ret)
             {
-                todo_wine
                 ok(encryptedBlobSize == 55,
                  "unexpected size of encrypted blob %d\n", encryptedBlobSize);
             }
@@ -1339,7 +1325,6 @@ static void test_encrypt_message(void)
     encryptedBlobSize = 0;
     ret = CryptEncryptMessage(&para, 2, certs, blob, sizeof(blob), NULL,
      &encryptedBlobSize);
-    todo_wine
     ok(ret, "CryptEncryptMessage failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -1349,7 +1334,6 @@ static void test_encrypt_message(void)
             SetLastError(0xdeadbeef);
             ret = CryptEncryptMessage(&para, 2, certs, blob, sizeof(blob),
              encryptedBlob, &encryptedBlobSize);
-	    todo_wine
             ok(ret ||
              broken(!ret), /* some Win95 and some NT4 */
              "CryptEncryptMessage failed: %08x\n", GetLastError());
