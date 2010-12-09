@@ -21,19 +21,40 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
+#include "objbase.h"
+#include "rpcproxy.h"
+
+static HINSTANCE instance;
 
 HRESULT WINAPI DllCanUnloadNow(void)
 {
     return S_FALSE;
 }
 
-BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
+BOOL WINAPI DllMain(HINSTANCE hinstance, DWORD reason, LPVOID reserved)
 {
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls(instance);
+        instance = hinstance;
+        DisableThreadLibraryCalls(hinstance);
         break;
     }
     return TRUE;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (MSXML4.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( instance, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (MSXML4.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( instance, NULL );
 }

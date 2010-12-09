@@ -3,10 +3,10 @@ MODULE    = msxml4.dll
 IMPORTS   = ole32 advapi32
 
 C_SRCS = \
-	main.c \
-	regsvr.c
+	main.c
 
 IDL_TLB_SRCS = msxml4_tlb.idl
+IDL_R_SRCS   = msxml4_tlb.idl
 
 RC_SRCS = rsrc.rc
 
