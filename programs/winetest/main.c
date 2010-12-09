@@ -37,6 +37,9 @@
 #include "winetest.h"
 #include "resource.h"
 
+/* Don't submit the results if more than SKIP_LIMIT tests have been skipped */
+#define SKIP_LIMIT 10
+
 struct wine_test
 {
     char *name;
@@ -53,7 +56,7 @@ char *url = NULL;
 char *email = NULL;
 BOOL aborting = FALSE;
 static struct wine_test *wine_tests;
-static int nr_of_files, nr_of_tests;
+static int nr_of_files, nr_of_tests, nr_of_skips;
 static int nr_native_dlls;
 static const char whitespace[] = " \t\r\n";
 static const char testexe[] = "_test.exe";
@@ -597,6 +600,7 @@ run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const ch
     {
         report (R_STEP, "Skipping: %s:%s", test->name, subtest);
         xprintf ("%s:%s skipped %s -\n", test->name, subtest, file);
+        nr_of_skips++;
     }
     else
     {
@@ -703,7 +707,11 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
     ULONG_PTR cookie;
 
     if (aborting) return TRUE;
-    if (test_filtered_out( lpszName, NULL )) return TRUE;
+    if (test_filtered_out( lpszName, NULL ))
+    {
+        nr_of_skips++;
+        return TRUE;
+    }
 
     CharLowerA(lpszName);
     extract_test (&wine_tests[nr_of_files], tempdir, lpszName);
@@ -902,6 +910,7 @@ run_tests (char *logname, char *outdir)
     report (R_PROGRESS, 0, nr_of_files);
     nr_of_files = 0;
     nr_of_tests = 0;
+    nr_of_skips = 0;
     if (!EnumResourceNames (NULL, "TESTRES", extract_test_proc, (LPARAM)tempdir))
         report (R_FATAL, "Can't enumerate test files: %d",
                 GetLastError ());
@@ -1172,27 +1181,24 @@ int main( int argc, char *argv[] )
             SetEnvironmentVariableA( "WINETEST_REPORT_SUCCESS", "0" );
         }
 
-        if (!nb_filters)  /* don't submit results when filtering */
-        {
-            while (!tag) {
-                if (!interactive)
-                    report (R_FATAL, "Please specify a tag (-t option) if "
-                            "running noninteractive!");
-                if (guiAskTag () == IDABORT) exit (1);
-            }
-            report (R_TAG);
-
-            while (!email) {
-                if (!interactive)
-                    report (R_FATAL, "Please specify an email address (-m option) to enable developers\n"
-                            "    to contact you about your report if necessary.");
-                if (guiAskEmail () == IDABORT) exit (1);
-            }
-
-            if (!build_id[0])
-                report( R_WARNING, "You won't be able to submit results without a valid build id.\n"
-                        "To submit results, winetest needs to be built from a git checkout." );
+        while (!tag) {
+            if (!interactive)
+                report (R_FATAL, "Please specify a tag (-t option) if "
+                        "running noninteractive!");
+            if (guiAskTag () == IDABORT) exit (1);
         }
+        report (R_TAG);
+
+        while (!email) {
+            if (!interactive)
+                report (R_FATAL, "Please specify an email address (-m option) to enable developers\n"
+                        "    to contact you about your report if necessary.");
+            if (guiAskEmail () == IDABORT) exit (1);
+        }
+
+        if (!build_id[0])
+            report( R_WARNING, "You won't be able to submit results without a valid build id.\n"
+                    "To submit results, winetest needs to be built from a git checkout." );
 
         if (!logname) {
             logname = run_tests (NULL, outdir);
@@ -1200,7 +1206,7 @@ int main( int argc, char *argv[] )
                 DeleteFileA(logname);
                 exit (0);
             }
-            if (build_id[0] && !nb_filters && !nr_native_dlls &&
+            if (build_id[0] && nr_of_skips <= SKIP_LIMIT && !nr_native_dlls &&
                 report (R_ASK, MB_YESNO, "Do you want to submit the test results?") == IDYES)
                 if (!send_file (logname) && !DeleteFileA(logname))
                     report (R_WARNING, "Can't remove logfile: %u", GetLastError());
