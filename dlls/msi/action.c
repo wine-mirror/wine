@@ -5953,8 +5953,9 @@ static UINT ITERATE_InstallODBCDriver( MSIRECORD *rec, LPVOID param )
     LPWSTR driver, driver_path, ptr;
     WCHAR outpath[MAX_PATH];
     MSIFILE *driver_file = NULL, *setup_file = NULL;
+    MSICOMPONENT *comp;
     MSIRECORD *uirow;
-    LPCWSTR desc, file_key;
+    LPCWSTR desc, file_key, component;
     DWORD len, usage;
     UINT r = ERROR_SUCCESS;
 
@@ -5964,6 +5965,17 @@ static UINT ITERATE_InstallODBCDriver( MSIRECORD *rec, LPVOID param )
         'S','e','t','u','p','=','%','s',0};
     static const WCHAR usage_fmt[] = {
         'F','i','l','e','U','s','a','g','e','=','1',0};
+
+    component = MSI_RecordGetString( rec, 2 );
+    comp = get_loaded_component( package, component );
+    if (!comp)
+        return ERROR_SUCCESS;
+
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled\n");
+        return ERROR_SUCCESS;
+    }
 
     desc = MSI_RecordGetString(rec, 3);
 
@@ -6035,8 +6047,9 @@ static UINT ITERATE_InstallODBCTranslator( MSIRECORD *rec, LPVOID param )
     LPWSTR translator, translator_path, ptr;
     WCHAR outpath[MAX_PATH];
     MSIFILE *translator_file = NULL, *setup_file = NULL;
+    MSICOMPONENT *comp;
     MSIRECORD *uirow;
-    LPCWSTR desc, file_key;
+    LPCWSTR desc, file_key, component;
     DWORD len, usage;
     UINT r = ERROR_SUCCESS;
 
@@ -6044,6 +6057,17 @@ static UINT ITERATE_InstallODBCTranslator( MSIRECORD *rec, LPVOID param )
         'T','r','a','n','s','l','a','t','o','r','=','%','s',0};
     static const WCHAR setup_fmt[] = {
         'S','e','t','u','p','=','%','s',0};
+
+    component = MSI_RecordGetString( rec, 2 );
+    comp = get_loaded_component( package, component );
+    if (!comp)
+        return ERROR_SUCCESS;
+
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled\n");
+        return ERROR_SUCCESS;
+    }
 
     desc = MSI_RecordGetString(rec, 3);
 
@@ -6108,8 +6132,9 @@ static UINT ITERATE_InstallODBCTranslator( MSIRECORD *rec, LPVOID param )
 static UINT ITERATE_InstallODBCDataSource( MSIRECORD *rec, LPVOID param )
 {
     MSIPACKAGE *package = param;
+    MSICOMPONENT *comp;
     LPWSTR attrs;
-    LPCWSTR desc, driver;
+    LPCWSTR desc, driver, component;
     WORD request = ODBC_ADD_SYS_DSN;
     INT registration;
     DWORD len;
@@ -6118,6 +6143,17 @@ static UINT ITERATE_InstallODBCDataSource( MSIRECORD *rec, LPVOID param )
 
     static const WCHAR attrs_fmt[] = {
         'D','S','N','=','%','s',0 };
+
+    component = MSI_RecordGetString( rec, 2 );
+    comp = get_loaded_component( package, component );
+    if (!comp)
+        return ERROR_SUCCESS;
+
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled\n");
+        return ERROR_SUCCESS;
+    }
 
     desc = MSI_RecordGetString(rec, 3);
     driver = MSI_RecordGetString(rec, 4);
@@ -6196,9 +6232,21 @@ static UINT ACTION_InstallODBC( MSIPACKAGE *package )
 static UINT ITERATE_RemoveODBCDriver( MSIRECORD *rec, LPVOID param )
 {
     MSIPACKAGE *package = param;
+    MSICOMPONENT *comp;
     MSIRECORD *uirow;
     DWORD usage;
-    LPCWSTR desc;
+    LPCWSTR desc, component;
+
+    component = MSI_RecordGetString( rec, 2 );
+    comp = get_loaded_component( package, component );
+    if (!comp)
+        return ERROR_SUCCESS;
+
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled\n");
+        return ERROR_SUCCESS;
+    }
 
     desc = MSI_RecordGetString( rec, 3 );
     if (!SQLRemoveDriverW( desc, FALSE, &usage ))
@@ -6222,9 +6270,21 @@ static UINT ITERATE_RemoveODBCDriver( MSIRECORD *rec, LPVOID param )
 static UINT ITERATE_RemoveODBCTranslator( MSIRECORD *rec, LPVOID param )
 {
     MSIPACKAGE *package = param;
+    MSICOMPONENT *comp;
     MSIRECORD *uirow;
     DWORD usage;
-    LPCWSTR desc;
+    LPCWSTR desc, component;
+
+    component = MSI_RecordGetString( rec, 2 );
+    comp = get_loaded_component( package, component );
+    if (!comp)
+        return ERROR_SUCCESS;
+
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled\n");
+        return ERROR_SUCCESS;
+    }
 
     desc = MSI_RecordGetString( rec, 3 );
     if (!SQLRemoveTranslatorW( desc, &usage ))
@@ -6248,15 +6308,27 @@ static UINT ITERATE_RemoveODBCTranslator( MSIRECORD *rec, LPVOID param )
 static UINT ITERATE_RemoveODBCDataSource( MSIRECORD *rec, LPVOID param )
 {
     MSIPACKAGE *package = param;
+    MSICOMPONENT *comp;
     MSIRECORD *uirow;
     LPWSTR attrs;
-    LPCWSTR desc, driver;
+    LPCWSTR desc, driver, component;
     WORD request = ODBC_REMOVE_SYS_DSN;
     INT registration;
     DWORD len;
 
     static const WCHAR attrs_fmt[] = {
         'D','S','N','=','%','s',0 };
+
+    component = MSI_RecordGetString( rec, 2 );
+    comp = get_loaded_component( package, component );
+    if (!comp)
+        return ERROR_SUCCESS;
+
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled\n");
+        return ERROR_SUCCESS;
+    }
 
     desc = MSI_RecordGetString( rec, 3 );
     driver = MSI_RecordGetString( rec, 4 );
