@@ -84,6 +84,30 @@ static HRESULT WINAPI InternetHostSecurityManager_ProcessUrlAction(IInternetHost
             pContext, cbContext, dwFlags, dwReserved);
 }
 
+static HRESULT confirm_safety_load(HTMLDocumentNode *This, struct CONFIRMSAFETY *cs, DWORD *ret)
+{
+    IObjectSafety *obj_safety;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(cs->pUnk, &IID_IObjectSafety, (void**)&obj_safety);
+    if(SUCCEEDED(hres)) {
+        hres = IObjectSafety_SetInterfaceSafetyOptions(obj_safety, &IID_IDispatch,
+                INTERFACESAFE_FOR_UNTRUSTED_DATA, INTERFACESAFE_FOR_UNTRUSTED_DATA);
+        IObjectSafety_Release(obj_safety);
+        *ret = SUCCEEDED(hres) ? URLPOLICY_ALLOW : URLPOLICY_DISALLOW;
+    }else {
+        CATID init_catid = CATID_SafeForInitializing;
+
+        hres = ICatInformation_IsClassOfCategories(This->catmgr, &cs->clsid, 1, &init_catid, 0, NULL);
+        if(FAILED(hres))
+            return hres;
+
+        *ret = hres == S_OK ? URLPOLICY_ALLOW : URLPOLICY_DISALLOW;
+    }
+
+    return S_OK;
+}
+
 static HRESULT confirm_safety(HTMLDocumentNode *This, const WCHAR *url, struct CONFIRMSAFETY *cs, DWORD *ret)
 {
     DWORD policy, enabled_opts, supported_opts;
@@ -102,7 +126,27 @@ static HRESULT confirm_safety(HTMLDocumentNode *This, const WCHAR *url, struct C
     }
 
     hres = IUnknown_QueryInterface(cs->pUnk, &IID_IObjectSafety, (void**)&obj_safety);
-    if(FAILED(hres)) {
+    if(SUCCEEDED(hres)) {
+        hres = IObjectSafety_GetInterfaceSafetyOptions(obj_safety, &IID_IDispatchEx, &supported_opts, &enabled_opts);
+        if(FAILED(hres))
+            supported_opts = 0;
+
+        enabled_opts = INTERFACESAFE_FOR_UNTRUSTED_CALLER;
+        if(supported_opts & INTERFACE_USES_SECURITY_MANAGER)
+            enabled_opts |= INTERFACE_USES_SECURITY_MANAGER;
+
+        hres = IObjectSafety_SetInterfaceSafetyOptions(obj_safety, &IID_IDispatchEx, enabled_opts, enabled_opts);
+        if(FAILED(hres)) {
+            enabled_opts &= ~INTERFACE_USES_SECURITY_MANAGER;
+            hres = IObjectSafety_SetInterfaceSafetyOptions(obj_safety, &IID_IDispatch, enabled_opts, enabled_opts);
+        }
+        IObjectSafety_Release(obj_safety);
+
+        if(FAILED(hres)) {
+            *ret = URLPOLICY_DISALLOW;
+            return S_OK;
+        }
+    }else {
         CATID scripting_catid = CATID_SafeForScripting;
 
         if(!This->catmgr) {
@@ -116,26 +160,16 @@ static HRESULT confirm_safety(HTMLDocumentNode *This, const WCHAR *url, struct C
         if(FAILED(hres))
             return hres;
 
-        *ret = hres == S_OK ? URLPOLICY_ALLOW : URLPOLICY_DISALLOW;
-        return S_OK;
+        if(hres != S_OK) {
+            *ret = URLPOLICY_DISALLOW;
+            return S_OK;
+        }
     }
 
-    hres = IObjectSafety_GetInterfaceSafetyOptions(obj_safety, &IID_IDispatchEx, &supported_opts, &enabled_opts);
-    if(FAILED(hres))
-        supported_opts = 0;
+    if(cs->dwFlags & CONFIRMSAFETYACTION_LOADOBJECT)
+        return confirm_safety_load(This, cs, ret);
 
-    enabled_opts = INTERFACESAFE_FOR_UNTRUSTED_CALLER;
-    if(supported_opts & INTERFACE_USES_SECURITY_MANAGER)
-        enabled_opts |= INTERFACE_USES_SECURITY_MANAGER;
-
-    hres = IObjectSafety_SetInterfaceSafetyOptions(obj_safety, &IID_IDispatchEx, enabled_opts, enabled_opts);
-    if(FAILED(hres)) {
-        enabled_opts &= ~INTERFACE_USES_SECURITY_MANAGER;
-        hres = IObjectSafety_SetInterfaceSafetyOptions(obj_safety, &IID_IDispatch, enabled_opts, enabled_opts);
-    }
-    IObjectSafety_Release(obj_safety);
-
-    *ret = SUCCEEDED(hres) ? URLPOLICY_ALLOW : URLPOLICY_DISALLOW;
+    *ret = URLPOLICY_ALLOW;
     return S_OK;
 }
 
@@ -166,6 +200,8 @@ static HRESULT WINAPI InternetHostSecurityManager_QueryCustomPolicy(IInternetHos
         }
 
         cs = (struct CONFIRMSAFETY*)pContext;
+        TRACE("cs = {%s %p %x}\n", debugstr_guid(&cs->clsid), cs->pUnk, cs->dwFlags);
+
         hres = IUnknown_QueryInterface(cs->pUnk, &IID_IActiveScript, (void**)&active_script);
         if(SUCCEEDED(hres)) {
             FIXME("Got IAciveScript iface\n");
