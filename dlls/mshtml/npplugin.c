@@ -272,7 +272,7 @@ static NPError CDECL NPP_New(NPMIMEType pluginType, NPP instance, UINT16 mode, I
         PluginHost *host;
         HRESULT hres;
 
-        hres = create_plugin_host(obj, &host);
+        hres = create_plugin_host(window->doc, obj, &host);
         nsIDOMElement_Release(nselem);
         IUnknown_Release(obj);
         if(SUCCEEDED(hres))

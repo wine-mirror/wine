@@ -618,6 +618,7 @@ struct HTMLDocumentNode {
     struct list bindings;
     struct list selection_list;
     struct list range_list;
+    struct list plugin_hosts;
 };
 
 #define HTMLWINDOW2(x)   ((IHTMLWindow2*)                 &(x)->lpHTMLWindow2Vtbl)

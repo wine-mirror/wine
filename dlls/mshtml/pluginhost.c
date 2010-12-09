@@ -160,6 +160,7 @@ static ULONG WINAPI PHClientSite_Release(IOleClientSite *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        list_remove(&This->entry);
         if(This->plugin_unk)
             IUnknown_Release(This->plugin_unk);
         heap_free(This);
@@ -731,7 +732,18 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
     PHServiceProvider_QueryService
 };
 
-HRESULT create_plugin_host(IUnknown *unk, PluginHost **ret)
+void detach_plugin_hosts(HTMLDocumentNode *doc)
+{
+    PluginHost *iter;
+
+    while(!list_empty(&doc->plugin_hosts)) {
+        iter = LIST_ENTRY(list_head(&doc->plugin_hosts), PluginHost, entry);
+        list_remove(&iter->entry);
+        iter->doc = NULL;
+    }
+}
+
+HRESULT create_plugin_host(HTMLDocumentNode *doc, IUnknown *unk, PluginHost **ret)
 {
     PluginHost *host;
 
@@ -752,6 +764,9 @@ HRESULT create_plugin_host(IUnknown *unk, PluginHost **ret)
 
     IUnknown_AddRef(unk);
     host->plugin_unk = unk;
+
+    host->doc = doc;
+    list_add_tail(&doc->plugin_hosts, &host->entry);
 
     *ret = host;
     return S_OK;

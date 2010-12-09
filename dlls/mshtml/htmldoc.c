@@ -35,6 +35,7 @@
 
 #include "mshtml_private.h"
 #include "htmlevent.h"
+#include "pluginhost.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -1897,6 +1898,7 @@ static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
 
     detach_selection(This);
     detach_ranges(This);
+    detach_plugin_hosts(This);
     release_nodes(This);
 
     if(This->nsdoc) {
@@ -1982,6 +1984,7 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLWindow *wi
     list_init(&doc->bindings);
     list_init(&doc->selection_list);
     list_init(&doc->range_list);
+    list_init(&doc->plugin_hosts);
 
     return doc;
 }

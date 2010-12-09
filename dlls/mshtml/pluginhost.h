@@ -32,7 +32,11 @@ typedef struct {
 
     IUnknown *plugin_unk;
     HWND hwnd;
+
+    HTMLDocumentNode *doc;
+    struct list entry;
 } PluginHost;
 
-HRESULT create_plugin_host(IUnknown*,PluginHost**);
+HRESULT create_plugin_host(HTMLDocumentNode*,IUnknown*,PluginHost**);
 void update_plugin_window(PluginHost*,HWND,const RECT*);
+void detach_plugin_hosts(HTMLDocumentNode*);
