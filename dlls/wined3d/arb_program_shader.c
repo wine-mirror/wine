@@ -6771,12 +6771,11 @@ static BOOL gen_yv12_read(struct wined3d_shader_buffer *buffer, GLenum textype, 
     return TRUE;
 }
 
-static GLuint gen_p8_shader(IWineD3DDeviceImpl *device, GLenum textype)
+static GLuint gen_p8_shader(struct arbfp_blit_priv *priv,
+        const struct wined3d_gl_info *gl_info, GLenum textype)
 {
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     GLenum shader;
     struct wined3d_shader_buffer buffer;
-    struct arbfp_blit_priv *priv = device->blit_priv;
     GLint pos;
 
     /* Shader header */
@@ -7068,7 +7067,7 @@ static HRESULT arbfp_blit_set(IWineD3DDevice *iface, IWineD3DSurfaceImpl *surfac
 
         case COMPLEX_FIXUP_P8:
             shader = textype == GL_TEXTURE_RECTANGLE_ARB ? priv->p8_rect_shader : priv->p8_2d_shader;
-            if (!shader) shader = gen_p8_shader(device, textype);
+            if (!shader) shader = gen_p8_shader(priv, gl_info, textype);
 
             upload_palette(surface);
             break;
