@@ -6872,13 +6872,12 @@ static void upload_palette(IWineD3DSurfaceImpl *surface)
 }
 
 /* Context activation is done by the caller. */
-static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, enum complex_fixup yuv_fixup, GLenum textype)
+static GLuint gen_yuv_shader(struct arbfp_blit_priv *priv, const struct wined3d_gl_info *gl_info,
+        enum complex_fixup yuv_fixup, GLenum textype)
 {
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     GLenum shader;
     struct wined3d_shader_buffer buffer;
     char luminance_component;
-    struct arbfp_blit_priv *priv = device->blit_priv;
     GLint pos;
 
     /* Shader header */
@@ -7083,7 +7082,7 @@ static HRESULT arbfp_blit_set(IWineD3DDevice *iface, IWineD3DSurfaceImpl *surfac
             return E_NOTIMPL;
     }
 
-    if (!shader) shader = gen_yuv_shader(device, fixup, textype);
+    if (!shader) shader = gen_yuv_shader(priv, gl_info, fixup, textype);
 
     ENTER_GL();
     glEnable(GL_FRAGMENT_PROGRAM_ARB);
