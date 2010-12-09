@@ -7094,10 +7094,8 @@ static HRESULT arbfp_blit_set(void *blit_priv, const struct wined3d_gl_info *gl_
 }
 
 /* Context activation is done by the caller. */
-static void arbfp_blit_unset(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-
+static void arbfp_blit_unset(const struct wined3d_gl_info *gl_info)
+{
     ENTER_GL();
     glDisable(GL_FRAGMENT_PROGRAM_ARB);
     checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
@@ -7198,7 +7196,7 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_
     LEAVE_GL();
 
     /* Leave the opengl state valid for blitting */
-    arbfp_blit_unset((IWineD3DDevice *)device);
+    arbfp_blit_unset(context->gl_info);
 
     dst_swapchain = dst_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
             ? dst_surface->container.u.swapchain : NULL;

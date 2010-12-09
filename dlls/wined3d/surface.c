@@ -3394,7 +3394,7 @@ static void surface_blt_to_drawable(IWineD3DDeviceImpl *device,
     LEAVE_GL();
 
     /* Leave the opengl state valid for blitting */
-    device->blitter->unset_shader((IWineD3DDevice *)device);
+    device->blitter->unset_shader(context->gl_info);
 
     if (wined3d_settings.strict_draw_ordering || (swapchain
             && (dst_surface == swapchain->front_buffer || swapchain->num_contexts > 1)))
@@ -4770,11 +4770,8 @@ static HRESULT ffp_blit_set(void *blit_priv, const struct wined3d_gl_info *gl_in
 }
 
 /* Context activation is done by the caller. */
-static void ffp_blit_unset(IWineD3DDevice *iface)
+static void ffp_blit_unset(const struct wined3d_gl_info *gl_info)
 {
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-
     ENTER_GL();
     glDisable(GL_TEXTURE_2D);
     checkGLcall("glDisable(GL_TEXTURE_2D)");
@@ -4880,7 +4877,7 @@ static HRESULT cpu_blit_set(void *blit_priv, const struct wined3d_gl_info *gl_in
 }
 
 /* Context activation is done by the caller. */
-static void cpu_blit_unset(IWineD3DDevice *iface)
+static void cpu_blit_unset(const struct wined3d_gl_info *gl_info)
 {
 }
 

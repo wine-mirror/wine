@@ -212,7 +212,7 @@ static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *
         glPopMatrix();
         glPopAttrib();
 
-        device->blitter->unset_shader((IWineD3DDevice *) device);
+        device->blitter->unset_shader(context->gl_info);
         checkGLcall("Swapchain present blit(manual)\n");
         LEAVE_GL();
 
