@@ -6,10 +6,10 @@ C_SRCS = \
 	factory.c \
 	gameexplorer.c \
 	gamestatistics.c \
-	main.c \
-	regsvr.c
+	main.c
 
 IDL_TLB_SRCS = gameux_tlb.idl
+IDL_R_SRCS   = gameux_tlb.idl
 
 RC_SRCS = rsrc.rc
 

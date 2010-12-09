@@ -27,6 +27,7 @@
 #include "winbase.h"
 
 #include "ole2.h"
+#include "rpcproxy.h"
 #include "shobjidl.h"
 #include "initguid.h"
 #include "gameux.h"
@@ -34,6 +35,8 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gameux);
+
+static HINSTANCE instance;
 
 HRESULT WINAPI DllCanUnloadNow(void)
 {
@@ -47,10 +50,27 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     switch(fdwReason)
     {
     case DLL_PROCESS_ATTACH:
+        instance = hInstDLL;
         DisableThreadLibraryCalls(hInstDLL);
         break;
     case DLL_PROCESS_DETACH:
         break;
     }
     return TRUE;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (GAMEUX.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( instance, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (GAMEUX.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( instance, NULL );
 }

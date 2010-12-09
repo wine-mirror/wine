@@ -170,6 +170,10 @@ library gameuxLib
     }
 
     [
+      helpstring("GameExplorer Class"),
+      threading(both),
+      progid("gameux.GameExplorer.1"),
+      vi_progid("gameux.GameExplorer"),
       uuid(9A5EA990-3034-4D6F-9128-01F3C61022BC)
     ]
     coclass GameExplorer
@@ -178,6 +182,10 @@ library gameuxLib
     };
 
     [
+      helpstring("GameStatistics Class"),
+      threading(apartment),
+      progid("gameux.GameStatistics.1"),
+      vi_progid("gameux.GameStatistics"),
       uuid(DBC85A2C-C0DC-4961-B6E2-D28B62C11AD4)
     ]
     coclass GameStatistics
