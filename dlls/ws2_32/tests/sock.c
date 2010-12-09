@@ -1237,7 +1237,7 @@ static void test_ip_pktinfo(void)
         ok(strncmp(iovec[0].buf, msg, sizeof(msg)) == 0,
            "WSARecvMsg() buffer does not match transmitted data!\n");
         ok(hdr.Control.len == IP_PKTINFO_LEN,
-           "WSARecvMsg() control length mismatch (%d != %d).\n", hdr.Control.len, IP_PKTINFO_LEN);
+           "WSARecvMsg() control length mismatch (%d).\n", hdr.Control.len);
 
         /* Test for the expected IP_PKTINFO return information. */
         foundhdr = FALSE;
