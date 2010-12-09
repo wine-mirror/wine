@@ -97,6 +97,7 @@ dlls/msxml3/msxml3_v1.tlb
 dlls/msxml3/xslpattern.tab.c
 dlls/msxml3/xslpattern.tab.h
 dlls/msxml3/xslpattern.yy.c
+dlls/msxml4/msxml4_tlb.tlb
 dlls/msxml6/msxml6_tlb.tlb
 dlls/ole32/dcom.h
 dlls/ole32/dcom_p.c

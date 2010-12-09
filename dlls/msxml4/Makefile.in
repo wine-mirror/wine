@@ -6,4 +6,8 @@ C_SRCS = \
 	main.c \
 	regsvr.c
 
+IDL_TLB_SRCS = msxml4_tlb.idl
+
+RC_SRCS = rsrc.rc
+
 @MAKE_DLL_RULES@
