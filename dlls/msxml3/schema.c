@@ -767,7 +767,7 @@ static inline schema_cache* impl_from_IXMLDOMSchemaCollection2(IXMLDOMSchemaColl
 
 static inline SCHEMA_TYPE schema_type_from_xmlDocPtr(xmlDocPtr schema)
 {
-    xmlNodePtr root;
+    xmlNodePtr root = NULL;
     if (schema)
         root = xmlDocGetRootElement(schema);
     if (root && root->ns)
