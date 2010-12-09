@@ -707,7 +707,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
 
     case PBM_SETSTATE:
         if(wParam != PBST_NORMAL)
-            FIXME("state %04lx not yet handled", wParam);
+            FIXME("state %04lx not yet handled\n", wParam);
         return PBST_NORMAL;
 
     case PBM_GETSTATE:
