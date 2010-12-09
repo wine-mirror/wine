@@ -23,12 +23,15 @@
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
+#include "rpcproxy.h"
 #include "netfw.h"
 
 #include "wine/debug.h"
 #include "hnetcfg_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hnetcfg);
+
+static HINSTANCE instance;
 
 typedef HRESULT (*fnCreateInstance)( IUnknown *pUnkOuter, LPVOID *ppObj );
 
@@ -118,6 +121,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
         case DLL_WINE_PREATTACH:
             return FALSE;
         case DLL_PROCESS_ATTACH:
+            instance = hInstDLL;
             DisableThreadLibraryCalls(hInstDLL);
             break;
         case DLL_PROCESS_DETACH:
@@ -148,4 +152,20 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
 HRESULT WINAPI DllCanUnloadNow( void )
 {
     return S_FALSE;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (HNETCFG.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( instance, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (HNETCFG.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( instance, NULL );
 }

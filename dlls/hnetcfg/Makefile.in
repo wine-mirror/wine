@@ -8,7 +8,8 @@ C_SRCS = \
 	policy.c \
 	port.c \
 	profile.c \
-	regsvr.c \
 	service.c
+
+IDL_R_SRCS = hnetcfg.idl
 
 @MAKE_DLL_RULES@
