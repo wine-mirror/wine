@@ -9,6 +9,8 @@ C_SRCS = \
 	main.c \
 	regsvr.c
 
-RC_SRCS = version.rc
+IDL_TLB_SRCS = gameux_tlb.idl
+
+RC_SRCS = rsrc.rc
 
 @MAKE_DLL_RULES@

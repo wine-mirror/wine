@@ -24,7 +24,7 @@ import "ocidl.idl";
 import "shobjidl.idl";
 
 [
-  uuid(1DE6CE3D-EA69-4671-941F-26F789F39C5B),
+  uuid(4F48A59C-942D-4F3C-83C9-4EFFE84E4959),
   version(1.0),
   helpstring("gameux public 1.0 Type Library")
 ]
