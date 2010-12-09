@@ -11,4 +11,8 @@ C_SRCS = \
 	session.c \
 	updates.c
 
+IDL_TLB_SRCS = wuapi_tlb.idl
+
+RC_SRCS = rsrc.rc
+
 @MAKE_DLL_RULES@

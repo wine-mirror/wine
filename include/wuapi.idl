@@ -21,6 +21,15 @@ cpp_quote("DEFINE_GUID(CLSID_UpdateSession, 0x4cb43d7f,0x7eee,0x4906,0x86,0x98,0
 
 import "oaidl.idl";
 
+[
+    helpstring("WUAPI 2.0 Type Library"),
+    uuid(b596cc9f-56e5-419e-a622-e01bb457431e),
+    version(2.0)
+]
+library WUApiLib {
+
+importlib("stdole2.tlb");
+
 interface ICategoryCollection;
 interface IStringCollection;
 interface IUpdateCollection;
@@ -1287,3 +1296,5 @@ interface IUpdateInstaller : IDispatch
     HRESULT RebootRequiredBeforeInstallation(
         [out, retval] VARIANT_BOOL *retval);
 }
+
+} /* WUApiLib */

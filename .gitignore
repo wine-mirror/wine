@@ -145,6 +145,7 @@ dlls/urlmon/urlmon_urlmon.h
 dlls/urlmon/urlmon_urlmon_p.c
 dlls/windowscodecs/windowscodecs_wincodec.h
 dlls/windowscodecs/windowscodecs_wincodec_p.c
+dlls/wuapi/wuapi_tlb.tlb
 include/activaut.h
 include/activdbg.h
 include/activscp.h
