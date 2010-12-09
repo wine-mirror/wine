@@ -6203,6 +6203,7 @@ static HRESULT parse_canonicalize(const Uri *uri, DWORD flags, LPWSTR output,
                                 !(flags & URL_ESCAPE_SPACES_ONLY) &&
                                 !(flags & URL_ESCAPE_PERCENT);
 
+
     /* Check if the dot segments need to be removed from the
      * path component.
      */
@@ -6612,6 +6613,7 @@ HRESULT WINAPI CoInternetParseIUri(IUri *pIUri, PARSEACTION ParseAction, DWORD d
 {
     HRESULT hr;
     Uri *uri;
+    IInternetProtocolInfo *info;
 
     TRACE("(%p %d %x %p %d %p %x)\n", pIUri, ParseAction, dwFlags, pwzResult,
         cchResult, pcchResult, (DWORD)dwReserved);
@@ -6624,44 +6626,35 @@ HRESULT WINAPI CoInternetParseIUri(IUri *pIUri, PARSEACTION ParseAction, DWORD d
         return E_INVALIDARG;
     }
 
+    if(!(uri = get_uri_obj(pIUri))) {
+        *pcchResult = 0;
+        FIXME("(%p %d %x %p %d %p %x) Unknown IUri's not supported for this action.\n",
+            pIUri, ParseAction, dwFlags, pwzResult, cchResult, pcchResult, (DWORD)dwReserved);
+        return E_NOTIMPL;
+    }
+
+    info = get_protocol_info(uri->canon_uri);
+    if(info) {
+        hr = IInternetProtocolInfo_ParseUrl(info, uri->canon_uri, ParseAction, dwFlags,
+                                            pwzResult, cchResult, pcchResult, 0);
+        IInternetProtocolInfo_Release(info);
+        if(SUCCEEDED(hr)) return hr;
+    }
+
     switch(ParseAction) {
     case PARSE_CANONICALIZE:
-        if(!(uri = get_uri_obj(pIUri))) {
-            *pcchResult = 0;
-            FIXME("(%p %d %x %p %d %p %x) Unknown IUri's not supported for this action.\n",
-                pIUri, ParseAction, dwFlags, pwzResult, cchResult, pcchResult, (DWORD)dwReserved);
-            return E_NOTIMPL;
-        }
         hr = parse_canonicalize(uri, dwFlags, pwzResult, cchResult, pcchResult);
         break;
     case PARSE_FRIENDLY:
         hr = parse_friendly(pIUri, pwzResult, cchResult, pcchResult);
         break;
     case PARSE_ROOTDOCUMENT:
-        if(!(uri = get_uri_obj(pIUri))) {
-            *pcchResult = 0;
-            FIXME("(%p %d %x %p %d %p %x) Unknown IUri's not supported for this action.\n",
-                pIUri, ParseAction, dwFlags, pwzResult, cchResult, pcchResult, (DWORD)dwReserved);
-            return E_NOTIMPL;
-        }
         hr = parse_rootdocument(uri, pwzResult, cchResult, pcchResult);
         break;
     case PARSE_DOCUMENT:
-        if(!(uri = get_uri_obj(pIUri))) {
-            *pcchResult = 0;
-            FIXME("(%p %d %x %p %d %p %x) Unknown IUri's not supported for this action.\n",
-                pIUri, ParseAction, dwFlags, pwzResult, cchResult, pcchResult, (DWORD)dwReserved);
-            return E_NOTIMPL;
-        }
         hr = parse_document(uri, pwzResult, cchResult, pcchResult);
         break;
     case PARSE_PATH_FROM_URL:
-        if(!(uri = get_uri_obj(pIUri))) {
-            *pcchResult = 0;
-            FIXME("(%p %d %x %p %d %p %x) Unknown IUri's not supported for this action.\n",
-                pIUri, ParseAction, dwFlags, pwzResult, cchResult, pcchResult, (DWORD)dwReserved);
-            return E_NOTIMPL;
-        }
         hr = parse_path_from_url(uri, pwzResult, cchResult, pcchResult);
         break;
     case PARSE_URL_FROM_PATH:

@@ -62,6 +62,7 @@
     }while(0)
 
 DEFINE_EXPECT(CombineUrl);
+DEFINE_EXPECT(ParseUrl);
 
 static HRESULT (WINAPI *pCreateUri)(LPCWSTR, DWORD, DWORD_PTR, IUri**);
 static HRESULT (WINAPI *pCreateUriWithFragment)(LPCWSTR, LPCWSTR, DWORD, DWORD_PTR, IUri**);
@@ -82,6 +83,12 @@ static const WCHAR combine_relativeW[] = {'?','t','e','s','t',0};
 static const WCHAR combine_resultW[] = {'z','i','p',':','t','e','s','t',0};
 
 static const WCHAR winetestW[] = {'w','i','n','e','t','e','s','t',0};
+
+static const WCHAR parse_urlW[] = {'w','i','n','e','t','e','s','t',':','t','e','s','t',0};
+static const WCHAR parse_resultW[] = {'z','i','p',':','t','e','s','t',0};
+
+static PARSEACTION parse_action;
+static DWORD parse_flags;
 
 typedef struct _uri_create_flag_test {
     DWORD   flags;
@@ -9300,8 +9307,17 @@ static HRESULT WINAPI InternetProtocolInfo_ParseUrl(IInternetProtocolInfo *iface
         PARSEACTION ParseAction, DWORD dwParseFlags, LPWSTR pwzResult, DWORD cchResult,
         DWORD *pcchResult, DWORD dwReserved)
 {
-    ok(0, "unexpected call %d\n", ParseAction);
-    return E_NOTIMPL;
+    CHECK_EXPECT(ParseUrl);
+    ok(!lstrcmpW(pwzUrl, parse_urlW), "Error: Expected %s, but got %s instead.\n",
+        wine_dbgstr_w(parse_urlW), wine_dbgstr_w(pwzUrl));
+    ok(ParseAction == parse_action, "Error: Expected %d, but got %d.\n", parse_action, ParseAction);
+    ok(dwParseFlags == parse_flags, "Error: Expected 0x%08x, but got 0x%08x.\n", parse_flags, dwParseFlags);
+    ok(cchResult == 200, "Error: Got %d.\n", cchResult);
+
+    memcpy(pwzResult, parse_resultW, sizeof(parse_resultW));
+    *pcchResult = lstrlenW(parse_resultW);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI InternetProtocolInfo_CombineUrl(IInternetProtocolInfo *iface,
@@ -9725,6 +9741,36 @@ static void test_CoInternetParseIUri(void) {
     }
 }
 
+static void test_CoInternetParseIUri_Pluggable(void) {
+    HRESULT hr;
+    IUri *uri = NULL;
+
+    hr = pCreateUri(parse_urlW, 0, 0, &uri);
+    ok(SUCCEEDED(hr), "Error: Expected CreateUri to succeed, but got 0x%08x.\n", hr);
+    if(SUCCEEDED(hr)) {
+        WCHAR result[200];
+        DWORD result_len;
+
+        SET_EXPECT(ParseUrl);
+
+        parse_action = PARSE_CANONICALIZE;
+        parse_flags = URL_UNESCAPE|URL_ESCAPE_UNSAFE;
+
+        hr = pCoInternetParseIUri(uri, parse_action, parse_flags, result, 200, &result_len, 0);
+        ok(hr == S_OK, "Error: CoInternetParseIUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+
+        CHECK_CALLED(ParseUrl);
+
+        if(SUCCEEDED(hr)) {
+            ok(result_len == lstrlenW(parse_resultW), "Error: Expected %d, but got %d.\n",
+                lstrlenW(parse_resultW), result_len);
+            ok(!lstrcmpW(result, parse_resultW), "Error: Expected %s, but got %s.\n",
+                wine_dbgstr_w(parse_resultW), wine_dbgstr_w(result));
+        }
+    }
+    if(uri) IUri_Release(uri);
+}
+
 START_TEST(uri) {
     HMODULE hurlmon;
 
@@ -9830,6 +9876,9 @@ START_TEST(uri) {
 
     trace("test CoInternetCombineUrlEx Pluggable...\n");
     test_CoInternetCombineUrlEx_Pluggable();
+
+    trace("test CoInternetParseIUri pluggable...\n");
+    test_CoInternetParseIUri_Pluggable();
 
     unregister_protocols();
 }
