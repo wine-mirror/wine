@@ -1645,6 +1645,17 @@ static BOOL CRYPT_ExportEncryptedKey(CMSG_CONTENT_ENCRYPT_INFO *info, DWORD i,
     return ret;
 }
 
+static LPVOID WINAPI mem_alloc(size_t size)
+{
+    return HeapAlloc(GetProcessHeap(), 0, size);
+}
+
+static VOID WINAPI mem_free(LPVOID pv)
+{
+    HeapFree(GetProcessHeap(), 0, pv);
+}
+
+
 static BOOL CContentEncryptInfo_Construct(CMSG_CONTENT_ENCRYPT_INFO *info,
  const CMSG_ENVELOPED_ENCODE_INFO_WITH_CMS *in, HCRYPTPROV prov)
 {
@@ -1701,8 +1712,8 @@ static BOOL CContentEncryptInfo_Construct(CMSG_CONTENT_ENCRYPT_INFO *info,
         else
             ret = FALSE;
     }
-    info->pfnAlloc = CryptMemAlloc;
-    info->pfnFree = CryptMemFree;
+    info->pfnAlloc = mem_alloc;
+    info->pfnFree = mem_free;
     return ret;
 }
 
