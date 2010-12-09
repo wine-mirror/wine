@@ -16,6 +16,6 @@ C_SRCS = \
 	rsaenh.c \
 	sha2.c
 
-RC_SRCS = version.rc
+RC_SRCS = rsrc.rc
 
 @MAKE_DLL_RULES@
