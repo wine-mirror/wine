@@ -46,6 +46,7 @@ static LONG (WINAPI *pRegDeleteKeyExA)(HKEY, LPCSTR, REGSAM, DWORD);
 static LONG (WINAPI *pRegDeleteKeyExW)(HKEY, LPCWSTR, REGSAM, DWORD);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 static void (WINAPI *pGetSystemInfo)(LPSYSTEM_INFO);
+static void (WINAPI *pGetNativeSystemInfo)(LPSYSTEM_INFO);
 static UINT (WINAPI *pGetSystemWow64DirectoryA)(LPSTR, UINT);
 
 static BOOL (WINAPI *pSRRemoveRestorePoint)(DWORD);
@@ -72,6 +73,7 @@ static void init_functionpointers(void)
     GET_PROC(hadvapi32, RegDeleteKeyExA)
     GET_PROC(hadvapi32, RegDeleteKeyExW)
     GET_PROC(hkernel32, IsWow64Process)
+    GET_PROC(hkernel32, GetNativeSystemInfo)
     GET_PROC(hkernel32, GetSystemInfo)
     GET_PROC(hkernel32, GetSystemWow64DirectoryA)
 
@@ -8283,6 +8285,7 @@ static void test_appsearch_reglocator(void)
     LPCSTR str;
     LONG res;
     UINT r, type = 0;
+    SYSTEM_INFO si;
 
     version = TRUE;
     if (!create_file_with_version("test.dll", MAKELONG(2, 1), MAKELONG(4, 3)))
@@ -8726,28 +8729,34 @@ static void test_appsearch_reglocator(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(prop, "#-42"), "Expected \"#-42\", got \"%s\"\n", prop);
 
-    size = ExpandEnvironmentStringsA("%PATH%", NULL, 0);
-    if (size == 0 && GetLastError() == ERROR_INVALID_PARAMETER)
+    memset(&si, 0, sizeof(si));
+    if (pGetNativeSystemInfo) pGetNativeSystemInfo(&si);
+
+    if (S(U(si)).wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
     {
-        /* Workaround for Win95 */
-        CHAR tempbuf[1];
-        size = ExpandEnvironmentStringsA("%PATH%", tempbuf, 0);
+        size = ExpandEnvironmentStringsA("%PATH%", NULL, 0);
+        if (size == 0 && GetLastError() == ERROR_INVALID_PARAMETER)
+        {
+            /* Workaround for Win95 */
+            CHAR tempbuf[1];
+            size = ExpandEnvironmentStringsA("%PATH%", tempbuf, 0);
+        }
+        pathvar = HeapAlloc(GetProcessHeap(), 0, size);
+        ExpandEnvironmentStringsA("%PATH%", pathvar, size);
+
+        size = 0;
+        r = MsiGetPropertyA(hpkg, "SIGPROP4", NULL, &size);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+        pathdata = HeapAlloc(GetProcessHeap(), 0, ++size);
+        r = MsiGetPropertyA(hpkg, "SIGPROP4", pathdata, &size);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(pathdata, pathvar),
+            "Expected \"%s\", got \"%s\"\n", pathvar, pathdata);
+
+        HeapFree(GetProcessHeap(), 0, pathvar);
+        HeapFree(GetProcessHeap(), 0, pathdata);
     }
-    pathvar = HeapAlloc(GetProcessHeap(), 0, size);
-    ExpandEnvironmentStringsA("%PATH%", pathvar, size);
-
-    size = 0;
-    r = MsiGetPropertyA(hpkg, "SIGPROP4", NULL, &size);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    pathdata = HeapAlloc(GetProcessHeap(), 0, ++size);
-    r = MsiGetPropertyA(hpkg, "SIGPROP4", pathdata, &size);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrcmpA(pathdata, pathvar),
-       "Expected \"%s\", got \"%s\"\n", pathvar, pathdata);
-
-    HeapFree(GetProcessHeap(), 0, pathvar);
-    HeapFree(GetProcessHeap(), 0, pathdata);
 
     size = MAX_PATH;
     r = MsiGetPropertyA(hpkg, "SIGPROP5", prop, &size);
