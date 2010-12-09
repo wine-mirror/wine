@@ -575,8 +575,7 @@ get_subtests (const char *tempdir, struct wine_test *test, LPTSTR res_name)
             test->subtests = heap_realloc (test->subtests,
                                            allocated * sizeof(char*));
         }
-        if (!test_filtered_out( test->name, index ))
-            test->subtests[test->subtest_count++] = heap_strdup(index);
+        test->subtests[test->subtest_count++] = heap_strdup(index);
         index = strtok (NULL, whitespace);
     }
     test->subtests = heap_realloc (test->subtests,
@@ -592,14 +591,23 @@ get_subtests (const char *tempdir, struct wine_test *test, LPTSTR res_name)
 static void
 run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const char *tempdir)
 {
-    int status;
     const char* file = get_test_source_file(test->name, subtest);
-    char *cmd = strmake (NULL, "%s %s", test->exename, subtest);
 
-    xprintf ("%s:%s start %s -\n", test->name, subtest, file);
-    status = run_ex (cmd, out_file, tempdir, 120000);
-    heap_free (cmd);
-    xprintf ("%s:%s done (%d)\n", test->name, subtest, status);
+    if (test_filtered_out( test->name, subtest ))
+    {
+        report (R_STEP, "Skipping: %s:%s", test->name, subtest);
+        xprintf ("%s:%s skipped %s -\n", test->name, subtest, file);
+    }
+    else
+    {
+        int status;
+        char *cmd = strmake (NULL, "%s %s", test->exename, subtest);
+        report (R_STEP, "Running: %s:%s", test->name, subtest);
+        xprintf ("%s:%s start %s -\n", test->name, subtest, file);
+        status = run_ex (cmd, out_file, tempdir, 120000);
+        heap_free (cmd);
+        xprintf ("%s:%s done (%d)\n", test->name, subtest, status);
+    }
 }
 
 static BOOL CALLBACK
@@ -924,9 +932,7 @@ run_tests (char *logname, char *outdir)
 
 	for (j = 0; j < test->subtest_count; j++) {
             if (aborting) break;
-            report (R_STEP, "Running: %s:%s", test->name,
-                    test->subtests[j]);
-	    run_test (test, test->subtests[j], logfile, tempdir);
+            run_test (test, test->subtests[j], logfile, tempdir);
         }
 
         if (test->maindllpath) {
