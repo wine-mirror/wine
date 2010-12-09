@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "rpcproxy.h"
 #include "wuapi.h"
 
 #include "wine/debug.h"
@@ -114,6 +115,8 @@ static const struct IClassFactoryVtbl wucf_vtbl =
 static wucf sessioncf = { &wucf_vtbl, UpdateSession_create };
 static wucf updatescf = { &wucf_vtbl, AutomaticUpdates_create };
 
+static HINSTANCE instance;
+
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID lpv )
 {
     switch(reason)
@@ -121,6 +124,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID lpv )
     case DLL_WINE_PREATTACH:
         return FALSE;  /* prefer native version */
     case DLL_PROCESS_ATTACH:
+        instance = hinst;
         DisableThreadLibraryCalls( hinst );
         break;
     case DLL_PROCESS_DETACH:
@@ -150,4 +154,20 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
 HRESULT WINAPI DllCanUnloadNow( void )
 {
     return S_FALSE;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (WUAPI.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( instance, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (WUAPI.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( instance, NULL );
 }

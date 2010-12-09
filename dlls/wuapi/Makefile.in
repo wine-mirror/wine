@@ -6,12 +6,12 @@ C_SRCS = \
 	downloader.c \
 	installer.c \
 	main.c \
-	regsvr.c \
 	searcher.c \
 	session.c \
 	updates.c
 
 IDL_TLB_SRCS = wuapi_tlb.idl
+IDL_R_SRCS   = wuapi_tlb.idl
 
 RC_SRCS = rsrc.rc
 
