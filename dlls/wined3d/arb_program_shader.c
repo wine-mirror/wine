@@ -7027,13 +7027,11 @@ static GLuint gen_yuv_shader(struct arbfp_blit_priv *priv, const struct wined3d_
 }
 
 /* Context activation is done by the caller. */
-static HRESULT arbfp_blit_set(IWineD3DDevice *iface, IWineD3DSurfaceImpl *surface)
+static HRESULT arbfp_blit_set(void *blit_priv, const struct wined3d_gl_info *gl_info, IWineD3DSurfaceImpl *surface)
 {
     GLenum shader;
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     float size[4] = {(float) surface->pow2Width, (float) surface->pow2Height, 1.0f, 1.0f};
-    struct arbfp_blit_priv *priv = device->blit_priv;
+    struct arbfp_blit_priv *priv = blit_priv;
     enum complex_fixup fixup;
     GLenum textype = surface->texture_target;
 
@@ -7190,7 +7188,7 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_
     if (!surface_is_offscreen(dst_surface))
         surface_translate_drawable_coords(dst_surface, context->win_handle, &dst_rect);
 
-    arbfp_blit_set((IWineD3DDevice *)device, src_surface);
+    arbfp_blit_set(device->blit_priv, context->gl_info, src_surface);
 
     ENTER_GL();
 

@@ -3358,7 +3358,7 @@ static void surface_blt_to_drawable(IWineD3DDeviceImpl *device,
     if (!surface_is_offscreen(dst_surface))
         surface_translate_drawable_coords(dst_surface, context->win_handle, &dst_rect);
 
-    device->blitter->set_shader((IWineD3DDevice *)device, src_surface);
+    device->blitter->set_shader(device->blit_priv, context->gl_info, src_surface);
 
     ENTER_GL();
 
@@ -4752,10 +4752,8 @@ static void ffp_blit_p8_upload_palette(IWineD3DSurfaceImpl *surface, const struc
 }
 
 /* Context activation is done by the caller. */
-static HRESULT ffp_blit_set(IWineD3DDevice *iface, IWineD3DSurfaceImpl *surface)
+static HRESULT ffp_blit_set(void *blit_priv, const struct wined3d_gl_info *gl_info, IWineD3DSurfaceImpl *surface)
 {
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     enum complex_fixup fixup = get_complex_fixup(surface->resource.format->color_fixup);
 
     /* When EXT_PALETTED_TEXTURE is around, palette conversion is done by the GPU
@@ -4876,7 +4874,7 @@ static void cpu_blit_free(IWineD3DDeviceImpl *device)
 }
 
 /* Context activation is done by the caller. */
-static HRESULT cpu_blit_set(IWineD3DDevice *iface, IWineD3DSurfaceImpl *surface)
+static HRESULT cpu_blit_set(void *blit_priv, const struct wined3d_gl_info *gl_info, IWineD3DSurfaceImpl *surface)
 {
     return WINED3D_OK;
 }

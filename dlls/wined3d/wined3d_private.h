@@ -1177,7 +1177,7 @@ struct blit_shader
 {
     HRESULT (*alloc_private)(IWineD3DDeviceImpl *device);
     void (*free_private)(IWineD3DDeviceImpl *device);
-    HRESULT (*set_shader)(IWineD3DDevice *iface, IWineD3DSurfaceImpl *surface);
+    HRESULT (*set_shader)(void *blit_priv, const struct wined3d_gl_info *gl_info, IWineD3DSurfaceImpl *surface);
     void (*unset_shader)(IWineD3DDevice *iface);
     BOOL (*blit_supported)(const struct wined3d_gl_info *gl_info, enum blit_operation blit_op,
             const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool, const struct wined3d_format *src_format,
