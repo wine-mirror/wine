@@ -35,6 +35,8 @@ typedef struct {
 
     HTMLDocumentNode *doc;
     struct list entry;
+
+    HTMLPluginContainer *element;
 } PluginHost;
 
 struct HTMLPluginContainer {
@@ -45,6 +47,6 @@ struct HTMLPluginContainer {
 
 extern const IID IID_HTMLPluginContainer;
 
-HRESULT create_plugin_host(HTMLDocumentNode*,IUnknown*,PluginHost**);
+HRESULT create_plugin_host(HTMLDocumentNode*,nsIDOMElement*,IUnknown*,PluginHost**);
 void update_plugin_window(PluginHost*,HWND,const RECT*);
 void detach_plugin_hosts(HTMLDocumentNode*);

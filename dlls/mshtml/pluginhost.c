@@ -164,6 +164,8 @@ static ULONG WINAPI PHClientSite_Release(IOleClientSite *iface)
 
     if(!ref) {
         list_remove(&This->entry);
+        if(This->element)
+            This->element->plugin_host = NULL;
         if(This->plugin_unk)
             IUnknown_Release(This->plugin_unk);
         heap_free(This);
@@ -735,6 +737,27 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
     PHServiceProvider_QueryService
 };
 
+static HRESULT assoc_element(PluginHost *host, HTMLDocumentNode *doc, nsIDOMElement *nselem)
+{
+    HTMLPluginContainer *container_elem;
+    HTMLDOMNode *node;
+    HRESULT hres;
+
+    hres = get_node(doc, (nsIDOMNode*)nselem, TRUE, &node);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_HTMLPluginContainer, (void**)&container_elem);
+    if(FAILED(hres)) {
+        ERR("Not an object element\n");
+        return hres;
+    }
+
+    container_elem->plugin_host = host;
+    host->element = container_elem;
+    return S_OK;
+}
+
 void detach_plugin_hosts(HTMLDocumentNode *doc)
 {
     PluginHost *iter;
@@ -746,9 +769,10 @@ void detach_plugin_hosts(HTMLDocumentNode *doc)
     }
 }
 
-HRESULT create_plugin_host(HTMLDocumentNode *doc, IUnknown *unk, PluginHost **ret)
+HRESULT create_plugin_host(HTMLDocumentNode *doc, nsIDOMElement *nselem, IUnknown *unk, PluginHost **ret)
 {
     PluginHost *host;
+    HRESULT hres;
 
     host = heap_alloc_zero(sizeof(*host));
     if(!host)
@@ -764,6 +788,12 @@ HRESULT create_plugin_host(HTMLDocumentNode *doc, IUnknown *unk, PluginHost **re
     host->IServiceProvider_iface.lpVtbl    = &ServiceProviderVtbl;
 
     host->ref = 1;
+
+    hres = assoc_element(host, doc, nselem);
+    if(FAILED(hres)) {
+        heap_free(host);
+        return hres;
+    }
 
     IUnknown_AddRef(unk);
     host->plugin_unk = unk;
