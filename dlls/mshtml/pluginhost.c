@@ -36,6 +36,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+const IID IID_HTMLPluginContainer =
+    {0xbd7a6050,0xb373,0x4f6f,{0xa4,0x93,0xdd,0x40,0xc5,0x23,0xa8,0x6a}};
+
 static void activate_plugin(PluginHost *host)
 {
     IClientSecurity *client_security;

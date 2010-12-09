@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-typedef struct HTMLObjectElement HTMLObjectElement;
+typedef struct HTMLPluginContainer HTMLPluginContainer;
 
 typedef struct {
     IOleClientSite       IOleClientSite_iface;
@@ -36,6 +36,14 @@ typedef struct {
     HTMLDocumentNode *doc;
     struct list entry;
 } PluginHost;
+
+struct HTMLPluginContainer {
+    HTMLElement element;
+
+    PluginHost *plugin_host;
+};
+
+extern const IID IID_HTMLPluginContainer;
 
 HRESULT create_plugin_host(HTMLDocumentNode*,IUnknown*,PluginHost**);
 void update_plugin_window(PluginHost*,HWND,const RECT*);

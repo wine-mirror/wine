@@ -29,11 +29,12 @@
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
+#include "pluginhost.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 typedef struct {
-    HTMLElement element;
+    HTMLPluginContainer plugin_container;
 
     IHTMLObjectElement IHTMLObjectElement_iface;
 
@@ -50,34 +51,34 @@ static HRESULT WINAPI HTMLObjectElement_QueryInterface(IHTMLObjectElement *iface
 {
     HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
 
-    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->element.node), riid, ppv);
+    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->plugin_container.element.node), riid, ppv);
 }
 
 static ULONG WINAPI HTMLObjectElement_AddRef(IHTMLObjectElement *iface)
 {
     HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
 
-    return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->element.node));
+    return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->plugin_container.element.node));
 }
 
 static ULONG WINAPI HTMLObjectElement_Release(IHTMLObjectElement *iface)
 {
     HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
 
-    return IHTMLDOMNode_Release(HTMLDOMNODE(&This->element.node));
+    return IHTMLDOMNode_Release(HTMLDOMNODE(&This->plugin_container.element.node));
 }
 
 static HRESULT WINAPI HTMLObjectElement_GetTypeInfoCount(IHTMLObjectElement *iface, UINT *pctinfo)
 {
     HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
-    return IDispatchEx_GetTypeInfoCount(DISPATCHEX(&This->element.node.dispex), pctinfo);
+    return IDispatchEx_GetTypeInfoCount(DISPATCHEX(&This->plugin_container.element.node.dispex), pctinfo);
 }
 
 static HRESULT WINAPI HTMLObjectElement_GetTypeInfo(IHTMLObjectElement *iface, UINT iTInfo,
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
-    return IDispatchEx_GetTypeInfo(DISPATCHEX(&This->element.node.dispex), iTInfo, lcid, ppTInfo);
+    return IDispatchEx_GetTypeInfo(DISPATCHEX(&This->plugin_container.element.node.dispex), iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI HTMLObjectElement_GetIDsOfNames(IHTMLObjectElement *iface, REFIID riid,
@@ -85,7 +86,7 @@ static HRESULT WINAPI HTMLObjectElement_GetIDsOfNames(IHTMLObjectElement *iface,
                                                 LCID lcid, DISPID *rgDispId)
 {
     HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
-    return IDispatchEx_GetIDsOfNames(DISPATCHEX(&This->element.node.dispex), riid, rgszNames, cNames, lcid, rgDispId);
+    return IDispatchEx_GetIDsOfNames(DISPATCHEX(&This->plugin_container.element.node.dispex), riid, rgszNames, cNames, lcid, rgDispId);
 }
 
 static HRESULT WINAPI HTMLObjectElement_Invoke(IHTMLObjectElement *iface, DISPID dispIdMember,
@@ -93,7 +94,7 @@ static HRESULT WINAPI HTMLObjectElement_Invoke(IHTMLObjectElement *iface, DISPID
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
-    return IDispatchEx_Invoke(DISPATCHEX(&This->element.node.dispex), dispIdMember, riid, lcid, wFlags, pDispParams,
+    return IDispatchEx_Invoke(DISPATCHEX(&This->plugin_container.element.node.dispex), dispIdMember, riid, lcid, wFlags, pDispParams,
             pVarResult, pExcepInfo, puArgErr);
 }
 
@@ -390,7 +391,7 @@ static const IHTMLObjectElementVtbl HTMLObjectElementVtbl = {
     HTMLObjectElement_get_hspace
 };
 
-#define HTMLOBJECT_NODE_THIS(iface) DEFINE_THIS2(HTMLObjectElement, element.node, iface)
+#define HTMLOBJECT_NODE_THIS(iface) DEFINE_THIS2(HTMLObjectElement, plugin_container.element.node, iface)
 
 static HRESULT HTMLObjectElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
@@ -405,8 +406,12 @@ static HRESULT HTMLObjectElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     }else if(IsEqualGUID(&IID_IHTMLObjectElement, riid)) {
         TRACE("(%p)->(IID_IHTMLObjectElement %p)\n", This, ppv);
         *ppv = &This->IHTMLObjectElement_iface;
+    }else if(IsEqualGUID(&IID_HTMLPluginContainer, riid)) {
+        TRACE("(%p)->(IID_HTMLPluginContainer %p)\n", This, ppv);
+        *ppv = &This->plugin_container;
+        return S_OK;
     }else {
-        return HTMLElement_QI(&This->element.node, riid, ppv);
+        return HTMLElement_QI(&This->plugin_container.element.node, riid, ppv);
     }
 
     IUnknown_AddRef((IUnknown*)*ppv);
@@ -420,7 +425,7 @@ static void HTMLObjectElement_destructor(HTMLDOMNode *iface)
     if(This->nsobject)
         nsIDOMHTMLObjectElement_Release(This->nsobject);
 
-    HTMLElement_destructor(&This->element.node);
+    HTMLElement_destructor(&This->plugin_container.element.node);
 }
 
 static HRESULT HTMLObjectElement_get_readystate(HTMLDOMNode *iface, BSTR *p)
@@ -466,7 +471,7 @@ HRESULT HTMLObjectElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nsele
         return E_OUTOFMEMORY;
 
     ret->IHTMLObjectElement_iface.lpVtbl = &HTMLObjectElementVtbl;
-    ret->element.node.vtbl = &HTMLObjectElementImplVtbl;
+    ret->plugin_container.element.node.vtbl = &HTMLObjectElementImplVtbl;
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLObjectElement, (void**)&ret->nsobject);
     if(NS_FAILED(nsres)) {
@@ -475,8 +480,8 @@ HRESULT HTMLObjectElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nsele
         return E_FAIL;
     }
 
-    HTMLElement_Init(&ret->element, doc, nselem, &HTMLObjectElement_dispex);
+    HTMLElement_Init(&ret->plugin_container.element, doc, nselem, &HTMLObjectElement_dispex);
 
-    *elem = &ret->element;
+    *elem = &ret->plugin_container.element;
     return S_OK;
 }
