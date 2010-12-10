@@ -360,7 +360,9 @@ static gboolean event_src(GstPad *pad, GstEvent *event) {
             LeaveCriticalSection(&This->filter.csFilter);
             break;
         default:
-            FIXME("%p stub\n", event);
+            FIXME("%p (%u) stub\n", event, event->type);
+        case GST_EVENT_TAG:
+        case GST_EVENT_QOS:
             return gst_pad_event_default(pad, event);
     }
     return 1;
