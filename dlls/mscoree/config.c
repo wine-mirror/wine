@@ -46,8 +46,8 @@ enum parse_state
 
 typedef struct ConfigFileHandler
 {
-    const struct ISAXContentHandlerVtbl *lpVtbl;
-    const struct ISAXErrorHandlerVtbl *lpErrorVtbl;
+    ISAXContentHandler ISAXContentHandler_iface;
+    ISAXErrorHandler ISAXErrorHandler_iface;
     LONG ref;
     enum parse_state states[16];
     int statenum;
@@ -56,12 +56,12 @@ typedef struct ConfigFileHandler
 
 static inline ConfigFileHandler *impl_from_ISAXContentHandler(ISAXContentHandler *iface)
 {
-    return (ConfigFileHandler *)((char*)iface - FIELD_OFFSET(ConfigFileHandler, lpVtbl));
+    return CONTAINING_RECORD(iface, ConfigFileHandler, ISAXContentHandler_iface);
 }
 
 static inline ConfigFileHandler *impl_from_ISAXErrorHandler(ISAXErrorHandler *iface)
 {
-    return (ConfigFileHandler *)((char*)iface - FIELD_OFFSET(ConfigFileHandler, lpErrorVtbl));
+    return CONTAINING_RECORD(iface, ConfigFileHandler, ISAXErrorHandler_iface);
 }
 
 static HRESULT WINAPI ConfigFileHandler_QueryInterface(ISAXContentHandler *iface,
@@ -399,8 +399,8 @@ static HRESULT parse_config(VARIANT input, parsed_config_file *result)
     if (!handler)
         return E_OUTOFMEMORY;
 
-    handler->lpVtbl = &ConfigFileHandlerVtbl;
-    handler->lpErrorVtbl = &ConfigFileHandlerErrorVtbl;
+    handler->ISAXContentHandler_iface.lpVtbl = &ConfigFileHandlerVtbl;
+    handler->ISAXErrorHandler_iface.lpVtbl = &ConfigFileHandlerErrorVtbl;
     handler->ref = 1;
     handler->states[0] = STATE_ROOT;
     handler->statenum = 0;
@@ -411,10 +411,10 @@ static HRESULT parse_config(VARIANT input, parsed_config_file *result)
 
     if (SUCCEEDED(hr))
     {
-        hr = ISAXXMLReader_putContentHandler(reader, (ISAXContentHandler*)&handler->lpVtbl);
+        hr = ISAXXMLReader_putContentHandler(reader, &handler->ISAXContentHandler_iface);
 
         if (SUCCEEDED(hr))
-            hr = ISAXXMLReader_putErrorHandler(reader, (ISAXErrorHandler*)&handler->lpErrorVtbl);
+            hr = ISAXXMLReader_putErrorHandler(reader, &handler->ISAXErrorHandler_iface);
 
         if (SUCCEEDED(hr))
             hr = ISAXXMLReader_parse(reader, input);
