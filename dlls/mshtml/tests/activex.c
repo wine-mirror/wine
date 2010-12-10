@@ -330,6 +330,8 @@ static HRESULT WINAPI PersistPropertyBag_InitNew(IPersistPropertyBag *face)
 
 static HRESULT WINAPI PersistPropertyBag_Load(IPersistPropertyBag *face, IPropertyBag *pPropBag, IErrorLog *pErrorLog)
 {
+    IBindHost *bind_host, *bind_host2;
+    IServiceProvider *sp;
     VARIANT v;
     HRESULT hres;
 
@@ -384,6 +386,21 @@ static HRESULT WINAPI PersistPropertyBag_Load(IPersistPropertyBag *face, IProper
     ok(V_BSTR(&v) == (BSTR)0xdeadbeef, "V_BSTR(v) = %p\n", V_BSTR(&v));
 
     set_plugin_readystate(READYSTATE_INTERACTIVE);
+
+    hres = IOleClientSite_QueryInterface(client_site, &IID_IBindHost, (void**)&bind_host);
+    ok(hres == S_OK, "Could not get IBindHost iface: %08x\n", hres);
+
+    hres = IOleClientSite_QueryInterface(client_site, &IID_IServiceProvider, (void**)&sp);
+    ok(hres == S_OK, "Could not get IServiceProvider iface: %08x\n", hres);
+
+    hres = IServiceProvider_QueryService(sp, &IID_IBindHost, &SID_SBindHost, (void**)&bind_host2);
+    ok(hres == S_OK, "QueryService(SID_SBindHost) failed: %08x\n", hres);
+    IServiceProvider_Release(sp);
+
+    ok(iface_cmp((IUnknown*)bind_host, (IUnknown*)bind_host2), "bind_host != bind_host2\n");
+    IBindHost_Release(bind_host2);
+    IBindHost_Release(bind_host);
+
     set_plugin_readystate(READYSTATE_COMPLETE);
 
     return S_OK;

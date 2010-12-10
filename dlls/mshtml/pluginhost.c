@@ -838,6 +838,12 @@ static ULONG WINAPI PHServiceProvider_Release(IServiceProvider *iface)
 static HRESULT WINAPI PHServiceProvider_QueryService(IServiceProvider *iface, REFGUID guidService, REFIID riid, void **ppv)
 {
     PluginHost *This = impl_from_IServiceProvider(iface);
+
+    if(IsEqualGUID(guidService, &SID_SBindHost)) {
+        TRACE("SID_SBindHost service\n");
+        return IOleClientSite_QueryInterface(&This->IOleClientSite_iface, riid, ppv);
+    }
+
     FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
     return E_NOINTERFACE;
 }
