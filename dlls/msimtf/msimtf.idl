@@ -1,5 +1,7 @@
 /*
- * Copyright 2007 Jacek Caban for CodeWeavers
+ * COM Classes for msimtf
+ *
+ * Copyright 2010 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,5 +18,21 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/* @makedep: msimtf.inf */
-REGINST REGINST msimtf.inf
+[
+    helpstring("CActiveIMMApp"),
+    threading(apartment),
+    uuid(4955dd33-b159-11d0-8fcf-00aa006bcc59)
+]
+coclass CActiveIMM { interface IActiveIMMApp; }
+
+[
+    threading(apartment),
+    uuid(c1ee01f2-b3b6-4a6a-9ddd-e988c088ec82)
+]
+coclass CActiveIMMAppEx { interface IActiveIMMApp; }
+
+[
+    threading(apartment),
+    uuid(50d5107a-d278-4871-8989-f4ceaaf59cfc)
+]
+coclass CActiveIMMAppEx_Trident { interface IActiveIMMApp; }

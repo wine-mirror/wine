@@ -31,7 +31,6 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "objbase.h"
-#include "advpub.h"
 #include "dimm.h"
 #include "imm.h"
 
