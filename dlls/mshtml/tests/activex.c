@@ -162,6 +162,22 @@ static void set_plugin_readystate(READYSTATE state)
     IPropertyNotifySink_Release(prop_notif);
 }
 
+static void test_mon_displayname(IMoniker *mon, const char *exname)
+{
+    LPOLESTR display_name;
+    DWORD mksys;
+    HRESULT hres;
+
+    hres = IMoniker_GetDisplayName(mon, NULL, NULL, &display_name);
+    ok(hres == S_OK, "GetDisplayName failed: %08x\n", hres);
+    ok(!strcmp_wa(display_name, exname), "display_name = %s\n", wine_dbgstr_w(display_name));
+    CoTaskMemFree(display_name);
+
+    hres = IMoniker_IsSystemMoniker(mon, &mksys);
+    ok(hres == S_OK, "IsSystemMoniker failed: %08x\n", hres);
+    ok(mksys == MKSYS_URLMONIKER, "mksys = %d\n", mksys);
+}
+
 static HRESULT ax_qi(REFIID,void**);
 
 static HRESULT WINAPI OleControl_QueryInterface(IOleControl *iface, REFIID riid, void **ppv)
@@ -332,6 +348,7 @@ static HRESULT WINAPI PersistPropertyBag_Load(IPersistPropertyBag *face, IProper
 {
     IBindHost *bind_host, *bind_host2;
     IServiceProvider *sp;
+    IMoniker *mon;
     VARIANT v;
     HRESULT hres;
 
@@ -399,6 +416,14 @@ static HRESULT WINAPI PersistPropertyBag_Load(IPersistPropertyBag *face, IProper
 
     ok(iface_cmp((IUnknown*)bind_host, (IUnknown*)bind_host2), "bind_host != bind_host2\n");
     IBindHost_Release(bind_host2);
+
+    mon = NULL;
+    hres = IOleClientSite_GetMoniker(client_site, OLEGETMONIKER_ONLYIFTHERE, OLEWHICHMK_CONTAINER, &mon);
+    ok(hres == S_OK, "GetMoniker failed: %08x\n", hres);
+    ok(mon != NULL, "mon == NULL\n");
+    test_mon_displayname(mon, "about:blank");
+    IMoniker_Release(mon);
+
     IBindHost_Release(bind_host);
 
     set_plugin_readystate(READYSTATE_COMPLETE);

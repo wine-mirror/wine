@@ -283,11 +283,28 @@ static HRESULT WINAPI PHClientSite_SaveObject(IOleClientSite *iface)
 }
 
 static HRESULT WINAPI PHClientSite_GetMoniker(IOleClientSite *iface, DWORD dwAssign,
-                                            DWORD dwWhichMoniker, IMoniker **ppmk)
+        DWORD dwWhichMoniker, IMoniker **ppmk)
 {
     PluginHost *This = impl_from_IOleClientSite(iface);
-    FIXME("(%p)->(%d %d %p)\n", This, dwAssign, dwWhichMoniker, ppmk);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d %d %p)\n", This, dwAssign, dwWhichMoniker, ppmk);
+
+    switch(dwWhichMoniker) {
+    case OLEWHICHMK_CONTAINER:
+        if(!This->doc || !This->doc->basedoc.window || !This->doc->basedoc.window->mon) {
+            FIXME("no moniker\n");
+            return E_UNEXPECTED;
+        }
+
+        *ppmk = This->doc->basedoc.window->mon;
+        IMoniker_AddRef(*ppmk);
+        break;
+    default:
+        FIXME("which %d\n", dwWhichMoniker);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PHClientSite_GetContainer(IOleClientSite *iface, IOleContainer **ppContainer)
