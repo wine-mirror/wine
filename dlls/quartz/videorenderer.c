@@ -432,6 +432,7 @@ static HRESULT WINAPI VideoRenderer_Receive(BaseInputPin* pin, IMediaSample * pS
         LeaveCriticalSection(&This->filter.csFilter);
         WaitForSingleObject(This->blocked, INFINITE);
         EnterCriticalSection(&This->filter.csFilter);
+        SetEvent(This->hEvent);
         This->sample_held = NULL;
         if (This->filter.state == State_Paused)
         {
@@ -959,6 +960,15 @@ static HRESULT WINAPI VideoRenderer_InputPin_EndFlush(IPin * iface)
     TRACE("(%p/%p)->()\n", This, iface);
 
     EnterCriticalSection(This->pin.pCritSec);
+
+    if (pVideoRenderer->sample_held) {
+        SetEvent(pVideoRenderer->blocked);
+        ResetEvent(pVideoRenderer->hEvent);
+        LeaveCriticalSection(This->pin.pCritSec);
+        WaitForSingleObject(pVideoRenderer->hEvent, INFINITE);
+        EnterCriticalSection(This->pin.pCritSec);
+        ResetEvent(pVideoRenderer->blocked);
+    }
     if (pVideoRenderer->filter.state == State_Paused) {
         ResetEvent(pVideoRenderer->blocked);
         ResetEvent(pVideoRenderer->hEvent);
