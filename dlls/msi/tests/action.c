@@ -2842,7 +2842,7 @@ currentuser:
     RegCloseKey(hkey);
 
 machprod:
-    res = RegOpenKeyA(HKEY_CLASSES_ROOT, machprod, &hkey);
+    res = RegOpenKeyExA(HKEY_CLASSES_ROOT, machprod, 0, access, &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     CHECK_DEL_REG_STR(hkey, "ProductName", "MSITEST");
@@ -2856,7 +2856,7 @@ machprod:
     CHECK_DEL_REG_DWORD(hkey, "InstanceType", 0);
     CHECK_DEL_REG_STR(hkey, "Clients", ":");
 
-    res = RegOpenKeyA(hkey, "SourceList", &sourcelist);
+    res = RegOpenKeyExA(hkey, "SourceList", 0, access, &sourcelist);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     lstrcpyA(path, "n;1;");
@@ -2864,7 +2864,7 @@ machprod:
     CHECK_DEL_REG_STR(sourcelist, "LastUsedSource", path);
     CHECK_DEL_REG_STR(sourcelist, "PackageName", "msitest.msi");
 
-    res = RegOpenKeyA(sourcelist, "Net", &net);
+    res = RegOpenKeyExA(sourcelist, "Net", 0, access, &net);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     CHECK_DEL_REG_STR(net, "1", temp);
@@ -2872,7 +2872,7 @@ machprod:
     RegDeleteKeyA(net, "");
     RegCloseKey(net);
 
-    res = RegOpenKeyA(sourcelist, "Media", &media);
+    res = RegOpenKeyExA(sourcelist, "Media", 0, access, &media);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     CHECK_DEL_REG_STR(media, "1", "DISK1;");
@@ -2884,7 +2884,7 @@ machprod:
     RegDeleteKeyA(hkey, "");
     RegCloseKey(hkey);
 
-    res = RegOpenKeyA(HKEY_CLASSES_ROOT, machup, &hkey);
+    res = RegOpenKeyExA(HKEY_CLASSES_ROOT, machup, 0, access, &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     CHECK_DEL_REG_STR(hkey, "84A88FD7F6998CE40A22FB59F6B9C2BB", NULL);
@@ -2989,7 +2989,7 @@ static void test_publish_features(void)
     res = RegOpenKeyA(HKEY_CURRENT_USER, cupath, &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
-    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, classfeat, &hkey);
+    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, classfeat, 0, access, &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     CHECK_REG_STR(hkey, "feature", "");
