@@ -226,6 +226,42 @@ end:
     return S_OK;
 }
 
+static HRESULT DSoundRender_HandleEndOfStream(DSoundRenderImpl *This)
+{
+    HRESULT hr;
+    IMediaEventSink *pEventSink;
+
+    while (1)
+    {
+        DWORD pos1, pos2;
+        DSoundRender_UpdatePositions(This, &pos1, &pos2);
+        if (pos1 == pos2)
+            break;
+
+        This->in_loop = 1;
+        LeaveCriticalSection(&This->filter.csFilter);
+        WaitForSingleObject(This->blocked, 10);
+        EnterCriticalSection(&This->filter.csFilter);
+        This->in_loop = 0;
+        if (This->pInputPin->flushing ||
+            This->filter.state != State_Running) {
+            SetEvent(This->state_change);
+            return S_FALSE;
+        }
+    }
+
+    if (!This->filter.filterInfo.pGraph)
+        return S_OK;
+
+    hr = IFilterGraph_QueryInterface(This->filter.filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
+    if (SUCCEEDED(hr))
+    {
+        hr = IMediaEventSink_Notify(pEventSink, EC_COMPLETE, S_OK, (LONG_PTR)This);
+        IMediaEventSink_Release(pEventSink);
+    }
+    return hr;
+}
+
 static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, REFERENCE_TIME tStart, REFERENCE_TIME tStop, const BYTE *data, DWORD size)
 {
     HRESULT hr;
@@ -875,7 +911,6 @@ static HRESULT WINAPI DSoundRender_InputPin_EndOfStream(IPin * iface)
 {
     BaseInputPin* This = (BaseInputPin*)iface;
     DSoundRenderImpl *me = (DSoundRenderImpl*)This->pin.pinInfo.pFilter;
-    IMediaEventSink* pEventSink;
     HRESULT hr;
 
     EnterCriticalSection(This->pin.pCritSec);
@@ -889,15 +924,7 @@ static HRESULT WINAPI DSoundRender_InputPin_EndOfStream(IPin * iface)
         return hr;
     }
 
-    if (me->filter.filterInfo.pGraph)
-    {
-        hr = IFilterGraph_QueryInterface(me->filter.filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
-        if (SUCCEEDED(hr))
-        {
-            hr = IMediaEventSink_Notify(pEventSink, EC_COMPLETE, S_OK, (LONG_PTR)me);
-            IMediaEventSink_Release(pEventSink);
-        }
-    }
+    hr = DSoundRender_HandleEndOfStream(me);
     MediaSeekingPassThru_EOS(me->seekthru_unk);
     SetEvent(me->state_change);
     LeaveCriticalSection(This->pin.pCritSec);
