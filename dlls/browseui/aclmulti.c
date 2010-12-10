@@ -49,23 +49,28 @@ struct ACLMultiSublist {
 };
 
 typedef struct tagACLMulti {
-    const IEnumStringVtbl *vtbl;
-    const IACListVtbl *aclVtbl;
-    const IObjMgrVtbl *objmgrVtbl;
+    IEnumString IEnumString_iface;
+    IACList IACList_iface;
+    IObjMgr IObjMgr_iface;
     LONG refCount;
     INT nObjs;
     INT currObj;
     struct ACLMultiSublist *objs;
 } ACLMulti;
 
+static inline ACLMulti *impl_from_IEnumString(IEnumString *iface)
+{
+    return CONTAINING_RECORD(iface, ACLMulti, IEnumString_iface);
+}
+
 static inline ACLMulti *impl_from_IACList(IACList *iface)
 {
-    return (ACLMulti *)((char *)iface - FIELD_OFFSET(ACLMulti, aclVtbl));
+    return CONTAINING_RECORD(iface, ACLMulti, IACList_iface);
 }
 
 static inline ACLMulti *impl_from_IObjMgr(IObjMgr *iface)
 {
-    return (ACLMulti *)((char *)iface - FIELD_OFFSET(ACLMulti, objmgrVtbl));
+    return CONTAINING_RECORD(iface, ACLMulti, IObjMgr_iface);
 }
 
 static void release_obj(struct ACLMultiSublist *obj)
@@ -90,7 +95,7 @@ static void ACLMulti_Destructor(ACLMulti *This)
 
 static HRESULT WINAPI ACLMulti_QueryInterface(IEnumString *iface, REFIID iid, LPVOID *ppvOut)
 {
-    ACLMulti *This = (ACLMulti *)iface;
+    ACLMulti *This = impl_from_IEnumString(iface);
     *ppvOut = NULL;
 
     if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_IEnumString))
@@ -99,11 +104,11 @@ static HRESULT WINAPI ACLMulti_QueryInterface(IEnumString *iface, REFIID iid, LP
     }
     else if (IsEqualIID(iid, &IID_IACList))
     {
-        *ppvOut = &This->aclVtbl;
+        *ppvOut = &This->IACList_iface;
     }
     else if (IsEqualIID(iid, &IID_IObjMgr))
     {
-        *ppvOut = &This->objmgrVtbl;
+        *ppvOut = &This->IObjMgr_iface;
     }
 
     if (*ppvOut)
@@ -118,13 +123,13 @@ static HRESULT WINAPI ACLMulti_QueryInterface(IEnumString *iface, REFIID iid, LP
 
 static ULONG WINAPI ACLMulti_AddRef(IEnumString *iface)
 {
-    ACLMulti *This = (ACLMulti *)iface;
+    ACLMulti *This = impl_from_IEnumString(iface);
     return InterlockedIncrement(&This->refCount);
 }
 
 static ULONG WINAPI ACLMulti_Release(IEnumString *iface)
 {
-    ACLMulti *This = (ACLMulti *)iface;
+    ACLMulti *This = impl_from_IEnumString(iface);
     ULONG ret;
 
     ret = InterlockedDecrement(&This->refCount);
@@ -173,7 +178,7 @@ static HRESULT WINAPI ACLMulti_Remove(IObjMgr *iface, IUnknown *obj)
 
 static HRESULT WINAPI ACLMulti_Next(IEnumString *iface, ULONG celt, LPOLESTR *rgelt, ULONG *pceltFetched)
 {
-    ACLMulti *This = (ACLMulti *)iface;
+    ACLMulti *This = impl_from_IEnumString(iface);
 
     TRACE("(%p, %d, %p, %p)\n", iface, celt, rgelt, pceltFetched);
     while (This->currObj < This->nObjs)
@@ -196,7 +201,7 @@ static HRESULT WINAPI ACLMulti_Next(IEnumString *iface, ULONG celt, LPOLESTR *rg
 
 static HRESULT WINAPI ACLMulti_Reset(IEnumString *iface)
 {
-    ACLMulti *This = (ACLMulti *)iface;
+    ACLMulti *This = impl_from_IEnumString(iface);
     int i;
 
     This->currObj = 0;
@@ -252,19 +257,19 @@ static const IEnumStringVtbl ACLMultiVtbl =
 static HRESULT WINAPI ACLMulti_IObjMgr_QueryInterface(IObjMgr *iface, REFIID iid, LPVOID *ppvOut)
 {
     ACLMulti *This = impl_from_IObjMgr(iface);
-    return ACLMulti_QueryInterface((IEnumString *)This, iid, ppvOut);
+    return ACLMulti_QueryInterface(&This->IEnumString_iface, iid, ppvOut);
 }
 
 static ULONG WINAPI ACLMulti_IObjMgr_AddRef(IObjMgr *iface)
 {
     ACLMulti *This = impl_from_IObjMgr(iface);
-    return ACLMulti_AddRef((IEnumString *)This);
+    return ACLMulti_AddRef(&This->IEnumString_iface);
 }
 
 static ULONG WINAPI ACLMulti_IObjMgr_Release(IObjMgr *iface)
 {
     ACLMulti *This = impl_from_IObjMgr(iface);
-    return ACLMulti_Release((IEnumString *)This);
+    return ACLMulti_Release(&This->IEnumString_iface);
 }
 
 static const IObjMgrVtbl ACLMulti_ObjMgrVtbl =
@@ -280,19 +285,19 @@ static const IObjMgrVtbl ACLMulti_ObjMgrVtbl =
 static HRESULT WINAPI ACLMulti_IACList_QueryInterface(IACList *iface, REFIID iid, LPVOID *ppvOut)
 {
     ACLMulti *This = impl_from_IACList(iface);
-    return ACLMulti_QueryInterface((IEnumString *)This, iid, ppvOut);
+    return ACLMulti_QueryInterface(&This->IEnumString_iface, iid, ppvOut);
 }
 
 static ULONG WINAPI ACLMulti_IACList_AddRef(IACList *iface)
 {
     ACLMulti *This = impl_from_IACList(iface);
-    return ACLMulti_AddRef((IEnumString *)This);
+    return ACLMulti_AddRef(&This->IEnumString_iface);
 }
 
 static ULONG WINAPI ACLMulti_IACList_Release(IACList *iface)
 {
     ACLMulti *This = impl_from_IACList(iface);
-    return ACLMulti_Release((IEnumString *)This);
+    return ACLMulti_Release(&This->IEnumString_iface);
 }
 
 static const IACListVtbl ACLMulti_ACListVtbl =
@@ -314,9 +319,9 @@ HRESULT ACLMulti_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     if (This == NULL)
         return E_OUTOFMEMORY;
 
-    This->vtbl = &ACLMultiVtbl;
-    This->aclVtbl = &ACLMulti_ACListVtbl;
-    This->objmgrVtbl = &ACLMulti_ObjMgrVtbl;
+    This->IEnumString_iface.lpVtbl = &ACLMultiVtbl;
+    This->IACList_iface.lpVtbl = &ACLMulti_ACListVtbl;
+    This->IObjMgr_iface.lpVtbl = &ACLMulti_ObjMgrVtbl;
     This->refCount = 1;
 
     TRACE("returning %p\n", This);
