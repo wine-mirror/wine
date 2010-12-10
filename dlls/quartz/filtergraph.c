@@ -2471,17 +2471,18 @@ static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface,
     else if ((dwStopFlags & 0x7) != AM_SEEKING_NoPositioning)
         FIXME("Stop position not handled yet!\n");
 
+    if (state == State_Running && !(dwCurrentFlags & AM_SEEKING_NoFlush))
+        IMediaControl_Pause((IMediaControl*)&This->IMediaControl_vtbl);
     args.current = pCurrent;
     args.stop = pStop;
     args.curflags = dwCurrentFlags;
     args.stopflags = dwStopFlags;
     hr = all_renderers_seek(This, found_setposition, (DWORD_PTR)&args);
 
-    if ((dwCurrentFlags & 0x7) != AM_SEEKING_NoPositioning) {
-        if (This->state == State_Running)
-            FIXME("Seeking while graph is running is not properly supported!\n");
+    if ((dwCurrentFlags & 0x7) != AM_SEEKING_NoPositioning)
         This->pause_time = This->start_time = -1;
-    }
+    if (state == State_Running && !(dwCurrentFlags & AM_SEEKING_NoFlush))
+        IMediaControl_Run((IMediaControl*)&This->IMediaControl_vtbl);
     LeaveCriticalSection(&This->cs);
 
     return hr;
