@@ -41,9 +41,14 @@ WINE_DEFAULT_DEBUG_CHANNEL( mscoree );
 
 typedef struct MetaDataDispenser
 {
-    const struct IMetaDataDispenserExVtbl *lpVtbl;
+    IMetaDataDispenserEx IMetaDataDispenserEx_iface;
     LONG ref;
 } MetaDataDispenser;
+
+static inline MetaDataDispenser *impl_from_IMetaDataDispenserEx(IMetaDataDispenserEx *iface)
+{
+    return CONTAINING_RECORD(iface, MetaDataDispenser, IMetaDataDispenserEx_iface);
+}
 
 static HRESULT WINAPI MetaDataDispenser_QueryInterface(IMetaDataDispenserEx* iface,
     REFIID riid, void **ppvObject)
@@ -69,7 +74,7 @@ static HRESULT WINAPI MetaDataDispenser_QueryInterface(IMetaDataDispenserEx* ifa
 
 static ULONG WINAPI MetaDataDispenser_AddRef(IMetaDataDispenserEx* iface)
 {
-    MetaDataDispenser *This = (MetaDataDispenser*)iface;
+    MetaDataDispenser *This = impl_from_IMetaDataDispenserEx(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("%p ref=%u\n", This, ref);
@@ -81,7 +86,7 @@ static ULONG WINAPI MetaDataDispenser_AddRef(IMetaDataDispenserEx* iface)
 
 static ULONG WINAPI MetaDataDispenser_Release(IMetaDataDispenserEx* iface)
 {
-    MetaDataDispenser *This = (MetaDataDispenser*)iface;
+    MetaDataDispenser *This = impl_from_IMetaDataDispenserEx(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("%p ref=%u\n", This, ref);
@@ -193,7 +198,7 @@ HRESULT MetaDataDispenser_CreateInstance(IUnknown **ppUnk)
     if (!This)
         return E_OUTOFMEMORY;
 
-    This->lpVtbl = &MetaDataDispenserVtbl;
+    This->IMetaDataDispenserEx_iface.lpVtbl = &MetaDataDispenserVtbl;
     This->ref = 1;
 
     *ppUnk = (IUnknown*)This;
