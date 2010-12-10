@@ -291,6 +291,11 @@ static HRESULT WINAPI QuickActivate_QuickActivate(IQuickActivate *iface, QACONTA
     IOleClientSite_AddRef(container->pClientSite);
     client_site = container->pClientSite;
 
+    control->dwMiscStatus = OLEMISC_SETCLIENTSITEFIRST|OLEMISC_ACTIVATEWHENVISIBLE|OLEMISC_INSIDEOUT
+        |OLEMISC_CANTLINKINSIDE|OLEMISC_RECOMPOSEONRESIZE;
+    control->dwViewStatus = 0x18;
+    control->dwPropNotifyCookie = 1;
+
     return S_OK;
 }
 
@@ -534,6 +539,118 @@ static const IDispatchVtbl DispatchVtbl = {
 
 static IDispatch Dispatch = { &DispatchVtbl };
 
+static HRESULT WINAPI ViewObjectEx_QueryInterface(IViewObjectEx *iface, REFIID riid, void **ppv)
+{
+    return ax_qi(riid, ppv);
+}
+
+static ULONG WINAPI ViewObjectEx_AddRef(IViewObjectEx *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ViewObjectEx_Release(IViewObjectEx *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ViewObjectEx_Draw(IViewObjectEx *iface, DWORD dwDrawAspect, LONG lindex, void *pvAspect, DVTARGETDEVICE *ptd,
+        HDC hdcTargetDev, HDC hdcDraw, LPCRECTL lprcBounds, LPCRECTL lprcWBoungs, BOOL (WINAPI*pfnContinue)(ULONG_PTR), ULONG_PTR dwContinue)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ViewObjectEx_GetColorSet(IViewObjectEx *iface, DWORD dwDrawAspect, LONG lindex, void *pvAspect, DVTARGETDEVICE *ptd,
+        HDC hicTargetDev, LOGPALETTE **ppColorSet)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ViewObjectEx_Freeze(IViewObjectEx *iface, DWORD dwDrawAspect, LONG lindex, void *pvAspect, DWORD *pdwFreeze)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ViewObjectEx_Unfreeze(IViewObjectEx *iface, DWORD dwFreeze)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ViewObjectEx_SetAdvise(IViewObjectEx *iface, DWORD aspects, DWORD advf, IAdviseSink *pAdvSink)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ViewObjectEx_GetAdvise(IViewObjectEx *iface, DWORD *pAspects, DWORD *pAdvf, IAdviseSink **ppAdvSink)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ViewObjectEx_GetExtent(IViewObjectEx *iface, DWORD dwDrawAspect, LONG lindex, DVTARGETDEVICE *ptd, LPSIZEL lpsizel)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ViewObjectEx_GetRect(IViewObjectEx *iface, DWORD dwAspect, LPRECTL pRect)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ViewObjectEx_GetViewStatus(IViewObjectEx *iface, DWORD *pdwStatus)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ViewObjectEx_QueryHitPoint(IViewObjectEx *iface, DWORD dwAspect, LPCRECT pRectBounds, POINT ptlLoc,
+        LONG lCloseHint, DWORD *pHitResult)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ViewObjectEx_QueryHitRect(IViewObjectEx *iface, DWORD dwAspect, LPCRECT pRectBounds, LPCRECT pRectLoc,
+        LONG lCloseHint, DWORD *pHitResult)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ViewObjectEx_GetNaturalExtent(IViewObjectEx *iface, DWORD dwAspect, LONG lindex, DVTARGETDEVICE *ptd,
+        HDC hicTargetDev, DVEXTENTINFO *pExtentIngo, LPSIZEL pSizel)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IViewObjectExVtbl ViewObjectExVtbl = {
+    ViewObjectEx_QueryInterface,
+    ViewObjectEx_AddRef,
+    ViewObjectEx_Release,
+    ViewObjectEx_Draw,
+    ViewObjectEx_GetColorSet,
+    ViewObjectEx_Freeze,
+    ViewObjectEx_Unfreeze,
+    ViewObjectEx_SetAdvise,
+    ViewObjectEx_GetAdvise,
+    ViewObjectEx_GetExtent,
+    ViewObjectEx_GetRect,
+    ViewObjectEx_GetViewStatus,
+    ViewObjectEx_QueryHitPoint,
+    ViewObjectEx_QueryHitRect,
+    ViewObjectEx_GetNaturalExtent
+};
+
+static IViewObjectEx ViewObjectEx = { &ViewObjectExVtbl };
+
 static HRESULT ax_qi(REFIID riid, void **ppv)
 {
     if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IOleControl)) {
@@ -553,6 +670,11 @@ static HRESULT ax_qi(REFIID riid, void **ppv)
 
     if(IsEqualGUID(riid, &IID_IDispatch)) {
         *ppv = &Dispatch;
+        return S_OK;
+    }
+
+    if(IsEqualGUID(riid, &IID_IViewObject) || IsEqualGUID(riid, &IID_IViewObject2) || IsEqualGUID(riid, &IID_IViewObjectEx)) {
+        *ppv = &ViewObjectEx;
         return S_OK;
     }
 
