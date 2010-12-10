@@ -31,7 +31,9 @@ typedef struct {
     LONG ref;
 
     IUnknown *plugin_unk;
+    CLSID clsid;
     HWND hwnd;
+    RECT rect;
 
     HTMLDocumentNode *doc;
     struct list entry;
@@ -47,6 +49,6 @@ struct HTMLPluginContainer {
 
 extern const IID IID_HTMLPluginContainer;
 
-HRESULT create_plugin_host(HTMLDocumentNode*,nsIDOMElement*,IUnknown*,PluginHost**);
+HRESULT create_plugin_host(HTMLDocumentNode*,nsIDOMElement*,IUnknown*,const CLSID*,PluginHost**);
 void update_plugin_window(PluginHost*,HWND,const RECT*);
 void detach_plugin_hosts(HTMLDocumentNode*);

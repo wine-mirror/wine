@@ -39,6 +39,81 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 const IID IID_HTMLPluginContainer =
     {0xbd7a6050,0xb373,0x4f6f,{0xa4,0x93,0xdd,0x40,0xc5,0x23,0xa8,0x6a}};
 
+static BOOL check_load_safety(PluginHost *host)
+{
+    DWORD policy_size, policy;
+    struct CONFIRMSAFETY cs;
+    BYTE *ppolicy;
+    HRESULT hres;
+
+    cs.clsid = host->clsid;
+    cs.pUnk = host->plugin_unk;
+    cs.dwFlags = CONFIRMSAFETYACTION_LOADOBJECT;
+
+    hres = IInternetHostSecurityManager_QueryCustomPolicy(HOSTSECMGR(host->doc),
+            &GUID_CUSTOM_CONFIRMOBJECTSAFETY, &ppolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
+    if(FAILED(hres))
+        return FALSE;
+
+    policy = *(DWORD*)ppolicy;
+    CoTaskMemFree(ppolicy);
+    return policy == URLPOLICY_ALLOW;
+}
+
+static HRESULT create_prop_bag(IPropertyBag **ret) {
+    *ret = NULL;
+    return S_OK;
+}
+
+static void load_prop_bag(PluginHost *host, IPersistPropertyBag *persist_prop_bag)
+{
+    IPropertyBag *prop_bag;
+    HRESULT hres;
+
+    hres = create_prop_bag(&prop_bag);
+    if(FAILED(hres))
+        return;
+
+    if(prop_bag && !check_load_safety(host)) {
+        IPropertyBag_Release(prop_bag);
+        prop_bag = NULL;
+    }
+
+    if(prop_bag) {
+        hres = IPersistPropertyBag_Load(persist_prop_bag, prop_bag, NULL);
+        IPropertyBag_Release(prop_bag);
+        if(FAILED(hres))
+            WARN("Load failed: %08x\n", hres);
+    }else {
+        hres = IPersistPropertyBag_InitNew(persist_prop_bag);
+        if(FAILED(hres))
+            WARN("InitNew failed: %08x\n", hres);
+    }
+}
+
+static void load_plugin(PluginHost *host)
+{
+    IPersistPropertyBag2 *persist_prop_bag2;
+    IPersistPropertyBag *persist_prop_bag;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(host->plugin_unk, &IID_IPersistPropertyBag2, (void**)&persist_prop_bag2);
+    if(SUCCEEDED(hres)) {
+        FIXME("Use IPersistPropertyBag2 iface\n");
+        IPersistPropertyBag2_Release(persist_prop_bag2);
+        return;
+    }
+
+    hres = IUnknown_QueryInterface(host->plugin_unk, &IID_IPersistPropertyBag, (void**)&persist_prop_bag);
+    if(SUCCEEDED(hres)) {
+        load_prop_bag(host, persist_prop_bag);
+        IPersistPropertyBag_Release(persist_prop_bag);
+        return;
+    }
+
+    FIXME("No IPersistPeropertyBag iface \n");
+}
+
 static void activate_plugin(PluginHost *host)
 {
     IClientSecurity *client_security;
@@ -74,7 +149,10 @@ static void activate_plugin(PluginHost *host)
             FIXME("QuickActivate failed: %08x\n", hres);
     }else {
         FIXME("No IQuickActivate\n");
+        return;
     }
+
+    load_plugin(host);
 }
 
 void update_plugin_window(PluginHost *host, HWND hwnd, const RECT *rect)
@@ -769,7 +847,7 @@ void detach_plugin_hosts(HTMLDocumentNode *doc)
     }
 }
 
-HRESULT create_plugin_host(HTMLDocumentNode *doc, nsIDOMElement *nselem, IUnknown *unk, PluginHost **ret)
+HRESULT create_plugin_host(HTMLDocumentNode *doc, nsIDOMElement *nselem, IUnknown *unk, const CLSID *clsid, PluginHost **ret)
 {
     PluginHost *host;
     HRESULT hres;
@@ -797,6 +875,7 @@ HRESULT create_plugin_host(HTMLDocumentNode *doc, nsIDOMElement *nselem, IUnknow
 
     IUnknown_AddRef(unk);
     host->plugin_unk = unk;
+    host->clsid = *clsid;
 
     host->doc = doc;
     list_add_tail(&doc->plugin_hosts, &host->entry);

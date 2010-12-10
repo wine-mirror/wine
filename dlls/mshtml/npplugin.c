@@ -203,31 +203,30 @@ static BOOL get_elem_clsid(nsIDOMElement *elem, CLSID *clsid)
     return ret;
 }
 
-static IUnknown *create_activex_object(HTMLWindow *window, nsIDOMElement *nselem)
+static IUnknown *create_activex_object(HTMLWindow *window, nsIDOMElement *nselem, CLSID *clsid)
 {
     IClassFactoryEx *cfex;
     IClassFactory *cf;
     IUnknown *obj;
     DWORD policy;
-    CLSID guid;
     HRESULT hres;
 
-    if(!get_elem_clsid(nselem, &guid)) {
+    if(!get_elem_clsid(nselem, clsid)) {
         WARN("Could not determine element CLSID\n");
         return NULL;
     }
 
-    TRACE("clsid %s\n", debugstr_guid(&guid));
+    TRACE("clsid %s\n", debugstr_guid(clsid));
 
     policy = 0;
     hres = IInternetHostSecurityManager_ProcessUrlAction(HOSTSECMGR(window->doc), URLACTION_ACTIVEX_RUN,
-            (BYTE*)&policy, sizeof(policy), (BYTE*)&guid, sizeof(GUID), 0, 0);
+            (BYTE*)&policy, sizeof(policy), (BYTE*)clsid, sizeof(GUID), 0, 0);
     if(FAILED(hres) || policy != URLPOLICY_ALLOW) {
         WARN("ProcessUrlAction returned %08x %x\n", hres, policy);
         return NULL;
     }
 
-    hres = CoGetClassObject(&guid, CLSCTX_INPROC_SERVER|CLSCTX_LOCAL_SERVER, NULL, &IID_IClassFactory, (void**)&cf);
+    hres = CoGetClassObject(clsid, CLSCTX_INPROC_SERVER|CLSCTX_LOCAL_SERVER, NULL, &IID_IClassFactory, (void**)&cf);
     if(FAILED(hres))
         return NULL;
 
@@ -250,6 +249,7 @@ static NPError CDECL NPP_New(NPMIMEType pluginType, NPP instance, UINT16 mode, I
     nsIDOMElement *nselem;
     HTMLWindow *window;
     IUnknown *obj;
+    CLSID clsid;
     NPError err = NPERR_NO_ERROR;
 
     TRACE("(%s %p %x %d %p %p %p)\n", debugstr_a(pluginType), instance, mode, argc, argn, argv, saved);
@@ -267,12 +267,12 @@ static NPError CDECL NPP_New(NPMIMEType pluginType, NPP instance, UINT16 mode, I
         return NPERR_GENERIC_ERROR;
     }
 
-    obj = create_activex_object(window, nselem);
+    obj = create_activex_object(window, nselem, &clsid);
     if(obj) {
         PluginHost *host;
         HRESULT hres;
 
-        hres = create_plugin_host(window->doc, nselem, obj, &host);
+        hres = create_plugin_host(window->doc, nselem, obj, &clsid, &host);
         nsIDOMElement_Release(nselem);
         IUnknown_Release(obj);
         if(SUCCEEDED(hres))
