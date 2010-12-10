@@ -299,10 +299,18 @@ static HRESULT WINAPI PersistPropertyBag_InitNew(IPersistPropertyBag *face)
 
 static HRESULT WINAPI PersistPropertyBag_Load(IPersistPropertyBag *face, IPropertyBag *pPropBag, IErrorLog *pErrorLog)
 {
+    static const IID *propbag_ifaces[] = {
+        &IID_IPropertyBag,
+        &IID_IPropertyBag2,
+        NULL
+    };
+
     CHECK_EXPECT(IPersistPropertyBag_Load);
 
     ok(pPropBag != NULL, "pPropBag == NULL\n");
     ok(!pErrorLog, "pErrorLog != NULL\n");
+
+    test_ifaces((IUnknown*)pPropBag, propbag_ifaces);
 
     return S_OK;
 }

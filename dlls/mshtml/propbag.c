@@ -38,6 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 typedef struct {
     IPropertyBag  IPropertyBag_iface;
+    IPropertyBag2 IPropertyBag2_iface;
 
     LONG ref;
 } PropertyBag;
@@ -57,6 +58,9 @@ static HRESULT WINAPI PropertyBag_QueryInterface(IPropertyBag *iface, REFIID rii
     }else if(IsEqualGUID(&IID_IPropertyBag, riid)) {
         TRACE("(%p)->(IID_IPropertyBag %p)\n", This, ppv);
         *ppv = &This->IPropertyBag_iface;
+    }else if(IsEqualGUID(&IID_IPropertyBag2, riid)) {
+        TRACE("(%p)->(IID_IPropertyBag2 %p)\n", This, ppv);
+        *ppv = &This->IPropertyBag2_iface;
     }else {
         WARN("Unsopported interface %s\n", debugstr_guid(riid));
         *ppv = NULL;
@@ -112,6 +116,78 @@ static const IPropertyBagVtbl PropertyBagVtbl = {
     PropertyBag_Write
 };
 
+static inline PropertyBag *impl_from_IPropertyBag2(IPropertyBag2 *iface)
+{
+    return CONTAINING_RECORD(iface, PropertyBag, IPropertyBag2_iface);
+}
+
+static HRESULT WINAPI PropertyBag2_QueryInterface(IPropertyBag2 *iface, REFIID riid, void **ppv)
+{
+    PropertyBag *This = impl_from_IPropertyBag2(iface);
+    return IPropertyBag_QueryInterface(&This->IPropertyBag_iface, riid, ppv);
+}
+
+static ULONG WINAPI PropertyBag2_AddRef(IPropertyBag2 *iface)
+{
+    PropertyBag *This = impl_from_IPropertyBag2(iface);
+    return IPropertyBag_AddRef(&This->IPropertyBag_iface);
+}
+
+static ULONG WINAPI PropertyBag2_Release(IPropertyBag2 *iface)
+{
+    PropertyBag *This = impl_from_IPropertyBag2(iface);
+    return IPropertyBag_Release(&This->IPropertyBag_iface);
+}
+
+static HRESULT WINAPI PropertyBag2_Read(IPropertyBag2 *iface, ULONG cProperties, PROPBAG2 *pPropBag,
+        IErrorLog *pErrLog, VARIANT *pvarValue, HRESULT *phrError)
+{
+    PropertyBag *This = impl_from_IPropertyBag2(iface);
+    FIXME("(%p)->(%d %p %p %p %p)\n", This, cProperties, pPropBag, pErrLog, pvarValue, phrError);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PropertyBag2_Write(IPropertyBag2 *iface, ULONG cProperties, PROPBAG2 *pPropBag, VARIANT *pvarValue)
+{
+    PropertyBag *This = impl_from_IPropertyBag2(iface);
+    FIXME("(%p)->(%d %p %s)\n", This, cProperties, pPropBag, debugstr_variant(pvarValue));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PropertyBag2_CountProperties(IPropertyBag2 *iface, ULONG *pcProperties)
+{
+    PropertyBag *This = impl_from_IPropertyBag2(iface);
+    FIXME("(%p)->(%p)\n", This, pcProperties);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PropertyBag2_GetPropertyInfo(IPropertyBag2 *iface, ULONG iProperty, ULONG cProperties,
+        PROPBAG2 *pPropBag, ULONG *pcProperties)
+{
+    PropertyBag *This = impl_from_IPropertyBag2(iface);
+    FIXME("(%p)->(%u %u %p %p)\n", This, iProperty, cProperties, pPropBag, pcProperties);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PropertyBag2_LoadObject(IPropertyBag2 *iface, LPCOLESTR pstrName, DWORD dwHint,
+        IUnknown *pUnkObject, IErrorLog *pErrLog)
+{
+    PropertyBag *This = impl_from_IPropertyBag2(iface);
+    FIXME("(%p)->(%s %x %p %p)\n", This, debugstr_w(pstrName), dwHint, pUnkObject, pErrLog);
+    return E_NOTIMPL;
+}
+
+static const IPropertyBag2Vtbl PropertyBag2Vtbl = {
+    PropertyBag2_QueryInterface,
+    PropertyBag2_AddRef,
+    PropertyBag2_Release,
+    PropertyBag2_Read,
+    PropertyBag2_Write,
+    PropertyBag2_CountProperties,
+    PropertyBag2_GetPropertyInfo,
+    PropertyBag2_LoadObject
+};
+
 HRESULT create_param_prop_bag(IPropertyBag **ret)
 {
     PropertyBag *prop_bag;
@@ -121,6 +197,7 @@ HRESULT create_param_prop_bag(IPropertyBag **ret)
         return E_OUTOFMEMORY;
 
     prop_bag->IPropertyBag_iface.lpVtbl  = &PropertyBagVtbl;
+    prop_bag->IPropertyBag2_iface.lpVtbl = &PropertyBag2Vtbl;
     prop_bag->ref = 1;
 
     *ret = &prop_bag->IPropertyBag_iface;
