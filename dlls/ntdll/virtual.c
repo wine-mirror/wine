@@ -877,6 +877,9 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
         if (mmap( (char *)view->base + start, size, prot, flags, fd, offset ) != (void *)-1)
             goto done;
 
+        if ((errno == EPERM) && (prot & PROT_EXEC))
+            ERR( "failed to set %08x protection on file map, noexec filesystem?\n", prot );
+
         /* mmap() failed; if this is because the file offset is not    */
         /* page-aligned (EINVAL), or because the underlying filesystem */
         /* does not support mmap() (ENOEXEC,ENODEV), we do it by hand. */
