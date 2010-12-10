@@ -60,17 +60,12 @@ static BOOL check_load_safety(PluginHost *host)
     return policy == URLPOLICY_ALLOW;
 }
 
-static HRESULT create_prop_bag(IPropertyBag **ret) {
-    *ret = NULL;
-    return S_OK;
-}
-
 static void load_prop_bag(PluginHost *host, IPersistPropertyBag *persist_prop_bag)
 {
     IPropertyBag *prop_bag;
     HRESULT hres;
 
-    hres = create_prop_bag(&prop_bag);
+    hres = create_param_prop_bag(&prop_bag);
     if(FAILED(hres))
         return;
 
