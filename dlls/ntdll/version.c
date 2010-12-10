@@ -135,8 +135,8 @@ static const RTL_OSVERSIONINFOEXW VersionData[NB_WINDOWS_VERSIONS] =
     /* WIN2K3 */
     {
         sizeof(RTL_OSVERSIONINFOEXW), 5, 2, 0xECE, VER_PLATFORM_WIN32_NT,
-        {'S','e','r','v','i','c','e',' ','P','a','c','k',' ','1',0},
-        1, 0, VER_SUITE_SINGLEUSERTS, VER_NT_SERVER, 0
+        {'S','e','r','v','i','c','e',' ','P','a','c','k',' ','2',0},
+        2, 0, VER_SUITE_SINGLEUSERTS, VER_NT_SERVER, 0
     },
     /* WINVISTA */
     {
