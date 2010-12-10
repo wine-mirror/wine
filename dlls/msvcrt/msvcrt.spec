@@ -378,7 +378,7 @@
 @ cdecl _dup (long) MSVCRT__dup
 @ cdecl _dup2 (long long) MSVCRT__dup2
 @ cdecl _ecvt(double long ptr ptr)
-# stub _ecvt_s
+@ cdecl _ecvt_s(str long double long ptr ptr)
 @ cdecl _endthread ()
 @ cdecl _endthreadex(long)
 @ extern _environ MSVCRT__environ

@@ -1104,6 +1104,72 @@ char * CDECL _ecvt( double number, int ndigits, int *decpt, int *sign )
     return data->efcvt_buffer;
 }
 
+/*********************************************************************
+ *		_ecvt_s (MSVCRT.@)
+ */
+int CDECL _ecvt_s( char *buffer, MSVCRT_size_t length, double number, int ndigits, int *decpt, int *sign )
+{
+    int prec, len;
+    char *result;
+    const char infret[] = "1#INF";
+
+    if(!MSVCRT_CHECK_PMT(buffer != NULL) || !MSVCRT_CHECK_PMT(decpt != NULL) || !MSVCRT_CHECK_PMT(sign != NULL))
+    {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+    if(!MSVCRT_CHECK_PMT(length > 2) || !MSVCRT_CHECK_PMT(ndigits < (int)length - 1))
+    {
+        *MSVCRT__errno() = MSVCRT_ERANGE;
+        return MSVCRT_ERANGE;
+    }
+
+    /* special case - inf */
+    if(number == HUGE_VAL || number == -HUGE_VAL)
+    {
+        memset(buffer, '0', ndigits);
+        memcpy(buffer, infret, min(ndigits, sizeof(infret) - 1 ) );
+        buffer[ndigits] = '\0';
+        (*decpt) = 1;
+        if(number == -HUGE_VAL)
+            (*sign) = 1;
+        else
+            (*sign) = 0;
+        return 0;
+    }
+    result = (char*)MSVCRT_malloc(max(ndigits + 7, 7));
+
+    if( number < 0) {
+        *sign = TRUE;
+        number = -number;
+    } else
+        *sign = FALSE;
+    /* handle cases with zero ndigits or less */
+    prec = ndigits;
+    if( prec < 1) prec = 2;
+    len = snprintf(result, 80, "%.*le", prec - 1, number);
+    /* take the decimal "point away */
+    if( prec != 1)
+        memmove( result + 1, result + 2, len - 1 );
+    /* take the exponential "e" out */
+    result[ prec] = '\0';
+    /* read the exponent */
+    sscanf( result + prec + 1, "%d", decpt);
+    (*decpt)++;
+    /* adjust for some border cases */
+    if( result[0] == '0')/* value is zero */
+        *decpt = 0;
+    /* handle cases with zero ndigits or less */
+    if( ndigits < 1){
+        if( result[ 0] >= '5')
+            (*decpt)++;
+        result[ 0] = '\0';
+    }
+    memcpy( buffer, result, max(ndigits + 1, 1) );
+    MSVCRT_free( result );
+    return 0;
+}
+
 /***********************************************************************
  *		_fcvt  (MSVCRT.@)
  */

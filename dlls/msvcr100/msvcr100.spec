@@ -583,7 +583,7 @@
 @ cdecl _dup2(long long) msvcrt._dup2
 @ cdecl _dupenv_s(ptr ptr str) msvcrt._dupenv_s
 @ cdecl _ecvt(double long ptr ptr) msvcrt._ecvt
-@ stub _ecvt_s
+@ cdecl _ecvt_s(str long double long ptr ptr) msvcrt._ecvt_s
 @ cdecl _encoded_null() msvcr90._encoded_null
 @ cdecl _endthread() msvcrt._endthread
 @ cdecl _endthreadex(long) msvcrt._endthreadex
