@@ -99,7 +99,8 @@ static BOOL test_filtered_out( LPCSTR module, LPCSTR testname )
         {
             if (!filters[i][len]) return exclude_tests;
             if (filters[i][len] != ':') continue;
-            if (!testname || !strcmp( testname, &filters[i][len+1] )) return exclude_tests;
+            if (testname && !strcmp( testname, &filters[i][len+1] )) return exclude_tests;
+            if (!testname && !exclude_tests) return FALSE;
         }
     }
     return !exclude_tests;
