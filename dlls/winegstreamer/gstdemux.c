@@ -1190,7 +1190,7 @@ static HRESULT WINAPI GST_Run(IBaseFilter *iface, REFERENCE_TIME tStart) {
         return S_OK;
     if (now == GST_STATE_PAUSED) {
         GstStateChangeReturn ret;
-        ret = gst_element_set_state(This->gstfilter, GST_STATE_PAUSED);
+        ret = gst_element_set_state(This->gstfilter, GST_STATE_PLAYING);
         if (ret == GST_STATE_CHANGE_ASYNC)
             return S_FALSE;
         return S_OK;
