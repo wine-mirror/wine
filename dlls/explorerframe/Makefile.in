@@ -6,8 +6,9 @@ C_SRCS = \
 	explorerframe_main.c \
 	nstc.c
 
+IDL_R_SRCS = explorerframe.idl
+
 RC_SRCS = \
-	eframe.rc \
 	version.rc
 
 @MAKE_DLL_RULES@

@@ -30,8 +30,8 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "shlwapi.h"
-#include "advpub.h"
 #include "shobjidl.h"
+#include "rpcproxy.h"
 
 #include "wine/debug.h"
 
@@ -209,72 +209,11 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 }
 
 /*************************************************************************
- *          Register/Unregister DLL, based on shdocvw/factory.c
- */
-static HRESULT reg_install(LPCSTR section, const STRTABLEA *strtable)
-{
-    HRESULT (WINAPI *pRegInstall)(HMODULE hm, LPCSTR pszSection, const STRTABLEA* pstTable);
-    HMODULE hadvpack;
-    HRESULT hres;
-
-    static const WCHAR advpackW[] = {'a','d','v','p','a','c','k','.','d','l','l',0};
-
-    hadvpack = LoadLibraryW(advpackW);
-    pRegInstall = (void *)GetProcAddress(hadvpack, "RegInstall");
-
-    hres = pRegInstall(explorerframe_hinstance, section, strtable);
-
-    FreeLibrary(hadvpack);
-    return hres;
-}
-
-#define INF_SET_CLSID(clsid)                  \
-    do                                        \
-    {                                         \
-        static CHAR name[] = "CLSID_" #clsid; \
-                                              \
-        pse[i].pszName = name;                \
-        clsids[i++] = &CLSID_ ## clsid;       \
-    } while (0)
-
-static HRESULT register_server(BOOL doregister)
-{
-    STRTABLEA strtable;
-    STRENTRYA pse[1];
-    static CLSID const *clsids[1];
-    unsigned int i = 0;
-    HRESULT hres;
-
-    INF_SET_CLSID(NamespaceTreeControl);
-
-    for(i = 0; i < sizeof(pse)/sizeof(pse[0]); i++)
-    {
-        pse[i].pszValue = HeapAlloc(GetProcessHeap(), 0, 39);
-        sprintf(pse[i].pszValue, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-                clsids[i]->Data1, clsids[i]->Data2, clsids[i]->Data3, clsids[i]->Data4[0],
-                clsids[i]->Data4[1], clsids[i]->Data4[2], clsids[i]->Data4[3], clsids[i]->Data4[4],
-                clsids[i]->Data4[5], clsids[i]->Data4[6], clsids[i]->Data4[7]);
-    }
-
-    strtable.cEntries = sizeof(pse)/sizeof(pse[0]);
-    strtable.pse = pse;
-
-    hres = reg_install(doregister ? "RegisterDll" : "UnregisterDll", &strtable);
-
-    for(i=0; i < sizeof(pse)/sizeof(pse[0]); i++)
-        HeapFree(GetProcessHeap(), 0, pse[i].pszValue);
-
-    return hres;
-}
-
-#undef INF_SET_CLSID
-
-/*************************************************************************
  *          DllRegisterServer (ExplorerFrame.@)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    return register_server(TRUE);
+    return __wine_register_resources( explorerframe_hinstance, NULL );
 }
 
 /*************************************************************************
@@ -282,5 +221,5 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    return register_server(FALSE);
+    return __wine_unregister_resources( explorerframe_hinstance, NULL );
 }
