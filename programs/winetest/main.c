@@ -708,18 +708,19 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
     ULONG_PTR cookie;
 
     if (aborting) return TRUE;
+
+    /* Check if the main dll is present on this system */
+    CharLowerA(lpszName);
+    strcpy(dllname, lpszName);
+    *strstr(dllname, testexe) = 0;
+
     if (test_filtered_out( lpszName, NULL ))
     {
         nr_of_skips++;
+        xprintf ("    %s=skipped\n", dllname);
         return TRUE;
     }
-
-    CharLowerA(lpszName);
     extract_test (&wine_tests[nr_of_files], tempdir, lpszName);
-
-    /* Check if the main dll is present on this system */
-    strcpy(dllname, lpszName);
-    *strstr(dllname, testexe) = 0;
 
     if (pCreateActCtxA != NULL && pActivateActCtx != NULL &&
         pDeactivateActCtx != NULL && pReleaseActCtx != NULL)
