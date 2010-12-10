@@ -355,6 +355,7 @@ static HRESULT WINAPI PersistPropertyBag_Load(IPersistPropertyBag *face, IProper
     static const WCHAR param_nameW[] = {'p','a','r','a','m','_','n','a','m','e',0};
     static const WCHAR num_paramW[] = {'n','u','m','_','p','a','r','a','m',0};
     static const WCHAR no_paramW[] = {'n','o','_','p','a','r','a','m',0};
+    static WCHAR test_swfW[] = {'t','e','s','t','.','s','w','f',0};
 
     static const IID *propbag_ifaces[] = {
         &IID_IPropertyBag,
@@ -418,13 +419,20 @@ static HRESULT WINAPI PersistPropertyBag_Load(IPersistPropertyBag *face, IProper
     IBindHost_Release(bind_host2);
 
     mon = NULL;
+    hres = IBindHost_CreateMoniker(bind_host, test_swfW, NULL, &mon, 0);
+    ok(hres == S_OK, "CreateMoniker failed: %08x\n", hres);
+    ok(mon != NULL, "mon == NULL\n");
+    test_mon_displayname(mon, "about:test.swf");
+    IMoniker_Release(mon);
+
+    IBindHost_Release(bind_host);
+
+    mon = NULL;
     hres = IOleClientSite_GetMoniker(client_site, OLEGETMONIKER_ONLYIFTHERE, OLEWHICHMK_CONTAINER, &mon);
     ok(hres == S_OK, "GetMoniker failed: %08x\n", hres);
     ok(mon != NULL, "mon == NULL\n");
     test_mon_displayname(mon, "about:blank");
     IMoniker_Release(mon);
-
-    IBindHost_Release(bind_host);
 
     set_plugin_readystate(READYSTATE_COMPLETE);
 

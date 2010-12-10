@@ -800,8 +800,15 @@ static ULONG WINAPI PHBindHost_Release(IBindHost *iface)
 static HRESULT WINAPI PHBindHost_CreateMoniker(IBindHost *iface, LPOLESTR szName, IBindCtx *pBC, IMoniker **ppmk, DWORD dwReserved)
 {
     PluginHost *This = impl_from_IBindHost(iface);
-    FIXME("(%p)->(%s %p %p %x)\n", This, debugstr_w(szName), pBC, ppmk, dwReserved);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s %p %p %x)\n", This, debugstr_w(szName), pBC, ppmk, dwReserved);
+
+    if(!This->doc || !This->doc->basedoc.window || !This->doc->basedoc.window->mon) {
+        FIXME("no moniker\n");
+        return E_UNEXPECTED;
+    }
+
+    return CreateURLMoniker(This->doc->basedoc.window->mon, szName, ppmk);
 }
 
 static HRESULT WINAPI PHBindHost_MonikerBindToStorage(IBindHost *iface, IMoniker *pMk, IBindCtx *pBC,
