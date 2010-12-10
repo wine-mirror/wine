@@ -60,6 +60,34 @@ static BOOL check_load_safety(PluginHost *host)
     return policy == URLPOLICY_ALLOW;
 }
 
+static void update_readystate(PluginHost *host)
+{
+    DISPPARAMS params = {NULL,NULL,0,0};
+    IDispatchEx *dispex;
+    IDispatch *disp;
+    ULONG err = 0;
+    VARIANT v;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(host->plugin_unk, &IID_IDispatchEx, (void**)&dispex);
+    if(SUCCEEDED(hres)) {
+        FIXME("Use IDispatchEx\n");
+        IDispatchEx_Release(dispex);
+    }
+
+    hres = IUnknown_QueryInterface(host->plugin_unk, &IID_IDispatch, (void**)&disp);
+    if(FAILED(hres))
+        return;
+
+    hres = IDispatch_Invoke(disp, DISPID_READYSTATE, &IID_NULL, 0, DISPATCH_PROPERTYGET, &params, &v, NULL, &err);
+    IDispatch_Release(disp);
+    if(SUCCEEDED(hres)) {
+        /* FIXME: make plugin readystate affect document readystate */
+        TRACE("readystate = %s\n", debugstr_variant(&v));
+        VariantClear(&v);
+    }
+}
+
 static void load_prop_bag(PluginHost *host, IPersistPropertyBag *persist_prop_bag)
 {
     IPropertyBag *prop_bag;
@@ -399,8 +427,19 @@ static ULONG WINAPI PHPropertyNotifySink_Release(IPropertyNotifySink *iface)
 static HRESULT WINAPI PHPropertyNotifySink_OnChanged(IPropertyNotifySink *iface, DISPID dispID)
 {
     PluginHost *This = impl_from_IPropertyNotifySink(iface);
-    FIXME("(%p)->(%d)\n", This, dispID);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d)\n", This, dispID);
+
+    switch(dispID) {
+    case DISPID_READYSTATE:
+        update_readystate(This);
+        break;
+    default :
+        FIXME("Unimplemented dispID %d\n", dispID);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PHPropertyNotifySink_OnRequestEdit(IPropertyNotifySink *iface, DISPID dispID)

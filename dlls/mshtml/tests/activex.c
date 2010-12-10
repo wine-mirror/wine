@@ -62,6 +62,7 @@ DEFINE_EXPECT(FreezeEvents_FALSE);
 DEFINE_EXPECT(QuickActivate);
 DEFINE_EXPECT(IPersistPropertyBag_InitNew);
 DEFINE_EXPECT(IPersistPropertyBag_Load);
+DEFINE_EXPECT(Invoke_READYSTATE);
 
 static HWND container_hwnd;
 
@@ -140,6 +141,25 @@ static int strcmp_wa(LPCWSTR strw, const char *stra)
     CHAR buf[512];
     WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
     return lstrcmpA(stra, buf);
+}
+
+static IOleClientSite *client_site;
+static READYSTATE plugin_readystate = READYSTATE_UNINITIALIZED;
+
+static void set_plugin_readystate(READYSTATE state)
+{
+    IPropertyNotifySink *prop_notif;
+    HRESULT hres;
+
+    plugin_readystate = state;
+
+    hres = IOleClientSite_QueryInterface(client_site, &IID_IPropertyNotifySink, (void**)&prop_notif);
+    ok(hres == S_OK, "Could not get IPropertyNotifySink iface: %08x\n", hres);
+
+    hres = IPropertyNotifySink_OnChanged(prop_notif, DISPID_READYSTATE);
+    ok(hres == S_OK, "OnChanged(DISPID_READYSTATE) failed: %08x\n", hres);
+
+    IPropertyNotifySink_Release(prop_notif);
 }
 
 static HRESULT ax_qi(REFIID,void**);
@@ -252,6 +272,9 @@ static HRESULT WINAPI QuickActivate_QuickActivate(IQuickActivate *iface, QACONTA
        "container->pClientSite != container->pPropertyNotifySink\n");
     test_ifaces((IUnknown*)container->pClientSite, pluginhost_iids);
 
+    IOleClientSite_AddRef(container->pClientSite);
+    client_site = container->pClientSite;
+
     return S_OK;
 }
 
@@ -360,6 +383,9 @@ static HRESULT WINAPI PersistPropertyBag_Load(IPersistPropertyBag *face, IProper
     ok(V_VT(&v) == VT_BSTR, "V_VT(&v) = %d\n", V_VT(&v));
     ok(V_BSTR(&v) == (BSTR)0xdeadbeef, "V_BSTR(v) = %p\n", V_BSTR(&v));
 
+    set_plugin_readystate(READYSTATE_INTERACTIVE);
+    set_plugin_readystate(READYSTATE_COMPLETE);
+
     return S_OK;
 }
 
@@ -382,6 +408,82 @@ static const IPersistPropertyBagVtbl PersistPropertyBagVtbl = {
 
 static IPersistPropertyBag PersistPropertyBag = { &PersistPropertyBagVtbl };
 
+static HRESULT WINAPI Dispatch_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
+{
+    return ax_qi(riid, ppv);
+}
+
+static ULONG WINAPI Dispatch_AddRef(IDispatch *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI Dispatch_Release(IDispatch *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI Dispatch_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Dispatch_GetTypeInfo(IDispatch *iface, UINT iTInfo, LCID lcid,
+        ITypeInfo **ppTInfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Dispatch_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *rgszNames,
+        UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REFIID riid,
+        LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    ok(IsEqualGUID(riid, &IID_NULL), "riid = %s\n", debugstr_guid(riid));
+    ok(pDispParams != NULL, "pDispParams == NULL\n");
+    ok(!pDispParams->cNamedArgs, "pDispParams->cNamedArgs = %d\n", pDispParams->cNamedArgs);
+    ok(!pDispParams->rgdispidNamedArgs, "pDispParams->rgdispidNamedArgs != NULL\n");
+    ok(pVarResult != NULL, "pVarResult == NULL\n");
+    ok(!pExcepInfo, "pExcepInfo != NULL\n");
+    ok(puArgErr != NULL, "puArgErr == NULL\n");
+
+    switch(dispIdMember) {
+    case DISPID_READYSTATE:
+        CHECK_EXPECT2(Invoke_READYSTATE);
+        ok(wFlags == DISPATCH_PROPERTYGET, "wFlags = %x\n", wFlags);
+        ok(!pDispParams->cArgs, "pDispParams->cArgs = %d\n", pDispParams->cArgs);
+        ok(!pDispParams->rgvarg, "pDispParams->rgvarg != NULL\n");
+
+        V_VT(pVarResult) = VT_I4;
+        V_I4(pVarResult) = plugin_readystate;
+        return S_OK;
+    default:
+        ok(0, "unexpected call %d\n", dispIdMember);
+    }
+
+    return E_NOTIMPL;
+}
+
+static const IDispatchVtbl DispatchVtbl = {
+    Dispatch_QueryInterface,
+    Dispatch_AddRef,
+    Dispatch_Release,
+    Dispatch_GetTypeInfoCount,
+    Dispatch_GetTypeInfo,
+    Dispatch_GetIDsOfNames,
+    Dispatch_Invoke
+};
+
+static IDispatch Dispatch = { &DispatchVtbl };
+
 static HRESULT ax_qi(REFIID riid, void **ppv)
 {
     if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IOleControl)) {
@@ -396,6 +498,11 @@ static HRESULT ax_qi(REFIID riid, void **ppv)
 
     if(IsEqualGUID(riid, &IID_IPersistPropertyBag)) {
         *ppv = &PersistPropertyBag;
+        return S_OK;
+    }
+
+    if(IsEqualGUID(riid, &IID_IDispatch)) {
+        *ppv = &Dispatch;
         return S_OK;
     }
 
@@ -1004,6 +1111,11 @@ static void release_doc(IHTMLDocument2 *doc)
 {
     ULONG ref;
 
+    if(client_site) {
+        IOleClientSite_Release(client_site);
+        client_site = NULL;
+    }
+
     set_client_site(doc, FALSE);
     ref = IHTMLDocument2_Release(doc);
     ok(!ref, "ref = %d\n", ref);
@@ -1023,6 +1135,7 @@ static void test_object_ax(void)
     SET_EXPECT(QuickActivate);
     SET_EXPECT(FreezeEvents_FALSE);
     SET_EXPECT(IPersistPropertyBag_Load);
+    SET_EXPECT(Invoke_READYSTATE);
 
     doc = create_doc(object_ax_str, &called_CreateInstance);
 
@@ -1033,6 +1146,7 @@ static void test_object_ax(void)
     todo_wine
     CHECK_CALLED(FreezeEvents_FALSE);
     CHECK_CALLED(IPersistPropertyBag_Load);
+    CHECK_CALLED(Invoke_READYSTATE);
 
     release_doc(doc);
 }
