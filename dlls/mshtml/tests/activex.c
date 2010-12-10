@@ -60,6 +60,8 @@ DEFINE_EXPECT(CreateInstance);
 DEFINE_EXPECT(FreezeEvents_TRUE);
 DEFINE_EXPECT(FreezeEvents_FALSE);
 DEFINE_EXPECT(QuickActivate);
+DEFINE_EXPECT(IPersistPropertyBag_InitNew);
+DEFINE_EXPECT(IPersistPropertyBag_Load);
 
 static HWND container_hwnd;
 
@@ -67,18 +69,6 @@ static HWND container_hwnd;
 
 static const GUID CLSID_TestActiveX =
     {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xf6,0x68,0x07,0x46}};
-
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
 
 static const char object_ax_str[] =
     "<html><head></head><body>"
@@ -102,7 +92,7 @@ static const REFIID pluginhost_iids[] = {
     NULL
 };
 
-static const char *dbgstr_guid(REFIID riid)
+static const char *debugstr_guid(REFIID riid)
 {
     static char buf[50];
 
@@ -138,7 +128,7 @@ static void _test_ifaces(unsigned line, IUnknown *iface, REFIID *iids)
 
      for(piid = iids; *piid; piid++) {
         hres = IDispatch_QueryInterface(iface, *piid, (void**)&unk);
-        ok_(__FILE__,line) (hres == S_OK, "Could not get %s interface: %08x\n", dbgstr_guid(*piid), hres);
+        ok_(__FILE__,line) (hres == S_OK, "Could not get %s interface: %08x\n", debugstr_guid(*piid), hres);
         if(SUCCEEDED(hres))
             IUnknown_Release(unk);
     }
@@ -280,6 +270,62 @@ static const IQuickActivateVtbl QuickActivateVtbl = {
 
 static IQuickActivate QuickActivate = { &QuickActivateVtbl };
 
+static HRESULT WINAPI PersistPropertyBag_QueryInterface(IPersistPropertyBag *iface, REFIID riid, void **ppv)
+{
+    return ax_qi(riid, ppv);
+}
+
+static ULONG WINAPI PersistPropertyBag_AddRef(IPersistPropertyBag *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI PersistPropertyBag_Release(IPersistPropertyBag *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI PersistPropertyBag_GetClassID(IPersistPropertyBag *face, CLSID *pClassID)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistPropertyBag_InitNew(IPersistPropertyBag *face)
+{
+    CHECK_EXPECT(IPersistPropertyBag_InitNew);
+    return S_OK;
+}
+
+static HRESULT WINAPI PersistPropertyBag_Load(IPersistPropertyBag *face, IPropertyBag *pPropBag, IErrorLog *pErrorLog)
+{
+    CHECK_EXPECT(IPersistPropertyBag_Load);
+
+    ok(pPropBag != NULL, "pPropBag == NULL\n");
+    ok(!pErrorLog, "pErrorLog != NULL\n");
+
+    return S_OK;
+}
+
+static HRESULT WINAPI PersistPropertyBag_Save(IPersistPropertyBag *face, IPropertyBag *pPropBag, BOOL fClearDisrty, BOOL fSaveAllProperties)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IPersistPropertyBagVtbl PersistPropertyBagVtbl = {
+    PersistPropertyBag_QueryInterface,
+    PersistPropertyBag_AddRef,
+    PersistPropertyBag_Release,
+    PersistPropertyBag_GetClassID,
+    PersistPropertyBag_InitNew,
+    PersistPropertyBag_Load,
+    PersistPropertyBag_Save
+
+};
+
+static IPersistPropertyBag PersistPropertyBag = { &PersistPropertyBagVtbl };
+
 static HRESULT ax_qi(REFIID riid, void **ppv)
 {
     if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IOleControl)) {
@@ -289,6 +335,11 @@ static HRESULT ax_qi(REFIID riid, void **ppv)
 
     if(IsEqualGUID(riid, &IID_IQuickActivate)) {
         *ppv = &QuickActivate;
+        return S_OK;
+    }
+
+    if(IsEqualGUID(riid, &IID_IPersistPropertyBag)) {
+        *ppv = &PersistPropertyBag;
         return S_OK;
     }
 
@@ -350,6 +401,8 @@ static const IClassFactoryVtbl ClassFactoryVtbl = {
     ClassFactory_CreateInstance,
     ClassFactory_LockServer
 };
+
+static IClassFactory activex_cf = { &ClassFactoryVtbl };
 
 static HRESULT cs_qi(REFIID,void **);
 static IOleDocumentView *view;
@@ -726,7 +779,6 @@ static HRESULT cs_qi(REFIID riid, void **ppv)
     return *ppv ? S_OK : E_NOINTERFACE;
 }
 
-static IClassFactory activex_cf = { &ClassFactoryVtbl };
 static IHTMLDocument2 *notif_doc;
 static BOOL doc_complete;
 
@@ -914,6 +966,7 @@ static void test_object_ax(void)
     SET_EXPECT(FreezeEvents_TRUE);
     SET_EXPECT(QuickActivate);
     SET_EXPECT(FreezeEvents_FALSE);
+    SET_EXPECT(IPersistPropertyBag_Load);
 
     doc = create_doc(object_ax_str, &called_CreateInstance);
 
@@ -923,6 +976,7 @@ static void test_object_ax(void)
     CHECK_CALLED(QuickActivate);
     todo_wine
     CHECK_CALLED(FreezeEvents_FALSE);
+    CHECK_CALLED(IPersistPropertyBag_Load);
 
     release_doc(doc);
 }
