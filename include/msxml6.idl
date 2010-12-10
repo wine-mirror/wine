@@ -25,6 +25,12 @@ import "unknwn.idl";
 import "objidl.idl";
 import "oaidl.idl";
 
+#ifndef __WIDL__
+#define threading(model)
+#define progid(str)
+#define vi_progid(str)
+#endif
+
 [
     uuid(f5078f18-c551-11d3-89b9-0000f81fe221),
     version(6.0),

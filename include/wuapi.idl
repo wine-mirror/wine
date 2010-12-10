@@ -18,6 +18,12 @@
 
 import "oaidl.idl";
 
+#ifndef __WIDL__
+#define threading(model)
+#define progid(str)
+#define vi_progid(str)
+#endif
+
 [
     helpstring("WUAPI 2.0 Type Library"),
     uuid(b596cc9f-56e5-419e-a622-e01bb457431e),

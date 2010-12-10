@@ -23,6 +23,12 @@ import "oaidl.idl";
 import "ocidl.idl";
 import "shobjidl.idl";
 
+#ifndef __WIDL__
+#define threading(model)
+#define progid(str)
+#define vi_progid(str)
+#endif
+
 [
   uuid(4F48A59C-942D-4F3C-83C9-4EFFE84E4959),
   version(1.0),
