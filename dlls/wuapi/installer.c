@@ -35,13 +35,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(wuapi);
 
 typedef struct _update_installer
 {
-    const struct IUpdateInstallerVtbl *vtbl;
+    IUpdateInstaller IUpdateInstaller_iface;
     LONG refs;
 } update_installer;
 
 static inline update_installer *impl_from_IUpdateInstaller( IUpdateInstaller *iface )
 {
-    return (update_installer *)((char *)iface - FIELD_OFFSET( update_installer, vtbl ));
+    return CONTAINING_RECORD(iface, update_installer, IUpdateInstaller_iface);
 }
 
 static ULONG WINAPI update_installer_AddRef(
@@ -243,10 +243,10 @@ HRESULT UpdateInstaller_create( IUnknown *pUnkOuter, LPVOID *ppObj )
     installer = HeapAlloc( GetProcessHeap(), 0, sizeof(*installer) );
     if (!installer) return E_OUTOFMEMORY;
 
-    installer->vtbl = &update_installer_vtbl;
+    installer->IUpdateInstaller_iface.lpVtbl = &update_installer_vtbl;
     installer->refs = 1;
 
-    *ppObj = &installer->vtbl;
+    *ppObj = &installer->IUpdateInstaller_iface;
 
     TRACE("returning iface %p\n", *ppObj);
     return S_OK;
