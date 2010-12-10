@@ -38,6 +38,8 @@ static int (__cdecl *p__vscwprintf)(const wchar_t *format, __ms_va_list valist);
 static int (__cdecl *p__vsnwprintf_s)(wchar_t *str, size_t sizeOfBuffer,
                                       size_t count, const wchar_t *format,
                                       __ms_va_list valist);
+static int (__cdecl *p__ecvt_s)(char *buffer, size_t length, double number,
+                                int ndigits, int *decpt, int *sign);
 
 static void init( void )
 {
@@ -46,6 +48,7 @@ static void init( void )
     p__vscprintf = (void *)GetProcAddress(hmod, "_vscprintf");
     p__vscwprintf = (void *)GetProcAddress(hmod, "_vscwprintf");
     p__vsnwprintf_s = (void *)GetProcAddress(hmod, "_vsnwprintf_s");
+    p__ecvt_s = (void *)GetProcAddress(hmod, "_ecvt_s");
 }
 
 static void test_sprintf( void )
@@ -766,7 +769,7 @@ static struct {
 static void test_xcvt(void)
 {
     char *str;
-    int i, decpt, sign;
+    int i, decpt, sign, err;
     for( i = 0; strcmp( test_cvt_testcases[i].expstr_e, "END"); i++){
         decpt = sign = 100;
         str = _ecvt( test_cvt_testcases[i].value,
@@ -779,6 +782,9 @@ static void test_xcvt(void)
         ok( decpt == test_cvt_testcases[i].expdecpt_e,
                 "_ecvt() decimal point wrong, got %d expected %d\n", decpt,
                 test_cvt_testcases[i].expdecpt_e);
+        ok( sign == test_cvt_testcases[i].expsign,
+                "_ecvt() sign wrong, got %d expected %d\n", sign,
+                test_cvt_testcases[i].expsign);
     }
     for( i = 0; strcmp( test_cvt_testcases[i].expstr_e, "END"); i++){
         decpt = sign = 100;
@@ -796,6 +802,28 @@ static void test_xcvt(void)
                 "_ecvt() sign wrong, got %d expected %d\n", sign,
                 test_cvt_testcases[i].expsign);
     }
+
+    if (p__ecvt_s)
+    {
+        str = malloc(1024);
+        for( i = 0; strcmp( test_cvt_testcases[i].expstr_e, "END"); i++){
+            decpt = sign = 100;
+            err = p__ecvt_s(str, 1024, test_cvt_testcases[i].value, test_cvt_testcases[i].nrdigits, &decpt, &sign);
+            ok(err == 0, "_ecvt_s() failed with error code %d", err);
+            ok( 0 == strncmp( str, test_cvt_testcases[i].expstr_e, 15),
+                   "_ecvt_s() bad return, got \n'%s' expected \n'%s'\n", str,
+                  test_cvt_testcases[i].expstr_e);
+            ok( decpt == test_cvt_testcases[i].expdecpt_e,
+                    "_ecvt_s() decimal point wrong, got %d expected %d\n", decpt,
+                    test_cvt_testcases[i].expdecpt_e);
+            ok( sign == test_cvt_testcases[i].expsign,
+                    "_ecvt_s() sign wrong, got %d expected %d\n", sign,
+                    test_cvt_testcases[i].expsign);
+        }
+        free(str);
+    }
+    else
+       win_skip("_ecvt_s not available\n");
 }
 
 static int __cdecl _vsnwprintf_wrapper(wchar_t *str, size_t len, const wchar_t *format, ...)
