@@ -35,13 +35,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(wuapi);
 
 typedef struct _update_searcher
 {
-    const struct IUpdateSearcherVtbl *vtbl;
+    IUpdateSearcher IUpdateSearcher_iface;
     LONG refs;
 } update_searcher;
 
 static inline update_searcher *impl_from_IUpdateSearcher( IUpdateSearcher *iface )
 {
-    return (update_searcher *)((char *)iface - FIELD_OFFSET( update_searcher, vtbl ));
+    return CONTAINING_RECORD(iface, update_searcher, IUpdateSearcher_iface);
 }
 
 static ULONG WINAPI update_searcher_AddRef(
@@ -247,10 +247,10 @@ HRESULT UpdateSearcher_create( IUnknown *pUnkOuter, LPVOID *ppObj )
     searcher = HeapAlloc( GetProcessHeap(), 0, sizeof(*searcher) );
     if (!searcher) return E_OUTOFMEMORY;
 
-    searcher->vtbl = &update_searcher_vtbl;
+    searcher->IUpdateSearcher_iface.lpVtbl = &update_searcher_vtbl;
     searcher->refs = 1;
 
-    *ppObj = &searcher->vtbl;
+    *ppObj = &searcher->IUpdateSearcher_iface;
 
     TRACE("returning iface %p\n", *ppObj);
     return S_OK;
