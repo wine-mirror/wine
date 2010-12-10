@@ -74,6 +74,7 @@ static const char object_ax_str[] =
     "<html><head></head><body>"
     "<object classid=\"clsid:" TESTACTIVEX_CLSID "\" width=\"300\" height=\"200\" id=\"objid\">"
     "<param name=\"param_name\" value=\"param_value\">"
+    "<param name=\"num_param\" value=\"3\">"
     "</object>"
     "</body></html>";
 
@@ -132,6 +133,13 @@ static void _test_ifaces(unsigned line, IUnknown *iface, REFIID *iids)
         if(SUCCEEDED(hres))
             IUnknown_Release(unk);
     }
+}
+
+static int strcmp_wa(LPCWSTR strw, const char *stra)
+{
+    CHAR buf[512];
+    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
+    return lstrcmpA(stra, buf);
 }
 
 static HRESULT ax_qi(REFIID,void**);
@@ -299,6 +307,13 @@ static HRESULT WINAPI PersistPropertyBag_InitNew(IPersistPropertyBag *face)
 
 static HRESULT WINAPI PersistPropertyBag_Load(IPersistPropertyBag *face, IPropertyBag *pPropBag, IErrorLog *pErrorLog)
 {
+    VARIANT v;
+    HRESULT hres;
+
+    static const WCHAR param_nameW[] = {'p','a','r','a','m','_','n','a','m','e',0};
+    static const WCHAR num_paramW[] = {'n','u','m','_','p','a','r','a','m',0};
+    static const WCHAR no_paramW[] = {'n','o','_','p','a','r','a','m',0};
+
     static const IID *propbag_ifaces[] = {
         &IID_IPropertyBag,
         &IID_IPropertyBag2,
@@ -311,6 +326,39 @@ static HRESULT WINAPI PersistPropertyBag_Load(IPersistPropertyBag *face, IProper
     ok(!pErrorLog, "pErrorLog != NULL\n");
 
     test_ifaces((IUnknown*)pPropBag, propbag_ifaces);
+
+    V_VT(&v) = VT_BSTR;
+    hres = IPropertyBag_Read(pPropBag, param_nameW, &v, NULL);
+    ok(hres == S_OK, "Read failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "param_value"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 0xdeadbeef;
+    hres = IPropertyBag_Read(pPropBag, param_nameW, &v, NULL);
+    ok(hres == DISP_E_TYPEMISMATCH, "Read failed: %08x, expected DISP_E_TYPEMISMATCH\n", hres);
+    ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == 0xdeadbeef, "V_I4(v) = %x\n", V_I4(&v));
+
+    V_VT(&v) = VT_BSTR;
+    hres = IPropertyBag_Read(pPropBag, num_paramW, &v, NULL);
+    ok(hres == S_OK, "Read failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "3"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 0xdeadbeef;
+    hres = IPropertyBag_Read(pPropBag, num_paramW, &v, NULL);
+    ok(hres == S_OK, "Read failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == 3, "V_I4(v) = %x\n", V_I4(&v));
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = (BSTR)0xdeadbeef;
+    hres = IPropertyBag_Read(pPropBag, no_paramW, &v, NULL);
+    ok(hres == E_INVALIDARG, "Read failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(V_BSTR(&v) == (BSTR)0xdeadbeef, "V_BSTR(v) = %p\n", V_BSTR(&v));
 
     return S_OK;
 }

@@ -65,7 +65,7 @@ static void load_prop_bag(PluginHost *host, IPersistPropertyBag *persist_prop_ba
     IPropertyBag *prop_bag;
     HRESULT hres;
 
-    hres = create_param_prop_bag(&prop_bag);
+    hres = create_param_prop_bag(host->element->element.nselem, &prop_bag);
     if(FAILED(hres))
         return;
 

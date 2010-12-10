@@ -1687,6 +1687,23 @@ interface nsIDOMHTMLObjectElement : nsIDOMHTMLElement
 
 [
     object,
+    uuid(a6cf90ad-15b3-11d2-932e-00805f8add32),
+    local
+]
+interface nsIDOMHTMLParamElement : nsIDOMHTMLElement
+{
+    nsresult GetName(nsAString *aName);
+    nsresult SetName(const nsAString *aName);
+    nsresult GetType(nsAString *aType);
+    nsresult SetType(const nsAString *aType);
+    nsresult GetValue(nsAString *aValue);
+    nsresult SetValue(const nsAString *aValue);
+    nsresult GetValueType(nsAString *aValueType);
+    nsresult SetValueType(const nsAString *aValueType);
+}
+
+[
+    object,
     uuid(94928ab3-8b63-11d3-989d-001083010e9b),
     local
 ]

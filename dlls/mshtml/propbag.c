@@ -41,7 +41,61 @@ typedef struct {
     IPropertyBag2 IPropertyBag2_iface;
 
     LONG ref;
+
+    struct list props;
 } PropertyBag;
+
+typedef struct {
+    struct list entry;
+    WCHAR *name;
+    WCHAR *value;
+} param_prop_t;
+
+static void free_prop(param_prop_t *prop)
+{
+    list_remove(&prop->entry);
+
+    heap_free(prop->name);
+    heap_free(prop->value);
+    heap_free(prop);
+}
+
+static param_prop_t *find_prop(PropertyBag *prop_bag, const WCHAR *name)
+{
+    param_prop_t *iter;
+
+    LIST_FOR_EACH_ENTRY(iter, &prop_bag->props, param_prop_t, entry) {
+        if(!strcmpiW(iter->name, name))
+            return iter;
+    }
+
+    return NULL;
+}
+
+static HRESULT add_prop(PropertyBag *prop_bag, const WCHAR *name, const WCHAR *value)
+{
+    param_prop_t *prop;
+
+    if(!name || !value)
+        return S_OK;
+
+    TRACE("%p %s %s\n", prop_bag, debugstr_w(name), debugstr_w(value));
+
+    prop = heap_alloc(sizeof(*prop));
+    if(!prop)
+        return E_OUTOFMEMORY;
+
+    prop->name = heap_strdupW(name);
+    prop->value = heap_strdupW(value);
+    if(!prop->name || !prop->value) {
+        list_init(&prop->entry);
+        free_prop(prop);
+        return E_OUTOFMEMORY;
+    }
+
+    list_add_tail(&prop_bag->props, &prop->entry);
+    return S_OK;
+}
 
 static inline PropertyBag *impl_from_IPropertyBag(IPropertyBag *iface)
 {
@@ -88,8 +142,11 @@ static ULONG WINAPI PropertyBag_Release(IPropertyBag *iface)
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        while(!list_empty(&This->props))
+            free_prop(LIST_ENTRY(This->props.next, param_prop_t, entry));
         heap_free(This);
+    }
 
     return ref;
 }
@@ -97,8 +154,32 @@ static ULONG WINAPI PropertyBag_Release(IPropertyBag *iface)
 static HRESULT WINAPI PropertyBag_Read(IPropertyBag *iface, LPCOLESTR pszPropName, VARIANT *pVar, IErrorLog *pErrorLog)
 {
     PropertyBag *This = impl_from_IPropertyBag(iface);
-    FIXME("(%p)->(%s %p %p)\n", This, debugstr_w(pszPropName), pVar, pErrorLog);
-    return E_NOTIMPL;
+    param_prop_t *prop;
+    VARIANT v;
+
+    TRACE("(%p)->(%s %p %p)\n", This, debugstr_w(pszPropName), pVar, pErrorLog);
+
+    prop = find_prop(This, pszPropName);
+    if(!prop) {
+        TRACE("Not found\n");
+        return E_INVALIDARG;
+    }
+
+    V_BSTR(&v) = SysAllocString(prop->value);
+    if(!V_BSTR(&v))
+        return E_OUTOFMEMORY;
+
+    if(V_VT(pVar) != VT_BSTR) {
+        HRESULT hres;
+
+        V_VT(&v) = VT_BSTR;
+        hres = VariantChangeType(pVar, &v, 0, V_VT(pVar));
+        SysFreeString(V_BSTR(&v));
+        return hres;
+    }
+
+    V_BSTR(pVar) = V_BSTR(&v);
+    return S_OK;
 }
 
 static HRESULT WINAPI PropertyBag_Write(IPropertyBag *iface, LPCOLESTR pszPropName, VARIANT *pVar)
@@ -188,9 +269,75 @@ static const IPropertyBag2Vtbl PropertyBag2Vtbl = {
     PropertyBag2_LoadObject
 };
 
-HRESULT create_param_prop_bag(IPropertyBag **ret)
+static HRESULT fill_props(nsIDOMHTMLElement *nselem, PropertyBag *prop_bag)
+{
+    nsIDOMHTMLParamElement *nsparam;
+    nsAString name_str, value_str;
+    nsIDOMNodeList *params;
+    PRUint32 length, i;
+    nsIDOMNode *nsnode;
+    nsresult nsres;
+    HRESULT hres = S_OK;
+
+    static const PRUnichar paramW[] = {'p','a','r','a','m',0};
+
+    nsAString_InitDepend(&name_str, paramW);
+    nsres = nsIDOMHTMLElement_GetElementsByTagName(nselem, &name_str, &params);
+    nsAString_Finish(&name_str);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    nsres = nsIDOMNodeList_GetLength(params, &length);
+    if(NS_FAILED(nsres))
+        return S_OK;
+
+    for(i=0; i < length; i++) {
+        nsres = nsIDOMNodeList_Item(params, i, &nsnode);
+        if(NS_FAILED(nsres)) {
+            hres = E_FAIL;
+            break;
+        }
+
+        nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMHTMLParamElement, (void**)&nsparam);
+        nsIDOMNode_Release(nsnode);
+        if(NS_FAILED(nsres)) {
+            hres = E_FAIL;
+            break;
+        }
+
+        nsAString_Init(&name_str, NULL);
+        nsres = nsIDOMHTMLParamElement_GetName(nsparam, &name_str);
+        if(NS_SUCCEEDED(nsres)) {
+            nsAString_Init(&value_str, NULL);
+            nsres = nsIDOMHTMLParamElement_GetValue(nsparam, &value_str);
+            if(NS_SUCCEEDED(nsres)) {
+                const PRUnichar *name, *value;
+
+                nsAString_GetData(&name_str, &name);
+                nsAString_GetData(&value_str, &value);
+
+                hres = add_prop(prop_bag, name, value);
+            }
+            nsAString_Finish(&value_str);
+        }
+
+        nsAString_Finish(&name_str);
+        nsIDOMHTMLParamElement_Release(nsparam);
+        if(FAILED(hres))
+            break;
+        if(NS_FAILED(nsres)) {
+            hres = E_FAIL;
+            break;
+        }
+    }
+
+    return hres;
+}
+
+HRESULT create_param_prop_bag(nsIDOMHTMLElement *nselem, IPropertyBag **ret)
 {
     PropertyBag *prop_bag;
+    HRESULT hres;
 
     prop_bag = heap_alloc(sizeof(*prop_bag));
     if(!prop_bag)
@@ -199,6 +346,14 @@ HRESULT create_param_prop_bag(IPropertyBag **ret)
     prop_bag->IPropertyBag_iface.lpVtbl  = &PropertyBagVtbl;
     prop_bag->IPropertyBag2_iface.lpVtbl = &PropertyBag2Vtbl;
     prop_bag->ref = 1;
+
+    list_init(&prop_bag->props);
+    hres = fill_props(nselem, prop_bag);
+    if(FAILED(hres) || list_empty(&prop_bag->props)) {
+        IPropertyBag_Release(&prop_bag->IPropertyBag_iface);
+        *ret = NULL;
+        return hres;
+    }
 
     *ret = &prop_bag->IPropertyBag_iface;
     return S_OK;
