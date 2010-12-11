@@ -2700,6 +2700,19 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
         IPropertySetStorage_Release(pPropSetStg);
     }
 
+    /* fail - try once again after parent process exit */
+    if( !icon_name )
+    {
+        if (bWait)
+        {
+            WINE_WARN("Unable to extract icon, deferring.\n");
+            ret = FALSE;
+            goto cleanup;
+        }
+        WINE_ERR("failed to extract icon from %s\n",
+                 wine_dbgstr_w( pv[0].pwszVal ));
+    }
+
     hSem = CreateSemaphoreA( NULL, 1, 1, "winemenubuilder_semaphore");
     if( WAIT_OBJECT_0 != MsgWaitForMultipleObjects( 1, &hSem, FALSE, INFINITE, QS_ALLINPUT ) )
     {
