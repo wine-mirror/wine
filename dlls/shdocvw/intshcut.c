@@ -30,6 +30,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#define NONAMELESSUNION
 #include "wine/debug.h"
 #include "shdocvw.h"
 #include "objidl.h"
@@ -503,9 +504,9 @@ static HRESULT WINAPI PersistFile_Load(IPersistFile *pFile, LPCOLESTR pszFileNam
                 PROPSPEC ps;
                 PROPVARIANT pv;
                 ps.ulKind = PRSPEC_PROPID;
-                ps.propid = PID_IS_ICONFILE;
+                ps.u.propid = PID_IS_ICONFILE;
                 pv.vt = VT_LPWSTR;
-                pv.pwszVal = iconfile;
+                pv.u.pwszVal = iconfile;
                 hr = IPropertyStorage_WriteMultiple(pPropStg, 1, &ps, &pv, 0);
                 if (FAILED(hr))
                 {
@@ -526,9 +527,9 @@ static HRESULT WINAPI PersistFile_Load(IPersistFile *pFile, LPCOLESTR pszFileNam
                 sscanf(iconindexastring, "%d", &iconindex);
                 CoTaskMemFree(iconindexastring);
                 ps.ulKind = PRSPEC_PROPID;
-                ps.propid = PID_IS_ICONINDEX;
+                ps.u.propid = PID_IS_ICONINDEX;
                 pv.vt = VT_I4;
-                pv.iVal = iconindex;
+                pv.u.iVal = iconindex;
                 hr = IPropertyStorage_WriteMultiple(pPropStg, 1, &ps, &pv, 0);
                 if (FAILED(hr))
                 {
@@ -595,9 +596,9 @@ static HRESULT WINAPI PersistFile_Save(IPersistFile *pFile, LPCOLESTR pszFileNam
             PROPSPEC ps[2];
             PROPVARIANT pvread[2];
             ps[0].ulKind = PRSPEC_PROPID;
-            ps[0].propid = PID_IS_ICONFILE;
+            ps[0].u.propid = PID_IS_ICONFILE;
             ps[1].ulKind = PRSPEC_PROPID;
-            ps[1].propid = PID_IS_ICONINDEX;
+            ps[1].u.propid = PID_IS_ICONINDEX;
 
             WriteFile(file, str_header, lstrlenA(str_header), &bytesWritten, NULL);
             WriteFile(file, str_eol, lstrlenA(str_eol), &bytesWritten, NULL);
@@ -612,17 +613,17 @@ static HRESULT WINAPI PersistFile_Save(IPersistFile *pFile, LPCOLESTR pszFileNam
                 if SUCCEEDED(hr)
                 {
                     char indexString[50];
-                    len = WideCharToMultiByte(CP_UTF8, 0, pvread[0].pwszVal, -1, NULL, 0, 0, 0);
+                    len = WideCharToMultiByte(CP_UTF8, 0, pvread[0].u.pwszVal, -1, NULL, 0, 0, 0);
                     iconfile = heap_alloc(len);
                     if (iconfile != NULL)
                     {
-                        WideCharToMultiByte(CP_UTF8, 0, pvread[0].pwszVal, -1, iconfile, len, 0, 0);
+                        WideCharToMultiByte(CP_UTF8, 0, pvread[0].u.pwszVal, -1, iconfile, len, 0, 0);
                         WriteFile(file, str_ICONFILE, lstrlenA(str_ICONFILE), &bytesWritten, NULL);
                         WriteFile(file, iconfile, lstrlenA(iconfile), &bytesWritten, NULL);
                         WriteFile(file, str_eol, lstrlenA(str_eol), &bytesWritten, NULL);
                     }
 
-                    sprintf(indexString, "ICONINDEX=%d", pvread[1].iVal);
+                    sprintf(indexString, "ICONINDEX=%d", pvread[1].u.iVal);
                     WriteFile(file, indexString, lstrlenA(indexString), &bytesWritten, NULL);
                     WriteFile(file, str_eol, lstrlenA(str_eol), &bytesWritten, NULL);
 
