@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbgeng);
 * Initializing Debug Engine
 *
 * PARAMS
-*   pVersion  [O] Recieving the version of extension
+*   pVersion  [O] Receiving the version of extension
 *   pFlags    [O] Reserved
 *
 * RETURNS

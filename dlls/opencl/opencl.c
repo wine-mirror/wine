@@ -784,7 +784,7 @@ cl_int WINAPI wine_clEnqueueNativeKernel(cl_command_queue command_queue,
     /* FIXME: There appears to be no obvious method for translating the ABI for user_func.
      * There is no opaque user_data structure passed, that could encapsulate the return address.
      * The OpenCL specification seems to indicate that args has an implementation specific
-     * structure that can not be used to stash away a return address for the WINAPI user_func.
+     * structure that cannot be used to stash away a return address for the WINAPI user_func.
      */
 #if 0
     ret = clEnqueueNativeKernel(command_queue, user_func, args, cb_args, num_mem_objects, mem_list, args_mem_loc,

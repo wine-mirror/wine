@@ -276,7 +276,7 @@ HRESULT WINAPI WerReportCreate(PCWSTR eventtype, WER_REPORT_TYPE reporttype, PWE
  *
  * PARAMS
  *  hreport [i] error reporting handle to add the parameter
- *  id      [i] parameter to set (WER_P0 upto WER_P9)
+ *  id      [i] parameter to set (WER_P0 up to WER_P9)
  *  name    [i] optional name of the parameter
  *  value   [i] value of the parameter
  *

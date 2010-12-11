@@ -137,7 +137,7 @@ static void DSoundRender_UpdatePositions(DSoundRenderImpl *This, DWORD *seqwrite
     if (!writepos_set || old_writepos < writepos) {
         if (writepos_set) {
             This->writepos = This->buf_size;
-            FIXME("Underrun of data occured!\n");
+            FIXME("Underrun of data occurred!\n");
         }
         *seqwritepos = writepos;
     } else

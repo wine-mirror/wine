@@ -1,5 +1,5 @@
 /*
- * Directshow filter for Quicktime Toolkit on mac OS/X
+ * DirectShow filter for QuickTime Toolkit on Mac OS X
  *
  * Copyright (C) 2010 Aric Stewart, CodeWeavers
  *

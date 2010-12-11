@@ -1,7 +1,7 @@
 /*
  * Quality Control Interfaces
  *
- * Copyright 2010 Maarten Lankhorst for Codeweavers
+ * Copyright 2010 Maarten Lankhorst for CodeWeavers
  *
  * rendering qos functions based on, the original can be found at
  * gstreamer/libs/gst/base/gstbasesink.c which has copyright notice:
