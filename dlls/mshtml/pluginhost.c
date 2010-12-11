@@ -134,7 +134,7 @@ static void load_plugin(PluginHost *host)
         return;
     }
 
-    FIXME("No IPersistPeropertyBag iface \n");
+    FIXME("No IPersistPropertyBag iface\n");
 }
 
 static void activate_plugin(PluginHost *host)
