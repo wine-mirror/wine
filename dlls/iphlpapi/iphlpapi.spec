@@ -6,6 +6,7 @@
 @ stdcall AllocateAndGetIpNetTableFromStack( ptr long long long )
 @ stdcall AllocateAndGetTcpTableFromStack( ptr long long long )
 @ stdcall AllocateAndGetUdpTableFromStack( ptr long long long )
+@ stdcall CancelIPChangeNotify( ptr )
 @ stdcall CreateIpForwardEntry( ptr )
 @ stdcall CreateIpNetEntry( ptr )
 @ stdcall CreateProxyArpEntry( long long long )

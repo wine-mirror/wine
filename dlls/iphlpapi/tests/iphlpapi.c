@@ -799,6 +799,7 @@ static void testGetPerAdapterInfo(void)
 /*
 still-to-be-tested 2K-onward functions:
 AddIPAddress
+CancelIPChangeNotify
 CreateProxyArpEntry
 DeleteIPAddress
 DeleteProxyArpEntry
