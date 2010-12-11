@@ -111,6 +111,8 @@ DWORD WINAPI NotifyAddrChange(PHANDLE Handle, LPOVERLAPPED overlapped);
 
 DWORD WINAPI NotifyRouteChange(PHANDLE Handle, LPOVERLAPPED overlapped);
 
+BOOL WINAPI CancelIPChangeNotify(LPOVERLAPPED overlapped);
+
 DWORD WINAPI GetAdapterIndex(IN LPWSTR AdapterName, OUT PULONG IfIndex);
 
 DWORD WINAPI AddIPAddress(IPAddr Address, IPMask IpMask, DWORD IfIndex,

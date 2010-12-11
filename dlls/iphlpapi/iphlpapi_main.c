@@ -200,6 +200,30 @@ DWORD WINAPI AllocateAndGetIpAddrTableFromStack(PMIB_IPADDRTABLE *ppIpAddrTable,
 
 
 /******************************************************************
+ *    CancelIPChangeNotify (IPHLPAPI.@)
+ *
+ * Cancel a previous notification created by NotifyAddrChange or
+ * NotifyRouteChange.
+ *
+ * PARAMS
+ *  overlapped [In]  overlapped structure that notifies the caller
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * FIXME
+ *  Stub, returns FALSE.
+ */
+BOOL WINAPI CancelIPChangeNotify(LPOVERLAPPED overlapped)
+{
+  FIXME("(overlapped %p): stub\n", overlapped);
+  return FALSE;
+}
+
+
+
+/******************************************************************
  *    CreateIpForwardEntry (IPHLPAPI.@)
  *
  * Create a route in the local computer's IP table.
