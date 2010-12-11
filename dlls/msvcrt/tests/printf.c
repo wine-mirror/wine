@@ -809,7 +809,7 @@ static void test_xcvt(void)
         for( i = 0; strcmp( test_cvt_testcases[i].expstr_e, "END"); i++){
             decpt = sign = 100;
             err = p__ecvt_s(str, 1024, test_cvt_testcases[i].value, test_cvt_testcases[i].nrdigits, &decpt, &sign);
-            ok(err == 0, "_ecvt_s() failed with error code %d", err);
+            ok(err == 0, "_ecvt_s() failed with error code %d\n", err);
             ok( 0 == strncmp( str, test_cvt_testcases[i].expstr_e, 15),
                    "_ecvt_s() bad return, got \n'%s' expected \n'%s'\n", str,
                   test_cvt_testcases[i].expstr_e);
