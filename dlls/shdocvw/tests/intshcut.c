@@ -178,7 +178,8 @@ static void test_ReadAndWriteProperties(void)
     HRESULT hr;
     IUniformResourceLocatorA *urlA;
     IUniformResourceLocatorA *urlAFromFile;
-    WCHAR fileNameW[] = {'C',':','/','w','i','n','d','o','w','s','/','t','e','m','p','/','t','e','s','t','s','h','o','r','t','c','u','t','.','u','r','l',0};
+    WCHAR fileNameW[MAX_PATH];
+    static const WCHAR shortcutW[] = {'t','e','s','t','s','h','o','r','t','c','u','t','.','u','r','l',0};
     WCHAR iconPath[] = {'f','i','l','e',':','/','/','/','C',':','/','a','r','b','i','t','r','a','r','y','/','i','c','o','n','/','p','a','t','h',0};
     int iconIndex = 7;
     char testurl[] = "http://some/bogus/url.html";
@@ -187,6 +188,10 @@ static void test_ReadAndWriteProperties(void)
     ps[0].propid = PID_IS_ICONFILE;
     ps[1].ulKind = PRSPEC_PROPID;
     ps[1].propid = PID_IS_ICONINDEX;
+
+    /* Make sure we have a valid temporary directory */
+    GetTempPathW(MAX_PATH, fileNameW);
+    lstrcatW(fileNameW, shortcutW);
 
     hr = CoCreateInstance(&CLSID_InternetShortcut, NULL, CLSCTX_ALL, &IID_IUniformResourceLocatorA, (void**)&urlA);
     if (hr == S_OK)
