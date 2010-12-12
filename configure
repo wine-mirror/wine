@@ -10812,9 +10812,9 @@ fi
 fi
 if test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" != xyes; then :
   case "x$with_gstreamer" in
-  x)   as_fn_append wine_notices "|gstreamer-0.10 ${notice_platform}development files not found, gstreamer support disabled" ;;
+  x)   as_fn_append wine_notices "|gstreamer-0.10 base plugins ${notice_platform}development files not found, gstreamer support disabled" ;;
   xno) ;;
-  *)   as_fn_error $? "gstreamer-0.10 ${notice_platform}development files not found, gstreamer support disabled
+  *)   as_fn_error $? "gstreamer-0.10 base plugins ${notice_platform}development files not found, gstreamer support disabled
 This is an error since --with-gstreamer was requested." "$LINENO" 5  ;;
 esac
 fi

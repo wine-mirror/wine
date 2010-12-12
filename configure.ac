@@ -1461,7 +1461,7 @@ then
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 WINE_NOTICE_WITH(gstreamer,[test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" != xyes],
-                 [gstreamer-0.10 ${notice_platform}development files not found, gstreamer support disabled])
+                 [gstreamer-0.10 base plugins ${notice_platform}development files not found, gstreamer support disabled])
 test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" = xyes || enable_winegstreamer=${enable_winegstreamer:-no}
 
 dnl **** Check for ALSA 1.x ****
