@@ -88,3 +88,6 @@ echo goto with a leading space worked
 if c==c goto dest3
 	:dest3
 echo goto with a leading tab worked
+if d==d goto dest4
+:dest4@space@
+echo goto with a following space worked

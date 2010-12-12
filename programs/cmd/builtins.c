@@ -1150,6 +1150,7 @@ void WCMD_give_help (WCHAR *command) {
 void WCMD_goto (CMD_LIST **cmdList) {
 
   WCHAR string[MAX_PATH];
+  WCHAR current[MAX_PATH];
 
   /* Do not process any more parts of a processed multipart or multilines command */
   if (cmdList) *cmdList = NULL;
@@ -1174,8 +1175,17 @@ void WCMD_goto (CMD_LIST **cmdList) {
     SetFilePointer (context -> h, 0, NULL, FILE_BEGIN);
     while (WCMD_fgets (string, sizeof(string)/sizeof(WCHAR), context -> h)) {
       str = string;
-      while (isspaceW(*str)) str++;
-      if ((*str == ':') && (lstrcmpiW (++str, paramStart) == 0)) return;
+      while (isspaceW (*str)) str++;
+      if (*str == ':') {
+        DWORD index = 0;
+        str++;
+        while (((current[index] = str[index])) && (!isspaceW (current[index])))
+            index++;
+
+        /* ignore space at the end */
+        current[index] = 0;
+        if (lstrcmpiW (current, paramStart) == 0) return;
+      }
     }
     WCMD_output (WCMD_LoadMessage(WCMD_NOTARGET));
   }

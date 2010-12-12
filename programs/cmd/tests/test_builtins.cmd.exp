@@ -82,3 +82,4 @@ if /I seems to work
 goto with no leading space worked
 goto with a leading space worked
 goto with a leading tab worked
+goto with a following space worked
