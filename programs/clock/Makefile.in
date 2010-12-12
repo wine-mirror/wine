@@ -23,6 +23,7 @@ RC_SRCS = \
 	Ja.rc \
 	Ko.rc \
 	Lt.rc \
+	Ml.rc \
 	Nl.rc \
 	No.rc \
 	Pl.rc \
