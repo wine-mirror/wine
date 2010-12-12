@@ -2362,7 +2362,8 @@ static void test_rsa_round_trip(void)
     dataLen = strlen(test_string) + 1;
     result = CryptEncrypt(keyExchangeKey, 0, TRUE, 0, data, &dataLen,
                           sizeof(data));
-    ok(result || broken(GetLastError() == NTE_BAD_KEY /* Win9x/2000 */),
+    ok(result || broken(GetLastError() == NTE_BAD_KEY /* Win9x/2000 */) ||
+       broken(GetLastError() == NTE_PERM /* NT4 */),
        "CryptEncrypt failed: %08x\n", GetLastError());
     /* export the key... */
     result = CryptExportKey(keyExchangeKey, 0, PRIVATEKEYBLOB, 0, NULL,
@@ -2382,7 +2383,8 @@ static void test_rsa_round_trip(void)
      * key.
      */
     result = CryptDecrypt(keyExchangeKey, 0, TRUE, 0, data, &dataLen);
-    ok(result || broken(GetLastError() == NTE_BAD_KEY /* Win9x/2000 */),
+    ok(result || broken(GetLastError() == NTE_BAD_KEY /* Win9x/2000 */) ||
+       broken(GetLastError() == NTE_PERM /* NT4 */),
        "CryptDecrypt failed: %08x\n", GetLastError());
     if (result)
     {
