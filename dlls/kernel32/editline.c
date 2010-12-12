@@ -66,6 +66,7 @@ typedef struct WCEL_Context {
     unsigned			done : 1,	/* to 1 when we're done with editing */
 	                        error : 1,	/* to 1 when an error occurred in the editing */
                                 can_wrap : 1,   /* to 1 when multi-line edition can take place */
+                                shall_echo : 1, /* to 1 when characters should be echo:ed when keyed-in */
                                 can_pos_cursor : 1; /* to 1 when console can (re)position cursor */
     unsigned			histSize;
     unsigned			histPos;
@@ -128,6 +129,7 @@ static inline COORD WCEL_GetCoord(WCEL_Context* ctx, int ofs)
 
 static inline void WCEL_Update(WCEL_Context* ctx, int beg, int len)
 {
+    if (!ctx->shall_echo) return;
     if (ctx->can_pos_cursor)
     {
         WriteConsoleOutputCharacterW(ctx->hConOut, &ctx->line[beg], len,
@@ -194,34 +196,38 @@ static BOOL WCEL_Grow(WCEL_Context* ctx, size_t len)
 static void WCEL_DeleteString(WCEL_Context* ctx, int beg, int end)
 {
     unsigned    str_len = end - beg;
-    COORD       cbeg = WCEL_GetCoord(ctx, ctx->len - str_len);
-    COORD       cend = WCEL_GetCoord(ctx, ctx->len);
-    CHAR_INFO   ci;
 
     if (end < ctx->len)
 	memmove(&ctx->line[beg], &ctx->line[end], (ctx->len - end) * sizeof(WCHAR));
     /* we need to clean from ctx->len - str_len to ctx->len */
 
-    ci.Char.UnicodeChar = ' ';
-    ci.Attributes = ctx->csbi.wAttributes;
+    if (ctx->shall_echo)
+    {
+        COORD       cbeg = WCEL_GetCoord(ctx, ctx->len - str_len);
+        COORD       cend = WCEL_GetCoord(ctx, ctx->len);
+        CHAR_INFO   ci;
 
-    if (cbeg.Y == cend.Y)
-    {
-        /* partial erase of sole line */
-        CONSOLE_FillLineUniform(ctx->hConOut, cbeg.X, cbeg.Y,
-                                cend.X - cbeg.X, &ci);
-    }
-    else
-    {
-        int         i;
-        /* erase til eol on first line */
-        CONSOLE_FillLineUniform(ctx->hConOut, cbeg.X, cbeg.Y,
-                                ctx->csbi.dwSize.X - cbeg.X, &ci);
-        /* completely erase all the others (full lines) */
-        for (i = cbeg.Y + 1; i < cend.Y; i++)
-            CONSOLE_FillLineUniform(ctx->hConOut, 0, i, ctx->csbi.dwSize.X, &ci);
-        /* erase from beginning of line until last pos on last line */
-        CONSOLE_FillLineUniform(ctx->hConOut, 0, cend.Y, cend.X, &ci);
+        ci.Char.UnicodeChar = ' ';
+        ci.Attributes = ctx->csbi.wAttributes;
+
+        if (cbeg.Y == cend.Y)
+        {
+            /* partial erase of sole line */
+            CONSOLE_FillLineUniform(ctx->hConOut, cbeg.X, cbeg.Y,
+                                    cend.X - cbeg.X, &ci);
+        }
+        else
+        {
+            int         i;
+            /* erase til eol on first line */
+            CONSOLE_FillLineUniform(ctx->hConOut, cbeg.X, cbeg.Y,
+                                    ctx->csbi.dwSize.X - cbeg.X, &ci);
+            /* completely erase all the others (full lines) */
+            for (i = cbeg.Y + 1; i < cend.Y; i++)
+                CONSOLE_FillLineUniform(ctx->hConOut, 0, i, ctx->csbi.dwSize.X, &ci);
+            /* erase from beginning of line until last pos on last line */
+            CONSOLE_FillLineUniform(ctx->hConOut, 0, cend.Y, cend.X, &ci);
+        }
     }
     ctx->len -= str_len;
     WCEL_Update(ctx, 0, ctx->len);
@@ -378,7 +384,8 @@ static void    WCEL_FindPrevInHist(WCEL_Context* ctx)
               ctx->ofs = 0;
               WCEL_InsertString(ctx, data);
               ctx->ofs = oldofs;
-              SetConsoleCursorPosition(ctx->hConOut, WCEL_GetCoord(ctx, ctx->ofs));
+              if (ctx->shall_echo)
+                  SetConsoleCursorPosition(ctx->hConOut, WCEL_GetCoord(ctx, ctx->ofs));
               HeapFree(GetProcessHeap(), 0, data);
               return;
            }
@@ -630,15 +637,18 @@ static void WCEL_MoveToLastHist(WCEL_Context* ctx)
 
 static void WCEL_Redraw(WCEL_Context* ctx)
 {
-    COORD       c = WCEL_GetCoord(ctx, ctx->len);
-    CHAR_INFO   ci;
+    if (ctx->shall_echo)
+    {
+        COORD       c = WCEL_GetCoord(ctx, ctx->len);
+        CHAR_INFO   ci;
 
-    WCEL_Update(ctx, 0, ctx->len);
+        WCEL_Update(ctx, 0, ctx->len);
 
-    ci.Char.UnicodeChar = ' ';
-    ci.Attributes = ctx->csbi.wAttributes;
+        ci.Char.UnicodeChar = ' ';
+        ci.Attributes = ctx->csbi.wAttributes;
 
-    CONSOLE_FillLineUniform(ctx->hConOut, c.X, c.Y, ctx->csbi.dwSize.X - c.X, &ci);
+        CONSOLE_FillLineUniform(ctx->hConOut, c.X, c.Y, ctx->csbi.dwSize.X - c.X, &ci);
+    }
 }
 
 static void WCEL_RepeatCount(WCEL_Context* ctx)
@@ -812,6 +822,7 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn, BOOL can_pos_cursor)
 				    OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE ||
 	!GetConsoleScreenBufferInfo(ctx.hConOut, &ctx.csbi))
 	return NULL;
+    ctx.shall_echo = (GetConsoleMode(hConsoleIn, &ks) && (ks & ENABLE_ECHO_INPUT)) ? 1 : 0;
     ctx.can_wrap = (GetConsoleMode(ctx.hConOut, &ks) && (ks & ENABLE_WRAP_AT_EOL_OUTPUT)) ? 1 : 0;
     ctx.can_pos_cursor = can_pos_cursor;
 
@@ -868,6 +879,7 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn, BOOL can_pos_cursor)
 	else TRACE("Dropped event\n");
 
 /* EPP         WCEL_Dump(&ctx, "after func"); */
+        if (!ctx.shall_echo) continue;
         if (ctx.can_pos_cursor)
         {
             if (ctx.ofs != ofs)
