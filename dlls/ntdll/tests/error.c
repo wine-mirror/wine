@@ -224,7 +224,7 @@ static void run_error_tests(void)
     cmp(STATUS_WRONG_VOLUME,                     ERROR_WRONG_DISK);
     cmp(STATUS_NO_MEDIA,                         ERROR_NO_MEDIA_IN_DRIVE);
     cmp(STATUS_NO_MEDIA_IN_DEVICE,               ERROR_NOT_READY);
-    cmp(STATUS_VOLUME_DISMOUNTED,                ERROR_NOT_READY);
+    cmp2(STATUS_VOLUME_DISMOUNTED,               ERROR_NOT_READY);
     cmp(STATUS_NONEXISTENT_SECTOR,               ERROR_SECTOR_NOT_FOUND);
     cmp(STATUS_WORKING_SET_QUOTA,                ERROR_WORKING_SET_QUOTA);
     cmp(STATUS_NO_MEMORY,                        ERROR_NOT_ENOUGH_MEMORY);
