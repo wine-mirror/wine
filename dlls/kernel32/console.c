@@ -41,6 +41,9 @@
 #ifdef HAVE_TERMIOS_H
 # include <termios.h>
 #endif
+#ifdef HAVE_SYS_POLL_H
+# include <sys/poll.h>
+#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -1112,33 +1115,35 @@ static BOOL handle_simple_char(HANDLE conin, unsigned real_inchar)
     return WriteConsoleInputW(conin, ir, numEvent, &written);
 }
 
-static enum read_console_input_return bare_console_fetch_input(HANDLE handle, DWORD timeout)
+static enum read_console_input_return bare_console_fetch_input(HANDLE handle, int fd, DWORD timeout)
 {
-    OVERLAPPED                          ov;
-    enum read_console_input_return      ret;
-    char                                ch;
+    struct pollfd pollfd;
+    char          ch;
+    enum read_console_input_return ret;
 
-    /* get the real handle to the console object */
-    handle = wine_server_ptr_handle(console_handle_unmap(handle));
+    pollfd.fd = fd;
+    pollfd.events = POLLIN;
+    pollfd.revents = 0;
 
-    memset(&ov, 0, sizeof(ov));
-    ov.hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
-
-    if (ReadFile(handle, &ch, 1, NULL, &ov) ||
-        (GetLastError() == ERROR_IO_PENDING &&
-         WaitForSingleObject(ov.hEvent, timeout) == WAIT_OBJECT_0 &&
-         GetOverlappedResult(handle, &ov, NULL, FALSE)))
+    switch (poll(&pollfd, 1, timeout))
     {
-        ret = handle_simple_char(handle, ch) ? rci_gotone : rci_error;
+    case 1:
+        RtlEnterCriticalSection(&CONSOLE_CritSect);
+        switch (read(fd, &ch, 1))
+        {
+        case 1: ret = handle_simple_char(handle, ch) ? rci_gotone : rci_error; break;
+        /* actually another thread likely beat us to reading the char
+         * return gotone, while not perfect, it should work in most of the cases (as the new event
+         * should be now in the queue)
+         */
+        case 0: ret = rci_gotone; break;
+        default: ret = rci_error; break;
+        }
+        RtlLeaveCriticalSection(&CONSOLE_CritSect);
+        return ret;
+    case 0: return rci_timeout;
+    default: return rci_error;
     }
-    else
-    {
-        WARN("Failed read %x\n", GetLastError());
-        ret = rci_error;
-    }
-    CloseHandle(ov.hEvent);
-
-    return ret;
 }
 
 static enum read_console_input_return read_console_input(HANDLE handle, PINPUT_RECORD ir, DWORD timeout)
@@ -1149,12 +1154,13 @@ static enum read_console_input_return read_console_input(HANDLE handle, PINPUT_R
     if ((fd = get_console_bare_fd(handle)) != -1)
     {
         put_console_into_raw_mode(fd);
-        close(fd);
         if (WaitForSingleObject(GetConsoleInputWaitHandle(), 0) != WAIT_OBJECT_0)
         {
-            ret = bare_console_fetch_input(handle, timeout);
-            if (ret != rci_gotone) return ret;
+            ret = bare_console_fetch_input(handle, fd, timeout);
         }
+        else ret = rci_gotone;
+        close(fd);
+        if (ret != rci_gotone) return ret;
     }
     else
     {
