@@ -3572,22 +3572,31 @@ static void test_open_window(IHTMLDocument2 *doc)
     SET_EXPECT(EvaluateNewWindow);
 
     hres = IHTMLWindow2_open(window, url, name, NULL, VARIANT_FALSE, &new_window);
+    open_call = FALSE;
+    SysFreeString(url);
+    SysFreeString(name);
+
+    todo_wine
+    CHECK_CALLED(TranslateUrl);
+
+    if(!called_EvaluateNewWindow) {
+        todo_wine
+        win_skip("INewWindowManager not supported\n");
+        if(SUCCEEDED(hres) && new_window)
+            IHTMLWindow2_Release(new_window);
+        IHTMLWindow2_Release(window);
+        return;
+    }
+
+    todo_wine
+    CHECK_CALLED(EvaluateNewWindow);
+
     todo_wine
     ok(hres == S_OK, "open failed: %08x\n", hres);
     todo_wine
     ok(new_window == NULL, "new_window != NULL\n");
 
-    todo_wine
-    CHECK_CALLED(TranslateUrl);
-    todo_wine
-    CHECK_CALLED(EvaluateNewWindow);
-
-    open_call = FALSE;
-    SysFreeString(url);
-    SysFreeString(name);
-
     IHTMLWindow2_Release(window);
-    SysFreeString(name);
 }
 
 static void test_clear(IHTMLDocument2 *doc)
