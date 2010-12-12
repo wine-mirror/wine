@@ -57,7 +57,7 @@ typedef struct WCEL_Context {
                                                    (for consoles that can't change cursor pos) */
     unsigned                    last_max;       /* max number of chars written
                                                    (for consoles that can't change cursor pos) */
-    unsigned			ofs;		/* offset for cursor in current line */
+    unsigned			ofs;    	/* offset for cursor in current line */
     WCHAR*			yanked;		/* yanked line */
     unsigned			mark;		/* marked point (emacs mode only) */
     CONSOLE_SCREEN_BUFFER_INFO	csbi;		/* current state (initial cursor, window size, attribute) */
@@ -111,10 +111,27 @@ static inline BOOL WCEL_IsSingleLine(WCEL_Context* ctx, size_t len)
     return ctx->csbi.dwCursorPosition.X + ctx->len + len <= ctx->csbi.dwSize.X;
 }
 
-static inline COORD WCEL_GetCoord(WCEL_Context* ctx, int ofs)
+static inline int WCEL_CharWidth(WCHAR wch)
+{
+    return wch < ' ' ? 2 : 1;
+}
+
+static inline int WCEL_StringWidth(const WCHAR* str, int beg, int len)
+{
+    int         i, ofs;
+
+    for (i = 0, ofs = 0; i < len; i++)
+        ofs += WCEL_CharWidth(str[beg + i]);
+    return ofs;
+}
+
+static inline COORD WCEL_GetCoord(WCEL_Context* ctx, int strofs)
 {
     COORD       c;
     int         len = ctx->csbi.dwSize.X - ctx->csbi.dwCursorPosition.X;
+    int         ofs;
+
+    ofs = WCEL_StringWidth(ctx->line, 0, strofs);
 
     c.Y = ctx->csbi.dwCursorPosition.Y;
     if (ofs >= len)
@@ -127,35 +144,79 @@ static inline COORD WCEL_GetCoord(WCEL_Context* ctx, int ofs)
     return c;
 }
 
+static DWORD WCEL_WriteConsole(WCEL_Context* ctx, DWORD beg, DWORD len)
+{
+    DWORD i, last, dw, ret = 0;
+    WCHAR tmp[2];
+
+    for (i = last = 0; i < len; i++)
+    {
+        if (ctx->line[beg + i] < ' ')
+        {
+            if (last != i)
+            {
+                WriteConsoleW(ctx->hConOut, &ctx->line[beg + last], i - last, &dw, NULL);
+                ret += dw;
+            }
+            tmp[0] = '^';
+            tmp[1] = '@' + ctx->line[beg + i];
+            WriteConsoleW(ctx->hConOut, tmp, 2, &dw, NULL);
+            last = i + 1;
+            ret += dw;
+        }
+    }
+    if (last != len)
+    {
+        WriteConsoleW(ctx->hConOut, &ctx->line[beg + last], len - last, &dw, NULL);
+        ret += dw;
+    }
+    return ret;
+}
+
+static inline void WCEL_WriteNChars(WCEL_Context* ctx, char ch, int count)
+{
+    DWORD       dw;
+
+    if (count > 0)
+    {
+        while (count--) WriteFile(ctx->hConOut, &ch, 1, &dw, NULL);
+    }
+}
+
 static inline void WCEL_Update(WCEL_Context* ctx, int beg, int len)
 {
-    if (!ctx->shall_echo) return;
-    if (ctx->can_pos_cursor)
+    int         i, last;
+    WCHAR       tmp[2];
+
+    /* bare console case is handled in CONSOLE_ReadLine (we always reprint the whole string) */
+    if (!ctx->shall_echo || !ctx->can_pos_cursor) return;
+
+    for (i = last = beg; i < beg + len; i++)
     {
-        WriteConsoleOutputCharacterW(ctx->hConOut, &ctx->line[beg], len,
-                                     WCEL_GetCoord(ctx, beg), NULL);
-        FillConsoleOutputAttribute(ctx->hConOut, ctx->csbi.wAttributes, len,
-                                   WCEL_GetCoord(ctx, beg), NULL);
+        if (ctx->line[i] < ' ')
+        {
+            if (last != i)
+            {
+                WriteConsoleOutputCharacterW(ctx->hConOut, &ctx->line[last], i - last,
+                                             WCEL_GetCoord(ctx, last), NULL);
+                FillConsoleOutputAttribute(ctx->hConOut, ctx->csbi.wAttributes, i - last,
+                                           WCEL_GetCoord(ctx, last), NULL);
+            }
+            tmp[0] = '^';
+            tmp[1] = '@' + ctx->line[i];
+            WriteConsoleOutputCharacterW(ctx->hConOut, tmp, 2,
+                                         WCEL_GetCoord(ctx, i), NULL);
+            FillConsoleOutputAttribute(ctx->hConOut, ctx->csbi.wAttributes, 2,
+                                       WCEL_GetCoord(ctx, i), NULL);
+            last = i + 1;
+        }
     }
-    else
+    if (last != beg + len)
     {
-        char ch;
-        unsigned i;
-        DWORD dw;
-
-        /* erase previous chars */
-        ch = '\b';
-        for (i = beg; i < ctx->last_rub; i++)
-            WriteFile(ctx->hConOut, &ch, 1, &dw, NULL);
-        beg = min(beg, ctx->last_rub);
-
-        /* write new chars */
-        WriteConsoleW(ctx->hConOut, &ctx->line[beg], ctx->len - beg, &dw, NULL);
-        /* clean rest of line (if any) */
-        ch = ' ';
-        for (i = ctx->len; i < ctx->last_max; i++)
-            WriteFile(ctx->hConOut, &ch, 1, &dw, NULL);
-        ctx->last_rub = max(ctx->last_max, ctx->len);
+        WriteConsoleOutputCharacterW(ctx->hConOut, &ctx->line[last], i - last,
+                                     WCEL_GetCoord(ctx, last), NULL);
+        FillConsoleOutputAttribute(ctx->hConOut, ctx->csbi.wAttributes, i - last,
+                                   WCEL_GetCoord(ctx, last), NULL);
     }
 }
 
@@ -887,18 +948,23 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn, BOOL can_pos_cursor)
         }
         else if (!ctx.done && !ctx.error)
         {
-            char        ch;
-            unsigned    i;
-            DWORD       dw;
-
+            DWORD last;
             /* erase previous chars */
-            ch = '\b';
-            for (i = 0; i < ctx.last_rub; i++)
-                WriteFile(ctx.hConOut, &ch, 1, &dw, NULL);
+            WCEL_WriteNChars(&ctx, '\b', ctx.last_rub);
 
             /* write chars up to cursor */
-            WriteConsoleW(ctx.hConOut, ctx.line, ctx.ofs, &dw, NULL);
-            if ((ctx.last_rub = ctx.ofs) > ctx.last_max) ctx.last_max = ctx.ofs;
+            ctx.last_rub = WCEL_WriteConsole(&ctx, 0, ctx.ofs);
+            /* write chars past cursor */
+            last = ctx.last_rub + WCEL_WriteConsole(&ctx, ctx.ofs, ctx.len - ctx.ofs);
+            if (last < ctx.last_max) /* ctx.line has been shortened, erase */
+            {
+                WCEL_WriteNChars(&ctx, ' ', ctx.last_max - last);
+                WCEL_WriteNChars(&ctx, '\b', ctx.last_max - last);
+                ctx.last_max = last;
+            }
+            else ctx.last_max = last;
+            /* reposition at cursor */
+            WCEL_WriteNChars(&ctx, '\b', last - ctx.last_rub);
         }
     }
     if (ctx.error)
