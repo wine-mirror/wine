@@ -26,6 +26,7 @@ RC_SRCS = \
 	Ml.rc \
 	Nl.rc \
 	No.rc \
+	Or.rc \
 	Pl.rc \
 	Pt.rc \
 	Ro.rc \
