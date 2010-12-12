@@ -945,7 +945,8 @@ static void test_machine_guid(void)
           r);
    /* Create and release a provider */
    ret = pCryptAcquireContextA(&hCryptProv, szKeySet, NULL, PROV_RSA_FULL, 0);
-   ok(ret, "CryptAcquireContextA failed: %08x\n", GetLastError());
+   ok(ret || broken(!ret && GetLastError() == NTE_KEYSET_ENTRY_BAD /* NT4 */),
+      "CryptAcquireContextA failed: %08x\n", GetLastError());
    pCryptReleaseContext(hCryptProv, 0);
 
    if (restoreGuid)
