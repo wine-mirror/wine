@@ -583,6 +583,7 @@ void SlDeleteShader(struct bwriter_shader *shader) DECLSPEC_HIDDEN;
 #define TAG_DXBC MAKE_TAG('D', 'X', 'B', 'C')
 #define TAG_ISGN MAKE_TAG('I', 'S', 'G', 'N')
 #define TAG_OSGN MAKE_TAG('O', 'S', 'G', 'N')
+#define TAG_OSG5 MAKE_TAG('O', 'S', 'G', '5')
 #define TAG_PCSG MAKE_TAG('P', 'C', 'S', 'G')
 #define TAG_RDEF MAKE_TAG('R', 'D', 'E', 'F')
 #define TAG_SDBG MAKE_TAG('S', 'D', 'B', 'G')

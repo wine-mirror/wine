@@ -130,11 +130,11 @@ static BOOL check_blob_part(DWORD tag, D3D_BLOB_PART part)
             break;
 
         case D3D_BLOB_OUTPUT_SIGNATURE_BLOB:
-            if (tag == TAG_OSGN) add = TRUE;
+            if (tag == TAG_OSGN || tag == TAG_OSG5) add = TRUE;
             break;
 
         case D3D_BLOB_INPUT_AND_OUTPUT_SIGNATURE_BLOB:
-            if (tag == TAG_ISGN || tag == TAG_OSGN) add = TRUE;
+            if (tag == TAG_ISGN || tag == TAG_OSGN || tag == TAG_OSG5) add = TRUE;
             break;
 
         case D3D_BLOB_PATCH_CONSTANT_SIGNATURE_BLOB:
@@ -142,7 +142,7 @@ static BOOL check_blob_part(DWORD tag, D3D_BLOB_PART part)
             break;
 
         case D3D_BLOB_ALL_SIGNATURE_BLOB:
-            if (tag == TAG_ISGN || tag == TAG_OSGN || tag == TAG_PCSG) add = TRUE;
+            if (tag == TAG_ISGN || tag == TAG_OSGN || tag == TAG_OSG5 || tag == TAG_PCSG) add = TRUE;
             break;
 
         case D3D_BLOB_DEBUG_INFO:
