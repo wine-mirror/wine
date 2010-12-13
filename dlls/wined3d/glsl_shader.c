@@ -4289,8 +4289,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
         IWineD3DDeviceImpl *device, BOOL use_ps, BOOL use_vs)
 {
     const struct wined3d_state *state = &device->stateBlock->state;
-    IWineD3DVertexShader *vshader = use_vs ? (IWineD3DVertexShader *)state->vertex_shader : NULL;
-    IWineD3DPixelShader *pshader = use_ps ? (IWineD3DPixelShader *)state->pixel_shader : NULL;
+    IWineD3DVertexShaderImpl *vshader = use_vs ? state->vertex_shader : NULL;
+    IWineD3DPixelShaderImpl *pshader = use_ps ? state->pixel_shader : NULL;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct shader_glsl_priv *priv = device->shader_priv;
     struct glsl_shader_prog_link *entry    = NULL;
@@ -4301,11 +4301,13 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
     struct ps_compile_args ps_compile_args;
     struct vs_compile_args vs_compile_args;
 
-    if (vshader) find_vs_compile_args(state, (IWineD3DVertexShaderImpl *)vshader, &vs_compile_args);
-    if (pshader) find_ps_compile_args(state, (IWineD3DPixelShaderImpl *)pshader, &ps_compile_args);
+    if (vshader) find_vs_compile_args(state, vshader, &vs_compile_args);
+    if (pshader) find_ps_compile_args(state, pshader, &ps_compile_args);
 
-    entry = get_glsl_program_entry(priv, vshader, pshader, &vs_compile_args, &ps_compile_args);
-    if (entry) {
+    entry = get_glsl_program_entry(priv, (IWineD3DVertexShader *)vshader, (IWineD3DPixelShader *)pshader,
+            &vs_compile_args, &ps_compile_args);
+    if (entry)
+    {
         priv->glsl_program = entry;
         return;
     }
@@ -4317,8 +4319,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
     /* Create the entry */
     entry = HeapAlloc(GetProcessHeap(), 0, sizeof(struct glsl_shader_prog_link));
     entry->programId = programId;
-    entry->vshader = vshader;
-    entry->pshader = pshader;
+    entry->vshader = (IWineD3DVertexShader *)vshader;
+    entry->pshader = (IWineD3DPixelShader *)pshader;
     entry->vs_args = vs_compile_args;
     entry->ps_args = ps_compile_args;
     entry->constant_version = 0;
@@ -4332,12 +4334,12 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
     /* Attach GLSL vshader */
     if (vshader)
     {
-        GLhandleARB vshader_id = find_glsl_vshader(context, &priv->shader_buffer,
-                (IWineD3DVertexShaderImpl *)vshader, &vs_compile_args);
-        WORD map = ((IWineD3DBaseShaderImpl *)vshader)->baseShader.reg_maps.input_registers;
+        GLhandleARB vshader_id = find_glsl_vshader(context, &priv->shader_buffer, vshader, &vs_compile_args);
+        WORD map = vshader->baseShader.reg_maps.input_registers;
         char tmp_name[10];
 
-        reorder_shader_id = generate_param_reorder_function(&priv->shader_buffer, vshader, pshader, gl_info);
+        reorder_shader_id = generate_param_reorder_function(&priv->shader_buffer,
+                (IWineD3DVertexShader *)vshader, (IWineD3DPixelShader *)pshader, gl_info);
         TRACE("Attaching GLSL shader object %u to program %u\n", reorder_shader_id, programId);
         GL_EXTCALL(glAttachObjectARB(programId, reorder_shader_id));
         checkGLcall("glAttachObjectARB");
@@ -4368,19 +4370,19 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
         }
         checkGLcall("glBindAttribLocationARB");
 
-        list_add_head(&((IWineD3DBaseShaderImpl *)vshader)->baseShader.linked_programs, &entry->vshader_entry);
+        list_add_head(&vshader->baseShader.linked_programs, &entry->vshader_entry);
     }
 
     /* Attach GLSL pshader */
     if (pshader)
     {
         GLhandleARB pshader_id = find_glsl_pshader(context, &priv->shader_buffer,
-                (IWineD3DPixelShaderImpl *)pshader, &ps_compile_args, &entry->np2Fixup_info);
+                pshader, &ps_compile_args, &entry->np2Fixup_info);
         TRACE("Attaching GLSL shader object %u to program %u\n", pshader_id, programId);
         GL_EXTCALL(glAttachObjectARB(programId, pshader_id));
         checkGLcall("glAttachObjectARB");
 
-        list_add_head(&((IWineD3DBaseShaderImpl *)pshader)->baseShader.linked_programs, &entry->pshader_entry);
+        list_add_head(&pshader->baseShader.linked_programs, &entry->pshader_entry);
     }
 
     /* Link the program */
@@ -4439,8 +4441,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
     checkGLcall("Find glsl program uniform locations");
 
     if (pshader
-            && ((IWineD3DPixelShaderImpl *)pshader)->baseShader.reg_maps.shader_version.major >= 3
-            && ((IWineD3DPixelShaderImpl *)pshader)->declared_in_count > vec4_varyings(3, gl_info))
+            && pshader->baseShader.reg_maps.shader_version.major >= 3
+            && pshader->declared_in_count > vec4_varyings(3, gl_info))
     {
         TRACE("Shader %d needs vertex color clamping disabled\n", programId);
         entry->vertex_color_clamp = GL_FALSE;
@@ -4467,11 +4469,11 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
      * load them now to have them hardcoded in the GLSL program. This saves some CPU cycles
      * later
      */
-    if (pshader && !((IWineD3DBaseShaderImpl *)pshader)->baseShader.load_local_constsF)
+    if (pshader && !pshader->baseShader.load_local_constsF)
     {
         hardcode_local_constants((IWineD3DBaseShaderImpl *) pshader, gl_info, programId, 'P');
     }
-    if (vshader && !((IWineD3DBaseShaderImpl *)vshader)->baseShader.load_local_constsF)
+    if (vshader && !vshader->baseShader.load_local_constsF)
     {
         hardcode_local_constants((IWineD3DBaseShaderImpl *) vshader, gl_info, programId, 'V');
     }
