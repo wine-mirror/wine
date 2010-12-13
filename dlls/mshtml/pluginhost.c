@@ -954,15 +954,37 @@ static HRESULT assoc_element(PluginHost *host, HTMLDocumentNode *doc, nsIDOMElem
     return S_OK;
 }
 
-void detach_plugin_hosts(HTMLDocumentNode *doc)
+void detach_plugin_host(PluginHost *host)
 {
-    PluginHost *iter;
+    HRESULT hres;
 
-    while(!list_empty(&doc->plugin_hosts)) {
-        iter = LIST_ENTRY(list_head(&doc->plugin_hosts), PluginHost, entry);
-        list_remove(&iter->entry);
-        iter->doc = NULL;
+    TRACE("%p\n", host);
+
+    if(!host->doc)
+        return;
+
+    if(host->ip_object)
+        IOleInPlaceObject_InPlaceDeactivate(host->ip_object);
+
+    if(host->plugin_unk) {
+        IOleObject *ole_obj;
+
+        hres = IUnknown_QueryInterface(host->plugin_unk, &IID_IOleObject, (void**)&ole_obj);
+        if(SUCCEEDED(hres)) {
+            if(!host->ip_object)
+                IOleObject_Close(ole_obj, OLECLOSE_NOSAVE);
+            IOleObject_SetClientSite(ole_obj, NULL);
+            IOleObject_Release(ole_obj);
+        }
     }
+
+    if(host->element) {
+        host->element->plugin_host = NULL;
+        host->element = NULL;
+    }
+
+    list_remove(&host->entry);
+    host->doc = NULL;
 }
 
 HRESULT create_plugin_host(HTMLDocumentNode *doc, nsIDOMElement *nselem, IUnknown *unk, const CLSID *clsid, PluginHost **ret)

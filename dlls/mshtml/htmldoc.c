@@ -1898,8 +1898,10 @@ static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
 
     detach_selection(This);
     detach_ranges(This);
-    detach_plugin_hosts(This);
     release_nodes(This);
+
+    while(!list_empty(&This->plugin_hosts))
+        detach_plugin_host(LIST_ENTRY(list_head(&This->plugin_hosts), PluginHost, entry));
 
     if(This->nsdoc) {
         release_mutation(This);

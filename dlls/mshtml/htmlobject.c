@@ -423,7 +423,7 @@ static void HTMLObjectElement_destructor(HTMLDOMNode *iface)
     HTMLObjectElement *This = HTMLOBJECT_NODE_THIS(iface);
 
     if(This->plugin_container.plugin_host)
-        This->plugin_container.plugin_host->element = NULL;
+        detach_plugin_host(This->plugin_container.plugin_host);
     if(This->nsobject)
         nsIDOMHTMLObjectElement_Release(This->nsobject);
 

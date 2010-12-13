@@ -296,6 +296,7 @@ static NPError CDECL NPP_Destroy(NPP instance, NPSavedData **save)
     if(!host)
         return NPERR_GENERIC_ERROR;
 
+    detach_plugin_host(host);
     IOleClientSite_Release(&host->IOleClientSite_iface);
     instance->pdata = NULL;
     return NPERR_NO_ERROR;

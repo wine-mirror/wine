@@ -52,6 +52,6 @@ extern const IID IID_HTMLPluginContainer;
 
 HRESULT create_plugin_host(HTMLDocumentNode*,nsIDOMElement*,IUnknown*,const CLSID*,PluginHost**);
 void update_plugin_window(PluginHost*,HWND,const RECT*);
-void detach_plugin_hosts(HTMLDocumentNode*);
+void detach_plugin_host(PluginHost*);
 
 HRESULT create_param_prop_bag(nsIDOMHTMLElement*,IPropertyBag**);
