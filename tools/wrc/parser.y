@@ -369,7 +369,7 @@ resource_file
 		else
 			$1 = rsc;
 
-		/* Final statements before were done */
+		/* Final statements before we're done */
                 if ((head = get_resource_head($1)) != NULL)
                 {
                     if (resource_top)  /* append to existing resources */
@@ -1278,13 +1278,14 @@ item_definitions
  * (who would want to specify a MF_x flag twice?).
  */
 item_options
-	: /* Empty */				{ $$ = 0; }
-	| opt_comma tCHECKED		item_options	{ $$ = $3 | MF_CHECKED; }
-	| opt_comma tGRAYED		item_options	{ $$ = $3 | MF_GRAYED; }
-	| opt_comma tHELP		item_options	{ $$ = $3 | MF_HELP; }
-	| opt_comma tINACTIVE		item_options	{ $$ = $3 | MF_DISABLED; }
-	| opt_comma tMENUBARBREAK	item_options	{ $$ = $3 | MF_MENUBARBREAK; }
-	| opt_comma tMENUBREAK	item_options	{ $$ = $3 | MF_MENUBREAK; }
+	:  /* Empty */			{ $$ = 0; }
+	| ','		item_options	{ $$ = $2; }
+	| tCHECKED	item_options	{ $$ = $2 | MF_CHECKED; }
+	| tGRAYED	item_options	{ $$ = $2 | MF_GRAYED; }
+	| tHELP		item_options	{ $$ = $2 | MF_HELP; }
+	| tINACTIVE	item_options	{ $$ = $2 | MF_DISABLED; }
+	| tMENUBARBREAK	item_options	{ $$ = $2 | MF_MENUBARBREAK; }
+	| tMENUBREAK	item_options	{ $$ = $2 | MF_MENUBREAK; }
 	;
 
 /* ------------------------------ MenuEx ------------------------------ */
