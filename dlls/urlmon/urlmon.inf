@@ -3,19 +3,11 @@ Signature="$CHICAGO$"
 
 
 [RegisterDll]
-AddReg=Classes.Reg, Protocols.Reg, ZoneMap.Reg, Zones.Reg, Misc.Reg
+AddReg=Protocols.Reg, ZoneMap.Reg, Zones.Reg, Misc.Reg
 
 
 [UnregisterDll]
-DelReg=Classes.Reg, Protocols.Reg, ZoneMap.Reg, Zones.Reg, Misc.Reg
-
-
-[Classes.Reg]
-
-;; CLSID_DeCompMimeFilter
-HKCR,"CLSID\%CLSID_DeCompMimeFilter%",,,"AP lzdhtml encoding/decoding Filter"
-HKCR,"CLSID\%CLSID_DeCompMimeFilter%\InProcServer32",,,"%MODULE%"
-HKCR,"CLSID\%CLSID_DeCompMimeFilter%\InProcServer32","ThreadingModel",,"Apartment"
+DelReg=Protocols.Reg, ZoneMap.Reg, Zones.Reg, Misc.Reg
 
 
 [Protocols.Reg]
