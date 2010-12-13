@@ -636,7 +636,8 @@ TOOLTIPS_Show (TOOLTIPS_INFO *infoPtr, BOOL track_activate)
             if (!(style & TTS_BALLOON))
                 rect.top  -= (size.cy / 2);
         }
-        infoPtr->bToolBelow = TRUE;
+        if (!(infoPtr->bToolBelow = (infoPtr->yTrackPos + size.cy <= GetSystemMetrics(SM_CYSCREEN))))
+            rect.top -= size.cy;
 
         if (!(toolPtr->uFlags & TTF_ABSOLUTE))
         {
