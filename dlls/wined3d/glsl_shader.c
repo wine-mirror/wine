@@ -906,11 +906,10 @@ static unsigned int vec4_varyings(DWORD shader_major, const struct wined3d_gl_in
 
 /** Generate the variable & register declarations for the GLSL output target */
 static void shader_generate_glsl_declarations(const struct wined3d_context *context,
-        struct wined3d_shader_buffer *buffer, IWineD3DBaseShader *iface,
+        struct wined3d_shader_buffer *buffer, IWineD3DBaseShaderImpl *shader,
         const struct wined3d_shader_reg_maps *reg_maps, struct shader_glsl_ctx_priv *ctx_priv)
 {
-    IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
-    IWineD3DDeviceImpl *device = This->baseShader.device;
+    IWineD3DDeviceImpl *device = shader->baseShader.device;
     const struct wined3d_state *state = &device->stateBlock->state;
     const struct ps_compile_args *ps_args = ctx_priv->cur_ps_args;
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -929,7 +928,8 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     }
 
     /* Declare the constants (aka uniforms) */
-    if (This->baseShader.limits.constant_float > 0) {
+    if (shader->baseShader.limits.constant_float > 0)
+    {
         unsigned max_constantsF;
         /* Unless the shader uses indirect addressing, always declare the maximum array size and ignore that we need some
          * uniforms privately. E.g. if GL supports 256 uniforms, and we need 2 for the pos fixup and immediate values, still
@@ -982,18 +982,18 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                 max_constantsF = gl_info->limits.glsl_vs_float_constants;
             }
         }
-        max_constantsF = min(This->baseShader.limits.constant_float, max_constantsF);
+        max_constantsF = min(shader->baseShader.limits.constant_float, max_constantsF);
         shader_addline(buffer, "uniform vec4 %cC[%u];\n", prefix, max_constantsF);
     }
 
-    /* Always declare the full set of constants, the compiler can remove the unused ones because d3d doesn't(yet)
-     * support indirect int and bool constant addressing. This avoids problems if the app uses e.g. i0 and i9.
-     */
-    if (This->baseShader.limits.constant_int > 0 && reg_maps->integer_constants)
-        shader_addline(buffer, "uniform ivec4 %cI[%u];\n", prefix, This->baseShader.limits.constant_int);
+    /* Always declare the full set of constants, the compiler can remove the
+     * unused ones because d3d doesn't (yet) support indirect int and bool
+     * constant addressing. This avoids problems if the app uses e.g. i0 and i9. */
+    if (shader->baseShader.limits.constant_int > 0 && reg_maps->integer_constants)
+        shader_addline(buffer, "uniform ivec4 %cI[%u];\n", prefix, shader->baseShader.limits.constant_int);
 
-    if (This->baseShader.limits.constant_bool > 0 && reg_maps->boolean_constants)
-        shader_addline(buffer, "uniform bool %cB[%u];\n", prefix, This->baseShader.limits.constant_bool);
+    if (shader->baseShader.limits.constant_bool > 0 && reg_maps->boolean_constants)
+        shader_addline(buffer, "uniform bool %cB[%u];\n", prefix, shader->baseShader.limits.constant_bool);
 
     if (!pshader)
     {
@@ -1027,11 +1027,11 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         }
         if (reg_maps->vpos || reg_maps->usesdsy)
         {
-            if (This->baseShader.limits.constant_float + extra_constants_needed
+            if (shader->baseShader.limits.constant_float + extra_constants_needed
                     + 1 < gl_info->limits.glsl_ps_float_constants)
             {
                 shader_addline(buffer, "uniform vec4 ycorrection;\n");
-                ((IWineD3DPixelShaderImpl *) This)->vpos_uniform = 1;
+                ((IWineD3DPixelShaderImpl *)shader)->vpos_uniform = 1;
                 extra_constants_needed++;
             } else {
                 /* This happens because we do not have proper tracking of the constant registers that are
@@ -1047,7 +1047,8 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     }
 
     /* Declare texture samplers */
-    for (i = 0; i < This->baseShader.limits.sampler; i++) {
+    for (i = 0; i < shader->baseShader.limits.sampler; ++i)
+    {
         if (reg_maps->sampler_type[i])
         {
             IWineD3DBaseTextureImpl *texture;
@@ -1107,8 +1108,10 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
          * samplerNP2Fixup stores texture dimensions and is updated through
          * shader_glsl_load_np2fixup_constants when the sampler changes. */
 
-        for (i = 0; i < This->baseShader.limits.sampler; ++i) {
-            if (reg_maps->sampler_type[i]) {
+        for (i = 0; i < shader->baseShader.limits.sampler; ++i)
+        {
+            if (reg_maps->sampler_type[i])
+            {
                 if (!(ps_args->np2_fixup & (1 << i))) continue;
 
                 if (WINED3DSTT_2D != reg_maps->sampler_type[i]) {
@@ -1154,9 +1157,8 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     }
 
     /* Declare output register temporaries */
-    if(This->baseShader.limits.packed_output) {
-        shader_addline(buffer, "vec4 OUT[%u];\n", This->baseShader.limits.packed_output);
-    }
+    if (shader->baseShader.limits.packed_output)
+        shader_addline(buffer, "vec4 OUT[%u];\n", shader->baseShader.limits.packed_output);
 
     /* Declare temporary variables */
     for (i = 0, map = reg_maps->temporary; map; map >>= 1, ++i)
@@ -1187,8 +1189,10 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
      * They can't be hardcoded into the shader text via LC = {x, y, z, w}; because the
      * float -> string conversion can cause precision loss.
      */
-    if(!This->baseShader.load_local_constsF) {
-        LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
+    if (!shader->baseShader.load_local_constsF)
+    {
+        LIST_FOR_EACH_ENTRY(lconst, &shader->baseShader.constantsF, local_constant, entry)
+        {
             shader_addline(buffer, "uniform vec4 %cLC%u;\n", prefix, lconst->idx);
         }
     }
@@ -3991,7 +3995,7 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     }
 
     /* Base Declarations */
-    shader_generate_glsl_declarations(context, buffer, (IWineD3DBaseShader *)This, reg_maps, &priv_ctx);
+    shader_generate_glsl_declarations(context, buffer, (IWineD3DBaseShaderImpl *)This, reg_maps, &priv_ctx);
 
     /* Pack 3.0 inputs */
     if (reg_maps->shader_version.major >= 3 && args->vp_mode != vertexshader)
@@ -4083,7 +4087,7 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
     priv_ctx.cur_vs_args = args;
 
     /* Base Declarations */
-    shader_generate_glsl_declarations(context, buffer, (IWineD3DBaseShader *)This, reg_maps, &priv_ctx);
+    shader_generate_glsl_declarations(context, buffer, (IWineD3DBaseShaderImpl *)This, reg_maps, &priv_ctx);
 
     /* Base Shader Body */
     shader_generate_main((IWineD3DBaseShader*)This, buffer, reg_maps, function, &priv_ctx);
