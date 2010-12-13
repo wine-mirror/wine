@@ -109,8 +109,8 @@ struct glsl_shader_prog_link {
     GLint                       luminanceoffset_location[MAX_TEXTURES];
     GLint                       ycorrection_location;
     GLenum                      vertex_color_clamp;
-    IWineD3DVertexShader        *vshader;
-    IWineD3DPixelShader         *pshader;
+    IWineD3DVertexShaderImpl    *vshader;
+    IWineD3DPixelShaderImpl     *pshader;
     struct vs_compile_args      vs_args;
     struct ps_compile_args      ps_args;
     UINT                        constant_version;
@@ -3691,8 +3691,8 @@ static void shader_glsl_input_pack(IWineD3DPixelShader *iface, struct wined3d_sh
 static void add_glsl_program_entry(struct shader_glsl_priv *priv, struct glsl_shader_prog_link *entry) {
     glsl_program_key_t key;
 
-    key.vshader = entry->vshader;
-    key.pshader = entry->pshader;
+    key.vshader = (IWineD3DVertexShader *)entry->vshader;
+    key.pshader = (IWineD3DPixelShader *)entry->pshader;
     key.vs_args = entry->vs_args;
     key.ps_args = entry->ps_args;
 
@@ -3723,8 +3723,8 @@ static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const struc
 {
     glsl_program_key_t key;
 
-    key.vshader = entry->vshader;
-    key.pshader = entry->pshader;
+    key.vshader = (IWineD3DVertexShader *)entry->vshader;
+    key.pshader = (IWineD3DPixelShader *)entry->pshader;
     key.vs_args = entry->vs_args;
     key.ps_args = entry->ps_args;
     wine_rb_remove(&priv->program_lookup, &key);
@@ -4317,8 +4317,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
     /* Create the entry */
     entry = HeapAlloc(GetProcessHeap(), 0, sizeof(struct glsl_shader_prog_link));
     entry->programId = programId;
-    entry->vshader = (IWineD3DVertexShader *)vshader;
-    entry->pshader = (IWineD3DPixelShader *)pshader;
+    entry->vshader = vshader;
+    entry->pshader = pshader;
     entry->vs_args = vs_compile_args;
     entry->ps_args = ps_compile_args;
     entry->constant_version = 0;
@@ -4788,11 +4788,11 @@ static int glsl_program_key_compare(const void *key, const struct wine_rb_entry 
             const struct glsl_shader_prog_link, program_lookup_entry);
     int cmp;
 
-    if (k->vshader > prog->vshader) return 1;
-    else if (k->vshader < prog->vshader) return -1;
+    if (k->vshader > (IWineD3DVertexShader *)prog->vshader) return 1;
+    else if (k->vshader < (IWineD3DVertexShader *)prog->vshader) return -1;
 
-    if (k->pshader > prog->pshader) return 1;
-    else if (k->pshader < prog->pshader) return -1;
+    if (k->pshader > (IWineD3DPixelShader *)prog->pshader) return 1;
+    else if (k->pshader < (IWineD3DPixelShader *)prog->pshader) return -1;
 
     if (k->vshader && (cmp = memcmp(&k->vs_args, &prog->vs_args, sizeof(prog->vs_args)))) return cmp;
     if (k->pshader && (cmp = memcmp(&k->ps_args, &prog->ps_args, sizeof(prog->ps_args)))) return cmp;
