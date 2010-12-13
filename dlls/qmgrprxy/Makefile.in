@@ -1,9 +1,10 @@
 MODULE    = qmgrprxy.dll
 IMPORTS   = rpcrt4
-EXTRADEFS = -DREGISTER_PROXY_DLL
+EXTRADEFS = -DWINE_REGISTER_DLL
 
 IDL_I_SRCS = qmgrprxy.idl
 IDL_P_SRCS = qmgrprxy.idl
+IDL_R_SRCS = qmgrprxy.idl
 
 EXTRA_OBJS = dlldata.o
 
