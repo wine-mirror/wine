@@ -694,12 +694,11 @@ static DWORD *local_const_mapping(IWineD3DBaseShaderImpl *This)
 }
 
 /* Generate the variable & register declarations for the ARB_vertex_program output target */
-static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface,
+static DWORD shader_generate_arb_declarations(IWineD3DBaseShaderImpl *shader,
         const struct wined3d_shader_reg_maps *reg_maps, struct wined3d_shader_buffer *buffer,
         const struct wined3d_gl_info *gl_info, DWORD *lconst_map,
         DWORD *num_clipplanes, struct shader_arb_ctx_priv *ctx)
 {
-    IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     DWORD i, next_local = 0;
     char pshader = shader_is_pshader_version(reg_maps->shader_version.type);
     unsigned max_constantsF;
@@ -725,7 +724,7 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface,
     }
     else
     {
-        const struct arb_vshader_private *shader_data = This->baseShader.backend_data;
+        const struct arb_vshader_private *shader_data = shader->baseShader.backend_data;
         max_constantsF = gl_info->limits.arb_vs_native_constants;
         /* 96 is the minimum MAX_PROGRAM_ENV_PARAMETERS_ARB value.
          * Also prevents max_constantsF from becoming less than 0 and
@@ -740,7 +739,7 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface,
             max_constantsF -= reserved_vs_const(shader_data, reg_maps, gl_info);
             max_constantsF -= count_bits(reg_maps->integer_constants);
 
-            for(i = 0; i < This->baseShader.limits.constant_float; i++)
+            for (i = 0; i < shader->baseShader.limits.constant_float; ++i)
             {
                 DWORD idx = i >> 5;
                 DWORD shift = i & 0x1f;
@@ -794,8 +793,10 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface,
     /* Load local constants using the program-local space,
      * this avoids reloading them each time the shader is used
      */
-    if(lconst_map) {
-        LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
+    if (lconst_map)
+    {
+        LIST_FOR_EACH_ENTRY(lconst, &shader->baseShader.constantsF, local_constant, entry)
+        {
             shader_addline(buffer, "PARAM C%u = program.local[%u];\n", lconst->idx,
                            lconst_map[lconst->idx]);
             next_local = max(next_local, lconst_map[lconst->idx] + 1);
@@ -815,7 +816,7 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface,
     }
 
     /* Avoid declaring more constants than needed */
-    max_constantsF = min(max_constantsF, This->baseShader.limits.constant_float);
+    max_constantsF = min(max_constantsF, shader->baseShader.limits.constant_float);
 
     /* we use the array-based constants array if the local constants are marked for loading,
      * because then we use indirect addressing, or when the local constant list is empty,
@@ -833,7 +834,7 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface,
             DWORD idx, mask;
             idx = i >> 5;
             mask = 1 << (i & 0x1f);
-            if (!shader_constant_is_local(This, i) && (reg_maps->constf[idx] & mask))
+            if (!shader_constant_is_local(shader, i) && (reg_maps->constf[idx] & mask))
             {
                 shader_addline(buffer, "PARAM C%d = program.env[%d];\n",i, i);
             }
@@ -3649,7 +3650,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     }
 
     /* Base Declarations */
-    next_local = shader_generate_arb_declarations((IWineD3DBaseShader *)This,
+    next_local = shader_generate_arb_declarations((IWineD3DBaseShaderImpl *)This,
             reg_maps, buffer, gl_info, lconst_map, NULL, &priv_ctx);
 
     for (i = 0, map = reg_maps->bumpmat; map; map >>= 1, ++i)
@@ -4121,7 +4122,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     shader_addline(buffer, "TEMP TA;\n");
 
     /* Base Declarations */
-    next_local = shader_generate_arb_declarations((IWineD3DBaseShader *)This,
+    next_local = shader_generate_arb_declarations((IWineD3DBaseShaderImpl *)This,
             reg_maps, buffer, gl_info, lconst_map, &priv_ctx.vs_clipplanes, &priv_ctx);
 
     for(i = 0; i < MAX_CONST_I; i++)
