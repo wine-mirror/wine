@@ -3830,11 +3830,9 @@ static void handle_ps3_input(struct wined3d_shader_buffer *buffer,
 
 /* GL locking is done by the caller */
 static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer *buffer,
-        IWineD3DVertexShader *vertexshader, IWineD3DPixelShader *pixelshader, const struct wined3d_gl_info *gl_info)
+        IWineD3DVertexShaderImpl *vs, IWineD3DPixelShaderImpl *ps, const struct wined3d_gl_info *gl_info)
 {
     GLhandleARB ret = 0;
-    IWineD3DVertexShaderImpl *vs = (IWineD3DVertexShaderImpl *) vertexshader;
-    IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *) pixelshader;
     DWORD ps_major = ps ? ps->baseShader.reg_maps.shader_version.major : 0;
     unsigned int i;
     const char *semantic_name;
@@ -4338,8 +4336,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
         WORD map = vshader->baseShader.reg_maps.input_registers;
         char tmp_name[10];
 
-        reorder_shader_id = generate_param_reorder_function(&priv->shader_buffer,
-                (IWineD3DVertexShader *)vshader, (IWineD3DPixelShader *)pshader, gl_info);
+        reorder_shader_id = generate_param_reorder_function(&priv->shader_buffer, vshader, pshader, gl_info);
         TRACE("Attaching GLSL shader object %u to program %u\n", reorder_shader_id, programId);
         GL_EXTCALL(glAttachObjectARB(programId, reorder_shader_id));
         checkGLcall("glAttachObjectARB");
