@@ -208,21 +208,39 @@ static void activate_plugin(PluginHost *host)
     IOleObject_Release(ole_obj);
     if(FAILED(hres))
         WARN("DoVerb failed: %08x\n", hres);
+
+    if(host->ip_object) {
+        HWND hwnd;
+
+        hres = IOleInPlaceObject_GetWindow(host->ip_object, &hwnd);
+        if(SUCCEEDED(hres))
+            TRACE("hwnd %p\n", hwnd);
+    }
 }
 
 void update_plugin_window(PluginHost *host, HWND hwnd, const RECT *rect)
 {
+    BOOL rect_changed = FALSE;
+
     if(!hwnd || (host->hwnd && host->hwnd != hwnd)) {
         FIXME("unhandled hwnd\n");
         return;
     }
 
-    host->rect = *rect;
+    TRACE("%p %s\n", hwnd, wine_dbgstr_rect(rect));
+
+    if(memcmp(rect, &host->rect, sizeof(RECT))) {
+        host->rect = *rect;
+        rect_changed = TRUE;
+    }
 
     if(!host->hwnd) {
         host->hwnd = hwnd;
         activate_plugin(host);
     }
+
+    if(rect_changed && host->ip_object)
+        IOleInPlaceObject_SetObjectRects(host->ip_object, &host->rect, &host->rect);
 }
 
 static inline PluginHost *impl_from_IOleClientSite(IOleClientSite *iface)
@@ -602,8 +620,11 @@ static ULONG WINAPI PHInPlaceSite_Release(IOleInPlaceSiteEx *iface)
 static HRESULT WINAPI PHInPlaceSite_GetWindow(IOleInPlaceSiteEx *iface, HWND *phwnd)
 {
     PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
-    FIXME("(%p)->(%p)\n", This, phwnd);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, phwnd);
+
+    *phwnd = This->hwnd;
+    return S_OK;
 }
 
 static HRESULT WINAPI PHInPlaceSite_ContextSensitiveHelp(IOleInPlaceSiteEx *iface, BOOL fEnterMode)
@@ -693,8 +714,15 @@ static HRESULT WINAPI PHInPlaceSite_OnUIDeactivate(IOleInPlaceSiteEx *iface, BOO
 static HRESULT WINAPI PHInPlaceSite_OnInPlaceDeactivate(IOleInPlaceSiteEx *iface)
 {
     PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    if(This->ip_object) {
+        IOleInPlaceObject_Release(This->ip_object);
+        This->ip_object = NULL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PHInPlaceSite_DiscardUndoState(IOleInPlaceSiteEx *iface)
