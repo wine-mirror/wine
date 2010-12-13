@@ -47,6 +47,7 @@ C_SRCS = \
 	htmltextcont.c \
 	htmltextnode.c \
 	htmlwindow.c \
+	ipwindow.c \
 	loadopts.c \
 	main.c \
 	mutation.c \

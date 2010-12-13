@@ -639,8 +639,41 @@ static HRESULT WINAPI PHInPlaceSite_GetWindowContext(IOleInPlaceSiteEx *iface,
         RECT *lprcClipRect, OLEINPLACEFRAMEINFO *frame_info)
 {
     PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
-    FIXME("(%p)->(%p %p %p %p %p)\n", This, ppFrame, ppDoc, lprcPosRect, lprcClipRect, frame_info);
-    return E_NOTIMPL;
+    IOleInPlaceUIWindow *ip_window;
+    IOleInPlaceFrame *ip_frame;
+    RECT pr, cr;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p %p %p %p %p)\n", This, ppFrame, ppDoc, lprcPosRect, lprcClipRect, frame_info);
+
+    if(!This->doc || !This->doc->basedoc.doc_obj || !This->doc->basedoc.doc_obj->ipsite) {
+        FIXME("No ipsite\n");
+        return E_UNEXPECTED;
+    }
+
+    hres = IOleInPlaceSite_GetWindowContext(This->doc->basedoc.doc_obj->ipsite, &ip_frame, &ip_window, &pr, &cr, frame_info);
+    if(FAILED(hres)) {
+        WARN("GetWindowContext failed: %08x\n", hres);
+        return hres;
+    }
+
+    if(ip_window)
+        IOleInPlaceUIWindow_Release(ip_window);
+    if(ip_frame)
+        IOleInPlaceFrame_Release(ip_frame);
+
+    hres = create_ip_frame(&ip_frame);
+    if(FAILED(hres))
+        return hres;
+
+    hres = create_ip_window(ppDoc);
+    if(FAILED(hres))
+        return hres;
+
+    *ppFrame = ip_frame;
+    *lprcPosRect = This->rect;
+    *lprcClipRect = This->rect;
+    return S_OK;
 }
 
 static HRESULT WINAPI PHInPlaceSite_Scroll(IOleInPlaceSiteEx *iface, SIZE scrollExtent)

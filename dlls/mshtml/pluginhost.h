@@ -55,3 +55,6 @@ void update_plugin_window(PluginHost*,HWND,const RECT*);
 void detach_plugin_host(PluginHost*);
 
 HRESULT create_param_prop_bag(nsIDOMHTMLElement*,IPropertyBag**);
+
+HRESULT create_ip_window(IOleInPlaceUIWindow**);
+HRESULT create_ip_frame(IOleInPlaceFrame**);
