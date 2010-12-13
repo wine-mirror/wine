@@ -1475,10 +1475,8 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
     }
 }
 
-static void shader_cleanup(IWineD3DBaseShader *iface)
+static void shader_cleanup(IWineD3DBaseShaderImpl *shader)
 {
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
-
     shader->baseShader.device->shader_backend->shader_destroy(shader);
     HeapFree(GetProcessHeap(), 0, shader->baseShader.reg_maps.constf);
     HeapFree(GetProcessHeap(), 0, shader->baseShader.function);
@@ -1661,7 +1659,7 @@ static ULONG STDMETHODCALLTYPE vertexshader_Release(IWineD3DVertexShader *iface)
 
     if (!refcount)
     {
-        shader_cleanup((IWineD3DBaseShader *)iface);
+        shader_cleanup((IWineD3DBaseShaderImpl *)shader);
         shader->baseShader.parent_ops->wined3d_object_destroyed(shader->baseShader.parent);
         HeapFree(GetProcessHeap(), 0, shader);
     }
@@ -1860,7 +1858,7 @@ HRESULT vertexshader_init(IWineD3DVertexShaderImpl *shader, IWineD3DDeviceImpl *
     if (FAILED(hr))
     {
         WARN("Failed to set function, hr %#x.\n", hr);
-        shader_cleanup((IWineD3DBaseShader *)shader);
+        shader_cleanup((IWineD3DBaseShaderImpl *)shader);
         return hr;
     }
 
@@ -1933,7 +1931,7 @@ static ULONG STDMETHODCALLTYPE geometryshader_Release(IWineD3DGeometryShader *if
 
     if (!refcount)
     {
-        shader_cleanup((IWineD3DBaseShader *)iface);
+        shader_cleanup((IWineD3DBaseShaderImpl *)shader);
         shader->base_shader.parent_ops->wined3d_object_destroyed(shader->base_shader.parent);
         HeapFree(GetProcessHeap(), 0, shader);
     }
@@ -1980,7 +1978,7 @@ HRESULT geometryshader_init(struct wined3d_geometryshader *shader, IWineD3DDevic
     if (FAILED(hr))
     {
         WARN("Failed to set function, hr %#x.\n", hr);
-        shader_cleanup((IWineD3DBaseShader *)shader);
+        shader_cleanup((IWineD3DBaseShaderImpl *)shader);
         return hr;
     }
 
@@ -2029,7 +2027,7 @@ static ULONG STDMETHODCALLTYPE pixelshader_Release(IWineD3DPixelShader *iface)
 
     if (!refcount)
     {
-        shader_cleanup((IWineD3DBaseShader *)iface);
+        shader_cleanup((IWineD3DBaseShaderImpl *)shader);
         shader->baseShader.parent_ops->wined3d_object_destroyed(shader->baseShader.parent);
         HeapFree(GetProcessHeap(), 0, shader);
     }
@@ -2267,7 +2265,7 @@ HRESULT pixelshader_init(IWineD3DPixelShaderImpl *shader, IWineD3DDeviceImpl *de
     if (FAILED(hr))
     {
         WARN("Failed to set function, hr %#x.\n", hr);
-        shader_cleanup((IWineD3DBaseShader *)shader);
+        shader_cleanup((IWineD3DBaseShaderImpl *)shader);
         return hr;
     }
 
