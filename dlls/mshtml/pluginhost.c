@@ -298,6 +298,8 @@ static ULONG WINAPI PHClientSite_Release(IOleClientSite *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        if(This->ip_object)
+            IOleInPlaceObject_Release(This->ip_object);
         list_remove(&This->entry);
         if(This->element)
             This->element->plugin_host = NULL;
@@ -351,8 +353,10 @@ static HRESULT WINAPI PHClientSite_GetContainer(IOleClientSite *iface, IOleConta
 static HRESULT WINAPI PHClientSite_ShowObject(IOleClientSite *iface)
 {
     PluginHost *This = impl_from_IOleClientSite(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PHClientSite_OnShowWindow(IOleClientSite *iface, BOOL fShow)
@@ -684,8 +688,24 @@ static HRESULT WINAPI PHInPlaceSite_OnPosRectChange(IOleInPlaceSiteEx *iface, LP
 static HRESULT WINAPI PHInPlaceSiteEx_OnInPlaceActivateEx(IOleInPlaceSiteEx *iface, BOOL *pfNoRedraw, DWORD dwFlags)
 {
     PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
-    FIXME("(%p)->(%p %x)\n", This, pfNoRedraw, dwFlags);
-    return E_NOTIMPL;
+    HWND hwnd;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p %x)\n", This, pfNoRedraw, dwFlags);
+
+    if(This->ip_object)
+        return S_OK;
+
+    hres = IUnknown_QueryInterface(This->plugin_unk, &IID_IOleInPlaceObject, (void**)&This->ip_object);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IOleInPlaceObject_GetWindow(This->ip_object, &hwnd);
+    if(SUCCEEDED(hres))
+        FIXME("Use hwnd %p\n", hwnd);
+
+    *pfNoRedraw = FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI PHInPlaceSiteEx_OnInPlaceDeactivateEx(IOleInPlaceSiteEx *iface, BOOL fNoRedraw)

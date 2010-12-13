@@ -31,6 +31,7 @@ typedef struct {
     LONG ref;
 
     IUnknown *plugin_unk;
+    IOleInPlaceObject *ip_object;
     CLSID clsid;
     HWND hwnd;
     RECT rect;
