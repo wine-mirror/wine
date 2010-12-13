@@ -88,6 +88,15 @@ static void update_readystate(PluginHost *host)
     }
 }
 
+/* FIXME: We shouldn't need this function and we should embed plugin directly in the main document */
+void get_pos_rect(PluginHost *host, RECT *ret)
+{
+    ret->top = 0;
+    ret->left = 0;
+    ret->bottom = host->rect.bottom - host->rect.top;
+    ret->right = host->rect.right - host->rect.left;
+}
+
 static void load_prop_bag(PluginHost *host, IPersistPropertyBag *persist_prop_bag)
 {
     IPropertyBag *prop_bag;
@@ -141,6 +150,9 @@ static void activate_plugin(PluginHost *host)
 {
     IClientSecurity *client_security;
     IQuickActivate *quick_activate;
+    IOleCommandTarget *cmdtrg;
+    IOleObject *ole_obj;
+    RECT rect;
     HRESULT hres;
 
     if(!host->plugin_unk)
@@ -176,6 +188,26 @@ static void activate_plugin(PluginHost *host)
     }
 
     load_plugin(host);
+
+    /* NOTE: Native QIs for IViewObjectEx, IActiveScript, an undocumented IID, IOleControl and IRunnableObject */
+
+    hres = IUnknown_QueryInterface(host->plugin_unk, &IID_IOleCommandTarget, (void**)&cmdtrg);
+    if(SUCCEEDED(hres)) {
+        FIXME("Use IOleCommandTarget\n");
+        IOleCommandTarget_Release(cmdtrg);
+    }
+
+    hres = IUnknown_QueryInterface(host->plugin_unk, &IID_IOleObject, (void**)&ole_obj);
+    if(FAILED(hres)) {
+        FIXME("Plugin does not support IOleObject\n");
+        return;
+    }
+
+    get_pos_rect(host, &rect);
+    hres = IOleObject_DoVerb(ole_obj, OLEIVERB_INPLACEACTIVATE, NULL, &host->IOleClientSite_iface, 0, host->hwnd, &rect);
+    IOleObject_Release(ole_obj);
+    if(FAILED(hres))
+        WARN("DoVerb failed: %08x\n", hres);
 }
 
 void update_plugin_window(PluginHost *host, HWND hwnd, const RECT *rect)
@@ -184,6 +216,8 @@ void update_plugin_window(PluginHost *host, HWND hwnd, const RECT *rect)
         FIXME("unhandled hwnd\n");
         return;
     }
+
+    host->rect = *rect;
 
     if(!host->hwnd) {
         host->hwnd = hwnd;
