@@ -7946,6 +7946,11 @@ static void test_MsiOpenProduct(void)
     /* LocalPackage has just the package name */
     hprod = 0xdeadbeef;
     r = MsiOpenProductA(prodcode, &hprod);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_INSTALL_PACKAGE_OPEN_FAILED || r == ERROR_SUCCESS,
        "Expected ERROR_INSTALL_PACKAGE_OPEN_FAILED or ERROR_SUCCESS, got %d\n", r);
     if (r == ERROR_SUCCESS)
@@ -7968,6 +7973,7 @@ static void test_MsiOpenProduct(void)
        "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
     ok(hprod == 0xdeadbeef, "Expected hprod to be unchanged\n");
 
+error:
     RegDeleteValueA(props, "LocalPackage");
     delete_key(props, "", access & KEY_WOW64_64KEY);
     RegCloseKey(props);
