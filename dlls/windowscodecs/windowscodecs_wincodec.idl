@@ -17,3 +17,87 @@
  */
 
 #include "wincodec.idl"
+
+[
+    helpstring("WIC Imaging Factory"),
+    threading(both),
+    uuid(cacaf262-9370-4615-a13b-9f5539da4c0a)
+]
+coclass WICImagingFactory { interface IWICImagingFactory; }
+
+[
+    helpstring("WIC BMP Decoder"),
+    threading(both),
+    uuid(6b462062-7cbf-400d-9fdb-813dd10f2778)
+]
+coclass WICBmpDecoder { interface IWICBitmapDecoder; }
+
+[
+    helpstring("WIC PNG Decoder"),
+    threading(both),
+    uuid(389ea17b-5078-4cde-b6ef-25c15175c751)
+]
+coclass WICPngDecoder { interface IWICBitmapDecoder; }
+
+[
+    helpstring("WIC PNG Encoder"),
+    threading(both),
+    uuid(27949969-876a-41d7-9447-568f6a35a4dc)
+]
+coclass WICPngEncoder { interface IWICBitmapEncoder; }
+
+[
+    helpstring("WIC BMP Encoder"),
+    threading(apartment),
+    uuid(69be8bb4-d66d-47c8-865a-ed1589433782)
+]
+coclass WICBmpEncoder { interface IWICBitmapEncoder; }
+
+[
+    helpstring("WIC GIF Decoder"),
+    threading(both),
+    uuid(381dda3c-9ce9-4834-a23e-1f98f8fc52be)
+]
+coclass WICGifDecoder { interface IWICBitmapDecoder; }
+
+[
+    helpstring("WIC ICO Decoder"),
+    threading(both),
+    uuid(c61bfcdf-2e0f-4aad-a8d7-e06bafebcdfe)
+]
+coclass WICIcoDecoder { interface IWICBitmapDecoder; }
+
+[
+    helpstring("WIC JPEG Decoder"),
+    threading(both),
+    uuid(9456a480-e88b-43ea-9e73-0b2d9b71b1ca)
+]
+coclass WICJpegDecoder { interface IWICBitmapDecoder; }
+
+[
+    helpstring("WIC TIFF Decoder"),
+    threading(both),
+    uuid(b54e85d9-fe23-499f-8b88-6acea713752b)
+]
+coclass WICTiffDecoder { interface IWICBitmapDecoder; }
+
+[
+    helpstring("WIC ICNS Encoder"),
+    threading(both),
+    uuid(312fb6f1-b767-409d-8a6d-0fc154d4f05c)
+]
+coclass WICIcnsEncoder { interface IWICBitmapEncoder; }
+
+[
+    helpstring("WIC Default Format Converter"),
+    threading(both),
+    uuid(1a3f11dc-b514-4b17-8c5f-2154513852f1)
+]
+coclass WICDefaultFormatConverter { interface IWICFormatConverter; }
+
+[
+    helpstring("WIC TGA Decoder"),
+    threading(both),
+    uuid(b11fc79a-67cc-43e6-a9ce-e3d54945d304)
+]
+coclass WineTgaDecoder { interface IWICBitmapDecoder; }
