@@ -10,6 +10,8 @@ C_SRCS = \
 	protocol.c \
 	storage.c
 
+IDL_R_SRCS = itss.idl
+
 RC_SRCS = rsrc.rc
 
 @MAKE_DLL_RULES@
