@@ -1479,7 +1479,7 @@ static void shader_cleanup(IWineD3DBaseShader *iface)
 {
     IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
 
-    shader->baseShader.device->shader_backend->shader_destroy(iface);
+    shader->baseShader.device->shader_backend->shader_destroy(shader);
     HeapFree(GetProcessHeap(), 0, shader->baseShader.reg_maps.constf);
     HeapFree(GetProcessHeap(), 0, shader->baseShader.function);
     shader_delete_constant_list(&shader->baseShader.constantsF);
@@ -1503,7 +1503,7 @@ static void shader_none_update_float_pixel_constants(IWineD3DDeviceImpl *device,
 static void shader_none_load_constants(const struct wined3d_context *context, char usePS, char useVS) {}
 static void shader_none_load_np2fixup_constants(void *shader_priv,
         const struct wined3d_gl_info *gl_info, const struct wined3d_state *state) {}
-static void shader_none_destroy(IWineD3DBaseShader *iface) {}
+static void shader_none_destroy(IWineD3DBaseShaderImpl *shader) {}
 static HRESULT shader_none_alloc(IWineD3DDeviceImpl *device) {return WINED3D_OK;}
 static void shader_none_free(IWineD3DDeviceImpl *device) {}
 static BOOL shader_none_dirty_const(void) {return FALSE;}

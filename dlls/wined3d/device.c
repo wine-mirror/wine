@@ -6182,8 +6182,9 @@ static void delete_opengl_contexts(IWineD3DDevice *iface, IWineD3DSwapChainImpl 
     gl_info = context->gl_info;
 
     IWineD3DDevice_EnumResources(iface, reset_unload_resources, NULL);
-    LIST_FOR_EACH_ENTRY(shader, &This->shaders, IWineD3DBaseShaderImpl, baseShader.shader_list_entry) {
-        This->shader_backend->shader_destroy((IWineD3DBaseShader *) shader);
+    LIST_FOR_EACH_ENTRY(shader, &This->shaders, IWineD3DBaseShaderImpl, baseShader.shader_list_entry)
+    {
+        This->shader_backend->shader_destroy(shader);
     }
 
     ENTER_GL();

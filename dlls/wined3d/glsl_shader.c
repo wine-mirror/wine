@@ -4672,10 +4672,10 @@ static void shader_glsl_deselect_depth_blt(void *shader_priv, const struct wined
     checkGLcall("glUseProgramObjectARB");
 }
 
-static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
+static void shader_glsl_destroy(IWineD3DBaseShaderImpl *shader)
+{
     const struct list *linked_programs;
-    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *) iface;
-    IWineD3DDeviceImpl *device = This->baseShader.device;
+    IWineD3DDeviceImpl *device = shader->baseShader.device;
     struct shader_glsl_priv *priv = device->shader_priv;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
@@ -4683,41 +4683,44 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
     /* Note: Do not use QueryInterface here to find out which shader type this is because this code
      * can be called from IWineD3DBaseShader::Release
      */
-    char pshader = shader_is_pshader_version(This->baseShader.reg_maps.shader_version.type);
+    char pshader = shader_is_pshader_version(shader->baseShader.reg_maps.shader_version.type);
 
-    if(pshader) {
-        struct glsl_pshader_private *shader_data;
-        shader_data = This->baseShader.backend_data;
+    if (pshader)
+    {
+        struct glsl_pshader_private *shader_data = shader->baseShader.backend_data;
+
         if (!shader_data || !shader_data->num_gl_shaders)
         {
             HeapFree(GetProcessHeap(), 0, shader_data);
-            This->baseShader.backend_data = NULL;
+            shader->baseShader.backend_data = NULL;
             return;
         }
 
         context = context_acquire(device, NULL);
         gl_info = context->gl_info;
 
-        if (priv->glsl_program && (IWineD3DBaseShader *)priv->glsl_program->pshader == iface)
+        if (priv->glsl_program && (IWineD3DBaseShaderImpl *)priv->glsl_program->pshader == shader)
         {
             ENTER_GL();
             shader_glsl_select(context, FALSE, FALSE);
             LEAVE_GL();
         }
-    } else {
-        struct glsl_vshader_private *shader_data;
-        shader_data = This->baseShader.backend_data;
+    }
+    else
+    {
+        struct glsl_vshader_private *shader_data = shader->baseShader.backend_data;
+
         if (!shader_data || !shader_data->num_gl_shaders)
         {
             HeapFree(GetProcessHeap(), 0, shader_data);
-            This->baseShader.backend_data = NULL;
+            shader->baseShader.backend_data = NULL;
             return;
         }
 
         context = context_acquire(device, NULL);
         gl_info = context->gl_info;
 
-        if (priv->glsl_program && (IWineD3DBaseShader *)priv->glsl_program->vshader == iface)
+        if (priv->glsl_program && (IWineD3DBaseShaderImpl *)priv->glsl_program->vshader == shader)
         {
             ENTER_GL();
             shader_glsl_select(context, FALSE, FALSE);
@@ -4725,7 +4728,7 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
         }
     }
 
-    linked_programs = &This->baseShader.linked_programs;
+    linked_programs = &shader->baseShader.linked_programs;
 
     TRACE("Deleting linked programs\n");
     if (linked_programs->next) {
@@ -4744,9 +4747,10 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
         LEAVE_GL();
     }
 
-    if(pshader) {
+    if (pshader)
+    {
+        struct glsl_pshader_private *shader_data = shader->baseShader.backend_data;
         UINT i;
-        struct glsl_pshader_private *shader_data = This->baseShader.backend_data;
 
         ENTER_GL();
         for(i = 0; i < shader_data->num_gl_shaders; i++) {
@@ -4759,8 +4763,8 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
     }
     else
     {
+        struct glsl_vshader_private *shader_data = shader->baseShader.backend_data;
         UINT i;
-        struct glsl_vshader_private *shader_data = This->baseShader.backend_data;
 
         ENTER_GL();
         for(i = 0; i < shader_data->num_gl_shaders; i++) {
@@ -4772,8 +4776,8 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
         HeapFree(GetProcessHeap(), 0, shader_data->gl_shaders);
     }
 
-    HeapFree(GetProcessHeap(), 0, This->baseShader.backend_data);
-    This->baseShader.backend_data = NULL;
+    HeapFree(GetProcessHeap(), 0, shader->baseShader.backend_data);
+    shader->baseShader.backend_data = NULL;
 
     context_release(context);
 }

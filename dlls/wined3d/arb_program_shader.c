@@ -4702,14 +4702,14 @@ static void shader_arb_deselect_depth_blt(void *shader_priv, const struct wined3
     }
 }
 
-static void shader_arb_destroy(IWineD3DBaseShader *iface) {
-    IWineD3DBaseShaderImpl *baseShader = (IWineD3DBaseShaderImpl *) iface;
-    IWineD3DDeviceImpl *device = baseShader->baseShader.device;
+static void shader_arb_destroy(IWineD3DBaseShaderImpl *shader)
+{
+    IWineD3DDeviceImpl *device = shader->baseShader.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
-    if (shader_is_pshader_version(baseShader->baseShader.reg_maps.shader_version.type))
+    if (shader_is_pshader_version(shader->baseShader.reg_maps.shader_version.type))
     {
-        struct arb_pshader_private *shader_data = baseShader->baseShader.backend_data;
+        struct arb_pshader_private *shader_data = shader->baseShader.backend_data;
         UINT i;
 
         if(!shader_data) return; /* This can happen if a shader was never compiled */
@@ -4731,11 +4731,11 @@ static void shader_arb_destroy(IWineD3DBaseShader *iface) {
 
         HeapFree(GetProcessHeap(), 0, shader_data->gl_shaders);
         HeapFree(GetProcessHeap(), 0, shader_data);
-        baseShader->baseShader.backend_data = NULL;
+        shader->baseShader.backend_data = NULL;
     }
     else
     {
-        struct arb_vshader_private *shader_data = baseShader->baseShader.backend_data;
+        struct arb_vshader_private *shader_data = shader->baseShader.backend_data;
         UINT i;
 
         if(!shader_data) return; /* This can happen if a shader was never compiled */
@@ -4757,7 +4757,7 @@ static void shader_arb_destroy(IWineD3DBaseShader *iface) {
 
         HeapFree(GetProcessHeap(), 0, shader_data->gl_shaders);
         HeapFree(GetProcessHeap(), 0, shader_data);
-        baseShader->baseShader.backend_data = NULL;
+        shader->baseShader.backend_data = NULL;
     }
 }
 

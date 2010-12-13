@@ -57,6 +57,7 @@ typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
 typedef struct IWineD3DPaletteImpl    IWineD3DPaletteImpl;
 typedef struct IWineD3DDeviceImpl     IWineD3DDeviceImpl;
 typedef struct IWineD3DSwapChainImpl  IWineD3DSwapChainImpl;
+struct IWineD3DBaseShaderImpl;
 
 /* Texture format fixups */
 
@@ -758,7 +759,7 @@ typedef struct {
     void (*shader_load_constants)(const struct wined3d_context *context, char usePS, char useVS);
     void (*shader_load_np2fixup_constants)(void *shader_priv, const struct wined3d_gl_info *gl_info,
             const struct wined3d_state *state);
-    void (*shader_destroy)(IWineD3DBaseShader *iface);
+    void (*shader_destroy)(struct IWineD3DBaseShaderImpl *shader);
     HRESULT (*shader_alloc_private)(IWineD3DDeviceImpl *device);
     void (*shader_free_private)(IWineD3DDeviceImpl *device);
     BOOL (*shader_dirtifyable_constants)(void);
