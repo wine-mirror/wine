@@ -118,8 +118,8 @@ struct glsl_shader_prog_link {
 };
 
 typedef struct {
-    IWineD3DVertexShader        *vshader;
-    IWineD3DPixelShader         *pshader;
+    IWineD3DVertexShaderImpl *vshader;
+    IWineD3DPixelShaderImpl *pshader;
     struct ps_compile_args      ps_args;
     struct vs_compile_args      vs_args;
 } glsl_program_key_t;
@@ -3691,8 +3691,8 @@ static void shader_glsl_input_pack(IWineD3DPixelShader *iface, struct wined3d_sh
 static void add_glsl_program_entry(struct shader_glsl_priv *priv, struct glsl_shader_prog_link *entry) {
     glsl_program_key_t key;
 
-    key.vshader = (IWineD3DVertexShader *)entry->vshader;
-    key.pshader = (IWineD3DPixelShader *)entry->pshader;
+    key.vshader = entry->vshader;
+    key.pshader = entry->pshader;
     key.vs_args = entry->vs_args;
     key.ps_args = entry->ps_args;
 
@@ -3708,8 +3708,8 @@ static struct glsl_shader_prog_link *get_glsl_program_entry(struct shader_glsl_p
     struct wine_rb_entry *entry;
     glsl_program_key_t key;
 
-    key.vshader = vshader;
-    key.pshader = pshader;
+    key.vshader = (IWineD3DVertexShaderImpl *)vshader;
+    key.pshader = (IWineD3DPixelShaderImpl *)pshader;
     key.vs_args = *vs_args;
     key.ps_args = *ps_args;
 
@@ -3723,8 +3723,8 @@ static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const struc
 {
     glsl_program_key_t key;
 
-    key.vshader = (IWineD3DVertexShader *)entry->vshader;
-    key.pshader = (IWineD3DPixelShader *)entry->pshader;
+    key.vshader = entry->vshader;
+    key.pshader = entry->pshader;
     key.vs_args = entry->vs_args;
     key.ps_args = entry->ps_args;
     wine_rb_remove(&priv->program_lookup, &key);
@@ -4788,11 +4788,11 @@ static int glsl_program_key_compare(const void *key, const struct wine_rb_entry 
             const struct glsl_shader_prog_link, program_lookup_entry);
     int cmp;
 
-    if (k->vshader > (IWineD3DVertexShader *)prog->vshader) return 1;
-    else if (k->vshader < (IWineD3DVertexShader *)prog->vshader) return -1;
+    if (k->vshader > prog->vshader) return 1;
+    else if (k->vshader < prog->vshader) return -1;
 
-    if (k->pshader > (IWineD3DPixelShader *)prog->pshader) return 1;
-    else if (k->pshader < (IWineD3DPixelShader *)prog->pshader) return -1;
+    if (k->pshader > prog->pshader) return 1;
+    else if (k->pshader < prog->pshader) return -1;
 
     if (k->vshader && (cmp = memcmp(&k->vs_args, &prog->vs_args, sizeof(prog->vs_args)))) return cmp;
     if (k->pshader && (cmp = memcmp(&k->ps_args, &prog->ps_args, sizeof(prog->ps_args)))) return cmp;
