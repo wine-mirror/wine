@@ -740,8 +740,11 @@ BOOL WIN_GetRectangles( HWND hwnd, enum coords_relative relative, RECT *rectWind
                     goto other_process;
                 }
                 win = parent;
-                OffsetRect( &window_rect, win->rectClient.left, win->rectClient.top );
-                OffsetRect( &client_rect, win->rectClient.left, win->rectClient.top );
+                if (win->parent)
+                {
+                    OffsetRect( &window_rect, win->rectClient.left, win->rectClient.top );
+                    OffsetRect( &client_rect, win->rectClient.left, win->rectClient.top );
+                }
             }
             break;
         }

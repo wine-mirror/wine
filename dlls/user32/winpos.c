@@ -445,7 +445,7 @@ static POINT WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, BOOL *mirrored )
                 mirror_from = TRUE;
                 offset.x += wndPtr->rectClient.right - wndPtr->rectClient.left;
             }
-            for (;;)
+            while (wndPtr->parent)
             {
                 offset.x += wndPtr->rectClient.left;
                 offset.y += wndPtr->rectClient.top;
@@ -460,6 +460,7 @@ static POINT WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, BOOL *mirrored )
                     goto other_process;
                 }
             }
+            if (wndPtr && wndPtr != WND_DESKTOP) WIN_ReleasePtr( wndPtr );
         }
     }
 
@@ -475,7 +476,7 @@ static POINT WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, BOOL *mirrored )
                 mirror_to = TRUE;
                 offset.x -= wndPtr->rectClient.right - wndPtr->rectClient.left;
             }
-            for (;;)
+            while (wndPtr->parent)
             {
                 offset.x -= wndPtr->rectClient.left;
                 offset.y -= wndPtr->rectClient.top;
@@ -490,6 +491,7 @@ static POINT WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, BOOL *mirrored )
                     goto other_process;
                 }
             }
+            if (wndPtr && wndPtr != WND_DESKTOP) WIN_ReleasePtr( wndPtr );
         }
     }
 
