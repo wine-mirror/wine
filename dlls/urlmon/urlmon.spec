@@ -85,3 +85,6 @@
 @ stdcall UrlMkSetSessionOption(long ptr long long)
 @ stub WriteHitLogging
 @ stub ZonesReInit
+
+410 stdcall @(long long) URLMON_410
+423 stdcall @(long long long long) URLMON_423

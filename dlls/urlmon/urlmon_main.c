@@ -861,3 +861,23 @@ BOOL WINAPI IsLoggingEnabledW(LPCWSTR url)
     FIXME("(%s)\n", debugstr_w(url));
     return FALSE;
 }
+
+/***********************************************************************
+ *           URLMON_410 (URLMON.410)
+ *    Undocumented, added in IE8
+ */
+BOOL WINAPI URLMON_410(DWORD unknown1, DWORD unknown2)
+{
+    FIXME("stub: %d %d\n", unknown1, unknown2);
+    return FALSE;
+}
+
+/***********************************************************************
+ *           URLMON_423 (URLMON.423)
+ *    Undocumented, added in IE8
+ */
+BOOL WINAPI URLMON_423(DWORD unknown1, DWORD unknown2, DWORD unknown3, DWORD unknown4)
+{
+    FIXME("stub: %d %d %d %d\n", unknown1, unknown2, unknown3, unknown4);
+    return FALSE;
+}
