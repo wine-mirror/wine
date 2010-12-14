@@ -1307,7 +1307,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
     /* oPos, oFog and oPts in D3D */
     static const char * const hwrastout_reg_names[] = {"OUT[10]", "OUT[11].x", "OUT[11].y"};
 
-    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
+    struct IWineD3DBaseShaderImpl *shader = ins->ctx->shader;
     const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     char pshader = shader_is_pshader_version(reg_maps->shader_version.type);
@@ -1333,7 +1333,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             /* pixel shaders >= 3.0 */
             if (reg_maps->shader_version.major >= 3)
             {
-                DWORD idx = ((IWineD3DPixelShaderImpl *)This)->input_reg_map[reg->idx];
+                DWORD idx = ((IWineD3DPixelShaderImpl *)shader)->input_reg_map[reg->idx];
                 unsigned int in_count = vec4_varyings(reg_maps->shader_version.major, gl_info);
 
                 if (reg->rel_addr)
@@ -1346,7 +1346,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                      * operation there */
                     if (idx)
                     {
-                        if (((IWineD3DPixelShaderImpl *)This)->declared_in_count > in_count)
+                        if (((IWineD3DPixelShaderImpl *)shader)->declared_in_count > in_count)
                         {
                             sprintf(register_name,
                                     "((%s + %u) > %d ? (%s + %u) > %d ? gl_SecondaryColor : gl_Color : IN[%s + %u])",
@@ -1360,7 +1360,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                     }
                     else
                     {
-                        if (((IWineD3DPixelShaderImpl *)This)->declared_in_count > in_count)
+                        if (((IWineD3DPixelShaderImpl *)shader)->declared_in_count > in_count)
                         {
                             sprintf(register_name, "((%s) > %d ? (%s) > %d ? gl_SecondaryColor : gl_Color : IN[%s])",
                                     rel_param.param_str, in_count - 1, rel_param.param_str, in_count,
@@ -1401,7 +1401,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                 }
                 else
                 {
-                    if (shader_constant_is_local(This, reg->idx))
+                    if (shader_constant_is_local(shader, reg->idx))
                         sprintf(register_name, "%cLC%u", prefix, reg->idx);
                     else
                         sprintf(register_name, "%cC[%u]", prefix, reg->idx);
@@ -2830,7 +2830,7 @@ static void shader_glsl_loop(const struct wined3d_shader_instruction *ins)
 {
     struct wined3d_shader_loop_state *loop_state = ins->ctx->loop_state;
     glsl_src_param_t src1_param;
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
+    struct IWineD3DBaseShaderImpl *shader = ins->ctx->shader;
     const DWORD *control_values = NULL;
     const local_constant *constant;
 
@@ -2912,7 +2912,7 @@ static void shader_glsl_end(const struct wined3d_shader_instruction *ins)
 
 static void shader_glsl_rep(const struct wined3d_shader_instruction *ins)
 {
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
+    struct IWineD3DBaseShaderImpl *shader = ins->ctx->shader;
     struct wined3d_shader_loop_state *loop_state = ins->ctx->loop_state;
     glsl_src_param_t src0_param;
     const DWORD *control_values = NULL;
@@ -3022,7 +3022,7 @@ static void shader_glsl_ret(const struct wined3d_shader_instruction *ins)
  ********************************************/
 static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
 {
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
+    struct IWineD3DBaseShaderImpl *shader = ins->ctx->shader;
     IWineD3DDeviceImpl *device = shader->baseShader.device;
     DWORD shader_version = WINED3D_SHADER_VERSION(ins->ctx->reg_maps->shader_version.major,
             ins->ctx->reg_maps->shader_version.minor);
@@ -3112,8 +3112,8 @@ static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
 
 static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
 {
-    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    IWineD3DDeviceImpl *device = This->baseShader.device;
+    struct IWineD3DBaseShaderImpl *shader = ins->ctx->shader;
+    IWineD3DDeviceImpl *device = shader->baseShader.device;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     glsl_sample_function_t sample_function;
     glsl_src_param_t coord_param, dx_param, dy_param;
@@ -3145,8 +3145,8 @@ static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
 
 static void shader_glsl_texldl(const struct wined3d_shader_instruction *ins)
 {
-    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    IWineD3DDeviceImpl *device = This->baseShader.device;
+    struct IWineD3DBaseShaderImpl *shader = ins->ctx->shader;
+    IWineD3DDeviceImpl *device = shader->baseShader.device;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     glsl_sample_function_t sample_function;
     glsl_src_param_t coord_param, lod_param;

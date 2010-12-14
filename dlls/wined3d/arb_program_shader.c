@@ -932,7 +932,7 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
 {
     /* oPos, oFog and oPts in D3D */
     static const char * const rastout_reg_names[] = {"TMP_OUT", "result.fogcoord", "result.pointsize"};
-    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
+    struct IWineD3DBaseShaderImpl *shader = ins->ctx->shader;
     const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
     BOOL pshader = shader_is_pshader_version(reg_maps->shader_version.type);
     struct shader_arb_ctx_priv *ctx = ins->ctx->backend_data;
@@ -1034,7 +1034,7 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
         case WINED3DSPR_CONST:
             if (!pshader && reg->rel_addr)
             {
-                const struct arb_vshader_private *shader_data = This->baseShader.backend_data;
+                const struct arb_vshader_private *shader_data = shader->baseShader.backend_data;
                 UINT rel_offset = shader_data->rel_offset;
                 BOOL aL = FALSE;
                 char rel_reg[50];
@@ -1328,8 +1328,8 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
     IWineD3DBaseTextureImpl *texture;
     const char *tex_type;
     BOOL np2_fixup = FALSE;
-    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    IWineD3DDeviceImpl *device = This->baseShader.device;
+    struct IWineD3DBaseShaderImpl *shader = ins->ctx->shader;
+    IWineD3DDeviceImpl *device = shader->baseShader.device;
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
     const char *mod;
     BOOL pshader = shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type);
@@ -1744,7 +1744,7 @@ static void shader_hw_nop(const struct wined3d_shader_instruction *ins)
 
 static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
 {
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
+    struct IWineD3DBaseShaderImpl *shader = ins->ctx->shader;
     const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
     BOOL pshader = shader_is_pshader_version(reg_maps->shader_version.type);
     struct shader_arb_ctx_priv *ctx = ins->ctx->backend_data;
@@ -3193,7 +3193,7 @@ static void shader_hw_ret(const struct wined3d_shader_instruction *ins)
 {
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *) ins->ctx->shader;
+    struct IWineD3DBaseShaderImpl *shader = ins->ctx->shader;
     BOOL vshader = shader_is_vshader_version(ins->ctx->reg_maps->shader_version.type);
 
     if(priv->target_version == ARB) return;
@@ -5231,7 +5231,7 @@ static void free_recorded_instruction(struct list *list)
 static void shader_arb_handle_instruction(const struct wined3d_shader_instruction *ins) {
     SHADER_HANDLER hw_fct;
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
-    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
+    struct IWineD3DBaseShaderImpl *shader = ins->ctx->shader;
     struct control_frame *control_frame;
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
     BOOL bool_const;
@@ -5262,7 +5262,7 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
                 list_init(&priv->record);
                 priv->recording = TRUE;
                 control_frame->outer_loop = TRUE;
-                get_loop_control_const(ins, This, ins->src[0].reg.idx, &control_frame->loop_control);
+                get_loop_control_const(ins, shader, ins->src[0].reg.idx, &control_frame->loop_control);
                 return; /* Instruction is handled */
             }
             /* Record this loop in the outer loop's recording */
@@ -5359,7 +5359,7 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
         list_add_head(&priv->control_frames, &control_frame->entry);
         control_frame->type = IF;
 
-        bool_const = get_bool_const(ins, This, ins->src[0].reg.idx);
+        bool_const = get_bool_const(ins, shader, ins->src[0].reg.idx);
         if(ins->src[0].modifiers == WINED3DSPSM_NOT) bool_const = !bool_const;
         if (!priv->muted && !bool_const)
         {

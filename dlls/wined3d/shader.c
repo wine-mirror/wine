@@ -1185,7 +1185,7 @@ void shader_generate_main(IWineD3DBaseShaderImpl *shader, struct wined3d_shader_
     loop_state.current_depth = 0;
     loop_state.current_reg = 0;
 
-    ctx.shader = (IWineD3DBaseShader *)shader;
+    ctx.shader = shader;
     ctx.gl_info = &device->adapter->gl_info;
     ctx.reg_maps = reg_maps;
     ctx.buffer = buffer;
