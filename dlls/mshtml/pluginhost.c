@@ -364,8 +364,17 @@ static HRESULT WINAPI PHClientSite_GetMoniker(IOleClientSite *iface, DWORD dwAss
 static HRESULT WINAPI PHClientSite_GetContainer(IOleClientSite *iface, IOleContainer **ppContainer)
 {
     PluginHost *This = impl_from_IOleClientSite(iface);
-    FIXME("(%p)->(%p)\n", This, ppContainer);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, ppContainer);
+
+    if(!This->doc) {
+        ERR("Called on detached object\n");
+        return E_UNEXPECTED;
+    }
+
+    *ppContainer = &This->doc->basedoc.IOleContainer_iface;
+    IOleContainer_AddRef(*ppContainer);
+    return S_OK;
 }
 
 static HRESULT WINAPI PHClientSite_ShowObject(IOleClientSite *iface)

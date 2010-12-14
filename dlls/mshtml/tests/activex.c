@@ -1164,6 +1164,32 @@ static const IClassFactoryVtbl ClassFactoryVtbl = {
 
 static IClassFactory activex_cf = { &ClassFactoryVtbl };
 
+static void test_container(IHTMLDocument2 *doc_obj)
+{
+    IHTMLWindow2 *parent_window;
+    IOleContainer *container;
+    IHTMLDocument2 *doc;
+    HRESULT hres;
+
+    container = NULL;
+    hres = IOleClientSite_GetContainer(client_site, &container);
+    ok(hres == S_OK, "GetContainer failed: %08x\n", hres);
+    ok(container != NULL, "container == NULL\n");
+
+    hres = IHTMLDocument2_get_parentWindow(doc_obj, &parent_window);
+    ok(hres == S_OK, "get_parentWindow failed: %08x\n", hres);
+    ok(parent_window != NULL, "parentWindow == NULL\n");
+
+    hres = IHTMLWindow2_get_document(parent_window, &doc);
+    ok(hres == S_OK, "get_document failed: %08x\n", hres);
+    ok(doc != NULL, "doc == NULL\n");
+    ok(iface_cmp((IUnknown*)doc, (IUnknown*)container), "container != doc\n");
+    IHTMLDocument2_Release(doc);
+
+    IHTMLWindow2_Release(parent_window);
+    IOleContainer_Release(container);
+}
+
 static void test_ui_activate(void)
 {
     IOleInPlaceSite *ip_site;
@@ -1779,6 +1805,7 @@ static void test_object_ax(void)
     CHECK_CALLED(SetObjectRects);
 
     test_ui_activate();
+    test_container(notif_doc);
 
     SET_EXPECT(UIDeactivate);
     SET_EXPECT(Invoke_ENABLED);
