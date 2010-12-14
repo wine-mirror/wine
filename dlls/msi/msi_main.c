@@ -118,14 +118,19 @@ ITypeLib *get_msi_typelib( LPWSTR *path )
 }
 
 typedef struct tagIClassFactoryImpl {
-    const IClassFactoryVtbl *lpVtbl;
+    IClassFactory IClassFactory_iface;
     HRESULT (*create_object)( IUnknown*, LPVOID* );
 } IClassFactoryImpl;
+
+static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, IClassFactoryImpl, IClassFactory_iface);
+}
 
 static HRESULT WINAPI MsiCF_QueryInterface(LPCLASSFACTORY iface,
                 REFIID riid,LPVOID *ppobj)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
 
     TRACE("%p %s %p\n",This,debugstr_guid(riid),ppobj);
 
@@ -154,7 +159,7 @@ static ULONG WINAPI MsiCF_Release(LPCLASSFACTORY iface)
 static HRESULT WINAPI MsiCF_CreateInstance(LPCLASSFACTORY iface,
     LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     IUnknown *unk = NULL;
     HRESULT r;
 
@@ -190,9 +195,9 @@ static const IClassFactoryVtbl MsiCF_Vtbl =
     MsiCF_LockServer
 };
 
-static IClassFactoryImpl MsiServer_CF = { &MsiCF_Vtbl, create_msiserver };
-static IClassFactoryImpl WineMsiCustomRemote_CF = { &MsiCF_Vtbl, create_msi_custom_remote };
-static IClassFactoryImpl WineMsiRemotePackage_CF = { &MsiCF_Vtbl, create_msi_remote_package };
+static IClassFactoryImpl MsiServer_CF = { { &MsiCF_Vtbl }, create_msiserver };
+static IClassFactoryImpl WineMsiCustomRemote_CF = { { &MsiCF_Vtbl }, create_msi_custom_remote };
+static IClassFactoryImpl WineMsiRemotePackage_CF = { { &MsiCF_Vtbl }, create_msi_remote_package };
 
 /******************************************************************
  * DllGetClassObject          [MSI.@]
