@@ -25,6 +25,7 @@
 #include <float.h>
 
 #define COBJMACROS
+#define CONST_VTABLE
 #include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"
@@ -76,7 +77,7 @@ static BOOL HAVE_OLEAUT32_INT_PTR;
  */
 typedef struct IRecordInfoImpl
 {
-  const IRecordInfoVtbl *lpvtbl;
+  IRecordInfo IRecordInfo_iface;
   LONG ref;
   DWORD sizeCalled;
   DWORD clearCalled;
@@ -84,12 +85,17 @@ typedef struct IRecordInfoImpl
 
 static const IRecordInfoVtbl IRecordInfoImpl_VTable;
 
+static inline IRecordInfoImpl *impl_from_IRecordInfo(IRecordInfo *iface)
+{
+  return CONTAINING_RECORD(iface, IRecordInfoImpl, IRecordInfo_iface);
+}
+
 static IRecordInfoImpl *IRecordInfoImpl_Construct(void)
 {
   IRecordInfoImpl *rec;
 
   rec = HeapAlloc(GetProcessHeap(), 0, sizeof(IRecordInfoImpl));
-  rec->lpvtbl = &IRecordInfoImpl_VTable;
+  rec->IRecordInfo_iface.lpVtbl = &IRecordInfoImpl_VTable;
   rec->ref = START_REF_COUNT;
   rec->clearCalled = 0;
   rec->sizeCalled = 0;
@@ -98,13 +104,13 @@ static IRecordInfoImpl *IRecordInfoImpl_Construct(void)
 
 static ULONG CALLBACK IRecordInfoImpl_AddRef(IRecordInfo *iface)
 {
-  IRecordInfoImpl* This=(IRecordInfoImpl*)iface;
+  IRecordInfoImpl* This = impl_from_IRecordInfo(iface);
   return InterlockedIncrement(&This->ref);
 }
 
 static ULONG CALLBACK IRecordInfoImpl_Release(IRecordInfo *iface)
 {
-  IRecordInfoImpl* This=(IRecordInfoImpl*)iface;
+  IRecordInfoImpl* This = impl_from_IRecordInfo(iface);
   return InterlockedDecrement(&This->ref);
 }
 
@@ -112,14 +118,14 @@ static BOOL fail_GetSize; /* Whether to fail the GetSize call */
 
 static HRESULT CALLBACK IRecordInfoImpl_RecordClear(IRecordInfo *iface, PVOID pvExisting)
 {
-  IRecordInfoImpl* This=(IRecordInfoImpl*)iface;
+  IRecordInfoImpl* This = impl_from_IRecordInfo(iface);
   This->clearCalled++;
   return S_OK;
 }
 
 static HRESULT CALLBACK IRecordInfoImpl_GetSize(IRecordInfo *iface, ULONG* size)
 {
-  IRecordInfoImpl* This=(IRecordInfoImpl*)iface;
+  IRecordInfoImpl* This = impl_from_IRecordInfo(iface);
   This->sizeCalled++;
   *size = 17;
   if (fail_GetSize)
@@ -1449,7 +1455,7 @@ static void test_SafeArrayCreateEx(void)
     hres = pSafeArrayGetRecordInfo(sa, &saRec);
 
     ok(hres == S_OK,"GRI failed\n");
-    ok(saRec == (IRecordInfo*)iRec,"Different saRec\n");
+    ok(saRec == &iRec->IRecordInfo_iface, "Different saRec\n");
     ok(iRec->ref == START_REF_COUNT + 2, "Didn't AddRef %d\n", iRec->ref);
     if (iRec->ref == START_REF_COUNT + 2)
       IRecordInfo_Release(saRec);
