@@ -29,7 +29,10 @@
 #include "mshtml.h"
 #include "docobj.h"
 #include "hlink.h"
+#include "dispex.h"
 #include "mshtmhst.h"
+#include "activscp.h"
+#include "objsafe.h"
 #include "mshtml_test.h"
 
 #define DEFINE_EXPECT(func) \
@@ -75,6 +78,7 @@ DEFINE_EXPECT(InPlaceObject_GetWindow);
 DEFINE_EXPECT(SetObjectRects);
 DEFINE_EXPECT(InPlaceDeactivate);
 DEFINE_EXPECT(UIDeactivate);
+DEFINE_EXPECT(QueryService_TestActiveX);
 
 static HWND container_hwnd, plugin_hwnd;
 
@@ -471,7 +475,7 @@ static HRESULT WINAPI PersistPropertyBag_Load(IPersistPropertyBag *face, IProper
     hres = IOleClientSite_QueryInterface(client_site, &IID_IServiceProvider, (void**)&sp);
     ok(hres == S_OK, "Could not get IServiceProvider iface: %08x\n", hres);
 
-    hres = IServiceProvider_QueryService(sp, &IID_IBindHost, &SID_SBindHost, (void**)&bind_host2);
+    hres = IServiceProvider_QueryService(sp, &SID_SBindHost, &IID_IBindHost, (void**)&bind_host2);
     ok(hres == S_OK, "QueryService(SID_SBindHost) failed: %08x\n", hres);
     IServiceProvider_Release(sp);
 
@@ -1166,9 +1170,11 @@ static IClassFactory activex_cf = { &ClassFactoryVtbl };
 
 static void test_container(IHTMLDocument2 *doc_obj)
 {
-    IHTMLWindow2 *parent_window;
+    IHTMLWindow2 *parent_window, *html_window;
+    IServiceProvider *serv_prov;
     IOleContainer *container;
     IHTMLDocument2 *doc;
+    IUnknown *unk;
     HRESULT hres;
 
     container = NULL;
@@ -1185,6 +1191,23 @@ static void test_container(IHTMLDocument2 *doc_obj)
     ok(doc != NULL, "doc == NULL\n");
     ok(iface_cmp((IUnknown*)doc, (IUnknown*)container), "container != doc\n");
     IHTMLDocument2_Release(doc);
+
+    hres = IOleClientSite_QueryInterface(client_site, &IID_IServiceProvider, (void**)&serv_prov);
+    ok(hres == S_OK, "Could not get IServiceProvider iface: %08x\n", hres);
+
+    hres = IServiceProvider_QueryService(serv_prov, &IID_IHTMLWindow2, &IID_IHTMLWindow2, (void**)&html_window);
+    ok(hres == S_OK, "Could not get IHTMLWindow2 service: %08x\n", hres);
+    todo_wine
+    ok(!iface_cmp((IUnknown*)html_window, (IUnknown*)parent_window), "html_window != parent_window\n");
+    IHTMLWindow2_Release(html_window);
+
+    SET_EXPECT(QueryService_TestActiveX);
+    hres = IServiceProvider_QueryService(serv_prov, &CLSID_TestActiveX, &IID_IUnknown, (void**)&unk);
+    ok(hres == S_OK, "QueryService(CLSID_TestActiveX) failed: %08x\n", hres);
+    ok(unk == (IUnknown*)&OleObject, "unexpected unk %p\n", unk);
+    CHECK_CALLED(QueryService_TestActiveX);
+
+    IServiceProvider_Release(serv_prov);
 
     IHTMLWindow2_Release(parent_window);
     IOleContainer_Release(container);
@@ -1567,6 +1590,45 @@ static const IOleDocumentSiteVtbl DocumentSiteVtbl = {
 
 static IOleDocumentSite DocumentSite = { &DocumentSiteVtbl };
 
+static HRESULT WINAPI ServiceProvider_QueryInterface(IServiceProvider *iface,
+                                                     REFIID riid, void **ppv)
+{
+    return cs_qi(riid, ppv);
+}
+
+static ULONG WINAPI ServiceProvider_AddRef(IServiceProvider *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ServiceProvider_Release(IServiceProvider *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFGUID guidService,
+        REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&CLSID_TestActiveX, guidService)) {
+        CHECK_EXPECT(QueryService_TestActiveX);
+        ok(IsEqualGUID(&IID_IUnknown, riid), "unexpected riid %s\n", debugstr_guid(riid));
+        *ppv = &OleObject;
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static const IServiceProviderVtbl ServiceProviderVtbl = {
+    ServiceProvider_QueryInterface,
+    ServiceProvider_AddRef,
+    ServiceProvider_Release,
+    ServiceProvider_QueryService
+};
+
+static IServiceProvider ServiceProvider = { &ServiceProviderVtbl };
+
 static HRESULT cs_qi(REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -1577,6 +1639,8 @@ static HRESULT cs_qi(REFIID riid, void **ppv)
         *ppv = &DocumentSite;
     else if(IsEqualGUID(&IID_IOleWindow, riid) || IsEqualGUID(&IID_IOleInPlaceSite, riid))
         *ppv = &InPlaceSite;
+    else if(IsEqualGUID(riid, &IID_IServiceProvider))
+        *ppv = &ServiceProvider;
 
     return *ppv ? S_OK : E_NOINTERFACE;
 }

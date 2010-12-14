@@ -1020,8 +1020,14 @@ static HRESULT WINAPI PHServiceProvider_QueryService(IServiceProvider *iface, RE
         return IOleClientSite_QueryInterface(&This->IOleClientSite_iface, riid, ppv);
     }
 
-    FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
-    return E_NOINTERFACE;
+    TRACE("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
+
+    if(!This->doc || !This->doc->basedoc.window) {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    return IServiceProvider_QueryService(SERVPROV(This->doc->basedoc.window), guidService, riid, ppv);
 }
 
 static const IServiceProviderVtbl ServiceProviderVtbl = {
