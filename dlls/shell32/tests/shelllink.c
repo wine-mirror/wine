@@ -168,15 +168,15 @@ static void test_get_set(void)
 
     CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                      &IID_IShellLinkW, (LPVOID*)&slW);
-    if (!slW)
-        skip("SetPath with NULL parameter crashes on Win9x\n");
+    if (!slW /* Win9x */ || !pGetLongPathNameA /* NT4 */)
+        skip("SetPath with NULL parameter crashes on Win9x and some NT4\n");
     else
     {
         IShellLinkW_Release(slW);
         r = IShellLinkA_SetPath(sl, NULL);
         ok(r==E_INVALIDARG ||
            broken(r==S_OK), /* Some Win95 and NT4 */
-           "SetPath failed (0x%08x)\n", r);
+           "SetPath returned wrong error (0x%08x)\n", r);
     }
 
     r = IShellLinkA_SetPath(sl, "");
@@ -808,11 +808,16 @@ static void test_datalink(void)
     ok( r == E_FAIL, "CopyDataBlock failed\n");
     ok( dar == NULL, "should be null\n");
 
-    r = IShellLinkW_SetPath(sl, NULL);
-    ok(r == E_INVALIDARG, "set path failed\n");
+    if (!pGetLongPathNameA /* NT4 */)
+        skip("SetPath with NULL parameter crashes on NT4\n");
+    else
+    {
+        r = IShellLinkW_SetPath(sl, NULL);
+        ok(r == E_INVALIDARG, "SetPath returned wrong error (0x%08x)\n", r);
+    }
 
     r = IShellLinkW_SetPath(sl, lnk);
-    ok(r == S_OK, "set path failed\n");
+    ok(r == S_OK, "SetPath failed\n");
 
 if (0)
 {
