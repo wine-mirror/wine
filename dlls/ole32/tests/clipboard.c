@@ -19,6 +19,7 @@
  */
 
 #define COBJMACROS
+#define CONST_VTABLE
 #define NONAMELESSUNION
 
 #include <stdarg.h>
@@ -49,7 +50,7 @@ static inline char *dump_fmtetc(FORMATETC *fmt)
 }
 
 typedef struct DataObjectImpl {
-    const IDataObjectVtbl *lpVtbl;
+    IDataObject IDataObject_iface;
     LONG ref;
 
     FORMATETC *fmtetc;
@@ -61,7 +62,7 @@ typedef struct DataObjectImpl {
 } DataObjectImpl;
 
 typedef struct EnumFormatImpl {
-    const IEnumFORMATETCVtbl *lpVtbl;
+    IEnumFORMATETC IEnumFORMATETC_iface;
     LONG ref;
 
     FORMATETC *fmtetc;
@@ -79,9 +80,19 @@ static UINT cf_stream, cf_storage, cf_global, cf_another, cf_onemore;
 
 static HRESULT EnumFormatImpl_Create(FORMATETC *fmtetc, UINT size, LPENUMFORMATETC *lplpformatetc);
 
+static inline DataObjectImpl *impl_from_IDataObject(IDataObject *iface)
+{
+    return CONTAINING_RECORD(iface, DataObjectImpl, IDataObject_iface);
+}
+
+static inline EnumFormatImpl *impl_from_IEnumFORMATETC(IEnumFORMATETC *iface)
+{
+    return CONTAINING_RECORD(iface, EnumFormatImpl, IEnumFORMATETC_iface);
+}
+
 static HRESULT WINAPI EnumFormatImpl_QueryInterface(IEnumFORMATETC *iface, REFIID riid, LPVOID *ppvObj)
 {
-    EnumFormatImpl *This = (EnumFormatImpl*)iface;
+    EnumFormatImpl *This = impl_from_IEnumFORMATETC(iface);
 
     if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IEnumFORMATETC)) {
         IEnumFORMATETC_AddRef(iface);
@@ -94,14 +105,14 @@ static HRESULT WINAPI EnumFormatImpl_QueryInterface(IEnumFORMATETC *iface, REFII
 
 static ULONG WINAPI EnumFormatImpl_AddRef(IEnumFORMATETC *iface)
 {
-    EnumFormatImpl *This = (EnumFormatImpl*)iface;
+    EnumFormatImpl *This = impl_from_IEnumFORMATETC(iface);
     LONG ref = InterlockedIncrement(&This->ref);
     return ref;
 }
 
 static ULONG WINAPI EnumFormatImpl_Release(IEnumFORMATETC *iface)
 {
-    EnumFormatImpl *This = (EnumFormatImpl*)iface;
+    EnumFormatImpl *This = impl_from_IEnumFORMATETC(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     if(!ref) {
@@ -115,7 +126,7 @@ static ULONG WINAPI EnumFormatImpl_Release(IEnumFORMATETC *iface)
 static HRESULT WINAPI EnumFormatImpl_Next(IEnumFORMATETC *iface, ULONG celt,
                                           FORMATETC *rgelt, ULONG *pceltFetched)
 {
-    EnumFormatImpl *This = (EnumFormatImpl*)iface;
+    EnumFormatImpl *This = impl_from_IEnumFORMATETC(iface);
     ULONG count, i;
 
     trace("next: count %d cur %d\n", celt, This->cur);
@@ -147,7 +158,7 @@ static HRESULT WINAPI EnumFormatImpl_Skip(IEnumFORMATETC *iface, ULONG celt)
 
 static HRESULT WINAPI EnumFormatImpl_Reset(IEnumFORMATETC *iface)
 {
-    EnumFormatImpl *This = (EnumFormatImpl*)iface;
+    EnumFormatImpl *This = impl_from_IEnumFORMATETC(iface);
 
     This->cur = 0;
     return S_OK;
@@ -174,7 +185,7 @@ static HRESULT EnumFormatImpl_Create(FORMATETC *fmtetc, UINT fmtetc_cnt, IEnumFO
     EnumFormatImpl *ret;
 
     ret = HeapAlloc(GetProcessHeap(), 0, sizeof(EnumFormatImpl));
-    ret->lpVtbl = &VT_EnumFormatImpl;
+    ret->IEnumFORMATETC_iface.lpVtbl = &VT_EnumFormatImpl;
     ret->ref = 1;
     ret->cur = 0;
     ret->fmtetc_cnt = fmtetc_cnt;
@@ -186,7 +197,7 @@ static HRESULT EnumFormatImpl_Create(FORMATETC *fmtetc, UINT fmtetc_cnt, IEnumFO
 
 static HRESULT WINAPI DataObjectImpl_QueryInterface(IDataObject *iface, REFIID riid, LPVOID *ppvObj)
 {
-    DataObjectImpl *This = (DataObjectImpl*)iface;
+    DataObjectImpl *This = impl_from_IDataObject(iface);
 
     if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDataObject)) {
         IDataObject_AddRef(iface);
@@ -199,14 +210,14 @@ static HRESULT WINAPI DataObjectImpl_QueryInterface(IDataObject *iface, REFIID r
 
 static ULONG WINAPI DataObjectImpl_AddRef(IDataObject* iface)
 {
-    DataObjectImpl *This = (DataObjectImpl*)iface;
+    DataObjectImpl *This = impl_from_IDataObject(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
     return ref;
 }
 
 static ULONG WINAPI DataObjectImpl_Release(IDataObject* iface)
 {
-    DataObjectImpl *This = (DataObjectImpl*)iface;
+    DataObjectImpl *This = impl_from_IDataObject(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     if(!ref)
@@ -226,7 +237,7 @@ static ULONG WINAPI DataObjectImpl_Release(IDataObject* iface)
 
 static HRESULT WINAPI DataObjectImpl_GetData(IDataObject* iface, FORMATETC *pformatetc, STGMEDIUM *pmedium)
 {
-    DataObjectImpl *This = (DataObjectImpl*)iface;
+    DataObjectImpl *This = impl_from_IDataObject(iface);
     UINT i;
     BOOL foundFormat = FALSE;
 
@@ -282,7 +293,7 @@ static HRESULT WINAPI DataObjectImpl_GetDataHere(IDataObject* iface, FORMATETC *
 
 static HRESULT WINAPI DataObjectImpl_QueryGetData(IDataObject* iface, FORMATETC *pformatetc)
 {
-    DataObjectImpl *This = (DataObjectImpl*)iface;
+    DataObjectImpl *This = impl_from_IDataObject(iface);
     UINT i;
     BOOL foundFormat = FALSE;
 
@@ -320,7 +331,7 @@ static HRESULT WINAPI DataObjectImpl_SetData(IDataObject* iface, FORMATETC *pfor
 static HRESULT WINAPI DataObjectImpl_EnumFormatEtc(IDataObject* iface, DWORD dwDirection,
                                                    IEnumFORMATETC **ppenumFormatEtc)
 {
-    DataObjectImpl *This = (DataObjectImpl*)iface;
+    DataObjectImpl *This = impl_from_IDataObject(iface);
 
     DataObjectImpl_EnumFormatEtc_calls++;
 
@@ -371,7 +382,7 @@ static HRESULT DataObjectImpl_CreateText(LPCSTR text, LPDATAOBJECT *lplpdataobj)
     DataObjectImpl *obj;
 
     obj = HeapAlloc(GetProcessHeap(), 0, sizeof(DataObjectImpl));
-    obj->lpVtbl = &VT_DataObjectImpl;
+    obj->IDataObject_iface.lpVtbl = &VT_DataObjectImpl;
     obj->ref = 1;
     obj->text = GlobalAlloc(GMEM_MOVEABLE, strlen(text) + 1);
     strcpy(GlobalLock(obj->text), text);
@@ -398,7 +409,7 @@ static HRESULT DataObjectImpl_CreateComplex(LPDATAOBJECT *lplpdataobj)
     DEVMODEW dm;
 
     obj = HeapAlloc(GetProcessHeap(), 0, sizeof(DataObjectImpl));
-    obj->lpVtbl = &VT_DataObjectImpl;
+    obj->IDataObject_iface.lpVtbl = &VT_DataObjectImpl;
     obj->ref = 1;
     obj->text = GlobalAlloc(GMEM_MOVEABLE, strlen(cmpl_text_data) + 1);
     strcpy(GlobalLock(obj->text), cmpl_text_data);
