@@ -178,7 +178,7 @@ static void set_plugin_readystate(READYSTATE state)
     IPropertyNotifySink_Release(prop_notif);
 }
 
-static void test_mon_displayname(IMoniker *mon, const char *exname)
+static void test_mon_displayname(IMoniker *mon, const char *exname, const char *broken_name)
 {
     LPOLESTR display_name;
     DWORD mksys;
@@ -186,7 +186,8 @@ static void test_mon_displayname(IMoniker *mon, const char *exname)
 
     hres = IMoniker_GetDisplayName(mon, NULL, NULL, &display_name);
     ok(hres == S_OK, "GetDisplayName failed: %08x\n", hres);
-    ok(!strcmp_wa(display_name, exname), "display_name = %s\n", wine_dbgstr_w(display_name));
+    ok(!strcmp_wa(display_name, exname) || broken(broken_name && !strcmp_wa(display_name, broken_name)),
+        "display_name = %s\n", wine_dbgstr_w(display_name));
     CoTaskMemFree(display_name);
 
     hres = IMoniker_IsSystemMoniker(mon, &mksys);
@@ -486,7 +487,7 @@ static HRESULT WINAPI PersistPropertyBag_Load(IPersistPropertyBag *face, IProper
     hres = IBindHost_CreateMoniker(bind_host, test_swfW, NULL, &mon, 0);
     ok(hres == S_OK, "CreateMoniker failed: %08x\n", hres);
     ok(mon != NULL, "mon == NULL\n");
-    test_mon_displayname(mon, "about:test.swf");
+    test_mon_displayname(mon, "about:test.swf", "about:blanktest.swf");
     IMoniker_Release(mon);
 
     IBindHost_Release(bind_host);
@@ -495,7 +496,7 @@ static HRESULT WINAPI PersistPropertyBag_Load(IPersistPropertyBag *face, IProper
     hres = IOleClientSite_GetMoniker(client_site, OLEGETMONIKER_ONLYIFTHERE, OLEWHICHMK_CONTAINER, &mon);
     ok(hres == S_OK, "GetMoniker failed: %08x\n", hres);
     ok(mon != NULL, "mon == NULL\n");
-    test_mon_displayname(mon, "about:blank");
+    test_mon_displayname(mon, "about:blank", NULL);
     IMoniker_Release(mon);
 
     set_plugin_readystate(READYSTATE_COMPLETE);
