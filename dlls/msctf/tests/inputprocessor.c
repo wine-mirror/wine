@@ -21,6 +21,7 @@
 #include <stdio.h>
 
 #define COBJMACROS
+#define CONST_VTABLE
 #include "wine/test.h"
 #include "winuser.h"
 #include "initguid.h"
@@ -148,10 +149,15 @@ static inline void _sink_check_ok(INT *sink, const CHAR* name)
  **********************************************************************/
 typedef struct tagTextStoreACP
 {
-    const ITextStoreACPVtbl *TextStoreACPVtbl;
+    ITextStoreACP ITextStoreACP_iface;
     LONG refCount;
 
 } TextStoreACP;
+
+static inline TextStoreACP *impl_from_ITextStoreACP(ITextStoreACP *iface)
+{
+    return CONTAINING_RECORD(iface, TextStoreACP, ITextStoreACP_iface);
+}
 
 static void TextStoreACP_Destructor(TextStoreACP *This)
 {
@@ -160,7 +166,7 @@ static void TextStoreACP_Destructor(TextStoreACP *This)
 
 static HRESULT WINAPI TextStoreACP_QueryInterface(ITextStoreACP *iface, REFIID iid, LPVOID *ppvOut)
 {
-    TextStoreACP *This = (TextStoreACP *)iface;
+    TextStoreACP *This = impl_from_ITextStoreACP(iface);
     *ppvOut = NULL;
 
     if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITextStoreACP))
@@ -179,13 +185,13 @@ static HRESULT WINAPI TextStoreACP_QueryInterface(ITextStoreACP *iface, REFIID i
 
 static ULONG WINAPI TextStoreACP_AddRef(ITextStoreACP *iface)
 {
-    TextStoreACP *This = (TextStoreACP *)iface;
+    TextStoreACP *This = impl_from_ITextStoreACP(iface);
     return InterlockedIncrement(&This->refCount);
 }
 
 static ULONG WINAPI TextStoreACP_Release(ITextStoreACP *iface)
 {
-    TextStoreACP *This = (TextStoreACP *)iface;
+    TextStoreACP *This = impl_from_ITextStoreACP(iface);
     ULONG ret;
 
     ret = InterlockedDecrement(&This->refCount);
@@ -421,7 +427,7 @@ static HRESULT TextStoreACP_Constructor(IUnknown **ppOut)
     if (This == NULL)
         return E_OUTOFMEMORY;
 
-    This->TextStoreACPVtbl = &TextStoreACP_TextStoreACPVtbl;
+    This->ITextStoreACP_iface.lpVtbl = &TextStoreACP_TextStoreACPVtbl;
     This->refCount = 1;
 
     *ppOut = (IUnknown *)This;
@@ -433,9 +439,14 @@ static HRESULT TextStoreACP_Constructor(IUnknown **ppOut)
  **********************************************************************/
 typedef struct tagThreadMgrEventSink
 {
-    const ITfThreadMgrEventSinkVtbl *ThreadMgrEventSinkVtbl;
+    ITfThreadMgrEventSink ITfThreadMgrEventSink_iface;
     LONG refCount;
 } ThreadMgrEventSink;
+
+static inline ThreadMgrEventSink *impl_from_ITfThreadMgrEventSink(ITfThreadMgrEventSink *iface)
+{
+    return CONTAINING_RECORD(iface, ThreadMgrEventSink, ITfThreadMgrEventSink_iface);
+}
 
 static void ThreadMgrEventSink_Destructor(ThreadMgrEventSink *This)
 {
@@ -444,7 +455,7 @@ static void ThreadMgrEventSink_Destructor(ThreadMgrEventSink *This)
 
 static HRESULT WINAPI ThreadMgrEventSink_QueryInterface(ITfThreadMgrEventSink *iface, REFIID iid, LPVOID *ppvOut)
 {
-    ThreadMgrEventSink *This = (ThreadMgrEventSink *)iface;
+    ThreadMgrEventSink *This = impl_from_ITfThreadMgrEventSink(iface);
     *ppvOut = NULL;
 
     if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITfThreadMgrEventSink))
@@ -463,14 +474,14 @@ static HRESULT WINAPI ThreadMgrEventSink_QueryInterface(ITfThreadMgrEventSink *i
 
 static ULONG WINAPI ThreadMgrEventSink_AddRef(ITfThreadMgrEventSink *iface)
 {
-    ThreadMgrEventSink *This = (ThreadMgrEventSink *)iface;
+    ThreadMgrEventSink *This = impl_from_ITfThreadMgrEventSink(iface);
     ok (tmSinkRefCount == This->refCount,"ThreadMgrEventSink refcount off %i vs %i\n",This->refCount,tmSinkRefCount);
     return InterlockedIncrement(&This->refCount);
 }
 
 static ULONG WINAPI ThreadMgrEventSink_Release(ITfThreadMgrEventSink *iface)
 {
-    ThreadMgrEventSink *This = (ThreadMgrEventSink *)iface;
+    ThreadMgrEventSink *This = impl_from_ITfThreadMgrEventSink(iface);
     ULONG ret;
 
     ok (tmSinkRefCount == This->refCount,"ThreadMgrEventSink refcount off %i vs %i\n",This->refCount,tmSinkRefCount);
@@ -568,7 +579,7 @@ static HRESULT ThreadMgrEventSink_Constructor(IUnknown **ppOut)
     if (This == NULL)
         return E_OUTOFMEMORY;
 
-    This->ThreadMgrEventSinkVtbl = &ThreadMgrEventSink_ThreadMgrEventSinkVtbl;
+    This->ITfThreadMgrEventSink_iface.lpVtbl = &ThreadMgrEventSink_ThreadMgrEventSinkVtbl;
     This->refCount = 1;
 
     *ppOut = (IUnknown *)This;
@@ -588,16 +599,26 @@ typedef HRESULT (*LPFNCONSTRUCTOR)(IUnknown *pUnkOuter, IUnknown **ppvOut);
 
 typedef struct tagClassFactory
 {
-    const IClassFactoryVtbl *vtbl;
+    IClassFactory IClassFactory_iface;
     LONG   ref;
     LPFNCONSTRUCTOR ctor;
 } ClassFactory;
 
+static inline ClassFactory *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, ClassFactory, IClassFactory_iface);
+}
+
 typedef struct tagTextService
 {
-    const ITfTextInputProcessorVtbl *TextInputProcessorVtbl;
+    ITfTextInputProcessor ITfTextInputProcessor_iface;
     LONG refCount;
 } TextService;
+
+static inline TextService *impl_from_ITfTextInputProcessor(ITfTextInputProcessor *iface)
+{
+    return CONTAINING_RECORD(iface, TextService, ITfTextInputProcessor_iface);
+}
 
 static void ClassFactory_Destructor(ClassFactory *This)
 {
@@ -620,13 +641,13 @@ static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID r
 
 static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
 {
-    ClassFactory *This = (ClassFactory *)iface;
+    ClassFactory *This = impl_from_IClassFactory(iface);
     return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
 {
-    ClassFactory *This = (ClassFactory *)iface;
+    ClassFactory *This = impl_from_IClassFactory(iface);
     ULONG ret = InterlockedDecrement(&This->ref);
 
     if (ret == 0)
@@ -636,7 +657,7 @@ static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
 
 static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown *punkOuter, REFIID iid, LPVOID *ppvOut)
 {
-    ClassFactory *This = (ClassFactory *)iface;
+    ClassFactory *This = impl_from_IClassFactory(iface);
     HRESULT ret;
     IUnknown *obj;
 
@@ -672,7 +693,7 @@ static const IClassFactoryVtbl ClassFactoryVtbl = {
 static HRESULT ClassFactory_Constructor(LPFNCONSTRUCTOR ctor, LPVOID *ppvOut)
 {
     ClassFactory *This = HeapAlloc(GetProcessHeap(),0,sizeof(ClassFactory));
-    This->vtbl = &ClassFactoryVtbl;
+    This->IClassFactory_iface.lpVtbl = &ClassFactoryVtbl;
     This->ref = 1;
     This->ctor = ctor;
     *ppvOut = (LPVOID)This;
@@ -687,7 +708,7 @@ static void TextService_Destructor(TextService *This)
 
 static HRESULT WINAPI TextService_QueryInterface(ITfTextInputProcessor *iface, REFIID iid, LPVOID *ppvOut)
 {
-    TextService *This = (TextService *)iface;
+    TextService *This = impl_from_ITfTextInputProcessor(iface);
     *ppvOut = NULL;
 
     if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITfTextInputProcessor))
@@ -706,13 +727,13 @@ static HRESULT WINAPI TextService_QueryInterface(ITfTextInputProcessor *iface, R
 
 static ULONG WINAPI TextService_AddRef(ITfTextInputProcessor *iface)
 {
-    TextService *This = (TextService *)iface;
+    TextService *This = impl_from_ITfTextInputProcessor(iface);
     return InterlockedIncrement(&This->refCount);
 }
 
 static ULONG WINAPI TextService_Release(ITfTextInputProcessor *iface)
 {
-    TextService *This = (TextService *)iface;
+    TextService *This = impl_from_ITfTextInputProcessor(iface);
     ULONG ret;
 
     ret = InterlockedDecrement(&This->refCount);
@@ -757,7 +778,7 @@ static HRESULT TextService_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     if (This == NULL)
         return E_OUTOFMEMORY;
 
-    This->TextInputProcessorVtbl= &TextService_TextInputProcessorVtbl;
+    This->ITfTextInputProcessor_iface.lpVtbl = &TextService_TextInputProcessorVtbl;
     This->refCount = 1;
 
     *ppOut = (IUnknown *)This;
@@ -998,9 +1019,14 @@ static void test_ThreadMgrUnadviseSinks(void)
  **********************************************************************/
 typedef struct tagKeyEventSink
 {
-    const ITfKeyEventSinkVtbl *KeyEventSinkVtbl;
+    ITfKeyEventSink ITfKeyEventSink_iface;
     LONG refCount;
 } KeyEventSink;
+
+static inline KeyEventSink *impl_from_ITfKeyEventSink(ITfKeyEventSink *iface)
+{
+    return CONTAINING_RECORD(iface, KeyEventSink, ITfKeyEventSink_iface);
+}
 
 static void KeyEventSink_Destructor(KeyEventSink *This)
 {
@@ -1009,7 +1035,7 @@ static void KeyEventSink_Destructor(KeyEventSink *This)
 
 static HRESULT WINAPI KeyEventSink_QueryInterface(ITfKeyEventSink *iface, REFIID iid, LPVOID *ppvOut)
 {
-    KeyEventSink *This = (KeyEventSink *)iface;
+    KeyEventSink *This = impl_from_ITfKeyEventSink(iface);
     *ppvOut = NULL;
 
     if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITfKeyEventSink))
@@ -1028,13 +1054,13 @@ static HRESULT WINAPI KeyEventSink_QueryInterface(ITfKeyEventSink *iface, REFIID
 
 static ULONG WINAPI KeyEventSink_AddRef(ITfKeyEventSink *iface)
 {
-    KeyEventSink *This = (KeyEventSink *)iface;
+    KeyEventSink *This = impl_from_ITfKeyEventSink(iface);
     return InterlockedIncrement(&This->refCount);
 }
 
 static ULONG WINAPI KeyEventSink_Release(ITfKeyEventSink *iface)
 {
-    KeyEventSink *This = (KeyEventSink *)iface;
+    KeyEventSink *This = impl_from_ITfKeyEventSink(iface);
     ULONG ret;
 
     ret = InterlockedDecrement(&This->refCount);
@@ -1107,10 +1133,10 @@ static HRESULT KeyEventSink_Constructor(ITfKeyEventSink **ppOut)
     if (This == NULL)
         return E_OUTOFMEMORY;
 
-    This->KeyEventSinkVtbl = &KeyEventSink_KeyEventSinkVtbl;
+    This->ITfKeyEventSink_iface.lpVtbl = &KeyEventSink_KeyEventSinkVtbl;
     This->refCount = 1;
 
-    *ppOut = (ITfKeyEventSink*)This;
+    *ppOut = &This->ITfKeyEventSink_iface;
     return S_OK;
 }
 
@@ -1253,9 +1279,14 @@ static inline int check_context_refcount(ITfContext *iface)
  **********************************************************************/
 typedef struct tagTextEditSink
 {
-    const ITfTextEditSinkVtbl *TextEditSinkVtbl;
+    ITfTextEditSink ITfTextEditSink_iface;
     LONG refCount;
 } TextEditSink;
+
+static inline TextEditSink *impl_from_ITfTextEditSink(ITfTextEditSink *iface)
+{
+    return CONTAINING_RECORD(iface, TextEditSink, ITfTextEditSink_iface);
+}
 
 static void TextEditSink_Destructor(TextEditSink *This)
 {
@@ -1264,7 +1295,7 @@ static void TextEditSink_Destructor(TextEditSink *This)
 
 static HRESULT WINAPI TextEditSink_QueryInterface(ITfTextEditSink *iface, REFIID iid, LPVOID *ppvOut)
 {
-    TextEditSink *This = (TextEditSink *)iface;
+    TextEditSink *This = impl_from_ITfTextEditSink(iface);
     *ppvOut = NULL;
 
     if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITfTextEditSink))
@@ -1283,13 +1314,13 @@ static HRESULT WINAPI TextEditSink_QueryInterface(ITfTextEditSink *iface, REFIID
 
 static ULONG WINAPI TextEditSink_AddRef(ITfTextEditSink *iface)
 {
-    TextEditSink *This = (TextEditSink *)iface;
+    TextEditSink *This = impl_from_ITfTextEditSink(iface);
     return InterlockedIncrement(&This->refCount);
 }
 
 static ULONG WINAPI TextEditSink_Release(ITfTextEditSink *iface)
 {
-    TextEditSink *This = (TextEditSink *)iface;
+    TextEditSink *This = impl_from_ITfTextEditSink(iface);
     ULONG ret;
 
     ret = InterlockedDecrement(&This->refCount);
@@ -1323,10 +1354,10 @@ static HRESULT TextEditSink_Constructor(ITfTextEditSink **ppOut)
     if (This == NULL)
         return E_OUTOFMEMORY;
 
-    This->TextEditSinkVtbl = &TextEditSink_TextEditSinkVtbl;
+    This->ITfTextEditSink_iface.lpVtbl = &TextEditSink_TextEditSinkVtbl;
     This->refCount = 1;
 
-    *ppOut = (ITfTextEditSink*)This;
+    *ppOut = &This->ITfTextEditSink_iface;
     return S_OK;
 }
 
@@ -1603,9 +1634,14 @@ static void test_ClientId(void)
  **********************************************************************/
 typedef struct tagEditSession
 {
-    const ITfEditSessionVtbl *EditSessionVtbl;
+    ITfEditSession ITfEditSession_iface;
     LONG refCount;
 } EditSession;
+
+static inline EditSession *impl_from_ITfEditSession(ITfEditSession *iface)
+{
+    return CONTAINING_RECORD(iface, EditSession, ITfEditSession_iface);
+}
 
 static void EditSession_Destructor(EditSession *This)
 {
@@ -1614,7 +1650,7 @@ static void EditSession_Destructor(EditSession *This)
 
 static HRESULT WINAPI EditSession_QueryInterface(ITfEditSession *iface, REFIID iid, LPVOID *ppvOut)
 {
-    EditSession *This = (EditSession *)iface;
+    EditSession *This = impl_from_ITfEditSession(iface);
     *ppvOut = NULL;
 
     if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITfEditSession))
@@ -1633,13 +1669,13 @@ static HRESULT WINAPI EditSession_QueryInterface(ITfEditSession *iface, REFIID i
 
 static ULONG WINAPI EditSession_AddRef(ITfEditSession *iface)
 {
-    EditSession *This = (EditSession *)iface;
+    EditSession *This = impl_from_ITfEditSession(iface);
     return InterlockedIncrement(&This->refCount);
 }
 
 static ULONG WINAPI EditSession_Release(ITfEditSession *iface)
 {
-    EditSession *This = (EditSession *)iface;
+    EditSession *This = impl_from_ITfEditSession(iface);
     ULONG ret;
 
     ret = InterlockedDecrement(&This->refCount);
@@ -1760,10 +1796,10 @@ static HRESULT EditSession_Constructor(ITfEditSession **ppOut)
     if (This == NULL)
         return E_OUTOFMEMORY;
 
-    This->EditSessionVtbl = &EditSession_EditSessionVtbl;
+    This->ITfEditSession_iface.lpVtbl = &EditSession_EditSessionVtbl;
     This->refCount = 1;
 
-    *ppOut = (ITfEditSession*)This;
+    *ppOut = &This->ITfEditSession_iface;
     return S_OK;
 }
 
