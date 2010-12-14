@@ -448,11 +448,10 @@ static unsigned int get_instr_extra_regcount(enum WINED3D_SHADER_INSTRUCTION_HAN
 }
 
 /* Note that this does not count the loop register as an address register. */
-static HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3d_shader_frontend *fe,
+static HRESULT shader_get_registers_used(IWineD3DBaseShaderImpl *shader, const struct wined3d_shader_frontend *fe,
         struct wined3d_shader_reg_maps *reg_maps, struct wined3d_shader_signature_element *input_signature,
         struct wined3d_shader_signature_element *output_signature, const DWORD *byte_code, DWORD constf_size)
 {
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
     unsigned int cur_loop_depth = 0, max_loop_depth = 0;
     void *fe_data = shader->baseShader.frontend_data;
     struct wined3d_shader_version shader_version;
@@ -1607,7 +1606,7 @@ static HRESULT shader_set_function(IWineD3DBaseShaderImpl *shader, const DWORD *
     list_init(&shader->baseShader.constantsI);
 
     /* Second pass: figure out which registers are used, what the semantics are, etc. */
-    hr = shader_get_registers_used((IWineD3DBaseShader *)shader, fe,
+    hr = shader_get_registers_used(shader, fe,
             reg_maps, shader->baseShader.input_signature, shader->baseShader.output_signature,
             byte_code, float_const_count);
     if (FAILED(hr)) return hr;
