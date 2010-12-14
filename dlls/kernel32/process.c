@@ -541,6 +541,87 @@ static void set_additional_environment(void)
 }
 
 /***********************************************************************
+ *           set_wow64_environment
+ *
+ * Set the environment variables that change across 32/64/Wow64.
+ */
+static void set_wow64_environment(void)
+{
+    static const WCHAR archW[]    = {'P','R','O','C','E','S','S','O','R','_','A','R','C','H','I','T','E','C','T','U','R','E',0};
+    static const WCHAR arch6432W[] = {'P','R','O','C','E','S','S','O','R','_','A','R','C','H','I','T','E','W','6','4','3','2',0};
+    static const WCHAR x86W[] = {'x','8','6',0};
+    static const WCHAR versionW[] = {'M','a','c','h','i','n','e','\\',
+                                     'S','o','f','t','w','a','r','e','\\',
+                                     'M','i','c','r','o','s','o','f','t','\\',
+                                     'W','i','n','d','o','w','s','\\',
+                                     'C','u','r','r','e','n','t','V','e','r','s','i','o','n',0};
+    static const WCHAR progdirW[]   = {'P','r','o','g','r','a','m','F','i','l','e','s','D','i','r',0};
+    static const WCHAR progdir86W[] = {'P','r','o','g','r','a','m','F','i','l','e','s','D','i','r',' ','(','x','8','6',')',0};
+    static const WCHAR progfilesW[] = {'P','r','o','g','r','a','m','F','i','l','e','s',0};
+    static const WCHAR progw6432W[] = {'P','r','o','g','r','a','m','W','6','4','3','2',0};
+    static const WCHAR commondirW[]   = {'C','o','m','m','o','n','F','i','l','e','s','D','i','r',0};
+    static const WCHAR commondir86W[] = {'C','o','m','m','o','n','F','i','l','e','s','D','i','r',' ','(','x','8','6',')',0};
+    static const WCHAR commonfilesW[] = {'C','o','m','m','o','n','P','r','o','g','r','a','m','F','i','l','e','s',0};
+    static const WCHAR commonw6432W[] = {'C','o','m','m','o','n','P','r','o','g','r','a','m','W','6','4','3','2',0};
+
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    WCHAR arch[64];
+    WCHAR *value;
+    HANDLE hkey;
+
+    /* set the PROCESSOR_ARCHITECTURE variable */
+
+    if (GetEnvironmentVariableW( arch6432W, arch, sizeof(arch) ))
+    {
+        if (is_win64)
+        {
+            SetEnvironmentVariableW( archW, arch );
+            SetEnvironmentVariableW( arch6432W, NULL );
+        }
+    }
+    else if (GetEnvironmentVariableW( archW, arch, sizeof(arch) ))
+    {
+        if (is_wow64)
+        {
+            SetEnvironmentVariableW( arch6432W, arch );
+            SetEnvironmentVariableW( archW, x86W );
+        }
+    }
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, versionW );
+    if (NtOpenKey( &hkey, KEY_READ | KEY_WOW64_64KEY, &attr )) return;
+
+    /* set the ProgramFiles variables */
+
+    if ((value = get_reg_value( hkey, progdirW )))
+    {
+        if (is_win64 || is_wow64) SetEnvironmentVariableW( progw6432W, value );
+        if (is_win64 || !is_wow64) SetEnvironmentVariableW( progfilesW, value );
+    }
+    if (is_wow64 && (value = get_reg_value( hkey, progdir86W )))
+        SetEnvironmentVariableW( progfilesW, value );
+
+    /* set the CommonProgramFiles variables */
+
+    if ((value = get_reg_value( hkey, commondirW )))
+    {
+        if (is_win64 || is_wow64) SetEnvironmentVariableW( commonw6432W, value );
+        if (is_win64 || !is_wow64) SetEnvironmentVariableW( commonfilesW, value );
+    }
+    if (is_wow64 && (value = get_reg_value( hkey, commondir86W )))
+        SetEnvironmentVariableW( commonfilesW, value );
+
+    NtClose( hkey );
+}
+
+/***********************************************************************
  *              set_library_wargv
  *
  * Set the Wine library Unicode argv global variables.
@@ -1124,6 +1205,7 @@ void CDECL __wine_kernel_init(void)
         set_registry_environment( got_environment );
         set_additional_environment();
     }
+    set_wow64_environment();
 
     if (!(peb->ImageBaseAddress = LoadLibraryExW( main_exe_name, 0, DONT_RESOLVE_DLL_REFERENCES )))
     {
