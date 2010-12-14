@@ -268,12 +268,13 @@ static void create_environment_registry_keys( void )
     static const WCHAR ProcRevW[]  = {'P','R','O','C','E','S','S','O','R','_','R','E','V','I','S','I','O','N',0};
     static const WCHAR PercentDW[] = {'%','d',0};
     static const WCHAR Percent04XW[] = {'%','0','4','x',0};
-    static const WCHAR IntelCpuDescrW[]  = {'x','8','6',' ','F','a','m','i','l','y',' ','%','d',' ','M','o','d','e','l',' ','%','d',
+    static const WCHAR IntelCpuDescrW[]  = {'%','s',' ','F','a','m','i','l','y',' ','%','d',' ','M','o','d','e','l',' ','%','d',
                                             ' ','S','t','e','p','p','i','n','g',' ','%','d',',',' ','G','e','n','u','i','n','e','I','n','t','e','l',0};
 
     HKEY env_key;
     SYSTEM_CPU_INFORMATION sci;
     WCHAR buffer[60];
+    const WCHAR *arch;
 
     NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL );
 
@@ -284,20 +285,15 @@ static void create_environment_registry_keys( void )
 
     switch(sci.Architecture)
     {
-	case PROCESSOR_ARCHITECTURE_AMD64:
-	    set_reg_value( env_key, ProcArchW, AMD64W );
-	    break;
-	case PROCESSOR_ARCHITECTURE_IA64:
-	    set_reg_value( env_key, ProcArchW, IA64W );
-	    break;
-	case PROCESSOR_ARCHITECTURE_INTEL:
-	default:
-	    set_reg_value( env_key, ProcArchW, x86W );
-	    break;
+    case PROCESSOR_ARCHITECTURE_AMD64: arch = AMD64W; break;
+    case PROCESSOR_ARCHITECTURE_IA64:  arch = IA64W; break;
+    default:
+    case PROCESSOR_ARCHITECTURE_INTEL: arch = x86W; break;
     }
+    set_reg_value( env_key, ProcArchW, arch );
 
     /* TODO: currently hardcoded Intel, add different processors */
-    sprintfW( buffer, IntelCpuDescrW, sci.Level, HIBYTE(sci.Revision), LOBYTE(sci.Revision) );
+    sprintfW( buffer, IntelCpuDescrW, arch, sci.Level, HIBYTE(sci.Revision), LOBYTE(sci.Revision) );
     set_reg_value( env_key, ProcIdW, buffer );
 
     sprintfW( buffer, PercentDW, sci.Level );
