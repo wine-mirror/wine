@@ -1162,10 +1162,9 @@ void shader_dump_src_param(const struct wined3d_shader_src_param *param,
 
 /* Shared code in order to generate the bulk of the shader string.
  * NOTE: A description of how to parse tokens can be found on MSDN. */
-void shader_generate_main(IWineD3DBaseShader *iface, struct wined3d_shader_buffer *buffer,
+void shader_generate_main(IWineD3DBaseShaderImpl *shader, struct wined3d_shader_buffer *buffer,
         const struct wined3d_shader_reg_maps *reg_maps, const DWORD *byte_code, void *backend_ctx)
 {
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
     IWineD3DDeviceImpl *device = shader->baseShader.device;
     const struct wined3d_shader_frontend *fe = shader->baseShader.frontend;
     void *fe_data = shader->baseShader.frontend_data;
@@ -1186,7 +1185,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, struct wined3d_shader_buffe
     loop_state.current_depth = 0;
     loop_state.current_reg = 0;
 
-    ctx.shader = iface;
+    ctx.shader = (IWineD3DBaseShader *)shader;
     ctx.gl_info = &device->adapter->gl_info;
     ctx.reg_maps = reg_maps;
     ctx.buffer = buffer;

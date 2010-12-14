@@ -4004,7 +4004,7 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     }
 
     /* Base Shader Body */
-    shader_generate_main((IWineD3DBaseShader *)This, buffer, reg_maps, function, &priv_ctx);
+    shader_generate_main((IWineD3DBaseShaderImpl *)This, buffer, reg_maps, function, &priv_ctx);
 
     /* Pixel shaders < 2.0 place the resulting color in R0 implicitly */
     if (reg_maps->shader_version.major < 2)
@@ -4089,7 +4089,7 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
     shader_generate_glsl_declarations(context, buffer, (IWineD3DBaseShaderImpl *)This, reg_maps, &priv_ctx);
 
     /* Base Shader Body */
-    shader_generate_main((IWineD3DBaseShader*)This, buffer, reg_maps, function, &priv_ctx);
+    shader_generate_main((IWineD3DBaseShaderImpl *)This, buffer, reg_maps, function, &priv_ctx);
 
     /* Unpack outputs */
     shader_addline(buffer, "order_ps_input(OUT);\n");

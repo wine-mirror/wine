@@ -3771,7 +3771,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     }
 
     /* Base Shader Body */
-    shader_generate_main((IWineD3DBaseShader *)This, buffer, reg_maps, function, &priv_ctx);
+    shader_generate_main((IWineD3DBaseShaderImpl *)This, buffer, reg_maps, function, &priv_ctx);
 
     if(args->super.srgb_correction) {
         arbfp_add_sRGB_correction(buffer, fragcolor, srgbtmp[0], srgbtmp[1], srgbtmp[2], srgbtmp[3],
@@ -4182,7 +4182,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     /* The shader starts with the main function */
     priv_ctx.in_main_func = TRUE;
     /* Base Shader Body */
-    shader_generate_main((IWineD3DBaseShader *)This, buffer, reg_maps, function, &priv_ctx);
+    shader_generate_main((IWineD3DBaseShaderImpl *)This, buffer, reg_maps, function, &priv_ctx);
 
     if (!priv_ctx.footer_written) vshader_add_footer(&priv_ctx,
             shader_data, args, reg_maps, gl_info, buffer);
