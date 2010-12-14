@@ -20,6 +20,7 @@
 #include <stdio.h>
 
 #define COBJMACROS
+#define CONST_VTABLE
 #include "wine/test.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -746,22 +747,32 @@ static void test_SHPackDispParams(void)
 
 typedef struct _disp
 {
-    const IDispatchVtbl *vtbl;
+    IDispatch IDispatch_iface;
     LONG   refCount;
 } Disp;
 
+static inline Disp *impl_from_IDispatch(IDispatch *iface)
+{
+    return CONTAINING_RECORD(iface, Disp, IDispatch_iface);
+}
+
 typedef struct _contain
 {
-    const IConnectionPointContainerVtbl *vtbl;
+    IConnectionPointContainer IConnectionPointContainer_iface;
     LONG   refCount;
 
     UINT  ptCount;
     IConnectionPoint **pt;
 } Contain;
 
+static inline Contain *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
+{
+    return CONTAINING_RECORD(iface, Contain, IConnectionPointContainer_iface);
+}
+
 typedef struct _cntptn
 {
-    const IConnectionPointVtbl *vtbl;
+    IConnectionPoint IConnectionPoint_iface;
     LONG refCount;
 
     Contain *container;
@@ -770,23 +781,38 @@ typedef struct _cntptn
     IUnknown **sink;
 } ConPt;
 
+static inline ConPt *impl_from_IConnectionPoint(IConnectionPoint *iface)
+{
+    return CONTAINING_RECORD(iface, ConPt, IConnectionPoint_iface);
+}
+
 typedef struct _enum
 {
-    const IEnumConnectionsVtbl *vtbl;
+    IEnumConnections IEnumConnections_iface;
     LONG   refCount;
 
     UINT idx;
     ConPt *pt;
 } EnumCon;
 
+static inline EnumCon *impl_from_IEnumConnections(IEnumConnections *iface)
+{
+    return CONTAINING_RECORD(iface, EnumCon, IEnumConnections_iface);
+}
+
 typedef struct _enumpt
 {
-    const IEnumConnectionPointsVtbl *vtbl;
+    IEnumConnectionPoints IEnumConnectionPoints_iface;
     LONG   refCount;
 
     int idx;
     Contain *container;
 } EnumPt;
+
+static inline EnumPt *impl_from_IEnumConnectionPoints(IEnumConnectionPoints *iface)
+{
+    return CONTAINING_RECORD(iface, EnumPt, IEnumConnectionPoints_iface);
+}
 
 
 static HRESULT WINAPI Disp_QueryInterface(
@@ -813,13 +839,13 @@ static HRESULT WINAPI Disp_QueryInterface(
 
 static ULONG WINAPI Disp_AddRef(IDispatch* This)
 {
-    Disp *iface = (Disp*)This;
+    Disp *iface = impl_from_IDispatch(This);
     return InterlockedIncrement(&iface->refCount);
 }
 
 static ULONG WINAPI Disp_Release(IDispatch* This)
 {
-    Disp *iface = (Disp*)This;
+    Disp *iface = impl_from_IDispatch(This);
     ULONG ret;
 
     ret = InterlockedDecrement(&iface->refCount);
@@ -928,13 +954,13 @@ static HRESULT WINAPI Enum_QueryInterface(
 
 static ULONG WINAPI Enum_AddRef(IEnumConnections* This)
 {
-    EnumCon *iface = (EnumCon*)This;
+    EnumCon *iface = impl_from_IEnumConnections(This);
     return InterlockedIncrement(&iface->refCount);
 }
 
 static ULONG WINAPI Enum_Release(IEnumConnections* This)
 {
-    EnumCon *iface = (EnumCon*)This;
+    EnumCon *iface = impl_from_IEnumConnections(This);
     ULONG ret;
 
     ret = InterlockedDecrement(&iface->refCount);
@@ -949,7 +975,7 @@ static HRESULT WINAPI Enum_Next(
         LPCONNECTDATA rgcd,
         ULONG *pcFetched)
 {
-    EnumCon *iface = (EnumCon*)This;
+    EnumCon *iface = impl_from_IEnumConnections(This);
 
     if (cConnections > 0 && iface->idx < iface->pt->sinkCount)
     {
@@ -1021,14 +1047,14 @@ static HRESULT WINAPI ConPt_QueryInterface(
 static ULONG WINAPI ConPt_AddRef(
         IConnectionPoint* This)
 {
-    ConPt *iface = (ConPt*)This;
+    ConPt *iface = impl_from_IConnectionPoint(This);
     return InterlockedIncrement(&iface->refCount);
 }
 
 static ULONG WINAPI ConPt_Release(
         IConnectionPoint* This)
 {
-    ConPt *iface = (ConPt*)This;
+    ConPt *iface = impl_from_IConnectionPoint(This);
     ULONG ret;
 
     ret = InterlockedDecrement(&iface->refCount);
@@ -1054,7 +1080,7 @@ static HRESULT WINAPI ConPt_GetConnectionInterface(
         IID *pIID)
 {
     static int i = 0;
-    ConPt *iface = (ConPt*)This;
+    ConPt *iface = impl_from_IConnectionPoint(This);
     if (i==0)
     {
         i++;
@@ -1069,9 +1095,9 @@ static HRESULT WINAPI ConPt_GetConnectionPointContainer(
         IConnectionPoint* This,
         IConnectionPointContainer **ppCPC)
 {
-    ConPt *iface = (ConPt*)This;
+    ConPt *iface = impl_from_IConnectionPoint(This);
 
-    *ppCPC = (IConnectionPointContainer*)iface->container;
+    *ppCPC = &iface->container->IConnectionPointContainer_iface;
     return S_OK;
 }
 
@@ -1080,7 +1106,7 @@ static HRESULT WINAPI ConPt_Advise(
         IUnknown *pUnkSink,
         DWORD *pdwCookie)
 {
-    ConPt *iface = (ConPt*)This;
+    ConPt *iface = impl_from_IConnectionPoint(This);
 
     if (iface->sinkCount == 0)
         iface->sink = HeapAlloc(GetProcessHeap(),0,sizeof(IUnknown*));
@@ -1097,7 +1123,7 @@ static HRESULT WINAPI ConPt_Unadvise(
         IConnectionPoint* This,
         DWORD dwCookie)
 {
-    ConPt *iface = (ConPt*)This;
+    ConPt *iface = impl_from_IConnectionPoint(This);
 
     if (dwCookie > iface->sinkCount)
         return E_FAIL;
@@ -1116,11 +1142,11 @@ static HRESULT WINAPI ConPt_EnumConnections(
     EnumCon *ec;
 
     ec = HeapAlloc(GetProcessHeap(),0,sizeof(EnumCon));
-    ec->vtbl = &enum_vtbl;
+    ec->IEnumConnections_iface.lpVtbl = &enum_vtbl;
     ec->refCount = 1;
-    ec->pt = (ConPt*)This;
+    ec->pt = impl_from_IConnectionPoint(This);
     ec->idx = 0;
-    *ppEnum = (IEnumConnections*)ec;
+    *ppEnum = &ec->IEnumConnections_iface;
 
     return S_OK;
 }
@@ -1161,13 +1187,13 @@ static HRESULT WINAPI EnumPt_QueryInterface(
 
 static ULONG WINAPI EnumPt_AddRef(IEnumConnectionPoints* This)
 {
-    EnumPt *iface = (EnumPt*)This;
+    EnumPt *iface = impl_from_IEnumConnectionPoints(This);
     return InterlockedIncrement(&iface->refCount);
 }
 
 static ULONG WINAPI EnumPt_Release(IEnumConnectionPoints* This)
 {
-    EnumPt *iface = (EnumPt*)This;
+    EnumPt *iface = impl_from_IEnumConnectionPoints(This);
     ULONG ret;
 
     ret = InterlockedDecrement(&iface->refCount);
@@ -1182,7 +1208,7 @@ static HRESULT WINAPI EnumPt_Next(
         IConnectionPoint **rgcd,
         ULONG *pcFetched)
 {
-    EnumPt *iface = (EnumPt*)This;
+    EnumPt *iface = impl_from_IEnumConnectionPoints(This);
 
     if (cConnections > 0 && iface->idx < iface->container->ptCount)
     {
@@ -1253,14 +1279,14 @@ static HRESULT WINAPI Contain_QueryInterface(
 static ULONG WINAPI Contain_AddRef(
         IConnectionPointContainer* This)
 {
-    Contain *iface = (Contain*)This;
+    Contain *iface = impl_from_IConnectionPointContainer(This);
     return InterlockedIncrement(&iface->refCount);
 }
 
 static ULONG WINAPI Contain_Release(
         IConnectionPointContainer* This)
 {
-    Contain *iface = (Contain*)This;
+    Contain *iface = impl_from_IConnectionPointContainer(This);
     ULONG ret;
 
     ret = InterlockedDecrement(&iface->refCount);
@@ -1285,11 +1311,11 @@ static HRESULT WINAPI Contain_EnumConnectionPoints(
     EnumPt *ec;
 
     ec = HeapAlloc(GetProcessHeap(),0,sizeof(EnumPt));
-    ec->vtbl = &enumpt_vtbl;
+    ec->IEnumConnectionPoints_iface.lpVtbl = &enumpt_vtbl;
     ec->refCount = 1;
     ec->idx= 0;
-    ec->container = (Contain*)This;
-    *ppEnum = (IEnumConnectionPoints*)ec;
+    ec->container = impl_from_IConnectionPointContainer(This);
+    *ppEnum = &ec->IEnumConnectionPoints_iface;
 
     return S_OK;
 }
@@ -1299,13 +1325,13 @@ static HRESULT WINAPI Contain_FindConnectionPoint(
         REFIID riid,
         IConnectionPoint **ppCP)
 {
-    Contain *iface = (Contain*)This;
+    Contain *iface = impl_from_IConnectionPointContainer(This);
     ConPt *pt;
 
     if (!IsEqualIID(riid, &IID_NULL) || iface->ptCount ==0)
     {
         pt = HeapAlloc(GetProcessHeap(),0,sizeof(ConPt));
-        pt->vtbl = &point_vtbl;
+        pt->IConnectionPoint_iface.lpVtbl = &point_vtbl;
         pt->refCount = 1;
         pt->sinkCount = 0;
         pt->sink = NULL;
@@ -1316,10 +1342,10 @@ static HRESULT WINAPI Contain_FindConnectionPoint(
             iface->pt =HeapAlloc(GetProcessHeap(),0,sizeof(IUnknown*));
         else
             iface->pt = HeapReAlloc(GetProcessHeap(),0,iface->pt,sizeof(IUnknown*)*(iface->ptCount+1));
-        iface->pt[iface->ptCount] = (IConnectionPoint*)pt;
+        iface->pt[iface->ptCount] = &pt->IConnectionPoint_iface;
         iface->ptCount++;
 
-        *ppCP = (IConnectionPoint*)pt;
+        *ppCP = &pt->IConnectionPoint_iface;
     }
     else
     {
@@ -1357,13 +1383,13 @@ static void test_IConnectionPoint(void)
     }
 
     container = HeapAlloc(GetProcessHeap(),0,sizeof(Contain));
-    container->vtbl = &contain_vtbl;
+    container->IConnectionPointContainer_iface.lpVtbl = &contain_vtbl;
     container->refCount = 1;
     container->ptCount = 0;
     container->pt = NULL;
 
     dispatch = HeapAlloc(GetProcessHeap(),0,sizeof(Disp));
-    dispatch->vtbl = &disp_vtbl;
+    dispatch->IDispatch_iface.lpVtbl = &disp_vtbl;
     dispatch->refCount = 1;
 
     rc = pConnectToConnectionPoint((IUnknown*)dispatch, &IID_NULL, TRUE, (IUnknown*)container, &cookie, &point);
@@ -1401,10 +1427,15 @@ static void test_IConnectionPoint(void)
 
 typedef struct _propbag
 {
-    const IPropertyBagVtbl *vtbl;
+    IPropertyBag IPropertyBag_iface;
     LONG   refCount;
 
 } PropBag;
+
+static inline PropBag *impl_from_IPropertyBag(IPropertyBag *iface)
+{
+    return CONTAINING_RECORD(iface, PropBag, IPropertyBag_iface);
+}
 
 
 static HRESULT WINAPI Prop_QueryInterface(
@@ -1432,14 +1463,14 @@ static HRESULT WINAPI Prop_QueryInterface(
 static ULONG WINAPI Prop_AddRef(
         IPropertyBag* This)
 {
-    PropBag *iface = (PropBag*)This;
+    PropBag *iface = impl_from_IPropertyBag(This);
     return InterlockedIncrement(&iface->refCount);
 }
 
 static ULONG WINAPI Prop_Release(
         IPropertyBag* This)
 {
-    PropBag *iface = (PropBag*)This;
+    PropBag *iface = impl_from_IPropertyBag(This);
     ULONG ret;
 
     ret = InterlockedDecrement(&iface->refCount);
@@ -1492,19 +1523,19 @@ static void test_SHPropertyBag_ReadLONG(void)
 
     pb = HeapAlloc(GetProcessHeap(),0,sizeof(PropBag));
     pb->refCount = 1;
-    pb->vtbl = &prop_vtbl;
+    pb->IPropertyBag_iface.lpVtbl = &prop_vtbl;
 
     out = 0xfeedface;
     rc = pSHPropertyBag_ReadLONG(NULL, szName1, &out);
     ok(rc == E_INVALIDARG || broken(rc == 0), "incorrect return %x\n",rc);
     ok(out == 0xfeedface, "value should not have changed\n");
-    rc = pSHPropertyBag_ReadLONG((IPropertyBag*)pb, NULL, &out);
+    rc = pSHPropertyBag_ReadLONG(&pb->IPropertyBag_iface, NULL, &out);
     ok(rc == E_INVALIDARG || broken(rc == 0) || broken(rc == 1), "incorrect return %x\n",rc);
     ok(out == 0xfeedface, "value should not have changed\n");
-    rc = pSHPropertyBag_ReadLONG((IPropertyBag*)pb, szName1, NULL);
+    rc = pSHPropertyBag_ReadLONG(&pb->IPropertyBag_iface, szName1, NULL);
     ok(rc == E_INVALIDARG || broken(rc == 0) || broken(rc == 1), "incorrect return %x\n",rc);
     ok(out == 0xfeedface, "value should not have changed\n");
-    rc = pSHPropertyBag_ReadLONG((IPropertyBag*)pb, szName1, &out);
+    rc = pSHPropertyBag_ReadLONG(&pb->IPropertyBag_iface, szName1, &out);
     ok(rc == DISP_E_BADVARTYPE || broken(rc == 0) || broken(rc == 1), "incorrect return %x\n",rc);
     ok(out == 0xfeedface  || broken(out == 0xfeedfa00), "value should not have changed %x\n",out);
     IUnknown_Release((IUnknown*)pb);
