@@ -797,6 +797,60 @@ static const IObjectWithSiteVtbl ObjectWithSiteVtbl = {
     ObjectWithSite_GetSite
 };
 
+static inline HTMLDocument *impl_from_IOleContainer(IOleContainer *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocument, IOleContainer_iface);
+}
+
+static HRESULT WINAPI OleContainer_QueryInterface(IOleContainer *iface, REFIID riid, void **ppv)
+{
+    HTMLDocument *This = impl_from_IOleContainer(iface);
+    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppv);
+}
+
+static ULONG WINAPI OleContainer_AddRef(IOleContainer *iface)
+{
+    HTMLDocument *This = impl_from_IOleContainer(iface);
+    return IHTMLDocument2_AddRef(HTMLDOC(This));
+}
+
+static ULONG WINAPI OleContainer_Release(IOleContainer *iface)
+{
+    HTMLDocument *This = impl_from_IOleContainer(iface);
+    return IHTMLDocument2_Release(HTMLDOC(This));
+}
+
+static HRESULT WINAPI OleContainer_ParseDisplayName(IOleContainer *iface, IBindCtx *pbc, LPOLESTR pszDisplayName,
+        ULONG *pchEaten, IMoniker **ppmkOut)
+{
+    HTMLDocument *This = impl_from_IOleContainer(iface);
+    FIXME("(%p)->(%p %s %p %p)\n", This, pbc, debugstr_w(pszDisplayName), pchEaten, ppmkOut);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleContainer_EnumObjects(IOleContainer *iface, DWORD grfFlags, IEnumUnknown **ppenum)
+{
+    HTMLDocument *This = impl_from_IOleContainer(iface);
+    FIXME("(%p)->(%x %p)\n", This, grfFlags, ppenum);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleContainer_LockContainer(IOleContainer *iface, BOOL fLock)
+{
+    HTMLDocument *This = impl_from_IOleContainer(iface);
+    FIXME("(%p)->(%x)\n", This, fLock);
+    return E_NOTIMPL;
+}
+
+static const IOleContainerVtbl OleContainerVtbl = {
+    OleContainer_QueryInterface,
+    OleContainer_AddRef,
+    OleContainer_Release,
+    OleContainer_ParseDisplayName,
+    OleContainer_EnumObjects,
+    OleContainer_LockContainer
+};
+
 void HTMLDocument_LockContainer(HTMLDocumentObj *This, BOOL fLock)
 {
     IOleContainer *container;
@@ -819,4 +873,5 @@ void HTMLDocument_OleObj_Init(HTMLDocument *This)
     This->lpOleDocumentVtbl = &OleDocumentVtbl;
     This->lpOleControlVtbl = &OleControlVtbl;
     This->lpObjectWithSiteVtbl = &ObjectWithSiteVtbl;
+    This->IOleContainer_iface.lpVtbl = &OleContainerVtbl;
 }

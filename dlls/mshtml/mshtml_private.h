@@ -365,6 +365,7 @@ struct HTMLDocument {
     const IDispatchExVtbl                 *lpIDispatchExVtbl;
     const ISupportErrorInfoVtbl           *lpSupportErrorInfoVtbl;
     const IObjectWithSiteVtbl             *lpObjectWithSiteVtbl;
+    IOleContainer    IOleContainer_iface;
 
     IUnknown *unk_impl;
     IDispatchEx *dispex;

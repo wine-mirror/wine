@@ -125,6 +125,7 @@ static const IID * const doc_node_iids[] = {
     &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     &IID_IInternetHostSecurityManager,
+    &IID_IOleContainer,
     NULL
 };
 
@@ -137,6 +138,7 @@ static const IID * const doc_obj_iids[] = {
     &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     &IID_ICustomDoc,
+    &IID_IOleContainer,
     NULL
 };
 
@@ -267,6 +269,7 @@ static const IID * const window_iids[] = {
     &IID_IHTMLWindow2,
     &IID_IHTMLWindow3,
     &IID_IDispatchEx,
+    &IID_IServiceProvider,
     NULL
 };
 
