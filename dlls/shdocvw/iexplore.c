@@ -488,7 +488,8 @@ static LRESULT iewnd_OnCreate(HWND hwnd, LPCREATESTRUCTW lpcs)
 
     This->menu = create_ie_menu();
 
-    This->status_hwnd = CreateStatusWindowW(CCS_NODIVIDER|WS_CHILD|WS_VISIBLE, NULL, hwnd, IDC_BROWSE_STATUSBAR);
+    This->status_hwnd = CreateStatusWindowW(WS_VISIBLE|WS_CHILD|SBT_NOBORDERS|CCS_NODIVIDER,
+                                            NULL, hwnd, IDC_BROWSE_STATUSBAR);
     SendMessageW(This->status_hwnd, SB_SIMPLE, TRUE, 0);
 
     create_rebar(hwnd);
