@@ -3703,13 +3703,14 @@ static void add_glsl_program_entry(struct shader_glsl_priv *priv, struct glsl_sh
 }
 
 static struct glsl_shader_prog_link *get_glsl_program_entry(struct shader_glsl_priv *priv,
-        IWineD3DVertexShader *vshader, IWineD3DPixelShader *pshader, struct vs_compile_args *vs_args,
-        struct ps_compile_args *ps_args) {
+        IWineD3DVertexShaderImpl *vshader, IWineD3DPixelShaderImpl *pshader,
+        struct vs_compile_args *vs_args, struct ps_compile_args *ps_args)
+{
     struct wine_rb_entry *entry;
     glsl_program_key_t key;
 
-    key.vshader = (IWineD3DVertexShaderImpl *)vshader;
-    key.pshader = (IWineD3DPixelShaderImpl *)pshader;
+    key.vshader = vshader;
+    key.pshader = pshader;
     key.vs_args = *vs_args;
     key.ps_args = *ps_args;
 
@@ -4302,8 +4303,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
     if (vshader) find_vs_compile_args(state, vshader, &vs_compile_args);
     if (pshader) find_ps_compile_args(state, pshader, &ps_compile_args);
 
-    entry = get_glsl_program_entry(priv, (IWineD3DVertexShader *)vshader, (IWineD3DPixelShader *)pshader,
-            &vs_compile_args, &ps_compile_args);
+    entry = get_glsl_program_entry(priv, vshader, pshader, &vs_compile_args, &ps_compile_args);
     if (entry)
     {
         priv->glsl_program = entry;
