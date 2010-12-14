@@ -33,8 +33,10 @@ typedef struct {
     IUnknown *plugin_unk;
     IOleInPlaceObject *ip_object;
     CLSID clsid;
+
     HWND hwnd;
     RECT rect;
+    BOOL ui_active;
 
     HTMLDocumentNode *doc;
     struct list entry;

@@ -63,6 +63,8 @@ DEFINE_EXPECT(QuickActivate);
 DEFINE_EXPECT(IPersistPropertyBag_InitNew);
 DEFINE_EXPECT(IPersistPropertyBag_Load);
 DEFINE_EXPECT(Invoke_READYSTATE);
+DEFINE_EXPECT(Invoke_ENABLED);
+DEFINE_EXPECT(Invoke_VALID);
 DEFINE_EXPECT(DoVerb);
 DEFINE_EXPECT(SetExtent);
 DEFINE_EXPECT(GetExtent);
@@ -72,6 +74,7 @@ DEFINE_EXPECT(Close);
 DEFINE_EXPECT(InPlaceObject_GetWindow);
 DEFINE_EXPECT(SetObjectRects);
 DEFINE_EXPECT(InPlaceDeactivate);
+DEFINE_EXPECT(UIDeactivate);
 
 static HWND container_hwnd, plugin_hwnd;
 
@@ -572,6 +575,18 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
         V_VT(pVarResult) = VT_I4;
         V_I4(pVarResult) = plugin_readystate;
         return S_OK;
+     case DISPID_ENABLED:
+        CHECK_EXPECT2(Invoke_ENABLED);
+        ok(wFlags == DISPATCH_PROPERTYGET, "wFlags = %x\n", wFlags);
+        ok(!pDispParams->cArgs, "pDispParams->cArgs = %d\n", pDispParams->cArgs);
+        ok(!pDispParams->rgvarg, "pDispParams->rgvarg != NULL\n");
+        return DISP_E_MEMBERNOTFOUND;
+    case DISPID_VALID:
+        CHECK_EXPECT(Invoke_VALID);
+        ok(wFlags == DISPATCH_PROPERTYGET, "wFlags = %x\n", wFlags);
+        ok(!pDispParams->cArgs, "pDispParams->cArgs = %d\n", pDispParams->cArgs);
+        ok(!pDispParams->rgvarg, "pDispParams->rgvarg != NULL\n");
+        return DISP_E_MEMBERNOTFOUND;
     default:
         ok(0, "unexpected call %d\n", dispIdMember);
     }
@@ -1003,8 +1018,8 @@ static HRESULT WINAPI OleInPlaceObject_InPlaceDeactivate(IOleInPlaceObjectWindow
 
 static HRESULT WINAPI OleInPlaceObject_UIDeactivate(IOleInPlaceObjectWindowless *iface)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT2(UIDeactivate);
+    return S_OK;
 }
 
 static HRESULT WINAPI OleInPlaceObject_SetObjectRects(IOleInPlaceObjectWindowless *iface,
@@ -1148,6 +1163,22 @@ static const IClassFactoryVtbl ClassFactoryVtbl = {
 };
 
 static IClassFactory activex_cf = { &ClassFactoryVtbl };
+
+static void test_ui_activate(void)
+{
+    IOleInPlaceSite *ip_site;
+    HRESULT hres;
+
+    hres = IOleClientSite_QueryInterface(client_site, &IID_IOleInPlaceSite, (void**)&ip_site);
+    ok(hres == S_OK, "Could not get IOleInPlaceSite iface: %08x\n", hres);
+
+    SET_EXPECT(Invoke_ENABLED);
+    hres = IOleInPlaceSite_OnUIActivate(ip_site);
+    ok(hres == S_OK, "OnUIActivate failed: %08x\n", hres);
+    CHECK_CALLED(Invoke_ENABLED);
+
+    IOleInPlaceSite_Release(ip_site);
+}
 
 static HRESULT cs_qi(REFIID,void **);
 static IOleDocumentView *view;
@@ -1747,10 +1778,20 @@ static void test_object_ax(void)
     CHECK_CALLED(InPlaceObject_GetWindow);
     CHECK_CALLED(SetObjectRects);
 
+    test_ui_activate();
+
+    SET_EXPECT(UIDeactivate);
+    SET_EXPECT(Invoke_ENABLED);
+    SET_EXPECT(Invoke_VALID);
     SET_EXPECT(InPlaceDeactivate);
     SET_EXPECT(Close);
     SET_EXPECT(SetClientSite_NULL);
     release_doc(doc);
+    CHECK_CALLED(UIDeactivate);
+    todo_wine
+    CHECK_CALLED(Invoke_ENABLED);
+    todo_wine
+    CHECK_CALLED(Invoke_VALID);
     CHECK_CALLED(InPlaceDeactivate);
     CHECK_CALLED(Close);
     CHECK_CALLED(SetClientSite_NULL);

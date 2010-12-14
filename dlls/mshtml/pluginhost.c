@@ -651,8 +651,36 @@ static HRESULT WINAPI PHInPlaceSite_OnInPlaceActivate(IOleInPlaceSiteEx *iface)
 static HRESULT WINAPI PHInPlaceSite_OnUIActivate(IOleInPlaceSiteEx *iface)
 {
     PluginHost *This = impl_from_IOleInPlaceSiteEx(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    DISPPARAMS args = {NULL, NULL, 0, 0};
+    IDispatch *disp;
+    ULONG err = 0;
+    VARIANT res;
+    HRESULT hres;
+
+    TRACE("(%p)\n", This);
+
+    if(!This->plugin_unk) {
+        ERR("No plugin object\n");
+        return E_UNEXPECTED;
+    }
+
+    This->ui_active = TRUE;
+
+    hres = IUnknown_QueryInterface(This->plugin_unk, &IID_IDispatch, (void**)&disp);
+    if(FAILED(hres)) {
+        FIXME("Could not get IDispatch iface: %08x\n", hres);
+        return hres;
+    }
+
+    V_VT(&res) = VT_EMPTY;
+    hres = IDispatch_Invoke(disp, DISPID_ENABLED, &IID_NULL, 0/*FIXME*/, DISPATCH_PROPERTYGET, &args, &res, NULL, &err);
+    IDispatch_Release(disp);
+    if(SUCCEEDED(hres)) {
+        FIXME("Got enabled %s\n", debugstr_variant(&res));
+        VariantClear(&res);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PHInPlaceSite_GetWindowContext(IOleInPlaceSiteEx *iface,
@@ -1024,8 +1052,11 @@ void detach_plugin_host(PluginHost *host)
     if(!host->doc)
         return;
 
-    if(host->ip_object)
+    if(host->ip_object) {
+        if(host->ui_active)
+            IOleInPlaceObject_UIDeactivate(host->ip_object);
         IOleInPlaceObject_InPlaceDeactivate(host->ip_object);
+    }
 
     if(host->plugin_unk) {
         IOleObject *ole_obj;
