@@ -196,11 +196,11 @@ static	DWORD	MIDI_drvClose(DWORD dwDevID)
 /**************************************************************************
  * 				MIDI_mciGetOpenDev		[internal]
  */
-static WINE_MCIMIDI*  MIDI_mciGetOpenDev(UINT wDevID)
+static WINE_MCIMIDI*  MIDI_mciGetOpenDev(MCIDEVICEID wDevID, UINT wMsg)
 {
     WINE_MCIMIDI*	wmm = (WINE_MCIMIDI*)mciGetDriverData(wDevID);
 
-    if (wmm == NULL || wmm->nUseCount == 0) {
+    if (wmm == NULL || ((wmm->nUseCount == 0) ^ (wMsg == MCI_OPEN_DRIVER))) {
 	WARN("Invalid wDevID=%u\n", wDevID);
 	return 0;
     }
@@ -1600,8 +1600,7 @@ LRESULT CALLBACK MCIMIDI_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
 
-    wmm = (wMsg == MCI_OPEN_DRIVER) ?
-	(WINE_MCIMIDI*)mciGetDriverData(dwDevID) : MIDI_mciGetOpenDev(dwDevID);
+    wmm = MIDI_mciGetOpenDev(dwDevID, wMsg);
     if (wmm == NULL)		return MCIERR_INVALID_DEVICE_ID;
 
     switch (wMsg) {
