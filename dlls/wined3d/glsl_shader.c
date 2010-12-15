@@ -4195,7 +4195,7 @@ static GLhandleARB find_glsl_pshader(const struct wined3d_context *context,
     memset(&shader_data->gl_shaders[shader_data->num_gl_shaders].np2fixup, 0, sizeof(struct ps_np2fixup_info));
     if (args->np2_fixup) np2fixup = &shader_data->gl_shaders[shader_data->num_gl_shaders].np2fixup;
 
-    pixelshader_update_samplers(&shader->baseShader.reg_maps, (IWineD3DBaseTexture **)state->textures);
+    pixelshader_update_samplers(&shader->baseShader.reg_maps, state->textures);
 
     shader_buffer_clear(buffer);
     ret = shader_glsl_generate_pshader(context, buffer, shader, args, np2fixup);

@@ -4296,8 +4296,7 @@ static struct arb_ps_compiled_shader *find_arb_pshader(IWineD3DPixelShaderImpl *
 
     shader_data->gl_shaders[shader_data->num_gl_shaders].args = *args;
 
-    pixelshader_update_samplers(&shader->baseShader.reg_maps,
-            (IWineD3DBaseTexture **)device->stateBlock->state.textures);
+    pixelshader_update_samplers(&shader->baseShader.reg_maps, device->stateBlock->state.textures);
 
     if (!shader_buffer_init(&buffer))
     {

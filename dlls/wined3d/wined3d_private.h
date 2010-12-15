@@ -2932,7 +2932,7 @@ HRESULT pixelshader_init(IWineD3DPixelShaderImpl *shader, IWineD3DDeviceImpl *de
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 void pixelshader_update_samplers(struct wined3d_shader_reg_maps *reg_maps,
-        IWineD3DBaseTexture * const *textures) DECLSPEC_HIDDEN;
+        IWineD3DBaseTextureImpl * const *textures) DECLSPEC_HIDDEN;
 void find_ps_compile_args(const struct wined3d_state *state,
         IWineD3DPixelShaderImpl *shader, struct ps_compile_args *args) DECLSPEC_HIDDEN;
 

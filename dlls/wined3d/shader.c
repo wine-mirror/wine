@@ -2313,7 +2313,7 @@ HRESULT pixelshader_init(IWineD3DPixelShaderImpl *shader, IWineD3DDeviceImpl *de
     return WINED3D_OK;
 }
 
-void pixelshader_update_samplers(struct wined3d_shader_reg_maps *reg_maps, IWineD3DBaseTexture * const *textures)
+void pixelshader_update_samplers(struct wined3d_shader_reg_maps *reg_maps, IWineD3DBaseTextureImpl * const *textures)
 {
     WINED3DSAMPLER_TEXTURE_TYPE *sampler_type = reg_maps->sampler_type;
     unsigned int i;
@@ -2332,7 +2332,7 @@ void pixelshader_update_samplers(struct wined3d_shader_reg_maps *reg_maps, IWine
             continue;
         }
 
-        switch (((IWineD3DBaseTextureImpl *)textures[i])->baseTexture.target)
+        switch (textures[i]->baseTexture.target)
         {
             case GL_TEXTURE_RECTANGLE_ARB:
             case GL_TEXTURE_2D:
@@ -2352,7 +2352,7 @@ void pixelshader_update_samplers(struct wined3d_shader_reg_maps *reg_maps, IWine
 
             default:
                 FIXME("Unrecognized texture type %#x, using 2D.\n",
-                        ((IWineD3DBaseTextureImpl *)textures[i])->baseTexture.target);
+                        textures[i]->baseTexture.target);
                 sampler_type[i] = WINED3DSTT_2D;
         }
     }
