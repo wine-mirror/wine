@@ -61,7 +61,6 @@ typedef struct tagWINE_MCIMIDI {
     UINT		wDevID;			/* the MCI one */
     HMIDI		hMidi;
     int			nUseCount;          	/* Incremented for each shared open          */
-    MCIDEVICEID         wNotifyDeviceID;    	/* MCI device ID with a pending notification */
     HANDLE 		hCallback;         	/* Callback handle for pending notification  */
     HMMIO		hFile;	            	/* mmio file handle open as Element          */
     LPWSTR		lpstrElementName;       /* Name of file (if any)                     */
@@ -219,7 +218,7 @@ static void MIDI_mciNotify(DWORD_PTR hWndCallBack, WINE_MCIMIDI* wmm, UINT wStat
     /* We simply save one parameter by not passing the wDevID local
      * to the command.  They are the same (via mciGetDriverData).
      */
-    MCIDEVICEID wDevID = wmm->wNotifyDeviceID;
+    MCIDEVICEID wDevID = wmm->wDevID;
     HANDLE old = InterlockedExchangePointer(&wmm->hCallback, NULL);
     if (old) mciDriverNotify(old, wDevID, MCI_NOTIFY_SUPERSEDED);
     mciDriverNotify(HWND_32(LOWORD(hWndCallBack)), wDevID, wStatus);
@@ -767,7 +766,6 @@ static DWORD MIDI_mciOpen(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_OPEN_PARMSW lp
     wmm->lpstrCopyright = NULL;
     wmm->lpstrName = NULL;
 
-    wmm->wNotifyDeviceID = wmm->wDevID;
     wmm->dwStatus = MCI_MODE_NOT_READY;	/* while loading file contents */
     /* spec says it should be the default format from the MIDI file... */
     wmm->dwMciTimeFormat = MCI_FORMAT_MILLISECONDS;
@@ -1563,11 +1561,8 @@ static DWORD MIDI_mciSeek(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_SEEK_PARMS lpP
 
 	TRACE("Seeking to position=%u ms\n", wmm->dwPositionMS);
 
-	if (dwFlags & MCI_NOTIFY) {
-	    TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	    mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
-			    wmm->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
-	}
+	if (dwFlags & MCI_NOTIFY)
+	    MIDI_mciNotify(lpParms->dwCallback, wmm, MCI_NOTIFY_SUCCESSFUL);
     }
     return ret;
 }
