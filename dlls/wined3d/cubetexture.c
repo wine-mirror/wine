@@ -229,7 +229,7 @@ static void WINAPI IWineD3DCubeTextureImpl_UnLoad(IWineD3DCubeTexture *iface)
         surface_set_texture_name(surface, 0, FALSE);
     }
 
-    basetexture_unload((IWineD3DBaseTexture *)iface);
+    basetexture_unload((IWineD3DBaseTextureImpl *)This);
 }
 
 static WINED3DRESOURCETYPE WINAPI IWineD3DCubeTextureImpl_GetType(IWineD3DCubeTexture *iface) {

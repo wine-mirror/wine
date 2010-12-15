@@ -76,7 +76,7 @@ HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, UINT layer_count, UIN
 
 void basetexture_cleanup(IWineD3DBaseTexture *iface)
 {
-    basetexture_unload(iface);
+    basetexture_unload((IWineD3DBaseTextureImpl *)iface);
     HeapFree(GetProcessHeap(), 0, ((IWineD3DBaseTextureImpl *)iface)->baseTexture.sub_resources);
     resource_cleanup((IWineD3DResource *)iface);
 }
@@ -103,30 +103,28 @@ static void gltexture_delete(struct gl_texture *tex)
     tex->name = 0;
 }
 
-void basetexture_unload(IWineD3DBaseTexture *iface)
+void basetexture_unload(IWineD3DBaseTextureImpl *texture)
 {
-    IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
-    IWineD3DDeviceImpl *device = This->resource.device;
+    IWineD3DDeviceImpl *device = texture->resource.device;
     struct wined3d_context *context = NULL;
 
-    if (This->baseTexture.texture_rgb.name || This->baseTexture.texture_srgb.name)
+    if (texture->baseTexture.texture_rgb.name || texture->baseTexture.texture_srgb.name)
     {
         context = context_acquire(device, NULL);
     }
 
-    if(This->baseTexture.texture_rgb.name) {
-        gltexture_delete(&This->baseTexture.texture_rgb);
-    }
-    if(This->baseTexture.texture_srgb.name) {
-        gltexture_delete(&This->baseTexture.texture_srgb);
-    }
+    if (texture->baseTexture.texture_rgb.name)
+        gltexture_delete(&texture->baseTexture.texture_rgb);
+
+    if (texture->baseTexture.texture_srgb.name)
+        gltexture_delete(&texture->baseTexture.texture_srgb);
 
     if (context) context_release(context);
 
-    This->baseTexture.texture_rgb.dirty = TRUE;
-    This->baseTexture.texture_srgb.dirty = TRUE;
+    texture->baseTexture.texture_rgb.dirty = TRUE;
+    texture->baseTexture.texture_srgb.dirty = TRUE;
 
-    resource_unload((IWineD3DResourceImpl *)This);
+    resource_unload((IWineD3DResourceImpl *)texture);
 }
 
 DWORD basetexture_set_lod(IWineD3DBaseTexture *iface, DWORD LODNew)

@@ -184,7 +184,7 @@ static void WINAPI IWineD3DVolumeTextureImpl_UnLoad(IWineD3DVolumeTexture *iface
         IWineD3DVolume_UnLoad((IWineD3DVolume *)This->baseTexture.sub_resources[i]);
     }
 
-    basetexture_unload((IWineD3DBaseTexture *)iface);
+    basetexture_unload((IWineD3DBaseTextureImpl *)This);
 }
 
 static WINED3DRESOURCETYPE WINAPI IWineD3DVolumeTextureImpl_GetType(IWineD3DVolumeTexture *iface) {

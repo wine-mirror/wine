@@ -1928,7 +1928,7 @@ HRESULT basetexture_set_autogen_filter_type(IWineD3DBaseTexture *iface,
         WINED3DTEXTUREFILTERTYPE filter_type) DECLSPEC_HIDDEN;
 BOOL basetexture_set_dirty(IWineD3DBaseTextureImpl *texture, BOOL dirty) DECLSPEC_HIDDEN;
 DWORD basetexture_set_lod(IWineD3DBaseTexture *iface, DWORD new_lod) DECLSPEC_HIDDEN;
-void basetexture_unload(IWineD3DBaseTexture *iface) DECLSPEC_HIDDEN;
+void basetexture_unload(IWineD3DBaseTextureImpl *texture) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IWineD3DTexture implementation structure (extends IWineD3DBaseTextureImpl)
