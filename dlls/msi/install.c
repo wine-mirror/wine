@@ -716,6 +716,10 @@ BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode)
         r = package->need_reboot;
         break;
 
+    case MSIRUNMODE_LOGENABLED:
+        r = (package->log_file != INVALID_HANDLE_VALUE);
+        break;
+
     default:
         FIXME("unimplemented run mode: %d\n", iRunMode);
         r = TRUE;
