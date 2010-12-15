@@ -1630,6 +1630,10 @@ LRESULT CALLBACK MCIMIDI_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
 
     if (dwDevID == 0xFFFFFFFF) return MCIERR_UNSUPPORTED_FUNCTION;
 
+    if ((wMsg < DRV_MCI_FIRST) || (wMsg > DRV_MCI_LAST)) {
+	TRACE("Sending msg %04x to default driver proc\n", wMsg);
+	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+    }
     switch (wMsg) {
     case MCI_OPEN_DRIVER:	return MIDI_mciOpen      (dwDevID, dwParam1, (LPMCI_OPEN_PARMSW)     dwParam2);
     case MCI_CLOSE_DRIVER:	return MIDI_mciClose     (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)   dwParam2);
@@ -1642,33 +1646,12 @@ LRESULT CALLBACK MCIMIDI_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
     case MCI_GETDEVCAPS:	return MIDI_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)dwParam2);
     case MCI_INFO:		return MIDI_mciInfo      (dwDevID, dwParam1, (LPMCI_INFO_PARMSW)     dwParam2);
     case MCI_SEEK:		return MIDI_mciSeek      (dwDevID, dwParam1, (LPMCI_SEEK_PARMS)      dwParam2);
-    /* commands that should report an error */
-    case MCI_RECORD:
-    case MCI_LOAD:
-    case MCI_SAVE:
-    case MCI_FREEZE:
-    case MCI_PUT:
-    case MCI_WINDOW:
-    case MCI_REALIZE:
-    case MCI_UNFREEZE:
-    case MCI_UPDATE:
-    case MCI_WHERE:
-    case MCI_STEP:
-    case MCI_SPIN:
-    case MCI_ESCAPE:
-    case MCI_COPY:
-    case MCI_CUT:
-    case MCI_DELETE:
-    case MCI_PASTE:
-	TRACE("Unsupported command [0x%x]\n", wMsg);
-	break;
     case MCI_OPEN:
     case MCI_CLOSE:
 	FIXME("Shouldn't receive a MCI_OPEN or CLOSE message\n");
-	break;
+	/* fall through */
     default:
-	TRACE("Sending msg [%u] to default driver proc\n", wMsg);
-	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+	TRACE("Unsupported command [0x%x]\n", wMsg);
+        return MCIERR_UNSUPPORTED_FUNCTION; /* Win9x: MCIERR_UNRECOGNIZED_COMMAND */
     }
-    return MCIERR_UNSUPPORTED_FUNCTION;
 }
