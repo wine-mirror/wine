@@ -6,6 +6,7 @@
  * Copyright 2005-2006 Paul Vriens
  * Copyright 2007 Maarten Lankhorst
  * Copyright 2009 Vincent Beers
+ * Copyright 2010 Albert Pool
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -44,7 +45,7 @@ BEGIN
     LTEXT           PACKAGE_NAME,IDC_ABT_TITLE_TEXT,105,30,55,30
     LTEXT           PACKAGE_VERSION,IDC_ABT_PANEL_TEXT,160,43,140,8
     CONTROL         "",IDC_ABT_WEB_LINK,"SysLink", LWS_TRANSPARENT, 105,53,106,8
-    LTEXT           "This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
+    LTEXT           "Dit programma is gratis software; u kunt het verspreiden en/of aanpassen binnen de voorwaarden van de GNU Lesser General Public License zoals gepubliceerd door de Free Software Foundation; versie 2.1 van de licentie, of (naar keuze) een latere versie.",
                     IDC_ABT_LICENSE_TEXT,105,64,145,60
     GROUPBOX        " Windows registratie-informatie ", IDC_STATIC, 15, 155, 230, 55
     LTEXT           "Eigenaar:", IDC_STATIC, 22, 171, 40, 20
@@ -58,13 +59,13 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Toepassingsinstellingen ",IDC_STATIC, 8,4,244,210
-    LTEXT           "Wine geeft de mogelijkheid om per toepassing de Windowsversie in te stellen. Deze tab is gekoppeld aan de Libraries en Graphics tabs om zowel systeemwijde als applicatiespecifieke instellingen in deze tabs mogelijk te maken.",
+    LTEXT           "Wine geeft de mogelijkheid om per toepassing de Windowsversie in te stellen. Deze tab is gekoppeld aan de \"Bibliotheken\" en \"Grafisch\" tabs om zowel systeemwijde als applicatiespecifieke instellingen in deze tabs mogelijk te maken.",
                     IDC_STATIC,15,20,227,40
     CONTROL         "Toepassingen",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
                     15,60,230,110
     PUSHBUTTON	    "Toepassing toevoegen..",IDC_APP_ADDAPP, 80,174,80,14
     PUSHBUTTON	    "Toepassing verwijderen",IDC_APP_REMOVEAPP, 165,174,80,14
-    LTEXT           "Windows Versie:",IDC_STATIC,17,196,58,8
+    LTEXT           "Windowsversie:",IDC_STATIC,17,196,58,8
     COMBOBOX        IDC_WINVER,83,194,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
@@ -76,9 +77,9 @@ BEGIN
     CONTROL     "Een DirectX programma kan de muis in een venster vasthouden.",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
     CONTROL     "Laat de window manager de vensters &decoreren",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
     CONTROL     "Laat de window manager de vensters beheren",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
-    CONTROL     "Emuleer een virtuele desktop",IDC_ENABLE_DESKTOP,"Button",
+    CONTROL     "Emuleer een virtueel bureaublad",IDC_ENABLE_DESKTOP,"Button",
                 BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
-    LTEXT       "Desktop afmetingen:",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
+    LTEXT       "Afmetingen:",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
     LTEXT       "X",IDC_DESKTOP_BY,109,70,8,8,WS_DISABLED
     EDITTEXT    IDC_DESKTOP_WIDTH,64,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
     EDITTEXT    IDC_DESKTOP_HEIGHT,117,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
@@ -100,7 +101,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " DLL Overrides ",IDC_STATIC,8,4,244,210
-    LTEXT           "Het is mogelijk om per uitvoerbaar bestand te specificeren of deze \"builtin\" dan wel \"native\" moet zijn. De specificatie voor ""*"" geldt voor alle niet expliciet genoemde bestanden."
+    LTEXT           "Het is mogelijk om per uitvoerbaar bestand in te stellen of deze \"builtin\" dan wel \"native\" moet zijn. De instelling voor ""*"" geldt voor alle niet expliciet genoemde bestanden."
                     ,IDC_STATIC,16,16,220,32
     LTEXT           "Nieuwe override voor dll:",IDC_STATIC,16,58,100,8
     COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
@@ -232,7 +233,7 @@ BEGIN
     IDS_WINECFG_TITLE_APP   "Wine configuratie voor %s"
     IDS_THEMEFILE           "Thema-bestanden (*.msstyles; *.theme)"
     IDS_THEMEFILE_SELECT    "Thema-bestanden kiezen"
-    IDS_AUDIO_MISSING       "Op dit moment is er geen stuurprogramma voor geluid gespecificeerd in het register.\n\nEen aanbevolen stuurprogramma is voor u geselecteerd.\nU kunt dit stuurprogramma gebruiken of (indien beschikbaar) een ander selecteren.\n\nKlik op Toepassen om deze selectie te activeren."
+    IDS_AUDIO_MISSING       "Op dit moment is er geen stuurprogramma voor geluid ingesteld in het register.\n\nEen aanbevolen stuurprogramma is voor u geselecteerd.\nU kunt dit stuurprogramma gebruiken of (indien beschikbaar) een ander selecteren.\n\nKlik op Toepassen om deze selectie te activeren."
     IDS_SHELL_FOLDER        "Persoonlijke map"
     IDS_LINKS_TO            "Verwijst naar"
 END
