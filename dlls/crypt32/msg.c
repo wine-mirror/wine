@@ -2045,14 +2045,23 @@ HCRYPTMSG WINAPI CryptMsgOpenToEncode(DWORD dwMsgEncodingType, DWORD dwFlags,
     return msg;
 }
 
+typedef struct _CEnvelopedDecodeMsg
+{
+    CRYPT_ENVELOPED_DATA *data;
+    HCRYPTPROV            crypt_prov;
+    CRYPT_DATA_BLOB       content;
+    BOOL                  decrypted;
+} CEnvelopedDecodeMsg;
+
 typedef struct _CDecodeMsg
 {
     CryptMsgBase           base;
     DWORD                  type;
     HCRYPTPROV             crypt_prov;
     union {
-        HCRYPTHASH     hash;
-        CSignedMsgData signed_data;
+        HCRYPTHASH          hash;
+        CSignedMsgData      signed_data;
+        CEnvelopedDecodeMsg enveloped_data;
     } u;
     CRYPT_DATA_BLOB        msg_data;
     CRYPT_DATA_BLOB        detached_data;
@@ -2070,6 +2079,12 @@ static void CDecodeMsg_Close(HCRYPTMSG hCryptMsg)
     case CMSG_HASHED:
         if (msg->u.hash)
             CryptDestroyHash(msg->u.hash);
+        break;
+    case CMSG_ENVELOPED:
+        if (msg->u.enveloped_data.crypt_prov)
+            CryptReleaseContext(msg->u.enveloped_data.crypt_prov, 0);
+        LocalFree(msg->u.enveloped_data.data);
+        CryptMemFree(msg->u.enveloped_data.content.pbData);
         break;
     case CMSG_SIGNED:
         if (msg->u.signed_data.info)
@@ -2203,6 +2218,21 @@ static BOOL CDecodeMsg_DecodeHashedContent(CDecodeMsg *msg,
     return ret;
 }
 
+static BOOL CDecodeMsg_DecodeEnvelopedContent(CDecodeMsg *msg,
+ const CRYPT_DER_BLOB *blob)
+{
+    BOOL ret;
+    CRYPT_ENVELOPED_DATA *envelopedData;
+    DWORD size;
+
+    ret = CRYPT_AsnDecodePKCSEnvelopedData(blob->pbData, blob->cbData,
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (CRYPT_ENVELOPED_DATA *)&envelopedData,
+     &size);
+    if (ret)
+        msg->u.enveloped_data.data = envelopedData;
+    return ret;
+}
+
 static BOOL CDecodeMsg_DecodeSignedContent(CDecodeMsg *msg,
  const CRYPT_DER_BLOB *blob)
 {
@@ -2239,8 +2269,8 @@ static BOOL CDecodeMsg_DecodeContent(CDecodeMsg *msg, const CRYPT_DER_BLOB *blob
             msg->type = CMSG_HASHED;
         break;
     case CMSG_ENVELOPED:
-        FIXME("unimplemented for type CMSG_ENVELOPED\n");
-        ret = TRUE;
+        if ((ret = CDecodeMsg_DecodeEnvelopedContent(msg, blob)))
+            msg->type = CMSG_ENVELOPED;
         break;
     case CMSG_SIGNED:
         if ((ret = CDecodeMsg_DecodeSignedContent(msg, blob)))
@@ -2316,6 +2346,20 @@ static BOOL CDecodeMsg_FinalizeHashedContent(CDecodeMsg *msg,
     return ret;
 }
 
+static BOOL CDecodeMsg_FinalizeEnvelopedContent(CDecodeMsg *msg,
+ CRYPT_DER_BLOB *blob)
+{
+    CRYPT_DATA_BLOB *content;
+
+    if (msg->base.open_flags & CMSG_DETACHED_FLAG)
+        content = &msg->detached_data;
+    else
+        content =
+         &msg->u.enveloped_data.data->encryptedContentInfo.encryptedContent;
+
+    return CRYPT_ConstructBlob(&msg->u.enveloped_data.content, content);
+}
+
 static BOOL CDecodeMsg_FinalizeSignedContent(CDecodeMsg *msg,
  CRYPT_DER_BLOB *blob)
 {
@@ -2376,6 +2420,9 @@ static BOOL CDecodeMsg_FinalizeContent(CDecodeMsg *msg, CRYPT_DER_BLOB *blob)
     {
     case CMSG_HASHED:
         ret = CDecodeMsg_FinalizeHashedContent(msg, blob);
+        break;
+    case CMSG_ENVELOPED:
+        ret = CDecodeMsg_FinalizeEnvelopedContent(msg, blob);
         break;
     case CMSG_SIGNED:
         ret = CDecodeMsg_FinalizeSignedContent(msg, blob);
@@ -3210,6 +3257,118 @@ static BOOL CDecodeSignedMsg_VerifySignatureEx(CDecodeMsg *msg,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_ImportKeyTrans(
+ PCRYPT_ALGORITHM_IDENTIFIER pContentEncryptionAlgorithm,
+ PCMSG_CTRL_KEY_TRANS_DECRYPT_PARA pKeyTransDecryptPara, DWORD dwFlags,
+ void *pvReserved, HCRYPTKEY *phContentEncryptKey)
+{
+    BOOL ret;
+    HCRYPTKEY key;
+
+    ret = CryptGetUserKey(pKeyTransDecryptPara->hCryptProv,
+     pKeyTransDecryptPara->dwKeySpec ? pKeyTransDecryptPara->dwKeySpec :
+     AT_KEYEXCHANGE, &key);
+    if (ret)
+    {
+        CMSG_KEY_TRANS_RECIPIENT_INFO *info =
+         &pKeyTransDecryptPara->pKeyTrans[pKeyTransDecryptPara->dwRecipientIndex];
+        CRYPT_DATA_BLOB *encryptedKey = &info->EncryptedKey;
+        DWORD size = encryptedKey->cbData + sizeof(BLOBHEADER) + sizeof(ALG_ID);
+        BYTE *keyBlob = CryptMemAlloc(size);
+
+        if (keyBlob)
+        {
+            DWORD i, k = size - 1;
+            BLOBHEADER *blobHeader = (BLOBHEADER *)keyBlob;
+            ALG_ID *algID = (ALG_ID *)(keyBlob + sizeof(BLOBHEADER));
+
+            blobHeader->bType = SIMPLEBLOB;
+            blobHeader->bVersion = CUR_BLOB_VERSION;
+            blobHeader->reserved = 0;
+            blobHeader->aiKeyAlg = CertOIDToAlgId(
+             pContentEncryptionAlgorithm->pszObjId);
+            *algID = CertOIDToAlgId(info->KeyEncryptionAlgorithm.pszObjId);
+            for (i = 0; i < encryptedKey->cbData; ++i, --k)
+                keyBlob[k] = encryptedKey->pbData[i];
+
+            ret = CryptImportKey(pKeyTransDecryptPara->hCryptProv, keyBlob,
+             size, key, 0, phContentEncryptKey);
+            CryptMemFree(keyBlob);
+        }
+        else
+            ret = FALSE;
+        CryptDestroyKey(key);
+    }
+    return ret;
+}
+
+static BOOL CRYPT_ImportEncryptedKey(PCRYPT_ALGORITHM_IDENTIFIER contEncrAlg,
+ PCMSG_CTRL_DECRYPT_PARA para, PCMSG_KEY_TRANS_RECIPIENT_INFO info,
+ HCRYPTKEY *key)
+{
+    static HCRYPTOIDFUNCSET set = NULL;
+    PFN_CMSG_IMPORT_KEY_TRANS importKeyFunc = NULL;
+    HCRYPTOIDFUNCADDR hFunc = NULL;
+    CMSG_CTRL_KEY_TRANS_DECRYPT_PARA decryptPara;
+    BOOL ret;
+
+    memset(&decryptPara, 0, sizeof(decryptPara));
+    decryptPara.cbSize = sizeof(decryptPara);
+    decryptPara.hCryptProv = para->hCryptProv;
+    decryptPara.dwKeySpec = para->dwKeySpec;
+    decryptPara.pKeyTrans = info;
+    decryptPara.dwRecipientIndex = para->dwRecipientIndex;
+
+    if (!set)
+        set = CryptInitOIDFunctionSet(CMSG_OID_IMPORT_KEY_TRANS_FUNC, 0);
+    CryptGetOIDFunctionAddress(set, X509_ASN_ENCODING, contEncrAlg->pszObjId, 0,
+     (void **)&importKeyFunc, &hFunc);
+    if (!importKeyFunc)
+        importKeyFunc = CRYPT_ImportKeyTrans;
+    ret = importKeyFunc(contEncrAlg, &decryptPara, 0, NULL, key);
+    if (hFunc)
+        CryptFreeOIDFunctionAddress(hFunc, 0);
+    return ret;
+}
+
+static BOOL CDecodeEnvelopedMsg_CrtlDecrypt(CDecodeMsg *msg,
+ PCMSG_CTRL_DECRYPT_PARA para)
+{
+    BOOL ret = FALSE;
+    CEnvelopedDecodeMsg *enveloped_data = &msg->u.enveloped_data;
+    CRYPT_ENVELOPED_DATA *data = enveloped_data->data;
+
+    if (para->cbSize != sizeof(CMSG_CTRL_DECRYPT_PARA))
+        SetLastError(E_INVALIDARG);
+    else if (!data)
+        SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+    else if (para->dwRecipientIndex >= data->cRecipientInfo)
+        SetLastError(CRYPT_E_INVALID_INDEX);
+    else if (enveloped_data->decrypted)
+        SetLastError(CRYPT_E_ALREADY_DECRYPTED);
+    else if (!para->hCryptProv)
+        SetLastError(ERROR_INVALID_PARAMETER);
+    else if (enveloped_data->content.cbData)
+    {
+        HCRYPTKEY key;
+
+        ret = CRYPT_ImportEncryptedKey(
+         &data->encryptedContentInfo.contentEncryptionAlgorithm, para,
+         data->rgRecipientInfo, &key);
+        if (ret)
+        {
+            ret = CryptDecrypt(key, 0, TRUE, 0, enveloped_data->content.pbData,
+             &enveloped_data->content.cbData);
+            CryptDestroyKey(key);
+        }
+    }
+    else
+        ret = TRUE;
+    if (ret)
+        enveloped_data->decrypted = TRUE;
+    return ret;
+}
+
 static BOOL CDecodeMsg_Control(HCRYPTMSG hCryptMsg, DWORD dwFlags,
  DWORD dwCtrlType, const void *pvCtrlPara)
 {
@@ -3231,6 +3390,13 @@ static BOOL CDecodeMsg_Control(HCRYPTMSG hCryptMsg, DWORD dwFlags,
     case CMSG_CTRL_DECRYPT:
         switch (msg->type)
         {
+        case CMSG_ENVELOPED:
+            ret = CDecodeEnvelopedMsg_CrtlDecrypt(msg,
+             (PCMSG_CTRL_DECRYPT_PARA)pvCtrlPara);
+            if (ret && (dwFlags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG))
+                msg->u.enveloped_data.crypt_prov =
+                 ((PCMSG_CTRL_DECRYPT_PARA)pvCtrlPara)->hCryptProv;
+            break;
         default:
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
         }

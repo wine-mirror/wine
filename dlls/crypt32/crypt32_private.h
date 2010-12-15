@@ -100,6 +100,10 @@ typedef struct _CRYPT_ENVELOPED_DATA
 BOOL CRYPT_AsnEncodePKCSEnvelopedData(const CRYPT_ENVELOPED_DATA *envelopedData,
  void *pvData, DWORD *pcbData);
 
+BOOL CRYPT_AsnDecodePKCSEnvelopedData(const BYTE *pbEncoded, DWORD cbEncoded,
+ DWORD dwFlags, PCRYPT_DECODE_PARA pDecodePara,
+ CRYPT_ENVELOPED_DATA *envelopedData, DWORD *pcbEnvelopedData);
+
 typedef struct _CRYPT_SIGNED_INFO
 {
     DWORD                 version;

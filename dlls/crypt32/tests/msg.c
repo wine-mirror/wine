@@ -2606,7 +2606,6 @@ static void test_decode_msg_update(void)
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, envelopedEmptyContent,
      sizeof(envelopedEmptyContent), TRUE);
-    todo_wine
     ok(!ret &&
      (GetLastError() == CRYPT_E_ASN1_BADTAG ||
       GetLastError() == OSS_DATA_ERROR), /* Win9x */
@@ -3089,12 +3088,10 @@ static void test_decode_msg_get_param(void)
         decryptPara.hCryptProv = hCryptProv;
         SetLastError(0xdeadbeef);
         ret = CryptMsgControl(msg, 0, CMSG_CTRL_DECRYPT, &decryptPara);
-        todo_wine
         ok(ret, "CryptMsgControl failed: %08x\n", GetLastError());
         decryptPara.hCryptProv = 0;
         SetLastError(0xdeadbeef);
         ret = CryptMsgControl(msg, 0, CMSG_CTRL_DECRYPT, &decryptPara);
-        todo_wine
         ok(!ret && GetLastError() == CRYPT_E_ALREADY_DECRYPTED,
          "expected CRYPT_E_ALREADY_DECRYPTED, got %08x\n", GetLastError());
         todo_wine
@@ -3118,7 +3115,6 @@ static void test_decode_msg_get_param(void)
         decryptPara.hCryptProv = hCryptProv;
         SetLastError(0xdeadbeef);
         ret = CryptMsgControl(msg, 0, CMSG_CTRL_DECRYPT, &decryptPara);
-        todo_wine
         ok(ret, "CryptMsgControl failed: %08x\n", GetLastError());
         todo_wine
         check_param("enveloped bare message", msg, CMSG_CONTENT_PARAM, msgData,
@@ -3556,7 +3552,6 @@ static void test_msg_control(void)
     decryptPara.cbSize = 0;
     SetLastError(0xdeadbeef);
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_DECRYPT, &decryptPara);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     decryptPara.cbSize = sizeof(decryptPara);
@@ -3573,7 +3568,6 @@ static void test_msg_control(void)
     ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_DECRYPT, &decryptPara);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_INVALID_INDEX,
      "expected CRYPT_E_INVALID_INDEX, got %08x\n", GetLastError());
     CryptMsgClose(msg);
@@ -3586,7 +3580,6 @@ static void test_msg_control(void)
     ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_DECRYPT, &decryptPara);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
      "expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
     CryptMsgClose(msg);
