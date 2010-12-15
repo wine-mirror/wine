@@ -39,7 +39,7 @@ BEGIN
 	MENUITEM "打开(&O)", IDM_OPEN
         MENUITEM "退出(&x)", IDM_EXIT
     END
-    POPUP "平移(&P)"
+    POPUP "平移(&P)" /* 译名待求证 */
     BEGIN
       MENUITEM "缩放至窗口(&S)", IDM_SET_EXT_TO_WIN
       MENUITEM SEPARATOR
