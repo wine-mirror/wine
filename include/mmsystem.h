@@ -200,6 +200,8 @@ typedef struct mmtime_tag {
 #define DRV_POWER               0x000F
 
 #define DRV_RESERVED            0x0800
+#define DRV_MCI_FIRST           DRV_RESERVED
+#define DRV_MCI_LAST            (0xFFF + DRV_MCI_FIRST)
 #define DRV_USER                0x4000
 
 #define DRVCNF_CANCEL           0x0000
