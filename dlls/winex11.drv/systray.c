@@ -32,6 +32,7 @@
 
 #include <X11/Xlib.h>
 
+#define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -53,11 +54,16 @@ struct tray_icon
     HWND           owner;    /* the HWND passed in to the Shell_NotifyIcon call */
     HWND           window;   /* the adaptor window */
     HWND           tooltip;  /* Icon tooltip */
+    UINT           state;    /* state flags */
     UINT           id;       /* the unique id given by the app */
     UINT           callback_message;
     int            display;  /* display index, or -1 if hidden */
-    WCHAR          tiptext[256]; /* Tooltip text. If empty => tooltip disabled */
-    WCHAR          tiptitle[64]; /* Tooltip title for ballon style tooltips.  If empty => tooltip is not balloon style. */
+    WCHAR          tiptext[128];    /* tooltip text */
+    WCHAR          info_text[256];  /* info balloon text */
+    WCHAR          info_title[64];  /* info balloon title */
+    UINT           info_flags;      /* flags for info balloon */
+    UINT           info_timeout;    /* timeout for info balloon */
+    HICON          info_icon;       /* info balloon icon */
 };
 
 static struct list icon_list = LIST_INIT( icon_list );
@@ -77,6 +83,9 @@ Atom systray_atom = 0;
 
 #define MIN_DISPLAYED 8
 #define ICON_BORDER 2
+
+#define BALLOON_SHOW_MIN_TIMEOUT 10000
+#define BALLOON_SHOW_MAX_TIMEOUT 30000
 
 /* stand-alone tray window */
 static HWND standalone_tray;
@@ -108,7 +117,7 @@ static void create_tooltip(struct tray_icon *icon)
         InitCommonControlsEx(&init_tooltip);
         tooltips_initialized = TRUE;
     }
-    if (icon->tiptitle[0] != 0)
+    if (icon->info_title[0] != 0)
     {
         icon->tooltip = CreateWindowExW( WS_EX_TOPMOST, TOOLTIPS_CLASSW, NULL,
                                          WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON,
@@ -484,10 +493,9 @@ static BOOL modify_icon( struct tray_icon *icon, NOTIFYICONDATAW *nid )
 {
     TRACE( "id=0x%x hwnd=%p flags=%x\n", nid->uID, nid->hWnd, nid->uFlags );
 
-    if ((nid->uFlags & NIF_STATE) && (nid->dwStateMask & NIS_HIDDEN))
+    if (nid->uFlags & NIF_STATE)
     {
-        if (nid->dwState & NIS_HIDDEN) hide_icon( icon );
-        else show_icon( icon );
+        icon->state = (icon->state & ~nid->dwStateMask) | (nid->dwState & nid->dwStateMask);
     }
 
     if (nid->uFlags & NIF_ICON)
@@ -512,15 +520,18 @@ static BOOL modify_icon( struct tray_icon *icon, NOTIFYICONDATAW *nid )
     if (nid->uFlags & NIF_TIP)
     {
         lstrcpynW(icon->tiptext, nid->szTip, sizeof(icon->tiptext)/sizeof(WCHAR));
-        icon->tiptitle[0] = 0;
         if (icon->tooltip) update_tooltip_text(icon);
     }
     if (nid->uFlags & NIF_INFO && nid->cbSize >= NOTIFYICONDATAA_V2_SIZE)
     {
-        lstrcpynW(icon->tiptext, nid->szInfo, sizeof(icon->tiptext)/sizeof(WCHAR));
-        lstrcpynW(icon->tiptitle, nid->szInfoTitle, sizeof(icon->tiptitle)/sizeof(WCHAR));
-        if (icon->tooltip) update_tooltip_text(icon);
+        lstrcpynW( icon->info_text, nid->szInfo, sizeof(icon->info_text)/sizeof(WCHAR) );
+        lstrcpynW( icon->info_title, nid->szInfoTitle, sizeof(icon->info_title)/sizeof(WCHAR) );
+        icon->info_flags = nid->dwInfoFlags;
+        icon->info_timeout = max(min(nid->u.uTimeout, BALLOON_SHOW_MAX_TIMEOUT), BALLOON_SHOW_MIN_TIMEOUT);
+        icon->info_icon = nid->hBalloonIcon;
     }
+    if (icon->state & NIS_HIDDEN) hide_icon( icon );
+    else show_icon( icon );
     return TRUE;
 }
 
@@ -549,10 +560,6 @@ static BOOL add_icon(NOTIFYICONDATAW *nid)
     icon->display = -1;
 
     list_add_tail(&icon_list, &icon->entry);
-
-    /* if hidden state is specified, modify_icon will take care of it */
-    if (!((nid->uFlags & NIF_STATE) && (nid->dwStateMask & NIS_HIDDEN)))
-        show_icon( icon );
 
     return modify_icon( icon, nid );
 }
