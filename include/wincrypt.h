@@ -2281,6 +2281,7 @@ static const WCHAR CERT_TRUST_PUB_AUTHENTICODE_FLAGS_VALUE_NAME[] =
 #define TIME_VALID_OID_GET_OBJECT_FUNC "TimeValidDllGetObject"
 #define CMSG_OID_GEN_CONTENT_ENCRYPT_KEY_FUNC "CryptMsgDllGenContentEncryptKey"
 #define CMSG_OID_EXPORT_KEY_TRANS_FUNC        "CryptMsgDllExportKeyTrans"
+#define CMSG_OID_IMPORT_KEY_TRANS_FUNC        "CryptMsgDllImportKeyTrans"
 
 #define CRYPT_OID_REGPATH "Software\\Microsoft\\Cryptography\\OID"
 #define CRYPT_OID_REG_ENCODING_TYPE_PREFIX "EncodingType "
@@ -3805,6 +3806,14 @@ typedef struct _CMSG_KEY_TRANS_ENCRYPT_INFO {
     DWORD                       dwFlags;
 } CMSG_KEY_TRANS_ENCRYPT_INFO, *PCMSG_KEY_TRANS_ENCRYPT_INFO;
 
+typedef struct _CMSG_CTRL_KEY_TRANS_DECRYPT_PARA {
+    DWORD                          cbSize;
+    HCRYPTPROV                     hCryptProv;
+    DWORD                          dwKeySpec;
+    PCMSG_KEY_TRANS_RECIPIENT_INFO pKeyTrans;
+    DWORD                          dwRecipientIndex;
+} CMSG_CTRL_KEY_TRANS_DECRYPT_PARA, *PCMSG_CTRL_KEY_TRANS_DECRYPT_PARA;
+
 typedef BOOL (WINAPI *PFN_CMSG_GEN_CONTENT_ENCRYPT_KEY)(
  PCMSG_CONTENT_ENCRYPT_INFO pContentEncryptInfo, DWORD dwFlags,
  void *pvReserved);
@@ -3814,6 +3823,11 @@ typedef BOOL (WINAPI *PFN_CMSG_EXPORT_KEY_TRANS)(
  PCMSG_KEY_TRANS_RECIPIENT_ENCODE_INFO pKeyTransEncodeInfo,
  PCMSG_KEY_TRANS_ENCRYPT_INFO pKeyTransEncryptInfo,
  DWORD dwFlags, void *pvReserved);
+
+typedef BOOL (WINAPI *PFN_CMSG_IMPORT_KEY_TRANS)(
+ PCRYPT_ALGORITHM_IDENTIFIER pContentEncryptionAlgorithm,
+ PCMSG_CTRL_KEY_TRANS_DECRYPT_PARA pKeyTransDecryptPara, DWORD dwFlags,
+ void *pvReserved, HCRYPTKEY *phContentEncryptKey);
 
 /* CryptMsgGetAndVerifySigner flags */
 #define CMSG_TRUSTED_SIGNER_FLAG   0x1
