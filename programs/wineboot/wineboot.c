@@ -1133,10 +1133,35 @@ int main( int argc, char *argv[] )
     int end_session = 0, force = 0, init = 0, kill = 0, restart = 0, shutdown = 0, update = 0;
     HANDLE event;
     SECURITY_ATTRIBUTES sa;
+    BOOL is_wow64;
 
     GetWindowsDirectoryW( windowsdir, MAX_PATH );
     if( !SetCurrentDirectoryW( windowsdir ) )
         WINE_ERR("Cannot set the dir to %s (%d)\n", wine_dbgstr_w(windowsdir), GetLastError() );
+
+    if (IsWow64Process( GetCurrentProcess(), &is_wow64 ) && is_wow64)
+    {
+        STARTUPINFOW si;
+        PROCESS_INFORMATION pi;
+        WCHAR filename[MAX_PATH];
+        void *redir;
+        DWORD exit_code;
+
+        memset( &si, 0, sizeof(si) );
+        si.cb = sizeof(si);
+        GetModuleFileNameW( 0, filename, MAX_PATH );
+
+        Wow64DisableWow64FsRedirection( &redir );
+        if (CreateProcessW( filename, GetCommandLineW(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi ))
+        {
+            WINE_TRACE( "restarting %s\n", wine_dbgstr_w(filename) );
+            WaitForSingleObject( pi.hProcess, INFINITE );
+            GetExitCodeProcess( pi.hProcess, &exit_code );
+            ExitProcess( exit_code );
+        }
+        else WINE_ERR( "failed to restart 64-bit %s, err %d\n", wine_dbgstr_w(filename), GetLastError() );
+        Wow64RevertWow64FsRedirection( redir );
+    }
 
     while ((optc = getopt_long(argc, argv, short_options, long_options, NULL )) != -1)
     {
