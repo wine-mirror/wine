@@ -87,9 +87,18 @@ static struct icon **displayed;  /* array of currently displayed icons */
 static BOOL hide_systray;
 static int icon_cx, icon_cy, tray_width;
 
+static struct icon *balloon_icon;
+static HWND balloon_window;
+
 #define MIN_DISPLAYED 8
 #define ICON_BORDER  2
 
+#define VALID_WIN_TIMER      1
+#define BALLOON_CREATE_TIMER 2
+#define BALLOON_SHOW_TIMER   3
+
+#define VALID_WIN_TIMEOUT        2000
+#define BALLOON_CREATE_TIMEOUT   2000
 #define BALLOON_SHOW_MIN_TIMEOUT 10000
 #define BALLOON_SHOW_MAX_TIMEOUT 30000
 
@@ -116,14 +125,11 @@ static RECT get_icon_rect( struct icon *icon )
     return rect;
 }
 
-/* Creates tooltip window for icon. */
-static void create_tooltip(struct icon *icon)
+static void init_common_controls(void)
 {
-    TTTOOLINFOW ti;
-    static BOOL tooltips_initialized = FALSE;
+    static BOOL initialized = FALSE;
 
-    /* Register tooltip classes if this is the first icon */
-    if (!tooltips_initialized)
+    if (!initialized)
     {
         INITCOMMONCONTROLSEX init_tooltip;
 
@@ -131,9 +137,16 @@ static void create_tooltip(struct icon *icon)
         init_tooltip.dwICC = ICC_TAB_CLASSES;
 
         InitCommonControlsEx(&init_tooltip);
-        tooltips_initialized = TRUE;
+        initialized = TRUE;
     }
+}
 
+/* Creates tooltip window for icon. */
+static void create_tooltip(struct icon *icon)
+{
+    TTTOOLINFOW ti;
+
+    init_common_controls();
     icon->tooltip = CreateWindowExW(WS_EX_TOPMOST, TOOLTIPS_CLASSW, NULL,
                                    WS_POPUP | TTS_ALWAYSTIP,
                                    CW_USEDEFAULT, CW_USEDEFAULT,
@@ -146,6 +159,96 @@ static void create_tooltip(struct icon *icon)
     ti.lpszText = icon->tiptext;
     if (icon->display != -1) ti.rect = get_icon_rect( icon );
     SendMessageW(icon->tooltip, TTM_ADDTOOLW, 0, (LPARAM)&ti);
+}
+
+static void set_balloon_position( struct icon *icon )
+{
+    RECT rect = get_icon_rect( icon );
+    POINT pos;
+
+    MapWindowPoints( tray_window, 0, (POINT *)&rect, 2 );
+    pos.x = (rect.left + rect.right) / 2;
+    pos.y = (rect.top + rect.bottom) / 2;
+    SendMessageW( balloon_window, TTM_TRACKPOSITION, 0, MAKELONG( pos.x, pos.y ));
+}
+
+static void balloon_create_timer(void)
+{
+    TTTOOLINFOW ti;
+
+    init_common_controls();
+    balloon_window = CreateWindowExW( WS_EX_TOPMOST, TOOLTIPS_CLASSW, NULL,
+                                      WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX | TTS_BALLOON | TTS_CLOSE,
+                                      CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+                                      tray_window, NULL, NULL, NULL);
+
+    memset( &ti, 0, sizeof(ti) );
+    ti.cbSize = sizeof(TTTOOLINFOW);
+    ti.hwnd = tray_window;
+    ti.uFlags = TTF_TRACK;
+    ti.lpszText = balloon_icon->info_text;
+    SendMessageW( balloon_window, TTM_ADDTOOLW, 0, (LPARAM)&ti );
+    if ((balloon_icon->info_flags & NIIF_ICONMASK) == NIIF_USER)
+        SendMessageW( balloon_window, TTM_SETTITLEW, (WPARAM)balloon_icon->info_icon,
+                      (LPARAM)balloon_icon->info_title );
+    else
+        SendMessageW( balloon_window, TTM_SETTITLEW, balloon_icon->info_flags,
+                      (LPARAM)balloon_icon->info_title );
+    set_balloon_position( balloon_icon );
+    SendMessageW( balloon_window, TTM_TRACKACTIVATE, TRUE, (LPARAM)&ti );
+    KillTimer( tray_window, BALLOON_CREATE_TIMER );
+    SetTimer( tray_window, BALLOON_SHOW_TIMER, balloon_icon->info_timeout, NULL );
+}
+
+static BOOL show_balloon( struct icon *icon )
+{
+    if (icon->display == -1) return FALSE;  /* not displayed */
+    if (!icon->info_text[0]) return FALSE;  /* no balloon */
+    balloon_icon = icon;
+    SetTimer( tray_window, BALLOON_CREATE_TIMER, BALLOON_CREATE_TIMEOUT, NULL );
+    return TRUE;
+}
+
+static void hide_balloon(void)
+{
+    if (!balloon_icon) return;
+    if (balloon_window)
+    {
+        KillTimer( tray_window, BALLOON_SHOW_TIMER );
+        DestroyWindow( balloon_window );
+        balloon_window = 0;
+    }
+    else KillTimer( tray_window, BALLOON_CREATE_TIMER );
+    balloon_icon = NULL;
+}
+
+static void show_next_balloon(void)
+{
+    struct icon *icon;
+
+    LIST_FOR_EACH_ENTRY( icon, &icon_list, struct icon, entry )
+        if (show_balloon( icon )) break;
+}
+
+static void update_balloon( struct icon *icon )
+{
+    if (balloon_icon == icon)
+    {
+        hide_balloon();
+        show_balloon( icon );
+    }
+    else if (!balloon_icon)
+    {
+        if (!show_balloon( icon )) return;
+    }
+    if (!balloon_icon) show_next_balloon();
+}
+
+static void balloon_timer(void)
+{
+    if (balloon_icon) balloon_icon->info_text[0] = 0;  /* clear text now that balloon has been shown */
+    hide_balloon();
+    show_next_balloon();
 }
 
 /* Synchronize tooltip text with tooltip window */
@@ -171,6 +274,7 @@ static void update_tooltip_position( struct icon *icon )
     ti.hwnd = tray_window;
     if (icon->display != -1) ti.rect = get_icon_rect( icon );
     SendMessageW( icon->tooltip, TTM_NEWTOOLRECTW, 0, (LPARAM)&ti );
+    if (balloon_icon == icon) set_balloon_position( icon );
 }
 
 /* find the icon located at a certain point in the tray window */
@@ -220,6 +324,7 @@ static BOOL show_icon(struct icon *icon)
     if (nb_displayed == 1 && !hide_systray) ShowWindow( tray_window, SW_SHOWNA );
 
     create_tooltip(icon);
+    update_balloon( icon );
     return TRUE;
 }
 
@@ -245,6 +350,7 @@ static BOOL hide_icon(struct icon *icon)
 
     if (!nb_displayed) ShowWindow( tray_window, SW_HIDE );
 
+    update_balloon( icon );
     update_tooltip_position( icon );
     return TRUE;
 }
@@ -289,6 +395,7 @@ static BOOL modify_icon( struct icon *icon, NOTIFYICONDATAW *nid )
         icon->info_flags = nid->dwInfoFlags;
         icon->info_timeout = max(min(nid->u.uTimeout, BALLOON_SHOW_MAX_TIMEOUT), BALLOON_SHOW_MIN_TIMEOUT);
         icon->info_icon = nid->hBalloonIcon;
+        update_balloon( icon );
     }
     if (icon->state & NIS_HIDDEN) hide_icon( icon );
     else show_icon( icon );
@@ -319,7 +426,7 @@ static BOOL add_icon(NOTIFYICONDATAW *nid)
     icon->owner  = nid->hWnd;
     icon->display = -1;
 
-    if (list_empty( &icon_list )) SetTimer( tray_window, 1, 2000, NULL );
+    if (list_empty( &icon_list )) SetTimer( tray_window, VALID_WIN_TIMER, VALID_WIN_TIMEOUT, NULL );
     list_add_tail(&icon_list, &icon->entry);
 
     return modify_icon( icon, nid );
@@ -332,7 +439,7 @@ static BOOL delete_icon(struct icon *icon)
     list_remove(&icon->entry);
     DestroyIcon(icon->image);
     HeapFree(GetProcessHeap(), 0, icon);
-    if (list_empty( &icon_list )) KillTimer( tray_window, 1 );
+    if (list_empty( &icon_list )) KillTimer( tray_window, VALID_WIN_TIMER );
     return TRUE;
 }
 
@@ -448,7 +555,12 @@ static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
         break;
 
     case WM_TIMER:
-        cleanup_destroyed_windows();
+        switch (wparam)
+        {
+        case VALID_WIN_TIMER:      cleanup_destroyed_windows(); break;
+        case BALLOON_CREATE_TIMER: balloon_create_timer(); break;
+        case BALLOON_SHOW_TIMER:   balloon_timer(); break;
+        }
         break;
 
     case WM_PAINT:
