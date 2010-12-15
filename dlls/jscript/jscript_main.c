@@ -25,19 +25,14 @@
 #include "activaut.h"
 #include "objsafe.h"
 #include "mshtmhst.h"
+#include "rpcproxy.h"
+#include "jscript_classes.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
 LONG module_ref = 0;
-
-static const CLSID CLSID_JScript =
-    {0xf414c260,0x6ac0,0x11cf,{0xb6,0xd1,0x00,0xaa,0x00,0xbb,0xbb,0x58}};
-static const CLSID CLSID_JScriptAuthor =
-    {0xf414c261,0x6ac0,0x11cf,{0xb6,0xd1,0x00,0xaa,0x00,0xbb,0xbb,0x58}};
-static const CLSID CLSID_JScriptEncode =
-    {0xf414c262,0x6ac0,0x11cf,{0xb6,0xd1,0x00,0xaa,0x00,0xbb,0xbb,0x58}};
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
@@ -204,7 +199,14 @@ static HRESULT register_inf(BOOL doregister)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
+    HRESULT hres;
+
     TRACE("()\n");
+
+    hres = __wine_register_resources(jscript_hinstance, NULL);
+    if(FAILED(hres))
+       return hres;
+
     return register_inf(TRUE);
 }
 
@@ -213,6 +215,13 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
+    HRESULT hres;
+
     TRACE("()\n");
+
+    hres = __wine_unregister_resources(jscript_hinstance, NULL);
+    if(FAILED(hres))
+        return hres;
+
     return register_inf(FALSE);
 }
