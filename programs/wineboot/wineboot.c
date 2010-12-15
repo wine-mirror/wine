@@ -318,6 +318,7 @@ static void create_volatile_environment_registry_key(void)
     static const WCHAR LogonServerW[] = {'L','O','G','O','N','S','E','R','V','E','R',0};
     static const WCHAR SessionNameW[] = {'S','E','S','S','I','O','N','N','A','M','E',0};
     static const WCHAR UserNameW[] = {'U','S','E','R','N','A','M','E',0};
+    static const WCHAR UserDomainW[] = {'U','S','E','R','D','O','M','A','I','N',0};
     static const WCHAR UserProfileW[] = {'U','S','E','R','P','R','O','F','I','L','E',0};
     static const WCHAR ConsoleW[] = {'C','o','n','s','o','l','e',0};
     static const WCHAR EmptyW[] = {0};
@@ -359,6 +360,7 @@ static void create_volatile_environment_registry_key(void)
     size = (sizeof(computername)/sizeof(WCHAR)) - 2;
     if (GetComputerNameW(&computername[2], &size))
     {
+        set_reg_value( hkey, UserDomainW, &computername[2] );
         computername[0] = computername[1] = '\\';
         set_reg_value( hkey, LogonServerW, computername );
     }
