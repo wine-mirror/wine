@@ -917,7 +917,6 @@ static HMODULE16 NE_DoLoadBuiltinModule( const IMAGE_DOS_HEADER *mz_header, cons
     NE_MODULE *pModule;
     HMODULE16 hModule;
     HINSTANCE16 hInstance;
-    OSVERSIONINFOW versionInfo;
     SIZE_T mapping_size = ~0UL;  /* assume builtins don't contain invalid offsets... */
 
     hModule = build_module( mz_header, mapping_size, file_name );
@@ -927,9 +926,8 @@ static HMODULE16 NE_DoLoadBuiltinModule( const IMAGE_DOS_HEADER *mz_header, cons
     pModule->owner32 = owner32;
 
     /* fake the expected version the module should have according to the current Windows version */
-    versionInfo.dwOSVersionInfoSize = sizeof(versionInfo);
-    if (GetVersionExW( &versionInfo ))
-        pModule->ne_expver = MAKEWORD( versionInfo.dwMinorVersion, versionInfo.dwMajorVersion );
+    pModule->ne_expver = MAKEWORD( NtCurrentTeb()->Peb->OSMajorVersion,
+                                   NtCurrentTeb()->Peb->OSMinorVersion );
 
     hInstance = NE_DoLoadModule( pModule );
     if (hInstance < 32) NE_FreeModule( hModule, 0 );
