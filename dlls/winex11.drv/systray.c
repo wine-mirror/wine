@@ -150,7 +150,7 @@ static void create_tooltip(struct tray_icon *icon)
     }
 }
 
-static void update_balloon_position(void)
+void update_systray_balloon_position(void)
 {
     RECT rect;
     POINT pos;
@@ -187,7 +187,7 @@ static void balloon_create_timer( struct tray_icon *icon )
         SendMessageW( balloon_window, TTM_SETTITLEW, icon->info_flags, (LPARAM)icon->info_title );
     balloon_icon = icon;
     balloon_pos.x = balloon_pos.y = MAXLONG;
-    update_balloon_position();
+    update_systray_balloon_position();
     SendMessageW( balloon_window, TTM_TRACKACTIVATE, TRUE, (LPARAM)&ti );
     KillTimer( icon->window, BALLOON_CREATE_TIMER );
     SetTimer( icon->window, BALLOON_SHOW_TIMER, icon->info_timeout, NULL );
@@ -292,7 +292,7 @@ static LRESULT WINAPI standalone_tray_wndproc( HWND hwnd, UINT msg, WPARAM wpara
     switch (msg)
     {
     case WM_MOVE:
-        update_balloon_position();
+        update_systray_balloon_position();
         break;
     case WM_CLOSE:
         ShowWindow( hwnd, SW_HIDE );
@@ -419,7 +419,7 @@ static LRESULT WINAPI tray_icon_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
         return 0;
 
     case WM_WINDOWPOSCHANGED:
-        update_balloon_position();
+        update_systray_balloon_position();
         break;
 
     case WM_TIMER:
