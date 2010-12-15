@@ -126,7 +126,7 @@ static void texture_cleanup(IWineD3DTextureImpl *This)
     }
 
     TRACE("(%p) : Cleaning up base texture\n", This);
-    basetexture_cleanup((IWineD3DBaseTexture *)This);
+    basetexture_cleanup((IWineD3DBaseTextureImpl *)This);
 }
 
 /* *******************************************

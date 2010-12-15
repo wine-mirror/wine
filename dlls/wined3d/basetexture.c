@@ -74,11 +74,11 @@ HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, UINT layer_count, UIN
     return WINED3D_OK;
 }
 
-void basetexture_cleanup(IWineD3DBaseTexture *iface)
+void basetexture_cleanup(IWineD3DBaseTextureImpl *texture)
 {
-    basetexture_unload((IWineD3DBaseTextureImpl *)iface);
-    HeapFree(GetProcessHeap(), 0, ((IWineD3DBaseTextureImpl *)iface)->baseTexture.sub_resources);
-    resource_cleanup((IWineD3DResource *)iface);
+    basetexture_unload(texture);
+    HeapFree(GetProcessHeap(), 0, texture->baseTexture.sub_resources);
+    resource_cleanup((IWineD3DResource *)texture);
 }
 
 IWineD3DResourceImpl *basetexture_get_sub_resource(IWineD3DBaseTextureImpl *texture, UINT sub_resource_idx)

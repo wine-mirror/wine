@@ -132,7 +132,7 @@ static void cubetexture_cleanup(IWineD3DCubeTextureImpl *This)
             IWineD3DSurface_Release((IWineD3DSurface *)surface);
         }
     }
-    basetexture_cleanup((IWineD3DBaseTexture *)This);
+    basetexture_cleanup((IWineD3DBaseTextureImpl *)This);
 }
 
 /* *******************************************

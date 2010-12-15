@@ -95,7 +95,7 @@ static void volumetexture_cleanup(IWineD3DVolumeTextureImpl *This)
             IWineD3DVolume_Release((IWineD3DVolume *)volume);
         }
     }
-    basetexture_cleanup((IWineD3DBaseTexture *)This);
+    basetexture_cleanup((IWineD3DBaseTextureImpl *)This);
 }
 
 /* *******************************************
