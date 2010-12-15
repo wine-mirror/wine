@@ -1456,13 +1456,13 @@ void ACTION_FinishCustomActions(const MSIPACKAGE* package)
 }
 
 typedef struct _msi_custom_remote_impl {
-    const IWineMsiRemoteCustomActionVtbl *lpVtbl;
+    IWineMsiRemoteCustomAction IWineMsiRemoteCustomAction_iface;
     LONG refs;
 } msi_custom_remote_impl;
 
-static inline msi_custom_remote_impl* mcr_from_IWineMsiRemoteCustomAction( IWineMsiRemoteCustomAction* iface )
+static inline msi_custom_remote_impl *impl_from_IWineMsiRemoteCustomAction( IWineMsiRemoteCustomAction *iface )
 {
-    return (msi_custom_remote_impl*) iface;
+    return CONTAINING_RECORD(iface, msi_custom_remote_impl, IWineMsiRemoteCustomAction_iface);
 }
 
 static HRESULT WINAPI mcr_QueryInterface( IWineMsiRemoteCustomAction *iface,
@@ -1481,14 +1481,14 @@ static HRESULT WINAPI mcr_QueryInterface( IWineMsiRemoteCustomAction *iface,
 
 static ULONG WINAPI mcr_AddRef( IWineMsiRemoteCustomAction *iface )
 {
-    msi_custom_remote_impl* This = mcr_from_IWineMsiRemoteCustomAction( iface );
+    msi_custom_remote_impl* This = impl_from_IWineMsiRemoteCustomAction( iface );
 
     return InterlockedIncrement( &This->refs );
 }
 
 static ULONG WINAPI mcr_Release( IWineMsiRemoteCustomAction *iface )
 {
-    msi_custom_remote_impl* This = mcr_from_IWineMsiRemoteCustomAction( iface );
+    msi_custom_remote_impl* This = impl_from_IWineMsiRemoteCustomAction( iface );
     ULONG r;
 
     r = InterlockedDecrement( &This->refs );
@@ -1531,7 +1531,7 @@ HRESULT create_msi_custom_remote( IUnknown *pOuter, LPVOID *ppObj )
     if (!This)
         return E_OUTOFMEMORY;
 
-    This->lpVtbl = &msi_custom_remote_vtbl;
+    This->IWineMsiRemoteCustomAction_iface.lpVtbl = &msi_custom_remote_vtbl;
     This->refs = 1;
 
     *ppObj = This;
