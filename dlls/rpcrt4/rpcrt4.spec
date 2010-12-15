@@ -402,7 +402,7 @@
 @ stub RpcMgmtInqServerPrincNameW
 @ stdcall RpcMgmtInqStats(ptr ptr)
 @ stdcall RpcMgmtIsServerListening(ptr)
-@ stub RpcMgmtSetAuthorizationFn
+@ stdcall RpcMgmtSetAuthorizationFn(ptr)
 @ stdcall RpcMgmtSetCancelTimeout(long)
 @ stdcall RpcMgmtSetComTimeout(ptr long)
 @ stdcall RpcMgmtSetServerStackSize(long)

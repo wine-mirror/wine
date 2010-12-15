@@ -1622,6 +1622,15 @@ RPC_STATUS WINAPI RpcMgmtIsServerListening(RPC_BINDING_HANDLE Binding)
 }
 
 /***********************************************************************
+ *             RpcMgmtSetAuthorizationFn (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcMgmtSetAuthorizationFn(RPC_MGMT_AUTHORIZATION_FN fn)
+{
+  FIXME("(%p): stub\n", fn);
+  return RPC_S_OK;
+}
+
+/***********************************************************************
  *             RpcMgmtSetServerStackSize (RPCRT4.@)
  */
 RPC_STATUS WINAPI RpcMgmtSetServerStackSize(ULONG ThreadStackSize)
