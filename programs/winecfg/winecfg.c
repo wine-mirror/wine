@@ -34,6 +34,7 @@
 #include <limits.h>
 #include <windows.h>
 #include <winreg.h>
+#include <wine/unicode.h>
 #include <wine/debug.h>
 #include <wine/list.h>
 
@@ -41,6 +42,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
 #include "winecfg.h"
 #include "resource.h"
+
+static const int is_win64 = (sizeof(void *) > sizeof(int));
 
 HKEY config_key = NULL;
 HMENU hPopupMenus = 0;
@@ -159,7 +162,8 @@ end:
  *
  * If valueName or value is NULL, an empty section will be created
  */
-static int set_config_key(HKEY root, const WCHAR *subkey, const WCHAR *name, const void *value, DWORD type) {
+static int set_config_key(HKEY root, const WCHAR *subkey, REGSAM access, const WCHAR *name, const void *value, DWORD type)
+{
     DWORD res = 1;
     HKEY key = NULL;
 
@@ -170,7 +174,8 @@ static int set_config_key(HKEY root, const WCHAR *subkey, const WCHAR *name, con
 
     if (subkey[0])
     {
-        res = RegCreateKeyW(root, subkey, &key);
+        res = RegCreateKeyExW( root, subkey, 0, NULL, REG_OPTION_NON_VOLATILE,
+                               access, NULL, &key, NULL );
         if (res != ERROR_SUCCESS) goto end;
     }
     else key = root;
@@ -190,25 +195,6 @@ end:
         WINE_ERR("Unable to set configuration key %s in section %s, res=%d\n",
                  wine_dbgstr_w(name), wine_dbgstr_w(subkey), res);
     return res;
-}
-
-/* removes the requested value from the registry, however, does not
- * remove the section if empty. Returns S_OK (0) on success.
- */
-static HRESULT remove_value(HKEY root, const WCHAR *subkey, const WCHAR *name)
-{
-    HRESULT hr;
-    HKEY key;
-
-    WINE_TRACE("subkey=%s, name=%s\n", wine_dbgstr_w(subkey), wine_dbgstr_w(name));
-
-    hr = RegOpenKeyW(root, subkey, &key);
-    if (hr != S_OK) return hr;
-
-    hr = RegDeleteValueW(key, name);
-    if (hr != ERROR_SUCCESS) return hr;
-
-    return S_OK;
 }
 
 /* ========================================================================= */
@@ -635,17 +621,43 @@ BOOL reg_key_exists(HKEY root, const char *path, const char *name)
 
 static void process_setting(struct setting *s)
 {
+    static const WCHAR softwareW[] = {'S','o','f','t','w','a','r','e','\\'};
+    HKEY key;
+    BOOL needs_wow64 = (is_win64 && s->root == HKEY_LOCAL_MACHINE && s->path &&
+                        !strncmpiW( s->path, softwareW, sizeof(softwareW)/sizeof(WCHAR) ));
+
     if (s->value)
     {
 	WINE_TRACE("Setting %s:%s to '%s'\n", wine_dbgstr_w(s->path),
                    wine_dbgstr_w(s->name), wine_dbgstr_w(s->value));
-        set_config_key(s->root, s->path, s->name, s->value, s->type);
+        set_config_key(s->root, s->path, MAXIMUM_ALLOWED, s->name, s->value, s->type);
+        if (needs_wow64)
+        {
+            WINE_TRACE("Setting 32-bit %s:%s to '%s'\n", wine_dbgstr_w(s->path),
+                       wine_dbgstr_w(s->name), wine_dbgstr_w(s->value));
+            set_config_key(s->root, s->path, MAXIMUM_ALLOWED | KEY_WOW64_32KEY, s->name, s->value, s->type);
+        }
     }
     else
     {
-        /* NULL name means remove that path/section entirely */
-	if (s->path && s->name) remove_value(s->root, s->path, s->name);
-        else if (s->path && !s->name) RegDeleteTreeW(s->root, s->path);
+	WINE_TRACE("Removing %s:%s\n", wine_dbgstr_w(s->path), wine_dbgstr_w(s->name));
+        if (!RegOpenKeyW( s->root, s->path, &key ))
+        {
+            /* NULL name means remove that path/section entirely */
+            if (s->name) RegDeleteValueW( key, s->name );
+            else RegDeleteTreeW( key, NULL );
+            RegCloseKey( key );
+        }
+        if (needs_wow64)
+        {
+            WINE_TRACE("Removing 32-bit %s:%s\n", wine_dbgstr_w(s->path), wine_dbgstr_w(s->name));
+            if (!RegOpenKeyExW( s->root, s->path, 0, MAXIMUM_ALLOWED | KEY_WOW64_32KEY, &key ))
+            {
+                if (s->name) RegDeleteValueW( key, s->name );
+                else RegDeleteTreeW( key, NULL );
+                RegCloseKey( key );
+            }
+        }
     }
 }
 
