@@ -3057,7 +3057,6 @@ static void test_decode_msg_get_param(void)
      NULL);
     CryptMsgUpdate(msg, envelopedEmptyBareContent,
      sizeof(envelopedEmptyBareContent), TRUE);
-    todo_wine
     check_param("enveloped empty bare content", msg, CMSG_CONTENT_PARAM, NULL,
      0);
     CryptMsgClose(msg);
@@ -3065,7 +3064,6 @@ static void test_decode_msg_get_param(void)
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     CryptMsgUpdate(msg, envelopedEmptyContent, sizeof(envelopedEmptyContent),
      TRUE);
-    todo_wine
     check_param("enveloped empty content", msg, CMSG_CONTENT_PARAM, NULL, 0);
     CryptMsgClose(msg);
 
@@ -3080,7 +3078,6 @@ static void test_decode_msg_get_param(void)
 
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     CryptMsgUpdate(msg, envelopedMessage, sizeof(envelopedMessage), TRUE);
-    todo_wine
     check_param("enveloped message before decrypting", msg, CMSG_CONTENT_PARAM,
      envelopedMessage + sizeof(envelopedMessage) - 4, 4);
     if (key)
@@ -3094,7 +3091,6 @@ static void test_decode_msg_get_param(void)
         ret = CryptMsgControl(msg, 0, CMSG_CTRL_DECRYPT, &decryptPara);
         ok(!ret && GetLastError() == CRYPT_E_ALREADY_DECRYPTED,
          "expected CRYPT_E_ALREADY_DECRYPTED, got %08x\n", GetLastError());
-        todo_wine
         check_param("enveloped message", msg, CMSG_CONTENT_PARAM, msgData,
          sizeof(msgData));
     }
@@ -3106,7 +3102,6 @@ static void test_decode_msg_get_param(void)
      NULL);
     CryptMsgUpdate(msg, envelopedBareMessage, sizeof(envelopedBareMessage),
      TRUE);
-    todo_wine
     check_param("enveloped bare message before decrypting", msg,
      CMSG_CONTENT_PARAM, envelopedBareMessage +
      sizeof(envelopedBareMessage) - 4, 4);
@@ -3116,7 +3111,6 @@ static void test_decode_msg_get_param(void)
         SetLastError(0xdeadbeef);
         ret = CryptMsgControl(msg, 0, CMSG_CTRL_DECRYPT, &decryptPara);
         ok(ret, "CryptMsgControl failed: %08x\n", GetLastError());
-        todo_wine
         check_param("enveloped bare message", msg, CMSG_CONTENT_PARAM, msgData,
          sizeof(msgData));
     }
@@ -3132,21 +3126,17 @@ static void test_decode_msg_get_param(void)
     CryptMsgUpdate(msg, envelopedMessageWith3Recps,
      sizeof(envelopedMessageWith3Recps), TRUE);
     value = 3;
-    todo_wine
     check_param("recipient count", msg, CMSG_RECIPIENT_COUNT_PARAM,
      (const BYTE *)&value, sizeof(value));
     size = 0;
     SetLastError(0xdeadbeef);
     ret = CryptMsgGetParam(msg, CMSG_RECIPIENT_INFO_PARAM, 3, NULL, &size);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_INVALID_INDEX,
      "expected CRYPT_E_INVALID_INDEX, got %08x\n", GetLastError());
     size = 0;
     SetLastError(0xdeadbeef);
     ret = CryptMsgGetParam(msg, CMSG_RECIPIENT_INFO_PARAM, 2, NULL, &size);
-    todo_wine
     ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
-    todo_wine
     ok(size >= 142, "unexpected size: %u\n", size);
     if (ret)
         buf = CryptMemAlloc(size);
@@ -3158,18 +3148,13 @@ static void test_decode_msg_get_param(void)
 
         SetLastError(0xdeadbeef);
         ret = CryptMsgGetParam(msg, CMSG_RECIPIENT_INFO_PARAM, 2, buf, &size);
-        todo_wine
         ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
-        todo_wine
         ok(certInfo->SerialNumber.cbData == sizeof(serialNumber),
          "unexpected serial number size: %u\n", certInfo->SerialNumber.cbData);
-        todo_wine
         ok(!memcmp(certInfo->SerialNumber.pbData, serialNumber,
          sizeof(serialNumber)), "unexpected serial number\n");
-        todo_wine
         ok(certInfo->Issuer.cbData == sizeof(issuer),
          "unexpected issuer size: %u\n", certInfo->Issuer.cbData);
-        todo_wine
         ok(!memcmp(certInfo->Issuer.pbData, issuer, sizeof(issuer)),
          "unexpected issuer\n");
         CryptMemFree(buf);

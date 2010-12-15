@@ -2881,6 +2881,89 @@ static BOOL CRYPT_CopySignerCertInfo(void *pvData, DWORD *pcbData,
     return ret;
 }
 
+static BOOL CRYPT_CopyRecipientInfo(void *pvData, DWORD *pcbData,
+ const CERT_ISSUER_SERIAL_NUMBER *in)
+{
+    DWORD size = sizeof(CERT_INFO);
+    BOOL ret;
+
+    TRACE("(%p, %d, %p)\n", pvData, pvData ? *pcbData : 0, in);
+
+    size += in->SerialNumber.cbData;
+    size += in->Issuer.cbData;
+    if (!pvData)
+    {
+        *pcbData = size;
+        ret = TRUE;
+    }
+    else if (*pcbData < size)
+    {
+        *pcbData = size;
+        SetLastError(ERROR_MORE_DATA);
+        ret = FALSE;
+    }
+    else
+    {
+        LPBYTE nextData = (BYTE *)pvData + sizeof(CERT_INFO);
+        CERT_INFO *out = pvData;
+
+        CRYPT_CopyBlob(&out->SerialNumber, &in->SerialNumber, &nextData);
+        CRYPT_CopyBlob(&out->Issuer, &in->Issuer, &nextData);
+        ret = TRUE;
+    }
+    TRACE("returning %d\n", ret);
+    return ret;
+}
+
+static BOOL CDecodeEnvelopedMsg_GetParam(CDecodeMsg *msg, DWORD dwParamType,
+ DWORD dwIndex, void *pvData, DWORD *pcbData)
+{
+    BOOL ret = FALSE;
+
+    switch (dwParamType)
+    {
+    case CMSG_TYPE_PARAM:
+        ret = CRYPT_CopyParam(pvData, pcbData, &msg->type, sizeof(msg->type));
+        break;
+    case CMSG_CONTENT_PARAM:
+        if (msg->u.enveloped_data.data)
+            ret = CRYPT_CopyParam(pvData, pcbData,
+             msg->u.enveloped_data.content.pbData,
+             msg->u.enveloped_data.content.cbData);
+        else
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        break;
+    case CMSG_RECIPIENT_COUNT_PARAM:
+        if (msg->u.enveloped_data.data)
+            ret = CRYPT_CopyParam(pvData, pcbData,
+             &msg->u.enveloped_data.data->cRecipientInfo, sizeof(DWORD));
+        else
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        break;
+    case CMSG_RECIPIENT_INFO_PARAM:
+        if (msg->u.enveloped_data.data)
+        {
+            if (dwIndex < msg->u.enveloped_data.data->cRecipientInfo)
+            {
+                PCMSG_KEY_TRANS_RECIPIENT_INFO recipientInfo =
+                 &msg->u.enveloped_data.data->rgRecipientInfo[dwIndex];
+
+                ret = CRYPT_CopyRecipientInfo(pvData, pcbData,
+                 &recipientInfo->RecipientId.u.IssuerSerialNumber);
+            }
+            else
+                SetLastError(CRYPT_E_INVALID_INDEX);
+        }
+        else
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        break;
+    default:
+        FIXME("unimplemented for %d\n", dwParamType);
+        SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+    }
+    return ret;
+}
+
 static BOOL CDecodeSignedMsg_GetParam(CDecodeMsg *msg, DWORD dwParamType,
  DWORD dwIndex, void *pvData, DWORD *pcbData)
 {
@@ -3071,6 +3154,10 @@ static BOOL CDecodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
     {
     case CMSG_HASHED:
         ret = CDecodeHashMsg_GetParam(msg, dwParamType, dwIndex, pvData,
+         pcbData);
+        break;
+    case CMSG_ENVELOPED:
+        ret = CDecodeEnvelopedMsg_GetParam(msg, dwParamType, dwIndex, pvData,
          pcbData);
         break;
     case CMSG_SIGNED:
