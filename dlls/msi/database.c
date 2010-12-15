@@ -2038,14 +2038,14 @@ MSIDBSTATE WINAPI MsiGetDatabaseState( MSIHANDLE handle )
 }
 
 typedef struct _msi_remote_database_impl {
-    const IWineMsiRemoteDatabaseVtbl *lpVtbl;
+    IWineMsiRemoteDatabase IWineMsiRemoteDatabase_iface;
     MSIHANDLE database;
     LONG refs;
 } msi_remote_database_impl;
 
-static inline msi_remote_database_impl* mrd_from_IWineMsiRemoteDatabase( IWineMsiRemoteDatabase* iface )
+static inline msi_remote_database_impl *impl_from_IWineMsiRemoteDatabase( IWineMsiRemoteDatabase *iface )
 {
-    return (msi_remote_database_impl *)iface;
+    return CONTAINING_RECORD(iface, msi_remote_database_impl, IWineMsiRemoteDatabase_iface);
 }
 
 static HRESULT WINAPI mrd_QueryInterface( IWineMsiRemoteDatabase *iface,
@@ -2064,14 +2064,14 @@ static HRESULT WINAPI mrd_QueryInterface( IWineMsiRemoteDatabase *iface,
 
 static ULONG WINAPI mrd_AddRef( IWineMsiRemoteDatabase *iface )
 {
-    msi_remote_database_impl* This = mrd_from_IWineMsiRemoteDatabase( iface );
+    msi_remote_database_impl* This = impl_from_IWineMsiRemoteDatabase( iface );
 
     return InterlockedIncrement( &This->refs );
 }
 
 static ULONG WINAPI mrd_Release( IWineMsiRemoteDatabase *iface )
 {
-    msi_remote_database_impl* This = mrd_from_IWineMsiRemoteDatabase( iface );
+    msi_remote_database_impl* This = impl_from_IWineMsiRemoteDatabase( iface );
     ULONG r;
 
     r = InterlockedDecrement( &This->refs );
@@ -2086,7 +2086,7 @@ static ULONG WINAPI mrd_Release( IWineMsiRemoteDatabase *iface )
 static HRESULT WINAPI mrd_IsTablePersistent( IWineMsiRemoteDatabase *iface,
                                              LPCWSTR table, MSICONDITION *persistent )
 {
-    msi_remote_database_impl *This = mrd_from_IWineMsiRemoteDatabase( iface );
+    msi_remote_database_impl *This = impl_from_IWineMsiRemoteDatabase( iface );
     *persistent = MsiDatabaseIsTablePersistentW(This->database, table);
     return S_OK;
 }
@@ -2094,7 +2094,7 @@ static HRESULT WINAPI mrd_IsTablePersistent( IWineMsiRemoteDatabase *iface,
 static HRESULT WINAPI mrd_GetPrimaryKeys( IWineMsiRemoteDatabase *iface,
                                           LPCWSTR table, MSIHANDLE *keys )
 {
-    msi_remote_database_impl *This = mrd_from_IWineMsiRemoteDatabase( iface );
+    msi_remote_database_impl *This = impl_from_IWineMsiRemoteDatabase( iface );
     UINT r = MsiDatabaseGetPrimaryKeysW(This->database, table, keys);
     return HRESULT_FROM_WIN32(r);
 }
@@ -2102,7 +2102,7 @@ static HRESULT WINAPI mrd_GetPrimaryKeys( IWineMsiRemoteDatabase *iface,
 static HRESULT WINAPI mrd_GetSummaryInformation( IWineMsiRemoteDatabase *iface,
                                                 UINT updatecount, MSIHANDLE *suminfo )
 {
-    msi_remote_database_impl *This = mrd_from_IWineMsiRemoteDatabase( iface );
+    msi_remote_database_impl *This = impl_from_IWineMsiRemoteDatabase( iface );
     UINT r = MsiGetSummaryInformationW(This->database, NULL, updatecount, suminfo);
     return HRESULT_FROM_WIN32(r);
 }
@@ -2110,14 +2110,14 @@ static HRESULT WINAPI mrd_GetSummaryInformation( IWineMsiRemoteDatabase *iface,
 static HRESULT WINAPI mrd_OpenView( IWineMsiRemoteDatabase *iface,
                                     LPCWSTR query, MSIHANDLE *view )
 {
-    msi_remote_database_impl *This = mrd_from_IWineMsiRemoteDatabase( iface );
+    msi_remote_database_impl *This = impl_from_IWineMsiRemoteDatabase( iface );
     UINT r = MsiDatabaseOpenViewW(This->database, query, view);
     return HRESULT_FROM_WIN32(r);
 }
 
 static HRESULT WINAPI mrd_SetMsiHandle( IWineMsiRemoteDatabase *iface, MSIHANDLE handle )
 {
-    msi_remote_database_impl* This = mrd_from_IWineMsiRemoteDatabase( iface );
+    msi_remote_database_impl* This = impl_from_IWineMsiRemoteDatabase( iface );
     This->database = handle;
     return S_OK;
 }
@@ -2142,7 +2142,7 @@ HRESULT create_msi_remote_database( IUnknown *pOuter, LPVOID *ppObj )
     if (!This)
         return E_OUTOFMEMORY;
 
-    This->lpVtbl = &msi_remote_database_vtbl;
+    This->IWineMsiRemoteDatabase_iface.lpVtbl = &msi_remote_database_vtbl;
     This->database = 0;
     This->refs = 1;
 
