@@ -245,8 +245,9 @@ static DWORD WINAPI IWineD3DTextureImpl_GetLOD(IWineD3DTexture *iface) {
     return basetexture_get_lod((IWineD3DBaseTexture *)iface);
 }
 
-static DWORD WINAPI IWineD3DTextureImpl_GetLevelCount(IWineD3DTexture *iface) {
-    return basetexture_get_level_count((IWineD3DBaseTexture *)iface);
+static DWORD WINAPI IWineD3DTextureImpl_GetLevelCount(IWineD3DTexture *iface)
+{
+    return basetexture_get_level_count((IWineD3DBaseTextureImpl *)iface);
 }
 
 static HRESULT WINAPI IWineD3DTextureImpl_SetAutoGenFilterType(IWineD3DTexture *iface, WINED3DTEXTUREFILTERTYPE FilterType) {

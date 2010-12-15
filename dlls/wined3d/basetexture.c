@@ -167,11 +167,10 @@ DWORD basetexture_get_lod(IWineD3DBaseTexture *iface)
     return This->baseTexture.LOD;
 }
 
-DWORD basetexture_get_level_count(IWineD3DBaseTexture *iface)
+DWORD basetexture_get_level_count(IWineD3DBaseTextureImpl *texture)
 {
-    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-    TRACE("iface %p, returning %u.\n", iface, This->baseTexture.level_count);
-    return This->baseTexture.level_count;
+    TRACE("texture %p, returning %u.\n", texture, texture->baseTexture.level_count);
+    return texture->baseTexture.level_count;
 }
 
 HRESULT basetexture_set_autogen_filter_type(IWineD3DBaseTexture *iface, WINED3DTEXTUREFILTERTYPE FilterType)
