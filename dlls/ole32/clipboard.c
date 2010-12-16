@@ -138,7 +138,7 @@ static inline DWORD_PTR td_get_offs(ole_priv_data *data, DWORD idx)
  */
 typedef struct snapshot
 {
-    const IDataObjectVtbl* lpVtbl;
+    IDataObject IDataObject_iface;
     LONG ref;
 
     DWORD seq_no;                   /* Clipboard sequence number corresponding to this snapshot */
@@ -161,7 +161,7 @@ typedef struct ole_clipbrd
 
 static inline snapshot *impl_from_IDataObject(IDataObject *iface)
 {
-    return (snapshot*)((char*)iface - FIELD_OFFSET(snapshot, lpVtbl));
+    return CONTAINING_RECORD(iface, snapshot, IDataObject_iface);
 }
 
 typedef struct PresentationDataHeader
@@ -226,7 +226,7 @@ static inline char *dump_fmtetc(FORMATETC *fmt)
 
 typedef struct enum_fmtetc
 {
-    const IEnumFORMATETCVtbl *lpVtbl;
+    IEnumFORMATETC IEnumFORMATETC_iface;
     LONG ref;
 
     UINT pos;    /* current enumerator position */
@@ -235,7 +235,7 @@ typedef struct enum_fmtetc
 
 static inline enum_fmtetc *impl_from_IEnumFORMATETC(IEnumFORMATETC *iface)
 {
-    return (enum_fmtetc*)((char*)iface - FIELD_OFFSET(enum_fmtetc, lpVtbl));
+    return CONTAINING_RECORD(iface, enum_fmtetc, IEnumFORMATETC_iface);
 }
 
 /************************************************************************
@@ -440,12 +440,12 @@ static HRESULT enum_fmtetc_construct(ole_priv_data *data, UINT pos, IEnumFORMATE
   if (!ef) return E_OUTOFMEMORY;
 
   ef->ref = 1;
-  ef->lpVtbl = &efvt;
+  ef->IEnumFORMATETC_iface.lpVtbl = &efvt;
   ef->data = data;
   ef->pos = pos;
 
   TRACE("(%p)->()\n", ef);
-  *obj = (IEnumFORMATETC *)ef;
+  *obj = &ef->IEnumFORMATETC_iface;
   return S_OK;
 }
 
@@ -1501,7 +1501,7 @@ static snapshot *snapshot_construct(DWORD seq_no)
     This = HeapAlloc( GetProcessHeap(), 0, sizeof(*This) );
     if (!This) return NULL;
 
-    This->lpVtbl = &snapshot_vtable;
+    This->IDataObject_iface.lpVtbl = &snapshot_vtable;
     This->ref = 0;
     This->seq_no = seq_no;
     This->data = NULL;
@@ -2016,7 +2016,7 @@ HRESULT WINAPI OleGetClipboard(IDataObject **obj)
         if(!clipbrd->latest_snapshot) return E_OUTOFMEMORY;
     }
 
-    *obj = (IDataObject*)&clipbrd->latest_snapshot->lpVtbl;
+    *obj = &clipbrd->latest_snapshot->IDataObject_iface;
     IDataObject_AddRef(*obj);
 
     return S_OK;
