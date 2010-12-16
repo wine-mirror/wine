@@ -41,13 +41,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 typedef struct _domdoctype
 {
     xmlnode node;
-    const struct IXMLDOMDocumentTypeVtbl *lpVtbl;
+    IXMLDOMDocumentType IXMLDOMDocumentType_iface;
     LONG ref;
 } domdoctype;
 
 static inline domdoctype *impl_from_IXMLDOMDocumentType( IXMLDOMDocumentType *iface )
 {
-    return (domdoctype *)((char*)iface - FIELD_OFFSET(domdoctype, lpVtbl));
+    return CONTAINING_RECORD(iface, domdoctype, IXMLDOMDocumentType_iface);
 }
 
 static HRESULT WINAPI domdoctype_QueryInterface(
@@ -64,7 +64,7 @@ static HRESULT WINAPI domdoctype_QueryInterface(
          IsEqualGUID( riid, &IID_IDispatch ) ||
          IsEqualGUID( riid, &IID_IUnknown ) )
     {
-        *ppvObject = &This->lpVtbl;
+        *ppvObject = &This->IXMLDOMDocumentType_iface;
     }
     else if(node_query_interface(&This->node, riid, ppvObject))
     {
@@ -176,8 +176,8 @@ static HRESULT WINAPI domdoctype_Invoke(
     hr = get_typeinfo(IXMLDOMDocumentType_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &(This->lpVtbl), dispIdMember, wFlags, pDispParams,
-                pVarResult, pExcepInfo, puArgErr);
+        hr = ITypeInfo_Invoke(typeinfo, &This->IXMLDOMDocumentType_iface, dispIdMember, wFlags,
+                pDispParams, pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
 
@@ -615,12 +615,13 @@ IUnknown* create_doc_type( xmlNodePtr doctype )
     if ( !This )
         return NULL;
 
-    This->lpVtbl = &domdoctype_vtbl;
+    This->IXMLDOMDocumentType_iface.lpVtbl = &domdoctype_vtbl;
     This->ref = 1;
 
-    init_xmlnode(&This->node, doctype, (IXMLDOMNode*)&This->lpVtbl, &domdoctype_dispex);
+    init_xmlnode(&This->node, doctype, (IXMLDOMNode*)&This->IXMLDOMDocumentType_iface,
+            &domdoctype_dispex);
 
-    return (IUnknown*) &This->lpVtbl;
+    return (IUnknown*)&This->IXMLDOMDocumentType_iface;
 }
 
 #endif
