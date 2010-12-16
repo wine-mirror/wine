@@ -44,13 +44,13 @@ static const xmlChar DT_nsURI[] = "urn:schemas-microsoft-com:datatypes";
 typedef struct _domelem
 {
     xmlnode node;
-    const struct IXMLDOMElementVtbl *lpVtbl;
+    IXMLDOMElement IXMLDOMElement_iface;
     LONG ref;
 } domelem;
 
 static inline domelem *impl_from_IXMLDOMElement( IXMLDOMElement *iface )
 {
-    return (domelem *)((char*)iface - FIELD_OFFSET(domelem, lpVtbl));
+    return CONTAINING_RECORD(iface, domelem, IXMLDOMElement_iface);
 }
 
 static inline xmlNodePtr get_element( const domelem *This )
@@ -72,7 +72,7 @@ static HRESULT WINAPI domelem_QueryInterface(
          IsEqualGUID( riid, &IID_IDispatch ) ||
          IsEqualGUID( riid, &IID_IUnknown ) )
     {
-        *ppvObject = &This->lpVtbl;
+        *ppvObject = &This->IXMLDOMElement_iface;
     }
     else if(node_query_interface(&This->node, riid, ppvObject))
     {
@@ -184,8 +184,8 @@ static HRESULT WINAPI domelem_Invoke(
     hr = get_typeinfo(IXMLDOMElement_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &(This->lpVtbl), dispIdMember, wFlags, pDispParams,
-                pVarResult, pExcepInfo, puArgErr);
+        hr = ITypeInfo_Invoke(typeinfo, &This->IXMLDOMElement_iface, dispIdMember, wFlags,
+                pDispParams, pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
 
@@ -314,7 +314,7 @@ static HRESULT WINAPI domelem_get_attributes(
 
     TRACE("(%p)->(%p)\n", This, attributeMap);
 
-    *attributeMap = create_nodemap((IXMLDOMNode*)&This->lpVtbl);
+    *attributeMap = create_nodemap((IXMLDOMNode*)&This->IXMLDOMElement_iface);
     return S_OK;
 }
 
@@ -1333,12 +1333,12 @@ IUnknown* create_element( xmlNodePtr element )
     if ( !This )
         return NULL;
 
-    This->lpVtbl = &domelem_vtbl;
+    This->IXMLDOMElement_iface.lpVtbl = &domelem_vtbl;
     This->ref = 1;
 
-    init_xmlnode(&This->node, element, (IXMLDOMNode*)&This->lpVtbl, &domelem_dispex);
+    init_xmlnode(&This->node, element, (IXMLDOMNode*)&This->IXMLDOMElement_iface, &domelem_dispex);
 
-    return (IUnknown*) &This->lpVtbl;
+    return (IUnknown*)&This->IXMLDOMElement_iface;
 }
 
 #endif
