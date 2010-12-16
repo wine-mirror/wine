@@ -40,13 +40,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 typedef struct _entityref
 {
     xmlnode node;
-    const struct IXMLDOMEntityReferenceVtbl *lpVtbl;
+    IXMLDOMEntityReference IXMLDOMEntityReference_iface;
     LONG ref;
 } entityref;
 
 static inline entityref *impl_from_IXMLDOMEntityReference( IXMLDOMEntityReference *iface )
 {
-    return (entityref *)((char*)iface - FIELD_OFFSET(entityref, lpVtbl));
+    return CONTAINING_RECORD(iface, entityref, IXMLDOMEntityReference_iface);
 }
 
 static HRESULT WINAPI entityref_QueryInterface(
@@ -169,8 +169,8 @@ static HRESULT WINAPI entityref_Invoke(
     hr = get_typeinfo(IXMLDOMEntityReference_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &(This->lpVtbl), dispIdMember, wFlags, pDispParams,
-                pVarResult, pExcepInfo, puArgErr);
+        hr = ITypeInfo_Invoke(typeinfo, &This->IXMLDOMEntityReference_iface, dispIdMember, wFlags,
+                pDispParams, pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
 
@@ -582,12 +582,12 @@ IUnknown* create_doc_entity_ref( xmlNodePtr entity )
     if ( !This )
         return NULL;
 
-    This->lpVtbl = &entityref_vtbl;
+    This->IXMLDOMEntityReference_iface.lpVtbl = &entityref_vtbl;
     This->ref = 1;
 
-    init_xmlnode(&This->node, entity, (IXMLDOMNode*)&This->lpVtbl, NULL);
+    init_xmlnode(&This->node, entity, (IXMLDOMNode*)&This->IXMLDOMEntityReference_iface, NULL);
 
-    return (IUnknown*) &This->lpVtbl;
+    return (IUnknown*)&This->IXMLDOMEntityReference_iface;
 }
 
 #endif
