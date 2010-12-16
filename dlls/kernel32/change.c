@@ -134,6 +134,12 @@ BOOL WINAPI FindCloseChangeNotification( HANDLE handle )
     return CloseHandle( handle );
 }
 
+static void WINAPI invoke_completion(LPVOID ctx, IO_STATUS_BLOCK *ios, ULONG res)
+{
+    LPOVERLAPPED_COMPLETION_ROUTINE completion = ctx;
+    completion(ios->u.Status, ios->Information, (LPOVERLAPPED)ios);
+}
+
 /****************************************************************************
  *		ReadDirectoryChangesW (KERNEL32.@)
  *
@@ -169,14 +175,16 @@ BOOL WINAPI ReadDirectoryChangesW( HANDLE handle, LPVOID buffer, DWORD len, BOOL
     else
     {
         pov = overlapped;
-        if (!completion && ((ULONG_PTR)overlapped->hEvent & 1) == 0) cvalue = overlapped;
+        if(completion) cvalue = completion;
+        else if (((ULONG_PTR)overlapped->hEvent & 1) == 0) cvalue = overlapped;
     }
 
     ios = (PIO_STATUS_BLOCK) pov;
     ios->u.Status = STATUS_PENDING;
 
-    status = NtNotifyChangeDirectoryFile( handle, pov->hEvent, NULL, cvalue,
-                                          ios, buffer, len, filter, subtree );
+    status = NtNotifyChangeDirectoryFile( handle, completion && overlapped ? NULL : pov->hEvent,
+            completion && overlapped ? invoke_completion : NULL,
+            cvalue, ios, buffer, len, filter, subtree );
     if (status == STATUS_PENDING)
     {
         if (overlapped)
