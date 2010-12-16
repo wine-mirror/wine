@@ -140,6 +140,7 @@ static void *user_space_limit;
 static void *working_set_limit;
 static void *address_space_start = (void *)0x10000;
 #endif  /* __i386__ */
+static const int is_win64 = (sizeof(void *) > sizeof(int));
 
 #define ROUND_ADDR(addr,mask) \
    ((void *)((UINT_PTR)(addr) & ~(UINT_PTR)(mask)))
@@ -1357,6 +1358,7 @@ static int alloc_virtual_heap( void *base, size_t size, void *arg )
 
     if (is_beyond_limit( base, size, address_space_limit )) address_space_limit = (char *)base + size;
     if (size < VIRTUAL_HEAP_SIZE) return 0;
+    if (is_win64 && base < (void *)0x80000000) return 0;
     *heap_base = wine_anon_mmap( (char *)base + size - VIRTUAL_HEAP_SIZE,
                                  VIRTUAL_HEAP_SIZE, PROT_READ|PROT_WRITE, MAP_FIXED );
     return (*heap_base != (void *)-1);
