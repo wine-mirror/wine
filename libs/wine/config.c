@@ -97,6 +97,14 @@ static char *xstrdup( const char *str )
     return res;
 }
 
+/* check if a string ends in a given substring */
+static inline int strendswith( const char* str, const char* end )
+{
+    size_t len = strlen( str );
+    size_t tail = strlen( end );
+    return len >= tail && !strcmp( str + len - tail, end );
+}
+
 /* remove all trailing slashes from a path name */
 static inline void remove_trailing_slashes( char *path )
 {
@@ -448,19 +456,23 @@ const char *wine_get_build_id(void)
 /* exec a binary using the preloader if requested; helper for wine_exec_wine_binary */
 static void preloader_exec( char **argv, int use_preloader )
 {
-#if defined(linux) && defined(__i386__)
+#ifdef linux
     if (use_preloader)
     {
         static const char preloader[] = "wine-preloader";
+        static const char preloader64[] = "wine64-preloader";
         char *p, *full_name;
         char **last_arg = argv, **new_argv;
 
         if (!(p = strrchr( argv[0], '/' ))) p = argv[0];
         else p++;
 
-        full_name = xmalloc( p - argv[0] + sizeof(preloader) );
+        full_name = xmalloc( p - argv[0] + sizeof(preloader64) );
         memcpy( full_name, argv[0], p - argv[0] );
-        memcpy( full_name + (p - argv[0]), preloader, sizeof(preloader) );
+        if (strendswith( p, "64" ))
+            memcpy( full_name + (p - argv[0]), preloader64, sizeof(preloader64) );
+        else
+            memcpy( full_name + (p - argv[0]), preloader, sizeof(preloader) );
 
         /* make a copy of argv */
         while (*last_arg) last_arg++;
@@ -480,13 +492,10 @@ static void preloader_exec( char **argv, int use_preloader )
 void wine_exec_wine_binary( const char *name, char **argv, const char *env_var )
 {
     const char *path, *pos, *ptr;
-    int use_preloader = 0;
+    int use_preloader;
 
-    if (!name)  /* no name means default loader */
-    {
-        name = argv0_name;
-        use_preloader = 1;
-    }
+    if (!name) name = argv0_name;  /* no name means default loader */
+    use_preloader = !strendswith( name, "wineserver" );
 
     if ((ptr = strrchr( name, '/' )))
     {
