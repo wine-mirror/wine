@@ -40,13 +40,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 typedef struct _domcomment
 {
     xmlnode node;
-    const struct IXMLDOMCommentVtbl *lpVtbl;
+    IXMLDOMComment IXMLDOMComment_iface;
     LONG ref;
 } domcomment;
 
 static inline domcomment *impl_from_IXMLDOMComment( IXMLDOMComment *iface )
 {
-    return (domcomment *)((char*)iface - FIELD_OFFSET(domcomment, lpVtbl));
+    return CONTAINING_RECORD(iface, domcomment, IXMLDOMComment_iface);
 }
 
 static HRESULT WINAPI domcomment_QueryInterface(
@@ -171,8 +171,8 @@ static HRESULT WINAPI domcomment_Invoke(
     hr = get_typeinfo(IXMLDOMComment_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &(This->lpVtbl), dispIdMember, wFlags, pDispParams,
-                pVarResult, pExcepInfo, puArgErr);
+        hr = ITypeInfo_Invoke(typeinfo, &This->IXMLDOMComment_iface, dispIdMember, wFlags,
+                pDispParams, pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
 
@@ -837,12 +837,12 @@ IUnknown* create_comment( xmlNodePtr comment )
     if ( !This )
         return NULL;
 
-    This->lpVtbl = &domcomment_vtbl;
+    This->IXMLDOMComment_iface.lpVtbl = &domcomment_vtbl;
     This->ref = 1;
 
-    init_xmlnode(&This->node, comment, (IXMLDOMNode*)&This->lpVtbl, NULL);
+    init_xmlnode(&This->node, comment, (IXMLDOMNode*)&This->IXMLDOMComment_iface, NULL);
 
-    return (IUnknown*) &This->lpVtbl;
+    return (IUnknown*)&This->IXMLDOMComment_iface;
 }
 
 #endif
