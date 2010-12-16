@@ -1863,11 +1863,11 @@ esac
 AC_SUBST(MAIN_BINARY,"wine")
 test "x$enable_win64" != "xyes" || MAIN_BINARY="wine64"
 
-case $host_cpu in
-  *i[[3456789]]86*)
-    case $host_os in
-      linux*)
-        AC_SUBST(EXTRA_BINARIES,"wine-preloader") ;;
+case $host_os in
+  linux*)
+    case $host_cpu in
+      *i[[3456789]]86*) AC_SUBST(EXTRA_BINARIES,"wine-preloader") ;;
+      x86_64*) AC_SUBST(EXTRA_BINARIES,"wine64-preloader") ;;
     esac
     ;;
 esac

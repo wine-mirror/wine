@@ -108,10 +108,17 @@
 
 static struct wine_preload_info preload_info[] =
 {
+#ifdef __i386__
     { (void *)0x00000000, 0x00010000 },  /* low 64k */
     { (void *)0x00010000, 0x00100000 },  /* DOS area */
     { (void *)0x00110000, 0x67ef0000 },  /* low memory area */
     { (void *)0x7f000000, 0x03000000 },  /* top-down allocations + shared heap + virtual heap */
+#else
+    { (void *)0x000000010000, 0x00100000 },  /* DOS area */
+    { (void *)0x000000110000, 0x67ef0000 },  /* low memory area */
+    { (void *)0x00007ff00000, 0x000f0000 },  /* shared user data */
+    { (void *)0x7ffffe000000, 0x01ff0000 },  /* top-down allocations + virtual heap */
+#endif
     { 0, 0 },                            /* PE exe range set with WINEPRELOADRESERVE */
     { 0, 0 }                             /* end of list */
 };
@@ -165,6 +172,8 @@ void __bb_init_func(void) { return; }
 void *__stack_chk_guard = 0;
 void __stack_chk_fail_local(void) { return; }
 void __stack_chk_fail(void) { return; }
+
+#ifdef __i386__
 
 /* data for setting up the glibc-style thread-local storage in %gs */
 
@@ -333,6 +342,126 @@ static inline int wld_prctl( int code, long arg )
     return SYSCALL_RET(ret);
 }
 
+#elif defined(__x86_64__)
+
+/*
+ * The _start function is the entry and exit point of this program
+ *
+ *  It calls wld_start, passing a pointer to the args it receives
+ *  then jumps to the address wld_start returns.
+ */
+void _start(void);
+extern char _end[];
+__ASM_GLOBAL_FUNC(_start,
+                  "movq %rsp,%rax\n\t"
+                  "leaq -144(%rsp),%rsp\n\t" /* allocate some space for extra aux values */
+                  "movq %rsp,%rdi\n\t"       /* ptr to orig stack pointer */
+                  "movq %rax,(%rdi)\n\t"     /* orig stack pointer */
+                  "call wld_start\n\t"
+                  "movq (%rsp),%rsp\n\t"     /* new stack pointer */
+                  "pushq %rax\n\t"           /* ELF interpreter entry point */
+                  "xorq %rax,%rax\n\t"
+                  "xorq %rcx,%rcx\n\t"
+                  "xorq %rdx,%rdx\n\t"
+                  "xorq %rsi,%rsi\n\t"
+                  "xorq %rdi,%rdi\n\t"
+                  "xorq %r8,%r8\n\t"
+                  "xorq %r9,%r9\n\t"
+                  "xorq %r10,%r10\n\t"
+                  "xorq %r11,%r11\n\t"
+                  "ret")
+
+#define SYSCALL_RET(ret) (((ret) < 0 && (ret) > -4096) ? -1 : (ret))
+
+static inline __attribute__((noreturn)) void wld_exit( int code )
+{
+    for (;;)  /* avoid warning */
+        __asm__ __volatile__( "syscall" : : "a" (SYS_exit), "D" (code) );
+}
+
+static inline int wld_open( const char *name, int flags )
+{
+    int ret;
+    __asm__ __volatile__( "syscall" : "=a" (ret) : "0" (SYS_open), "D" (name), "S" (flags) );
+    return SYSCALL_RET(ret);
+}
+
+static inline int wld_close( int fd )
+{
+    int ret;
+    __asm__ __volatile__( "syscall" : "=a" (ret) : "0" (SYS_close), "D" (fd) );
+    return SYSCALL_RET(ret);
+}
+
+static inline ssize_t wld_read( int fd, void *buffer, size_t len )
+{
+    int ret;
+    __asm__ __volatile__( "syscall"
+                          : "=a" (ret)
+                          : "0" (SYS_read), "D" (fd), "S" (buffer), "d" (len)
+                          : "memory" );
+    return SYSCALL_RET(ret);
+}
+
+static inline ssize_t wld_write( int fd, const void *buffer, size_t len )
+{
+    int ret;
+    __asm__ __volatile__( "syscall" : "=a" (ret) : "0" (SYS_write), "D" (fd), "S" (buffer), "d" (len) );
+    return SYSCALL_RET(ret);
+}
+
+static inline int wld_mprotect( const void *addr, size_t len, int prot )
+{
+    int ret;
+    __asm__ __volatile__( "syscall" : "=a" (ret) : "0" (SYS_mprotect), "D" (addr), "S" (len), "d" (prot) );
+    return SYSCALL_RET(ret);
+}
+
+void *wld_mmap( void *start, size_t len, int prot, int flags, int fd, off_t offset );
+__ASM_GLOBAL_FUNC( wld_mmap,
+                   "movq %rcx,%r10\n\t"
+                   "movq $9,%rax\n\t"  /* SYS_mmap */
+                   "syscall\n\t"
+                   "ret" );
+
+static inline uid_t wld_getuid(void)
+{
+    uid_t ret;
+    __asm__( "syscall" : "=a" (ret) : "0" (SYS_getuid) );
+    return ret;
+}
+
+static inline uid_t wld_geteuid(void)
+{
+    uid_t ret;
+    __asm__( "syscall" : "=a" (ret) : "0" (SYS_geteuid) );
+    return ret;
+}
+
+static inline gid_t wld_getgid(void)
+{
+    gid_t ret;
+    __asm__( "syscall" : "=a" (ret) : "0" (SYS_getgid) );
+    return ret;
+}
+
+static inline gid_t wld_getegid(void)
+{
+    gid_t ret;
+    __asm__( "syscall" : "=a" (ret) : "0" (SYS_getegid) );
+    return ret;
+}
+
+static inline int wld_prctl( int code, int arg )
+{
+    int ret;
+    __asm__ __volatile__( "syscall" : "=a" (ret) : "D" (SYS_prctl), "S" (code), "d" (arg) );
+    return SYSCALL_RET(ret);
+}
+
+#else
+#error preloader not implemented for this CPU
+#endif
 
 /* replacement for libc functions */
 
@@ -594,8 +723,13 @@ static void map_so_lib( const char *name, struct wld_link_map *l)
         ( header->e_ident[3] != 'F' ) )
         fatal_error( "%s: not an ELF binary... don't know how to load it\n", name );
 
+#ifdef __i386__
     if( header->e_machine != EM_386 )
         fatal_error("%s: not an i386 ELF binary... don't know how to load it\n", name );
+#elif defined(__x86_64__)
+    if( header->e_machine != EM_X86_64 )
+        fatal_error("%s: not an x86-64 ELF binary... don't know how to load it\n", name );
+#endif
 
     if (header->e_phnum > sizeof(loadcmds)/sizeof(loadcmds[0]))
         fatal_error( "%s: oops... not enough space for load commands\n", name );
@@ -1082,8 +1216,14 @@ void* wld_start( void **stack )
     if (reserve) preload_reserve( reserve );
     for (i = 0; preload_info[i].size; i++)
     {
-        if (wld_mmap( preload_info[i].addr, preload_info[i].size, PROT_NONE,
-                      MAP_FIXED | MAP_PRIVATE | MAP_ANON | MAP_NORESERVE, -1, 0 ) == (void *)-1)
+        if ((char *)av >= (char *)preload_info[i].addr &&
+            (char *)pargc <= (char *)preload_info[i].addr + preload_info[i].size)
+        {
+            remove_preload_range( i );
+            i--;
+        }
+        else if (wld_mmap( preload_info[i].addr, preload_info[i].size, PROT_NONE,
+                           MAP_FIXED | MAP_PRIVATE | MAP_ANON | MAP_NORESERVE, -1, 0 ) == (void *)-1)
         {
             /* don't warn for low 64k */
             if (preload_info[i].addr >= (void *)0x10000)

@@ -164,6 +164,13 @@ static int pre_exec(void)
     return 1;
 }
 
+#elif defined(__linux__) && defined(__x86_64__)
+
+static int pre_exec(void)
+{
+    return 1;  /* we have a preloader on x86-64 */
+}
+
 #elif defined(__FreeBSD__) && defined(__i386__)
 
 static int pre_exec(void)

@@ -262,6 +262,7 @@ loader/wine
 loader/wine-installed
 loader/wine-preloader
 loader/wine64
+loader/wine64-preloader
 programs/Makeprog.rules
 programs/rpcss/epm.h
 programs/rpcss/epm_s.c

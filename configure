@@ -12736,11 +12736,12 @@ MAIN_BINARY="wine"
 
 test "x$enable_win64" != "xyes" || MAIN_BINARY="wine64"
 
-case $host_cpu in
-  *i[3456789]86*)
-    case $host_os in
-      linux*)
-        EXTRA_BINARIES="wine-preloader"
+case $host_os in
+  linux*)
+    case $host_cpu in
+      *i[3456789]86*) EXTRA_BINARIES="wine-preloader"
+ ;;
+      x86_64*) EXTRA_BINARIES="wine64-preloader"
  ;;
     esac
     ;;
