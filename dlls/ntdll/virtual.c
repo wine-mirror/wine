@@ -122,6 +122,7 @@ static RTL_CRITICAL_SECTION csVirtual = { &critsect_debug, -1, 0, 0, 0, 0 };
 static void *address_space_limit = (void *)0xc0000000;  /* top of the total available address space */
 static void *user_space_limit    = (void *)0x7fff0000;  /* top of the user address space */
 static void *working_set_limit   = (void *)0x7fff0000;  /* top of the current working set */
+static void *address_space_start = (void *)0x110000;    /* keep DOS area clear */
 #elif defined(__x86_64__)
 # define page_mask  0xfff
 # define page_shift 12
@@ -129,6 +130,7 @@ static void *working_set_limit   = (void *)0x7fff0000;  /* top of the current wo
 static void *address_space_limit = (void *)0x7fffffff0000;
 static void *user_space_limit    = (void *)0x7fffffff0000;
 static void *working_set_limit   = (void *)0x7fffffff0000;
+static void *address_space_start = (void *)0x10000;
 #else
 static UINT page_shift;
 static UINT_PTR page_size;
@@ -136,8 +138,8 @@ static UINT_PTR page_mask;
 static void *address_space_limit;
 static void *user_space_limit;
 static void *working_set_limit;
+static void *address_space_start = (void *)0x10000;
 #endif  /* __i386__ */
-static void * const address_space_start = (void *)0x110000;
 
 #define ROUND_ADDR(addr,mask) \
    ((void *)((UINT_PTR)(addr) & ~(UINT_PTR)(mask)))
@@ -1071,7 +1073,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
-    if (base >= (char *)0x110000)  /* make sure the DOS area remains free */
+    if (base >= (char *)address_space_start)  /* make sure the DOS area remains free */
         status = map_view( &view, base, total_size, mask, FALSE,
                            VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY | VPROT_IMAGE );
 
@@ -1367,6 +1369,7 @@ void virtual_init(void)
 {
     const char *preload;
     void *heap_base;
+    size_t size;
     struct file_view *heap_view;
 
 #ifndef page_mask
@@ -1397,9 +1400,10 @@ void virtual_init(void)
                                   VIRTUAL_HEAP_SIZE, NULL, NULL );
     create_view( &heap_view, heap_base, VIRTUAL_HEAP_SIZE, VPROT_COMMITTED | VPROT_READ | VPROT_WRITE );
 
-    /* make the DOS area accessible to hide bugs in broken apps like Excel 2003 */
-    if (wine_mmap_is_in_reserved_area( (void *)0x10000, 0x100000 ) == 1)
-        wine_anon_mmap( (void *)0x10000, 0x100000, PROT_READ | PROT_WRITE, MAP_FIXED );
+    /* make the DOS area accessible (except the low 64K) to hide bugs in broken apps like Excel 2003 */
+    size = (char *)address_space_start - (char *)0x10000;
+    if (size && wine_mmap_is_in_reserved_area( (void*)0x10000, size ) == 1)
+        wine_anon_mmap( (void *)0x10000, size, PROT_READ | PROT_WRITE, MAP_FIXED );
 }
 
 
