@@ -41,13 +41,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 typedef struct _domtext
 {
     xmlnode node;
-    const struct IXMLDOMTextVtbl *lpVtbl;
+    IXMLDOMText IXMLDOMText_iface;
     LONG ref;
 } domtext;
 
 static inline domtext *impl_from_IXMLDOMText( IXMLDOMText *iface )
 {
-    return (domtext *)((char*)iface - FIELD_OFFSET(domtext, lpVtbl));
+    return CONTAINING_RECORD(iface, domtext, IXMLDOMText_iface);
 }
 
 static HRESULT WINAPI domtext_QueryInterface(
@@ -179,7 +179,7 @@ static HRESULT WINAPI domtext_Invoke(
     hr = get_typeinfo(IXMLDOMText_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &(This->lpVtbl), dispIdMember, wFlags, pDispParams,
+        hr = ITypeInfo_Invoke(typeinfo, &This->IXMLDOMText_iface, dispIdMember, wFlags, pDispParams,
                 pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
@@ -945,12 +945,12 @@ IUnknown* create_text( xmlNodePtr text )
     if ( !This )
         return NULL;
 
-    This->lpVtbl = &domtext_vtbl;
+    This->IXMLDOMText_iface.lpVtbl = &domtext_vtbl;
     This->ref = 1;
 
-    init_xmlnode(&This->node, text, (IXMLDOMNode*)&This->lpVtbl, NULL);
+    init_xmlnode(&This->node, text, (IXMLDOMNode*)&This->IXMLDOMText_iface, NULL);
 
-    return (IUnknown*) &This->lpVtbl;
+    return (IUnknown*)&This->IXMLDOMText_iface;
 }
 
 #endif
