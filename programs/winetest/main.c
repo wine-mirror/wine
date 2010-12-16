@@ -1162,7 +1162,12 @@ int main( int argc, char *argv[] )
         }
     }
     if (!submit && !extract) {
+        int is_win9x = (GetVersion() & 0x80000000) != 0;
+
         report (R_STATUS, "Starting up");
+
+        if (is_win9x)
+            report (R_WARNING, "Running on win9x is not supported. You won't be able to submit results.");
 
         if (!running_on_visible_desktop ())
             report (R_FATAL, "Tests must be run on a visible desktop");
@@ -1208,7 +1213,7 @@ int main( int argc, char *argv[] )
                 DeleteFileA(logname);
                 exit (0);
             }
-            if (build_id[0] && nr_of_skips <= SKIP_LIMIT && !nr_native_dlls &&
+            if (build_id[0] && nr_of_skips <= SKIP_LIMIT && !nr_native_dlls && !is_win9x &&
                 report (R_ASK, MB_YESNO, "Do you want to submit the test results?") == IDYES)
                 if (!send_file (logname) && !DeleteFileA(logname))
                     report (R_WARNING, "Can't remove logfile: %u", GetLastError());
