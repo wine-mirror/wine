@@ -40,13 +40,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 typedef struct _dom_pi
 {
     xmlnode node;
-    const struct IXMLDOMProcessingInstructionVtbl *lpVtbl;
+    IXMLDOMProcessingInstruction IXMLDOMProcessingInstruction_iface;
     LONG ref;
 } dom_pi;
 
 static inline dom_pi *impl_from_IXMLDOMProcessingInstruction( IXMLDOMProcessingInstruction *iface )
 {
-    return (dom_pi *)((char*)iface - FIELD_OFFSET(dom_pi, lpVtbl));
+    return CONTAINING_RECORD(iface, dom_pi, IXMLDOMProcessingInstruction_iface);
 }
 
 static HRESULT WINAPI dom_pi_QueryInterface(
@@ -170,8 +170,8 @@ static HRESULT WINAPI dom_pi_Invoke(
     hr = get_typeinfo(IXMLDOMProcessingInstruction_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-       hr = ITypeInfo_Invoke(typeinfo, &(This->lpVtbl), dispIdMember, wFlags, pDispParams,
-                pVarResult, pExcepInfo, puArgErr);
+       hr = ITypeInfo_Invoke(typeinfo, &This->IXMLDOMProcessingInstruction_iface, dispIdMember,
+                wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
 
@@ -313,7 +313,7 @@ static HRESULT WINAPI dom_pi_get_attributes(
 
     TRACE("(%p)->(%p)\n", This, attributeMap);
 
-    *attributeMap = create_nodemap((IXMLDOMNode*)&This->lpVtbl);
+    *attributeMap = create_nodemap((IXMLDOMNode*)&This->IXMLDOMProcessingInstruction_iface);
     return S_OK;
 }
 
@@ -668,12 +668,12 @@ IUnknown* create_pi( xmlNodePtr pi )
     if ( !This )
         return NULL;
 
-    This->lpVtbl = &dom_pi_vtbl;
+    This->IXMLDOMProcessingInstruction_iface.lpVtbl = &dom_pi_vtbl;
     This->ref = 1;
 
-    init_xmlnode(&This->node, pi, (IXMLDOMNode*)&This->lpVtbl, NULL);
+    init_xmlnode(&This->node, pi, (IXMLDOMNode*)&This->IXMLDOMProcessingInstruction_iface, NULL);
 
-    return (IUnknown*) &This->lpVtbl;
+    return (IUnknown*)&This->IXMLDOMProcessingInstruction_iface;
 }
 
 #endif
