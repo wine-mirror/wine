@@ -512,18 +512,19 @@ static void set_auxiliary_values( ElfW(auxv_t) *av, const ElfW(auxv_t) *new_av,
 
     src = (char *)*stack;
     dst = src - (new_count - delete_count) * sizeof(*av);
-    if (new_count > delete_count)   /* need to make room for the extra values */
+    dst = (char *)((unsigned long)dst & ~15);
+    if (dst < src)   /* need to make room for the extra values */
     {
         int len = (char *)(av + av_count + 1) - src;
         for (i = 0; i < len; i++) dst[i] = src[i];
     }
-    else if (new_count < delete_count)  /* get rid of unused values */
+    else if (dst > src)  /* get rid of unused values */
     {
         int len = (char *)(av + av_count + 1) - src;
         for (i = len - 1; i >= 0; i--) dst[i] = src[i];
     }
     *stack = dst;
-    av -= (new_count - delete_count);
+    av = (ElfW(auxv_t) *)((char *)av + (dst - src));
 
     /* now set the values */
     for (j = 0; new_av[j].a_type != AT_NULL; j++)
