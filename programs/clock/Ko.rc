@@ -4,6 +4,7 @@
  * Copyright 1998 Marcel Baur <mbaur@g26.ethz.ch>
  * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  * Copyright 2004 Mike McCormack
+ * Copyright 2010 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,29 +23,31 @@
 
 #include "clock_res.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 MAIN_MENU MENU 
 {
- POPUP "µî·Ï Á¤º¸(&P)" {
-  MENUITEM "¾Æ³¯·Î±×(&L)", IDM_ANALOG
-  MENUITEM "µðÁöÅÐ(&T)", IDM_DIGITAL
+ POPUP "ë“±ë¡ ì •ë³´(&P)" {
+  MENUITEM "ì•„ë‚ ë¡œê·¸(&L)", IDM_ANALOG
+  MENUITEM "ë””ì§€í„¸(&T)", IDM_DIGITAL
   MENUITEM SEPARATOR
-  MENUITEM "±Û²Ã(&F)...", IDM_FONT
+  MENUITEM "ê¸€ê¼´(&F)...", IDM_FONT
   MENUITEM SEPARATOR
-  MENUITEM "Á¦¸ñ Ç¥½Ã ¾ÈÇÔ (&W)", IDM_NOTITLE
+  MENUITEM "ì œëª© í‘œì‹œ ì•ˆí•¨ (&W)", IDM_NOTITLE
   MENUITEM SEPARATOR
-  MENUITEM "ÃÊ(&S)", IDM_SECONDS
-  MENUITEM "³¯Â¥(&D)", IDM_DATE
+  MENUITEM "ì´ˆ(&S)", IDM_SECONDS
+  MENUITEM "ë‚ ì§œ(&D)", IDM_DATE
   MENUITEM SEPARATOR
-  MENUITEM "Ç×»ó  ¾Õ¿¡ (&A)", IDM_ONTOP
+  MENUITEM "í•­ìƒ  ì•žì— (&A)", IDM_ONTOP
  }
- POPUP "Á¤º¸(&O)" {
-  MENUITEM "½Ã°è Á¤º¸(&A)...", IDM_ABOUT
+ POPUP "ì •ë³´(&O)" {
+  MENUITEM "ì‹œê³„ ì •ë³´(&A)...", IDM_ABOUT
  }
 }
 
 STRINGTABLE
 {
-IDS_CLOCK, "½Ã°è"
+IDS_CLOCK, "ì‹œê³„"
 }
