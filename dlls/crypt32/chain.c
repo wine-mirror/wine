@@ -3267,13 +3267,24 @@ static BOOL match_dns_to_subject_dn(PCCERT_CONTEXT cert, LPCWSTR server_name)
         }
         else
         {
-            PCERT_RDN_ATTR attr;
+            DWORD i, j;
 
             /* If the certificate isn't using a DN attribute in the name, make
-             * make sure the common name matches.
+             * make sure at least one common name matches.  From RFC 2818,
+             * section 3.1:
+             * "If more than one identity of a given type is present in the
+             * certificate (e.g., more than one dNSName name, a match in any
+             * one of the set is considered acceptable.)"
              */
-            if ((attr = CertFindRDNAttr(szOID_COMMON_NAME, name)))
-                matches = match_common_name(server_name, attr);
+            for (i = 0; !matches && i < name->cRDN; i++)
+                for (j = 0; !matches && j < name->rgRDN[i].cRDNAttr; j++)
+                {
+                    PCERT_RDN_ATTR attr = &name->rgRDN[i].rgRDNAttr[j];
+
+                    if (attr->pszObjId && !strcmp(szOID_COMMON_NAME,
+                     attr->pszObjId))
+                        matches = match_common_name(server_name, attr);
+                }
         }
         LocalFree(name);
     }
