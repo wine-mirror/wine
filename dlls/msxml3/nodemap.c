@@ -40,8 +40,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 typedef struct _xmlnodemap
 {
-    const struct IXMLDOMNamedNodeMapVtbl *lpVtbl;
-    const struct ISupportErrorInfoVtbl *lpSEIVtbl;
+    IXMLDOMNamedNodeMap IXMLDOMNamedNodeMap_iface;
+    ISupportErrorInfo ISupportErrorInfo_iface;
     LONG ref;
     IXMLDOMNode *node;
     LONG iterator;
@@ -49,12 +49,12 @@ typedef struct _xmlnodemap
 
 static inline xmlnodemap *impl_from_IXMLDOMNamedNodeMap( IXMLDOMNamedNodeMap *iface )
 {
-    return (xmlnodemap *)((char*)iface - FIELD_OFFSET(xmlnodemap, lpVtbl));
+    return CONTAINING_RECORD(iface, xmlnodemap, IXMLDOMNamedNodeMap_iface);
 }
 
 static inline xmlnodemap *impl_from_ISupportErrorInfo( ISupportErrorInfo *iface )
 {
-    return (xmlnodemap *)((char*)iface - FIELD_OFFSET(xmlnodemap, lpSEIVtbl));
+    return CONTAINING_RECORD(iface, xmlnodemap, ISupportErrorInfo_iface);
 }
 
 static HRESULT WINAPI xmlnodemap_QueryInterface(
@@ -72,7 +72,7 @@ static HRESULT WINAPI xmlnodemap_QueryInterface(
     }
     else if( IsEqualGUID( riid, &IID_ISupportErrorInfo ))
     {
-        *ppvObject = &This->lpSEIVtbl;
+        *ppvObject = &This->ISupportErrorInfo_iface;
     }
     else
     {
@@ -172,8 +172,8 @@ static HRESULT WINAPI xmlnodemap_Invoke(
     hr = get_typeinfo(IXMLDOMNamedNodeMap_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &(This->lpVtbl), dispIdMember, wFlags, pDispParams,
-                pVarResult, pExcepInfo, puArgErr);
+        hr = ITypeInfo_Invoke(typeinfo, &This->IXMLDOMNamedNodeMap_iface, dispIdMember, wFlags,
+                pDispParams, pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
 
@@ -513,21 +513,21 @@ static HRESULT WINAPI support_error_QueryInterface(
 {
     xmlnodemap *This = impl_from_ISupportErrorInfo( iface );
     TRACE("%p %s %p\n", iface, debugstr_guid(riid), ppvObject);
-    return IXMLDOMNamedNodeMap_QueryInterface((IXMLDOMNamedNodeMap*)&This->lpVtbl, riid, ppvObject);
+    return IXMLDOMNamedNodeMap_QueryInterface(&This->IXMLDOMNamedNodeMap_iface, riid, ppvObject);
 }
 
 static ULONG WINAPI support_error_AddRef(
     ISupportErrorInfo *iface )
 {
     xmlnodemap *This = impl_from_ISupportErrorInfo( iface );
-    return IXMLDOMNamedNodeMap_AddRef((IXMLDOMNamedNodeMap*)&This->lpVtbl);
+    return IXMLDOMNamedNodeMap_AddRef(&This->IXMLDOMNamedNodeMap_iface);
 }
 
 static ULONG WINAPI support_error_Release(
     ISupportErrorInfo *iface )
 {
     xmlnodemap *This = impl_from_ISupportErrorInfo( iface );
-    return IXMLDOMNamedNodeMap_Release((IXMLDOMNamedNodeMap*)&This->lpVtbl);
+    return IXMLDOMNamedNodeMap_Release(&This->IXMLDOMNamedNodeMap_iface);
 }
 
 static HRESULT WINAPI support_error_InterfaceSupportsErrorInfo(
@@ -554,8 +554,8 @@ IXMLDOMNamedNodeMap *create_nodemap( IXMLDOMNode *node )
     if ( !nodemap )
         return NULL;
 
-    nodemap->lpVtbl = &xmlnodemap_vtbl;
-    nodemap->lpSEIVtbl = &support_error_vtbl;
+    nodemap->IXMLDOMNamedNodeMap_iface.lpVtbl = &xmlnodemap_vtbl;
+    nodemap->ISupportErrorInfo_iface.lpVtbl = &support_error_vtbl;
     nodemap->node = node;
     nodemap->ref = 1;
     nodemap->iterator = 0;
@@ -563,7 +563,7 @@ IXMLDOMNamedNodeMap *create_nodemap( IXMLDOMNode *node )
     IXMLDOMNode_AddRef( node );
     /* Since we AddRef a node here, we don't need to call xmldoc_add_ref() */
 
-    return (IXMLDOMNamedNodeMap*) &nodemap->lpVtbl;
+    return &nodemap->IXMLDOMNamedNodeMap_iface;
 }
 
 #endif
