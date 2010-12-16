@@ -40,13 +40,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 typedef struct _domfrag
 {
     xmlnode node;
-    const struct IXMLDOMDocumentFragmentVtbl *lpVtbl;
+    IXMLDOMDocumentFragment IXMLDOMDocumentFragment_iface;
     LONG ref;
 } domfrag;
 
 static inline domfrag *impl_from_IXMLDOMDocumentFragment( IXMLDOMDocumentFragment *iface )
 {
-    return (domfrag *)((char*)iface - FIELD_OFFSET(domfrag, lpVtbl));
+    return CONTAINING_RECORD(iface, domfrag, IXMLDOMDocumentFragment_iface);
 }
 
 static HRESULT WINAPI domfrag_QueryInterface(
@@ -170,8 +170,8 @@ static HRESULT WINAPI domfrag_Invoke(
     hr = get_typeinfo(IXMLDOMDocumentFragment_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &(This->lpVtbl), dispIdMember, wFlags, pDispParams,
-                pVarResult, pExcepInfo, puArgErr);
+        hr = ITypeInfo_Invoke(typeinfo, &This->IXMLDOMDocumentFragment_iface, dispIdMember,
+                wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
 
@@ -588,12 +588,12 @@ IUnknown* create_doc_fragment( xmlNodePtr fragment )
     if ( !This )
         return NULL;
 
-    This->lpVtbl = &domfrag_vtbl;
+    This->IXMLDOMDocumentFragment_iface.lpVtbl = &domfrag_vtbl;
     This->ref = 1;
 
-    init_xmlnode(&This->node, fragment, (IXMLDOMNode*)&This->lpVtbl, NULL);
+    init_xmlnode(&This->node, fragment, (IXMLDOMNode*)&This->IXMLDOMDocumentFragment_iface, NULL);
 
-    return (IUnknown*) &This->lpVtbl;
+    return (IUnknown*)&This->IXMLDOMDocumentFragment_iface;
 }
 
 #endif
