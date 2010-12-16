@@ -137,7 +137,7 @@ static struct wine_preload_info preload_info[] =
 #define DT_GNU_HASH 0x6ffffef5
 #endif
 
-static unsigned int page_size, page_mask;
+static size_t page_size, page_mask;
 static char *preloader_start, *preloader_end;
 
 struct wld_link_map {
@@ -325,7 +325,7 @@ static inline gid_t wld_getegid(void)
     return ret;
 }
 
-static inline int wld_prctl( int code, int arg )
+static inline int wld_prctl( int code, long arg )
 {
     int ret;
     __asm__ __volatile__( "pushl %%ebx; movl %2,%%ebx; int $0x80; popl %%ebx"
@@ -378,20 +378,20 @@ static int wld_vsprintf(char *buffer, const char *fmt, va_list args )
             if( *p == 'x' )
             {
                 unsigned int x = va_arg( args, unsigned int );
-                for(i=7; i>=0; i--)
+                for (i = 2*sizeof(x) - 1; i >= 0; i--)
                     *str++ = hex_chars[(x>>(i*4))&0xf];
             }
             else if (p[0] == 'l' && p[1] == 'x')
             {
                 unsigned long x = va_arg( args, unsigned long );
-                for(i=7; i>=0; i--)
+                for (i = 2*sizeof(x) - 1; i >= 0; i--)
                     *str++ = hex_chars[(x>>(i*4))&0xf];
                 p++;
             }
             else if( *p == 'p' )
             {
                 unsigned long x = (unsigned long)va_arg( args, void * );
-                for(i=7; i>=0; i--)
+                for (i = 2*sizeof(x) - 1; i >= 0; i--)
                     *str++ = hex_chars[(x>>(i*4))&0xf];
             }
             else if( *p == 's' )
@@ -470,8 +470,8 @@ static void dump_auxiliary( ElfW(auxv_t) *av )
     for (  ; av->a_type != AT_NULL; av++)
     {
         for (i = 0; names[i].name; i++) if (names[i].val == av->a_type) break;
-        if (names[i].name) wld_printf("%s = %lx\n", names[i].name, av->a_un.a_val);
-        else wld_printf( "%x = %lx\n", av->a_type, av->a_un.a_val );
+        if (names[i].name) wld_printf("%s = %lx\n", names[i].name, (unsigned long)av->a_un.a_val);
+        else wld_printf( "%lx = %lx\n", (unsigned long)av->a_type, (unsigned long)av->a_un.a_val );
     }
 }
 #endif
@@ -616,14 +616,14 @@ static void map_so_lib( const char *name, struct wld_link_map *l)
 
 #ifdef DUMP_SEGMENTS
       wld_printf( "ph = %p\n", ph );
-      wld_printf( " p_type   = %x\n", ph->p_type );
-      wld_printf( " p_flags  = %x\n", ph->p_flags );
-      wld_printf( " p_offset = %x\n", ph->p_offset );
-      wld_printf( " p_vaddr  = %x\n", ph->p_vaddr );
-      wld_printf( " p_paddr  = %x\n", ph->p_paddr );
-      wld_printf( " p_filesz = %x\n", ph->p_filesz );
-      wld_printf( " p_memsz  = %x\n", ph->p_memsz );
-      wld_printf( " p_align  = %x\n", ph->p_align );
+      wld_printf( " p_type   = %lx\n", (unsigned long)ph->p_type );
+      wld_printf( " p_flags  = %lx\n", (unsigned long)ph->p_flags );
+      wld_printf( " p_offset = %lx\n", (unsigned long)ph->p_offset );
+      wld_printf( " p_vaddr  = %lx\n", (unsigned long)ph->p_vaddr );
+      wld_printf( " p_paddr  = %lx\n", (unsigned long)ph->p_paddr );
+      wld_printf( " p_filesz = %lx\n", (unsigned long)ph->p_filesz );
+      wld_printf( " p_memsz  = %lx\n", (unsigned long)ph->p_memsz );
+      wld_printf( " p_align  = %lx\n", (unsigned long)ph->p_align );
 #endif
 
       switch (ph->p_type)
@@ -738,7 +738,7 @@ static void map_so_lib( const char *name, struct wld_link_map *l)
             && ((size_t) (c->mapend - c->mapstart + c->mapoff)
                 >= header->e_phoff + header->e_phnum * sizeof (ElfW(Phdr))))
           /* Found the program header in this segment.  */
-          l->l_phdr = (void *)(unsigned int) (c->mapstart + header->e_phoff - c->mapoff);
+          l->l_phdr = (void *)(unsigned long)(c->mapstart + header->e_phoff - c->mapoff);
 
         if (c->allocend > c->dataend)
           {
@@ -846,7 +846,7 @@ static void *find_symbol( const ElfW(Phdr) *phdr, int num, const char *var, int 
         if( PT_DYNAMIC == ph->p_type )
         {
             dyn = (void *) ph->p_vaddr;
-            num = ph->p_memsz / sizeof (Elf32_Dyn);
+            num = ph->p_memsz / sizeof (*dyn);
             break;
         }
     }
@@ -863,7 +863,7 @@ static void *find_symbol( const ElfW(Phdr) *phdr, int num, const char *var, int 
         if( dyn->d_tag == DT_GNU_HASH )
             gnu_hashtab = (const Elf32_Word *)dyn->d_un.d_ptr;
 #ifdef DUMP_SYMS
-        wld_printf("%x %x\n", dyn->d_tag, dyn->d_un.d_ptr );
+        wld_printf("%lx %p\n", (unsigned long)dyn->d_tag, (void *)dyn->d_un.d_ptr );
 #endif
         dyn++;
     }
@@ -907,7 +907,7 @@ static void *find_symbol( const ElfW(Phdr) *phdr, int num, const char *var, int 
 
 found:
 #ifdef DUMP_SYMS
-    wld_printf("Found %s -> %x\n", strings + symtab[idx].st_name, symtab[idx].st_value );
+    wld_printf("Found %s -> %p\n", strings + symtab[idx].st_name, (void *)symtab[idx].st_value );
 #endif
     return (void *)symtab[idx].st_value;
 }
@@ -1022,7 +1022,7 @@ static void set_process_name( int argc, char *argv[] )
 
     /* set the process short name */
     for (p = name = argv[1]; *p; p++) if (p[0] == '/' && p[1]) name = p + 1;
-    if (wld_prctl( 15 /* PR_SET_NAME */, (int)name ) == -1) return;
+    if (wld_prctl( 15 /* PR_SET_NAME */, (long)name ) == -1) return;
 
     /* find the end of the argv array and move everything down */
     end = argv[argc - 1];
@@ -1043,7 +1043,7 @@ static void set_process_name( int argc, char *argv[] )
  */
 void* wld_start( void **stack )
 {
-    int i, *pargc;
+    long i, *pargc;
     char **argv, **p;
     char *interp, *reserve = NULL;
     ElfW(auxv_t) new_av[12], delete_av[3], *av;
@@ -1069,12 +1069,12 @@ void* wld_start( void **stack )
     page_size = get_auxiliary( av, AT_PAGESZ, 4096 );
     page_mask = page_size - 1;
 
-    preloader_start = (char *)_start - ((unsigned int)_start & page_mask);
-    preloader_end = (char *)((unsigned int)(_end + page_mask) & ~page_mask);
+    preloader_start = (char *)_start - ((unsigned long)_start & page_mask);
+    preloader_end = (char *)((unsigned long)(_end + page_mask) & ~page_mask);
 
 #ifdef DUMP_AUX_INFO
     wld_printf( "stack = %p\n", *stack );
-    for( i = 0; i < *pargc; i++ ) wld_printf("argv[%x] = %s\n", i, argv[i]);
+    for( i = 0; i < *pargc; i++ ) wld_printf("argv[%lx] = %s\n", i, argv[i]);
     dump_auxiliary( av );
 #endif
 
@@ -1145,7 +1145,7 @@ void* wld_start( void **stack )
 
 #ifdef DUMP_AUX_INFO
     wld_printf("new stack = %p\n", *stack);
-    wld_printf("jumping to %x\n", ld_so_map.l_entry);
+    wld_printf("jumping to %p\n", (void *)ld_so_map.l_entry);
 #endif
 
     return (void *)ld_so_map.l_entry;
