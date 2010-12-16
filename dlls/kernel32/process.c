@@ -573,7 +573,7 @@ static void set_wow64_environment(void)
 
     /* set the PROCESSOR_ARCHITECTURE variable */
 
-    if (GetEnvironmentVariableW( arch6432W, arch, sizeof(arch) ))
+    if (GetEnvironmentVariableW( arch6432W, arch, sizeof(arch)/sizeof(WCHAR) ))
     {
         if (is_win64)
         {
@@ -581,7 +581,7 @@ static void set_wow64_environment(void)
             SetEnvironmentVariableW( arch6432W, NULL );
         }
     }
-    else if (GetEnvironmentVariableW( archW, arch, sizeof(arch) ))
+    else if (GetEnvironmentVariableW( archW, arch, sizeof(arch)/sizeof(WCHAR) ))
     {
         if (is_wow64)
         {
