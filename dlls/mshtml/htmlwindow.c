@@ -990,7 +990,7 @@ static HRESULT WINAPI HTMLWindow2_get_document(IHTMLWindow2 *iface, IHTMLDocumen
 
     if(This->doc) {
         /* FIXME: We should return a wrapper object here */
-        *p = HTMLDOC(&This->doc->basedoc);
+        *p = &This->doc->basedoc.IHTMLDocument2_iface;
         IHTMLDocument2_AddRef(*p);
     }else {
         *p = NULL;

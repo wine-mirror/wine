@@ -47,22 +47,22 @@ DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
 
 #define OLEOBJ_THIS(iface) DEFINE_THIS(HTMLDocument, OleObject, iface)
 
-static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, void **ppvObject)
+static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, void **ppv)
 {
     HTMLDocument *This = OLEOBJ_THIS(iface);
-    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppvObject);
+    return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI OleObject_AddRef(IOleObject *iface)
 {
     HTMLDocument *This = OLEOBJ_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
+    return htmldoc_addref(This);
 }
 
 static ULONG WINAPI OleObject_Release(IOleObject *iface)
 {
     HTMLDocument *This = OLEOBJ_THIS(iface);
-    return IHTMLDocument2_Release(HTMLDOC(This));
+    return htmldoc_release(This);
 }
 
 static void update_hostinfo(HTMLDocumentObj *This, DOCHOSTUIINFO *hostinfo)
@@ -491,22 +491,22 @@ static const IOleObjectVtbl OleObjectVtbl = {
 
 #define OLEDOC_THIS(iface) DEFINE_THIS(HTMLDocument, OleDocument, iface)
 
-static HRESULT WINAPI OleDocument_QueryInterface(IOleDocument *iface, REFIID riid, void **ppvObject)
+static HRESULT WINAPI OleDocument_QueryInterface(IOleDocument *iface, REFIID riid, void **ppv)
 {
     HTMLDocument *This = OLEDOC_THIS(iface);
-    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppvObject);
+    return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI OleDocument_AddRef(IOleDocument *iface)
 {
     HTMLDocument *This = OLEDOC_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
+    return htmldoc_addref(This);
 }
 
 static ULONG WINAPI OleDocument_Release(IOleDocument *iface)
 {
     HTMLDocument *This = OLEDOC_THIS(iface);
-    return IHTMLDocument2_Release(HTMLDOC(This));
+    return htmldoc_release(This);
 }
 
 static HRESULT WINAPI OleDocument_CreateView(IOleDocument *iface, IOleInPlaceSite *pIPSite, IStream *pstm,
@@ -576,19 +576,19 @@ static const IOleDocumentVtbl OleDocumentVtbl = {
 static HRESULT WINAPI OleControl_QueryInterface(IOleControl *iface, REFIID riid, void **ppv)
 {
     HTMLDocument *This = CONTROL_THIS(iface);
-    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppv);
+    return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI OleControl_AddRef(IOleControl *iface)
 {
     HTMLDocument *This = CONTROL_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
+    return htmldoc_addref(This);
 }
 
 static ULONG WINAPI OleControl_Release(IOleControl *iface)
 {
     HTMLDocument *This = CONTROL_THIS(iface);
-    return IHTMLDocument_Release(HTMLDOC(This));
+    return htmldoc_release(This);
 }
 
 static HRESULT WINAPI OleControl_GetControlInfo(IOleControl *iface, CONTROLINFO *pCI)
@@ -755,22 +755,22 @@ static const IOleControlVtbl OleControlVtbl = {
 
 #define OBJSITE_THIS(iface) DEFINE_THIS(HTMLDocument, ObjectWithSite, iface)
 
-static HRESULT WINAPI ObjectWithSite_QueryInterface(IObjectWithSite *iface, REFIID riid, void **ppvObject)
+static HRESULT WINAPI ObjectWithSite_QueryInterface(IObjectWithSite *iface, REFIID riid, void **ppv)
 {
     HTMLDocument *This = OBJSITE_THIS(iface);
-    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppvObject);
+    return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI ObjectWithSite_AddRef(IObjectWithSite *iface)
 {
     HTMLDocument *This = OBJSITE_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
+    return htmldoc_addref(This);
 }
 
 static ULONG WINAPI ObjectWithSite_Release(IObjectWithSite *iface)
 {
     HTMLDocument *This = OBJSITE_THIS(iface);
-    return IHTMLDocument2_Release(HTMLDOC(This));
+    return htmldoc_release(This);
 }
 
 static HRESULT WINAPI ObjectWithSite_SetSite(IObjectWithSite *iface, IUnknown *pUnkSite)
@@ -805,19 +805,19 @@ static inline HTMLDocument *impl_from_IOleContainer(IOleContainer *iface)
 static HRESULT WINAPI OleContainer_QueryInterface(IOleContainer *iface, REFIID riid, void **ppv)
 {
     HTMLDocument *This = impl_from_IOleContainer(iface);
-    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppv);
+    return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI OleContainer_AddRef(IOleContainer *iface)
 {
     HTMLDocument *This = impl_from_IOleContainer(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
+    return htmldoc_addref(This);
 }
 
 static ULONG WINAPI OleContainer_Release(IOleContainer *iface)
 {
     HTMLDocument *This = impl_from_IOleContainer(iface);
-    return IHTMLDocument2_Release(HTMLDOC(This));
+    return htmldoc_release(This);
 }
 
 static HRESULT WINAPI OleContainer_ParseDisplayName(IOleContainer *iface, IBindCtx *pbc, LPOLESTR pszDisplayName,

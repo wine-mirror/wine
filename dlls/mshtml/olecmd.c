@@ -737,19 +737,19 @@ static const cmdtable_t base_cmds[] = {
 static HRESULT WINAPI OleCommandTarget_QueryInterface(IOleCommandTarget *iface, REFIID riid, void **ppv)
 {
     HTMLDocument *This = CMDTARGET_THIS(iface);
-    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppv);
+    return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI OleCommandTarget_AddRef(IOleCommandTarget *iface)
 {
     HTMLDocument *This = CMDTARGET_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
+    return htmldoc_addref(This);
 }
 
 static ULONG WINAPI OleCommandTarget_Release(IOleCommandTarget *iface)
 {
     HTMLDocument *This = CMDTARGET_THIS(iface);
-    return IHTMLDocument_Release(HTMLDOC(This));
+    return htmldoc_release(This);
 }
 
 static HRESULT query_from_table(HTMLDocument *This, const cmdtable_t *cmdtable, OLECMD *cmd)

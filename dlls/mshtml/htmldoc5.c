@@ -40,19 +40,19 @@ static HRESULT WINAPI HTMLDocument5_QueryInterface(IHTMLDocument5 *iface,
         REFIID riid, void **ppv)
 {
     HTMLDocument *This = HTMLDOC5_THIS(iface);
-    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppv);
+    return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI HTMLDocument5_AddRef(IHTMLDocument5 *iface)
 {
     HTMLDocument *This = HTMLDOC5_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
+    return htmldoc_addref(This);
 }
 
 static ULONG WINAPI HTMLDocument5_Release(IHTMLDocument5 *iface)
 {
     HTMLDocument *This = HTMLDOC5_THIS(iface);
-    return IHTMLDocument2_Release(HTMLDOC(This));
+    return htmldoc_release(This);
 }
 
 static HRESULT WINAPI HTMLDocument5_GetTypeInfoCount(IHTMLDocument5 *iface, UINT *pctinfo)
@@ -308,19 +308,19 @@ static HRESULT WINAPI HTMLDocument6_QueryInterface(IHTMLDocument6 *iface,
         REFIID riid, void **ppv)
 {
     HTMLDocument *This = HTMLDOC6_THIS(iface);
-    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppv);
+    return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI HTMLDocument6_AddRef(IHTMLDocument6 *iface)
 {
     HTMLDocument *This = HTMLDOC6_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
+    return htmldoc_addref(This);
 }
 
 static ULONG WINAPI HTMLDocument6_Release(IHTMLDocument6 *iface)
 {
     HTMLDocument *This = HTMLDOC6_THIS(iface);
-    return IHTMLDocument2_Release(HTMLDOC(This));
+    return htmldoc_release(This);
 }
 
 static HRESULT WINAPI HTMLDocument6_GetTypeInfoCount(IHTMLDocument6 *iface, UINT *pctinfo)

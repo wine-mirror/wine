@@ -41,22 +41,22 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define ACTOBJ_THIS(iface) DEFINE_THIS(HTMLDocument, OleInPlaceActiveObject, iface)
 
-static HRESULT WINAPI OleInPlaceActiveObject_QueryInterface(IOleInPlaceActiveObject *iface, REFIID riid, void **ppvObject)
+static HRESULT WINAPI OleInPlaceActiveObject_QueryInterface(IOleInPlaceActiveObject *iface, REFIID riid, void **ppv)
 {
     HTMLDocument *This = ACTOBJ_THIS(iface);
-    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppvObject);
+    return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI OleInPlaceActiveObject_AddRef(IOleInPlaceActiveObject *iface)
 {
     HTMLDocument *This = ACTOBJ_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
+    return htmldoc_addref(This);
 }
 
 static ULONG WINAPI OleInPlaceActiveObject_Release(IOleInPlaceActiveObject *iface)
 {
     HTMLDocument *This = ACTOBJ_THIS(iface);
-    return IHTMLDocument2_Release(HTMLDOC(This));
+    return htmldoc_release(This);
 }
 
 static HRESULT WINAPI OleInPlaceActiveObject_GetWindow(IOleInPlaceActiveObject *iface, HWND *phwnd)
@@ -148,22 +148,22 @@ static const IOleInPlaceActiveObjectVtbl OleInPlaceActiveObjectVtbl = {
 #define OLEINPLACEWND_THIS(iface) DEFINE_THIS(HTMLDocument, OleInPlaceObjectWindowless, iface)
 
 static HRESULT WINAPI OleInPlaceObjectWindowless_QueryInterface(IOleInPlaceObjectWindowless *iface,
-        REFIID riid, void **ppvObject)
+        REFIID riid, void **ppv)
 {
     HTMLDocument *This = OLEINPLACEWND_THIS(iface);
-    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppvObject);
+    return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI OleInPlaceObjectWindowless_AddRef(IOleInPlaceObjectWindowless *iface)
 {
     HTMLDocument *This = OLEINPLACEWND_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
+    return htmldoc_addref(This);
 }
 
 static ULONG WINAPI OleInPlaceObjectWindowless_Release(IOleInPlaceObjectWindowless *iface)
 {
     HTMLDocument *This = OLEINPLACEWND_THIS(iface);
-    return IHTMLDocument2_Release(HTMLDOC(This));
+    return htmldoc_release(This);
 }
 
 static HRESULT WINAPI OleInPlaceObjectWindowless_GetWindow(IOleInPlaceObjectWindowless *iface,

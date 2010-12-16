@@ -342,7 +342,7 @@ struct ConnectionPoint {
 };
 
 struct HTMLDocument {
-    const IHTMLDocument2Vtbl              *lpHTMLDocument2Vtbl;
+    IHTMLDocument2              IHTMLDocument2_iface;
     const IHTMLDocument3Vtbl              *lpHTMLDocument3Vtbl;
     const IHTMLDocument4Vtbl              *lpHTMLDocument4Vtbl;
     const IHTMLDocument5Vtbl              *lpHTMLDocument5Vtbl;
@@ -626,7 +626,6 @@ struct HTMLDocumentNode {
 #define HTMLWINDOW3(x)   ((IHTMLWindow3*)                 &(x)->lpHTMLWindow3Vtbl)
 #define HTMLWINDOW4(x)   ((IHTMLWindow4*)                 &(x)->lpHTMLWindow4Vtbl)
 
-#define HTMLDOC(x)       ((IHTMLDocument2*)               &(x)->lpHTMLDocument2Vtbl)
 #define HTMLDOC3(x)      ((IHTMLDocument3*)               &(x)->lpHTMLDocument3Vtbl)
 #define HTMLDOC4(x)      ((IHTMLDocument4*)               &(x)->lpHTMLDocument4Vtbl)
 #define HTMLDOC5(x)      ((IHTMLDocument5*)               &(x)->lpHTMLDocument5Vtbl)

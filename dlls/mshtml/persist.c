@@ -341,23 +341,22 @@ static HRESULT get_doc_string(HTMLDocumentNode *This, char **str)
 
 #define PERSISTMON_THIS(iface) DEFINE_THIS(HTMLDocument, PersistMoniker, iface)
 
-static HRESULT WINAPI PersistMoniker_QueryInterface(IPersistMoniker *iface, REFIID riid,
-                                                            void **ppvObject)
+static HRESULT WINAPI PersistMoniker_QueryInterface(IPersistMoniker *iface, REFIID riid, void **ppv)
 {
     HTMLDocument *This = PERSISTMON_THIS(iface);
-    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppvObject);
+    return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI PersistMoniker_AddRef(IPersistMoniker *iface)
 {
     HTMLDocument *This = PERSISTMON_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
+    return htmldoc_addref(This);
 }
 
 static ULONG WINAPI PersistMoniker_Release(IPersistMoniker *iface)
 {
     HTMLDocument *This = PERSISTMON_THIS(iface);
-    return IHTMLDocument2_Release(HTMLDOC(This));
+    return htmldoc_release(This);
 }
 
 static HRESULT WINAPI PersistMoniker_GetClassID(IPersistMoniker *iface, CLSID *pClassID)
@@ -466,22 +465,22 @@ static const IPersistMonikerVtbl PersistMonikerVtbl = {
 
 #define MONPROP_THIS(iface) DEFINE_THIS(HTMLDocument, MonikerProp, iface)
 
-static HRESULT WINAPI MonikerProp_QueryInterface(IMonikerProp *iface, REFIID riid, void **ppvObject)
+static HRESULT WINAPI MonikerProp_QueryInterface(IMonikerProp *iface, REFIID riid, void **ppv)
 {
     HTMLDocument *This = MONPROP_THIS(iface);
-    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppvObject);
+    return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI MonikerProp_AddRef(IMonikerProp *iface)
 {
     HTMLDocument *This = MONPROP_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
+    return htmldoc_addref(This);
 }
 
 static ULONG WINAPI MonikerProp_Release(IMonikerProp *iface)
 {
     HTMLDocument *This = MONPROP_THIS(iface);
-    return IHTMLDocument_Release(HTMLDOC(This));
+    return htmldoc_release(This);
 }
 
 static HRESULT WINAPI MonikerProp_PutProperty(IMonikerProp *iface, MONIKERPROPERTY mkp, LPCWSTR val)
@@ -520,22 +519,22 @@ static const IMonikerPropVtbl MonikerPropVtbl = {
 
 #define PERSISTFILE_THIS(iface) DEFINE_THIS(HTMLDocument, PersistFile, iface)
 
-static HRESULT WINAPI PersistFile_QueryInterface(IPersistFile *iface, REFIID riid, void **ppvObject)
+static HRESULT WINAPI PersistFile_QueryInterface(IPersistFile *iface, REFIID riid, void **ppv)
 {
     HTMLDocument *This = PERSISTFILE_THIS(iface);
-    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppvObject);
+    return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI PersistFile_AddRef(IPersistFile *iface)
 {
     HTMLDocument *This = PERSISTFILE_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
+    return htmldoc_addref(This);
 }
 
 static ULONG WINAPI PersistFile_Release(IPersistFile *iface)
 {
     HTMLDocument *This = PERSISTFILE_THIS(iface);
-    return IHTMLDocument2_Release(HTMLDOC(This));
+    return htmldoc_release(This);
 }
 
 static HRESULT WINAPI PersistFile_GetClassID(IPersistFile *iface, CLSID *pClassID)
@@ -624,19 +623,19 @@ static HRESULT WINAPI PersistStreamInit_QueryInterface(IPersistStreamInit *iface
                                                        REFIID riid, void **ppv)
 {
     HTMLDocument *This = PERSTRINIT_THIS(iface);
-    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppv);
+    return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI PersistStreamInit_AddRef(IPersistStreamInit *iface)
 {
     HTMLDocument *This = PERSTRINIT_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
+    return htmldoc_addref(This);
 }
 
 static ULONG WINAPI PersistStreamInit_Release(IPersistStreamInit *iface)
 {
     HTMLDocument *This = PERSTRINIT_THIS(iface);
-    return IHTMLDocument2_Release(HTMLDOC(This));
+    return htmldoc_release(This);
 }
 
 static HRESULT WINAPI PersistStreamInit_GetClassID(IPersistStreamInit *iface, CLSID *pClassID)
@@ -759,22 +758,22 @@ static const IPersistStreamInitVtbl PersistStreamInitVtbl = {
 
 #define PERSISTHIST_THIS(iface) DEFINE_THIS(HTMLDocument, PersistHistory, iface)
 
-static HRESULT WINAPI PersistHistory_QueryInterface(IPersistHistory *iface, REFIID riid, void **ppvObject)
+static HRESULT WINAPI PersistHistory_QueryInterface(IPersistHistory *iface, REFIID riid, void **ppv)
 {
     HTMLDocument *This = PERSISTHIST_THIS(iface);
-    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppvObject);
+    return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI PersistHistory_AddRef(IPersistHistory *iface)
 {
     HTMLDocument *This = PERSISTHIST_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
+    return htmldoc_addref(This);
 }
 
 static ULONG WINAPI PersistHistory_Release(IPersistHistory *iface)
 {
     HTMLDocument *This = PERSISTHIST_THIS(iface);
-    return IHTMLDocument2_Release(HTMLDOC(This));
+    return htmldoc_release(This);
 }
 
 static HRESULT WINAPI PersistHistory_GetClassID(IPersistHistory *iface, CLSID *pClassID)

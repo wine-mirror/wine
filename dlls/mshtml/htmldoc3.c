@@ -41,19 +41,19 @@ static HRESULT WINAPI HTMLDocument3_QueryInterface(IHTMLDocument3 *iface,
                                                   REFIID riid, void **ppv)
 {
     HTMLDocument *This = HTMLDOC3_THIS(iface);
-    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppv);
+    return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI HTMLDocument3_AddRef(IHTMLDocument3 *iface)
 {
     HTMLDocument *This = HTMLDOC3_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
+    return htmldoc_addref(This);
 }
 
 static ULONG WINAPI HTMLDocument3_Release(IHTMLDocument3 *iface)
 {
     HTMLDocument *This = HTMLDOC3_THIS(iface);
-    return IHTMLDocument2_Release(HTMLDOC(This));
+    return htmldoc_release(This);
 }
 
 static HRESULT WINAPI HTMLDocument3_GetTypeInfoCount(IHTMLDocument3 *iface, UINT *pctinfo)
@@ -372,7 +372,7 @@ static HRESULT WINAPI HTMLDocument3_createDocumentFragment(IHTMLDocument3 *iface
     if(FAILED(hres))
         return hres;
 
-    *ppNewDoc = HTMLDOC(&docnode->basedoc);
+    *ppNewDoc = &docnode->basedoc.IHTMLDocument2_iface;
     return S_OK;
 }
 
@@ -640,19 +640,19 @@ static HRESULT WINAPI HTMLDocument4_QueryInterface(IHTMLDocument4 *iface,
                                                    REFIID riid, void **ppv)
 {
     HTMLDocument *This = HTMLDOC4_THIS(iface);
-    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppv);
+    return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI HTMLDocument4_AddRef(IHTMLDocument4 *iface)
 {
     HTMLDocument *This = HTMLDOC4_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
+    return htmldoc_addref(This);
 }
 
 static ULONG WINAPI HTMLDocument4_Release(IHTMLDocument4 *iface)
 {
     HTMLDocument *This = HTMLDOC4_THIS(iface);
-    return IHTMLDocument2_Release(HTMLDOC(This));
+    return htmldoc_release(This);
 }
 
 static HRESULT WINAPI HTMLDocument4_GetTypeInfoCount(IHTMLDocument4 *iface, UINT *pctinfo)

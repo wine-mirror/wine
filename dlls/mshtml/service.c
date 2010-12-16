@@ -211,19 +211,19 @@ static IOleUndoManager *create_undomgr(void)
 static HRESULT WINAPI ServiceProvider_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
 {
     HTMLDocument *This = SERVPROV_THIS(iface);
-    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppv);
+    return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI ServiceProvider_AddRef(IServiceProvider *iface)
 {
     HTMLDocument *This = SERVPROV_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
+    return htmldoc_addref(This);
 }
 
 static ULONG WINAPI ServiceProvider_Release(IServiceProvider *iface)
 {
     HTMLDocument *This = SERVPROV_THIS(iface);
-    return IHTMLDocument_Release(HTMLDOC(This));
+    return htmldoc_release(This);
 }
 
 static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFGUID guidService,

@@ -41,19 +41,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 static HRESULT WINAPI HlinkTarget_QueryInterface(IHlinkTarget *iface, REFIID riid, void **ppv)
 {
     HTMLDocument *This = HLINKTRG_THIS(iface);
-    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppv);
+    return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI HlinkTarget_AddRef(IHlinkTarget *iface)
 {
     HTMLDocument *This = HLINKTRG_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
+    return htmldoc_addref(This);
 }
 
 static ULONG WINAPI HlinkTarget_Release(IHlinkTarget *iface)
 {
     HTMLDocument *This = HLINKTRG_THIS(iface);
-    return IHTMLDocument2_Release(HTMLDOC(This));
+    return htmldoc_release(This);
 }
 
 static HRESULT WINAPI HlinkTarget_SetBrowseContext(IHlinkTarget *iface, IHlinkBrowseContext *pihlbc)

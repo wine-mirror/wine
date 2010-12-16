@@ -183,7 +183,7 @@ static HRESULT HTMLIFrame_get_document(HTMLDOMNode *iface, IDispatch **p)
         return S_OK;
     }
 
-    *p = (IDispatch*)HTMLDOC(&This->framebase.content_window->doc->basedoc);
+    *p = (IDispatch*)&This->framebase.content_window->doc->basedoc.IHTMLDocument2_iface;
     IDispatch_AddRef(*p);
     return S_OK;
 }

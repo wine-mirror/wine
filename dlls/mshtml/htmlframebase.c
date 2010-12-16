@@ -478,7 +478,7 @@ static HRESULT WINAPI HTMLFrameBase2_get_readyState(IHTMLFrameBase2 *iface, BSTR
         return E_FAIL;
     }
 
-    return IHTMLDocument2_get_readyState(HTMLDOC(&This->content_window->doc->basedoc), p);
+    return IHTMLDocument2_get_readyState(&This->content_window->doc->basedoc.IHTMLDocument2_iface, p);
 }
 
 static HRESULT WINAPI HTMLFrameBase2_put_allowTransparency(IHTMLFrameBase2 *iface, VARIANT_BOOL v)

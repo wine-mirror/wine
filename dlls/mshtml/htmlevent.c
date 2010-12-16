@@ -963,7 +963,7 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode
         }
 
         call_event_handlers(doc, event_obj, doc->node.event_target, &doc->basedoc.cp_container, eid,
-                (IDispatch*)HTMLDOC(&doc->basedoc));
+                (IDispatch*)&doc->basedoc.IHTMLDocument2_iface);
         break;
 
     default:

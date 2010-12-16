@@ -450,19 +450,19 @@ HRESULT call_set_active_object(IOleInPlaceUIWindow *window, IOleInPlaceActiveObj
 static HRESULT WINAPI OleDocumentView_QueryInterface(IOleDocumentView *iface, REFIID riid, void **ppvObject)
 {
     HTMLDocument *This = DOCVIEW_THIS(iface);
-    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppvObject);
+    return htmldoc_query_interface(This, riid, ppvObject);
 }
 
 static ULONG WINAPI OleDocumentView_AddRef(IOleDocumentView *iface)
 {
     HTMLDocument *This = DOCVIEW_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
+    return htmldoc_addref(This);
 }
 
 static ULONG WINAPI OleDocumentView_Release(IOleDocumentView *iface)
 {
     HTMLDocument *This = DOCVIEW_THIS(iface);
-    return IHTMLDocument2_Release(HTMLDOC(This));
+    return htmldoc_release(This);
 }
 
 static HRESULT WINAPI OleDocumentView_SetInPlaceSite(IOleDocumentView *iface, IOleInPlaceSite *pIPSite)
@@ -504,8 +504,8 @@ static HRESULT WINAPI OleDocumentView_GetDocument(IOleDocumentView *iface, IUnkn
     if(!ppunk)
         return E_INVALIDARG;
 
-    IHTMLDocument2_AddRef(HTMLDOC(This));
-    *ppunk = (IUnknown*)HTMLDOC(This);
+    htmldoc_addref(This);
+    *ppunk = (IUnknown*)&This->IHTMLDocument2_iface;
     return S_OK;
 }
 
@@ -758,22 +758,22 @@ static const IOleDocumentViewVtbl OleDocumentViewVtbl = {
 
 #define VIEWOBJ_THIS(iface) DEFINE_THIS(HTMLDocument, ViewObjectEx, iface)
 
-static HRESULT WINAPI ViewObject_QueryInterface(IViewObjectEx *iface, REFIID riid, void **ppvObject)
+static HRESULT WINAPI ViewObject_QueryInterface(IViewObjectEx *iface, REFIID riid, void **ppv)
 {
     HTMLDocument *This = VIEWOBJ_THIS(iface);
-    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppvObject);
+    return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI ViewObject_AddRef(IViewObjectEx *iface)
 {
     HTMLDocument *This = VIEWOBJ_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
+    return htmldoc_addref(This);
 }
 
 static ULONG WINAPI ViewObject_Release(IViewObjectEx *iface)
 {
     HTMLDocument *This = VIEWOBJ_THIS(iface);
-    return IHTMLDocument2_Release(HTMLDOC(This));
+    return htmldoc_release(This);
 }
 
 static HRESULT WINAPI ViewObject_Draw(IViewObjectEx *iface, DWORD dwDrawAspect, LONG lindex, void *pvAspect,
