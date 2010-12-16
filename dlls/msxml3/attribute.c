@@ -40,13 +40,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 typedef struct _domattr
 {
     xmlnode node;
-    const struct IXMLDOMAttributeVtbl *lpVtbl;
+    IXMLDOMAttribute IXMLDOMAttribute_iface;
     LONG ref;
 } domattr;
 
 static inline domattr *impl_from_IXMLDOMAttribute( IXMLDOMAttribute *iface )
 {
-    return (domattr *)((char*)iface - FIELD_OFFSET(domattr, lpVtbl));
+    return CONTAINING_RECORD(iface, domattr, IXMLDOMAttribute_iface);
 }
 
 static HRESULT WINAPI domattr_QueryInterface(
@@ -170,8 +170,8 @@ static HRESULT WINAPI domattr_Invoke(
     hr = get_typeinfo(IXMLDOMAttribute_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &(This->lpVtbl), dispIdMember, wFlags, pDispParams,
-                pVarResult, pExcepInfo, puArgErr);
+        hr = ITypeInfo_Invoke(typeinfo, &This->IXMLDOMAttribute_iface, dispIdMember, wFlags,
+                pDispParams, pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
     return hr;
@@ -616,12 +616,12 @@ IUnknown* create_attribute( xmlNodePtr attribute )
     if ( !This )
         return NULL;
 
-    This->lpVtbl = &domattr_vtbl;
+    This->IXMLDOMAttribute_iface.lpVtbl = &domattr_vtbl;
     This->ref = 1;
 
-    init_xmlnode(&This->node, attribute, (IXMLDOMNode*)&This->lpVtbl, NULL);
+    init_xmlnode(&This->node, attribute, (IXMLDOMNode*)&This->IXMLDOMAttribute_iface, NULL);
 
-    return (IUnknown*) &This->lpVtbl;
+    return (IUnknown*)&This->IXMLDOMAttribute_iface;
 }
 
 #endif
