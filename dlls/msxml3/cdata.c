@@ -40,13 +40,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 typedef struct _domcdata
 {
     xmlnode node;
-    const struct IXMLDOMCDATASectionVtbl *lpVtbl;
+    IXMLDOMCDATASection IXMLDOMCDATASection_iface;
     LONG ref;
 } domcdata;
 
 static inline domcdata *impl_from_IXMLDOMCDATASection( IXMLDOMCDATASection *iface )
 {
-    return (domcdata *)((char*)iface - FIELD_OFFSET(domcdata, lpVtbl));
+    return CONTAINING_RECORD(iface, domcdata, IXMLDOMCDATASection_iface);
 }
 
 static HRESULT WINAPI domcdata_QueryInterface(
@@ -177,8 +177,8 @@ static HRESULT WINAPI domcdata_Invoke(
     hr = get_typeinfo(IXMLDOMCDATASection_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &(This->lpVtbl), dispIdMember, wFlags, pDispParams,
-                pVarResult, pExcepInfo, puArgErr);
+        hr = ITypeInfo_Invoke(typeinfo, &This->IXMLDOMCDATASection_iface, dispIdMember, wFlags,
+                pDispParams, pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
 
@@ -892,12 +892,12 @@ IUnknown* create_cdata( xmlNodePtr text )
     if ( !This )
         return NULL;
 
-    This->lpVtbl = &domcdata_vtbl;
+    This->IXMLDOMCDATASection_iface.lpVtbl = &domcdata_vtbl;
     This->ref = 1;
 
-    init_xmlnode(&This->node, text, (IXMLDOMNode*)&This->lpVtbl, NULL);
+    init_xmlnode(&This->node, text, (IXMLDOMNode*)&This->IXMLDOMCDATASection_iface, NULL);
 
-    return (IUnknown*) &This->lpVtbl;
+    return (IUnknown*)&This->IXMLDOMCDATASection_iface;
 }
 
 #endif
