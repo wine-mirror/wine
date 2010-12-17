@@ -6211,6 +6211,11 @@ static void test_elems(IHTMLDocument2 *doc)
 
             hres = IHTMLScriptElement_put_defer(script, VARIANT_FALSE);
             ok(hres == S_OK, "put_defer failed: %08x\n", hres);
+
+            str = (BSTR)0xdeadbeef;
+            hres = IHTMLScriptElement_get_src(script, &str);
+            ok(hres == S_OK, "get_src failed: %08x\n", hres);
+            ok(!str, "src = %s\n", wine_dbgstr_w(str));
         }
 
         IHTMLScriptElement_Release(script);

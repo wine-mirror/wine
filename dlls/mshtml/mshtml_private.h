@@ -781,6 +781,7 @@ void nsAString_InitDepend(nsAString*,const PRUnichar*);
 void nsAString_SetData(nsAString*,const PRUnichar*);
 PRUint32 nsAString_GetData(const nsAString*,const PRUnichar**);
 void nsAString_Finish(nsAString*);
+HRESULT return_nsstr(nsresult,nsAString*,BSTR*);
 
 nsICommandParams *create_nscommand_params(void);
 HRESULT nsnode_to_nsstring(nsIDOMNode*,nsAString*);

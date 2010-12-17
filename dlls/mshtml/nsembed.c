@@ -733,6 +733,30 @@ void nsAString_Finish(nsAString *str)
     NS_StringContainerFinish(str);
 }
 
+HRESULT return_nsstr(nsresult nsres, nsAString *nsstr, BSTR *p)
+{
+    const PRUnichar *str;
+
+    if(NS_FAILED(nsres)) {
+        ERR("failed: %08x\n", nsres);
+        nsAString_Finish(nsstr);
+        return E_FAIL;
+    }
+
+    nsAString_GetData(nsstr, &str);
+    TRACE("ret %s\n", debugstr_w(str));
+    if(*str) {
+        *p = SysAllocString(str);
+        if(!*p)
+            return E_OUTOFMEMORY;
+    }else {
+        *p = NULL;
+    }
+
+    nsAString_Finish(nsstr);
+    return S_OK;
+}
+
 nsICommandParams *create_nscommand_params(void)
 {
     nsICommandParams *ret = NULL;
