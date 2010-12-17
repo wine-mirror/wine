@@ -245,6 +245,8 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFG
         return IOleUndoManager_QueryInterface(This->doc_obj->undomgr, riid, ppv);
     }
 
+    TRACE("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
+
     if(This->doc_obj->client) {
         IServiceProvider *sp;
         HRESULT hres;
@@ -260,8 +262,7 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFG
         }
     }
 
-    FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
-    
+    FIXME("unknown service %s\n", debugstr_guid(guidService));
     return E_NOINTERFACE;
 }
 
