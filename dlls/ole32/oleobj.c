@@ -792,14 +792,22 @@ static HRESULT WINAPI     DataAdviseHolder_Unadvise(
   return S_OK;
 }
 
-static HRESULT WINAPI     DataAdviseHolder_EnumAdvise(
-  IDataAdviseHolder*      iface,
-  IEnumSTATDATA**         ppenumAdvise)
+/******************************************************************************
+ * DataAdviseHolder_EnumAdvise
+ */
+static HRESULT WINAPI DataAdviseHolder_EnumAdvise(IDataAdviseHolder *iface,
+                                                  IEnumSTATDATA **enum_advise)
 {
-  DataAdviseHolder *This = (DataAdviseHolder *)iface;
+    DataAdviseHolder *This = (DataAdviseHolder *)iface;
+    IUnknown *unk;
+    HRESULT hr;
 
-  FIXME("(%p)->(%p)\n", This, ppenumAdvise);
-  return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, enum_advise);
+
+    IDataAdviseHolder_QueryInterface(iface, &IID_IUnknown, (void**)&unk);
+    hr = EnumSTATDATA_Construct(unk, 0, This->maxCons, This->connections, enum_advise);
+    IUnknown_Release(unk);
+    return hr;
 }
 
 /******************************************************************************
