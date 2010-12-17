@@ -2480,6 +2480,40 @@ static void _test_style_put_media(unsigned line, IUnknown *unk, const char *medi
     _test_style_media(line, unk, media);
 }
 
+#define test_style_type(s,m) _test_style_type(__LINE__,s,m)
+static void _test_style_type(unsigned line, IUnknown *unk, const char *extype)
+{
+    IHTMLStyleElement *style = _get_style_iface(line, unk);
+    BSTR type;
+    HRESULT hres;
+
+    hres = IHTMLStyleElement_get_type(style, &type);
+    ok_(__FILE__,line)(hres == S_OK, "get_type failed: %08x\n", hres);
+    if(extype)
+        ok_(__FILE__,line)(!strcmp_wa(type, extype), "type = %s, expected %s\n", wine_dbgstr_w(type), extype);
+    else
+        ok_(__FILE__,line)(!type, "type = %s, expected NULL\n", wine_dbgstr_w(type));
+
+    IHTMLStyleElement_Release(style);
+    SysFreeString(type);
+}
+
+#define test_style_put_type(s,m) _test_style_put_type(__LINE__,s,m)
+static void _test_style_put_type(unsigned line, IUnknown *unk, const char *type)
+{
+    IHTMLStyleElement *style = _get_style_iface(line, unk);
+    BSTR str;
+    HRESULT hres;
+
+    str = a2bstr(type);
+    hres = IHTMLStyleElement_put_type(style, str);
+    ok_(__FILE__,line)(hres == S_OK, "put_type failed: %08x\n", hres);
+    IHTMLStyleElement_Release(style);
+    SysFreeString(str);
+
+    _test_style_type(line, unk, type);
+}
+
 #define test_elem_filters(u) _test_elem_filters(__LINE__,u)
 static void _test_elem_filters(unsigned line, IUnknown *unk)
 {
@@ -6328,6 +6362,8 @@ static void test_elems(IHTMLDocument2 *doc)
     if(elem) {
         test_style_media((IUnknown*)elem, NULL);
         test_style_put_media((IUnknown*)elem, "screen");
+        test_style_type((IUnknown*)elem, NULL);
+        test_style_put_type((IUnknown*)elem, "text/css");
         IHTMLElement_Release(elem);
     }
 
