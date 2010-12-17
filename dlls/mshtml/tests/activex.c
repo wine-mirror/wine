@@ -70,6 +70,8 @@ DEFINE_EXPECT(Invoke_READYSTATE);
 DEFINE_EXPECT(Invoke_ENABLED);
 DEFINE_EXPECT(Invoke_VALID);
 DEFINE_EXPECT(Invoke_SECURITYCTX);
+DEFINE_EXPECT(Invoke_SCRIPTPROP);
+DEFINE_EXPECT(GetIDsOfNames_scriptprop);
 DEFINE_EXPECT(DoVerb);
 DEFINE_EXPECT(SetExtent);
 DEFINE_EXPECT(GetExtent);
@@ -570,8 +572,15 @@ static HRESULT WINAPI Dispatch_GetTypeInfo(IDispatch *iface, UINT iTInfo, LCID l
 static HRESULT WINAPI Dispatch_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *rgszNames,
         UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    ok(0, "unexpected call\n");
-    return E_FAIL;
+    CHECK_EXPECT(GetIDsOfNames_scriptprop);
+    ok(IsEqualGUID(riid, &IID_NULL), "riid = %s\n", debugstr_guid(riid));
+    ok(cNames == 1, "cNames = %d\n", cNames);
+    ok(rgszNames != NULL, "rgszNames == NULL\n");
+    ok(!strcmp_wa(rgszNames[0], "scriptprop"), "rgszNames[0] = %s\n", wine_dbgstr_w(rgszNames[0]));
+    ok(rgDispId != NULL, "rgDispId == NULL\n");
+
+    *rgDispId = DISPID_SCRIPTPROP;
+    return S_OK;
 }
 
 static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REFIID riid,
@@ -620,6 +629,17 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
         ok(!pExcepInfo, "pExcepInfo != NULL\n");
         ok(puArgErr != NULL, "puArgErr == NULL\n");
         return DISP_E_MEMBERNOTFOUND;
+    case DISPID_SCRIPTPROP:
+        CHECK_EXPECT(Invoke_SCRIPTPROP);
+        ok(wFlags == DISPATCH_PROPERTYGET, "wFlags = %x\n", wFlags);
+        ok(!pDispParams->cArgs, "pDispParams->cArgs = %d\n", pDispParams->cArgs);
+        ok(!pDispParams->rgvarg, "pDispParams->rgvarg != NULL\n");
+        ok(pExcepInfo != NULL, "pExcepInfo == NULL\n");
+        ok(!puArgErr, "puArgErr != NULL\n");
+
+        V_VT(pVarResult) = VT_I4;
+        V_I4(pVarResult) = 4;
+        return S_OK;
     default:
         ok(0, "unexpected call %d\n", dispIdMember);
     }
@@ -1197,10 +1217,42 @@ static const IClassFactoryVtbl ClassFactoryVtbl = {
 
 static IClassFactory activex_cf = { &ClassFactoryVtbl };
 
+static void test_elem_dispex(IDispatchEx *dispex)
+{
+    DISPPARAMS dp;
+    EXCEPINFO ei;
+    VARIANT v;
+    DISPID id;
+    BSTR str;
+    HRESULT hres;
+
+    str = a2bstr("scriptprop");
+    SET_EXPECT(GetIDsOfNames_scriptprop);
+    hres = IDispatchEx_GetDispID(dispex, str, 0, &id);
+    CHECK_CALLED(GetIDsOfNames_scriptprop);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
+    todo_wine
+    ok(id == DISPID_SCRIPTPROP, "id = %d\n", id);
+
+    SET_EXPECT(Invoke_SECURITYCTX);
+    SET_EXPECT(Invoke_SCRIPTPROP);
+    memset(&dp, 0, sizeof(dp));
+    memset(&ei, 0, sizeof(ei));
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatchEx_InvokeEx(dispex, id, LOCALE_NEUTRAL, DISPATCH_PROPERTYGET, &dp, &v, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_I4, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == 4, "V_I4(v) = %d\n", V_I4(&v));
+    CHECK_CALLED(Invoke_SECURITYCTX);
+    CHECK_CALLED(Invoke_SCRIPTPROP);
+}
+
 static void test_object_elem(IHTMLDocument2 *doc)
 {
     IHTMLObjectElement *objelem;
     IHTMLDocument3 *doc3;
+    IDispatchEx *dispex;
     IHTMLElement *elem;
     IDispatch *disp;
     BSTR str;
@@ -1226,6 +1278,10 @@ static void test_object_elem(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_object failed: %08x\n", hres);
     ok(disp == &Dispatch, "disp != Dispatch\n");
     CHECK_CALLED(Invoke_SECURITYCTX);
+
+    hres = IHTMLObjectElement_QueryInterface(objelem, &IID_IDispatchEx, (void**)&dispex);
+    test_elem_dispex(dispex);
+    IDispatchEx_Release(dispex);
 
     IHTMLObjectElement_Release(objelem);
 }

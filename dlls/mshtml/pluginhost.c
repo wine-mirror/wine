@@ -318,6 +318,82 @@ HRESULT get_plugin_disp(HTMLPluginContainer *plugin_container, IDispatch **ret)
     return S_OK;
 }
 
+HRESULT get_plugin_dispid(HTMLPluginContainer *plugin_container, WCHAR *name, DISPID *ret)
+{
+    IDispatch *disp;
+    DISPID id;
+    DWORD i;
+    HRESULT hres;
+
+    if(!plugin_container->plugin_host) {
+        WARN("no plugin host\n");
+        return DISP_E_UNKNOWNNAME;
+    }
+
+    disp = plugin_container->plugin_host->disp;
+    if(!disp)
+        return DISP_E_UNKNOWNNAME;
+
+    hres = IDispatch_GetIDsOfNames(disp, &IID_NULL, &name, 1, 0, &id);
+    if(FAILED(hres)) {
+        TRACE("no prop %s\n", debugstr_w(name));
+        return DISP_E_UNKNOWNNAME;
+    }
+
+    for(i=0; i < plugin_container->props_len; i++) {
+        if(id == plugin_container->props[i]) {
+            *ret = MSHTML_DISPID_CUSTOM_MIN+i;
+            return S_OK;
+        }
+    }
+
+    if(!plugin_container->props) {
+        plugin_container->props = heap_alloc(8*sizeof(DISPID));
+        if(!plugin_container->props)
+            return E_OUTOFMEMORY;
+        plugin_container->props_size = 8;
+    }else if(plugin_container->props_len == plugin_container->props_size) {
+        DISPID *new_props;
+
+        new_props = heap_realloc(plugin_container->props, plugin_container->props_size*2);
+        if(!new_props)
+            return E_OUTOFMEMORY;
+
+        plugin_container->props = new_props;
+        plugin_container->props_size *= 2;
+    }
+
+    plugin_container->props[plugin_container->props_len] = id;
+    *ret = MSHTML_DISPID_CUSTOM_MIN+plugin_container->props_len;
+    plugin_container->props_len++;
+    return S_OK;
+}
+
+HRESULT invoke_plugin_prop(HTMLPluginContainer *plugin_container, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+        VARIANT *res, EXCEPINFO *ei)
+{
+    PluginHost *host;
+
+    host = plugin_container->plugin_host;
+    if(!host || !host->disp) {
+        FIXME("Called with no disp\n");
+        return E_UNEXPECTED;
+    }
+
+    if(!check_script_safety(host)) {
+        FIXME("Insecure object\n");
+        return E_FAIL;
+    }
+
+    if(id < MSHTML_DISPID_CUSTOM_MIN || id > MSHTML_DISPID_CUSTOM_MIN + plugin_container->props_len) {
+        ERR("Invalid id\n");
+        return E_FAIL;
+    }
+
+    return IDispatch_Invoke(host->disp, plugin_container->props[id-MSHTML_DISPID_CUSTOM_MIN], &IID_NULL,
+            lcid, flags, params, res, ei, NULL);
+}
+
 static inline PluginHost *impl_from_IOleClientSite(IOleClientSite *iface)
 {
     return CONTAINING_RECORD(iface, PluginHost, IOleClientSite_iface);

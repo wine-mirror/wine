@@ -50,6 +50,10 @@ struct HTMLPluginContainer {
     HTMLElement element;
 
     PluginHost *plugin_host;
+
+    DISPID *props;
+    DWORD props_size;
+    DWORD props_len;
 };
 
 extern const IID IID_HTMLPluginContainer;
@@ -64,3 +68,5 @@ HRESULT create_ip_window(IOleInPlaceUIWindow**);
 HRESULT create_ip_frame(IOleInPlaceFrame**);
 
 HRESULT get_plugin_disp(HTMLPluginContainer*,IDispatch**);
+HRESULT get_plugin_dispid(HTMLPluginContainer*,WCHAR*,DISPID*);
+HRESULT invoke_plugin_prop(HTMLPluginContainer*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*);

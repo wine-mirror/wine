@@ -439,6 +439,26 @@ static HRESULT HTMLObjectElement_get_readystate(HTMLDOMNode *iface, BSTR *p)
     return E_NOTIMPL;
 }
 
+static HRESULT HTMLObjectElement_get_dispid(HTMLDOMNode *iface, BSTR name,
+        DWORD grfdex, DISPID *pid)
+{
+    HTMLObjectElement *This = HTMLOBJECT_NODE_THIS(iface);
+
+    TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(name), grfdex, pid);
+
+    return get_plugin_dispid(&This->plugin_container, name, pid);
+}
+
+static HRESULT HTMLObjectElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid,
+        WORD flags, DISPPARAMS *params, VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    HTMLObjectElement *This = HTMLOBJECT_NODE_THIS(iface);
+
+    TRACE("(%p)->(%d)\n", This, id);
+
+    return invoke_plugin_prop(&This->plugin_container, id, lcid, flags, params, res, ei);
+}
+
 #undef HTMLOBJECT_NODE_THIS
 
 static const NodeImplVtbl HTMLObjectElementImplVtbl = {
@@ -450,7 +470,9 @@ static const NodeImplVtbl HTMLObjectElementImplVtbl = {
     NULL,
     NULL,
     NULL,
-    HTMLObjectElement_get_readystate
+    HTMLObjectElement_get_readystate,
+    HTMLObjectElement_get_dispid,
+    HTMLObjectElement_invoke
 };
 
 static const tid_t HTMLObjectElement_iface_tids[] = {
