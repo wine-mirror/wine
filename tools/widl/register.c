@@ -61,9 +61,26 @@ static const char *get_coclass_threading( const type_t *class )
     return models[get_attrv( class->attrs, ATTR_THREADING )];
 }
 
-static int write_interface( const type_t *iface )
+static const type_t *find_ps_factory( const statement_list_t *stmts )
+{
+    const statement_t *stmt;
+
+    if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
+    {
+        if (stmt->type == STMT_TYPE)
+        {
+            const type_t *type = stmt->u.type;
+            if (type_get_type(type) == TYPE_COCLASS && !strcmp( type->name, "PSFactoryBuffer" ))
+                return type;
+        }
+    }
+    return NULL;
+}
+
+static int write_interface( const type_t *iface, const type_t *ps_factory )
 {
     const UUID *uuid = get_attrp( iface->attrs, ATTR_UUID );
+    const UUID *ps_uuid = ps_factory ? get_attrp( ps_factory->attrs, ATTR_UUID ) : NULL;
 
     if (!uuid) return 0;
     if (!is_object( iface )) return 0;
@@ -77,13 +94,14 @@ static int write_interface( const type_t *iface )
     put_str( indent, "{\n" );
     indent++;
     put_str( indent, "NumMethods = s %u\n", count_methods( iface ));
-    put_str( indent, "ProxyStubClsid32 = s '%%CLSID_PSFactoryBuffer%%'\n" );
+    put_str( indent, "ProxyStubClsid32 = s '%s'\n",
+             ps_uuid ? format_uuid( ps_uuid ) : "%CLSID_PSFactoryBuffer%" );
     indent--;
     put_str( indent, "}\n" );
     return 1;
 }
 
-static int write_interfaces( const statement_list_t *stmts )
+static int write_interfaces( const statement_list_t *stmts, const type_t *ps_factory )
 {
     const statement_t *stmt;
     int count = 0;
@@ -91,7 +109,7 @@ static int write_interfaces( const statement_list_t *stmts )
     if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
     {
         if (stmt->type == STMT_TYPE && type_get_type( stmt->u.type ) == TYPE_INTERFACE)
-            count += write_interface( stmt->u.type );
+            count += write_interface( stmt->u.type, ps_factory );
     }
     return count;
 }
@@ -204,6 +222,7 @@ static inline void put_string( const char *str )
 void write_regscript( const statement_list_t *stmts )
 {
     int count;
+    const type_t *ps_factory;
 
     if (!do_regscript) return;
     if (do_everything && !need_proxy_file( stmts )) return;
@@ -215,12 +234,13 @@ void write_regscript( const statement_list_t *stmts )
 
     put_str( indent, "NoRemove Interface\n" );
     put_str( indent++, "{\n" );
-    count = write_interfaces( stmts );
+    ps_factory = find_ps_factory( stmts );
+    count = write_interfaces( stmts, ps_factory );
     put_str( --indent, "}\n" );
 
     put_str( indent, "NoRemove CLSID\n" );
     put_str( indent++, "{\n" );
-    if (count)
+    if (count && !ps_factory)
     {
         put_str( indent, "ForceRemove '%%CLSID_PSFactoryBuffer%%' = s 'PSFactoryBuffer'\n" );
         put_str( indent++, "{\n" );
