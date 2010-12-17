@@ -33,8 +33,6 @@ AC_ARG_ENABLE(maintainer-mode, AS_HELP_STRING([--enable-maintainer-mode],[enable
 
 AC_ARG_WITH(alsa,      AS_HELP_STRING([--without-alsa],[do not use the Alsa sound support]),
             [if test "x$withval" = "xno"; then ac_cv_header_sys_asoundlib_h=no; ac_cv_header_alsa_asoundlib_h=no; fi])
-AC_ARG_WITH(audioio,   AS_HELP_STRING([--without-audioio],[do not use the AudioIO sound support]),
-            [if test "x$withval" = "xno"; then ac_cv_header_libaudioio_h=no; fi])
 AC_ARG_WITH(capi,      AS_HELP_STRING([--without-capi],[do not use CAPI (ISDN support)]),
             [if test "x$withval" = "xno"; then ac_cv_header_capi20_h=no; ac_cv_header_linux_capi_h=no; fi])
 AC_ARG_WITH(cms,       AS_HELP_STRING([--without-cms],[do not use CMS (color management support)]),
@@ -409,7 +407,6 @@ AC_CHECK_HEADERS(\
 	lcms.h \
 	lcms/lcms.h \
 	ldap.h \
-	libaudioio.h \
 	link.h \
 	linux/cdrom.h \
 	linux/compiler.h \
@@ -1478,15 +1475,6 @@ then
                          ALSALIBS="-lasound"],[])])
 fi
 
-dnl **** Check for libaudioio (which can be used to get solaris audio support) ****
-AC_SUBST(AUDIOIOLIBS,"")
-if test "$ac_cv_header_libaudioio_h" = "yes"
-then
-    AC_CHECK_LIB(audioio,AudioIOGetVersion,
-                  [AUDIOIOLIBS="-laudioio"
-                   AC_DEFINE(HAVE_LIBAUDIOIO, 1, [Define if you have libaudioIO])])
-fi
-
 dnl **** Check for capi4linux ****
 
 if test "$ac_cv_header_capi20_h" = "yes" -a "$ac_cv_header_linux_capi_h" = "yes"
@@ -1642,11 +1630,11 @@ dnl **** Check for libodbc ****
 WINE_CHECK_SONAME(odbc,SQLConnect,,[AC_DEFINE_UNQUOTED(SONAME_LIBODBC,["libodbc.$LIBEXT"])])
 
 dnl **** Check for any sound system ****
-if test "x$ALSALIBS$AUDIOIOLIBS$COREAUDIO$NASLIBS$ESDLIBS$ac_cv_lib_soname_jack" = "x" -a \
+if test "x$ALSALIBS$COREAUDIO$NASLIBS$ESDLIBS$ac_cv_lib_soname_jack" = "x" -a \
         "$ac_cv_header_sys_soundcard_h" != "yes" -a \
         "$ac_cv_header_machine_soundcard_h" != "yes" -a \
         "$ac_cv_header_soundcard_h" != "yes" -a \
-        "x$with_alsa$with_audioio$with_coreaudio$with_nas$with_esd$with_jack$with_oss" != xnonononononono
+        "x$with_alsa$with_coreaudio$with_nas$with_esd$with_jack$with_oss" != xnononononono
 then
     WINE_WARNING([No sound system was found. Windows applications will be silent.])
 fi
@@ -2783,7 +2771,6 @@ WINE_CONFIG_DLL(windebug.dll16,enable_win16)
 WINE_CONFIG_DLL(windowscodecs,,[windowscodecs])
 WINE_CONFIG_TEST(dlls/windowscodecs/tests)
 WINE_CONFIG_DLL(winealsa.drv)
-WINE_CONFIG_DLL(wineaudioio.drv)
 WINE_CONFIG_DLL(winecoreaudio.drv)
 WINE_CONFIG_LIB(winecrt0)
 WINE_CONFIG_DLL(wined3d,,[wined3d])

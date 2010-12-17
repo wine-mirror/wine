@@ -616,7 +616,6 @@ LIBMPG123
 PNGINCL
 FONTCONFIGINCL
 CUPSINCL
-AUDIOIOLIBS
 ALSALIBS
 GSTREAMER_INCL
 GSTREAMER_LIBS
@@ -770,7 +769,6 @@ enable_win64
 enable_tests
 enable_maintainer_mode
 with_alsa
-with_audioio
 with_capi
 with_cms
 with_coreaudio
@@ -1461,7 +1459,6 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --without-alsa          do not use the Alsa sound support
-  --without-audioio       do not use the AudioIO sound support
   --without-capi          do not use CAPI (ISDN support)
   --without-cms           do not use CMS (color management support)
   --without-coreaudio     do not use the CoreAudio sound support
@@ -2513,12 +2510,6 @@ fi
 # Check whether --with-alsa was given.
 if test "${with_alsa+set}" = set; then :
   withval=$with_alsa; if test "x$withval" = "xno"; then ac_cv_header_sys_asoundlib_h=no; ac_cv_header_alsa_asoundlib_h=no; fi
-fi
-
-
-# Check whether --with-audioio was given.
-if test "${with_audioio+set}" = set; then :
-  withval=$with_audioio; if test "x$withval" = "xno"; then ac_cv_header_libaudioio_h=no; fi
 fi
 
 
@@ -5806,7 +5797,6 @@ for ac_header in \
 	lcms.h \
 	lcms/lcms.h \
 	ldap.h \
-	libaudioio.h \
 	link.h \
 	linux/cdrom.h \
 	linux/compiler.h \
@@ -10887,55 +10877,6 @@ fi
 
 fi
 
-AUDIOIOLIBS=""
-
-if test "$ac_cv_header_libaudioio_h" = "yes"
-then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for AudioIOGetVersion in -laudioio" >&5
-$as_echo_n "checking for AudioIOGetVersion in -laudioio... " >&6; }
-if test "${ac_cv_lib_audioio_AudioIOGetVersion+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-laudioio  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char AudioIOGetVersion ();
-int
-main ()
-{
-return AudioIOGetVersion ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_audioio_AudioIOGetVersion=yes
-else
-  ac_cv_lib_audioio_AudioIOGetVersion=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_audioio_AudioIOGetVersion" >&5
-$as_echo "$ac_cv_lib_audioio_AudioIOGetVersion" >&6; }
-if test "x$ac_cv_lib_audioio_AudioIOGetVersion" = x""yes; then :
-  AUDIOIOLIBS="-laudioio"
-
-$as_echo "#define HAVE_LIBAUDIOIO 1" >>confdefs.h
-
-fi
-
-fi
-
 
 if test "$ac_cv_header_capi20_h" = "yes" -a "$ac_cv_header_linux_capi_h" = "yes"
 then
@@ -12076,11 +12017,11 @@ _ACEOF
 
 fi
 
-if test "x$ALSALIBS$AUDIOIOLIBS$COREAUDIO$NASLIBS$ESDLIBS$ac_cv_lib_soname_jack" = "x" -a \
+if test "x$ALSALIBS$COREAUDIO$NASLIBS$ESDLIBS$ac_cv_lib_soname_jack" = "x" -a \
         "$ac_cv_header_sys_soundcard_h" != "yes" -a \
         "$ac_cv_header_machine_soundcard_h" != "yes" -a \
         "$ac_cv_header_soundcard_h" != "yes" -a \
-        "x$with_alsa$with_audioio$with_coreaudio$with_nas$with_esd$with_jack$with_oss" != xnonononononono
+        "x$with_alsa$with_coreaudio$with_nas$with_esd$with_jack$with_oss" != xnononononono
 then
     as_fn_append wine_warnings "|No sound system was found. Windows applications will be silent."
 fi
@@ -15262,7 +15203,6 @@ wine_fn_config_dll windebug.dll16 enable_win16
 wine_fn_config_dll windowscodecs enable_windowscodecs windowscodecs
 wine_fn_config_test dlls/windowscodecs/tests windowscodecs_test
 wine_fn_config_dll winealsa.drv enable_winealsa_drv
-wine_fn_config_dll wineaudioio.drv enable_wineaudioio_drv
 wine_fn_config_dll winecoreaudio.drv enable_winecoreaudio_drv
 wine_fn_config_lib winecrt0
 wine_fn_config_dll wined3d enable_wined3d wined3d

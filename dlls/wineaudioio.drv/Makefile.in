@@ -1,9 +1,0 @@
-MODULE    = wineaudioio.drv
-IMPORTS   = dxguid uuid winmm user32
-EXTRALIBS = @AUDIOIOLIBS@
-
-C_SRCS = \
-	audio.c \
-	audioio.c
-
-@MAKE_DLL_RULES@
