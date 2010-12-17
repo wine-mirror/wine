@@ -5665,21 +5665,6 @@ WORD
 
 DWORD_PTR
 
-%%wineaudioio.drv
-
-%long
-
-DWORD
-HDRVR
-LPARAM
-LRESULT
-UINT
-WORD
-
-%long --pointer
-
-DWORD_PTR
-
 %%winecoreaudio.drv
 
 %long
