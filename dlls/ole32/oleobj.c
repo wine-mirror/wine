@@ -584,20 +584,14 @@ static LPOLEADVISEHOLDER OleAdviseHolderImpl_Constructor(void)
 /**************************************************************************
  *  DataAdviseHolder Implementation
  */
-typedef struct DataAdviseConnection {
-  IAdviseSink *sink;
-  FORMATETC fmat;
-  DWORD advf;
-  DWORD remote_connection;
-} DataAdviseConnection;
-
 typedef struct DataAdviseHolder
 {
   const IDataAdviseHolderVtbl *lpVtbl;
 
   LONG                  ref;
   DWORD                 maxCons;
-  DataAdviseConnection* Connections;
+  STATDATA*             connections;
+  DWORD*                remote_connections;
   IDataObject*          delegate;
 } DataAdviseHolder;
 
@@ -614,19 +608,19 @@ static void DataAdviseHolder_Destructor(DataAdviseHolder* ptrToDestroy)
 
   for (index = 0; index < ptrToDestroy->maxCons; index++)
   {
-    if (ptrToDestroy->Connections[index].sink != NULL)
+    if (ptrToDestroy->connections[index].pAdvSink != NULL)
     {
       if (ptrToDestroy->delegate && 
-          (ptrToDestroy->Connections[index].advf & WINE_ADVF_REMOTE))
+          (ptrToDestroy->connections[index].advf & WINE_ADVF_REMOTE))
         IDataObject_DUnadvise(ptrToDestroy->delegate,
-          ptrToDestroy->Connections[index].remote_connection);
+          ptrToDestroy->remote_connections[index]);
 
-      IAdviseSink_Release(ptrToDestroy->Connections[index].sink);
-      ptrToDestroy->Connections[index].sink = NULL;
+      release_statdata(ptrToDestroy->connections + index);
     }
   }
 
-  HeapFree(GetProcessHeap(), 0, ptrToDestroy->Connections);
+  HeapFree(GetProcessHeap(), 0, ptrToDestroy->remote_connections);
+  HeapFree(GetProcessHeap(), 0, ptrToDestroy->connections);
   HeapFree(GetProcessHeap(), 0, ptrToDestroy);
 }
 
@@ -701,7 +695,7 @@ static HRESULT WINAPI DataAdviseHolder_Advise(
   DWORD*                  pdwConnection)
 {
   DWORD index;
-
+  STATDATA new_conn;
   DataAdviseHolder *This = (DataAdviseHolder *)iface;
 
   TRACE("(%p)->(%p, %p, %08x, %p, %p)\n", This, pDataObject, pFetc, advf,
@@ -714,62 +708,52 @@ static HRESULT WINAPI DataAdviseHolder_Advise(
 
   for (index = 0; index < This->maxCons; index++)
   {
-    if (This->Connections[index].sink == NULL)
+    if (This->connections[index].pAdvSink == NULL)
       break;
   }
 
   if (index == This->maxCons)
   {
     This->maxCons+=INITIAL_SINKS;
-    This->Connections = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-				    This->Connections,
-				    This->maxCons*sizeof(DataAdviseConnection));
+    This->connections = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                    This->connections,
+                                    This->maxCons * sizeof(*This->connections));
+    This->remote_connections = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                           This->remote_connections,
+                                           This->maxCons * sizeof(*This->remote_connections));
   }
 
-  This->Connections[index].sink = pAdvise;
-  This->Connections[index].advf = advf & ~WINE_ADVF_REMOTE;
-  This->Connections[index].fmat = *pFetc;
-  if (pFetc->ptd)
+  new_conn.pAdvSink = pAdvise;
+  new_conn.advf = advf & ~WINE_ADVF_REMOTE;
+  new_conn.formatetc = *pFetc;
+  new_conn.dwConnection = index + 1; /* 0 is not a valid cookie, so increment the index */
+
+  copy_statdata(This->connections + index, &new_conn);
+
+  if (This->connections[index].pAdvSink != NULL)
   {
-    This->Connections[index].fmat.ptd = CoTaskMemAlloc(pFetc->ptd->tdSize);
-    if (!This->Connections[index].fmat.ptd)
-    {
-      IDataAdviseHolder_Unadvise(iface, index + 1);
-      return E_OUTOFMEMORY;
-    }
-    memcpy(This->Connections[index].fmat.ptd, pFetc->ptd, pFetc->ptd->tdSize);
-  }
-
-  if (This->Connections[index].sink != NULL) {
-    IAdviseSink_AddRef(This->Connections[index].sink);
-
     /* if we are already connected advise the remote object */
     if (This->delegate)
     {
         HRESULT hr;
 
-        hr = IDataObject_DAdvise(This->delegate, &This->Connections[index].fmat,
-                                 This->Connections[index].advf,
-                                 This->Connections[index].sink,
-                                 &This->Connections[index].remote_connection);
+        hr = IDataObject_DAdvise(This->delegate, &new_conn.formatetc,
+                                 new_conn.advf, new_conn.pAdvSink,
+                                 &This->remote_connections[index]);
         if (FAILED(hr))
         {
-            IDataAdviseHolder_Unadvise(iface, index + 1);
+            IDataAdviseHolder_Unadvise(iface, new_conn.dwConnection);
             return hr;
         }
-        This->Connections[index].advf |= WINE_ADVF_REMOTE;
+        This->connections[index].advf |= WINE_ADVF_REMOTE;
     }
     else if(advf & ADVF_PRIMEFIRST)
       /* only do this if we have no delegate, since in the above case the
        * delegate will do the priming for us */
       IDataAdviseHolder_SendOnDataChange(iface, pDataObject, 0, advf);
   }
-  /*
-   * Return the index as the cookie.
-   * Since 0 is not a valid cookie, we will increment by
-   * 1 the index in the table.
-   */
-  *pdwConnection = index+1;
+
+  *pdwConnection = new_conn.dwConnection;
 
   return S_OK;
 }
@@ -782,34 +766,22 @@ static HRESULT WINAPI     DataAdviseHolder_Unadvise(
   DWORD                   dwConnection)
 {
   DataAdviseHolder *This = (DataAdviseHolder *)iface;
-
+  DWORD index;
   TRACE("(%p)->(%u)\n", This, dwConnection);
 
-  /*
-   * So we don't return 0 as a cookie, the index was
-   * incremented by 1 in OleAdviseHolderImpl_Advise
-   * we have to compensate.
-   */
-  dwConnection--;
+  /* The connection number is 1 more than the index, see DataAdviseHolder_Advise */
+  index = dwConnection - 1;
 
-  /*
-   * Check for invalid cookies.
-   */
-  if (dwConnection >= This->maxCons)
-    return OLE_E_NOCONNECTION;
+  if (index >= This->maxCons || This->connections[index].pAdvSink == NULL)
+     return OLE_E_NOCONNECTION;
 
-  if (This->Connections[dwConnection].sink == NULL)
-    return OLE_E_NOCONNECTION;
+  if (This->delegate && This->connections[index].advf & WINE_ADVF_REMOTE)
+  {
+    IDataObject_DUnadvise(This->delegate, This->remote_connections[index]);
+    This->remote_connections[index] = 0;
+  }
 
-  if (This->delegate && This->Connections[dwConnection].advf & WINE_ADVF_REMOTE)
-    IDataObject_DUnadvise(This->delegate,
-      This->Connections[dwConnection].remote_connection);
-
-  /*
-   * Release the sink and mark the spot in the list as free.
-   */
-  IAdviseSink_Release(This->Connections[dwConnection].sink);
-  memset(&(This->Connections[dwConnection]), 0, sizeof(DataAdviseConnection));
+  release_statdata(This->connections + index);
 
   return S_OK;
 }
@@ -840,24 +812,27 @@ static HRESULT WINAPI     DataAdviseHolder_SendOnDataChange(
 
   TRACE("(%p)->(%p,%08x,%08x)\n", This, pDataObject, dwReserved, advf);
 
-  for(index = 0; index < This->maxCons; index++) {
-    if(This->Connections[index].sink != NULL) {
+  for(index = 0; index < This->maxCons; index++)
+  {
+    if(This->connections[index].pAdvSink != NULL)
+    {
       memset(&stg, 0, sizeof(stg));
-      if(!(This->Connections[index].advf & ADVF_NODATA)) {
+      if(!(This->connections[index].advf & ADVF_NODATA))
+      {
 	TRACE("Calling IDataObject_GetData\n");
 	res = IDataObject_GetData(pDataObject,
-				  &(This->Connections[index].fmat),
+				  &(This->connections[index].formatetc),
 				  &stg);
 	TRACE("returns %08x\n", res);
       }
       TRACE("Calling IAdviseSink_OnDataChange\n");
-      IAdviseSink_OnDataChange(This->Connections[index].sink,
-				     &(This->Connections[index].fmat),
-				     &stg);
+      IAdviseSink_OnDataChange(This->connections[index].pAdvSink,
+                               &(This->connections[index].formatetc),
+                               &stg);
       TRACE("Done IAdviseSink_OnDataChange\n");
-      if(This->Connections[index].advf & ADVF_ONLYONCE) {
+      if(This->connections[index].advf & ADVF_ONLYONCE) {
 	TRACE("Removing connection\n");
-	DataAdviseHolder_Unadvise(iface, index+1);
+	DataAdviseHolder_Unadvise(iface, This->connections[index].dwConnection);
       }
     }
   }
@@ -886,14 +861,14 @@ HRESULT DataAdviseHolder_OnConnect(IDataAdviseHolder *iface, IDataObject *pDeleg
 
   for(index = 0; index < This->maxCons; index++)
   {
-    if(This->Connections[index].sink != NULL)
+    if(This->connections[index].pAdvSink != NULL)
     {
-      hr = IDataObject_DAdvise(pDelegate, &This->Connections[index].fmat,
-                               This->Connections[index].advf,
-                               This->Connections[index].sink,
-                               &This->Connections[index].remote_connection);
+      hr = IDataObject_DAdvise(pDelegate, &This->connections[index].formatetc,
+                               This->connections[index].advf,
+                               This->connections[index].pAdvSink,
+                               &This->remote_connections[index]);
       if (FAILED(hr)) break;
-      This->Connections[index].advf |= WINE_ADVF_REMOTE;
+      This->connections[index].advf |= WINE_ADVF_REMOTE;
     }
   }
   This->delegate = pDelegate;
@@ -907,12 +882,12 @@ void DataAdviseHolder_OnDisconnect(IDataAdviseHolder *iface)
 
   for(index = 0; index < This->maxCons; index++)
   {
-    if((This->Connections[index].sink != NULL) &&
-       (This->Connections[index].advf & WINE_ADVF_REMOTE))
+    if((This->connections[index].pAdvSink != NULL) &&
+       (This->connections[index].advf & WINE_ADVF_REMOTE))
     {
-      IDataObject_DUnadvise(This->delegate,
-        This->Connections[index].remote_connection);
-      This->Connections[index].advf &= ~WINE_ADVF_REMOTE;
+      IDataObject_DUnadvise(This->delegate, This->remote_connections[index]);
+      This->remote_connections[index] = 0;
+      This->connections[index].advf &= ~WINE_ADVF_REMOTE;
     }
   }
   This->delegate = NULL;
@@ -930,10 +905,10 @@ static IDataAdviseHolder* DataAdviseHolder_Constructor(void)
   newHolder->lpVtbl = &DataAdviseHolderImpl_VTable;
   newHolder->ref = 1;
   newHolder->maxCons = INITIAL_SINKS;
-  newHolder->Connections = HeapAlloc(GetProcessHeap(),
-				     HEAP_ZERO_MEMORY,
-				     newHolder->maxCons *
-				     sizeof(DataAdviseConnection));
+  newHolder->connections = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                     newHolder->maxCons * sizeof(*newHolder->connections));
+  newHolder->remote_connections = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                            newHolder->maxCons * sizeof(*newHolder->remote_connections));
   newHolder->delegate = NULL;
 
   TRACE("returning %p\n", newHolder);
