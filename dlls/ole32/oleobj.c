@@ -274,9 +274,7 @@ static HRESULT WINAPI OleAdviseHolderImpl_QueryInterface(
 {
   OleAdviseHolderImpl *This = (OleAdviseHolderImpl *)iface;
   TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppvObj);
-  /*
-   * Sanity check
-   */
+
   if (ppvObj==NULL)
     return E_POINTER;
 
@@ -284,21 +282,16 @@ static HRESULT WINAPI OleAdviseHolderImpl_QueryInterface(
 
   if (IsEqualIID(riid, &IID_IUnknown))
   {
-    /* IUnknown */
     *ppvObj = This;
   }
   else if(IsEqualIID(riid, &IID_IOleAdviseHolder))
   {
-    /* IOleAdviseHolder */
     *ppvObj = This;
   }
 
   if(*ppvObj == NULL)
     return E_NOINTERFACE;
 
-  /*
-   * A successful QI always increments the reference count.
-   */
   IUnknown_AddRef((IUnknown*)*ppvObj);
 
   return S_OK;
@@ -348,26 +341,17 @@ static HRESULT WINAPI OleAdviseHolderImpl_Advise(
 
   TRACE("(%p)->(%p, %p)\n", This, pAdvise, pdwConnection);
 
-  /*
-   * Sanity check
-   */
   if (pdwConnection==NULL)
     return E_POINTER;
 
   *pdwConnection = 0;
 
-  /*
-   * Find a free spot in the array.
-   */
   for (index = 0; index < This->maxSinks; index++)
   {
     if (This->arrayOfSinks[index]==NULL)
       break;
   }
 
-  /*
-   * If the array is full, we need to grow it.
-   */
   if (index == This->maxSinks)
   {
     DWORD i;
@@ -383,9 +367,6 @@ static HRESULT WINAPI OleAdviseHolderImpl_Advise(
       This->arrayOfSinks[i]=0;
   }
 
-  /*
-   * Store the new sink
-   */
   This->arrayOfSinks[index] = pAdvise;
 
   if (This->arrayOfSinks[index]!=NULL)
@@ -651,8 +632,6 @@ static void DataAdviseHolder_Destructor(DataAdviseHolder* ptrToDestroy)
 
 /************************************************************************
  * DataAdviseHolder_QueryInterface (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
  */
 static HRESULT WINAPI DataAdviseHolder_QueryInterface(
   IDataAdviseHolder*      iface,
@@ -661,47 +640,29 @@ static HRESULT WINAPI DataAdviseHolder_QueryInterface(
 {
   DataAdviseHolder *This = (DataAdviseHolder *)iface;
   TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppvObject);
-  /*
-   * Perform a sanity check on the parameters.
-   */
+
   if ( (This==0) || (ppvObject==0) )
     return E_INVALIDARG;
 
-  /*
-   * Initialize the return parameter.
-   */
   *ppvObject = 0;
 
-  /*
-   * Compare the riid with the interface IDs implemented by this object.
-   */
   if ( IsEqualIID(&IID_IUnknown, riid) ||
        IsEqualIID(&IID_IDataAdviseHolder, riid)  )
   {
     *ppvObject = iface;
   }
 
-  /*
-   * Check that we obtained an interface.
-   */
   if ((*ppvObject)==0)
   {
     return E_NOINTERFACE;
   }
 
-  /*
-   * Query Interface always increases the reference count by one when it is
-   * successful.
-   */
   IUnknown_AddRef((IUnknown*)*ppvObject);
-
   return S_OK;
 }
 
 /************************************************************************
  * DataAdviseHolder_AddRef (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
  */
 static ULONG WINAPI       DataAdviseHolder_AddRef(
   IDataAdviseHolder*      iface)
@@ -713,8 +674,6 @@ static ULONG WINAPI       DataAdviseHolder_AddRef(
 
 /************************************************************************
  * DataAdviseHolder_Release (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
  */
 static ULONG WINAPI DataAdviseHolder_Release(
   IDataAdviseHolder*      iface)
@@ -723,14 +682,7 @@ static ULONG WINAPI DataAdviseHolder_Release(
   ULONG ref;
   TRACE("(%p) (ref=%d)\n", This, This->ref);
 
-  /*
-   * Decrease the reference count on this object.
-   */
   ref = InterlockedDecrement(&This->ref);
-
-  /*
-   * If the reference count goes down to 0, perform suicide.
-   */
   if (ref==0) DataAdviseHolder_Destructor(This);
 
   return ref;
@@ -754,26 +706,18 @@ static HRESULT WINAPI DataAdviseHolder_Advise(
 
   TRACE("(%p)->(%p, %p, %08x, %p, %p)\n", This, pDataObject, pFetc, advf,
 	pAdvise, pdwConnection);
-  /*
-   * Sanity check
-   */
+
   if (pdwConnection==NULL)
     return E_POINTER;
 
   *pdwConnection = 0;
 
-  /*
-   * Find a free spot in the array.
-   */
   for (index = 0; index < This->maxCons; index++)
   {
     if (This->Connections[index].sink == NULL)
       break;
   }
 
-  /*
-   * If the array is full, we need to grow it.
-   */
   if (index == This->maxCons)
   {
     This->maxCons+=INITIAL_SINKS;
@@ -781,9 +725,7 @@ static HRESULT WINAPI DataAdviseHolder_Advise(
 				    This->Connections,
 				    This->maxCons*sizeof(DataAdviseConnection));
   }
-  /*
-   * Store the new sink
-   */
+
   This->Connections[index].sink = pAdvise;
   This->Connections[index].advf = advf & ~WINE_ADVF_REMOTE;
   This->Connections[index].fmat = *pFetc;
@@ -1010,9 +952,6 @@ HRESULT WINAPI CreateOleAdviseHolder(
 {
   TRACE("(%p)\n", ppOAHolder);
 
-  /*
-   * Sanity check,
-   */
   if (ppOAHolder==NULL)
     return E_POINTER;
 
@@ -1032,9 +971,6 @@ HRESULT WINAPI CreateDataAdviseHolder(
 {
   TRACE("(%p)\n", ppDAHolder);
 
-  /*
-   * Sanity check,
-   */
   if (ppDAHolder==NULL)
     return E_POINTER;
 
