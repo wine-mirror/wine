@@ -39,6 +39,7 @@
 #include "shlguid.h"
 #include "exdispid.h"
 #include "mimeinfo.h"
+#include "hlink.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
@@ -155,6 +156,21 @@ static int strcmp_wa(LPCWSTR strw, const char *stra)
     CHAR buf[512];
     WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
     return lstrcmpA(stra, buf);
+}
+
+static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
+{
+    IUnknown *unk1, *unk2;
+
+    if(iface1 == iface2)
+        return TRUE;
+
+    IUnknown_QueryInterface(iface1, &IID_IUnknown, (void**)&unk1);
+    IUnknown_Release(unk1);
+    IUnknown_QueryInterface(iface2, &IID_IUnknown, (void**)&unk2);
+    IUnknown_Release(unk2);
+
+    return unk1 == unk2;
 }
 
 static const char *debugstr_guid(REFIID riid)
@@ -2807,6 +2823,31 @@ static void test_TranslateAccelerator(IUnknown *unk)
     test_UIActivate(unk, FALSE);
 }
 
+static void test_dochost_qs(IUnknown *unk)
+{
+    IOleClientSite *client_site;
+    IServiceProvider *serv_prov;
+    IUnknown *service;
+    HRESULT hres;
+
+    client_site = get_dochost(unk);
+    hres = IOleClientSite_QueryInterface(client_site, &IID_IServiceProvider, (void**)&serv_prov);
+    IOleClientSite_Release(client_site);
+    ok(hres == S_OK, "Could not get IServiceProvider iface: %08x\n", hres);
+
+    hres = IServiceProvider_QueryService(serv_prov, &IID_IHlinkFrame, &IID_IHlinkFrame, (void**)&service);
+    ok(hres == S_OK, "QueryService failed: %08x\n", hres);
+    ok(iface_cmp(service, unk), "service != unk\n");
+    IUnknown_Release(service);
+
+    hres = IServiceProvider_QueryService(serv_prov, &IID_IWebBrowserApp, &IID_IHlinkFrame, (void**)&service);
+    ok(hres == S_OK, "QueryService failed: %08x\n", hres);
+    ok(iface_cmp(service, unk), "service != unk\n");
+    IUnknown_Release(service);
+
+    IServiceProvider_Release(serv_prov);
+}
+
 static void test_WebBrowser(BOOL do_download)
 {
     IUnknown *unk = NULL;
@@ -2855,6 +2896,8 @@ static void test_WebBrowser(BOOL do_download)
         ok(doc == doc2, "doc != doc2\n");
         IDispatch_Release(doc2);
         IDispatch_Release(doc2);
+
+        test_dochost_qs(unk);
     }
 
     test_ClientSite(unk, NULL, !do_download);

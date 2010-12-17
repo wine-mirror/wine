@@ -617,6 +617,11 @@ static HRESULT WINAPI ClServiceProvider_QueryService(IServiceProvider *iface, RE
         return IDispatch_QueryInterface(This->disp, riid, ppv);
     }
 
+    if(IsEqualGUID(&IID_IWebBrowserApp, guidService)) {
+        TRACE("IWebBrowserApp service\n");
+        return IDispatch_QueryInterface(This->disp, riid, ppv);
+    }
+
     FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
 
     return E_NOINTERFACE;
