@@ -443,6 +443,7 @@ HKLM,%CurrentVersion%\Explorer\AutoplayHandlers,,16
 HKLM,%CurrentVersion%\Explorer\DriveIcons,,16
 HKLM,%CurrentVersion%\Explorer\KindMap,,16
 HKLM,%CurrentVersion%\Group Policy,,16
+HKLM,%CurrentVersion%\Installer,"InstallerLocation",,"%11%"
 HKLM,%CurrentVersion%\Policies\System,"EnableLUA",0x10003,0
 HKLM,%CurrentVersion%\PreviewHandlers,,16
 HKLM,%CurrentVersion%\Setup,"BootDir",,"%30%"

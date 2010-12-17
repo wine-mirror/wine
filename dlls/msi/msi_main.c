@@ -28,7 +28,9 @@
 #include "winreg.h"
 #include "shlwapi.h"
 #include "oleauto.h"
+#include "rpcproxy.h"
 #include "msipriv.h"
+#include "msiserver.h"
 
 #include "wine/debug.h"
 
@@ -206,28 +208,28 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     TRACE("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
-    if ( IsEqualCLSID (rclsid, &CLSID_IMsiServerX2) )
+    if ( IsEqualCLSID (rclsid, &CLSID_MsiInstaller) )
     {
         *ppv = &MsiServer_CF;
         return S_OK;
     }
 
-    if ( IsEqualCLSID (rclsid, &CLSID_IWineMsiRemoteCustomAction) )
+    if ( IsEqualCLSID (rclsid, &CLSID_WineMsiRemoteCustomAction) )
     {
         *ppv = &WineMsiCustomRemote_CF;
         return S_OK;
     }
 
-    if ( IsEqualCLSID (rclsid, &CLSID_IWineMsiRemotePackage) )
+    if ( IsEqualCLSID (rclsid, &CLSID_WineMsiRemotePackage) )
     {
         *ppv = &WineMsiRemotePackage_CF;
         return S_OK;
     }
 
-    if( IsEqualCLSID (rclsid, &CLSID_IMsiServerMessage) ||
-        IsEqualCLSID (rclsid, &CLSID_IMsiServer) ||
-        IsEqualCLSID (rclsid, &CLSID_IMsiServerX1) ||
-        IsEqualCLSID (rclsid, &CLSID_IMsiServerX3) )
+    if( IsEqualCLSID (rclsid, &CLSID_MsiServerMessage) ||
+        IsEqualCLSID (rclsid, &CLSID_MsiServer) ||
+        IsEqualCLSID (rclsid, &CLSID_PSFactoryBuffer) ||
+        IsEqualCLSID (rclsid, &CLSID_MsiServerX3) )
     {
         FIXME("create %s object\n", debugstr_guid( rclsid ));
     }
@@ -259,4 +261,20 @@ HRESULT WINAPI DllGetVersion(DLLVERSIONINFO *pdvi)
 HRESULT WINAPI DllCanUnloadNow(void)
 {
     return dll_count == 0 ? S_OK : S_FALSE;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (MSI.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( msi_hInstance, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (MSI.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( msi_hInstance, NULL );
 }

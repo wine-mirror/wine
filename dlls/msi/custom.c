@@ -646,7 +646,7 @@ static UINT get_action_info( const GUID *guid, INT *type, MSIHANDLE *handle,
     IWineMsiRemoteCustomAction *rca = NULL;
     HRESULT r;
 
-    r = DllGetClassObject( &CLSID_IWineMsiRemoteCustomAction,
+    r = DllGetClassObject( &CLSID_WineMsiRemoteCustomAction,
                            &IID_IClassFactory, (LPVOID *)&cf );
     if (FAILED(r))
     {
