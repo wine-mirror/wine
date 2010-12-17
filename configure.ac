@@ -1673,12 +1673,23 @@ then
   dnl Check for noisy string.h
   saved_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS -Wpointer-arith -Werror"
-  AC_CACHE_CHECK([for broken string.h that generates warnings], ac_cv_c_string_h_warnings,
+  AC_CACHE_CHECK([for broken string.h that generates warnings with -Wpointer-arith], ac_cv_c_string_h_warnings,
       AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <string.h>]], [[]])],[ac_cv_c_string_h_warnings=no],[ac_cv_c_string_h_warnings=yes]))
   CFLAGS="$saved_CFLAGS"
   if test "$ac_cv_c_string_h_warnings" = "no"
   then
     EXTRACFLAGS="$EXTRACFLAGS -Wpointer-arith"
+  fi
+
+  dnl Check for noisy string.h on logical ops
+  saved_CFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS -Wlogical-op -Werror"
+  AC_CACHE_CHECK([for broken string.h that generates warnings with -Wlogical-op], ac_cv_c_logicalop_noisy,
+      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <string.h>]], [[char*f(const char *h,char n) {return strchr(h,n);}]])],[ac_cv_c_logicalop_noisy=no],[ac_cv_c_logicalop_noisy=yes]))
+  CFLAGS="$saved_CFLAGS"
+  if test "$ac_cv_c_logicalop_noisy" = "no"
+  then
+    EXTRACFLAGS="$EXTRACFLAGS -Wlogical-op"
   fi
 
   dnl Enable -Werror for maintainer mode

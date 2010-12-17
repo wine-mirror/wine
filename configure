@@ -12229,8 +12229,8 @@ fi
 
     saved_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS -Wpointer-arith -Werror"
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for broken string.h that generates warnings" >&5
-$as_echo_n "checking for broken string.h that generates warnings... " >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for broken string.h that generates warnings with -Wpointer-arith" >&5
+$as_echo_n "checking for broken string.h that generates warnings with -Wpointer-arith... " >&6; }
 if test "${ac_cv_c_string_h_warnings+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
@@ -12258,6 +12258,39 @@ $as_echo "$ac_cv_c_string_h_warnings" >&6; }
   if test "$ac_cv_c_string_h_warnings" = "no"
   then
     EXTRACFLAGS="$EXTRACFLAGS -Wpointer-arith"
+  fi
+
+    saved_CFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS -Wlogical-op -Werror"
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for broken string.h that generates warnings with -Wlogical-op" >&5
+$as_echo_n "checking for broken string.h that generates warnings with -Wlogical-op... " >&6; }
+if test "${ac_cv_c_logicalop_noisy+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <string.h>
+int
+main ()
+{
+char*f(const char *h,char n) {return strchr(h,n);}
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_c_logicalop_noisy=no
+else
+  ac_cv_c_logicalop_noisy=yes
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_logicalop_noisy" >&5
+$as_echo "$ac_cv_c_logicalop_noisy" >&6; }
+  CFLAGS="$saved_CFLAGS"
+  if test "$ac_cv_c_logicalop_noisy" = "no"
+  then
+    EXTRACFLAGS="$EXTRACFLAGS -Wlogical-op"
   fi
 
     if test "x$enable_maintainer_mode" = "xyes"
