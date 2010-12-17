@@ -243,8 +243,7 @@ static inline int mmap_reserve( void *addr, size_t size )
  *
  * Reserve as much memory as possible in the given area.
  */
-#ifdef __i386__
-static void reserve_area( void *addr, void *end )
+static inline void reserve_area( void *addr, void *end )
 {
     size_t size = (char *)end - (char *)addr;
 
@@ -294,7 +293,7 @@ static void reserve_area( void *addr, void *end )
  * Solaris malloc is not smart enough to obtain space through mmap(), so try to make
  * sure that there is some available sbrk() space before we reserve other things.
  */
-static void reserve_malloc_space( size_t size )
+static inline void reserve_malloc_space( size_t size )
 {
 #ifdef __sun
     size_t i, count = size / 1024;
@@ -309,15 +308,13 @@ static void reserve_malloc_space( size_t size )
 #endif
 }
 
-#endif  /* __i386__ */
-
 
 /***********************************************************************
  *           reserve_dos_area
  *
  * Reserve the DOS area (0x00000000-0x00110000).
  */
-static void reserve_dos_area(void)
+static inline void reserve_dos_area(void)
 {
     const size_t page_size = getpagesize();
     const size_t dos_area_size = 0x110000;
@@ -341,9 +338,9 @@ static void reserve_dos_area(void)
  */
 void mmap_init(void)
 {
+#ifdef __i386__
     struct reserved_area *area;
     struct list *ptr;
-#ifdef __i386__
     char stack;
     char * const stack_ptr = &stack;
     char *user_space_limit = (char *)0x7ffe0000;
@@ -383,7 +380,6 @@ void mmap_init(void)
         reserve_area( base, end );
     }
     else reserve_area( user_space_limit, 0 );
-#endif /* __i386__ */
 
     /* reserve the DOS area if not already done */
 
@@ -394,6 +390,18 @@ void mmap_init(void)
         if (!area->base) return;  /* already reserved */
     }
     reserve_dos_area();
+
+#elif defined(__x86_64__)
+
+    if (!list_head( &reserved_areas ))
+    {
+        /* if we don't have a preloader, try to reserve the space now */
+        reserve_area( (void *)0x000000010000, (void *)0x000068000000 );
+        reserve_area( (void *)0x00007ff00000, (void *)0x00007fff0000 );
+        reserve_area( (void *)0x7ffffe000000, (void *)0x7fffffff0000 );
+    }
+
+#endif
 }
 
 
