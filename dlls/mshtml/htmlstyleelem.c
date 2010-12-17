@@ -36,6 +36,8 @@ typedef struct {
     HTMLElement element;
 
     const IHTMLStyleElementVtbl *lpIHTMLStyleElementVtbl;
+
+    nsIDOMHTMLStyleElement *nsstyle;
 } HTMLStyleElement;
 
 #define HTMLSTYLE(x)  (&(x)->lpIHTMLStyleElementVtbl)
@@ -180,15 +182,33 @@ static HRESULT WINAPI HTMLStyleElement_get_disabled(IHTMLStyleElement *iface, VA
 static HRESULT WINAPI HTMLStyleElement_put_media(IHTMLStyleElement *iface, BSTR v)
 {
     HTMLStyleElement *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString media_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsAString_InitDepend(&media_str, v);
+    nsres = nsIDOMHTMLStyleElement_SetMedia(This->nsstyle, &media_str);
+    nsAString_Finish(&media_str);
+    if(NS_FAILED(nsres)) {
+        ERR("SetMedia failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyleElement_get_media(IHTMLStyleElement *iface, BSTR *p)
 {
     HTMLStyleElement *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&nsstr, NULL);
+    nsres = nsIDOMHTMLStyleElement_GetMedia(This->nsstyle, &nsstr);
+    return return_nsstr(nsres, &nsstr, p);
 }
 
 #undef HTMLSTYLE_THIS
@@ -244,6 +264,9 @@ static void HTMLStyleElement_destructor(HTMLDOMNode *iface)
 {
     HTMLStyleElement *This = HTMLSTYLE_NODE_THIS(iface);
 
+    if(This->nsstyle)
+        nsIDOMHTMLStyleElement_Release(This->nsstyle);
+
     HTMLElement_destructor(&This->element.node);
 }
 
@@ -270,6 +293,7 @@ static dispex_static_data_t HTMLStyleElement_dispex = {
 HRESULT HTMLStyleElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
 {
     HTMLStyleElement *ret;
+    nsresult nsres;
 
     ret = heap_alloc_zero(sizeof(*ret));
     if(!ret)
@@ -277,6 +301,13 @@ HRESULT HTMLStyleElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem
 
     ret->lpIHTMLStyleElementVtbl = &HTMLStyleElementVtbl;
     ret->element.node.vtbl = &HTMLStyleElementImplVtbl;
+
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLStyleElement, (void**)&ret->nsstyle);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMHTMLStyleElement iface: %08x\n", nsres);
+        heap_free(ret);
+        return E_FAIL;
+    }
 
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLStyleElement_dispex);
     *elem = &ret->element;

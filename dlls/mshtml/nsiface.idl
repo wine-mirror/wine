@@ -1704,6 +1704,21 @@ interface nsIDOMHTMLParamElement : nsIDOMHTMLElement
 
 [
     object,
+    uuid(a6cf908d-15b3-11d2-932e-00805f8add32),
+    local
+]
+interface nsIDOMHTMLStyleElement : nsIDOMHTMLElement
+{
+    nsresult GetDisabled(PRBool *aDisabled);
+    nsresult SetDisabled(PRBool aDisabled);
+    nsresult GetMedia(nsAString *aMedia);
+    nsresult SetMedia(const nsAString *aMedia);
+    nsresult GetType(nsAString *aType);
+    nsresult SetType(const nsAString *aType);
+}
+
+[
+    object,
     uuid(94928ab3-8b63-11d3-989d-001083010e9b),
     local
 ]

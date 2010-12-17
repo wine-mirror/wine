@@ -40,7 +40,7 @@ static const char range_test_str[] =
 static const char range_test2_str[] =
     "<html><body>abc<hr />123<br /><hr />def</body></html>";
 static const char elem_test_str[] =
-    "<html><head><title>test</title><style>.body { margin-right: 0px; }</style>"
+    "<html><head><title>test</title><style id=\"styleid\">.body { margin-right: 0px; }</style>"
     "<body onload=\"Testing()\">text test<!-- a comment -->"
     "<a id=\"a\" href=\"http://test\" name=\"x\">link</a>"
     "<input id=\"in\" class=\"testclass\" tabIndex=\"2\" title=\"test title\" />"
@@ -784,6 +784,17 @@ static IHTMLObjectElement *_get_object_iface(unsigned line, IUnknown *unk)
 
     hres = IUnknown_QueryInterface(unk, &IID_IHTMLObjectElement, (void**)&obj);
     ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLObjectElement: %08x\n", hres);
+    return obj;
+}
+
+#define get_style_iface(u) _get_style_iface(__LINE__,u)
+static IHTMLStyleElement *_get_style_iface(unsigned line, IUnknown *unk)
+{
+    IHTMLStyleElement *obj;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLStyleElement, (void**)&obj);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLStyleElement: %08x\n", hres);
     return obj;
 }
 
@@ -2433,6 +2444,40 @@ static void _test_elem_set_tabindex(unsigned line, IUnknown *unk, short index)
     ok_(__FILE__,line) (hres == S_OK, "get_tabIndex failed: %08x\n", hres);
 
     _test_elem_tabindex(line, unk, index);
+}
+
+#define test_style_media(s,m) _test_style_media(__LINE__,s,m)
+static void _test_style_media(unsigned line, IUnknown *unk, const char *exmedia)
+{
+    IHTMLStyleElement *style = _get_style_iface(line, unk);
+    BSTR media;
+    HRESULT hres;
+
+    hres = IHTMLStyleElement_get_media(style, &media);
+    ok_(__FILE__,line)(hres == S_OK, "get_media failed: %08x\n", hres);
+    if(exmedia)
+        ok_(__FILE__,line)(!strcmp_wa(media, exmedia), "media = %s, expected %s\n", wine_dbgstr_w(media), exmedia);
+    else
+        ok_(__FILE__,line)(!media, "media = %s, expected NULL\n", wine_dbgstr_w(media));
+
+    IHTMLStyleElement_Release(style);
+    SysFreeString(media);
+}
+
+#define test_style_put_media(s,m) _test_style_put_media(__LINE__,s,m)
+static void _test_style_put_media(unsigned line, IUnknown *unk, const char *media)
+{
+    IHTMLStyleElement *style = _get_style_iface(line, unk);
+    BSTR str;
+    HRESULT hres;
+
+    str = a2bstr(media);
+    hres = IHTMLStyleElement_put_media(style, str);
+    ok_(__FILE__,line)(hres == S_OK, "put_media failed: %08x\n", hres);
+    IHTMLStyleElement_Release(style);
+    SysFreeString(str);
+
+    _test_style_media(line, unk, media);
 }
 
 #define test_elem_filters(u) _test_elem_filters(__LINE__,u)
@@ -6276,6 +6321,13 @@ static void test_elems(IHTMLDocument2 *doc)
         test_img_alt((IUnknown*)elem, NULL);
         test_img_set_alt((IUnknown*)elem, "alt test");
         test_img_name((IUnknown*)elem, "WineImg");
+        IHTMLElement_Release(elem);
+    }
+
+    elem = get_elem_by_id(doc, "styleid", TRUE);
+    if(elem) {
+        test_style_media((IUnknown*)elem, NULL);
+        test_style_put_media((IUnknown*)elem, "screen");
         IHTMLElement_Release(elem);
     }
 
