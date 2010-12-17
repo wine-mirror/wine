@@ -34,6 +34,8 @@ typedef struct {
     IOleInPlaceObject *ip_object;
     CLSID clsid;
 
+    IDispatch *disp;
+
     HWND hwnd;
     RECT rect;
     BOOL ui_active;
@@ -60,3 +62,5 @@ HRESULT create_param_prop_bag(nsIDOMHTMLElement*,IPropertyBag**);
 
 HRESULT create_ip_window(IOleInPlaceUIWindow**);
 HRESULT create_ip_frame(IOleInPlaceFrame**);
+
+HRESULT get_plugin_disp(HTMLPluginContainer*,IDispatch**);

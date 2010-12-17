@@ -33,6 +33,7 @@
 #include "mshtmhst.h"
 #include "activscp.h"
 #include "objsafe.h"
+#include "mshtmdid.h"
 #include "mshtml_test.h"
 
 #define DEFINE_EXPECT(func) \
@@ -68,6 +69,7 @@ DEFINE_EXPECT(IPersistPropertyBag_Load);
 DEFINE_EXPECT(Invoke_READYSTATE);
 DEFINE_EXPECT(Invoke_ENABLED);
 DEFINE_EXPECT(Invoke_VALID);
+DEFINE_EXPECT(Invoke_SECURITYCTX);
 DEFINE_EXPECT(DoVerb);
 DEFINE_EXPECT(SetExtent);
 DEFINE_EXPECT(GetExtent);
@@ -79,6 +81,8 @@ DEFINE_EXPECT(SetObjectRects);
 DEFINE_EXPECT(InPlaceDeactivate);
 DEFINE_EXPECT(UIDeactivate);
 DEFINE_EXPECT(QueryService_TestActiveX);
+
+#define DISPID_SCRIPTPROP 1000
 
 static HWND container_hwnd, plugin_hwnd;
 
@@ -157,6 +161,18 @@ static int strcmp_wa(LPCWSTR strw, const char *stra)
     CHAR buf[512];
     WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
     return lstrcmpA(stra, buf);
+}
+
+static BSTR a2bstr(const char *str)
+{
+    BSTR ret;
+    int len;
+
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    ret = SysAllocStringLen(NULL, len);
+    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+
+    return ret;
 }
 
 static IOleClientSite *client_site;
@@ -555,7 +571,7 @@ static HRESULT WINAPI Dispatch_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOL
         UINT cNames, LCID lcid, DISPID *rgDispId)
 {
     ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    return E_FAIL;
 }
 
 static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REFIID riid,
@@ -567,8 +583,6 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
     ok(!pDispParams->cNamedArgs, "pDispParams->cNamedArgs = %d\n", pDispParams->cNamedArgs);
     ok(!pDispParams->rgdispidNamedArgs, "pDispParams->rgdispidNamedArgs != NULL\n");
     ok(pVarResult != NULL, "pVarResult == NULL\n");
-    ok(!pExcepInfo, "pExcepInfo != NULL\n");
-    ok(puArgErr != NULL, "puArgErr == NULL\n");
 
     switch(dispIdMember) {
     case DISPID_READYSTATE:
@@ -576,6 +590,8 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
         ok(wFlags == DISPATCH_PROPERTYGET, "wFlags = %x\n", wFlags);
         ok(!pDispParams->cArgs, "pDispParams->cArgs = %d\n", pDispParams->cArgs);
         ok(!pDispParams->rgvarg, "pDispParams->rgvarg != NULL\n");
+        ok(!pExcepInfo, "pExcepInfo != NULL\n");
+        ok(puArgErr != NULL, "puArgErr == NULL\n");
 
         V_VT(pVarResult) = VT_I4;
         V_I4(pVarResult) = plugin_readystate;
@@ -585,12 +601,24 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
         ok(wFlags == DISPATCH_PROPERTYGET, "wFlags = %x\n", wFlags);
         ok(!pDispParams->cArgs, "pDispParams->cArgs = %d\n", pDispParams->cArgs);
         ok(!pDispParams->rgvarg, "pDispParams->rgvarg != NULL\n");
+        ok(!pExcepInfo, "pExcepInfo != NULL\n");
+        ok(puArgErr != NULL, "puArgErr == NULL\n");
         return DISP_E_MEMBERNOTFOUND;
     case DISPID_VALID:
         CHECK_EXPECT(Invoke_VALID);
         ok(wFlags == DISPATCH_PROPERTYGET, "wFlags = %x\n", wFlags);
         ok(!pDispParams->cArgs, "pDispParams->cArgs = %d\n", pDispParams->cArgs);
         ok(!pDispParams->rgvarg, "pDispParams->rgvarg != NULL\n");
+        ok(!pExcepInfo, "pExcepInfo != NULL\n");
+        ok(puArgErr != NULL, "puArgErr == NULL\n");
+        return DISP_E_MEMBERNOTFOUND;
+    case DISPID_SECURITYCTX:
+        CHECK_EXPECT(Invoke_SECURITYCTX);
+        ok(wFlags == DISPATCH_PROPERTYGET, "wFlags = %x\n", wFlags);
+        ok(!pDispParams->cArgs, "pDispParams->cArgs = %d\n", pDispParams->cArgs);
+        ok(!pDispParams->rgvarg, "pDispParams->rgvarg != NULL\n");
+        ok(!pExcepInfo, "pExcepInfo != NULL\n");
+        ok(puArgErr != NULL, "puArgErr == NULL\n");
         return DISP_E_MEMBERNOTFOUND;
     default:
         ok(0, "unexpected call %d\n", dispIdMember);
@@ -1168,6 +1196,39 @@ static const IClassFactoryVtbl ClassFactoryVtbl = {
 };
 
 static IClassFactory activex_cf = { &ClassFactoryVtbl };
+
+static void test_object_elem(IHTMLDocument2 *doc)
+{
+    IHTMLObjectElement *objelem;
+    IHTMLDocument3 *doc3;
+    IHTMLElement *elem;
+    IDispatch *disp;
+    BSTR str;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument3, (void**)&doc3);
+    ok(hres == S_OK, "Could not get IHTMLDocument3 iface: %08x\n", hres);
+
+    str = a2bstr("objid");
+    elem = (void*)0xdeadbeef;
+    hres = IHTMLDocument3_getElementById(doc3, str, &elem);
+    IHTMLDocument3_Release(doc3);
+    SysFreeString(str);
+    ok(hres == S_OK, "getElementById failed: %08x\n", hres);
+    ok(elem != NULL, "elem == NULL\n");
+
+    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLObjectElement, (void**)&objelem);
+    IHTMLElement_Release(elem);
+    ok(hres == S_OK, "Could not get IHTMLObjectElement iface: %08x\n", hres);
+
+    SET_EXPECT(Invoke_SECURITYCTX);
+    hres = IHTMLObjectElement_get_object(objelem, &disp);
+    ok(hres == S_OK, "get_object failed: %08x\n", hres);
+    ok(disp == &Dispatch, "disp != Dispatch\n");
+    CHECK_CALLED(Invoke_SECURITYCTX);
+
+    IHTMLObjectElement_Release(objelem);
+}
 
 static void test_container(IHTMLDocument2 *doc_obj)
 {
@@ -1871,6 +1932,7 @@ static void test_object_ax(void)
 
     test_ui_activate();
     test_container(notif_doc);
+    test_object_elem(notif_doc);
 
     SET_EXPECT(UIDeactivate);
     SET_EXPECT(Invoke_ENABLED);

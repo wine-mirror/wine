@@ -27,6 +27,7 @@
 #include "winuser.h"
 #include "ole2.h"
 #include "shlobj.h"
+#include "mshtmdid.h"
 
 #include "mshtml_private.h"
 #include "pluginhost.h"
@@ -58,6 +59,41 @@ static BOOL check_load_safety(PluginHost *host)
     policy = *(DWORD*)ppolicy;
     CoTaskMemFree(ppolicy);
     return policy == URLPOLICY_ALLOW;
+}
+
+static BOOL check_script_safety(PluginHost *host)
+{
+    DISPPARAMS params = {NULL,NULL,0,0};
+    DWORD policy_size, policy;
+    struct CONFIRMSAFETY cs;
+    BYTE *ppolicy;
+    ULONG err = 0;
+    VARIANT v;
+    HRESULT hres;
+
+    cs.clsid = host->clsid;
+    cs.pUnk = host->plugin_unk;
+    cs.dwFlags = 0;
+
+    hres = IInternetHostSecurityManager_QueryCustomPolicy(HOSTSECMGR(host->doc),
+            &GUID_CUSTOM_CONFIRMOBJECTSAFETY, &ppolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
+    if(FAILED(hres))
+        return FALSE;
+
+    policy = *(DWORD*)ppolicy;
+    CoTaskMemFree(ppolicy);
+
+    if(policy != URLPOLICY_ALLOW)
+        return FALSE;
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatch_Invoke(host->disp, DISPID_SECURITYCTX, &IID_NULL, 0, DISPATCH_PROPERTYGET, &params, &v, NULL, &err);
+    if(SUCCEEDED(hres)) {
+        FIXME("Handle security ctx %s\n", debugstr_variant(&v));
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 static void update_readystate(PluginHost *host)
@@ -152,6 +188,8 @@ static void activate_plugin(PluginHost *host)
     IQuickActivate *quick_activate;
     IOleCommandTarget *cmdtrg;
     IOleObject *ole_obj;
+    IDispatchEx *dispex;
+    IDispatch *disp;
     RECT rect;
     HRESULT hres;
 
@@ -190,6 +228,18 @@ static void activate_plugin(PluginHost *host)
     load_plugin(host);
 
     /* NOTE: Native QIs for IViewObjectEx, IActiveScript, an undocumented IID, IOleControl and IRunnableObject */
+
+    hres = IUnknown_QueryInterface(host->plugin_unk, &IID_IDispatchEx, (void**)&dispex);
+    if(SUCCEEDED(hres)) {
+        FIXME("Use IDispatchEx\n");
+        host->disp = (IDispatch*)dispex;
+    }else {
+        hres = IUnknown_QueryInterface(host->plugin_unk, &IID_IDispatch, (void**)&disp);
+        if(SUCCEEDED(hres))
+            host->disp = disp;
+        else
+            TRACE("no IDispatch iface\n");
+    }
 
     hres = IUnknown_QueryInterface(host->plugin_unk, &IID_IOleCommandTarget, (void**)&cmdtrg);
     if(SUCCEEDED(hres)) {
@@ -241,6 +291,31 @@ void update_plugin_window(PluginHost *host, HWND hwnd, const RECT *rect)
 
     if(rect_changed && host->ip_object)
         IOleInPlaceObject_SetObjectRects(host->ip_object, &host->rect, &host->rect);
+}
+
+HRESULT get_plugin_disp(HTMLPluginContainer *plugin_container, IDispatch **ret)
+{
+    PluginHost *host;
+
+    host = plugin_container->plugin_host;
+    if(!host) {
+        ERR("No plugin host\n");
+        return E_UNEXPECTED;
+    }
+
+    if(!host->disp) {
+        *ret = NULL;
+        return S_OK;
+    }
+
+    if(!check_script_safety(host)) {
+        FIXME("Insecure object\n");
+        return E_FAIL;
+    }
+
+    IDispatch_AddRef(host->disp);
+    *ret = host->disp;
+    return S_OK;
 }
 
 static inline PluginHost *impl_from_IOleClientSite(IOleClientSite *iface)
@@ -316,6 +391,8 @@ static ULONG WINAPI PHClientSite_Release(IOleClientSite *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        if(This->disp)
+            IDispatch_Release(This->disp);
         if(This->ip_object)
             IOleInPlaceObject_Release(This->ip_object);
         list_remove(&This->entry);
