@@ -286,7 +286,6 @@ BEGIN
     IDS_DRIVER_OSS              "OSS ドライバ"
     IDS_DRIVER_JACK             "JACK ドライバ"
     IDS_DRIVER_NAS              "NAS ドライバ"
-    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) ドライバ"
     IDS_DRIVER_COREAUDIO        "CoreAudio ドライバ"
     IDS_OPEN_DRIVER_ERROR       "%sをオープンできません!"
     IDS_SOUNDDRIVERS            "サウンドドライバ"

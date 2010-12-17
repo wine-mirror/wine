@@ -282,7 +282,6 @@ BEGIN
     IDS_DRIVER_OSS              "Controlador OSS"
     IDS_DRIVER_JACK             "Controlador JACK"
     IDS_DRIVER_NAS              "Controlador NAS"
-    IDS_DRIVER_AUDIOIO          "Controlador Audio IO (Solaris)"
     IDS_DRIVER_COREAUDIO        "Controlador CoreAudio"
     IDS_OPEN_DRIVER_ERROR       "¡No se ha podido abrir %s!"
     IDS_SOUNDDRIVERS            "Controladores de sonido"

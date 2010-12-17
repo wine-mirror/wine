@@ -287,7 +287,6 @@ BEGIN
     IDS_DRIVER_OSS              "OSS драйвер"
     IDS_DRIVER_JACK             "JACK драйвер"
     IDS_DRIVER_NAS              "NAS драйвер"
-    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) драйвер"
     IDS_DRIVER_COREAUDIO        "CoreAudio драйвер"
     IDS_OPEN_DRIVER_ERROR       "Неможна відкрити %s!"
     IDS_SOUNDDRIVERS            "Звукові драйвери"

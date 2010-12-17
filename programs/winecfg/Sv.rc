@@ -281,7 +281,6 @@ BEGIN
     IDS_DRIVER_OSS              "OSS-drivrutin"
     IDS_DRIVER_JACK             "JACK-drivrutin"
     IDS_DRIVER_NAS              "NAS-drivrutin"
-    IDS_DRIVER_AUDIOIO          "Audio IO-drivrutin (Solaris)"
     IDS_DRIVER_COREAUDIO        "CoreAudio Driver"
     IDS_OPEN_DRIVER_ERROR       "Kunde inte öppna %s!"
     IDS_SOUNDDRIVERS            "Ljuddrivrutiner"

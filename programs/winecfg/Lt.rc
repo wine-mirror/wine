@@ -284,7 +284,6 @@ BEGIN
     IDS_DRIVER_OSS              "OSS tvarkyklė"
     IDS_DRIVER_JACK             "JACK tvarkyklė"
     IDS_DRIVER_NAS              "NAS tvarkyklė"
-    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) tvarkyklė"
     IDS_DRIVER_COREAUDIO        "CoreAudio tvarkyklė"
     IDS_OPEN_DRIVER_ERROR       "Nepavyko atverti %s!"
     IDS_SOUNDDRIVERS            "Garso tvarkyklės"

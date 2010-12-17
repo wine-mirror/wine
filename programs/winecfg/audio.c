@@ -96,7 +96,6 @@ static AUDIO_DRIVER sAudioDrivers[] = {
   {IDS_DRIVER_JACK,      "jack"},
   {IDS_DRIVER_NAS,       "nas"},
   {IDS_DRIVER_ESOUND,    "esd"},
-  {IDS_DRIVER_AUDIOIO,   "audioio"},
   {0, ""}
 };
 

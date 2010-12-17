@@ -285,7 +285,6 @@ BEGIN
     IDS_DRIVER_OSS              "Sterownik OSS"
     IDS_DRIVER_JACK             "Sterownik JACK"
     IDS_DRIVER_NAS              "Sterownik NAS"
-    IDS_DRIVER_AUDIOIO          "Sterownik Audio IO (Solaris)"
     IDS_DRIVER_COREAUDIO        "Sterownik CoreAudio"
     IDS_OPEN_DRIVER_ERROR       "Nie mogê otworzyæ %s!"
     IDS_SOUNDDRIVERS            "Sterowniki dŸwiêkowe"

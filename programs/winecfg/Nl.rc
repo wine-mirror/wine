@@ -284,7 +284,6 @@ BEGIN
     IDS_DRIVER_OSS              "OSS Stuurprogramma"
     IDS_DRIVER_JACK             "JACK Stuurprogramma"
     IDS_DRIVER_NAS              "NAS Stuurprogramma"
-    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) Stuurprogramma"
     IDS_DRIVER_COREAUDIO        "CoreAudio Stuurprogramma"
     IDS_OPEN_DRIVER_ERROR       "%s kon niet worden geopend!"
     IDS_SOUNDDRIVERS            "Stuurprogramma's voor geluid"

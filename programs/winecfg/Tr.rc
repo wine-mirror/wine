@@ -271,7 +271,6 @@ BEGIN
     IDS_DRIVER_OSS              "OSS Sürücüsü"
     IDS_DRIVER_JACK             "JACK Sürücüsü"
     IDS_DRIVER_NAS              "NAS Sürücüsü"
-    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) Sürücüsü"
     IDS_DRIVER_COREAUDIO        "CoreAudio Sürücüsü"
     IDS_OPEN_DRIVER_ERROR       "%s açýlamadý!"
     IDS_SOUNDDRIVERS            "Ses Sürücüleri"

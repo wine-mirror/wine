@@ -284,7 +284,6 @@ BEGIN
     IDS_DRIVER_OSS              "OSS-driver"
     IDS_DRIVER_JACK             "JACK-driver"
     IDS_DRIVER_NAS              "NAS-driver"
-    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris)-driver"
     IDS_DRIVER_COREAUDIO        "CoreAudio-driver"
     IDS_OPEN_DRIVER_ERROR       "Kunne ikke åbne %s!"
     IDS_SOUNDDRIVERS            "lyddrivere"
