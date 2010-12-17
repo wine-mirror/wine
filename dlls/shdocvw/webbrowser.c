@@ -501,16 +501,9 @@ static HRESULT WINAPI WebBrowser_get_LocationURL(IWebBrowser2 *iface, BSTR *Loca
 {
     WebBrowser *This = impl_from_IWebBrowser2(iface);
 
-    FIXME("(%p)->(%p)\n", This, LocationURL);
+    TRACE("(%p)->(%p)\n", This, LocationURL);
 
-    if(!This->doc_host.url) {
-        static const WCHAR null_char = 0;
-        *LocationURL = SysAllocString(&null_char);
-        return S_FALSE;
-    }
-
-    *LocationURL = SysAllocString(This->doc_host.url);
-    return S_OK;
+    return get_location_url(&This->doc_host, LocationURL);
 }
 
 static HRESULT WINAPI WebBrowser_get_Busy(IWebBrowser2 *iface, VARIANT_BOOL *pBool)

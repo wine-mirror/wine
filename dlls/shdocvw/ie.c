@@ -291,8 +291,10 @@ static HRESULT WINAPI InternetExplorer_get_LocationName(IWebBrowser2 *iface, BST
 static HRESULT WINAPI InternetExplorer_get_LocationURL(IWebBrowser2 *iface, BSTR *LocationURL)
 {
     InternetExplorer *This = impl_from_IWebBrowser2(iface);
-    FIXME("(%p)->(%p)\n", This, LocationURL);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, LocationURL);
+
+    return get_location_url(&This->doc_host, LocationURL);
 }
 
 static HRESULT WINAPI InternetExplorer_get_Busy(IWebBrowser2 *iface, VARIANT_BOOL *pBool)

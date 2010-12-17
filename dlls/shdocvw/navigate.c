@@ -880,6 +880,17 @@ HRESULT go_home(DocHost *This)
     return navigate_url(This, wszPageName, NULL, NULL, NULL, NULL);
 }
 
+HRESULT get_location_url(DocHost *This, BSTR *ret)
+{
+    FIXME("semi-stub\n");
+
+    *ret = This->url ? SysAllocString(This->url) : SysAllocStringLen(NULL, 0);
+    if(!*ret)
+        return E_OUTOFMEMORY;
+
+    return This->url ? S_OK : S_FALSE;
+}
+
 static inline HlinkFrame *impl_from_IHlinkFrame(IHlinkFrame *iface)
 {
     return CONTAINING_RECORD(iface, HlinkFrame, IHlinkFrame_iface);
