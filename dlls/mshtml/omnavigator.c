@@ -368,8 +368,11 @@ static HRESULT WINAPI OmNavigator_get_userAgent(IOmNavigator *iface, BSTR *p)
 static HRESULT WINAPI OmNavigator_javaEnabled(IOmNavigator *iface, VARIANT_BOOL *enabled)
 {
     OmNavigator *This = impl_from_IOmNavigator(iface);
-    FIXME("(%p)->(%p)\n", This, enabled);
-    return E_NOTIMPL;
+
+    FIXME("(%p)->(%p) semi-stub\n", This, enabled);
+
+    *enabled = VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI OmNavigator_taintEnabled(IOmNavigator *iface, VARIANT_BOOL *enabled)
