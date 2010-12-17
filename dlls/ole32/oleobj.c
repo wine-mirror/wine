@@ -80,7 +80,7 @@ typedef struct OleAdviseHolderImpl
 
 } OleAdviseHolderImpl;
 
-static HRESULT EnumSTATDATA_Construct(IUnknown *holder, ULONG index, DWORD num, STATDATA *data, IEnumSTATDATA **ppenum);
+static HRESULT EnumSTATDATA_Construct(IUnknown *holder, ULONG index, DWORD array_len, STATDATA *data, IEnumSTATDATA **ppenum);
 
 typedef struct
 {
@@ -207,11 +207,11 @@ static const IEnumSTATDATAVtbl EnumSTATDATA_VTable =
     EnumSTATDATA_Clone
 };
 
-static HRESULT EnumSTATDATA_Construct(IUnknown *holder, ULONG index, DWORD num, STATDATA *data,
+static HRESULT EnumSTATDATA_Construct(IUnknown *holder, ULONG index, DWORD array_len, STATDATA *data,
                                       IEnumSTATDATA **ppenum)
 {
     EnumSTATDATA *This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
-    DWORD i;
+    DWORD i, count;
 
     if (!This) return E_OUTOFMEMORY;
 
@@ -219,17 +219,23 @@ static HRESULT EnumSTATDATA_Construct(IUnknown *holder, ULONG index, DWORD num, 
     This->ref = 1;
     This->index = index;
 
-    This->statdata = HeapAlloc(GetProcessHeap(), 0, num * sizeof(*This->statdata));
+    This->statdata = HeapAlloc(GetProcessHeap(), 0, array_len * sizeof(*This->statdata));
     if(!This->statdata)
     {
         HeapFree(GetProcessHeap(), 0, This);
         return E_OUTOFMEMORY;
     }
 
-    for(i = 0; i < num; i++)
-        copy_statdata(This->statdata + i, data + i);
+    for(i = 0, count = 0; i < array_len; i++)
+    {
+        if(data[i].pAdvSink)
+        {
+            copy_statdata(This->statdata + count, data + i);
+            count++;
+        }
+    }
 
-    This->num_of_elems = num;
+    This->num_of_elems = count;
     This->holder = holder;
     IUnknown_AddRef(holder);
     *ppenum = &This->IEnumSTATDATA_iface;
