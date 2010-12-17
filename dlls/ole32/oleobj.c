@@ -67,18 +67,8 @@ static HRESULT copy_statdata(STATDATA *dst, const STATDATA *src)
 }
 
 /**************************************************************************
- *  OleAdviseHolderImpl Implementation
+ *  EnumSTATDATA Implementation
  */
-typedef struct OleAdviseHolderImpl
-{
-  const IOleAdviseHolderVtbl *lpVtbl;
-
-  LONG ref;
-
-  DWORD         maxSinks;
-  IAdviseSink** arrayOfSinks;
-
-} OleAdviseHolderImpl;
 
 static HRESULT EnumSTATDATA_Construct(IUnknown *holder, ULONG index, DWORD array_len, STATDATA *data, IEnumSTATDATA **ppenum);
 
@@ -243,10 +233,27 @@ static HRESULT EnumSTATDATA_Construct(IUnknown *holder, ULONG index, DWORD array
 }
 
 /**************************************************************************
+ *  OleAdviseHolder Implementation
+ */
+typedef struct
+{
+    IOleAdviseHolder IOleAdviseHolder_iface;
+
+    LONG ref;
+
+    DWORD         maxSinks;
+    IAdviseSink** arrayOfSinks;
+} OleAdviseHolderImpl;
+
+static inline OleAdviseHolderImpl *impl_from_IOleAdviseHolder(IOleAdviseHolder *iface)
+{
+    return CONTAINING_RECORD(iface, OleAdviseHolderImpl, IOleAdviseHolder_iface);
+}
+
+/**************************************************************************
  *  OleAdviseHolderImpl_Destructor
  */
-static void OleAdviseHolderImpl_Destructor(
-  OleAdviseHolderImpl* ptrToDestroy)
+static void OleAdviseHolderImpl_Destructor(OleAdviseHolderImpl* ptrToDestroy)
 {
   DWORD index;
   TRACE("%p\n", ptrToDestroy);
@@ -273,32 +280,27 @@ static void OleAdviseHolderImpl_Destructor(
 /**************************************************************************
  *  OleAdviseHolderImpl_QueryInterface
  */
-static HRESULT WINAPI OleAdviseHolderImpl_QueryInterface(
-  LPOLEADVISEHOLDER iface,
-  REFIID            riid,
-  LPVOID*           ppvObj)
+static HRESULT WINAPI OleAdviseHolderImpl_QueryInterface(IOleAdviseHolder *iface,
+                                                         REFIID iid, void **obj)
 {
-  OleAdviseHolderImpl *This = (OleAdviseHolderImpl *)iface;
-  TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppvObj);
+  OleAdviseHolderImpl *This = impl_from_IOleAdviseHolder(iface);
+  TRACE("(%p)->(%s,%p)\n",This, debugstr_guid(iid), obj);
 
-  if (ppvObj==NULL)
+  if (obj == NULL)
     return E_POINTER;
 
-  *ppvObj = NULL;
+  *obj = NULL;
 
-  if (IsEqualIID(riid, &IID_IUnknown))
+  if (IsEqualIID(iid, &IID_IUnknown) ||
+      IsEqualIID(iid, &IID_IOleAdviseHolder))
   {
-    *ppvObj = This;
-  }
-  else if(IsEqualIID(riid, &IID_IOleAdviseHolder))
-  {
-    *ppvObj = This;
+    *obj = &This->IOleAdviseHolder_iface;
   }
 
-  if(*ppvObj == NULL)
+  if(*obj == NULL)
     return E_NOINTERFACE;
 
-  IUnknown_AddRef((IUnknown*)*ppvObj);
+  IUnknown_AddRef((IUnknown*)*obj);
 
   return S_OK;
 }
@@ -306,10 +308,9 @@ static HRESULT WINAPI OleAdviseHolderImpl_QueryInterface(
 /******************************************************************************
  * OleAdviseHolderImpl_AddRef
  */
-static ULONG WINAPI OleAdviseHolderImpl_AddRef(
-  LPOLEADVISEHOLDER iface)
+static ULONG WINAPI OleAdviseHolderImpl_AddRef(IOleAdviseHolder *iface)
 {
-  OleAdviseHolderImpl *This = (OleAdviseHolderImpl *)iface;
+  OleAdviseHolderImpl *This = impl_from_IOleAdviseHolder(iface);
   ULONG ref = InterlockedIncrement(&This->ref);
 
   TRACE("(%p)->(ref=%d)\n", This, ref - 1);
@@ -320,10 +321,9 @@ static ULONG WINAPI OleAdviseHolderImpl_AddRef(
 /******************************************************************************
  * OleAdviseHolderImpl_Release
  */
-static ULONG WINAPI OleAdviseHolderImpl_Release(
-  LPOLEADVISEHOLDER iface)
+static ULONG WINAPI OleAdviseHolderImpl_Release(IOleAdviseHolder *iface)
 {
-  OleAdviseHolderImpl *This = (OleAdviseHolderImpl *)iface;
+  OleAdviseHolderImpl *This = impl_from_IOleAdviseHolder(iface);
   ULONG ref;
   TRACE("(%p)->(ref=%d)\n", This, This->ref);
   ref = InterlockedDecrement(&This->ref);
@@ -336,14 +336,12 @@ static ULONG WINAPI OleAdviseHolderImpl_Release(
 /******************************************************************************
  * OleAdviseHolderImpl_Advise
  */
-static HRESULT WINAPI OleAdviseHolderImpl_Advise(
-  LPOLEADVISEHOLDER iface,
-  IAdviseSink*      pAdvise,
-  DWORD*            pdwConnection)
+static HRESULT WINAPI OleAdviseHolderImpl_Advise(IOleAdviseHolder *iface,
+                                                 IAdviseSink *pAdvise,
+                                                 DWORD *pdwConnection)
 {
   DWORD index;
-
-  OleAdviseHolderImpl *This = (OleAdviseHolderImpl *)iface;
+  OleAdviseHolderImpl *This = impl_from_IOleAdviseHolder(iface);
 
   TRACE("(%p)->(%p, %p)\n", This, pAdvise, pdwConnection);
 
@@ -391,11 +389,10 @@ static HRESULT WINAPI OleAdviseHolderImpl_Advise(
 /******************************************************************************
  * OleAdviseHolderImpl_Unadvise
  */
-static HRESULT WINAPI OleAdviseHolderImpl_Unadvise(
-  LPOLEADVISEHOLDER iface,
-  DWORD             dwConnection)
+static HRESULT WINAPI OleAdviseHolderImpl_Unadvise(IOleAdviseHolder *iface,
+                                                   DWORD dwConnection)
 {
-  OleAdviseHolderImpl *This = (OleAdviseHolderImpl *)iface;
+  OleAdviseHolderImpl *This = impl_from_IOleAdviseHolder(iface);
 
   TRACE("(%p)->(%u)\n", This, dwConnection);
 
@@ -427,10 +424,9 @@ static HRESULT WINAPI OleAdviseHolderImpl_Unadvise(
 /******************************************************************************
  * OleAdviseHolderImpl_EnumAdvise
  */
-static HRESULT WINAPI
-OleAdviseHolderImpl_EnumAdvise (LPOLEADVISEHOLDER iface, IEnumSTATDATA **ppenumAdvise)
+static HRESULT WINAPI OleAdviseHolderImpl_EnumAdvise(IOleAdviseHolder *iface, IEnumSTATDATA **ppenumAdvise)
 {
-    OleAdviseHolderImpl *This = (OleAdviseHolderImpl *)iface;
+    OleAdviseHolderImpl *This = impl_from_IOleAdviseHolder(iface);
     IUnknown *unk;
     DWORD i, count;
     STATDATA *data;
@@ -468,8 +464,7 @@ OleAdviseHolderImpl_EnumAdvise (LPOLEADVISEHOLDER iface, IEnumSTATDATA **ppenumA
 /******************************************************************************
  * OleAdviseHolderImpl_SendOnRename
  */
-static HRESULT WINAPI
-OleAdviseHolderImpl_SendOnRename (LPOLEADVISEHOLDER iface, IMoniker *pmk)
+static HRESULT WINAPI OleAdviseHolderImpl_SendOnRename(IOleAdviseHolder *iface, IMoniker *pmk)
 {
     IEnumSTATDATA *pEnum;
     HRESULT hr;
@@ -495,8 +490,7 @@ OleAdviseHolderImpl_SendOnRename (LPOLEADVISEHOLDER iface, IMoniker *pmk)
 /******************************************************************************
  * OleAdviseHolderImpl_SendOnSave
  */
-static HRESULT WINAPI
-OleAdviseHolderImpl_SendOnSave (LPOLEADVISEHOLDER iface)
+static HRESULT WINAPI OleAdviseHolderImpl_SendOnSave(IOleAdviseHolder *iface)
 {
     IEnumSTATDATA *pEnum;
     HRESULT hr;
@@ -522,8 +516,7 @@ OleAdviseHolderImpl_SendOnSave (LPOLEADVISEHOLDER iface)
 /******************************************************************************
  * OleAdviseHolderImpl_SendOnClose
  */
-static HRESULT WINAPI
-OleAdviseHolderImpl_SendOnClose (LPOLEADVISEHOLDER iface)
+static HRESULT WINAPI OleAdviseHolderImpl_SendOnClose(IOleAdviseHolder *iface)
 {
     IEnumSTATDATA *pEnum;
     HRESULT hr;
@@ -566,14 +559,14 @@ static const IOleAdviseHolderVtbl oahvt =
  *  OleAdviseHolderImpl_Constructor
  */
 
-static LPOLEADVISEHOLDER OleAdviseHolderImpl_Constructor(void)
+static IOleAdviseHolder *OleAdviseHolderImpl_Constructor(void)
 {
   OleAdviseHolderImpl* lpoah;
   DWORD                index;
 
   lpoah = HeapAlloc(GetProcessHeap(), 0, sizeof(OleAdviseHolderImpl));
 
-  lpoah->lpVtbl = &oahvt;
+  lpoah->IOleAdviseHolder_iface.lpVtbl = &oahvt;
   lpoah->ref = 1;
   lpoah->maxSinks = INITIAL_SINKS;
   lpoah->arrayOfSinks = HeapAlloc(GetProcessHeap(),
@@ -583,16 +576,16 @@ static LPOLEADVISEHOLDER OleAdviseHolderImpl_Constructor(void)
   for (index = 0; index < lpoah->maxSinks; index++)
     lpoah->arrayOfSinks[index]=0;
 
-  TRACE("returning %p\n", lpoah);
-  return (LPOLEADVISEHOLDER)lpoah;
+  TRACE("returning %p\n",  &lpoah->IOleAdviseHolder_iface);
+  return &lpoah->IOleAdviseHolder_iface;
 }
 
 /**************************************************************************
  *  DataAdviseHolder Implementation
  */
-typedef struct DataAdviseHolder
+typedef struct
 {
-  const IDataAdviseHolderVtbl *lpVtbl;
+  IDataAdviseHolder     IDataAdviseHolder_iface;
 
   LONG                  ref;
   DWORD                 maxCons;
@@ -603,6 +596,11 @@ typedef struct DataAdviseHolder
 
 /* this connection has also has been advised to the delegate data object */
 #define WINE_ADVF_REMOTE 0x80000000
+
+static inline DataAdviseHolder *impl_from_IDataAdviseHolder(IDataAdviseHolder *iface)
+{
+    return CONTAINING_RECORD(iface, DataAdviseHolder, IDataAdviseHolder_iface);
+}
 
 /******************************************************************************
  * DataAdviseHolder_Destructor
@@ -633,12 +631,10 @@ static void DataAdviseHolder_Destructor(DataAdviseHolder* ptrToDestroy)
 /************************************************************************
  * DataAdviseHolder_QueryInterface (IUnknown)
  */
-static HRESULT WINAPI DataAdviseHolder_QueryInterface(
-  IDataAdviseHolder*      iface,
-  REFIID                  riid,
-  void**                  ppvObject)
+static HRESULT WINAPI DataAdviseHolder_QueryInterface(IDataAdviseHolder *iface,
+                                                      REFIID riid, void **ppvObject)
 {
-  DataAdviseHolder *This = (DataAdviseHolder *)iface;
+  DataAdviseHolder *This = impl_from_IDataAdviseHolder(iface);
   TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppvObject);
 
   if ( (This==0) || (ppvObject==0) )
@@ -664,10 +660,9 @@ static HRESULT WINAPI DataAdviseHolder_QueryInterface(
 /************************************************************************
  * DataAdviseHolder_AddRef (IUnknown)
  */
-static ULONG WINAPI       DataAdviseHolder_AddRef(
-  IDataAdviseHolder*      iface)
+static ULONG WINAPI DataAdviseHolder_AddRef(IDataAdviseHolder *iface)
 {
-  DataAdviseHolder *This = (DataAdviseHolder *)iface;
+  DataAdviseHolder *This = impl_from_IDataAdviseHolder(iface);
   TRACE("(%p) (ref=%d)\n", This, This->ref);
   return InterlockedIncrement(&This->ref);
 }
@@ -675,10 +670,9 @@ static ULONG WINAPI       DataAdviseHolder_AddRef(
 /************************************************************************
  * DataAdviseHolder_Release (IUnknown)
  */
-static ULONG WINAPI DataAdviseHolder_Release(
-  IDataAdviseHolder*      iface)
+static ULONG WINAPI DataAdviseHolder_Release(IDataAdviseHolder *iface)
 {
-  DataAdviseHolder *This = (DataAdviseHolder *)iface;
+  DataAdviseHolder *This = impl_from_IDataAdviseHolder(iface);
   ULONG ref;
   TRACE("(%p) (ref=%d)\n", This, This->ref);
 
@@ -692,17 +686,14 @@ static ULONG WINAPI DataAdviseHolder_Release(
  * DataAdviseHolder_Advise
  *
  */
-static HRESULT WINAPI DataAdviseHolder_Advise(
-  IDataAdviseHolder*      iface,
-  IDataObject*            pDataObject,
-  FORMATETC*              pFetc,
-  DWORD                   advf,
-  IAdviseSink*            pAdvise,
-  DWORD*                  pdwConnection)
+static HRESULT WINAPI DataAdviseHolder_Advise(IDataAdviseHolder *iface,
+                                              IDataObject *pDataObject, FORMATETC *pFetc,
+                                              DWORD advf, IAdviseSink *pAdvise,
+                                              DWORD *pdwConnection)
 {
   DWORD index;
   STATDATA new_conn;
-  DataAdviseHolder *This = (DataAdviseHolder *)iface;
+  DataAdviseHolder *This = impl_from_IDataAdviseHolder(iface);
 
   TRACE("(%p)->(%p, %p, %08x, %p, %p)\n", This, pDataObject, pFetc, advf,
 	pAdvise, pdwConnection);
@@ -767,11 +758,10 @@ static HRESULT WINAPI DataAdviseHolder_Advise(
 /******************************************************************************
  * DataAdviseHolder_Unadvise
  */
-static HRESULT WINAPI     DataAdviseHolder_Unadvise(
-  IDataAdviseHolder*      iface,
-  DWORD                   dwConnection)
+static HRESULT WINAPI DataAdviseHolder_Unadvise(IDataAdviseHolder *iface,
+                                                DWORD dwConnection)
 {
-  DataAdviseHolder *This = (DataAdviseHolder *)iface;
+  DataAdviseHolder *This = impl_from_IDataAdviseHolder(iface);
   DWORD index;
   TRACE("(%p)->(%u)\n", This, dwConnection);
 
@@ -798,7 +788,7 @@ static HRESULT WINAPI     DataAdviseHolder_Unadvise(
 static HRESULT WINAPI DataAdviseHolder_EnumAdvise(IDataAdviseHolder *iface,
                                                   IEnumSTATDATA **enum_advise)
 {
-    DataAdviseHolder *This = (DataAdviseHolder *)iface;
+    DataAdviseHolder *This = impl_from_IDataAdviseHolder(iface);
     IUnknown *unk;
     HRESULT hr;
 
@@ -813,13 +803,11 @@ static HRESULT WINAPI DataAdviseHolder_EnumAdvise(IDataAdviseHolder *iface,
 /******************************************************************************
  * DataAdviseHolder_SendOnDataChange
  */
-static HRESULT WINAPI     DataAdviseHolder_SendOnDataChange(
-  IDataAdviseHolder*      iface,
-  IDataObject*            pDataObject,
-  DWORD                   dwReserved,
-  DWORD                   advf)
+static HRESULT WINAPI DataAdviseHolder_SendOnDataChange(IDataAdviseHolder *iface,
+                                                        IDataObject *pDataObject,
+                                                        DWORD dwReserved, DWORD advf)
 {
-  DataAdviseHolder *This = (DataAdviseHolder *)iface;
+  DataAdviseHolder *This = impl_from_IDataAdviseHolder(iface);
   DWORD index;
   STGMEDIUM stg;
   HRESULT res;
@@ -869,7 +857,7 @@ static const IDataAdviseHolderVtbl DataAdviseHolderImpl_VTable =
 
 HRESULT DataAdviseHolder_OnConnect(IDataAdviseHolder *iface, IDataObject *pDelegate)
 {
-  DataAdviseHolder *This = (DataAdviseHolder *)iface;
+  DataAdviseHolder *This = impl_from_IDataAdviseHolder(iface);
   DWORD index;
   HRESULT hr = S_OK;
 
@@ -891,7 +879,7 @@ HRESULT DataAdviseHolder_OnConnect(IDataAdviseHolder *iface, IDataObject *pDeleg
 
 void DataAdviseHolder_OnDisconnect(IDataAdviseHolder *iface)
 {
-  DataAdviseHolder *This = (DataAdviseHolder *)iface;
+  DataAdviseHolder *This = impl_from_IDataAdviseHolder(iface);
   DWORD index;
 
   for(index = 0; index < This->maxCons; index++)
@@ -910,13 +898,13 @@ void DataAdviseHolder_OnDisconnect(IDataAdviseHolder *iface)
 /******************************************************************************
  * DataAdviseHolder_Constructor
  */
-static IDataAdviseHolder* DataAdviseHolder_Constructor(void)
+static IDataAdviseHolder *DataAdviseHolder_Constructor(void)
 {
   DataAdviseHolder* newHolder;
 
   newHolder = HeapAlloc(GetProcessHeap(), 0, sizeof(DataAdviseHolder));
 
-  newHolder->lpVtbl = &DataAdviseHolderImpl_VTable;
+  newHolder->IDataAdviseHolder_iface.lpVtbl = &DataAdviseHolderImpl_VTable;
   newHolder->ref = 1;
   newHolder->maxCons = INITIAL_SINKS;
   newHolder->connections = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
@@ -925,8 +913,8 @@ static IDataAdviseHolder* DataAdviseHolder_Constructor(void)
                                             newHolder->maxCons * sizeof(*newHolder->remote_connections));
   newHolder->delegate = NULL;
 
-  TRACE("returning %p\n", newHolder);
-  return (IDataAdviseHolder*)newHolder;
+  TRACE("returning %p\n", &newHolder->IDataAdviseHolder_iface);
+  return &newHolder->IDataAdviseHolder_iface;
 }
 
 /***********************************************************************
@@ -936,8 +924,7 @@ static IDataAdviseHolder* DataAdviseHolder_Constructor(void)
 /***********************************************************************
  * CreateOleAdviseHolder [OLE32.@]
  */
-HRESULT WINAPI CreateOleAdviseHolder(
-  LPOLEADVISEHOLDER *ppOAHolder)
+HRESULT WINAPI CreateOleAdviseHolder(IOleAdviseHolder **ppOAHolder)
 {
   TRACE("(%p)\n", ppOAHolder);
 
@@ -955,8 +942,7 @@ HRESULT WINAPI CreateOleAdviseHolder(
 /******************************************************************************
  *              CreateDataAdviseHolder        [OLE32.@]
  */
-HRESULT WINAPI CreateDataAdviseHolder(
-  LPDATAADVISEHOLDER* ppDAHolder)
+HRESULT WINAPI CreateDataAdviseHolder(IDataAdviseHolder **ppDAHolder)
 {
   TRACE("(%p)\n", ppDAHolder);
 
