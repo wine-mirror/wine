@@ -371,93 +371,58 @@ __ASM_GLOBAL_FUNC(_start,
                   "xorq %r11,%r11\n\t"
                   "ret")
 
-#define SYSCALL_RET(ret) (((ret) < 0 && (ret) > -4096) ? -1 : (ret))
+#define SYSCALL_FUNC( name, nr ) \
+    __ASM_GLOBAL_FUNC( name, \
+                       "movq $" #nr ",%rax\n\t" \
+                       "movq %rcx,%r10\n\t" \
+                       "syscall\n\t" \
+                       "leaq 4096(%rax),%rcx\n\t" \
+                       "movq $-1,%rdx\n\t" \
+                       "cmp $4096,%rcx\n\t" \
+                       "cmovb %rdx,%rax\n\t" \
+                       "ret" )
 
-static inline __attribute__((noreturn)) void wld_exit( int code )
-{
-    for (;;)  /* avoid warning */
-        __asm__ __volatile__( "syscall" : : "a" (SYS_exit), "D" (code) );
-}
+#define SYSCALL_NOERR( name, nr ) \
+    __ASM_GLOBAL_FUNC( name, \
+                       "movq $" #nr ",%rax\n\t" \
+                       "syscall\n\t" \
+                       "ret" )
 
-static inline int wld_open( const char *name, int flags )
-{
-    int ret;
-    __asm__ __volatile__( "syscall" : "=a" (ret) : "0" (SYS_open), "D" (name), "S" (flags) );
-    return SYSCALL_RET(ret);
-}
+void wld_exit( int code ) __attribute__((noreturn));
+SYSCALL_NOERR( wld_exit, 60 /* SYS_exit */ );
 
-static inline int wld_close( int fd )
-{
-    int ret;
-    __asm__ __volatile__( "syscall" : "=a" (ret) : "0" (SYS_close), "D" (fd) );
-    return SYSCALL_RET(ret);
-}
+ssize_t wld_read( int fd, void *buffer, size_t len );
+SYSCALL_FUNC( wld_read, 0 /* SYS_read */ );
 
-static inline ssize_t wld_read( int fd, void *buffer, size_t len )
-{
-    int ret;
-    __asm__ __volatile__( "syscall"
-                          : "=a" (ret)
-                          : "0" (SYS_read), "D" (fd), "S" (buffer), "d" (len)
-                          : "memory" );
-    return SYSCALL_RET(ret);
-}
+ssize_t wld_write( int fd, const void *buffer, size_t len );
+SYSCALL_FUNC( wld_write, 1 /* SYS_write */ );
 
-static inline ssize_t wld_write( int fd, const void *buffer, size_t len )
-{
-    int ret;
-    __asm__ __volatile__( "syscall" : "=a" (ret) : "0" (SYS_write), "D" (fd), "S" (buffer), "d" (len) );
-    return SYSCALL_RET(ret);
-}
+int wld_open( const char *name, int flags );
+SYSCALL_FUNC( wld_open, 2 /* SYS_open */ );
 
-static inline int wld_mprotect( const void *addr, size_t len, int prot )
-{
-    int ret;
-    __asm__ __volatile__( "syscall" : "=a" (ret) : "0" (SYS_mprotect), "D" (addr), "S" (len), "d" (prot) );
-    return SYSCALL_RET(ret);
-}
+int wld_close( int fd );
+SYSCALL_FUNC( wld_close, 3 /* SYS_close */ );
 
 void *wld_mmap( void *start, size_t len, int prot, int flags, int fd, off_t offset );
-__ASM_GLOBAL_FUNC( wld_mmap,
-                   "movq %rcx,%r10\n\t"
-                   "movq $9,%rax\n\t"  /* SYS_mmap */
-                   "syscall\n\t"
-                   "ret" );
+SYSCALL_FUNC( wld_mmap, 9 /* SYS_mmap */ );
 
-static inline uid_t wld_getuid(void)
-{
-    uid_t ret;
-    __asm__( "syscall" : "=a" (ret) : "0" (SYS_getuid) );
-    return ret;
-}
+int wld_mprotect( const void *addr, size_t len, int prot );
+SYSCALL_FUNC( wld_mprotect, 10 /* SYS_mprotect */ );
 
-static inline uid_t wld_geteuid(void)
-{
-    uid_t ret;
-    __asm__( "syscall" : "=a" (ret) : "0" (SYS_geteuid) );
-    return ret;
-}
+int wld_prctl( int code, int arg );
+SYSCALL_FUNC( wld_prctl, 157 /* SYS_prctl */ );
 
-static inline gid_t wld_getgid(void)
-{
-    gid_t ret;
-    __asm__( "syscall" : "=a" (ret) : "0" (SYS_getgid) );
-    return ret;
-}
+uid_t wld_getuid(void);
+SYSCALL_NOERR( wld_getuid, 102 /* SYS_getuid */ );
 
-static inline gid_t wld_getegid(void)
-{
-    gid_t ret;
-    __asm__( "syscall" : "=a" (ret) : "0" (SYS_getegid) );
-    return ret;
-}
+gid_t wld_getgid(void);
+SYSCALL_NOERR( wld_getgid, 104 /* SYS_getgid */ );
 
-static inline int wld_prctl( int code, int arg )
-{
-    int ret;
-    __asm__ __volatile__( "syscall" : "=a" (ret) : "D" (SYS_prctl), "S" (code), "d" (arg) );
-    return SYSCALL_RET(ret);
-}
+uid_t wld_geteuid(void);
+SYSCALL_NOERR( wld_geteuid, 107 /* SYS_geteuid */ );
+
+gid_t wld_getegid(void);
+SYSCALL_NOERR( wld_getegid, 108 /* SYS_getegid */ );
 
 #else
 #error preloader not implemented for this CPU
