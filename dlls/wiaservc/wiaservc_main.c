@@ -25,6 +25,7 @@
 #include "winreg.h"
 #include "advpub.h"
 #include "olectl.h"
+#include "rpcproxy.h"
 #include "winsvc.h"
 
 #include "wia_lh.h"
@@ -164,10 +165,14 @@ static HRESULT register_server(BOOL do_register)
 
 HRESULT WINAPI DllRegisterServer(void)
 {
+    HRESULT hr = __wine_register_resources( hInst, NULL );
+    if (FAILED(hr)) return hr;
     return register_server(TRUE);
 }
 
 HRESULT WINAPI DllUnregisterServer(void)
 {
+    HRESULT hr = __wine_unregister_resources( hInst, NULL );
+    if (FAILED(hr)) return hr;
     return register_server(FALSE);
 }

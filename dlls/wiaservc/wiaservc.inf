@@ -10,18 +10,7 @@ DelReg = WiaServc.Reg
 [WiaServc.Reg]
 HKCR,"AppID\%CLSID_WiaDevMgr%",,,"WIA Device Manager"
 HKCR,"AppID\%CLSID_WiaDevMgr%","LocalService",,"stisvc"
-
-HKCR,"CLSID\%CLSID_WiaDevMgr%",,,"WIA Device Manager"
 HKCR,"CLSID\%CLSID_WiaDevMgr%","AppID",,"%CLSID_WiaDevMgr%"
-HKCR,"CLSID\%CLSID_WiaDevMgr%\ProgID",,,"WiaDevMgr.1"
-HKCR,"CLSID\%CLSID_WiaDevMgr%\VersionIndependentProgID",,,"WiaDevMgr"
-
-HKCR,"WiaDevMgr.1",,,"WIA Device Manager"
-HKCR,"WiaDevMgr.1\CLSID",,,"%CLSID_WiaDevMgr%"
-
-HKCR,"WiaDevMgr",,,"WIA Device Manager"
-HKCR,"WiaDevMgr\CLSID",,,"%CLSID_WiaDevMgr%"
-HKCR,"WiaDevMgr\CurVer",,,"WiaDevMgr.1"
 
 HKLM,"Software\Microsoft\Windows NT\CurrentVersion\SvcHost","imgsvc",0x00010000,"StiSvc"
 
