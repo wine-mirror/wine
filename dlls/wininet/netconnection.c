@@ -248,7 +248,8 @@ static DWORD netconn_verify_cert(PCCERT_CONTEXT cert, HCERTSTORE store,
                 CERT_TRUST_IS_REVOKED |
                 CERT_TRUST_IS_NOT_VALID_FOR_USAGE;
 
-            if (chain->TrustStatus.dwErrorStatus & CERT_TRUST_IS_NOT_TIME_VALID)
+            if (chain->TrustStatus.dwErrorStatus & CERT_TRUST_IS_NOT_TIME_VALID &&
+                !(security_flags & SECURITY_FLAG_IGNORE_CERT_DATE_INVALID))
                 err = ERROR_INTERNET_SEC_CERT_DATE_INVALID;
             else if (chain->TrustStatus.dwErrorStatus &
                      CERT_TRUST_IS_UNTRUSTED_ROOT &&
