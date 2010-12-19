@@ -268,7 +268,7 @@ static HRESULT WINAPI IWineD3DVolumeImpl_Unmap(IWineD3DVolume *iface)
     }
     TRACE("(%p) : unlocking volume\n", This);
     This->locked = FALSE;
-    memset(&This->lockedBox, 0, sizeof(RECT));
+    memset(&This->lockedBox, 0, sizeof(This->lockedBox));
     return WINED3D_OK;
 }
 
