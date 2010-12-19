@@ -217,7 +217,7 @@ static HRESULT GAMEUX_WriteRegistryRecord(struct GAMEUX_GAME_DATA *GameData)
 
     if(SUCCEEDED(hr))
         hr = HRESULT_FROM_WIN32(RegCreateKeyExW(HKEY_LOCAL_MACHINE, lpRegistryKey,
-                                                0, NULL, 0, KEY_ALL_ACCESS, NULL,
+                                                0, NULL, 0, KEY_ALL_ACCESS | KEY_WOW64_64KEY, NULL,
                                                 &hKey, NULL));
 
     if(SUCCEEDED(hr))
@@ -252,7 +252,7 @@ static HRESULT GAMEUX_WriteRegistryRecord(struct GAMEUX_GAME_DATA *GameData)
         if(FAILED(hr))
         {
             /* if something failed, remove whole key */
-            hr2 = RegDeleteKeyExW(HKEY_LOCAL_MACHINE, lpRegistryKey, 0, 0);
+            hr2 = RegDeleteKeyExW(HKEY_LOCAL_MACHINE, lpRegistryKey, KEY_WOW64_64KEY, 0);
             /* do not overwrite old failure code with new success code */
             if(FAILED(hr2))
                 hr = hr2;
@@ -481,7 +481,7 @@ static HRESULT GAMEUX_RemoveRegistryRecord(GUID* pInstanceID)
     /* first, check is game installed for all users */
     hr = GAMEUX_buildGameRegistryPath(GIS_ALL_USERS, pInstanceID, &lpRegistryPath);
     if(SUCCEEDED(hr))
-        hr = HRESULT_FROM_WIN32(RegDeleteKeyExW(HKEY_LOCAL_MACHINE, lpRegistryPath, 0, 0));
+        hr = HRESULT_FROM_WIN32(RegDeleteKeyExW(HKEY_LOCAL_MACHINE, lpRegistryPath, KEY_WOW64_64KEY, 0));
 
     HeapFree(GetProcessHeap(), 0, lpRegistryPath);
 
@@ -490,7 +490,7 @@ static HRESULT GAMEUX_RemoveRegistryRecord(GUID* pInstanceID)
     {
         hr = GAMEUX_buildGameRegistryPath(GIS_CURRENT_USER, pInstanceID, &lpRegistryPath);
         if(SUCCEEDED(hr))
-            hr = HRESULT_FROM_WIN32(RegDeleteKeyExW(HKEY_LOCAL_MACHINE, lpRegistryPath, 0, 0));
+            hr = HRESULT_FROM_WIN32(RegDeleteKeyExW(HKEY_LOCAL_MACHINE, lpRegistryPath, KEY_WOW64_64KEY, 0));
 
         HeapFree(GetProcessHeap(), 0, lpRegistryPath);
     }
