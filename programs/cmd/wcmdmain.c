@@ -76,6 +76,7 @@ const WCHAR inbuilt[][10] = {
         {'C','O','L','O','R','\0'},
         {'F','T','Y','P','E','\0'},
         {'M','O','R','E','\0'},
+        {'C','H','O','I','C','E','\0'},
         {'E','X','I','T','\0'}
 };
 
@@ -1542,6 +1543,9 @@ void WCMD_execute (WCHAR *command, WCHAR *redirects,
         break;
       case WCMD_MORE:
         WCMD_more(p);
+        break;
+      case WCMD_CHOICE:
+        WCMD_choice(p);
         break;
       case WCMD_EXIT:
         WCMD_exit (cmdList);

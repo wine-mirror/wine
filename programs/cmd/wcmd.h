@@ -52,6 +52,7 @@ void WCMD_assoc (WCHAR *, BOOL);
 void WCMD_batch (WCHAR *, WCHAR *, int, WCHAR *, HANDLE);
 void WCMD_call (WCHAR *command);
 void WCMD_change_tty (void);
+void WCMD_choice (WCHAR *);
 void WCMD_clear_screen (void);
 void WCMD_color (void);
 void WCMD_copy (void);
@@ -202,9 +203,10 @@ typedef struct _DIRECTORY_STACK
 #define WCMD_COLOR  41
 #define WCMD_FTYPE  42
 #define WCMD_MORE   43
+#define WCMD_CHOICE 44
 
 /* Must be last in list */
-#define WCMD_EXIT   44
+#define WCMD_EXIT   45
 
 /* Some standard messages */
 extern const WCHAR newline[];

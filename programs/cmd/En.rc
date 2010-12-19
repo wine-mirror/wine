@@ -211,6 +211,10 @@ PUSHD.\n"
 
   WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
 
+  WCMD_CHOICE, "CHOICE displays a text and waits, until the User\n\
+press an allowed Key from a selectable list.\n\
+CHOICE is mainly used to build a menu selection in a batch file.\n"
+
   WCMD_EXIT,
 "EXIT terminates the current command session and returns\n\
 to the operating system or shell from which you invoked cmd.\n"
@@ -219,6 +223,7 @@ to the operating system or shell from which you invoked cmd.\n"
 ATTRIB\t\tShow or change DOS file attributes\n\
 CALL\t\tInvoke a batch file from inside another\n\
 CD (CHDIR)\tChange current default directory\n\
+CHOICE\t\tWait for an keypress from a selectable list\n\
 CLS\t\tClear the console screen\n\
 COPY\t\tCopy file\n\
 CTTY\t\tChange input/output device\n\

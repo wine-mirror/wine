@@ -160,6 +160,174 @@ void WCMD_change_tty (void) {
 }
 
 /****************************************************************************
+ * WCMD_choice
+ *
+ */
+
+void WCMD_choice (WCHAR * command) {
+
+    static const WCHAR bellW[] = {7,0};
+    static const WCHAR commaW[] = {',',0};
+    static const WCHAR bracket_open[] = {'[',0};
+    static const WCHAR bracket_close[] = {']','?',0};
+    WCHAR answer[16];
+    WCHAR buffer[16];
+    WCHAR *ptr = NULL;
+    WCHAR *opt_c = NULL;
+    WCHAR *my_command = NULL;
+    WCHAR opt_default = 0;
+    DWORD opt_timeout = 0;
+    DWORD count;
+    DWORD oldmode;
+    DWORD have_console;
+    BOOL opt_n = FALSE;
+    BOOL opt_s = FALSE;
+
+    have_console = GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &oldmode);
+    errorlevel = 0;
+
+    my_command = WCMD_strdupW(WCMD_strtrim_leading_spaces(command));
+    if (!my_command)
+        return;
+
+    ptr = WCMD_strtrim_leading_spaces(my_command);
+    while (*ptr == '/') {
+        switch (toupperW(ptr[1])) {
+            case 'C':
+                ptr += 2;
+                /* the colon is optional */
+                if (*ptr == ':')
+                    ptr++;
+
+                if (!*ptr || isspaceW(*ptr)) {
+                    WINE_FIXME("bad parameter %s for /C\n", wine_dbgstr_w(ptr));
+                    HeapFree(GetProcessHeap(), 0, my_command);
+                    return;
+                }
+
+                /* remember the allowed keys (overwrite previous /C option) */
+                opt_c = ptr;
+                while (*ptr && (!isspaceW(*ptr)))
+                    ptr++;
+
+                if (*ptr) {
+                    /* terminate allowed chars */
+                    *ptr = 0;
+                    ptr = WCMD_strtrim_leading_spaces(&ptr[1]);
+                }
+                WINE_TRACE("answer-list: %s\n", wine_dbgstr_w(opt_c));
+                break;
+
+            case 'N':
+                opt_n = TRUE;
+                ptr = WCMD_strtrim_leading_spaces(&ptr[2]);
+                break;
+
+            case 'S':
+                opt_s = TRUE;
+                ptr = WCMD_strtrim_leading_spaces(&ptr[2]);
+                break;
+
+            case 'T':
+                ptr = &ptr[2];
+                /* the colon is optional */
+                if (*ptr == ':')
+                    ptr++;
+
+                opt_default = *ptr++;
+
+                if (!opt_default || (*ptr != ',')) {
+                    WINE_FIXME("bad option %s for /T\n", opt_default ? wine_dbgstr_w(ptr) : "");
+                    HeapFree(GetProcessHeap(), 0, my_command);
+                    return;
+                }
+                ptr++;
+
+                count = 0;
+                while (((answer[count] = *ptr)) && isdigitW(*ptr) && (count < 15)) {
+                    count++;
+                    ptr++;
+                }
+
+                answer[count] = 0;
+                opt_timeout = atoiW(answer);
+
+                ptr = WCMD_strtrim_leading_spaces(ptr);
+                break;
+
+            default:
+                WINE_FIXME("bad parameter: %s\n", wine_dbgstr_w(ptr));
+                HeapFree(GetProcessHeap(), 0, my_command);
+                return;
+        }
+    }
+
+    if (opt_timeout)
+        WINE_FIXME("timeout not supported: %c,%d\n", opt_default, opt_timeout);
+
+    if (have_console)
+        SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), 0);
+
+    /* use default keys, when needed: localized versions of "Y"es and "No" */
+    if (!opt_c) {
+        LoadStringW(hinst, WCMD_YES, buffer, sizeof(buffer)/sizeof(WCHAR));
+        LoadStringW(hinst, WCMD_NO, buffer + 1, sizeof(buffer)/sizeof(WCHAR) - 1);
+        opt_c = buffer;
+        buffer[2] = 0;
+    }
+
+    /* print the question, when needed */
+    if (*ptr)
+        WCMD_output_asis(ptr);
+
+    if (!opt_s) {
+        struprW(opt_c);
+        WINE_TRACE("case insensitive answer-list: %s\n", wine_dbgstr_w(opt_c));
+    }
+
+    if (!opt_n) {
+        /* print a list of all allowed answers inside brackets */
+        WCMD_output_asis(bracket_open);
+        ptr = opt_c;
+        answer[1] = 0;
+        while ((answer[0] = *ptr++)) {
+            WCMD_output_asis(answer);
+            if (*ptr)
+                WCMD_output_asis(commaW);
+        }
+        WCMD_output_asis(bracket_close);
+    }
+
+    while (TRUE) {
+
+        /* FIXME: Add support for option /T */
+        WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, 1, &count, NULL);
+
+        if (!opt_s)
+            answer[0] = toupperW(answer[0]);
+
+        ptr = strchrW(opt_c, answer[0]);
+        if (ptr) {
+            WCMD_output_asis(answer);
+            WCMD_output(newline);
+            if (have_console)
+                SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), oldmode);
+
+            errorlevel = (ptr - opt_c) + 1;
+            WINE_TRACE("answer: %d\n", errorlevel);
+            HeapFree(GetProcessHeap(), 0, my_command);
+            return;
+        }
+        else
+        {
+            /* key not allowed: play the bell */
+            WINE_TRACE("key not allowed: %s\n", wine_dbgstr_w(answer));
+            WCMD_output_asis(bellW);
+        }
+    }
+}
+
+/****************************************************************************
  * WCMD_copy
  *
  * Copy a file or wildcarded set.
