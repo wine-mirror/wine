@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"
+#include "winreg.h"
 
 static CHAR string[MAX_PATH];
 #define ok_w(res, format, szString) \
@@ -34,13 +35,120 @@ static CHAR string[MAX_PATH];
 
 static BOOL (WINAPI *pGetComputerNameExA)(COMPUTER_NAME_FORMAT,LPSTR,LPDWORD);
 static BOOL (WINAPI *pGetComputerNameExW)(COMPUTER_NAME_FORMAT,LPWSTR,LPDWORD);
+static BOOL (WINAPI *pOpenProcessToken)(HANDLE,DWORD,PHANDLE);
+static BOOL (WINAPI *pGetUserProfileDirectoryA)(HANDLE,LPSTR,LPDWORD);
 
 static void init_functionpointers(void)
 {
     HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
+    HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
+    HMODULE huserenv = LoadLibraryA("userenv.dll");
 
     pGetComputerNameExA = (void *)GetProcAddress(hkernel32, "GetComputerNameExA");
     pGetComputerNameExW = (void *)GetProcAddress(hkernel32, "GetComputerNameExW");
+    pOpenProcessToken = (void *)GetProcAddress(hadvapi32, "OpenProcessToken");
+    pGetUserProfileDirectoryA = (void *)GetProcAddress(huserenv,
+                                                       "GetUserProfileDirectoryA");
+}
+
+static void test_Predefined(void)
+{
+    /*
+     * If anything fails here, your test environment is probably not set up
+     * correctly.
+     */
+    HKEY UserEnvironment;
+    LSTATUS Err;
+    DWORD Index;
+    char ValueName[256];
+    DWORD ValueNameSize;
+    DWORD Type;
+    char Data[1024];
+    DWORD DataSize;
+    char Env[sizeof(Data)];
+    DWORD EnvSize;
+    HANDLE Token;
+    BOOL NoErr;
+
+    /*
+     * Enumerate all values in HKCU\Environment and verify that environment
+     * variables with those names/values are present.
+     */
+    Err = RegOpenKeyExA(HKEY_CURRENT_USER, "Environment", 0, KEY_QUERY_VALUE,
+                        &UserEnvironment);
+    ok(Err == ERROR_SUCCESS || Err == ERROR_FILE_NOT_FOUND,
+       "Failed to open HKCU\\Environment key, error %d\n",
+       Err);
+
+    if (Err == ERROR_SUCCESS)
+    {
+        Index = 0;
+        do
+        {
+            ValueNameSize = sizeof(ValueName);
+            DataSize = sizeof(Data);
+            Err = RegEnumValueA(UserEnvironment, Index, ValueName, &ValueNameSize,
+                                NULL, &Type, (LPBYTE) Data, &DataSize);
+            if (Err == ERROR_SUCCESS)
+            {
+                if (Type == REG_EXPAND_SZ)
+                {
+                    char Expanded[sizeof(Data)];
+                    DWORD ExpandedSize;
+                    ExpandedSize = ExpandEnvironmentStringsA(Data, Expanded,
+                                                             sizeof(Expanded));
+                    ok(ExpandedSize != 0 && ExpandedSize <= sizeof(Expanded),
+                       "Failed to expand %s, error %u\n", Data, GetLastError());
+                    memcpy(Data, Expanded, ExpandedSize);
+                    Type = REG_SZ;
+                }
+                ok(Type == REG_SZ, "Expected data type REG_SZ, got %d\n", Type);
+                EnvSize = GetEnvironmentVariableA(ValueName, Env, sizeof(Env));
+                ok(EnvSize != 0 && EnvSize <= sizeof(Env),
+                   "Failed to retrieve environment variable %s, error %u\n",
+                   ValueName, GetLastError());
+                ok(strcmp(Data, Env) == 0,
+                   "Expected value %s for env var %s, got %s\n", Data, ValueName,
+                   Env);
+            }
+            Index++;
+        }
+        while (Err == ERROR_SUCCESS);
+        ok(Err == ERROR_NO_MORE_ITEMS,
+           "Unexpected return %d from RegEnumValueA\n", Err);
+
+        Err = RegCloseKey(UserEnvironment);
+        ok(Err == ERROR_SUCCESS, "Failed to close reg key, error %d\n", Err);
+    }
+
+    /*
+     * Check value of %USERPROFILE%, should be same as GetUserProfileDirectory()
+     */
+    if (pOpenProcessToken == NULL || pGetUserProfileDirectoryA == NULL)
+    {
+        skip("Skipping USERPROFILE check\n");
+        return;
+    }
+    NoErr = pOpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &Token);
+    ok(NoErr, "Failed to open token, error %u\n", GetLastError());
+    DataSize = sizeof(Data);
+    NoErr = pGetUserProfileDirectoryA(Token, Data, &DataSize);
+    todo_wine ok(NoErr, "Failed to get user profile dir, error %u\n",
+                 GetLastError());
+    if (NoErr)
+    {
+        EnvSize = GetEnvironmentVariableA("USERPROFILE", Env, sizeof(Env));
+        ok(EnvSize != 0 && EnvSize <= sizeof(Env),
+           "Failed to retrieve environment variable USERPROFILE, error %u\n",
+           GetLastError());
+        ok(strcmp(Data, Env) == 0,
+           "USERPROFILE env var %s doesn't match GetUserProfileDirectory %s\n",
+           Env, Data);
+    }
+    else
+        skip("Skipping USERPROFILE check, can't get user profile dir\n");
+    NoErr = CloseHandle(Token);
+    ok(NoErr, "Failed to close token, error %u\n", GetLastError());
 }
 
 static void test_GetSetEnvironmentVariableA(void)
@@ -512,6 +620,7 @@ START_TEST(environ)
 {
     init_functionpointers();
 
+    test_Predefined();
     test_GetSetEnvironmentVariableA();
     test_GetSetEnvironmentVariableW();
     test_ExpandEnvironmentStringsA();
