@@ -128,7 +128,7 @@ static HRESULT _buildStatisticsFilePath(LPCGUID guidApplicationId, LPWSTR *lpSta
     static const WCHAR sStatisticsDir[] = {'\\','M','i','c','r','o','s','o','f','t',
             '\\','W','i','n','d','o','w','s','\\','G','a','m','e','E','x','p',
             'l','o','r','e','r','\\','G','a','m','e','S','t','a','t','i','s',
-            't','i','c','s',0};
+            't','i','c','s','\\',0};
     static const WCHAR sDotGamestats[] = {'.','g','a','m','e','s','t','a','t','s',0};
     static const DWORD dwGuidLength = 49;
 
