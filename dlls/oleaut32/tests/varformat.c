@@ -212,7 +212,9 @@ static const FMTDATERES VarFormat_date_results[] =
   { 2.525, "hh :mm:mm", "12 :36:01" },
   { 2.525, "dd :mm:mm", "01 :01:01" },
   { 2.525, "dd :mm:nn", "01 :01:36" },
-  { 2.725, "hh:nn:ss A/P", "05:24:00 P" }
+  { 2.725, "hh:nn:ss A/P", "05:24:00 P" },
+  { 40531.0, "dddd", "Sunday" },
+  { 40531.0, "ddd", "Sun" }
 };
 
 #define VNUMFMT(vt,v) \

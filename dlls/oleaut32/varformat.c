@@ -1725,14 +1725,14 @@ static HRESULT VARIANT_FormatDate(LPVARIANT pVarIn, LPOLESTR lpszFormat,
     case FMT_DATE_DAY_SHORT:
       /* FIXME: VARIANT_CALENDAR HIJRI should cause Hijri output */
       TRACE("short day\n");
-      localeValue = LOCALE_SABBREVDAYNAME1 + udate.st.wMonth - 1;
+      localeValue = LOCALE_SABBREVDAYNAME1 + (udate.st.wDayOfWeek + 6)%7;
       defaultChar = '?';
       break;
 
     case FMT_DATE_DAY_LONG:
       /* FIXME: VARIANT_CALENDAR HIJRI should cause Hijri output */
       TRACE("long day\n");
-      localeValue = LOCALE_SDAYNAME1 + udate.st.wMonth - 1;
+      localeValue = LOCALE_SDAYNAME1 + (udate.st.wDayOfWeek + 6)%7;
       defaultChar = '?';
       break;
 
