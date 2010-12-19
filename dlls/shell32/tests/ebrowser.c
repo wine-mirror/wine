@@ -1037,6 +1037,7 @@ static void test_basics(void)
     HDWP hdwp;
     RECT rc;
     HRESULT hr;
+    static const WCHAR winetest[] = {'W','i','n','e','T','e','s','t',0};
 
     ebrowser_instantiate(&peb);
     ebrowser_initialize(peb);
@@ -1144,6 +1145,12 @@ static void test_basics(void)
     fs.ViewMode = 0; fs.fFlags = 0;
     hr = IExplorerBrowser_SetFolderSettings(peb, &fs);
     todo_wine ok(hr == E_INVALIDARG, "got (0x%08x)\n", hr);
+
+    /* SetPropertyBag */
+    hr = IExplorerBrowser_SetPropertyBag(peb, NULL);
+    ok(hr == E_INVALIDARG, "Got 0x%08x\n", hr);
+    hr = IExplorerBrowser_SetPropertyBag(peb, winetest);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
 
     /* TODO: Test after browsing somewhere. */
 

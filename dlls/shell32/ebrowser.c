@@ -931,7 +931,15 @@ static HRESULT WINAPI IExplorerBrowser_fnSetPropertyBag(IExplorerBrowser *iface,
     ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
     FIXME("stub, %p (%s)\n", This, debugstr_w(pszPropertyBag));
 
-    return E_NOTIMPL;
+    if(!pszPropertyBag)
+        return E_INVALIDARG;
+
+    /* FIXME: This method is currently useless as we don't save any
+     * settings anywhere, but at least one application breaks if we
+     * return E_NOTIMPL.
+     */
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IExplorerBrowser_fnSetEmptyText(IExplorerBrowser *iface,
