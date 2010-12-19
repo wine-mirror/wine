@@ -389,6 +389,75 @@ interface IShellItem : IUnknown
         [out] int *piOrder);
 }
 
+/*****************************************************************************
+ * IShellItem2 interface
+ */
+[
+    object,
+    uuid(7E9FB0D3-919F-4307-AB2E-9B1860310C93),
+    pointer_default(unique)
+]
+interface IShellItem2 : IShellItem
+{
+    HRESULT GetPropertyStore(
+        [in] GETPROPERTYSTOREFLAGS flags,
+        [in] REFIID riid,
+        [out, iid_is(riid)] void **ppv);
+
+    HRESULT GetPropertyStoreWithCreateObject(
+        [in] GETPROPERTYSTOREFLAGS flags,
+        [in] IUnknown *punkCreateObject,
+        [in] REFIID riid,
+        [out, iid_is(riid)] void **ppv);
+
+    HRESULT GetPropertyStoreForKeys(
+        [in, size_is(cKeys)] const PROPERTYKEY *rgKeys,
+        [in] UINT cKeys,
+        [in] GETPROPERTYSTOREFLAGS flags,
+        [in] REFIID riid,
+        [out, iid_is(riid)] void **ppv);
+
+    HRESULT GetPropertyDescriptionList(
+        [in] REFPROPERTYKEY keyType,
+        [in] REFIID riid,
+        [out, iid_is(riid)] void **ppv);
+
+    HRESULT Update(
+        [in, unique] IBindCtx *pbc);
+
+    HRESULT GetProperty(
+        [in] REFPROPERTYKEY key,
+        [out] PROPVARIANT *ppropvar);
+
+    HRESULT GetCLSID(
+        [in] REFPROPERTYKEY key,
+        [out] CLSID *pclsid);
+
+    HRESULT GetFileTime (
+        [in] REFPROPERTYKEY key,
+        [out] FILETIME *pft);
+
+    HRESULT GetInt32(
+        [in] REFPROPERTYKEY key,
+        [out] int *pi);
+
+    HRESULT GetString(
+        [in] REFPROPERTYKEY key,
+        [out, string] LPWSTR *ppsz);
+
+    HRESULT GetUInt32(
+        [in] REFPROPERTYKEY key,
+        [out] ULONG *pui);
+
+    HRESULT GetUInt64(
+        [in] REFPROPERTYKEY key,
+        [out] ULONGLONG *pull);
+
+    HRESULT GetBool(
+        [in] REFPROPERTYKEY key,
+        [out] BOOL *pf);
+}
+
 typedef enum tagNWMF {
     NWMF_UNLOADING        = 0x0001,
     NWMF_USERINITED       = 0x0002,
