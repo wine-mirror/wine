@@ -908,11 +908,13 @@ static HRESULT WINAPI IExplorerBrowser_fnSetRect(IExplorerBrowser *iface,
     ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
     TRACE("%p (%p, %s)\n", This, phdwp, wine_dbgstr_rect(&rcBrowser));
 
-    if(phdwp)
+    if(phdwp && *phdwp)
     {
         *phdwp = DeferWindowPos(*phdwp, This->hwnd_main, NULL, rcBrowser.left, rcBrowser.top,
                                 rcBrowser.right - rcBrowser.left, rcBrowser.bottom - rcBrowser.top,
                                 SWP_NOZORDER | SWP_NOACTIVATE);
+        if(!*phdwp)
+            return E_FAIL;
     }
     else
     {

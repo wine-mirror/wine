@@ -1076,6 +1076,7 @@ static void test_basics(void)
         HWND eb_hwnd;
         RECT eb_rc;
         static const RECT exp_rc = {11, 21, 49, 49};
+        static const RECT exp_rc2 = {11, 21, 49, 24};
 
         hr = IShellBrowser_GetWindow(psb, &eb_hwnd);
         ok(hr == S_OK, "Got 0x%08x\n", hr);
@@ -1083,6 +1084,24 @@ static void test_basics(void)
         GetClientRect(eb_hwnd, &eb_rc);
         MapWindowPoints(eb_hwnd, hwnd, (POINT*)&eb_rc, 2);
         ok(EqualRect(&eb_rc, &exp_rc), "Got rect (%d, %d) - (%d, %d)\n",
+           eb_rc.left, eb_rc.top, eb_rc.right, eb_rc.bottom);
+
+        /* Try resizing with invalid hdwp */
+        rc.bottom = 25;
+        hdwp = (HDWP)0xdeadbeef;
+        hr = IExplorerBrowser_SetRect(peb, &hdwp, rc);
+        ok(hr == E_FAIL, "Got 0x%08x\n", hr);
+        GetClientRect(eb_hwnd, &eb_rc);
+        MapWindowPoints(eb_hwnd, hwnd, (POINT*)&eb_rc, 2);
+        ok(EqualRect(&eb_rc, &exp_rc), "Got rect (%d, %d) - (%d, %d)\n",
+           eb_rc.left, eb_rc.top, eb_rc.right, eb_rc.bottom);
+
+        hdwp = NULL;
+        hr = IExplorerBrowser_SetRect(peb, &hdwp, rc);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        GetClientRect(eb_hwnd, &eb_rc);
+        MapWindowPoints(eb_hwnd, hwnd, (POINT*)&eb_rc, 2);
+        ok(EqualRect(&eb_rc, &exp_rc2), "Got rect (%d, %d) - (%d, %d)\n",
            eb_rc.left, eb_rc.top, eb_rc.right, eb_rc.bottom);
 
         IShellBrowser_Release(psb);
