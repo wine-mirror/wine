@@ -192,6 +192,7 @@ static HRESULT binding_hres;
 static BOOL have_IHttpNegotiate2, use_bscex, is_async_prot;
 static BOOL test_redirect, use_cache_file, callback_read, no_callback, test_abort;
 static WCHAR cache_file_name[MAX_PATH];
+static BOOL only_check_prot_args = FALSE;
 
 static LPCWSTR urls[] = {
     WINE_ABOUT_URL,
@@ -566,7 +567,8 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
     ok(bind_info & BINDF_FROMURLMON, "BINDF_FROMURLMON is not set\n");
 
-    if(filedwl_api || !is_urlmon_protocol(test_protocol) || !(bindf&BINDF_ASYNCSTORAGE) || tymed != TYMED_ISTREAM)
+    if(filedwl_api || !is_urlmon_protocol(test_protocol) || tymed != TYMED_ISTREAM ||
+       !(bindf&BINDF_ASYNCSTORAGE) || !(bindf&BINDF_PULLDATA))
         ok(bind_info & BINDF_NEEDFILE, "BINDF_NEEDFILE is not set\n");
     else
         ok(!(bind_info & BINDF_NEEDFILE), "BINDF_NEEDFILE is set\n");
@@ -592,6 +594,9 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     ok(IsEqualGUID(&bindinfo.iid, &IID_NULL), "wrong bindinfo.iid\n");
     ok(!bindinfo.pUnk, "bindinfo.pUnk = %p\n", bindinfo.pUnk);
     ok(!bindinfo.dwReserved, "bindinfo.dwReserved = %d\n", bindinfo.dwReserved);
+
+    if(only_check_prot_args)
+        return E_FAIL;
 
     switch(test_protocol) {
     case MK_TEST:
@@ -1542,6 +1547,11 @@ static HRESULT WINAPI statusclb_OnStopBinding(IBindStatusCallbackEx *iface, HRES
     }
 
     ok(GetCurrentThreadId() == thread_id, "wrong thread %d\n", GetCurrentThreadId());
+
+    if(only_check_prot_args) {
+        todo_wine ok(hresult == S_OK, "Got %08x\n", hresult);
+        return S_OK;
+    }
 
     /* ignore DNS failure */
     if (hresult == HRESULT_FROM_WIN32(ERROR_INTERNET_NAME_NOT_RESOLVED))
@@ -2510,6 +2520,8 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
     if(tymed == TYMED_FILE && (test_protocol == ABOUT_TEST || test_protocol == ITS_TEST))
         binding_hres = INET_E_DATA_NOT_AVAILABLE;
 
+    if(only_check_prot_args)
+        SET_EXPECT(OnStopBinding);
     if(!no_callback) {
         SET_EXPECT(QueryInterface_IBindStatusCallbackEx);
         SET_EXPECT(GetBindInfo);
@@ -2568,7 +2580,10 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
         return;
     }
 
-    if(no_callback) {
+    if(only_check_prot_args) {
+        ok(hres == E_FAIL, "Got %08x\n", hres);
+        CHECK_CALLED(OnStopBinding);
+    }else if(no_callback) {
         if(emulate_protocol)
             WaitForSingleObject(complete_event2, INFINITE);
         ok(hres == S_OK, "IMoniker_BindToStorage failed: %08x\n", hres);
@@ -3346,6 +3361,12 @@ START_TEST(url)
 
         trace("test failures...\n");
         test_BindToStorage_fail();
+
+        bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE;
+        only_check_prot_args = TRUE; /* Fail after checking arguments to Protocol_Start */
+
+        trace("check emulated http protocol arguments...\n");
+        test_BindToStorage(HTTP_TEST, BINDTEST_EMULATE, TYMED_ISTREAM);
     }
 
     DeleteFileA(wszIndexHtmlA);

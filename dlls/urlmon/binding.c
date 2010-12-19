@@ -1496,7 +1496,7 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, IUri *uri, IB
     if(to_obj)
         ret->bindinfo.dwOptions |= 0x100000;
 
-    if(!(ret->bindf & BINDF_ASYNCHRONOUS)) {
+    if(!(ret->bindf & BINDF_ASYNCHRONOUS) || !(ret->bindf & BINDF_PULLDATA)) {
         ret->bindf |= BINDF_NEEDFILE;
         ret->use_cache_file = TRUE;
     }else if(!is_urlmon_protocol(uri)) {
