@@ -228,6 +228,10 @@ mit PUSHD gespeicherten.\n"
 
   WCMD_MORE,   "MORE gibt Dateien und Pipes seitenweise aus.\n"
 
+  WCMD_CHOICE, "CHOICE zeigt einen Text auf dem Bildschirm an und wartet,\n\
+bis der Benutzer eine erlaubte Taste aus einer wählbaren Liste drückt.\n\
+CHOICE wird hauptsächlich als Menüauswahl in einer Batchdatei genutzt.\n"
+
   WCMD_EXIT,
 "EXIT beendet die aktuelle Befehlssitzung und kehrt zum\n\
 Betriebssystem oder der Shell zurück, von der CMD gestart wurde.\n"
@@ -237,6 +241,7 @@ Betriebssystem oder der Shell zurück, von der CMD gestart wurde.\n"
 ATTRIB\t\tZeigt oder ändert die DOS Dateieigenschaften\n\
 CALL\t\tRuft eine Batch-Datei innerhalb einer anderen auf\n\
 CD (CHDIR)\tWechselt in ein Verzeichnis\n\
+CHOICE\t\tWartet auf einen Tastendruck aus einer wählbaren Liste\n\
 CLS\t\tLöscht den Inhalt der Konsole\n\
 COPY\t\tKopiert eine Datei\n\
 CTTY\t\tÄndert das Eingabe/Ausgabe - Gerät\n\
