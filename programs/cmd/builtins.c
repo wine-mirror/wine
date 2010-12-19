@@ -2265,7 +2265,6 @@ void WCMD_setshow_env (WCHAR *s) {
   int status;
   static const WCHAR parmP[] = {'/','P','\0'};
 
-  errorlevel = 0;
   if (param1[0] == 0x00 && quals[0] == 0x00) {
     env = GetEnvironmentStringsW();
     WCMD_setshow_sortenv( env, NULL );
