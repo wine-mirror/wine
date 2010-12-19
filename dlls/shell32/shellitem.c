@@ -39,15 +39,15 @@
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 typedef struct _ShellItem {
-    IShellItem              IShellItem_iface;
+    IShellItem2             IShellItem2_iface;
     LONG                    ref;
     LPITEMIDLIST            pidl;
     IPersistIDList          IPersistIDList_iface;
 } ShellItem;
 
-static inline ShellItem *impl_from_IShellItem(IShellItem *iface)
+static inline ShellItem *impl_from_IShellItem2(IShellItem2 *iface)
 {
-    return CONTAINING_RECORD(iface, ShellItem, IShellItem_iface);
+    return CONTAINING_RECORD(iface, ShellItem, IShellItem2_iface);
 }
 
 
@@ -57,16 +57,17 @@ static inline ShellItem *impl_from_IPersistIDList( IPersistIDList *iface )
 }
 
 
-static HRESULT WINAPI ShellItem_QueryInterface(IShellItem *iface, REFIID riid,
+static HRESULT WINAPI ShellItem_QueryInterface(IShellItem2 *iface, REFIID riid,
     void **ppv)
 {
-    ShellItem *This = impl_from_IShellItem(iface);
+    ShellItem *This = impl_from_IShellItem2(iface);
 
     TRACE("(%p,%p,%p)\n", iface, riid, ppv);
 
     if (!ppv) return E_INVALIDARG;
 
-    if (IsEqualIID(&IID_IUnknown, riid) || IsEqualIID(&IID_IShellItem, riid))
+    if (IsEqualIID(&IID_IUnknown, riid) || IsEqualIID(&IID_IShellItem, riid) ||
+        IsEqualIID(&IID_IShellItem2, riid))
     {
         *ppv = This;
     }
@@ -84,9 +85,9 @@ static HRESULT WINAPI ShellItem_QueryInterface(IShellItem *iface, REFIID riid,
     return S_OK;
 }
 
-static ULONG WINAPI ShellItem_AddRef(IShellItem *iface)
+static ULONG WINAPI ShellItem_AddRef(IShellItem2 *iface)
 {
-    ShellItem *This = impl_from_IShellItem(iface);
+    ShellItem *This = impl_from_IShellItem2(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p), new refcount=%i\n", iface, ref);
@@ -94,9 +95,9 @@ static ULONG WINAPI ShellItem_AddRef(IShellItem *iface)
     return ref;
 }
 
-static ULONG WINAPI ShellItem_Release(IShellItem *iface)
+static ULONG WINAPI ShellItem_Release(IShellItem2 *iface)
 {
-    ShellItem *This = impl_from_IShellItem(iface);
+    ShellItem *This = impl_from_IShellItem2(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p), new refcount=%i\n", iface, ref);
@@ -176,10 +177,10 @@ static HRESULT ShellItem_get_shellfolder(ShellItem *This, IBindCtx *pbc, IShellF
     return ret;
 }
 
-static HRESULT WINAPI ShellItem_BindToHandler(IShellItem *iface, IBindCtx *pbc,
+static HRESULT WINAPI ShellItem_BindToHandler(IShellItem2 *iface, IBindCtx *pbc,
     REFGUID rbhid, REFIID riid, void **ppvOut)
 {
-    ShellItem *This = impl_from_IShellItem(iface);
+    ShellItem *This = impl_from_IShellItem2(iface);
     HRESULT ret;
     TRACE("(%p,%p,%s,%p,%p)\n", iface, pbc, shdebugstr_guid(rbhid), riid, ppvOut);
 
@@ -213,7 +214,7 @@ static HRESULT WINAPI ShellItem_BindToHandler(IShellItem *iface, IBindCtx *pbc,
     }
     else if (IsEqualGUID(rbhid, &BHID_DataObject))
     {
-        return ShellItem_BindToHandler(&This->IShellItem_iface, pbc, &BHID_SFUIObject,
+        return ShellItem_BindToHandler(&This->IShellItem2_iface, pbc, &BHID_SFUIObject,
                                        &IID_IDataObject, ppvOut);
     }
 
@@ -222,9 +223,9 @@ static HRESULT WINAPI ShellItem_BindToHandler(IShellItem *iface, IBindCtx *pbc,
     return MK_E_NOOBJECT;
 }
 
-static HRESULT WINAPI ShellItem_GetParent(IShellItem *iface, IShellItem **ppsi)
+static HRESULT WINAPI ShellItem_GetParent(IShellItem2 *iface, IShellItem **ppsi)
 {
-    ShellItem *This = impl_from_IShellItem(iface);
+    ShellItem *This = impl_from_IShellItem2(iface);
     LPITEMIDLIST parent_pidl;
     HRESULT ret;
 
@@ -240,19 +241,19 @@ static HRESULT WINAPI ShellItem_GetParent(IShellItem *iface, IShellItem **ppsi)
     return ret;
 }
 
-static HRESULT WINAPI ShellItem_GetDisplayName(IShellItem *iface, SIGDN sigdnName,
+static HRESULT WINAPI ShellItem_GetDisplayName(IShellItem2 *iface, SIGDN sigdnName,
     LPWSTR *ppszName)
 {
-    ShellItem *This = impl_from_IShellItem(iface);
+    ShellItem *This = impl_from_IShellItem2(iface);
     TRACE("(%p,%x,%p)\n", iface, sigdnName, ppszName);
 
     return SHGetNameFromIDList(This->pidl, sigdnName, ppszName);
 }
 
-static HRESULT WINAPI ShellItem_GetAttributes(IShellItem *iface, SFGAOF sfgaoMask,
+static HRESULT WINAPI ShellItem_GetAttributes(IShellItem2 *iface, SFGAOF sfgaoMask,
     SFGAOF *psfgaoAttribs)
 {
-    ShellItem *This = impl_from_IShellItem(iface);
+    ShellItem *This = impl_from_IShellItem2(iface);
     IShellFolder *parent_folder;
     LPITEMIDLIST child_pidl;
     HRESULT ret;
@@ -274,7 +275,7 @@ static HRESULT WINAPI ShellItem_GetAttributes(IShellItem *iface, SFGAOF sfgaoMas
     return ret;
 }
 
-static HRESULT WINAPI ShellItem_Compare(IShellItem *iface, IShellItem *oth,
+static HRESULT WINAPI ShellItem_Compare(IShellItem2 *iface, IShellItem *oth,
     SICHINTF hint, int *piOrder)
 {
     LPWSTR dispname, dispname_oth;
@@ -324,7 +325,105 @@ static HRESULT WINAPI ShellItem_Compare(IShellItem *iface, IShellItem *oth,
         return S_OK;
 }
 
-static const IShellItemVtbl ShellItem_Vtbl = {
+static HRESULT WINAPI ShellItem2_GetPropertyStore(IShellItem2 *iface, GETPROPERTYSTOREFLAGS flags,
+    REFIID riid, void **ppv)
+{
+    ShellItem *This = impl_from_IShellItem2(iface);
+    FIXME("Stub: %p (%d, %s, %p)\n", This, flags, shdebugstr_guid(riid), ppv);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellItem2_GetPropertyStoreWithCreateObject(IShellItem2 *iface,
+    GETPROPERTYSTOREFLAGS flags, IUnknown *punkCreateObject, REFIID riid, void **ppv)
+{
+    ShellItem *This = impl_from_IShellItem2(iface);
+    FIXME("Stub: %p (%08x, %p, %s, %p)\n",
+          This, flags, punkCreateObject, shdebugstr_guid(riid), ppv);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellItem2_GetPropertyStoreForKeys(IShellItem2 *iface, const PROPERTYKEY *rgKeys,
+    UINT cKeys, GETPROPERTYSTOREFLAGS flags, REFIID riid, void **ppv)
+{
+    ShellItem *This = impl_from_IShellItem2(iface);
+    FIXME("Stub: %p (%p, %d, %08x, %s, %p)\n",
+          This, rgKeys, cKeys, flags, shdebugstr_guid(riid), ppv);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellItem2_GetPropertyDescriptionList(IShellItem2 *iface,
+    REFPROPERTYKEY keyType, REFIID riid, void **ppv)
+{
+    ShellItem *This = impl_from_IShellItem2(iface);
+    FIXME("Stub: %p (%p, %s, %p)\n", This, keyType, debugstr_guid(riid), ppv);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellItem2_Update(IShellItem2 *iface, IBindCtx *pbc)
+{
+    ShellItem *This = impl_from_IShellItem2(iface);
+    FIXME("Stub: %p (%p)\n", This, pbc);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellItem2_GetProperty(IShellItem2 *iface, REFPROPERTYKEY key, PROPVARIANT *ppropvar)
+{
+    ShellItem *This = impl_from_IShellItem2(iface);
+    FIXME("Stub: %p (%p, %p)\n", This, key, ppropvar);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellItem2_GetCLSID(IShellItem2 *iface, REFPROPERTYKEY key, CLSID *pclsid)
+{
+    ShellItem *This = impl_from_IShellItem2(iface);
+    FIXME("Stub: %p (%p, %p)\n", This, key, pclsid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellItem2_GetFileTime(IShellItem2 *iface, REFPROPERTYKEY key, FILETIME *pft)
+{
+    ShellItem *This = impl_from_IShellItem2(iface);
+    FIXME("Stub: %p (%p, %p)\n", This, key, pft);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellItem2_GetInt32(IShellItem2 *iface, REFPROPERTYKEY key, int *pi)
+{
+    ShellItem *This = impl_from_IShellItem2(iface);
+    FIXME("Stub: %p (%p, %p)\n", This, key, pi);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellItem2_GetString(IShellItem2 *iface, REFPROPERTYKEY key, LPWSTR *ppsz)
+{
+    ShellItem *This = impl_from_IShellItem2(iface);
+    FIXME("Stub: %p (%p, %p)\n", This, key, ppsz);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellItem2_GetUInt32(IShellItem2 *iface, REFPROPERTYKEY key, ULONG *pui)
+{
+    ShellItem *This = impl_from_IShellItem2(iface);
+    FIXME("Stub: %p (%p, %p)\n", This, key, pui);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellItem2_GetUInt64(IShellItem2 *iface, REFPROPERTYKEY key, ULONGLONG *pull)
+{
+    ShellItem *This = impl_from_IShellItem2(iface);
+    FIXME("Stub: %p (%p, %p)\n", This, key, pull);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellItem2_GetBool(IShellItem2 *iface, REFPROPERTYKEY key, BOOL *pf)
+{
+    ShellItem *This = impl_from_IShellItem2(iface);
+    FIXME("Stub: %p (%p, %p)\n", This, key, pf);
+    return E_NOTIMPL;
+}
+
+
+static const IShellItem2Vtbl ShellItem2_Vtbl = {
     ShellItem_QueryInterface,
     ShellItem_AddRef,
     ShellItem_Release,
@@ -332,7 +431,20 @@ static const IShellItemVtbl ShellItem_Vtbl = {
     ShellItem_GetParent,
     ShellItem_GetDisplayName,
     ShellItem_GetAttributes,
-    ShellItem_Compare
+    ShellItem_Compare,
+    ShellItem2_GetPropertyStore,
+    ShellItem2_GetPropertyStoreWithCreateObject,
+    ShellItem2_GetPropertyStoreForKeys,
+    ShellItem2_GetPropertyDescriptionList,
+    ShellItem2_Update,
+    ShellItem2_GetProperty,
+    ShellItem2_GetCLSID,
+    ShellItem2_GetFileTime,
+    ShellItem2_GetInt32,
+    ShellItem2_GetString,
+    ShellItem2_GetUInt32,
+    ShellItem2_GetUInt64,
+    ShellItem2_GetBool
 };
 
 
@@ -349,19 +461,19 @@ static HRESULT WINAPI ShellItem_IPersistIDList_QueryInterface(IPersistIDList *if
     REFIID riid, void **ppv)
 {
     ShellItem *This = impl_from_IPersistIDList(iface);
-    return ShellItem_QueryInterface(&This->IShellItem_iface, riid, ppv);
+    return ShellItem_QueryInterface(&This->IShellItem2_iface, riid, ppv);
 }
 
 static ULONG WINAPI ShellItem_IPersistIDList_AddRef(IPersistIDList *iface)
 {
     ShellItem *This = impl_from_IPersistIDList(iface);
-    return ShellItem_AddRef(&This->IShellItem_iface);
+    return ShellItem_AddRef(&This->IShellItem2_iface);
 }
 
 static ULONG WINAPI ShellItem_IPersistIDList_Release(IPersistIDList *iface)
 {
     ShellItem *This = impl_from_IPersistIDList(iface);
-    return ShellItem_Release(&This->IShellItem_iface);
+    return ShellItem_Release(&This->IShellItem2_iface);
 }
 
 static HRESULT WINAPI ShellItem_IPersistIDList_GetClassID(IPersistIDList* iface,
@@ -428,13 +540,13 @@ HRESULT WINAPI IShellItem_Constructor(IUnknown *pUnkOuter, REFIID riid, void **p
     if (pUnkOuter) return CLASS_E_NOAGGREGATION;
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(ShellItem));
-    This->IShellItem_iface.lpVtbl = &ShellItem_Vtbl;
+    This->IShellItem2_iface.lpVtbl = &ShellItem2_Vtbl;
     This->ref = 1;
     This->pidl = NULL;
     This->IPersistIDList_iface.lpVtbl = &ShellItem_IPersistIDList_Vtbl;
 
-    ret = ShellItem_QueryInterface(&This->IShellItem_iface, riid, ppv);
-    ShellItem_Release(&This->IShellItem_iface);
+    ret = ShellItem_QueryInterface(&This->IShellItem2_iface, riid, ppv);
+    ShellItem_Release(&This->IShellItem2_iface);
 
     return ret;
 }
@@ -492,7 +604,7 @@ HRESULT WINAPI SHCreateShellItem(LPCITEMIDLIST pidlParent,
     ret = IShellItem_Constructor(NULL, &IID_IShellItem, (void**)&This);
     if (This)
     {
-        *ppsi = &This->IShellItem_iface;
+        *ppsi = (IShellItem*)&This->IShellItem2_iface;
         This->pidl = new_pidl;
     }
     else
