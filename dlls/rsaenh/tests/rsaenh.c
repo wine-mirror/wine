@@ -947,8 +947,8 @@ static void test_aes(int keylen)
 
     /* AES provider doesn't support salt */
     result = CryptGetKeyParam(hKey, KP_SALT, NULL, &dwLen, 0);
-    ok(!result && (GetLastError() == NTE_BAD_KEY || GetLastError() == ERROR_NO_TOKEN /* Win7 */),
-       "expected NTE_BAD_KEY or ERROR_NO_TOKEN, got %08x\n", GetLastError());
+    ok((!result && GetLastError() == NTE_BAD_KEY) || result /* Win7 */,
+       "expected NTE_BAD_KEY, got %08x\n", GetLastError());
 
     dwLen = 13;
     result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwLen, 16);
