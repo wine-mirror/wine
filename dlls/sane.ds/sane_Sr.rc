@@ -41,7 +41,7 @@ STRINGTABLE
  3 "мм"
  4 "тпи"
  5 "%"
- 6 "нс"
+ 6 "µс"
 }
 
 LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
@@ -62,5 +62,5 @@ STRINGTABLE
  3 "mm"
  4 "tpi"
  5 "%"
- 6 "ns"
+ 6 "µs"
 }

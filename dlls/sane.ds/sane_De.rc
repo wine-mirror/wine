@@ -2,6 +2,7 @@
  * German resources for Twain
  *
  * Copyright 2006 Henning Gerhardt
+ * Copyright 2010 André Hentschel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -40,5 +41,5 @@ STRINGTABLE
  3 "mm"
  4 "dpi"
  5 "%"
- 6 "ns"
+ 6 "µs"
 }

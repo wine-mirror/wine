@@ -41,7 +41,7 @@ STRINGTABLE
  3 "mm"
  4 "dpi"
  5 "%"
- 6 "ns"
+ 6 "µs"
 }
 
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
@@ -62,5 +62,5 @@ STRINGTABLE
  3 "mm"
  4 "dpi"
  5 "%"
- 6 "ns"
+ 6 "µs"
 }
