@@ -490,7 +490,6 @@ DWORD WINAPI InternetErrorDlg(HWND hWnd, HINTERNET hRequest,
                  DWORD dwError, DWORD dwFlags, LPVOID* lppvData)
 {
     struct WININET_ErrorDlgParams params;
-    HMODULE hwininet = GetModuleHandleA( "wininet.dll" );
     INT dwStatus;
 
     TRACE("%p %p %d %08x %p\n", hWnd, hRequest, dwError, dwFlags, lppvData);
@@ -512,10 +511,10 @@ DWORD WINAPI InternetErrorDlg(HWND hWnd, HINTERNET hRequest,
         switch (dwStatus)
         {
         case HTTP_STATUS_PROXY_AUTH_REQ:
-            return DialogBoxParamW( hwininet, MAKEINTRESOURCEW( IDD_PROXYDLG ),
+            return DialogBoxParamW( WININET_hModule, MAKEINTRESOURCEW( IDD_PROXYDLG ),
                                     hWnd, WININET_ProxyPasswordDialog, (LPARAM) &params );
         case HTTP_STATUS_DENIED:
-            return DialogBoxParamW( hwininet, MAKEINTRESOURCEW( IDD_AUTHDLG ),
+            return DialogBoxParamW( WININET_hModule, MAKEINTRESOURCEW( IDD_AUTHDLG ),
                                     hWnd, WININET_PasswordDialog, (LPARAM) &params );
         default:
             WARN("unhandled status %u\n", dwStatus);

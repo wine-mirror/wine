@@ -47,6 +47,8 @@
 #define ioctlsocket ioctl
 #endif /* __MINGW32__ */
 
+extern HMODULE WININET_hModule;
+
 /* used for netconnection.c stuff */
 typedef struct
 {

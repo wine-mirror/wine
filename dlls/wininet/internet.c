@@ -88,7 +88,7 @@ typedef struct
 } WITHREADERROR, *LPWITHREADERROR;
 
 static DWORD g_dwTlsErrIndex = TLS_OUT_OF_INDEXES;
-static HMODULE WININET_hModule;
+HMODULE WININET_hModule;
 
 #define HANDLE_CHUNK_SIZE 0x10
 
