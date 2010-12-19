@@ -259,7 +259,10 @@ static HRESULT WINAPI ShellItem_GetAttributes(IShellItem *iface, SFGAOF sfgaoMas
 
     TRACE("(%p,%x,%p)\n", iface, sfgaoMask, psfgaoAttribs);
 
-    ret = ShellItem_get_parent_shellfolder(This, &parent_folder);
+    if (_ILIsDesktop(This->pidl))
+        ret = SHGetDesktopFolder(&parent_folder);
+    else
+        ret = ShellItem_get_parent_shellfolder(This, &parent_folder);
     if (SUCCEEDED(ret))
     {
         child_pidl = ILFindLastID(This->pidl);

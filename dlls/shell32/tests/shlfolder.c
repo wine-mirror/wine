@@ -3670,6 +3670,49 @@ static void test_ShellItemBindToHandler(void)
     pILFree(pidl_desktop);
 }
 
+void test_ShellItemGetAttributes(void)
+{
+    IShellItem *psi;
+    LPITEMIDLIST pidl_desktop;
+    SFGAOF sfgao;
+    HRESULT hr;
+
+    if(!pSHCreateShellItem)
+    {
+        skip("SHCreateShellItem missing.\n");
+        return;
+    }
+
+    hr = pSHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, &pidl_desktop);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        hr = pSHCreateShellItem(NULL, NULL, pidl_desktop, &psi);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        pILFree(pidl_desktop);
+    }
+    if(FAILED(hr))
+    {
+        skip("Skipping tests.");
+        return;
+    }
+
+    if(0)
+    {
+        /* Crashes on native (Win 7) */
+        hr = IShellItem_GetAttributes(psi, 0, NULL);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+    }
+
+    /* Test GetAttributes on the desktop folder. */
+    sfgao = 0xdeadbeef;
+    hr = IShellItem_GetAttributes(psi, SFGAO_FOLDER, &sfgao);
+    ok(hr == S_OK || broken(hr == E_FAIL) /* <Vista */, "Got 0x%08x\n", hr);
+    ok(sfgao == SFGAO_FOLDER || broken(sfgao == 0) /* <Vista */, "Got 0x%08x\n", sfgao);
+
+    IShellItem_Release(psi);
+}
+
 static void test_SHParseDisplayName(void)
 {
     LPITEMIDLIST pidl1, pidl2;
@@ -4432,6 +4475,7 @@ START_TEST(shlfolder)
     test_ShellItemCompare();
     test_SHChangeNotify();
     test_ShellItemBindToHandler();
+    test_ShellItemGetAttributes();
 
     OleUninitialize();
 }
