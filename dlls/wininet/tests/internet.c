@@ -22,6 +22,7 @@
 #include <string.h>
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "wininet.h"
 #include "winerror.h"
 #include "winreg.h"
@@ -1123,6 +1124,152 @@ static void test_Option_PerConnectionOptionA(void)
     HeapFree(GetProcessHeap(), 0, list.pOptions);
 }
 
+#define FLAG_TODO     0x1
+#define FLAG_NEEDREQ  0x2
+#define FLAG_UNIMPL   0x4
+
+void test_InternetErrorDlg(void)
+{
+    HINTERNET ses, con, req;
+    DWORD res, flags;
+    HWND hwnd;
+    ULONG i;
+    static const struct {
+        DWORD error;
+        DWORD res;
+        DWORD test_flags;
+    } no_ui_res[] = {
+        { ERROR_INTERNET_INCORRECT_PASSWORD     , ERROR_SUCCESS, FLAG_NEEDREQ },
+        { ERROR_INTERNET_SEC_CERT_DATE_INVALID  , ERROR_CANCELLED, 0 },
+        { ERROR_INTERNET_SEC_CERT_CN_INVALID    , ERROR_CANCELLED, 0 },
+        { ERROR_INTERNET_HTTP_TO_HTTPS_ON_REDIR , ERROR_SUCCESS, 0 },
+        { ERROR_INTERNET_HTTPS_TO_HTTP_ON_REDIR , ERROR_SUCCESS, FLAG_TODO },
+        { ERROR_INTERNET_MIXED_SECURITY         , ERROR_CANCELLED, FLAG_TODO },
+        { ERROR_INTERNET_CHG_POST_IS_NON_SECURE , ERROR_CANCELLED, FLAG_TODO },
+        { ERROR_INTERNET_POST_IS_NON_SECURE     , ERROR_SUCCESS, 0 },
+        { ERROR_INTERNET_CLIENT_AUTH_CERT_NEEDED, ERROR_CANCELLED, FLAG_NEEDREQ|FLAG_TODO },
+        { ERROR_INTERNET_INVALID_CA             , ERROR_CANCELLED, 0 },
+        { ERROR_INTERNET_HTTPS_HTTP_SUBMIT_REDIR, ERROR_CANCELLED, FLAG_TODO },
+        { ERROR_INTERNET_INSERT_CDROM           , ERROR_CANCELLED, FLAG_TODO|FLAG_NEEDREQ|FLAG_UNIMPL },
+        { ERROR_INTERNET_SEC_CERT_ERRORS        , ERROR_CANCELLED, 0 },
+        { ERROR_INTERNET_SEC_CERT_REV_FAILED    , ERROR_CANCELLED, FLAG_TODO },
+        { ERROR_HTTP_COOKIE_NEEDS_CONFIRMATION  , ERROR_HTTP_COOKIE_DECLINED, FLAG_TODO },
+        { ERROR_INTERNET_BAD_AUTO_PROXY_SCRIPT  , ERROR_CANCELLED, FLAG_TODO },
+        { ERROR_INTERNET_UNABLE_TO_DOWNLOAD_SCRIPT, ERROR_CANCELLED, FLAG_TODO },
+        { ERROR_HTTP_REDIRECT_NEEDS_CONFIRMATION, ERROR_CANCELLED, FLAG_TODO },
+        { ERROR_INTERNET_SEC_CERT_REVOKED       , ERROR_CANCELLED, 0 },
+        { 0, ERROR_NOT_SUPPORTED }
+    };
+
+    flags = 0;
+
+    res = InternetErrorDlg(NULL, NULL, 12055, flags, NULL);
+    ok(res == ERROR_INVALID_HANDLE, "Got %d\n", res);
+
+    ses = InternetOpen(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(ses != 0, "InternetOpen failed: 0x%08x\n", GetLastError());
+    con = InternetConnect(ses, "www.winehq.org", 80, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(con != 0, "InternetConnect failed: 0x%08x\n", GetLastError());
+    req = HttpOpenRequest(con, "GET", "/", NULL, NULL, NULL, 0, 0);
+    ok(req != 0, "HttpOpenRequest failed: 0x%08x\n", GetLastError());
+
+    /* NULL hwnd and FLAGS_ERROR_UI_FLAGS_NO_UI not set */
+    for(i = INTERNET_ERROR_BASE; i < INTERNET_ERROR_LAST; i++)
+    {
+        res = InternetErrorDlg(NULL, req, i, flags, NULL);
+        ok(res == ERROR_INVALID_HANDLE, "Got %d (%d)\n", res, i);
+    }
+
+    hwnd = GetDesktopWindow();
+    ok(hwnd != NULL, "GetDesktopWindow failed (%d)\n", GetLastError());
+
+    flags = FLAGS_ERROR_UI_FLAGS_NO_UI;
+    for(i = INTERNET_ERROR_BASE; i < INTERNET_ERROR_LAST; i++)
+    {
+        DWORD expected, test_flags, j;
+
+        for(j = 0; no_ui_res[j].error != 0; ++j)
+            if(no_ui_res[j].error == i)
+                break;
+
+        test_flags = no_ui_res[j].test_flags;
+        expected = no_ui_res[j].res;
+
+        /* Try an invalid request handle */
+        res = InternetErrorDlg(hwnd, (HANDLE)0xdeadbeef, i, flags, NULL);
+        if(res == ERROR_CALL_NOT_IMPLEMENTED)
+        {
+            todo_wine ok(test_flags & FLAG_UNIMPL, "%i is unexpectedly unimplemented.\n", i);
+            continue;
+        }
+        else
+            todo_wine ok(res == ERROR_INVALID_HANDLE, "Got %d (%d)\n", res, i);
+
+        /* With a valid req */
+        if(i == ERROR_INTERNET_NEED_UI)
+            continue; /* Crashes on windows XP */
+
+        if(i == ERROR_INTERNET_SEC_CERT_REVOKED)
+            continue; /* Interactive (XP, Win7) */
+
+        res = InternetErrorDlg(hwnd, req, i, flags, NULL);
+
+        /* Handle some special cases */
+        switch(i)
+        {
+        case ERROR_INTERNET_HTTP_TO_HTTPS_ON_REDIR:
+        case ERROR_INTERNET_HTTPS_TO_HTTP_ON_REDIR:
+            if(res == ERROR_CANCELLED)
+            {
+                /* Some windows XP, w2k3 x64, W2K8 */
+                win_skip("Skipping some tests for %d\n", i);
+                continue;
+            }
+            break;
+        case 12054: /* ERROR_INTERNET_FORTEZZA_LOGIN_NEEDED */
+            if(res != expected)
+            {
+                /* Windows XP, W2K3 */
+                ok(res == NTE_PROV_TYPE_NOT_DEF, "Got %d\n", res);
+                win_skip("Skipping some tests for %d\n", i);
+                continue;
+            }
+            break;
+        default: break;
+        }
+
+        if(test_flags & FLAG_TODO)
+            todo_wine ok(res == expected, "Got %d, expected %d (%d)\n", res, expected, i);
+        else
+            ok(res == expected, "Got %d, expected %d (%d)\n", res, expected, i);
+
+        /* Same thing with NULL hwnd */
+        res = InternetErrorDlg(NULL, req, i, flags, NULL);
+        if(test_flags & FLAG_TODO)
+            todo_wine ok(res == expected, "Got %d, expected %d (%d)\n", res, expected, i);
+        else
+            ok(res == expected, "Got %d, expected %d (%d)\n", res, expected, i);
+
+
+        /* With a null req */
+        if(test_flags & FLAG_NEEDREQ)
+            expected = ERROR_INVALID_PARAMETER;
+
+        res = InternetErrorDlg(hwnd, NULL, i, flags, NULL);
+        if( test_flags & FLAG_TODO || i == ERROR_INTERNET_INCORRECT_PASSWORD)
+            todo_wine ok(res == expected, "Got %d, expected %d (%d)\n", res, expected, i);
+        else
+            ok(res == expected, "Got %d, expected %d (%d)\n", res, expected, i);
+    }
+
+    res = InternetCloseHandle(req);
+    ok(res == TRUE, "InternetCloseHandle failed: 0x%08x\n", GetLastError());
+    res = InternetCloseHandle(con);
+    ok(res == TRUE, "InternetCloseHandle failed: 0x%08x\n", GetLastError());
+    res = InternetCloseHandle(ses);
+    ok(res == TRUE, "InternetCloseHandle failed: 0x%08x\n", GetLastError());
+}
+
 /* ############################### */
 
 START_TEST(internet)
@@ -1153,6 +1300,7 @@ START_TEST(internet)
     test_null();
     test_Option_PerConnectionOption();
     test_Option_PerConnectionOptionA();
+    test_InternetErrorDlg();
 
     if (!pInternetTimeFromSystemTimeA)
         win_skip("skipping the InternetTime tests\n");

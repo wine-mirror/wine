@@ -44,6 +44,8 @@
 
 #include "resource.h"
 
+#define MAX_STRING_LEN 1024
+
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
 struct WININET_ErrorDlgParams
@@ -461,6 +463,109 @@ static INT_PTR WINAPI WININET_PasswordDialog(
 }
 
 /***********************************************************************
+ *         WININET_InvalidCertificateDialog
+ */
+static INT_PTR WINAPI WININET_InvalidCertificateDialog(
+    HWND hdlg, UINT uMsg, WPARAM wParam, LPARAM lParam )
+{
+    struct WININET_ErrorDlgParams *params;
+    HWND hitem;
+    WCHAR buf[1024];
+
+    if( uMsg == WM_INITDIALOG )
+    {
+        TRACE("WM_INITDIALOG (%08lx)\n", lParam);
+
+        /* save the parameter list */
+        params = (struct WININET_ErrorDlgParams*) lParam;
+        SetWindowLongPtrW( hdlg, GWLP_USERDATA, lParam );
+
+        switch( params->dwError )
+        {
+        case ERROR_INTERNET_INVALID_CA:
+            LoadStringW( WININET_hModule, IDS_CERT_CA_INVALID, buf, 1024 );
+            break;
+        case ERROR_INTERNET_SEC_CERT_DATE_INVALID:
+            LoadStringW( WININET_hModule, IDS_CERT_DATE_INVALID, buf, 1024 );
+            break;
+        case ERROR_INTERNET_SEC_CERT_CN_INVALID:
+            LoadStringW( WININET_hModule, IDS_CERT_CN_INVALID, buf, 1024 );
+            break;
+        case ERROR_INTERNET_SEC_CERT_ERRORS:
+            /* FIXME: We should fetch information about the
+             * certificate here and show all the relevant errors.
+             */
+            LoadStringW( WININET_hModule, IDS_CERT_ERRORS, buf, 1024 );
+            break;
+        default:
+            FIXME( "No message for error %d\n", params->dwError );
+            buf[0] = '\0';
+        }
+
+        hitem = GetDlgItem( hdlg, IDC_CERT_ERROR );
+        SetWindowTextW( hitem, buf );
+
+        return TRUE;
+    }
+
+    params = (struct WININET_ErrorDlgParams*)
+                 GetWindowLongPtrW( hdlg, GWLP_USERDATA );
+
+    switch( uMsg )
+    {
+    case WM_COMMAND:
+        if( wParam == IDOK )
+        {
+            BOOL res = TRUE;
+
+            if( params->dwFlags & FLAGS_ERROR_UI_FLAGS_CHANGE_OPTIONS )
+            {
+                DWORD flags, size = sizeof(flags);
+
+                InternetQueryOptionW( params->hRequest, INTERNET_OPTION_SECURITY_FLAGS, &flags, &size );
+                switch( params->dwError )
+                {
+                case ERROR_INTERNET_INVALID_CA:
+                    flags |= SECURITY_FLAG_IGNORE_UNKNOWN_CA;
+                    break;
+                case ERROR_INTERNET_SEC_CERT_DATE_INVALID:
+                    flags |= SECURITY_FLAG_IGNORE_CERT_DATE_INVALID;
+                    break;
+                case ERROR_INTERNET_SEC_CERT_CN_INVALID:
+                    flags |= SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
+                    break;
+                case ERROR_INTERNET_SEC_CERT_ERRORS:
+                    FIXME("Should only add ignore flags as needed.\n");
+                    flags |= SECURITY_FLAG_IGNORE_CERT_CN_INVALID |
+                        SECURITY_FLAG_IGNORE_CERT_DATE_INVALID |
+                        SECURITY_FLAG_IGNORE_UNKNOWN_CA;
+                    /* FIXME: ERROR_INTERNET_SEC_CERT_ERRORS also
+                     * seems to set the corresponding DLG_* flags.
+                     */
+                    break;
+                }
+                res = InternetSetOptionW( params->hRequest, INTERNET_OPTION_SECURITY_FLAGS, &flags, size );
+                if(!res)
+                    WARN("InternetSetOption(INTERNET_OPTION_SECURITY_FLAGS) failed.\n");
+            }
+
+            EndDialog( hdlg, res ? ERROR_SUCCESS : ERROR_NOT_SUPPORTED );
+            return TRUE;
+        }
+        if( wParam == IDCANCEL )
+        {
+            TRACE("Pressed cancel.\n");
+
+            EndDialog( hdlg, ERROR_CANCELLED );
+            return TRUE;
+        }
+        break;
+    }
+
+    return FALSE;
+}
+
+/***********************************************************************
  *         WININET_GetConnectionStatus
  */
 static INT WININET_GetConnectionStatus( HINTERNET hRequest )
@@ -494,6 +599,9 @@ DWORD WINAPI InternetErrorDlg(HWND hWnd, HINTERNET hRequest,
 
     TRACE("%p %p %d %08x %p\n", hWnd, hRequest, dwError, dwFlags, lppvData);
 
+    if( !hWnd && !(dwFlags & FLAGS_ERROR_UI_FLAGS_NO_UI) )
+        return ERROR_INVALID_HANDLE;
+
     params.hWnd = hWnd;
     params.hRequest = hRequest;
     params.dwError = dwError;
@@ -520,14 +628,23 @@ DWORD WINAPI InternetErrorDlg(HWND hWnd, HINTERNET hRequest,
             WARN("unhandled status %u\n", dwStatus);
             return 0;
         }
-
-    case ERROR_INTERNET_HTTP_TO_HTTPS_ON_REDIR:
-    case ERROR_INTERNET_INVALID_CA:
-    case ERROR_INTERNET_POST_IS_NON_SECURE:
+    case ERROR_INTERNET_SEC_CERT_ERRORS:
     case ERROR_INTERNET_SEC_CERT_CN_INVALID:
     case ERROR_INTERNET_SEC_CERT_DATE_INVALID:
+    case ERROR_INTERNET_INVALID_CA:
+        if( dwFlags & FLAGS_ERROR_UI_FLAGS_NO_UI )
+            return ERROR_CANCELLED;
+
+        if( dwFlags & ~FLAGS_ERROR_UI_FLAGS_CHANGE_OPTIONS )
+            FIXME("%08x contains unsupported flags.\n", dwFlags);
+
+        return DialogBoxParamW( WININET_hModule, MAKEINTRESOURCEW( IDD_INVCERTDLG ),
+                                hWnd, WININET_InvalidCertificateDialog, (LPARAM) &params );
+    case ERROR_INTERNET_HTTP_TO_HTTPS_ON_REDIR:
+    case ERROR_INTERNET_POST_IS_NON_SECURE:
         FIXME("Need to display dialog for error %d\n", dwError);
         return ERROR_SUCCESS;
     }
-    return ERROR_INVALID_PARAMETER;
+
+    return ERROR_NOT_SUPPORTED;
 }
