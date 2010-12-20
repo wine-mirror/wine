@@ -1871,79 +1871,125 @@ err.message = undefined;
 if(invokeVersion >= 2)
     ok(err.toString() === "Error", "err.toString() = " + err.toString());
 
-function exception_test(func, type, number) {
-    ret = "";
-    num = "";
+var exception_array = {
+    E_INVALID_LENGTH:  { type: "RangeError",  number: -2146823259 },
+
+    E_NOT_DATE:            { type: "TypeError",   number: -2146823282 },
+    E_NOT_BOOL:            { type: "TypeError",   number: -2146823278 },
+    E_ARG_NOT_OPT:         { type: "TypeError",   number: -2146827839 },
+    E_NO_PROPERTY:         { type: "TypeError",   number: -2146827850 },
+    E_NOT_NUM:             { type: "TypeError",   number: -2146823287 },
+    E_INVALID_CALL_ARG:    { type: "TypeError",   number: -2146828283 },
+    E_NOT_FUNC:            { type: "TypeError",   number: -2146823286 },
+    E_OBJECT_EXPECTED:     { type: "TypeError", number: -2146823281 },
+    E_UNSUPPORTED_ACTION:  { type: "TypeError", number: -2146827843 },
+    E_NOT_VBARRAY:         { type: "TypeError", number: -2146823275 },
+    E_UNDEFINED:           { type: "TypeError", number: -2146823279 },
+    E_JSCRIPT_EXPECTED:    { type: "TypeError", number: -2146823274 },
+    E_NOT_ARRAY:           { type: "TypeError", number: -2146823257 },
+
+    E_SYNTAX_ERROR:      { type: "SyntaxError",  number: -2146827286 },
+    E_LBRACKET:          { type: "SyntaxError",  number: -2146827283 },
+    E_RBRACKET:          { type: "SyntaxError",  number: -2146827282 },
+    E_SEMICOLON:         { type: "SyntaxError",  number: -2146827284 },
+    E_UNTERMINATED_STR:  { type: "SyntaxError",  number: -2146827273 },
+
+    E_ILLEGAL_ASSIGN:  { type: "ReferenceError", number: -2146823280 },
+
+    E_SUBSCRIPT_OUT_OF_RANGE:  {type: "RangeError", number: -2146828279 },
+
+    E_REGEXP_SYNTAX_ERROR:  { type: "RegExpError", number: -2146823271 },
+
+    E_URI_INVALID_CHAR:  { type: "URIError", number: -2146823264 }
+};
+
+function testException(func, id) {
+    var ex = exception_array[id];
+    var ret = "", num = "";
+
     try {
         func();
     } catch(e) {
         ret = e.name;
         num = e.number;
     }
-    ok(ret === type, "Exception test, ret = " + ret + ", expected " + type +". Executed function: " + func.toString());
-    ok(num === number, "Exception test, num = " + num + ", expected " + number + ". Executed function: " + func.toString());
-}
-exception_test(function() {arr.toString = Date.prototype.toString; arr.toString();}, "TypeError", -2146823282);
-exception_test(function() {Array(-3);}, "RangeError", -2146823259);
-exception_test(function() {arr.toString = Boolean.prototype.toString; arr.toString();}, "TypeError", -2146823278);
-exception_test(function() {date.setTime();}, "TypeError", -2146827839);
-exception_test(function() {date.setYear();}, "TypeError", -2146827839);
-exception_test(function() {arr.test();}, "TypeError", -2146827850);
-exception_test(function() {arr.toString = Number.prototype.toString; arr.toString();}, "TypeError", -2146823287);
-exception_test(function() {(new Number(3)).toString(1);}, "TypeError", -2146828283);
-exception_test(function() {not_existing_variable.something();}, "TypeError", -2146823279);
-exception_test(function() {arr.toString = Function.prototype.toString; arr.toString();}, "TypeError", -2146823286);
-exception_test(function() {date();}, "TypeError", -2146823286);
-exception_test(function() {arr();}, "TypeError", -2146823286);
-exception_test(function() {eval("for(i=0;) {}");}, "SyntaxError", -2146827286);
-exception_test(function() {eval("function {};");}, "SyntaxError", -2146827283);
-exception_test(function() {eval("if");}, "SyntaxError", -2146827283);
-exception_test(function() {eval("do i=0; while");}, "SyntaxError", -2146827283);
-exception_test(function() {eval("while");}, "SyntaxError", -2146827283);
-exception_test(function() {eval("for");}, "SyntaxError", -2146827283);
-exception_test(function() {eval("with");}, "SyntaxError", -2146827283);
-exception_test(function() {eval("switch");}, "SyntaxError", -2146827283);
-exception_test(function() {eval("if(false");}, "SyntaxError", -2146827282);
-exception_test(function() {eval("for(i=0; i<10; i++");}, "SyntaxError", -2146827282);
-exception_test(function() {eval("while(true");}, "SyntaxError", -2146827282);
-exception_test(function() {test = function() {}}, "ReferenceError", -2146823280);
-exception_test(function() {eval("for(i=0")}, "SyntaxError", -2146827284);
-exception_test(function() {eval("for(i=0;i<10")}, "SyntaxError", -2146827284);
-exception_test(function() {eval("while(")}, "SyntaxError", -2146827286);
-exception_test(function() {eval("if(")}, "SyntaxError", -2146827286);
-exception_test(function() {eval("'unterminated")}, "SyntaxError", -2146827273);
-exception_test(function() {eval("nonexistingfunc()")}, "TypeError", -2146823281);
-exception_test(function() {RegExp(/a/, "g");}, "RegExpError", -2146823271);
-exception_test(function() {encodeURI('\udcaa');}, "URIError", -2146823264);
-exception_test(function() {(new Object()) instanceof 3;}, "TypeError", -2146823286);
-exception_test(function() {(new Object()) instanceof null;}, "TypeError", -2146823286);
-exception_test(function() {(new Object()) instanceof nullDisp;}, "TypeError", -2146823286);
-exception_test(function() {"test" in 3;}, "TypeError", -2146823281);
-exception_test(function() {"test" in null;}, "TypeError", -2146823281);
-exception_test(function() {"test" in nullDisp;}, "TypeError", -2146823281);
-exception_test(function() {new 3;}, "TypeError", -2146827843);
-exception_test(function() {new null;}, "TypeError", -2146823281);
-exception_test(function() {new nullDisp;}, "TypeError", -2146827850);
-exception_test(function() {new VBArray();}, "TypeError", -2146823275);
-exception_test(function() {new VBArray(new VBArray(createArray()));}, "TypeError", -2146823275);
-exception_test(function() {createArray().lbound("aaa");}, "RangeError", -2146828279);
-exception_test(function() {createArray().lbound(3);}, "RangeError", -2146828279);
-exception_test(function() {VBArray.prototype.lbound.call(new Object());}, "TypeError", -2146823275);
-exception_test(function() {createArray().getItem(3);}, "RangeError", -2146828279);
 
-function testThisExcept(func, number) {
-    exception_test(function() {func.call(new Object())}, "TypeError", number);
+    ok(ret === ex.type, "Exception test, ret = " + ret + ", expected " + ex.type +". Executed function: " + func.toString());
+    ok(num === ex.number, "Exception test, num = " + num + ", expected " + ex.number + ". Executed function: " + func.toString());
+}
+
+// RangeError tests
+testException(function() {Array(-3);}, "E_INVALID_LENGTH");
+testException(function() {createArray().lbound("aaa");}, "E_SUBSCRIPT_OUT_OF_RANGE");
+testException(function() {createArray().lbound(3);}, "E_SUBSCRIPT_OUT_OF_RANGE");
+testException(function() {createArray().getItem(3);}, "E_SUBSCRIPT_OUT_OF_RANGE");
+
+// TypeError tests
+testException(function() {date.setTime();}, "E_ARG_NOT_OPT");
+testException(function() {date.setYear();}, "E_ARG_NOT_OPT");
+testException(function() {arr.test();}, "E_NO_PROPERTY");
+testException(function() {arr.toString = Number.prototype.toString; arr.toString();}, "E_NOT_NUM");
+testException(function() {(new Number(3)).toString(1);}, "E_INVALID_CALL_ARG");
+testException(function() {not_existing_variable.something();}, "E_UNDEFINED");
+testException(function() {date();}, "E_NOT_FUNC");
+testException(function() {arr();}, "E_NOT_FUNC");
+testException(function() {eval("nonexistingfunc()")}, "E_OBJECT_EXPECTED");
+testException(function() {(new Object()) instanceof 3;}, "E_NOT_FUNC");
+testException(function() {(new Object()) instanceof null;}, "E_NOT_FUNC");
+testException(function() {(new Object()) instanceof nullDisp;}, "E_NOT_FUNC");
+testException(function() {"test" in 3;}, "E_OBJECT_EXPECTED");
+testException(function() {"test" in null;}, "E_OBJECT_EXPECTED");
+testException(function() {"test" in nullDisp;}, "E_OBJECT_EXPECTED");
+testException(function() {new 3;}, "E_UNSUPPORTED_ACTION");
+testException(function() {new null;}, "E_OBJECT_EXPECTED");
+testException(function() {new nullDisp;}, "E_NO_PROPERTY");
+testException(function() {new VBArray();}, "E_NOT_VBARRAY");
+testException(function() {new VBArray(new VBArray(createArray()));}, "E_NOT_VBARRAY");
+testException(function() {VBArray.prototype.lbound.call(new Object());}, "E_NOT_VBARRAY");
+
+// SyntaxError tests
+function testSyntaxError(code, e) {
+    testException(function() { eval(code); }, e);
+}
+testSyntaxError("for(i=0;) {}", "E_SYNTAX_ERROR");
+testSyntaxError("function {};", "E_LBRACKET");
+testSyntaxError("if", "E_LBRACKET");
+testSyntaxError("do i=0; while", "E_LBRACKET");
+testSyntaxError("while", "E_LBRACKET");
+testSyntaxError("for", "E_LBRACKET");
+testSyntaxError("with", "E_LBRACKET");
+testSyntaxError("switch", "E_LBRACKET");
+testSyntaxError("if(false", "E_RBRACKET");
+testSyntaxError("for(i=0; i<10; i++", "E_RBRACKET");
+testSyntaxError("while(true", "E_RBRACKET");
+testSyntaxError("for(i=0", "E_SEMICOLON");
+testSyntaxError("for(i=0;i<10", "E_SEMICOLON");
+testSyntaxError("while(", "E_SYNTAX_ERROR");
+testSyntaxError("if(", "E_SYNTAX_ERROR");
+testSyntaxError("'unterminated", "E_UNTERMINATED_STR");
+
+// ReferenceError tests
+testException(function() {test = function() {}}, "E_ILLEGAL_ASSIGN");
+
+// RegExpError tests
+testException(function() {RegExp(/a/, "g");}, "E_REGEXP_SYNTAX_ERROR");
+
+// URIError tests
+testException(function() {encodeURI('\udcaa');}, "E_URI_INVALID_CHAR");
+
+function testThisExcept(func, e) {
+    testException(function() {func.call(new Object())}, e);
 }
 
 function testBoolThis(func) {
-    testThisExcept(Boolean.prototype[func], -2146823278);
+    testThisExcept(Boolean.prototype[func], "E_NOT_BOOL");
 }
 
 testBoolThis("toString");
 testBoolThis("valueOf");
 
 function testDateThis(func) {
-    testThisExcept(Date.prototype[func], -2146823282);
+    testThisExcept(Date.prototype[func], "E_NOT_DATE");
 }
 
 testDateThis("getDate");
@@ -1991,13 +2037,13 @@ testDateThis("toUTCString");
 testDateThis("valueOf");
 
 function testArrayThis(func) {
-    testThisExcept(Array.prototype[func], -2146823257);
+    testThisExcept(Array.prototype[func], "E_NOT_ARRAY");
 }
 
 testArrayThis("toString");
 
 function testFunctionThis(func) {
-    testThisExcept(Function.prototype[func], -2146823286);
+    testThisExcept(Function.prototype[func], "E_NOT_FUNC");
 }
 
 testFunctionThis("toString");
@@ -2005,7 +2051,7 @@ testFunctionThis("call");
 testFunctionThis("apply");
 
 function testArrayHostThis(func) {
-    exception_test(function() { Array.prototype[func].call(testObj); }, "TypeError", -2146823274);
+    testException(function() { Array.prototype[func].call(testObj); }, "E_JSCRIPT_EXPECTED");
 }
 
 testArrayHostThis("push");
