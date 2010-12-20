@@ -33,6 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
 typedef struct {
     const IMonikerVtbl *lpIMonikerVtbl;
+    IUriContainer IUriContainer_iface;
 
     LONG ref;
 
@@ -63,6 +64,9 @@ static HRESULT WINAPI URLMoniker_QueryInterface(IMoniker *iface, REFIID riid, vo
     }else if(IsEqualIID(&IID_IAsyncMoniker, riid)) {
         TRACE("(%p)->(IID_IAsyncMoniker %p)\n", This, ppv);
         *ppv = iface;
+    }else if(IsEqualIID(&IID_IUriContainer, riid)) {
+        TRACE("(%p)->(IID_IUriContainer %p)\n", This, ppv);
+        *ppv = &This->IUriContainer_iface;
     }else {
         WARN("(%p)->(%s,%p)\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
@@ -454,6 +458,46 @@ static const IMonikerVtbl URLMonikerVtbl =
     URLMoniker_IsSystemMoniker
 };
 
+static inline URLMoniker *impl_from_IUriContainer(IUriContainer *iface)
+{
+    return CONTAINING_RECORD(iface, URLMoniker, IUriContainer_iface);
+}
+
+static HRESULT WINAPI UriContainer_QueryInterface(IUriContainer *iface, REFIID riid, void **ppv)
+{
+    URLMoniker *This = impl_from_IUriContainer(iface);
+    return IMoniker_QueryInterface((IMoniker*)&This->lpIMonikerVtbl, riid, ppv);
+}
+
+static ULONG WINAPI UriContainer_AddRef(IUriContainer *iface)
+{
+    URLMoniker *This = impl_from_IUriContainer(iface);
+    return IMoniker_AddRef((IMoniker*)&This->lpIMonikerVtbl);
+}
+
+static ULONG WINAPI UriContainer_Release(IUriContainer *iface)
+{
+    URLMoniker *This = impl_from_IUriContainer(iface);
+    return IMoniker_Release((IMoniker*)&This->lpIMonikerVtbl);
+}
+
+static HRESULT WINAPI UriContainer_GetIUri(IUriContainer *iface, IUri **ppIUri)
+{
+    URLMoniker *This = impl_from_IUriContainer(iface);
+
+    FIXME("(%p)->(%p)\n", This, ppIUri);
+
+    *ppIUri = NULL;
+    return S_FALSE;
+}
+
+static const IUriContainerVtbl UriContainerVtbl = {
+    UriContainer_QueryInterface,
+    UriContainer_AddRef,
+    UriContainer_Release,
+    UriContainer_GetIUri
+};
+
 static URLMoniker *alloc_moniker(void)
 {
     URLMoniker *ret;
@@ -463,6 +507,7 @@ static URLMoniker *alloc_moniker(void)
         return NULL;
 
     ret->lpIMonikerVtbl = &URLMonikerVtbl;
+    ret->IUriContainer_iface.lpVtbl = &UriContainerVtbl;
     ret->ref = 1;
     ret->URLName = NULL;
 

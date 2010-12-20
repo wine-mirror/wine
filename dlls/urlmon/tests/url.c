@@ -37,7 +37,7 @@
 
 static HRESULT (WINAPI *pCreateAsyncBindCtxEx)(IBindCtx *, DWORD,
                 IBindStatusCallback *, IEnumFORMATETC *, IBindCtx **, DWORD);
-
+static HRESULT (WINAPI *pCreateUri)(LPCWSTR, DWORD, DWORD_PTR, IUri**);
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(CLSID_IdentityUnmarshal,0x0000001b,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
@@ -3157,6 +3157,22 @@ static void test_StdURLMoniker(void)
     hres = IMoniker_GetDisplayName(mon, NULL, NULL, &display_name);
     ok(hres == E_OUTOFMEMORY, "GetDisplayName failed: %08x, expected E_OUTOFMEMORY\n", hres);
 
+    if(pCreateUri) {
+      IUriContainer *uri_container;
+      IUri *uri;
+
+      hres = IMoniker_QueryInterface(mon, &IID_IUriContainer, (void**)&uri_container);
+      ok(hres == S_OK, "Coud not get IUriMoniker iface: %08x\n", hres);
+
+
+      uri = (void*)0xdeadbeef;
+      hres = IUriContainer_GetIUri(uri_container, &uri);
+      ok(hres == S_FALSE, "GetIUri failed: %08x\n", hres);
+      ok(!uri, "uri = %p, expected NULL\n", uri);
+
+      IUriContainer_Release(uri_container);
+    }
+
     IMoniker_Release(mon);
 }
 
@@ -3190,6 +3206,10 @@ START_TEST(url)
         win_skip("Too old IE\n");
         return;
     }
+
+    pCreateUri = (void*) GetProcAddress(hurlmon, "CreateUri");
+    if(!pCreateUri)
+        win_skip("IUri not supported\n");
 
     complete_event = CreateEvent(NULL, FALSE, FALSE, NULL);
     complete_event2 = CreateEvent(NULL, FALSE, FALSE, NULL);
