@@ -37,13 +37,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(wmiutils);
 
 typedef struct status_code
 {
-    const IWbemStatusCodeTextVtbl *vtbl;
+    IWbemStatusCodeText IWbemStatusCodeText_iface;
     LONG refs;
 } status_code;
 
 static inline status_code *impl_from_IWbemStatusCodeText( IWbemStatusCodeText *iface )
 {
-    return (status_code *)((char *)iface - FIELD_OFFSET( status_code, vtbl ));
+    return CONTAINING_RECORD(iface, status_code, IWbemStatusCodeText_iface);
 }
 
 static ULONG WINAPI status_code_AddRef(
@@ -143,10 +143,10 @@ HRESULT WbemStatusCodeText_create( IUnknown *pUnkOuter, LPVOID *ppObj )
     sc = HeapAlloc( GetProcessHeap(), 0, sizeof(*sc) );
     if (!sc) return E_OUTOFMEMORY;
 
-    sc->vtbl = &status_code_vtbl;
+    sc->IWbemStatusCodeText_iface.lpVtbl = &status_code_vtbl;
     sc->refs = 1;
 
-    *ppObj = &sc->vtbl;
+    *ppObj = &sc->IWbemStatusCodeText_iface;
 
     TRACE("returning iface %p\n", *ppObj);
     return S_OK;
