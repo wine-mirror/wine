@@ -25,14 +25,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 static const struct ID3DXLineVtbl ID3DXLine_Vtbl;
 
 typedef struct ID3DXLineImpl {
-    const ID3DXLineVtbl *lpVtbl;
+    ID3DXLine ID3DXLine_iface;
     LONG ref;
 } ID3DXLineImpl;
+
+static inline ID3DXLineImpl *impl_from_ID3DXLine(ID3DXLine *iface)
+{
+    return CONTAINING_RECORD(iface, ID3DXLineImpl, ID3DXLine_iface);
+}
 
 /*** IUnknown methods ***/
 static HRESULT WINAPI ID3DXLineImpl_QueryInterface(ID3DXLine* iface, REFIID riid, LPVOID* object)
 {
-    ID3DXLineImpl *This = (ID3DXLineImpl *)iface;
+    ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
 
     TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), object);
 
@@ -51,7 +56,7 @@ static HRESULT WINAPI ID3DXLineImpl_QueryInterface(ID3DXLine* iface, REFIID riid
 
 static ULONG WINAPI ID3DXLineImpl_AddRef(ID3DXLine* iface)
 {
-    ID3DXLineImpl *This = (ID3DXLineImpl *)iface;
+    ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
 
     TRACE("(%p)->(): AddRef from %u\n", This, This->ref);
 
@@ -60,7 +65,7 @@ static ULONG WINAPI ID3DXLineImpl_AddRef(ID3DXLine* iface)
 
 static ULONG WINAPI ID3DXLineImpl_Release(ID3DXLine* iface)
 {
-    ID3DXLineImpl *This = (ID3DXLineImpl *)iface;
+    ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p)->(): Release from %u\n", This, ref + 1);
@@ -74,7 +79,7 @@ static ULONG WINAPI ID3DXLineImpl_Release(ID3DXLine* iface)
 /*** ID3DXLine methods ***/
 static HRESULT WINAPI ID3DXLineImpl_GetDevice(ID3DXLine* iface, LPDIRECT3DDEVICE9* device)
 {
-    ID3DXLineImpl *This = (ID3DXLineImpl *)iface;
+    ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
 
     FIXME("(%p)->(%p): stub\n", This, device);
 
@@ -83,7 +88,7 @@ static HRESULT WINAPI ID3DXLineImpl_GetDevice(ID3DXLine* iface, LPDIRECT3DDEVICE
 
 static HRESULT WINAPI ID3DXLineImpl_Begin(ID3DXLine* iface)
 {
-    ID3DXLineImpl *This = (ID3DXLineImpl *)iface;
+    ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
 
     FIXME("(%p)->(): stub\n", This);
 
@@ -92,7 +97,7 @@ static HRESULT WINAPI ID3DXLineImpl_Begin(ID3DXLine* iface)
 
 static HRESULT WINAPI ID3DXLineImpl_Draw(ID3DXLine* iface, CONST D3DXVECTOR2* vertexlist, DWORD vertexlistcount, D3DCOLOR color)
 {
-    ID3DXLineImpl *This = (ID3DXLineImpl *)iface;
+    ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
 
     FIXME("(%p)->(%p, %u, %#x): stub\n", This, vertexlist, vertexlistcount, color);
 
@@ -102,7 +107,7 @@ static HRESULT WINAPI ID3DXLineImpl_Draw(ID3DXLine* iface, CONST D3DXVECTOR2* ve
 static HRESULT WINAPI ID3DXLineImpl_DrawTransform(ID3DXLine* iface, CONST D3DXVECTOR3* vertexlist, DWORD vertexlistcount,
                                                   CONST D3DXMATRIX* transform, D3DCOLOR color)
 {
-    ID3DXLineImpl *This = (ID3DXLineImpl *)iface;
+    ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
 
     FIXME("(%p)->(%p, %u, %p, %#x): stub\n", This, vertexlist, vertexlistcount, transform, color);
 
@@ -111,7 +116,7 @@ static HRESULT WINAPI ID3DXLineImpl_DrawTransform(ID3DXLine* iface, CONST D3DXVE
 
 static HRESULT WINAPI ID3DXLineImpl_SetPattern(ID3DXLine* iface, DWORD pattern)
 {
-    ID3DXLineImpl *This = (ID3DXLineImpl *)iface;
+    ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
 
     FIXME("(%p)->(%#x): stub\n", This, pattern);
 
@@ -120,7 +125,7 @@ static HRESULT WINAPI ID3DXLineImpl_SetPattern(ID3DXLine* iface, DWORD pattern)
 
 static DWORD WINAPI ID3DXLineImpl_GetPattern(ID3DXLine* iface)
 {
-    ID3DXLineImpl *This = (ID3DXLineImpl *)iface;
+    ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
 
     FIXME("(%p)->(): stub\n", This);
 
@@ -129,7 +134,7 @@ static DWORD WINAPI ID3DXLineImpl_GetPattern(ID3DXLine* iface)
 
 static HRESULT WINAPI ID3DXLineImpl_SetPatternScale(ID3DXLine* iface, FLOAT scale)
 {
-    ID3DXLineImpl *This = (ID3DXLineImpl *)iface;
+    ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
 
     FIXME("(%p)->(%f): stub\n", This, scale);
 
@@ -138,7 +143,7 @@ static HRESULT WINAPI ID3DXLineImpl_SetPatternScale(ID3DXLine* iface, FLOAT scal
 
 static FLOAT WINAPI ID3DXLineImpl_GetPatternScale(ID3DXLine* iface)
 {
-    ID3DXLineImpl *This = (ID3DXLineImpl *)iface;
+    ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
 
     FIXME("(%p)->(): stub\n", This);
 
@@ -147,7 +152,7 @@ static FLOAT WINAPI ID3DXLineImpl_GetPatternScale(ID3DXLine* iface)
 
 static HRESULT WINAPI ID3DXLineImpl_SetWidth(ID3DXLine* iface, FLOAT width)
 {
-    ID3DXLineImpl *This = (ID3DXLineImpl *)iface;
+    ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
 
     FIXME("(%p)->(%f): stub\n", This, width);
 
@@ -156,7 +161,7 @@ static HRESULT WINAPI ID3DXLineImpl_SetWidth(ID3DXLine* iface, FLOAT width)
 
 static FLOAT WINAPI ID3DXLineImpl_GetWidth(ID3DXLine* iface)
 {
-    ID3DXLineImpl *This = (ID3DXLineImpl *)iface;
+    ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
 
     FIXME("(%p)->(): stub\n", This);
 
@@ -165,7 +170,7 @@ static FLOAT WINAPI ID3DXLineImpl_GetWidth(ID3DXLine* iface)
 
 static HRESULT WINAPI ID3DXLineImpl_SetAntialias(ID3DXLine* iface, BOOL antialias)
 {
-    ID3DXLineImpl *This = (ID3DXLineImpl *)iface;
+    ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
 
     FIXME("(%p)->(%u): stub\n", This, antialias);
 
@@ -174,7 +179,7 @@ static HRESULT WINAPI ID3DXLineImpl_SetAntialias(ID3DXLine* iface, BOOL antialia
 
 static BOOL WINAPI ID3DXLineImpl_GetAntialias(ID3DXLine* iface)
 {
-    ID3DXLineImpl *This = (ID3DXLineImpl *)iface;
+    ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
 
     FIXME("(%p)->(): stub\n", This);
 
@@ -183,7 +188,7 @@ static BOOL WINAPI ID3DXLineImpl_GetAntialias(ID3DXLine* iface)
 
 static HRESULT WINAPI ID3DXLineImpl_SetGLLines(ID3DXLine* iface, BOOL gl_lines)
 {
-    ID3DXLineImpl *This = (ID3DXLineImpl *)iface;
+    ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
 
     FIXME("(%p)->(%u): stub\n", This, gl_lines);
 
@@ -192,7 +197,7 @@ static HRESULT WINAPI ID3DXLineImpl_SetGLLines(ID3DXLine* iface, BOOL gl_lines)
 
 static BOOL WINAPI ID3DXLineImpl_GetGLLines(ID3DXLine* iface)
 {
-    ID3DXLineImpl *This = (ID3DXLineImpl *)iface;
+    ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
 
     FIXME("(%p)->(): stub\n", This);
 
@@ -201,7 +206,7 @@ static BOOL WINAPI ID3DXLineImpl_GetGLLines(ID3DXLine* iface)
 
 static HRESULT WINAPI ID3DXLineImpl_End(ID3DXLine* iface)
 {
-    ID3DXLineImpl *This = (ID3DXLineImpl *)iface;
+    ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
 
     FIXME("(%p)->(): stub\n", This);
 
@@ -210,7 +215,7 @@ static HRESULT WINAPI ID3DXLineImpl_End(ID3DXLine* iface)
 
 static HRESULT WINAPI ID3DXLineImpl_OnLostDevice(ID3DXLine* iface)
 {
-    ID3DXLineImpl *This = (ID3DXLineImpl *)iface;
+    ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
 
     FIXME("(%p)->(): stub\n", This);
 
@@ -218,7 +223,7 @@ static HRESULT WINAPI ID3DXLineImpl_OnLostDevice(ID3DXLine* iface)
 }
 static HRESULT WINAPI ID3DXLineImpl_OnResetDevice(ID3DXLine* iface)
 {
-    ID3DXLineImpl *This = (ID3DXLineImpl *)iface;
+    ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
 
     FIXME("(%p)->(): stub\n", This);
 
@@ -267,10 +272,10 @@ HRESULT WINAPI D3DXCreateLine(LPDIRECT3DDEVICE9 device, LPD3DXLINE* line)
         return E_OUTOFMEMORY;
     }
 
-    object->lpVtbl = &ID3DXLine_Vtbl;
+    object->ID3DXLine_iface.lpVtbl = &ID3DXLine_Vtbl;
     object->ref = 1;
 
-    *line = (LPD3DXLINE)object;
+    *line = &object->ID3DXLine_iface;
 
     return D3D_OK;
 }
