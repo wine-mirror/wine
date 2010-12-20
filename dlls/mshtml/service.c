@@ -49,19 +49,20 @@ static HRESULT WINAPI OleUndoManager_QueryInterface(IOleUndoManager *iface, REFI
 {
     UndoManager *This = impl_from_IOleUndoManager(iface);
 
-    *ppv = NULL;
-
     if(IsEqualGUID(riid, &IID_IUnknown)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
         *ppv = &This->IOleUndoManager_iface;
     }else if(IsEqualGUID(riid, &IID_IOleUndoManager)) {
         TRACE("(%p)->(IID_IOleUndoManager %p)\n", This, ppv);
         *ppv = &This->IOleUndoManager_iface;
+    }else {
+        *ppv = NULL;
+        FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        return E_NOINTERFACE;
     }
 
-
-    FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
 }
 
 static ULONG WINAPI OleUndoManager_AddRef(IOleUndoManager *iface)
