@@ -918,7 +918,6 @@ static void test_query_svc(void)
     SetLastError(0xdeadbeef);
     ret = QueryServiceStatus(svc_handle, NULL);
     ok(!ret, "Expected failure\n");
-    todo_wine
     ok(GetLastError() == ERROR_INVALID_ADDRESS ||
        GetLastError() == ERROR_INVALID_PARAMETER /* NT4 */,
        "Unexpected last error %d\n", GetLastError());
