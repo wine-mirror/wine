@@ -3,7 +3,7 @@
  * Italian Language Support
  *
  * Copyright (C) 1999 D A Pickles
- * Copyright (C) 2009 Luca Bennati
+ * Copyright (C) 2009-2010 Luca Bennati
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -210,6 +210,10 @@ PUSHD.\n"
 
   WCMD_MORE,   "MORE mostra l'output di files o l'input dalla pipe in pagine.\n"
 
+  WCMD_CHOICE, "CHOICE mostra un testo e aspetta l'inserimento da parte\n\
+dell'utente di un tasto permesso da una lista selezionabile.\n\
+CHOICE è usato generalmente per creare un menù a selezione in un file batch.\n"
+
   WCMD_EXIT,
 "EXIT termina la sessione corrente di cmd e torna al\n\
 sistema operativo o alla shell dal quale hai chiamato cmd.\n"
@@ -218,6 +222,7 @@ sistema operativo o alla shell dal quale hai chiamato cmd.\n"
 ATTRIB\t\tMostra o cambia gli attributi dei files DOS\n\
 CALL\t\tInvoca un file batch da dentro un altro\n\
 CD (CHDIR)\tCambia la cartella di default attuale\n\
+CHOICE\t\tAspetta la pressione di un tasto da una lista selezionabile\n\
 CLS\t\tPulisce lo schermo della console\n\
 COPY\t\tCopia files\n\
 CTTY\t\tCambia il dispositivo di input/output\n\
