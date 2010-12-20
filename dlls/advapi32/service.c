@@ -1130,6 +1130,17 @@ BOOL WINAPI QueryServiceStatus(SC_HANDLE hService,
 
     TRACE("%p %p\n", hService, lpservicestatus);
 
+    if (!hService)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if (!lpservicestatus)
+    {
+        SetLastError(ERROR_INVALID_ADDRESS);
+        return FALSE;
+    }
+
     ret = QueryServiceStatusEx(hService, SC_STATUS_PROCESS_INFO, (LPBYTE)&SvcStatusData,
                                 sizeof(SERVICE_STATUS_PROCESS), &dummy);
     if (ret) memcpy(lpservicestatus, &SvcStatusData, sizeof(SERVICE_STATUS)) ;
