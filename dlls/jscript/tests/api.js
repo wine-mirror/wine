@@ -1597,6 +1597,7 @@ ok(date.getUTCHours() === 0, "date.getUTCHours() = " + date.getUTCHours());
 ok(date.getUTCMinutes() === 0, "date.getUTCMinutes() = " + date.getUTCMinutes());
 ok(date.getUTCSeconds() === 0, "date.getUTCSeconds() = " + date.getUTCSeconds());
 ok(date.getUTCMilliseconds() === 0, "date.getUTCMilliseconds() = " + date.getUTCMilliseconds());
+
 date.setTime(60*24*60*60*1000);
 ok(date.getUTCFullYear() === 1970, "date.getUTCFullYear() = " + date.getUTCFullYear());
 ok(date.getUTCMonth() === 2, "date.getUTCMonth() = " + date.getUTCMonth());
@@ -1606,6 +1607,7 @@ ok(date.getUTCHours() === 0, "date.getUTCHours() = " + date.getUTCHours());
 ok(date.getUTCMinutes() === 0, "date.getUTCMinutes() = " + date.getUTCMinutes());
 ok(date.getUTCSeconds() === 0, "date.getUTCSeconds() = " + date.getUTCSeconds());
 ok(date.getUTCMilliseconds() === 0, "date.getUTCMilliseconds() = " + date.getUTCMilliseconds());
+
 date.setTime(59*24*60*60*1000 + 4*365*24*60*60*1000 + 60*60*1000 + 2*60*1000 + 2*1000 + 640);
 ok(date.getUTCFullYear() === 1974, "date.getUTCFullYear() = " + date.getUTCFullYear());
 ok(date.getUTCMonth() === 1, "date.getUTCMonth() = " + date.getUTCMonth());
@@ -1616,6 +1618,22 @@ ok(date.getUTCHours() === 1, "date.getUTCHours() = " + date.getUTCHours());
 ok(date.getUTCMinutes() === 2, "date.getUTCMinutes() = " + date.getUTCMinutes());
 ok(date.getUTCSeconds() === 2, "date.getUTCSeconds() = " + date.getUTCSeconds());
 ok(date.getUTCMilliseconds() === 640, "date.getUTCMilliseconds() = " + date.getUTCMilliseconds());
+
+tmp = date.setYear(96);
+ok(date.getYear() === 96, "date.getYear() = " + date.getYear());
+ok(date.getFullYear() === 1996, "date.getFullYear() = " + date.getYear());
+ok(date.getUTCMonth() === 1, "date.getUTCMonth() = " + date.getUTCMonth());
+ok(date.getUTCMonth(123) === 1, "date.getUTCMonth() = " + date.getUTCMonth());
+ok(date.getUTCMilliseconds() === 640, "date.getUTCMilliseconds() = " + date.getUTCMilliseconds());
+
+tmp = date.setYear(2010);
+ok(tmp === date.getTime(), "date.setYear(2010) = " + tmp);
+ok(date.getYear() === 2010, "date.getYear() = " + date.getYear());
+ok(date.getFullYear() === 2010, "date.getFullYear() = " + date.getYear());
+ok(date.getUTCMonth() === 1, "date.getUTCMonth() = " + date.getUTCMonth());
+ok(date.getUTCMonth(123) === 1, "date.getUTCMonth() = " + date.getUTCMonth());
+ok(date.getUTCMilliseconds() === 640, "date.getUTCMilliseconds() = " + date.getUTCMilliseconds());
+
 date.setTime(Infinity);
 ok(isNaN(date.getUTCFullYear()), "date.getUTCFullYear() is not NaN");
 ok(isNaN(date.getUTCMonth()), "date.getUTCMonth() is not NaN");
@@ -1626,6 +1644,12 @@ ok(isNaN(date.getUTCMinutes()), "date.getUTCMinutes() is not NaN");
 ok(isNaN(date.getUTCSeconds()), "date.getUTCSeconds() is not NaN");
 ok(isNaN(date.getUTCMilliseconds()), "date.getUTCMilliseconds() is not NaN");
 ok(isNaN(date.setMilliseconds(0)), "date.setMilliseconds() is not NaN");
+
+date.setTime(0);
+tmp = date.setYear(NaN);
+ok(isNaN(tmp), "date.setYear(NaN) = " + tmp);
+ok(isNaN(date.getUTCFullYear()), "date.getUTCFullYear() is not NaN");
+ok(isNaN(date.getUTCMonth()), "date.getUTCMonth() is not NaN");
 
 date.setTime(0);
 date.setUTCMilliseconds(-10, 2);
@@ -1863,6 +1887,7 @@ exception_test(function() {arr.toString = Date.prototype.toString; arr.toString(
 exception_test(function() {Array(-3);}, "RangeError", -2146823259);
 exception_test(function() {arr.toString = Boolean.prototype.toString; arr.toString();}, "TypeError", -2146823278);
 exception_test(function() {date.setTime();}, "TypeError", -2146827839);
+exception_test(function() {date.setYear();}, "TypeError", -2146827839);
 exception_test(function() {arr.test();}, "TypeError", -2146827850);
 exception_test(function() {arr.toString = Number.prototype.toString; arr.toString();}, "TypeError", -2146823287);
 exception_test(function() {(new Number(3)).toString(1);}, "TypeError", -2146828283);
@@ -1939,6 +1964,7 @@ testDateThis("getUTCMilliseconds");
 testDateThis("getUTCMinutes");
 testDateThis("getUTCMonth");
 testDateThis("getUTCSeconds");
+testDateThis("getYear");
 testDateThis("setDate");
 testDateThis("setFullYear");
 testDateThis("setHours");
@@ -1954,6 +1980,7 @@ testDateThis("setUTCMilliseconds");
 testDateThis("setUTCMinutes");
 testDateThis("setUTCMonth");
 testDateThis("setUTCSeconds");
+testDateThis("setYear");
 testDateThis("toDateString");
 testDateThis("toLocaleDateString");
 testDateThis("toLocaleString");
@@ -2121,6 +2148,7 @@ testFunctions(Date.prototype, [
         ["getUTCMinutes", 0],
         ["getUTCMonth", 0],
         ["getUTCSeconds", 0],
+        ["getYear", 0],
         ["setDate", 1],
         ["setFullYear", 3],
         ["setHours", 4],

@@ -2028,8 +2028,42 @@ static HRESULT Date_getYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
 static HRESULT Date_setYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    DateInstance *date;
+    DOUBLE t, year;
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(!(date = date_this(jsthis)))
+        return throw_type_error(ctx, ei, IDS_NOT_DATE, NULL);
+
+    if(!arg_cnt(dp))
+        return throw_type_error(ctx, ei, IDS_ARG_NOT_OPT, NULL);
+
+    t = local_time(date->time, date);
+
+    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    if(FAILED(hres))
+        return hres;
+
+    year = num_val(&v);
+    if(isnan(year)) {
+        date->time = year;
+        if(retv)
+            num_set_nan(retv);
+        return S_OK;
+    }
+
+    year = year >= 0.0 ? floor(year) : -floor(-year);
+    if(-1.0 < year && year < 100.0)
+        year += 1900.0;
+
+    date->time = time_clip(utc(make_date(make_day(year, month_from_time(t), date_from_time(t)), time_within_day(t)), date));
+
+    if(retv)
+        num_set_val(retv, date->time);
+    return S_OK;
 }
 
 static HRESULT Date_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
