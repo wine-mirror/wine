@@ -743,7 +743,6 @@ static UINT WINECON_ParseOptions(const char* lpCmdLine, struct wc_init* wci)
             if (end == wci->ptr + 12) return IDS_CMD_INVALID_EVENT_ID;
             wci->mode = from_event;
             wci->ptr = end;
-            wci->backend = WCUSER_InitBackend;
         }
         else if (strncmp(wci->ptr, "--backend=", 10) == 0)
         {
