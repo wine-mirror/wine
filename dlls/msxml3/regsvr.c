@@ -466,14 +466,6 @@ static LONG register_key_defvalueA(
  *		coclass list
  */
 static struct regsvr_coclass const coclass_list[] = {
-    {   &CLSID_DOMDocument,
-	"XML DOM Document",
-	NULL,
-	"msxml3.dll",
-	"Both",
-	"Microsoft.XMLDOM",
-	"1.0"
-    },
     {   &CLSID_DOMDocument2,
         "XML DOM Document",
         NULL,
@@ -489,22 +481,6 @@ static struct regsvr_coclass const coclass_list[] = {
         "Both",
         "Msxml2.DOMDocument",
         "3.0"
-    },
-    {   &CLSID_DOMFreeThreadedDocument,
-	"Free threaded XML DOM Document",
-	NULL,
-	"msxml3.dll",
-	"Both",
-	"Microsoft.FreeThreadedXMLDOM",
-	"1.0"
-    },
-    {   &CLSID_DOMFreeThreadedDocument,
-        "Free threaded XML DOM Document",
-        NULL,
-        "msxml3.dll",
-        "Both",
-        "Microsoft.FreeThreadedXMLDOM",
-        NULL
     },
     {   &CLSID_FreeThreadedDOMDocument,
         "Free Threaded XML DOM Document",
@@ -530,14 +506,6 @@ static struct regsvr_coclass const coclass_list[] = {
         "Microsoft.FreeThreadedDOMDocument.1.0",
         "1.0"
      },
-    {   &CLSID_XMLHTTPRequest,
-	"XML HTTP Request",
-	NULL,
-	"msxml3.dll",
-	"Apartment",
-	"Microsoft.XMLHTTP",
-	"1.0"
-    },
     {   &CLSID_XMLHTTP26,
 	"XML HTTP 2.6",
 	NULL,
@@ -553,14 +521,6 @@ static struct regsvr_coclass const coclass_list[] = {
 	"Apartment",
 	"Msxml2.XMLHTTP.3.0",
 	"3.0"
-    },
-    {   &CLSID_XMLDSOControl,
-	"XML Data Source Object",
-	NULL,
-	"msxml3.dll",
-	"Apartment",
-	"Microsoft.XMLDSO",
-	"1.0"
     },
     {   &CLSID_XMLDocument,
 	"Msxml",
@@ -655,21 +615,6 @@ static struct regsvr_interface const interface_list[] = {
  *		progid list
  */
 static struct progid const progid_list[] = {
-    {   "Microsoft.XMLDOM",
-	"XML DOM Document",
-	&CLSID_DOMDocument,
-	"Microsoft.XMLDOM.1.0"
-    },
-    {   "Microsoft.XMLDOM.1.0",
-	"XML DOM Document",
-	&CLSID_DOMDocument,
-	NULL
-    },
-    {   "MSXML.DOMDocument",
-	"XML DOM Document",
-	&CLSID_DOMDocument,
-	"Microsoft.XMLDOM.1.0"
-    },
     {   "Msxml2.DOMDocument",
         "XML DOM Document",
         &CLSID_DOMDocument2,
@@ -679,21 +624,6 @@ static struct progid const progid_list[] = {
         "XML DOM Document 3.0",
         &CLSID_DOMDocument30,
         NULL
-    },
-    {   "Microsoft.FreeThreadedXMLDOM",
-	"Free threaded XML DOM Document",
-	&CLSID_DOMFreeThreadedDocument,
-	"Microsoft.FreeThreadedXMLDOM.1.0"
-    },
-    {   "Microsoft.FreeThreadedXMLDOM.1.0",
-	"Free threaded XML DOM Document",
-	&CLSID_DOMFreeThreadedDocument,
-	NULL
-    },
-    {   "MSXML.FreeThreadedDOMDocument",
-	"Free threaded XML DOM Document",
-	&CLSID_DOMFreeThreadedDocument,
-	"Microsoft.FreeThreadedXMLDOM.1.0"
     },
     {   "MSXML.FreeThreadedDOMDocument26",
     "Free threaded XML DOM Document 2.6",
@@ -705,16 +635,6 @@ static struct progid const progid_list[] = {
     &CLSID_FreeThreadedDOMDocument30,
     NULL
     },
-    {   "Microsoft.XMLHTTP",
-	"XML HTTP Request",
-	&CLSID_XMLHTTPRequest,
-	"Microsoft.XMLHTTP.1.0"
-    },
-    {   "Microsoft.XMLHTTP.1.0",
-	"XML HTTP Request",
-	&CLSID_XMLHTTPRequest,
-	NULL
-    },
     {   "Msxml2.XMLHTTP.2.6",
 	"XML HTTP 2.6",
 	&CLSID_XMLHTTP26,
@@ -723,16 +643,6 @@ static struct progid const progid_list[] = {
     {   "Msxml2.XMLHTTP.3.0",
 	"XML HTTP 3.0",
 	&CLSID_XMLHTTP30,
-	NULL
-    },
-    {   "Microsoft.XMLDSO",
-	"XML Data Source Object",
-	&CLSID_XMLDSOControl,
-	"Microsoft.XMLDSO.1.0"
-    },
-    {   "Microsoft.XMLDSO.1.0",
-	"XML Data Source Object",
-	&CLSID_XMLDSOControl,
 	NULL
     },
     {   "Msxml",

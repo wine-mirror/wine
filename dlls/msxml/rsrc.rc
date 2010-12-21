@@ -20,3 +20,6 @@
 
 /* @makedep: msxml_tlb.tlb */
 1 TYPELIB msxml_tlb.tlb
+
+/* @makedep: msxml.rgs */
+1 WINE_REGISTRY msxml.rgs
