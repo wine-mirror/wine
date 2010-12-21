@@ -62,6 +62,33 @@ struct d3dcompiler_shader_reflection
 {
     ID3D11ShaderReflection ID3D11ShaderReflection_iface;
     LONG refcount;
+
+    UINT mov_instruction_count;
+    UINT conversion_instruction_count;
+    UINT instruction_count;
+    UINT emit_instruction_count;
+    D3D_PRIMITIVE_TOPOLOGY gs_output_topology;
+    UINT gs_max_output_vertex_count;
+    D3D_PRIMITIVE input_primitive;
+    UINT cut_instruction_count;
+    UINT dcl_count;
+    UINT static_flow_control_count;
+    UINT float_instruction_count;
+    UINT temp_register_count;
+    UINT int_instruction_count;
+    UINT uint_instruction_count;
+    UINT temp_array_count;
+    UINT array_instruction_count;
+    UINT texture_normal_instructions;
+    UINT texture_load_instructions;
+    UINT texture_comp_instructions;
+    UINT texture_bias_instructions;
+    UINT texture_gradient_instructions;
+    UINT dynamic_flow_control_count;
+    UINT c_control_points;
+    D3D_TESSELLATOR_OUTPUT_PRIMITIVE hs_output_primitive;
+    D3D_TESSELLATOR_PARTITIONING hs_prtitioning;
+    D3D_TESSELLATOR_DOMAIN tessellator_domain;
 };
 
 /* reflection handling */
