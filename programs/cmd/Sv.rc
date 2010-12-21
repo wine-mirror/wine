@@ -209,6 +209,10 @@ och ändrar sedan sökvägen till den angivna mappen.\n"
 
   WCMD_MORE,   "MORE skriver ut filers utskrift eller vidarebefodrade förfrågningar på sidor.\n"
 
+  WCMD_CHOICE, "CHOICE visar en text och väntar tills användaren\n\
+trycker ner en tangent från en valbar lista.\n\
+CHOICE används främst för att skapa menyval i batchfiler.\n"
+
   WCMD_EXIT,
 "EXIT avslutar cmd och skickar tillbaks användaren till\n\
 operativsystemet eller skalet som cmd startades ifrån.\n"
@@ -217,6 +221,7 @@ operativsystemet eller skalet som cmd startades ifrån.\n"
 ATTRIB\t\tVisa eller ändra DOS-filers attribut\n\
 CALL\t\tAnropar en batchfil inifrån en annan\n\
 CD (CHDIR)\tÄndrar nuvarande standardsökväg\n\
+CHOICE\t\tVäntar på en tangenttryckning från en valbar lista\n\
 CLS\t\tRensar konsollen\n\
 COPY\t\tKopierar en fil\n\
 CTTY\t\tÄndrar input/output-enhet\n\
