@@ -1226,7 +1226,7 @@ void test_InternetErrorDlg(void)
                 continue;
             }
             break;
-        case 12054: /* ERROR_INTERNET_FORTEZZA_LOGIN_NEEDED */
+        case ERROR_INTERNET_FORTEZZA_LOGIN_NEEDED:
             if(res != expected)
             {
                 /* Windows XP, W2K3 */
