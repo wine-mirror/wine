@@ -26,6 +26,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dcompiler);
 
+static inline struct d3dcompiler_blob *impl_from_ID3DBlob(ID3DBlob *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3dcompiler_blob, ID3DBlob_iface);
+}
+
 /* IUnknown methods */
 
 static HRESULT STDMETHODCALLTYPE d3dcompiler_blob_QueryInterface(ID3DBlob *iface, REFIID riid, void **object)
@@ -48,7 +53,7 @@ static HRESULT STDMETHODCALLTYPE d3dcompiler_blob_QueryInterface(ID3DBlob *iface
 
 static ULONG STDMETHODCALLTYPE d3dcompiler_blob_AddRef(ID3DBlob *iface)
 {
-    struct d3dcompiler_blob *blob = (struct d3dcompiler_blob *)iface;
+    struct d3dcompiler_blob *blob = impl_from_ID3DBlob(iface);
     ULONG refcount = InterlockedIncrement(&blob->refcount);
 
     TRACE("%p increasing refcount to %u\n", blob, refcount);
@@ -58,7 +63,7 @@ static ULONG STDMETHODCALLTYPE d3dcompiler_blob_AddRef(ID3DBlob *iface)
 
 static ULONG STDMETHODCALLTYPE d3dcompiler_blob_Release(ID3DBlob *iface)
 {
-    struct d3dcompiler_blob *blob = (struct d3dcompiler_blob *)iface;
+    struct d3dcompiler_blob *blob = impl_from_ID3DBlob(iface);
     ULONG refcount = InterlockedDecrement(&blob->refcount);
 
     TRACE("%p decreasing refcount to %u\n", blob, refcount);
@@ -76,7 +81,7 @@ static ULONG STDMETHODCALLTYPE d3dcompiler_blob_Release(ID3DBlob *iface)
 
 static void * STDMETHODCALLTYPE d3dcompiler_blob_GetBufferPointer(ID3DBlob *iface)
 {
-    struct d3dcompiler_blob *blob = (struct d3dcompiler_blob *)iface;
+    struct d3dcompiler_blob *blob = impl_from_ID3DBlob(iface);
 
     TRACE("iface %p\n", iface);
 
@@ -85,7 +90,7 @@ static void * STDMETHODCALLTYPE d3dcompiler_blob_GetBufferPointer(ID3DBlob *ifac
 
 static SIZE_T STDMETHODCALLTYPE d3dcompiler_blob_GetBufferSize(ID3DBlob *iface)
 {
-    struct d3dcompiler_blob *blob = (struct d3dcompiler_blob *)iface;
+    struct d3dcompiler_blob *blob = impl_from_ID3DBlob(iface);
 
     TRACE("iface %p\n", iface);
 
@@ -105,7 +110,7 @@ static const struct ID3D10BlobVtbl d3dcompiler_blob_vtbl =
 
 HRESULT d3dcompiler_blob_init(struct d3dcompiler_blob *blob, SIZE_T data_size)
 {
-    blob->vtbl = &d3dcompiler_blob_vtbl;
+    blob->ID3DBlob_iface.lpVtbl = &d3dcompiler_blob_vtbl;
     blob->refcount = 1;
     blob->size = data_size;
 

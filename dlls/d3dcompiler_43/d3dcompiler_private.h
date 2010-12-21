@@ -44,7 +44,7 @@ const char *debug_d3dcompiler_d3d_blob_part(D3D_BLOB_PART part) DECLSPEC_HIDDEN;
 /* ID3DBlob */
 struct d3dcompiler_blob
 {
-    const struct ID3D10BlobVtbl *vtbl;
+    ID3DBlob ID3DBlob_iface;
     LONG refcount;
 
     SIZE_T size;
