@@ -706,7 +706,8 @@ static void res_free_str( LPWSTR str )
 }
 
 static BOOL update_add_resource( QUEUEDUPDATES *updates, LPCWSTR Type, LPCWSTR Name,
-                                 struct resource_data *resdata, BOOL overwrite_existing )
+                                 LANGID Lang, struct resource_data *resdata,
+                                 BOOL overwrite_existing )
 {
     struct resource_dir_entry *restype, *resname;
     struct resource_data *existing;
@@ -736,7 +737,7 @@ static BOOL update_add_resource( QUEUEDUPDATES *updates, LPCWSTR Type, LPCWSTR N
      * If there's an existing resource entry with matching (Type,Name,Language)
      *  it needs to be removed before adding the new data.
      */
-    existing = find_resource_data( &resname->children, resdata->lang );
+    existing = find_resource_data( &resname->children, Lang );
     if (existing)
     {
         if (!overwrite_existing)
@@ -745,7 +746,8 @@ static BOOL update_add_resource( QUEUEDUPDATES *updates, LPCWSTR Type, LPCWSTR N
         HeapFree( GetProcessHeap(), 0, existing );
     }
 
-    add_resource_data_entry( &resname->children, resdata );
+    if (resdata)
+        add_resource_data_entry( &resname->children, resdata );
 
     return TRUE;
 }
@@ -1007,7 +1009,7 @@ static BOOL enumerate_mapped_resources( QUEUEDUPDATES *updates,
                 resdata = allocate_resource_data( Lang, data->CodePage, p, data->Size, FALSE );
                 if (resdata)
                 {
-                    if (!update_add_resource( updates, Type, Name, resdata, FALSE ))
+                    if (!update_add_resource( updates, Type, Name, Lang, resdata, FALSE ))
                         HeapFree( GetProcessHeap(), 0, resdata );
                 }
             }
@@ -1697,10 +1699,17 @@ BOOL WINAPI UpdateResourceW( HANDLE hUpdate, LPCWSTR lpType, LPCWSTR lpName,
     updates = GlobalLock(hUpdate);
     if (updates)
     {
-        struct resource_data *data;
-        data = allocate_resource_data( wLanguage, 0, lpData, cbData, TRUE );
-        if (data)
-            ret = update_add_resource( updates, lpType, lpName, data, TRUE );
+        if (lpData == NULL && cbData == 0)  /* remove resource */
+        {
+            ret = update_add_resource( updates, lpType, lpName, wLanguage, NULL, TRUE );
+        }
+        else
+        {
+            struct resource_data *data;
+            data = allocate_resource_data( wLanguage, 0, lpData, cbData, TRUE );
+            if (data)
+                ret = update_add_resource( updates, lpType, lpName, wLanguage, data, TRUE );
+        }
         GlobalUnlock(hUpdate);
     }
     return ret;
