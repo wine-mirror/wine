@@ -1801,13 +1801,13 @@ if (0)
     /* no way to get required buffer length here */
     SetLastError(0xdeadbeef);
     ret = pSHFormatDateTimeW(&filetime, NULL, NULL, 0);
-    ok(ret == 0, "got %d\n", ret);
+    ok(ret == 0, "expected 0, got %d\n", ret);
     ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     buff[0] = 'a'; buff[1] = 0;
     ret = pSHFormatDateTimeW(&filetime, NULL, buff, 0);
-    ok(ret == 0, "got %d\n", ret);
+    ok(ret == 0, "expected 0, got %d\n", ret);
     ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
     ok(buff[0] == 'a', "expected same string\n");
 
@@ -1815,20 +1815,23 @@ if (0)
     flags = FDTF_SHORTTIME | FDTF_LONGTIME;
     SetLastError(0xdeadbeef);
     ret = pSHFormatDateTimeW(&filetime, &flags, buff, sizeof(buff)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff)+1 || ret == lstrlenW(buff),
+       "expected %d or %d, got %d\n", lstrlenW(buff)+1, lstrlenW(buff), ret);
     ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
 
     flags = FDTF_SHORTDATE | FDTF_LONGDATE;
     SetLastError(0xdeadbeef);
     ret = pSHFormatDateTimeW(&filetime, &flags, buff, sizeof(buff)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff)+1 || ret == lstrlenW(buff),
+       "expected %d or %d, got %d\n", lstrlenW(buff)+1, lstrlenW(buff), ret);
     ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
 
     flags = FDTF_SHORTDATE | FDTF_LTRDATE | FDTF_RTLDATE;
     SetLastError(0xdeadbeef);
     buff[0] = 0; /* NT4 doesn't clear the buffer on failure */
     ret = pSHFormatDateTimeW(&filetime, &flags, buff, sizeof(buff)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff)+1 || ret == lstrlenW(buff),
+       "expected %d or %d, got %d\n", lstrlenW(buff)+1, lstrlenW(buff), ret);
     ok(GetLastError() == 0xdeadbeef ||
         broken(GetLastError() == ERROR_INVALID_FLAGS), /* Win9x/WinMe/NT4 */
         "expected 0xdeadbeef, got %d\n", GetLastError());
@@ -1836,7 +1839,8 @@ if (0)
     /* now check returned strings */
     flags = FDTF_SHORTTIME;
     ret = pSHFormatDateTimeW(&filetime, &flags, buff, sizeof(buff)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff)+1 || ret == lstrlenW(buff),
+       "expected %d or %d, got %d\n", lstrlenW(buff)+1, lstrlenW(buff), ret);
     SetLastError(0xdeadbeef);
     ret = GetTimeFormatW(LOCALE_USER_DEFAULT, TIME_NOSECONDS, &st, NULL, buff2, sizeof(buff2)/sizeof(WCHAR));
     if (ret == 0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
@@ -1844,88 +1848,97 @@ if (0)
         win_skip("Needed W-functions are not implemented\n");
         return;
     }
-    ok(ret == lstrlenW(buff2)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff2)+1, "expected %d, got %d\n", lstrlenW(buff2)+1, ret);
     ok(lstrcmpW(buff, buff2) == 0, "expected equal strings\n");
 
     flags = FDTF_LONGTIME;
     ret = pSHFormatDateTimeW(&filetime, &flags, buff, sizeof(buff)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff)+1 || ret == lstrlenW(buff),
+       "expected %d or %d, got %d\n", lstrlenW(buff)+1, lstrlenW(buff), ret);
     ret = GetTimeFormatW(LOCALE_USER_DEFAULT, 0, &st, NULL, buff2, sizeof(buff2)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff2)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff2)+1, "expected %d, got %d\n", lstrlenW(buff2)+1, ret);
     ok(lstrcmpW(buff, buff2) == 0, "expected equal strings\n");
 
     /* both time flags */
     flags = FDTF_LONGTIME | FDTF_SHORTTIME;
     ret = pSHFormatDateTimeW(&filetime, &flags, buff, sizeof(buff)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff)+1 || ret == lstrlenW(buff),
+       "expected %d or %d, got %d\n", lstrlenW(buff)+1, lstrlenW(buff), ret);
     ret = GetTimeFormatW(LOCALE_USER_DEFAULT, 0, &st, NULL, buff2, sizeof(buff2)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff2)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff2)+1, "expected %d, got %d\n", lstrlenW(buff2)+1, ret);
     ok(lstrcmpW(buff, buff2) == 0, "expected equal string\n");
 
     flags = FDTF_SHORTDATE;
     ret = pSHFormatDateTimeW(&filetime, &flags, buff, sizeof(buff)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff)+1 || ret == lstrlenW(buff),
+       "expected %d or %d, got %d\n", lstrlenW(buff)+1, lstrlenW(buff), ret);
     ret = GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &st, NULL, buff2, sizeof(buff2)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff2)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff2)+1, "expected %d, got %d\n", lstrlenW(buff2)+1, ret);
     ok(lstrcmpW(buff, buff2) == 0, "expected equal strings\n");
 
     flags = FDTF_LONGDATE;
     ret = pSHFormatDateTimeW(&filetime, &flags, buff, sizeof(buff)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff)+1 || ret == lstrlenW(buff),
+       "expected %d or %d, got %d\n", lstrlenW(buff)+1, lstrlenW(buff), ret);
     ret = GetDateFormatW(LOCALE_USER_DEFAULT, DATE_LONGDATE, &st, NULL, buff2, sizeof(buff2)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff2)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff2)+1, "expected %d, got %d\n", lstrlenW(buff2)+1, ret);
     ok(lstrcmpW(buff, buff2) == 0, "expected equal strings\n");
 
     /* both date flags */
     flags = FDTF_LONGDATE | FDTF_SHORTDATE;
     ret = pSHFormatDateTimeW(&filetime, &flags, buff, sizeof(buff)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff)+1 || ret == lstrlenW(buff),
+       "expected %d or %d, got %d\n", lstrlenW(buff)+1, lstrlenW(buff), ret);
     ret = GetDateFormatW(LOCALE_USER_DEFAULT, DATE_LONGDATE, &st, NULL, buff2, sizeof(buff2)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff2)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff2)+1, "expected %d, got %d\n", lstrlenW(buff2)+1, ret);
     ok(lstrcmpW(buff, buff2) == 0, "expected equal strings\n");
 
     /* various combinations of date/time flags */
     flags = FDTF_LONGDATE | FDTF_SHORTTIME;
     ret = pSHFormatDateTimeW(&filetime, &flags, buff, sizeof(buff)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff)+1, "got %d, length %d\n", ret, lstrlenW(buff)+1);
+    ok(ret == lstrlenW(buff)+1 || ret == lstrlenW(buff),
+       "expected %d or %d, got %d\n", lstrlenW(buff)+1, lstrlenW(buff), ret);
     ret = GetDateFormatW(LOCALE_USER_DEFAULT, DATE_LONGDATE, &st, NULL, buff2, sizeof(buff2)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff2)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff2)+1, "expected %d, got %d\n", lstrlenW(buff2)+1, ret);
     lstrcatW(buff2, commaW);
     ret = GetTimeFormatW(LOCALE_USER_DEFAULT, TIME_NOSECONDS, &st, NULL, buff3, sizeof(buff3)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff3)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff3)+1, "expected %d, got %d\n", lstrlenW(buff3)+1, ret);
     lstrcatW(buff2, buff3);
     ok(lstrcmpW(buff, buff2) == 0, "expected equal strings\n");
 
     flags = FDTF_LONGDATE | FDTF_LONGTIME;
     ret = pSHFormatDateTimeW(&filetime, &flags, buff, sizeof(buff)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff)+1 || ret == lstrlenW(buff),
+       "expected %d or %d, got %d\n", lstrlenW(buff)+1, lstrlenW(buff), ret);
     ret = GetDateFormatW(LOCALE_USER_DEFAULT, DATE_LONGDATE, &st, NULL, buff2, sizeof(buff2)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff2)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff2)+1, "expected %d, got %d\n", lstrlenW(buff2)+1, ret);
     lstrcatW(buff2, commaW);
     ret = GetTimeFormatW(LOCALE_USER_DEFAULT, 0, &st, NULL, buff3, sizeof(buff3)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff3)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff3)+1, "expected %d, got %d\n", lstrlenW(buff3)+1, ret);
     lstrcatW(buff2, buff3);
     ok(lstrcmpW(buff, buff2) == 0, "expected equal strings\n");
 
     flags = FDTF_SHORTDATE | FDTF_SHORTTIME;
     ret = pSHFormatDateTimeW(&filetime, &flags, buff, sizeof(buff)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff)+1 || ret == lstrlenW(buff),
+       "expected %d or %d, got %d\n", lstrlenW(buff)+1, lstrlenW(buff), ret);
     ret = GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &st, NULL, buff2, sizeof(buff2)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff2)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff2)+1, "expected %d, got %d\n", lstrlenW(buff2)+1, ret);
     lstrcatW(buff2, spaceW);
     ret = GetTimeFormatW(LOCALE_USER_DEFAULT, TIME_NOSECONDS, &st, NULL, buff3, sizeof(buff3)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff3)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff3)+1, "expected %d, got %d\n", lstrlenW(buff3)+1, ret);
     lstrcatW(buff2, buff3);
     ok(lstrcmpW(buff, buff2) == 0, "expected equal strings\n");
 
     flags = FDTF_SHORTDATE | FDTF_LONGTIME;
     ret = pSHFormatDateTimeW(&filetime, &flags, buff, sizeof(buff)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff)+1 || ret == lstrlenW(buff),
+       "expected %d or %d, got %d\n", lstrlenW(buff)+1, lstrlenW(buff), ret);
     ret = GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &st, NULL, buff2, sizeof(buff2)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff2)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff2)+1, "expected %d, got %d\n", lstrlenW(buff2)+1, ret);
     lstrcatW(buff2, spaceW);
     ret = GetTimeFormatW(LOCALE_USER_DEFAULT, 0, &st, NULL, buff3, sizeof(buff3)/sizeof(WCHAR));
-    ok(ret == lstrlenW(buff3)+1, "got %d\n", ret);
+    ok(ret == lstrlenW(buff3)+1, "expected %d, got %d\n", lstrlenW(buff3)+1, ret);
     lstrcatW(buff2, buff3);
     ok(lstrcmpW(buff, buff2) == 0, "expected equal strings\n");
 }
