@@ -216,7 +216,7 @@ BEGIN
     GROUPBOX        "U¿ycie procesora",IDC_CPU_USAGE_FRAME,5,5,60,54,WS_TABSTOP, WS_EX_TRANSPARENT
     GROUPBOX        "U¿ycie pamiêci",IDC_MEM_USAGE_FRAME,5,63,60,54,BS_LEFTTEXT, WS_EX_TRANSPARENT
     GROUPBOX        "Sumy",IDC_TOTALS_FRAME,5,122,111,39,0,WS_EX_TRANSPARENT
-    GROUPBOX        "Pamiêc zadeklarowana (KB)",IDC_COMMIT_CHARGE_FRAME,5,166,111,39,0,WS_EX_TRANSPARENT
+    GROUPBOX        "Pamiêæ zadeklarowana (KB)",IDC_COMMIT_CHARGE_FRAME,5,166,111,39,0,WS_EX_TRANSPARENT
     GROUPBOX        "Pamiêæ fizyczna (KB)",IDC_PHYSICAL_MEMORY_FRAME,131,122,111,39,0,WS_EX_TRANSPARENT
     GROUPBOX        "Pamiêæ j¹dra (KB)",IDC_KERNEL_MEMORY_FRAME,131,166,111,39,0,WS_EX_TRANSPARENT
     LTEXT           "Uchwyty",IDS_TOTALS_HANDLE_COUNT,12,131,27,8
@@ -386,7 +386,7 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,138,65,10
     CONTROL         "ID Ses&ji",IDC_SESSIONID,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,149,120,10
-    CONTROL         "Na&zwa u¿ytownika",IDC_USERNAME,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "Na&zwa u¿ytkownika",IDC_USERNAME,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,160,120,10
     CONTROL         "Ró¿nica b³ê&dów strony",IDC_PAGEFAULTSDELTA,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,130,28,120,10
@@ -436,7 +436,7 @@ BEGIN
     ID_VIEW_LARGE           "Wyœwietl zadania u¿ywaj¹c du¿ych ikon"
     ID_VIEW_SMALL           "Wyœwietl zadania u¿ywaj¹c ma³ych ikon"
     ID_VIEW_DETAILS         "Wyœwietla szczegó³y ka¿dego zadania"
-    ID_VIEW_UPDATESPEED_HIGH "Od¿wie¿a listê dwa razy na sekundê"
+    ID_VIEW_UPDATESPEED_HIGH "Odœwie¿a listê dwa razy na sekundê"
     ID_VIEW_UPDATESPEED_NORMAL "Odœwie¿a listê co dwie sekundy"
     ID_VIEW_UPDATESPEED_LOW "Odœwie¿a listê co cztery sekundy"
 END
@@ -455,7 +455,7 @@ BEGIN
     ID_HELP_ABOUT           "Wyœwietl informacje o programie, wersji i prawach autorskich"
     ID_FILE_EXIT            "Zakoñcz aplikacjê Mened¿era zadañ"
     ID_OPTIONS_SHOW16BITTASKS
-                            "Wyœwitels 16-bitowe zadania pod odpowiednim ntvdm.exe"
+                            "Wyœwietl 16-bitowe zadania pod odpowiednim ntvdm.exe"
     ID_VIEW_SELECTCOLUMNS   "Wybierz kolumny, które bêd¹ widoczne na zak³adce Procesy"
     ID_VIEW_SHOWKERNELTIMES "Pokazuje czasy j¹dra na wykresach wydajnoœci"
     ID_VIEW_CPUHISTORY_ONEGRAPHALL
@@ -473,7 +473,7 @@ BEGIN
     ID_PROCESS_PAGE_ENDPROCESS "Usuwa dane zadanie z systemu"
     ID_PROCESS_PAGE_ENDPROCESSTREE
                             "Usuwa dany proces i wszystkich jego potomków z systemu"
-    ID_PROCESS_PAGE_DEBUG   "Pod³¹cza debuger do tego zadania"
+    ID_PROCESS_PAGE_DEBUG   "Pod³¹cza debugger do tego zadania"
     ID_PROCESS_PAGE_SETAFFINITY
                             "Ustala na jakich procesorach ten proces mo¿e siê wykonywaæ"
     ID_PROCESS_PAGE_SETPRIORITY_REALTIME
@@ -524,11 +524,11 @@ BEGIN
     IDS_IOREADS           "Odczyty We/Wy"
     IDS_IOREADBYTES       "Odczyty We/Wy w bajtach"
     IDS_SESSIONID         "Identyfikator sesji"
-    IDS_USERNAME          "Nazwa u¿ytkowinka"
+    IDS_USERNAME          "Nazwa u¿ytkownika"
     IDS_PAGEFAULTSDELTA   "Zmiana b³êdów stron"
     IDS_VIRTUALMEMORYSIZE "Rozmiar pamiêci wirtualnej"
-    IDS_PAGEDPOOL         "Pula stronnicowania"
-    IDS_NONPAGEDPOOL      "Pula niestronnicowania"
+    IDS_PAGEDPOOL         "Pula stronicowania"
+    IDS_NONPAGEDPOOL      "Pula niestronicowana"
     IDS_BASEPRIORITY      "Priorytet podstawowy"
     IDS_HANDLECOUNT       "Liczba dojœæ"
     IDS_THREADCOUNT       "Liczba w¹tków"
@@ -542,18 +542,18 @@ END
 STRINGTABLE
 BEGIN
     IDS_WARNING_TITLE               "Ostrze¿enie menad¿era zadañ"
-    IDS_PRIORITY_CHANGE_MESSAGE     "OSTRZE¯ENIE: Zmiana priorytetu tego rprcesu mo¿e przynieœæ\n\
-                                     nieporz¹dane skutki, w tym równie¿ niestabilnoœæ systemu\n\
+    IDS_PRIORITY_CHANGE_MESSAGE     "OSTRZE¯ENIE: Zmiana priorytetu tego procesu mo¿e przynieœæ\n\
+                                     niepo¿¹dane skutki, w tym równie¿ niestabilnoœæ systemu\n\
                                      Czy na pewno chcesz zmieniæ priorytet?"
-    IDS_PRIORITY_UNABLE2CHANGE      "Nie mozna zmieniæ priorytetu"
+    IDS_PRIORITY_UNABLE2CHANGE      "Nie mo¿na zmieniæ priorytetu"
     IDS_TERMINATE_MESSAGE           "OSTRZE¯ENIE: Zakoñczenie procesu mo¿e przynieœæ\n\
-                                     nieporz¹dane skutki, w tym równie¿\n\
+                                     niepo¿¹dane skutki, w tym równie¿\n\
                                      utratê danych i niestabilnoœæ systemu.\n\
                                      Proces nie bêdzie mia³ szansy na zapisanie danych\n\
                                      Czy na pewno chcesz zakoñczyæ?"
     IDS_TERMINATE_UNABLE2TERMINATE  "Nie mo¿na zakoñczyæ procesu"
     IDS_DEBUG_MESSAGE               "OSTRZE¯ENIE: Debugowanie tego procesu mo¿e spowodowaæ utratê tanych.\n\
-                                     Czy na pewno chcesz uruchomiæ debugera?"
+                                     Czy na pewno chcesz uruchomiæ debuggera?"
     IDS_DEBUG_UNABLE2DEBUG          "Nie mo¿na debugowaæ procesu"
     IDS_AFFINITY_ERROR_MESSAGE      "Proces musi byæ skoligacony z co najmniej jednym procesorem"
     IDS_AFFINITY_ERROR_TITLE        "Niew³aœciwa opcja"
@@ -562,7 +562,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_SYSTEM_IDLE_PROCESS            "System Idle Process"
+    IDS_SYSTEM_IDLE_PROCESS            "Proces bezczynnoœci"
     IDS_APPLICATION_NOT_RESPONDING     "Nie odpowiada"
     IDS_APPLICATION_RUNNING            "Uruchomiony"
     IDS_APPLICATION_TASK               "Zadanie"
