@@ -95,6 +95,7 @@ dlls/msi/sql.tab.h
 dlls/mstask/mstask_local.h
 dlls/mstask/mstask_local_i.c
 dlls/msxml/msxml_tlb.tlb
+dlls/msxml2/msxml2_tlb.tlb
 dlls/msxml3/msxml3_v1.tlb
 dlls/msxml3/xslpattern.tab.c
 dlls/msxml3/xslpattern.tab.h

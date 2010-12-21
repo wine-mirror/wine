@@ -218,6 +218,7 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID riid, void **ppv )
 
     if( IsEqualCLSID( rclsid, &CLSID_DOMDocument )  ||  /* Version indep. v 2.x */
         IsEqualCLSID( rclsid, &CLSID_DOMDocument2 ) ||  /* Version indep. v 3.0 */
+        IsEqualCLSID( rclsid, &CLSID_DOMDocument26 )||  /* Version dep.   v 2.6 */
         IsEqualCLSID( rclsid, &CLSID_DOMDocument30 )||  /* Version dep.   v 3.0 */
         IsEqualCLSID( rclsid, &CLSID_DOMDocument40 )||  /* Version dep.   v 4.0 */
         IsEqualCLSID( rclsid, &CLSID_DOMDocument60 ))   /* Version dep.   v 6.0 */
@@ -225,6 +226,7 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID riid, void **ppv )
         return DOMClassFactory_Create(rclsid, riid, ppv, DOMDocument_create);
     }
     else if( IsEqualCLSID( rclsid, &CLSID_XMLSchemaCache )   ||
+             IsEqualCLSID( rclsid, &CLSID_XMLSchemaCache26 ) ||
              IsEqualCLSID( rclsid, &CLSID_XMLSchemaCache30 ) ||
              IsEqualCLSID( rclsid, &CLSID_XMLSchemaCache40 ) ||
              IsEqualCLSID( rclsid, &CLSID_XMLSchemaCache60 ))
@@ -237,6 +239,7 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID riid, void **ppv )
     }
     else if( IsEqualCLSID( rclsid, &CLSID_DOMFreeThreadedDocument )   ||   /* Version indep. v 2.x */
              IsEqualCLSID( rclsid, &CLSID_FreeThreadedDOMDocument )   ||
+             IsEqualCLSID( rclsid, &CLSID_FreeThreadedDOMDocument26 ) ||
              IsEqualCLSID( rclsid, &CLSID_FreeThreadedDOMDocument30 ) ||
              IsEqualCLSID( rclsid, &CLSID_FreeThreadedDOMDocument40 ) ||
              IsEqualCLSID( rclsid, &CLSID_FreeThreadedDOMDocument60 ))

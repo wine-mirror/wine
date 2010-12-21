@@ -15066,6 +15066,7 @@ wine_fn_config_dll msvidc32 enable_msvidc32
 wine_fn_config_dll msvideo.dll16 enable_win16
 wine_fn_config_dll mswsock enable_mswsock mswsock
 wine_fn_config_dll msxml enable_msxml
+wine_fn_config_dll msxml2 enable_msxml2
 wine_fn_config_dll msxml3 enable_msxml3
 wine_fn_config_test dlls/msxml3/tests msxml3_test
 wine_fn_config_dll msxml4 enable_msxml4
