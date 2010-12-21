@@ -60,15 +60,30 @@ static HRESULT VfwPin_Construct( IBaseFilter *, LPCRITICAL_SECTION, IPin ** );
 typedef struct VfwCapture
 {
     BaseFilter filter;
-    const IAMStreamConfigVtbl * IAMStreamConfig_vtbl;
-    const IAMVideoProcAmpVtbl * IAMVideoProcAmp_vtbl;
-    const IPersistPropertyBagVtbl * IPersistPropertyBag_vtbl;
+    IAMStreamConfig IAMStreamConfig_iface;
+    IAMVideoProcAmp IAMVideoProcAmp_iface;
+    IPersistPropertyBag IPersistPropertyBag_iface;
 
     BOOL init;
     Capture *driver_info;
 
     IPin * pOutputPin;
 } VfwCapture;
+
+static inline VfwCapture *impl_from_IAMStreamConfig(IAMStreamConfig *iface)
+{
+    return CONTAINING_RECORD(iface, VfwCapture, IAMStreamConfig_iface);
+}
+
+static inline VfwCapture *impl_from_IAMVideoProcAmp(IAMVideoProcAmp *iface)
+{
+    return CONTAINING_RECORD(iface, VfwCapture, IAMVideoProcAmp_iface);
+}
+
+static inline VfwCapture *impl_from_IPersistPropertyBag(IPersistPropertyBag *iface)
+{
+    return CONTAINING_RECORD(iface, VfwCapture, IPersistPropertyBag_iface);
+}
 
 /* VfwPin implementation */
 typedef struct VfwPinImpl
@@ -119,9 +134,9 @@ IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *pUnkOuter, HRESULT *phr)
 
     BaseFilter_Init(&pVfwCapture->filter, &VfwCapture_Vtbl, &CLSID_VfwCapture, (DWORD_PTR)(__FILE__ ": VfwCapture.csFilter"), &BaseFuncTable);
 
-    pVfwCapture->IAMStreamConfig_vtbl = &IAMStreamConfig_VTable;
-    pVfwCapture->IAMVideoProcAmp_vtbl = &IAMVideoProcAmp_VTable;
-    pVfwCapture->IPersistPropertyBag_vtbl = &IPersistPropertyBag_VTable;
+    pVfwCapture->IAMStreamConfig_iface.lpVtbl = &IAMStreamConfig_VTable;
+    pVfwCapture->IAMVideoProcAmp_iface.lpVtbl = &IAMVideoProcAmp_VTable;
+    pVfwCapture->IPersistPropertyBag_iface.lpVtbl = &IPersistPropertyBag_VTable;
     pVfwCapture->init = FALSE;
 
     hr = VfwPin_Construct((IBaseFilter *)&pVfwCapture->filter.lpVtbl,
@@ -152,11 +167,11 @@ static HRESULT WINAPI VfwCapture_QueryInterface(IBaseFilter * iface, REFIID riid
         *ppv = This;
     }
     else if (IsEqualIID(riid, &IID_IAMStreamConfig))
-        *ppv = &(This->IAMStreamConfig_vtbl);
+        *ppv = &This->IAMStreamConfig_iface;
     else if (IsEqualIID(riid, &IID_IAMVideoProcAmp))
-        *ppv = &(This->IAMVideoProcAmp_vtbl);
+        *ppv = &This->IAMVideoProcAmp_iface;
     else if (IsEqualIID(riid, &IID_IPersistPropertyBag))
-        *ppv = &(This->IPersistPropertyBag_vtbl);
+        *ppv = &This->IPersistPropertyBag_iface;
 
     if (!IsEqualIID(riid, &IID_IUnknown) &&
         !IsEqualIID(riid, &IID_IPersist) &&
@@ -271,7 +286,7 @@ static const IBaseFilterVtbl VfwCapture_Vtbl =
 static HRESULT WINAPI
 AMStreamConfig_QueryInterface( IAMStreamConfig * iface, REFIID riid, LPVOID * ppv )
 {
-    ICOM_THIS_MULTI(VfwCapture, IAMStreamConfig_vtbl, iface);
+    VfwCapture *This = impl_from_IAMStreamConfig(iface);
 
     TRACE("%p --> %s\n", This, debugstr_guid(riid));
 
@@ -289,7 +304,7 @@ AMStreamConfig_QueryInterface( IAMStreamConfig * iface, REFIID riid, LPVOID * pp
 
 static ULONG WINAPI AMStreamConfig_AddRef( IAMStreamConfig * iface )
 {
-    ICOM_THIS_MULTI(VfwCapture, IAMStreamConfig_vtbl, iface);
+    VfwCapture *This = impl_from_IAMStreamConfig(iface);
 
     TRACE("%p --> Forwarding to VfwCapture (%p)\n", iface, This);
     return IUnknown_AddRef((IUnknown *)This);
@@ -297,7 +312,7 @@ static ULONG WINAPI AMStreamConfig_AddRef( IAMStreamConfig * iface )
 
 static ULONG WINAPI AMStreamConfig_Release( IAMStreamConfig * iface )
 {
-    ICOM_THIS_MULTI(VfwCapture, IAMStreamConfig_vtbl, iface);
+    VfwCapture *This = impl_from_IAMStreamConfig(iface);
 
     TRACE("%p --> Forwarding to VfwCapture (%p)\n", iface, This);
     return IUnknown_Release((IUnknown *)This);
@@ -307,7 +322,7 @@ static HRESULT WINAPI
 AMStreamConfig_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *pmt)
 {
     HRESULT hr;
-    ICOM_THIS_MULTI(VfwCapture, IAMStreamConfig_vtbl, iface);
+    VfwCapture *This = impl_from_IAMStreamConfig(iface);
     BasePin *pin;
 
     TRACE("(%p): %p->%p\n", iface, pmt, pmt ? pmt->pbFormat : NULL);
@@ -349,7 +364,7 @@ AMStreamConfig_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *pmt)
 static HRESULT WINAPI
 AMStreamConfig_GetFormat( IAMStreamConfig *iface, AM_MEDIA_TYPE **pmt )
 {
-    ICOM_THIS_MULTI(VfwCapture, IAMStreamConfig_vtbl, iface);
+    VfwCapture *This = impl_from_IAMStreamConfig(iface);
 
     TRACE("%p -> (%p)\n", iface, pmt);
     return qcap_driver_get_format(This->driver_info, pmt);
@@ -400,14 +415,14 @@ AMVideoProcAmp_QueryInterface( IAMVideoProcAmp * iface, REFIID riid,
 
 static ULONG WINAPI AMVideoProcAmp_AddRef(IAMVideoProcAmp * iface)
 {
-    ICOM_THIS_MULTI(VfwCapture, IAMVideoProcAmp_vtbl, iface);
+    VfwCapture *This = impl_from_IAMVideoProcAmp(iface);
 
     return IUnknown_AddRef((IUnknown *)This);
 }
 
 static ULONG WINAPI AMVideoProcAmp_Release(IAMVideoProcAmp * iface)
 {
-    ICOM_THIS_MULTI(VfwCapture, IAMVideoProcAmp_vtbl, iface);
+    VfwCapture *This = impl_from_IAMVideoProcAmp(iface);
 
     return IUnknown_Release((IUnknown *)This);
 }
@@ -416,7 +431,7 @@ static HRESULT WINAPI
 AMVideoProcAmp_GetRange( IAMVideoProcAmp * iface, LONG Property, LONG *pMin,
         LONG *pMax, LONG *pSteppingDelta, LONG *pDefault, LONG *pCapsFlags )
 {
-    ICOM_THIS_MULTI(VfwCapture, IAMVideoProcAmp_vtbl, iface);
+    VfwCapture *This = impl_from_IAMVideoProcAmp(iface);
 
     return qcap_driver_get_prop_range( This->driver_info, Property, pMin, pMax,
                    pSteppingDelta, pDefault, pCapsFlags );
@@ -426,7 +441,7 @@ static HRESULT WINAPI
 AMVideoProcAmp_Set( IAMVideoProcAmp * iface, LONG Property, LONG lValue,
                     LONG Flags )
 {
-    ICOM_THIS_MULTI(VfwCapture, IAMVideoProcAmp_vtbl, iface);
+    VfwCapture *This = impl_from_IAMVideoProcAmp(iface);
 
     return qcap_driver_set_prop(This->driver_info, Property, lValue, Flags);
 }
@@ -435,7 +450,7 @@ static HRESULT WINAPI
 AMVideoProcAmp_Get( IAMVideoProcAmp * iface, LONG Property, LONG *lValue,
                     LONG *Flags )
 {
-    ICOM_THIS_MULTI(VfwCapture, IAMVideoProcAmp_vtbl, iface);
+    VfwCapture *This = impl_from_IAMVideoProcAmp(iface);
 
     return qcap_driver_get_prop(This->driver_info, Property, lValue, Flags);
 }
@@ -475,7 +490,7 @@ PPB_QueryInterface( IPersistPropertyBag * iface, REFIID riid, LPVOID * ppv )
 
 static ULONG WINAPI PPB_AddRef(IPersistPropertyBag * iface)
 {
-    ICOM_THIS_MULTI(VfwCapture, IPersistPropertyBag_vtbl, iface);
+    VfwCapture *This = impl_from_IPersistPropertyBag(iface);
 
     TRACE("%p --> Forwarding to VfwCapture (%p)\n", iface, This);
 
@@ -484,7 +499,7 @@ static ULONG WINAPI PPB_AddRef(IPersistPropertyBag * iface)
 
 static ULONG WINAPI PPB_Release(IPersistPropertyBag * iface)
 {
-    ICOM_THIS_MULTI(VfwCapture, IPersistPropertyBag_vtbl, iface);
+    VfwCapture *This = impl_from_IPersistPropertyBag(iface);
 
     TRACE("%p --> Forwarding to VfwCapture (%p)\n", iface, This);
 
@@ -494,7 +509,7 @@ static ULONG WINAPI PPB_Release(IPersistPropertyBag * iface)
 static HRESULT WINAPI
 PPB_GetClassID( IPersistPropertyBag * iface, CLSID * pClassID )
 {
-    ICOM_THIS_MULTI(VfwCapture, IPersistPropertyBag_vtbl, iface);
+    VfwCapture *This = impl_from_IPersistPropertyBag(iface);
 
     FIXME("%p - stub\n", This);
 
@@ -503,7 +518,7 @@ PPB_GetClassID( IPersistPropertyBag * iface, CLSID * pClassID )
 
 static HRESULT WINAPI PPB_InitNew(IPersistPropertyBag * iface)
 {
-    ICOM_THIS_MULTI(VfwCapture, IPersistPropertyBag_vtbl, iface);
+    VfwCapture *This = impl_from_IPersistPropertyBag(iface);
 
     FIXME("%p - stub\n", This);
 
@@ -514,7 +529,7 @@ static HRESULT WINAPI
 PPB_Load( IPersistPropertyBag * iface, IPropertyBag *pPropBag,
           IErrorLog *pErrorLog )
 {
-    ICOM_THIS_MULTI(VfwCapture, IPersistPropertyBag_vtbl, iface);
+    VfwCapture *This = impl_from_IPersistPropertyBag(iface);
     HRESULT hr;
     VARIANT var;
     const OLECHAR VFWIndex[] = {'V','F','W','I','n','d','e','x',0};
@@ -549,7 +564,7 @@ static HRESULT WINAPI
 PPB_Save( IPersistPropertyBag * iface, IPropertyBag *pPropBag,
           BOOL fClearDirty, BOOL fSaveAllProperties )
 {
-    ICOM_THIS_MULTI(VfwCapture, IPersistPropertyBag_vtbl, iface);
+    VfwCapture *This = impl_from_IPersistPropertyBag(iface);
     FIXME("%p - stub\n", This);
     return E_NOTIMPL;
 }
