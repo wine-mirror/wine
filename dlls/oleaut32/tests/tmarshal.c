@@ -216,10 +216,15 @@ static ItestDual TestDualDisp = { &TestDualVtbl };
 
 typedef struct Widget
 {
-    const IWidgetVtbl *lpVtbl;
+    IWidget IWidget_iface;
     LONG refs;
     IUnknown *pDispatchUnknown;
 } Widget;
+
+static inline Widget *impl_from_IWidget(IWidget *iface)
+{
+    return CONTAINING_RECORD(iface, Widget, IWidget_iface);
+}
 
 static HRESULT WINAPI Widget_QueryInterface(
     IWidget *iface,
@@ -242,7 +247,7 @@ static HRESULT WINAPI Widget_QueryInterface(
 static ULONG WINAPI Widget_AddRef(
     IWidget *iface)
 {
-    Widget *This = (Widget *)iface;
+    Widget *This = impl_from_IWidget(iface);
 
     return InterlockedIncrement(&This->refs);
 }
@@ -250,7 +255,7 @@ static ULONG WINAPI Widget_AddRef(
 static ULONG WINAPI Widget_Release(
     IWidget *iface)
 {
-    Widget *This = (Widget *)iface;
+    Widget *This = impl_from_IWidget(iface);
     ULONG refs = InterlockedDecrement(&This->refs);
     if (!refs)
     {
@@ -267,7 +272,7 @@ static HRESULT WINAPI Widget_GetTypeInfoCount(
     IWidget *iface,
     /* [out] */ UINT __RPC_FAR *pctinfo)
 {
-    Widget *This = (Widget *)iface;
+    Widget *This = impl_from_IWidget(iface);
     IDispatch *pDispatch;
     HRESULT hr = IUnknown_QueryInterface(This->pDispatchUnknown, &IID_IDispatch, (void **)&pDispatch);
     if (SUCCEEDED(hr))
@@ -284,7 +289,7 @@ static HRESULT WINAPI Widget_GetTypeInfo(
     /* [in] */ LCID lcid,
     /* [out] */ ITypeInfo __RPC_FAR *__RPC_FAR *ppTInfo)
 {
-    Widget *This = (Widget *)iface;
+    Widget *This = impl_from_IWidget(iface);
     IDispatch *pDispatch;
     HRESULT hr = IUnknown_QueryInterface(This->pDispatchUnknown, &IID_IDispatch, (void **)&pDispatch);
     if (SUCCEEDED(hr))
@@ -303,7 +308,7 @@ static HRESULT WINAPI Widget_GetIDsOfNames(
     /* [in] */ LCID lcid,
     /* [size_is][out] */ DISPID __RPC_FAR *rgDispId)
 {
-    Widget *This = (Widget *)iface;
+    Widget *This = impl_from_IWidget(iface);
     IDispatch *pDispatch;
     HRESULT hr = IUnknown_QueryInterface(This->pDispatchUnknown, &IID_IDispatch, (void **)&pDispatch);
     if (SUCCEEDED(hr))
@@ -325,7 +330,7 @@ static HRESULT WINAPI Widget_Invoke(
     /* [out] */ EXCEPINFO __RPC_FAR *pExcepInfo,
     /* [out] */ UINT __RPC_FAR *puArgErr)
 {
-    Widget *This = (Widget *)iface;
+    Widget *This = impl_from_IWidget(iface);
     IDispatch *pDispatch;
     HRESULT hr = IUnknown_QueryInterface(This->pDispatchUnknown, &IID_IDispatch, (void **)&pDispatch);
     if (SUCCEEDED(hr))
@@ -723,9 +728,14 @@ static IStaticWidget StaticWidget = { &StaticWidgetVtbl };
 
 typedef struct KindaEnum
 {
-    const IKindaEnumWidgetVtbl *lpVtbl;
+    IKindaEnumWidget IKindaEnumWidget_iface;
     LONG refs;
 } KindaEnum;
+
+static inline KindaEnum *impl_from_IKindaEnumWidget(IKindaEnumWidget *iface)
+{
+    return CONTAINING_RECORD(iface, KindaEnum, IKindaEnumWidget_iface);
+}
 
 static HRESULT register_current_module_typelib(void)
 {
@@ -777,16 +787,17 @@ static IWidget *Widget_Create(void)
         return NULL;
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
-    This->lpVtbl = &Widget_VTable;
+    This->IWidget_iface.lpVtbl = &Widget_VTable;
     This->refs = 1;
     This->pDispatchUnknown = NULL;
 
-    hr = CreateStdDispatch((IUnknown *)&This->lpVtbl, This, pTypeInfo, &This->pDispatchUnknown);
+    hr = CreateStdDispatch((IUnknown *)&This->IWidget_iface, This, pTypeInfo,
+                           &This->pDispatchUnknown);
     ok_ole_success(hr, CreateStdDispatch);
     ITypeInfo_Release(pTypeInfo);
 
     if (SUCCEEDED(hr))
-        return (IWidget *)&This->lpVtbl;
+        return &This->IWidget_iface;
     else
     {
         HeapFree(GetProcessHeap(), 0, This);
@@ -815,7 +826,7 @@ static HRESULT WINAPI KindaEnum_QueryInterface(
 static ULONG WINAPI KindaEnum_AddRef(
     IKindaEnumWidget *iface)
 {
-    KindaEnum *This = (KindaEnum *)iface;
+    KindaEnum *This = impl_from_IKindaEnumWidget(iface);
 
     return InterlockedIncrement(&This->refs);
 }
@@ -823,7 +834,7 @@ static ULONG WINAPI KindaEnum_AddRef(
 static ULONG WINAPI KindaEnum_Release(
     IKindaEnumWidget *iface)
 {
-    KindaEnum *This = (KindaEnum *)iface;
+    KindaEnum *This = impl_from_IKindaEnumWidget(iface);
     ULONG refs = InterlockedDecrement(&This->refs);
     if (!refs)
     {
@@ -883,9 +894,9 @@ static IKindaEnumWidget *KindaEnumWidget_Create(void)
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if (!This) return NULL;
-    This->lpVtbl = &KindaEnumWidget_VTable;
+    This->IKindaEnumWidget_iface.lpVtbl = &KindaEnumWidget_VTable;
     This->refs = 1;
-    return (IKindaEnumWidget *)This;
+    return &This->IKindaEnumWidget_iface;
 }
 
 static HRESULT WINAPI NonOleAutomation_QueryInterface(INonOleAutomation *iface, REFIID riid, void **ppv)
