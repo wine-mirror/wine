@@ -29,7 +29,6 @@
 #include "winuser.h"
 #include "ole2.h"
 #include "msxml.h"
-#include "xmldom.h"
 #include "msxml2.h"
 
 /* undef the #define in msxml2 so that we can access the v.2 version

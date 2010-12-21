@@ -23,7 +23,6 @@
 
 #include "ole2.h"
 #include "sddl.h"
-#include "xmldom.h"
 
 #include "gameux.h"
 #include "gameux_private.h"

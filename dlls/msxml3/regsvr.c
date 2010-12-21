@@ -34,8 +34,6 @@
 #include "winerror.h"
 #include "ole2.h"
 #include "msxml.h"
-#include "xmldom.h"
-#include "xmldso.h"
 #include "msxml6.h"
 
 /* undef the #define in msxml2 so that we can access the v.2 version

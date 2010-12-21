@@ -32,8 +32,6 @@
 #include "ole2.h"
 #include "ocidl.h"
 #include "shellapi.h"
-#include "xmldom.h"
-#include "xmldso.h"
 
 #include "initguid.h"
 #include "msxml2.h"

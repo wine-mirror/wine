@@ -24,7 +24,6 @@
 
 #include "windows.h"
 #include "ole2.h"
-#include "xmldom.h"
 #include "msxml2.h"
 #include "ocidl.h"
 

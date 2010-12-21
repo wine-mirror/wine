@@ -101,8 +101,6 @@ PUBLIC_IDL_H_SRCS = \
 	winsxs.idl \
 	wtypes.idl \
 	wuapi.idl \
-	xmldom.idl \
-	xmldso.idl \
 	xmllite.idl
 
 IDL_TLB_SRCS = \
@@ -549,7 +547,10 @@ SRCDIR_INCLUDES = \
 	wtsapi32.h \
 	xcmc.h \
 	xinput.h \
+	xmldom.h \
+	xmldom.idl \
 	xmldomdid.h \
+	xmldso.idl \
 	xmldsodid.h \
 	zmouse.h
 

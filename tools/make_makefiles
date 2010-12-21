@@ -156,6 +156,8 @@ my %private_idl_headers = (
     "rstloc.idl" => 1,
     "sesprp.idl" => 1,
     "vmrender.idl" => 1,
+    "xmldom.idl" => 1,
+    "xmldso.idl" => 1,
     "wine/wined3d.idl" => 1,
     "wine/winedxgi.idl" => 1,
 );

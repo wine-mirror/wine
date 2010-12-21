@@ -26,7 +26,6 @@
 #include "windows.h"
 #include "ole2.h"
 #include "objsafe.h"
-#include "xmldom.h"
 #include "msxml2.h"
 #include "msxml2did.h"
 #include "dispex.h"

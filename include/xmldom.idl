@@ -19,8 +19,6 @@
 #include <xmldomdid.h>
 #include <idispids.h>
 
-import "ocidl.idl";
-
 interface IXMLDOMImplementation;
 interface IXMLDOMNode;
 interface IXMLDOMDocumentFragment;
@@ -39,8 +37,9 @@ interface IXMLDOMNotation;
 interface IXMLDOMEntity;
 interface IXMLDOMEntityReference;
 interface IXMLDOMParseError;
-interface IXTLRuntime;
 
+cpp_quote("#ifndef __MSXML_DOMNODETYPE_DEFINED")
+cpp_quote("#define __MSXML_DOMNODETYPE_DEFINED")
 typedef enum tagDOMNodeType {
     NODE_INVALID,
     NODE_ELEMENT,
@@ -56,6 +55,7 @@ typedef enum tagDOMNodeType {
     NODE_DOCUMENT_FRAGMENT,
     NODE_NOTATION
 } DOMNodeType;
+cpp_quote("#endif")
 
 [
 local,
