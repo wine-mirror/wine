@@ -57,6 +57,13 @@ HRESULT d3dcompiler_blob_init(struct d3dcompiler_blob *blob, SIZE_T data_size) D
 HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, D3D_BLOB_PART part, UINT flags, ID3DBlob **blob) DECLSPEC_HIDDEN;
 HRESULT d3dcompiler_strip_shader(const void *data, SIZE_T data_size, UINT flags, ID3DBlob **blob) DECLSPEC_HIDDEN;
 
+struct d3dcompiler_shader_signature
+{
+    D3D11_SIGNATURE_PARAMETER_DESC *elements;
+    UINT element_count;
+    char *string_data;
+};
+
 /* ID3D11ShaderReflection */
 struct d3dcompiler_shader_reflection
 {
@@ -89,6 +96,8 @@ struct d3dcompiler_shader_reflection
     D3D_TESSELLATOR_OUTPUT_PRIMITIVE hs_output_primitive;
     D3D_TESSELLATOR_PARTITIONING hs_prtitioning;
     D3D_TESSELLATOR_DOMAIN tessellator_domain;
+
+    struct d3dcompiler_shader_signature *isgn;
 };
 
 /* reflection handling */

@@ -25,6 +25,25 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dcompiler);
 
+static void free_signature(struct d3dcompiler_shader_signature *sig)
+{
+    TRACE("Free signature %p\n", sig);
+
+    HeapFree(GetProcessHeap(), 0, sig->elements);
+    HeapFree(GetProcessHeap(), 0, sig->string_data);
+}
+
+static void reflection_cleanup(struct d3dcompiler_shader_reflection *ref)
+{
+    TRACE("Cleanup %p\n", ref);
+
+    if (ref->isgn)
+    {
+        free_signature(ref->isgn);
+        HeapFree(GetProcessHeap(), 0, ref->isgn);
+    }
+}
+
 static inline struct d3dcompiler_shader_reflection *impl_from_ID3D11ShaderReflection(ID3D11ShaderReflection *iface)
 {
     return CONTAINING_RECORD(iface, struct d3dcompiler_shader_reflection, ID3D11ShaderReflection_iface);
@@ -69,6 +88,7 @@ static ULONG STDMETHODCALLTYPE d3dcompiler_shader_reflection_Release(ID3D11Shade
 
     if (!refcount)
     {
+        reflection_cleanup(This);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -361,6 +381,68 @@ static HRESULT d3dcompiler_parse_stat(struct d3dcompiler_shader_reflection *r, c
     return E_FAIL;
 }
 
+HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *s, const char *data, DWORD data_size)
+{
+    D3D11_SIGNATURE_PARAMETER_DESC *d;
+    unsigned int string_data_offset;
+    unsigned int string_data_size;
+    const char *ptr = data;
+    char *string_data;
+    unsigned int i;
+    DWORD count;
+
+    read_dword(&ptr, &count);
+    TRACE("%u elements\n", count);
+
+    skip_dword_unknown(&ptr, 1);
+
+    d = HeapAlloc(GetProcessHeap(), 0, count * sizeof(*d));
+    if (!d)
+    {
+        ERR("Failed to allocate signature memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    /* 2 DWORDs for the header, 6 for each element. */
+    string_data_offset = 2 * sizeof(DWORD) + count * 6 * sizeof(DWORD);
+    string_data_size = data_size - string_data_offset;
+    string_data = HeapAlloc(GetProcessHeap(), 0, string_data_size);
+    if (!string_data)
+    {
+        ERR("Failed to allocate string data memory.\n");
+        HeapFree(GetProcessHeap(), 0, d);
+        return E_OUTOFMEMORY;
+    }
+    memcpy(string_data, data + string_data_offset, string_data_size);
+
+    for (i = 0; i < count; ++i)
+    {
+        UINT name_offset;
+        DWORD mask;
+
+        read_dword(&ptr, &name_offset);
+        d[i].SemanticName = string_data + (name_offset - string_data_offset);
+        read_dword(&ptr, &d[i].SemanticIndex);
+        read_dword(&ptr, &d[i].SystemValueType);
+        read_dword(&ptr, &d[i].ComponentType);
+        read_dword(&ptr, &d[i].Register);
+        read_dword(&ptr, &mask);
+        d[i].ReadWriteMask = (mask >> 8) & 0xff;
+        d[i].Mask = mask & 0xff;
+
+        TRACE("semantic: %s, semantic idx: %u, sysval_semantic %#x, "
+                "type %u, register idx: %u, use_mask %#x, input_mask %#x, stream %u\n",
+                debugstr_a(d[i].SemanticName), d[i].SemanticIndex, d[i].SystemValueType,
+                d[i].ComponentType, d[i].Register, d[i].Mask, d[i].ReadWriteMask, d[i].Stream);
+    }
+
+    s->elements = d;
+    s->element_count = count;
+    s->string_data = string_data;
+
+    return S_OK;
+}
+
 HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_reflection *reflection,
         const void *data, SIZE_T data_size)
 {
@@ -388,9 +470,25 @@ HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_reflection 
                 hr = d3dcompiler_parse_stat(reflection, section->data, section->data_size);
                 if (FAILED(hr))
                 {
-                    dxbc_destroy(&src_dxbc);
                     WARN("Failed to parse section STAT.\n");
-                    return hr;
+                    goto err_out;
+                }
+                break;
+
+            case TAG_ISGN:
+                reflection->isgn = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*reflection->isgn));
+                if (!reflection->isgn)
+                {
+                    ERR("Failed to allocate ISGN memory.\n");
+                    hr = E_OUTOFMEMORY;
+                    goto err_out;
+                }
+
+                hr = d3dcompiler_parse_signature(reflection->isgn, section->data, section->data_size);
+                if (FAILED(hr))
+                {
+                    WARN("Failed to parse section ISGN.\n");
+                    goto err_out;
                 }
                 break;
 
@@ -400,6 +498,12 @@ HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_reflection 
         }
     }
 
+    dxbc_destroy(&src_dxbc);
+
+    return hr;
+
+err_out:
+    reflection_cleanup(reflection);
     dxbc_destroy(&src_dxbc);
 
     return hr;
