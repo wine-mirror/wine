@@ -80,13 +80,54 @@ static LPWSTR query_http_info(HttpProtocol *This, DWORD option)
     return ret;
 }
 
+static ULONG send_http_request(HttpProtocol *This)
+{
+    INTERNET_BUFFERSW send_buffer = {sizeof(INTERNET_BUFFERSW)};
+    BOOL res;
+
+    send_buffer.lpcszHeader = This->full_header;
+    send_buffer.dwHeadersLength = send_buffer.dwHeadersTotal = strlenW(This->full_header);
+
+    if(This->base.bind_info.dwBindVerb != BINDVERB_GET) {
+        switch(This->base.bind_info.stgmedData.tymed) {
+        case TYMED_HGLOBAL:
+            /* Native does not use GlobalLock/GlobalUnlock, so we won't either */
+            send_buffer.lpvBuffer = This->base.bind_info.stgmedData.u.hGlobal;
+            send_buffer.dwBufferLength = send_buffer.dwBufferTotal = This->base.bind_info.cbstgmedData;
+            break;
+        case TYMED_ISTREAM: {
+            LARGE_INTEGER offset;
+
+            send_buffer.dwBufferTotal = This->base.bind_info.cbstgmedData;
+            if(!This->base.post_stream) {
+                This->base.post_stream = This->base.bind_info.stgmedData.u.pstm;
+                IStream_AddRef(This->base.post_stream);
+            }
+
+            offset.QuadPart = 0;
+            IStream_Seek(This->base.post_stream, offset, STREAM_SEEK_SET, NULL);
+            break;
+        }
+        default:
+            FIXME("Unsupported This->base.bind_info.stgmedData.tymed %d\n", This->base.bind_info.stgmedData.tymed);
+        }
+    }
+
+    if(This->base.post_stream)
+        res = HttpSendRequestExW(This->base.request, &send_buffer, NULL, 0, 0);
+    else
+        res = HttpSendRequestW(This->base.request, send_buffer.lpcszHeader, send_buffer.dwHeadersLength,
+                send_buffer.lpvBuffer, send_buffer.dwBufferLength);
+
+    return res ? 0 : GetLastError();
+}
+
 #define ASYNCPROTOCOL_THIS(iface) DEFINE_THIS2(HttpProtocol, base, iface)
 
 static HRESULT HttpProtocol_open_request(Protocol *prot, IUri *uri, DWORD request_flags,
         HINTERNET internet_session, IInternetBindInfo *bind_info)
 {
     HttpProtocol *This = ASYNCPROTOCOL_THIS(prot);
-    INTERNET_BUFFERSW send_buffer = {sizeof(INTERNET_BUFFERSW)};
     LPWSTR addl_header = NULL, post_cookie = NULL;
     IServiceProvider *service_provider = NULL;
     IHttpNegotiate2 *http_negotiate2 = NULL;
@@ -95,7 +136,7 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, IUri *uri, DWORD reques
     const WCHAR **accept_types;
     BYTE security_id[512];
     DWORD len = 0, port;
-    ULONG num;
+    ULONG num, error;
     BOOL res, b;
     HRESULT hres;
 
@@ -236,48 +277,18 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, IUri *uri, DWORD reques
         }
     }
 
-    send_buffer.lpcszHeader = This->full_header;
-    send_buffer.dwHeadersLength = send_buffer.dwHeadersTotal = strlenW(This->full_header);
-
-    if(This->base.bind_info.dwBindVerb != BINDVERB_GET) {
-        switch(This->base.bind_info.stgmedData.tymed) {
-        case TYMED_HGLOBAL:
-            /* Native does not use GlobalLock/GlobalUnlock, so we won't either */
-            send_buffer.lpvBuffer = This->base.bind_info.stgmedData.u.hGlobal;
-            send_buffer.dwBufferLength = send_buffer.dwBufferTotal = This->base.bind_info.cbstgmedData;
-            break;
-        case TYMED_ISTREAM: {
-            LARGE_INTEGER offset;
-
-            send_buffer.dwBufferTotal = This->base.bind_info.cbstgmedData;
-            This->base.post_stream = This->base.bind_info.stgmedData.u.pstm;
-            IStream_AddRef(This->base.post_stream);
-
-            offset.QuadPart = 0;
-            IStream_Seek(This->base.post_stream, offset, STREAM_SEEK_SET, NULL);
-            break;
-        }
-        default:
-            FIXME("Unsupported This->base.bind_info.stgmedData.tymed %d\n", This->base.bind_info.stgmedData.tymed);
-        }
-    }
-
     b = TRUE;
     res = InternetSetOptionW(This->base.request, INTERNET_OPTION_HTTP_DECODING, &b, sizeof(b));
     if(!res)
         WARN("InternetSetOption(INTERNET_OPTION_HTTP_DECODING) failed: %08x\n", GetLastError());
 
-    if(This->base.post_stream)
-        res = HttpSendRequestExW(This->base.request, &send_buffer, NULL, 0, 0);
-    else
-        res = HttpSendRequestW(This->base.request, send_buffer.lpcszHeader, send_buffer.dwHeadersLength,
-                send_buffer.lpvBuffer, send_buffer.dwBufferLength);
-    if(!res && GetLastError() != ERROR_IO_PENDING) {
-        WARN("HttpSendRequest failed: %d\n", GetLastError());
-        return INET_E_DOWNLOAD_FAILURE;
-    }
+    error = send_http_request(This);
 
-    return S_OK;
+    if(error == ERROR_IO_PENDING || error == ERROR_SUCCESS)
+        return S_OK;
+
+    WARN("HttpSendRequest failed: %d\n", error);
+    return INET_E_DOWNLOAD_FAILURE;
 }
 
 static HRESULT HttpProtocol_end_request(Protocol *protocol)
