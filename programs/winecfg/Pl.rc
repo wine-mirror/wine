@@ -47,7 +47,7 @@ BEGIN
     CONTROL         "",IDC_ABT_WEB_LINK,"SysLink", LWS_TRANSPARENT, 105,53,106,8
     LTEXT           "Ta biblioteka jest wolnym oprogramowaniem; mo¿esz j¹ rozpowszechniaæ i/lub modyfikowaæ pod warunkami licencji GNU Lesser General Public License opublikowanej przez Free Software Foundation; licencji w wersji 2.1, lub (wed³ug w³asnego uznania) dowolnej póŸniejszej.",
                     IDC_ABT_LICENSE_TEXT,105,64,145,60
-    GROUPBOX        " Windows Registration Information ", IDC_STATIC, 15, 155, 230, 55
+    GROUPBOX        " Informacje do rejestracji w Windows ", IDC_STATIC, 15, 155, 230, 55
     LTEXT           "W³aœciciel:", IDC_STATIC, 22, 171, 40, 20
     EDITTEXT        IDC_ABT_OWNER, 75, 171, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
     LTEXT           "Organizacja:", IDC_STATIC, 22, 185, 50, 20
@@ -158,7 +158,7 @@ BEGIN
     COMBOBOX        IDC_COMBO_TYPE,46,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
     PUSHBUTTON      "&Opcje zaawansowane >>",IDC_BUTTON_SHOW_HIDE_ADVANCED,156,135,90,13
-    LTEXT           "De&vice:",IDC_STATIC_DEVICE,15,153,26,9
+    LTEXT           "U&rz¹dzenie:",IDC_STATIC_DEVICE,15,153,26,9
     EDITTEXT        IDC_EDIT_DEVICE,46,150,145,13,ES_AUTOHSCROLL | WS_TABSTOP
     PUSHBUTTON      "Prze&gl¹daj...",IDC_BUTTON_BROWSE_DEVICE,201,150,45,13
 
