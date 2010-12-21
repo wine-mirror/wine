@@ -151,9 +151,11 @@ static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetResourceBindin
 static UINT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetMovInstructionCount(
         ID3D11ShaderReflection *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3dcompiler_shader_reflection *This = impl_from_ID3D11ShaderReflection(iface);
 
-    return 0;
+    TRACE("iface %p\n", iface);
+
+    return This->mov_instruction_count;
 }
 
 static UINT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetMovcInstructionCount(
