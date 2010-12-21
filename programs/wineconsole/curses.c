@@ -951,7 +951,7 @@ static int WCCURSES_MainLoop(struct inner_data* data)
 enum init_return WCCURSES_InitBackend(struct inner_data* data)
 {
     if( !WCCURSES_bind_libcurses() )
-        return init_failed;
+        return init_not_supported;
 
     data->private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct inner_data_curse));
     if (!data->private) return init_failed;
