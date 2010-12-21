@@ -282,15 +282,15 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* dbgtasks)
 
     get_file_name(dbglog);
     get_events(dbglog, &start_event, &done_event);
-    cmd=HeapAlloc(GetProcessHeap(), 0, strlen(argv0)+10+strlen(dbgtasks)+1+strlen(dbglog)+34+1);
-    sprintf(cmd, "%s debugger %s %s %%ld %%ld", argv0, dbgtasks, dbglog);
+    cmd=HeapAlloc(GetProcessHeap(), 0, strlen(argv0)+10+strlen(dbgtasks)+1+strlen(dbglog)+2+34+1);
+    sprintf(cmd, "%s debugger %s \"%s\" %%ld %%ld", argv0, dbgtasks, dbglog);
     ret=RegSetValueExA(hkey, "debugger", 0, REG_SZ, (BYTE*)cmd, strlen(cmd)+1);
     ok(ret == ERROR_SUCCESS, "unable to set AeDebug/debugger: ret=%d\n", ret);
     HeapFree(GetProcessHeap(), 0, cmd);
 
     get_file_name(childlog);
-    cmd=HeapAlloc(GetProcessHeap(), 0, strlen(argv0)+16+strlen(dbglog)+1);
-    sprintf(cmd, "%s debugger crash %s", argv0, childlog);
+    cmd=HeapAlloc(GetProcessHeap(), 0, strlen(argv0)+16+strlen(dbglog)+2+1);
+    sprintf(cmd, "%s debugger crash \"%s\"", argv0, childlog);
 
     memset(&startup, 0, sizeof(startup));
     startup.cb = sizeof(startup);
@@ -582,8 +582,8 @@ static void test_debug_loop(int argc, char **argv)
     ok(!ret, "DebugActiveProcess() succeeded on own process.\n");
 
     get_file_name(blackbox_file);
-    cmd = HeapAlloc(GetProcessHeap(), 0, strlen(argv[0]) + strlen(arguments) + strlen(blackbox_file) + 10);
-    sprintf(cmd, "%s%s%08x %s", argv[0], arguments, pid, blackbox_file);
+    cmd = HeapAlloc(GetProcessHeap(), 0, strlen(argv[0]) + strlen(arguments) + strlen(blackbox_file) + 2 + 10);
+    sprintf(cmd, "%s%s%08x \"%s\"", argv[0], arguments, pid, blackbox_file);
 
     memset(&si, 0, sizeof(si));
     si.cb = sizeof(si);
