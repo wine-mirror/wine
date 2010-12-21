@@ -25,7 +25,6 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"
-#include "winreg.h"
 
 static CHAR string[MAX_PATH];
 #define ok_w(res, format, szString) \
@@ -53,16 +52,6 @@ static void init_functionpointers(void)
 
 static void test_Predefined(void)
 {
-    /*
-     * If anything fails here, your test environment is probably not set up
-     * correctly.
-     */
-    HKEY UserEnvironment;
-    LSTATUS Err;
-    DWORD Index;
-    char ValueName[256];
-    DWORD ValueNameSize;
-    DWORD Type;
     char Data[1024];
     DWORD DataSize;
     char Env[sizeof(Data)];
@@ -71,58 +60,8 @@ static void test_Predefined(void)
     BOOL NoErr;
 
     /*
-     * Enumerate all values in HKCU\Environment and verify that environment
-     * variables with those names/values are present.
-     */
-    Err = RegOpenKeyExA(HKEY_CURRENT_USER, "Environment", 0, KEY_QUERY_VALUE,
-                        &UserEnvironment);
-    ok(Err == ERROR_SUCCESS || Err == ERROR_FILE_NOT_FOUND,
-       "Failed to open HKCU\\Environment key, error %d\n",
-       Err);
-
-    if (Err == ERROR_SUCCESS)
-    {
-        Index = 0;
-        do
-        {
-            ValueNameSize = sizeof(ValueName);
-            DataSize = sizeof(Data);
-            Err = RegEnumValueA(UserEnvironment, Index, ValueName, &ValueNameSize,
-                                NULL, &Type, (LPBYTE) Data, &DataSize);
-            if (Err == ERROR_SUCCESS)
-            {
-                if (Type == REG_EXPAND_SZ)
-                {
-                    char Expanded[sizeof(Data)];
-                    DWORD ExpandedSize;
-                    ExpandedSize = ExpandEnvironmentStringsA(Data, Expanded,
-                                                             sizeof(Expanded));
-                    ok(ExpandedSize != 0 && ExpandedSize <= sizeof(Expanded),
-                       "Failed to expand %s, error %u\n", Data, GetLastError());
-                    memcpy(Data, Expanded, ExpandedSize);
-                    Type = REG_SZ;
-                }
-                ok(Type == REG_SZ, "Expected data type REG_SZ, got %d\n", Type);
-                EnvSize = GetEnvironmentVariableA(ValueName, Env, sizeof(Env));
-                ok(EnvSize != 0 && EnvSize <= sizeof(Env),
-                   "Failed to retrieve environment variable %s, error %u\n",
-                   ValueName, GetLastError());
-                ok(strcmp(Data, Env) == 0,
-                   "Expected value %s for env var %s, got %s\n", Data, ValueName,
-                   Env);
-            }
-            Index++;
-        }
-        while (Err == ERROR_SUCCESS);
-        ok(Err == ERROR_NO_MORE_ITEMS,
-           "Unexpected return %d from RegEnumValueA\n", Err);
-
-        Err = RegCloseKey(UserEnvironment);
-        ok(Err == ERROR_SUCCESS, "Failed to close reg key, error %d\n", Err);
-    }
-
-    /*
      * Check value of %USERPROFILE%, should be same as GetUserProfileDirectory()
+     * If this fails, your test environment is probably not set up
      */
     if (pOpenProcessToken == NULL || pGetUserProfileDirectoryA == NULL)
     {
