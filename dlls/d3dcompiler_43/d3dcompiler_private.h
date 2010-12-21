@@ -60,7 +60,7 @@ HRESULT d3dcompiler_strip_shader(const void *data, SIZE_T data_size, UINT flags,
 /* ID3D11ShaderReflection */
 struct d3dcompiler_shader_reflection
 {
-    const struct ID3D11ShaderReflectionVtbl *vtbl;
+    ID3D11ShaderReflection ID3D11ShaderReflection_iface;
     LONG refcount;
 };
 

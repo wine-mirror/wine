@@ -25,6 +25,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dcompiler);
 
+static inline struct d3dcompiler_shader_reflection *impl_from_ID3D11ShaderReflection(ID3D11ShaderReflection *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3dcompiler_shader_reflection, ID3D11ShaderReflection_iface);
+}
+
 /* IUnknown methods */
 
 static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_QueryInterface(ID3D11ShaderReflection *iface, REFIID riid, void **object)
@@ -47,7 +52,7 @@ static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_QueryInterface(ID
 
 static ULONG STDMETHODCALLTYPE d3dcompiler_shader_reflection_AddRef(ID3D11ShaderReflection *iface)
 {
-    struct d3dcompiler_shader_reflection *This = (struct d3dcompiler_shader_reflection *)iface;
+    struct d3dcompiler_shader_reflection *This = impl_from_ID3D11ShaderReflection(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
@@ -57,7 +62,7 @@ static ULONG STDMETHODCALLTYPE d3dcompiler_shader_reflection_AddRef(ID3D11Shader
 
 static ULONG STDMETHODCALLTYPE d3dcompiler_shader_reflection_Release(ID3D11ShaderReflection *iface)
 {
-    struct d3dcompiler_shader_reflection *This = (struct d3dcompiler_shader_reflection *)iface;
+    struct d3dcompiler_shader_reflection *This = impl_from_ID3D11ShaderReflection(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);
@@ -249,7 +254,7 @@ HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_reflection 
     HRESULT hr;
     unsigned int i;
 
-    reflection->vtbl = &d3dcompiler_shader_reflection_vtbl;
+    reflection->ID3D11ShaderReflection_iface.lpVtbl = &d3dcompiler_shader_reflection_vtbl;
     reflection->refcount = 1;
 
     hr = dxbc_parse(data, data_size, &src_dxbc);
