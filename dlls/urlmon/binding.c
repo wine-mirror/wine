@@ -1373,7 +1373,7 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface,
     }
 
     WARN("unknown service %s\n", debugstr_guid(guidService));
-    return E_NOTIMPL;
+    return E_NOINTERFACE;
 }
 
 #undef SERVPROV_THIS
