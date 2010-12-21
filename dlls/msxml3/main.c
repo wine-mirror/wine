@@ -29,6 +29,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "rpcproxy.h"
 #include "msxml.h"
 #include "msxml6.h"
 
@@ -242,4 +243,20 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
         break;
     }
     return TRUE;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (MSXML3.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( MSXML_hInstance, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (MSXML3.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( MSXML_hInstance, NULL );
 }
