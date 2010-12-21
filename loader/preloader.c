@@ -344,6 +344,8 @@ static inline int wld_prctl( int code, long arg )
 
 #elif defined(__x86_64__)
 
+void *thread_data[256];
+
 /*
  * The _start function is the entry and exit point of this program
  *
@@ -355,8 +357,12 @@ extern char _end[];
 __ASM_GLOBAL_FUNC(_start,
                   "movq %rsp,%rax\n\t"
                   "leaq -144(%rsp),%rsp\n\t" /* allocate some space for extra aux values */
+                  "movq %rax,(%rsp)\n\t"     /* orig stack pointer */
+                  "movq $thread_data,%rsi\n\t"
+                  "movq $0x1002,%rdi\n\t"    /* ARCH_SET_FS */
+                  "movq $158,%rax\n\t"       /* SYS_arch_prctl */
+                  "syscall\n\t"
                   "movq %rsp,%rdi\n\t"       /* ptr to orig stack pointer */
-                  "movq %rax,(%rdi)\n\t"     /* orig stack pointer */
                   "call wld_start\n\t"
                   "movq (%rsp),%rsp\n\t"     /* new stack pointer */
                   "pushq %rax\n\t"           /* ELF interpreter entry point */
