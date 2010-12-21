@@ -202,6 +202,10 @@ Ustawienia flagi nic nie zmieniaj¹ pod Wine'em.\n"
 
   WCMD_MORE,   "MORE wyœwietla strona po stronie wyjœcie pliku lub potoku.\n"
 
+  WCMD_CHOICE, "CHOICE wyœwietla tekst i czeka, a¿ U¿ytkownik\n\
+naciœnie dozwolony Przycisk z zaznaczalnej listy.\n\
+CHOICE jest u¿ywany g³ównie do budowania menu wyboru w plikach typu bat.\n"
+
   WCMD_EXIT,
 "EXIT koñczy bie¿¹c¹ sesjê cmd i powraca do systemu operacyjnego\n\
 lub pow³oki, w której uruchomiono cmd.\n"
@@ -243,7 +247,7 @@ Wpisz HELP <komenda> dla dok³adniejszych informacji o komendzie\n"
   WCMD_NOFTYPE, "Brak skojarzenia polecenia otwórz z typem plików '%s'\n"
   WCMD_OVERWRITE, "Nadpisaæ %s"
   WCMD_MORESTR, "Wiêcej..."
-  WCMD_TRUNCATEDLINE, "Line in Batch processing possibly truncated. Using:\n"
+  WCMD_TRUNCATEDLINE, "Linia przy przetwarzaniu pliku bat prawdopodobnie obciêta. U¿ywam:\n"
   WCMD_NYI, "Jeszcze niezaimplementowane\n\n"
   WCMD_NOARG, "Brakuje argumentu\n"
   WCMD_SYNTAXERR, "B³¹d sk³adni\n"
@@ -256,7 +260,7 @@ Wpisz HELP <komenda> dla dok³adniejszych informacji o komendzie\n"
   WCMD_NEWTIME, "Wpisz nowy czas: "
   WCMD_MISSINGENV, "Zmienna œrodowiskowa %s niezdefiniowana\n"
   WCMD_READFAIL, "Nieudane otwarcie '%s'\n"
-  WCMD_CALLINSCRIPT, "Cannot call batch label outside of a batch script\n"
+  WCMD_CALLINSCRIPT, "Nie mo¿na wywo³aæ etykiety bat poza skryptem bat\n"
   WCMD_ALL, "A"
   WCMD_DELPROMPT, "%s, Usun¹æ"
   WCMD_ECHOPROMPT, "Echo jest %s\n"
