@@ -69,6 +69,18 @@ FONT 8, "MS Shell Dlg"
  PUSHBUTTON "Annuler", IDCANCEL, 147, 128, 56, 14, WS_GROUP | WS_TABSTOP
 }
 
+IDD_INVCERTDLG DIALOG 3, 24, 250, 86
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Alerte de sécurité"
+FONT 8, "MS Shell Dlg"
+{
+ LTEXT "Le certificat pour ce site pose problème.", -1, 40, 6, 200, 20
+ LTEXT "", IDC_CERT_ERROR, 40, 26, 200, 20
+ LTEXT "Voulez-vous tout de même continuer ?", -1, 40, 46, 200, 20
+ PUSHBUTTON "Oui", IDOK, 40, 66, 56, 14, WS_GROUP | WS_TABSTOP | BS_DEFPUSHBUTTON
+ PUSHBUTTON "Non", IDCANCEL, 100, 66, 56, 14, WS_GROUP | WS_TABSTOP
+}
+
 STRINGTABLE
 {
   IDS_LANCONNECTION "Connexion réseau local (LAN)"
