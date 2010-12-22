@@ -1406,6 +1406,16 @@ static void test_CreateTypeLib(void) {
     SysFreeString(name);
     SysFreeString(helpfile);
 
+    /* invalid parameters */
+    hres = ICreateTypeLib_CreateTypeInfo(createtl, NULL, TKIND_INTERFACE, &createti);
+    ok(hres == E_INVALIDARG, "got %08x\n", hres);
+
+    hres = ICreateTypeLib_CreateTypeInfo(createtl, interface1W, TKIND_INTERFACE, NULL);
+    ok(hres == E_INVALIDARG, "got %08x\n", hres);
+
+    hres = ICreateTypeLib_CreateTypeInfo(createtl, NULL, TKIND_INTERFACE, NULL);
+    ok(hres == E_INVALIDARG, "got %08x\n", hres);
+
     hres = ICreateTypeLib_CreateTypeInfo(createtl, interface1W, TKIND_INTERFACE, &createti);
     ok(hres == S_OK, "got %08x\n", hres);
 

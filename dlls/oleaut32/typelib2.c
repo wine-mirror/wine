@@ -4389,20 +4389,21 @@ static HRESULT WINAPI ICreateTypeLib2_fnCreateTypeInfo(
 	ICreateTypeLib2 * iface,
 	LPOLESTR szName,
 	TYPEKIND tkind,
-	ICreateTypeInfo **ppCTInfo)
+	ICreateTypeInfo **tinfo)
 {
     ICreateTypeLib2Impl *This = (ICreateTypeLib2Impl *)iface;
     char *name;
 
-    TRACE("(%p,%s,%d,%p)\n", iface, debugstr_w(szName), tkind, ppCTInfo);
+    TRACE("(%p,%s,%d,%p)\n", iface, debugstr_w(szName), tkind, tinfo);
+
+    if (!szName || !tinfo) return E_INVALIDARG;
 
     ctl2_encode_name(This, szName, &name);
     if(ctl2_find_name(This, name) != -1)
         return TYPE_E_NAMECONFLICT;
 
-    *ppCTInfo = (ICreateTypeInfo *)ICreateTypeInfo2_Constructor(This, szName, tkind);
-
-    if (!*ppCTInfo) return E_OUTOFMEMORY;
+    *tinfo = (ICreateTypeInfo *)ICreateTypeInfo2_Constructor(This, szName, tkind);
+    if (!*tinfo) return E_OUTOFMEMORY;
 
     return S_OK;
 }
