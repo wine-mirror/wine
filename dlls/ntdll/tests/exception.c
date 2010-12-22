@@ -72,13 +72,16 @@ static BOOL is_wow64;
 
 static const struct exception
 {
-    BYTE     code[18];   /* asm code */
-    BYTE     offset;     /* offset of faulting instruction */
-    BYTE     length;     /* length of faulting instruction */
-    BOOL     wow64_broken; /* broken on Wow64, should be skipped */
-    NTSTATUS status;     /* expected status code */
-    DWORD    nb_params;  /* expected number of parameters */
-    DWORD    params[4];  /* expected parameters */
+    BYTE     code[18];      /* asm code */
+    BYTE     offset;        /* offset of faulting instruction */
+    BYTE     length;        /* length of faulting instruction */
+    BOOL     wow64_broken;  /* broken on Wow64, should be skipped */
+    NTSTATUS status;        /* expected status code */
+    DWORD    nb_params;     /* expected number of parameters */
+    DWORD    params[4];     /* expected parameters */
+    NTSTATUS alt_status;    /* alternative status code */
+    DWORD    alt_nb_params; /* alternative number of parameters */
+    DWORD    alt_params[4]; /* alternative parameters */
 } exceptions[] =
 {
 /* 0 */
@@ -137,66 +140,67 @@ static const struct exception
       6, 6, FALSE, STATUS_ACCESS_VIOLATION, 2, { 0, 0xffffffff } },
 
     /* test moving %cs -> %ss */
-    { { 0x0e, 0x17, 0x58, 0xc3 },  /* 18: pushl %cs; popl %ss; popl %eax; ret */
+    { { 0x0e, 0x17, 0x58, 0xc3 },  /* pushl %cs; popl %ss; popl %eax; ret */
       1, 1, FALSE, STATUS_ACCESS_VIOLATION, 2, { 0, 0xffffffff } },
 
 /* 20 */
     /* test overlong instruction (limit is 15 bytes, 5 on Win7) */
     { { 0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0xfa,0xc3 },
-      0, 16, TRUE, STATUS_ILLEGAL_INSTRUCTION, 0 },
+      0, 16, TRUE, STATUS_ILLEGAL_INSTRUCTION, 0, { 0 },
+      STATUS_ACCESS_VIOLATION, 2, { 0, 0xffffffff } },
     { { 0x64,0x64,0x64,0x64,0xfa,0xc3 },
       0, 5, TRUE, STATUS_PRIVILEGED_INSTRUCTION, 0 },
 
     /* test invalid interrupt */
-    { { 0xcd, 0xff, 0xc3 },   /* 21: int $0xff; ret */
+    { { 0xcd, 0xff, 0xc3 },   /* int $0xff; ret */
       0, 2, FALSE, STATUS_ACCESS_VIOLATION, 2, { 0, 0xffffffff } },
 
     /* test moves to/from Crx */
-    { { 0x0f, 0x20, 0xc0, 0xc3 },  /* 22: movl %cr0,%eax; ret */
+    { { 0x0f, 0x20, 0xc0, 0xc3 },  /* movl %cr0,%eax; ret */
       0, 3, FALSE, STATUS_PRIVILEGED_INSTRUCTION, 0 },
-    { { 0x0f, 0x20, 0xe0, 0xc3 },  /* 23: movl %cr4,%eax; ret */
+    { { 0x0f, 0x20, 0xe0, 0xc3 },  /* movl %cr4,%eax; ret */
       0, 3, FALSE, STATUS_PRIVILEGED_INSTRUCTION, 0 },
 /* 25 */
-    { { 0x0f, 0x22, 0xc0, 0xc3 },  /* 24: movl %eax,%cr0; ret */
+    { { 0x0f, 0x22, 0xc0, 0xc3 },  /* movl %eax,%cr0; ret */
       0, 3, FALSE, STATUS_PRIVILEGED_INSTRUCTION, 0 },
-    { { 0x0f, 0x22, 0xe0, 0xc3 },  /* 25: movl %eax,%cr4; ret */
+    { { 0x0f, 0x22, 0xe0, 0xc3 },  /* movl %eax,%cr4; ret */
       0, 3, FALSE, STATUS_PRIVILEGED_INSTRUCTION, 0 },
 
     /* test moves to/from Drx */
-    { { 0x0f, 0x21, 0xc0, 0xc3 },  /* 26: movl %dr0,%eax; ret */
+    { { 0x0f, 0x21, 0xc0, 0xc3 },  /* movl %dr0,%eax; ret */
       0, 3, FALSE, STATUS_PRIVILEGED_INSTRUCTION, 0 },
-    { { 0x0f, 0x21, 0xc8, 0xc3 },  /* 27: movl %dr1,%eax; ret */
+    { { 0x0f, 0x21, 0xc8, 0xc3 },  /* movl %dr1,%eax; ret */
       0, 3, FALSE, STATUS_PRIVILEGED_INSTRUCTION, 0 },
-    { { 0x0f, 0x21, 0xf8, 0xc3 },  /* 28: movl %dr7,%eax; ret */
+    { { 0x0f, 0x21, 0xf8, 0xc3 },  /* movl %dr7,%eax; ret */
       0, 3, FALSE, STATUS_PRIVILEGED_INSTRUCTION, 0 },
 /* 30 */
-    { { 0x0f, 0x23, 0xc0, 0xc3 },  /* 29: movl %eax,%dr0; ret */
+    { { 0x0f, 0x23, 0xc0, 0xc3 },  /* movl %eax,%dr0; ret */
       0, 3, FALSE, STATUS_PRIVILEGED_INSTRUCTION, 0 },
-    { { 0x0f, 0x23, 0xc8, 0xc3 },  /* 30: movl %eax,%dr1; ret */
+    { { 0x0f, 0x23, 0xc8, 0xc3 },  /* movl %eax,%dr1; ret */
       0, 3, FALSE, STATUS_PRIVILEGED_INSTRUCTION, 0 },
-    { { 0x0f, 0x23, 0xf8, 0xc3 },  /* 31: movl %eax,%dr7; ret */
+    { { 0x0f, 0x23, 0xf8, 0xc3 },  /* movl %eax,%dr7; ret */
       0, 3, FALSE, STATUS_PRIVILEGED_INSTRUCTION, 0 },
 
     /* test memory reads */
-    { { 0xa1, 0xfc, 0xff, 0xff, 0xff, 0xc3 },  /* 32: movl 0xfffffffc,%eax; ret */
+    { { 0xa1, 0xfc, 0xff, 0xff, 0xff, 0xc3 },  /* movl 0xfffffffc,%eax; ret */
       0, 5, FALSE, STATUS_ACCESS_VIOLATION, 2, { 0, 0xfffffffc } },
-    { { 0xa1, 0xfd, 0xff, 0xff, 0xff, 0xc3 },  /* 33: movl 0xfffffffd,%eax; ret */
+    { { 0xa1, 0xfd, 0xff, 0xff, 0xff, 0xc3 },  /* movl 0xfffffffd,%eax; ret */
       0, 5, FALSE, STATUS_ACCESS_VIOLATION, 2, { 0, 0xfffffffd } },
 /* 35 */
-    { { 0xa1, 0xfe, 0xff, 0xff, 0xff, 0xc3 },  /* 34: movl 0xfffffffe,%eax; ret */
+    { { 0xa1, 0xfe, 0xff, 0xff, 0xff, 0xc3 },  /* movl 0xfffffffe,%eax; ret */
       0, 5, FALSE, STATUS_ACCESS_VIOLATION, 2, { 0, 0xfffffffe } },
-    { { 0xa1, 0xff, 0xff, 0xff, 0xff, 0xc3 },  /* 35: movl 0xffffffff,%eax; ret */
+    { { 0xa1, 0xff, 0xff, 0xff, 0xff, 0xc3 },  /* movl 0xffffffff,%eax; ret */
       0, 5, FALSE, STATUS_ACCESS_VIOLATION, 2, { 0, 0xffffffff } },
 
     /* test memory writes */
-    { { 0xa3, 0xfc, 0xff, 0xff, 0xff, 0xc3 },  /* 36: movl %eax,0xfffffffc; ret */
+    { { 0xa3, 0xfc, 0xff, 0xff, 0xff, 0xc3 },  /* movl %eax,0xfffffffc; ret */
       0, 5, FALSE, STATUS_ACCESS_VIOLATION, 2, { 1, 0xfffffffc } },
-    { { 0xa3, 0xfd, 0xff, 0xff, 0xff, 0xc3 },  /* 37: movl %eax,0xfffffffd; ret */
+    { { 0xa3, 0xfd, 0xff, 0xff, 0xff, 0xc3 },  /* movl %eax,0xfffffffd; ret */
       0, 5, FALSE, STATUS_ACCESS_VIOLATION, 2, { 1, 0xfffffffd } },
-    { { 0xa3, 0xfe, 0xff, 0xff, 0xff, 0xc3 },  /* 38: movl %eax,0xfffffffe; ret */
+    { { 0xa3, 0xfe, 0xff, 0xff, 0xff, 0xc3 },  /* movl %eax,0xfffffffe; ret */
       0, 5, FALSE, STATUS_ACCESS_VIOLATION, 2, { 1, 0xfffffffe } },
 /* 40 */
-    { { 0xa3, 0xff, 0xff, 0xff, 0xff, 0xc3 },  /* 39: movl %eax,0xffffffff; ret */
+    { { 0xa3, 0xff, 0xff, 0xff, 0xff, 0xc3 },  /* movl %eax,0xffffffff; ret */
       0, 5, FALSE, STATUS_ACCESS_VIOLATION, 2, { 1, 0xffffffff } },
 
     /* test exception with cleared %ds and %es (broken on Wow64) */
@@ -389,14 +393,23 @@ static DWORD handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *fram
     trace( "exception %u: %x flags:%x addr:%p\n",
            entry, rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
 
-    ok( rec->ExceptionCode == except->status,
+    ok( rec->ExceptionCode == except->status ||
+        (except->alt_status != 0 && rec->ExceptionCode == except->alt_status),
         "%u: Wrong exception code %x/%x\n", entry, rec->ExceptionCode, except->status );
     ok( rec->ExceptionAddress == (char*)code_mem + except->offset,
         "%u: Wrong exception address %p/%p\n", entry,
         rec->ExceptionAddress, (char*)code_mem + except->offset );
 
-    ok( rec->NumberParameters == except->nb_params,
-        "%u: Wrong number of parameters %u/%u\n", entry, rec->NumberParameters, except->nb_params );
+    if (except->alt_status == 0 || rec->ExceptionCode != except->alt_status)
+    {
+        ok( rec->NumberParameters == except->nb_params,
+            "%u: Wrong number of parameters %u/%u\n", entry, rec->NumberParameters, except->nb_params );
+    }
+    else
+    {
+        ok( rec->NumberParameters == except->alt_nb_params,
+            "%u: Wrong number of parameters %u/%u\n", entry, rec->NumberParameters, except->nb_params );
+    }
 
     /* Most CPUs (except Intel Core apparently) report a segment limit violation */
     /* instead of page faults for accesses beyond 0xffffffff */
@@ -414,10 +427,20 @@ static DWORD handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *fram
         goto skip_params;
     }
 
-    for (i = 0; i < rec->NumberParameters; i++)
-        ok( rec->ExceptionInformation[i] == except->params[i],
-            "%u: Wrong parameter %d: %lx/%x\n",
-            entry, i, rec->ExceptionInformation[i], except->params[i] );
+    if (except->alt_status == 0 || rec->ExceptionCode != except->alt_status)
+    {
+        for (i = 0; i < rec->NumberParameters; i++)
+            ok( rec->ExceptionInformation[i] == except->params[i],
+                "%u: Wrong parameter %d: %lx/%x\n",
+                entry, i, rec->ExceptionInformation[i], except->params[i] );
+    }
+    else
+    {
+        for (i = 0; i < rec->NumberParameters; i++)
+            ok( rec->ExceptionInformation[i] == except->alt_params[i],
+                "%u: Wrong parameter %d: %lx/%x\n",
+                entry, i, rec->ExceptionInformation[i], except->alt_params[i] );
+    }
 
 skip_params:
     /* don't handle exception if it's not the address we expected */
