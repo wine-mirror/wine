@@ -346,6 +346,7 @@ interface IXMLElementNotificationSink : IDispatch
     helpstring("Msxml"),
     progid("Msxml"),
     threading(both),
+    version(1.0),
     uuid(cfc399af-d876-11d0-9c10-00c04fc99c8e)
 ]
 coclass XMLDocument

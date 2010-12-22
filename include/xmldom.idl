@@ -740,6 +740,7 @@ dispinterface XMLDOMDocumentEvents
     progid("Microsoft.XMLDOM.1.0"),
     vi_progid("Microsoft.XMLDOM"),
     threading(both),
+    version(1.0),
     uuid(2933bf90-7b36-11d2-b20e-00c04f983e60)
 ]
 coclass DOMDocument
@@ -753,6 +754,7 @@ coclass DOMDocument
     progid("Microsoft.FreeThreadedXMLDOM.1.0"),
     vi_progid("Microsoft.FreeThreadedXMLDOM"),
     threading(both),
+    version(1.0),
     uuid(2933bf91-7b36-11d2-b20e-00c04f983e60)
 ]
 coclass DOMFreeThreadedDocument
@@ -821,6 +823,7 @@ interface IXMLHttpRequest : IDispatch
     progid("Microsoft.XMLHTTP.1.0"),
     vi_progid("Microsoft.XMLHTTP"),
     threading(apartment),
+    version(1.0),
     uuid(ed8c108e-4349-11d2-91a4-00c04f7969e8)
 ]
 coclass XMLHTTPRequest
