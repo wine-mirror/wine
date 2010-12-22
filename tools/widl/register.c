@@ -134,7 +134,8 @@ static int write_coclass( const type_t *class, const typelib_t *typelib )
     if (typelib)
     {
         const UUID *typelib_uuid = get_attrp( typelib->attrs, ATTR_UUID );
-        const unsigned int version = get_attrv( typelib->attrs, ATTR_VERSION );
+        unsigned int version = get_attrv( class->attrs, ATTR_VERSION );
+        if (!version) version = get_attrv( typelib->attrs, ATTR_VERSION );
         put_str( indent, "TypeLib = s '%s'\n", format_uuid( typelib_uuid ));
         put_str( indent, "Version = s '%u.%u'\n", MAJORVERSION(version), MINORVERSION(version) );
     }
