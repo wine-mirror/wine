@@ -93,6 +93,15 @@ typedef enum _SELECTION_TYPE {
 } SELECTION_TYPE;
 
 [
+    version(4.0),
+    uuid(3050F1C5-98B5-11CF-BB82-00AA00BDCE0B)
+]
+library MSHTML
+{
+
+importlib("stdole2.tlb");
+
+[
     odl,
     oleautomation,
     dual,
@@ -142,15 +151,6 @@ interface IHTMLFiltersCollection : IDispatch
         [in] VARIANT *pvarIndex,
         [retval, out] VARIANT *pvarResult);
 }
-
-[
-    version(4.0),
-    uuid(3050F1C5-98B5-11CF-BB82-00AA00BDCE0B)
-]
-library MSHTML
-{
-
-importlib("stdole2.tlb");
 
 /*****************************************************************************
  *    IHTMLStyle interface
@@ -13135,6 +13135,104 @@ coclass HTMLDocument
                       interface IHTMLDocument6;
                       interface IHTMLDOMNode;
                       interface IHTMLDOMNode2;
+}
+
+/*****************************************************************************
+ *    DWebBridgeEvents dispinterface
+ */
+[
+    hidden,
+    uuid(a6d897ff-0a95-11d1-b0ba-006008166e11)
+]
+dispinterface DWebBridgeEvents
+{
+properties:
+methods:
+    [id(DISPID_DWEBBRIDGEEVENTS_ONSCRIPTLETEVENT)]
+    void onscriptletevent([in] BSTR name,[in] VARIANT eventData);
+
+    [id(DISPID_DWEBBRIDGEEVENTS_ONREADYSTATECHANGE)]
+    void onreadystatechange();
+
+    [id(DISPID_DWEBBRIDGEEVENTS_ONCLICK)]
+    VARIANT_BOOL onclick();
+
+    [id(DISPID_DWEBBRIDGEEVENTS_ONDBLCLICK)]
+    VARIANT_BOOL ondblclick();
+
+    [id(DISPID_DWEBBRIDGEEVENTS_ONKEYDOWN)]
+    void onkeydown();
+
+    [id(DISPID_DWEBBRIDGEEVENTS_ONKEYUP)]
+    void onkeyup();
+
+    [id(DISPID_DWEBBRIDGEEVENTS_ONKEYPRESS)]
+    VARIANT_BOOL onkeypress();
+
+    [id(DISPID_DWEBBRIDGEEVENTS_ONMOUSEDOWN)]
+    void onmousedown();
+
+    [id(DISPID_DWEBBRIDGEEVENTS_ONMOUSEMOVE)]
+    void onmousemove();
+
+    [id(DISPID_DWEBBRIDGEEVENTS_ONMOUSEUP)]
+    void onmouseup();
+}
+
+/*****************************************************************************
+ *    IWebBridge interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(ae24fdad-03c6-11d1-8b76-0080c744f389)
+]
+interface IWebBridge : IDispatch
+{
+    [propput, id(DISPID_IWEBBRIDGE_URL)]
+    HRESULT URL([in] BSTR v);
+
+    [propget, id(DISPID_IWEBBRIDGE_URL)]
+    HRESULT URL([retval, out] BSTR * p);
+
+    [propput, id(DISPID_IWEBBRIDGE_SCROLLBAR)]
+    HRESULT Scrollbar([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IWEBBRIDGE_SCROLLBAR)]
+    HRESULT Scrollbar([retval, out] VARIANT_BOOL * p);
+
+    [propput, id(DISPID_IWEBBRIDGE_EMBED)]
+    HRESULT embed([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IWEBBRIDGE_EMBED)]
+    HRESULT embed([retval, out] VARIANT_BOOL * p);
+
+    [propget, id(DISPID_IWEBBRIDGE_EVENT)]
+    HRESULT event([retval, out] IDispatch* * p);
+
+    [propget, id(DISPID_IWEBBRIDGE_READYSTATE)]
+    HRESULT readyState([retval, out] long * p);
+
+    [id(DISPID_IWEBBRIDGE_ABOUTBOX)]
+    HRESULT AboutBox();
+}
+
+/*****************************************************************************
+ *    Scriptlet coclass
+ */
+[
+    control,
+    helpstring("Microsoft Scriptlet Component"),
+    progid("ScriptBridge.ScriptBridge.1"),
+    vi_progid("ScriptBridge.ScriptBridge"),
+    threading(apartment),
+    uuid(ae24fdae-03c6-11d1-8b76-0080c744f389)
+]
+coclass Scriptlet
+{
+    [default]           interface IWebBridge;
+    [source, default]   dispinterface DWebBridgeEvents;
 }
 
 /*****************************************************************************
