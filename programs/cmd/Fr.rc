@@ -212,6 +212,10 @@ PUSHD.\n"
 
   WCMD_MORE,   "MORE affiche le contenu de fichiers ou l'entrée standard par pages.\n"
 
+  WCMD_CHOICE, "CHOICE affiche un message et bloque jusqu'à ce que l'utilisateur appuie\n\
+sur une des touches spécifiées dans une liste configurable.\n\
+CHOICE est principalement utilisé pour construire une sélection de menu dans un fichier batch.\n"
+
   WCMD_EXIT,
 "EXIT termine la session de ligne de commande et retourne\n\
 au système d'exploitation ou au shell où vous avez invoqué cmd.\n"
@@ -220,6 +224,7 @@ au système d'exploitation ou au shell où vous avez invoqué cmd.\n"
 ATTRIB\t\tAffiche ou modifie les attributs de fichiers DOS\n\
 CALL\t\tInvoque un fichier batch à l'intérieur d'un autre\n\
 CD (CHDIR)\tChange le répertoire courant par défaut\n\
+CHOICE\t\tAttend l'appui d'une touche appartenant à une liste configurable\n\
 CLS\t\tEfface l'écran\n\
 COPY\t\tCopie un ou plusieurs fichiers\n\
 CTTY\t\tChange le périphérique d'entrée/sortie\n\
