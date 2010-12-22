@@ -2206,7 +2206,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
     int var_type_size;
     int alignment;
 
-    TRACE("(%p,%d,%p), stub!\n", iface, index, pVarDesc);
+    TRACE("(%p,%d,%p)\n", iface, index, pVarDesc);
     TRACE("%d, %p, %d, {{%x, %d}, {%p, %x}}, 0x%x, %d\n", pVarDesc->memid, pVarDesc->lpstrSchema, pVarDesc->u.oInst,
 	  pVarDesc->elemdescVar.tdesc.u.hreftype, pVarDesc->elemdescVar.tdesc.vt,
 	  pVarDesc->elemdescVar.u.paramdesc.pparamdescex, pVarDesc->elemdescVar.u.paramdesc.wParamFlags,
@@ -2543,10 +2543,27 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncHelpContext(
 static HRESULT WINAPI ICreateTypeInfo2_fnSetVarHelpContext(
         ICreateTypeInfo2* iface,
         UINT index,
-        DWORD dwHelpContext)
+        DWORD context)
 {
-    FIXME("(%p,%d,%d), stub!\n", iface, index, dwHelpContext);
-    return E_OUTOFMEMORY;
+    ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
+    CyclicList *iter;
+
+    TRACE("(%p,%d,%d)\n", This, index, context);
+
+    if ((This->typeinfo->cElement >> 16) <= index)
+	return TYPE_E_ELEMENTNOTFOUND;
+
+    for (iter = This->typedata->next->next; iter != This->typedata; iter = iter->next)
+       if (iter->type == CyclicListVar)
+       {
+           if (index-- == 0)
+           {
+               iter->u.data[5] = context;
+               return S_OK;
+           }
+       }
+
+    return TYPE_E_ELEMENTNOTFOUND;
 }
 
 /******************************************************************************
