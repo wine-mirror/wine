@@ -1225,7 +1225,7 @@ if(use_midl_tlb) {
     href = U(pFD->lprgelemdescParam[0].tdesc).hreftype;
     ok((href & 0xff000000) == 0x04000000, "href 0x%08x\n", href);
     hr = ITypeInfo_GetRefTypeInfo(pTI, href, &pTI_p);
-    ok(SUCCEEDED(hr), "hr %08x\n", hr);
+    ok(hr == S_OK, "hr %08x\n", hr);
     if (SUCCEEDED(hr)) ITypeInfo_Release(pTI_p);
     ITypeInfo_ReleaseFuncDesc(pTI, pFD);
 }
@@ -2728,7 +2728,7 @@ static void test_register_typelib(BOOL system_registration)
     MultiByteToWideChar(CP_ACP, 0, filenameA, -1, filename, MAX_PATH);
 
     hr = LoadTypeLibEx(filename, REGKIND_NONE, &typelib);
-    ok(SUCCEEDED(hr), "got %08x\n", hr);
+    ok(hr == S_OK, "got %08x\n", hr);
 
     if (system_registration)
         hr = RegisterTypeLib(typelib, filename, NULL);
@@ -2741,7 +2741,7 @@ static void test_register_typelib(BOOL system_registration)
         DeleteFileA(filenameA);
         return;
     }
-    ok(SUCCEEDED(hr), "got %08x\n", hr);
+    ok(hr == S_OK, "got %08x\n", hr);
 
     count = ITypeLib_GetTypeInfoCount(typelib);
     ok(count == 11, "got %d\n", count);
@@ -2752,10 +2752,10 @@ static void test_register_typelib(BOOL system_registration)
         TYPEATTR *attr;
 
         hr = ITypeLib_GetTypeInfo(typelib, i, &typeinfo);
-        ok(SUCCEEDED(hr), "got %08x\n", hr);
+        ok(hr == S_OK, "got %08x\n", hr);
 
         hr = ITypeInfo_GetTypeAttr(typeinfo, &attr);
-        ok(SUCCEEDED(hr), "got %08x\n", hr);
+        ok(hr == S_OK, "got %08x\n", hr);
 
         ok(attr->typekind == attrs[i].kind, "%d: got kind %d\n", i, attr->typekind);
         ok(attr->wTypeFlags == attrs[i].flags, "%d: got flags %04x\n", i, attr->wTypeFlags);
@@ -2767,13 +2767,13 @@ static void test_register_typelib(BOOL system_registration)
             TYPEATTR *dual_attr;
 
             hr = ITypeInfo_GetRefTypeOfImplType(typeinfo, -1, &reftype);
-            ok(SUCCEEDED(hr), "got %08x\n", hr);
+            ok(hr == S_OK, "got %08x\n", hr);
 
             hr = ITypeInfo_GetRefTypeInfo(typeinfo, reftype, &dual_info);
-            ok(SUCCEEDED(hr), "got %08x\n", hr);
+            ok(hr == S_OK, "got %08x\n", hr);
 
             hr = ITypeInfo_GetTypeAttr(dual_info, &dual_attr);
-            ok(SUCCEEDED(hr), "got %08x\n", hr);
+            ok(hr == S_OK, "got %08x\n", hr);
 
             ok(dual_attr->typekind == TKIND_INTERFACE, "%d: got kind %d\n", i, dual_attr->typekind);
             ok(dual_attr->wTypeFlags == (TYPEFLAG_FDISPATCHABLE | TYPEFLAG_FOLEAUTOMATION | TYPEFLAG_FDUAL), "%d: got flags %04x\n", i, dual_attr->wTypeFlags);
@@ -2807,7 +2807,7 @@ static void test_register_typelib(BOOL system_registration)
         hr = UnRegisterTypeLib(&LIBID_register_test, 1, 0, LOCALE_NEUTRAL, is_win64 ? SYS_WIN64 : SYS_WIN32);
     else
         hr = pUnRegisterTypeLibForUser(&LIBID_register_test, 1, 0, LOCALE_NEUTRAL, is_win64 ? SYS_WIN64 : SYS_WIN32);
-    ok(SUCCEEDED(hr), "got %08x\n", hr);
+    ok(hr == S_OK, "got %08x\n", hr);
 
     ITypeLib_Release(typelib);
     DeleteFileA( filenameA );
