@@ -1275,7 +1275,8 @@ static HRESULT HTMLWindow_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD fla
     case GLOBAL_ELEMENTVAR: {
         IHTMLElement *elem;
 
-        hres = IHTMLDocument3_getElementById(HTMLDOC3(&This->doc->basedoc), prop->name, &elem);
+        hres = IHTMLDocument3_getElementById(&This->doc->basedoc.IHTMLDocument3_iface,
+                                             prop->name, &elem);
         if(FAILED(hres))
             return hres;
 
@@ -2001,7 +2002,8 @@ static HRESULT WINAPI WindowDispEx_GetDispID(IDispatchEx *iface, BSTR bstrName, 
         global_prop_t *prop;
         IHTMLElement *elem;
 
-        hres = IHTMLDocument3_getElementById(HTMLDOC3(&This->doc->basedoc), bstrName, &elem);
+        hres = IHTMLDocument3_getElementById(&This->doc->basedoc.IHTMLDocument3_iface,
+                                             bstrName, &elem);
         if(SUCCEEDED(hres) && elem) {
             IHTMLElement_Release(elem);
 
