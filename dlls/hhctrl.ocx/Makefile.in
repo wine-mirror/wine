@@ -7,10 +7,12 @@ C_SRCS = \
 	help.c \
 	hhctrl.c \
 	index.c \
-	regsvr.c \
 	search.c \
 	stream.c \
 	webbrowser.c
+
+IDL_TLB_SRCS = hhctrl_tlb.idl
+IDL_R_SRCS   = hhctrl_tlb.idl
 
 RC_SRCS = \
 	Cs.rc \
@@ -39,6 +41,6 @@ RC_SRCS = \
 	Tr.rc \
 	Uk.rc \
 	Zh.rc \
-	version.rc
+	rsrc.rc
 
 @MAKE_DLL_RULES@

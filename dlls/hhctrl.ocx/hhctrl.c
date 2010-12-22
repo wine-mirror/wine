@@ -21,6 +21,18 @@
 
 #include "wine/debug.h"
 
+#include <stdarg.h>
+
+#define COBJMACROS
+
+#include "windef.h"
+#include "winbase.h"
+#include "winuser.h"
+#include "winnls.h"
+#include "htmlhelp.h"
+#include "ole2.h"
+#include "rpcproxy.h"
+
 #define INIT_GUID
 #include "hhctrl.h"
 
@@ -352,4 +364,20 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     FIXME("(%s %s %p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (HHCTRL.OCX.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( hhctrl_hinstance, NULL );
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (HHCTRL.OCX.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( hhctrl_hinstance, NULL );
 }
