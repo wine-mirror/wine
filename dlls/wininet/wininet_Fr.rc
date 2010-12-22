@@ -5,7 +5,7 @@
  * Copyright 2003 Mike McCormack for CodeWeavers
  * Copyright 2003 Vincent Béron
  * Copyright 2005 Jonathan Ernst
- * Copyright 2009 Frédéric Delanoy
+ * Copyright 2009-2010 Frédéric Delanoy
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -72,4 +72,8 @@ FONT 8, "MS Shell Dlg"
 STRINGTABLE
 {
   IDS_LANCONNECTION "Connexion réseau local (LAN)"
+  IDS_CERT_CA_INVALID   "Le certificat est délivré par un éditeur inconnu ou non fiable."
+  IDS_CERT_DATE_INVALID "La date sur le certificat est invalide."
+  IDS_CERT_CN_INVALID   "Le nom sur le certificat ne correspond pas au nom du site."
+  IDS_CERT_ERRORS       "Ce certificat comporte au moins un problème de sécurité indéterminé."
 }
