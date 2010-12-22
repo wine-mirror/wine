@@ -26,6 +26,8 @@
 
 #define NO_SHLWAPI_REG
 #include "shlwapi.h"
+#include "advpub.h"
+
 #include "wine/debug.h"
 
 #include "urlmon.h"
@@ -366,6 +368,44 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
+static HRESULT register_inf(BOOL doregister)
+{
+    HRESULT (WINAPI *pRegInstall)(HMODULE hm, LPCSTR pszSection, const STRTABLEA* pstTable);
+    HMODULE hAdvpack;
+
+    static const WCHAR wszAdvpack[] = {'a','d','v','p','a','c','k','.','d','l','l',0};
+
+    hAdvpack = LoadLibraryW(wszAdvpack);
+    pRegInstall = (void *)GetProcAddress(hAdvpack, "RegInstall");
+
+    return pRegInstall(hProxyDll, doregister ? "RegisterDll" : "UnregisterDll", NULL);
+}
+
+/***********************************************************************
+ *		DllRegisterServer (URLMON.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    HRESULT hr;
+
+    TRACE("\n");
+
+    hr = URLMON_DllRegisterServer();
+    return SUCCEEDED(hr) ? register_inf(TRUE) : hr;
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (URLMON.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    HRESULT hr;
+
+    TRACE("\n");
+
+    hr = URLMON_DllUnregisterServer();
+    return SUCCEEDED(hr) ? register_inf(FALSE) : hr;
+}
 
 /***********************************************************************
  *		DllRegisterServerEx (URLMON.@)
