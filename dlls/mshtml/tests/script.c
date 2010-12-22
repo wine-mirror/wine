@@ -124,8 +124,10 @@ DEFINE_EXPECT(script_testprop2_d);
 DEFINE_EXPECT(AXQueryInterface_IActiveScript);
 DEFINE_EXPECT(AXQueryInterface_IObjectSafety);
 DEFINE_EXPECT(AXGetInterfaceSafetyOptions);
-DEFINE_EXPECT(AXSetInterfaceSafetyOptions_IDispatch);
-DEFINE_EXPECT(AXSetInterfaceSafetyOptions_IDispatchEx);
+DEFINE_EXPECT(AXSetInterfaceSafetyOptions_IDispatch_caller);
+DEFINE_EXPECT(AXSetInterfaceSafetyOptions_IDispatch_data);
+DEFINE_EXPECT(AXSetInterfaceSafetyOptions_IDispatchEx_caller_secmgr);
+DEFINE_EXPECT(AXSetInterfaceSafetyOptions_IDispatchEx_caller);
 DEFINE_EXPECT(external_success);
 
 #define TESTSCRIPT_CLSID "{178fc163-f585-4e24-9c13-4bb7faf80746}"
@@ -150,8 +152,9 @@ static BOOL doc_complete;
 static IDispatch *script_disp;
 static BOOL ax_objsafe;
 static HWND container_hwnd;
-static HRESULT ax_getopt_hres = S_OK, ax_setopt_dispex_hres = S_OK, ax_setopt_disp_hres = S_OK;
-static DWORD ax_setopt;
+static HRESULT ax_getopt_hres = S_OK, ax_setopt_dispex_hres = S_OK;
+static HRESULT ax_setopt_disp_caller_hres = S_OK, ax_setopt_disp_data_hres = S_OK;
+static BOOL skip_loadobject_tests;
 
 static const char *debugstr_guid(REFIID riid)
 {
@@ -1249,7 +1252,7 @@ static HRESULT WINAPI AXObjectSafety_QueryInterface(IObjectSafety *iface, REFIID
     }
 
     if(IsEqualGUID(&IID_IObjectSafety, riid)) {
-        CHECK_EXPECT(AXQueryInterface_IObjectSafety);
+        CHECK_EXPECT2(AXQueryInterface_IObjectSafety);
         if(!ax_objsafe)
             return E_NOINTERFACE;
         *ppv = iface;
@@ -1281,19 +1284,39 @@ static HRESULT WINAPI AXObjectSafety_SetInterfaceSafetyOptions(IObjectSafety *if
         DWORD dwOptionSetMask, DWORD dwEnabledOptions)
 {
     if(IsEqualGUID(&IID_IDispatchEx, riid)) {
-        CHECK_EXPECT(AXSetInterfaceSafetyOptions_IDispatchEx);
-        ok(dwOptionSetMask == ax_setopt, "dwOptionSetMask=%x, expected %x\n", dwOptionSetMask, ax_setopt);
-        ok(dwEnabledOptions == ax_setopt, "dwEnabledOptions=%x, expected %x\n", dwOptionSetMask, ax_setopt);
+        switch(dwEnabledOptions) {
+        case INTERFACESAFE_FOR_UNTRUSTED_CALLER|INTERFACE_USES_SECURITY_MANAGER:
+            CHECK_EXPECT(AXSetInterfaceSafetyOptions_IDispatchEx_caller_secmgr);
+            break;
+        case INTERFACESAFE_FOR_UNTRUSTED_CALLER:
+            CHECK_EXPECT(AXSetInterfaceSafetyOptions_IDispatchEx_caller);
+            break;
+        default:
+            ok(0, "unexpected dwEnabledOptions %x\n", dwEnabledOptions);
+        }
+
+        ok(dwOptionSetMask == dwEnabledOptions, "dwOptionSetMask=%x, expected %x\n", dwOptionSetMask, dwEnabledOptions);
         return ax_setopt_dispex_hres;
     }
 
     if(IsEqualGUID(&IID_IDispatch, riid)) {
-        DWORD exopt = ax_setopt & ~INTERFACE_USES_SECURITY_MANAGER;
+        HRESULT hres;
 
-        CHECK_EXPECT(AXSetInterfaceSafetyOptions_IDispatch);
-        ok(dwOptionSetMask == exopt, "dwOptionSetMask=%x, expected %x\n", dwOptionSetMask, exopt);
-        ok(dwEnabledOptions == exopt, "dwEnabledOptions=%x, expected %x\n", dwOptionSetMask, exopt);
-        return ax_setopt_disp_hres;
+        switch(dwEnabledOptions) {
+        case INTERFACESAFE_FOR_UNTRUSTED_CALLER:
+            CHECK_EXPECT(AXSetInterfaceSafetyOptions_IDispatch_caller);
+            hres = ax_setopt_disp_caller_hres;
+            break;
+        case INTERFACESAFE_FOR_UNTRUSTED_DATA:
+            CHECK_EXPECT(AXSetInterfaceSafetyOptions_IDispatch_data);
+            hres = ax_setopt_disp_data_hres;
+            break;
+        default:
+            ok(0, "unexpected dwEnabledOptions %x\n", dwEnabledOptions);
+            hres = E_FAIL;
+        }
+        ok(dwOptionSetMask == dwEnabledOptions, "dwOptionSetMask=%x, expected %x\n", dwOptionSetMask, dwEnabledOptions);
+        return hres;
     }
 
     ok(0, "unexpected riid %s\n", debugstr_guid(riid));
@@ -1310,10 +1333,83 @@ static const IObjectSafetyVtbl AXObjectSafetyVtbl = {
 
 static IObjectSafety AXObjectSafety = { &AXObjectSafetyVtbl };
 
-static BOOL set_safe_reg(BOOL init)
+static BOOL set_safe_reg(BOOL safe_call, BOOL safe_data)
 {
     return init_key("CLSID\\"TESTACTIVEX_CLSID"\\Implemented Categories\\{7dd95801-9882-11cf-9fa9-00aa006c42c4}",
-                    NULL, init);
+                    NULL, safe_call)
+        && init_key("CLSID\\"TESTACTIVEX_CLSID"\\Implemented Categories\\{7dd95802-9882-11cf-9fa9-00aa006c42c4}",
+                    NULL, safe_data);
+}
+
+#define check_custom_policy(a,b,c,d) _check_custom_policy(__LINE__,a,b,c,d)
+static void _check_custom_policy(unsigned line, HRESULT hres, BYTE *ppolicy, DWORD policy_size, DWORD expolicy)
+{
+    ok_(__FILE__,line)(hres == S_OK, "QueryCusromPolicy failed: %08x\n", hres);
+    ok_(__FILE__,line)(policy_size == sizeof(DWORD), "policy_size = %d\n", policy_size);
+    ok_(__FILE__,line)(*(DWORD*)ppolicy == expolicy, "policy = %x, expected %x\n", *(DWORD*)ppolicy, expolicy);
+    CoTaskMemFree(ppolicy);
+}
+
+static void test_security_reg(IInternetHostSecurityManager *sec_mgr, DWORD policy_caller, DWORD policy_load)
+{
+    struct CONFIRMSAFETY cs;
+    DWORD policy_size;
+    BYTE *ppolicy;
+    HRESULT hres;
+
+    cs.clsid = CLSID_TestActiveX;
+    cs.pUnk = (IUnknown*)&AXObjectSafety;
+
+    cs.dwFlags = 0;
+    ax_objsafe = FALSE;
+    SET_EXPECT(AXQueryInterface_IActiveScript);
+    SET_EXPECT(AXQueryInterface_IObjectSafety);
+    hres = IInternetHostSecurityManager_QueryCustomPolicy(sec_mgr, &GUID_CUSTOM_CONFIRMOBJECTSAFETY,
+            &ppolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
+    CHECK_CALLED(AXQueryInterface_IActiveScript);
+    CHECK_CALLED(AXQueryInterface_IObjectSafety);
+    check_custom_policy(hres, ppolicy, policy_size, policy_caller);
+
+    ax_objsafe = TRUE;
+    SET_EXPECT(AXQueryInterface_IActiveScript);
+    SET_EXPECT(AXQueryInterface_IObjectSafety);
+    SET_EXPECT(AXGetInterfaceSafetyOptions);
+    SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatchEx_caller_secmgr);
+    hres = IInternetHostSecurityManager_QueryCustomPolicy(sec_mgr, &GUID_CUSTOM_CONFIRMOBJECTSAFETY,
+            &ppolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
+    CHECK_CALLED(AXQueryInterface_IActiveScript);
+    CHECK_CALLED(AXQueryInterface_IObjectSafety);
+    CHECK_CALLED(AXGetInterfaceSafetyOptions);
+    CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatchEx_caller_secmgr);
+    check_custom_policy(hres, ppolicy, policy_size, URLPOLICY_ALLOW);
+
+    if(skip_loadobject_tests)
+        return;
+
+    cs.dwFlags = CONFIRMSAFETYACTION_LOADOBJECT;
+    ax_objsafe = FALSE;
+    SET_EXPECT(AXQueryInterface_IActiveScript);
+    SET_EXPECT(AXQueryInterface_IObjectSafety);
+    hres = IInternetHostSecurityManager_QueryCustomPolicy(sec_mgr, &GUID_CUSTOM_CONFIRMOBJECTSAFETY,
+            &ppolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
+    CHECK_CALLED(AXQueryInterface_IActiveScript);
+    CHECK_CALLED(AXQueryInterface_IObjectSafety);
+    check_custom_policy(hres, ppolicy, policy_size, policy_load);
+
+    ax_objsafe = TRUE;
+    SET_EXPECT(AXQueryInterface_IActiveScript);
+    SET_EXPECT(AXQueryInterface_IObjectSafety);
+    SET_EXPECT(AXGetInterfaceSafetyOptions);
+    SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatchEx_caller_secmgr);
+    SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatch_data);
+    hres = IInternetHostSecurityManager_QueryCustomPolicy(sec_mgr, &GUID_CUSTOM_CONFIRMOBJECTSAFETY,
+            &ppolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
+    CHECK_CALLED(AXQueryInterface_IActiveScript);
+    CHECK_CALLED(AXQueryInterface_IObjectSafety);
+    CHECK_CALLED(AXGetInterfaceSafetyOptions);
+    CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatchEx_caller_secmgr);
+    CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatch_data);
+    check_custom_policy(hres, ppolicy, policy_size, URLPOLICY_ALLOW);
 }
 
 static void test_security(void)
@@ -1324,8 +1420,6 @@ static void test_security(void)
     struct CONFIRMSAFETY cs;
     BYTE *ppolicy;
     HRESULT hres;
-
-    ax_setopt = INTERFACESAFE_FOR_UNTRUSTED_CALLER|INTERFACE_USES_SECURITY_MANAGER;
 
     hres = IActiveScriptSite_QueryInterface(site, &IID_IServiceProvider, (void**)&sp);
     ok(hres == S_OK, "Could not get IServiceProvider iface: %08x\n", hres);
@@ -1348,19 +1442,37 @@ static void test_security(void)
     SET_EXPECT(AXQueryInterface_IActiveScript);
     SET_EXPECT(AXQueryInterface_IObjectSafety);
     SET_EXPECT(AXGetInterfaceSafetyOptions);
-    SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatchEx);
+    SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatchEx_caller_secmgr);
     hres = IInternetHostSecurityManager_QueryCustomPolicy(sec_mgr, &GUID_CUSTOM_CONFIRMOBJECTSAFETY,
             &ppolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
     CHECK_CALLED(AXQueryInterface_IActiveScript);
     CHECK_CALLED(AXQueryInterface_IObjectSafety);
     CHECK_CALLED(AXGetInterfaceSafetyOptions);
-    CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatchEx);
+    CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatchEx_caller_secmgr);
+    check_custom_policy(hres, ppolicy, policy_size, URLPOLICY_ALLOW);
 
-    ok(hres == S_OK, "QueryCusromPolicy failed: %08x\n", hres);
-    ok(policy_size == sizeof(DWORD), "policy_size = %d\n", policy_size);
-    ok(*(DWORD*)ppolicy == URLPOLICY_ALLOW, "policy = %x\n", *(DWORD*)ppolicy);
-    CoTaskMemFree(ppolicy);
+    cs.dwFlags = CONFIRMSAFETYACTION_LOADOBJECT;
+    SET_EXPECT(AXQueryInterface_IActiveScript);
+    SET_EXPECT(AXQueryInterface_IObjectSafety);
+    SET_EXPECT(AXGetInterfaceSafetyOptions);
+    SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatchEx_caller_secmgr);
+    SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatch_data);
+    hres = IInternetHostSecurityManager_QueryCustomPolicy(sec_mgr, &GUID_CUSTOM_CONFIRMOBJECTSAFETY,
+            &ppolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
+    CHECK_CALLED(AXQueryInterface_IActiveScript);
+    CHECK_CALLED(AXQueryInterface_IObjectSafety);
+    CHECK_CALLED(AXGetInterfaceSafetyOptions);
+    CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatchEx_caller_secmgr);
+    if(called_AXSetInterfaceSafetyOptions_IDispatch_data) {
+        CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatch_data);
+    }else {
+        win_skip("CONFIRMSAFETYACTION_LOADOBJECT flag not supported\n");
+        skip_loadobject_tests = TRUE;
+        CLEAR_CALLED(AXSetInterfaceSafetyOptions_IDispatch_data);
+    }
+    check_custom_policy(hres, ppolicy, policy_size, URLPOLICY_ALLOW);
 
+    cs.dwFlags = 0;
     ax_objsafe = FALSE;
     SET_EXPECT(AXQueryInterface_IActiveScript);
     SET_EXPECT(AXQueryInterface_IObjectSafety);
@@ -1368,110 +1480,127 @@ static void test_security(void)
             &ppolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
     CHECK_CALLED(AXQueryInterface_IActiveScript);
     CHECK_CALLED(AXQueryInterface_IObjectSafety);
+    check_custom_policy(hres, ppolicy, policy_size, URLPOLICY_DISALLOW);
 
-    ok(hres == S_OK, "QueryCusromPolicy failed: %08x\n", hres);
-    ok(policy_size == sizeof(DWORD), "policy_size = %d\n", policy_size);
-    ok(*(DWORD*)ppolicy == URLPOLICY_DISALLOW, "policy = %x\n", *(DWORD*)ppolicy);
-    CoTaskMemFree(ppolicy);
-
-    if(set_safe_reg(TRUE)) {
+    if(!skip_loadobject_tests) {
+        cs.dwFlags = CONFIRMSAFETYACTION_LOADOBJECT;
         ax_objsafe = FALSE;
         SET_EXPECT(AXQueryInterface_IActiveScript);
         SET_EXPECT(AXQueryInterface_IObjectSafety);
         hres = IInternetHostSecurityManager_QueryCustomPolicy(sec_mgr, &GUID_CUSTOM_CONFIRMOBJECTSAFETY,
-                 &ppolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
-        CHECK_CALLED(AXQueryInterface_IActiveScript);
-        CHECK_CALLED(AXQueryInterface_IObjectSafety);
-
-        ok(hres == S_OK, "QueryCusromPolicy failed: %08x\n", hres);
-        ok(policy_size == sizeof(DWORD), "policy_size = %d\n", policy_size);
-        ok(*(DWORD*)ppolicy == URLPOLICY_ALLOW, "policy = %x\n", *(DWORD*)ppolicy);
-        CoTaskMemFree(ppolicy);
-
-        ax_objsafe = TRUE;
-        SET_EXPECT(AXQueryInterface_IActiveScript);
-        SET_EXPECT(AXQueryInterface_IObjectSafety);
-        SET_EXPECT(AXGetInterfaceSafetyOptions);
-        SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatchEx);
-        hres = IInternetHostSecurityManager_QueryCustomPolicy(sec_mgr, &GUID_CUSTOM_CONFIRMOBJECTSAFETY,
                 &ppolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
         CHECK_CALLED(AXQueryInterface_IActiveScript);
         CHECK_CALLED(AXQueryInterface_IObjectSafety);
-        CHECK_CALLED(AXGetInterfaceSafetyOptions);
-        CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatchEx);
+        check_custom_policy(hres, ppolicy, policy_size, URLPOLICY_DISALLOW);
+    }
 
-        ok(hres == S_OK, "QueryCusromPolicy failed: %08x\n", hres);
-        ok(policy_size == sizeof(DWORD), "policy_size = %d\n", policy_size);
-        ok(*(DWORD*)ppolicy == URLPOLICY_ALLOW, "policy = %x\n", *(DWORD*)ppolicy);
-        CoTaskMemFree(ppolicy);
+    if(set_safe_reg(TRUE, FALSE)) {
+        test_security_reg(sec_mgr, URLPOLICY_ALLOW, URLPOLICY_DISALLOW);
 
-        set_safe_reg(FALSE);
+        set_safe_reg(FALSE, TRUE);
+        test_security_reg(sec_mgr, URLPOLICY_DISALLOW, URLPOLICY_DISALLOW);
+
+        set_safe_reg(TRUE, TRUE);
+        test_security_reg(sec_mgr, URLPOLICY_ALLOW, URLPOLICY_ALLOW);
+
+        set_safe_reg(FALSE, FALSE);
     }else {
         skip("Could not set safety registry\n");
     }
 
     ax_objsafe = TRUE;
 
+    cs.dwFlags = 0;
     ax_setopt_dispex_hres = E_NOINTERFACE;
     SET_EXPECT(AXQueryInterface_IActiveScript);
     SET_EXPECT(AXQueryInterface_IObjectSafety);
     SET_EXPECT(AXGetInterfaceSafetyOptions);
-    SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatchEx);
-    SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatch);
+    SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatchEx_caller_secmgr);
+    SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatch_caller);
     hres = IInternetHostSecurityManager_QueryCustomPolicy(sec_mgr, &GUID_CUSTOM_CONFIRMOBJECTSAFETY,
             &ppolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
     CHECK_CALLED(AXQueryInterface_IActiveScript);
     CHECK_CALLED(AXQueryInterface_IObjectSafety);
     CHECK_CALLED(AXGetInterfaceSafetyOptions);
-    CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatchEx);
-    CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatch);
-
-    ok(hres == S_OK, "QueryCusromPolicy failed: %08x\n", hres);
-    ok(policy_size == sizeof(DWORD), "policy_size = %d\n", policy_size);
-    ok(*(DWORD*)ppolicy == URLPOLICY_ALLOW, "policy = %x\n", *(DWORD*)ppolicy);
-    CoTaskMemFree(ppolicy);
+    CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatchEx_caller_secmgr);
+    CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatch_caller);
+    check_custom_policy(hres, ppolicy, policy_size, URLPOLICY_ALLOW);
 
     ax_setopt_dispex_hres = E_FAIL;
-    ax_setopt_disp_hres = E_NOINTERFACE;
+    ax_setopt_disp_caller_hres = E_NOINTERFACE;
     SET_EXPECT(AXQueryInterface_IActiveScript);
     SET_EXPECT(AXQueryInterface_IObjectSafety);
     SET_EXPECT(AXGetInterfaceSafetyOptions);
-    SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatchEx);
-    SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatch);
+    SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatchEx_caller_secmgr);
+    SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatch_caller);
     hres = IInternetHostSecurityManager_QueryCustomPolicy(sec_mgr, &GUID_CUSTOM_CONFIRMOBJECTSAFETY,
             &ppolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
     CHECK_CALLED(AXQueryInterface_IActiveScript);
     CHECK_CALLED(AXQueryInterface_IObjectSafety);
     CHECK_CALLED(AXGetInterfaceSafetyOptions);
-    CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatchEx);
-    CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatch);
+    CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatchEx_caller_secmgr);
+    CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatch_caller);
+    check_custom_policy(hres, ppolicy, policy_size, URLPOLICY_DISALLOW);
 
-    ok(hres == S_OK, "QueryCusromPolicy failed: %08x\n", hres);
-    ok(policy_size == sizeof(DWORD), "policy_size = %d\n", policy_size);
-    ok(*(DWORD*)ppolicy == URLPOLICY_DISALLOW, "policy = %x\n", *(DWORD*)ppolicy);
-    CoTaskMemFree(ppolicy);
+    if(!skip_loadobject_tests) {
+        cs.dwFlags = CONFIRMSAFETYACTION_LOADOBJECT;
+        ax_setopt_dispex_hres = E_FAIL;
+        ax_setopt_disp_caller_hres = E_NOINTERFACE;
+        SET_EXPECT(AXQueryInterface_IActiveScript);
+        SET_EXPECT(AXQueryInterface_IObjectSafety);
+        SET_EXPECT(AXGetInterfaceSafetyOptions);
+        SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatchEx_caller_secmgr);
+        SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatch_caller);
+        hres = IInternetHostSecurityManager_QueryCustomPolicy(sec_mgr, &GUID_CUSTOM_CONFIRMOBJECTSAFETY,
+                &ppolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
+        CHECK_CALLED(AXQueryInterface_IActiveScript);
+        CHECK_CALLED(AXQueryInterface_IObjectSafety);
+        CHECK_CALLED(AXGetInterfaceSafetyOptions);
+        CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatchEx_caller_secmgr);
+        CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatch_caller);
+        check_custom_policy(hres, ppolicy, policy_size, URLPOLICY_DISALLOW);
+    }
 
+    cs.dwFlags = 0;
     ax_setopt_dispex_hres = E_FAIL;
-    ax_setopt_disp_hres = S_OK;
+    ax_setopt_disp_caller_hres = S_OK;
     ax_getopt_hres = E_NOINTERFACE;
-    ax_setopt = INTERFACESAFE_FOR_UNTRUSTED_CALLER;
     SET_EXPECT(AXQueryInterface_IActiveScript);
     SET_EXPECT(AXQueryInterface_IObjectSafety);
     SET_EXPECT(AXGetInterfaceSafetyOptions);
-    SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatchEx);
-    SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatch);
+    SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatchEx_caller);
+    SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatch_caller);
     hres = IInternetHostSecurityManager_QueryCustomPolicy(sec_mgr, &GUID_CUSTOM_CONFIRMOBJECTSAFETY,
             &ppolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
     CHECK_CALLED(AXQueryInterface_IActiveScript);
     CHECK_CALLED(AXQueryInterface_IObjectSafety);
     CHECK_CALLED(AXGetInterfaceSafetyOptions);
-    CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatchEx);
-    CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatch);
+    CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatchEx_caller);
+    CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatch_caller);
+    check_custom_policy(hres, ppolicy, policy_size, URLPOLICY_ALLOW);
 
-    ok(hres == S_OK, "QueryCusromPolicy failed: %08x\n", hres);
-    ok(policy_size == sizeof(DWORD), "policy_size = %d\n", policy_size);
-    ok(*(DWORD*)ppolicy == URLPOLICY_ALLOW, "policy = %x\n", *(DWORD*)ppolicy);
-    CoTaskMemFree(ppolicy);
+    if(!skip_loadobject_tests) {
+        cs.dwFlags = CONFIRMSAFETYACTION_LOADOBJECT;
+        ax_setopt_dispex_hres = E_FAIL;
+        ax_setopt_disp_caller_hres = S_OK;
+        ax_setopt_disp_data_hres = E_FAIL;
+        ax_getopt_hres = E_NOINTERFACE;
+        SET_EXPECT(AXQueryInterface_IActiveScript);
+        SET_EXPECT(AXQueryInterface_IObjectSafety);
+        SET_EXPECT(AXGetInterfaceSafetyOptions);
+        SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatchEx_caller);
+        SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatch_caller);
+        SET_EXPECT(AXSetInterfaceSafetyOptions_IDispatch_data);
+        hres = IInternetHostSecurityManager_QueryCustomPolicy(sec_mgr, &GUID_CUSTOM_CONFIRMOBJECTSAFETY,
+                &ppolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
+        CHECK_CALLED(AXQueryInterface_IActiveScript);
+        CHECK_CALLED(AXQueryInterface_IObjectSafety);
+        CHECK_CALLED(AXGetInterfaceSafetyOptions);
+        CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatchEx_caller);
+        CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatch_caller);
+        CHECK_CALLED(AXSetInterfaceSafetyOptions_IDispatch_data);
+        check_custom_policy(hres, ppolicy, policy_size, URLPOLICY_DISALLOW);
+    }
 
     IInternetHostSecurityManager_Release(sec_mgr);
 }
