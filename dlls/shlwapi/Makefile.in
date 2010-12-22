@@ -28,6 +28,7 @@ RC_SRCS = \
 	shlwapi_Es.rc \
 	shlwapi_Fi.rc \
 	shlwapi_Fr.rc \
+	shlwapi_He.rc \
 	shlwapi_Hu.rc \
 	shlwapi_It.rc \
 	shlwapi_Ja.rc \
