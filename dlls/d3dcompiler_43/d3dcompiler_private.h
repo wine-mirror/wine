@@ -99,6 +99,7 @@ struct d3dcompiler_shader_reflection
 
     struct d3dcompiler_shader_signature *isgn;
     struct d3dcompiler_shader_signature *osgn;
+    struct d3dcompiler_shader_signature *pcsg;
 };
 
 /* reflection handling */

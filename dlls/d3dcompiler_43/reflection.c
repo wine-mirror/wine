@@ -48,6 +48,12 @@ static void reflection_cleanup(struct d3dcompiler_shader_reflection *ref)
         free_signature(ref->osgn);
         HeapFree(GetProcessHeap(), 0, ref->osgn);
     }
+
+    if (ref->pcsg)
+    {
+        free_signature(ref->pcsg);
+        HeapFree(GetProcessHeap(), 0, ref->pcsg);
+    }
 }
 
 static inline struct d3dcompiler_shader_reflection *impl_from_ID3D11ShaderReflection(ID3D11ShaderReflection *iface)
@@ -514,6 +520,23 @@ HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_reflection 
                 if (FAILED(hr))
                 {
                     WARN("Failed to parse section OSGN.\n");
+                    goto err_out;
+                }
+                break;
+
+            case TAG_PCSG:
+                reflection->pcsg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*reflection->pcsg));
+                if (!reflection->pcsg)
+                {
+                    ERR("Failed to allocate PCSG memory.\n");
+                    hr = E_OUTOFMEMORY;
+                    goto err_out;
+                }
+
+                hr = d3dcompiler_parse_signature(reflection->pcsg, section->data, section->data_size);
+                if (FAILED(hr))
+                {
+                    WARN("Failed to parse section PCSG.\n");
                     goto err_out;
                 }
                 break;
