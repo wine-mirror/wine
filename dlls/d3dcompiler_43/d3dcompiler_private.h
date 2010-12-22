@@ -98,6 +98,7 @@ struct d3dcompiler_shader_reflection
     D3D_TESSELLATOR_DOMAIN tessellator_domain;
 
     struct d3dcompiler_shader_signature *isgn;
+    struct d3dcompiler_shader_signature *osgn;
 };
 
 /* reflection handling */
