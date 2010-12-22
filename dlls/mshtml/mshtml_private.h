@@ -344,7 +344,7 @@ struct ConnectionPoint {
 struct HTMLDocument {
     IHTMLDocument2              IHTMLDocument2_iface;
     IHTMLDocument3              IHTMLDocument3_iface;
-    const IHTMLDocument4Vtbl              *lpHTMLDocument4Vtbl;
+    IHTMLDocument4              IHTMLDocument4_iface;
     const IHTMLDocument5Vtbl              *lpHTMLDocument5Vtbl;
     const IHTMLDocument6Vtbl              *lpHTMLDocument6Vtbl;
     const IPersistMonikerVtbl             *lpPersistMonikerVtbl;
@@ -626,7 +626,6 @@ struct HTMLDocumentNode {
 #define HTMLWINDOW3(x)   ((IHTMLWindow3*)                 &(x)->lpHTMLWindow3Vtbl)
 #define HTMLWINDOW4(x)   ((IHTMLWindow4*)                 &(x)->lpHTMLWindow4Vtbl)
 
-#define HTMLDOC4(x)      ((IHTMLDocument4*)               &(x)->lpHTMLDocument4Vtbl)
 #define HTMLDOC5(x)      ((IHTMLDocument5*)               &(x)->lpHTMLDocument5Vtbl)
 #define HTMLDOC6(x)      ((IHTMLDocument6*)               &(x)->lpHTMLDocument6Vtbl)
 #define PERSIST(x)       ((IPersist*)                     &(x)->lpPersistFileVtbl)

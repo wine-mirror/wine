@@ -1722,7 +1722,7 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IHTMLDocument3_iface;
     }else if(IsEqualGUID(&IID_IHTMLDocument4, riid)) {
         TRACE("(%p)->(IID_IHTMLDocument4, %p)\n", This, ppv);
-        *ppv = HTMLDOC4(This);
+        *ppv = &This->IHTMLDocument4_iface;
     }else if(IsEqualGUID(&IID_IHTMLDocument5, riid)) {
         TRACE("(%p)->(IID_IHTMLDocument5, %p)\n", This, ppv);
         *ppv = HTMLDOC5(This);

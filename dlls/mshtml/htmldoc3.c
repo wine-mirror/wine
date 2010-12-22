@@ -636,37 +636,40 @@ static const IHTMLDocument3Vtbl HTMLDocument3Vtbl = {
     HTMLDocument3_getElementsByTagName
 };
 
-#define HTMLDOC4_THIS(iface) DEFINE_THIS(HTMLDocument, HTMLDocument4, iface)
+static inline HTMLDocument *impl_from_IHTMLDocument4(IHTMLDocument4 *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocument, IHTMLDocument4_iface);
+}
 
 static HRESULT WINAPI HTMLDocument4_QueryInterface(IHTMLDocument4 *iface,
                                                    REFIID riid, void **ppv)
 {
-    HTMLDocument *This = HTMLDOC4_THIS(iface);
+    HTMLDocument *This = impl_from_IHTMLDocument4(iface);
     return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI HTMLDocument4_AddRef(IHTMLDocument4 *iface)
 {
-    HTMLDocument *This = HTMLDOC4_THIS(iface);
+    HTMLDocument *This = impl_from_IHTMLDocument4(iface);
     return htmldoc_addref(This);
 }
 
 static ULONG WINAPI HTMLDocument4_Release(IHTMLDocument4 *iface)
 {
-    HTMLDocument *This = HTMLDOC4_THIS(iface);
+    HTMLDocument *This = impl_from_IHTMLDocument4(iface);
     return htmldoc_release(This);
 }
 
 static HRESULT WINAPI HTMLDocument4_GetTypeInfoCount(IHTMLDocument4 *iface, UINT *pctinfo)
 {
-    HTMLDocument *This = HTMLDOC4_THIS(iface);
+    HTMLDocument *This = impl_from_IHTMLDocument4(iface);
     return IDispatchEx_GetTypeInfoCount(DISPATCHEX(This), pctinfo);
 }
 
 static HRESULT WINAPI HTMLDocument4_GetTypeInfo(IHTMLDocument4 *iface, UINT iTInfo,
                                                 LCID lcid, ITypeInfo **ppTInfo)
 {
-    HTMLDocument *This = HTMLDOC4_THIS(iface);
+    HTMLDocument *This = impl_from_IHTMLDocument4(iface);
     return IDispatchEx_GetTypeInfo(DISPATCHEX(This), iTInfo, lcid, ppTInfo);
 }
 
@@ -674,7 +677,7 @@ static HRESULT WINAPI HTMLDocument4_GetIDsOfNames(IHTMLDocument4 *iface, REFIID 
                                                 LPOLESTR *rgszNames, UINT cNames,
                                                 LCID lcid, DISPID *rgDispId)
 {
-    HTMLDocument *This = HTMLDOC4_THIS(iface);
+    HTMLDocument *This = impl_from_IHTMLDocument4(iface);
     return IDispatchEx_GetIDsOfNames(DISPATCHEX(This), riid, rgszNames, cNames, lcid, rgDispId);
 }
 
@@ -682,14 +685,14 @@ static HRESULT WINAPI HTMLDocument4_Invoke(IHTMLDocument4 *iface, DISPID dispIdM
                             REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    HTMLDocument *This = HTMLDOC4_THIS(iface);
+    HTMLDocument *This = impl_from_IHTMLDocument4(iface);
     return IDispatchEx_Invoke(DISPATCHEX(This), dispIdMember, riid, lcid, wFlags, pDispParams,
             pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI HTMLDocument4_focus(IHTMLDocument4 *iface)
 {
-    HTMLDocument *This = HTMLDOC4_THIS(iface);
+    HTMLDocument *This = impl_from_IHTMLDocument4(iface);
     nsIDOMNSHTMLElement *nselem;
     nsIDOMHTMLElement *nsbody;
     nsresult nsres;
@@ -721,28 +724,28 @@ static HRESULT WINAPI HTMLDocument4_focus(IHTMLDocument4 *iface)
 
 static HRESULT WINAPI HTMLDocument4_hasFocus(IHTMLDocument4 *iface, VARIANT_BOOL *pfFocus)
 {
-    HTMLDocument *This = HTMLDOC4_THIS(iface);
+    HTMLDocument *This = impl_from_IHTMLDocument4(iface);
     FIXME("(%p)->(%p)\n", This, pfFocus);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument4_put_onselectionchange(IHTMLDocument4 *iface, VARIANT v)
 {
-    HTMLDocument *This = HTMLDOC4_THIS(iface);
+    HTMLDocument *This = impl_from_IHTMLDocument4(iface);
     FIXME("(%p)->(v)\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument4_get_onselectionchange(IHTMLDocument4 *iface, VARIANT *p)
 {
-    HTMLDocument *This = HTMLDOC4_THIS(iface);
+    HTMLDocument *This = impl_from_IHTMLDocument4(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument4_get_namespace(IHTMLDocument4 *iface, IDispatch **p)
 {
-    HTMLDocument *This = HTMLDOC4_THIS(iface);
+    HTMLDocument *This = impl_from_IHTMLDocument4(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
@@ -750,21 +753,21 @@ static HRESULT WINAPI HTMLDocument4_get_namespace(IHTMLDocument4 *iface, IDispat
 static HRESULT WINAPI HTMLDocument4_createDocumentFromUrl(IHTMLDocument4 *iface, BSTR bstrUrl,
         BSTR bstrOptions, IHTMLDocument2 **newDoc)
 {
-    HTMLDocument *This = HTMLDOC4_THIS(iface);
+    HTMLDocument *This = impl_from_IHTMLDocument4(iface);
     FIXME("(%p)->(%s %s %p)\n", This, debugstr_w(bstrUrl), debugstr_w(bstrOptions), newDoc);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument4_put_media(IHTMLDocument4 *iface, BSTR v)
 {
-    HTMLDocument *This = HTMLDOC4_THIS(iface);
+    HTMLDocument *This = impl_from_IHTMLDocument4(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument4_get_media(IHTMLDocument4 *iface, BSTR *p)
 {
-    HTMLDocument *This = HTMLDOC4_THIS(iface);
+    HTMLDocument *This = impl_from_IHTMLDocument4(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
@@ -772,7 +775,7 @@ static HRESULT WINAPI HTMLDocument4_get_media(IHTMLDocument4 *iface, BSTR *p)
 static HRESULT WINAPI HTMLDocument4_createEventObject(IHTMLDocument4 *iface,
         VARIANT *pvarEventObject, IHTMLEventObj **ppEventObj)
 {
-    HTMLDocument *This = HTMLDOC4_THIS(iface);
+    HTMLDocument *This = impl_from_IHTMLDocument4(iface);
     FIXME("(%p)->(%p %p)\n", This, pvarEventObject, ppEventObj);
     return E_NOTIMPL;
 }
@@ -780,7 +783,7 @@ static HRESULT WINAPI HTMLDocument4_createEventObject(IHTMLDocument4 *iface,
 static HRESULT WINAPI HTMLDocument4_fireEvent(IHTMLDocument4 *iface, BSTR bstrEventName,
         VARIANT *pvarEventObject, VARIANT_BOOL *pfCanceled)
 {
-    HTMLDocument *This = HTMLDOC4_THIS(iface);
+    HTMLDocument *This = impl_from_IHTMLDocument4(iface);
     FIXME("(%p)->(%s %p %p)\n", This, debugstr_w(bstrEventName), pvarEventObject, pfCanceled);
     return E_NOTIMPL;
 }
@@ -788,33 +791,31 @@ static HRESULT WINAPI HTMLDocument4_fireEvent(IHTMLDocument4 *iface, BSTR bstrEv
 static HRESULT WINAPI HTMLDocument4_createRenderStyle(IHTMLDocument4 *iface, BSTR v,
         IHTMLRenderStyle **ppIHTMLRenderStyle)
 {
-    HTMLDocument *This = HTMLDOC4_THIS(iface);
+    HTMLDocument *This = impl_from_IHTMLDocument4(iface);
     FIXME("(%p)->(%s %p)\n", This, debugstr_w(v), ppIHTMLRenderStyle);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument4_put_oncontrolselect(IHTMLDocument4 *iface, VARIANT v)
 {
-    HTMLDocument *This = HTMLDOC4_THIS(iface);
+    HTMLDocument *This = impl_from_IHTMLDocument4(iface);
     FIXME("(%p)->(v)\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument4_get_oncontrolselect(IHTMLDocument4 *iface, VARIANT *p)
 {
-    HTMLDocument *This = HTMLDOC4_THIS(iface);
+    HTMLDocument *This = impl_from_IHTMLDocument4(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument4_get_URLEncoded(IHTMLDocument4 *iface, BSTR *p)
 {
-    HTMLDocument *This = HTMLDOC4_THIS(iface);
+    HTMLDocument *This = impl_from_IHTMLDocument4(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
-
-#undef HTMLDOC4_THIS
 
 static const IHTMLDocument4Vtbl HTMLDocument4Vtbl = {
     HTMLDocument4_QueryInterface,
@@ -843,5 +844,5 @@ static const IHTMLDocument4Vtbl HTMLDocument4Vtbl = {
 void HTMLDocument_HTMLDocument3_Init(HTMLDocument *This)
 {
     This->IHTMLDocument3_iface.lpVtbl = &HTMLDocument3Vtbl;
-    This->lpHTMLDocument4Vtbl = &HTMLDocument4Vtbl;
+    This->IHTMLDocument4_iface.lpVtbl = &HTMLDocument4Vtbl;
 }
