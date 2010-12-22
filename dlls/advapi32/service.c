@@ -1406,6 +1406,8 @@ cleanup:
 
 /******************************************************************************
  * QueryServiceConfig2W [ADVAPI32.@]
+ *
+ * See QueryServiceConfig2A.
  */
 BOOL WINAPI QueryServiceConfig2W(SC_HANDLE hService, DWORD dwLevel, LPBYTE buffer,
                                  DWORD size, LPDWORD needed)
@@ -1413,13 +1415,7 @@ BOOL WINAPI QueryServiceConfig2W(SC_HANDLE hService, DWORD dwLevel, LPBYTE buffe
     DWORD err;
 
     if(dwLevel != SERVICE_CONFIG_DESCRIPTION) {
-        if((dwLevel == SERVICE_CONFIG_DELAYED_AUTO_START_INFO) ||
-           (dwLevel == SERVICE_CONFIG_FAILURE_ACTIONS) ||
-           (dwLevel == SERVICE_CONFIG_FAILURE_ACTIONS_FLAG) ||
-           (dwLevel == SERVICE_CONFIG_PRESHUTDOWN_INFO) ||
-           (dwLevel == SERVICE_CONFIG_REQUIRED_PRIVILEGES_INFO) ||
-           (dwLevel == SERVICE_CONFIG_SERVICE_SID_INFO))
-            FIXME("Level %d not implemented\n", dwLevel);
+        FIXME("Level %d not implemented\n", dwLevel);
         SetLastError(ERROR_INVALID_LEVEL);
         return FALSE;
     }
