@@ -502,9 +502,30 @@ static void test_TypeInfo(void)
     DISPPARAMS dispparams;
     GUID bogusguid = {0x806afb4f,0x13f7,0x42d2,{0x89,0x2c,0x6c,0x97,0xc3,0x6a,0x36,0xc1}};
     VARIANT var;
+    UINT count;
+    TYPEKIND kind;
 
     hr = LoadTypeLib(wszStdOle2, &pTypeLib);
     ok_ole_success(hr, LoadTypeLib);
+
+    count = ITypeLib_GetTypeInfoCount(pTypeLib);
+    ok(count > 0, "got %d\n", count);
+
+    /* invalid index */
+    hr = ITypeLib_GetTypeInfo(pTypeLib, count, &pTypeInfo);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "got 0x%08x\n", hr);
+
+    hr = ITypeLib_GetTypeInfo(pTypeLib, 0, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = ITypeLib_GetTypeInfoType(pTypeLib, count, &kind);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "got 0x%08x\n", hr);
+
+    hr = ITypeLib_GetTypeInfoType(pTypeLib, count, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = ITypeLib_GetTypeInfoType(pTypeLib, 0, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     hr = ITypeLib_GetTypeInfoOfGuid(pTypeLib, &IID_IFont, &pTypeInfo);
     ok_ole_success(hr, ITypeLib_GetTypeInfoOfGuid); 
@@ -1307,6 +1328,7 @@ static void test_CreateTypeLib(void) {
     int impltypeflags;
     VARIANT cust_data;
     HRESULT hres;
+    TYPEKIND kind;
 
     trace("CreateTypeLib tests\n");
 
@@ -1327,6 +1349,18 @@ static void test_CreateTypeLib(void) {
 
     hres = ICreateTypeLib_QueryInterface(createtl, &IID_ITypeLib, (void**)&tl);
     ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeLib_GetTypeInfo(tl, 0, NULL);
+    ok(hres == E_INVALIDARG, "got 0x%08x\n", hres);
+
+    hres = ITypeLib_GetTypeInfoType(tl, 0, &kind);
+    ok(hres == TYPE_E_ELEMENTNOTFOUND, "got 0x%08x\n", hres);
+
+    hres = ITypeLib_GetTypeInfoType(tl, 0, NULL);
+    ok(hres == E_INVALIDARG, "got 0x%08x\n", hres);
+
+    hres = ITypeLib_GetTypeInfoType(tl, 0, NULL);
+    ok(hres == E_INVALIDARG, "got 0x%08x\n", hres);
 
     hres = ITypeLib_GetLibAttr(tl, &libattr);
     ok(hres == S_OK, "got %08x\n", hres);

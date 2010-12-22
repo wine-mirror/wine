@@ -4278,12 +4278,12 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfoType(
     UINT i;
     ITypeInfoImpl *pTInfo = This->pTypeInfo;
 
-    if (ITypeLib2_fnGetTypeInfoCount(iface) < index + 1)
-    	 return TYPE_E_ELEMENTNOTFOUND;
-
-    TRACE("(%p) index %d\n", This, index);
+    TRACE("(%p, %d, %p)\n", This, index, pTKind);
 
     if(!pTKind) return E_INVALIDARG;
+
+    if(ITypeLib2_GetTypeInfoCount(iface) <= index)
+        return TYPE_E_ELEMENTNOTFOUND;
 
     /* search element n in list */
     for(i=0; i < index; i++)

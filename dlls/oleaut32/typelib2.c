@@ -4862,6 +4862,8 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfo(
 
     TRACE("(%p,%d,%p)\n", iface, index, ppTInfo);
 
+    if (!ppTInfo) return E_INVALIDARG;
+
     if (index >= This->typelib_header.nrtypeinfos) {
 	return TYPE_E_ELEMENTNOTFOUND;
     }
@@ -4877,17 +4879,19 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfo(
 static HRESULT WINAPI ITypeLib2_fnGetTypeInfoType(
         ITypeLib2 * iface,
         UINT index,
-        TYPEKIND* pTKind)
+        TYPEKIND* kind)
 {
     ICreateTypeLib2Impl *This = impl_from_ITypeLib2(iface);
 
-    TRACE("(%p,%d,%p)\n", iface, index, pTKind);
+    TRACE("(%p,%d,%p)\n", iface, index, kind);
+
+    if (!kind) return E_INVALIDARG;
 
     if (index >= This->typelib_header.nrtypeinfos) {
 	return TYPE_E_ELEMENTNOTFOUND;
     }
 
-    *pTKind = (This->typelib_segment_data[MSFT_SEG_TYPEINFO][This->typelib_typeinfo_offsets[index]]) & 15;
+    *kind = (This->typelib_segment_data[MSFT_SEG_TYPEINFO][This->typelib_typeinfo_offsets[index]]) & 0xF;
 
     return S_OK;
 }
