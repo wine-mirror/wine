@@ -4351,12 +4351,18 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfoOfGuid(
  */
 static HRESULT WINAPI ITypeLib2_fnGetLibAttr(
 	ITypeLib2 *iface,
-	LPTLIBATTR *ppTLibAttr)
+	LPTLIBATTR *attr)
 {
     ITypeLibImpl *This = (ITypeLibImpl *)iface;
-    TRACE("(%p)\n",This);
-    *ppTLibAttr = HeapAlloc(GetProcessHeap(), 0, sizeof(**ppTLibAttr));
-    **ppTLibAttr = This->LibAttr;
+
+    TRACE("(%p, %p)\n", This, attr);
+
+    if (!attr) return E_INVALIDARG;
+
+    *attr = HeapAlloc(GetProcessHeap(), 0, sizeof(**attr));
+    if (!*attr) return E_OUTOFMEMORY;
+
+    **attr = This->LibAttr;
     return S_OK;
 }
 

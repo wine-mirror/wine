@@ -518,6 +518,9 @@ static void test_TypeInfo(void)
     hr = ITypeLib_GetTypeInfo(pTypeLib, 0, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
+    hr = ITypeLib_GetLibAttr(pTypeLib, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
     hr = ITypeLib_GetTypeInfoType(pTypeLib, count, &kind);
     ok(hr == TYPE_E_ELEMENTNOTFOUND, "got 0x%08x\n", hr);
 
@@ -1361,6 +1364,9 @@ static void test_CreateTypeLib(void) {
 
     hres = ITypeLib_GetTypeInfoType(tl, 0, NULL);
     ok(hres == E_INVALIDARG, "got 0x%08x\n", hres);
+
+    hres = ITypeLib_GetLibAttr(tl, NULL);
+    ok(hres == E_INVALIDARG, "got %08x\n", hres);
 
     hres = ITypeLib_GetLibAttr(tl, &libattr);
     ok(hres == S_OK, "got %08x\n", hres);
