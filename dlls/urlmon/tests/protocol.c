@@ -102,6 +102,7 @@ DEFINE_EXPECT(Switch);
 DEFINE_EXPECT(Continue);
 DEFINE_EXPECT(CreateInstance);
 DEFINE_EXPECT(Start);
+DEFINE_EXPECT(StartEx);
 DEFINE_EXPECT(Terminate);
 DEFINE_EXPECT(Read);
 DEFINE_EXPECT(Read2);
@@ -149,7 +150,7 @@ static HANDLE event_complete, event_complete2, event_continue, event_continue_do
 static BOOL binding_test;
 static PROTOCOLDATA protocoldata, *pdata, continue_protdata;
 static DWORD prot_read, pi, filter_state, http_post_test, thread_id;
-static BOOL security_problem, test_async_req;
+static BOOL security_problem, test_async_req, impl_protex;
 static BOOL async_read_pending, mimefilter_test, direct_read, wait_for_switch, emulate_prot, short_read, test_abort;
 
 enum {
@@ -1313,17 +1314,17 @@ static const IInternetPriorityVtbl InternetPriorityVtbl = {
 
 static IInternetPriority InternetPriority = { &InternetPriorityVtbl };
 
-static ULONG WINAPI Protocol_AddRef(IInternetProtocol *iface)
+static ULONG WINAPI Protocol_AddRef(IInternetProtocolEx *iface)
 {
     return 2;
 }
 
-static ULONG WINAPI Protocol_Release(IInternetProtocol *iface)
+static ULONG WINAPI Protocol_Release(IInternetProtocolEx *iface)
 {
     return 1;
 }
 
-static HRESULT WINAPI Protocol_Abort(IInternetProtocol *iface, HRESULT hrReason,
+static HRESULT WINAPI Protocol_Abort(IInternetProtocolEx *iface, HRESULT hrReason,
         DWORD dwOptions)
 {
     HRESULT hres;
@@ -1338,26 +1339,26 @@ static HRESULT WINAPI Protocol_Abort(IInternetProtocol *iface, HRESULT hrReason,
     return S_OK;
 }
 
-static HRESULT WINAPI Protocol_Suspend(IInternetProtocol *iface)
+static HRESULT WINAPI Protocol_Suspend(IInternetProtocolEx *iface)
 {
     ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Protocol_Resume(IInternetProtocol *iface)
+static HRESULT WINAPI Protocol_Resume(IInternetProtocolEx *iface)
 {
     ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Protocol_Seek(IInternetProtocol *iface,
+static HRESULT WINAPI Protocol_Seek(IInternetProtocolEx *iface,
         LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
 {
     ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ProtocolEmul_QueryInterface(IInternetProtocol *iface, REFIID riid, void **ppv)
+static HRESULT WINAPI ProtocolEmul_QueryInterface(IInternetProtocolEx *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IInternetProtocol, riid)) {
         *ppv = iface;
@@ -1365,7 +1366,10 @@ static HRESULT WINAPI ProtocolEmul_QueryInterface(IInternetProtocol *iface, REFI
     }
 
     if(IsEqualGUID(&IID_IInternetProtocolEx, riid)) {
-        trace("IID_IInternetProtocolEx not supported\n");
+        if(impl_protex) {
+            *ppv = iface;
+            return S_OK;
+        }
         *ppv = NULL;
         return E_NOINTERFACE;
     }
@@ -1472,22 +1476,17 @@ static DWORD WINAPI thread_proc(PVOID arg)
     return 0;
 }
 
-static HRESULT WINAPI ProtocolEmul_Start(IInternetProtocol *iface, LPCWSTR szUrl,
-        IInternetProtocolSink *pOIProtSink, IInternetBindInfo *pOIBindInfo,
-        DWORD grfPI, HANDLE_PTR dwReserved)
+static void protocol_start(IInternetProtocolSink *pOIProtSink, IInternetBindInfo *pOIBindInfo, DWORD pi)
 {
     BINDINFO bindinfo, exp_bindinfo;
     DWORD cbindf = 0;
     HRESULT hres;
 
-    CHECK_EXPECT(Start);
-
     ok(pOIProtSink != NULL, "pOIProtSink == NULL\n");
     ok(pOIBindInfo != NULL, "pOIBindInfo == NULL\n");
     ok(pOIProtSink != &protocol_sink, "unexpected pOIProtSink\n");
     ok(pOIBindInfo != &bind_info, "unexpected pOIBindInfo\n");
-    ok(!grfPI, "grfPI = %x\n", grfPI);
-    ok(!dwReserved, "dwReserved = %lx\n", dwReserved);
+    ok(!pi, "pi = %x\n", pi);
 
     if(binding_test)
         ok(pOIProtSink == binding_sink, "pOIProtSink != binding_sink\n");
@@ -1576,8 +1575,7 @@ static HRESULT WINAPI ProtocolEmul_Start(IInternetProtocol *iface, LPCWSTR szUrl
         IServiceProvider_Release(service_provider);
 
         CreateThread(NULL, 0, thread_proc, NULL, 0, &tid);
-
-        return S_OK;
+        return;
     }
 
     SET_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
@@ -1632,11 +1630,20 @@ static HRESULT WINAPI ProtocolEmul_Start(IInternetProtocol *iface, LPCWSTR szUrl
         CHECK_CALLED(MimeFilter_ReportResult);
     else
         CHECK_CALLED(ReportResult);
+}
 
+static HRESULT WINAPI ProtocolEmul_Start(IInternetProtocolEx *iface, LPCWSTR szUrl,
+        IInternetProtocolSink *pOIProtSink, IInternetBindInfo *pOIBindInfo,
+        DWORD grfPI, HANDLE_PTR dwReserved)
+{
+    CHECK_EXPECT(Start);
+
+    ok(!dwReserved, "dwReserved = %lx\n", dwReserved);
+    protocol_start(pOIProtSink, pOIBindInfo, grfPI);
     return S_OK;
 }
 
-static HRESULT WINAPI ProtocolEmul_Continue(IInternetProtocol *iface,
+static HRESULT WINAPI ProtocolEmul_Continue(IInternetProtocolEx *iface,
         PROTOCOLDATA *pProtocolData)
 {
     DWORD bscf = 0, pr;
@@ -1749,14 +1756,14 @@ static HRESULT WINAPI ProtocolEmul_Continue(IInternetProtocol *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI ProtocolEmul_Terminate(IInternetProtocol *iface, DWORD dwOptions)
+static HRESULT WINAPI ProtocolEmul_Terminate(IInternetProtocolEx *iface, DWORD dwOptions)
 {
     CHECK_EXPECT(Terminate);
     ok(!dwOptions, "dwOptions=%d\n", dwOptions);
     return S_OK;
 }
 
-static HRESULT WINAPI ProtocolEmul_Read(IInternetProtocol *iface, void *pv,
+static HRESULT WINAPI ProtocolEmul_Read(IInternetProtocolEx *iface, void *pv,
         ULONG cb, ULONG *pcbRead)
 {
     if(read_report_data)
@@ -1841,20 +1848,30 @@ static HRESULT WINAPI ProtocolEmul_Read(IInternetProtocol *iface, void *pv,
     return S_OK;
 }
 
-static HRESULT WINAPI ProtocolEmul_LockRequest(IInternetProtocol *iface, DWORD dwOptions)
+static HRESULT WINAPI ProtocolEmul_LockRequest(IInternetProtocolEx *iface, DWORD dwOptions)
 {
     CHECK_EXPECT(LockRequest);
     ok(dwOptions == 0, "dwOptions=%x\n", dwOptions);
     return S_OK;
 }
 
-static HRESULT WINAPI ProtocolEmul_UnlockRequest(IInternetProtocol *iface)
+static HRESULT WINAPI ProtocolEmul_UnlockRequest(IInternetProtocolEx *iface)
 {
     CHECK_EXPECT(UnlockRequest);
     return S_OK;
 }
 
-static const IInternetProtocolVtbl ProtocolVtbl = {
+static HRESULT WINAPI ProtocolEmul_StartEx(IInternetProtocolEx *iface, IUri *pUri,
+        IInternetProtocolSink *pOIProtSink, IInternetBindInfo *pOIBindInfo,
+        DWORD grfPI, HANDLE *dwReserved)
+{
+    CHECK_EXPECT(StartEx);
+    ok(!dwReserved, "dwReserved = %p\n", dwReserved);
+    protocol_start(pOIProtSink, pOIBindInfo, grfPI);
+    return S_OK;
+}
+
+static const IInternetProtocolExVtbl ProtocolVtbl = {
     ProtocolEmul_QueryInterface,
     Protocol_AddRef,
     Protocol_Release,
@@ -1867,12 +1884,13 @@ static const IInternetProtocolVtbl ProtocolVtbl = {
     ProtocolEmul_Read,
     Protocol_Seek,
     ProtocolEmul_LockRequest,
-    ProtocolEmul_UnlockRequest
+    ProtocolEmul_UnlockRequest,
+    ProtocolEmul_StartEx
 };
 
-static IInternetProtocol Protocol = { &ProtocolVtbl };
+static IInternetProtocolEx Protocol = { &ProtocolVtbl };
 
-static HRESULT WINAPI MimeProtocol_QueryInterface(IInternetProtocol *iface, REFIID riid, void **ppv)
+static HRESULT WINAPI MimeProtocol_QueryInterface(IInternetProtocolEx *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IInternetProtocol, riid)) {
         *ppv = iface;
@@ -1889,7 +1907,7 @@ static HRESULT WINAPI MimeProtocol_QueryInterface(IInternetProtocol *iface, REFI
     return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI MimeProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
+static HRESULT WINAPI MimeProtocol_Start(IInternetProtocolEx *iface, LPCWSTR szUrl,
         IInternetProtocolSink *pOIProtSink, IInternetBindInfo *pOIBindInfo,
         DWORD grfPI, HANDLE_PTR dwReserved)
 {
@@ -1969,14 +1987,14 @@ static HRESULT WINAPI MimeProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     return S_OK;
 }
 
-static HRESULT WINAPI Protocol_Continue(IInternetProtocol *iface,
+static HRESULT WINAPI Protocol_Continue(IInternetProtocolEx *iface,
         PROTOCOLDATA *pProtocolData)
 {
     CHECK_EXPECT(MimeFilter_Continue);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MimeProtocol_Terminate(IInternetProtocol *iface, DWORD dwOptions)
+static HRESULT WINAPI MimeProtocol_Terminate(IInternetProtocolEx *iface, DWORD dwOptions)
 {
     HRESULT hres;
 
@@ -1992,7 +2010,7 @@ static HRESULT WINAPI MimeProtocol_Terminate(IInternetProtocol *iface, DWORD dwO
     return S_OK;
 }
 
-static HRESULT WINAPI MimeProtocol_Read(IInternetProtocol *iface, void *pv,
+static HRESULT WINAPI MimeProtocol_Read(IInternetProtocolEx *iface, void *pv,
         ULONG cb, ULONG *pcbRead)
 {
     BYTE buf[2096];
@@ -2025,7 +2043,7 @@ static HRESULT WINAPI MimeProtocol_Read(IInternetProtocol *iface, void *pv,
     return hres;
 }
 
-static HRESULT WINAPI MimeProtocol_LockRequest(IInternetProtocol *iface, DWORD dwOptions)
+static HRESULT WINAPI MimeProtocol_LockRequest(IInternetProtocolEx *iface, DWORD dwOptions)
 {
     HRESULT hres;
 
@@ -2041,7 +2059,7 @@ static HRESULT WINAPI MimeProtocol_LockRequest(IInternetProtocol *iface, DWORD d
     return S_OK;
 }
 
-static HRESULT WINAPI MimeProtocol_UnlockRequest(IInternetProtocol *iface)
+static HRESULT WINAPI MimeProtocol_UnlockRequest(IInternetProtocolEx *iface)
 {
     HRESULT hres;
 
@@ -2055,7 +2073,7 @@ static HRESULT WINAPI MimeProtocol_UnlockRequest(IInternetProtocol *iface)
     return S_OK;
 }
 
-static const IInternetProtocolVtbl MimeProtocolVtbl = {
+static const IInternetProtocolExVtbl MimeProtocolVtbl = {
     MimeProtocol_QueryInterface,
     Protocol_AddRef,
     Protocol_Release,
@@ -2071,7 +2089,7 @@ static const IInternetProtocolVtbl MimeProtocolVtbl = {
     MimeProtocol_UnlockRequest
 };
 
-static IInternetProtocol MimeProtocol = { &MimeProtocolVtbl };
+static IInternetProtocolEx MimeProtocol = { &MimeProtocolVtbl };
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
 {
@@ -2150,6 +2168,7 @@ static IClassFactory mimefilter_cf = { &MimeFilterCFVtbl };
 #define TEST_ABORT       0x0100
 #define TEST_ASYNCREQ    0x0200
 #define TEST_USEIURI     0x0400
+#define TEST_IMPLPROTEX  0x0800
 
 static void init_test(int prot, DWORD flags)
 {
@@ -2179,6 +2198,7 @@ static void init_test(int prot, DWORD flags)
     http_post_test = TYMED_NULL;
     test_redirect = (flags & TEST_REDIRECT) != 0;
     test_abort = (flags & TEST_ABORT) != 0;
+    impl_protex = (flags & TEST_IMPLPROTEX) != 0;
 }
 
 static void test_priority(IInternetProtocol *protocol)
@@ -3251,8 +3271,10 @@ static void test_CreateBinding(void)
 
 static void test_binding(int prot, DWORD grf_pi, DWORD test_flags)
 {
+    IInternetProtocolEx *protocolex = NULL;
     IInternetProtocol *protocol;
     IInternetSession *session;
+    IUri *uri = NULL;
     ULONG ref;
     HRESULT hres;
 
@@ -3279,22 +3301,47 @@ static void test_binding(int prot, DWORD grf_pi, DWORD test_flags)
     hres = IInternetProtocol_QueryInterface(protocol, &IID_IInternetProtocolSink, (void**)&binding_sink);
     ok(hres == S_OK, "QueryInterface(IID_IInternetProtocolSink) failed: %08x\n", hres);
 
+    if(test_flags & TEST_USEIURI) {
+        hres = IInternetProtocol_QueryInterface(protocol, &IID_IInternetProtocolEx, (void**)&protocolex);
+        ok(hres == S_OK, "Could not get IInternetProtocolEx iface: %08x\n", hres);
+
+        hres = pCreateUri(binding_urls[prot], Uri_CREATE_FILE_USE_DOS_PATH, 0, &uri);
+        ok(hres == S_OK, "CreateUri failed: %08x\n", hres);
+    }
+
     ex_priority = 0;
     SET_EXPECT(QueryService_InternetProtocol);
     SET_EXPECT(CreateInstance);
     SET_EXPECT(ReportProgress_PROTOCOLCLASSID);
     SET_EXPECT(SetPriority);
-    SET_EXPECT(Start);
+    if(impl_protex)
+        SET_EXPECT(StartEx);
+    else
+        SET_EXPECT(Start);
 
     expect_hrResult = S_OK;
-    hres = IInternetProtocol_Start(protocol, binding_urls[prot], &protocol_sink, &bind_info, pi, 0);
-    ok(hres == S_OK, "Start failed: %08x\n", hres);
+
+    if(protocolex) {
+        hres = IInternetProtocolEx_StartEx(protocolex, uri, &protocol_sink, &bind_info, pi, 0);
+        ok(hres == S_OK, "StartEx failed: %08x\n", hres);
+    }else {
+        hres = IInternetProtocol_Start(protocol, binding_urls[prot], &protocol_sink, &bind_info, pi, 0);
+        ok(hres == S_OK, "Start failed: %08x\n", hres);
+    }
 
     CHECK_CALLED(QueryService_InternetProtocol);
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(ReportProgress_PROTOCOLCLASSID);
     CHECK_CALLED(SetPriority);
-    CHECK_CALLED(Start);
+    if(impl_protex)
+        CHECK_CALLED(StartEx);
+    else
+        CHECK_CALLED(Start);
+
+    if(protocolex)
+        IInternetProtocolEx_Release(protocolex);
+    if(uri)
+        IUri_Release(uri);
 
     if(prot == HTTP_TEST || prot == HTTPS_TEST) {
         while(prot_state < 4) {
@@ -3440,6 +3487,14 @@ START_TEST(protocol)
     test_binding(HTTP_TEST, PI_MIMEVERIFICATION, TEST_EMULATEPROT|TEST_DIRECT_READ);
     trace("Testing http binding (mime verification, emulate prot, abort)...\n");
     test_binding(HTTP_TEST, PI_MIMEVERIFICATION, TEST_EMULATEPROT|TEST_ABORT);
+    if(pCreateUri) {
+        trace("Testing file binding (use IUri, mime verification, emulate prot)...\n");
+        test_binding(FILE_TEST, PI_MIMEVERIFICATION, TEST_EMULATEPROT|TEST_USEIURI);
+        trace("Testing file binding (use IUri, impl StartEx, mime verification, emulate prot)...\n");
+        test_binding(FILE_TEST, PI_MIMEVERIFICATION, TEST_EMULATEPROT|TEST_USEIURI|TEST_IMPLPROTEX);
+        trace("Testing file binding (impl StartEx, mime verification, emulate prot)...\n");
+        test_binding(FILE_TEST, PI_MIMEVERIFICATION, TEST_EMULATEPROT|TEST_IMPLPROTEX);
+    }
 
     CloseHandle(event_complete);
     CloseHandle(event_complete2);
