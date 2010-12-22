@@ -605,9 +605,13 @@ static void set_wow64_environment(void)
     {
         if (is_win64 || is_wow64) SetEnvironmentVariableW( progw6432W, value );
         if (is_win64 || !is_wow64) SetEnvironmentVariableW( progfilesW, value );
+        HeapFree( GetProcessHeap(), 0, value );
     }
     if (is_wow64 && (value = get_reg_value( hkey, progdir86W )))
+    {
         SetEnvironmentVariableW( progfilesW, value );
+        HeapFree( GetProcessHeap(), 0, value );
+    }
 
     /* set the CommonProgramFiles variables */
 
@@ -615,9 +619,13 @@ static void set_wow64_environment(void)
     {
         if (is_win64 || is_wow64) SetEnvironmentVariableW( commonw6432W, value );
         if (is_win64 || !is_wow64) SetEnvironmentVariableW( commonfilesW, value );
+        HeapFree( GetProcessHeap(), 0, value );
     }
     if (is_wow64 && (value = get_reg_value( hkey, commondir86W )))
+    {
         SetEnvironmentVariableW( commonfilesW, value );
+        HeapFree( GetProcessHeap(), 0, value );
+    }
 
     NtClose( hkey );
 }
