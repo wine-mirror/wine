@@ -420,6 +420,9 @@ HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *s, cons
         UINT name_offset;
         DWORD mask;
 
+        /* todo: Parse stream in shaderblobs v5 (dx11) */
+        d[i].Stream = 0;
+
         read_dword(&ptr, &name_offset);
         d[i].SemanticName = string_data + (name_offset - string_data_offset);
         read_dword(&ptr, &d[i].SemanticIndex);
