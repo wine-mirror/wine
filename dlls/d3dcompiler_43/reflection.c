@@ -161,9 +161,19 @@ static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetInputParameter
 static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetOutputParameterDesc(
         ID3D11ShaderReflection *iface, UINT index, D3D11_SIGNATURE_PARAMETER_DESC *desc)
 {
-    FIXME("iface %p, index %u, desc %p stub!\n", iface, index, desc);
+    struct d3dcompiler_shader_reflection *This = impl_from_ID3D11ShaderReflection(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, index %u, desc %p\n", iface, index, desc);
+
+    if (!desc || !This->osgn || index >= This->osgn->element_count)
+    {
+        WARN("Invalid argument specified\n");
+        return E_INVALIDARG;
+    }
+
+    *desc = This->osgn->elements[index];
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetPatchConstantParameterDesc(
