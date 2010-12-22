@@ -1731,13 +1731,13 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IHTMLDocument6_iface;
     }else if(IsEqualGUID(&IID_IPersist, riid)) {
         TRACE("(%p)->(IID_IPersist, %p)\n", This, ppv);
-        *ppv = PERSIST(This);
+        *ppv = &This->IPersistFile_iface;
     }else if(IsEqualGUID(&IID_IPersistMoniker, riid)) {
         TRACE("(%p)->(IID_IPersistMoniker, %p)\n", This, ppv);
-        *ppv = PERSISTMON(This);
+        *ppv = &This->IPersistMoniker_iface;
     }else if(IsEqualGUID(&IID_IPersistFile, riid)) {
         TRACE("(%p)->(IID_IPersistFile, %p)\n", This, ppv);
-        *ppv = PERSISTFILE(This);
+        *ppv = &This->IPersistFile_iface;
     }else if(IsEqualGUID(&IID_IMonikerProp, riid)) {
         TRACE("(%p)->(IID_IMonikerProp, %p)\n", This, ppv);
         *ppv = MONPROP(This);
@@ -1788,7 +1788,7 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = CONPTCONT(&This->cp_container);
     }else if(IsEqualGUID(&IID_IPersistStreamInit, riid)) {
         TRACE("(%p)->(IID_IPersistStreamInit %p)\n", This, ppv);
-        *ppv = PERSTRINIT(This);
+        *ppv = &This->IPersistStreamInit_iface;
     }else if(IsEqualGUID(&DIID_DispHTMLDocument, riid)) {
         TRACE("(%p)->(DIID_DispHTMLDocument %p)\n", This, ppv);
         *ppv = &This->IHTMLDocument2_iface;
@@ -1797,7 +1797,7 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = SUPPERRINFO(This);
     }else if(IsEqualGUID(&IID_IPersistHistory, riid)) {
         TRACE("(%p)->(IID_IPersistHistory %p)\n", This, ppv);
-        *ppv = PERSISTHIST(This);
+        *ppv = &This->IPersistHistory_iface;
     }else if(IsEqualGUID(&CLSID_CMarkup, riid)) {
         FIXME("(%p)->(CLSID_CMarkup %p)\n", This, ppv);
         *ppv = NULL;

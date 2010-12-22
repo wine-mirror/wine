@@ -347,9 +347,9 @@ struct HTMLDocument {
     IHTMLDocument4              IHTMLDocument4_iface;
     IHTMLDocument5              IHTMLDocument5_iface;
     IHTMLDocument6              IHTMLDocument6_iface;
-    const IPersistMonikerVtbl             *lpPersistMonikerVtbl;
-    const IPersistFileVtbl                *lpPersistFileVtbl;
-    const IPersistHistoryVtbl             *lpPersistHistoryVtbl;
+    IPersistMoniker             IPersistMoniker_iface;
+    IPersistFile                IPersistFile_iface;
+    IPersistHistory             IPersistHistory_iface;
     const IMonikerPropVtbl                *lpMonikerPropVtbl;
     const IOleObjectVtbl                  *lpOleObjectVtbl;
     const IOleDocumentVtbl                *lpOleDocumentVtbl;
@@ -361,7 +361,7 @@ struct HTMLDocument {
     const IOleCommandTargetVtbl           *lpOleCommandTargetVtbl;
     const IOleControlVtbl                 *lpOleControlVtbl;
     const IHlinkTargetVtbl                *lpHlinkTargetVtbl;
-    const IPersistStreamInitVtbl          *lpPersistStreamInitVtbl;
+    IPersistStreamInit          IPersistStreamInit_iface;
     const IDispatchExVtbl                 *lpIDispatchExVtbl;
     const ISupportErrorInfoVtbl           *lpSupportErrorInfoVtbl;
     const IObjectWithSiteVtbl             *lpObjectWithSiteVtbl;
@@ -626,9 +626,6 @@ struct HTMLDocumentNode {
 #define HTMLWINDOW3(x)   ((IHTMLWindow3*)                 &(x)->lpHTMLWindow3Vtbl)
 #define HTMLWINDOW4(x)   ((IHTMLWindow4*)                 &(x)->lpHTMLWindow4Vtbl)
 
-#define PERSIST(x)       ((IPersist*)                     &(x)->lpPersistFileVtbl)
-#define PERSISTMON(x)    ((IPersistMoniker*)              &(x)->lpPersistMonikerVtbl)
-#define PERSISTFILE(x)   ((IPersistFile*)                 &(x)->lpPersistFileVtbl)
 #define MONPROP(x)       ((IMonikerProp*)                 &(x)->lpMonikerPropVtbl)
 #define OLEOBJ(x)        ((IOleObject*)                   &(x)->lpOleObjectVtbl)
 #define OLEDOC(x)        ((IOleDocument*)                 &(x)->lpOleDocumentVtbl)
@@ -645,8 +642,6 @@ struct HTMLDocumentNode {
 #define CONTROL(x)       ((IOleControl*)                  &(x)->lpOleControlVtbl)
 #define HLNKTARGET(x)    ((IHlinkTarget*)                 &(x)->lpHlinkTargetVtbl)
 #define CONPTCONT(x)     ((IConnectionPointContainer*)    &(x)->lpConnectionPointContainerVtbl)
-#define PERSTRINIT(x)    ((IPersistStreamInit*)           &(x)->lpPersistStreamInitVtbl)
-#define PERSISTHIST(x)   ((IPersistHistory*)              &(x)->lpPersistHistoryVtbl)
 #define CUSTOMDOC(x)     ((ICustomDoc*)                   &(x)->lpCustomDocVtbl)
 #define OBJSITE(x)       ((IObjectWithSite*)              &(x)->lpObjectWithSiteVtbl)
 

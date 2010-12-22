@@ -604,7 +604,7 @@ static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
         }
     }
 
-    hres = IPersistMoniker_Load(PERSISTMON(This), TRUE, mon, NULL, 0);
+    hres = IPersistMoniker_Load(&This->IPersistMoniker_iface, TRUE, mon, NULL, 0);
     IMoniker_Release(mon);
     if(FAILED(hres))
         return hres;
