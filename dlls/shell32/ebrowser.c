@@ -53,11 +53,11 @@ typedef struct _travellog_entry {
 } travellog_entry;
 
 typedef struct _ExplorerBrowserImpl {
-    const IExplorerBrowserVtbl *lpVtbl;
-    const IShellBrowserVtbl *lpsbVtbl;
-    const ICommDlgBrowser3Vtbl *lpcdb3Vtbl;
-    const IObjectWithSiteVtbl *lpowsVtbl;
-    const INameSpaceTreeControlEventsVtbl *lpnstceVtbl;
+    IExplorerBrowser  IExplorerBrowser_iface;
+    IShellBrowser     IShellBrowser_iface;
+    ICommDlgBrowser3  ICommDlgBrowser3_iface;
+    IObjectWithSite   IObjectWithSite_iface;
+    INameSpaceTreeControlEvents INameSpaceTreeControlEvents_iface;
     LONG ref;
     BOOL destroyed;
 
@@ -357,7 +357,7 @@ static HRESULT change_viewmode(ExplorerBrowserImpl *This, UINT viewmode)
 
 static HRESULT create_new_shellview(ExplorerBrowserImpl *This, IShellItem *psi)
 {
-    IShellBrowser *psb = (IShellBrowser*)&This->lpsbVtbl;
+    IShellBrowser *psb = &This->IShellBrowser_iface;
     IShellFolder *psf;
     IShellView *psv;
     HWND hwnd_new;
@@ -597,7 +597,7 @@ static LRESULT navpane_on_wm_create(HWND hwnd, CREATESTRUCTW *crs)
             else
                 ERR("QueryInterface(IOleWindow) failed (0x%08x)\n", hr);
 
-            pnstce = (INameSpaceTreeControlEvents *)&This->lpnstceVtbl;
+            pnstce = &This->INameSpaceTreeControlEvents_iface;
             hr = INameSpaceTreeControl2_TreeAdvise(pnstc2, (IUnknown*)pnstce, &cookie);
             if(FAILED(hr))
                 ERR("TreeAdvise failed. (0x%08x).\n", hr);
@@ -758,10 +758,16 @@ static LRESULT CALLBACK main_wndproc(HWND hWnd, UINT uMessage, WPARAM wParam, LP
 /**************************************************************************
  * IExplorerBrowser Implementation
  */
+
+static inline ExplorerBrowserImpl *impl_from_IExplorerBrowser(IExplorerBrowser *iface)
+{
+    return CONTAINING_RECORD(iface, ExplorerBrowserImpl, IExplorerBrowser_iface);
+}
+
 static HRESULT WINAPI IExplorerBrowser_fnQueryInterface(IExplorerBrowser *iface,
                                                         REFIID riid, void **ppvObject)
 {
-    ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
+    ExplorerBrowserImpl *This = impl_from_IExplorerBrowser(iface);
     TRACE("%p (%s, %p)\n", This, shdebugstr_guid(riid), ppvObject);
 
     *ppvObject = NULL;
@@ -772,17 +778,17 @@ static HRESULT WINAPI IExplorerBrowser_fnQueryInterface(IExplorerBrowser *iface,
     }
     else if(IsEqualIID(riid, &IID_IShellBrowser))
     {
-        *ppvObject = &This->lpsbVtbl;
+        *ppvObject = &This->IShellBrowser_iface;
     }
     else if(IsEqualIID(riid, &IID_ICommDlgBrowser) ||
             IsEqualIID(riid, &IID_ICommDlgBrowser2) ||
             IsEqualIID(riid, &IID_ICommDlgBrowser3))
     {
-        *ppvObject = &This->lpcdb3Vtbl;
+        *ppvObject = &This->ICommDlgBrowser3_iface;
     }
     else if(IsEqualIID(riid, &IID_IObjectWithSite))
     {
-        *ppvObject = &This->lpowsVtbl;
+        *ppvObject = &This->IObjectWithSite_iface;
     }
 
     if(*ppvObject)
@@ -796,7 +802,7 @@ static HRESULT WINAPI IExplorerBrowser_fnQueryInterface(IExplorerBrowser *iface,
 
 static ULONG WINAPI IExplorerBrowser_fnAddRef(IExplorerBrowser *iface)
 {
-    ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
+    ExplorerBrowserImpl *This = impl_from_IExplorerBrowser(iface);
     LONG ref = InterlockedIncrement(&This->ref);
     TRACE("%p - ref %d\n", This, ref);
 
@@ -805,7 +811,7 @@ static ULONG WINAPI IExplorerBrowser_fnAddRef(IExplorerBrowser *iface)
 
 static ULONG WINAPI IExplorerBrowser_fnRelease(IExplorerBrowser *iface)
 {
-    ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
+    ExplorerBrowserImpl *This = impl_from_IExplorerBrowser(iface);
     LONG ref = InterlockedDecrement(&This->ref);
     TRACE("%p - ref %d\n", This, ref);
 
@@ -816,7 +822,7 @@ static ULONG WINAPI IExplorerBrowser_fnRelease(IExplorerBrowser *iface)
         if(!This->destroyed)
             IExplorerBrowser_Destroy(iface);
 
-        IObjectWithSite_SetSite((IObjectWithSite*)&This->lpowsVtbl, NULL);
+        IObjectWithSite_SetSite(&This->IObjectWithSite_iface, NULL);
 
         HeapFree(GetProcessHeap(), 0, This);
         return 0;
@@ -829,7 +835,7 @@ static HRESULT WINAPI IExplorerBrowser_fnInitialize(IExplorerBrowser *iface,
                                                     HWND hwndParent, const RECT *prc,
                                                     const FOLDERSETTINGS *pfs)
 {
-    ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
+    ExplorerBrowserImpl *This = impl_from_IExplorerBrowser(iface);
     WNDCLASSW wc;
     LONG style;
     static const WCHAR EB_CLASS_NAME[] =
@@ -879,7 +885,7 @@ static HRESULT WINAPI IExplorerBrowser_fnInitialize(IExplorerBrowser *iface,
 
 static HRESULT WINAPI IExplorerBrowser_fnDestroy(IExplorerBrowser *iface)
 {
-    ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
+    ExplorerBrowserImpl *This = impl_from_IExplorerBrowser(iface);
     TRACE("%p\n", This);
 
     if(This->psv)
@@ -905,7 +911,7 @@ static HRESULT WINAPI IExplorerBrowser_fnDestroy(IExplorerBrowser *iface)
 static HRESULT WINAPI IExplorerBrowser_fnSetRect(IExplorerBrowser *iface,
                                                  HDWP *phdwp, RECT rcBrowser)
 {
-    ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
+    ExplorerBrowserImpl *This = impl_from_IExplorerBrowser(iface);
     TRACE("%p (%p, %s)\n", This, phdwp, wine_dbgstr_rect(&rcBrowser));
 
     if(phdwp && *phdwp)
@@ -928,7 +934,7 @@ static HRESULT WINAPI IExplorerBrowser_fnSetRect(IExplorerBrowser *iface,
 static HRESULT WINAPI IExplorerBrowser_fnSetPropertyBag(IExplorerBrowser *iface,
                                                         LPCWSTR pszPropertyBag)
 {
-    ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
+    ExplorerBrowserImpl *This = impl_from_IExplorerBrowser(iface);
     FIXME("stub, %p (%s)\n", This, debugstr_w(pszPropertyBag));
 
     if(!pszPropertyBag)
@@ -945,7 +951,7 @@ static HRESULT WINAPI IExplorerBrowser_fnSetPropertyBag(IExplorerBrowser *iface,
 static HRESULT WINAPI IExplorerBrowser_fnSetEmptyText(IExplorerBrowser *iface,
                                                       LPCWSTR pszEmptyText)
 {
-    ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
+    ExplorerBrowserImpl *This = impl_from_IExplorerBrowser(iface);
     FIXME("stub, %p (%s)\n", This, debugstr_w(pszEmptyText));
 
     return E_NOTIMPL;
@@ -954,7 +960,7 @@ static HRESULT WINAPI IExplorerBrowser_fnSetEmptyText(IExplorerBrowser *iface,
 static HRESULT WINAPI IExplorerBrowser_fnSetFolderSettings(IExplorerBrowser *iface,
                                                            const FOLDERSETTINGS *pfs)
 {
-    ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
+    ExplorerBrowserImpl *This = impl_from_IExplorerBrowser(iface);
     TRACE("%p (%p)\n", This, pfs);
 
     if(!pfs)
@@ -971,7 +977,7 @@ static HRESULT WINAPI IExplorerBrowser_fnAdvise(IExplorerBrowser *iface,
                                                 IExplorerBrowserEvents *psbe,
                                                 DWORD *pdwCookie)
 {
-    ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
+    ExplorerBrowserImpl *This = impl_from_IExplorerBrowser(iface);
     event_client *client;
     TRACE("%p (%p, %p)\n", This, psbe, pdwCookie);
 
@@ -990,7 +996,7 @@ static HRESULT WINAPI IExplorerBrowser_fnAdvise(IExplorerBrowser *iface,
 static HRESULT WINAPI IExplorerBrowser_fnUnadvise(IExplorerBrowser *iface,
                                                   DWORD dwCookie)
 {
-    ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
+    ExplorerBrowserImpl *This = impl_from_IExplorerBrowser(iface);
     event_client *client;
     TRACE("%p (0x%x)\n", This, dwCookie);
 
@@ -1011,7 +1017,7 @@ static HRESULT WINAPI IExplorerBrowser_fnUnadvise(IExplorerBrowser *iface,
 static HRESULT WINAPI IExplorerBrowser_fnSetOptions(IExplorerBrowser *iface,
                                                     EXPLORER_BROWSER_OPTIONS dwFlag)
 {
-    ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
+    ExplorerBrowserImpl *This = impl_from_IExplorerBrowser(iface);
     static const EXPLORER_BROWSER_OPTIONS unsupported_options =
         EBO_ALWAYSNAVIGATE | EBO_NOWRAPPERWINDOW | EBO_HTMLSHAREPOINTVIEW;
 
@@ -1028,7 +1034,7 @@ static HRESULT WINAPI IExplorerBrowser_fnSetOptions(IExplorerBrowser *iface,
 static HRESULT WINAPI IExplorerBrowser_fnGetOptions(IExplorerBrowser *iface,
                                                     EXPLORER_BROWSER_OPTIONS *pdwFlag)
 {
-    ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
+    ExplorerBrowserImpl *This = impl_from_IExplorerBrowser(iface);
     TRACE("%p (%p)\n", This, pdwFlag);
 
     *pdwFlag = This->eb_options;
@@ -1040,7 +1046,7 @@ static HRESULT WINAPI IExplorerBrowser_fnBrowseToIDList(IExplorerBrowser *iface,
                                                         PCUIDLIST_RELATIVE pidl,
                                                         UINT uFlags)
 {
-    ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
+    ExplorerBrowserImpl *This = impl_from_IExplorerBrowser(iface);
     LPITEMIDLIST absolute_pidl = NULL;
     HRESULT hr;
     static const UINT unsupported_browse_flags =
@@ -1190,7 +1196,7 @@ static HRESULT WINAPI IExplorerBrowser_fnBrowseToIDList(IExplorerBrowser *iface,
 static HRESULT WINAPI IExplorerBrowser_fnBrowseToObject(IExplorerBrowser *iface,
                                                         IUnknown *punk, UINT uFlags)
 {
-    ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
+    ExplorerBrowserImpl *This = impl_from_IExplorerBrowser(iface);
     LPITEMIDLIST pidl;
     HRESULT hr;
     TRACE("%p (%p, 0x%x)\n", This, punk, uFlags);
@@ -1212,7 +1218,7 @@ static HRESULT WINAPI IExplorerBrowser_fnFillFromObject(IExplorerBrowser *iface,
                                                         IUnknown *punk,
                                                         EXPLORER_BROWSER_FILL_FLAGS dwFlags)
 {
-    ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
+    ExplorerBrowserImpl *This = impl_from_IExplorerBrowser(iface);
     FIXME("stub, %p (%p, 0x%x)\n", This, punk, dwFlags);
 
     return E_NOTIMPL;
@@ -1220,7 +1226,7 @@ static HRESULT WINAPI IExplorerBrowser_fnFillFromObject(IExplorerBrowser *iface,
 
 static HRESULT WINAPI IExplorerBrowser_fnRemoveAll(IExplorerBrowser *iface)
 {
-    ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
+    ExplorerBrowserImpl *This = impl_from_IExplorerBrowser(iface);
     FIXME("stub, %p\n", This);
 
     return E_NOTIMPL;
@@ -1229,7 +1235,7 @@ static HRESULT WINAPI IExplorerBrowser_fnRemoveAll(IExplorerBrowser *iface)
 static HRESULT WINAPI IExplorerBrowser_fnGetCurrentView(IExplorerBrowser *iface,
                                                         REFIID riid, void **ppv)
 {
-    ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
+    ExplorerBrowserImpl *This = impl_from_IExplorerBrowser(iface);
     TRACE("%p (%s, %p)\n", This, shdebugstr_guid(riid), ppv);
 
     if(!This->psv)
@@ -1266,7 +1272,7 @@ static const IExplorerBrowserVtbl vt_IExplorerBrowser =
 
 static inline ExplorerBrowserImpl *impl_from_IShellBrowser(IShellBrowser *iface)
 {
-    return (ExplorerBrowserImpl *)((char*)iface - FIELD_OFFSET(ExplorerBrowserImpl, lpsbVtbl));
+    return CONTAINING_RECORD(iface, ExplorerBrowserImpl, IShellBrowser_iface);
 }
 
 static HRESULT WINAPI IShellBrowser_fnQueryInterface(IShellBrowser *iface,
@@ -1474,7 +1480,7 @@ static const IShellBrowserVtbl vt_IShellBrowser = {
 
 static inline ExplorerBrowserImpl *impl_from_ICommDlgBrowser3(ICommDlgBrowser3 *iface)
 {
-    return (ExplorerBrowserImpl *)((char*)iface - FIELD_OFFSET(ExplorerBrowserImpl, lpcdb3Vtbl));
+    return CONTAINING_RECORD(iface, ExplorerBrowserImpl, ICommDlgBrowser3_iface);
 }
 
 static HRESULT WINAPI ICommDlgBrowser3_fnQueryInterface(ICommDlgBrowser3 *iface,
@@ -1669,7 +1675,7 @@ static const ICommDlgBrowser3Vtbl vt_ICommDlgBrowser3 = {
 
 static inline ExplorerBrowserImpl *impl_from_IObjectWithSite(IObjectWithSite *iface)
 {
-    return (ExplorerBrowserImpl *)((char*)iface - FIELD_OFFSET(ExplorerBrowserImpl, lpowsVtbl));
+    return CONTAINING_RECORD(iface, ExplorerBrowserImpl, IObjectWithSite_iface);
 }
 
 static HRESULT WINAPI IObjectWithSite_fnQueryInterface(IObjectWithSite *iface,
@@ -1738,7 +1744,7 @@ static const IObjectWithSiteVtbl vt_IObjectWithSite = {
  */
 static inline ExplorerBrowserImpl *impl_from_INameSpaceTreeControlEvents(INameSpaceTreeControlEvents *iface)
 {
-    return (ExplorerBrowserImpl *)((char*)iface - FIELD_OFFSET(ExplorerBrowserImpl, lpnstceVtbl));
+    return CONTAINING_RECORD(iface, ExplorerBrowserImpl, INameSpaceTreeControlEvents_iface);
 }
 
 static HRESULT WINAPI NSTCEvents_fnQueryInterface(INameSpaceTreeControlEvents *iface,
@@ -1979,11 +1985,11 @@ HRESULT WINAPI ExplorerBrowser_Constructor(IUnknown *pUnkOuter, REFIID riid, voi
 
     eb = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ExplorerBrowserImpl));
     eb->ref = 1;
-    eb->lpVtbl = &vt_IExplorerBrowser;
-    eb->lpsbVtbl = &vt_IShellBrowser;
-    eb->lpcdb3Vtbl = &vt_ICommDlgBrowser3;
-    eb->lpowsVtbl = &vt_IObjectWithSite;
-    eb->lpnstceVtbl = &vt_INameSpaceTreeControlEvents;
+    eb->IExplorerBrowser_iface.lpVtbl = &vt_IExplorerBrowser;
+    eb->IShellBrowser_iface.lpVtbl    = &vt_IShellBrowser;
+    eb->ICommDlgBrowser3_iface.lpVtbl = &vt_ICommDlgBrowser3;
+    eb->IObjectWithSite_iface.lpVtbl  = &vt_IObjectWithSite;
+    eb->INameSpaceTreeControlEvents_iface.lpVtbl = &vt_INameSpaceTreeControlEvents;
 
     /* Default settings */
     eb->navpane.width = 150;
