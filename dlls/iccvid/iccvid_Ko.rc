@@ -1,6 +1,6 @@
 /*
  * Copyright 2005 Dmitry Timoshkov
- * Copyright 2005 YunSomg Hwang
+ * Copyright 2005,2010 YunSomg Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,10 +19,12 @@
 
 #include "iccvid_private.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-    IDS_NAME "½Ã³×ÆÑ ºñµğ¿À ÄÚµ¦"
-    IDS_DESCRIPTION "½Ã³×ÆÑ ºñµğ¿À ÄÚµ¦"
+    IDS_NAME "ì‹œë„¤íŒ© ë¹„ë””ì˜¤ ì½”ë±"
+    IDS_DESCRIPTION "ì‹œë„¤íŒ© ë¹„ë””ì˜¤ ì½”ë±"
 }
