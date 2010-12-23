@@ -5525,6 +5525,10 @@ static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
         goto done;
     }
 
+    comp = MSI_RecordGetString( rec, 12 );
+    if (!get_loaded_component( package, comp ))
+        goto done;
+
     start_type = MSI_RecordGetInteger(rec, 5);
     if (start_type == SERVICE_BOOT_START || start_type == SERVICE_SYSTEM_START)
         goto done;
@@ -5538,7 +5542,6 @@ static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
     deformat_string(package, MSI_RecordGetString(rec, 9), &serv_name);
     deformat_string(package, MSI_RecordGetString(rec, 10), &pass);
     deformat_string(package, MSI_RecordGetString(rec, 11), &args);
-    comp = MSI_RecordGetString(rec, 12);
     deformat_string(package, MSI_RecordGetString(rec, 13), &sd.lpDescription);
 
     /* fetch the service path */
