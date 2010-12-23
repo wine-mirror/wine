@@ -466,29 +466,32 @@ static const IPersistMonikerVtbl PersistMonikerVtbl = {
  * IMonikerProp implementation
  */
 
-#define MONPROP_THIS(iface) DEFINE_THIS(HTMLDocument, MonikerProp, iface)
+static inline HTMLDocument *impl_from_IMonikerProp(IMonikerProp *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocument, IMonikerProp_iface);
+}
 
 static HRESULT WINAPI MonikerProp_QueryInterface(IMonikerProp *iface, REFIID riid, void **ppv)
 {
-    HTMLDocument *This = MONPROP_THIS(iface);
+    HTMLDocument *This = impl_from_IMonikerProp(iface);
     return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI MonikerProp_AddRef(IMonikerProp *iface)
 {
-    HTMLDocument *This = MONPROP_THIS(iface);
+    HTMLDocument *This = impl_from_IMonikerProp(iface);
     return htmldoc_addref(This);
 }
 
 static ULONG WINAPI MonikerProp_Release(IMonikerProp *iface)
 {
-    HTMLDocument *This = MONPROP_THIS(iface);
+    HTMLDocument *This = impl_from_IMonikerProp(iface);
     return htmldoc_release(This);
 }
 
 static HRESULT WINAPI MonikerProp_PutProperty(IMonikerProp *iface, MONIKERPROPERTY mkp, LPCWSTR val)
 {
-    HTMLDocument *This = MONPROP_THIS(iface);
+    HTMLDocument *This = impl_from_IMonikerProp(iface);
 
     TRACE("(%p)->(%d %s)\n", This, mkp, debugstr_w(val));
 
@@ -835,7 +838,7 @@ void HTMLDocument_Persist_Init(HTMLDocument *This)
 {
     This->IPersistMoniker_iface.lpVtbl = &PersistMonikerVtbl;
     This->IPersistFile_iface.lpVtbl = &PersistFileVtbl;
-    This->lpMonikerPropVtbl = &MonikerPropVtbl;
+    This->IMonikerProp_iface.lpVtbl = &MonikerPropVtbl;
     This->IPersistStreamInit_iface.lpVtbl = &PersistStreamInitVtbl;
     This->IPersistHistory_iface.lpVtbl = &PersistHistoryVtbl;
 }

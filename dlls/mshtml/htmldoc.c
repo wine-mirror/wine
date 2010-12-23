@@ -1740,7 +1740,7 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IPersistFile_iface;
     }else if(IsEqualGUID(&IID_IMonikerProp, riid)) {
         TRACE("(%p)->(IID_IMonikerProp, %p)\n", This, ppv);
-        *ppv = MONPROP(This);
+        *ppv = &This->IMonikerProp_iface;
     }else if(IsEqualGUID(&IID_IOleObject, riid)) {
         TRACE("(%p)->(IID_IOleObject, %p)\n", This, ppv);
         *ppv = OLEOBJ(This);
