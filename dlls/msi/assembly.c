@@ -176,6 +176,10 @@ static WCHAR *get_assembly_display_name( MSIDATABASE *db, const WCHAR *comp, MSI
         '%','s',',',' ','v','e','r','s','i','o','n','=','%','s',',',' ',
         'p','u','b','l','i','c','K','e','y','T','o','k','e','n','=','%','s',',',' ',
         'p','r','o','c','e','s','s','o','r','A','r','c','h','i','t','e','c','t','u','r','e','=','%','s',0};
+    static const WCHAR fmt_sxs_localW[] = {
+        '%','s',',',' ','v','e','r','s','i','o','n','=','%','s',',',' ',
+        'c','u','l','t','u','r','e','=','%','s',',',' ',
+        'p','u','b','l','i','c','K','e','y','T','o','k','e','n','=','%','s',0};
     static const WCHAR queryW[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
         '`','M','s','i','A','s','s','e','m','b','l','y','N','a','m','e','`',' ',
@@ -198,18 +202,36 @@ static WCHAR *get_assembly_display_name( MSIDATABASE *db, const WCHAR *comp, MSI
 
     if (assembly->attributes == msidbAssemblyAttributesWin32)
     {
-        if (!name.type || !name.name || !name.version || !name.token || !name.arch)
+        if (!assembly->application)
         {
-            WARN("invalid win32 assembly name\n");
-            goto done;
+            if (!name.type || !name.name || !name.version || !name.token || !name.arch)
+            {
+                WARN("invalid global win32 assembly name\n");
+                goto done;
+            }
+            len = strlenW( fmt_sxsW );
+            len += strlenW( name.name );
+            len += strlenW( name.version );
+            len += strlenW( name.token );
+            len += strlenW( name.arch );
+            if (!(display_name = msi_alloc( len * sizeof(WCHAR) ))) goto done;
+            sprintfW( display_name, fmt_sxsW, name.name, name.version, name.token, name.arch );
         }
-        len = strlenW( fmt_sxsW );
-        len += strlenW( name.name );
-        len += strlenW( name.version );
-        len += strlenW( name.token );
-        len += strlenW( name.arch );
-        if (!(display_name = msi_alloc( len * sizeof(WCHAR) ))) goto done;
-        sprintfW( display_name, fmt_sxsW, name.name, name.version, name.token, name.arch );
+        else
+        {
+            if (!name.name || !name.version || !name.culture || !name.token)
+            {
+                WARN("invalid local win32 assembly name\n");
+                goto done;
+            }
+            len = strlenW( fmt_sxs_localW );
+            len += strlenW( name.name );
+            len += strlenW( name.version );
+            len += strlenW( name.culture );
+            len += strlenW( name.token );
+            if (!(display_name = msi_alloc( len * sizeof(WCHAR) ))) goto done;
+            sprintfW( display_name, fmt_sxs_localW, name.name, name.version, name.culture, name.token );
+        }
     }
     else
     {
