@@ -70,34 +70,12 @@ static inline void fill_modify_ldt_struct( struct modify_ldt_s *ptr, const LDT_E
 
 static inline int modify_ldt( int func, struct modify_ldt_s *ptr, unsigned long count )
 {
-    int res;
-    __asm__ __volatile__( "pushl %%ebx\n\t"
-                          "movl %2,%%ebx\n\t"
-                          "int $0x80\n\t"
-                          "popl %%ebx"
-                          : "=a" (res)
-                          : "0" (SYS_modify_ldt),
-                            "r" (func),
-                            "c" (ptr),
-                            "d" (count),
-                            "m" (*ptr) );
-    if (res >= 0) return res;
-    errno = -res;
-    return -1;
+    return syscall( SYS_modify_ldt, func, ptr, count );
 }
 
 static inline int set_thread_area( struct modify_ldt_s *ptr )
 {
-    int res;
-    __asm__ __volatile__( "pushl %%ebx\n\t"
-                          "movl %3,%%ebx\n\t"
-                          "int $0x80\n\t"
-                          "popl %%ebx"
-                          : "=a" (res), "=m" (*ptr)
-                          : "0" (243) /* SYS_set_thread_area */, "q" (ptr), "m" (*ptr) );
-    if (res >= 0) return res;
-    errno = -res;
-    return -1;
+    return syscall( 243 /* SYS_set_thread_area */, ptr );
 }
 
 #endif  /* linux */
