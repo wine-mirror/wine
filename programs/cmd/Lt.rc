@@ -208,6 +208,10 @@ o po to pakeičia dabartinį katalogą į nurodytą.\n"
 
   WCMD_MORE,   "MORE parodo failo išvedimą ar kanalo įvedimą puslapiais.\n"
 
+  WCMD_CHOICE, "CHOICE parodo tekstą ir laukia, kol naudotojas\n\
+paspaus leidžiamą klavišą iš pasirinkimų sąrašo.\n\
+CHOICE dažniausiai naudojama pasirinkimo meniu konstravimui komandų faile.\n"
+
   WCMD_EXIT,
 "EXIT baigia dabartinį komandų seansą ir grįžta į operacinę sistemą\n\
 ar apvalkalą iš kur CMD buvo iškviestas.\n"
@@ -216,6 +220,7 @@ ar apvalkalą iš kur CMD buvo iškviestas.\n"
 ATTRIB\t\tRodyti ar keisti DOS failo požymius\n\
 CALL\t\tKviesti komandų failą iš kito komandų failo\n\
 CD (CHDIR)\tPakeisti dabartinį numatytą katalogą\n\
+CHOICE\t\tLaukti klavišo paspaudimo iš pasirinkimų sąrašo\n\
 CLS\t\tIšvalyti pulto ekraną\n\
 COPY\t\tKopijuoti failą\n\
 CTTY\t\tPakeisti įvedimo/išvedimo įrenginį\n\
