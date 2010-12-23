@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Aurimas Fišeras <aurimas@gmail.com>
+ * Copyright 2009-2010 Aurimas Fišeras <aurimas@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -63,7 +63,23 @@ FONT 8, "MS Shell Dlg"
  PUSHBUTTON "Atsisakyti", IDCANCEL, 158, 126, 56, 14, WS_GROUP | WS_TABSTOP
 }
 
+IDD_INVCERTDLG DIALOG 3, 24, 250, 86
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Įspėjimas apie saugumą"
+FONT 8, "MS Shell Dlg"
+{
+ LTEXT "Yra nesklandumų su šios svetainės liudijimu.", -1, 40, 6, 200, 20
+ LTEXT "", IDC_CERT_ERROR, 40, 26, 200, 20
+ LTEXT "Ar vistiek norite tęsti?", -1, 40, 46, 200, 20
+ PUSHBUTTON "Taip", IDOK, 40, 66, 56, 14, WS_GROUP | WS_TABSTOP | BS_DEFPUSHBUTTON
+ PUSHBUTTON "Ne", IDCANCEL, 100, 66, 56, 14, WS_GROUP | WS_TABSTOP
+}
+
 STRINGTABLE
 {
   IDS_LANCONNECTION "Vietinio tinklo ryšys"
+  IDS_CERT_CA_INVALID   "Liudijimas yra išduotas nežinomo arba nepatikimo leidėjo."
+  IDS_CERT_DATE_INVALID "Liudijimo data yra neteisinga."
+  IDS_CERT_CN_INVALID   "Liudijimo pavadinimas neatitinka svetainės."
+  IDS_CERT_ERRORS       "Yra mažiausiai viena nenustatyta saugumo problema su šiuo liudijimu."
 }
