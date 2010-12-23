@@ -39,13 +39,13 @@ typedef HRESULT (*fnCreateInstance)( IUnknown *pUnkOuter, LPVOID *ppObj );
 
 typedef struct _wucf
 {
-    const struct IClassFactoryVtbl *vtbl;
+    IClassFactory IClassFactory_iface;
     fnCreateInstance pfnCreateInstance;
 } wucf;
 
 static inline wucf *impl_from_IClassFactory( IClassFactory *iface )
 {
-    return (wucf *)((char *)iface - FIELD_OFFSET( wucf, vtbl ));
+    return CONTAINING_RECORD(iface, wucf, IClassFactory_iface);
 }
 
 static HRESULT WINAPI wucf_QueryInterface( IClassFactory *iface, REFIID riid, LPVOID *ppobj )
@@ -112,8 +112,8 @@ static const struct IClassFactoryVtbl wucf_vtbl =
     wucf_LockServer
 };
 
-static wucf sessioncf = { &wucf_vtbl, UpdateSession_create };
-static wucf updatescf = { &wucf_vtbl, AutomaticUpdates_create };
+static wucf sessioncf = { { &wucf_vtbl }, UpdateSession_create };
+static wucf updatescf = { { &wucf_vtbl }, AutomaticUpdates_create };
 
 static HINSTANCE instance;
 
@@ -141,11 +141,11 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
 
     if (IsEqualGUID( rclsid, &CLSID_UpdateSession ))
     {
-       cf = (IClassFactory *)&sessioncf.vtbl;
+       cf = &sessioncf.IClassFactory_iface;
     }
     else if (IsEqualGUID( rclsid, &CLSID_AutomaticUpdates ))
     {
-       cf = (IClassFactory *)&updatescf.vtbl;
+       cf = &updatescf.IClassFactory_iface;
     }
     if (!cf) return CLASS_E_CLASSNOTAVAILABLE;
     return IClassFactory_QueryInterface( cf, iid, ppv );
