@@ -2553,7 +2553,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetVarHelpContext(
     if ((This->typeinfo->cElement >> 16) <= index)
 	return TYPE_E_ELEMENTNOTFOUND;
 
-    for (iter = This->typedata->next->next; iter != This->typedata; iter = iter->next)
+    for (iter = This->typedata->next->next; iter != This->typedata->next; iter = iter->next)
        if (iter->type == CyclicListVar)
        {
            if (index-- == 0)

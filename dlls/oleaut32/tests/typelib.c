@@ -2874,6 +2874,55 @@ static void test_LoadTypeLib(void)
     ok(hres == TYPE_E_CANTLOADLIBRARY, "LoadTypeLib returned: %08x, expected TYPE_E_CANTLOADLIBRARY\n", hres);
 }
 
+static void test_SetVarHelpContext(void)
+{
+    static OLECHAR nameW[] = {'n','a','m','e',0};
+    CHAR filenameA[MAX_PATH];
+    WCHAR filenameW[MAX_PATH];
+    ICreateTypeLib2 *ctl;
+    ICreateTypeInfo *cti;
+    VARDESC desc;
+    HRESULT hr;
+    VARIANT v;
+
+    GetTempFileNameA(".", "tlb", 0, filenameA);
+    MultiByteToWideChar(CP_ACP, 0, filenameA, -1, filenameW, MAX_PATH);
+
+    hr = CreateTypeLib2(SYS_WIN32, filenameW, &ctl);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeLib2_CreateTypeInfo(ctl, nameW, TKIND_ENUM, &cti);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_SetVarHelpContext(cti, 0, 0);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hr);
+
+    memset(&desc, 0, sizeof(desc));
+    desc.elemdescVar.tdesc.vt = VT_INT;
+    desc.varkind = VAR_CONST;
+
+    V_VT(&v) = VT_INT;
+    V_INT(&v) = 1;
+    U(desc).lpvarValue = &v;
+    hr = ICreateTypeInfo2_AddVarDesc(cti, 0, &desc);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo2_SetVarHelpContext(cti, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    /* another time */
+    hr = ICreateTypeInfo2_SetVarHelpContext(cti, 0, 1);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    /* wrong index now */
+    hr = ICreateTypeInfo2_SetVarHelpContext(cti, 1, 0);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hr);
+
+    ICreateTypeInfo_Release(cti);
+    ICreateTypeLib2_Release(ctl);
+    DeleteFileA(filenameA);
+}
+
 START_TEST(typelib)
 {
     const char *filename;
@@ -2890,6 +2939,7 @@ START_TEST(typelib)
         test_QueryPathOfRegTypeLib(64);
     test_inheritance();
     test_CreateTypeLib();
+    test_SetVarHelpContext();
 
     if ((filename = create_test_typelib(2)))
     {
