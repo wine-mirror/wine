@@ -1548,6 +1548,12 @@ static void test_CreateTypeLib(void) {
     hres = ICreateTypeInfo_SetFuncHelpContext(createti, 1, 0xabcdefab);
     ok(hres == S_OK, "got %08x\n", hres);
 
+    hres = ICreateTypeInfo_SetFuncAndParamNames(createti, 0, propname, 0);
+    ok(hres == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_SetFuncAndParamNames(createti, 0, NULL, 1);
+    ok(hres == E_INVALIDARG, "got %08x\n", hres);
+
     hres = ICreateTypeInfo_SetFuncAndParamNames(createti, 0, propname, 1);
     ok(hres == S_OK, "got %08x\n", hres);
 
