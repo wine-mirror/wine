@@ -1193,7 +1193,7 @@ static DWORD WINAPI DSoundAdviseThread(LPVOID lpParam) {
             FIXME("Could not get time: %08x\n", hr);
             continue;
         }
-        TRACE("Time: %Li\n", curtime);
+        TRACE("Time: %s\n", wine_dbgstr_longlong(curtime));
         while (prev->next) {
             cur = prev->next;
             if (cur->start > curtime) {
@@ -1207,7 +1207,7 @@ static DWORD WINAPI DSoundAdviseThread(LPVOID lpParam) {
                 prev = cur;
             } else {
                 struct dsoundrender_timer *next = cur->next;
-                TRACE("Firing %p %Li < %Li\n", cur, cur->start, curtime);
+                TRACE("Firing %p %s < %s\n", cur, wine_dbgstr_longlong(cur->start), wine_dbgstr_longlong(curtime));
                 SetEvent(cur->handle);
                 HeapFree(GetProcessHeap(), 0, cur);
                 prev->next = next;
