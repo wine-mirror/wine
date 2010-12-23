@@ -112,17 +112,7 @@ typedef struct
 
 static inline int getdents64( int fd, char *de, unsigned int size )
 {
-    int ret;
-    __asm__( "pushl %%ebx; movl %2,%%ebx; int $0x80; popl %%ebx"
-             : "=a" (ret)
-             : "0" (220 /*NR_getdents64*/), "r" (fd), "c" (de), "d" (size)
-             : "memory" );
-    if (ret < 0)
-    {
-        errno = -ret;
-        ret = -1;
-    }
-    return ret;
+    return syscall( 220 /* NR_getdents64 */, fd, de, size );
 }
 #define USE_GETDENTS
 
