@@ -1181,13 +1181,22 @@ UINT MSI_GetComponentStateW(MSIPACKAGE *package, LPCWSTR szComponent,
         return ERROR_UNKNOWN_COMPONENT;
 
     if (piInstalled)
-        *piInstalled = comp->Installed;
+    {
+        if (comp->Enabled)
+            *piInstalled = comp->Installed;
+        else
+            *piInstalled = INSTALLSTATE_UNKNOWN;
+    }
 
     if (piAction)
-        *piAction = comp->Action;
+    {
+        if (comp->Enabled)
+            *piAction = comp->Action;
+        else
+            *piAction = INSTALLSTATE_UNKNOWN;
+    }
 
     TRACE("states (%i, %i)\n", comp->Installed, comp->Action );
-
     return ERROR_SUCCESS;
 }
 
