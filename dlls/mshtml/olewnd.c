@@ -146,44 +146,47 @@ static const IOleInPlaceActiveObjectVtbl OleInPlaceActiveObjectVtbl = {
  * IOleInPlaceObjectWindowless implementation
  */
 
-#define OLEINPLACEWND_THIS(iface) DEFINE_THIS(HTMLDocument, OleInPlaceObjectWindowless, iface)
+static inline HTMLDocument *impl_from_IOleInPlaceObjectWindowless(IOleInPlaceObjectWindowless *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocument, IOleInPlaceObjectWindowless_iface);
+}
 
 static HRESULT WINAPI OleInPlaceObjectWindowless_QueryInterface(IOleInPlaceObjectWindowless *iface,
         REFIID riid, void **ppv)
 {
-    HTMLDocument *This = OLEINPLACEWND_THIS(iface);
+    HTMLDocument *This = impl_from_IOleInPlaceObjectWindowless(iface);
     return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI OleInPlaceObjectWindowless_AddRef(IOleInPlaceObjectWindowless *iface)
 {
-    HTMLDocument *This = OLEINPLACEWND_THIS(iface);
+    HTMLDocument *This = impl_from_IOleInPlaceObjectWindowless(iface);
     return htmldoc_addref(This);
 }
 
 static ULONG WINAPI OleInPlaceObjectWindowless_Release(IOleInPlaceObjectWindowless *iface)
 {
-    HTMLDocument *This = OLEINPLACEWND_THIS(iface);
+    HTMLDocument *This = impl_from_IOleInPlaceObjectWindowless(iface);
     return htmldoc_release(This);
 }
 
 static HRESULT WINAPI OleInPlaceObjectWindowless_GetWindow(IOleInPlaceObjectWindowless *iface,
         HWND *phwnd)
 {
-    HTMLDocument *This = OLEINPLACEWND_THIS(iface);
+    HTMLDocument *This = impl_from_IOleInPlaceObjectWindowless(iface);
     return IOleWindow_GetWindow(&This->IOleInPlaceActiveObject_iface, phwnd);
 }
 
 static HRESULT WINAPI OleInPlaceObjectWindowless_ContextSensitiveHelp(IOleInPlaceObjectWindowless *iface,
         BOOL fEnterMode)
 {
-    HTMLDocument *This = OLEINPLACEWND_THIS(iface);
+    HTMLDocument *This = impl_from_IOleInPlaceObjectWindowless(iface);
     return IOleWindow_ContextSensitiveHelp(&This->IOleInPlaceActiveObject_iface, fEnterMode);
 }
 
 static HRESULT WINAPI OleInPlaceObjectWindowless_InPlaceDeactivate(IOleInPlaceObjectWindowless *iface)
 {
-    HTMLDocument *This = OLEINPLACEWND_THIS(iface);
+    HTMLDocument *This = impl_from_IOleInPlaceObjectWindowless(iface);
 
     TRACE("(%p)\n", This);
 
@@ -224,7 +227,7 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_InPlaceDeactivate(IOleInPlaceOb
 
 static HRESULT WINAPI OleInPlaceObjectWindowless_UIDeactivate(IOleInPlaceObjectWindowless *iface)
 {
-    HTMLDocument *This = OLEINPLACEWND_THIS(iface);
+    HTMLDocument *This = impl_from_IOleInPlaceObjectWindowless(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
@@ -232,14 +235,14 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_UIDeactivate(IOleInPlaceObjectW
 static HRESULT WINAPI OleInPlaceObjectWindowless_SetObjectRects(IOleInPlaceObjectWindowless *iface,
         LPCRECT lprcPosRect, LPCRECT lprcClipRect)
 {
-    HTMLDocument *This = OLEINPLACEWND_THIS(iface);
+    HTMLDocument *This = impl_from_IOleInPlaceObjectWindowless(iface);
     FIXME("(%p)->(%p %p)\n", This, lprcPosRect, lprcClipRect);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleInPlaceObjectWindowless_ReactivateAndUndo(IOleInPlaceObjectWindowless *iface)
 {
-    HTMLDocument *This = OLEINPLACEWND_THIS(iface);
+    HTMLDocument *This = impl_from_IOleInPlaceObjectWindowless(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
@@ -247,7 +250,7 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_ReactivateAndUndo(IOleInPlaceOb
 static HRESULT WINAPI OleInPlaceObjectWindowless_OnWindowMessage(IOleInPlaceObjectWindowless *iface,
         UINT msg, WPARAM wParam, LPARAM lParam, LRESULT *lpResult)
 {
-    HTMLDocument *This = OLEINPLACEWND_THIS(iface);
+    HTMLDocument *This = impl_from_IOleInPlaceObjectWindowless(iface);
     FIXME("(%p)->(%u %lu %lu %p)\n", This, msg, wParam, lParam, lpResult);
     return E_NOTIMPL;
 }
@@ -255,7 +258,7 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_OnWindowMessage(IOleInPlaceObje
 static HRESULT WINAPI OleInPlaceObjectWindowless_GetDropTarget(IOleInPlaceObjectWindowless *iface,
         IDropTarget **ppDropTarget)
 {
-    HTMLDocument *This = OLEINPLACEWND_THIS(iface);
+    HTMLDocument *This = impl_from_IOleInPlaceObjectWindowless(iface);
     FIXME("(%p)->(%p)\n", This, ppDropTarget);
     return E_NOTIMPL;
 }
@@ -274,10 +277,8 @@ static const IOleInPlaceObjectWindowlessVtbl OleInPlaceObjectWindowlessVtbl = {
     OleInPlaceObjectWindowless_GetDropTarget
 };
 
-#undef INPLACEWIN_THIS
-
 void HTMLDocument_Window_Init(HTMLDocument *This)
 {
     This->IOleInPlaceActiveObject_iface.lpVtbl = &OleInPlaceActiveObjectVtbl;
-    This->lpOleInPlaceObjectWindowlessVtbl = &OleInPlaceObjectWindowlessVtbl;
+    This->IOleInPlaceObjectWindowless_iface.lpVtbl = &OleInPlaceObjectWindowlessVtbl;
 }

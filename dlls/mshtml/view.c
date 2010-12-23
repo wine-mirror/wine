@@ -574,7 +574,7 @@ static HRESULT WINAPI OleDocumentView_Show(IOleDocumentView *iface, BOOL fShow)
         ShowWindow(This->doc_obj->hwnd, SW_HIDE);
 
         if(This->doc_obj->in_place_active)
-            IOleInPlaceObjectWindowless_InPlaceDeactivate(INPLACEWIN(This));
+            IOleInPlaceObjectWindowless_InPlaceDeactivate(&This->IOleInPlaceObjectWindowless_iface);
 
         if(This->doc_obj->ip_window) {
             IOleInPlaceUIWindow_Release(This->doc_obj->ip_window);

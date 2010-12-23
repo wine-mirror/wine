@@ -267,7 +267,7 @@ static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
         FIXME("OLECLOSE_PROMPTSAVE not implemented\n");
 
     if(This->doc_obj->in_place_active)
-        IOleInPlaceObjectWindowless_InPlaceDeactivate(INPLACEWIN(This));
+        IOleInPlaceObjectWindowless_InPlaceDeactivate(&This->IOleInPlaceObjectWindowless_iface);
 
     HTMLDocument_LockContainer(This->doc_obj, FALSE);
 

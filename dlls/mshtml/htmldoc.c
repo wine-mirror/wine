@@ -1767,10 +1767,10 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IOleInPlaceActiveObject_iface;
     }else if(IsEqualGUID(&IID_IOleInPlaceObject, riid)) {
         TRACE("(%p)->(IID_IOleInPlaceObject, %p)\n", This, ppv);
-        *ppv = INPLACEOBJ(This);
+        *ppv = &This->IOleInPlaceObjectWindowless_iface;
     }else if(IsEqualGUID(&IID_IOleInPlaceObjectWindowless, riid)) {
         TRACE("(%p)->(IID_IOleInPlaceObjectWindowless, %p)\n", This, ppv);
-        *ppv = INPLACEWIN(This);
+        *ppv = &This->IOleInPlaceObjectWindowless_iface;
     }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
         TRACE("(%p)->(IID_IServiceProvider, %p)\n", This, ppv);
         *ppv = SERVPROV(This);
@@ -2106,7 +2106,7 @@ static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
         if(This->hostui)
             ICustomDoc_SetUIHandler(CUSTOMDOC(This), NULL);
         if(This->in_place_active)
-            IOleInPlaceObjectWindowless_InPlaceDeactivate(INPLACEWIN(&This->basedoc));
+            IOleInPlaceObjectWindowless_InPlaceDeactivate(&This->basedoc.IOleInPlaceObjectWindowless_iface);
         if(This->ipsite)
             IOleDocumentView_SetInPlaceSite(&This->basedoc.IOleDocumentView_iface, NULL);
         if(This->undomgr)
