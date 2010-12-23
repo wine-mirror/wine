@@ -81,7 +81,7 @@ static HRESULT WINAPI HlinkTarget_Navigate(IHlinkTarget *iface, DWORD grfHLNF, L
     if(pwzJumpLocation)
         FIXME("JumpLocation not supported\n");
 
-    return IOleObject_DoVerb(OLEOBJ(This), OLEIVERB_SHOW, NULL, NULL, -1, NULL, NULL);
+    return IOleObject_DoVerb(&This->IOleObject_iface, OLEIVERB_SHOW, NULL, NULL, -1, NULL, NULL);
 }
 
 static HRESULT WINAPI HlinkTarget_GetMoniker(IHlinkTarget *iface, LPCWSTR pwzLocation, DWORD dwAssign,

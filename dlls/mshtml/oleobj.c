@@ -45,23 +45,26 @@ DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
  * IOleObject implementation
  */
 
-#define OLEOBJ_THIS(iface) DEFINE_THIS(HTMLDocument, OleObject, iface)
+static inline HTMLDocument *impl_from_IOleObject(IOleObject *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocument, IOleObject_iface);
+}
 
 static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, void **ppv)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
     return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI OleObject_AddRef(IOleObject *iface)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
     return htmldoc_addref(This);
 }
 
 static ULONG WINAPI OleObject_Release(IOleObject *iface)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
     return htmldoc_release(This);
 }
 
@@ -93,7 +96,7 @@ static void update_hostinfo(HTMLDocumentObj *This, DOCHOSTUIINFO *hostinfo)
 
 static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite *pClientSite)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
     IOleCommandTarget *cmdtrg = NULL;
     IOleWindow *ole_window;
     BOOL hostui_setup;
@@ -233,7 +236,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
 
 static HRESULT WINAPI OleObject_GetClientSite(IOleObject *iface, IOleClientSite **ppClientSite)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
 
     TRACE("(%p)->(%p)\n", This, ppClientSite);
 
@@ -249,14 +252,14 @@ static HRESULT WINAPI OleObject_GetClientSite(IOleObject *iface, IOleClientSite 
 
 static HRESULT WINAPI OleObject_SetHostNames(IOleObject *iface, LPCOLESTR szContainerApp, LPCOLESTR szContainerObj)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
     FIXME("(%p)->(%s %s)\n", This, debugstr_w(szContainerApp), debugstr_w(szContainerObj));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
 
     TRACE("(%p)->(%08x)\n", This, dwSaveOption);
 
@@ -276,14 +279,14 @@ static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
 
 static HRESULT WINAPI OleObject_SetMoniker(IOleObject *iface, DWORD dwWhichMoniker, IMoniker *pmk)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
     FIXME("(%p %d %p)->()\n", This, dwWhichMoniker, pmk);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_GetMoniker(IOleObject *iface, DWORD dwAssign, DWORD dwWhichMoniker, IMoniker **ppmk)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
     FIXME("(%p)->(%d %d %p)\n", This, dwAssign, dwWhichMoniker, ppmk);
     return E_NOTIMPL;
 }
@@ -291,14 +294,14 @@ static HRESULT WINAPI OleObject_GetMoniker(IOleObject *iface, DWORD dwAssign, DW
 static HRESULT WINAPI OleObject_InitFromData(IOleObject *iface, IDataObject *pDataObject, BOOL fCreation,
                                         DWORD dwReserved)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
     FIXME("(%p)->(%p %x %d)\n", This, pDataObject, fCreation, dwReserved);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_GetClipboardData(IOleObject *iface, DWORD dwReserved, IDataObject **ppDataObject)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
     FIXME("(%p)->(%d %p)\n", This, dwReserved, ppDataObject);
     return E_NOTIMPL;
 }
@@ -306,7 +309,7 @@ static HRESULT WINAPI OleObject_GetClipboardData(IOleObject *iface, DWORD dwRese
 static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, LPMSG lpmsg, IOleClientSite *pActiveSite,
                                         LONG lindex, HWND hwndParent, LPCRECT lprcPosRect)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
     IOleDocumentSite *pDocSite;
     HRESULT hres;
 
@@ -344,28 +347,28 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, LPMSG lpms
 
 static HRESULT WINAPI OleObject_EnumVerbs(IOleObject *iface, IEnumOLEVERB **ppEnumOleVerb)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
     FIXME("(%p)->(%p)\n", This, ppEnumOleVerb);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_Update(IOleObject *iface)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_IsUpToDate(IOleObject *iface)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_GetUserClassID(IOleObject *iface, CLSID *pClsid)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
 
     TRACE("(%p)->(%p)\n", This, pClsid);
 
@@ -378,28 +381,28 @@ static HRESULT WINAPI OleObject_GetUserClassID(IOleObject *iface, CLSID *pClsid)
 
 static HRESULT WINAPI OleObject_GetUserType(IOleObject *iface, DWORD dwFormOfType, LPOLESTR *pszUserType)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
     FIXME("(%p)->(%d %p)\n", This, dwFormOfType, pszUserType);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_SetExtent(IOleObject *iface, DWORD dwDrawAspect, SIZEL *psizel)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
     FIXME("(%p)->(%d %p)\n", This, dwDrawAspect, psizel);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_GetExtent(IOleObject *iface, DWORD dwDrawAspect, SIZEL *psizel)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
     FIXME("(%p)->(%d %p)\n", This, dwDrawAspect, psizel);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_Advise(IOleObject *iface, IAdviseSink *pAdvSink, DWORD *pdwConnection)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
     TRACE("(%p)->(%p %p)\n", This, pAdvSink, pdwConnection);
 
     if(!pdwConnection)
@@ -421,7 +424,7 @@ static HRESULT WINAPI OleObject_Advise(IOleObject *iface, IAdviseSink *pAdvSink,
 
 static HRESULT WINAPI OleObject_Unadvise(IOleObject *iface, DWORD dwConnection)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
     TRACE("(%p)->(%d)\n", This, dwConnection);
 
     if(!This->advise_holder)
@@ -432,7 +435,7 @@ static HRESULT WINAPI OleObject_Unadvise(IOleObject *iface, DWORD dwConnection)
 
 static HRESULT WINAPI OleObject_EnumAdvise(IOleObject *iface, IEnumSTATDATA **ppenumAdvise)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
 
     if(!This->advise_holder) {
         *ppenumAdvise = NULL;
@@ -444,19 +447,17 @@ static HRESULT WINAPI OleObject_EnumAdvise(IOleObject *iface, IEnumSTATDATA **pp
 
 static HRESULT WINAPI OleObject_GetMiscStatus(IOleObject *iface, DWORD dwAspect, DWORD *pdwStatus)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
     FIXME("(%p)->(%d %p)\n", This, dwAspect, pdwStatus);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleObject_SetColorScheme(IOleObject *iface, LOGPALETTE *pLogpal)
 {
-    HTMLDocument *This = OLEOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleObject(iface);
     FIXME("(%p)->(%p)\n", This, pLogpal);
     return E_NOTIMPL;
 }
-
-#undef OLEPBJ_THIS
 
 static const IOleObjectVtbl OleObjectVtbl = {
     OleObject_QueryInterface,
@@ -869,7 +870,7 @@ void HTMLDocument_LockContainer(HTMLDocumentObj *This, BOOL fLock)
 
 void HTMLDocument_OleObj_Init(HTMLDocument *This)
 {
-    This->lpOleObjectVtbl = &OleObjectVtbl;
+    This->IOleObject_iface.lpVtbl = &OleObjectVtbl;
     This->lpOleDocumentVtbl = &OleDocumentVtbl;
     This->lpOleControlVtbl = &OleControlVtbl;
     This->lpObjectWithSiteVtbl = &ObjectWithSiteVtbl;

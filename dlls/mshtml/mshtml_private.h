@@ -351,7 +351,7 @@ struct HTMLDocument {
     IPersistFile                IPersistFile_iface;
     IPersistHistory             IPersistHistory_iface;
     IMonikerProp                IMonikerProp_iface;
-    const IOleObjectVtbl                  *lpOleObjectVtbl;
+    IOleObject                  IOleObject_iface;
     const IOleDocumentVtbl                *lpOleDocumentVtbl;
     const IOleDocumentViewVtbl            *lpOleDocumentViewVtbl;
     const IOleInPlaceActiveObjectVtbl     *lpOleInPlaceActiveObjectVtbl;
@@ -626,7 +626,6 @@ struct HTMLDocumentNode {
 #define HTMLWINDOW3(x)   ((IHTMLWindow3*)                 &(x)->lpHTMLWindow3Vtbl)
 #define HTMLWINDOW4(x)   ((IHTMLWindow4*)                 &(x)->lpHTMLWindow4Vtbl)
 
-#define OLEOBJ(x)        ((IOleObject*)                   &(x)->lpOleObjectVtbl)
 #define OLEDOC(x)        ((IOleDocument*)                 &(x)->lpOleDocumentVtbl)
 #define DOCVIEW(x)       ((IOleDocumentView*)             &(x)->lpOleDocumentViewVtbl)
 #define OLEWIN(x)        ((IOleWindow*)                   &(x)->lpOleInPlaceActiveObjectVtbl)

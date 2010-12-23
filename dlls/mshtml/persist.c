@@ -406,7 +406,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
             hres = IUnknown_QueryInterface(unk, &IID_IOleClientSite, (void**)&client);
             if(SUCCEEDED(hres)) {
                 TRACE("Got client site %p\n", client);
-                IOleObject_SetClientSite(OLEOBJ(This), client);
+                IOleObject_SetClientSite(&This->IOleObject_iface, client);
                 IOleClientSite_Release(client);
             }
 

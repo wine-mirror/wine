@@ -1743,7 +1743,7 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IMonikerProp_iface;
     }else if(IsEqualGUID(&IID_IOleObject, riid)) {
         TRACE("(%p)->(IID_IOleObject, %p)\n", This, ppv);
-        *ppv = OLEOBJ(This);
+        *ppv = &This->IOleObject_iface;
     }else if(IsEqualGUID(&IID_IOleDocument, riid)) {
         TRACE("(%p)->(IID_IOleDocument, %p)\n", This, ppv);
         *ppv = OLEDOC(This);
@@ -2102,7 +2102,7 @@ static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
         if(This->view_sink)
             IAdviseSink_Release(This->view_sink);
         if(This->client)
-            IOleObject_SetClientSite(OLEOBJ(&This->basedoc), NULL);
+            IOleObject_SetClientSite(&This->basedoc.IOleObject_iface, NULL);
         if(This->hostui)
             ICustomDoc_SetUIHandler(CUSTOMDOC(This), NULL);
         if(This->in_place_active)
