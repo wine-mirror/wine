@@ -187,7 +187,7 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_InPlaceDeactivate(IOleInPlaceOb
     TRACE("(%p)\n", This);
 
     if(This->doc_obj->ui_active)
-        IOleDocumentView_UIActivate(DOCVIEW(This), FALSE);
+        IOleDocumentView_UIActivate(&This->IOleDocumentView_iface, FALSE);
     This->doc_obj->window_active = FALSE;
 
     if(!This->doc_obj->in_place_active)

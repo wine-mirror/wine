@@ -1749,7 +1749,7 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IOleDocument_iface;
     }else if(IsEqualGUID(&IID_IOleDocumentView, riid)) {
         TRACE("(%p)->(IID_IOleDocumentView, %p)\n", This, ppv);
-        *ppv = DOCVIEW(This);
+        *ppv = &This->IOleDocumentView_iface;
     }else if(IsEqualGUID(&IID_IOleInPlaceActiveObject, riid)) {
         TRACE("(%p)->(IID_IOleInPlaceActiveObject, %p)\n", This, ppv);
         *ppv = ACTOBJ(This);
@@ -2108,7 +2108,7 @@ static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
         if(This->in_place_active)
             IOleInPlaceObjectWindowless_InPlaceDeactivate(INPLACEWIN(&This->basedoc));
         if(This->ipsite)
-            IOleDocumentView_SetInPlaceSite(DOCVIEW(&This->basedoc), NULL);
+            IOleDocumentView_SetInPlaceSite(&This->basedoc.IOleDocumentView_iface, NULL);
         if(This->undomgr)
             IOleUndoManager_Release(This->undomgr);
         if(This->tooltips_hwnd)
