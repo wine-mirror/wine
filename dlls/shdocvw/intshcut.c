@@ -610,7 +610,13 @@ static HRESULT WINAPI PersistFile_Save(IPersistFile *pFile, LPCOLESTR pszFileNam
             if SUCCEEDED(hr)
             {
                 hr = IPropertyStorage_ReadMultiple(pPropStgRead, 2, ps, pvread);
-                if SUCCEEDED(hr)
+                if (hr == S_FALSE)
+                {
+                    /* None of the properties are present, that's ok */
+                    hr = S_OK;
+                    IPropertyStorage_Release(pPropStgRead);
+                }
+                else if SUCCEEDED(hr)
                 {
                     char indexString[50];
                     len = WideCharToMultiByte(CP_UTF8, 0, pvread[0].u.pwszVal, -1, NULL, 0, 0, 0);

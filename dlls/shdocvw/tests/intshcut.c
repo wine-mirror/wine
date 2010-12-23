@@ -200,6 +200,20 @@ static void test_ReadAndWriteProperties(void)
         IPropertyStorage *pPropStgWrite;
         IPropertySetStorage *pPropSetStg;
         PROPVARIANT pv[2];
+
+        /* We need to set a URL -- IPersistFile refuses to save without one. */
+        hr = urlA->lpVtbl->SetURL(urlA, testurl, 0);
+        ok(hr == S_OK, "Failed to set a URL.  hr=0x%x\n", hr);
+
+        /* Write this shortcut out to a file so that we can test reading it in again. */
+        hr = urlA->lpVtbl->QueryInterface(urlA, &IID_IPersistFile, (void **) &pf);
+        ok(hr == S_OK, "Failed to get the IPersistFile for writing.  hr=0x%x\n", hr);
+
+        hr = IPersistFile_Save(pf, fileNameW, TRUE);
+        ok(hr == S_OK, "Failed to save via IPersistFile. hr=0x%x\n", hr);
+
+        IPersistFile_Release(pf);
+
         pv[0].vt = VT_LPWSTR;
         pv[0].pwszVal = (void *) iconPath;
         pv[1].vt = VT_I4;
@@ -217,19 +231,6 @@ static void test_ReadAndWriteProperties(void)
         ok(hr == S_OK, "Failed to commit properties, hr=0x%x\n", hr);
 
         pPropStgWrite->lpVtbl->Release(pPropStgWrite);
-
-        /* We need to set a URL -- IPersistFile refuses to save without one. */
-        hr = urlA->lpVtbl->SetURL(urlA, testurl, 0);
-        ok(hr == S_OK, "Failed to set a URL.  hr=0x%x\n", hr);
-
-        /* Write this shortcut out to a file so that we can test reading it in again. */
-        hr = urlA->lpVtbl->QueryInterface(urlA, &IID_IPersistFile, (void **) &pf);
-        ok(hr == S_OK, "Failed to get the IPersistFile for writing.  hr=0x%x\n", hr);
-
-        hr = IPersistFile_Save(pf, fileNameW, TRUE);
-        ok(hr == S_OK, "Failed to save via IPersistFile. hr=0x%x\n", hr);
-
-        IPersistFile_Release(pf);
         urlA->lpVtbl->Release(urlA);
         IPropertySetStorage_Release(pPropSetStg);
     }
@@ -267,9 +268,12 @@ static void test_ReadAndWriteProperties(void)
         hr = IPropertyStorage_ReadMultiple(pPropStgRead, 2, ps, pvread);
         ok(hr == S_OK, "Unable to read properties, hr=0x%x\n", hr);
 
-        ok(pvread[1].iVal == iconIndex, "Read wrong icon index: %d\n", pvread[1].iVal);
+        todo_wine /* Wine doesn't yet support setting properties after save */
+        {
+            ok(pvread[1].iVal == iconIndex, "Read wrong icon index: %d\n", pvread[1].iVal);
 
-        ok(lstrcmpW(pvread[0].pwszVal, iconPath) == 0, "Wrong icon path read: %s\n",wine_dbgstr_w(pvread[0].pwszVal));
+            ok(lstrcmpW(pvread[0].pwszVal, iconPath) == 0, "Wrong icon path read: %s\n",wine_dbgstr_w(pvread[0].pwszVal));
+        }
 
         PropVariantClear(&pvread[0]);
         PropVariantClear(&pvread[1]);
