@@ -41,6 +41,7 @@ static HRESULT (WINAPI *pCreateUri)(LPCWSTR, DWORD, DWORD_PTR, IUri**);
 
 #define CHECK_EXPECT2(func) \
     do { \
+        trace(#func "\n"); /* temporary debug traces */     \
         ok(expect_ ##func, "unexpected call " #func  "\n"); \
         called_ ## func = TRUE; \
     }while(0)
