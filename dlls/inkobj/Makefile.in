@@ -1,7 +1,6 @@
 MODULE    = inkobj.dll
 
 C_SRCS = \
-	inkcollector.c \
 	inkobj.c
 
 @MAKE_DLL_RULES@
