@@ -1942,6 +1942,7 @@ UINT WINAPI MsiQueryComponentStateW(LPCWSTR szProductCode,
             *pdwState = INSTALLSTATE_LOCAL;
     }
 
+    TRACE("-> %d\n", *pdwState);
     return ERROR_SUCCESS;
 }
 
@@ -2018,6 +2019,7 @@ done:
 
     RegCloseKey(prodkey);
     RegCloseKey(userdata);
+    TRACE("-> %d\n", state);
     return state;
 }
 
@@ -2725,7 +2727,7 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
     else
         r = INSTALLSTATE_LOCAL;
 
-    TRACE("%s %s -> %d\n", debugstr_w(szProduct), debugstr_w(szFeature), r);
+    TRACE("-> %d\n", r);
     return r;
 }
 
@@ -3666,8 +3668,10 @@ UINT WINAPI MsiGetFileHashW( LPCWSTR szFilePath, DWORD dwOptions,
     handle = CreateFileW( szFilePath, GENERIC_READ,
                           FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL );
     if (handle == INVALID_HANDLE_VALUE)
+    {
+        WARN("can't open file %u\n", GetLastError());
         return ERROR_FILE_NOT_FOUND;
-
+    }
     length = GetFileSize( handle, NULL );
 
     mapping = CreateFileMappingW( handle, NULL, PAGE_READONLY, 0, 0, NULL );

@@ -1549,10 +1549,11 @@ UINT WINAPI MsiEnumClientsW(LPCWSTR szComponent, DWORD index, LPWSTR szProduct)
     sz = SQUISH_GUID_SIZE;
     r = RegEnumValueW(hkeyComp, index, szValName, &sz, NULL, NULL, NULL, NULL);
     if( r == ERROR_SUCCESS )
+    {
         unsquash_guid(szValName, szProduct);
-
+        TRACE("-> %s\n", debugstr_w(szProduct));
+    }
     RegCloseKey(hkeyComp);
-
     return r;
 }
 
