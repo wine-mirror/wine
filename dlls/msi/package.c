@@ -59,8 +59,7 @@ static void remove_tracked_tempfiles( MSIPACKAGE *package )
 
         list_remove( &temp->entry );
         TRACE("deleting temp file %s\n", debugstr_w( temp->Path ));
-        if (!DeleteFileW( temp->Path ))
-            ERR("failed to delete %s\n", debugstr_w( temp->Path ));
+        DeleteFileW( temp->Path );
         msi_free( temp->Path );
         msi_free( temp );
     }
