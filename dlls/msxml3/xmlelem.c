@@ -45,7 +45,7 @@ static HRESULT XMLElementCollection_create( IUnknown *pUnkOuter, xmlNodePtr node
  */
 typedef struct _xmlelem
 {
-    const IXMLElementVtbl *lpVtbl;
+    IXMLElement IXMLElement_iface;
     LONG ref;
     xmlNodePtr node;
     BOOL own;
@@ -53,7 +53,7 @@ typedef struct _xmlelem
 
 static inline xmlelem *impl_from_IXMLElement(IXMLElement *iface)
 {
-    return (xmlelem *)((char*)iface - FIELD_OFFSET(xmlelem, lpVtbl));
+    return CONTAINING_RECORD(iface, xmlelem, IXMLElement_iface);
 }
 
 static HRESULT WINAPI xmlelem_QueryInterface(IXMLElement *iface, REFIID riid, void** ppvObject)
@@ -165,7 +165,7 @@ static HRESULT WINAPI xmlelem_Invoke(IXMLElement *iface, DISPID dispIdMember,
     hr = get_typeinfo(IXMLElement_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &(This->lpVtbl), dispIdMember, wFlags, pDispParams,
+        hr = ITypeInfo_Invoke(typeinfo, &This->IXMLElement_iface, dispIdMember, wFlags, pDispParams,
                 pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
@@ -493,12 +493,12 @@ HRESULT XMLElement_create(IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj, B
     if(!elem)
         return E_OUTOFMEMORY;
 
-    elem->lpVtbl = &xmlelem_vtbl;
+    elem->IXMLElement_iface.lpVtbl = &xmlelem_vtbl;
     elem->ref = 1;
     elem->node = node;
     elem->own  = own;
 
-    *ppObj = &elem->lpVtbl;
+    *ppObj = &elem->IXMLElement_iface;
 
     TRACE("returning iface %p\n", *ppObj);
     return S_OK;
@@ -509,8 +509,8 @@ HRESULT XMLElement_create(IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj, B
  */
 typedef struct _xmlelem_collection
 {
-    const IXMLElementCollectionVtbl *lpVtbl;
-    const IEnumVARIANTVtbl          *lpvtblIEnumVARIANT;
+    IXMLElementCollection IXMLElementCollection_iface;
+    IEnumVARIANT IEnumVARIANT_iface;
     LONG ref;
     LONG length;
     xmlNodePtr node;
@@ -534,12 +534,12 @@ static inline LONG xmlelem_collection_updatelength(xmlelem_collection *collectio
 
 static inline xmlelem_collection *impl_from_IXMLElementCollection(IXMLElementCollection *iface)
 {
-    return (xmlelem_collection *)((char*)iface - FIELD_OFFSET(xmlelem_collection, lpVtbl));
+    return CONTAINING_RECORD(iface, xmlelem_collection, IXMLElementCollection_iface);
 }
 
 static inline xmlelem_collection *impl_from_IEnumVARIANT(IEnumVARIANT *iface)
 {
-    return (xmlelem_collection *)((char*)iface - FIELD_OFFSET(xmlelem_collection, lpvtblIEnumVARIANT));
+    return CONTAINING_RECORD(iface, xmlelem_collection, IEnumVARIANT_iface);
 }
 
 static HRESULT WINAPI xmlelem_collection_QueryInterface(IXMLElementCollection *iface, REFIID riid, void** ppvObject)
@@ -555,7 +555,7 @@ static HRESULT WINAPI xmlelem_collection_QueryInterface(IXMLElementCollection *i
     }
     else if (IsEqualGUID(riid, &IID_IEnumVARIANT))
     {
-        *ppvObject = &(This->lpvtblIEnumVARIANT);
+        *ppvObject = &This->IEnumVARIANT_iface;
     }
     else
     {
@@ -797,15 +797,15 @@ static HRESULT XMLElementCollection_create(IUnknown *pUnkOuter, xmlNodePtr node,
     if(!collection)
         return E_OUTOFMEMORY;
 
-    collection->lpVtbl = &xmlelem_collection_vtbl;
-    collection->lpvtblIEnumVARIANT = &xmlelem_collection_IEnumVARIANTvtbl;
+    collection->IXMLElementCollection_iface.lpVtbl = &xmlelem_collection_vtbl;
+    collection->IEnumVARIANT_iface.lpVtbl = &xmlelem_collection_IEnumVARIANTvtbl;
     collection->ref = 1;
     collection->length = 0;
     collection->node = node;
     collection->current = node->children;
     xmlelem_collection_updatelength(collection);
 
-    *ppObj = &collection->lpVtbl;
+    *ppObj = &collection->IXMLElementCollection_iface;
 
     TRACE("returning iface %p\n", *ppObj);
     return S_OK;
