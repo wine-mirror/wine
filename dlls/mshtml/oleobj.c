@@ -490,30 +490,33 @@ static const IOleObjectVtbl OleObjectVtbl = {
  * IOleDocument implementation
  */
 
-#define OLEDOC_THIS(iface) DEFINE_THIS(HTMLDocument, OleDocument, iface)
+static inline HTMLDocument *impl_from_IOleDocument(IOleDocument *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocument, IOleDocument_iface);
+}
 
 static HRESULT WINAPI OleDocument_QueryInterface(IOleDocument *iface, REFIID riid, void **ppv)
 {
-    HTMLDocument *This = OLEDOC_THIS(iface);
+    HTMLDocument *This = impl_from_IOleDocument(iface);
     return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI OleDocument_AddRef(IOleDocument *iface)
 {
-    HTMLDocument *This = OLEDOC_THIS(iface);
+    HTMLDocument *This = impl_from_IOleDocument(iface);
     return htmldoc_addref(This);
 }
 
 static ULONG WINAPI OleDocument_Release(IOleDocument *iface)
 {
-    HTMLDocument *This = OLEDOC_THIS(iface);
+    HTMLDocument *This = impl_from_IOleDocument(iface);
     return htmldoc_release(This);
 }
 
 static HRESULT WINAPI OleDocument_CreateView(IOleDocument *iface, IOleInPlaceSite *pIPSite, IStream *pstm,
                                    DWORD dwReserved, IOleDocumentView **ppView)
 {
-    HTMLDocument *This = OLEDOC_THIS(iface);
+    HTMLDocument *This = impl_from_IOleDocument(iface);
     HRESULT hres;
 
     TRACE("(%p)->(%p %p %d %p)\n", This, pIPSite, pstm, dwReserved, ppView);
@@ -544,7 +547,7 @@ static HRESULT WINAPI OleDocument_CreateView(IOleDocument *iface, IOleInPlaceSit
 
 static HRESULT WINAPI OleDocument_GetDocMiscStatus(IOleDocument *iface, DWORD *pdwStatus)
 {
-    HTMLDocument *This = OLEDOC_THIS(iface);
+    HTMLDocument *This = impl_from_IOleDocument(iface);
     FIXME("(%p)->(%p)\n", This, pdwStatus);
     return E_NOTIMPL;
 }
@@ -552,12 +555,10 @@ static HRESULT WINAPI OleDocument_GetDocMiscStatus(IOleDocument *iface, DWORD *p
 static HRESULT WINAPI OleDocument_EnumViews(IOleDocument *iface, IEnumOleDocumentViews **ppEnum,
                                    IOleDocumentView **ppView)
 {
-    HTMLDocument *This = OLEDOC_THIS(iface);
+    HTMLDocument *This = impl_from_IOleDocument(iface);
     FIXME("(%p)->(%p %p)\n", This, ppEnum, ppView);
     return E_NOTIMPL;
 }
-
-#undef OLEDOC_THIS
 
 static const IOleDocumentVtbl OleDocumentVtbl = {
     OleDocument_QueryInterface,
@@ -871,7 +872,7 @@ void HTMLDocument_LockContainer(HTMLDocumentObj *This, BOOL fLock)
 void HTMLDocument_OleObj_Init(HTMLDocument *This)
 {
     This->IOleObject_iface.lpVtbl = &OleObjectVtbl;
-    This->lpOleDocumentVtbl = &OleDocumentVtbl;
+    This->IOleDocument_iface.lpVtbl = &OleDocumentVtbl;
     This->lpOleControlVtbl = &OleControlVtbl;
     This->lpObjectWithSiteVtbl = &ObjectWithSiteVtbl;
     This->IOleContainer_iface.lpVtbl = &OleContainerVtbl;

@@ -1746,7 +1746,7 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IOleObject_iface;
     }else if(IsEqualGUID(&IID_IOleDocument, riid)) {
         TRACE("(%p)->(IID_IOleDocument, %p)\n", This, ppv);
-        *ppv = OLEDOC(This);
+        *ppv = &This->IOleDocument_iface;
     }else if(IsEqualGUID(&IID_IOleDocumentView, riid)) {
         TRACE("(%p)->(IID_IOleDocumentView, %p)\n", This, ppv);
         *ppv = DOCVIEW(This);
