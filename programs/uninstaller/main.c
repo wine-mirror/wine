@@ -59,6 +59,7 @@ static const WCHAR PathUninstallW[] = {
         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
         'U','n','i','n','s','t','a','l','l',0 };
 static const WCHAR UninstallCommandlineW[] = {'U','n','i','n','s','t','a','l','l','S','t','r','i','n','g',0};
+static const WCHAR WindowsInstallerW[] = {'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
 
 
 /**
@@ -192,9 +193,24 @@ static int FetchFromRootKey(HKEY root)
     {
         lstrcpyW(p, subKeyName);
         RegOpenKeyExW(root, key_app, 0, KEY_READ, &hkeyApp);
-        if ((RegQueryValueExW(hkeyApp, DisplayNameW, 0, 0, NULL, &displen) == ERROR_SUCCESS)
-         && (RegQueryValueExW(hkeyApp, UninstallCommandlineW, 0, 0, NULL, &uninstlen) == ERROR_SUCCESS))
+        if (!RegQueryValueExW(hkeyApp, DisplayNameW, NULL, NULL, NULL, &displen))
         {
+            DWORD value, type;
+            WCHAR *command;
+
+            if (!RegQueryValueExW(hkeyApp, WindowsInstallerW, NULL, &type, NULL, &value) && type == REG_DWORD && value == 1)
+            {
+                static const WCHAR fmtW[] = {'m','s','i','e','x','e','c',' ','/','x','%','s',0};
+                command = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(fmtW) + lstrlenW(subKeyName)) * sizeof(WCHAR));
+                wsprintfW(command, fmtW, subKeyName);
+            }
+            else if (!RegQueryValueExW(hkeyApp, UninstallCommandlineW, NULL, NULL, NULL, &uninstlen))
+            {
+                command = HeapAlloc(GetProcessHeap(), 0, uninstlen);
+                RegQueryValueExW(hkeyApp, UninstallCommandlineW, 0, 0, (LPBYTE)command, &uninstlen);
+            }
+            else continue;
+
             numentries++;
             entries = HeapReAlloc(GetProcessHeap(), 0, entries, numentries*sizeof(uninst_entry));
             entries[numentries-1].root = root;
@@ -202,9 +218,8 @@ static int FetchFromRootKey(HKEY root)
             lstrcpyW(entries[numentries-1].key, subKeyName);
             entries[numentries-1].descr = HeapAlloc(GetProcessHeap(), 0, displen);
             RegQueryValueExW(hkeyApp, DisplayNameW, 0, 0, (LPBYTE)entries[numentries-1].descr, &displen);
-            entries[numentries-1].command = HeapAlloc(GetProcessHeap(), 0, uninstlen);
+            entries[numentries-1].command = command;
             entries[numentries-1].active = 0;
-            RegQueryValueExW(hkeyApp, UninstallCommandlineW, 0, 0, (LPBYTE)entries[numentries-1].command, &uninstlen);
             WINE_TRACE("allocated entry #%d: %s (%s), %s\n",
             numentries, wine_dbgstr_w(entries[numentries-1].key), wine_dbgstr_w(entries[numentries-1].descr), wine_dbgstr_w(entries[numentries-1].command));
             if(sFilter != NULL && StrStrIW(entries[numentries-1].descr,sFilter)==NULL)
