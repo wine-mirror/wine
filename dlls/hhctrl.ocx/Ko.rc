@@ -3,7 +3,7 @@
  * Korean Language Support
  *
  * Copyright 2005 James Hawkins
- * Copyright 2005 YunSong Hwang
+ * Copyright 2005,2010 YunSong Hwang
  
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,28 +22,30 @@
 
 #include "resource.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 STRINGTABLE
 BEGIN
-    IDS_CONTENTS     "∏Ò∑œ(&C)"
-    IDS_INDEX        "¿Œµ¶Ω∫(&N)"
-    IDS_SEARCH       "√£±‚(&S)"
-    IDS_FAVORITES    "¡Ò∞‹√£±‚(&I)"
+    IDS_CONTENTS     "Î™©Î°ù(&C)"
+    IDS_INDEX        "Ïù∏Îç±Ïä§(&N)"
+    IDS_SEARCH       "Ï∞æÍ∏∞(&S)"
+    IDS_FAVORITES    "Ï¶êÍ≤®Ï∞æÍ∏∞(&I)"
 END
 
 STRINGTABLE
 BEGIN
-    IDTB_EXPAND      "∫∏ø©¡÷±‚"
-    IDTB_CONTRACT    "º˚±‚±‚"
-    IDTB_STOP        "¡§¡ˆ"
-    IDTB_REFRESH     "ªı∑Œ ∞Ìƒß"
-    IDTB_BACK        "µ⁄∑Œ"
-    IDTB_HOME        "»®"
-    IDTB_SYNC        "µø±‚»≠"
-    IDTB_PRINT       "¿Œº‚"
-    IDTB_OPTIONS     "ø…º«"
-    IDTB_FORWARD     "æ’¿∏∑Œ"
+    IDTB_EXPAND      "Î≥¥Ïó¨Ï£ºÍ∏∞"
+    IDTB_CONTRACT    "Ïà®Í∏∞Í∏∞"
+    IDTB_STOP        "Ï†ïÏßÄ"
+    IDTB_REFRESH     "ÏÉàÎ°ú Í≥†Ïπ®"
+    IDTB_BACK        "Îí§Î°ú"
+    IDTB_HOME        "Ìôà"
+    IDTB_SYNC        "ÎèôÍ∏∞Ìôî"
+    IDTB_PRINT       "Ïù∏ÏáÑ"
+    IDTB_OPTIONS     "ÏòµÏÖò"
+    IDTB_FORWARD     "ÏïûÏúºÎ°ú"
     IDTB_NOTES       "IDTB_NOTES"
     IDTB_BROWSE_FWD  "IDTB_BROWSE_FWD"
     IDTB_BROWSE_BACK "IDT_BROWSE_BACK"
@@ -54,8 +56,8 @@ BEGIN
     IDTB_FAVORITES   "IDTB_FAVORITES"
     IDTB_JUMP1       "Jump1"
     IDTB_JUMP2       "Jump2"
-    IDTB_CUSTOMIZE   "ªÁøÎ¿⁄¡§¿«"
-    IDTB_ZOOM        "»Æ¥Î"
+    IDTB_CUSTOMIZE   "ÏÇ¨Ïö©ÏûêÏ†ïÏùò"
+    IDTB_ZOOM        "ÌôïÎåÄ"
     IDTB_TOC_NEXT    "IDTB_TOC_NEXT"
     IDTB_TOC_PREV    "IDTB_TOC_PREV"
 END
