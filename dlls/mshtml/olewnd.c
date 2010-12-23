@@ -39,29 +39,32 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
  * IOleInPlaceActiveObject implementation
  */
 
-#define ACTOBJ_THIS(iface) DEFINE_THIS(HTMLDocument, OleInPlaceActiveObject, iface)
+static inline HTMLDocument *impl_from_IOleInPlaceActiveObject(IOleInPlaceActiveObject *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocument, IOleInPlaceActiveObject_iface);
+}
 
 static HRESULT WINAPI OleInPlaceActiveObject_QueryInterface(IOleInPlaceActiveObject *iface, REFIID riid, void **ppv)
 {
-    HTMLDocument *This = ACTOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleInPlaceActiveObject(iface);
     return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI OleInPlaceActiveObject_AddRef(IOleInPlaceActiveObject *iface)
 {
-    HTMLDocument *This = ACTOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleInPlaceActiveObject(iface);
     return htmldoc_addref(This);
 }
 
 static ULONG WINAPI OleInPlaceActiveObject_Release(IOleInPlaceActiveObject *iface)
 {
-    HTMLDocument *This = ACTOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleInPlaceActiveObject(iface);
     return htmldoc_release(This);
 }
 
 static HRESULT WINAPI OleInPlaceActiveObject_GetWindow(IOleInPlaceActiveObject *iface, HWND *phwnd)
 {
-    HTMLDocument *This = ACTOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleInPlaceActiveObject(iface);
 
     TRACE("(%p)->(%p)\n", This, phwnd);
 
@@ -79,14 +82,14 @@ static HRESULT WINAPI OleInPlaceActiveObject_GetWindow(IOleInPlaceActiveObject *
 
 static HRESULT WINAPI OleInPlaceActiveObject_ContextSensitiveHelp(IOleInPlaceActiveObject *iface, BOOL fEnterMode)
 {
-    HTMLDocument *This = ACTOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleInPlaceActiveObject(iface);
     FIXME("(%p)->(%x)\n", This, fEnterMode);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleInPlaceActiveObject_TranslateAccelerator(IOleInPlaceActiveObject *iface, LPMSG lpmsg)
 {
-    HTMLDocument *This = ACTOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleInPlaceActiveObject(iface);
     FIXME("(%p)->(%p)\n", This, lpmsg);
     return E_NOTIMPL;
 }
@@ -94,7 +97,7 @@ static HRESULT WINAPI OleInPlaceActiveObject_TranslateAccelerator(IOleInPlaceAct
 static HRESULT WINAPI OleInPlaceActiveObject_OnFrameWindowActivate(IOleInPlaceActiveObject *iface,
         BOOL fActivate)
 {
-    HTMLDocument *This = ACTOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleInPlaceActiveObject(iface);
 
     TRACE("(%p)->(%x)\n", This, fActivate);
 
@@ -106,7 +109,7 @@ static HRESULT WINAPI OleInPlaceActiveObject_OnFrameWindowActivate(IOleInPlaceAc
 
 static HRESULT WINAPI OleInPlaceActiveObject_OnDocWindowActivate(IOleInPlaceActiveObject *iface, BOOL fActivate)
 {
-    HTMLDocument *This = ACTOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleInPlaceActiveObject(iface);
     FIXME("(%p)->(%x)\n", This, fActivate);
     return E_NOTIMPL;
 }
@@ -114,14 +117,14 @@ static HRESULT WINAPI OleInPlaceActiveObject_OnDocWindowActivate(IOleInPlaceActi
 static HRESULT WINAPI OleInPlaceActiveObject_ResizeBorder(IOleInPlaceActiveObject *iface, LPCRECT prcBorder,
                                                 IOleInPlaceUIWindow *pUIWindow, BOOL fFrameWindow)
 {
-    HTMLDocument *This = ACTOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleInPlaceActiveObject(iface);
     FIXME("(%p)->(%p %p %x)\n", This, prcBorder, pUIWindow, fFrameWindow);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleInPlaceActiveObject_EnableModeless(IOleInPlaceActiveObject *iface, BOOL fEnable)
 {
-    HTMLDocument *This = ACTOBJ_THIS(iface);
+    HTMLDocument *This = impl_from_IOleInPlaceActiveObject(iface);
     FIXME("(%p)->(%x)\n", This, fEnable);
     return E_NOTIMPL;
 }
@@ -138,8 +141,6 @@ static const IOleInPlaceActiveObjectVtbl OleInPlaceActiveObjectVtbl = {
     OleInPlaceActiveObject_ResizeBorder,
     OleInPlaceActiveObject_EnableModeless
 };
-
-#undef ACTOBJ_THIS
 
 /**********************************************************
  * IOleInPlaceObjectWindowless implementation
@@ -170,14 +171,14 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_GetWindow(IOleInPlaceObjectWind
         HWND *phwnd)
 {
     HTMLDocument *This = OLEINPLACEWND_THIS(iface);
-    return IOleWindow_GetWindow(OLEWIN(This), phwnd);
+    return IOleWindow_GetWindow(&This->IOleInPlaceActiveObject_iface, phwnd);
 }
 
 static HRESULT WINAPI OleInPlaceObjectWindowless_ContextSensitiveHelp(IOleInPlaceObjectWindowless *iface,
         BOOL fEnterMode)
 {
     HTMLDocument *This = OLEINPLACEWND_THIS(iface);
-    return IOleWindow_ContextSensitiveHelp(OLEWIN(This), fEnterMode);
+    return IOleWindow_ContextSensitiveHelp(&This->IOleInPlaceActiveObject_iface, fEnterMode);
 }
 
 static HRESULT WINAPI OleInPlaceObjectWindowless_InPlaceDeactivate(IOleInPlaceObjectWindowless *iface)
@@ -277,6 +278,6 @@ static const IOleInPlaceObjectWindowlessVtbl OleInPlaceObjectWindowlessVtbl = {
 
 void HTMLDocument_Window_Init(HTMLDocument *This)
 {
-    This->lpOleInPlaceActiveObjectVtbl = &OleInPlaceActiveObjectVtbl;
+    This->IOleInPlaceActiveObject_iface.lpVtbl = &OleInPlaceActiveObjectVtbl;
     This->lpOleInPlaceObjectWindowlessVtbl = &OleInPlaceObjectWindowlessVtbl;
 }

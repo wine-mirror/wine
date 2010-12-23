@@ -620,11 +620,12 @@ static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
         RECT rcBorderWidths;
 
         if(This->doc_obj->hostui)
-            IDocHostUIHandler_ShowUI(This->doc_obj->hostui, DOCHOSTUITYPE_AUTHOR, ACTOBJ(This), CMDTARGET(This),
+            IDocHostUIHandler_ShowUI(This->doc_obj->hostui, DOCHOSTUITYPE_AUTHOR,
+                &This->IOleInPlaceActiveObject_iface, CMDTARGET(This),
                 This->doc_obj->frame, This->doc_obj->ip_window);
 
         if(This->doc_obj->ip_window)
-            call_set_active_object(This->doc_obj->ip_window, ACTOBJ(This));
+            call_set_active_object(This->doc_obj->ip_window, &This->IOleInPlaceActiveObject_iface);
 
         memset(&rcBorderWidths, 0, sizeof(rcBorderWidths));
         if(This->doc_obj->frame)

@@ -645,7 +645,8 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
 
         hres = IOleInPlaceSite_OnUIActivate(This->doc_obj->ipsite);
         if(SUCCEEDED(hres)) {
-            call_set_active_object((IOleInPlaceUIWindow*)This->doc_obj->frame, ACTOBJ(This));
+            call_set_active_object((IOleInPlaceUIWindow*)This->doc_obj->frame,
+                    &This->IOleInPlaceActiveObject_iface);
         }else {
             FIXME("OnUIActivate failed: %08x\n", hres);
             IOleInPlaceFrame_Release(This->doc_obj->frame);
@@ -657,13 +658,14 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
         if(This->doc_obj->hostui) {
             hres = IDocHostUIHandler_ShowUI(This->doc_obj->hostui,
                     This->doc_obj->usermode == EDITMODE ? DOCHOSTUITYPE_AUTHOR : DOCHOSTUITYPE_BROWSE,
-                    ACTOBJ(This), CMDTARGET(This), This->doc_obj->frame, This->doc_obj->ip_window);
+                    &This->IOleInPlaceActiveObject_iface, CMDTARGET(This), This->doc_obj->frame,
+                    This->doc_obj->ip_window);
             if(FAILED(hres))
                 IDocHostUIHandler_HideUI(This->doc_obj->hostui);
         }
 
         if(This->doc_obj->ip_window)
-            call_set_active_object(This->doc_obj->ip_window, ACTOBJ(This));
+            call_set_active_object(This->doc_obj->ip_window, &This->IOleInPlaceActiveObject_iface);
 
         memset(&rcBorderWidths, 0, sizeof(rcBorderWidths));
         IOleInPlaceFrame_SetBorderSpace(This->doc_obj->frame, &rcBorderWidths);

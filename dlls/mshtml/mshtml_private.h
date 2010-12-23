@@ -354,7 +354,7 @@ struct HTMLDocument {
     IOleObject                  IOleObject_iface;
     IOleDocument                IOleDocument_iface;
     IOleDocumentView            IOleDocumentView_iface;
-    const IOleInPlaceActiveObjectVtbl     *lpOleInPlaceActiveObjectVtbl;
+    IOleInPlaceActiveObject     IOleInPlaceActiveObject_iface;
     const IViewObjectExVtbl               *lpViewObjectExVtbl;
     const IOleInPlaceObjectWindowlessVtbl *lpOleInPlaceObjectWindowlessVtbl;
     const IServiceProviderVtbl            *lpServiceProviderVtbl;
@@ -625,8 +625,6 @@ struct HTMLDocumentNode {
 #define HTMLWINDOW2(x)   ((IHTMLWindow2*)                 &(x)->lpHTMLWindow2Vtbl)
 #define HTMLWINDOW3(x)   ((IHTMLWindow3*)                 &(x)->lpHTMLWindow3Vtbl)
 #define HTMLWINDOW4(x)   ((IHTMLWindow4*)                 &(x)->lpHTMLWindow4Vtbl)
-#define OLEWIN(x)        ((IOleWindow*)                   &(x)->lpOleInPlaceActiveObjectVtbl)
-#define ACTOBJ(x)        ((IOleInPlaceActiveObject*)      &(x)->lpOleInPlaceActiveObjectVtbl)
 #define VIEWOBJ(x)       ((IViewObject*)                  &(x)->lpViewObjectExVtbl)
 #define VIEWOBJ2(x)      ((IViewObject2*)                 &(x)->lpViewObjectExVtbl)
 #define VIEWOBJEX(x)      ((IViewObjectEx*)               &(x)->lpViewObjectExVtbl)

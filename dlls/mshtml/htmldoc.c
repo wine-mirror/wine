@@ -1752,7 +1752,7 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IOleDocumentView_iface;
     }else if(IsEqualGUID(&IID_IOleInPlaceActiveObject, riid)) {
         TRACE("(%p)->(IID_IOleInPlaceActiveObject, %p)\n", This, ppv);
-        *ppv = ACTOBJ(This);
+        *ppv = &This->IOleInPlaceActiveObject_iface;
     }else if(IsEqualGUID(&IID_IViewObject, riid)) {
         TRACE("(%p)->(IID_IViewObject, %p)\n", This, ppv);
         *ppv = VIEWOBJ(This);
@@ -1764,7 +1764,7 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = VIEWOBJEX(This);
     }else if(IsEqualGUID(&IID_IOleWindow, riid)) {
         TRACE("(%p)->(IID_IOleWindow, %p)\n", This, ppv);
-        *ppv = OLEWIN(This);
+        *ppv = &This->IOleInPlaceActiveObject_iface;
     }else if(IsEqualGUID(&IID_IOleInPlaceObject, riid)) {
         TRACE("(%p)->(IID_IOleInPlaceObject, %p)\n", This, ppv);
         *ppv = INPLACEOBJ(This);
