@@ -299,79 +299,167 @@ static void ui_actioninfo(MSIPACKAGE *package, LPCWSTR action, BOOL start,
     msiobj_release(&row->hdr);
 }
 
+enum parse_state
+{
+    state_whitespace,
+    state_token,
+    state_quote
+};
+
+static int parse_prop( const WCHAR *str, WCHAR *value, int *quotes )
+{
+    enum parse_state state = state_quote;
+    const WCHAR *p;
+    WCHAR *out = value;
+    int ignore, in_quotes = 0, count = 0, len = 0;
+
+    for (p = str; *p; p++)
+    {
+        ignore = 0;
+        switch (state)
+        {
+        case state_whitespace:
+            switch (*p)
+            {
+            case ' ':
+                if (!count) goto done;
+                in_quotes = 1;
+                ignore = 1;
+                break;
+            case '"':
+                state = state_quote;
+                if (in_quotes) count--;
+                else count++;
+                break;
+            default:
+                state = state_token;
+                if (!count) in_quotes = 0;
+                else in_quotes = 1;
+                len++;
+                break;
+            }
+            break;
+
+        case state_token:
+            switch (*p)
+            {
+            case '"':
+                state = state_quote;
+                if (in_quotes) count--;
+                else count++;
+                break;
+            case ' ':
+                state = state_whitespace;
+                if (!count) goto done;
+                in_quotes = 1;
+                break;
+            default:
+                if (!count) in_quotes = 0;
+                else in_quotes = 1;
+                len++;
+                break;
+            }
+            break;
+
+        case state_quote:
+            switch (*p)
+            {
+            case '"':
+                if (in_quotes) count--;
+                else count++;
+                break;
+            case ' ':
+                state = state_whitespace;
+                if (!count || !len) goto done;
+                in_quotes = 1;
+                break;
+            default:
+                state = state_token;
+                if (!count) in_quotes = 0;
+                else in_quotes = 1;
+                len++;
+                break;
+            }
+            break;
+
+        default: break;
+        }
+        if (!ignore) *out++ = *p;
+    }
+
+done:
+    if (!len) *value = 0;
+    else *out = 0;
+
+    *quotes = count;
+    return p - str;
+}
+
+static void remove_quotes( WCHAR *str )
+{
+    WCHAR *p = str;
+    int len = strlenW( str );
+
+    while ((p = strchrW( p, '"' )))
+    {
+        memmove( p, p + 1, (len - (p - str)) * sizeof(WCHAR) );
+        p++;
+    }
+}
+
 UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine,
                              BOOL preserve_case )
 {
-    LPCWSTR ptr,ptr2;
-    BOOL quote;
+    LPCWSTR ptr, ptr2;
+    int quotes;
     DWORD len;
-    LPWSTR prop = NULL, val = NULL;
+    WCHAR *prop, *val;
+    UINT r;
 
     if (!szCommandLine)
         return ERROR_SUCCESS;
 
     ptr = szCommandLine;
-       
     while (*ptr)
     {
-        if (*ptr==' ')
-        {
-            ptr++;
-            continue;
-        }
+        while (*ptr == ' ') ptr++;
+        if (!*ptr) break;
 
-        TRACE("Looking at %s\n",debugstr_w(ptr));
-
-        ptr2 = strchrW(ptr,'=');
-        if (!ptr2)
-        {
-            ERR("command line contains unknown string : %s\n", debugstr_w(ptr));
-            break;
-        }
+        ptr2 = strchrW( ptr, '=' );
+        if (!ptr2) return ERROR_INVALID_COMMAND_LINE;
  
-        quote = FALSE;
+        len = ptr2 - ptr;
+        if (!len) return ERROR_INVALID_COMMAND_LINE;
 
-        len = ptr2-ptr;
-        prop = msi_alloc((len+1)*sizeof(WCHAR));
-        memcpy(prop,ptr,len*sizeof(WCHAR));
-        prop[len]=0;
-
-        if (!preserve_case)
-            struprW(prop);
+        prop = msi_alloc( (len + 1) * sizeof(WCHAR) );
+        memcpy( prop, ptr, len * sizeof(WCHAR) );
+        prop[len] = 0;
+        if (!preserve_case) struprW( prop );
 
         ptr2++;
-       
-        len = 0; 
-        ptr = ptr2; 
-        while (*ptr && (quote || (!quote && *ptr!=' ')))
-        {
-            if (*ptr == '"')
-                quote = !quote;
-            ptr++;
-            len++;
-        }
-       
-        if (*ptr2=='"')
-        {
-            ptr2++;
-            len -= 2;
-        }
-        val = msi_alloc((len+1)*sizeof(WCHAR));
-        memcpy(val,ptr2,len*sizeof(WCHAR));
-        val[len] = 0;
+        while (*ptr2 == ' ') ptr2++;
 
-        if (lstrlenW(prop) > 0)
+        quotes = 0;
+        val = msi_alloc( (strlenW( ptr2 ) + 1) * sizeof(WCHAR) );
+        len = parse_prop( ptr2, val, &quotes );
+        if (quotes % 2)
         {
-            UINT r = msi_set_property( package->db, prop, val );
-
-            TRACE("Found commandline property (%s) = (%s)\n", 
-                   debugstr_w(prop), debugstr_w(val));
-
-            if (r == ERROR_SUCCESS && !strcmpW( prop, cszSourceDir ))
-                msi_reset_folders( package, TRUE );
+            WARN("unbalanced quotes\n");
+            msi_free( val );
+            msi_free( prop );
+            return ERROR_INVALID_COMMAND_LINE;
         }
-        msi_free(val);
-        msi_free(prop);
+        remove_quotes( val );
+        TRACE("Found commandline property %s = %s\n", debugstr_w(prop), debugstr_w(val));
+
+        r = msi_set_property( package->db, prop, val );
+        if (r == ERROR_SUCCESS && !strcmpW( prop, cszSourceDir ))
+            msi_reset_folders( package, TRUE );
+
+        msi_free( val );
+        msi_free( prop );
+
+        ptr = ptr2 + len;
     }
 
     return ERROR_SUCCESS;
@@ -7356,7 +7444,9 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
         msi_set_sourcedir_props(package, FALSE);
     }
 
-    msi_parse_command_line( package, szCommandLine, FALSE );
+    rc = msi_parse_command_line( package, szCommandLine, FALSE );
+    if (rc != ERROR_SUCCESS)
+        return rc;
 
     msi_apply_transforms( package );
     msi_apply_patches( package );
