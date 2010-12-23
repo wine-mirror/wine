@@ -1755,13 +1755,13 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IOleInPlaceActiveObject_iface;
     }else if(IsEqualGUID(&IID_IViewObject, riid)) {
         TRACE("(%p)->(IID_IViewObject, %p)\n", This, ppv);
-        *ppv = VIEWOBJ(This);
+        *ppv = &This->IViewObjectEx_iface;
     }else if(IsEqualGUID(&IID_IViewObject2, riid)) {
         TRACE("(%p)->(IID_IViewObject2, %p)\n", This, ppv);
-        *ppv = VIEWOBJ2(This);
+        *ppv = &This->IViewObjectEx_iface;
     }else if(IsEqualGUID(&IID_IViewObjectEx, riid)) {
         TRACE("(%p)->(IID_IViewObjectEx, %p)\n", This, ppv);
-        *ppv = VIEWOBJEX(This);
+        *ppv = &This->IViewObjectEx_iface;
     }else if(IsEqualGUID(&IID_IOleWindow, riid)) {
         TRACE("(%p)->(IID_IOleWindow, %p)\n", This, ppv);
         *ppv = &This->IOleInPlaceActiveObject_iface;
