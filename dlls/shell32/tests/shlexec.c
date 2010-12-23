@@ -1714,7 +1714,7 @@ static void test_dde(void)
     {
         if (!create_test_association(".sde"))
         {
-            skip("Unable to create association for '.sfe'\n");
+            skip("Unable to create association for '.sde'\n");
             return;
         }
         create_test_verb_dde(".sde", "Open", 0, test->command, test->ddeexec,
