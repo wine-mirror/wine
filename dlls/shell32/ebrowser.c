@@ -58,6 +58,7 @@ typedef struct _ExplorerBrowserImpl {
     ICommDlgBrowser3  ICommDlgBrowser3_iface;
     IObjectWithSite   IObjectWithSite_iface;
     INameSpaceTreeControlEvents INameSpaceTreeControlEvents_iface;
+    IInputObject      IInputObject_iface;
     LONG ref;
     BOOL destroyed;
 
@@ -789,6 +790,10 @@ static HRESULT WINAPI IExplorerBrowser_fnQueryInterface(IExplorerBrowser *iface,
     else if(IsEqualIID(riid, &IID_IObjectWithSite))
     {
         *ppvObject = &This->IObjectWithSite_iface;
+    }
+    else if(IsEqualIID(riid, &IID_IInputObject))
+    {
+        *ppvObject = &This->IInputObject_iface;
     }
 
     if(*ppvObject)
@@ -1971,6 +1976,67 @@ const INameSpaceTreeControlEventsVtbl vt_INameSpaceTreeControlEvents =  {
     NSTCEvents_fnOnGetDefaultIconIndex
 };
 
+/**************************************************************************
+ * IInputObject Implementation
+ */
+
+static inline ExplorerBrowserImpl *impl_from_IInputObject(IInputObject *iface)
+{
+    return CONTAINING_RECORD(iface, ExplorerBrowserImpl, IInputObject_iface);
+}
+
+static HRESULT WINAPI IInputObject_fnQueryInterface(IInputObject *iface,
+                                                    REFIID riid, void **ppvObject)
+{
+    ExplorerBrowserImpl *This = impl_from_IInputObject(iface);
+    TRACE("%p\n", This);
+    return IUnknown_QueryInterface((IUnknown*)This, riid, ppvObject);
+}
+
+static ULONG WINAPI IInputObject_fnAddRef(IInputObject *iface)
+{
+    ExplorerBrowserImpl *This = impl_from_IInputObject(iface);
+    TRACE("%p\n", This);
+    return IUnknown_AddRef((IUnknown*)This);
+}
+
+static ULONG WINAPI IInputObject_fnRelease(IInputObject *iface)
+{
+    ExplorerBrowserImpl *This = impl_from_IInputObject(iface);
+    TRACE("%p\n", This);
+    return IUnknown_Release((IUnknown*)This);
+}
+
+static HRESULT WINAPI IInputObject_fnUIActivateIO(IInputObject *iface, BOOL fActivate, MSG *pMsg)
+{
+    ExplorerBrowserImpl *This = impl_from_IInputObject(iface);
+    FIXME("stub, %p (%d, %p)\n", This, fActivate, pMsg);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IInputObject_fnHasFocusIO(IInputObject *iface)
+{
+    ExplorerBrowserImpl *This = impl_from_IInputObject(iface);
+    FIXME("stub, %p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IInputObject_fnTranslateAcceleratorIO(IInputObject *iface, MSG *pMsg)
+{
+    ExplorerBrowserImpl *This = impl_from_IInputObject(iface);
+    FIXME("stub, %p (%p)\n", This, pMsg);
+    return E_NOTIMPL;
+}
+
+static IInputObjectVtbl vt_IInputObject = {
+    IInputObject_fnQueryInterface,
+    IInputObject_fnAddRef,
+    IInputObject_fnRelease,
+    IInputObject_fnUIActivateIO,
+    IInputObject_fnHasFocusIO,
+    IInputObject_fnTranslateAcceleratorIO
+};
+
 HRESULT WINAPI ExplorerBrowser_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv)
 {
     ExplorerBrowserImpl *eb;
@@ -1990,6 +2056,7 @@ HRESULT WINAPI ExplorerBrowser_Constructor(IUnknown *pUnkOuter, REFIID riid, voi
     eb->ICommDlgBrowser3_iface.lpVtbl = &vt_ICommDlgBrowser3;
     eb->IObjectWithSite_iface.lpVtbl  = &vt_IObjectWithSite;
     eb->INameSpaceTreeControlEvents_iface.lpVtbl = &vt_INameSpaceTreeControlEvents;
+    eb->IInputObject_iface.lpVtbl     = &vt_IInputObject;
 
     /* Default settings */
     eb->navpane.width = 150;

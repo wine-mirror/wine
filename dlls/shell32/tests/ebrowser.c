@@ -1607,6 +1607,114 @@ static void test_GetCurrentView(void)
     IExplorerBrowser_Release(peb);
 }
 
+static void test_InputObject(void)
+{
+    IExplorerBrowser *peb;
+    IShellFolder *psf;
+    IInputObject *pio;
+    HRESULT hr;
+    RECT rc;
+    UINT i;
+    WPARAM supported_key_accels_mode1[] = {
+        VK_BACK, VK_TAB, VK_RETURN, VK_PRIOR, VK_NEXT, VK_END, VK_HOME,
+        VK_LEFT, VK_UP, VK_RIGHT, VK_DOWN, VK_DELETE, VK_F1, VK_F2,
+        VK_F5, VK_F6, VK_F10, 0 };
+    WPARAM supported_key_accels_mode2[] = {
+        VK_RETURN, VK_PRIOR, VK_NEXT, VK_END, VK_HOME,
+        VK_LEFT, VK_UP, VK_RIGHT, VK_DOWN, VK_DELETE, VK_F1, VK_F2,
+        VK_F10, 0 };
+    WPARAM *key_accels;
+    MSG msg_a = {
+        hwnd,
+        WM_KEYDOWN,
+        VK_F5, 0,
+        GetTickCount(),
+        {5, 2}
+    };
+
+    ebrowser_instantiate(&peb);
+    hr = IExplorerBrowser_QueryInterface(peb, &IID_IInputObject, (void**)&pio);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(FAILED(hr))
+    {
+        win_skip("IInputObject not supported.\n");
+        return;
+    }
+
+    /* Before initializing */
+    hr = IInputObject_TranslateAcceleratorIO(pio, &msg_a);
+    todo_wine ok(hr == E_FAIL, "Got 0x%08x\n", hr);
+
+    hr = IInputObject_HasFocusIO(pio);
+    todo_wine ok(hr == E_FAIL, "Got 0x%08x\n", hr);
+
+    hr = IInputObject_UIActivateIO(pio, TRUE, &msg_a);
+    todo_wine ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+    hr = IInputObject_HasFocusIO(pio);
+    todo_wine ok(hr == E_FAIL, "Got 0x%08x\n", hr);
+
+    hr = IInputObject_TranslateAcceleratorIO(pio, &msg_a);
+    todo_wine ok(hr == E_FAIL, "Got 0x%08x\n", hr);
+
+    rc.left = 0; rc.top = 0; rc.right = 100; rc.bottom = 100;
+    hr = IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+    hr = IInputObject_HasFocusIO(pio);
+    todo_wine ok(hr == E_FAIL, "Got 0x%08x\n", hr);
+
+    hr = IInputObject_TranslateAcceleratorIO(pio, &msg_a);
+    todo_wine ok(hr == E_FAIL, "Got 0x%08x\n", hr);
+
+    /* Browse to the desktop */
+    SHGetDesktopFolder(&psf);
+    hr = IExplorerBrowser_BrowseToObject(peb, (IUnknown*)psf, SBSP_DEFBROWSER);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    IShellFolder_Release(psf);
+
+    hr = IInputObject_UIActivateIO(pio, TRUE, &msg_a);
+    todo_wine ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+    hr = IInputObject_HasFocusIO(pio);
+    todo_wine ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+    hr = IInputObject_UIActivateIO(pio, FALSE, &msg_a);
+    todo_wine ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+    hr = IInputObject_HasFocusIO(pio);
+    todo_wine ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+    hr = IInputObject_TranslateAcceleratorIO(pio, &msg_a);
+    if(hr == S_OK)
+        key_accels = supported_key_accels_mode1;
+    else
+        key_accels = supported_key_accels_mode2;
+
+    for(i = 0; i < 0x100; i++)
+    {
+        BOOL found = FALSE;
+        UINT j;
+        for(j = 0; key_accels[j] != 0; j++)
+            if(key_accels[j] == i)
+            {
+                found = TRUE;
+                break;
+            }
+
+        msg_a.wParam = i;
+        process_msgs();
+        hr = IInputObject_TranslateAcceleratorIO(pio, &msg_a);
+        todo_wine ok(hr == (found ? S_OK : S_FALSE), "Got 0x%08x (%04x)\n", hr, i);
+    }
+
+    process_msgs();
+
+    IInputObject_Release(pio);
+    IExplorerBrowser_Destroy(peb);
+    IExplorerBrowser_Release(peb);
+}
+
 static BOOL test_instantiate_control(void)
 {
     IExplorerBrowser *peb;
@@ -1658,6 +1766,7 @@ START_TEST(ebrowser)
     test_navigation();
     test_GetCurrentView();
     test_SetSite();
+    test_InputObject();
 
     DestroyWindow(hwnd);
     OleUninitialize();
