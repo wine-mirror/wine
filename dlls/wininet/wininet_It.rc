@@ -2,6 +2,7 @@
  * Copyright 2003 Mike McCormack for CodeWeavers
  * Copyright 2003 Ivan Leo Puoti
  * Copyright 2006 Antonio Codazzi
+ * Copyright 2010 Luca Bennati
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -39,9 +40,9 @@ FONT 8, "MS Shell Dlg"
  LTEXT "" IDC_REALM, 80, 46, 150, 14, 0
  EDITTEXT IDC_USERNAME, 80, 66, 150, 14, ES_AUTOHSCROLL | WS_BORDER | WS_TABSTOP
  EDITTEXT IDC_PASSWORD, 80, 86, 150, 14, ES_AUTOHSCROLL | WS_BORDER | WS_TABSTOP | ES_PASSWORD
- CHECKBOX "&Memorizza la password ( RISCHIOSO )", IDC_SAVEPASSWORD,
+ CHECKBOX "&Memorizza la password (non sicuro)", IDC_SAVEPASSWORD,
            80, 106, 150, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
- PUSHBUTTON "OK", IDOK, 98, 126, 56, 14, WS_GROUP | WS_TABSTOP | BS_DEFPUSHBUTTON
+ PUSHBUTTON "Ok", IDOK, 98, 126, 56, 14, WS_GROUP | WS_TABSTOP | BS_DEFPUSHBUTTON
  PUSHBUTTON "Annulla", IDCANCEL, 158, 126, 56, 14, WS_GROUP | WS_TABSTOP
 }
 
@@ -59,13 +60,29 @@ FONT 8, "MS Shell Dlg"
  LTEXT "" IDC_REALM, 80, 46, 150, 14, 0
  EDITTEXT IDC_USERNAME, 80, 66, 150, 14, ES_AUTOHSCROLL | WS_BORDER | WS_TABSTOP
  EDITTEXT IDC_PASSWORD, 80, 86, 150, 14, ES_AUTOHSCROLL | WS_BORDER | WS_TABSTOP | ES_PASSWORD
- CHECKBOX "&Memorizza la password (RISCHIOSO)", IDC_SAVEPASSWORD,
+ CHECKBOX "&Memorizza la password (non sicuro)", IDC_SAVEPASSWORD,
            80, 106, 150, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
- PUSHBUTTON "OK", IDOK, 98, 126, 56, 14, WS_GROUP | WS_TABSTOP | BS_DEFPUSHBUTTON
+ PUSHBUTTON "Ok", IDOK, 98, 126, 56, 14, WS_GROUP | WS_TABSTOP | BS_DEFPUSHBUTTON
  PUSHBUTTON "Annulla", IDCANCEL, 158, 126, 56, 14, WS_GROUP | WS_TABSTOP
+}
+
+IDD_INVCERTDLG DIALOG 3, 24, 250, 86
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Avviso di sicurezza"
+FONT 8, "MS Shell Dlg"
+{
+ LTEXT "È presente un problema con il certificato per questo sito.", -1, 40, 6, 200, 20
+ LTEXT "", IDC_CERT_ERROR, 40, 26, 200, 20
+ LTEXT "Vuoi continuare comunque?", -1, 40, 46, 200, 20
+ PUSHBUTTON "Sì", IDOK, 40, 66, 56, 14, WS_GROUP | WS_TABSTOP | BS_DEFPUSHBUTTON
+ PUSHBUTTON "No", IDCANCEL, 100, 66, 56, 14, WS_GROUP | WS_TABSTOP
 }
 
 STRINGTABLE
 {
-IDS_LANCONNECTION "Connessione LAN"
+  IDS_LANCONNECTION     "Connessione LAN"
+  IDS_CERT_CA_INVALID   "Il certificato è stato emesso da un editore sconosciuto o non fidato."
+  IDS_CERT_DATE_INVALID "La data sul certificato non è valida."
+  IDS_CERT_CN_INVALID   "Il nome sul certificato non corrisponde al sito."
+  IDS_CERT_ERRORS       "È presente almeno un problema di sicurezza non specificato con questo certificato."
 }
