@@ -121,18 +121,18 @@ typedef struct DataCacheEntry
 struct DataCache
 {
   /*
-   * List all interface VTables here
+   * List all interface here
    */
-  const IDataObjectVtbl*      lpVtbl;
-  const IUnknownVtbl*         lpvtblNDIUnknown;
-  const IPersistStorageVtbl*  lpvtblIPersistStorage;
-  const IViewObject2Vtbl*     lpvtblIViewObject;
-  const IOleCache2Vtbl*       lpvtblIOleCache2;
-  const IOleCacheControlVtbl* lpvtblIOleCacheControl;
+  IDataObject       IDataObject_iface;
+  IUnknown          IUnknown_iface;
+  IPersistStorage   IPersistStorage_iface;
+  IViewObject2      IViewObject2_iface;
+  IOleCache2        IOleCache2_iface;
+  IOleCacheControl  IOleCacheControl_iface;
 
   /* The sink that is connected to a remote object.
      The other interfaces are not available by QI'ing the sink and vice-versa */
-  const IAdviseSinkVtbl*      lpvtblIAdviseSink;
+  IAdviseSink       IAdviseSink_iface;
 
   /*
    * Reference count of this object
@@ -175,37 +175,37 @@ typedef struct DataCache DataCache;
 
 static inline DataCache *impl_from_IDataObject( IDataObject *iface )
 {
-    return (DataCache *)((char*)iface - FIELD_OFFSET(DataCache, lpVtbl));
+    return CONTAINING_RECORD(iface, DataCache, IDataObject_iface);
 }
 
-static inline DataCache *impl_from_NDIUnknown( IUnknown *iface )
+static inline DataCache *impl_from_IUnknown( IUnknown *iface )
 {
-    return (DataCache *)((char*)iface - FIELD_OFFSET(DataCache, lpvtblNDIUnknown));
+    return CONTAINING_RECORD(iface, DataCache, IUnknown_iface);
 }
 
 static inline DataCache *impl_from_IPersistStorage( IPersistStorage *iface )
 {
-    return (DataCache *)((char*)iface - FIELD_OFFSET(DataCache, lpvtblIPersistStorage));
+    return CONTAINING_RECORD(iface, DataCache, IPersistStorage_iface);
 }
 
 static inline DataCache *impl_from_IViewObject2( IViewObject2 *iface )
 {
-    return (DataCache *)((char*)iface - FIELD_OFFSET(DataCache, lpvtblIViewObject));
+    return CONTAINING_RECORD(iface, DataCache, IViewObject2_iface);
 }
 
 static inline DataCache *impl_from_IOleCache2( IOleCache2 *iface )
 {
-    return (DataCache *)((char*)iface - FIELD_OFFSET(DataCache, lpvtblIOleCache2));
+    return CONTAINING_RECORD(iface, DataCache, IOleCache2_iface);
 }
 
 static inline DataCache *impl_from_IOleCacheControl( IOleCacheControl *iface )
 {
-    return (DataCache *)((char*)iface - FIELD_OFFSET(DataCache, lpvtblIOleCacheControl));
+    return CONTAINING_RECORD(iface, DataCache, IOleCacheControl_iface);
 }
 
 static inline DataCache *impl_from_IAdviseSink( IAdviseSink *iface )
 {
-    return (DataCache *)((char*)iface - FIELD_OFFSET(DataCache, lpvtblIAdviseSink));
+    return CONTAINING_RECORD(iface, DataCache, IAdviseSink_iface);
 }
 
 static const char * debugstr_formatetc(const FORMATETC *formatetc)
@@ -879,7 +879,7 @@ static HRESULT WINAPI DataCache_NDIUnknown_QueryInterface(
             REFIID         riid,
             void**         ppvObject)
 {
-  DataCache *this = impl_from_NDIUnknown(iface);
+  DataCache *this = impl_from_IUnknown(iface);
 
   if ( ppvObject==0 )
     return E_INVALIDARG;
@@ -892,26 +892,26 @@ static HRESULT WINAPI DataCache_NDIUnknown_QueryInterface(
   }
   else if (IsEqualIID(&IID_IDataObject, riid))
   {
-    *ppvObject = &this->lpVtbl;
+    *ppvObject = &this->IDataObject_iface;
   }
   else if ( IsEqualIID(&IID_IPersistStorage, riid)  ||
             IsEqualIID(&IID_IPersist, riid) )
   {
-    *ppvObject = &this->lpvtblIPersistStorage;
+    *ppvObject = &this->IPersistStorage_iface;
   }
   else if ( IsEqualIID(&IID_IViewObject, riid) ||
             IsEqualIID(&IID_IViewObject2, riid) )
   {
-    *ppvObject = &this->lpvtblIViewObject;
+    *ppvObject = &this->IViewObject2_iface;
   }
   else if ( IsEqualIID(&IID_IOleCache, riid) ||
             IsEqualIID(&IID_IOleCache2, riid) )
   {
-    *ppvObject = &this->lpvtblIOleCache2;
+    *ppvObject = &this->IOleCache2_iface;
   }
   else if ( IsEqualIID(&IID_IOleCacheControl, riid) )
   {
-    *ppvObject = &this->lpvtblIOleCacheControl;
+    *ppvObject = &this->IOleCacheControl_iface;
   }
 
   if ((*ppvObject)==0)
@@ -934,7 +934,7 @@ static HRESULT WINAPI DataCache_NDIUnknown_QueryInterface(
 static ULONG WINAPI DataCache_NDIUnknown_AddRef(
             IUnknown*      iface)
 {
-  DataCache *this = impl_from_NDIUnknown(iface);
+  DataCache *this = impl_from_IUnknown(iface);
   return InterlockedIncrement(&this->ref);
 }
 
@@ -947,7 +947,7 @@ static ULONG WINAPI DataCache_NDIUnknown_AddRef(
 static ULONG WINAPI DataCache_NDIUnknown_Release(
             IUnknown*      iface)
 {
-  DataCache *this = impl_from_NDIUnknown(iface);
+  DataCache *this = impl_from_IUnknown(iface);
   ULONG ref;
 
   ref = InterlockedDecrement(&this->ref);
@@ -1882,7 +1882,7 @@ static HRESULT setup_sink(DataCache *This, DataCacheEntry *cache_entry)
     if(This->running_object)
         if(!(flags & ADVF_NODATA))
             hr = IDataObject_DAdvise(This->running_object, &cache_entry->fmtetc, flags,
-                                     (IAdviseSink *)&This->lpvtblIAdviseSink, &cache_entry->sink_id);
+                                     &This->IAdviseSink_iface, &cache_entry->sink_id);
     return hr;
 }
 
@@ -2012,8 +2012,7 @@ static HRESULT WINAPI DataCache_DiscardCache(
     TRACE("(%d)\n", dwDiscardOptions);
 
     if (dwDiscardOptions == DISCARDCACHE_SAVEIFDIRTY)
-        hr = DataCache_Save((IPersistStorage *)&This->lpvtblIPersistStorage,
-                            This->presentationStorage, TRUE);
+        hr = DataCache_Save(&This->IPersistStorage_iface, This->presentationStorage, TRUE);
 
     LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
     {
@@ -2152,7 +2151,7 @@ static void WINAPI DataCache_OnDataChange(IAdviseSink *iface, FORMATETC *fmt, ST
 {
     DataCache *This = impl_from_IAdviseSink(iface);
     TRACE("(%p)->(%s, %p)\n", This, debugstr_formatetc(fmt), med);
-    IOleCache_SetData((IOleCache2*)&This->lpvtblIOleCache2, fmt, med, FALSE);
+    IOleCache_SetData(&This->IOleCache2_iface, fmt, med, FALSE);
 }
 
 static void WINAPI DataCache_OnViewChange(IAdviseSink *iface, DWORD aspect, LONG index)
@@ -2284,13 +2283,13 @@ static DataCache* DataCache_Construct(
   /*
    * Initialize the virtual function table.
    */
-  newObject->lpVtbl = &DataCache_IDataObject_VTable;
-  newObject->lpvtblNDIUnknown = &DataCache_NDIUnknown_VTable;
-  newObject->lpvtblIPersistStorage = &DataCache_IPersistStorage_VTable;
-  newObject->lpvtblIViewObject = &DataCache_IViewObject2_VTable;
-  newObject->lpvtblIOleCache2 = &DataCache_IOleCache2_VTable;
-  newObject->lpvtblIOleCacheControl = &DataCache_IOleCacheControl_VTable;
-  newObject->lpvtblIAdviseSink = &DataCache_IAdviseSink_VTable;
+  newObject->IDataObject_iface.lpVtbl = &DataCache_IDataObject_VTable;
+  newObject->IUnknown_iface.lpVtbl = &DataCache_NDIUnknown_VTable;
+  newObject->IPersistStorage_iface.lpVtbl = &DataCache_IPersistStorage_VTable;
+  newObject->IViewObject2_iface.lpVtbl = &DataCache_IViewObject2_VTable;
+  newObject->IOleCache2_iface.lpVtbl = &DataCache_IOleCache2_VTable;
+  newObject->IOleCacheControl_iface.lpVtbl = &DataCache_IOleCacheControl_VTable;
+  newObject->IAdviseSink_iface.lpVtbl = &DataCache_IAdviseSink_VTable;
 
   /*
    * Start with one reference count. The caller of this function
@@ -2305,7 +2304,7 @@ static DataCache* DataCache_Construct(
    * lifetime.
    */
   if (pUnkOuter==NULL)
-    pUnkOuter = (IUnknown*)&(newObject->lpvtblNDIUnknown);
+    pUnkOuter = &newObject->IUnknown_iface;
 
   newObject->outerUnknown = pUnkOuter;
 
@@ -2385,13 +2384,13 @@ HRESULT WINAPI CreateDataCache(
   /*
    * Make sure it supports the interface required by the caller.
    */
-  hr = IUnknown_QueryInterface((IUnknown*)&(newCache->lpvtblNDIUnknown), riid, ppvObj);
+  hr = IUnknown_QueryInterface(&newCache->IUnknown_iface, riid, ppvObj);
 
   /*
    * Release the reference obtained in the constructor. If
    * the QueryInterface was unsuccessful, it will free the class.
    */
-  IUnknown_Release((IUnknown*)&(newCache->lpvtblNDIUnknown));
+  IUnknown_Release(&newCache->IUnknown_iface);
 
   return hr;
 }
