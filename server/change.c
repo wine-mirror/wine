@@ -98,38 +98,17 @@ struct inotify_event {
 
 static inline int inotify_init( void )
 {
-    int ret;
-    __asm__ __volatile__( "int $0x80"
-                          : "=a" (ret)
-                          : "0" (SYS_inotify_init));
-    if (ret<0) { errno = -ret; ret = -1; }
-    return ret;
+    return syscall( SYS_inotify_init );
 }
 
 static inline int inotify_add_watch( int fd, const char *name, unsigned int mask )
 {
-    int ret;
-    __asm__ __volatile__( "pushl %%ebx;\n\t"
-                          "movl %2,%%ebx;\n\t"
-                          "int $0x80;\n\t"
-                          "popl %%ebx"
-                          : "=a" (ret) : "0" (SYS_inotify_add_watch),
-                            "r" (fd), "c" (name), "d" (mask) );
-    if (ret<0) { errno = -ret; ret = -1; }
-    return ret;
+    return syscall( SYS_inotify_add_watch, fd, name, mask );
 }
 
 static inline int inotify_rm_watch( int fd, int wd )
 {
-    int ret;
-    __asm__ __volatile__( "pushl %%ebx;\n\t"
-                          "movl %2,%%ebx;\n\t"
-                          "int $0x80;\n\t"
-                          "popl %%ebx"
-                          : "=a" (ret) : "0" (SYS_inotify_rm_watch),
-                            "r" (fd), "c" (wd) );
-    if (ret<0) { errno = -ret; ret = -1; }
-    return ret;
+    return syscall( SYS_inotify_rm_watch, fd, wd );
 }
 
 #define USE_INOTIFY
