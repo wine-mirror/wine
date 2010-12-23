@@ -46,15 +46,15 @@ typedef struct _INTERNET_CACHE_CONFIG_INFOA
     BOOL fPerUser;
     DWORD dwSyncMode;
     DWORD dwNumCachePaths;
-    union
+    __C89_NAMELESSUNION union
     {
-        struct
+        __C89_NAMELESSSTRUCT struct
         {
             CHAR CachePath[MAX_PATH];
             DWORD dwCacheSize;
-        } DUMMYSTRUCTNAME;
+        } __C89_NAMELESSSTRUCTNAME;
         INTERNET_CACHE_CONFIG_PATH_ENTRYA CachePaths[ANYSIZE_ARRAY];
-    } DUMYUNIONNAME;
+    } __C89_NAMELESSUNIONNAME;
     DWORD dwNormalUsage;
     DWORD dwExemptUsage;
 } INTERNET_CACHE_CONFIG_INFOA, *LPINTERNET_CACHE_CONFIG_INFOA;
@@ -68,15 +68,15 @@ typedef struct _INTERNET_CACHE_CONFIG_INFOW
     BOOL  fPerUser;
     DWORD dwSyncMode;
     DWORD dwNumCachePaths;
-    union
+    __C89_NAMELESSUNION union
     {
-        struct
+        __C89_NAMELESSSTRUCT struct
         {
             WCHAR CachePath[MAX_PATH];
             DWORD dwCacheSize;
-        } DUMMYSTRUCTNAME;
+        } __C89_NAMELESSSTRUCTNAME;
         INTERNET_CACHE_CONFIG_PATH_ENTRYW CachePaths[ANYSIZE_ARRAY];
-    } ;
+    } __C89_NAMELESSUNIONNAME;
     DWORD dwNormalUsage;
     DWORD dwExemptUsage;
 } INTERNET_CACHE_CONFIG_INFOW, *LPINTERNET_CACHE_CONFIG_INFOW;
