@@ -209,8 +209,12 @@ static int FetchFromRootKey(HKEY root)
                 command = HeapAlloc(GetProcessHeap(), 0, uninstlen);
                 RegQueryValueExW(hkeyApp, UninstallCommandlineW, 0, 0, (LPBYTE)command, &uninstlen);
             }
-            else continue;
-
+            else
+            {
+                RegCloseKey(hkeyApp);
+                sizeOfSubKeyName = 255;
+                continue;
+            }
             numentries++;
             entries = HeapReAlloc(GetProcessHeap(), 0, entries, numentries*sizeof(uninst_entry));
             entries[numentries-1].root = root;
