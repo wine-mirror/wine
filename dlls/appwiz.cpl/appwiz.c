@@ -97,6 +97,7 @@ static const WCHAR URLUpdateInfoW[] = {'U','R','L','U','p','d','a','t','e','I',
 static const WCHAR CommentsW[] = {'C','o','m','m','e','n','t','s',0};
 static const WCHAR UninstallCommandlineW[] = {'U','n','i','n','s','t','a','l','l',
     'S','t','r','i','n','g',0};
+static const WCHAR WindowsInstallerW[] = {'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
 
 static const WCHAR PathUninstallW[] = {
         'S','o','f','t','w','a','r','e','\\',
@@ -156,10 +157,10 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
     HKEY hkeyUninst, hkeyApp;
     int i, id = 0;
     DWORD sizeOfSubKeyName, displen, uninstlen;
-    DWORD dwNoModify, dwType;
+    DWORD dwNoModify, dwType, value;
     WCHAR subKeyName[256];
     WCHAR key_app[MAX_STRING_LEN];
-    WCHAR *p;
+    WCHAR *p, *command;
     APPINFO *iter = AppInfo;
     LPWSTR iconPtr;
     BOOL ret = FALSE;
@@ -188,11 +189,29 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
 
         displen = 0;
         uninstlen = 0;
-
-        if ((RegQueryValueExW(hkeyApp, DisplayNameW, 0, 0, NULL, &displen) ==
-            ERROR_SUCCESS) && (RegQueryValueExW(hkeyApp, UninstallCommandlineW,
-            0, 0, NULL, &uninstlen) == ERROR_SUCCESS))
+        if (!RegQueryValueExW(hkeyApp, DisplayNameW, 0, 0, NULL, &displen))
         {
+            if (!RegQueryValueExW(hkeyApp, WindowsInstallerW, NULL, &dwType, NULL, &value)
+                && dwType == REG_DWORD && value == 1)
+            {
+                static const WCHAR fmtW[] = {'m','s','i','e','x','e','c',' ','/','x','%','s',0};
+                int len = lstrlenW(fmtW) + lstrlenW(subKeyName);
+
+                if (!(command = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR)))) goto err;
+                wsprintfW(command, fmtW, subKeyName);
+            }
+            else if (!RegQueryValueExW(hkeyApp, UninstallCommandlineW, 0, 0, NULL, &uninstlen))
+            {
+                if (!(command = HeapAlloc(GetProcessHeap(), 0, uninstlen))) goto err;
+                RegQueryValueExW(hkeyApp, UninstallCommandlineW, 0, 0, (LPBYTE)command, &uninstlen);
+            }
+            else
+            {
+                RegCloseKey(hkeyApp);
+                sizeOfSubKeyName = sizeof(subKeyName) / sizeof(subKeyName[0]);
+                continue;
+            }
+
             /* if we already have iter, allocate the next entry */
             if (iter)
             {
@@ -248,14 +267,6 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
                 }
             }
 
-            iter->path = HeapAlloc(GetProcessHeap(), 0, uninstlen);
-
-            if (!iter->path)
-                goto err;
-
-            RegQueryValueExW(hkeyApp, UninstallCommandlineW, 0, 0,
-                (LPBYTE)iter->path, &uninstlen);
-
             /* publisher, version */
             if (RegQueryValueExW(hkeyApp, PublisherW, 0, 0, NULL, &displen) ==
                 ERROR_SUCCESS)
@@ -298,20 +309,28 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
                 dwNoModify = (dwNoModify == 49) ? 1 : 0;
 
             /* Fetch the modify path */
-            if ((dwNoModify == 0) && (RegQueryValueExW(hkeyApp, ModifyPathW, 0, 0, NULL, &displen)
-                == ERROR_SUCCESS))
+            if (!dwNoModify)
             {
-                iter->path_modify = HeapAlloc(GetProcessHeap(), 0, displen);
+                if (!RegQueryValueExW(hkeyApp, WindowsInstallerW, NULL, &dwType, NULL, &value)
+                    && dwType == REG_DWORD && value == 1)
+                {
+                    static const WCHAR fmtW[] = {'m','s','i','e','x','e','c',' ','/','i','%','s',0};
+                    int len = lstrlenW(fmtW) + lstrlenW(subKeyName);
 
-                if (!iter->path_modify)
-                    goto err;
-
-                RegQueryValueExW(hkeyApp, ModifyPathW, 0, 0, (LPBYTE)iter->path_modify, &displen);
+                    if (!(iter->path_modify = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR)))) goto err;
+                    wsprintfW(iter->path_modify, fmtW, subKeyName);
+                }
+                else if (!RegQueryValueExW(hkeyApp, ModifyPathW, 0, 0, NULL, &displen))
+                {
+                    if (!(iter->path_modify = HeapAlloc(GetProcessHeap(), 0, displen))) goto err;
+                    RegQueryValueExW(hkeyApp, ModifyPathW, 0, 0, (LPBYTE)iter->path_modify, &displen);
+                }
             }
 
             /* registry key */
             iter->regroot = root;
             lstrcpyW(iter->regkey, subKeyName);
+            iter->path = command;
 
             iter->id = id++;
         }
