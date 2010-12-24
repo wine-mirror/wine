@@ -315,7 +315,14 @@ static void test_SetupCopyOEMInf(void)
         char *destfile = strrchr(dest, '\\') + 1;
 
         SetLastError(0xdeadbeef);
-        ok(pSetupUninstallOEMInfA(destfile, 0, NULL), "Failed to uninstall '%s' : %d\n", destfile, GetLastError());
+        res = pSetupUninstallOEMInfA(destfile, 0, NULL);
+        ok(res, "Failed to uninstall '%s' : %d\n", destfile, GetLastError());
+        if(!res)
+        {
+            SetLastError(0xdeadbeef);
+            res = DeleteFileA(dest);
+            ok(res, "Failed to delete file '%s' : %d\n", dest, GetLastError());
+        }
     }
     else
     {
