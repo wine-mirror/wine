@@ -1,9 +1,10 @@
+
 /*
  * Korean  resources for localspl
  *
  * Copyright 2005 Huw Davies
  * Copyright 2006 Detlef Riekenberg
- * Copyright 2006 YunSong Hwang
+ * Copyright 2006,2010 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,10 +23,12 @@
 
 #include "localspl_private.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-    IDS_LOCALPORT "Áö¿ª Æ÷Æ®"
-    IDS_LOCALMONITOR "Áö¿ª ¸ğ´ÏÅÍ"
+    IDS_LOCALPORT "ì§€ì—­ í¬íŠ¸"
+    IDS_LOCALMONITOR "ì§€ì—­ ëª¨ë‹ˆí„°"
 }
