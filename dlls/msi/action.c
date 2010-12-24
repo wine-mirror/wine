@@ -1877,6 +1877,11 @@ static void ACTION_GetFeatureInstallStates(MSIPACKAGE *package)
     }
 }
 
+static inline BOOL is_feature_selected( MSIFEATURE *feature, INT level )
+{
+    return (feature->Level > 0 && feature->Level <= level);
+}
+
 static BOOL process_state_property(MSIPACKAGE* package, int level,
                                    LPCWSTR property, INSTALLSTATE state)
 {
@@ -1889,8 +1894,7 @@ static BOOL process_state_property(MSIPACKAGE* package, int level,
 
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
-        if (strcmpW( property, szRemove ) &&
-            (feature->Level <= 0 || feature->Level > level))
+        if (strcmpW( property, szRemove ) && !is_feature_selected( feature, level ))
             continue;
 
         if (!strcmpW(property, szReinstall)) state = feature->Installed;
@@ -1981,10 +1985,9 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
     {
         LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
         {
-            BOOL feature_state = ((feature->Level > 0) &&
-                                  (feature->Level <= level));
+            if (!is_feature_selected( feature, level )) continue;
 
-            if (feature_state && feature->ActionRequest == INSTALLSTATE_UNKNOWN)
+            if (feature->ActionRequest == INSTALLSTATE_UNKNOWN)
             {
                 if (feature->Attributes & msidbFeatureAttributesFavorSource)
                     msi_feature_set_state(package, feature, INSTALLSTATE_SOURCE);
@@ -2000,20 +2003,19 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         {
             FeatureList *fl;
 
-            if (feature->Level > 0 && feature->Level <= level)
-                continue;
+            if (is_feature_selected( feature, level )) continue;
 
             LIST_FOR_EACH_ENTRY( fl, &feature->Children, FeatureList, entry )
                 msi_feature_set_state(package, fl->feature, INSTALLSTATE_UNKNOWN);
         }
     }
-    else
+    else /* preselected */
     {
         LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
         {
-            BOOL selected = feature->Level > 0 && feature->Level <= level;
+            if (!is_feature_selected( feature, level )) continue;
 
-            if (selected && feature->ActionRequest == INSTALLSTATE_UNKNOWN)
+            if (feature->ActionRequest == INSTALLSTATE_UNKNOWN)
             {
                  msi_feature_set_state(package, feature, feature->Installed);
             }
@@ -2031,8 +2033,7 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
               debugstr_w(feature->Feature), feature->Level, feature->Installed,
               feature->ActionRequest, feature->Action);
 
-        if (!feature->Level)
-            continue;
+        if (!is_feature_selected( feature, level )) continue;
 
         /* features with components that have compressed files are made local */
         LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )
