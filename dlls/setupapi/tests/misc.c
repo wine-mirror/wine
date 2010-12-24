@@ -328,7 +328,8 @@ static void test_SetupCopyOEMInf(void)
     {
         /* Win9x/WinMe */
         SetLastError(0xdeadbeef);
-        ok(DeleteFileA(dest), "Failed to delete file '%s' : %d\n", dest, GetLastError());
+        res = DeleteFileA(dest);
+        ok(res, "Failed to delete file '%s' : %d\n", dest, GetLastError());
 
         /* On WinMe we also need to remove the .pnf file */
         *(strrchr(dest, '.') + 1) = 'p';
