@@ -827,7 +827,7 @@ UINT WINAPI MSI_SetFeatureStateW(MSIPACKAGE* package, LPCWSTR szFeature,
 
     feature->ActionRequest = iState;
 
-    ACTION_UpdateComponentStates(package,szFeature);
+    ACTION_UpdateComponentStates( package, feature );
 
     /* update all the features that are children of this feature */
     LIST_FOR_EACH_ENTRY( child, &package->features, MSIFEATURE, entry )

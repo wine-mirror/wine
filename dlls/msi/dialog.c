@@ -2127,7 +2127,7 @@ msi_seltree_update_feature_installstate( HWND hwnd, HTREEITEM hItem,
 {
     msi_feature_set_state( package, feature, state );
     msi_seltree_sync_item_state( hwnd, feature, hItem );
-    ACTION_UpdateComponentStates( package, feature->Feature );
+    ACTION_UpdateComponentStates( package, feature );
 }
 
 static void

@@ -945,7 +945,7 @@ extern LPWSTR build_directory_name(DWORD , ...);
 extern BOOL create_full_pathW(const WCHAR *path);
 extern void reduce_to_longfilename(WCHAR*);
 extern LPWSTR create_component_advertise_string(MSIPACKAGE*, MSICOMPONENT*, LPCWSTR);
-extern void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature);
+extern void ACTION_UpdateComponentStates(MSIPACKAGE *package, MSIFEATURE *feature);
 extern UINT register_unique_action(MSIPACKAGE *, LPCWSTR);
 extern BOOL check_unique_action(const MSIPACKAGE *, LPCWSTR);
 extern WCHAR* generate_error_string(MSIPACKAGE *, UINT, DWORD, ... );

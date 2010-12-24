@@ -639,15 +639,10 @@ LPWSTR create_component_advertise_string(MSIPACKAGE* package,
 }
 
 /* update component state based on a feature change */
-void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
+void ACTION_UpdateComponentStates( MSIPACKAGE *package, MSIFEATURE *feature )
 {
     INSTALLSTATE newstate;
-    MSIFEATURE *feature;
     ComponentList *cl;
-
-    feature = get_loaded_feature(package,szFeature);
-    if (!feature)
-        return;
 
     newstate = feature->ActionRequest;
 
