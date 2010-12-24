@@ -684,6 +684,8 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
 
     static const WCHAR szInstalled[] = {
         ' ','I','n','s','t','a','l','l','e','d','=','1',0};
+    static const WCHAR szInstallLevel[] = {
+        ' ','I','N','S','T','A','L','L','L','E','V','E','L','=','3','2','7','6','7',0};
     static const WCHAR szRemoveAll[] = {
         ' ','R','E','M','O','V','E','=','A','L','L',0};
     static const WCHAR szMachine[] = {
@@ -715,6 +717,9 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
     if (szCommandLine)
         sz += lstrlenW(szCommandLine);
 
+    if (eInstallState != INSTALLSTATE_DEFAULT)
+        sz += lstrlenW(szInstallLevel);
+
     if (eInstallState == INSTALLSTATE_ABSENT)
         sz += lstrlenW(szRemoveAll);
 
@@ -731,6 +736,9 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
     commandline[0] = 0;
     if (szCommandLine)
         lstrcpyW(commandline,szCommandLine);
+
+    if (eInstallState != INSTALLSTATE_DEFAULT)
+        lstrcatW(commandline, szInstallLevel);
 
     if (eInstallState == INSTALLSTATE_ABSENT)
         lstrcatW(commandline, szRemoveAll);
