@@ -1,18 +1,18 @@
-The Wine development release 1.3.9 is now available.
+The Wine development release 1.3.10 is now available.
 
 What's new in this release (see below for details):
-  - Beginnings of support for ActiveX in built-in browser.
-  - Icons on Internet shortcut menu entries.
-  - Standardization of code implementing COM interfaces.
-  - New scheme for auto-generated DLL registrations.
-  - OpenCL library wrapper.
+  - Support for notification balloons in system tray.
+  - Obsolete AudioIO sound driver removed.
+  - More work on ActiveX support.
+  - Various MSI fixes.
+  - Preloader now used for 64-bit too. 
   - Translation updates.
   - Various bug fixes.
 
 The source is available from the following locations:
 
-  http://ibiblio.org/pub/linux/system/emulators/wine/wine-1.3.9.tar.bz2
-  http://prdownloads.sourceforge.net/wine/wine-1.3.9.tar.bz2
+  http://ibiblio.org/pub/linux/system/emulators/wine/wine-1.3.10.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-1.3.10.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -28,625 +28,474 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.3.9:
+Bugs fixed in 1.3.10:
 
-   8103  Ventrilo list does not draw correctly at times
-   8978  No mp3's playing in Age of Empires 3
-  10366  EAccess Violation in winex11.drv when printing
-  11800  WISO Sparbuch garbled printout
-  11839  Visualworks Smalltalk menu z-order pfui
-  12001  chemsketch won't display
-  13306  Swichmax 2 close in the try to export
-  15349  Spore crashes when leaving water
-  16328  GTA4 does not work
-  16653  Trials 2 SE normal graphics mode does not work
-  16694  undefined reference to `NtCurrentTeb'  on PowerPC
-  16736  kernel32/format_msg.c: compiler errors
-  16861  ntdll/tests: size of array is negative
-  16972  AutoCAD 2008: installation of Service Pack 1 fails
-  18376  Office 2007 SP1/SP2 installers fail
-  18571  Top level window loses focus when selecting a menu item
-  18606  Open/save file dialog "New Folder" button does not behave as expected for non-unixfs/My Documents working directory shell items
-  19746  Adobe Reader 7 w/ FEAD installer causes a page fault
-  20029  Msxml2.DOMDocument.6.0 unimplemented
-  21679  men of war version 1.2 (regular game-on-cd, not steam or demo) crashes
-  21697  Background music (MIDI) doesn't always play in Pikachu Volleyball 1.2
-  22480  Letter Chase 5.4 crash when typing
-  22617  Texture Problems in Battlefield Bad Company 2
-  22732  unimplemented function msvcr80.dll._wgetenv_s
-  22859  MS Paint crashes attempting to save a monochrome bitmap
-  22910  Age of Empires III 1.1.3: Unhandled exception: page fault on write access....
-  23440  Windows Live Essentials installer aborts just after startup with "an unknown error occurred"
-  23723  Multiple games from Sonalysts cannot play sound files (stored in Sfx.agg)
-  23872  Steam: Windows will automatically reopen after being closed
-  24213  WMI: provide "WMIC" stub executable to silence various "file not found" messages (Java SE JRE/JDK installers)
-  24275  Nimbus Sky Princess is slow during gameplay
-  24526  install eatree tweak
-  24605  MS Office 2010 Pro Trial installer "encounters an error"
-  24941  Fable: The Lost Chapters can't play video
-  24968  ApacheMonitor.exe (start/stop/pause the Apache demon) needs wtsapi32.WTSTerminateProcess
-  25041  Civilization 4 crashes when starting.
-  25077  Dragon Age: Origins - ultimate edition, updater needs dotnet20, mono26 isn't enough
-  25179  application Get My Ancestors won't install
-  25196  utorrent icon in systray is blank and unclickable
-  25270  Chaser: crashes before reaching the main menu
-  25281  VLC 1.1.5 fails to install in Vista mode
-  25308  Rise of Nations installer hangs on "Removing icons..."
-  25319  AutoCAD 2008: Hangs at installation
-  25322  Parameter checking in _controlfp_s seems to be broken.
-  25335  Classmodules not usable in MS Word 2003
-  25339  make install-dev target broken for empty directory structures
-  25347  AutoCAD 2005 crashes selecting files after OPEN command
-  25351  Fable: The Lost Chapters, no video with gstreamer
-  25354  King's Quest Collection Series (1997): setup.exe crashes
-  25356  graphical glitches drawing gun in Battlefield 2 Bad Company
-  25363  Photoshop CS4 Freezes on start while reading preferences
-  25374  Lightworks : Unhandled page fault on read access
-  25378  Age of Empires 3: initial playback of mp3 stutters
-  25395  GTA III and Vice City crash after the intro video
-  25401  WSAStringToAddress doesn't update lpAddressLength on success
-  25424  Windows Live Photo Gallery [for XP] fails to install
-  25468  Windows Live Movie Maker fails to install
+   4432  Blobby Volley - corrupted graphics
+   7304  WRC (Wine Resource Compiler) preprocessing is buggy
+   7431  Xilinx picoblaze assembler kcpsm3 crashes
+   7922  Language settings not found and strange Day Error in EWRevenge (bug in oleaut32)
+  11449  ExpressPCB 6.1.2 crashes when updating pricing
+  12744  Steam tray icon doesn't appear if panel hidden in autohide mode
+  12808  indexed bitmaps support is broken
+  12828  Arcade Pool 2: Game crashes after several seconds
+  14922  no ingame sound in drakensang
+  15003  VB6 crashes when triing enter a program code
+  15041  Guild Wars: Typing into Char Fields
+  15257  Changing from OpenGL to Direct3D output in WinUAE results in blank screen
+  15882  while wine application is running fullscreen ekiga incoming call popup doesn't appare
+  16489  Falcon 4.0 AF: Updater does not work, check fails
+  16672  Marie La Cavalière: Unhandled exception
+  16703  Wineconsole: Fallback from curses to window based backend
+  16704  wineconsole: Allow specifying the console backend to use when wineconsole is launched implicitly
+  16914  wrc chokes on a file which is accepted by windows rc
+  18075  IE8 crashes due to missing urlmon.dll.423 API
+  18230  Romanian translation wrong
+  18484  Charma: too slow and there's a problem with the pointer
+  18497  Gothic 3: Failure at starting new game
+  18768  Madden NFL 08 regression: program doesn't start
+  19314  IE8 for Server 2003 refuses to install (Service Pack 2 for Windows Server 2003 install required)
+  19565  Guitar Hero World Tour does not produces any sound (except videos)
+  20311  Blitzkrieg game crashes when selecting 'Allies campaign' (failed to save document to IStream)
+  20552  Memory leak in alloc_thread_tls?
+  20842  Python: ctrl-c and ctrl-d do not work in wineconsole [dogfood]
+  21173  choice.exe missing, needed by some cmd scripts
+  21245  file operations are very slow or hangs solidworks
+  22487  tray icons broken with ubuntu 10.04 for some users (affects utorrent 2.0.1, autohotkey)
+  23028  Empire Earth 1.00 and 1.04 mirrored cursor on vertical move
+  23089  Grass rendering bug in S.T.A.L.K.E.R clear sky/call of pripyat
+  23378  Desktop launchers generated by new Steam UI are broken
+  24294  corrupted icons in SolidWorks sketches
+  24323  Need for speed 3 crashes on startup
+  24680  loader: segfault after  loading krnl386.exe, while LoadLibraryEx for any buildin dll
+  24866  Unhandled exception in Windows Double Explorer (IExplorerBrowser_fnSetPropertyBag)
+  25040  Icons in system tray area are blank
+  25059  dotnet30 install completion window minimized, needs balloon tooltip
+  25155  Creative Writer 2 only installs in Win9x modes on WoW64
+  25283  Unimplemented function urlmon.dll.410
+  25301  Occasional sock_check_pollhup() error on Solaris
+  25452  office2000 reconfiguration gives msi crash
+  25484  NewsLeecher 'send to tray' broken
+  25510  Wine-generated desktop files are not compliant with XDG standard
+  25513  Wine Software Uninstaller crashes
+  25529  64-bit Internet Explorer 7/8 refuse to install
+  25545  64-bit wine loader broken (in win64 mode)
 
 ----------------------------------------------------------------
 
-Changes since 1.3.8:
+Changes since 1.3.9:
 
-Adam Martinson (1):
-      msxml3/domdoc: Add a ref to the schema cache in copy_properties().
+Albert Pool (1):
+      winecfg: Update Dutch translation.
 
-Alexander Morozov (6):
-      crypt32: Add a stub enveloped message implementation.
-      wincrypt.h: Define some enveloped message callback functions.
-      crypt32: Save some info needed for creating enveloped messages.
-      crypt32: Implement updating enveloped messages.
-      crypt32: Implement getting content of an enveloped message.
-      crypt32: Implement CryptEncryptMessage.
+Alexander Morozov (3):
+      wincrypt.h: Define PFN_CMSG_IMPORT_KEY_TRANS callback function.
+      crypt32: Implement decoding enveloped messages.
+      crypt32: Implement getting content and some parameters from a decoded enveloped message.
 
-Alexander Puzankov (5):
-      winmm: Revert "Handle playing of files containing a '+' as part of the filename.".
-      winmm: Use the default I/O procedure only if a custom procedure for a given FOURCC is not found.
-      winmm: The default I/O procedure should return MMIOERR_FILENOTFOUND if the openable file is not found.
-      winmm/tests: Add tests for mmioOpen for the file name of the form EXAMPLE.EXT+ABC.
-      winmm: Fixed boundary condition in mmioOpen file name parsing.
-
-Alexandre Julliard (91):
-      widl: Copy the output buffer management functions from winebuild.
-      widl: Use the output buffer functions to write typelibs.
-      widl: Add a general -o option instead of having a different output name option for each file type.
-      widl: Add support for generating a .rgs registration script for the defined interfaces.
-      msvcrt: Fix controlfp_s parameter checks, with tests.
-      msdaps: Remove the redundant IRowset interface.
-      msdmo: Don't use an interface pointer for an internal function.
-      makefiles: Add rules for building dll registration resources.
-      makedep: Add support for dll registration files.
-      oleaut32: Create dll registration resources.
-      sti: Create dll registration resources.
-      include: Don't use the Ndr functions at all when using registration resources.
-      msxml3: Avoid some uninitialized variable warnings on old gcc.
-      widl: Add progid, threading and vi_progid attributes for coclasses.
-      widl: Generate keys for coclasses in the registration resources.
-      oleaut32: Use widl to generate the coclasses registrations.
-      msdaps: Convert dll registration to the IRegistrar mechanism.
-      inetcomm: Convert dll registration to the IRegistrar mechanism.
-      objsel: Convert dll registration to the IRegistrar mechanism.
-      wmiutils: Convert dll registration to the IRegistrar mechanism.
-      wbemprox: Convert dll registration to the IRegistrar mechanism.
-      oledb32: Convert dll registration to the IRegistrar mechanism.
-      inseng: Convert dll registration to the IRegistrar mechanism.
-      hlink: Convert dll registration to the IRegistrar mechanism.
-      configure: Fix the OpenCL detection for Mac OS.
-      amstream: Convert dll registration to the IRegistrar mechanism.
-      dmband: Convert dll registration to the IRegistrar mechanism.
-      dmcompos: Convert dll registration to the IRegistrar mechanism.
-      dmime: Convert dll registration to the IRegistrar mechanism.
-      dmloader: Convert dll registration to the IRegistrar mechanism.
-      dmscript: Convert dll registration to the IRegistrar mechanism.
-      dmstyle: Convert dll registration to the IRegistrar mechanism.
-      dmsynth: Convert dll registration to the IRegistrar mechanism.
-      dmusic: Convert dll registration to the IRegistrar mechanism.
-      dsound: Convert dll registration to the IRegistrar mechanism.
-      dswave: Convert dll registration to the IRegistrar mechanism.
-      widl: Use the class name as default description for a progid.
-      resources: Define a generic mechanism for adding extra values to the common version block.
-      msi/tests: Fix a test failure on win2k.
-      widl: Don't force removal of progids since "CLSID" is also a progid.
-      widl: Output registration information also for IUnknown.
-      ole32: Convert dll registration to the IRegistrar mechanism.
-      atl: Generate the class registration and use a copy of the standard winecrt0 mechanism.
-      sti: Generate the class registration.
-      makefiles: Add common rules for installing the main man page.
-      shlwapi: Don't use wide strings in button labels.
-      msrle32: Fix invalid character in resource wide string.
-      wrc: Only allow 7-bit ASCII characters in wide string constants.
-      d3dxof: Convert dll registration to the IRegistrar mechanism.
-      ddrawex: Convert dll registration to the IRegistrar mechanism.
-      ddraw: Convert dll registration to the IRegistrar mechanism.
-      dinput8: Convert dll registration to the IRegistrar mechanism.
-      dinput: Convert dll registration to the IRegistrar mechanism.
-      dplayx: Convert dll registration to the IRegistrar mechanism.
-      dpnet: Convert dll registration to the IRegistrar mechanism.
-      dxdiagn: Convert dll registration to the IRegistrar mechanism.
-      mlang: Convert dll registration to the IRegistrar mechanism.
-      mmdevapi: Convert dll registration to the IRegistrar mechanism.
-      devenum: Convert dll registration to the IRegistrar mechanism.
-      infosoft: Convert dll registration to the IRegistrar mechanism.
-      avifil32: Convert dll registration to the IRegistrar mechanism.
-      browseui: Convert dll registration to the IRegistrar mechanism.
-      msctf: Convert dll registration to the IRegistrar mechanism.
-      qedit: Convert dll registration to the IRegistrar mechanism.
-      winecrt0: Automatically register typelib resources too.
-      widl: Improve registration of coclasses contained in typelibs.
-      msxml6: Convert dll registration to the IRegistrar mechanism.
-      ws2_32: Fix a compile failure when control messages are not supported.
-      widl: Signal an error when trying to output an undefined interface into a typelib.
-      widl: Support encoding the DECIMAL type in typelibs.
-      include: Define more wuapi interfaces to avoid undefined forward declarations.
-      wuapi: Add a typelib resource.
-      wuapi: Convert dll registration to the IRegistrar mechanism.
-      gameux: Add a typelib resource.
-      gameux: Convert dll registration to the IRegistrar mechanism.
-      hnetcfg: Convert dll registration to the IRegistrar mechanism.
-      rsaenh: Convert dll registration to the IRegistrar mechanism.
-      crypt32: Use allocation function with the correct prototype in CMSG_CONTENT_ENCRYPT_INFO.
-      ws2_32/tests: Avoid size_t in a trace.
-      msxml3: Avoid using an initialized variable.
-      winex11: Only map the window the first time that WS_VISIBLE is set through WM_SETREDRAW.
-      user32: Return some fake information for an inter-process GetWindowPlacement.
-      msxml4: Add a typelib resource.
-      msxml4: Convert dll registration to the IRegistrar mechanism.
-      widl: Don't create the CurVer key if the ProgId is already version-independent.
-      winetest: Fix filtering of whole dll when individual tests are excluded.
-      winetest: Sill output an entry for a dll when it's skipped entirely.
-      include: Disable widl-specific coclass attributes when not building with widl.
-      msimtf: Convert dll registration to the IRegistrar mechanism.
-      mstask: Convert dll registration to the IRegistrar mechanism.
-      explorerframe: Convert dll registration to the IRegistrar mechanism.
+Alexandre Julliard (54):
+      user32: Fix coordinates mapping for the desktop window in the explorer process.
+      winex11: Fix event coordinates mapping for the root window in the explorer process.
+      comctl32: Fix positioning of tracking tooltips at the bottom of the screen.
+      windowscodecs: Convert the coclasses registration to the IRegistrar mechanism.
+      urlmon: Convert the coclasses registration to the IRegistrar mechanism.
+      itss: Convert protocol registration to the IRegistrar format.
+      actxprxy: Convert dll registration to the IRegistrar mechanism.
+      dispex: Convert dll registration to the IRegistrar mechanism.
+      qmgrprxy: Convert dll registration to the IRegistrar mechanism.
+      user32: Don't call GetModuleFileNameW under the user lock.
+      wineboot: Set the correct architecture in the process identifier variable.
+      kernel32: Update the environment variables that vary across 32-bit/64-bit/Wow64.
+      wine.inf: Don't set the ProgramFiles environment variables through the registry.
+      ntdll: Ensure alignment of static TLS data and free it at thread exit.
+      krnl386: Fetch version from the PEB to avoid potentially using GetVersionEx before it's initialized.
+      winex11: Store information needed for the info balloon in the tray icon structure.
+      winex11: Add support for displaying system tray notification balloons.
+      winex11: Potentially update the system tray notification position when any foreign window is moved.
+      explorer: Store information needed for the info balloon in the tray icon structure.
+      explorer: Add support for displaying system tray notification balloons in desktop mode.
+      wineboot: Relaunch the 64-bit version of wineboot on Wow64.
+      winecfg: Relaunch the 64-bit version of winecfg on Wow64.
+      winecfg: Set Wow64 registry keys as well as the 64-bit ones for version information.
+      ntdll: Don't worry about the DOS area on non-x86.
+      loader: Make sure the new stack is 16-byte aligned in the preloader.
+      loader: Use long instead of int in the preloader for anything that can store a pointer.
+      loader: Build the preloader for x86-64.
+      libwine: Use the 64-bit preloader when starting 64-bit wine.
+      libwine: Reserve memory areas for 64-bit in case we don't have a preloader.
+      ntdll: Avoid putting the virtual heap in the low 2Gb on 64-bit.
+      quartz: Convert coclasses registration to the IRegistrar mechanism.
+      avifil32: Move extension registrations to the rgs file.
+      widl: Register the PSFactoryBuffer class as factory if it's defined in the idl file.
+      msi: Convert the dll registration to the IRegistrar mechanism.
+      loader: Define asm functions instead of inlines for x86-64 syscalls to avoid trouble with register constraints.
+      wiaservc: Convert coclasses registration to the IRegistrar mechanism.
+      include: Correctly define the msxml typelib by directly including xmldom.idl and xmldso.idl.
+      include: Add a couple of missing interfaces in msxml2.idl.
+      msxml: Add an msxml library that contains the v2.0 msxml typelib.
+      msxml: Register the v2.0 classes using the IRegistrar mechanism.
+      msxml2: Add an msxml2 library that contains the v2.6 msxml typelib.
+      msxml3: Convert dll registration to the IRegistrar mechanism.
+      loader: Setup the TLS register on x86-64 for stack protector checks.
+      widl: Allow specifying a version for a coclass independently of its typelib version.
+      include: Set version to 1.0 for msxml classes.
+      hhctrl.ocx: Add a typelib and register it.
+      widl: Don't free the input file name since it's stored in various places in the location info.
+      widl: Allow specifying a class version outside of a typelib too.
+      include: Define the Scriptlet class in mshtml.idl.
+      mshtml: Convert the classes registration to the IRegistrar mechanism.
+      server: Use the syscall function instead of inline assembly.
+      ntdll: Use the syscall function instead of inline assembly.
+      libwine: Use the syscall function instead of inline assembly.
+      appwiz.cpl: Convert the application list to a standard Wine list.
 
 Anders Jonsson (1):
-      appwiz.cpl: Update Swedish translation.
+      cmd: Update Swedish translation.
 
-Andrew Bogott (12):
-      ole32: Revert "ole32: Only read known format ids when attempting to read summary information.".
-      ole32: Fix an off-by-one error that broke reading of many properties.
-      ole32: Fix the test for arbitrary property ids.
-      shdocvw: Skip some tests if a modern IE is not present.
-      shdocvw: Test read/write of a couple of properties on IUniformResourceLocator.
-      shdocvw: Add the IPropertySet interface to an internet shortcut, and partially implement it.
-      shdocvw: In PersistFile_Save, output the Icon Path and Icon Index properties.
-      shdocvw: Plug a tiny memory leak in a test.
-      shdocvw: Add reading of iconfile and iconframe via IPersistFile.
-      shdocvw: Add tests for IPersistFile on an internet shortcut.
-      winemenubuilder: Include icons in .url menus.
-      winemenubuilder: Release property variants. Plugs a one-string memory leak.
+Andrew Bogott (1):
+      winemenubuilder: In InvokeShellLinkerForURL, better replicate the deferral behavior in InvokeShellLinker.
 
-Andrew Eikum (2):
-      include: CMIC_MASK_NOASYNC flag.
-      shell32: Correctly construct the PIDL given to SHChangeNotify in AddFolder.
-
-Andrew Nguyen (4):
-      msvcrt: Add some definitions and prototypes to float.h.
-      shdocvw/tests: Avoid using a freed IUniformResourceLocatorA variable.
-      shdocvw: Avoid a double free in PersistFile_Load.
-      shdocvw: Correct misuse of output pointer in get_profile_string helper.
-
-André Hentschel (17):
-      wldap32/tests: Fix skipping if server is unavailable.
-      gdi32/tests: Fix test on WinME.
-      user32/tests: Remove obsolete comment.
-      winemaker: Remove unused target constants.
-      winemaker: Fix current directory recognition.
-      winemaker: Fix going up one directory level.
-      winemaker: Add calling convention flags.
-      include: Increase rpcndr header version.
-      user32/tests: Skip DDE tests on win9x.
-      advapi32/tests: More tests for the merged view of HKEY_CLASSES_ROOT.
-      mshtml: Fix export comment.
-      winemaker: Remove a comment.
-      include: Add more well known sid types.
-      include: Add more progressbar defines.
-      comctl32: Partially implement new messages.
-      sane.ds: Convert Norwegian translation to UTF-8.
-      sane.ds: Convert Swedish translation to UTF-8.
-
-Aric Stewart (2):
-      secur32/tests: Skip test on failure to acquire cred_handle.
-      wineqtdecoder: Initial version of the video decoder using Mac OS/X QuickTime Framework.
+André Hentschel (22):
+      msi: Fix test failure on some 2k3 machines.
+      advapi32: Fix test failure on some NT4 machines.
+      ntdll: Fix test failure on some NT4 machines.
+      rsaenh: Fix test failure on some NT4 machines.
+      wrc: Allow comma after popup name.
+      shell32: Fix shelllink test to not crash on NT4.
+      shdocvw: Add Resizer control to the iexplore window.
+      gphoto2.ds: Fix German translation.
+      include: Add winhttp secure protocol flags.
+      msi/tests: Remove superfluous check.
+      gameux: Fix test failures on Wine wow64.
+      gameux: Fix Path for the statistics.
+      sane.ds: Fix translation of microsecond.
+      wininet: Update German translation.
+      include: Add ERROR_INTERNET_FORTEZZA_LOGIN_NEEDED for wininet tests.
+      include: Add new suite masks.
+      wininet: Fix German translation.
+      shlwapi/tests: Allow Win7 behaviour for SHFormatDateTimeW.
+      qmgr/tests: Use a temporary path to avoid failures.
+      shell32/tests: Fix a typo.
+      advapi32: Print a FIXME also for the unknown levels.
+      gameux: Fix another test failure on Wine wow64.
 
 Austin English (4):
-      msxml3: Bump version information to SP9.
-      tools: Fix install-dev target.
-      msvcrt: Fix a compiler warning on PowerPC.
-      d3d8/d3d9: Fix compiler warnings on non x86/x86_64.
+      ntdll: Bump win2k3 version information to sp2.
+      urlmon: Add stubs for ordinals 410 and 423.
+      mscoree/tests: Fix a broken test (LLVM/Clang).
+      quartz: Avoid %L in traces (LLVM/Clang).
 
-Austin Lund (4):
-      user32/tests: Fix test failures by disabling IME when testing unicode input.
-      shell32/tests: Fixed SHPathPrepareForWriteW tests on Asian platforms.
-      user32/tests: Close second window in DBCS WM_CHAR tests.
-      user32/tests: Disable IME for msg tests.
+Cheer Xiao (2):
+      view: Update simplified Chinese translation.
+      write: Update simplified Chinese translation.
 
-Daniel Zimmermann (1):
-      wtsapi32: Add some stubs.
+Damian Dixon (1):
+      advapi32: Added check for NULL pointer being passed to QueryServiceStatus for either parameter.
+
+David Bartley (1):
+      iphlpapi: Add CancelIPChangeNotify stub.
+
+David Hedberg (14):
+      urlmon: Set BINDF_NEEDFILE if BINDF_PULLDATA is not specified.
+      wininet: Respect SECURITY_FLAG_IGNORE_CERT_DATE_INVALID.
+      wininet: Make module handle scope global.
+      wininet: Add a simple certificate dialog to InternetErrorDlg.
+      shell32: Fix ExplorerBrowser::SetRect to work properly when passed a NULL-valued hdwp.
+      shell32: Return S_OK in ::SetPropertyBag.
+      include: Add IShellItem2 interface declaration.
+      shell32: IShellItem::GetAttributes should also work on the desktop shellfolder.
+      shell32: Add IShellItem2 stub to ShellItem implementation.
+      include: Add a few INET_E_ defines.
+      urlmon: Split the code for sending an http request into its own function.
+      urlmon: Fix return value from QueryService.
+      shell32: Standardize the COM usage in ebrowser.c.
+      shell32: Add IInputObject stub to ExplorerBrowser.
+
+Detlef Riekenberg (5):
+      cmd: Allow GOTO to a label which has a following whitespace, with test.
+      configure: Ask for the correct development package for gstreamer base plugins.
+      cmd: Add CHOICE builtin with DOS6 to XP commandline parameter.
+      cmd: Add german translation for CHOICE.
+      cmd: Do not reset errorlevel during SET.
 
 Eric Pouech (3):
-      kernel32: Control characters should be returned while reading a line from console.
-      kernel32: Properly manage ctrl-Z (and ctrl-D) in ReadFile when dealing with a console handle.
-      wineconsole: Move the curses critical section inside the private data.
+      kernel32: When reading chars out of a bare console, use the Unix API (instead of the Windows one).
+      kernel32: Proper support for echo-input (enable/disable) when getting console input.
+      kernel32: In readline, now print control characters with ^ escape.
 
-Erich Hoover (2):
-      ws2_32: Add support for WSARecvMsg and IP_PKTINFO.
-      ws2_32/tests: Add regression tests for WSARecvMsg and IP_PKTINFO.
+Eryk Wieliczko (1):
+      msvcrt/tests: Add _fcvt_s tests.
 
-Eryk Wieliczko (4):
-      msvcp90: Added basic_string<{char, wchar}>.capacity implementation.
-      msvcp90/tests: Added basic_string<{char, wchar}>.capacity tests.
-      msvcrt: Implement ecvt_s.
-      msvcrt/tests: Add _ecvt_s tests.
+Francois Gouget (4):
+      shdocvw: Fix compilation on systems that don't support nameless unions.
+      mshtml: Fix a typo and remove a space before a '\n' in a FIXME() trace.
+      msvcrt/tests: Add a trailing '\n' to an ok() call.
+      Assorted spelling fixes.
 
-Francois Gouget (8):
-      server: Make sock_check_pollhup() more reliable on Solaris.
-      comctl32/tests: Add a trailing '\n' to an ok() call.
-      shdocvw: Fix the trailing '\n' of a TRACE().
-      ntdll/tests: Add a trailing '\n' to an ok() call.
-      msxml3: Add a trailing '\n' to an ERR() call.
-      comctl32: Add a trailing '\n' to a FIXME() call.
-      winetest: Add a trace in the log when skipping a subtest.
-      winetest: Allow submitting the results if not too many tests have been skipped.
+Frédéric Delanoy (3):
+      cmd: Update French translation.
+      wininet: Update French translation.
+      wininet: Update French translation.
 
-Hans Leidekker (13):
-      msi: Always ignore disabled components.
-      msi: Look for transform files relative to the package directory.
-      msi: Improve the stub implementations of RemoveExistingProducts and MigrateFeatureStates.
-      msi: Reuse temporary executables.
-      ntdll: Don't call NtClose directly in delete_view.
-      msi: Clear last error on success in MsiQueryFeatureState and MsiQueryProductState.
-      programs: Add a stub implementation of netsh.exe.
-      msi: Map neutral parts of package language ids to the system default language id.
-      msi: Don't try to install or remove ODBC drivers if the component is disabled.
-      msi/tests: Avoid a test failure on 64-bit.
-      advapi32: Return the computer name as referenced domain name in LookupAccountName.
-      sxs: Add support for installing policy files.
-      msi/tests: Fix some test failures on Wow64.
+Greg Geldorp (6):
+      kernel32/tests: Add tests to verify USERPROFILE and environment variables from registry are present and correct.
+      rsaenh/tests: CryptGetKeyParam doesn't fail on Win7/Win2K8R2.
+      kernel32/tests: Quote command line arguments that might contain spaces.
+      kernel32/tests: Remove check of environment variables against registry.
+      ntdll/tests: Add alternative results for overlong instructions.
+      shdocvw/tests: Need to save .url before committing extra props for IE6.
 
-Henri Verbeet (40):
-      ddraw/tests: Fix a typo.
-      wined3d: Pass an IWineD3DDeviceImpl pointer to drawStridedSlow().
-      wined3d: Pass an IWineD3DDeviceImpl pointer to drawPrimitive().
-      wined3d: Explicitly pass data and gl_info to shader_select_depth_blt().
-      wined3d: Explicitly pass data and gl_info to shader_deselect_depth_blt().
-      wined3d: Move the PrivateData structure to resource.c.
-      wined3d: Pass an IWineD3DDeviceImpl pointer to shader_update_float_vertex_constants().
-      wined3d: Pass an IWineD3DDeviceImpl pointer to shader_update_float_pixel_constants().
-      wined3d: Pass an IWineD3DDeviceImpl pointer to shader_alloc_private().
-      wined3d: Pass an IWineD3DDeviceImpl pointer to shader_free_private().
-      wined3d: Remove a unused parameter to shader_dirtifyable_constants().
-      wined3d: Remove a redundant parameter to enable_extension().
-      wined3d: Pass an IWineD3DDeviceImpl pointer to alloc_private().
-      wined3d: Pass an IWineD3DDeviceImpl pointer to free_private().
-      wined3d: Move min_rel_offset / max_rel_offset to the shader_reg_maps structure.
-      wined3d: Properly initialize min_rel_offset.
-      wined3d: Move the rel_offset vertex shader field to the ARB shader backend.
-      wined3d: need_rel_addr_const() is only ever called for vertex shaders.
-      wined3d: Explicitly pass shader_data and reg_maps to need_rel_addr_const().
-      wined3d: shader_get_registers_used() is only called during shader initialization.
-      wined3d: Explicitly pass shader_data and reg_maps to need_helper_const().
-      wined3d: Explicitly pass shader_data and reg_maps to reserved_vs_const().
-      wined3d: Use local reg_maps variables where possible.
-      wined3d: Explicitly pass shader_data, reg_maps and gl_info to vshader_add_footer().
-      d3d9/tests: Don't draw undefined data in stream_test().
-      wined3d: Rename shader_reg_maps to wined3d_shader_reg_maps.
-      wined3d: Explicitly pass gl_info to shader_arb_generate_vshader().
-      wined3d: Explicitly pass gl_info to shader_arb_generate_pshader().
-      wined3d: Don't leak heapMemory in surface_remove_pbo().
-      wined3d: Pass a wined3d_buffer structure to buffer_get_memory().
-      wined3d: Remove a redundant SetDirty() call from IWineD3DSurfaceImpl_Map().
-      wined3d: Store an IWineD3DDeviceImpl pointer in IWineD3DBaseShaderClass.
-      wined3d: Remove the unused IWineD3DBaseTexture::GetDirty() method.
-      wined3d: Remove IWineD3DBaseTexture::SetDirty() from the public interface.
-      wined3d: Pass an IWineD3DDeviceImpl pointer to alloc_private().
-      wined3d: Pass an IWineD3DDeviceImpl pointer to free_private().
-      wined3d: Explicitly pass blit_priv and gl_info to gen_yuv_shader().
-      wined3d: Explicitly pass blit_priv and gl_info to gen_p8_shader().
-      wined3d: Explicitly pass blit_priv and gl_info to set_shader().
-      wined3d: Explicitly pass gl_info to unset_shader().
+Hans Leidekker (16):
+      msi: Support MSIRUNMODE_LOGENABLED in MsiGetMode.
+      rpcrt4: Add a stub implementation of RpcMgmtSetAuthorizationFn.
+      wineboot: Set the USERDOMAIN environment variable.
+      msi: Return INSTALLSTATE_UNKNOWN from MsiGetComponentState if the component is disabled.
+      msi: Rewrite command line parsing to handle quoted values correctly.
+      msi: Add some traces.
+      msi: Global and local win32 assembly names are formatted differently.
+      msi: Don't flag an error in the InstallServices action if the component does not exist.
+      msi: Remove an incorrect error trace.
+      uninstaller: Run msiexec if the WindowsInstaller value is set.
+      uninstaller: Fix a leak.
+      appwiz.cpl: Run msiexec if the WindowsInstaller value is set.
+      msi: Set the Preselected property if the default feature selection is modified in a dialog.
+      msi: Set the install level to the maximum if the requested install state is not the default.
+      msi: Use a function to determine if a feature is selected.
+      msi: Change ACTION_UpdateComponentStates to take a feature pointer.
 
-Huw Davies (1):
-      winspool.drv: Rewrite the lpr scheduler to use the pipe scheduler.
+Henri Verbeet (17):
+      wined3d: Pass an IWineD3DBaseShaderImpl pointer to shader_generate_arb_declarations().
+      wined3d: Pass an IWineD3DBaseShaderImpl pointer to shader_generate_glsl_declarations().
+      wined3d: Pass an IWineD3DBaseShaderImpl pointer to shader_destroy().
+      wined3d: Pass an IWineD3DBaseShaderImpl pointer to shader_cleanup().
+      wined3d: Avoid some interface pointers in set_glsl_shader_program().
+      wined3d: Pass implementation pointers to generate_param_reorder_function().
+      wined3d: Store implementation pointers in struct glsl_shader_prog_link.
+      wined3d: Store implementation pointers in glsl_program_key_t.
+      wined3d: Pass implementation pointers to get_glsl_program_entry().
+      wined3d: Pass an IWineD3DBaseShaderImpl pointer to shader_get_registers_used().
+      wined3d: Pass an IWineD3DBaseShaderImpl pointer to shader_generate_main().
+      wined3d: Store an IWineD3DBaseShaderImpl pointer in wined3d_shader_context.
+      wined3d: Pass an IWineD3DBaseTextureImpl array to pixelshader_update_samplers().
+      wined3d: Pass an IWineD3DBaseTextureImpl pointer to basetexture_unload().
+      wined3d: Pass an IWineD3DBaseTextureImpl pointer to basetexture_cleanup().
+      wined3d: Pass an IWineD3DBaseTextureImpl pointer to basetexture_get_level_count().
+      kernel32: Fix some memory leaks in set_wow64_environment().
 
-Hwang YunSong (1):
-      appwiz.cpl: Update Korean resource.
+Huw Davies (9):
+      fonts: Fix the metrics of the extended integral and brace glyphs.
+      ole32: Rewrite the OleAdviseHolder's STATDATA enumerator to be a generic STATDATA enumerator.
+      include: Add GLYPHSET flag define.
+      gdi32: Clear the accel flags.
+      ole32: Remove some useless comments.
+      ole32: Use a STATDATA array to hold the connection data.
+      ole32: Allow the EnumSTATDATA constructor to take a sparse array.
+      ole32: Implement IDataAdviseHolder_EnumAdvise.
+      ole32: Standardize the COM usage.
 
-Jacek Caban (47):
-      mscoree: Explicitly specify CDECL on imported functions.
-      mshtml: Added ICustomDoc::SetUIHandler implementation.
-      mshtml: Don't overwrite custom UI handler in SetClientSite.
-      mshtml: Added SetUIHandler tests.
-      mshtml: Added IHTMLStyle::padding property implementation.
-      mshtml.idl: Added param element's interfaces declaration.
-      mshtml: Fixed tests on Windows.
-      urlmon: Moved buffer-based MIME finding to a separated function.
-      urlmon: Clean up default protocol handler pseudo-interface implementation.
-      mshtml: Added beginning ActiveX tests.
-      mshtml: Improved error handling in get_node calls.
-      mshtml: Better error handling in create_node calls.
-      mshtml: Use binary search in HTMLElement_Create.
-      mshtml: Improved error handling in HTMLElement_Create calls.
-      mshtml: Improved error handling in element constructors.
-      npmshtml: Added Mozilla plugin for mshtml ActiveX controls.
-      mshtml: Added NP_GetEntryPoints implementation.
-      mshtml: Added ActiveX control creation implementation.
-      mshtml: Make translate_url IUri-based.
-      mshtml: Added IOleControl calls test.
-      mshtml: Added plugin host's IOleClientSite stub implementation.
-      mshtml: Added QuickActivate tests.
-      mshtml: Added QuickActivation support.
-      mshtml: Added PluginHost's IAdviseSinkEx stub implementation.
-      mshtml: Added PluginHost's IPropertyNotifySink stub implementation.
-      mshtml: Added PluginHost's IDispatch stub implementation.
-      mshtml: Added PluginHost's IOleInPlaceSite stub implementation.
-      mshtml: Added PluginHost's IOleControlSite stub implementation.
-      mshtml: Added PluginHost's IBindHost stub implementation.
-      mshtml: Added PluginHost's IServiceProvider stub implementation.
-      appwiz.cpl: Added Gecko installer based on mshtml code.
-      appwiz.cpl: Added translations from mshtml.
-      mshtml: Use wineaddon.cpl to install Gecko.
-      mshtml: Associate PluginHost with containing HTMLDocumentDode.
-      mshtml: Inherit HTMLObjectElement from new HTMLPluginContainer object.
-      mshtml: Associate PluginHost with containing element.
-      mshtml: Added support for CONFIRMSAFETYACTION_LOADOBJECT flag in CONFIRMSAFETY struct.
-      mshtml: Added beginning support for loading data by an ActiveX object.
-      mshtml: IPropertyBag stub implementation.
-      mshtml: Added IPersistPropertyBag calls test.
-      mshtml: Added IPropertyBag2 stub implementation.
-      mshtml: Added IPropertyBag::Read implementation.
-      mshtml: Added OnChanged(DISPID_READYSTATE) semi-stub implementation.
-      mshtml: Added QueryService(SID_SBindHost) implementation.
-      mshtml: Added PluginHost::GetMoniker implementation.
-      mshtml: Added IBindHost::CreateMoniker implementation.
-      mshtml: Added IViewObjectEx iface to plugin test.
+Hwang YunSong (16):
+      sane.ds: Update Korean resource.
+      browseui: Update Korean resource.
+      clock: Update Korean resource.
+      cmdlgtst: Update Korean resource.
+      comctl32: Update Korean resource.
+      comdlg32: Update Korean resource.
+      credui: Update Korean resource.
+      crypt32: Update Korean resource.
+      cryptdlg: Update Korean resource.
+      cryptui: Update Korean resource.
+      cmd: Update Korean resource.
+      gphoto2.ds: Update Korean resource.
+      hhctl.ocx: Update Korean resource.
+      iccvid: Update Korean resource.
+      localspl: Update Korean resource.
+      localui: Update Korean resource.
 
-Joris Huizer (1):
-      msi: Don't leak memory on error path.
+Jacek Caban (38):
+      mshtml: Fixed tests on IEs not supporting INewWindowManager.
+      mshtml: Call DoVerb on embedded plugin.
+      mshtml: Added support for plugin in place activation.
+      mshtml: Deactivate plugin when detaching from document.
+      mshtml: Added PluginHost::GetWindowContext implementation.
+      mshtml: Added more plugin in place activation support.
+      mshtml: Added more ActiveX tests.
+      mshtml: Added OnUIActivation implementation.
+      mshtml: Added IOleContainer stub implementation.
+      mshtml: Added PluginHost::GetContainer implementation.
+      mshtml: Forward PluginHost's QueryService calls to window object.
+      mshtml: Fixed tests on some IE6 installations.
+      mshtml: Removed undocumented, internal stubs exported only by old IEs.
+      jscript: Move some of registration process to IRegistrar mechanism.
+      mshtml: IHTMLDocument2 iface handling clean up.
+      winetest: Make win9x unsupported.
+      shdocvw: Share get_LocationURL implementation between WebBrowser and InternetExplorer objects.
+      shdocvw: Moved getting dochost pointer to separated function.
+      shdocvw: Added support for QueryService(IID_IWebBrowserApp).
+      mshtml: Added IHTMLObjectElement::get_object implementation.
+      mshtml: Added support for forwarding object element's DOM calls to ActiveX control.
+      mshtml: Improved QueryService debug traces.
+      mshtml: Improved IOmNavigator::javaEnabled stub.
+      mshtml: Added IHTMLScriptElement::get_scr implementation.
+      mshtml: Added IHTMLStyleElement::media property implementation.
+      mshtml: Added IHTMLStyleElement::type property implementation.
+      appwiz.cpl: Correctly handle NULL params in CPL_STARTWPARAMSW handler.
+      jscript: Added Date.setYear implementation.
+      urlmon: Added IUriContainer stub implementation of URLMoniker object.
+      mshtml: Fixed IOleUndoManager::QueryInterface implementation.
+      jscript: Exception tests clean up.
+      aclocal.m4: Recognize mingw-w64 as 32-bit cross compiler.
+      urlmon: Added more IInternetProtocolEx tests.
+      mshtml: Added GUID_CUSTOM_CONFIRMOBJECTSAFETY with CONFIRMSAFETYACTION_LOADOBJECT flag tests.
+      urlmon: Converted more registration process to IRegistrar mechanism.
+      mshtml: Get rid of no longer used GECKO_DATADIR.
+      urlmon: Make protocol tests more verbose.
+      include: Added macros for unions and structs that should remain nameless regardless NONAMELESSUNION/NONAMELESSSTRUCT definition.
 
-Juan Lang (2):
-      ws2_32: Set length on successful return from WSAStringToAddress.
-      quartz: Don't crash in SetMediaType if the source media type is NULL.
+Jerome Leclanche (1):
+      winemenubuilder: Add a trailing semicolon to MimeType in desktop files.
 
-Ken Thomases (1):
-      msxml3: Fix building on Leopard.
+Joel Holdsworth (1):
+      shdocvw: Added missing rendering directive to ietoolbar.svg.
 
-Louis Lenders (1):
-      Add stubbed wmic.exe.
+Juan Lang (1):
+      crypt32: Accept any matching CN when checking a certificate's name.
 
-Maarten Lankhorst (29):
-      shell32: Fix pointer truncation in SHGetFileInfoA.
-      quartz: Unset time in dsoundrender if it cannot be obtained.
-      quartz: Silence fixmes in sound renderer.
-      strmbase: Fix qos.
-      quartz: Unregister window class after shutdown.
-      quartz: Fix timestamping in avi decoder.
-      quartz: Handle selecting default sync source better.
-      winegstreamer: Prevent gstreamer from being unloaded.
-      quartz: Add support for advise functions in dsoundrender.
-      quartz: Implement AsyncReader_FindPin.
-      quartz: Increase min_lag.
-      quartz: Fill up sound buffer while in paused state.
-      Revert "quartz: Fill up sound buffer while in paused state.".
-      quartz: Allow stream time to go negative in sound renderer.
-      quartz: Add quality control to sound renderer.
-      quartz: Refuse WAVE_FORMAT_PCM/EXTENSIBLE in acmwrapper.
-      quartz: Support IFilterMapper3 interface.
-      quartz: Add support for filtermapper3 to filtergraph.
-      quartz: Make sure video window is actually destroyed.
-      quartz: Implement AMGetErrorTextA on top of AMGetErrorTextW.
-      quartz: Use unicode calls in SystemClock.
-      quartz: Make video renderer use unicode calls.
-      strmbase: Fix reference leak of enumpins.
-      winegstreamer: Make sure size is set correctly before delivering buffers.
-      winegstreamer: Kill thread on disconnect.
-      quartz: Remove default clock if the providing filter is removed from filtergraph.
-      quartz: Always update time when Run is called.
-      winegstreamer: Always update time when Run is called.
-      strmbase: Use advise functions in WaitFor.
+Kirill Smelkov (1):
+      kernel32: Support deleting resources in UpdateResource.
 
-Marcus Meissner (3):
-      wined3d: Detect nouveau as NVIDIA.
-      winex11.drv: Do not include XFORM.eDx and eDy into font hashing/caching.
-      ntdll: Report a failed executable mmap on nonexec filesystems.
+Luca Bennati (2):
+      cmd: Update Italian translation.
+      wininet: Update Italian translation.
 
-Michael Stefaniuc (131):
-      msimtf: Use an interface instance instead of a vtbl pointer.
-      msdmo: Use an iface instead of a vtbl pointer in IEnumDMOImpl.
-      atl: Use an iface instead of a vtbl pointer in the Registrar object.
-      d3drm: Use an iface instead of a vtbl pointer in IDirect3DRMImpl.
-      d3drm: Use an iface instead of a vtbl pointer in IDirect3DRMMeshBuilderImpl.
-      dispex/tests: Use an iface instead of a vtbl pointer in dispex.
-      msdaps: Standardize the COM usage in row_server.c.
-      windowscodecs: Use an iface instead of a vtbl pointer in ClassFactoryImpl.
-      windowscodecs: Standardize the COM usage in gifformat.c.
-      windowscodecs: Standardize the COM usage in tiffformat.c.
-      windowscodecs: Standardize the COM usage in tgaformat.c.
-      windowscodecs: Standardize the COM usage in icoformat.c.
-      windowscodecs: Standardize the COM usage in jpegformat.c.
-      windowscodecs: Standardize the COM usage in pngformat.c.
-      windowscodecs: Standardize the COM usage in info.c.
-      windowscodecs: Use an iface instead of a vtbl pointer in ImagingFactory.
-      windowscodecs: Use an iface instead of a vtbl pointer in PaletteImpl.
-      pstorec: Use an iface instead of a vtbl pointer in PStore_impl.
-      explorerframe: Use iface instead of vtbl pointers in NSTC2Impl.
-      shlwapi: Use iface instead of vtbl pointers in ISHFileStream.
-      shlwapi: Use an iface instead of an vtbl pointer in threadref.
-      shlwapi: Use an iface instead of an vtbl pointer in ISHRegStream.
-      shdocvw: Use an iface instead of an vtbl pointer in IClassFactoryImpl.
-      amstream: Use an iface instead of an vtbl pointer in IAMMultiMediaStreamImpl.
-      devenum: Use an iface instead of an vtbl pointer in RegPropBagImpl.
-      mshtml: Use an iface instead of a vtbl pointer in ClassFactory.
-      ole32: Use an iface instead of a vtbl pointer in EnumOleSTATDATA.
-      oleaut32: Use an iface instead of a vtbl pointer in IRecordInfoImpl.
-      oleaut32: Use an iface instead of a vtbl pointer in StdDispatch.
-      shell32: Use an iface instead of a vtbl pointer in IShellItemArrayImpl.
-      shell32: Use ifaces instead of vtbl pointers in IDesktopFolderImpl.
-      avifil32: Use an iface instead of an vtbl pointer in IClassFactoryImpl.
-      ole32/tests: Use an iface instead of a vtbl pointer in HeapUnknown.
-      fusion: Use an iface instead of a vtbl pointer in IAssemblyEnumImpl.
-      ole32: Use an iface instead of a vtbl pointer in EnumOLEVERB.
-      qmgr: Use an iface instead of a vtbl pointer in DLBindStatusCallback.
-      fusion: Standardize the COM usage in asmcache.c.
-      shell32: Use an iface instead of a vtbl pointer in IQueryAssociationsImpl.
-      hlink: Use an iface instead of a vtbl pointer in HlinkBCImpl.
-      itss: Standardize the COM usage in moniker.c.
-      dinput: Use an iface instead of a vtbl pointer in IClassFactoryImpl.
-      dpnet: Use an iface instead of a vtbl pointer in IClassFactoryImpl.
-      itss: Standardize the COM usage in itss.c.
-      oleaut32: Use an iface instead of a vtbl pointer in IClassFactoryImpl.
-      dplayx: Use an iface instead of a vtbl pointer in IClassFactoryImpl.
-      oleaut32: Use an iface instead of a vtbl pointer in TMarshalDispatchChannel.
-      infosoft: Use an iface instead of a vtbl pointer in IClassFactoryImpl.
-      dsound: Use an iface instead of a vtbl pointer in IClassFactoryImpl.
-      wbemprox: Use an iface instead of a vtbl pointer in wbem_locator.
-      mmdevapi: Use an iface instead of a vtbl pointer in IClassFactoryImpl.
-      dinput8: Use an iface instead of a vtbl pointer in IClassFactoryImpl.
-      oledb32: Use an iface instead of a vtbl pointer in IClassFactoryImpl.
-      itss: Use ifaces instead of vtbl pointers in ITSProtocol.
-      mshtml: Use an iface instead of an vtbl pointer in HTMLAnchorElement.
-      mshtml: Use an iface instead of a vtbl pointer in HTMLBodyElement.
-      mshtml: Use an iface instead of a vtbl pointer in HTMLRect.
-      mshtml: Use an iface instead of a vtbl pointer in HTMLEventObj.
-      mshtml: Use an iface instead of a vtbl pointer in HTMLScriptElement.
-      mshtml: Use an iface instead of a vtbl pointer in UndoManager.
-      mshtml: Use an iface instead of a vtbl pointer in HTMLFrameElement.
-      mshtml: Use an iface instead of a vtbl pointer in HTMLTableRow.
-      mshtml: Use an iface instead of a vtbl pointer in HTMLSelectElement.
-      mshtml: Change the first vtbl in HTMLInputElement to an iface.
-      mshtml: Change the second vtbl in HTMLInputElement to an iface.
-      mshtml: Use an iface instead of a vtbl pointer in HTMLGenericElement.
-      mshtml: Use an iface instead of a vtbl pointer in HTMLTextAreaElement.
-      mshtml: Use an iface instead of a vtbl pointer in HTMLObjectElement.
-      mshtml: Use an iface instead of a vtbl pointer in HTMLLoadOptions.
-      mshtml: Use an iface instead of a vtbl pointer in HTMLSelectionObject.
-      mshtml: Use an iface instead of a vtbl pointer in HTMLScreen.
-      mshtml: Use an iface instead of a vtbl pointer in HTMLIFrame.
-      mshtml: Use an iface instead of a vtbl pointer in OmNavigator.
-      mshtml: Use an iface instead of a vtbl pointer in HTMLImgElement.
-      urlmon: Use an iface instead of a vtbl pointer in EnumFORMATETC.
-      urlmon: Standardize the COM usage in sec_mgr.c.
-      urlmon: Use ifaces instead of vtbl pointers in DownloadBSC.
-      urlmon: Use ifaces instead of vtbl pointers in FtpProtocol.
-      urlmon: Use ifaces instead of vtbl pointers in HttpProtocol.
-      urlmon: Use ifaces instead of vtbl pointers in FileProtocol.
-      shell32: Standardize the COM usage in dataobject.c.
-      shell32: Use an iface instead of a vtbl pointer in IDefClFImpl.
-      shell32: Use an iface instead of a vtbl pointer in IFileSystemBindDataImpl.
-      mshtml: Use an iface instead of a vtbl pointer in HTMLPluginsCollection.
-      wineoss.drv: Standardize the COM usage in dscapture.c.
-      winealsa.drv: Standardize the COM usage in dsoutput.c.
-      ole32: Use an iface instead of a vtbl pointer in PropertyStorage_impl.
-      shell32/tests: Standardize the COM usage in shlview.c.
-      shlwapi: The Italian translation uses UTF-8 encoding.
-      quartz: Use an iface instead of a vtbl pointer in IEnumFiltersImpl.
-      quartz: Use an iface instead of a vtbl pointer in EnumMonikerImpl.
-      quartz: Use an iface instead of a vtbl pointer in BaseMemAllocator.
-      strmbase: Use an iface instead of a vtbl pointer in IEnumPinsImpl.
-      windowscodecs: Use an iface instead of a vtbl pointer in FormatConverter.
-      windowscodecs: Use an iface instead of a vtbl pointer in PropertyBag.
-      windowscodecs: Use an iface instead of a vtbl pointer in FlipRotator.
-      windowscodecs: Standardize the COM usage in icnsformat.c.
-      mmdevapi: Use an iface instead of a vtbl pointer in AEVImpl.
-      quartz: Use an iface instead of a vtbl pointer in IEnumRegFiltersImpl.
-      quartz: Use an iface instead of a vtbl pointer in SystemClockImpl.
-      browseui: Use an iface instead of a vtbl pointer in ACLShellSource.
-      browseui: Use an iface instead of a vtbl pointer in CompCatCacheDaemon.
-      browseui: Use an iface instead of a vtbl pointer in ClassFactory.
-      browseui: Use an iface instead of a vtbl pointer in ProgressDialog.
-      ole32: Use an iface instead of a vtbl pointer in RemUnknown.
-      ole32: Use an iface instead of a vtbl pointer in FileLockBytesImpl.
-      ole32: Use an iface instead of a vtbl pointer in BindCtxImpl.
-      ole32: Use ifaces instead of vtbl pointers in Context.
-      ole32: Use an iface instead of a vtbl pointer in PointerMonikerImpl.
-      rpcrt4: Use an iface instead of a vtbl pointer in RpcStreamImpl.
-      strmbase: Use an iface instead of a vtbl pointer in IEnumMediaTypesImpl.
-      msctf: Use an iface instead of a vtbl pointer in DisplayAttributeMgr.
-      msctf: Use an iface instead of a vtbl pointer in ClassFactory.
-      msctf: Use an iface instead of a vtbl pointer in CategoryMgr.
-      msctf: Use an iface instead of a vtbl pointer in LangBarMgr.
-      msctf: Use an iface instead of a vtbl pointer in Range.
-      itss: Standardize the COM usage in storage.c.
-      infosoft: Use an iface instead of a vtbl pointer in wordbreaker_impl.
-      qedit: Use an iface instead of a vtbl pointer in MediaDetImpl.
-      msimtf: Use an iface instead of a vtbl pointer in ActiveIMMApp.
-      msxml3: Use ifaces instead of vtbl pointers in BindStatusCallback.
-      riched20/tests: Use an iface instead of a vtbl pointer in ITextHostTestImpl.
-      riched20: Standardize the COM usage in clipboard.c.
-      browseui: Use ifaces instead of vtbl pointers in ACLMulti.
-      wuapi: Use an iface instead of a vtbl pointer in update_installer.
-      wuapi: Use an iface instead of a vtbl pointer in update_session.
-      wuapi: Use an iface instead of a vtbl pointer in update_downloader.
-      wuapi: Use an iface instead of a vtbl pointer in automatic_updates.
-      oleaut32: Use ifaces instead of vtbl pointers in OLEPictureImpl.
-      mscoree: Use an iface instead of a vtbl pointer in MetaDataDispenser.
-      mscoree: Use ifaces instead of vtbl pointers in ConfigFileHandler.
-      wuapi: Use an iface instead of a vtbl pointer in update_searcher.
+Maarten Lankhorst (5):
+      quartz: Handle seeking while running better.
+      quartz: Fix a race condition in videorenderer endflush.
+      quartz: Handle EndOfStream more elegantly in dsound renderer.
+      winegstreamer: Silence a harmless fixme.
+      winegstreamer: Correct a state transition.
 
-Mike Gibson (1):
-      msvcrt: Implement wcsnicoll.
+Marcus Meissner (2):
+      kernel32: Fixed size to GetEnvironmentVariableW.
+      configure.ac: Add -Wlogical-op, if it's not noisy.
 
-Nikolay Sivov (2):
-      oleaut32/tests: Some VarDateFromStr() tests.
-      comctl32/listview: Don't touch out text pointer if it wasn't requested.
+Martin Storsjo (2):
+      wineconsole: Fallback to window based console if the curses library isn't found.
+      wineconsole: Don't overwrite the backend selection when parsing --use-event.
 
-Paul Vriens (2):
-      shell32/tests: Use more A-functions to fix Win95 and actually test correctly on Win9x.
-      atl/tests: Skip tests on old versions of atl.dll.
+Michael Stefaniuc (69):
+      clock: Add the Malayalam translation.
+      clock: Add the Telugu translation.
+      clock: Add the Oriya translation.
+      clock: Add the Punjabi translation.
+      oleaut32: Standardize the COM usage in connpt.c.
+      mmdevapi: Standardize the COM usage in devenum.c.
+      msctf/tests: Standardize the COM usage in inputprocessor.c.
+      ole32/tests: Standardize the COM usage in clipboard.c.
+      shlwapi/tests: Standardize the COM usage in ordinal.c.
+      oleaut32/tests: Use an iface instead of an vtbl pointer in IRecordInfoImpl.
+      msi: Use an iface instead of an vtbl pointer in IClassFactoryImpl.
+      msi: Use an iface instead of a vtbl pointer in msi_custom_remote_impl.
+      msi: Use an iface instead of a vtbl pointer in msi_remote_package_impl.
+      msi: Use an iface instead of a vtbl pointer in msi_remote_database_impl.
+      ole32: Use ifaces instead of vtbl pointers in FTMarshalImpl.
+      ole32: Standardize the COM usage in moniker.c.
+      msxml3: Use an iface instead of a vtbl pointer in domattr.
+      msxml3: Use ifaces instead of vtbl pointers in xmlnodemap.
+      msxml3: Use an iface instead of a vtbl pointer in domcdata.
+      msxml3: Use an iface instead of a vtbl pointer in entityref.
+      msxml3: Use an iface instead of a vtbl pointer in domtext.
+      msxml3: Use an iface instead of a vtbl pointer in domelem.
+      msxml3: Use an iface instead of a vtbl pointer in xmlnodelist.
+      msxml3: Use an iface instead of a vtbl pointer in dom_pi.
+      msxml3: Use an iface instead of a vtbl pointer in domcomment.
+      msxml3: Use an iface instead of a vtbl pointer in domimpl.
+      msxml3: Use an iface instead of a vtbl pointer in domdoctype.
+      msxml3: Use an iface instead of a vtbl pointer in domfrag.
+      windowscodecs: Use ifaces instead of vtbl pointers in PngEncoder.
+      oleaut32: Use ifaces instead of vtbl pointers in OLEFontImpl.
+      ole32: Standardize the COM usage in clipboard.c.
+      shell32: Use an iface instead of a vtbl pointer in ShellItem.
+      winecfg: Remove the support to configure the audioio driver sound.
+      Remove the audioio sound driver. It is unused.
+      winapi: Remove support for wineaudioio.drv. wineaudioio.drv is no more.
+      hnetcfg: Standardize the COM usage in apps.c.
+      hnetcfg: Use an iface instead of an vtbl pointer in fw_manager.
+      hnetcfg: Use an iface instead of an vtbl pointer in fw_policy.
+      hnetcfg: Standardize the COM usage in port.c.
+      hnetcfg: Use an iface instead of an vtbl pointer in fw_profile.
+      hnetcfg: Standardize the COM usage in service.c.
+      d3dx9_36: Use an iface instead of an vtbl pointer in ID3DXLineImpl.
+      wmiutils: Use an iface instead of an vtbl pointer in status_code.
+      sane.ds: The Da, En, Fi, Fr, Nl, Pt resources are using UTF-8.
+      d3dx9_36: Use an iface instead of an vtbl pointer in ID3DXConstantTableImpl.
+      qcap: Use ifaces instead of vtbl pointers in VfwCapture.
+      oleaut32/tests: Standardize the COM usage in tmarshal.c.
+      oleaut32: Standardize the COM usage in tmarshal.c.
+      ole32: Standardize the COM usage in git.c.
+      mshtml: COM cleanup for the IHTMLDocument3 iface.
+      mshtml: COM cleanup for the IHTMLDocument4 iface.
+      mshtml: COM cleanup for the IHTMLDocument5 iface.
+      mshtml: COM cleanup for the IHTMLDocument6 iface.
+      mshtml: COM cleanup for the IPersist* ifaces in HTMLDocument.
+      msxml3: Use ifaces instead of vtbl pointers in xmldoc.
+      msxml3: Standardize the COM usage in xmlelem.c.
+      msctf: Standardize the COM usage in documentmgr.c.
+      inkobj: Remove inkcollector.c as it is dead code.
+      avifil32: Use an iface instead of a vtbl pointer in ITmpFileImpl.
+      wuapi: Use an iface instead of a vtbl pointer in wucf.
+      mshtml: COM cleanup for the IMonikerProp iface.
+      mshtml: COM cleanup for the IOleObject iface.
+      mshtml: COM cleanup for the IOleDocument iface.
+      mshtml: COM cleanup for the IOleDocumentView iface.
+      mshtml: COM cleanup for the IOleInPlaceActiveObject iface.
+      mshtml: COM cleanup for the IViewObjectEx iface.
+      mshtml: COM cleanup for the IOleInPlaceObjectWindowless iface.
+      ole32: Use ifaces instead of vtbl pointers in DataCache.
+      ole32: Standardize the COM usage in defaulthandler.c.
 
-Peter Schlaile (1):
-      winedbg: Adds an rwatch command to winedbg.
+Nikolay Sivov (8):
+      oleaut32/varformat: Fix day string representation format output.
+      oleaut32/tests: Test return value without macros.
+      oleaut32: Basic parameter validation tests for some GetTypeInfo* methods.
+      oleaut32: Fix GetLibAttr for null argument, plus error handling.
+      oleaut32: Added ICreateTypeInfo2::SetVarHelpContext().
+      oleaut32: Fix null parameters handling in ICreateTypeLib2::CreateTypeInfo().
+      oleaut32: Fix ICreateTypeInfo2::SetVarHelpContext() to iterate properly.
+      oleaut32: Hide variables and functions count storage details in helpers.
 
-Peter Urbanec (2):
-      opencl: Initial stub implementation of OpenCL 1.0.
-      opencl: Basic OpenCL 1.0 implementation.
+Paul Vriens (1):
+      shdocvw/tests: Make sure we use a valid temporary directory.
 
-Piotr Caban (1):
-      msvcrt: Added _get_terminate implementation.
+Piotr Caban (4):
+      sane.ds: Convert Polish translation to UTF-8.
+      kernel32: Add support for completion routine invocation in ReadDirectoryChangesW.
+      server: Handle more inotify mask values.
+      kernel32: Added more ReadDirectoryChangesW tests.
 
-Rico Schüller (1):
-      d3dcompiler: Add initial reflection parsing.
+Rico Schüller (14):
+      d3dcompiler: Handle TAG_OSG5 in D3DGetBlobPart().
+      wined3d: Fix memset size in IWineD3DVolumeImpl_Unmap.
+      d3dcompiler: Use an iface instead of a vtbl pointer in d3dcompiler_blob.
+      d3dcompiler: Use an iface instead of a vtbl pointer in d3dcompiler_shader_reflection.
+      d3dcompiler: Parse reflection STAT tag.
+      d3dcompiler: Implement ID3D11ShaderReflection::GetMovInstructionCount().
+      d3dcompiler: Implement ID3D11ShaderReflection::GetConversionInstructionCount().
+      d3dcompiler: Parse ISGN in the reflection interface.
+      d3dcompiler: Properly initialize Stream member of D3D11_SIGNATURE_PARAMETER_DESC.
+      d3dcompiler: Parse OSGN in the reflection interface.
+      d3dcompiler: Parse PCSG in the reflection interface.
+      d3dcompiler: Implement ID3D11ShaderReflection::GetInputParameterDesc().
+      d3dcompiler: Implement ID3D11ShaderReflection::GetOutputParameterDesc().
+      d3dcompiler: Implement ID3D11ShaderReflection::GetPatchConstantParameterDesc().
 
-Stefan Leichter (1):
-      ntoskrnl.exe: Add stub for IoWMIRegistrationControl.
+Yaron Shahrabani (1):
+      shlwapi: Added Hebrew translation.
 
-Thomas Mullaly (17):
-      urlmon: Added stub for CoInternetParseIUri.
-      include: Added basic header for strsafe.
-      urlmon: Added implementation for PARSE_CANONICALIZE in CoInternetParseIUri.
-      urlmon: Implementation for PARSE_FRIENDLY in CoInternetParseIUri.
-      urlmon: Added implementation for PARSE_ROOTDOCUMENT for CoInternetParseIUri.
-      urlmon: Implemented PARSE_DOCUMENT for CoInternetParseIUri.
-      urlmon: Implemented PARSE_PATH_FROM_URL for CoInternetParseIUri.
-      urlmon: Implemented PARSE_URL_FROM_PATH for CoInternetParseIUri.
-      urlmon: Implemented PARSE_SCHEMA for CoInternetParseIUri.
-      urlmon: Implemented PARSE_SITE for CoInternetParseIUri.
-      urlmon: Implemented PARSE_DOMAIN for CoInternetParseIUri.
-      urlmon: Standardize COM implementation of IUri.
-      urlmon: Standardize IUriBuilder COM interface.
-      urlmon: Implemented PARSE_ANCHOR and PARSE_LOCATION for CoInternetParseIUri.
-      include: Added IUriBuilderFactory interface definition.
-      urlmon: Implemented IUriBuilderFactory interface.
-      urlmon: Added pluggable protocol support to CoInternetParseIUri.
-
-Travis Athougies (2):
-      d3dx9_36: Improved constant table parsing.
-      d3dx9_36/tests: Extended ID3DXConstantTable tests.
-
-Tristan Schmelcher (2):
-      ddeml: Fix incorrect HSZ argument sizes.
-      ddeml: More calling convention fixes.
-
-Wolfram Sang (1):
-      winex11.drv: In GetDIBits() with DIB sections, always use dibpitch from the target.
-
-Yaron Shahrabani (2):
-      view: Added Hebrew translation.
-      sane: Added Hebrew translation.
+Łukasz Wojniłowicz (5):
+      avifile: Update Polish translation.
+      wininet: Update Polish translation.
+      taskmgr: Update Polish translation.
+      cmd: Update Polish translation.
+      winecfg: Update Polish translation.
 
 --
 Alexandre Julliard
