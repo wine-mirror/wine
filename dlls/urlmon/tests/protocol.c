@@ -41,7 +41,6 @@ static HRESULT (WINAPI *pCreateUri)(LPCWSTR, DWORD, DWORD_PTR, IUri**);
 
 #define CHECK_EXPECT2(func) \
     do { \
-        trace(#func "\n"); /* temporary debug traces */     \
         ok(expect_ ##func, "unexpected call " #func  "\n"); \
         called_ ## func = TRUE; \
     }while(0)
@@ -864,12 +863,16 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
                 else
                     SET_EXPECT(ReportData2);
                 SET_EXPECT(ReportResult);
+                if(!emulate_prot)
+                    SET_EXPECT(Switch);
                 hres = IInternetProtocol_Read(binding_test ? binding_protocol : async_protocol, expect_pv = buf, sizeof(buf), &read);
+                ok(hres == E_PENDING || hres == S_FALSE || hres == S_OK, "Read failed: %08x\n", hres);
                 if(hres == S_OK)
                     ok(read, "read == 0\n");
-                if(reported_all_data) {
+                if(reported_all_data)
                     ok(hres == S_FALSE, "Read failed: %08x, expected S_FALSE\n", hres);
-                }
+                if(!emulate_prot && hres != E_PENDING)
+                    CHECK_NOT_CALLED(Switch); /* otherwise checked in wait_for_switch loop */
                 if(emulate_prot)
                     CHECK_CALLED(Read);
                 if(!reported_all_data && called_ReportData2) {
@@ -2763,10 +2766,10 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags, DWORD tym
         expect_hrResult = test_abort ? E_ABORT : S_OK;
 
         if(direct_read) {
+            SET_EXPECT(Switch);
             while(wait_for_switch) {
-                SET_EXPECT(Switch);
                 WaitForSingleObject(event_continue, INFINITE);
-                CHECK_CALLED(Switch);
+                CHECK_CALLED(Switch); /* Set in ReportData */
                 call_continue(&continue_protdata);
                 SetEvent(event_continue_done);
             }
