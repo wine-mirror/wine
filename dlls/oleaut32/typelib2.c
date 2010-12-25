@@ -240,6 +240,13 @@ static inline UINT cti2_get_func_count(const MSFT_TypeInfoBase *typeinfo)
     return typeinfo->cElement & 0xFFFF;
 }
 
+/* NOTE: entry always assumed to be a function */
+static inline INVOKEKIND ctl2_get_invokekind(const CyclicList *func)
+{
+    /* INVOKEKIND uses bit flags up to 8 */
+    return (func->u.data[4] >> 3) & 0xF;
+}
+
 /****************************************************************************
  *	ctl2_init_header
  *
@@ -2348,17 +2355,19 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(
                 break;
 
     /* cNames == cParams for put or putref accessor, cParams+1 otherwise */
-    if(cNames != iter->u.data[5] + ((iter->u.data[4]>>3)&(INVOKE_PROPERTYPUT|INVOKE_PROPERTYPUTREF) ? 0 : 1))
+    if(cNames != iter->u.data[5] + (ctl2_get_invokekind(iter) & (INVOKE_PROPERTYPUT|INVOKE_PROPERTYPUTREF) ? 0 : 1))
         return TYPE_E_ELEMENTNOTFOUND;
 
+    TRACE("function name %s\n", debugstr_w(names[0]));
     len = ctl2_encode_name(This->typelib, names[0], &namedata);
     for(iter2=This->typedata->next->next; iter2!=This->typedata->next; iter2=iter2->next) {
         if(iter2->name!=-1 && !memcmp(namedata,
                     This->typelib->typelib_segment_data[MSFT_SEG_NAME]+iter2->name+8, len)) {
             /* getters/setters can have a same name */
             if (iter2->type == CyclicListFunc) {
-                INT inv1 = iter2->u.data[4] >> 3;
-                INT inv2 = iter->u.data[4] >> 3;
+                INVOKEKIND inv1 = ctl2_get_invokekind(iter2);
+                INVOKEKIND inv2 = ctl2_get_invokekind(iter);
+
                 if (((inv1&(INVOKE_PROPERTYPUT|INVOKE_PROPERTYPUTREF)) && (inv2&INVOKE_PROPERTYGET)) ||
                     ((inv2&(INVOKE_PROPERTYPUT|INVOKE_PROPERTYPUTREF)) && (inv1&INVOKE_PROPERTYGET)))
                     continue;
@@ -2801,13 +2810,12 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
 
     for(i=0; i< cti2_get_func_count(This->typeinfo); i++) {
         if(typedata[i]->u.data[4]>>16 > i) {
-            int inv;
+            INVOKEKIND inv = ctl2_get_invokekind(typedata[i]);
 
-            inv = (typedata[i]->u.data[4]>>3) & 0xf;
             i = typedata[i]->u.data[4] >> 16;
 
             while(i > typedata[i]->u.data[4]>>16) {
-                int invkind = (typedata[i]->u.data[4]>>3) & 0xf;
+                INVOKEKIND invkind = ctl2_get_invokekind(typedata[i]);
 
                 if(inv & invkind) {
                     HeapFree(GetProcessHeap(), 0, typedata);
