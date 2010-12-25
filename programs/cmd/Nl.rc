@@ -226,6 +226,11 @@ op de stapel werd gezet met PUSHD.\n"
   WCMD_MORE,   "MORE toont de uitvoer van programma's of herleidde invoer\n\
 per bladzijde.\n"
 
+  WCMD_CHOICE, "CHOICE laat een tekst zien en wacht tot de Gebruiker\n\
+op een toegestane Toets uit een selecteerbare lijst drukt.\n\
+CHOICE wordt hoofdzakelijk gebruikt om een selectie uit een menu te maken\n\
+in een batch bestand.\n"
+
   WCMD_EXIT,
 "EXIT beëindigt de lopende sessie en keert terug\n\
 naar het besturingssysteem of de schil van waaruit cmd werd gestart.\n"
