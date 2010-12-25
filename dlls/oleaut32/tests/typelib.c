@@ -2929,6 +2929,75 @@ static void test_SetVarHelpContext(void)
     DeleteFileA(filenameA);
 }
 
+static void test_SetFuncAndParamNames(void)
+{
+    static OLECHAR nameW[] = {'n','a','m','e',0};
+    static OLECHAR prop[] = {'p','r','o','p',0};
+    static OLECHAR *propW[] = {prop};
+    CHAR filenameA[MAX_PATH];
+    WCHAR filenameW[MAX_PATH];
+    ICreateTypeLib2 *ctl;
+    ICreateTypeInfo *cti;
+    FUNCDESC funcdesc;
+    ELEMDESC edesc;
+    HRESULT hr;
+
+    GetTempFileNameA(".", "tlb", 0, filenameA);
+    MultiByteToWideChar(CP_ACP, 0, filenameA, -1, filenameW, MAX_PATH);
+
+    hr = CreateTypeLib2(SYS_WIN32, filenameW, &ctl);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeLib2_CreateTypeInfo(ctl, nameW, TKIND_DISPATCH, &cti);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    /* get method */
+    memset(&funcdesc, 0, sizeof(FUNCDESC));
+    funcdesc.funckind = FUNC_DISPATCH;
+    funcdesc.callconv = CC_STDCALL;
+    funcdesc.elemdescFunc.tdesc.vt = VT_VOID;
+    funcdesc.wFuncFlags = FUNCFLAG_FBINDABLE;
+
+    /* put method */
+    memset(&edesc, 0, sizeof(edesc));
+    edesc.tdesc.vt = VT_BSTR;
+    U(edesc).idldesc.dwReserved = 0;
+    U(edesc).idldesc.wIDLFlags = IDLFLAG_FIN;
+
+    funcdesc.lprgelemdescParam = &edesc;
+    funcdesc.invkind = INVOKE_PROPERTYPUT;
+    funcdesc.cParams = 1;
+
+    hr = ICreateTypeInfo_AddFuncDesc(cti, 0, &funcdesc);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* setter name */
+    hr = ICreateTypeInfo_SetFuncAndParamNames(cti, 0, propW, 1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* putref method */
+    funcdesc.invkind = INVOKE_PROPERTYPUTREF;
+    hr = ICreateTypeInfo_AddFuncDesc(cti, 1, &funcdesc);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* putref name */
+    hr = ICreateTypeInfo_SetFuncAndParamNames(cti, 1, propW, 1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    funcdesc.invkind = INVOKE_PROPERTYGET;
+    funcdesc.cParams = 0;
+    hr = ICreateTypeInfo_AddFuncDesc(cti, 2, &funcdesc);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* getter name */
+    hr = ICreateTypeInfo_SetFuncAndParamNames(cti, 2, propW, 1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ICreateTypeInfo_Release(cti);
+    ICreateTypeLib2_Release(ctl);
+    DeleteFileA(filenameA);
+}
+
 START_TEST(typelib)
 {
     const char *filename;
@@ -2946,6 +3015,7 @@ START_TEST(typelib)
     test_inheritance();
     test_CreateTypeLib();
     test_SetVarHelpContext();
+    test_SetFuncAndParamNames();
 
     if ((filename = create_test_typelib(2)))
     {

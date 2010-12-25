@@ -2361,15 +2361,17 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(
     TRACE("function name %s\n", debugstr_w(names[0]));
     len = ctl2_encode_name(This->typelib, names[0], &namedata);
     for(iter2=This->typedata->next->next; iter2!=This->typedata->next; iter2=iter2->next) {
-        if(iter2->name!=-1 && !memcmp(namedata,
-                    This->typelib->typelib_segment_data[MSFT_SEG_NAME]+iter2->name+8, len)) {
-            /* getters/setters can have a same name */
-            if (iter2->type == CyclicListFunc) {
-                INVOKEKIND inv1 = ctl2_get_invokekind(iter2);
-                INVOKEKIND inv2 = ctl2_get_invokekind(iter);
 
-                if (((inv1&(INVOKE_PROPERTYPUT|INVOKE_PROPERTYPUTREF)) && (inv2&INVOKE_PROPERTYGET)) ||
-                    ((inv2&(INVOKE_PROPERTYPUT|INVOKE_PROPERTYPUTREF)) && (inv1&INVOKE_PROPERTYGET)))
+        int cmp = memcmp(namedata, This->typelib->typelib_segment_data[MSFT_SEG_NAME]+iter2->name+8, len);
+        if (iter2->name != -1 && cmp == 0) {
+            if (iter2->type == CyclicListFunc) {
+                INVOKEKIND inv1 = ctl2_get_invokekind(iter);
+                INVOKEKIND inv2 = ctl2_get_invokekind(iter2);
+
+                /* it's allowed to have PUT, PUTREF and GET methods with the same name */
+                if ((inv1 != inv2) &&
+                    (inv1 & (INVOKE_PROPERTYPUT|INVOKE_PROPERTYPUTREF|INVOKE_PROPERTYGET)) &&
+                    (inv2 & (INVOKE_PROPERTYPUT|INVOKE_PROPERTYPUTREF|INVOKE_PROPERTYGET)))
                     continue;
             }
 
