@@ -212,7 +212,7 @@ PUSHD.\n"
   WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
 
   WCMD_CHOICE, "CHOICE displays a text and waits, until the User\n\
-press an allowed Key from a selectable list.\n\
+presses an allowed Key from a selectable list.\n\
 CHOICE is mainly used to build a menu selection in a batch file.\n"
 
   WCMD_EXIT,
