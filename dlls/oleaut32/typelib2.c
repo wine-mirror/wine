@@ -247,6 +247,11 @@ static inline INVOKEKIND ctl2_get_invokekind(const CyclicList *func)
     return (func->u.data[4] >> 3) & 0xF;
 }
 
+static inline SYSKIND ctl2_get_syskind(const ICreateTypeLib2Impl *This)
+{
+    return This->typelib_header.varflags & 0xF;
+}
+
 /****************************************************************************
  *	ctl2_init_header
  *
@@ -419,7 +424,7 @@ static int ctl2_encode_name(
 
     converted_name[1] = 0x00;
 
-    value = LHashValOfNameSysA(This->typelib_header.varflags & 0x0f, This->typelib_header.lcid, converted_name + 4);
+    value = LHashValOfNameSysA(ctl2_get_syskind(This), This->typelib_header.lcid, converted_name + 4);
 
     converted_name[2] = value;
     converted_name[3] = value >> 8;
@@ -1140,7 +1145,7 @@ static int ctl2_encode_typedesc(
 
     case VT_INT:
 	*encoded_tdesc = 0x80000000 | (VT_I4 << 16) | VT_INT;
-	if ((This->typelib_header.varflags & 0x0f) == SYS_WIN16) {
+	if (ctl2_get_syskind(This) == SYS_WIN16) {
 	    *width = 2;
 	    *alignment = 2;
 	} else {
@@ -1151,7 +1156,7 @@ static int ctl2_encode_typedesc(
 
     case VT_UINT:
 	*encoded_tdesc = 0x80000000 | (VT_UI4 << 16) | VT_UINT;
-	if ((This->typelib_header.varflags & 0x0f) == SYS_WIN16) {
+	if (ctl2_get_syskind(This) == SYS_WIN16) {
 	    *width = 2;
 	    *alignment = 2;
 	} else {
@@ -4984,9 +4989,9 @@ static HRESULT WINAPI ITypeLib2_fnGetLibAttr(
     }
 
     (*ppTLibAttr)->lcid = This->typelib_header.lcid;
-    (*ppTLibAttr)->syskind = This->typelib_header.varflags&0x3;
-    (*ppTLibAttr)->wMajorVerNum = This->typelib_header.version&0xffff;
-    (*ppTLibAttr)->wMinorVerNum = This->typelib_header.version>>16;
+    (*ppTLibAttr)->syskind = ctl2_get_syskind(This);
+    (*ppTLibAttr)->wMajorVerNum = LOWORD(This->typelib_header.version);
+    (*ppTLibAttr)->wMinorVerNum = HIWORD(This->typelib_header.version);
     (*ppTLibAttr)->wLibFlags = This->typelib_header.flags;
     return S_OK;
 }
