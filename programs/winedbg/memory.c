@@ -342,18 +342,14 @@ static void dbg_print_longlong(LONGLONG sv, BOOL is_signed)
     dbg_printf("%s", ptr);
 }
 
-static void dbg_print_hex(ULONGLONG sv)
+static void dbg_print_hex(DWORD size, ULONGLONG sv)
 {
     if (!sv)
-    {
         dbg_printf("0");
-        return;
-    }
-
-    if (sv >> 32)
-        dbg_printf("0x%lx%08lx", (unsigned long)(sv >> 32), (unsigned long)sv);
+    else if (size > 4 && (sv >> 32))
+        dbg_printf("0x%x%08x", (DWORD)(sv >> 32), (DWORD)sv);
     else
-        dbg_printf("0x%04lx", (unsigned long)sv);
+        dbg_printf("0x%x", (DWORD)sv);
 }
 
 static void print_typed_basic(const struct dbg_lvalue* lvalue)
@@ -385,12 +381,12 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
         case btLong:
             if (!be_cpu->fetch_integer(lvalue, size, TRUE, &val_int)) return;
             if (size == 1) goto print_char;
-            dbg_print_hex(val_int);
+            dbg_print_hex(size, val_int);
             break;
         case btUInt:
         case btULong:
             if (!be_cpu->fetch_integer(lvalue, size, FALSE, &val_int)) return;
-            dbg_print_hex(val_int);
+            dbg_print_hex(size, val_int);
             break;
         case btFloat:
             if (!be_cpu->fetch_float(lvalue, size, &val_real)) return;
@@ -530,18 +526,12 @@ void print_basic(const struct dbg_lvalue* lvalue, char format)
     {
         unsigned size;
         LONGLONG res = types_extract_as_longlong(lvalue, &size);
-        DWORD hi;
         WCHAR wch;
 
-        /* FIXME: this implies i386 byte ordering */
         switch (format)
         {
         case 'x':
-            hi = (ULONG64)res >> 32;
-            if (size == 8 && hi)
-                dbg_printf("0x%x%08x", hi, (DWORD)res);
-            else
-                dbg_printf("0x%x", (DWORD)res);
+            dbg_print_hex(size, (ULONGLONG)res);
             return;
 
         case 'd':
