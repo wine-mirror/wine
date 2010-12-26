@@ -260,7 +260,7 @@ static inline SYSKIND ctl2_get_syskind(const ICreateTypeLib2Impl *This)
 static void ctl2_init_header(
 	ICreateTypeLib2Impl *This) /* [I] The typelib to initialize. */
 {
-    This->typelib_header.magic1 = 0x5446534d;
+    This->typelib_header.magic1 = MSFT_SIGNATURE;
     This->typelib_header.magic2 = 0x00010002;
     This->typelib_header.posguid = -1;
     This->typelib_header.lcid = This->typelib_header.lcid2 = GetUserDefaultLCID();

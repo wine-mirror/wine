@@ -52,8 +52,11 @@
  * it is at the beginning of a type lib file
  *
  */
+
+#define MSFT_SIGNATURE 0x5446534D /* "MSFT" */
+
 typedef struct tagMSFT_Header {
-/*0x00*/INT magic1;       /* 0x5446534D "MSFT" */
+/*0x00*/INT   magic1;       /* 0x5446534D "MSFT" */
         INT   magic2;       /* 0x00010002 version nr? */
         INT   posguid;      /* position of libid in guid table  */
                             /* (should be,  else -1) */
