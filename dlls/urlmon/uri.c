@@ -1818,7 +1818,7 @@ static BOOL parse_ipv6address(const WCHAR **ptr, parse_data *data, DWORD flags) 
 
     TRACE("(%p %p %x): Found valid IPv6 literal %s len=%d\n",
         ptr, data, flags, debugstr_wn(start, *ptr-start),
-        *ptr-start);
+        (int)(*ptr-start));
     return TRUE;
 }
 
@@ -1860,7 +1860,7 @@ static BOOL parse_ipvfuture(const WCHAR **ptr, parse_data *data, DWORD flags) {
     data->host_type = Uri_HOST_UNKNOWN;
 
     TRACE("(%p %p %x): Parsed IPvFuture address %s len=%d\n", ptr, data, flags,
-        debugstr_wn(start, *ptr-start), *ptr-start);
+          debugstr_wn(start, *ptr-start), (int)(*ptr-start));
 
     return TRUE;
 }
