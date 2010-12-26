@@ -431,7 +431,7 @@ static void ALSA_MixerInit(void)
     info = HeapAlloc( GetProcessHeap(), 0, snd_ctl_card_info_sizeof());
     for (x = 0; x < MAX_MIXERS; ++x)
     {
-        int card, err, capcontrols, total_elems = 0;
+        int card, err, capcontrols = 0, total_elems = 0;
         char cardind[6], cardname[10];
 
         snd_ctl_t *ctl;
