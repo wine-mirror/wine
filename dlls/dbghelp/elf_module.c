@@ -102,8 +102,8 @@ const char* elf_map_section(struct image_section_map* ism)
 {
     struct elf_file_map*        fmap = &ism->fmap->u.elf;
 
-    unsigned pgsz = getpagesize();
-    unsigned ofst, size;
+    unsigned long pgsz = getpagesize();
+    unsigned long ofst, size;
 
     assert(ism->fmap->modtype == DMT_ELF);
     if (ism->sidx < 0 || ism->sidx >= ism->fmap->u.elf.elfhdr.e_shnum ||
@@ -168,8 +168,8 @@ void elf_unmap_section(struct image_section_map* ism)
 
     if (ism->sidx >= 0 && ism->sidx < fmap->elfhdr.e_shnum && fmap->sect[ism->sidx].mapped != IMAGE_NO_MAP)
     {
-        unsigned pgsz = getpagesize();
-        unsigned ofst, size;
+        unsigned long pgsz = getpagesize();
+        unsigned long ofst, size;
 
         ofst = fmap->sect[ism->sidx].shdr.sh_offset & ~(pgsz - 1);
         size = ((fmap->sect[ism->sidx].shdr.sh_offset +
@@ -236,7 +236,7 @@ static BOOL elf_map_file(const WCHAR* filenameW, struct image_file_map* fmap)
     struct stat	        statbuf;
     int                 i;
     Elf_Phdr            phdr;
-    unsigned            tmp, page_mask = getpagesize() - 1;
+    unsigned long       tmp, page_mask = getpagesize() - 1;
     char*               filename;
     unsigned            len;
     BOOL                ret = FALSE;
