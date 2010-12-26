@@ -509,7 +509,7 @@ static void test_qsort_s(void)
 
     /* overflow without side effects, other overflow values crash */
     g_qsort_s_context_counter = 0;
-    p_qsort_s((void*)arr2, (1 << (8*sizeof(size_t) - 1)) + 1, sizeof(int), intcomparefunc, &g_qsort_s_context_counter);
+    p_qsort_s((void*)arr2, (((size_t)1) << (8*sizeof(size_t) - 1)) + 1, sizeof(int), intcomparefunc, &g_qsort_s_context_counter);
     ok(g_qsort_s_context_counter == 0, "callback shouldn't have been called\n");
     ok(arr2[0] == 23, "should remain unsorted, arr2[0] is %d\n", arr2[0]);
     ok(arr2[1] == 42, "should remain unsorted, arr2[1] is %d\n", arr2[1]);
