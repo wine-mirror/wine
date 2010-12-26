@@ -546,7 +546,6 @@ void print_basic(const struct dbg_lvalue* lvalue, char format)
 
         case 'd':
             dbg_print_longlong(res, TRUE);
-            dbg_printf("\n");
             return;
 
         case 'c':
@@ -570,7 +569,6 @@ void print_basic(const struct dbg_lvalue* lvalue, char format)
     if (lvalue->type.id == dbg_itype_segptr)
     {
         dbg_print_longlong(types_extract_as_longlong(lvalue, NULL), TRUE);
-        dbg_printf("\n");
     }
     else print_typed_basic(lvalue);
 }
