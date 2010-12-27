@@ -144,8 +144,6 @@ HRESULT create_nselem(HTMLDocumentNode *doc, const WCHAR *tag, nsIDOMHTMLElement
     return S_OK;
 }
 
-#define HTMLELEM_NODE_THIS(iface) DEFINE_THIS2(HTMLElement, node, iface)
-
 static HRESULT WINAPI HTMLElement_QueryInterface(IHTMLElement *iface,
                                                  REFIID riid, void **ppv)
 {
@@ -1591,9 +1589,14 @@ static const IHTMLElementVtbl HTMLElementVtbl = {
     HTMLElement_get_all
 };
 
+static inline HTMLElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLElement, node);
+}
+
 HRESULT HTMLElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
-    HTMLElement *This = HTMLELEM_NODE_THIS(iface);
+    HTMLElement *This = impl_from_HTMLDOMNode(iface);
 
     *ppv =  NULL;
 
@@ -1627,7 +1630,7 @@ HRESULT HTMLElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
 void HTMLElement_destructor(HTMLDOMNode *iface)
 {
-    HTMLElement *This = HTMLELEM_NODE_THIS(iface);
+    HTMLElement *This = impl_from_HTMLDOMNode(iface);
 
     ConnectionPointContainer_Destroy(&This->cp_container);
 
@@ -1639,7 +1642,7 @@ void HTMLElement_destructor(HTMLDOMNode *iface)
 
 HRESULT HTMLElement_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
 {
-    HTMLElement *This = HTMLELEM_NODE_THIS(iface);
+    HTMLElement *This = impl_from_HTMLDOMNode(iface);
     HTMLElement *new_elem;
     HRESULT hres;
 

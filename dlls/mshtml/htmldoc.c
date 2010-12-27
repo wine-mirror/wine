@@ -1870,11 +1870,14 @@ static void destroy_htmldoc(HTMLDocument *This)
     ConnectionPointContainer_Destroy(&This->cp_container);
 }
 
-#define HTMLDOCNODE_NODE_THIS(iface) DEFINE_THIS2(HTMLDocumentNode, node, iface)
+static inline HTMLDocumentNode *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocumentNode, node);
+}
 
 static HRESULT HTMLDocumentNode_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
-    HTMLDocumentNode *This = HTMLDOCNODE_NODE_THIS(iface);
+    HTMLDocumentNode *This = impl_from_HTMLDOMNode(iface);
 
     if(htmldoc_qi(&This->basedoc, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
@@ -1892,7 +1895,7 @@ static HRESULT HTMLDocumentNode_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
 static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
 {
-    HTMLDocumentNode *This = HTMLDOCNODE_NODE_THIS(iface);
+    HTMLDocumentNode *This = impl_from_HTMLDOMNode(iface);
 
     if(This->body_event_target)
         release_event_target(This->body_event_target);
@@ -1921,7 +1924,7 @@ static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
 
 static HRESULT HTMLDocumentNode_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
 {
-    HTMLDocumentNode *This = HTMLDOCNODE_NODE_THIS(iface);
+    HTMLDocumentNode *This = impl_from_HTMLDOMNode(iface);
     FIXME("%p\n", This);
     return E_NOTIMPL;
 }
@@ -1934,7 +1937,7 @@ static const NodeImplVtbl HTMLDocumentNodeImplVtbl = {
 
 static HRESULT HTMLDocumentFragment_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
 {
-    HTMLDocumentNode *This = HTMLDOCNODE_NODE_THIS(iface);
+    HTMLDocumentNode *This = impl_from_HTMLDOMNode(iface);
     HTMLDocumentNode *new_node;
     HRESULT hres;
 
@@ -1945,8 +1948,6 @@ static HRESULT HTMLDocumentFragment_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode
     *ret = &new_node->node;
     return S_OK;
 }
-
-#undef HTMLDOCNODE_NODE_THIS
 
 static const NodeImplVtbl HTMLDocumentFragmentImplVtbl = {
     HTMLDocumentNode_QI,

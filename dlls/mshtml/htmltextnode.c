@@ -43,8 +43,6 @@ struct HTMLDOMTextNode {
 
 #define HTMLTEXT_THIS(iface) DEFINE_THIS(HTMLDOMTextNode, IHTMLDOMTextNode, iface)
 
-#define HTMLTEXT_NODE_THIS(iface) DEFINE_THIS2(HTMLDOMTextNode, node, iface)
-
 static HRESULT WINAPI HTMLDOMTextNode_QueryInterface(IHTMLDOMTextNode *iface,
                                                  REFIID riid, void **ppv)
 {
@@ -158,11 +156,14 @@ static const IHTMLDOMTextNodeVtbl HTMLDOMTextNodeVtbl = {
     HTMLDOMTextNode_splitText
 };
 
-#define HTMLTEXT_NODE_THIS(iface) DEFINE_THIS2(HTMLDOMTextNode, node, iface)
+static inline HTMLDOMTextNode *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDOMTextNode, node);
+}
 
 static HRESULT HTMLDOMTextNode_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
-    HTMLDOMTextNode *This = HTMLTEXT_NODE_THIS(iface);
+    HTMLDOMTextNode *This = impl_from_HTMLDOMNode(iface);
 
     *ppv =  NULL;
 
@@ -179,7 +180,7 @@ static HRESULT HTMLDOMTextNode_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
 static void HTMLDOMTextNode_destructor(HTMLDOMNode *iface)
 {
-    HTMLDOMTextNode *This = HTMLTEXT_NODE_THIS(iface);
+    HTMLDOMTextNode *This = impl_from_HTMLDOMNode(iface);
 
     if(This->nstext)
         IHTMLDOMTextNode_Release(This->nstext);
@@ -189,7 +190,7 @@ static void HTMLDOMTextNode_destructor(HTMLDOMNode *iface)
 
 static HRESULT HTMLDOMTextNode_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
 {
-    HTMLDOMTextNode *This = HTMLTEXT_NODE_THIS(iface);
+    HTMLDOMTextNode *This = impl_from_HTMLDOMNode(iface);
     HRESULT hres;
 
     hres = HTMLDOMTextNode_Create(This->node.doc, nsnode, ret);
@@ -199,8 +200,6 @@ static HRESULT HTMLDOMTextNode_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTM
     IHTMLDOMNode_AddRef(HTMLDOMNODE(*ret));
     return S_OK;
 }
-
-#undef HTMLTEXT_NODE_THIS
 
 static const NodeImplVtbl HTMLDOMTextNodeImplVtbl = {
     HTMLDOMTextNode_QI,

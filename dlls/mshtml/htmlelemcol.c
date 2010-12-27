@@ -50,6 +50,12 @@ typedef struct {
     DWORD size;
 } elem_vector_t;
 
+/* FIXME: Handle it better way */
+static inline HTMLElement *elem_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLElement, node);
+}
+
 static IHTMLElementCollection *HTMLElementCollection_Create(IUnknown *ref_unk,
                                                             HTMLElement **elems, DWORD len);
 
@@ -85,7 +91,6 @@ static inline BOOL is_elem_node(nsIDOMNode *node)
 }
 
 #define ELEMCOL_THIS(iface) DEFINE_THIS(HTMLElementCollection, HTMLElementCollection, iface)
-#define HTMLELEM_NODE_THIS(iface) DEFINE_THIS2(HTMLElement, node, iface)
 
 static HRESULT WINAPI HTMLElementCollection_QueryInterface(IHTMLElementCollection *iface,
                                                            REFIID riid, void **ppv)
@@ -514,7 +519,7 @@ static void create_all_list(HTMLDocumentNode *doc, HTMLDOMNode *elem, elem_vecto
                 continue;
             }
 
-            elem_vector_add(buf, HTMLELEM_NODE_THIS(node));
+            elem_vector_add(buf, elem_from_HTMLDOMNode(node));
             create_all_list(doc, node, buf);
         }
     }
@@ -527,7 +532,7 @@ IHTMLElementCollection *create_all_collection(HTMLDOMNode *node, BOOL include_ro
     buf.buf = heap_alloc(buf.size*sizeof(HTMLElement**));
 
     if(include_root)
-        elem_vector_add(&buf, HTMLELEM_NODE_THIS(node));
+        elem_vector_add(&buf, elem_from_HTMLDOMNode(node));
     create_all_list(node->doc, node, &buf);
     elem_vector_normalize(&buf);
 
@@ -556,7 +561,7 @@ IHTMLElementCollection *create_collection_from_nodelist(HTMLDocumentNode *doc, I
                 hres = get_node(doc, nsnode, TRUE, &node);
                 if(FAILED(hres))
                     continue;
-                buf.buf[buf.len++] = HTMLELEM_NODE_THIS(node);
+                buf.buf[buf.len++] = elem_from_HTMLDOMNode(node);
             }
             nsIDOMNode_Release(nsnode);
         }
@@ -590,7 +595,7 @@ IHTMLElementCollection *create_collection_from_htmlcol(HTMLDocumentNode *doc, IU
             nsIDOMNode_Release(nsnode);
             if(FAILED(hres))
                 break;
-            buf.buf[i] = HTMLELEM_NODE_THIS(node);
+            buf.buf[i] = elem_from_HTMLDOMNode(node);
         }
     }else {
         buf.buf = NULL;

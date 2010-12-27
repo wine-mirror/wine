@@ -299,11 +299,14 @@ static const IHTMLOptionElementVtbl HTMLOptionElementVtbl = {
     HTMLOptionElement_get_form
 };
 
-#define HTMLOPTION_NODE_THIS(iface) DEFINE_THIS2(HTMLOptionElement, element.node, iface)
+static inline HTMLOptionElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLOptionElement, element.node);
+}
 
 static HRESULT HTMLOptionElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
-    HTMLOptionElement *This = HTMLOPTION_NODE_THIS(iface);
+    HTMLOptionElement *This = impl_from_HTMLDOMNode(iface);
 
     *ppv = NULL;
 
@@ -328,15 +331,13 @@ static HRESULT HTMLOptionElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
 static void HTMLOptionElement_destructor(HTMLDOMNode *iface)
 {
-    HTMLOptionElement *This = HTMLOPTION_NODE_THIS(iface);
+    HTMLOptionElement *This = impl_from_HTMLDOMNode(iface);
 
     if(This->nsoption)
         nsIDOMHTMLOptionElement_Release(This->nsoption);
 
     HTMLElement_destructor(&This->element.node);
 }
-
-#undef HTMLOPTION_NODE_THIS
 
 static const NodeImplVtbl HTMLOptionElementImplVtbl = {
     HTMLOptionElement_QI,

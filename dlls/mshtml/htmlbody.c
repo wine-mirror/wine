@@ -738,11 +738,14 @@ static const IHTMLBodyElementVtbl HTMLBodyElementVtbl = {
     HTMLBodyElement_createTextRange
 };
 
-#define HTMLBODY_NODE_THIS(iface) DEFINE_THIS2(HTMLBodyElement, textcont.element.node, iface)
+static inline HTMLBodyElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLBodyElement, textcont.element.node);
+}
 
 static HRESULT HTMLBodyElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
-    HTMLBodyElement *This = HTMLBODY_NODE_THIS(iface);
+    HTMLBodyElement *This = impl_from_HTMLDOMNode(iface);
 
     *ppv = NULL;
 
@@ -770,7 +773,7 @@ static HRESULT HTMLBodyElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
 static void HTMLBodyElement_destructor(HTMLDOMNode *iface)
 {
-    HTMLBodyElement *This = HTMLBODY_NODE_THIS(iface);
+    HTMLBodyElement *This = impl_from_HTMLDOMNode(iface);
 
     nsIDOMHTMLBodyElement_Release(This->nsbody);
 
@@ -779,14 +782,12 @@ static void HTMLBodyElement_destructor(HTMLDOMNode *iface)
 
 static event_target_t **HTMLBodyElement_get_event_target(HTMLDOMNode *iface)
 {
-    HTMLBodyElement *This = HTMLBODY_NODE_THIS(iface);
+    HTMLBodyElement *This = impl_from_HTMLDOMNode(iface);
 
     return This->textcont.element.node.doc
         ? &This->textcont.element.node.doc->body_event_target
         : &This->textcont.element.node.event_target;
 }
-
-#undef HTMLBODY_NODE_THIS
 
 static const NodeImplVtbl HTMLBodyElementImplVtbl = {
     HTMLBodyElement_QI,

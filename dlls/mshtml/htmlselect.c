@@ -504,11 +504,14 @@ static const IHTMLSelectElementVtbl HTMLSelectElementVtbl = {
     HTMLSelectElement_tags
 };
 
-#define HTMLSELECT_NODE_THIS(iface) DEFINE_THIS2(HTMLSelectElement, element.node, iface)
+static inline HTMLSelectElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLSelectElement, element.node);
+}
 
 static HRESULT HTMLSelectElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
-    HTMLSelectElement *This = HTMLSELECT_NODE_THIS(iface);
+    HTMLSelectElement *This = impl_from_HTMLDOMNode(iface);
 
     *ppv = NULL;
 
@@ -533,7 +536,7 @@ static HRESULT HTMLSelectElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
 static void HTMLSelectElement_destructor(HTMLDOMNode *iface)
 {
-    HTMLSelectElement *This = HTMLSELECT_NODE_THIS(iface);
+    HTMLSelectElement *This = impl_from_HTMLDOMNode(iface);
 
     nsIDOMHTMLSelectElement_Release(This->nsselect);
 
@@ -542,13 +545,13 @@ static void HTMLSelectElement_destructor(HTMLDOMNode *iface)
 
 static HRESULT HTMLSelectElementImpl_put_disabled(HTMLDOMNode *iface, VARIANT_BOOL v)
 {
-    HTMLSelectElement *This = HTMLSELECT_NODE_THIS(iface);
+    HTMLSelectElement *This = impl_from_HTMLDOMNode(iface);
     return IHTMLSelectElement_put_disabled(&This->IHTMLSelectElement_iface, v);
 }
 
 static HRESULT HTMLSelectElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BOOL *p)
 {
-    HTMLSelectElement *This = HTMLSELECT_NODE_THIS(iface);
+    HTMLSelectElement *This = impl_from_HTMLDOMNode(iface);
     return IHTMLSelectElement_get_disabled(&This->IHTMLSelectElement_iface, p);
 }
 
@@ -576,7 +579,7 @@ static HRESULT HTMLSelectElement_get_dispid(HTMLDOMNode *iface, BSTR name, DWORD
 static HRESULT HTMLSelectElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
-    HTMLSelectElement *This = HTMLSELECT_NODE_THIS(iface);
+    HTMLSelectElement *This = impl_from_HTMLDOMNode(iface);
 
     TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, flags, params, res, ei, caller);
 
@@ -605,8 +608,6 @@ static HRESULT HTMLSelectElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid
 
     return S_OK;
 }
-
-#undef HTMLSELECT_NODE_THIS
 
 static const NodeImplVtbl HTMLSelectElementImplVtbl = {
     HTMLSelectElement_QI,

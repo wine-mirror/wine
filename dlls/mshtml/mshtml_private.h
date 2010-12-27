@@ -668,8 +668,7 @@ struct HTMLDocumentNode {
 
 #define HOSTSECMGR(x)    ((IInternetHostSecurityManager*)  &(x)->lpIInternetHostSecurityManagerVtbl)
 
-#define DEFINE_THIS2(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,ifc)))
-#define DEFINE_THIS(cls,ifc,iface) DEFINE_THIS2(cls,lp ## ifc ## Vtbl,iface)
+#define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
 
 HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**);
 HRESULT HTMLLoadOptions_Create(IUnknown*,REFIID,void**);

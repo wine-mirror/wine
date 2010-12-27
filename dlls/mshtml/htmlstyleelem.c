@@ -255,11 +255,14 @@ static const IHTMLStyleElementVtbl HTMLStyleElementVtbl = {
     HTMLStyleElement_get_media
 };
 
-#define HTMLSTYLE_NODE_THIS(iface) DEFINE_THIS2(HTMLStyleElement, element.node, iface)
+static inline HTMLStyleElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLStyleElement, element.node);
+}
 
 static HRESULT HTMLStyleElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
-    HTMLStyleElement *This = HTMLSTYLE_NODE_THIS(iface);
+    HTMLStyleElement *This = impl_from_HTMLDOMNode(iface);
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
@@ -280,15 +283,13 @@ static HRESULT HTMLStyleElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
 static void HTMLStyleElement_destructor(HTMLDOMNode *iface)
 {
-    HTMLStyleElement *This = HTMLSTYLE_NODE_THIS(iface);
+    HTMLStyleElement *This = impl_from_HTMLDOMNode(iface);
 
     if(This->nsstyle)
         nsIDOMHTMLStyleElement_Release(This->nsstyle);
 
     HTMLElement_destructor(&This->element.node);
 }
-
-#undef HTMLSTYLE_NODE_THIS
 
 static const NodeImplVtbl HTMLStyleElementImplVtbl = {
     HTMLStyleElement_QI,

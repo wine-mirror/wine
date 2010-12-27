@@ -139,11 +139,14 @@ static const IHTMLCommentElementVtbl HTMLCommentElementVtbl = {
     HTMLCommentElement_get_atomic
 };
 
-#define HTMLCOMMENT_NODE_THIS(iface) DEFINE_THIS2(HTMLCommentElement, element.node, iface)
+static inline HTMLCommentElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLCommentElement, element.node);
+}
 
 static HRESULT HTMLCommentElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
-    HTMLCommentElement *This = HTMLCOMMENT_NODE_THIS(iface);
+    HTMLCommentElement *This = impl_from_HTMLDOMNode(iface);
 
     *ppv =  NULL;
 
@@ -160,12 +163,10 @@ static HRESULT HTMLCommentElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv
 
 static void HTMLCommentElement_destructor(HTMLDOMNode *iface)
 {
-    HTMLCommentElement *This = HTMLCOMMENT_NODE_THIS(iface);
+    HTMLCommentElement *This = impl_from_HTMLDOMNode(iface);
 
     HTMLElement_destructor(&This->element.node);
 }
-
-#undef HTMLCOMMENT_NODE_THIS
 
 static const NodeImplVtbl HTMLCommentElementImplVtbl = {
     HTMLCommentElement_QI,

@@ -172,11 +172,14 @@ static const IHTMLFrameElement3Vtbl HTMLFrameElement3Vtbl = {
     HTMLFrameElement3_get_frameBorder
 };
 
-#define HTMLFRAME_NODE_THIS(iface) DEFINE_THIS2(HTMLFrameElement, framebase.element.node, iface)
+static inline HTMLFrameElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLFrameElement, framebase.element.node);
+}
 
 static HRESULT HTMLFrameElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
-    HTMLFrameElement *This = HTMLFRAME_NODE_THIS(iface);
+    HTMLFrameElement *This = impl_from_HTMLDOMNode(iface);
 
     if(IsEqualGUID(&IID_IHTMLFrameElement3, riid)) {
         TRACE("(%p)->(IID_IHTMLFrameElement3 %p)\n", This, ppv);
@@ -191,14 +194,14 @@ static HRESULT HTMLFrameElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
 static void HTMLFrameElement_destructor(HTMLDOMNode *iface)
 {
-    HTMLFrameElement *This = HTMLFRAME_NODE_THIS(iface);
+    HTMLFrameElement *This = impl_from_HTMLDOMNode(iface);
 
     HTMLFrameBase_destructor(&This->framebase);
 }
 
 static HRESULT HTMLFrameElement_get_document(HTMLDOMNode *iface, IDispatch **p)
 {
-    HTMLFrameElement *This = HTMLFRAME_NODE_THIS(iface);
+    HTMLFrameElement *This = impl_from_HTMLDOMNode(iface);
 
     if(!This->framebase.content_window || !This->framebase.content_window->doc) {
         *p = NULL;
@@ -212,7 +215,7 @@ static HRESULT HTMLFrameElement_get_document(HTMLDOMNode *iface, IDispatch **p)
 
 static HRESULT HTMLFrameElement_get_readystate(HTMLDOMNode *iface, BSTR *p)
 {
-    HTMLFrameElement *This = HTMLFRAME_NODE_THIS(iface);
+    HTMLFrameElement *This = impl_from_HTMLDOMNode(iface);
 
     return IHTMLFrameBase2_get_readyState(HTMLFRAMEBASE2(&This->framebase), p);
 }
@@ -220,7 +223,7 @@ static HRESULT HTMLFrameElement_get_readystate(HTMLDOMNode *iface, BSTR *p)
 static HRESULT HTMLFrameElement_get_dispid(HTMLDOMNode *iface, BSTR name,
         DWORD grfdex, DISPID *pid)
 {
-    HTMLFrameElement *This = HTMLFRAME_NODE_THIS(iface);
+    HTMLFrameElement *This = impl_from_HTMLDOMNode(iface);
 
     if(!This->framebase.content_window)
         return DISP_E_UNKNOWNNAME;
@@ -231,7 +234,7 @@ static HRESULT HTMLFrameElement_get_dispid(HTMLDOMNode *iface, BSTR name,
 static HRESULT HTMLFrameElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid,
         WORD flags, DISPPARAMS *params, VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
-    HTMLFrameElement *This = HTMLFRAME_NODE_THIS(iface);
+    HTMLFrameElement *This = impl_from_HTMLDOMNode(iface);
 
     if(!This->framebase.content_window) {
         ERR("no content window to invoke on\n");
@@ -243,7 +246,7 @@ static HRESULT HTMLFrameElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid,
 
 static HRESULT HTMLFrameElement_bind_to_tree(HTMLDOMNode *iface)
 {
-    HTMLFrameElement *This = HTMLFRAME_NODE_THIS(iface);
+    HTMLFrameElement *This = impl_from_HTMLDOMNode(iface);
     nsIDOMDocument *nsdoc;
     nsresult nsres;
     HRESULT hres;
@@ -259,7 +262,7 @@ static HRESULT HTMLFrameElement_bind_to_tree(HTMLDOMNode *iface)
     return hres;
 }
 
-#undef HTMLFRAME_NODE_THIS
+#undef impl_from_HTMLDOMNode
 
 static const NodeImplVtbl HTMLFrameElementImplVtbl = {
     HTMLFrameElement_QI,

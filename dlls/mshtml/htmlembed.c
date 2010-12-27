@@ -217,11 +217,14 @@ static const IHTMLEmbedElementVtbl HTMLEmbedElementVtbl = {
     HTMLEmbedElement_get_height
 };
 
-#define HTMLEMBED_NODE_THIS(iface) DEFINE_THIS2(HTMLEmbedElement, element.node, iface)
+static inline HTMLEmbedElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLEmbedElement, element.node);
+}
 
 static HRESULT HTMLEmbedElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
-    HTMLEmbedElement *This = HTMLEMBED_NODE_THIS(iface);
+    HTMLEmbedElement *This = impl_from_HTMLDOMNode(iface);
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
@@ -242,12 +245,10 @@ static HRESULT HTMLEmbedElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
 static void HTMLEmbedElement_destructor(HTMLDOMNode *iface)
 {
-    HTMLEmbedElement *This = HTMLEMBED_NODE_THIS(iface);
+    HTMLEmbedElement *This = impl_from_HTMLDOMNode(iface);
 
     HTMLElement_destructor(&This->element.node);
 }
-
-#undef HTMLEMBED_NODE_THIS
 
 static const NodeImplVtbl HTMLEmbedElementImplVtbl = {
     HTMLEmbedElement_QI,

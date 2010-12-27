@@ -281,11 +281,14 @@ static const IHTMLScriptElementVtbl HTMLScriptElementVtbl = {
     HTMLScriptElement_get_type
 };
 
-#define HTMLSCRIPT_NODE_THIS(iface) DEFINE_THIS2(HTMLScriptElement, element.node, iface)
+static inline HTMLScriptElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLScriptElement, element.node);
+}
 
 static HRESULT HTMLScriptElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
-    HTMLScriptElement *This = HTMLSCRIPT_NODE_THIS(iface);
+    HTMLScriptElement *This = impl_from_HTMLDOMNode(iface);
 
     *ppv = NULL;
 
@@ -310,18 +313,16 @@ static HRESULT HTMLScriptElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
 static void HTMLScriptElement_destructor(HTMLDOMNode *iface)
 {
-    HTMLScriptElement *This = HTMLSCRIPT_NODE_THIS(iface);
+    HTMLScriptElement *This = impl_from_HTMLDOMNode(iface);
     HTMLElement_destructor(&This->element.node);
 }
 
 static HRESULT HTMLScriptElement_get_readystate(HTMLDOMNode *iface, BSTR *p)
 {
-    HTMLScriptElement *This = HTMLSCRIPT_NODE_THIS(iface);
+    HTMLScriptElement *This = impl_from_HTMLDOMNode(iface);
 
     return IHTMLScriptElement_get_readyState(&This->IHTMLScriptElement_iface, p);
 }
-
-#undef HTMLSCRIPT_NODE_THIS
 
 static const NodeImplVtbl HTMLScriptElementImplVtbl = {
     HTMLScriptElement_QI,

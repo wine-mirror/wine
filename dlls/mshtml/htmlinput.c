@@ -1117,11 +1117,14 @@ static const IHTMLInputTextElementVtbl HTMLInputTextElementVtbl = {
     HTMLInputTextElement_createTextRange
 };
 
-#define HTMLINPUT_NODE_THIS(iface) DEFINE_THIS2(HTMLInputElement, element.node, iface)
+static inline HTMLInputElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLInputElement, element.node);
+}
 
 static HRESULT HTMLInputElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
-    HTMLInputElement *This = HTMLINPUT_NODE_THIS(iface);
+    HTMLInputElement *This = impl_from_HTMLDOMNode(iface);
 
     *ppv = NULL;
 
@@ -1149,7 +1152,7 @@ static HRESULT HTMLInputElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
 static void HTMLInputElement_destructor(HTMLDOMNode *iface)
 {
-    HTMLInputElement *This = HTMLINPUT_NODE_THIS(iface);
+    HTMLInputElement *This = impl_from_HTMLDOMNode(iface);
 
     nsIDOMHTMLInputElement_Release(This->nsinput);
 
@@ -1158,7 +1161,7 @@ static void HTMLInputElement_destructor(HTMLDOMNode *iface)
 
 static HRESULT HTMLInputElementImpl_call_event(HTMLDOMNode *iface, eventid_t eid, BOOL *handled)
 {
-    HTMLInputElement *This = HTMLINPUT_NODE_THIS(iface);
+    HTMLInputElement *This = impl_from_HTMLDOMNode(iface);
 
     if(eid == EVENTID_CLICK) {
         nsresult nsres;
@@ -1177,17 +1180,15 @@ static HRESULT HTMLInputElementImpl_call_event(HTMLDOMNode *iface, eventid_t eid
 
 static HRESULT HTMLInputElementImpl_put_disabled(HTMLDOMNode *iface, VARIANT_BOOL v)
 {
-    HTMLInputElement *This = HTMLINPUT_NODE_THIS(iface);
+    HTMLInputElement *This = impl_from_HTMLDOMNode(iface);
     return IHTMLInputElement_put_disabled(&This->IHTMLInputElement_iface, v);
 }
 
 static HRESULT HTMLInputElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BOOL *p)
 {
-    HTMLInputElement *This = HTMLINPUT_NODE_THIS(iface);
+    HTMLInputElement *This = impl_from_HTMLDOMNode(iface);
     return IHTMLInputElement_get_disabled(&This->IHTMLInputElement_iface, p);
 }
-
-#undef HTMLINPUT_NODE_THIS
 
 static const NodeImplVtbl HTMLInputElementImplVtbl = {
     HTMLInputElement_QI,

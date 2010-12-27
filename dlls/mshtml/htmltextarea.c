@@ -390,11 +390,14 @@ static const IHTMLTextAreaElementVtbl HTMLTextAreaElementVtbl = {
     HTMLTextAreaElement_createTextRange
 };
 
-#define HTMLTXTAREA_NODE_THIS(iface) DEFINE_THIS2(HTMLTextAreaElement, element.node, iface)
+static inline HTMLTextAreaElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLTextAreaElement, element.node);
+}
 
 static HRESULT HTMLTextAreaElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
-    HTMLTextAreaElement *This = HTMLTXTAREA_NODE_THIS(iface);
+    HTMLTextAreaElement *This = impl_from_HTMLDOMNode(iface);
 
     *ppv = NULL;
 
@@ -419,7 +422,7 @@ static HRESULT HTMLTextAreaElement_QI(HTMLDOMNode *iface, REFIID riid, void **pp
 
 static void HTMLTextAreaElement_destructor(HTMLDOMNode *iface)
 {
-    HTMLTextAreaElement *This = HTMLTXTAREA_NODE_THIS(iface);
+    HTMLTextAreaElement *This = impl_from_HTMLDOMNode(iface);
 
     nsIDOMHTMLTextAreaElement_Release(This->nstextarea);
 
@@ -428,17 +431,15 @@ static void HTMLTextAreaElement_destructor(HTMLDOMNode *iface)
 
 static HRESULT HTMLTextAreaElementImpl_put_disabled(HTMLDOMNode *iface, VARIANT_BOOL v)
 {
-    HTMLTextAreaElement *This = HTMLTXTAREA_NODE_THIS(iface);
+    HTMLTextAreaElement *This = impl_from_HTMLDOMNode(iface);
     return IHTMLTextAreaElement_put_disabled(&This->IHTMLTextAreaElement_iface, v);
 }
 
 static HRESULT HTMLTextAreaElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BOOL *p)
 {
-    HTMLTextAreaElement *This = HTMLTXTAREA_NODE_THIS(iface);
+    HTMLTextAreaElement *This = impl_from_HTMLDOMNode(iface);
     return IHTMLTextAreaElement_get_disabled(&This->IHTMLTextAreaElement_iface, p);
 }
-
-#undef HTMLTXTAREA_NODE_THIS
 
 static const NodeImplVtbl HTMLTextAreaElementImplVtbl = {
     HTMLTextAreaElement_QI,

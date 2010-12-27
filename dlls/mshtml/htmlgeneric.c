@@ -120,11 +120,14 @@ static const IHTMLGenericElementVtbl HTMLGenericElementVtbl = {
     HTMLGenericElement_namedRecordset
 };
 
-#define HTMLGENERIC_NODE_THIS(iface) DEFINE_THIS2(HTMLGenericElement, element.node, iface)
+static inline HTMLGenericElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLGenericElement, element.node);
+}
 
 static HRESULT HTMLGenericElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
-    HTMLGenericElement *This = HTMLGENERIC_NODE_THIS(iface);
+    HTMLGenericElement *This = impl_from_HTMLDOMNode(iface);
 
     *ppv = NULL;
 
@@ -141,12 +144,10 @@ static HRESULT HTMLGenericElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv
 
 static void HTMLGenericElement_destructor(HTMLDOMNode *iface)
 {
-    HTMLGenericElement *This = HTMLGENERIC_NODE_THIS(iface);
+    HTMLGenericElement *This = impl_from_HTMLDOMNode(iface);
 
     HTMLElement_destructor(&This->element.node);
 }
-
-#undef HTMLGENERIC_NODE_THIS
 
 static const NodeImplVtbl HTMLGenericElementImplVtbl = {
     HTMLGenericElement_QI,

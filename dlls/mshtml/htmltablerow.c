@@ -255,11 +255,14 @@ static const IHTMLTableRowVtbl HTMLTableRowVtbl = {
     HTMLTableRow_deleteCell
 };
 
-#define HTMLTABLEROW_NODE_THIS(iface) DEFINE_THIS2(HTMLTableRow, element.node, iface)
+static inline HTMLTableRow *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLTableRow, element.node);
+}
 
 static HRESULT HTMLTableRow_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
-    HTMLTableRow *This = HTMLTABLEROW_NODE_THIS(iface);
+    HTMLTableRow *This = impl_from_HTMLDOMNode(iface);
 
     *ppv = NULL;
 
@@ -284,15 +287,13 @@ static HRESULT HTMLTableRow_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
 static void HTMLTableRow_destructor(HTMLDOMNode *iface)
 {
-    HTMLTableRow *This = HTMLTABLEROW_NODE_THIS(iface);
+    HTMLTableRow *This = impl_from_HTMLDOMNode(iface);
 
     if(This->nsrow)
         nsIDOMHTMLTableRowElement_Release(This->nsrow);
 
     HTMLElement_destructor(&This->element.node);
 }
-
-#undef HTMLTABLEROW_NODE_THIS
 
 static const NodeImplVtbl HTMLTableRowImplVtbl = {
     HTMLTableRow_QI,

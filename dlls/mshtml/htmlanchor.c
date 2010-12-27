@@ -473,11 +473,14 @@ static const IHTMLAnchorElementVtbl HTMLAnchorElementVtbl = {
     HTMLAnchorElement_blur
 };
 
-#define HTMLANCHOR_NODE_THIS(iface) DEFINE_THIS2(HTMLAnchorElement, element.node, iface)
+static inline HTMLAnchorElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLAnchorElement, element.node);
+}
 
 static HRESULT HTMLAnchorElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_NODE_THIS(iface);
+    HTMLAnchorElement *This = impl_from_HTMLDOMNode(iface);
 
     *ppv = NULL;
 
@@ -502,15 +505,13 @@ static HRESULT HTMLAnchorElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
 static void HTMLAnchorElement_destructor(HTMLDOMNode *iface)
 {
-    HTMLAnchorElement *This = HTMLANCHOR_NODE_THIS(iface);
+    HTMLAnchorElement *This = impl_from_HTMLDOMNode(iface);
 
     if(This->nsanchor)
         nsIDOMHTMLAnchorElement_Release(This->nsanchor);
 
     HTMLElement_destructor(&This->element.node);
 }
-
-#undef HTMLANCHOR_NODE_THIS
 
 static const NodeImplVtbl HTMLAnchorElementImplVtbl = {
     HTMLAnchorElement_QI,

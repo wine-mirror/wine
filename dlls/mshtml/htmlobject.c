@@ -393,11 +393,14 @@ static const IHTMLObjectElementVtbl HTMLObjectElementVtbl = {
     HTMLObjectElement_get_hspace
 };
 
-#define HTMLOBJECT_NODE_THIS(iface) DEFINE_THIS2(HTMLObjectElement, plugin_container.element.node, iface)
+static inline HTMLObjectElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLObjectElement, plugin_container.element.node);
+}
 
 static HRESULT HTMLObjectElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
-    HTMLObjectElement *This = HTMLOBJECT_NODE_THIS(iface);
+    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
@@ -422,7 +425,7 @@ static HRESULT HTMLObjectElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
 static void HTMLObjectElement_destructor(HTMLDOMNode *iface)
 {
-    HTMLObjectElement *This = HTMLOBJECT_NODE_THIS(iface);
+    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
 
     if(This->plugin_container.plugin_host)
         detach_plugin_host(This->plugin_container.plugin_host);
@@ -434,7 +437,7 @@ static void HTMLObjectElement_destructor(HTMLDOMNode *iface)
 
 static HRESULT HTMLObjectElement_get_readystate(HTMLDOMNode *iface, BSTR *p)
 {
-    HTMLObjectElement *This = HTMLOBJECT_NODE_THIS(iface);
+    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
@@ -442,7 +445,7 @@ static HRESULT HTMLObjectElement_get_readystate(HTMLDOMNode *iface, BSTR *p)
 static HRESULT HTMLObjectElement_get_dispid(HTMLDOMNode *iface, BSTR name,
         DWORD grfdex, DISPID *pid)
 {
-    HTMLObjectElement *This = HTMLOBJECT_NODE_THIS(iface);
+    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
 
     TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(name), grfdex, pid);
 
@@ -452,14 +455,14 @@ static HRESULT HTMLObjectElement_get_dispid(HTMLDOMNode *iface, BSTR name,
 static HRESULT HTMLObjectElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid,
         WORD flags, DISPPARAMS *params, VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
-    HTMLObjectElement *This = HTMLOBJECT_NODE_THIS(iface);
+    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
 
     TRACE("(%p)->(%d)\n", This, id);
 
     return invoke_plugin_prop(&This->plugin_container, id, lcid, flags, params, res, ei);
 }
 
-#undef HTMLOBJECT_NODE_THIS
+#undef impl_from_HTMLDOMNode
 
 static const NodeImplVtbl HTMLObjectElementImplVtbl = {
     HTMLObjectElement_QI,

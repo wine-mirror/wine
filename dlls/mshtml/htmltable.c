@@ -513,11 +513,14 @@ static const IHTMLTableVtbl HTMLTableVtbl = {
     HTMLTable_get_onreadystatechange
 };
 
-#define HTMLTABLE_NODE_THIS(iface) DEFINE_THIS2(HTMLTable, element.node, iface)
+static inline HTMLTable *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLTable, element.node);
+}
 
 static HRESULT HTMLTable_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
-    HTMLTable *This = HTMLTABLE_NODE_THIS(iface);
+    HTMLTable *This = impl_from_HTMLDOMNode(iface);
 
     *ppv = NULL;
 
@@ -542,15 +545,13 @@ static HRESULT HTMLTable_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
 static void HTMLTable_destructor(HTMLDOMNode *iface)
 {
-    HTMLTable *This = HTMLTABLE_NODE_THIS(iface);
+    HTMLTable *This = impl_from_HTMLDOMNode(iface);
 
     if(This->nstable)
         nsIDOMHTMLTableElement_Release(This->nstable);
 
     HTMLElement_destructor(&This->element.node);
 }
-
-#undef HTMLTABLE_NODE_THIS
 
 static const NodeImplVtbl HTMLTableImplVtbl = {
     HTMLTable_QI,

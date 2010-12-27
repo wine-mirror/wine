@@ -603,11 +603,14 @@ static const IHTMLImgElementVtbl HTMLImgElementVtbl = {
     HTMLImgElement_get_start
 };
 
-#define HTMLIMG_NODE_THIS(iface) DEFINE_THIS2(HTMLImgElement, element.node, iface)
+static inline HTMLImgElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLImgElement, element.node);
+}
 
 static HRESULT HTMLImgElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
-    HTMLImgElement *This = HTMLIMG_NODE_THIS(iface);
+    HTMLImgElement *This = impl_from_HTMLDOMNode(iface);
 
     *ppv = NULL;
 
@@ -624,7 +627,7 @@ static HRESULT HTMLImgElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
 static void HTMLImgElement_destructor(HTMLDOMNode *iface)
 {
-    HTMLImgElement *This = HTMLIMG_NODE_THIS(iface);
+    HTMLImgElement *This = impl_from_HTMLDOMNode(iface);
 
     if(This->nsimg)
         nsIDOMHTMLImageElement_Release(This->nsimg);
@@ -634,12 +637,10 @@ static void HTMLImgElement_destructor(HTMLDOMNode *iface)
 
 static HRESULT HTMLImgElement_get_readystate(HTMLDOMNode *iface, BSTR *p)
 {
-    HTMLImgElement *This = HTMLIMG_NODE_THIS(iface);
+    HTMLImgElement *This = impl_from_HTMLDOMNode(iface);
 
     return IHTMLImgElement_get_readyState(&This->IHTMLImgElement_iface, p);
 }
-
-#undef HTMLIMG_NODE_THIS
 
 static const NodeImplVtbl HTMLImgElementImplVtbl = {
     HTMLImgElement_QI,

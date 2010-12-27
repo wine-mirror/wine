@@ -489,11 +489,14 @@ static const IHTMLFormElementVtbl HTMLFormElementVtbl = {
     HTMLFormElement_tags
 };
 
-#define HTMLFORM_NODE_THIS(iface) DEFINE_THIS2(HTMLFormElement, element.node, iface)
+static inline HTMLFormElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLFormElement, element.node);
+}
 
 static HRESULT HTMLFormElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
-    HTMLFormElement *This = HTMLFORM_NODE_THIS(iface);
+    HTMLFormElement *This = impl_from_HTMLDOMNode(iface);
 
     *ppv = NULL;
 
@@ -518,7 +521,7 @@ static HRESULT HTMLFormElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
 static void HTMLFormElement_destructor(HTMLDOMNode *iface)
 {
-    HTMLFormElement *This = HTMLFORM_NODE_THIS(iface);
+    HTMLFormElement *This = impl_from_HTMLDOMNode(iface);
 
     if(This->nsform)
         nsIDOMHTMLFormElement_Release(This->nsform);
@@ -529,7 +532,7 @@ static void HTMLFormElement_destructor(HTMLDOMNode *iface)
 static HRESULT HTMLFormElement_get_dispid(HTMLDOMNode *iface,
         BSTR name, DWORD grfdex, DISPID *pid)
 {
-    HTMLFormElement *This = HTMLFORM_NODE_THIS(iface);
+    HTMLFormElement *This = impl_from_HTMLDOMNode(iface);
     nsIDOMHTMLCollection *elements;
     nsAString nsname, nsstr;
     PRUint32 len, i;
@@ -615,7 +618,7 @@ static HRESULT HTMLFormElement_invoke(HTMLDOMNode *iface,
         DISPID id, LCID lcid, WORD flags, DISPPARAMS *params, VARIANT *res,
         EXCEPINFO *ei, IServiceProvider *caller)
 {
-    HTMLFormElement *This = HTMLFORM_NODE_THIS(iface);
+    HTMLFormElement *This = impl_from_HTMLDOMNode(iface);
     IDispatch *ret;
     HRESULT hres;
 
@@ -633,8 +636,6 @@ static HRESULT HTMLFormElement_invoke(HTMLDOMNode *iface,
     }
     return S_OK;
 }
-
-#undef HTMLFORM_NODE_THIS
 
 static const NodeImplVtbl HTMLFormElementImplVtbl = {
     HTMLFormElement_QI,
