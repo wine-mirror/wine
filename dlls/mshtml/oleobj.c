@@ -757,41 +757,42 @@ static const IOleControlVtbl OleControlVtbl = {
  * IObjectWithSite implementation
  */
 
-#define OBJSITE_THIS(iface) DEFINE_THIS(HTMLDocument, ObjectWithSite, iface)
+static inline HTMLDocument *impl_from_IObjectWithSite(IObjectWithSite *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocument, IObjectWithSite_iface);
+}
 
 static HRESULT WINAPI ObjectWithSite_QueryInterface(IObjectWithSite *iface, REFIID riid, void **ppv)
 {
-    HTMLDocument *This = OBJSITE_THIS(iface);
+    HTMLDocument *This = impl_from_IObjectWithSite(iface);
     return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI ObjectWithSite_AddRef(IObjectWithSite *iface)
 {
-    HTMLDocument *This = OBJSITE_THIS(iface);
+    HTMLDocument *This = impl_from_IObjectWithSite(iface);
     return htmldoc_addref(This);
 }
 
 static ULONG WINAPI ObjectWithSite_Release(IObjectWithSite *iface)
 {
-    HTMLDocument *This = OBJSITE_THIS(iface);
+    HTMLDocument *This = impl_from_IObjectWithSite(iface);
     return htmldoc_release(This);
 }
 
 static HRESULT WINAPI ObjectWithSite_SetSite(IObjectWithSite *iface, IUnknown *pUnkSite)
 {
-    HTMLDocument *This = OBJSITE_THIS(iface);
+    HTMLDocument *This = impl_from_IObjectWithSite(iface);
     FIXME("(%p)->(%p)\n", This, pUnkSite);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ObjectWithSite_GetSite(IObjectWithSite* iface, REFIID riid, PVOID *ppvSite)
 {
-    HTMLDocument *This = OBJSITE_THIS(iface);
+    HTMLDocument *This = impl_from_IObjectWithSite(iface);
     FIXME("(%p)->(%p)\n", This, ppvSite);
     return E_NOTIMPL;
 }
-
-#undef OBJSITE_THIS
 
 static const IObjectWithSiteVtbl ObjectWithSiteVtbl = {
     ObjectWithSite_QueryInterface,
@@ -876,6 +877,6 @@ void HTMLDocument_OleObj_Init(HTMLDocument *This)
     This->IOleObject_iface.lpVtbl = &OleObjectVtbl;
     This->IOleDocument_iface.lpVtbl = &OleDocumentVtbl;
     This->IOleControl_iface.lpVtbl = &OleControlVtbl;
-    This->lpObjectWithSiteVtbl = &ObjectWithSiteVtbl;
+    This->IObjectWithSite_iface.lpVtbl = &ObjectWithSiteVtbl;
     This->IOleContainer_iface.lpVtbl = &OleContainerVtbl;
 }

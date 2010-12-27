@@ -364,8 +364,8 @@ struct HTMLDocument {
     IPersistStreamInit          IPersistStreamInit_iface;
     const IDispatchExVtbl                 *lpIDispatchExVtbl;
     ISupportErrorInfo           ISupportErrorInfo_iface;
-    const IObjectWithSiteVtbl             *lpObjectWithSiteVtbl;
-    IOleContainer    IOleContainer_iface;
+    IObjectWithSite             IObjectWithSite_iface;
+    IOleContainer               IOleContainer_iface;
 
     IUnknown *unk_impl;
     IDispatchEx *dispex;
@@ -627,7 +627,6 @@ struct HTMLDocumentNode {
 #define HTMLWINDOW4(x)   ((IHTMLWindow4*)                 &(x)->lpHTMLWindow4Vtbl)
 #define CONPTCONT(x)     ((IConnectionPointContainer*)    &(x)->lpConnectionPointContainerVtbl)
 #define CUSTOMDOC(x)     ((ICustomDoc*)                   &(x)->lpCustomDocVtbl)
-#define OBJSITE(x)       ((IObjectWithSite*)              &(x)->lpObjectWithSiteVtbl)
 
 #define NSWBCHROME(x)    ((nsIWebBrowserChrome*)          &(x)->lpWebBrowserChromeVtbl)
 #define NSCML(x)         ((nsIContextMenuListener*)       &(x)->lpContextMenuListenerVtbl)
