@@ -37,29 +37,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(avifile);
 
 /***********************************************************************/
 
-static HRESULT WINAPI IGetFrame_fnQueryInterface(IGetFrame *iface,
-						 REFIID refiid, LPVOID *obj);
-static ULONG   WINAPI IGetFrame_fnAddRef(IGetFrame *iface);
-static ULONG   WINAPI IGetFrame_fnRelease(IGetFrame *iface);
-static LPVOID  WINAPI IGetFrame_fnGetFrame(IGetFrame *iface, LONG lPos);
-static HRESULT WINAPI IGetFrame_fnBegin(IGetFrame *iface, LONG lStart,
-					LONG lEnd, LONG lRate);
-static HRESULT WINAPI IGetFrame_fnEnd(IGetFrame *iface);
-static HRESULT WINAPI IGetFrame_fnSetFormat(IGetFrame *iface,
-					    LPBITMAPINFOHEADER lpbi,
-					    LPVOID lpBits, INT x, INT y,
-					    INT dx, INT dy);
-
-static const struct IGetFrameVtbl igetframeVtbl = {
-  IGetFrame_fnQueryInterface,
-  IGetFrame_fnAddRef,
-  IGetFrame_fnRelease,
-  IGetFrame_fnGetFrame,
-  IGetFrame_fnBegin,
-  IGetFrame_fnEnd,
-  IGetFrame_fnSetFormat
-};
-
 typedef struct _IGetFrameImpl {
   /* IUnknown stuff */
   IGetFrame          IGetFrame_iface;
@@ -113,26 +90,6 @@ static void AVIFILE_CloseCompressor(IGetFrameImpl *This)
     ICClose(This->hic);
     This->hic = NULL;
   }
-}
-
-PGETFRAME AVIFILE_CreateGetFrame(PAVISTREAM pStream)
-{
-  IGetFrameImpl *pg;
-
-  /* check parameter */
-  if (pStream == NULL)
-    return NULL;
-
-  pg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IGetFrameImpl));
-  if (pg != NULL) {
-    pg->IGetFrame_iface.lpVtbl = &igetframeVtbl;
-    pg->ref           = 1;
-    pg->lCurrentFrame = -1;
-    pg->pStream       = pStream;
-    IAVIStream_AddRef(pStream);
-  }
-
-  return (PGETFRAME)pg;
 }
 
 static HRESULT WINAPI IGetFrame_fnQueryInterface(IGetFrame *iface,
@@ -519,6 +476,36 @@ static HRESULT WINAPI IGetFrame_fnSetFormat(IGetFrame *iface,
 
     return AVIERR_COMPRESSOR;
   }
+}
+
+static const struct IGetFrameVtbl igetframeVtbl = {
+  IGetFrame_fnQueryInterface,
+  IGetFrame_fnAddRef,
+  IGetFrame_fnRelease,
+  IGetFrame_fnGetFrame,
+  IGetFrame_fnBegin,
+  IGetFrame_fnEnd,
+  IGetFrame_fnSetFormat
+};
+
+PGETFRAME AVIFILE_CreateGetFrame(PAVISTREAM pStream)
+{
+  IGetFrameImpl *pg;
+
+  /* check parameter */
+  if (pStream == NULL)
+    return NULL;
+
+  pg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IGetFrameImpl));
+  if (pg != NULL) {
+    pg->IGetFrame_iface.lpVtbl = &igetframeVtbl;
+    pg->ref           = 1;
+    pg->lCurrentFrame = -1;
+    pg->pStream       = pStream;
+    IAVIStream_AddRef(pStream);
+  }
+
+  return (PGETFRAME)pg;
 }
 
 /***********************************************************************/
