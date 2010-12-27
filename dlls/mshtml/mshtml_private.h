@@ -363,7 +363,7 @@ struct HTMLDocument {
     IHlinkTarget                IHlinkTarget_iface;
     IPersistStreamInit          IPersistStreamInit_iface;
     const IDispatchExVtbl                 *lpIDispatchExVtbl;
-    const ISupportErrorInfoVtbl           *lpSupportErrorInfoVtbl;
+    ISupportErrorInfo           ISupportErrorInfo_iface;
     const IObjectWithSiteVtbl             *lpObjectWithSiteVtbl;
     IOleContainer    IOleContainer_iface;
 
@@ -667,8 +667,6 @@ struct HTMLDocumentNode {
 #define HTMLLOCATION(x)    ((IHTMLLocation*)              &(x)->lpHTMLLocationVtbl)
 
 #define DISPATCHEX(x)    ((IDispatchEx*) &(x)->lpIDispatchExVtbl)
-
-#define SUPPERRINFO(x)   ((ISupportErrorInfo*) &(x)->lpSupportErrorInfoVtbl)
 
 #define HOSTSECMGR(x)    ((IInternetHostSecurityManager*)  &(x)->lpIInternetHostSecurityManagerVtbl)
 

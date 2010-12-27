@@ -1511,23 +1511,26 @@ static void HTMLDocument_on_advise(IUnknown *iface, cp_static_data_t *cp)
         update_cp_events(This->window, &This->doc_node->node.event_target, cp, This->doc_node->node.nsnode);
 }
 
-#define SUPPINFO_THIS(iface) DEFINE_THIS(HTMLDocument, SupportErrorInfo, iface)
+static inline HTMLDocument *impl_from_ISupportErrorInfo(ISupportErrorInfo *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocument, ISupportErrorInfo_iface);
+}
 
 static HRESULT WINAPI SupportErrorInfo_QueryInterface(ISupportErrorInfo *iface, REFIID riid, void **ppv)
 {
-    HTMLDocument *This = SUPPINFO_THIS(iface);
+    HTMLDocument *This = impl_from_ISupportErrorInfo(iface);
     return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI SupportErrorInfo_AddRef(ISupportErrorInfo *iface)
 {
-    HTMLDocument *This = SUPPINFO_THIS(iface);
+    HTMLDocument *This = impl_from_ISupportErrorInfo(iface);
     return htmldoc_addref(This);
 }
 
 static ULONG WINAPI SupportErrorInfo_Release(ISupportErrorInfo *iface)
 {
-    HTMLDocument *This = SUPPINFO_THIS(iface);
+    HTMLDocument *This = impl_from_ISupportErrorInfo(iface);
     return htmldoc_release(This);
 }
 
@@ -1794,7 +1797,7 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IHTMLDocument2_iface;
     }else if(IsEqualGUID(&IID_ISupportErrorInfo, riid)) {
         TRACE("(%p)->(IID_ISupportErrorInfo %p)\n", This, ppv);
-        *ppv = SUPPERRINFO(This);
+        *ppv = &This->ISupportErrorInfo_iface;
     }else if(IsEqualGUID(&IID_IPersistHistory, riid)) {
         TRACE("(%p)->(IID_IPersistHistory %p)\n", This, ppv);
         *ppv = &This->IPersistHistory_iface;
@@ -1837,7 +1840,7 @@ static void init_doc(HTMLDocument *doc, IUnknown *unk_impl, IDispatchEx *dispex)
 {
     doc->IHTMLDocument2_iface.lpVtbl = &HTMLDocumentVtbl;
     doc->lpIDispatchExVtbl = &DocDispatchExVtbl;
-    doc->lpSupportErrorInfoVtbl = &SupportErrorInfoVtbl;
+    doc->ISupportErrorInfo_iface.lpVtbl = &SupportErrorInfoVtbl;
 
     doc->unk_impl = unk_impl;
     doc->dispex = dispex;
