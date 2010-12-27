@@ -38,7 +38,7 @@ static const WCHAR hrW[] = {'h','r',0};
 
 typedef struct {
     const IHTMLTxtRangeVtbl *lpHTMLTxtRangeVtbl;
-    const IOleCommandTargetVtbl *lpOleCommandTargetVtbl;
+    IOleCommandTarget IOleCommandTarget_iface;
 
     LONG ref;
 
@@ -1017,7 +1017,7 @@ static HRESULT WINAPI HTMLTxtRange_QueryInterface(IHTMLTxtRange *iface, REFIID r
         *ppv = HTMLTXTRANGE(This);
     }else if(IsEqualGUID(&IID_IOleCommandTarget, riid)) {
         TRACE("(%p)->(IID_IOleCommandTarget %p)\n", This, ppv);
-        *ppv = CMDTARGET(This);
+        *ppv = &This->IOleCommandTarget_iface;
     }
 
     if(*ppv) {
@@ -1755,30 +1755,33 @@ static const IHTMLTxtRangeVtbl HTMLTxtRangeVtbl = {
     HTMLTxtRange_execCommandShowHelp
 };
 
-#define OLECMDTRG_THIS(iface) DEFINE_THIS(HTMLTxtRange, OleCommandTarget, iface)
+static inline HTMLTxtRange *impl_from_IOleCommandTarget(IOleCommandTarget *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLTxtRange, IOleCommandTarget_iface);
+}
 
 static HRESULT WINAPI RangeCommandTarget_QueryInterface(IOleCommandTarget *iface, REFIID riid, void **ppv)
 {
-    HTMLTxtRange *This = OLECMDTRG_THIS(iface);
+    HTMLTxtRange *This = impl_from_IOleCommandTarget(iface);
     return IHTMLTxtRange_QueryInterface(HTMLTXTRANGE(This), riid, ppv);
 }
 
 static ULONG WINAPI RangeCommandTarget_AddRef(IOleCommandTarget *iface)
 {
-    HTMLTxtRange *This = OLECMDTRG_THIS(iface);
+    HTMLTxtRange *This = impl_from_IOleCommandTarget(iface);
     return IHTMLTxtRange_AddRef(HTMLTXTRANGE(This));
 }
 
 static ULONG WINAPI RangeCommandTarget_Release(IOleCommandTarget *iface)
 {
-    HTMLTxtRange *This = OLECMDTRG_THIS(iface);
+    HTMLTxtRange *This = impl_from_IOleCommandTarget(iface);
     return IHTMLTxtRange_Release(HTMLTXTRANGE(This));
 }
 
 static HRESULT WINAPI RangeCommandTarget_QueryStatus(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
         ULONG cCmds, OLECMD prgCmds[], OLECMDTEXT *pCmdText)
 {
-    HTMLTxtRange *This = OLECMDTRG_THIS(iface);
+    HTMLTxtRange *This = impl_from_IOleCommandTarget(iface);
     FIXME("(%p)->(%s %d %p %p)\n", This, debugstr_guid(pguidCmdGroup), cCmds, prgCmds, pCmdText);
     return E_NOTIMPL;
 }
@@ -1820,7 +1823,7 @@ static HRESULT exec_indent(HTMLTxtRange *This, VARIANT *in, VARIANT *out)
 static HRESULT WINAPI RangeCommandTarget_Exec(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
         DWORD nCmdID, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    HTMLTxtRange *This = OLECMDTRG_THIS(iface);
+    HTMLTxtRange *This = impl_from_IOleCommandTarget(iface);
 
     TRACE("(%p)->(%s %d %x %p %p)\n", This, debugstr_guid(pguidCmdGroup), nCmdID,
           nCmdexecopt, pvaIn, pvaOut);
@@ -1858,7 +1861,7 @@ HRESULT HTMLTxtRange_Create(HTMLDocumentNode *doc, nsIDOMRange *nsrange, IHTMLTx
         return E_OUTOFMEMORY;
 
     ret->lpHTMLTxtRangeVtbl = &HTMLTxtRangeVtbl;
-    ret->lpOleCommandTargetVtbl = &OleCommandTargetVtbl;
+    ret->IOleCommandTarget_iface.lpVtbl = &OleCommandTargetVtbl;
     ret->ref = 1;
 
     if(nsrange)

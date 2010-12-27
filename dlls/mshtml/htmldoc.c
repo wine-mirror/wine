@@ -1776,7 +1776,7 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IServiceProvider_iface;
     }else if(IsEqualGUID(&IID_IOleCommandTarget, riid)) {
         TRACE("(%p)->(IID_IOleCommandTarget, %p)\n", This, ppv);
-        *ppv = CMDTARGET(This);
+        *ppv = &This->IOleCommandTarget_iface;
     }else if(IsEqualGUID(&IID_IOleControl, riid)) {
         TRACE("(%p)->(IID_IOleControl, %p)\n", This, ppv);
         *ppv = CONTROL(This);
