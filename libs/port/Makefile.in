@@ -9,7 +9,6 @@ C_SRCS = \
 	getopt.c \
 	getopt1.c \
 	getpagesize.c \
-	gettid.c \
 	interlocked.c \
 	isinf.c \
 	isnan.c \

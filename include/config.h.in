@@ -226,9 +226,6 @@
 /* Define to 1 if you have the `getservbyport' function. */
 #undef HAVE_GETSERVBYPORT
 
-/* Define to 1 if you have the `gettid' function. */
-#undef HAVE_GETTID
-
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
 

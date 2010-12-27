@@ -248,10 +248,6 @@ int futimes(int fd, const struct timeval *tv);
 size_t getpagesize(void);
 #endif  /* HAVE_GETPAGESIZE */
 
-#ifndef HAVE_GETTID
-pid_t gettid(void);
-#endif /* HAVE_GETTID */
-
 #ifndef HAVE_ISINF
 int isinf(double x);
 #endif

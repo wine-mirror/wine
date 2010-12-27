@@ -1904,7 +1904,6 @@ AC_CHECK_FUNCS(\
 	getopt_long \
 	getpagesize \
 	getpwuid \
-	gettid \
 	gettimeofday \
 	getuid \
 	kqueue \

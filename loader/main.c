@@ -30,6 +30,9 @@
 #ifdef HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>
 #endif
+#ifdef HAVE_SYS_SYSCALL_H
+# include <sys/syscall.h>
+#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -104,7 +107,7 @@ static void check_command_line( int argc, char *argv[] )
 /* separate thread to check for NPTL and TLS features */
 static void *needs_pthread( void *arg )
 {
-    pid_t tid = gettid();
+    pid_t tid = syscall( SYS_gettid );
     /* check for NPTL */
     if (tid != -1 && tid != getpid()) return (void *)1;
     /* check for TLS glibc */
