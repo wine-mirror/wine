@@ -41,6 +41,9 @@
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
+#ifdef HAVE_SYS_SYSCALL_H
+# include <sys/syscall.h>
+#endif
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
@@ -99,8 +102,7 @@ typedef struct
 # define O_DIRECTORY 0200000 /* must be directory */
 #endif
 
-#ifdef __i386__
-
+#ifdef SYS_getdents64
 typedef struct
 {
     ULONG64        d_ino;
@@ -112,11 +114,10 @@ typedef struct
 
 static inline int getdents64( int fd, char *de, unsigned int size )
 {
-    return syscall( 220 /* NR_getdents64 */, fd, de, size );
+    return syscall( SYS_getdents64, fd, de, size );
 }
 #define USE_GETDENTS
-
-#endif  /* i386 */
+#endif
 
 #endif  /* linux */
 
