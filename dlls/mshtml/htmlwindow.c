@@ -1236,67 +1236,6 @@ static HRESULT WINAPI HTMLWindow2_get_external(IHTMLWindow2 *iface, IDispatch **
     return IDocHostUIHandler_GetExternal(This->doc_obj->hostui, p);
 }
 
-static HRESULT HTMLWindow_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
-        VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
-{
-    HTMLWindow *This = impl_from_IHTMLWindow2((IHTMLWindow2*)iface);
-    global_prop_t *prop;
-    DWORD idx;
-    HRESULT hres;
-
-    idx = id - MSHTML_DISPID_CUSTOM_MIN;
-    if(idx >= This->global_prop_cnt)
-        return DISP_E_MEMBERNOTFOUND;
-
-    prop = This->global_props+idx;
-
-    switch(prop->type) {
-    case GLOBAL_SCRIPTVAR: {
-        IDispatchEx *dispex;
-        IDispatch *disp;
-
-        disp = get_script_disp(prop->script_host);
-        if(!disp)
-            return E_UNEXPECTED;
-
-        hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
-        if(SUCCEEDED(hres)) {
-            TRACE("%s >>>\n", debugstr_w(prop->name));
-            hres = IDispatchEx_InvokeEx(dispex, prop->id, lcid, flags, params, res, ei, caller);
-            if(hres == S_OK)
-                TRACE("%s <<<\n", debugstr_w(prop->name));
-            else
-                WARN("%s <<< %08x\n", debugstr_w(prop->name), hres);
-            IDispatchEx_Release(dispex);
-        }else {
-            FIXME("No IDispatchEx\n");
-        }
-        IDispatch_Release(disp);
-        break;
-    }
-    case GLOBAL_ELEMENTVAR: {
-        IHTMLElement *elem;
-
-        hres = IHTMLDocument3_getElementById(&This->doc->basedoc.IHTMLDocument3_iface,
-                                             prop->name, &elem);
-        if(FAILED(hres))
-            return hres;
-
-        if(!elem)
-            return DISP_E_MEMBERNOTFOUND;
-
-        V_VT(res) = VT_DISPATCH;
-        V_DISPATCH(res) = (IDispatch*)elem;
-        break;
-    }
-    default:
-        ERR("invalid type %d\n", prop->type);
-        hres = DISP_E_MEMBERNOTFOUND;
-    }
-
-    return hres;
-}
-
 static const IHTMLWindow2Vtbl HTMLWindow2Vtbl = {
     HTMLWindow2_QueryInterface,
     HTMLWindow2_AddRef,
@@ -2170,17 +2109,84 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
     HTMLWindowSP_QueryService
 };
 
-static const tid_t HTMLWindow_iface_tids[] = {
-    IHTMLWindow2_tid,
-    IHTMLWindow3_tid,
-    IHTMLWindow4_tid,
-    0
-};
+static inline HTMLWindow *impl_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLWindow, dispex);
+}
+
+static HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+        VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    HTMLWindow *This = impl_from_DispatchEx(dispex);
+    global_prop_t *prop;
+    DWORD idx;
+    HRESULT hres;
+
+    idx = id - MSHTML_DISPID_CUSTOM_MIN;
+    if(idx >= This->global_prop_cnt)
+        return DISP_E_MEMBERNOTFOUND;
+
+    prop = This->global_props+idx;
+
+    switch(prop->type) {
+    case GLOBAL_SCRIPTVAR: {
+        IDispatchEx *dispex;
+        IDispatch *disp;
+
+        disp = get_script_disp(prop->script_host);
+        if(!disp)
+            return E_UNEXPECTED;
+
+        hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+        if(SUCCEEDED(hres)) {
+            TRACE("%s >>>\n", debugstr_w(prop->name));
+            hres = IDispatchEx_InvokeEx(dispex, prop->id, lcid, flags, params, res, ei, caller);
+            if(hres == S_OK)
+                TRACE("%s <<<\n", debugstr_w(prop->name));
+            else
+                WARN("%s <<< %08x\n", debugstr_w(prop->name), hres);
+            IDispatchEx_Release(dispex);
+        }else {
+            FIXME("No IDispatchEx\n");
+        }
+        IDispatch_Release(disp);
+        break;
+    }
+    case GLOBAL_ELEMENTVAR: {
+        IHTMLElement *elem;
+
+        hres = IHTMLDocument3_getElementById(&This->doc->basedoc.IHTMLDocument3_iface,
+                                             prop->name, &elem);
+        if(FAILED(hres))
+            return hres;
+
+        if(!elem)
+            return DISP_E_MEMBERNOTFOUND;
+
+        V_VT(res) = VT_DISPATCH;
+        V_DISPATCH(res) = (IDispatch*)elem;
+        break;
+    }
+    default:
+        ERR("invalid type %d\n", prop->type);
+        hres = DISP_E_MEMBERNOTFOUND;
+    }
+
+    return hres;
+}
+
 
 static const dispex_static_data_vtbl_t HTMLWindow_dispex_vtbl = {
     NULL,
     NULL,
     HTMLWindow_invoke
+};
+
+static const tid_t HTMLWindow_iface_tids[] = {
+    IHTMLWindow2_tid,
+    IHTMLWindow3_tid,
+    IHTMLWindow4_tid,
+    0
 };
 
 static dispex_static_data_t HTMLWindow_dispex = {

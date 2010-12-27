@@ -1492,31 +1492,6 @@ static HRESULT WINAPI HTMLElement_get_all(IHTMLElement *iface, IDispatch **p)
     return S_OK;
 }
 
-static HRESULT HTMLElement_get_dispid(IUnknown *iface, BSTR name,
-        DWORD grfdex, DISPID *pid)
-{
-    HTMLElement *This = HTMLELEM_THIS(iface);
-
-    if(This->node.vtbl->get_dispid)
-        return This->node.vtbl->get_dispid(&This->node, name, grfdex, pid);
-
-    return DISP_E_UNKNOWNNAME;
-}
-
-static HRESULT HTMLElement_invoke(IUnknown *iface, DISPID id, LCID lcid,
-        WORD flags, DISPPARAMS *params, VARIANT *res, EXCEPINFO *ei,
-        IServiceProvider *caller)
-{
-    HTMLElement *This = HTMLELEM_THIS(iface);
-
-    if(This->node.vtbl->invoke)
-        return This->node.vtbl->invoke(&This->node, id, lcid, flags,
-                params, res, ei, caller);
-
-    ERR("(%p): element has no invoke method\n", This);
-    return E_NOTIMPL;
-}
-
 #undef HTMLELEM_THIS
 
 static const IHTMLElementVtbl HTMLElementVtbl = {
@@ -1682,6 +1657,36 @@ static const NodeImplVtbl HTMLElementImplVtbl = {
     HTMLElement_destructor,
     HTMLElement_clone
 };
+
+static inline HTMLElement *impl_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLElement, node.dispex);
+}
+
+static HRESULT HTMLElement_get_dispid(DispatchEx *dispex, BSTR name,
+        DWORD grfdex, DISPID *pid)
+{
+    HTMLElement *This = impl_from_DispatchEx(dispex);
+
+    if(This->node.vtbl->get_dispid)
+        return This->node.vtbl->get_dispid(&This->node, name, grfdex, pid);
+
+    return DISP_E_UNKNOWNNAME;
+}
+
+static HRESULT HTMLElement_invoke(DispatchEx *dispex, DISPID id, LCID lcid,
+        WORD flags, DISPPARAMS *params, VARIANT *res, EXCEPINFO *ei,
+        IServiceProvider *caller)
+{
+    HTMLElement *This = impl_from_DispatchEx(dispex);
+
+    if(This->node.vtbl->invoke)
+        return This->node.vtbl->invoke(&This->node, id, lcid, flags,
+                params, res, ei, caller);
+
+    ERR("(%p): element has no invoke method\n", This);
+    return E_NOTIMPL;
+}
 
 static const tid_t HTMLElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
@@ -1888,7 +1893,7 @@ static const IHTMLFiltersCollectionVtbl HTMLFiltersCollectionVtbl = {
     HTMLFiltersCollection_item
 };
 
-static HRESULT HTMLFiltersCollection_get_dispid(IUnknown *iface, BSTR name, DWORD flags, DISPID *dispid)
+static HRESULT HTMLFiltersCollection_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
 {
     WCHAR *ptr;
     int idx = 0;
@@ -1903,12 +1908,10 @@ static HRESULT HTMLFiltersCollection_get_dispid(IUnknown *iface, BSTR name, DWOR
     return S_OK;
 }
 
-static HRESULT HTMLFiltersCollection_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+static HRESULT HTMLFiltersCollection_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
-    HTMLFiltersCollection *This = HTMLFILTERSCOLLECTION_THIS(iface);
-
-    TRACE("(%p)->(%x %x %x %p %p %p)\n", This, id, lcid, flags, params, res, ei);
+    TRACE("(%p)->(%x %x %x %p %p %p)\n", dispex, id, lcid, flags, params, res, ei);
 
     V_VT(res) = VT_DISPATCH;
     V_DISPATCH(res) = NULL;

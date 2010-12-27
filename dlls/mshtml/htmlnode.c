@@ -184,11 +184,31 @@ static HRESULT WINAPI HTMLDOMChildrenCollection_item(IHTMLDOMChildrenCollection 
     return S_OK;
 }
 
+#undef HTMLCHILDCOL_THIS
+
+static const IHTMLDOMChildrenCollectionVtbl HTMLDOMChildrenCollectionVtbl = {
+    HTMLDOMChildrenCollection_QueryInterface,
+    HTMLDOMChildrenCollection_AddRef,
+    HTMLDOMChildrenCollection_Release,
+    HTMLDOMChildrenCollection_GetTypeInfoCount,
+    HTMLDOMChildrenCollection_GetTypeInfo,
+    HTMLDOMChildrenCollection_GetIDsOfNames,
+    HTMLDOMChildrenCollection_Invoke,
+    HTMLDOMChildrenCollection_get_length,
+    HTMLDOMChildrenCollection__newEnum,
+    HTMLDOMChildrenCollection_item
+};
+
+static inline HTMLDOMChildrenCollection *impl_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDOMChildrenCollection, dispex);
+}
+
 #define DISPID_CHILDCOL_0 MSHTML_DISPID_CUSTOM_MIN
 
-static HRESULT HTMLDOMChildrenCollection_get_dispid(IUnknown *iface, BSTR name, DWORD flags, DISPID *dispid)
+static HRESULT HTMLDOMChildrenCollection_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
 {
-    HTMLDOMChildrenCollection *This = HTMLCHILDCOL_THIS(iface);
+    HTMLDOMChildrenCollection *This = impl_from_DispatchEx(dispex);
     WCHAR *ptr;
     DWORD idx=0;
     PRUint32 len = 0;
@@ -207,10 +227,10 @@ static HRESULT HTMLDOMChildrenCollection_get_dispid(IUnknown *iface, BSTR name, 
     return S_OK;
 }
 
-static HRESULT HTMLDOMChildrenCollection_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+static HRESULT HTMLDOMChildrenCollection_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
-    HTMLDOMChildrenCollection *This = HTMLCHILDCOL_THIS(iface);
+    HTMLDOMChildrenCollection *This = impl_from_DispatchEx(dispex);
 
     TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, flags, params, res, ei, caller);
 
@@ -236,30 +256,15 @@ static HRESULT HTMLDOMChildrenCollection_invoke(IUnknown *iface, DISPID id, LCID
     return S_OK;
 }
 
-#undef HTMLCHILDCOL_THIS
-
-static const IHTMLDOMChildrenCollectionVtbl HTMLDOMChildrenCollectionVtbl = {
-    HTMLDOMChildrenCollection_QueryInterface,
-    HTMLDOMChildrenCollection_AddRef,
-    HTMLDOMChildrenCollection_Release,
-    HTMLDOMChildrenCollection_GetTypeInfoCount,
-    HTMLDOMChildrenCollection_GetTypeInfo,
-    HTMLDOMChildrenCollection_GetIDsOfNames,
-    HTMLDOMChildrenCollection_Invoke,
-    HTMLDOMChildrenCollection_get_length,
-    HTMLDOMChildrenCollection__newEnum,
-    HTMLDOMChildrenCollection_item
+static const dispex_static_data_vtbl_t HTMLDOMChildrenCollection_dispex_vtbl = {
+    NULL,
+    HTMLDOMChildrenCollection_get_dispid,
+    HTMLDOMChildrenCollection_invoke
 };
 
 static const tid_t HTMLDOMChildrenCollection_iface_tids[] = {
     IHTMLDOMChildrenCollection_tid,
     0
-};
-
-static const dispex_static_data_vtbl_t HTMLDOMChildrenCollection_dispex_vtbl = {
-    NULL,
-    HTMLDOMChildrenCollection_get_dispid,
-    HTMLDOMChildrenCollection_invoke
 };
 
 static dispex_static_data_t HTMLDOMChildrenCollection_dispex = {

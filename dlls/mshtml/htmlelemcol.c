@@ -382,11 +382,34 @@ static HRESULT WINAPI HTMLElementCollection_tags(IHTMLElementCollection *iface,
     return S_OK;
 }
 
+#undef ELEMCOL_THIS
+
+static const IHTMLElementCollectionVtbl HTMLElementCollectionVtbl = {
+    HTMLElementCollection_QueryInterface,
+    HTMLElementCollection_AddRef,
+    HTMLElementCollection_Release,
+    HTMLElementCollection_GetTypeInfoCount,
+    HTMLElementCollection_GetTypeInfo,
+    HTMLElementCollection_GetIDsOfNames,
+    HTMLElementCollection_Invoke,
+    HTMLElementCollection_toString,
+    HTMLElementCollection_put_length,
+    HTMLElementCollection_get_length,
+    HTMLElementCollection_get__newEnum,
+    HTMLElementCollection_item,
+    HTMLElementCollection_tags
+};
+
+static inline HTMLElementCollection *impl_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLElementCollection, dispex);
+}
+
 #define DISPID_ELEMCOL_0 MSHTML_DISPID_CUSTOM_MIN
 
-static HRESULT HTMLElementCollection_get_dispid(IUnknown *iface, BSTR name, DWORD flags, DISPID *dispid)
+static HRESULT HTMLElementCollection_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
 {
-    HTMLElementCollection *This = ELEMCOL_THIS(iface);
+    HTMLElementCollection *This = impl_from_DispatchEx(dispex);
     WCHAR *ptr;
     DWORD idx=0;
 
@@ -413,10 +436,10 @@ static HRESULT HTMLElementCollection_get_dispid(IUnknown *iface, BSTR name, DWOR
     return S_OK;
 }
 
-static HRESULT HTMLElementCollection_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+static HRESULT HTMLElementCollection_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
-    HTMLElementCollection *This = ELEMCOL_THIS(iface);
+    HTMLElementCollection *This = impl_from_DispatchEx(dispex);
     DWORD idx;
 
     TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, flags, params, res, ei, caller);
@@ -439,24 +462,6 @@ static HRESULT HTMLElementCollection_invoke(IUnknown *iface, DISPID id, LCID lci
     return S_OK;
 }
 
-#undef ELEMCOL_THIS
-
-static const IHTMLElementCollectionVtbl HTMLElementCollectionVtbl = {
-    HTMLElementCollection_QueryInterface,
-    HTMLElementCollection_AddRef,
-    HTMLElementCollection_Release,
-    HTMLElementCollection_GetTypeInfoCount,
-    HTMLElementCollection_GetTypeInfo,
-    HTMLElementCollection_GetIDsOfNames,
-    HTMLElementCollection_Invoke,
-    HTMLElementCollection_toString,
-    HTMLElementCollection_put_length,
-    HTMLElementCollection_get_length,
-    HTMLElementCollection_get__newEnum,
-    HTMLElementCollection_item,
-    HTMLElementCollection_tags
-};
-
 static const dispex_static_data_vtbl_t HTMLElementColection_dispex_vtbl = {
     NULL,
     HTMLElementCollection_get_dispid,
@@ -467,6 +472,7 @@ static const tid_t HTMLElementCollection_iface_tids[] = {
     IHTMLElementCollection_tid,
     0
 };
+
 static dispex_static_data_t HTMLElementCollection_dispex = {
     &HTMLElementColection_dispex_vtbl,
     DispHTMLElementCollection_tid,

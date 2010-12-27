@@ -171,10 +171,12 @@ typedef struct dispex_dynamic_data_t dispex_dynamic_data_t;
 #define MSHTML_DISPID_CUSTOM_MAX 0x6fffffff
 #define MSHTML_CUSTOM_DISPID_CNT (MSHTML_DISPID_CUSTOM_MAX-MSHTML_DISPID_CUSTOM_MIN)
 
+typedef struct DispatchEx DispatchEx;
+
 typedef struct {
-    HRESULT (*value)(IUnknown*,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
-    HRESULT (*get_dispid)(IUnknown*,BSTR,DWORD,DISPID*);
-    HRESULT (*invoke)(IUnknown*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
+    HRESULT (*value)(DispatchEx*,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
+    HRESULT (*get_dispid)(DispatchEx*,BSTR,DWORD,DISPID*);
+    HRESULT (*invoke)(DispatchEx*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
 } dispex_static_data_vtbl_t;
 
 typedef struct {
@@ -184,14 +186,14 @@ typedef struct {
     const tid_t* const iface_tids;
 } dispex_static_data_t;
 
-typedef struct {
+struct DispatchEx {
     const IDispatchExVtbl  *lpIDispatchExVtbl;
 
     IUnknown *outer;
 
     dispex_static_data_t *data;
     dispex_dynamic_data_t *dynamic_data;
-} DispatchEx;
+};
 
 void init_dispex(DispatchEx*,IUnknown*,dispex_static_data_t*);
 void release_dispex(DispatchEx*);

@@ -2463,28 +2463,6 @@ static HRESULT WINAPI HTMLStyle_toString(IHTMLStyle *iface, BSTR *String)
     return E_NOTIMPL;
 }
 
-static HRESULT HTMLStyle_get_dispid(IUnknown *iface, BSTR name, DWORD flags, DISPID *dispid)
-{
-    int c, i, min=0, max = sizeof(style_tbl)/sizeof(*style_tbl)-1;
-
-    while(min <= max) {
-        i = (min+max)/2;
-
-        c = strcmpW(style_tbl[i].name, name);
-        if(!c) {
-            *dispid = style_tbl[i].dispid;
-            return S_OK;
-        }
-
-        if(c > 0)
-            max = i-1;
-        else
-            min = i+1;
-    }
-
-    return DISP_E_UNKNOWNNAME;
-}
-
 static const IHTMLStyleVtbl HTMLStyleVtbl = {
     HTMLStyle_QueryInterface,
     HTMLStyle_AddRef,
@@ -2673,6 +2651,28 @@ static const IHTMLStyleVtbl HTMLStyleVtbl = {
     HTMLStyle_removeAttribute,
     HTMLStyle_toString
 };
+
+static HRESULT HTMLStyle_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
+{
+    int c, i, min=0, max = sizeof(style_tbl)/sizeof(*style_tbl)-1;
+
+    while(min <= max) {
+        i = (min+max)/2;
+
+        c = strcmpW(style_tbl[i].name, name);
+        if(!c) {
+            *dispid = style_tbl[i].dispid;
+            return S_OK;
+        }
+
+        if(c > 0)
+            max = i-1;
+        else
+            min = i+1;
+    }
+
+    return DISP_E_UNKNOWNNAME;
+}
 
 static const dispex_static_data_vtbl_t HTMLStyle_dispex_vtbl = {
     NULL,

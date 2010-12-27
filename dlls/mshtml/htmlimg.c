@@ -851,11 +851,29 @@ static HRESULT WINAPI HTMLImageElementFactory_create(IHTMLImageElementFactory *i
     return S_OK;
 }
 
-static HRESULT HTMLImageElementFactory_value(IUnknown *iface, LCID lcid,
+#undef HTMLIMGFACTORY_THIS
+
+static const IHTMLImageElementFactoryVtbl HTMLImageElementFactoryVtbl = {
+    HTMLImageElementFactory_QueryInterface,
+    HTMLImageElementFactory_AddRef,
+    HTMLImageElementFactory_Release,
+    HTMLImageElementFactory_GetTypeInfoCount,
+    HTMLImageElementFactory_GetTypeInfo,
+    HTMLImageElementFactory_GetIDsOfNames,
+    HTMLImageElementFactory_Invoke,
+    HTMLImageElementFactory_create
+};
+
+static inline HTMLImageElementFactory *impl_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLImageElementFactory, dispex);
+}
+
+static HRESULT HTMLImageElementFactory_value(DispatchEx *dispex, LCID lcid,
         WORD flags, DISPPARAMS *params, VARIANT *res, EXCEPINFO *ei,
         IServiceProvider *caller)
 {
-    HTMLImageElementFactory *This = HTMLIMGFACTORY_THIS(iface);
+    HTMLImageElementFactory *This = impl_from_DispatchEx(dispex);
     IHTMLImgElement *img;
     VARIANT empty, *width, *height;
     HRESULT hres;
@@ -877,19 +895,6 @@ static HRESULT HTMLImageElementFactory_value(IUnknown *iface, LCID lcid,
 
     return S_OK;
 }
-
-#undef HTMLIMGFACTORY_THIS
-
-static const IHTMLImageElementFactoryVtbl HTMLImageElementFactoryVtbl = {
-    HTMLImageElementFactory_QueryInterface,
-    HTMLImageElementFactory_AddRef,
-    HTMLImageElementFactory_Release,
-    HTMLImageElementFactory_GetTypeInfoCount,
-    HTMLImageElementFactory_GetTypeInfo,
-    HTMLImageElementFactory_GetIDsOfNames,
-    HTMLImageElementFactory_Invoke,
-    HTMLImageElementFactory_create
-};
 
 static const tid_t HTMLImageElementFactory_iface_tids[] = {
     IHTMLImageElementFactory_tid,

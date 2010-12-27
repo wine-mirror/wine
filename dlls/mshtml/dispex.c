@@ -445,7 +445,7 @@ static HRESULT dispex_value(DispatchEx *This, LCID lcid, WORD flags, DISPPARAMS 
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
     if(This->data->vtbl && This->data->vtbl->value)
-        return This->data->vtbl->value(This->outer, lcid, flags, params, res, ei, caller);
+        return This->data->vtbl->value(This, lcid, flags, params, res, ei, caller);
 
     switch(flags) {
     case DISPATCH_PROPERTYGET:
@@ -526,10 +526,23 @@ static ULONG WINAPI Function_Release(IUnknown *iface)
     return IDispatchEx_Release(DISPATCHEX(This->obj));
 }
 
-static HRESULT function_value(IUnknown *iface, LCID lcid, WORD flags, DISPPARAMS *params,
+#undef FUNCTION_THIS
+
+static const IUnknownVtbl FunctionUnkVtbl = {
+    Function_QueryInterface,
+    Function_AddRef,
+    Function_Release
+};
+
+static inline func_disp_t *impl_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, func_disp_t, dispex);
+}
+
+static HRESULT function_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
-    func_disp_t *This = FUNCTION_THIS(iface);
+    func_disp_t *This = impl_from_DispatchEx(dispex);
     HRESULT hres;
 
     switch(flags) {
@@ -546,14 +559,6 @@ static HRESULT function_value(IUnknown *iface, LCID lcid, WORD flags, DISPPARAMS
 
     return hres;
 }
-
-#undef FUNCTION_THIS
-
-static const IUnknownVtbl FunctionUnkVtbl = {
-    Function_QueryInterface,
-    Function_AddRef,
-    Function_Release
-};
 
 static const dispex_static_data_vtbl_t function_dispex_vtbl = {
     function_value,
@@ -702,7 +707,7 @@ static HRESULT get_builtin_id(DispatchEx *This, BSTR name, DWORD grfdex, DISPID 
     if(This->data->vtbl && This->data->vtbl->get_dispid) {
         HRESULT hres;
 
-        hres = This->data->vtbl->get_dispid(This->outer, name, grfdex, ret);
+        hres = This->data->vtbl->get_dispid(This, name, grfdex, ret);
         if(hres != DISP_E_UNKNOWNNAME)
             return hres;
     }
@@ -886,13 +891,12 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 
     if(is_custom_dispid(id) && This->data->vtbl && This->data->vtbl->invoke)
-        return This->data->vtbl->invoke(This->outer, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+        return This->data->vtbl->invoke(This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 
     if(wFlags == DISPATCH_CONSTRUCT) {
         if(id == DISPID_VALUE) {
             if(This->data->vtbl && This->data->vtbl->value) {
-                return This->data->vtbl->value(This->outer, lcid, wFlags, pdp,
-                        pvarRes, pei, pspCaller);
+                return This->data->vtbl->value(This, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
             }
             FIXME("DISPATCH_CONSTRUCT flag but missing value function\n");
             return E_FAIL;
