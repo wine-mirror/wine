@@ -1279,65 +1279,6 @@ static BOOL elf_enum_modules_internal(const struct process* pcs,
     return TRUE;
 }
 
-struct elf_sync
-{
-    struct process*     pcs;
-    struct elf_info     elf_info;
-};
-
-static BOOL elf_enum_sync_cb(const WCHAR* name, unsigned long load_addr,
-                             unsigned long dyn_addr, void* user)
-{
-    struct elf_sync*    es = user;
-
-    elf_search_and_load_file(es->pcs, name, load_addr, dyn_addr, &es->elf_info);
-    return TRUE;
-}
-
-/******************************************************************
- *		elf_synchronize_module_list
- *
- * this functions rescans the debuggee module's list and synchronizes it with
- * the one from 'pcs', ie:
- * - if a module is in debuggee and not in pcs, it's loaded into pcs
- * - if a module is in pcs and not in debuggee, it's unloaded from pcs
- */
-BOOL	elf_synchronize_module_list(struct process* pcs)
-{
-    struct module*      module;
-    struct elf_sync     es;
-
-    for (module = pcs->lmodules; module; module = module->next)
-    {
-        if (module->type == DMT_ELF && !module->is_virtual)
-            module->format_info[DFI_ELF]->u.elf_info->elf_mark = 0;
-    }
-
-    es.pcs = pcs;
-    es.elf_info.flags = ELF_INFO_MODULE;
-    if (!elf_enum_modules_internal(pcs, NULL, elf_enum_sync_cb, &es))
-        return FALSE;
-
-    module = pcs->lmodules;
-    while (module)
-    {
-        if (module->type == DMT_ELF && !module->is_virtual)
-        {
-            struct elf_module_info* elf_info = module->format_info[DFI_ELF]->u.elf_info;
-
-            if (!elf_info->elf_mark && !elf_info->elf_loader)
-            {
-                module_remove(pcs, module);
-                /* restart all over */
-                module = pcs->lmodules;
-                continue;
-            }
-        }
-        module = module->next;
-    }
-    return TRUE;
-}
-
 /******************************************************************
  *		elf_search_loader
  *
@@ -1440,19 +1381,25 @@ static BOOL elf_load_cb(const WCHAR* name, unsigned long load_addr,
                         unsigned long dyn_addr, void* user)
 {
     struct elf_load*    el = user;
+    BOOL                ret = TRUE;
     const WCHAR*        p;
 
-    /* memcmp is needed for matches when bufstr contains also version information
-     * el->name: libc.so, name: libc.so.6.0
-     */
-    p = strrchrW(name, '/');
-    if (!p++) p = name;
-    if (!memcmp(p, el->name, lstrlenW(el->name) * sizeof(WCHAR)))
+    if (el->name)
+    {
+        /* memcmp is needed for matches when bufstr contains also version information
+         * el->name: libc.so, name: libc.so.6.0
+         */
+        p = strrchrW(name, '/');
+        if (!p++) p = name;
+    }
+
+    if (!el->name || !memcmp(p, el->name, lstrlenW(el->name) * sizeof(WCHAR)))
     {
         el->ret = elf_search_and_load_file(el->pcs, name, load_addr, dyn_addr, &el->elf_info);
-        return FALSE;
+        if (el->name) ret = FALSE;
     }
-    return TRUE;
+
+    return ret;
 }
 
 /******************************************************************
@@ -1492,6 +1439,53 @@ struct module*  elf_load_module(struct process* pcs, const WCHAR* name, unsigned
     if (!el.ret) return NULL;
     assert(el.elf_info.module);
     return el.elf_info.module;
+}
+
+/******************************************************************
+ *		elf_synchronize_module_list
+ *
+ * this functions rescans the debuggee module's list and synchronizes it with
+ * the one from 'pcs', ie:
+ * - if a module is in debuggee and not in pcs, it's loaded into pcs
+ * - if a module is in pcs and not in debuggee, it's unloaded from pcs
+ */
+BOOL	elf_synchronize_module_list(struct process* pcs)
+{
+    struct module*      module;
+    struct elf_load     el;
+
+    for (module = pcs->lmodules; module; module = module->next)
+    {
+        if (module->type == DMT_ELF && !module->is_virtual)
+            module->format_info[DFI_ELF]->u.elf_info->elf_mark = 0;
+    }
+
+    el.pcs = pcs;
+    el.elf_info.flags = ELF_INFO_MODULE;
+    el.ret = FALSE;
+    el.name = NULL; /* fetch all modules */
+
+    if (!elf_enum_modules_internal(pcs, NULL, elf_load_cb, &el))
+        return FALSE;
+
+    module = pcs->lmodules;
+    while (module)
+    {
+        if (module->type == DMT_ELF && !module->is_virtual)
+        {
+            struct elf_module_info* elf_info = module->format_info[DFI_ELF]->u.elf_info;
+
+            if (!elf_info->elf_mark && !elf_info->elf_loader)
+            {
+                module_remove(pcs, module);
+                /* restart all over */
+                module = pcs->lmodules;
+                continue;
+            }
+        }
+        module = module->next;
+    }
+    return TRUE;
 }
 
 #else	/* !__ELF__ */
