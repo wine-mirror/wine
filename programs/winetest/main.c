@@ -61,6 +61,7 @@ static int nr_native_dlls;
 static const char whitespace[] = " \t\r\n";
 static const char testexe[] = "_test.exe";
 static char build_id[64];
+static BOOL is_wow64;
 
 /* filters for running only specific tests */
 static char *filters[64];
@@ -149,25 +150,34 @@ static int running_under_wine (void)
 
 static int check_mount_mgr(void)
 {
-    if (running_under_wine())
-    {
-        HANDLE handle = CreateFileA( "\\\\.\\MountPointManager", GENERIC_READ,
-                                     FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
-        if (handle == INVALID_HANDLE_VALUE) return FALSE;
-        CloseHandle( handle );
-    }
+    HANDLE handle = CreateFileA( "\\\\.\\MountPointManager", GENERIC_READ,
+                                 FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
+    if (handle == INVALID_HANDLE_VALUE) return FALSE;
+    CloseHandle( handle );
     return TRUE;
+}
+
+static int check_wow64_registry(void)
+{
+    char buffer[MAX_PATH];
+    DWORD type, size = MAX_PATH;
+    HKEY hkey;
+    BOOL ret;
+
+    if (!is_wow64) return TRUE;
+    if (RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows\\CurrentVersion", &hkey ))
+        return FALSE;
+    ret = !RegQueryValueExA( hkey, "ProgramFilesDir (x86)", NULL, &type, (BYTE *)buffer, &size );
+    RegCloseKey( hkey );
+    return ret;
 }
 
 static int check_display_driver(void)
 {
-    if (running_under_wine())
-    {
-        HWND hwnd = CreateWindowA( "STATIC", "", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0,
-                                   0, 0, GetModuleHandleA(0), 0 );
-        if (!hwnd) return FALSE;
-        DestroyWindow( hwnd );
-    }
+    HWND hwnd = CreateWindowA( "STATIC", "", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0,
+                               0, 0, GetModuleHandleA(0), 0 );
+    if (!hwnd) return FALSE;
+    DestroyWindow( hwnd );
     return TRUE;
 }
 
@@ -232,11 +242,10 @@ static void print_version (void)
 # error CPU unknown
 #endif
     OSVERSIONINFOEX ver;
-    BOOL ext, wow64;
+    BOOL ext;
     int is_win2k3_r2;
     const char *(CDECL *wine_get_build_id)(void);
     void (CDECL *wine_get_host_version)( const char **sysname, const char **release );
-    BOOL (WINAPI *pIsWow64Process)(HANDLE hProcess, PBOOL Wow64Process);
     BOOL (WINAPI *pGetProductInfo)(DWORD, DWORD, DWORD, DWORD, DWORD *);
 
     ver.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
@@ -246,10 +255,7 @@ static void print_version (void)
 	if (!GetVersionEx ((OSVERSIONINFO *) &ver))
 	    report (R_FATAL, "Can't get OS version.");
     }
-    pIsWow64Process = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"),"IsWow64Process");
-    if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &wow64 )) wow64 = FALSE;
-
-    xprintf ("    Platform=%s%s\n", platform, wow64 ? " (WOW64)" : "");
+    xprintf ("    Platform=%s%s\n", platform, is_wow64 ? " (WOW64)" : "");
     xprintf ("    bRunningUnderWine=%d\n", running_under_wine ());
     xprintf ("    bRunningOnVisibleDesktop=%d\n", running_on_visible_desktop ());
     xprintf ("    Submitter=%s\n", email );
@@ -1041,6 +1047,7 @@ usage (void)
 
 int main( int argc, char *argv[] )
 {
+    BOOL (WINAPI *pIsWow64Process)(HANDLE hProcess, PBOOL Wow64Process);
     char *logname = NULL, *outdir = NULL;
     const char *extract = NULL;
     const char *cp, *submit = NULL;
@@ -1050,6 +1057,9 @@ int main( int argc, char *argv[] )
     int i;
 
     if (!LoadStringA( 0, IDS_BUILD_ID, build_id, sizeof(build_id) )) build_id[0] = 0;
+
+    pIsWow64Process = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"),"IsWow64Process");
+    if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
 
     for (i = 1; i < argc && argv[i]; i++)
     {
@@ -1172,11 +1182,17 @@ int main( int argc, char *argv[] )
         if (!running_on_visible_desktop ())
             report (R_FATAL, "Tests must be run on a visible desktop");
 
-        if (!check_mount_mgr())
-            report (R_FATAL, "Mount manager not running, most likely your WINEPREFIX wasn't created correctly.");
+        if (running_under_wine())
+        {
+            if (!check_mount_mgr())
+                report (R_FATAL, "Mount manager not running, most likely your WINEPREFIX wasn't created correctly.");
 
-        if (!check_display_driver())
-            report (R_FATAL, "Unable to create a window, the display driver is not working.");
+            if (!check_wow64_registry())
+                report (R_FATAL, "WoW64 keys missing, most likely your WINEPREFIX wasn't created correctly.");
+
+            if (!check_display_driver())
+                report (R_FATAL, "Unable to create a window, the display driver is not working.");
+        }
 
         SetConsoleCtrlHandler(ctrl_handler, TRUE);
 
