@@ -20,6 +20,9 @@ var tmp, i;
 
 ok(ScriptEngine() === "JScript", "ScriptEngine() = " + ScriptEngine());
 ok(ScriptEngine(3) === "JScript", "ScriptEngine(3) = " + ScriptEngine(3));
+ok(ScriptEngineMajorVersion() === ScriptEngineMajorVersion(2), "ScriptEngineMajorVersion() !== ScriptEngineMajorVersion(2)");
+ok(ScriptEngineMinorVersion() === ScriptEngineMinorVersion(2), "ScriptEngineMinorVersion() !== ScriptEngineMinorVersion(2)");
+ok(ScriptEngineBuildVersion() === ScriptEngineBuildVersion(2), "ScriptEngineBuildVersion() !== ScriptEngineBuildVersion(2)");
 
 i = parseInt("0");
 ok(i === 0, "parseInt('0') = " + i);

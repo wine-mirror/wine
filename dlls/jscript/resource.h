@@ -18,6 +18,10 @@
 
 #include <windef.h>
 
+#define JSCRIPT_MAJOR_VERSION 5
+#define JSCRIPT_MINOR_VERSION 8
+#define JSCRIPT_BUILD_VERSION 16475
+
 #define IDS_TO_PRIMITIVE                    0x0001
 #define IDS_INVALID_CALL_ARG                0x0005
 #define IDS_SUBSCRIPT_OUT_OF_RANGE          0x0009

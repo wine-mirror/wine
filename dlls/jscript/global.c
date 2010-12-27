@@ -727,22 +727,37 @@ static HRESULT JSGlobal_ScriptEngine(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
 static HRESULT JSGlobal_ScriptEngineMajorVersion(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(retv) {
+        V_VT(retv) = VT_I4;
+        V_I4(retv) = JSCRIPT_MAJOR_VERSION;
+    }
+    return S_OK;
 }
 
 static HRESULT JSGlobal_ScriptEngineMinorVersion(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(retv) {
+        V_VT(retv) = VT_I4;
+        V_I4(retv) = JSCRIPT_MINOR_VERSION;
+    }
+    return S_OK;
 }
 
 static HRESULT JSGlobal_ScriptEngineBuildVersion(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(retv) {
+        V_VT(retv) = VT_I4;
+        V_I4(retv) = JSCRIPT_BUILD_VERSION;
+    }
+    return S_OK;
 }
 
 static HRESULT JSGlobal_CollectGarbage(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
