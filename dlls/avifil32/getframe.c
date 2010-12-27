@@ -62,7 +62,7 @@ static const struct IGetFrameVtbl igetframeVtbl = {
 
 typedef struct _IGetFrameImpl {
   /* IUnknown stuff */
-  const IGetFrameVtbl *lpVtbl;
+  IGetFrame          IGetFrame_iface;
   LONG               ref;
 
   /* IGetFrame stuff */
@@ -92,6 +92,11 @@ typedef struct _IGetFrameImpl {
 
 /***********************************************************************/
 
+static inline IGetFrameImpl *impl_from_IGetFrame(IGetFrame *iface)
+{
+  return CONTAINING_RECORD(iface, IGetFrameImpl, IGetFrame_iface);
+}
+
 static void AVIFILE_CloseCompressor(IGetFrameImpl *This)
 {
   if (This->lpInFormat != This->lpOutFormat) {
@@ -120,7 +125,7 @@ PGETFRAME AVIFILE_CreateGetFrame(PAVISTREAM pStream)
 
   pg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IGetFrameImpl));
   if (pg != NULL) {
-    pg->lpVtbl        = &igetframeVtbl;
+    pg->IGetFrame_iface.lpVtbl = &igetframeVtbl;
     pg->ref           = 1;
     pg->lCurrentFrame = -1;
     pg->pStream       = pStream;
@@ -133,7 +138,7 @@ PGETFRAME AVIFILE_CreateGetFrame(PAVISTREAM pStream)
 static HRESULT WINAPI IGetFrame_fnQueryInterface(IGetFrame *iface,
 						 REFIID refiid, LPVOID *obj)
 {
-  IGetFrameImpl *This = (IGetFrameImpl *)iface;
+  IGetFrameImpl *This = impl_from_IGetFrame(iface);
 
   TRACE("(%p,%s,%p)\n", This, debugstr_guid(refiid), obj);
 
@@ -149,7 +154,7 @@ static HRESULT WINAPI IGetFrame_fnQueryInterface(IGetFrame *iface,
 
 static ULONG   WINAPI IGetFrame_fnAddRef(IGetFrame *iface)
 {
-  IGetFrameImpl *This = (IGetFrameImpl *)iface;
+  IGetFrameImpl *This = impl_from_IGetFrame(iface);
   ULONG ref = InterlockedIncrement(&This->ref);
 
   TRACE("(%p)\n", iface);
@@ -159,7 +164,7 @@ static ULONG   WINAPI IGetFrame_fnAddRef(IGetFrame *iface)
 
 static ULONG   WINAPI IGetFrame_fnRelease(IGetFrame *iface)
 {
-  IGetFrameImpl *This = (IGetFrameImpl *)iface;
+  IGetFrameImpl *This = impl_from_IGetFrame(iface);
   ULONG ref = InterlockedDecrement(&This->ref);
 
   TRACE("(%p)\n", iface);
@@ -180,7 +185,7 @@ static ULONG   WINAPI IGetFrame_fnRelease(IGetFrame *iface)
 
 static LPVOID  WINAPI IGetFrame_fnGetFrame(IGetFrame *iface, LONG lPos)
 {
-  IGetFrameImpl *This = (IGetFrameImpl *)iface;
+  IGetFrameImpl *This = impl_from_IGetFrame(iface);
 
   LONG readBytes;
   LONG readSamples;
@@ -299,7 +304,7 @@ static LPVOID  WINAPI IGetFrame_fnGetFrame(IGetFrame *iface, LONG lPos)
 static HRESULT WINAPI IGetFrame_fnBegin(IGetFrame *iface, LONG lStart,
 					LONG lEnd, LONG lRate)
 {
-  IGetFrameImpl *This = (IGetFrameImpl *)iface;
+  IGetFrameImpl *This = impl_from_IGetFrame(iface);
 
   TRACE("(%p,%d,%d,%d)\n", iface, lStart, lEnd, lRate);
 
@@ -310,7 +315,7 @@ static HRESULT WINAPI IGetFrame_fnBegin(IGetFrame *iface, LONG lStart,
 
 static HRESULT WINAPI IGetFrame_fnEnd(IGetFrame *iface)
 {
-  IGetFrameImpl *This = (IGetFrameImpl *)iface;
+  IGetFrameImpl *This = impl_from_IGetFrame(iface);
 
   TRACE("(%p)\n", iface);
 
@@ -324,7 +329,7 @@ static HRESULT WINAPI IGetFrame_fnSetFormat(IGetFrame *iface,
 					    LPVOID lpBits, INT x, INT y,
 					    INT dx, INT dy)
 {
-  IGetFrameImpl *This = (IGetFrameImpl *)iface;
+  IGetFrameImpl *This = impl_from_IGetFrame(iface);
 
   AVISTREAMINFOW     sInfo;
   LPBITMAPINFOHEADER lpbi         = lpbiWanted;
