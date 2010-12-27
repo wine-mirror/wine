@@ -1834,7 +1834,6 @@ typedef enum wined3d_gl_extension
     NV_VERTEX_PROGRAM3,
     /* SGI */
     SGIS_GENERATE_MIPMAP,
-    SGI_VIDEO_SYNC,
     /* WGL extensions */
     WGL_ARB_PIXEL_FORMAT,
     WGL_WINE_PIXEL_FORMAT_PASSTHROUGH,
@@ -3717,10 +3716,6 @@ typedef void (WINE_GLAPI *PGLFNGETCOMBINERSTAGEPARAMETERFVNVPROC)(GLenum stage, 
 #define GL_GENERATE_MIPMAP_HINT_SGIS                        0x8192
 #endif
 
-/* GLX_SGI_video_sync */
-typedef int (WINE_GLAPI *PGLXFNGETVIDEOSYNCSGIPROC)(unsigned int *);
-typedef int (WINE_GLAPI *PGLXFNWAITVIDEOSYNCSGIPROC)(int, int, unsigned int *);
-
 /* WGL_ARB_extensions_string */
 typedef const char *(WINAPI *WINED3D_PFNWGLGETEXTENSIONSSTRINGARBPROC)(HDC hdc);
 
@@ -4530,11 +4525,6 @@ typedef BOOL (WINAPI *WINED3D_PFNWGLSETPIXELFORMATWINE)(HDC hdc, int iPixelForma
             glCombinerParameterivNV,                    NV_REGISTER_COMBINERS,          NULL) \
     USE_GL_FUNC(PGLFNFINALCOMBINERINPUTNVPROC, \
             glFinalCombinerInputNV,                     NV_REGISTER_COMBINERS,          NULL) \
-    /* GLX_SGI_video_sync */ \
-    USE_GL_FUNC(PGLXFNGETVIDEOSYNCSGIPROC, \
-            glXGetVideoSyncSGI,                         SGI_VIDEO_SYNC,                 NULL) \
-    USE_GL_FUNC(PGLXFNWAITVIDEOSYNCSGIPROC, \
-            glXWaitVideoSyncSGI,                        SGI_VIDEO_SYNC,                 NULL)
 
 #define WGL_EXT_FUNCS_GEN \
     USE_GL_FUNC(WINED3D_PFNWGLGETEXTENSIONSSTRINGARBPROC,       wglGetExtensionsStringARB,      0, NULL) \

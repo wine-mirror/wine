@@ -229,8 +229,6 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface,
     struct wined3d_context *context;
     RECT src_rect, dst_rect;
     BOOL render_to_fbo;
-    unsigned int sync;
-    int retval;
 
     IWineD3DSwapChain_SetDestWindowOverride(iface, hDestWindowOverride);
 
@@ -450,47 +448,6 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface,
                 IWineD3DSurface_Release((IWineD3DSurface *)This->device->onscreen_depth_stencil);
                 This->device->onscreen_depth_stencil = NULL;
             }
-        }
-    }
-
-    if (This->presentParms.PresentationInterval != WINED3DPRESENT_INTERVAL_IMMEDIATE
-            && gl_info->supported[SGI_VIDEO_SYNC])
-    {
-        if ((retval = GL_EXTCALL(glXGetVideoSyncSGI(&sync))))
-            ERR("glXGetVideoSyncSGI failed(retval = %d\n", retval);
-
-        switch(This->presentParms.PresentationInterval) {
-            case WINED3DPRESENT_INTERVAL_DEFAULT:
-            case WINED3DPRESENT_INTERVAL_ONE:
-                if(sync <= This->vSyncCounter) {
-                    retval = GL_EXTCALL(glXWaitVideoSyncSGI(1, 0, &This->vSyncCounter));
-                } else {
-                    This->vSyncCounter = sync;
-                }
-                break;
-            case WINED3DPRESENT_INTERVAL_TWO:
-                if(sync <= This->vSyncCounter + 1) {
-                    retval = GL_EXTCALL(glXWaitVideoSyncSGI(2, This->vSyncCounter & 0x1, &This->vSyncCounter));
-                } else {
-                    This->vSyncCounter = sync;
-                }
-                break;
-            case WINED3DPRESENT_INTERVAL_THREE:
-                if(sync <= This->vSyncCounter + 2) {
-                    retval = GL_EXTCALL(glXWaitVideoSyncSGI(3, This->vSyncCounter % 0x3, &This->vSyncCounter));
-                } else {
-                    This->vSyncCounter = sync;
-                }
-                break;
-            case WINED3DPRESENT_INTERVAL_FOUR:
-                if(sync <= This->vSyncCounter + 3) {
-                    retval = GL_EXTCALL(glXWaitVideoSyncSGI(4, This->vSyncCounter & 0x3, &This->vSyncCounter));
-                } else {
-                    This->vSyncCounter = sync;
-                }
-                break;
-            default:
-                FIXME("Unknown presentation interval %08x\n", This->presentParms.PresentationInterval);
         }
     }
 
