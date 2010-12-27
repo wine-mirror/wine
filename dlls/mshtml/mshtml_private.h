@@ -265,7 +265,7 @@ struct HTMLWindow {
     const IHTMLWindow4Vtbl *lpHTMLWindow4Vtbl;
     const IHTMLPrivateWindowVtbl *lpIHTMLPrivateWindowVtbl;
     const IDispatchExVtbl         *lpIDispatchExVtbl;
-    const IServiceProviderVtbl    *lpServiceProviderVtbl;
+    IServiceProvider   IServiceProvider_iface;
 
     LONG ref;
 
@@ -357,7 +357,7 @@ struct HTMLDocument {
     IOleInPlaceActiveObject     IOleInPlaceActiveObject_iface;
     IViewObjectEx               IViewObjectEx_iface;
     IOleInPlaceObjectWindowless IOleInPlaceObjectWindowless_iface;
-    const IServiceProviderVtbl            *lpServiceProviderVtbl;
+    IServiceProvider            IServiceProvider_iface;
     const IOleCommandTargetVtbl           *lpOleCommandTargetVtbl;
     const IOleControlVtbl                 *lpOleControlVtbl;
     const IHlinkTargetVtbl                *lpHlinkTargetVtbl;
@@ -625,7 +625,6 @@ struct HTMLDocumentNode {
 #define HTMLWINDOW2(x)   ((IHTMLWindow2*)                 &(x)->lpHTMLWindow2Vtbl)
 #define HTMLWINDOW3(x)   ((IHTMLWindow3*)                 &(x)->lpHTMLWindow3Vtbl)
 #define HTMLWINDOW4(x)   ((IHTMLWindow4*)                 &(x)->lpHTMLWindow4Vtbl)
-#define SERVPROV(x)      ((IServiceProvider*)             &(x)->lpServiceProviderVtbl)
 #define CMDTARGET(x)     ((IOleCommandTarget*)            &(x)->lpOleCommandTargetVtbl)
 #define CONTROL(x)       ((IOleControl*)                  &(x)->lpOleControlVtbl)
 #define HLNKTARGET(x)    ((IHlinkTarget*)                 &(x)->lpHlinkTargetVtbl)

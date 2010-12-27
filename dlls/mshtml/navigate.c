@@ -68,7 +68,7 @@ typedef struct {
 
 struct BSCallback {
     const IBindStatusCallbackVtbl *lpBindStatusCallbackVtbl;
-    const IServiceProviderVtbl    *lpServiceProviderVtbl;
+    IServiceProvider    IServiceProvider_iface;
     const IHttpNegotiate2Vtbl     *lpHttpNegotiate2Vtbl;
     const IInternetBindInfoVtbl   *lpInternetBindInfoVtbl;
 
@@ -252,7 +252,7 @@ static HRESULT WINAPI BindStatusCallback_QueryInterface(IBindStatusCallback *ifa
         *ppv = STATUSCLB(This);
     }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
         TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
-        *ppv = SERVPROV(This);
+        *ppv = &This->IServiceProvider_iface;
     }else if(IsEqualGUID(&IID_IHttpNegotiate, riid)) {
         TRACE("(%p)->(IID_IHttpNegotiate %p)\n", This, ppv);
         *ppv = HTTPNEG(This);
@@ -570,36 +570,37 @@ static const IInternetBindInfoVtbl InternetBindInfoVtbl = {
     InternetBindInfo_GetBindString
 };
 
-#define SERVPROV_THIS(iface) DEFINE_THIS(BSCallback, ServiceProvider, iface)
+static inline BSCallback *impl_from_IServiceProvider(IServiceProvider *iface)
+{
+    return CONTAINING_RECORD(iface, BSCallback, IServiceProvider_iface);
+}
 
 static HRESULT WINAPI BSCServiceProvider_QueryInterface(IServiceProvider *iface,
                                                         REFIID riid, void **ppv)
 {
-    BSCallback *This = SERVPROV_THIS(iface);
+    BSCallback *This = impl_from_IServiceProvider(iface);
     return IBindStatusCallback_QueryInterface(STATUSCLB(This), riid, ppv);
 }
 
 static ULONG WINAPI BSCServiceProvider_AddRef(IServiceProvider *iface)
 {
-    BSCallback *This = SERVPROV_THIS(iface);
+    BSCallback *This = impl_from_IServiceProvider(iface);
     return IBindStatusCallback_AddRef(STATUSCLB(This));
 }
 
 static ULONG WINAPI BSCServiceProvider_Release(IServiceProvider *iface)
 {
-    BSCallback *This = SERVPROV_THIS(iface);
+    BSCallback *This = impl_from_IServiceProvider(iface);
     return IBindStatusCallback_Release(STATUSCLB(This));
 }
 
 static HRESULT WINAPI BSCServiceProvider_QueryService(IServiceProvider *iface,
         REFGUID guidService, REFIID riid, void **ppv)
 {
-    BSCallback *This = SERVPROV_THIS(iface);
+    BSCallback *This = impl_from_IServiceProvider(iface);
     TRACE("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
     return E_NOINTERFACE;
 }
-
-#undef SERVPROV_THIS
 
 static const IServiceProviderVtbl ServiceProviderVtbl = {
     BSCServiceProvider_QueryInterface,
@@ -611,7 +612,7 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
 static void init_bscallback(BSCallback *This, const BSCallbackVtbl *vtbl, IMoniker *mon, DWORD bindf)
 {
     This->lpBindStatusCallbackVtbl = &BindStatusCallbackVtbl;
-    This->lpServiceProviderVtbl    = &ServiceProviderVtbl;
+    This->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
     This->lpHttpNegotiate2Vtbl     = &HttpNegotiate2Vtbl;
     This->lpInternetBindInfoVtbl   = &InternetBindInfoVtbl;
     This->vtbl = vtbl;

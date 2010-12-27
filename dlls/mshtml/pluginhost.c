@@ -1180,7 +1180,8 @@ static HRESULT WINAPI PHServiceProvider_QueryService(IServiceProvider *iface, RE
         return E_NOINTERFACE;
     }
 
-    return IServiceProvider_QueryService(SERVPROV(This->doc->basedoc.window), guidService, riid, ppv);
+    return IServiceProvider_QueryService(&This->doc->basedoc.window->IServiceProvider_iface,
+            guidService, riid, ppv);
 }
 
 static const IServiceProviderVtbl ServiceProviderVtbl = {

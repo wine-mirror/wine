@@ -55,7 +55,7 @@ struct ScriptHost {
     const IActiveScriptSiteInterruptPollVtbl  *lpIActiveScriptSiteInterruptPollVtbl;
     const IActiveScriptSiteWindowVtbl         *lpIActiveScriptSiteWindowVtbl;
     const IActiveScriptSiteDebugVtbl          *lpIActiveScriptSiteDebugVtbl;
-    const IServiceProviderVtbl                *lpServiceProviderVtbl;
+    IServiceProvider               IServiceProvider_iface;
 
     LONG ref;
 
@@ -250,7 +250,7 @@ static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, 
         *ppv = ACTSCPDBG(This);
     }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
         TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
-        *ppv = SERVPROV(This);
+        *ppv = &This->IServiceProvider_iface;
     }else if(IsEqualGUID(&IID_ICanHandleException, riid)) {
         TRACE("(%p)->(IID_ICanHandleException not supported %p)\n", This, ppv);
         return E_NOINTERFACE;
@@ -542,30 +542,33 @@ static const IActiveScriptSiteDebugVtbl ActiveScriptSiteDebugVtbl = {
     ActiveScriptSiteDebug_OnScriptErrorDebug
 };
 
-#define SERVPROV_THIS(iface) DEFINE_THIS(ScriptHost, ServiceProvider, iface)
+static inline ScriptHost *impl_from_IServiceProvider(IServiceProvider *iface)
+{
+    return CONTAINING_RECORD(iface, ScriptHost, IServiceProvider_iface);
+}
 
 static HRESULT WINAPI ASServiceProvider_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
 {
-    ScriptHost *This = SERVPROV_THIS(iface);
+    ScriptHost *This = impl_from_IServiceProvider(iface);
     return IActiveScriptSite_QueryInterface(ACTSCPSITE(This), riid, ppv);
 }
 
 static ULONG WINAPI ASServiceProvider_AddRef(IServiceProvider *iface)
 {
-    ScriptHost *This = SERVPROV_THIS(iface);
+    ScriptHost *This = impl_from_IServiceProvider(iface);
     return IActiveScriptSite_AddRef(ACTSCPSITE(This));
 }
 
 static ULONG WINAPI ASServiceProvider_Release(IServiceProvider *iface)
 {
-    ScriptHost *This = SERVPROV_THIS(iface);
+    ScriptHost *This = impl_from_IServiceProvider(iface);
     return IActiveScriptSite_Release(ACTSCPSITE(This));
 }
 
 static HRESULT WINAPI ASServiceProvider_QueryService(IServiceProvider *iface, REFGUID guidService,
         REFIID riid, void **ppv)
 {
-    ScriptHost *This = SERVPROV_THIS(iface);
+    ScriptHost *This = impl_from_IServiceProvider(iface);
 
     if(IsEqualGUID(&SID_SInternetHostSecurityManager, guidService)) {
         TRACE("(%p)->(SID_SInternetHostSecurityManager)\n", This);
@@ -579,8 +582,6 @@ static HRESULT WINAPI ASServiceProvider_QueryService(IServiceProvider *iface, RE
     FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
     return E_NOINTERFACE;
 }
-
-#undef SERVPROV_THIS
 
 static const IServiceProviderVtbl ASServiceProviderVtbl = {
     ASServiceProvider_QueryInterface,
@@ -599,7 +600,7 @@ static ScriptHost *create_script_host(HTMLWindow *window, const GUID *guid)
     ret->lpIActiveScriptSiteInterruptPollVtbl  = &ActiveScriptSiteInterruptPollVtbl;
     ret->lpIActiveScriptSiteWindowVtbl         = &ActiveScriptSiteWindowVtbl;
     ret->lpIActiveScriptSiteDebugVtbl          = &ActiveScriptSiteDebugVtbl;
-    ret->lpServiceProviderVtbl                 = &ASServiceProviderVtbl;
+    ret->IServiceProvider_iface.lpVtbl         = &ASServiceProviderVtbl;
     ret->ref = 1;
     ret->window = window;
     ret->script_state = SCRIPTSTATE_UNINITIALIZED;

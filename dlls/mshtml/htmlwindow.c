@@ -193,7 +193,7 @@ static HRESULT WINAPI HTMLWindow2_QueryInterface(IHTMLWindow2 *iface, REFIID rii
         *ppv = HTMLPRIVWINDOW(This);
     }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
         TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
-        *ppv = SERVPROV(This);
+        *ppv = &This->IServiceProvider_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }
@@ -2119,29 +2119,32 @@ static const IDispatchExVtbl WindowDispExVtbl = {
     WindowDispEx_GetNameSpaceParent
 };
 
-#define SERVPROV_THIS(iface) DEFINE_THIS(HTMLWindow, ServiceProvider, iface)
+static inline HTMLWindow *impl_from_IServiceProvider(IServiceProvider *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLWindow, IServiceProvider_iface);
+}
 
 static HRESULT WINAPI HTMLWindowSP_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
 {
-    HTMLWindow *This = SERVPROV_THIS(iface);
+    HTMLWindow *This = impl_from_IServiceProvider(iface);
     return IHTMLWindow2_QueryInterface(HTMLWINDOW2(This), riid, ppv);
 }
 
 static ULONG WINAPI HTMLWindowSP_AddRef(IServiceProvider *iface)
 {
-    HTMLWindow *This = SERVPROV_THIS(iface);
+    HTMLWindow *This = impl_from_IServiceProvider(iface);
     return IHTMLWindow2_AddRef(HTMLWINDOW2(This));
 }
 
 static ULONG WINAPI HTMLWindowSP_Release(IServiceProvider *iface)
 {
-    HTMLWindow *This = SERVPROV_THIS(iface);
+    HTMLWindow *This = impl_from_IServiceProvider(iface);
     return IHTMLWindow2_Release(HTMLWINDOW2(This));
 }
 
 static HRESULT WINAPI HTMLWindowSP_QueryService(IServiceProvider *iface, REFGUID guidService, REFIID riid, void **ppv)
 {
-    HTMLWindow *This = SERVPROV_THIS(iface);
+    HTMLWindow *This = impl_from_IServiceProvider(iface);
 
     if(IsEqualGUID(guidService, &IID_IHTMLWindow2)) {
         TRACE("IID_IHTMLWindow2\n");
@@ -2153,10 +2156,9 @@ static HRESULT WINAPI HTMLWindowSP_QueryService(IServiceProvider *iface, REFGUID
     if(!This->doc_obj)
         return E_NOINTERFACE;
 
-    return IServiceProvider_QueryService(SERVPROV(&This->doc_obj->basedoc), guidService, riid, ppv);
+    return IServiceProvider_QueryService(&This->doc_obj->basedoc.IServiceProvider_iface,
+            guidService, riid, ppv);
 }
-
-#undef SERVPROV_THIS
 
 static const IServiceProviderVtbl ServiceProviderVtbl = {
     HTMLWindowSP_QueryInterface,
@@ -2204,7 +2206,7 @@ HRESULT HTMLWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow, HTML
     window->lpHTMLWindow4Vtbl = &HTMLWindow4Vtbl;
     window->lpIHTMLPrivateWindowVtbl = &HTMLPrivateWindowVtbl;
     window->lpIDispatchExVtbl = &WindowDispExVtbl;
-    window->lpServiceProviderVtbl = &ServiceProviderVtbl;
+    window->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
     window->ref = 1;
     window->doc_obj = doc_obj;
 

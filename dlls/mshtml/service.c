@@ -207,31 +207,34 @@ static IOleUndoManager *create_undomgr(void)
  * IServiceProvider implementation
  */
 
-#define SERVPROV_THIS(iface) DEFINE_THIS(HTMLDocument, ServiceProvider, iface)
+static inline HTMLDocument *impl_from_IServiceProvider(IServiceProvider *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocument, IServiceProvider_iface);
+}
 
 static HRESULT WINAPI ServiceProvider_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
 {
-    HTMLDocument *This = SERVPROV_THIS(iface);
+    HTMLDocument *This = impl_from_IServiceProvider(iface);
     return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI ServiceProvider_AddRef(IServiceProvider *iface)
 {
-    HTMLDocument *This = SERVPROV_THIS(iface);
+    HTMLDocument *This = impl_from_IServiceProvider(iface);
     return htmldoc_addref(This);
 }
 
 static ULONG WINAPI ServiceProvider_Release(IServiceProvider *iface)
 {
-    HTMLDocument *This = SERVPROV_THIS(iface);
+    HTMLDocument *This = impl_from_IServiceProvider(iface);
     return htmldoc_release(This);
 }
 
 static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFGUID guidService,
         REFIID riid, void **ppv)
 {
-    HTMLDocument *This = SERVPROV_THIS(iface);
-    
+    HTMLDocument *This = impl_from_IServiceProvider(iface);
+
     if(IsEqualGUID(&CLSID_CMarkup, guidService)) {
         FIXME("(%p)->(CLSID_CMarkup %s %p)\n", This, debugstr_guid(riid), ppv);
         return E_NOINTERFACE;
@@ -276,5 +279,5 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
 
 void HTMLDocument_Service_Init(HTMLDocument *This)
 {
-    This->lpServiceProviderVtbl = &ServiceProviderVtbl;
+    This->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
 }

@@ -1773,7 +1773,7 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IOleInPlaceObjectWindowless_iface;
     }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
         TRACE("(%p)->(IID_IServiceProvider, %p)\n", This, ppv);
-        *ppv = SERVPROV(This);
+        *ppv = &This->IServiceProvider_iface;
     }else if(IsEqualGUID(&IID_IOleCommandTarget, riid)) {
         TRACE("(%p)->(IID_IOleCommandTarget, %p)\n", This, ppv);
         *ppv = CMDTARGET(This);
