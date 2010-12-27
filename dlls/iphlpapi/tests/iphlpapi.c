@@ -819,7 +819,7 @@ static void testWin2KFunctions(void)
 static void test_GetAdaptersAddresses(void)
 {
     ULONG ret, size;
-    IP_ADAPTER_ADDRESSES *aa;
+    IP_ADAPTER_ADDRESSES *aa, *ptr;
     IP_ADAPTER_UNICAST_ADDRESS *ua;
 
     if (!gGetAdaptersAddresses)
@@ -831,17 +831,25 @@ static void test_GetAdaptersAddresses(void)
     ret = gGetAdaptersAddresses(AF_UNSPEC, 0, NULL, NULL, NULL);
     ok(ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got %u\n", ret);
 
-    size = 0;
+    /* size should be ignored and overwritten if buffer is NULL */
+    size = 0x7fffffff;
     ret = gGetAdaptersAddresses(AF_UNSPEC, 0, NULL, NULL, &size);
     ok(ret == ERROR_BUFFER_OVERFLOW, "expected ERROR_BUFFER_OVERFLOW, got %u\n", ret);
     if (ret != ERROR_BUFFER_OVERFLOW) return;
 
-    aa = HeapAlloc(GetProcessHeap(), 0, size);
-    ret = gGetAdaptersAddresses(AF_UNSPEC, 0, NULL, aa, &size);
+    ptr = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = gGetAdaptersAddresses(AF_UNSPEC, 0, NULL, ptr, &size);
     ok(!ret, "expected ERROR_SUCCESS got %u\n", ret);
 
-    while (!ret && winetest_debug > 1 && aa)
+    for (aa = ptr; !ret && aa; aa = aa->Next)
     {
+        ok(aa->DnsSuffix != NULL, "DnsSuffix is not a valid pointer\n");
+        ok(aa->Description != NULL, "Description is not a valid pointer\n");
+        ok(aa->FriendlyName != NULL, "FriendlyName is not a valid pointer\n");
+
+        if (winetest_debug <= 1)
+            continue;
+
         trace("Length:                %u\n", S(U(*aa)).Length);
         trace("IfIndex:               %u\n", S(U(*aa)).IfIndex);
         trace("Next:                  %p\n", aa->Next);
@@ -877,9 +885,8 @@ static void test_GetAdaptersAddresses(void)
         trace("IfType:                %u\n", aa->IfType);
         trace("OperStatus:            %u\n", aa->OperStatus);
         trace("\n");
-        aa = aa->Next;
     }
-    HeapFree(GetProcessHeap(), 0, aa);
+    HeapFree(GetProcessHeap(), 0, ptr);
 }
 
 START_TEST(iphlpapi)

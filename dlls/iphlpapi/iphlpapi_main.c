@@ -1115,10 +1115,13 @@ ULONG WINAPI GetAdaptersAddresses(ULONG family, ULONG flags, PVOID reserved,
         {
             if (aa->IfType != IF_TYPE_SOFTWARE_LOOPBACK && aa->OperStatus == IfOperStatusUp)
                 aa->DnsSuffix = dnsSuffix;
+            else
+                aa->DnsSuffix = (WCHAR *)((BYTE*)dnsSuffix + dns_suffix_size - 2);
         }
         ret = ERROR_SUCCESS;
     }
-    if (*buflen < total_size) ret = ERROR_BUFFER_OVERFLOW;
+    else
+        ret = ERROR_BUFFER_OVERFLOW;
     *buflen = total_size;
 
     TRACE("num adapters %u\n", table->numIndexes);
