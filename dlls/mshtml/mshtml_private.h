@@ -444,13 +444,13 @@ struct HTMLDocumentObj {
 
 struct NSContainer {
     nsIWebBrowserChrome      nsIWebBrowserChrome_iface;
-    const nsIContextMenuListenerVtbl    *lpContextMenuListenerVtbl;
-    const nsIURIContentListenerVtbl     *lpURIContentListenerVtbl;
-    const nsIEmbeddingSiteWindowVtbl    *lpEmbeddingSiteWindowVtbl;
-    const nsITooltipListenerVtbl        *lpTooltipListenerVtbl;
-    const nsIInterfaceRequestorVtbl     *lpInterfaceRequestorVtbl;
-    const nsIWeakReferenceVtbl          *lpWeakReferenceVtbl;
-    const nsISupportsWeakReferenceVtbl  *lpSupportsWeakReferenceVtbl;
+    nsIContextMenuListener   nsIContextMenuListener_iface;
+    nsIURIContentListener    nsIURIContentListener_iface;
+    nsIEmbeddingSiteWindow   nsIEmbeddingSiteWindow_iface;
+    nsITooltipListener       nsITooltipListener_iface;
+    nsIInterfaceRequestor    nsIInterfaceRequestor_iface;
+    nsIWeakReference         nsIWeakReference_iface;
+    nsISupportsWeakReference nsISupportsWeakReference_iface;
 
     nsIWebBrowser *webbrowser;
     nsIWebNavigation *navigation;
@@ -627,14 +627,7 @@ struct HTMLDocumentNode {
 #define CONPTCONT(x)     ((IConnectionPointContainer*)    &(x)->lpConnectionPointContainerVtbl)
 #define CUSTOMDOC(x)     ((ICustomDoc*)                   &(x)->lpCustomDocVtbl)
 
-#define NSCML(x)         ((nsIContextMenuListener*)       &(x)->lpContextMenuListenerVtbl)
-#define NSURICL(x)       ((nsIURIContentListener*)        &(x)->lpURIContentListenerVtbl)
-#define NSEMBWNDS(x)     ((nsIEmbeddingSiteWindow*)       &(x)->lpEmbeddingSiteWindowVtbl)
-#define NSIFACEREQ(x)    ((nsIInterfaceRequestor*)        &(x)->lpInterfaceRequestorVtbl)
-#define NSTOOLTIP(x)     ((nsITooltipListener*)           &(x)->lpTooltipListenerVtbl)
 #define NSEVENTLIST(x)   ((nsIDOMEventListener*)          &(x)->lpDOMEventListenerVtbl)
-#define NSWEAKREF(x)     ((nsIWeakReference*)             &(x)->lpWeakReferenceVtbl)
-#define NSSUPWEAKREF(x)  ((nsISupportsWeakReference*)     &(x)->lpSupportsWeakReferenceVtbl)
 
 #define NSDOCOBS(x)      ((nsIDocumentObserver*)          &(x)->lpIDocumentObserverVtbl)
 
