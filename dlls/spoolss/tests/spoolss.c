@@ -62,6 +62,16 @@ static LPCSTR load_functions(void)
     if (!pSplInitializeWinSpoolDrv) return ptr;
 
 
+    /* Calling BuildOtherNamesFromMachineName or SplInitializeWinSpoolDrv on
+     * Win7 results in a breakpoint exception. If you continue after hitting
+     * the breakpoint, the functions fail with ERROR_NOT_SUPPORTED. So we
+     * just skip the tests on Win7, since they won't provide any useful info.
+     * To detect Win7, we check whether UnloadDriver exists (it doesn't on
+     * Win7, but does exist on earlier Windows versions) */
+    ptr = "UnloadDriver";
+    if (GetProcAddress(hspl, ptr) == NULL) return ptr;
+
+
     ptr = "winspool.drv";
     hwinspool = LoadLibraryA(ptr);
     if (!hwinspool) return ptr;
