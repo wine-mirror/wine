@@ -99,8 +99,7 @@ static nsresult NSAPI nsWindowCreator_CreateChromeWindow2(nsIWindowCreator2 *ifa
     if(cancel)
         *cancel = FALSE;
 
-    *_retval = NSWBCHROME(NSContainer_Create(NULL, (NSContainer*)parent));
-    return NS_OK;
+    return create_chrome_window(parent, _retval);
 }
 
 static const nsIWindowCreator2Vtbl nsWindowCreatorVtbl = {

@@ -705,6 +705,7 @@ void ConnectionPointContainer_Destroy(ConnectionPointContainer*);
 
 NSContainer *NSContainer_Create(HTMLDocumentObj*,NSContainer*);
 void NSContainer_Release(NSContainer*);
+nsresult create_chrome_window(nsIWebBrowserChrome*,nsIWebBrowserChrome**);
 
 void init_mutation(HTMLDocumentNode*);
 void release_mutation(HTMLDocumentNode*);

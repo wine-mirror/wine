@@ -1150,8 +1150,6 @@ static nsresult NSAPI nsWebBrowserChrome_ExitModalEventLoop(nsIWebBrowserChrome 
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-#undef NSWBCHROME_THIS
-
 static const nsIWebBrowserChromeVtbl nsWebBrowserChromeVtbl = {
     nsWebBrowserChrome_QueryInterface,
     nsWebBrowserChrome_AddRef,
@@ -1711,6 +1709,17 @@ static const nsISupportsWeakReferenceVtbl nsSupportsWeakReferenceVtbl = {
     nsSupportsWeakReference_GetWeakReference
 };
 
+nsresult create_chrome_window(nsIWebBrowserChrome *parent, nsIWebBrowserChrome **ret)
+{
+    NSContainer *new_container;
+
+    if(parent->lpVtbl != &nsWebBrowserChromeVtbl)
+        return NS_ERROR_UNEXPECTED;
+
+    new_container = NSContainer_Create(NULL, NSWBCHROME_THIS(parent));
+    *ret = NSWBCHROME(new_container);
+    return NS_OK;
+}
 
 NSContainer *NSContainer_Create(HTMLDocumentObj *doc, NSContainer *parent)
 {
