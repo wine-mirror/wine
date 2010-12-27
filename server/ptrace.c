@@ -37,6 +37,9 @@
 #ifdef HAVE_SYS_WAIT_H
 # include <sys/wait.h>
 #endif
+#ifdef HAVE_SYS_SYSCALL_H
+# include <sys/syscall.h>
+#endif
 #ifdef HAVE_SYS_THR_H
 # include <sys/ucontext.h>
 # include <sys/thr.h>
@@ -213,17 +216,9 @@ static int wait4_thread( struct thread *thread, int signal )
 static inline int tkill( int tgid, int pid, int sig )
 {
 #ifdef __linux__
-# ifdef __i386__
-    int ret = syscall(270 /*SYS_tgkill*/, tgid, pid, sig);
-    if (ret < 0 && errno == -ENOSYS)
-        ret = syscall(238 /*SYS_tkill*/, pid, sig);
+    int ret = syscall( SYS_tgkill, tgid, pid, sig );
+    if (ret < 0 && errno == ENOSYS) ret = syscall( SYS_tkill, pid, sig );
     return ret;
-# elif defined(__x86_64__)
-    return syscall(234 /*SYS_tgkill*/, tgid, pid, sig);
-# else
-    errno = ENOSYS;
-    return -1;
-# endif
 #elif defined(__FreeBSD__) && defined(HAVE_THR_KILL2)
     return thr_kill2( tgid, pid, sig );
 #else
