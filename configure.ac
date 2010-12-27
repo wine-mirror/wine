@@ -2942,13 +2942,15 @@ dnl Some final makefile rules
 if test -n "$with_wine64"
 then
 WINE_APPEND_RULE([ALL_MAKEFILE_DEPENDS],
-[all: fonts server $with_wine64/loader/wine
+[all: fonts server $with_wine64/loader/wine $with_wine64/loader/wine-preloader
 fonts server:
 	\$(RM) \$[@] && \$(LN_S) $with_wine64/\$[@] \$[@]
 $with_wine64/loader/wine:
 	\$(RM) \$[@] && \$(LN_S) $ac_pwd/loader/wine \$[@]
+$with_wine64/loader/wine-preloader:
+	\$(RM) \$[@] && \$(LN_S) $ac_pwd/loader/wine-preloader \$[@]
 clean::
-	\$(RM) fonts server $with_wine64/loader/wine])
+	\$(RM) fonts server $with_wine64/loader/wine $with_wine64/loader/wine-preloader])
 fi
 
 WINE_APPEND_RULE([ALL_MAKEFILE_DEPENDS],

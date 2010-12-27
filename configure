@@ -15388,13 +15388,15 @@ ac_config_files="$ac_config_files Make.tmp:Make.vars.in:Makefile.in"
 
 if test -n "$with_wine64"
 then
-wine_fn_append_rule ALL_MAKEFILE_DEPENDS "all: fonts server $with_wine64/loader/wine
+wine_fn_append_rule ALL_MAKEFILE_DEPENDS "all: fonts server $with_wine64/loader/wine $with_wine64/loader/wine-preloader
 fonts server:
 	\$(RM) \$@ && \$(LN_S) $with_wine64/\$@ \$@
 $with_wine64/loader/wine:
 	\$(RM) \$@ && \$(LN_S) $ac_pwd/loader/wine \$@
+$with_wine64/loader/wine-preloader:
+	\$(RM) \$@ && \$(LN_S) $ac_pwd/loader/wine-preloader \$@
 clean::
-	\$(RM) fonts server $with_wine64/loader/wine"
+	\$(RM) fonts server $with_wine64/loader/wine $with_wine64/loader/wine-preloader"
 fi
 
 wine_fn_append_rule ALL_MAKEFILE_DEPENDS "uninstall::
