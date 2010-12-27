@@ -776,9 +776,9 @@ static void test_IShellFolderView(void)
     /* ::RemoveObject */
     i = 0xdeadbeef;
     hr = IShellFolderView_RemoveObject(folderview, NULL, &i);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
-    ok(i == 0 || i == -1 /* Win7 */ || broken(i == 0xdeadbeef) /* Vista, 2k8 */,
-        "got %d\n", i);
+    ok(hr == S_OK || hr == E_FAIL, "got (0x%08x)\n", hr);
+    if (hr == S_OK) ok(i == 0 || broken(i == 0xdeadbeef) /* Vista, 2k8 */,
+                       "got %d\n", i);
 
     IShellFolderView_Release(folderview);
 
