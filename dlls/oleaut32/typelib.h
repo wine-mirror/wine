@@ -177,7 +177,7 @@ typedef struct tagMSFT_ImpInfo {
 
 /* function description data */
 typedef struct {
-/*  INT   recsize;       record size including some xtra stuff */
+    INT   Info;         /* record size including some extra stuff */
     INT   DataType;     /* data type of the member, eg return of function */
     INT   Flags;        /* something to do with attribute flags (LOWORD) */
 #ifdef WORDS_BIGENDIAN
@@ -202,19 +202,17 @@ typedef struct {
     INT16 nrargs;       /* number of arguments (including optional ????) */
     INT16 nroargs;      /* nr of optional arguments */
 #endif
+
     /* optional attribute fields, the number of them is variable */
-    INT   OptAttr[1];
-/*
-0*  INT   helpcontext;
-1*  INT   oHelpString;
-2*  INT   oEntry;       // either offset in string table or numeric as it is //
-3*  INT   res9;         // unknown (-1) //
-4*  INT   resA;         // unknown (-1) //
-5*  INT   HelpStringContext;
-    // these are controlled by a bit set in the FKCCIC field  //
-6*  INT   oCustData;        // custom data for function //
-7*  INT   oArgCustData[1];  // custom data per argument //
-*/
+    INT   HelpContext;
+    INT   oHelpString;
+    INT   oEntry;       /* either offset in string table or numeric as it is */
+    INT   res9;         /* unknown (-1) */
+    INT   resA;         /* unknown (-1) */
+    INT   HelpStringContext;
+    /* these are controlled by a bit set in the FKCCIC field  */
+    INT   oCustData;        /* custom data for function */
+    INT   oArgCustData[1];  /* custom data per argument */
 } MSFT_FuncRecord;
 
 /* after this may follow an array with default value pointers if the

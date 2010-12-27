@@ -1906,11 +1906,11 @@ MSFT_DoFuncs(TLBContext*     pcx,
      * in the first part of this file segment.
      */
 
-    int infolen, nameoffset, reclength, nrattributes, i;
+    int infolen, nameoffset, reclength, i;
     int recoffset = offset + sizeof(INT);
 
     char *recbuf = HeapAlloc(GetProcessHeap(), 0, 0xffff);
-    MSFT_FuncRecord * pFuncRec=(MSFT_FuncRecord *) recbuf;
+    MSFT_FuncRecord *pFuncRec = (MSFT_FuncRecord*)recbuf;
     TLBFuncDesc *ptfd_prev = NULL;
 
     TRACE_(typelib)("\n");
@@ -1919,6 +1919,8 @@ MSFT_DoFuncs(TLBContext*     pcx,
 
     for ( i = 0; i < cFuncs ; i++ )
     {
+        int optional;
+
         *pptfd = TLB_Alloc(sizeof(TLBFuncDesc));
 
         /* name, eventually add to a hash table */
@@ -1933,56 +1935,40 @@ MSFT_DoFuncs(TLBContext*     pcx,
             (*pptfd)->Name = MSFT_ReadName(pcx, nameoffset);
 
         /* read the function information record */
-        MSFT_ReadLEDWords(&reclength, sizeof(INT), pcx, recoffset);
+        MSFT_ReadLEDWords(&reclength, sizeof(pFuncRec->Info), pcx, recoffset);
 
         reclength &= 0xffff;
 
-        MSFT_ReadLEDWords(pFuncRec, reclength - sizeof(INT), pcx, DO_NOT_SEEK);
+        MSFT_ReadLEDWords(&pFuncRec->DataType, reclength - FIELD_OFFSET(MSFT_FuncRecord, DataType), pcx, DO_NOT_SEEK);
 
-        /* do the attributes */
-        nrattributes = (reclength - pFuncRec->nrargs * 3 * sizeof(int) - 0x18)
-                       / sizeof(int);
+        /* size without argument data */
+        optional = reclength - pFuncRec->nrargs*sizeof(MSFT_ParameterInfo);
 
-        if ( nrattributes > 0 )
+        if (optional > FIELD_OFFSET(MSFT_FuncRecord, HelpContext))
+            (*pptfd)->helpcontext = pFuncRec->HelpContext;
+
+        if (optional > FIELD_OFFSET(MSFT_FuncRecord, oHelpString))
+            (*pptfd)->HelpString = MSFT_ReadString(pcx, pFuncRec->oHelpString);
+
+        if (optional > FIELD_OFFSET(MSFT_FuncRecord, oEntry))
         {
-            (*pptfd)->helpcontext = pFuncRec->OptAttr[0] ;
-
-            if ( nrattributes > 1 )
+            if (pFuncRec->FKCCIC & 0x2000 )
             {
-                (*pptfd)->HelpString = MSFT_ReadString(pcx,
-                                                      pFuncRec->OptAttr[1]) ;
-
-                if ( nrattributes > 2 )
-                {
-                    if ( pFuncRec->FKCCIC & 0x2000 )
-                    {
-                       if (!IS_INTRESOURCE(pFuncRec->OptAttr[2]))
-                           ERR("ordinal 0x%08x invalid, IS_INTRESOURCE is false\n", pFuncRec->OptAttr[2]);
-                       (*pptfd)->Entry = (BSTR)(DWORD_PTR)LOWORD(pFuncRec->OptAttr[2]);
-                    }
-                    else
-                    {
-                        (*pptfd)->Entry = MSFT_ReadString(pcx,
-                                                         pFuncRec->OptAttr[2]);
-                    }
-                    if( nrattributes > 5 )
-                    {
-                        (*pptfd)->HelpStringContext = pFuncRec->OptAttr[5] ;
-
-                        if ( nrattributes > 6 && pFuncRec->FKCCIC & 0x80 )
-                        {
-                            MSFT_CustData(pcx,
-					  pFuncRec->OptAttr[6],
-					  &(*pptfd)->pCustData);
-                        }
-                    }
-                }
-                else
-                {
-                    (*pptfd)->Entry = (BSTR)-1;
-                }
+                if (!IS_INTRESOURCE(pFuncRec->oEntry))
+                    ERR("ordinal 0x%08x invalid, IS_INTRESOURCE is false\n", pFuncRec->oEntry);
+                (*pptfd)->Entry = (BSTR)(DWORD_PTR)LOWORD(pFuncRec->oEntry);
             }
+            else
+                (*pptfd)->Entry = MSFT_ReadString(pcx, pFuncRec->oEntry);
         }
+        else
+            (*pptfd)->Entry = (BSTR)-1;
+
+        if (optional > FIELD_OFFSET(MSFT_FuncRecord, HelpStringContext))
+            (*pptfd)->HelpStringContext = pFuncRec->HelpStringContext;
+
+        if (optional > FIELD_OFFSET(MSFT_FuncRecord, oCustData) && pFuncRec->FKCCIC & 0x80)
+            MSFT_CustData(pcx, pFuncRec->oCustData, &(*pptfd)->pCustData);
 
         /* fill the FuncDesc Structure */
         MSFT_ReadLEDWords( & (*pptfd)->funcdesc.memid, sizeof(INT), pcx,
@@ -2047,7 +2033,7 @@ MSFT_DoFuncs(TLBContext*     pcx,
                 {
                     INT* pInt = (INT *)((char *)pFuncRec +
                                    reclength -
-                                   (pFuncRec->nrargs * 4 + 1) * sizeof(INT) );
+                                   (pFuncRec->nrargs * 4) * sizeof(INT) );
 
                     PARAMDESC* pParamDesc = &elemdesc->u.paramdesc;
 
@@ -2059,11 +2045,14 @@ MSFT_DoFuncs(TLBContext*     pcx,
                 }
                 else
                     elemdesc->u.paramdesc.pparamdescex = NULL;
+
                 /* custom info */
-                if ( nrattributes > 7 + j && pFuncRec->FKCCIC & 0x80 )
+                if (optional > (FIELD_OFFSET(MSFT_FuncRecord, oArgCustData) +
+                                j*sizeof(pFuncRec->oArgCustData[0])) &&
+                    pFuncRec->FKCCIC & 0x80 )
                 {
                     MSFT_CustData(pcx,
-				  pFuncRec->OptAttr[7+j],
+				  pFuncRec->oArgCustData[j],
 				  &(*pptfd)->pParamDesc[j].pCustData);
                 }
 
@@ -2120,7 +2109,7 @@ static void MSFT_DoVars(TLBContext *pcx, ITypeInfoImpl *pTI, int cFuncs,
             (*pptvd)->HelpContext = pVarRec->HelpContext;
 
         if(reclength > FIELD_OFFSET(MSFT_VarRecord, oHelpString))
-            (*pptvd)->HelpString = MSFT_ReadString(pcx, pVarRec->oHelpString) ;
+            (*pptvd)->HelpString = MSFT_ReadString(pcx, pVarRec->oHelpString);
 
         if(reclength > FIELD_OFFSET(MSFT_VarRecord, HelpStringContext))
             (*pptvd)->HelpStringContext = pVarRec->HelpStringContext;
