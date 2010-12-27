@@ -2572,6 +2572,10 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
                     gl_info->supported[WGL_ARB_PIXEL_FORMAT] = TRUE;
                     TRACE_(d3d_caps)("FOUND: WGL_ARB_pixel_format support\n");
                 }
+                if (!strcmp(ThisExtn, "WGL_EXT_swap_control")) {
+                    gl_info->supported[WGL_EXT_SWAP_CONTROL] = TRUE;
+                    TRACE_(d3d_caps)("FOUND: WGL_EXT_swap_control support\n");
+                }
                 if (!strcmp(ThisExtn, "WGL_WINE_pixel_format_passthrough")) {
                     gl_info->supported[WGL_WINE_PIXEL_FORMAT_PASSTHROUGH] = TRUE;
                     TRACE_(d3d_caps)("FOUND: WGL_WINE_pixel_format_passthrough support\n");

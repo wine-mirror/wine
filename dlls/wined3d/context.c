@@ -1280,6 +1280,7 @@ struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain,
     int numSamples = 0;
     int pixel_format;
     unsigned int s;
+    int swap_interval;
     DWORD state;
     HGLRC ctx;
     HDC hdc;
@@ -1458,6 +1459,36 @@ struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain,
         ERR("Cannot activate context to set up defaults\n");
         context_release(ret);
         goto out;
+    }
+
+    switch (swapchain->presentParms.PresentationInterval)
+    {
+        case WINED3DPRESENT_INTERVAL_IMMEDIATE:
+            swap_interval = 0;
+            break;
+        case WINED3DPRESENT_INTERVAL_DEFAULT:
+        case WINED3DPRESENT_INTERVAL_ONE:
+            swap_interval = 1;
+            break;
+        case WINED3DPRESENT_INTERVAL_TWO:
+            swap_interval = 2;
+            break;
+        case WINED3DPRESENT_INTERVAL_THREE:
+            swap_interval = 3;
+            break;
+        case WINED3DPRESENT_INTERVAL_FOUR:
+            swap_interval = 4;
+            break;
+        default:
+            FIXME("Unknown presentation interval %08x\n", swapchain->presentParms.PresentationInterval);
+            swap_interval = 1;
+    }
+
+    if (gl_info->supported[WGL_EXT_SWAP_CONTROL])
+    {
+        if (!GL_EXTCALL(wglSwapIntervalEXT(swap_interval)))
+            ERR("wglSwapIntervalEXT failed to set swap interval %d for context %p, last error %#x\n",
+                swap_interval, ret, GetLastError());
     }
 
     ENTER_GL();
