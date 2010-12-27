@@ -105,7 +105,7 @@ static HRESULT WINAPI HTMLFrameElement3_get_contentDocument(IHTMLFrameElement3 *
         return E_FAIL;
     }
 
-    hres = IHTMLWindow2_get_document(HTMLWINDOW2(This->framebase.content_window), &doc);
+    hres = IHTMLWindow2_get_document(&This->framebase.content_window->IHTMLWindow2_iface, &doc);
     if(FAILED(hres))
         return hres;
 

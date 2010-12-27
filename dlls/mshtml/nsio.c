@@ -808,7 +808,7 @@ static HTMLWindow *get_window_from_load_group(nsChannel *This)
 
     window = wine_uri->window_ref ? wine_uri->window_ref->window : NULL;
     if(window)
-        IHTMLWindow2_AddRef(HTMLWINDOW2(window));
+        IHTMLWindow2_AddRef(&window->IHTMLWindow2_iface);
     nsIURI_Release(NSURI(wine_uri));
 
     return window;
@@ -858,7 +858,7 @@ static HTMLWindow *get_channel_window(nsChannel *This)
     nsIDOMWindow_Release(nswindow);
 
     if(window)
-        IHTMLWindow2_AddRef(HTMLWINDOW2(window));
+        IHTMLWindow2_AddRef(&window->IHTMLWindow2_iface);
     else
         FIXME("NULL window for %p\n", nswindow);
     return window;
@@ -948,7 +948,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     if(!window) {
         if(This->uri->window_ref && This->uri->window_ref->window) {
             window = This->uri->window_ref->window;
-            IHTMLWindow2_AddRef(HTMLWINDOW2(window));
+            IHTMLWindow2_AddRef(&window->IHTMLWindow2_iface);
         }else {
             /* FIXME: Analyze removing get_window_from_load_group call */
             if(This->load_group)
@@ -993,7 +993,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
             ERR("AddRequest failed: %08x\n", nsres);
     }
 
-    IHTMLWindow2_Release(HTMLWINDOW2(window));
+    IHTMLWindow2_Release(&window->IHTMLWindow2_iface);
     return nsres;
 }
 
@@ -2722,7 +2722,7 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
             base_wine_url = base_wine_uri->wine_url;
             if(base_wine_uri->window_ref && base_wine_uri->window_ref->window) {
                 window = base_wine_uri->window_ref->window;
-                IHTMLWindow2_AddRef(HTMLWINDOW2(window));
+                IHTMLWindow2_AddRef(&window->IHTMLWindow2_iface);
             }
             TRACE("base url: %s window: %p\n", debugstr_w(base_wine_url), window);
         }else if(FAILED(ParseURLA(spec, &parsed_url))) {
@@ -2743,7 +2743,7 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
     *_retval = (nsIURI*)wine_uri;
 
     if(window)
-        IHTMLWindow2_Release(HTMLWINDOW2(window));
+        IHTMLWindow2_Release(&window->IHTMLWindow2_iface);
 
     if(base_wine_url) {
         WCHAR url[INTERNET_MAX_URL_LENGTH], rel_url[INTERNET_MAX_URL_LENGTH];

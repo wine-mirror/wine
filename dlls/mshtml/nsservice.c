@@ -158,7 +158,7 @@ static nsresult NSAPI nsPromptService_Alert(nsIPromptService *iface, nsIDOMWindo
     }
 
     text = SysAllocString(aText);
-    IHTMLWindow2_alert(HTMLWINDOW2(window), text);
+    IHTMLWindow2_alert(&window->IHTMLWindow2_iface, text);
     SysFreeString(text);
 
     return NS_OK;

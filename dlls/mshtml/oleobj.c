@@ -199,7 +199,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
 
         if(!hostui_setup) {
             V_VT(&var) = VT_UNKNOWN;
-            V_UNKNOWN(&var) = (IUnknown*)HTMLWINDOW2(This->window);
+            V_UNKNOWN(&var) = (IUnknown*)&This->window->IHTMLWindow2_iface;
             IOleCommandTarget_Exec(cmdtrg, &CGID_DocHostCmdPriv, DOCHOST_DOCCANNAVIGATE, 0, &var, NULL);
         }
 

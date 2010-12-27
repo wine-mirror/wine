@@ -233,7 +233,7 @@ HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, nsChannel
                 IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 37, 0, &var, NULL);
             }else {
                 V_VT(&var) = VT_UNKNOWN;
-                V_UNKNOWN(&var) = (IUnknown*)HTMLWINDOW2(This->window);
+                V_UNKNOWN(&var) = (IUnknown*)&This->window->IHTMLWindow2_iface;
                 V_VT(&out) = VT_EMPTY;
                 hres = IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 63, 0, &var, &out);
                 if(SUCCEEDED(hres))

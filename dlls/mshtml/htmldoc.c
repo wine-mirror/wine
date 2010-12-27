@@ -105,7 +105,7 @@ static HRESULT WINAPI HTMLDocument_get_Script(IHTMLDocument2 *iface, IDispatch *
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = (IDispatch*)HTMLWINDOW2(This->window);
+    *p = (IDispatch*)&This->window->IHTMLWindow2_iface;
     IDispatch_AddRef(*p);
     return S_OK;
 }
@@ -579,7 +579,7 @@ static HRESULT WINAPI HTMLDocument_get_location(IHTMLDocument2 *iface, IHTMLLoca
         return E_UNEXPECTED;
     }
 
-    return IHTMLWindow2_get_location(HTMLWINDOW2(This->window), p);
+    return IHTMLWindow2_get_location(&This->window->IHTMLWindow2_iface, p);
 }
 
 static HRESULT WINAPI HTMLDocument_get_lastModified(IHTMLDocument2 *iface, BSTR *p)
@@ -872,8 +872,8 @@ static HRESULT WINAPI HTMLDocument_open(IHTMLDocument2 *iface, BSTR url, VARIANT
         return E_FAIL;
     }
 
-    *pomWindowResult = (IDispatch*)HTMLWINDOW2(This->window);
-    IHTMLWindow2_AddRef(HTMLWINDOW2(This->window));
+    *pomWindowResult = (IDispatch*)&This->window->IHTMLWindow2_iface;
+    IHTMLWindow2_AddRef(&This->window->IHTMLWindow2_iface);
     return S_OK;
 }
 
@@ -1302,7 +1302,7 @@ static HRESULT WINAPI HTMLDocument_get_parentWindow(IHTMLDocument2 *iface, IHTML
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = HTMLWINDOW2(This->window);
+    *p = &This->window->IHTMLWindow2_iface;
     IHTMLWindow2_AddRef(*p);
     return S_OK;
 }
@@ -2097,7 +2097,7 @@ static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
         }
         if(This->basedoc.window) {
             This->basedoc.window->doc_obj = NULL;
-            IHTMLWindow2_Release(HTMLWINDOW2(This->basedoc.window));
+            IHTMLWindow2_Release(&This->basedoc.window->IHTMLWindow2_iface);
         }
         if(This->basedoc.advise_holder)
             IOleAdviseHolder_Release(This->basedoc.advise_holder);

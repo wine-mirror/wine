@@ -430,8 +430,8 @@ static HRESULT WINAPI HTMLFrameBase2_get_contentWindow(IHTMLFrameBase2 *iface, I
     TRACE("(%p)->(%p)\n", This, p);
 
     if(This->content_window) {
-        IHTMLWindow2_AddRef(HTMLWINDOW2(This->content_window));
-        *p = HTMLWINDOW2(This->content_window);
+        IHTMLWindow2_AddRef(&This->content_window->IHTMLWindow2_iface);
+        *p = &This->content_window->IHTMLWindow2_iface;
     }else {
         WARN("NULL content window\n");
         *p = NULL;
