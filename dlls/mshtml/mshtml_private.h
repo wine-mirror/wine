@@ -359,7 +359,7 @@ struct HTMLDocument {
     IOleInPlaceObjectWindowless IOleInPlaceObjectWindowless_iface;
     IServiceProvider            IServiceProvider_iface;
     IOleCommandTarget           IOleCommandTarget_iface;
-    const IOleControlVtbl                 *lpOleControlVtbl;
+    IOleControl                 IOleControl_iface;
     const IHlinkTargetVtbl                *lpHlinkTargetVtbl;
     IPersistStreamInit          IPersistStreamInit_iface;
     const IDispatchExVtbl                 *lpIDispatchExVtbl;
@@ -625,7 +625,6 @@ struct HTMLDocumentNode {
 #define HTMLWINDOW2(x)   ((IHTMLWindow2*)                 &(x)->lpHTMLWindow2Vtbl)
 #define HTMLWINDOW3(x)   ((IHTMLWindow3*)                 &(x)->lpHTMLWindow3Vtbl)
 #define HTMLWINDOW4(x)   ((IHTMLWindow4*)                 &(x)->lpHTMLWindow4Vtbl)
-#define CONTROL(x)       ((IOleControl*)                  &(x)->lpOleControlVtbl)
 #define HLNKTARGET(x)    ((IHlinkTarget*)                 &(x)->lpHlinkTargetVtbl)
 #define CONPTCONT(x)     ((IConnectionPointContainer*)    &(x)->lpConnectionPointContainerVtbl)
 #define CUSTOMDOC(x)     ((ICustomDoc*)                   &(x)->lpCustomDocVtbl)

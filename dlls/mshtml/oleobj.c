@@ -216,9 +216,10 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
     }
 
     if(This->doc_obj->usermode == UNKNOWN_USERMODE)
-        IOleControl_OnAmbientPropertyChange(CONTROL(This), DISPID_AMBIENT_USERMODE);
+        IOleControl_OnAmbientPropertyChange(&This->IOleControl_iface, DISPID_AMBIENT_USERMODE);
 
-    IOleControl_OnAmbientPropertyChange(CONTROL(This), DISPID_AMBIENT_OFFLINEIFNOTCONNECTED); 
+    IOleControl_OnAmbientPropertyChange(&This->IOleControl_iface,
+            DISPID_AMBIENT_OFFLINEIFNOTCONNECTED);
 
     hres = get_client_disp_property(This->doc_obj->client, DISPID_AMBIENT_SILENT, &silent);
     if(SUCCEEDED(hres)) {
@@ -228,8 +229,8 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
             FIXME("silent == true\n");
     }
 
-    IOleControl_OnAmbientPropertyChange(CONTROL(This), DISPID_AMBIENT_USERAGENT);
-    IOleControl_OnAmbientPropertyChange(CONTROL(This), DISPID_AMBIENT_PALETTE);
+    IOleControl_OnAmbientPropertyChange(&This->IOleControl_iface, DISPID_AMBIENT_USERAGENT);
+    IOleControl_OnAmbientPropertyChange(&This->IOleControl_iface, DISPID_AMBIENT_PALETTE);
 
     return S_OK;
 }
@@ -573,36 +574,39 @@ static const IOleDocumentVtbl OleDocumentVtbl = {
  * IOleControl implementation
  */
 
-#define CONTROL_THIS(iface) DEFINE_THIS(HTMLDocument, OleControl, iface)
+static inline HTMLDocument *impl_from_IOleControl(IOleControl *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocument, IOleControl_iface);
+}
 
 static HRESULT WINAPI OleControl_QueryInterface(IOleControl *iface, REFIID riid, void **ppv)
 {
-    HTMLDocument *This = CONTROL_THIS(iface);
+    HTMLDocument *This = impl_from_IOleControl(iface);
     return htmldoc_query_interface(This, riid, ppv);
 }
 
 static ULONG WINAPI OleControl_AddRef(IOleControl *iface)
 {
-    HTMLDocument *This = CONTROL_THIS(iface);
+    HTMLDocument *This = impl_from_IOleControl(iface);
     return htmldoc_addref(This);
 }
 
 static ULONG WINAPI OleControl_Release(IOleControl *iface)
 {
-    HTMLDocument *This = CONTROL_THIS(iface);
+    HTMLDocument *This = impl_from_IOleControl(iface);
     return htmldoc_release(This);
 }
 
 static HRESULT WINAPI OleControl_GetControlInfo(IOleControl *iface, CONTROLINFO *pCI)
 {
-    HTMLDocument *This = CONTROL_THIS(iface);
+    HTMLDocument *This = impl_from_IOleControl(iface);
     FIXME("(%p)->(%p)\n", This, pCI);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleControl_OnMnemonic(IOleControl *iface, MSG *pMsg)
 {
-    HTMLDocument *This = CONTROL_THIS(iface);
+    HTMLDocument *This = impl_from_IOleControl(iface);
     FIXME("(%p)->(%p)\n", This, pMsg);
     return E_NOTIMPL;
 }
@@ -644,7 +648,7 @@ static HRESULT on_change_dlcontrol(HTMLDocument *This)
 
 static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DISPID dispID)
 {
-    HTMLDocument *This = CONTROL_THIS(iface);
+    HTMLDocument *This = impl_from_IOleControl(iface);
     IOleClientSite *client;
     VARIANT res;
     HRESULT hres;
@@ -734,12 +738,10 @@ static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DIS
 
 static HRESULT WINAPI OleControl_FreezeEvents(IOleControl *iface, BOOL bFreeze)
 {
-    HTMLDocument *This = CONTROL_THIS(iface);
+    HTMLDocument *This = impl_from_IOleControl(iface);
     FIXME("(%p)->(%x)\n", This, bFreeze);
     return E_NOTIMPL;
 }
-
-#undef CONTROL_THIS
 
 static const IOleControlVtbl OleControlVtbl = {
     OleControl_QueryInterface,
@@ -873,7 +875,7 @@ void HTMLDocument_OleObj_Init(HTMLDocument *This)
 {
     This->IOleObject_iface.lpVtbl = &OleObjectVtbl;
     This->IOleDocument_iface.lpVtbl = &OleDocumentVtbl;
-    This->lpOleControlVtbl = &OleControlVtbl;
+    This->IOleControl_iface.lpVtbl = &OleControlVtbl;
     This->lpObjectWithSiteVtbl = &ObjectWithSiteVtbl;
     This->IOleContainer_iface.lpVtbl = &OleContainerVtbl;
 }
