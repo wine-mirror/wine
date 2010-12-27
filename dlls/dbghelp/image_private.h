@@ -81,6 +81,7 @@ struct image_file_map
             int                         fd;
             const char*	                shstrtab;
             struct image_file_map*      alternate;      /* another ELF file (linked to this one) */
+            char*                       target_copy;
 #ifdef __ELF__
             Elf_Ehdr                    elfhdr;
             struct

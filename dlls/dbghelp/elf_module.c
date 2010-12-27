@@ -110,6 +110,10 @@ const char* elf_map_section(struct image_section_map* ism)
         fmap->sect[ism->sidx].shdr.sh_type == SHT_NOBITS)
         return IMAGE_NO_MAP;
 
+    if (fmap->target_copy)
+    {
+        return fmap->target_copy + fmap->sect[ism->sidx].shdr.sh_offset;
+    }
     /* align required information on page size (we assume pagesize is a power of 2) */
     ofst = fmap->sect[ism->sidx].shdr.sh_offset & ~(pgsz - 1);
     size = ((fmap->sect[ism->sidx].shdr.sh_offset +
@@ -166,7 +170,8 @@ void elf_unmap_section(struct image_section_map* ism)
 {
     struct elf_file_map*        fmap = &ism->fmap->u.elf;
 
-    if (ism->sidx >= 0 && ism->sidx < fmap->elfhdr.e_shnum && fmap->sect[ism->sidx].mapped != IMAGE_NO_MAP)
+    if (ism->sidx >= 0 && ism->sidx < fmap->elfhdr.e_shnum && !fmap->target_copy &&
+        fmap->sect[ism->sidx].mapped != IMAGE_NO_MAP)
     {
         unsigned long pgsz = getpagesize();
         unsigned long ofst, size;
@@ -223,6 +228,41 @@ static inline void elf_reset_file_map(struct image_file_map* fmap)
     fmap->u.elf.fd = -1;
     fmap->u.elf.shstrtab = IMAGE_NO_MAP;
     fmap->u.elf.alternate = NULL;
+    fmap->u.elf.target_copy = NULL;
+}
+
+struct elf_map_file_data
+{
+    enum {from_file, from_process}      kind;
+    union
+    {
+        struct
+        {
+            const WCHAR* filename;
+        } file;
+        struct
+        {
+            HANDLE      handle;
+            void*       load_addr;
+        } process;
+    } u;
+};
+
+static BOOL elf_map_file_read(struct image_file_map* fmap, struct elf_map_file_data* emfd,
+                              void* buf, size_t len, off_t off)
+{
+    SIZE_T dw;
+
+    switch (emfd->kind)
+    {
+    case from_file:
+        return pread(fmap->u.elf.fd, buf, len, off) == len;
+    case from_process:
+        return ReadProcessMemory(emfd->u.process.handle,
+                                 (void*)((unsigned long)emfd->u.process.load_addr + (unsigned long)off),
+                                 buf, len, &dw) && dw == len;
+    default: assert(0);
+    }
 }
 
 /******************************************************************
@@ -230,7 +270,7 @@ static inline void elf_reset_file_map(struct image_file_map* fmap)
  *
  * Maps an ELF file into memory (and checks it's a real ELF file)
  */
-static BOOL elf_map_file(const WCHAR* filenameW, struct image_file_map* fmap)
+static BOOL elf_map_file(struct elf_map_file_data* emfd, struct image_file_map* fmap)
 {
     static const BYTE   elf_signature[4] = { ELFMAG0, ELFMAG1, ELFMAG2, ELFMAG3 };
     struct stat	        statbuf;
@@ -241,21 +281,40 @@ static BOOL elf_map_file(const WCHAR* filenameW, struct image_file_map* fmap)
     unsigned            len;
     BOOL                ret = FALSE;
 
-    len = WideCharToMultiByte(CP_UNIXCP, 0, filenameW, -1, NULL, 0, NULL, NULL);
-    if (!(filename = HeapAlloc(GetProcessHeap(), 0, len))) return FALSE;
-    WideCharToMultiByte(CP_UNIXCP, 0, filenameW, -1, filename, len, NULL, NULL);
+    switch (emfd->kind)
+    {
+    case from_file:
+        len = WideCharToMultiByte(CP_UNIXCP, 0, emfd->u.file.filename, -1, NULL, 0, NULL, NULL);
+        if (!(filename = HeapAlloc(GetProcessHeap(), 0, len))) return FALSE;
+        WideCharToMultiByte(CP_UNIXCP, 0, emfd->u.file.filename, -1, filename, len, NULL, NULL);
+        break;
+    case from_process:
+        filename = NULL;
+        break;
+    default: assert(0);
+    }
 
     elf_reset_file_map(fmap);
 
     fmap->modtype = DMT_ELF;
-    /* check that the file exists, and that the module hasn't been loaded yet */
-    if (stat(filename, &statbuf) == -1 || S_ISDIR(statbuf.st_mode)) goto done;
+    fmap->u.elf.fd = -1;
+    fmap->u.elf.target_copy = NULL;
 
-    /* Now open the file, so that we can mmap() it. */
-    if ((fmap->u.elf.fd = open(filename, O_RDONLY)) == -1) goto done;
+    switch (emfd->kind)
+    {
+    case from_file:
+        /* check that the file exists, and that the module hasn't been loaded yet */
+        if (stat(filename, &statbuf) == -1 || S_ISDIR(statbuf.st_mode)) goto done;
 
-    if (read(fmap->u.elf.fd, &fmap->u.elf.elfhdr, sizeof(fmap->u.elf.elfhdr)) != sizeof(fmap->u.elf.elfhdr))
+        /* Now open the file, so that we can mmap() it. */
+        if ((fmap->u.elf.fd = open(filename, O_RDONLY)) == -1) goto done;
+        break;
+    case from_process:
+        break;
+    }
+    if (!elf_map_file_read(fmap, emfd, &fmap->u.elf.elfhdr, sizeof(fmap->u.elf.elfhdr), 0))
         goto done;
+
     /* and check for an ELF header */
     if (memcmp(fmap->u.elf.elfhdr.e_ident,
                elf_signature, sizeof(elf_signature))) goto done;
@@ -271,8 +330,8 @@ static BOOL elf_map_file(const WCHAR* filenameW, struct image_file_map* fmap)
 
     for (i = 0; i < fmap->u.elf.elfhdr.e_shnum; i++)
     {
-        if (pread(fmap->u.elf.fd, &fmap->u.elf.sect[i].shdr, sizeof(fmap->u.elf.sect[i].shdr),
-                  fmap->u.elf.elfhdr.e_shoff + i * sizeof(fmap->u.elf.sect[i].shdr)) != sizeof(fmap->u.elf.sect[i].shdr))
+        if (!elf_map_file_read(fmap, emfd, &fmap->u.elf.sect[i].shdr, sizeof(fmap->u.elf.sect[i].shdr),
+                               fmap->u.elf.elfhdr.e_shoff + i * sizeof(fmap->u.elf.sect[i].shdr)))
         {
             HeapFree(GetProcessHeap(), 0, fmap->u.elf.sect);
             fmap->u.elf.sect = NULL;
@@ -286,8 +345,8 @@ static BOOL elf_map_file(const WCHAR* filenameW, struct image_file_map* fmap)
     fmap->u.elf.elf_start = ~0L;
     for (i = 0; i < fmap->u.elf.elfhdr.e_phnum; i++)
     {
-        if (pread(fmap->u.elf.fd, &phdr, sizeof(phdr),
-                  fmap->u.elf.elfhdr.e_phoff + i * sizeof(phdr)) == sizeof(phdr) &&
+        if (elf_map_file_read(fmap, emfd, &phdr, sizeof(phdr),
+                              fmap->u.elf.elfhdr.e_phoff + i * sizeof(phdr)) &&
             phdr.p_type == PT_LOAD)
         {
             tmp = (phdr.p_vaddr + phdr.p_memsz + page_mask) & ~page_mask;
@@ -299,6 +358,25 @@ static BOOL elf_map_file(const WCHAR* filenameW, struct image_file_map* fmap)
      * otherwise, all addresses are zero based and start has no effect
      */
     fmap->u.elf.elf_size -= fmap->u.elf.elf_start;
+
+    switch (emfd->kind)
+    {
+    case from_file: break;
+    case from_process:
+        if (!(fmap->u.elf.target_copy = HeapAlloc(GetProcessHeap(), 0, fmap->u.elf.elf_size)))
+        {
+            HeapFree(GetProcessHeap(), 0, fmap->u.elf.sect);
+            goto done;
+        }
+        if (!ReadProcessMemory(emfd->u.process.handle, emfd->u.process.load_addr, fmap->u.elf.target_copy,
+                               fmap->u.elf.elf_size, NULL))
+        {
+            HeapFree(GetProcessHeap(), 0, fmap->u.elf.target_copy);
+            HeapFree(GetProcessHeap(), 0, fmap->u.elf.sect);
+            goto done;
+        }
+        break;
+    }
     ret = TRUE;
 done:
     HeapFree(GetProcessHeap(), 0, filename);
@@ -325,6 +403,7 @@ static void elf_unmap_file(struct image_file_map* fmap)
             HeapFree(GetProcessHeap(), 0, fmap->u.elf.sect);
             close(fmap->u.elf.fd);
         }
+        HeapFree(GetProcessHeap(), 0, fmap->u.elf.target_copy);
         fmap = fmap->u.elf.alternate;
     }
 }
@@ -737,7 +816,11 @@ static int elf_new_public_symbols(struct module* module, const struct hash_table
 static BOOL elf_check_debug_link(const WCHAR* file, struct image_file_map* fmap, DWORD crc)
 {
     BOOL        ret;
-    if (!elf_map_file(file, fmap)) return FALSE;
+    struct elf_map_file_data    emfd;
+
+    emfd.kind = from_file;
+    emfd.u.file.filename = file;
+    if (!elf_map_file(&emfd, fmap)) return FALSE;
     if (!(ret = crc == calc_crc32(fmap->u.elf.fd)))
     {
         WARN("Bad CRC for file %s (got %08x while expecting %08x)\n",
@@ -979,7 +1062,11 @@ BOOL elf_fetch_file_info(const WCHAR* name, DWORD_PTR* base,
 {
     struct image_file_map fmap;
 
-    if (!elf_map_file(name, &fmap)) return FALSE;
+    struct elf_map_file_data    emfd;
+
+    emfd.kind = from_file;
+    emfd.u.file.filename = name;
+    if (!elf_map_file(&emfd, &fmap)) return FALSE;
     if (base) *base = fmap.u.elf.elf_start;
     *size = fmap.u.elf.elf_size;
     *checksum = calc_crc32(fmap.u.elf.fd);
@@ -1110,10 +1197,13 @@ static BOOL elf_load_file(struct process* pcs, const WCHAR* filename,
 {
     BOOL                        ret = FALSE;
     struct image_file_map       fmap;
+    struct elf_map_file_data    emfd;
 
     TRACE("Processing elf file '%s' at %08lx\n", debugstr_w(filename), load_offset);
 
-    if (!elf_map_file(filename, &fmap)) return ret;
+    emfd.kind = from_file;
+    emfd.u.file.filename = filename;
+    if (!elf_map_file(&emfd, &fmap)) return ret;
 
     /* Next, we need to find a few of the internal ELF headers within
      * this thing.  We need the main executable header, and the section
