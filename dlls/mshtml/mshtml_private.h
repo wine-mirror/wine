@@ -443,7 +443,7 @@ struct HTMLDocumentObj {
 };
 
 struct NSContainer {
-    const nsIWebBrowserChromeVtbl       *lpWebBrowserChromeVtbl;
+    nsIWebBrowserChrome      nsIWebBrowserChrome_iface;
     const nsIContextMenuListenerVtbl    *lpContextMenuListenerVtbl;
     const nsIURIContentListenerVtbl     *lpURIContentListenerVtbl;
     const nsIEmbeddingSiteWindowVtbl    *lpEmbeddingSiteWindowVtbl;
@@ -627,7 +627,6 @@ struct HTMLDocumentNode {
 #define CONPTCONT(x)     ((IConnectionPointContainer*)    &(x)->lpConnectionPointContainerVtbl)
 #define CUSTOMDOC(x)     ((ICustomDoc*)                   &(x)->lpCustomDocVtbl)
 
-#define NSWBCHROME(x)    ((nsIWebBrowserChrome*)          &(x)->lpWebBrowserChromeVtbl)
 #define NSCML(x)         ((nsIContextMenuListener*)       &(x)->lpContextMenuListenerVtbl)
 #define NSURICL(x)       ((nsIURIContentListener*)        &(x)->lpURIContentListenerVtbl)
 #define NSEMBWNDS(x)     ((nsIEmbeddingSiteWindow*)       &(x)->lpEmbeddingSiteWindowVtbl)

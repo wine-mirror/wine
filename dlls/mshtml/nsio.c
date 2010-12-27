@@ -218,11 +218,11 @@ static void set_uri_nscontainer(nsWineURI *This, NSContainer *nscontainer)
         if(This->container == nscontainer)
             return;
         TRACE("Changing %p -> %p\n", This->container, nscontainer);
-        nsIWebBrowserChrome_Release(NSWBCHROME(This->container));
+        nsIWebBrowserChrome_Release(&This->container->nsIWebBrowserChrome_iface);
     }
 
     if(nscontainer)
-        nsIWebBrowserChrome_AddRef(NSWBCHROME(nscontainer));
+        nsIWebBrowserChrome_AddRef(&nscontainer->nsIWebBrowserChrome_iface);
     This->container = nscontainer;
 }
 
@@ -1624,7 +1624,7 @@ static nsrefcnt NSAPI nsURI_Release(nsIURL *iface)
         if(This->window_ref)
             windowref_release(This->window_ref);
         if(This->container)
-            nsIWebBrowserChrome_Release(NSWBCHROME(This->container));
+            nsIWebBrowserChrome_Release(&This->container->nsIWebBrowserChrome_iface);
         if(This->nsurl)
             nsIURL_Release(This->nsurl);
         if(This->nsuri)
@@ -3099,7 +3099,7 @@ nsresult on_start_uri_open(NSContainer *nscontainer, nsIURI *uri, PRBool *_retva
         wine_uri->is_doc_uri = TRUE;
 
         if(!wine_uri->container) {
-            nsIWebBrowserChrome_AddRef(NSWBCHROME(nscontainer));
+            nsIWebBrowserChrome_AddRef(&nscontainer->nsIWebBrowserChrome_iface);
             wine_uri->container = nscontainer;
         }
 
