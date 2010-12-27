@@ -1,7 +1,7 @@
 /*
  * Korean resource file for MS-RLE
  *
- * Copyright 2005 YunSong Hwang
+ * Copyright 2005,2010 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,11 +20,13 @@
 
 #include "msrle_private.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 STRINGTABLE DISCARDABLE
 {
 	IDS_NAME	"WINE-MS-RLE"
-	IDS_DESCRIPTION	"Wine MS-RLE ºñµğ¿À ÄÚµ¦"
-	IDS_ABOUT       "Wine MS-RLE ºñµğ¿À ÄÚµ¦\nCopyright 2002 by Michael Gunnewig"
+	IDS_DESCRIPTION	"Wine MS-RLE ë¹„ë””ì˜¤ ì½”ë±"
+	IDS_ABOUT       "Wine MS-RLE ë¹„ë””ì˜¤ ì½”ë±\nCopyright 2002 by Michael Gunnewig"
 }
