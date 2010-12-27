@@ -231,7 +231,7 @@ typedef struct {
 
 /* Variable description data */
 typedef struct {
-/*  INT   recsize;      // record size including some xtra stuff */
+    INT   Info;         /* record size including some extra stuff */
     INT   DataType;     /* data type of the variable */
     INT   Flags;        /* VarFlags (LOWORD) */
 #ifdef WORDS_BIGENDIAN
@@ -250,7 +250,6 @@ typedef struct {
     INT   res9;         /* unknown (-1) */
     INT   oCustData;        /* custom data for variable */
     INT   HelpStringContext;
-
 } MSFT_VarRecord;
 
 /* Structure of the reference data  */

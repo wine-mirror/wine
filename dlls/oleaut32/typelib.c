@@ -2094,7 +2094,7 @@ static void MSFT_DoVars(TLBContext *pcx, ITypeInfoImpl *pTI, int cFuncs,
 {
     int infolen, nameoffset, reclength;
     char recbuf[256];
-    MSFT_VarRecord * pVarRec=(MSFT_VarRecord *) recbuf;
+    MSFT_VarRecord *pVarRec = (MSFT_VarRecord*)recbuf;
     int i;
     int recoffset;
 
@@ -2111,17 +2111,20 @@ static void MSFT_DoVars(TLBContext *pcx, ITypeInfoImpl *pTI, int cFuncs,
                           offset + infolen + (2*cFuncs + cVars + i + 1) * sizeof(INT));
         (*pptvd)->Name=MSFT_ReadName(pcx, nameoffset);
     /* read the variable information record */
-        MSFT_ReadLEDWords(&reclength, sizeof(INT), pcx, recoffset);
-        reclength &=0xff;
-        MSFT_ReadLEDWords(pVarRec, reclength - sizeof(INT), pcx, DO_NOT_SEEK);
-    /* Optional data */
-        if(reclength >(6*sizeof(INT)) )
-            (*pptvd)->HelpContext=pVarRec->HelpContext;
-        if(reclength >(7*sizeof(INT)) )
+        MSFT_ReadLEDWords(&reclength, sizeof(pVarRec->Info), pcx, recoffset);
+        reclength &= 0xff;
+        MSFT_ReadLEDWords(&pVarRec->DataType, reclength - FIELD_OFFSET(MSFT_VarRecord, DataType), pcx, DO_NOT_SEEK);
+
+        /* optional data */
+        if(reclength > FIELD_OFFSET(MSFT_VarRecord, HelpContext))
+            (*pptvd)->HelpContext = pVarRec->HelpContext;
+
+        if(reclength > FIELD_OFFSET(MSFT_VarRecord, oHelpString))
             (*pptvd)->HelpString = MSFT_ReadString(pcx, pVarRec->oHelpString) ;
-        if(reclength >(8*sizeof(INT)) )
-        if(reclength >(9*sizeof(INT)) )
-            (*pptvd)->HelpStringContext=pVarRec->HelpStringContext;
+
+        if(reclength > FIELD_OFFSET(MSFT_VarRecord, HelpStringContext))
+            (*pptvd)->HelpStringContext = pVarRec->HelpStringContext;
+
     /* fill the VarDesc Structure */
         MSFT_ReadLEDWords(&(*pptvd)->vardesc.memid, sizeof(INT), pcx,
                           offset + infolen + (cFuncs + i + 1) * sizeof(INT));
