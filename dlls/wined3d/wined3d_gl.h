@@ -3710,8 +3710,8 @@ typedef void (WINE_GLAPI *PGLFNGETCOMBINERSTAGEPARAMETERFVNVPROC)(GLenum stage, 
 #endif
 
 /* GL_SGIS_generate_mipmap */
-#ifndef GLX_SGIS_generate_mipmap
-#define GLX_SGIS_generate_mipmap 1
+#ifndef GL_SGIS_generate_mipmap
+#define GL_SGIS_generate_mipmap 1
 #define GL_GENERATE_MIPMAP_SGIS                             0x8191
 #define GL_GENERATE_MIPMAP_HINT_SGIS                        0x8192
 #endif
