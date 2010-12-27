@@ -18,6 +18,9 @@
 
 var tmp, i;
 
+ok(ScriptEngine() === "JScript", "ScriptEngine() = " + ScriptEngine());
+ok(ScriptEngine(3) === "JScript", "ScriptEngine(3) = " + ScriptEngine(3));
+
 i = parseInt("0");
 ok(i === 0, "parseInt('0') = " + i);
 i = parseInt("123");
