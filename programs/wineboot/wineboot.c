@@ -175,6 +175,7 @@ static void create_hardware_registry_keys(void)
     static const WCHAR cpuW[] = {'C','e','n','t','r','a','l','P','r','o','c','e','s','s','o','r',0};
     static const WCHAR FeatureSetW[] = {'F','e','a','t','u','r','e','S','e','t',0};
     static const WCHAR IdentifierW[] = {'I','d','e','n','t','i','f','i','e','r',0};
+    static const WCHAR ProcessorNameStringW[] = {'P','r','o','c','e','s','s','o','r','N','a','m','e','S','t','r','i','n','g',0};
     static const WCHAR SysidW[] = {'A','T',' ','c','o','m','p','a','t','i','b','l','e',0};
     static const WCHAR mhzKeyW[] = {'~','M','H','z',0};
     static const WCHAR VendorIdentifierW[] = {'V','e','n','d','o','r','I','d','e','n','t','i','f','i','e','r',0};
@@ -183,6 +184,8 @@ static void create_hardware_registry_keys(void)
     static const WCHAR PercentDW[] = {'%','d',0};
     static const WCHAR IntelCpuDescrW[] = {'x','8','6',' ','F','a','m','i','l','y',' ','%','d',' ','M','o','d','e','l',' ','%','d',
                                            ' ','S','t','e','p','p','i','n','g',' ','%','d',0};
+    static const WCHAR IntelCpuStringW[] = {'I','n','t','e','l','(','R',')',' ','P','e','n','t','i','u','m','(','R',')',' ','4',' ',
+                                            'C','P','U',' ','2','.','4','0','G','H','z',0};
     unsigned int i;
     HKEY hkey, system_key, cpu_key, fpu_key;
     SYSTEM_CPU_INFORMATION sci;
@@ -220,6 +223,7 @@ static void create_hardware_registry_keys(void)
             RegSetValueExW( hkey, FeatureSetW, 0, REG_DWORD, (BYTE *)&sci.FeatureSet, sizeof(DWORD) );
             set_reg_value( hkey, IdentifierW, idW );
             /*TODO; report amd's properly*/
+            set_reg_value( hkey, ProcessorNameStringW, IntelCpuStringW );
             set_reg_value( hkey, VendorIdentifierW, VenidIntelW );
             RegSetValueExW( hkey, mhzKeyW, 0, REG_DWORD, (BYTE *)&power_info.MaxMhz, sizeof(DWORD) );
             RegCloseKey( hkey );
