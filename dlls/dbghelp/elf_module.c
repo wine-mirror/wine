@@ -987,6 +987,112 @@ BOOL elf_fetch_file_info(const WCHAR* name, DWORD_PTR* base,
     return TRUE;
 }
 
+static BOOL elf_load_file_from_fmap(struct process* pcs, const WCHAR* filename,
+                                    struct image_file_map* fmap, unsigned long load_offset,
+                                    unsigned long dyn_addr, struct elf_info* elf_info)
+{
+    BOOL        ret = FALSE;
+
+    if (elf_info->flags & ELF_INFO_DEBUG_HEADER)
+    {
+        struct image_section_map        ism;
+
+        if (elf_find_section(fmap, ".dynamic", SHT_DYNAMIC, &ism))
+        {
+            Elf_Dyn         dyn;
+            char*           ptr = (char*)fmap->u.elf.sect[ism.sidx].shdr.sh_addr;
+            unsigned long   len;
+
+            do
+            {
+                if (!ReadProcessMemory(pcs->handle, ptr, &dyn, sizeof(dyn), &len) ||
+                    len != sizeof(dyn))
+                    return ret;
+                if (dyn.d_tag == DT_DEBUG)
+                {
+                    elf_info->dbg_hdr_addr = dyn.d_un.d_ptr;
+                    if (load_offset == 0 && dyn_addr == 0) /* likely the case */
+                        /* Assume this module (the Wine loader) has been loaded at its preferred address */
+                        dyn_addr = ism.fmap->u.elf.sect[ism.sidx].shdr.sh_addr;
+                    break;
+                }
+                ptr += sizeof(dyn);
+            } while (dyn.d_tag != DT_NULL);
+            if (dyn.d_tag == DT_NULL) return ret;
+	}
+        elf_end_find(fmap);
+    }
+
+    if (elf_info->flags & ELF_INFO_MODULE)
+    {
+        struct elf_module_info *elf_module_info;
+        struct module_format*   modfmt;
+        struct image_section_map ism;
+        unsigned long           modbase = load_offset;
+
+        if (elf_find_section(fmap, ".dynamic", SHT_DYNAMIC, &ism))
+        {
+            unsigned long rva_dyn = elf_get_map_rva(&ism);
+
+            TRACE("For module %s, got ELF (start=%lx dyn=%lx), link_map (start=%lx dyn=%lx)\n",
+                  debugstr_w(filename), (unsigned long)fmap->u.elf.elf_start, rva_dyn,
+                  load_offset, dyn_addr);
+            if (dyn_addr && load_offset + rva_dyn != dyn_addr)
+            {
+                WARN("\thave to relocate: %lx\n", dyn_addr - rva_dyn);
+                modbase = dyn_addr - rva_dyn;
+            }
+	} else WARN("For module %s, no .dynamic section\n", debugstr_w(filename));
+        elf_end_find(fmap);
+
+        modfmt = HeapAlloc(GetProcessHeap(), 0,
+                          sizeof(struct module_format) + sizeof(struct elf_module_info));
+        if (!modfmt) return FALSE;
+        elf_info->module = module_new(pcs, filename, DMT_ELF, FALSE, modbase,
+                                      fmap->u.elf.elf_size, 0, calc_crc32(fmap->u.elf.fd));
+        if (!elf_info->module)
+        {
+            HeapFree(GetProcessHeap(), 0, modfmt);
+            return FALSE;
+        }
+        elf_info->module->reloc_delta = elf_info->module->module.BaseOfImage - fmap->u.elf.elf_start;
+        elf_module_info = (void*)(modfmt + 1);
+        elf_info->module->format_info[DFI_ELF] = modfmt;
+        modfmt->module      = elf_info->module;
+        modfmt->remove      = elf_module_remove;
+        modfmt->loc_compute = NULL;
+        modfmt->u.elf_info  = elf_module_info;
+
+        elf_module_info->elf_addr = load_offset;
+
+        elf_module_info->file_map = *fmap;
+        elf_reset_file_map(fmap);
+        if (dbghelp_options & SYMOPT_DEFERRED_LOADS)
+        {
+            elf_info->module->module.SymType = SymDeferred;
+            ret = TRUE;
+        }
+        else ret = elf_load_debug_info(elf_info->module);
+
+        elf_module_info->elf_mark = 1;
+        elf_module_info->elf_loader = 0;
+    } else ret = TRUE;
+
+    if (elf_info->flags & ELF_INFO_NAME)
+    {
+        WCHAR*  ptr;
+        ptr = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(filename) + 1) * sizeof(WCHAR));
+        if (ptr)
+        {
+            strcpyW(ptr, filename);
+            elf_info->module_name = ptr;
+        }
+        else ret = FALSE;
+    }
+
+    return ret;
+}
+
 /******************************************************************
  *		elf_load_file
  *
@@ -1017,103 +1123,8 @@ static BOOL elf_load_file(struct process* pcs, const WCHAR* filename,
         ERR("Relocatable ELF %s, but no load address. Loading at 0x0000000\n",
             debugstr_w(filename));
 
-    if (elf_info->flags & ELF_INFO_DEBUG_HEADER)
-    {
-        struct image_section_map        ism;
+    ret = elf_load_file_from_fmap(pcs, filename, &fmap, load_offset, dyn_addr, elf_info);
 
-        if (elf_find_section(&fmap, ".dynamic", SHT_DYNAMIC, &ism))
-        {
-            Elf_Dyn         dyn;
-            char*           ptr = (char*)fmap.u.elf.sect[ism.sidx].shdr.sh_addr;
-            unsigned long   len;
-
-            do
-            {
-                if (!ReadProcessMemory(pcs->handle, ptr, &dyn, sizeof(dyn), &len) ||
-                    len != sizeof(dyn))
-                    goto leave;
-                if (dyn.d_tag == DT_DEBUG)
-                {
-                    elf_info->dbg_hdr_addr = dyn.d_un.d_ptr;
-                    if (load_offset == 0 && dyn_addr == 0) /* likely the case */
-                        /* Assume this module (the Wine loader) has been loaded at its preferred address */
-                        dyn_addr = ism.fmap->u.elf.sect[ism.sidx].shdr.sh_addr;
-                    break;
-                }
-                ptr += sizeof(dyn);
-            } while (dyn.d_tag != DT_NULL);
-            if (dyn.d_tag == DT_NULL) goto leave;
-	}
-        elf_end_find(&fmap);
-    }
-
-    if (elf_info->flags & ELF_INFO_MODULE)
-    {
-        struct elf_module_info *elf_module_info;
-        struct module_format*   modfmt;
-        struct image_section_map ism;
-        unsigned long           modbase = load_offset;
-
-        if (elf_find_section(&fmap, ".dynamic", SHT_DYNAMIC, &ism))
-        {
-            unsigned long rva_dyn = elf_get_map_rva(&ism);
-
-            TRACE("For module %s, got ELF (start=%lx dyn=%lx), link_map (start=%lx dyn=%lx)\n",
-                  debugstr_w(filename), (unsigned long)fmap.u.elf.elf_start, rva_dyn,
-                  load_offset, dyn_addr);
-            if (dyn_addr && load_offset + rva_dyn != dyn_addr)
-            {
-                WARN("\thave to relocate: %lx\n", dyn_addr - rva_dyn);
-                modbase = dyn_addr - rva_dyn;
-            }
-	} else WARN("For module %s, no .dynamic section\n", debugstr_w(filename));
-        elf_end_find(&fmap);
-
-        modfmt = HeapAlloc(GetProcessHeap(), 0,
-                          sizeof(struct module_format) + sizeof(struct elf_module_info));
-        if (!modfmt) goto leave;
-        elf_info->module = module_new(pcs, filename, DMT_ELF, FALSE, modbase,
-                                      fmap.u.elf.elf_size, 0, calc_crc32(fmap.u.elf.fd));
-        if (!elf_info->module)
-        {
-            HeapFree(GetProcessHeap(), 0, modfmt);
-            goto leave;
-        }
-        elf_info->module->reloc_delta = elf_info->module->module.BaseOfImage - fmap.u.elf.elf_start;
-        elf_module_info = (void*)(modfmt + 1);
-        elf_info->module->format_info[DFI_ELF] = modfmt;
-        modfmt->module      = elf_info->module;
-        modfmt->remove      = elf_module_remove;
-        modfmt->loc_compute = NULL;
-        modfmt->u.elf_info  = elf_module_info;
-
-        elf_module_info->elf_addr = load_offset;
-
-        elf_module_info->file_map = fmap;
-        elf_reset_file_map(&fmap);
-        if (dbghelp_options & SYMOPT_DEFERRED_LOADS)
-        {
-            elf_info->module->module.SymType = SymDeferred;
-            ret = TRUE;
-        }
-        else ret = elf_load_debug_info(elf_info->module);
-
-        elf_module_info->elf_mark = 1;
-        elf_module_info->elf_loader = 0;
-    } else ret = TRUE;
-
-    if (elf_info->flags & ELF_INFO_NAME)
-    {
-        WCHAR*  ptr;
-        ptr = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(filename) + 1) * sizeof(WCHAR));
-        if (ptr)
-        {
-            strcpyW(ptr, filename);
-            elf_info->module_name = ptr;
-        }
-        else ret = FALSE;
-    }
-leave:
     elf_unmap_file(&fmap);
 
     return ret;
