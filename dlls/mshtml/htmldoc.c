@@ -1782,7 +1782,7 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IOleControl_iface;
     }else if(IsEqualGUID(&IID_IHlinkTarget, riid)) {
         TRACE("(%p)->(IID_IHlinkTarget, %p)\n", This, ppv);
-        *ppv = HLNKTARGET(This);
+        *ppv = &This->IHlinkTarget_iface;
     }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
         TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
         *ppv = CONPTCONT(&This->cp_container);
