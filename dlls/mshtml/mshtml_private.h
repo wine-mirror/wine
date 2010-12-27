@@ -261,9 +261,9 @@ typedef struct nsChannelBSC nsChannelBSC;
 struct HTMLWindow {
     DispatchEx dispex;
     IHTMLWindow2       IHTMLWindow2_iface;
-    const IHTMLWindow3Vtbl *lpHTMLWindow3Vtbl;
-    const IHTMLWindow4Vtbl *lpHTMLWindow4Vtbl;
-    const IHTMLPrivateWindowVtbl *lpIHTMLPrivateWindowVtbl;
+    IHTMLWindow3       IHTMLWindow3_iface;
+    IHTMLWindow4       IHTMLWindow4_iface;
+    IHTMLPrivateWindow IHTMLPrivateWindow_iface;
     const IDispatchExVtbl         *lpIDispatchExVtbl;
     IServiceProvider   IServiceProvider_iface;
 
@@ -622,8 +622,6 @@ struct HTMLDocumentNode {
     struct list plugin_hosts;
 };
 
-#define HTMLWINDOW3(x)   ((IHTMLWindow3*)                 &(x)->lpHTMLWindow3Vtbl)
-#define HTMLWINDOW4(x)   ((IHTMLWindow4*)                 &(x)->lpHTMLWindow4Vtbl)
 #define CONPTCONT(x)     ((IConnectionPointContainer*)    &(x)->lpConnectionPointContainerVtbl)
 #define CUSTOMDOC(x)     ((ICustomDoc*)                   &(x)->lpCustomDocVtbl)
 
