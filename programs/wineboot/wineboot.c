@@ -173,6 +173,7 @@ static void create_hardware_registry_keys(void)
                                     'S','y','s','t','e','m',0};
     static const WCHAR fpuW[] = {'F','l','o','a','t','i','n','g','P','o','i','n','t','P','r','o','c','e','s','s','o','r',0};
     static const WCHAR cpuW[] = {'C','e','n','t','r','a','l','P','r','o','c','e','s','s','o','r',0};
+    static const WCHAR FeatureSetW[] = {'F','e','a','t','u','r','e','S','e','t',0};
     static const WCHAR IdentifierW[] = {'I','d','e','n','t','i','f','i','e','r',0};
     static const WCHAR SysidW[] = {'A','T',' ','c','o','m','p','a','t','i','b','l','e',0};
     static const WCHAR mhzKeyW[] = {'~','M','H','z',0};
@@ -216,6 +217,7 @@ static void create_hardware_registry_keys(void)
         if (!RegCreateKeyExW( cpu_key, numW, 0, NULL, REG_OPTION_VOLATILE,
                               KEY_ALL_ACCESS, NULL, &hkey, NULL ))
         {
+            RegSetValueExW( hkey, FeatureSetW, 0, REG_DWORD, (BYTE *)&sci.FeatureSet, sizeof(DWORD) );
             set_reg_value( hkey, IdentifierW, idW );
             /*TODO; report amd's properly*/
             set_reg_value( hkey, VendorIdentifierW, VenidIntelW );
