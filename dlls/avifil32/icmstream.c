@@ -38,38 +38,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(avifile);
 
 /***********************************************************************/
 
-static HRESULT WINAPI ICMStream_fnQueryInterface(IAVIStream*iface,REFIID refiid,LPVOID *obj);
-static ULONG   WINAPI ICMStream_fnAddRef(IAVIStream*iface);
-static ULONG   WINAPI ICMStream_fnRelease(IAVIStream* iface);
-static HRESULT WINAPI ICMStream_fnCreate(IAVIStream*iface,LPARAM lParam1,LPARAM lParam2);
-static HRESULT WINAPI ICMStream_fnInfo(IAVIStream*iface,AVISTREAMINFOW *psi,LONG size);
-static LONG    WINAPI ICMStream_fnFindSample(IAVIStream*iface,LONG pos,LONG flags);
-static HRESULT WINAPI ICMStream_fnReadFormat(IAVIStream*iface,LONG pos,LPVOID format,LONG *formatsize);
-static HRESULT WINAPI ICMStream_fnSetFormat(IAVIStream*iface,LONG pos,LPVOID format,LONG formatsize);
-static HRESULT WINAPI ICMStream_fnRead(IAVIStream*iface,LONG start,LONG samples,LPVOID buffer,LONG buffersize,LONG *bytesread,LONG *samplesread);
-static HRESULT WINAPI ICMStream_fnWrite(IAVIStream*iface,LONG start,LONG samples,LPVOID buffer,LONG buffersize,DWORD flags,LONG *sampwritten,LONG *byteswritten);
-static HRESULT WINAPI ICMStream_fnDelete(IAVIStream*iface,LONG start,LONG samples);
-static HRESULT WINAPI ICMStream_fnReadData(IAVIStream*iface,DWORD fcc,LPVOID lp,LONG *lpread);
-static HRESULT WINAPI ICMStream_fnWriteData(IAVIStream*iface,DWORD fcc,LPVOID lp,LONG size);
-static HRESULT WINAPI ICMStream_fnSetInfo(IAVIStream*iface,AVISTREAMINFOW*info,LONG infolen);
-
-static const struct IAVIStreamVtbl iicmst = {
-  ICMStream_fnQueryInterface,
-  ICMStream_fnAddRef,
-  ICMStream_fnRelease,
-  ICMStream_fnCreate,
-  ICMStream_fnInfo,
-  ICMStream_fnFindSample,
-  ICMStream_fnReadFormat,
-  ICMStream_fnSetFormat,
-  ICMStream_fnRead,
-  ICMStream_fnWrite,
-  ICMStream_fnDelete,
-  ICMStream_fnReadData,
-  ICMStream_fnWriteData,
-  ICMStream_fnSetInfo
-};
-
 typedef struct _IAVIStreamImpl {
   /* IUnknown stuff */
   IAVIStream         IAVIStream_iface;
@@ -118,29 +86,6 @@ static inline void AVIFILE_Reset(IAVIStreamImpl *This)
   This->lLastKey      = 0;
   This->dwLastQuality = ICQUALITY_HIGH;
   This->dwUnusedBytes = 0;
-}
-
-HRESULT AVIFILE_CreateICMStream(REFIID riid, LPVOID *ppv)
-{
-  IAVIStreamImpl *pstream;
-  HRESULT         hr;
-
-  assert(riid != NULL && ppv != NULL);
-
-  *ppv = NULL;
-
-  pstream = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IAVIStreamImpl));
-  if (pstream == NULL)
-    return AVIERR_MEMORY;
-
-  pstream->IAVIStream_iface.lpVtbl = &iicmst;
-  AVIFILE_Reset(pstream);
-
-  hr = IAVIStream_QueryInterface(&pstream->IAVIStream_iface, riid, ppv);
-  if (FAILED(hr))
-    HeapFree(GetProcessHeap(), 0, pstream);
-
-  return hr;
 }
 
 static HRESULT WINAPI ICMStream_fnQueryInterface(IAVIStream *iface,
@@ -760,6 +705,46 @@ static HRESULT WINAPI ICMStream_fnSetInfo(IAVIStream *iface,
   FIXME("(%p,%p,%d): stub\n", iface, info, infolen);
 
   return E_FAIL;
+}
+
+static const struct IAVIStreamVtbl iicmst = {
+  ICMStream_fnQueryInterface,
+  ICMStream_fnAddRef,
+  ICMStream_fnRelease,
+  ICMStream_fnCreate,
+  ICMStream_fnInfo,
+  ICMStream_fnFindSample,
+  ICMStream_fnReadFormat,
+  ICMStream_fnSetFormat,
+  ICMStream_fnRead,
+  ICMStream_fnWrite,
+  ICMStream_fnDelete,
+  ICMStream_fnReadData,
+  ICMStream_fnWriteData,
+  ICMStream_fnSetInfo
+};
+
+HRESULT AVIFILE_CreateICMStream(REFIID riid, LPVOID *ppv)
+{
+  IAVIStreamImpl *pstream;
+  HRESULT         hr;
+
+  assert(riid != NULL && ppv != NULL);
+
+  *ppv = NULL;
+
+  pstream = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IAVIStreamImpl));
+  if (pstream == NULL)
+    return AVIERR_MEMORY;
+
+  pstream->IAVIStream_iface.lpVtbl = &iicmst;
+  AVIFILE_Reset(pstream);
+
+  hr = IAVIStream_QueryInterface(&pstream->IAVIStream_iface, riid, ppv);
+  if (FAILED(hr))
+    HeapFree(GetProcessHeap(), 0, pstream);
+
+  return hr;
 }
 
 /***********************************************************************/
