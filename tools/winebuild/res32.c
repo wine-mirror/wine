@@ -53,6 +53,7 @@ struct resource
     unsigned int     data_offset;
     unsigned short   mem_options;
     unsigned short   lang;
+    unsigned int     version;
 };
 
 /* name level of the resource tree */
@@ -232,7 +233,7 @@ static void load_next_resource( DLLSPEC *spec )
     get_dword();                        /* skip data version */
     res->mem_options = get_word();
     res->lang = get_word();
-    get_dword();                        /* skip version */
+    res->version = get_dword();
     get_dword();                        /* skip characteristics */
 
     input_buffer_pos = ((const unsigned char *)res->data - input_buffer) + ((res->data_size + 3) & ~3);
@@ -277,7 +278,8 @@ static int cmp_res( const void *ptr1, const void *ptr2 )
 
     if ((ret = cmp_string( &res1->type, &res2->type ))) return ret;
     if ((ret = cmp_string( &res1->name, &res2->name ))) return ret;
-    return res1->lang - res2->lang;
+    if ((ret = res1->lang - res2->lang)) return ret;
+    return res1->version - res2->version;
 }
 
 static char *format_res_string( const struct string_id *str )
@@ -290,6 +292,31 @@ static char *format_res_string( const struct string_id *str )
     return ret;
 }
 
+/* get rid of duplicate resources with different versions */
+static void remove_duplicate_resources( DLLSPEC *spec )
+{
+    unsigned int i, n;
+
+    for (i = n = 0; i < spec->nb_resources; i++, n++)
+    {
+        if (i && !cmp_string( &spec->resources[i].type, &spec->resources[i-1].type ) &&
+            !cmp_string( &spec->resources[i].name, &spec->resources[i-1].name ) &&
+            spec->resources[i].lang == spec->resources[i-1].lang)
+        {
+            if (spec->resources[i].version == spec->resources[i-1].version)
+            {
+                char *type_str = format_res_string( &spec->resources[i].type );
+                char *name_str = format_res_string( &spec->resources[i].name );
+                error( "winebuild: duplicate resource type %s name %s language %04x version %08x\n",
+                       type_str, name_str, spec->resources[i].lang, spec->resources[i].version );
+            }
+            else n--;  /* replace the previous one */
+        }
+        if (n < i) spec->resources[n] = spec->resources[i];
+    }
+    spec->nb_resources = n;
+}
+
 /* build the 3-level (type,name,language) resource tree */
 static struct res_tree *build_resource_tree( DLLSPEC *spec, unsigned int *dir_size )
 {
@@ -300,6 +327,7 @@ static struct res_tree *build_resource_tree( DLLSPEC *spec, unsigned int *dir_si
     struct resource *res;
 
     qsort( spec->resources, spec->nb_resources, sizeof(*spec->resources), cmp_res );
+    remove_duplicate_resources( spec );
 
     tree = xmalloc( sizeof(*tree) );
     tree->types = NULL;
@@ -316,14 +344,10 @@ static struct res_tree *build_resource_tree( DLLSPEC *spec, unsigned int *dir_si
         {
             name = add_name( type, &spec->resources[i] );
         }
-        else if (spec->resources[i].lang == spec->resources[i-1].lang)
+        else
         {
-            char *type_str = format_res_string( &spec->resources[i].type );
-            char *name_str = format_res_string( &spec->resources[i].name );
-            error( "winebuild: duplicate resource type %s name %s language %04x\n",
-                   type_str, name_str, spec->resources[i].lang );
+            name->nb_languages++;
         }
-        else name->nb_languages++;
     }
 
     /* compute the offsets */
@@ -606,6 +630,9 @@ void output_res_o_file( DLLSPEC *spec )
     if (!spec->nb_resources) fatal_error( "--resources mode needs at least one resource file as input\n" );
     if (!output_file_name) fatal_error( "No output file name specified\n" );
 
+    qsort( spec->resources, spec->nb_resources, sizeof(*spec->resources), cmp_res );
+    remove_duplicate_resources( spec );
+
     byte_swapped = 0;
     init_output_buffer();
 
@@ -633,7 +660,7 @@ void output_res_o_file( DLLSPEC *spec )
         put_dword( 0 );
         put_word( spec->resources[i].mem_options );
         put_word( spec->resources[i].lang );
-        put_dword( 0 );
+        put_dword( spec->resources[i].version );
         put_dword( 0 );
         put_data( spec->resources[i].data, spec->resources[i].data_size );
         align_output( 4 );
