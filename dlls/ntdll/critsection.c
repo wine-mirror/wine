@@ -26,6 +26,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <sys/types.h>
+#ifdef HAVE_SYS_SYSCALL_H
+#include <sys/syscall.h>
+#endif
 #include <time.h>
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -56,29 +59,27 @@ static inline void small_pause(void)
 #endif
 }
 
-#if defined(linux) && defined(__i386__)
+#ifdef __linux__
 
 static inline int futex_wait( int *addr, int val, struct timespec *timeout )
 {
-    int ret = syscall( 240/*SYS_futex*/, addr, 0/*FUTEX_WAIT*/, val, timeout, 0, 0 );
-    if (ret < 0)
-        return -errno;
-    return ret;
+    return syscall( SYS_futex, addr, 0/*FUTEX_WAIT*/, val, timeout, 0, 0 );
 }
 
 static inline int futex_wake( int *addr, int val )
 {
-    int ret = syscall( 240/*SYS_futex*/, addr, 1/*FUTEX_WAKE*/, val, NULL, 0, 0 );
-    if (ret < 0)
-        return -errno;
-    return ret;
+    return syscall( SYS_futex, addr, 1/*FUTEX_WAKE*/, val, NULL, 0, 0 );
 }
 
 static inline int use_futexes(void)
 {
     static int supported = -1;
 
-    if (supported == -1) supported = (futex_wait( &supported, 10, NULL ) != -ENOSYS);
+    if (supported == -1)
+    {
+        futex_wait( &supported, 10, NULL );
+        supported = (errno != ENOSYS);
+    }
     return supported;
 }
 
@@ -95,7 +96,7 @@ static inline NTSTATUS fast_wait( RTL_CRITICAL_SECTION *crit, int timeout )
     {
         /* note: this may wait longer than specified in case of signals or */
         /*       multiple wake-ups, but that shouldn't be a problem */
-        if (futex_wait( (int *)&crit->LockSemaphore, val, &timespec ) == -ETIMEDOUT)
+        if (futex_wait( (int *)&crit->LockSemaphore, val, &timespec ) == -1 && errno == ETIMEDOUT)
             return STATUS_TIMEOUT;
     }
     return STATUS_WAIT_0;
