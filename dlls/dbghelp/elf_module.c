@@ -1297,6 +1297,59 @@ static BOOL elf_load_file_from_dll_path(HANDLE hProcess,
     return ret;
 }
 
+#ifdef AT_SYSINFO_EHDR
+/******************************************************************
+ *		elf_search_auxv
+ *
+ * locate some a value from the debuggee auxillary vector
+ */
+static BOOL elf_search_auxv(const struct process* pcs, unsigned type, unsigned long* val)
+{
+    char        buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
+    SYMBOL_INFO*si = (SYMBOL_INFO*)buffer;
+    void*       addr;
+    void*       str;
+    void*       str_max;
+    Elf_auxv_t  auxv;
+
+    si->SizeOfStruct = sizeof(*si);
+    si->MaxNameLen = MAX_SYM_NAME;
+    if (!SymFromName(pcs->handle, "libwine.so.1!__wine_main_environ", si) ||
+        !(addr = (void*)(DWORD_PTR)si->Address) ||
+        !ReadProcessMemory(pcs->handle, addr, &addr, sizeof(addr), NULL) ||
+        !addr)
+    {
+        FIXME("can't find symbol in module\n");
+        return FALSE;
+    }
+    /* walk through envp[] */
+    /* envp[] strings are located after the auxillary vector, so protect the walk */
+    str_max = (void*)(DWORD_PTR)~0L;
+    while (ReadProcessMemory(pcs->handle, addr, &str, sizeof(str), NULL) &&
+           (addr = (void*)((DWORD_PTR)addr + sizeof(str))) != NULL && str != NULL)
+        str_max = min(str_max, str);
+
+    /* Walk through the end of envp[] array.
+     * Actually, there can be several NULLs at the end of envp[]. This happens when an env variable is
+     * deleted, the last entry is replaced by an extra NULL.
+     */
+    while (addr < str_max && ReadProcessMemory(pcs->handle, addr, &str, sizeof(str), NULL) && str == NULL)
+        addr = (void*)((DWORD_PTR)addr + sizeof(str));
+
+    while (ReadProcessMemory(pcs->handle, addr, &auxv, sizeof(auxv), NULL) && auxv.a_type != AT_NULL)
+    {
+        if (auxv.a_type == type)
+        {
+            *val = auxv.a_un.a_val;
+            return TRUE;
+        }
+        addr = (void*)((DWORD_PTR)addr + sizeof(auxv));
+    }
+
+    return FALSE;
+}
+#endif
+
 /******************************************************************
  *		elf_search_and_load_file
  *
@@ -1330,12 +1383,12 @@ static BOOL elf_search_and_load_file(struct process* pcs, const WCHAR* filename,
         if (!ret) ret = elf_load_file_from_dll_path(pcs, filename,
                                                     load_offset, dyn_addr, elf_info);
     }
-    
+
     return ret;
 }
 
 typedef BOOL (*enum_elf_modules_cb)(const WCHAR*, unsigned long load_addr,
-                                    unsigned long dyn_addr, void* user);
+                                    unsigned long dyn_addr, BOOL is_system, void* user);
 
 /******************************************************************
  *		elf_enum_modules_internal
@@ -1351,6 +1404,7 @@ static BOOL elf_enum_modules_internal(const struct process* pcs,
     struct link_map     lm;
     char		bufstr[256];
     WCHAR               bufstrW[MAX_PATH];
+    unsigned long       ehdr_addr;
 
     if (!pcs->dbg_hdr_addr ||
         !ReadProcessMemory(pcs->handle, (void*)pcs->dbg_hdr_addr,
@@ -1374,9 +1428,16 @@ static BOOL elf_enum_modules_internal(const struct process* pcs,
 	    bufstr[sizeof(bufstr) - 1] = '\0';
             MultiByteToWideChar(CP_UNIXCP, 0, bufstr, -1, bufstrW, sizeof(bufstrW) / sizeof(WCHAR));
             if (main_name && !bufstrW[0]) strcpyW(bufstrW, main_name);
-            if (!cb(bufstrW, (unsigned long)lm.l_addr, (unsigned long)lm.l_ld, user)) break;
+            if (!cb(bufstrW, (unsigned long)lm.l_addr, (unsigned long)lm.l_ld, FALSE, user)) break;
 	}
     }
+#ifdef AT_SYSINFO_EHDR
+    if (!lm_addr && elf_search_auxv(pcs, AT_SYSINFO_EHDR, &ehdr_addr))
+    {
+        static const WCHAR vdsoW[] = {'[','v','d','s','o',']','.','s','o',0};
+        cb(vdsoW, ehdr_addr, 0, TRUE, user);
+    }
+#endif
     return TRUE;
 }
 
@@ -1432,7 +1493,7 @@ struct elf_enum_user
 };
 
 static BOOL elf_enum_modules_translate(const WCHAR* name, unsigned long load_addr,
-                                       unsigned long dyn_addr, void* user)
+                                       unsigned long dyn_addr, BOOL is_system, void* user)
 {
     struct elf_enum_user*       eeu = user;
     return eeu->cb(name, load_addr, eeu->user);
@@ -1479,12 +1540,33 @@ struct elf_load
  * modules.
  */
 static BOOL elf_load_cb(const WCHAR* name, unsigned long load_addr,
-                        unsigned long dyn_addr, void* user)
+                        unsigned long dyn_addr, BOOL is_system, void* user)
 {
     struct elf_load*    el = user;
     BOOL                ret = TRUE;
     const WCHAR*        p;
 
+    if (is_system) /* virtual ELF module, created by system. handle it from memory */
+    {
+        struct module*                  module;
+        struct elf_map_file_data        emfd;
+        struct image_file_map           fmap;
+
+        if ((module = module_is_already_loaded(el->pcs, name)))
+        {
+            el->elf_info.module = module;
+            el->elf_info.module->format_info[DFI_ELF]->u.elf_info->elf_mark = 1;
+            return module->module.SymType;
+        }
+
+        emfd.kind = from_process;
+        emfd.u.process.handle = el->pcs->handle;
+        emfd.u.process.load_addr = (void*)load_addr;
+
+        if (elf_map_file(&emfd, &fmap))
+            el->ret = elf_load_file_from_fmap(el->pcs, name, &fmap, load_addr, 0, &el->elf_info);
+        return TRUE;
+    }
     if (el->name)
     {
         /* memcmp is needed for matches when bufstr contains also version information
