@@ -269,10 +269,10 @@ static BOOL elf_map_file(const WCHAR* filenameW, struct image_file_map* fmap)
                                  fmap->u.elf.elfhdr.e_shnum * sizeof(fmap->u.elf.sect[0]));
     if (!fmap->u.elf.sect) goto done;
 
-    lseek(fmap->u.elf.fd, fmap->u.elf.elfhdr.e_shoff, SEEK_SET);
     for (i = 0; i < fmap->u.elf.elfhdr.e_shnum; i++)
     {
-        if (read(fmap->u.elf.fd, &fmap->u.elf.sect[i].shdr, sizeof(fmap->u.elf.sect[i].shdr)) != sizeof(fmap->u.elf.sect[i].shdr))
+        if (pread(fmap->u.elf.fd, &fmap->u.elf.sect[i].shdr, sizeof(fmap->u.elf.sect[i].shdr),
+                  fmap->u.elf.elfhdr.e_shoff + i * sizeof(fmap->u.elf.sect[i].shdr)) != sizeof(fmap->u.elf.sect[i].shdr))
         {
             HeapFree(GetProcessHeap(), 0, fmap->u.elf.sect);
             fmap->u.elf.sect = NULL;
@@ -282,12 +282,12 @@ static BOOL elf_map_file(const WCHAR* filenameW, struct image_file_map* fmap)
     }
 
     /* grab size of module once loaded in memory */
-    lseek(fmap->u.elf.fd, fmap->u.elf.elfhdr.e_phoff, SEEK_SET);
     fmap->u.elf.elf_size = 0;
     fmap->u.elf.elf_start = ~0L;
     for (i = 0; i < fmap->u.elf.elfhdr.e_phnum; i++)
     {
-        if (read(fmap->u.elf.fd, &phdr, sizeof(phdr)) == sizeof(phdr) &&
+        if (pread(fmap->u.elf.fd, &phdr, sizeof(phdr),
+                  fmap->u.elf.elfhdr.e_phoff + i * sizeof(phdr)) == sizeof(phdr) &&
             phdr.p_type == PT_LOAD)
         {
             tmp = (phdr.p_vaddr + phdr.p_memsz + page_mask) & ~page_mask;
