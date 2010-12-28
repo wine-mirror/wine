@@ -828,8 +828,10 @@ static void test_debugger(void)
     } while (de.dwDebugEventCode != EXIT_PROCESS_DEBUG_EVENT);
 
     winetest_wait_child_process( pi.hProcess );
-    ok(CloseHandle(pi.hThread) != 0, "error %u\n", GetLastError());
-    ok(CloseHandle(pi.hProcess) != 0, "error %u\n", GetLastError());
+    ret = CloseHandle(pi.hThread);
+    ok(ret, "error %u\n", GetLastError());
+    ret = CloseHandle(pi.hProcess);
+    ok(ret, "error %u\n", GetLastError());
 
     return;
 }

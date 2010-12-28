@@ -456,6 +456,7 @@ static void read_file_test(void)
     char buffer[128];
     LARGE_INTEGER offset;
     HANDLE event = CreateEventA( NULL, TRUE, FALSE, NULL );
+    BOOL ret;
 
     buffer[0] = 1;
 
@@ -599,8 +600,8 @@ static void read_file_test(void)
     CloseHandle( read );
 
     if (!create_pipe( &read, &write, FILE_FLAG_OVERLAPPED, 4096 )) return;
-    ok(DuplicateHandle(GetCurrentProcess(), read, GetCurrentProcess(), &handle, 0, TRUE, DUPLICATE_SAME_ACCESS),
-        "Failed to duplicate handle: %d\n", GetLastError());
+    ret = DuplicateHandle(GetCurrentProcess(), read, GetCurrentProcess(), &handle, 0, TRUE, DUPLICATE_SAME_ACCESS);
+    ok(ret, "Failed to duplicate handle: %d\n", GetLastError());
 
     apc_count = 0;
     U(iosb).Status = 0xdeadbabe;
