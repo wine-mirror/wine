@@ -312,16 +312,33 @@ static void test_SetupCopyOEMInf(void)
 
     if (pSetupUninstallOEMInfA)
     {
+        char pnf[MAX_PATH];
+        char *pnffile;
         char *destfile = strrchr(dest, '\\') + 1;
+
+        strcpy(pnf, dest);
+        *(strrchr(pnf, '.') + 1) = 'p';
+        pnffile = strrchr(pnf, '\\') + 1;
 
         SetLastError(0xdeadbeef);
         res = pSetupUninstallOEMInfA(destfile, 0, NULL);
-        ok(res, "Failed to uninstall '%s' : %d\n", destfile, GetLastError());
         if(!res)
+            res = pSetupUninstallOEMInfA(pnffile, 0, NULL);
+        ok(res, "Failed to uninstall '%s'/'%s' : %d\n", destfile,
+           pnffile, GetLastError());
+        todo_wine ok(!file_exists(dest), "Expected inf '%s' to not exist\n", dest);
+        if(file_exists(dest))
         {
             SetLastError(0xdeadbeef);
             res = DeleteFileA(dest);
             ok(res, "Failed to delete file '%s' : %d\n", dest, GetLastError());
+        }
+        ok(!file_exists(pnf), "Expected pnf '%s' to not exist\n", pnf);
+        if(file_exists(pnf))
+        {
+            SetLastError(0xdeadbeef);
+            res = DeleteFileA(pnf);
+            ok(res, "Failed to delete file '%s' : %d\n", pnf, GetLastError());
         }
     }
     else
