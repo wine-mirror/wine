@@ -38,7 +38,6 @@ typedef struct _statement_list_t {
 
 static literal_t *new_string_literal(parser_ctx_t*,const WCHAR*);
 static literal_t *new_null_literal(parser_ctx_t*);
-static literal_t *new_boolean_literal(parser_ctx_t*,VARIANT_BOOL);
 
 typedef struct _property_list_t {
     prop_val_t *head;
@@ -851,16 +850,6 @@ static literal_t *new_null_literal(parser_ctx_t *ctx)
     literal_t *ret = parser_alloc(ctx, sizeof(literal_t));
 
     ret->type = LT_NULL;
-
-    return ret;
-}
-
-static literal_t *new_boolean_literal(parser_ctx_t *ctx, VARIANT_BOOL bval)
-{
-    literal_t *ret = parser_alloc(ctx, sizeof(literal_t));
-
-    ret->type = LT_BOOL;
-    ret->u.bval = bval;
 
     return ret;
 }

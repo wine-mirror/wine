@@ -147,6 +147,7 @@ typedef struct {
 } literal_t;
 
 literal_t *parse_regexp(parser_ctx_t*);
+literal_t *new_boolean_literal(parser_ctx_t*,VARIANT_BOOL);
 
 typedef struct _variable_declaration_t {
     const WCHAR *identifier;

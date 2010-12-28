@@ -374,6 +374,16 @@ static literal_t *alloc_int_literal(parser_ctx_t *ctx, LONG l)
     return ret;
 }
 
+literal_t *new_boolean_literal(parser_ctx_t *ctx, VARIANT_BOOL bval)
+{
+    literal_t *ret = parser_alloc(ctx, sizeof(literal_t));
+
+    ret->type = LT_BOOL;
+    ret->u.bval = bval;
+
+    return ret;
+}
+
 static int parse_double_literal(parser_ctx_t *ctx, LONG int_part, literal_t **literal)
 {
     LONGLONG d, hlp;
