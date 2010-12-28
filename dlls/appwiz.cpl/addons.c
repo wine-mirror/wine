@@ -20,6 +20,7 @@
 
 #include <stdarg.h>
 #include <fcntl.h>
+#include <stdio.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -53,10 +54,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(appwizcpl);
 
 #ifdef __i386__
 #define ARCH_STRING "x86"
+#define GECKO_SHA "1b6c637207b6f032ae8a52841db9659433482714"
 #elif defined(__x86_64__)
 #define ARCH_STRING "x86_64"
+#define GECKO_SHA "55b4b60cd2a48631d6236fb411c3a94d806d9906"
 #else
 #define ARCH_STRING ""
+#define GECKO_SHA "???"
 #endif
 
 #define GECKO_FILE_NAME "wine_gecko-" GECKO_VERSION "-" ARCH_STRING ".cab"
@@ -80,6 +84,67 @@ static inline char *heap_strdupWtoA(LPCWSTR str)
     }
 
     return ret;
+}
+
+/* SHA definitions are copied from advapi32. They aren't available in headers. */
+
+typedef struct {
+   ULONG Unknown[6];
+   ULONG State[5];
+   ULONG Count[2];
+   UCHAR Buffer[64];
+} SHA_CTX, *PSHA_CTX;
+
+void WINAPI A_SHAInit(PSHA_CTX);
+void WINAPI A_SHAUpdate(PSHA_CTX,const unsigned char*,UINT);
+void WINAPI A_SHAFinal(PSHA_CTX,PULONG);
+
+static BOOL sha_check(const WCHAR *file_name)
+{
+    const unsigned char *file_map;
+    HANDLE file, map;
+    ULONG sha[5];
+    char buf[2*sizeof(sha)+1];
+    SHA_CTX ctx;
+    DWORD size, i;
+
+    file = CreateFileW(file_name, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
+    if(file == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    size = GetFileSize(file, NULL);
+
+    map = CreateFileMappingW(file, NULL, PAGE_READONLY, 0, 0, NULL);
+    CloseHandle(file);
+    if(!map)
+        return FALSE;
+
+    file_map = MapViewOfFile(map, FILE_MAP_READ, 0, 0, 0);
+    CloseHandle(map);
+    if(!file_map)
+        return FALSE;
+
+    A_SHAInit(&ctx);
+    A_SHAUpdate(&ctx, file_map, size);
+    A_SHAFinal(&ctx, sha);
+
+    UnmapViewOfFile(file_map);
+
+    for(i=0; i < sizeof(sha); i++)
+        sprintf(buf + i*2, "%02x", *((unsigned char*)sha+i));
+
+    if(strcmp(buf, GECKO_SHA)) {
+        WCHAR message[256];
+
+        WARN("Got %s, expected %s\n", buf, GECKO_SHA);
+
+        if(LoadStringW(hInst, IDS_INVALID_SHA, message, sizeof(message)/sizeof(WCHAR)))
+            MessageBoxW(NULL, message, NULL, MB_ICONERROR);
+
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 static void set_status(DWORD id)
@@ -447,7 +512,8 @@ static DWORD WINAPI download_proc(PVOID arg)
         return 0;
     }
 
-    install_cab(tmp_file);
+    if(sha_check(tmp_file))
+        install_cab(tmp_file);
     DeleteFileW(tmp_file);
     EndDialog(install_dialog, 0);
     return 0;

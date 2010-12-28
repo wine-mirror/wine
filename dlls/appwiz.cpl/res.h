@@ -68,3 +68,4 @@
 #define IDS_MODIFY_REMOVE      11
 #define IDS_DOWNLOADING        12
 #define IDS_INSTALLING         13
+#define IDS_INVALID_SHA        14
