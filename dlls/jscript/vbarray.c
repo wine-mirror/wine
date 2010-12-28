@@ -53,7 +53,7 @@ static HRESULT VBArray_dimensions(script_ctx_t *ctx, vdisp_t *vthis, WORD flags,
 
     vbarray = vbarray_this(vthis);
     if(!vbarray)
-        return throw_type_error(ctx, ei, IDS_NOT_VBARRAY, NULL);
+        return throw_type_error(ctx, ei, JS_E_VBARRAY_EXPECTED, NULL);
 
     if(retv)
         num_set_int(retv, SafeArrayGetDim(vbarray->safearray));
@@ -72,11 +72,11 @@ static HRESULT VBArray_getItem(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DI
 
     vbarray = vbarray_this(vthis);
     if(!vbarray)
-        return throw_type_error(ctx, ei, IDS_NOT_VBARRAY, NULL);
+        return throw_type_error(ctx, ei, JS_E_VBARRAY_EXPECTED, NULL);
 
     size = arg_cnt(dp);
     if(size < SafeArrayGetDim(vbarray->safearray))
-        return throw_range_error(ctx, ei, IDS_SUBSCRIPT_OUT_OF_RANGE, NULL);
+        return throw_range_error(ctx, ei, JS_E_SUBSCRIPT_OUT_OF_RANGE, NULL);
 
     indexes = heap_alloc(sizeof(int)*size);
     if(!indexes)
@@ -93,7 +93,7 @@ static HRESULT VBArray_getItem(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DI
     hres = SafeArrayGetElement(vbarray->safearray, indexes, (void*)&out);
     heap_free(indexes);
     if(hres == DISP_E_BADINDEX)
-        return throw_range_error(ctx, ei, IDS_SUBSCRIPT_OUT_OF_RANGE, NULL);
+        return throw_range_error(ctx, ei, JS_E_SUBSCRIPT_OUT_OF_RANGE, NULL);
     else if(FAILED(hres))
         return hres;
 
@@ -114,7 +114,7 @@ static HRESULT VBArray_lbound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DIS
 
     vbarray = vbarray_this(vthis);
     if(!vbarray)
-        return throw_type_error(ctx, ei, IDS_NOT_VBARRAY, NULL);
+        return throw_type_error(ctx, ei, JS_E_VBARRAY_EXPECTED, NULL);
 
     if(arg_cnt(dp)) {
         hres = to_int32(ctx, get_arg(dp, 0), ei, &dim);
@@ -125,7 +125,7 @@ static HRESULT VBArray_lbound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DIS
 
     hres = SafeArrayGetLBound(vbarray->safearray, dim, &dim);
     if(hres == DISP_E_BADINDEX)
-        return throw_range_error(ctx, ei, IDS_SUBSCRIPT_OUT_OF_RANGE, NULL);
+        return throw_range_error(ctx, ei, JS_E_SUBSCRIPT_OUT_OF_RANGE, NULL);
     else if(FAILED(hres))
         return hres;
 
@@ -147,7 +147,7 @@ static HRESULT VBArray_toArray(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DI
 
     vbarray = vbarray_this(vthis);
     if(!vbarray)
-        return throw_type_error(ctx, ei, IDS_NOT_VBARRAY, NULL);
+        return throw_type_error(ctx, ei, JS_E_VBARRAY_EXPECTED, NULL);
 
     for(i=1; i<=SafeArrayGetDim(vbarray->safearray); i++) {
         SafeArrayGetLBound(vbarray->safearray, i, &lbound);
@@ -193,7 +193,7 @@ static HRESULT VBArray_ubound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DIS
 
     vbarray = vbarray_this(vthis);
     if(!vbarray)
-        return throw_type_error(ctx, ei, IDS_NOT_VBARRAY, NULL);
+        return throw_type_error(ctx, ei, JS_E_VBARRAY_EXPECTED, NULL);
 
     if(arg_cnt(dp)) {
         hres = to_int32(ctx, get_arg(dp, 0), ei, &dim);
@@ -204,7 +204,7 @@ static HRESULT VBArray_ubound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DIS
 
     hres = SafeArrayGetUBound(vbarray->safearray, dim, &dim);
     if(hres == DISP_E_BADINDEX)
-        return throw_range_error(ctx, ei, IDS_SUBSCRIPT_OUT_OF_RANGE, NULL);
+        return throw_range_error(ctx, ei, JS_E_SUBSCRIPT_OUT_OF_RANGE, NULL);
     else if(FAILED(hres))
         return hres;
 
@@ -287,14 +287,14 @@ static HRESULT VBArrayConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD flags
     switch(flags) {
     case DISPATCH_METHOD:
         if(arg_cnt(dp)<1 || V_VT((arg = get_arg(dp, 0)))!=(VT_ARRAY|VT_VARIANT))
-            return throw_type_error(ctx, ei, IDS_NOT_VBARRAY, NULL);
+            return throw_type_error(ctx, ei, JS_E_VBARRAY_EXPECTED, NULL);
 
         hres = VariantCopy(retv, arg);
         return hres;
 
     case DISPATCH_CONSTRUCT:
         if(arg_cnt(dp)<1 || V_VT((arg = get_arg(dp, 0)))!=(VT_ARRAY|VT_VARIANT))
-            return throw_type_error(ctx, ei, IDS_NOT_VBARRAY, NULL);
+            return throw_type_error(ctx, ei, JS_E_VBARRAY_EXPECTED, NULL);
 
         hres = alloc_vbarray(ctx, NULL, &vbarray);
         if(FAILED(hres))

@@ -3778,7 +3778,7 @@ static HRESULT RegExp_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
 
     switch(flags) {
     case INVOKE_FUNC:
-        return throw_type_error(ctx, ei, IDS_NOT_FUNC, NULL);
+        return throw_type_error(ctx, ei, JS_E_FUNCTION_EXPECTED, NULL);
     default:
         FIXME("unimplemented flags %x\n", flags);
         return E_NOTIMPL;
@@ -4089,7 +4089,7 @@ static HRESULT RegExpConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
                     if(is_class(jsdisp, JSCLASS_REGEXP)) {
                         if(arg_cnt(dp) > 1 && V_VT(get_arg(dp,1)) != VT_EMPTY) {
                             jsdisp_release(jsdisp);
-                            return throw_regexp_error(ctx, ei, IDS_REGEXP_SYNTAX_ERROR, NULL);
+                            return throw_regexp_error(ctx, ei, JS_E_REGEXP_SYNTAX, NULL);
                         }
 
                         if(retv)

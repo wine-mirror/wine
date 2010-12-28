@@ -33,8 +33,6 @@
 #include "wine/unicode.h"
 #include "wine/list.h"
 
-#define JSCRIPT_ERROR 0x800A0000
-
 typedef struct _script_ctx_t script_ctx_t;
 typedef struct _exec_ctx_t exec_ctx_t;
 typedef struct _dispex_prop_t dispex_prop_t;
@@ -226,14 +224,14 @@ HRESULT create_builtin_function(script_ctx_t*,builtin_invoke_t,const WCHAR*,cons
         jsdisp_t*,jsdisp_t**);
 HRESULT Function_value(script_ctx_t*,vdisp_t*,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
 
-HRESULT throw_eval_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
-HRESULT throw_generic_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
-HRESULT throw_range_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
-HRESULT throw_reference_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
-HRESULT throw_regexp_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
-HRESULT throw_syntax_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
-HRESULT throw_type_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
-HRESULT throw_uri_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
+HRESULT throw_eval_error(script_ctx_t*,jsexcept_t*,HRESULT,const WCHAR*);
+HRESULT throw_generic_error(script_ctx_t*,jsexcept_t*,HRESULT,const WCHAR*);
+HRESULT throw_range_error(script_ctx_t*,jsexcept_t*,HRESULT,const WCHAR*);
+HRESULT throw_reference_error(script_ctx_t*,jsexcept_t*,HRESULT,const WCHAR*);
+HRESULT throw_regexp_error(script_ctx_t*,jsexcept_t*,HRESULT,const WCHAR*);
+HRESULT throw_syntax_error(script_ctx_t*,jsexcept_t*,HRESULT,const WCHAR*);
+HRESULT throw_type_error(script_ctx_t*,jsexcept_t*,HRESULT,const WCHAR*);
+HRESULT throw_uri_error(script_ctx_t*,jsexcept_t*,HRESULT,const WCHAR*);
 
 HRESULT create_object(script_ctx_t*,jsdisp_t*,jsdisp_t**);
 HRESULT create_math(script_ctx_t*,jsdisp_t**);
@@ -432,6 +430,41 @@ static inline void var_set_jsdisp(VARIANT *v, jsdisp_t *jsdisp)
 static inline DWORD make_grfdex(script_ctx_t *ctx, DWORD flags)
 {
     return (ctx->version << 28) | flags;
+}
+
+#define FACILITY_JSCRIPT 10
+
+#define MAKE_JSERROR(code) MAKE_HRESULT(SEVERITY_ERROR, FACILITY_JSCRIPT, code)
+
+#define JS_E_TO_PRIMITIVE            MAKE_JSERROR(IDS_TO_PRIMITIVE)
+#define JS_E_INVALIDARG              MAKE_JSERROR(IDS_INVALID_CALL_ARG)
+#define JS_E_SUBSCRIPT_OUT_OF_RANGE  MAKE_JSERROR(IDS_SUBSCRIPT_OUT_OF_RANGE)
+#define JS_E_CANNOT_CREATE_OBJ       MAKE_JSERROR(IDS_CREATE_OBJ_ERROR)
+#define JS_E_INVALID_PROPERTY        MAKE_JSERROR(IDS_NO_PROPERTY)
+#define JS_E_INVALID_ACTION          MAKE_JSERROR(IDS_UNSUPPORTED_ACTION)
+#define JS_E_MISSING_ARG             MAKE_JSERROR(IDS_ARG_NOT_OPT)
+#define JS_E_SYNTAX                  MAKE_JSERROR(IDS_SYNTAX_ERROR)
+#define JS_E_MISSING_SEMICOLON       MAKE_JSERROR(IDS_SEMICOLON)
+#define JS_E_MISSING_LBRACKET        MAKE_JSERROR(IDS_LBRACKET)
+#define JS_E_MISSING_RBRACKET        MAKE_JSERROR(IDS_RBRACKET)
+#define JS_E_UNTERMINATED_STRING     MAKE_JSERROR(IDS_UNTERMINATED_STR)
+#define JS_E_FUNCTION_EXPECTED       MAKE_JSERROR(IDS_NOT_FUNC)
+#define JS_E_DATE_EXPECTED           MAKE_JSERROR(IDS_NOT_DATE)
+#define JS_E_NUMBER_EXPECTED         MAKE_JSERROR(IDS_NOT_NUM)
+#define JS_E_OBJECT_EXPECTED         MAKE_JSERROR(IDS_OBJECT_EXPECTED)
+#define JS_E_ILLEGAL_ASSIGN          MAKE_JSERROR(IDS_ILLEGAL_ASSIGN)
+#define JS_E_UNDEFINED_VARIABLE      MAKE_JSERROR(IDS_UNDEFINED)
+#define JS_E_BOOLEAN_EXPECTED        MAKE_JSERROR(IDS_NOT_BOOL)
+#define JS_E_VBARRAY_EXPECTED        MAKE_JSERROR(IDS_NOT_VBARRAY)
+#define JS_E_JSCRIPT_EXPECTED        MAKE_JSERROR(IDS_JSCRIPT_EXPECTED)
+#define JS_E_REGEXP_SYNTAX           MAKE_JSERROR(IDS_REGEXP_SYNTAX_ERROR)
+#define JS_E_INVALID_URI_CHAR        MAKE_JSERROR(IDS_URI_INVALID_CHAR)
+#define JS_E_INVALID_LENGTH          MAKE_JSERROR(IDS_INVALID_LENGTH)
+#define JS_E_ARRAY_EXPECTED          MAKE_JSERROR(IDS_ARRAY_EXPECTED)
+
+static inline BOOL is_jscript_error(HRESULT hres)
+{
+    return HRESULT_FACILITY(hres) == FACILITY_JSCRIPT;
 }
 
 const char *debugstr_variant(const VARIANT*);

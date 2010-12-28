@@ -99,7 +99,7 @@ static const struct {
 
 static int lex_error(parser_ctx_t *ctx, HRESULT hres)
 {
-    ctx->hres = JSCRIPT_ERROR|hres;
+    ctx->hres = MAKE_JSERROR(hres);
     ctx->lexer_error = TRUE;
     return -1;
 }

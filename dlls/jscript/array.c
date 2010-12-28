@@ -70,7 +70,7 @@ static HRESULT get_length(script_ctx_t *ctx, vdisp_t *vdisp, jsexcept_t *ei, jsd
     }
 
     if(!is_jsdisp(vdisp))
-        return throw_type_error(ctx, ei, IDS_JSCRIPT_EXPECTED, NULL);
+        return throw_type_error(ctx, ei, JS_E_JSCRIPT_EXPECTED, NULL);
 
     hres = jsdisp_propget_name(vdisp->u.jsdisp, lengthW, &var, ei, NULL/*FIXME*/);
     if(FAILED(hres))
@@ -139,7 +139,7 @@ static HRESULT Array_length(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
             len = floor(V_R8(&num));
 
         if(len!=(DWORD)len)
-            return throw_range_error(ctx, ei, IDS_INVALID_LENGTH, NULL);
+            return throw_range_error(ctx, ei, JS_E_INVALID_LENGTH, NULL);
 
         for(i=len; i<This->length; i++) {
             hres = jsdisp_delete_idx(&This->dispex, i);
@@ -975,7 +975,7 @@ static HRESULT Array_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
 
     array = array_this(jsthis);
     if(!array)
-        return throw_type_error(ctx, ei, IDS_ARRAY_EXPECTED, NULL);
+        return throw_type_error(ctx, ei, JS_E_ARRAY_EXPECTED, NULL);
 
     return array_join(ctx, &array->dispex, array->length, default_separatorW, retv, ei, sp);
 }
@@ -1061,7 +1061,7 @@ static HRESULT Array_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPP
 
     switch(flags) {
     case INVOKE_FUNC:
-        return throw_type_error(ctx, ei, IDS_NOT_FUNC, NULL);
+        return throw_type_error(ctx, ei, JS_E_FUNCTION_EXPECTED, NULL);
     case INVOKE_PROPERTYGET:
         return array_join(ctx, jsthis->u.jsdisp, array_from_vdisp(jsthis)->length, default_separatorW, retv, ei, sp);
     default:
@@ -1138,7 +1138,7 @@ static HRESULT ArrayConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, 
     case DISPATCH_CONSTRUCT: {
         if(arg_cnt(dp) == 1 && V_VT((arg_var = get_arg(dp, 0))) == VT_I4) {
             if(V_I4(arg_var) < 0)
-                return throw_range_error(ctx, ei, IDS_INVALID_LENGTH, NULL);
+                return throw_range_error(ctx, ei, JS_E_INVALID_LENGTH, NULL);
 
             hres = create_array(ctx, V_I4(arg_var), &obj);
             if(FAILED(hres))

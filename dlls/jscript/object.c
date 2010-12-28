@@ -136,7 +136,7 @@ static HRESULT Object_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
 
     switch(flags) {
     case INVOKE_FUNC:
-        return throw_type_error(ctx, ei, IDS_NOT_FUNC, NULL);
+        return throw_type_error(ctx, ei, JS_E_FUNCTION_EXPECTED, NULL);
     case DISPATCH_PROPERTYGET:
         V_VT(retv) = VT_BSTR;
         V_BSTR(retv) = SysAllocString(default_valueW);

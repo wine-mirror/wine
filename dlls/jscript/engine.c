@@ -81,7 +81,7 @@ static HRESULT exprval_value(script_ctx_t *ctx, exprval_t *val, jsexcept_t *ei, 
     case EXPRVAL_NAMEREF:
         break;
     case EXPRVAL_INVALID:
-        return throw_type_error(ctx, ei, IDS_UNDEFINED, val->u.identifier);
+        return throw_type_error(ctx, ei, JS_E_UNDEFINED_VARIABLE, val->u.identifier);
     }
 
     ERR("type %d\n", val->type);
@@ -247,7 +247,7 @@ static HRESULT disp_get_id(script_ctx_t *ctx, IDispatch *disp, BSTR name, DWORD 
 static HRESULT put_value(script_ctx_t *ctx, exprval_t *ref, VARIANT *v, jsexcept_t *ei)
 {
     if(ref->type != EXPRVAL_IDREF)
-        return throw_reference_error(ctx, ei, IDS_ILLEGAL_ASSIGN, NULL);
+        return throw_reference_error(ctx, ei, JS_E_ILLEGAL_ASSIGN, NULL);
 
     return disp_propput(ctx, ref->u.idref.disp, ref->u.idref.id, v, ei, NULL/*FIXME*/);
 }
@@ -1560,13 +1560,13 @@ HRESULT new_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags,
 
     if(V_VT(&constr) == VT_NULL) {
         VariantClear(&constr);
-        return throw_type_error(ctx, ei, IDS_OBJECT_EXPECTED, NULL);
+        return throw_type_error(ctx, ei, JS_E_OBJECT_EXPECTED, NULL);
     } else if(V_VT(&constr) != VT_DISPATCH) {
         VariantClear(&constr);
-        return throw_type_error(ctx, ei, IDS_UNSUPPORTED_ACTION, NULL);
+        return throw_type_error(ctx, ei, JS_E_INVALID_ACTION, NULL);
     } else if(!V_DISPATCH(&constr)) {
         VariantClear(&constr);
-        return throw_type_error(ctx, ei, IDS_NO_PROPERTY, NULL);
+        return throw_type_error(ctx, ei, JS_E_INVALID_PROPERTY, NULL);
     }
 
     hres = disp_call(ctx, V_DISPATCH(&constr), DISPID_VALUE,
@@ -1604,14 +1604,14 @@ HRESULT call_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags
                 hres = disp_call(ctx, V_DISPATCH(&exprval.u.var), DISPID_VALUE,
                         DISPATCH_METHOD, &dp, flags & EXPR_NOVAL ? NULL : &var, ei, NULL/*FIXME*/);
             else
-                hres = throw_type_error(ctx, ei, IDS_NO_PROPERTY, NULL);
+                hres = throw_type_error(ctx, ei, JS_E_INVALID_PROPERTY, NULL);
             break;
         case EXPRVAL_IDREF:
             hres = disp_call(ctx, exprval.u.idref.disp, exprval.u.idref.id,
                     DISPATCH_METHOD, &dp, flags & EXPR_NOVAL ? NULL : &var, ei, NULL/*FIXME*/);
             break;
         case EXPRVAL_INVALID:
-            hres = throw_type_error(ctx, ei, IDS_OBJECT_EXPECTED, NULL);
+            hres = throw_type_error(ctx, ei, JS_E_OBJECT_EXPECTED, NULL);
             break;
         default:
             FIXME("unimplemented type %d\n", exprval.type);
@@ -1996,7 +1996,7 @@ static HRESULT instanceof_eval(script_ctx_t *ctx, VARIANT *inst, VARIANT *objv, 
     static const WCHAR prototypeW[] = {'p','r','o','t','o','t', 'y', 'p','e',0};
 
     if(V_VT(objv) != VT_DISPATCH || !V_DISPATCH(objv))
-        return throw_type_error(ctx, ei, IDS_NOT_FUNC, NULL);
+        return throw_type_error(ctx, ei, JS_E_FUNCTION_EXPECTED, NULL);
 
     obj = iface_to_jsdisp((IUnknown*)V_DISPATCH(objv));
     if(!obj) {
@@ -2062,7 +2062,7 @@ static HRESULT in_eval(script_ctx_t *ctx, VARIANT *lval, VARIANT *obj, jsexcept_
     HRESULT hres;
 
     if(V_VT(obj) != VT_DISPATCH || !V_DISPATCH(obj))
-        return throw_type_error(ctx, ei, IDS_OBJECT_EXPECTED, NULL);
+        return throw_type_error(ctx, ei, JS_E_OBJECT_EXPECTED, NULL);
 
     hres = to_string(ctx, lval, ei, &str);
     if(FAILED(hres))

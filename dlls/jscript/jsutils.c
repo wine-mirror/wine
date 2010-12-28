@@ -252,7 +252,7 @@ HRESULT to_primitive(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret
         jsdisp_release(jsdisp);
 
         WARN("failed\n");
-        return throw_type_error(ctx, ei, IDS_TO_PRIMITIVE, NULL);
+        return throw_type_error(ctx, ei, JS_E_TO_PRIMITIVE, NULL);
     }
     default:
         FIXME("Unimplemented for vt %d\n", V_VT(v));

@@ -1459,7 +1459,7 @@ static int parser_error(const char *str)
 
 static void set_error(parser_ctx_t *ctx, UINT error)
 {
-    ctx->hres = JSCRIPT_ERROR|error;
+    ctx->hres = MAKE_JSERROR(error);
 }
 
 static BOOL explicit_error(parser_ctx_t *ctx, void *obj, WCHAR next)
@@ -1603,7 +1603,7 @@ HRESULT script_parse(script_ctx_t *ctx, const WCHAR *code, const WCHAR *delimite
         return E_OUTOFMEMORY;
 
     parser_ctx->ref = 1;
-    parser_ctx->hres = JSCRIPT_ERROR|IDS_SYNTAX_ERROR;
+    parser_ctx->hres = JS_E_SYNTAX;
     parser_ctx->is_html = delimiter && !strcmpiW(delimiter, html_tagW);
 
     parser_ctx->begin = heap_strdupW(code);

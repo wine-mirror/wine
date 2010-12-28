@@ -132,7 +132,7 @@ static HRESULT Error_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
 
     switch(flags) {
     case INVOKE_FUNC:
-        return throw_type_error(ctx, ei, IDS_NOT_FUNC, NULL);
+        return throw_type_error(ctx, ei, JS_E_FUNCTION_EXPECTED, NULL);
     default:
         FIXME("unimplemented flags %x\n", flags);
         return E_NOTIMPL;
@@ -384,14 +384,17 @@ HRESULT init_error_constr(script_ctx_t *ctx, jsdisp_t *object_prototype)
     return S_OK;
 }
 
-static HRESULT throw_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR *str, jsdisp_t *constr)
+static HRESULT throw_error(script_ctx_t *ctx, jsexcept_t *ei, HRESULT error, const WCHAR *str, jsdisp_t *constr)
 {
     WCHAR buf[1024], *pos = NULL;
     jsdisp_t *err;
     HRESULT hres;
 
+    if(!is_jscript_error(error))
+        return error;
+
     buf[0] = '\0';
-    LoadStringW(jscript_hinstance, id&0xFFFF,  buf, sizeof(buf)/sizeof(WCHAR));
+    LoadStringW(jscript_hinstance, HRESULT_CODE(error),  buf, sizeof(buf)/sizeof(WCHAR));
 
     if(str) pos = strchrW(buf, '|');
     if(pos) {
@@ -402,47 +405,46 @@ static HRESULT throw_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCH
 
     WARN("%s\n", debugstr_w(buf));
 
-    id |= JSCRIPT_ERROR;
-    hres = create_error(ctx, constr, id, buf, &err);
+    hres = create_error(ctx, constr, error, buf, &err);
     if(FAILED(hres))
         return hres;
 
     if(ei)
         var_set_jsdisp(&ei->var, err);
-    return id;
+    return error;
 }
 
-HRESULT throw_generic_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR *str)
+HRESULT throw_generic_error(script_ctx_t *ctx, jsexcept_t *ei, HRESULT error, const WCHAR *str)
 {
-    return throw_error(ctx, ei, id, str, ctx->error_constr);
+    return throw_error(ctx, ei, error, str, ctx->error_constr);
 }
 
-HRESULT throw_range_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR *str)
+HRESULT throw_range_error(script_ctx_t *ctx, jsexcept_t *ei, HRESULT error, const WCHAR *str)
 {
-    return throw_error(ctx, ei, id, str, ctx->range_error_constr);
+    return throw_error(ctx, ei, error, str, ctx->range_error_constr);
 }
 
-HRESULT throw_reference_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR *str)
+HRESULT throw_reference_error(script_ctx_t *ctx, jsexcept_t *ei, HRESULT error, const WCHAR *str)
 {
-    return throw_error(ctx, ei, id, str, ctx->reference_error_constr);
+    return throw_error(ctx, ei, error, str, ctx->reference_error_constr);
 }
 
-HRESULT throw_regexp_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR *str)
+HRESULT throw_regexp_error(script_ctx_t *ctx, jsexcept_t *ei, HRESULT error, const WCHAR *str)
 {
-    return throw_error(ctx, ei, id, str, ctx->regexp_error_constr);
+    return throw_error(ctx, ei, error, str, ctx->regexp_error_constr);
 }
 
-HRESULT throw_syntax_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR *str)
+HRESULT throw_syntax_error(script_ctx_t *ctx, jsexcept_t *ei, HRESULT error, const WCHAR *str)
 {
-    return throw_error(ctx, ei, id, str, ctx->syntax_error_constr);
+    return throw_error(ctx, ei, error, str, ctx->syntax_error_constr);
 }
 
-HRESULT throw_type_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR *str)
+HRESULT throw_type_error(script_ctx_t *ctx, jsexcept_t *ei, HRESULT error, const WCHAR *str)
 {
-    return throw_error(ctx, ei, id, str, ctx->type_error_constr);
+    return throw_error(ctx, ei, error, str, ctx->type_error_constr);
 }
 
-HRESULT throw_uri_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR *str)
+HRESULT throw_uri_error(script_ctx_t *ctx, jsexcept_t *ei, HRESULT error, const WCHAR *str)
 {
-    return throw_error(ctx, ei, id, str, ctx->uri_error_constr);
+    return throw_error(ctx, ei, error, str, ctx->uri_error_constr);
 }

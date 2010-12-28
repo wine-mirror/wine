@@ -65,7 +65,7 @@ static HRESULT Number_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
     TRACE("\n");
 
     if(!(number = number_this(jsthis)))
-        return throw_type_error(ctx, ei, IDS_NOT_NUM, NULL);
+        return throw_type_error(ctx, ei, JS_E_NUMBER_EXPECTED, NULL);
 
     if(arg_cnt(dp)) {
         hres = to_int32(ctx, get_arg(dp, 0), ei, &radix);
@@ -73,7 +73,7 @@ static HRESULT Number_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
             return hres;
 
         if(radix<2 || radix>36)
-            return throw_type_error(ctx, ei, IDS_INVALID_CALL_ARG, NULL);
+            return throw_type_error(ctx, ei, JS_E_INVALIDARG, NULL);
     }
 
     if(V_VT(&number->num) == VT_I4)
@@ -215,7 +215,7 @@ static HRESULT Number_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
     TRACE("\n");
 
     if(!(number = number_this(jsthis)))
-        return throw_type_error(ctx, ei, IDS_NOT_NUM, NULL);
+        return throw_type_error(ctx, ei, JS_E_NUMBER_EXPECTED, NULL);
 
     if(retv)
         *retv = number->num;
@@ -229,7 +229,7 @@ static HRESULT Number_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
 
     switch(flags) {
     case INVOKE_FUNC:
-        return throw_type_error(ctx, ei, IDS_NOT_FUNC, NULL);
+        return throw_type_error(ctx, ei, JS_E_FUNCTION_EXPECTED, NULL);
     case DISPATCH_PROPERTYGET:
         *retv = number->num;
         break;

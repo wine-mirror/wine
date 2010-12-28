@@ -49,7 +49,7 @@ static HRESULT Bool_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
     TRACE("\n");
 
     if(!(bool = bool_this(jsthis)))
-        return throw_type_error(ctx, ei, IDS_NOT_BOOL, NULL);
+        return throw_type_error(ctx, ei, JS_E_BOOLEAN_EXPECTED, NULL);
 
     if(retv) {
         BSTR val;
@@ -76,7 +76,7 @@ static HRESULT Bool_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
     TRACE("\n");
 
     if(!(bool = bool_this(jsthis)))
-        return throw_type_error(ctx, ei, IDS_NOT_BOOL, NULL);
+        return throw_type_error(ctx, ei, JS_E_BOOLEAN_EXPECTED, NULL);
 
     if(retv) {
         V_VT(retv) = VT_BOOL;
@@ -93,7 +93,7 @@ static HRESULT Bool_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPA
 
     switch(flags) {
     case INVOKE_FUNC:
-        return throw_type_error(ctx, ei, IDS_NOT_FUNC, NULL);
+        return throw_type_error(ctx, ei, JS_E_FUNCTION_EXPECTED, NULL);
     default:
         FIXME("unimplemented flags %x\n", flags);
         return E_NOTIMPL;
