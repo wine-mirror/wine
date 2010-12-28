@@ -72,6 +72,7 @@ struct d3dcompiler_shader_reflection
 
     char *creator;
     UINT flags;
+    UINT version;
     UINT bound_resource_count;
     UINT constant_buffer_count;
 
@@ -630,6 +631,8 @@ void SlDeleteShader(struct bwriter_shader *shader) DECLSPEC_HIDDEN;
 #define TAG_PCSG MAKE_TAG('P', 'C', 'S', 'G')
 #define TAG_RDEF MAKE_TAG('R', 'D', 'E', 'F')
 #define TAG_SDBG MAKE_TAG('S', 'D', 'B', 'G')
+#define TAG_SHDR MAKE_TAG('S', 'H', 'D', 'R')
+#define TAG_SHEX MAKE_TAG('S', 'H', 'E', 'X')
 #define TAG_STAT MAKE_TAG('S', 'T', 'A', 'T')
 #define TAG_XNAP MAKE_TAG('X', 'N', 'A', 'P')
 #define TAG_XNAS MAKE_TAG('X', 'N', 'A', 'S')

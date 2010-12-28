@@ -556,6 +556,18 @@ HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *s, cons
     return S_OK;
 }
 
+static HRESULT d3dcompiler_parse_shdr(struct d3dcompiler_shader_reflection *r, const char *data, DWORD data_size)
+{
+    const char *ptr = data;
+
+    read_dword(&ptr, &r->version);
+    TRACE("Shader version: %u\n", r->version);
+
+    /* todo: Check if anything else is needed from the shdr or shex blob. */
+
+    return S_OK;
+}
+
 HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_reflection *reflection,
         const void *data, SIZE_T data_size)
 {
@@ -584,6 +596,16 @@ HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_reflection 
                 if (FAILED(hr))
                 {
                     WARN("Failed to parse section STAT.\n");
+                    goto err_out;
+                }
+                break;
+
+            case TAG_SHEX:
+            case TAG_SHDR:
+                hr = d3dcompiler_parse_shdr(reflection, section->data, section->data_size);
+                if (FAILED(hr))
+                {
+                    WARN("Failed to parse SHDR section.\n");
                     goto err_out;
                 }
                 break;
