@@ -526,7 +526,7 @@ int parser_lex(void *lval, parser_ctx_t *ctx)
     do {
         skip_spaces(ctx);
         if(ctx->ptr == ctx->end)
-            return 0;
+            return tEOF;
     }while(skip_comment(ctx) || skip_html_comment(ctx));
 
     if(isalphaW(*ctx->ptr)) {

@@ -180,6 +180,7 @@ static source_elements_t *source_elements_add_statement(source_elements_t*,state
 %token <ival> tAssignOper tEqOper tShiftOper tRelOper
 %token <literal> tNumericLiteral
 %token <wstr> tStringLiteral
+%token tEOF
 
 %type <source_elements> SourceElements
 %type <source_elements> FunctionBody
@@ -253,7 +254,7 @@ static source_elements_t *source_elements_add_statement(source_elements_t*,state
 
 /* ECMA-262 3rd Edition    14 */
 Program
-       : SourceElements HtmlComment
+       : SourceElements HtmlComment tEOF
                                 { program_parsed(ctx, $1); }
 
 HtmlComment

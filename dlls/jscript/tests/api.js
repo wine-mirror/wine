@@ -1985,6 +1985,7 @@ testSyntaxError("for(i=0;i<10", "E_SEMICOLON");
 testSyntaxError("while(", "E_SYNTAX_ERROR");
 testSyntaxError("if(", "E_SYNTAX_ERROR");
 testSyntaxError("'unterminated", "E_UNTERMINATED_STR");
+testSyntaxError("*", "E_SYNTAX_ERROR");
 
 // ReferenceError tests
 testException(function() {test = function() {}}, "E_ILLEGAL_ASSIGN");
