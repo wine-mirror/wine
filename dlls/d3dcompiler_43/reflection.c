@@ -137,9 +137,56 @@ static ULONG STDMETHODCALLTYPE d3dcompiler_shader_reflection_Release(ID3D11Shade
 
 static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetDesc(ID3D11ShaderReflection *iface, D3D11_SHADER_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3dcompiler_shader_reflection *This = impl_from_ID3D11ShaderReflection(iface);
 
-    return E_NOTIMPL;
+    FIXME("iface %p, desc %p partial stub!\n", iface, desc);
+
+    if (!desc)
+    {
+        WARN("Invalid argument specified\n");
+        return E_FAIL;
+    }
+
+    desc->Version = This->version;
+    desc->Creator = This->creator;
+    desc->Flags = This->flags;
+    desc->ConstantBuffers = This->constant_buffer_count;
+    desc->BoundResources = This->bound_resource_count;
+    desc->InputParameters = This->isgn ? This->isgn->element_count : 0;
+    desc->OutputParameters = This->osgn ? This->osgn->element_count : 0;
+    desc->InstructionCount = This->instruction_count;
+    desc->TempRegisterCount = This->temp_register_count;
+    desc->TempArrayCount = This->temp_array_count;
+    desc->DefCount = 0;
+    desc->DclCount = This->dcl_count;
+    desc->TextureNormalInstructions = This->texture_normal_instructions;
+    desc->TextureLoadInstructions = This->texture_load_instructions;
+    desc->TextureCompInstructions = This->texture_comp_instructions;
+    desc->TextureBiasInstructions = This->texture_bias_instructions;
+    desc->TextureGradientInstructions = This->texture_gradient_instructions;
+    desc->FloatInstructionCount = This->float_instruction_count;
+    desc->IntInstructionCount = This->int_instruction_count;
+    desc->UintInstructionCount = This->uint_instruction_count;
+    desc->StaticFlowControlCount = This->static_flow_control_count;
+    desc->DynamicFlowControlCount = This->dynamic_flow_control_count;
+    desc->MacroInstructionCount = 0;
+    desc->ArrayInstructionCount = This->array_instruction_count;
+    desc->CutInstructionCount = This->cut_instruction_count;
+    desc->EmitInstructionCount = This->emit_instruction_count;
+    desc->GSOutputTopology = This->gs_output_topology;
+    desc->GSMaxOutputVertexCount = This->gs_max_output_vertex_count;
+    desc->InputPrimitive = This->input_primitive;
+    desc->PatchConstantParameters = This->pcsg ? This->pcsg->element_count : 0;
+    desc->cGSInstanceCount = 0;
+    desc->cControlPoints = This->c_control_points;
+    desc->HSOutputPrimitive = This->hs_output_primitive;
+    desc->HSPartitioning = This->hs_prtitioning;
+    desc->TessellatorDomain = This->tessellator_domain;
+    desc->cBarrierInstructions = 0;
+    desc->cInterlockedInstructions = 0;
+    desc->cTextureStoreInstructions = 0;
+
+    return S_OK;
 }
 
 static struct ID3D11ShaderReflectionConstantBuffer * STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetConstantBufferByIndex(
