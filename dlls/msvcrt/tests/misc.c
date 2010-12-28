@@ -170,17 +170,28 @@ static const I10_OUTPUT_test I10_OUTPUT_tests[] = {
 static void test_I10_OUTPUT(void)
 {
     I10_OUTPUT_data out;
-    int i, j, ret;
+    int i, j = sizeof(long double), ret;
 
     if(!pI10_OUTPUT) {
         win_skip("I10_OUTPUT not available\n");
         return;
     }
+    if (j != 12)
+        trace("sizeof(long double) = %d on this machine\n", j);
 
     for(i=0; i<sizeof(I10_OUTPUT_tests)/sizeof(I10_OUTPUT_test); i++) {
         memset(out.str, '#', sizeof(out.str));
 
-        ret = pI10_OUTPUT(I10_OUTPUT_tests[i].d, I10_OUTPUT_tests[i].size, I10_OUTPUT_tests[i].flags, &out);
+        if (sizeof(long double) == 12)
+            ret = pI10_OUTPUT(I10_OUTPUT_tests[i].d, I10_OUTPUT_tests[i].size, I10_OUTPUT_tests[i].flags, &out);
+        else {
+            /* MS' "long double" is an 80 bit FP that takes 12 bytes*/
+            typedef struct { ULONG x80[3]; } uld; /* same calling convention */
+            union { long double ld; uld ld12; } fp80;
+            int (__cdecl *pI10_OUTPUT12)(uld, int, int, void*) = (void*)pI10_OUTPUT;
+            fp80.ld = I10_OUTPUT_tests[i].d;
+            ret = pI10_OUTPUT12(fp80.ld12, I10_OUTPUT_tests[i].size, I10_OUTPUT_tests[i].flags, &out);
+        }
         ok(ret == I10_OUTPUT_tests[i].ret, "%d: ret = %d\n", i, ret);
         ok(out.pos == I10_OUTPUT_tests[i].out.pos, "%d: out.pos = %hd\n", i, out.pos);
         ok(out.sign == I10_OUTPUT_tests[i].out.sign, "%d: out.size = %c\n", i, out.sign);
