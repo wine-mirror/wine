@@ -163,6 +163,11 @@ wine_fn_append_rule ()
     AS_VAR_APPEND($[1],"$as_nl$[2]")
 }
 
+wine_fn_has_flag ()
+{
+    expr ",$[2]," : ".*,$[1],.*" >/dev/null
+}
+
 wine_fn_all_dir_rules ()
 {
     ac_dir=$[1]
@@ -236,8 +241,8 @@ wine_fn_config_dll ()
     ac_name=$[1]
     ac_dir=dlls/$ac_name
     ac_enable=$[2]
-    ac_implib=$[3]
-    ac_implibsrc=$[4]
+    ac_flags=$[3]
+    ac_implib=$[4]
     ac_file=$ac_dir/lib$ac_implib
     ac_deps="tools/widl tools/winebuild tools/winegcc include"
     ac_implibflags=""
@@ -263,7 +268,7 @@ install-lib:: $ac_dir/Makefile __builddeps__
 uninstall manpages htmlpages sgmlpages xmlpages:: $ac_dir/Makefile
 	@cd $ac_dir && \$(MAKE) \$[@]"])
 
-    if test -n "$ac_implibsrc"
+    if wine_fn_has_flag staticimplib $ac_flags
     then
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "__builddeps__: $ac_file.$IMPLIBEXT $ac_file.$STATIC_IMPLIBEXT
@@ -282,7 +287,7 @@ $ac_file.cross.a: $ac_dir/Makefile dummy
 	@cd $ac_dir && \$(MAKE) lib$ac_implib.cross.a"
         fi
 
-    elif test -n "$ac_implib"
+    elif wine_fn_has_flag implib $ac_flags
     then
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "__builddeps__: $ac_file.$IMPLIBEXT
@@ -324,7 +329,7 @@ wine_fn_config_program ()
     ac_name=$[1]
     ac_dir=programs/$ac_name
     ac_enable=$[2]
-    ac_install=$[3]
+    ac_flags=$[3]
     wine_fn_all_dir_rules $ac_dir programs/Makeprog.rules
 
     AS_VAR_IF([$ac_enable],[no],,[wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
@@ -333,13 +338,13 @@ wine_fn_config_program ()
 $ac_dir: $ac_dir/Makefile __builddeps__ dummy
 	@cd $ac_dir && \$(MAKE)"
 
-    test -n "$ac_install" || return
+    wine_fn_has_flag install $ac_flags || return
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "install install-lib:: $ac_dir/Makefile __builddeps__
 	@cd $ac_dir && \$(MAKE) install
 uninstall:: $ac_dir/Makefile
 	@cd $ac_dir && \$(MAKE) uninstall"
-    if test "$ac_install" = installbin -a -n "$DLLEXT" -a "x$enable_tools" != xno
+    if wine_fn_has_flag installbin $ac_flags -a -n "$DLLEXT" -a "x$enable_tools" != xno
     then
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "install install-lib:: tools \$(DESTDIR)\$(bindir)
@@ -492,20 +497,20 @@ AS_VAR_POPDEF([ac_enable])])
 
 dnl **** Create a dll makefile from config.status ****
 dnl
-dnl Usage: WINE_CONFIG_DLL(name,enable,implib,implibsrc)
+dnl Usage: WINE_CONFIG_DLL(name,enable,flags,implib)
 dnl
 AC_DEFUN([WINE_CONFIG_DLL],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
 AS_VAR_PUSHDEF([ac_enable],m4_default([$2],[enable_]$1))dnl
-wine_fn_config_dll [$1] ac_enable [$3] m4_ifval([$4],["$4"])dnl
+wine_fn_config_dll [$1] ac_enable [$3] [$4]dnl
 AS_VAR_POPDEF([ac_enable])])
 
 dnl **** Create a program makefile from config.status ****
 dnl
-dnl Usage: WINE_CONFIG_PROGRAM(name,install,enable)
+dnl Usage: WINE_CONFIG_PROGRAM(name,enable,flags)
 dnl
 AC_DEFUN([WINE_CONFIG_PROGRAM],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-AS_VAR_PUSHDEF([ac_enable],m4_default([$3],[enable_]$1))dnl
-wine_fn_config_program [$1] ac_enable [$2]dnl
+AS_VAR_PUSHDEF([ac_enable],m4_default([$2],[enable_]$1))dnl
+wine_fn_config_program [$1] ac_enable [$3]dnl
 AS_VAR_POPDEF([ac_enable])])
 
 dnl **** Create a test makefile from config.status ****

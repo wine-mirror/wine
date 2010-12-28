@@ -14416,6 +14416,11 @@ wine_fn_append_rule ()
     as_fn_append $1 "$as_nl$2"
 }
 
+wine_fn_has_flag ()
+{
+    expr ",$2," : ".*,$1,.*" >/dev/null
+}
+
 wine_fn_all_dir_rules ()
 {
     ac_dir=$1
@@ -14490,8 +14495,8 @@ wine_fn_config_dll ()
     ac_name=$1
     ac_dir=dlls/$ac_name
     ac_enable=$2
-    ac_implib=$3
-    ac_implibsrc=$4
+    ac_flags=$3
+    ac_implib=$4
     ac_file=$ac_dir/lib$ac_implib
     ac_deps="tools/widl tools/winebuild tools/winegcc include"
     ac_implibflags=""
@@ -14518,7 +14523,7 @@ uninstall manpages htmlpages sgmlpages xmlpages:: $ac_dir/Makefile
 	@cd $ac_dir && \$(MAKE) \$@"
 fi
 
-    if test -n "$ac_implibsrc"
+    if wine_fn_has_flag staticimplib $ac_flags
     then
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "__builddeps__: $ac_file.$IMPLIBEXT $ac_file.$STATIC_IMPLIBEXT
@@ -14537,7 +14542,7 @@ $ac_file.cross.a: $ac_dir/Makefile dummy
 	@cd $ac_dir && \$(MAKE) lib$ac_implib.cross.a"
         fi
 
-    elif test -n "$ac_implib"
+    elif wine_fn_has_flag implib $ac_flags
     then
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "__builddeps__: $ac_file.$IMPLIBEXT
@@ -14579,7 +14584,7 @@ wine_fn_config_program ()
     ac_name=$1
     ac_dir=programs/$ac_name
     ac_enable=$2
-    ac_install=$3
+    ac_flags=$3
     wine_fn_all_dir_rules $ac_dir programs/Makeprog.rules
 
     if eval test \"x\$"$ac_enable"\" = x"no"; then :
@@ -14591,13 +14596,13 @@ else
 $ac_dir: $ac_dir/Makefile __builddeps__ dummy
 	@cd $ac_dir && \$(MAKE)"
 
-    test -n "$ac_install" || return
+    wine_fn_has_flag install $ac_flags || return
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "install install-lib:: $ac_dir/Makefile __builddeps__
 	@cd $ac_dir && \$(MAKE) install
 uninstall:: $ac_dir/Makefile
 	@cd $ac_dir && \$(MAKE) uninstall"
-    if test "$ac_install" = installbin -a -n "$DLLEXT" -a "x$enable_tools" != xno
+    if wine_fn_has_flag installbin $ac_flags -a -n "$DLLEXT" -a "x$enable_tools" != xno
     then
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "install install-lib:: tools \$(DESTDIR)\$(bindir)
@@ -14767,66 +14772,66 @@ ac_config_files="$ac_config_files programs/Makeprog.rules"
 
 
 wine_fn_config_dll acledit enable_acledit
-wine_fn_config_dll aclui enable_aclui aclui
-wine_fn_config_dll activeds enable_activeds activeds
+wine_fn_config_dll aclui enable_aclui implib aclui
+wine_fn_config_dll activeds enable_activeds implib activeds
 wine_fn_config_dll actxprxy enable_actxprxy
 wine_fn_config_lib adsiid
-wine_fn_config_dll advapi32 enable_advapi32 advapi32
+wine_fn_config_dll advapi32 enable_advapi32 implib advapi32
 wine_fn_config_test dlls/advapi32/tests advapi32_test
-wine_fn_config_dll advpack enable_advpack advpack
+wine_fn_config_dll advpack enable_advpack implib advpack
 wine_fn_config_test dlls/advpack/tests advpack_test
 wine_fn_config_dll amstream enable_amstream
 wine_fn_config_test dlls/amstream/tests amstream_test
 wine_fn_config_dll appwiz.cpl enable_appwiz_cpl
-wine_fn_config_dll atl enable_atl atl
+wine_fn_config_dll atl enable_atl implib atl
 wine_fn_config_test dlls/atl/tests atl_test
 wine_fn_config_dll authz enable_authz
-wine_fn_config_dll avicap32 enable_avicap32 avicap32
-wine_fn_config_dll avifil32 enable_avifil32 avifil32
+wine_fn_config_dll avicap32 enable_avicap32 implib avicap32
+wine_fn_config_dll avifil32 enable_avifil32 implib avifil32
 wine_fn_config_test dlls/avifil32/tests avifil32_test
 wine_fn_config_dll avifile.dll16 enable_win16
-wine_fn_config_dll avrt enable_avrt avrt
+wine_fn_config_dll avrt enable_avrt implib avrt
 wine_fn_config_dll bcrypt enable_bcrypt
 wine_fn_config_dll browseui enable_browseui
 wine_fn_config_test dlls/browseui/tests browseui_test
-wine_fn_config_dll cabinet enable_cabinet cabinet
+wine_fn_config_dll cabinet enable_cabinet implib cabinet
 wine_fn_config_test dlls/cabinet/tests cabinet_test
-wine_fn_config_dll capi2032 enable_capi2032 capi2032
-wine_fn_config_dll cards enable_cards cards
-wine_fn_config_dll cfgmgr32 enable_cfgmgr32 cfgmgr32
-wine_fn_config_dll clusapi enable_clusapi clusapi
+wine_fn_config_dll capi2032 enable_capi2032 implib capi2032
+wine_fn_config_dll cards enable_cards implib cards
+wine_fn_config_dll cfgmgr32 enable_cfgmgr32 implib cfgmgr32
+wine_fn_config_dll clusapi enable_clusapi implib clusapi
 wine_fn_config_dll comcat enable_comcat
 wine_fn_config_test dlls/comcat/tests comcat_test
-wine_fn_config_dll comctl32 enable_comctl32 comctl32
+wine_fn_config_dll comctl32 enable_comctl32 implib comctl32
 wine_fn_config_test dlls/comctl32/tests comctl32_test
-wine_fn_config_dll comdlg32 enable_comdlg32 comdlg32
+wine_fn_config_dll comdlg32 enable_comdlg32 implib comdlg32
 wine_fn_config_test dlls/comdlg32/tests comdlg32_test
 wine_fn_config_dll comm.drv16 enable_win16
 wine_fn_config_dll commdlg.dll16 enable_win16
 wine_fn_config_dll compobj.dll16 enable_win16
-wine_fn_config_dll compstui enable_compstui compstui
-wine_fn_config_dll credui enable_credui credui
+wine_fn_config_dll compstui enable_compstui implib compstui
+wine_fn_config_dll credui enable_credui implib credui
 wine_fn_config_test dlls/credui/tests credui_test
-wine_fn_config_dll crtdll enable_crtdll crtdll
-wine_fn_config_dll crypt32 enable_crypt32 crypt32
+wine_fn_config_dll crtdll enable_crtdll implib crtdll
+wine_fn_config_dll crypt32 enable_crypt32 implib crypt32
 wine_fn_config_test dlls/crypt32/tests crypt32_test
 wine_fn_config_dll cryptdlg enable_cryptdlg
-wine_fn_config_dll cryptdll enable_cryptdll cryptdll
-wine_fn_config_dll cryptnet enable_cryptnet cryptnet
+wine_fn_config_dll cryptdll enable_cryptdll implib cryptdll
+wine_fn_config_dll cryptnet enable_cryptnet implib cryptnet
 wine_fn_config_test dlls/cryptnet/tests cryptnet_test
-wine_fn_config_dll cryptui enable_cryptui cryptui
+wine_fn_config_dll cryptui enable_cryptui implib cryptui
 wine_fn_config_test dlls/cryptui/tests cryptui_test
 wine_fn_config_dll ctapi32 enable_ctapi32
 wine_fn_config_dll ctl3d.dll16 enable_win16
-wine_fn_config_dll ctl3d32 enable_ctl3d32 ctl3d32
+wine_fn_config_dll ctl3d32 enable_ctl3d32 implib ctl3d32
 wine_fn_config_dll ctl3dv2.dll16 enable_win16
-wine_fn_config_dll d3d10 enable_d3d10 d3d10
+wine_fn_config_dll d3d10 enable_d3d10 implib d3d10
 wine_fn_config_test dlls/d3d10/tests d3d10_test
-wine_fn_config_dll d3d10core enable_d3d10core d3d10core
+wine_fn_config_dll d3d10core enable_d3d10core implib d3d10core
 wine_fn_config_test dlls/d3d10core/tests d3d10core_test
-wine_fn_config_dll d3d8 enable_d3d8 d3d8
+wine_fn_config_dll d3d8 enable_d3d8 implib d3d8
 wine_fn_config_test dlls/d3d8/tests d3d8_test
-wine_fn_config_dll d3d9 enable_d3d9 d3d9
+wine_fn_config_dll d3d9 enable_d3d9 implib d3d9
 wine_fn_config_test dlls/d3d9/tests d3d9_test
 wine_fn_config_dll d3dcompiler_33 enable_d3dcompiler_33
 wine_fn_config_dll d3dcompiler_34 enable_d3dcompiler_34
@@ -14838,10 +14843,10 @@ wine_fn_config_dll d3dcompiler_39 enable_d3dcompiler_39
 wine_fn_config_dll d3dcompiler_40 enable_d3dcompiler_40
 wine_fn_config_dll d3dcompiler_41 enable_d3dcompiler_41
 wine_fn_config_dll d3dcompiler_42 enable_d3dcompiler_42
-wine_fn_config_dll d3dcompiler_43 enable_d3dcompiler_43 d3dcompiler
+wine_fn_config_dll d3dcompiler_43 enable_d3dcompiler_43 implib d3dcompiler
 wine_fn_config_test dlls/d3dcompiler_43/tests d3dcompiler_43_test
-wine_fn_config_dll d3dim enable_d3dim d3dim
-wine_fn_config_dll d3drm enable_d3drm d3drm
+wine_fn_config_dll d3dim enable_d3dim implib d3dim
+wine_fn_config_dll d3drm enable_d3drm implib d3drm
 wine_fn_config_test dlls/d3drm/tests d3drm_test
 wine_fn_config_dll d3dx10_33 enable_d3dx10_33
 wine_fn_config_dll d3dx10_34 enable_d3dx10_34
@@ -14866,7 +14871,7 @@ wine_fn_config_dll d3dx9_32 enable_d3dx9_32
 wine_fn_config_dll d3dx9_33 enable_d3dx9_33
 wine_fn_config_dll d3dx9_34 enable_d3dx9_34
 wine_fn_config_dll d3dx9_35 enable_d3dx9_35
-wine_fn_config_dll d3dx9_36 enable_d3dx9_36 d3dx9
+wine_fn_config_dll d3dx9_36 enable_d3dx9_36 implib d3dx9
 wine_fn_config_test dlls/d3dx9_36/tests d3dx9_36_test
 wine_fn_config_dll d3dx9_37 enable_d3dx9_37
 wine_fn_config_dll d3dx9_38 enable_d3dx9_38
@@ -14875,20 +14880,20 @@ wine_fn_config_dll d3dx9_40 enable_d3dx9_40
 wine_fn_config_dll d3dx9_41 enable_d3dx9_41
 wine_fn_config_dll d3dx9_42 enable_d3dx9_42
 wine_fn_config_dll d3dx9_43 enable_d3dx9_43
-wine_fn_config_dll d3dxof enable_d3dxof d3dxof
+wine_fn_config_dll d3dxof enable_d3dxof implib d3dxof
 wine_fn_config_test dlls/d3dxof/tests d3dxof_test
-wine_fn_config_dll dbgeng enable_dbgeng dbgeng
-wine_fn_config_dll dbghelp enable_dbghelp dbghelp
-wine_fn_config_dll dciman32 enable_dciman32 dciman32
+wine_fn_config_dll dbgeng enable_dbgeng implib dbgeng
+wine_fn_config_dll dbghelp enable_dbghelp implib dbghelp
+wine_fn_config_dll dciman32 enable_dciman32 implib dciman32
 wine_fn_config_dll ddeml.dll16 enable_win16
-wine_fn_config_dll ddraw enable_ddraw ddraw
+wine_fn_config_dll ddraw enable_ddraw implib ddraw
 wine_fn_config_test dlls/ddraw/tests ddraw_test
 wine_fn_config_dll ddrawex enable_ddrawex
 wine_fn_config_test dlls/ddrawex/tests ddrawex_test
 wine_fn_config_dll devenum enable_devenum
-wine_fn_config_dll dinput enable_dinput dinput "data_formats.c"
+wine_fn_config_dll dinput enable_dinput implib,staticimplib dinput
 wine_fn_config_test dlls/dinput/tests dinput_test
-wine_fn_config_dll dinput8 enable_dinput8 dinput8
+wine_fn_config_dll dinput8 enable_dinput8 implib dinput8
 wine_fn_config_dll dispdib.dll16 enable_win16
 wine_fn_config_dll dispex enable_dispex
 wine_fn_config_test dlls/dispex/tests dispex_test
@@ -14903,33 +14908,33 @@ wine_fn_config_dll dmscript enable_dmscript
 wine_fn_config_dll dmstyle enable_dmstyle
 wine_fn_config_dll dmsynth enable_dmsynth
 wine_fn_config_dll dmusic enable_dmusic
-wine_fn_config_dll dmusic32 enable_dmusic32 dmusic32
-wine_fn_config_dll dnsapi enable_dnsapi dnsapi
+wine_fn_config_dll dmusic32 enable_dmusic32 implib dmusic32
+wine_fn_config_dll dnsapi enable_dnsapi implib dnsapi
 wine_fn_config_test dlls/dnsapi/tests dnsapi_test
-wine_fn_config_dll dplay enable_dplay dplay
-wine_fn_config_dll dplayx enable_dplayx dplayx
+wine_fn_config_dll dplay enable_dplay implib dplay
+wine_fn_config_dll dplayx enable_dplayx implib dplayx
 wine_fn_config_test dlls/dplayx/tests dplayx_test
 wine_fn_config_dll dpnaddr enable_dpnaddr
-wine_fn_config_dll dpnet enable_dpnet dpnet
+wine_fn_config_dll dpnet enable_dpnet implib dpnet
 wine_fn_config_dll dpnhpast enable_dpnhpast
 wine_fn_config_dll dpnlobby enable_dpnlobby
 wine_fn_config_dll dpwsockx enable_dpwsockx
 wine_fn_config_dll drmclien enable_drmclien
-wine_fn_config_dll dsound enable_dsound dsound
+wine_fn_config_dll dsound enable_dsound implib dsound
 wine_fn_config_test dlls/dsound/tests dsound_test
 wine_fn_config_dll dssenh enable_dssenh
 wine_fn_config_dll dswave enable_dswave
-wine_fn_config_dll dwmapi enable_dwmapi dwmapi
+wine_fn_config_dll dwmapi enable_dwmapi implib dwmapi
 wine_fn_config_dll dxdiagn enable_dxdiagn
 wine_fn_config_test dlls/dxdiagn/tests dxdiagn_test
 wine_fn_config_lib dxerr8
 wine_fn_config_lib dxerr9
-wine_fn_config_dll dxgi enable_dxgi dxgi
+wine_fn_config_dll dxgi enable_dxgi implib dxgi
 wine_fn_config_test dlls/dxgi/tests dxgi_test
 wine_fn_config_lib dxguid
 wine_fn_config_dll explorerframe enable_explorerframe
 wine_fn_config_test dlls/explorerframe/tests explorerframe_test
-wine_fn_config_dll faultrep enable_faultrep faultrep
+wine_fn_config_dll faultrep enable_faultrep implib faultrep
 wine_fn_config_test dlls/faultrep/tests faultrep_test
 wine_fn_config_dll fltlib enable_fltlib
 wine_fn_config_dll fusion enable_fusion
@@ -14938,17 +14943,17 @@ wine_fn_config_dll fwpuclnt enable_fwpuclnt
 wine_fn_config_dll gameux enable_gameux
 wine_fn_config_test dlls/gameux/tests gameux_test
 wine_fn_config_dll gdi.exe16 enable_win16
-wine_fn_config_dll gdi32 enable_gdi32 gdi32
+wine_fn_config_dll gdi32 enable_gdi32 implib gdi32
 wine_fn_config_test dlls/gdi32/tests gdi32_test
-wine_fn_config_dll gdiplus enable_gdiplus gdiplus
+wine_fn_config_dll gdiplus enable_gdiplus implib gdiplus
 wine_fn_config_test dlls/gdiplus/tests gdiplus_test
-wine_fn_config_dll glu32 enable_glu32 glu32
+wine_fn_config_dll glu32 enable_glu32 implib glu32
 wine_fn_config_dll gphoto2.ds enable_gphoto2_ds
 wine_fn_config_dll gpkcsp enable_gpkcsp
 wine_fn_config_dll hal enable_hal
 wine_fn_config_dll hhctrl.ocx enable_hhctrl_ocx
-wine_fn_config_dll hid enable_hid hid
-wine_fn_config_dll hlink enable_hlink hlink
+wine_fn_config_dll hid enable_hid implib hid
+wine_fn_config_dll hlink enable_hlink implib hlink
 wine_fn_config_test dlls/hlink/tests hlink_test
 wine_fn_config_dll hnetcfg enable_hnetcfg
 wine_fn_config_dll httpapi enable_httpapi
@@ -14956,12 +14961,12 @@ wine_fn_config_dll iccvid enable_iccvid
 wine_fn_config_dll icmp enable_icmp
 wine_fn_config_dll ifsmgr.vxd enable_win16
 wine_fn_config_dll imaadp32.acm enable_imaadp32_acm
-wine_fn_config_dll imagehlp enable_imagehlp imagehlp
+wine_fn_config_dll imagehlp enable_imagehlp implib imagehlp
 wine_fn_config_test dlls/imagehlp/tests imagehlp_test
 wine_fn_config_dll imm.dll16 enable_win16
-wine_fn_config_dll imm32 enable_imm32 imm32
+wine_fn_config_dll imm32 enable_imm32 implib imm32
 wine_fn_config_test dlls/imm32/tests imm32_test
-wine_fn_config_dll inetcomm enable_inetcomm inetcomm
+wine_fn_config_dll inetcomm enable_inetcomm implib inetcomm
 wine_fn_config_test dlls/inetcomm/tests inetcomm_test
 wine_fn_config_dll inetcpl.cpl enable_inetcpl_cpl
 wine_fn_config_dll inetmib1 enable_inetmib1
@@ -14971,27 +14976,27 @@ wine_fn_config_test dlls/infosoft/tests infosoft_test
 wine_fn_config_dll initpki enable_initpki
 wine_fn_config_dll inkobj enable_inkobj
 wine_fn_config_dll inseng enable_inseng
-wine_fn_config_dll iphlpapi enable_iphlpapi iphlpapi
+wine_fn_config_dll iphlpapi enable_iphlpapi implib iphlpapi
 wine_fn_config_test dlls/iphlpapi/tests iphlpapi_test
 wine_fn_config_dll itircl enable_itircl
 wine_fn_config_dll itss enable_itss
 wine_fn_config_test dlls/itss/tests itss_test
 wine_fn_config_dll jscript enable_jscript
 wine_fn_config_test dlls/jscript/tests jscript_test
-wine_fn_config_dll kernel32 enable_kernel32 kernel32
+wine_fn_config_dll kernel32 enable_kernel32 implib kernel32
 wine_fn_config_test dlls/kernel32/tests kernel32_test
 wine_fn_config_dll keyboard.drv16 enable_win16
-wine_fn_config_dll krnl386.exe16 enable_win16 kernel
+wine_fn_config_dll krnl386.exe16 enable_win16 implib kernel
 wine_fn_config_dll ktmw32 enable_ktmw32
-wine_fn_config_dll loadperf enable_loadperf loadperf
+wine_fn_config_dll loadperf enable_loadperf implib loadperf
 wine_fn_config_dll localspl enable_localspl
 wine_fn_config_test dlls/localspl/tests localspl_test
 wine_fn_config_dll localui enable_localui
 wine_fn_config_test dlls/localui/tests localui_test
-wine_fn_config_dll lz32 enable_lz32 lz32
+wine_fn_config_dll lz32 enable_lz32 implib lz32
 wine_fn_config_test dlls/lz32/tests lz32_test
 wine_fn_config_dll lzexpand.dll16 enable_win16
-wine_fn_config_dll mapi32 enable_mapi32 mapi32
+wine_fn_config_dll mapi32 enable_mapi32 implib mapi32
 wine_fn_config_test dlls/mapi32/tests mapi32_test
 wine_fn_config_dll mapistub enable_mapistub
 wine_fn_config_dll mciavi32 enable_mciavi32
@@ -15000,7 +15005,7 @@ wine_fn_config_dll mciqtz32 enable_mciqtz32
 wine_fn_config_dll mciseq enable_mciseq
 wine_fn_config_dll mciwave enable_mciwave
 wine_fn_config_dll midimap enable_midimap
-wine_fn_config_dll mlang enable_mlang mlang
+wine_fn_config_dll mlang enable_mlang implib mlang
 wine_fn_config_test dlls/mlang/tests mlang_test
 wine_fn_config_dll mmdevapi enable_mmdevapi
 wine_fn_config_test dlls/mmdevapi/tests mmdevapi_test
@@ -15009,31 +15014,31 @@ wine_fn_config_dll mmsystem.dll16 enable_win16
 wine_fn_config_dll monodebg.vxd enable_win16
 wine_fn_config_dll mountmgr.sys enable_mountmgr_sys
 wine_fn_config_dll mouse.drv16 enable_win16
-wine_fn_config_dll mpr enable_mpr mpr
-wine_fn_config_dll mprapi enable_mprapi mprapi
+wine_fn_config_dll mpr enable_mpr implib mpr
+wine_fn_config_dll mprapi enable_mprapi implib mprapi
 wine_fn_config_dll msacm.dll16 enable_win16
 wine_fn_config_dll msacm32.drv enable_msacm32_drv
-wine_fn_config_dll msacm32 enable_msacm32 msacm32
+wine_fn_config_dll msacm32 enable_msacm32 implib msacm32
 wine_fn_config_test dlls/msacm32/tests msacm32_test
 wine_fn_config_dll msadp32.acm enable_msadp32_acm
 wine_fn_config_dll mscat32 enable_mscat32
-wine_fn_config_dll mscms enable_mscms mscms
+wine_fn_config_dll mscms enable_mscms implib mscms
 wine_fn_config_test dlls/mscms/tests mscms_test
 wine_fn_config_dll mscoree enable_mscoree
 wine_fn_config_test dlls/mscoree/tests mscoree_test
 wine_fn_config_dll msctf enable_msctf
 wine_fn_config_test dlls/msctf/tests msctf_test
 wine_fn_config_dll msdaps enable_msdaps
-wine_fn_config_dll msdmo enable_msdmo msdmo
+wine_fn_config_dll msdmo enable_msdmo implib msdmo
 wine_fn_config_dll msftedit enable_msftedit
 wine_fn_config_dll msg711.acm enable_msg711_acm
 wine_fn_config_dll msgsm32.acm enable_msgsm32_acm
 wine_fn_config_dll mshtml.tlb enable_mshtml_tlb
-wine_fn_config_dll mshtml enable_mshtml mshtml
+wine_fn_config_dll mshtml enable_mshtml implib mshtml
 wine_fn_config_test dlls/mshtml/tests mshtml_test
-wine_fn_config_dll msi enable_msi msi
+wine_fn_config_dll msi enable_msi implib msi
 wine_fn_config_test dlls/msi/tests msi_test
-wine_fn_config_dll msimg32 enable_msimg32 msimg32
+wine_fn_config_dll msimg32 enable_msimg32 implib msimg32
 wine_fn_config_dll msimtf enable_msimtf
 wine_fn_config_dll msisip enable_msisip
 wine_fn_config_dll msisys.ocx enable_msisys_ocx
@@ -15048,43 +15053,43 @@ wine_fn_config_dll msvcp80 enable_msvcp80
 wine_fn_config_dll msvcp90 enable_msvcp90
 wine_fn_config_test dlls/msvcp90/tests msvcp90_test
 wine_fn_config_dll msvcr100 enable_msvcr100
-wine_fn_config_dll msvcr70 enable_msvcr70 msvcr70
-wine_fn_config_dll msvcr71 enable_msvcr71 msvcr71
+wine_fn_config_dll msvcr70 enable_msvcr70 implib msvcr70
+wine_fn_config_dll msvcr71 enable_msvcr71 implib msvcr71
 wine_fn_config_dll msvcr80 enable_msvcr80
 wine_fn_config_dll msvcr90 enable_msvcr90
 wine_fn_config_test dlls/msvcr90/tests msvcr90_test
-wine_fn_config_dll msvcrt enable_msvcrt msvcrt
+wine_fn_config_dll msvcrt enable_msvcrt implib msvcrt
 wine_fn_config_test dlls/msvcrt/tests msvcrt_test
-wine_fn_config_dll msvcrt20 enable_msvcrt20 msvcrt20
-wine_fn_config_dll msvcrt40 enable_msvcrt40 msvcrt40
-wine_fn_config_dll msvcrtd enable_msvcrtd msvcrtd
+wine_fn_config_dll msvcrt20 enable_msvcrt20 implib msvcrt20
+wine_fn_config_dll msvcrt40 enable_msvcrt40 implib msvcrt40
+wine_fn_config_dll msvcrtd enable_msvcrtd implib msvcrtd
 wine_fn_config_test dlls/msvcrtd/tests msvcrtd_test
-wine_fn_config_dll msvfw32 enable_msvfw32 msvfw32
+wine_fn_config_dll msvfw32 enable_msvfw32 implib msvfw32
 wine_fn_config_test dlls/msvfw32/tests msvfw32_test
 wine_fn_config_dll msvidc32 enable_msvidc32
 wine_fn_config_dll msvideo.dll16 enable_win16
-wine_fn_config_dll mswsock enable_mswsock mswsock
+wine_fn_config_dll mswsock enable_mswsock implib mswsock
 wine_fn_config_dll msxml enable_msxml
 wine_fn_config_dll msxml2 enable_msxml2
 wine_fn_config_dll msxml3 enable_msxml3
 wine_fn_config_test dlls/msxml3/tests msxml3_test
 wine_fn_config_dll msxml4 enable_msxml4
 wine_fn_config_dll msxml6 enable_msxml6
-wine_fn_config_dll nddeapi enable_nddeapi nddeapi
-wine_fn_config_dll netapi32 enable_netapi32 netapi32
+wine_fn_config_dll nddeapi enable_nddeapi implib nddeapi
+wine_fn_config_dll netapi32 enable_netapi32 implib netapi32
 wine_fn_config_test dlls/netapi32/tests netapi32_test
-wine_fn_config_dll newdev enable_newdev newdev
+wine_fn_config_dll newdev enable_newdev implib newdev
 wine_fn_config_dll npmshtml enable_npmshtml
-wine_fn_config_dll ntdll enable_ntdll ntdll
+wine_fn_config_dll ntdll enable_ntdll implib ntdll
 wine_fn_config_test dlls/ntdll/tests ntdll_test
-wine_fn_config_dll ntdsapi enable_ntdsapi ntdsapi
+wine_fn_config_dll ntdsapi enable_ntdsapi implib ntdsapi
 wine_fn_config_test dlls/ntdsapi/tests ntdsapi_test
-wine_fn_config_dll ntoskrnl.exe enable_ntoskrnl_exe ntoskrnl.exe
+wine_fn_config_dll ntoskrnl.exe enable_ntoskrnl_exe implib ntoskrnl.exe
 wine_fn_config_dll ntprint enable_ntprint
 wine_fn_config_test dlls/ntprint/tests ntprint_test
 wine_fn_config_dll objsel enable_objsel
-wine_fn_config_dll odbc32 enable_odbc32 odbc32
-wine_fn_config_dll odbccp32 enable_odbccp32 odbccp32
+wine_fn_config_dll odbc32 enable_odbc32 implib odbc32
+wine_fn_config_dll odbccp32 enable_odbccp32 implib odbccp32
 wine_fn_config_test dlls/odbccp32/tests odbccp32_test
 wine_fn_config_dll ole2.dll16 enable_win16
 wine_fn_config_dll ole2conv.dll16 enable_win16
@@ -15092,33 +15097,33 @@ wine_fn_config_dll ole2disp.dll16 enable_win16
 wine_fn_config_dll ole2nls.dll16 enable_win16
 wine_fn_config_dll ole2prox.dll16 enable_win16
 wine_fn_config_dll ole2thk.dll16 enable_win16
-wine_fn_config_dll ole32 enable_ole32 ole32
+wine_fn_config_dll ole32 enable_ole32 implib ole32
 wine_fn_config_test dlls/ole32/tests ole32_test
-wine_fn_config_dll oleacc enable_oleacc oleacc
+wine_fn_config_dll oleacc enable_oleacc implib oleacc
 wine_fn_config_test dlls/oleacc/tests oleacc_test
-wine_fn_config_dll oleaut32 enable_oleaut32 oleaut32
+wine_fn_config_dll oleaut32 enable_oleaut32 implib oleaut32
 wine_fn_config_test dlls/oleaut32/tests oleaut32_test
 wine_fn_config_dll olecli.dll16 enable_win16
-wine_fn_config_dll olecli32 enable_olecli32 olecli32
+wine_fn_config_dll olecli32 enable_olecli32 implib olecli32
 wine_fn_config_dll oledb32 enable_oledb32
 wine_fn_config_test dlls/oledb32/tests oledb32_test
-wine_fn_config_dll oledlg enable_oledlg oledlg
-wine_fn_config_dll olepro32 enable_olepro32 olepro32
+wine_fn_config_dll oledlg enable_oledlg implib oledlg
+wine_fn_config_dll olepro32 enable_olepro32 implib olepro32
 wine_fn_config_dll olesvr.dll16 enable_win16
-wine_fn_config_dll olesvr32 enable_olesvr32 olesvr32
+wine_fn_config_dll olesvr32 enable_olesvr32 implib olesvr32
 wine_fn_config_dll olethk32 enable_olethk32
 wine_fn_config_dll openal32 enable_openal32
 wine_fn_config_dll opencl enable_opencl
-wine_fn_config_dll opengl32 enable_opengl32 opengl32
+wine_fn_config_dll opengl32 enable_opengl32 implib opengl32
 wine_fn_config_test dlls/opengl32/tests opengl32_test
-wine_fn_config_dll pdh enable_pdh pdh
+wine_fn_config_dll pdh enable_pdh implib pdh
 wine_fn_config_test dlls/pdh/tests pdh_test
 wine_fn_config_dll pidgen enable_pidgen
-wine_fn_config_dll powrprof enable_powrprof powrprof
+wine_fn_config_dll powrprof enable_powrprof implib powrprof
 wine_fn_config_dll printui enable_printui
-wine_fn_config_dll propsys enable_propsys propsys
+wine_fn_config_dll propsys enable_propsys implib propsys
 wine_fn_config_test dlls/propsys/tests propsys_test
-wine_fn_config_dll psapi enable_psapi psapi
+wine_fn_config_dll psapi enable_psapi implib psapi
 wine_fn_config_test dlls/psapi/tests psapi_test
 wine_fn_config_dll pstorec enable_pstorec
 wine_fn_config_dll qcap enable_qcap
@@ -15127,61 +15132,61 @@ wine_fn_config_test dlls/qedit/tests qedit_test
 wine_fn_config_dll qmgr enable_qmgr
 wine_fn_config_test dlls/qmgr/tests qmgr_test
 wine_fn_config_dll qmgrprxy enable_qmgrprxy
-wine_fn_config_dll quartz enable_quartz quartz
+wine_fn_config_dll quartz enable_quartz implib quartz
 wine_fn_config_test dlls/quartz/tests quartz_test
 wine_fn_config_dll query enable_query
 wine_fn_config_dll rasapi16.dll16 enable_win16
-wine_fn_config_dll rasapi32 enable_rasapi32 rasapi32
+wine_fn_config_dll rasapi32 enable_rasapi32 implib rasapi32
 wine_fn_config_test dlls/rasapi32/tests rasapi32_test
-wine_fn_config_dll rasdlg enable_rasdlg rasdlg
-wine_fn_config_dll resutils enable_resutils resutils
-wine_fn_config_dll riched20 enable_riched20 riched20
+wine_fn_config_dll rasdlg enable_rasdlg implib rasdlg
+wine_fn_config_dll resutils enable_resutils implib resutils
+wine_fn_config_dll riched20 enable_riched20 implib riched20
 wine_fn_config_test dlls/riched20/tests riched20_test
 wine_fn_config_dll riched32 enable_riched32
 wine_fn_config_test dlls/riched32/tests riched32_test
-wine_fn_config_dll rpcrt4 enable_rpcrt4 rpcrt4
+wine_fn_config_dll rpcrt4 enable_rpcrt4 implib rpcrt4
 wine_fn_config_test dlls/rpcrt4/tests rpcrt4_test
 wine_fn_config_dll rsabase enable_rsabase
-wine_fn_config_dll rsaenh enable_rsaenh rsaenh
+wine_fn_config_dll rsaenh enable_rsaenh implib rsaenh
 wine_fn_config_test dlls/rsaenh/tests rsaenh_test
 wine_fn_config_dll rstrtmgr enable_rstrtmgr
-wine_fn_config_dll rtutils enable_rtutils rtutils
+wine_fn_config_dll rtutils enable_rtutils implib rtutils
 wine_fn_config_dll samlib enable_samlib
 wine_fn_config_dll sane.ds enable_sane_ds
 wine_fn_config_dll sccbase enable_sccbase
 wine_fn_config_dll schannel enable_schannel
 wine_fn_config_test dlls/schannel/tests schannel_test
-wine_fn_config_dll secur32 enable_secur32 secur32
+wine_fn_config_dll secur32 enable_secur32 implib secur32
 wine_fn_config_test dlls/secur32/tests secur32_test
 wine_fn_config_dll security enable_security
-wine_fn_config_dll sensapi enable_sensapi sensapi
-wine_fn_config_dll serialui enable_serialui serialui
+wine_fn_config_dll sensapi enable_sensapi implib sensapi
+wine_fn_config_dll serialui enable_serialui implib serialui
 wine_fn_config_test dlls/serialui/tests serialui_test
-wine_fn_config_dll setupapi enable_setupapi setupapi
+wine_fn_config_dll setupapi enable_setupapi implib setupapi
 wine_fn_config_test dlls/setupapi/tests setupapi_test
 wine_fn_config_dll setupx.dll16 enable_win16
-wine_fn_config_dll sfc enable_sfc sfc
-wine_fn_config_dll sfc_os enable_sfc_os sfc_os
+wine_fn_config_dll sfc enable_sfc implib sfc
+wine_fn_config_dll sfc_os enable_sfc_os implib sfc_os
 wine_fn_config_dll shdoclc enable_shdoclc
-wine_fn_config_dll shdocvw enable_shdocvw shdocvw
+wine_fn_config_dll shdocvw enable_shdocvw implib shdocvw
 wine_fn_config_test dlls/shdocvw/tests shdocvw_test
 wine_fn_config_dll shell.dll16 enable_win16
-wine_fn_config_dll shell32 enable_shell32 shell32
+wine_fn_config_dll shell32 enable_shell32 implib shell32
 wine_fn_config_test dlls/shell32/tests shell32_test
-wine_fn_config_dll shfolder enable_shfolder shfolder
-wine_fn_config_dll shlwapi enable_shlwapi shlwapi
+wine_fn_config_dll shfolder enable_shfolder implib shfolder
+wine_fn_config_dll shlwapi enable_shlwapi implib shlwapi
 wine_fn_config_test dlls/shlwapi/tests shlwapi_test
 wine_fn_config_dll slbcsp enable_slbcsp
-wine_fn_config_dll slc enable_slc slc
-wine_fn_config_dll snmpapi enable_snmpapi snmpapi
+wine_fn_config_dll slc enable_slc implib slc
+wine_fn_config_dll snmpapi enable_snmpapi implib snmpapi
 wine_fn_config_test dlls/snmpapi/tests snmpapi_test
 wine_fn_config_dll softpub enable_softpub
 wine_fn_config_dll sound.drv16 enable_win16
-wine_fn_config_dll spoolss enable_spoolss spoolss
+wine_fn_config_dll spoolss enable_spoolss implib spoolss
 wine_fn_config_test dlls/spoolss/tests spoolss_test
 wine_fn_config_dll stdole2.tlb enable_stdole2_tlb
 wine_fn_config_dll stdole32.tlb enable_stdole32_tlb
-wine_fn_config_dll sti enable_sti sti
+wine_fn_config_dll sti enable_sti implib sti
 wine_fn_config_test dlls/sti/tests sti_test
 wine_fn_config_dll storage.dll16 enable_win16
 wine_fn_config_dll stress.dll16 enable_win16
@@ -15191,33 +15196,33 @@ wine_fn_config_dll svrapi enable_svrapi
 wine_fn_config_dll sxs enable_sxs
 wine_fn_config_dll system.drv16 enable_win16
 wine_fn_config_dll t2embed enable_t2embed
-wine_fn_config_dll tapi32 enable_tapi32 tapi32
+wine_fn_config_dll tapi32 enable_tapi32 implib tapi32
 wine_fn_config_dll toolhelp.dll16 enable_win16
 wine_fn_config_dll traffic enable_traffic
 wine_fn_config_dll twain.dll16 enable_win16
 wine_fn_config_dll twain_32 enable_twain_32
 wine_fn_config_test dlls/twain_32/tests twain_32_test
 wine_fn_config_dll typelib.dll16 enable_win16
-wine_fn_config_dll unicows enable_unicows unicows
+wine_fn_config_dll unicows enable_unicows implib unicows
 wine_fn_config_dll updspapi enable_updspapi
-wine_fn_config_dll url enable_url url
-wine_fn_config_dll urlmon enable_urlmon urlmon
+wine_fn_config_dll url enable_url implib url
+wine_fn_config_dll urlmon enable_urlmon implib urlmon
 wine_fn_config_test dlls/urlmon/tests urlmon_test
-wine_fn_config_dll usbd.sys enable_usbd_sys usbd.sys
+wine_fn_config_dll usbd.sys enable_usbd_sys implib usbd.sys
 wine_fn_config_dll user.exe16 enable_win16
-wine_fn_config_dll user32 enable_user32 user32
+wine_fn_config_dll user32 enable_user32 implib user32
 wine_fn_config_test dlls/user32/tests user32_test
-wine_fn_config_dll userenv enable_userenv userenv
+wine_fn_config_dll userenv enable_userenv implib userenv
 wine_fn_config_test dlls/userenv/tests userenv_test
-wine_fn_config_dll usp10 enable_usp10 usp10
+wine_fn_config_dll usp10 enable_usp10 implib usp10
 wine_fn_config_test dlls/usp10/tests usp10_test
 wine_fn_config_lib uuid
-wine_fn_config_dll uxtheme enable_uxtheme uxtheme
+wine_fn_config_dll uxtheme enable_uxtheme implib uxtheme
 wine_fn_config_test dlls/uxtheme/tests uxtheme_test
 wine_fn_config_dll vdhcp.vxd enable_win16
-wine_fn_config_dll vdmdbg enable_vdmdbg vdmdbg
+wine_fn_config_dll vdmdbg enable_vdmdbg implib vdmdbg
 wine_fn_config_dll ver.dll16 enable_win16
-wine_fn_config_dll version enable_version version
+wine_fn_config_dll version enable_version implib version
 wine_fn_config_test dlls/version/tests version_test
 wine_fn_config_dll vmm.vxd enable_win16
 wine_fn_config_dll vnbt.vxd enable_win16
@@ -15227,19 +15232,19 @@ wine_fn_config_dll vwin32.vxd enable_win16
 wine_fn_config_dll w32skrnl enable_win16
 wine_fn_config_dll w32sys.dll16 enable_win16
 wine_fn_config_dll wbemprox enable_wbemprox
-wine_fn_config_dll wer enable_wer wer
+wine_fn_config_dll wer enable_wer implib wer
 wine_fn_config_test dlls/wer/tests wer_test
 wine_fn_config_dll wiaservc enable_wiaservc
 wine_fn_config_dll win32s16.dll16 enable_win16
 wine_fn_config_dll win87em.dll16 enable_win16
 wine_fn_config_dll winaspi.dll16 enable_win16
 wine_fn_config_dll windebug.dll16 enable_win16
-wine_fn_config_dll windowscodecs enable_windowscodecs windowscodecs
+wine_fn_config_dll windowscodecs enable_windowscodecs implib windowscodecs
 wine_fn_config_test dlls/windowscodecs/tests windowscodecs_test
 wine_fn_config_dll winealsa.drv enable_winealsa_drv
 wine_fn_config_dll winecoreaudio.drv enable_winecoreaudio_drv
 wine_fn_config_lib winecrt0
-wine_fn_config_dll wined3d enable_wined3d wined3d
+wine_fn_config_dll wined3d enable_wined3d implib wined3d
 wine_fn_config_dll wineesd.drv enable_wineesd_drv
 wine_fn_config_dll winegstreamer enable_winegstreamer
 wine_fn_config_dll winejack.drv enable_winejack_drv
@@ -15255,40 +15260,40 @@ wine_fn_config_dll winequartz.drv enable_winequartz_drv
 wine_fn_config_dll winex11.drv enable_winex11_drv
 wine_fn_config_dll wing.dll16 enable_win16
 wine_fn_config_dll wing32 enable_wing32
-wine_fn_config_dll winhttp enable_winhttp winhttp
+wine_fn_config_dll winhttp enable_winhttp implib winhttp
 wine_fn_config_test dlls/winhttp/tests winhttp_test
-wine_fn_config_dll wininet enable_wininet wininet
+wine_fn_config_dll wininet enable_wininet implib wininet
 wine_fn_config_test dlls/wininet/tests wininet_test
-wine_fn_config_dll winmm enable_winmm winmm
+wine_fn_config_dll winmm enable_winmm implib winmm
 wine_fn_config_test dlls/winmm/tests winmm_test
 wine_fn_config_dll winnls.dll16 enable_win16
-wine_fn_config_dll winnls32 enable_winnls32 winnls32
-wine_fn_config_dll winscard enable_winscard winscard
+wine_fn_config_dll winnls32 enable_winnls32 implib winnls32
+wine_fn_config_dll winscard enable_winscard implib winscard
 wine_fn_config_dll winsock.dll16 enable_win16
-wine_fn_config_dll winspool.drv enable_winspool_drv winspool
+wine_fn_config_dll winspool.drv enable_winspool_drv implib winspool
 wine_fn_config_test dlls/winspool.drv/tests winspool.drv_test
 wine_fn_config_dll wintab.dll16 enable_win16
-wine_fn_config_dll wintab32 enable_wintab32 wintab32
+wine_fn_config_dll wintab32 enable_wintab32 implib wintab32
 wine_fn_config_test dlls/wintab32/tests wintab32_test
-wine_fn_config_dll wintrust enable_wintrust wintrust
+wine_fn_config_dll wintrust enable_wintrust implib wintrust
 wine_fn_config_test dlls/wintrust/tests wintrust_test
 wine_fn_config_dll wlanapi enable_wlanapi
-wine_fn_config_dll wldap32 enable_wldap32 wldap32
+wine_fn_config_dll wldap32 enable_wldap32 implib wldap32
 wine_fn_config_test dlls/wldap32/tests wldap32_test
 wine_fn_config_dll wmi enable_wmi
 wine_fn_config_dll wmiutils enable_wmiutils
-wine_fn_config_dll wnaspi32 enable_wnaspi32 wnaspi32
-wine_fn_config_dll wow32 enable_win16 wow32
-wine_fn_config_dll ws2_32 enable_ws2_32 ws2_32
+wine_fn_config_dll wnaspi32 enable_wnaspi32 implib wnaspi32
+wine_fn_config_dll wow32 enable_win16 implib wow32
+wine_fn_config_dll ws2_32 enable_ws2_32 implib ws2_32
 wine_fn_config_test dlls/ws2_32/tests ws2_32_test
-wine_fn_config_dll wsock32 enable_wsock32 wsock32
-wine_fn_config_dll wtsapi32 enable_wtsapi32 wtsapi32
+wine_fn_config_dll wsock32 enable_wsock32 implib wsock32
+wine_fn_config_dll wtsapi32 enable_wtsapi32 implib wtsapi32
 wine_fn_config_dll wuapi enable_wuapi
 wine_fn_config_dll wuaueng enable_wuaueng
 wine_fn_config_dll xapofx1_1 enable_xapofx1_1
 wine_fn_config_dll xinput1_1 enable_xinput1_1
 wine_fn_config_dll xinput1_2 enable_xinput1_2
-wine_fn_config_dll xinput1_3 enable_xinput1_3 xinput
+wine_fn_config_dll xinput1_3 enable_xinput1_3 implib xinput
 wine_fn_config_test dlls/xinput1_3/tests xinput1_3_test
 wine_fn_config_dll xinput9_1_0 enable_xinput9_1_0
 wine_fn_config_dll xmllite enable_xmllite
@@ -15320,19 +15325,19 @@ wine_fn_config_program ipconfig enable_ipconfig install
 wine_fn_config_program lodctr enable_lodctr install
 wine_fn_config_program mofcomp enable_mofcomp install
 wine_fn_config_program mshta enable_mshta install
-wine_fn_config_program msiexec enable_msiexec installbin
+wine_fn_config_program msiexec enable_msiexec install,installbin
 wine_fn_config_program net enable_net install
 wine_fn_config_program netsh enable_netsh install
 wine_fn_config_program ngen enable_ngen install
-wine_fn_config_program notepad enable_notepad installbin
+wine_fn_config_program notepad enable_notepad install,installbin
 wine_fn_config_program oleview enable_oleview install
 wine_fn_config_program ping enable_ping install
 wine_fn_config_program progman enable_progman install
 wine_fn_config_program reg enable_reg install
-wine_fn_config_program regedit enable_regedit installbin
+wine_fn_config_program regedit enable_regedit install,installbin
 wine_fn_config_test programs/regedit/tests regedit.exe_test
 wine_fn_config_program regsvcs enable_regsvcs install
-wine_fn_config_program regsvr32 enable_regsvr32 installbin
+wine_fn_config_program regsvr32 enable_regsvr32 install,installbin
 wine_fn_config_program rpcss enable_rpcss install
 wine_fn_config_program rundll.exe16 enable_win16 install
 wine_fn_config_program rundll32 enable_rundll32 install
@@ -15349,16 +15354,16 @@ wine_fn_config_program termsv enable_termsv install
 wine_fn_config_program uninstaller enable_uninstaller install
 wine_fn_config_program unlodctr enable_unlodctr install
 wine_fn_config_program view enable_view
-wine_fn_config_program wineboot enable_wineboot installbin
+wine_fn_config_program wineboot enable_wineboot install,installbin
 wine_fn_config_program winebrowser enable_winebrowser install
-wine_fn_config_program winecfg enable_winecfg installbin
-wine_fn_config_program wineconsole enable_wineconsole installbin
-wine_fn_config_program winedbg enable_winedbg installbin
+wine_fn_config_program winecfg enable_winecfg install,installbin
+wine_fn_config_program wineconsole enable_wineconsole install,installbin
+wine_fn_config_program winedbg enable_winedbg install,installbin
 wine_fn_config_program winedevice enable_winedevice install
-wine_fn_config_program winefile enable_winefile installbin
+wine_fn_config_program winefile enable_winefile install,installbin
 wine_fn_config_program winemenubuilder enable_winemenubuilder install
-wine_fn_config_program winemine enable_winemine installbin
-wine_fn_config_program winepath enable_winepath installbin
+wine_fn_config_program winemine enable_winemine install,installbin
+wine_fn_config_program winepath enable_winepath install,installbin
 wine_fn_config_program winetest enable_winetest
 wine_fn_config_program winevdm enable_win16 install
 wine_fn_config_program winhelp.exe16 enable_win16 install

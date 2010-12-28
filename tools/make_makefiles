@@ -367,6 +367,7 @@ sub update_makefiles(@)
         my %make = %{$makefiles{$file}};
         my $rules = $make{"=rules"};
         my $args = "";
+        my @flags;
         my $is_win16 = $make{"MODULE"} && ($make{"MODULE"} =~ /16$/ || $modules16{$make{"MODULE"}});
         if ($rules eq $makerules{"MAKE_DLL_RULES"})
         {
@@ -380,11 +381,12 @@ sub update_makefiles(@)
                 die "Invalid MODULE in $file" unless $make{"MODULE"} eq "$name.dll";
             }
             my $implib = $make{"IMPORTLIB"} || "";
-            my $implib_srcs = defined($make{"IMPLIB_SRCS"}) && join( " ", @{$make{"IMPLIB_SRCS"}} );
-            $args .= "," if $implib || $is_win16;
+            push @flags, "implib" if $implib;
+            push @flags, "staticimplib" if defined($make{"IMPLIB_SRCS"});
+            $args .= "," if $is_win16 || @flags;
             $args .= "enable_win16" if $is_win16;
+            $args .= ",[" . join(",",@flags) ."]" if @flags;
             $args .= ",[$implib]" if $implib;
-            $args .= ",[$implib_srcs]" if $implib_srcs;
             push @lines, "WINE_CONFIG_DLL($name$args)\n";
         }
         elsif ($rules eq $makerules{"MAKE_PROG_RULES"})
@@ -398,11 +400,11 @@ sub update_makefiles(@)
             {
                 die "Invalid MODULE in $file" unless $make{"MODULE"} eq "$name.exe";
             }
-            my $install = $dont_install{$name} ? "" : "install";
-            $install .= "bin" if $bin_install{$name};
-            $args .= "," if $is_win16 || $install;
-            $args .= "$install" if $install;
-            $args .= ",enable_win16" if $is_win16;
+            push @flags, "install" unless $dont_install{$name};
+            push @flags, "installbin" if $bin_install{$name};
+            $args .= "," if $is_win16 || @flags;
+            $args .= "enable_win16" if $is_win16;
+            $args .= ",[" . join(",",@flags) ."]" if @flags;
             push @lines, "WINE_CONFIG_PROGRAM($name$args)\n";
         }
         elsif ($rules eq $makerules{"MAKE_TEST_RULES"})
