@@ -177,7 +177,7 @@ static source_elements_t *source_elements_add_statement(source_elements_t*,state
 /* tokens */
 %token <identifier> tIdentifier
 %token <ival> tAssignOper tEqOper tShiftOper tRelOper
-%token <literal> tNumericLiteral
+%token <literal> tNumericLiteral tBooleanLiteral
 %token <wstr> tStringLiteral
 %token tEOF
 
@@ -811,6 +811,7 @@ Literal
 BooleanLiteral
         : kTRUE                 { $$ = new_boolean_literal(ctx, VARIANT_TRUE); }
         | kFALSE                { $$ = new_boolean_literal(ctx, VARIANT_FALSE); }
+        | tBooleanLiteral       { $$ = $1; }
 
 semicolon_opt
         : ';'

@@ -266,6 +266,14 @@ typedef struct named_item_t {
     struct named_item_t *next;
 } named_item_t;
 
+typedef struct _cc_var_t cc_var_t;
+
+typedef struct {
+    cc_var_t *vars;
+} cc_ctx_t;
+
+void release_cc(cc_ctx_t*);
+
 struct _script_ctx_t {
     LONG ref;
 
@@ -277,6 +285,7 @@ struct _script_ctx_t {
     DWORD safeopt;
     DWORD version;
     LCID lcid;
+    cc_ctx_t *cc;
 
     jsheap_t tmp_heap;
 
@@ -448,6 +457,7 @@ static inline DWORD make_grfdex(script_ctx_t *ctx, DWORD flags)
 #define JS_E_MISSING_LBRACKET        MAKE_JSERROR(IDS_LBRACKET)
 #define JS_E_MISSING_RBRACKET        MAKE_JSERROR(IDS_RBRACKET)
 #define JS_E_UNTERMINATED_STRING     MAKE_JSERROR(IDS_UNTERMINATED_STR)
+#define JS_E_DISABLED_CC             MAKE_JSERROR(IDS_DISABLED_CC)
 #define JS_E_FUNCTION_EXPECTED       MAKE_JSERROR(IDS_NOT_FUNC)
 #define JS_E_DATE_EXPECTED           MAKE_JSERROR(IDS_NOT_DATE)
 #define JS_E_NUMBER_EXPECTED         MAKE_JSERROR(IDS_NOT_NUM)

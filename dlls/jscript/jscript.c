@@ -70,6 +70,8 @@ void script_release(script_ctx_t *ctx)
     if(--ctx->ref)
         return;
 
+    if(ctx->cc)
+        release_cc(ctx->cc);
     jsheap_free(&ctx->tmp_heap);
     SysFreeString(ctx->last_match);
     heap_free(ctx);
