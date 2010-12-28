@@ -30,8 +30,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(opencl);
 
-#if defined(HAVE_CL_OPENCL_H)
-#include <CL/opencl.h>
+#if defined(HAVE_CL_CL_H)
+#include <CL/cl.h>
 #elif defined(HAVE_OPENCL_OPENCL_H)
 #include <OpenCL/opencl.h>
 #endif

@@ -2641,7 +2641,7 @@ fi
 
 # Check whether --with-opencl was given.
 if test "${with_opencl+set}" = set; then :
-  withval=$with_opencl; if test "x$withval" = "xno"; then ac_cv_header_CL_opencl_h=no; ac_cv_header_OpenCL_opencl_h=no; fi
+  withval=$with_opencl; if test "x$withval" = "xno"; then ac_cv_header_CL_cl_h=no; ac_cv_header_OpenCL_opencl_h=no; fi
 fi
 
 
@@ -5760,7 +5760,7 @@ for ac_header in \
 	AL/al.h \
 	AudioToolbox/AudioConverter.h \
 	AudioUnit/AudioUnit.h \
-	CL/opencl.h \
+	CL/cl.h \
 	Carbon/Carbon.h \
 	CoreAudio/CoreAudio.h \
 	DiskArbitration/DiskArbitration.h \
@@ -9064,7 +9064,7 @@ Use the --without-x option if you really want this." "$LINENO" 5  ;;
 esac
 fi
 
-if test "$ac_cv_header_CL_opencl_h" = "yes"
+if test "$ac_cv_header_CL_cl_h" = "yes"
 then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for clGetPlatformInfo in -lOpenCL" >&5
 $as_echo_n "checking for clGetPlatformInfo in -lOpenCL... " >&6; }
