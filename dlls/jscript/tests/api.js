@@ -1954,9 +1954,21 @@ testException(function() {new VBArray(new VBArray(createArray()));}, "E_NOT_VBAR
 testException(function() {VBArray.prototype.lbound.call(new Object());}, "E_NOT_VBARRAY");
 
 // SyntaxError tests
-function testSyntaxError(code, e) {
-    testException(function() { eval(code); }, e);
+function testSyntaxError(code, id) {
+    var ex = exception_array[id];
+    var ret = "", num = "";
+
+    try {
+        eval(code);
+    } catch(e) {
+        ret = e.name;
+        num = e.number;
+    }
+
+    ok(ret === ex.type, "Syntax exception test, ret = " + ret + ", expected " + ex.type +". Executed code: " + code);
+    ok(num === ex.number, "Syntax exception test, num = " + num + ", expected " + ex.number + ". Executed code: " + code);
 }
+
 testSyntaxError("for(i=0;) {}", "E_SYNTAX_ERROR");
 testSyntaxError("function {};", "E_LBRACKET");
 testSyntaxError("if", "E_LBRACKET");
