@@ -364,13 +364,22 @@ static int parse_string_literal(parser_ctx_t *ctx, const WCHAR **ret, WCHAR endc
     return tStringLiteral;
 }
 
-static literal_t *alloc_int_literal(parser_ctx_t *ctx, LONG l)
+static literal_t *new_int_literal(parser_ctx_t *ctx, LONG l)
 {
     literal_t *ret = parser_alloc(ctx, sizeof(literal_t));
 
     ret->type = LT_INT;
     ret->u.lval = l;
 
+    return ret;
+}
+
+static literal_t *new_double_literal(parser_ctx_t *ctx, DOUBLE d)
+{
+    literal_t *ret = parser_alloc(ctx, sizeof(literal_t));
+
+    ret->type = LT_DOUBLE;
+    ret->u.dval = d;
     return ret;
 }
 
@@ -455,10 +464,7 @@ static int parse_double_literal(parser_ctx_t *ctx, LONG int_part, literal_t **li
         else exp += e;
     }
 
-    *literal = parser_alloc(ctx, sizeof(literal_t));
-    (*literal)->type = LT_DOUBLE;
-    (*literal)->u.dval = (double)d*pow(10, exp);
-
+    *literal = new_double_literal(ctx, (DOUBLE)d*pow(10, exp));
     return tNumericLiteral;
 }
 
@@ -468,7 +474,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, literal_t **literal)
 
     l = *ctx->ptr++ - '0';
     if(ctx->ptr == ctx->end) {
-        *literal = alloc_int_literal(ctx, l);
+        *literal = new_int_literal(ctx, l);
         return tNumericLiteral;
     }
 
@@ -489,7 +495,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, literal_t **literal)
                 return lex_error(ctx, E_FAIL);
             }
 
-            *literal = alloc_int_literal(ctx, l);
+            *literal = new_int_literal(ctx, l);
             return tNumericLiteral;
         }
 
@@ -498,7 +504,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, literal_t **literal)
             return lex_error(ctx, E_FAIL);
         }
 
-        *literal = alloc_int_literal(ctx, 0);
+        *literal = new_int_literal(ctx, 0);
     }
 
     while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr))
@@ -523,7 +529,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, literal_t **literal)
         }
     }
 
-    *literal = alloc_int_literal(ctx, l);
+    *literal = new_int_literal(ctx, l);
     return tNumericLiteral;
 }
 
