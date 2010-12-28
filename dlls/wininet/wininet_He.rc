@@ -26,13 +26,13 @@ LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
 IDD_PROXYDLG DIALOG 36, 24, 250, 154
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_LAYOUTRTL
-CAPTION "נא להזין את ססמת הרשת"
+CAPTION "הזנת ססמת הרשת"
 FONT 8, "MS Shell Dlg"
 {
- LTEXT "נא להזין את שם המשתמש והססמה שלך:", -1, 40, 6, 150, 15
+ LTEXT "נא להזין את שם המשתמש ואת הססמה שלך:", -1, 40, 6, 150, 15
  LTEXT "מתווך", -1, 40, 26, 50, 10
  LTEXT "תחום", -1, 40, 46, 50, 10
- LTEXT "שם משתמש", -1, 40, 66, 50, 10
+ LTEXT "משתמש", -1, 40, 66, 50, 10
  LTEXT "ססמה", -1, 40, 86, 50, 10
  LTEXT "" IDC_PROXY, 80, 26, 150, 14, 0
  LTEXT "" IDC_REALM, 80, 46, 150, 14, 0
@@ -50,7 +50,7 @@ EXSTYLE WS_EX_LAYOUTRTL
 CAPTION "נדרש אימות"
 FONT 8, "MS Shell Dlg"
 {
- LTEXT "נא להזין את שם המשתמש והססמה שלך:", -1, 40, 6, 150, 15
+ LTEXT "נא להזין את שם המשתמש ואת הססמה שלך:", -1, 40, 6, 150, 15
  LTEXT "שרת", -1, 40, 26, 50, 10
  LTEXT "תחום", -1, 40, 46, 50, 10
  LTEXT "שם משתמש", -1, 40, 66, 50, 10
@@ -65,7 +65,24 @@ FONT 8, "MS Shell Dlg"
  PUSHBUTTON "ביטול", IDCANCEL, 158, 126, 56, 14, WS_GROUP | WS_TABSTOP
 }
 
+IDD_INVCERTDLG DIALOG 3, 24, 250, 86
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "אזהרת אבטחה"
+FONT 8, "MS Shell Dlg"
+{
+ LTEXT "אירעה תקלה עם האישור לאתר זה.", -1, 40, 6, 200, 20
+ LTEXT "", IDC_CERT_ERROR, 40, 26, 200, 20
+ LTEXT "האם ברצונך להמשיך בכל זאת?", -1, 40, 46, 200, 20
+ PUSHBUTTON "כן", IDOK, 40, 66, 56, 14, WS_GROUP | WS_TABSTOP | BS_DEFPUSHBUTTON
+ PUSHBUTTON "לא", IDCANCEL, 100, 66, 56, 14, WS_GROUP | WS_TABSTOP
+}
+
 STRINGTABLE
 {
-  IDS_LANCONNECTION "חיבור לרשת מקומית"
+  IDS_LANCONNECTION "חיבור רשת מקומית"
+  IDS_CERT_CA_INVALID   "האישור הונפק על ידי מפיץ בלתי ידוע או בלתי מהימן."
+  IDS_CERT_DATE_INVALID "התאריך על האישור שגוי."
+  IDS_CERT_CN_INVALID   "השם על האישור אינו תואם את שם האתר."
+  IDS_CERT_ERRORS       "ישנה לפחות בעיית אבטחה אחת שלא צוינה עם אישור זה."
 }
