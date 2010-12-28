@@ -1404,7 +1404,6 @@ static BOOL elf_enum_modules_internal(const struct process* pcs,
     struct link_map     lm;
     char		bufstr[256];
     WCHAR               bufstrW[MAX_PATH];
-    unsigned long       ehdr_addr;
 
     if (!pcs->dbg_hdr_addr ||
         !ReadProcessMemory(pcs->handle, (void*)pcs->dbg_hdr_addr,
@@ -1431,11 +1430,17 @@ static BOOL elf_enum_modules_internal(const struct process* pcs,
             if (!cb(bufstrW, (unsigned long)lm.l_addr, (unsigned long)lm.l_ld, FALSE, user)) break;
 	}
     }
+
 #ifdef AT_SYSINFO_EHDR
-    if (!lm_addr && elf_search_auxv(pcs, AT_SYSINFO_EHDR, &ehdr_addr))
+    if (!lm_addr)
     {
-        static const WCHAR vdsoW[] = {'[','v','d','s','o',']','.','s','o',0};
-        cb(vdsoW, ehdr_addr, 0, TRUE, user);
+        unsigned long ehdr_addr;
+
+        if (elf_search_auxv(pcs, AT_SYSINFO_EHDR, &ehdr_addr))
+        {
+            static const WCHAR vdsoW[] = {'[','v','d','s','o',']','.','s','o',0};
+            cb(vdsoW, ehdr_addr, 0, TRUE, user);
+        }
     }
 #endif
     return TRUE;
