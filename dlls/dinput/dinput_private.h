@@ -30,10 +30,10 @@
 typedef struct IDirectInputImpl IDirectInputImpl;
 struct IDirectInputImpl
 {
-    const IDirectInput7AVtbl   *lpVtbl;
-    const IDirectInput7WVtbl   *lpVtbl7w;
-    const IDirectInput8AVtbl   *lpVtbl8a;
-    const IDirectInput8WVtbl   *lpVtbl8w;
+    IDirectInput7A              IDirectInput7A_iface;
+    IDirectInput7W              IDirectInput7W_iface;
+    IDirectInput8A              IDirectInput8A_iface;
+    IDirectInput8W              IDirectInput8W_iface;
 
     LONG                        ref;
 
