@@ -1,6 +1,6 @@
 /*
  * Copyright 2005 Dmitry Timoshkov
- * Copyright 2005,2006 YunSong Hwang
+ * Copyright 2005,2006,2010 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,36 +19,38 @@
 
 #include "msvideo_private.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 ICM_CHOOSE_COMPRESSOR DIALOG DISCARDABLE  36, 24, 187, 95
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "∫Òµø¿ æ–√‡"
+CAPTION "ÎπÑÎîîÏò§ ÏïïÏ∂ï"
 FONT 9, "MS Shell Dlg"
 {
-    DEFPUSHBUTTON "»Æ¿Œ",IDOK,129,2,49,14
-    PUSHBUTTON "√Îº“",IDCANCEL,129,18,49,14
+    DEFPUSHBUTTON "ÌôïÏù∏",IDOK,129,2,49,14
+    PUSHBUTTON "Ï∑®ÏÜå",IDCANCEL,129,18,49,14
 
-    LTEXT "æ–√‡(&C):",-1,9,6,105,8
+    LTEXT "ÏïïÏ∂ï(&C):",-1,9,6,105,8
     COMBOBOX 880,9,16,111,67,CBS_DROPDOWNLIST|WS_VSCROLL|WS_TABSTOP
 
-    PUSHBUTTON "º≥¡§(&F)...",882,129,36,49,14
-    PUSHBUTTON "¡§∫∏(&A)...",883,129,52,49,14
+    PUSHBUTTON "ÏÑ§Ï†ï(&F)...",882,129,36,49,14
+    PUSHBUTTON "Ï†ïÎ≥¥(&A)...",883,129,52,49,14
 
     SCROLLBAR 884,9,44,111,9,WS_TABSTOP
 
-    LTEXT "æ–√‡ «∞¡˙(&Q):",886,9,34,80,8
+    LTEXT "ÏïïÏ∂ï ÌíàÏßà(&Q):",886,9,34,80,8
 
-    CONTROL "∏µÁ ≈∞ «¡∑π¿”(&K)",887,"Button",BS_AUTOCHECKBOX|WS_TABSTOP,9,60,66,12
+    CONTROL "Î™®Îì† ÌÇ§ ÌîÑÎ†àÏûÑ(&K)",887,"Button",BS_AUTOCHECKBOX|WS_TABSTOP,9,60,66,12
     EDITTEXT 888,78,60,22,12
-    LTEXT "«¡∑π¿”",889,103,62,26,10
+    LTEXT "ÌîÑÎ†àÏûÑ",889,103,62,26,10
 
-    CONTROL "µ•¿Ã≈∏ ¿¸º€¿≤(&D)",894,"Button",BS_AUTOCHECKBOX|WS_TABSTOP,9,76,66,12
+    CONTROL "Îç∞Ïù¥ÌÉÄ Ï†ÑÏÜ°Ïú®(&D)",894,"Button",BS_AUTOCHECKBOX|WS_TABSTOP,9,76,66,12
     EDITTEXT 895,78,76,22,12
     LTEXT "KB/sec",896,102,78,26,10
 }
 
 STRINGTABLE DISCARDABLE
 {
-    IDS_FULLFRAMES "¿¸√§ «¡∑π¿”(∫Òæ–√‡)"
+    IDS_FULLFRAMES "Ï†ÑÏ±Ñ ÌîÑÎ†àÏûÑ(ÎπÑÏïïÏ∂ï)"
 }
