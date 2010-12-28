@@ -70,6 +70,11 @@ struct d3dcompiler_shader_reflection
     ID3D11ShaderReflection ID3D11ShaderReflection_iface;
     LONG refcount;
 
+    char *creator;
+    UINT flags;
+    UINT bound_resource_count;
+    UINT constant_buffer_count;
+
     UINT mov_instruction_count;
     UINT conversion_instruction_count;
     UINT instruction_count;

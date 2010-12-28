@@ -25,6 +25,30 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dcompiler);
 
+static BOOL copy_name(const char *ptr, char **name)
+{
+    size_t name_len;
+
+    if (!ptr) return TRUE;
+
+    name_len = strlen(ptr) + 1;
+    if (name_len == 1)
+    {
+        return TRUE;
+    }
+
+    *name = HeapAlloc(GetProcessHeap(), 0, name_len);
+    if (!*name)
+    {
+        ERR("Failed to allocate name memory.\n");
+        return FALSE;
+    }
+
+    memcpy(*name, ptr, name_len);
+
+    return TRUE;
+}
+
 static void free_signature(struct d3dcompiler_shader_signature *sig)
 {
     TRACE("Free signature %p\n", sig);
@@ -54,6 +78,8 @@ static void reflection_cleanup(struct d3dcompiler_shader_reflection *ref)
         free_signature(ref->pcsg);
         HeapFree(GetProcessHeap(), 0, ref->pcsg);
     }
+
+    HeapFree(GetProcessHeap(), 0, ref->creator);
 }
 
 static inline struct d3dcompiler_shader_reflection *impl_from_ID3D11ShaderReflection(ID3D11ShaderReflection *iface)
@@ -423,6 +449,48 @@ static HRESULT d3dcompiler_parse_stat(struct d3dcompiler_shader_reflection *r, c
     return E_FAIL;
 }
 
+static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, const char *data, DWORD data_size)
+{
+    const char *ptr = data;
+    DWORD size = data_size >> 2;
+    DWORD offset;
+
+    TRACE("Size %u\n", size);
+
+    read_dword(&ptr, &r->constant_buffer_count);
+    TRACE("Constant buffer count: %u\n", r->constant_buffer_count);
+
+    read_dword(&ptr, &offset);
+    TRACE("Constant buffer offset: %x\n", offset);
+
+    read_dword(&ptr, &r->bound_resource_count);
+    TRACE("Bound resource count: %u\n", r->bound_resource_count);
+
+    read_dword(&ptr, &offset);
+    TRACE("Bound resource offset: %x\n", offset);
+
+    skip_dword_unknown(&ptr, 1);
+
+    read_dword(&ptr, &r->flags);
+    TRACE("Flags: %u\n", r->flags);
+
+    read_dword(&ptr, &offset);
+    TRACE("Creator at offset %#x.\n", offset);
+
+    if (!copy_name(data + offset, &r->creator))
+    {
+        ERR("Failed to copy name.\n");
+        return E_OUTOFMEMORY;
+    }
+    TRACE("Creator: %s.\n", debugstr_a(r->creator));
+
+    /* todo: Parse D3D11_SHADER_INPUT_BIND_DESC Structure */
+
+    /* todo: Parse Constant buffers */
+
+    return S_OK;
+}
+
 HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *s, const char *data, DWORD data_size)
 {
     D3D11_SIGNATURE_PARAMETER_DESC *d;
@@ -516,6 +584,15 @@ HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_reflection 
                 if (FAILED(hr))
                 {
                     WARN("Failed to parse section STAT.\n");
+                    goto err_out;
+                }
+                break;
+
+            case TAG_RDEF:
+                hr = d3dcompiler_parse_rdef(reflection, section->data, section->data_size);
+                if (FAILED(hr))
+                {
+                    WARN("Failed to parse RDEF section.\n");
                     goto err_out;
                 }
                 break;
