@@ -87,6 +87,7 @@ DEFINE_EXPECT(invoke_func);
 #define DISPID_GLOBAL_CREATEARRAY   0x100c
 #define DISPID_GLOBAL_PROPGETFUNC   0x100d
 #define DISPID_GLOBAL_OBJECT_FLAG   0x100e
+#define DISPID_GLOBAL_ISWIN64       0x100f
 
 #define DISPID_TESTOBJ_PROP         0x2000
 
@@ -387,6 +388,12 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         return S_OK;
     }
 
+    if(!strcmp_wa(bstrName, "isWin64")) {
+        test_grfdex(grfdex, fdexNameCaseSensitive);
+        *pid = DISPID_GLOBAL_ISWIN64;
+        return S_OK;
+    }
+
     if(strict_dispid_check)
         ok(0, "unexpected call %s\n", wine_dbgstr_w(bstrName));
     return DISP_E_UNKNOWNNAME;
@@ -540,6 +547,13 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         if(pvarRes) {
             V_VT(pvarRes) = VT_BSTR;
             V_BSTR(pvarRes) = NULL;
+        }
+        return S_OK;
+
+    case DISPID_GLOBAL_ISWIN64:
+        if(pvarRes) {
+            V_VT(pvarRes) = VT_BOOL;
+            V_BSTR(pvarRes) = sizeof(void*) == 8 ? VARIANT_TRUE : VARIANT_FALSE;
         }
         return S_OK;
 
@@ -1420,6 +1434,7 @@ static void run_tests(void)
     run_from_res("lang.js");
     run_from_res("api.js");
     run_from_res("regexp.js");
+    run_from_res("cc.js");
 
     test_isvisible(FALSE);
     test_isvisible(TRUE);
