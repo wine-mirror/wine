@@ -57,6 +57,7 @@ static char tmpdir[MAX_PATH];
 static char child_file[MAX_PATH];
 static DLLVERSIONINFO dllver;
 static BOOL skip_noassoc_tests = FALSE;
+static HANDLE dde_ready_event;
 
 
 /***
@@ -572,13 +573,14 @@ static void doChild(int argc, char** argv)
 
             timer = SetTimer(NULL, 0, 2500, childTimeout);
 
-            dde_ready = CreateEvent(NULL, FALSE, FALSE, "winetest_shlexec_dde_ready");
+            dde_ready = OpenEvent(EVENT_MODIFY_STATE, FALSE, "winetest_shlexec_dde_ready");
             SetEvent(dde_ready);
             CloseHandle(dde_ready);
 
             while (GetMessage(&msg, NULL, 0, 0))
                 DispatchMessage(&msg);
 
+            Sleep(500);
             KillTimer(NULL, timer);
             assert(DdeNameService(ddeInst, hszApplication, 0L, DNS_UNREGISTER));
             assert(DdeFreeStringHandle(ddeInst, hszTopic));
@@ -587,7 +589,7 @@ static void doChild(int argc, char** argv)
         }
         else
         {
-            dde_ready = CreateEvent(NULL, FALSE, FALSE, "winetest_shlexec_dde_ready");
+            dde_ready = OpenEvent(EVENT_MODIFY_STATE, FALSE, "winetest_shlexec_dde_ready");
             SetEvent(dde_ready);
             CloseHandle(dde_ready);
         }
@@ -1613,14 +1615,7 @@ static dde_tests_t dde_tests[] =
 
 static DWORD WINAPI hooked_WaitForInputIdle(HANDLE process, DWORD timeout)
 {
-    HANDLE dde_ready;
-    DWORD wait_result;
-
-    dde_ready = CreateEventA(NULL, FALSE, FALSE, "winetest_shlexec_dde_ready");
-    wait_result = WaitForSingleObject(dde_ready, timeout);
-    CloseHandle(dde_ready);
-
-    return wait_result;
+    return WaitForSingleObject(dde_ready_event, timeout);
 }
 
 /*
@@ -1732,7 +1727,9 @@ static void test_dde(void)
         }
         ddeExec[0] = 0;
 
+        dde_ready_event = CreateEventA(NULL, FALSE, FALSE, "winetest_shlexec_dde_ready");
         rc = shell_execute_ex(SEE_MASK_FLAG_DDEWAIT | SEE_MASK_FLAG_NO_UI, NULL, filename, NULL, NULL);
+        CloseHandle(dde_ready_event);
         if ((test->todo & 0x1)==0)
         {
             ok(32 < rc, "%s failed: rc=%d err=%d\n", shell_call,
