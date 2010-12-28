@@ -496,7 +496,7 @@ Expression_opt
 
 Expression_err
         : Expression            { $$ = $1; }
-        | error                 { set_error(ctx, IDS_SYNTAX_ERROR); YYABORT; }
+        | error                 { set_error(ctx, JS_E_SYNTAX); YYABORT; }
 
 /* ECMA-262 3rd Edition    11.14 */
 Expression
@@ -818,15 +818,15 @@ semicolon_opt
 
 left_bracket
         : '('
-        | error                 { set_error(ctx, IDS_LBRACKET); YYABORT; }
+        | error                 { set_error(ctx, JS_E_MISSING_LBRACKET); YYABORT; }
 
 right_bracket
         : ')'
-        | error                 { set_error(ctx, IDS_RBRACKET); YYABORT; }
+        | error                 { set_error(ctx, JS_E_MISSING_RBRACKET); YYABORT; }
 
 semicolon
         : ';'
-        | error                 { set_error(ctx, IDS_SEMICOLON); YYABORT; }
+        | error                 { set_error(ctx, JS_E_MISSING_SEMICOLON); YYABORT; }
 
 %%
 
@@ -1459,14 +1459,14 @@ static int parser_error(const char *str)
 
 static void set_error(parser_ctx_t *ctx, UINT error)
 {
-    ctx->hres = MAKE_JSERROR(error);
+    ctx->hres = error;
 }
 
 static BOOL explicit_error(parser_ctx_t *ctx, void *obj, WCHAR next)
 {
     if(obj || *(ctx->ptr-1)==next) return TRUE;
 
-    set_error(ctx, IDS_SYNTAX_ERROR);
+    set_error(ctx, JS_E_SYNTAX);
     return FALSE;
 }
 

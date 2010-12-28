@@ -99,7 +99,7 @@ static const struct {
 
 static int lex_error(parser_ctx_t *ctx, HRESULT hres)
 {
-    ctx->hres = MAKE_JSERROR(hres);
+    ctx->hres = hres;
     ctx->lexer_error = TRUE;
     return -1;
 }
@@ -346,7 +346,7 @@ static int parse_string_literal(parser_ctx_t *ctx, const WCHAR **ret, WCHAR endc
     }
 
     if(ctx->ptr == ctx->end)
-        return lex_error(ctx, IDS_UNTERMINATED_STR);
+        return lex_error(ctx, JS_E_UNTERMINATED_STRING);
 
     len = ctx->ptr-ptr;
 
