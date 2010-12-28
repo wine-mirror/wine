@@ -500,9 +500,9 @@
 @ cdecl -ret64 _ftelli64(ptr) msvcrt._ftelli64
 @ stub _ftelli64_nolock
 @ cdecl _ftime32(ptr) msvcrt._ftime32
-@ stub _ftime32_s
+@ cdecl _ftime32_s(ptr) msvcrt._ftime32_s
 @ cdecl _ftime64(ptr) msvcrt._ftime64
-@ stub _ftime64_s
+@ cdecl _ftime64_s(ptr) msvcrt._ftime64_s
 @ cdecl -ret64 _ftol() msvcrt._ftol
 @ cdecl _fullpath(ptr str long) msvcrt._fullpath
 @ cdecl _futime32(long ptr) msvcrt._futime32

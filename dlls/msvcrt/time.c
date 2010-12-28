@@ -602,6 +602,20 @@ void CDECL MSVCRT__ftime64(struct MSVCRT___timeb64 *buf)
 }
 
 /*********************************************************************
+ *		_ftime64_s (MSVCRT.@)
+ */
+int CDECL MSVCRT__ftime64_s(struct MSVCRT___timeb64 *buf)
+{
+    if( !MSVCRT_CHECK_PMT( buf != NULL ) )
+    {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+    MSVCRT__ftime64(buf);
+    return 0;
+}
+
+/*********************************************************************
  *		_ftime32 (MSVCRT.@)
  */
 void CDECL MSVCRT__ftime32(struct MSVCRT___timeb32 *buf)
@@ -613,6 +627,20 @@ void CDECL MSVCRT__ftime32(struct MSVCRT___timeb32 *buf)
     buf->millitm  = buf64.millitm;
     buf->timezone = buf64.timezone;
     buf->dstflag  = buf64.dstflag;
+}
+
+/*********************************************************************
+ *		_ftime32_s (MSVCRT.@)
+ */
+int CDECL MSVCRT__ftime32_s(struct MSVCRT___timeb32 *buf)
+{
+    if( !MSVCRT_CHECK_PMT( buf != NULL ) )
+    {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+    MSVCRT__ftime32(buf);
+    return 0;
 }
 
 /*********************************************************************

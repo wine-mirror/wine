@@ -444,9 +444,9 @@
 @ cdecl -ret64 _ftelli64(ptr) MSVCRT__ftelli64
 @ cdecl _ftime(ptr) MSVCRT__ftime
 @ cdecl _ftime32(ptr) MSVCRT__ftime32
-# stub _ftime32_s
+@ cdecl _ftime32_s(ptr) MSVCRT__ftime32_s
 @ cdecl _ftime64(ptr) MSVCRT__ftime64
-# stub _ftime64_s
+@ cdecl _ftime64_s(ptr) MSVCRT__ftime64_s
 @ cdecl -ret64 _ftol() ntdll._ftol
 @ cdecl -ret64 _ftol2() ntdll._ftol
 @ cdecl -ret64 _ftol2_sse() ntdll._ftol #FIXME: SSE variant should be implemented
