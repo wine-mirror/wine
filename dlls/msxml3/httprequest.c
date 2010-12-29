@@ -60,7 +60,7 @@ struct reqheader
 
 typedef struct
 {
-    const struct IXMLHTTPRequestVtbl *lpVtbl;
+    IXMLHTTPRequest IXMLHTTPRequest_iface;
     LONG ref;
 
     READYSTATE state;
@@ -85,7 +85,7 @@ typedef struct
 
 static inline httprequest *impl_from_IXMLHTTPRequest( IXMLHTTPRequest *iface )
 {
-    return (httprequest *)((char*)iface - FIELD_OFFSET(httprequest, lpVtbl));
+    return CONTAINING_RECORD(iface, httprequest, IXMLHTTPRequest_iface);
 }
 
 static void httprequest_setreadystate(httprequest *This, READYSTATE state)
@@ -617,8 +617,8 @@ static HRESULT WINAPI httprequest_Invoke(IXMLHTTPRequest *iface, DISPID dispIdMe
     hr = get_typeinfo(IXMLHTTPRequest_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &(This->lpVtbl), dispIdMember, wFlags, pDispParams,
-                pVarResult, pExcepInfo, puArgErr);
+        hr = ITypeInfo_Invoke(typeinfo, &This->IXMLHTTPRequest_iface, dispIdMember, wFlags,
+                pDispParams, pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
 
@@ -1001,7 +1001,7 @@ HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **ppObj)
     if( !req )
         return E_OUTOFMEMORY;
 
-    req->lpVtbl = &dimimpl_vtbl;
+    req->IXMLHTTPRequest_iface.lpVtbl = &dimimpl_vtbl;
     req->ref = 1;
 
     req->async = FALSE;
@@ -1016,7 +1016,7 @@ HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **ppObj)
     req->reqheader_size = 0;
     list_init(&req->reqheaders);
 
-    *ppObj = &req->lpVtbl;
+    *ppObj = &req->IXMLHTTPRequest_iface;
 
     TRACE("returning iface %p\n", *ppObj);
 
