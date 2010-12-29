@@ -40,13 +40,13 @@ typedef HRESULT (*fnCreateInstance)( IUnknown *pUnkOuter, LPVOID *ppObj );
 
 typedef struct
 {
-    const struct IClassFactoryVtbl *vtbl;
+    IClassFactory IClassFactory_iface;
     fnCreateInstance pfnCreateInstance;
 } wbemprox_cf;
 
 static inline wbemprox_cf *impl_from_IClassFactory( IClassFactory *iface )
 {
-    return (wbemprox_cf *)((char *)iface - FIELD_OFFSET( wbemprox_cf, vtbl ));
+    return CONTAINING_RECORD(iface, wbemprox_cf, IClassFactory_iface);
 }
 
 static HRESULT WINAPI wbemprox_cf_QueryInterface( IClassFactory *iface, REFIID riid, LPVOID *ppobj )
@@ -113,7 +113,7 @@ static const struct IClassFactoryVtbl wbemprox_cf_vtbl =
     wbemprox_cf_LockServer
 };
 
-static wbemprox_cf wbem_locator_cf = { &wbemprox_cf_vtbl, WbemLocator_create };
+static wbemprox_cf wbem_locator_cf = { { &wbemprox_cf_vtbl }, WbemLocator_create };
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -141,7 +141,7 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
 
     if (IsEqualGUID( rclsid, &CLSID_WbemLocator ))
     {
-       cf = (IClassFactory *)&wbem_locator_cf.vtbl;
+       cf = &wbem_locator_cf.IClassFactory_iface;
     }
     if (!cf) return CLASS_E_CLASSNOTAVAILABLE;
     return IClassFactory_QueryInterface( cf, iid, ppv );
