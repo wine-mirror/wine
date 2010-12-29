@@ -34,6 +34,7 @@ STRINGTABLE
     IDS_LBRACKET            "Oczekiwane '('"
     IDS_RBRACKET            "Oczekiwane ')'"
     IDS_UNTERMINATED_STR    "Niezakoñczona sta³a znakowa"
+    IDS_DISABLED_CC         "Warunkowa kompilacja jest wy³¹czona"
     IDS_NOT_FUNC            "Oczekiwana funkcja"
     IDS_NOT_DATE            "'[obiekt]' nie jest obiektem daty"
     IDS_NOT_NUM             "Oczekiwana liczba"
