@@ -1534,7 +1534,6 @@ static INT funcrecord_reallochdr(INT **typedata, int need)
 /******************************************************************************
  * ICreateTypeInfo2_QueryInterface {OLEAUT32}
  *
- *  See IUnknown_QueryInterface.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnQueryInterface(
 	ICreateTypeInfo2 * iface,
@@ -1568,8 +1567,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnQueryInterface(
 
 /******************************************************************************
  * ICreateTypeInfo2_AddRef {OLEAUT32}
- *
- *  See IUnknown_AddRef.
  */
 static ULONG WINAPI ICreateTypeInfo2_fnAddRef(ICreateTypeInfo2 *iface)
 {
@@ -1586,8 +1583,6 @@ static ULONG WINAPI ICreateTypeInfo2_fnAddRef(ICreateTypeInfo2 *iface)
 
 /******************************************************************************
  * ICreateTypeInfo2_Release {OLEAUT32}
- *
- *  See IUnknown_Release.
  */
 static ULONG WINAPI ICreateTypeInfo2_fnRelease(ICreateTypeInfo2 *iface)
 {
@@ -1614,8 +1609,6 @@ static ULONG WINAPI ICreateTypeInfo2_fnRelease(ICreateTypeInfo2 *iface)
 
 /******************************************************************************
  * ICreateTypeInfo2_SetGuid {OLEAUT32}
- *
- *  See ICreateTypeInfo_SetGuid.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnSetGuid(ICreateTypeInfo2 *iface, REFGUID guid)
 {
@@ -1645,8 +1638,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetGuid(ICreateTypeInfo2 *iface, REFGUI
 
 /******************************************************************************
  * ICreateTypeInfo2_SetTypeFlags {OLEAUT32}
- *
- *  See ICreateTypeInfo_SetTypeFlags.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeFlags(ICreateTypeInfo2 *iface, UINT uTypeFlags)
 {
@@ -1716,8 +1707,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeFlags(ICreateTypeInfo2 *iface, U
 
 /******************************************************************************
  * ICreateTypeInfo2_SetDocString {OLEAUT32}
- *
- *  See ICreateTypeInfo_SetDocString.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnSetDocString(
         ICreateTypeInfo2* iface,
@@ -1739,8 +1728,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetDocString(
 
 /******************************************************************************
  * ICreateTypeInfo2_SetHelpContext {OLEAUT32}
- *
- *  See ICreateTypeInfo_SetHelpContext.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnSetHelpContext(
         ICreateTypeInfo2* iface,
@@ -1757,8 +1744,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetHelpContext(
 
 /******************************************************************************
  * ICreateTypeInfo2_SetVersion {OLEAUT32}
- *
- *  See ICreateTypeInfo_SetVersion.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnSetVersion(
         ICreateTypeInfo2* iface,
@@ -1775,8 +1760,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetVersion(
 
 /******************************************************************************
  * ICreateTypeInfo2_AddRefTypeInfo {OLEAUT32}
- *
- *  See ICreateTypeInfo_AddRefTypeInfo.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(
         ICreateTypeInfo2* iface,
@@ -1899,8 +1882,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(
 
 /******************************************************************************
  * ICreateTypeInfo2_AddFuncDesc {OLEAUT32}
- *
- *  See ICreateTypeInfo_AddFuncDesc.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
         ICreateTypeInfo2* iface,
@@ -2055,8 +2036,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
 
 /******************************************************************************
  * ICreateTypeInfo2_AddImplType {OLEAUT32}
- *
- *  See ICreateTypeInfo_AddImplType.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnAddImplType(
         ICreateTypeInfo2* iface,
@@ -2124,8 +2103,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddImplType(
 
 /******************************************************************************
  * ICreateTypeInfo2_SetImplTypeFlags {OLEAUT32}
- *
- *  See ICreateTypeInfo_SetImplTypeFlags.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnSetImplTypeFlags(
         ICreateTypeInfo2* iface,
@@ -2153,8 +2130,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetImplTypeFlags(
 
 /******************************************************************************
  * ICreateTypeInfo2_SetAlignment {OLEAUT32}
- *
- *  See ICreateTypeInfo_SetAlignment.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnSetAlignment(
         ICreateTypeInfo2* iface,
@@ -2197,8 +2172,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetAlignment(
 
 /******************************************************************************
  * ICreateTypeInfo2_SetSchema {OLEAUT32}
- *
- *  See ICreateTypeInfo_SetSchema.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnSetSchema(
         ICreateTypeInfo2* iface,
@@ -2210,8 +2183,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetSchema(
 
 /******************************************************************************
  * ICreateTypeInfo2_AddVarDesc {OLEAUT32}
- *
- *  See ICreateTypeInfo_AddVarDesc.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
         ICreateTypeInfo2* iface,
@@ -2332,8 +2303,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
 
 /******************************************************************************
  * ICreateTypeInfo2_SetFuncAndParamNames {OLEAUT32}
- *
- *  See ICreateTypeInfo_SetFuncAndParamNames.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(
         ICreateTypeInfo2* iface,
@@ -2406,8 +2375,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(
 
 /******************************************************************************
  * ICreateTypeInfo2_SetVarName {OLEAUT32}
- *
- *  See ICreateTypeInfo_SetVarName.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnSetVarName(
         ICreateTypeInfo2* iface,
@@ -2447,8 +2414,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetVarName(
 
 /******************************************************************************
  * ICreateTypeInfo2_SetTypeDescAlias {OLEAUT32}
- *
- *  See ICreateTypeInfo_SetTypeDescAlias.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeDescAlias(
         ICreateTypeInfo2* iface,
@@ -2477,8 +2442,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeDescAlias(
 
 /******************************************************************************
  * ICreateTypeInfo2_DefineFuncAsDllEntry {OLEAUT32}
- *
- *  See ICreateTypeInfo_DefineFuncAsDllEntry.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnDefineFuncAsDllEntry(
         ICreateTypeInfo2* iface,
@@ -2492,8 +2455,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnDefineFuncAsDllEntry(
 
 /******************************************************************************
  * ICreateTypeInfo2_SetFuncDocString {OLEAUT32}
- *
- *  See ICreateTypeInfo_SetFuncDocString.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncDocString(
         ICreateTypeInfo2* iface,
@@ -2506,8 +2467,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncDocString(
 
 /******************************************************************************
  * ICreateTypeInfo2_SetVarDocString {OLEAUT32}
- *
- *  See ICreateTypeInfo_SetVarDocString.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnSetVarDocString(
         ICreateTypeInfo2* iface,
@@ -2525,8 +2484,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetVarDocString(
 
 /******************************************************************************
  * ICreateTypeInfo2_SetFuncHelpContext {OLEAUT32}
- *
- *  See ICreateTypeInfo_SetFuncHelpContext.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncHelpContext(
         ICreateTypeInfo2* iface,
@@ -2559,8 +2516,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncHelpContext(
 
 /******************************************************************************
  * ICreateTypeInfo2_SetVarHelpContext {OLEAUT32}
- *
- *  See ICreateTypeInfo_SetVarHelpContext.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnSetVarHelpContext(
         ICreateTypeInfo2* iface,
@@ -2590,8 +2545,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetVarHelpContext(
 
 /******************************************************************************
  * ICreateTypeInfo2_SetMops {OLEAUT32}
- *
- *  See ICreateTypeInfo_SetMops.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnSetMops(
         ICreateTypeInfo2* iface,
@@ -2604,8 +2557,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetMops(
 
 /******************************************************************************
  * ICreateTypeInfo2_SetTypeIdldesc {OLEAUT32}
- *
- *  See ICreateTypeInfo_SetTypeIdldesc.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeIdldesc(
         ICreateTypeInfo2* iface,
@@ -2617,8 +2568,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeIdldesc(
 
 /******************************************************************************
  * ICreateTypeInfo2_LayOut {OLEAUT32}
- *
- *  See ICreateTypeInfo_LayOut.
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
 	ICreateTypeInfo2* iface)
@@ -3150,8 +3099,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetName(
 
 /******************************************************************************
  * ITypeInfo2_QueryInterface {OLEAUT32}
- *
- *  See IUnknown_QueryInterface.
  */
 static HRESULT WINAPI ITypeInfo2_fnQueryInterface(ITypeInfo2 * iface, REFIID riid, LPVOID * ppv)
 {
@@ -3162,8 +3109,6 @@ static HRESULT WINAPI ITypeInfo2_fnQueryInterface(ITypeInfo2 * iface, REFIID rii
 
 /******************************************************************************
  * ITypeInfo2_AddRef {OLEAUT32}
- *
- *  See IUnknown_AddRef.
  */
 static ULONG WINAPI ITypeInfo2_fnAddRef(ITypeInfo2 * iface)
 {
@@ -3174,8 +3119,6 @@ static ULONG WINAPI ITypeInfo2_fnAddRef(ITypeInfo2 * iface)
 
 /******************************************************************************
  * ITypeInfo2_Release {OLEAUT32}
- *
- *  See IUnknown_Release.
  */
 static ULONG WINAPI ITypeInfo2_fnRelease(ITypeInfo2 * iface)
 {
@@ -3186,8 +3129,6 @@ static ULONG WINAPI ITypeInfo2_fnRelease(ITypeInfo2 * iface)
 
 /******************************************************************************
  * ITypeInfo2_GetTypeAttr {OLEAUT32}
- *
- *  See ITypeInfo_GetTypeAttr.
  */
 static HRESULT WINAPI ITypeInfo2_fnGetTypeAttr(
         ITypeInfo2* iface,
@@ -3238,8 +3179,6 @@ static HRESULT WINAPI ITypeInfo2_fnGetTypeAttr(
 
 /******************************************************************************
  * ITypeInfo2_GetTypeComp {OLEAUT32}
- *
- *  See ITypeInfo_GetTypeComp.
  */
 static HRESULT WINAPI ITypeInfo2_fnGetTypeComp(
         ITypeInfo2* iface,
@@ -3251,8 +3190,6 @@ static HRESULT WINAPI ITypeInfo2_fnGetTypeComp(
 
 /******************************************************************************
  * ITypeInfo2_GetFuncDesc {OLEAUT32}
- *
- *  See ITypeInfo_GetFuncDesc.
  */
 static HRESULT WINAPI ITypeInfo2_fnGetFuncDesc(
         ITypeInfo2* iface,
@@ -3358,8 +3295,6 @@ static HRESULT WINAPI ITypeInfo2_fnGetFuncDesc(
 
 /******************************************************************************
  * ITypeInfo2_GetVarDesc {OLEAUT32}
- *
- *  See ITypeInfo_GetVarDesc.
  */
 static HRESULT WINAPI ITypeInfo2_fnGetVarDesc(
         ITypeInfo2* iface,
@@ -3372,8 +3307,6 @@ static HRESULT WINAPI ITypeInfo2_fnGetVarDesc(
 
 /******************************************************************************
  * ITypeInfo2_GetNames {OLEAUT32}
- *
- *  See ITypeInfo_GetNames.
  */
 static HRESULT WINAPI ITypeInfo2_fnGetNames(
         ITypeInfo2* iface,
@@ -3388,8 +3321,6 @@ static HRESULT WINAPI ITypeInfo2_fnGetNames(
 
 /******************************************************************************
  * ITypeInfo2_GetRefTypeOfImplType {OLEAUT32}
- *
- *  See ITypeInfo_GetRefTypeOfImplType.
  */
 static HRESULT WINAPI ITypeInfo2_fnGetRefTypeOfImplType(
         ITypeInfo2* iface,
@@ -3435,8 +3366,6 @@ static HRESULT WINAPI ITypeInfo2_fnGetRefTypeOfImplType(
 
 /******************************************************************************
  * ITypeInfo2_GetImplTypeFlags {OLEAUT32}
- *
- *  See ITypeInfo_GetImplTypeFlags.
  */
 static HRESULT WINAPI ITypeInfo2_fnGetImplTypeFlags(
         ITypeInfo2* iface,
@@ -3471,8 +3400,6 @@ static HRESULT WINAPI ITypeInfo2_fnGetImplTypeFlags(
 
 /******************************************************************************
  * ITypeInfo2_GetIDsOfNames {OLEAUT32}
- *
- *  See ITypeInfo_GetIDsOfNames.
  */
 static HRESULT WINAPI ITypeInfo2_fnGetIDsOfNames(
         ITypeInfo2* iface,
@@ -3486,8 +3413,6 @@ static HRESULT WINAPI ITypeInfo2_fnGetIDsOfNames(
 
 /******************************************************************************
  * ITypeInfo2_Invoke {OLEAUT32}
- *
- *  See ITypeInfo_Invoke.
  */
 static HRESULT WINAPI ITypeInfo2_fnInvoke(
         ITypeInfo2* iface,
@@ -3505,8 +3430,6 @@ static HRESULT WINAPI ITypeInfo2_fnInvoke(
 
 /******************************************************************************
  * ITypeInfo2_GetDocumentation {OLEAUT32}
- *
- *  See ITypeInfo_GetDocumentation.
  */
 static HRESULT WINAPI ITypeInfo2_fnGetDocumentation(
         ITypeInfo2* iface,
@@ -3602,8 +3525,6 @@ static HRESULT WINAPI ITypeInfo2_fnGetDocumentation(
 
 /******************************************************************************
  * ITypeInfo2_GetDllEntry {OLEAUT32}
- *
- *  See ITypeInfo_GetDllEntry.
  */
 static HRESULT WINAPI ITypeInfo2_fnGetDllEntry(
         ITypeInfo2* iface,
@@ -3619,8 +3540,6 @@ static HRESULT WINAPI ITypeInfo2_fnGetDllEntry(
 
 /******************************************************************************
  * ITypeInfo2_GetRefTypeInfo {OLEAUT32}
- *
- *  See ITypeInfo_GetRefTypeInfo.
  */
 static HRESULT WINAPI ITypeInfo2_fnGetRefTypeInfo(
         ITypeInfo2* iface,
@@ -3685,8 +3604,6 @@ static HRESULT WINAPI ITypeInfo2_fnGetRefTypeInfo(
 
 /******************************************************************************
  * ITypeInfo2_AddressOfMember {OLEAUT32}
- *
- *  See ITypeInfo_AddressOfMember.
  */
 static HRESULT WINAPI ITypeInfo2_fnAddressOfMember(
         ITypeInfo2* iface,
@@ -3700,8 +3617,6 @@ static HRESULT WINAPI ITypeInfo2_fnAddressOfMember(
 
 /******************************************************************************
  * ITypeInfo2_CreateInstance {OLEAUT32}
- *
- *  See ITypeInfo_CreateInstance.
  */
 static HRESULT WINAPI ITypeInfo2_fnCreateInstance(
         ITypeInfo2* iface,
@@ -3715,8 +3630,6 @@ static HRESULT WINAPI ITypeInfo2_fnCreateInstance(
 
 /******************************************************************************
  * ITypeInfo2_GetMops {OLEAUT32}
- *
- *  See ITypeInfo_GetMops.
  */
 static HRESULT WINAPI ITypeInfo2_fnGetMops(
         ITypeInfo2* iface,
@@ -3729,8 +3642,6 @@ static HRESULT WINAPI ITypeInfo2_fnGetMops(
 
 /******************************************************************************
  * ITypeInfo2_GetContainingTypeLib {OLEAUT32}
- *
- *  See ITypeInfo_GetContainingTypeLib.
  */
 static HRESULT WINAPI ITypeInfo2_fnGetContainingTypeLib(
         ITypeInfo2* iface,
@@ -3763,8 +3674,6 @@ static void release_typedesc(TYPEDESC *tdesc)
 
 /******************************************************************************
  * ITypeInfo2_ReleaseTypeAttr {OLEAUT32}
- *
- *  See ITypeInfo_ReleaseTypeAttr.
  */
 static void WINAPI ITypeInfo2_fnReleaseTypeAttr(
         ITypeInfo2* iface,
@@ -3780,8 +3689,6 @@ static void WINAPI ITypeInfo2_fnReleaseTypeAttr(
 
 /******************************************************************************
  * ITypeInfo2_ReleaseFuncDesc {OLEAUT32}
- *
- *  See ITypeInfo_ReleaseFuncDesc.
  */
 static void WINAPI ITypeInfo2_fnReleaseFuncDesc(
         ITypeInfo2* iface,
@@ -3813,8 +3720,6 @@ static void WINAPI ITypeInfo2_fnReleaseFuncDesc(
 
 /******************************************************************************
  * ITypeInfo2_ReleaseVarDesc {OLEAUT32}
- *
- *  See ITypeInfo_ReleaseVarDesc.
  */
 static void WINAPI ITypeInfo2_fnReleaseVarDesc(
         ITypeInfo2* iface,
@@ -4299,8 +4204,6 @@ static ICreateTypeInfo2 *ICreateTypeInfo2_Constructor(ICreateTypeLib2Impl *typel
 
 /******************************************************************************
  * ICreateTypeLib2_QueryInterface {OLEAUT32}
- *
- *  See IUnknown_QueryInterface.
  */
 static HRESULT WINAPI ICreateTypeLib2_fnQueryInterface(
 	ICreateTypeLib2 * iface,
@@ -4334,30 +4237,26 @@ static HRESULT WINAPI ICreateTypeLib2_fnQueryInterface(
 
 /******************************************************************************
  * ICreateTypeLib2_AddRef {OLEAUT32}
- *
- *  See IUnknown_AddRef.
  */
 static ULONG WINAPI ICreateTypeLib2_fnAddRef(ICreateTypeLib2 *iface)
 {
     ICreateTypeLib2Impl *This = (ICreateTypeLib2Impl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->ref was %u\n",This, ref - 1);
+    TRACE("(%p)->(%u)\n", This, ref);
 
     return ref;
 }
 
 /******************************************************************************
  * ICreateTypeLib2_Release {OLEAUT32}
- *
- *  See IUnknown_Release.
  */
 static ULONG WINAPI ICreateTypeLib2_fnRelease(ICreateTypeLib2 *iface)
 {
     ICreateTypeLib2Impl *This = (ICreateTypeLib2Impl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(%u)\n",This, ref);
+    TRACE("(%p)->(%u)\n", This, ref);
 
     if (!ref) {
 	int i;
@@ -4403,8 +4302,6 @@ static ULONG WINAPI ICreateTypeLib2_fnRelease(ICreateTypeLib2 *iface)
 
 /******************************************************************************
  * ICreateTypeLib2_CreateTypeInfo {OLEAUT32}
- *
- *  See ICreateTypeLib_CreateTypeInfo.
  */
 static HRESULT WINAPI ICreateTypeLib2_fnCreateTypeInfo(
 	ICreateTypeLib2 * iface,
@@ -4431,8 +4328,6 @@ static HRESULT WINAPI ICreateTypeLib2_fnCreateTypeInfo(
 
 /******************************************************************************
  * ICreateTypeLib2_SetName {OLEAUT32}
- *
- *  See ICreateTypeLib_SetName.
  */
 static HRESULT WINAPI ICreateTypeLib2_fnSetName(
 	ICreateTypeLib2 * iface,
@@ -4452,8 +4347,6 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetName(
 
 /******************************************************************************
  * ICreateTypeLib2_SetVersion {OLEAUT32}
- *
- *  See ICreateTypeLib_SetVersion.
  */
 static HRESULT WINAPI ICreateTypeLib2_fnSetVersion(ICreateTypeLib2 * iface, WORD wMajorVerNum, WORD wMinorVerNum)
 {
@@ -4467,8 +4360,6 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetVersion(ICreateTypeLib2 * iface, WORD
 
 /******************************************************************************
  * ICreateTypeLib2_SetGuid {OLEAUT32}
- *
- *  See ICreateTypeLib_SetGuid.
  */
 static HRESULT WINAPI ICreateTypeLib2_fnSetGuid(ICreateTypeLib2 * iface, REFGUID guid)
 {
@@ -4494,8 +4385,6 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetGuid(ICreateTypeLib2 * iface, REFGUID
 
 /******************************************************************************
  * ICreateTypeLib2_SetDocString {OLEAUT32}
- *
- *  See ICreateTypeLib_SetDocString.
  */
 static HRESULT WINAPI ICreateTypeLib2_fnSetDocString(ICreateTypeLib2 * iface, LPOLESTR szDoc)
 {
@@ -4515,8 +4404,6 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetDocString(ICreateTypeLib2 * iface, LP
 
 /******************************************************************************
  * ICreateTypeLib2_SetHelpFileName {OLEAUT32}
- *
- *  See ICreateTypeLib_SetHelpFileName.
  */
 static HRESULT WINAPI ICreateTypeLib2_fnSetHelpFileName(ICreateTypeLib2 * iface, LPOLESTR szHelpFileName)
 {
@@ -4535,8 +4422,6 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetHelpFileName(ICreateTypeLib2 * iface,
 
 /******************************************************************************
  * ICreateTypeLib2_SetHelpContext {OLEAUT32}
- *
- *  See ICreateTypeLib_SetHelpContext.
  */
 static HRESULT WINAPI ICreateTypeLib2_fnSetHelpContext(ICreateTypeLib2 * iface, DWORD dwHelpContext)
 {
@@ -4570,8 +4455,6 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetLcid(ICreateTypeLib2 * iface, LCID lc
 
 /******************************************************************************
  * ICreateTypeLib2_SetLibFlags {OLEAUT32}
- *
- *  See ICreateTypeLib_SetLibFlags.
  */
 static HRESULT WINAPI ICreateTypeLib2_fnSetLibFlags(ICreateTypeLib2 * iface, UINT uLibFlags)
 {
@@ -4668,8 +4551,6 @@ static void ctl2_write_typeinfos(ICreateTypeLib2Impl *This, HANDLE hFile)
 
 /******************************************************************************
  * ICreateTypeLib2_SaveAllChanges {OLEAUT32}
- *
- *  See ICreateTypeLib_SaveAllChanges.
  */
 static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 * iface)
 {
@@ -4838,8 +4719,6 @@ HRESULT WINAPI ICreateTypeLib2_fnSetHelpStringDll(ICreateTypeLib2 * iface,
 
 /******************************************************************************
  * ITypeLib2_QueryInterface {OLEAUT32}
- *
- *  See IUnknown_QueryInterface.
  */
 static HRESULT WINAPI ITypeLib2_fnQueryInterface(ITypeLib2 * iface, REFIID riid, LPVOID * ppv)
 {
@@ -4850,8 +4729,6 @@ static HRESULT WINAPI ITypeLib2_fnQueryInterface(ITypeLib2 * iface, REFIID riid,
 
 /******************************************************************************
  * ITypeLib2_AddRef {OLEAUT32}
- *
- *  See IUnknown_AddRef.
  */
 static ULONG WINAPI ITypeLib2_fnAddRef(ITypeLib2 * iface)
 {
@@ -4862,8 +4739,6 @@ static ULONG WINAPI ITypeLib2_fnAddRef(ITypeLib2 * iface)
 
 /******************************************************************************
  * ITypeLib2_Release {OLEAUT32}
- *
- *  See IUnknown_Release.
  */
 static ULONG WINAPI ITypeLib2_fnRelease(ITypeLib2 * iface)
 {
@@ -4874,8 +4749,6 @@ static ULONG WINAPI ITypeLib2_fnRelease(ITypeLib2 * iface)
 
 /******************************************************************************
  * ITypeLib2_GetTypeInfoCount {OLEAUT32}
- *
- *  See ITypeLib_GetTypeInfoCount.
  */
 static UINT WINAPI ITypeLib2_fnGetTypeInfoCount(
         ITypeLib2 * iface)
@@ -4889,8 +4762,6 @@ static UINT WINAPI ITypeLib2_fnGetTypeInfoCount(
 
 /******************************************************************************
  * ITypeLib2_GetTypeInfo {OLEAUT32}
- *
- *  See ITypeLib_GetTypeInfo.
  */
 static HRESULT WINAPI ITypeLib2_fnGetTypeInfo(
         ITypeLib2 * iface,
@@ -4912,8 +4783,6 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfo(
 
 /******************************************************************************
  * ITypeLib2_GetTypeInfoType {OLEAUT32}
- *
- *  See ITypeLib_GetTypeInfoType.
  */
 static HRESULT WINAPI ITypeLib2_fnGetTypeInfoType(
         ITypeLib2 * iface,
@@ -4937,8 +4806,6 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfoType(
 
 /******************************************************************************
  * ITypeLib2_GetTypeInfoOfGuid {OLEAUT32}
- *
- *  See ITypeLib_GetTypeInfoOfGuid.
  */
 static HRESULT WINAPI ITypeLib2_fnGetTypeInfoOfGuid(
         ITypeLib2 * iface,
@@ -4963,8 +4830,6 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfoOfGuid(
 
 /******************************************************************************
  * ITypeLib2_GetLibAttr {OLEAUT32}
- *
- *  See ITypeLib_GetLibAttr.
  */
 static HRESULT WINAPI ITypeLib2_fnGetLibAttr(
         ITypeLib2 * iface,
@@ -4998,8 +4863,6 @@ static HRESULT WINAPI ITypeLib2_fnGetLibAttr(
 
 /******************************************************************************
  * ITypeLib2_GetTypeComp {OLEAUT32}
- *
- *  See ITypeLib_GetTypeComp.
  */
 static HRESULT WINAPI ITypeLib2_fnGetTypeComp(
         ITypeLib2 * iface,
@@ -5014,8 +4877,6 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeComp(
 
 /******************************************************************************
  * ITypeLib2_GetDocumentation {OLEAUT32}
- *
- *  See ITypeLib_GetDocumentation.
  */
 static HRESULT WINAPI ITypeLib2_fnGetDocumentation(
         ITypeLib2 * iface,
@@ -5095,8 +4956,6 @@ static HRESULT WINAPI ITypeLib2_fnGetDocumentation(
 
 /******************************************************************************
  * ITypeLib2_IsName {OLEAUT32}
- *
- *  See ITypeLib_IsName.
  */
 static HRESULT WINAPI ITypeLib2_fnIsName(
         ITypeLib2 * iface,
@@ -5131,8 +4990,6 @@ static HRESULT WINAPI ITypeLib2_fnIsName(
 
 /******************************************************************************
  * ITypeLib2_FindName {OLEAUT32}
- *
- *  See ITypeLib_FindName.
  */
 static HRESULT WINAPI ITypeLib2_fnFindName(
         ITypeLib2 * iface,
@@ -5151,8 +5008,6 @@ static HRESULT WINAPI ITypeLib2_fnFindName(
 
 /******************************************************************************
  * ITypeLib2_ReleaseTLibAttr {OLEAUT32}
- *
- *  See ITypeLib_ReleaseTLibAttr.
  */
 static void WINAPI ITypeLib2_fnReleaseTLibAttr(
         ITypeLib2 * iface,
