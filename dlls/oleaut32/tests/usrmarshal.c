@@ -19,6 +19,7 @@
  */
 
 #define COBJMACROS
+#define CONST_VTABLE
 
 #include <stdarg.h>
 
@@ -669,9 +670,14 @@ static void test_marshal_BSTR(void)
 
 typedef struct
 {
-    const IUnknownVtbl *lpVtbl;
+    IUnknown IUnknown_iface;
     ULONG refs;
 } HeapUnknown;
+
+static inline HeapUnknown *impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, HeapUnknown, IUnknown_iface);
+}
 
 static HRESULT WINAPI HeapUnknown_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
 {
@@ -687,13 +693,13 @@ static HRESULT WINAPI HeapUnknown_QueryInterface(IUnknown *iface, REFIID riid, v
 
 static ULONG WINAPI HeapUnknown_AddRef(IUnknown *iface)
 {
-    HeapUnknown *This = (HeapUnknown *)iface;
+    HeapUnknown *This = impl_from_IUnknown(iface);
     return InterlockedIncrement((LONG*)&This->refs);
 }
 
 static ULONG WINAPI HeapUnknown_Release(IUnknown *iface)
 {
-    HeapUnknown *This = (HeapUnknown *)iface;
+    HeapUnknown *This = impl_from_IUnknown(iface);
     ULONG refs = InterlockedDecrement((LONG*)&This->refs);
     if (!refs) HeapFree(GetProcessHeap(), 0, This);
     return refs;
@@ -1437,12 +1443,12 @@ static void test_marshal_VARIANT(void)
 
     /*** UNKNOWN ***/
     heap_unknown = HeapAlloc(GetProcessHeap(), 0, sizeof(*heap_unknown));
-    heap_unknown->lpVtbl = &HeapUnknown_Vtbl;
+    heap_unknown->IUnknown_iface.lpVtbl = &HeapUnknown_Vtbl;
     heap_unknown->refs = 1;
     VariantInit(&v);
     VariantInit(&v2);
     V_VT(&v) = VT_UNKNOWN;
-    V_UNKNOWN(&v) = (IUnknown *)heap_unknown;
+    V_UNKNOWN(&v) = &heap_unknown->IUnknown_iface;
 
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
     ok(stubMsg.BufferLength > 32, "size %d\n", stubMsg.BufferLength);
@@ -1471,7 +1477,7 @@ static void test_marshal_VARIANT(void)
         VARIANT v3;
         VariantInit(&v3);
         V_VT(&v3) = VT_UNKNOWN;
-        V_UNKNOWN(&v3) = (IUnknown *)heap_unknown;
+        V_UNKNOWN(&v3) = &heap_unknown->IUnknown_iface;
         IUnknown_AddRef(V_UNKNOWN(&v3));
         stubMsg.Buffer = buffer;
         next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v3);
@@ -1479,7 +1485,7 @@ static void test_marshal_VARIANT(void)
         ok(V_UNKNOWN(&v) == V_UNKNOWN(&v3), "got %p expect %p\n", V_UNKNOWN(&v), V_UNKNOWN(&v3));
         VARIANT_UserFree(&umcb.Flags, &v3);
         ok(heap_unknown->refs == 1, "%d refcounts of IUnknown leaked\n", heap_unknown->refs - 1);
-        IUnknown_Release((IUnknown *)heap_unknown);
+        IUnknown_Release(&heap_unknown->IUnknown_iface);
     }
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 
@@ -1509,7 +1515,7 @@ static void test_marshal_VARIANT(void)
 
     /*** UNKNOWN BYREF ***/
     heap_unknown = HeapAlloc(GetProcessHeap(), 0, sizeof(*heap_unknown));
-    heap_unknown->lpVtbl = &HeapUnknown_Vtbl;
+    heap_unknown->IUnknown_iface.lpVtbl = &HeapUnknown_Vtbl;
     heap_unknown->refs = 1;
     VariantInit(&v);
     VariantInit(&v2);
@@ -1545,7 +1551,7 @@ static void test_marshal_VARIANT(void)
         VARIANT v3;
         VariantInit(&v3);
         V_VT(&v3) = VT_UNKNOWN;
-        V_UNKNOWN(&v3) = (IUnknown *)heap_unknown;
+        V_UNKNOWN(&v3) = &heap_unknown->IUnknown_iface;
         IUnknown_AddRef(V_UNKNOWN(&v3));
         stubMsg.Buffer = buffer;
         next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v3);
@@ -1553,7 +1559,7 @@ static void test_marshal_VARIANT(void)
         ok(*V_UNKNOWNREF(&v) == *V_UNKNOWNREF(&v3), "got %p expect %p\n", *V_UNKNOWNREF(&v), *V_UNKNOWNREF(&v3));
         VARIANT_UserFree(&umcb.Flags, &v3);
         ok(heap_unknown->refs == 1, "%d refcounts of IUnknown leaked\n", heap_unknown->refs - 1);
-        IUnknown_Release((IUnknown *)heap_unknown);
+        IUnknown_Release(&heap_unknown->IUnknown_iface);
     }
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 }
