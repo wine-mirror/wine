@@ -36,6 +36,7 @@ STRINGTABLE
     IDS_LBRACKET            "'(' förväntades"
     IDS_RBRACKET            "')' förväntades"
     IDS_UNTERMINATED_STR    "Oterminerad strängkonstant"
+    IDS_DISABLED_CC         "Villkorlig kompilering är avslagen"
     IDS_NOT_FUNC            "Funktion förväntades"
     IDS_NOT_DATE            "'[object]' är inte ett datumobjekt"
     IDS_NOT_NUM             "Nummer förväntades"
