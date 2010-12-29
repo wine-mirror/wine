@@ -1373,14 +1373,19 @@ ULONG WINAPI FBadColumnSet(LPSPropTagArray lpCols)
 
 
 /**************************************************************************
- *  IMAPIProp {MAPI32}
+ *  IPropData {MAPI32}
  *
- * The default Mapi interface for manipulating object properties.
+ * A default Mapi interface to provide manipulation of object properties.
  *
  * DESCRIPTION
- *  This object provides an interface to an objects properties. It is exposed
- *  by several types of Mapi objects in order to simplify the querying and
- *  modification of properties.
+ *  This object provides a default interface suitable in some cases as an
+ *  implementation of the IMAPIProp interface (which has no default
+ *  implementation). In addition to the IMAPIProp() methods inherited, this
+ *  interface allows read/write control over access to the object and its
+ *  individual properties.
+ *
+ *  To obtain the default implementation of this interface from Mapi, call
+ *  CreateIProp().
  *
  * METHODS
  */
@@ -1475,17 +1480,12 @@ static inline void IMAPIPROP_Unlock(IPropDataImpl *This)
     (offsetof(SPropProblemArray,aProblem)+(c)*sizeof(SPropProblem))
 
 /**************************************************************************
- *  IMAPIProp_QueryInterface {MAPI32}
+ *  IPropData_QueryInterface {MAPI32}
  *
  * Inherited method from the IUnknown Interface.
  * See IUnknown_QueryInterface.
- *
- * NOTES
- * This object exposes the following interfaces:
- * - IUnknown() : The default interface for all COM-Objects.
- * - IMAPIProp() : The default Mapi interface for manipulating object properties.
  */
-static inline HRESULT IMAPIProp_fnQueryInterface(LPMAPIPROP iface, REFIID riid, LPVOID *ppvObj)
+static WINAPI HRESULT IPropData_fnQueryInterface(LPPROPDATA iface, REFIID riid, LPVOID *ppvObj)
 {
     IPropDataImpl *This = (IPropDataImpl*)iface;
 
@@ -1511,12 +1511,12 @@ static inline HRESULT IMAPIProp_fnQueryInterface(LPMAPIPROP iface, REFIID riid, 
 }
 
 /**************************************************************************
- *  IMAPIProp_AddRef {MAPI32}
+ *  IPropData_AddRef {MAPI32}
  *
  * Inherited method from the IUnknown Interface.
  * See IUnknown_AddRef.
  */
-static inline ULONG IMAPIProp_fnAddRef(LPMAPIPROP iface)
+static ULONG WINAPI IPropData_fnAddRef(LPPROPDATA iface)
 {
     IPropDataImpl *This = (IPropDataImpl*)iface;
 
@@ -1526,12 +1526,12 @@ static inline ULONG IMAPIProp_fnAddRef(LPMAPIPROP iface)
 }
 
 /**************************************************************************
- *  IMAPIProp_Release {MAPI32}
+ *  IPropData_Release {MAPI32}
  *
  * Inherited method from the IUnknown Interface.
  * See IUnknown_Release.
  */
-static inline ULONG IMAPIProp_fnRelease(LPMAPIPROP iface)
+static ULONG WINAPI IPropData_fnRelease(LPPROPDATA iface)
 {
     IPropDataImpl *This = (IPropDataImpl*)iface;
     LONG lRef;
@@ -1560,7 +1560,7 @@ static inline ULONG IMAPIProp_fnRelease(LPMAPIPROP iface)
 }
 
 /**************************************************************************
- *  IMAPIProp_GetLastError {MAPI32}
+ *  IPropData_GetLastError {MAPI32}
  *
  * Get information about the last error that occurred in an IMAPIProp object.
  *
@@ -1581,9 +1581,8 @@ static inline ULONG IMAPIProp_fnRelease(LPMAPIPROP iface)
  *  - It is possible for this function to succeed and set *lppError to NULL,
  *  if there is no further information to report about hRes.
  */
-static inline HRESULT
-IMAPIProp_fnGetLastError(LPMAPIPROP iface, HRESULT hRes,
-                         ULONG ulFlags, LPMAPIERROR *lppError)
+static HRESULT WINAPI IPropData_fnGetLastError(LPPROPDATA iface, HRESULT hRes, ULONG ulFlags,
+                                               LPMAPIERROR *lppError)
 {
     TRACE("(%p,0x%08X,0x%08X,%p)\n", iface, hRes, ulFlags, lppError);
 
@@ -1595,7 +1594,7 @@ IMAPIProp_fnGetLastError(LPMAPIPROP iface, HRESULT hRes,
 }
 
 /**************************************************************************
- *  IMAPIProp_SaveChanges {MAPI32}
+ *  IPropData_SaveChanges {MAPI32}
  *
  * Update any changes made to a transactional IMAPIProp object.
  *
@@ -1607,8 +1606,7 @@ IMAPIProp_fnGetLastError(LPMAPIPROP iface, HRESULT hRes,
  *  Success: S_OK. Any outstanding changes are committed to the object.
  *  Failure: An HRESULT error code describing the error.
  */
-static inline HRESULT
-IMAPIProp_fnSaveChanges(LPMAPIPROP iface, ULONG ulFlags)
+static HRESULT WINAPI IPropData_fnSaveChanges(LPPROPDATA iface, ULONG ulFlags)
 {
     TRACE("(%p,0x%08X)\n", iface, ulFlags);
 
@@ -1618,7 +1616,7 @@ IMAPIProp_fnSaveChanges(LPMAPIPROP iface, ULONG ulFlags)
 }
 
 /**************************************************************************
- *  IMAPIProp_GetProps {MAPI32}
+ *  IPropData_GetProps {MAPI32}
  *
  * Get property values from an IMAPIProp object.
  *
@@ -1641,9 +1639,8 @@ IMAPIProp_fnSaveChanges(LPMAPIPROP iface, ULONG ulFlags)
  *    retrieved from iface are present in lppProps with their type
  *    changed to PT_ERROR and Id unchanged.
  */
-static inline HRESULT
-IMAPIProp_fnGetProps(LPMAPIPROP iface, LPSPropTagArray lpTags,
-                     ULONG ulFlags, ULONG *lpCount, LPSPropValue *lppProps)
+static HRESULT WINAPI IPropData_fnGetProps(LPPROPDATA iface, LPSPropTagArray lpTags, ULONG ulFlags,
+                                           ULONG *lpCount, LPSPropValue *lppProps)
 {
     ULONG i;
     HRESULT hRet = S_OK;
@@ -1708,9 +1705,8 @@ IMAPIProp_fnGetProps(LPMAPIPROP iface, LPSPropTagArray lpTags,
  *           MAPI_E_BAD_CHARWIDTH, if Ascii or Unicode strings are requested
  *           and that type of string is not supported.
  */
-static inline HRESULT
-IMAPIProp_fnGetPropList(LPMAPIPROP iface, ULONG ulFlags,
-                        LPSPropTagArray *lppTags)
+static HRESULT WINAPI IPropData_fnGetPropList(LPPROPDATA iface, ULONG ulFlags,
+                                              LPSPropTagArray *lppTags)
 {
     IPropDataImpl *This = (IPropDataImpl*)iface;
     ULONG i;
@@ -1748,16 +1744,15 @@ IMAPIProp_fnGetPropList(LPMAPIPROP iface, ULONG ulFlags,
 }
 
 /**************************************************************************
- *  IMAPIProp_OpenProperty {MAPI32}
+ *  IPropData_OpenProperty {MAPI32}
  *
  * Not documented at this time.
  *
  * RETURNS
  *  An HRESULT success/failure code.
  */
-static inline HRESULT
-IMAPIProp_fnOpenProperty(LPMAPIPROP iface, ULONG ulPropTag, LPCIID iid,
-                         ULONG ulOpts, ULONG ulFlags, LPUNKNOWN *lpUnk)
+static HRESULT WINAPI IPropData_fnOpenProperty(LPPROPDATA iface, ULONG ulPropTag, LPCIID iid,
+                                               ULONG ulOpts, ULONG ulFlags, LPUNKNOWN *lpUnk)
 {
     FIXME("(%p,%u,%s,%u,0x%08x,%p) stub\n", iface, ulPropTag,
           debugstr_guid(iid), ulOpts, ulFlags, lpUnk);
@@ -1766,7 +1761,7 @@ IMAPIProp_fnOpenProperty(LPMAPIPROP iface, ULONG ulPropTag, LPCIID iid,
 
 
 /**************************************************************************
- *  IMAPIProp_SetProps {MAPI32}
+ *  IPropData_SetProps {MAPI32}
  *
  * Add or edit the property values in an IMAPIProp object.
  *
@@ -1781,9 +1776,8 @@ IMAPIProp_fnOpenProperty(LPMAPIPROP iface, ULONG ulPropTag, LPCIID iid,
  *           exist, or changed to the values in lpProps if they do
  *  Failure: An HRESULT error code describing the error
  */
-static inline HRESULT
-IMAPIProp_fnSetProps(LPMAPIPROP iface, ULONG ulValues,
-                     LPSPropValue lpProps, LPSPropProblemArray *lppProbs)
+static HRESULT WINAPI IPropData_fnSetProps(LPPROPDATA iface, ULONG ulValues, LPSPropValue lpProps,
+                                           LPSPropProblemArray *lppProbs)
 {
     IPropDataImpl *This = (IPropDataImpl*)iface;
     HRESULT hRet = S_OK;
@@ -1845,7 +1839,7 @@ IMAPIProp_fnSetProps(LPMAPIPROP iface, ULONG ulValues,
 }
 
 /**************************************************************************
- *  IMAPIProp_DeleteProps {MAPI32}
+ *  IPropData_DeleteProps {MAPI32}
  *
  * Delete one or more property values from an IMAPIProp object.
  *
@@ -1868,9 +1862,8 @@ IMAPIProp_fnSetProps(LPMAPIPROP iface, ULONG ulValues,
  *    in lpTags but not in iface.
  *  - lppProbs should be deleted with MAPIFreeBuffer() if returned.
  */
-static inline HRESULT
-IMAPIProp_fnDeleteProps(LPMAPIPROP iface, LPSPropTagArray lpTags,
-                        LPSPropProblemArray *lppProbs)
+static HRESULT WINAPI IPropData_fnDeleteProps(LPPROPDATA iface, LPSPropTagArray lpTags,
+                                              LPSPropProblemArray *lppProbs)
 {
     IPropDataImpl *This = (IPropDataImpl*)iface;
     ULONG i, numProbs = 0;
@@ -1945,18 +1938,18 @@ IMAPIProp_fnDeleteProps(LPMAPIPROP iface, LPSPropTagArray lpTags,
 
 
 /**************************************************************************
- *  IMAPIProp_CopyTo {MAPI32}
+ *  IPropData_CopyTo {MAPI32}
  *
  * Not documented at this time.
  *
  * RETURNS
  *  An HRESULT success/failure code.
  */
-static inline HRESULT
-IMAPIProp_fnCopyTo(LPMAPIPROP iface, ULONG niids, LPCIID lpiidExcl,
-                   LPSPropTagArray lpPropsExcl, ULONG ulParam,
-                   LPMAPIPROGRESS lpIProgress, LPCIID lpIfaceIid, LPVOID lpDstObj,
-                   ULONG ulFlags, LPSPropProblemArray *lppProbs)
+static HRESULT WINAPI IPropData_fnCopyTo(LPPROPDATA iface, ULONG niids, LPCIID lpiidExcl,
+                                         LPSPropTagArray lpPropsExcl, ULONG ulParam,
+                                         LPMAPIPROGRESS lpIProgress, LPCIID lpIfaceIid,
+                                         LPVOID lpDstObj, ULONG ulFlags,
+                                         LPSPropProblemArray *lppProbs)
 {
     FIXME("(%p,%u,%p,%p,%x,%p,%s,%p,0x%08X,%p) stub\n", iface, niids,
           lpiidExcl, lpPropsExcl, ulParam, lpIProgress,
@@ -1965,18 +1958,17 @@ IMAPIProp_fnCopyTo(LPMAPIPROP iface, ULONG niids, LPCIID lpiidExcl,
 }
 
 /**************************************************************************
- *  IMAPIProp_CopyProps {MAPI32}
+ *  IPropData_CopyProps {MAPI32}
  *
  * Not documented at this time.
  *
  * RETURNS
  *  An HRESULT success/failure code.
  */
-static inline HRESULT
-IMAPIProp_fnCopyProps(LPMAPIPROP iface, LPSPropTagArray lpInclProps,
-                      ULONG ulParam, LPMAPIPROGRESS lpIProgress, LPCIID lpIface,
-                      LPVOID lpDstObj, ULONG ulFlags,
-                      LPSPropProblemArray *lppProbs)
+static HRESULT WINAPI IPropData_fnCopyProps(LPPROPDATA iface, LPSPropTagArray lpInclProps,
+                                            ULONG ulParam, LPMAPIPROGRESS lpIProgress,
+                                            LPCIID lpIface, LPVOID lpDstObj, ULONG ulFlags,
+                                            LPSPropProblemArray *lppProbs)
 {
     FIXME("(%p,%p,%x,%p,%s,%p,0x%08X,%p) stub\n", iface, lpInclProps,
           ulParam, lpIProgress, debugstr_guid(lpIface), lpDstObj, ulFlags,
@@ -1985,7 +1977,7 @@ IMAPIProp_fnCopyProps(LPMAPIPROP iface, LPSPropTagArray lpInclProps,
 }
 
 /**************************************************************************
- *  IMAPIProp_GetNamesFromIDs {MAPI32}
+ *  IPropData_GetNamesFromIDs {MAPI32}
  *
  * Get the names of properties from their identifiers.
  *
@@ -2007,10 +1999,9 @@ IMAPIProp_fnCopyProps(LPMAPIPROP iface, LPSPropTagArray lpInclProps,
  *           MAPI_W_ERRORS_RETURNED if not all properties were retrieved
  *           successfully.
  */
-static inline HRESULT
-IMAPIProp_fnGetNamesFromIDs(LPMAPIPROP iface, LPSPropTagArray *lppPropTags,
-                            LPGUID iid, ULONG ulFlags, ULONG *lpCount,
-                            LPMAPINAMEID **lpppNames)
+static HRESULT WINAPI IPropData_fnGetNamesFromIDs(LPPROPDATA iface, LPSPropTagArray *lppPropTags,
+                                                  LPGUID iid, ULONG ulFlags, ULONG *lpCount,
+                                                  LPMAPINAMEID **lpppNames)
 {
     FIXME("(%p,%p,%s,0x%08X,%p,%p) stub\n", iface, lppPropTags,
           debugstr_guid(iid), ulFlags, lpCount, lpppNames);
@@ -2018,7 +2009,7 @@ IMAPIProp_fnGetNamesFromIDs(LPMAPIPROP iface, LPSPropTagArray *lppPropTags,
 }
 
 /**************************************************************************
- *  IMAPIProp_GetIDsFromNames {MAPI32}
+ *  IPropData_GetIDsFromNames {MAPI32}
  *
  * Get property identifiers associated with one or more named properties.
  *
@@ -2038,222 +2029,13 @@ IMAPIProp_fnGetNamesFromIDs(LPMAPIPROP iface, LPSPropTagArray *lppPropTags,
  *           MAPI_W_ERRORS_RETURNED if not all properties were retrieved
  *           successfully.
  */
-static inline HRESULT
-IMAPIProp_fnGetIDsFromNames(LPMAPIPROP iface, ULONG ulNames,
-                            LPMAPINAMEID *lppNames, ULONG ulFlags,
-                            LPSPropTagArray *lppPropTags)
+static HRESULT WINAPI IPropData_fnGetIDsFromNames(LPPROPDATA iface, ULONG ulNames,
+                                                  LPMAPINAMEID *lppNames, ULONG ulFlags,
+                                                  LPSPropTagArray *lppPropTags)
 {
     FIXME("(%p,%d,%p,0x%08X,%p) stub\n",
           iface, ulNames, lppNames, ulFlags, lppPropTags);
     return MAPI_E_NO_SUPPORT;
-}
-
-/**************************************************************************
- *  IPropData {MAPI32}
- *
- * A default Mapi interface to provide manipulation of object properties.
- *
- * DESCRIPTION
- *  This object provides a default interface suitable in some cases as an
- *  implementation of the IMAPIProp interface (which has no default
- *  implementation). In addition to the IMAPIProp() methods inherited, this
- *  interface allows read/write control over access to the object and its
- *  individual properties.
- *
- *  To obtain the default implementation of this interface from Mapi, call
- *  CreateIProp().
- *
- * METHODS
- */
-
-/**************************************************************************
- *  IPropData_QueryInterface {MAPI32}
- *
- * Inherited method from the IMAPIProp Interface.
- * See IMAPIProp_QueryInterface.
- */
-static HRESULT WINAPI
-IPropData_fnQueryInterface(LPPROPDATA iface, REFIID riid, LPVOID *ppvObj)
-{
-    return IMAPIProp_fnQueryInterface((LPMAPIPROP)iface, riid, ppvObj);
-}
-
-/**************************************************************************
- *  IPropData_AddRef {MAPI32}
- *
- * Inherited method from the IMAPIProp Interface.
- * See IMAPIProp_AddRef.
- */
-static ULONG WINAPI
-IPropData_fnAddRef(LPPROPDATA iface)
-{
-    return IMAPIProp_fnAddRef((LPMAPIPROP)iface);
-}
-
-/**************************************************************************
- *  IPropData_Release {MAPI32}
- *
- * Inherited method from the IMAPIProp Interface.
- * See IMAPIProp_Release.
- */
-static ULONG WINAPI
-IPropData_fnRelease(LPPROPDATA iface)
-{
-    return IMAPIProp_fnRelease((LPMAPIPROP)iface);
-}
-
-/**************************************************************************
- *  IPropData_GetLastError {MAPI32}
- *
- * Inherited method from the IMAPIProp Interface.
- * See IMAPIProp_GetLastError.
- */
-static HRESULT WINAPI
-IPropData_fnGetLastError(LPPROPDATA iface, HRESULT hRes, ULONG ulFlags,
-                         LPMAPIERROR *lppError)
-{
-    return IMAPIProp_fnGetLastError((LPMAPIPROP)iface, hRes, ulFlags, lppError);
-}
-
-/**************************************************************************
- *  IPropData_SaveChanges {MAPI32}
- *
- * Inherited method from the IMAPIProp Interface.
- * See IMAPIProp_SaveChanges.
- */
-static HRESULT WINAPI
-IPropData_fnSaveChanges(LPPROPDATA iface, ULONG ulFlags)
-{
-    return IMAPIProp_fnSaveChanges((LPMAPIPROP)iface, ulFlags);
-}
-
-/**************************************************************************
- *  IPropData_GetProps {MAPI32}
- *
- * Inherited method from the IMAPIProp Interface.
- * See IMAPIProp_GetProps.
- */
-static HRESULT WINAPI
-IPropData_fnGetProps(LPPROPDATA iface, LPSPropTagArray lpPropTags,
-                     ULONG ulFlags, ULONG *lpCount, LPSPropValue *lppProps)
-{
-    return IMAPIProp_fnGetProps((LPMAPIPROP)iface, lpPropTags, ulFlags,
-                                lpCount, lppProps);
-}
-
-/**************************************************************************
- *  IPropData_GetPropList {MAPI32}
- *
- * Inherited method from the IMAPIProp Interface.
- * See IMAPIProp_GetPropList.
- */
-static HRESULT WINAPI
-IPropData_fnGetPropList(LPPROPDATA iface, ULONG ulFlags,
-                                              LPSPropTagArray *lppPropTags)
-{
-    return IMAPIProp_fnGetPropList((LPMAPIPROP)iface, ulFlags, lppPropTags);
-}
-
-/**************************************************************************
- *  IPropData_OpenProperty {MAPI32}
- *
- * Inherited method from the IMAPIProp Interface.
- * See IMAPIProp_OpenProperty.
- */
-static HRESULT WINAPI
-IPropData_fnOpenProperty(LPPROPDATA iface, ULONG ulPropTag, LPCIID iid,
-                         ULONG ulOpts, ULONG ulFlags, LPUNKNOWN *lpUnk)
-{
-    return IMAPIProp_fnOpenProperty((LPMAPIPROP)iface, ulPropTag, iid,
-                                    ulOpts, ulFlags, lpUnk);
-}
-
-/**************************************************************************
- *  IPropData_SetProps {MAPI32}
- *
- * Inherited method from the IMAPIProp Interface.
- * See IMAPIProp_SetProps.
- */
-static HRESULT WINAPI
-IPropData_fnSetProps(LPPROPDATA iface, ULONG cValues, LPSPropValue lpProps,
-                     LPSPropProblemArray *lppProbs)
-{
-    return IMAPIProp_fnSetProps((LPMAPIPROP)iface, cValues, lpProps, lppProbs);
-}
-
-/**************************************************************************
- *  IPropData_DeleteProps {MAPI32}
- *
- * Inherited method from the IMAPIProp Interface.
- * See IMAPIProp_DeleteProps.
- */
-static HRESULT WINAPI
-IPropData_fnDeleteProps(LPPROPDATA iface, LPSPropTagArray lpPropTags,
-                        LPSPropProblemArray *lppProbs)
-{
-    return IMAPIProp_fnDeleteProps((LPMAPIPROP)iface, lpPropTags, lppProbs);
-}
-
-/**************************************************************************
- *  IPropData_CopyTo {MAPI32}
- *
- * Inherited method from the IMAPIProp Interface.
- * See IMAPIProp_CopyTo.
- */
-static HRESULT WINAPI
-IPropData_fnCopyTo(LPPROPDATA iface, ULONG ciidExclude, LPCIID lpIid,
-                   LPSPropTagArray lpProps, ULONG ulParam,
-                   LPMAPIPROGRESS lpProgress, LPCIID lpIface, LPVOID lpDst,
-                   ULONG ulFlags, LPSPropProblemArray *lppProbs)
-{
-    return IMAPIProp_fnCopyTo((LPMAPIPROP)iface, ciidExclude, lpIid, lpProps,
-                              ulParam, lpProgress, lpIface, lpDst,
-                              ulFlags, lppProbs);
-}
-
-/**************************************************************************
- *  IPropData_CopyProps {MAPI32}
- *
- * Inherited method from the IMAPIProp Interface.
- * See IMAPIProp_CopyProps.
- */
-static HRESULT WINAPI
-IPropData_fnCopyProps(LPPROPDATA iface, LPSPropTagArray lpProps,
-                      ULONG ulParam, LPMAPIPROGRESS lpProgress, LPCIID lpIface,
-                      LPVOID lpDst, ULONG ulFlags, LPSPropProblemArray *lppProbs)
-{
-    return IMAPIProp_fnCopyProps((LPMAPIPROP)iface, lpProps, ulParam,
-                                 lpProgress, lpIface, lpDst, ulFlags, lppProbs);
-}
-
-/**************************************************************************
- *  IPropData_GetNamesFromIDs {MAPI32}
- *
- * Inherited method from the IMAPIProp Interface.
- * See IMAPIProp_GetNamesFromIDs.
- */
-static HRESULT WINAPI
-IPropData_fnGetNamesFromIDs(LPPROPDATA iface, LPSPropTagArray *lppPropTags,
-                            LPGUID iid, ULONG ulFlags, ULONG *lpCount,
-                            LPMAPINAMEID **lpppNames)
-{
-    return IMAPIProp_fnGetNamesFromIDs((LPMAPIPROP)iface, lppPropTags, iid,
-                                       ulFlags, lpCount, lpppNames);
-}
-
-/**************************************************************************
- *  IPropData_GetIDsFromNames {MAPI32}
- *
- * Inherited method from the IMAPIProp Interface.
- * See IMAPIProp_GetIDsFromNames.
- */
-static HRESULT WINAPI
-IPropData_fnGetIDsFromNames(LPPROPDATA iface, ULONG ulNames,
-                            LPMAPINAMEID *lppNames, ULONG ulFlags,
-                            LPSPropTagArray *lppPropTags)
-{
-    return IMAPIProp_fnGetIDsFromNames((LPMAPIPROP)iface, ulNames, lppNames,
-                                       ulFlags, lppPropTags);
 }
 
 /**************************************************************************
