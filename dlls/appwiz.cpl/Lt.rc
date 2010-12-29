@@ -48,6 +48,7 @@ STRINGTABLE
 {
     IDS_DOWNLOADING     "Atsiunčiama..."
     IDS_INSTALLING      "Įdiegiama..."
+    IDS_INVALID_SHA     "Netikėta atsiųsto failo kontrolinė suma. Nutraukiamas pažeisto failo įdiegimas."
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
