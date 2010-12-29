@@ -636,19 +636,19 @@ static void test_GetShellSecurityDescriptor(void)
     ok(psd!=NULL, "GetShellSecurityDescriptor failed\n");
     if (psd!=NULL)
     {
-        BOOL bHasDacl = FALSE, bDefaulted;
+        BOOL bHasDacl = FALSE, bDefaulted, ret;
         PACL pAcl;
         DWORD dwRev;
         SECURITY_DESCRIPTOR_CONTROL control;
 
         ok(IsValidSecurityDescriptor(psd), "returned value is not valid SD\n");
 
-        ok(GetSecurityDescriptorControl(psd, &control, &dwRev),
-                "GetSecurityDescriptorControl failed with error %u\n", GetLastError());
+        ret = GetSecurityDescriptorControl(psd, &control, &dwRev);
+        ok(ret, "GetSecurityDescriptorControl failed with error %u\n", GetLastError());
         ok(0 == (control & SE_SELF_RELATIVE), "SD should be absolute\n");
 
-        ok(GetSecurityDescriptorDacl(psd, &bHasDacl, &pAcl, &bDefaulted), 
-            "GetSecurityDescriptorDacl failed with error %u\n", GetLastError());
+        ret = GetSecurityDescriptorDacl(psd, &bHasDacl, &pAcl, &bDefaulted);
+        ok(ret, "GetSecurityDescriptorDacl failed with error %u\n", GetLastError());
 
         ok(bHasDacl, "SD has no DACL\n");
         if (bHasDacl)
@@ -662,28 +662,31 @@ static void test_GetShellSecurityDescriptor(void)
 
                 ok(IsValidAcl(pAcl), "DACL is not valid\n");
 
-                ok(GetAclInformation(pAcl, &asiSize, sizeof(asiSize), AclSizeInformation),
-                        "GetAclInformation failed with error %u\n", GetLastError());
+                ret = GetAclInformation(pAcl, &asiSize, sizeof(asiSize), AclSizeInformation);
+                ok(ret, "GetAclInformation failed with error %u\n", GetLastError());
 
                 ok(asiSize.AceCount == 3, "Incorrect number of ACEs: %d entries\n", asiSize.AceCount);
                 if (asiSize.AceCount == 3)
                 {
                     ACCESS_ALLOWED_ACE *paaa; /* will use for DENIED too */
 
-                    ok(GetAce(pAcl, 0, (LPVOID*)&paaa), "GetAce failed with error %u\n", GetLastError());
+                    ret = GetAce(pAcl, 0, (LPVOID*)&paaa);
+                    ok(ret, "GetAce failed with error %u\n", GetLastError());
                     ok(paaa->Header.AceType == ACCESS_ALLOWED_ACE_TYPE, 
                             "Invalid ACE type %d\n", paaa->Header.AceType); 
                     ok(paaa->Header.AceFlags == 0, "Invalid ACE flags %x\n", paaa->Header.AceFlags);
                     ok(paaa->Mask == GENERIC_ALL, "Invalid ACE mask %x\n", paaa->Mask);
 
-                    ok(GetAce(pAcl, 1, (LPVOID*)&paaa), "GetAce failed with error %u\n", GetLastError());
+                    ret = GetAce(pAcl, 1, (LPVOID*)&paaa);
+                    ok(ret, "GetAce failed with error %u\n", GetLastError());
                     ok(paaa->Header.AceType == ACCESS_DENIED_ACE_TYPE, 
                             "Invalid ACE type %d\n", paaa->Header.AceType); 
                     /* first one of two ACEs generated from inheritable entry - without inheritance */
                     ok(paaa->Header.AceFlags == 0, "Invalid ACE flags %x\n", paaa->Header.AceFlags);
                     ok(paaa->Mask == GENERIC_WRITE, "Invalid ACE mask %x\n", paaa->Mask);
 
-                    ok(GetAce(pAcl, 2, (LPVOID*)&paaa), "GetAce failed with error %u\n", GetLastError());
+                    ret = GetAce(pAcl, 2, (LPVOID*)&paaa);
+                    ok(ret, "GetAce failed with error %u\n", GetLastError());
                     ok(paaa->Header.AceType == ACCESS_DENIED_ACE_TYPE, 
                             "Invalid ACE type %d\n", paaa->Header.AceType); 
                     /* second ACE - with inheritance */
