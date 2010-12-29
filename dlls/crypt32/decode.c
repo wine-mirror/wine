@@ -3731,9 +3731,8 @@ static BOOL CRYPT_AsnDecodeRequireExplicit(const BYTE *pbEncoded,
         }
         else
         {
-            CERT_POLICY_CONSTRAINTS_INFO *info =
-             (CERT_POLICY_CONSTRAINTS_INFO *)((BYTE *)pvStructInfo -
-             offsetof(CERT_POLICY_CONSTRAINTS_INFO, fRequireExplicitPolicy));
+            CERT_POLICY_CONSTRAINTS_INFO *info = CONTAINING_RECORD(pvStructInfo,
+              CERT_POLICY_CONSTRAINTS_INFO, fRequireExplicitPolicy);
 
             *pcbStructInfo = bytesNeeded;
             /* The BOOL is implicit:  if the integer is present, then it's
@@ -3779,9 +3778,8 @@ static BOOL CRYPT_AsnDecodeInhibitMapping(const BYTE *pbEncoded,
         }
         else
         {
-            CERT_POLICY_CONSTRAINTS_INFO *info =
-             (CERT_POLICY_CONSTRAINTS_INFO *)((BYTE *)pvStructInfo -
-             offsetof(CERT_POLICY_CONSTRAINTS_INFO, fInhibitPolicyMapping));
+            CERT_POLICY_CONSTRAINTS_INFO *info = CONTAINING_RECORD(pvStructInfo,
+              CERT_POLICY_CONSTRAINTS_INFO, fInhibitPolicyMapping);
 
             *pcbStructInfo = bytesNeeded;
             /* The BOOL is implicit:  if the integer is present, then it's
@@ -5107,8 +5105,8 @@ static BOOL CRYPT_AsnDecodeMaximum(const BYTE *pbEncoded,
         }
         else
         {
-            CERT_GENERAL_SUBTREE *subtree = (CERT_GENERAL_SUBTREE *)
-             ((BYTE *)pvStructInfo - offsetof(CERT_GENERAL_SUBTREE, fMaximum));
+            CERT_GENERAL_SUBTREE *subtree = CONTAINING_RECORD(pvStructInfo,
+             CERT_GENERAL_SUBTREE, fMaximum);
 
             *pcbStructInfo = bytesNeeded;
             /* The BOOL is implicit:  if the integer is present, then it's
