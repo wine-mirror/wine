@@ -386,7 +386,7 @@ sub update_makefiles(@)
             $args .= "," if $is_win16 || @flags;
             $args .= "enable_win16" if $is_win16;
             $args .= ",[" . join(",",@flags) ."]" if @flags;
-            $args .= ",[$implib]" if $implib;
+            $args .= ",[$implib]" if $implib && $implib ne $name;
             push @lines, "WINE_CONFIG_DLL($name$args)\n";
         }
         elsif ($rules eq $makerules{"MAKE_PROG_RULES"})

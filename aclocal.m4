@@ -242,7 +242,7 @@ wine_fn_config_dll ()
     ac_dir=dlls/$ac_name
     ac_enable=$[2]
     ac_flags=$[3]
-    ac_implib=$[4]
+    ac_implib=${4:-$ac_name}
     ac_file=$ac_dir/lib$ac_implib
     ac_deps="tools/widl tools/winebuild tools/winegcc include"
     ac_implibflags=""
