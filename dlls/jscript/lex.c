@@ -266,9 +266,6 @@ static BOOL unescape(WCHAR *str)
         case 'n':
             c = '\n';
             break;
-        case 'v':
-            c = '\v';
-            break;
         case 'f':
             c = '\f';
             break;

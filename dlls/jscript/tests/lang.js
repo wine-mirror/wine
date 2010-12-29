@@ -942,6 +942,30 @@ ok((Infinity != NaN) === true, "(Infinity != NaN) !== true");
 ok((Infinity != NaN) === true, "(Infinity != NaN) !== true");
 ok((0 == NaN) === false, "(0 === NaN) != false");
 
+// escape tests
+var escapeTests = [
+    ["\'", "\\'", 39],
+    ["\"", "\\\"", 34],
+    ["\\", "\\\\", 92],
+    ["\b", "\\b", 8],
+    ["\t", "\\t", 9],
+    ["\n", "\\n", 10],
+    ["\v", "\\v", 118],
+    ["\f", "\\f", 12],
+    ["\r", "\\r", 13],
+    ["\xf3", "\\xf3", 0xf3],
+    ["\u1234", "\\u1234", 0x1234],
+    ["\a", "\\a", 97],
+    ["\?", "\\?", 63]
+];
+
+for(i=0; i<escapeTests.length; i++) {
+    tmp = escapeTests[i][0].charCodeAt(0);
+    ok(tmp === escapeTests[i][2], "escaped '" + escapeTests[i][1] + "' = " + tmp + " expected " + escapeTests[i][2]);
+}
+
+tmp = !+"\v1";
+ok(tmp === true, '!+"\v1" = ' + tmp);
 
 ok(typeof(testFunc2) === "function", "typeof(testFunc2) = " + typeof(testFunc2));
 tmp = testFunc2(1);
