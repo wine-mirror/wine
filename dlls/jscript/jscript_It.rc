@@ -38,6 +38,7 @@ STRINGTABLE
     IDS_LBRACKET            "Richiesto '('"
     IDS_RBRACKET            "Richiesto ')'"
     IDS_UNTERMINATED_STR    "Costante stringa non terminata"
+    IDS_DISABLED_CC         "Compilazione condizionale disattivata"
     IDS_NOT_FUNC            "Richiesta una funzione"
     IDS_NOT_DATE            "'[oggetto]' non è un oggetto data"
     IDS_NOT_NUM             "Richiesto un numero"
