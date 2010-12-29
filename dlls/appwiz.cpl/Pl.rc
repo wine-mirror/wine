@@ -44,8 +44,9 @@ STRINGTABLE
 
 STRINGTABLE
 {
-    IDS_DOWNLOADING     "Pobieranie plików..."
-    IDS_INSTALLING      "Instalacja..."
+    IDS_DOWNLOADING     "Pobieranie..."
+    IDS_INSTALLING      "Instalowanie..."
+    IDS_INVALID_SHA     "Nieoczekiwana suma pobranego pliku. Przerywanie instalacji uszkodzonego pliku."
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
