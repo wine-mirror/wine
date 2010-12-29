@@ -1401,7 +1401,7 @@ typedef struct
  /* The main property data collection structure */
 typedef struct
 {
-    const IPropDataVtbl   *lpVtbl;
+    IPropData        IPropData_iface;
     LONG             lRef;        /* Reference count */
     ALLOCATEBUFFER  *lpAlloc;     /* Memory allocation routine */
     ALLOCATEMORE    *lpMore;      /* Linked memory allocation routine */
@@ -1411,6 +1411,11 @@ typedef struct
     struct list      values;      /* List of property values */
     CRITICAL_SECTION cs;          /* Lock for thread safety */
 } IPropDataImpl;
+
+static inline IPropDataImpl *impl_from_IPropData(IPropData *iface)
+{
+    return CONTAINING_RECORD(iface, IPropDataImpl, IPropData_iface);
+}
 
 /* Internal - Get a property value, assumes lock is held */
 static IPropDataItem *IMAPIPROP_GetValue(IPropDataImpl *This, ULONG ulPropTag)
@@ -1487,7 +1492,7 @@ static inline void IMAPIPROP_Unlock(IPropDataImpl *This)
  */
 static WINAPI HRESULT IPropData_fnQueryInterface(LPPROPDATA iface, REFIID riid, LPVOID *ppvObj)
 {
-    IPropDataImpl *This = (IPropDataImpl*)iface;
+    IPropDataImpl *This = impl_from_IPropData(iface);
 
     TRACE("(%p,%s,%p)\n", This, debugstr_guid(riid), ppvObj);
 
@@ -1518,7 +1523,7 @@ static WINAPI HRESULT IPropData_fnQueryInterface(LPPROPDATA iface, REFIID riid, 
  */
 static ULONG WINAPI IPropData_fnAddRef(LPPROPDATA iface)
 {
-    IPropDataImpl *This = (IPropDataImpl*)iface;
+    IPropDataImpl *This = impl_from_IPropData(iface);
 
     TRACE("(%p)->(count before=%u)\n", This, This->lRef);
 
@@ -1533,7 +1538,7 @@ static ULONG WINAPI IPropData_fnAddRef(LPPROPDATA iface)
  */
 static ULONG WINAPI IPropData_fnRelease(LPPROPDATA iface)
 {
-    IPropDataImpl *This = (IPropDataImpl*)iface;
+    IPropDataImpl *This = impl_from_IPropData(iface);
     LONG lRef;
 
     TRACE("(%p)->(count before=%u)\n", This, This->lRef);
@@ -1642,9 +1647,9 @@ static HRESULT WINAPI IPropData_fnSaveChanges(LPPROPDATA iface, ULONG ulFlags)
 static HRESULT WINAPI IPropData_fnGetProps(LPPROPDATA iface, LPSPropTagArray lpTags, ULONG ulFlags,
                                            ULONG *lpCount, LPSPropValue *lppProps)
 {
+    IPropDataImpl *This = impl_from_IPropData(iface);
     ULONG i;
     HRESULT hRet = S_OK;
-    IPropDataImpl *This = (IPropDataImpl*)iface;
 
     TRACE("(%p,%p,0x%08x,%p,%p) stub\n", iface, lpTags, ulFlags,
           lpCount, lppProps);
@@ -1708,7 +1713,7 @@ static HRESULT WINAPI IPropData_fnGetProps(LPPROPDATA iface, LPSPropTagArray lpT
 static HRESULT WINAPI IPropData_fnGetPropList(LPPROPDATA iface, ULONG ulFlags,
                                               LPSPropTagArray *lppTags)
 {
-    IPropDataImpl *This = (IPropDataImpl*)iface;
+    IPropDataImpl *This = impl_from_IPropData(iface);
     ULONG i;
     HRESULT hRet;
 
@@ -1779,7 +1784,7 @@ static HRESULT WINAPI IPropData_fnOpenProperty(LPPROPDATA iface, ULONG ulPropTag
 static HRESULT WINAPI IPropData_fnSetProps(LPPROPDATA iface, ULONG ulValues, LPSPropValue lpProps,
                                            LPSPropProblemArray *lppProbs)
 {
-    IPropDataImpl *This = (IPropDataImpl*)iface;
+    IPropDataImpl *This = impl_from_IPropData(iface);
     HRESULT hRet = S_OK;
     ULONG i;
 
@@ -1865,7 +1870,7 @@ static HRESULT WINAPI IPropData_fnSetProps(LPPROPDATA iface, ULONG ulValues, LPS
 static HRESULT WINAPI IPropData_fnDeleteProps(LPPROPDATA iface, LPSPropTagArray lpTags,
                                               LPSPropProblemArray *lppProbs)
 {
-    IPropDataImpl *This = (IPropDataImpl*)iface;
+    IPropDataImpl *This = impl_from_IPropData(iface);
     ULONG i, numProbs = 0;
     HRESULT hRet = S_OK;
 
@@ -2055,7 +2060,7 @@ static HRESULT WINAPI IPropData_fnGetIDsFromNames(LPPROPDATA iface, ULONG ulName
 static HRESULT WINAPI
 IPropData_fnHrSetObjAccess(LPPROPDATA iface, ULONG ulAccess)
 {
-    IPropDataImpl *This = (IPropDataImpl*)iface;
+    IPropDataImpl *This = impl_from_IPropData(iface);
 
     TRACE("(%p,%x)\n", iface, ulAccess);
 
@@ -2109,8 +2114,7 @@ static HRESULT WINAPI
 IPropData_fnHrSetPropAccess(LPPROPDATA iface, LPSPropTagArray lpTags,
                             ULONG *lpAccess)
 {
-    IPropDataImpl *This = (IPropDataImpl*)iface;
-
+    IPropDataImpl *This = impl_from_IPropData(iface);
     ULONG i;
 
     TRACE("(%p,%p,%p)\n", iface, lpTags, lpAccess);
@@ -2161,7 +2165,7 @@ static HRESULT WINAPI
 IPropData_fnHrGetPropAccess(LPPROPDATA iface, LPSPropTagArray *lppTags,
                             ULONG **lppAccess)
 {
-    IPropDataImpl *This = (IPropDataImpl*)iface;
+    IPropDataImpl *This = impl_from_IPropData(iface);
     LPVOID lpMem;
     HRESULT hRet;
     ULONG i;
@@ -2316,7 +2320,7 @@ SCODE WINAPI CreateIProp(LPCIID iid, ALLOCATEBUFFER *lpAlloc,
 
     if (SUCCEEDED(scode))
     {
-        lpPropData->lpVtbl = &IPropDataImpl_vtbl;
+        lpPropData->IPropData_iface.lpVtbl = &IPropDataImpl_vtbl;
         lpPropData->lRef = 1;
         lpPropData->lpAlloc = lpAlloc;
         lpPropData->lpMore = lpMore;
@@ -2326,7 +2330,7 @@ SCODE WINAPI CreateIProp(LPCIID iid, ALLOCATEBUFFER *lpAlloc,
         list_init(&lpPropData->values);
         InitializeCriticalSection(&lpPropData->cs);
         lpPropData->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IPropDataImpl.cs");
-        *lppPropData = (LPPROPDATA)lpPropData;
+        *lppPropData = &lpPropData->IPropData_iface;
     }
     return scode;
 }
