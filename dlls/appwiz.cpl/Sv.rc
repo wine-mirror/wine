@@ -49,6 +49,7 @@ STRINGTABLE
 {
     IDS_DOWNLOADING     "Hämtar..."
     IDS_INSTALLING      "Installerar..."
+    IDS_INVALID_SHA     "Oväntad kontrollsumma på hämtad fil. Avbryter installation av korrupt fil."
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
