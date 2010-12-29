@@ -1914,7 +1914,7 @@ static void test_redirection(void)
 
 static void test_classesroot(void)
 {
-    HKEY hkey, hklm, hkcr;
+    HKEY hkey, hklm, hkcr, hkeysub1, hklmsub1, hkcrsub1;
     DWORD size = 8;
     DWORD type = REG_SZ;
     static CHAR buffer[8];
@@ -1961,6 +1961,24 @@ static void test_classesroot(void)
     ok(res == ERROR_SUCCESS, "RegQueryValueExA failed: %d, GLE=%x\n", res, GetLastError());
     ok(!strcmp( buffer, "hkcr" ), "value set to '%s'\n", buffer );
 
+    /* set a value in hkcr */
+    res = RegSetValueExA(hkcr, "val0", 0, REG_SZ, (const BYTE *)"hkcr", sizeof("hkcr"));
+    ok(res == ERROR_SUCCESS, "RegSetValueExA failed: %d, GLE=%x\n", res, GetLastError());
+
+    /* try to find the value in user's classes */
+    res = RegQueryValueExA(hkcr, "val0", NULL, &type, (LPBYTE)buffer, &size);
+    ok(res == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", res);
+    ok(!strcmp( buffer, "hkcr" ), "value set to '%s'\n", buffer );
+
+    /* modify the value in user's classes */
+    res = RegSetValueExA(hkcr, "val0", 0, REG_SZ, (const BYTE *)"user", sizeof("user"));
+    ok(res == ERROR_SUCCESS, "RegSetValueExA failed: %d\n", res);
+
+    /* check if the value is also modified in hkcr */
+    res = RegQueryValueExA(hkey, "val0", NULL, &type, (LPBYTE)buffer, &size);
+    ok(res == ERROR_SUCCESS, "RegQueryValueExA failed: %d, GLE=%x\n", res, GetLastError());
+    ok(!strcmp( buffer, "user" ), "value set to '%s'\n", buffer );
+
     /* cleanup */
     delete_key( hkey );
     delete_key( hkcr );
@@ -1994,7 +2012,7 @@ static void test_classesroot(void)
     }
 
     /* set a value in hklm classes */
-    res = RegSetValueExA(hklm, "val2", 0, REG_SZ, (const BYTE *)"hklm", sizeof("user"));
+    res = RegSetValueExA(hklm, "val2", 0, REG_SZ, (const BYTE *)"hklm", sizeof("hklm"));
     ok(res == ERROR_SUCCESS, "RegSetValueExA failed: %d, GLE=%x\n", res, GetLastError());
 
     /* try to find the value in hkcr */
@@ -2030,7 +2048,7 @@ static void test_classesroot(void)
     ok(!strcmp( buffer, "user" ), "value set to '%s'\n", buffer );
 
     /* modify the value in hklm */
-    res = RegSetValueExA(hklm, "val2", 0, REG_SZ, (const BYTE *)"hklm", sizeof("user"));
+    res = RegSetValueExA(hklm, "val2", 0, REG_SZ, (const BYTE *)"hklm", sizeof("hklm"));
     ok(res == ERROR_SUCCESS, "RegSetValueExA failed: %d, GLE=%x\n", res, GetLastError());
 
     /* check that the value is not overwritten in hkcr or user's classes */
@@ -2041,13 +2059,93 @@ static void test_classesroot(void)
     ok(res == ERROR_SUCCESS, "RegQueryValueExA failed: %d, GLE=%x\n", res, GetLastError());
     ok(!strcmp( buffer, "user" ), "value set to '%s'\n", buffer );
 
+    /* modify the value in hkcr */
+    res = RegSetValueExA(hkcr, "val2", 0, REG_SZ, (const BYTE *)"hkcr", sizeof("hkcr"));
+    ok(res == ERROR_SUCCESS, "RegSetValueExA failed: %d\n", res);
+
+    /* check that the value is overwritten in hklm and user's classes */
+    res = RegQueryValueExA(hkcr, "val2", NULL, &type, (LPBYTE)buffer, &size);
+    ok(res == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", res);
+    ok(!strcmp( buffer, "hkcr" ), "value set to '%s'\n", buffer );
+    res = RegQueryValueExA(hkey, "val2", NULL, &type, (LPBYTE)buffer, &size);
+    ok(res == ERROR_SUCCESS, "RegQueryValueExA failed: %d, GLE=%x\n", res, GetLastError());
+    ok(!strcmp( buffer, "hkcr" ), "value set to '%s'\n", buffer );
+
+    /* create a subkey in hklm */
+    if (RegCreateKeyExA( hklm, "subkey1", 0, NULL, 0,
+                         KEY_QUERY_VALUE|KEY_SET_VALUE, NULL, &hklmsub1, NULL )) return;
+    /* try to open that subkey in hkcr */
+    res = RegOpenKeyExA( hkcr, "subkey1", 0, KEY_QUERY_VALUE|KEY_SET_VALUE, &hkcrsub1 );
+    ok(res == ERROR_SUCCESS, "test key not found in hkcr: %d\n", res);
+
+    /* set a value in hklm classes */
+    res = RegSetValueExA(hklmsub1, "subval1", 0, REG_SZ, (const BYTE *)"hklm", sizeof("hklm"));
+    ok(res == ERROR_SUCCESS, "RegSetValueExA failed: %d, GLE=%x\n", res, GetLastError());
+
+    /* try to find the value in hkcr */
+    res = RegQueryValueExA(hkcrsub1, "subval1", NULL, &type, (LPBYTE)buffer, &size);
+    ok(res == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", res);
+    ok(!strcmp( buffer, "hklm" ), "value set to '%s'\n", buffer );
+
+    /* modify the value in hkcr */
+    res = RegSetValueExA(hkcrsub1, "subval1", 0, REG_SZ, (const BYTE *)"hkcr", sizeof("hkcr"));
+    ok(res == ERROR_SUCCESS, "RegSetValueExA failed: %d\n", res);
+
+    /* check that the value is modified in hklm classes */
+    res = RegQueryValueExA(hklmsub1, "subval1", NULL, &type, (LPBYTE)buffer, &size);
+    ok(res == ERROR_SUCCESS, "RegQueryValueExA failed: %d, GLE=%x\n", res, GetLastError());
+    ok(!strcmp( buffer, "hkcr" ), "value set to '%s'\n", buffer );
+
+    /* create a subkey in user's classes */
+    if (RegCreateKeyExA( hkey, "subkey1", 0, NULL, 0,
+                         KEY_QUERY_VALUE|KEY_SET_VALUE, NULL, &hkeysub1, NULL )) return;
+
+    /* set a value in user's classes */
+    res = RegSetValueExA(hkeysub1, "subval1", 0, REG_SZ, (const BYTE *)"user", sizeof("user"));
+    ok(res == ERROR_SUCCESS, "RegSetValueExA failed: %d, GLE=%x\n", res, GetLastError());
+
+    /* try to find the value in hkcr */
+    res = RegQueryValueExA(hkcrsub1, "subval1", NULL, &type, (LPBYTE)buffer, &size);
+    ok(res == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", res);
+    ok(!strcmp( buffer, "user" ), "value set to '%s'\n", buffer );
+
+    /* modify the value in hklm */
+    res = RegSetValueExA(hklmsub1, "subval1", 0, REG_SZ, (const BYTE *)"hklm", sizeof("hklm"));
+    ok(res == ERROR_SUCCESS, "RegSetValueExA failed: %d, GLE=%x\n", res, GetLastError());
+
+    /* check that the value is not overwritten in hkcr or user's classes */
+    res = RegQueryValueExA(hkcrsub1, "subval1", NULL, &type, (LPBYTE)buffer, &size);
+    ok(res == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", res);
+    ok(!strcmp( buffer, "user" ), "value set to '%s'\n", buffer );
+    res = RegQueryValueExA(hkeysub1, "subval1", NULL, &type, (LPBYTE)buffer, &size);
+    ok(res == ERROR_SUCCESS, "RegQueryValueExA failed: %d, GLE=%x\n", res, GetLastError());
+    ok(!strcmp( buffer, "user" ), "value set to '%s'\n", buffer );
+
+    /* modify the value in hkcr */
+    res = RegSetValueExA(hkcrsub1, "subval1", 0, REG_SZ, (const BYTE *)"hkcr", sizeof("hkcr"));
+    ok(res == ERROR_SUCCESS, "RegSetValueExA failed: %d\n", res);
+
+    /* check that the value is overwritten in hklm and user's classes */
+    res = RegQueryValueExA(hkcrsub1, "subval1", NULL, &type, (LPBYTE)buffer, &size);
+    ok(res == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", res);
+    ok(!strcmp( buffer, "hkcr" ), "value set to '%s'\n", buffer );
+    res = RegQueryValueExA(hkeysub1, "subval1", NULL, &type, (LPBYTE)buffer, &size);
+    ok(res == ERROR_SUCCESS, "RegQueryValueExA failed: %d, GLE=%x\n", res, GetLastError());
+    ok(!strcmp( buffer, "hkcr" ), "value set to '%s'\n", buffer );
+
     /* cleanup */
     delete_key( hkey );
     delete_key( hklm );
     delete_key( hkcr );
+    delete_key( hkeysub1 );
+    delete_key( hklmsub1 );
+    delete_key( hkcrsub1 );
     RegCloseKey( hkey );
     RegCloseKey( hklm );
     RegCloseKey( hkcr );
+    RegCloseKey( hkeysub1 );
+    RegCloseKey( hklmsub1 );
+    RegCloseKey( hkcrsub1 );
 }
 
 static void test_deleted_key(void)
