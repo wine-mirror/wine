@@ -820,6 +820,7 @@ static void test_copy(void)
     DWORD retval;
     LPSTR ptr;
     BOOL on_nt4 = FALSE;
+    BOOL ret;
 
     if (old_shell32)
     {
@@ -973,16 +974,16 @@ static void test_copy(void)
     shfo.pTo = "test2.txt\0";
     /* suppress the error-dialog in win9x here */
     shfo.fFlags = FOF_NOERRORUI | FOF_NOCONFIRMATION | FOF_SILENT;
-    ok(SetFileAttributesA(shfo.pTo, FILE_ATTRIBUTE_READONLY),
-        "Failure to set file attributes (error %x)\n", GetLastError());
+    ret = SetFileAttributesA(shfo.pTo, FILE_ATTRIBUTE_READONLY);
+    ok(ret, "Failure to set file attributes (error %x)\n", GetLastError());
     retval = CopyFileA(shfo.pFrom, shfo.pTo, FALSE);
     ok(!retval && GetLastError() == ERROR_ACCESS_DENIED, "CopyFileA should have fail with ERROR_ACCESS_DENIED\n");
     retval = SHFileOperationA(&shfo);
     /* Does not work on Win95, Win95B, NT4WS and NT4SRV */
     ok(!retval || broken(retval == DE_OPCANCELLED), "SHFileOperationA failed to copy (error %x)\n", retval);
     /* Set back normal attributes to make the file deletion succeed */
-    ok(SetFileAttributesA(shfo.pTo, FILE_ATTRIBUTE_NORMAL),
-        "Failure to set file attributes (error %x)\n", GetLastError());
+    ret = SetFileAttributesA(shfo.pTo, FILE_ATTRIBUTE_NORMAL);
+    ok(ret, "Failure to set file attributes (error %x)\n", GetLastError());
     shfo.fFlags = tmp_flags;
 
     /* try to copy files to a file */
