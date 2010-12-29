@@ -132,7 +132,7 @@ static BOOL remove_device(void)
 {
     HDEVINFO set;
     SP_DEVINFO_DATA devInfo = { sizeof(devInfo), { 0 } };
-    BOOL ret;
+    BOOL ret, retval;
 
     SetLastError(0xdeadbeef);
     set = pSetupDiGetClassDevsA(&guid, NULL, 0, 0);
@@ -140,23 +140,23 @@ static BOOL remove_device(void)
      GetLastError());
 
     SetLastError(0xdeadbeef);
-    ok(pSetupDiEnumDeviceInfo(set, 0, &devInfo),
-     "SetupDiEnumDeviceInfo failed: %08x\n", GetLastError());
+    ret = pSetupDiEnumDeviceInfo(set, 0, &devInfo);
+    ok(ret, "SetupDiEnumDeviceInfo failed: %08x\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    ret = pSetupDiCallClassInstaller(DIF_REMOVE, set, &devInfo);
+    retval = pSetupDiCallClassInstaller(DIF_REMOVE, set, &devInfo);
     if(is_wow64)
-        todo_wine ok(!ret && GetLastError() == ERROR_IN_WOW64,
+        todo_wine ok(!retval && GetLastError() == ERROR_IN_WOW64,
                      "SetupDiCallClassInstaller(DIF_REMOVE...) succeeded: %08x\n", GetLastError());
     else
-        todo_wine ok(ret,
+        todo_wine ok(retval,
                      "SetupDiCallClassInstaller(DIF_REMOVE...) failed: %08x\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    ok(pSetupDiDestroyDeviceInfoList(set),
-     "SetupDiDestroyDeviceInfoList failed: %08x\n", GetLastError());
+    ret = pSetupDiDestroyDeviceInfoList(set);
+    ok(ret, "SetupDiDestroyDeviceInfoList failed: %08x\n", GetLastError());
 
-    return ret;
+    return retval;
 }
 
 /* RegDeleteTreeW from dlls/advapi32/registry.c */
