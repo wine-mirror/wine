@@ -919,6 +919,43 @@ int CDECL MSVCRT__ui64toa_s(unsigned __int64 value, char *str,
 }
 
 /*********************************************************************
+ *      _ui64tow_s  (MSVCRT.@)
+ */
+int CDECL MSVCRT__ui64tow_s( unsigned __int64 value, MSVCRT_wchar_t *str,
+                             MSVCRT_size_t size, int radix )
+{
+    MSVCRT_wchar_t buffer[65], *pos;
+    int digit;
+
+    if (!MSVCRT_CHECK_PMT(str != NULL) || !MSVCRT_CHECK_PMT(size > 0) ||
+        !MSVCRT_CHECK_PMT(radix>=2) || !MSVCRT_CHECK_PMT(radix<=36)) {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    pos = &buffer[64];
+    *pos = '\0';
+
+    do {
+	digit = value % radix;
+	value = value / radix;
+	if (digit < 10)
+	    *--pos = '0' + digit;
+	else
+	    *--pos = 'a' + digit - 10;
+    } while (value != 0);
+
+    if(buffer-pos+65 > size) {
+        MSVCRT_INVALID_PMT("str[size] is too small");
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    memcpy(str, pos, buffer-pos+65);
+    return 0;
+}
+
+/*********************************************************************
  *  _ultoa_s (MSVCRT.@)
  */
 int CDECL _ultoa_s(MSVCRT_ulong value, char *str, MSVCRT_size_t size, int radix)
