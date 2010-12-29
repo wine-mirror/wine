@@ -38,8 +38,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(oledb);
 
 typedef struct
 {
-    const struct IDataConvertVtbl *lpVtbl;
-    const struct IDCInfoVtbl *lpDCInfoVtbl;
+    IDataConvert IDataConvert_iface;
+    IDCInfo IDCInfo_iface;
 
     LONG ref;
 
@@ -48,12 +48,12 @@ typedef struct
 
 static inline convert *impl_from_IDataConvert(IDataConvert *iface)
 {
-    return (convert *)((char*)iface - FIELD_OFFSET(convert, lpVtbl));
+    return CONTAINING_RECORD(iface, convert, IDataConvert_iface);
 }
 
 static inline convert *impl_from_IDCInfo(IDCInfo *iface)
 {
-    return (convert *)((char*)iface - FIELD_OFFSET(convert, lpDCInfoVtbl));
+    return CONTAINING_RECORD(iface, convert, IDCInfo_iface);
 }
 
 static HRESULT WINAPI convert_QueryInterface(IDataConvert* iface,
@@ -72,7 +72,7 @@ static HRESULT WINAPI convert_QueryInterface(IDataConvert* iface,
     }
     else if(IsEqualIID(riid, &IID_IDCInfo))
     {
-        *obj = &This->lpDCInfoVtbl;
+        *obj = &This->IDCInfo_iface;
     }
     else
     {
@@ -985,21 +985,21 @@ static HRESULT WINAPI dcinfo_QueryInterface(IDCInfo* iface, REFIID riid, void **
 {
     convert *This = impl_from_IDCInfo(iface);
 
-    return IDataConvert_QueryInterface((IDataConvert *)This, riid, obj);
+    return IDataConvert_QueryInterface(&This->IDataConvert_iface, riid, obj);
 }
 
 static ULONG WINAPI dcinfo_AddRef(IDCInfo* iface)
 {
     convert *This = impl_from_IDCInfo(iface);
 
-    return IDataConvert_AddRef((IDataConvert *)This);
+    return IDataConvert_AddRef(&This->IDataConvert_iface);
 }
 
 static ULONG WINAPI dcinfo_Release(IDCInfo* iface)
 {
     convert *This = impl_from_IDCInfo(iface);
 
-    return IDataConvert_Release((IDataConvert *)This);
+    return IDataConvert_Release(&This->IDataConvert_iface);
 }
 
 static HRESULT WINAPI dcinfo_GetInfo(IDCInfo *iface, ULONG num, DCINFOTYPE types[], DCINFO **info_ptr)
@@ -1081,12 +1081,12 @@ HRESULT create_oledb_convert(IUnknown *outer, void **obj)
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if(!This) return E_OUTOFMEMORY;
 
-    This->lpVtbl = &convert_vtbl;
-    This->lpDCInfoVtbl = &dcinfo_vtbl;
+    This->IDataConvert_iface.lpVtbl = &convert_vtbl;
+    This->IDCInfo_iface.lpVtbl = &dcinfo_vtbl;
     This->ref = 1;
     This->version = 0x110;
 
-    *obj = &This->lpVtbl;
+    *obj = &This->IDataConvert_iface;
 
     return S_OK;
 }
