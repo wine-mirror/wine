@@ -270,12 +270,7 @@ static int load_file( const char *input_name, const char *output_name )
             exit(0);
         }
 
-        if (output_name && output_name[0])
-        {
-            name = xmalloc( strlen(output_name) + 8 );
-            strcpy( name, output_name );
-            strcat( name, ".XXXXXX" );
-        }
+        if (output_name && output_name[0]) name = strmake( "%s.XXXXXX", output_name );
         else name = xstrdup( "wrc.XXXXXX" );
 
         if ((fd = mkstemps( name, 0 )) == -1)

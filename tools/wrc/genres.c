@@ -1741,23 +1741,8 @@ char *prep_nid_for_label(const name_id_t *nid)
 */
 char *make_c_name(const char *base, const name_id_t *nid, const language_t *lan)
 {
-	int nlen;
-	char *buf;
-	char *ret;
-	char lanbuf[6];
-
-	sprintf(lanbuf, "%d", lan ? MAKELANGID(lan->id, lan->sub) : 0);
-	buf = prep_nid_for_label(nid);
-	nlen = strlen(buf) + strlen(lanbuf);
-	nlen += strlen(base) + 4; /* three time '_' and '\0' */
-	ret = xmalloc(nlen);
-	strcpy(ret, "_");
-	strcat(ret, base);
-	strcat(ret, "_");
-	strcat(ret, buf);
-	strcat(ret, "_");
-	strcat(ret, lanbuf);
-	return ret;
+	char *buf = prep_nid_for_label(nid);
+	return strmake( "_%s_%s_%d", base, buf, lan ? MAKELANGID(lan->id, lan->sub) : 0);
 }
 
 /*
