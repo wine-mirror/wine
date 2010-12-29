@@ -37,7 +37,7 @@ static const WCHAR brW[] = {'b','r',0};
 static const WCHAR hrW[] = {'h','r',0};
 
 typedef struct {
-    const IHTMLTxtRangeVtbl *lpHTMLTxtRangeVtbl;
+    IHTMLTxtRange     IHTMLTxtRange_iface;
     IOleCommandTarget IOleCommandTarget_iface;
 
     LONG ref;
@@ -47,8 +47,6 @@ typedef struct {
 
     struct list entry;
 } HTMLTxtRange;
-
-#define HTMLTXTRANGE(x)  ((IHTMLTxtRange*)  &(x)->lpHTMLTxtRangeVtbl)
 
 typedef struct {
     WCHAR *buf;
@@ -77,7 +75,7 @@ static HTMLTxtRange *get_range_object(HTMLDocumentNode *doc, IHTMLTxtRange *ifac
     HTMLTxtRange *iter;
 
     LIST_FOR_EACH_ENTRY(iter, &doc->range_list, HTMLTxtRange, entry) {
-        if(HTMLTXTRANGE(iter) == iface)
+        if(&iter->IHTMLTxtRange_iface == iface)
             return iter;
     }
 
@@ -998,23 +996,26 @@ static LONG move_prev_words(HTMLTxtRange *This, LONG cnt, const dompos_t *pos, d
     return ret;
 }
 
-#define HTMLTXTRANGE_THIS(iface) DEFINE_THIS(HTMLTxtRange, HTMLTxtRange, iface)
+static inline HTMLTxtRange *impl_from_IHTMLTxtRange(IHTMLTxtRange *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLTxtRange, IHTMLTxtRange_iface);
+}
 
 static HRESULT WINAPI HTMLTxtRange_QueryInterface(IHTMLTxtRange *iface, REFIID riid, void **ppv)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
 
     *ppv = NULL;
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = HTMLTXTRANGE(This);
+        *ppv = &This->IHTMLTxtRange_iface;
     }else if(IsEqualGUID(&IID_IDispatch, riid)) {
         TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = HTMLTXTRANGE(This);
+        *ppv = &This->IHTMLTxtRange_iface;
     }else if(IsEqualGUID(&IID_IHTMLTxtRange, riid)) {
         TRACE("(%p)->(IID_IHTMLTxtRange %p)\n", This, ppv);
-        *ppv = HTMLTXTRANGE(This);
+        *ppv = &This->IHTMLTxtRange_iface;
     }else if(IsEqualGUID(&IID_IOleCommandTarget, riid)) {
         TRACE("(%p)->(IID_IOleCommandTarget %p)\n", This, ppv);
         *ppv = &This->IOleCommandTarget_iface;
@@ -1031,7 +1032,7 @@ static HRESULT WINAPI HTMLTxtRange_QueryInterface(IHTMLTxtRange *iface, REFIID r
 
 static ULONG WINAPI HTMLTxtRange_AddRef(IHTMLTxtRange *iface)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -1041,7 +1042,7 @@ static ULONG WINAPI HTMLTxtRange_AddRef(IHTMLTxtRange *iface)
 
 static ULONG WINAPI HTMLTxtRange_Release(IHTMLTxtRange *iface)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -1059,7 +1060,7 @@ static ULONG WINAPI HTMLTxtRange_Release(IHTMLTxtRange *iface)
 
 static HRESULT WINAPI HTMLTxtRange_GetTypeInfoCount(IHTMLTxtRange *iface, UINT *pctinfo)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     FIXME("(%p)->(%p)\n", This, pctinfo);
     return E_NOTIMPL;
 }
@@ -1067,7 +1068,7 @@ static HRESULT WINAPI HTMLTxtRange_GetTypeInfoCount(IHTMLTxtRange *iface, UINT *
 static HRESULT WINAPI HTMLTxtRange_GetTypeInfo(IHTMLTxtRange *iface, UINT iTInfo,
                                                LCID lcid, ITypeInfo **ppTInfo)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
     return E_NOTIMPL;
 }
@@ -1076,7 +1077,7 @@ static HRESULT WINAPI HTMLTxtRange_GetIDsOfNames(IHTMLTxtRange *iface, REFIID ri
                                                  LPOLESTR *rgszNames, UINT cNames,
                                                  LCID lcid, DISPID *rgDispId)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
           lcid, rgDispId);
     return E_NOTIMPL;
@@ -1086,7 +1087,7 @@ static HRESULT WINAPI HTMLTxtRange_Invoke(IHTMLTxtRange *iface, DISPID dispIdMem
                             REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
     return E_NOTIMPL;
@@ -1094,7 +1095,7 @@ static HRESULT WINAPI HTMLTxtRange_Invoke(IHTMLTxtRange *iface, DISPID dispIdMem
 
 static HRESULT WINAPI HTMLTxtRange_get_htmlText(IHTMLTxtRange *iface, BSTR *p)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -1131,7 +1132,7 @@ static HRESULT WINAPI HTMLTxtRange_get_htmlText(IHTMLTxtRange *iface, BSTR *p)
 
 static HRESULT WINAPI HTMLTxtRange_put_text(IHTMLTxtRange *iface, BSTR v)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     nsIDOMText *text_node;
     nsAString text_str;
     nsresult nsres;
@@ -1160,12 +1161,12 @@ static HRESULT WINAPI HTMLTxtRange_put_text(IHTMLTxtRange *iface, BSTR v)
     if(NS_FAILED(nsres))
         ERR("SetEndAfter failed: %08x\n", nsres);
 
-    return IHTMLTxtRange_collapse(HTMLTXTRANGE(This), VARIANT_FALSE);
+    return IHTMLTxtRange_collapse(&This->IHTMLTxtRange_iface, VARIANT_FALSE);
 }
 
 static HRESULT WINAPI HTMLTxtRange_get_text(IHTMLTxtRange *iface, BSTR *p)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     wstrbuf_t buf;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -1187,7 +1188,7 @@ static HRESULT WINAPI HTMLTxtRange_get_text(IHTMLTxtRange *iface, BSTR *p)
 
 static HRESULT WINAPI HTMLTxtRange_parentElement(IHTMLTxtRange *iface, IHTMLElement **parent)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     nsIDOMNode *nsnode, *tmp;
     HTMLDOMNode *node;
     HRESULT hres;
@@ -1216,7 +1217,7 @@ static HRESULT WINAPI HTMLTxtRange_parentElement(IHTMLTxtRange *iface, IHTMLElem
 
 static HRESULT WINAPI HTMLTxtRange_duplicate(IHTMLTxtRange *iface, IHTMLTxtRange **Duplicate)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     nsIDOMRange *nsrange = NULL;
     HRESULT hres;
 
@@ -1232,7 +1233,7 @@ static HRESULT WINAPI HTMLTxtRange_duplicate(IHTMLTxtRange *iface, IHTMLTxtRange
 static HRESULT WINAPI HTMLTxtRange_inRange(IHTMLTxtRange *iface, IHTMLTxtRange *Range,
         VARIANT_BOOL *InRange)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     HTMLTxtRange *src_range;
     PRInt16 nsret = 0;
     nsresult nsres;
@@ -1263,7 +1264,7 @@ static HRESULT WINAPI HTMLTxtRange_inRange(IHTMLTxtRange *iface, IHTMLTxtRange *
 static HRESULT WINAPI HTMLTxtRange_isEqual(IHTMLTxtRange *iface, IHTMLTxtRange *Range,
         VARIANT_BOOL *IsEqual)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     HTMLTxtRange *src_range;
     PRInt16 nsret = 0;
     nsresult nsres;
@@ -1293,14 +1294,14 @@ static HRESULT WINAPI HTMLTxtRange_isEqual(IHTMLTxtRange *iface, IHTMLTxtRange *
 
 static HRESULT WINAPI HTMLTxtRange_scrollIntoView(IHTMLTxtRange *iface, VARIANT_BOOL fStart)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     FIXME("(%p)->(%x)\n", This, fStart);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLTxtRange_collapse(IHTMLTxtRange *iface, VARIANT_BOOL Start)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
 
     TRACE("(%p)->(%x)\n", This, Start);
 
@@ -1310,7 +1311,7 @@ static HRESULT WINAPI HTMLTxtRange_collapse(IHTMLTxtRange *iface, VARIANT_BOOL S
 
 static HRESULT WINAPI HTMLTxtRange_expand(IHTMLTxtRange *iface, BSTR Unit, VARIANT_BOOL *Success)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     range_unit_t unit;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(Unit), Success);
@@ -1382,7 +1383,7 @@ static HRESULT WINAPI HTMLTxtRange_expand(IHTMLTxtRange *iface, BSTR Unit, VARIA
 static HRESULT WINAPI HTMLTxtRange_move(IHTMLTxtRange *iface, BSTR Unit,
         LONG Count, LONG *ActualCount)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     range_unit_t unit;
 
     TRACE("(%p)->(%s %d %p)\n", This, debugstr_w(Unit), Count, ActualCount);
@@ -1393,7 +1394,7 @@ static HRESULT WINAPI HTMLTxtRange_move(IHTMLTxtRange *iface, BSTR Unit,
 
     if(!Count) {
         *ActualCount = 0;
-        return IHTMLTxtRange_collapse(HTMLTXTRANGE(This), TRUE);
+        return IHTMLTxtRange_collapse(&This->IHTMLTxtRange_iface, TRUE);
     }
 
     switch(unit) {
@@ -1407,11 +1408,11 @@ static HRESULT WINAPI HTMLTxtRange_move(IHTMLTxtRange *iface, BSTR Unit,
             set_range_pos(This, FALSE, &new_pos);
             dompos_release(&new_pos);
 
-            IHTMLTxtRange_collapse(HTMLTXTRANGE(This), FALSE);
+            IHTMLTxtRange_collapse(&This->IHTMLTxtRange_iface, FALSE);
         }else {
             *ActualCount = -move_prev_chars(This, -Count, &cur_pos, FALSE, NULL, NULL, &new_pos);
             set_range_pos(This, TRUE, &new_pos);
-            IHTMLTxtRange_collapse(HTMLTXTRANGE(This), TRUE);
+            IHTMLTxtRange_collapse(&This->IHTMLTxtRange_iface, TRUE);
             dompos_release(&new_pos);
         }
 
@@ -1428,11 +1429,11 @@ static HRESULT WINAPI HTMLTxtRange_move(IHTMLTxtRange *iface, BSTR Unit,
             *ActualCount = move_next_words(Count, &cur_pos, &new_pos);
             set_range_pos(This, FALSE, &new_pos);
             dompos_release(&new_pos);
-            IHTMLTxtRange_collapse(HTMLTXTRANGE(This), FALSE);
+            IHTMLTxtRange_collapse(&This->IHTMLTxtRange_iface, FALSE);
         }else {
             *ActualCount = -move_prev_words(This, -Count, &cur_pos, &new_pos);
             set_range_pos(This, TRUE, &new_pos);
-            IHTMLTxtRange_collapse(HTMLTXTRANGE(This), TRUE);
+            IHTMLTxtRange_collapse(&This->IHTMLTxtRange_iface, TRUE);
             dompos_release(&new_pos);
         }
 
@@ -1451,7 +1452,7 @@ static HRESULT WINAPI HTMLTxtRange_move(IHTMLTxtRange *iface, BSTR Unit,
 static HRESULT WINAPI HTMLTxtRange_moveStart(IHTMLTxtRange *iface, BSTR Unit,
         LONG Count, LONG *ActualCount)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     range_unit_t unit;
 
     TRACE("(%p)->(%s %d %p)\n", This, debugstr_w(Unit), Count, ActualCount);
@@ -1480,7 +1481,7 @@ static HRESULT WINAPI HTMLTxtRange_moveStart(IHTMLTxtRange *iface, BSTR Unit,
             *ActualCount = move_next_chars(Count, &start_pos, collapsed, &end_pos, &bounded, &new_pos);
             set_range_pos(This, !bounded, &new_pos);
             if(bounded)
-                IHTMLTxtRange_collapse(HTMLTXTRANGE(This), FALSE);
+                IHTMLTxtRange_collapse(&This->IHTMLTxtRange_iface, FALSE);
         }else {
             *ActualCount = -move_prev_chars(This, -Count, &start_pos, FALSE, NULL, NULL, &new_pos);
             set_range_pos(This, TRUE, &new_pos);
@@ -1502,7 +1503,7 @@ static HRESULT WINAPI HTMLTxtRange_moveStart(IHTMLTxtRange *iface, BSTR Unit,
 static HRESULT WINAPI HTMLTxtRange_moveEnd(IHTMLTxtRange *iface, BSTR Unit,
         LONG Count, LONG *ActualCount)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     range_unit_t unit;
 
     TRACE("(%p)->(%s %d %p)\n", This, debugstr_w(Unit), Count, ActualCount);
@@ -1534,7 +1535,7 @@ static HRESULT WINAPI HTMLTxtRange_moveEnd(IHTMLTxtRange *iface, BSTR Unit,
             *ActualCount = -move_prev_chars(This, -Count, &end_pos, TRUE, &start_pos, &bounded, &new_pos);
             set_range_pos(This, bounded, &new_pos);
             if(bounded)
-                IHTMLTxtRange_collapse(HTMLTXTRANGE(This), TRUE);
+                IHTMLTxtRange_collapse(&This->IHTMLTxtRange_iface, TRUE);
         }
 
         dompos_release(&start_pos);
@@ -1552,7 +1553,7 @@ static HRESULT WINAPI HTMLTxtRange_moveEnd(IHTMLTxtRange *iface, BSTR Unit,
 
 static HRESULT WINAPI HTMLTxtRange_select(IHTMLTxtRange *iface)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     nsISelection *nsselection;
     nsresult nsres;
 
@@ -1572,14 +1573,14 @@ static HRESULT WINAPI HTMLTxtRange_select(IHTMLTxtRange *iface)
 
 static HRESULT WINAPI HTMLTxtRange_pasteHTML(IHTMLTxtRange *iface, BSTR html)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(html));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLTxtRange_moveToElementText(IHTMLTxtRange *iface, IHTMLElement *element)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     FIXME("(%p)->(%p)\n", This, element);
     return E_NOTIMPL;
 }
@@ -1587,7 +1588,7 @@ static HRESULT WINAPI HTMLTxtRange_moveToElementText(IHTMLTxtRange *iface, IHTML
 static HRESULT WINAPI HTMLTxtRange_setEndPoint(IHTMLTxtRange *iface, BSTR how,
         IHTMLTxtRange *SourceRange)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     FIXME("(%p)->(%s %p)\n", This, debugstr_w(how), SourceRange);
     return E_NOTIMPL;
 }
@@ -1595,7 +1596,7 @@ static HRESULT WINAPI HTMLTxtRange_setEndPoint(IHTMLTxtRange *iface, BSTR how,
 static HRESULT WINAPI HTMLTxtRange_compareEndPoints(IHTMLTxtRange *iface, BSTR how,
         IHTMLTxtRange *SourceRange, LONG *ret)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     HTMLTxtRange *src_range;
     PRInt16 nsret = 0;
     int nscmpt;
@@ -1622,21 +1623,21 @@ static HRESULT WINAPI HTMLTxtRange_compareEndPoints(IHTMLTxtRange *iface, BSTR h
 static HRESULT WINAPI HTMLTxtRange_findText(IHTMLTxtRange *iface, BSTR String,
         LONG count, LONG Flags, VARIANT_BOOL *Success)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     FIXME("(%p)->(%s %d %08x %p)\n", This, debugstr_w(String), count, Flags, Success);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLTxtRange_moveToPoint(IHTMLTxtRange *iface, LONG x, LONG y)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     FIXME("(%p)->(%d %d)\n", This, x, y);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLTxtRange_getBookmark(IHTMLTxtRange *iface, BSTR *Bookmark)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     FIXME("(%p)->(%p)\n", This, Bookmark);
     return E_NOTIMPL;
 }
@@ -1644,7 +1645,7 @@ static HRESULT WINAPI HTMLTxtRange_getBookmark(IHTMLTxtRange *iface, BSTR *Bookm
 static HRESULT WINAPI HTMLTxtRange_moveToBookmark(IHTMLTxtRange *iface, BSTR Bookmark,
         VARIANT_BOOL *Success)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     FIXME("(%p)->(%s %p)\n", This, debugstr_w(Bookmark), Success);
     return E_NOTIMPL;
 }
@@ -1652,7 +1653,7 @@ static HRESULT WINAPI HTMLTxtRange_moveToBookmark(IHTMLTxtRange *iface, BSTR Boo
 static HRESULT WINAPI HTMLTxtRange_queryCommandSupported(IHTMLTxtRange *iface, BSTR cmdID,
         VARIANT_BOOL *pfRet)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     FIXME("(%p)->(%s %p)\n", This, debugstr_w(cmdID), pfRet);
     return E_NOTIMPL;
 }
@@ -1660,7 +1661,7 @@ static HRESULT WINAPI HTMLTxtRange_queryCommandSupported(IHTMLTxtRange *iface, B
 static HRESULT WINAPI HTMLTxtRange_queryCommandEnabled(IHTMLTxtRange *iface, BSTR cmdID,
         VARIANT_BOOL *pfRet)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     FIXME("(%p)->(%s %p)\n", This, debugstr_w(cmdID), pfRet);
     return E_NOTIMPL;
 }
@@ -1668,7 +1669,7 @@ static HRESULT WINAPI HTMLTxtRange_queryCommandEnabled(IHTMLTxtRange *iface, BST
 static HRESULT WINAPI HTMLTxtRange_queryCommandState(IHTMLTxtRange *iface, BSTR cmdID,
         VARIANT_BOOL *pfRet)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     FIXME("(%p)->(%s %p)\n", This, debugstr_w(cmdID), pfRet);
     return E_NOTIMPL;
 }
@@ -1676,7 +1677,7 @@ static HRESULT WINAPI HTMLTxtRange_queryCommandState(IHTMLTxtRange *iface, BSTR 
 static HRESULT WINAPI HTMLTxtRange_queryCommandIndeterm(IHTMLTxtRange *iface, BSTR cmdID,
         VARIANT_BOOL *pfRet)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     FIXME("(%p)->(%s %p)\n", This, debugstr_w(cmdID), pfRet);
     return E_NOTIMPL;
 }
@@ -1684,7 +1685,7 @@ static HRESULT WINAPI HTMLTxtRange_queryCommandIndeterm(IHTMLTxtRange *iface, BS
 static HRESULT WINAPI HTMLTxtRange_queryCommandText(IHTMLTxtRange *iface, BSTR cmdID,
         BSTR *pcmdText)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     FIXME("(%p)->(%s %p)\n", This, debugstr_w(cmdID), pcmdText);
     return E_NOTIMPL;
 }
@@ -1692,7 +1693,7 @@ static HRESULT WINAPI HTMLTxtRange_queryCommandText(IHTMLTxtRange *iface, BSTR c
 static HRESULT WINAPI HTMLTxtRange_queryCommandValue(IHTMLTxtRange *iface, BSTR cmdID,
         VARIANT *pcmdValue)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     FIXME("(%p)->(%s %p)\n", This, debugstr_w(cmdID), pcmdValue);
     return E_NOTIMPL;
 }
@@ -1700,7 +1701,7 @@ static HRESULT WINAPI HTMLTxtRange_queryCommandValue(IHTMLTxtRange *iface, BSTR 
 static HRESULT WINAPI HTMLTxtRange_execCommand(IHTMLTxtRange *iface, BSTR cmdID,
         VARIANT_BOOL showUI, VARIANT value, VARIANT_BOOL *pfRet)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     FIXME("(%p)->(%s %x v %p)\n", This, debugstr_w(cmdID), showUI, pfRet);
     return E_NOTIMPL;
 }
@@ -1708,12 +1709,10 @@ static HRESULT WINAPI HTMLTxtRange_execCommand(IHTMLTxtRange *iface, BSTR cmdID,
 static HRESULT WINAPI HTMLTxtRange_execCommandShowHelp(IHTMLTxtRange *iface, BSTR cmdID,
         VARIANT_BOOL *pfRet)
 {
-    HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
+    HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     FIXME("(%p)->(%s %p)\n", This, debugstr_w(cmdID), pfRet);
     return E_NOTIMPL;
 }
-
-#undef HTMLTXTRANGE_THIS
 
 static const IHTMLTxtRangeVtbl HTMLTxtRangeVtbl = {
     HTMLTxtRange_QueryInterface,
@@ -1763,19 +1762,19 @@ static inline HTMLTxtRange *impl_from_IOleCommandTarget(IOleCommandTarget *iface
 static HRESULT WINAPI RangeCommandTarget_QueryInterface(IOleCommandTarget *iface, REFIID riid, void **ppv)
 {
     HTMLTxtRange *This = impl_from_IOleCommandTarget(iface);
-    return IHTMLTxtRange_QueryInterface(HTMLTXTRANGE(This), riid, ppv);
+    return IHTMLTxtRange_QueryInterface(&This->IHTMLTxtRange_iface, riid, ppv);
 }
 
 static ULONG WINAPI RangeCommandTarget_AddRef(IOleCommandTarget *iface)
 {
     HTMLTxtRange *This = impl_from_IOleCommandTarget(iface);
-    return IHTMLTxtRange_AddRef(HTMLTXTRANGE(This));
+    return IHTMLTxtRange_AddRef(&This->IHTMLTxtRange_iface);
 }
 
 static ULONG WINAPI RangeCommandTarget_Release(IOleCommandTarget *iface)
 {
     HTMLTxtRange *This = impl_from_IOleCommandTarget(iface);
-    return IHTMLTxtRange_Release(HTMLTXTRANGE(This));
+    return IHTMLTxtRange_Release(&This->IHTMLTxtRange_iface);
 }
 
 static HRESULT WINAPI RangeCommandTarget_QueryStatus(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
@@ -1842,8 +1841,6 @@ static HRESULT WINAPI RangeCommandTarget_Exec(IOleCommandTarget *iface, const GU
     return E_NOTIMPL;
 }
 
-#undef OLECMDTRG_THIS
-
 static const IOleCommandTargetVtbl OleCommandTargetVtbl = {
     RangeCommandTarget_QueryInterface,
     RangeCommandTarget_AddRef,
@@ -1860,7 +1857,7 @@ HRESULT HTMLTxtRange_Create(HTMLDocumentNode *doc, nsIDOMRange *nsrange, IHTMLTx
     if(!ret)
         return E_OUTOFMEMORY;
 
-    ret->lpHTMLTxtRangeVtbl = &HTMLTxtRangeVtbl;
+    ret->IHTMLTxtRange_iface.lpVtbl = &HTMLTxtRangeVtbl;
     ret->IOleCommandTarget_iface.lpVtbl = &OleCommandTargetVtbl;
     ret->ref = 1;
 
@@ -1871,7 +1868,7 @@ HRESULT HTMLTxtRange_Create(HTMLDocumentNode *doc, nsIDOMRange *nsrange, IHTMLTx
     ret->doc = doc;
     list_add_head(&doc->range_list, &ret->entry);
 
-    *p = HTMLTXTRANGE(ret);
+    *p = &ret->IHTMLTxtRange_iface;
     return S_OK;
 }
 
