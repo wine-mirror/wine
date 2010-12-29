@@ -1077,7 +1077,8 @@ START_TEST(dsound)
     {
         BOOL ret;
 
-        ok( FreeLibrary(hDsound), "FreeLibrary(1) returned %d\n", GetLastError());
+        ret = FreeLibrary(hDsound);
+        ok( ret, "FreeLibrary(1) returned %d\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = FreeLibrary(hDsound);
         ok( ret ||
