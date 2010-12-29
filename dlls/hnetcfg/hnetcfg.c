@@ -37,13 +37,13 @@ typedef HRESULT (*fnCreateInstance)( IUnknown *pUnkOuter, LPVOID *ppObj );
 
 typedef struct
 {
-    const struct IClassFactoryVtbl *vtbl;
+    IClassFactory IClassFactory_iface;
     fnCreateInstance pfnCreateInstance;
 } hnetcfg_cf;
 
 static inline hnetcfg_cf *impl_from_IClassFactory( IClassFactory *iface )
 {
-    return (hnetcfg_cf *)((char *)iface - FIELD_OFFSET( hnetcfg_cf, vtbl ));
+    return CONTAINING_RECORD(iface, hnetcfg_cf, IClassFactory_iface);
 }
 
 static HRESULT WINAPI hnetcfg_cf_QueryInterface( IClassFactory *iface, REFIID riid, LPVOID *ppobj )
@@ -110,8 +110,8 @@ static const struct IClassFactoryVtbl hnetcfg_cf_vtbl =
     hnetcfg_cf_LockServer
 };
 
-static hnetcfg_cf fw_manager_cf = { &hnetcfg_cf_vtbl, NetFwMgr_create };
-static hnetcfg_cf fw_app_cf = { &hnetcfg_cf_vtbl, NetFwAuthorizedApplication_create };
+static hnetcfg_cf fw_manager_cf = { { &hnetcfg_cf_vtbl }, NetFwMgr_create };
+static hnetcfg_cf fw_app_cf = { { &hnetcfg_cf_vtbl }, NetFwAuthorizedApplication_create };
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -138,11 +138,11 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
 
     if (IsEqualGUID( rclsid, &CLSID_NetFwMgr ))
     {
-       cf = (IClassFactory *)&fw_manager_cf.vtbl;
+       cf = &fw_manager_cf.IClassFactory_iface;
     }
     else if (IsEqualGUID( rclsid, &CLSID_NetFwAuthorizedApplication ))
     {
-       cf = (IClassFactory *)&fw_app_cf.vtbl;
+       cf = &fw_app_cf.IClassFactory_iface;
     }
 
     if (!cf) return CLASS_E_CLASSNOTAVAILABLE;
