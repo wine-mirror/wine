@@ -108,6 +108,11 @@ ok(typeof(testFunc1) === "function", "typeof(testFunc1) is not function");
 ok(typeof(String) === "function", "typeof(String) is not function");
 ok(typeof(ScriptEngine) === "function", "typeof(ScriptEngine) is not function");
 ok(typeof(this) === "object", "typeof(this) is not object");
+ok(typeof(doesnotexist) === "undefined", "typeof(doesnotexist) = " + typeof(doesnotexist));
+tmp = typeof((new Object()).doesnotexist);
+ok(tmp === "undefined", "typeof((new Object).doesnotexist = " + tmp);
+tmp = typeof(testObj.onlyDispID);
+ok(tmp === "unknown", "typeof(testObj.onlyDispID) = " + tmp);
 
 ok(testFunc1(true, "test") === true, "testFunc1 not returned true");
 
@@ -1056,8 +1061,6 @@ if(false) {
 }
 
 ok(in_if_false(), "in_if_false failed");
-
-ok(typeof(doesnotexist) === "undefined", "typeof(doesnotexist) = " + typeof(doesnotexist));
 
 (function() { newValue = 1; })();
 ok(newValue === 1, "newValue = " + newValue);

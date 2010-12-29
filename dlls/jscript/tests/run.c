@@ -68,6 +68,8 @@ DEFINE_EXPECT(testobj_delete);
 DEFINE_EXPECT(testobj_value);
 DEFINE_EXPECT(testobj_prop_d);
 DEFINE_EXPECT(testobj_noprop_d);
+DEFINE_EXPECT(testobj_onlydispid_d);
+DEFINE_EXPECT(testobj_onlydispid_i);
 DEFINE_EXPECT(GetItemInfo_testVal);
 DEFINE_EXPECT(ActiveScriptSite_OnScriptError);
 DEFINE_EXPECT(invoke_func);
@@ -90,6 +92,7 @@ DEFINE_EXPECT(invoke_func);
 #define DISPID_GLOBAL_ISWIN64       0x100f
 
 #define DISPID_TESTOBJ_PROP         0x2000
+#define DISPID_TESTOBJ_ONLYDISPID   0x2001
 
 static const WCHAR testW[] = {'t','e','s','t',0};
 static const CHAR testA[] = "test";
@@ -230,6 +233,13 @@ static HRESULT WINAPI testObj_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD
         test_grfdex(grfdex, fdexNameCaseSensitive);
         return DISP_E_UNKNOWNNAME;
     }
+    if(!strcmp_wa(bstrName, "onlyDispID")) {
+        if(strict_dispid_check)
+            CHECK_EXPECT(testobj_onlydispid_d);
+        test_grfdex(grfdex, fdexNameCaseSensitive);
+        *pid = DISPID_TESTOBJ_ONLYDISPID;
+        return S_OK;
+    }
 
     ok(0, "unexpected name %s\n", wine_dbgstr_w(bstrName));
     return E_NOTIMPL;
@@ -266,6 +276,19 @@ static HRESULT WINAPI testObj_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid,
         V_VT(pvarRes) = VT_I4;
         V_I4(pvarRes) = 1;
         return S_OK;
+    case DISPID_TESTOBJ_ONLYDISPID:
+        if(strict_dispid_check)
+            CHECK_EXPECT(testobj_onlydispid_i);
+        ok(wFlags == INVOKE_PROPERTYGET, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgvarg, "rgvarg != NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) ==  VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
+        return DISP_E_MEMBERNOTFOUND;
     }
 
     ok(0, "unexpected call %x\n", id);
@@ -1430,6 +1453,12 @@ static void run_tests(void)
 
     parse_script_a("testThis(this);");
     parse_script_a("(function () { testThis(this); })();");
+
+    SET_EXPECT(testobj_onlydispid_d);
+    SET_EXPECT(testobj_onlydispid_i);
+    parse_script_a("ok(typeof(testObj.onlyDispID) === 'unknown', 'unexpected typeof(testObj.onlyDispID)');");
+    CHECK_CALLED(testobj_onlydispid_d);
+    CHECK_CALLED(testobj_onlydispid_i);
 
     run_from_res("lang.js");
     run_from_res("api.js");

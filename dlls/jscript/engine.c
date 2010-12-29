@@ -2365,6 +2365,7 @@ static HRESULT typeof_exprval(script_ctx_t *ctx, exprval_t *exprval, jsexcept_t 
     static const WCHAR objectW[] = {'o','b','j','e','c','t',0};
     static const WCHAR stringW[] = {'s','t','r','i','n','g',0};
     static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
+    static const WCHAR unknownW[] = {'u','n','k','n','o','w','n',0};
 
     if(exprval->type == EXPRVAL_INVALID) {
         *ret = undefinedW;
@@ -2372,8 +2373,13 @@ static HRESULT typeof_exprval(script_ctx_t *ctx, exprval_t *exprval, jsexcept_t 
     }
 
     hres = exprval_to_value(ctx, exprval, ei, &val);
-    if(FAILED(hres))
+    if(FAILED(hres)) {
+        if(exprval->type == EXPRVAL_IDREF) {
+            *ret = unknownW;
+            return S_OK;
+        }
         return hres;
+    }
 
     switch(V_VT(&val)) {
     case VT_EMPTY:
