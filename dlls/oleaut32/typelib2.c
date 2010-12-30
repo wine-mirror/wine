@@ -240,6 +240,11 @@ static inline UINT cti2_get_func_count(const MSFT_TypeInfoBase *typeinfo)
     return typeinfo->cElement & 0xFFFF;
 }
 
+static inline INT ctl2_get_record_size(const CyclicList *iter)
+{
+    return iter->u.data[0] & 0xFFFF;
+}
+
 /* NOTE: entry always assumed to be a function */
 static inline INVOKEKIND ctl2_get_invokekind(const CyclicList *func)
 {
@@ -2219,11 +2224,12 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
             This->dual->typedata = This->typedata;
     }
 
-    /* allocate type data space for us */
     insert = alloc_cyclic_list_item(CyclicListVar);
     if(!insert)
         return E_OUTOFMEMORY;
-    insert->u.data = HeapAlloc(GetProcessHeap(), 0, sizeof(int[5]));
+
+    /* allocate whole structure, it's fixed size always */
+    insert->u.data = HeapAlloc(GetProcessHeap(), 0, sizeof(MSFT_VarRecord));
     if(!insert->u.data) {
         HeapFree(GetProcessHeap(), 0, insert);
         return E_OUTOFMEMORY;
@@ -2236,11 +2242,13 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
     if(This->dual)
         This->dual->typedata = This->typedata;
 
-    This->typedata->next->u.val += 0x14;
+    This->typedata->next->u.val += FIELD_OFFSET(MSFT_VarRecord, HelpContext);
     typedata = This->typedata->u.data;
 
     /* fill out the basic type information */
-    typedata[0] = 0x14 | (index << 16);
+
+    /* no optional fields initially */
+    typedata[0] = FIELD_OFFSET(MSFT_VarRecord, HelpContext) | (index << 16);
     typedata[2] = pVarDesc->wVarFlags;
     typedata[3] = (sizeof(VARDESC) << 16) | pVarDesc->varkind;
 
@@ -2363,7 +2371,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(
     if (*((INT*)namedata) == -1)
 	    *((INT *)namedata) = This->typelib->typelib_typeinfo_offsets[This->typeinfo->typekind >> 16];
 
-    len = (iter->u.data[0]&0xFFFF)/4 - iter->u.data[5]*3;
+    len = ctl2_get_record_size(iter)/4 - iter->u.data[5]*3;
 
     for (i = 1; i < cNames; i++) {
 	offset = ctl2_alloc_name(This->typelib, names[i]);
@@ -2723,7 +2731,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
 
         typedata[i] = iter;
 
-        iter->u.data[0] = (iter->u.data[0]&0xffff) | (i<<16);
+        iter->u.data[0] = ctl2_get_record_size(iter) | (i<<16);
 
         if((iter->u.data[3]&1) != (user_vft&1)) {
             HeapFree(GetProcessHeap(), 0, typedata);
@@ -3247,7 +3255,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetFuncDesc(
 
     has_defaults = typedata[4] & 0x1000;
     tail = typedata[5] * (has_defaults ? 16 : 12);
-    hdr_len = ((typedata[0] & 0xFFFF) - tail) / sizeof(int);
+    hdr_len = (ctl2_get_record_size(desc) - tail) / sizeof(int);
 
     if ((*ppFuncDesc)->cParams > 0) {
         (*ppFuncDesc)->lprgelemdescParam = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (*ppFuncDesc)->cParams * sizeof(ELEMDESC));
@@ -3458,7 +3466,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetDocumentation(
                 if (iter->indice == memid) {
                     if (iter->type == CyclicListFunc) {
                         const int *typedata = iter->u.data;
-                        int   size = (typedata[0]&0xFFFF) - typedata[5]*(typedata[4]&0x1000?16:12);
+                        int size = ctl2_get_record_size(iter) - typedata[5]*(typedata[4]&0x1000?16:12);
 
                         nameoffset = iter->name;
                         /* FIXME implement this once SetFuncDocString is implemented */
@@ -4534,7 +4542,7 @@ static void ctl2_write_typeinfos(ICreateTypeLib2Impl *This, HANDLE hFile)
         iter = typeinfo->typedata->next;
         ctl2_write_chunk(hFile, &iter->u.val, sizeof(int));
         for(iter=iter->next; iter!=typeinfo->typedata->next; iter=iter->next)
-            ctl2_write_chunk(hFile, iter->u.data, iter->u.data[0] & 0xffff);
+            ctl2_write_chunk(hFile, iter->u.data, ctl2_get_record_size(iter));
 
         for(iter=typeinfo->typedata->next->next; iter!=typeinfo->typedata->next; iter=iter->next)
             ctl2_write_chunk(hFile, &iter->indice, sizeof(int));
@@ -4544,7 +4552,7 @@ static void ctl2_write_typeinfos(ICreateTypeLib2Impl *This, HANDLE hFile)
 
         for(iter=typeinfo->typedata->next->next; iter!=typeinfo->typedata->next; iter=iter->next) {
             ctl2_write_chunk(hFile, &offset, sizeof(int));
-            offset += iter->u.data[0] & 0xffff;
+            offset += ctl2_get_record_size(iter);
         }
     }
 }
