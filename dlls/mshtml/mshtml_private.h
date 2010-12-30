@@ -484,8 +484,8 @@ typedef enum {
 
 typedef struct {
     nsIHttpChannel         nsIHttpChannel_iface;
-    const nsIUploadChannelVtbl *lpUploadChannelVtbl;
-    const nsIHttpChannelInternalVtbl *lpIHttpChannelInternalVtbl;
+    nsIUploadChannel       nsIUploadChannel_iface;
+    nsIHttpChannelInternal nsIHttpChannelInternal_iface;
 
     LONG ref;
 
@@ -632,9 +632,6 @@ struct HTMLDocumentNode {
 #define NSDOCOBS(x)      ((nsIDocumentObserver*)          &(x)->lpIDocumentObserverVtbl)
 
 #define NSRUNNABLE(x)    ((nsIRunnable*)  &(x)->lpIRunnableVtbl)
-
-#define NSUPCHANNEL(x)   ((nsIUploadChannel*)  &(x)->lpUploadChannelVtbl)
-#define NSHTTPINTERNAL(x) ((nsIHttpChannelInternal*)  &(x)->lpIHttpChannelInternalVtbl)
 
 #define HTTPNEG(x)       ((IHttpNegotiate2*)              &(x)->lpHttpNegotiate2Vtbl)
 #define STATUSCLB(x)     ((IBindStatusCallback*)          &(x)->lpBindStatusCallbackVtbl)

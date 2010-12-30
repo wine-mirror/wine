@@ -420,10 +420,10 @@ static nsresult NSAPI nsChannel_QueryInterface(nsIHttpChannel *iface, nsIIDRef r
         *result = is_http_channel(This) ? &This->nsIHttpChannel_iface : NULL;
     }else if(IsEqualGUID(&IID_nsIUploadChannel, riid)) {
         TRACE("(%p)->(IID_nsIUploadChannel %p)\n", This, result);
-        *result = NSUPCHANNEL(This);
+        *result = &This->nsIUploadChannel_iface;
     }else if(IsEqualGUID(&IID_nsIHttpChannelInternal, riid)) {
         TRACE("(%p)->(IID_nsIHttpChannelInternal %p)\n", This, result);
-        *result = is_http_channel(This) ? NSHTTPINTERNAL(This) : NULL;
+        *result = is_http_channel(This) ? &This->nsIHttpChannelInternal_iface : NULL;
     }else {
         TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), result);
         *result = NULL;
@@ -1272,31 +1272,34 @@ static const nsIHttpChannelVtbl nsChannelVtbl = {
     nsChannel_IsNoCacheResponse
 };
 
-#define NSUPCHANNEL_THIS(iface) DEFINE_THIS(nsChannel, UploadChannel, iface)
+static inline nsChannel *impl_from_nsIUploadChannel(nsIUploadChannel *iface)
+{
+    return CONTAINING_RECORD(iface, nsChannel, nsIUploadChannel_iface);
+}
 
 static nsresult NSAPI nsUploadChannel_QueryInterface(nsIUploadChannel *iface, nsIIDRef riid,
         void **result)
 {
-    nsChannel *This = NSUPCHANNEL_THIS(iface);
+    nsChannel *This = impl_from_nsIUploadChannel(iface);
     return nsIChannel_QueryInterface(&This->nsIHttpChannel_iface, riid, result);
 }
 
 static nsrefcnt NSAPI nsUploadChannel_AddRef(nsIUploadChannel *iface)
 {
-    nsChannel *This = NSUPCHANNEL_THIS(iface);
+    nsChannel *This = impl_from_nsIUploadChannel(iface);
     return nsIChannel_AddRef(&This->nsIHttpChannel_iface);
 }
 
 static nsrefcnt NSAPI nsUploadChannel_Release(nsIUploadChannel *iface)
 {
-    nsChannel *This = NSUPCHANNEL_THIS(iface);
+    nsChannel *This = impl_from_nsIUploadChannel(iface);
     return nsIChannel_Release(&This->nsIHttpChannel_iface);
 }
 
 static nsresult NSAPI nsUploadChannel_SetUploadStream(nsIUploadChannel *iface,
         nsIInputStream *aStream, const nsACString *aContentType, PRInt32 aContentLength)
 {
-    nsChannel *This = NSUPCHANNEL_THIS(iface);
+    nsChannel *This = impl_from_nsIUploadChannel(iface);
     const char *content_type;
 
     static const WCHAR content_typeW[] =
@@ -1338,7 +1341,7 @@ static nsresult NSAPI nsUploadChannel_SetUploadStream(nsIUploadChannel *iface,
 static nsresult NSAPI nsUploadChannel_GetUploadStream(nsIUploadChannel *iface,
         nsIInputStream **aUploadStream)
 {
-    nsChannel *This = NSUPCHANNEL_THIS(iface);
+    nsChannel *This = impl_from_nsIUploadChannel(iface);
 
     TRACE("(%p)->(%p)\n", This, aUploadStream);
 
@@ -1349,8 +1352,6 @@ static nsresult NSAPI nsUploadChannel_GetUploadStream(nsIUploadChannel *iface,
     return NS_OK;
 }
 
-#undef NSUPCHANNEL_THIS
-
 static const nsIUploadChannelVtbl nsUploadChannelVtbl = {
     nsUploadChannel_QueryInterface,
     nsUploadChannel_AddRef,
@@ -1359,30 +1360,33 @@ static const nsIUploadChannelVtbl nsUploadChannelVtbl = {
     nsUploadChannel_GetUploadStream
 };
 
-#define NSHTTPINTERNAL_THIS(iface) DEFINE_THIS(nsChannel, IHttpChannelInternal, iface)
+static inline nsChannel *impl_from_nsIHttpChannelInternal(nsIHttpChannelInternal *iface)
+{
+    return CONTAINING_RECORD(iface, nsChannel, nsIHttpChannelInternal_iface);
+}
 
 static nsresult NSAPI nsHttpChannelInternal_QueryInterface(nsIHttpChannelInternal *iface, nsIIDRef riid,
         void **result)
 {
-    nsChannel *This = NSHTTPINTERNAL_THIS(iface);
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
     return nsIChannel_QueryInterface(&This->nsIHttpChannel_iface, riid, result);
 }
 
 static nsrefcnt NSAPI nsHttpChannelInternal_AddRef(nsIHttpChannelInternal *iface)
 {
-    nsChannel *This = NSHTTPINTERNAL_THIS(iface);
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
     return nsIChannel_AddRef(&This->nsIHttpChannel_iface);
 }
 
 static nsrefcnt NSAPI nsHttpChannelInternal_Release(nsIHttpChannelInternal *iface)
 {
-    nsChannel *This = NSHTTPINTERNAL_THIS(iface);
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
     return nsIChannel_Release(&This->nsIHttpChannel_iface);
 }
 
 static nsresult NSAPI nsHttpChannelInternal_GetDocumentURI(nsIHttpChannelInternal *iface, nsIURI **aDocumentURI)
 {
-    nsChannel *This = NSHTTPINTERNAL_THIS(iface);
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
 
     FIXME("(%p)->()\n", This);
 
@@ -1391,7 +1395,7 @@ static nsresult NSAPI nsHttpChannelInternal_GetDocumentURI(nsIHttpChannelInterna
 
 static nsresult NSAPI nsHttpChannelInternal_SetDocumentURI(nsIHttpChannelInternal *iface, nsIURI *aDocumentURI)
 {
-    nsChannel *This = NSHTTPINTERNAL_THIS(iface);
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
 
     FIXME("(%p)->()\n", This);
 
@@ -1400,7 +1404,7 @@ static nsresult NSAPI nsHttpChannelInternal_SetDocumentURI(nsIHttpChannelInterna
 
 static nsresult NSAPI nsHttpChannelInternal_GetRequestVersion(nsIHttpChannelInternal *iface, PRUint32 *major, PRUint32 *minor)
 {
-    nsChannel *This = NSHTTPINTERNAL_THIS(iface);
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
 
     FIXME("(%p)->()\n", This);
 
@@ -1409,7 +1413,7 @@ static nsresult NSAPI nsHttpChannelInternal_GetRequestVersion(nsIHttpChannelInte
 
 static nsresult NSAPI nsHttpChannelInternal_GetResponseVersion(nsIHttpChannelInternal *iface, PRUint32 *major, PRUint32 *minor)
 {
-    nsChannel *This = NSHTTPINTERNAL_THIS(iface);
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
 
     FIXME("(%p)->()\n", This);
 
@@ -1418,7 +1422,7 @@ static nsresult NSAPI nsHttpChannelInternal_GetResponseVersion(nsIHttpChannelInt
 
 static nsresult NSAPI nsHttpChannelInternal_SetCookie(nsIHttpChannelInternal *iface, const char *aCookieHeader)
 {
-    nsChannel *This = NSHTTPINTERNAL_THIS(iface);
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
 
     FIXME("(%p)->()\n", This);
 
@@ -1427,7 +1431,7 @@ static nsresult NSAPI nsHttpChannelInternal_SetCookie(nsIHttpChannelInternal *if
 
 static nsresult NSAPI nsHttpChannelInternal_SetupFallbackChannel(nsIHttpChannelInternal *iface, const char *aFallbackKey)
 {
-    nsChannel *This = NSHTTPINTERNAL_THIS(iface);
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
 
     FIXME("(%p)->()\n", This);
 
@@ -1436,7 +1440,7 @@ static nsresult NSAPI nsHttpChannelInternal_SetupFallbackChannel(nsIHttpChannelI
 
 static nsresult NSAPI nsHttpChannelInternal_GetForceAllowThirdPartyCookie(nsIHttpChannelInternal *iface, PRBool *aForceThirdPartyCookie)
 {
-    nsChannel *This = NSHTTPINTERNAL_THIS(iface);
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
 
     FIXME("(%p)->()\n", This);
 
@@ -1445,7 +1449,7 @@ static nsresult NSAPI nsHttpChannelInternal_GetForceAllowThirdPartyCookie(nsIHtt
 
 static nsresult NSAPI nsHttpChannelInternal_SetForceAllowThirdPartyCookie(nsIHttpChannelInternal *iface, PRBool aForceThirdPartyCookie)
 {
-    nsChannel *This = NSHTTPINTERNAL_THIS(iface);
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
 
     FIXME("(%p)->()\n", This);
 
@@ -1454,14 +1458,12 @@ static nsresult NSAPI nsHttpChannelInternal_SetForceAllowThirdPartyCookie(nsIHtt
 
 static nsresult NSAPI nsHttpChannelInternal_GetCanceled(nsIHttpChannelInternal *iface, PRBool *aCanceled)
 {
-    nsChannel *This = NSHTTPINTERNAL_THIS(iface);
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
 
     FIXME("(%p)->(%p)\n", This, aCanceled);
 
     return NS_ERROR_NOT_IMPLEMENTED;
 }
-
-#undef NSHTTPINTERNAL_THIS
 
 static const nsIHttpChannelInternalVtbl nsHttpChannelInternalVtbl = {
     nsHttpChannelInternal_QueryInterface,
@@ -2804,8 +2806,8 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
     ret = heap_alloc_zero(sizeof(nsChannel));
 
     ret->nsIHttpChannel_iface.lpVtbl = &nsChannelVtbl;
-    ret->lpUploadChannelVtbl = &nsUploadChannelVtbl;
-    ret->lpIHttpChannelInternalVtbl = &nsHttpChannelInternalVtbl;
+    ret->nsIUploadChannel_iface.lpVtbl = &nsUploadChannelVtbl;
+    ret->nsIHttpChannelInternal_iface.lpVtbl = &nsHttpChannelInternalVtbl;
     ret->ref = 1;
     ret->uri = wine_uri;
     ret->request_method = METHOD_GET;
