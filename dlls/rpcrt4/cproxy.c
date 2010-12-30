@@ -44,7 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 /* I don't know what MS's std proxy structure looks like,
    so this probably doesn't match, but that shouldn't matter */
 typedef struct {
-  const IRpcProxyBufferVtbl *lpVtbl;
+  IRpcProxyBuffer IRpcProxyBuffer_iface;
   LPVOID *PVtbl;
   LONG RefCount;
   const IID* piid;
@@ -58,9 +58,14 @@ typedef struct {
 
 static const IRpcProxyBufferVtbl StdProxy_Vtbl;
 
+static inline StdProxyImpl *impl_from_IRpcProxyBuffer(IRpcProxyBuffer *iface)
+{
+    return CONTAINING_RECORD(iface, StdProxyImpl, IRpcProxyBuffer_iface);
+}
+
 static inline StdProxyImpl *impl_from_proxy_obj( void *iface )
 {
-    return (StdProxyImpl *)((char*)iface - FIELD_OFFSET(StdProxyImpl, PVtbl));
+    return CONTAINING_RECORD(iface, StdProxyImpl, PVtbl);
 }
 
 #if defined(__i386__)
@@ -197,7 +202,7 @@ HRESULT StdProxy_Construct(REFIID riid,
   if (!This) return E_OUTOFMEMORY;
 
   if (!pUnkOuter) pUnkOuter = (IUnknown *)This;
-  This->lpVtbl = &StdProxy_Vtbl;
+  This->IRpcProxyBuffer_iface.lpVtbl = &StdProxy_Vtbl;
   This->PVtbl = vtbl->Vtbl;
   /* one reference for the proxy */
   This->RefCount = 1;
@@ -220,7 +225,7 @@ HRESULT StdProxy_Construct(REFIID riid,
       }
   }
 
-  *ppProxy = (LPRPCPROXYBUFFER)&This->lpVtbl;
+  *ppProxy = &This->IRpcProxyBuffer_iface;
   *ppvObj = &This->PVtbl;
   IUnknown_AddRef((IUnknown *)*ppvObj);
   IPSFactoryBuffer_AddRef(pPSFactory);
@@ -230,25 +235,11 @@ HRESULT StdProxy_Construct(REFIID riid,
   return S_OK;
 }
 
-static void StdProxy_Destruct(LPRPCPROXYBUFFER iface)
-{
-  StdProxyImpl *This = (StdProxyImpl *)iface;
-
-  if (This->pChannel)
-    IRpcProxyBuffer_Disconnect(iface);
-
-  if (This->base_object) IUnknown_Release( This->base_object );
-  if (This->base_proxy) IRpcProxyBuffer_Release( This->base_proxy );
-
-  IPSFactoryBuffer_Release(This->pPSFactory);
-  HeapFree(GetProcessHeap(),0,This);
-}
-
 static HRESULT WINAPI StdProxy_QueryInterface(LPRPCPROXYBUFFER iface,
                                              REFIID riid,
                                              LPVOID *obj)
 {
-  StdProxyImpl *This = (StdProxyImpl *)iface;
+  StdProxyImpl *This = impl_from_IRpcProxyBuffer(iface);
   TRACE("(%p)->QueryInterface(%s,%p)\n",This,debugstr_guid(riid),obj);
 
   if (IsEqualGUID(&IID_IUnknown,riid) ||
@@ -259,7 +250,7 @@ static HRESULT WINAPI StdProxy_QueryInterface(LPRPCPROXYBUFFER iface,
   }
 
   if (IsEqualGUID(&IID_IRpcProxyBuffer,riid)) {
-    *obj = &This->lpVtbl;
+    *obj = &This->IRpcProxyBuffer_iface;
     InterlockedIncrement(&This->RefCount);
     return S_OK;
   }
@@ -269,7 +260,7 @@ static HRESULT WINAPI StdProxy_QueryInterface(LPRPCPROXYBUFFER iface,
 
 static ULONG WINAPI StdProxy_AddRef(LPRPCPROXYBUFFER iface)
 {
-  StdProxyImpl *This = (StdProxyImpl *)iface;
+  StdProxyImpl *This = impl_from_IRpcProxyBuffer(iface);
   TRACE("(%p)->AddRef()\n",This);
 
   return InterlockedIncrement(&This->RefCount);
@@ -278,19 +269,29 @@ static ULONG WINAPI StdProxy_AddRef(LPRPCPROXYBUFFER iface)
 static ULONG WINAPI StdProxy_Release(LPRPCPROXYBUFFER iface)
 {
   ULONG refs;
-  StdProxyImpl *This = (StdProxyImpl *)iface;
+  StdProxyImpl *This = impl_from_IRpcProxyBuffer(iface);
   TRACE("(%p)->Release()\n",This);
 
   refs = InterlockedDecrement(&This->RefCount);
   if (!refs)
-    StdProxy_Destruct((LPRPCPROXYBUFFER)&This->lpVtbl);
+  {
+    if (This->pChannel)
+      IRpcProxyBuffer_Disconnect(&This->IRpcProxyBuffer_iface);
+
+    if (This->base_object) IUnknown_Release( This->base_object );
+    if (This->base_proxy) IRpcProxyBuffer_Release( This->base_proxy );
+
+    IPSFactoryBuffer_Release(This->pPSFactory);
+    HeapFree(GetProcessHeap(),0,This);
+  }
+
   return refs;
 }
 
 static HRESULT WINAPI StdProxy_Connect(LPRPCPROXYBUFFER iface,
                                       LPRPCCHANNELBUFFER pChannel)
 {
-  StdProxyImpl *This = (StdProxyImpl *)iface;
+  StdProxyImpl *This = impl_from_IRpcProxyBuffer(iface);
   TRACE("(%p)->Connect(%p)\n",This,pChannel);
 
   This->pChannel = pChannel;
@@ -301,7 +302,7 @@ static HRESULT WINAPI StdProxy_Connect(LPRPCPROXYBUFFER iface,
 
 static VOID WINAPI StdProxy_Disconnect(LPRPCPROXYBUFFER iface)
 {
-  StdProxyImpl *This = (StdProxyImpl *)iface;
+  StdProxyImpl *This = impl_from_IRpcProxyBuffer(iface);
   TRACE("(%p)->Disconnect()\n",This);
 
   if (This->base_proxy) IRpcProxyBuffer_Disconnect( This->base_proxy );
