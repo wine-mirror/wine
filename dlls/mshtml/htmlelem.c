@@ -1613,7 +1613,7 @@ HRESULT HTMLElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
         *ppv = &This->IHTMLElement_iface;
     }else if(IsEqualGUID(&IID_IHTMLElement2, riid)) {
         TRACE("(%p)->(IID_IHTMLElement2 %p)\n", This, ppv);
-        *ppv = HTMLELEM2(This);
+        *ppv = &This->IHTMLElement2_iface;
     }else if(IsEqualGUID(&IID_IHTMLElement3, riid)) {
         TRACE("(%p)->(IID_IHTMLElement3 %p)\n", This, ppv);
         *ppv = HTMLELEM3(This);

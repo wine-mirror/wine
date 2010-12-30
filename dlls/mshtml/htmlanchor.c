@@ -317,7 +317,7 @@ static HRESULT WINAPI HTMLAnchorElement_put_onblur(IHTMLAnchorElement *iface, VA
 
     TRACE("(%p)->()\n", This);
 
-    return IHTMLElement2_put_onblur(HTMLELEM2(&This->element), v);
+    return IHTMLElement2_put_onblur(&This->element.IHTMLElement2_iface, v);
 }
 
 static HRESULT WINAPI HTMLAnchorElement_get_onblur(IHTMLAnchorElement *iface, VARIANT *p)
@@ -326,7 +326,7 @@ static HRESULT WINAPI HTMLAnchorElement_get_onblur(IHTMLAnchorElement *iface, VA
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLElement2_get_onblur(HTMLELEM2(&This->element), p);
+    return IHTMLElement2_get_onblur(&This->element.IHTMLElement2_iface, p);
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_onfocus(IHTMLAnchorElement *iface, VARIANT v)
@@ -335,7 +335,7 @@ static HRESULT WINAPI HTMLAnchorElement_put_onfocus(IHTMLAnchorElement *iface, V
 
     TRACE("(%p)->()\n", This);
 
-    return IHTMLElement2_put_onfocus(HTMLELEM2(&This->element), v);
+    return IHTMLElement2_put_onfocus(&This->element.IHTMLElement2_iface, v);
 }
 
 static HRESULT WINAPI HTMLAnchorElement_get_onfocus(IHTMLAnchorElement *iface, VARIANT *p)
@@ -344,7 +344,7 @@ static HRESULT WINAPI HTMLAnchorElement_get_onfocus(IHTMLAnchorElement *iface, V
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLElement2_get_onfocus(HTMLELEM2(&This->element), p);
+    return IHTMLElement2_get_onfocus(&This->element.IHTMLElement2_iface, p);
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_accessKey(IHTMLAnchorElement *iface, BSTR v)
@@ -353,7 +353,7 @@ static HRESULT WINAPI HTMLAnchorElement_put_accessKey(IHTMLAnchorElement *iface,
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    return IHTMLElement2_put_accessKey(HTMLELEM2(&This->element), v);
+    return IHTMLElement2_put_accessKey(&This->element.IHTMLElement2_iface, v);
 }
 
 static HRESULT WINAPI HTMLAnchorElement_get_accessKey(IHTMLAnchorElement *iface, BSTR *p)
@@ -362,7 +362,7 @@ static HRESULT WINAPI HTMLAnchorElement_get_accessKey(IHTMLAnchorElement *iface,
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLElement2_get_accessKey(HTMLELEM2(&This->element), p);
+    return IHTMLElement2_get_accessKey(&This->element.IHTMLElement2_iface, p);
 }
 
 static HRESULT WINAPI HTMLAnchorElement_get_protocolLong(IHTMLAnchorElement *iface, BSTR *p)
@@ -392,7 +392,7 @@ static HRESULT WINAPI HTMLAnchorElement_put_tabIndex(IHTMLAnchorElement *iface, 
 
     TRACE("(%p)->()\n", This);
 
-    return IHTMLElement2_put_tabIndex(HTMLELEM2(&This->element), v);
+    return IHTMLElement2_put_tabIndex(&This->element.IHTMLElement2_iface, v);
 }
 
 static HRESULT WINAPI HTMLAnchorElement_get_tabIndex(IHTMLAnchorElement *iface, short *p)
@@ -401,7 +401,7 @@ static HRESULT WINAPI HTMLAnchorElement_get_tabIndex(IHTMLAnchorElement *iface, 
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLElement2_get_tabIndex(HTMLELEM2(&This->element), p);
+    return IHTMLElement2_get_tabIndex(&This->element.IHTMLElement2_iface, p);
 }
 
 static HRESULT WINAPI HTMLAnchorElement_focus(IHTMLAnchorElement *iface)
@@ -410,7 +410,7 @@ static HRESULT WINAPI HTMLAnchorElement_focus(IHTMLAnchorElement *iface)
 
     TRACE("(%p)\n", This);
 
-    return IHTMLElement2_focus(HTMLELEM2(&This->element));
+    return IHTMLElement2_focus(&This->element.IHTMLElement2_iface);
 }
 
 static HRESULT WINAPI HTMLAnchorElement_blur(IHTMLAnchorElement *iface)
@@ -419,7 +419,7 @@ static HRESULT WINAPI HTMLAnchorElement_blur(IHTMLAnchorElement *iface)
 
     TRACE("(%p)\n", This);
 
-    return IHTMLElement2_blur(HTMLELEM2(&This->element));
+    return IHTMLElement2_blur(&This->element.IHTMLElement2_iface);
 }
 
 static const IHTMLAnchorElementVtbl HTMLAnchorElementVtbl = {
