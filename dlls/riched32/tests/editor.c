@@ -1063,6 +1063,7 @@ START_TEST( editor )
 {
   MSG msg;
   time_t end;
+  BOOL ret;
 
   /* Must explicitly LoadLibrary(). The test has no references to functions in
    * RICHED32.DLL, so the linker doesn't actually link to it. */
@@ -1101,5 +1102,6 @@ START_TEST( editor )
   }
 
   OleFlushClipboard();
-  ok(FreeLibrary(hmoduleRichEdit) != 0, "error: %d\n", (int) GetLastError());
+  ret = FreeLibrary(hmoduleRichEdit);
+  ok(ret, "error: %u\n", GetLastError());
 }
