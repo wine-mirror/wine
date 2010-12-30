@@ -244,7 +244,7 @@ typedef struct {
     /* optional attribute fields, the number of them is variable */
     /* controlled by record length */
     INT   HelpContext;
-    INT   oHelpString;
+    INT   HelpString;
     INT   res9;         /* unknown (-1) */
     INT   oCustData;        /* custom data for variable */
     INT   HelpStringContext;

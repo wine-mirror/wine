@@ -245,6 +245,23 @@ static inline INT ctl2_get_record_size(const CyclicList *iter)
     return iter->u.data[0] & 0xFFFF;
 }
 
+static void ctl2_update_var_size(const ICreateTypeInfo2Impl *This, CyclicList *var, int size)
+{
+    int old = ctl2_get_record_size(var), i;
+
+    if (old >= size) return;
+
+    /* initialize fields included in size but currently unused */
+    for (i = old/sizeof(int); i < (size/sizeof(int) - 1); i++)
+    {
+        /* HelpContext/HelpStringContext being 0 means it's not set */
+        var->u.data[i] = (i == 5 || i == 9) ? 0 : -1;
+    }
+
+    var->u.data[0] += size - old;
+    This->typedata->next->u.val += size - old;
+}
+
 /* NOTE: entry always assumed to be a function */
 static inline INVOKEKIND ctl2_get_invokekind(const CyclicList *func)
 {
@@ -2543,6 +2560,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetVarHelpContext(
        {
            if (index-- == 0)
            {
+               ctl2_update_var_size(This, iter, FIELD_OFFSET(MSFT_VarRecord, HelpString));
                iter->u.data[5] = context;
                return S_OK;
            }
