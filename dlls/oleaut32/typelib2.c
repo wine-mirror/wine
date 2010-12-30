@@ -2496,15 +2496,33 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncDocString(
 static HRESULT WINAPI ICreateTypeInfo2_fnSetVarDocString(
         ICreateTypeInfo2* iface,
         UINT index,
-        LPOLESTR szDocString)
+        LPOLESTR docstring)
 {
     ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
+    CyclicList *iter;
 
-    FIXME("(%p,%d,%s), stub!\n", iface, index, debugstr_w(szDocString));
+    TRACE("(%p,%d,%s)\n", This, index, debugstr_w(docstring));
 
-    ctl2_alloc_string(This->typelib, szDocString);
+    if (!docstring) return E_INVALIDARG;
 
-    return E_OUTOFMEMORY;
+    if (cti2_get_var_count(This->typeinfo) <= index)
+	return TYPE_E_ELEMENTNOTFOUND;
+
+    for (iter = This->typedata->next->next; iter != This->typedata->next; iter = iter->next)
+       if (iter->type == CyclicListVar)
+       {
+           if (index-- == 0)
+           {
+               int offset = ctl2_alloc_string(This->typelib, docstring);
+
+               if (offset == -1) return E_OUTOFMEMORY;
+               ctl2_update_var_size(This, iter, FIELD_OFFSET(MSFT_VarRecord, res9));
+               iter->u.data[6] = offset;
+               return S_OK;
+           }
+       }
+
+    return TYPE_E_ELEMENTNOTFOUND;
 }
 
 /******************************************************************************

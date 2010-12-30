@@ -2998,6 +2998,63 @@ static void test_SetFuncAndParamNames(void)
     DeleteFileA(filenameA);
 }
 
+static void test_SetVarDocString(void)
+{
+    static OLECHAR nameW[] = {'n','a','m','e',0};
+    static OLECHAR doc1W[] = {'d','o','c','1',0};
+    static OLECHAR doc2W[] = {'d','o','c','2',0};
+    CHAR filenameA[MAX_PATH];
+    WCHAR filenameW[MAX_PATH];
+    ICreateTypeLib2 *ctl;
+    ICreateTypeInfo *cti;
+    VARDESC desc;
+    HRESULT hr;
+    VARIANT v;
+
+    GetTempFileNameA(".", "tlb", 0, filenameA);
+    MultiByteToWideChar(CP_ACP, 0, filenameA, -1, filenameW, MAX_PATH);
+
+    hr = CreateTypeLib2(SYS_WIN32, filenameW, &ctl);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeLib2_CreateTypeInfo(ctl, nameW, TKIND_ENUM, &cti);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_SetVarDocString(cti, 0, doc1W);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_SetVarDocString(cti, 0, NULL);
+    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+
+    memset(&desc, 0, sizeof(desc));
+    desc.elemdescVar.tdesc.vt = VT_INT;
+    desc.varkind = VAR_CONST;
+
+    V_VT(&v) = VT_INT;
+    V_INT(&v) = 1;
+    U(desc).lpvarValue = &v;
+    hr = ICreateTypeInfo2_AddVarDesc(cti, 0, &desc);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_SetVarDocString(cti, 0, NULL);
+    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_SetVarDocString(cti, 0, doc1W);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    /* already set */
+    hr = ICreateTypeInfo_SetVarDocString(cti, 0, doc2W);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    /* wrong index now */
+    hr = ICreateTypeInfo2_SetVarDocString(cti, 1, doc1W);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hr);
+
+    ICreateTypeInfo_Release(cti);
+    ICreateTypeLib2_Release(ctl);
+    DeleteFileA(filenameA);
+}
+
 START_TEST(typelib)
 {
     const char *filename;
@@ -3016,6 +3073,7 @@ START_TEST(typelib)
     test_CreateTypeLib();
     test_SetVarHelpContext();
     test_SetFuncAndParamNames();
+    test_SetVarDocString();
 
     if ((filename = create_test_typelib(2)))
     {
