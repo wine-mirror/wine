@@ -442,10 +442,11 @@ static HRESULT WINAPI dom_pi_get_nodeTypedValue(
 
 static HRESULT WINAPI dom_pi_put_nodeTypedValue(
     IXMLDOMProcessingInstruction *iface,
-    VARIANT var1)
+    VARIANT typedValue)
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    return IXMLDOMNode_put_nodeTypedValue( IXMLDOMNode_from_impl(&This->node), var1 );
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&typedValue));
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI dom_pi_get_dataType(
@@ -462,7 +463,13 @@ static HRESULT WINAPI dom_pi_put_dataType(
     BSTR p)
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    return IXMLDOMNode_put_dataType( IXMLDOMNode_from_impl(&This->node), p );
+
+    FIXME("(%p)->(%s)\n", This, debugstr_w(p));
+
+    if(!p)
+        return E_INVALIDARG;
+
+    return E_FAIL;
 }
 
 static HRESULT WINAPI dom_pi_get_xml(

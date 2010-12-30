@@ -1288,7 +1288,8 @@ static HRESULT WINAPI domdoc_put_nodeTypedValue(
     VARIANT typedValue )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_put_nodeTypedValue( IXMLDOMNode_from_impl(&This->node), typedValue );
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&typedValue));
+    return E_NOTIMPL;
 }
 
 
@@ -1307,7 +1308,13 @@ static HRESULT WINAPI domdoc_put_dataType(
     BSTR dataTypeName )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_put_dataType( IXMLDOMNode_from_impl(&This->node), dataTypeName );
+
+    FIXME("(%p)->(%s)\n", This, debugstr_w(dataTypeName));
+
+    if(!dataTypeName)
+        return E_INVALIDARG;
+
+    return E_FAIL;
 }
 
 static int XMLCALL domdoc_get_xml_writecallback(void *ctx, const char *data, int len)

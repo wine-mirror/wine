@@ -413,6 +413,8 @@ typedef struct bsc_t bsc_t;
 HRESULT bind_url(LPCWSTR, HRESULT (*onDataAvailable)(void*,char*,DWORD), void*, bsc_t**);
 void detach_bsc(bsc_t*);
 
+const char *debugstr_variant(const VARIANT*);
+
 /* memory allocation functions */
 
 static inline void *heap_alloc(size_t len)

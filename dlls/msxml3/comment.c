@@ -427,10 +427,11 @@ static HRESULT WINAPI domcomment_get_nodeTypedValue(
 
 static HRESULT WINAPI domcomment_put_nodeTypedValue(
     IXMLDOMComment *iface,
-    VARIANT var1)
+    VARIANT typedValue)
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
-    return IXMLDOMNode_put_nodeTypedValue( IXMLDOMNode_from_impl(&This->node), var1 );
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&typedValue));
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI domcomment_get_dataType(
@@ -447,7 +448,13 @@ static HRESULT WINAPI domcomment_put_dataType(
     BSTR p)
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
-    return IXMLDOMNode_put_dataType( IXMLDOMNode_from_impl(&This->node), p );
+
+    FIXME("(%p)->(%s)\n", This, debugstr_w(p));
+
+    if(!p)
+        return E_INVALIDARG;
+
+    return E_FAIL;
 }
 
 static HRESULT WINAPI domcomment_get_xml(
