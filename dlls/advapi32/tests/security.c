@@ -2293,8 +2293,8 @@ static void test_process_security(void)
     psa.bInheritHandle = TRUE;
 
     /* Doesn't matter what ACL say we should get full access for ourselves */
-    ok(CreateProcessA( NULL, buffer, &psa, NULL, FALSE, 0, NULL, NULL, &startup, &info ),
-        "CreateProcess with err:%d\n", GetLastError());
+    res = CreateProcessA( NULL, buffer, &psa, NULL, FALSE, 0, NULL, NULL, &startup, &info );
+    ok(res, "CreateProcess with err:%d\n", GetLastError());
     TEST_GRANTED_ACCESS2( info.hProcess, PROCESS_ALL_ACCESS,
                           STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL );
     winetest_wait_child_process( info.hProcess );
@@ -3008,6 +3008,7 @@ static void test_PrivateObjectSecurity(void)
     LPSTR string;
     ULONG len;
     PSECURITY_DESCRIPTOR buf;
+    BOOL ret;
 
     if (!pConvertStringSecurityDescriptorToSecurityDescriptorA)
     {
@@ -3046,25 +3047,26 @@ static void test_PrivateObjectSecurity(void)
     GetSecurityDescriptorControl(sec, &ctrl, &dwRevision);
     expect_eq(ctrl, 0x9014, int, "%x");
 
-    ok(GetPrivateObjectSecurity(sec, GROUP_SECURITY_INFORMATION, buf, dwDescSize, &retSize),
-        "GetPrivateObjectSecurity failed (err=%u)\n", GetLastError());
+    ret = GetPrivateObjectSecurity(sec, GROUP_SECURITY_INFORMATION, buf, dwDescSize, &retSize);
+    ok(ret, "GetPrivateObjectSecurity failed (err=%u)\n", GetLastError());
     ok(retSize <= dwDescSize, "Buffer too small (%d vs %d)\n", retSize, dwDescSize);
     ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(buf, SDDL_REVISION_1, sec_info, &string, &len), "Conversion failed\n");
     CHECK_RESULT_AND_FREE("G:S-1-5-21-93476-23408-4576");
     GetSecurityDescriptorControl(buf, &ctrl, &dwRevision);
     expect_eq(ctrl, 0x8000, int, "%x");
 
-    ok(GetPrivateObjectSecurity(sec, GROUP_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION, buf, dwDescSize, &retSize),
-        "GetPrivateObjectSecurity failed (err=%u)\n", GetLastError());
+    ret = GetPrivateObjectSecurity(sec, GROUP_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION, buf, dwDescSize, &retSize);
+    ok(ret, "GetPrivateObjectSecurity failed (err=%u)\n", GetLastError());
     ok(retSize <= dwDescSize, "Buffer too small (%d vs %d)\n", retSize, dwDescSize);
-    ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(buf, SDDL_REVISION_1, sec_info, &string, &len), "Conversion failed err=%u\n", GetLastError());
+    ret = pConvertSecurityDescriptorToStringSecurityDescriptorA(buf, SDDL_REVISION_1, sec_info, &string, &len);
+    ok(ret, "Conversion failed err=%u\n", GetLastError());
     CHECK_ONE_OF_AND_FREE("G:S-1-5-21-93476-23408-4576D:(A;NP;GAGXGWGR;;;SU)(A;IOID;CCDC;;;SU)(D;OICI;0xffffffff;;;S-1-5-21-93476-23408-4576)",
         "G:S-1-5-21-93476-23408-4576D:P(A;NP;GAGXGWGR;;;SU)(A;IOID;CCDC;;;SU)(D;OICI;0xffffffff;;;S-1-5-21-93476-23408-4576)"); /* Win7 */
     GetSecurityDescriptorControl(buf, &ctrl, &dwRevision);
     expect_eq(ctrl & (~ SE_DACL_PROTECTED), 0x8004, int, "%x");
 
-    ok(GetPrivateObjectSecurity(sec, sec_info, buf, dwDescSize, &retSize),
-        "GetPrivateObjectSecurity failed (err=%u)\n", GetLastError());
+    ret = GetPrivateObjectSecurity(sec, sec_info, buf, dwDescSize, &retSize);
+    ok(ret, "GetPrivateObjectSecurity failed (err=%u)\n", GetLastError());
     ok(retSize == dwDescSize, "Buffer too small (%d vs %d)\n", retSize, dwDescSize);
     ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(buf, SDDL_REVISION_1, sec_info, &string, &len), "Conversion failed\n");
     CHECK_ONE_OF_AND_FREE("O:SY"
