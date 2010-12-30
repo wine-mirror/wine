@@ -7070,6 +7070,7 @@ static void test_dialogmode(void)
 
 START_TEST( editor )
 {
+  BOOL ret;
   /* Must explicitly LoadLibrary(). The test has no references to functions in
    * RICHED20.DLL, so the linker doesn't actually link to it. */
   hmoduleRichEdit = LoadLibrary("RICHED20.DLL");
@@ -7134,5 +7135,6 @@ START_TEST( editor )
   }
 
   OleFlushClipboard();
-  ok(FreeLibrary(hmoduleRichEdit) != 0, "error: %d\n", (int) GetLastError());
+  ret = FreeLibrary(hmoduleRichEdit);
+  ok(ret, "error: %d\n", (int) GetLastError());
 }
