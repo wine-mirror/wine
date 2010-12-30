@@ -551,7 +551,7 @@ typedef struct {
 
     IHTMLElement  IHTMLElement_iface;
     IHTMLElement2 IHTMLElement2_iface;
-    const IHTMLElement3Vtbl  *lpHTMLElement3Vtbl;
+    IHTMLElement3 IHTMLElement3_iface;
 
     nsIDOMHTMLElement *nselem;
 } HTMLElement;
@@ -642,7 +642,6 @@ struct HTMLDocumentNode {
 #define STATUSCLB(x)     ((IBindStatusCallback*)          &(x)->lpBindStatusCallbackVtbl)
 #define BINDINFO(x)      ((IInternetBindInfo*)            &(x)->lpInternetBindInfoVtbl);
 
-#define HTMLELEM3(x)     ((IHTMLElement3*)                &(x)->lpHTMLElement3Vtbl)
 #define HTMLDOMNODE(x)   ((IHTMLDOMNode*)                 &(x)->lpHTMLDOMNodeVtbl)
 #define HTMLDOMNODE2(x)  ((IHTMLDOMNode2*)                &(x)->lpHTMLDOMNode2Vtbl)
 
