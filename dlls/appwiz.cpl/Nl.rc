@@ -48,6 +48,7 @@ STRINGTABLE
 {
     IDS_DOWNLOADING   "Bezig met downloaden..."
     IDS_INSTALLING    "Bezig met installeren..."
+    IDS_INVALID_SHA   "Onverwachte checksum van het gedownloade bestand. Installatie van het corrupte bestand wordt afgebroken."
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
