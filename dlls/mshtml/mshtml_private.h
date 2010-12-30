@@ -483,7 +483,7 @@ typedef enum {
 } REQUEST_METHOD;
 
 typedef struct {
-    const nsIHttpChannelVtbl *lpHttpChannelVtbl;
+    nsIHttpChannel         nsIHttpChannel_iface;
     const nsIUploadChannelVtbl *lpUploadChannelVtbl;
     const nsIHttpChannelInternalVtbl *lpIHttpChannelInternalVtbl;
 
@@ -633,8 +633,6 @@ struct HTMLDocumentNode {
 
 #define NSRUNNABLE(x)    ((nsIRunnable*)  &(x)->lpIRunnableVtbl)
 
-#define NSCHANNEL(x)     ((nsIChannel*)        &(x)->lpHttpChannelVtbl)
-#define NSHTTPCHANNEL(x) ((nsIHttpChannel*)    &(x)->lpHttpChannelVtbl)
 #define NSUPCHANNEL(x)   ((nsIUploadChannel*)  &(x)->lpUploadChannelVtbl)
 #define NSHTTPINTERNAL(x) ((nsIHttpChannelInternal*)  &(x)->lpIHttpChannelInternalVtbl)
 
