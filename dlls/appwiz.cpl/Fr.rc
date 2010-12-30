@@ -50,6 +50,7 @@ STRINGTABLE
 {
     IDS_DOWNLOADING     "Téléchargement..."
     IDS_INSTALLING      "Installation..."
+    IDS_INVALID_SHA     "Somme de contrôle du fichier téléchargé inattendue. Abandon de l'installation d'un fichier corrompu."
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
