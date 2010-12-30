@@ -37,7 +37,7 @@ static HRESULT create_node(HTMLDocumentNode*,nsIDOMNode*,HTMLDOMNode**);
 
 typedef struct {
     DispatchEx dispex;
-    const IHTMLDOMChildrenCollectionVtbl  *lpIHTMLDOMChildrenCollectionVtbl;
+    IHTMLDOMChildrenCollection IHTMLDOMChildrenCollection_iface;
 
     LONG ref;
 
@@ -47,22 +47,23 @@ typedef struct {
     nsIDOMNodeList *nslist;
 } HTMLDOMChildrenCollection;
 
-#define HTMLCHILDCOL(x)  ((IHTMLDOMChildrenCollection*)  &(x)->lpIHTMLDOMChildrenCollectionVtbl)
-
-#define HTMLCHILDCOL_THIS(iface) DEFINE_THIS(HTMLDOMChildrenCollection, IHTMLDOMChildrenCollection, iface)
+static inline HTMLDOMChildrenCollection *impl_from_IHTMLDOMChildrenCollection(IHTMLDOMChildrenCollection *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDOMChildrenCollection, IHTMLDOMChildrenCollection_iface);
+}
 
 static HRESULT WINAPI HTMLDOMChildrenCollection_QueryInterface(IHTMLDOMChildrenCollection *iface, REFIID riid, void **ppv)
 {
-    HTMLDOMChildrenCollection *This = HTMLCHILDCOL_THIS(iface);
+    HTMLDOMChildrenCollection *This = impl_from_IHTMLDOMChildrenCollection(iface);
 
     *ppv = NULL;
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = HTMLCHILDCOL(This);
+        *ppv = &This->IHTMLDOMChildrenCollection_iface;
     }else if(IsEqualGUID(&IID_IHTMLDOMChildrenCollection, riid)) {
         TRACE("(%p)->(IID_IHTMLDOMChildrenCollection %p)\n", This, ppv);
-        *ppv = HTMLCHILDCOL(This);
+        *ppv = &This->IHTMLDOMChildrenCollection_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }
@@ -78,7 +79,7 @@ static HRESULT WINAPI HTMLDOMChildrenCollection_QueryInterface(IHTMLDOMChildrenC
 
 static ULONG WINAPI HTMLDOMChildrenCollection_AddRef(IHTMLDOMChildrenCollection *iface)
 {
-    HTMLDOMChildrenCollection *This = HTMLCHILDCOL_THIS(iface);
+    HTMLDOMChildrenCollection *This = impl_from_IHTMLDOMChildrenCollection(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -88,7 +89,7 @@ static ULONG WINAPI HTMLDOMChildrenCollection_AddRef(IHTMLDOMChildrenCollection 
 
 static ULONG WINAPI HTMLDOMChildrenCollection_Release(IHTMLDOMChildrenCollection *iface)
 {
-    HTMLDOMChildrenCollection *This = HTMLCHILDCOL_THIS(iface);
+    HTMLDOMChildrenCollection *This = impl_from_IHTMLDOMChildrenCollection(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -103,21 +104,21 @@ static ULONG WINAPI HTMLDOMChildrenCollection_Release(IHTMLDOMChildrenCollection
 
 static HRESULT WINAPI HTMLDOMChildrenCollection_GetTypeInfoCount(IHTMLDOMChildrenCollection *iface, UINT *pctinfo)
 {
-    HTMLDOMChildrenCollection *This = HTMLCHILDCOL_THIS(iface);
+    HTMLDOMChildrenCollection *This = impl_from_IHTMLDOMChildrenCollection(iface);
     return IDispatchEx_GetTypeInfoCount(DISPATCHEX(&This->dispex), pctinfo);
 }
 
 static HRESULT WINAPI HTMLDOMChildrenCollection_GetTypeInfo(IHTMLDOMChildrenCollection *iface, UINT iTInfo,
         LCID lcid, ITypeInfo **ppTInfo)
 {
-    HTMLDOMChildrenCollection *This = HTMLCHILDCOL_THIS(iface);
+    HTMLDOMChildrenCollection *This = impl_from_IHTMLDOMChildrenCollection(iface);
     return IDispatchEx_GetTypeInfo(DISPATCHEX(&This->dispex), iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI HTMLDOMChildrenCollection_GetIDsOfNames(IHTMLDOMChildrenCollection *iface, REFIID riid,
         LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    HTMLDOMChildrenCollection *This = HTMLCHILDCOL_THIS(iface);
+    HTMLDOMChildrenCollection *This = impl_from_IHTMLDOMChildrenCollection(iface);
     return IDispatchEx_GetIDsOfNames(DISPATCHEX(&This->dispex), riid, rgszNames, cNames, lcid, rgDispId);
 }
 
@@ -125,14 +126,14 @@ static HRESULT WINAPI HTMLDOMChildrenCollection_Invoke(IHTMLDOMChildrenCollectio
         REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
         VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    HTMLDOMChildrenCollection *This = HTMLCHILDCOL_THIS(iface);
+    HTMLDOMChildrenCollection *This = impl_from_IHTMLDOMChildrenCollection(iface);
     return IDispatchEx_Invoke(DISPATCHEX(&This->dispex), dispIdMember, riid, lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI HTMLDOMChildrenCollection_get_length(IHTMLDOMChildrenCollection *iface, LONG *p)
 {
-    HTMLDOMChildrenCollection *This = HTMLCHILDCOL_THIS(iface);
+    HTMLDOMChildrenCollection *This = impl_from_IHTMLDOMChildrenCollection(iface);
     PRUint32 length=0;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -144,14 +145,14 @@ static HRESULT WINAPI HTMLDOMChildrenCollection_get_length(IHTMLDOMChildrenColle
 
 static HRESULT WINAPI HTMLDOMChildrenCollection__newEnum(IHTMLDOMChildrenCollection *iface, IUnknown **p)
 {
-    HTMLDOMChildrenCollection *This = HTMLCHILDCOL_THIS(iface);
+    HTMLDOMChildrenCollection *This = impl_from_IHTMLDOMChildrenCollection(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDOMChildrenCollection_item(IHTMLDOMChildrenCollection *iface, LONG index, IDispatch **ppItem)
 {
-    HTMLDOMChildrenCollection *This = HTMLCHILDCOL_THIS(iface);
+    HTMLDOMChildrenCollection *This = impl_from_IHTMLDOMChildrenCollection(iface);
     nsIDOMNode *nsnode = NULL;
     HTMLDOMNode *node;
     PRUint32 length=0;
@@ -183,8 +184,6 @@ static HRESULT WINAPI HTMLDOMChildrenCollection_item(IHTMLDOMChildrenCollection 
     IDispatch_AddRef(*ppItem);
     return S_OK;
 }
-
-#undef HTMLCHILDCOL_THIS
 
 static const IHTMLDOMChildrenCollectionVtbl HTMLDOMChildrenCollectionVtbl = {
     HTMLDOMChildrenCollection_QueryInterface,
@@ -239,7 +238,8 @@ static HRESULT HTMLDOMChildrenCollection_invoke(DispatchEx *dispex, DISPID id, L
         IDispatch *disp = NULL;
         HRESULT hres;
 
-        hres = IHTMLDOMChildrenCollection_item(HTMLCHILDCOL(This), id - DISPID_CHILDCOL_0, &disp);
+        hres = IHTMLDOMChildrenCollection_item(&This->IHTMLDOMChildrenCollection_iface,
+                id - DISPID_CHILDCOL_0, &disp);
         if(0&&FAILED(hres))
             return hres;
 
@@ -279,16 +279,17 @@ static IHTMLDOMChildrenCollection *create_child_collection(HTMLDocumentNode *doc
     HTMLDOMChildrenCollection *ret;
 
     ret = heap_alloc_zero(sizeof(*ret));
-    ret->lpIHTMLDOMChildrenCollectionVtbl = &HTMLDOMChildrenCollectionVtbl;
+    ret->IHTMLDOMChildrenCollection_iface.lpVtbl = &HTMLDOMChildrenCollectionVtbl;
     ret->ref = 1;
 
     nsIDOMNodeList_AddRef(nslist);
     ret->nslist = nslist;
     ret->doc = doc;
 
-    init_dispex(&ret->dispex, (IUnknown*)HTMLCHILDCOL(ret), &HTMLDOMChildrenCollection_dispex);
+    init_dispex(&ret->dispex, (IUnknown*)&ret->IHTMLDOMChildrenCollection_iface,
+            &HTMLDOMChildrenCollection_dispex);
 
-    return HTMLCHILDCOL(ret);
+    return &ret->IHTMLDOMChildrenCollection_iface;
 }
 
 static inline HTMLDOMNode *impl_from_IHTMLDOMNode(IHTMLDOMNode *iface)
