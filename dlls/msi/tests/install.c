@@ -5546,6 +5546,7 @@ static void process_pending_renames(HKEY hkey)
     for (src = buf; *src; src = dst + strlen(dst) + 1)
     {
         DWORD flags = MOVEFILE_COPY_ALLOWED;
+        BOOL fileret;
 
         dst = src + strlen(src) + 1;
 
@@ -5573,10 +5574,14 @@ static void process_pending_renames(HKEY hkey)
         if (*dst)
         {
             if (dst[0] == '\\' && dst[1] == '?' && dst[2] == '?' && dst[3] == '\\') dst += 4;
-            ok(MoveFileExA(src, dst, flags), "Failed to move file %s -> %s (%u)\n", src, dst, GetLastError());
+            fileret = MoveFileExA(src, dst, flags);
+            ok(fileret, "Failed to move file %s -> %s (%u)\n", src, dst, GetLastError());
         }
         else
-            ok(DeleteFileA(src), "Failed to delete file %s (%u)\n", src, GetLastError());
+        {
+            fileret = DeleteFileA(src);
+            ok(fileret, "Failed to delete file %s (%u)\n", src, GetLastError());
+        }
     }
 
     ok(found, "Expected a 'msitest' entry\n");

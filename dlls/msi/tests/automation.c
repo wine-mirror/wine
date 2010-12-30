@@ -2103,7 +2103,8 @@ static void test_Installer_RegistryValue(void)
         "RegSetValueExW failed\n");
     ok(!RegSetValueExW(hkey,szThree,0,REG_BINARY, (const BYTE *)qw, 4),
         "RegSetValueExW failed\n");
-    ok(SetEnvironmentVariableA("MSITEST", "Four"), "SetEnvironmentVariableA failed %d\n", GetLastError());
+    bRet = SetEnvironmentVariableA("MSITEST", "Four");
+    ok(bRet, "SetEnvironmentVariableA failed %d\n", GetLastError());
     ok(!RegSetValueExW(hkey,szFour,0,REG_EXPAND_SZ, (const BYTE *)szExpand, sizeof(szExpand)),
         "RegSetValueExW failed\n");
     ok(!RegSetValueExW(hkey,szFive,0,REG_MULTI_SZ, (const BYTE *)szFive, sizeof(szFive)),
