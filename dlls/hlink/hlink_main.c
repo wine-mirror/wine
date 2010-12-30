@@ -34,9 +34,14 @@ typedef HRESULT (CALLBACK *LPFNCREATEINSTANCE)(IUnknown*, REFIID, LPVOID*);
 
 typedef struct
 {
-    const IClassFactoryVtbl *lpVtbl;
-    LPFNCREATEINSTANCE      lpfnCI;
+    IClassFactory      IClassFactory_iface;
+    LPFNCREATEINSTANCE lpfnCI;
 } CFImpl;
+
+static inline CFImpl *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, CFImpl, IClassFactory_iface);
+}
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -500,7 +505,7 @@ cleanup:
 static HRESULT WINAPI HLinkCF_fnQueryInterface ( LPCLASSFACTORY iface,
         REFIID riid, LPVOID *ppvObj)
 {
-    CFImpl *This = (CFImpl *)iface;
+    CFImpl *This = impl_from_IClassFactory(iface);
 
     TRACE("(%p)->(%s)\n",This,debugstr_guid(riid));
 
@@ -530,7 +535,7 @@ static ULONG WINAPI HLinkCF_fnRelease(LPCLASSFACTORY iface)
 static HRESULT WINAPI HLinkCF_fnCreateInstance( LPCLASSFACTORY iface,
         LPUNKNOWN pUnkOuter, REFIID riid, LPVOID *ppvObject)
 {
-    CFImpl *This = (CFImpl *)iface;
+    CFImpl *This = impl_from_IClassFactory(iface);
 
     TRACE("%p->(%p,%s,%p)\n", This, pUnkOuter, debugstr_guid(riid), ppvObject);
 
@@ -554,8 +559,8 @@ static const IClassFactoryVtbl hlcfvt =
     HLinkCF_fnLockServer
 };
 
-static CFImpl HLink_cf = { &hlcfvt, HLink_Constructor };
-static CFImpl HLinkBrowseContext_cf = { &hlcfvt, HLinkBrowseContext_Constructor };
+static CFImpl HLink_cf = { { &hlcfvt }, HLink_Constructor };
+static CFImpl HLinkBrowseContext_cf = { { &hlcfvt }, HLinkBrowseContext_Constructor };
 
 /***********************************************************************
  *             DllGetClassObject (HLINK.@)
@@ -571,9 +576,9 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
     *ppv = NULL;
 
     if (IsEqualIID(rclsid, &CLSID_StdHlink))
-        pcf = (IClassFactory*) &HLink_cf;
+        pcf = &HLink_cf.IClassFactory_iface;
     else if (IsEqualIID(rclsid, &CLSID_StdHlinkBrowseContext))
-        pcf = (IClassFactory*) &HLinkBrowseContext_cf;
+        pcf = &HLinkBrowseContext_cf.IClassFactory_iface;
     else
         return CLASS_E_CLASSNOTAVAILABLE;
 
