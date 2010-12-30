@@ -2586,7 +2586,8 @@ static void test_SetForegroundWindow(HWND hwnd)
 
     hwnd2 = GetForegroundWindow();
     ok(hwnd2 == hwnd, "Wrong foreground window %p\n", hwnd2);
-    ok(SetForegroundWindow( GetDesktopWindow() ), "SetForegroundWindow(desktop) error: %d\n", GetLastError());
+    ret = SetForegroundWindow( GetDesktopWindow() );
+    ok(ret, "SetForegroundWindow(desktop) error: %d\n", GetLastError());
     hwnd2 = GetForegroundWindow();
     ok(hwnd2 != hwnd, "Wrong foreground window %p\n", hwnd2);
 
@@ -4529,10 +4530,12 @@ static void test_CreateWindow(void)
     HMENU hmenu;
     RECT rc, rc_minmax;
     MINMAXINFO minmax;
+    BOOL res;
 
 #define expect_menu(window, menu) \
     SetLastError(0xdeadbeef); \
-    ok(GetMenu(window) == (HMENU)menu, "GetMenu error %d\n", GetLastError())
+    res = (GetMenu(window) == (HMENU)menu); \
+    ok(res, "GetMenu error %d\n", GetLastError())
 
 #define expect_style(window, style)\
     ok((ULONG)GetWindowLong(window, GWL_STYLE) == (style), "expected style %x != %x\n", (LONG)(style), GetWindowLong(window, GWL_STYLE))
@@ -4551,7 +4554,8 @@ static void test_CreateWindow(void)
     assert(parent != 0);
 
     SetLastError(0xdeadbeef);
-    ok(IsMenu(hmenu), "IsMenu error %d\n", GetLastError());
+    res = IsMenu(hmenu);
+    ok(res, "IsMenu error %d\n", GetLastError());
 
     /* WS_CHILD */
     SetLastError(0xdeadbeef);
@@ -6051,7 +6055,8 @@ static void test_thick_child_size(HWND parentWindow)
     cls.lpszMenuName = NULL;
     cls.lpszClassName = className;
     SetLastError(0xdeadbeef);
-    ok(RegisterClassA(&cls),"RegisterClassA failed, error: %u\n", GetLastError());
+    success = RegisterClassA(&cls);
+    ok(success,"RegisterClassA failed, error: %u\n", GetLastError());
 
     for(i = 0; i < NUMBER_OF_THICK_CHILD_TESTS; i++)
     {
