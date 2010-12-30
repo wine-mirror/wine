@@ -2061,6 +2061,7 @@ static void test_LocalizedNames(void)
     DWORD res;
     HANDLE file;
     STRRET strret;
+    BOOL ret;
 
     static const char desktopini_contents1[] =
         "[.ShellClassInfo]\r\n"
@@ -2080,10 +2081,10 @@ static void test_LocalizedNames(void)
     file = CreateFileA(".\\testfolder\\desktop.ini", GENERIC_WRITE, 0, NULL,
                          CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     ok(file != INVALID_HANDLE_VALUE, "CreateFileA failed %i\n", GetLastError());
-    ok(WriteFile(file, desktopini_contents1, strlen(desktopini_contents1), &res, NULL) &&
-       WriteFile(file, resourcefile, strlen(resourcefile), &res, NULL) &&
-       WriteFile(file, desktopini_contents2, strlen(desktopini_contents2), &res, NULL),
-       "WriteFile failed %i\n", GetLastError());
+    ret = WriteFile(file, desktopini_contents1, strlen(desktopini_contents1), &res, NULL) &&
+          WriteFile(file, resourcefile, strlen(resourcefile), &res, NULL) &&
+          WriteFile(file, desktopini_contents2, strlen(desktopini_contents2), &res, NULL);
+    ok(ret, "WriteFile failed %i\n", GetLastError());
     CloseHandle(file);
 
     /* get IShellFolder for parent */
