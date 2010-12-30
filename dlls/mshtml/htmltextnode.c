@@ -48,21 +48,21 @@ static HRESULT WINAPI HTMLDOMTextNode_QueryInterface(IHTMLDOMTextNode *iface,
 {
     HTMLDOMTextNode *This = HTMLTEXT_THIS(iface);
 
-    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->node), riid, ppv);
+    return IHTMLDOMNode_QueryInterface(&This->node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLDOMTextNode_AddRef(IHTMLDOMTextNode *iface)
 {
     HTMLDOMTextNode *This = HTMLTEXT_THIS(iface);
 
-    return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->node));
+    return IHTMLDOMNode_AddRef(&This->node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI HTMLDOMTextNode_Release(IHTMLDOMTextNode *iface)
 {
     HTMLDOMTextNode *This = HTMLTEXT_THIS(iface);
 
-    return IHTMLDOMNode_Release(HTMLDOMNODE(&This->node));
+    return IHTMLDOMNode_Release(&This->node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI HTMLDOMTextNode_GetTypeInfoCount(IHTMLDOMTextNode *iface, UINT *pctinfo)
@@ -197,7 +197,7 @@ static HRESULT HTMLDOMTextNode_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTM
     if(FAILED(hres))
         return hres;
 
-    IHTMLDOMNode_AddRef(HTMLDOMNODE(*ret));
+    IHTMLDOMNode_AddRef(&(*ret)->IHTMLDOMNode_iface);
     return S_OK;
 }
 

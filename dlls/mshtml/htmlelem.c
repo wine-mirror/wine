@@ -152,21 +152,21 @@ static HRESULT WINAPI HTMLElement_QueryInterface(IHTMLElement *iface,
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
 
-    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->node), riid, ppv);
+    return IHTMLDOMNode_QueryInterface(&This->node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLElement_AddRef(IHTMLElement *iface)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
 
-    return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->node));
+    return IHTMLDOMNode_AddRef(&This->node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI HTMLElement_Release(IHTMLElement *iface)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
 
-    return IHTMLDOMNode_Release(HTMLDOMNODE(&This->node));
+    return IHTMLDOMNode_Release(&This->node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI HTMLElement_GetTypeInfoCount(IHTMLElement *iface, UINT *pctinfo)
@@ -409,7 +409,7 @@ static HRESULT WINAPI HTMLElement_get_parentElement(IHTMLElement *iface, IHTMLEl
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    hres = IHTMLDOMNode_get_parentNode(HTMLDOMNODE(&This->node), &node);
+    hres = IHTMLDOMNode_get_parentNode(&This->node.IHTMLDOMNode_iface, &node);
     if(FAILED(hres))
         return hres;
 

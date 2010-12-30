@@ -172,7 +172,7 @@ static HRESULT WINAPI HTMLDocument_get_body(IHTMLDocument2 *iface, IHTMLElement 
     if(FAILED(hres))
         return hres;
 
-    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)p);
+    return IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLElement, (void**)p);
 }
 
 static HRESULT WINAPI HTMLDocument_get_activeElement(IHTMLDocument2 *iface, IHTMLElement **p)
@@ -1985,8 +1985,10 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLWindow *wi
     doc->basedoc.doc_obj = doc_obj;
     doc->basedoc.window = window;
 
-    init_dispex(&doc->node.dispex, (IUnknown*)HTMLDOMNODE(&doc->node), &HTMLDocumentNode_dispex);
-    init_doc(&doc->basedoc, (IUnknown*)HTMLDOMNODE(&doc->node), DISPATCHEX(&doc->node.dispex));
+    init_dispex(&doc->node.dispex, (IUnknown*)&doc->node.IHTMLDOMNode_iface,
+            &HTMLDocumentNode_dispex);
+    init_doc(&doc->basedoc, (IUnknown*)&doc->node.IHTMLDOMNode_iface,
+            DISPATCHEX(&doc->node.dispex));
     HTMLDocumentNode_SecMgr_Init(doc);
 
     init_nsevents(doc);

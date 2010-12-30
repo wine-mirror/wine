@@ -535,7 +535,7 @@ IHTMLElementCollection *create_all_collection(HTMLDOMNode *node, BOOL include_ro
     create_all_list(node->doc, node, &buf);
     elem_vector_normalize(&buf);
 
-    return HTMLElementCollection_Create((IUnknown*)HTMLDOMNODE(node), buf.buf, buf.len);
+    return HTMLElementCollection_Create((IUnknown*)&node->IHTMLDOMNode_iface, buf.buf, buf.len);
 }
 
 IHTMLElementCollection *create_collection_from_nodelist(HTMLDocumentNode *doc, IUnknown *unk, nsIDOMNodeList *nslist)

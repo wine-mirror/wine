@@ -67,9 +67,9 @@ static HRESULT htmlform_item(HTMLFormElement *This, int i, IDispatch **ret)
         if(FAILED(hres))
             return hres;
 
-        IHTMLDOMNode_AddRef(HTMLDOMNODE(node));
+        IHTMLDOMNode_AddRef(&node->IHTMLDOMNode_iface);
         nsIDOMNode_Release(item);
-        *ret = (IDispatch*)HTMLDOMNODE(node);
+        *ret = (IDispatch*)&node->IHTMLDOMNode_iface;
     }else {
         *ret = NULL;
     }
@@ -84,21 +84,21 @@ static HRESULT WINAPI HTMLFormElement_QueryInterface(IHTMLFormElement *iface,
 {
     HTMLFormElement *This = HTMLFORM_THIS(iface);
 
-    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->element.node), riid, ppv);
+    return IHTMLDOMNode_QueryInterface(&This->element.node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLFormElement_AddRef(IHTMLFormElement *iface)
 {
     HTMLFormElement *This = HTMLFORM_THIS(iface);
 
-    return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->element.node));
+    return IHTMLDOMNode_AddRef(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI HTMLFormElement_Release(IHTMLFormElement *iface)
 {
     HTMLFormElement *This = HTMLFORM_THIS(iface);
 
-    return IHTMLDOMNode_Release(HTMLDOMNODE(&This->element.node));
+    return IHTMLDOMNode_Release(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI HTMLFormElement_GetTypeInfoCount(IHTMLFormElement *iface, UINT *pctinfo)

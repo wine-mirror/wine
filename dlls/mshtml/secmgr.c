@@ -47,19 +47,19 @@ const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY =
 static HRESULT WINAPI InternetHostSecurityManager_QueryInterface(IInternetHostSecurityManager *iface, REFIID riid, void **ppv)
 {
     HTMLDocumentNode *This = HOSTSECMGR_THIS(iface);
-    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->node), riid, ppv);
+    return IHTMLDOMNode_QueryInterface(&This->node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI InternetHostSecurityManager_AddRef(IInternetHostSecurityManager *iface)
 {
     HTMLDocumentNode *This = HOSTSECMGR_THIS(iface);
-    return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->node));
+    return IHTMLDOMNode_AddRef(&This->node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI InternetHostSecurityManager_Release(IInternetHostSecurityManager *iface)
 {
     HTMLDocumentNode *This = HOSTSECMGR_THIS(iface);
-    return IHTMLDOMNode_Release(HTMLDOMNODE(&This->node));
+    return IHTMLDOMNode_Release(&This->node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI InternetHostSecurityManager_GetSecurityId(IInternetHostSecurityManager *iface,  BYTE *pbSecurityId,

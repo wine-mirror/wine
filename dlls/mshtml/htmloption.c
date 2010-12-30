@@ -48,21 +48,21 @@ static HRESULT WINAPI HTMLOptionElement_QueryInterface(IHTMLOptionElement *iface
 {
     HTMLOptionElement *This = HTMLOPTION_THIS(iface);
 
-    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->element.node), riid, ppv);
+    return IHTMLDOMNode_QueryInterface(&This->element.node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLOptionElement_AddRef(IHTMLOptionElement *iface)
 {
     HTMLOptionElement *This = HTMLOPTION_THIS(iface);
 
-    return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->element.node));
+    return IHTMLDOMNode_AddRef(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI HTMLOptionElement_Release(IHTMLOptionElement *iface)
 {
     HTMLOptionElement *This = HTMLOPTION_THIS(iface);
 
-    return IHTMLDOMNode_Release(HTMLDOMNODE(&This->element.node));
+    return IHTMLDOMNode_Release(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI HTMLOptionElement_GetTypeInfoCount(IHTMLOptionElement *iface, UINT *pctinfo)
@@ -499,7 +499,7 @@ static HRESULT WINAPI HTMLOptionElementFactory_create(IHTMLOptionElementFactory 
     if(FAILED(hres))
         return hres;
 
-    hres = IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node),
+    hres = IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface,
             &IID_IHTMLOptionElement, (void**)optelem);
 
     if(V_VT(&text) == VT_BSTR)

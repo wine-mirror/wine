@@ -46,21 +46,21 @@ static HRESULT WINAPI HTMLCommentElement_QueryInterface(IHTMLCommentElement *ifa
 {
     HTMLCommentElement *This = HTMLCOMMENT_THIS(iface);
 
-    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->element.node), riid, ppv);
+    return IHTMLDOMNode_QueryInterface(&This->element.node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLCommentElement_AddRef(IHTMLCommentElement *iface)
 {
     HTMLCommentElement *This = HTMLCOMMENT_THIS(iface);
 
-    return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->element.node));
+    return IHTMLDOMNode_AddRef(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI HTMLCommentElement_Release(IHTMLCommentElement *iface)
 {
     HTMLCommentElement *This = HTMLCOMMENT_THIS(iface);
 
-    return IHTMLDOMNode_Release(HTMLDOMNODE(&This->element.node));
+    return IHTMLDOMNode_Release(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI HTMLCommentElement_GetTypeInfoCount(IHTMLCommentElement *iface, UINT *pctinfo)

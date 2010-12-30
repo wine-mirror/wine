@@ -73,8 +73,8 @@ static HRESULT htmlselect_item(HTMLSelectElement *This, int i, IDispatch **ret)
         if(FAILED(hres))
             return hres;
 
-        IHTMLDOMNode_AddRef(HTMLDOMNODE(node));
-        *ret = (IDispatch*)HTMLDOMNODE(node);
+        IHTMLDOMNode_AddRef(&node->IHTMLDOMNode_iface);
+        *ret = (IDispatch*)&node->IHTMLDOMNode_iface;
     }else {
         *ret = NULL;
     }
@@ -86,21 +86,21 @@ static HRESULT WINAPI HTMLSelectElement_QueryInterface(IHTMLSelectElement *iface
 {
     HTMLSelectElement *This = impl_from_IHTMLSelectElement(iface);
 
-    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->element.node), riid, ppv);
+    return IHTMLDOMNode_QueryInterface(&This->element.node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLSelectElement_AddRef(IHTMLSelectElement *iface)
 {
     HTMLSelectElement *This = impl_from_IHTMLSelectElement(iface);
 
-    return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->element.node));
+    return IHTMLDOMNode_AddRef(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI HTMLSelectElement_Release(IHTMLSelectElement *iface)
 {
     HTMLSelectElement *This = impl_from_IHTMLSelectElement(iface);
 
-    return IHTMLDOMNode_Release(HTMLDOMNODE(&This->element.node));
+    return IHTMLDOMNode_Release(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI HTMLSelectElement_GetTypeInfoCount(IHTMLSelectElement *iface, UINT *pctinfo)
@@ -387,7 +387,7 @@ static HRESULT WINAPI HTMLSelectElement_add(IHTMLSelectElement *iface, IHTMLElem
     if(FAILED(hres))
         return hres;
 
-    hres = IHTMLDOMNode_appendChild(HTMLDOMNODE(&This->element.node), node, &tmp);
+    hres = IHTMLDOMNode_appendChild(&This->element.node.IHTMLDOMNode_iface, node, &tmp);
     IHTMLDOMNode_Release(node);
     if(SUCCEEDED(hres) && tmp)
         IHTMLDOMNode_Release(tmp);

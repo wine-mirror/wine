@@ -531,7 +531,7 @@ typedef struct {
 
 struct HTMLDOMNode {
     DispatchEx dispex;
-    const IHTMLDOMNodeVtbl   *lpHTMLDOMNodeVtbl;
+    IHTMLDOMNode  IHTMLDOMNode_iface;
     const IHTMLDOMNode2Vtbl  *lpHTMLDOMNode2Vtbl;
     const NodeImplVtbl *vtbl;
 
@@ -642,7 +642,6 @@ struct HTMLDocumentNode {
 #define STATUSCLB(x)     ((IBindStatusCallback*)          &(x)->lpBindStatusCallbackVtbl)
 #define BINDINFO(x)      ((IInternetBindInfo*)            &(x)->lpInternetBindInfoVtbl);
 
-#define HTMLDOMNODE(x)   ((IHTMLDOMNode*)                 &(x)->lpHTMLDOMNodeVtbl)
 #define HTMLDOMNODE2(x)  ((IHTMLDOMNode2*)                &(x)->lpHTMLDOMNode2Vtbl)
 
 #define HTMLTEXTCONT(x)  ((IHTMLTextContainer*)           &(x)->lpHTMLTextContainerVtbl)

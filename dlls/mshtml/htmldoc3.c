@@ -133,8 +133,8 @@ static HRESULT WINAPI HTMLDocument3_createTextNode(IHTMLDocument3 *iface, BSTR t
     if(FAILED(hres))
         return hres;
 
-    *newTextNode = HTMLDOMNODE(node);
-    IHTMLDOMNode_AddRef(HTMLDOMNODE(node));
+    *newTextNode = &node->IHTMLDOMNode_iface;
+    IHTMLDOMNode_AddRef(&node->IHTMLDOMNode_iface);
     return S_OK;
 }
 
@@ -174,7 +174,7 @@ static HRESULT WINAPI HTMLDocument3_get_documentElement(IHTMLDocument3 *iface, I
     if(FAILED(hres))
         return hres;
 
-    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)p);
+    return IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLElement, (void**)p);
 }
 
 static HRESULT WINAPI HTMLDocument3_uniqueID(IHTMLDocument3 *iface, BSTR *p)
@@ -542,7 +542,8 @@ static HRESULT WINAPI HTMLDocument3_getElementById(IHTMLDocument3 *iface, BSTR v
         nsIDOMNode_Release(nsnode);
 
         if(SUCCEEDED(hres))
-            hres = IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)pel);
+            hres = IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLElement,
+                    (void**)pel);
     }else {
         *pel = NULL;
         hres = S_OK;

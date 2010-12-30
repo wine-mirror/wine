@@ -49,21 +49,21 @@ static HRESULT WINAPI HTMLScriptElement_QueryInterface(IHTMLScriptElement *iface
 {
     HTMLScriptElement *This = impl_from_IHTMLScriptElement(iface);
 
-    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->element.node), riid, ppv);
+    return IHTMLDOMNode_QueryInterface(&This->element.node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLScriptElement_AddRef(IHTMLScriptElement *iface)
 {
     HTMLScriptElement *This = impl_from_IHTMLScriptElement(iface);
 
-    return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->element.node));
+    return IHTMLDOMNode_AddRef(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI HTMLScriptElement_Release(IHTMLScriptElement *iface)
 {
     HTMLScriptElement *This = impl_from_IHTMLScriptElement(iface);
 
-    return IHTMLDOMNode_Release(HTMLDOMNODE(&This->element.node));
+    return IHTMLDOMNode_Release(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI HTMLScriptElement_GetTypeInfoCount(IHTMLScriptElement *iface, UINT *pctinfo)

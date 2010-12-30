@@ -56,21 +56,21 @@ static HRESULT WINAPI HTMLInputElement_QueryInterface(IHTMLInputElement *iface,
 {
     HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
 
-    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->element.node), riid, ppv);
+    return IHTMLDOMNode_QueryInterface(&This->element.node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLInputElement_AddRef(IHTMLInputElement *iface)
 {
     HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
 
-    return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->element.node));
+    return IHTMLDOMNode_AddRef(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI HTMLInputElement_Release(IHTMLInputElement *iface)
 {
     HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
 
-    return IHTMLDOMNode_Release(HTMLDOMNODE(&This->element.node));
+    return IHTMLDOMNode_Release(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI HTMLInputElement_GetTypeInfoCount(IHTMLInputElement *iface, UINT *pctinfo)
@@ -825,21 +825,21 @@ static HRESULT WINAPI HTMLInputTextElement_QueryInterface(IHTMLInputTextElement 
 {
     HTMLInputElement *This = impl_from_IHTMLInputTextElement(iface);
 
-    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->element.node), riid, ppv);
+    return IHTMLDOMNode_QueryInterface(&This->element.node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLInputTextElement_AddRef(IHTMLInputTextElement *iface)
 {
     HTMLInputElement *This = impl_from_IHTMLInputTextElement(iface);
 
-    return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->element.node));
+    return IHTMLDOMNode_AddRef(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI HTMLInputTextElement_Release(IHTMLInputTextElement *iface)
 {
     HTMLInputElement *This = impl_from_IHTMLInputTextElement(iface);
 
-    return IHTMLDOMNode_Release(HTMLDOMNODE(&This->element.node));
+    return IHTMLDOMNode_Release(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI HTMLInputTextElement_GetTypeInfoCount(IHTMLInputTextElement *iface, UINT *pctinfo)

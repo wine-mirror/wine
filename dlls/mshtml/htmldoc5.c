@@ -153,8 +153,8 @@ static HRESULT WINAPI HTMLDocument5_createComment(IHTMLDocument5 *iface, BSTR bs
     if(FAILED(hres))
         return hres;
 
-    *ppRetNode = HTMLDOMNODE(&elem->node);
-    IHTMLDOMNode_AddRef(HTMLDOMNODE(&elem->node));
+    *ppRetNode = &elem->node.IHTMLDOMNode_iface;
+    IHTMLDOMNode_AddRef(&elem->node.IHTMLDOMNode_iface);
     return S_OK;
 }
 

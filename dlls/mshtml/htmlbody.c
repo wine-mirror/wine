@@ -203,21 +203,21 @@ static HRESULT WINAPI HTMLBodyElement_QueryInterface(IHTMLBodyElement *iface,
 {
     HTMLBodyElement *This = impl_from_IHTMLBodyElement(iface);
 
-    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->textcont.element.node), riid, ppv);
+    return IHTMLDOMNode_QueryInterface(&This->textcont.element.node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLBodyElement_AddRef(IHTMLBodyElement *iface)
 {
     HTMLBodyElement *This = impl_from_IHTMLBodyElement(iface);
 
-    return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->textcont.element.node));
+    return IHTMLDOMNode_AddRef(&This->textcont.element.node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI HTMLBodyElement_Release(IHTMLBodyElement *iface)
 {
     HTMLBodyElement *This = impl_from_IHTMLBodyElement(iface);
 
-    return IHTMLDOMNode_Release(HTMLDOMNODE(&This->textcont.element.node));
+    return IHTMLDOMNode_Release(&This->textcont.element.node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI HTMLBodyElement_GetTypeInfoCount(IHTMLBodyElement *iface, UINT *pctinfo)

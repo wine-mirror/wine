@@ -49,21 +49,21 @@ static HRESULT WINAPI HTMLTableRow_QueryInterface(IHTMLTableRow *iface,
 {
     HTMLTableRow *This = impl_from_IHTMLTableRow(iface);
 
-    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->element.node), riid, ppv);
+    return IHTMLDOMNode_QueryInterface(&This->element.node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLTableRow_AddRef(IHTMLTableRow *iface)
 {
     HTMLTableRow *This = impl_from_IHTMLTableRow(iface);
 
-    return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->element.node));
+    return IHTMLDOMNode_AddRef(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI HTMLTableRow_Release(IHTMLTableRow *iface)
 {
     HTMLTableRow *This = impl_from_IHTMLTableRow(iface);
 
-    return IHTMLDOMNode_Release(HTMLDOMNODE(&This->element.node));
+    return IHTMLDOMNode_Release(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI HTMLTableRow_GetTypeInfoCount(IHTMLTableRow *iface, UINT *pctinfo)

@@ -322,7 +322,8 @@ static HRESULT WINAPI HTMLEventObj_get_srcElement(IHTMLEventObj *iface, IHTMLEle
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(This->target), &IID_IHTMLElement, (void**)p);
+    return IHTMLDOMNode_QueryInterface(&This->target->IHTMLDOMNode_iface, &IID_IHTMLElement,
+            (void**)p);
 }
 
 static HRESULT WINAPI HTMLEventObj_get_altKey(IHTMLEventObj *iface, VARIANT_BOOL *p)
@@ -772,7 +773,7 @@ static IHTMLEventObj *create_event(HTMLDOMNode *target, eventid_t eid, nsIDOMEve
     }
 
     ret->target = target;
-    IHTMLDOMNode_AddRef(HTMLDOMNODE(target));
+    IHTMLDOMNode_AddRef(&target->IHTMLDOMNode_iface);
 
     init_dispex(&ret->dispex, (IUnknown*)&ret->IHTMLEventObj_iface, &HTMLEventObj_dispex);
 
@@ -927,8 +928,8 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode
         do {
             hres = get_node(doc, nsnode, FALSE, &node);
             if(SUCCEEDED(hres) && node)
-                call_event_handlers(doc, event_obj, *get_node_event_target(node), node->cp_container, eid,
-                        (IDispatch*)HTMLDOMNODE(node));
+                call_event_handlers(doc, event_obj, *get_node_event_target(node),
+                        node->cp_container, eid, (IDispatch*)&node->IHTMLDOMNode_iface);
 
             if(!(event_info[eid].flags & EVENT_BUBBLE))
                 break;
@@ -954,8 +955,8 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode
             if(NS_SUCCEEDED(nsres) && nsbody) {
                 hres = get_node(doc, (nsIDOMNode*)nsbody, FALSE, &node);
                 if(SUCCEEDED(hres) && node)
-                    call_event_handlers(doc, event_obj, *get_node_event_target(node), node->cp_container,
-                            eid, (IDispatch*)HTMLDOMNODE(node));
+                    call_event_handlers(doc, event_obj, *get_node_event_target(node),
+                            node->cp_container, eid, (IDispatch*)&node->IHTMLDOMNode_iface);
                 nsIDOMHTMLElement_Release(nsbody);
             }else {
                 ERR("Could not get body: %08x\n", nsres);

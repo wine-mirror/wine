@@ -50,21 +50,21 @@ static HRESULT WINAPI HTMLAnchorElement_QueryInterface(IHTMLAnchorElement *iface
 {
     HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
 
-    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(&This->element.node), riid, ppv);
+    return IHTMLDOMNode_QueryInterface(&This->element.node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLAnchorElement_AddRef(IHTMLAnchorElement *iface)
 {
     HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
 
-    return IHTMLDOMNode_AddRef(HTMLDOMNODE(&This->element.node));
+    return IHTMLDOMNode_AddRef(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI HTMLAnchorElement_Release(IHTMLAnchorElement *iface)
 {
     HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
 
-    return IHTMLDOMNode_Release(HTMLDOMNODE(&This->element.node));
+    return IHTMLDOMNode_Release(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI HTMLAnchorElement_GetTypeInfoCount(IHTMLAnchorElement *iface, UINT *pctinfo)
