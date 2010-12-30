@@ -100,7 +100,13 @@ static HRESULT Math_acos(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPAR
     if(FAILED(hres))
         return hres;
 
-    if(retv) num_set_val(retv, acos(num_val(&v)));
+    if(retv) {
+        DOUBLE x = num_val(&v);
+        if(x < -1.0 || x > 1.0)
+            num_set_nan(retv);
+        else
+            num_set_val(retv, acos(x));
+    }
     return S_OK;
 }
 
@@ -121,7 +127,13 @@ static HRESULT Math_asin(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPAR
     if(FAILED(hres))
         return hres;
 
-    if(retv) num_set_val(retv, asin(num_val(&v)));
+    if(retv) {
+        DOUBLE x = num_val(&v);
+        if(x < -1.0 || x > 1.0)
+            num_set_nan(retv);
+        else
+            num_set_val(retv, asin(x));
+    }
     return S_OK;
 }
 
@@ -278,8 +290,13 @@ static HRESULT Math_log(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
     if(FAILED(hres))
         return hres;
 
-    if(retv)
-        num_set_val(retv, log(num_val(&v)));
+    if(retv) {
+        DOUBLE x = num_val(&v);
+        if(x < -0.0)
+            num_set_nan(retv);
+        else
+            num_set_val(retv, log(x));
+    }
     return S_OK;
 }
 

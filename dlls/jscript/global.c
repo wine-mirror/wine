@@ -290,7 +290,7 @@ static HRESULT JSGlobal_escape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
     for(ptr=str; *ptr; ptr++) {
         if(*ptr > 0xff)
             len += 6;
-        else if(isalnum((char)*ptr) || *ptr=='*' || *ptr=='@' || *ptr=='-'
+        else if(isalnum((unsigned char)*ptr) || *ptr=='*' || *ptr=='@' || *ptr=='-'
                 || *ptr=='_' || *ptr=='+' || *ptr=='.' || *ptr=='/')
             len++;
         else
