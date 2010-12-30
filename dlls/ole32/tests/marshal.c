@@ -2644,6 +2644,7 @@ static HANDLE create_target_process(const char *arg)
 {
     char **argv;
     char cmdline[MAX_PATH];
+    BOOL ret;
     PROCESS_INFORMATION pi;
     STARTUPINFO si = { 0 };
     si.cb = sizeof(si);
@@ -2652,8 +2653,8 @@ static HANDLE create_target_process(const char *arg)
     pi.hProcess = NULL;
     winetest_get_mainargs( &argv );
     sprintf(cmdline, "%s %s %s", argv[0], argv[1], arg);
-    ok(CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL,
-                     &si, &pi) != 0, "CreateProcess failed with error: %u\n", GetLastError());
+    ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcess failed with error: %u\n", GetLastError());
     if (pi.hThread) CloseHandle(pi.hThread);
     return pi.hProcess;
 }
