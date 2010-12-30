@@ -168,8 +168,8 @@ int wpp_parse( const char *input, FILE *output )
     int ret;
 
     pp_status.input = NULL;
-    pp_status.line_number = 0;
-    pp_status.char_number = 0;
+    pp_status.line_number = 1;
+    pp_status.char_number = 1;
     pp_status.state = 0;
 
     ret = pp_push_define_state();
