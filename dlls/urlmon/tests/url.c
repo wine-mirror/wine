@@ -1617,9 +1617,10 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallbackEx *iface, DW
     ok(pformatetc != NULL, "pformatetx == NULL\n");
     if(pformatetc) {
         if (mime_type[0]) {
+            INT ret;
             clipfmt[0] = 0;
-            ok(GetClipboardFormatName(pformatetc->cfFormat, clipfmt, sizeof(clipfmt)-1),
-               "GetClipboardFormatName failed, error %d\n", GetLastError());
+            ret = GetClipboardFormatName(pformatetc->cfFormat, clipfmt, sizeof(clipfmt)-1);
+            ok(ret, "GetClipboardFormatName failed, error %d\n", GetLastError());
             ok(!lstrcmp(clipfmt, mime_type), "clipformat %x != mime_type, \"%s\" != \"%s\"\n",
                pformatetc->cfFormat, clipfmt, mime_type);
         } else {
