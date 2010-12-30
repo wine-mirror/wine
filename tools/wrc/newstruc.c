@@ -166,6 +166,7 @@ string_t *new_string(void)
 {
     string_t *ret = xmalloc( sizeof(*ret) );
     memset( ret, 0, sizeof(*ret) );
+    set_location( &ret->loc );
     return ret;
 }
 

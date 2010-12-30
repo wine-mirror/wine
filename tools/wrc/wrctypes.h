@@ -83,6 +83,13 @@
 #define BYTESWAP_WORD(w)	((WORD)(((WORD)WRC_LOBYTE(w) << 8) + (WORD)WRC_HIBYTE(w)))
 #define BYTESWAP_DWORD(d)	((DWORD)(((DWORD)BYTESWAP_WORD(WRC_LOWORD(d)) << 16) + ((DWORD)BYTESWAP_WORD(WRC_HIWORD(d)))))
 
+typedef struct
+{
+    const char *file;
+    int         line;
+    int         col;
+} location_t;
+
 /* Binary resource structure */
 #define RES_BLOCKSIZE	512
 
@@ -103,6 +110,7 @@ typedef struct string {
 		char *cstr;
 		WCHAR *wstr;
 	} str;
+	location_t loc;
 } string_t;
 
 /* Resources are identified either by name or by number */

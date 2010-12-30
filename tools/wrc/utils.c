@@ -271,6 +271,8 @@ string_t *convert_string(const string_t *str, enum str_e type, int codepage)
     string_t *ret = xmalloc(sizeof(*ret));
     int res;
 
+    ret->loc = str->loc;
+
     if (!codepage && str->type != type)
         parser_error( "Current language is Unicode only, cannot convert string" );
 
