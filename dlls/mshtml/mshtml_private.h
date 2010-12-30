@@ -549,7 +549,7 @@ typedef struct {
     HTMLDOMNode node;
     ConnectionPointContainer cp_container;
 
-    const IHTMLElementVtbl   *lpHTMLElementVtbl;
+    IHTMLElement  IHTMLElement_iface;
     const IHTMLElement2Vtbl  *lpHTMLElement2Vtbl;
     const IHTMLElement3Vtbl  *lpHTMLElement3Vtbl;
 
@@ -642,7 +642,6 @@ struct HTMLDocumentNode {
 #define STATUSCLB(x)     ((IBindStatusCallback*)          &(x)->lpBindStatusCallbackVtbl)
 #define BINDINFO(x)      ((IInternetBindInfo*)            &(x)->lpInternetBindInfoVtbl);
 
-#define HTMLELEM(x)      ((IHTMLElement*)                 &(x)->lpHTMLElementVtbl)
 #define HTMLELEM2(x)     ((IHTMLElement2*)                &(x)->lpHTMLElement2Vtbl)
 #define HTMLELEM3(x)     ((IHTMLElement3*)                &(x)->lpHTMLElement3Vtbl)
 #define HTMLDOMNODE(x)   ((IHTMLDOMNode*)                 &(x)->lpHTMLDOMNodeVtbl)

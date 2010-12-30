@@ -394,7 +394,7 @@ static HRESULT WINAPI HTMLWindow2_item(IHTMLWindow2 *iface, VARIANT *pvarIndex, 
 
             nsIDOMWindow_Release(nsWindow);
 
-            hres = IHTMLElement_get_id(HTMLELEM(&cur_window->frame_element->element), &id);
+            hres = IHTMLElement_get_id(&cur_window->frame_element->element.IHTMLElement_iface, &id);
             if(FAILED(hres)) {
                 FIXME("IHTMLElement_get_id failed: 0x%08x\n", hres);
                 goto cleanup;

@@ -284,19 +284,19 @@ static HRESULT WINAPI HTMLElement2_QueryInterface(IHTMLElement2 *iface,
                                                   REFIID riid, void **ppv)
 {
     HTMLElement *This = HTMLELEM2_THIS(iface);
-    return IHTMLElement_QueryInterface(HTMLELEM(This), riid, ppv);
+    return IHTMLElement_QueryInterface(&This->IHTMLElement_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLElement2_AddRef(IHTMLElement2 *iface)
 {
     HTMLElement *This = HTMLELEM2_THIS(iface);
-    return IHTMLElement_AddRef(HTMLELEM(This));
+    return IHTMLElement_AddRef(&This->IHTMLElement_iface);
 }
 
 static ULONG WINAPI HTMLElement2_Release(IHTMLElement2 *iface)
 {
     HTMLElement *This = HTMLELEM2_THIS(iface);
-    return IHTMLElement_Release(HTMLELEM(This));
+    return IHTMLElement_Release(&This->IHTMLElement_iface);
 }
 
 static HRESULT WINAPI HTMLElement2_GetTypeInfoCount(IHTMLElement2 *iface, UINT *pctinfo)
@@ -739,7 +739,7 @@ static HRESULT WINAPI HTMLElement2_put_accessKey(IHTMLElement2 *iface, BSTR v)
 
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = v;
-    return IHTMLElement_setAttribute(HTMLELEM(This), accessKeyW, var, 0);
+    return IHTMLElement_setAttribute(&This->IHTMLElement_iface, accessKeyW, var, 0);
 }
 
 static HRESULT WINAPI HTMLElement2_get_accessKey(IHTMLElement2 *iface, BSTR *p)
@@ -1365,7 +1365,8 @@ static HRESULT WINAPI HTMLElement2_getElementsByTagName(IHTMLElement2 *iface, BS
         return E_FAIL;
     }
 
-    *pelColl = create_collection_from_nodelist(This->node.doc, (IUnknown*)HTMLELEM(This), nslist);
+    *pelColl = create_collection_from_nodelist(This->node.doc,
+            (IUnknown*)&This->IHTMLElement_iface, nslist);
     nsIDOMNodeList_Release(nslist);
     return S_OK;
 }

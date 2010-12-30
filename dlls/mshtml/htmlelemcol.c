@@ -215,7 +215,7 @@ static BOOL is_elem_id(HTMLElement *elem, LPCWSTR name)
     BSTR elem_id;
     HRESULT hres;
 
-    hres = IHTMLElement_get_id(HTMLELEM(elem), &elem_id);
+    hres = IHTMLElement_get_id(&elem->IHTMLElement_iface, &elem_id);
     if(FAILED(hres)){
         WARN("IHTMLElement_get_id failed: 0x%08x\n", hres);
         return FALSE;
@@ -308,7 +308,7 @@ static HRESULT WINAPI HTMLElementCollection_item(IHTMLElementCollection *iface,
             }
 
             if(i != This->len) {
-                *pdisp = (IDispatch*)HTMLELEM(This->elems[i]);
+                *pdisp = (IDispatch*)&This->elems[i]->IHTMLElement_iface;
                 IDispatch_AddRef(*pdisp);
             }
         }else {
@@ -326,7 +326,7 @@ static HRESULT WINAPI HTMLElementCollection_item(IHTMLElementCollection *iface,
                 *pdisp = (IDispatch*)HTMLElementCollection_Create(This->ref_unk, buf.buf, buf.len);
             }else {
                 if(buf.len == 1) {
-                    *pdisp = (IDispatch*)HTMLELEM(buf.buf[0]);
+                    *pdisp = (IDispatch*)&buf.buf[0]->IHTMLElement_iface;
                     IDispatch_AddRef(*pdisp);
                 }
 
@@ -456,8 +456,8 @@ static HRESULT HTMLElementCollection_invoke(DispatchEx *dispex, DISPID id, LCID 
     switch(flags) {
     case DISPATCH_PROPERTYGET:
         V_VT(res) = VT_DISPATCH;
-        V_DISPATCH(res) = (IDispatch*)HTMLELEM(This->elems[idx]);
-        IHTMLElement_AddRef(HTMLELEM(This->elems[idx]));
+        V_DISPATCH(res) = (IDispatch*)&This->elems[idx]->IHTMLElement_iface;
+        IHTMLElement_AddRef(&This->elems[idx]->IHTMLElement_iface);
         break;
     default:
         FIXME("unimplemented flags %x\n", flags);

@@ -1005,8 +1005,8 @@ static HRESULT WINAPI HTMLDocument_createElement(IHTMLDocument2 *iface, BSTR eTa
     if(FAILED(hres))
         return hres;
 
-    *newElem = HTMLELEM(elem);
-    IHTMLElement_AddRef(HTMLELEM(elem));
+    *newElem = &elem->IHTMLElement_iface;
+    IHTMLElement_AddRef(&elem->IHTMLElement_iface);
     return S_OK;
 }
 

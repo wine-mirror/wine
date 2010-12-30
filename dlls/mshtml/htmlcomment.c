@@ -106,7 +106,7 @@ static HRESULT WINAPI HTMLCommentElement_get_text(IHTMLCommentElement *iface, BS
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLElement_get_outerHTML(HTMLELEM(&This->element), p);
+    return IHTMLElement_get_outerHTML(&This->element.IHTMLElement_iface, p);
 }
 
 static HRESULT WINAPI HTMLCommentElement_put_atomic(IHTMLCommentElement *iface, LONG v)

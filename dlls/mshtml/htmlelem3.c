@@ -39,19 +39,19 @@ static HRESULT WINAPI HTMLElement3_QueryInterface(IHTMLElement3 *iface,
                                                   REFIID riid, void **ppv)
 {
     HTMLElement *This = HTMLELEM3_THIS(iface);
-    return IHTMLElement_QueryInterface(HTMLELEM(This), riid, ppv);
+    return IHTMLElement_QueryInterface(&This->IHTMLElement_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLElement3_AddRef(IHTMLElement3 *iface)
 {
     HTMLElement *This = HTMLELEM3_THIS(iface);
-    return IHTMLElement_AddRef(HTMLELEM(This));
+    return IHTMLElement_AddRef(&This->IHTMLElement_iface);
 }
 
 static ULONG WINAPI HTMLElement3_Release(IHTMLElement3 *iface)
 {
     HTMLElement *This = HTMLELEM3_THIS(iface);
-    return IHTMLElement_Release(HTMLELEM(This));
+    return IHTMLElement_Release(&This->IHTMLElement_iface);
 }
 
 static HRESULT WINAPI HTMLElement3_GetTypeInfoCount(IHTMLElement3 *iface, UINT *pctinfo)

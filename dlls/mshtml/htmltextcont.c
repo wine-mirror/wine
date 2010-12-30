@@ -40,19 +40,19 @@ static HRESULT WINAPI HTMLTextContainer_QueryInterface(IHTMLTextContainer *iface
                                                        REFIID riid, void **ppv)
 {
     HTMLTextContainer *This = HTMLTEXTCONT_THIS(iface);
-    return IHTMLElement_QueryInterface(HTMLELEM(&This->element), riid, ppv);
+    return IHTMLElement_QueryInterface(&This->element.IHTMLElement_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLTextContainer_AddRef(IHTMLTextContainer *iface)
 {
     HTMLTextContainer *This = HTMLTEXTCONT_THIS(iface);
-    return IHTMLElement_AddRef(HTMLELEM(&This->element));
+    return IHTMLElement_AddRef(&This->element.IHTMLElement_iface);
 }
 
 static ULONG WINAPI HTMLTextContainer_Release(IHTMLTextContainer *iface)
 {
     HTMLTextContainer *This = HTMLTEXTCONT_THIS(iface);
-    return IHTMLElement_Release(HTMLELEM(&This->element));
+    return IHTMLElement_Release(&This->element.IHTMLElement_iface);
 }
 
 static HRESULT WINAPI HTMLTextContainer_GetTypeInfoCount(IHTMLTextContainer *iface, UINT *pctinfo)
