@@ -2699,13 +2699,13 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
         const char *aOriginCharset, nsIURI *aBaseURI, nsIURI **_retval)
 {
     nsWineURI *wine_uri, *base_wine_uri = NULL;
-    const char *spec = NULL;
+    WCHAR new_spec[INTERNET_MAX_URL_LENGTH];
     HTMLWindow *window = NULL;
+    const char *spec = NULL;
     nsIURI *uri = NULL;
-    LPCWSTR base_wine_url = NULL;
-    nsACString spec_str;
+    IUri *urlmon_uri;
     nsresult nsres;
-
+    HRESULT hres;
 
     TRACE("(%s %s %p %p)\n", debugstr_nsacstr(aSpec), debugstr_a(aOriginCharset),
           aBaseURI, _retval);
@@ -2718,60 +2718,49 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
         spec += 5;
 
     if(aBaseURI) {
-        PARSEDURLA parsed_url = {sizeof(PARSEDURLA)};
-
         nsres = nsIURI_QueryInterface(aBaseURI, &IID_nsWineURI, (void**)&base_wine_uri);
         if(NS_SUCCEEDED(nsres)) {
-            base_wine_url = base_wine_uri->wine_url;
-            if(base_wine_uri->window_ref && base_wine_uri->window_ref->window) {
+            if(!ensure_uri(base_wine_uri))
+                return NS_ERROR_UNEXPECTED;
+            if(base_wine_uri->window_ref)
                 window = base_wine_uri->window_ref->window;
-                IHTMLWindow2_AddRef(&window->IHTMLWindow2_iface);
-            }
-            TRACE("base url: %s window: %p\n", debugstr_w(base_wine_url), window);
-        }else if(FAILED(ParseURLA(spec, &parsed_url))) {
-            TRACE("not wraping\n");
-            return nsIIOService_NewURI(nsio, aSpec, aOriginCharset, aBaseURI, _retval);
         }else {
             WARN("Could not get base nsWineURI: %08x\n", nsres);
         }
     }
 
-    nsACString_InitDepend(&spec_str, spec);
-    nsres = nsIIOService_NewURI(nsio, &spec_str, aOriginCharset, aBaseURI, &uri);
-    nsACString_Finish(&spec_str);
+    MultiByteToWideChar(CP_ACP, 0, spec, -1, new_spec, sizeof(new_spec)/sizeof(WCHAR));
+
+    if(base_wine_uri) {
+        hres = CoInternetCombineUrlEx(base_wine_uri->uri, new_spec, URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO,
+                &urlmon_uri, 0);
+        if(FAILED(hres))
+            WARN("CoInternetCombineUrlEx failed: %08x\n", hres);
+    }else {
+        hres = CreateUri(new_spec, 0, 0, &urlmon_uri);
+        if(FAILED(hres))
+            WARN("CreateUri failed: %08x\n", hres);
+    }
+
+    nsres = nsIIOService_NewURI(nsio, aSpec, aOriginCharset, aBaseURI, &uri);
     if(NS_FAILED(nsres))
         TRACE("NewURI failed: %08x\n", nsres);
 
-    nsres = create_uri(uri, window, NULL, &wine_uri);
-    *_retval = (nsIURI*)wine_uri;
-
-    if(window)
-        IHTMLWindow2_Release(&window->IHTMLWindow2_iface);
-
-    if(base_wine_url) {
-        WCHAR url[INTERNET_MAX_URL_LENGTH], rel_url[INTERNET_MAX_URL_LENGTH];
-        DWORD len;
-        HRESULT hres;
-
-        MultiByteToWideChar(CP_ACP, 0, spec, -1, rel_url, sizeof(rel_url)/sizeof(WCHAR));
-
-        hres = CoInternetCombineUrl(base_wine_url, rel_url,
-                                    URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO,
-                                    url, sizeof(url)/sizeof(WCHAR), &len, 0);
-        if(SUCCEEDED(hres))
-            set_wine_url(wine_uri, url);
-        else
-             WARN("CoCombineUrl failed: %08x\n", hres);
-    }else {
-        WCHAR url[INTERNET_MAX_URL_LENGTH];
-
-        MultiByteToWideChar(CP_ACP, 0, spec, -1, url, sizeof(url)/sizeof(WCHAR));
-        set_wine_url(wine_uri, url);
+    if(FAILED(hres)) {
+        *_retval = uri;
+        return nsres;
     }
 
+    nsres = create_uri(uri, window, NULL, &wine_uri);
     if(base_wine_uri)
         nsIURI_Release(NSURI(base_wine_uri));
+    if(NS_FAILED(nsres))
+        return nsres;
 
+    wine_uri->uri = urlmon_uri;
+
+    sync_wine_url(wine_uri);
+    *_retval = (nsIURI*)wine_uri;
     return nsres;
 }
 
