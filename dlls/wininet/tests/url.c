@@ -465,21 +465,21 @@ static void InternetCrackUrl_test(void)
   ret = InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents);
   GLE = GetLastError();
   ok(ret==firstret && (GLE==firstGLE), "InternetCrackUrl returned %d with GLE=%d (expected to return %d)\n",
-    ret, GetLastError(), firstret);
+    ret, GLE, firstret);
 
   copy_compsA(&urlSrc, &urlComponents, 32, 1024, 0, 1024, 2048, 1024);
   SetLastError(0xdeadbeef);
   ret = InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents);
   GLE = GetLastError();
   ok(ret==firstret && (GLE==firstGLE), "InternetCrackUrl returned %d with GLE=%d (expected to return %d)\n",
-    ret, GetLastError(), firstret);
+    ret, GLE, firstret);
 
   copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 0, 2048, 1024);
   SetLastError(0xdeadbeef);
   ret = InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents);
   GLE = GetLastError();
   ok(ret==firstret && (GLE==firstGLE), "InternetCrackUrl returned %d with GLE=%d (expected to return %d)\n",
-    ret, GetLastError(), firstret);
+    ret, GLE, firstret);
 
   copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 0, 1024);
   SetLastError(0xdeadbeef);
