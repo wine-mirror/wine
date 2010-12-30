@@ -189,12 +189,15 @@ HRESULT WINAPI DllCanUnloadNow(void)
  * Urlmon ClassFactory
  */
 typedef struct {
-    const IClassFactoryVtbl *lpClassFactoryVtbl;
+    IClassFactory IClassFactory_iface;
 
     HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, LPVOID *ppObj);
 } ClassFactory;
 
-#define CLASSFACTORY(x)  ((IClassFactory*)  &(x)->lpClassFactoryVtbl)
+static inline ClassFactory *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, ClassFactory, IClassFactory_iface);
+}
 
 static HRESULT WINAPI CF_QueryInterface(IClassFactory *iface, REFIID riid, LPVOID *ppv)
 {
@@ -233,7 +236,7 @@ static ULONG WINAPI CF_Release(IClassFactory *iface)
 static HRESULT WINAPI CF_CreateInstance(IClassFactory *iface, IUnknown *pOuter,
                                         REFIID riid, LPVOID *ppobj)
 {
-    ClassFactory *This = (ClassFactory*)iface;
+    ClassFactory *This = impl_from_IClassFactory(iface);
     HRESULT hres;
     LPUNKNOWN punk;
     
@@ -268,27 +271,27 @@ static const IClassFactoryVtbl ClassFactoryVtbl =
     CF_LockServer
 };
 
-static const ClassFactory FileProtocolCF =
-    { &ClassFactoryVtbl, FileProtocol_Construct};
-static const ClassFactory FtpProtocolCF =
-    { &ClassFactoryVtbl, FtpProtocol_Construct};
-static const ClassFactory GopherProtocolCF =
-    { &ClassFactoryVtbl, GopherProtocol_Construct};
-static const ClassFactory HttpProtocolCF =
-    { &ClassFactoryVtbl, HttpProtocol_Construct};
-static const ClassFactory HttpSProtocolCF =
-    { &ClassFactoryVtbl, HttpSProtocol_Construct};
-static const ClassFactory MkProtocolCF =
-    { &ClassFactoryVtbl, MkProtocol_Construct};
-static const ClassFactory SecurityManagerCF =
-    { &ClassFactoryVtbl, SecManagerImpl_Construct};
-static const ClassFactory ZoneManagerCF =
-    { &ClassFactoryVtbl, ZoneMgrImpl_Construct};
-static const ClassFactory StdURLMonikerCF =
-    { &ClassFactoryVtbl, StdURLMoniker_Construct};
-static const ClassFactory MimeFilterCF =
-    { &ClassFactoryVtbl, MimeFilter_Construct};
- 
+static ClassFactory FileProtocolCF =
+    { { &ClassFactoryVtbl }, FileProtocol_Construct};
+static ClassFactory FtpProtocolCF =
+    { { &ClassFactoryVtbl }, FtpProtocol_Construct};
+static ClassFactory GopherProtocolCF =
+    { { &ClassFactoryVtbl }, GopherProtocol_Construct};
+static ClassFactory HttpProtocolCF =
+    { { &ClassFactoryVtbl }, HttpProtocol_Construct};
+static ClassFactory HttpSProtocolCF =
+    { { &ClassFactoryVtbl }, HttpSProtocol_Construct};
+static ClassFactory MkProtocolCF =
+    { { &ClassFactoryVtbl }, MkProtocol_Construct};
+static ClassFactory SecurityManagerCF =
+    { { &ClassFactoryVtbl }, SecManagerImpl_Construct};
+static ClassFactory ZoneManagerCF =
+    { { &ClassFactoryVtbl }, ZoneMgrImpl_Construct};
+static ClassFactory StdURLMonikerCF =
+    { { &ClassFactoryVtbl }, StdURLMoniker_Construct};
+static ClassFactory MimeFilterCF =
+    { { &ClassFactoryVtbl }, MimeFilter_Construct};
+
 struct object_creation_info
 {
     const CLSID *clsid;
@@ -305,16 +308,16 @@ static const WCHAR wszMk[]   = {'m','k',0};
 
 static const struct object_creation_info object_creation[] =
 {
-    { &CLSID_FileProtocol,            CLASSFACTORY(&FileProtocolCF),    wszFile },
-    { &CLSID_FtpProtocol,             CLASSFACTORY(&FtpProtocolCF),     wszFtp  },
-    { &CLSID_GopherProtocol,          CLASSFACTORY(&GopherProtocolCF),  wszGopher },
-    { &CLSID_HttpProtocol,            CLASSFACTORY(&HttpProtocolCF),    wszHttp },
-    { &CLSID_HttpSProtocol,           CLASSFACTORY(&HttpSProtocolCF),   wszHttps },
-    { &CLSID_MkProtocol,              CLASSFACTORY(&MkProtocolCF),      wszMk },
-    { &CLSID_InternetSecurityManager, CLASSFACTORY(&SecurityManagerCF), NULL    },
-    { &CLSID_InternetZoneManager,     CLASSFACTORY(&ZoneManagerCF),     NULL    },
-    { &CLSID_StdURLMoniker,           CLASSFACTORY(&StdURLMonikerCF),   NULL    },
-    { &CLSID_DeCompMimeFilter,        CLASSFACTORY(&MimeFilterCF),      NULL    }
+    { &CLSID_FileProtocol,            &FileProtocolCF.IClassFactory_iface,    wszFile },
+    { &CLSID_FtpProtocol,             &FtpProtocolCF.IClassFactory_iface,     wszFtp  },
+    { &CLSID_GopherProtocol,          &GopherProtocolCF.IClassFactory_iface,  wszGopher },
+    { &CLSID_HttpProtocol,            &HttpProtocolCF.IClassFactory_iface,    wszHttp },
+    { &CLSID_HttpSProtocol,           &HttpSProtocolCF.IClassFactory_iface,   wszHttps },
+    { &CLSID_MkProtocol,              &MkProtocolCF.IClassFactory_iface,      wszMk },
+    { &CLSID_InternetSecurityManager, &SecurityManagerCF.IClassFactory_iface, NULL    },
+    { &CLSID_InternetZoneManager,     &ZoneManagerCF.IClassFactory_iface,     NULL    },
+    { &CLSID_StdURLMoniker,           &StdURLMonikerCF.IClassFactory_iface,   NULL    },
+    { &CLSID_DeCompMimeFilter,        &MimeFilterCF.IClassFactory_iface,      NULL    }
 };
 
 static void init_session(BOOL init)
