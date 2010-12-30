@@ -45,31 +45,144 @@ typedef struct
 } BITMAPOS2HEADER;
 #include <poppack.h>
 
-/* Generate new_* functions that have no parameters (NOTE: no ';') */
-__NEW_STRUCT_FUNC(dialog)
-__NEW_STRUCT_FUNC(name_id)
-__NEW_STRUCT_FUNC(menu)
-__NEW_STRUCT_FUNC(menu_item)
-__NEW_STRUCT_FUNC(control)
-__NEW_STRUCT_FUNC(icon)
-__NEW_STRUCT_FUNC(cursor)
-__NEW_STRUCT_FUNC(versioninfo)
-__NEW_STRUCT_FUNC(ver_value)
-__NEW_STRUCT_FUNC(ver_block)
-__NEW_STRUCT_FUNC(stt_entry)
-__NEW_STRUCT_FUNC(accelerator)
-__NEW_STRUCT_FUNC(event)
-__NEW_STRUCT_FUNC(raw_data)
-__NEW_STRUCT_FUNC(lvc)
-__NEW_STRUCT_FUNC(res_count)
-__NEW_STRUCT_FUNC(string)
-__NEW_STRUCT_FUNC(toolbar_item)
-__NEW_STRUCT_FUNC(ani_any)
-
 /* New instances for all types of structures */
 /* Very inefficient (in size), but very functional :-]
  * Especially for type-checking.
  */
+
+dialog_t *new_dialog(void)
+{
+    dialog_t *ret = xmalloc( sizeof(*ret) );
+    memset( ret, 0, sizeof(*ret) );
+    return ret;
+}
+
+name_id_t *new_name_id(void)
+{
+    name_id_t *ret = xmalloc( sizeof(*ret) );
+    memset( ret, 0, sizeof(*ret) );
+    return ret;
+}
+
+menu_t *new_menu(void)
+{
+    menu_t *ret = xmalloc( sizeof(*ret) );
+    memset( ret, 0, sizeof(*ret) );
+    return ret;
+}
+
+menu_item_t *new_menu_item(void)
+{
+    menu_item_t *ret = xmalloc( sizeof(*ret) );
+    memset( ret, 0, sizeof(*ret) );
+    return ret;
+}
+
+control_t *new_control(void)
+{
+    control_t *ret = xmalloc( sizeof(*ret) );
+    memset( ret, 0, sizeof(*ret) );
+    return ret;
+}
+
+icon_t *new_icon(void)
+{
+    icon_t *ret = xmalloc( sizeof(*ret) );
+    memset( ret, 0, sizeof(*ret) );
+    return ret;
+}
+
+cursor_t *new_cursor(void)
+{
+    cursor_t *ret = xmalloc( sizeof(*ret) );
+    memset( ret, 0, sizeof(*ret) );
+    return ret;
+}
+
+versioninfo_t *new_versioninfo(void)
+{
+    versioninfo_t *ret = xmalloc( sizeof(*ret) );
+    memset( ret, 0, sizeof(*ret) );
+    return ret;
+}
+
+ver_value_t *new_ver_value(void)
+{
+    ver_value_t *ret = xmalloc( sizeof(*ret) );
+    memset( ret, 0, sizeof(*ret) );
+    return ret;
+}
+
+ver_block_t *new_ver_block(void)
+{
+    ver_block_t *ret = xmalloc( sizeof(*ret) );
+    memset( ret, 0, sizeof(*ret) );
+    return ret;
+}
+
+stt_entry_t *new_stt_entry(void)
+{
+    stt_entry_t *ret = xmalloc( sizeof(*ret) );
+    memset( ret, 0, sizeof(*ret) );
+    return ret;
+}
+
+accelerator_t *new_accelerator(void)
+{
+    accelerator_t *ret = xmalloc( sizeof(*ret) );
+    memset( ret, 0, sizeof(*ret) );
+    return ret;
+}
+
+event_t *new_event(void)
+{
+    event_t *ret = xmalloc( sizeof(*ret) );
+    memset( ret, 0, sizeof(*ret) );
+    return ret;
+}
+
+raw_data_t *new_raw_data(void)
+{
+    raw_data_t *ret = xmalloc( sizeof(*ret) );
+    memset( ret, 0, sizeof(*ret) );
+    return ret;
+}
+
+lvc_t *new_lvc(void)
+{
+    lvc_t *ret = xmalloc( sizeof(*ret) );
+    memset( ret, 0, sizeof(*ret) );
+    return ret;
+}
+
+res_count_t *new_res_count(void)
+{
+    res_count_t *ret = xmalloc( sizeof(*ret) );
+    memset( ret, 0, sizeof(*ret) );
+    return ret;
+}
+
+string_t *new_string(void)
+{
+    string_t *ret = xmalloc( sizeof(*ret) );
+    memset( ret, 0, sizeof(*ret) );
+    return ret;
+}
+
+toolbar_item_t *new_toolbar_item(void)
+{
+    toolbar_item_t *ret = xmalloc( sizeof(*ret) );
+    memset( ret, 0, sizeof(*ret) );
+    return ret;
+}
+
+ani_any_t *new_ani_any(void)
+{
+    ani_any_t *ret = xmalloc( sizeof(*ret) );
+    memset( ret, 0, sizeof(*ret) );
+    return ret;
+}
+
 resource_t *new_resource(enum res_e t, void *res, int memopt, language_t *lan)
 {
 	resource_t *r = xmalloc(sizeof(resource_t));
