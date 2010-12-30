@@ -141,6 +141,7 @@ static void test_add_certificate(char *cert_data, int len)
     LPWIN_CERTIFICATE cert;
     DWORD cert_len;
     DWORD index;
+    BOOL ret;
 
     hFile = CreateFileA(test_dll_path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
@@ -165,7 +166,8 @@ static void test_add_certificate(char *cert_data, int len)
     cert->wCertificateType = WIN_CERT_TYPE_PKCS_SIGNED_DATA;
     CopyMemory(cert->bCertificate, cert_data, len);
 
-    ok(pImageAddCertificate(hFile, cert, &index), "Unable to add certificate to image, error %x\n", GetLastError());
+    ret = pImageAddCertificate(hFile, cert, &index);
+    ok(ret, "Unable to add certificate to image, error %x\n", GetLastError());
 
     HeapFree(GetProcessHeap(), 0, cert);
     CloseHandle(hFile);
@@ -211,6 +213,7 @@ static void test_remove_certificate(int index)
 {
     DWORD orig_count = 0, count = 0;
     HANDLE hFile;
+    BOOL ret;
 
     hFile = CreateFileA(test_dll_path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
@@ -220,9 +223,10 @@ static void test_remove_certificate(int index)
         return;
     }
 
-    ok (pImageEnumerateCertificates(hFile, CERT_SECTION_TYPE_ANY, &orig_count, NULL, 0), "Unable to enumerate certificates in file; err=%x\n", GetLastError());
-
-    ok (pImageRemoveCertificate(hFile, index), "Unable to remove certificate from file; err=%x\n", GetLastError());
+    ret = pImageEnumerateCertificates(hFile, CERT_SECTION_TYPE_ANY, &orig_count, NULL, 0);
+    ok (ret, "Unable to enumerate certificates in file; err=%x\n", GetLastError());
+    ret = pImageRemoveCertificate(hFile, index);
+    ok (ret, "Unable to remove certificate from file; err=%x\n", GetLastError());
 
     /* Test to see if the certificate has actually been removed */
     pImageEnumerateCertificates(hFile, CERT_SECTION_TYPE_ANY, &count, NULL, 0);
