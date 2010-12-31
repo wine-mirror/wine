@@ -5976,8 +5976,15 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     }
 
     SetLastError(NOERROR);
-    if (dwFlags & CRYPT_DECODE_ALLOC_FLAG && pvStructInfo)
+    if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
+    {
+        if (!pvStructInfo)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
         *(BYTE **)pvStructInfo = NULL;
+    }
     decodeFunc = CRYPT_GetBuiltinDecoder(dwCertEncodingType, lpszStructType);
     if (!decodeFunc)
     {
