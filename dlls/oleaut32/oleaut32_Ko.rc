@@ -1,8 +1,8 @@
 /*
  * Korean resources for oleaut32
  *
- * 
- *Copyright 2005 YunSong Hwang(hys545@dreamwiz.com)
+ * Copyright 2005,2010 YunSong Hwang
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
@@ -20,14 +20,16 @@
 
 #include "resource.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 STRINGTABLE DISCARDABLE
 {
-  IDS_TRUE  "Áø½Ç"
-  IDS_FALSE "°ÅÁş"
-  IDS_YES   "¿¹"
-  IDS_NO    "¾Æ´Ï¿À"
-  IDS_ON    "ÀÛµ¿"
-  IDS_OFF   "ºñÀÛµ¿"
+  IDS_TRUE  "ì§„ì‹¤"
+  IDS_FALSE "ê±°ì§“"
+  IDS_YES   "ì˜ˆ"
+  IDS_NO    "ì•„ë‹ˆì˜¤"
+  IDS_ON    "ì‘ë™"
+  IDS_OFF   "ë¹„ì‘ë™"
 }
