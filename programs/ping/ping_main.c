@@ -17,8 +17,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <unistd.h>
+#include "config.h"
+#include "wine/port.h"
+
 #include <stdio.h>
+#include <stdlib.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include <windows.h>
 
 #include "wine/debug.h"
