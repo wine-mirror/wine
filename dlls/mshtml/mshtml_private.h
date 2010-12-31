@@ -266,7 +266,7 @@ struct HTMLWindow {
     IHTMLWindow3       IHTMLWindow3_iface;
     IHTMLWindow4       IHTMLWindow4_iface;
     IHTMLPrivateWindow IHTMLPrivateWindow_iface;
-    const IDispatchExVtbl         *lpIDispatchExVtbl;
+    IDispatchEx        IDispatchEx_iface;
     IServiceProvider   IServiceProvider_iface;
 
     LONG ref;
