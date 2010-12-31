@@ -950,7 +950,7 @@ HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
             DWORD len;
             PROPVARIANT pv = { VT_EMPTY };
 
-            len = sizeof(guidvalue);
+            len = sizeof(guidvalue)/sizeof(guidvalue[0]);
             ret = RegEnumKeyExW(cur, i++, guidvalue, &len, NULL, NULL, NULL, NULL);
             if (ret == ERROR_NO_MORE_ITEMS)
             {
