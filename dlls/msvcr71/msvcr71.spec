@@ -479,7 +479,7 @@
 @ cdecl _set_sbh_threshold(long) msvcrt._set_sbh_threshold
 @ stub _set_security_error_handler
 @ cdecl _seterrormode(long) msvcrt._seterrormode
-@ cdecl -i386 _setjmp(ptr) msvcrt._setjmp
+@ cdecl -arch=i386,x86_64 _setjmp(ptr) msvcrt._setjmp
 @ cdecl -i386 _setjmp3(ptr long) msvcrt._setjmp3
 @ cdecl _setmaxstdio(long) msvcrt._setmaxstdio
 @ cdecl _setmbcp(long) msvcrt._setmbcp

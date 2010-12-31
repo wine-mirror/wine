@@ -880,7 +880,7 @@
 @ stub _set_purecall_handler
 @ cdecl _set_sbh_threshold(long) msvcrt._set_sbh_threshold
 @ cdecl _seterrormode(long) msvcrt._seterrormode
-@ cdecl -i386 -norelay _setjmp(ptr) msvcrt._setjmp
+@ cdecl -arch=i386,x86_64 -norelay _setjmp(ptr) msvcrt._setjmp
 @ cdecl -i386 -norelay _setjmp3(ptr long) msvcrt._setjmp3
 @ cdecl _setmaxstdio(long) msvcrt._setmaxstdio
 @ cdecl _setmbcp(long) msvcrt._setmbcp

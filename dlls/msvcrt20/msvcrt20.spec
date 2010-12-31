@@ -766,7 +766,7 @@
 @ cdecl _searchenv(str str ptr) msvcrt._searchenv
 @ stdcall -i386 __seh_longjmp_unwind@4(ptr) msvcrt._seh_longjmp_unwind
 @ cdecl _seterrormode(long) msvcrt._seterrormode
-@ cdecl -i386 _setjmp(ptr) msvcrt._setjmp
+@ cdecl -arch=i386,x86_64 _setjmp(ptr) msvcrt._setjmp
 @ cdecl -i386 _setjmp3(ptr long) msvcrt._setjmp3
 @ cdecl _setmbcp(long) msvcrt._setmbcp
 @ cdecl _setmode(long long) msvcrt._setmode

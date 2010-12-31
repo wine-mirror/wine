@@ -263,7 +263,7 @@
 @ cdecl _scalb( double long) msvcrt._scalb
 @ cdecl _searchenv(str str ptr) msvcrt._searchenv
 @ cdecl _seterrormode(long) msvcrt._seterrormode
-@ cdecl -i386 _setjmp(ptr) msvcrt._setjmp
+@ cdecl -arch=i386,x86_64 _setjmp(ptr) msvcrt._setjmp
 @ cdecl _setmode(long long) msvcrt._setmode
 @ cdecl _setsystime(ptr long) msvcrt._setsystime
 @ cdecl _sleep(long) msvcrt._sleep
