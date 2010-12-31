@@ -72,12 +72,6 @@ static const IShellBrowserVtbl IShellBrowserImpl_Vtbl;
 static const ICommDlgBrowserVtbl IShellBrowserImpl_ICommDlgBrowser_Vtbl;
 static const IServiceProviderVtbl IShellBrowserImpl_IServiceProvider_Vtbl;
 
-/**************************************************************************
-*   Local Prototypes
-*/
-
-static HRESULT IShellBrowserImpl_ICommDlgBrowser_OnSelChange(ICommDlgBrowser *iface, const IShellView *ppshv);
-
 /*
  *   Helper functions
  */
@@ -805,6 +799,32 @@ static HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_OnDefaultCommand(ICommDl
 }
 
 /**************************************************************************
+*  IShellBrowserImpl_OnSelChange
+*/
+static HRESULT IShellBrowserImpl_OnSelChange(IShellBrowserImpl *This, const IShellView *ppshv)
+{
+    FileOpenDlgInfos *fodInfos;
+
+    fodInfos = GetPropA(This->hwndOwner,FileOpenDlgInfosStr);
+    TRACE("(%p do=%p view=%p)\n", This, fodInfos->Shell.FOIDataObject, fodInfos->Shell.FOIShellView);
+
+    /* release old selections */
+    if (fodInfos->Shell.FOIDataObject)
+        IDataObject_Release(fodInfos->Shell.FOIDataObject);
+
+    /* get a new DataObject from the ShellView */
+    if(FAILED(IShellView_GetItemObject(fodInfos->Shell.FOIShellView, SVGIO_SELECTION,
+                                       &IID_IDataObject, (void**)&fodInfos->Shell.FOIDataObject)))
+        return E_FAIL;
+
+    FILEDLG95_FILENAME_FillFromSelection(This->hwndOwner);
+
+    if(fodInfos->ofnInfos->Flags & OFN_EXPLORER)
+        SendCustomDlgNotificationMessage(This->hwndOwner, CDN_SELCHANGE);
+    return S_OK;
+}
+
+/**************************************************************************
 *  IShellBrowserImpl_ICommDlgBrowser_OnStateChange
 */
 static HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_OnStateChange(ICommDlgBrowser *iface,
@@ -838,7 +858,7 @@ static HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_OnStateChange(ICommDlgBr
             }
             break;
         case CDBOSC_SELCHANGE:
-            return IShellBrowserImpl_ICommDlgBrowser_OnSelChange(iface,ppshv);
+            return IShellBrowserImpl_OnSelChange(This, ppshv);
         case CDBOSC_RENAME:
 	    /* nothing to do */
             break;
@@ -936,34 +956,6 @@ static HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_IncludeObject(ICommDlgBr
     }
     return S_FALSE;
 
-}
-
-/**************************************************************************
-*  IShellBrowserImpl_ICommDlgBrowser_OnSelChange
-*/
-static HRESULT IShellBrowserImpl_ICommDlgBrowser_OnSelChange(ICommDlgBrowser *iface, const IShellView *ppshv)
-{
-    FileOpenDlgInfos *fodInfos;
-
-    IShellBrowserImpl *This = impl_from_ICommDlgBrowser(iface);
-
-    fodInfos = GetPropA(This->hwndOwner,FileOpenDlgInfosStr);
-    TRACE("(%p do=%p view=%p)\n", This, fodInfos->Shell.FOIDataObject, fodInfos->Shell.FOIShellView);
-
-    /* release old selections */
-    if (fodInfos->Shell.FOIDataObject)
-      IDataObject_Release(fodInfos->Shell.FOIDataObject);
-
-    /* get a new DataObject from the ShellView */
-    if(FAILED(IShellView_GetItemObject(fodInfos->Shell.FOIShellView, SVGIO_SELECTION,
-                              &IID_IDataObject, (LPVOID*)&fodInfos->Shell.FOIDataObject)))
-      return E_FAIL;
-
-    FILEDLG95_FILENAME_FillFromSelection(This->hwndOwner);
-
-    if(fodInfos->ofnInfos->Flags & OFN_EXPLORER)
-        SendCustomDlgNotificationMessage(This->hwndOwner, CDN_SELCHANGE);
-    return S_OK;
 }
 
 static const ICommDlgBrowserVtbl IShellBrowserImpl_ICommDlgBrowser_Vtbl =
