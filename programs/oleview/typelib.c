@@ -420,7 +420,7 @@ static int EnumVars(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
         memset(wszAfter, 0, sizeof(wszAfter));
         CreateTypeInfo(wszText, wszAfter, pVarDesc->elemdescVar.tdesc, pTypeInfo);
         AddToStrW(wszText, wszSpace);
-        AddToStrW(wszText, bstrName);
+        if (bstrName) AddToStrW(wszText, bstrName);
         AddToStrW(wszText, wszAfter);
         AddToTLDataStrW(tld, wszText);
         AddToTLDataStrW(tld, wszSemicolon);
@@ -482,7 +482,7 @@ static int EnumEnums(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
         AddToStrW(wszText, wszSpace);
         AddToStrW(wszText, bstrName);
         AddToStrW(wszText, wszAfter);
-	AddToTLDataStrW(tld, bstrName);
+        if (bstrName) AddToTLDataStrW(tld, bstrName);
         AddToTLDataStrW(tld, wszAfter);
 	if (i<cVars-1)
             AddToTLDataStrW(tld, wszComa);
