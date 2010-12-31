@@ -1227,20 +1227,26 @@ static int PopulateTree(void)
     AddSpaces(tld, TAB_SIZE);
     wsprintfW(wszText, wszFormat2, pTLibAttr->wMajorVerNum, pTLibAttr->wMinorVerNum);
     AddToTLDataStrW(tld, wszText);
-    AddToTLDataStrW(tld, wszComa);
-    AddToTLDataStrW(tld, wszNewLine);
-    AddSpaces(tld, TAB_SIZE);
-    AddToTLDataStrW(tld, wszHelpstring);
-    AddToTLDataStrW(tld, wszOpenBrackets2);
-    AddToTLDataStrW(tld, wszInvertedComa);
-    AddToTLDataStrW(tld, bstrData);
-    AddToTLDataStrW(tld, wszInvertedComa);
-    AddToTLDataStrW(tld, wszCloseBrackets2);
+
+    if (bstrData)
+    {
+        /* helpstring is optional */
+        AddToTLDataStrW(tld, wszComa);
+        AddToTLDataStrW(tld, wszNewLine);
+        AddSpaces(tld, TAB_SIZE);
+        AddToTLDataStrW(tld, wszHelpstring);
+        AddToTLDataStrW(tld, wszOpenBrackets2);
+        AddToTLDataStrW(tld, wszInvertedComa);
+        AddToTLDataStrW(tld, bstrData);
+        AddToTLDataStrW(tld, wszInvertedComa);
+        AddToTLDataStrW(tld, wszCloseBrackets2);
+    }
+
     AddToTLDataStrW(tld, wszNewLine);
     AddToTLDataStrW(tld, wszCloseBrackets1);
     AddToTLDataStrW(tld, wszNewLine);
     AddToTLDataStrW(tld, wszLibrary);
-    AddToTLDataStrW(tld, bstrName);
+    if (bstrName) AddToTLDataStrW(tld, bstrName);
     AddToTLDataStrW(tld, wszNewLine);
     AddToTLDataStrW(tld, wszOpenBrackets3);
     AddToTLDataStrW(tld, wszNewLine);
