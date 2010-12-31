@@ -163,7 +163,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
     convert *This = impl_from_IDataConvert(iface);
     HRESULT hr;
 
-    TRACE("(%p)->(%d, %d, %d, %p, %p, %p, %d, %d, %p, %d, %d, %x)\n", This,
+    TRACE("(%p)->(%d, %d, %ld, %p, %p, %p, %ld, %d, %p, %d, %d, %x)\n", This,
           src_type, dst_type, src_len, dst_len, src, dst, dst_max_len,
           src_status, dst_status, precision, scale, flags);
 

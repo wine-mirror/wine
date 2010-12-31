@@ -51,8 +51,8 @@ typedef struct
 } wine_getcolumns_out;
 
     HRESULT GetColumns([in] DBORDINAL num_cols,
-                       [in, size_is(num_cols)] wine_getcolumns_in *in_data,
-                       [out, size_is(num_cols)] wine_getcolumns_out *out_cols);
+                       [in, size_is((ULONG)num_cols)] wine_getcolumns_in *in_data,
+                       [out, size_is((ULONG)num_cols)] wine_getcolumns_out *out_cols);
 
     HRESULT GetSourceRowset([in] REFIID riid,
                             [out, iid_is(riid)] IUnknown **ppRowset,
@@ -79,14 +79,14 @@ typedef struct
 } wine_setcolumns_in;
 
     HRESULT SetColumns([in] DBORDINAL num_cols,
-                       [in, size_is(num_cols)] wine_setcolumns_in *in_data,
-                       [out, size_is(num_cols)] DBSTATUS *status);
+                       [in, size_is((ULONG)num_cols)] wine_setcolumns_in *in_data,
+                       [out, size_is((ULONG)num_cols)] DBSTATUS *status);
 
     /* IRowset */
     HRESULT AddRefRows([in] DBCOUNTITEM cRows,
-                       [in, size_is(cRows)] const HROW rghRows[],
-                       [out, size_is(cRows)] DBREFCOUNT rgRefCounts[],
-                       [out, size_is(cRows)] DBROWSTATUS rgRowStatus[]);
+                       [in, size_is((ULONG)cRows)] const HROW rghRows[],
+                       [out, size_is((ULONG)cRows)] DBREFCOUNT rgRefCounts[],
+                       [out, size_is((ULONG)cRows)] DBROWSTATUS rgRowStatus[]);
 
     HRESULT GetData([in] HROW hRow,
                     [in] HACCESSOR hAccessor,
@@ -97,13 +97,13 @@ typedef struct
                         [in] DBROWOFFSET lRowsOffset,
                         [in] DBROWCOUNT cRows,
                         [out] DBCOUNTITEM *pcRowObtained,
-                        [out, size_is(,cRows)] HROW **prghRows);
+                        [out, size_is(,(ULONG)cRows)] HROW **prghRows);
 
     HRESULT ReleaseRows([in] DBCOUNTITEM cRows,
-                        [in, size_is(cRows)] const HROW rghRows[],
-                        [in, size_is(cRows)] DBROWOPTIONS rgRowOptions[],
-                        [out, size_is(cRows)] DBREFCOUNT rgRefCounts[],
-                        [out, size_is(cRows)] DBROWSTATUS rgRowStatus[]);
+                        [in, size_is((ULONG)cRows)] const HROW rghRows[],
+                        [in, size_is((ULONG)cRows)] DBROWOPTIONS rgRowOptions[],
+                        [out, size_is((ULONG)cRows)] DBREFCOUNT rgRefCounts[],
+                        [out, size_is((ULONG)cRows)] DBROWSTATUS rgRowStatus[]);
 
     HRESULT RestartPosition([in] HCHAPTER hReserved);
 
@@ -111,38 +111,38 @@ typedef struct
 
     HRESULT Compare([in] HCHAPTER hReserved,
                     [in] DBBKMARK cbBookmark1,
-                    [in, size_is(cbBookmark1)] const BYTE *pBookmark1,
+                    [in, size_is((ULONG)cbBookmark1)] const BYTE *pBookmark1,
                     [in] DBBKMARK cbBookmark2,
-                    [in, size_is(cbBookmark2)] const BYTE *pBookmark2,
+                    [in, size_is((ULONG)cbBookmark2)] const BYTE *pBookmark2,
                     [out] DBCOMPARE *pComparison);
 
     HRESULT GetRowsAt([in] HWATCHREGION hReserved1,
                       [in] HCHAPTER hReserved2,
                       [in] DBBKMARK cbBookmark,
-                      [in, size_is(cbBookmark)] const BYTE *pBookmark,
+                      [in, size_is((ULONG)cbBookmark)] const BYTE *pBookmark,
                       [in] DBROWOFFSET lRowsOffset,
                       [in] DBROWCOUNT cRows,
                       [out] DBCOUNTITEM *pcRowsObtained,
-                      [out, size_is(,cRows)] HROW **prghRows);
+                      [out, size_is(,(ULONG)cRows)] HROW **prghRows);
 
     HRESULT GetRowsByBookmark([in] HCHAPTER hReserved,
                               [in] DBCOUNTITEM cRows,
-                              [in, size_is(cRows)] const DBBKMARK rgcbBookmarks[],
-                              [in, size_is(cRows)] const BYTE *rgpBookmarks[],
-                              [out, size_is(cRows)] HROW rghRows[],
-                              [out, size_is(cRows)] DBROWSTATUS rgRowStatus[]);
+                              [in, size_is((ULONG)cRows)] const DBBKMARK rgcbBookmarks[],
+                              [in, size_is((ULONG)cRows)] const BYTE *rgpBookmarks[],
+                              [out, size_is((ULONG)cRows)] HROW rghRows[],
+                              [out, size_is((ULONG)cRows)] DBROWSTATUS rgRowStatus[]);
 
     HRESULT Hash([in] HCHAPTER hReserved,
                  [in] DBBKMARK cBookmarks,
-                 [in, size_is(cBookmarks)] const DBBKMARK rgcbBookmarks[],
-                 [in, size_is(cBookmarks)] const BYTE *rgpBookmarks[],
-                 [out, size_is(cBookmarks)] DBHASHVALUE rgHashedValues[],
-                 [out, size_is(cBookmarks)] DBROWSTATUS rgBookmarkStatus[]);
+                 [in, size_is((ULONG)cBookmarks)] const DBBKMARK rgcbBookmarks[],
+                 [in, size_is((ULONG)cBookmarks)] const BYTE *rgpBookmarks[],
+                 [out, size_is((ULONG)cBookmarks)] DBHASHVALUE rgHashedValues[],
+                 [out, size_is((ULONG)cBookmarks)] DBROWSTATUS rgBookmarkStatus[]);
 
     /* IRowsetInfo */
 
     HRESULT GetProperties([in] ULONG cPropertyIDSets,
-                          [in, unique, size_is(cPropertyIDSets)] const DBPROPIDSET *rgPropertyIDSets,
+                          [in, unique, size_is((ULONG)cPropertyIDSets)] const DBPROPIDSET *rgPropertyIDSets,
                           [in, out] ULONG *pcPropertySets,
                           [out, size_is(,*pcPropertySets)] DBPROPSET **prgPropertySets);
 
@@ -160,15 +160,15 @@ typedef struct
 
     HRESULT CreateAccessor([in] DBACCESSORFLAGS dwAccessorFlags,
                            [in] DBCOUNTITEM cBindings,
-                           [in, unique, size_is(cBindings)] const DBBINDING *rgBindings,
+                           [in, unique, size_is((ULONG)cBindings)] const DBBINDING *rgBindings,
                            [in] DBLENGTH cbRowSize,
                            [out] HACCESSOR *phAccessor,
-                           [in, out, unique, size_is(cBindings)] DBBINDSTATUS *rgStatus);
+                           [in, out, unique, size_is((ULONG)cBindings)] DBBINDSTATUS *rgStatus);
 
     HRESULT GetBindings([in] HACCESSOR hAccessor,
                         [out] DBACCESSORFLAGS *pdwAccessorFlags,
                         [in, out] DBCOUNTITEM *pcBindings,
-                        [out, size_is(,*pcBindings)] DBBINDING **prgBindings);
+                        [out, size_is(,(ULONG)*pcBindings)] DBBINDING **prgBindings);
 
     HRESULT ReleaseAccessor([in] HACCESSOR hAccessor,
                             [in, out, unique] DBREFCOUNT *pcRefCount);

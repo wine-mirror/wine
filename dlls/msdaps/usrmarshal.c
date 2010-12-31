@@ -597,12 +597,12 @@ HRESULT CALLBACK IAccessor_CreateAccessor_Proxy(IAccessor* This, DBACCESSORFLAGS
     IErrorInfo *error;
     DBCOUNTITEM i;
 
-    TRACE("(%p)->(%08x, %d, %p, %d, %p, %p)\n", This, dwAccessorFlags, cBindings, rgBindings,
+    TRACE("(%p)->(%08x, %ld, %p, %ld, %p, %p)\n", This, dwAccessorFlags, cBindings, rgBindings,
           cbRowSize, phAccessor, rgStatus);
 
     for(i = 0; i < cBindings; i++)
     {
-        TRACE("%d: ord %d val off %d len off %d stat off %d part %04x mem_owner %d max_len %d type %04x\n",
+        TRACE("%ld: ord %ld val off %ld len off %ld stat off %ld part %04x mem_owner %d max_len %ld type %04x\n",
               i, rgBindings[i].iOrdinal, rgBindings[i].obValue, rgBindings[i].obLength, rgBindings[i].obStatus,
               rgBindings[i].dwPart, rgBindings[i].dwMemOwner, rgBindings[i].cbMaxLen, rgBindings[i].wType);
     }
@@ -625,7 +625,7 @@ HRESULT __RPC_STUB IAccessor_CreateAccessor_Stub(IAccessor* This, DBACCESSORFLAG
 {
     HRESULT hr;
 
-    TRACE("(%p)->(%08x, %d, %p, %d, %p, %p, %p)\n", This, dwAccessorFlags, cBindings, rgBindings,
+    TRACE("(%p)->(%08x, %ld, %p, %ld, %p, %p, %p)\n", This, dwAccessorFlags, cBindings, rgBindings,
           cbRowSize, phAccessor, rgStatus, ppErrorInfoRem);
 
     *ppErrorInfoRem = NULL;
@@ -728,14 +728,14 @@ HRESULT __RPC_STUB IRowsetInfo_GetProperties_Stub(IRowsetInfo* This, ULONG cProp
 
 HRESULT CALLBACK IRowsetInfo_GetReferencedRowset_Proxy(IRowsetInfo* This, DBORDINAL iOrdinal, REFIID riid, IUnknown **ppReferencedRowset)
 {
-    FIXME("(%p)->(%d, %s, %p): stub\n", This, iOrdinal, debugstr_guid(riid), ppReferencedRowset);
+    FIXME("(%p)->(%ld, %s, %p): stub\n", This, iOrdinal, debugstr_guid(riid), ppReferencedRowset);
     return E_NOTIMPL;
 }
 
 HRESULT __RPC_STUB IRowsetInfo_GetReferencedRowset_Stub(IRowsetInfo* This, DBORDINAL iOrdinal, REFIID riid, IUnknown **ppReferencedRowset,
                                                         IErrorInfo **ppErrorInfoRem)
 {
-    FIXME("(%p)->(%d, %s, %p, %p): stub\n", This, iOrdinal, debugstr_guid(riid), ppReferencedRowset, ppErrorInfoRem);
+    FIXME("(%p)->(%ld, %s, %p, %p): stub\n", This, iOrdinal, debugstr_guid(riid), ppReferencedRowset, ppErrorInfoRem);
     return E_NOTIMPL;
 }
 
@@ -776,7 +776,7 @@ HRESULT CALLBACK ICommand_Execute_Proxy(ICommand* This, IUnknown *pUnkOuter, REF
 
     if(pParams)
     {
-        FIXME("Unhandled params {%p, %d, %08lx}\n", pParams->pData, pParams->cParamSets, pParams->hAccessor);
+        FIXME("Unhandled params {%p, %ld, %08lx}\n", pParams->pData, pParams->cParamSets, pParams->hAccessor);
         return E_NOTIMPL;
     }
 
@@ -806,7 +806,7 @@ HRESULT __RPC_STUB ICommand_Execute_Stub(ICommand* This, IUnknown *pUnkOuter, RE
     IUnknown *obj = NULL;
     HRESULT hr;
 
-    TRACE("(%p)->(%p, %s, %08lx, %d, %p, %d, %p, %p, %d, %p, %p, %p, %p): stub\n", This, pUnkOuter, debugstr_guid(riid),
+    TRACE("(%p)->(%p, %s, %08lx, %ld, %p, %d, %p, %p, %ld, %p, %p, %p, %p): stub\n", This, pUnkOuter, debugstr_guid(riid),
           hAccessor, cParamSets, pGuid, ulGuidOffset, pInputParams, pOutputParams, cBindings, rgBindings, rgStatus,
           pcRowsAffected, ppRowset);
 
@@ -892,13 +892,13 @@ HRESULT __RPC_STUB ICommandText_SetCommandText_Stub(ICommandText* This, REFGUID 
 
 HRESULT CALLBACK IDBAsynchNotify_OnLowResource_Proxy(IDBAsynchNotify* This, DB_DWRESERVE dwReserved)
 {
-    FIXME("(%p)->(%08x): stub\n", This, dwReserved);
+    FIXME("(%p)->(%08lx): stub\n", This, dwReserved);
     return E_NOTIMPL;
 }
 
 HRESULT __RPC_STUB IDBAsynchNotify_OnLowResource_Stub(IDBAsynchNotify* This, DB_DWRESERVE dwReserved)
 {
-    FIXME("(%p)->(%08x): stub\n", This, dwReserved);
+    FIXME("(%p)->(%08lx): stub\n", This, dwReserved);
     return E_NOTIMPL;
 }
 
@@ -906,7 +906,7 @@ HRESULT CALLBACK IDBAsynchNotify_OnProgress_Proxy(IDBAsynchNotify* This, HCHAPTE
                                                   DBCOUNTITEM ulProgress, DBCOUNTITEM ulProgressMax, DBASYNCHPHASE eAsynchPhase,
                                                   LPOLESTR pwszStatusText)
 {
-    TRACE("(%p)->(%lx, %d, %d, %d, %d, %s)\n", This, hChapter, eOperation, ulProgress, ulProgressMax,
+    TRACE("(%p)->(%lx, %d, %ld, %ld, %d, %s)\n", This, hChapter, eOperation, ulProgress, ulProgressMax,
           eAsynchPhase, debugstr_w(pwszStatusText));
 
     return IDBAsynchNotify_RemoteOnProgress_Proxy(This, hChapter, eOperation, ulProgress, ulProgressMax, eAsynchPhase,
@@ -917,7 +917,7 @@ HRESULT __RPC_STUB IDBAsynchNotify_OnProgress_Stub(IDBAsynchNotify* This, HCHAPT
                                                    DBCOUNTITEM ulProgress, DBCOUNTITEM ulProgressMax, DBASYNCHPHASE eAsynchPhase,
                                                    LPOLESTR pwszStatusText)
 {
-    TRACE("(%p)->(%lx, %d, %d, %d, %d, %s)\n", This, hChapter, eOperation, ulProgress, ulProgressMax,
+    TRACE("(%p)->(%lx, %d, %ld, %ld, %d, %s)\n", This, hChapter, eOperation, ulProgress, ulProgressMax,
           eAsynchPhase, debugstr_w(pwszStatusText));
     return IDBAsynchNotify_OnProgress(This, hChapter, eOperation, ulProgress, ulProgressMax, eAsynchPhase,
                                       pwszStatusText);

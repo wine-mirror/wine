@@ -167,7 +167,7 @@ static HRESULT WINAPI server_GetColumns(IWineRowServer* iface, DBORDINAL num_col
     DBCOLUMNACCESS *cols;
     IRow *row;
 
-    TRACE("(%p)->(%d, %p, %p)\n", This, num_cols, in_data, out_data);
+    TRACE("(%p)->(%ld, %p, %p)\n", This, num_cols, in_data, out_data);
 
     hr = IUnknown_QueryInterface(This->inner_unk, &IID_IRow, (void**)&row);
     if(FAILED(hr)) return hr;
@@ -176,7 +176,7 @@ static HRESULT WINAPI server_GetColumns(IWineRowServer* iface, DBORDINAL num_col
 
     for(i = 0; i < num_cols; i++)
     {
-        TRACE("%d:\tmax_len %d type %04x\n", i, in_data[i].max_len, in_data[i].type);
+        TRACE("%ld:\tmax_len %ld type %04x\n", i, in_data[i].max_len, in_data[i].type);
         cols[i].pData        = CoTaskMemAlloc(db_type_size(in_data[i].type, in_data[i].max_len));
         cols[i].columnid     = in_data[i].columnid;
         cols[i].cbMaxLen     = in_data[i].max_len;
@@ -275,7 +275,7 @@ static HRESULT WINAPI server_SetColumns(IWineRowServer* iface, DBORDINAL num_col
     DBCOLUMNACCESS *cols;
     IRowChange *row_change;
 
-    TRACE("(%p)->(%d, %p, %p)\n", This, num_cols, in_data, status);
+    TRACE("(%p)->(%ld, %p, %p)\n", This, num_cols, in_data, status);
     hr = IUnknown_QueryInterface(This->inner_unk, &IID_IRowChange, (void**)&row_change);
     if(FAILED(hr)) return hr;
 
@@ -283,7 +283,7 @@ static HRESULT WINAPI server_SetColumns(IWineRowServer* iface, DBORDINAL num_col
 
     for(i = 0; i < num_cols; i++)
     {
-        TRACE("%d:\ttype %04x\n", i, in_data[i].type);
+        TRACE("%ld:\ttype %04x\n", i, in_data[i].type);
         cols[i].pData        = CoTaskMemAlloc(db_type_size(in_data[i].type, in_data[i].max_len));
         memcpy(cols[i].pData, &V_I1(&in_data[i].v), db_type_size(in_data[i].type, in_data[i].max_len));
         cols[i].columnid     = in_data[i].columnid;
@@ -317,7 +317,7 @@ static HRESULT WINAPI server_AddRefRows(IWineRowServer* iface, DBCOUNTITEM cRows
     IRowset *rowset;
     HRESULT hr;
 
-    TRACE("(%p)->(%d, %p, %p, %p)\n", This, cRows, rghRows, rgRefCounts, rgRowStatus);
+    TRACE("(%p)->(%ld, %p, %p, %p)\n", This, cRows, rghRows, rgRefCounts, rgRowStatus);
 
     hr = IUnknown_QueryInterface(This->inner_unk, &IID_IRowset, (void**)&rowset);
     if(FAILED(hr)) return hr;
@@ -355,7 +355,7 @@ static HRESULT WINAPI server_GetNextRows(IWineRowServer* iface, HCHAPTER hReserv
     IRowset *rowset;
     HRESULT hr;
 
-    TRACE("(%p)->(%08lx, %d, %d, %p, %p)\n", This, hReserved, lRowsOffset, cRows, pcRowObtained, prghRows);
+    TRACE("(%p)->(%08lx, %ld, %ld, %p, %p)\n", This, hReserved, lRowsOffset, cRows, pcRowObtained, prghRows);
 
     hr = IUnknown_QueryInterface(This->inner_unk, &IID_IRowset, (void**)&rowset);
     if(FAILED(hr)) return hr;
@@ -364,7 +364,7 @@ static HRESULT WINAPI server_GetNextRows(IWineRowServer* iface, HCHAPTER hReserv
 
     hr = IRowset_GetNextRows(rowset, hReserved, lRowsOffset, cRows, pcRowObtained, prghRows);
     IRowset_Release(rowset);
-    TRACE("returning %08x, got %d rows\n", hr, *pcRowObtained);
+    TRACE("returning %08x, got %ld rows\n", hr, *pcRowObtained);
     return hr;
 }
 
@@ -375,7 +375,7 @@ static HRESULT WINAPI server_ReleaseRows(IWineRowServer* iface, DBCOUNTITEM cRow
     IRowset *rowset;
     HRESULT hr;
 
-    TRACE("(%p)->(%d, %p, %p, %p, %p)\n", This, cRows, rghRows, rgRowOptions, rgRefCounts, rgRowStatus);
+    TRACE("(%p)->(%ld, %p, %p, %p, %p)\n", This, cRows, rghRows, rgRowOptions, rgRefCounts, rgRowStatus);
 
     hr = IUnknown_QueryInterface(This->inner_unk, &IID_IRowset, (void**)&rowset);
     if(FAILED(hr)) return hr;
@@ -411,7 +411,7 @@ static HRESULT WINAPI server_GetRowsAt(IWineRowServer *iface, HWATCHREGION hRese
     IRowsetLocate *rowsetlocate;
     HRESULT hr;
 
-    TRACE("(%p)->(%08lx, %08lx, %d, %p, %d, %d, %p, %p\n", This, hReserved1, hReserved2, cbBookmark, pBookmark, lRowsOffset, cRows,
+    TRACE("(%p)->(%08lx, %08lx, %ld, %p, %ld, %ld, %p, %p\n", This, hReserved1, hReserved2, cbBookmark, pBookmark, lRowsOffset, cRows,
           pcRowsObtained, prghRows);
 
     *prghRows = NULL;
@@ -497,7 +497,7 @@ static HRESULT WINAPI server_CreateAccessor(IWineRowServer* iface, DBACCESSORFLA
     HRESULT hr;
     IAccessor *accessor;
 
-    TRACE("(%p)->(%08x, %d, %p, %d, %p, %p)\n", This, dwAccessorFlags, cBindings, rgBindings, cbRowSize, phAccessor, rgStatus);
+    TRACE("(%p)->(%08x, %ld, %p, %ld, %p, %p)\n", This, dwAccessorFlags, cBindings, rgBindings, cbRowSize, phAccessor, rgStatus);
 
     hr = IUnknown_QueryInterface(This->inner_unk, &IID_IAccessor, (void**)&accessor);
     if(FAILED(hr)) return hr;
@@ -688,14 +688,14 @@ static HRESULT WINAPI row_GetColumns(IRow* iface, DBORDINAL cColumns, DBCOLUMNAC
     wine_getcolumns_out *out_data;
     HRESULT hr;
 
-    TRACE("(%p)->(%d, %p)\n", This, cColumns, rgColumns);
+    TRACE("(%p)->(%ld, %p)\n", This, cColumns, rgColumns);
 
     in_data = CoTaskMemAlloc(cColumns * sizeof(in_data[0]));
     out_data = CoTaskMemAlloc(cColumns * sizeof(out_data[0]));
 
     for(i = 0; i < cColumns; i++)
     {
-        TRACE("%d:\tdata %p data_len %d status %08x max_len %d type %04x\n", i, rgColumns[i].pData,
+        TRACE("%ld:\tdata %p data_len %ld status %08x max_len %ld type %04x\n", i, rgColumns[i].pData,
               rgColumns[i].cbDataLen, rgColumns[i].dwStatus, rgColumns[i].cbMaxLen, rgColumns[i].wType);
         in_data[i].columnid     = rgColumns[i].columnid;
         in_data[i].max_len      = rgColumns[i].cbMaxLen;
@@ -783,14 +783,14 @@ static HRESULT WINAPI row_change_SetColumns(IRowChange *iface, DBORDINAL cColumn
     DBSTATUS *status;
     DBORDINAL i;
 
-    TRACE("(%p)->(%d, %p)\n", This, cColumns, rgColumns);
+    TRACE("(%p)->(%ld, %p)\n", This, cColumns, rgColumns);
 
     in_data = CoTaskMemAlloc(cColumns * sizeof(in_data[0]));
     status = CoTaskMemAlloc(cColumns * sizeof(status[0]));
 
     for(i = 0; i < cColumns; i++)
     {
-        TRACE("%d: wtype %04x max %08x len %08x\n", i, rgColumns[i].wType, rgColumns[i].cbMaxLen, rgColumns[i].cbDataLen);
+        TRACE("%ld: wtype %04x max %08lx len %08lx\n", i, rgColumns[i].wType, rgColumns[i].cbMaxLen, rgColumns[i].cbDataLen);
         V_VT(&in_data[i].v) = rgColumns[i].wType;
         memcpy(&V_I1(&in_data[i].v), rgColumns[i].pData, db_type_size(rgColumns[i].wType, rgColumns[i].cbDataLen));
         in_data[i].columnid = rgColumns[i].columnid;
@@ -932,7 +932,7 @@ static HRESULT WINAPI rowsetlocate_AddRefRows(IRowsetLocate *iface, DBCOUNTITEM 
     DBREFCOUNT *refs = rgRefCounts;
     DBSTATUS *stats = rgRowStatus;
 
-    TRACE("(%p)->(%d, %p, %p, %p)\n", This, cRows, rghRows, rgRefCounts, rgRowStatus);
+    TRACE("(%p)->(%ld, %p, %p, %p)\n", This, cRows, rghRows, rgRefCounts, rgRowStatus);
 
     if(!refs) refs = CoTaskMemAlloc(cRows * sizeof(refs[0]));
     if(!stats) stats = CoTaskMemAlloc(cRows * sizeof(stats[0]));
@@ -964,10 +964,10 @@ static HRESULT WINAPI rowsetlocate_GetData(IRowsetLocate *iface, HROW hRow, HACC
     IAccessor_Release(accessor);
     if(FAILED(hr)) return hr;
 
-    TRACE("got %d bindings\n", count);
+    TRACE("got %ld bindings\n", count);
     for(i = 0; i < count; i++)
     {
-        TRACE("%d\tord %d offs: val %d len %d stat %d, part %x, max len %d type %04x\n",
+        TRACE("%ld\tord %ld offs: val %ld len %ld stat %ld, part %x, max len %ld type %04x\n",
               i, bindings[i].iOrdinal, bindings[i].obValue, bindings[i].obLength, bindings[i].obStatus,
               bindings[i].dwPart, bindings[i].cbMaxLen, bindings[i].wType);
         if(bindings[i].dwPart & DBPART_LENGTH && bindings[i].obLength >= max_len)
@@ -994,7 +994,7 @@ static HRESULT WINAPI rowsetlocate_GetNextRows(IRowsetLocate *iface, HCHAPTER hR
     HRESULT hr;
     HROW *rows = NULL;
 
-    TRACE("(%p)->(%08lx, %d, %d, %p, %p)\n", This, hReserved, lRowsOffset, cRows, pcRowObtained, prghRows);
+    TRACE("(%p)->(%08lx, %ld, %ld, %p, %p)\n", This, hReserved, lRowsOffset, cRows, pcRowObtained, prghRows);
 
     hr = IWineRowServer_GetNextRows(This->server, hReserved, lRowsOffset, cRows, pcRowObtained, &rows);
     if(*prghRows)
@@ -1017,7 +1017,7 @@ static HRESULT WINAPI rowsetlocate_ReleaseRows(IRowsetLocate *iface, DBCOUNTITEM
     DBREFCOUNT *refs = rgRefCounts;
     DBROWSTATUS *status = rgRowStatus;
 
-    TRACE("(%p)->(%d, %p, %p, %p, %p)\n", This, cRows, rghRows, rgRowOptions, rgRefCounts, rgRowStatus);
+    TRACE("(%p)->(%ld, %p, %p, %p, %p)\n", This, cRows, rghRows, rgRowOptions, rgRefCounts, rgRowStatus);
 
     if(!options)
     {
@@ -1061,7 +1061,7 @@ static HRESULT WINAPI rowsetlocate_GetRowsAt(IRowsetLocate *iface, HWATCHREGION 
     HRESULT hr;
     HROW *rows = NULL;
 
-    TRACE("(%p)->(%08lx, %08lx, %d, %p, %d, %d, %p, %p\n", This, hReserved1, hReserved2, cbBookmark, pBookmark, lRowsOffset, cRows,
+    TRACE("(%p)->(%08lx, %08lx, %ld, %p, %ld, %ld, %p, %p\n", This, hReserved1, hReserved2, cbBookmark, pBookmark, lRowsOffset, cRows,
           pcRowsObtained, prghRows);
 
     hr = IWineRowServer_GetRowsAt(This->server, hReserved1, hReserved2, cbBookmark, pBookmark, lRowsOffset, cRows, pcRowsObtained, &rows);
@@ -1199,7 +1199,7 @@ static HRESULT WINAPI accessor_CreateAccessor(IAccessor *iface, DBACCESSORFLAGS 
     HRESULT hr;
     DBBINDSTATUS *status;
 
-    TRACE("(%p)->(%08x, %d, %p, %d, %p, %p)\n", This, dwAccessorFlags, cBindings, rgBindings, cbRowSize, phAccessor, rgStatus);
+    TRACE("(%p)->(%08x, %ld, %p, %ld, %p, %p)\n", This, dwAccessorFlags, cBindings, rgBindings, cbRowSize, phAccessor, rgStatus);
 
     if(!rgStatus) status = CoTaskMemAlloc(cBindings * sizeof(status[0]));
     else status = rgStatus;

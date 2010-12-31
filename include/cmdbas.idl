@@ -46,8 +46,8 @@ interface ICommand : IUnknown
                           [in, unique] RMTPACK *pInputParams,
                           [in, out, unique] RMTPACK *pOutputParams,
                           [in] DBCOUNTITEM cBindings,
-                          [in, unique, size_is(cBindings)] DBBINDING *rgBindings,
-                          [in, out, unique, size_is(cBindings)] DBSTATUS *rgStatus,
+                          [in, unique, size_is((ULONG)cBindings)] DBBINDING *rgBindings,
+                          [in, out, unique, size_is((ULONG)cBindings)] DBSTATUS *rgStatus,
                           [in, out, unique] DBROWCOUNT *pcRowsAffected,
                           [in, out, unique, iid_is(riid)] IUnknown **ppRowset);
 
