@@ -1990,7 +1990,7 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLWindow *wi
     init_dispex(&doc->node.dispex, (IUnknown*)&doc->node.IHTMLDOMNode_iface,
             &HTMLDocumentNode_dispex);
     init_doc(&doc->basedoc, (IUnknown*)&doc->node.IHTMLDOMNode_iface,
-            DISPATCHEX(&doc->node.dispex));
+            &doc->node.dispex.IDispatchEx_iface);
     HTMLDocumentNode_SecMgr_Init(doc);
 
     init_nsevents(doc);
@@ -2204,7 +2204,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
         return E_OUTOFMEMORY;
 
     init_dispex(&doc->dispex, (IUnknown*)CUSTOMDOC(doc), &HTMLDocumentObj_dispex);
-    init_doc(&doc->basedoc, (IUnknown*)CUSTOMDOC(doc), DISPATCHEX(&doc->dispex));
+    init_doc(&doc->basedoc, (IUnknown*)CUSTOMDOC(doc), &doc->dispex.IDispatchEx_iface);
 
     doc->lpCustomDocVtbl = &CustomDocVtbl;
     doc->ref = 1;

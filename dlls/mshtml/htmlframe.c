@@ -66,21 +66,24 @@ static ULONG WINAPI HTMLFrameElement3_Release(IHTMLFrameElement3 *iface)
 static HRESULT WINAPI HTMLFrameElement3_GetTypeInfoCount(IHTMLFrameElement3 *iface, UINT *pctinfo)
 {
     HTMLFrameElement *This = impl_from_IHTMLFrameElement3(iface);
-    return IDispatchEx_GetTypeInfoCount(DISPATCHEX(&This->framebase.element.node.dispex), pctinfo);
+    return IDispatchEx_GetTypeInfoCount(&This->framebase.element.node.dispex.IDispatchEx_iface,
+            pctinfo);
 }
 
 static HRESULT WINAPI HTMLFrameElement3_GetTypeInfo(IHTMLFrameElement3 *iface, UINT iTInfo,
         LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLFrameElement *This = impl_from_IHTMLFrameElement3(iface);
-    return IDispatchEx_GetTypeInfo(DISPATCHEX(&This->framebase.element.node.dispex), iTInfo, lcid, ppTInfo);
+    return IDispatchEx_GetTypeInfo(&This->framebase.element.node.dispex.IDispatchEx_iface, iTInfo,
+            lcid, ppTInfo);
 }
 
 static HRESULT WINAPI HTMLFrameElement3_GetIDsOfNames(IHTMLFrameElement3 *iface, REFIID riid,
         LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
     HTMLFrameElement *This = impl_from_IHTMLFrameElement3(iface);
-    return IDispatchEx_GetIDsOfNames(DISPATCHEX(&This->framebase.element.node.dispex), riid, rgszNames, cNames, lcid, rgDispId);
+    return IDispatchEx_GetIDsOfNames(&This->framebase.element.node.dispex.IDispatchEx_iface, riid,
+            rgszNames, cNames, lcid, rgDispId);
 }
 
 static HRESULT WINAPI HTMLFrameElement3_Invoke(IHTMLFrameElement3 *iface, DISPID dispIdMember,
@@ -88,8 +91,8 @@ static HRESULT WINAPI HTMLFrameElement3_Invoke(IHTMLFrameElement3 *iface, DISPID
         VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLFrameElement *This = impl_from_IHTMLFrameElement3(iface);
-    return IDispatchEx_Invoke(DISPATCHEX(&This->framebase.element.node.dispex), dispIdMember, riid,
-            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return IDispatchEx_Invoke(&This->framebase.element.node.dispex.IDispatchEx_iface, dispIdMember,
+            riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI HTMLFrameElement3_get_contentDocument(IHTMLFrameElement3 *iface, IDispatch **p)

@@ -66,21 +66,24 @@ static ULONG WINAPI HTMLIFrameElement_Release(IHTMLIFrameElement *iface)
 static HRESULT WINAPI HTMLIFrameElement_GetTypeInfoCount(IHTMLIFrameElement *iface, UINT *pctinfo)
 {
     HTMLIFrame *This = impl_from_IHTMLIFrameElement(iface);
-    return IDispatchEx_GetTypeInfoCount(DISPATCHEX(&This->framebase.element.node.dispex), pctinfo);
+    return IDispatchEx_GetTypeInfoCount(&This->framebase.element.node.dispex.IDispatchEx_iface,
+            pctinfo);
 }
 
 static HRESULT WINAPI HTMLIFrameElement_GetTypeInfo(IHTMLIFrameElement *iface, UINT iTInfo,
         LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLIFrame *This = impl_from_IHTMLIFrameElement(iface);
-    return IDispatchEx_GetTypeInfo(DISPATCHEX(&This->framebase.element.node.dispex), iTInfo, lcid, ppTInfo);
+    return IDispatchEx_GetTypeInfo(&This->framebase.element.node.dispex.IDispatchEx_iface, iTInfo,
+            lcid, ppTInfo);
 }
 
 static HRESULT WINAPI HTMLIFrameElement_GetIDsOfNames(IHTMLIFrameElement *iface, REFIID riid,
         LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
     HTMLIFrame *This = impl_from_IHTMLIFrameElement(iface);
-    return IDispatchEx_GetIDsOfNames(DISPATCHEX(&This->framebase.element.node.dispex), riid, rgszNames, cNames, lcid, rgDispId);
+    return IDispatchEx_GetIDsOfNames(&This->framebase.element.node.dispex.IDispatchEx_iface, riid,
+            rgszNames, cNames, lcid, rgDispId);
 }
 
 static HRESULT WINAPI HTMLIFrameElement_Invoke(IHTMLIFrameElement *iface, DISPID dispIdMember,
@@ -88,8 +91,8 @@ static HRESULT WINAPI HTMLIFrameElement_Invoke(IHTMLIFrameElement *iface, DISPID
         VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLIFrame *This = impl_from_IHTMLIFrameElement(iface);
-    return IDispatchEx_Invoke(DISPATCHEX(&This->framebase.element.node.dispex), dispIdMember, riid,
-            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return IDispatchEx_Invoke(&This->framebase.element.node.dispex.IDispatchEx_iface, dispIdMember,
+            riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI HTMLIFrameElement_put_vspace(IHTMLIFrameElement *iface, LONG v)

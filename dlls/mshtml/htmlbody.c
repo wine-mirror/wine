@@ -223,14 +223,16 @@ static ULONG WINAPI HTMLBodyElement_Release(IHTMLBodyElement *iface)
 static HRESULT WINAPI HTMLBodyElement_GetTypeInfoCount(IHTMLBodyElement *iface, UINT *pctinfo)
 {
     HTMLBodyElement *This = impl_from_IHTMLBodyElement(iface);
-    return IDispatchEx_GetTypeInfoCount(DISPATCHEX(&This->textcont.element.node.dispex), pctinfo);
+    return IDispatchEx_GetTypeInfoCount(&This->textcont.element.node.dispex.IDispatchEx_iface,
+            pctinfo);
 }
 
 static HRESULT WINAPI HTMLBodyElement_GetTypeInfo(IHTMLBodyElement *iface, UINT iTInfo,
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLBodyElement *This = impl_from_IHTMLBodyElement(iface);
-    return IDispatchEx_GetTypeInfo(DISPATCHEX(&This->textcont.element.node.dispex), iTInfo, lcid, ppTInfo);
+    return IDispatchEx_GetTypeInfo(&This->textcont.element.node.dispex.IDispatchEx_iface, iTInfo,
+            lcid, ppTInfo);
 }
 
 static HRESULT WINAPI HTMLBodyElement_GetIDsOfNames(IHTMLBodyElement *iface, REFIID riid,
@@ -238,7 +240,8 @@ static HRESULT WINAPI HTMLBodyElement_GetIDsOfNames(IHTMLBodyElement *iface, REF
                                                 LCID lcid, DISPID *rgDispId)
 {
     HTMLBodyElement *This = impl_from_IHTMLBodyElement(iface);
-    return IDispatchEx_GetIDsOfNames(DISPATCHEX(&This->textcont.element.node.dispex), riid, rgszNames, cNames, lcid, rgDispId);
+    return IDispatchEx_GetIDsOfNames(&This->textcont.element.node.dispex.IDispatchEx_iface, riid,
+            rgszNames, cNames, lcid, rgDispId);
 }
 
 static HRESULT WINAPI HTMLBodyElement_Invoke(IHTMLBodyElement *iface, DISPID dispIdMember,
@@ -246,8 +249,8 @@ static HRESULT WINAPI HTMLBodyElement_Invoke(IHTMLBodyElement *iface, DISPID dis
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLBodyElement *This = impl_from_IHTMLBodyElement(iface);
-    return IDispatchEx_Invoke(DISPATCHEX(&This->textcont.element.node.dispex), dispIdMember, riid, lcid,
-            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return IDispatchEx_Invoke(&This->textcont.element.node.dispex.IDispatchEx_iface, dispIdMember,
+            riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI HTMLBodyElement_put_background(IHTMLBodyElement *iface, BSTR v)

@@ -1819,7 +1819,7 @@ static HRESULT WINAPI WindowDispEx_GetTypeInfoCount(IDispatchEx *iface, UINT *pc
 
     TRACE("(%p)->(%p)\n", This, pctinfo);
 
-    return IDispatchEx_GetTypeInfoCount(DISPATCHEX(&This->dispex), pctinfo);
+    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI WindowDispEx_GetTypeInfo(IDispatchEx *iface, UINT iTInfo,
@@ -1829,7 +1829,7 @@ static HRESULT WINAPI WindowDispEx_GetTypeInfo(IDispatchEx *iface, UINT iTInfo,
 
     TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
 
-    return IDispatchEx_GetTypeInfo(DISPATCHEX(&This->dispex), iTInfo, lcid, ppTInfo);
+    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI WindowDispEx_GetIDsOfNames(IDispatchEx *iface, REFIID riid,
@@ -1864,8 +1864,8 @@ static HRESULT WINAPI WindowDispEx_Invoke(IDispatchEx *iface, DISPID dispIdMembe
 
     /* FIXME: Use script dispatch */
 
-    return IDispatchEx_Invoke(DISPATCHEX(&This->dispex), dispIdMember, riid, lcid, wFlags, pDispParams,
-                              pVarResult, pExcepInfo, puArgErr);
+    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
+            pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 static global_prop_t *alloc_global_prop(HTMLWindow *This, global_prop_type_t type, BSTR name)
@@ -1942,7 +1942,7 @@ static HRESULT WINAPI WindowDispEx_GetDispID(IDispatchEx *iface, BSTR bstrName, 
     if(hres != DISP_E_UNKNOWNNAME)
         return hres;
 
-    hres = IDispatchEx_GetDispID(DISPATCHEX(&This->dispex), bstrName, grfdex, pid);
+    hres = IDispatchEx_GetDispID(&This->dispex.IDispatchEx_iface, bstrName, grfdex, pid);
     if(hres != DISP_E_UNKNOWNNAME)
         return hres;
 
@@ -1984,12 +1984,14 @@ static HRESULT WINAPI WindowDispEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID 
         if(FAILED(hres))
             return hres;
 
-        hres = IDispatchEx_InvokeEx(DISPATCHEX(&location->dispex), DISPID_VALUE, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+        hres = IDispatchEx_InvokeEx(&location->dispex.IDispatchEx_iface, DISPID_VALUE, lcid,
+                wFlags, pdp, pvarRes, pei, pspCaller);
         IHTMLLocation_Release(HTMLLOCATION(location));
         return hres;
     }
 
-    return IDispatchEx_InvokeEx(DISPATCHEX(&This->dispex), id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+    return IDispatchEx_InvokeEx(&This->dispex.IDispatchEx_iface, id, lcid, wFlags, pdp, pvarRes,
+            pei, pspCaller);
 }
 
 static HRESULT WINAPI WindowDispEx_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
@@ -1998,7 +2000,7 @@ static HRESULT WINAPI WindowDispEx_DeleteMemberByName(IDispatchEx *iface, BSTR b
 
     TRACE("(%p)->(%s %x)\n", This, debugstr_w(bstrName), grfdex);
 
-    return IDispatchEx_DeleteMemberByName(DISPATCHEX(&This->dispex), bstrName, grfdex);
+    return IDispatchEx_DeleteMemberByName(&This->dispex.IDispatchEx_iface, bstrName, grfdex);
 }
 
 static HRESULT WINAPI WindowDispEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID id)
@@ -2007,7 +2009,7 @@ static HRESULT WINAPI WindowDispEx_DeleteMemberByDispID(IDispatchEx *iface, DISP
 
     TRACE("(%p)->(%x)\n", This, id);
 
-    return IDispatchEx_DeleteMemberByDispID(DISPATCHEX(&This->dispex), id);
+    return IDispatchEx_DeleteMemberByDispID(&This->dispex.IDispatchEx_iface, id);
 }
 
 static HRESULT WINAPI WindowDispEx_GetMemberProperties(IDispatchEx *iface, DISPID id, DWORD grfdexFetch, DWORD *pgrfdex)
@@ -2016,7 +2018,8 @@ static HRESULT WINAPI WindowDispEx_GetMemberProperties(IDispatchEx *iface, DISPI
 
     TRACE("(%p)->(%x %x %p)\n", This, id, grfdexFetch, pgrfdex);
 
-    return IDispatchEx_GetMemberProperties(DISPATCHEX(&This->dispex), id, grfdexFetch, pgrfdex);
+    return IDispatchEx_GetMemberProperties(&This->dispex.IDispatchEx_iface, id, grfdexFetch,
+            pgrfdex);
 }
 
 static HRESULT WINAPI WindowDispEx_GetMemberName(IDispatchEx *iface, DISPID id, BSTR *pbstrName)
@@ -2025,7 +2028,7 @@ static HRESULT WINAPI WindowDispEx_GetMemberName(IDispatchEx *iface, DISPID id, 
 
     TRACE("(%p)->(%x %p)\n", This, id, pbstrName);
 
-    return IDispatchEx_GetMemberName(DISPATCHEX(&This->dispex), id, pbstrName);
+    return IDispatchEx_GetMemberName(&This->dispex.IDispatchEx_iface, id, pbstrName);
 }
 
 static HRESULT WINAPI WindowDispEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex, DISPID id, DISPID *pid)
@@ -2034,7 +2037,7 @@ static HRESULT WINAPI WindowDispEx_GetNextDispID(IDispatchEx *iface, DWORD grfde
 
     TRACE("(%p)->(%x %x %p)\n", This, grfdex, id, pid);
 
-    return IDispatchEx_GetNextDispID(DISPATCHEX(&This->dispex), grfdex, id, pid);
+    return IDispatchEx_GetNextDispID(&This->dispex.IDispatchEx_iface, grfdex, id, pid);
 }
 
 static HRESULT WINAPI WindowDispEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown **ppunk)

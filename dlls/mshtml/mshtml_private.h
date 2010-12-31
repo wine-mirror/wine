@@ -187,7 +187,7 @@ typedef struct {
 } dispex_static_data_t;
 
 struct DispatchEx {
-    const IDispatchExVtbl  *lpIDispatchExVtbl;
+    IDispatchEx IDispatchEx_iface;
 
     IUnknown *outer;
 
@@ -644,8 +644,6 @@ struct HTMLDocumentNode {
 #define HTMLOPTFACTORY(x)  ((IHTMLOptionElementFactory*)  &(x)->lpHTMLOptionElementFactoryVtbl)
 #define HTMLIMGFACTORY(x)  ((IHTMLImageElementFactory*)   &(x)->lpHTMLImageElementFactoryVtbl)
 #define HTMLLOCATION(x)    ((IHTMLLocation*)              &(x)->lpHTMLLocationVtbl)
-
-#define DISPATCHEX(x)    ((IDispatchEx*) &(x)->lpIDispatchExVtbl)
 
 #define HOSTSECMGR(x)    ((IInternetHostSecurityManager*)  &(x)->lpIInternetHostSecurityManagerVtbl)
 
