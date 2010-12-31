@@ -188,8 +188,6 @@ static HRESULT WINAPI InPlaceFrame_TranslateAccelerator(IOleInPlaceFrame *iface,
     return E_NOTIMPL;
 }
 
-#undef impl_from_IOleInPlaceFrame
-
 static const IOleInPlaceFrameVtbl OleInPlaceFrameVtbl = {
     InPlaceFrame_QueryInterface,
     InPlaceFrame_AddRef,
