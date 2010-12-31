@@ -364,7 +364,7 @@ struct HTMLDocument {
     IOleControl                 IOleControl_iface;
     IHlinkTarget                IHlinkTarget_iface;
     IPersistStreamInit          IPersistStreamInit_iface;
-    const IDispatchExVtbl                 *lpIDispatchExVtbl;
+    IDispatchEx                 IDispatchEx_iface;
     ISupportErrorInfo           ISupportErrorInfo_iface;
     IObjectWithSite             IObjectWithSite_iface;
     IOleContainer               IOleContainer_iface;
