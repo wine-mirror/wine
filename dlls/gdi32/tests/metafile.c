@@ -1664,6 +1664,7 @@ static void test_SetMetaFileBits(void)
     ret = DeleteMetaFile(hmf);
     ok(ret, "DeleteMetaFile(%p) error %d\n", hmf, GetLastError());
 
+#ifndef _WIN64 /* Generates access violation on XP x64 and Win2003 x64 */
     /* Now with zeroed out mtSize field */
     memcpy(buf, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS));
     mh = (METAHEADER *)buf;
@@ -1681,6 +1682,7 @@ static void test_SetMetaFileBits(void)
 
     ret = DeleteMetaFile(hmf);
     ok(ret, "DeleteMetaFile(%p) error %d\n", hmf, GetLastError());
+#endif
 }
 
 /* Simple APIs from mfdrv/graphics.c
