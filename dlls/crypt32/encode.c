@@ -4628,8 +4628,13 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     }
 
     SetLastError(NOERROR);
-    if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG && pvEncoded)
+    if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG) {
+        if (!pvEncoded) {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
         *(BYTE **)pvEncoded = NULL;
+    }
     encodeFunc = CRYPT_GetBuiltinEncoder(dwCertEncodingType, lpszStructType);
     if (!encodeFunc)
     {
