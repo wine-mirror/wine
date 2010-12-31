@@ -59,12 +59,10 @@ typedef struct {
 
 typedef struct {
     DispatchEx dispex;
-    const IUnknownVtbl *lpIUnknownVtbl;
+    IUnknown IUnknown_iface;
     DispatchEx *obj;
     func_info_t *info;
 } func_disp_t;
-
-#define FUNCUNKNOWN(x)  ((IUnknown*) &(x)->lpIUnknownVtbl)
 
 struct dispex_dynamic_data_t {
     DWORD buf_size;
@@ -488,15 +486,18 @@ static HRESULT typeinfo_invoke(DispatchEx *This, func_info_t *func, WORD flags, 
     return hres;
 }
 
-#define FUNCTION_THIS(iface) DEFINE_THIS(func_disp_t, IUnknown, iface)
+static inline func_disp_t *impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, func_disp_t, IUnknown_iface);
+}
 
 static HRESULT WINAPI Function_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
 {
-    func_disp_t *This = FUNCTION_THIS(iface);
+    func_disp_t *This = impl_from_IUnknown(iface);
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = FUNCUNKNOWN(This);
+        *ppv = &This->IUnknown_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
@@ -510,7 +511,7 @@ static HRESULT WINAPI Function_QueryInterface(IUnknown *iface, REFIID riid, void
 
 static ULONG WINAPI Function_AddRef(IUnknown *iface)
 {
-    func_disp_t *This = FUNCTION_THIS(iface);
+    func_disp_t *This = impl_from_IUnknown(iface);
 
     TRACE("(%p)\n", This);
 
@@ -519,14 +520,12 @@ static ULONG WINAPI Function_AddRef(IUnknown *iface)
 
 static ULONG WINAPI Function_Release(IUnknown *iface)
 {
-    func_disp_t *This = FUNCTION_THIS(iface);
+    func_disp_t *This = impl_from_IUnknown(iface);
 
     TRACE("(%p)\n", This);
 
     return IDispatchEx_Release(&This->obj->IDispatchEx_iface);
 }
-
-#undef FUNCTION_THIS
 
 static const IUnknownVtbl FunctionUnkVtbl = {
     Function_QueryInterface,
@@ -583,8 +582,8 @@ static func_disp_t *create_func_disp(DispatchEx *obj, func_info_t *info)
     if(!ret)
         return NULL;
 
-    ret->lpIUnknownVtbl = &FunctionUnkVtbl;
-    init_dispex(&ret->dispex, FUNCUNKNOWN(ret),  &function_dispex);
+    ret->IUnknown_iface.lpVtbl = &FunctionUnkVtbl;
+    init_dispex(&ret->dispex, &ret->IUnknown_iface,  &function_dispex);
     ret->obj = obj;
     ret->info = info;
 
