@@ -3,7 +3,7 @@
  * Korean Language Support
  *
  * Copyright 2006 Piotr Caban
- * Copyright 2006 YunSong Hwang
+ * Copyright 2006,2010 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,23 +22,25 @@
 
 #include "resource.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 IDM_MENU MENU
 {
-    POPUP "ÆÄÀÏ(&F)"
+    POPUP "íŒŒì¼(&F)"
     {
-        MENUITEM "ÆÄÀÏ¿¡ ¿¬°á(&B)...",    IDM_BIND
-        MENUITEM "Å¸ÀÔ ¶óÀÌºê·¯¸® º¸±â(&V)...",    IDM_TYPELIB
+        MENUITEM "íŒŒì¼ì— ì—°ê²°(&B)...",    IDM_BIND
+        MENUITEM "íƒ€ìž… ë¼ì´ë¸ŒëŸ¬ë¦¬ ë³´ê¸°(&V)...",    IDM_TYPELIB
         MENUITEM SEPARATOR
-        MENUITEM "½Ã½ºÅÛ ¼³Á¤(&S)...",    IDM_SYSCONF
-        MENUITEM "·¹Áö½ºÆ®¸® ÆíÁý±â ½ÇÇà(&R)",    IDM_REGEDIT
+        MENUITEM "ì‹œìŠ¤í…œ ì„¤ì •(&S)...",    IDM_SYSCONF
+        MENUITEM "ë ˆì§€ìŠ¤íŠ¸ë¦¬ íŽ¸ì§‘ê¸° ì‹¤í–‰(&R)",    IDM_REGEDIT
         MENUITEM SEPARATOR
-        MENUITEM "³ª°¡±â(&X)",    IDM_EXIT
+        MENUITEM "ë‚˜ê°€ê¸°(&X)",    IDM_EXIT
     }
-    POPUP " °´Ã¼(&O)"
+    POPUP " ê°ì²´(&O)"
     {
-        POPUP "&CoCreateInstance ÇÃ·¡±×"
+        POPUP "&CoCreateInstance í”Œëž˜ê·¸"
         {
             MENUITEM "CLSCTX_&INPROC_SERVER",    IDM_FLAG_INSERV,CHECKED
             MENUITEM "CLSCTX_INPROC_&HANDLER",    IDM_FLAG_INHANDL
@@ -46,47 +48,47 @@ IDM_MENU MENU
             MENUITEM "CLSCTX_&REMOTE_SERVER",    IDM_FLAG_REMSERV
         }
         MENUITEM SEPARATOR
-        MENUITEM "Å¸ÀÔ Á¤º¸ º¸±â(&T)",    IDM_TYPEINFO, GRAYED
+        MENUITEM "íƒ€ìž… ì •ë³´ ë³´ê¸°(&T)",    IDM_TYPEINFO, GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "ÀÎ½ºÅÏ½º ¸¸µé±â(&I)",    IDM_CREATEINST, GRAYED
-        MENUITEM "ÀÎ½ºÅÏÆ® ¿Â(Instance &On) ¸¸µé±â...",    IDM_CREATEINSTON, GRAYED
-        MENUITEM "ÀÎ½ºÅÏÆ® ÇØÁ¦ÇÏ±â(&R)",    IDM_RELEASEINST, GRAYED
+        MENUITEM "ì¸ìŠ¤í„´ìŠ¤ ë§Œë“¤ê¸°(&I)",    IDM_CREATEINST, GRAYED
+        MENUITEM "ì¸ìŠ¤í„´íŠ¸ ì˜¨(Instance &On) ë§Œë“¤ê¸°...",    IDM_CREATEINSTON, GRAYED
+        MENUITEM "ì¸ìŠ¤í„´íŠ¸ í•´ì œí•˜ê¸°(&R)",    IDM_RELEASEINST, GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "C&LSID¸¦ Å¬¸³º¸µå·Î º¹»ç",    IDM_COPYCLSID, GRAYED
-        MENUITEM "&HTML °´Ã¼ ÅÂ±×¸¦ Å¬¸³º¸µå·Î º¹»ç", IDM_HTMLTAG, GRAYED
+        MENUITEM "C&LSIDë¥¼ í´ë¦½ë³´ë“œë¡œ ë³µì‚¬",    IDM_COPYCLSID, GRAYED
+        MENUITEM "&HTML ê°ì²´ íƒœê·¸ë¥¼ í´ë¦½ë³´ë“œë¡œ ë³µì‚¬", IDM_HTMLTAG, GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "º¸±â(&V)...",    IDM_VIEW, GRAYED
+        MENUITEM "ë³´ê¸°(&V)...",    IDM_VIEW, GRAYED
     }
-    POPUP "º¸±â(&V)"
+    POPUP "ë³´ê¸°(&V)"
     {
-        MENUITEM "Àü¹®°¡ ¸ðµå(&E)",    IDM_EXPERT,CHECKED
+        MENUITEM "ì „ë¬¸ê°€ ëª¨ë“œ(&E)",    IDM_EXPERT,CHECKED
         MENUITEM SEPARATOR
-        MENUITEM "ÄÄÆ÷³ÍÆ® ºÐ·ù ¼û±â±â(&H)",    IDM_HIDDEN, GRAYED
+        MENUITEM "ì»´í¬ë„ŒíŠ¸ ë¶„ë¥˜ ìˆ¨ê¸°ê¸°(&H)",    IDM_HIDDEN, GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "µµ±¸¹Ù(&T)",    IDM_TOOLBAR,CHECKED
-        MENUITEM "»óÅÂ¹Ù(&S)",    IDM_STATUSBAR,CHECKED
+        MENUITEM "ë„êµ¬ë°”(&T)",    IDM_TOOLBAR,CHECKED
+        MENUITEM "ìƒíƒœë°”(&S)",    IDM_STATUSBAR,CHECKED
         MENUITEM SEPARATOR
-        MENUITEM "»õ·Î °íÄ§(&R)\tF5",    IDM_REFRESH
+        MENUITEM "ìƒˆë¡œ ê³ ì¹¨(&R)\tF5",    IDM_REFRESH
     }
-    POPUP "µµ¿ò¸»(&H)"
+    POPUP "ë„ì›€ë§(&H)"
     {
-        MENUITEM "OleView Á¤º¸(&A)",    IDM_ABOUT
+        MENUITEM "OleView ì •ë³´(&A)",    IDM_ABOUT
     }
 }
 
 IDM_TYPELIB MENU
 {
- 	POPUP "ÆÄÀÏ(&F)"
+	POPUP "íŒŒì¼(&F)"
 	{
-		MENUITEM "´Ù¸¥ ÀÌ¸§À¸·Î ÀúÀå(&S)...",    IDM_SAVEAS
-		MENUITEM "´Ý±â(&C)",  IDM_CLOSE
+		MENUITEM "ë‹¤ë¥¸ ì´ë¦„ìœ¼ë¡œ ì €ìž¥(&S)...",    IDM_SAVEAS
+		MENUITEM "ë‹«ê¸°(&C)",  IDM_CLOSE
 	}
-	POPUP "º¸±â(&V)"
+	POPUP "ë³´ê¸°(&V)"
 	{
-		MENUITEM "Å¸ÀÔ Á¾·ù¿¡ µû¶ó ±¸ºÐ(&G)", IDM_GROUP
+		MENUITEM "íƒ€ìž… ì¢…ë¥˜ì— ë”°ë¼ êµ¬ë¶„(&G)", IDM_GROUP
 		MENUITEM SEPARATOR
-		MENUITEM "µµ±¸¹Ù(&T)",    IDM_TOOLBAR
-		MENUITEM "»óÅÂ¹Ù(&S)", IDM_STATUSBAR,CHECKED
+		MENUITEM "ë„êµ¬ë°”(&T)",    IDM_TOOLBAR
+		MENUITEM "ìƒíƒœë°”(&S)", IDM_STATUSBAR,CHECKED
 	}
 }
 
@@ -95,121 +97,121 @@ STRINGTABLE
 {
     IDS_APPNAME            "OleView"
     IDS_APPTITLE           "OleView"
-    IDS_READY              "ÁØºñ"
-    IDS_ABOUT              "OleView - OLE/COM °´Ã¼ ºä¾î"
-    IDS_ABOUTVER           "¹öÁ¯ 1.0"
-    IDS_TYPELIBTITLE       "ITypeLib ºä¾î"
-    IDS_OPEN               "¿­±â"
-    IDS_OPEN_TYPELIB_FILTER "TypeLib ÆÄÀÏ (*.tlb;*.olb;*.dll;*.ocx;*.exe)\0*.tlb;*.olb;*.dll;*.ocx;*.exe\0All Files (*.*)\0*.*\0\0"
+    IDS_READY              "ì¤€ë¹„"
+    IDS_ABOUT              "OleView - OLE/COM ê°ì²´ ë·°ì–´"
+    IDS_ABOUTVER           "ë²„ì ¼ 1.0"
+    IDS_TYPELIBTITLE       "ITypeLib ë·°ì–´"
+    IDS_OPEN               "ì—´ê¸°"
+    IDS_OPEN_TYPELIB_FILTER "TypeLib íŒŒì¼ (*.tlb;*.olb;*.dll;*.ocx;*.exe)\0*.tlb;*.olb;*.dll;*.ocx;*.exe\0All Files (*.*)\0*.*\0\0"
 
-    IDM_BIND,              "ÆÄÀÏ º°¸íÀ¸·Î ÆÄÀÏ ¿¬°á"
-    IDM_TYPELIB,           "Å¸ÀÔ ¶óÀÌºê·¯¸® ÆÄÀÏÀ» ¿­°í ³»¿ë º¸±â"
-    IDM_SYSCONF,           "¸Ó½Å ÀüÃ¼ÀÇ DCOM¼³Á¤ ¹Ù²Ù±â"
-    IDM_REGEDIT,           "Wine ·¹Áö½ºÆ®¸® ÆíÁý±â ½ÇÇà"
-    IDM_EXIT,              "¹Ù²ï °ÍÀ» ÀúÀåÇÒÁö ¹°¾îº¸°í ÇÁ·Î±×·¥ ³¡³»±â"
-    IDM_CREATEINST,        "¼±ÅÃµÈ °´Ã¼ÀÇ ÀÎ½ºÅÏÆ® ¸¸µé±â"
-    IDM_CREATEINSTON,      "ÁöÁ¤µÈ ¸Ó½ÅÀÇ ¼±ÅÃµÈ °´Ã¼ÀÇ ÀÎ½ºÅÏÆ® ¸¸µé±â"
-    IDM_RELEASEINST,       "ÇöÀç ¼±ÅÃµÈ °´Ã¼ ÀÎ½ºÅÏÆ® ÇØÁ¦ÇÏ±â"
-    IDM_COPYCLSID,         "ÇöÀç ¼±ÅÃµÈ Ç×¸ñÀÇ GUID¸¦ Å¬¸³º¸µå·Î º¹»ç"
-    IDM_VIEW,              "¼±ÅÃµÈ Ç×¸ñÀÇ ºä¾î º¸±â"
-    IDM_FLAG_INSERV,       "CoGetClassObjectÀÌ È£ÃâµÉ ¶§ Use CLSCTX_INPROC_SERVER »ç¿ë"
-    IDM_FLAG_INHANDL,      "CoGetClassObjectÀÌ È£ÃâµÉ ¶§ Use CLSCTX_INPROC_HANDLER »ç¿ë"
-    IDM_FLAG_LOCSERV,      "CoGetClassObjectÀÌ È£ÃâµÉ ¶§ CLSCTX_LOCAL_SERVER »ç¿ë"
-    IDM_FLAG_REMSERV,      "CoGetClassObjectÀÌ È£ÃâµÉ ¶§ CLSCTX_REMOTE_SERVER  »ç¿ë"
-    IDM_EXPERT,            "Àü¹®°¡¿Í ÃÊº¸ÀÚ ¸ðµå ÀüÈ¯e"
-    IDM_HIDDEN,            "ÄÄÆ÷³ÍÆ® ¸ñ·Ï º¸±â(º¸ÀÌÁö ¾Ê´õ¶óµµ)"
-    IDM_TOOLBAR,           "µµ±¸¹Ù º¸±â/¼û±â±â"
-    IDM_STATUSBAR,         "»óÅÂ¹Ù º¸±â/¼û±â±â"
-    IDM_REFRESH,           "¸ðµç ¸ñ·Ï »õ·Î °íÄ§"
-    IDM_ABOUT,             "ÇÁ·Î±×·¥ Á¤º¸, ¹öÁ¯, ÀúÀÛ±Ç º¸¿©ÁÖ±â"
+    IDM_BIND,              "íŒŒì¼ ë³„ëª…ìœ¼ë¡œ íŒŒì¼ ì—°ê²°"
+    IDM_TYPELIB,           "íƒ€ìž… ë¼ì´ë¸ŒëŸ¬ë¦¬ íŒŒì¼ì„ ì—´ê³  ë‚´ìš© ë³´ê¸°"
+    IDM_SYSCONF,           "ë¨¸ì‹  ì „ì²´ì˜ DCOMì„¤ì • ë°”ê¾¸ê¸°"
+    IDM_REGEDIT,           "Wine ë ˆì§€ìŠ¤íŠ¸ë¦¬ íŽ¸ì§‘ê¸° ì‹¤í–‰"
+    IDM_EXIT,              "ë°”ë€ ê²ƒì„ ì €ìž¥í• ì§€ ë¬¼ì–´ë³´ê³  í”„ë¡œê·¸ëž¨ ëë‚´ê¸°"
+    IDM_CREATEINST,        "ì„ íƒëœ ê°ì²´ì˜ ì¸ìŠ¤í„´íŠ¸ ë§Œë“¤ê¸°"
+    IDM_CREATEINSTON,      "ì§€ì •ëœ ë¨¸ì‹ ì˜ ì„ íƒëœ ê°ì²´ì˜ ì¸ìŠ¤í„´íŠ¸ ë§Œë“¤ê¸°"
+    IDM_RELEASEINST,       "í˜„ìž¬ ì„ íƒëœ ê°ì²´ ì¸ìŠ¤í„´íŠ¸ í•´ì œí•˜ê¸°"
+    IDM_COPYCLSID,         "í˜„ìž¬ ì„ íƒëœ í•­ëª©ì˜ GUIDë¥¼ í´ë¦½ë³´ë“œë¡œ ë³µì‚¬"
+    IDM_VIEW,              "ì„ íƒëœ í•­ëª©ì˜ ë·°ì–´ ë³´ê¸°"
+    IDM_FLAG_INSERV,       "CoGetClassObjectì´ í˜¸ì¶œë  ë•Œ Use CLSCTX_INPROC_SERVER ì‚¬ìš©"
+    IDM_FLAG_INHANDL,      "CoGetClassObjectì´ í˜¸ì¶œë  ë•Œ Use CLSCTX_INPROC_HANDLER ì‚¬ìš©"
+    IDM_FLAG_LOCSERV,      "CoGetClassObjectì´ í˜¸ì¶œë  ë•Œ CLSCTX_LOCAL_SERVER ì‚¬ìš©"
+    IDM_FLAG_REMSERV,      "CoGetClassObjectì´ í˜¸ì¶œë  ë•Œ CLSCTX_REMOTE_SERVER  ì‚¬ìš©"
+    IDM_EXPERT,            "ì „ë¬¸ê°€ì™€ ì´ˆë³´ìž ëª¨ë“œ ì „í™˜e"
+    IDM_HIDDEN,            "ì»´í¬ë„ŒíŠ¸ ëª©ë¡ ë³´ê¸°(ë³´ì´ì§€ ì•Šë”ë¼ë„)"
+    IDM_TOOLBAR,           "ë„êµ¬ë°” ë³´ê¸°/ìˆ¨ê¸°ê¸°"
+    IDM_STATUSBAR,         "ìƒíƒœë°” ë³´ê¸°/ìˆ¨ê¸°ê¸°"
+    IDM_REFRESH,           "ëª¨ë“  ëª©ë¡ ìƒˆë¡œ ê³ ì¹¨"
+    IDM_ABOUT,             "í”„ë¡œê·¸ëž¨ ì •ë³´, ë²„ì ¼, ì €ìž‘ê¶Œ ë³´ì—¬ì£¼ê¸°"
 
-    IDM_SAVEAS,            ".IDL ÀÌ³ª .H file·Î ÀúÀå"
-    IDM_CLOSE,             "Ã¢ ´Ý±â"
-    IDM_GROUP,             "Å¸ÀÔÁ¤º¸¸¦ Å¸ÀÔ¿¡ µû¶ó ºÐ·ù"
+    IDM_SAVEAS,            ".IDL ì´ë‚˜ .H fileë¡œ ì €ìž¥"
+    IDM_CLOSE,             "ì°½ ë‹«ê¸°"
+    IDM_GROUP,             "íƒ€ìž…ì •ë³´ë¥¼ íƒ€ìž…ì— ë”°ë¼ ë¶„ë¥˜"
 
     IDS_TREE_OC,           "ObjectClasses"
-    IDS_TREE_GBCC,         "ÄÄÆ÷ÅÏÆ® ºÐ·ù"
-    IDS_TREE_O1O,          "OLE 1.0 °´Ã¼"
-    IDS_TREE_CLO,          "COM ¶óÀÌºê·¯¸® °´Ã¼"
-    IDS_TREE_AO,           "¸ðµç °´Ã¼"
-    IDS_TREE_AID,          "ÇÁ·Î±×·¥ IDs"
-    IDS_TREE_TL,           "Å¸ÀÔ ¶óÀÌºê·¯¸®"
+    IDS_TREE_GBCC,         "ì»´í¬í„´íŠ¸ ë¶„ë¥˜"
+    IDS_TREE_O1O,          "OLE 1.0 ê°ì²´"
+    IDS_TREE_CLO,          "COM ë¼ì´ë¸ŒëŸ¬ë¦¬ ê°ì²´"
+    IDS_TREE_AO,           "ëª¨ë“  ê°ì²´"
+    IDS_TREE_AID,          "í”„ë¡œê·¸ëž¨ IDs"
+    IDS_TREE_TL,           "íƒ€ìž… ë¼ì´ë¸ŒëŸ¬ë¦¬"
     IDS_TL_VER,            "ver."
-    IDS_TREE_I,            "ÀÎÅÍÆäÀÌ½º"
+    IDS_TREE_I,            "ì¸í„°íŽ˜ì´ìŠ¤"
 
     IDS_TAB_REG,           "Registry"
     IDS_TAB_IMPL,          "Implementation"
     IDS_TAB_ACTIV,         "Activation"
 
-    IDS_CGCOFAIL,          "CoGetClassObject ½ÇÆÐ."
-    IDS_ERROR_UNKN,        "¾Ë¼ö ¾ø´Â ¿¡·¯"
-    IDS_TRUE,              "Âü"
-    IDS_FALSE,             "°ÅÁþ"
-    IDS_BYTES,             "¹ÙÀÌÆ®"
+    IDS_CGCOFAIL,          "CoGetClassObject ì‹¤íŒ¨."
+    IDS_ERROR_UNKN,        "ì•Œìˆ˜ ì—†ëŠ” ì—ëŸ¬"
+    IDS_TRUE,              "ì°¸"
+    IDS_FALSE,             "ê±°ì§“"
+    IDS_BYTES,             "ë°”ì´íŠ¸"
 
-    IDS_ERROR_LOADTYPELIB, "LoadTypeLib( %s ) ½ÇÆÐ ($%x)"
+    IDS_ERROR_LOADTYPELIB, "LoadTypeLib( %s ) ì‹¤íŒ¨ ($%x)"
     IDS_INHERITINTERFACES, "Inherited Interfaces"
 }
 
 DLG_CREATEINSTON DIALOG DISCARDABLE 0, 0, 250, 41
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
-CAPTION "´Ù¸¥ ¸Ó½Å(machine)¿¡ Á¢¼Ó"
+CAPTION "ë‹¤ë¥¸ ë¨¸ì‹ (machine)ì— ì ‘ì†"
 FONT 9, "MS Shell Dlg"
 {
-    LTEXT   "¸Ó½Å(&Machine) ÀÌ¸§:", -1, 5, 6, 190, 8
+    LTEXT   "ë¨¸ì‹ (&Machine) ì´ë¦„:", -1, 5, 6, 190, 8
     EDITTEXT    IDC_MACHINE, 5, 16, 190, 12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
-    DEFPUSHBUTTON   "È®ÀÎ(&O)", IDOK, 200, 5, 45, 14
-    PUSHBUTTON  "Ãë¼Ò(&C)", IDCANCEL, 200, 22, 45, 14
+    DEFPUSHBUTTON   "í™•ì¸(&O)", IDOK, 200, 5, 45, 14
+    PUSHBUTTON  "ì·¨ì†Œ(&C)", IDCANCEL, 200, 22, 45, 14
 }
 
 DLG_SYSCONF DIALOG DISCARDABLE 0, 0, 170, 100
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
-CAPTION "½Ã½ºÅÛ ¼³Á¤"
+CAPTION "ì‹œìŠ¤í…œ ì„¤ì •"
 FONT 9, "MS Shell Dlg"
 {
-    LTEXT   "½Ã½ºÅÛ ¼ÂÆÃ", -1, 5, 6, 160, 8
-    CHECKBOX    "DCOM Çã¿ë(&E)", IDC_ENABLEDCOM, 5, 20, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
-    CHECKBOX    "¿ø°Ý ¿¬°á Çã¿ë(&R) (Win95¸¸ ÇØ´ç)", IDC_ENABLEREMOTE, 5, 35, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
-    LTEXT   "ÀÌ ¼ÂÆÃÀº ¿ÀÁ÷ ·¹Áö½ºÆ®¸® °ª¸¸ ¹Ù²ß´Ï´Ù.\nWIneÀÇ ¼º´É¿¡´Â ¾Æ¹« ¿µÇâÀ» ¾È ¹ÌÄ¨´Ï´Ù.", -1, 5, 50, 160, 40
-    DEFPUSHBUTTON   "È®ÀÎ(&O)", IDOK, 70, 80, 45, 14
-    PUSHBUTTON  "Ãë¼Ò(&C)", IDCANCEL, 120, 80, 45, 14
+    LTEXT   "ì‹œìŠ¤í…œ ì…‹íŒ…", -1, 5, 6, 160, 8
+    CHECKBOX    "DCOM í—ˆìš©(&E)", IDC_ENABLEDCOM, 5, 20, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX    "ì›ê²© ì—°ê²° í—ˆìš©(&R) (Win95ë§Œ í•´ë‹¹)", IDC_ENABLEREMOTE, 5, 35, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    LTEXT   "ì´ ì…‹íŒ…ì€ ì˜¤ì§ ë ˆì§€ìŠ¤íŠ¸ë¦¬ ê°’ë§Œ ë°”ê¿‰ë‹ˆë‹¤.\nWIneì˜ ì„±ëŠ¥ì—ëŠ” ì•„ë¬´ ì˜í–¥ì„ ì•ˆ ë¯¸ì¹©ë‹ˆë‹¤.", -1, 5, 50, 160, 40
+    DEFPUSHBUTTON   "í™•ì¸(&O)", IDOK, 70, 80, 45, 14
+    PUSHBUTTON  "ì·¨ì†Œ(&C)", IDCANCEL, 120, 80, 45, 14
 }
 
 DLG_DEFAULT_IV DIALOG DISCARDABLE 0, 0, 280, 50
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
-CAPTION "±âº» ÀÎÅÍÆäÀÌ½º º¸±â"
+CAPTION "ê¸°ë³¸ ì¸í„°íŽ˜ì´ìŠ¤ ë³´ê¸°"
 FONT 9, "MS Shell Dlg"
 {
-  LTEXT   "ÀÎÅÍÆäÀÌ½º", -1, 5, 6, 50, 8
+  LTEXT   "ì¸í„°íŽ˜ì´ìŠ¤", -1, 5, 6, 50, 8
   LTEXT   "", IDC_LABEL, 60, 6, 145, 8
   LTEXT   "IID:", -1, 5, 16, 50, 8
   LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
-  DEFPUSHBUTTON   "´Ý±â(&C)", IDCANCEL, 230, 6, 45, 14
-  PUSHBUTTON  "Å¸ÀÔ Á¤º¸ º¸±â(&V)", IDC_VIEWTYPEINFO, 6, 31, 70, 14, WS_DISABLED
+  DEFPUSHBUTTON   "ë‹«ê¸°(&C)", IDCANCEL, 230, 6, 45, 14
+  PUSHBUTTON  "íƒ€ìž… ì •ë³´ ë³´ê¸°(&V)", IDC_VIEWTYPEINFO, 6, 31, 70, 14, WS_DISABLED
 }
 
 DLG_IPERSIST_IV DIALOG DISCARDABLE 0, 0, 280, 29
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
-CAPTION "IPersist ÀÎÅÍÆäÀÌ½º º¸±â"
+CAPTION "IPersist ì¸í„°íŽ˜ì´ìŠ¤ ë³´ê¸°"
 FONT 9, "MS Shell Dlg"
 {
-  LTEXT   "Å¬·¡½º ÀÌ¸§:", -1, 5, 6, 50, 8
+  LTEXT   "í´ëž˜ìŠ¤ ì´ë¦„:", -1, 5, 6, 50, 8
   LTEXT   "", IDC_LABEL, 60, 6, 145, 8
   LTEXT   "CLSID:", -1, 5, 16, 50, 8
   LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
-  DEFPUSHBUTTON   "´Ý±â(&C)", IDCANCEL, 230, 6, 45, 14
+  DEFPUSHBUTTON   "ë‹«ê¸°(&C)", IDCANCEL, 230, 6, 45, 14
 }
 
 DLG_IPERSISTSTREAM_IV DIALOG DISCARDABLE 0, 0, 280, 68
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
-CAPTION "IPersistStream ÀÎÅÍÆäÀÌ½º º¸±â"
+CAPTION "IPersistStream ì¸í„°íŽ˜ì´ìŠ¤ ë³´ê¸°"
 FONT 9, "MS Shell Dlg"
 {
-  LTEXT   "Å¬·¡½º ÀÌ¸§:", -1, 5, 6, 50, 8
+  LTEXT   "í´ëž˜ìŠ¤ ì´ë¦„:", -1, 5, 6, 50, 8
   LTEXT   "", IDC_LABEL, 60, 6, 145, 8
   LTEXT   "CLSID:", -1, 5, 16, 50, 8
   LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
-  DEFPUSHBUTTON   "´Ý±â(&C)", IDCANCEL, 230, 6, 45, 14
+  DEFPUSHBUTTON   "ë‹«ê¸°(&C)", IDCANCEL, 230, 6, 45, 14
   PUSHBUTTON  "&IsDirty", IDC_ISDIRTY_BUTTON, 6, 31, 50, 14
   LTEXT   "???", IDC_ISDIRTY, 60, 34, 145, 8
   PUSHBUTTON  "&GetSizeMax", IDC_GETSIZEMAX_BUTTON, 6, 49, 50, 14
