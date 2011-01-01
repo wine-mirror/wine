@@ -312,10 +312,6 @@ DWORD WINAPI WNetGetNetworkInformationW(LPCWSTR,LPNETINFOSTRUCT);
  *  Status codes
  */
 
-DWORD WINAPI WNetGetLastErrorA(LPDWORD,LPSTR,DWORD,LPSTR,DWORD);
-DWORD WINAPI WNetGetLastErrorW(LPDWORD,LPWSTR,DWORD,LPWSTR,DWORD);
-#define      WNetGetLastError WINELIB_NAME_AW(WNetGetLastError)
-
 #define WN_SUCCESS                      NO_ERROR
 #define WN_NO_ERROR                     NO_ERROR
 #define WN_NOT_SUPPORTED                ERROR_NOT_SUPPORTED
