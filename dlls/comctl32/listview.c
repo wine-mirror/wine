@@ -457,7 +457,7 @@ static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *, INT, BOOL);
 static UINT LISTVIEW_GetItemState(const LISTVIEW_INFO *, INT, UINT);
 static BOOL LISTVIEW_SetItemState(LISTVIEW_INFO *, INT, const LVITEMW *);
 static LRESULT LISTVIEW_VScroll(LISTVIEW_INFO *, INT, INT);
-static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *, INT, INT, HWND);
+static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *, INT, INT);
 static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *, INT, BOOL);
 static HIMAGELIST LISTVIEW_SetImageList(LISTVIEW_INFO *, INT, HIMAGELIST);
 static INT LISTVIEW_HitTest(const LISTVIEW_INFO *, LPLVHITTESTINFO, BOOL, BOOL);
@@ -6065,7 +6065,7 @@ static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *infoPtr, INT nItem, BOOL bPart
     {
 	INT diff = nHorzDiff / nScrollPosWidth;
 	if (nHorzDiff % nScrollPosWidth) diff += nHorzAdjust;
-	LISTVIEW_HScroll(infoPtr, SB_INTERNAL, diff, 0);
+	LISTVIEW_HScroll(infoPtr, SB_INTERNAL, diff);
     }
 
     if (nScrollPosHeight)
@@ -7837,7 +7837,7 @@ static BOOL LISTVIEW_Scroll(LISTVIEW_INFO *infoPtr, INT dx, INT dy)
 	break;
     }	
 
-    if (dx != 0) LISTVIEW_HScroll(infoPtr, SB_INTERNAL, dx, 0);
+    if (dx != 0) LISTVIEW_HScroll(infoPtr, SB_INTERNAL, dx);
     if (dy != 0) LISTVIEW_VScroll(infoPtr, SB_INTERNAL, dy);
   
     return TRUE;
@@ -9576,7 +9576,7 @@ static LRESULT LISTVIEW_VScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode,
  *
  */
 static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode,
-                                INT nScrollDiff, HWND hScrollWnd)
+                                INT nScrollDiff)
 {
     INT nOldScrollPos, nNewScrollPos;
     SCROLLINFO scrollInfo;
@@ -9690,7 +9690,7 @@ static LRESULT LISTVIEW_MouseWheel(LISTVIEW_INFO *infoPtr, INT wheelDelta)
         break;
 
     case LV_VIEW_LIST:
-        LISTVIEW_HScroll(infoPtr, (gcWheelDelta < 0) ? SB_LINELEFT : SB_LINERIGHT, 0, 0);
+        LISTVIEW_HScroll(infoPtr, (gcWheelDelta < 0) ? SB_LINELEFT : SB_LINERIGHT, 0);
         break;
     }
     return 0;
@@ -11431,7 +11431,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return (LRESULT)infoPtr->hFont;
 
   case WM_HSCROLL:
-    return LISTVIEW_HScroll(infoPtr, (INT)LOWORD(wParam), 0, (HWND)lParam);
+    return LISTVIEW_HScroll(infoPtr, (INT)LOWORD(wParam), 0);
 
   case WM_KEYDOWN:
     return LISTVIEW_KeyDown(infoPtr, (INT)wParam, (LONG)lParam);
