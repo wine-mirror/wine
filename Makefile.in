@@ -19,7 +19,10 @@
 # xmlpages:        compile xml source for the Wine API Guide
 
 # Sub-directories that don't have a makefile
-EXTRASUBDIRS = dlls libs programs
+EXTRASUBDIRS = \
+	dlls \
+	libs \
+	programs
 
 # Destination directories for make install
 INSTALLDIRS = $(DESTDIR)$(bindir)
