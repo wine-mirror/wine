@@ -261,7 +261,9 @@ static BOOL elf_map_file_read(struct image_file_map* fmap, struct elf_map_file_d
         return ReadProcessMemory(emfd->u.process.handle,
                                  (void*)((unsigned long)emfd->u.process.load_addr + (unsigned long)off),
                                  buf, len, &dw) && dw == len;
-    default: assert(0);
+    default:
+        assert(0);
+        return FALSE;
     }
 }
 
