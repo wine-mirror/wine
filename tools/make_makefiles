@@ -241,6 +241,7 @@ sub replace_makefile_variable($$)
 {
     my ($file, $var) = @_;
     my $make = $makefiles{$file};
+    my $replaced = 0;
 
     return unless defined ${$make}{"=$var"};
 
@@ -252,7 +253,7 @@ sub replace_makefile_variable($$)
     open OLD_FILE, "$file.in" or die "cannot open $file.in";
     while (<OLD_FILE>)
     {
-        if (/^\s*($var\s+)=/)
+        if (/^\s*($var\s*)=/)
         {
             # try to preserve formatting
             my $prefix = $1;
@@ -270,7 +271,12 @@ sub replace_makefile_variable($$)
             {
                 print NEW_FILE "$prefix= @values\n";
             }
+            $replaced = 1;
             next;
+        }
+        if (/^\@MAKE/ && !$replaced)
+        {
+            print NEW_FILE "$var = \\\n\t" . join(" \\\n\t", sort @values) . "\n";
         }
         print NEW_FILE $_;
     }

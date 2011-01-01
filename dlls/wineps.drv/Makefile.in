@@ -63,7 +63,7 @@ C_SRCS = \
 	type1afm.c \
 	type42.c
 
-RC_SRCS= \
+RC_SRCS = \
 	wps_Bg.rc \
 	wps_Cs.rc \
 	wps_Da.rc \
