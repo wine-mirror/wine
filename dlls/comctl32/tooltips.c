@@ -1937,7 +1937,7 @@ TOOLTIPS_MouseMessage (TOOLTIPS_INFO *infoPtr)
 
 
 static LRESULT
-TOOLTIPS_NCCreate (HWND hwnd, const CREATESTRUCTW *lpcs)
+TOOLTIPS_NCCreate (HWND hwnd)
 {
     DWORD dwStyle = GetWindowLongW (hwnd, GWL_STYLE);
     DWORD dwExStyle = GetWindowLongW (hwnd, GWL_EXSTYLE);
@@ -2292,7 +2292,7 @@ TOOLTIPS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return TOOLTIPS_MouseMessage (infoPtr);
 
 	case WM_NCCREATE:
-	    return TOOLTIPS_NCCreate (hwnd, (LPCREATESTRUCTW)lParam);
+	    return TOOLTIPS_NCCreate (hwnd);
 
 	case WM_NCHITTEST:
 	    return TOOLTIPS_NCHitTest (infoPtr, wParam, lParam);
