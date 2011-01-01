@@ -107,6 +107,7 @@ static NTSTATUS (WINAPI *pLsaFreeMemory)(PVOID);
 static NTSTATUS (WINAPI *pLsaOpenPolicy)(PLSA_UNICODE_STRING,PLSA_OBJECT_ATTRIBUTES,ACCESS_MASK,PLSA_HANDLE);
 static NTSTATUS (WINAPI *pNtQueryObject)(HANDLE,OBJECT_INFORMATION_CLASS,PVOID,ULONG,PULONG);
 static DWORD (WINAPI *pSetEntriesInAclW)(ULONG, PEXPLICIT_ACCESSW, PACL, PACL*);
+static DWORD (WINAPI *pSetEntriesInAclA)(ULONG, PEXPLICIT_ACCESSA, PACL, PACL*);
 static BOOL (WINAPI *pSetSecurityDescriptorControl)(PSECURITY_DESCRIPTOR, SECURITY_DESCRIPTOR_CONTROL,
                                                     SECURITY_DESCRIPTOR_CONTROL);
 static DWORD (WINAPI *pGetSecurityInfo)(HANDLE, SE_OBJECT_TYPE, SECURITY_INFORMATION,
@@ -152,6 +153,7 @@ static void init(void)
     pIsValidSid = (void *)GetProcAddress(hmod, "IsValidSid");
     pMakeSelfRelativeSD = (void *)GetProcAddress(hmod, "MakeSelfRelativeSD");
     pSetEntriesInAclW = (void *)GetProcAddress(hmod, "SetEntriesInAclW");
+    pSetEntriesInAclA = (void *)GetProcAddress(hmod, "SetEntriesInAclA");
     pSetSecurityDescriptorControl = (void *)GetProcAddress(hmod, "SetSecurityDescriptorControl");
     pGetSecurityInfo = (void *)GetProcAddress(hmod, "GetSecurityInfo");
 
@@ -2478,7 +2480,7 @@ static void test_impersonation_level(void)
     HeapFree(GetProcessHeap(), 0, PrivilegeSet);
 }
 
-static void test_SetEntriesInAcl(void)
+static void test_SetEntriesInAclW(void)
 {
     DWORD res;
     PSID EveryoneSid = NULL, UsersSid = NULL;
@@ -2601,6 +2603,137 @@ static void test_SetEntriesInAcl(void)
     ExplicitAccess.Trustee.ptstrName = UsersSid;
     res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
     ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %u\n", res);
+    ok(NewAcl != NULL, "returned acl was NULL\n");
+    LocalFree(NewAcl);
+
+    FreeSid(UsersSid);
+    FreeSid(EveryoneSid);
+    HeapFree(GetProcessHeap(), 0, OldAcl);
+}
+
+static void test_SetEntriesInAclA(void)
+{
+    DWORD res;
+    PSID EveryoneSid = NULL, UsersSid = NULL;
+    PACL OldAcl = NULL, NewAcl;
+    SID_IDENTIFIER_AUTHORITY SIDAuthWorld = { SECURITY_WORLD_SID_AUTHORITY };
+    SID_IDENTIFIER_AUTHORITY SIDAuthNT = { SECURITY_NT_AUTHORITY };
+    EXPLICIT_ACCESS ExplicitAccess;
+    static const CHAR szEveryone[] = {'E','v','e','r','y','o','n','e',0};
+    static const CHAR szCurrentUser[] = { 'C','U','R','R','E','N','T','_','U','S','E','R','\0'};
+
+    if (!pSetEntriesInAclA)
+    {
+        win_skip("SetEntriesInAclA is not available\n");
+        return;
+    }
+
+    NewAcl = (PACL)0xdeadbeef;
+    res = pSetEntriesInAclA(0, NULL, NULL, &NewAcl);
+    if(res == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("SetEntriesInAclA is not implemented\n");
+        return;
+    }
+    ok(res == ERROR_SUCCESS, "SetEntriesInAclA failed: %u\n", res);
+    ok(NewAcl == NULL ||
+        broken(NewAcl != NULL), /* NT4 */
+        "NewAcl=%p, expected NULL\n", NewAcl);
+    LocalFree(NewAcl);
+
+    OldAcl = HeapAlloc(GetProcessHeap(), 0, 256);
+    res = InitializeAcl(OldAcl, 256, ACL_REVISION);
+    if(!res && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("ACLs not implemented - skipping tests\n");
+        HeapFree(GetProcessHeap(), 0, OldAcl);
+        return;
+    }
+    ok(res, "InitializeAcl failed with error %d\n", GetLastError());
+
+    res = AllocateAndInitializeSid( &SIDAuthWorld, 1, SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, &EveryoneSid);
+    ok(res, "AllocateAndInitializeSid failed with error %d\n", GetLastError());
+
+    res = AllocateAndInitializeSid( &SIDAuthNT, 2, SECURITY_BUILTIN_DOMAIN_RID,
+        DOMAIN_ALIAS_RID_USERS, 0, 0, 0, 0, 0, 0, &UsersSid);
+    ok(res, "AllocateAndInitializeSid failed with error %d\n", GetLastError());
+
+    res = AddAccessAllowedAce(OldAcl, ACL_REVISION, KEY_READ, UsersSid);
+    ok(res, "AddAccessAllowedAce failed with error %d\n", GetLastError());
+
+    ExplicitAccess.grfAccessPermissions = KEY_WRITE;
+    ExplicitAccess.grfAccessMode = GRANT_ACCESS;
+    ExplicitAccess.grfInheritance = NO_INHERITANCE;
+    ExplicitAccess.Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
+    ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_SID;
+    ExplicitAccess.Trustee.ptstrName = EveryoneSid;
+    ExplicitAccess.Trustee.MultipleTrusteeOperation = 0xDEADBEEF;
+    ExplicitAccess.Trustee.pMultipleTrustee = (PVOID)0xDEADBEEF;
+    res = pSetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
+    ok(res == ERROR_SUCCESS, "SetEntriesInAclA failed: %u\n", res);
+    ok(NewAcl != NULL, "returned acl was NULL\n");
+    LocalFree(NewAcl);
+
+    ExplicitAccess.Trustee.TrusteeType = TRUSTEE_IS_UNKNOWN;
+    ExplicitAccess.Trustee.pMultipleTrustee = NULL;
+    ExplicitAccess.Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+    res = pSetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
+    ok(res == ERROR_SUCCESS, "SetEntriesInAclA failed: %u\n", res);
+    ok(NewAcl != NULL, "returned acl was NULL\n");
+    LocalFree(NewAcl);
+
+    if (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) != LANG_ENGLISH)
+    {
+        skip("Non-english locale (test with hardcoded 'Everyone')\n");
+    }
+    else
+    {
+        ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_USER;
+        ExplicitAccess.Trustee.ptstrName = (LPSTR)szEveryone;
+        res = pSetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
+        ok(res == ERROR_SUCCESS, "SetEntriesInAclA failed: %u\n", res);
+        ok(NewAcl != NULL, "returned acl was NULL\n");
+        LocalFree(NewAcl);
+
+        ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_BAD_FORM;
+        res = pSetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
+        ok(res == ERROR_INVALID_PARAMETER ||
+            broken(res == ERROR_NOT_SUPPORTED), /* NT4 */
+            "SetEntriesInAclA failed: %u\n", res);
+        ok(NewAcl == NULL ||
+            broken(NewAcl != NULL), /* NT4 */
+            "returned acl wasn't NULL: %p\n", NewAcl);
+
+        ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_USER;
+        ExplicitAccess.Trustee.MultipleTrusteeOperation = TRUSTEE_IS_IMPERSONATE;
+        res = pSetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
+        ok(res == ERROR_INVALID_PARAMETER ||
+            broken(res == ERROR_NOT_SUPPORTED), /* NT4 */
+            "SetEntriesInAclA failed: %u\n", res);
+        ok(NewAcl == NULL ||
+            broken(NewAcl != NULL), /* NT4 */
+            "returned acl wasn't NULL: %p\n", NewAcl);
+
+        ExplicitAccess.Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+        ExplicitAccess.grfAccessMode = SET_ACCESS;
+        res = pSetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
+        ok(res == ERROR_SUCCESS, "SetEntriesInAclA failed: %u\n", res);
+        ok(NewAcl != NULL, "returned acl was NULL\n");
+        LocalFree(NewAcl);
+    }
+
+    ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_USER;
+    ExplicitAccess.Trustee.ptstrName = (LPSTR)szCurrentUser;
+    res = pSetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
+    ok(res == ERROR_SUCCESS, "SetEntriesInAclA failed: %u\n", res);
+    ok(NewAcl != NULL, "returned acl was NULL\n");
+    LocalFree(NewAcl);
+
+    ExplicitAccess.grfAccessMode = REVOKE_ACCESS;
+    ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_SID;
+    ExplicitAccess.Trustee.ptstrName = UsersSid;
+    res = pSetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
+    ok(res == ERROR_SUCCESS, "SetEntriesInAclA failed: %u\n", res);
     ok(NewAcl != NULL, "returned acl was NULL\n");
     LocalFree(NewAcl);
 
@@ -3388,7 +3521,8 @@ START_TEST(security)
     test_security_descriptor();
     test_process_security();
     test_impersonation_level();
-    test_SetEntriesInAcl();
+    test_SetEntriesInAclW();
+    test_SetEntriesInAclA();
     test_GetNamedSecurityInfoA();
     test_ConvertStringSecurityDescriptor();
     test_ConvertSecurityDescriptorToString();

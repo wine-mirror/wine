@@ -3521,10 +3521,58 @@ BOOL WINAPI SetAclInformation( PACL pAcl, LPVOID pAclInformation,
 DWORD WINAPI SetEntriesInAclA( ULONG count, PEXPLICIT_ACCESSA pEntries,
                                PACL OldAcl, PACL* NewAcl )
 {
-    FIXME("%d %p %p %p\n",count,pEntries,OldAcl,NewAcl);
+    DWORD err = ERROR_SUCCESS;
+    PEXPLICIT_ACCESSW pEntriesW;
+
+    TRACE("%d %p %p %p\n", count, pEntries, OldAcl, NewAcl);
+
     if (NewAcl)
-         *NewAcl = NULL;
-    return ERROR_SUCCESS;
+        *NewAcl = NULL;
+
+    if (!count && !OldAcl)
+        return ERROR_SUCCESS;
+
+    pEntriesW = HeapAlloc( GetProcessHeap(), 0, count*sizeof(EXPLICIT_ACCESSW) );
+    if (pEntriesW)
+    {
+        int i, len;
+        LPWSTR wstr = NULL;
+        PEXPLICIT_ACCESSW ptrW = pEntriesW;
+        PEXPLICIT_ACCESSA ptrA = pEntries;
+
+        for (i = 0; i < count; ++i, ++ptrA, ++ptrW)
+        {
+            ptrW->grfAccessPermissions = ptrA->grfAccessPermissions;
+            ptrW->grfAccessMode = ptrA->grfAccessMode;
+            ptrW->grfInheritance = ptrA->grfInheritance;
+            ptrW->Trustee.pMultipleTrustee = NULL; /* currently not supported */
+            ptrW->Trustee.MultipleTrusteeOperation = ptrA->Trustee.MultipleTrusteeOperation;
+            ptrW->Trustee.TrusteeForm = ptrA->Trustee.TrusteeForm;
+            ptrW->Trustee.TrusteeType = ptrA->Trustee.TrusteeType;
+            wstr = NULL;
+            if (ptrA->Trustee.ptstrName)
+            {
+                len = MultiByteToWideChar( CP_ACP, 0, ptrA->Trustee.ptstrName, -1, NULL, 0 );
+                wstr = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR));
+                MultiByteToWideChar( CP_ACP, 0, ptrA->Trustee.ptstrName, -1, wstr, len );
+            }
+            ptrW->Trustee.ptstrName = wstr;
+        }
+
+        err = SetEntriesInAclW( count, pEntriesW, OldAcl, NewAcl );
+
+        ptrW = pEntriesW;
+        for (i = 0; i < count; ++i, ++ptrW)
+        {
+            HeapFree( GetProcessHeap(), 0, ptrW->Trustee.ptstrName );
+        }
+        HeapFree( GetProcessHeap(), 0, pEntriesW );
+    }
+    else
+    {
+        err = ERROR_NOT_ENOUGH_MEMORY;
+    }
+    return err;
 }
 
 /******************************************************************************
@@ -3541,7 +3589,8 @@ DWORD WINAPI SetEntriesInAclW( ULONG count, PEXPLICIT_ACCESSW pEntries,
 
     TRACE("%d %p %p %p\n", count, pEntries, OldAcl, NewAcl);
 
-    *NewAcl = NULL;
+    if (NewAcl)
+        *NewAcl = NULL;
 
     if (!count && !OldAcl)
         return ERROR_SUCCESS;
