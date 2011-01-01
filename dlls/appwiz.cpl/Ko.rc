@@ -47,6 +47,7 @@ STRINGTABLE
 {
     IDS_DOWNLOADING     "다운로드중..."
     IDS_INSTALLING      "설치하는 중..."
+    IDS_INVALID_SHA     "다운로드한 파일의 체크섬에 문제가 있습니다..망가진 파일의 설치를 취소하는 중입니다."
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
