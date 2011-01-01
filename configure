@@ -15391,6 +15391,17 @@ ac_config_files="$ac_config_files Make.tmp:Make.vars.in:Makefile.in"
 
 
 
+if test "x$enable_maintainer_mode" = xyes
+then
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS "\$(srcdir)/configure: configure.ac aclocal.m4
+	cd \$(srcdir) && autoconf --warnings=all
+
+\$(srcdir)/include/config.h.in: include/stamp-h.in
+\$(srcdir)/include/stamp-h.in: configure.ac aclocal.m4
+	cd \$(srcdir) && autoheader --warnings=all
+	@echo timestamp > \$@"
+fi
+
 if test -n "$with_wine64"
 then
 wine_fn_append_rule ALL_MAKEFILE_DEPENDS "all: fonts server $with_wine64/loader/wine $with_wine64/loader/wine-preloader

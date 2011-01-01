@@ -2939,6 +2939,17 @@ AC_CONFIG_FILES([Make.tmp:Make.vars.in:Makefile.in])
 
 dnl Some final makefile rules
 
+if test "x$enable_maintainer_mode" = xyes
+then
+    WINE_APPEND_RULE([ALL_MAKEFILE_DEPENDS],
+[\$(srcdir)/configure: configure.ac aclocal.m4
+	cd \$(srcdir) && autoconf --warnings=all
+\$(srcdir)/include/config.h.in: include/stamp-h.in
+\$(srcdir)/include/stamp-h.in: configure.ac aclocal.m4
+	cd \$(srcdir) && autoheader --warnings=all
+	@echo timestamp > \$[@]])
+fi
+
 if test -n "$with_wine64"
 then
 WINE_APPEND_RULE([ALL_MAKEFILE_DEPENDS],

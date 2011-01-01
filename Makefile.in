@@ -33,14 +33,6 @@ WINAPI_CHECK_EXTRA_FLAGS = --global
 
 # Rules for re-running configure
 
-$(srcdir)/configure: @MAINTAINER_MODE@ configure.ac aclocal.m4
-	cd $(srcdir) && autoconf --warnings=all
-
-$(srcdir)/include/config.h.in: @MAINTAINER_MODE@ include/stamp-h.in
-$(srcdir)/include/stamp-h.in: configure.ac aclocal.m4
-	cd $(srcdir) && autoheader --warnings=all
-	@echo timestamp > $@
-
 config.status: configure
 	@./config.status --recheck
 
