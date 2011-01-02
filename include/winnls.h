@@ -24,6 +24,12 @@
 extern "C" {
 #endif
 
+#ifndef _NORMALIZE_
+# define WINNORMALIZEAPI DECLSPEC_IMPORT
+#else
+# define WINNORMALIZEAPI
+#endif
+
 /* Country codes */
 #define CTRY_DEFAULT            (0)
 #define CTRY_ALBANIA            (355)
@@ -532,8 +538,20 @@ extern "C" {
 #define LGRPID_GEORGIAN            0x10
 #define LGRPID_ARMENIAN            0x11
 
+/* IDN defines. */
+#define IDN_ALLOW_UNASSIGNED        0x1
+#define IDN_USE_STD3_ASCII_RULES    0x2
+
 /* Types
  */
+
+typedef enum _NORM_FORM {
+    NormalizationOther  = 0,
+    NormalizationC      = 0x1,
+    NormalizationD      = 0x2,
+    NormalizationKC     = 0x5,
+    NormalizationKD     = 0x6
+} NORM_FORM;
 
 typedef DWORD CALID;
 typedef DWORD CALTYPE;
@@ -790,8 +808,12 @@ WINBASEAPI LCID        WINAPI GetUserDefaultLCID(void);
 WINBASEAPI INT         WINAPI GetUserDefaultLocaleName(LPWSTR,int);
 WINBASEAPI LANGID      WINAPI GetUserDefaultUILanguage(void);
 WINBASEAPI GEOID       WINAPI GetUserGeoID(GEOCLASS);
+WINNORMALIZEAPI INT    WINAPI IdnToAscii(DWORD,LPCWSTR,INT,LPWSTR,INT);
+WINNORMALIZEAPI INT    WINAPI IdnToNameprepUnicode(DWORD,LPCWSTR,INT,LPWSTR,INT);
+WINNORMALIZEAPI INT    WINAPI IdnToUnicode(DWORD,LPCWSTR,INT,LPWSTR,INT);
 WINBASEAPI BOOL        WINAPI IsDBCSLeadByte(BYTE);
 WINBASEAPI BOOL        WINAPI IsDBCSLeadByteEx(UINT,BYTE);
+WINNORMALIZEAPI BOOL   WINAPI IsNormalizedString(NORM_FORM,LPCWSTR,INT);
 WINBASEAPI BOOL        WINAPI IsValidCodePage(UINT);
 WINBASEAPI BOOL        WINAPI IsValidLocale(LCID,DWORD);
 WINBASEAPI BOOL        WINAPI IsValidLanguageGroup(LGRPID,DWORD);
@@ -801,6 +823,7 @@ WINBASEAPI INT         WINAPI LCMapStringW(LCID,DWORD,LPCWSTR,INT,LPWSTR,INT);
 #define                       LCMapString WINELIB_NAME_AW(LCMapString)
 WINBASEAPI LCID        WINAPI LocaleNameToLCID(LPCWSTR,DWORD);
 WINBASEAPI INT         WINAPI MultiByteToWideChar(UINT,DWORD,LPCSTR,INT,LPWSTR,INT);
+WINNORMALIZEAPI INT    WINAPI NormalizeString(NORM_FORM,LPCWSTR,INT,LPWSTR,INT);
 WINBASEAPI INT         WINAPI SetCalendarInfoA(LCID,CALID,CALTYPE,LPCSTR);
 WINBASEAPI INT         WINAPI SetCalendarInfoW(LCID,CALID,CALTYPE,LPCWSTR);
 #define                       SetCalendarInfo WINELIB_NAME_AW(SetCalendarInfo)
