@@ -631,7 +631,7 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
             AddToTLDataStrW(tld, wszStdCall);
             AddToTLDataStrW(tld, wszSpace);
         }
-        AddToTLDataStrW(tld, bstrName);
+        if (bstrName) AddToTLDataStrW(tld, bstrName);
         AddToTLDataStrW(tld, wszOpenBrackets2);
 
         for(j=0; j<pFuncDesc->cParams; j++)
@@ -701,8 +701,11 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
             AddToTLDataStrW(tld, wszAfter);
             AddToTLDataStrW(tld, wszSpace);
             if (j+1 < namesNo) {
-                AddToTLDataStrW(tld, bstrParamNames[j+1]);
-                SysFreeString(bstrParamNames[j+1]);
+                if (bstrParamNames[j+1])
+                {
+                    AddToTLDataStrW(tld, bstrParamNames[j+1]);
+                    SysFreeString(bstrParamNames[j+1]);
+                }
             } else {
                 AddToTLDataStrW(tld, szRhs);
             }
