@@ -3857,3 +3857,60 @@ INT WINAPI GetUserDefaultLocaleName(LPWSTR localename, int buffersize)
     userlcid = GetUserDefaultLCID();
     return LCIDToLocaleName(userlcid, localename, buffersize, 0);
 }
+
+/******************************************************************************
+ *           NormalizeString (KERNEL32.@)
+ */
+INT WINAPI NormalizeString(NORM_FORM NormForm, LPCWSTR lpSrcString, INT cwSrcLength,
+                           LPWSTR lpDstString, INT cwDstLength)
+{
+    FIXME("%x %p %d %p %d\n", NormForm, lpSrcString, cwSrcLength, lpDstString, cwDstLength);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+/******************************************************************************
+ *           IsNormalizedString (KERNEL32.@)
+ */
+BOOL WINAPI IsNormalizedString(NORM_FORM NormForm, LPCWSTR lpString, INT cwLength)
+{
+    FIXME("%x %p %d\n", NormForm, lpString, cwLength);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/******************************************************************************
+ *           IdnToAscii (KERNEL32.@)
+ */
+INT WINAPI IdnToAscii(DWORD dwFlags, LPCWSTR lpUnicodeCharStr, INT cchUnicodeChar,
+                      LPWSTR lpASCIICharStr, INT cchASCIIChar)
+{
+    FIXME("%x %p %d %p %d\n", dwFlags, lpUnicodeCharStr, cchUnicodeChar,
+        lpASCIICharStr, cchASCIIChar);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+/******************************************************************************
+ *           IdnToNameprepUnicode (KERNEL32.@)
+ */
+INT WINAPI IdnToNameprepUnicode(DWORD dwFlags, LPCWSTR lpUnicodeCharStr, INT cchUnicodeChar,
+                                LPWSTR lpNameprepCharStr, INT cchNameprepChar)
+{
+    FIXME("%x %p %d %p %d\n", dwFlags, lpUnicodeCharStr, cchUnicodeChar,
+        lpNameprepCharStr, cchNameprepChar);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+/******************************************************************************
+ *           IdnToUnicode (KERNEL32.@)
+ */
+INT WINAPI IdnToUnicode(DWORD dwFlags, LPCWSTR lpASCIICharStr, INT cchASCIIChar,
+                        LPWSTR lpUnicodeCharStr, INT cchUnicodeChar)
+{
+    FIXME("%x %p %d %p %d\n", dwFlags, lpASCIICharStr, cchASCIIChar,
+        lpUnicodeCharStr, cchUnicodeChar);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}

@@ -1,4 +1,4 @@
-EXTRADEFS = -D_KERNEL32_
+EXTRADEFS = -D_KERNEL32_ -D_NORMALIZE_
 MODULE    = kernel32.dll
 IMPORTLIB = kernel32
 IMPORTS   = winecrt0 ntdll

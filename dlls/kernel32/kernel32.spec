@@ -726,6 +726,9 @@
 @ stub HeapUsage
 @ stdcall HeapValidate(long long ptr)
 @ stdcall HeapWalk(long ptr)
+@ stdcall IdnToAscii(long wstr long ptr long)
+@ stdcall IdnToNameprepUnicode(long wstr long ptr long)
+@ stdcall IdnToUnicode(long wstr long ptr long)
 @ stdcall InitAtomTable(long)
 @ stdcall InitializeCriticalSection(ptr)
 @ stdcall InitializeCriticalSectionAndSpinCount(ptr long)
@@ -753,6 +756,7 @@
 @ stdcall IsDBCSLeadByteEx(long long)
 @ stdcall IsDebuggerPresent()
 @ stub -i386 IsLSCallback
+@ stdcall IsNormalizedString(long wstr long)
 @ stdcall IsProcessInJob(long long ptr)
 @ stdcall IsProcessorFeaturePresent(long)
 @ stub -i386 IsSLCallback
@@ -832,6 +836,7 @@
 # @ stub NlsConvertIntegerToString
 # @ stub NlsGetCacheUpdateCount
 # @ stub NlsResetProcessLocale
+@ stdcall NormalizeString(long wstr long ptr long)
 @ stub NotifyNLSUserCache
 # @ stub NumaVirtualQueryNode
 @ stdcall OpenConsoleW(wstr long long long)
