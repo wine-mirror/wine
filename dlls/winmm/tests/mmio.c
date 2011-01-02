@@ -65,7 +65,7 @@ static void test_mmioDescend(char *fname)
     MMRESULT ret;
     HMMIO hmmio;
     MMIOINFO mmio;
-    MMCKINFO ckRiff, ckList, ck;
+    MMCKINFO ckRiff, ckList, ck, ckList2;
 
     memset(&mmio, 0, sizeof(mmio));
     mmio.fccIOProc = fname ? FOURCC_DOS : FOURCC_MEM;
@@ -118,17 +118,17 @@ static void test_mmioDescend(char *fname)
     ret = mmioSeek(hmmio, ck.cksize, SEEK_CUR);
     ok(ret == 0x58, "expected 0x58, got %#x\n", ret);
 
-    ret = mmioDescend(hmmio, &ckList, &ckList, 0);
+    ret = mmioDescend(hmmio, &ckList2, &ckList, 0);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
-    ok(ckList.ckid == FOURCC_LIST, "wrong ckid: %04x\n", ckList.ckid);
-    ok(ckList.fccType == listtypeSTREAMHEADER, "wrong fccType: %04x\n", ckList.fccType);
+    ok(ckList2.ckid == FOURCC_LIST, "wrong ckid: %04x\n", ckList2.ckid);
+    ok(ckList2.fccType == listtypeSTREAMHEADER, "wrong fccType: %04x\n", ckList2.fccType);
     trace("ckid %4.4s cksize %04x fccType %4.4s off %04x flags %04x\n",
-          (LPCSTR)&ckList.ckid, ckList.cksize, (LPCSTR)&ckList.fccType,
-          ckList.dwDataOffset, ckList.dwFlags);
+          (LPCSTR)&ckList2.ckid, ckList2.cksize, (LPCSTR)&ckList2.fccType,
+          ckList2.dwDataOffset, ckList2.dwFlags);
 
     expect_buf_offset(hmmio, 100);
 
-    ret = mmioDescend(hmmio, &ck, &ckList, 0);
+    ret = mmioDescend(hmmio, &ck, &ckList2, 0);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
     ok(ck.ckid == ckidSTREAMHEADER, "wrong ckid: %04x\n", ck.ckid);
     ok(ck.fccType == 0, "wrong fccType: %04x\n", ck.fccType);
