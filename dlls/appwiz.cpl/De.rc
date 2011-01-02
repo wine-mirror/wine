@@ -1,8 +1,8 @@
 /*
 * Add/Remove Programs German resources
 *
-* Copyright 2009-2010 André Hentschel
 * Copyright 2005 Henning Gerhardt
+* Copyright 2009-2011 André Hentschel
 *
 * This library is free software; you can redistribute it and/or
 * modify it under the terms of the GNU Lesser General Public
@@ -48,6 +48,7 @@ STRINGTABLE
 {
     IDS_DOWNLOADING   "Lade herunter..."
     IDS_INSTALLING    "Installiere..."
+    IDS_INVALID_SHA   "Unerwartete Prüfsumme der heruntergeladenen Datei. Breche Installation der beschädigten Datei ab."
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
