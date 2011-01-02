@@ -2318,9 +2318,9 @@ static void test_process_security_child(void)
     ok(handle != NULL, "OpenProcess(PROCESS_TERMINATE) with err:%d\n", GetLastError());
     TEST_GRANTED_ACCESS( handle, PROCESS_TERMINATE );
 
-    ok(DuplicateHandle( GetCurrentProcess(), handle, GetCurrentProcess(),
-                        &handle1, 0, TRUE, DUPLICATE_SAME_ACCESS ),
-       "duplicating handle err:%d\n", GetLastError());
+    ret = DuplicateHandle( GetCurrentProcess(), handle, GetCurrentProcess(),
+                           &handle1, 0, TRUE, DUPLICATE_SAME_ACCESS );
+    ok(ret, "duplicating handle err:%d\n", GetLastError());
     TEST_GRANTED_ACCESS( handle1, PROCESS_TERMINATE );
 
     CloseHandle( handle1 );
@@ -2344,23 +2344,23 @@ static void test_process_security_child(void)
     ok(handle == NULL, "OpenProcess(PROCESS_ALL_ACCESS) should have failed\n");
 
     /* Documented privilege elevation */
-    ok(DuplicateHandle( GetCurrentProcess(), GetCurrentProcess(), GetCurrentProcess(),
-                        &handle, 0, TRUE, DUPLICATE_SAME_ACCESS ),
-       "duplicating handle err:%d\n", GetLastError());
+    ret = DuplicateHandle( GetCurrentProcess(), GetCurrentProcess(), GetCurrentProcess(),
+                           &handle, 0, TRUE, DUPLICATE_SAME_ACCESS );
+    ok(ret, "duplicating handle err:%d\n", GetLastError());
     TEST_GRANTED_ACCESS2( handle, PROCESS_ALL_ACCESS,
                           STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL );
 
     CloseHandle( handle );
 
     /* Same only explicitly asking for all access rights */
-    ok(DuplicateHandle( GetCurrentProcess(), GetCurrentProcess(), GetCurrentProcess(),
-                        &handle, PROCESS_ALL_ACCESS, TRUE, 0 ),
-       "duplicating handle err:%d\n", GetLastError());
+    ret = DuplicateHandle( GetCurrentProcess(), GetCurrentProcess(), GetCurrentProcess(),
+                           &handle, PROCESS_ALL_ACCESS, TRUE, 0 );
+    ok(ret, "duplicating handle err:%d\n", GetLastError());
     TEST_GRANTED_ACCESS2( handle, PROCESS_ALL_ACCESS,
                           PROCESS_ALL_ACCESS | PROCESS_QUERY_LIMITED_INFORMATION );
-    ok(DuplicateHandle( GetCurrentProcess(), handle, GetCurrentProcess(),
-                        &handle1, PROCESS_VM_READ, TRUE, 0 ),
-       "duplicating handle err:%d\n", GetLastError());
+    ret = DuplicateHandle( GetCurrentProcess(), handle, GetCurrentProcess(),
+                           &handle1, PROCESS_VM_READ, TRUE, 0 );
+    ok(ret, "duplicating handle err:%d\n", GetLastError());
     TEST_GRANTED_ACCESS( handle1, PROCESS_VM_READ );
     CloseHandle( handle1 );
     CloseHandle( handle );
