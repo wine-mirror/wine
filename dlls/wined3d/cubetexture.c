@@ -251,7 +251,7 @@ static DWORD WINAPI IWineD3DCubeTextureImpl_SetLOD(IWineD3DCubeTexture *iface, D
 }
 
 static DWORD WINAPI IWineD3DCubeTextureImpl_GetLOD(IWineD3DCubeTexture *iface) {
-    return basetexture_get_lod((IWineD3DBaseTexture *)iface);
+    return basetexture_get_lod((IWineD3DBaseTextureImpl *)iface);
 }
 
 static DWORD WINAPI IWineD3DCubeTextureImpl_GetLevelCount(IWineD3DCubeTexture *iface)

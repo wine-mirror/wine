@@ -157,13 +157,11 @@ DWORD basetexture_set_lod(IWineD3DBaseTextureImpl *texture, DWORD lod)
     return old;
 }
 
-DWORD basetexture_get_lod(IWineD3DBaseTexture *iface)
+DWORD basetexture_get_lod(IWineD3DBaseTextureImpl *texture)
 {
-    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
+    TRACE("texture %p, returning %u.\n", texture, texture->baseTexture.LOD);
 
-    TRACE("(%p) : returning %d\n", This, This->baseTexture.LOD);
-
-    return This->baseTexture.LOD;
+    return texture->baseTexture.LOD;
 }
 
 DWORD basetexture_get_level_count(IWineD3DBaseTextureImpl *texture)
