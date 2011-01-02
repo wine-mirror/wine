@@ -576,7 +576,7 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
     case DISPID_GLOBAL_ISWIN64:
         if(pvarRes) {
             V_VT(pvarRes) = VT_BOOL;
-            V_BSTR(pvarRes) = sizeof(void*) == 8 ? VARIANT_TRUE : VARIANT_FALSE;
+            V_BOOL(pvarRes) = sizeof(void*) == 8 ? VARIANT_TRUE : VARIANT_FALSE;
         }
         return S_OK;
 
