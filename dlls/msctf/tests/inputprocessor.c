@@ -2113,6 +2113,8 @@ START_TEST(inputprocessor)
     {
         test_Register();
         test_RegisterCategory();
+        Sleep(2000); /* Win7 needs some time before the registrations become active */
+        processPendingMessages();
         test_EnumLanguageProfiles();
         test_EnumInputProcessorInfo();
         test_Enable();
