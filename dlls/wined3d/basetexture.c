@@ -170,50 +170,52 @@ DWORD basetexture_get_level_count(IWineD3DBaseTextureImpl *texture)
     return texture->baseTexture.level_count;
 }
 
-HRESULT basetexture_set_autogen_filter_type(IWineD3DBaseTexture *iface, WINED3DTEXTUREFILTERTYPE FilterType)
+HRESULT basetexture_set_autogen_filter_type(IWineD3DBaseTextureImpl *texture, WINED3DTEXTUREFILTERTYPE filter_type)
 {
-  IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-  IWineD3DDeviceImpl *device = This->resource.device;
-  GLenum textureDimensions = This->baseTexture.target;
+    TRACE("texture %p, filter_type %s.\n", texture, debug_d3dtexturefiltertype(filter_type));
 
-  if (!(This->resource.usage & WINED3DUSAGE_AUTOGENMIPMAP)) {
-      TRACE("(%p) : returning invalid call\n", This);
-      return WINED3DERR_INVALIDCALL;
-  }
-  if(This->baseTexture.filterType != FilterType) {
-      /* What about multithreading? Do we want all the context overhead just to set this value?
-       * Or should we delay the applying until the texture is used for drawing? For now, apply
-       * immediately.
-       */
-      struct wined3d_context *context = context_acquire(device, NULL);
+    if (!(texture->resource.usage & WINED3DUSAGE_AUTOGENMIPMAP))
+    {
+        WARN("Texture doesn't have AUTOGENMIPMAP usage.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
 
-      ENTER_GL();
-      glBindTexture(textureDimensions, This->baseTexture.texture_rgb.name);
-      checkGLcall("glBindTexture");
-      switch(FilterType) {
-          case WINED3DTEXF_NONE:
-          case WINED3DTEXF_POINT:
-              glTexParameteri(textureDimensions, GL_GENERATE_MIPMAP_HINT_SGIS, GL_FASTEST);
-              checkGLcall("glTexParameteri(textureDimensions, GL_GENERATE_MIPMAP_HINT_SGIS, GL_FASTEST)");
+    if (texture->baseTexture.filterType != filter_type)
+    {
+        GLenum target = texture->baseTexture.target;
+        struct wined3d_context *context;
 
-              break;
-          case WINED3DTEXF_LINEAR:
-              glTexParameteri(textureDimensions, GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
-              checkGLcall("glTexParameteri(textureDimensions, GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST)");
+        context = context_acquire(texture->resource.device, NULL);
 
-              break;
-          default:
-              WARN("Unexpected filter type %d, setting to GL_NICEST\n", FilterType);
-              glTexParameteri(textureDimensions, GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
-              checkGLcall("glTexParameteri(textureDimensions, GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST)");
-      }
-      LEAVE_GL();
+        ENTER_GL();
+        glBindTexture(target, texture->baseTexture.texture_rgb.name);
+        checkGLcall("glBindTexture");
+        switch (filter_type)
+        {
+            case WINED3DTEXF_NONE:
+            case WINED3DTEXF_POINT:
+                glTexParameteri(target, GL_GENERATE_MIPMAP_HINT_SGIS, GL_FASTEST);
+                checkGLcall("glTexParameteri(target, GL_GENERATE_MIPMAP_HINT_SGIS, GL_FASTEST)");
+                break;
 
-      context_release(context);
-  }
-  This->baseTexture.filterType = FilterType;
-  TRACE("(%p) :\n", This);
-  return WINED3D_OK;
+            case WINED3DTEXF_LINEAR:
+                glTexParameteri(target, GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
+                checkGLcall("glTexParameteri(target, GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST)");
+                break;
+
+            default:
+                WARN("Unexpected filter type %#x, setting to GL_NICEST.\n", filter_type);
+                glTexParameteri(target, GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
+                checkGLcall("glTexParameteri(target, GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST)");
+                break;
+        }
+        LEAVE_GL();
+
+        context_release(context);
+    }
+    texture->baseTexture.filterType = filter_type;
+
+    return WINED3D_OK;
 }
 
 WINED3DTEXTUREFILTERTYPE basetexture_get_autogen_filter_type(IWineD3DBaseTexture *iface)

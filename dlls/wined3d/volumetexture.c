@@ -214,8 +214,10 @@ static DWORD WINAPI IWineD3DVolumeTextureImpl_GetLevelCount(IWineD3DVolumeTextur
     return basetexture_get_level_count((IWineD3DBaseTextureImpl *)iface);
 }
 
-static HRESULT WINAPI IWineD3DVolumeTextureImpl_SetAutoGenFilterType(IWineD3DVolumeTexture *iface, WINED3DTEXTUREFILTERTYPE FilterType) {
-  return basetexture_set_autogen_filter_type((IWineD3DBaseTexture *)iface, FilterType);
+static HRESULT WINAPI IWineD3DVolumeTextureImpl_SetAutoGenFilterType(IWineD3DVolumeTexture *iface,
+        WINED3DTEXTUREFILTERTYPE FilterType)
+{
+  return basetexture_set_autogen_filter_type((IWineD3DBaseTextureImpl *)iface, FilterType);
 }
 
 static WINED3DTEXTUREFILTERTYPE WINAPI IWineD3DVolumeTextureImpl_GetAutoGenFilterType(IWineD3DVolumeTexture *iface) {
