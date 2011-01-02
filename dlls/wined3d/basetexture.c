@@ -218,13 +218,11 @@ HRESULT basetexture_set_autogen_filter_type(IWineD3DBaseTextureImpl *texture, WI
     return WINED3D_OK;
 }
 
-WINED3DTEXTUREFILTERTYPE basetexture_get_autogen_filter_type(IWineD3DBaseTexture *iface)
+WINED3DTEXTUREFILTERTYPE basetexture_get_autogen_filter_type(IWineD3DBaseTextureImpl *texture)
 {
-    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
+    TRACE("texture %p.\n", texture);
 
-    FIXME("(%p) : stub\n", This);
-
-    return This->baseTexture.filterType;
+    return texture->baseTexture.filterType;
 }
 
 void basetexture_generate_mipmaps(IWineD3DBaseTexture *iface)

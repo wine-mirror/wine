@@ -265,8 +265,9 @@ static HRESULT WINAPI IWineD3DCubeTextureImpl_SetAutoGenFilterType(IWineD3DCubeT
   return basetexture_set_autogen_filter_type((IWineD3DBaseTextureImpl *)iface, FilterType);
 }
 
-static WINED3DTEXTUREFILTERTYPE WINAPI IWineD3DCubeTextureImpl_GetAutoGenFilterType(IWineD3DCubeTexture *iface) {
-  return basetexture_get_autogen_filter_type((IWineD3DBaseTexture *)iface);
+static WINED3DTEXTUREFILTERTYPE WINAPI IWineD3DCubeTextureImpl_GetAutoGenFilterType(IWineD3DCubeTexture *iface)
+{
+  return basetexture_get_autogen_filter_type((IWineD3DBaseTextureImpl *)iface);
 }
 
 static void WINAPI IWineD3DCubeTextureImpl_GenerateMipSubLevels(IWineD3DCubeTexture *iface) {

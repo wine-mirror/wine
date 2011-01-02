@@ -1915,7 +1915,7 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
 HRESULT basetexture_bind(IWineD3DBaseTexture *iface, BOOL srgb, BOOL *set_surface_desc) DECLSPEC_HIDDEN;
 void basetexture_cleanup(IWineD3DBaseTextureImpl *texture) DECLSPEC_HIDDEN;
 void basetexture_generate_mipmaps(IWineD3DBaseTexture *iface) DECLSPEC_HIDDEN;
-WINED3DTEXTUREFILTERTYPE basetexture_get_autogen_filter_type(IWineD3DBaseTexture *iface) DECLSPEC_HIDDEN;
+WINED3DTEXTUREFILTERTYPE basetexture_get_autogen_filter_type(IWineD3DBaseTextureImpl *texture) DECLSPEC_HIDDEN;
 DWORD basetexture_get_level_count(IWineD3DBaseTextureImpl *texture) DECLSPEC_HIDDEN;
 DWORD basetexture_get_lod(IWineD3DBaseTextureImpl *texture) DECLSPEC_HIDDEN;
 IWineD3DResourceImpl *basetexture_get_sub_resource(IWineD3DBaseTextureImpl *texture,
