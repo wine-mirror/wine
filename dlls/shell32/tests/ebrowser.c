@@ -1706,6 +1706,8 @@ static void test_InputObject(void)
         process_msgs();
         hr = IInputObject_TranslateAcceleratorIO(pio, &msg_a);
         todo_wine ok(hr == (found ? S_OK : S_FALSE), "Got 0x%08x (%04x)\n", hr, i);
+        if(i == VK_F5)
+            Sleep(1000); /* Needed for w2k8 (64bit) */
     }
 
     process_msgs();
