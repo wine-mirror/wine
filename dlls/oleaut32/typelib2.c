@@ -1976,7 +1976,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
     insert = alloc_cyclic_list_item(CyclicListFunc);
     if(!insert)
         return E_OUTOFMEMORY;
-    insert->u.data = HeapAlloc(GetProcessHeap(), 0, sizeof(int[6])+sizeof(int[(num_defaults?4:3)])*pFuncDesc->cParams);
+    insert->u.data = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(MSFT_FuncRecord, HelpContext)+
+        sizeof(int[(num_defaults?4:3)])*pFuncDesc->cParams);
     if(!insert->u.data) {
         HeapFree(GetProcessHeap(), 0, insert);
         return E_OUTOFMEMORY;
@@ -1984,7 +1985,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
 
     /* fill out the basic type information */
     typedata = insert->u.data;
-    typedata[0] = 0x18 + pFuncDesc->cParams*(num_defaults?16:12);
+    typedata[0] = FIELD_OFFSET(MSFT_FuncRecord, HelpContext) + pFuncDesc->cParams*(num_defaults?16:12);
     ctl2_encode_typedesc(This->typelib, &pFuncDesc->elemdescFunc.tdesc, &typedata[1], NULL, NULL, &decoded_size);
     typedata[2] = pFuncDesc->wFuncFlags;
     typedata[3] = ((sizeof(FUNCDESC) + decoded_size) << 16) | (unsigned short)(pFuncDesc->oVft?pFuncDesc->oVft+1:0);
@@ -2048,7 +2049,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
     }
 
     /* update type data size */
-    This->typedata->next->u.val += 0x18 + pFuncDesc->cParams*(num_defaults?16:12);
+    This->typedata->next->u.val += FIELD_OFFSET(MSFT_FuncRecord, HelpContext) + pFuncDesc->cParams*(num_defaults?16:12);
 
     /* Increment the number of function elements */
     This->typeinfo->cElement += 1;
