@@ -118,6 +118,7 @@ struct hgdiobj_event
 static DWORD WINAPI thread_proc(void *param)
 {
     LOGPEN lp;
+    DWORD status;
     struct hgdiobj_event *hgdiobj_event = param;
 
     hgdiobj_event->hdc = CreateDC("display", NULL, NULL, NULL);
@@ -130,8 +131,8 @@ static DWORD WINAPI thread_proc(void *param)
     ok(hgdiobj_event->hgdiobj2 != 0, "Failed to create pen\n");
 
     SetEvent(hgdiobj_event->ready_event);
-    ok(WaitForSingleObject(hgdiobj_event->stop_event, INFINITE) == WAIT_OBJECT_0,
-       "WaitForSingleObject error %u\n", GetLastError());
+    status = WaitForSingleObject(hgdiobj_event->stop_event, INFINITE);
+    ok(status == WAIT_OBJECT_0, "WaitForSingleObject error %u\n", GetLastError());
 
     ok(!GetObject(hgdiobj_event->hgdiobj1, sizeof(lp), &lp), "GetObject should fail\n");
 
@@ -147,6 +148,8 @@ static void test_thread_objects(void)
     HANDLE hthread;
     struct hgdiobj_event hgdiobj_event;
     INT ret;
+    DWORD status;
+    BOOL bRet;
 
     hgdiobj_event.stop_event = CreateEvent(NULL, 0, 0, NULL);
     ok(hgdiobj_event.stop_event != NULL, "CreateEvent error %u\n", GetLastError());
@@ -156,11 +159,11 @@ static void test_thread_objects(void)
     hthread = CreateThread(NULL, 0, thread_proc, &hgdiobj_event, 0, &tid);
     ok(hthread != NULL, "CreateThread error %u\n", GetLastError());
 
-    ok(WaitForSingleObject(hgdiobj_event.ready_event, INFINITE) == WAIT_OBJECT_0,
-       "WaitForSingleObject error %u\n", GetLastError());
+    status = WaitForSingleObject(hgdiobj_event.ready_event, INFINITE);
+    ok(status == WAIT_OBJECT_0, "WaitForSingleObject error %u\n", GetLastError());
 
-    ok(GetObject(hgdiobj_event.hgdiobj1, sizeof(lp), &lp) == sizeof(lp),
-       "GetObject error %u\n", GetLastError());
+    ret = GetObject(hgdiobj_event.hgdiobj1, sizeof(lp), &lp);
+    ok(ret == sizeof(lp), "GetObject error %u\n", GetLastError());
     ok(lp.lopnStyle == PS_DASHDOTDOT, "wrong pen style %d\n", lp.lopnStyle);
     ok(lp.lopnWidth.x == 17, "wrong pen width.y %d\n", lp.lopnWidth.x);
     ok(lp.lopnWidth.y == 0, "wrong pen width.y %d\n", lp.lopnWidth.y);
@@ -169,20 +172,23 @@ static void test_thread_objects(void)
     ret = GetDeviceCaps(hgdiobj_event.hdc, TECHNOLOGY);
     ok(ret == DT_RASDISPLAY, "GetDeviceCaps(TECHNOLOGY) should return DT_RASDISPLAY not %d\n", ret);
 
-    ok(DeleteObject(hgdiobj_event.hgdiobj1), "DeleteObject error %u\n", GetLastError());
-    ok(DeleteDC(hgdiobj_event.hdc), "DeleteDC error %u\n", GetLastError());
+    bRet = DeleteObject(hgdiobj_event.hgdiobj1);
+    ok(bRet, "DeleteObject error %u\n", GetLastError());
+    bRet = DeleteDC(hgdiobj_event.hdc);
+    ok(bRet, "DeleteDC error %u\n", GetLastError());
 
     type = GetObjectType(hgdiobj_event.hgdiobj2);
     ok(type == OBJ_REGION, "GetObjectType returned %u\n", type);
 
     SetEvent(hgdiobj_event.stop_event);
-    ok(WaitForSingleObject(hthread, INFINITE) == WAIT_OBJECT_0,
-       "WaitForSingleObject error %u\n", GetLastError());
+    status = WaitForSingleObject(hthread, INFINITE);
+    ok(status == WAIT_OBJECT_0, "WaitForSingleObject error %u\n", GetLastError());
     CloseHandle(hthread);
 
     type = GetObjectType(hgdiobj_event.hgdiobj2);
     ok(type == OBJ_REGION, "GetObjectType returned %u\n", type);
-    ok(DeleteObject(hgdiobj_event.hgdiobj2), "DeleteObject error %u\n", GetLastError());
+    bRet = DeleteObject(hgdiobj_event.hgdiobj2);
+    ok(bRet, "DeleteObject error %u\n", GetLastError());
 
     CloseHandle(hgdiobj_event.stop_event);
     CloseHandle(hgdiobj_event.ready_event);

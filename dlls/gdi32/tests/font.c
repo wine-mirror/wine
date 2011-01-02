@@ -800,6 +800,7 @@ static void test_bitmap_font_metrics(void)
         {
             DWORD fs[2];
             CHARSETINFO csi;
+            BOOL bRet;
 
             fs[0] = 1L << bit;
             fs[1] = 0;
@@ -812,7 +813,8 @@ static void test_bitmap_font_metrics(void)
 
             hfont = create_font(lf.lfFaceName, &lf);
             old_hfont = SelectObject(hdc, hfont);
-            ok(GetTextMetrics(hdc, &tm), "GetTextMetrics error %d\n", GetLastError());
+            bRet = GetTextMetrics(hdc, &tm);
+            ok(bRet, "GetTextMetrics error %d\n", GetLastError());
             if(fd[i].dpi == tm.tmDigitizedAspectX)
             {
                 trace("found font %s, height %d charset %x dpi %d\n", lf.lfFaceName, lf.lfHeight, lf.lfCharSet, fd[i].dpi);
@@ -1166,6 +1168,7 @@ static void test_GetKerningPairs(void)
     for (i = 0; i < sizeof(kd)/sizeof(kd[0]); i++)
     {
         OUTLINETEXTMETRICW otm;
+        UINT uiRet;
 
         if (!is_font_installed(kd[i].face_name))
         {
@@ -1185,7 +1188,8 @@ static void test_GetKerningPairs(void)
 
         SetLastError(0xdeadbeef);
         otm.otmSize = sizeof(otm); /* just in case for Win9x compatibility */
-        ok(GetOutlineTextMetricsW(hdc, sizeof(otm), &otm) == sizeof(otm), "GetOutlineTextMetricsW error %d\n", GetLastError());
+        uiRet = GetOutlineTextMetricsW(hdc, sizeof(otm), &otm);
+        ok(uiRet == sizeof(otm), "GetOutlineTextMetricsW error %d\n", GetLastError());
 
         ok(match_off_by_1(kd[i].tmHeight, otm.otmTextMetrics.tmHeight), "expected %d, got %d\n",
            kd[i].tmHeight, otm.otmTextMetrics.tmHeight);
@@ -3197,6 +3201,7 @@ static void test_AddFontMemResource(void)
     void *font;
     DWORD font_size, num_fonts;
     HANDLE ret;
+    BOOL bRet;
 
     if (!pAddFontMemResourceEx || !pRemoveFontMemResourceEx)
     {
@@ -3284,7 +3289,8 @@ static void test_AddFontMemResource(void)
     free_font(font);
 
     SetLastError(0xdeadbeef);
-    ok(pRemoveFontMemResourceEx(ret), "RemoveFontMemResourceEx error %d\n", GetLastError());
+    bRet = pRemoveFontMemResourceEx(ret);
+    ok(bRet, "RemoveFontMemResourceEx error %d\n", GetLastError());
 
     /* test invalid pointer to number of loaded fonts */
     font = load_font("sserife.fon", &font_size);

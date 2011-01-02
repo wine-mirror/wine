@@ -340,13 +340,17 @@ static int CALLBACK savedc_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
     ret = GetWorldTransform(hdc, &xform);
     if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        ok(GetWindowOrgEx(hdc, &pt), "GetWindowOrgEx error %u\n", GetLastError());
+        ret = GetWindowOrgEx(hdc, &pt);
+        ok(ret, "GetWindowOrgEx error %u\n", GetLastError());
         trace("window org (%d,%d)\n", pt.x, pt.y);
-        ok(GetViewportOrgEx(hdc, &pt), "GetViewportOrgEx error %u\n", GetLastError());
+        ret = GetViewportOrgEx(hdc, &pt);
+        ok(ret, "GetViewportOrgEx error %u\n", GetLastError());
         trace("vport org (%d,%d)\n", pt.x, pt.y);
-        ok(GetWindowExtEx(hdc, &size), "GetWindowExtEx error %u\n", GetLastError());
+        ret = GetWindowExtEx(hdc, &size);
+        ok(ret, "GetWindowExtEx error %u\n", GetLastError());
         trace("window ext (%d,%d)\n", size.cx, size.cy);
-        ok(GetViewportExtEx(hdc, &size), "GetViewportExtEx error %u\n", GetLastError());
+        ret = GetViewportExtEx(hdc, &size);
+        ok(ret, "GetViewportExtEx error %u\n", GetLastError());
         trace("vport ext (%d,%d)\n", size.cx, size.cy);
     }
     else
@@ -458,13 +462,17 @@ static int CALLBACK savedc_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
     ret = GetWorldTransform(hdc, &xform);
     if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        ok(GetWindowOrgEx(hdc, &pt), "GetWindowOrgEx error %u\n", GetLastError());
+        ret = GetWindowOrgEx(hdc, &pt);
+        ok(ret, "GetWindowOrgEx error %u\n", GetLastError());
         trace("window org (%d,%d)\n", pt.x, pt.y);
-        ok(GetViewportOrgEx(hdc, &pt), "GetViewportOrgEx error %u\n", GetLastError());
+        ret = GetViewportOrgEx(hdc, &pt);
+        ok(ret, "GetViewportOrgEx error %u\n", GetLastError());
         trace("vport org (%d,%d)\n", pt.x, pt.y);
-        ok(GetWindowExtEx(hdc, &size), "GetWindowExtEx error %u\n", GetLastError());
+        ret = GetWindowExtEx(hdc, &size);
+        ok(ret, "GetWindowExtEx error %u\n", GetLastError());
         trace("window ext (%d,%d)\n", size.cx, size.cy);
-        ok(GetViewportExtEx(hdc, &size), "GetViewportExtEx error %u\n", GetLastError());
+        ret = GetViewportExtEx(hdc, &size);
+        ok(ret, "GetViewportExtEx error %u\n", GetLastError());
         trace("vport ext (%d,%d)\n", size.cx, size.cy);
     }
     else
