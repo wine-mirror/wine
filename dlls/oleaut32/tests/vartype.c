@@ -4903,23 +4903,30 @@ static void test_VarBstrFromR4(void)
   }
 }
 
-#define BSTR_DATE(dt,str) \
-  bstr = NULL; \
-  hres = pVarBstrFromDate(dt,lcid,LOCALE_NOUSEROVERRIDE,&bstr); \
-  if (bstr) {WideCharToMultiByte(CP_ACP, 0, bstr, -1, buff, sizeof(buff), 0, 0); SysFreeString(bstr);} \
-  else buff[0] = 0; \
-  ok(hres == S_OK && !strcmp(str,buff), "Expected '%s', got '%s', hres = 0x%08x\n", \
-     str, buff, hres)
+static void _BSTR_DATE(DATE dt, const char *str, int line)
+{
+  LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
+  char buff[256];
+  BSTR bstr = NULL;
+  HRESULT hres;
+
+  hres = pVarBstrFromDate(dt, lcid, LOCALE_NOUSEROVERRIDE, &bstr);
+  if (bstr)
+  {
+    WideCharToMultiByte(CP_ACP, 0, bstr, -1, buff, sizeof(buff), 0, 0);
+    SysFreeString(bstr);
+  }
+  else
+    buff[0] = 0;
+  ok_(__FILE__, line)(hres == S_OK && !strcmp(str, buff),
+      "Expected '%s', got '%s', hres = 0x%08x\n", str, buff, hres);
+}
 
 static void test_VarBstrFromDate(void)
 {
-  char buff[256];
-  LCID lcid;
-  HRESULT hres;
-  BSTR bstr;
+#define BSTR_DATE(dt,str) _BSTR_DATE(dt,str,__LINE__)
 
   CHECKPTR(VarBstrFromDate);
-  lcid = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
 
   BSTR_DATE(0.0, "12:00:00 AM");
   BSTR_DATE(3.34, "1/2/1900 8:09:36 AM");
@@ -4930,174 +4937,146 @@ static void test_VarBstrFromDate(void)
   BSTR_DATE(1461.5, "12/31/1903 12:00:00 PM");
   todo_wine { BSTR_DATE(-657434.0, "1/1/100"); }
   BSTR_DATE(2958465.0, "12/31/9999");
+
+#undef BSTR_DATE
 }
 
-#define BSTR_CY(l, a, b, e) \
-  S(l).Lo = b; S(l).Hi = a; \
-  hres = pVarBstrFromCy(l, lcid, LOCALE_NOUSEROVERRIDE, &bstr);\
-  ok(hres == S_OK, "got hres 0x%08x\n", hres);\
-  if (hres== S_OK && bstr)\
-  {\
-    ok(lstrcmpW(bstr, e) == 0, "invalid number (got %s)\n", wtoascii(bstr));\
-    SysFreeString(bstr);\
+static void _BSTR_CY(LONG a, LONG b, const char *str, LCID lcid, int line)
+{
+  HRESULT hr;
+  BSTR bstr = NULL;
+  char buff[256];
+  CY l;
+
+  S(l).Lo = b;
+  S(l).Hi = a;
+  hr = pVarBstrFromCy(l, lcid, LOCALE_NOUSEROVERRIDE, &bstr);
+  ok(hr == S_OK, "got hr 0x%08x\n", hr);
+
+  if(bstr)
+  {
+    WideCharToMultiByte(CP_ACP, 0, bstr, -1, buff, sizeof(buff), 0, 0);
+    SysFreeString(bstr);
   }
+  else
+    buff[0] = 0;
+
+  if(hr == S_OK)
+  {
+    ok_(__FILE__, line)(!strcmp(str, buff), "Expected '%s', got '%s'\n", str, buff);
+  }
+}
 
 static void test_VarBstrFromCy(void)
 {
-  LCID lcid;
-  HRESULT hres;
-  BSTR bstr = NULL;
-  CY l;
+#define BSTR_CY(a, b, str, lcid) _BSTR_CY(a, b, str, lcid, __LINE__)
 
-  static const WCHAR szZero[] = {'0', '\0'};
-  static const WCHAR szOne[] = {'1', '\0'};
-  static const WCHAR szOnePointFive[] = {'1','.','5','\0'};
-  static const WCHAR szMinusOnePointFive[] = {'-','1','.','5','\0'};
-  static const WCHAR szBigNum1[] = {'4','2','9','4','9','6','.','7','2','9','5','\0'};    /* (1 << 32) - 1 / 1000 */
-  static const WCHAR szBigNum2[] = {'4','2','9','4','9','6','.','7','2','9','6','\0'};    /* (1 << 32) / 1000 */
-  static const WCHAR szBigNum3[] = {'9','2','2','3','3','7','2','0','3','6','8','5','4','7','7','.','5','8','0','7','\0'};    /* ((1 << 63) - 1)/10000 */
-
-  static const WCHAR szSmallNumber_English[] = {'0','.','0','0','0','9','\0'};
-  static const WCHAR szSmallNumber_Spanish[] = {'0',',','0','0','0','9','\0'};
+  LCID en_us, sp;
 
   CHECKPTR(VarBstrFromCy);
-  lcid = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
 
-  /* check zero */
-  BSTR_CY(l, 0,0, szZero);
+  en_us = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
+  sp = MAKELCID(MAKELANGID(LANG_SPANISH, SUBLANG_DEFAULT), SORT_DEFAULT);
 
-  /* check one */
-  BSTR_CY(l, 0, 10000, szOne);
-
-  /* check one point five */
-  BSTR_CY(l, 0, 15000, szOnePointFive);
-
-  /* check minus one point five */
-  BSTR_CY(l, 0xffffffff, ((15000)^0xffffffff)+1, szMinusOnePointFive);
-
-  /* check bignum (1) */
-  BSTR_CY(l, 0, 0xffffffff, szBigNum1);
-
-  /* check bignum (2) */
-  BSTR_CY(l, 1,0, szBigNum2);
-
-  /* check bignum (3) */
-  BSTR_CY(l, 0x7fffffff,0xffffffff, szBigNum3);
-
-  /* check leading zeros and decimal sep. for English locale */
-  BSTR_CY(l, 0,9, szSmallNumber_English);
-
-  lcid = MAKELCID(MAKELANGID(LANG_SPANISH, SUBLANG_DEFAULT), SORT_DEFAULT);
-
-  /* check leading zeros and decimal sep. for Spanish locale */
-  BSTR_CY(l, 0,9, szSmallNumber_Spanish);
-}
+  BSTR_CY(0, 0, "0", en_us);
+  BSTR_CY(0, 10000, "1", en_us);
+  BSTR_CY(0, 15000, "1.5", en_us);
+  BSTR_CY(0xffffffff, ((15000)^0xffffffff)+1, "-1.5", en_us);
+  /* (1 << 32) - 1 / 1000 */
+  BSTR_CY(0, 0xffffffff, "429496.7295", en_us);
+  /* (1 << 32) / 1000 */
+  BSTR_CY(1, 0, "429496.7296", en_us);
+  /* ((1 << 63) - 1)/10000 */
+  BSTR_CY(0x7fffffff, 0xffffffff, "922337203685477.5807", en_us);
+  BSTR_CY(0, 9, "0.0009", en_us);
+  BSTR_CY(0, 9, "0,0009", sp);
 
 #undef BSTR_CY
+}
 
-#define BSTR_DEC(l, a, b, c, d, e) \
-  SETDEC(l, a,b,c,d);\
-  hres = pVarBstrFromDec(&l, lcid, LOCALE_NOUSEROVERRIDE, &bstr);\
-  ok(hres == S_OK, "got hres 0x%08x\n", hres);\
-  if (hres== S_OK && bstr)\
-  {\
-    ok(lstrcmpW(bstr, e) == 0, "invalid number (got %s)\n", wtoascii(bstr));\
-    SysFreeString(bstr);\
-  }
+static void _BSTR_DEC(BYTE scale, BYTE sign, ULONG hi, ULONG mid, ULONGLONG lo, const char *str,
+    LCID lcid, int line)
+{
+  char buff[256];
+  HRESULT hr;
+  BSTR bstr = NULL;
+  DECIMAL dec;
 
-#define BSTR_DEC64(l, a, b, c, x, d, e) \
-  SETDEC64(l, a,b,c,x,d);\
-  hres = pVarBstrFromDec(&l, lcid, LOCALE_NOUSEROVERRIDE, &bstr);\
-  ok(hres == S_OK, "got hres 0x%08x\n", hres);\
-  if (hres== S_OK && bstr)\
-  {\
-    ok(lstrcmpW(bstr, e) == 0, "invalid number (got %s)\n", wtoascii(bstr));\
-    SysFreeString(bstr);\
+  SETDEC64(dec, scale, sign, hi, mid, lo);
+  hr = pVarBstrFromDec(&dec, lcid, LOCALE_NOUSEROVERRIDE, &bstr);
+  ok_(__FILE__, line)(hr == S_OK, "got hr 0x%08x\n", hr);
+
+  if(bstr)
+  {
+    WideCharToMultiByte(CP_ACP, 0, bstr, -1, buff, sizeof(buff), 0, 0);
+    SysFreeString(bstr);
   }
+  else
+    buff[0] = 0;
+
+  if(hr == S_OK)
+  {
+    ok_(__FILE__, line)(!strcmp(str, buff), "Expected '%s', got '%s'\n", str, buff);
+  }
+}
 
 static void test_VarBstrFromDec(void)
 {
-  LCID lcid;
-  HRESULT hres;
-  BSTR bstr = NULL;
-  DECIMAL l;
+#define BSTR_DEC(scale, sign, hi, lo, str, lcid) _BSTR_DEC(scale, sign, hi, 0, lo, str, lcid, __LINE__)
+#define BSTR_DEC64(scale, sign, hi, mid, lo, str, lcid) _BSTR_DEC(scale, sign, hi, mid, lo, str, lcid, __LINE__)
 
-  static const WCHAR szZero[] = {'0', '\0'};
-  static const WCHAR szOne[] = {'1', '\0'};
-  static const WCHAR szOnePointFive[] = {'1','.','5','\0'};
-  static const WCHAR szMinusOnePointFive[] = {'-','1','.','5','\0'};
-  static const WCHAR szBigNum1[] = {'4','2','9','4','9','6','7','2','9','5','\0'};    /* (1 << 32) - 1 */
-  static const WCHAR szBigNum2[] = {'4','2','9','4','9','6','7','2','9','6','\0'};    /* (1 << 32) */
-  static const WCHAR szBigNum3[] = {'1','8','4','4','6','7','4','4','0','7','3','7','0','9','5','5','1','6','1','5','\0'};    /* (1 << 64) - 1 */
-  static const WCHAR szBigNum4[] = {'1','8','4','4','6','7','4','4','0','7','3','7','0','9','5','5','1','6','1','6','\0'};    /* (1 << 64) */
-  static const WCHAR szBigNum5[] = {'7','9','2','2','8','1','6','2','5','1','4','2','6','4','3','3','7','5','9','3','5','4','3','9','5','0','3','3','5','\0'};    /* (1 << 96) - 1 */
-  static const WCHAR szBigScale1[] = {'0','.','0','0','0','0','0','0','0','0','0','1','\0'};    /* 1 * 10^-10 */
-  static const WCHAR szBigScale2[] = {'7','9','2','2','8','1','6','2','5','1','4','2','6','4','3','3','7','5','9','.','3','5','4','3','9','5','0','3','3','5','\0'};    /* ((1 << 96) - 1) * 10^-10 */
-  static const WCHAR szBigScale3[] = {'7','.','9','2','2','8','1','6','2','5','1','4','2','6','4','3','3','7','5','9','3','5','4','3','9','5','0','3','3','5','\0'};    /* ((1 << 96) - 1) * 10^-28 */
-
-  static const WCHAR szSmallNumber_English[] = {'0','.','0','0','0','9','\0'};
-  static const WCHAR szSmallNumber_Spanish[] = {'0',',','0','0','0','9','\0'};
+  LCID en_us, sp;
 
   CHECKPTR(VarBstrFromDec);
-  lcid = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
 
-  /* check zero */
-  BSTR_DEC(l, 0,0,0,0, szZero);
-  
-  /* check one */
-  BSTR_DEC(l, 0,0,0,1, szOne);
-  BSTR_DEC(l, 1,0,0,10,szOne);
-  BSTR_DEC(l, 2,0,0,100,szOne);
-  BSTR_DEC(l, 3,0,0,1000,szOne);
+  en_us = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
+  sp = MAKELCID(MAKELANGID(LANG_SPANISH, SUBLANG_DEFAULT), SORT_DEFAULT);
 
-  /* check one point five */
-  BSTR_DEC(l, 1,0,0,15, szOnePointFive);
-  BSTR_DEC(l, 2,0,0,150, szOnePointFive);
-  BSTR_DEC(l, 3,0,0,1500, szOnePointFive);
+  BSTR_DEC(0,0,0,0, "0", en_us);
 
-  /* check minus one point five */
-  BSTR_DEC(l, 1,0x80,0,15, szMinusOnePointFive);
+  BSTR_DEC(0,0,0,1,   "1", en_us);
+  BSTR_DEC(1,0,0,10,  "1", en_us);
+  BSTR_DEC(2,0,0,100, "1", en_us);
+  BSTR_DEC(3,0,0,1000,"1", en_us);
 
-  /* check bignum (1) */
-  BSTR_DEC(l, 0,0,0,0xffffffff, szBigNum1);
+  BSTR_DEC(1,0,0,15,  "1.5", en_us);
+  BSTR_DEC(2,0,0,150, "1.5", en_us);
+  BSTR_DEC(3,0,0,1500,"1.5", en_us);
 
-  /* check bignum (2) */
-  BSTR_DEC64(l, 0,0,0,1,0, szBigNum2);
+  BSTR_DEC(1,0x80,0,15, "-1.5", en_us);
 
-  /* check bignum (3) */
-  BSTR_DEC64(l, 0,0,0,0xffffffff,0xffffffff, szBigNum3);
-
-  /* check bignum (4) */
-  BSTR_DEC(l, 0,0,1,0, szBigNum4);
-
-  /* check bignum (5) */
-  BSTR_DEC64(l, 0,0,0xffffffff,0xffffffff,0xffffffff, szBigNum5);
-
-  /* check bigscale (1) */
-  BSTR_DEC(l, 10,0,0,1, szBigScale1);
-
-  /* check bigscale (2) */
-  BSTR_DEC64(l, 10,0,0xffffffffUL,0xffffffff,0xffffffff, szBigScale2);
-
-  /* check bigscale (3) */
-  BSTR_DEC64(l, 28,0,0xffffffffUL,0xffffffff,0xffffffff, szBigScale3);
+  /* (1 << 32) - 1 */
+  BSTR_DEC(0,0,0,0xffffffff, "4294967295", en_us);
+  /* (1 << 32) */
+  BSTR_DEC64(0,0,0,1,0, "4294967296", en_us);
+  /* (1 << 64) - 1 */
+  BSTR_DEC64(0,0,0,0xffffffff,0xffffffff, "18446744073709551615", en_us);
+  /* (1 << 64) */
+  BSTR_DEC(0,0,1,0, "18446744073709551616", en_us);
+  /* (1 << 96) - 1 */
+  BSTR_DEC64(0,0,0xffffffff,0xffffffff,0xffffffff, "79228162514264337593543950335", en_us);
+  /* 1 * 10^-10 */
+  BSTR_DEC(10,0,0,1, "0.0000000001", en_us);
+  /* ((1 << 96) - 1) * 10^-10 */
+  BSTR_DEC64(10,0,0xffffffffUL,0xffffffff,0xffffffff, "7922816251426433759.3543950335", en_us);
+  /* ((1 << 96) - 1) * 10^-28 */
+  BSTR_DEC64(28,0,0xffffffffUL,0xffffffff,0xffffffff, "7.9228162514264337593543950335", en_us);
 
   /* check leading zeros and decimal sep. for English locale */
-  BSTR_DEC(l, 4,0,0,9, szSmallNumber_English);
-  BSTR_DEC(l, 5,0,0,90, szSmallNumber_English);
-  BSTR_DEC(l, 6,0,0,900, szSmallNumber_English);
-  BSTR_DEC(l, 7,0,0,9000, szSmallNumber_English);
-  
-  lcid = MAKELCID(MAKELANGID(LANG_SPANISH, SUBLANG_DEFAULT), SORT_DEFAULT);
+  BSTR_DEC(4,0,0,9, "0.0009", en_us);
+  BSTR_DEC(5,0,0,90, "0.0009", en_us);
+  BSTR_DEC(6,0,0,900, "0.0009", en_us);
+  BSTR_DEC(7,0,0,9000, "0.0009", en_us);
   
   /* check leading zeros and decimal sep. for Spanish locale */
-  BSTR_DEC(l, 4,0,0,9, szSmallNumber_Spanish);
-  BSTR_DEC(l, 5,0,0,90, szSmallNumber_Spanish);
-  BSTR_DEC(l, 6,0,0,900, szSmallNumber_Spanish);
-  BSTR_DEC(l, 7,0,0,9000, szSmallNumber_Spanish);
-}
+  BSTR_DEC(4,0,0,9, "0,0009", sp);
+  BSTR_DEC(5,0,0,90, "0,0009", sp);
+  BSTR_DEC(6,0,0,900, "0,0009", sp);
+  BSTR_DEC(7,0,0,9000, "0,0009", sp);
+
 #undef BSTR_DEC
 #undef BSTR_DEC64
+}
 
 #define _VARBSTRCMP(left,right,lcid,flags,result) \
         hres = pVarBstrCmp(left,right,lcid,flags); \

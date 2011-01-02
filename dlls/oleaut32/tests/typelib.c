@@ -569,9 +569,9 @@ static void test_TypeInfo(void)
     dispparams.cNamedArgs = 0;
     hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, dispidMember, DISPATCH_PROPERTYGET, &dispparams, NULL, NULL, NULL);
     ok(hr == DISP_E_MEMBERNOTFOUND, "ITypeInfo_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08x\n", hr);
-    /* correct member id -- correct flags -- cNamedArgs not bigger than cArgs
+    /* correct member id -- correct flags -- cNamedArgs not bigger than cArgs */
     hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, dispidMember, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-    ok(hr == 0x8002000e, "ITypeInfo_Invoke should have returned 0x8002000e instead of 0x%08x\n", hr); */
+    ok(hr == DISP_E_BADPARAMCOUNT, "ITypeInfo_Invoke should have returned DISP_E_BADPARAMCOUNT instead of 0x%08x\n", hr);
 
     /* correct member id -- wrong flags -- cNamedArgs bigger than cArgs */
     dispparams.cNamedArgs = 1;
