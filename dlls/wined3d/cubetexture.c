@@ -247,7 +247,7 @@ static void * WINAPI IWineD3DCubeTextureImpl_GetParent(IWineD3DCubeTexture *ifac
    IWineD3DCubeTexture IWineD3DBaseTexture parts follow
    ****************************************************** */
 static DWORD WINAPI IWineD3DCubeTextureImpl_SetLOD(IWineD3DCubeTexture *iface, DWORD LODNew) {
-    return basetexture_set_lod((IWineD3DBaseTexture *)iface, LODNew);
+    return basetexture_set_lod((IWineD3DBaseTextureImpl *)iface, LODNew);
 }
 
 static DWORD WINAPI IWineD3DCubeTextureImpl_GetLOD(IWineD3DCubeTexture *iface) {

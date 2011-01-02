@@ -202,7 +202,7 @@ static void * WINAPI IWineD3DVolumeTextureImpl_GetParent(IWineD3DVolumeTexture *
    IWineD3DVolumeTexture IWineD3DBaseTexture parts follow
    ****************************************************** */
 static DWORD WINAPI IWineD3DVolumeTextureImpl_SetLOD(IWineD3DVolumeTexture *iface, DWORD LODNew) {
-    return basetexture_set_lod((IWineD3DBaseTexture *)iface, LODNew);
+    return basetexture_set_lod((IWineD3DBaseTextureImpl *)iface, LODNew);
 }
 
 static DWORD WINAPI IWineD3DVolumeTextureImpl_GetLOD(IWineD3DVolumeTexture *iface) {

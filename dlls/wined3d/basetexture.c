@@ -127,33 +127,32 @@ void basetexture_unload(IWineD3DBaseTextureImpl *texture)
     resource_unload((IWineD3DResourceImpl *)texture);
 }
 
-DWORD basetexture_set_lod(IWineD3DBaseTexture *iface, DWORD LODNew)
+DWORD basetexture_set_lod(IWineD3DBaseTextureImpl *texture, DWORD lod)
 {
-    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-    DWORD old = This->baseTexture.LOD;
+    DWORD old = texture->baseTexture.LOD;
+
+    TRACE("texture %p, lod %u.\n", texture, lod);
 
     /* The d3d9:texture test shows that SetLOD is ignored on non-managed
-     * textures. The call always returns 0, and GetLOD always returns 0
-     */
-    if (This->resource.pool != WINED3DPOOL_MANAGED) {
-        TRACE("Ignoring SetLOD on %s texture, returning 0\n", debug_d3dpool(This->resource.pool));
+     * textures. The call always returns 0, and GetLOD always returns 0. */
+    if (texture->resource.pool != WINED3DPOOL_MANAGED)
+    {
+        TRACE("Ignoring SetLOD on %s texture, returning 0.\n", debug_d3dpool(texture->resource.pool));
         return 0;
     }
 
-    if (LODNew >= This->baseTexture.level_count)
-        LODNew = This->baseTexture.level_count - 1;
+    if (lod >= texture->baseTexture.level_count)
+        lod = texture->baseTexture.level_count - 1;
 
-    if(This->baseTexture.LOD != LODNew) {
-        This->baseTexture.LOD = LODNew;
+    if (texture->baseTexture.LOD != lod)
+    {
+        texture->baseTexture.LOD = lod;
 
-        This->baseTexture.texture_rgb.states[WINED3DTEXSTA_MAXMIPLEVEL] = ~0U;
-        This->baseTexture.texture_srgb.states[WINED3DTEXSTA_MAXMIPLEVEL] = ~0U;
-        if(This->baseTexture.bindCount) {
-            IWineD3DDeviceImpl_MarkStateDirty(This->resource.device, STATE_SAMPLER(This->baseTexture.sampler));
-        }
+        texture->baseTexture.texture_rgb.states[WINED3DTEXSTA_MAXMIPLEVEL] = ~0U;
+        texture->baseTexture.texture_srgb.states[WINED3DTEXSTA_MAXMIPLEVEL] = ~0U;
+        if (texture->baseTexture.bindCount)
+            IWineD3DDeviceImpl_MarkStateDirty(texture->resource.device, STATE_SAMPLER(texture->baseTexture.sampler));
     }
-
-    TRACE("(%p) : set LOD to %d\n", This, This->baseTexture.LOD);
 
     return old;
 }
