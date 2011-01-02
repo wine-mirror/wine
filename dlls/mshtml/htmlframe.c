@@ -220,7 +220,7 @@ static HRESULT HTMLFrameElement_get_readystate(HTMLDOMNode *iface, BSTR *p)
 {
     HTMLFrameElement *This = impl_from_HTMLDOMNode(iface);
 
-    return IHTMLFrameBase2_get_readyState(HTMLFRAMEBASE2(&This->framebase), p);
+    return IHTMLFrameBase2_get_readyState(&This->framebase.IHTMLFrameBase2_iface, p);
 }
 
 static HRESULT HTMLFrameElement_get_dispid(HTMLDOMNode *iface, BSTR name,

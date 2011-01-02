@@ -1610,7 +1610,7 @@ static HRESULT WINAPI HTMLWindow4_get_frameElement(IHTMLWindow4 *iface, IHTMLFra
     TRACE("(%p)->(%p)\n", This, p);
 
     if(This->frame_element) {
-        *p = HTMLFRAMEBASE(This->frame_element);
+        *p = &This->frame_element->IHTMLFrameBase_iface;
         IHTMLFrameBase_AddRef(*p);
     }else
         *p = NULL;

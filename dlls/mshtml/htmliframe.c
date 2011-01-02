@@ -223,7 +223,7 @@ static HRESULT HTMLIFrame_get_readystate(HTMLDOMNode *iface, BSTR *p)
 {
     HTMLIFrame *This = impl_from_HTMLDOMNode(iface);
 
-    return IHTMLFrameBase2_get_readyState(HTMLFRAMEBASE2(&This->framebase), p);
+    return IHTMLFrameBase2_get_readyState(&This->framebase.IHTMLFrameBase2_iface, p);
 }
 
 static HRESULT HTMLIFrame_bind_to_tree(HTMLDOMNode *iface)
