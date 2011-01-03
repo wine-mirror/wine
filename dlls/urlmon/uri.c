@@ -5007,10 +5007,10 @@ static ULONG WINAPI UriBuilderFactory_Release(IUriBuilderFactory *iface)
     return ref;
 }
 
-static HRESULT WINAPI UriBuilderFactory_CreateInitializedIUriBuilder(IUriBuilderFactory *iface,
-                                                              DWORD dwFlags,
-                                                              DWORD_PTR dwReserved,
-                                                              IUriBuilder **ppIUriBuilder)
+static HRESULT WINAPI UriBuilderFactory_CreateIUriBuilder(IUriBuilderFactory *iface,
+                                                          DWORD dwFlags,
+                                                          DWORD_PTR dwReserved,
+                                                          IUriBuilder **ppIUriBuilder)
 {
     Uri *This = impl_from_IUriBuilderFactory(iface);
     TRACE("(%p)->(%08x %08x %p)\n", This, dwFlags, (DWORD)dwReserved, ppIUriBuilder);
@@ -5026,10 +5026,10 @@ static HRESULT WINAPI UriBuilderFactory_CreateInitializedIUriBuilder(IUriBuilder
     return CreateIUriBuilder(NULL, 0, 0, ppIUriBuilder);
 }
 
-static HRESULT WINAPI UriBuilderFactory_CreateIUriBuilder(IUriBuilderFactory *iface,
-                                                   DWORD dwFlags,
-                                                   DWORD_PTR dwReserved,
-                                                   IUriBuilder **ppIUriBuilder)
+static HRESULT WINAPI UriBuilderFactory_CreateInitializedIUriBuilder(IUriBuilderFactory *iface,
+                                                                     DWORD dwFlags,
+                                                                     DWORD_PTR dwReserved,
+                                                                     IUriBuilder **ppIUriBuilder)
 {
     Uri *This = impl_from_IUriBuilderFactory(iface);
     TRACE("(%p)->(%08x %08x %p)\n", This, dwFlags, (DWORD)dwReserved, ppIUriBuilder);
@@ -5049,8 +5049,8 @@ static const IUriBuilderFactoryVtbl UriBuilderFactoryVtbl = {
     UriBuilderFactory_QueryInterface,
     UriBuilderFactory_AddRef,
     UriBuilderFactory_Release,
-    UriBuilderFactory_CreateInitializedIUriBuilder,
-    UriBuilderFactory_CreateIUriBuilder
+    UriBuilderFactory_CreateIUriBuilder,
+    UriBuilderFactory_CreateInitializedIUriBuilder
 };
 
 static Uri* create_uri_obj(void) {

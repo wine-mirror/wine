@@ -1839,16 +1839,16 @@ cpp_quote("HRESULT WINAPI CreateIUriBuilder(IUri*,DWORD,DWORD_PTR,IUriBuilder**)
 ]
 interface IUriBuilderFactory : IUnknown
 {
-    HRESULT CreateInitializedIUriBuilder(
-        [in]  DWORD dwFlags,
-        [in]  DWORD_PTR dwReserved,
-        [out] IUriBuilder **ppIUriBuilder);
-
     HRESULT CreateIUriBuilder(
         [in]  DWORD dwFlags,
         [in]  DWORD_PTR dwReserved,
         [out] IUriBuilder **ppIUriBuilder);
-};
+
+    HRESULT CreateInitializedIUriBuilder(
+        [in]  DWORD dwFlags,
+        [in]  DWORD_PTR dwReserved,
+        [out] IUriBuilder **ppIUriBuilder);
+}
 
 /*****************************************************************************
  * IInternetProtocolEx interface

@@ -9090,23 +9090,23 @@ static void test_IUriBuilderFactory(void) {
 
         if(SUCCEEDED(hr)) {
             builder = (void*) 0xdeadbeef;
-            hr = IUriBuilderFactory_CreateInitializedIUriBuilder(factory, 10, 0, &builder);
+            hr = IUriBuilderFactory_CreateIUriBuilder(factory, 10, 0, &builder);
             ok(hr == E_INVALIDARG, "Error: CreateInitializedIUriBuilder returned 0x%08x, expected 0x%08x.\n",
                 hr, E_INVALIDARG);
             ok(!builder, "Error: Expected 'builder' to be NULL, but was %p.\n", builder);
 
             builder = (void*) 0xdeadbeef;
-            hr = IUriBuilderFactory_CreateInitializedIUriBuilder(factory, 0, 10, &builder);
+            hr = IUriBuilderFactory_CreateIUriBuilder(factory, 0, 10, &builder);
             ok(hr == E_INVALIDARG, "Error: CreateInitializedIUriBuilder returned 0x%08x, expected 0x%08x.\n",
                 hr, E_INVALIDARG);
             ok(!builder, "Error: Expected 'builder' to be NULL, but was %p.\n", builder);
 
-            hr = IUriBuilderFactory_CreateInitializedIUriBuilder(factory, 0, 0, NULL);
+            hr = IUriBuilderFactory_CreateIUriBuilder(factory, 0, 0, NULL);
             ok(hr == E_POINTER, "Error: CreateInitializedIUriBuilder returned 0x%08x, expected 0x%08x.\n",
                 hr, E_POINTER);
 
             builder = NULL;
-            hr = IUriBuilderFactory_CreateInitializedIUriBuilder(factory, 0, 0, &builder);
+            hr = IUriBuilderFactory_CreateIUriBuilder(factory, 0, 0, &builder);
             ok(hr == S_OK, "Error: CreateInitializedIUriBuilder returned 0x%08x, expected 0x%08x.\n",
                 hr, S_OK);
             if(SUCCEEDED(hr)) {
@@ -9114,9 +9114,6 @@ static void test_IUriBuilderFactory(void) {
                 LPCWSTR result;
                 DWORD result_len;
 
-                /* Seems microsoft had a bit of mixup naming this function. It
-                 * returns an uninitialized IUriBuilder.
-                 */
                 hr = IUriBuilder_GetIUri(builder, &tmp);
                 ok(hr == S_OK, "Error: GetIUri returned 0x%08x, expected 0x%08x.\n",
                     hr, S_OK);
@@ -9129,23 +9126,23 @@ static void test_IUriBuilderFactory(void) {
             if(builder) IUriBuilder_Release(builder);
 
             builder = (void*) 0xdeadbeef;
-            hr = IUriBuilderFactory_CreateIUriBuilder(factory, 10, 0, &builder);
+            hr = IUriBuilderFactory_CreateInitializedIUriBuilder(factory, 10, 0, &builder);
             ok(hr == E_INVALIDARG, "Error: CreateIUriBuilder returned 0x%08x, expected 0x%08x.\n",
                 hr, E_INVALIDARG);
             ok(!builder, "Error: Expected 'builder' to be NULL, but was %p.\n", builder);
 
             builder = (void*) 0xdeadbeef;
-            hr = IUriBuilderFactory_CreateIUriBuilder(factory, 0, 10, &builder);
+            hr = IUriBuilderFactory_CreateInitializedIUriBuilder(factory, 0, 10, &builder);
             ok(hr == E_INVALIDARG, "Error: CreateIUriBuilder returned 0x%08x, expected 0x%08x.\n",
                 hr, E_INVALIDARG);
             ok(!builder, "Error: Expected 'builder' to be NULL, but was %p.\n", builder);
 
-            hr = IUriBuilderFactory_CreateIUriBuilder(factory, 0, 0, NULL);
+            hr = IUriBuilderFactory_CreateInitializedIUriBuilder(factory, 0, 0, NULL);
             ok(hr == E_POINTER, "Error: CreateIUriBuilder returned 0x%08x, expected 0x%08x.\n",
                 hr, E_POINTER);
 
             builder = NULL;
-            hr = IUriBuilderFactory_CreateIUriBuilder(factory, 0, 0, &builder);
+            hr = IUriBuilderFactory_CreateInitializedIUriBuilder(factory, 0, 0, &builder);
             ok(hr == S_OK, "Error: CreateIUriBuilder returned 0x%08x, expected 0x%08x.\n",
                 hr, S_OK);
             if(SUCCEEDED(hr)) {
