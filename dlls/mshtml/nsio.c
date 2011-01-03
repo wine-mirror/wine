@@ -2048,36 +2048,43 @@ static nsresult NSAPI nsURI_Resolve(nsIURL *iface, const nsACString *aRelativePa
         nsACString *_retval)
 {
     nsWineURI *This = NSURI_THIS(iface);
-    WCHAR url[INTERNET_MAX_URL_LENGTH];
     const char *patha;
+    IUri *new_uri;
     WCHAR *path;
-    char *urla;
-    DWORD len;
+    char *reta;
+    BSTR ret;
     HRESULT hres;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_nsacstr(aRelativePath), _retval);
+
+    if(!ensure_uri(This))
+        return NS_ERROR_UNEXPECTED;
 
     nsACString_GetData(aRelativePath, &patha);
     path = heap_strdupAtoW(patha);
     if(!path)
         return NS_ERROR_OUT_OF_MEMORY;
 
-    hres = CoInternetCombineUrl(This->wine_url, path,
-                                URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO,
-                                url, sizeof(url)/sizeof(WCHAR), &len, 0);
+    hres = CoInternetCombineUrlEx(This->uri, path, URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO, &new_uri, 0);
     heap_free(path);
     if(FAILED(hres)) {
-        ERR("CoIntenetCombineUrl failed: %08x\n", hres);
+        ERR("CoIntenetCombineUrlEx failed: %08x\n", hres);
         return NS_ERROR_FAILURE;
     }
 
-    urla = heap_strdupWtoA(url);
-    if(!urla)
+    hres = IUri_GetDisplayUri(new_uri, &ret);
+    IUri_Release(new_uri);
+    if(FAILED(hres))
+        return NS_ERROR_FAILURE;
+
+    reta = heap_strdupWtoA(ret);
+    SysFreeString(ret);
+    if(!reta)
         return NS_ERROR_OUT_OF_MEMORY;
 
-    TRACE("returning %s\n", debugstr_a(urla));
-    nsACString_SetData(_retval, urla);
-    heap_free(urla);
+    TRACE("returning %s\n", debugstr_a(reta));
+    nsACString_SetData(_retval, reta);
+    heap_free(reta);
     return NS_OK;
 }
 
