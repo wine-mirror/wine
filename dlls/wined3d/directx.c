@@ -2318,7 +2318,7 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
         TRACE_(d3d_caps)("Max vertex samplers: %u.\n", gl_info->limits.vertex_samplers);
         TRACE_(d3d_caps)("Max combined samplers: %u.\n", gl_info->limits.combined_samplers);
     }
-    if (gl_info->supported[ARB_VERTEX_BLEND] || gl_info->supported[ARB_VERTEX_PROGRAM])
+    if (gl_info->supported[ARB_VERTEX_BLEND])
     {
         glGetIntegerv(GL_MAX_VERTEX_UNITS_ARB, &gl_max);
         gl_info->limits.blends = gl_max;
