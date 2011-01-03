@@ -693,21 +693,24 @@ HRESULT HTMLImgElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, 
     return S_OK;
 }
 
-#define HTMLIMGFACTORY_THIS(iface) DEFINE_THIS(HTMLImageElementFactory, HTMLImageElementFactory, iface)
+static inline HTMLImageElementFactory *impl_from_IHTMLImageElementFactory(IHTMLImageElementFactory *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLImageElementFactory, IHTMLImageElementFactory_iface);
+}
 
 static HRESULT WINAPI HTMLImageElementFactory_QueryInterface(IHTMLImageElementFactory *iface,
         REFIID riid, void **ppv)
 {
-    HTMLImageElementFactory *This = HTMLIMGFACTORY_THIS(iface);
+    HTMLImageElementFactory *This = impl_from_IHTMLImageElementFactory(iface);
 
     *ppv = NULL;
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_Unknown %p)\n", This, ppv);
-        *ppv = HTMLIMGFACTORY(This);
+        *ppv = &This->IHTMLImageElementFactory_iface;
     }else if(IsEqualGUID(&IID_IHTMLImageElementFactory, riid)) {
         TRACE("(%p)->(IID_IHTMLImageElementFactory %p)\n", This, ppv);
-        *ppv = HTMLIMGFACTORY(This);
+        *ppv = &This->IHTMLImageElementFactory_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
 
@@ -722,7 +725,7 @@ static HRESULT WINAPI HTMLImageElementFactory_QueryInterface(IHTMLImageElementFa
 
 static ULONG WINAPI HTMLImageElementFactory_AddRef(IHTMLImageElementFactory *iface)
 {
-    HTMLImageElementFactory *This = HTMLIMGFACTORY_THIS(iface);
+    HTMLImageElementFactory *This = impl_from_IHTMLImageElementFactory(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -732,7 +735,7 @@ static ULONG WINAPI HTMLImageElementFactory_AddRef(IHTMLImageElementFactory *ifa
 
 static ULONG WINAPI HTMLImageElementFactory_Release(IHTMLImageElementFactory *iface)
 {
-    HTMLImageElementFactory *This = HTMLIMGFACTORY_THIS(iface);
+    HTMLImageElementFactory *This = impl_from_IHTMLImageElementFactory(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -746,7 +749,7 @@ static ULONG WINAPI HTMLImageElementFactory_Release(IHTMLImageElementFactory *if
 static HRESULT WINAPI HTMLImageElementFactory_GetTypeInfoCount(IHTMLImageElementFactory *iface,
         UINT *pctinfo)
 {
-    HTMLImageElementFactory *This = HTMLIMGFACTORY_THIS(iface);
+    HTMLImageElementFactory *This = impl_from_IHTMLImageElementFactory(iface);
     FIXME("(%p)->(%p)\n", This, pctinfo);
     return E_NOTIMPL;
 }
@@ -754,7 +757,7 @@ static HRESULT WINAPI HTMLImageElementFactory_GetTypeInfoCount(IHTMLImageElement
 static HRESULT WINAPI HTMLImageElementFactory_GetTypeInfo(IHTMLImageElementFactory *iface,
         UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
-    HTMLImageElementFactory *This = HTMLIMGFACTORY_THIS(iface);
+    HTMLImageElementFactory *This = impl_from_IHTMLImageElementFactory(iface);
     FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
     return E_NOTIMPL;
 }
@@ -763,7 +766,7 @@ static HRESULT WINAPI HTMLImageElementFactory_GetIDsOfNames(IHTMLImageElementFac
         REFIID riid, LPOLESTR *rgszNames, UINT cNames, LCID lcid,
         DISPID *rgDispId)
 {
-    HTMLImageElementFactory *This = HTMLIMGFACTORY_THIS(iface);
+    HTMLImageElementFactory *This = impl_from_IHTMLImageElementFactory(iface);
     FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames,
             cNames, lcid, rgDispId);
     return E_NOTIMPL;
@@ -774,7 +777,7 @@ static HRESULT WINAPI HTMLImageElementFactory_Invoke(IHTMLImageElementFactory *i
         DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo,
         UINT *puArgErr)
 {
-    HTMLImageElementFactory *This = HTMLIMGFACTORY_THIS(iface);
+    HTMLImageElementFactory *This = impl_from_IHTMLImageElementFactory(iface);
     FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
             lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
     return E_NOTIMPL;
@@ -807,7 +810,7 @@ static LONG var_to_size(const VARIANT *v)
 static HRESULT WINAPI HTMLImageElementFactory_create(IHTMLImageElementFactory *iface,
         VARIANT width, VARIANT height, IHTMLImgElement **img_elem)
 {
-    HTMLImageElementFactory *This = HTMLIMGFACTORY_THIS(iface);
+    HTMLImageElementFactory *This = impl_from_IHTMLImageElementFactory(iface);
     IHTMLImgElement *img;
     HTMLElement *elem;
     nsIDOMHTMLElement *nselem;
@@ -855,8 +858,6 @@ static HRESULT WINAPI HTMLImageElementFactory_create(IHTMLImageElementFactory *i
     return S_OK;
 }
 
-#undef HTMLIMGFACTORY_THIS
-
 static const IHTMLImageElementFactoryVtbl HTMLImageElementFactoryVtbl = {
     HTMLImageElementFactory_QueryInterface,
     HTMLImageElementFactory_AddRef,
@@ -890,7 +891,8 @@ static HRESULT HTMLImageElementFactory_value(DispatchEx *dispex, LCID lcid,
     width = argc >= 1 ? params->rgvarg + (params->cArgs - 1) : &empty;
     height = argc >= 2 ? params->rgvarg + (params->cArgs - 2) : &empty;
 
-    hres = IHTMLImageElementFactory_create(HTMLIMGFACTORY(This), *width, *height, &img);
+    hres = IHTMLImageElementFactory_create(&This->IHTMLImageElementFactory_iface, *width, *height,
+            &img);
     if(FAILED(hres))
         return hres;
 
@@ -924,11 +926,12 @@ HTMLImageElementFactory *HTMLImageElementFactory_Create(HTMLWindow *window)
 
     ret = heap_alloc(sizeof(HTMLImageElementFactory));
 
-    ret->lpHTMLImageElementFactoryVtbl = &HTMLImageElementFactoryVtbl;
+    ret->IHTMLImageElementFactory_iface.lpVtbl = &HTMLImageElementFactoryVtbl;
     ret->ref = 1;
     ret->window = window;
 
-    init_dispex(&ret->dispex, (IUnknown*)HTMLIMGFACTORY(ret), &HTMLImageElementFactory_dispex);
+    init_dispex(&ret->dispex, (IUnknown*)&ret->IHTMLImageElementFactory_iface,
+            &HTMLImageElementFactory_dispex);
 
     return ret;
 }

@@ -237,7 +237,7 @@ typedef struct {
 
 typedef struct {
     DispatchEx dispex;
-    const IHTMLImageElementFactoryVtbl *lpHTMLImageElementFactoryVtbl;
+    IHTMLImageElementFactory IHTMLImageElementFactory_iface;
 
     LONG ref;
 
@@ -634,7 +634,6 @@ struct HTMLDocumentNode {
 
 #define HTMLTEXTCONT(x)  ((IHTMLTextContainer*)           &(x)->lpHTMLTextContainerVtbl)
 
-#define HTMLIMGFACTORY(x)  ((IHTMLImageElementFactory*)   &(x)->lpHTMLImageElementFactoryVtbl)
 #define HTMLLOCATION(x)    ((IHTMLLocation*)              &(x)->lpHTMLLocationVtbl)
 
 #define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))

@@ -244,7 +244,7 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
 
         if(This->image_factory) {
             This->image_factory->window = NULL;
-            IHTMLImageElementFactory_Release(HTMLIMGFACTORY(This->image_factory));
+            IHTMLImageElementFactory_Release(&This->image_factory->IHTMLImageElementFactory_iface);
         }
 
         if(This->location) {
@@ -670,7 +670,7 @@ static HRESULT WINAPI HTMLWindow2_get_Image(IHTMLWindow2 *iface, IHTMLImageEleme
     if(!This->image_factory)
         This->image_factory = HTMLImageElementFactory_Create(This);
 
-    *p = HTMLIMGFACTORY(This->image_factory);
+    *p = &This->image_factory->IHTMLImageElementFactory_iface;
     IHTMLImageElementFactory_AddRef(*p);
 
     return S_OK;
