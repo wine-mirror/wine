@@ -1933,9 +1933,6 @@ static nsresult NSAPI nsURI_GetPath(nsIURL *iface, nsACString *aPath)
 
     TRACE("(%p)->(%p)\n", This, aPath);
 
-    if(This->nsuri)
-        return nsIURI_GetPath(This->nsuri, aPath);
-
     return get_uri_string(This, Uri_PROPERTY_PATH, aPath);
 }
 
@@ -2060,9 +2057,6 @@ static nsresult NSAPI nsURI_Resolve(nsIURL *iface, const nsACString *aRelativePa
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_nsacstr(aRelativePath), _retval);
 
-    if(This->nsuri)
-        return nsIURI_Resolve(This->nsuri, aRelativePath, _retval);
-
     nsACString_GetData(aRelativePath, &patha);
     path = heap_strdupAtoW(patha);
     if(!path)
@@ -2183,9 +2177,6 @@ static nsresult NSAPI nsURL_GetQuery(nsIURL *iface, nsACString *aQuery)
     nsWineURI *This = NSURI_THIS(iface);
 
     TRACE("(%p)->(%p)\n", This, aQuery);
-
-    if(This->nsurl)
-        return nsIURL_GetQuery(This->nsurl, aQuery);
 
     return get_uri_string(This, Uri_PROPERTY_QUERY, aQuery);
 }
