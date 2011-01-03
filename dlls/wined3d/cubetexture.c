@@ -28,16 +28,16 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
 
 /* Do not call while under the GL lock. */
-static void cubetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3DSRGB srgb)
+static void cubetexture_internal_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB srgb)
 {
-    /* Override the IWineD3DResource Preload method. */
-    IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
-    UINT sub_count = This->baseTexture.level_count * This->baseTexture.layer_count;
-    IWineD3DDeviceImpl *device = This->resource.device;
+    UINT sub_count = texture->baseTexture.level_count * texture->baseTexture.layer_count;
+    IWineD3DDeviceImpl *device = texture->resource.device;
     struct wined3d_context *context = NULL;
     BOOL srgb_mode;
     BOOL *dirty;
     UINT i;
+
+    TRACE("texture %p, srgb %#x.\n", texture, srgb);
 
     switch (srgb)
     {
@@ -46,7 +46,7 @@ static void cubetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3
             break;
 
         case SRGB_BOTH:
-            cubetexture_internal_preload(iface, SRGB_RGB);
+            cubetexture_internal_preload(texture, SRGB_RGB);
             /* Fallthrough */
 
         case SRGB_SRGB:
@@ -54,12 +54,10 @@ static void cubetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3
             break;
 
         default:
-            srgb_mode = This->baseTexture.is_srgb;
+            srgb_mode = texture->baseTexture.is_srgb;
             break;
     }
-    dirty = srgb_mode ? &This->baseTexture.texture_srgb.dirty : &This->baseTexture.texture_rgb.dirty;
-
-    TRACE("(%p) : About to load texture: dirtified(%u).\n", This, *dirty);
+    dirty = srgb_mode ? &texture->baseTexture.texture_srgb.dirty : &texture->baseTexture.texture_rgb.dirty;
 
     /* We only have to activate a context for gl when we're not drawing.
      * In most cases PreLoad will be called during draw and a context was
@@ -71,12 +69,12 @@ static void cubetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3
         context = context_acquire(device, NULL);
     }
 
-    if (This->resource.format->id == WINED3DFMT_P8_UINT
-            || This->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM)
+    if (texture->resource.format->id == WINED3DFMT_P8_UINT
+            || texture->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM)
     {
         for (i = 0; i < sub_count; ++i)
         {
-            IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)This->baseTexture.sub_resources[i];
+            IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)texture->baseTexture.sub_resources[i];
 
             if (palette9_changed(surface))
             {
@@ -96,12 +94,12 @@ static void cubetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3
     {
         for (i = 0; i < sub_count; ++i)
         {
-            IWineD3DSurface_LoadTexture((IWineD3DSurface *)This->baseTexture.sub_resources[i], srgb_mode);
+            IWineD3DSurface_LoadTexture((IWineD3DSurface *)texture->baseTexture.sub_resources[i], srgb_mode);
         }
     }
     else
     {
-        TRACE("(%p) Texture not dirty, nothing to do.\n" , iface);
+        TRACE("Texture %p not dirty, nothing to do.\n" , texture);
     }
 
     /* No longer dirty. */
@@ -203,8 +201,9 @@ static DWORD WINAPI IWineD3DCubeTextureImpl_GetPriority(IWineD3DCubeTexture *ifa
 }
 
 /* Do not call while under the GL lock. */
-static void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface) {
-    cubetexture_internal_preload((IWineD3DBaseTexture *) iface, SRGB_ANY);
+static void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface)
+{
+    cubetexture_internal_preload((IWineD3DBaseTextureImpl *)iface, SRGB_ANY);
 }
 
 /* Do not call while under the GL lock. */

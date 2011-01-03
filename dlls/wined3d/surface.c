@@ -1071,8 +1071,8 @@ void surface_internal_preload(IWineD3DSurfaceImpl *surface, enum WINED3DSRGB srg
     {
         IWineD3DBaseTextureImpl *texture = surface->container.u.texture;
 
-        TRACE("Passing to container.\n");
-        texture->baseTexture.internal_preload((IWineD3DBaseTexture *)texture, srgb);
+        TRACE("Passing to container (%p).\n", texture);
+        texture->baseTexture.internal_preload(texture, srgb);
     }
     else
     {

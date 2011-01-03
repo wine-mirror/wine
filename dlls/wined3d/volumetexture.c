@@ -27,55 +27,53 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
 
 /* Do not call while under the GL lock. */
-static void volumetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3DSRGB srgb)
+static void volumetexture_internal_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB srgb)
 {
-    /* Override the IWineD3DResource Preload method. */
-    IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
-    IWineD3DDeviceImpl *device = This->resource.device;
+    IWineD3DDeviceImpl *device = texture->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_context *context = NULL;
-    BOOL srgb_mode = This->baseTexture.is_srgb;
+    BOOL srgb_mode = texture->baseTexture.is_srgb;
     BOOL srgb_was_toggled = FALSE;
     unsigned int i;
 
-    TRACE("(%p) : About to load texture.\n", This);
+    TRACE("texture %p, srgb %#x.\n", texture, srgb);
 
     if (!device->isInDraw) context = context_acquire(device, NULL);
-    else if (gl_info->supported[EXT_TEXTURE_SRGB] && This->baseTexture.bindCount > 0)
+    else if (gl_info->supported[EXT_TEXTURE_SRGB] && texture->baseTexture.bindCount > 0)
     {
-        srgb_mode = device->stateBlock->state.sampler_states[This->baseTexture.sampler][WINED3DSAMP_SRGBTEXTURE];
-        srgb_was_toggled = This->baseTexture.is_srgb != srgb_mode;
-        This->baseTexture.is_srgb = srgb_mode;
+        srgb_mode = device->stateBlock->state.sampler_states[texture->baseTexture.sampler][WINED3DSAMP_SRGBTEXTURE];
+        srgb_was_toggled = texture->baseTexture.is_srgb != srgb_mode;
+        texture->baseTexture.is_srgb = srgb_mode;
     }
 
     /* If the texture is marked dirty or the srgb sampler setting has changed
      * since the last load then reload the volumes. */
-    if (This->baseTexture.texture_rgb.dirty)
+    if (texture->baseTexture.texture_rgb.dirty)
     {
-        for (i = 0; i < This->baseTexture.level_count; ++i)
+        for (i = 0; i < texture->baseTexture.level_count; ++i)
         {
-            IWineD3DVolume *volume = (IWineD3DVolume *)This->baseTexture.sub_resources[i];
+            IWineD3DVolume *volume = (IWineD3DVolume *)texture->baseTexture.sub_resources[i];
             IWineD3DVolume_LoadTexture(volume, i, srgb_mode);
         }
     }
     else if (srgb_was_toggled)
     {
-        for (i = 0; i < This->baseTexture.level_count; ++i)
+        for (i = 0; i < texture->baseTexture.level_count; ++i)
         {
-            IWineD3DVolume *volume = (IWineD3DVolume *)This->baseTexture.sub_resources[i];
+            IWineD3DVolume *volume = (IWineD3DVolume *)texture->baseTexture.sub_resources[i];
             volume_add_dirty_box(volume, NULL);
             IWineD3DVolume_LoadTexture(volume, i, srgb_mode);
         }
     }
     else
     {
-        TRACE("(%p) Texture not dirty, nothing to do.\n", iface);
+        TRACE("Texture %p not dirty, nothing to do.\n", texture);
     }
 
     if (context) context_release(context);
 
     /* No longer dirty */
-    This->baseTexture.texture_rgb.dirty = FALSE;
+    texture->baseTexture.texture_rgb.dirty = FALSE;
 }
 
 static void volumetexture_cleanup(IWineD3DVolumeTextureImpl *This)
@@ -165,8 +163,9 @@ static DWORD WINAPI IWineD3DVolumeTextureImpl_GetPriority(IWineD3DVolumeTexture 
     return resource_get_priority((IWineD3DResource *)iface);
 }
 
-static void WINAPI IWineD3DVolumeTextureImpl_PreLoad(IWineD3DVolumeTexture *iface) {
-    volumetexture_internal_preload((IWineD3DBaseTexture *) iface, SRGB_ANY);
+static void WINAPI IWineD3DVolumeTextureImpl_PreLoad(IWineD3DVolumeTexture *iface)
+{
+    volumetexture_internal_preload((IWineD3DBaseTextureImpl *)iface, SRGB_ANY);
 }
 
 /* Do not call while under the GL lock. */

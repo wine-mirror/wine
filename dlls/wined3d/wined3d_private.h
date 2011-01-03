@@ -58,6 +58,7 @@ typedef struct IWineD3DPaletteImpl    IWineD3DPaletteImpl;
 typedef struct IWineD3DDeviceImpl     IWineD3DDeviceImpl;
 typedef struct IWineD3DSwapChainImpl  IWineD3DSwapChainImpl;
 struct IWineD3DBaseShaderImpl;
+struct IWineD3DBaseTextureImpl;
 
 /* Texture format fixups */
 
@@ -1897,7 +1898,7 @@ typedef struct IWineD3DBaseTextureClass
     const struct min_lookup *minMipLookup;
     const GLenum            *magLookup;
     GLenum target;
-    void                    (*internal_preload)(IWineD3DBaseTexture *iface, enum WINED3DSRGB srgb);
+    void                    (*internal_preload)(struct IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB srgb);
 } IWineD3DBaseTextureClass;
 
 typedef struct IWineD3DBaseTextureImpl
