@@ -246,7 +246,7 @@ typedef struct {
 
 struct HTMLLocation {
     DispatchEx dispex;
-    const IHTMLLocationVtbl *lpHTMLLocationVtbl;
+    IHTMLLocation IHTMLLocation_iface;
 
     LONG ref;
 
@@ -629,8 +629,6 @@ struct HTMLDocumentNode {
 #define HTTPNEG(x)       ((IHttpNegotiate2*)              &(x)->lpHttpNegotiate2Vtbl)
 #define STATUSCLB(x)     ((IBindStatusCallback*)          &(x)->lpBindStatusCallbackVtbl)
 #define BINDINFO(x)      ((IInternetBindInfo*)            &(x)->lpInternetBindInfoVtbl);
-
-#define HTMLLOCATION(x)    ((IHTMLLocation*)              &(x)->lpHTMLLocationVtbl)
 
 #define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
 

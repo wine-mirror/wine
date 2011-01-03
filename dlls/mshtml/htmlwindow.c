@@ -124,7 +124,7 @@ static void release_children(HTMLWindow *This)
 static HRESULT get_location(HTMLWindow *This, HTMLLocation **ret)
 {
     if(This->location) {
-        IHTMLLocation_AddRef(HTMLLOCATION(This->location));
+        IHTMLLocation_AddRef(&This->location->IHTMLLocation_iface);
     }else {
         HRESULT hres;
 
@@ -249,7 +249,7 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
 
         if(This->location) {
             This->location->window = NULL;
-            IHTMLLocation_Release(HTMLLOCATION(This->location));
+            IHTMLLocation_Release(&This->location->IHTMLLocation_iface);
         }
 
         if(This->screen)
@@ -688,7 +688,7 @@ static HRESULT WINAPI HTMLWindow2_get_location(IHTMLWindow2 *iface, IHTMLLocatio
     if(FAILED(hres))
         return hres;
 
-    *p = HTMLLOCATION(location);
+    *p = &location->IHTMLLocation_iface;
     return S_OK;
 }
 
@@ -1986,7 +1986,7 @@ static HRESULT WINAPI WindowDispEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID 
 
         hres = IDispatchEx_InvokeEx(&location->dispex.IDispatchEx_iface, DISPID_VALUE, lcid,
                 wFlags, pdp, pvarRes, pei, pspCaller);
-        IHTMLLocation_Release(HTMLLOCATION(location));
+        IHTMLLocation_Release(&location->IHTMLLocation_iface);
         return hres;
     }
 

@@ -64,20 +64,23 @@ static HRESULT get_url_components(HTMLLocation *This, URL_COMPONENTSW *url)
     return S_OK;
 }
 
-#define HTMLLOCATION_THIS(iface) DEFINE_THIS(HTMLLocation, HTMLLocation, iface)
+static inline HTMLLocation *impl_from_IHTMLLocation(IHTMLLocation *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLLocation, IHTMLLocation_iface);
+}
 
 static HRESULT WINAPI HTMLLocation_QueryInterface(IHTMLLocation *iface, REFIID riid, void **ppv)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
 
     *ppv = NULL;
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = HTMLLOCATION(This);
+        *ppv = &This->IHTMLLocation_iface;
     }else if(IsEqualGUID(&IID_IHTMLLocation, riid)) {
         TRACE("(%p)->(IID_IHTMLLocation %p)\n", This, ppv);
-        *ppv = HTMLLOCATION(This);
+        *ppv = &This->IHTMLLocation_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }
@@ -93,7 +96,7 @@ static HRESULT WINAPI HTMLLocation_QueryInterface(IHTMLLocation *iface, REFIID r
 
 static ULONG WINAPI HTMLLocation_AddRef(IHTMLLocation *iface)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -103,7 +106,7 @@ static ULONG WINAPI HTMLLocation_AddRef(IHTMLLocation *iface)
 
 static ULONG WINAPI HTMLLocation_Release(IHTMLLocation *iface)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -120,14 +123,14 @@ static ULONG WINAPI HTMLLocation_Release(IHTMLLocation *iface)
 
 static HRESULT WINAPI HTMLLocation_GetTypeInfoCount(IHTMLLocation *iface, UINT *pctinfo)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI HTMLLocation_GetTypeInfo(IHTMLLocation *iface, UINT iTInfo,
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
@@ -135,7 +138,7 @@ static HRESULT WINAPI HTMLLocation_GetIDsOfNames(IHTMLLocation *iface, REFIID ri
                                                 LPOLESTR *rgszNames, UINT cNames,
                                                 LCID lcid, DISPID *rgDispId)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
             lcid, rgDispId);
 }
@@ -144,14 +147,14 @@ static HRESULT WINAPI HTMLLocation_Invoke(IHTMLLocation *iface, DISPID dispIdMem
                             REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI HTMLLocation_put_href(IHTMLLocation *iface, BSTR v)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
@@ -165,7 +168,7 @@ static HRESULT WINAPI HTMLLocation_put_href(IHTMLLocation *iface, BSTR v)
 
 static HRESULT WINAPI HTMLLocation_get_href(IHTMLLocation *iface, BSTR *p)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     URL_COMPONENTSW url = {sizeof(URL_COMPONENTSW)};
     WCHAR *buf = NULL, *url_path = NULL;
     HRESULT hres, ret;
@@ -265,14 +268,14 @@ cleanup:
 
 static HRESULT WINAPI HTMLLocation_put_protocol(IHTMLLocation *iface, BSTR v)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLLocation_get_protocol(IHTMLLocation *iface, BSTR *p)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     URL_COMPONENTSW url = {sizeof(URL_COMPONENTSW)};
     HRESULT hres;
 
@@ -302,14 +305,14 @@ static HRESULT WINAPI HTMLLocation_get_protocol(IHTMLLocation *iface, BSTR *p)
 
 static HRESULT WINAPI HTMLLocation_put_host(IHTMLLocation *iface, BSTR v)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLLocation_get_host(IHTMLLocation *iface, BSTR *p)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     URL_COMPONENTSW url = {sizeof(URL_COMPONENTSW)};
     HRESULT hres;
 
@@ -348,14 +351,14 @@ static HRESULT WINAPI HTMLLocation_get_host(IHTMLLocation *iface, BSTR *p)
 
 static HRESULT WINAPI HTMLLocation_put_hostname(IHTMLLocation *iface, BSTR v)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLLocation_get_hostname(IHTMLLocation *iface, BSTR *p)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     URL_COMPONENTSW url = {sizeof(URL_COMPONENTSW)};
     HRESULT hres;
 
@@ -382,14 +385,14 @@ static HRESULT WINAPI HTMLLocation_get_hostname(IHTMLLocation *iface, BSTR *p)
 
 static HRESULT WINAPI HTMLLocation_put_port(IHTMLLocation *iface, BSTR v)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLLocation_get_port(IHTMLLocation *iface, BSTR *p)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     URL_COMPONENTSW url = {sizeof(URL_COMPONENTSW)};
     HRESULT hres;
 
@@ -419,14 +422,14 @@ static HRESULT WINAPI HTMLLocation_get_port(IHTMLLocation *iface, BSTR *p)
 
 static HRESULT WINAPI HTMLLocation_put_pathname(IHTMLLocation *iface, BSTR v)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLLocation_get_pathname(IHTMLLocation *iface, BSTR *p)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     URL_COMPONENTSW url = {sizeof(URL_COMPONENTSW)};
     HRESULT hres;
 
@@ -453,14 +456,14 @@ static HRESULT WINAPI HTMLLocation_get_pathname(IHTMLLocation *iface, BSTR *p)
 
 static HRESULT WINAPI HTMLLocation_put_search(IHTMLLocation *iface, BSTR v)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLLocation_get_search(IHTMLLocation *iface, BSTR *p)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     URL_COMPONENTSW url = {sizeof(URL_COMPONENTSW)};
     HRESULT hres;
     const WCHAR hash[] = {'#',0};
@@ -491,14 +494,14 @@ static HRESULT WINAPI HTMLLocation_get_search(IHTMLLocation *iface, BSTR *p)
 
 static HRESULT WINAPI HTMLLocation_put_hash(IHTMLLocation *iface, BSTR v)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLLocation_get_hash(IHTMLLocation *iface, BSTR *p)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     URL_COMPONENTSW url = {sizeof(URL_COMPONENTSW)};
     const WCHAR hash[] = {'#',0};
     DWORD hash_pos = 0;
@@ -531,33 +534,31 @@ static HRESULT WINAPI HTMLLocation_get_hash(IHTMLLocation *iface, BSTR *p)
 
 static HRESULT WINAPI HTMLLocation_reload(IHTMLLocation *iface, VARIANT_BOOL flag)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     FIXME("(%p)->(%x)\n", This, flag);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLLocation_replace(IHTMLLocation *iface, BSTR bstr)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(bstr));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLLocation_assign(IHTMLLocation *iface, BSTR bstr)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(bstr));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLLocation_toString(IHTMLLocation *iface, BSTR *String)
 {
-    HTMLLocation *This = HTMLLOCATION_THIS(iface);
+    HTMLLocation *This = impl_from_IHTMLLocation(iface);
     FIXME("(%p)->(%p)\n", This, String);
     return E_NOTIMPL;
 }
-
-#undef HTMLLOCATION_THIS
 
 static const IHTMLLocationVtbl HTMLLocationVtbl = {
     HTMLLocation_QueryInterface,
@@ -609,11 +610,11 @@ HRESULT HTMLLocation_Create(HTMLWindow *window, HTMLLocation **ret)
     if(!location)
         return E_OUTOFMEMORY;
 
-    location->lpHTMLLocationVtbl = &HTMLLocationVtbl;
+    location->IHTMLLocation_iface.lpVtbl = &HTMLLocationVtbl;
     location->ref = 1;
     location->window = window;
 
-    init_dispex(&location->dispex, (IUnknown*)HTMLLOCATION(location),  &HTMLLocation_dispex);
+    init_dispex(&location->dispex, (IUnknown*)&location->IHTMLLocation_iface, &HTMLLocation_dispex);
 
     *ret = location;
     return S_OK;
