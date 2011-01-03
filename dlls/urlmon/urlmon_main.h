@@ -115,6 +115,36 @@ struct ProtocolVtbl {
     void (*close_connection)(Protocol*);
 };
 
+/* Flags are needed for, among other things, return HRESULTs from the Read function
+ * to conform to native. For example, Read returns:
+ *
+ * 1. E_PENDING if called before the request has completed,
+ *        (flags = 0)
+ * 2. S_FALSE after all data has been read and S_OK has been reported,
+ *        (flags = FLAG_REQUEST_COMPLETE | FLAG_ALL_DATA_READ | FLAG_RESULT_REPORTED)
+ * 3. INET_E_DATA_NOT_AVAILABLE if InternetQueryDataAvailable fails. The first time
+ *    this occurs, INET_E_DATA_NOT_AVAILABLE will also be reported to the sink,
+ *        (flags = FLAG_REQUEST_COMPLETE)
+ *    but upon subsequent calls to Read no reporting will take place, yet
+ *    InternetQueryDataAvailable will still be called, and, on failure,
+ *    INET_E_DATA_NOT_AVAILABLE will still be returned.
+ *        (flags = FLAG_REQUEST_COMPLETE | FLAG_RESULT_REPORTED)
+ *
+ * FLAG_FIRST_DATA_REPORTED and FLAG_LAST_DATA_REPORTED are needed for proper
+ * ReportData reporting. For example, if OnResponse returns S_OK, Continue will
+ * report BSCF_FIRSTDATANOTIFICATION, and when all data has been read Read will
+ * report BSCF_INTERMEDIATEDATANOTIFICATION|BSCF_LASTDATANOTIFICATION. However,
+ * if OnResponse does not return S_OK, Continue will not report data, and Read
+ * will report BSCF_FIRSTDATANOTIFICATION|BSCF_LASTDATANOTIFICATION when all
+ * data has been read.
+ */
+#define FLAG_REQUEST_COMPLETE         0x0001
+#define FLAG_FIRST_CONTINUE_COMPLETE  0x0002
+#define FLAG_FIRST_DATA_REPORTED      0x0004
+#define FLAG_ALL_DATA_READ            0x0008
+#define FLAG_LAST_DATA_REPORTED       0x0010
+#define FLAG_RESULT_REPORTED          0x0020
+
 HRESULT protocol_start(Protocol*,IInternetProtocol*,IUri*,IInternetProtocolSink*,IInternetBindInfo*);
 HRESULT protocol_continue(Protocol*,PROTOCOLDATA*);
 HRESULT protocol_read(Protocol*,void*,ULONG,ULONG*);
