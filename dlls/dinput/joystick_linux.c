@@ -110,7 +110,7 @@ static const GUID DInput_Wine_Joystick_GUID = { /* 9e573ed9-7734-11d2-8d4a-23903
 static INT joystick_devices_count = -1;
 static struct JoyDev *joystick_devices;
 
-static void joy_polldev(JoystickGenericImpl *This);
+static void joy_polldev(LPDIRECTINPUTDEVICE8A iface);
 
 static INT find_joystick_devices(void)
 {
@@ -544,10 +544,11 @@ static HRESULT WINAPI JoystickLinuxAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
     return DI_NOEFFECT;
 }
 
-static void joy_polldev(JoystickGenericImpl *This_in) {
+static void joy_polldev(LPDIRECTINPUTDEVICE8A iface)
+{
     struct pollfd plfd;
-    struct	js_event jse;
-    JoystickImpl *This = (JoystickImpl*) This_in;
+    struct js_event jse;
+    JoystickImpl *This = (JoystickImpl*) iface;
 
     TRACE("(%p)\n", This);
 

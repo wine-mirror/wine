@@ -33,7 +33,7 @@
 #define MAX_PROPS 164
 struct JoystickGenericImpl;
 
-typedef void joy_polldev_handler(struct JoystickGenericImpl *This);
+typedef void joy_polldev_handler(LPDIRECTINPUTDEVICE8A iface);
 
 typedef struct JoystickGenericImpl
 {

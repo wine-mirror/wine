@@ -135,7 +135,7 @@ struct JoystickImpl
 
 static void fake_current_js_state(JoystickImpl *ji);
 static void find_joydevs(void);
-static void joy_polldev(JoystickGenericImpl *This);
+static void joy_polldev(LPDIRECTINPUTDEVICE8A iface);
 
 /* This GUID is slightly different from the linux joystick one. Take note. */
 static const GUID DInput_Wine_Joystick_Base_GUID = { /* 9e573eda-7734-11d2-8d4a-23903fb6bdf7 */
@@ -731,7 +731,7 @@ static void fake_current_js_state(JoystickImpl *ji)
 #undef CENTER_AXIS
 
 /* convert wine format offset to user format object index */
-static void joy_polldev(JoystickGenericImpl *iface)
+static void joy_polldev(LPDIRECTINPUTDEVICE8A iface)
 {
     struct pollfd plfd;
     struct input_event ie;

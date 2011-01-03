@@ -358,7 +358,7 @@ HRESULT WINAPI JoystickAGenericImpl_Poll(LPDIRECTINPUTDEVICE8A iface)
         return DIERR_NOTACQUIRED;
     }
 
-    This->joy_polldev(This);
+    This->joy_polldev(iface);
     return DI_OK;
 }
 
@@ -381,7 +381,7 @@ HRESULT WINAPI JoystickAGenericImpl_GetDeviceState(
     }
 
     /* update joystick state */
-    This->joy_polldev(This);
+    This->joy_polldev(iface);
 
     /* convert and copy data to user supplied buffer */
     fill_DataFormat(ptr, len, &This->js, &This->base.data_format);
