@@ -56,3 +56,657 @@ msgstr "&Informazioni sull'orologio..."
 #: clock.rc:48
 msgid "Clock"
 msgstr "Orologio"
+
+#: cmd.rc:30
+msgid "ATTRIB shows or changes DOS file attributes.\n"
+msgstr "Aiuto su ATTRIB\n"
+
+#: cmd.rc:38
+msgid ""
+"CALL <batchfilename> is used within a batch file to execute commands\n"
+"from another batch file. When the batch file exits, control returns to\n"
+"the file which called it. The CALL command may supply parameters to the\n"
+"called procedure.\n"
+"\n"
+"Changes to default directory, environment variables etc made within a\n"
+"called procedure are inherited by the caller.\n"
+msgstr ""
+"CALL <nomedelfilebatch> si usa all'interno di un file batch per eseguire\n"
+"comandi da un altro file batch. Quando il file batch esiste, il controllo\n"
+"torna al file che l'ha chiamato. Il comando CALL può passare parametri alla\n"
+"procedura chiamata.\n"
+"\n"
+"Cambiamenti alla cartella predefinita, alle variabili d'ambiente etc fatti "
+"dentro una\n"
+"procedura chiamata sono ereditati dalla chiamante.\n"
+
+#: cmd.rc:41
+msgid ""
+"CD <dir> is the short version of CHDIR. It changes the current\n"
+"default directory.\n"
+msgstr "Aiuto su CD\n"
+
+#: cmd.rc:42
+msgid "CHDIR <dir> changes the current default directory.\n"
+msgstr "Aiuto su CHDIR\n"
+
+#: cmd.rc:44
+msgid "CLS clears the console screen.\n"
+msgstr "CLS pulisce la schermata della console\n"
+
+#: cmd.rc:46
+msgid "COPY <filename> copies a file.\n"
+msgstr "Aiuto su COPY\n"
+
+#: cmd.rc:47
+msgid "CTTY changes the input/output device.\n"
+msgstr "Aiuto su CTTY\n"
+
+#: cmd.rc:48
+msgid "DATE shows or changes the system date.\n"
+msgstr "Aiuto su DATE\n"
+
+#: cmd.rc:49
+msgid "DEL <filename> deletes a file or set of files.\n"
+msgstr "Aiuto su DEL\n"
+
+#: cmd.rc:50
+msgid "DIR lists the contents of a directory.\n"
+msgstr "Aiuto su DIR\n"
+
+#: cmd.rc:60
+msgid ""
+"ECHO <string> displays <string> on the current terminal device.\n"
+"\n"
+"ECHO ON causes all subsequent commands in a batch file to be displayed\n"
+"on the terminal device before they are executed.\n"
+"\n"
+"ECHO OFF reverses the effect of a previous ECHO ON (ECHO is OFF by\n"
+"default). The ECHO OFF command can be prevented from displaying by\n"
+"preceding it with an @ sign.\n"
+msgstr ""
+"ECHO <string> mostra <string> sul dispositivo di terminale corrente.\n"
+"\n"
+"ECHO ON fa sì che tutti i comandi seguenti in un file batch siano mostrati\n"
+"sul dispositivo di terminale prima di essere eseguiti.\n"
+"\n"
+"ECHO OFF inverte l'effetto di un precedente ECHO ON (ECHO usa OFF per\n"
+"default). Si può evitare che il comando ECHO OFF sia mostrato\n"
+"precedendolo con un segno @.\n"
+
+#: cmd.rc:62
+msgid "ERASE <filename> deletes a file or set of files.\n"
+msgstr "Aiuto su ERASE\n"
+
+#: cmd.rc:70
+msgid ""
+"The FOR command is used to execute a command for each of a set of files.\n"
+"\n"
+"Syntax: FOR %variable IN (set) DO command\n"
+"\n"
+"The requirement to double the % sign when using FOR in a batch file does\n"
+"not exist in wine's cmd.\n"
+msgstr ""
+"Il comando FOR è usato per eseguire un comando per ciascuno di un set di "
+"files.\n"
+"\n"
+"Sintassi: FOR %variabile IN (set) DO comando\n"
+"\n"
+"La necessità di raddoppiare il segno % nell'uso di un FOR in un file batch "
+"non\n"
+"esiste nel cmd di wine.\n"
+
+#: cmd.rc:82
+msgid ""
+"The GOTO command transfers execution to another statement within a\n"
+"batch file.\n"
+"\n"
+"The label which is the target of a GOTO may be up to 255 characters\n"
+"long but may not include spaces (this is different from other operating\n"
+"systems). If two or more identical labels exist in a batch file the\n"
+"first one will always be executed. Attempting to GOTO a nonexistent\n"
+"label terminates the batch file execution.\n"
+"\n"
+"GOTO has no effect when used interactively.\n"
+msgstr ""
+"Il comando GOTO trasferisce l'esecuzione ad un'altra istruzione dentro un\n"
+"file batch.\n"
+"\n"
+"L'etichetta di destinazione di un GOTO può essere lunga fino a 255 "
+"caratteri\n"
+"ma non può includere spazi (questo è differente da altri sistemi\n"
+"operativi). Se esistono due o più etichette identiche in un file batch, la\n"
+"prima sarà sempre eseguita. Tentare un GOTO verso un'etichetta\n"
+"inesistente termina l'esecuzione del file batch.\n"
+"\n"
+"GOTO non ha effetto quando usato in modalità interattiva.\n"
+
+#: cmd.rc:85
+msgid ""
+"HELP <command> shows brief help details on a topic.\n"
+"HELP without an argument shows all CMD built-in commands.\n"
+msgstr "Aiuto su HELP\n"
+
+#: cmd.rc:95
+msgid ""
+"IF is used to conditionally execute a command.\n"
+"\n"
+"Syntax:\tIF [NOT] EXIST filename command\n"
+"IF [NOT] string1==string2 command\n"
+"IF [NOT] ERRORLEVEL number command\n"
+"\n"
+"In the second form of the command, string1 and string2 must be in double\n"
+"quotes. The comparison is not case-sensitive.\n"
+msgstr ""
+"IF è usato per eseguire condizionalmente un comando.\n"
+"\n"
+"Sintassi:\tIF [NOT] EXIST nomedelfile comando\n"
+"IF [NOT] stringa1==stringa2 comando\n"
+"IF [NOT] ERRORLEVEL numero comando\n"
+"\n"
+"Nella seconda forma del comando, stringa1 and stringa2 devono essere\n"
+"in doppi apici. Il confronto non è sensibile alle maiuscole.\n"
+
+#: cmd.rc:101
+msgid ""
+"LABEL is used to set a disk volume label.\n"
+"\n"
+"Syntax: LABEL [drive:]\n"
+"The command will prompt you for the new volume label for the given drive.\n"
+"You can display the disk volume label with the VOL command.\n"
+msgstr ""
+"LABEL è usato per creare un'etichetta del volume di un disco.\n"
+"\n"
+"Sintassi: LABEL [unità:]\n"
+"Il comando ti chiederà la nuova etichetta di volume per l'unità "
+"specificata.\n"
+"Puoi mostrare l'etichetta di volume del disco con il comando VOL.\n"
+
+#: cmd.rc:104
+msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
+msgstr "Aiuto su MD\n"
+
+#: cmd.rc:105
+msgid "MKDIR <name> creates a subdirectory.\n"
+msgstr "Aiuto su MKDIR\n"
+
+#: cmd.rc:112
+msgid ""
+"MOVE relocates a file or directory to a new point within the file system.\n"
+"\n"
+"If the item being moved is a directory then all the files and "
+"subdirectories\n"
+"below the item are moved as well.\n"
+"\n"
+"MOVE fails if the old and new locations are on different DOS drive letters.\n"
+msgstr ""
+"MOVE sposta un file o una cartella in un punto diverso nel file system.\n"
+"\n"
+"Se l'oggetto che viene spostato è una cartella allora tutti i files e le "
+"sottocartelle\n"
+"dentro l'oggetto saranno spostate insieme.\n"
+"\n"
+"MOVE fallisce se la nuova e la vecchia locazione sono su lettere di unità "
+"DOS differenti.\n"
+
+#: cmd.rc:123
+msgid ""
+"PATH displays or changes the cmd search path.\n"
+"\n"
+"Entering PATH will display the current PATH setting (initially taken\n"
+"from the registry). To change the setting follow the\n"
+"PATH command with the new value.\n"
+"\n"
+"It is also possible to modify the PATH by using the PATH environment\n"
+"variable, for example:\n"
+"PATH %PATH%;c:\\temp\n"
+msgstr ""
+"PATH mostra o cambia il percorso di ricerca di cmd.\n"
+"\n"
+"Usando PATH, verrà mostrato l'impostazione corrente di PATH (il cui valore è "
+"preso\n"
+"inizialmente dal registro). Per cambiarla, fai seguire al\n"
+"comando PATH il nuovo valore.\n"
+"\n"
+"È anche possibile modificare il PATH usando la variabile d'ambiente\n"
+"PATH, per esempio:\n"
+"PATH %PATH%;c:\\temp\n"
+
+#: cmd.rc:129
+msgid ""
+"PAUSE displays a message on the screen 'Press Return key to continue'\n"
+"and waits for the user to press the Return key. It is mainly useful in\n"
+"batch files to allow the user to read the output of a previous command\n"
+"before it scrolls off the screen.\n"
+msgstr ""
+"PAUSE mostra un messaggio sullo schermo 'Premere Invio per continuare'\n"
+"e aspetta che l'utente prema Invio. È utile principalmente nei files\n"
+"batch per permettere all'utente di leggere l'output di un comando "
+"precedente\n"
+"prima che scorra fuori dallo schermo.\n"
+
+#: cmd.rc:150
+msgid ""
+"PROMPT sets the command-line prompt.\n"
+"\n"
+"The string following the PROMPT command (and the space immediately after)\n"
+"appears at the beginning of the line when cmd is waiting for input.\n"
+"\n"
+"The following character strings have the special meaning shown:\n"
+"\n"
+"$$    Dollar sign         $_    Linefeed            $b    Pipe sign (|)\n"
+"$d    Current date        $e    Escape              $g    > sign\n"
+"$l    < sign              $n    Current drive       $p    Current path\n"
+"$q    Equal sign          $t    Current time        $v    cmd version\n"
+"\n"
+"Note that entering the PROMPT command without a prompt-string resets the\n"
+"prompt to the default, which is the current directory (which includes the\n"
+"current drive letter) followed by a greater-than (>) sign.\n"
+"(like a command PROMPT $p$g).\n"
+"\n"
+"The prompt can also be changed by altering the PROMPT environment variable,\n"
+"so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'\n"
+msgstr ""
+"PROMPT configura il prompt a linea di comando.\n"
+"\n"
+"La stringa che segue il comando PROMPT (e lo spazio immediatamente dopo)\n"
+"appariranno all'inizio della linea quando cmd sta aspettando l'input "
+"dell'utente.\n"
+"\n"
+"Le seguenti stringhe di caratteri hanno il loro significato speciale "
+"accanto:\n"
+"\n"
+"$$    Segno del dollaro\t\t$_    Linefeed\t\t$b    Segno della pipe (|)\n"
+"$d    Data attuale\t\t$e    Escape\t\t$g    Segno >\n"
+"$l    Segno <\t\t\t$n    Unità attuale\t$p    Percorso corrente\n"
+"$q    Segno uguale\t\t$t    Ora attuale\t$v    Versione di cmd\n"
+"\n"
+"Nota che inserire il comando PROMPT senza una stringa dopo resetta il\n"
+"prompt al default, che è la cartella corrente (che include la\n"
+"lettera dell'unità attuale) seguita da un segno maggiore (>).\n"
+"(come un comando PROMPT $p$g).\n"
+"\n"
+"Il prompt può essere cambiato anche alterando la variabile d'ambiente "
+"PROMPT,\n"
+"perciò il comando 'SET PROMPT=testo' ha lo stesso effetto di 'PROMPT testo'\n"
+
+#: cmd.rc:154
+msgid ""
+"A command line beginning REM (followed by a space) performs no\n"
+"action, and can therefore be used as a comment in a batch file.\n"
+msgstr ""
+"Una linea di comando che comincia con REM (seguito da uno spazio) non "
+"esegue\n"
+"alcuna azione e può, quindi, essere usata come un commento in un file "
+"batch.\n"
+
+#: cmd.rc:157
+msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
+msgstr "Aiuto su REN\n"
+
+#: cmd.rc:158
+msgid "RENAME <filename> renames a file\n"
+msgstr "Aiuto su RENAME\n"
+
+#: cmd.rc:160
+msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
+msgstr "Aiuto su RD\n"
+
+#: cmd.rc:161
+msgid "RMDIR <dir> deletes a subdirectory.\n"
+msgstr "Aiuto su RMDIR\n"
+
+#: cmd.rc:179
+msgid ""
+"SET displays or changes the cmd environment variables.\n"
+"\n"
+"SET without parameters shows all of the current environment.\n"
+"\n"
+"To create or modify an environment variable the syntax is:\n"
+"\n"
+"SET <variable>=<value>\n"
+"\n"
+"where <variable> and <value> are character strings. There must be no\n"
+"spaces before the equals sign, nor can the variable name\n"
+"have embedded spaces.\n"
+"\n"
+"Under Wine, the environment of the underlying operating system is\n"
+"included into the Win32 environment, there will generally therefore be\n"
+"many more values than in a native Win32 implementation. Note that it is\n"
+"not possible to affect the operating system environment from within cmd.\n"
+msgstr ""
+"SET mostra o cambia le variabili d'ambiente di cmd.\n"
+"\n"
+"SET senza parametri mostra tutto dell'ambiente attuale.\n"
+"\n"
+"Per creare o modificare una variabile d'ambiente, la sintassi è:\n"
+"\n"
+"SET <variabile>=<valore>\n"
+"\n"
+"dove <variabile> e <valore> sono stringhe di caratteri. Non devono esserci\n"
+"spazi prima del segno uguale, né il nome della variabile può\n"
+"avere spazi all'interno.\n"
+"\n"
+"Sotto Wine, l'ambiente del sistema operativo sottostante è\n"
+"incluso nell'ambiente Win32; ci saranno quindi generalmente\n"
+"molti più valori che ina implementazione nativa di Win32. Nota che non è\n"
+"possibile influenzare l'ambiente del sistema operativo da dentro il cmd.\n"
+
+#: cmd.rc:184
+msgid ""
+"SHIFT is used in a batch file to remove one parameter from the head of\n"
+"the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
+"if called from the command line.\n"
+msgstr ""
+"SHIFT è usato in un file batch per rimuovere un parametro dall'inizio della\n"
+"lista, perciò il parametro 2 diventa parametro 1 e così via. Non ha effetto\n"
+"se chiamato dalla linea di comando.\n"
+
+#: cmd.rc:186
+msgid "TIME sets or shows the current system time.\n"
+msgstr "Aiuto su TIME\n"
+
+#: cmd.rc:188
+msgid "Sets the window title for the cmd window, syntax TITLE [string]\n"
+msgstr ""
+"Stabilisce il titolo della finestra per quella di cmd, sintassi TITLE "
+"[stringa]\n"
+
+#: cmd.rc:192
+msgid ""
+"TYPE <filename> copies <filename> to the console device (or elsewhere\n"
+"if redirected). No check is made that the file is readable text.\n"
+msgstr ""
+"TYPE <nomedelfile> copia <nomedelfile> sul dispositivo della console (o "
+"ovunque\n"
+"se rediretto). Nessun controllo è fatto se il file sia testo leggibile.\n"
+
+#: cmd.rc:201
+msgid ""
+"VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
+"\n"
+"VERIFY ON\tSet the flag\n"
+"VERIFY OFF\tClear the flag\n"
+"VERIFY\t\tDisplays ON or OFF as appropriate.\n"
+"\n"
+"The verify flag has no function in Wine.\n"
+msgstr ""
+"VERIFY è usato per impostare, pulire o verificare la flag di verify. Forme "
+"valide sono:\n"
+"\n"
+"VERIFY ON\tImposta la flag\n"
+"VERIFY OFF\tPulisce la flag\n"
+"VERIFY\t\tMostra ON o OFF a seconda dei casi.\n"
+"\n"
+"La flag di verify non ha funzioni in Wine.\n"
+
+#: cmd.rc:204
+msgid "VER displays the version of cmd you are running\n"
+msgstr "VER mostra la versione di cmd che stai usando\n"
+
+#: cmd.rc:206
+msgid "VOL shows the volume label of a disk device.\n"
+msgstr "Aiuto su VOL\n"
+
+#: cmd.rc:209
+msgid ""
+"PUSHD <directoryname> saves the current directory onto a\n"
+"stack, and then changes the current directory to the supplied one.\n"
+msgstr ""
+"PUSHD <nomedellacartella> salva la cartella attuale su di uno\n"
+"stack e poi la cambia con quella passata.\n"
+
+#: cmd.rc:212
+msgid ""
+"POPD changes current directory to the last one saved with\n"
+"PUSHD.\n"
+msgstr ""
+"POPD cambia la cartella attuale con l'ultima salvata con\n"
+"PUSHD.\n"
+
+#: cmd.rc:214
+msgid "MORE displays output of files or piped input in pages.\n"
+msgstr "MORE mostra l'output di files o l'input dalla pipe in pagine.\n"
+
+#: cmd.rc:218
+msgid ""
+"CHOICE displays a text and waits, until the User\n"
+"presses an allowed Key from a selectable list.\n"
+"CHOICE is mainly used to build a menu selection in a batch file.\n"
+msgstr ""
+"CHOICE mostra un testo e aspetta l'inserimento da parte\n"
+"dell'utente di un tasto permesso da una lista selezionabile.\n"
+"CHOICE è usato generalmente per creare un menù a selezione in un file "
+"batch.\n"
+
+#: cmd.rc:222
+msgid ""
+"EXIT terminates the current command session and returns\n"
+"to the operating system or shell from which you invoked cmd.\n"
+msgstr ""
+"EXIT termina la sessione corrente di cmd e torna al\n"
+"sistema operativo o alla shell dal quale hai chiamato cmd.\n"
+
+#: cmd.rc:253
+msgid ""
+"CMD built-in commands are:\n"
+"ATTRIB\t\tShow or change DOS file attributes\n"
+"CALL\t\tInvoke a batch file from inside another\n"
+"CD (CHDIR)\tChange current default directory\n"
+"CHOICE\t\tWait for an keypress from a selectable list\n"
+"CLS\t\tClear the console screen\n"
+"COPY\t\tCopy file\n"
+"CTTY\t\tChange input/output device\n"
+"DATE\t\tShow or change the system date\n"
+"DEL (ERASE)\tDelete a file or set of files\n"
+"DIR\t\tList the contents of a directory\n"
+"ECHO\t\tCopy text directly to the console output\n"
+"HELP\t\tShow brief help details on a topic\n"
+"MD (MKDIR)\tCreate a subdirectory\n"
+"MORE\t\tDisplay output in pages\n"
+"MOVE\t\tMove a file, set of files or directory tree\n"
+"PATH\t\tSet or show the search path\n"
+"POPD\t\tRestores the directory to the last one saved with PUSHD\n"
+"PROMPT\t\tChange the command prompt\n"
+"PUSHD\t\tChanges to a new directory, saving the current one\n"
+"REN (RENAME)\tRename a file\n"
+"RD (RMDIR)\tDelete a subdirectory\n"
+"SET\t\tSet or show environment variables\n"
+"TIME\t\tSet or show the current system time\n"
+"TITLE\t\tSet the window title for the CMD session\n"
+"TYPE\t\tType the contents of a text file\n"
+"VER\t\tShow the current version of CMD\n"
+"VOL\t\tShow the volume label of a disk device\n"
+"EXIT\t\tClose down CMD\n"
+"\n"
+"Enter HELP <command> for further information on any of the above commands\n"
+msgstr ""
+"I comandi built-in di CMD sono:\n"
+"ATTRIB\t\tMostra o cambia gli attributi dei files DOS\n"
+"CALL\t\tInvoca un file batch da dentro un altro\n"
+"CD (CHDIR)\tCambia la cartella di default attuale\n"
+"CHOICE\t\tAspetta la pressione di un tasto da una lista selezionabile\n"
+"CLS\t\tPulisce lo schermo della console\n"
+"COPY\t\tCopia files\n"
+"CTTY\t\tCambia il dispositivo di input/output\n"
+"DATE\t\tMostra o cambia la data di sistema\n"
+"DEL (ERASE)\tCancella un file o un set di files\n"
+"DIR\t\tElenca il contenuto di una cartella\n"
+"ECHO\t\tCopia il testo direttamente sull'output della console\n"
+"HELP\t\tMostra dei semplici dettagli di aiuto su di un argomento\n"
+"MD (MKDIR)\tCrea una sottocartella\n"
+"MORE\t\tMostra l'output in pagine\n"
+"MOVE\t\tMuove un file, set di files o un albero di cartelle\n"
+"PATH\t\tConfigura o mostra il percorso di ricerca\n"
+"POPD\t\tRipristina la cartella all'ultima salvata con PUSHD\n"
+"PROMPT\t\tCambia il prompt dei comandi\n"
+"PUSHD\t\tCambia su una nuova cartella, salvando quella attuale\n"
+"REN (RENAME)\tRinomina un file\n"
+"RD (RMDIR)\tCancella una sottocartella\n"
+"SET\t\tConfigura o mostra le variabili d'ambiente\n"
+"TIME\t\tConfigura o cambia l'orario di sistema attuale\n"
+"TITLE\t\tConfigura il titolo della finestra per la sessione di CMD\n"
+"TYPE\t\tInserisce il contenuto di un file di testo\n"
+"VER\t\tMostra la versione attuale di CMD\n"
+"VOL\t\tMostra l'etichetta di volume di un'unità disco\n"
+"EXIT\t\tChiude CMD\n"
+"\n"
+"Inserisci HELP <comando> per maggiori informazioni su ciascuno dei comandi "
+"soprastanti\n"
+
+#: cmd.rc:255
+msgid "Are you sure"
+msgstr "Sei sicuro"
+
+#: cmd.rc:256
+msgctxt "Yes key"
+msgid "Y"
+msgstr "S"
+
+#: cmd.rc:257
+msgctxt "No key"
+msgid "N"
+msgstr "N"
+
+#: cmd.rc:258
+msgid "File association missing for extension %s\n"
+msgstr "Associazione di file mancante per l'estensione %s\n"
+
+#: cmd.rc:259
+msgid "No open command associated with file type '%s'\n"
+msgstr "Nessun comando di apertura associato con il tipo di file '%s'\n"
+
+#: cmd.rc:260
+msgid "Overwrite %s"
+msgstr "Sovrascrivere %s"
+
+#: cmd.rc:261
+msgid "More..."
+msgstr "Di più..."
+
+#: cmd.rc:262
+msgid "Line in Batch processing possibly truncated. Using:\n"
+msgstr "Linea nell'elaborazione Batch probabilmente troncata. Uso:\n"
+
+#: cmd.rc:263
+msgid ""
+"Not Yet Implemented\n"
+"\n"
+msgstr ""
+"Non ancora implementato\n"
+"\n"
+
+#: cmd.rc:264
+msgid "Argument missing\n"
+msgstr "Manca un parametro\n"
+
+#: cmd.rc:265
+msgid "Syntax error\n"
+msgstr "Errore di sintassi\n"
+
+#: cmd.rc:266
+msgid "%s : File Not Found\n"
+msgstr "%s : File non trovato\n"
+
+#: cmd.rc:267
+msgid "No help available for %s\n"
+msgstr "Nessun aiuto disponibile per %s\n"
+
+#: cmd.rc:268
+msgid "Target to GOTO not found\n"
+msgstr "Destinazione del GOTO non trovata\n"
+
+#: cmd.rc:269
+msgid "Current Date is %s\n"
+msgstr "La data attuale è  %s\n"
+
+#: cmd.rc:270
+msgid "Current Time is %s\n"
+msgstr "L'ora attuale è  %s\n"
+
+#: cmd.rc:271
+msgid "Enter new date: "
+msgstr "Inserisci una nuova data: "
+
+#: cmd.rc:272
+msgid "Enter new time: "
+msgstr "Inserisci una nuova ora: "
+
+#: cmd.rc:273
+msgid "Environment variable %s not defined\n"
+msgstr "Variabile d'ambiente %s non definita\n"
+
+#: cmd.rc:274
+msgid "Failed to open '%s'\n"
+msgstr "Impossibile aprire '%s'\n"
+
+#: cmd.rc:275
+msgid "Cannot call batch label outside of a batch script\n"
+msgstr "Impossibile chiamare un'etichetta batch fuori da uno script batch\n"
+
+#: cmd.rc:276
+msgctxt "All key"
+msgid "A"
+msgstr "T"
+
+#: cmd.rc:277
+msgid "%s, Delete"
+msgstr "%s, Cancella"
+
+#: cmd.rc:278
+msgid "Echo is %s\n"
+msgstr "Echo è %s\n"
+
+#: cmd.rc:279
+msgid "Verify is %s\n"
+msgstr "Verify è %s\n"
+
+#: cmd.rc:280
+msgid "Verify must be ON or OFF\n"
+msgstr "Verify deve essere ON o OFF\n"
+
+#: cmd.rc:281
+msgid "Parameter error\n"
+msgstr "Errore nel parametro\n"
+
+#: cmd.rc:282
+msgid ""
+"Volume in drive %c is %s\n"
+"Volume Serial Number is %04x-%04x\n"
+"\n"
+msgstr ""
+"Il volume nell'unità %c è %s\n"
+"Il numero seriale del volume è %04x-%04x\n"
+"\n"
+
+#: cmd.rc:283
+msgid "Volume label (11 characters, ENTER for none)?"
+msgstr "Etichetta del volume (11 caratteri, Invio per nessuno)?"
+
+#: cmd.rc:284
+msgid "PATH not found\n"
+msgstr "PATH non trovato\n"
+
+#: cmd.rc:285
+msgid "Press Return key to continue: "
+msgstr "Premere Invio per continuare: "
+
+#: cmd.rc:286
+msgid "Wine Command Prompt"
+msgstr "Prompt dei comandi di Wine"
+
+#: cmd.rc:287
+msgid ""
+"CMD Version %s\n"
+"\n"
+msgstr ""
+"Versione di CMD %s\n"
+"\n"
+
+#: cmd.rc:288
+msgid "More? "
+msgstr "Di più? "
+
+#: cmd.rc:289
+msgid "The input line is too long.\n"
+msgstr "La linea di input è troppo lunga.\n"

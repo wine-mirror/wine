@@ -15395,7 +15395,7 @@ wine_fn_config_program aspnet_regiis enable_aspnet_regiis install
 wine_fn_config_program attrib enable_attrib install
 wine_fn_config_program cacls enable_cacls install
 wine_fn_config_program clock enable_clock po,install
-wine_fn_config_program cmd enable_cmd install
+wine_fn_config_program cmd enable_cmd po,install
 wine_fn_config_test programs/cmd/tests cmd.exe_test
 wine_fn_config_program cmdlgtst enable_cmdlgtst
 wine_fn_config_program control enable_control install

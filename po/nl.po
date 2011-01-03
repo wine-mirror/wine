@@ -56,3 +56,660 @@ msgstr "&Over Klok..."
 #: clock.rc:48
 msgid "Clock"
 msgstr "Klok"
+
+#: cmd.rc:30
+msgid "ATTRIB shows or changes DOS file attributes.\n"
+msgstr "ATTRIB toont of wijzigt DOS bestandsattributen.\n"
+
+#: cmd.rc:38
+msgid ""
+"CALL <batchfilename> is used within a batch file to execute commands\n"
+"from another batch file. When the batch file exits, control returns to\n"
+"the file which called it. The CALL command may supply parameters to the\n"
+"called procedure.\n"
+"\n"
+"Changes to default directory, environment variables etc made within a\n"
+"called procedure are inherited by the caller.\n"
+msgstr ""
+"CALL <batchbestandsnaam> wordt gebruikt binnen een batchbestand om\n"
+"opdrachten uit een ander batchbestand aan te roepen. Als het batchbestand\n"
+"bestaat keert de controle terug naar het bestand dat het aanriep. De CALL\n"
+"opdracht kan parameters meegeven aan de aan te roepen procedure.\n"
+"\n"
+"Veranderingen m.b.t , map, omgevingsvariabelen, etc die tot stand komen\n"
+"binnen een aangeroepen procedure worden geërfd door de aanroepende "
+"procedure.\n"
+
+#: cmd.rc:41
+msgid ""
+"CD <dir> is the short version of CHDIR. It changes the current\n"
+"default directory.\n"
+msgstr ""
+"CD <mapnaam> is de korte versie van CHDIR. Het wijzigt de huidige map.\n"
+
+#: cmd.rc:42
+msgid "CHDIR <dir> changes the current default directory.\n"
+msgstr "CHDIR <mapnaam> wijzigt de huidige map.\n"
+
+#: cmd.rc:44
+msgid "CLS clears the console screen.\n"
+msgstr "CLS wist het scherm\n"
+
+#: cmd.rc:46
+msgid "COPY <filename> copies a file.\n"
+msgstr "COPY <bestandsnaam> kopieert een bestand.\n"
+
+#: cmd.rc:47
+msgid "CTTY changes the input/output device.\n"
+msgstr "CTTY wijzigt het invoer-/uitvoerapparaat.\n"
+
+#: cmd.rc:48
+msgid "DATE shows or changes the system date.\n"
+msgstr "DATE toont of wijzigt de systeemdatum.\n"
+
+#: cmd.rc:49
+msgid "DEL <filename> deletes a file or set of files.\n"
+msgstr ""
+"DEL <bestandsnaam> verwijdert een bestand of een verzameling bestanden.\n"
+
+#: cmd.rc:50
+msgid "DIR lists the contents of a directory.\n"
+msgstr "DIR toont de inhoud van een map.\n"
+
+#: cmd.rc:60
+msgid ""
+"ECHO <string> displays <string> on the current terminal device.\n"
+"\n"
+"ECHO ON causes all subsequent commands in a batch file to be displayed\n"
+"on the terminal device before they are executed.\n"
+"\n"
+"ECHO OFF reverses the effect of a previous ECHO ON (ECHO is OFF by\n"
+"default). The ECHO OFF command can be prevented from displaying by\n"
+"preceding it with an @ sign.\n"
+msgstr ""
+"ECHO <tekenreeks> geeft <tekenreeks> weer op het actieve uitvoerapparaat.\n"
+"\n"
+"ECHO ON zorgt ervoor dat alle hierop volgende opdrachten in een "
+"batchbestand\n"
+"worden weergegeven op het uitvoerapparaat voordat ze worden uitgevoerd.\n"
+"\n"
+"ECHO OFF keert het effect van een voorafgaande ECHO ON om (ECHO OFF is\n"
+"de standaardinstelling). Weergave van de ECHO OFF opdracht kan worden\n"
+"voorkomen door het te laten voorafgaan door het @-teken.\n"
+
+#: cmd.rc:62
+msgid "ERASE <filename> deletes a file or set of files.\n"
+msgstr ""
+"ERASE <bestandsnaam> verwijdert een bestand of een verzameling bestanden.\n"
+
+#: cmd.rc:70
+msgid ""
+"The FOR command is used to execute a command for each of a set of files.\n"
+"\n"
+"Syntax: FOR %variable IN (set) DO command\n"
+"\n"
+"The requirement to double the % sign when using FOR in a batch file does\n"
+"not exist in wine's cmd.\n"
+msgstr ""
+"De FOR opdracht wordt gebruikt om een opdracht uit te voeren voor ieder\n"
+"van een verzameling bestanden.\n"
+"\n"
+"Syntax: FOR %variabele IN (verzameling) DO opdracht\n"
+"\n"
+"In cmd is het niet vereist om het %-teken in een FOR opdracht in een\n"
+"batchbestand te verdubbelen.\n"
+
+#: cmd.rc:82
+msgid ""
+"The GOTO command transfers execution to another statement within a\n"
+"batch file.\n"
+"\n"
+"The label which is the target of a GOTO may be up to 255 characters\n"
+"long but may not include spaces (this is different from other operating\n"
+"systems). If two or more identical labels exist in a batch file the\n"
+"first one will always be executed. Attempting to GOTO a nonexistent\n"
+"label terminates the batch file execution.\n"
+"\n"
+"GOTO has no effect when used interactively.\n"
+msgstr ""
+"De GOTO opdracht verplaatst uitvoering naar een andere opdracht binnen een\n"
+"batchbestand.\n"
+"\n"
+"Het doel van een GOTO opdracht wordt aangegeven met een label. Dat label\n"
+"mag uit maximaal 255 tekens bestaan maar er mogen geen spaties in voorkomen\n"
+"(dit verschilt bij andere besturingssystemen). Als er twee of meer\n"
+"identieke labels bestaan in een batchbestand dan wordt altijd naar de "
+"eerste\n"
+"gesprongen. Een poging om te springen naar een niet bestaand label "
+"beëindigt\n"
+"het uitvoeren van het batchbestand.\n"
+"\n"
+"GOTO heeft geen effect als het in een interactieve sessie wordt gebruikt.\n"
+
+#: cmd.rc:85
+msgid ""
+"HELP <command> shows brief help details on a topic.\n"
+"HELP without an argument shows all CMD built-in commands.\n"
+msgstr ""
+"HELP <opdracht> toont een korte uitleg over een onderwerp.\n"
+"Help zonder argument laat alle ingebouwde opdrachten van CMD zien.\n"
+
+#: cmd.rc:95
+msgid ""
+"IF is used to conditionally execute a command.\n"
+"\n"
+"Syntax:\tIF [NOT] EXIST filename command\n"
+"IF [NOT] string1==string2 command\n"
+"IF [NOT] ERRORLEVEL number command\n"
+"\n"
+"In the second form of the command, string1 and string2 must be in double\n"
+"quotes. The comparison is not case-sensitive.\n"
+msgstr ""
+"IF wordt gebruikt om een opdracht voorwaardelijk uit te voeren.\n"
+"\n"
+"Syntax:\tIF [NOT] EXIST bestandsnaam opdracht\n"
+"IF [NOT] tekenreeks1==tekenreeks2 opdracht\n"
+"IF [NOT] ERRORLEVEL getal opdracht\n"
+"\n"
+"In de tweede vorm van de opdracht moeten tekenreeks1 en tekenreeks2 tussen\n"
+"dubbele aanhalingsteken staan. De vergelijking is niet gevoelig voor het\n"
+"onderscheid tussen hoofd- en kleine letters.\n"
+
+#: cmd.rc:101
+msgid ""
+"LABEL is used to set a disk volume label.\n"
+"\n"
+"Syntax: LABEL [drive:]\n"
+"The command will prompt you for the new volume label for the given drive.\n"
+"You can display the disk volume label with the VOL command.\n"
+msgstr ""
+"LABEL wordt gebruikt om een schijflabel te wijzigen.\n"
+"\n"
+"Syntax: LABEL [schijf:]\n"
+"De opdracht vraagt u om een nieuw label in te tikken voor de opgegeven "
+"schijf.\n"
+"U kunt het label van een schijf tonen met behulp van de VOL opdracht.\n"
+
+#: cmd.rc:104
+msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
+msgstr "MD <naam> is de korte versie van MKDIR. Het maakt een map aan.\n"
+
+#: cmd.rc:105
+msgid "MKDIR <name> creates a subdirectory.\n"
+msgstr "MKDIR <naam> maakt een map aan\n"
+
+#: cmd.rc:112
+msgid ""
+"MOVE relocates a file or directory to a new point within the file system.\n"
+"\n"
+"If the item being moved is a directory then all the files and "
+"subdirectories\n"
+"below the item are moved as well.\n"
+"\n"
+"MOVE fails if the old and new locations are on different DOS drive letters.\n"
+msgstr ""
+"MOVE verplaatst een bestand of map naar een andere plek binnen het\n"
+"bestandssysteem.\n"
+"\n"
+"Als het om een map gaat dan worden alle bestanden en mappen\n"
+"daaronder ook verplaatst.\n"
+"\n"
+"MOVE werkt niet als de oude en nieuwe locaties zich op verschillende\n"
+"DOS-schijven bevinden.\n"
+
+#: cmd.rc:123
+msgid ""
+"PATH displays or changes the cmd search path.\n"
+"\n"
+"Entering PATH will display the current PATH setting (initially taken\n"
+"from the registry). To change the setting follow the\n"
+"PATH command with the new value.\n"
+"\n"
+"It is also possible to modify the PATH by using the PATH environment\n"
+"variable, for example:\n"
+"PATH %PATH%;c:\\temp\n"
+msgstr ""
+"PATH toon of wijzigt het zoekpad van cmd.\n"
+"\n"
+"De opdracht PATH toont het huidige zoekpad (de beginwaarde wordt uit\n"
+"het register gehaald). Om het zoekpad te wijzigen laat\n"
+"u de PATH opdracht volgen door de nieuwe waarde.\n"
+"\n"
+"Het is ook mogelijk om het zoekpad te wijzigen met behulp van de PATH\n"
+"omgevingsvariabele, bij voorbeeld:\n"
+"PATH %PATH%;c:\\temp\n"
+
+#: cmd.rc:129
+msgid ""
+"PAUSE displays a message on the screen 'Press Return key to continue'\n"
+"and waits for the user to press the Return key. It is mainly useful in\n"
+"batch files to allow the user to read the output of a previous command\n"
+"before it scrolls off the screen.\n"
+msgstr ""
+"PAUSE toont een bericht op het scherm: 'Toets Enter om door te gaan'\n"
+"en wacht totdat de gebruiker de Enter-toets indrukt. Dit is vooral handig\n"
+"in batchbestanden om de gebruiker in staat te stellen om de uitvoer van\n"
+"een voorafgaande opdracht te bekijken, voordat het van het scherm schuift.\n"
+
+#: cmd.rc:150
+msgid ""
+"PROMPT sets the command-line prompt.\n"
+"\n"
+"The string following the PROMPT command (and the space immediately after)\n"
+"appears at the beginning of the line when cmd is waiting for input.\n"
+"\n"
+"The following character strings have the special meaning shown:\n"
+"\n"
+"$$    Dollar sign         $_    Linefeed            $b    Pipe sign (|)\n"
+"$d    Current date        $e    Escape              $g    > sign\n"
+"$l    < sign              $n    Current drive       $p    Current path\n"
+"$q    Equal sign          $t    Current time        $v    cmd version\n"
+"\n"
+"Note that entering the PROMPT command without a prompt-string resets the\n"
+"prompt to the default, which is the current directory (which includes the\n"
+"current drive letter) followed by a greater-than (>) sign.\n"
+"(like a command PROMPT $p$g).\n"
+"\n"
+"The prompt can also be changed by altering the PROMPT environment variable,\n"
+"so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'\n"
+msgstr ""
+"PROMPT wijzigt de prompt van de opdrachtregel.\n"
+"\n"
+"De tekenreeks volgend op de PROMPT opdracht (en de spatie direct daarna)\n"
+"verschijnt vooraan op de regel als cmd wacht op invoer.\n"
+"\n"
+"De volgende tekenreeksen hebben een speciale betekenis:\n"
+"\n"
+"$$    dollar-teken             $_    nieuwe regel      $b    pijp-teken (|)\n"
+"$d    huidige datum            $e    escape            $g    groter-dan-"
+"teken (>)\n"
+"$l    kleiner-dan-teken (<)    $n    huidige schijf    $p    huidige map\n"
+"$q    is-gelijk-teken (=)      $t    huidige tijd      $v    cmd versie\n"
+"\n"
+"Merk op dat het uitvoeren van de PROMPT opdracht zonder een tekenreeks de\n"
+"prompt terugzet naar de standaardinstelling. Dat is de huidige map\n"
+"(inclusief schijfaanduiding) gevolgd een groter-dan-teken (>).\n"
+"(dat staat gelijk aan de opdracht: PROMPT $p$g).\n"
+"\n"
+"De prompt kan ook gewijzigd worden via de PROMPT omgevingsvariabele,\n"
+"dus de opdracht 'SET PROMPT=tekenreeks' heeft hetzelfde effect als 'PROMPT\n"
+"tekenreeks'\n"
+
+#: cmd.rc:154
+msgid ""
+"A command line beginning REM (followed by a space) performs no\n"
+"action, and can therefore be used as a comment in a batch file.\n"
+msgstr ""
+"Een opdrachtregel die begint met REM (gevold door een spatie) wordt niet\n"
+"uitgevoerd, en kan daarom worden gebruikt als een commentaar-regel in een\n"
+"batchbestand.\n"
+
+#: cmd.rc:157
+msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
+msgstr ""
+"REN <bestandsnaam> is de korte versie van RENAME. Het hernoemt een bestand.\n"
+
+#: cmd.rc:158
+msgid "RENAME <filename> renames a file\n"
+msgstr "RENAME hernoemt een bestand.\n"
+
+#: cmd.rc:160
+msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
+msgstr "RD <mapnaam> is de korte versie van RMDIR. Het verwijdert een map.\n"
+
+#: cmd.rc:161
+msgid "RMDIR <dir> deletes a subdirectory.\n"
+msgstr "RMDIR <mapnaam> verwijdert een map.\n"
+
+#: cmd.rc:179
+msgid ""
+"SET displays or changes the cmd environment variables.\n"
+"\n"
+"SET without parameters shows all of the current environment.\n"
+"\n"
+"To create or modify an environment variable the syntax is:\n"
+"\n"
+"SET <variable>=<value>\n"
+"\n"
+"where <variable> and <value> are character strings. There must be no\n"
+"spaces before the equals sign, nor can the variable name\n"
+"have embedded spaces.\n"
+"\n"
+"Under Wine, the environment of the underlying operating system is\n"
+"included into the Win32 environment, there will generally therefore be\n"
+"many more values than in a native Win32 implementation. Note that it is\n"
+"not possible to affect the operating system environment from within cmd.\n"
+msgstr ""
+"SET toont of wijzigt omgevingsvariabelen van cmd.\n"
+"\n"
+"SET zonder parameters toont alle omgevingsvariabelen.\n"
+"\n"
+"De syntax voor het maken of wijzigen van een omgevingsvariabele is:\n"
+"\n"
+"SET <variable>=<waarde>\n"
+"\n"
+"waarbij <variable> en <waarde> uit tekenreeksen bestaan. Er mogen geen\n"
+"spaties voor het is-gelijk-teken staan, noch mogen er in de variabelenaam\n"
+"spaties voorkomen.\n"
+"\n"
+"Onder Wine worden de omgevingsvariabelen van het onderliggende\n"
+"besturingssysteem opgenomen in de Win32 omgeving. Er zullen daarom\n"
+"doorgaans veel meer variabelen in voorkomen dan in een oorspronkelijke\n"
+"Win32 implementatie. Merk op dat het niet mogelijk is om de omgevings-\n"
+"variabelen van het onderliggende besturingssysteem te wijzigen vanuit cmd.\n"
+
+#: cmd.rc:184
+msgid ""
+"SHIFT is used in a batch file to remove one parameter from the head of\n"
+"the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
+"if called from the command line.\n"
+msgstr ""
+"SHIFT wordt gebruikt in een batchbestand om een parameter te verwijderen\n"
+"van het begin van de lijst. Dus de tweede parameter wordt dan de eerste,\n"
+"enzovoort. Deze opdracht heeft geen effect als hij wordt aangeroepen vanaf\n"
+"de opdrachtregel.\n"
+
+#: cmd.rc:186
+msgid "TIME sets or shows the current system time.\n"
+msgstr "TIME wijzigt of toont de systeemtijd.\n"
+
+#: cmd.rc:188
+msgid "Sets the window title for the cmd window, syntax TITLE [string]\n"
+msgstr "Wijzigt de naam van het cmd-venster, syntax: TITLE [tekenreeks]\n"
+
+#: cmd.rc:192
+msgid ""
+"TYPE <filename> copies <filename> to the console device (or elsewhere\n"
+"if redirected). No check is made that the file is readable text.\n"
+msgstr ""
+"TYPE <bestandsnaam> kopieert <bestandsnaam> naar het uitvoerapparaat.\n"
+"Er wordt niet gecontroleerd of het bestand leesbare tekst bevat.\n"
+
+#: cmd.rc:201
+msgid ""
+"VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
+"\n"
+"VERIFY ON\tSet the flag\n"
+"VERIFY OFF\tClear the flag\n"
+"VERIFY\t\tDisplays ON or OFF as appropriate.\n"
+"\n"
+"The verify flag has no function in Wine.\n"
+msgstr ""
+"VERIFY wordt gebruikt om de VERIFY-schakelaar aan of uit te zetten of\n"
+"om hem te testen. Geldige aanroepen zijn:\n"
+"\n"
+"VERIFY ON\tZet de schakelaar aan\n"
+"VERIFY OFF\tZet de schakelaar uit\n"
+"VERIFY\t\tToont ON of OFF naar gelang de stand.\n"
+"\n"
+"De verify-schakelaar heeft geen functie binnen Wine.\n"
+
+#: cmd.rc:204
+msgid "VER displays the version of cmd you are running\n"
+msgstr "VER toont de versie van cmd die u draait\n"
+
+#: cmd.rc:206
+msgid "VOL shows the volume label of a disk device.\n"
+msgstr "VOL toont het label van een schijf\n"
+
+#: cmd.rc:209
+msgid ""
+"PUSHD <directoryname> saves the current directory onto a\n"
+"stack, and then changes the current directory to the supplied one.\n"
+msgstr ""
+"PUSHD <mapnaam> bewaart de huidige map op een\n"
+"stapel, en verandert dan de huidige map naar de opgegeven naam.\n"
+
+#: cmd.rc:212
+msgid ""
+"POPD changes current directory to the last one saved with\n"
+"PUSHD.\n"
+msgstr ""
+"POPD verandert de huidige map naar de meest recente die\n"
+"op de stapel werd gezet met PUSHD.\n"
+
+#: cmd.rc:214
+msgid "MORE displays output of files or piped input in pages.\n"
+msgstr ""
+"MORE toont de uitvoer van programma's of herleidde invoer\n"
+"per bladzijde.\n"
+
+#: cmd.rc:218
+msgid ""
+"CHOICE displays a text and waits, until the User\n"
+"presses an allowed Key from a selectable list.\n"
+"CHOICE is mainly used to build a menu selection in a batch file.\n"
+msgstr ""
+"CHOICE laat een tekst zien en wacht tot de Gebruiker\n"
+"op een toegestane Toets uit een selecteerbare lijst drukt.\n"
+"CHOICE wordt hoofdzakelijk gebruikt om een selectie uit een menu te maken\n"
+"in een batch bestand.\n"
+
+#: cmd.rc:222
+msgid ""
+"EXIT terminates the current command session and returns\n"
+"to the operating system or shell from which you invoked cmd.\n"
+msgstr ""
+"EXIT beëindigt de lopende sessie en keert terug\n"
+"naar het besturingssysteem of de schil van waaruit cmd werd gestart.\n"
+
+#: cmd.rc:253
+msgid ""
+"CMD built-in commands are:\n"
+"ATTRIB\t\tShow or change DOS file attributes\n"
+"CALL\t\tInvoke a batch file from inside another\n"
+"CD (CHDIR)\tChange current default directory\n"
+"CHOICE\t\tWait for an keypress from a selectable list\n"
+"CLS\t\tClear the console screen\n"
+"COPY\t\tCopy file\n"
+"CTTY\t\tChange input/output device\n"
+"DATE\t\tShow or change the system date\n"
+"DEL (ERASE)\tDelete a file or set of files\n"
+"DIR\t\tList the contents of a directory\n"
+"ECHO\t\tCopy text directly to the console output\n"
+"HELP\t\tShow brief help details on a topic\n"
+"MD (MKDIR)\tCreate a subdirectory\n"
+"MORE\t\tDisplay output in pages\n"
+"MOVE\t\tMove a file, set of files or directory tree\n"
+"PATH\t\tSet or show the search path\n"
+"POPD\t\tRestores the directory to the last one saved with PUSHD\n"
+"PROMPT\t\tChange the command prompt\n"
+"PUSHD\t\tChanges to a new directory, saving the current one\n"
+"REN (RENAME)\tRename a file\n"
+"RD (RMDIR)\tDelete a subdirectory\n"
+"SET\t\tSet or show environment variables\n"
+"TIME\t\tSet or show the current system time\n"
+"TITLE\t\tSet the window title for the CMD session\n"
+"TYPE\t\tType the contents of a text file\n"
+"VER\t\tShow the current version of CMD\n"
+"VOL\t\tShow the volume label of a disk device\n"
+"EXIT\t\tClose down CMD\n"
+"\n"
+"Enter HELP <command> for further information on any of the above commands\n"
+msgstr ""
+"CMD's ingebouwde opdrachten zijn:\n"
+"ATTRIB\t\tToon of wijzig DOS bestandsattributen\n"
+"CALL\t\tRoep een batchbestand aan vanuit een ander bestand\n"
+"CD (CHDIR)\tWijzig de huidige map\n"
+"CLS\t\tWis het scherm\n"
+"COPY\t\tKopieer een bestand\n"
+"CTTY\t\tWijzig het invoer-/uitvoerapparaat\n"
+"DATE\t\tToon of wijzig de systeemdatum\n"
+"DEL (ERASE)\tVerwijder een bestand of een verzameling van bestanden\n"
+"DIR\t\tToon de inhoud van een map\n"
+"ECHO\t\tKopieer tekst direct naar het uitvoerapparaat\n"
+"HELP\t\tToon een korte uitleg over een onderwerp\n"
+"MD (MKDIR)\tMaak een map\n"
+"MORE\t\tDisplay output in pages\n"
+"MOVE\t\tVerplaats een bestand, een verzameling bestanden of een map\n"
+"PATH\t\tWijzig of toon het zoekpad\n"
+"PROMPT\t\tWijzig de prompt\n"
+"REN (RENAME)\tHernoem een bestand\n"
+"RD (RMDIR)\tVerwijder een map\n"
+"SET\t\tWijzig of toon de omgevingsvariabelen\n"
+"TIME\t\tWijzig of toon de systeemtijd\n"
+"TITLE\t\tWijzig de vensternaam van de CMD-sessie\n"
+"TYPE\t\tToon de inhoud van een tekstbestand\n"
+"VER\t\tToon de versie van CMD\n"
+"VOL\t\tToon het label van een schijf\n"
+"EXIT\t\tSluit CMD af\n"
+"\n"
+"type HELP <opdracht> voor meer informatie over bovengenoemde opdrachten\n"
+
+#: cmd.rc:255
+msgid "Are you sure"
+msgstr "Bent u zeker"
+
+#: cmd.rc:256
+msgctxt "Yes key"
+msgid "Y"
+msgstr "J"
+
+#: cmd.rc:257
+msgctxt "No key"
+msgid "N"
+msgstr "N"
+
+#: cmd.rc:258
+msgid "File association missing for extension %s\n"
+msgstr "Bestandsassociatie ontbreekt voor extensie %s\n"
+
+#: cmd.rc:259
+msgid "No open command associated with file type '%s'\n"
+msgstr "Geen open commando verbonden met bestand type '%s'\n"
+
+#: cmd.rc:260
+msgid "Overwrite %s"
+msgstr "Overschrijf %s"
+
+#: cmd.rc:261
+msgid "More..."
+msgstr "Meer..."
+
+#: cmd.rc:262
+msgid "Line in Batch processing possibly truncated. Using:\n"
+msgstr "Regel in Batch proces mogelijk afgebroken. We gebruiken:\n"
+
+#: cmd.rc:263
+msgid ""
+"Not Yet Implemented\n"
+"\n"
+msgstr ""
+"Nog niet geïmplementeerd\n"
+"\n"
+
+#: cmd.rc:264
+msgid "Argument missing\n"
+msgstr "Argument ontbreekt\n"
+
+#: cmd.rc:265
+msgid "Syntax error\n"
+msgstr "Fout in de syntax\n"
+
+#: cmd.rc:266
+msgid "%s : File Not Found\n"
+msgstr "%s : Bestand Niet Gevonden\n"
+
+#: cmd.rc:267
+msgid "No help available for %s\n"
+msgstr "Geen help beschikbaar voor %s\n"
+
+#: cmd.rc:268
+msgid "Target to GOTO not found\n"
+msgstr "Doel opgegeven bij GOTO niet gevonden\n"
+
+#: cmd.rc:269
+msgid "Current Date is %s\n"
+msgstr "Huidige Datum is %s\n"
+
+#: cmd.rc:270
+msgid "Current Time is %s\n"
+msgstr "Huidige Tijd is %s\n"
+
+#: cmd.rc:271
+msgid "Enter new date: "
+msgstr "Voer de nieuwe datum in: "
+
+#: cmd.rc:272
+msgid "Enter new time: "
+msgstr "voer de nieuwe tijd in: "
+
+#: cmd.rc:273
+msgid "Environment variable %s not defined\n"
+msgstr "Omgevingsvariable %s niet gedefinieerd\n"
+
+#: cmd.rc:274
+msgid "Failed to open '%s'\n"
+msgstr "Openen van '%s' is mislukt\n"
+
+#: cmd.rc:275
+msgid "Cannot call batch label outside of a batch script\n"
+msgstr ""
+"Onmogelijk om een batch label aan te roepen van buiten een batch script\n"
+
+#: cmd.rc:276
+msgctxt "All key"
+msgid "A"
+msgstr "A"
+
+#: cmd.rc:277
+msgid "%s, Delete"
+msgstr "%s, Verwijderen"
+
+#: cmd.rc:278
+msgid "Echo is %s\n"
+msgstr "Echo staat %s\n"
+
+#: cmd.rc:279
+msgid "Verify is %s\n"
+msgstr "Verify staat %s\n"
+
+#: cmd.rc:280
+msgid "Verify must be ON or OFF\n"
+msgstr "Verify moet ON of OFF zijn\n"
+
+#: cmd.rc:281
+msgid "Parameter error\n"
+msgstr "Parameter onjuist\n"
+
+#: cmd.rc:282
+msgid ""
+"Volume in drive %c is %s\n"
+"Volume Serial Number is %04x-%04x\n"
+"\n"
+msgstr ""
+"Schijf in drive %c is %s\n"
+"Het serienummer van de schijf is %04x-%04x\n"
+"\n"
+
+#: cmd.rc:283
+msgid "Volume label (11 characters, ENTER for none)?"
+msgstr "Schijf naam (11 karakters, ENTER voor geen)?"
+
+#: cmd.rc:284
+msgid "PATH not found\n"
+msgstr "PATH niet gevonden\n"
+
+#: cmd.rc:285
+msgid "Press Return key to continue: "
+msgstr "Druk op de Return-toets om verder te gaan: "
+
+#: cmd.rc:286
+msgid "Wine Command Prompt"
+msgstr "Wine Command Prompt"
+
+#: cmd.rc:287
+msgid ""
+"CMD Version %s\n"
+"\n"
+msgstr ""
+"CMD Versie %s\n"
+"\n"
+
+#: cmd.rc:288
+msgid "More? "
+msgstr "Meer? "
+
+#: cmd.rc:289
+msgid "The input line is too long.\n"
+msgstr "De invoerregel is te lang.\n"

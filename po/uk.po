@@ -56,3 +56,641 @@ msgstr "&Про Годинник..."
 #: clock.rc:48
 msgid "Clock"
 msgstr "Годинник"
+
+#: cmd.rc:30
+msgid "ATTRIB shows or changes DOS file attributes.\n"
+msgstr "ATTRIB відображає або змінює атрибути файлу DOS.\n"
+
+#: cmd.rc:38
+msgid ""
+"CALL <batchfilename> is used within a batch file to execute commands\n"
+"from another batch file. When the batch file exits, control returns to\n"
+"the file which called it. The CALL command may supply parameters to the\n"
+"called procedure.\n"
+"\n"
+"Changes to default directory, environment variables etc made within a\n"
+"called procedure are inherited by the caller.\n"
+msgstr ""
+"CALL <ім'я_пакетного_файлу> використовується в пакетному файлі для "
+"виконання\n"
+"команд з іншого пакетного файлу. Якщо пакетний файл існує, керування\n"
+"повертається до файлу, який його викликав. Команда CALL може передати\n"
+"параметри до викликаної процедури.\n"
+"\n"
+"Зміни теки за замовчуванням, змінних оточення та ін., зроблені викликаною\n"
+"процедурою, успадковуються тим, хто її викликав.\n"
+
+#: cmd.rc:41
+msgid ""
+"CD <dir> is the short version of CHDIR. It changes the current\n"
+"default directory.\n"
+msgstr ""
+"CD <тека> це короткий варіант CHDIR. Вона змінює поточну\n"
+"теку за зомовчуванням.\n"
+
+#: cmd.rc:42
+msgid "CHDIR <dir> changes the current default directory.\n"
+msgstr "CHDIR <тека> змінює поточну теку за замовчуванням.\n"
+
+#: cmd.rc:44
+msgid "CLS clears the console screen.\n"
+msgstr "CLS очищує екран консолі.\n"
+
+#: cmd.rc:46
+msgid "COPY <filename> copies a file.\n"
+msgstr "COPY <ім'я_файлу> копіює файл.\n"
+
+#: cmd.rc:47
+msgid "CTTY changes the input/output device.\n"
+msgstr "CTTY змінює пристрій вводу/виводу.\n"
+
+#: cmd.rc:48
+msgid "DATE shows or changes the system date.\n"
+msgstr "DATE показує чи змінює системну дату.\n"
+
+#: cmd.rc:49
+msgid "DEL <filename> deletes a file or set of files.\n"
+msgstr "DEL <ім'я_файлу> видадяє файл чи набір файлів.\n"
+
+#: cmd.rc:50
+msgid "DIR lists the contents of a directory.\n"
+msgstr "DIR показує вміст теки.\n"
+
+#: cmd.rc:60
+msgid ""
+"ECHO <string> displays <string> on the current terminal device.\n"
+"\n"
+"ECHO ON causes all subsequent commands in a batch file to be displayed\n"
+"on the terminal device before they are executed.\n"
+"\n"
+"ECHO OFF reverses the effect of a previous ECHO ON (ECHO is OFF by\n"
+"default). The ECHO OFF command can be prevented from displaying by\n"
+"preceding it with an @ sign.\n"
+msgstr ""
+"ECHO <рядок> відображає <рядок> на поточному термінальному пристрої.\n"
+"\n"
+"ECHO ON вмикає відображення всіх наступних команд пакетного файлу\n"
+"в термінальному пристрої перед їх виконанням.\n"
+"\n"
+"ECHO OFF дає протилежний ефект до попередьної ECHO ON (ECHO вимкнено\n"
+"(OFF) за замовчуванням). Команда ECHO OFF може бути прихована зазначенням\n"
+"перед нею знаку @.\n"
+
+#: cmd.rc:62
+msgid "ERASE <filename> deletes a file or set of files.\n"
+msgstr "ERASE <ім'я_файлу> видаляє файл чи набір файлів.\n"
+
+#: cmd.rc:70
+msgid ""
+"The FOR command is used to execute a command for each of a set of files.\n"
+"\n"
+"Syntax: FOR %variable IN (set) DO command\n"
+"\n"
+"The requirement to double the % sign when using FOR in a batch file does\n"
+"not exist in wine's cmd.\n"
+msgstr ""
+"FOR використовується для виконання команди для кожного набору файлів.\n"
+"\n"
+"Синтаксис: FOR %змінна IN (набір) DO команда\n"
+"\n"
+"Немає необхідності подвоєння знаку % при використанні FOR в пакетних\n"
+"файлах в cmd від wine.\n"
+
+#: cmd.rc:82
+msgid ""
+"The GOTO command transfers execution to another statement within a\n"
+"batch file.\n"
+"\n"
+"The label which is the target of a GOTO may be up to 255 characters\n"
+"long but may not include spaces (this is different from other operating\n"
+"systems). If two or more identical labels exist in a batch file the\n"
+"first one will always be executed. Attempting to GOTO a nonexistent\n"
+"label terminates the batch file execution.\n"
+"\n"
+"GOTO has no effect when used interactively.\n"
+msgstr ""
+"Команда GOTO передає керування певному рядку пакетного файлу.\n"
+"\n"
+"Мітка, що є ціллю GOTO, може мати довжину до 255 знаків, але\n"
+"не повинна містити пробіли (відмінність від інших операційних\n"
+"систем). Якщо в пакетному файлі є дві чи більше однакових мітки,\n"
+"завжди буде працювати перша. Спроба GOTO перейти до неіснуючої\n"
+"мітки перериває виконання пакетного файлу.\n"
+"\n"
+"GOTO не працює в інтерактивному режимі.\n"
+
+#: cmd.rc:85
+msgid ""
+"HELP <command> shows brief help details on a topic.\n"
+"HELP without an argument shows all CMD built-in commands.\n"
+msgstr ""
+"HELP <команда> показує коротку довідкову інформацію про команду.\n"
+"HELP без аргументів показує всі вбудовані команди CMD.\n"
+
+#: cmd.rc:95
+msgid ""
+"IF is used to conditionally execute a command.\n"
+"\n"
+"Syntax:\tIF [NOT] EXIST filename command\n"
+"IF [NOT] string1==string2 command\n"
+"IF [NOT] ERRORLEVEL number command\n"
+"\n"
+"In the second form of the command, string1 and string2 must be in double\n"
+"quotes. The comparison is not case-sensitive.\n"
+msgstr ""
+"IF використовується для умовної обробки команди.\n"
+"\n"
+"Синтаксис:\tIF [NOT] EXIST ім'я_файлу команда\n"
+"IF [NOT] рядок1==рядок2 команда\n"
+"IF [NOT] ERRORLEVEL число команда\n"
+"\n"
+"В другій формі команди, рядок1 та рядок2 повинні бути в\n"
+"подвійних лапках. Порівняння не чутливе до регістру.\n"
+
+#: cmd.rc:101
+msgid ""
+"LABEL is used to set a disk volume label.\n"
+"\n"
+"Syntax: LABEL [drive:]\n"
+"The command will prompt you for the new volume label for the given drive.\n"
+"You can display the disk volume label with the VOL command.\n"
+msgstr ""
+"LABEL використовується щоб задати мітку диску.\n"
+"\n"
+"Синтаксис: LABEL [диск:]\n"
+"Команда запитує нову мітку тому для відповідного диску.\n"
+"З допомогою команди VOL ви можете подивитись мітку диску.\n"
+
+#: cmd.rc:104
+msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
+msgstr "MD <ім'я> це коротка версія MKDIR. Вона створює пвдтеку.\n"
+
+#: cmd.rc:105
+msgid "MKDIR <name> creates a subdirectory.\n"
+msgstr "MKDIR <ім'я> створює підтеку.\n"
+
+#: cmd.rc:112
+msgid ""
+"MOVE relocates a file or directory to a new point within the file system.\n"
+"\n"
+"If the item being moved is a directory then all the files and "
+"subdirectories\n"
+"below the item are moved as well.\n"
+"\n"
+"MOVE fails if the old and new locations are on different DOS drive letters.\n"
+msgstr ""
+"MOVE переміщує файл чи теку на нове місце файлової системи.\n"
+"\n"
+"Якщо переміщується тека, то переміщуються всі файли та підтеки,\n"
+"які містить ця тека.\n"
+"\n"
+"MOVE не працює для переміщення даних з одного логічного диска DOS на інший.\n"
+
+#: cmd.rc:123
+msgid ""
+"PATH displays or changes the cmd search path.\n"
+"\n"
+"Entering PATH will display the current PATH setting (initially taken\n"
+"from the registry). To change the setting follow the\n"
+"PATH command with the new value.\n"
+"\n"
+"It is also possible to modify the PATH by using the PATH environment\n"
+"variable, for example:\n"
+"PATH %PATH%;c:\\temp\n"
+msgstr ""
+"PATH відображає або змінює шлях пошуку cmd.\n"
+"\n"
+"Команда PATH відобразить поточні параметри PATH (спочатку береться\n"
+"з реєстру). Для зміни налаштувань використайте команду\n"
+"PATH з новим значенням.\n"
+"\n"
+"Також можна змінити значення PATH, використавши змінну оточення\n"
+"PATH, наприклад:\n"
+"PATH %PATH%;c:\\temp\n"
+
+#: cmd.rc:129
+msgid ""
+"PAUSE displays a message on the screen 'Press Return key to continue'\n"
+"and waits for the user to press the Return key. It is mainly useful in\n"
+"batch files to allow the user to read the output of a previous command\n"
+"before it scrolls off the screen.\n"
+msgstr ""
+"PAUSE показує на екрані повідомлення 'Натисніть Enter для продовження'\n"
+"та очікує натиснення користувачем клавіші. В основному корисно в\n"
+"пакетних файлах щоб користувач міг прочитати вивід попередньої команди\n"
+"перед її зникненням з екрану.\n"
+
+#: cmd.rc:150
+msgid ""
+"PROMPT sets the command-line prompt.\n"
+"\n"
+"The string following the PROMPT command (and the space immediately after)\n"
+"appears at the beginning of the line when cmd is waiting for input.\n"
+"\n"
+"The following character strings have the special meaning shown:\n"
+"\n"
+"$$    Dollar sign         $_    Linefeed            $b    Pipe sign (|)\n"
+"$d    Current date        $e    Escape              $g    > sign\n"
+"$l    < sign              $n    Current drive       $p    Current path\n"
+"$q    Equal sign          $t    Current time        $v    cmd version\n"
+"\n"
+"Note that entering the PROMPT command without a prompt-string resets the\n"
+"prompt to the default, which is the current directory (which includes the\n"
+"current drive letter) followed by a greater-than (>) sign.\n"
+"(like a command PROMPT $p$g).\n"
+"\n"
+"The prompt can also be changed by altering the PROMPT environment variable,\n"
+"so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'\n"
+msgstr ""
+"PROMPT задає запрошення командного рядка.\n"
+"\n"
+"Рядок, що йде після команди PROMPT і пробілу після команди,\n"
+"появляється на початку рядка, коли cmd очікує введення.\n"
+"\n"
+"Наступні символьні рядки мають спеціальні значення і відображення:\n"
+"\n"
+"$$    Знак долара         $_    Linefeed            $b    Знак Pipe (|)\n"
+"$d    Поточна дата        $e    Escape              $g    Знак >\n"
+"$l    Знак <              $n    Поточний диск       $p    Поточний шлях\n"
+"$q    Знак рівності       $t    Поточний час        $v    Версія cmd\n"
+"\n"
+"Зауважте, що при вводі команди PROMPT без рядка запрошення налаштування\n"
+"скидаються до стандатрних, тобто поточна тека (включаючи\n"
+"букву поточного диску) з наступним знаком більше (>).\n"
+"(як в команді PROMPT $p$g).\n"
+"\n"
+"Запрошення також може бути змінене зміною змінної оточення PROMPT,\n"
+"тому команда 'SET PROMPT=text' має той же ефект, що і 'PROMPT text'\n"
+
+#: cmd.rc:154
+msgid ""
+"A command line beginning REM (followed by a space) performs no\n"
+"action, and can therefore be used as a comment in a batch file.\n"
+msgstr ""
+"Командний рядок, що починається з REM (з наступним пробілом) нічого\n"
+"не виконує, тому може бути використаний як коментар в пакетному файлі.\n"
+
+#: cmd.rc:157
+msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
+msgstr "REN <ім'я_файлу> це коротка версія RENAME. Вона переіменовує файл.\n"
+
+#: cmd.rc:158
+msgid "RENAME <filename> renames a file\n"
+msgstr "RENAME <ім'я_файлу> переіменовує файл\n"
+
+#: cmd.rc:160
+msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
+msgstr "RD <тека> це коротка версія RMDIR. Вона видаляє підтеку.\n"
+
+#: cmd.rc:161
+msgid "RMDIR <dir> deletes a subdirectory.\n"
+msgstr "RMDIR <тека> видаляє підтеку.\n"
+
+#: cmd.rc:179
+msgid ""
+"SET displays or changes the cmd environment variables.\n"
+"\n"
+"SET without parameters shows all of the current environment.\n"
+"\n"
+"To create or modify an environment variable the syntax is:\n"
+"\n"
+"SET <variable>=<value>\n"
+"\n"
+"where <variable> and <value> are character strings. There must be no\n"
+"spaces before the equals sign, nor can the variable name\n"
+"have embedded spaces.\n"
+"\n"
+"Under Wine, the environment of the underlying operating system is\n"
+"included into the Win32 environment, there will generally therefore be\n"
+"many more values than in a native Win32 implementation. Note that it is\n"
+"not possible to affect the operating system environment from within cmd.\n"
+msgstr ""
+"SET показує чи задає змiнні оточення cmd.\n"
+"\n"
+"SET без параметрiв виводить поточнi значення змiнних оточення.\n"
+"\n"
+"Для створення чи зміни змінної оточення використовуйте:\n"
+"\n"
+"SET <змінна>=<значення>\n"
+"\n"
+"де <змінна> та <значення> є символьними рядками. Перед знаком рівності\n"
+"не повинно бути пробілів, ім'я змінної не повинно містити в собі\n"
+"пробіли.\n"
+"\n"
+"В Wine, оточення основної операційної системи включене\n"
+"в оточення Win32, тому буде доступно більше змінних, ніж\n"
+"в звичайній реалізації Win32. Зверніть увагу на те, що неможливо\n"
+"змінити оточення операційної системи з cmd.\n"
+
+#: cmd.rc:184
+msgid ""
+"SHIFT is used in a batch file to remove one parameter from the head of\n"
+"the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
+"if called from the command line.\n"
+msgstr ""
+"SHIFT використовується в пакетному файлі для вилучення одного параметра з\n"
+"вершини списку, тому параметр 2 стає параметром 1 і т.д. Команда не працює "
+"при\n"
+"її виклику з командного рядка.\n"
+
+#: cmd.rc:186
+msgid "TIME sets or shows the current system time.\n"
+msgstr "TIME задає чи показує поточний системний час.\n"
+
+#: cmd.rc:188
+msgid "Sets the window title for the cmd window, syntax TITLE [string]\n"
+msgstr "Задає заголовок вікна для вікна cmd, синтаксис TITLE [рядок]\n"
+
+#: cmd.rc:192
+msgid ""
+"TYPE <filename> copies <filename> to the console device (or elsewhere\n"
+"if redirected). No check is made that the file is readable text.\n"
+msgstr ""
+"TYPE <ім'я_файлу> копіює <ім'я_файлу> до консольного пристрою (чи в інше "
+"місце,\n"
+"якщо він перенаправлений). Не перевіряється, чи файл це текст, призначений\n"
+"для читання.\n"
+
+#: cmd.rc:201
+msgid ""
+"VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
+"\n"
+"VERIFY ON\tSet the flag\n"
+"VERIFY OFF\tClear the flag\n"
+"VERIFY\t\tDisplays ON or OFF as appropriate.\n"
+"\n"
+"The verify flag has no function in Wine.\n"
+msgstr ""
+"VERIFY пизначена для задання, скидання чи тестування прапора перевірки. "
+"Діючі форми:\n"
+"\n"
+"VERIFY ON\tЗадати прапор\n"
+"VERIFY OFF\tСкинути прапор\n"
+"VERIFY\t\tВідображає відповідні значення ON чи OFF.\n"
+"\n"
+"Прапор перевірки не має функцій в Wine.\n"
+
+#: cmd.rc:204
+msgid "VER displays the version of cmd you are running\n"
+msgstr "VER відображає версію запущеного cmd\n"
+
+#: cmd.rc:206
+msgid "VOL shows the volume label of a disk device.\n"
+msgstr "VOL відображає мітку тому дискового пристрою.\n"
+
+#: cmd.rc:209
+msgid ""
+"PUSHD <directoryname> saves the current directory onto a\n"
+"stack, and then changes the current directory to the supplied one.\n"
+msgstr ""
+"PUSHD <ім'я_теки> зберігає поточну теку в стек,\n"
+"а потім змінює поточну теку на вказану.\n"
+
+#: cmd.rc:212
+msgid ""
+"POPD changes current directory to the last one saved with\n"
+"PUSHD.\n"
+msgstr ""
+"POPD змінює поточну теку на останню збережену\n"
+"командою PUSHD.\n"
+
+#: cmd.rc:214
+msgid "MORE displays output of files or piped input in pages.\n"
+msgstr "MORE відображає вміст файлів чи каналів сторінками.\n"
+
+#: cmd.rc:218
+msgid ""
+"CHOICE displays a text and waits, until the User\n"
+"presses an allowed Key from a selectable list.\n"
+"CHOICE is mainly used to build a menu selection in a batch file.\n"
+msgstr ""
+
+#: cmd.rc:222
+msgid ""
+"EXIT terminates the current command session and returns\n"
+"to the operating system or shell from which you invoked cmd.\n"
+msgstr ""
+"EXIT завершує поточну сесію командного рядка та повертає вас\n"
+"до операційної системи чи оболонки, з якої ви запустили cmd.\n"
+
+#: cmd.rc:253
+msgid ""
+"CMD built-in commands are:\n"
+"ATTRIB\t\tShow or change DOS file attributes\n"
+"CALL\t\tInvoke a batch file from inside another\n"
+"CD (CHDIR)\tChange current default directory\n"
+"CHOICE\t\tWait for an keypress from a selectable list\n"
+"CLS\t\tClear the console screen\n"
+"COPY\t\tCopy file\n"
+"CTTY\t\tChange input/output device\n"
+"DATE\t\tShow or change the system date\n"
+"DEL (ERASE)\tDelete a file or set of files\n"
+"DIR\t\tList the contents of a directory\n"
+"ECHO\t\tCopy text directly to the console output\n"
+"HELP\t\tShow brief help details on a topic\n"
+"MD (MKDIR)\tCreate a subdirectory\n"
+"MORE\t\tDisplay output in pages\n"
+"MOVE\t\tMove a file, set of files or directory tree\n"
+"PATH\t\tSet or show the search path\n"
+"POPD\t\tRestores the directory to the last one saved with PUSHD\n"
+"PROMPT\t\tChange the command prompt\n"
+"PUSHD\t\tChanges to a new directory, saving the current one\n"
+"REN (RENAME)\tRename a file\n"
+"RD (RMDIR)\tDelete a subdirectory\n"
+"SET\t\tSet or show environment variables\n"
+"TIME\t\tSet or show the current system time\n"
+"TITLE\t\tSet the window title for the CMD session\n"
+"TYPE\t\tType the contents of a text file\n"
+"VER\t\tShow the current version of CMD\n"
+"VOL\t\tShow the volume label of a disk device\n"
+"EXIT\t\tClose down CMD\n"
+"\n"
+"Enter HELP <command> for further information on any of the above commands\n"
+msgstr ""
+"Вбудовані команди CMD:\n"
+"ATTRIB\t\tВідображення чи зміна атрибутів файлу DOS\n"
+"CALL\t\tЗапуск пакетного файлу всередині іншого\n"
+"CD (CHDIR)\tЗміна поточної теки за замовчуванням\n"
+"CLS\t\tОчищення екрану консолі\n"
+"COPY\t\tКопіювання файлу\n"
+"CTTY\t\tЗміна пристрою вводу/виводу\n"
+"DATE\t\tВідображення чи зміна системної дати\n"
+"DEL (ERASE)\tВидалення файлу чи набору файлів\n"
+"DIR\t\tВідображення вмісту теки\n"
+"ECHO\t\tКопіювання тексту прямо в консольний вивід\n"
+"HELP\t\tПоказ короткої довідкової інформації про команду\n"
+"MD (MKDIR)\tСтворення підтеки\n"
+"MORE\t\tВідображення виводу сторінками\n"
+"MOVE\t\tПереміщення файлу, набору файлів чи дерева каталогів\n"
+"PATH\t\tЗадання чи відображення шляху пошуку\n"
+"POPD\t\tВідновлює теку до останньої збереженої командою PUSHD\n"
+"PROMPT\t\tЗміна запрошення командного рядка\n"
+"PUSHD\t\tПереходить до нової теки, зберігаючи поточну\n"
+"REN (RENAME)\tПереіменування файлу\n"
+"RD (RMDIR)\tВидалення підтеки\n"
+"SET\t\tЗадання чи відображення змінних оточення\n"
+"TIME\t\tЗадання чи відображення поточного системного часу\n"
+"TITLE\t\tЗадання заголовка вікна для поточної сесії CMD\n"
+"TYPE\t\tВиведення вмісту текстового файлу\n"
+"VER\t\tВідображення поточної версії CMD\n"
+"VOL\t\tВідображення мітки тому дискового пристрою\n"
+"EXIT\t\tВихід з CMD\n"
+"\n"
+"Введіть HELP <команда> для детальнішої інформації про вищенаведені команди\n"
+
+#: cmd.rc:255
+msgid "Are you sure"
+msgstr "Ви впевнені"
+
+#: cmd.rc:256
+msgctxt "Yes key"
+msgid "Y"
+msgstr "Y"
+
+#: cmd.rc:257
+msgctxt "No key"
+msgid "N"
+msgstr "N"
+
+#: cmd.rc:258
+msgid "File association missing for extension %s\n"
+msgstr "Файлова асоціація для розширення %s втрачена\n"
+
+#: cmd.rc:259
+msgid "No open command associated with file type '%s'\n"
+msgstr "Немає команди відкриття, асоційованої з файловим типом '%s'\n"
+
+#: cmd.rc:260
+msgid "Overwrite %s"
+msgstr "Перезаписати %s"
+
+#: cmd.rc:261
+msgid "More..."
+msgstr "Більше..."
+
+#: cmd.rc:262
+msgid "Line in Batch processing possibly truncated. Using:\n"
+msgstr "Рядок в обробці Пакету мабуть урізаний. Використовую:\n"
+
+#: cmd.rc:263
+msgid ""
+"Not Yet Implemented\n"
+"\n"
+msgstr ""
+"Ще не реалізовано\n"
+"\n"
+
+#: cmd.rc:264
+msgid "Argument missing\n"
+msgstr "Відсутній аргумент\n"
+
+#: cmd.rc:265
+msgid "Syntax error\n"
+msgstr "Синтаксична помилка\n"
+
+#: cmd.rc:266
+msgid "%s : File Not Found\n"
+msgstr "%s : Файл не знайдено\n"
+
+#: cmd.rc:267
+msgid "No help available for %s\n"
+msgstr "Немає довідки для %s\n"
+
+#: cmd.rc:268
+msgid "Target to GOTO not found\n"
+msgstr "Не знайдена ціль для GOTO\n"
+
+#: cmd.rc:269
+msgid "Current Date is %s\n"
+msgstr "Поточна дата: %s\n"
+
+#: cmd.rc:270
+msgid "Current Time is %s\n"
+msgstr "Поточний час: %s\n"
+
+#: cmd.rc:271
+msgid "Enter new date: "
+msgstr "Введіть нову дату: "
+
+#: cmd.rc:272
+msgid "Enter new time: "
+msgstr "Введіть новий час: "
+
+#: cmd.rc:273
+msgid "Environment variable %s not defined\n"
+msgstr "Змінна оточення %s не визначена\n"
+
+#: cmd.rc:274
+msgid "Failed to open '%s'\n"
+msgstr "Помилка відкриття '%s'\n"
+
+#: cmd.rc:275
+msgid "Cannot call batch label outside of a batch script\n"
+msgstr "Не можу викликати мітку пакету за межами пакетного скрипта\n"
+
+#: cmd.rc:276
+msgctxt "All key"
+msgid "A"
+msgstr "A"
+
+#: cmd.rc:277
+msgid "%s, Delete"
+msgstr "%s, Видалити"
+
+#: cmd.rc:278
+msgid "Echo is %s\n"
+msgstr "Echo зараз %s\n"
+
+#: cmd.rc:279
+msgid "Verify is %s\n"
+msgstr "Verify зараз %s\n"
+
+#: cmd.rc:280
+msgid "Verify must be ON or OFF\n"
+msgstr "Verify повинен бути ON чи OFF\n"
+
+#: cmd.rc:281
+msgid "Parameter error\n"
+msgstr "Помилка параметру\n"
+
+#: cmd.rc:282
+msgid ""
+"Volume in drive %c is %s\n"
+"Volume Serial Number is %04x-%04x\n"
+"\n"
+msgstr ""
+"Диск %c має мітку %s\n"
+"Серійний номер диску: %04x-%04x\n"
+"\n"
+
+#: cmd.rc:283
+msgid "Volume label (11 characters, ENTER for none)?"
+msgstr "Мітка диску (11 символів, ENTER - без мітки)?"
+
+#: cmd.rc:284
+msgid "PATH not found\n"
+msgstr "PATH не знайдено\n"
+
+#: cmd.rc:285
+msgid "Press Return key to continue: "
+msgstr "Натисніть Enter для продовження: "
+
+#: cmd.rc:286
+msgid "Wine Command Prompt"
+msgstr "Командний рядок Wine"
+
+#: cmd.rc:287
+msgid ""
+"CMD Version %s\n"
+"\n"
+msgstr ""
+"Версія CMD %s\n"
+"\n"
+
+#: cmd.rc:288
+msgid "More? "
+msgstr "Більше? "
+
+#: cmd.rc:289
+msgid "The input line is too long.\n"
+msgstr "Введений рядок задовгий.\n"

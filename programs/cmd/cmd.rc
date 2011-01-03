@@ -1,6 +1,5 @@
 /*
- * Wine command prompt
- * English Language Support
+ * Wine command prompt resources
  *
  * Copyright (C) 1999 D A Pickles
  *
@@ -20,6 +19,9 @@
  */
 
 #include "wcmd.h"
+
+/* @makedep: wcmd.ico */
+IDI_ICON1 ICON wcmd.ico
 
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
@@ -251,8 +253,8 @@ EXIT\t\tClose down CMD\n\n\
 Enter HELP <command> for further information on any of the above commands\n"
 
   WCMD_CONFIRM, "Are you sure"
-  WCMD_YES, "Y"
-  WCMD_NO, "N"
+  WCMD_YES, "#msgctxt#Yes key#Y"
+  WCMD_NO, "#msgctxt#No key#N"
   WCMD_NOASSOC, "File association missing for extension %s\n"
   WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
   WCMD_OVERWRITE, "Overwrite %s"
@@ -271,7 +273,7 @@ Enter HELP <command> for further information on any of the above commands\n"
   WCMD_MISSINGENV, "Environment variable %s not defined\n"
   WCMD_READFAIL, "Failed to open '%s'\n"
   WCMD_CALLINSCRIPT, "Cannot call batch label outside of a batch script\n"
-  WCMD_ALL, "A"
+  WCMD_ALL, "#msgctxt#All key#A"
   WCMD_DELPROMPT, "%s, Delete"
   WCMD_ECHOPROMPT, "Echo is %s\n"
   WCMD_VERIFYPROMPT, "Verify is %s\n"
