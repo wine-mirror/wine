@@ -171,9 +171,9 @@ static void testCursorInfo(HANDLE hCon)
 
 static void testEmptyWrite(HANDLE hCon)
 {
+    static const char	emptybuf[16];
     COORD		c;
     DWORD		len;
-    const char* 	mytest = "";
 
     c.X = c.Y = 0;
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left\n");
@@ -197,13 +197,13 @@ static void testEmptyWrite(HANDLE hCon)
     }
 
     len = -1;
-    ok(WriteConsole(hCon, mytest, 0, &len, NULL) != 0 && len == 0, "WriteConsole\n");
+    ok(WriteConsole(hCon, emptybuf, 0, &len, NULL) != 0 && len == 0, "WriteConsole\n");
     okCURSOR(hCon, c);
 
     /* WriteConsole does not halt on a null terminator and is happy to write
      * memory contents beyond the actual size of the buffer. */
     len = -1;
-    ok(WriteConsole(hCon, mytest, 16, &len, NULL) != 0 && len == 16, "WriteConsole\n");
+    ok(WriteConsole(hCon, emptybuf, 16, &len, NULL) != 0 && len == 16, "WriteConsole\n");
     c.X += 16;
     okCURSOR(hCon, c);
 }
