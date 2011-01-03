@@ -370,24 +370,22 @@ static void apply_wrap(const struct wined3d_gl_info *gl_info, GLenum target,
 }
 
 /* GL locking is done by the caller (state handler) */
-void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
+void basetexture_apply_state_changes(IWineD3DBaseTextureImpl *texture,
         const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1],
         const struct wined3d_gl_info *gl_info)
 {
-    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-    GLenum textureDimensions = This->baseTexture.target;
+    BOOL cond_np2 = IWineD3DBaseTexture_IsCondNP2((IWineD3DBaseTexture *)texture);
+    GLenum textureDimensions = texture->baseTexture.target;
     DWORD state;
-    BOOL cond_np2 = IWineD3DBaseTexture_IsCondNP2(iface);
     DWORD aniso;
     struct gl_texture *gl_tex;
 
-    TRACE("iface %p, samplerStates %p\n", iface, samplerStates);
+    TRACE("texture %p, samplerStates %p\n", texture, samplerStates);
 
-    if(This->baseTexture.is_srgb) {
-        gl_tex = &This->baseTexture.texture_srgb;
-    } else {
-        gl_tex = &This->baseTexture.texture_rgb;
-    }
+    if (texture->baseTexture.is_srgb)
+        gl_tex = &texture->baseTexture.texture_srgb;
+    else
+        gl_tex = &texture->baseTexture.texture_rgb;
 
     /* This function relies on the correct texture being bound and loaded. */
 
@@ -427,7 +425,7 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
             FIXME("Unrecognized or unsupported MAGFILTER* value %d\n", state);
         }
 
-        glValue = wined3d_gl_mag_filter(This->baseTexture.magLookup,
+        glValue = wined3d_gl_mag_filter(texture->baseTexture.magLookup,
                 min(max(state, WINED3DTEXF_POINT), WINED3DTEXF_LINEAR));
         TRACE("ValueMAG=%d setting MAGFILTER to %x\n", state, glValue);
         glTexParameteri(textureDimensions, GL_TEXTURE_MAG_FILTER, glValue);
@@ -452,7 +450,7 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
                   gl_tex->states[WINED3DTEXSTA_MINFILTER],
                   gl_tex->states[WINED3DTEXSTA_MIPFILTER]);
         }
-        glValue = wined3d_gl_min_mip_filter(This->baseTexture.minMipLookup,
+        glValue = wined3d_gl_min_mip_filter(texture->baseTexture.minMipLookup,
                 min(max(samplerStates[WINED3DSAMP_MINFILTER], WINED3DTEXF_POINT), WINED3DTEXF_LINEAR),
                 min(max(samplerStates[WINED3DSAMP_MIPFILTER], WINED3DTEXF_NONE), WINED3DTEXF_LINEAR));
 
@@ -465,12 +463,12 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
         if (!cond_np2)
         {
             if (gl_tex->states[WINED3DTEXSTA_MIPFILTER] == WINED3DTEXF_NONE)
-                glValue = This->baseTexture.LOD;
-            else if (gl_tex->states[WINED3DTEXSTA_MAXMIPLEVEL] >= This->baseTexture.level_count)
-                glValue = This->baseTexture.level_count - 1;
-            else if (gl_tex->states[WINED3DTEXSTA_MAXMIPLEVEL] < This->baseTexture.LOD)
+                glValue = texture->baseTexture.LOD;
+            else if (gl_tex->states[WINED3DTEXSTA_MAXMIPLEVEL] >= texture->baseTexture.level_count)
+                glValue = texture->baseTexture.level_count - 1;
+            else if (gl_tex->states[WINED3DTEXSTA_MAXMIPLEVEL] < texture->baseTexture.LOD)
                 /* baseTexture.LOD is already clamped in the setter */
-                glValue = This->baseTexture.LOD;
+                glValue = texture->baseTexture.LOD;
             else
                 glValue = gl_tex->states[WINED3DTEXSTA_MAXMIPLEVEL];
 
@@ -508,10 +506,10 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
         gl_tex->states[WINED3DTEXSTA_MAXANISOTROPY] = aniso;
     }
 
-    if (!(This->resource.format->flags & WINED3DFMT_FLAG_SHADOW)
+    if (!(texture->resource.format->flags & WINED3DFMT_FLAG_SHADOW)
             != !gl_tex->states[WINED3DTEXSTA_SHADOW])
     {
-        if (This->resource.format->flags & WINED3DFMT_FLAG_SHADOW)
+        if (texture->resource.format->flags & WINED3DFMT_FLAG_SHADOW)
         {
             glTexParameteri(textureDimensions, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
             glTexParameteri(textureDimensions, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB);

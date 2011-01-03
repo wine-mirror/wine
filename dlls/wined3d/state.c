@@ -3643,10 +3643,10 @@ static void sampler(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct w
 
     if (state->textures[sampler])
     {
-        IWineD3DBaseTexture *texture = (IWineD3DBaseTexture *)state->textures[sampler];
+        IWineD3DBaseTextureImpl *texture = state->textures[sampler];
         BOOL srgb = state->sampler_states[sampler][WINED3DSAMP_SRGBTEXTURE];
 
-        IWineD3DBaseTexture_BindTexture(texture, srgb);
+        IWineD3DBaseTexture_BindTexture((IWineD3DBaseTexture *)texture, srgb);
         basetexture_apply_state_changes(texture,
                 state->sampler_states[sampler], gl_info);
 
@@ -3671,7 +3671,7 @@ static void sampler(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct w
         }
 
         /* Trigger shader constant reloading (for NP2 texcoord fixup) */
-        if (!state->textures[sampler]->baseTexture.pow2Matrix_identity)
+        if (!texture->baseTexture.pow2Matrix_identity)
         {
             device->shader_backend->shader_load_np2fixup_constants(device->shader_priv, gl_info, state);
         }
