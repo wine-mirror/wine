@@ -1141,8 +1141,8 @@ static inline ITypeInfoImpl *info_impl_from_ITypeComp( ITypeComp *iface )
 static const ITypeInfo2Vtbl tinfvt;
 static const ITypeCompVtbl  tcompvt;
 
-static ITypeInfo2 * ITypeInfo_Constructor(void);
-static void ITypeInfo_fnDestroy(ITypeInfoImpl *This);
+static ITypeInfoImpl* ITypeInfoImpl_Constructor(void);
+static void ITypeInfoImpl_Destroy(ITypeInfoImpl *This);
 
 typedef struct tagTLBContext
 {
@@ -2226,7 +2226,7 @@ static ITypeInfoImpl * MSFT_DoTypeInfo(
 
     TRACE_(typelib)("count=%u\n", count);
 
-    ptiRet = (ITypeInfoImpl*) ITypeInfo_Constructor();
+    ptiRet = ITypeInfoImpl_Constructor();
     MSFT_ReadLEDWords(&tiBase, sizeof(tiBase) ,pcx ,
                       pcx->pTblDir->pTypeInfoTab.offset+count*sizeof(tiBase));
 
@@ -3961,7 +3961,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
         "pTIHeader->res16 = %x, pTIHeader->res1e = %x\n",
         pTIHeader->res06, pTIHeader->res0e, pTIHeader->res16, pTIHeader->res1e);
 
-      *ppTypeInfoImpl = (ITypeInfoImpl*)ITypeInfo_Constructor();
+      *ppTypeInfoImpl = ITypeInfoImpl_Constructor();
       (*ppTypeInfoImpl)->pTypeLib = pTypeLibImpl;
       (*ppTypeInfoImpl)->index = i;
       (*ppTypeInfoImpl)->Name = TLB_MultiByteToBSTR(
@@ -4186,7 +4186,7 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
       for (pTI = This->pTypeInfo; pTI; pTI = pTINext)
       {
           pTINext = pTI->next;
-          ITypeInfo_fnDestroy(pTI);
+          ITypeInfoImpl_Destroy(pTI);
       }
       heap_free(This);
       return 0;
@@ -4935,9 +4935,9 @@ static const ITypeCompVtbl tlbtcvt =
 };
 
 /*================== ITypeInfo(2) Methods ===================================*/
-static ITypeInfo2 * ITypeInfo_Constructor(void)
+static ITypeInfoImpl* ITypeInfoImpl_Constructor(void)
 {
-    ITypeInfoImpl * pTypeInfoImpl;
+    ITypeInfoImpl *pTypeInfoImpl;
 
     pTypeInfoImpl = heap_alloc_zero(sizeof(ITypeInfoImpl));
     if (pTypeInfoImpl)
@@ -4950,7 +4950,7 @@ static ITypeInfo2 * ITypeInfo_Constructor(void)
       pTypeInfoImpl->TypeAttr.memidDestructor = MEMBERID_NIL;
     }
     TRACE("(%p)\n", pTypeInfoImpl);
-    return (ITypeInfo2*) pTypeInfoImpl;
+    return pTypeInfoImpl;
 }
 
 /* ITypeInfo::QueryInterface
@@ -4994,7 +4994,7 @@ static ULONG WINAPI ITypeInfo_fnAddRef( ITypeInfo2 *iface)
     return ref;
 }
 
-static void ITypeInfo_fnDestroy(ITypeInfoImpl *This)
+static void ITypeInfoImpl_Destroy(ITypeInfoImpl *This)
 {
     TLBFuncDesc *pFInfo, *pFInfoNext;
     TLBVarDesc *pVInfo, *pVInfoNext;
@@ -6845,7 +6845,7 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
 	  /* when we meet a DUAL dispinterface, we must create the interface
 	  * version of it.
 	  */
-	  ITypeInfoImpl* pTypeInfoImpl = (ITypeInfoImpl*) ITypeInfo_Constructor();
+	  ITypeInfoImpl *pTypeInfoImpl = ITypeInfoImpl_Constructor();
 
 
 	  /* the interface version contains the same information as the dispinterface
@@ -7696,7 +7696,7 @@ HRESULT WINAPI CreateDispTypeInfo(
     pTypeLibImpl = TypeLibImpl_Constructor();
     if (!pTypeLibImpl) return E_FAIL;
 
-    pTIIface = (ITypeInfoImpl*)ITypeInfo_Constructor();
+    pTIIface = ITypeInfoImpl_Constructor();
     pTIIface->pTypeLib = pTypeLibImpl;
     pTIIface->index = 0;
     pTIIface->Name = NULL;
@@ -7754,7 +7754,7 @@ HRESULT WINAPI CreateDispTypeInfo(
     pTypeLibImpl->pTypeInfo = pTIIface;
     pTypeLibImpl->TypeInfoCount++;
 
-    pTIClass = (ITypeInfoImpl*)ITypeInfo_Constructor();
+    pTIClass = ITypeInfoImpl_Constructor();
     pTIClass->pTypeLib = pTypeLibImpl;
     pTIClass->index = 1;
     pTIClass->Name = NULL;
