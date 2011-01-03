@@ -113,6 +113,7 @@ struct ProtocolVtbl {
     HRESULT (*end_request)(Protocol*);
     HRESULT (*start_downloading)(Protocol*);
     void (*close_connection)(Protocol*);
+    void (*on_error)(Protocol*,DWORD);
 };
 
 /* Flags are needed for, among other things, return HRESULTs from the Read function
@@ -144,6 +145,7 @@ struct ProtocolVtbl {
 #define FLAG_ALL_DATA_READ            0x0008
 #define FLAG_LAST_DATA_REPORTED       0x0010
 #define FLAG_RESULT_REPORTED          0x0020
+#define FLAG_ERROR                    0x0040
 
 HRESULT protocol_start(Protocol*,IInternetProtocol*,IUri*,IInternetProtocolSink*,IInternetBindInfo*);
 HRESULT protocol_continue(Protocol*,PROTOCOLDATA*);

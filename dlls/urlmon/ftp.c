@@ -99,13 +99,19 @@ static void FtpProtocol_close_connection(Protocol *prot)
 {
 }
 
+static void FtpProtocol_on_error(Protocol *prot, DWORD error)
+{
+    FIXME("(%p) %d - stub\n", prot, error);
+}
+
 #undef ASYNCPROTOCOL_THIS
 
 static const ProtocolVtbl AsyncProtocolVtbl = {
     FtpProtocol_open_request,
     FtpProtocol_end_request,
     FtpProtocol_start_downloading,
-    FtpProtocol_close_connection
+    FtpProtocol_close_connection,
+    FtpProtocol_on_error
 };
 
 static HRESULT WINAPI FtpProtocol_QueryInterface(IInternetProtocolEx *iface, REFIID riid, void **ppv)

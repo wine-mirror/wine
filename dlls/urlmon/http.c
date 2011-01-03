@@ -388,13 +388,19 @@ static void HttpProtocol_close_connection(Protocol *prot)
     }
 }
 
+static void HttpProtocol_on_error(Protocol *prot, DWORD error)
+{
+    FIXME("(%p) %d - stub\n", prot, error);
+}
+
 #undef ASYNCPROTOCOL_THIS
 
 static const ProtocolVtbl AsyncProtocolVtbl = {
     HttpProtocol_open_request,
     HttpProtocol_end_request,
     HttpProtocol_start_downloading,
-    HttpProtocol_close_connection
+    HttpProtocol_close_connection,
+    HttpProtocol_on_error
 };
 
 static HRESULT WINAPI HttpProtocol_QueryInterface(IInternetProtocolEx *iface, REFIID riid, void **ppv)

@@ -76,25 +76,27 @@ static void request_complete(Protocol *protocol, INTERNET_ASYNC_RESULT *ar)
 
     TRACE("(%p)->(%p)\n", protocol, ar);
 
-    if(!ar->dwResult) {
-        WARN("request failed: %d\n", ar->dwError);
-        return;
-    }
-
-    protocol->flags |= FLAG_REQUEST_COMPLETE;
-
-    if(!protocol->request) {
-        TRACE("setting request handle %p\n", (HINTERNET)ar->dwResult);
-        protocol->request = (HINTERNET)ar->dwResult;
-    }
-
     /* PROTOCOLDATA same as native */
     memset(&data, 0, sizeof(data));
     data.dwState = 0xf1000000;
-    if(protocol->flags & FLAG_FIRST_CONTINUE_COMPLETE)
-        data.pData = (LPVOID)BINDSTATUS_ENDDOWNLOADCOMPONENTS;
-    else
-        data.pData = (LPVOID)BINDSTATUS_DOWNLOADINGDATA;
+
+    if(ar->dwResult) {
+        protocol->flags |= FLAG_REQUEST_COMPLETE;
+
+        if(!protocol->request) {
+            TRACE("setting request handle %p\n", (HINTERNET)ar->dwResult);
+            protocol->request = (HINTERNET)ar->dwResult;
+        }
+
+        if(protocol->flags & FLAG_FIRST_CONTINUE_COMPLETE)
+            data.pData = (LPVOID)BINDSTATUS_ENDDOWNLOADCOMPONENTS;
+        else
+            data.pData = (LPVOID)BINDSTATUS_DOWNLOADINGDATA;
+
+    }else {
+        protocol->flags |= FLAG_ERROR;
+        data.pData = (LPVOID)ar->dwError;
+    }
 
     if (protocol->bindf & BINDF_FROMURLMON)
         IInternetProtocolSink_Switch(protocol->protocol_sink, &data);
@@ -298,6 +300,12 @@ HRESULT protocol_continue(Protocol *protocol, PROTOCOLDATA *data)
 
     if(!protocol->protocol_sink) {
         WARN("Expected IInternetProtocolSink pointer to be non-NULL\n");
+        return S_OK;
+    }
+
+    if(protocol->flags & FLAG_ERROR) {
+        protocol->flags &= ~FLAG_ERROR;
+        protocol->vtbl->on_error(protocol, (DWORD)data->pData);
         return S_OK;
     }
 

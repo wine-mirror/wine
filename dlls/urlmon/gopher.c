@@ -70,13 +70,19 @@ static void GopherProtocol_close_connection(Protocol *prot)
 {
 }
 
+static void GopherProtocol_on_error(Protocol *prot, DWORD error)
+{
+    FIXME("(%p) %d - stub\n", prot, error);
+}
+
 #undef ASYNCPROTOCOL_THIS
 
 static const ProtocolVtbl AsyncProtocolVtbl = {
     GopherProtocol_open_request,
     GopherProtocol_end_request,
     GopherProtocol_start_downloading,
-    GopherProtocol_close_connection
+    GopherProtocol_close_connection,
+    GopherProtocol_on_error
 };
 
 #define PROTOCOL_THIS(iface) DEFINE_THIS(GopherProtocol, IInternetProtocol, iface)
