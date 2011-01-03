@@ -228,7 +228,7 @@ typedef struct {
 } global_prop_t;
 
 typedef struct {
-    const IHTMLOptionElementFactoryVtbl *lpHTMLOptionElementFactoryVtbl;
+    IHTMLOptionElementFactory IHTMLOptionElementFactory_iface;
 
     LONG ref;
 
@@ -634,7 +634,6 @@ struct HTMLDocumentNode {
 
 #define HTMLTEXTCONT(x)  ((IHTMLTextContainer*)           &(x)->lpHTMLTextContainerVtbl)
 
-#define HTMLOPTFACTORY(x)  ((IHTMLOptionElementFactory*)  &(x)->lpHTMLOptionElementFactoryVtbl)
 #define HTMLIMGFACTORY(x)  ((IHTMLImageElementFactory*)   &(x)->lpHTMLImageElementFactoryVtbl)
 #define HTMLLOCATION(x)    ((IHTMLLocation*)              &(x)->lpHTMLLocationVtbl)
 

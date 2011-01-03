@@ -239,7 +239,7 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
 
         if(This->option_factory) {
             This->option_factory->window = NULL;
-            IHTMLOptionElementFactory_Release(HTMLOPTFACTORY(This->option_factory));
+            IHTMLOptionElementFactory_Release(&This->option_factory->IHTMLOptionElementFactory_iface);
         }
 
         if(This->image_factory) {
@@ -1065,7 +1065,7 @@ static HRESULT WINAPI HTMLWindow2_get_Option(IHTMLWindow2 *iface, IHTMLOptionEle
     if(!This->option_factory)
         This->option_factory = HTMLOptionElementFactory_Create(This);
 
-    *p = HTMLOPTFACTORY(This->option_factory);
+    *p = &This->option_factory->IHTMLOptionElementFactory_iface;
     IHTMLOptionElementFactory_AddRef(*p);
 
     return S_OK;
