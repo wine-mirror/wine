@@ -225,8 +225,9 @@ static WINED3DTEXTUREFILTERTYPE WINAPI IWineD3DVolumeTextureImpl_GetAutoGenFilte
   return basetexture_get_autogen_filter_type((IWineD3DBaseTextureImpl *)iface);
 }
 
-static void WINAPI IWineD3DVolumeTextureImpl_GenerateMipSubLevels(IWineD3DVolumeTexture *iface) {
-    basetexture_generate_mipmaps((IWineD3DBaseTexture *)iface);
+static void WINAPI IWineD3DVolumeTextureImpl_GenerateMipSubLevels(IWineD3DVolumeTexture *iface)
+{
+    basetexture_generate_mipmaps((IWineD3DBaseTextureImpl *)iface);
 }
 
 /* Context activation is done by the caller. */

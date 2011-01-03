@@ -225,10 +225,10 @@ WINED3DTEXTUREFILTERTYPE basetexture_get_autogen_filter_type(IWineD3DBaseTexture
     return texture->baseTexture.filterType;
 }
 
-void basetexture_generate_mipmaps(IWineD3DBaseTexture *iface)
+void basetexture_generate_mipmaps(IWineD3DBaseTextureImpl *texture)
 {
     /* TODO: Implement filters using GL_SGI_generate_mipmaps. */
-    FIXME("iface %p stub!\n", iface);
+    FIXME("texture %p stub!\n", texture);
 }
 
 BOOL basetexture_set_dirty(IWineD3DBaseTextureImpl *texture, BOOL dirty)
