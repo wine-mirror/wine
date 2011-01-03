@@ -763,7 +763,7 @@ static HRESULT HTMLBodyElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
         *ppv = &This->IHTMLBodyElement_iface;
     }else if(IsEqualGUID(&IID_IHTMLTextContainer, riid)) {
         TRACE("(%p)->(IID_IHTMLTextContainer %p)\n", &This->textcont, ppv);
-        *ppv = HTMLTEXTCONT(&This->textcont);
+        *ppv = &This->textcont.IHTMLTextContainer_iface;
     }
 
     if(*ppv) {

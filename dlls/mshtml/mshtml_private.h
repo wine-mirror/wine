@@ -567,7 +567,7 @@ typedef struct {
 typedef struct {
     HTMLElement element;
 
-    const IHTMLTextContainerVtbl *lpHTMLTextContainerVtbl;
+    IHTMLTextContainer IHTMLTextContainer_iface;
 
     ConnectionPoint cp;
 } HTMLTextContainer;
@@ -631,8 +631,6 @@ struct HTMLDocumentNode {
 #define HTTPNEG(x)       ((IHttpNegotiate2*)              &(x)->lpHttpNegotiate2Vtbl)
 #define STATUSCLB(x)     ((IBindStatusCallback*)          &(x)->lpBindStatusCallbackVtbl)
 #define BINDINFO(x)      ((IInternetBindInfo*)            &(x)->lpInternetBindInfoVtbl);
-
-#define HTMLTEXTCONT(x)  ((IHTMLTextContainer*)           &(x)->lpHTMLTextContainerVtbl)
 
 #define HTMLLOCATION(x)    ((IHTMLLocation*)              &(x)->lpHTMLLocationVtbl)
 
