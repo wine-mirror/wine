@@ -1780,26 +1780,33 @@ static nsresult NSAPI nsURI_GetPassword(nsIURL *iface, nsACString *aPassword)
 
     TRACE("(%p)->(%p)\n", This, aPassword);
 
-    if(This->nsuri)
-        return nsIURI_GetPassword(This->nsuri, aPassword);
-
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    return get_uri_string(This, Uri_PROPERTY_PASSWORD, aPassword);
 }
 
 static nsresult NSAPI nsURI_SetPassword(nsIURL *iface, const nsACString *aPassword)
 {
     nsWineURI *This = NSURI_THIS(iface);
+    const char *passa;
+    WCHAR *pass;
+    HRESULT hres;
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aPassword));
 
-    if(This->nsuri) {
-        invalidate_uri(This);
-        return nsIURI_SetPassword(This->nsuri, aPassword);
-    }
+    if(!ensure_uri_builder(This))
+        return NS_ERROR_UNEXPECTED;
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    nsACString_GetData(aPassword, &passa);
+    pass = heap_strdupAtoW(passa);
+    if(!pass)
+        return NS_ERROR_OUT_OF_MEMORY;
+
+    hres = IUriBuilder_SetPassword(This->uri_builder, pass);
+    heap_free(pass);
+    if(FAILED(hres))
+        return NS_ERROR_UNEXPECTED;
+
+    sync_wine_url(This);
+    return NS_OK;
 }
 
 static nsresult NSAPI nsURI_GetHostPort(nsIURL *iface, nsACString *aHostPort)
