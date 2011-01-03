@@ -406,7 +406,7 @@ static inline ULONG htmldoc_release(HTMLDocument *This)
 struct HTMLDocumentObj {
     HTMLDocument basedoc;
     DispatchEx dispex;
-    const ICustomDocVtbl  *lpCustomDocVtbl;
+    ICustomDoc ICustomDoc_iface;
 
     LONG ref;
 
@@ -623,8 +623,6 @@ struct HTMLDocumentNode {
     struct list range_list;
     struct list plugin_hosts;
 };
-
-#define CUSTOMDOC(x)     ((ICustomDoc*)                   &(x)->lpCustomDocVtbl)
 
 #define NSEVENTLIST(x)   ((nsIDOMEventListener*)          &(x)->lpDOMEventListenerVtbl)
 

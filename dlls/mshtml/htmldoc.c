@@ -2054,18 +2054,21 @@ HRESULT create_document_fragment(nsIDOMNode *nsnode, HTMLDocumentNode *doc_node,
  * ICustomDoc implementation
  */
 
-#define CUSTOMDOC_THIS(iface) DEFINE_THIS(HTMLDocumentObj, CustomDoc, iface)
+static inline HTMLDocumentObj *impl_from_ICustomDoc(ICustomDoc *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocumentObj, ICustomDoc_iface);
+}
 
 static HRESULT WINAPI CustomDoc_QueryInterface(ICustomDoc *iface, REFIID riid, void **ppv)
 {
-    HTMLDocumentObj *This = CUSTOMDOC_THIS(iface);
+    HTMLDocumentObj *This = impl_from_ICustomDoc(iface);
 
     if(htmldoc_qi(&This->basedoc, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
 
     if(IsEqualGUID(&IID_ICustomDoc, riid)) {
         TRACE("(%p)->(IID_ICustomDoc %p)\n", This, ppv);
-        *ppv = CUSTOMDOC(This);
+        *ppv = &This->ICustomDoc_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
@@ -2080,7 +2083,7 @@ static HRESULT WINAPI CustomDoc_QueryInterface(ICustomDoc *iface, REFIID riid, v
 
 static ULONG WINAPI CustomDoc_AddRef(ICustomDoc *iface)
 {
-    HTMLDocumentObj *This = CUSTOMDOC_THIS(iface);
+    HTMLDocumentObj *This = impl_from_ICustomDoc(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref = %u\n", This, ref);
@@ -2090,7 +2093,7 @@ static ULONG WINAPI CustomDoc_AddRef(ICustomDoc *iface)
 
 static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
 {
-    HTMLDocumentObj *This = CUSTOMDOC_THIS(iface);
+    HTMLDocumentObj *This = impl_from_ICustomDoc(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref = %u\n", This, ref);
@@ -2112,7 +2115,7 @@ static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
         if(This->client)
             IOleObject_SetClientSite(&This->basedoc.IOleObject_iface, NULL);
         if(This->hostui)
-            ICustomDoc_SetUIHandler(CUSTOMDOC(This), NULL);
+            ICustomDoc_SetUIHandler(&This->ICustomDoc_iface, NULL);
         if(This->in_place_active)
             IOleInPlaceObjectWindowless_InPlaceDeactivate(&This->basedoc.IOleInPlaceObjectWindowless_iface);
         if(This->ipsite)
@@ -2139,7 +2142,7 @@ static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
 
 static HRESULT WINAPI CustomDoc_SetUIHandler(ICustomDoc *iface, IDocHostUIHandler *pUIHandler)
 {
-    HTMLDocumentObj *This = CUSTOMDOC_THIS(iface);
+    HTMLDocumentObj *This = impl_from_ICustomDoc(iface);
     IOleCommandTarget *cmdtrg;
     HRESULT hres;
 
@@ -2166,8 +2169,6 @@ static HRESULT WINAPI CustomDoc_SetUIHandler(ICustomDoc *iface, IDocHostUIHandle
 
     return S_OK;
 }
-
-#undef CUSTOMDOC_THIS
 
 static const ICustomDocVtbl CustomDocVtbl = {
     CustomDoc_QueryInterface,
@@ -2203,10 +2204,10 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     if(!doc)
         return E_OUTOFMEMORY;
 
-    init_dispex(&doc->dispex, (IUnknown*)CUSTOMDOC(doc), &HTMLDocumentObj_dispex);
-    init_doc(&doc->basedoc, (IUnknown*)CUSTOMDOC(doc), &doc->dispex.IDispatchEx_iface);
+    init_dispex(&doc->dispex, (IUnknown*)&doc->ICustomDoc_iface, &HTMLDocumentObj_dispex);
+    init_doc(&doc->basedoc, (IUnknown*)&doc->ICustomDoc_iface, &doc->dispex.IDispatchEx_iface);
 
-    doc->lpCustomDocVtbl = &CustomDocVtbl;
+    doc->ICustomDoc_iface.lpVtbl = &CustomDocVtbl;
     doc->ref = 1;
     doc->basedoc.doc_obj = doc;
 
