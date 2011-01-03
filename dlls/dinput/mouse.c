@@ -60,8 +60,8 @@ typedef enum
 
 struct SysMouseImpl
 {
-    struct IDirectInputDevice2AImpl base;
-    
+    struct IDirectInputDeviceImpl   base;
+
     /* SysMouseAImpl */
     /* These are used in case of relative -> absolute transitions */
     POINT                           org_coords;

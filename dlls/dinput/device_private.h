@@ -48,8 +48,8 @@ typedef struct
 } DataFormat;
 
 /* Device implementation */
-typedef struct IDirectInputDevice2AImpl IDirectInputDevice2AImpl;
-struct IDirectInputDevice2AImpl
+typedef struct IDirectInputDeviceImpl IDirectInputDeviceImpl;
+struct IDirectInputDeviceImpl
 {
     const void                 *lpVtbl;
     LONG                        ref;

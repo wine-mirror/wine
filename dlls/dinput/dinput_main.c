@@ -504,7 +504,7 @@ static HRESULT WINAPI IDirectInput7AImpl_CreateDeviceEx(LPDIRECTINPUT7A iface, R
     if ((ret = dinput_devices[i]->create_deviceA(This, rguid, riid, (LPDIRECTINPUTDEVICEA*) pvOut)) == DI_OK)
     {
       EnterCriticalSection( &This->crit );
-      list_add_tail( &This->devices_list, &(*(IDirectInputDevice2AImpl**)pvOut)->entry );
+      list_add_tail( &This->devices_list, &(*(IDirectInputDeviceImpl**)pvOut)->entry );
       LeaveCriticalSection( &This->crit );
       return DI_OK;
     }
@@ -540,7 +540,7 @@ static HRESULT WINAPI IDirectInput7WImpl_CreateDeviceEx(LPDIRECTINPUT7W iface, R
     if ((ret = dinput_devices[i]->create_deviceW(This, rguid, riid, (LPDIRECTINPUTDEVICEW*) pvOut)) == DI_OK)
     {
       EnterCriticalSection( &This->crit );
-      list_add_tail( &This->devices_list, &(*(IDirectInputDevice2AImpl**)pvOut)->entry );
+      list_add_tail( &This->devices_list, &(*(IDirectInputDeviceImpl**)pvOut)->entry );
       LeaveCriticalSection( &This->crit );
       return DI_OK;
     }
@@ -920,10 +920,10 @@ static LRESULT CALLBACK LL_hook_proc( int code, WPARAM wparam, LPARAM lparam )
     EnterCriticalSection( &dinput_hook_crit );
     LIST_FOR_EACH_ENTRY( dinput, &direct_input_list, IDirectInputImpl, entry )
     {
-        IDirectInputDevice2AImpl *dev;
+        IDirectInputDeviceImpl *dev;
 
         EnterCriticalSection( &dinput->crit );
-        LIST_FOR_EACH_ENTRY( dev, &dinput->devices_list, IDirectInputDevice2AImpl, entry )
+        LIST_FOR_EACH_ENTRY( dev, &dinput->devices_list, IDirectInputDeviceImpl, entry )
             if (dev->acquired && dev->event_proc)
             {
                 TRACE("calling %p->%p (%lx %lx)\n", dev, dev->event_proc, wparam, lparam);
@@ -952,10 +952,10 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
 
     LIST_FOR_EACH_ENTRY( dinput, &direct_input_list, IDirectInputImpl, entry )
     {
-        IDirectInputDevice2AImpl *dev;
+        IDirectInputDeviceImpl *dev;
 
         EnterCriticalSection( &dinput->crit );
-        LIST_FOR_EACH_ENTRY( dev, &dinput->devices_list, IDirectInputDevice2AImpl, entry )
+        LIST_FOR_EACH_ENTRY( dev, &dinput->devices_list, IDirectInputDeviceImpl, entry )
         {
             if (!dev->acquired) continue;
 
@@ -1004,10 +1004,10 @@ static DWORD WINAPI hook_thread_proc(void *param)
             /* Count acquired keyboards and mice*/
             LIST_FOR_EACH_ENTRY( dinput, &direct_input_list, IDirectInputImpl, entry )
             {
-                IDirectInputDevice2AImpl *dev;
+                IDirectInputDeviceImpl *dev;
 
                 EnterCriticalSection( &dinput->crit );
-                LIST_FOR_EACH_ENTRY( dev, &dinput->devices_list, IDirectInputDevice2AImpl, entry )
+                LIST_FOR_EACH_ENTRY( dev, &dinput->devices_list, IDirectInputDeviceImpl, entry )
                 {
                     if (!dev->acquired || !dev->event_proc) continue;
 
@@ -1102,7 +1102,7 @@ void check_dinput_hooks(LPDIRECTINPUTDEVICE8A iface)
 {
     static HHOOK callwndproc_hook;
     static ULONG foreground_cnt;
-    IDirectInputDevice2AImpl *dev = (IDirectInputDevice2AImpl *)iface;
+    IDirectInputDeviceImpl *dev = (IDirectInputDeviceImpl *)iface;
 
     EnterCriticalSection(&dinput_hook_crit);
 

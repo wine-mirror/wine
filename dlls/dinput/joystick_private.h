@@ -37,7 +37,7 @@ typedef void joy_polldev_handler(struct JoystickGenericImpl *This);
 
 typedef struct JoystickGenericImpl
 {
-    struct IDirectInputDevice2AImpl base;
+    struct IDirectInputDeviceImpl base;
 
     ObjProps    props[MAX_PROPS];
     DIDEVCAPS   devcaps;

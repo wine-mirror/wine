@@ -46,7 +46,7 @@ static const IDirectInputDevice8WVtbl SysKeyboardWvt;
 typedef struct SysKeyboardImpl SysKeyboardImpl;
 struct SysKeyboardImpl
 {
-    struct IDirectInputDevice2AImpl base;
+    struct IDirectInputDeviceImpl base;
     BYTE DInputKeyState[WINE_DINPUT_KEYBOARD_MAX_KEYS];
 };
 
