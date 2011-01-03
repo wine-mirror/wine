@@ -3428,6 +3428,8 @@ static void test_publish(void)
     else
     {
         res = RegOpenKeyExA(uninstall, prodcode, 0, access, &prodkey);
+        if (is_wow64 && res == ERROR_FILE_NOT_FOUND) /* XP - Vista, Wow64 */
+            res = RegOpenKeyExA(uninstall, prodcode, 0, KEY_ALL_ACCESS, &prodkey);
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
     }
 
