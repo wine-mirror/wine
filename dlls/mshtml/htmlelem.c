@@ -1618,7 +1618,7 @@ HRESULT HTMLElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
         *ppv = &This->IHTMLElement3_iface;
     }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
         TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
-        *ppv = CONPTCONT(&This->cp_container);
+        *ppv = &This->cp_container.IConnectionPointContainer_iface;
     }
 
     if(*ppv) {

@@ -31,8 +31,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-#define CONPOINT(x) ((IConnectionPoint*) &(x)->lpConnectionPointVtbl);
-
 static const char *debugstr_cp_guid(REFIID riid)
 {
 #define X(x) \
@@ -60,21 +58,24 @@ void call_property_onchanged(ConnectionPoint *This, DISPID dispid)
     }
 }
 
-#define CONPOINT_THIS(iface) DEFINE_THIS(ConnectionPoint, ConnectionPoint, iface)
+static inline ConnectionPoint *impl_from_IConnectionPoint(IConnectionPoint *iface)
+{
+    return CONTAINING_RECORD(iface, ConnectionPoint, IConnectionPoint_iface);
+}
 
 static HRESULT WINAPI ConnectionPoint_QueryInterface(IConnectionPoint *iface,
                                                      REFIID riid, LPVOID *ppv)
 {
-    ConnectionPoint *This = CONPOINT_THIS(iface);
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
 
     *ppv = NULL;
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = CONPOINT(This);
+        *ppv = &This->IConnectionPoint_iface;
     }else if(IsEqualGUID(&IID_IConnectionPoint, riid)) {
         TRACE("(%p)->(IID_IConnectionPoint %p)\n", This, ppv);
-        *ppv = CONPOINT(This);
+        *ppv = &This->IConnectionPoint_iface;
     }
 
     if(*ppv) {
@@ -88,19 +89,19 @@ static HRESULT WINAPI ConnectionPoint_QueryInterface(IConnectionPoint *iface,
 
 static ULONG WINAPI ConnectionPoint_AddRef(IConnectionPoint *iface)
 {
-    ConnectionPoint *This = CONPOINT_THIS(iface);
-    return IConnectionPointContainer_AddRef(CONPTCONT(This->container));
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+    return IConnectionPointContainer_AddRef(&This->container->IConnectionPointContainer_iface);
 }
 
 static ULONG WINAPI ConnectionPoint_Release(IConnectionPoint *iface)
 {
-    ConnectionPoint *This = CONPOINT_THIS(iface);
-    return IConnectionPointContainer_Release(CONPTCONT(This->container));
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+    return IConnectionPointContainer_Release(&This->container->IConnectionPointContainer_iface);
 }
 
 static HRESULT WINAPI ConnectionPoint_GetConnectionInterface(IConnectionPoint *iface, IID *pIID)
 {
-    ConnectionPoint *This = CONPOINT_THIS(iface);
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
 
     TRACE("(%p)->(%p)\n", This, pIID);
 
@@ -114,14 +115,14 @@ static HRESULT WINAPI ConnectionPoint_GetConnectionInterface(IConnectionPoint *i
 static HRESULT WINAPI ConnectionPoint_GetConnectionPointContainer(IConnectionPoint *iface,
         IConnectionPointContainer **ppCPC)
 {
-    ConnectionPoint *This = CONPOINT_THIS(iface);
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
 
     TRACE("(%p)->(%p)\n", This, ppCPC);
 
     if(!ppCPC)
         return E_POINTER;
 
-    *ppCPC = CONPTCONT(This->container);
+    *ppCPC = &This->container->IConnectionPointContainer_iface;
     IConnectionPointContainer_AddRef(*ppCPC);
     return S_OK;
 }
@@ -129,7 +130,7 @@ static HRESULT WINAPI ConnectionPoint_GetConnectionPointContainer(IConnectionPoi
 static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *pUnkSink,
                                              DWORD *pdwCookie)
 {
-    ConnectionPoint *This = CONPOINT_THIS(iface);
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
     IUnknown *sink;
     DWORD i;
     HRESULT hres;
@@ -167,7 +168,7 @@ static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *
 
 static HRESULT WINAPI ConnectionPoint_Unadvise(IConnectionPoint *iface, DWORD dwCookie)
 {
-    ConnectionPoint *This = CONPOINT_THIS(iface);
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
     TRACE("(%p)->(%d)\n", This, dwCookie);
 
     if(!dwCookie || dwCookie > This->sinks_size || !This->sinks[dwCookie-1].unk)
@@ -182,12 +183,10 @@ static HRESULT WINAPI ConnectionPoint_Unadvise(IConnectionPoint *iface, DWORD dw
 static HRESULT WINAPI ConnectionPoint_EnumConnections(IConnectionPoint *iface,
                                                       IEnumConnections **ppEnum)
 {
-    ConnectionPoint *This = CONPOINT_THIS(iface);
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
     FIXME("(%p)->(%p)\n", This, ppEnum);
     return E_NOTIMPL;
 }
-
-#undef CONPOINT_THIS
 
 static const IConnectionPointVtbl ConnectionPointVtbl =
 {
@@ -203,7 +202,7 @@ static const IConnectionPointVtbl ConnectionPointVtbl =
 
 void ConnectionPoint_Init(ConnectionPoint *cp, ConnectionPointContainer *container, REFIID riid, cp_static_data_t *data)
 {
-    cp->lpConnectionPointVtbl = &ConnectionPointVtbl;
+    cp->IConnectionPoint_iface.lpVtbl = &ConnectionPointVtbl;
     cp->container = container;
     cp->sinks = NULL;
     cp->sinks_size = 0;
@@ -226,31 +225,34 @@ static void ConnectionPoint_Destroy(ConnectionPoint *This)
     heap_free(This->sinks);
 }
 
-#define CONPTCONT_THIS(iface) DEFINE_THIS(ConnectionPointContainer, ConnectionPointContainer, iface)
+static inline ConnectionPointContainer *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
+{
+    return CONTAINING_RECORD(iface, ConnectionPointContainer, IConnectionPointContainer_iface);
+}
 
 static HRESULT WINAPI ConnectionPointContainer_QueryInterface(IConnectionPointContainer *iface,
                                                               REFIID riid, void **ppv)
 {
-    ConnectionPointContainer *This = CONPTCONT_THIS(iface);
+    ConnectionPointContainer *This = impl_from_IConnectionPointContainer(iface);
     return IUnknown_QueryInterface(This->outer, riid, ppv);
 }
 
 static ULONG WINAPI ConnectionPointContainer_AddRef(IConnectionPointContainer *iface)
 {
-    ConnectionPointContainer *This = CONPTCONT_THIS(iface);
+    ConnectionPointContainer *This = impl_from_IConnectionPointContainer(iface);
     return IUnknown_AddRef(This->outer);
 }
 
 static ULONG WINAPI ConnectionPointContainer_Release(IConnectionPointContainer *iface)
 {
-    ConnectionPointContainer *This = CONPTCONT_THIS(iface);
+    ConnectionPointContainer *This = impl_from_IConnectionPointContainer(iface);
     return IUnknown_Release(This->outer);
 }
 
 static HRESULT WINAPI ConnectionPointContainer_EnumConnectionPoints(IConnectionPointContainer *iface,
         IEnumConnectionPoints **ppEnum)
 {
-    ConnectionPointContainer *This = CONPTCONT_THIS(iface);
+    ConnectionPointContainer *This = impl_from_IConnectionPointContainer(iface);
     FIXME("(%p)->(%p)\n", This, ppEnum);
     return E_NOTIMPL;
 }
@@ -258,19 +260,20 @@ static HRESULT WINAPI ConnectionPointContainer_EnumConnectionPoints(IConnectionP
 static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPointContainer *iface,
         REFIID riid, IConnectionPoint **ppCP)
 {
-    ConnectionPointContainer *This = CONPTCONT_THIS(iface);
+    ConnectionPointContainer *This = impl_from_IConnectionPointContainer(iface);
     ConnectionPoint *iter;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_cp_guid(riid), ppCP);
 
     if(This->forward_container)
-        return IConnectionPointContainer_FindConnectionPoint(CONPTCONT(This), riid, ppCP);
+        return IConnectionPointContainer_FindConnectionPoint(&This->IConnectionPointContainer_iface,
+                riid, ppCP);
 
     *ppCP = NULL;
 
     for(iter = This->cp_list; iter; iter = iter->next) {
         if(IsEqualGUID(iter->iid, riid))
-            *ppCP = CONPOINT(iter);
+            *ppCP = &iter->IConnectionPoint_iface;
     }
 
     if(*ppCP) {
@@ -290,11 +293,9 @@ static const IConnectionPointContainerVtbl ConnectionPointContainerVtbl = {
     ConnectionPointContainer_FindConnectionPoint
 };
 
-#undef CONPTCONT_THIS
-
 void ConnectionPointContainer_Init(ConnectionPointContainer *This, IUnknown *outer)
 {
-    This->lpConnectionPointContainerVtbl = &ConnectionPointContainerVtbl;
+    This->IConnectionPointContainer_iface.lpVtbl = &ConnectionPointContainerVtbl;
     This->cp_list = NULL;
     This->outer = outer;
 }

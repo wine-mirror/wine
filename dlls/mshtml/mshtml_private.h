@@ -318,7 +318,7 @@ typedef struct _cp_static_data_t {
 } cp_static_data_t;
 
 typedef struct ConnectionPointContainer {
-    const IConnectionPointContainerVtbl  *lpConnectionPointContainerVtbl;
+    IConnectionPointContainer IConnectionPointContainer_iface;
 
     ConnectionPoint *cp_list;
     IUnknown *outer;
@@ -326,7 +326,7 @@ typedef struct ConnectionPointContainer {
 } ConnectionPointContainer;
 
 struct ConnectionPoint {
-    const IConnectionPointVtbl *lpConnectionPointVtbl;
+    IConnectionPoint IConnectionPoint_iface;
 
     ConnectionPointContainer *container;
 
@@ -624,7 +624,6 @@ struct HTMLDocumentNode {
     struct list plugin_hosts;
 };
 
-#define CONPTCONT(x)     ((IConnectionPointContainer*)    &(x)->lpConnectionPointContainerVtbl)
 #define CUSTOMDOC(x)     ((ICustomDoc*)                   &(x)->lpCustomDocVtbl)
 
 #define NSEVENTLIST(x)   ((nsIDOMEventListener*)          &(x)->lpDOMEventListenerVtbl)
