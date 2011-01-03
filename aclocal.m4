@@ -344,7 +344,7 @@ $ac_dir: $ac_dir/Makefile __builddeps__ dummy
 	@cd $ac_dir && \$(MAKE) install
 uninstall:: $ac_dir/Makefile
 	@cd $ac_dir && \$(MAKE) uninstall"
-    if wine_fn_has_flag installbin $ac_flags -a -n "$DLLEXT" -a "x$enable_tools" != xno
+    if test -n "$DLLEXT" -a "x$enable_tools" != xno && wine_fn_has_flag installbin $ac_flags
     then
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "install install-lib:: tools \$(DESTDIR)\$(bindir)
