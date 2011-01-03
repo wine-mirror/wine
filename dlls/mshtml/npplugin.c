@@ -219,8 +219,8 @@ static IUnknown *create_activex_object(HTMLWindow *window, nsIDOMElement *nselem
     TRACE("clsid %s\n", debugstr_guid(clsid));
 
     policy = 0;
-    hres = IInternetHostSecurityManager_ProcessUrlAction(HOSTSECMGR(window->doc), URLACTION_ACTIVEX_RUN,
-            (BYTE*)&policy, sizeof(policy), (BYTE*)clsid, sizeof(GUID), 0, 0);
+    hres = IInternetHostSecurityManager_ProcessUrlAction(&window->doc->IInternetHostSecurityManager_iface,
+            URLACTION_ACTIVEX_RUN, (BYTE*)&policy, sizeof(policy), (BYTE*)clsid, sizeof(GUID), 0, 0);
     if(FAILED(hres) || policy != URLPOLICY_ALLOW) {
         WARN("ProcessUrlAction returned %08x %x\n", hres, policy);
         return NULL;

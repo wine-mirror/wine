@@ -1886,7 +1886,7 @@ static HRESULT HTMLDocumentNode_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
     if(IsEqualGUID(&IID_IInternetHostSecurityManager, riid)) {
         TRACE("(%p)->(IID_IInternetHostSecurityManager %p)\n", This, ppv);
-        *ppv = HOSTSECMGR(This);
+        *ppv = &This->IInternetHostSecurityManager_iface;
     }else {
         return HTMLDOMNode_QI(&This->node, riid, ppv);
     }

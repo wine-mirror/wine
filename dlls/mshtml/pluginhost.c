@@ -51,7 +51,7 @@ static BOOL check_load_safety(PluginHost *host)
     cs.pUnk = host->plugin_unk;
     cs.dwFlags = CONFIRMSAFETYACTION_LOADOBJECT;
 
-    hres = IInternetHostSecurityManager_QueryCustomPolicy(HOSTSECMGR(host->doc),
+    hres = IInternetHostSecurityManager_QueryCustomPolicy(&host->doc->IInternetHostSecurityManager_iface,
             &GUID_CUSTOM_CONFIRMOBJECTSAFETY, &ppolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
     if(FAILED(hres))
         return FALSE;
@@ -75,7 +75,7 @@ static BOOL check_script_safety(PluginHost *host)
     cs.pUnk = host->plugin_unk;
     cs.dwFlags = 0;
 
-    hres = IInternetHostSecurityManager_QueryCustomPolicy(HOSTSECMGR(host->doc),
+    hres = IInternetHostSecurityManager_QueryCustomPolicy(&host->doc->IInternetHostSecurityManager_iface,
             &GUID_CUSTOM_CONFIRMOBJECTSAFETY, &ppolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
     if(FAILED(hres))
         return FALSE;

@@ -42,30 +42,33 @@ static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k'
 const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY =
     {0x10200490,0xfa38,0x11d0,{0xac,0x0e,0x00,0xa0,0xc9,0xf,0xff,0xc0}};
 
-#define HOSTSECMGR_THIS(iface) DEFINE_THIS(HTMLDocumentNode, IInternetHostSecurityManager, iface)
+static inline HTMLDocumentNode *impl_from_IInternetHostSecurityManager(IInternetHostSecurityManager *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocumentNode, IInternetHostSecurityManager_iface);
+}
 
 static HRESULT WINAPI InternetHostSecurityManager_QueryInterface(IInternetHostSecurityManager *iface, REFIID riid, void **ppv)
 {
-    HTMLDocumentNode *This = HOSTSECMGR_THIS(iface);
+    HTMLDocumentNode *This = impl_from_IInternetHostSecurityManager(iface);
     return IHTMLDOMNode_QueryInterface(&This->node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI InternetHostSecurityManager_AddRef(IInternetHostSecurityManager *iface)
 {
-    HTMLDocumentNode *This = HOSTSECMGR_THIS(iface);
+    HTMLDocumentNode *This = impl_from_IInternetHostSecurityManager(iface);
     return IHTMLDOMNode_AddRef(&This->node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI InternetHostSecurityManager_Release(IInternetHostSecurityManager *iface)
 {
-    HTMLDocumentNode *This = HOSTSECMGR_THIS(iface);
+    HTMLDocumentNode *This = impl_from_IInternetHostSecurityManager(iface);
     return IHTMLDOMNode_Release(&This->node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI InternetHostSecurityManager_GetSecurityId(IInternetHostSecurityManager *iface,  BYTE *pbSecurityId,
         DWORD *pcbSecurityId, DWORD_PTR dwReserved)
 {
-    HTMLDocumentNode *This = HOSTSECMGR_THIS(iface);
+    HTMLDocumentNode *This = impl_from_IInternetHostSecurityManager(iface);
     FIXME("(%p)->(%p %p %lx)\n", This, pbSecurityId, pcbSecurityId, dwReserved);
     return E_NOTIMPL;
 }
@@ -73,7 +76,7 @@ static HRESULT WINAPI InternetHostSecurityManager_GetSecurityId(IInternetHostSec
 static HRESULT WINAPI InternetHostSecurityManager_ProcessUrlAction(IInternetHostSecurityManager *iface, DWORD dwAction,
         BYTE *pPolicy, DWORD cbPolicy, BYTE *pContext, DWORD cbContext, DWORD dwFlags, DWORD dwReserved)
 {
-    HTMLDocumentNode *This = HOSTSECMGR_THIS(iface);
+    HTMLDocumentNode *This = impl_from_IInternetHostSecurityManager(iface);
     const WCHAR *url;
 
     TRACE("(%p)->(%d %p %d %p %d %x %x)\n", This, dwAction, pPolicy, cbPolicy, pContext, cbContext, dwFlags, dwReserved);
@@ -176,7 +179,7 @@ static HRESULT confirm_safety(HTMLDocumentNode *This, const WCHAR *url, struct C
 static HRESULT WINAPI InternetHostSecurityManager_QueryCustomPolicy(IInternetHostSecurityManager *iface, REFGUID guidKey,
         BYTE **ppPolicy, DWORD *pcbPolicy, BYTE *pContext, DWORD cbContext, DWORD dwReserved)
 {
-    HTMLDocumentNode *This = HOSTSECMGR_THIS(iface);
+    HTMLDocumentNode *This = impl_from_IInternetHostSecurityManager(iface);
     const WCHAR *url;
     HRESULT hres;
 
@@ -227,8 +230,6 @@ static HRESULT WINAPI InternetHostSecurityManager_QueryCustomPolicy(IInternetHos
     return hres;
 }
 
-#undef HOSTSECMGR_THIS
-
 static const IInternetHostSecurityManagerVtbl InternetHostSecurityManagerVtbl = {
     InternetHostSecurityManager_QueryInterface,
     InternetHostSecurityManager_AddRef,
@@ -240,5 +241,5 @@ static const IInternetHostSecurityManagerVtbl InternetHostSecurityManagerVtbl = 
 
 void HTMLDocumentNode_SecMgr_Init(HTMLDocumentNode *This)
 {
-    This->lpIInternetHostSecurityManagerVtbl = &InternetHostSecurityManagerVtbl;
+    This->IInternetHostSecurityManager_iface.lpVtbl = &InternetHostSecurityManagerVtbl;
 }

@@ -597,10 +597,10 @@ struct HTMLDocumentNode {
     HTMLDOMNode node;
     HTMLDocument basedoc;
 
-    const IInternetHostSecurityManagerVtbl *lpIInternetHostSecurityManagerVtbl;
+    IInternetHostSecurityManager IInternetHostSecurityManager_iface;
 
-    const nsIDocumentObserverVtbl  *lpIDocumentObserverVtbl;
-    const nsIRunnableVtbl  *lpIRunnableVtbl;
+    nsIDocumentObserver          nsIDocumentObserver_iface;
+    nsIRunnable                  nsIRunnable_iface;
 
     LONG ref;
 
@@ -629,10 +629,6 @@ struct HTMLDocumentNode {
 
 #define NSEVENTLIST(x)   ((nsIDOMEventListener*)          &(x)->lpDOMEventListenerVtbl)
 
-#define NSDOCOBS(x)      ((nsIDocumentObserver*)          &(x)->lpIDocumentObserverVtbl)
-
-#define NSRUNNABLE(x)    ((nsIRunnable*)  &(x)->lpIRunnableVtbl)
-
 #define HTTPNEG(x)       ((IHttpNegotiate2*)              &(x)->lpHttpNegotiate2Vtbl)
 #define STATUSCLB(x)     ((IBindStatusCallback*)          &(x)->lpBindStatusCallbackVtbl)
 #define BINDINFO(x)      ((IInternetBindInfo*)            &(x)->lpInternetBindInfoVtbl);
@@ -642,8 +638,6 @@ struct HTMLDocumentNode {
 #define HTMLOPTFACTORY(x)  ((IHTMLOptionElementFactory*)  &(x)->lpHTMLOptionElementFactoryVtbl)
 #define HTMLIMGFACTORY(x)  ((IHTMLImageElementFactory*)   &(x)->lpHTMLImageElementFactoryVtbl)
 #define HTMLLOCATION(x)    ((IHTMLLocation*)              &(x)->lpHTMLLocationVtbl)
-
-#define HOSTSECMGR(x)    ((IInternetHostSecurityManager*)  &(x)->lpIInternetHostSecurityManagerVtbl)
 
 #define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
 

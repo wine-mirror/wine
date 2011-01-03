@@ -193,23 +193,26 @@ static void add_script_runner(HTMLDocumentNode *This)
         return;
     }
 
-    nsIDOMNSDocument_WineAddScriptRunner(nsdoc, NSRUNNABLE(This));
+    nsIDOMNSDocument_WineAddScriptRunner(nsdoc, &This->nsIRunnable_iface);
     nsIDOMNSDocument_Release(nsdoc);
 }
 
-#define NSRUNNABLE_THIS(iface) DEFINE_THIS(HTMLDocumentNode, IRunnable, iface)
+static inline HTMLDocumentNode *impl_from_nsIRunnable(nsIRunnable *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocumentNode, nsIRunnable_iface);
+}
 
 static nsresult NSAPI nsRunnable_QueryInterface(nsIRunnable *iface,
         nsIIDRef riid, void **result)
 {
-    HTMLDocumentNode *This = NSRUNNABLE_THIS(iface);
+    HTMLDocumentNode *This = impl_from_nsIRunnable(iface);
 
     if(IsEqualGUID(riid, &IID_nsISupports)) {
         TRACE("(%p)->(IID_nsISupports %p)\n", This, result);
-        *result = NSRUNNABLE(This);
+        *result = &This->nsIRunnable_iface;
     }else if(IsEqualGUID(riid, &IID_nsIRunnable)) {
         TRACE("(%p)->(IID_nsIRunnable %p)\n", This, result);
-        *result = NSRUNNABLE(This);
+        *result = &This->nsIRunnable_iface;
     }else {
         *result = NULL;
         WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), result);
@@ -222,13 +225,13 @@ static nsresult NSAPI nsRunnable_QueryInterface(nsIRunnable *iface,
 
 static nsrefcnt NSAPI nsRunnable_AddRef(nsIRunnable *iface)
 {
-    HTMLDocumentNode *This = NSRUNNABLE_THIS(iface);
+    HTMLDocumentNode *This = impl_from_nsIRunnable(iface);
     return htmldoc_addref(&This->basedoc);
 }
 
 static nsrefcnt NSAPI nsRunnable_Release(nsIRunnable *iface)
 {
-    HTMLDocumentNode *This = NSRUNNABLE_THIS(iface);
+    HTMLDocumentNode *This = impl_from_nsIRunnable(iface);
     return htmldoc_release(&This->basedoc);
 }
 
@@ -349,7 +352,7 @@ static void handle_end_load(HTMLDocumentNode *This)
 
 static nsresult NSAPI nsRunnable_Run(nsIRunnable *iface)
 {
-    HTMLDocumentNode *This = NSRUNNABLE_THIS(iface);
+    HTMLDocumentNode *This = impl_from_nsIRunnable(iface);
     nsresult nsres;
 
     TRACE("(%p)\n", This);
@@ -436,8 +439,6 @@ static nsresult NSAPI nsRunnable_Run(nsIRunnable *iface)
     return S_OK;
 }
 
-#undef NSRUNNABLE_THIS
-
 static const nsIRunnableVtbl nsRunnableVtbl = {
     nsRunnable_QueryInterface,
     nsRunnable_AddRef,
@@ -445,22 +446,25 @@ static const nsIRunnableVtbl nsRunnableVtbl = {
     nsRunnable_Run
 };
 
-#define NSDOCOBS_THIS(iface) DEFINE_THIS(HTMLDocumentNode, IDocumentObserver, iface)
+static inline HTMLDocumentNode *impl_from_nsIDocumentObserver(nsIDocumentObserver *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocumentNode, nsIDocumentObserver_iface);
+}
 
 static nsresult NSAPI nsDocumentObserver_QueryInterface(nsIDocumentObserver *iface,
         nsIIDRef riid, void **result)
 {
-    HTMLDocumentNode *This = NSDOCOBS_THIS(iface);
+    HTMLDocumentNode *This = impl_from_nsIDocumentObserver(iface);
 
     if(IsEqualGUID(&IID_nsISupports, riid)) {
         TRACE("(%p)->(IID_nsISupports, %p)\n", This, result);
-        *result = NSDOCOBS(This);
+        *result = &This->nsIDocumentObserver_iface;
     }else if(IsEqualGUID(&IID_nsIMutationObserver, riid)) {
         TRACE("(%p)->(IID_nsIMutationObserver %p)\n", This, result);
-        *result = NSDOCOBS(This);
+        *result = &This->nsIDocumentObserver_iface;
     }else if(IsEqualGUID(&IID_nsIDocumentObserver, riid)) {
         TRACE("(%p)->(IID_nsIDocumentObserver %p)\n", This, result);
-        *result = NSDOCOBS(This);
+        *result = &This->nsIDocumentObserver_iface;
     }else {
         *result = NULL;
         TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), result);
@@ -473,13 +477,13 @@ static nsresult NSAPI nsDocumentObserver_QueryInterface(nsIDocumentObserver *ifa
 
 static nsrefcnt NSAPI nsDocumentObserver_AddRef(nsIDocumentObserver *iface)
 {
-    HTMLDocumentNode *This = NSDOCOBS_THIS(iface);
+    HTMLDocumentNode *This = impl_from_nsIDocumentObserver(iface);
     return htmldoc_addref(&This->basedoc);
 }
 
 static nsrefcnt NSAPI nsDocumentObserver_Release(nsIDocumentObserver *iface)
 {
-    HTMLDocumentNode *This = NSDOCOBS_THIS(iface);
+    HTMLDocumentNode *This = impl_from_nsIDocumentObserver(iface);
     return htmldoc_release(&This->basedoc);
 }
 
@@ -543,7 +547,7 @@ static void NSAPI nsDocumentObserver_BeginLoad(nsIDocumentObserver *iface, nsIDo
 
 static void NSAPI nsDocumentObserver_EndLoad(nsIDocumentObserver *iface, nsIDocument *aDocument)
 {
-    HTMLDocumentNode *This = NSDOCOBS_THIS(iface);
+    HTMLDocumentNode *This = impl_from_nsIDocumentObserver(iface);
 
     TRACE("\n");
 
@@ -597,7 +601,7 @@ static void NSAPI nsDocumentObserver_StyleRuleRemoved(nsIDocumentObserver *iface
 static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, nsIDocument *aDocument,
         nsIContent *aContent)
 {
-    HTMLDocumentNode *This = NSDOCOBS_THIS(iface);
+    HTMLDocumentNode *This = impl_from_nsIDocumentObserver(iface);
     nsIDOMHTMLIFrameElement *nsiframe;
     nsIDOMHTMLFrameElement *nsframe;
     nsIDOMComment *nscomment;
@@ -640,7 +644,7 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
 static void NSAPI nsDocumentObserver_DoneAddingChildren(nsIDocumentObserver *iface, nsIContent *aContent,
         PRBool aHaveNotified)
 {
-    HTMLDocumentNode *This = NSDOCOBS_THIS(iface);
+    HTMLDocumentNode *This = impl_from_nsIDocumentObserver(iface);
     nsIDOMHTMLScriptElement *nsscript;
     nsresult nsres;
 
@@ -691,8 +695,8 @@ void init_mutation(HTMLDocumentNode *doc)
     nsIDOMNSDocument *nsdoc;
     nsresult nsres;
 
-    doc->lpIDocumentObserverVtbl  = &nsDocumentObserverVtbl;
-    doc->lpIRunnableVtbl          = &nsRunnableVtbl;
+    doc->nsIDocumentObserver_iface.lpVtbl = &nsDocumentObserverVtbl;
+    doc->nsIRunnable_iface.lpVtbl = &nsRunnableVtbl;
 
     nsres = nsIDOMHTMLDocument_QueryInterface(doc->nsdoc, &IID_nsIDOMNSDocument, (void**)&nsdoc);
     if(NS_FAILED(nsres)) {
@@ -700,7 +704,7 @@ void init_mutation(HTMLDocumentNode *doc)
         return;
     }
 
-    nsIDOMNSDocument_WineAddObserver(nsdoc, NSDOCOBS(doc));
+    nsIDOMNSDocument_WineAddObserver(nsdoc, &doc->nsIDocumentObserver_iface);
     nsIDOMNSDocument_Release(nsdoc);
 }
 
@@ -715,6 +719,6 @@ void release_mutation(HTMLDocumentNode *doc)
         return;
     }
 
-    nsIDOMNSDocument_WineRemoveObserver(nsdoc, NSDOCOBS(doc));
+    nsIDOMNSDocument_WineRemoveObserver(nsdoc, &doc->nsIDocumentObserver_iface);
     nsIDOMNSDocument_Release(nsdoc);
 }
