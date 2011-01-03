@@ -243,23 +243,23 @@ BOOL basetexture_set_dirty(IWineD3DBaseTextureImpl *texture, BOOL dirty)
 }
 
 /* Context activation is done by the caller. */
-HRESULT basetexture_bind(IWineD3DBaseTexture *iface, BOOL srgb, BOOL *set_surface_desc)
+HRESULT basetexture_bind(IWineD3DBaseTextureImpl *texture, BOOL srgb, BOOL *set_surface_desc)
 {
-    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
     HRESULT hr = WINED3D_OK;
     GLenum textureDimensions;
     BOOL isNewTexture = FALSE;
     struct gl_texture *gl_tex;
-    TRACE("(%p) : About to bind texture\n", This);
 
-    This->baseTexture.is_srgb = srgb; /* SRGB mode cache for PreLoad calls outside drawprim */
-    if(srgb) {
-        gl_tex = &This->baseTexture.texture_srgb;
-    } else {
-        gl_tex = &This->baseTexture.texture_rgb;
-    }
+    TRACE("texture %p, srgb %#x, set_surface_desc %p.\n", texture, srgb, set_surface_desc);
 
-    textureDimensions = This->baseTexture.target;
+    texture->baseTexture.is_srgb = srgb; /* SRGB mode cache for PreLoad calls outside drawprim */
+    if (srgb)
+        gl_tex = &texture->baseTexture.texture_srgb;
+    else
+        gl_tex = &texture->baseTexture.texture_rgb;
+
+    textureDimensions = texture->baseTexture.target;
+
     ENTER_GL();
     /* Generate a texture name if we don't already have one */
     if (!gl_tex->name)
@@ -268,7 +268,8 @@ HRESULT basetexture_bind(IWineD3DBaseTexture *iface, BOOL srgb, BOOL *set_surfac
         glGenTextures(1, &gl_tex->name);
         checkGLcall("glGenTextures");
         TRACE("Generated texture %d\n", gl_tex->name);
-        if (This->resource.pool == WINED3DPOOL_DEFAULT) {
+        if (texture->resource.pool == WINED3DPOOL_DEFAULT)
+        {
             /* Tell opengl to try and keep this texture in video ram (well mostly) */
             GLclampf tmp;
             tmp = 0.9f;
@@ -288,10 +289,11 @@ HRESULT basetexture_bind(IWineD3DBaseTexture *iface, BOOL srgb, BOOL *set_surfac
         gl_tex->states[WINED3DTEXSTA_MAXANISOTROPY] = 1;
         gl_tex->states[WINED3DTEXSTA_SRGBTEXTURE]   = 0;
         gl_tex->states[WINED3DTEXSTA_SHADOW]        = FALSE;
-        basetexture_set_dirty(This, TRUE);
+        basetexture_set_dirty(texture, TRUE);
         isNewTexture = TRUE;
 
-        if(This->resource.usage & WINED3DUSAGE_AUTOGENMIPMAP) {
+        if (texture->resource.usage & WINED3DUSAGE_AUTOGENMIPMAP)
+        {
             /* This means double binding the texture at creation, but keeps the code simpler all
              * in all, and the run-time path free from additional checks
              */
@@ -319,9 +321,9 @@ HRESULT basetexture_bind(IWineD3DBaseTexture *iface, BOOL srgb, BOOL *set_surfac
              */
             if (textureDimensions != GL_TEXTURE_RECTANGLE_ARB)
             {
-                TRACE("Setting GL_TEXTURE_MAX_LEVEL to %u.\n", This->baseTexture.level_count - 1);
-                glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.level_count - 1);
-                checkGLcall("glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.level_count)");
+                TRACE("Setting GL_TEXTURE_MAX_LEVEL to %u.\n", texture->baseTexture.level_count - 1);
+                glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, texture->baseTexture.level_count - 1);
+                checkGLcall("glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, texture->baseTexture.level_count)");
             }
             if(textureDimensions==GL_TEXTURE_CUBE_MAP_ARB) {
                 /* Cubemaps are always set to clamp, regardless of the sampler state. */

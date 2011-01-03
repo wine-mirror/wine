@@ -237,7 +237,7 @@ static HRESULT WINAPI IWineD3DVolumeTextureImpl_BindTexture(IWineD3DVolumeTextur
 
     TRACE("iface %p, srgb %#x.\n", iface, srgb);
 
-    return basetexture_bind((IWineD3DBaseTexture *)iface, srgb, &dummy);
+    return basetexture_bind((IWineD3DBaseTextureImpl *)iface, srgb, &dummy);
 }
 
 static BOOL WINAPI IWineD3DVolumeTextureImpl_IsCondNP2(IWineD3DVolumeTexture *iface)

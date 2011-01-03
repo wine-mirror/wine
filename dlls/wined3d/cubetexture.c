@@ -283,7 +283,7 @@ static HRESULT WINAPI IWineD3DCubeTextureImpl_BindTexture(IWineD3DCubeTexture *i
 
     TRACE("(%p) : relay to BaseTexture\n", This);
 
-    hr = basetexture_bind((IWineD3DBaseTexture *)iface, srgb, &set_gl_texture_desc);
+    hr = basetexture_bind((IWineD3DBaseTextureImpl *)iface, srgb, &set_gl_texture_desc);
     if (set_gl_texture_desc && SUCCEEDED(hr))
     {
         UINT sub_count = This->baseTexture.level_count * This->baseTexture.layer_count;
