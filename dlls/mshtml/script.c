@@ -51,10 +51,10 @@ static const CLSID CLSID_JScript =
     {0xf414c260,0x6ac0,0x11cf,{0xb6,0xd1,0x00,0xaa,0x00,0xbb,0xbb,0x58}};
 
 struct ScriptHost {
-    const IActiveScriptSiteVtbl               *lpIActiveScriptSiteVtbl;
-    const IActiveScriptSiteInterruptPollVtbl  *lpIActiveScriptSiteInterruptPollVtbl;
-    const IActiveScriptSiteWindowVtbl         *lpIActiveScriptSiteWindowVtbl;
-    const IActiveScriptSiteDebugVtbl          *lpIActiveScriptSiteDebugVtbl;
+    IActiveScriptSite              IActiveScriptSite_iface;
+    IActiveScriptSiteInterruptPoll IActiveScriptSiteInterruptPoll_iface;
+    IActiveScriptSiteWindow        IActiveScriptSiteWindow_iface;
+    IActiveScriptSiteDebug         IActiveScriptSiteDebug_iface;
     IServiceProvider               IServiceProvider_iface;
 
     LONG ref;
@@ -70,11 +70,6 @@ struct ScriptHost {
     GUID guid;
     struct list entry;
 };
-
-#define ACTSCPSITE(x)  ((IActiveScriptSite*)               &(x)->lpIActiveScriptSiteVtbl)
-#define ACTSCPPOLL(x)  (&(x)->lpIActiveScriptSiteInterruptPollVtbl)
-#define ACTSCPWIN(x)   (&(x)->lpIActiveScriptSiteWindowVtbl)
-#define ACTSCPDBG(x)   (&(x)->lpIActiveScriptSiteDebugVtbl)
 
 static void set_script_prop(ScriptHost *script_host, DWORD property, VARIANT *val)
 {
@@ -145,7 +140,7 @@ static BOOL init_script_engine(ScriptHost *script_host)
         return FALSE;
     }
 
-    hres = IActiveScript_SetScriptSite(script_host->script, ACTSCPSITE(script_host));
+    hres = IActiveScript_SetScriptSite(script_host->script, &script_host->IActiveScriptSite_iface);
     if(FAILED(hres)) {
         WARN("SetScriptSite failed: %08x\n", hres);
         IActiveScript_Close(script_host->script);
@@ -225,29 +220,32 @@ void connect_scripts(HTMLWindow *window)
     }
 }
 
-#define ACTSCPSITE_THIS(iface) DEFINE_THIS(ScriptHost, IActiveScriptSite, iface)
+static inline ScriptHost *impl_from_IActiveScriptSite(IActiveScriptSite *iface)
+{
+    return CONTAINING_RECORD(iface, ScriptHost, IActiveScriptSite_iface);
+}
 
 static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, REFIID riid, void **ppv)
 {
-    ScriptHost *This = ACTSCPSITE_THIS(iface);
+    ScriptHost *This = impl_from_IActiveScriptSite(iface);
 
     *ppv = NULL;
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = ACTSCPSITE(This);
+        *ppv = &This->IActiveScriptSite_iface;
     }else if(IsEqualGUID(&IID_IActiveScriptSite, riid)) {
         TRACE("(%p)->(IID_IActiveScriptSite %p)\n", This, ppv);
-        *ppv = ACTSCPSITE(This);
+        *ppv = &This->IActiveScriptSite_iface;
     }else if(IsEqualGUID(&IID_IActiveScriptSiteInterruptPoll, riid)) {
         TRACE("(%p)->(IID_IActiveScriptSiteInterruprtPoll %p)\n", This, ppv);
-        *ppv = ACTSCPPOLL(This);
+        *ppv = &This->IActiveScriptSiteInterruptPoll_iface;
     }else if(IsEqualGUID(&IID_IActiveScriptSiteWindow, riid)) {
         TRACE("(%p)->(IID_IActiveScriptSiteWindow %p)\n", This, ppv);
-        *ppv = ACTSCPWIN(This);
+        *ppv = &This->IActiveScriptSiteWindow_iface;
     }else if(IsEqualGUID(&IID_IActiveScriptSiteDebug, riid)) {
         TRACE("(%p)->(IID_IActiveScriptSiteDebug %p)\n", This, ppv);
-        *ppv = ACTSCPDBG(This);
+        *ppv = &This->IActiveScriptSiteDebug_iface;
     }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
         TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
         *ppv = &This->IServiceProvider_iface;
@@ -265,7 +263,7 @@ static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, 
 
 static ULONG WINAPI ActiveScriptSite_AddRef(IActiveScriptSite *iface)
 {
-    ScriptHost *This = ACTSCPSITE_THIS(iface);
+    ScriptHost *This = impl_from_IActiveScriptSite(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -275,7 +273,7 @@ static ULONG WINAPI ActiveScriptSite_AddRef(IActiveScriptSite *iface)
 
 static ULONG WINAPI ActiveScriptSite_Release(IActiveScriptSite *iface)
 {
-    ScriptHost *This = ACTSCPSITE_THIS(iface);
+    ScriptHost *This = impl_from_IActiveScriptSite(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -292,7 +290,7 @@ static ULONG WINAPI ActiveScriptSite_Release(IActiveScriptSite *iface)
 
 static HRESULT WINAPI ActiveScriptSite_GetLCID(IActiveScriptSite *iface, LCID *plcid)
 {
-    ScriptHost *This = ACTSCPSITE_THIS(iface);
+    ScriptHost *This = impl_from_IActiveScriptSite(iface);
 
     TRACE("(%p)->(%p)\n", This, plcid);
 
@@ -303,7 +301,7 @@ static HRESULT WINAPI ActiveScriptSite_GetLCID(IActiveScriptSite *iface, LCID *p
 static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPCOLESTR pstrName,
         DWORD dwReturnMask, IUnknown **ppiunkItem, ITypeInfo **ppti)
 {
-    ScriptHost *This = ACTSCPSITE_THIS(iface);
+    ScriptHost *This = impl_from_IActiveScriptSite(iface);
 
     TRACE("(%p)->(%s %x %p %p)\n", This, debugstr_w(pstrName), dwReturnMask, ppiunkItem, ppti);
 
@@ -329,7 +327,7 @@ static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPC
 
 static HRESULT WINAPI ActiveScriptSite_GetDocVersionString(IActiveScriptSite *iface, BSTR *pbstrVersion)
 {
-    ScriptHost *This = ACTSCPSITE_THIS(iface);
+    ScriptHost *This = impl_from_IActiveScriptSite(iface);
     FIXME("(%p)->(%p)\n", This, pbstrVersion);
     return E_NOTIMPL;
 }
@@ -337,14 +335,14 @@ static HRESULT WINAPI ActiveScriptSite_GetDocVersionString(IActiveScriptSite *if
 static HRESULT WINAPI ActiveScriptSite_OnScriptTerminate(IActiveScriptSite *iface,
         const VARIANT *pvarResult, const EXCEPINFO *pexcepinfo)
 {
-    ScriptHost *This = ACTSCPSITE_THIS(iface);
+    ScriptHost *This = impl_from_IActiveScriptSite(iface);
     FIXME("(%p)->(%p %p)\n", This, pvarResult, pexcepinfo);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ActiveScriptSite_OnStateChange(IActiveScriptSite *iface, SCRIPTSTATE ssScriptState)
 {
-    ScriptHost *This = ACTSCPSITE_THIS(iface);
+    ScriptHost *This = impl_from_IActiveScriptSite(iface);
 
     TRACE("(%p)->(%x)\n", This, ssScriptState);
 
@@ -354,14 +352,14 @@ static HRESULT WINAPI ActiveScriptSite_OnStateChange(IActiveScriptSite *iface, S
 
 static HRESULT WINAPI ActiveScriptSite_OnScriptError(IActiveScriptSite *iface, IActiveScriptError *pscripterror)
 {
-    ScriptHost *This = ACTSCPSITE_THIS(iface);
+    ScriptHost *This = impl_from_IActiveScriptSite(iface);
     FIXME("(%p)->(%p)\n", This, pscripterror);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ActiveScriptSite_OnEnterScript(IActiveScriptSite *iface)
 {
-    ScriptHost *This = ACTSCPSITE_THIS(iface);
+    ScriptHost *This = impl_from_IActiveScriptSite(iface);
 
     TRACE("(%p)->()\n", This);
 
@@ -370,14 +368,12 @@ static HRESULT WINAPI ActiveScriptSite_OnEnterScript(IActiveScriptSite *iface)
 
 static HRESULT WINAPI ActiveScriptSite_OnLeaveScript(IActiveScriptSite *iface)
 {
-    ScriptHost *This = ACTSCPSITE_THIS(iface);
+    ScriptHost *This = impl_from_IActiveScriptSite(iface);
 
     TRACE("(%p)->()\n", This);
 
     return S_OK;
 }
-
-#undef ACTSCPSITE_THIS
 
 static const IActiveScriptSiteVtbl ActiveScriptSiteVtbl = {
     ActiveScriptSite_QueryInterface,
@@ -393,37 +389,38 @@ static const IActiveScriptSiteVtbl ActiveScriptSiteVtbl = {
     ActiveScriptSite_OnLeaveScript
 };
 
-#define ACTSCPPOLL_THIS(iface) DEFINE_THIS(ScriptHost, IActiveScriptSiteInterruptPoll, iface)
+static inline ScriptHost *impl_from_IActiveScriptSiteInterruptPoll(IActiveScriptSiteInterruptPoll *iface)
+{
+    return CONTAINING_RECORD(iface, ScriptHost, IActiveScriptSiteInterruptPoll_iface);
+}
 
 static HRESULT WINAPI ActiveScriptSiteInterruptPoll_QueryInterface(IActiveScriptSiteInterruptPoll *iface,
         REFIID riid, void **ppv)
 {
-    ScriptHost *This = ACTSCPPOLL_THIS(iface);
-    return IActiveScriptSite_QueryInterface(ACTSCPSITE(This), riid, ppv);
+    ScriptHost *This = impl_from_IActiveScriptSiteInterruptPoll(iface);
+    return IActiveScriptSite_QueryInterface(&This->IActiveScriptSite_iface, riid, ppv);
 }
 
 static ULONG WINAPI ActiveScriptSiteInterruptPoll_AddRef(IActiveScriptSiteInterruptPoll *iface)
 {
-    ScriptHost *This = ACTSCPPOLL_THIS(iface);
-    return IActiveScriptSite_AddRef(ACTSCPSITE(This));
+    ScriptHost *This = impl_from_IActiveScriptSiteInterruptPoll(iface);
+    return IActiveScriptSite_AddRef(&This->IActiveScriptSite_iface);
 }
 
 static ULONG WINAPI ActiveScriptSiteInterruptPoll_Release(IActiveScriptSiteInterruptPoll *iface)
 {
-    ScriptHost *This = ACTSCPPOLL_THIS(iface);
-    return IActiveScriptSite_Release(ACTSCPSITE(This));
+    ScriptHost *This = impl_from_IActiveScriptSiteInterruptPoll(iface);
+    return IActiveScriptSite_Release(&This->IActiveScriptSite_iface);
 }
 
 static HRESULT WINAPI ActiveScriptSiteInterruptPoll_QueryContinue(IActiveScriptSiteInterruptPoll *iface)
 {
-    ScriptHost *This = ACTSCPPOLL_THIS(iface);
+    ScriptHost *This = impl_from_IActiveScriptSiteInterruptPoll(iface);
 
     TRACE("(%p)\n", This);
 
     return S_OK;
 }
-
-#undef ACTSCPPOLL_THIS
 
 static const IActiveScriptSiteInterruptPollVtbl ActiveScriptSiteInterruptPollVtbl = {
     ActiveScriptSiteInterruptPoll_QueryInterface,
@@ -432,42 +429,43 @@ static const IActiveScriptSiteInterruptPollVtbl ActiveScriptSiteInterruptPollVtb
     ActiveScriptSiteInterruptPoll_QueryContinue
 };
 
-#define ACTSCPWIN_THIS(iface) DEFINE_THIS(ScriptHost, IActiveScriptSiteWindow, iface)
+static inline ScriptHost *impl_from_IActiveScriptSiteWindow(IActiveScriptSiteWindow *iface)
+{
+    return CONTAINING_RECORD(iface, ScriptHost, IActiveScriptSiteWindow_iface);
+}
 
 static HRESULT WINAPI ActiveScriptSiteWindow_QueryInterface(IActiveScriptSiteWindow *iface,
         REFIID riid, void **ppv)
 {
-    ScriptHost *This = ACTSCPWIN_THIS(iface);
-    return IActiveScriptSite_QueryInterface(ACTSCPSITE(This), riid, ppv);
+    ScriptHost *This = impl_from_IActiveScriptSiteWindow(iface);
+    return IActiveScriptSite_QueryInterface(&This->IActiveScriptSite_iface, riid, ppv);
 }
 
 static ULONG WINAPI ActiveScriptSiteWindow_AddRef(IActiveScriptSiteWindow *iface)
 {
-    ScriptHost *This = ACTSCPWIN_THIS(iface);
-    return IActiveScriptSite_AddRef(ACTSCPSITE(This));
+    ScriptHost *This = impl_from_IActiveScriptSiteWindow(iface);
+    return IActiveScriptSite_AddRef(&This->IActiveScriptSite_iface);
 }
 
 static ULONG WINAPI ActiveScriptSiteWindow_Release(IActiveScriptSiteWindow *iface)
 {
-    ScriptHost *This = ACTSCPWIN_THIS(iface);
-    return IActiveScriptSite_Release(ACTSCPSITE(This));
+    ScriptHost *This = impl_from_IActiveScriptSiteWindow(iface);
+    return IActiveScriptSite_Release(&This->IActiveScriptSite_iface);
 }
 
 static HRESULT WINAPI ActiveScriptSiteWindow_GetWindow(IActiveScriptSiteWindow *iface, HWND *phwnd)
 {
-    ScriptHost *This = ACTSCPWIN_THIS(iface);
+    ScriptHost *This = impl_from_IActiveScriptSiteWindow(iface);
     FIXME("(%p)->(%p)\n", This, phwnd);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ActiveScriptSiteWindow_EnableModeless(IActiveScriptSiteWindow *iface, BOOL fEnable)
 {
-    ScriptHost *This = ACTSCPWIN_THIS(iface);
+    ScriptHost *This = impl_from_IActiveScriptSiteWindow(iface);
     FIXME("(%p)->(%x)\n", This, fEnable);
     return E_NOTIMPL;
 }
-
-#undef ACTSCPWIN_THIS
 
 static const IActiveScriptSiteWindowVtbl ActiveScriptSiteWindowVtbl = {
     ActiveScriptSiteWindow_QueryInterface,
@@ -477,31 +475,34 @@ static const IActiveScriptSiteWindowVtbl ActiveScriptSiteWindowVtbl = {
     ActiveScriptSiteWindow_EnableModeless
 };
 
-#define ACTSCPDBG_THIS(iface) DEFINE_THIS(ScriptHost, IActiveScriptSiteDebug, iface)
+static inline ScriptHost *impl_from_IActiveScriptSiteDebug(IActiveScriptSiteDebug *iface)
+{
+    return CONTAINING_RECORD(iface, ScriptHost, IActiveScriptSiteDebug_iface);
+}
 
 static HRESULT WINAPI ActiveScriptSiteDebug_QueryInterface(IActiveScriptSiteDebug *iface,
         REFIID riid, void **ppv)
 {
-    ScriptHost *This = ACTSCPDBG_THIS(iface);
-    return IActiveScriptSite_QueryInterface(ACTSCPSITE(This), riid, ppv);
+    ScriptHost *This = impl_from_IActiveScriptSiteDebug(iface);
+    return IActiveScriptSite_QueryInterface(&This->IActiveScriptSite_iface, riid, ppv);
 }
 
 static ULONG WINAPI ActiveScriptSiteDebug_AddRef(IActiveScriptSiteDebug *iface)
 {
-    ScriptHost *This = ACTSCPDBG_THIS(iface);
-    return IActiveScriptSite_AddRef(ACTSCPSITE(This));
+    ScriptHost *This = impl_from_IActiveScriptSiteDebug(iface);
+    return IActiveScriptSite_AddRef(&This->IActiveScriptSite_iface);
 }
 
 static ULONG WINAPI ActiveScriptSiteDebug_Release(IActiveScriptSiteDebug *iface)
 {
-    ScriptHost *This = ACTSCPDBG_THIS(iface);
-    return IActiveScriptSite_Release(ACTSCPSITE(This));
+    ScriptHost *This = impl_from_IActiveScriptSiteDebug(iface);
+    return IActiveScriptSite_Release(&This->IActiveScriptSite_iface);
 }
 
 static HRESULT WINAPI ActiveScriptSiteDebug_GetDocumentContextFromPosition(IActiveScriptSiteDebug *iface,
             CTXARG_T dwSourceContext, ULONG uCharacterOffset, ULONG uNumChars, IDebugDocumentContext **ppsc)
 {
-    ScriptHost *This = ACTSCPDBG_THIS(iface);
+    ScriptHost *This = impl_from_IActiveScriptSiteDebug(iface);
     FIXME("(%p)->(%s %u %u %p)\n", This, wine_dbgstr_longlong(dwSourceContext), uCharacterOffset,
           uNumChars, ppsc);
     return E_NOTIMPL;
@@ -509,7 +510,7 @@ static HRESULT WINAPI ActiveScriptSiteDebug_GetDocumentContextFromPosition(IActi
 
 static HRESULT WINAPI ActiveScriptSiteDebug_GetApplication(IActiveScriptSiteDebug *iface, IDebugApplication **ppda)
 {
-    ScriptHost *This = ACTSCPDBG_THIS(iface);
+    ScriptHost *This = impl_from_IActiveScriptSiteDebug(iface);
     FIXME("(%p)->(%p)\n", This, ppda);
     return E_NOTIMPL;
 }
@@ -517,7 +518,7 @@ static HRESULT WINAPI ActiveScriptSiteDebug_GetApplication(IActiveScriptSiteDebu
 static HRESULT WINAPI ActiveScriptSiteDebug_GetRootApplicationNode(IActiveScriptSiteDebug *iface,
             IDebugApplicationNode **ppdanRoot)
 {
-    ScriptHost *This = ACTSCPDBG_THIS(iface);
+    ScriptHost *This = impl_from_IActiveScriptSiteDebug(iface);
     FIXME("(%p)->(%p)\n", This, ppdanRoot);
     return E_NOTIMPL;
 }
@@ -525,12 +526,10 @@ static HRESULT WINAPI ActiveScriptSiteDebug_GetRootApplicationNode(IActiveScript
 static HRESULT WINAPI ActiveScriptSiteDebug_OnScriptErrorDebug(IActiveScriptSiteDebug *iface,
             IActiveScriptErrorDebug *pErrorDebug, BOOL *pfEnterDebugger, BOOL *pfCallOnScriptErrorWhenContinuing)
 {
-    ScriptHost *This = ACTSCPDBG_THIS(iface);
+    ScriptHost *This = impl_from_IActiveScriptSiteDebug(iface);
     FIXME("(%p)->(%p %p %p)\n", This, pErrorDebug, pfEnterDebugger, pfCallOnScriptErrorWhenContinuing);
     return E_NOTIMPL;
 }
-
-#undef ACTSCPDBG_THIS
 
 static const IActiveScriptSiteDebugVtbl ActiveScriptSiteDebugVtbl = {
     ActiveScriptSiteDebug_QueryInterface,
@@ -550,19 +549,19 @@ static inline ScriptHost *impl_from_IServiceProvider(IServiceProvider *iface)
 static HRESULT WINAPI ASServiceProvider_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
 {
     ScriptHost *This = impl_from_IServiceProvider(iface);
-    return IActiveScriptSite_QueryInterface(ACTSCPSITE(This), riid, ppv);
+    return IActiveScriptSite_QueryInterface(&This->IActiveScriptSite_iface, riid, ppv);
 }
 
 static ULONG WINAPI ASServiceProvider_AddRef(IServiceProvider *iface)
 {
     ScriptHost *This = impl_from_IServiceProvider(iface);
-    return IActiveScriptSite_AddRef(ACTSCPSITE(This));
+    return IActiveScriptSite_AddRef(&This->IActiveScriptSite_iface);
 }
 
 static ULONG WINAPI ASServiceProvider_Release(IServiceProvider *iface)
 {
     ScriptHost *This = impl_from_IServiceProvider(iface);
-    return IActiveScriptSite_Release(ACTSCPSITE(This));
+    return IActiveScriptSite_Release(&This->IActiveScriptSite_iface);
 }
 
 static HRESULT WINAPI ASServiceProvider_QueryService(IServiceProvider *iface, REFGUID guidService,
@@ -597,11 +596,11 @@ static ScriptHost *create_script_host(HTMLWindow *window, const GUID *guid)
     HRESULT hres;
 
     ret = heap_alloc_zero(sizeof(*ret));
-    ret->lpIActiveScriptSiteVtbl               = &ActiveScriptSiteVtbl;
-    ret->lpIActiveScriptSiteInterruptPollVtbl  = &ActiveScriptSiteInterruptPollVtbl;
-    ret->lpIActiveScriptSiteWindowVtbl         = &ActiveScriptSiteWindowVtbl;
-    ret->lpIActiveScriptSiteDebugVtbl          = &ActiveScriptSiteDebugVtbl;
-    ret->IServiceProvider_iface.lpVtbl         = &ASServiceProviderVtbl;
+    ret->IActiveScriptSite_iface.lpVtbl = &ActiveScriptSiteVtbl;
+    ret->IActiveScriptSiteInterruptPoll_iface.lpVtbl = &ActiveScriptSiteInterruptPollVtbl;
+    ret->IActiveScriptSiteWindow_iface.lpVtbl = &ActiveScriptSiteWindowVtbl;
+    ret->IActiveScriptSiteDebug_iface.lpVtbl = &ActiveScriptSiteDebugVtbl;
+    ret->IServiceProvider_iface.lpVtbl = &ASServiceProviderVtbl;
     ret->ref = 1;
     ret->window = window;
     ret->script_state = SCRIPTSTATE_UNINITIALIZED;
@@ -1016,6 +1015,6 @@ void release_script_hosts(HTMLWindow *window)
         release_script_engine(iter);
         list_remove(&iter->entry);
         iter->window = NULL;
-        IActiveScript_Release(ACTSCPSITE(iter));
+        IActiveScript_Release(&iter->IActiveScriptSite_iface);
     }
 }
