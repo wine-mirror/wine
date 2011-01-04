@@ -640,18 +640,30 @@ BOOL WINAPI WriteConsoleOutputCharacterA( HANDLE hConsoleOutput, LPCSTR str, DWO
                                           COORD coord, LPDWORD lpNumCharsWritten )
 {
     BOOL ret;
-    LPWSTR strW;
-    DWORD lenW;
+    LPWSTR strW = NULL;
+    DWORD lenW = 0;
 
     TRACE("(%p,%s,%d,%dx%d,%p)\n", hConsoleOutput,
           debugstr_an(str, length), length, coord.X, coord.Y, lpNumCharsWritten);
 
-    lenW = MultiByteToWideChar( GetConsoleOutputCP(), 0, str, length, NULL, 0 );
+    if (length > 0)
+    {
+        if (!str)
+        {
+            SetLastError( ERROR_INVALID_ACCESS );
+            return FALSE;
+        }
 
-    if (lpNumCharsWritten) *lpNumCharsWritten = 0;
+        lenW = MultiByteToWideChar( GetConsoleOutputCP(), 0, str, length, NULL, 0 );
 
-    if (!(strW = HeapAlloc( GetProcessHeap(), 0, lenW * sizeof(WCHAR) ))) return FALSE;
-    MultiByteToWideChar( GetConsoleOutputCP(), 0, str, length, strW, lenW );
+        if (!(strW = HeapAlloc( GetProcessHeap(), 0, lenW * sizeof(WCHAR) )))
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            return FALSE;
+        }
+
+        MultiByteToWideChar( GetConsoleOutputCP(), 0, str, length, strW, lenW );
+    }
 
     ret = WriteConsoleOutputCharacterW( hConsoleOutput, strW, lenW, coord, lpNumCharsWritten );
     HeapFree( GetProcessHeap(), 0, strW );
