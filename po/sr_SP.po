@@ -856,3 +856,17 @@ msgstr ""
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr ""
+
+#: uninstaller.rc:26
+msgid "Wine Application Uninstaller"
+msgstr "Wine деинсталациони програм"
+
+#: uninstaller.rc:27
+msgid ""
+"Execution of uninstall command '%s' failed, perhaps due to missing "
+"executable.\n"
+"Do you want to remove the uninstall entry from the registry ?"
+msgstr ""
+"Извршавање наредбе за деинсталацију „%s“ није успело вероватно због тога што "
+"недостаје извршна датотека.\n"
+"Желите ли да уклоните деинсталациони унос из регистра?"

@@ -1079,3 +1079,17 @@ msgstr "Eroare: Nu se pot adăuga chei pe calculatorul de la distanță\n"
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr ""
+
+#: uninstaller.rc:26
+msgid "Wine Application Uninstaller"
+msgstr "Programul de dezinstalare de aplicații Wine"
+
+#: uninstaller.rc:27
+msgid ""
+"Execution of uninstall command '%s' failed, perhaps due to missing "
+"executable.\n"
+"Do you want to remove the uninstall entry from the registry ?"
+msgstr ""
+"Execuția comenzi de dezinstalare '%s' a eșuat, probabil din lipsa fișierului "
+"executabil.\n"
+"Doriți să ștergeți înregistrarea de dezinstalare din registru?"

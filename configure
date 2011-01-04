@@ -15437,7 +15437,7 @@ wine_fn_config_program svchost enable_svchost install
 wine_fn_config_program taskkill enable_taskkill po,install
 wine_fn_config_program taskmgr enable_taskmgr install
 wine_fn_config_program termsv enable_termsv install
-wine_fn_config_program uninstaller enable_uninstaller install
+wine_fn_config_program uninstaller enable_uninstaller po,install
 wine_fn_config_program unlodctr enable_unlodctr install
 wine_fn_config_program view enable_view
 wine_fn_config_program wineboot enable_wineboot install,installbin
@@ -15471,6 +15471,7 @@ wine_fn_config_tool tools/wmc
 wine_fn_config_tool tools/wrc
 
 LINGUAS="\
+bg \
 cs \
 da \
 de \

@@ -1074,3 +1074,16 @@ msgstr "Помилка: Не вдається завершити процес \"
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr "Помилка: Самоприпинення процесу не дозволене.\n"
+
+#: uninstaller.rc:26
+msgid "Wine Application Uninstaller"
+msgstr "Видалення додатків Wine"
+
+#: uninstaller.rc:27
+msgid ""
+"Execution of uninstall command '%s' failed, perhaps due to missing "
+"executable.\n"
+"Do you want to remove the uninstall entry from the registry ?"
+msgstr ""
+"Помилка виконання команди видалення '%s', можливо через відсутність файлу.\n"
+"Видалити дані про встановлення з реєстру ?"

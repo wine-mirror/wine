@@ -1073,3 +1073,17 @@ msgstr "Error: Unable to terminate process \"%s\".\n"
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr "Error: Process self-termination is not permitted.\n"
+
+#: uninstaller.rc:26
+msgid "Wine Application Uninstaller"
+msgstr "Wine Application Uninstaller"
+
+#: uninstaller.rc:27
+msgid ""
+"Execution of uninstall command '%s' failed, perhaps due to missing "
+"executable.\n"
+"Do you want to remove the uninstall entry from the registry ?"
+msgstr ""
+"Execution of uninstall command '%s' failed, perhaps due to missing "
+"executable.\n"
+"Do you want to remove the uninstall entry from the registry ?"

@@ -1099,3 +1099,17 @@ msgstr "Fout: Kon het proces \"%s\" niet beëindigen.\n"
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr "Fout: Zelf-beëindiging van een proces is niet toegestaan.\n"
+
+#: uninstaller.rc:26
+msgid "Wine Application Uninstaller"
+msgstr "Programma verwijderen"
+
+#: uninstaller.rc:27
+msgid ""
+"Execution of uninstall command '%s' failed, perhaps due to missing "
+"executable.\n"
+"Do you want to remove the uninstall entry from the registry ?"
+msgstr ""
+"Het uitvoeren van de verwijderopdracht '%s' is mislukt, wellicht vanwege een "
+"ontbrekend bestand.\n"
+"Wilt u de verwijdersleutel verwijderen uit het register?"

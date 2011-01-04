@@ -1074,3 +1074,17 @@ msgstr "Feil: Kan ikke legge til nøkler på ekstern maskin\n"
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr ""
+
+#: uninstaller.rc:26
+msgid "Wine Application Uninstaller"
+msgstr "Avinstaller programmer"
+
+#: uninstaller.rc:27
+msgid ""
+"Execution of uninstall command '%s' failed, perhaps due to missing "
+"executable.\n"
+"Do you want to remove the uninstall entry from the registry ?"
+msgstr ""
+"Kjøring av avinstalleringskommandoen '%s' feilet, kanskje på grunn av en "
+"manglende programfil.\n"
+"Fjerne avinstalleringsoppføringen fra registeret?"

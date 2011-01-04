@@ -1084,3 +1084,17 @@ msgstr "Erro: Incapaz de adicionar chaves à máquina remota\n"
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr ""
+
+#: uninstaller.rc:26
+msgid "Wine Application Uninstaller"
+msgstr "Desinstalador de Aplicativos Wine"
+
+#: uninstaller.rc:27
+msgid ""
+"Execution of uninstall command '%s' failed, perhaps due to missing "
+"executable.\n"
+"Do you want to remove the uninstall entry from the registry ?"
+msgstr ""
+"Falha ao executar o comando de desinstalação '%s', talvez devido à falta do "
+"executável.\n"
+"Deseja remover a entrada de desinstalação do registro?"

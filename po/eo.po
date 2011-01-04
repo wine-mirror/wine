@@ -848,3 +848,16 @@ msgstr ""
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr ""
+
+#: uninstaller.rc:26
+msgid "Wine Application Uninstaller"
+msgstr "Wine Programa Malinstalilo"
+
+#: uninstaller.rc:27
+msgid ""
+"Execution of uninstall command '%s' failed, perhaps due to missing "
+"executable.\n"
+"Do you want to remove the uninstall entry from the registry ?"
+msgstr ""
+"Malinstalad-komando '%s' malsukcesis, eble æar mankas programo.\n"
+"Æu vi volas forigi la malinstalada 'entry' de la registro ?"

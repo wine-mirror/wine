@@ -2908,7 +2908,7 @@ WINE_CONFIG_PROGRAM(svchost,,[install])
 WINE_CONFIG_PROGRAM(taskkill,,[po,install])
 WINE_CONFIG_PROGRAM(taskmgr,,[install])
 WINE_CONFIG_PROGRAM(termsv,,[install])
-WINE_CONFIG_PROGRAM(uninstaller,,[install])
+WINE_CONFIG_PROGRAM(uninstaller,,[po,install])
 WINE_CONFIG_PROGRAM(unlodctr,,[install])
 WINE_CONFIG_PROGRAM(view)
 WINE_CONFIG_PROGRAM(wineboot,,[install,installbin])
@@ -2942,6 +2942,7 @@ WINE_CONFIG_TOOL(tools/wmc)
 WINE_CONFIG_TOOL(tools/wrc)
 
 AC_SUBST([LINGUAS],["\
+bg \
 cs \
 da \
 de \
