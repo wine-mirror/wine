@@ -486,12 +486,27 @@ HANDLE WINAPI GetConsoleInputWaitHandle(void)
 BOOL WINAPI WriteConsoleInputA( HANDLE handle, const INPUT_RECORD *buffer,
                                 DWORD count, LPDWORD written )
 {
-    INPUT_RECORD *recW;
+    INPUT_RECORD *recW = NULL;
     BOOL ret;
 
-    if (!(recW = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*recW) ))) return FALSE;
-    memcpy( recW, buffer, count*sizeof(*recW) );
-    input_records_AtoW( recW, count );
+    if (count > 0)
+    {
+        if (!buffer)
+        {
+            SetLastError( ERROR_INVALID_ACCESS );
+            return FALSE;
+        }
+
+        if (!(recW = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*recW) )))
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            return FALSE;
+        }
+
+        memcpy( recW, buffer, count * sizeof(*recW) );
+        input_records_AtoW( recW, count );
+    }
+
     ret = WriteConsoleInputW( handle, recW, count, written );
     HeapFree( GetProcessHeap(), 0, recW );
     return ret;

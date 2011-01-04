@@ -1221,6 +1221,96 @@ static void test_GetNumberOfConsoleInputEvents(HANDLE input_handle)
     ok(count != 0xdeadbeef, "Expected output count to initialized\n");
 }
 
+static void test_WriteConsoleInputA(HANDLE input_handle)
+{
+    INPUT_RECORD event, temp;
+    MOUSE_EVENT_RECORD mouse_event = { {0, 0}, 0, 0, MOUSE_MOVED };
+    DWORD count;
+    BOOL ret;
+    int i;
+
+    const struct
+    {
+        HANDLE handle;
+        const INPUT_RECORD *buffer;
+        DWORD count;
+        LPDWORD written;
+        DWORD expected_count;
+        DWORD last_error;
+        int win7_crash;
+    } invalid_table[] =
+    {
+        {NULL, NULL, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {NULL, NULL, 0, &count, 0, ERROR_INVALID_HANDLE},
+        {NULL, NULL, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS},
+        {NULL, NULL, 1, &count, 0xdeadbeef, ERROR_INVALID_ACCESS},
+        {NULL, &event, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {NULL, &event, 0, &count, 0, ERROR_INVALID_HANDLE},
+        {NULL, &event, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {NULL, &event, 1, &count, 0, ERROR_INVALID_HANDLE},
+        {INVALID_HANDLE_VALUE, NULL, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {INVALID_HANDLE_VALUE, NULL, 0, &count, 0, ERROR_INVALID_HANDLE},
+        {INVALID_HANDLE_VALUE, NULL, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS},
+        {INVALID_HANDLE_VALUE, NULL, 1, &count, 0xdeadbeef, ERROR_INVALID_ACCESS},
+        {INVALID_HANDLE_VALUE, &event, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {INVALID_HANDLE_VALUE, &event, 0, &count, 0, ERROR_INVALID_HANDLE},
+        {INVALID_HANDLE_VALUE, &event, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {INVALID_HANDLE_VALUE, &event, 1, &count, 0, ERROR_INVALID_HANDLE},
+        {input_handle, NULL, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {input_handle, NULL, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS},
+        {input_handle, NULL, 1, &count, 0xdeadbeef, ERROR_INVALID_ACCESS},
+        {input_handle, &event, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {input_handle, &event, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+    };
+
+    event.EventType = MOUSE_EVENT;
+    event.Event.MouseEvent = mouse_event;
+
+    for (i = 0; i < sizeof(invalid_table)/sizeof(invalid_table[0]); i++)
+    {
+        if (invalid_table[i].win7_crash)
+            continue;
+
+        SetLastError(0xdeadbeef);
+        if (invalid_table[i].written) count = 0xdeadbeef;
+        ret = WriteConsoleInputA(invalid_table[i].handle,
+                                 invalid_table[i].buffer,
+                                 invalid_table[i].count,
+                                 invalid_table[i].written);
+        ok(!ret, "[%d] Expected WriteConsoleInputA to return FALSE, got %d\n", i, ret);
+        if (invalid_table[i].written)
+        {
+            ok(count == invalid_table[i].expected_count,
+               "[%d] Expected output count to be %u, got %u\n",
+               i, invalid_table[i].expected_count, count);
+        }
+        ok(GetLastError() == invalid_table[i].last_error,
+           "[%d] Expected last error to be %u, got %u\n",
+           i, invalid_table[i].last_error, GetLastError());
+    }
+
+    count = 0xdeadbeef;
+    ret = WriteConsoleInputA(input_handle, NULL, 0, &count);
+    ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
+    ok(count == 0, "Expected count to be 0, got %u\n", count);
+
+    count = 0xdeadbeef;
+    ret = WriteConsoleInputA(input_handle, &event, 0, &count);
+    ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
+    ok(count == 0, "Expected count to be 0, got %u\n", count);
+
+    count = 0xdeadbeef;
+    ret = WriteConsoleInputA(input_handle, &event, 1, &count);
+    ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
+    ok(count == 1, "Expected count to be 1, got %u\n", count);
+
+    /* Discard the queued input event by reading it. */
+    count = 0xdeadbeef;
+    ret = ReadConsoleInputA(input_handle, &temp, 1, &count);
+    ok(ret == TRUE, "Expected ReadConsoleInputA to return TRUE, got %d\n", ret);
+    ok(count == 1, "Expected count to be 1, got %u\n", count);
+}
+
 static void test_WriteConsoleInputW(HANDLE input_handle)
 {
     INPUT_RECORD event, temp;
@@ -1365,5 +1455,6 @@ START_TEST(console)
     test_VerifyConsoleIoHandle(hConOut);
     test_GetSetStdHandle();
     test_GetNumberOfConsoleInputEvents(hConIn);
+    test_WriteConsoleInputA(hConIn);
     test_WriteConsoleInputW(hConIn);
 }
