@@ -2869,7 +2869,8 @@ machprod:
 
     CHECK_DEL_REG_STR(net, "1", temp);
 
-    RegDeleteKeyA(net, "");
+    res = delete_key(net, "", access);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
     RegCloseKey(net);
 
     res = RegOpenKeyExA(sourcelist, "Media", 0, access, &media);
@@ -2877,11 +2878,14 @@ machprod:
 
     CHECK_DEL_REG_STR(media, "1", "DISK1;");
 
-    RegDeleteKeyA(media, "");
+    res = delete_key(media, "", access);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
     RegCloseKey(media);
-    RegDeleteKeyA(sourcelist, "");
+    res = delete_key(sourcelist, "", access);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
     RegCloseKey(sourcelist);
-    RegDeleteKeyA(hkey, "");
+    res = delete_key(hkey, "", access);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
     RegCloseKey(hkey);
 
     res = RegOpenKeyExA(HKEY_CLASSES_ROOT, machup, 0, access, &hkey);
@@ -2889,7 +2893,8 @@ machprod:
 
     CHECK_DEL_REG_STR(hkey, "84A88FD7F6998CE40A22FB59F6B9C2BB", NULL);
 
-    RegDeleteKeyA(hkey, "");
+    res = delete_key(hkey, "", access);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
     RegCloseKey(hkey);
 
 error:
@@ -2910,9 +2915,12 @@ static void test_publish_features(void)
 
     static const CHAR cupath[] = "Software\\Microsoft\\Installer\\Features"
                                  "\\84A88FD7F6998CE40A22FB59F6B9C2BB";
-    static const CHAR udpath[] = "Software\\Microsoft\\Windows\\CurrentVersion"
-                                 "\\Installer\\UserData\\%s\\Products"
-                                 "\\84A88FD7F6998CE40A22FB59F6B9C2BB\\Features";
+    static const CHAR udfeatpath[] = "Software\\Microsoft\\Windows\\CurrentVersion"
+                                     "\\Installer\\UserData\\%s\\Products"
+                                     "\\84A88FD7F6998CE40A22FB59F6B9C2BB\\Features";
+    static const CHAR udpridpath[] = "Software\\Microsoft\\Windows\\CurrentVersion"
+                                     "\\Installer\\UserData\\%s\\Products"
+                                     "\\84A88FD7F6998CE40A22FB59F6B9C2BB";
     static const CHAR featkey[] = "Software\\Microsoft\\Windows\\CurrentVersion"
                                   "\\Installer\\Features";
     static const CHAR classfeat[] = "Software\\Classes\\Installer\\Features"
@@ -2962,10 +2970,10 @@ static void test_publish_features(void)
 
     RegDeleteValueA(hkey, "feature");
     RegDeleteValueA(hkey, "montecristo");
-    RegDeleteKeyA(hkey, "");
+    delete_key(hkey, "", access);
     RegCloseKey(hkey);
 
-    sprintf(keypath, udpath, usersid);
+    sprintf(keypath, udfeatpath, usersid);
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, access, &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
@@ -2974,8 +2982,10 @@ static void test_publish_features(void)
 
     RegDeleteValueA(hkey, "feature");
     RegDeleteValueA(hkey, "montecristo");
-    RegDeleteKeyA(hkey, "");
+    delete_key(hkey, "", access);
     RegCloseKey(hkey);
+    sprintf(keypath, udpridpath, usersid);
+    delete_key(HKEY_LOCAL_MACHINE, keypath, access);
 
     /* PublishFeatures, machine */
     r = MsiInstallProductA(msifile, "PUBLISH_FEATURES=1 ALLUSERS=1");
@@ -2988,7 +2998,6 @@ static void test_publish_features(void)
 
     res = RegOpenKeyA(HKEY_CURRENT_USER, cupath, &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
-
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, classfeat, 0, access, &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
@@ -2997,10 +3006,10 @@ static void test_publish_features(void)
 
     RegDeleteValueA(hkey, "feature");
     RegDeleteValueA(hkey, "montecristo");
-    RegDeleteKeyA(hkey, "");
+    delete_key(hkey, "", access);
     RegCloseKey(hkey);
 
-    sprintf(keypath, udpath, "S-1-5-18");
+    sprintf(keypath, udfeatpath, "S-1-5-18");
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, access, &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
@@ -3009,8 +3018,10 @@ static void test_publish_features(void)
 
     RegDeleteValueA(hkey, "feature");
     RegDeleteValueA(hkey, "montecristo");
-    RegDeleteKeyA(hkey, "");
+    delete_key(hkey, "", access);
     RegCloseKey(hkey);
+    sprintf(keypath, udpridpath, "S-1-5-18");
+    delete_key(HKEY_LOCAL_MACHINE, keypath, access);
 
 error:
     DeleteFile(msifile);
@@ -3092,9 +3103,12 @@ static void test_register_user(void)
     CHAR keypath[MAX_PATH];
     REGSAM access = KEY_ALL_ACCESS;
 
-    static const CHAR keyfmt[] =
+    static const CHAR keypropsfmt[] =
         "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\"
         "UserData\\%s\\Products\\84A88FD7F6998CE40A22FB59F6B9C2BB\\InstallProperties";
+    static const CHAR keypridfmt[] =
+        "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\"
+        "UserData\\%s\\Products\\84A88FD7F6998CE40A22FB59F6B9C2BB";
 
     if (is_process_limited())
     {
@@ -3128,7 +3142,7 @@ static void test_register_user(void)
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
-    sprintf(keypath, keyfmt, usersid);
+    sprintf(keypath, keypropsfmt, usersid);
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, access, &props);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
@@ -3141,6 +3155,8 @@ static void test_register_user(void)
     RegDeleteValueA(props, "RegOwner");
     delete_key(props, "", access);
     RegCloseKey(props);
+    sprintf(keypath, keypridfmt, usersid);
+    delete_key(HKEY_LOCAL_MACHINE, keypath, access);
 
     /* RegisterUser, machine */
     r = MsiInstallProductA(msifile, "REGISTER_USER=1 ALLUSERS=1");
@@ -3148,7 +3164,7 @@ static void test_register_user(void)
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
-    sprintf(keypath, keyfmt, "S-1-5-18");
+    sprintf(keypath, keypropsfmt, "S-1-5-18");
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, access, &props);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
@@ -3161,6 +3177,8 @@ static void test_register_user(void)
     RegDeleteValueA(props, "RegOwner");
     delete_key(props, "", access);
     RegCloseKey(props);
+    sprintf(keypath, keypridfmt, "S-1-5-18");
+    delete_key(HKEY_LOCAL_MACHINE, keypath, access);
 
 error:
     HeapFree(GetProcessHeap(), 0, company);
