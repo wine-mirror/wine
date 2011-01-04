@@ -1729,6 +1729,14 @@ BOOL WINAPI WriteConsoleOutputCharacterW( HANDLE hConsoleOutput, LPCWSTR str, DW
     TRACE("(%p,%s,%d,%dx%d,%p)\n", hConsoleOutput,
           debugstr_wn(str, length), length, coord.X, coord.Y, lpNumCharsWritten);
 
+    if ((length > 0 && !str) || !lpNumCharsWritten)
+    {
+        SetLastError(ERROR_INVALID_ACCESS);
+        return FALSE;
+    }
+
+    *lpNumCharsWritten = 0;
+
     SERVER_START_REQ( write_console_output )
     {
         req->handle = console_handle_unmap(hConsoleOutput);
@@ -1738,9 +1746,7 @@ BOOL WINAPI WriteConsoleOutputCharacterW( HANDLE hConsoleOutput, LPCWSTR str, DW
         req->wrap   = TRUE;
         wine_server_add_data( req, str, length * sizeof(WCHAR) );
         if ((ret = !wine_server_call_err( req )))
-        {
-            if (lpNumCharsWritten) *lpNumCharsWritten = reply->written;
-        }
+            *lpNumCharsWritten = reply->written;
     }
     SERVER_END_REQ;
     return ret;
