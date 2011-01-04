@@ -78,6 +78,7 @@
 #endif
 
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include <windows.h>
 #include <shlobj.h>
@@ -2676,9 +2677,9 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
     }
 
     ps[0].ulKind = PRSPEC_PROPID;
-    ps[0].propid = PID_IS_ICONFILE;
+    ps[0].u.propid = PID_IS_ICONFILE;
     ps[1].ulKind = PRSPEC_PROPID;
-    ps[1].propid = PID_IS_ICONINDEX;
+    ps[1].u.propid = PID_IS_ICONINDEX;
 
     hr = url->lpVtbl->QueryInterface(url, &IID_IPropertySetStorage, (void **) &pPropSetStg);
     if (SUCCEEDED(hr))
@@ -2689,9 +2690,9 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
             hr = IPropertyStorage_ReadMultiple(pPropStg, 2, ps, pv);
             if (SUCCEEDED(hr))
             {
-                icon_name = extract_icon( pv[0].pwszVal, pv[1].iVal, NULL, bWait );
+                icon_name = extract_icon( pv[0].u.pwszVal, pv[1].u.iVal, NULL, bWait );
 
-                WINE_TRACE("URL icon path: %s icon index: %d icon name: %s\n", wine_dbgstr_w(pv[0].pwszVal), pv[1].iVal, icon_name);
+                WINE_TRACE("URL icon path: %s icon index: %d icon name: %s\n", wine_dbgstr_w(pv[0].u.pwszVal), pv[1].u.iVal, icon_name);
                 PropVariantClear(&pv[0]);
                 PropVariantClear(&pv[1]);
             }
@@ -2710,7 +2711,7 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
             goto cleanup;
         }
         WINE_ERR("failed to extract icon from %s\n",
-                 wine_dbgstr_w( pv[0].pwszVal ));
+                 wine_dbgstr_w( pv[0].u.pwszVal ));
     }
 
     hSem = CreateSemaphoreA( NULL, 1, 1, "winemenubuilder_semaphore");
