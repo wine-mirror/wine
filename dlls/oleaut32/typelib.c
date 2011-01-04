@@ -1466,21 +1466,26 @@ static void TLB_abort(void)
     DebugBreak();
 }
 
-static inline void* __WINE_ALLOC_SIZE(1) heap_alloc_zero(unsigned size)
+void* __WINE_ALLOC_SIZE(1) heap_alloc_zero(unsigned size)
 {
     void *ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
     if (!ret) ERR("cannot allocate memory\n");
     return ret;
 }
 
-static inline void* __WINE_ALLOC_SIZE(1) heap_alloc(unsigned size)
+void* __WINE_ALLOC_SIZE(1) heap_alloc(unsigned size)
 {
     void *ret = HeapAlloc(GetProcessHeap(), 0, size);
     if (!ret) ERR("cannot allocate memory\n");
     return ret;
 }
 
-static inline void heap_free(void *ptr)
+void* __WINE_ALLOC_SIZE(2) heap_realloc(void *ptr, unsigned size)
+{
+    return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
+}
+
+void heap_free(void *ptr)
 {
     HeapFree(GetProcessHeap(), 0, ptr);
 }

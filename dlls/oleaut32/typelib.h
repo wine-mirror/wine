@@ -596,6 +596,12 @@ WORD typeofarray
 
 #include "poppack.h"
 
+/* heap allocation helpers */
+extern void* heap_alloc_zero(unsigned size);
+extern void* heap_alloc(unsigned size);
+extern void* heap_realloc(void *ptr, unsigned size);
+extern void  heap_free(void *ptr);
+
 HRESULT ITypeInfoImpl_GetInternalFuncDesc( ITypeInfo *iface, UINT index, const FUNCDESC **ppFuncDesc );
 
 extern DWORD _invoke(FARPROC func,CALLCONV callconv, int nrargs, DWORD *args);
