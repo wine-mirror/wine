@@ -22,6 +22,7 @@
 #include <stdio.h>
 
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include "windef.h"
 #include "winbase.h"
@@ -185,9 +186,9 @@ static void test_ReadAndWriteProperties(void)
     char testurl[] = "http://some/bogus/url.html";
     PROPSPEC ps[2];
     ps[0].ulKind = PRSPEC_PROPID;
-    ps[0].propid = PID_IS_ICONFILE;
+    U(ps[0]).propid = PID_IS_ICONFILE;
     ps[1].ulKind = PRSPEC_PROPID;
-    ps[1].propid = PID_IS_ICONINDEX;
+    U(ps[1]).propid = PID_IS_ICONINDEX;
 
     /* Make sure we have a valid temporary directory */
     GetTempPathW(MAX_PATH, fileNameW);
@@ -215,9 +216,9 @@ static void test_ReadAndWriteProperties(void)
         IPersistFile_Release(pf);
 
         pv[0].vt = VT_LPWSTR;
-        pv[0].pwszVal = (void *) iconPath;
+        U(pv[0]).pwszVal = (void *) iconPath;
         pv[1].vt = VT_I4;
-        pv[1].iVal = iconIndex;
+        U(pv[1]).iVal = iconIndex;
         hr = urlA->lpVtbl->QueryInterface(urlA, &IID_IPropertySetStorage, (void **) &pPropSetStg);
         ok(hr == S_OK, "Unable to get an IPropertySetStorage, hr=0x%x\n", hr);
 
@@ -270,9 +271,9 @@ static void test_ReadAndWriteProperties(void)
 
         todo_wine /* Wine doesn't yet support setting properties after save */
         {
-            ok(pvread[1].iVal == iconIndex, "Read wrong icon index: %d\n", pvread[1].iVal);
+            ok(U(pvread[1]).iVal == iconIndex, "Read wrong icon index: %d\n", U(pvread[1]).iVal);
 
-            ok(lstrcmpW(pvread[0].pwszVal, iconPath) == 0, "Wrong icon path read: %s\n",wine_dbgstr_w(pvread[0].pwszVal));
+            ok(lstrcmpW(U(pvread[0]).pwszVal, iconPath) == 0, "Wrong icon path read: %s\n", wine_dbgstr_w(U(pvread[0]).pwszVal));
         }
 
         PropVariantClear(&pvread[0]);
