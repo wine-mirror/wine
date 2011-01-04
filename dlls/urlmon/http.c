@@ -122,12 +122,15 @@ static ULONG send_http_request(HttpProtocol *This)
     return res ? 0 : GetLastError();
 }
 
-#define ASYNCPROTOCOL_THIS(iface) DEFINE_THIS2(HttpProtocol, base, iface)
+static inline HttpProtocol *impl_from_Protocol(Protocol *prot)
+{
+    return CONTAINING_RECORD(prot, HttpProtocol, base);
+}
 
 static HRESULT HttpProtocol_open_request(Protocol *prot, IUri *uri, DWORD request_flags,
         HINTERNET internet_session, IInternetBindInfo *bind_info)
 {
-    HttpProtocol *This = ASYNCPROTOCOL_THIS(prot);
+    HttpProtocol *This = impl_from_Protocol(prot);
     LPWSTR addl_header = NULL, post_cookie = NULL;
     IServiceProvider *service_provider = NULL;
     IHttpNegotiate2 *http_negotiate2 = NULL;
@@ -306,7 +309,7 @@ static HRESULT HttpProtocol_end_request(Protocol *protocol)
 
 static HRESULT HttpProtocol_start_downloading(Protocol *prot)
 {
-    HttpProtocol *This = ASYNCPROTOCOL_THIS(prot);
+    HttpProtocol *This = impl_from_Protocol(prot);
     LPWSTR content_type, content_length, ranges;
     DWORD len = sizeof(DWORD);
     DWORD status_code;
@@ -374,7 +377,7 @@ static HRESULT HttpProtocol_start_downloading(Protocol *prot)
 
 static void HttpProtocol_close_connection(Protocol *prot)
 {
-    HttpProtocol *This = ASYNCPROTOCOL_THIS(prot);
+    HttpProtocol *This = impl_from_Protocol(prot);
 
     if(This->http_negotiate) {
         IHttpNegotiate_Release(This->http_negotiate);
@@ -392,8 +395,6 @@ static void HttpProtocol_on_error(Protocol *prot, DWORD error)
 {
     FIXME("(%p) %d - stub\n", prot, error);
 }
-
-#undef ASYNCPROTOCOL_THIS
 
 static const ProtocolVtbl AsyncProtocolVtbl = {
     HttpProtocol_open_request,

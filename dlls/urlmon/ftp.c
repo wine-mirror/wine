@@ -50,12 +50,15 @@ static inline FtpProtocol *impl_from_IWinInetHttpInfo(IWinInetHttpInfo *iface)
     return CONTAINING_RECORD(iface, FtpProtocol, IWinInetHttpInfo_iface);
 }
 
-#define ASYNCPROTOCOL_THIS(iface) DEFINE_THIS2(FtpProtocol, base, iface)
+static inline FtpProtocol *impl_from_Protocol(Protocol *prot)
+{
+    return CONTAINING_RECORD(prot, FtpProtocol, base);
+}
 
 static HRESULT FtpProtocol_open_request(Protocol *prot, IUri *uri, DWORD request_flags,
         HINTERNET internet_session, IInternetBindInfo *bind_info)
 {
-    FtpProtocol *This = ASYNCPROTOCOL_THIS(prot);
+    FtpProtocol *This = impl_from_Protocol(prot);
     BSTR url;
     HRESULT hres;
 
@@ -82,7 +85,7 @@ static HRESULT FtpProtocol_end_request(Protocol *prot)
 
 static HRESULT FtpProtocol_start_downloading(Protocol *prot)
 {
-    FtpProtocol *This = ASYNCPROTOCOL_THIS(prot);
+    FtpProtocol *This = impl_from_Protocol(prot);
     DWORD size;
     BOOL res;
 
@@ -103,8 +106,6 @@ static void FtpProtocol_on_error(Protocol *prot, DWORD error)
 {
     FIXME("(%p) %d - stub\n", prot, error);
 }
-
-#undef ASYNCPROTOCOL_THIS
 
 static const ProtocolVtbl AsyncProtocolVtbl = {
     FtpProtocol_open_request,

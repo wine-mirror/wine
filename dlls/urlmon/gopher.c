@@ -32,12 +32,15 @@ typedef struct {
 
 #define PRIORITY(x)  ((IInternetPriority*)  &(x)->lpInternetPriorityVtbl)
 
-#define ASYNCPROTOCOL_THIS(iface) DEFINE_THIS2(GopherProtocol, base, iface)
+static inline GopherProtocol *impl_from_Protocol(Protocol *prot)
+{
+    return CONTAINING_RECORD(prot, GopherProtocol, base);
+}
 
 static HRESULT GopherProtocol_open_request(Protocol *prot, IUri *uri, DWORD request_flags,
         HINTERNET internet_session, IInternetBindInfo *bind_info)
 {
-    GopherProtocol *This = ASYNCPROTOCOL_THIS(prot);
+    GopherProtocol *This = impl_from_Protocol(prot);
     BSTR url;
     HRESULT hres;
 
@@ -74,8 +77,6 @@ static void GopherProtocol_on_error(Protocol *prot, DWORD error)
 {
     FIXME("(%p) %d - stub\n", prot, error);
 }
-
-#undef ASYNCPROTOCOL_THIS
 
 static const ProtocolVtbl AsyncProtocolVtbl = {
     GopherProtocol_open_request,
