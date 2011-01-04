@@ -71,6 +71,7 @@ static const char usage[] =
 	"   -o, --output=FILE          Output to file (default is infile.res)\n"
 	"   -O, --output-format=FORMAT The output format (`po', `pot', `res', or `res16`)\n"
 	"   --pedantic                 Enable pedantic warnings\n"
+	"   --po-dir=DIR               Directory containing po files for translations\n"
 	"   --preprocessor             Specifies the preprocessor to use, including arguments\n"
 	"   -r                         Ignored for compatibility with rc\n"
 	"   -U, --undefine id          Undefine preprocessor identifier id\n"
@@ -171,6 +172,7 @@ enum long_options_values
     LONG_OPT_NOSTDINC = 1,
     LONG_OPT_TMPFILE,
     LONG_OPT_NOTMPFILE,
+    LONG_OPT_PO_DIR,
     LONG_OPT_PREPROCESSOR,
     LONG_OPT_VERSION,
     LONG_OPT_DEBUG,
@@ -195,6 +197,7 @@ static const struct option long_options[] = {
 	{ "output", 1, NULL, 'o' },
 	{ "output-format", 1, NULL, 'O' },
 	{ "pedantic", 0, NULL, LONG_OPT_PEDANTIC },
+	{ "po-dir", 1, NULL, LONG_OPT_PO_DIR },
 	{ "preprocessor", 1, NULL, LONG_OPT_PREPROCESSOR },
 	{ "target", 1, NULL, 'F' },
 	{ "undefine", 1, NULL, 'U' },
@@ -334,6 +337,7 @@ int main(int argc,char *argv[])
 	int i;
 	int cmdlen;
         int po_mode = 0;
+        char *po_dir = NULL;
         char **files = xmalloc( argc * sizeof(*files) );
 
 	signal(SIGSEGV, segvhandler);
@@ -377,6 +381,9 @@ int main(int argc,char *argv[])
 			break;
 		case LONG_OPT_NOTMPFILE:
 			if (debuglevel) warning("--no-use-temp-file option not yet supported, ignored.\n");
+			break;
+		case LONG_OPT_PO_DIR:
+			po_dir = xstrdup( optarg );
 			break;
 		case LONG_OPT_PREPROCESSOR:
 			if (strcmp(optarg, "cat") == 0) no_preprocess = 1;
@@ -555,6 +562,7 @@ int main(int argc,char *argv[])
             output_name = NULL;
             exit(0);
 	}
+        if (po_dir) add_translations( po_dir );
 
 	/* Convert the internal lists to binary data */
 	resources2res(resource_top);

@@ -107,6 +107,12 @@ input.
 Enable pedantic warnings. Notably redefinition of #define statements can
 be discovered with this option.
 .TP
+.I \fB\-\-po-dir=\fIdir\fR
+Enable the generation of resource translations based on po files
+loaded from the specified directory. That directory must follow the
+gettext convention, in particular in must contain one .po file for
+each language, and a LINGUAS file listing the available languages.
+.TP
 .I \fB\-r\fR
 Ignored for compatibility with \fIrc\fR.
 .TP

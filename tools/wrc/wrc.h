@@ -58,6 +58,7 @@ extern language_t *currentlanguage;
 void verify_translations(resource_t *top);
 void write_pot_file( const char *outname );
 void write_po_files( const char *outname );
+void add_translations( const char *po_dir );
 void write_resfile(char *outname, resource_t *top);
 
 static inline void set_location( location_t *loc )
