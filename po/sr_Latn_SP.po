@@ -870,3 +870,7 @@ msgstr ""
 "Izvršavanje naredbe za deinstalaciju „%s“ nije uspelo verovatno zbog toga "
 "što nedostaje izvršna datoteka.\n"
 "Želite li da uklonite deinstalacioni unos iz registra?"
+
+#: write.rc:27
+msgid "Starting Wordpad failed"
+msgstr "Pokretanje Pisanke nije uspelo"

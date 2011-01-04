@@ -1116,3 +1116,7 @@ msgstr ""
 "Erreur lors de l'excution de la commande de désinstallation « %s ». "
 "L'exécutable n'a peut-être pas été trouvé.\n"
 "Souhaitez-vous supprimmer l'entrée de la base de registre ?"
+
+#: write.rc:27
+msgid "Starting Wordpad failed"
+msgstr "Wordpad n'a pas pu être démarré"

@@ -1087,3 +1087,7 @@ msgstr ""
 "Execution of uninstall command '%s' failed, perhaps due to missing "
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry ?"
+
+#: write.rc:27
+msgid "Starting Wordpad failed"
+msgstr "Starting Wordpad failed"

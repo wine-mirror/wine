@@ -1098,3 +1098,7 @@ msgstr ""
 "Falha ao executar o comando de desinstalação '%s', talvez devido à falta do "
 "executável.\n"
 "Deseja remover a entrada de desinstalação do registro?"
+
+#: write.rc:27
+msgid "Starting Wordpad failed"
+msgstr "Falhou ao iniciar o Wordpad"

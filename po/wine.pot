@@ -856,3 +856,7 @@ msgid ""
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry ?"
 msgstr ""
+
+#: write.rc:27
+msgid "Starting Wordpad failed"
+msgstr ""

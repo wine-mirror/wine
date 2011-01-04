@@ -1073,3 +1073,7 @@ msgstr ""
 "アンインストール コマンド '%s' の実行に失敗しました。コマンドが存在しないため"
 "かもしれません。\n"
 "レジストリからこの登録を削除しますか?"
+
+#: write.rc:27
+msgid "Starting Wordpad failed"
+msgstr "Wordpad の起動に失敗しました"

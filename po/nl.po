@@ -1113,3 +1113,7 @@ msgstr ""
 "Het uitvoeren van de verwijderopdracht '%s' is mislukt, wellicht vanwege een "
 "ontbrekend bestand.\n"
 "Wilt u de verwijdersleutel verwijderen uit het register?"
+
+#: write.rc:27
+msgid "Starting Wordpad failed"
+msgstr "Starten van Wordpad mislukt"

@@ -861,3 +861,7 @@ msgid ""
 msgstr ""
 "卸載指令執行失敗 '%s', 可能是找不到可執行程式.\n"
 "你想把這項卸載指令從註冊表中刪除嗎?"
+
+#: write.rc:27
+msgid "Starting Wordpad failed"
+msgstr ""

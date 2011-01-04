@@ -861,3 +861,7 @@ msgid ""
 msgstr ""
 "Poistokomento '%s' epäonnistui, johtuen ehkä puuttuvasta tiedostosta.\n"
 "Haluatko poistaa ohjelman rekisteristä?"
+
+#: write.rc:27
+msgid "Starting Wordpad failed"
+msgstr ""

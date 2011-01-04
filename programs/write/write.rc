@@ -1,7 +1,7 @@
 /*
- * Russian language support
+ * Write resources
  *
- * Copyright 2008 Andrey Esin <andrey@esin.name>
+ * Copyright (C) 2007 Mikolaj Zalewski
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,12 +20,9 @@
 
 #include "resources.h"
 
-/* UTF-8 */
-#pragma code_page(65001)
-
-LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-    IDS_FAILED, "Не удалось запустить Wordpad"
+    IDS_FAILED, "Starting Wordpad failed"
 }

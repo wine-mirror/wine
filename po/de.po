@@ -1125,3 +1125,7 @@ msgstr ""
 "Die Ausführung des Entfernungsbefehls '%s' ist fehlgeschlagen, "
 "wahrscheinlich durch eine fehlende, ausführbare Datei.\n"
 "Möchten Sie, dass der Anwendungseintrag aus der Registry entfernt wird?"
+
+#: write.rc:27
+msgid "Starting Wordpad failed"
+msgstr "Der Start von Wordpad ist fehlgeschlagen"

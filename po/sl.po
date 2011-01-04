@@ -1091,3 +1091,7 @@ msgstr ""
 "Izvedba odstranitvenega ukaza '%s' ni uspela, morda zaradi manjkajoče "
 "izvršljive datoteke.\n"
 "Ali želite odstraniti odstranitveni ključ iz registra?"
+
+#: write.rc:27
+msgid "Starting Wordpad failed"
+msgstr "Zagon programa Wordpad ni uspel"

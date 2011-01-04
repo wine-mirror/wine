@@ -1087,3 +1087,7 @@ msgstr ""
 "Køring af afinstallerings kommandoen '%s' fejlede, måske er det på grund af "
 "en manglende programfil.\n"
 "Vil du fjerne afinstallerings opførselen fra registeringsdatabasen?"
+
+#: write.rc:27
+msgid "Starting Wordpad failed"
+msgstr "Kunne ikke starte Wordpad"

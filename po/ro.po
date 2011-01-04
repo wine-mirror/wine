@@ -1093,3 +1093,7 @@ msgstr ""
 "Execuția comenzi de dezinstalare '%s' a eșuat, probabil din lipsa fișierului "
 "executabil.\n"
 "Doriți să ștergeți înregistrarea de dezinstalare din registru?"
+
+#: write.rc:27
+msgid "Starting Wordpad failed"
+msgstr "Execuția Wordpad a eșuat"

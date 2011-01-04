@@ -863,3 +863,7 @@ msgstr ""
 "futtatható állomány miatt.\n"
 "El szeretné távolítani az eltávolítási bejegyzést a regisztrációs "
 "adatbázisból ?"
+
+#: write.rc:27
+msgid "Starting Wordpad failed"
+msgstr ""

@@ -1060,3 +1060,7 @@ msgid ""
 msgstr ""
 "Spuštění příkazu %s selhalo, možná příčína je chybějící aplikace.\n"
 "Přejete si odstranit instalační záznam z registru?"
+
+#: write.rc:27
+msgid "Starting Wordpad failed"
+msgstr ""

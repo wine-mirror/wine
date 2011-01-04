@@ -1058,3 +1058,7 @@ msgid ""
 msgstr ""
 "'%s' kaldırma komutu çalıştırılamadı, çalıştırıbilir dosya var olmayabilir.\n"
 "Sistem kaydından bu kaldırma girişini silmek ister misiniz?"
+
+#: write.rc:27
+msgid "Starting Wordpad failed"
+msgstr ""

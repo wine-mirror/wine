@@ -1078,3 +1078,7 @@ msgstr ""
 "Nie udało się wykonać polecenia '%s', które powinno usunąć progam. Być może "
 "już był usunięty.\n"
 "Czy chcesz usunąć jego wpis z tej listy?"
+
+#: write.rc:27
+msgid "Starting Wordpad failed"
+msgstr "Nie udało się uruchomić programu Wordpad"

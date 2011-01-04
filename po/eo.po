@@ -861,3 +861,7 @@ msgid ""
 msgstr ""
 "Malinstalad-komando '%s' malsukcesis, eble æar mankas programo.\n"
 "Æu vi volas forigi la malinstalada 'entry' de la registro ?"
+
+#: write.rc:27
+msgid "Starting Wordpad failed"
+msgstr ""

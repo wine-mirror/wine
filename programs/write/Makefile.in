@@ -5,27 +5,7 @@ IMPORTS   = user32 gdi32
 
 C_SRCS = write.c
 
-RC_SRCS = \
-	Da.rc \
-	De.rc \
-	En.rc \
-	Es.rc \
-	Fr.rc \
-	He.rc \
-	It.rc \
-	Ja.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	No.rc \
-	Pl.rc \
-	Pt.rc \
-	Ro.rc \
-	Ru.rc \
-	Si.rc \
-	Sr.rc \
-	Sv.rc \
-	Uk.rc \
-	Zh.rc
+RC_SRCS = write.rc
+PO_SRCS = write.rc
 
 @MAKE_PROG_RULES@

@@ -1113,3 +1113,7 @@ msgstr ""
 "L'esecuzione del comando di disinstallazione '%s' è fallita, forse a causa "
 "di un eseguibile mancante.\n"
 "Vuoi rimuovere dal registro la voce di disinstallazione?"
+
+#: write.rc:27
+msgid "Starting Wordpad failed"
+msgstr "Impossibile avviare WordPad"

@@ -1094,3 +1094,7 @@ msgstr ""
 "Nepavyko įvykdyti programos pašalinimo komandos „%s“, greičiausiai dėl "
 "trūkstamo vykdomojo failo.\n"
 "Ar norite pašalinti programos šalinimo įrašą iš registro?"
+
+#: write.rc:27
+msgid "Starting Wordpad failed"
+msgstr "Nepavyko paleisti Wordpad"
