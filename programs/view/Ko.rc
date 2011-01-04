@@ -4,7 +4,7 @@
  *
  * Copyright 1998 Douglas Ridgway
  * Copyright 2003 Marcelo Duarte
- * Copyright 2005 YunSong Hwang
+ * Copyright 2005,2011 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,8 @@
 
 #include "resource.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 /*
@@ -33,19 +35,19 @@ LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 VIEW MENU
 BEGIN
-    POPUP "∆ƒ¿œ(&F)"
+    POPUP "ÌååÏùº(&F)"
     BEGIN
-	MENUITEM "ø≠±‚(&O)",			IDM_OPEN
-        MENUITEM "≥™∞°±‚(&X)",                       IDM_EXIT
+	MENUITEM "Ïó¥Í∏∞(&O)",			IDM_OPEN
+        MENUITEM "ÎÇòÍ∞ÄÍ∏∞(&X)",                       IDM_EXIT
     END
-    POPUP "»∏¿¸(&P)"
+    POPUP "ÌöåÏ†Ñ(&P)"
     BEGIN
-      MENUITEM "»≠∏È ∞°µÊ √§øÏ±‚(&S)",          IDM_SET_EXT_TO_WIN
+      MENUITEM "ÌôîÎ©¥ Í∞ÄÎìù Ï±ÑÏö∞Í∏∞(&S)",          IDM_SET_EXT_TO_WIN
       MENUITEM SEPARATOR
-      MENUITEM "øﬁ¬ (&L)",				IDM_LEFT
-      MENUITEM "ø¿∏•¬ (&R)",			IDM_RIGHT
-      MENUITEM "¿ß(&U)",				IDM_UP
-      MENUITEM "æ∆∑°(&D)",				IDM_DOWN
+      MENUITEM "ÏôºÏ™Ω(&L)",				IDM_LEFT
+      MENUITEM "Ïò§Î•∏Ï™Ω(&R)",			IDM_RIGHT
+      MENUITEM "ÏúÑ(&U)",				IDM_UP
+      MENUITEM "ÏïÑÎûò(&D)",				IDM_DOWN
     END
 END
 
@@ -70,5 +72,5 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_DESCRIPTION         "¡§±‘ ∏ﬁ≈∏∆ƒ¿œ ∫∏±‚"
+    IDS_DESCRIPTION         "Ï†ïÍ∑ú Î©îÌÉÄÌååÏùº Î≥¥Í∏∞"
 END
