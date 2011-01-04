@@ -21,14 +21,12 @@ struct HTMLStyle {
     IHTMLStyle  IHTMLStyle_iface;
     IHTMLStyle2 IHTMLStyle2_iface;
     IHTMLStyle3 IHTMLStyle3_iface;
-    const IHTMLStyle4Vtbl   *lpHTMLStyle4Vtbl;
+    IHTMLStyle4 IHTMLStyle4_iface;
 
     LONG ref;
 
     nsIDOMCSSStyleDeclaration *nsstyle;
 };
-
-#define HTMLSTYLE4(x)    ((IHTMLStyle4*)                  &(x)->lpHTMLStyle4Vtbl)
 
 /* NOTE: Make sure to keep in sync with style_tbl in htmlstyle.c */
 typedef enum {

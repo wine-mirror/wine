@@ -355,39 +355,42 @@ static const IHTMLStyle3Vtbl HTMLStyle3Vtbl = {
 /*
  * IHTMLStyle4 Interface
  */
-#define HTMLSTYLE4_THIS(iface) DEFINE_THIS(HTMLStyle, HTMLStyle4, iface)
+static inline HTMLStyle *impl_from_IHTMLStyle4(IHTMLStyle4 *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLStyle, IHTMLStyle4_iface);
+}
 
 static HRESULT WINAPI HTMLStyle4_QueryInterface(IHTMLStyle4 *iface, REFIID riid, void **ppv)
 {
-    HTMLStyle *This = HTMLSTYLE4_THIS(iface);
+    HTMLStyle *This = impl_from_IHTMLStyle4(iface);
 
     return IHTMLStyle_QueryInterface(&This->IHTMLStyle_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLStyle4_AddRef(IHTMLStyle4 *iface)
 {
-    HTMLStyle *This = HTMLSTYLE4_THIS(iface);
+    HTMLStyle *This = impl_from_IHTMLStyle4(iface);
 
     return IHTMLStyle_AddRef(&This->IHTMLStyle_iface);
 }
 
 static ULONG WINAPI HTMLStyle4_Release(IHTMLStyle4 *iface)
 {
-    HTMLStyle *This = HTMLSTYLE4_THIS(iface);
+    HTMLStyle *This = impl_from_IHTMLStyle4(iface);
 
     return IHTMLStyle_Release(&This->IHTMLStyle_iface);
 }
 
 static HRESULT WINAPI HTMLStyle4_GetTypeInfoCount(IHTMLStyle4 *iface, UINT *pctinfo)
 {
-    HTMLStyle *This = HTMLSTYLE4_THIS(iface);
+    HTMLStyle *This = impl_from_IHTMLStyle4(iface);
     return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI HTMLStyle4_GetTypeInfo(IHTMLStyle4 *iface, UINT iTInfo,
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
-    HTMLStyle *This = HTMLSTYLE4_THIS(iface);
+    HTMLStyle *This = impl_from_IHTMLStyle4(iface);
     return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
@@ -395,7 +398,7 @@ static HRESULT WINAPI HTMLStyle4_GetIDsOfNames(IHTMLStyle4 *iface, REFIID riid,
                                                 LPOLESTR *rgszNames, UINT cNames,
                                                 LCID lcid, DISPID *rgDispId)
 {
-    HTMLStyle *This = HTMLSTYLE4_THIS(iface);
+    HTMLStyle *This = impl_from_IHTMLStyle4(iface);
     return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
             lcid, rgDispId);
 }
@@ -404,28 +407,28 @@ static HRESULT WINAPI HTMLStyle4_Invoke(IHTMLStyle4 *iface, DISPID dispIdMember,
                             REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    HTMLStyle *This = HTMLSTYLE4_THIS(iface);
+    HTMLStyle *This = impl_from_IHTMLStyle4(iface);
     return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI HTMLStyle4_put_textOverflow(IHTMLStyle4 *iface, BSTR v)
 {
-    HTMLStyle *This = HTMLSTYLE4_THIS(iface);
+    HTMLStyle *This = impl_from_IHTMLStyle4(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLStyle4_get_textOverflow(IHTMLStyle4 *iface, BSTR *p)
 {
-    HTMLStyle *This = HTMLSTYLE4_THIS(iface);
+    HTMLStyle *This = impl_from_IHTMLStyle4(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLStyle4_put_minHeight(IHTMLStyle4 *iface, VARIANT v)
 {
-    HTMLStyle *This = HTMLSTYLE4_THIS(iface);
+    HTMLStyle *This = impl_from_IHTMLStyle4(iface);
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
@@ -434,7 +437,7 @@ static HRESULT WINAPI HTMLStyle4_put_minHeight(IHTMLStyle4 *iface, VARIANT v)
 
 static HRESULT WINAPI HTMLStyle4_get_minHeight(IHTMLStyle4 *iface, VARIANT *p)
 {
-    HTMLStyle *This = HTMLSTYLE4_THIS(iface);
+    HTMLStyle *This = impl_from_IHTMLStyle4(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -458,5 +461,5 @@ static const IHTMLStyle4Vtbl HTMLStyle4Vtbl = {
 void HTMLStyle3_Init(HTMLStyle *This)
 {
     This->IHTMLStyle3_iface.lpVtbl = &HTMLStyle3Vtbl;
-    This->lpHTMLStyle4Vtbl = &HTMLStyle4Vtbl;
+    This->IHTMLStyle4_iface.lpVtbl = &HTMLStyle4Vtbl;
 }

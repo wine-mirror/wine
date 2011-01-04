@@ -579,7 +579,7 @@ static HRESULT WINAPI HTMLStyle_QueryInterface(IHTMLStyle *iface, REFIID riid, v
         *ppv = &This->IHTMLStyle3_iface;
     }else if(IsEqualGUID(&IID_IHTMLStyle4, riid)) {
         TRACE("(%p)->(IID_IHTMLStyle4 %p)\n", This, ppv);
-        *ppv = HTMLSTYLE4(This);
+        *ppv = &This->IHTMLStyle4_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }
