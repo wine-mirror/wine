@@ -504,20 +504,32 @@ BOOL WINAPI WriteConsoleInputA( HANDLE handle, const INPUT_RECORD *buffer,
 BOOL WINAPI WriteConsoleInputW( HANDLE handle, const INPUT_RECORD *buffer,
                                 DWORD count, LPDWORD written )
 {
+    DWORD events_written = 0;
     BOOL ret;
 
     TRACE("(%p,%p,%d,%p)\n", handle, buffer, count, written);
 
-    if (written) *written = 0;
+    if (count > 0 && !buffer)
+    {
+        SetLastError(ERROR_INVALID_ACCESS);
+        return FALSE;
+    }
+
     SERVER_START_REQ( write_console_input )
     {
         req->handle = console_handle_unmap(handle);
         wine_server_add_data( req, buffer, count * sizeof(INPUT_RECORD) );
-        if ((ret = !wine_server_call_err( req )) && written)
-            *written = reply->written;
+        if ((ret = !wine_server_call_err( req )))
+            events_written = reply->written;
     }
     SERVER_END_REQ;
 
+    if (written) *written = events_written;
+    else
+    {
+        SetLastError(ERROR_INVALID_ACCESS);
+        ret = FALSE;
+    }
     return ret;
 }
 
