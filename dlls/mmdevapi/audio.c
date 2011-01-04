@@ -64,7 +64,8 @@ typedef struct ACImpl {
     BOOL init, running;
     CRITICAL_SECTION *crst;
     HANDLE handle;
-    DWORD locked, flags, bufsize_frames, pad, padpartial, ofs, periodsize_frames, candisconnect;
+    DWORD locked, flags, candisconnect;
+    DWORD bufsize_frames, ofs_frames, periodsize_frames, pad, padpartial;
     BYTE *buffer;
     WAVEFORMATEX *pwfx;
     ALuint source;
@@ -665,7 +666,7 @@ static int disconnected(ACImpl *This)
                 return 1;
 
             WARN("Emptying buffer after newly reconnected!\n");
-            This->pad = This->ofs = 0;
+            This->pad = This->ofs_frames = 0;
             if (This->running)
                 palcCaptureStart(This->dev);
         }
@@ -742,18 +743,18 @@ static HRESULT WINAPI AC_GetCurrentPadding(IAudioClient *iface, UINT32 *numpad)
         DWORD block = This->pwfx->nBlockAlign;
         palcGetIntegerv(This->dev, ALC_CAPTURE_SAMPLES, 1, &avail);
         if (avail) {
-            DWORD ofs = This->ofs + This->pad;
+            DWORD ofs_frames = This->ofs_frames + This->pad;
             BYTE *buf1;
-            ofs %= This->bufsize_frames;
-            buf1 = This->buffer + (ofs * block);
+            ofs_frames %= This->bufsize_frames;
+            buf1 = This->buffer + (ofs_frames * block);
             This->laststamp = gettime();
             if (This->handle)
                 SetEvent(This->handle);
 
-            if (ofs + avail <= This->bufsize_frames)
+            if (ofs_frames + avail <= This->bufsize_frames)
                 palcCaptureSamples(This->dev, buf1, avail);
             else {
-                DWORD part1 = This->bufsize_frames - ofs;
+                DWORD part1 = This->bufsize_frames - ofs_frames;
                 palcCaptureSamples(This->dev, buf1, part1);
                 palcCaptureSamples(This->dev, This->buffer, avail - part1);
             }
@@ -763,11 +764,11 @@ static HRESULT WINAPI AC_GetCurrentPadding(IAudioClient *iface, UINT32 *numpad)
             if (This->pad > This->bufsize_frames) {
                 DWORD rest;
                 WARN("Overflowed! %u frames\n", This->pad - This->bufsize_frames);
-                This->ofs += This->pad - This->bufsize_frames;
-                rest = This->ofs % This->periodsize_frames;
+                This->ofs_frames += This->pad - This->bufsize_frames;
+                rest = This->ofs_frames % This->periodsize_frames;
                 if (rest)
-                    This->ofs += This->periodsize_frames - rest;
-                This->ofs %= This->bufsize_frames;
+                    This->ofs_frames += This->periodsize_frames - rest;
+                This->ofs_frames %= This->bufsize_frames;
                 This->pad = This->bufsize_frames;
             }
         }
@@ -1015,7 +1016,7 @@ static HRESULT WINAPI AC_Reset(IAudioClient *iface)
             palcCaptureSamples(This->dev, This->buffer, avail);
     }
     This->pad = This->padpartial = 0;
-    This->ofs = 0;
+    This->ofs_frames = 0;
     This->frameswritten = 0;
 out:
     LeaveCriticalSection(This->crst);
@@ -1187,9 +1188,9 @@ static HRESULT WINAPI ACR_GetBuffer(IAudioRenderClient *iface, UINT32 frames, BY
 
     /* Exact offset doesn't matter, offset could be 0 forever
      * but increasing it is easier to debug */
-    if (This->parent->ofs + frames > This->parent->bufsize_frames)
-        This->parent->ofs = 0;
-    *data = This->parent->buffer + This->parent->ofs * framesize;
+    if (This->parent->ofs_frames + frames > This->parent->bufsize_frames)
+        This->parent->ofs_frames = 0;
+    *data = This->parent->buffer + This->parent->ofs_frames * framesize;
 
     LeaveCriticalSection(This->parent->crst);
     return S_OK;
@@ -1200,7 +1201,7 @@ static HRESULT WINAPI ACR_ReleaseBuffer(IAudioRenderClient *iface, UINT32 writte
     ACRender *This = (ACRender*)iface;
     BYTE *buf = This->parent->buffer;
     DWORD framesize = This->parent->pwfx->nBlockAlign;
-    DWORD ofs = This->parent->ofs;
+    DWORD ofs = This->parent->ofs_frames;
     DWORD bufsize = This->parent->bufsize_frames;
     DWORD freq = This->parent->pwfx->nSamplesPerSec;
     DWORD bpp = This->parent->pwfx->wBitsPerSample;
@@ -1226,8 +1227,8 @@ static HRESULT WINAPI ACR_ReleaseBuffer(IAudioRenderClient *iface, UINT32 writte
 
     EnterCriticalSection(This->parent->crst);
 
-    This->parent->ofs += written;
-    This->parent->ofs %= bufsize;
+    This->parent->ofs_frames += written;
+    This->parent->ofs_frames %= bufsize;
     This->parent->pad += written;
     This->parent->frameswritten += written;
     This->parent->locked = 0;
@@ -1384,7 +1385,7 @@ static HRESULT WINAPI ACC_GetBuffer(IAudioCaptureClient *iface, BYTE **data, UIN
     if (This->parent->locked)
         goto out;
     IAudioCaptureClient_GetNextPacketSize(iface, frames);
-    ofs = This->parent->ofs;
+    ofs = This->parent->ofs_frames;
     if ( ofs % This->parent->periodsize_frames)
         ERR("Unaligned offset %u with %u\n", ofs, This->parent->periodsize_frames);
     *data = This->parent->buffer + ofs * block;
@@ -1410,8 +1411,8 @@ static HRESULT WINAPI ACC_ReleaseBuffer(IAudioCaptureClient *iface, UINT32 writt
     EnterCriticalSection(This->parent->crst);
     if (!written || written == This->parent->locked) {
         This->parent->locked = 0;
-        This->parent->ofs += written;
-        This->parent->ofs %= This->parent->bufsize_frames;
+        This->parent->ofs_frames += written;
+        This->parent->ofs_frames %= This->parent->bufsize_frames;
         This->parent->pad -= written;
     } else if (!This->parent->locked)
         hr = AUDCLNT_E_OUT_OF_ORDER;
