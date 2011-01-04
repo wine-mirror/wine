@@ -1196,26 +1196,26 @@ static HRESULT WINAPI ACR_GetBuffer(IAudioRenderClient *iface, UINT32 frames, BY
     return S_OK;
 }
 
-static HRESULT WINAPI ACR_ReleaseBuffer(IAudioRenderClient *iface, UINT32 written, DWORD flags)
+static HRESULT WINAPI ACR_ReleaseBuffer(IAudioRenderClient *iface, UINT32 written_frames, DWORD flags)
 {
     ACRender *This = (ACRender*)iface;
     BYTE *buf = This->parent->buffer;
     DWORD framesize = This->parent->pwfx->nBlockAlign;
-    DWORD ofs = This->parent->ofs_frames;
-    DWORD bufsize = This->parent->bufsize_frames;
+    DWORD ofs_bytes = This->parent->ofs_frames * framesize;
+    DWORD written_bytes = written_frames * framesize;
     DWORD freq = This->parent->pwfx->nSamplesPerSec;
     DWORD bpp = This->parent->pwfx->wBitsPerSample;
     ALuint albuf;
 
-    TRACE("(%p)->(%u,%x)\n", This, written, flags);
+    TRACE("(%p)->(%u,%x)\n", This, written_frames, flags);
 
-    if (This->parent->locked < written)
+    if (This->parent->locked < written_frames)
         return AUDCLNT_E_INVALID_SIZE;
 
     if (flags & ~AUDCLNT_BUFFERFLAGS_SILENT)
         return E_INVALIDARG;
 
-    if (!written) {
+    if (!written_frames) {
         if (This->parent->locked)
             FIXME("Handled right?\n");
         This->parent->locked = 0;
@@ -1227,25 +1227,21 @@ static HRESULT WINAPI ACR_ReleaseBuffer(IAudioRenderClient *iface, UINT32 writte
 
     EnterCriticalSection(This->parent->crst);
 
-    This->parent->ofs_frames += written;
-    This->parent->ofs_frames %= bufsize;
-    This->parent->pad += written;
-    This->parent->frameswritten += written;
+    This->parent->ofs_frames += written_frames;
+    This->parent->ofs_frames %= This->parent->bufsize_frames;
+    This->parent->pad += written_frames;
+    This->parent->frameswritten += written_frames;
     This->parent->locked = 0;
 
-    ofs *= framesize;
-    written *= framesize;
-    bufsize *= framesize;
-
     if (flags & AUDCLNT_BUFFERFLAGS_SILENT)
-        memset(buf+ofs, bpp != 8 ? 0 : 128, written);
-    TRACE("buf: %p, ofs: %x, written %u, freq %u\n", buf, ofs, written, freq);
+        memset(buf + ofs_bytes, bpp != 8 ? 0 : 128, written_bytes);
+    TRACE("buf: %p, ofs: %x, written %u, freq %u\n", buf, ofs_bytes, written_bytes, freq);
     if (!valid_dev(This->parent))
         goto out;
 
     setALContext(This->parent->parent->ctx);
     palGenBuffers(1, &albuf);
-    palBufferData(albuf, This->parent->format, buf+ofs, written, freq);
+    palBufferData(albuf, This->parent->format, buf + ofs_bytes, written_bytes, freq);
     palSourceQueueBuffers(This->parent->source, 1, &albuf);
     TRACE("Queued %u\n", albuf);
 
