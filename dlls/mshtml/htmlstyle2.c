@@ -39,21 +39,21 @@ static HRESULT WINAPI HTMLStyle2_QueryInterface(IHTMLStyle2 *iface, REFIID riid,
 {
     HTMLStyle *This = HTMLSTYLE2_THIS(iface);
 
-    return IHTMLStyle_QueryInterface(HTMLSTYLE(This), riid, ppv);
+    return IHTMLStyle_QueryInterface(&This->IHTMLStyle_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLStyle2_AddRef(IHTMLStyle2 *iface)
 {
     HTMLStyle *This = HTMLSTYLE2_THIS(iface);
 
-    return IHTMLStyle_AddRef(HTMLSTYLE(This));
+    return IHTMLStyle_AddRef(&This->IHTMLStyle_iface);
 }
 
 static ULONG WINAPI HTMLStyle2_Release(IHTMLStyle2 *iface)
 {
     HTMLStyle *This = HTMLSTYLE2_THIS(iface);
 
-    return IHTMLStyle_Release(HTMLSTYLE(This));
+    return IHTMLStyle_Release(&This->IHTMLStyle_iface);
 }
 
 static HRESULT WINAPI HTMLStyle2_GetTypeInfoCount(IHTMLStyle2 *iface, UINT *pctinfo)

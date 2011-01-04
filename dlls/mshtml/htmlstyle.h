@@ -18,7 +18,7 @@
 
 struct HTMLStyle {
     DispatchEx dispex;
-    const IHTMLStyleVtbl    *lpHTMLStyleVtbl;
+    IHTMLStyle  IHTMLStyle_iface;
     const IHTMLStyle2Vtbl   *lpHTMLStyle2Vtbl;
     const IHTMLStyle3Vtbl   *lpHTMLStyle3Vtbl;
     const IHTMLStyle4Vtbl   *lpHTMLStyle4Vtbl;
@@ -28,7 +28,6 @@ struct HTMLStyle {
     nsIDOMCSSStyleDeclaration *nsstyle;
 };
 
-#define HTMLSTYLE(x)     ((IHTMLStyle*)                   &(x)->lpHTMLStyleVtbl)
 #define HTMLSTYLE2(x)    ((IHTMLStyle2*)                  &(x)->lpHTMLStyle2Vtbl)
 #define HTMLSTYLE3(x)    ((IHTMLStyle3*)                  &(x)->lpHTMLStyle3Vtbl)
 #define HTMLSTYLE4(x)    ((IHTMLStyle4*)                  &(x)->lpHTMLStyle4Vtbl)

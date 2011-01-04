@@ -39,21 +39,21 @@ static HRESULT WINAPI HTMLStyle3_QueryInterface(IHTMLStyle3 *iface, REFIID riid,
 {
     HTMLStyle *This = HTMLSTYLE3_THIS(iface);
 
-    return IHTMLStyle_QueryInterface(HTMLSTYLE(This), riid, ppv);
+    return IHTMLStyle_QueryInterface(&This->IHTMLStyle_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLStyle3_AddRef(IHTMLStyle3 *iface)
 {
     HTMLStyle *This = HTMLSTYLE3_THIS(iface);
 
-    return IHTMLStyle_AddRef(HTMLSTYLE(This));
+    return IHTMLStyle_AddRef(&This->IHTMLStyle_iface);
 }
 
 static ULONG WINAPI HTMLStyle3_Release(IHTMLStyle3 *iface)
 {
     HTMLStyle *This = HTMLSTYLE3_THIS(iface);
 
-    return IHTMLStyle_Release(HTMLSTYLE(This));
+    return IHTMLStyle_Release(&This->IHTMLStyle_iface);
 }
 
 static HRESULT WINAPI HTMLStyle3_GetTypeInfoCount(IHTMLStyle3 *iface, UINT *pctinfo)
@@ -358,21 +358,21 @@ static HRESULT WINAPI HTMLStyle4_QueryInterface(IHTMLStyle4 *iface, REFIID riid,
 {
     HTMLStyle *This = HTMLSTYLE4_THIS(iface);
 
-    return IHTMLStyle_QueryInterface(HTMLSTYLE(This), riid, ppv);
+    return IHTMLStyle_QueryInterface(&This->IHTMLStyle_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLStyle4_AddRef(IHTMLStyle4 *iface)
 {
     HTMLStyle *This = HTMLSTYLE4_THIS(iface);
 
-    return IHTMLStyle_AddRef(HTMLSTYLE(This));
+    return IHTMLStyle_AddRef(&This->IHTMLStyle_iface);
 }
 
 static ULONG WINAPI HTMLStyle4_Release(IHTMLStyle4 *iface)
 {
     HTMLStyle *This = HTMLSTYLE4_THIS(iface);
 
-    return IHTMLStyle_Release(HTMLSTYLE(This));
+    return IHTMLStyle_Release(&This->IHTMLStyle_iface);
 }
 
 static HRESULT WINAPI HTMLStyle4_GetTypeInfoCount(IHTMLStyle4 *iface, UINT *pctinfo)
