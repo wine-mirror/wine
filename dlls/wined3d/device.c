@@ -6172,45 +6172,46 @@ static BOOL is_display_mode_supported(IWineD3DDeviceImpl *This, const WINED3DPRE
 }
 
 /* Do not call while under the GL lock. */
-static void delete_opengl_contexts(IWineD3DDevice *iface, IWineD3DSwapChainImpl *swapchain)
+static void delete_opengl_contexts(IWineD3DDeviceImpl *device, IWineD3DSwapChainImpl *swapchain)
 {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     IWineD3DBaseShaderImpl *shader;
 
-    context = context_acquire(This, NULL);
+    context = context_acquire(device, NULL);
     gl_info = context->gl_info;
 
-    IWineD3DDevice_EnumResources(iface, reset_unload_resources, NULL);
-    LIST_FOR_EACH_ENTRY(shader, &This->shaders, IWineD3DBaseShaderImpl, baseShader.shader_list_entry)
+    IWineD3DDevice_EnumResources((IWineD3DDevice *)device, reset_unload_resources, NULL);
+    LIST_FOR_EACH_ENTRY(shader, &device->shaders, IWineD3DBaseShaderImpl, baseShader.shader_list_entry)
     {
-        This->shader_backend->shader_destroy(shader);
+        device->shader_backend->shader_destroy(shader);
     }
 
     ENTER_GL();
-    if(This->depth_blt_texture) {
-        glDeleteTextures(1, &This->depth_blt_texture);
-        This->depth_blt_texture = 0;
+    if (device->depth_blt_texture)
+    {
+        glDeleteTextures(1, &device->depth_blt_texture);
+        device->depth_blt_texture = 0;
     }
-    if (This->depth_blt_rb) {
-        gl_info->fbo_ops.glDeleteRenderbuffers(1, &This->depth_blt_rb);
-        This->depth_blt_rb = 0;
-        This->depth_blt_rb_w = 0;
-        This->depth_blt_rb_h = 0;
+    if (device->depth_blt_rb)
+    {
+        gl_info->fbo_ops.glDeleteRenderbuffers(1, &device->depth_blt_rb);
+        device->depth_blt_rb = 0;
+        device->depth_blt_rb_w = 0;
+        device->depth_blt_rb_h = 0;
     }
     LEAVE_GL();
 
-    This->blitter->free_private(This);
-    This->frag_pipe->free_private(This);
-    This->shader_backend->shader_free_private(This);
-    destroy_dummy_textures(This, gl_info);
+    device->blitter->free_private(device);
+    device->frag_pipe->free_private(device);
+    device->shader_backend->shader_free_private(device);
+    destroy_dummy_textures(device, gl_info);
 
     context_release(context);
 
-    while (This->numContexts)
+    while (device->numContexts)
     {
-        context_destroy(This, This->contexts[0]);
+        context_destroy(device, device->contexts[0]);
     }
     HeapFree(GetProcessHeap(), 0, swapchain->context);
     swapchain->context = NULL;
@@ -6387,7 +6388,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
     IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->updateStateBlock);
     IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->stateBlock);
 
-    delete_opengl_contexts(iface, swapchain);
+    delete_opengl_contexts(This, swapchain);
 
     if(pPresentationParameters->Windowed) {
         mode.Width = swapchain->orig_width;
