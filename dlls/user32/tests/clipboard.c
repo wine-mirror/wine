@@ -68,8 +68,8 @@ static void test_ClipboardOwner(void)
     ok(OpenClipboard(hWnd1), "OpenClipboard failed\n");
 
     SetLastError(0xdeadbeef);
-    ok(!OpenClipboard(hWnd2) &&
-       (GetLastError() == 0xdeadbeef || GetLastError() == ERROR_ACCESS_DENIED),
+    ret = OpenClipboard(hWnd2);
+    ok(!ret && (GetLastError() == 0xdeadbeef || GetLastError() == ERROR_ACCESS_DENIED),
        "OpenClipboard should fail without setting last error value, or with ERROR_ACCESS_DENIED, got error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -79,8 +79,8 @@ static void test_ClipboardOwner(void)
     ok(GetClipboardOwner() == hWnd1, "clipboard should be owned by %p, not by %p\n", hWnd1, GetClipboardOwner());
 
     SetLastError(0xdeadbeef);
-    ok(!OpenClipboard(hWnd2) &&
-       (GetLastError() == 0xdeadbeef || GetLastError() == ERROR_ACCESS_DENIED),
+    ret = OpenClipboard(hWnd2);
+    ok(!ret && (GetLastError() == 0xdeadbeef || GetLastError() == ERROR_ACCESS_DENIED),
        "OpenClipboard should fail without setting last error valuei, or with ERROR_ACCESS_DENIED, got error %d\n", GetLastError());
 
     ret = CloseClipboard();
