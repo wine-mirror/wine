@@ -3207,10 +3207,10 @@ static HRESULT WINAPI ITypeInfo2_fnGetTypeAttr(
     (*ppTypeAttr)->typekind = This->typekind;
     (*ppTypeAttr)->cFuncs = cti2_get_func_count(This->typeinfo);
     if(This->typeinfo->flags&TYPEFLAG_FDUAL && This->typekind==TKIND_DISPATCH)
-        (*ppTypeAttr)->cFuncs += 7;
+        (*ppTypeAttr)->cFuncs += sizeof(IDispatchVtbl)/sizeof(void*);
     (*ppTypeAttr)->cVars = cti2_get_var_count(This->typeinfo);
     (*ppTypeAttr)->cImplTypes = This->typeinfo->cImplTypes;
-    (*ppTypeAttr)->cbSizeVft = This->typekind==TKIND_DISPATCH ? 7 * sizeof(void*) : This->typeinfo->cbSizeVft;
+    (*ppTypeAttr)->cbSizeVft = This->typekind == TKIND_DISPATCH ? sizeof(IDispatchVtbl) : This->typeinfo->cbSizeVft;
     (*ppTypeAttr)->cbAlignment = (This->typeinfo->typekind>>11) & 0x1f;
     (*ppTypeAttr)->wTypeFlags = This->typeinfo->flags;
     (*ppTypeAttr)->wMajorVerNum = LOWORD(This->typeinfo->version);

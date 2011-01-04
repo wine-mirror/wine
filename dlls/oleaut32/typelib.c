@@ -1082,7 +1082,7 @@ typedef struct tagTLBVarDesc
     VARDESC vardesc;        /* lots of info on the variable and its attributes. */
     BSTR Name;             /* the name of this variable */
     int HelpContext;
-    int HelpStringContext;  /* FIXME: where? */
+    int HelpStringContext;
     BSTR HelpString;
     int ctCustData;
     TLBCustData * pCustData;/* linked list to cust data; */
@@ -5110,7 +5110,8 @@ static HRESULT WINAPI ITypeInfo_fnGetTypeAttr( ITypeInfo2 *iface,
     if((*ppTypeAttr)->typekind == TKIND_DISPATCH) {
         /* This should include all the inherited funcs */
         (*ppTypeAttr)->cFuncs = (*ppTypeAttr)->cbSizeVft / sizeof(void *);
-        (*ppTypeAttr)->cbSizeVft = 7 * sizeof(void *); /* This is always the size of IDispatch's vtbl */
+        /* This is always the size of IDispatch's vtbl */
+        (*ppTypeAttr)->cbSizeVft = sizeof(IDispatchVtbl);
         (*ppTypeAttr)->wTypeFlags &= ~TYPEFLAG_FOLEAUTOMATION;
     }
     return S_OK;
