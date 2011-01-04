@@ -3646,7 +3646,7 @@ static void sampler(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct w
         IWineD3DBaseTextureImpl *texture = state->textures[sampler];
         BOOL srgb = state->sampler_states[sampler][WINED3DSAMP_SRGBTEXTURE];
 
-        IWineD3DBaseTexture_BindTexture((IWineD3DBaseTexture *)texture, srgb);
+        texture->baseTexture.texture_ops->texture_bind(texture, srgb);
         basetexture_apply_state_changes(texture,
                 state->sampler_states[sampler], gl_info);
 

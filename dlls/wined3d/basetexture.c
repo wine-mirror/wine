@@ -27,9 +27,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
 
-HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, UINT layer_count, UINT level_count,
-        WINED3DRESOURCETYPE resource_type, IWineD3DDeviceImpl *device, DWORD usage,
-        const struct wined3d_format *format, WINED3DPOOL pool, void *parent,
+HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, const struct wined3d_texture_ops *texture_ops,
+        UINT layer_count, UINT level_count, WINED3DRESOURCETYPE resource_type, IWineD3DDeviceImpl *device,
+        DWORD usage, const struct wined3d_format *format, WINED3DPOOL pool, void *parent,
         const struct wined3d_parent_ops *parent_ops)
 {
     HRESULT hr;
@@ -42,6 +42,7 @@ HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, UINT layer_count, UIN
         return hr;
     }
 
+    texture->baseTexture.texture_ops = texture_ops;
     texture->baseTexture.sub_resources = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
             level_count * layer_count * sizeof(*texture->baseTexture.sub_resources));
     if (!texture->baseTexture.sub_resources)

@@ -27,8 +27,66 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
 
+/* Context activation is done by the caller. */
+static HRESULT texture_bind(IWineD3DBaseTextureImpl *texture, BOOL srgb)
+{
+    BOOL set_gl_texture_desc;
+    HRESULT hr;
+
+    TRACE("texture %p, srgb %#x.\n", texture, srgb);
+
+    hr = basetexture_bind(texture, srgb, &set_gl_texture_desc);
+    if (set_gl_texture_desc && SUCCEEDED(hr))
+    {
+        UINT i;
+        struct gl_texture *gl_tex;
+
+        if (texture->baseTexture.is_srgb)
+            gl_tex = &texture->baseTexture.texture_srgb;
+        else
+            gl_tex = &texture->baseTexture.texture_rgb;
+
+        for (i = 0; i < texture->baseTexture.level_count; ++i)
+        {
+            IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)texture->baseTexture.sub_resources[i];
+            surface_set_texture_name(surface, gl_tex->name, texture->baseTexture.is_srgb);
+        }
+
+        /* Conditinal non power of two textures use a different clamping
+         * default. If we're using the GL_WINE_normalized_texrect partial
+         * driver emulation, we're dealing with a GL_TEXTURE_2D texture which
+         * has the address mode set to repeat - something that prevents us
+         * from hitting the accelerated codepath. Thus manually set the GL
+         * state. The same applies to filtering. Even if the texture has only
+         * one mip level, the default LINEAR_MIPMAP_LINEAR filter causes a SW
+         * fallback on macos. */
+        if (IWineD3DBaseTexture_IsCondNP2((IWineD3DBaseTexture *)texture))
+        {
+            GLenum target = texture->baseTexture.target;
+
+            ENTER_GL();
+            glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            checkGLcall("glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)");
+            glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            checkGLcall("glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)");
+            glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            checkGLcall("glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST)");
+            glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            checkGLcall("glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)");
+            LEAVE_GL();
+            gl_tex->states[WINED3DTEXSTA_ADDRESSU]      = WINED3DTADDRESS_CLAMP;
+            gl_tex->states[WINED3DTEXSTA_ADDRESSV]      = WINED3DTADDRESS_CLAMP;
+            gl_tex->states[WINED3DTEXSTA_MAGFILTER]     = WINED3DTEXF_POINT;
+            gl_tex->states[WINED3DTEXSTA_MINFILTER]     = WINED3DTEXF_POINT;
+            gl_tex->states[WINED3DTEXSTA_MIPFILTER]     = WINED3DTEXF_NONE;
+        }
+    }
+
+    return hr;
+}
+
 /* Do not call while under the GL lock. */
-static void texture_internal_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB srgb)
+static void texture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB srgb)
 {
     IWineD3DDeviceImpl *device = texture->resource.device;
     struct wined3d_context *context = NULL;
@@ -45,7 +103,7 @@ static void texture_internal_preload(IWineD3DBaseTextureImpl *texture, enum WINE
             break;
 
         case SRGB_BOTH:
-            texture_internal_preload(texture, SRGB_RGB);
+            texture_preload(texture, SRGB_RGB);
             /* Fallthrough */
 
         case SRGB_SRGB:
@@ -101,6 +159,12 @@ static void texture_internal_preload(IWineD3DBaseTextureImpl *texture, enum WINE
     /* No longer dirty. */
     *dirty = FALSE;
 }
+
+static const struct wined3d_texture_ops texture_ops =
+{
+    texture_bind,
+    texture_preload,
+};
 
 static void texture_cleanup(IWineD3DTextureImpl *This)
 {
@@ -198,7 +262,7 @@ static DWORD WINAPI IWineD3DTextureImpl_GetPriority(IWineD3DTexture *iface) {
 /* Do not call while under the GL lock. */
 static void WINAPI IWineD3DTextureImpl_PreLoad(IWineD3DTexture *iface)
 {
-    texture_internal_preload((IWineD3DBaseTextureImpl *)iface, SRGB_ANY);
+    texture_preload((IWineD3DBaseTextureImpl *)iface, SRGB_ANY);
 }
 
 /* Do not call while under the GL lock. */
@@ -263,64 +327,6 @@ static WINED3DTEXTUREFILTERTYPE WINAPI IWineD3DTextureImpl_GetAutoGenFilterType(
 static void WINAPI IWineD3DTextureImpl_GenerateMipSubLevels(IWineD3DTexture *iface)
 {
     basetexture_generate_mipmaps((IWineD3DBaseTextureImpl *)iface);
-}
-
-/* Context activation is done by the caller. */
-static HRESULT WINAPI IWineD3DTextureImpl_BindTexture(IWineD3DTexture *iface, BOOL srgb) {
-    IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
-    BOOL set_gl_texture_desc;
-    HRESULT hr;
-
-    TRACE("(%p) : relay to BaseTexture\n", This);
-
-    hr = basetexture_bind((IWineD3DBaseTextureImpl *)iface, srgb, &set_gl_texture_desc);
-    if (set_gl_texture_desc && SUCCEEDED(hr)) {
-        UINT i;
-        struct gl_texture *gl_tex;
-
-        if(This->baseTexture.is_srgb) {
-            gl_tex = &This->baseTexture.texture_srgb;
-        } else {
-            gl_tex = &This->baseTexture.texture_rgb;
-        }
-
-        for (i = 0; i < This->baseTexture.level_count; ++i)
-        {
-            IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)This->baseTexture.sub_resources[i];
-            surface_set_texture_name(surface, gl_tex->name, This->baseTexture.is_srgb);
-        }
-
-        /* Conditinal non power of two textures use a different clamping
-         * default. If we're using the GL_WINE_normalized_texrect partial
-         * driver emulation, we're dealing with a GL_TEXTURE_2D texture which
-         * has the address mode set to repeat - something that prevents us
-         * from hitting the accelerated codepath. Thus manually set the GL
-         * state. The same applies to filtering. Even if the texture has only
-         * one mip level, the default LINEAR_MIPMAP_LINEAR filter causes a SW
-         * fallback on macos. */
-        if (IWineD3DBaseTexture_IsCondNP2(iface))
-        {
-            GLenum target = This->baseTexture.target;
-
-            ENTER_GL();
-            glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            checkGLcall("glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)");
-            glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            checkGLcall("glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)");
-            glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            checkGLcall("glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST)");
-            glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            checkGLcall("glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)");
-            LEAVE_GL();
-            gl_tex->states[WINED3DTEXSTA_ADDRESSU]      = WINED3DTADDRESS_CLAMP;
-            gl_tex->states[WINED3DTEXSTA_ADDRESSV]      = WINED3DTADDRESS_CLAMP;
-            gl_tex->states[WINED3DTEXSTA_MAGFILTER]     = WINED3DTEXF_POINT;
-            gl_tex->states[WINED3DTEXSTA_MINFILTER]     = WINED3DTEXF_POINT;
-            gl_tex->states[WINED3DTEXSTA_MIPFILTER]     = WINED3DTEXF_NONE;
-        }
-    }
-
-    return hr;
 }
 
 static BOOL WINAPI IWineD3DTextureImpl_IsCondNP2(IWineD3DTexture *iface) {
@@ -448,7 +454,6 @@ static const IWineD3DTextureVtbl IWineD3DTexture_Vtbl =
     IWineD3DTextureImpl_SetAutoGenFilterType,
     IWineD3DTextureImpl_GetAutoGenFilterType,
     IWineD3DTextureImpl_GenerateMipSubLevels,
-    IWineD3DTextureImpl_BindTexture,
     IWineD3DTextureImpl_IsCondNP2,
     /* IWineD3DTexture */
     IWineD3DTextureImpl_GetLevelDesc,
@@ -526,8 +531,9 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
 
     texture->lpVtbl = &IWineD3DTexture_Vtbl;
 
-    hr = basetexture_init((IWineD3DBaseTextureImpl *)texture, 1, levels,
-            WINED3DRTYPE_TEXTURE, device, usage, format, pool, parent, parent_ops);
+    hr = basetexture_init((IWineD3DBaseTextureImpl *)texture, &texture_ops,
+            1, levels, WINED3DRTYPE_TEXTURE, device, usage, format, pool,
+            parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize basetexture, returning %#x.\n", hr);
@@ -616,7 +622,6 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
         tmp_w = max(1, tmp_w >> 1);
         tmp_h = max(1, tmp_h >> 1);
     }
-    texture->baseTexture.internal_preload = texture_internal_preload;
 
     return WINED3D_OK;
 }

@@ -460,7 +460,7 @@ static void device_preload_texture(const struct wined3d_state *state, unsigned i
 
     if (!(texture = state->textures[idx])) return;
     srgb = state->sampler_states[idx][WINED3DSAMP_SRGBTEXTURE] ? SRGB_SRGB : SRGB_RGB;
-    texture->baseTexture.internal_preload(texture, srgb);
+    texture->baseTexture.texture_ops->texture_preload(texture, srgb);
 }
 
 void device_preload_textures(IWineD3DDeviceImpl *device)
@@ -5062,7 +5062,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture(IWineD3DDevice *iface,
     }
 
     /* Make sure that the destination texture is loaded. */
-    ((IWineD3DBaseTextureImpl *)dst_texture)->baseTexture.internal_preload(
+    ((IWineD3DBaseTextureImpl *)dst_texture)->baseTexture.texture_ops->texture_preload(
             (IWineD3DBaseTextureImpl *)dst_texture, SRGB_RGB);
 
     /* Update every surface level of the texture. */

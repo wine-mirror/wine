@@ -30,6 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 static void volume_bind_and_dirtify(IWineD3DVolume *iface) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     const struct wined3d_gl_info *gl_info = &This->resource.device->adapter->gl_info;
+    IWineD3DBaseTextureImpl *container = (IWineD3DBaseTextureImpl *)This->container;
     DWORD active_sampler;
 
     /* We don't need a specific texture unit, but after binding the texture the current unit is dirty.
@@ -59,7 +60,7 @@ static void volume_bind_and_dirtify(IWineD3DVolume *iface) {
         IWineD3DDeviceImpl_MarkStateDirty(This->resource.device, STATE_SAMPLER(active_sampler));
     }
 
-    IWineD3DVolumeTexture_BindTexture((IWineD3DVolumeTexture *)This->container, FALSE);
+    container->baseTexture.texture_ops->texture_bind(container, FALSE);
 }
 
 void volume_add_dirty_box(IWineD3DVolume *iface, const WINED3DBOX *dirty_box)

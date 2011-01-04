@@ -1879,11 +1879,18 @@ struct gl_texture
     GLuint                  name;
 };
 
+struct wined3d_texture_ops
+{
+    HRESULT (*texture_bind)(struct IWineD3DBaseTextureImpl *texture, BOOL srgb);
+    void (*texture_preload)(struct IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB srgb);
+};
+
 /*****************************************************************************
  * IWineD3DBaseTexture implementation structure (extends IWineD3DResourceImpl)
  */
 typedef struct IWineD3DBaseTextureClass
 {
+    const struct wined3d_texture_ops *texture_ops;
     struct gl_texture       texture_rgb, texture_srgb;
     IWineD3DResourceImpl **sub_resources;
     UINT layer_count;
@@ -1898,7 +1905,6 @@ typedef struct IWineD3DBaseTextureClass
     const struct min_lookup *minMipLookup;
     const GLenum            *magLookup;
     GLenum target;
-    void                    (*internal_preload)(struct IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB srgb);
 } IWineD3DBaseTextureClass;
 
 typedef struct IWineD3DBaseTextureImpl
@@ -1921,9 +1927,9 @@ DWORD basetexture_get_level_count(IWineD3DBaseTextureImpl *texture) DECLSPEC_HID
 DWORD basetexture_get_lod(IWineD3DBaseTextureImpl *texture) DECLSPEC_HIDDEN;
 IWineD3DResourceImpl *basetexture_get_sub_resource(IWineD3DBaseTextureImpl *texture,
         UINT sub_resource_idx) DECLSPEC_HIDDEN;
-HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, UINT layer_count, UINT level_count,
-        WINED3DRESOURCETYPE resource_type, IWineD3DDeviceImpl *device, DWORD usage,
-        const struct wined3d_format *format, WINED3DPOOL pool, void *parent,
+HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, const struct wined3d_texture_ops *texture_ops,
+        UINT layer_count, UINT level_count, WINED3DRESOURCETYPE resource_type, IWineD3DDeviceImpl *device,
+        DWORD usage, const struct wined3d_format *format, WINED3DPOOL pool, void *parent,
         const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 HRESULT basetexture_set_autogen_filter_type(IWineD3DBaseTextureImpl *texture,
         WINED3DTEXTUREFILTERTYPE filter_type) DECLSPEC_HIDDEN;

@@ -26,8 +26,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
 
+/* Context activation is done by the caller. */
+static HRESULT volumetexture_bind(IWineD3DBaseTextureImpl *texture, BOOL srgb)
+{
+    BOOL dummy;
+
+    TRACE("texture %p, srgb %#x.\n", texture, srgb);
+
+    return basetexture_bind(texture, srgb, &dummy);
+}
+
 /* Do not call while under the GL lock. */
-static void volumetexture_internal_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB srgb)
+static void volumetexture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB srgb)
 {
     IWineD3DDeviceImpl *device = texture->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -75,6 +85,12 @@ static void volumetexture_internal_preload(IWineD3DBaseTextureImpl *texture, enu
     /* No longer dirty */
     texture->baseTexture.texture_rgb.dirty = FALSE;
 }
+
+const struct wined3d_texture_ops volumetexture_ops =
+{
+    volumetexture_bind,
+    volumetexture_preload,
+};
 
 static void volumetexture_cleanup(IWineD3DVolumeTextureImpl *This)
 {
@@ -165,7 +181,7 @@ static DWORD WINAPI IWineD3DVolumeTextureImpl_GetPriority(IWineD3DVolumeTexture 
 
 static void WINAPI IWineD3DVolumeTextureImpl_PreLoad(IWineD3DVolumeTexture *iface)
 {
-    volumetexture_internal_preload((IWineD3DBaseTextureImpl *)iface, SRGB_ANY);
+    volumetexture_preload((IWineD3DBaseTextureImpl *)iface, SRGB_ANY);
 }
 
 /* Do not call while under the GL lock. */
@@ -227,16 +243,6 @@ static WINED3DTEXTUREFILTERTYPE WINAPI IWineD3DVolumeTextureImpl_GetAutoGenFilte
 static void WINAPI IWineD3DVolumeTextureImpl_GenerateMipSubLevels(IWineD3DVolumeTexture *iface)
 {
     basetexture_generate_mipmaps((IWineD3DBaseTextureImpl *)iface);
-}
-
-/* Context activation is done by the caller. */
-static HRESULT WINAPI IWineD3DVolumeTextureImpl_BindTexture(IWineD3DVolumeTexture *iface, BOOL srgb)
-{
-    BOOL dummy;
-
-    TRACE("iface %p, srgb %#x.\n", iface, srgb);
-
-    return basetexture_bind((IWineD3DBaseTextureImpl *)iface, srgb, &dummy);
 }
 
 static BOOL WINAPI IWineD3DVolumeTextureImpl_IsCondNP2(IWineD3DVolumeTexture *iface)
@@ -365,7 +371,6 @@ static const IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl =
     IWineD3DVolumeTextureImpl_GetAutoGenFilterType,
     IWineD3DVolumeTextureImpl_GenerateMipSubLevels,
     /* not in d3d */
-    IWineD3DVolumeTextureImpl_BindTexture,
     IWineD3DVolumeTextureImpl_IsCondNP2,
     /* volume texture */
     IWineD3DVolumeTextureImpl_GetLevelDesc,
@@ -424,8 +429,9 @@ HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT 
 
     texture->lpVtbl = &IWineD3DVolumeTexture_Vtbl;
 
-    hr = basetexture_init((IWineD3DBaseTextureImpl *)texture, 1, levels,
-            WINED3DRTYPE_VOLUMETEXTURE, device, usage, format, pool, parent, parent_ops);
+    hr = basetexture_init((IWineD3DBaseTextureImpl *)texture, &volumetexture_ops,
+            1, levels, WINED3DRTYPE_VOLUMETEXTURE, device, usage, format, pool,
+            parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize basetexture, returning %#x.\n", hr);
@@ -467,7 +473,6 @@ HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT 
         tmp_h = max(1, tmp_h >> 1);
         tmp_d = max(1, tmp_d >> 1);
     }
-    texture->baseTexture.internal_preload = volumetexture_internal_preload;
 
     return WINED3D_OK;
 }

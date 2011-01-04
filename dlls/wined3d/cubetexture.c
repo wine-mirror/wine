@@ -27,8 +27,36 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
 
+/* Context activation is done by the caller. */
+static HRESULT cubetexture_bind(IWineD3DBaseTextureImpl *texture, BOOL srgb)
+{
+    BOOL set_gl_texture_desc;
+    HRESULT hr;
+
+    TRACE("texture %p, srgb %#x.\n", texture, srgb);
+
+    hr = basetexture_bind(texture, srgb, &set_gl_texture_desc);
+    if (set_gl_texture_desc && SUCCEEDED(hr))
+    {
+        UINT sub_count = texture->baseTexture.level_count * texture->baseTexture.layer_count;
+        UINT i;
+
+        for (i = 0; i < sub_count; ++i)
+        {
+            IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)texture->baseTexture.sub_resources[i];
+
+            if (texture->baseTexture.is_srgb)
+                surface_set_texture_name(surface, texture->baseTexture.texture_srgb.name, TRUE);
+            else
+                surface_set_texture_name(surface, texture->baseTexture.texture_rgb.name, FALSE);
+        }
+    }
+
+    return hr;
+}
+
 /* Do not call while under the GL lock. */
-static void cubetexture_internal_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB srgb)
+static void cubetexture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB srgb)
 {
     UINT sub_count = texture->baseTexture.level_count * texture->baseTexture.layer_count;
     IWineD3DDeviceImpl *device = texture->resource.device;
@@ -46,7 +74,7 @@ static void cubetexture_internal_preload(IWineD3DBaseTextureImpl *texture, enum 
             break;
 
         case SRGB_BOTH:
-            cubetexture_internal_preload(texture, SRGB_RGB);
+            cubetexture_preload(texture, SRGB_RGB);
             /* Fallthrough */
 
         case SRGB_SRGB:
@@ -107,6 +135,12 @@ static void cubetexture_internal_preload(IWineD3DBaseTextureImpl *texture, enum 
 
     if (context) context_release(context);
 }
+
+static const struct wined3d_texture_ops cubetexture_ops =
+{
+    cubetexture_bind,
+    cubetexture_preload,
+};
 
 static void cubetexture_cleanup(IWineD3DCubeTextureImpl *This)
 {
@@ -203,7 +237,7 @@ static DWORD WINAPI IWineD3DCubeTextureImpl_GetPriority(IWineD3DCubeTexture *ifa
 /* Do not call while under the GL lock. */
 static void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface)
 {
-    cubetexture_internal_preload((IWineD3DBaseTextureImpl *)iface, SRGB_ANY);
+    cubetexture_preload((IWineD3DBaseTextureImpl *)iface, SRGB_ANY);
 }
 
 /* Do not call while under the GL lock. */
@@ -272,34 +306,6 @@ static WINED3DTEXTUREFILTERTYPE WINAPI IWineD3DCubeTextureImpl_GetAutoGenFilterT
 static void WINAPI IWineD3DCubeTextureImpl_GenerateMipSubLevels(IWineD3DCubeTexture *iface)
 {
     basetexture_generate_mipmaps((IWineD3DBaseTextureImpl *)iface);
-}
-
-/* Context activation is done by the caller. */
-static HRESULT WINAPI IWineD3DCubeTextureImpl_BindTexture(IWineD3DCubeTexture *iface, BOOL srgb) {
-    IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
-    BOOL set_gl_texture_desc;
-    HRESULT hr;
-
-    TRACE("(%p) : relay to BaseTexture\n", This);
-
-    hr = basetexture_bind((IWineD3DBaseTextureImpl *)iface, srgb, &set_gl_texture_desc);
-    if (set_gl_texture_desc && SUCCEEDED(hr))
-    {
-        UINT sub_count = This->baseTexture.level_count * This->baseTexture.layer_count;
-        UINT i;
-
-        for (i = 0; i < sub_count; ++i)
-        {
-            IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)This->baseTexture.sub_resources[i];
-
-            if (This->baseTexture.is_srgb)
-                surface_set_texture_name(surface, This->baseTexture.texture_srgb.name, TRUE);
-            else
-                surface_set_texture_name(surface, This->baseTexture.texture_rgb.name, FALSE);
-        }
-    }
-
-    return hr;
 }
 
 static BOOL WINAPI IWineD3DCubeTextureImpl_IsCondNP2(IWineD3DCubeTexture *iface)
@@ -433,7 +439,6 @@ static const IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl =
     IWineD3DCubeTextureImpl_SetAutoGenFilterType,
     IWineD3DCubeTextureImpl_GetAutoGenFilterType,
     IWineD3DCubeTextureImpl_GenerateMipSubLevels,
-    IWineD3DCubeTextureImpl_BindTexture,
     IWineD3DCubeTextureImpl_IsCondNP2,
     /* IWineD3DCubeTexture */
     IWineD3DCubeTextureImpl_GetLevelDesc,
@@ -493,8 +498,9 @@ HRESULT cubetexture_init(IWineD3DCubeTextureImpl *texture, UINT edge_length, UIN
 
     texture->lpVtbl = &IWineD3DCubeTexture_Vtbl;
 
-    hr = basetexture_init((IWineD3DBaseTextureImpl *)texture, 6, levels,
-            WINED3DRTYPE_CUBETEXTURE, device, usage, format, pool, parent, parent_ops);
+    hr = basetexture_init((IWineD3DBaseTextureImpl *)texture, &cubetexture_ops,
+            6, levels, WINED3DRTYPE_CUBETEXTURE, device, usage, format, pool,
+            parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize basetexture, returning %#x\n", hr);
@@ -559,7 +565,6 @@ HRESULT cubetexture_init(IWineD3DCubeTextureImpl *texture, UINT edge_length, UIN
         }
         tmp_w = max(1, tmp_w >> 1);
     }
-    texture->baseTexture.internal_preload = cubetexture_internal_preload;
 
     return WINED3D_OK;
 }
