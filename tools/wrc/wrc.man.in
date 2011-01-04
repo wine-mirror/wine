@@ -93,8 +93,15 @@ with \fB.rc\fR stripped or \fBwrc.tab.res\fR if input is read
 from standard input.
 .TP
 .I \fB\-O\fR, \fB\-\-output\-format\fR=\fIformat\fR
-Sets the output format. The supported formats are 'res' and 'res16'.
-If this option is not specified, format defaults to 'res'.
+Sets the output format. The supported formats are \fBpo\fR, \fBpot\fR,
+\fBres\fR, and \fBres16\fR.  If this option is not specified, the
+format defaults to \fBres\fR.
+.br
+In \fBpo\fR mode, if an output file name is specified it must match a
+known language name, like \fBen_US.po\fR; only resources for the
+specified language are output. If no output file name is specified, a
+separate .po file is created for every language encountered in the
+input.
 .TP
 .I \fB\-\-pedantic\fR
 Enable pedantic warnings. Notably redefinition of #define statements can

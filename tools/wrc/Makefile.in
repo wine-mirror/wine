@@ -1,11 +1,13 @@
 DEFS      = -D__WINESRC__ -DINCLUDEDIR="\"$(includedir)\"" $(EXTRADEFS)
 PROGRAMS = wrc$(EXEEXT) wrc-installed
 MANPAGE  = wrc.man
+ALL_LIBS = @LIBGETTEXTPO@ $(LIBWPP) $(LIBWINE) $(LIBPORT)
 
 C_SRCS = \
 	dumpres.c \
 	genres.c \
 	newstruc.c \
+	po.c \
 	readres.c \
 	translation.c \
 	utils.c \
@@ -22,10 +24,10 @@ all: $(PROGRAMS)
 @MAKE_RULES@
 
 wrc$(EXEEXT): $(OBJS) $(LIBWPP)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWPP) $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(LDRPATH_LOCAL)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(ALL_LIBS) $(LDFLAGS) $(LDRPATH_LOCAL)
 
 wrc-installed: $(OBJS) $(LIBWPP)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWPP) $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(LDRPATH_INSTALL)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(ALL_LIBS) $(LDFLAGS) $(LDRPATH_INSTALL)
 
 install:: wrc-installed $(DESTDIR)$(bindir)
 	$(INSTALL_PROGRAM) wrc-installed $(DESTDIR)$(bindir)/wrc$(EXEEXT)

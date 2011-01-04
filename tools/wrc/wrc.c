@@ -69,7 +69,7 @@ static const char usage[] =
 	"   --no-use-temp-file         Ignored for compatibility with windres\n"
 	"   --nostdinc                 Disables searching the standard include path\n"
 	"   -o, --output=FILE          Output to file (default is infile.res)\n"
-	"   -O, --output-format=FORMAT The output format (either `res' or `res16`)\n"
+	"   -O, --output-format=FORMAT The output format (`po', `pot', `res', or `res16`)\n"
 	"   --pedantic                 Enable pedantic warnings\n"
 	"   --preprocessor             Specifies the preprocessor to use, including arguments\n"
 	"   -r                         Ignored for compatibility with rc\n"
@@ -148,7 +148,7 @@ static int pointer_size = sizeof(void *);
 
 static int verify_translations_mode;
 
-char *output_name = NULL;	/* The name given by the -o option */
+static char *output_name;	/* The name given by the -o option */
 char *input_name = NULL;	/* The name given on the command-line */
 static char *temp_name = NULL;	/* Temporary file for preprocess pipe */
 
@@ -333,6 +333,7 @@ int main(int argc,char *argv[])
 	int nb_files = 0;
 	int i;
 	int cmdlen;
+        int po_mode = 0;
         char **files = xmalloc( argc * sizeof(*files) );
 
 	signal(SIGSEGV, segvhandler);
@@ -462,7 +463,9 @@ int main(int argc,char *argv[])
 			else error("Too many output files.\n");
 			break;
 		case 'O':
-			if (strcmp(optarg, "res16") == 0) win32 = 0;
+			if (strcmp(optarg, "po") == 0) po_mode = 1;
+			else if (strcmp(optarg, "pot") == 0) po_mode = 2;
+			else if (strcmp(optarg, "res16") == 0) win32 = 0;
 			else if (strcmp(optarg, "res")) warning("Output format %s not supported.\n", optarg);
 			break;
 		case 'r':
@@ -524,20 +527,10 @@ int main(int argc,char *argv[])
         for (i = 0; i < nb_files; i++)
         {
             input_name = files[i];
-            if(!output_name && !preprocess_only)
-            {
-		output_name = dup_basename(input_name, ".rc");
-		strcat(output_name, ".res");
-            }
             if (load_file( input_name, output_name )) exit(1);
         }
 	/* stdin special case. NULL means "stdin" for wpp. */
-        if (nb_files == 0)
-        {
-            if(!output_name && !preprocess_only)
-		output_name = strdup("wrc.tab.res");
-            if (load_file( NULL, output_name )) exit(1);
-        }
+        if (nb_files == 0 && load_file( NULL, output_name )) exit(1);
 
 	if(debuglevel & DEBUGLEVEL_DUMP)
 		dump_resources(resource_top);
@@ -547,11 +540,31 @@ int main(int argc,char *argv[])
 		verify_translations(resource_top);
 		exit(0);
 	}
+	if (po_mode)
+	{
+            if (po_mode == 2)  /* pot file */
+            {
+                if (!output_name)
+                {
+                    output_name = dup_basename( nb_files ? files[0] : NULL, ".rc" );
+                    strcat( output_name, ".pot" );
+                }
+                write_pot_file( output_name );
+            }
+            else write_po_files( output_name );
+            output_name = NULL;
+            exit(0);
+	}
 
 	/* Convert the internal lists to binary data */
 	resources2res(resource_top);
 
 	chat("Writing .res-file\n");
+        if (!output_name)
+        {
+            output_name = dup_basename( nb_files ? files[0] : NULL, ".rc" );
+            strcat(output_name, ".res");
+        }
 	write_resfile(output_name, resource_top);
 	output_name = NULL;
 
