@@ -1652,6 +1652,72 @@ static void test_WriteConsoleOutputAttribute(HANDLE output_handle)
     ok(count == 1, "Expected count to be 1, got %u\n", count);
 }
 
+static void test_FillConsoleOutputCharacterA(HANDLE output_handle)
+{
+    COORD origin = {0, 0};
+    DWORD count;
+    BOOL ret;
+    int i;
+
+    const struct
+    {
+        HANDLE hConsoleOutput;
+        CHAR ch;
+        DWORD length;
+        COORD coord;
+        LPDWORD lpNumCharsWritten;
+        DWORD expected_count;
+        DWORD last_error;
+        int win7_crash;
+    } invalid_table[] =
+    {
+        {NULL, 'a', 0, origin, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {NULL, 'a', 0, origin, &count, 0, ERROR_INVALID_HANDLE},
+        {NULL, 'a', 1, origin, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {NULL, 'a', 1, origin, &count, 0, ERROR_INVALID_HANDLE},
+        {INVALID_HANDLE_VALUE, 'a', 0, origin, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {INVALID_HANDLE_VALUE, 'a', 0, origin, &count, 0, ERROR_INVALID_HANDLE},
+        {INVALID_HANDLE_VALUE, 'a', 1, origin, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {INVALID_HANDLE_VALUE, 'a', 1, origin, &count, 0, ERROR_INVALID_HANDLE},
+        {output_handle, 'a', 0, origin, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {output_handle, 'a', 1, origin, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+    };
+
+    for (i = 0; i < sizeof(invalid_table)/sizeof(invalid_table[0]); i++)
+    {
+        if (invalid_table[i].win7_crash)
+            continue;
+
+        SetLastError(0xdeadbeef);
+        if (invalid_table[i].lpNumCharsWritten) count = 0xdeadbeef;
+        ret = FillConsoleOutputCharacterA(invalid_table[i].hConsoleOutput,
+                                          invalid_table[i].ch,
+                                          invalid_table[i].length,
+                                          invalid_table[i].coord,
+                                          invalid_table[i].lpNumCharsWritten);
+        ok(!ret, "[%d] Expected FillConsoleOutputCharacterA to return FALSE, got %d\n", i, ret);
+        if (invalid_table[i].lpNumCharsWritten)
+        {
+            ok(count == invalid_table[i].expected_count,
+               "[%d] Expected count to be %u, got %u\n",
+               i, invalid_table[i].expected_count, count);
+        }
+        ok(GetLastError() == invalid_table[i].last_error,
+           "[%d] Expected last error to be %u, got %u\n",
+           i, invalid_table[i].last_error, GetLastError());
+    }
+
+    count = 0xdeadbeef;
+    ret = FillConsoleOutputCharacterA(output_handle, 'a', 0, origin, &count);
+    ok(ret == TRUE, "Expected FillConsoleOutputCharacterA to return TRUE, got %d\n", ret);
+    ok(count == 0, "Expected count to be 0, got %u\n", count);
+
+    count = 0xdeadbeef;
+    ret = FillConsoleOutputCharacterA(output_handle, 'a', 1, origin, &count);
+    ok(ret == TRUE, "Expected FillConsoleOutputCharacterA to return TRUE, got %d\n", ret);
+    ok(count == 1, "Expected count to be 1, got %u\n", count);
+}
+
 static void test_FillConsoleOutputCharacterW(HANDLE output_handle)
 {
     COORD origin = {0, 0};
@@ -1777,5 +1843,6 @@ START_TEST(console)
     test_WriteConsoleOutputCharacterA(hConOut);
     test_WriteConsoleOutputCharacterW(hConOut);
     test_WriteConsoleOutputAttribute(hConOut);
+    test_FillConsoleOutputCharacterA(hConOut);
     test_FillConsoleOutputCharacterW(hConOut);
 }
