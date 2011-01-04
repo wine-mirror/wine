@@ -281,6 +281,7 @@ programs/winetest/build.rc
 programs/winhlp32/macro.lex.yy.c
 programs/wscript/ihost.h
 programs/wscript/ihost.tlb
+rsrc.pot
 server/wineserver
 server/wineserver-installed
 tools/fnt2bdf

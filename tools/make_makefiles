@@ -100,6 +100,7 @@ my @ignores = (
     "programs/winetest/*_test.rc",
     "programs/winetest/build.nfo",
     "programs/winetest/build.rc",
+    "rsrc.pot",
     "tools/makedep",
 );
 
@@ -315,7 +316,7 @@ sub parse_makefile($)
             $make{$1} = $2;
             next;
         }
-        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_[CHIPRS]_SRCS|IDL_TLB_SRCS|IMPLIB_SRCS|C_SRCS|MC_SRCS|RC_SRCS|SVG_SRCS|PROGRAMS)\s*=\s*(.*)/)
+        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_[CHIPRS]_SRCS|IDL_TLB_SRCS|IMPLIB_SRCS|C_SRCS|MC_SRCS|RC_SRCS|PO_SRCS|SVG_SRCS|PROGRAMS)\s*=\s*(.*)/)
         {
             my @list = split(/\s+/, $2);
             $make{$1} = \@list;
@@ -424,6 +425,7 @@ sub update_makefiles(@)
                 die "Invalid MODULE in $file" unless $make{"MODULE"} eq "$name.dll";
             }
             my $implib = $make{"IMPORTLIB"} || "";
+            push @flags, "po" if defined $make{"PO_SRCS"};
             push @flags, "implib" if $implib;
             push @flags, "staticimplib" if defined($make{"IMPLIB_SRCS"});
             $args .= "," if $is_win16 || @flags;
@@ -443,6 +445,7 @@ sub update_makefiles(@)
             {
                 die "Invalid MODULE in $file" unless $make{"MODULE"} eq "$name.exe";
             }
+            push @flags, "po" if defined $make{"PO_SRCS"};
             push @flags, "install" unless $dont_install{$name};
             push @flags, "installbin" if $bin_install{$name};
             $args .= "," if $is_win16 || @flags;

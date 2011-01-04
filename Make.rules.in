@@ -26,7 +26,8 @@ IDL_GEN_HEADERS = $(IDL_H_SRCS:.idl=.h) $(IDL_C_SRCS:.idl=.h) $(IDL_I_SRCS:.idl=
 
 CLEAN_FILES   = *.o *.a *.so *.ln *.res *.fake *.$(LIBEXT) \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej *.flc core
 CLEAN_TARGETS = $(IDL_GEN_C_SRCS) $(IDL_GEN_HEADERS) $(IDL_TLB_SRCS:.idl=.tlb) $(IDL_P_SRCS:%=dlldata.c) \
-                $(BISON_SRCS:.y=.tab.c) $(BISON_SRCS:.y=.tab.h) $(LEX_SRCS:.l=.yy.c) $(MC_SRCS:.mc=.mc.rc)
+                $(BISON_SRCS:.y=.tab.c) $(BISON_SRCS:.y=.tab.h) $(LEX_SRCS:.l=.yy.c) \
+                $(MC_SRCS:.mc=.mc.rc) $(PO_SRCS:%=rsrc.pot)
 
 OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(IDL_GEN_C_SRCS:.c=.o) \
        $(IDL_R_SRCS:.idl=_r.res) $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.mc.res) $(EXTRA_OBJS)
@@ -174,14 +175,20 @@ install install-lib install-dev uninstall::
 
 .PHONY: install install-lib install-dev uninstall
 
-# Misc. rules
+# Rules for resources
+
+all: @MAINTAINER_MODE@ $(PO_SRCS:%=rsrc.pot)
+
+$(PO_SRCS:%=rsrc.pot): $(WRC) $(PO_SRCS)
+	$(LDPATH) $(WRC) $(RCFLAGS) -O pot -o $@ $(PO_SRCS)
 
 $(MC_SRCS:.mc=.mc.rc): $(WMC)
-
-$(IDL_GEN_HEADERS) $(IDL_GEN_C_SRCS) $(IDL_TLB_SRCS:.idl=.tlb) $(IDL_R_SRCS:.idl=_r.res): $(WIDL)
-
 $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.mc.res): $(WRC)
 $(PO_SRCS:.rc=.res): $(ALL_PO_FILES)
+
+# Misc. rules
+
+$(IDL_GEN_HEADERS) $(IDL_GEN_C_SRCS) $(IDL_TLB_SRCS:.idl=.tlb) $(IDL_R_SRCS:.idl=_r.res): $(WIDL)
 
 dummy:
 

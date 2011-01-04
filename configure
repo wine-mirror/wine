@@ -14471,6 +14471,7 @@ all: Makefile
 Makefile: Makefile.in Make.vars.in Make.rules config.status
 	@./config.status Make.tmp Makefile"
 
+ALL_POT_FILES=""
 ALL_WINETEST_DEPENDS="# Test binaries"
 
 ALL_TEST_BINARIES=""
@@ -14591,6 +14592,13 @@ install-lib:: $ac_dir/Makefile __builddeps__
 	@cd $ac_dir && \$(MAKE) install-lib
 uninstall manpages htmlpages sgmlpages xmlpages:: $ac_dir/Makefile
 	@cd $ac_dir && \$(MAKE) \$@"
+
+        if test "x$enable_maintainer_mode" = xyes && wine_fn_has_flag po $ac_flags
+        then
+            wine_fn_append_file ALL_POT_FILES $ac_dir/rsrc.pot
+            wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_dir/rsrc.pot: $ac_dir"
+        fi
 fi
 
     if wine_fn_has_flag staticimplib $ac_flags
@@ -14665,6 +14673,13 @@ else
 .PHONY: $ac_dir
 $ac_dir: $ac_dir/Makefile __builddeps__ dummy
 	@cd $ac_dir && \$(MAKE)"
+
+    if test "x$enable_maintainer_mode" = xyes && wine_fn_has_flag po $ac_flags
+    then
+        wine_fn_append_file ALL_POT_FILES $ac_dir/rsrc.pot
+        wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_dir/rsrc.pot: $ac_dir"
+    fi
 
     wine_fn_has_flag install $ac_flags || return
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
@@ -15379,7 +15394,7 @@ wine_fn_config_makefile loader enable_loader
 wine_fn_config_program aspnet_regiis enable_aspnet_regiis install
 wine_fn_config_program attrib enable_attrib install
 wine_fn_config_program cacls enable_cacls install
-wine_fn_config_program clock enable_clock install
+wine_fn_config_program clock enable_clock po,install
 wine_fn_config_program cmd enable_cmd install
 wine_fn_config_test programs/cmd/tests cmd.exe_test
 wine_fn_config_program cmdlgtst enable_cmdlgtst
@@ -15510,7 +15525,14 @@ then
 \$(srcdir)/include/config.h.in: include/stamp-h.in
 \$(srcdir)/include/stamp-h.in: configure.ac aclocal.m4
 	cd \$(srcdir) && autoheader --warnings=all
-	@echo timestamp > \$@"
+	@echo timestamp > \$@
+
+ALL_POT_FILES =$ALL_POT_FILES
+all: \$(ALL_PO_FILES)
+\$(ALL_PO_FILES): \$(srcdir)/po/wine.pot
+	msgmerge -U -q --backup=none \$@ \$(srcdir)/po/wine.pot && touch \$@
+\$(srcdir)/po/wine.pot: \$(ALL_POT_FILES)
+	msgcat -o \$@ \$(ALL_POT_FILES)"
 fi
 
 if test -n "$with_wine64"

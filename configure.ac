@@ -2865,7 +2865,7 @@ WINE_CONFIG_MAKEFILE([loader])
 WINE_CONFIG_PROGRAM(aspnet_regiis,,[install])
 WINE_CONFIG_PROGRAM(attrib,,[install])
 WINE_CONFIG_PROGRAM(cacls,,[install])
-WINE_CONFIG_PROGRAM(clock,,[install])
+WINE_CONFIG_PROGRAM(clock,,[po,install])
 WINE_CONFIG_PROGRAM(cmd,,[install])
 WINE_CONFIG_TEST(programs/cmd/tests)
 WINE_CONFIG_PROGRAM(cmdlgtst)
@@ -3003,7 +3003,14 @@ then
 \$(srcdir)/include/config.h.in: include/stamp-h.in
 \$(srcdir)/include/stamp-h.in: configure.ac aclocal.m4
 	cd \$(srcdir) && autoheader --warnings=all
-	@echo timestamp > \$[@]])
+	@echo timestamp > \$[@]
+
+ALL_POT_FILES =$ALL_POT_FILES
+all: \$(ALL_PO_FILES)
+\$(ALL_PO_FILES): \$(srcdir)/po/wine.pot
+	msgmerge -U -q --backup=none \$[@] \$(srcdir)/po/wine.pot && touch \$[@]
+\$(srcdir)/po/wine.pot: \$(ALL_POT_FILES)
+	msgcat -o \$[@] \$(ALL_POT_FILES)])
 fi
 
 if test -n "$with_wine64"

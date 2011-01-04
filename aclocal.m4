@@ -150,6 +150,7 @@ all: Makefile
 Makefile: Makefile.in Make.vars.in Make.rules config.status
 	@./config.status Make.tmp Makefile"
 
+ALL_POT_FILES=""
 AC_SUBST(ALL_WINETEST_DEPENDS,["# Test binaries"])
 AC_SUBST(ALL_TEST_BINARIES,"")
 
@@ -266,7 +267,14 @@ install:: $ac_dir/Makefile __builddeps__
 install-lib:: $ac_dir/Makefile __builddeps__ 
 	@cd $ac_dir && \$(MAKE) install-lib
 uninstall manpages htmlpages sgmlpages xmlpages:: $ac_dir/Makefile
-	@cd $ac_dir && \$(MAKE) \$[@]"])
+	@cd $ac_dir && \$(MAKE) \$[@]"
+
+        if test "x$enable_maintainer_mode" = xyes && wine_fn_has_flag po $ac_flags
+        then
+            wine_fn_append_file ALL_POT_FILES $ac_dir/rsrc.pot
+            wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_dir/rsrc.pot: $ac_dir"
+        fi])
 
     if wine_fn_has_flag staticimplib $ac_flags
     then
@@ -337,6 +345,13 @@ wine_fn_config_program ()
 .PHONY: $ac_dir
 $ac_dir: $ac_dir/Makefile __builddeps__ dummy
 	@cd $ac_dir && \$(MAKE)"
+
+    if test "x$enable_maintainer_mode" = xyes && wine_fn_has_flag po $ac_flags
+    then
+        wine_fn_append_file ALL_POT_FILES $ac_dir/rsrc.pot
+        wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_dir/rsrc.pot: $ac_dir"
+    fi
 
     wine_fn_has_flag install $ac_flags || return
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
