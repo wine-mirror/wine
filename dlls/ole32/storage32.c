@@ -296,8 +296,7 @@ extern const IPropertySetStorageVtbl IPropertySetStorage_Vtbl;
  */
 struct IEnumSTATSTGImpl
 {
-  const IEnumSTATSTGVtbl *lpVtbl;    /* Needs to be the first item in the struct
-				* since we want to cast this in an IEnumSTATSTG pointer */
+  IEnumSTATSTG   IEnumSTATSTG_iface;
 
   LONG           ref;                   /* Reference count */
   StorageBaseImpl* parentStorage;         /* Reference to the parent storage */
@@ -305,6 +304,11 @@ struct IEnumSTATSTGImpl
 
   WCHAR	         name[DIRENTRY_NAME_MAX_LEN]; /* The most recent name visited */
 };
+
+static inline IEnumSTATSTGImpl *impl_from_IEnumSTATSTG(IEnumSTATSTG *iface)
+{
+  return CONTAINING_RECORD(iface, IEnumSTATSTGImpl, IEnumSTATSTG_iface);
+}
 
 
 static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(StorageBaseImpl* This, DirRef storageDirEntry);
@@ -711,7 +715,7 @@ static HRESULT WINAPI StorageBaseImpl_EnumElements(
 
   if (newEnum!=0)
   {
-    *ppenum = (IEnumSTATSTG*)newEnum;
+    *ppenum = &newEnum->IEnumSTATSTG_iface;
 
     IEnumSTATSTG_AddRef(*ppenum);
 
@@ -5292,7 +5296,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_QueryInterface(
   REFIID            riid,
   void**            ppvObject)
 {
-  IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
+  IEnumSTATSTGImpl* const This = impl_from_IEnumSTATSTG(iface);
 
   if (ppvObject==0)
     return E_INVALIDARG;
@@ -5303,7 +5307,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_QueryInterface(
       IsEqualGUID(&IID_IEnumSTATSTG, riid))
   {
     *ppvObject = This;
-    IEnumSTATSTG_AddRef((IEnumSTATSTG*)This);
+    IEnumSTATSTG_AddRef(&This->IEnumSTATSTG_iface);
     return S_OK;
   }
 
@@ -5313,14 +5317,14 @@ static HRESULT WINAPI IEnumSTATSTGImpl_QueryInterface(
 static ULONG   WINAPI IEnumSTATSTGImpl_AddRef(
   IEnumSTATSTG* iface)
 {
-  IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
+  IEnumSTATSTGImpl* const This = impl_from_IEnumSTATSTG(iface);
   return InterlockedIncrement(&This->ref);
 }
 
 static ULONG   WINAPI IEnumSTATSTGImpl_Release(
   IEnumSTATSTG* iface)
 {
-  IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
+  IEnumSTATSTGImpl* const This = impl_from_IEnumSTATSTG(iface);
 
   ULONG newRef;
 
@@ -5385,7 +5389,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Next(
   STATSTG*          rgelt,
   ULONG*            pceltFetched)
 {
-  IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
+  IEnumSTATSTGImpl* const This = impl_from_IEnumSTATSTG(iface);
 
   DirEntry    currentEntry;
   STATSTG*    currentReturnStruct = rgelt;
@@ -5452,9 +5456,9 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Skip(
   IEnumSTATSTG* iface,
   ULONG             celt)
 {
-  IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
+  IEnumSTATSTGImpl* const This = impl_from_IEnumSTATSTG(iface);
 
-  ULONG       objectFetched       = 0;
+  ULONG       objectFetched = 0;
   DirRef      currentSearchNode;
   HRESULT     hr=S_OK;
 
@@ -5480,7 +5484,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Skip(
 static HRESULT WINAPI IEnumSTATSTGImpl_Reset(
   IEnumSTATSTG* iface)
 {
-  IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
+  IEnumSTATSTGImpl* const This = impl_from_IEnumSTATSTG(iface);
 
   if (This->parentStorage->reverted)
     return STG_E_REVERTED;
@@ -5494,7 +5498,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Clone(
   IEnumSTATSTG* iface,
   IEnumSTATSTG**    ppenum)
 {
-  IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
+  IEnumSTATSTGImpl* const This = impl_from_IEnumSTATSTG(iface);
 
   IEnumSTATSTGImpl* newClone;
 
@@ -5517,7 +5521,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Clone(
    */
   memcpy(newClone->name, This->name, sizeof(newClone->name));
 
-  *ppenum = (IEnumSTATSTG*)newClone;
+  *ppenum = &newClone->IEnumSTATSTG_iface;
 
   /*
    * Don't forget to nail down a reference to the clone before
@@ -5559,7 +5563,7 @@ static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(
     /*
      * Set-up the virtual function table and reference count.
      */
-    newEnumeration->lpVtbl    = &IEnumSTATSTGImpl_Vtbl;
+    newEnumeration->IEnumSTATSTG_iface.lpVtbl = &IEnumSTATSTGImpl_Vtbl;
     newEnumeration->ref       = 0;
 
     /*
@@ -5574,7 +5578,7 @@ static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(
     /*
      * Make sure the current node of the iterator is the first one.
      */
-    IEnumSTATSTGImpl_Reset((IEnumSTATSTG*)newEnumeration);
+    IEnumSTATSTGImpl_Reset(&newEnumeration->IEnumSTATSTG_iface);
   }
 
   return newEnumeration;
