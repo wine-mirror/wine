@@ -34,45 +34,46 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 struct HTMLCommentElement {
     HTMLElement element;
-    const IHTMLCommentElementVtbl   *lpIHTMLCommentElementVtbl;
+    IHTMLCommentElement IHTMLCommentElement_iface;
 };
 
-#define HTMLCOMMENT(x)  (&(x)->lpIHTMLCommentElementVtbl)
-
-#define HTMLCOMMENT_THIS(iface) DEFINE_THIS(HTMLCommentElement, IHTMLCommentElement, iface)
+static inline HTMLCommentElement *impl_from_IHTMLCommentElement(IHTMLCommentElement *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLCommentElement, IHTMLCommentElement_iface);
+}
 
 static HRESULT WINAPI HTMLCommentElement_QueryInterface(IHTMLCommentElement *iface,
         REFIID riid, void **ppv)
 {
-    HTMLCommentElement *This = HTMLCOMMENT_THIS(iface);
+    HTMLCommentElement *This = impl_from_IHTMLCommentElement(iface);
 
     return IHTMLDOMNode_QueryInterface(&This->element.node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLCommentElement_AddRef(IHTMLCommentElement *iface)
 {
-    HTMLCommentElement *This = HTMLCOMMENT_THIS(iface);
+    HTMLCommentElement *This = impl_from_IHTMLCommentElement(iface);
 
     return IHTMLDOMNode_AddRef(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI HTMLCommentElement_Release(IHTMLCommentElement *iface)
 {
-    HTMLCommentElement *This = HTMLCOMMENT_THIS(iface);
+    HTMLCommentElement *This = impl_from_IHTMLCommentElement(iface);
 
     return IHTMLDOMNode_Release(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI HTMLCommentElement_GetTypeInfoCount(IHTMLCommentElement *iface, UINT *pctinfo)
 {
-    HTMLCommentElement *This = HTMLCOMMENT_THIS(iface);
+    HTMLCommentElement *This = impl_from_IHTMLCommentElement(iface);
     return IDispatchEx_GetTypeInfoCount(&This->element.node.dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI HTMLCommentElement_GetTypeInfo(IHTMLCommentElement *iface, UINT iTInfo,
         LCID lcid, ITypeInfo **ppTInfo)
 {
-    HTMLCommentElement *This = HTMLCOMMENT_THIS(iface);
+    HTMLCommentElement *This = impl_from_IHTMLCommentElement(iface);
     return IDispatchEx_GetTypeInfo(&This->element.node.dispex.IDispatchEx_iface, iTInfo, lcid,
             ppTInfo);
 }
@@ -81,7 +82,7 @@ static HRESULT WINAPI HTMLCommentElement_GetIDsOfNames(IHTMLCommentElement *ifac
                                                 LPOLESTR *rgszNames, UINT cNames,
                                                 LCID lcid, DISPID *rgDispId)
 {
-    HTMLCommentElement *This = HTMLCOMMENT_THIS(iface);
+    HTMLCommentElement *This = impl_from_IHTMLCommentElement(iface);
     return IDispatchEx_GetIDsOfNames(&This->element.node.dispex.IDispatchEx_iface, riid, rgszNames,
             cNames, lcid, rgDispId);
 }
@@ -90,21 +91,21 @@ static HRESULT WINAPI HTMLCommentElement_Invoke(IHTMLCommentElement *iface, DISP
                             REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    HTMLCommentElement *This = HTMLCOMMENT_THIS(iface);
+    HTMLCommentElement *This = impl_from_IHTMLCommentElement(iface);
     return IDispatchEx_Invoke(&This->element.node.dispex.IDispatchEx_iface, dispIdMember, riid,
             lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI HTMLCommentElement_put_text(IHTMLCommentElement *iface, BSTR v)
 {
-    HTMLCommentElement *This = HTMLCOMMENT_THIS(iface);
+    HTMLCommentElement *This = impl_from_IHTMLCommentElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCommentElement_get_text(IHTMLCommentElement *iface, BSTR *p)
 {
-    HTMLCommentElement *This = HTMLCOMMENT_THIS(iface);
+    HTMLCommentElement *This = impl_from_IHTMLCommentElement(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -113,19 +114,17 @@ static HRESULT WINAPI HTMLCommentElement_get_text(IHTMLCommentElement *iface, BS
 
 static HRESULT WINAPI HTMLCommentElement_put_atomic(IHTMLCommentElement *iface, LONG v)
 {
-    HTMLCommentElement *This = HTMLCOMMENT_THIS(iface);
+    HTMLCommentElement *This = impl_from_IHTMLCommentElement(iface);
     FIXME("(%p)->(%d)\n", This, v);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCommentElement_get_atomic(IHTMLCommentElement *iface, LONG *p)
 {
-    HTMLCommentElement *This = HTMLCOMMENT_THIS(iface);
+    HTMLCommentElement *This = impl_from_IHTMLCommentElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
-
-#undef HTMLCOMMENT_THIS
 
 static const IHTMLCommentElementVtbl HTMLCommentElementVtbl = {
     HTMLCommentElement_QueryInterface,
@@ -154,7 +153,7 @@ static HRESULT HTMLCommentElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv
 
     if(IsEqualGUID(&IID_IHTMLCommentElement, riid)) {
         TRACE("(%p)->(IID_IHTMLCommentElement %p)\n", This, ppv);
-        *ppv = HTMLCOMMENT(This);
+        *ppv = &This->IHTMLCommentElement_iface;
     }else {
         return HTMLElement_QI(&This->element.node, riid, ppv);
     }
@@ -197,7 +196,7 @@ HRESULT HTMLCommentElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTM
         return E_OUTOFMEMORY;
 
     ret->element.node.vtbl = &HTMLCommentElementImplVtbl;
-    ret->lpIHTMLCommentElementVtbl = &HTMLCommentElementVtbl;
+    ret->IHTMLCommentElement_iface.lpVtbl = &HTMLCommentElementVtbl;
 
     HTMLElement_Init(&ret->element, doc, NULL, &HTMLCommentElement_dispex);
 
