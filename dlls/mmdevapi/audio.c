@@ -64,7 +64,7 @@ typedef struct ACImpl {
     BOOL init, running;
     CRITICAL_SECTION *crst;
     HANDLE handle;
-    DWORD locked, flags, bufsize, pad, padpartial, ofs, psize, candisconnect;
+    DWORD locked, flags, bufsize, pad, padpartial, ofs, periodsize_frames, candisconnect;
     BYTE *buffer;
     WAVEFORMATEX *pwfx;
     ALuint source;
@@ -515,15 +515,14 @@ static HRESULT WINAPI AC_Initialize(IAudioClient *iface, AUDCLNT_SHAREMODE mode,
     if (FAILED(hr))
         goto out;
 
-    This->psize = (DWORD64)This->pwfx->nSamplesPerSec * time / (DWORD64)10000000;
+    This->periodsize_frames = (DWORD64)This->pwfx->nSamplesPerSec * time / (DWORD64)10000000;
     if (duration > 20000000)
         duration = 20000000;
 
-    bufsize = duration / time * This->psize;
+    bufsize = duration / time * This->periodsize_frames;
     if (duration % time)
-        bufsize += This->psize;
+        bufsize += This->periodsize_frames;
     This->bufsize = bufsize;
-    This->psize *= This->pwfx->nBlockAlign;
     bufsize *= pwfx->nBlockAlign;
 
     This->format = get_format(This->pwfx);
@@ -694,20 +693,20 @@ static HRESULT WINAPI AC_GetCurrentPadding(IAudioClient *iface, UINT32 *numpad)
             This->laststamp += period;
 
             if (This->parent->flow == eCapture) {
-                This->pad += This->psize;
+                This->pad += This->periodsize_frames;
                 if (This->pad > This->bufsize)
                     This->pad = This->bufsize;
             } else {
-                if (This->pad <= This->psize) {
+                if (This->pad <= This->periodsize_frames) {
                     This->pad = 0;
                     break;
                 } else
-                    This->pad -= This->psize;
+                    This->pad -= This->periodsize_frames;
             }
         }
 
         if (This->parent->flow == eCapture)
-            *numpad = This->pad >= This->psize ? This->psize : 0;
+            *numpad = This->pad >= This->periodsize_frames ? This->periodsize_frames: 0;
         else
             *numpad = This->pad;
     } else if (This->parent->flow == eRender) {
@@ -726,8 +725,8 @@ static HRESULT WINAPI AC_GetCurrentPadding(IAudioClient *iface, UINT32 *numpad)
 #if 0 /* Manipulative lie */
         } else if (This->running) {
             ALint size = This->pad - padpart;
-            if (size > This->psize)
-                size = This->psize;
+            if (size > This->periodsize_frames)
+                size = This->periodsize_frames;
             played = (gettime() - This->laststamp)*8;
             played = played * This->pwfx->nSamplesPerSec / 10000000;
             if (played > size)
@@ -735,13 +734,12 @@ static HRESULT WINAPI AC_GetCurrentPadding(IAudioClient *iface, UINT32 *numpad)
 #endif
         }
         *numpad = This->pad - This->padpartial - played;
-        if (This->handle && *numpad + This->psize <= This->bufsize)
+        if (This->handle && (*numpad + This->periodsize_frames) <= This->bufsize)
             SetEvent(This->handle);
         getALError();
         popALContext();
     } else {
         DWORD block = This->pwfx->nBlockAlign;
-        DWORD psize = This->psize / block;
         palcGetIntegerv(This->dev, ALC_CAPTURE_SAMPLES, 1, &avail);
         if (avail) {
             DWORD ofs = This->ofs + This->pad;
@@ -766,15 +764,15 @@ static HRESULT WINAPI AC_GetCurrentPadding(IAudioClient *iface, UINT32 *numpad)
                 DWORD rest;
                 WARN("Overflowed! %u bytes\n", This->pad - This->bufsize);
                 This->ofs += This->pad - This->bufsize;
-                rest = This->ofs % psize;
+                rest = This->ofs % This->periodsize_frames;
                 if (rest)
-                    This->ofs += psize - rest;
+                    This->ofs += This->periodsize_frames - rest;
                 This->ofs %= This->bufsize;
                 This->pad = This->bufsize;
             }
         }
-        if (This->pad >= psize)
-            *numpad = psize;
+        if (This->pad >= This->periodsize_frames)
+            *numpad = This->periodsize_frames;
         else
             *numpad = 0;
     }
@@ -1387,8 +1385,8 @@ static HRESULT WINAPI ACC_GetBuffer(IAudioCaptureClient *iface, BYTE **data, UIN
         goto out;
     IAudioCaptureClient_GetNextPacketSize(iface, frames);
     ofs = This->parent->ofs;
-    if ( (ofs*block) % This->parent->psize)
-        ERR("Unaligned offset %u with %u\n", ofs*block, This->parent->psize);
+    if ( ofs % This->parent->periodsize_frames)
+        ERR("Unaligned offset %u with %u\n", ofs, This->parent->periodsize_frames);
     *data = This->parent->buffer + ofs * block;
     This->parent->locked = *frames;
     if (devpos)
