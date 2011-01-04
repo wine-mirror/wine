@@ -306,6 +306,7 @@ static int wpp_close_output(void)
     if(!new_wpp_output) return 0;
     wpp_output = new_wpp_output;
     wpp_output[wpp_output_size]='\0';
+    wpp_output_size++;
     return 1;
 }
 
