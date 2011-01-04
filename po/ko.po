@@ -774,3 +774,99 @@ msgstr "아니오"
 #: ipconfig.rc:46
 msgid "Default gateway"
 msgstr "기본 게이트웨이"
+
+#: net.rc:27
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET [ HELP | START | STOP | USE ]\n"
+msgstr ""
+"이 명령어의 문법:\n"
+"\n"
+"NET [ HELP | START | STOP | USE ]\n"
+
+#: net.rc:28
+msgid "Specify service name to start.\n"
+msgstr "지정된 서비스  시작.\n"
+
+#: net.rc:29
+msgid "Specify service name to stop.\n"
+msgstr "지정된 서비스  정지.\n"
+
+#: net.rc:30
+msgid "Stopping dependent service: %s\n"
+msgstr "종속된 서비스 정지중: %s\n"
+
+#: net.rc:31
+msgid "Could not stop service %s\n"
+msgstr "%s 서비스를 정지할 수 없습니다\n"
+
+#: net.rc:32
+msgid "Could not get handle to service control manager.\n"
+msgstr "서비스 제어 관리자를 다룰 수 없습니다.\n"
+
+#: net.rc:33
+msgid "Could not get handle to service.\n"
+msgstr "서비스 핸들을 얻을 수 없습니다.\n"
+
+#: net.rc:34
+msgid "The %s service is starting.\n"
+msgstr "%s 서비스는 시작중.\n"
+
+#: net.rc:35
+msgid "The %s service was started successfully.\n"
+msgstr " %s 서비스 시작 성공.\n"
+
+#: net.rc:36
+msgid "The %s service failed to start.\n"
+msgstr "%s 서비스 시작 실패.\n"
+
+#: net.rc:37
+msgid "The %s service is stopping.\n"
+msgstr "%s  서비스 정지.\n"
+
+#: net.rc:38
+msgid "The %s service was stopped successfully.\n"
+msgstr "%s 서비스 정지 성공.\n"
+
+#: net.rc:39
+msgid "The %s service failed to stop.\n"
+msgstr "%s 서비스 정지 실패.\n"
+
+#: net.rc:40
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET HELP command\n"
+"    -or-\n"
+"NET command /HELP\n"
+"\n"
+"   Commands available are:\n"
+"   NET HELP    NET START    NET STOP    NET USE\n"
+msgstr ""
+"명령어 문법:\n"
+"\n"
+"NET HELP 명령어\n"
+"    -or-\n"
+"NET 명령어  /HELP\n"
+"\n"
+"    가능한 명령어:\n"
+"   NET HELP    NET START    NET STOP    NET USE\n"
+
+#: net.rc:42
+msgid "There are no entries in the list.\n"
+msgstr "리스트가 비어 있습니다.\n"
+
+#: net.rc:43
+msgid ""
+"\n"
+"Status  Local   Remote\n"
+"---------------------------------------------------------------\n"
+msgstr ""
+"\n"
+"상태  로컬   원격\n"
+"---------------------------------------------------------------\n"
+
+#: net.rc:44
+msgid "%s      %S      %S      Open resources: %lu\n"
+msgstr "%s      %S      %S      열린 리소스: %lu\n"

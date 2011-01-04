@@ -782,3 +782,99 @@ msgstr "Ne"
 #: ipconfig.rc:46
 msgid "Default gateway"
 msgstr ""
+
+#: net.rc:27
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET [ HELP | START | STOP | USE ]\n"
+msgstr ""
+"Sintaksa ukaza:\n"
+"\n"
+"NET [ HELP | START | STOP | USE ]\n"
+
+#: net.rc:28
+msgid "Specify service name to start.\n"
+msgstr "Navedite ime storitve, ki naj jo zaženem.\n"
+
+#: net.rc:29
+msgid "Specify service name to stop.\n"
+msgstr "Navedite ime storitve, ki naj jo ustavim.\n"
+
+#: net.rc:30
+msgid "Stopping dependent service: %s\n"
+msgstr "Ustavljam odvisno storitev: %s\n"
+
+#: net.rc:31
+msgid "Could not stop service %s\n"
+msgstr "Ustavljanje storitve %s ni uspelo\n"
+
+#: net.rc:32
+msgid "Could not get handle to service control manager.\n"
+msgstr "Napaka pri povezovanju z Upraviteljem storitev.\n"
+
+#: net.rc:33
+msgid "Could not get handle to service.\n"
+msgstr "Napaka pri povezovanju s storitvijo.\n"
+
+#: net.rc:34
+msgid "The %s service is starting.\n"
+msgstr "Zaganjam storitev %s.\n"
+
+#: net.rc:35
+msgid "The %s service was started successfully.\n"
+msgstr "Zagon storitve %s je uspel.\n"
+
+#: net.rc:36
+msgid "The %s service failed to start.\n"
+msgstr "Zagon storitve %s ni uspel.\n"
+
+#: net.rc:37
+msgid "The %s service is stopping.\n"
+msgstr "Ustavljam storitev %s.\n"
+
+#: net.rc:38
+msgid "The %s service was stopped successfully.\n"
+msgstr "Ustavljanje storitve %s je uspelo.\n"
+
+#: net.rc:39
+msgid "The %s service failed to stop.\n"
+msgstr "Ustavljanje storitve %s ni uspelo.\n"
+
+#: net.rc:40
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET HELP command\n"
+"    -or-\n"
+"NET command /HELP\n"
+"\n"
+"   Commands available are:\n"
+"   NET HELP    NET START    NET STOP    NET USE\n"
+msgstr ""
+"Sintaksa ukaza je:\n"
+"\n"
+"NET HELP ukaz\n"
+"    -ali-\n"
+"NET ukaz /HELP\n"
+"\n"
+"   Razpoložljivi ukazi:\n"
+"   NET HELP    NET START    NET STOP    NET USE\n"
+
+#: net.rc:42
+msgid "There are no entries in the list.\n"
+msgstr "Na seznamu ni vnosov.\n"
+
+#: net.rc:43
+msgid ""
+"\n"
+"Status  Local   Remote\n"
+"---------------------------------------------------------------\n"
+msgstr ""
+"\n"
+"Stanje  Lokalno   Oddaljeno\n"
+"---------------------------------------------------------------\n"
+
+#: net.rc:44
+msgid "%s      %S      %S      Open resources: %lu\n"
+msgstr "%s      %S      %S      Porabljena sredstva: %lu\n"

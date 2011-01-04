@@ -15412,7 +15412,7 @@ wine_fn_config_program lodctr enable_lodctr install
 wine_fn_config_program mofcomp enable_mofcomp install
 wine_fn_config_program mshta enable_mshta install
 wine_fn_config_program msiexec enable_msiexec install,installbin
-wine_fn_config_program net enable_net install
+wine_fn_config_program net enable_net po,install
 wine_fn_config_program netsh enable_netsh install
 wine_fn_config_program ngen enable_ngen install
 wine_fn_config_program notepad enable_notepad install,installbin

@@ -776,3 +776,99 @@ msgstr "Ne"
 #: ipconfig.rc:46
 msgid "Default gateway"
 msgstr "Numatytasis šliuzas"
+
+#: net.rc:27
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET [ HELP | START | STOP | USE ]\n"
+msgstr ""
+"Šios komandos sintaksė yra:\n"
+"\n"
+"NET [ HELP | START | STOP | USE ]\n"
+
+#: net.rc:28
+msgid "Specify service name to start.\n"
+msgstr "Nurodykite paleidžiamos tarnybos vardą.\n"
+
+#: net.rc:29
+msgid "Specify service name to stop.\n"
+msgstr "Nurodykite stabdomos tarnybos vardą.\n"
+
+#: net.rc:30
+msgid "Stopping dependent service: %s\n"
+msgstr "Stabdoma priklausoma tarnyba: %s\n"
+
+#: net.rc:31
+msgid "Could not stop service %s\n"
+msgstr "Nepavyko sustabdyti tarnybos %s\n"
+
+#: net.rc:32
+msgid "Could not get handle to service control manager.\n"
+msgstr "Nepavyko gauti tarnybos valdymo tvarkytuvės rodyklės.\n"
+
+#: net.rc:33
+msgid "Could not get handle to service.\n"
+msgstr "Nepavyko gauti tarnybos rodyklės.\n"
+
+#: net.rc:34
+msgid "The %s service is starting.\n"
+msgstr "Tarnyba %s yra paleidžiama.\n"
+
+#: net.rc:35
+msgid "The %s service was started successfully.\n"
+msgstr "Tarnyba %s sėkmingai paleista.\n"
+
+#: net.rc:36
+msgid "The %s service failed to start.\n"
+msgstr "Tarnyba %s nepasileido.\n"
+
+#: net.rc:37
+msgid "The %s service is stopping.\n"
+msgstr "Tarnyba %s yra stabdoma.\n"
+
+#: net.rc:38
+msgid "The %s service was stopped successfully.\n"
+msgstr "Tarnyba %s sėkmingai sustabdyta.\n"
+
+#: net.rc:39
+msgid "The %s service failed to stop.\n"
+msgstr "Tarnyba %s nesustojo.\n"
+
+#: net.rc:40
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET HELP command\n"
+"    -or-\n"
+"NET command /HELP\n"
+"\n"
+"   Commands available are:\n"
+"   NET HELP    NET START    NET STOP    NET USE\n"
+msgstr ""
+"Šios komandos sintaksė yra:\n"
+"\n"
+"NET HELP komanda\n"
+"    -arba-\n"
+"NET komanda /HELP\n"
+"\n"
+"   Galimos komandos yra:\n"
+"   NET HELP    NET START    NET STOP    NET USE\n"
+
+#: net.rc:42
+msgid "There are no entries in the list.\n"
+msgstr "Sąraše nėra elementų.\n"
+
+#: net.rc:43
+msgid ""
+"\n"
+"Status  Local   Remote\n"
+"---------------------------------------------------------------\n"
+msgstr ""
+"\n"
+"Būsena  Vietinė   Nutolusi\n"
+"---------------------------------------------------------------\n"
+
+#: net.rc:44
+msgid "%s      %S      %S      Open resources: %lu\n"
+msgstr "%s      %S      %S      Atverti ištekliai: %lu\n"

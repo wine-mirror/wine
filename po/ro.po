@@ -774,3 +774,99 @@ msgstr ""
 #: ipconfig.rc:46
 msgid "Default gateway"
 msgstr ""
+
+#: net.rc:27
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET [ HELP | START | STOP | USE ]\n"
+msgstr ""
+"Sintaxa acestei comenzi este:\n"
+"\n"
+"NET [ HELP | START | STOP | USE ]\n"
+
+#: net.rc:28
+msgid "Specify service name to start.\n"
+msgstr "Specificați numele serviciului de pornit.\n"
+
+#: net.rc:29
+msgid "Specify service name to stop.\n"
+msgstr "Specificați numele serviciului de oprit.\n"
+
+#: net.rc:30
+msgid "Stopping dependent service: %s\n"
+msgstr "Se oprește serviciul dependent: %s\n"
+
+#: net.rc:31
+msgid "Could not stop service %s\n"
+msgstr "Serviciul %s nu a putut fi oprit\n"
+
+#: net.rc:32
+msgid "Could not get handle to service control manager.\n"
+msgstr "Nu a putut fi accesat managerul de control al serviciului.\n"
+
+#: net.rc:33
+msgid "Could not get handle to service.\n"
+msgstr "Serviciul nu a putut fi accesat.\n"
+
+#: net.rc:34
+msgid "The %s service is starting.\n"
+msgstr "Serviciul %s pornește.\n"
+
+#: net.rc:35
+msgid "The %s service was started successfully.\n"
+msgstr "Serviciul %s a fost pornit cu succes.\n"
+
+#: net.rc:36
+msgid "The %s service failed to start.\n"
+msgstr "Pornirea serviciului %s a eșuat.\n"
+
+#: net.rc:37
+msgid "The %s service is stopping.\n"
+msgstr "Serviciul %s se oprește.\n"
+
+#: net.rc:38
+msgid "The %s service was stopped successfully.\n"
+msgstr "Serviciul %s a fost oprit cu succes.\n"
+
+#: net.rc:39
+msgid "The %s service failed to stop.\n"
+msgstr "Oprirea serviciului %s a eșuat.\n"
+
+#: net.rc:40
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET HELP command\n"
+"    -or-\n"
+"NET command /HELP\n"
+"\n"
+"   Commands available are:\n"
+"   NET HELP    NET START    NET STOP    NET USE\n"
+msgstr ""
+"Sintaxa acestei comenzi este:\n"
+"\n"
+"comandă NET HELP\n"
+"    -sau-\n"
+"comandă NET /HELP\n"
+"\n"
+"   Comenzile disponibile sunt:\n"
+"   NET HELP    NET START    NET STOP    NET USE\n"
+
+#: net.rc:42
+msgid "There are no entries in the list.\n"
+msgstr "Nu există nici un element în listă.\n"
+
+#: net.rc:43
+msgid ""
+"\n"
+"Status  Local   Remote\n"
+"---------------------------------------------------------------\n"
+msgstr ""
+"\n"
+"Stare  Local   Distant\n"
+"---------------------------------------------------------------\n"
+
+#: net.rc:44
+msgid "%s      %S      %S      Open resources: %lu\n"
+msgstr "%s      %S      %S      Resurse deschise: %lu\n"

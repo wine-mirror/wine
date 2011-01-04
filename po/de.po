@@ -809,3 +809,99 @@ msgstr "Nein"
 #: ipconfig.rc:46
 msgid "Default gateway"
 msgstr "Standard Gateway"
+
+#: net.rc:27
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET [ HELP | START | STOP | USE ]\n"
+msgstr ""
+"Die Syntax von diesem Befehl ist:\n"
+"\n"
+"NET [ HELP | START | STOP | USE ]\n"
+
+#: net.rc:28
+msgid "Specify service name to start.\n"
+msgstr "Gib den zu startenden Dienst an.\n"
+
+#: net.rc:29
+msgid "Specify service name to stop.\n"
+msgstr "Gib den zu stoppenden Dienst an.\n"
+
+#: net.rc:30
+msgid "Stopping dependent service: %s\n"
+msgstr "Stoppe den abbhängigen Dienst: %s\n"
+
+#: net.rc:31
+msgid "Could not stop service %s\n"
+msgstr "Konnte den Dienst nicht stoppen %s\n"
+
+#: net.rc:32
+msgid "Could not get handle to service control manager.\n"
+msgstr "Konnte den Zeiger von der Dienststeuerung nicht bekommen.\n"
+
+#: net.rc:33
+msgid "Could not get handle to service.\n"
+msgstr "Konnte den Zeiger zum Dienst nicht bekommen.\n"
+
+#: net.rc:34
+msgid "The %s service is starting.\n"
+msgstr "Der %s Dienst startet.\n"
+
+#: net.rc:35
+msgid "The %s service was started successfully.\n"
+msgstr "Der %s Dienst wurde erfolgreich gestartet.\n"
+
+#: net.rc:36
+msgid "The %s service failed to start.\n"
+msgstr "Der Start des %s Dienstes ist fehlgeschlagen.\n"
+
+#: net.rc:37
+msgid "The %s service is stopping.\n"
+msgstr "Der %s Dienst wird gestoppt.\n"
+
+#: net.rc:38
+msgid "The %s service was stopped successfully.\n"
+msgstr "Der %s Dienst wurde erfolgreich beendet.\n"
+
+#: net.rc:39
+msgid "The %s service failed to stop.\n"
+msgstr "Der %s Dienst konnte nicht beendet werden.\n"
+
+#: net.rc:40
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET HELP command\n"
+"    -or-\n"
+"NET command /HELP\n"
+"\n"
+"   Commands available are:\n"
+"   NET HELP    NET START    NET STOP    NET USE\n"
+msgstr ""
+"Die Syntax von diesem Befehl ist:\n"
+"\n"
+"NET HELP Befehl\n"
+"    -or-\n"
+"NET Befehl /HELP\n"
+"\n"
+"   Mögliche Befehle:\n"
+"   NET HELP    NET START    NET STOP    NET USE\n"
+
+#: net.rc:42
+msgid "There are no entries in the list.\n"
+msgstr "Es sind keine Einträge in der Liste.\n"
+
+#: net.rc:43
+msgid ""
+"\n"
+"Status  Local   Remote\n"
+"---------------------------------------------------------------\n"
+msgstr ""
+"\n"
+"Status  Lokal   Entfernt\n"
+"---------------------------------------------------------------\n"
+
+#: net.rc:44
+msgid "%s      %S      %S      Open resources: %lu\n"
+msgstr "%s      %S      %S      Offene Ressourcen: %lu\n"

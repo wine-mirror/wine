@@ -782,3 +782,99 @@ msgstr ""
 #: ipconfig.rc:46
 msgid "Default gateway"
 msgstr ""
+
+#: net.rc:27
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET [ HELP | START | STOP | USE ]\n"
+msgstr ""
+"Использование:\n"
+"\n"
+"NET [ HELP | START | STOP | USE ]\n"
+
+#: net.rc:28
+msgid "Specify service name to start.\n"
+msgstr "Укажите запускаемую службу.\n"
+
+#: net.rc:29
+msgid "Specify service name to stop.\n"
+msgstr "Укажите останавливаемую службу.\n"
+
+#: net.rc:30
+msgid "Stopping dependent service: %s\n"
+msgstr "Остановка зависимой службы: %s\n"
+
+#: net.rc:31
+msgid "Could not stop service %s\n"
+msgstr "Невозможно остановить службу %s\n"
+
+#: net.rc:32
+msgid "Could not get handle to service control manager.\n"
+msgstr "Невозможно получить доступ к диспетчеру служб.\n"
+
+#: net.rc:33
+msgid "Could not get handle to service.\n"
+msgstr "Невозможно получить доступ к службе.\n"
+
+#: net.rc:34
+msgid "The %s service is starting.\n"
+msgstr "Запуск службы %s.\n"
+
+#: net.rc:35
+msgid "The %s service was started successfully.\n"
+msgstr "Служба %s успешно запущена.\n"
+
+#: net.rc:36
+msgid "The %s service failed to start.\n"
+msgstr "Ошибка при запуске службы %s.\n"
+
+#: net.rc:37
+msgid "The %s service is stopping.\n"
+msgstr "Остановка службы %s.\n"
+
+#: net.rc:38
+msgid "The %s service was stopped successfully.\n"
+msgstr "Служба %s успешно остановлена.\n"
+
+#: net.rc:39
+msgid "The %s service failed to stop.\n"
+msgstr "Ошибка при остановке службы %s.\n"
+
+#: net.rc:40
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET HELP command\n"
+"    -or-\n"
+"NET command /HELP\n"
+"\n"
+"   Commands available are:\n"
+"   NET HELP    NET START    NET STOP    NET USE\n"
+msgstr ""
+"Использование:\n"
+"\n"
+"NET HELP команда\n"
+"    -или-\n"
+"NET команда /HELP\n"
+"\n"
+"   Доступные команды:\n"
+"   NET HELP    NET START    NET STOP    NET USE\n"
+
+#: net.rc:42
+msgid "There are no entries in the list.\n"
+msgstr "Список пуст.\n"
+
+#: net.rc:43
+msgid ""
+"\n"
+"Status  Local   Remote\n"
+"---------------------------------------------------------------\n"
+msgstr ""
+"\n"
+"Статус  Локальный  Удалённый\n"
+"---------------------------------------------------------------\n"
+
+#: net.rc:44
+msgid "%s      %S      %S      Open resources: %lu\n"
+msgstr "%s      %S         %S      Открытых ресурсов: %lu\n"

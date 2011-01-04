@@ -775,3 +775,99 @@ msgstr "No"
 #: ipconfig.rc:46
 msgid "Default gateway"
 msgstr "Default gateway"
+
+#: net.rc:27
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET [ HELP | START | STOP | USE ]\n"
+msgstr ""
+"The syntax of this command is:\n"
+"\n"
+"NET [ HELP | START | STOP | USE ]\n"
+
+#: net.rc:28
+msgid "Specify service name to start.\n"
+msgstr "Specify service name to start.\n"
+
+#: net.rc:29
+msgid "Specify service name to stop.\n"
+msgstr "Specify service name to stop.\n"
+
+#: net.rc:30
+msgid "Stopping dependent service: %s\n"
+msgstr "Stopping dependent service: %s\n"
+
+#: net.rc:31
+msgid "Could not stop service %s\n"
+msgstr "Could not stop service %s\n"
+
+#: net.rc:32
+msgid "Could not get handle to service control manager.\n"
+msgstr "Could not get handle to service control manager.\n"
+
+#: net.rc:33
+msgid "Could not get handle to service.\n"
+msgstr "Could not get handle to service.\n"
+
+#: net.rc:34
+msgid "The %s service is starting.\n"
+msgstr "The %s service is starting.\n"
+
+#: net.rc:35
+msgid "The %s service was started successfully.\n"
+msgstr "The %s service was started successfully.\n"
+
+#: net.rc:36
+msgid "The %s service failed to start.\n"
+msgstr "The %s service failed to start.\n"
+
+#: net.rc:37
+msgid "The %s service is stopping.\n"
+msgstr "The %s service is stopping.\n"
+
+#: net.rc:38
+msgid "The %s service was stopped successfully.\n"
+msgstr "The %s service was stopped successfully.\n"
+
+#: net.rc:39
+msgid "The %s service failed to stop.\n"
+msgstr "The %s service failed to stop.\n"
+
+#: net.rc:40
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET HELP command\n"
+"    -or-\n"
+"NET command /HELP\n"
+"\n"
+"   Commands available are:\n"
+"   NET HELP    NET START    NET STOP    NET USE\n"
+msgstr ""
+"The syntax of this command is:\n"
+"\n"
+"NET HELP command\n"
+"    -or-\n"
+"NET command /HELP\n"
+"\n"
+"   Commands available are:\n"
+"   NET HELP    NET START    NET STOP    NET USE\n"
+
+#: net.rc:42
+msgid "There are no entries in the list.\n"
+msgstr "There are no entries in the list.\n"
+
+#: net.rc:43
+msgid ""
+"\n"
+"Status  Local   Remote\n"
+"---------------------------------------------------------------\n"
+msgstr ""
+"\n"
+"Status  Local   Remote\n"
+"---------------------------------------------------------------\n"
+
+#: net.rc:44
+msgid "%s      %S      %S      Open resources: %lu\n"
+msgstr "%s      %S      %S      Open resources: %lu\n"

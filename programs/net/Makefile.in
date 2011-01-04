@@ -5,22 +5,7 @@ EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 
 C_SRCS = net.c
 
-RC_SRCS = \
-	Da.rc \
-	De.rc \
-	En.rc \
-	Fr.rc \
-	It.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	No.rc \
-	Pl.rc \
-	Pt.rc \
-	Ro.rc \
-	Ru.rc \
-	Si.rc \
-	Sv.rc \
-	Uk.rc
+RC_SRCS = net.rc
+PO_SRCS = net.rc
 
 @MAKE_PROG_RULES@
