@@ -34,12 +34,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 struct HTMLFormElement {
     HTMLElement element;
 
-    const IHTMLFormElementVtbl *lpHTMLFormElementVtbl;
+    IHTMLFormElement IHTMLFormElement_iface;
 
     nsIDOMHTMLFormElement *nsform;
 };
-
-#define HTMLFORM(x)  (&(x)->lpHTMLFormElementVtbl)
 
 static HRESULT htmlform_item(HTMLFormElement *This, int i, IDispatch **ret)
 {
@@ -77,40 +75,43 @@ static HRESULT htmlform_item(HTMLFormElement *This, int i, IDispatch **ret)
     return S_OK;
 }
 
-#define HTMLFORM_THIS(iface) DEFINE_THIS(HTMLFormElement, HTMLFormElement, iface)
+static inline HTMLFormElement *impl_from_IHTMLFormElement(IHTMLFormElement *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLFormElement, IHTMLFormElement_iface);
+}
 
 static HRESULT WINAPI HTMLFormElement_QueryInterface(IHTMLFormElement *iface,
         REFIID riid, void **ppv)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
 
     return IHTMLDOMNode_QueryInterface(&This->element.node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLFormElement_AddRef(IHTMLFormElement *iface)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
 
     return IHTMLDOMNode_AddRef(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI HTMLFormElement_Release(IHTMLFormElement *iface)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
 
     return IHTMLDOMNode_Release(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI HTMLFormElement_GetTypeInfoCount(IHTMLFormElement *iface, UINT *pctinfo)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     return IDispatchEx_GetTypeInfoCount(&This->element.node.dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI HTMLFormElement_GetTypeInfo(IHTMLFormElement *iface, UINT iTInfo,
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     return IDispatchEx_GetTypeInfo(&This->element.node.dispex.IDispatchEx_iface, iTInfo, lcid,
             ppTInfo);
 }
@@ -119,7 +120,7 @@ static HRESULT WINAPI HTMLFormElement_GetIDsOfNames(IHTMLFormElement *iface, REF
                                                 LPOLESTR *rgszNames, UINT cNames,
                                                 LCID lcid, DISPID *rgDispId)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     return IDispatchEx_GetIDsOfNames(&This->element.node.dispex.IDispatchEx_iface, riid, rgszNames,
             cNames, lcid, rgDispId);
 }
@@ -128,14 +129,14 @@ static HRESULT WINAPI HTMLFormElement_Invoke(IHTMLFormElement *iface, DISPID dis
                             REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     return IDispatchEx_Invoke(&This->element.node.dispex.IDispatchEx_iface, dispIdMember, riid,
             lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI HTMLFormElement_put_action(IHTMLFormElement *iface, BSTR v)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     nsAString action_str;
     nsresult nsres;
 
@@ -154,7 +155,7 @@ static HRESULT WINAPI HTMLFormElement_put_action(IHTMLFormElement *iface, BSTR v
 
 static HRESULT WINAPI HTMLFormElement_get_action(IHTMLFormElement *iface, BSTR *p)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     nsAString action_str;
     nsresult nsres;
     HRESULT hres;
@@ -177,14 +178,14 @@ static HRESULT WINAPI HTMLFormElement_get_action(IHTMLFormElement *iface, BSTR *
 
 static HRESULT WINAPI HTMLFormElement_put_dir(IHTMLFormElement *iface, BSTR v)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     FIXME("(%p)->(%s)\n", This, wine_dbgstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLFormElement_get_dir(IHTMLFormElement *iface, BSTR *p)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
@@ -197,7 +198,7 @@ static HRESULT WINAPI HTMLFormElement_put_encoding(IHTMLFormElement *iface, BSTR
         'f','o','r','m','-','d','a','t','a',0};
     static const WCHAR plainW[] = {'t','e','x','t','/','p','l','a','i','n',0};
 
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     nsAString encoding_str;
     nsresult nsres;
 
@@ -219,7 +220,7 @@ static HRESULT WINAPI HTMLFormElement_put_encoding(IHTMLFormElement *iface, BSTR
 
 static HRESULT WINAPI HTMLFormElement_get_encoding(IHTMLFormElement *iface, BSTR *p)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     nsAString encoding_str;
     nsresult nsres;
 
@@ -245,7 +246,7 @@ static HRESULT WINAPI HTMLFormElement_put_method(IHTMLFormElement *iface, BSTR v
     static const WCHAR postW[] = {'P','O','S','T',0};
     static const WCHAR getW[] = {'G','E','T',0};
 
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     nsAString method_str;
     nsresult nsres;
 
@@ -267,7 +268,7 @@ static HRESULT WINAPI HTMLFormElement_put_method(IHTMLFormElement *iface, BSTR v
 
 static HRESULT WINAPI HTMLFormElement_get_method(IHTMLFormElement *iface, BSTR *p)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     nsAString method_str;
     nsresult nsres;
 
@@ -290,28 +291,28 @@ static HRESULT WINAPI HTMLFormElement_get_method(IHTMLFormElement *iface, BSTR *
 
 static HRESULT WINAPI HTMLFormElement_get_elements(IHTMLFormElement *iface, IDispatch **p)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLFormElement_put_target(IHTMLFormElement *iface, BSTR v)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     FIXME("(%p)->(%s)\n", This, wine_dbgstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLFormElement_get_target(IHTMLFormElement *iface, BSTR *p)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLFormElement_put_name(IHTMLFormElement *iface, BSTR v)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     nsAString name_str;
     nsresult nsres;
 
@@ -328,7 +329,7 @@ static HRESULT WINAPI HTMLFormElement_put_name(IHTMLFormElement *iface, BSTR v)
 
 static HRESULT WINAPI HTMLFormElement_get_name(IHTMLFormElement *iface, BSTR *p)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     nsAString name_str;
     nsresult nsres;
 
@@ -354,56 +355,56 @@ static HRESULT WINAPI HTMLFormElement_get_name(IHTMLFormElement *iface, BSTR *p)
 
 static HRESULT WINAPI HTMLFormElement_put_onsubmit(IHTMLFormElement *iface, VARIANT v)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     FIXME("(%p)->(v)\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLFormElement_get_onsubmit(IHTMLFormElement *iface, VARIANT *p)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLFormElement_put_onreset(IHTMLFormElement *iface, VARIANT v)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     FIXME("(%p)->(v)\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLFormElement_get_onreset(IHTMLFormElement *iface, VARIANT *p)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLFormElement_submit(IHTMLFormElement *iface)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLFormElement_reset(IHTMLFormElement *iface)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLFormElement_put_length(IHTMLFormElement *iface, LONG v)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     FIXME("(%p)->(%d)\n", This, v);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLFormElement_get_length(IHTMLFormElement *iface, LONG *p)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     PRInt32 length;
     nsresult nsres;
 
@@ -421,7 +422,7 @@ static HRESULT WINAPI HTMLFormElement_get_length(IHTMLFormElement *iface, LONG *
 
 static HRESULT WINAPI HTMLFormElement__newEnum(IHTMLFormElement *iface, IUnknown **p)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
@@ -429,7 +430,7 @@ static HRESULT WINAPI HTMLFormElement__newEnum(IHTMLFormElement *iface, IUnknown
 static HRESULT WINAPI HTMLFormElement_item(IHTMLFormElement *iface, VARIANT name,
         VARIANT index, IDispatch **pdisp)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
 
     TRACE("(%p)->(%s %s %p)\n", This, debugstr_variant(&name), debugstr_variant(&index), pdisp);
 
@@ -450,12 +451,10 @@ static HRESULT WINAPI HTMLFormElement_item(IHTMLFormElement *iface, VARIANT name
 static HRESULT WINAPI HTMLFormElement_tags(IHTMLFormElement *iface, VARIANT tagName,
         IDispatch **pdisp)
 {
-    HTMLFormElement *This = HTMLFORM_THIS(iface);
+    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     FIXME("(%p)->(v %p)\n", This, pdisp);
     return E_NOTIMPL;
 }
-
-#undef HTMLFORM_THIS
 
 static const IHTMLFormElementVtbl HTMLFormElementVtbl = {
     HTMLFormElement_QueryInterface,
@@ -504,13 +503,13 @@ static HRESULT HTMLFormElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = HTMLFORM(This);
+        *ppv = &This->IHTMLFormElement_iface;
     }else if(IsEqualGUID(&IID_IDispatch, riid)) {
         TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = HTMLFORM(This);
+        *ppv = &This->IHTMLFormElement_iface;
     }else if(IsEqualGUID(&IID_IHTMLFormElement, riid)) {
         TRACE("(%p)->(IID_IHTMLFormElement %p)\n", This, ppv);
-        *ppv = HTMLFORM(This);
+        *ppv = &This->IHTMLFormElement_iface;
     }
 
     if(*ppv) {
@@ -675,7 +674,7 @@ HRESULT HTMLFormElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem,
     if(!ret)
         return E_OUTOFMEMORY;
 
-    ret->lpHTMLFormElementVtbl = &HTMLFormElementVtbl;
+    ret->IHTMLFormElement_iface.lpVtbl = &HTMLFormElementVtbl;
     ret->element.node.vtbl = &HTMLFormElementImplVtbl;
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLFormElement, (void**)&ret->nsform);
