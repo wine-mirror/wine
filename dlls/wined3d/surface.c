@@ -1884,19 +1884,15 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Unmap(IWineD3DSurface *iface)
 
         surface_load_location(This, SFLAG_INDRAWABLE, fullsurface ? NULL : &This->dirtyRect);
 
+        /* Partial rectangle tracking is not commonly implemented, it is only
+         * done for render targets. INSYSMEM was set before to tell
+         * surface_load_location() where to read the rectangle from.
+         * Indrawable is set because all modifications from the partial
+         * sysmem copy are written back to the drawable, thus the surface is
+         * merged again in the drawable. The sysmem copy is not fully up to
+         * date because only a subrectangle was read in Map(). */
         if (!fullsurface)
-        {
-            /* Partial rectangle tracking is not commonly implemented, it is
-             * only done for render targets. Overwrite the flags to bring
-             * them back into a sane state. INSYSMEM was set before to tell
-             * surface_load_location() where to read the rectangle from.
-             * Indrawable is set because all modifications from the partial
-             * sysmem copy are written back to the drawable, thus the surface
-             * is merged again in the drawable. The sysmem copy is not fully
-             * up to date because only a subrectangle was read in Map(). */
-            This->flags &= ~SFLAG_INSYSMEM;
-            This->flags |= SFLAG_INDRAWABLE;
-        }
+            surface_modify_location(This, SFLAG_INDRAWABLE, TRUE);
 
         This->dirtyRect.left   = This->currentDesc.Width;
         This->dirtyRect.top    = This->currentDesc.Height;
