@@ -622,6 +622,7 @@ GSTREAMER_LIBS
 ESDLIBS
 ESDINCL
 ESDCONFIG
+LIBGETTEXTPO
 ZLIB
 FREETYPEINCL
 FREETYPELIBS
@@ -777,6 +778,7 @@ with_curses
 with_esd
 with_fontconfig
 with_freetype
+with_gettextpo
 with_gphoto
 with_glu
 with_gnutls
@@ -1467,6 +1469,7 @@ Optional Packages:
   --without-esd           do not use the EsounD sound support
   --without-fontconfig    do not use fontconfig
   --without-freetype      do not use the FreeType library
+  --without-gettextpo     do not use the GetTextPO library
   --without-gphoto        do not use gphoto (Digital Camera support)
   --without-glu           do not use the GLU library
   --without-gnutls        do not use GnuTLS (schannel support)
@@ -2558,6 +2561,12 @@ fi
 # Check whether --with-freetype was given.
 if test "${with_freetype+set}" = set; then :
   withval=$with_freetype;
+fi
+
+
+# Check whether --with-gettextpo was given.
+if test "${with_gettextpo+set}" = set; then :
+  withval=$with_gettextpo; if test "x$withval" = "xno"; then ac_cv_header_gettext_po_h=no; fi
 fi
 
 
@@ -5783,6 +5792,7 @@ for ac_header in \
 	fnmatch.h \
 	fontconfig/fontconfig.h \
 	getopt.h \
+	gettext-po.h \
 	grp.h \
 	gsm.h \
 	gsm/gsm.h \
@@ -10579,6 +10589,65 @@ $as_echo "#define HAVE_ZLIB 1" >>confdefs.h
 
 fi
 
+fi
+
+if test "x$enable_tools" != xno
+then
+    if test "$ac_cv_header_gettext_po_h" = "yes"
+    then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for po_file_write in -lgettextpo" >&5
+$as_echo_n "checking for po_file_write in -lgettextpo... " >&6; }
+if test "${ac_cv_lib_gettextpo_po_file_write+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lgettextpo  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char po_file_write ();
+int
+main ()
+{
+return po_file_write ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_gettextpo_po_file_write=yes
+else
+  ac_cv_lib_gettextpo_po_file_write=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gettextpo_po_file_write" >&5
+$as_echo "$ac_cv_lib_gettextpo_po_file_write" >&6; }
+if test "x$ac_cv_lib_gettextpo_po_file_write" = x""yes; then :
+
+$as_echo "#define HAVE_LIBGETTEXTPO 1" >>confdefs.h
+
+                      LIBGETTEXTPO="-lgettextpo"
+
+fi
+
+    fi
+    if test "x$LIBGETTEXTPO" = "x"; then :
+  case "x$with_gettextpo" in
+  x)   as_fn_append wine_warnings "|GetText ${notice_platform}development files not found. Internationalization won't be fully supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "GetText ${notice_platform}development files not found. Internationalization won't be fully supported.
+This is an error since --with-gettextpo was requested." "$LINENO" 5  ;;
+esac
+fi
 fi
 
 if test "x$with_esd" != xno
@@ -15395,7 +15464,6 @@ if test "x$enable_maintainer_mode" = xyes
 then
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS "\$(srcdir)/configure: configure.ac aclocal.m4
 	cd \$(srcdir) && autoconf --warnings=all
-
 \$(srcdir)/include/config.h.in: include/stamp-h.in
 \$(srcdir)/include/stamp-h.in: configure.ac aclocal.m4
 	cd \$(srcdir) && autoheader --warnings=all

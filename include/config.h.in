@@ -226,6 +226,9 @@
 /* Define to 1 if you have the `getservbyport' function. */
 #undef HAVE_GETSERVBYPORT
 
+/* Define to 1 if you have the <gettext-po.h> header file. */
+#undef HAVE_GETTEXT_PO_H
+
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
 
@@ -351,6 +354,9 @@
 
 /* Define to 1 if you have the `ldap_parse_vlv_control' function. */
 #undef HAVE_LDAP_PARSE_VLV_CONTROL
+
+/* Define to 1 if you have the `gettextpo' library (-lgettextpo). */
+#undef HAVE_LIBGETTEXTPO
 
 /* Define to 1 if you have the `i386' library (-li386). */
 #undef HAVE_LIBI386

@@ -46,6 +46,8 @@ AC_ARG_WITH(esd,       AS_HELP_STRING([--without-esd],[do not use the EsounD sou
 AC_ARG_WITH(fontconfig,AS_HELP_STRING([--without-fontconfig],[do not use fontconfig]),
             [if test "x$withval" = "xno"; then ac_cv_header_fontconfig_fontconfig_h=no; fi])
 AC_ARG_WITH(freetype,  AS_HELP_STRING([--without-freetype],[do not use the FreeType library]))
+AC_ARG_WITH(gettextpo, AS_HELP_STRING([--without-gettextpo],[do not use the GetTextPO library]),
+            [if test "x$withval" = "xno"; then ac_cv_header_gettext_po_h=no; fi])
 AC_ARG_WITH(gphoto,    AS_HELP_STRING([--without-gphoto],[do not use gphoto (Digital Camera support)]))
 AC_ARG_WITH(glu,       AS_HELP_STRING([--without-glu],[do not use the GLU library]),
             [if test "x$withval" = "xno"; then ac_cv_header_GL_glu_h=no; fi])
@@ -393,6 +395,7 @@ AC_CHECK_HEADERS(\
 	fnmatch.h \
 	fontconfig/fontconfig.h \
 	getopt.h \
+	gettext-po.h \
 	grp.h \
 	gsm.h \
 	gsm/gsm.h \
@@ -1405,6 +1408,18 @@ if test "$ac_cv_header_zlib_h" = "yes"
 then
     AC_CHECK_LIB(z,inflate,[AC_DEFINE(HAVE_ZLIB,1,[Define to 1 if you have the `z' library (-lz).])
                             AC_SUBST(ZLIB,"-lz")])
+fi
+
+dnl **** Check for gettextpo ****
+if test "x$enable_tools" != xno
+then
+    if test "$ac_cv_header_gettext_po_h" = "yes"
+    then
+        AC_CHECK_LIB(gettextpo,po_file_write,
+                     [AC_DEFINE(HAVE_LIBGETTEXTPO,1,[Define to 1 if you have the `gettextpo' library (-lgettextpo).])
+                      AC_SUBST(LIBGETTEXTPO,"-lgettextpo")])
+    fi
+    WINE_WARNING_WITH(gettextpo,[test "x$LIBGETTEXTPO" = "x"],[GetText ${notice_platform}development files not found. Internationalization won't be fully supported.])
 fi
 
 dnl **** Check for EsounD ****
