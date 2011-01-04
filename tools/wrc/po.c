@@ -772,8 +772,13 @@ static string_t *translate_string( po_file_t po, string_t *str, int *found )
     msg = find_message( po, msgid, context, &iterator );
     po_message_iterator_free( iterator );
 
-    if (msg) (*found)++;
-    transl = msg ? po_message_msgstr( msg ) : msgid;
+    if (msg && !po_message_is_fuzzy( msg ))
+    {
+        (*found)++;
+        transl = po_message_msgstr( msg );
+    }
+    else transl = msgid;
+
     new = xmalloc( sizeof(*new) );
     new->type = str_unicode;
     new->size = wine_utf8_mbstowcs( 0, transl, strlen(transl), NULL, 0 );
