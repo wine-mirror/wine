@@ -871,3 +871,53 @@ msgstr ""
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Open resources: %lu\n"
+
+#: reg.rc:27
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"REG [ ADD | DELETE | QUERY ]\n"
+"REG command /?\n"
+msgstr ""
+"The syntax of this command is:\n"
+"\n"
+"REG [ ADD | DELETE | QUERY ]\n"
+"REG command /?\n"
+
+#: reg.rc:28
+msgid ""
+"REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
+"f]\n"
+msgstr ""
+"REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
+"f]\n"
+
+#: reg.rc:29
+msgid "REG DELETE key_name [/v value_name | /ve | /va] [/f]\n"
+msgstr "REG DELETE key_name [/v value_name | /ve | /va] [/f]\n"
+
+#: reg.rc:30
+msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
+msgstr "REG QUERY key_name [/v value_name | /ve] [/s]\n"
+
+#: reg.rc:31
+msgid "The operation completed successfully\n"
+msgstr "The operation completed successfully\n"
+
+#: reg.rc:32
+msgid "Error: Invalid key name\n"
+msgstr "Error: Invalid key name\n"
+
+#: reg.rc:33
+msgid "Error: Invalid command line parameters\n"
+msgstr "Error: Invalid command line parameters\n"
+
+#: reg.rc:34
+msgid "Error: Unable to add keys to remote machine\n"
+msgstr "Error: Unable to add keys to remote machine\n"
+
+#: reg.rc:35
+msgid ""
+"Error: The system was unable to find the specified registry key or value\n"
+msgstr ""
+"Error: The system was unable to find the specified registry key or value\n"

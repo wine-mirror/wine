@@ -890,3 +890,54 @@ msgstr ""
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Ressources ouvertes : %lu\n"
+
+#: reg.rc:27
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"REG [ ADD | DELETE | QUERY ]\n"
+"REG command /?\n"
+msgstr ""
+"La syntaxe de cette commande est :\n"
+"\n"
+"REG [ ADD | DELETE | QUERY ]\n"
+"REG commande /?\n"
+
+#: reg.rc:28
+msgid ""
+"REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
+"f]\n"
+msgstr ""
+"REG ADD nom_de_clé [/v nom_de_valeur | /ve] [/t type] [/s séparateur] [/d "
+"données] [/f]\n"
+
+#: reg.rc:29
+msgid "REG DELETE key_name [/v value_name | /ve | /va] [/f]\n"
+msgstr "REG DELETE nom_de_clé [/v nom_de_valeur | /ve | /va] [/f]\n"
+
+#: reg.rc:30
+msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
+msgstr "REG QUERY nom_de_clé [/v nom_de_valeur | /ve] [/s]\n"
+
+#: reg.rc:31
+msgid "The operation completed successfully\n"
+msgstr "L'opération s'est terminée avec succès\n"
+
+#: reg.rc:32
+msgid "Error: Invalid key name\n"
+msgstr "Erreur : nom de clé non valable\n"
+
+#: reg.rc:33
+msgid "Error: Invalid command line parameters\n"
+msgstr "Erreur : paramètre de ligne de commande non valable\n"
+
+#: reg.rc:34
+msgid "Error: Unable to add keys to remote machine\n"
+msgstr "Erreur : impossible d'ajouter des clés à une machine distante\n"
+
+#: reg.rc:35
+msgid ""
+"Error: The system was unable to find the specified registry key or value\n"
+msgstr ""
+"Erreur : le système n'a pas pu trouver la clé ou la valeur de registre "
+"spécifiée\n"

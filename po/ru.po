@@ -878,3 +878,52 @@ msgstr ""
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S         %S      Открытых ресурсов: %lu\n"
+
+#: reg.rc:27
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"REG [ ADD | DELETE | QUERY ]\n"
+"REG command /?\n"
+msgstr ""
+"Использование программы:\n"
+"\n"
+"REG [ ADD | DELETE | QUERY ]\n"
+"REG <команда> /?\n"
+
+#: reg.rc:28
+msgid ""
+"REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
+"f]\n"
+msgstr ""
+"REG ADD <ключ> [/v <параметр> | /ve] [/t <тип>] [/s <разделитель>] [/d "
+"данные] [/f]\n"
+
+#: reg.rc:29
+msgid "REG DELETE key_name [/v value_name | /ve | /va] [/f]\n"
+msgstr "REG DELETE <ключ> [/v <параметр> | /ve | /va] [/f]\n"
+
+#: reg.rc:30
+msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
+msgstr "REG QUERY <ключ> [/v <параметр> | /ve] [/s]\n"
+
+#: reg.rc:31
+msgid "The operation completed successfully\n"
+msgstr "Операция успешно завершена\n"
+
+#: reg.rc:32
+msgid "Error: Invalid key name\n"
+msgstr "Ошибка: неправильное имя ключа\n"
+
+#: reg.rc:33
+msgid "Error: Invalid command line parameters\n"
+msgstr "Ошибка: неправильные параметры командной строки\n"
+
+#: reg.rc:34
+msgid "Error: Unable to add keys to remote machine\n"
+msgstr "Ошибка: невозможно добавить ключи на удаленной машине\n"
+
+#: reg.rc:35
+msgid ""
+"Error: The system was unable to find the specified registry key or value\n"
+msgstr "Ошибка: не удалось найти указанный ключ реестра или значение\n"

@@ -870,3 +870,53 @@ msgstr ""
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Resurse deschise: %lu\n"
+
+#: reg.rc:27
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"REG [ ADD | DELETE | QUERY ]\n"
+"REG command /?\n"
+msgstr ""
+"Sintaxa acestei comenzi este:\n"
+"\n"
+"REG [ ADD | DELETE | QUERY ]\n"
+"REG comandă /?\n"
+
+#: reg.rc:28
+msgid ""
+"REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
+"f]\n"
+msgstr ""
+"REG ADD nume_cheie [/v nume_valoare | /ve] [/t tip] [/s separator] [/d date] "
+"[/f]\n"
+
+#: reg.rc:29
+msgid "REG DELETE key_name [/v value_name | /ve | /va] [/f]\n"
+msgstr "REG DELETE nume_cheie [/v nume_valoare | /ve | /va] [/f]\n"
+
+#: reg.rc:30
+msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
+msgstr "REG QUERY nume_cheie [/v nume_valoare | /ve] [/s]\n"
+
+#: reg.rc:31
+msgid "The operation completed successfully\n"
+msgstr "Operațiunea a fost finalizată cu succes\n"
+
+#: reg.rc:32
+msgid "Error: Invalid key name\n"
+msgstr "Eroare: Nume de cheie nevalid\n"
+
+#: reg.rc:33
+msgid "Error: Invalid command line parameters\n"
+msgstr "Eroare: Parametri nevalizi pentru linia de comandă\n"
+
+#: reg.rc:34
+msgid "Error: Unable to add keys to remote machine\n"
+msgstr "Eroare: Nu se pot adăuga chei pe calculatorul de la distanță\n"
+
+#: reg.rc:35
+msgid ""
+"Error: The system was unable to find the specified registry key or value\n"
+msgstr ""
+"Eroare: Sistemul nu a putut găsi cheia sau valoarea de registru specificată\n"

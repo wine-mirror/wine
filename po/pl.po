@@ -861,3 +861,52 @@ msgstr ""
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Otwarte zasoby: %lu\n"
+
+#: reg.rc:27
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"REG [ ADD | DELETE | QUERY ]\n"
+"REG command /?\n"
+msgstr ""
+"Składnia tego polecenia:\n"
+"\n"
+"REG [ ADD | DELETE | QUERY ]\n"
+"REG polecenie /?\n"
+
+#: reg.rc:28
+msgid ""
+"REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
+"f]\n"
+msgstr ""
+"REG ADD nazwa_klucza [/v nazwa_wartości | /ve] [/t typ] [/s separator] [/d "
+"dane] [/f]\n"
+
+#: reg.rc:29
+msgid "REG DELETE key_name [/v value_name | /ve | /va] [/f]\n"
+msgstr "REG DELETE nazwa_klucza [/v nazwa_wartości | /ve | /va] [/f]\n"
+
+#: reg.rc:30
+msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
+msgstr "REG QUERY nazwa_klucza [/v nazwa_wartości | /ve] [/s]\n"
+
+#: reg.rc:31
+msgid "The operation completed successfully\n"
+msgstr "Operacja zakończona pomyślnie\n"
+
+#: reg.rc:32
+msgid "Error: Invalid key name\n"
+msgstr "Błąd: Niewłaściwa nazwa klucza\n"
+
+#: reg.rc:33
+msgid "Error: Invalid command line parameters\n"
+msgstr "Błąd: Niewłaściwe parametry wiersza poleceń\n"
+
+#: reg.rc:34
+msgid "Error: Unable to add keys to remote machine\n"
+msgstr "Błąd: Nie można dodać kluczy do zdalnej maszyny\n"
+
+#: reg.rc:35
+msgid ""
+"Error: The system was unable to find the specified registry key or value\n"
+msgstr "Błąd: System nie mógł znaleźć podanej wartości lub klucza rejestru\n"

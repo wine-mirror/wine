@@ -15419,7 +15419,7 @@ wine_fn_config_program notepad enable_notepad install,installbin
 wine_fn_config_program oleview enable_oleview install
 wine_fn_config_program ping enable_ping install
 wine_fn_config_program progman enable_progman install
-wine_fn_config_program reg enable_reg install
+wine_fn_config_program reg enable_reg po,install
 wine_fn_config_program regedit enable_regedit install,installbin
 wine_fn_config_test programs/regedit/tests regedit.exe_test
 wine_fn_config_program regsvcs enable_regsvcs install

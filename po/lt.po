@@ -872,3 +872,52 @@ msgstr ""
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Atverti ištekliai: %lu\n"
+
+#: reg.rc:27
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"REG [ ADD | DELETE | QUERY ]\n"
+"REG command /?\n"
+msgstr ""
+"Šios komandos sintaksė yra:\n"
+"\n"
+"REG [ ADD | DELETE | QUERY ]\n"
+"REG komanda /?\n"
+
+#: reg.rc:28
+msgid ""
+"REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
+"f]\n"
+msgstr ""
+"REG ADD rakto_vardas [/v reikšmės_vardas | /ve] [/t tipas] [/s skirtukas] [/"
+"d duomenys] [/f]\n"
+
+#: reg.rc:29
+msgid "REG DELETE key_name [/v value_name | /ve | /va] [/f]\n"
+msgstr "REG DELETE rakto_vardas [/v reikšmės_vardas | /ve | /va] [/f]\n"
+
+#: reg.rc:30
+msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
+msgstr "REG QUERY rakto_vardas [/v reikšmės_vardas | /ve] [/s]\n"
+
+#: reg.rc:31
+msgid "The operation completed successfully\n"
+msgstr "Operacija sėkmingai įvykdyta\n"
+
+#: reg.rc:32
+msgid "Error: Invalid key name\n"
+msgstr "Klaida: Netinkamas rakto vardas\n"
+
+#: reg.rc:33
+msgid "Error: Invalid command line parameters\n"
+msgstr "Klaida: Netinkami komandos eilutės parametrai\n"
+
+#: reg.rc:34
+msgid "Error: Unable to add keys to remote machine\n"
+msgstr "Klaida: Negalima pridėti raktų nuotoliniame kompiuteryje\n"
+
+#: reg.rc:35
+msgid ""
+"Error: The system was unable to find the specified registry key or value\n"
+msgstr "Klaida: Sistemai nepavyko rasti nurodyto registro rakto ar reikšmės\n"

@@ -878,3 +878,53 @@ msgstr ""
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Öppna resurser: %lu\n"
+
+#: reg.rc:27
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"REG [ ADD | DELETE | QUERY ]\n"
+"REG command /?\n"
+msgstr ""
+"Syntax för detta kommando är:\n"
+"\n"
+"REG [ ADD | DELETE | QUERY ]\n"
+"REG kommando /?\n"
+
+#: reg.rc:28
+msgid ""
+"REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
+"f]\n"
+msgstr ""
+"REG ADD nyckelnamn [/v värdenamn | /ve] [/t typ] [/s separator] [/d data] [/"
+"f]\n"
+
+#: reg.rc:29
+msgid "REG DELETE key_name [/v value_name | /ve | /va] [/f]\n"
+msgstr "REG DELETE nyckelnamn [/v värdenamn | /ve | /va] [/f]\n"
+
+#: reg.rc:30
+msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
+msgstr "REG QUERY nyckelnamn [/v värdenamn | /ve] [/s]\n"
+
+#: reg.rc:31
+msgid "The operation completed successfully\n"
+msgstr "Operation slutfördes utan problem\n"
+
+#: reg.rc:32
+msgid "Error: Invalid key name\n"
+msgstr "Fel: ogiltigt nyckelnamn\n"
+
+#: reg.rc:33
+msgid "Error: Invalid command line parameters\n"
+msgstr "Fel: ogiltiga kommandoradsparametrar\n"
+
+#: reg.rc:34
+msgid "Error: Unable to add keys to remote machine\n"
+msgstr "Fel: Kan inte lägga till nycklar till fjärrmaskin\n"
+
+#: reg.rc:35
+msgid ""
+"Error: The system was unable to find the specified registry key or value\n"
+msgstr ""
+"Fel: Systemet kunde inte hitta angiven nyckel eller värde i registret\n"

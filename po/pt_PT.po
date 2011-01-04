@@ -876,3 +876,54 @@ msgstr ""
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Recursos disponíveis: %lu\n"
+
+#: reg.rc:27
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"REG [ ADD | DELETE | QUERY ]\n"
+"REG command /?\n"
+msgstr ""
+"A sintaxe deste comando é:\n"
+"\n"
+"REG [ ADD | DELETE | QUERY ]\n"
+"REG comando /?\n"
+
+#: reg.rc:28
+msgid ""
+"REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
+"f]\n"
+msgstr ""
+"REG ADD nome_chave [/v nome_valor | /ve] [/t tipo] [/s separador] [/d dados] "
+"[/f]\n"
+
+#: reg.rc:29
+msgid "REG DELETE key_name [/v value_name | /ve | /va] [/f]\n"
+msgstr "REG DELETE nome_chave [/v nome_valor | /ve | /va] [/f]\n"
+
+#: reg.rc:30
+msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
+msgstr "REG QUERY nome_chave [/v nome_valor | /ve] [/s]\n"
+
+#: reg.rc:31
+msgid "The operation completed successfully\n"
+msgstr "A operação foi completada com sucesso\n"
+
+#: reg.rc:32
+msgid "Error: Invalid key name\n"
+msgstr "Erro: Nome de chave inválido\n"
+
+#: reg.rc:33
+msgid "Error: Invalid command line parameters\n"
+msgstr "Erro: Parâmetros da linha de comandos inválidos\n"
+
+#: reg.rc:34
+msgid "Error: Unable to add keys to remote machine\n"
+msgstr "Erro: Incapaz de adicionar chaves à máquina remota\n"
+
+#: reg.rc:35
+msgid ""
+"Error: The system was unable to find the specified registry key or value\n"
+msgstr ""
+"Erro: O sistema foi incapaz de encontrar a chave de registo ou valor "
+"especificado\n"

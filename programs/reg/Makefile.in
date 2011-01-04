@@ -6,24 +6,7 @@ DELAYIMPORTS = user32
 
 C_SRCS = reg.c
 
-RC_SRCS = \
-	Da.rc \
-	De.rc \
-	En.rc \
-	Es.rc \
-	Fr.rc \
-	It.rc \
-	Ja.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	No.rc \
-	Pl.rc \
-	Pt.rc \
-	Ro.rc \
-	Ru.rc \
-	Si.rc \
-	Sv.rc \
-	Uk.rc
+RC_SRCS = reg.rc
+PO_SRCS = reg.rc
 
 @MAKE_PROG_RULES@
