@@ -6219,9 +6219,8 @@ static void delete_opengl_contexts(IWineD3DDeviceImpl *device, IWineD3DSwapChain
 }
 
 /* Do not call while under the GL lock. */
-static HRESULT create_primary_opengl_context(IWineD3DDevice *iface, IWineD3DSwapChainImpl *swapchain)
+static HRESULT create_primary_opengl_context(IWineD3DDeviceImpl *device, IWineD3DSwapChainImpl *swapchain)
 {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     struct wined3d_context *context;
     HRESULT hr;
     IWineD3DSurfaceImpl *target;
@@ -6244,40 +6243,40 @@ static HRESULT create_primary_opengl_context(IWineD3DDevice *iface, IWineD3DSwap
 
     swapchain->context[0] = context;
     swapchain->num_contexts = 1;
-    create_dummy_textures(This);
+    create_dummy_textures(device);
     context_release(context);
 
-    hr = This->shader_backend->shader_alloc_private(This);
+    hr = device->shader_backend->shader_alloc_private(device);
     if (FAILED(hr))
     {
         ERR("Failed to allocate shader private data, hr %#x.\n", hr);
         goto err;
     }
 
-    hr = This->frag_pipe->alloc_private(This);
+    hr = device->frag_pipe->alloc_private(device);
     if (FAILED(hr))
     {
         ERR("Failed to allocate fragment pipe private data, hr %#x.\n", hr);
-        This->shader_backend->shader_free_private(This);
+        device->shader_backend->shader_free_private(device);
         goto err;
     }
 
-    hr = This->blitter->alloc_private(This);
+    hr = device->blitter->alloc_private(device);
     if (FAILED(hr))
     {
         ERR("Failed to allocate blitter private data, hr %#x.\n", hr);
-        This->frag_pipe->free_private(This);
-        This->shader_backend->shader_free_private(This);
+        device->frag_pipe->free_private(device);
+        device->shader_backend->shader_free_private(device);
         goto err;
     }
 
     return WINED3D_OK;
 
 err:
-    context_acquire(This, NULL);
-    destroy_dummy_textures(This, context->gl_info);
+    context_acquire(device, NULL);
+    destroy_dummy_textures(device, context->gl_info);
     context_release(context);
-    context_destroy(This, context);
+    context_destroy(device, context);
     HeapFree(GetProcessHeap(), 0, swapchain->context);
     swapchain->num_contexts = 0;
     return hr;
@@ -6537,7 +6536,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
         }
     }
 
-    hr = create_primary_opengl_context(iface, swapchain);
+    hr = create_primary_opengl_context(This, swapchain);
     IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
 
     /* All done. There is no need to reload resources or shaders, this will happen automatically on the
