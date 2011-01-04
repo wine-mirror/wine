@@ -992,7 +992,13 @@ BOOL WINAPI GetNumberOfConsoleInputEvents( HANDLE handle, LPDWORD nrofevents )
         req->flush  = FALSE;
         if ((ret = !wine_server_call_err( req )))
         {
-            if (nrofevents) *nrofevents = reply->read;
+            if (nrofevents)
+                *nrofevents = reply->read;
+            else
+            {
+                SetLastError(ERROR_INVALID_ACCESS);
+                ret = FALSE;
+            }
         }
     }
     SERVER_END_REQ;

@@ -1168,6 +1168,59 @@ static void test_GetSetStdHandle(void)
     ok(error == 0xdeadbeef, "wrong GetLastError() %d\n", error);
 }
 
+static void test_GetNumberOfConsoleInputEvents(HANDLE input_handle)
+{
+    DWORD count;
+    BOOL ret;
+    int i;
+
+    const struct
+    {
+        HANDLE handle;
+        LPDWORD nrofevents;
+        DWORD last_error;
+    } invalid_table[] =
+    {
+        {NULL,                 NULL,   ERROR_INVALID_HANDLE},
+        {NULL,                 &count, ERROR_INVALID_HANDLE},
+        {INVALID_HANDLE_VALUE, NULL,   ERROR_INVALID_HANDLE},
+        {INVALID_HANDLE_VALUE, &count, ERROR_INVALID_HANDLE},
+    };
+
+    for (i = 0; i < sizeof(invalid_table)/sizeof(invalid_table[0]); i++)
+    {
+        SetLastError(0xdeadbeef);
+        if (invalid_table[i].nrofevents) count = 0xdeadbeef;
+        ret = GetNumberOfConsoleInputEvents(invalid_table[i].handle,
+                                            invalid_table[i].nrofevents);
+        ok(!ret, "[%d] Expected GetNumberOfConsoleInputEvents to return FALSE, got %d\n", i, ret);
+        if (invalid_table[i].nrofevents)
+        {
+            ok(count == 0xdeadbeef,
+               "[%d] Expected output count to be unmodified, got %u\n", i, count);
+        }
+        ok(GetLastError() == invalid_table[i].last_error,
+           "[%d] Expected last error to be %u, got %u\n",
+           i, invalid_table[i].last_error, GetLastError());
+    }
+
+    /* Test crashes on Windows 7. */
+    if (0)
+    {
+        SetLastError(0xdeadbeef);
+        ret = GetNumberOfConsoleInputEvents(input_handle, NULL);
+        ok(!ret, "Expected GetNumberOfConsoleInputEvents to return FALSE, got %d\n", ret);
+        ok(GetLastError() == ERROR_INVALID_ACCESS,
+           "Expected last error to be ERROR_INVALID_ACCESS, got %u\n",
+           GetLastError());
+    }
+
+    count = 0xdeadbeef;
+    ret = GetNumberOfConsoleInputEvents(input_handle, &count);
+    ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
+    ok(count != 0xdeadbeef, "Expected output count to initialized\n");
+}
+
 START_TEST(console)
 {
     HANDLE hConIn, hConOut;
@@ -1221,4 +1274,5 @@ START_TEST(console)
     test_OpenConsoleW();
     test_VerifyConsoleIoHandle(hConOut);
     test_GetSetStdHandle();
+    test_GetNumberOfConsoleInputEvents(hConIn);
 }
