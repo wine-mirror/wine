@@ -559,12 +559,12 @@ msgstr ""
 msgid "Are you sure"
 msgstr "Êtes-vous sûr"
 
-#: cmd.rc:256
+#: cmd.rc:256 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "O"
 
-#: cmd.rc:257
+#: cmd.rc:257 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
@@ -638,7 +638,7 @@ msgstr "Saisissez la nouvelle heure : "
 msgid "Environment variable %s not defined\n"
 msgstr "La variable d'environnement %s n'est pas définie\n"
 
-#: cmd.rc:274
+#: cmd.rc:274 xcopy.rc:38
 msgid "Failed to open '%s'\n"
 msgstr "Impossible d'ouvrir « %s »\n"
 
@@ -646,7 +646,7 @@ msgstr "Impossible d'ouvrir « %s »\n"
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Impossible d'appeler une étiquette de batch hors d'un script batch\n"
 
-#: cmd.rc:276
+#: cmd.rc:276 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "T"
@@ -1120,3 +1120,135 @@ msgstr ""
 #: write.rc:27
 msgid "Starting Wordpad failed"
 msgstr "Wordpad n'a pas pu être démarré"
+
+#: xcopy.rc:27
+msgid "Invalid number of parameters - Use xcopy /? for help\n"
+msgstr ""
+"Nombre invalide de paramètres - Utilisez xcopy /? pour obtenir de l'aide\n"
+
+#: xcopy.rc:28
+msgid "Invalid parameter '%s' -  Use xcopy /? for help\n"
+msgstr ""
+"Paramètre invalide « %s » -  Utilisez xcopy /? pour obtenir de l'aide\n"
+
+#: xcopy.rc:29
+msgid "Press <enter> to begin copying\n"
+msgstr "Appuyez sur ENTRÉE pour démarrer la copie\n"
+
+#: xcopy.rc:30
+msgid "%d file(s) would be copied\n"
+msgstr "%d fichier(s) seront copiés\n"
+
+#: xcopy.rc:31
+msgid "%d file(s) copied\n"
+msgstr "%d fichier(s) copiés\n"
+
+#: xcopy.rc:34
+msgid ""
+"Is '%s' a filename or directory\n"
+"on the target?\n"
+"(F - File, D - Directory)\n"
+msgstr ""
+"« %s » est-il un fichier ou un répertoire\n"
+"dans la destination ?\n"
+"(F - Fichier, R - Répertoire)\n"
+
+#: xcopy.rc:35
+msgid "%s? (Yes|No)\n"
+msgstr "%s ? (Oui|Non)\n"
+
+#: xcopy.rc:36
+msgid "Overwrite %s? (Yes|No|All)\n"
+msgstr "Écraser  %s ? (Oui|Non|Tous)\n"
+
+#: xcopy.rc:37
+msgid "Copying of '%s' to '%s' failed with r/c %d\n"
+msgstr "La copie de « %s » vers « %s » a échoué avec le code de retour %d\n"
+
+#: xcopy.rc:39
+msgid "Failed during reading of '%s'\n"
+msgstr "Impossible de lire « %s »\n"
+
+#: xcopy.rc:43
+msgctxt "File key"
+msgid "F"
+msgstr "F"
+
+#: xcopy.rc:44
+msgctxt "Directory key"
+msgid "D"
+msgstr "R"
+
+#: xcopy.rc:77
+msgid ""
+"XCOPY - Copies source files or directory trees to a destination\n"
+"\n"
+"Syntax:\n"
+"XCOPY source [dest] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"\n"
+"Where:\n"
+"\n"
+"[/I]  Assume directory if destination does not exist and copying two or\n"
+"\tmore files\n"
+"[/S]  Copy directories and subdirectories\n"
+"[/E]  Copy directories and subdirectories, including any empty ones\n"
+"[/Q]  Do not list names during copy, ie quiet.\n"
+"[/F]  Show full source and destination names during copy\n"
+"[/L]  Simulate operation, showing names which would be copied\n"
+"[/W]  Prompts before beginning the copy operation\n"
+"[/T]  Creates empty directory structure but does not copy files\n"
+"[/Y]  Suppress prompting when overwriting files\n"
+"[/-Y] Enable prompting when overwriting files\n"
+"[/P]  Prompts on each source file before copying\n"
+"[/N]  Copy using short names\n"
+"[/U]  Copy only files which already exist in destination\n"
+"[/R]  Overwrite any read only files\n"
+"[/H]  Include hidden and system files in the copy\n"
+"[/C]  Continue even if an error occurs during the copy\n"
+"[/A]  Only copy files with archive attribute set\n"
+"[/M]  Only copy files with archive attribute set, removes\n"
+"\tarchive attribute\n"
+"[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
+"\t\tIf no date is supplied, only copy if destination is older\n"
+"\t\tthan source\n"
+"\n"
+msgstr ""
+"XCOPY - Copie les fichiers ou répertoires sources vers une destination\n"
+"\n"
+"Syntaxe :\n"
+"XCOPY source [destination] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"\n"
+"où :\n"
+"\n"
+"[/I]  Suppose que la destination est un répertoire si elle n'existe pas et "
+"que l'on copie plus\n"
+"\td'un fichier\n"
+"[/S]  Copie les répertoires et sous-répertoires\n"
+"[/E]  Copie les répertoires et sous-répertoires, y compris ceux qui sont "
+"vides\n"
+"[/Q]  Ne pas afficher la liste des fichiers copiés (mode silencieux)\n"
+"[/F]  Afficher les source et destination complètes lors de la copie\n"
+"[/L]  Simuler la copie, en montrant le nom des fichiers qui seraient copiés\n"
+"[/W]  Demande avant de démarrer la copie\n"
+"[/T]  Créer une structure de répertoires vides, mais ne pas copier les "
+"fichiers\n"
+"[/Y]  Ne demande pas de confirmation lors de l'écrasement des fichiers\n"
+"[/-Y] Demande une confirmation lors de l'écrasement des fichiers\n"
+"[/P]  Interroge l'utilisateur avant de copier chaque fichier source\n"
+"[/N]  Copie en utilisant les noms courts\n"
+"[/U]  Copie uniquement les fichiers qui existent déjà dans la destination\n"
+"[/R]  Écrase même les fichiers en lecture seule\n"
+"[/H]  Inclure les fichiers cachés et système dans la copie\n"
+"[/C]  Continue même si une erreur survient pendant la copie\n"
+"[/A]  Copie uniquement les fichiers qui ont l'attribut archive défini\n"
+"[/M]  Copie uniquement les fichiers qui ont l'attribut archive défini ; "
+"supprime\n"
+"\tensuite l'attribut\n"
+"[/D | /D:m-d-y] Copie uniquement les nouveaux fichiers, ou ceux modifiés "
+"après la date spécifiée.\n"
+"\t\tSi aucune date n'est spécifiée, copie uniquement lorsque le fichier de "
+"destination est plus ancien\n"
+"\t\tque le fichier source\n"
+"\n"

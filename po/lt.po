@@ -543,12 +543,12 @@ msgstr ""
 msgid "Are you sure"
 msgstr "Ar tikrai"
 
-#: cmd.rc:256
+#: cmd.rc:256 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "T"
 
-#: cmd.rc:257
+#: cmd.rc:257 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
@@ -621,7 +621,7 @@ msgstr "Įveskite naują laiką: "
 msgid "Environment variable %s not defined\n"
 msgstr "Aplinkos kintamasis %s neapibrėžtas\n"
 
-#: cmd.rc:274
+#: cmd.rc:274 xcopy.rc:38
 msgid "Failed to open '%s'\n"
 msgstr "Nepavyko atverti „%s“\n"
 
@@ -629,7 +629,7 @@ msgstr "Nepavyko atverti „%s“\n"
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Negalima iškviesti žymės esančios už komandos failo ribų\n"
 
-#: cmd.rc:276
+#: cmd.rc:276 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "V"
@@ -1098,3 +1098,128 @@ msgstr ""
 #: write.rc:27
 msgid "Starting Wordpad failed"
 msgstr "Nepavyko paleisti Wordpad"
+
+#: xcopy.rc:27
+msgid "Invalid number of parameters - Use xcopy /? for help\n"
+msgstr "Neteisingas parametrų skaičius - pagalba: xcopy /?\n"
+
+#: xcopy.rc:28
+msgid "Invalid parameter '%s' -  Use xcopy /? for help\n"
+msgstr "Neteisingas parametras „%s“ - pagalba: xcopy /?\n"
+
+#: xcopy.rc:29
+msgid "Press <enter> to begin copying\n"
+msgstr "Spauskite <enter> kopijavimui pradėti\n"
+
+#: xcopy.rc:30
+msgid "%d file(s) would be copied\n"
+msgstr "bus nukopijuota failų: %d\n"
+
+#: xcopy.rc:31
+msgid "%d file(s) copied\n"
+msgstr "nukopijuota failų: %d\n"
+
+#: xcopy.rc:34
+msgid ""
+"Is '%s' a filename or directory\n"
+"on the target?\n"
+"(F - File, D - Directory)\n"
+msgstr ""
+"Ar „%s“ yra failas, ar katalogas,\n"
+"ar paskirtis?\n"
+"(F - failas, K - katalogas)\n"
+
+#: xcopy.rc:35
+msgid "%s? (Yes|No)\n"
+msgstr "%s? (Taip|Ne)\n"
+
+#: xcopy.rc:36
+msgid "Overwrite %s? (Yes|No|All)\n"
+msgstr "Perrašyti %s? (Taip|Ne|Visus)\n"
+
+#: xcopy.rc:37
+msgid "Copying of '%s' to '%s' failed with r/c %d\n"
+msgstr "„%s“ kopijavimas į „%s“ nepavyko su r/c %d\n"
+
+#: xcopy.rc:39
+msgid "Failed during reading of '%s'\n"
+msgstr "Klaida skaitant „%s“\n"
+
+#: xcopy.rc:43
+msgctxt "File key"
+msgid "F"
+msgstr "F"
+
+#: xcopy.rc:44
+msgctxt "Directory key"
+msgid "D"
+msgstr "K"
+
+#: xcopy.rc:77
+msgid ""
+"XCOPY - Copies source files or directory trees to a destination\n"
+"\n"
+"Syntax:\n"
+"XCOPY source [dest] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"\n"
+"Where:\n"
+"\n"
+"[/I]  Assume directory if destination does not exist and copying two or\n"
+"\tmore files\n"
+"[/S]  Copy directories and subdirectories\n"
+"[/E]  Copy directories and subdirectories, including any empty ones\n"
+"[/Q]  Do not list names during copy, ie quiet.\n"
+"[/F]  Show full source and destination names during copy\n"
+"[/L]  Simulate operation, showing names which would be copied\n"
+"[/W]  Prompts before beginning the copy operation\n"
+"[/T]  Creates empty directory structure but does not copy files\n"
+"[/Y]  Suppress prompting when overwriting files\n"
+"[/-Y] Enable prompting when overwriting files\n"
+"[/P]  Prompts on each source file before copying\n"
+"[/N]  Copy using short names\n"
+"[/U]  Copy only files which already exist in destination\n"
+"[/R]  Overwrite any read only files\n"
+"[/H]  Include hidden and system files in the copy\n"
+"[/C]  Continue even if an error occurs during the copy\n"
+"[/A]  Only copy files with archive attribute set\n"
+"[/M]  Only copy files with archive attribute set, removes\n"
+"\tarchive attribute\n"
+"[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
+"\t\tIf no date is supplied, only copy if destination is older\n"
+"\t\tthan source\n"
+"\n"
+msgstr ""
+"XCOPY - Kopijuoja šaltinio failus ir katalogų medžius į paskirties vietą\n"
+"\n"
+"Sintaksė:\n"
+"XCOPY šaltinis [paskirtis] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"\n"
+"Kur:\n"
+"\n"
+"[/I]  Tarti, kad katalogas, jei paskirtis neegzistuoja ir kopijuojami\n"
+"\t2 ar daugiau failų\n"
+"[/S]  Kopijuoti katalogus ir pakatalogius\n"
+"[/E]  Kopijuoti katalogus ir pakatalogius, taip pat ir tuščius\n"
+"[/Q]  Kopijuojant nerodyti vardų, kopijuoti tyliai.\n"
+"[/F]  Kopijuojant rodyti pilnus šaltinio ir paskirties vardus\n"
+"[/L]  Modeliuoti veikimą rodant failus, kurie būtų kopijuojami\n"
+"[/W]  Raginti prieš pradedant kopijavimo operaciją\n"
+"[/T]  Sukuria tuščią katalogų struktūrą, bet nekopijuoja jokių failų\n"
+"[/Y]  Nerodyti raginimų, kai perrašomi failai\n"
+"[/-Y] Įjungti raginimus, kai perrašomi failai\n"
+"[/P]  Ragina prieš kopijuojant kiekvieną šaltinio failą\n"
+"[/N]  Kopijuoti naudojant trumpus vardus\n"
+"[/U]  Kopijuoti tik tuos failus, kurie jau egzistuoja paskirties vietoje\n"
+"[/R]  Perrašyti visus nekeičiamus failus\n"
+"[/H]  Kopijuoti paslėptus ir sisteminius failus\n"
+"[/C]  Tęsti, net jei įvyksta klaida kopijuojant\n"
+"[/A]  Kopijuoti tik failus su nustatytu archyvavimo požymiu\n"
+"[/M]  Kopijuoti tik failus su nustatytu archyvavimo požymiu, pašalinti\n"
+"\tarchyvavimo požymį\n"
+"[/D | /D:m-d-y] Kopijuoti naujus failus arba modifikuotos po nurodytos "
+"datos.\n"
+"\t\tJei data nenurodyta, kopijuoti tik jei paskirties failas yra\n"
+"\t\tsenesnis už šaltinio failą\n"
+"\n"

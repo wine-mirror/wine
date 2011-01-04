@@ -386,12 +386,12 @@ msgstr ""
 msgid "Are you sure"
 msgstr ""
 
-#: cmd.rc:256
+#: cmd.rc:256 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr ""
 
-#: cmd.rc:257
+#: cmd.rc:257 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr ""
@@ -462,15 +462,15 @@ msgstr ""
 msgid "Environment variable %s not defined\n"
 msgstr ""
 
-#: cmd.rc:274
+#: cmd.rc:274 xcopy.rc:38
 msgid "Failed to open '%s'\n"
-msgstr ""
+msgstr "Отварање „%s“ датотеке није успело\n"
 
 #: cmd.rc:275
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr ""
 
-#: cmd.rc:276
+#: cmd.rc:276 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr ""
@@ -874,3 +874,128 @@ msgstr ""
 #: write.rc:27
 msgid "Starting Wordpad failed"
 msgstr "Покретање Писанке није успело"
+
+#: xcopy.rc:27
+msgid "Invalid number of parameters - Use xcopy /? for help\n"
+msgstr "Неисправан број параметара. Користите xcopy /? за помоћ\n"
+
+#: xcopy.rc:28
+msgid "Invalid parameter '%s' -  Use xcopy /? for help\n"
+msgstr "Неисправан параметар „%s“. Користите xcopy /? за помоћ\n"
+
+#: xcopy.rc:29
+msgid "Press <enter> to begin copying\n"
+msgstr "Притисните <enter> да започнете умножавање\n"
+
+#: xcopy.rc:30
+msgid "%d file(s) would be copied\n"
+msgstr "%d датотека/е ће бити уможено\n"
+
+#: xcopy.rc:31
+msgid "%d file(s) copied\n"
+msgstr "%d датотека/е је умножено\n"
+
+#: xcopy.rc:34
+msgid ""
+"Is '%s' a filename or directory\n"
+"on the target?\n"
+"(F - File, D - Directory)\n"
+msgstr ""
+"Да ли је „%s“ назив датотеке или фасцикла\n"
+"на одредишту?\n"
+"(Д - датотека, Ф - фасцикла)\n"
+
+#: xcopy.rc:35
+msgid "%s? (Yes|No)\n"
+msgstr "%s? (Да|Не)\n"
+
+#: xcopy.rc:36
+msgid "Overwrite %s? (Yes|No|All)\n"
+msgstr "Заменити %s? (Да|Не|Све)\n"
+
+#: xcopy.rc:37
+msgid "Copying of '%s' to '%s' failed with r/c %d\n"
+msgstr "Умножавање „%s“ у „%s“ није успело са r/c %d\n"
+
+#: xcopy.rc:39
+msgid "Failed during reading of '%s'\n"
+msgstr "Читање „%s“ датотеке није успело\n"
+
+#: xcopy.rc:43
+msgctxt "File key"
+msgid "F"
+msgstr "Д"
+
+#: xcopy.rc:44
+msgctxt "Directory key"
+msgid "D"
+msgstr "Ф"
+
+#: xcopy.rc:77
+msgid ""
+"XCOPY - Copies source files or directory trees to a destination\n"
+"\n"
+"Syntax:\n"
+"XCOPY source [dest] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"\n"
+"Where:\n"
+"\n"
+"[/I]  Assume directory if destination does not exist and copying two or\n"
+"\tmore files\n"
+"[/S]  Copy directories and subdirectories\n"
+"[/E]  Copy directories and subdirectories, including any empty ones\n"
+"[/Q]  Do not list names during copy, ie quiet.\n"
+"[/F]  Show full source and destination names during copy\n"
+"[/L]  Simulate operation, showing names which would be copied\n"
+"[/W]  Prompts before beginning the copy operation\n"
+"[/T]  Creates empty directory structure but does not copy files\n"
+"[/Y]  Suppress prompting when overwriting files\n"
+"[/-Y] Enable prompting when overwriting files\n"
+"[/P]  Prompts on each source file before copying\n"
+"[/N]  Copy using short names\n"
+"[/U]  Copy only files which already exist in destination\n"
+"[/R]  Overwrite any read only files\n"
+"[/H]  Include hidden and system files in the copy\n"
+"[/C]  Continue even if an error occurs during the copy\n"
+"[/A]  Only copy files with archive attribute set\n"
+"[/M]  Only copy files with archive attribute set, removes\n"
+"\tarchive attribute\n"
+"[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
+"\t\tIf no date is supplied, only copy if destination is older\n"
+"\t\tthan source\n"
+"\n"
+msgstr ""
+"XCOPY — умножава изворне датотеке или гране фасцикли у одредиште\n"
+"\n"
+"Синтакса:\n"
+"XCOPY извор [dest] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"\n"
+"Где:\n"
+"\n"
+"[/I]  Претпостави фасциклу када одредиште не постоји и када се умножавају "
+"две или\n"
+"\tвише датотека\n"
+"[/S]  Умножи фасцикле и потфасцикле\n"
+"[/E]  Умножи фасцикле и потфасцикле заједно с празним\n"
+"[/Q]  Не приказуј називе током умножавања.\n"
+"[/F]  Прикажи цео извор и одредиште током умножавања\n"
+"[/L]  Опонашај радњу приказујући називе који ће бити умножени\n"
+"[/W]  Питај пре почињања умножавања\n"
+"[/T]  Прави празну структуру фасцикле, али не умножава датотеке\n"
+"[/Y]  Потисни упит при замењивању датотека\n"
+"[/-Y] Омогући упит при замењивању датотека\n"
+"[/P]  Питај за сваку изворну датотеку пре умножавања\n"
+"[/N]  Умножи користећи кратке називе\n"
+"[/U]  Умножи само оне датотеке које постоје у одредишту\n"
+"[/R]  Замени све датотеке које се само читају\n"
+"[/H]  Укључи сакривене и системске датотеке у умножавање\n"
+"[/C]  Настави иако дође до грешке у умножавању\n"
+"[/A]  Умножи само архивиране датотеке\n"
+"[/M]  Умножи само архивиране датотеке и уклони\n"
+"\tособине архиве\n"
+"[/D | /D:m-d-y] Умножи нове или измењене датотеке након одређеног датума.\n"
+"\t\tАко датум није унесен, умножи само ако је одредиште старије\n"
+"\t\tод извора\n"
+"\n"

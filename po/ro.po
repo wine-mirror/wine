@@ -540,12 +540,12 @@ msgstr ""
 msgid "Are you sure"
 msgstr "Sunteți sigur"
 
-#: cmd.rc:256
+#: cmd.rc:256 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "D"
 
-#: cmd.rc:257
+#: cmd.rc:257 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
@@ -620,15 +620,15 @@ msgstr "Introduceți noua oră: "
 msgid "Environment variable %s not defined\n"
 msgstr "Variabila de mediu %s nu este definită\n"
 
-#: cmd.rc:274
+#: cmd.rc:274 xcopy.rc:38
 msgid "Failed to open '%s'\n"
-msgstr "Nu s-a putut deschide „%s”\n"
+msgstr "Deschiderea „%s” a eșuat\n"
 
 #: cmd.rc:275
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Nu se poate apela eticheta pentru batch în afara unui script batch\n"
 
-#: cmd.rc:276
+#: cmd.rc:276 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "T"
@@ -1097,3 +1097,128 @@ msgstr ""
 #: write.rc:27
 msgid "Starting Wordpad failed"
 msgstr "Execuția Wordpad a eșuat"
+
+#: xcopy.rc:27
+msgid "Invalid number of parameters - Use xcopy /? for help\n"
+msgstr "Număr de parametri nevalid - Utilizați xcopy /? pentru ajutor\n"
+
+#: xcopy.rc:28
+msgid "Invalid parameter '%s' -  Use xcopy /? for help\n"
+msgstr "Parametru nevalid „%s” -  Utilizați xcopy /? pentru ajutor\n"
+
+#: xcopy.rc:29
+msgid "Press <enter> to begin copying\n"
+msgstr "Apăsați pe <enter> pentru a începe copierea\n"
+
+#: xcopy.rc:30
+msgid "%d file(s) would be copied\n"
+msgstr "%d fișier(e) ar fi copiat(e)\n"
+
+#: xcopy.rc:31
+msgid "%d file(s) copied\n"
+msgstr "%d fișier(e) copiat(e)\n"
+
+#: xcopy.rc:34
+msgid ""
+"Is '%s' a filename or directory\n"
+"on the target?\n"
+"(F - File, D - Directory)\n"
+msgstr ""
+"„%s” este un nume de fișier sau un director\n"
+"din destinație?\n"
+"(F - Fișier, D - Director)\n"
+
+#: xcopy.rc:35
+msgid "%s? (Yes|No)\n"
+msgstr "%s? (Da|Nu)\n"
+
+#: xcopy.rc:36
+msgid "Overwrite %s? (Yes|No|All)\n"
+msgstr "Se suprascrie %s? (Da|Nu|Toate)\n"
+
+#: xcopy.rc:37
+msgid "Copying of '%s' to '%s' failed with r/c %d\n"
+msgstr "Copierea „%s” în „%s” a eșuat cu cod de retur %d\n"
+
+#: xcopy.rc:39
+msgid "Failed during reading of '%s'\n"
+msgstr "Citirea „%s” a eșuat\n"
+
+#: xcopy.rc:43
+msgctxt "File key"
+msgid "F"
+msgstr "F"
+
+#: xcopy.rc:44
+msgctxt "Directory key"
+msgid "D"
+msgstr "D"
+
+#: xcopy.rc:77
+msgid ""
+"XCOPY - Copies source files or directory trees to a destination\n"
+"\n"
+"Syntax:\n"
+"XCOPY source [dest] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"\n"
+"Where:\n"
+"\n"
+"[/I]  Assume directory if destination does not exist and copying two or\n"
+"\tmore files\n"
+"[/S]  Copy directories and subdirectories\n"
+"[/E]  Copy directories and subdirectories, including any empty ones\n"
+"[/Q]  Do not list names during copy, ie quiet.\n"
+"[/F]  Show full source and destination names during copy\n"
+"[/L]  Simulate operation, showing names which would be copied\n"
+"[/W]  Prompts before beginning the copy operation\n"
+"[/T]  Creates empty directory structure but does not copy files\n"
+"[/Y]  Suppress prompting when overwriting files\n"
+"[/-Y] Enable prompting when overwriting files\n"
+"[/P]  Prompts on each source file before copying\n"
+"[/N]  Copy using short names\n"
+"[/U]  Copy only files which already exist in destination\n"
+"[/R]  Overwrite any read only files\n"
+"[/H]  Include hidden and system files in the copy\n"
+"[/C]  Continue even if an error occurs during the copy\n"
+"[/A]  Only copy files with archive attribute set\n"
+"[/M]  Only copy files with archive attribute set, removes\n"
+"\tarchive attribute\n"
+"[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
+"\t\tIf no date is supplied, only copy if destination is older\n"
+"\t\tthan source\n"
+"\n"
+msgstr ""
+"XCOPY - Copiază fișiere sau arbori de directoare sursă într-o destinație\n"
+"\n"
+"Sintaxă:\n"
+"XCOPY sursă [destinație] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"\n"
+"Cu:\n"
+"\n"
+"[/I]  Creează director dacă destinația nu există și se copiază două sau\n"
+"\tmai multe fișiere\n"
+"[/S]  Copiază directoarele și subdirectoarele\n"
+"[/E]  Copiază directoarele și subdirectoarele, inclusiv pe cele goale\n"
+"[/Q]  Nu afișa numele în timpul copierii.\n"
+"[/F]  Arată numele întreg pentru sursă și destinație în timpul copierii\n"
+"[/L]  Simulează operațiunea, afișând numele care ar fi copiate\n"
+"[/W]  Solicită confirmarea înainte de a începe copierea\n"
+"[/T]  Creează o structură de directoare goale, dar nu copiază fișiere\n"
+"[/Y]  Nu solicita confirmarea la suprascrierea fișierelor\n"
+"[/-Y] Solicită confirmarea la suprascrierea fișierelor\n"
+"[/P]  Solicită confirmarea înainte de copierea fiecărui fișier sursă\n"
+"[/N]  Copiază utilizând prescurtări de nume\n"
+"[/U]  Copiază numai fișierele care există deja în destinație\n"
+"[/R]  Suprascrie orice fișiere cu protecție la modificări\n"
+"[/H]  Include în copie fișierele ascunse și de sistem\n"
+"[/C]  Continuă chiar dacă apare o eroare în timpul copierii\n"
+"[/A]  Copiază numai fișierele cu atributul de arhivă activat\n"
+"[/M]  Copiază numai fișierele cu atributul de arhivă activat, dezactivează\n"
+"\tapoi atributul\n"
+"[/D | /D:m-d-y] Copiază fișierele noi sau pe cele modificate după data\n"
+"\t\tspecificată. Dacă nu este specificată nici o dată, copiază\n"
+"\t\tnumai dacă fișierul destinație este mai vechi decât fișierul\n"
+"\t\tsursă\n"
+"\n"

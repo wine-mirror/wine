@@ -553,12 +553,12 @@ msgstr ""
 msgid "Are you sure"
 msgstr "Är du säker?"
 
-#: cmd.rc:256
+#: cmd.rc:256 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "J"
 
-#: cmd.rc:257
+#: cmd.rc:257 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
@@ -631,7 +631,7 @@ msgstr "Skriv in den nya tiden: "
 msgid "Environment variable %s not defined\n"
 msgstr "Miljövariabeln %s ej definierad\n"
 
-#: cmd.rc:274
+#: cmd.rc:274 xcopy.rc:38
 msgid "Failed to open '%s'\n"
 msgstr "Misslyckades med att öppna '%s'\n"
 
@@ -639,7 +639,7 @@ msgstr "Misslyckades med att öppna '%s'\n"
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Går ej att anropa en batchetikett utanför ett batchskript\n"
 
-#: cmd.rc:276
+#: cmd.rc:276 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
@@ -1102,3 +1102,127 @@ msgstr ""
 #: write.rc:27
 msgid "Starting Wordpad failed"
 msgstr "Kunde inte starta Wordpad"
+
+#: xcopy.rc:27
+msgid "Invalid number of parameters - Use xcopy /? for help\n"
+msgstr "Ogiltigt antal parametrar - Använd xcopy /? för hjälp\n"
+
+#: xcopy.rc:28
+msgid "Invalid parameter '%s' -  Use xcopy /? for help\n"
+msgstr "Ogiltig parameter '%s' -  Använd xcopy /? för hjälp\n"
+
+#: xcopy.rc:29
+msgid "Press <enter> to begin copying\n"
+msgstr "Tryck <enter> för att börja kopiera\n"
+
+#: xcopy.rc:30
+msgid "%d file(s) would be copied\n"
+msgstr "%d fil(er) skulle kopieras\n"
+
+#: xcopy.rc:31
+msgid "%d file(s) copied\n"
+msgstr "%d fil(er) kopierade\n"
+
+#: xcopy.rc:34
+msgid ""
+"Is '%s' a filename or directory\n"
+"on the target?\n"
+"(F - File, D - Directory)\n"
+msgstr ""
+"Är '%s' ett filnamn eller en katalog\n"
+"på målet?\n"
+"(F - Fil, K - Katalog)\n"
+
+#: xcopy.rc:35
+msgid "%s? (Yes|No)\n"
+msgstr "%s? (Ja|Nej)\n"
+
+#: xcopy.rc:36
+msgid "Overwrite %s? (Yes|No|All)\n"
+msgstr "Skriv över %s? (Ja|Nej|Alla)\n"
+
+#: xcopy.rc:37
+msgid "Copying of '%s' to '%s' failed with r/c %d\n"
+msgstr "Kunde inte kopiera '%s' till '%s'; misslyckades med r/c %d\n"
+
+#: xcopy.rc:39
+msgid "Failed during reading of '%s'\n"
+msgstr "Kunde inte läsa '%s'\n"
+
+#: xcopy.rc:43
+msgctxt "File key"
+msgid "F"
+msgstr "F"
+
+#: xcopy.rc:44
+msgctxt "Directory key"
+msgid "D"
+msgstr "K"
+
+#: xcopy.rc:77
+msgid ""
+"XCOPY - Copies source files or directory trees to a destination\n"
+"\n"
+"Syntax:\n"
+"XCOPY source [dest] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"\n"
+"Where:\n"
+"\n"
+"[/I]  Assume directory if destination does not exist and copying two or\n"
+"\tmore files\n"
+"[/S]  Copy directories and subdirectories\n"
+"[/E]  Copy directories and subdirectories, including any empty ones\n"
+"[/Q]  Do not list names during copy, ie quiet.\n"
+"[/F]  Show full source and destination names during copy\n"
+"[/L]  Simulate operation, showing names which would be copied\n"
+"[/W]  Prompts before beginning the copy operation\n"
+"[/T]  Creates empty directory structure but does not copy files\n"
+"[/Y]  Suppress prompting when overwriting files\n"
+"[/-Y] Enable prompting when overwriting files\n"
+"[/P]  Prompts on each source file before copying\n"
+"[/N]  Copy using short names\n"
+"[/U]  Copy only files which already exist in destination\n"
+"[/R]  Overwrite any read only files\n"
+"[/H]  Include hidden and system files in the copy\n"
+"[/C]  Continue even if an error occurs during the copy\n"
+"[/A]  Only copy files with archive attribute set\n"
+"[/M]  Only copy files with archive attribute set, removes\n"
+"\tarchive attribute\n"
+"[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
+"\t\tIf no date is supplied, only copy if destination is older\n"
+"\t\tthan source\n"
+"\n"
+msgstr ""
+"XCOPY - Kopierar källfiler eller katalogträd till ett mål\n"
+"\n"
+"Syntax:\n"
+"XCOPY källa [dest] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"\n"
+"Där:\n"
+"\n"
+"[/I]  Antag att målet är en katalog om målet inte existerar och\n"
+"      två eller fler filer kopieras\n"
+"[/S]  Kopiera kataloger och underkataloger\n"
+"[/E]  Kopiera kataloger och underkataloger, inklusive tomma sådana\n"
+"[/Q]  Tyst läge: Lista inte filnamn under kopiering\n"
+"[/F]  Visa fulla käll- och målnamn under kopiering\n"
+"[/L]  Simulerar operationen och visar namn som skulle kopieras\n"
+"[/W]  Frågar innan kopieringen påbörjas\n"
+"[/T]  Skapar tom katalogstruktur men kopierar inga filer\n"
+"[/Y]  Fråga inte när filer skrivs över\n"
+"[/-Y] Fråga innan filer skrivs över\n"
+"[/P]  Fråga för varje källfil som kopieras.\n"
+"[/N]  Kopiera som korta filnamn\n"
+"[/U]  Kopiera enbart filer som redan existerar i destinationskatalogen\n"
+"[/R]  Skriv över skrivskyddade filer\n"
+"[/H]  Inkludera gömda filer och systemfiler i kopian\n"
+"[/C]  Fortsätt även om ett fel uppstår under kopieringen\n"
+"[/A]  Kopiera enbart filer markerade som arkiv\n"
+"[/M]  Kopiera enbart filer markerade som arkiv, ta bort\n"
+"      markeringen\n"
+"[/D | /D:m-d-y] Kopiera nya filer eller de ändrade efter angivet datum.\n"
+"\t\tOm inget datum angivits utförs endast kopiering om målet är\n"
+"\t\täldre än källan\n"
+"\n"

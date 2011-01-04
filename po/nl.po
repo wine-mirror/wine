@@ -560,12 +560,12 @@ msgstr ""
 msgid "Are you sure"
 msgstr "Bent u zeker"
 
-#: cmd.rc:256
+#: cmd.rc:256 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "J"
 
-#: cmd.rc:257
+#: cmd.rc:257 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
@@ -638,7 +638,7 @@ msgstr "voer de nieuwe tijd in: "
 msgid "Environment variable %s not defined\n"
 msgstr "Omgevingsvariable %s niet gedefinieerd\n"
 
-#: cmd.rc:274
+#: cmd.rc:274 xcopy.rc:38
 msgid "Failed to open '%s'\n"
 msgstr "Openen van '%s' is mislukt\n"
 
@@ -647,7 +647,7 @@ msgid "Cannot call batch label outside of a batch script\n"
 msgstr ""
 "Onmogelijk om een batch label aan te roepen van buiten een batch script\n"
 
-#: cmd.rc:276
+#: cmd.rc:276 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
@@ -1117,3 +1117,128 @@ msgstr ""
 #: write.rc:27
 msgid "Starting Wordpad failed"
 msgstr "Starten van Wordpad mislukt"
+
+#: xcopy.rc:27
+msgid "Invalid number of parameters - Use xcopy /? for help\n"
+msgstr "Onjuist aantal parameters - Gebruik xcopy /? om hulp te krijgen\n"
+
+#: xcopy.rc:28
+msgid "Invalid parameter '%s' -  Use xcopy /? for help\n"
+msgstr "Onjuiste parameter '%s' -  Gebruik xcopy /? om hulp te krijgen\n"
+
+#: xcopy.rc:29
+msgid "Press <enter> to begin copying\n"
+msgstr "Druk op <enter> om te beginnen met kopiëren\n"
+
+#: xcopy.rc:30
+msgid "%d file(s) would be copied\n"
+msgstr "%d bestand(en) zouden worden gekopieerd\n"
+
+#: xcopy.rc:31
+msgid "%d file(s) copied\n"
+msgstr "%d bestand(en) gekopieerd\n"
+
+#: xcopy.rc:34
+msgid ""
+"Is '%s' a filename or directory\n"
+"on the target?\n"
+"(F - File, D - Directory)\n"
+msgstr ""
+"Is '%s' een bestand of een map\n"
+"op de bestemming?\n"
+"(B - Bestand, D - Directory)\n"
+
+#: xcopy.rc:35
+msgid "%s? (Yes|No)\n"
+msgstr "%s? (Ja|Nee)\n"
+
+#: xcopy.rc:36
+msgid "Overwrite %s? (Yes|No|All)\n"
+msgstr "Overschrijven %s? (Ja|Nee|Alles)\n"
+
+#: xcopy.rc:37
+msgid "Copying of '%s' to '%s' failed with r/c %d\n"
+msgstr "Kopiëren van '%s' naar '%s' mislukt met r/c %d\n"
+
+#: xcopy.rc:39
+msgid "Failed during reading of '%s'\n"
+msgstr "Fout tijdens lezen van '%s'\n"
+
+#: xcopy.rc:43
+msgctxt "File key"
+msgid "F"
+msgstr "B"
+
+#: xcopy.rc:44
+msgctxt "Directory key"
+msgid "D"
+msgstr "D"
+
+#: xcopy.rc:77
+msgid ""
+"XCOPY - Copies source files or directory trees to a destination\n"
+"\n"
+"Syntax:\n"
+"XCOPY source [dest] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"\n"
+"Where:\n"
+"\n"
+"[/I]  Assume directory if destination does not exist and copying two or\n"
+"\tmore files\n"
+"[/S]  Copy directories and subdirectories\n"
+"[/E]  Copy directories and subdirectories, including any empty ones\n"
+"[/Q]  Do not list names during copy, ie quiet.\n"
+"[/F]  Show full source and destination names during copy\n"
+"[/L]  Simulate operation, showing names which would be copied\n"
+"[/W]  Prompts before beginning the copy operation\n"
+"[/T]  Creates empty directory structure but does not copy files\n"
+"[/Y]  Suppress prompting when overwriting files\n"
+"[/-Y] Enable prompting when overwriting files\n"
+"[/P]  Prompts on each source file before copying\n"
+"[/N]  Copy using short names\n"
+"[/U]  Copy only files which already exist in destination\n"
+"[/R]  Overwrite any read only files\n"
+"[/H]  Include hidden and system files in the copy\n"
+"[/C]  Continue even if an error occurs during the copy\n"
+"[/A]  Only copy files with archive attribute set\n"
+"[/M]  Only copy files with archive attribute set, removes\n"
+"\tarchive attribute\n"
+"[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
+"\t\tIf no date is supplied, only copy if destination is older\n"
+"\t\tthan source\n"
+"\n"
+msgstr ""
+"XCOPY - Kopieert bronbestanden of -mappen naar een bestemming\n"
+"\n"
+"Gebruik:\n"
+"XCOPY bron [bestemming] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"\n"
+"Parameters:\n"
+"\n"
+"[/I]  Als bestemming niet bestaat en 2 of meer bestanden worden\n"
+"\tgekopieerd, neem aan dat een map werd bedoeld\n"
+"[/S]  Kopieer mappen en submappen\n"
+"[/E]  Kopieer mappen en submappen, inclusief lege\n"
+"[/Q]  Toon geen namen tijdens kopiëren (stil).\n"
+"[/F]  Toon volledige bron- en bestemmingnamen tijdens kopiëren\n"
+"[/L]  Simuleer de actie, toon de namen die gekopieerd zouden worden\n"
+"[/W]  Wacht op actie van de gebruiker voor het kopiëren begint\n"
+"[/T]  Creëert een lege mapstructuur, maar kopieert geen bestanden\n"
+"[/Y]  Onderdrukt gebruikersactie wanneer bestanden worden overschreven\n"
+"[/-Y] Vraagt gebruikersactie wanneer bestanden worden overschreven\n"
+"[/P]  Vraagt gebruikersactie voor ieder bronbestand voor kopiëren\n"
+"[/N]  Kopieer m.b.v korte bestandsnamen\n"
+"[/U]  Kopieer alleen bestanden die al bestaan op de bestemming\n"
+"[/R]  Overschrijf alle schrijf-beveiligde bestanden\n"
+"[/H]  Inclusief verborgen en systeem bestanden\n"
+"[/C]  Ga door zelfs als er een fout optreed tijdens het kopiëren\n"
+"[/A]  Kopieer alleen bestanden met archiveringsattribuut aan\n"
+"[/M]  Kopieer alleen bestanden met archiveringsattribuut aan, verwijdert\n"
+"\tdit archiveringsattribuut\n"
+"[/D | /D:m-d-y] Kopieer bestanden die nieuw zijn of gewijzigd zijn na de "
+"opgegeven\n"
+"\t\tdatum. Als geen datum wordt gegeven, kopieer alleen als bron nieuwer "
+"is.\n"
+"\n"

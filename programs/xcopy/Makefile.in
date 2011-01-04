@@ -8,24 +8,7 @@ MODCFLAGS = @BUILTINFLAG@
 C_SRCS = \
 	xcopy.c
 
-RC_SRCS = \
-	Da.rc \
-	De.rc \
-	En.rc \
-	Fr.rc \
-	It.rc \
-	Ja.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	No.rc \
-	Pl.rc \
-	Pt.rc \
-	Ro.rc \
-	Ru.rc \
-	Si.rc \
-	Sr.rc \
-	Sv.rc \
-	Uk.rc
+RC_SRCS = xcopy.rc
+PO_SRCS = xcopy.rc
 
 @MAKE_PROG_RULES@

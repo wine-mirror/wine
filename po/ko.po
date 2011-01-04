@@ -542,12 +542,12 @@ msgstr ""
 msgid "Are you sure"
 msgstr "당신은 확신합니까?"
 
-#: cmd.rc:256
+#: cmd.rc:256 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "예"
 
-#: cmd.rc:257
+#: cmd.rc:257 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "아니오"
@@ -620,7 +620,7 @@ msgstr "새 시간 입력: "
 msgid "Environment variable %s not defined\n"
 msgstr "환경 변수 %s 는 정의되지 않았습니다\n"
 
-#: cmd.rc:274
+#: cmd.rc:274 xcopy.rc:38
 msgid "Failed to open '%s'\n"
 msgstr "'%s' 열기 실패\n"
 
@@ -628,7 +628,7 @@ msgstr "'%s' 열기 실패\n"
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "배치 스크립트 밖의 배치 라벨은 불러올수 없습니다\n"
 
-#: cmd.rc:276
+#: cmd.rc:276 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
@@ -1083,3 +1083,128 @@ msgstr ""
 #: write.rc:27
 msgid "Starting Wordpad failed"
 msgstr "워드패드 시작 실패함"
+
+#: xcopy.rc:27
+msgid "Invalid number of parameters - Use xcopy /? for help\n"
+msgstr "올바르지 않은 매개변수의 갯수 - xcopy /?로 도움말을 보시오\n"
+
+#: xcopy.rc:28
+msgid "Invalid parameter '%s' -  Use xcopy /? for help\n"
+msgstr "올바르지 않은 매개변수 '%s' -  xcopy /?로 도움말을 보시오\n"
+
+#: xcopy.rc:29
+msgid "Press <enter> to begin copying\n"
+msgstr "<enter> 를 누르면 복사가 시작될 것입니다\n"
+
+#: xcopy.rc:30
+msgid "%d file(s) would be copied\n"
+msgstr "%d 파일이 복사될 것입니다\n"
+
+#: xcopy.rc:31
+msgid "%d file(s) copied\n"
+msgstr "%d 파일이 복사되었습니다\n"
+
+#: xcopy.rc:34
+msgid ""
+"Is '%s' a filename or directory\n"
+"on the target?\n"
+"(F - File, D - Directory)\n"
+msgstr ""
+"'%s'이 복사할 파일이나 디렉토리?\n"
+"입니까?\n"
+"(F - 파일, D - 디렉토리)\n"
+
+#: xcopy.rc:35
+msgid "%s? (Yes|No)\n"
+msgstr "%s? (예|아니오)\n"
+
+#: xcopy.rc:36
+msgid "Overwrite %s? (Yes|No|All)\n"
+msgstr "%s를 덮어쓰겠습니까? (예|아니오|모두)\n"
+
+#: xcopy.rc:37
+msgid "Copying of '%s' to '%s' failed with r/c %d\n"
+msgstr "Copying of '%s' to '%s' failed with r/c %d\n"
+
+#: xcopy.rc:39
+msgid "Failed during reading of '%s'\n"
+msgstr "'%s를 읽지 못했습니다'\n"
+
+#: xcopy.rc:43
+msgctxt "File key"
+msgid "F"
+msgstr "F"
+
+#: xcopy.rc:44
+msgctxt "Directory key"
+msgid "D"
+msgstr "D"
+
+#: xcopy.rc:77
+msgid ""
+"XCOPY - Copies source files or directory trees to a destination\n"
+"\n"
+"Syntax:\n"
+"XCOPY source [dest] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"\n"
+"Where:\n"
+"\n"
+"[/I]  Assume directory if destination does not exist and copying two or\n"
+"\tmore files\n"
+"[/S]  Copy directories and subdirectories\n"
+"[/E]  Copy directories and subdirectories, including any empty ones\n"
+"[/Q]  Do not list names during copy, ie quiet.\n"
+"[/F]  Show full source and destination names during copy\n"
+"[/L]  Simulate operation, showing names which would be copied\n"
+"[/W]  Prompts before beginning the copy operation\n"
+"[/T]  Creates empty directory structure but does not copy files\n"
+"[/Y]  Suppress prompting when overwriting files\n"
+"[/-Y] Enable prompting when overwriting files\n"
+"[/P]  Prompts on each source file before copying\n"
+"[/N]  Copy using short names\n"
+"[/U]  Copy only files which already exist in destination\n"
+"[/R]  Overwrite any read only files\n"
+"[/H]  Include hidden and system files in the copy\n"
+"[/C]  Continue even if an error occurs during the copy\n"
+"[/A]  Only copy files with archive attribute set\n"
+"[/M]  Only copy files with archive attribute set, removes\n"
+"\tarchive attribute\n"
+"[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
+"\t\tIf no date is supplied, only copy if destination is older\n"
+"\t\tthan source\n"
+"\n"
+msgstr ""
+"XCOPY - 원본 파일이나 디렉토리 구조를 목적지로 복사\n"
+"\n"
+"문법:\n"
+"XCOPY 원본 [대상] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"\n"
+"Where:\n"
+"\n"
+"[/I] 만약 대상이 존재하지 않는 경우 디렉토리로 가정하고 두개나 더 많은 파일"
+"을\n"
+"\t복사\n"
+"[/S]  디렉토리하고 하위 디렉토리 복사\n"
+"[/E]  빈 디렉토리를 포함해서 디렉토리와 하위 디렉토리 복사\n"
+"[/Q]  조용하게 복사되는 파일이나 디렉토리를 표시하지 않고 복사.\n"
+"[/F]  복사하는 동안 완전한 원본과 대상 보여주기\n"
+"[/L]  복사될 것을 보여주면서 가상으로 작업\n"
+"[/W]  복사시작 하기 전에 확인하기\n"
+"[/T]  파일은 복사하지 않고 빈 디렉토리 구조만 복사\n"
+"[/Y]  파일 덮어 쓸 때 확인하지 않기\n"
+"[/-Y] 파일을 덮어 쓸 때 확인하기\n"
+"[/P]  복사하는 동안에 각가의 원본 파일마다 확인\n"
+"[/N]  짧은 이름을 사용해서 복사\n"
+"[/U]  이미 대상 디렉토리에 존재하는 파일만 복사\n"
+"[/R]  읽기 전용 파일도 덮어 쓰기\n"
+"[/H]  숨은 파일이나 시스템 파일도 포함해서 복사\n"
+"[/C]  복사하는 동안에 에러가 발생해도 계속 진행\n"
+"[/A]  오직 압축 속성이 설정되어있는 파일만 복사\n"
+"[/M]  오직 압축 속성을 제거하면서  압축 속성이 설정되어있는\n"
+"\t파일만 복사\n"
+"[/D | /D:m-d-y] 지정된 날짜 후에 수정되거나 새로운 파일 복사.\n"
+"\t\tI만약 어떠한 날짜도 지정되지 않으면,오직 원본보다\n"
+"\t\t대상이 오래된 것만 복사\n"
+"\n"

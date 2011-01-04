@@ -540,12 +540,12 @@ msgstr ""
 msgid "Are you sure"
 msgstr "Are you sure"
 
-#: cmd.rc:256
+#: cmd.rc:256 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "Y"
 
-#: cmd.rc:257
+#: cmd.rc:257 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
@@ -618,15 +618,15 @@ msgstr "Enter new time: "
 msgid "Environment variable %s not defined\n"
 msgstr "Environment variable %s not defined\n"
 
-#: cmd.rc:274
+#: cmd.rc:274 xcopy.rc:38
 msgid "Failed to open '%s'\n"
-msgstr "Failed to open '%s'\n"
+msgstr "'%s' を開けません\n"
 
 #: cmd.rc:275
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Cannot call batch label outside of a batch script\n"
 
-#: cmd.rc:276
+#: cmd.rc:276 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
@@ -1077,3 +1077,127 @@ msgstr ""
 #: write.rc:27
 msgid "Starting Wordpad failed"
 msgstr "Wordpad の起動に失敗しました"
+
+#: xcopy.rc:27
+msgid "Invalid number of parameters - Use xcopy /? for help\n"
+msgstr "パラメータの数が違います。xcopy /? で使い方を表示します\n"
+
+#: xcopy.rc:28
+msgid "Invalid parameter '%s' -  Use xcopy /? for help\n"
+msgstr "無効なパラメータ '%s' です。xcopy /? で使い方を表示します\n"
+
+#: xcopy.rc:29
+msgid "Press <enter> to begin copying\n"
+msgstr "コピーを開始するには <enter> を押してください\n"
+
+#: xcopy.rc:30
+msgid "%d file(s) would be copied\n"
+msgstr "%d ファイルがコピーされる見込みです。\n"
+
+#: xcopy.rc:31
+msgid "%d file(s) copied\n"
+msgstr "%d ファイルをコピーしました\n"
+
+#: xcopy.rc:34
+msgid ""
+"Is '%s' a filename or directory\n"
+"on the target?\n"
+"(F - File, D - Directory)\n"
+msgstr ""
+"送り先の '%s' はファイル名ですか、\n"
+"ディレクトリですか?\n"
+"(F - ファイル、D - ディレクトリ)\n"
+
+#: xcopy.rc:35
+msgid "%s? (Yes|No)\n"
+msgstr "%s? (Yes|No)\n"
+
+#: xcopy.rc:36
+msgid "Overwrite %s? (Yes|No|All)\n"
+msgstr "%s を上書きしますか? (Yes|No|All)\n"
+
+#: xcopy.rc:37
+msgid "Copying of '%s' to '%s' failed with r/c %d\n"
+msgstr "'%s' から '%s' へのコピーは失敗しました。戻り値 %d\n"
+
+#: xcopy.rc:39
+msgid "Failed during reading of '%s'\n"
+msgstr "'%s' の読み込み中に失敗しました\n"
+
+#: xcopy.rc:43
+msgctxt "File key"
+msgid "F"
+msgstr "F"
+
+#: xcopy.rc:44
+msgctxt "Directory key"
+msgid "D"
+msgstr "D"
+
+#: xcopy.rc:77
+msgid ""
+"XCOPY - Copies source files or directory trees to a destination\n"
+"\n"
+"Syntax:\n"
+"XCOPY source [dest] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"\n"
+"Where:\n"
+"\n"
+"[/I]  Assume directory if destination does not exist and copying two or\n"
+"\tmore files\n"
+"[/S]  Copy directories and subdirectories\n"
+"[/E]  Copy directories and subdirectories, including any empty ones\n"
+"[/Q]  Do not list names during copy, ie quiet.\n"
+"[/F]  Show full source and destination names during copy\n"
+"[/L]  Simulate operation, showing names which would be copied\n"
+"[/W]  Prompts before beginning the copy operation\n"
+"[/T]  Creates empty directory structure but does not copy files\n"
+"[/Y]  Suppress prompting when overwriting files\n"
+"[/-Y] Enable prompting when overwriting files\n"
+"[/P]  Prompts on each source file before copying\n"
+"[/N]  Copy using short names\n"
+"[/U]  Copy only files which already exist in destination\n"
+"[/R]  Overwrite any read only files\n"
+"[/H]  Include hidden and system files in the copy\n"
+"[/C]  Continue even if an error occurs during the copy\n"
+"[/A]  Only copy files with archive attribute set\n"
+"[/M]  Only copy files with archive attribute set, removes\n"
+"\tarchive attribute\n"
+"[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
+"\t\tIf no date is supplied, only copy if destination is older\n"
+"\t\tthan source\n"
+"\n"
+msgstr ""
+"XCOPY - 送り元のファイルやディレクトリを送り先にコピーします\n"
+"\n"
+"構文:\n"
+"XCOPY 送り元 [送り先] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"\n"
+"オプション:\n"
+"\n"
+"[/I]  送り先が存在せず、複数のファイルをコピーするときは、送り先を\n"
+"\tディレクトリとみなします。\n"
+"[/S]  ディレクトリとサブディレクトリをコピーします。\n"
+"[/E]  空ディレクトリを含め、ディレクトリとサブディレクトリをコピー。\n"
+"[/Q]  コピー中にファイル名を一覧にしません。すなわち寡黙です。\n"
+"[/F]  コピー中にフルパスで送り元と送り先の名前を表示します。\n"
+"[/L]  操作を模擬実行し、コピー予定のファイル名を表示します。\n"
+"[/W]  コピーを開始する前に確認のメッセージを表示します。\n"
+"[/T]  空のディレクトリ構造を作成しますが、ファイルはコピーしません。\n"
+"[/Y]  ファイルを上書きする時に確認のメッセージを表示しません。\n"
+"[/-Y] ファイルを上書きする時に確認のメッセージを表示します。\n"
+"[/P]  各ファイルのコピー前に確認のメッセージを表示します。\n"
+"[/N]  短いファイル名を利用してコピーします。\n"
+"[/U]  送り先にあるファイルだけコピーします。\n"
+"[/R]  読み取り専用ファイルを上書きします。\n"
+"[/H]  隠しファイルやシステム ファイルもコピーします。\n"
+"[/C]  コピー中にエラーが起こっても続行します。\n"
+"[/A]  アーカイブ属性のファイルだけコピーします。\n"
+"[/M]  アーカイブ属性のファイルだけコピーし、アーカイブ属性を\n"
+"\t取り除きます。\n"
+"[/D | /D:月-日-年] 新しいファイルや指定された日付以降に変更された\n"
+"\t\tファイルをコピーします。日付が指定されない場合は、\n"
+"\t\tコピー先がコピー元より古いファイルだけコピーします。\n"
+"\n"

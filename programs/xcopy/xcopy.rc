@@ -1,6 +1,5 @@
 /*
  * XCOPY - Wine-compatible xcopy program
- * English language support
  *
  * Copyright (C) 2007 J. Edmeades
  *
@@ -38,11 +37,11 @@ STRINGTABLE
     STRING_COPYFAIL, "Copying of '%s' to '%s' failed with r/c %d\n"
     STRING_OPENFAIL, "Failed to open '%s'\n"
     STRING_READFAIL, "Failed during reading of '%s'\n"
-    STRING_YES_CHAR, "Y"
-    STRING_NO_CHAR,  "N"
-    STRING_ALL_CHAR, "A"
-    STRING_FILE_CHAR,"F"
-    STRING_DIR_CHAR, "D"
+    STRING_YES_CHAR, "#msgctxt#Yes key#Y"
+    STRING_NO_CHAR,  "#msgctxt#No key#N"
+    STRING_ALL_CHAR, "#msgctxt#All key#A"
+    STRING_FILE_CHAR,"#msgctxt#File key#F"
+    STRING_DIR_CHAR, "#msgctxt#Directory key#D"
 
     STRING_HELP,
 "XCOPY - Copies source files or directory trees to a destination\n\

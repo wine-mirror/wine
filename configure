@@ -15460,7 +15460,7 @@ wine_fn_config_program wmic enable_wmic install
 wine_fn_config_program wordpad enable_wordpad install
 wine_fn_config_program write enable_write po,install
 wine_fn_config_program wscript enable_wscript install
-wine_fn_config_program xcopy enable_xcopy install
+wine_fn_config_program xcopy enable_xcopy po,install
 wine_fn_config_makefile server enable_server
 wine_fn_config_tool tools
 wine_fn_config_tool tools/widl

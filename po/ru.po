@@ -550,12 +550,12 @@ msgstr ""
 msgid "Are you sure"
 msgstr "Вы уверены?"
 
-#: cmd.rc:256
+#: cmd.rc:256 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "Д"
 
-#: cmd.rc:257
+#: cmd.rc:257 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "Н"
@@ -628,15 +628,20 @@ msgstr "Введите новое время: "
 msgid "Environment variable %s not defined\n"
 msgstr "Переменная окружения %s не определена\n"
 
-#: cmd.rc:274
+#: cmd.rc:274 xcopy.rc:38
+#, fuzzy
 msgid "Failed to open '%s'\n"
-msgstr "Ошибка при открытии '%s'\n"
+msgstr ""
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"Ошибка при открытии '%s'\n"
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"Невозможно открыть '%s'\n"
 
 #: cmd.rc:275
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Не могу вызвать метку bat-файла вне bat-скрипта\n"
 
-#: cmd.rc:276
+#: cmd.rc:276 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "В"
@@ -1105,3 +1110,131 @@ msgstr ""
 #: write.rc:27
 msgid "Starting Wordpad failed"
 msgstr "Не удалось запустить Wordpad"
+
+#: xcopy.rc:27
+msgid "Invalid number of parameters - Use xcopy /? for help\n"
+msgstr ""
+"Недопустимое число параметров - попробуйте 'xcopy /?' для получения\n"
+"подробного описания.\n"
+
+#: xcopy.rc:28
+msgid "Invalid parameter '%s' -  Use xcopy /? for help\n"
+msgstr ""
+"Недопустимый параметр '%s' - попробуйте 'xcopy /?' для получения подробного\n"
+"описания.\n"
+
+#: xcopy.rc:29
+msgid "Press <enter> to begin copying\n"
+msgstr "Нажмите клавишу <Enter>, чтобы начать копирование.\n"
+
+#: xcopy.rc:30
+msgid "%d file(s) would be copied\n"
+msgstr "%d файл(ов) было бы скопировано.\n"
+
+#: xcopy.rc:31
+msgid "%d file(s) copied\n"
+msgstr "%d файл(ов) скопировано.\n"
+
+#: xcopy.rc:34
+msgid ""
+"Is '%s' a filename or directory\n"
+"on the target?\n"
+"(F - File, D - Directory)\n"
+msgstr ""
+"'%s' является файлом или папкой?\n"
+"(F - Файл, D - Папка)\n"
+
+#: xcopy.rc:35
+msgid "%s? (Yes|No)\n"
+msgstr "%s? (Yes|No)\n"
+
+#: xcopy.rc:36
+msgid "Overwrite %s? (Yes|No|All)\n"
+msgstr "Переписать %s? (Yes|No|All)\n"
+
+#: xcopy.rc:37
+msgid "Copying of '%s' to '%s' failed with r/c %d\n"
+msgstr "При копировании '%s' в '%s' произошла ошибка: %d\n"
+
+#: xcopy.rc:39
+msgid "Failed during reading of '%s'\n"
+msgstr "При чтении '%s' произошла ошибка\n"
+
+#: xcopy.rc:43
+msgctxt "File key"
+msgid "F"
+msgstr "F"
+
+#: xcopy.rc:44
+msgctxt "Directory key"
+msgid "D"
+msgstr "D"
+
+#: xcopy.rc:77
+msgid ""
+"XCOPY - Copies source files or directory trees to a destination\n"
+"\n"
+"Syntax:\n"
+"XCOPY source [dest] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"\n"
+"Where:\n"
+"\n"
+"[/I]  Assume directory if destination does not exist and copying two or\n"
+"\tmore files\n"
+"[/S]  Copy directories and subdirectories\n"
+"[/E]  Copy directories and subdirectories, including any empty ones\n"
+"[/Q]  Do not list names during copy, ie quiet.\n"
+"[/F]  Show full source and destination names during copy\n"
+"[/L]  Simulate operation, showing names which would be copied\n"
+"[/W]  Prompts before beginning the copy operation\n"
+"[/T]  Creates empty directory structure but does not copy files\n"
+"[/Y]  Suppress prompting when overwriting files\n"
+"[/-Y] Enable prompting when overwriting files\n"
+"[/P]  Prompts on each source file before copying\n"
+"[/N]  Copy using short names\n"
+"[/U]  Copy only files which already exist in destination\n"
+"[/R]  Overwrite any read only files\n"
+"[/H]  Include hidden and system files in the copy\n"
+"[/C]  Continue even if an error occurs during the copy\n"
+"[/A]  Only copy files with archive attribute set\n"
+"[/M]  Only copy files with archive attribute set, removes\n"
+"\tarchive attribute\n"
+"[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
+"\t\tIf no date is supplied, only copy if destination is older\n"
+"\t\tthan source\n"
+"\n"
+msgstr ""
+"XCOPY - Копирует файлы и деревья папок\n"
+"\n"
+"Синтаксис:\n"
+"XCOPY source [dest] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"\n"
+"Где:\n"
+"\n"
+"[/I]  Если конечная папка отсутствует и копируется более одного файла,\n"
+"то предполагается папка в качестве места назначения.\n"
+"[/S]  Копирует папки и подпапки.\n"
+"[/E]  Копирует папки и подпапки, включая пустые.\n"
+"[/Q]  Не отображает имена копируемых файлов.\n"
+"[/F]  Отображает полные имена исходных и конечных файлов.\n"
+"[/L]  Выводит список файлов, которые будут скопированы.\n"
+"[/W]  Запрашивает подтверждение перед началом копирования.\n"
+"[/T]  Создает структуру папок, но не копирует файлы.\n"
+"[/Y]  Подавляет запрос на подтверждение перезаписи файлов.\n"
+"[/-Y] Запрашивает подтверждение на перезапись файлов.\n"
+"[/P]  Запрашивает подтверждение для каждого копируемого файла.\n"
+"[/N]  Использует короткие имена файлов при копировании.\n"
+"[/U]  Копирует только те файлы, которые уже существуют в конечной папке.\n"
+"[/R]  Перезаписывает файлы, доступные только для чтения.\n"
+"[/H]  Копирует скрытые и системные файлы.\n"
+"[/C]  Продолжает работу, даже если произошла ошибка.\n"
+"[/A]  Копирует только те файлы, для которых установлен атрибут \"архивный"
+"\".\n"
+"[/M]  Копирует только те файлы, для которых установлен атрибут \"архивный"
+"\",\n"
+"при этом атрибут удаляется.\n"
+"[/D | /D:m-d-y] Копирует только новые файлы или те, которые были изменены\n"
+"после указанной даты. Если дата не указана, копирует только\n"
+"те файлы, которые новее в исходной папке.\n"
