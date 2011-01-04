@@ -64,7 +64,7 @@ typedef struct ACImpl {
     BOOL init, running;
     CRITICAL_SECTION *crst;
     HANDLE handle;
-    DWORD locked, flags, bufsize, pad, padpartial, ofs, periodsize_frames, candisconnect;
+    DWORD locked, flags, bufsize_frames, pad, padpartial, ofs, periodsize_frames, candisconnect;
     BYTE *buffer;
     WAVEFORMATEX *pwfx;
     ALuint source;
@@ -387,10 +387,10 @@ static HRESULT AC_OpenRenderAL(ACImpl *This)
 static HRESULT AC_OpenCaptureAL(ACImpl *This)
 {
     char alname[MAX_PATH];
-    ALint freq, size;
+    ALint freq, size_frames;
 
     freq = This->pwfx->nSamplesPerSec;
-    size = This->bufsize;
+    size_frames = This->bufsize_frames;
 
     alname[sizeof(alname)-1] = 0;
     if (This->dev) {
@@ -399,11 +399,11 @@ static HRESULT AC_OpenCaptureAL(ACImpl *This)
     }
     WideCharToMultiByte(CP_UNIXCP, 0, This->parent->alname, -1,
                         alname, sizeof(alname)/sizeof(*alname)-1, NULL, NULL);
-    This->dev = palcCaptureOpenDevice(alname, freq, This->format, size);
+    This->dev = palcCaptureOpenDevice(alname, freq, This->format, size_frames);
     if (!This->dev) {
         ALCenum err = palcGetError(NULL);
         FIXME("Could not open device %s with buf size %u: 0x%04x\n",
-              alname, This->bufsize, err);
+              alname, This->bufsize_frames, err);
         return AUDCLNT_E_DEVICE_IN_USE;
     }
     return S_OK;
@@ -452,7 +452,8 @@ static HRESULT WINAPI AC_Initialize(IAudioClient *iface, AUDCLNT_SHAREMODE mode,
     ACImpl *This = (ACImpl*)iface;
     HRESULT hr = S_OK;
     WAVEFORMATEX *pwfx2;
-    REFERENCE_TIME time, bufsize;
+    REFERENCE_TIME time;
+    DWORD bufsize_bytes;
 
     TRACE("(%p)->(%x,%x,%u,%u,%p,%s)\n", This, mode, flags, (int)duration, (int)period, pwfx, debugstr_guid(sessionguid));
     if (This->init)
@@ -519,11 +520,10 @@ static HRESULT WINAPI AC_Initialize(IAudioClient *iface, AUDCLNT_SHAREMODE mode,
     if (duration > 20000000)
         duration = 20000000;
 
-    bufsize = duration / time * This->periodsize_frames;
+    This->bufsize_frames = duration / time * This->periodsize_frames;
     if (duration % time)
-        bufsize += This->periodsize_frames;
-    This->bufsize = bufsize;
-    bufsize *= pwfx->nBlockAlign;
+        This->bufsize_frames += This->periodsize_frames;
+    bufsize_bytes = This->bufsize_frames * pwfx->nBlockAlign;
 
     This->format = get_format(This->pwfx);
     if (This->parent->flow == eRender) {
@@ -563,7 +563,7 @@ static HRESULT WINAPI AC_Initialize(IAudioClient *iface, AUDCLNT_SHAREMODE mode,
         goto out;
 
     This->candisconnect = palcIsExtensionPresent(This->dev, "ALC_EXT_disconnect");
-    This->buffer = HeapAlloc(GetProcessHeap(), 0, bufsize);
+    This->buffer = HeapAlloc(GetProcessHeap(), 0, bufsize_bytes);
     if (!This->buffer) {
         hr = E_OUTOFMEMORY;
         goto out;
@@ -585,7 +585,7 @@ static HRESULT WINAPI AC_GetBufferSize(IAudioClient *iface, UINT32 *frames)
         return AUDCLNT_E_NOT_INITIALIZED;
     if (!frames)
         return E_POINTER;
-    *frames = This->bufsize;
+    *frames = This->bufsize_frames;
     return S_OK;
 }
 
@@ -694,8 +694,8 @@ static HRESULT WINAPI AC_GetCurrentPadding(IAudioClient *iface, UINT32 *numpad)
 
             if (This->parent->flow == eCapture) {
                 This->pad += This->periodsize_frames;
-                if (This->pad > This->bufsize)
-                    This->pad = This->bufsize;
+                if (This->pad > This->bufsize_frames)
+                    This->pad = This->bufsize_frames;
             } else {
                 if (This->pad <= This->periodsize_frames) {
                     This->pad = 0;
@@ -734,7 +734,7 @@ static HRESULT WINAPI AC_GetCurrentPadding(IAudioClient *iface, UINT32 *numpad)
 #endif
         }
         *numpad = This->pad - This->padpartial - played;
-        if (This->handle && (*numpad + This->periodsize_frames) <= This->bufsize)
+        if (This->handle && (*numpad + This->periodsize_frames) <= This->bufsize_frames)
             SetEvent(This->handle);
         getALError();
         popALContext();
@@ -744,31 +744,31 @@ static HRESULT WINAPI AC_GetCurrentPadding(IAudioClient *iface, UINT32 *numpad)
         if (avail) {
             DWORD ofs = This->ofs + This->pad;
             BYTE *buf1;
-            ofs %= This->bufsize;
+            ofs %= This->bufsize_frames;
             buf1 = This->buffer + (ofs * block);
             This->laststamp = gettime();
             if (This->handle)
                 SetEvent(This->handle);
 
-            if (ofs + avail <= This->bufsize)
+            if (ofs + avail <= This->bufsize_frames)
                 palcCaptureSamples(This->dev, buf1, avail);
             else {
-                DWORD part1 = This->bufsize - ofs;
+                DWORD part1 = This->bufsize_frames - ofs;
                 palcCaptureSamples(This->dev, buf1, part1);
                 palcCaptureSamples(This->dev, This->buffer, avail - part1);
             }
             This->pad += avail;
             This->frameswritten += avail;
             /* Increase ofs if the app forgets to read */
-            if (This->pad > This->bufsize) {
+            if (This->pad > This->bufsize_frames) {
                 DWORD rest;
-                WARN("Overflowed! %u bytes\n", This->pad - This->bufsize);
-                This->ofs += This->pad - This->bufsize;
+                WARN("Overflowed! %u frames\n", This->pad - This->bufsize_frames);
+                This->ofs += This->pad - This->bufsize_frames;
                 rest = This->ofs % This->periodsize_frames;
                 if (rest)
                     This->ofs += This->periodsize_frames - rest;
-                This->ofs %= This->bufsize;
-                This->pad = This->bufsize;
+                This->ofs %= This->bufsize_frames;
+                This->pad = This->bufsize_frames;
             }
         }
         if (This->pad >= This->periodsize_frames)
@@ -1177,8 +1177,8 @@ static HRESULT WINAPI ACR_GetBuffer(IAudioRenderClient *iface, UINT32 frames, BY
         return AUDCLNT_E_OUT_OF_ORDER;
     }
     AC_GetCurrentPadding((IAudioClient*)This->parent, &free);
-    if (This->parent->bufsize-free < frames) {
-        ERR("Too large: %u %u %u\n", This->parent->bufsize, free, frames);
+    if (This->parent->bufsize_frames - free < frames) {
+        ERR("Too large: %u %u %u\n", This->parent->bufsize_frames, free, frames);
         return AUDCLNT_E_BUFFER_TOO_LARGE;
     }
     EnterCriticalSection(This->parent->crst);
@@ -1187,7 +1187,7 @@ static HRESULT WINAPI ACR_GetBuffer(IAudioRenderClient *iface, UINT32 frames, BY
 
     /* Exact offset doesn't matter, offset could be 0 forever
      * but increasing it is easier to debug */
-    if (This->parent->ofs + frames > This->parent->bufsize)
+    if (This->parent->ofs + frames > This->parent->bufsize_frames)
         This->parent->ofs = 0;
     *data = This->parent->buffer + This->parent->ofs * framesize;
 
@@ -1201,7 +1201,7 @@ static HRESULT WINAPI ACR_ReleaseBuffer(IAudioRenderClient *iface, UINT32 writte
     BYTE *buf = This->parent->buffer;
     DWORD framesize = This->parent->pwfx->nBlockAlign;
     DWORD ofs = This->parent->ofs;
-    DWORD bufsize = This->parent->bufsize;
+    DWORD bufsize = This->parent->bufsize_frames;
     DWORD freq = This->parent->pwfx->nSamplesPerSec;
     DWORD bpp = This->parent->pwfx->wBitsPerSample;
     ALuint albuf;
@@ -1411,7 +1411,7 @@ static HRESULT WINAPI ACC_ReleaseBuffer(IAudioCaptureClient *iface, UINT32 writt
     if (!written || written == This->parent->locked) {
         This->parent->locked = 0;
         This->parent->ofs += written;
-        This->parent->ofs %= This->parent->bufsize;
+        This->parent->ofs %= This->parent->bufsize_frames;
         This->parent->pad -= written;
     } else if (!This->parent->locked)
         hr = AUDCLNT_E_OUT_OF_ORDER;
