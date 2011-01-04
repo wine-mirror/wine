@@ -22,6 +22,7 @@
 EXTRASUBDIRS = \
 	dlls \
 	libs \
+	po \
 	programs
 
 # Destination directories for make install

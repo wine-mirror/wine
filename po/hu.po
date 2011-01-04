@@ -1,0 +1,58 @@
+# Hungarian translations for Wine
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Wine\n"
+"Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
+"POT-Creation-Date: N/A\n"
+"PO-Revision-Date: N/A\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: Hungarian\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: clock.rc:28
+msgid "&Properties"
+msgstr "&Beállítások"
+
+#: clock.rc:29
+msgid "Ana&log"
+msgstr "Ana&lóg"
+
+#: clock.rc:30
+msgid "Digi&tal"
+msgstr "Digi&tális"
+
+#: clock.rc:32
+msgid "&Font..."
+msgstr "&Betűtípus..."
+
+#: clock.rc:34
+msgid "&Without Titlebar"
+msgstr "&Címsor nélkül"
+
+#: clock.rc:36
+msgid "&Seconds"
+msgstr "&Másodperc"
+
+#: clock.rc:37
+msgid "&Date"
+msgstr "&Dátum"
+
+#: clock.rc:39
+msgid "&Always on Top"
+msgstr "&Mindig legfelül"
+
+#: clock.rc:41
+msgid "Inf&o"
+msgstr "Inf&ormáció"
+
+#: clock.rc:42
+msgid "&About Clock..."
+msgstr "&Óra névjegy..."
+
+#: clock.rc:48
+msgid "Clock"
+msgstr "Óra"

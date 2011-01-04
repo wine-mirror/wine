@@ -1,0 +1,58 @@
+# German translations for Wine
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Wine\n"
+"Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
+"POT-Creation-Date: N/A\n"
+"PO-Revision-Date: N/A\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: German\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: clock.rc:28
+msgid "&Properties"
+msgstr "&Einstellungen"
+
+#: clock.rc:29
+msgid "Ana&log"
+msgstr "Ana&log"
+
+#: clock.rc:30
+msgid "Digi&tal"
+msgstr "Digi&tal"
+
+#: clock.rc:32
+msgid "&Font..."
+msgstr "Schrift&art..."
+
+#: clock.rc:34
+msgid "&Without Titlebar"
+msgstr "&Ohne Titelleiste"
+
+#: clock.rc:36
+msgid "&Seconds"
+msgstr "&Sekunden"
+
+#: clock.rc:37
+msgid "&Date"
+msgstr "&Datum"
+
+#: clock.rc:39
+msgid "&Always on Top"
+msgstr "&Immer im Vordergrund"
+
+#: clock.rc:41
+msgid "Inf&o"
+msgstr "Inf&o"
+
+#: clock.rc:42
+msgid "&About Clock..."
+msgstr "&Über Uhr..."
+
+#: clock.rc:48
+msgid "Clock"
+msgstr "Uhr"
