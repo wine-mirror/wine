@@ -710,3 +710,85 @@ msgstr "Di più? "
 #: cmd.rc:289
 msgid "The input line is too long.\n"
 msgstr "La linea di input è troppo lunga.\n"
+
+#: ipconfig.rc:27
+msgid "Usage: ipconfig [ /? | /all ]\n"
+msgstr "Uso: ipconfig [ /? | /all ]\n"
+
+#: ipconfig.rc:28
+msgid "Error: Unknown or invalid command line parameters specified\n"
+msgstr ""
+"Errore: i parametri specificati della riga di comando sono sconosciuti o non "
+"validi\n"
+
+#: ipconfig.rc:29
+msgid "%s adapter %s\n"
+msgstr "%s adattatore %s\n"
+
+#: ipconfig.rc:30
+msgid "Ethernet"
+msgstr "Ethernet"
+
+#: ipconfig.rc:31
+msgid "Unknown"
+msgstr "Sconosciuto"
+
+#: ipconfig.rc:32
+msgid "Connection-specific DNS suffix"
+msgstr "Suffisso DNS specifico per la connessione"
+
+#: ipconfig.rc:33
+msgid "IP address"
+msgstr "Indirizzo IP"
+
+#: ipconfig.rc:34
+msgid "Hostname"
+msgstr "Nome host"
+
+#: ipconfig.rc:35
+msgid "Node type"
+msgstr "Tipo nodo"
+
+#: ipconfig.rc:36
+msgid "Broadcast"
+msgstr "Broadcast"
+
+#: ipconfig.rc:37
+msgid "Peer-to-peer"
+msgstr "Peer-to-peer"
+
+#: ipconfig.rc:38
+msgid "Mixed"
+msgstr "Misto"
+
+#: ipconfig.rc:39
+msgid "Hybrid"
+msgstr "Ibrido"
+
+#: ipconfig.rc:40
+msgid "IP routing enabled"
+msgstr "IP routing abilitato"
+
+#: ipconfig.rc:41
+msgid "Description"
+msgstr "Descrizione"
+
+#: ipconfig.rc:42
+msgid "Physical address"
+msgstr "Indirizzo fisico"
+
+#: ipconfig.rc:43
+msgid "DHCP enabled"
+msgstr "DHCP abilitato"
+
+#: ipconfig.rc:44
+msgid "Yes"
+msgstr "Sì"
+
+#: ipconfig.rc:45
+msgid "No"
+msgstr "No"
+
+#: ipconfig.rc:46
+msgid "Default gateway"
+msgstr "Gateway predefinito"

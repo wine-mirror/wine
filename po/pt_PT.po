@@ -700,3 +700,83 @@ msgstr "More? "
 #: cmd.rc:289
 msgid "The input line is too long.\n"
 msgstr "The input line is too long.\n"
+
+#: ipconfig.rc:27
+msgid "Usage: ipconfig [ /? | /all ]\n"
+msgstr ""
+
+#: ipconfig.rc:28
+msgid "Error: Unknown or invalid command line parameters specified\n"
+msgstr ""
+
+#: ipconfig.rc:29
+msgid "%s adapter %s\n"
+msgstr ""
+
+#: ipconfig.rc:30
+msgid "Ethernet"
+msgstr ""
+
+#: ipconfig.rc:31
+msgid "Unknown"
+msgstr ""
+
+#: ipconfig.rc:32
+msgid "Connection-specific DNS suffix"
+msgstr ""
+
+#: ipconfig.rc:33
+msgid "IP address"
+msgstr ""
+
+#: ipconfig.rc:34
+msgid "Hostname"
+msgstr ""
+
+#: ipconfig.rc:35
+msgid "Node type"
+msgstr ""
+
+#: ipconfig.rc:36
+msgid "Broadcast"
+msgstr ""
+
+#: ipconfig.rc:37
+msgid "Peer-to-peer"
+msgstr ""
+
+#: ipconfig.rc:38
+msgid "Mixed"
+msgstr ""
+
+#: ipconfig.rc:39
+msgid "Hybrid"
+msgstr ""
+
+#: ipconfig.rc:40
+msgid "IP routing enabled"
+msgstr ""
+
+#: ipconfig.rc:41
+msgid "Description"
+msgstr ""
+
+#: ipconfig.rc:42
+msgid "Physical address"
+msgstr ""
+
+#: ipconfig.rc:43
+msgid "DHCP enabled"
+msgstr ""
+
+#: ipconfig.rc:44
+msgid "Yes"
+msgstr ""
+
+#: ipconfig.rc:45
+msgid "No"
+msgstr ""
+
+#: ipconfig.rc:46
+msgid "Default gateway"
+msgstr ""

@@ -702,3 +702,83 @@ msgstr "Več? "
 #: cmd.rc:289
 msgid "The input line is too long.\n"
 msgstr "The input line is too long.\n"
+
+#: ipconfig.rc:27
+msgid "Usage: ipconfig [ /? | /all ]\n"
+msgstr "Uporaba: ipconfig [ /? | /all ]\n"
+
+#: ipconfig.rc:28
+msgid "Error: Unknown or invalid command line parameters specified\n"
+msgstr "Napaka: Nepoznana ali nepopolna ukazna vrstica\n"
+
+#: ipconfig.rc:29
+msgid "%s adapter %s\n"
+msgstr "%s kartica %s\n"
+
+#: ipconfig.rc:30
+msgid "Ethernet"
+msgstr "Ethernet"
+
+#: ipconfig.rc:31
+msgid "Unknown"
+msgstr "Nepoznano"
+
+#: ipconfig.rc:32
+msgid "Connection-specific DNS suffix"
+msgstr "S povezavo določena DNS pripona"
+
+#: ipconfig.rc:33
+msgid "IP address"
+msgstr "IP naslov"
+
+#: ipconfig.rc:34
+msgid "Hostname"
+msgstr "Ime gostitelja"
+
+#: ipconfig.rc:35
+msgid "Node type"
+msgstr "Tip vozlišča"
+
+#: ipconfig.rc:36
+msgid "Broadcast"
+msgstr "Broadcast"
+
+#: ipconfig.rc:37
+msgid "Peer-to-peer"
+msgstr "Vsak z vsakim"
+
+#: ipconfig.rc:38
+msgid "Mixed"
+msgstr "Mešan"
+
+#: ipconfig.rc:39
+msgid "Hybrid"
+msgstr "Hibriden"
+
+#: ipconfig.rc:40
+msgid "IP routing enabled"
+msgstr "IP usmerjanje omogočeno"
+
+#: ipconfig.rc:41
+msgid "Description"
+msgstr "Opis"
+
+#: ipconfig.rc:42
+msgid "Physical address"
+msgstr "Fizični naslov"
+
+#: ipconfig.rc:43
+msgid "DHCP enabled"
+msgstr "DHCP omogočen"
+
+#: ipconfig.rc:44
+msgid "Yes"
+msgstr "Da"
+
+#: ipconfig.rc:45
+msgid "No"
+msgstr "Ne"
+
+#: ipconfig.rc:46
+msgid "Default gateway"
+msgstr ""

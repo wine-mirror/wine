@@ -685,3 +685,83 @@ msgstr "Więcej? "
 #: cmd.rc:289
 msgid "The input line is too long.\n"
 msgstr "Wpisany tekst jest zbyt długi.\n"
+
+#: ipconfig.rc:27
+msgid "Usage: ipconfig [ /? | /all ]\n"
+msgstr "Sposób użycia: ipconfig [ /? | /all ]\n"
+
+#: ipconfig.rc:28
+msgid "Error: Unknown or invalid command line parameters specified\n"
+msgstr "Błąd: Nierozpoznany lub niepełny wiersz polecenia\n"
+
+#: ipconfig.rc:29
+msgid "%s adapter %s\n"
+msgstr "%s karta %s\n"
+
+#: ipconfig.rc:30
+msgid "Ethernet"
+msgstr "Ethernet"
+
+#: ipconfig.rc:31
+msgid "Unknown"
+msgstr "Nieznane"
+
+#: ipconfig.rc:32
+msgid "Connection-specific DNS suffix"
+msgstr "Sufiks DNS konkretnego połączenia"
+
+#: ipconfig.rc:33
+msgid "IP address"
+msgstr "Adres IP"
+
+#: ipconfig.rc:34
+msgid "Hostname"
+msgstr "Nazwa hosta"
+
+#: ipconfig.rc:35
+msgid "Node type"
+msgstr "Typ węzła"
+
+#: ipconfig.rc:36
+msgid "Broadcast"
+msgstr "Nadawca"
+
+#: ipconfig.rc:37
+msgid "Peer-to-peer"
+msgstr "Peer-to-peer"
+
+#: ipconfig.rc:38
+msgid "Mixed"
+msgstr "Mieszane"
+
+#: ipconfig.rc:39
+msgid "Hybrid"
+msgstr "Hybrydowe"
+
+#: ipconfig.rc:40
+msgid "IP routing enabled"
+msgstr "Przekierowywanie IP włączone"
+
+#: ipconfig.rc:41
+msgid "Description"
+msgstr "Opis"
+
+#: ipconfig.rc:42
+msgid "Physical address"
+msgstr "Adres fizyczny"
+
+#: ipconfig.rc:43
+msgid "DHCP enabled"
+msgstr "DHCP włączone"
+
+#: ipconfig.rc:44
+msgid "Yes"
+msgstr "Tak"
+
+#: ipconfig.rc:45
+msgid "No"
+msgstr "Nie"
+
+#: ipconfig.rc:46
+msgid "Default gateway"
+msgstr "Brama domyślna"

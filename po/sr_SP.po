@@ -531,3 +531,84 @@ msgstr ""
 #: cmd.rc:289
 msgid "The input line is too long.\n"
 msgstr ""
+
+#: ipconfig.rc:27
+msgid "Usage: ipconfig [ /? | /all ]\n"
+msgstr "Употреба: ipconfig [ /? | /all ]\n"
+
+#: ipconfig.rc:28
+msgid "Error: Unknown or invalid command line parameters specified\n"
+msgstr ""
+"Грешка: унесени су непознати или неисправни параметри наредбене линије\n"
+
+#: ipconfig.rc:29
+msgid "%s adapter %s\n"
+msgstr "%s адаптер %s\n"
+
+#: ipconfig.rc:30
+msgid "Ethernet"
+msgstr "Етернет"
+
+#: ipconfig.rc:31
+msgid "Unknown"
+msgstr "Непознато"
+
+#: ipconfig.rc:32
+msgid "Connection-specific DNS suffix"
+msgstr "Веза одређена DNS суфиксом"
+
+#: ipconfig.rc:33
+msgid "IP address"
+msgstr "IP адреса"
+
+#: ipconfig.rc:34
+msgid "Hostname"
+msgstr "Назив домаћина"
+
+#: ipconfig.rc:35
+msgid "Node type"
+msgstr "Врста чвора"
+
+#: ipconfig.rc:36
+msgid "Broadcast"
+msgstr "Емитовање"
+
+#: ipconfig.rc:37
+msgid "Peer-to-peer"
+msgstr "Непосредна размена"
+
+#: ipconfig.rc:38
+msgid "Mixed"
+msgstr "Измешано"
+
+#: ipconfig.rc:39
+msgid "Hybrid"
+msgstr "Хибридно"
+
+#: ipconfig.rc:40
+msgid "IP routing enabled"
+msgstr "IP усмеравање је омогућено"
+
+#: ipconfig.rc:41
+msgid "Description"
+msgstr "Опис"
+
+#: ipconfig.rc:42
+msgid "Physical address"
+msgstr "Физичка адреса"
+
+#: ipconfig.rc:43
+msgid "DHCP enabled"
+msgstr "DHCP је омогућен"
+
+#: ipconfig.rc:44
+msgid "Yes"
+msgstr "Да"
+
+#: ipconfig.rc:45
+msgid "No"
+msgstr "Не"
+
+#: ipconfig.rc:46
+msgid "Default gateway"
+msgstr "Подразумевани мрежни пролаз"

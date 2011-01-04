@@ -695,3 +695,84 @@ msgstr "Daugiau? "
 #: cmd.rc:289
 msgid "The input line is too long.\n"
 msgstr "Įvedimo eilutė per ilga.\n"
+
+#: ipconfig.rc:27
+msgid "Usage: ipconfig [ /? | /all ]\n"
+msgstr "Naudojimas: ipconfig [ /? | /all ]\n"
+
+#: ipconfig.rc:28
+msgid "Error: Unknown or invalid command line parameters specified\n"
+msgstr ""
+"Klaida: nurodytas nežinomas arba netinkamas komandinės eilutės parametras\n"
+
+#: ipconfig.rc:29
+msgid "%s adapter %s\n"
+msgstr "%s adapteris %s\n"
+
+#: ipconfig.rc:30
+msgid "Ethernet"
+msgstr "Eterneto"
+
+#: ipconfig.rc:31
+msgid "Unknown"
+msgstr "Nežinomas"
+
+#: ipconfig.rc:32
+msgid "Connection-specific DNS suffix"
+msgstr "Ryšiui būdingas DNS sufiksas"
+
+#: ipconfig.rc:33
+msgid "IP address"
+msgstr "IP adresas"
+
+#: ipconfig.rc:34
+msgid "Hostname"
+msgstr "Kompiuterio vardas"
+
+#: ipconfig.rc:35
+msgid "Node type"
+msgstr "Mazgo tipas"
+
+#: ipconfig.rc:36
+msgid "Broadcast"
+msgstr "Transliavimas"
+
+#: ipconfig.rc:37
+msgid "Peer-to-peer"
+msgstr "Lygiarangis"
+
+#: ipconfig.rc:38
+msgid "Mixed"
+msgstr "Maišytas"
+
+#: ipconfig.rc:39
+msgid "Hybrid"
+msgstr "Mišrusis"
+
+#: ipconfig.rc:40
+msgid "IP routing enabled"
+msgstr "IP maršruto parinkimas įjungtas"
+
+#: ipconfig.rc:41
+msgid "Description"
+msgstr "Aprašas"
+
+#: ipconfig.rc:42
+msgid "Physical address"
+msgstr "Fizinis adresas"
+
+#: ipconfig.rc:43
+msgid "DHCP enabled"
+msgstr "DHCP įjungta"
+
+#: ipconfig.rc:44
+msgid "Yes"
+msgstr "Taip"
+
+#: ipconfig.rc:45
+msgid "No"
+msgstr "Ne"
+
+#: ipconfig.rc:46
+msgid "Default gateway"
+msgstr "Numatytasis šliuzas"

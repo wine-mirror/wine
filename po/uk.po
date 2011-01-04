@@ -694,3 +694,83 @@ msgstr "Більше? "
 #: cmd.rc:289
 msgid "The input line is too long.\n"
 msgstr "Введений рядок задовгий.\n"
+
+#: ipconfig.rc:27
+msgid "Usage: ipconfig [ /? | /all ]\n"
+msgstr "Використання: ipconfig [ /? | /all ]\n"
+
+#: ipconfig.rc:28
+msgid "Error: Unknown or invalid command line parameters specified\n"
+msgstr "Помилка: Вказані невідомі чи невірні параметри командного рядка\n"
+
+#: ipconfig.rc:29
+msgid "%s adapter %s\n"
+msgstr "%s адаптер %s\n"
+
+#: ipconfig.rc:30
+msgid "Ethernet"
+msgstr "Ethernet"
+
+#: ipconfig.rc:31
+msgid "Unknown"
+msgstr "Невідомо"
+
+#: ipconfig.rc:32
+msgid "Connection-specific DNS suffix"
+msgstr "DNS-суфікс підключення"
+
+#: ipconfig.rc:33
+msgid "IP address"
+msgstr "IP-адреса"
+
+#: ipconfig.rc:34
+msgid "Hostname"
+msgstr "Ім'я хосту"
+
+#: ipconfig.rc:35
+msgid "Node type"
+msgstr "Тип вузла"
+
+#: ipconfig.rc:36
+msgid "Broadcast"
+msgstr "Передача"
+
+#: ipconfig.rc:37
+msgid "Peer-to-peer"
+msgstr "Peer-to-peer"
+
+#: ipconfig.rc:38
+msgid "Mixed"
+msgstr "Змішаний"
+
+#: ipconfig.rc:39
+msgid "Hybrid"
+msgstr "Гібрид"
+
+#: ipconfig.rc:40
+msgid "IP routing enabled"
+msgstr "IP-маршрутизація включена"
+
+#: ipconfig.rc:41
+msgid "Description"
+msgstr "Опис"
+
+#: ipconfig.rc:42
+msgid "Physical address"
+msgstr "Фізична адреса"
+
+#: ipconfig.rc:43
+msgid "DHCP enabled"
+msgstr "DHCP ввімкнено"
+
+#: ipconfig.rc:44
+msgid "Yes"
+msgstr "Так"
+
+#: ipconfig.rc:45
+msgid "No"
+msgstr "Ні"
+
+#: ipconfig.rc:46
+msgid "Default gateway"
+msgstr "Шлюз за замовчуванням"

@@ -702,3 +702,83 @@ msgstr "Mer? "
 #: cmd.rc:289
 msgid "The input line is too long.\n"
 msgstr "Inmatningen är för lång.\n"
+
+#: ipconfig.rc:27
+msgid "Usage: ipconfig [ /? | /all ]\n"
+msgstr "Användning: ipconfig [ /? | /all ]\n"
+
+#: ipconfig.rc:28
+msgid "Error: Unknown or invalid command line parameters specified\n"
+msgstr "Fel: Okända eller ogiltiga kommandoradsparametrar angavs\n"
+
+#: ipconfig.rc:29
+msgid "%s adapter %s\n"
+msgstr "%s-adapter %s\n"
+
+#: ipconfig.rc:30
+msgid "Ethernet"
+msgstr "Ethernet"
+
+#: ipconfig.rc:31
+msgid "Unknown"
+msgstr "Okänd"
+
+#: ipconfig.rc:32
+msgid "Connection-specific DNS suffix"
+msgstr "Anslutningsspecifikt DNS-suffix"
+
+#: ipconfig.rc:33
+msgid "IP address"
+msgstr "IP-adress"
+
+#: ipconfig.rc:34
+msgid "Hostname"
+msgstr "Värdnamn"
+
+#: ipconfig.rc:35
+msgid "Node type"
+msgstr "Nodtyp"
+
+#: ipconfig.rc:36
+msgid "Broadcast"
+msgstr "Broadcast"
+
+#: ipconfig.rc:37
+msgid "Peer-to-peer"
+msgstr "Peer-to-peer"
+
+#: ipconfig.rc:38
+msgid "Mixed"
+msgstr "Mixad"
+
+#: ipconfig.rc:39
+msgid "Hybrid"
+msgstr "Hybrid"
+
+#: ipconfig.rc:40
+msgid "IP routing enabled"
+msgstr "IP-routning aktiverad"
+
+#: ipconfig.rc:41
+msgid "Description"
+msgstr "Beskrivning"
+
+#: ipconfig.rc:42
+msgid "Physical address"
+msgstr "Fysisk adress"
+
+#: ipconfig.rc:43
+msgid "DHCP enabled"
+msgstr "DHCP aktiverat"
+
+#: ipconfig.rc:44
+msgid "Yes"
+msgstr "Ja"
+
+#: ipconfig.rc:45
+msgid "No"
+msgstr "Nej"
+
+#: ipconfig.rc:46
+msgid "Default gateway"
+msgstr "Förvald gateway"

@@ -5,18 +5,7 @@ IMPORTS   = iphlpapi ws2_32 user32
 
 C_SRCS = ipconfig.c
 
-RC_SRCS = \
-	De.rc \
-	En.rc \
-	Fr.rc \
-	It.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	Pl.rc \
-	Si.rc \
-	Sr.rc \
-	Sv.rc \
-	Uk.rc
+RC_SRCS = ipconfig.rc
+PO_SRCS = ipconfig.rc
 
 @MAKE_PROG_RULES@
