@@ -2623,10 +2623,10 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
     unsigned user_vft = 0;
     int i;
 
-    TRACE("(%p)\n", iface);
+    TRACE("(%p)\n", This);
 
     /* FIXME: LayOut should be run on all ImplTypes */
-    if(This->typekind == TKIND_COCLASS)
+    if(This->typekind == TKIND_COCLASS || This->typekind == TKIND_ALIAS)
         return S_OK;
 
     /* Validate inheritance */
