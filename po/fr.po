@@ -1041,3 +1041,64 @@ msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr ""
 "Le nom de fichier Unix spécifié n'a pas pu être converti en nom de fichier "
 "DOS."
+
+#: taskkill.rc:27
+msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
+msgstr "Usage : taskkill [/?] [/f] [/im NomProcessus | /pid IdProcessus]\n"
+
+#: taskkill.rc:28
+msgid "Error: Unknown or invalid command line option specified.\n"
+msgstr "Erreur : option de ligne de commande inconnue ou invalide.\n"
+
+#: taskkill.rc:29
+msgid "Error: Invalid command line parameter specified.\n"
+msgstr "Erreur : paramètre de ligne de commande invalide.\n"
+
+#: taskkill.rc:30
+msgid "Error: One of options /im or /pid must be specified.\n"
+msgstr "Erreur : une des options /im ou /pid doit être spécifiée.\n"
+
+#: taskkill.rc:31
+msgid "Error: Option %s expects a command line parameter.\n"
+msgstr "Erreur : l'option %s requiert un paramètre de ligne de commande.\n"
+
+#: taskkill.rc:32
+msgid "Error: Options /im and /pid are mutually exclusive.\n"
+msgstr "Erreur : les options /im et /pid sont incompatibles.\n"
+
+#: taskkill.rc:33
+msgid "Close message sent to top-level windows of process with PID %u.\n"
+msgstr ""
+"Message de fermeture envoyé aux fenêtres supérieures du processus de PID "
+"%u.\n"
+
+#: taskkill.rc:34
+msgid ""
+"Close message sent to top-level windows of process \"%s\" with PID %u.\n"
+msgstr ""
+"Message de fermeture envoyé aux fenêtres supérieures du processus \"%s\" de "
+"PID %u.\n"
+
+#: taskkill.rc:35
+msgid "Process with PID %u was forcibly terminated.\n"
+msgstr "Le processus de PID %u a été terminé brutalement.\n"
+
+#: taskkill.rc:36
+msgid "Process \"%s\" with PID %u was forcibly terminated.\n"
+msgstr "Le processus \"%s\" de PID %u a été terminé brutalement.\n"
+
+#: taskkill.rc:37
+msgid "Error: Could not find process \"%s\".\n"
+msgstr "Erreur : processus \"%s\" introuvable.\n"
+
+#: taskkill.rc:38
+msgid "Error: Unable to enumerate the process list.\n"
+msgstr "Erreur : impossible d'énumérer la liste de processus.\n"
+
+#: taskkill.rc:39
+msgid "Error: Unable to terminate process \"%s\".\n"
+msgstr "Erreur : impossible de terminer le processus \"%s\".\n"
+
+#: taskkill.rc:40
+msgid "Error: Process self-termination is not permitted.\n"
+msgstr "Erreur : un processus ne peut pas s'auto-terminer.\n"

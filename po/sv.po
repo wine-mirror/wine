@@ -1024,3 +1024,63 @@ msgstr ""
 #: start.rc:67
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr "Kunde inte konvertera Unix-filnamnet till ett DOS-filnamn."
+
+#: taskkill.rc:27
+msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
+msgstr "Användning: taskkill [/?] [/f] [/im Processnamn | /pid Process-ID]\n"
+
+#: taskkill.rc:28
+msgid "Error: Unknown or invalid command line option specified.\n"
+msgstr "Fel: Okänt eller ogiltigt kommandoradsval angavs.\n"
+
+#: taskkill.rc:29
+msgid "Error: Invalid command line parameter specified.\n"
+msgstr "Fel: Ogiltig kommandoradsparameter angavs.\n"
+
+#: taskkill.rc:30
+msgid "Error: One of options /im or /pid must be specified.\n"
+msgstr "Fel: Ett av valen /im eller /pid måste anges.\n"
+
+#: taskkill.rc:31
+msgid "Error: Option %s expects a command line parameter.\n"
+msgstr "Fel: Valet %s kräver en kommandoradsparameter.\n"
+
+#: taskkill.rc:32
+msgid "Error: Options /im and /pid are mutually exclusive.\n"
+msgstr "Fel: Valen /im och /pid kan inte användas tillsammans.\n"
+
+#: taskkill.rc:33
+msgid "Close message sent to top-level windows of process with PID %u.\n"
+msgstr ""
+"Stängningsmeddelande sänt till toppnivåfönster för processen med PID %u.\n"
+
+#: taskkill.rc:34
+msgid ""
+"Close message sent to top-level windows of process \"%s\" with PID %u.\n"
+msgstr ""
+"Stängningsmeddelande sänt till toppnivåfönster för processen \"%s\" med PID "
+"%u.\n"
+
+#: taskkill.rc:35
+msgid "Process with PID %u was forcibly terminated.\n"
+msgstr "Tvingade fram nedstängning av processen med PID %u.\n"
+
+#: taskkill.rc:36
+msgid "Process \"%s\" with PID %u was forcibly terminated.\n"
+msgstr "Tvingade fram nedstängning av processen \"%s\" med PID %u.\n"
+
+#: taskkill.rc:37
+msgid "Error: Could not find process \"%s\".\n"
+msgstr "Fel: Kunde inte hitta processen \"%s\".\n"
+
+#: taskkill.rc:38
+msgid "Error: Unable to enumerate the process list.\n"
+msgstr "Fel: Kunde inte räkna upp processlistan.\n"
+
+#: taskkill.rc:39
+msgid "Error: Unable to terminate process \"%s\".\n"
+msgstr "Fel: Kunde inte avsluta processen \"%s\".\n"
+
+#: taskkill.rc:40
+msgid "Error: Process self-termination is not permitted.\n"
+msgstr "Fel: Processen får inte avsluta sig själv.\n"

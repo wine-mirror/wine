@@ -1038,3 +1038,64 @@ msgstr ""
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr ""
 "Kon de opgegeven Unix bestandsnaam niet omzetten naar een DOS bestandsnaam."
+
+#: taskkill.rc:27
+msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
+msgstr "Gebruik: taskkill [/?] [/f] [/im ProcesNaam | /pid ProcesID]\n"
+
+#: taskkill.rc:28
+msgid "Error: Unknown or invalid command line option specified.\n"
+msgstr "Fout: Onbekende of ongeldige commandoregeloptie gespecificeerd.\n"
+
+#: taskkill.rc:29
+msgid "Error: Invalid command line parameter specified.\n"
+msgstr "Fout: Ongeldige commandoregelparameter gespecificeerd.\n"
+
+#: taskkill.rc:30
+msgid "Error: One of options /im or /pid must be specified.\n"
+msgstr "Fout: Eén van de opties /im of /pid moet zijn gespecificeerd.\n"
+
+#: taskkill.rc:31
+msgid "Error: Option %s expects a command line parameter.\n"
+msgstr "Fout: Optie %s verwacht een commandoregelparameter.\n"
+
+#: taskkill.rc:32
+msgid "Error: Options /im and /pid are mutually exclusive.\n"
+msgstr "Fout: Opties /im en /pid spreken elkaar tegen.\n"
+
+#: taskkill.rc:33
+msgid "Close message sent to top-level windows of process with PID %u.\n"
+msgstr ""
+"Bericht om te sluiten verzonden naar top-level vensters van het proces met "
+"PID %u.\n"
+
+#: taskkill.rc:34
+msgid ""
+"Close message sent to top-level windows of process \"%s\" with PID %u.\n"
+msgstr ""
+"Bericht om te sluiten verzonden naar top-level vensters van het proces \"%s"
+"\" met PID %u.\n"
+
+#: taskkill.rc:35
+msgid "Process with PID %u was forcibly terminated.\n"
+msgstr "Proces met PID %u is geforceerd beëindigd.\n"
+
+#: taskkill.rc:36
+msgid "Process \"%s\" with PID %u was forcibly terminated.\n"
+msgstr "Proces \"%s\" met PID %u is geforceerd beëindigd.\n"
+
+#: taskkill.rc:37
+msgid "Error: Could not find process \"%s\".\n"
+msgstr "Fout: Kon proces \"%s\" niet vinden.\n"
+
+#: taskkill.rc:38
+msgid "Error: Unable to enumerate the process list.\n"
+msgstr "Fout: Kon de proceslijst niet opsommen.\n"
+
+#: taskkill.rc:39
+msgid "Error: Unable to terminate process \"%s\".\n"
+msgstr "Fout: Kon het proces \"%s\" niet beëindigen.\n"
+
+#: taskkill.rc:40
+msgid "Error: Process self-termination is not permitted.\n"
+msgstr "Fout: Zelf-beëindiging van een proces is niet toegestaan.\n"

@@ -1014,3 +1014,63 @@ msgstr ""
 #: start.rc:67
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr "Неможливо перетворити ім'я файлу UNIX в ім'я файлу DOS."
+
+#: taskkill.rc:27
+msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
+msgstr "Використання: taskkill [/?] [/f] [/im Ім'яПроцесу | /pid IDПроцесу]\n"
+
+#: taskkill.rc:28
+msgid "Error: Unknown or invalid command line option specified.\n"
+msgstr "Помилка: Вказана невідома чи невірна опція командного рядка.\n"
+
+#: taskkill.rc:29
+msgid "Error: Invalid command line parameter specified.\n"
+msgstr "Помилка: Вказано невірний параметр командного рядка.\n"
+
+#: taskkill.rc:30
+msgid "Error: One of options /im or /pid must be specified.\n"
+msgstr "Помилка: Повинна бути вказана одна з опцій /im чи /pid.\n"
+
+#: taskkill.rc:31
+msgid "Error: Option %s expects a command line parameter.\n"
+msgstr "Помилка: Опція %s очікує параметр командного рядка.\n"
+
+#: taskkill.rc:32
+msgid "Error: Options /im and /pid are mutually exclusive.\n"
+msgstr "Помилка: Опції /im та /pid є взаємновиключними.\n"
+
+#: taskkill.rc:33
+msgid "Close message sent to top-level windows of process with PID %u.\n"
+msgstr ""
+"Надіслано повідомлення закриття до вікон верхнього рівня процесу з PID %u.\n"
+
+#: taskkill.rc:34
+msgid ""
+"Close message sent to top-level windows of process \"%s\" with PID %u.\n"
+msgstr ""
+"Надіслано повідомлення закриття до вікон верхнього рівня процесу \"%s\" з "
+"PID %u.\n"
+
+#: taskkill.rc:35
+msgid "Process with PID %u was forcibly terminated.\n"
+msgstr "Процес з PID %u був завершений примусово.\n"
+
+#: taskkill.rc:36
+msgid "Process \"%s\" with PID %u was forcibly terminated.\n"
+msgstr "Процес \"%s\" з PID %u був завершений примусово.\n"
+
+#: taskkill.rc:37
+msgid "Error: Could not find process \"%s\".\n"
+msgstr "Помилка: Не вдалось знайти процес \"%s\".\n"
+
+#: taskkill.rc:38
+msgid "Error: Unable to enumerate the process list.\n"
+msgstr "Помилка: Неможливо перелічити список процесів.\n"
+
+#: taskkill.rc:39
+msgid "Error: Unable to terminate process \"%s\".\n"
+msgstr "Помилка: Не вдається завершити процес \"%s\".\n"
+
+#: taskkill.rc:40
+msgid "Error: Process self-termination is not permitted.\n"
+msgstr "Помилка: Самоприпинення процесу не дозволене.\n"

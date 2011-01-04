@@ -793,3 +793,66 @@ msgstr ""
 #: start.rc:67
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr ""
+
+#: taskkill.rc:27
+msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
+msgstr ""
+
+#: taskkill.rc:28
+#, fuzzy
+msgid "Error: Unknown or invalid command line option specified.\n"
+msgstr ""
+"Грешка: унесени су непознати или неисправни параметри наредбене линије\n"
+
+#: taskkill.rc:29
+#, fuzzy
+msgid "Error: Invalid command line parameter specified.\n"
+msgstr ""
+"Грешка: унесени су непознати или неисправни параметри наредбене линије\n"
+
+#: taskkill.rc:30
+msgid "Error: One of options /im or /pid must be specified.\n"
+msgstr ""
+
+#: taskkill.rc:31
+#, fuzzy
+msgid "Error: Option %s expects a command line parameter.\n"
+msgstr ""
+"Грешка: унесени су непознати или неисправни параметри наредбене линије\n"
+
+#: taskkill.rc:32
+msgid "Error: Options /im and /pid are mutually exclusive.\n"
+msgstr ""
+
+#: taskkill.rc:33
+msgid "Close message sent to top-level windows of process with PID %u.\n"
+msgstr ""
+
+#: taskkill.rc:34
+msgid ""
+"Close message sent to top-level windows of process \"%s\" with PID %u.\n"
+msgstr ""
+
+#: taskkill.rc:35
+msgid "Process with PID %u was forcibly terminated.\n"
+msgstr ""
+
+#: taskkill.rc:36
+msgid "Process \"%s\" with PID %u was forcibly terminated.\n"
+msgstr ""
+
+#: taskkill.rc:37
+msgid "Error: Could not find process \"%s\".\n"
+msgstr ""
+
+#: taskkill.rc:38
+msgid "Error: Unable to enumerate the process list.\n"
+msgstr ""
+
+#: taskkill.rc:39
+msgid "Error: Unable to terminate process \"%s\".\n"
+msgstr ""
+
+#: taskkill.rc:40
+msgid "Error: Process self-termination is not permitted.\n"
+msgstr ""

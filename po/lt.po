@@ -1018,3 +1018,65 @@ msgstr ""
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr ""
 "Nepavyko paversti nurodyto Unix failo pavadinimo į DOS failo pavadinimą."
+
+#: taskkill.rc:27
+msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
+msgstr "Naudojimas: taskkill [/?] [/f] [/im ProcesoVardas | /pid ProcesoID]\n"
+
+#: taskkill.rc:28
+msgid "Error: Unknown or invalid command line option specified.\n"
+msgstr ""
+"Klaida: nurodyta nežinoma arba neteisinga komandos eilutės parinktis.\n"
+
+#: taskkill.rc:29
+msgid "Error: Invalid command line parameter specified.\n"
+msgstr "Klaida: nurodytas neteisingas komandos eilutės parametras.\n"
+
+#: taskkill.rc:30
+msgid "Error: One of options /im or /pid must be specified.\n"
+msgstr "Klaida: viena iš parinkčių /im arba /pid privalo būti nurodyta.\n"
+
+#: taskkill.rc:31
+msgid "Error: Option %s expects a command line parameter.\n"
+msgstr "Klaida: parinkčiai %s reikalingas komandos eilutės parametras.\n"
+
+#: taskkill.rc:32
+msgid "Error: Options /im and /pid are mutually exclusive.\n"
+msgstr "Klaida: parinktys /im ir /pid yra nesuderinamos.\n"
+
+#: taskkill.rc:33
+msgid "Close message sent to top-level windows of process with PID %u.\n"
+msgstr ""
+"Užvėrimo pranešimas nusiųstas aukščiausiojo lygio proceso, kurio PID %u, "
+"langams.\n"
+
+#: taskkill.rc:34
+msgid ""
+"Close message sent to top-level windows of process \"%s\" with PID %u.\n"
+msgstr ""
+"Užvėrimo pranešimas nusiųstas aukščiausiojo lygio proceso „%s“, kurio PID "
+"%u, langams.\n"
+
+#: taskkill.rc:35
+msgid "Process with PID %u was forcibly terminated.\n"
+msgstr "Procesas, kurio PID %u, buvo priverstinai nutrauktas.\n"
+
+#: taskkill.rc:36
+msgid "Process \"%s\" with PID %u was forcibly terminated.\n"
+msgstr "Procesas „%s“, kurio PID %u, buvo priverstinai nutrauktas.\n"
+
+#: taskkill.rc:37
+msgid "Error: Could not find process \"%s\".\n"
+msgstr "Klaida: nepavyko rasti proceso „%s“.\n"
+
+#: taskkill.rc:38
+msgid "Error: Unable to enumerate the process list.\n"
+msgstr "Klaida: nepavyko gauti procesų sąrašo.\n"
+
+#: taskkill.rc:39
+msgid "Error: Unable to terminate process \"%s\".\n"
+msgstr "Klaida: nepavyko nutraukti proceso „%s“.\n"
+
+#: taskkill.rc:40
+msgid "Error: Process self-termination is not permitted.\n"
+msgstr "Klaida: savo proceso priverstinis nutraukimas negalimas.\n"

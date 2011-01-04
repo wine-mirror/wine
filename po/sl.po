@@ -1020,3 +1020,60 @@ msgstr ""
 #: start.rc:67
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr "Navedenega Unix imena datoteke ni mogoče prevesti v DOS ime datoteke."
+
+#: taskkill.rc:27
+msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
+msgstr "Uporaba: taskkill [/?] [/f] [/im ImeProcesa | /pid IDProcesa]\n"
+
+#: taskkill.rc:28
+msgid "Error: Unknown or invalid command line option specified.\n"
+msgstr "Napaka: Nepoznana ali nepopolna ukazna vrstica.\n"
+
+#: taskkill.rc:29
+msgid "Error: Invalid command line parameter specified.\n"
+msgstr "Napaka: Nepravilen parameter ukazne vrstice.\n"
+
+#: taskkill.rc:30
+msgid "Error: One of options /im or /pid must be specified.\n"
+msgstr "Napaka: Ena izmed opcija /im ali /pid mora biti izbrana.\n"
+
+#: taskkill.rc:31
+msgid "Error: Option %s expects a command line parameter.\n"
+msgstr "Napaka: Opcija %s pričakuje parameter v ukazni vstici.\n"
+
+#: taskkill.rc:32
+msgid "Error: Options /im and /pid are mutually exclusive.\n"
+msgstr "Napaka: Opciji /im in /pid se izključujeta.\n"
+
+#: taskkill.rc:33
+msgid "Close message sent to top-level windows of process with PID %u.\n"
+msgstr "Sporočilo zapri poslano vrhnjemu oknu procesa s PID %u.\n"
+
+#: taskkill.rc:34
+msgid ""
+"Close message sent to top-level windows of process \"%s\" with PID %u.\n"
+msgstr "Sporočilo zapri poslano vrhnjemu oknu procesa \"%s\" s PID %u.\n"
+
+#: taskkill.rc:35
+msgid "Process with PID %u was forcibly terminated.\n"
+msgstr "Proces s PID %u je bil prisilno končan.\n"
+
+#: taskkill.rc:36
+msgid "Process \"%s\" with PID %u was forcibly terminated.\n"
+msgstr "Proces \"%s\" s PID %u je bil prisilno končan.\n"
+
+#: taskkill.rc:37
+msgid "Error: Could not find process \"%s\".\n"
+msgstr "Napaka: Procesa \"%s\" ni mogoče najti.\n"
+
+#: taskkill.rc:38
+msgid "Error: Unable to enumerate the process list.\n"
+msgstr "Napaka: Ne morem dobiti seznama procesov.\n"
+
+#: taskkill.rc:39
+msgid "Error: Unable to terminate process \"%s\".\n"
+msgstr "Napaka: Procesa  \"%s\" ni mogoče končati.\n"
+
+#: taskkill.rc:40
+msgid "Error: Process self-termination is not permitted.\n"
+msgstr ""

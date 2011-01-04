@@ -5,17 +5,7 @@ IMPORTS   = psapi user32
 
 C_SRCS = taskkill.c
 
-RC_SRCS = \
-	De.rc \
-	En.rc \
-	Fr.rc \
-	It.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	Pl.rc \
-	Si.rc \
-	Sv.rc \
-	Uk.rc
+RC_SRCS = taskkill.rc
+PO_SRCS = taskkill.rc
 
 @MAKE_PROG_RULES@
