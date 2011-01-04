@@ -45,15 +45,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define UTF16_STR "utf-16"
 
 typedef struct {
-    const nsIInputStreamVtbl *lpInputStreamVtbl;
+    nsIInputStream nsIInputStream_iface;
 
     LONG ref;
 
     char buf[1024];
     DWORD buf_size;
 } nsProtocolStream;
-
-#define NSINSTREAM(x) ((nsIInputStream*) &(x)->lpInputStreamVtbl)
 
 typedef struct {
     void (*destroy)(BSCallback*);
@@ -91,25 +89,28 @@ struct BSCallback {
     struct list entry;
 };
 
-#define NSINSTREAM_THIS(iface) DEFINE_THIS(nsProtocolStream, InputStream, iface)
+static inline nsProtocolStream *impl_from_nsIInputStream(nsIInputStream *iface)
+{
+    return CONTAINING_RECORD(iface, nsProtocolStream, nsIInputStream_iface);
+}
 
 static nsresult NSAPI nsInputStream_QueryInterface(nsIInputStream *iface, nsIIDRef riid,
         void **result)
 {
-    nsProtocolStream *This = NSINSTREAM_THIS(iface);
+    nsProtocolStream *This = impl_from_nsIInputStream(iface);
 
     *result = NULL;
 
     if(IsEqualGUID(&IID_nsISupports, riid)) {
         TRACE("(%p)->(IID_nsISupports %p)\n", This, result);
-        *result  = NSINSTREAM(This);
+        *result  = &This->nsIInputStream_iface;
     }else if(IsEqualGUID(&IID_nsIInputStream, riid)) {
         TRACE("(%p)->(IID_nsIInputStream %p)\n", This, result);
-        *result  = NSINSTREAM(This);
+        *result  = &This->nsIInputStream_iface;
     }
 
     if(*result) {
-        nsIInputStream_AddRef(NSINSTREAM(This));
+        nsIInputStream_AddRef(&This->nsIInputStream_iface);
         return NS_OK;
     }
 
@@ -119,7 +120,7 @@ static nsresult NSAPI nsInputStream_QueryInterface(nsIInputStream *iface, nsIIDR
 
 static nsrefcnt NSAPI nsInputStream_AddRef(nsIInputStream *iface)
 {
-    nsProtocolStream *This = NSINSTREAM_THIS(iface);
+    nsProtocolStream *This = impl_from_nsIInputStream(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -130,7 +131,7 @@ static nsrefcnt NSAPI nsInputStream_AddRef(nsIInputStream *iface)
 
 static nsrefcnt NSAPI nsInputStream_Release(nsIInputStream *iface)
 {
-    nsProtocolStream *This = NSINSTREAM_THIS(iface);
+    nsProtocolStream *This = impl_from_nsIInputStream(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -143,14 +144,14 @@ static nsrefcnt NSAPI nsInputStream_Release(nsIInputStream *iface)
 
 static nsresult NSAPI nsInputStream_Close(nsIInputStream *iface)
 {
-    nsProtocolStream *This = NSINSTREAM_THIS(iface);
+    nsProtocolStream *This = impl_from_nsIInputStream(iface);
     FIXME("(%p)\n", This);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsInputStream_Available(nsIInputStream *iface, PRUint32 *_retval)
 {
-    nsProtocolStream *This = NSINSTREAM_THIS(iface);
+    nsProtocolStream *This = impl_from_nsIInputStream(iface);
     FIXME("(%p)->(%p)\n", This, _retval);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -158,7 +159,7 @@ static nsresult NSAPI nsInputStream_Available(nsIInputStream *iface, PRUint32 *_
 static nsresult NSAPI nsInputStream_Read(nsIInputStream *iface, char *aBuf, PRUint32 aCount,
                                          PRUint32 *_retval)
 {
-    nsProtocolStream *This = NSINSTREAM_THIS(iface);
+    nsProtocolStream *This = impl_from_nsIInputStream(iface);
     DWORD read = aCount;
 
     TRACE("(%p)->(%p %d %p)\n", This, aBuf, aCount, _retval);
@@ -181,7 +182,7 @@ static nsresult NSAPI nsInputStream_ReadSegments(nsIInputStream *iface,
         nsresult (WINAPI *aWriter)(nsIInputStream*,void*,const char*,PRUint32,PRUint32,PRUint32*),
         void *aClousure, PRUint32 aCount, PRUint32 *_retval)
 {
-    nsProtocolStream *This = NSINSTREAM_THIS(iface);
+    nsProtocolStream *This = impl_from_nsIInputStream(iface);
     PRUint32 written = 0;
     nsresult nsres;
 
@@ -193,7 +194,7 @@ static nsresult NSAPI nsInputStream_ReadSegments(nsIInputStream *iface,
     if(aCount > This->buf_size)
         aCount = This->buf_size;
 
-    nsres = aWriter(NSINSTREAM(This), aClousure, This->buf, 0, aCount, &written);
+    nsres = aWriter(&This->nsIInputStream_iface, aClousure, This->buf, 0, aCount, &written);
     if(NS_FAILED(nsres))
         TRACE("aWritter failed: %08x\n", nsres);
     else if(written != This->buf_size)
@@ -207,12 +208,10 @@ static nsresult NSAPI nsInputStream_ReadSegments(nsIInputStream *iface,
 
 static nsresult NSAPI nsInputStream_IsNonBlocking(nsIInputStream *iface, PRBool *_retval)
 {
-    nsProtocolStream *This = NSINSTREAM_THIS(iface);
+    nsProtocolStream *This = impl_from_nsIInputStream(iface);
     FIXME("(%p)->(%p)\n", This, _retval);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
-
-#undef NSINSTREAM_THIS
 
 static const nsIInputStreamVtbl nsInputStreamVtbl = {
     nsInputStream_QueryInterface,
@@ -229,7 +228,7 @@ static nsProtocolStream *create_nsprotocol_stream(void)
 {
     nsProtocolStream *ret = heap_alloc(sizeof(nsProtocolStream));
 
-    ret->lpInputStreamVtbl = &nsInputStreamVtbl;
+    ret->nsIInputStream_iface.lpVtbl = &nsInputStreamVtbl;
     ret->ref = 1;
     ret->buf_size = 0;
 
@@ -1016,7 +1015,7 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
 
         nsres = nsIStreamListener_OnDataAvailable(This->nslistener,
                 (nsIRequest*)&This->nschannel->nsIHttpChannel_iface, This->nscontext,
-                NSINSTREAM(This->nsstream), This->bsc.readed-This->nsstream->buf_size,
+                &This->nsstream->nsIInputStream_iface, This->bsc.readed-This->nsstream->buf_size,
                 This->nsstream->buf_size);
         if(NS_FAILED(nsres))
             ERR("OnDataAvailable failed: %08x\n", nsres);
@@ -1043,7 +1042,7 @@ static void nsChannelBSC_destroy(BSCallback *bsc)
     if(This->nscontext)
         nsISupports_Release(This->nscontext);
     if(This->nsstream)
-        nsIInputStream_Release(NSINSTREAM(This->nsstream));
+        nsIInputStream_Release(&This->nsstream->nsIInputStream_iface);
     heap_free(This);
 }
 
