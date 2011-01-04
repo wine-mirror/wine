@@ -410,7 +410,7 @@ typedef struct BmpEncoder {
     const IWICBitmapEncoderVtbl *lpVtbl;
     LONG ref;
     IStream *stream;
-    IWICBitmapFrameEncode *frame;
+    BmpFrameEncode *frame;
 } BmpEncoder;
 
 static HRESULT WINAPI BmpEncoder_QueryInterface(IWICBitmapEncoder *iface, REFIID iid,
@@ -456,7 +456,7 @@ static ULONG WINAPI BmpEncoder_Release(IWICBitmapEncoder *iface)
     if (ref == 0)
     {
         if (This->stream) IStream_Release(This->stream);
-        if (This->frame) IWICBitmapFrameEncode_Release(This->frame);
+        if (This->frame) IWICBitmapFrameEncode_Release((IWICBitmapFrameEncode*)This->frame);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -553,7 +553,7 @@ static HRESULT WINAPI BmpEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
     encode->committed = FALSE;
 
     *ppIFrameEncode = (IWICBitmapFrameEncode*)encode;
-    This->frame = (IWICBitmapFrameEncode*)encode;
+    This->frame = encode;
 
     return S_OK;
 }
@@ -561,10 +561,9 @@ static HRESULT WINAPI BmpEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
 static HRESULT WINAPI BmpEncoder_Commit(IWICBitmapEncoder *iface)
 {
     BmpEncoder *This = (BmpEncoder*)iface;
-    BmpFrameEncode *frame = (BmpFrameEncode*)This->frame;
     TRACE("(%p)\n", iface);
 
-    if (!frame || !frame->committed) return WINCODEC_ERR_WRONGSTATE;
+    if (!This->frame || !This->frame->committed) return WINCODEC_ERR_WRONGSTATE;
 
     return S_OK;
 }
