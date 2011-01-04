@@ -53,6 +53,8 @@ RSVG            = @RSVG@
 CONVERT         = @CONVERT@
 ICOTOOL         = @ICOTOOL@
 CROSSTARGET     = @CROSSTARGET@
+LINGUAS         = @LINGUAS@
+ALL_PO_FILES    = $(LINGUAS:%=@top_srcdir@/po/%.po)
 CROSSAR         = $(CROSSTARGET)-ar
 CROSSRANLIB     = $(CROSSTARGET)-ranlib
 MKINSTALLDIRS   = $(top_srcdir)/tools/mkinstalldirs -m 755

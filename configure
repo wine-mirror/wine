@@ -596,6 +596,7 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+LINGUAS
 ALL_TEST_BINARIES
 ALL_WINETEST_DEPENDS
 LDAPLIBS
@@ -15453,6 +15454,47 @@ wine_fn_config_tool tools/winedump
 wine_fn_config_tool tools/winegcc
 wine_fn_config_tool tools/wmc
 wine_fn_config_tool tools/wrc
+
+LINGUAS="\
+cs \
+da \
+de \
+en_US \
+eo \
+es \
+fi \
+fr \
+he \
+hi \
+hu \
+it \
+ja \
+ko \
+lt \
+ml \
+nb_NO \
+nl \
+or \
+pa \
+pl \
+pt_BR \
+pt_PT \
+ro \
+ru \
+sk \
+sl \
+sr_Latn_SP \
+sr_SP \
+sv \
+te \
+th \
+tr \
+uk \
+wa \
+zh_CN \
+zh_TW"
+
+
 
 ac_config_commands="$ac_config_commands Makefile"
 

@@ -181,6 +181,7 @@ $(MC_SRCS:.mc=.mc.rc): $(WMC)
 $(IDL_GEN_HEADERS) $(IDL_GEN_C_SRCS) $(IDL_TLB_SRCS:.idl=.tlb) $(IDL_R_SRCS:.idl=_r.res): $(WIDL)
 
 $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.mc.res): $(WRC)
+$(PO_SRCS:.rc=.res): $(ALL_PO_FILES)
 
 dummy:
 

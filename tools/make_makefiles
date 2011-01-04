@@ -170,7 +170,7 @@ my %ignored_source_files = (
     "programs/winetest/dist.rc" => 1,
 );
 
-my (@makefiles, %makefiles);
+my (@linguas, @makefiles, %makefiles);
 
 sub dirname($)
 {
@@ -472,6 +472,8 @@ sub update_makefiles(@)
         }
     }
 
+    push @lines, "\nAC_SUBST([LINGUAS],[\"\\\n", join( " \\\n", sort @linguas ), "\"])\n\n";
+
     # update the source variables in all the makefiles
 
     foreach my $file (sort @_)
@@ -563,10 +565,20 @@ sub update_gitignore(@)
 }
 
 
+################################################################
+# update the LINGUAS file
+
+sub update_linguas(@)
+{
+    replace_in_file( "po/LINGUAS", undef, undef, join("\n", sort @_), "\n" );
+}
+
+
 die "needs to be run from a git checkout" unless -d ".git";
 
 my @all_files = split /\0/, `git ls-files -c -z`;
-@makefiles = map { my $ret = $_; $ret =~ s/\.in$//; $ret; } grep /Makefile.in$/, @all_files;
+@linguas = map { (my $ret = $_) =~ s/^po\/(.*)\.po/$1/; $ret; } grep /^po\/.*\.po$/, @all_files;
+@makefiles = map { (my $ret = $_) =~ s/\.in$//; $ret; } grep /Makefile.in$/, @all_files;
 
 foreach my $file (sort values %makerules, @makefiles)
 {
@@ -575,6 +587,7 @@ foreach my $file (sort values %makerules, @makefiles)
 }
 
 assign_sources_to_makefiles( @all_files );
+update_linguas( @linguas );
 update_makefiles( @makefiles );
 push @ignores, update_ignores( @makefiles );
 update_gitignore( @ignores );

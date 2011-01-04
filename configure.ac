@@ -2940,6 +2940,46 @@ WINE_CONFIG_TOOL(tools/winedump)
 WINE_CONFIG_TOOL(tools/winegcc)
 WINE_CONFIG_TOOL(tools/wmc)
 WINE_CONFIG_TOOL(tools/wrc)
+
+AC_SUBST([LINGUAS],["\
+cs \
+da \
+de \
+en_US \
+eo \
+es \
+fi \
+fr \
+he \
+hi \
+hu \
+it \
+ja \
+ko \
+lt \
+ml \
+nb_NO \
+nl \
+or \
+pa \
+pl \
+pt_BR \
+pt_PT \
+ro \
+ru \
+sk \
+sl \
+sr_Latn_SP \
+sr_SP \
+sv \
+te \
+th \
+tr \
+uk \
+wa \
+zh_CN \
+zh_TW"])
+
 dnl End of auto-generated output commands
 
 AC_CONFIG_COMMANDS([Makefile], [wine_fn_output_makefile Makefile],
