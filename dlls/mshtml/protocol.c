@@ -39,31 +39,32 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
  * common ProtocolFactory implementation
  */
 
-#define CLASSFACTORY(x) (&(x)->lpClassFactoryVtbl)
 #define PROTOCOL(x)     ((IInternetProtocol*)     &(x)->lpInternetProtocolVtbl)
-#define PROTOCOLINFO(x) ((IInternetProtocolInfo*) &(x)->lpInternetProtocolInfoVtbl)
 
 typedef struct {
-    const IInternetProtocolInfoVtbl *lpInternetProtocolInfoVtbl;
-    const IClassFactoryVtbl         *lpClassFactoryVtbl;
+    IInternetProtocolInfo IInternetProtocolInfo_iface;
+    IClassFactory         IClassFactory_iface;
 } ProtocolFactory;
 
-#define PROTOCOLINFO_THIS(iface) DEFINE_THIS(ProtocolFactory, InternetProtocolInfo, iface)
+static inline ProtocolFactory *impl_from_IInternetProtocolInfo(IInternetProtocolInfo *iface)
+{
+    return CONTAINING_RECORD(iface, ProtocolFactory, IInternetProtocolInfo_iface);
+}
 
 static HRESULT WINAPI InternetProtocolInfo_QueryInterface(IInternetProtocolInfo *iface, REFIID riid, void **ppv)
 {
-    ProtocolFactory *This = PROTOCOLINFO_THIS(iface);
+    ProtocolFactory *This = impl_from_IInternetProtocolInfo(iface);
 
     *ppv = NULL;
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = PROTOCOLINFO(This);
+        *ppv = &This->IInternetProtocolInfo_iface;
     }else if(IsEqualGUID(&IID_IInternetProtocolInfo, riid)) {
         TRACE("(%p)->(IID_IInternetProtocolInfo %p)\n", This, ppv);
-        *ppv = PROTOCOLINFO(This);
+        *ppv = &This->IInternetProtocolInfo_iface;
     }else if(IsEqualGUID(&IID_IClassFactory, riid)) {
         TRACE("(%p)->(IID_IClassFactory %p)\n", This, ppv);
-        *ppv = CLASSFACTORY(This);
+        *ppv = &This->IClassFactory_iface;
     }
 
     if(!*ppv) {
@@ -105,26 +106,27 @@ static HRESULT WINAPI InternetProtocolInfo_CompareUrl(IInternetProtocolInfo *ifa
     return E_NOTIMPL;
 }
 
-#undef PROTOCOLINFO_THIS
-
-#define CLASSFACTORY_THIS(iface) DEFINE_THIS(ProtocolFactory, ClassFactory, iface)
+static inline ProtocolFactory *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, ProtocolFactory, IClassFactory_iface);
+}
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
 {
-    ProtocolFactory *This = CLASSFACTORY_THIS(iface);
-    return IInternetProtocolInfo_QueryInterface(PROTOCOLINFO(This), riid, ppv);
+    ProtocolFactory *This = impl_from_IClassFactory(iface);
+    return IInternetProtocolInfo_QueryInterface(&This->IInternetProtocolInfo_iface, riid, ppv);
 }
 
 static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
 {
-    ProtocolFactory *This = CLASSFACTORY_THIS(iface);
-    return IInternetProtocolInfo_AddRef(PROTOCOLINFO(This));
+    ProtocolFactory *This = impl_from_IClassFactory(iface);
+    return IInternetProtocolInfo_AddRef(&This->IInternetProtocolInfo_iface);
 }
 
 static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
 {
-    ProtocolFactory *This = CLASSFACTORY_THIS(iface);
-    return IInternetProtocolInfo_Release(PROTOCOLINFO(This));
+    ProtocolFactory *This = impl_from_IClassFactory(iface);
+    return IInternetProtocolInfo_Release(&This->IInternetProtocolInfo_iface);
 }
 
 static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
@@ -132,8 +134,6 @@ static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
     TRACE("(%p)->(%x)\n", iface, dolock);
     return S_OK;
 }
-
-#undef CLASSFACTORY_THIS
 
 /********************************************************************
  * AboutProtocol implementation
@@ -497,8 +497,8 @@ static const IClassFactoryVtbl AboutProtocolFactoryVtbl = {
 };
 
 static ProtocolFactory AboutProtocolFactory = {
-    &AboutProtocolInfoVtbl,
-    &AboutProtocolFactoryVtbl
+    { &AboutProtocolInfoVtbl },
+    { &AboutProtocolFactoryVtbl }
 };
 
 /********************************************************************
@@ -934,8 +934,8 @@ static const IClassFactoryVtbl ResProtocolFactoryVtbl = {
 };
 
 static ProtocolFactory ResProtocolFactory = {
-    &ResProtocolInfoVtbl,
-    &ResProtocolFactoryVtbl
+    { &ResProtocolInfoVtbl },
+    { &ResProtocolFactoryVtbl }
 };
 
 /********************************************************************
@@ -1017,8 +1017,8 @@ static const IClassFactoryVtbl JSProtocolFactoryVtbl = {
 };
 
 static ProtocolFactory JSProtocolFactory = {
-    &JSProtocolInfoVtbl,
-    &JSProtocolFactoryVtbl
+    { &JSProtocolInfoVtbl },
+    { &JSProtocolFactoryVtbl }
 };
 
 HRESULT ProtocolFactory_Create(REFCLSID rclsid, REFIID riid, void **ppv)
