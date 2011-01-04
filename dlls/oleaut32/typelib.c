@@ -1448,17 +1448,17 @@ static void dump_VARDESC(const VARDESC *v)
     MESSAGE("varkind %d\n",v->varkind);
 }
 
-static TYPEDESC stndTypeDesc[VT_LPWSTR+1]=
+static TYPEDESC std_typedesc[VT_LPWSTR+1] =
 {
-    /* VT_LPWSTR is largest type that */
-    /* may appear in type description*/
-    {{0}, 0},{{0}, 1},{{0}, 2},{{0}, 3},{{0}, 4},
-    {{0}, 5},{{0}, 6},{{0}, 7},{{0}, 8},{{0}, 9},
-    {{0},10},{{0},11},{{0},12},{{0},13},{{0},14},
-    {{0},15},{{0},16},{{0},17},{{0},18},{{0},19},
-    {{0},20},{{0},21},{{0},22},{{0},23},{{0},24},
-    {{0},25},{{0},26},{{0},27},{{0},28},{{0},29},
-    {{0},30},{{0},31}
+    /* VT_LPWSTR is largest type that, may appear in type description */
+    {{0}, VT_EMPTY},  {{0}, VT_NULL},        {{0}, VT_I2},      {{0}, VT_I4},
+    {{0}, VT_R4},     {{0}, VT_R8},          {{0}, VT_CY},      {{0}, VT_DATE},
+    {{0}, VT_BSTR},   {{0}, VT_DISPATCH},    {{0}, VT_ERROR},   {{0}, VT_BOOL},
+    {{0}, VT_VARIANT},{{0}, VT_UNKNOWN},     {{0}, VT_DECIMAL}, {{0}, 15}, /* unused in VARENUM */
+    {{0}, VT_I1},     {{0}, VT_UI1},         {{0}, VT_UI2},     {{0}, VT_UI4},
+    {{0}, VT_I8},     {{0}, VT_UI8},         {{0}, VT_INT},     {{0}, VT_UINT},
+    {{0}, VT_VOID},   {{0}, VT_HRESULT},     {{0}, VT_PTR},     {{0}, VT_SAFEARRAY},
+    {{0}, VT_CARRAY}, {{0}, VT_USERDEFINED}, {{0}, VT_LPSTR},   {{0}, VT_LPWSTR}
 };
 
 static void TLB_abort(void)
@@ -2977,9 +2977,9 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
 	    {
 	        /* FIXME: check safearray */
                 if(td[3] < 0)
-                    pTypeLibImpl->pTypeDesc[i].u.lptdesc= & stndTypeDesc[td[2]];
+                    pTypeLibImpl->pTypeDesc[i].u.lptdesc = &std_typedesc[td[2]];
                 else
-                    pTypeLibImpl->pTypeDesc[i].u.lptdesc= & pTypeLibImpl->pTypeDesc[td[2]/8];
+                    pTypeLibImpl->pTypeDesc[i].u.lptdesc = &pTypeLibImpl->pTypeDesc[td[2]/8];
             }
 	    else if(td[0] == VT_CARRAY)
             {
