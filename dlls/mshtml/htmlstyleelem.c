@@ -35,47 +35,48 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 typedef struct {
     HTMLElement element;
 
-    const IHTMLStyleElementVtbl *lpIHTMLStyleElementVtbl;
+    IHTMLStyleElement IHTMLStyleElement_iface;
 
     nsIDOMHTMLStyleElement *nsstyle;
 } HTMLStyleElement;
 
-#define HTMLSTYLE(x)  (&(x)->lpIHTMLStyleElementVtbl)
-
-#define HTMLSTYLE_THIS(iface) DEFINE_THIS(HTMLStyleElement, IHTMLStyleElement, iface)
+static inline HTMLStyleElement *impl_from_IHTMLStyleElement(IHTMLStyleElement *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLStyleElement, IHTMLStyleElement_iface);
+}
 
 static HRESULT WINAPI HTMLStyleElement_QueryInterface(IHTMLStyleElement *iface,
         REFIID riid, void **ppv)
 {
-    HTMLStyleElement *This = HTMLSTYLE_THIS(iface);
+    HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
 
     return IHTMLDOMNode_QueryInterface(&This->element.node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLStyleElement_AddRef(IHTMLStyleElement *iface)
 {
-    HTMLStyleElement *This = HTMLSTYLE_THIS(iface);
+    HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
 
     return IHTMLDOMNode_AddRef(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI HTMLStyleElement_Release(IHTMLStyleElement *iface)
 {
-    HTMLStyleElement *This = HTMLSTYLE_THIS(iface);
+    HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
 
     return IHTMLDOMNode_Release(&This->element.node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI HTMLStyleElement_GetTypeInfoCount(IHTMLStyleElement *iface, UINT *pctinfo)
 {
-    HTMLStyleElement *This = HTMLSTYLE_THIS(iface);
+    HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
     return IDispatchEx_GetTypeInfoCount(&This->element.node.dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI HTMLStyleElement_GetTypeInfo(IHTMLStyleElement *iface, UINT iTInfo,
         LCID lcid, ITypeInfo **ppTInfo)
 {
-    HTMLStyleElement *This = HTMLSTYLE_THIS(iface);
+    HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
     return IDispatchEx_GetTypeInfo(&This->element.node.dispex.IDispatchEx_iface, iTInfo, lcid,
             ppTInfo);
 }
@@ -83,7 +84,7 @@ static HRESULT WINAPI HTMLStyleElement_GetTypeInfo(IHTMLStyleElement *iface, UIN
 static HRESULT WINAPI HTMLStyleElement_GetIDsOfNames(IHTMLStyleElement *iface, REFIID riid,
         LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    HTMLStyleElement *This = HTMLSTYLE_THIS(iface);
+    HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
     return IDispatchEx_GetIDsOfNames(&This->element.node.dispex.IDispatchEx_iface, riid, rgszNames,
             cNames, lcid, rgDispId);
 }
@@ -92,14 +93,14 @@ static HRESULT WINAPI HTMLStyleElement_Invoke(IHTMLStyleElement *iface, DISPID d
         REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
         VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    HTMLStyleElement *This = HTMLSTYLE_THIS(iface);
+    HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
     return IDispatchEx_Invoke(&This->element.node.dispex.IDispatchEx_iface, dispIdMember, riid,
             lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI HTMLStyleElement_put_type(IHTMLStyleElement *iface, BSTR v)
 {
-    HTMLStyleElement *This = HTMLSTYLE_THIS(iface);
+    HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
     nsAString type_str;
     nsresult nsres;
 
@@ -118,7 +119,7 @@ static HRESULT WINAPI HTMLStyleElement_put_type(IHTMLStyleElement *iface, BSTR v
 
 static HRESULT WINAPI HTMLStyleElement_get_type(IHTMLStyleElement *iface, BSTR *p)
 {
-    HTMLStyleElement *This = HTMLSTYLE_THIS(iface);
+    HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
     nsAString nsstr;
     nsresult nsres;
 
@@ -131,77 +132,77 @@ static HRESULT WINAPI HTMLStyleElement_get_type(IHTMLStyleElement *iface, BSTR *
 
 static HRESULT WINAPI HTMLStyleElement_get_readyState(IHTMLStyleElement *iface, BSTR *p)
 {
-    HTMLStyleElement *This = HTMLSTYLE_THIS(iface);
+    HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLStyleElement_put_onreadystatechange(IHTMLStyleElement *iface, VARIANT v)
 {
-    HTMLStyleElement *This = HTMLSTYLE_THIS(iface);
+    HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLStyleElement_get_onreadystatechange(IHTMLStyleElement *iface, VARIANT *p)
 {
-    HTMLStyleElement *This = HTMLSTYLE_THIS(iface);
+    HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLStyleElement_put_onload(IHTMLStyleElement *iface, VARIANT v)
 {
-    HTMLStyleElement *This = HTMLSTYLE_THIS(iface);
+    HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLStyleElement_get_onload(IHTMLStyleElement *iface, VARIANT *p)
 {
-    HTMLStyleElement *This = HTMLSTYLE_THIS(iface);
+    HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLStyleElement_put_onerror(IHTMLStyleElement *iface, VARIANT v)
 {
-    HTMLStyleElement *This = HTMLSTYLE_THIS(iface);
+    HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLStyleElement_get_onerror(IHTMLStyleElement *iface, VARIANT *p)
 {
-    HTMLStyleElement *This = HTMLSTYLE_THIS(iface);
+    HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLStyleElement_get_styleSheet(IHTMLStyleElement *iface, IHTMLStyleSheet **p)
 {
-    HTMLStyleElement *This = HTMLSTYLE_THIS(iface);
+    HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLStyleElement_put_disabled(IHTMLStyleElement *iface, VARIANT_BOOL v)
 {
-    HTMLStyleElement *This = HTMLSTYLE_THIS(iface);
+    HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
     FIXME("(%p)->(%x)\n", This, v);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLStyleElement_get_disabled(IHTMLStyleElement *iface, VARIANT_BOOL *p)
 {
-    HTMLStyleElement *This = HTMLSTYLE_THIS(iface);
+    HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLStyleElement_put_media(IHTMLStyleElement *iface, BSTR v)
 {
-    HTMLStyleElement *This = HTMLSTYLE_THIS(iface);
+    HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
     nsAString media_str;
     nsresult nsres;
 
@@ -220,7 +221,7 @@ static HRESULT WINAPI HTMLStyleElement_put_media(IHTMLStyleElement *iface, BSTR 
 
 static HRESULT WINAPI HTMLStyleElement_get_media(IHTMLStyleElement *iface, BSTR *p)
 {
-    HTMLStyleElement *This = HTMLSTYLE_THIS(iface);
+    HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
     nsAString nsstr;
     nsresult nsres;
 
@@ -230,8 +231,6 @@ static HRESULT WINAPI HTMLStyleElement_get_media(IHTMLStyleElement *iface, BSTR 
     nsres = nsIDOMHTMLStyleElement_GetMedia(This->nsstyle, &nsstr);
     return return_nsstr(nsres, &nsstr, p);
 }
-
-#undef HTMLSTYLE_THIS
 
 static const IHTMLStyleElementVtbl HTMLStyleElementVtbl = {
     HTMLStyleElement_QueryInterface,
@@ -268,13 +267,13 @@ static HRESULT HTMLStyleElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = HTMLSTYLE(This);
+        *ppv = &This->IHTMLStyleElement_iface;
     }else if(IsEqualGUID(&IID_IDispatch, riid)) {
         TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = HTMLSTYLE(This);
+        *ppv = &This->IHTMLStyleElement_iface;
     }else if(IsEqualGUID(&IID_IHTMLStyleElement, riid)) {
         TRACE("(%p)->(IID_IHTMLStyleElement %p)\n", This, ppv);
-        *ppv = HTMLSTYLE(This);
+        *ppv = &This->IHTMLStyleElement_iface;
     }else {
         return HTMLElement_QI(&This->element.node, riid, ppv);
     }
@@ -320,7 +319,7 @@ HRESULT HTMLStyleElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem
     if(!ret)
         return E_OUTOFMEMORY;
 
-    ret->lpIHTMLStyleElementVtbl = &HTMLStyleElementVtbl;
+    ret->IHTMLStyleElement_iface.lpVtbl = &HTMLStyleElementVtbl;
     ret->element.node.vtbl = &HTMLStyleElementImplVtbl;
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLStyleElement, (void**)&ret->nsstyle);
