@@ -573,7 +573,7 @@ static HRESULT WINAPI HTMLStyle_QueryInterface(IHTMLStyle *iface, REFIID riid, v
         *ppv = &This->IHTMLStyle_iface;
     }else if(IsEqualGUID(&IID_IHTMLStyle2, riid)) {
         TRACE("(%p)->(IID_IHTMLStyle2 %p)\n", This, ppv);
-        *ppv = HTMLSTYLE2(This);
+        *ppv = &This->IHTMLStyle2_iface;
     }else if(IsEqualGUID(&IID_IHTMLStyle3, riid)) {
         TRACE("(%p)->(IID_IHTMLStyle3 %p)\n", This, ppv);
         *ppv = HTMLSTYLE3(This);
@@ -2037,7 +2037,7 @@ static HRESULT WINAPI HTMLStyle_get_position(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return IHTMLStyle2_get_position(HTMLSTYLE2(This), p);
+    return IHTMLStyle2_get_position(&This->IHTMLStyle2_iface, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_zIndex(IHTMLStyle *iface, VARIANT v)
