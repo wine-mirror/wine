@@ -694,6 +694,14 @@ BOOL WINAPI WriteConsoleOutputAttribute( HANDLE hConsoleOutput, CONST WORD *attr
 
     TRACE("(%p,%p,%d,%dx%d,%p)\n", hConsoleOutput,attr,length,coord.X,coord.Y,lpNumAttrsWritten);
 
+    if ((length > 0 && !attr) || !lpNumAttrsWritten)
+    {
+        SetLastError(ERROR_INVALID_ACCESS);
+        return FALSE;
+    }
+
+    *lpNumAttrsWritten = 0;
+
     SERVER_START_REQ( write_console_output )
     {
         req->handle = console_handle_unmap(hConsoleOutput);
@@ -703,9 +711,7 @@ BOOL WINAPI WriteConsoleOutputAttribute( HANDLE hConsoleOutput, CONST WORD *attr
         req->wrap   = TRUE;
         wine_server_add_data( req, attr, length * sizeof(WORD) );
         if ((ret = !wine_server_call_err( req )))
-        {
-            if (lpNumAttrsWritten) *lpNumAttrsWritten = reply->written;
-        }
+            *lpNumAttrsWritten = reply->written;
     }
     SERVER_END_REQ;
     return ret;
