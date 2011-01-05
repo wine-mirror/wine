@@ -511,6 +511,8 @@ INT CDECL PSDRV_GetDeviceCaps( PSDRV_PDEVICE *physDev, INT cap )
     case VREFRESH:
     case BLTALIGNMENT:
         return 0;
+    case SHADEBLENDCAPS:
+        return SB_NONE;
     default:
         FIXME("(%p): unsupported capability %d, will return 0\n", physDev->hdc, cap );
         return 0;
