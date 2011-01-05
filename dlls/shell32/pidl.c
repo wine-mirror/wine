@@ -544,6 +544,8 @@ BOOL WINAPI ILIsEqual(LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
  *  parent = a/b, child = a/b/c -> true, c is in folder a/b
  *  child = a/b/c/d -> false if bImmediate is true, d is not in folder a/b
  *  child = a/b/c/d -> true if bImmediate is false, d is in a subfolder of a/b
+ *  child = a/b -> false if bImmediate is true
+ *  child = a/b -> true if bImmediate is false
  */
 BOOL WINAPI ILIsParent(LPCITEMIDLIST pidlParent, LPCITEMIDLIST pidlChild, BOOL bImmediate)
 {
@@ -569,12 +571,12 @@ BOOL WINAPI ILIsParent(LPCITEMIDLIST pidlParent, LPCITEMIDLIST pidlChild, BOOL b
         pChild = ILGetNext(pChild);
     }
 
-    /* child shorter or has equal length to parent */
-    if (pParent->mkid.cb || !pChild->mkid.cb)
+    /* child has shorter name than parent */
+    if (pParent->mkid.cb)
         return FALSE;
 
     /* not immediate descent */
-    if ( ILGetNext(pChild)->mkid.cb && bImmediate)
+    if ((!pChild->mkid.cb || ILGetNext(pChild)->mkid.cb) && bImmediate)
         return FALSE;
 
     return TRUE;
