@@ -243,8 +243,8 @@ typedef struct
 
     LONG ref;
 
-    DWORD         maxSinks;
-    IAdviseSink** arrayOfSinks;
+    DWORD max_cons;
+    STATDATA *connections;
 } OleAdviseHolderImpl;
 
 static inline OleAdviseHolderImpl *impl_from_IOleAdviseHolder(IOleAdviseHolder *iface)
@@ -255,28 +255,19 @@ static inline OleAdviseHolderImpl *impl_from_IOleAdviseHolder(IOleAdviseHolder *
 /**************************************************************************
  *  OleAdviseHolderImpl_Destructor
  */
-static void OleAdviseHolderImpl_Destructor(OleAdviseHolderImpl* ptrToDestroy)
+static void OleAdviseHolderImpl_Destructor(OleAdviseHolderImpl *This)
 {
-  DWORD index;
-  TRACE("%p\n", ptrToDestroy);
+    DWORD index;
+    TRACE("%p\n", This);
 
-  for (index = 0; index < ptrToDestroy->maxSinks; index++)
-  {
-    if (ptrToDestroy->arrayOfSinks[index]!=0)
+    for (index = 0; index < This->max_cons; index++)
     {
-      IAdviseSink_Release(ptrToDestroy->arrayOfSinks[index]);
-      ptrToDestroy->arrayOfSinks[index] = NULL;
+        if (This->connections[index].pAdvSink != NULL)
+            release_statdata(This->connections + index);
     }
-  }
 
-  HeapFree(GetProcessHeap(),
-	   0,
-	   ptrToDestroy->arrayOfSinks);
-
-
-  HeapFree(GetProcessHeap(),
-	   0,
-	   ptrToDestroy);
+    HeapFree(GetProcessHeap(), 0, This->connections);
+    HeapFree(GetProcessHeap(), 0, This);
 }
 
 /**************************************************************************
@@ -344,6 +335,8 @@ static HRESULT WINAPI OleAdviseHolderImpl_Advise(IOleAdviseHolder *iface,
 {
   DWORD index;
   OleAdviseHolderImpl *This = impl_from_IOleAdviseHolder(iface);
+  STATDATA new_conn;
+  static const FORMATETC empty_fmtetc = {0, NULL, 0, -1, 0};
 
   TRACE("(%p)->(%p, %p)\n", This, pAdvise, pdwConnection);
 
@@ -352,38 +345,27 @@ static HRESULT WINAPI OleAdviseHolderImpl_Advise(IOleAdviseHolder *iface,
 
   *pdwConnection = 0;
 
-  for (index = 0; index < This->maxSinks; index++)
+  for (index = 0; index < This->max_cons; index++)
   {
-    if (This->arrayOfSinks[index]==NULL)
+    if (This->connections[index].pAdvSink == NULL)
       break;
   }
 
-  if (index == This->maxSinks)
+  if (index == This->max_cons)
   {
-    DWORD i;
-
-    This->maxSinks+=INITIAL_SINKS;
-
-    This->arrayOfSinks = HeapReAlloc(GetProcessHeap(),
-				     0,
-				     This->arrayOfSinks,
-				     This->maxSinks*sizeof(IAdviseSink*));
-
-    for (i=index;i < This->maxSinks; i++)
-      This->arrayOfSinks[i]=0;
+    This->max_cons += INITIAL_SINKS;
+    This->connections = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->connections,
+                                    This->max_cons * sizeof(*This->connections));
   }
 
-  This->arrayOfSinks[index] = pAdvise;
+  new_conn.pAdvSink = pAdvise;
+  new_conn.advf = 0;
+  new_conn.formatetc = empty_fmtetc;
+  new_conn.dwConnection = index + 1; /* 0 is not a valid cookie, so increment the index */
 
-  if (This->arrayOfSinks[index]!=NULL)
-    IAdviseSink_AddRef(This->arrayOfSinks[index]);
+  copy_statdata(This->connections + index, &new_conn);
 
-  /*
-   * Return the index as the cookie.
-   * Since 0 is not a valid cookie, we will increment by
-   * 1 the index in the table.
-   */
-  *pdwConnection = index+1;
+  *pdwConnection = new_conn.dwConnection;
 
   return S_OK;
 }
@@ -395,30 +377,17 @@ static HRESULT WINAPI OleAdviseHolderImpl_Unadvise(IOleAdviseHolder *iface,
                                                    DWORD dwConnection)
 {
   OleAdviseHolderImpl *This = impl_from_IOleAdviseHolder(iface);
+  DWORD index;
 
   TRACE("(%p)->(%u)\n", This, dwConnection);
 
-  /*
-   * So we don't return 0 as a cookie, the index was
-   * incremented by 1 in OleAdviseHolderImpl_Advise
-   * we have to compensate.
-   */
-  dwConnection--;
+  /* The connection number is 1 more than the index, see OleAdviseHolder_Advise */
+  index = dwConnection - 1;
 
-  /*
-   * Check for invalid cookies.
-   */
-  if (dwConnection >= This->maxSinks)
-    return OLE_E_NOCONNECTION;
+  if (index >= This->max_cons || This->connections[index].pAdvSink == NULL)
+     return OLE_E_NOCONNECTION;
 
-  if (This->arrayOfSinks[dwConnection] == NULL)
-    return OLE_E_NOCONNECTION;
-
-  /*
-   * Release the sink and mark the spot in the list as free.
-   */
-  IAdviseSink_Release(This->arrayOfSinks[dwConnection]);
-  This->arrayOfSinks[dwConnection] = NULL;
+  release_statdata(This->connections + index);
 
   return S_OK;
 }
@@ -426,40 +395,17 @@ static HRESULT WINAPI OleAdviseHolderImpl_Unadvise(IOleAdviseHolder *iface,
 /******************************************************************************
  * OleAdviseHolderImpl_EnumAdvise
  */
-static HRESULT WINAPI OleAdviseHolderImpl_EnumAdvise(IOleAdviseHolder *iface, IEnumSTATDATA **ppenumAdvise)
+static HRESULT WINAPI OleAdviseHolderImpl_EnumAdvise(IOleAdviseHolder *iface, IEnumSTATDATA **enum_advise)
 {
     OleAdviseHolderImpl *This = impl_from_IOleAdviseHolder(iface);
     IUnknown *unk;
-    DWORD i, count;
-    STATDATA *data;
-    static const FORMATETC empty_fmtetc = {0, NULL, 0, -1, 0};
     HRESULT hr;
 
-    TRACE("(%p)->(%p)\n", This, ppenumAdvise);
-
-    *ppenumAdvise = NULL;
-
-    /* Build an array of STATDATA structures */
-    data = HeapAlloc(GetProcessHeap(), 0, This->maxSinks * sizeof(*data));
-    if(!data) return E_OUTOFMEMORY;
-
-    for(i = 0, count = 0; i < This->maxSinks; i++)
-    {
-        if(This->arrayOfSinks[i])
-        {
-            data[count].formatetc = empty_fmtetc;
-            data[count].advf = 0;
-            data[count].pAdvSink = This->arrayOfSinks[i]; /* The constructor will take a ref. */
-            data[count].dwConnection = i;
-            count++;
-        }
-    }
+    TRACE("(%p)->(%p)\n", This, enum_advise);
 
     IOleAdviseHolder_QueryInterface(iface, &IID_IUnknown, (void**)&unk);
-    hr = EnumSTATDATA_Construct(unk, 0, count, data, ppenumAdvise);
+    hr = EnumSTATDATA_Construct(unk, 0, This->max_cons, This->connections, enum_advise);
     IUnknown_Release(unk);
-    HeapFree(GetProcessHeap(), 0, data);
-
     return hr;
 }
 
@@ -564,19 +510,14 @@ static const IOleAdviseHolderVtbl oahvt =
 static IOleAdviseHolder *OleAdviseHolderImpl_Constructor(void)
 {
   OleAdviseHolderImpl* lpoah;
-  DWORD                index;
 
   lpoah = HeapAlloc(GetProcessHeap(), 0, sizeof(OleAdviseHolderImpl));
 
   lpoah->IOleAdviseHolder_iface.lpVtbl = &oahvt;
   lpoah->ref = 1;
-  lpoah->maxSinks = INITIAL_SINKS;
-  lpoah->arrayOfSinks = HeapAlloc(GetProcessHeap(),
-				  0,
-				  lpoah->maxSinks * sizeof(IAdviseSink*));
-
-  for (index = 0; index < lpoah->maxSinks; index++)
-    lpoah->arrayOfSinks[index]=0;
+  lpoah->max_cons = INITIAL_SINKS;
+  lpoah->connections = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                 lpoah->max_cons * sizeof(*lpoah->connections));
 
   TRACE("returning %p\n",  &lpoah->IOleAdviseHolder_iface);
   return &lpoah->IOleAdviseHolder_iface;
