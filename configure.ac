@@ -56,8 +56,6 @@ AC_ARG_WITH(gsm,       AS_HELP_STRING([--without-gsm],[do not use libgsm (GSM 06
             [if test "x$withval" = "xno"; then ac_cv_header_gsm_h=no; ac_cv_header_gsm_gsm_h=no; fi])
 AC_ARG_WITH(gstreamer, AS_HELP_STRING([--without-gstreamer],[do not use GStreamer (codecs support)]))
 AC_ARG_WITH(hal,       AS_HELP_STRING([--without-hal],[do not use HAL (dynamic device support)]))
-AC_ARG_WITH(icns,      AS_HELP_STRING([--without-icns],[do not use ICNS icon support]),
-            [if test "x$withval" = "xno"; then ac_cv_header_icns_h=no; fi])
 AC_ARG_WITH(jack,      AS_HELP_STRING([--without-jack],[do not use the Jack sound support]),
             [if test "x$withval" = "xno"; then ac_cv_header_jack_jack_h=no; fi])
 AC_ARG_WITH(jpeg,      AS_HELP_STRING([--without-jpeg],[do not use JPEG]),
@@ -370,6 +368,7 @@ AC_SYS_LARGEFILE()
 
 AC_CHECK_HEADERS(\
 	AL/al.h \
+	ApplicationServices/ApplicationServices.h \
 	AudioToolbox/AudioConverter.h \
 	AudioUnit/AudioUnit.h \
 	CL/cl.h \
@@ -399,7 +398,6 @@ AC_CHECK_HEADERS(\
 	grp.h \
 	gsm.h \
 	gsm/gsm.h \
-	icns.h \
 	ieeefp.h \
 	inet/mib2.h \
 	io.h \
@@ -703,6 +701,7 @@ case $host_os in
     AC_SUBST(COREFOUNDATIONLIB,"-framework CoreFoundation")
     AC_SUBST(IOKITLIB,"-framework IOKit -framework CoreFoundation")
     AC_SUBST(QUICKTIMELIB,"-framework QuickTime -framework ApplicationServices -framework CoreVideo")
+    AC_SUBST(APPLICATIONSERVICESLIB,"-framework ApplicationServices")
     AC_SUBST(LDEXECFLAGS,["-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00000000,-segaddr,WINE_SHAREDHEAP,0x7f000000"])
     if test "$ac_cv_header_DiskArbitration_DiskArbitration_h" = "yes"
     then
@@ -1559,17 +1558,6 @@ then
 fi
 WINE_NOTICE_WITH(gsm,[test "x$ac_cv_lib_soname_gsm" = "x"],
                  [libgsm ${notice_platform}development files not found, gsm 06.10 codec won't be supported.])
-
-dnl **** Check for libicns ****
-if test "$ac_cv_header_icns_h" = "yes"
-then
-    WINE_CHECK_SONAME(icns,icns_write_family_to_file)
-fi
-case $host_os in
-  darwin*|macosx*)
-    WINE_NOTICE_WITH(icns,[test "x$ac_cv_lib_soname_icns" = "x"],
-                     [libicns ${notice_platform}development files not found, ICNS icons won't be supported.]) ;;
-esac
 
 dnl **** Check for libjpeg ****
 if test "$ac_cv_header_jpeglib_h" = "yes"

@@ -658,6 +658,7 @@ FRAMEWORK_OPENAL
 COREAUDIO
 DISKARBITRATIONLIB
 LDEXECFLAGS
+APPLICATIONSERVICESLIB
 QUICKTIMELIB
 IOKITLIB
 COREFOUNDATIONLIB
@@ -786,7 +787,6 @@ with_gnutls
 with_gsm
 with_gstreamer
 with_hal
-with_icns
 with_jack
 with_jpeg
 with_ldap
@@ -1477,7 +1477,6 @@ Optional Packages:
   --without-gsm           do not use libgsm (GSM 06.10 codec support)
   --without-gstreamer     do not use GStreamer (codecs support)
   --without-hal           do not use HAL (dynamic device support)
-  --without-icns          do not use ICNS icon support
   --without-jack          do not use the Jack sound support
   --without-jpeg          do not use JPEG
   --without-ldap          do not use LDAP
@@ -2604,12 +2603,6 @@ fi
 # Check whether --with-hal was given.
 if test "${with_hal+set}" = set; then :
   withval=$with_hal;
-fi
-
-
-# Check whether --with-icns was given.
-if test "${with_icns+set}" = set; then :
-  withval=$with_icns; if test "x$withval" = "xno"; then ac_cv_header_icns_h=no; fi
 fi
 
 
@@ -5768,6 +5761,7 @@ done
 
 for ac_header in \
 	AL/al.h \
+	ApplicationServices/ApplicationServices.h \
 	AudioToolbox/AudioConverter.h \
 	AudioUnit/AudioUnit.h \
 	CL/cl.h \
@@ -5797,7 +5791,6 @@ for ac_header in \
 	grp.h \
 	gsm.h \
 	gsm/gsm.h \
-	icns.h \
 	ieeefp.h \
 	inet/mib2.h \
 	io.h \
@@ -6521,6 +6514,8 @@ fi
     IOKITLIB="-framework IOKit -framework CoreFoundation"
 
     QUICKTIMELIB="-framework QuickTime -framework ApplicationServices -framework CoreVideo"
+
+    APPLICATIONSERVICESLIB="-framework ApplicationServices"
 
     LDEXECFLAGS="-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00000000,-segaddr,WINE_SHAREDHEAP,0x7f000000"
 
@@ -11452,71 +11447,6 @@ if test "x$ac_cv_lib_soname_gsm" = "x"; then :
 This is an error since --with-gsm was requested." "$LINENO" 5  ;;
 esac
 fi
-
-if test "$ac_cv_header_icns_h" = "yes"
-then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -licns" >&5
-$as_echo_n "checking for -licns... " >&6; }
-if test "${ac_cv_lib_soname_icns+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_soname_save_LIBS=$LIBS
-LIBS="-licns  $LIBS"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char icns_write_family_to_file ();
-int
-main ()
-{
-return icns_write_family_to_file ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  case "$LIBEXT" in
-    dll) ac_cv_lib_soname_icns=`$ac_cv_path_LDD conftest.exe | grep "icns" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_icns=`otool -L conftest$ac_exeext | grep "libicns\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libicns\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_icns=`$ac_cv_path_LDD conftest$ac_exeext | grep "libicns\\.$LIBEXT" | sed -e "s/^.*\(libicns\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'` ;;
-  esac
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS
-fi
-if test "x$ac_cv_lib_soname_icns" = "x"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_icns" >&5
-$as_echo "$ac_cv_lib_soname_icns" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define SONAME_LIBICNS "$ac_cv_lib_soname_icns"
-_ACEOF
-
-
-fi
-fi
-case $host_os in
-  darwin*|macosx*)
-    if test "x$ac_cv_lib_soname_icns" = "x"; then :
-  case "x$with_icns" in
-  x)   as_fn_append wine_notices "|libicns ${notice_platform}development files not found, ICNS icons won't be supported." ;;
-  xno) ;;
-  *)   as_fn_error $? "libicns ${notice_platform}development files not found, ICNS icons won't be supported.
-This is an error since --with-icns was requested." "$LINENO" 5  ;;
-esac
-fi ;;
-esac
 
 if test "$ac_cv_header_jpeglib_h" = "yes"
 then

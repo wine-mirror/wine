@@ -21,8 +21,37 @@
 
 #include <stdarg.h>
 
-#ifdef HAVE_ICNS_H
-#include <icns.h>
+#ifdef HAVE_APPLICATIONSERVICES_APPLICATIONSERVICES_H
+#define GetCurrentProcess GetCurrentProcess_Mac
+#define GetCurrentThread GetCurrentThread_Mac
+#define LoadResource LoadResource_Mac
+#define EqualRect EqualRect_Mac
+#define FillRect FillRect_Mac
+#define FrameRect FrameRect_Mac
+#define GetCursor GetCursor_Mac
+#define InvertRect InvertRect_Mac
+#define OffsetRect OffsetRect_Mac
+#define PtInRect PtInRect_Mac
+#define SetCursor SetCursor_Mac
+#define SetRect SetRect_Mac
+#define ShowCursor ShowCursor_Mac
+#define UnionRect UnionRect_Mac
+#include <ApplicationServices/ApplicationServices.h>
+#undef GetCurrentProcess
+#undef GetCurrentThread
+#undef LoadResource
+#undef EqualRect
+#undef FillRect
+#undef FrameRect
+#undef GetCursor
+#undef InvertRect
+#undef OffsetRect
+#undef PtInRect
+#undef SetCursor
+#undef SetRect
+#undef ShowCursor
+#undef UnionRect
+#undef DPRINTF
 #endif
 
 #define COBJMACROS
@@ -39,47 +68,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
-#ifdef SONAME_LIBICNS
-
-static void *libicns_handle;
-#define MAKE_FUNCPTR(f) static typeof(f) * p##f
-MAKE_FUNCPTR(icns_create_family);
-MAKE_FUNCPTR(icns_export_family_data);
-MAKE_FUNCPTR(icns_free_image);
-MAKE_FUNCPTR(icns_get_mask_type_for_icon_type);
-MAKE_FUNCPTR(icns_get_type_from_image_info);
-MAKE_FUNCPTR(icns_init_image_for_type);
-MAKE_FUNCPTR(icns_new_element_from_image);
-MAKE_FUNCPTR(icns_set_element_in_family);
-#undef MAKE_FUNCPTR
-
-static void *load_libicns(void)
-{
-    if((libicns_handle = wine_dlopen(SONAME_LIBICNS, RTLD_NOW, NULL, 0)) != NULL) {
-
-#define LOAD_FUNCPTR(f) \
-    if((p##f = wine_dlsym(libicns_handle, #f, NULL, 0)) == NULL) { \
-        libicns_handle = NULL; \
-        return NULL; \
-    }
-        LOAD_FUNCPTR(icns_create_family);
-        LOAD_FUNCPTR(icns_export_family_data);
-        LOAD_FUNCPTR(icns_free_image);
-        LOAD_FUNCPTR(icns_get_mask_type_for_icon_type);
-        LOAD_FUNCPTR(icns_get_type_from_image_info);
-        LOAD_FUNCPTR(icns_init_image_for_type);
-        LOAD_FUNCPTR(icns_new_element_from_image);
-        LOAD_FUNCPTR(icns_set_element_in_family);
-#undef LOAD_FUNCPTR
-    }
-    return libicns_handle;
-}
+#ifdef HAVE_APPLICATIONSERVICES_APPLICATIONSERVICES_H
 
 typedef struct IcnsEncoder {
     IWICBitmapEncoder IWICBitmapEncoder_iface;
     LONG ref;
     IStream *stream;
-    icns_family_t *icns_family;
+    IconFamilyHandle icns_family;
     BOOL any_frame_committed;
     int outstanding_commits;
     BOOL committed;
@@ -96,10 +91,9 @@ typedef struct IcnsFrameEncode {
     IcnsEncoder *encoder;
     LONG ref;
     BOOL initialized;
-    UINT width;
-    UINT height;
-    icns_type_t icns_type;
-    icns_image_t icns_image;
+    UINT size;
+    OSType icns_type;
+    BYTE* icns_image;
     int lines_written;
     BOOL committed;
 } IcnsFrameEncode;
@@ -157,8 +151,8 @@ static ULONG WINAPI IcnsFrameEncode_Release(IWICBitmapFrameEncode *iface)
             This->encoder->outstanding_commits--;
             LeaveCriticalSection(&This->encoder->lock);
         }
-        if (This->icns_image.imageData != NULL)
-            picns_free_image(&This->icns_image);
+        if (This->icns_image != NULL)
+            HeapFree(GetProcessHeap(), 0, This->icns_image);
 
         IUnknown_Release((IUnknown*)This->encoder);
         HeapFree(GetProcessHeap(), 0, This);
@@ -199,14 +193,35 @@ static HRESULT WINAPI IcnsFrameEncode_SetSize(IWICBitmapFrameEncode *iface,
 
     EnterCriticalSection(&This->encoder->lock);
 
-    if (!This->initialized || This->icns_image.imageData)
+    if (!This->initialized || This->icns_image)
     {
         hr = WINCODEC_ERR_WRONGSTATE;
         goto end;
     }
 
-    This->width = uiWidth;
-    This->height = uiHeight;
+    if (uiWidth != uiHeight)
+    {
+        WARN("cannot generate ICNS icon from %dx%d image\n", uiWidth, uiHeight);
+        hr = E_INVALIDARG;
+        goto end;
+    }
+
+    switch (uiWidth)
+    {
+        case 16:
+        case 32:
+        case 48:
+        case 128:
+        case 256:
+        case 512:
+            break;
+        default:
+            WARN("cannot generate ICNS icon from %dx%d image\n", This->size, This->size);
+            hr = E_INVALIDARG;
+            goto end;
+    }
+
+    This->size = uiWidth;
 
 end:
     LeaveCriticalSection(&This->encoder->lock);
@@ -223,7 +238,7 @@ static HRESULT WINAPI IcnsFrameEncode_SetResolution(IWICBitmapFrameEncode *iface
 
     EnterCriticalSection(&This->encoder->lock);
 
-    if (!This->initialized || This->icns_image.imageData)
+    if (!This->initialized || This->icns_image)
     {
         hr = WINCODEC_ERR_WRONGSTATE;
         goto end;
@@ -244,7 +259,7 @@ static HRESULT WINAPI IcnsFrameEncode_SetPixelFormat(IWICBitmapFrameEncode *ifac
 
     EnterCriticalSection(&This->encoder->lock);
 
-    if (!This->initialized || This->icns_image.imageData)
+    if (!This->initialized || This->icns_image)
     {
         hr = WINCODEC_ERR_WRONGSTATE;
         goto end;
@@ -284,43 +299,41 @@ static HRESULT WINAPI IcnsFrameEncode_WritePixels(IWICBitmapFrameEncode *iface,
     IcnsFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
     HRESULT hr = S_OK;
     UINT i;
-    int ret;
 
     TRACE("(%p,%u,%u,%u,%p)\n", iface, lineCount, cbStride, cbBufferSize, pbPixels);
 
     EnterCriticalSection(&This->encoder->lock);
 
-    if (!This->initialized || !This->width || !This->height)
+    if (!This->initialized || !This->size)
     {
         hr = WINCODEC_ERR_WRONGSTATE;
         goto end;
     }
-    if (lineCount == 0 || lineCount + This->lines_written > This->height)
+    if (lineCount == 0 || lineCount + This->lines_written > This->size)
     {
         hr = E_INVALIDARG;
         goto end;
     }
 
-    if (!This->icns_image.imageData)
+    if (!This->icns_image)
     {
-        icns_icon_info_t icns_info;
-        icns_info.isImage = 1;
-        icns_info.iconWidth = This->width;
-        icns_info.iconHeight = This->height;
-        icns_info.iconBitDepth = 32;
-        icns_info.iconChannels = 4;
-        icns_info.iconPixelDepth = icns_info.iconBitDepth / icns_info.iconChannels;
-        This->icns_type = picns_get_type_from_image_info(icns_info);
-        if (This->icns_type == ICNS_NULL_TYPE)
+        switch (This->size)
         {
-            WARN("cannot generate ICNS icon from %dx%d image\n", This->width, This->height);
-            hr = E_INVALIDARG;
-            goto end;
+            case 16:  This->icns_type = kIconServices16PixelDataARGB;  break;
+            case 32:  This->icns_type = kIconServices32PixelDataARGB;  break;
+            case 48:  This->icns_type = kIconServices48PixelDataARGB;  break;
+            case 128: This->icns_type = kIconServices128PixelDataARGB; break;
+            case 256: This->icns_type = kIconServices256PixelDataARGB; break;
+            case 512: This->icns_type = kIconServices512PixelDataARGB; break;
+            default:
+                WARN("cannot generate ICNS icon from %dx%d image\n", This->size, This->size);
+                hr = E_INVALIDARG;
+                goto end;
         }
-        ret = picns_init_image_for_type(This->icns_type, &This->icns_image);
-        if (ret != ICNS_STATUS_OK)
+        This->icns_image = HeapAlloc(GetProcessHeap(), 0, This->size * This->size * 4);
+        if (!This->icns_image)
         {
-            WARN("error %d in icns_init_image_for_type\n", ret);
+            WARN("failed to allocate image buffer\n");
             hr = E_FAIL;
             goto end;
         }
@@ -331,14 +344,14 @@ static HRESULT WINAPI IcnsFrameEncode_WritePixels(IWICBitmapFrameEncode *iface,
         BYTE *src_row, *dst_row;
         UINT j;
         src_row = pbPixels + cbStride * i;
-        dst_row = This->icns_image.imageData + (This->lines_written + i)*(This->width*4);
+        dst_row = This->icns_image + (This->lines_written + i)*(This->size*4);
         /* swap bgr -> rgb */
-        for (j = 0; j < This->width*4; j += 4)
+        for (j = 0; j < This->size*4; j += 4)
         {
-            dst_row[j] = src_row[j+2];
-            dst_row[j+1] = src_row[j+1];
-            dst_row[j+2] = src_row[j];
-            dst_row[j+3] = src_row[j+3];
+            dst_row[j] = src_row[j+3];
+            dst_row[j+1] = src_row[j+2];
+            dst_row[j+2] = src_row[j+1];
+            dst_row[j+3] = src_row[j];
         }
     }
     This->lines_written += lineCount;
@@ -360,7 +373,7 @@ static HRESULT WINAPI IcnsFrameEncode_WriteSource(IWICBitmapFrameEncode *iface,
 
     TRACE("(%p,%p,%p)\n", iface, pIBitmapSource, prc);
 
-    if (!This->initialized || !This->width || !This->height)
+    if (!This->initialized || !This->size)
     {
         hr = WINCODEC_ERR_WRONGSTATE;
         goto end;
@@ -389,13 +402,13 @@ static HRESULT WINAPI IcnsFrameEncode_WriteSource(IWICBitmapFrameEncode *iface,
         prc = &rc;
     }
 
-    if (prc->Width != This->width)
+    if (prc->Width != This->size)
     {
         hr = E_INVALIDARG;
         goto end;
     }
 
-    stride = (32 * This->width + 7)/8;
+    stride = (32 * This->size + 7)/8;
     pixeldata = HeapAlloc(GetProcessHeap(), 0, stride * prc->Height);
     if (!pixeldata)
     {
@@ -419,76 +432,37 @@ end:
 static HRESULT WINAPI IcnsFrameEncode_Commit(IWICBitmapFrameEncode *iface)
 {
     IcnsFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
-    icns_element_t *icns_element = NULL;
-    icns_image_t mask;
-    icns_element_t *mask_element = NULL;
-    int ret;
-    int i;
+    Handle handle;
+    OSErr ret;
     HRESULT hr = S_OK;
 
     TRACE("(%p): stub\n", iface);
 
-    memset(&mask, 0, sizeof(mask));
-
     EnterCriticalSection(&This->encoder->lock);
 
-    if (!This->icns_image.imageData || This->lines_written != This->height || This->committed)
+    if (!This->icns_image || This->lines_written != This->size || This->committed)
     {
         hr = WINCODEC_ERR_WRONGSTATE;
         goto end;
     }
 
-    ret = picns_new_element_from_image(&This->icns_image, This->icns_type, &icns_element);
-    if (ret != ICNS_STATUS_OK && icns_element != NULL)
+    ret = PtrToHand(This->icns_image, &handle, This->size * This->size * 4);
+    if (ret != noErr || !handle)
     {
-        WARN("icns_new_element_from_image failed with error %d\n", ret);
+        WARN("PtrToHand failed with error %d\n", ret);
         hr = E_FAIL;
         goto end;
     }
 
-    if (This->icns_type != ICNS_512x512_32BIT_ARGB_DATA && This->icns_type != ICNS_256x256_32BIT_ARGB_DATA)
-    {
-        /* we need to write the mask too */
-        ret = picns_init_image_for_type(picns_get_mask_type_for_icon_type(This->icns_type), &mask);
-        if (ret != ICNS_STATUS_OK)
-        {
-            WARN("icns_init_image_from_type failed to make mask, error %d\n", ret);
-            hr = E_FAIL;
-            goto end;
-        }
-        for (i = 0; i < mask.imageHeight; i++)
-        {
-            int j;
-            for (j = 0; j < mask.imageWidth; j++)
-                mask.imageData[i*mask.imageWidth + j] = This->icns_image.imageData[i*mask.imageWidth*4 + j*4 + 3];
-        }
-        ret = picns_new_element_from_image(&mask, picns_get_mask_type_for_icon_type(This->icns_type), &mask_element);
-        if (ret != ICNS_STATUS_OK)
-        {
-            WARN("icns_new_element_from image failed to make element from mask, error %d\n", ret);
-            hr = E_FAIL;
-            goto end;
-        }
-    }
+    ret = SetIconFamilyData(This->encoder->icns_family, This->icns_type, handle);
+    DisposeHandle(handle);
 
-    ret = picns_set_element_in_family(&This->encoder->icns_family, icns_element);
-    if (ret != ICNS_STATUS_OK)
-    {
-        WARN("icns_set_element_in_family failed for image with error %d\n", ret);
+    if (ret != noErr)
+	{
+        WARN("SetIconFamilyData failed for image with error %d\n", ret);
         hr = E_FAIL;
         goto end;
-    }
-
-    if (mask_element)
-    {
-        ret = picns_set_element_in_family(&This->encoder->icns_family, mask_element);
-        if (ret != ICNS_STATUS_OK)
-        {
-            WARN("icns_set_element_in_family failed for mask with error %d\n", ret);
-            hr = E_FAIL;
-            goto end;
-        }
-    }
+	}
 
     This->committed = TRUE;
     This->encoder->any_frame_committed = TRUE;
@@ -496,9 +470,6 @@ static HRESULT WINAPI IcnsFrameEncode_Commit(IWICBitmapFrameEncode *iface)
 
 end:
     LeaveCriticalSection(&This->encoder->lock);
-    picns_free_image(&mask);
-    free(icns_element);
-    free(mask_element);
     return hr;
 }
 
@@ -571,7 +542,7 @@ static ULONG WINAPI IcnsEncoder_Release(IWICBitmapEncoder *iface)
         This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
         if (This->icns_family)
-            free(This->icns_family);
+            DisposeHandle((Handle)This->icns_family);
         if (This->stream)
             IStream_Release(This->stream);
         HeapFree(GetProcessHeap(), 0, This);
@@ -584,7 +555,6 @@ static HRESULT WINAPI IcnsEncoder_Initialize(IWICBitmapEncoder *iface,
     IStream *pIStream, WICBitmapEncoderCacheOption cacheOption)
 {
     IcnsEncoder *This = impl_from_IWICBitmapEncoder(iface);
-    int ret;
     HRESULT hr = S_OK;
 
     TRACE("(%p,%p,%u)\n", iface, pIStream, cacheOption);
@@ -596,10 +566,10 @@ static HRESULT WINAPI IcnsEncoder_Initialize(IWICBitmapEncoder *iface,
         hr = WINCODEC_ERR_WRONGSTATE;
         goto end;
     }
-    ret = picns_create_family(&This->icns_family);
-    if (ret != ICNS_STATUS_OK)
+    This->icns_family = (IconFamilyHandle)NewHandle(0);
+    if (!This->icns_family)
     {
-        WARN("error %d creating icns family\n", ret);
+        WARN("error creating icns family\n");
         hr = E_FAIL;
         goto end;
     }
@@ -682,9 +652,8 @@ static HRESULT WINAPI IcnsEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
     frameEncode->encoder = This;
     frameEncode->ref = 1;
     frameEncode->initialized = FALSE;
-    frameEncode->width = 0;
-    frameEncode->height = 0;
-    memset(&frameEncode->icns_image, 0, sizeof(icns_image_t));
+    frameEncode->size = 0;
+    frameEncode->icns_image = NULL;
     frameEncode->lines_written = 0;
     frameEncode->committed = FALSE;
     *ppIFrameEncode = &frameEncode->IWICBitmapFrameEncode_iface;
@@ -700,9 +669,7 @@ end:
 static HRESULT WINAPI IcnsEncoder_Commit(IWICBitmapEncoder *iface)
 {
     IcnsEncoder *This = impl_from_IWICBitmapEncoder(iface);
-    icns_byte_t *buffer = NULL;
-    icns_size_t buffer_size;
-    int ret;
+    size_t buffer_size;
     HRESULT hr = S_OK;
     ULONG byteswritten;
 
@@ -716,14 +683,8 @@ static HRESULT WINAPI IcnsEncoder_Commit(IWICBitmapEncoder *iface)
         goto end;
     }
 
-    ret = picns_export_family_data(This->icns_family, &buffer_size, &buffer);
-    if (ret != ICNS_STATUS_OK)
-    {
-        WARN("icns_export_family_data failed with error %d\n", ret);
-        hr = E_FAIL;
-        goto end;
-    }
-    hr = IStream_Write(This->stream, buffer, buffer_size, &byteswritten);
+    buffer_size = GetHandleSize((Handle)This->icns_family);
+    hr = IStream_Write(This->stream, *This->icns_family, buffer_size, &byteswritten);
     if (FAILED(hr) || byteswritten != buffer_size)
     {
         WARN("writing file failed, hr = 0x%08X\n", hr);
@@ -735,7 +696,6 @@ static HRESULT WINAPI IcnsEncoder_Commit(IWICBitmapEncoder *iface)
 
 end:
     LeaveCriticalSection(&This->lock);
-    free(buffer);
     return hr;
 }
 
@@ -773,12 +733,6 @@ HRESULT IcnsEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
 
     if (pUnkOuter) return CLASS_E_NOAGGREGATION;
 
-    if (!libicns_handle && !load_libicns())
-    {
-        ERR("Failed writing ICNS because unable to find %s\n",SONAME_LIBICNS);
-        return E_FAIL;
-    }
-
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(IcnsEncoder));
     if (!This) return E_OUTOFMEMORY;
 
@@ -798,7 +752,7 @@ HRESULT IcnsEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     return ret;
 }
 
-#else /* !defined(SONAME_LIBICNS) */
+#else /* !defined(HAVE_APPLICATIONSERVICES_APPLICATIONSERVICES_H) */
 
 HRESULT IcnsEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
 {
