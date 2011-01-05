@@ -469,7 +469,7 @@ static char *get_po_file_name( const language_t *lang )
 static unsigned int flush_po_files( const char *output_name )
 {
     struct po_file_lang *po_file, *next;
-    unsigned int count;
+    unsigned int count = 0;
 
     LIST_FOR_EACH_ENTRY_SAFE( po_file, next, &po_file_langs, struct po_file_lang, entry )
     {
