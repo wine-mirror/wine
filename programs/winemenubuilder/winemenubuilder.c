@@ -815,16 +815,77 @@ static HRESULT open_icon(LPCWSTR filename, int index, BOOL bWait, IStream **ppSt
 }
 
 #ifdef __APPLE__
-static HRESULT platform_write_icon(IStream *icoStream, int exeIndex,
-                                   int bestIndex, LPCWSTR icoPathW,
+#define ICNS_SLOTS 6
+
+static inline int size_to_slot(int size)
+{
+    switch (size)
+    {
+        case 16: return 0;
+        case 32: return 1;
+        case 48: return 2;
+        case 128: return 3;
+        case 256: return 4;
+        case 512: return 5;
+    }
+
+    return -1;
+}
+
+static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR icoPathW,
                                    const char *destFilename, char **nativeIdentifier)
 {
+    ICONDIRENTRY *iconDirEntries = NULL;
+    int numEntries;
+    struct {
+        int index;
+        int maxPixels;
+        int maxBits;
+    } best[ICNS_SLOTS];
+    int indexes[ICNS_SLOTS];
+    int i;
     GUID guid;
     WCHAR *guidStrW = NULL;
     char *guidStrA = NULL;
     char *icnsPath = NULL;
     LARGE_INTEGER zero;
     HRESULT hr;
+
+    hr = read_ico_direntries(icoStream, &iconDirEntries, &numEntries);
+    if (FAILED(hr))
+        goto end;
+    for (i = 0; i < ICNS_SLOTS; i++)
+    {
+        best[i].index = -1;
+        best[i].maxPixels = 0;
+        best[i].maxBits = 0;
+    }
+    for (i = 0; i < numEntries; i++)
+    {
+        int slot;
+
+        WINE_TRACE("[%d]: %d x %d @ %d\n", i, iconDirEntries[i].bWidth,
+            iconDirEntries[i].bHeight, iconDirEntries[i].wBitCount);
+        slot = size_to_slot(iconDirEntries[i].bWidth);
+        if (slot < 0)
+            continue;
+        if (iconDirEntries[i].wBitCount >= best[slot].maxBits &&
+            (iconDirEntries[i].bHeight * iconDirEntries[i].bWidth) >= best[slot].maxPixels)
+        {
+            best[slot].index = i;
+            best[slot].maxPixels = iconDirEntries[i].bHeight * iconDirEntries[i].bWidth;
+            best[slot].maxBits = iconDirEntries[i].wBitCount;
+        }
+    }
+    numEntries = 0;
+    for (i = 0; i < ICNS_SLOTS; i++)
+    {
+        if (best[i].index >= 0)
+        {
+            indexes[numEntries] = best[i].index;
+            numEntries++;
+        }
+    }
 
     hr = CoCreateGuid(&guid);
     if (FAILED(hr))
@@ -859,7 +920,7 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex,
         WINE_WARN("seeking icon stream failed, error 0x%08X\n", hr);
         goto end;
     }
-    hr = convert_to_native_icon(icoStream, &bestIndex, 1, &CLSID_WICIcnsEncoder,
+    hr = convert_to_native_icon(icoStream, indexes, numEntries, &CLSID_WICIcnsEncoder,
                                 icnsPath, icoPathW);
     if (FAILED(hr))
     {
@@ -869,6 +930,7 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex,
     }
 
 end:
+    HeapFree(GetProcessHeap(), 0, iconDirEntries);
     CoTaskMemFree(guidStrW);
     HeapFree(GetProcessHeap(), 0, guidStrA);
     if (SUCCEEDED(hr))
@@ -878,10 +940,15 @@ end:
     return hr;
 }
 #else
-static HRESULT platform_write_icon(IStream *icoStream, int exeIndex,
-                                   int bestIndex, LPCWSTR icoPathW,
+static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR icoPathW,
                                    const char *destFilename, char **nativeIdentifier)
 {
+    ICONDIRENTRY *iconDirEntries = NULL;
+    int numEntries;
+    int bestIndex = -1;
+    int maxPixels = 0;
+    int maxBits = 0;
+    int i;
     char *icoPathA = NULL;
     char *iconsDir = NULL;
     char *pngPath = NULL;
@@ -889,6 +956,23 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex,
     char *p, *q;
     HRESULT hr = S_OK;
     LARGE_INTEGER zero;
+
+    hr = read_ico_direntries(icoStream, &iconDirEntries, &numEntries);
+    if (FAILED(hr))
+        goto end;
+    for (i = 0; i < numEntries; i++)
+    {
+        WINE_TRACE("[%d]: %d x %d @ %d\n", i, iconDirEntries[i].bWidth,
+            iconDirEntries[i].bHeight, iconDirEntries[i].wBitCount);
+        if (iconDirEntries[i].wBitCount >= maxBits &&
+            (iconDirEntries[i].bHeight * iconDirEntries[i].bWidth) >= maxPixels)
+        {
+            bestIndex = i;
+            maxPixels = iconDirEntries[i].bHeight * iconDirEntries[i].bWidth;
+            maxBits = iconDirEntries[i].wBitCount;
+        }
+    }
+    WINE_TRACE("Selected: %d\n", bestIndex);
 
     icoPathA = wchars_to_utf8_chars(icoPathW);
     if (icoPathA == NULL)
@@ -938,6 +1022,7 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex,
                                 pngPath, icoPathW);
 
 end:
+    HeapFree(GetProcessHeap(), 0, iconDirEntries);
     HeapFree(GetProcessHeap(), 0, icoPathA);
     HeapFree(GetProcessHeap(), 0, iconsDir);
     HeapFree(GetProcessHeap(), 0, pngPath);
@@ -951,12 +1036,6 @@ static char *extract_icon(LPCWSTR icoPathW, int index, const char *destFilename,
     IStream *stream = NULL;
     HRESULT hr;
     char *nativeIdentifier = NULL;
-    ICONDIRENTRY *iconDirEntries = NULL;
-    int numEntries;
-    int bestIndex = -1;
-    int maxPixels = 0;
-    int maxBits = 0;
-    int i;
 
     WINE_TRACE("path=[%s] index=%d destFilename=[%s]\n", wine_dbgstr_w(icoPathW), index, wine_dbgstr_a(destFilename));
 
@@ -966,30 +1045,13 @@ static char *extract_icon(LPCWSTR icoPathW, int index, const char *destFilename,
         WINE_WARN("opening icon %s index %d failed, hr=0x%08X\n", wine_dbgstr_w(icoPathW), index, hr);
         goto end;
     }
-    hr = read_ico_direntries(stream, &iconDirEntries, &numEntries);
-    if (FAILED(hr))
-        goto end;
-    for (i = 0; i < numEntries; i++)
-    {
-        WINE_TRACE("[%d]: %d x %d @ %d\n", i, iconDirEntries[i].bWidth,
-            iconDirEntries[i].bHeight, iconDirEntries[i].wBitCount);
-        if (iconDirEntries[i].wBitCount >= maxBits &&
-            (iconDirEntries[i].bHeight * iconDirEntries[i].bWidth) >= maxPixels)
-        {
-            bestIndex = i;
-            maxPixels = iconDirEntries[i].bHeight * iconDirEntries[i].bWidth;
-            maxBits = iconDirEntries[i].wBitCount;
-        }
-    }
-    WINE_TRACE("Selected: %d\n", bestIndex);
-    hr = platform_write_icon(stream, index, bestIndex, icoPathW, destFilename, &nativeIdentifier);
+    hr = platform_write_icon(stream, index, icoPathW, destFilename, &nativeIdentifier);
     if (FAILED(hr))
         WINE_WARN("writing icon failed, error 0x%08X\n", hr);
 
 end:
     if (stream)
         IStream_Release(stream);
-    HeapFree(GetProcessHeap(), 0, iconDirEntries);
     if (FAILED(hr))
     {
         HeapFree(GetProcessHeap(), 0, nativeIdentifier);
