@@ -24,6 +24,8 @@
 #include <string.h>
 
 #define COBJMACROS
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 
 #include "windef.h"
 #include "winbase.h"
@@ -804,41 +806,43 @@ static HRESULT WINAPI DataAdviseHolder_EnumAdvise(IDataAdviseHolder *iface,
  * DataAdviseHolder_SendOnDataChange
  */
 static HRESULT WINAPI DataAdviseHolder_SendOnDataChange(IDataAdviseHolder *iface,
-                                                        IDataObject *pDataObject,
+                                                        IDataObject *data_obj,
                                                         DWORD dwReserved, DWORD advf)
 {
-  DataAdviseHolder *This = impl_from_IDataAdviseHolder(iface);
-  DWORD index;
-  STGMEDIUM stg;
-  HRESULT res;
+    IEnumSTATDATA *pEnum;
+    HRESULT hr;
 
-  TRACE("(%p)->(%p,%08x,%08x)\n", This, pDataObject, dwReserved, advf);
+    TRACE("(%p)->(%p, %08x, %08x)\n", iface, data_obj, dwReserved, advf);
 
-  for(index = 0; index < This->maxCons; index++)
-  {
-    if(This->connections[index].pAdvSink != NULL)
+    hr = IDataAdviseHolder_EnumAdvise(iface, &pEnum);
+    if (SUCCEEDED(hr))
     {
-      memset(&stg, 0, sizeof(stg));
-      if(!(This->connections[index].advf & ADVF_NODATA))
-      {
-	TRACE("Calling IDataObject_GetData\n");
-	res = IDataObject_GetData(pDataObject,
-				  &(This->connections[index].formatetc),
-				  &stg);
-	TRACE("returns %08x\n", res);
-      }
-      TRACE("Calling IAdviseSink_OnDataChange\n");
-      IAdviseSink_OnDataChange(This->connections[index].pAdvSink,
-                               &(This->connections[index].formatetc),
-                               &stg);
-      TRACE("Done IAdviseSink_OnDataChange\n");
-      if(This->connections[index].advf & ADVF_ONLYONCE) {
-	TRACE("Removing connection\n");
-	DataAdviseHolder_Unadvise(iface, This->connections[index].dwConnection);
-      }
+        STATDATA statdata;
+        while (IEnumSTATDATA_Next(pEnum, 1, &statdata, NULL) == S_OK)
+        {
+            STGMEDIUM stg;
+            stg.tymed = TYMED_NULL;
+            stg.u.pstg = NULL;
+            stg.pUnkForRelease = NULL;
+
+            if(!(statdata.advf & ADVF_NODATA))
+            {
+                hr = IDataObject_GetData(data_obj, &statdata.formatetc, &stg);
+            }
+
+            IAdviseSink_OnDataChange(statdata.pAdvSink, &statdata.formatetc, &stg);
+
+            if(statdata.advf & ADVF_ONLYONCE)
+            {
+                IDataAdviseHolder_Unadvise(iface, statdata.dwConnection);
+            }
+
+            release_statdata(&statdata);
+        }
+        IEnumSTATDATA_Release(pEnum);
     }
-  }
-  return S_OK;
+
+    return S_OK;
 }
 
 /**************************************************************************
