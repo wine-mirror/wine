@@ -548,7 +548,8 @@ static HRESULT WINAPI dom_pi_transformNodeToObject(
     IXMLDOMNode* domNode, VARIANT var1)
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    return IXMLDOMNode_transformNodeToObject( IXMLDOMNode_from_impl(&This->node), domNode, var1 );
+    FIXME("(%p)->(%p %s)\n", This, domNode, debugstr_variant(&var1));
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI dom_pi_get_target(

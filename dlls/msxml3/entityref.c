@@ -531,7 +531,8 @@ static HRESULT WINAPI entityref_transformNodeToObject(
     IXMLDOMNode* domNode, VARIANT var1)
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    return IXMLDOMNode_transformNodeToObject( IXMLDOMNode_from_impl(&This->node), domNode, var1 );
+    FIXME("(%p)->(%p %s)\n", This, domNode, debugstr_variant(&var1));
+    return E_NOTIMPL;
 }
 
 static const struct IXMLDOMEntityReferenceVtbl entityref_vtbl =

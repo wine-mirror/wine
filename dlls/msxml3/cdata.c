@@ -540,7 +540,8 @@ static HRESULT WINAPI domcdata_transformNodeToObject(
     IXMLDOMNode* domNode, VARIANT var1)
 {
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
-    return IXMLDOMNode_transformNodeToObject( IXMLDOMNode_from_impl(&This->node), domNode, var1 );
+    FIXME("(%p)->(%p %s)\n", This, domNode, debugstr_variant(&var1));
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI domcdata_get_data(

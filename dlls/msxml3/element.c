@@ -990,7 +990,8 @@ static HRESULT WINAPI domelem_transformNodeToObject(
     IXMLDOMNode* domNode, VARIANT var1)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    return IXMLDOMNode_transformNodeToObject( IXMLDOMNode_from_impl(&This->node), domNode, var1 );
+    FIXME("(%p)->(%p %s)\n", This, domNode, debugstr_variant(&var1));
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI domelem_get_tagName(

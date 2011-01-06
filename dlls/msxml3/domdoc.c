@@ -1454,7 +1454,8 @@ static HRESULT WINAPI domdoc_transformNodeToObject(
     VARIANT outputObject)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_transformNodeToObject( IXMLDOMNode_from_impl(&This->node), stylesheet, outputObject );
+    FIXME("(%p)->(%p %s)\n", This, stylesheet, debugstr_variant(&outputObject));
+    return E_NOTIMPL;
 }
 
 

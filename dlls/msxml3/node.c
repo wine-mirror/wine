@@ -1172,16 +1172,6 @@ HRESULT node_get_base_name(xmlnode *This, BSTR *name)
     return S_OK;
 }
 
-static HRESULT WINAPI xmlnode_transformNodeToObject(
-    IXMLDOMNode *iface,
-    IXMLDOMNode* stylesheet,
-    VARIANT outputObject)
-{
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
-    FIXME("(%p)->(%p)\n", This, stylesheet);
-    return E_NOTIMPL;
-}
-
 static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
 {
     NULL,
@@ -1223,10 +1213,7 @@ static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
     xmlnode_selectNodes,
     xmlnode_selectSingleNode,
     NULL,
-    xmlnode_get_namespaceURI,
-    NULL,
-    NULL,
-    xmlnode_transformNodeToObject,
+    xmlnode_get_namespaceURI
 };
 
 void destroy_xmlnode(xmlnode *This)
@@ -1745,7 +1732,8 @@ static HRESULT WINAPI unknode_transformNodeToObject(
     IXMLDOMNode* domNode, VARIANT var1)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_transformNodeToObject( IXMLDOMNode_from_impl(&This->node), domNode, var1 );
+    FIXME("(%p)->(%p %s)\n", This, domNode, debugstr_variant(&var1));
+    return E_NOTIMPL;
 }
 
 static const struct IXMLDOMNodeVtbl unknode_vtbl =
