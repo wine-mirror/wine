@@ -346,7 +346,7 @@ HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT
 
     volume->lpVtbl = &IWineD3DVolume_Vtbl;
 
-    hr = resource_init((IWineD3DResource *)volume, WINED3DRTYPE_VOLUME, device,
+    hr = resource_init((IWineD3DResourceImpl *)volume, WINED3DRTYPE_VOLUME, device,
             width * height * depth * format->byte_count, usage, format, pool, parent, parent_ops);
     if (FAILED(hr))
     {

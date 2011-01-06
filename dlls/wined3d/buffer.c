@@ -1473,7 +1473,7 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
 
     buffer->vtbl = &wined3d_buffer_vtbl;
 
-    hr = resource_init((IWineD3DResource *)buffer, WINED3DRTYPE_BUFFER,
+    hr = resource_init((IWineD3DResourceImpl *)buffer, WINED3DRTYPE_BUFFER,
             device, size, usage, format, pool, parent, parent_ops);
     if (FAILED(hr))
     {

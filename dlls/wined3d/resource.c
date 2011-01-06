@@ -43,28 +43,28 @@ struct private_data
     DWORD size;
 };
 
-HRESULT resource_init(IWineD3DResource *iface, WINED3DRESOURCETYPE resource_type,
+HRESULT resource_init(struct IWineD3DResourceImpl *resource, WINED3DRESOURCETYPE resource_type,
         IWineD3DDeviceImpl *device, UINT size, DWORD usage, const struct wined3d_format *format,
         WINED3DPOOL pool, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    struct IWineD3DResourceClass *resource = &((IWineD3DResourceImpl *)iface)->resource;
+    struct IWineD3DResourceClass *r = &resource->resource;
 
-    resource->device = device;
-    resource->resourceType = resource_type;
-    resource->ref = 1;
-    resource->pool = pool;
-    resource->format = format;
-    resource->usage = usage;
-    resource->size = size;
-    resource->priority = 0;
-    resource->parent = parent;
-    resource->parent_ops = parent_ops;
-    list_init(&resource->privateData);
+    r->device = device;
+    r->resourceType = resource_type;
+    r->ref = 1;
+    r->pool = pool;
+    r->format = format;
+    r->usage = usage;
+    r->size = size;
+    r->priority = 0;
+    r->parent = parent;
+    r->parent_ops = parent_ops;
+    list_init(&r->privateData);
 
     if (size)
     {
-        resource->heapMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size + RESOURCE_ALIGNMENT);
-        if (!resource->heapMemory)
+        r->heapMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size + RESOURCE_ALIGNMENT);
+        if (!r->heapMemory)
         {
             ERR("Out of memory!\n");
             return WINED3DERR_OUTOFVIDEOMEMORY;
@@ -72,9 +72,9 @@ HRESULT resource_init(IWineD3DResource *iface, WINED3DRESOURCETYPE resource_type
     }
     else
     {
-        resource->heapMemory = NULL;
+        r->heapMemory = NULL;
     }
-    resource->allocatedMemory = (BYTE *)(((ULONG_PTR)resource->heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
+    r->allocatedMemory = (BYTE *)(((ULONG_PTR)r->heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
 
     /* Check that we have enough video ram left */
     if (pool == WINED3DPOOL_DEFAULT)
@@ -82,13 +82,13 @@ HRESULT resource_init(IWineD3DResource *iface, WINED3DRESOURCETYPE resource_type
         if (size > IWineD3DDevice_GetAvailableTextureMem((IWineD3DDevice *)device))
         {
             ERR("Out of adapter memory\n");
-            HeapFree(GetProcessHeap(), 0, resource->heapMemory);
+            HeapFree(GetProcessHeap(), 0, r->heapMemory);
             return WINED3DERR_OUTOFVIDEOMEMORY;
         }
         WineD3DAdapterChangeGLRam(device, size);
     }
 
-    device_resource_add(device, iface);
+    device_resource_add(device, (IWineD3DResource *)resource);
 
     return WINED3D_OK;
 }

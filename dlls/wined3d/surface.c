@@ -373,7 +373,7 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
             return WINED3DERR_INVALIDCALL;
     }
 
-    hr = resource_init((IWineD3DResource *)surface, WINED3DRTYPE_SURFACE,
+    hr = resource_init((IWineD3DResourceImpl *)surface, WINED3DRTYPE_SURFACE,
             device, resource_size, usage, format, pool, parent, parent_ops);
     if (FAILED(hr))
     {
