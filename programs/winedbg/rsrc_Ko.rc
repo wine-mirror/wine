@@ -2,7 +2,7 @@
  * Korean Language Support
  *
  * Copyright 2008 Mikolaj Zalewski
- * Copyright 2009 YunSong Hwang
+ * Copyright 2009,2010 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,36 +21,38 @@
 
 #include "resource.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 IDM_DEBUG_POPUP MENU
 BEGIN
     POPUP ""
     BEGIN
-        MENUITEM "µð¹ö±×(&D)", ID_DEBUG
+        MENUITEM "ë””ë²„ê·¸(&D)", ID_DEBUG
     END
 END
 
 IDD_CRASH_DLG DIALOGEX 100, 100, 273, 175
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "ÇÁ·Î±×·¥ ¿¡·¯"
-FONT 8, "Tahoma"
+CAPTION "í”„ë¡œê·¸ëž¨ ì—ëŸ¬"
+FONT 9, "MS Shell Dlg"
 BEGIN
     LTEXT           "",IDC_STATIC_BG,0,0,273,52,WS_BORDER,0
-    LTEXT           "ÀÌ ÇÁ·Î±×·¥ %s Àº ½É°¢ÇÑ ¹®Á¦¿¡ Á÷¸éÇØ¼­ Á¾·á¸¦ ÇÊ¿ä·Î ÇÕ´Ï´Ù. \
-                      ¿ì¸®´Â  ºÒÆíÀ» ³¢ÃÄµå¸° °Å¿¡ ´ëÇÏ¿© À¯°¨À» Ç¥ÇÔ´Ï´Ù.",
+    LTEXT           "ì´ í”„ë¡œê·¸ëž¨ %s ì€ ì‹¬ê°í•œ ë¬¸ì œì— ì§ë©´í•´ì„œ ì¢…ë£Œë¥¼ í•„ìš”ë¡œ í•©ë‹ˆë‹¤. \
+                      ìš°ë¦¬ëŠ”  ë¶ˆíŽ¸ì„ ë¼ì³ë“œë¦° ê±°ì— ëŒ€í•˜ì—¬ ìœ ê°ì„ í‘œí•¨ë‹ˆë‹¤.",
                     IDC_STATIC_TXT1,27,10,224,30
-    LTEXT           "ÇÁ·Î±×·¥ÀÇ ¹®Á¦³ª WindÀÇ °áÇÔÀ¸·Î À§ÇØ ¹ß»ýÇÒ ¼ö ÀÖ½À´Ï´Ù. \
-	´ç½ÅÀº ½ÇÇàÇÑ ÇÁ·Î±×·¥¿¡ ´ëÇÏ¿©  http://appdb.winehq.org ÀÇ ÆÁÀ» È®ÀÎ ÇÒ ¼ö ÀÖ½À´Ï´Ù. \
+    LTEXT           "í”„ë¡œê·¸ëž¨ì˜ ë¬¸ì œë‚˜ Windì˜ ê²°í•¨ìœ¼ë¡œ ìœ„í•´ ë°œìƒí•  ìˆ˜ ìžˆìŠµë‹ˆë‹¤. \
+	ë‹¹ì‹ ì€ ì‹¤í–‰í•œ í”„ë¡œê·¸ëž¨ì— ëŒ€í•˜ì—¬  http://appdb.winehq.org ì˜ íŒì„ í™•ì¸ í•  ìˆ˜ ìžˆìŠµë‹ˆë‹¤. \
                     .\n\n\
-                    ¸¸¾à ÀÌ ¹®Á¦°¡ À©µµ¿ì¿¡¼­´Â Á¸ÀçÇÏÁö ¾Ê°í, ¾ÆÁ÷ ¹ö±×·Î º¸°íµÇÁö ¾Ê¾ÒÀ¸¸é \
-		    , ´ç½ÅÀº http://bugs.winehq.org¿¡ ¹ö±×·Î º¸°íÇÒ ¼ö ÀÖ½À´Ï´Ù.",IDC_STATIC_TXT2,27,60,224,100
-    DEFPUSHBUTTON   "´Ý±â", IDOK, 205, 151, 60, 16, WS_TABSTOP
+                    ë§Œì•½ ì´ ë¬¸ì œê°€ ìœˆë„ìš°ì—ì„œëŠ” ì¡´ìž¬í•˜ì§€ ì•Šê³ , ì•„ì§ ë²„ê·¸ë¡œ ë³´ê³ ë˜ì§€ ì•Šì•˜ìœ¼ë©´ \
+		    , ë‹¹ì‹ ì€ http://bugs.winehq.orgì— ë²„ê·¸ë¡œ ë³´ê³ í•  ìˆ˜ ìžˆìŠµë‹ˆë‹¤.",IDC_STATIC_TXT2,27,60,224,100
+    DEFPUSHBUTTON   "ë‹«ê¸°", IDOK, 205, 151, 60, 16, WS_TABSTOP
 END
 
 STRINGTABLE
 BEGIN
-    IDS_AUTO_CAPTION     "Wine ÇÁ·Î±×·¥ Ãæµ¹"
-    IDS_INVALID_PARAMS   "³»ºÎ ¿¡·¯ -¿Ã¹Ù¸£Áö ¾ÊÀº ¸Å°³º¯¼ö°¡ µé¾î¿È"
-    IDS_UNIDENTIFIED     "(¾Ë¼ö ¾øÀ½)"
+    IDS_AUTO_CAPTION     "Wine í”„ë¡œê·¸ëž¨ ì¶©ëŒ"
+    IDS_INVALID_PARAMS   "ë‚´ë¶€ ì—ëŸ¬ -ì˜¬ë°”ë¥´ì§€ ì•Šì€ ë§¤ê°œë³€ìˆ˜ê°€ ë“¤ì–´ì˜´"
+    IDS_UNIDENTIFIED     "(ì•Œìˆ˜ ì—†ìŒ)"
 END
