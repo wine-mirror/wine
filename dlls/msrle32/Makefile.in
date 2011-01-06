@@ -3,31 +3,7 @@ IMPORTS   = winmm user32
 
 C_SRCS = msrle32.c
 
-RC_SRCS = \
-	msrle_Bg.rc \
-	msrle_Cs.rc \
-	msrle_Cy.rc \
-	msrle_Da.rc \
-	msrle_De.rc \
-	msrle_En.rc \
-	msrle_Es.rc \
-	msrle_Fr.rc \
-	msrle_He.rc \
-	msrle_Hu.rc \
-	msrle_It.rc \
-	msrle_Ja.rc \
-	msrle_Ko.rc \
-	msrle_Lt.rc \
-	msrle_Nl.rc \
-	msrle_No.rc \
-	msrle_Pl.rc \
-	msrle_Pt.rc \
-	msrle_Ro.rc \
-	msrle_Ru.rc \
-	msrle_Si.rc \
-	msrle_Sr.rc \
-	msrle_Sv.rc \
-	msrle_Tr.rc \
-	msrle_Uk.rc
+RC_SRCS = msrle32.rc
+PO_SRCS = msrle32.rc
 
 @MAKE_DLL_RULES@

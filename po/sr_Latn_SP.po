@@ -1227,6 +1227,22 @@ msgstr "mogućnost od:"
 msgid "choose which folder contains %s"
 msgstr "izaberite koja fascikla sadrži %s"
 
+#: msrle32.rc:27
+msgid "WINE-MS-RLE"
+msgstr "WINE-MS-RLE"
+
+#: msrle32.rc:28
+msgid "Wine MS-RLE video codec"
+msgstr "Wine MS-RLE video kodek"
+
+#: msrle32.rc:29
+msgid ""
+"Wine MS-RLE video codec\n"
+"Copyright 2002 by Michael Guennewig"
+msgstr ""
+"Wine MS-RLE video kodek\n"
+"Copyright ©2002 by Michael Günnewig"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Svojstva"

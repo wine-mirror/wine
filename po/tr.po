@@ -1236,6 +1236,22 @@ msgstr "özellik buradan:"
 msgid "choose which folder contains %s"
 msgstr "%s öğesini içeren dizini seçin"
 
+#: msrle32.rc:27
+msgid "WINE-MS-RLE"
+msgstr "WINE-MS-RLE"
+
+#: msrle32.rc:28
+msgid "Wine MS-RLE video codec"
+msgstr "Wine MS-RLE vidyo çözücü"
+
+#: msrle32.rc:29
+msgid ""
+"Wine MS-RLE video codec\n"
+"Copyright 2002 by Michael Guennewig"
+msgstr ""
+"Wine MS-RLE vidyo çözücü\n"
+"Telif Hakkı 2002 Michael Günnewig"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Özellikler"

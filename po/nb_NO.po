@@ -1229,6 +1229,22 @@ msgstr "Egenskap fra::"
 msgid "choose which folder contains %s"
 msgstr "Velg katalogen som inneholder '%s'."
 
+#: msrle32.rc:27
+msgid "WINE-MS-RLE"
+msgstr "WINE-MS-RLE"
+
+#: msrle32.rc:28
+msgid "Wine MS-RLE video codec"
+msgstr "Wine MS-RLE-videokodek"
+
+#: msrle32.rc:29
+msgid ""
+"Wine MS-RLE video codec\n"
+"Copyright 2002 by Michael Guennewig"
+msgstr ""
+"Wine MS-RLE-videokodek\n"
+"Kopirett 2002 tilhører Michael Günnewig"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Egenskaper"
