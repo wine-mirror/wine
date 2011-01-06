@@ -15051,7 +15051,7 @@ wine_fn_config_dll msgsm32.acm enable_msgsm32_acm
 wine_fn_config_dll mshtml.tlb enable_mshtml_tlb
 wine_fn_config_dll mshtml enable_mshtml implib
 wine_fn_config_test dlls/mshtml/tests mshtml_test
-wine_fn_config_dll msi enable_msi implib
+wine_fn_config_dll msi enable_msi po,implib
 wine_fn_config_test dlls/msi/tests msi_test
 wine_fn_config_dll msimg32 enable_msimg32 implib
 wine_fn_config_dll msimtf enable_msimtf

@@ -1129,6 +1129,103 @@ msgstr "설치된 MAPI 메일 클라이언트가 없어서 메일 보내기 실�
 msgid "Send Mail"
 msgstr "메일 보내기"
 
+#: msi.rc:27
+msgid ""
+"The specified installation package could not be opened.  Please check the "
+"file path and try again."
+msgstr ""
+" 지정한 설치 패키지를 열 수 없습니다. 파일 경로를 확인하고 다시 시도하십시오."
+
+#: msi.rc:28
+msgid "path %s not found"
+msgstr "%s  경로를 찾을수 없습니다"
+
+#: msi.rc:29
+msgid "insert disk %s"
+msgstr "디스크 %s 삽입"
+
+#: msi.rc:30
+msgid ""
+"Windows Installer %s\n"
+"\n"
+"Usage:\n"
+"msiexec command {required parameter} [optional parameter]\n"
+"\n"
+"Install a product:\n"
+"\t/i {package|productcode} [property]\n"
+"\t/package {package|productcode} [property]\n"
+"\t/a package [property]\n"
+"Repair an installation:\n"
+"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n"
+"Uninstall a product:\n"
+"\t/uninstall {package|productcode} [property]\n"
+"\t/x {package|productcode} [property]\n"
+"Advertise a product:\n"
+"\t/j[u|m] package [/t transform] [/g languageid]\n"
+"Apply a patch:\n"
+"\t/p patchpackage [property]\n"
+"\t/p patchpackage /a package [property]\n"
+"Log and UI Modifiers for above commands:\n"
+"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
+"\t/q{|n|b|r|f|n+|b+|b-}\n"
+"Register MSI Service:\n"
+"\t/y\n"
+"Unregister MSI Service:\n"
+"\t/z\n"
+"Display this help:\n"
+"\t/help\n"
+"\t/?\n"
+msgstr ""
+"Windows Installer %s\n"
+"\n"
+"사용법:\n"
+"msiexec 명령 {필수 매개변수}  [선택적 매개변수]\n"
+"\n"
+"제품 설치:\n"
+"\t/i {package|productcode} [property]\n"
+"\t/package {package|productcode} [property]\n"
+"\t/a package [property]\n"
+"설치 복구:\n"
+"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n"
+"제품 제거:\n"
+"\t/uninstall {package|productcode} [property]\n"
+"\t/x {package|productcode} [property]\n"
+"제품 알리기:\n"
+"\t/j[u|m] package [/t transform] [/g languageid]\n"
+"패치 추가:\n"
+"\t/p patchpackage [property]\n"
+"\t/p patchpackage /a package [property]\n"
+"위의 명령어를 위한 Log 와 UI 한정자 :\n"
+"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
+"\t/q{|n|b|r|f|n+|b+|b-}\n"
+"MSI 서비스  등록:\n"
+"\t/y\n"
+"MSI 서비스 등록 해제:\n"
+"\t/z\n"
+"도움말  보기:\n"
+"\t/help\n"
+"\t/?\n"
+
+#: msi.rc:57
+msgid "enter which folder contains %s"
+msgstr "%s를 포함하는 폴더를 입력하세여"
+
+#: msi.rc:58
+msgid "install source for feature missing"
+msgstr "빠진 부분(feature)을 위한 설치 원본"
+
+#: msi.rc:59
+msgid "network drive for feature missing"
+msgstr "빠진 부분(feature)을 위한 네트워크 드라이브"
+
+#: msi.rc:60
+msgid "feature from:"
+msgstr "부분(feature)에서:"
+
+#: msi.rc:61
+msgid "choose which folder contains %s"
+msgstr " %s를 포함하는 폴더 선택"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "등록 정보(&P)"

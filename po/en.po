@@ -1125,6 +1125,74 @@ msgstr ""
 msgid "Send Mail"
 msgstr ""
 
+#: msi.rc:27
+msgid ""
+"The specified installation package could not be opened.  Please check the "
+"file path and try again."
+msgstr ""
+
+#: msi.rc:28
+#, fuzzy
+msgid "path %s not found"
+msgstr "PATH not found\n"
+
+#: msi.rc:29
+msgid "insert disk %s"
+msgstr ""
+
+#: msi.rc:30
+msgid ""
+"Windows Installer %s\n"
+"\n"
+"Usage:\n"
+"msiexec command {required parameter} [optional parameter]\n"
+"\n"
+"Install a product:\n"
+"\t/i {package|productcode} [property]\n"
+"\t/package {package|productcode} [property]\n"
+"\t/a package [property]\n"
+"Repair an installation:\n"
+"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n"
+"Uninstall a product:\n"
+"\t/uninstall {package|productcode} [property]\n"
+"\t/x {package|productcode} [property]\n"
+"Advertise a product:\n"
+"\t/j[u|m] package [/t transform] [/g languageid]\n"
+"Apply a patch:\n"
+"\t/p patchpackage [property]\n"
+"\t/p patchpackage /a package [property]\n"
+"Log and UI Modifiers for above commands:\n"
+"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
+"\t/q{|n|b|r|f|n+|b+|b-}\n"
+"Register MSI Service:\n"
+"\t/y\n"
+"Unregister MSI Service:\n"
+"\t/z\n"
+"Display this help:\n"
+"\t/help\n"
+"\t/?\n"
+msgstr ""
+
+#: msi.rc:57
+msgid "enter which folder contains %s"
+msgstr ""
+
+#: msi.rc:58
+msgid "install source for feature missing"
+msgstr ""
+
+#: msi.rc:59
+msgid "network drive for feature missing"
+msgstr ""
+
+#: msi.rc:60
+msgid "feature from:"
+msgstr ""
+
+#: msi.rc:61
+msgid "choose which folder contains %s"
+msgstr ""
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Properties"
