@@ -54,7 +54,7 @@ void surface_gdi_cleanup(IWineD3DSurfaceImpl *This)
 
     HeapFree(GetProcessHeap(), 0, This->palette9);
 
-    resource_cleanup((IWineD3DResource *)This);
+    resource_cleanup((IWineD3DResourceImpl *)This);
 }
 
 /*****************************************************************************

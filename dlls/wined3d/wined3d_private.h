@@ -1828,7 +1828,7 @@ typedef struct IWineD3DResourceImpl
     IWineD3DResourceClass   resource;
 } IWineD3DResourceImpl;
 
-void resource_cleanup(IWineD3DResource *iface) DECLSPEC_HIDDEN;
+void resource_cleanup(struct IWineD3DResourceImpl *resource) DECLSPEC_HIDDEN;
 HRESULT resource_free_private_data(IWineD3DResource *iface, REFGUID guid) DECLSPEC_HIDDEN;
 DWORD resource_get_priority(IWineD3DResource *iface) DECLSPEC_HIDDEN;
 HRESULT resource_get_private_data(IWineD3DResource *iface, REFGUID guid,

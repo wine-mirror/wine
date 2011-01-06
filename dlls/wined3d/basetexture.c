@@ -48,7 +48,7 @@ HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, const struct wined3d_
     if (!texture->baseTexture.sub_resources)
     {
         ERR("Failed to allocate sub-resource array.\n");
-        resource_cleanup((IWineD3DResource *)texture);
+        resource_cleanup((IWineD3DResourceImpl *)texture);
         return E_OUTOFMEMORY;
     }
 
@@ -79,7 +79,7 @@ void basetexture_cleanup(IWineD3DBaseTextureImpl *texture)
 {
     basetexture_unload(texture);
     HeapFree(GetProcessHeap(), 0, texture->baseTexture.sub_resources);
-    resource_cleanup((IWineD3DResource *)texture);
+    resource_cleanup((IWineD3DResourceImpl *)texture);
 }
 
 IWineD3DResourceImpl *basetexture_get_sub_resource(IWineD3DBaseTextureImpl *texture, UINT sub_resource_idx)

@@ -133,7 +133,7 @@ static ULONG WINAPI IWineD3DVolumeImpl_Release(IWineD3DVolume *iface) {
 
     if (!ref)
     {
-        resource_cleanup((IWineD3DResource *)iface);
+        resource_cleanup((IWineD3DResourceImpl *)iface);
         This->resource.parent_ops->wined3d_object_destroyed(This->resource.parent);
         HeapFree(GetProcessHeap(), 0, This);
     }

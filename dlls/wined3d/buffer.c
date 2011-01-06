@@ -742,7 +742,7 @@ static ULONG STDMETHODCALLTYPE buffer_Release(IWineD3DBuffer *iface)
     if (!refcount)
     {
         buffer_UnLoad(iface);
-        resource_cleanup((IWineD3DResource *)iface);
+        resource_cleanup((IWineD3DResourceImpl *)iface);
         This->resource.parent_ops->wined3d_object_destroyed(This->resource.parent);
         HeapFree(GetProcessHeap(), 0, This->maps);
         HeapFree(GetProcessHeap(), 0, This);
@@ -1521,7 +1521,7 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
         {
             ERR("Failed to map buffer, hr %#x\n", hr);
             buffer_UnLoad((IWineD3DBuffer *)buffer);
-            resource_cleanup((IWineD3DResource *)buffer);
+            resource_cleanup((IWineD3DResourceImpl *)buffer);
             return hr;
         }
 
@@ -1535,7 +1535,7 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
     {
         ERR("Out of memory\n");
         buffer_UnLoad((IWineD3DBuffer *)buffer);
-        resource_cleanup((IWineD3DResource *)buffer);
+        resource_cleanup((IWineD3DResourceImpl *)buffer);
         return E_OUTOFMEMORY;
     }
     buffer->maps_size = 1;

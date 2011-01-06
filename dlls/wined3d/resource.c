@@ -93,33 +93,34 @@ HRESULT resource_init(struct IWineD3DResourceImpl *resource, WINED3DRESOURCETYPE
     return WINED3D_OK;
 }
 
-void resource_cleanup(IWineD3DResource *iface)
+void resource_cleanup(struct IWineD3DResourceImpl *resource)
 {
-    IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
     struct private_data *data;
     struct list *e1, *e2;
     HRESULT hr;
 
-    TRACE("(%p) Cleaning up resource\n", This);
-    if (This->resource.pool == WINED3DPOOL_DEFAULT) {
-        TRACE("Decrementing device memory pool by %u\n", This->resource.size);
-        WineD3DAdapterChangeGLRam(This->resource.device, -This->resource.size);
+    TRACE("Cleaning up resource %p.\n", resource);
+
+    if (resource->resource.pool == WINED3DPOOL_DEFAULT)
+    {
+        TRACE("Decrementing device memory pool by %u.\n", resource->resource.size);
+        WineD3DAdapterChangeGLRam(resource->resource.device, -resource->resource.size);
     }
 
-    LIST_FOR_EACH_SAFE(e1, e2, &This->resource.privateData)
+    LIST_FOR_EACH_SAFE(e1, e2, &resource->resource.privateData)
     {
         data = LIST_ENTRY(e1, struct private_data, entry);
-        hr = resource_free_private_data(iface, &data->tag);
-        if(hr != WINED3D_OK) {
-            ERR("Failed to free private data when destroying resource %p, hr = %08x\n", This, hr);
-        }
+        hr = resource_free_private_data((IWineD3DResource *)resource, &data->tag);
+        if (FAILED(hr))
+            ERR("Failed to free private data when destroying resource %p, hr = %#x.\n", resource, hr);
     }
 
-    HeapFree(GetProcessHeap(), 0, This->resource.heapMemory);
-    This->resource.allocatedMemory = 0;
-    This->resource.heapMemory = 0;
+    HeapFree(GetProcessHeap(), 0, resource->resource.heapMemory);
+    resource->resource.allocatedMemory = 0;
+    resource->resource.heapMemory = 0;
 
-    if (This->resource.device) device_resource_released(This->resource.device, iface);
+    if (resource->resource.device)
+        device_resource_released(resource->resource.device, (IWineD3DResource *)resource);
 }
 
 void resource_unload(IWineD3DResourceImpl *resource)

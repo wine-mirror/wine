@@ -89,7 +89,7 @@ static void surface_cleanup(IWineD3DSurfaceImpl *This)
 
     HeapFree(GetProcessHeap(), 0, This->palette9);
 
-    resource_cleanup((IWineD3DResource *)This);
+    resource_cleanup((IWineD3DResourceImpl *)This);
 }
 
 void surface_set_container(IWineD3DSurfaceImpl *surface, enum wined3d_container_type type, IWineD3DBase *container)
