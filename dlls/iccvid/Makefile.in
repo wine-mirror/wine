@@ -4,29 +4,7 @@ IMPORTS   = user32
 C_SRCS = \
 	iccvid.c
 
-RC_SRCS = \
-	iccvid_Cy.rc \
-	iccvid_Da.rc \
-	iccvid_De.rc \
-	iccvid_En.rc \
-	iccvid_Es.rc \
-	iccvid_Fr.rc \
-	iccvid_He.rc \
-	iccvid_Hu.rc \
-	iccvid_It.rc \
-	iccvid_Ja.rc \
-	iccvid_Ko.rc \
-	iccvid_Lt.rc \
-	iccvid_Nl.rc \
-	iccvid_No.rc \
-	iccvid_Pl.rc \
-	iccvid_Pt.rc \
-	iccvid_Ro.rc \
-	iccvid_Ru.rc \
-	iccvid_Si.rc \
-	iccvid_Sr.rc \
-	iccvid_Sv.rc \
-	iccvid_Tr.rc \
-	iccvid_Uk.rc
+RC_SRCS = iccvid.rc
+PO_SRCS = iccvid.rc
 
 @MAKE_DLL_RULES@

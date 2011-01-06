@@ -999,6 +999,10 @@ msgstr ""
 msgid "IDTB_TOC_PREV"
 msgstr ""
 
+#: iccvid.rc:25 iccvid.rc:26
+msgid "Cinepak Video codec"
+msgstr ""
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr ""
