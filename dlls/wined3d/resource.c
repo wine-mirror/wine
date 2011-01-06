@@ -110,7 +110,7 @@ void resource_cleanup(struct IWineD3DResourceImpl *resource)
     LIST_FOR_EACH_SAFE(e1, e2, &resource->resource.privateData)
     {
         data = LIST_ENTRY(e1, struct private_data, entry);
-        hr = resource_free_private_data((IWineD3DResource *)resource, &data->tag);
+        hr = resource_free_private_data(resource, &data->tag);
         if (FAILED(hr))
             ERR("Failed to free private data when destroying resource %p, hr = %#x.\n", resource, hr);
     }
@@ -156,7 +156,7 @@ HRESULT resource_set_private_data(IWineD3DResource *iface, REFGUID refguid,
     TRACE("iface %p, riid %s, data %p, data_size %u, flags %#x.\n",
             iface, debugstr_guid(refguid), pData, SizeOfData, flags);
 
-    resource_free_private_data(iface, refguid);
+    resource_free_private_data(This, refguid);
 
     data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data));
     if (!data) return E_OUTOFMEMORY;
@@ -223,13 +223,13 @@ HRESULT resource_get_private_data(IWineD3DResource *iface, REFGUID refguid, void
 
     return WINED3D_OK;
 }
-HRESULT resource_free_private_data(IWineD3DResource *iface, REFGUID refguid)
+HRESULT resource_free_private_data(struct IWineD3DResourceImpl *resource, REFGUID guid)
 {
-    IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
     struct private_data *data;
 
-    TRACE("(%p) : %s\n", This, debugstr_guid(refguid));
-    data = resource_find_private_data(This, refguid);
+    TRACE("resource %p, guid %s.\n", resource, debugstr_guid(guid));
+
+    data = resource_find_private_data(resource, guid);
     if (!data) return WINED3DERR_NOTFOUND;
 
     if (data->flags & WINED3DSPD_IUNKNOWN)

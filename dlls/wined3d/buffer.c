@@ -775,7 +775,7 @@ static HRESULT STDMETHODCALLTYPE buffer_GetPrivateData(IWineD3DBuffer *iface,
 
 static HRESULT STDMETHODCALLTYPE buffer_FreePrivateData(IWineD3DBuffer *iface, REFGUID guid)
 {
-    return resource_free_private_data((IWineD3DResource *)iface, guid);
+    return resource_free_private_data((IWineD3DResourceImpl *)iface, guid);
 }
 
 static DWORD STDMETHODCALLTYPE buffer_SetPriority(IWineD3DBuffer *iface, DWORD priority)
