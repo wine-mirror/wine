@@ -914,9 +914,14 @@ msgstr "Näytä"
 msgid "Hide"
 msgstr "Piilota"
 
-#: hhctrl.rc:37
+#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194
+#, fuzzy
 msgid "Stop"
-msgstr "Pysäytä"
+msgstr ""
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"Pysäytä\n"
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"P&ysäytä"
 
 #: hhctrl.rc:38
 msgid "Refresh"
@@ -1262,9 +1267,377 @@ msgstr ""
 msgid "Off"
 msgstr ""
 
-#: clock.rc:28
+#: shdoclc.rc:36
+msgid "Default"
+msgstr "Oletus"
+
+#: shdoclc.rc:38
+msgid "&Back"
+msgstr "&Takaisin"
+
+#: shdoclc.rc:39
+msgid "F&orward"
+msgstr "&Eteenpäin"
+
+#: shdoclc.rc:41
+msgid "&Save Background As..."
+msgstr "Ta&llenna Tausta..."
+
+#: shdoclc.rc:42
+msgid "Set As Back&ground"
+msgstr "&Aseta Taustaksi"
+
+#: shdoclc.rc:43
+msgid "&Copy Background"
+msgstr "&Kopioi Tausta"
+
+#: shdoclc.rc:44
+msgid "Set as &Desktop Item"
+msgstr "A&seta Työpöydälle"
+
+#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121
+msgid "Select &All"
+msgstr "&Valitse Kaikki"
+
+#: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
+#: shdoclc.rc:189
+msgid "&Paste"
+msgstr "L&iitä"
+
+#: shdoclc.rc:49
+msgid "Create Shor&tcut"
+msgstr "Luo &Pikakuvake"
+
+#: shdoclc.rc:50
+msgid "Add to &Favorites"
+msgstr "Lisää S&uosikkeihin"
+
+#: shdoclc.rc:51
+msgid "&View Source"
+msgstr "Nä&ytä Lähde"
+
+#: shdoclc.rc:53
+msgid "&Encoding"
+msgstr "Koo&daus"
+
+#: shdoclc.rc:55
+msgid "Pr&int"
+msgstr "Tul&osta"
+
+#: shdoclc.rc:56
+msgid "&Refresh"
+msgstr "P&äivitä"
+
+#: shdoclc.rc:59 clock.rc:28
+#, fuzzy
 msgid "&Properties"
-msgstr "&Ominaisuudet"
+msgstr ""
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"&Ominaisuudet\n"
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"O&minaisuudet"
+
+#: shdoclc.rc:62
+msgid "Image"
+msgstr "Kuva"
+
+#: shdoclc.rc:64 shdoclc.rc:151 shdoclc.rc:176
+msgid "&Open Link"
+msgstr "&Avaa Linkki"
+
+#: shdoclc.rc:65 shdoclc.rc:152 shdoclc.rc:177
+msgid "Open Link in &New Window"
+msgstr "A&vaa Linkki Uudessa Ikkunassa"
+
+#: shdoclc.rc:66 shdoclc.rc:130 shdoclc.rc:153 shdoclc.rc:178
+msgid "Save Target &As..."
+msgstr "&Tallenna kohde nimellä..."
+
+#: shdoclc.rc:67 shdoclc.rc:131 shdoclc.rc:154 shdoclc.rc:179
+msgid "&Print Target"
+msgstr "T&ulosta Kohde"
+
+#: shdoclc.rc:69 shdoclc.rc:156 shdoclc.rc:181
+msgid "S&how Picture"
+msgstr "&Näytä Kuva"
+
+#: shdoclc.rc:70 shdoclc.rc:182
+msgid "&Save Picture As..."
+msgstr "Tallenna Kuva Ni&mellä..."
+
+#: shdoclc.rc:71
+msgid "&E-mail Picture..."
+msgstr "Lä&hetä kuva sähköpostina..."
+
+#: shdoclc.rc:72
+msgid "Pr&int Picture..."
+msgstr "Tulosta &Kuva..."
+
+#: shdoclc.rc:73
+msgid "&Go to My Pictures"
+msgstr "Mene &Omiin Kuviin"
+
+#: shdoclc.rc:74 shdoclc.rc:158 shdoclc.rc:183
+msgid "Set as Back&ground"
+msgstr "A&seta Taustaksi"
+
+#: shdoclc.rc:75 shdoclc.rc:159 shdoclc.rc:184
+msgid "Set as &Desktop Item..."
+msgstr "Aseta T&yöpöydälle..."
+
+#: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
+msgid "Cu&t"
+msgstr "&Leikkaa"
+
+#: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
+#: shdoclc.rc:187
+msgid "&Copy"
+msgstr "Ko&pioi"
+
+#: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
+msgid "Copy Shor&tcut"
+msgstr "Kopioi Pikakuvak&e"
+
+#: shdoclc.rc:82 shdoclc.rc:138 shdoclc.rc:166 shdoclc.rc:191
+msgid "Add to &Favorites..."
+msgstr "Lis&ää Suosikkeihin..."
+
+#: shdoclc.rc:85 shdoclc.rc:141 shdoclc.rc:171 shdoclc.rc:198
+msgid "P&roperties"
+msgstr "Ominaisuu&det"
+
+#: shdoclc.rc:88
+msgid "Control"
+msgstr "Hallinta"
+
+#: shdoclc.rc:90
+msgid "&Undo"
+msgstr "K&umoa"
+
+#: shdoclc.rc:95
+msgid "&Delete"
+msgstr "P&oista"
+
+#: shdoclc.rc:101
+msgid "Table"
+msgstr "Taulukko"
+
+#: shdoclc.rc:103
+msgid "&Select"
+msgstr "&Valitse"
+
+#: shdoclc.rc:105
+msgid "&Cell"
+msgstr "&Solu"
+
+#: shdoclc.rc:106
+msgid "&Row"
+msgstr "&Rivi"
+
+#: shdoclc.rc:107
+msgid "&Column"
+msgstr "&Palsta"
+
+#: shdoclc.rc:108
+msgid "&Table"
+msgstr "&Taulukko"
+
+#: shdoclc.rc:112
+msgid "&Cell Properties"
+msgstr "S&olun Ominaisuudet"
+
+#: shdoclc.rc:113
+msgid "&Table Properties"
+msgstr "Ta&ulukon Ominaisuudet"
+
+#: shdoclc.rc:116
+msgid "1DSite Select"
+msgstr "1DSivun Valinta"
+
+#: shdoclc.rc:120
+msgid "Paste"
+msgstr "L&iitä"
+
+#: shdoclc.rc:122
+msgid "&Print"
+msgstr "&Tulosta"
+
+#: shdoclc.rc:126
+msgid "Anchor"
+msgstr "Ankkuri"
+
+#: shdoclc.rc:128
+msgid "&Open"
+msgstr "&Avaa"
+
+#: shdoclc.rc:129
+msgid "Open in &New Window"
+msgstr "A&vaa Uudessa Ikkunassa"
+
+#: shdoclc.rc:133
+msgid "Cut"
+msgstr "&Leikkaa"
+
+#: shdoclc.rc:144
+msgid "Context Unknown"
+msgstr "Context Unknown"
+
+#: shdoclc.rc:149
+msgid "DYNSRC Image"
+msgstr "DYNSRC Kuva"
+
+#: shdoclc.rc:157
+msgid "&Save Video As..."
+msgstr "Tallenna Vi&deo Nimellä..."
+
+#: shdoclc.rc:169 shdoclc.rc:193
+msgid "Play"
+msgstr "&Toista"
+
+#: shdoclc.rc:174
+msgid "ART Image"
+msgstr "ART Kuva"
+
+#: shdoclc.rc:195
+msgid "Rewind"
+msgstr "Al&kuun"
+
+#: shdoclc.rc:201
+msgid "Debug"
+msgstr "Debug"
+
+#: shdoclc.rc:203
+msgid "Trace Tags"
+msgstr "Trace Tags"
+
+#: shdoclc.rc:204
+msgid "Resource Failures"
+msgstr "Resource Failures"
+
+#: shdoclc.rc:205
+msgid "Dump Tracking Info"
+msgstr "Dump Tracking Info"
+
+#: shdoclc.rc:206
+msgid "Debug Break"
+msgstr "Debug Break"
+
+#: shdoclc.rc:207
+msgid "Debug View"
+msgstr "Debug View"
+
+#: shdoclc.rc:208
+msgid "Dump Tree"
+msgstr "Dump Tree"
+
+#: shdoclc.rc:209
+msgid "Dump Lines"
+msgstr "Dump Lines"
+
+#: shdoclc.rc:210
+msgid "Dump DisplayTree"
+msgstr "Dump DisplayTree"
+
+#: shdoclc.rc:211
+msgid "Dump FormatCaches"
+msgstr "Dump FormatCaches"
+
+#: shdoclc.rc:212
+msgid "Dump LayoutRects"
+msgstr "Dump LayoutRects"
+
+#: shdoclc.rc:213
+msgid "Memory Monitor"
+msgstr "Memory Monitor"
+
+#: shdoclc.rc:214
+msgid "Performance Meters"
+msgstr "Performance Meters"
+
+#: shdoclc.rc:215
+msgid "Save HTML"
+msgstr "Save HTML"
+
+#: shdoclc.rc:217
+msgid "&Browse View"
+msgstr "&Browse View"
+
+#: shdoclc.rc:218
+msgid "&Edit View"
+msgstr "&Edit View"
+
+#: shdoclc.rc:221
+msgid "Vertical Scrollbar"
+msgstr "Pystysuora Vierityspalkki"
+
+#: shdoclc.rc:223 shdoclc.rc:237
+msgid "Scroll Here"
+msgstr "Vieritä Tänne"
+
+#: shdoclc.rc:225
+msgid "Top"
+msgstr "Ylös"
+
+#: shdoclc.rc:226
+msgid "Bottom"
+msgstr "Alas"
+
+#: shdoclc.rc:228
+msgid "Page Up"
+msgstr "Sivu Ylös"
+
+#: shdoclc.rc:229
+msgid "Page Down"
+msgstr "Sivu Alas"
+
+#: shdoclc.rc:231
+msgid "Scroll Up"
+msgstr "Vieritä Ylös"
+
+#: shdoclc.rc:232
+msgid "Scroll Down"
+msgstr "Vieritä Alas"
+
+#: shdoclc.rc:235
+msgid "Horizontal Scrollbar"
+msgstr "Vaakasuora Vierityspalkki"
+
+#: shdoclc.rc:239
+msgid "Left Edge"
+msgstr "Vasen Reuna"
+
+#: shdoclc.rc:240
+msgid "Right Edge"
+msgstr "Oikea Reuna"
+
+#: shdoclc.rc:242
+msgid "Page Left"
+msgstr "Sivu Vasempaan"
+
+#: shdoclc.rc:243
+msgid "Page Right"
+msgstr "Sivu Oikeaan"
+
+#: shdoclc.rc:245
+msgid "Scroll Left"
+msgstr "Vieritä Vasemmalle"
+
+#: shdoclc.rc:246
+msgid "Scroll Right"
+msgstr "Vieritä Oikealle"
+
+#: shdoclc.rc:25
+msgid "Wine Internet Explorer"
+msgstr ""
+
+#: shdoclc.rc:30
+#, fuzzy
+msgid "&w&bPage &p"
+msgstr "Sivu Ylös"
+
+#: shdoclc.rc:31
+msgid "&u&b&d"
+msgstr ""
 
 #: clock.rc:29
 msgid "Ana&log"

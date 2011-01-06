@@ -917,7 +917,7 @@ msgstr "Weergeven"
 msgid "Hide"
 msgstr "Verbergen"
 
-#: hhctrl.rc:37
+#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194
 msgid "Stop"
 msgstr "Stop"
 
@@ -1269,9 +1269,371 @@ msgstr "Aan"
 msgid "Off"
 msgstr "Uit"
 
-#: clock.rc:28
+#: shdoclc.rc:36
+msgid "Default"
+msgstr "Standaard"
+
+#: shdoclc.rc:38
+msgid "&Back"
+msgstr "&Terug"
+
+#: shdoclc.rc:39
+msgid "F&orward"
+msgstr "V&ooruit"
+
+#: shdoclc.rc:41
+msgid "&Save Background As..."
+msgstr "Achtergrond ops&laan als..."
+
+#: shdoclc.rc:42
+msgid "Set As Back&ground"
+msgstr "Als achtergrond instellen"
+
+#: shdoclc.rc:43
+msgid "&Copy Background"
+msgstr "Achtergrond &kopiëren"
+
+#: shdoclc.rc:44
+msgid "Set as &Desktop Item"
+msgstr "Als desktopelement instellen..."
+
+#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121
+msgid "Select &All"
+msgstr "&Alles selecteren"
+
+#: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
+#: shdoclc.rc:189
+msgid "&Paste"
+msgstr "&Plakken"
+
+#: shdoclc.rc:49
+msgid "Create Shor&tcut"
+msgstr "&Snelkoppeling aanmaken"
+
+#: shdoclc.rc:50
+msgid "Add to &Favorites"
+msgstr "Aan &favorieten toevoegen"
+
+#: shdoclc.rc:51
+msgid "&View Source"
+msgstr "&Bronweergave"
+
+#: shdoclc.rc:53
+msgid "&Encoding"
+msgstr "&Tekstcodering"
+
+#: shdoclc.rc:55
+msgid "Pr&int"
+msgstr "Af&drukken"
+
+#: shdoclc.rc:56
+msgid "&Refresh"
+msgstr "A&ctualiseren"
+
+#: shdoclc.rc:59 clock.rc:28
 msgid "&Properties"
 msgstr "&Eigenschappen"
+
+#: shdoclc.rc:62
+msgid "Image"
+msgstr "Afbeelding"
+
+#: shdoclc.rc:64 shdoclc.rc:151 shdoclc.rc:176
+msgid "&Open Link"
+msgstr "&Open link"
+
+#: shdoclc.rc:65 shdoclc.rc:152 shdoclc.rc:177
+msgid "Open Link in &New Window"
+msgstr "Open link in &nieuw venster"
+
+#: shdoclc.rc:66 shdoclc.rc:130 shdoclc.rc:153 shdoclc.rc:178
+msgid "Save Target &As..."
+msgstr "Doel ops&laan als..."
+
+#: shdoclc.rc:67 shdoclc.rc:131 shdoclc.rc:154 shdoclc.rc:179
+msgid "&Print Target"
+msgstr "Doel af&drukken"
+
+#: shdoclc.rc:69 shdoclc.rc:156 shdoclc.rc:181
+msgid "S&how Picture"
+msgstr "&Toon afbeelding"
+
+#: shdoclc.rc:70 shdoclc.rc:182
+msgid "&Save Picture As..."
+msgstr "Af&beelding opslaan als..."
+
+#: shdoclc.rc:71
+msgid "&E-mail Picture..."
+msgstr "Afbeelding &versturen..."
+
+#: shdoclc.rc:72
+msgid "Pr&int Picture..."
+msgstr "Afbeelding &afdrukken..."
+
+#: shdoclc.rc:73
+msgid "&Go to My Pictures"
+msgstr "&Ga naar Mijn Afbeeldingen"
+
+#: shdoclc.rc:74 shdoclc.rc:158 shdoclc.rc:183
+msgid "Set as Back&ground"
+msgstr "Als achtergrond instellen"
+
+#: shdoclc.rc:75 shdoclc.rc:159 shdoclc.rc:184
+msgid "Set as &Desktop Item..."
+msgstr "Als desktopelement instellen..."
+
+#: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
+msgid "Cu&t"
+msgstr "K&nippen"
+
+#: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
+#: shdoclc.rc:187
+msgid "&Copy"
+msgstr "&Kopiëren"
+
+#: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
+msgid "Copy Shor&tcut"
+msgstr "&Snelkoppeling kopiëren"
+
+#: shdoclc.rc:82 shdoclc.rc:138 shdoclc.rc:166 shdoclc.rc:191
+msgid "Add to &Favorites..."
+msgstr "Aan &favorieten toevoegen..."
+
+#: shdoclc.rc:85 shdoclc.rc:141 shdoclc.rc:171 shdoclc.rc:198
+msgid "P&roperties"
+msgstr "&Eigenschappen"
+
+#: shdoclc.rc:88
+msgid "Control"
+msgstr "Besturing"
+
+#: shdoclc.rc:90
+msgid "&Undo"
+msgstr "&Ongedaan maken"
+
+#: shdoclc.rc:95
+msgid "&Delete"
+msgstr "&Verwijderen"
+
+#: shdoclc.rc:101
+msgid "Table"
+msgstr "Tabellen"
+
+#: shdoclc.rc:103
+msgid "&Select"
+msgstr "&Selecteren"
+
+#: shdoclc.rc:105
+msgid "&Cell"
+msgstr "&Cel"
+
+#: shdoclc.rc:106
+msgid "&Row"
+msgstr "&Regel"
+
+#: shdoclc.rc:107
+msgid "&Column"
+msgstr "&Kolom"
+
+#: shdoclc.rc:108
+msgid "&Table"
+msgstr "&Tabel"
+
+#: shdoclc.rc:112
+msgid "&Cell Properties"
+msgstr "Cel&eigenschappen"
+
+#: shdoclc.rc:113
+msgid "&Table Properties"
+msgstr "Tabelei&genschappen"
+
+#: shdoclc.rc:116
+msgid "1DSite Select"
+msgstr "1DPaginakeuze"
+
+#: shdoclc.rc:120
+msgid "Paste"
+msgstr "&Plakken"
+
+#: shdoclc.rc:122
+msgid "&Print"
+msgstr "Af&drukken"
+
+#: shdoclc.rc:126
+msgid "Anchor"
+msgstr "Anker"
+
+#: shdoclc.rc:128
+msgid "&Open"
+msgstr "&Openen"
+
+#: shdoclc.rc:129
+msgid "Open in &New Window"
+msgstr "In nieuw &venster openen"
+
+#: shdoclc.rc:133
+msgid "Cut"
+msgstr "K&nippen"
+
+#: shdoclc.rc:144
+msgid "Context Unknown"
+msgstr "Context Onbekend"
+
+#: shdoclc.rc:149
+msgid "DYNSRC Image"
+msgstr "DYNSRC Afbeelding"
+
+#: shdoclc.rc:157
+msgid "&Save Video As..."
+msgstr "Af&beelding opslaan als..."
+
+#: shdoclc.rc:169 shdoclc.rc:193
+msgid "Play"
+msgstr "Afspelen"
+
+#: shdoclc.rc:174
+msgid "ART Image"
+msgstr "ART Afbeelding"
+
+#: shdoclc.rc:195
+msgid "Rewind"
+msgstr "Terugspoelen"
+
+#: shdoclc.rc:201
+msgid "Debug"
+msgstr "Debug"
+
+#: shdoclc.rc:203
+msgid "Trace Tags"
+msgstr "Traceer Labels"
+
+#: shdoclc.rc:204
+msgid "Resource Failures"
+msgstr "Resource Fouten"
+
+#: shdoclc.rc:205
+msgid "Dump Tracking Info"
+msgstr "Log Tracerings Informatie"
+
+#: shdoclc.rc:206
+msgid "Debug Break"
+msgstr "Debug Onderbreking"
+
+#: shdoclc.rc:207
+msgid "Debug View"
+msgstr "Debug Beeld"
+
+#: shdoclc.rc:208
+msgid "Dump Tree"
+msgstr "Log Gehele Boom"
+
+#: shdoclc.rc:209
+msgid "Dump Lines"
+msgstr "Log Regels"
+
+#: shdoclc.rc:210
+msgid "Dump DisplayTree"
+msgstr "Log Beeld Boom"
+
+#: shdoclc.rc:211
+msgid "Dump FormatCaches"
+msgstr "Log Formaat Caches"
+
+#: shdoclc.rc:212
+msgid "Dump LayoutRects"
+msgstr "Log Layout Rects"
+
+#: shdoclc.rc:213
+msgid "Memory Monitor"
+msgstr "Geheugen Monitor"
+
+#: shdoclc.rc:214
+msgid "Performance Meters"
+msgstr "Performance Meters"
+
+#: shdoclc.rc:215
+msgid "Save HTML"
+msgstr "Sla HTML op"
+
+#: shdoclc.rc:217
+msgid "&Browse View"
+msgstr "&Bladeren Beeld"
+
+#: shdoclc.rc:218
+msgid "&Edit View"
+msgstr "&Wijzigen Beeld"
+
+#: shdoclc.rc:221
+msgid "Vertical Scrollbar"
+msgstr "Verticale scrollbalk"
+
+#: shdoclc.rc:223 shdoclc.rc:237
+msgid "Scroll Here"
+msgstr "Scroll hier"
+
+#: shdoclc.rc:225
+msgid "Top"
+msgstr "Boven"
+
+#: shdoclc.rc:226
+msgid "Bottom"
+msgstr "Onder"
+
+#: shdoclc.rc:228
+msgid "Page Up"
+msgstr "Pagina naar boven"
+
+#: shdoclc.rc:229
+msgid "Page Down"
+msgstr "Pagina naar onder"
+
+#: shdoclc.rc:231
+msgid "Scroll Up"
+msgstr "Scroll omhoog"
+
+#: shdoclc.rc:232
+msgid "Scroll Down"
+msgstr "Scroll omlaag"
+
+#: shdoclc.rc:235
+msgid "Horizontal Scrollbar"
+msgstr "Horizontale scrollbalk"
+
+#: shdoclc.rc:239
+msgid "Left Edge"
+msgstr "Linkerrand"
+
+#: shdoclc.rc:240
+msgid "Right Edge"
+msgstr "Rechterrand"
+
+#: shdoclc.rc:242
+msgid "Page Left"
+msgstr "Pagina naar links"
+
+#: shdoclc.rc:243
+msgid "Page Right"
+msgstr "Pagina naar rechts"
+
+#: shdoclc.rc:245
+msgid "Scroll Left"
+msgstr "Scroll naar links"
+
+#: shdoclc.rc:246
+msgid "Scroll Right"
+msgstr "Scroll naar rechts"
+
+#: shdoclc.rc:25
+msgid "Wine Internet Explorer"
+msgstr "Wine Internet Verkenner"
+
+#: shdoclc.rc:30
+msgid "&w&bPage &p"
+msgstr "&w&bPagina &p"
+
+#: shdoclc.rc:31
+msgid "&u&b&d"
+msgstr "&u&b&d"
 
 #: clock.rc:29
 msgid "Ana&log"

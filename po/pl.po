@@ -917,7 +917,7 @@ msgstr "Pokaż"
 msgid "Hide"
 msgstr "Ukryj"
 
-#: hhctrl.rc:37
+#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194
 msgid "Stop"
 msgstr "Zatrzymaj"
 
@@ -1269,9 +1269,376 @@ msgstr "Włączone"
 msgid "Off"
 msgstr "Wyłączone"
 
-#: clock.rc:28
+#: shdoclc.rc:36
+msgid "Default"
+msgstr "Domyślne"
+
+#: shdoclc.rc:38
+msgid "&Back"
+msgstr "&Wstecz"
+
+#: shdoclc.rc:39
+msgid "F&orward"
+msgstr "&Dalej"
+
+#: shdoclc.rc:41
+msgid "&Save Background As..."
+msgstr "Z&apisz tło jako..."
+
+#: shdoclc.rc:42
+msgid "Set As Back&ground"
+msgstr "&Ustaw jako tło"
+
+#: shdoclc.rc:43
+msgid "&Copy Background"
+msgstr "Kop&iuj tło"
+
+#: shdoclc.rc:44
+msgid "Set as &Desktop Item"
+msgstr "Ustaw jako &element pulpitu..."
+
+#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121
+msgid "Select &All"
+msgstr "&Zaznacz wszystko"
+
+#: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
+#: shdoclc.rc:189
+msgid "&Paste"
+msgstr "Wkl&ej"
+
+#: shdoclc.rc:49
+msgid "Create Shor&tcut"
+msgstr "Utwórz &skrót"
+
+#: shdoclc.rc:50
+msgid "Add to &Favorites"
+msgstr "Dodaj do ulu&bionych"
+
+#: shdoclc.rc:51
+msgid "&View Source"
+msgstr "&Pokaż źródło"
+
+#: shdoclc.rc:53
+msgid "&Encoding"
+msgstr "&Kodowanie"
+
+#: shdoclc.rc:55
+msgid "Pr&int"
+msgstr "D&rukuj"
+
+#: shdoclc.rc:56
+msgid "&Refresh"
+msgstr "&Odśwież"
+
+#: shdoclc.rc:59 clock.rc:28
+#, fuzzy
 msgid "&Properties"
-msgstr "&Ustawienia"
+msgstr ""
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"&Ustawienia\n"
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"Właś&ciwości"
+
+#: shdoclc.rc:62
+msgid "Image"
+msgstr "Obrazek"
+
+#: shdoclc.rc:64 shdoclc.rc:151 shdoclc.rc:176
+msgid "&Open Link"
+msgstr "&Otwórz łącze"
+
+#: shdoclc.rc:65 shdoclc.rc:152 shdoclc.rc:177
+msgid "Open Link in &New Window"
+msgstr "Otwórz łącze w &nowym oknie"
+
+#: shdoclc.rc:66 shdoclc.rc:130 shdoclc.rc:153 shdoclc.rc:178
+msgid "Save Target &As..."
+msgstr "&Zapisz element doecelowy jako..."
+
+#: shdoclc.rc:67 shdoclc.rc:131 shdoclc.rc:154 shdoclc.rc:179
+msgid "&Print Target"
+msgstr "&Drukuj element docelowy"
+
+#: shdoclc.rc:69 shdoclc.rc:156 shdoclc.rc:181
+msgid "S&how Picture"
+msgstr "&Pokaż obraz"
+
+#: shdoclc.rc:70 shdoclc.rc:182
+msgid "&Save Picture As..."
+msgstr "&Zapisz obraz jako..."
+
+#: shdoclc.rc:71
+msgid "&E-mail Picture..."
+msgstr "&Wyślij obraz pocztą e-mail..."
+
+#: shdoclc.rc:72
+msgid "Pr&int Picture..."
+msgstr "D&rukuj obraz..."
+
+#: shdoclc.rc:73
+msgid "&Go to My Pictures"
+msgstr "Przejdź do &Moich obrazów"
+
+#: shdoclc.rc:74 shdoclc.rc:158 shdoclc.rc:183
+msgid "Set as Back&ground"
+msgstr "&Ustaw jako tło"
+
+#: shdoclc.rc:75 shdoclc.rc:159 shdoclc.rc:184
+msgid "Set as &Desktop Item..."
+msgstr "Ustaw jako &element pulpitu..."
+
+#: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
+msgid "Cu&t"
+msgstr "Wyt&nij"
+
+#: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
+#: shdoclc.rc:187
+msgid "&Copy"
+msgstr "&Kopiuj"
+
+#: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
+msgid "Copy Shor&tcut"
+msgstr "Kopiuj &skrót"
+
+#: shdoclc.rc:82 shdoclc.rc:138 shdoclc.rc:166 shdoclc.rc:191
+msgid "Add to &Favorites..."
+msgstr "Dodaj do ulu&bionych..."
+
+#: shdoclc.rc:85 shdoclc.rc:141 shdoclc.rc:171 shdoclc.rc:198
+msgid "P&roperties"
+msgstr "Właś&ciwości"
+
+#: shdoclc.rc:88
+msgid "Control"
+msgstr "Sterowanie"
+
+#: shdoclc.rc:90
+msgid "&Undo"
+msgstr "&Confij"
+
+#: shdoclc.rc:95
+msgid "&Delete"
+msgstr "&Usuń"
+
+#: shdoclc.rc:101
+msgid "Table"
+msgstr "Tabela"
+
+#: shdoclc.rc:103
+msgid "&Select"
+msgstr "&Zaznacz"
+
+#: shdoclc.rc:105
+msgid "&Cell"
+msgstr "&Komórka"
+
+#: shdoclc.rc:106
+msgid "&Row"
+msgstr "&Wiersz"
+
+#: shdoclc.rc:107
+msgid "&Column"
+msgstr "K&olumna"
+
+#: shdoclc.rc:108
+msgid "&Table"
+msgstr "&Tabela"
+
+#: shdoclc.rc:112
+msgid "&Cell Properties"
+msgstr "Właściwości &komórki"
+
+#: shdoclc.rc:113
+msgid "&Table Properties"
+msgstr "Właściwości &tabeli"
+
+#: shdoclc.rc:116
+msgid "1DSite Select"
+msgstr "1DSite Select"
+
+#: shdoclc.rc:120
+msgid "Paste"
+msgstr "Wkl&ej"
+
+#: shdoclc.rc:122
+msgid "&Print"
+msgstr "D&rukuj"
+
+#: shdoclc.rc:126
+msgid "Anchor"
+msgstr "Kotwica"
+
+#: shdoclc.rc:128
+msgid "&Open"
+msgstr "&Otwórz"
+
+#: shdoclc.rc:129
+msgid "Open in &New Window"
+msgstr "Otwórz w &nowym oknie"
+
+#: shdoclc.rc:133
+msgid "Cut"
+msgstr "Wyt&nij"
+
+#: shdoclc.rc:144
+msgid "Context Unknown"
+msgstr "Context Unknown"
+
+#: shdoclc.rc:149
+msgid "DYNSRC Image"
+msgstr "DYNSRC obrazek"
+
+#: shdoclc.rc:157
+msgid "&Save Video As..."
+msgstr "Zapisz &wideo jako..."
+
+#: shdoclc.rc:169 shdoclc.rc:193
+msgid "Play"
+msgstr "Odtwarzaj"
+
+#: shdoclc.rc:174
+msgid "ART Image"
+msgstr "ART obrazek"
+
+#: shdoclc.rc:195
+msgid "Rewind"
+msgstr "Przewiń"
+
+#: shdoclc.rc:201
+msgid "Debug"
+msgstr "Debug"
+
+#: shdoclc.rc:203
+msgid "Trace Tags"
+msgstr "Znaczniki śledzenia"
+
+#: shdoclc.rc:204
+msgid "Resource Failures"
+msgstr "Niepowodzenia zasobów"
+
+#: shdoclc.rc:205
+msgid "Dump Tracking Info"
+msgstr "Zrzuć informację śledzenia"
+
+#: shdoclc.rc:206
+msgid "Debug Break"
+msgstr "Przerwa debugowania"
+
+#: shdoclc.rc:207
+msgid "Debug View"
+msgstr "Widok debugowania"
+
+#: shdoclc.rc:208
+msgid "Dump Tree"
+msgstr "Zrzuć drzewa"
+
+#: shdoclc.rc:209
+msgid "Dump Lines"
+msgstr "Zrzuć linie"
+
+#: shdoclc.rc:210
+msgid "Dump DisplayTree"
+msgstr "Zrzuć DisplayTree"
+
+#: shdoclc.rc:211
+msgid "Dump FormatCaches"
+msgstr "Zrzuć FormatCaches"
+
+#: shdoclc.rc:212
+msgid "Dump LayoutRects"
+msgstr "Zrzuć LayoutRects"
+
+#: shdoclc.rc:213
+msgid "Memory Monitor"
+msgstr "Monitor pamięci"
+
+#: shdoclc.rc:214
+msgid "Performance Meters"
+msgstr "Mierniki wydajności"
+
+#: shdoclc.rc:215
+msgid "Save HTML"
+msgstr "Zapisz HTML"
+
+#: shdoclc.rc:217
+msgid "&Browse View"
+msgstr "Widok &przeglądania"
+
+#: shdoclc.rc:218
+msgid "&Edit View"
+msgstr "Widok &edycji"
+
+#: shdoclc.rc:221
+msgid "Vertical Scrollbar"
+msgstr "Pionowy suwak"
+
+#: shdoclc.rc:223 shdoclc.rc:237
+msgid "Scroll Here"
+msgstr "Przewiń tutaj"
+
+#: shdoclc.rc:225
+msgid "Top"
+msgstr "Góra"
+
+#: shdoclc.rc:226
+msgid "Bottom"
+msgstr "Dół"
+
+#: shdoclc.rc:228
+msgid "Page Up"
+msgstr "Strona w górę"
+
+#: shdoclc.rc:229
+msgid "Page Down"
+msgstr "Strona w dół"
+
+#: shdoclc.rc:231
+msgid "Scroll Up"
+msgstr "Przewiń w górę"
+
+#: shdoclc.rc:232
+msgid "Scroll Down"
+msgstr "Przewiń w dół"
+
+#: shdoclc.rc:235
+msgid "Horizontal Scrollbar"
+msgstr "Poziomy suwak"
+
+#: shdoclc.rc:239
+msgid "Left Edge"
+msgstr "Lewa krawędź"
+
+#: shdoclc.rc:240
+msgid "Right Edge"
+msgstr "Prawa krawędź"
+
+#: shdoclc.rc:242
+msgid "Page Left"
+msgstr "Strona w lewo"
+
+#: shdoclc.rc:243
+msgid "Page Right"
+msgstr "Strona w prawo"
+
+#: shdoclc.rc:245
+msgid "Scroll Left"
+msgstr "Przewiń w lewo"
+
+#: shdoclc.rc:246
+msgid "Scroll Right"
+msgstr "Przewiń w prawo"
+
+#: shdoclc.rc:25
+msgid "Wine Internet Explorer"
+msgstr "Wine Internet Explorer"
+
+#: shdoclc.rc:30
+msgid "&w&bPage &p"
+msgstr "&w&bStrona &p"
+
+#: shdoclc.rc:31
+msgid "&u&b&d"
+msgstr "&u&b&d"
 
 #: clock.rc:29
 msgid "Ana&log"

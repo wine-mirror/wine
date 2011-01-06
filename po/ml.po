@@ -914,7 +914,7 @@ msgstr ""
 msgid "Hide"
 msgstr ""
 
-#: hhctrl.rc:37
+#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194
 msgid "Stop"
 msgstr ""
 
@@ -1231,9 +1231,374 @@ msgstr ""
 msgid "Off"
 msgstr ""
 
-#: clock.rc:28
+#: shdoclc.rc:36
+msgid "Default"
+msgstr ""
+
+#: shdoclc.rc:38
+msgid "&Back"
+msgstr ""
+
+#: shdoclc.rc:39
+msgid "F&orward"
+msgstr ""
+
+#: shdoclc.rc:41
+msgid "&Save Background As..."
+msgstr ""
+
+#: shdoclc.rc:42
+msgid "Set As Back&ground"
+msgstr ""
+
+#: shdoclc.rc:43
+msgid "&Copy Background"
+msgstr ""
+
+#: shdoclc.rc:44
+msgid "Set as &Desktop Item"
+msgstr ""
+
+#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121
+msgid "Select &All"
+msgstr ""
+
+#: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
+#: shdoclc.rc:189
+msgid "&Paste"
+msgstr ""
+
+#: shdoclc.rc:49
+msgid "Create Shor&tcut"
+msgstr ""
+
+#: shdoclc.rc:50
+msgid "Add to &Favorites"
+msgstr ""
+
+#: shdoclc.rc:51
+msgid "&View Source"
+msgstr ""
+
+#: shdoclc.rc:53
+msgid "&Encoding"
+msgstr ""
+
+#: shdoclc.rc:55
+msgid "Pr&int"
+msgstr ""
+
+#: shdoclc.rc:56
+msgid "&Refresh"
+msgstr ""
+
+#: shdoclc.rc:59 clock.rc:28
 msgid "&Properties"
 msgstr "വി_വരം"
+
+#: shdoclc.rc:62
+msgid "Image"
+msgstr ""
+
+#: shdoclc.rc:64 shdoclc.rc:151 shdoclc.rc:176
+msgid "&Open Link"
+msgstr ""
+
+#: shdoclc.rc:65 shdoclc.rc:152 shdoclc.rc:177
+msgid "Open Link in &New Window"
+msgstr ""
+
+#: shdoclc.rc:66 shdoclc.rc:130 shdoclc.rc:153 shdoclc.rc:178
+msgid "Save Target &As..."
+msgstr ""
+
+#: shdoclc.rc:67 shdoclc.rc:131 shdoclc.rc:154 shdoclc.rc:179
+msgid "&Print Target"
+msgstr ""
+
+#: shdoclc.rc:69 shdoclc.rc:156 shdoclc.rc:181
+msgid "S&how Picture"
+msgstr ""
+
+#: shdoclc.rc:70 shdoclc.rc:182
+msgid "&Save Picture As..."
+msgstr ""
+
+#: shdoclc.rc:71
+msgid "&E-mail Picture..."
+msgstr ""
+
+#: shdoclc.rc:72
+msgid "Pr&int Picture..."
+msgstr ""
+
+#: shdoclc.rc:73
+msgid "&Go to My Pictures"
+msgstr ""
+
+#: shdoclc.rc:74 shdoclc.rc:158 shdoclc.rc:183
+msgid "Set as Back&ground"
+msgstr ""
+
+#: shdoclc.rc:75 shdoclc.rc:159 shdoclc.rc:184
+msgid "Set as &Desktop Item..."
+msgstr ""
+
+#: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
+msgid "Cu&t"
+msgstr ""
+
+#: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
+#: shdoclc.rc:187
+msgid "&Copy"
+msgstr ""
+
+#: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
+msgid "Copy Shor&tcut"
+msgstr ""
+
+#: shdoclc.rc:82 shdoclc.rc:138 shdoclc.rc:166 shdoclc.rc:191
+msgid "Add to &Favorites..."
+msgstr ""
+
+#: shdoclc.rc:85 shdoclc.rc:141 shdoclc.rc:171 shdoclc.rc:198
+#, fuzzy
+msgid "P&roperties"
+msgstr "വി_വരം"
+
+#: shdoclc.rc:88
+msgid "Control"
+msgstr ""
+
+#: shdoclc.rc:90
+msgid "&Undo"
+msgstr ""
+
+#: shdoclc.rc:95
+msgid "&Delete"
+msgstr ""
+
+#: shdoclc.rc:101
+msgid "Table"
+msgstr ""
+
+#: shdoclc.rc:103
+msgid "&Select"
+msgstr ""
+
+#: shdoclc.rc:105
+msgid "&Cell"
+msgstr ""
+
+#: shdoclc.rc:106
+msgid "&Row"
+msgstr ""
+
+#: shdoclc.rc:107
+msgid "&Column"
+msgstr ""
+
+#: shdoclc.rc:108
+msgid "&Table"
+msgstr ""
+
+#: shdoclc.rc:112
+#, fuzzy
+msgid "&Cell Properties"
+msgstr "വി_വരം"
+
+#: shdoclc.rc:113
+#, fuzzy
+msgid "&Table Properties"
+msgstr "വി_വരം"
+
+#: shdoclc.rc:116
+msgid "1DSite Select"
+msgstr ""
+
+#: shdoclc.rc:120
+msgid "Paste"
+msgstr ""
+
+#: shdoclc.rc:122
+msgid "&Print"
+msgstr ""
+
+#: shdoclc.rc:126
+msgid "Anchor"
+msgstr ""
+
+#: shdoclc.rc:128
+msgid "&Open"
+msgstr ""
+
+#: shdoclc.rc:129
+msgid "Open in &New Window"
+msgstr ""
+
+#: shdoclc.rc:133
+msgid "Cut"
+msgstr ""
+
+#: shdoclc.rc:144
+msgid "Context Unknown"
+msgstr ""
+
+#: shdoclc.rc:149
+msgid "DYNSRC Image"
+msgstr ""
+
+#: shdoclc.rc:157
+msgid "&Save Video As..."
+msgstr ""
+
+#: shdoclc.rc:169 shdoclc.rc:193
+msgid "Play"
+msgstr ""
+
+#: shdoclc.rc:174
+msgid "ART Image"
+msgstr ""
+
+#: shdoclc.rc:195
+msgid "Rewind"
+msgstr ""
+
+#: shdoclc.rc:201
+msgid "Debug"
+msgstr ""
+
+#: shdoclc.rc:203
+msgid "Trace Tags"
+msgstr ""
+
+#: shdoclc.rc:204
+msgid "Resource Failures"
+msgstr ""
+
+#: shdoclc.rc:205
+msgid "Dump Tracking Info"
+msgstr ""
+
+#: shdoclc.rc:206
+msgid "Debug Break"
+msgstr ""
+
+#: shdoclc.rc:207
+msgid "Debug View"
+msgstr ""
+
+#: shdoclc.rc:208
+msgid "Dump Tree"
+msgstr ""
+
+#: shdoclc.rc:209
+msgid "Dump Lines"
+msgstr ""
+
+#: shdoclc.rc:210
+msgid "Dump DisplayTree"
+msgstr ""
+
+#: shdoclc.rc:211
+msgid "Dump FormatCaches"
+msgstr ""
+
+#: shdoclc.rc:212
+msgid "Dump LayoutRects"
+msgstr ""
+
+#: shdoclc.rc:213
+msgid "Memory Monitor"
+msgstr ""
+
+#: shdoclc.rc:214
+msgid "Performance Meters"
+msgstr ""
+
+#: shdoclc.rc:215
+msgid "Save HTML"
+msgstr ""
+
+#: shdoclc.rc:217
+msgid "&Browse View"
+msgstr ""
+
+#: shdoclc.rc:218
+msgid "&Edit View"
+msgstr ""
+
+#: shdoclc.rc:221
+msgid "Vertical Scrollbar"
+msgstr ""
+
+#: shdoclc.rc:223 shdoclc.rc:237
+msgid "Scroll Here"
+msgstr ""
+
+#: shdoclc.rc:225
+msgid "Top"
+msgstr ""
+
+#: shdoclc.rc:226
+msgid "Bottom"
+msgstr ""
+
+#: shdoclc.rc:228
+msgid "Page Up"
+msgstr ""
+
+#: shdoclc.rc:229
+msgid "Page Down"
+msgstr ""
+
+#: shdoclc.rc:231
+msgid "Scroll Up"
+msgstr ""
+
+#: shdoclc.rc:232
+msgid "Scroll Down"
+msgstr ""
+
+#: shdoclc.rc:235
+msgid "Horizontal Scrollbar"
+msgstr ""
+
+#: shdoclc.rc:239
+msgid "Left Edge"
+msgstr ""
+
+#: shdoclc.rc:240
+msgid "Right Edge"
+msgstr ""
+
+#: shdoclc.rc:242
+msgid "Page Left"
+msgstr ""
+
+#: shdoclc.rc:243
+msgid "Page Right"
+msgstr ""
+
+#: shdoclc.rc:245
+msgid "Scroll Left"
+msgstr ""
+
+#: shdoclc.rc:246
+msgid "Scroll Right"
+msgstr ""
+
+#: shdoclc.rc:25
+msgid "Wine Internet Explorer"
+msgstr ""
+
+#: shdoclc.rc:30
+msgid "&w&bPage &p"
+msgstr ""
+
+#: shdoclc.rc:31
+msgid "&u&b&d"
+msgstr ""
 
 #: clock.rc:29
 msgid "Ana&log"

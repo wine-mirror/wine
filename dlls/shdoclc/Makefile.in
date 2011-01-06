@@ -1,30 +1,6 @@
 MODULE    = shdoclc.dll
 
-RC_SRCS = \
-	Bg.rc \
-	Da.rc \
-	De.rc \
-	En.rc \
-	Es.rc \
-	Fi.rc \
-	Fr.rc \
-	He.rc \
-	Hu.rc \
-	It.rc \
-	Ja.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	No.rc \
-	Pl.rc \
-	Pt.rc \
-	Ro.rc \
-	Ru.rc \
-	Si.rc \
-	Sr.rc \
-	Sv.rc \
-	Tr.rc \
-	Uk.rc \
-	Zh.rc
+RC_SRCS = shdoclc.rc
+PO_SRCS = shdoclc.rc
 
 @MAKE_DLL_RULES@

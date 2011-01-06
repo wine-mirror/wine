@@ -917,7 +917,7 @@ msgstr "Rodyti"
 msgid "Hide"
 msgstr "Slėpti"
 
-#: hhctrl.rc:37
+#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194
 msgid "Stop"
 msgstr "Stabdyti"
 
@@ -1267,9 +1267,376 @@ msgstr "Įjungta"
 msgid "Off"
 msgstr "Išjungta"
 
-#: clock.rc:28
+#: shdoclc.rc:36
+msgid "Default"
+msgstr "Numatytasis"
+
+#: shdoclc.rc:38
+msgid "&Back"
+msgstr "&Atgal"
+
+#: shdoclc.rc:39
+msgid "F&orward"
+msgstr "&Pirmyn"
+
+#: shdoclc.rc:41
+msgid "&Save Background As..."
+msgstr "&Išsaugoti foną kaip..."
+
+#: shdoclc.rc:42
+msgid "Set As Back&ground"
+msgstr "Parinkti užsk&landos piešiniu"
+
+#: shdoclc.rc:43
+msgid "&Copy Background"
+msgstr "Kopijuoti &foną"
+
+#: shdoclc.rc:44
+msgid "Set as &Desktop Item"
+msgstr "Nustatyti da&rbalaukio elementu"
+
+#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121
+msgid "Select &All"
+msgstr "Pažymėti &viską"
+
+#: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
+#: shdoclc.rc:189
+msgid "&Paste"
+msgstr "Į&dėti"
+
+#: shdoclc.rc:49
+msgid "Create Shor&tcut"
+msgstr "Sukurti &šaukinį"
+
+#: shdoclc.rc:50
+msgid "Add to &Favorites"
+msgstr "Pridėti į adr&esyną"
+
+#: shdoclc.rc:51
+msgid "&View Source"
+msgstr "Pirminis &tekstas"
+
+#: shdoclc.rc:53
+msgid "&Encoding"
+msgstr "&Koduotė"
+
+#: shdoclc.rc:55
+msgid "Pr&int"
+msgstr "&Spausdinti"
+
+#: shdoclc.rc:56
+msgid "&Refresh"
+msgstr "Atsiųsti iš &naujo"
+
+#: shdoclc.rc:59 clock.rc:28
+#, fuzzy
 msgid "&Properties"
-msgstr "&Savybės"
+msgstr ""
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"&Savybės\n"
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"Savy&bės"
+
+#: shdoclc.rc:62
+msgid "Image"
+msgstr "Paveikslas"
+
+#: shdoclc.rc:64 shdoclc.rc:151 shdoclc.rc:176
+msgid "&Open Link"
+msgstr "&Atverti saitą"
+
+#: shdoclc.rc:65 shdoclc.rc:152 shdoclc.rc:177
+msgid "Open Link in &New Window"
+msgstr "Atverti saitą &naujame lange"
+
+#: shdoclc.rc:66 shdoclc.rc:130 shdoclc.rc:153 shdoclc.rc:178
+msgid "Save Target &As..."
+msgstr "Įrašyti saistomą &objektą kaip..."
+
+#: shdoclc.rc:67 shdoclc.rc:131 shdoclc.rc:154 shdoclc.rc:179
+msgid "&Print Target"
+msgstr "&Spausdinti saistomą objektą"
+
+#: shdoclc.rc:69 shdoclc.rc:156 shdoclc.rc:181
+msgid "S&how Picture"
+msgstr "Rod&yti paveikslą"
+
+#: shdoclc.rc:70 shdoclc.rc:182
+msgid "&Save Picture As..."
+msgstr "Įrašyti pa&veikslą kaip..."
+
+#: shdoclc.rc:71
+msgid "&E-mail Picture..."
+msgstr "Išsiųsti pav&eikslą el. paštu..."
+
+#: shdoclc.rc:72
+msgid "Pr&int Picture..."
+msgstr "S&pausdinti paveikslą..."
+
+#: shdoclc.rc:73
+msgid "&Go to My Pictures"
+msgstr "Ei&ti į paveikslų aplanką"
+
+#: shdoclc.rc:74 shdoclc.rc:158 shdoclc.rc:183
+msgid "Set as Back&ground"
+msgstr "Parinkti užsk&landos piešiniu"
+
+#: shdoclc.rc:75 shdoclc.rc:159 shdoclc.rc:184
+msgid "Set as &Desktop Item..."
+msgstr "Nustatyti da&rbalaukio elementu..."
+
+#: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
+msgid "Cu&t"
+msgstr "&Iškirpti"
+
+#: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
+#: shdoclc.rc:187
+msgid "&Copy"
+msgstr "&Kopijuoti"
+
+#: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
+msgid "Copy Shor&tcut"
+msgstr "Kopi&juoti adresą"
+
+#: shdoclc.rc:82 shdoclc.rc:138 shdoclc.rc:166 shdoclc.rc:191
+msgid "Add to &Favorites..."
+msgstr "Prid&ėti į adresyną..."
+
+#: shdoclc.rc:85 shdoclc.rc:141 shdoclc.rc:171 shdoclc.rc:198
+msgid "P&roperties"
+msgstr "Savy&bės"
+
+#: shdoclc.rc:88
+msgid "Control"
+msgstr "Valdiklis"
+
+#: shdoclc.rc:90
+msgid "&Undo"
+msgstr "&Atšaukti"
+
+#: shdoclc.rc:95
+msgid "&Delete"
+msgstr "&Šalinti"
+
+#: shdoclc.rc:101
+msgid "Table"
+msgstr "Lentelė"
+
+#: shdoclc.rc:103
+msgid "&Select"
+msgstr "&Pažymėti"
+
+#: shdoclc.rc:105
+msgid "&Cell"
+msgstr "lan&gelį"
+
+#: shdoclc.rc:106
+msgid "&Row"
+msgstr "&eilutę"
+
+#: shdoclc.rc:107
+msgid "&Column"
+msgstr "&stulpelį"
+
+#: shdoclc.rc:108
+msgid "&Table"
+msgstr "&lentelę"
+
+#: shdoclc.rc:112
+msgid "&Cell Properties"
+msgstr "Lan&gelio savybės"
+
+#: shdoclc.rc:113
+msgid "&Table Properties"
+msgstr "&Lentelės savybės"
+
+#: shdoclc.rc:116
+msgid "1DSite Select"
+msgstr "1DPuslapio žymėjimas"
+
+#: shdoclc.rc:120
+msgid "Paste"
+msgstr "Į&dėti"
+
+#: shdoclc.rc:122
+msgid "&Print"
+msgstr "&Spausdinti"
+
+#: shdoclc.rc:126
+msgid "Anchor"
+msgstr "Žymė"
+
+#: shdoclc.rc:128
+msgid "&Open"
+msgstr "&Atverti"
+
+#: shdoclc.rc:129
+msgid "Open in &New Window"
+msgstr "Atverti &naujame lange"
+
+#: shdoclc.rc:133
+msgid "Cut"
+msgstr "&Iškirpti"
+
+#: shdoclc.rc:144
+msgid "Context Unknown"
+msgstr "Nežinomas kontekstas"
+
+#: shdoclc.rc:149
+msgid "DYNSRC Image"
+msgstr "DYNSRC paveikslas"
+
+#: shdoclc.rc:157
+msgid "&Save Video As..."
+msgstr "Įrašyti pa&veikslą kaip..."
+
+#: shdoclc.rc:169 shdoclc.rc:193
+msgid "Play"
+msgstr "Leisti"
+
+#: shdoclc.rc:174
+msgid "ART Image"
+msgstr "ART paveikslas"
+
+#: shdoclc.rc:195
+msgid "Rewind"
+msgstr "Perleisti"
+
+#: shdoclc.rc:201
+msgid "Debug"
+msgstr "Derinimas"
+
+#: shdoclc.rc:203
+msgid "Trace Tags"
+msgstr "Sekti gaires"
+
+#: shdoclc.rc:204
+msgid "Resource Failures"
+msgstr "Išteklių klaidos"
+
+#: shdoclc.rc:205
+msgid "Dump Tracking Info"
+msgstr "Parodyti stebėjimo informaciją"
+
+#: shdoclc.rc:206
+msgid "Debug Break"
+msgstr "Derinimo pertraukimas"
+
+#: shdoclc.rc:207
+msgid "Debug View"
+msgstr "Derinimo rodinys"
+
+#: shdoclc.rc:208
+msgid "Dump Tree"
+msgstr "Parodyti medį"
+
+#: shdoclc.rc:209
+msgid "Dump Lines"
+msgstr "Parodyti eilutes"
+
+#: shdoclc.rc:210
+msgid "Dump DisplayTree"
+msgstr "Parodyti rodymo medį"
+
+#: shdoclc.rc:211
+msgid "Dump FormatCaches"
+msgstr "Parodyti formatų podėlius"
+
+#: shdoclc.rc:212
+msgid "Dump LayoutRects"
+msgstr "Parodyti išdėstymo stačiakampius"
+
+#: shdoclc.rc:213
+msgid "Memory Monitor"
+msgstr "Atminties monitorius"
+
+#: shdoclc.rc:214
+msgid "Performance Meters"
+msgstr "Našumo skaitikliai"
+
+#: shdoclc.rc:215
+msgid "Save HTML"
+msgstr "Išsaugoti HTML"
+
+#: shdoclc.rc:217
+msgid "&Browse View"
+msgstr "&Naršyti rodinį"
+
+#: shdoclc.rc:218
+msgid "&Edit View"
+msgstr "&Redaguoti rodinį"
+
+#: shdoclc.rc:221
+msgid "Vertical Scrollbar"
+msgstr "Stačioji slankjuostė"
+
+#: shdoclc.rc:223 shdoclc.rc:237
+msgid "Scroll Here"
+msgstr "Slinkti čia"
+
+#: shdoclc.rc:225
+msgid "Top"
+msgstr "Viršus"
+
+#: shdoclc.rc:226
+msgid "Bottom"
+msgstr "Apačia"
+
+#: shdoclc.rc:228
+msgid "Page Up"
+msgstr "Ankstesnis lapas"
+
+#: shdoclc.rc:229
+msgid "Page Down"
+msgstr "Tolesnis lapas"
+
+#: shdoclc.rc:231
+msgid "Scroll Up"
+msgstr "Slinkti aukštyn"
+
+#: shdoclc.rc:232
+msgid "Scroll Down"
+msgstr "Slinkti žemyn"
+
+#: shdoclc.rc:235
+msgid "Horizontal Scrollbar"
+msgstr "Gulsčioji slankjuostė"
+
+#: shdoclc.rc:239
+msgid "Left Edge"
+msgstr "Kairysis kraštas"
+
+#: shdoclc.rc:240
+msgid "Right Edge"
+msgstr "Dešinysis kraštas"
+
+#: shdoclc.rc:242
+msgid "Page Left"
+msgstr "Kairysis lapas"
+
+#: shdoclc.rc:243
+msgid "Page Right"
+msgstr "Dešinysis lapas"
+
+#: shdoclc.rc:245
+msgid "Scroll Left"
+msgstr "Slinkti kairėn"
+
+#: shdoclc.rc:246
+msgid "Scroll Right"
+msgstr "Slinkti dešinėn"
+
+#: shdoclc.rc:25
+msgid "Wine Internet Explorer"
+msgstr "Wine interneto naršyklė"
+
+#: shdoclc.rc:30
+msgid "&w&bPage &p"
+msgstr "&w&bPuslapis &p"
+
+#: shdoclc.rc:31
+msgid "&u&b&d"
+msgstr "&u&b&d"
 
 #: clock.rc:29
 msgid "Ana&log"

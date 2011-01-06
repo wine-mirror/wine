@@ -917,9 +917,14 @@ msgstr "Megjelenítés"
 msgid "Hide"
 msgstr "Elrejtés"
 
-#: hhctrl.rc:37
+#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194
+#, fuzzy
 msgid "Stop"
-msgstr "Megállítás"
+msgstr ""
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"Megállítás\n"
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"Leállítás"
 
 #: hhctrl.rc:38
 msgid "Refresh"
@@ -1271,9 +1276,376 @@ msgstr "Be"
 msgid "Off"
 msgstr "Ki"
 
-#: clock.rc:28
+#: shdoclc.rc:36
+msgid "Default"
+msgstr "Default"
+
+#: shdoclc.rc:38
+msgid "&Back"
+msgstr "&Vissza"
+
+#: shdoclc.rc:39
+msgid "F&orward"
+msgstr "El&őre"
+
+#: shdoclc.rc:41
+msgid "&Save Background As..."
+msgstr "&Háttér mentése..."
+
+#: shdoclc.rc:42
+msgid "Set As Back&ground"
+msgstr "Beállítás há&ttérként"
+
+#: shdoclc.rc:43
+msgid "&Copy Background"
+msgstr "Háttér &másolása"
+
+#: shdoclc.rc:44
+msgid "Set as &Desktop Item"
+msgstr "Beállítás &asztalelemként"
+
+#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121
+msgid "Select &All"
+msgstr "M&indet kijelöli"
+
+#: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
+#: shdoclc.rc:189
+msgid "&Paste"
+msgstr "&Beillesztés"
+
+#: shdoclc.rc:49
+msgid "Create Shor&tcut"
+msgstr "Parancsi&kon létrehozása"
+
+#: shdoclc.rc:50
+msgid "Add to &Favorites"
+msgstr "Hozzáa&dás a kedvencekhez"
+
+#: shdoclc.rc:51
+msgid "&View Source"
+msgstr "&Forrás megjelenítése"
+
+#: shdoclc.rc:53
+msgid "&Encoding"
+msgstr "K&ódolás"
+
+#: shdoclc.rc:55
+msgid "Pr&int"
+msgstr "&Nyomtatás"
+
+#: shdoclc.rc:56
+msgid "&Refresh"
+msgstr "F&rissítés"
+
+#: shdoclc.rc:59 clock.rc:28
+#, fuzzy
 msgid "&Properties"
-msgstr "&Beállítások"
+msgstr ""
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"&Beállítások\n"
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"Tula&jdonságok"
+
+#: shdoclc.rc:62
+msgid "Image"
+msgstr "Image"
+
+#: shdoclc.rc:64 shdoclc.rc:151 shdoclc.rc:176
+msgid "&Open Link"
+msgstr "&Link megnyitása"
+
+#: shdoclc.rc:65 shdoclc.rc:152 shdoclc.rc:177
+msgid "Open Link in &New Window"
+msgstr "Li&nk megnyitása új ablakban"
+
+#: shdoclc.rc:66 shdoclc.rc:130 shdoclc.rc:153 shdoclc.rc:178
+msgid "Save Target &As..."
+msgstr "Cél ment&ése..."
+
+#: shdoclc.rc:67 shdoclc.rc:131 shdoclc.rc:154 shdoclc.rc:179
+msgid "&Print Target"
+msgstr "&Cél nyomtatása"
+
+#: shdoclc.rc:69 shdoclc.rc:156 shdoclc.rc:181
+msgid "S&how Picture"
+msgstr "Kép megjelen&ítése"
+
+#: shdoclc.rc:70 shdoclc.rc:182
+msgid "&Save Picture As..."
+msgstr "&Kép mentése..."
+
+#: shdoclc.rc:71
+msgid "&E-mail Picture..."
+msgstr "Kép elküldése &e-mail-ben..."
+
+#: shdoclc.rc:72
+msgid "Pr&int Picture..."
+msgstr "Kép n&yomtatása..."
+
+#: shdoclc.rc:73
+msgid "&Go to My Pictures"
+msgstr "&Ugrás a Képek-hez"
+
+#: shdoclc.rc:74 shdoclc.rc:158 shdoclc.rc:183
+msgid "Set as Back&ground"
+msgstr "Beállíttás há&ttérként"
+
+#: shdoclc.rc:75 shdoclc.rc:159 shdoclc.rc:184
+msgid "Set as &Desktop Item..."
+msgstr "Beállíttás &asztalelemként..."
+
+#: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
+msgid "Cu&t"
+msgstr "K&ivágás"
+
+#: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
+#: shdoclc.rc:187
+msgid "&Copy"
+msgstr "&Másolás"
+
+#: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
+msgid "Copy Shor&tcut"
+msgstr "Parancs&ikon másolása"
+
+#: shdoclc.rc:82 shdoclc.rc:138 shdoclc.rc:166 shdoclc.rc:191
+msgid "Add to &Favorites..."
+msgstr "Hozzáa&dás a kedvencekhez..."
+
+#: shdoclc.rc:85 shdoclc.rc:141 shdoclc.rc:171 shdoclc.rc:198
+msgid "P&roperties"
+msgstr "Tula&jdonságok"
+
+#: shdoclc.rc:88
+msgid "Control"
+msgstr "Control"
+
+#: shdoclc.rc:90
+msgid "&Undo"
+msgstr "&Visszavonás"
+
+#: shdoclc.rc:95
+msgid "&Delete"
+msgstr "&Törlés"
+
+#: shdoclc.rc:101
+msgid "Table"
+msgstr "Table"
+
+#: shdoclc.rc:103
+msgid "&Select"
+msgstr "&Kiválasztás"
+
+#: shdoclc.rc:105
+msgid "&Cell"
+msgstr "&Cella"
+
+#: shdoclc.rc:106
+msgid "&Row"
+msgstr "&Sor"
+
+#: shdoclc.rc:107
+msgid "&Column"
+msgstr "&Oszlop"
+
+#: shdoclc.rc:108
+msgid "&Table"
+msgstr "&Tábla"
+
+#: shdoclc.rc:112
+msgid "&Cell Properties"
+msgstr "&Cella tulajdonságai"
+
+#: shdoclc.rc:113
+msgid "&Table Properties"
+msgstr "&Tábla tulajdonságai"
+
+#: shdoclc.rc:116
+msgid "1DSite Select"
+msgstr "1DSite Select"
+
+#: shdoclc.rc:120
+msgid "Paste"
+msgstr "Beillesztés"
+
+#: shdoclc.rc:122
+msgid "&Print"
+msgstr "&Nyomtatás"
+
+#: shdoclc.rc:126
+msgid "Anchor"
+msgstr "Anchor"
+
+#: shdoclc.rc:128
+msgid "&Open"
+msgstr "&Megnyitás"
+
+#: shdoclc.rc:129
+msgid "Open in &New Window"
+msgstr "Megnyitás &új ablakban"
+
+#: shdoclc.rc:133
+msgid "Cut"
+msgstr "Kivágás"
+
+#: shdoclc.rc:144
+msgid "Context Unknown"
+msgstr "Context Unknown"
+
+#: shdoclc.rc:149
+msgid "DYNSRC Image"
+msgstr "DYNSRC Image"
+
+#: shdoclc.rc:157
+msgid "&Save Video As..."
+msgstr "&Video mentése..."
+
+#: shdoclc.rc:169 shdoclc.rc:193
+msgid "Play"
+msgstr "Lejátszás"
+
+#: shdoclc.rc:174
+msgid "ART Image"
+msgstr "ART Image"
+
+#: shdoclc.rc:195
+msgid "Rewind"
+msgstr "Visszatekerés"
+
+#: shdoclc.rc:201
+msgid "Debug"
+msgstr "Debug"
+
+#: shdoclc.rc:203
+msgid "Trace Tags"
+msgstr "Trace Tag-ek"
+
+#: shdoclc.rc:204
+msgid "Resource Failures"
+msgstr "Erőforrás hibák"
+
+#: shdoclc.rc:205
+msgid "Dump Tracking Info"
+msgstr "Nyomkövetési info dumplása"
+
+#: shdoclc.rc:206
+msgid "Debug Break"
+msgstr "Hibakeresés megszakítása"
+
+#: shdoclc.rc:207
+msgid "Debug View"
+msgstr "Hibakeresési nézet"
+
+#: shdoclc.rc:208
+msgid "Dump Tree"
+msgstr "Fa dumpolása"
+
+#: shdoclc.rc:209
+msgid "Dump Lines"
+msgstr "Sorok dumpolása"
+
+#: shdoclc.rc:210
+msgid "Dump DisplayTree"
+msgstr "DisplayTree dumpolása"
+
+#: shdoclc.rc:211
+msgid "Dump FormatCaches"
+msgstr "FormatCaches dumpolása"
+
+#: shdoclc.rc:212
+msgid "Dump LayoutRects"
+msgstr "LayoutRects dumpolása"
+
+#: shdoclc.rc:213
+msgid "Memory Monitor"
+msgstr "Memóriafigyelő"
+
+#: shdoclc.rc:214
+msgid "Performance Meters"
+msgstr "Teljesítménymérő"
+
+#: shdoclc.rc:215
+msgid "Save HTML"
+msgstr "HTML mentése"
+
+#: shdoclc.rc:217
+msgid "&Browse View"
+msgstr "&Nézet tallózása"
+
+#: shdoclc.rc:218
+msgid "&Edit View"
+msgstr "N&ézet szerkesztése"
+
+#: shdoclc.rc:221
+msgid "Vertical Scrollbar"
+msgstr "Vertical Scrollbar"
+
+#: shdoclc.rc:223 shdoclc.rc:237
+msgid "Scroll Here"
+msgstr "Görgetés itt"
+
+#: shdoclc.rc:225
+msgid "Top"
+msgstr "Felül"
+
+#: shdoclc.rc:226
+msgid "Bottom"
+msgstr "Alul"
+
+#: shdoclc.rc:228
+msgid "Page Up"
+msgstr "Lap fel"
+
+#: shdoclc.rc:229
+msgid "Page Down"
+msgstr "Lap le"
+
+#: shdoclc.rc:231
+msgid "Scroll Up"
+msgstr "Görgetés fel"
+
+#: shdoclc.rc:232
+msgid "Scroll Down"
+msgstr "Görgetés le"
+
+#: shdoclc.rc:235
+msgid "Horizontal Scrollbar"
+msgstr "Horizontal Scrollbar"
+
+#: shdoclc.rc:239
+msgid "Left Edge"
+msgstr "Bal széle"
+
+#: shdoclc.rc:240
+msgid "Right Edge"
+msgstr "Jobb széle"
+
+#: shdoclc.rc:242
+msgid "Page Left"
+msgstr "Lap balra"
+
+#: shdoclc.rc:243
+msgid "Page Right"
+msgstr "Lap jobbra"
+
+#: shdoclc.rc:245
+msgid "Scroll Left"
+msgstr "Görgetés balra"
+
+#: shdoclc.rc:246
+msgid "Scroll Right"
+msgstr "Görgetés jobbra"
+
+#: shdoclc.rc:25
+msgid "Wine Internet Explorer"
+msgstr "Wine Internet Explorer"
+
+#: shdoclc.rc:30
+msgid "&w&bPage &p"
+msgstr "&w&bOldal &p"
+
+#: shdoclc.rc:31
+msgid "&u&b&d"
+msgstr "&u&b&d"
 
 #: clock.rc:29
 msgid "Ana&log"
