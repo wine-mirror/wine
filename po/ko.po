@@ -13,6 +13,830 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: crypt32.rc:27
+msgid "Authority Key Identifier"
+msgstr "접근 키 식별자"
+
+#: crypt32.rc:28
+msgid "Key Attributes"
+msgstr "키 속성"
+
+#: crypt32.rc:29
+msgid "Key Usage Restriction"
+msgstr "키 사용 제한"
+
+#: crypt32.rc:30
+msgid "Subject Alternative Name"
+msgstr "주제(subject) 대체 이름"
+
+#: crypt32.rc:31
+msgid "Issuer Alternative Name"
+msgstr "발행자 대체 이름"
+
+#: crypt32.rc:32
+msgid "Basic Constraints"
+msgstr "기본 제약"
+
+#: crypt32.rc:33
+msgid "Key Usage"
+msgstr "키 사용법"
+
+#: crypt32.rc:34
+msgid "Certificate Policies"
+msgstr "인증 방침"
+
+#: crypt32.rc:35
+msgid "Subject Key Identifier"
+msgstr "주제(Subject)키 식별자"
+
+#: crypt32.rc:36
+msgid "CRL Reason Code"
+msgstr "CRL 분별 코드"
+
+#: crypt32.rc:37
+msgid "CRL Distribution Points"
+msgstr "CRL 배포  지점"
+
+#: crypt32.rc:38
+msgid "Enhanced Key Usage"
+msgstr "확장된 키 사용법"
+
+#: crypt32.rc:39
+msgid "Authority Information Access"
+msgstr "권한 정보 접근"
+
+#: crypt32.rc:40
+msgid "Certificate Extensions"
+msgstr "인증서 확장(Certificate Extensions)"
+
+#: crypt32.rc:41
+msgid "Next Update Location"
+msgstr "다음 업데이트 위치"
+
+#: crypt32.rc:42
+msgid "Yes or No Trust"
+msgstr "신뢰(예 나 아니오)"
+
+#: crypt32.rc:43
+msgid "Email Address"
+msgstr "이메일 주소"
+
+#: crypt32.rc:44
+msgid "Unstructured Name"
+msgstr "비구조화 이름"
+
+#: crypt32.rc:45
+msgid "Content Type"
+msgstr "내용 형식"
+
+#: crypt32.rc:46
+msgid "Message Digest"
+msgstr "내용 요약"
+
+#: crypt32.rc:47
+msgid "Signing Time"
+msgstr "서명 시간"
+
+#: crypt32.rc:48
+msgid "Counter Sign"
+msgstr "역 서명(Counter Sign)"
+
+#: crypt32.rc:49
+msgid "Challenge Password"
+msgstr "암호 바꾸기"
+
+#: crypt32.rc:50
+msgid "Unstructured Address"
+msgstr "비구조화 주소"
+
+#: crypt32.rc:51
+msgid "SMIME Capabilities"
+msgstr "SMIME 특성"
+
+#: crypt32.rc:52
+msgid "Prefer Signed Data"
+msgstr "선호하는 사인된 데이타(Prefer Signed Data)"
+
+#: crypt32.rc:53
+msgid "CPS"
+msgstr "CPS"
+
+#: crypt32.rc:54
+msgid "User Notice"
+msgstr "사용자 통지"
+
+#: crypt32.rc:55
+msgid "On-line Certificate Status Protocol"
+msgstr "온라인 인증 상태 프로토콜"
+
+#: crypt32.rc:56
+msgid "Certification Authority Issuer"
+msgstr "인증서 접근 발행자"
+
+#: crypt32.rc:57
+msgid "Certification Template Name"
+msgstr "인증 형판 이름"
+
+#: crypt32.rc:58
+msgid "Certificate Type"
+msgstr "인증서 형태"
+
+#: crypt32.rc:59
+msgid "Certificate Manifold"
+msgstr "인증서 사본"
+
+#: crypt32.rc:60
+msgid "Netscape Cert Type"
+msgstr "넷스케이프 인증 형태"
+
+#: crypt32.rc:61
+msgid "Netscape Base URL"
+msgstr "넷스케이프 기본 웹주소"
+
+#: crypt32.rc:62
+msgid "Netscape Revocation URL"
+msgstr "넷스케이프 취소 웹주소"
+
+#: crypt32.rc:63
+msgid "Netscape CA Revocation URL"
+msgstr "넷스케이프 CA 취소 웹주소"
+
+#: crypt32.rc:64
+msgid "Netscape Cert Renewal URL"
+msgstr "넷스케이프 인증서 재개 웹주소"
+
+#: crypt32.rc:65
+msgid "Netscape CA Policy URL"
+msgstr "넷스케이프 CA 방침 URL"
+
+#: crypt32.rc:66
+msgid "Netscape SSL ServerName"
+msgstr "넷스케이프 SSL 서버이름"
+
+#: crypt32.rc:67
+msgid "Netscape Comment"
+msgstr "넷스케이프 설명"
+
+#: crypt32.rc:68
+msgid "SpcSpAgencyInfo"
+msgstr "SpcSp관리자 정보"
+
+#: crypt32.rc:69
+msgid "SpcFinancialCriteria"
+msgstr "Spc재정상 원칙"
+
+#: crypt32.rc:70
+msgid "SpcMinimalCriteria"
+msgstr "Spc최소 원칙"
+
+#: crypt32.rc:71
+msgid "Country/Region"
+msgstr "나라/지역"
+
+#: crypt32.rc:72
+msgid "Organization"
+msgstr "단체"
+
+#: crypt32.rc:73
+msgid "Organizational Unit"
+msgstr "단체(Organizational Unit)"
+
+#: crypt32.rc:74
+msgid "Common Name"
+msgstr "애칭"
+
+#: crypt32.rc:75
+msgid "Locality"
+msgstr "소재지"
+
+#: crypt32.rc:76
+msgid "State or Province"
+msgstr "주나 지방"
+
+#: crypt32.rc:77
+msgid "Title"
+msgstr "제목"
+
+#: crypt32.rc:78
+msgid "Given Name"
+msgstr "주어진 이름"
+
+#: crypt32.rc:79
+msgid "Initials"
+msgstr "머릿글자"
+
+#: crypt32.rc:80
+msgid "Sur Name"
+msgstr "성"
+
+#: crypt32.rc:81
+msgid "Domain Component"
+msgstr "주소 구성요소"
+
+#: crypt32.rc:82
+msgid "Street Address"
+msgstr "거리 주소"
+
+#: crypt32.rc:83
+msgid "Serial Number"
+msgstr "시리얼 번호"
+
+#: crypt32.rc:84
+msgid "CA Version"
+msgstr "CA 버젼"
+
+#: crypt32.rc:85
+msgid "Cross CA Version"
+msgstr "교차 CA 버젼"
+
+#: crypt32.rc:86
+msgid "Serialized Signature Serial Number"
+msgstr "연속된(Serialized) 서명 시리얼 넘버"
+
+#: crypt32.rc:87
+msgid "Principal Name"
+msgstr "주요한 이름"
+
+#: crypt32.rc:88
+msgid "Windows Product Update"
+msgstr "윈도우즈 제품 업데이트"
+
+#: crypt32.rc:89
+msgid "Enrollment Name Value Pair"
+msgstr "등록 이름 값의 쌍"
+
+#: crypt32.rc:90
+msgid "OS Version"
+msgstr "OS 버젼"
+
+#: crypt32.rc:91
+msgid "Enrollment CSP"
+msgstr "CSP 등록"
+
+#: crypt32.rc:92
+msgid "CRL Number"
+msgstr "CRL 번호"
+
+#: crypt32.rc:93
+msgid "Delta CRL Indicator"
+msgstr "델타 CRL 표시기"
+
+#: crypt32.rc:94
+msgid "Issuing Distribution Point"
+msgstr "발행자 배포 위치"
+
+#: crypt32.rc:95
+msgid "Freshest CRL"
+msgstr "최신 CRL"
+
+#: crypt32.rc:96
+msgid "Name Constraints"
+msgstr "이름 제약"
+
+#: crypt32.rc:97
+msgid "Policy Mappings"
+msgstr "정책 대응"
+
+#: crypt32.rc:98
+msgid "Policy Constraints"
+msgstr "정책 제약"
+
+#: crypt32.rc:99
+msgid "Cross-Certificate Distribution Points"
+msgstr "상호 인증 분배 위치"
+
+#: crypt32.rc:100
+msgid "Application Policies"
+msgstr "풀그림 방침"
+
+#: crypt32.rc:101
+msgid "Application Policy Mappings"
+msgstr "풀그림 정책 대응(Mappings)"
+
+#: crypt32.rc:102
+msgid "Application Policy Constraints"
+msgstr "풀그림 정책 제약"
+
+#: crypt32.rc:103
+msgid "CMC Data"
+msgstr "CMC 데이타"
+
+#: crypt32.rc:104
+msgid "CMC Response"
+msgstr "CMC 응답"
+
+#: crypt32.rc:105
+msgid "Unsigned CMC Request"
+msgstr "서명되지 않은CMC 요청"
+
+#: crypt32.rc:106
+msgid "CMC Status Info"
+msgstr "CMC 상태 정보"
+
+#: crypt32.rc:107
+msgid "CMC Extensions"
+msgstr "CMC 확장"
+
+#: crypt32.rc:108
+msgid "CMC Attributes"
+msgstr "CMC 속성"
+
+#: crypt32.rc:109
+msgid "PKCS 7 Data"
+msgstr "PKCS 7 데이타"
+
+#: crypt32.rc:110
+msgid "PKCS 7 Signed"
+msgstr "PKCS 7 서명"
+
+#: crypt32.rc:111
+msgid "PKCS 7 Enveloped"
+msgstr "PKCS 7 싸개"
+
+#: crypt32.rc:112
+msgid "PKCS 7 Signed Enveloped"
+msgstr "PKCS 7 서명된 싸개"
+
+#: crypt32.rc:113
+msgid "PKCS 7 Digested"
+msgstr "PKCS 7 요약"
+
+#: crypt32.rc:114
+msgid "PKCS 7 Encrypted"
+msgstr "PKCS 7 암호화"
+
+#: crypt32.rc:115
+msgid "Previous CA Certificate Hash"
+msgstr "이전의 CA 인증 해쉬"
+
+#: crypt32.rc:116
+msgid "Virtual Base CRL Number"
+msgstr "가상 기반 CRL 숫자(Virtual Base CRL Number)"
+
+#: crypt32.rc:117
+msgid "Next CRL Publish"
+msgstr "다음 CRL 발행"
+
+#: crypt32.rc:118
+msgid "CA Encryption Certificate"
+msgstr "CA 암호 인증"
+
+#: crypt32.rc:119
+msgid "Key Recovery Agent"
+msgstr "키 복구 관리자"
+
+#: crypt32.rc:120
+msgid "Certificate Template Information"
+msgstr "인증 주형(Template) 정보"
+
+#: crypt32.rc:121
+msgid "Enterprise Root OID"
+msgstr "기업 루트 OID"
+
+#: crypt32.rc:122
+msgid "Dummy Signer"
+msgstr "더미 사인자"
+
+#: crypt32.rc:123
+msgid "Encrypted Private Key"
+msgstr "암호화된 개인 키"
+
+#: crypt32.rc:124
+msgid "Published CRL Locations"
+msgstr "발행된 CRL 위치"
+
+#: crypt32.rc:125
+msgid "Enforce Certificate Chain Policy"
+msgstr "강제 인증 체인 정책(Enforce Certificate Chain Policy)"
+
+#: crypt32.rc:126
+msgid "Transaction Id"
+msgstr "처리 Id"
+
+#: crypt32.rc:127
+msgid "Sender Nonce"
+msgstr "임시 발송인"
+
+#: crypt32.rc:128
+msgid "Recipient Nonce"
+msgstr "임시 수령인"
+
+#: crypt32.rc:129
+msgid "Reg Info"
+msgstr "등록 정보"
+
+#: crypt32.rc:130
+msgid "Get Certificate"
+msgstr "인증서 얻기"
+
+#: crypt32.rc:131
+msgid "Get CRL"
+msgstr "CRL 얻기"
+
+#: crypt32.rc:132
+msgid "Revoke Request"
+msgstr "취소 요청"
+
+#: crypt32.rc:133
+msgid "Query Pending"
+msgstr "질문하는 중"
+
+#: crypt32.rc:134
+msgid "Certificate Trust List"
+msgstr "인증된 신뢰 목록"
+
+#: crypt32.rc:135
+msgid "Archived Key Certificate Hash"
+msgstr "압축된 키 인증 해쉬"
+
+#: crypt32.rc:136
+msgid "Private Key Usage Period"
+msgstr "개인 키 사용 기간"
+
+#: crypt32.rc:137
+msgid "Client Information"
+msgstr "클라이언트 정보"
+
+#: crypt32.rc:138
+msgid "Server Authentication"
+msgstr "서버 인증"
+
+#: crypt32.rc:139
+msgid "Client Authentication"
+msgstr "클라이언트 인증"
+
+#: crypt32.rc:140
+msgid "Code Signing"
+msgstr "코드 서명"
+
+#: crypt32.rc:141
+msgid "Secure Email"
+msgstr "보안 이메일"
+
+#: crypt32.rc:142
+msgid "Time Stamping"
+msgstr "시간 날인"
+
+#: crypt32.rc:143
+msgid "Microsoft Trust List Signing"
+msgstr "마이크로소프트 신뢰 목록 사인"
+
+#: crypt32.rc:144
+msgid "Microsoft Time Stamping"
+msgstr "마이크로소프트 시간 날인"
+
+#: crypt32.rc:145
+msgid "IP security end system"
+msgstr "IP 보안 종단 시스템"
+
+#: crypt32.rc:146
+msgid "IP security tunnel termination"
+msgstr "IP 보안  터널 종료(tunnel termination)"
+
+#: crypt32.rc:147
+msgid "IP security user"
+msgstr "IP 보안 사용자"
+
+#: crypt32.rc:148
+msgid "Encrypting File System"
+msgstr "암호화된 파일 시스템"
+
+#: crypt32.rc:149
+msgid "Windows Hardware Driver Verification"
+msgstr "윈도우즈 하드웨어 드라이버 검증"
+
+#: crypt32.rc:150
+msgid "Windows System Component Verification"
+msgstr "윈도우즈 시스템 구성요소 검증"
+
+#: crypt32.rc:151
+msgid "OEM Windows System Component Verification"
+msgstr "OEM 윈도우즈 시스템 구성요소 검증"
+
+#: crypt32.rc:152
+msgid "Embedded Windows System Component Verification"
+msgstr "내장된 윈도우즈 시스탬 구성요소 검중"
+
+#: crypt32.rc:153
+msgid "Key Pack Licenses"
+msgstr "키 팩 라이센스"
+
+#: crypt32.rc:154
+msgid "License Server Verification"
+msgstr "라이센스 서버 검증"
+
+#: crypt32.rc:155
+msgid "Smart Card Logon"
+msgstr "스마트 카드 로그인"
+
+#: crypt32.rc:156
+msgid "Digital Rights"
+msgstr "디지털 저작권"
+
+#: crypt32.rc:157
+msgid "Qualified Subordination"
+msgstr "자격있는 종속관계"
+
+#: crypt32.rc:158
+msgid "Key Recovery"
+msgstr "키 복구"
+
+#: crypt32.rc:159
+msgid "Document Signing"
+msgstr "문서 서명"
+
+#: crypt32.rc:160
+msgid "IP security IKE intermediate"
+msgstr "IP 보안  IKE 수단(intermediate)"
+
+#: crypt32.rc:161
+msgid "File Recovery"
+msgstr "파일 복구"
+
+#: crypt32.rc:162
+msgid "Root List Signer"
+msgstr "루트 목록 서명자"
+
+#: crypt32.rc:163
+msgid "All application policies"
+msgstr "모든 프로그램의 방침"
+
+#: crypt32.rc:164
+msgid "Directory Service Email Replication"
+msgstr "디렉토리 서비스 이메일 응답"
+
+#: crypt32.rc:165
+msgid "Certificate Request Agent"
+msgstr "인증 요구 관리자"
+
+#: crypt32.rc:166
+msgid "Lifetime Signing"
+msgstr "평생 서명"
+
+#: crypt32.rc:167
+msgid "All issuance policies"
+msgstr "모든 배포 방침"
+
+#: crypt32.rc:172
+msgid "Trusted Root Certification Authorities"
+msgstr "신회 할 수 있는 루트 검증기관"
+
+#: crypt32.rc:173
+msgid "Personal"
+msgstr "개인"
+
+#: crypt32.rc:174
+msgid "Intermediate Certification Authorities"
+msgstr "중개 검증 기관"
+
+#: crypt32.rc:175
+msgid "Other People"
+msgstr "다른 사람"
+
+#: crypt32.rc:176
+msgid "Trusted Publishers"
+msgstr "신뢰할 수 있는 발행자"
+
+#: crypt32.rc:177
+msgid "Untrusted Certificates"
+msgstr "신뢰 할 수 없는 인증서"
+
+#: crypt32.rc:182
+msgid "KeyID="
+msgstr "KeyID="
+
+#: crypt32.rc:183
+msgid "Certificate Issuer"
+msgstr "인증서 발행자 "
+
+#: crypt32.rc:184
+msgid "Certificate Serial Number="
+msgstr "인증서 시리얼 번호="
+
+#: crypt32.rc:185
+msgid "Other Name="
+msgstr "다른 이름="
+
+#: crypt32.rc:186
+msgid "Email Address="
+msgstr "이메일 주소="
+
+#: crypt32.rc:187
+msgid "DNS Name="
+msgstr "DNS 이름="
+
+#: crypt32.rc:188
+msgid "Directory Address"
+msgstr "디렉토리  주소"
+
+#: crypt32.rc:189
+msgid "URL="
+msgstr "URL="
+
+#: crypt32.rc:190
+msgid "IP Address="
+msgstr "IP 주소="
+
+#: crypt32.rc:191
+msgid "Mask="
+msgstr "마스크="
+
+#: crypt32.rc:192
+msgid "Registered ID="
+msgstr "등록된 ID="
+
+#: crypt32.rc:193
+msgid "Unknown Key Usage"
+msgstr "알수 없는 키 사용"
+
+#: crypt32.rc:194
+msgid "Subject Type="
+msgstr "제목 형식="
+
+#: crypt32.rc:195
+msgid "CA"
+msgstr "CA"
+
+#: crypt32.rc:196
+msgid "End Entity"
+msgstr "엔티티 끝"
+
+#: crypt32.rc:197
+msgid "Path Length Constraint="
+msgstr "제한된 경로 길이 ="
+
+#: crypt32.rc:198
+msgid "None"
+msgstr "없음"
+
+#: crypt32.rc:199
+msgid "Information Not Available"
+msgstr "정보가 없음"
+
+#: crypt32.rc:200
+msgid "Authority Info Access"
+msgstr "권한 정보 접근"
+
+#: crypt32.rc:201
+msgid "Access Method="
+msgstr "접근 방법="
+
+#: crypt32.rc:202
+msgid "OCSP"
+msgstr "OCSP"
+
+#: crypt32.rc:203
+msgid "CA Issuers"
+msgstr "CA 발행자"
+
+#: crypt32.rc:204
+msgid "Unknown Access Method"
+msgstr "알 수 없는 접근 방법"
+
+#: crypt32.rc:205
+msgid "Alternative Name"
+msgstr "대체 이름"
+
+#: crypt32.rc:206
+msgid "CRL Distribution Point"
+msgstr "CRL 분배 포인트"
+
+#: crypt32.rc:207
+msgid "Distribution Point Name"
+msgstr "분배 포인트 이름"
+
+#: crypt32.rc:208
+msgid "Full Name"
+msgstr "전체 이름"
+
+#: crypt32.rc:209
+msgid "RDN Name"
+msgstr "RDN 이름"
+
+#: crypt32.rc:210
+msgid "CRL Reason="
+msgstr "CRL 원인="
+
+#: crypt32.rc:211
+msgid "CRL Issuer"
+msgstr "CRL 발행자"
+
+#: crypt32.rc:212
+msgid "Key Compromise"
+msgstr "Key 협정"
+
+#: crypt32.rc:213
+msgid "CA Compromise"
+msgstr "CA 협정"
+
+#: crypt32.rc:214
+msgid "Affiliation Changed"
+msgstr "가입이 변경됨"
+
+#: crypt32.rc:215
+msgid "Superseded"
+msgstr "대체"
+
+#: crypt32.rc:216
+msgid "Operation Ceased"
+msgstr "작업 중지"
+
+#: crypt32.rc:217
+msgid "Certificate Hold"
+msgstr "인증서 유지"
+
+#: crypt32.rc:218
+msgid "Financial Information="
+msgstr "재무 정보="
+
+#: crypt32.rc:219
+msgid "Available"
+msgstr "가능함"
+
+#: crypt32.rc:220
+msgid "Not Available"
+msgstr "불가능함"
+
+#: crypt32.rc:221
+msgid "Meets Criteria="
+msgstr "맞는 기준 ="
+
+#: crypt32.rc:222 ipconfig.rc:44
+msgid "Yes"
+msgstr "예"
+
+#: crypt32.rc:223 ipconfig.rc:45
+msgid "No"
+msgstr "아니오"
+
+#: crypt32.rc:224
+msgid "Digital Signature"
+msgstr " 전자 서명"
+
+#: crypt32.rc:225
+msgid "Non-Repudiation"
+msgstr "부인 방지"
+
+#: crypt32.rc:226
+msgid "Key Encipherment"
+msgstr "키 암호화"
+
+#: crypt32.rc:227
+msgid "Data Encipherment"
+msgstr "데이터 암호화"
+
+#: crypt32.rc:228
+msgid "Key Agreement"
+msgstr "키 보증서t"
+
+#: crypt32.rc:229
+msgid "Certificate Signing"
+msgstr "증명서 서명"
+
+#: crypt32.rc:230
+msgid "Off-line CRL Signing"
+msgstr "오프라인 CRL 사인"
+
+#: crypt32.rc:231
+msgid "CRL Signing"
+msgstr "CRL 서명"
+
+#: crypt32.rc:232
+msgid "Encipher Only"
+msgstr "오직 암호화만 함"
+
+#: crypt32.rc:233
+msgid "Decipher Only"
+msgstr "오직 복호화만"
+
+#: crypt32.rc:234
+msgid "SSL Client Authentication"
+msgstr "SSL 클라이언트 인증"
+
+#: crypt32.rc:235
+msgid "SSL Server Authentication"
+msgstr "SSL 서버 인증"
+
+#: crypt32.rc:236
+msgid "S/MIME"
+msgstr "S/MIME"
+
+#: crypt32.rc:237
+msgid "Signature"
+msgstr "서명"
+
+#: crypt32.rc:238
+msgid "SSL CA"
+msgstr "SSL CA"
+
+#: crypt32.rc:239
+msgid "S/MIME CA"
+msgstr "S/MIME CA"
+
+#: crypt32.rc:240
+msgid "Signature CA"
+msgstr " CA 서명"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "등록 정보(&P)"
@@ -762,14 +1586,6 @@ msgstr "물리 주소"
 #: ipconfig.rc:43
 msgid "DHCP enabled"
 msgstr "DHCP 가능"
-
-#: ipconfig.rc:44
-msgid "Yes"
-msgstr "예"
-
-#: ipconfig.rc:45
-msgid "No"
-msgstr "아니오"
 
 #: ipconfig.rc:46
 msgid "Default gateway"

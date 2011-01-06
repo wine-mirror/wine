@@ -13,6 +13,830 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: crypt32.rc:27
+msgid "Authority Key Identifier"
+msgstr "Identifikator for autentiseringsnøkkel"
+
+#: crypt32.rc:28
+msgid "Key Attributes"
+msgstr "Nøkkelegenskaper"
+
+#: crypt32.rc:29
+msgid "Key Usage Restriction"
+msgstr "Begrensning av nøkkelbruk"
+
+#: crypt32.rc:30
+msgid "Subject Alternative Name"
+msgstr "Alternativt navn for emne"
+
+#: crypt32.rc:31
+msgid "Issuer Alternative Name"
+msgstr "Alternativt navn for utsteder"
+
+#: crypt32.rc:32
+msgid "Basic Constraints"
+msgstr "Basisbegrensninger"
+
+#: crypt32.rc:33
+msgid "Key Usage"
+msgstr "Nøkkelbruk"
+
+#: crypt32.rc:34
+msgid "Certificate Policies"
+msgstr "Sertifikatregler"
+
+#: crypt32.rc:35
+msgid "Subject Key Identifier"
+msgstr "Identifiserer for emnenøkkel"
+
+#: crypt32.rc:36
+msgid "CRL Reason Code"
+msgstr "CRL-grunnkode"
+
+#: crypt32.rc:37
+msgid "CRL Distribution Points"
+msgstr "CRL-distribusjonspunkter"
+
+#: crypt32.rc:38
+msgid "Enhanced Key Usage"
+msgstr "Forbedret nøkkelbruk"
+
+#: crypt32.rc:39
+msgid "Authority Information Access"
+msgstr "Myndighet-informasjonstilgang"
+
+#: crypt32.rc:40
+msgid "Certificate Extensions"
+msgstr "Sertifikatutvidelser"
+
+#: crypt32.rc:41
+msgid "Next Update Location"
+msgstr "Neste oppdateringsplassering"
+
+#: crypt32.rc:42
+msgid "Yes or No Trust"
+msgstr "Ja eller nei-tillit"
+
+#: crypt32.rc:43
+msgid "Email Address"
+msgstr "E-postadresse"
+
+#: crypt32.rc:44
+msgid "Unstructured Name"
+msgstr "Ustrukturert navn"
+
+#: crypt32.rc:45
+msgid "Content Type"
+msgstr "Innholdstype"
+
+#: crypt32.rc:46
+msgid "Message Digest"
+msgstr "Meldingssammendrag"
+
+#: crypt32.rc:47
+msgid "Signing Time"
+msgstr "Signeringstidspunkt"
+
+#: crypt32.rc:48
+msgid "Counter Sign"
+msgstr "Tellersymbol"
+
+#: crypt32.rc:49
+msgid "Challenge Password"
+msgstr "Utfordre passord"
+
+#: crypt32.rc:50
+msgid "Unstructured Address"
+msgstr "Ustrukturert adresse"
+
+#: crypt32.rc:51
+msgid "SMIME Capabilities"
+msgstr "SMIME-evner"
+
+#: crypt32.rc:52
+msgid "Prefer Signed Data"
+msgstr "Fortrekk signert data"
+
+#: crypt32.rc:53
+msgid "CPS"
+msgstr "CPS"
+
+#: crypt32.rc:54
+msgid "User Notice"
+msgstr "Brukervarsel"
+
+#: crypt32.rc:55
+msgid "On-line Certificate Status Protocol"
+msgstr "On-line Certificate Status Protocol"
+
+#: crypt32.rc:56
+msgid "Certification Authority Issuer"
+msgstr "Utsteder for sertifiseringsautoritet"
+
+#: crypt32.rc:57
+msgid "Certification Template Name"
+msgstr "Navn på sertifiseringsmal"
+
+#: crypt32.rc:58
+msgid "Certificate Type"
+msgstr "Sertifikattype"
+
+#: crypt32.rc:59
+msgid "Certificate Manifold"
+msgstr "Sertifikatmangfold"
+
+#: crypt32.rc:60
+msgid "Netscape Cert Type"
+msgstr "Netscape-sertifikattype"
+
+#: crypt32.rc:61
+msgid "Netscape Base URL"
+msgstr "Netscape-basis-URL"
+
+#: crypt32.rc:62
+msgid "Netscape Revocation URL"
+msgstr "Netscape-tilbakekalling-URL"
+
+#: crypt32.rc:63
+msgid "Netscape CA Revocation URL"
+msgstr "Netscape-CA-tilbakekalling-URLURL"
+
+#: crypt32.rc:64
+msgid "Netscape Cert Renewal URL"
+msgstr "Netscape-sertifikatfornying-URL"
+
+#: crypt32.rc:65
+msgid "Netscape CA Policy URL"
+msgstr "Netscape-CA-politikk-URL"
+
+#: crypt32.rc:66
+msgid "Netscape SSL ServerName"
+msgstr "Netscape-SSL-tjenernavn"
+
+#: crypt32.rc:67
+msgid "Netscape Comment"
+msgstr "Netscape-kommentar"
+
+#: crypt32.rc:68
+msgid "SpcSpAgencyInfo"
+msgstr "SpcSpAgencyInfo"
+
+#: crypt32.rc:69
+msgid "SpcFinancialCriteria"
+msgstr "SpcFinancialCriteria"
+
+#: crypt32.rc:70
+msgid "SpcMinimalCriteria"
+msgstr "SpcMinimalCriteria"
+
+#: crypt32.rc:71
+msgid "Country/Region"
+msgstr "Land/Region"
+
+#: crypt32.rc:72
+msgid "Organization"
+msgstr "Organisasjon"
+
+#: crypt32.rc:73
+msgid "Organizational Unit"
+msgstr "Organisasjonsell enhet"
+
+#: crypt32.rc:74
+msgid "Common Name"
+msgstr "Vanlig navn"
+
+#: crypt32.rc:75
+msgid "Locality"
+msgstr "Lokalitet"
+
+#: crypt32.rc:76
+msgid "State or Province"
+msgstr "Fylke"
+
+#: crypt32.rc:77
+msgid "Title"
+msgstr "Tittel"
+
+#: crypt32.rc:78
+msgid "Given Name"
+msgstr "Oppgitt navn"
+
+#: crypt32.rc:79
+msgid "Initials"
+msgstr "Initialer"
+
+#: crypt32.rc:80
+msgid "Sur Name"
+msgstr "Etternavn"
+
+#: crypt32.rc:81
+msgid "Domain Component"
+msgstr "Domenekomponent"
+
+#: crypt32.rc:82
+msgid "Street Address"
+msgstr "Gateadresse"
+
+#: crypt32.rc:83
+msgid "Serial Number"
+msgstr "Serienummer"
+
+#: crypt32.rc:84
+msgid "CA Version"
+msgstr "CA-versjon"
+
+#: crypt32.rc:85
+msgid "Cross CA Version"
+msgstr "Kryss CA-versjon"
+
+#: crypt32.rc:86
+msgid "Serialized Signature Serial Number"
+msgstr "Serienummer for serialisert signatur"
+
+#: crypt32.rc:87
+msgid "Principal Name"
+msgstr "Hovednavn"
+
+#: crypt32.rc:88
+msgid "Windows Product Update"
+msgstr "Windows-produktoppdatering"
+
+#: crypt32.rc:89
+msgid "Enrollment Name Value Pair"
+msgstr "Innrullerings-navneverdipar"
+
+#: crypt32.rc:90
+msgid "OS Version"
+msgstr "OS-versjon"
+
+#: crypt32.rc:91
+msgid "Enrollment CSP"
+msgstr "Innrullerings-CSP"
+
+#: crypt32.rc:92
+msgid "CRL Number"
+msgstr "CRL-nummer"
+
+#: crypt32.rc:93
+msgid "Delta CRL Indicator"
+msgstr "Delta CRL-indikator"
+
+#: crypt32.rc:94
+msgid "Issuing Distribution Point"
+msgstr "Utsteder distribusjonspunkt"
+
+#: crypt32.rc:95
+msgid "Freshest CRL"
+msgstr "Nyeste CRL"
+
+#: crypt32.rc:96
+msgid "Name Constraints"
+msgstr "Navnebegrensninger"
+
+#: crypt32.rc:97
+msgid "Policy Mappings"
+msgstr "Framgangsmåtekartlegginger"
+
+#: crypt32.rc:98
+msgid "Policy Constraints"
+msgstr "Framgangsmåtebegresninger"
+
+#: crypt32.rc:99
+msgid "Cross-Certificate Distribution Points"
+msgstr "Distribusjonspunkter for kryss-sertifikat"
+
+#: crypt32.rc:100
+msgid "Application Policies"
+msgstr "Framgangsmåter for programmers"
+
+#: crypt32.rc:101
+msgid "Application Policy Mappings"
+msgstr "Framgangsmåtekartlegginger for programmer"
+
+#: crypt32.rc:102
+msgid "Application Policy Constraints"
+msgstr "Framgangsmåtebegrensninger for programmer"
+
+#: crypt32.rc:103
+msgid "CMC Data"
+msgstr "CMC-data"
+
+#: crypt32.rc:104
+msgid "CMC Response"
+msgstr "CMS-svar"
+
+#: crypt32.rc:105
+msgid "Unsigned CMC Request"
+msgstr "Usignert CMC-forespørsel"
+
+#: crypt32.rc:106
+msgid "CMC Status Info"
+msgstr "CMC-statusinformasjon"
+
+#: crypt32.rc:107
+msgid "CMC Extensions"
+msgstr "CMC-utvidelser"
+
+#: crypt32.rc:108
+msgid "CMC Attributes"
+msgstr "CMC-egenskaper"
+
+#: crypt32.rc:109
+msgid "PKCS 7 Data"
+msgstr "PKCS 7 Data"
+
+#: crypt32.rc:110
+msgid "PKCS 7 Signed"
+msgstr "PKCS 7 Signert"
+
+#: crypt32.rc:111
+msgid "PKCS 7 Enveloped"
+msgstr "PKCS 7 Innpakket"
+
+#: crypt32.rc:112
+msgid "PKCS 7 Signed Enveloped"
+msgstr "PKCS 7 Signert Innpakket"
+
+#: crypt32.rc:113
+msgid "PKCS 7 Digested"
+msgstr "PKCS 7 Fordøyet"
+
+#: crypt32.rc:114
+msgid "PKCS 7 Encrypted"
+msgstr "PKCS 7 Kryptert"
+
+#: crypt32.rc:115
+msgid "Previous CA Certificate Hash"
+msgstr "Forrige CA-sertifikatlappskaus"
+
+#: crypt32.rc:116
+msgid "Virtual Base CRL Number"
+msgstr "Virtuelt basis-CRL-nummer"
+
+#: crypt32.rc:117
+msgid "Next CRL Publish"
+msgstr "Neste CRL-utgiving"
+
+#: crypt32.rc:118
+msgid "CA Encryption Certificate"
+msgstr "CA-krypteringssertifikat"
+
+#: crypt32.rc:119
+msgid "Key Recovery Agent"
+msgstr "Agent for nøkkelgjenoppretting"
+
+#: crypt32.rc:120
+msgid "Certificate Template Information"
+msgstr "Informasjon om sertifikatmal"
+
+#: crypt32.rc:121
+msgid "Enterprise Root OID"
+msgstr "Storselskap-rot-OID"
+
+#: crypt32.rc:122
+msgid "Dummy Signer"
+msgstr "Tullesignerer"
+
+#: crypt32.rc:123
+msgid "Encrypted Private Key"
+msgstr "Kryptert privat nøkkel"
+
+#: crypt32.rc:124
+msgid "Published CRL Locations"
+msgstr "Publisert CRL-plasseringer"
+
+#: crypt32.rc:125
+msgid "Enforce Certificate Chain Policy"
+msgstr "Håndhev sertifikatlenkepolitikk"
+
+#: crypt32.rc:126
+msgid "Transaction Id"
+msgstr "Transaksjons-id"
+
+#: crypt32.rc:127
+msgid "Sender Nonce"
+msgstr "Gjeldende sender"
+
+#: crypt32.rc:128
+msgid "Recipient Nonce"
+msgstr "Gjeldende mottaker"
+
+#: crypt32.rc:129
+msgid "Reg Info"
+msgstr "Reg info"
+
+#: crypt32.rc:130
+msgid "Get Certificate"
+msgstr "Hent sertifikat"
+
+#: crypt32.rc:131
+msgid "Get CRL"
+msgstr "Hent CRL"
+
+#: crypt32.rc:132
+msgid "Revoke Request"
+msgstr "Gjenoppliv forespørsel"
+
+#: crypt32.rc:133
+msgid "Query Pending"
+msgstr "Spørring venter"
+
+#: crypt32.rc:134
+msgid "Certificate Trust List"
+msgstr "Tillitsliste for sertifikater"
+
+#: crypt32.rc:135
+msgid "Archived Key Certificate Hash"
+msgstr "Arkivert nøkkelsertifikatlappskaus"
+
+#: crypt32.rc:136
+msgid "Private Key Usage Period"
+msgstr "Privat nøkkelbrukperiode"
+
+#: crypt32.rc:137
+msgid "Client Information"
+msgstr "Klientinformasjon"
+
+#: crypt32.rc:138
+msgid "Server Authentication"
+msgstr "Tjenerautentisering"
+
+#: crypt32.rc:139
+msgid "Client Authentication"
+msgstr "Klientautentisering"
+
+#: crypt32.rc:140
+msgid "Code Signing"
+msgstr "Kodesignering"
+
+#: crypt32.rc:141
+msgid "Secure Email"
+msgstr "Sikker e-post"
+
+#: crypt32.rc:142
+msgid "Time Stamping"
+msgstr "Tidsstempling"
+
+#: crypt32.rc:143
+msgid "Microsoft Trust List Signing"
+msgstr "Microsoft tillitslistesignering"
+
+#: crypt32.rc:144
+msgid "Microsoft Time Stamping"
+msgstr "Microsoft tidsstempling"
+
+#: crypt32.rc:145
+msgid "IP security end system"
+msgstr "IP-sikkerhetsendesystem"
+
+#: crypt32.rc:146
+msgid "IP security tunnel termination"
+msgstr "IP-sikkerhetstunnel-terminering"
+
+#: crypt32.rc:147
+msgid "IP security user"
+msgstr "IP-sikkerhetsbruker"
+
+#: crypt32.rc:148
+msgid "Encrypting File System"
+msgstr "Krypterer filsystem"
+
+#: crypt32.rc:149
+msgid "Windows Hardware Driver Verification"
+msgstr "Windows maskinvaredriver-godkjenning"
+
+#: crypt32.rc:150
+msgid "Windows System Component Verification"
+msgstr "Windows sytemkomponent-godkjenning"
+
+#: crypt32.rc:151
+msgid "OEM Windows System Component Verification"
+msgstr "OEM Windows systemkomponent-godkjenning"
+
+#: crypt32.rc:152
+msgid "Embedded Windows System Component Verification"
+msgstr "Innebygget Windows systemkomponent-godkjenning"
+
+#: crypt32.rc:153
+msgid "Key Pack Licenses"
+msgstr "Nøkkelpakkelisenser"
+
+#: crypt32.rc:154
+msgid "License Server Verification"
+msgstr "Lisenstjener-verifisering"
+
+#: crypt32.rc:155
+msgid "Smart Card Logon"
+msgstr "Smart Card-pålogging"
+
+#: crypt32.rc:156
+msgid "Digital Rights"
+msgstr "Digitale rettigheter"
+
+#: crypt32.rc:157
+msgid "Qualified Subordination"
+msgstr "Kvalifisert underordinering"
+
+#: crypt32.rc:158
+msgid "Key Recovery"
+msgstr "Nøkkelgjenoppretting"
+
+#: crypt32.rc:159
+msgid "Document Signing"
+msgstr "Dokumentsignering"
+
+#: crypt32.rc:160
+msgid "IP security IKE intermediate"
+msgstr "IP-sikkerhet IKE viderekommen"
+
+#: crypt32.rc:161
+msgid "File Recovery"
+msgstr "Filgjenoppretting"
+
+#: crypt32.rc:162
+msgid "Root List Signer"
+msgstr "Rotlistesignerer"
+
+#: crypt32.rc:163
+msgid "All application policies"
+msgstr "Alle framgangsmåter for programmer"
+
+#: crypt32.rc:164
+msgid "Directory Service Email Replication"
+msgstr "Katalogtjeneste e-postreplikering"
+
+#: crypt32.rc:165
+msgid "Certificate Request Agent"
+msgstr "Agent for sertifikatforespørsler"
+
+#: crypt32.rc:166
+msgid "Lifetime Signing"
+msgstr "Livstidsignering"
+
+#: crypt32.rc:167
+msgid "All issuance policies"
+msgstr "Alle framgangsmåter for utsteding"
+
+#: crypt32.rc:172
+msgid "Trusted Root Certification Authorities"
+msgstr "Klarerte rotsertifiseringsinstanser"
+
+#: crypt32.rc:173
+msgid "Personal"
+msgstr "Personlig"
+
+#: crypt32.rc:174
+msgid "Intermediate Certification Authorities"
+msgstr "Mellomliggende sertifiseringsinstanser"
+
+#: crypt32.rc:175
+msgid "Other People"
+msgstr "Andre personer"
+
+#: crypt32.rc:176
+msgid "Trusted Publishers"
+msgstr "Betrodde utgivere"
+
+#: crypt32.rc:177
+msgid "Untrusted Certificates"
+msgstr "Mistrodde sertifikater"
+
+#: crypt32.rc:182
+msgid "KeyID="
+msgstr "NøkkelID="
+
+#: crypt32.rc:183
+msgid "Certificate Issuer"
+msgstr "Utsteder"
+
+#: crypt32.rc:184
+msgid "Certificate Serial Number="
+msgstr "Serienummer="
+
+#: crypt32.rc:185
+msgid "Other Name="
+msgstr "Annet navn="
+
+#: crypt32.rc:186
+msgid "Email Address="
+msgstr "E-postadresse="
+
+#: crypt32.rc:187
+msgid "DNS Name="
+msgstr "DNS-navn="
+
+#: crypt32.rc:188
+msgid "Directory Address"
+msgstr "Katalogadresse"
+
+#: crypt32.rc:189
+msgid "URL="
+msgstr "URL="
+
+#: crypt32.rc:190
+msgid "IP Address="
+msgstr "IP-adresse="
+
+#: crypt32.rc:191
+msgid "Mask="
+msgstr "Mask="
+
+#: crypt32.rc:192
+msgid "Registered ID="
+msgstr "Registrert ID="
+
+#: crypt32.rc:193
+msgid "Unknown Key Usage"
+msgstr "Ukjent nøkkelbruk"
+
+#: crypt32.rc:194
+msgid "Subject Type="
+msgstr "Emnetype="
+
+#: crypt32.rc:195
+msgid "CA"
+msgstr "CA"
+
+#: crypt32.rc:196
+msgid "End Entity"
+msgstr "Sluttenhet"
+
+#: crypt32.rc:197
+msgid "Path Length Constraint="
+msgstr "Begrensning på stilengde="
+
+#: crypt32.rc:198
+msgid "None"
+msgstr "Ingen"
+
+#: crypt32.rc:199
+msgid "Information Not Available"
+msgstr "Informasjonen er utilgjengelig"
+
+#: crypt32.rc:200
+msgid "Authority Info Access"
+msgstr "Tilgang til autoritetsinfo"
+
+#: crypt32.rc:201
+msgid "Access Method="
+msgstr "Tilgangsmetode="
+
+#: crypt32.rc:202
+msgid "OCSP"
+msgstr "OCSP"
+
+#: crypt32.rc:203
+msgid "CA Issuers"
+msgstr "CA-utstedere"
+
+#: crypt32.rc:204
+msgid "Unknown Access Method"
+msgstr "Ukjent tilgangsmetode"
+
+#: crypt32.rc:205
+msgid "Alternative Name"
+msgstr "Alternativt navn"
+
+#: crypt32.rc:206
+msgid "CRL Distribution Point"
+msgstr "Distribusjonspunkt for CRL"
+
+#: crypt32.rc:207
+msgid "Distribution Point Name"
+msgstr "Navn på distribusjonspunkt"
+
+#: crypt32.rc:208
+msgid "Full Name"
+msgstr "Fult navn"
+
+#: crypt32.rc:209
+msgid "RDN Name"
+msgstr "RDN-navn"
+
+#: crypt32.rc:210
+msgid "CRL Reason="
+msgstr "CRL-årsak="
+
+#: crypt32.rc:211
+msgid "CRL Issuer"
+msgstr "CRL-utsteder"
+
+#: crypt32.rc:212
+msgid "Key Compromise"
+msgstr "Nøkellkompromiss"
+
+#: crypt32.rc:213
+msgid "CA Compromise"
+msgstr "CA-kompromiss"
+
+#: crypt32.rc:214
+msgid "Affiliation Changed"
+msgstr "Tilslutning endret"
+
+#: crypt32.rc:215
+msgid "Superseded"
+msgstr "Erstattet"
+
+#: crypt32.rc:216
+msgid "Operation Ceased"
+msgstr "Operasjonen opphørte"
+
+#: crypt32.rc:217
+msgid "Certificate Hold"
+msgstr "Sertifikatet er holdt tilbake"
+
+#: crypt32.rc:218
+msgid "Financial Information="
+msgstr "Finansiell informasjon="
+
+#: crypt32.rc:219
+msgid "Available"
+msgstr "Tilgjengelig"
+
+#: crypt32.rc:220
+msgid "Not Available"
+msgstr "Ikke tilgjengelig"
+
+#: crypt32.rc:221
+msgid "Meets Criteria="
+msgstr "Møter kriterier="
+
+#: crypt32.rc:222 ipconfig.rc:44
+msgid "Yes"
+msgstr "Ja"
+
+#: crypt32.rc:223 ipconfig.rc:45
+msgid "No"
+msgstr "Nei"
+
+#: crypt32.rc:224
+msgid "Digital Signature"
+msgstr "Digital signatur"
+
+#: crypt32.rc:225
+msgid "Non-Repudiation"
+msgstr "Kan ikke tilbakekalles"
+
+#: crypt32.rc:226
+msgid "Key Encipherment"
+msgstr "Nøkkelkryptering"
+
+#: crypt32.rc:227
+msgid "Data Encipherment"
+msgstr "Datakryptering"
+
+#: crypt32.rc:228
+msgid "Key Agreement"
+msgstr "Nøkkel-avtale"
+
+#: crypt32.rc:229
+msgid "Certificate Signing"
+msgstr "Sertifikatsignering"
+
+#: crypt32.rc:230
+msgid "Off-line CRL Signing"
+msgstr "Lokal CRL-signering"
+
+#: crypt32.rc:231
+msgid "CRL Signing"
+msgstr "CRL-signering"
+
+#: crypt32.rc:232
+msgid "Encipher Only"
+msgstr "Kun kryptering"
+
+#: crypt32.rc:233
+msgid "Decipher Only"
+msgstr "Kun dekryptering"
+
+#: crypt32.rc:234
+msgid "SSL Client Authentication"
+msgstr "Autentisering av SSL-klient"
+
+#: crypt32.rc:235
+msgid "SSL Server Authentication"
+msgstr "Autentisering av SSL-tjener"
+
+#: crypt32.rc:236
+msgid "S/MIME"
+msgstr "S/MIME"
+
+#: crypt32.rc:237
+msgid "Signature"
+msgstr "Signatur"
+
+#: crypt32.rc:238
+msgid "SSL CA"
+msgstr "SSL CA"
+
+#: crypt32.rc:239
+msgid "S/MIME CA"
+msgstr "S/MIME CA"
+
+#: crypt32.rc:240
+msgid "Signature CA"
+msgstr "Signatur CA"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Egenskaper"
@@ -757,14 +1581,6 @@ msgstr ""
 
 #: ipconfig.rc:43
 msgid "DHCP enabled"
-msgstr ""
-
-#: ipconfig.rc:44
-msgid "Yes"
-msgstr ""
-
-#: ipconfig.rc:45
-msgid "No"
 msgstr ""
 
 #: ipconfig.rc:46

@@ -30,22 +30,7 @@ C_SRCS = \
 	store.c \
 	str.c
 
-RC_SRCS = \
-	crypt32_De.rc \
-	crypt32_En.rc \
-	crypt32_Fr.rc \
-	crypt32_Hu.rc \
-	crypt32_It.rc \
-	crypt32_Ja.rc \
-	crypt32_Ko.rc \
-	crypt32_Lt.rc \
-	crypt32_Nl.rc \
-	crypt32_No.rc \
-	crypt32_Pl.rc \
-	crypt32_Pt.rc \
-	crypt32_Ro.rc \
-	crypt32_Sv.rc \
-	crypt32_Uk.rc \
-	version.rc
+RC_SRCS = crypt32.rc
+PO_SRCS = crypt32.rc
 
 @MAKE_DLL_RULES@
