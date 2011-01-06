@@ -1635,6 +1635,624 @@ msgstr "&w&bPagina &p"
 msgid "&u&b&d"
 msgstr "&u&b&d"
 
+#: winmm.rc:28
+msgid "The specified command was carried out."
+msgstr "De gespecificeerde opdracht is uitgevoerd."
+
+#: winmm.rc:29
+msgid "Undefined external error."
+msgstr "Ongedefinieerde fout van buitenaf."
+
+#: winmm.rc:30
+msgid "A device ID has been used that is out of range for your system."
+msgstr ""
+"Een apparaat-ID werd gebruikt dat buiten de grenzen van uw systeem ligt."
+
+#: winmm.rc:31
+msgid "The driver was not enabled."
+msgstr "De driver is niet geactiveerd."
+
+#: winmm.rc:32
+msgid ""
+"The specified device is already in use. Wait until it is free, and then try "
+"again."
+msgstr ""
+"Het gewenste apparaat is in gebruik. Wacht totdat het vrijkomt en probeer "
+"het dan opnieuw."
+
+#: winmm.rc:33
+msgid "The specified device handle is invalid."
+msgstr "De gespecificeerde apparaatverwijzing is ongeldig."
+
+#: winmm.rc:34
+msgid "There is no driver installed on your system !\n"
+msgstr "Er is geen driver geïnstalleerd op uw systeem !\n"
+
+#: winmm.rc:35
+msgid ""
+"Not enough memory available for this task. Quit one or more applications to "
+"increase available memory, and then try again."
+msgstr ""
+"Er is niet genoeg geheugen beschikbaar voor deze taak. Sluit enkele "
+"programma's af om meer geheugen vrij te krijgen en doe dan nog een poging."
+
+#: winmm.rc:36
+msgid ""
+"This function is not supported. Use the Capabilities function to determine "
+"which functions and messages the driver supports."
+msgstr ""
+"Deze functie wordt niet ondersteund. Gebruik de 'Capabilities' functie om "
+"uit te zoeken welke toepassingen en boodschappen de driver ondersteund."
+
+#: winmm.rc:37
+msgid "An error number was specified that is not defined in the system."
+msgstr "Een niet binnen het systeem bekend foutnummer werd gebruikt."
+
+#: winmm.rc:38
+msgid "An invalid flag was passed to a system function."
+msgstr "Een ongeldige vlag werd aan een systeemfunctie gevoerd."
+
+#: winmm.rc:39
+msgid "An invalid parameter was passed to a system function."
+msgstr "Een systeemfunctie kreeg een ongeldige parameter te eten."
+
+#: winmm.rc:42
+msgid ""
+"The specified format is not supported or cannot be translated. Use the "
+"Capabilities function to determine the supported formats"
+msgstr ""
+"Het aangegeven formaat wordt niet ondersteund of geconverteerd. Gebruik de "
+"'Capabilities' functie om de ondersteunde formaten te vinden"
+
+#: winmm.rc:43 winmm.rc:49
+msgid ""
+"Cannot perform this operation while media data is still playing. Reset the "
+"device, or wait until the data is finished playing."
+msgstr ""
+"Kan deze opdracht niet uitvoeren zolang er afgespeeld wordt. Herstart het "
+"apparaat of wacht totdat het apparaat klaar is met spelen."
+
+#: winmm.rc:44
+msgid ""
+"The wave header was not prepared. Use the Prepare function to prepare the "
+"header, and then try again."
+msgstr ""
+"De Wave Header was niet aanwezig. Gebruik de 'Prepare' functie om de Header "
+"te genereren en probeer het dan opnieuw."
+
+#: winmm.rc:45
+msgid ""
+"Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
+"and then try again."
+msgstr ""
+"Kan het apparaat niet openen zonder de WAVE_ALLOWSYNC vlag. Zet de vlag en "
+"probeer opnieuw."
+
+#: winmm.rc:48
+msgid ""
+"The MIDI header was not prepared. Use the Prepare function to prepare the "
+"header, and then try again."
+msgstr ""
+"De MIDI Header was niet aanwezig. Gebruik de 'Prepare' functie om de Header "
+"te genereren en probeer het dan opnieuw."
+
+#: winmm.rc:50
+msgid ""
+"A MIDI map was not found. There may be a problem with the driver, or the "
+"MIDIMAP.CFG file may be corrupt or missing."
+msgstr ""
+"Er is geen MIDI Map gevonden. Er zou een driver probleem kunnen zijn of de "
+"MIDIMAP.CFG file is verminkt of afwezig."
+
+#: winmm.rc:51
+msgid ""
+"The port is transmitting data to the device. Wait until the data has been "
+"transmitted, and then try again."
+msgstr ""
+"De poort is bezig data ter versturen naar het apparaat. Wacht totdat alle "
+"data is verstuurd en probeer het dan opnieuw."
+
+#: winmm.rc:52
+msgid ""
+"The current MIDI Mapper setup refers to a MIDI device that is not installed "
+"on the system. Use MIDI Mapper to edit the setup."
+msgstr ""
+"De huidige MIDI Mapper setup verwijst naar een MIDI-apparaat dat niet op het "
+"systeem aanwezig is. Gebruik MIDI Mapper om de instellingen aan te passen."
+
+#: winmm.rc:53
+msgid ""
+"The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
+"Windows SYSTEM directory, and then try again."
+msgstr ""
+"De huidige MIDI setup is beschadigd. Kopieer de originele MIDIMAP.CFG file "
+"naar de Windows SYSTEM directory en probeer het daarna weer."
+
+#: winmm.rc:56
+msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
+msgstr ""
+"Ongeldig MCI-apparaat-ID. Gebruik het teruggegeven ID als u dit MCI-apparaat "
+"opent."
+
+#: winmm.rc:57
+msgid "The driver cannot recognize the specified command parameter."
+msgstr "De driver herkent de opgegeven opdrachtparameter niet."
+
+#: winmm.rc:58
+msgid "The driver cannot recognize the specified command."
+msgstr "De driver herkent de opgegeven opdracht niet."
+
+#: winmm.rc:59
+msgid ""
+"There is a problem with your media device. Make sure it is working correctly "
+"or contact the device manufacturer."
+msgstr ""
+"Er is een probleem met uw media-apparaat. Controleer of hij correct werkt of "
+"neem contact op met de leverancier."
+
+#: winmm.rc:60
+msgid "The specified device is not open or is not recognized by MCI."
+msgstr "Het opgegeven apparaat is niet geopend of wordt niet door MCI herkend."
+
+#: winmm.rc:61
+msgid ""
+"Not enough memory available for this task.\n"
+"Quit one or more applications to increase available memory, and then try "
+"again."
+msgstr ""
+"Er is niet genoeg geheugen beschikbaar voor deze taak. Sluit enkele "
+"programma's af om meer geheugen vrij te krijgen en probeer opnieuw."
+
+#: winmm.rc:62
+msgid ""
+"The device name is already being used as an alias by this application. Use a "
+"unique alias."
+msgstr ""
+"Een apparaat met die naam is al als alias in gebruik door deze applicatie. "
+"Gebruik een unieke alias."
+
+#: winmm.rc:63
+msgid ""
+"There is an undetectable problem in loading the specified device driver."
+msgstr ""
+"Er is een onbekende fout ontstaan tijdens het laden van de apparaatdriver."
+
+#: winmm.rc:64
+msgid "No command was specified."
+msgstr "Er was geen opdracht opgegeven."
+
+#: winmm.rc:65
+msgid ""
+"The output string was too large to fit in the return buffer. Increase the "
+"size of the buffer."
+msgstr ""
+"De output string was te groot om in de antwoordbuffer te passen. Vergroot de "
+"buffer."
+
+#: winmm.rc:66
+msgid ""
+"The specified command requires a character-string parameter. Please provide "
+"one."
+msgstr ""
+"De gegeven opdracht vereist een character-stringparameter. Lever er s.v.p. "
+"één aan"
+
+#: winmm.rc:67
+msgid "The specified integer is invalid for this command."
+msgstr "De gegeven integer is niet geldig bij dit commando."
+
+#: winmm.rc:68
+msgid ""
+"The device driver returned an invalid return type. Check with the device "
+"manufacturer about obtaining a new driver."
+msgstr ""
+"De apparaat driver retourneerde een ongeldige waarde. Vraag de fabrikant om "
+"een andere driver."
+
+#: winmm.rc:69
+msgid ""
+"There is a problem with the device driver. Check with the device "
+"manufacturer about obtaining a new driver."
+msgstr ""
+"Er is een probleem met de apparaat driver. Vraag de fabrikant om een andere "
+"driver."
+
+#: winmm.rc:70
+msgid "The specified command requires a parameter. Please supply one."
+msgstr "De gegeven opdracht heeft een parameter nodig. Vult u deze a.u.b. in."
+
+#: winmm.rc:71
+msgid "The MCI device you are using does not support the specified command."
+msgstr "Het MCI-apparaat dat u gebruikt ondersteund het gegeven commando niet."
+
+#: winmm.rc:72
+msgid ""
+"Cannot find the specified file. Make sure the path and filename are correct."
+msgstr ""
+"Kan het opgegeven bestand niet vinden. Zorg ervoor dat het pad en de "
+"bestandsnaam correct zijn."
+
+#: winmm.rc:73
+msgid "The device driver is not ready."
+msgstr "De apparaatdriver is niet gereed."
+
+#: winmm.rc:74
+msgid "A problem occurred in initializing MCI. Try restarting Windows."
+msgstr ""
+"Tijdens het initialiseren van MCI ontstond een probleem. Probeer dit te "
+"verhelpen door Windows opnieuw te starten."
+
+#: winmm.rc:75
+msgid ""
+"There is a problem with the device driver. The driver has closed. Cannot "
+"access error."
+msgstr ""
+"Er is een probleem met de apparaatdriver. Daarom is de driver afgesloten. "
+"Derhalve een toegangsfout."
+
+#: winmm.rc:76
+msgid "Cannot use 'all' as the device name with the specified command."
+msgstr "Kan 'all' niet gebruiken als apparaatnaam bij het opgegeven commando."
+
+#: winmm.rc:77
+msgid ""
+"Errors occurred in more than one device. Specify each command and device "
+"separately to determine which devices caused the error"
+msgstr ""
+"In meer dan één apparaat zijn fouten opgetreden. Geef elk commando en "
+"apparaat apart op om te achterhalen welke apparaten fouten veroorzaken."
+
+#: winmm.rc:78
+msgid "Cannot determine the device type from the given filename extension."
+msgstr ""
+"Kan het apparaat type niet achterhalen uit de gegeven bestandsextensie."
+
+#: winmm.rc:79
+msgid "The specified parameter is out of range for the specified command."
+msgstr "De gegeven parameter is buiten het bereik van het opgegeven commando."
+
+#: winmm.rc:80
+msgid "The specified parameters cannot be used together."
+msgstr "De gegeven parameters kunnen niet samen gebruikt worden."
+
+#: winmm.rc:81
+msgid ""
+"Cannot save the specified file. Make sure you have enough disk space or are "
+"still connected to the network."
+msgstr ""
+"Kan de opgegeven file niet opslaan. Zorg ervoor dat er voldoende "
+"schijfruimte is of dat u nog steeds met het netwerk verbonden bent."
+
+#: winmm.rc:82
+msgid ""
+"Cannot find the specified device. Make sure it is installed or that the "
+"device name is spelled correctly."
+msgstr ""
+"Kan het opgegeven apparaat niet vinden. Verzeker u ervan dat het correct "
+"geïnstalleerd is en dat de apparaatnaam correct is opgegeven."
+
+#: winmm.rc:83
+msgid ""
+"The specified device is now being closed. Wait a few seconds, and then try "
+"again."
+msgstr ""
+"Het opgegeven apparaat wordt nu gesloten. Wacht s.v.p. enkele seconden en "
+"probeer het dan opnieuw."
+
+#: winmm.rc:84
+msgid ""
+"The specified alias is already being used in this application. Use a unique "
+"alias."
+msgstr ""
+"De opgegeven alias is al in gebruik door dit programma. Gebruik een unieke "
+"alias."
+
+#: winmm.rc:85
+msgid "The specified parameter is invalid for this command."
+msgstr "De opgegeven parameter is ongeldig voor dit commando."
+
+#: winmm.rc:86
+msgid ""
+"The device driver is already in use. To share it, use the 'shareable' "
+"parameter with each 'open' command."
+msgstr ""
+"De apparaatdriver is al in gebruik. Om het te delen, gebruik de 'deelbaar' "
+"parameter met elk 'open' commando."
+
+#: winmm.rc:87
+msgid ""
+"The specified command requires an alias, file, driver, or device name. "
+"Please supply one."
+msgstr ""
+"Het gegeven commando vereist een alias, bestand, driver of apparaatnaam. "
+"Geeft u er svp een in."
+
+#: winmm.rc:88
+msgid ""
+"The specified value for the time format is invalid. Refer to the MCI "
+"documentation for valid formats."
+msgstr ""
+"De gegeven waarde voor het tijdsformaat is ongeldig. Zoek in de MCI "
+"handleidingen naar geldige formaten."
+
+#: winmm.rc:89
+msgid ""
+"A closing double-quotation mark is missing from the parameter value. Please "
+"supply one."
+msgstr ""
+"Een afsluitende dubbele apostrof ontbreekt van de parameter waarde. Geeft u "
+"er s.v.p. één op."
+
+#: winmm.rc:90
+msgid "A parameter or value was specified twice. Only specify it once."
+msgstr ""
+"Een parameter of waarde werd dubbel opgegeven. Doe dat s.v.p. maar één keer."
+
+#: winmm.rc:91
+msgid ""
+"The specified file cannot be played on the specified MCI device. The file "
+"may be corrupt, or not in the correct format."
+msgstr ""
+"Het gegeven bestand kan niet op het MCI-apparaat worden afgespeeld. Het "
+"bestand is misschien corrupt of niet in het juiste formaat."
+
+#: winmm.rc:92
+msgid "A null parameter block was passed to MCI."
+msgstr "Een leeg parameterblok werd doorgegeven aan MCI."
+
+#: winmm.rc:93
+msgid "Cannot save an unnamed file. Supply a filename."
+msgstr "Kan een bestand zonder naam niet opslaan. Geef een bestandsnaam s.v.p."
+
+#: winmm.rc:94
+msgid "You must specify an alias when using the 'new' parameter."
+msgstr "U moet een alias opgeven als u de 'new' parameter gebruikt."
+
+#: winmm.rc:95
+msgid "Cannot use the 'notify' flag with auto-opened devices."
+msgstr ""
+"Kan de 'notify' vlag niet gebruiken met automatisch geopende apparaten."
+
+#: winmm.rc:96
+msgid "Cannot use a filename with the specified device."
+msgstr "Kan voor het huidige apparaat geen bestandsnaam gebruiken."
+
+#: winmm.rc:97
+msgid ""
+"Cannot carry out the commands in the order specified. Correct the command "
+"sequence, and then try again."
+msgstr ""
+"Kan de opgegeven commando's niet in deze volgorde uitvoeren. Corrigeer de "
+"commandoreeks en probeer opnieuw."
+
+#: winmm.rc:98
+msgid ""
+"Cannot carry out the specified command on an auto-opened device. Wait until "
+"the device is closed, and then try again."
+msgstr ""
+"Kan het opgegeven commando niet uitvoeren op een automatisch geopend "
+"apparaat. Wacht totdat het apparaat is afgesloten en probeer het dan opnieuw."
+
+#: winmm.rc:99
+msgid ""
+"The filename is invalid. Make sure the filename is not longer than 8 "
+"characters, followed by a period and an extension."
+msgstr ""
+"De bestandsnaam is ongeldig. Zorg ervoor dat de bestandsnaam aan het 8.3 "
+"formaat voldoet."
+
+#: winmm.rc:100
+msgid ""
+"Cannot specify extra characters after a string enclosed in quotation marks."
+msgstr ""
+"Het is niet mogelijk om extra lettertekens toe te voegen na een string in "
+"aanhalingstekens."
+
+#: winmm.rc:101
+msgid ""
+"The specified device is not installed on the system. Use the Drivers option "
+"in Control Panel to install the device."
+msgstr ""
+"Het opgegeven apparaat is niet geïnstalleerd op het systeem. Gebruik de "
+"'Drivers'-optie in het Configuratiescherm om het apparaat te installeren."
+
+#: winmm.rc:102
+msgid ""
+"Cannot access the specified file or MCI device. Try changing directories or "
+"restarting your computer."
+msgstr ""
+"Kan het opgegeven bestand of MCI-apparaat niet openen. Probeer de directory "
+"te wijzigen of de computer opnieuw te starten."
+
+#: winmm.rc:103
+msgid ""
+"Cannot access the specified file or MCI device because the application "
+"cannot change directories."
+msgstr ""
+"Kan het opgegeven bestand of MCI-apparaat niet openen omdat de applicatie de "
+"directory niet kan wijzigen."
+
+#: winmm.rc:104
+msgid ""
+"Cannot access specified file or MCI device because the application cannot "
+"change drives."
+msgstr ""
+"Kan het opgegeven bestand of MCI-apparaat niet openen omdat de applicatie de "
+"directory niet kan wijzigen."
+
+#: winmm.rc:105
+msgid "Specify a device or driver name that is less than 79 characters."
+msgstr "Geef een apparaat of driver naam op met minder dan 79 lettertekens."
+
+#: winmm.rc:106
+msgid "Specify a device or driver name that is less than 69 characters."
+msgstr "Geef een apparaat of driver naam op met minder dan 79 lettertekens."
+
+#: winmm.rc:107
+msgid ""
+"The specified command requires an integer parameter. Please provide one."
+msgstr ""
+"Het gegeven commando vereist een integer parameter. Geef er s.v.p. één."
+
+#: winmm.rc:108
+msgid ""
+"All wave devices that can play files in the current format are in use. Wait "
+"until a wave device is free, and then try again."
+msgstr ""
+"Alle WAVE-apparaten die in staat zijn om een bestand in dit formaat af te "
+"spelen, zijn in gebruik. Wacht totdat een WAVE-apparaat vrij is en probeer "
+"het dan opnieuw."
+
+#: winmm.rc:109
+msgid ""
+"Cannot set the current wave device for play back because it is in use. Wait "
+"until the device is free, and then try again."
+msgstr ""
+"Kan het huidige WAVE-apparaat niet gebruiken omdat het in gebruik is. Wacht "
+"totdat het apparaat vrij is en probeer het dan opnieuw."
+
+#: winmm.rc:110
+msgid ""
+"All wave devices that can record files in the current format are in use. "
+"Wait until a wave device is free, and then try again."
+msgstr ""
+"Alle WAVE-apparaten die in staat zijn om een bestand in dit formaat op te "
+"nemen, zijn in gebruik. Wacht totdat een WAVE-apparaat vrij is en probeer "
+"het dan opnieuw."
+
+#: winmm.rc:111
+msgid ""
+"Cannot set the current wave device for recording because it is in use. Wait "
+"until the device is free, and then try again."
+msgstr ""
+"Kan het huidige WAVE-apparaat niet gebruiken om op te nemen omdat het in "
+"gebruik is. Wacht totdat het apparaat vrij is en probeer het dan opnieuw."
+
+#: winmm.rc:112
+msgid "Any compatible waveform playback device may be used."
+msgstr "Elk compatibel WAVE-afspeelapparaat kan worden gebruikt."
+
+#: winmm.rc:113
+msgid "Any compatible waveform recording device may be used."
+msgstr "Elk compatibel WAVE-opnameapparaat kan worden gebruikt."
+
+#: winmm.rc:114
+msgid ""
+"No wave device that can play files in the current format is installed. Use "
+"the Drivers option to install the wave device."
+msgstr ""
+"Er is momenteel geen WAVE-apparaat geïnstalleerd dat bestanden in het "
+"huidige formaat kan afspelen. Gebruik de 'Drivers' optie om zo'n WAVE-"
+"apparaat te installeren."
+
+#: winmm.rc:115
+msgid ""
+"The device you are trying to play to cannot recognize the current file "
+"format."
+msgstr ""
+"Het apparaat waar u mee probeert af te spelen is niet in staat om het "
+"huidige formaat te herkennen."
+
+#: winmm.rc:116
+msgid ""
+"No wave device that can record files in the current format is installed. Use "
+"the Drivers option to install the wave device."
+msgstr ""
+"Er is momenteel geen WAVE-apparaat geïnstalleerd dat bestanden in het "
+"huidige formaat kan opnemen. Gebruik de 'Drivers' optie om zo'n WAVE-"
+"apparaat te installeren."
+
+#: winmm.rc:117
+msgid ""
+"The device you are trying to record from cannot recognize the current file "
+"format."
+msgstr ""
+"Het apparaat waar u mee probeert op te nemen is niet in staat om het huidige "
+"formaat te herkennen."
+
+#: winmm.rc:122
+msgid ""
+"The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
+"You can't use them together."
+msgstr ""
+"Van tijdsformaten van 'song pointer' en SMPTE kan er maar een in gebruik "
+"zijn. U kunt ze niet beide tegelijkertijd gebruiken."
+
+#: winmm.rc:124
+msgid ""
+"The specified MIDI port is already in use. Wait until it is free; then try "
+"again."
+msgstr ""
+"De opgegeven MIDI poort is al in gebruik. Wacht totdat deze vrij is en "
+"probeer dan opnieuw."
+
+#: winmm.rc:127
+msgid ""
+"The specified MIDI device is not installed on the system. Use the Drivers "
+"option from the Control Panel to install a MIDI device."
+msgstr ""
+"Het opgegeven MIDI Mapper apparaat is niet op het systeem geïnstalleerd. "
+"Gebruik de 'MIDI mapper'-optie in het Configuratiescherm om het te "
+"installeren."
+
+#: winmm.rc:125
+msgid ""
+"The current MIDI Mapper setup refers to a MIDI device that is not installed "
+"on the system. Use the MIDI Mapper option from the Control Panel to edit the "
+"setup."
+msgstr ""
+"De huidige MIDI Mapper setup verwijst naar een MIDI-apparaat dat niet op het "
+"systeem is geïnstalleerd. Gebruik de 'MIDI mapper'-optie in het "
+"Configuratiescherm om een MIDI-apparaat te installeren."
+
+#: winmm.rc:126
+msgid "An error occurred with the specified port."
+msgstr "Er is een fout opgetreden bij de opgegeven poort."
+
+#: winmm.rc:129
+msgid ""
+"All multimedia timers are being used by other applications. Quit one of "
+"these applications; then, try again."
+msgstr ""
+"Alle multimedia timers zijn in gebruik door andere applicaties. Sluit een "
+"van deze applicaties, probeer het dan opnieuw."
+
+#: winmm.rc:128
+msgid "The system doesn't have a current MIDI port specified."
+msgstr "Het systeem heeft momenteel geen aangewezen MIDI poort."
+
+#: winmm.rc:123
+msgid ""
+"The system has no installed MIDI devices. Use the Drivers option from the "
+"Control Panel to install a MIDI driver."
+msgstr ""
+"Het systeem heeft geen MIDI apparaten geïnstalleerd. Gebruik de 'Drivers'-"
+"optie in het Configuratiescherm om een MIDI-apparaat te installeren."
+
+#: winmm.rc:118
+msgid "There is no display window."
+msgstr "Er is geen weergave venster."
+
+#: winmm.rc:119
+msgid "Could not create or use window."
+msgstr "Kon geen venster maken of gebruiken."
+
+#: winmm.rc:120
+msgid ""
+"Cannot read the specified file. Make sure the file is still present, or "
+"check your disk or network connection."
+msgstr ""
+"Kan het opgegeven bestand niet lezen. Controleer of het bestand nog steeds "
+"bestaat, en controleer de verbinding naar de disk of het netwerk."
+
+#: winmm.rc:121
+msgid ""
+"Cannot write to the specified file. Make sure you have enough disk space or "
+"are still connected to the network."
+msgstr ""
+"Kan het opgegeven bestand niet schrijven. Controleer of er voldoende "
+"schijfruimte is, en controleer de verbinding met het netwerk."
+
 #: clock.rc:29
 msgid "Ana&log"
 msgstr "&Analoog"

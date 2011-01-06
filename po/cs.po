@@ -1623,6 +1623,594 @@ msgstr ""
 msgid "&u&b&d"
 msgstr ""
 
+#: winmm.rc:28
+msgid "The specified command was carried out."
+msgstr "Určený příkaz byl proveden."
+
+#: winmm.rc:29
+msgid "Undefined external error."
+msgstr "Nedefinovaná vnější chyba."
+
+#: winmm.rc:30
+msgid "A device ID has been used that is out of range for your system."
+msgstr "Použité ID zařízení je mimo možnosti systému."
+
+#: winmm.rc:31
+msgid "The driver was not enabled."
+msgstr "Ovladač nebyl povolen."
+
+#: winmm.rc:32
+msgid ""
+"The specified device is already in use. Wait until it is free, and then try "
+"again."
+msgstr ""
+"Zařízení je dosud používáno. Vyčkejte na jeho uvolnění a zkuste to znovu."
+
+#: winmm.rc:33
+msgid "The specified device handle is invalid."
+msgstr "Ukazatel na zařízení je neplatný."
+
+#: winmm.rc:34
+msgid "There is no driver installed on your system !\n"
+msgstr "V systému není nainstalován žádný ovladač !\n"
+
+#: winmm.rc:35
+msgid ""
+"Not enough memory available for this task. Quit one or more applications to "
+"increase available memory, and then try again."
+msgstr ""
+"Není dost paměti pro tuto úlohu. Ukončete jednu nebo víc aplikací k získání "
+"více volné paměti a zkuste to znovu."
+
+#: winmm.rc:36
+msgid ""
+"This function is not supported. Use the Capabilities function to determine "
+"which functions and messages the driver supports."
+msgstr ""
+"Tato funkce není podporována. Použijte funkci Capabilities k určení, jaké "
+"funkce a zprávy ovladač podporuje."
+
+#: winmm.rc:37
+msgid "An error number was specified that is not defined in the system."
+msgstr "Uvedené číslo chyby není v systému definováno."
+
+#: winmm.rc:38
+msgid "An invalid flag was passed to a system function."
+msgstr "Systémové funkci byl předán neplatný příznak."
+
+#: winmm.rc:39
+msgid "An invalid parameter was passed to a system function."
+msgstr "Systémové funkci byl předán neplatný parametr."
+
+#: winmm.rc:42
+msgid ""
+"The specified format is not supported or cannot be translated. Use the "
+"Capabilities function to determine the supported formats"
+msgstr ""
+"Tento formát není podporován nebo nemůže být přeložen. Použijte funkci "
+"Capabilities k určení podporovaného formátu."
+
+#: winmm.rc:43 winmm.rc:49
+msgid ""
+"Cannot perform this operation while media data is still playing. Reset the "
+"device, or wait until the data is finished playing."
+msgstr ""
+"Nemohu provést tuto operaci dokud jsou data přehrávána. Zresetujte "
+"multimediální zařízení nebo vyčkejte na konec přehrávání."
+
+#: winmm.rc:44
+msgid ""
+"The wave header was not prepared. Use the Prepare function to prepare the "
+"header, and then try again."
+msgstr ""
+"Wave hlavička nebyla připravena. Použijte funkci Prepare k její konstrukci a "
+"pak to zkuste znovu."
+
+#: winmm.rc:45
+msgid ""
+"Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
+"and then try again."
+msgstr ""
+"Nemohu otevřít zařízení bez použití příznaku WAVE_ALLOWSYNC. Použijte ho a "
+"zkuste to znovu."
+
+#: winmm.rc:48
+msgid ""
+"The MIDI header was not prepared. Use the Prepare function to prepare the "
+"header, and then try again."
+msgstr ""
+"MIDI hlavička nebyla připravena. Použijte funkci Prepare k její konstrukci a "
+"pak to zkuste znovu."
+
+#: winmm.rc:50
+msgid ""
+"A MIDI map was not found. There may be a problem with the driver, or the "
+"MIDIMAP.CFG file may be corrupt or missing."
+msgstr ""
+"MIDI map nebyla nalezena. To může ukazovat na problém s ovladačem nebo je "
+"soubor MIDIMAP.CFG poškozen či chybí."
+
+#: winmm.rc:51
+msgid ""
+"The port is transmitting data to the device. Wait until the data has been "
+"transmitted, and then try again."
+msgstr ""
+"Port přenáší data na zařízení. Počkejte na dokončení přenosu a zkuste to "
+"znovu."
+
+#: winmm.rc:52
+msgid ""
+"The current MIDI Mapper setup refers to a MIDI device that is not installed "
+"on the system. Use MIDI Mapper to edit the setup."
+msgstr ""
+"Současné nastavení MIDI mapperu se odkazuje na MIDI zařízení nepřítomné v "
+"systému. Upravte nastavení MIDI mapperu."
+
+#: winmm.rc:53
+msgid ""
+"The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
+"Windows SYSTEM directory, and then try again."
+msgstr ""
+"Současné nastavení MIDI je poškozené. Přepište soubor MIDIMAP.CFG ve Windows "
+"složce SYSTEM originálem a zkuste to znovu."
+
+#: winmm.rc:56
+msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
+msgstr ""
+"Neplatný identifikátor MCI zařízení. Použijte identifikátor vrácený při "
+"otevření MCI zařízení."
+
+#: winmm.rc:57
+msgid "The driver cannot recognize the specified command parameter."
+msgstr "Ovladač nepřipouští použitý parametr příkazu."
+
+#: winmm.rc:58
+msgid "The driver cannot recognize the specified command."
+msgstr "Ovladač nepřipouští použitý příkaz."
+
+#: winmm.rc:59
+msgid ""
+"There is a problem with your media device. Make sure it is working correctly "
+"or contact the device manufacturer."
+msgstr ""
+"S multimediálním zařízením něco není v pořádku. Ujistěte se, že pracuje jak "
+"má, případně oslovte jeho výrobce."
+
+#: winmm.rc:60
+msgid "The specified device is not open or is not recognized by MCI."
+msgstr "Uvedené zařízení není použitelné nebo není podporované MCI."
+
+#: winmm.rc:61
+msgid ""
+"Not enough memory available for this task.\n"
+"Quit one or more applications to increase available memory, and then try "
+"again."
+msgstr ""
+"Není dost paměti na provedení této úlohy.\n"
+"Ukončete jednu nebo víc aplikací a zkuste to znovu."
+
+#: winmm.rc:62
+msgid ""
+"The device name is already being used as an alias by this application. Use a "
+"unique alias."
+msgstr ""
+"Jméno zařízení už je použito jako alias touto aplikací. Použijte unikátní "
+"alias."
+
+#: winmm.rc:63
+msgid ""
+"There is an undetectable problem in loading the specified device driver."
+msgstr "Vyskytl se nerozpoznatelný problém při zavádění uvedeného ovladače."
+
+#: winmm.rc:64
+msgid "No command was specified."
+msgstr "Nebyl zadán žádný příkaz."
+
+#: winmm.rc:65
+msgid ""
+"The output string was too large to fit in the return buffer. Increase the "
+"size of the buffer."
+msgstr ""
+"Výstupní řetězec se nevejde do výstupního zásobníku. Zvětšete velikost "
+"zásobníku."
+
+#: winmm.rc:66
+msgid ""
+"The specified command requires a character-string parameter. Please provide "
+"one."
+msgstr "Tento příkaz vyžaduje textový parametr. Zadejte jeden."
+
+#: winmm.rc:67
+msgid "The specified integer is invalid for this command."
+msgstr "Toto číslo je neplatné pro tento příkaz."
+
+#: winmm.rc:68
+msgid ""
+"The device driver returned an invalid return type. Check with the device "
+"manufacturer about obtaining a new driver."
+msgstr ""
+"Ovladač zařízení vrátil neplatný návratový typ. Zeptejte se dodavatele "
+"zařízení na nový ovladač."
+
+#: winmm.rc:69
+msgid ""
+"There is a problem with the device driver. Check with the device "
+"manufacturer about obtaining a new driver."
+msgstr "Byl rozpoznán problém s ovladačem. Získejte od výrobce nový ovladač."
+
+#: winmm.rc:70
+msgid "The specified command requires a parameter. Please supply one."
+msgstr "Tento příkaz vyžaduje parametr. Zadejte ho."
+
+#: winmm.rc:71
+msgid "The MCI device you are using does not support the specified command."
+msgstr "Vámi použité MCI zařízení nepodporuje uvedený příkaz."
+
+#: winmm.rc:72
+msgid ""
+"Cannot find the specified file. Make sure the path and filename are correct."
+msgstr ""
+"Soubor nebyl nalezen. Ujistěte se, že cesta k souboru a jeho jméno jsou "
+"platné."
+
+#: winmm.rc:73
+msgid "The device driver is not ready."
+msgstr "Ovladač zařízení není připraven."
+
+#: winmm.rc:74
+msgid "A problem occurred in initializing MCI. Try restarting Windows."
+msgstr "Při inicialiazaci MCI došlo k problémům. Zkuste zrestartovat Windows."
+
+#: winmm.rc:75
+msgid ""
+"There is a problem with the device driver. The driver has closed. Cannot "
+"access error."
+msgstr ""
+"Ovladač má problémy a ukončil svou činnost. Ovladač nevrátil popis chyby."
+
+#: winmm.rc:76
+msgid "Cannot use 'all' as the device name with the specified command."
+msgstr "Nemohu použít 'all' jako jméno zařízení při provádění tohoto příkazu."
+
+#: winmm.rc:77
+msgid ""
+"Errors occurred in more than one device. Specify each command and device "
+"separately to determine which devices caused the error"
+msgstr ""
+"Vyskytly se chyby na více zařízeních. Zadejte příkazy zvlášť pro každé jedno "
+"zařízeníify, aby bylo zjištěno, které zařízení chybuje."
+
+#: winmm.rc:78
+msgid "Cannot determine the device type from the given filename extension."
+msgstr "Nedokáži přiřadit soubor s touto příponou vhodnému zařízení."
+
+#: winmm.rc:79
+msgid "The specified parameter is out of range for the specified command."
+msgstr "Uvedený parametr je mimo meze uvedeného příkazu."
+
+#: winmm.rc:80
+msgid "The specified parameters cannot be used together."
+msgstr "Tyto parametry nemohou být požity spolu."
+
+#: winmm.rc:81
+msgid ""
+"Cannot save the specified file. Make sure you have enough disk space or are "
+"still connected to the network."
+msgstr ""
+"Nemohu uložit soubor. Ujistěte se, že je dost místa na disku nebo je-li Vaše "
+"síťové připojení průchozí."
+
+#: winmm.rc:82
+msgid ""
+"Cannot find the specified device. Make sure it is installed or that the "
+"device name is spelled correctly."
+msgstr ""
+"Nemohu najít požadované zařízení. Ujistěte se, že je nainstalováno, nebo že "
+"jste jeho název uvedli přesně."
+
+#: winmm.rc:83
+msgid ""
+"The specified device is now being closed. Wait a few seconds, and then try "
+"again."
+msgstr ""
+"Toto zařízení je právě uzavíráno. Vyčkejte několik sekund a zkuste to znovu."
+
+#: winmm.rc:84
+msgid ""
+"The specified alias is already being used in this application. Use a unique "
+"alias."
+msgstr "Tento alias je už používán v této aplikaci. Použijte jiné jméno."
+
+#: winmm.rc:85
+msgid "The specified parameter is invalid for this command."
+msgstr "Uvedený parametr je neplatný pro tento příkaz."
+
+#: winmm.rc:86
+msgid ""
+"The device driver is already in use. To share it, use the 'shareable' "
+"parameter with each 'open' command."
+msgstr ""
+"Uvedené zařízení je už používáno. Chcete-li ho sdílet, použijte 'shareable' "
+"parametr s každým příkazem 'open'."
+
+#: winmm.rc:87
+msgid ""
+"The specified command requires an alias, file, driver, or device name. "
+"Please supply one."
+msgstr ""
+"Tento příkaz vyžaduje alias, soubor, ovladač nebo název zařízení. Uveďte "
+"jeden prosím."
+
+#: winmm.rc:88
+msgid ""
+"The specified value for the time format is invalid. Refer to the MCI "
+"documentation for valid formats."
+msgstr ""
+"Použitý formát času je neplatný. Nahlédněte do MCI dokumentace a zjistěte si "
+"platné formáty."
+
+#: winmm.rc:89
+msgid ""
+"A closing double-quotation mark is missing from the parameter value. Please "
+"supply one."
+msgstr "Hodnota parametru není uzavřena uvozovkami. Doplňte je."
+
+#: winmm.rc:90
+msgid "A parameter or value was specified twice. Only specify it once."
+msgstr "Parametr nebo hodnota byla zadána dvakrát. Zadejte jen jeden/jednu."
+
+#: winmm.rc:91
+msgid ""
+"The specified file cannot be played on the specified MCI device. The file "
+"may be corrupt, or not in the correct format."
+msgstr ""
+"Tento soubor nemůže být přehrán na tomto MCI zařízení. Soubor může být "
+"poškozen nebo nemá správný formát."
+
+#: winmm.rc:92
+msgid "A null parameter block was passed to MCI."
+msgstr "MCI byl předán prázdný blok parametrů."
+
+#: winmm.rc:93
+msgid "Cannot save an unnamed file. Supply a filename."
+msgstr "Nemohu uložit soubor bez názvu. Zadejte název."
+
+#: winmm.rc:94
+msgid "You must specify an alias when using the 'new' parameter."
+msgstr "Při použití parametru 'new' musíte zadat alias."
+
+#: winmm.rc:95
+msgid "Cannot use the 'notify' flag with auto-opened devices."
+msgstr "Nelze použít parametr 'notify' s automaticky otevřeným zařízením."
+
+#: winmm.rc:96
+msgid "Cannot use a filename with the specified device."
+msgstr "Nelze použít soubor s tímto zařízením."
+
+#: winmm.rc:97
+msgid ""
+"Cannot carry out the commands in the order specified. Correct the command "
+"sequence, and then try again."
+msgstr ""
+"Nelze dokončit skupinu příkazů v tomto pořadí. Opravte pořadí příkazů a "
+"zkuste to znovu."
+
+#: winmm.rc:98
+msgid ""
+"Cannot carry out the specified command on an auto-opened device. Wait until "
+"the device is closed, and then try again."
+msgstr ""
+"Tento příkaz nelze dokončit na automaticky otevřeném zařízení. Vyčkejte na "
+"zavření zařízení a zkuste to znovu."
+
+#: winmm.rc:99
+msgid ""
+"The filename is invalid. Make sure the filename is not longer than 8 "
+"characters, followed by a period and an extension."
+msgstr ""
+"Název souboru je neplatný. Ujistěte se, že název souboru má 8 znaků "
+"následovaných tečkou a příponou."
+
+#: winmm.rc:100
+msgid ""
+"Cannot specify extra characters after a string enclosed in quotation marks."
+msgstr "Nelze zadat znaky za řetězec uzavřený uvozovkami."
+
+#: winmm.rc:101
+msgid ""
+"The specified device is not installed on the system. Use the Drivers option "
+"in Control Panel to install the device."
+msgstr ""
+"Toto zařízení není v systému nainstalováno. Nainstalujte ho v Ovládacím "
+"panelu, na záložce Ovladače."
+
+#: winmm.rc:102
+msgid ""
+"Cannot access the specified file or MCI device. Try changing directories or "
+"restarting your computer."
+msgstr ""
+"Nemohu přistoupit k uvedenému souboru nebo MCI zařízení. Změňte adresář nebo "
+"restartujte Váš počítač."
+
+#: winmm.rc:103
+msgid ""
+"Cannot access the specified file or MCI device because the application "
+"cannot change directories."
+msgstr ""
+"Nemohu přistoupit k uvedenému souboru nebo MCI zařízení, protože aplikace "
+"nemůže změnit adresář."
+
+#: winmm.rc:104
+msgid ""
+"Cannot access specified file or MCI device because the application cannot "
+"change drives."
+msgstr ""
+"Nemohu přistoupit k uvedenému souboru nebo MCI zařízení, protože aplikace "
+"nemůže změnit jednotku disku."
+
+#: winmm.rc:105
+msgid "Specify a device or driver name that is less than 79 characters."
+msgstr "Určete zařízení nebo ovladač jehož název je kratší než 79 znaků."
+
+#: winmm.rc:106
+msgid "Specify a device or driver name that is less than 69 characters."
+msgstr "Určete zařízení nebo ovladač jehož název je kratší než 69 znaků."
+
+#: winmm.rc:107
+msgid ""
+"The specified command requires an integer parameter. Please provide one."
+msgstr "Tento příkaz vyžaduje celočíselný parametr. Použijte ho prosím."
+
+#: winmm.rc:108
+msgid ""
+"All wave devices that can play files in the current format are in use. Wait "
+"until a wave device is free, and then try again."
+msgstr ""
+"Všechna wave zařízení, která by mohla přehrát soubory s tímto formátem jsou "
+"používána. Vyčkejte na uvolnění zařízení a zkuste to znovu."
+
+#: winmm.rc:109
+msgid ""
+"Cannot set the current wave device for play back because it is in use. Wait "
+"until the device is free, and then try again."
+msgstr ""
+"Nemohu nastavit toto wave zařízení na playback, jelikož je používáno. "
+"Vyčkejte na uvolnění zařízení a zkuste to znovu."
+
+#: winmm.rc:110
+msgid ""
+"All wave devices that can record files in the current format are in use. "
+"Wait until a wave device is free, and then try again."
+msgstr ""
+"Všechna wave zařízení, která by mohla nahrávat oubory s tímto formátem jsou "
+"používána. Vyčkejte na uvolnění zařízení a zkuste to znovu."
+
+#: winmm.rc:111
+msgid ""
+"Cannot set the current wave device for recording because it is in use. Wait "
+"until the device is free, and then try again."
+msgstr ""
+"Nemohu nastavit toto wave zařízení na nahrávání, jelikož je používáno. "
+"Vyčkejte na uvolnění zařízení a zkuste to znovu."
+
+#: winmm.rc:112
+msgid "Any compatible waveform playback device may be used."
+msgstr "Jakékoliv waveform kompatibilní přehrávací zařízení může být použito."
+
+#: winmm.rc:113
+msgid "Any compatible waveform recording device may be used."
+msgstr "Jakékoliv waveform kompatibilní nahrávací zařízení může být použito."
+
+#: winmm.rc:114
+msgid ""
+"No wave device that can play files in the current format is installed. Use "
+"the Drivers option to install the wave device."
+msgstr ""
+"Není nainstalováno žádné wave zařízení, které by bylo schopno přehrát "
+"soubory v tomto formátu. Použijte záložku Ovladače k instalaci wave zařízení."
+
+#: winmm.rc:115
+msgid ""
+"The device you are trying to play to cannot recognize the current file "
+"format."
+msgstr "Přehrávací zařízení nedokázalo rozpoznat formát souboru."
+
+#: winmm.rc:116
+msgid ""
+"No wave device that can record files in the current format is installed. Use "
+"the Drivers option to install the wave device."
+msgstr ""
+"Není nainstalováno žádné wave zařízení, které by bylo schopno nahrát soubory "
+"v tomto formátu. Použijte záložku Ovladače k instalaci wave zařízení."
+
+#: winmm.rc:117
+msgid ""
+"The device you are trying to record from cannot recognize the current file "
+"format."
+msgstr ""
+"Zařízení, ze kterého zkoušíte nahrávat, nedokáže rozpoznat formát výstupního "
+"souboru."
+
+#: winmm.rc:122
+msgid ""
+"The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
+"You can't use them together."
+msgstr ""
+"Formáty času \"song pointer\" a SMPTE jsou vzájemně výlučné. Nemůžete je "
+"použít současně."
+
+#: winmm.rc:124
+msgid ""
+"The specified MIDI port is already in use. Wait until it is free; then try "
+"again."
+msgstr ""
+"Tento MIDI port je používán. Vyčkejte na jeho uvolnění; pak to zkuste znovu."
+
+#: winmm.rc:127
+msgid ""
+"The specified MIDI device is not installed on the system. Use the Drivers "
+"option from the Control Panel to install a MIDI device."
+msgstr ""
+"Toto MIDI zařízení není nainstalováno v systému. Nainstalujte ho v Ovládacím "
+"panelu na záložce Driver."
+
+#: winmm.rc:125
+msgid ""
+"The current MIDI Mapper setup refers to a MIDI device that is not installed "
+"on the system. Use the MIDI Mapper option from the Control Panel to edit the "
+"setup."
+msgstr ""
+"Nastavení MIDI mapperu odkazuje na MIDI zařízení, které není v systému "
+"nainstalováno. Nainstalujte ho pomocí záložky MIDI Mapper v Ovládacím panelu."
+
+#: winmm.rc:126
+msgid "An error occurred with the specified port."
+msgstr "Nastala chyba při práci s tímto portem."
+
+#: winmm.rc:129
+msgid ""
+"All multimedia timers are being used by other applications. Quit one of "
+"these applications; then, try again."
+msgstr ""
+"Všechny časovače multimédií jsou používány aplikacemi. Ukončete jednu z "
+"těchto aplikací a zkuste to znovu."
+
+#: winmm.rc:128
+msgid "The system doesn't have a current MIDI port specified."
+msgstr "Systém nezná tento MIDI port."
+
+#: winmm.rc:123
+msgid ""
+"The system has no installed MIDI devices. Use the Drivers option from the "
+"Control Panel to install a MIDI driver."
+msgstr ""
+"V systému nejsou nainstalovány MIDI zařízení. Nainstalujte je ze záložky "
+"Ovladač v Ovládacím panelu."
+
+#: winmm.rc:118
+msgid "There is no display window."
+msgstr "Okno display chybí."
+
+#: winmm.rc:119
+msgid "Could not create or use window."
+msgstr "Nemohu vytvořit nebo použít okno."
+
+#: winmm.rc:120
+msgid ""
+"Cannot read the specified file. Make sure the file is still present, or "
+"check your disk or network connection."
+msgstr ""
+"Nemohu přečíst zadaný soubor. Ujistěte se, že soubor stále existuje a "
+"zkontrolujte svůj disk nebo síťovou konektivitu."
+
+#: winmm.rc:121
+msgid ""
+"Cannot write to the specified file. Make sure you have enough disk space or "
+"are still connected to the network."
+msgstr ""
+"Nemohu zapisovat do zadaného souboru. Ujistěte se, že máte dost místa na "
+"disku nebo zda jste připojeni k síti."
+
 #: clock.rc:29
 msgid "Ana&log"
 msgstr "Ana&logové"

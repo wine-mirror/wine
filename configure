@@ -15280,7 +15280,7 @@ wine_fn_config_dll winhttp enable_winhttp implib
 wine_fn_config_test dlls/winhttp/tests winhttp_test
 wine_fn_config_dll wininet enable_wininet implib
 wine_fn_config_test dlls/wininet/tests wininet_test
-wine_fn_config_dll winmm enable_winmm implib
+wine_fn_config_dll winmm enable_winmm po,implib
 wine_fn_config_test dlls/winmm/tests winmm_test
 wine_fn_config_dll winnls.dll16 enable_win16
 wine_fn_config_dll winnls32 enable_winnls32 implib

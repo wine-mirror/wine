@@ -14,27 +14,9 @@ C_SRCS = \
 	winmm.c
 
 RC_SRCS = \
-	winmm_Cs.rc \
-	winmm_Da.rc \
-	winmm_De.rc \
-	winmm_En.rc \
-	winmm_Es.rc \
-	winmm_Fr.rc \
-	winmm_It.rc \
-	winmm_Ja.rc \
-	winmm_Ko.rc \
-	winmm_Lt.rc \
-	winmm_Nl.rc \
-	winmm_No.rc \
-	winmm_Pl.rc \
-	winmm_Pt.rc \
-	winmm_Ro.rc \
-	winmm_Ru.rc \
-	winmm_Si.rc \
-	winmm_Sk.rc \
-	winmm_Sv.rc \
-	winmm_Tr.rc \
-	winmm_Uk.rc \
+	winmm.rc \
 	winmm_res.rc
+
+PO_SRCS = winmm.rc
 
 @MAKE_DLL_RULES@

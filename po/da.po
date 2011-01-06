@@ -1649,6 +1649,604 @@ msgstr "&w&bSide &p"
 msgid "&u&b&d"
 msgstr "&u&b&d"
 
+#: winmm.rc:28
+msgid "The specified command was carried out."
+msgstr "Den specificerede kommando blev udført."
+
+#: winmm.rc:29
+msgid "Undefined external error."
+msgstr "Udefineret ekstern fejl."
+
+#: winmm.rc:30
+msgid "A device ID has been used that is out of range for your system."
+msgstr "Et enheds ID som er udenfor rækkevidde er blevet brugt på dit system."
+
+#: winmm.rc:31
+msgid "The driver was not enabled."
+msgstr "Driveren blev ikke aktiveret."
+
+#: winmm.rc:32
+msgid ""
+"The specified device is already in use. Wait until it is free, and then try "
+"again."
+msgstr ""
+"Den specificerede enhed er allerede i brug. Vent til den er ledig og prøv "
+"igen."
+
+#: winmm.rc:33
+msgid "The specified device handle is invalid."
+msgstr "Det specificerede enheds handle er ugyldigt."
+
+#: winmm.rc:34
+msgid "There is no driver installed on your system !\n"
+msgstr "Det er ingen driver installeret på systemet.\n"
+
+#: winmm.rc:35
+msgid ""
+"Not enough memory available for this task. Quit one or more applications to "
+"increase available memory, and then try again."
+msgstr ""
+"Ikke nok hukommelse tilrådig til denne operation. Afslut et eller flere "
+"programmer for at frigøre hukommelse og prøv igen."
+
+#: winmm.rc:36
+msgid ""
+"This function is not supported. Use the Capabilities function to determine "
+"which functions and messages the driver supports."
+msgstr ""
+"Denne funktion understøttes ikke. Brug funktionen 'Capabilities' for at "
+"finde ud af hvilke funktioner og meddelser driveren understøtter."
+
+#: winmm.rc:37
+msgid "An error number was specified that is not defined in the system."
+msgstr "Et udefineret fejlnummer blev specificeret."
+
+#: winmm.rc:38
+msgid "An invalid flag was passed to a system function."
+msgstr "Et ugyldigt flag blev overført til en systemfunktion."
+
+#: winmm.rc:39
+msgid "An invalid parameter was passed to a system function."
+msgstr "En ugyldig parameter blev overført til en systemfunktion."
+
+#: winmm.rc:42
+msgid ""
+"The specified format is not supported or cannot be translated. Use the "
+"Capabilities function to determine the supported formats"
+msgstr ""
+"Det specificerede format understøttes ikke eller kan ikke oversættes. Brug "
+"funktionen 'Capabilities' for at se de understøttede formater."
+
+#: winmm.rc:43 winmm.rc:49
+msgid ""
+"Cannot perform this operation while media data is still playing. Reset the "
+"device, or wait until the data is finished playing."
+msgstr ""
+"Kan ikke udfører denne operation mens medie data afspilles. Genstart "
+"enheden, eller vent til den er færdig."
+
+#: winmm.rc:44
+msgid ""
+"The wave header was not prepared. Use the Prepare function to prepare the "
+"header, and then try again."
+msgstr ""
+"Wafe headeren var ikke klargjort. Brug funktionen 'Prepare' for at klargøre "
+"headeren og prøv derefter igen."
+
+#: winmm.rc:45
+msgid ""
+"Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
+"and then try again."
+msgstr ""
+"Kan ikke åbne enheden uden at bruke flagget 'WAVE_ALLOWSYNC. Brug flagget og "
+"prøv igen."
+
+#: winmm.rc:48
+msgid ""
+"The MIDI header was not prepared. Use the Prepare function to prepare the "
+"header, and then try again."
+msgstr ""
+"MIDI headeren var ikke klargjort. Brug funktionen 'Prepare' for at klargøre "
+"headeren og prøv derefter igen."
+
+#: winmm.rc:50
+msgid ""
+"A MIDI map was not found. There may be a problem with the driver, or the "
+"MIDIMAP.CFG file may be corrupt or missing."
+msgstr ""
+"En MIDI map blev ikke fundet. Der er måske et problem med driveren, eller "
+"også er filen 'MIDIMAP.CFG' korrupt eller mangler."
+
+#: winmm.rc:51
+msgid ""
+"The port is transmitting data to the device. Wait until the data has been "
+"transmitted, and then try again."
+msgstr ""
+"Porten sender data til enheden. Vent til dataerne er sendt og prøv igen."
+
+#: winmm.rc:52
+msgid ""
+"The current MIDI Mapper setup refers to a MIDI device that is not installed "
+"on the system. Use MIDI Mapper to edit the setup."
+msgstr ""
+"Den nuværende Mapper opsætning peger på en MIDI enhed der ikke er "
+"installeret i systemet. brug MIDI Mapper'en til editere opsætningen."
+
+#: winmm.rc:53
+msgid ""
+"The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
+"Windows SYSTEM directory, and then try again."
+msgstr ""
+"Den nuværende MIDI opsætning er skadet. Kopier den originale MIDIMAP.CFG fil "
+"ind i Windows SYSTEM folderen, og prøv igen."
+
+#: winmm.rc:56
+msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
+msgstr ""
+"Ugyldig MCI enheds ID. Brug ID'et som returneres når MCI-enhetdn åbnes."
+
+#: winmm.rc:57
+msgid "The driver cannot recognize the specified command parameter."
+msgstr "Driveren kunne ikke genkende den specificerede kommandoparameter."
+
+#: winmm.rc:58
+msgid "The driver cannot recognize the specified command."
+msgstr "Driveren kunne ikke genkende den specificerede kommando."
+
+#: winmm.rc:59
+msgid ""
+"There is a problem with your media device. Make sure it is working correctly "
+"or contact the device manufacturer."
+msgstr ""
+"Det er et problem med medieenheden. Sørg for at den virker ordentlig eller "
+"kontakt leverandøren."
+
+#: winmm.rc:60
+msgid "The specified device is not open or is not recognized by MCI."
+msgstr "Den specificerede enhed er ikke åben, eller ikke genkendt af MCI."
+
+#: winmm.rc:61
+msgid ""
+"Not enough memory available for this task.\n"
+"Quit one or more applications to increase available memory, and then try "
+"again."
+msgstr ""
+"Ikke nok hukommelse til denne operation.\n"
+"Afslut et eller flere programmer for at frigøre hukommelse og prøv igen."
+
+#: winmm.rc:62
+msgid ""
+"The device name is already being used as an alias by this application. Use a "
+"unique alias."
+msgstr ""
+"Enhedsnafnet bruges allerede som et alies af dette program. Brug et unikt "
+"alias."
+
+#: winmm.rc:63
+msgid ""
+"There is an undetectable problem in loading the specified device driver."
+msgstr ""
+"Et ukendt problem opstod under indlæsningen af den specificerede driver."
+
+#: winmm.rc:64
+msgid "No command was specified."
+msgstr "Der blev ikke specificeret nogen kommando."
+
+#: winmm.rc:65
+msgid ""
+"The output string was too large to fit in the return buffer. Increase the "
+"size of the buffer."
+msgstr ""
+"Den skrevne streng var for stor til at være i retur bufferen. Forøg "
+"størrelsen på bufferen."
+
+#: winmm.rc:66
+msgid ""
+"The specified command requires a character-string parameter. Please provide "
+"one."
+msgstr "Den specificerede kommando kræver en tegnstrengs parameter. Angiv en."
+
+#: winmm.rc:67
+msgid "The specified integer is invalid for this command."
+msgstr "Det specificerede heltal er ugyldigt til denne kommando."
+
+#: winmm.rc:68
+msgid ""
+"The device driver returned an invalid return type. Check with the device "
+"manufacturer about obtaining a new driver."
+msgstr ""
+"Enhedsdriveren returnerede en ugyldig retur type. Kontakt producenten for at "
+"få en ny driver."
+
+#: winmm.rc:69
+msgid ""
+"There is a problem with the device driver. Check with the device "
+"manufacturer about obtaining a new driver."
+msgstr ""
+"Der er et problem med enhedsdriveren. Kontakt producenten for at få en ny "
+"driver."
+
+#: winmm.rc:70
+msgid "The specified command requires a parameter. Please supply one."
+msgstr "Den specificerede kommando kræver en parameter. Angiv en."
+
+#: winmm.rc:71
+msgid "The MCI device you are using does not support the specified command."
+msgstr "MCI enheden som bruges understøtter ikke den specificerede kommando."
+
+#: winmm.rc:72
+msgid ""
+"Cannot find the specified file. Make sure the path and filename are correct."
+msgstr ""
+"Kunne ikke finde den specificerede fil. Kontroller at stien og filnafnet er "
+"rigtigt."
+
+#: winmm.rc:73
+msgid "The device driver is not ready."
+msgstr "Enhedsdriveren er ikke klar."
+
+#: winmm.rc:74
+msgid "A problem occurred in initializing MCI. Try restarting Windows."
+msgstr ""
+"Et problem opstod under initaliseringen af MCI. Prøv at genstarte Wine."
+
+#: winmm.rc:75
+msgid ""
+"There is a problem with the device driver. The driver has closed. Cannot "
+"access error."
+msgstr ""
+"Der er et problem med enhedsdriveren. Driveren blev lukket, ingen adgang "
+"fejl."
+
+#: winmm.rc:76
+msgid "Cannot use 'all' as the device name with the specified command."
+msgstr "Kan ikke bruge 'all' som enhedsnafn med den specificerede kommando."
+
+#: winmm.rc:77
+msgid ""
+"Errors occurred in more than one device. Specify each command and device "
+"separately to determine which devices caused the error"
+msgstr ""
+"Der opstod fejl i mere end en enhed. Angiv hver kommando og enhed seperat "
+"for at finde ud hvilken enhed som forårsagede fejlen."
+
+#: winmm.rc:78
+msgid "Cannot determine the device type from the given filename extension."
+msgstr "Kan ikke bestemme enhedstypen ud fra den opgivede fil efternafn."
+
+#: winmm.rc:79
+msgid "The specified parameter is out of range for the specified command."
+msgstr ""
+"Den specificerede parameter er udenfor rækkevidde for den specificerede "
+"kommando."
+
+#: winmm.rc:80
+msgid "The specified parameters cannot be used together."
+msgstr "De specificerede parametere kan ikke bruges sammen."
+
+#: winmm.rc:81
+msgid ""
+"Cannot save the specified file. Make sure you have enough disk space or are "
+"still connected to the network."
+msgstr ""
+"Kunne ikke gemme den specificerede fil. Kontroller at du har nok fri "
+"diskplads eller at du fortsat er tilkoblet netværket."
+
+#: winmm.rc:82
+msgid ""
+"Cannot find the specified device. Make sure it is installed or that the "
+"device name is spelled correctly."
+msgstr ""
+"Fandt ikke den specificerede enhedn. Kontroller at den er installeret eller "
+"at enhedsnafnet er rigtigt stafet."
+
+#: winmm.rc:83
+msgid ""
+"The specified device is now being closed. Wait a few seconds, and then try "
+"again."
+msgstr ""
+"Den specificerede enhed er igang med at blive lukket. Vent et par sekunder "
+"og prøv igen."
+
+#: winmm.rc:84
+msgid ""
+"The specified alias is already being used in this application. Use a unique "
+"alias."
+msgstr ""
+"Det specificerede alias bruges allerede i dette program. Brug et unikt alias."
+
+#: winmm.rc:85
+msgid "The specified parameter is invalid for this command."
+msgstr "Den specificerede parameter er ugyldig til denne kommando."
+
+#: winmm.rc:86
+msgid ""
+"The device driver is already in use. To share it, use the 'shareable' "
+"parameter with each 'open' command."
+msgstr ""
+"Enhedsdriveren er allerede i brug. Brug parameteren 'shareable' for hver "
+"'open'-kommando for at dele den."
+
+#: winmm.rc:87
+msgid ""
+"The specified command requires an alias, file, driver, or device name. "
+"Please supply one."
+msgstr ""
+"Den specificerede kommando kræver et alias, en fil, driver eller et "
+"enhedsnafn."
+
+#: winmm.rc:88
+msgid ""
+"The specified value for the time format is invalid. Refer to the MCI "
+"documentation for valid formats."
+msgstr ""
+"Den specificerede værdi for tidsformatet er ugyldigt. Se i MCI "
+"dokumentationen efter gyldige formater."
+
+#: winmm.rc:89
+msgid ""
+"A closing double-quotation mark is missing from the parameter value. Please "
+"supply one."
+msgstr "Et afsluttende anførelsestegn mangler i parameter værdien. Tilføj et."
+
+#: winmm.rc:90
+msgid "A parameter or value was specified twice. Only specify it once."
+msgstr ""
+"Parameteren eller værdien blev angivet to ganger. Angiv det kun en gang."
+
+#: winmm.rc:91
+msgid ""
+"The specified file cannot be played on the specified MCI device. The file "
+"may be corrupt, or not in the correct format."
+msgstr ""
+"Den specificerede fil kan ikke spilles af på den specificerede MCI enhed. "
+"Filen er måske korrupt, eller i forkert format."
+
+#: winmm.rc:92
+msgid "A null parameter block was passed to MCI."
+msgstr "En null parameter blok blev givet til MCI."
+
+#: winmm.rc:93
+msgid "Cannot save an unnamed file. Supply a filename."
+msgstr "Kan ikke gemme en fil uden nafn. Angiv et filnafn."
+
+#: winmm.rc:94
+msgid "You must specify an alias when using the 'new' parameter."
+msgstr "Du skal specificere et alias når du bruger parameteren 'new'."
+
+#: winmm.rc:95
+msgid "Cannot use the 'notify' flag with auto-opened devices."
+msgstr "Kan ikke bruge flagget 'notify' med automatisk åbnede enheder."
+
+#: winmm.rc:96
+msgid "Cannot use a filename with the specified device."
+msgstr "Kan ikke bruge et filnafn med den specificerede enhed."
+
+#: winmm.rc:97
+msgid ""
+"Cannot carry out the commands in the order specified. Correct the command "
+"sequence, and then try again."
+msgstr ""
+"Kunne ikke udføre kommandoen i den specificerede rækkefølge. Ret rækkefølgen "
+"og prøv igen."
+
+#: winmm.rc:98
+msgid ""
+"Cannot carry out the specified command on an auto-opened device. Wait until "
+"the device is closed, and then try again."
+msgstr ""
+"Kunne ikke udføre den specificerede kommando på en automatisk åbnet enhed. "
+"Vent til enheden er lukket og prøv igen."
+
+#: winmm.rc:99
+msgid ""
+"The filename is invalid. Make sure the filename is not longer than 8 "
+"characters, followed by a period and an extension."
+msgstr ""
+"Filnafnet er ugyldigt. Kontroller at filnafnet ikke er længere end 8 tegn, "
+"efterfulgt af et punktum og en fil type (3 tegn)."
+
+#: winmm.rc:100
+msgid ""
+"Cannot specify extra characters after a string enclosed in quotation marks."
+msgstr ""
+"Kan ikke specificere ekstra tegn efter en streng omgivet af anførelsestegn."
+
+#: winmm.rc:101
+msgid ""
+"The specified device is not installed on the system. Use the Drivers option "
+"in Control Panel to install the device."
+msgstr ""
+"Den specificerede enhed er ikke installeret i systemet. Brug valget "
+"'Drivere' i Kontrolpanelet for at installere enheden."
+
+#: winmm.rc:102
+msgid ""
+"Cannot access the specified file or MCI device. Try changing directories or "
+"restarting your computer."
+msgstr ""
+"Kan ikke tilgå den specificerede fil eller MCI enhed. Prøv at ændre folder "
+"eller at genstarte din computer."
+
+#: winmm.rc:103
+msgid ""
+"Cannot access the specified file or MCI device because the application "
+"cannot change directories."
+msgstr ""
+"Kan ikke tilgå den specificerede fil eller MCI enhed fordi programmet ikke "
+"kan skifte folder."
+
+#: winmm.rc:104
+msgid ""
+"Cannot access specified file or MCI device because the application cannot "
+"change drives."
+msgstr ""
+"Kan ikke tilgå den specificerede fil eller MCI enhed fordi programmet ikke "
+"kan skifte drev."
+
+#: winmm.rc:105
+msgid "Specify a device or driver name that is less than 79 characters."
+msgstr "Specificer en enhed eller drivernafn som er mindre en 79 tegn."
+
+#: winmm.rc:106
+msgid "Specify a device or driver name that is less than 69 characters."
+msgstr "Specificer en enhed eller drivernafn som er mindre en 69 tegn."
+
+#: winmm.rc:107
+msgid ""
+"The specified command requires an integer parameter. Please provide one."
+msgstr ""
+"Den specificerede kommando har brug for en heltals parameter. Angiv et."
+
+#: winmm.rc:108
+msgid ""
+"All wave devices that can play files in the current format are in use. Wait "
+"until a wave device is free, and then try again."
+msgstr ""
+"Alle lydenheder som kan afspille filer i det pågældende format er optagede. "
+"Vent til at en af lydenhederne er ledige og prøv igen."
+
+#: winmm.rc:109
+msgid ""
+"Cannot set the current wave device for play back because it is in use. Wait "
+"until the device is free, and then try again."
+msgstr ""
+"Kunne ikke sætte den gældende lydenhed til afspilning fordi den er i brug. "
+"Vent til at enheden er ledig og prøv igen."
+
+#: winmm.rc:110
+msgid ""
+"All wave devices that can record files in the current format are in use. "
+"Wait until a wave device is free, and then try again."
+msgstr ""
+"Alle lydenheder som kan optage filer i det gældende format er optagede. Vent "
+"til at en af lydenhederne er ledige og prøv igen."
+
+#: winmm.rc:111
+msgid ""
+"Cannot set the current wave device for recording because it is in use. Wait "
+"until the device is free, and then try again."
+msgstr ""
+"Kunne ikke sætte den gældende lydenhed til at optage fordi den er i brug. "
+"Vent til at enheden er ledig og prøv igen."
+
+#: winmm.rc:112
+msgid "Any compatible waveform playback device may be used."
+msgstr "Enhver kompatibel enhed til lydafspilling kan bruges."
+
+#: winmm.rc:113
+msgid "Any compatible waveform recording device may be used."
+msgstr "Enhver kompatibel enhed til lydoptagening kan bruges."
+
+#: winmm.rc:114
+msgid ""
+"No wave device that can play files in the current format is installed. Use "
+"the Drivers option to install the wave device."
+msgstr ""
+"Ingen lydenhed som kan afspille filer i det gældende formatet er "
+"installeret. Brug 'Drivere' for at installere lydenheden."
+
+#: winmm.rc:115
+msgid ""
+"The device you are trying to play to cannot recognize the current file "
+"format."
+msgstr ""
+"Enheden du prøver at afspille fra, genkender ikke det gældende filformat."
+
+#: winmm.rc:116
+msgid ""
+"No wave device that can record files in the current format is installed. Use "
+"the Drivers option to install the wave device."
+msgstr ""
+"Ingen lydenhed som kan optage filer i det gældende format er installeret. "
+"Brug 'Drivere' for at installere lydenheden."
+
+#: winmm.rc:117
+msgid ""
+"The device you are trying to record from cannot recognize the current file "
+"format."
+msgstr "Enheden du prøver at optage på, genkender ikke det gældende filformat."
+
+#: winmm.rc:122
+msgid ""
+"The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
+"You can't use them together."
+msgstr "Tidsformatet til \"song pointer\" og 'SMPTE' kan ikke bruges sammen."
+
+#: winmm.rc:124
+msgid ""
+"The specified MIDI port is already in use. Wait until it is free; then try "
+"again."
+msgstr ""
+"Den specificerede MIDI port er allerede i brug. Vent til den er ledig og "
+"prøv igen."
+
+#: winmm.rc:127
+msgid ""
+"The specified MIDI device is not installed on the system. Use the Drivers "
+"option from the Control Panel to install a MIDI device."
+msgstr ""
+"Den specificerede MIDI enhed er ikke installeret på systemet. Brug 'Drivere' "
+"i Kontrollpanelet for at installere en MIDI enhed."
+
+#: winmm.rc:125
+msgid ""
+"The current MIDI Mapper setup refers to a MIDI device that is not installed "
+"on the system. Use the MIDI Mapper option from the Control Panel to edit the "
+"setup."
+msgstr ""
+"Det gældende opsætning for MIDI mapperen refererer til en MIDI enhed som "
+"ikke er installeret i systemet. Brug 'MIDI mapper' i Kontrolpanelet for at "
+"ændre opsætningen."
+
+#: winmm.rc:126
+msgid "An error occurred with the specified port."
+msgstr "En fejl opstod med den specificerede port.."
+
+#: winmm.rc:129
+msgid ""
+"All multimedia timers are being used by other applications. Quit one of "
+"these applications; then, try again."
+msgstr ""
+"Alle multimediatidstagere bruges af andre programmer. Luk et af de "
+"programmer og prøv igen."
+
+#: winmm.rc:128
+msgid "The system doesn't have a current MIDI port specified."
+msgstr "Systemet har ikke specificeret en gældende MIDI port."
+
+#: winmm.rc:123
+msgid ""
+"The system has no installed MIDI devices. Use the Drivers option from the "
+"Control Panel to install a MIDI driver."
+msgstr ""
+"Systemet har ikke nogen installerede MIDI enheder. Brug 'Drivere' i "
+"Kontrolpanelet for at installere en MIDI driver."
+
+#: winmm.rc:118
+msgid "There is no display window."
+msgstr "Der er ikke noget vindue."
+
+#: winmm.rc:119
+msgid "Could not create or use window."
+msgstr "Kunne ikke oprette eller bruge vinduet."
+
+#: winmm.rc:120
+msgid ""
+"Cannot read the specified file. Make sure the file is still present, or "
+"check your disk or network connection."
+msgstr ""
+"Kunne ikke læse den specificerede fil. Kontroller at filen fortsat findes, "
+"og kontroller forbindelsen til disken eller netværket."
+
+#: winmm.rc:121
+msgid ""
+"Cannot write to the specified file. Make sure you have enough disk space or "
+"are still connected to the network."
+msgstr ""
+"Kunne ikke skrive til den specificerede fil. Kontroller at du har nok fri "
+"diskplads, og at du fortsat er tilkoblet netværket."
+
 #: clock.rc:29
 msgid "Ana&log"
 msgstr "&Analog"
