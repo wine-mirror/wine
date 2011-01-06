@@ -426,3 +426,13 @@ BOOL WINAPI SetupDiLoadClassIcon(const GUID *ClassGuid, HICON *LargeIcon, PINT M
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+/***********************************************************************
+ *              SetupDiSetSelectedDevice  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiSetSelectedDevice(HDEVINFO SetupDiSetSelectedDevice, PSP_DEVINFO_DATA DeviceInfoData)
+{
+    FIXME("(%p, %p) stub\n", SetupDiSetSelectedDevice, DeviceInfoData);
+
+    return TRUE;
+}

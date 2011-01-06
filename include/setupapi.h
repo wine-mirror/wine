@@ -1635,6 +1635,7 @@ BOOL     WINAPI SetupDiSetDeviceRegistryPropertyW(HDEVINFO, PSP_DEVINFO_DATA, DW
 BOOL     WINAPI SetupDiSetDriverInstallParamsA(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_A, PSP_DRVINSTALL_PARAMS);
 BOOL     WINAPI SetupDiSetDriverInstallParamsW(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_W, PSP_DRVINSTALL_PARAMS);
 #define         SetupDiSetDriverInstallParams WINELIB_NAME_AW(SetupDiSetDriverInstallParams)
+BOOL     WINAPI SetupDiSetSelectedDevice(HDEVINFO, PSP_DEVINFO_DATA);
 BOOL     WINAPI SetupDiSetSelectedDriverA(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_A);
 BOOL     WINAPI SetupDiSetSelectedDriverW(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_W);
 #define         SetupDiSetSelectedDriver WINELIB_NAME_AW(SetupDiSetSelectedDriver)

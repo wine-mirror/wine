@@ -387,7 +387,7 @@
 @ stdcall SetupDiSetDeviceRegistryPropertyW(ptr ptr long ptr ptr)
 @ stub SetupDiSetDriverInstallParamsA
 @ stub SetupDiSetDriverInstallParamsW
-@ stub SetupDiSetSelectedDevice
+@ stdcall SetupDiSetSelectedDevice(ptr ptr)
 @ stub SetupDiSetSelectedDriverA
 @ stub SetupDiSetSelectedDriverW
 @ stub SetupDiUnremoveDevice
