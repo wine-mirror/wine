@@ -117,11 +117,11 @@ msgstr "Capacidades SMIME"
 msgid "Prefer Signed Data"
 msgstr "Preferir Dados Assinados"
 
-#: crypt32.rc:53
+#: crypt32.rc:53 cryptdlg.rc:31
 msgid "CPS"
 msgstr "CPS"
 
-#: crypt32.rc:54
+#: crypt32.rc:54 cryptdlg.rc:32
 msgid "User Notice"
 msgstr "Aviso de Utilizador"
 
@@ -836,6 +836,46 @@ msgstr "S/MIME CA"
 #: crypt32.rc:240
 msgid "Signature CA"
 msgstr "CA de Assinatura"
+
+#: cryptdlg.rc:27
+#, fuzzy
+msgid "Certificate Policy"
+msgstr "Políticas de Certificados"
+
+#: cryptdlg.rc:28
+#, fuzzy
+msgid "Policy Identifier: "
+msgstr "Identificador da Chave de Autoridade"
+
+#: cryptdlg.rc:29
+msgid "Policy Qualifier Info"
+msgstr ""
+
+#: cryptdlg.rc:30
+msgid "Policy Qualifier Id="
+msgstr ""
+
+#: cryptdlg.rc:33
+msgid "Qualifier"
+msgstr ""
+
+#: cryptdlg.rc:34
+msgid "Notice Reference"
+msgstr ""
+
+#: cryptdlg.rc:35
+#, fuzzy
+msgid "Organization="
+msgstr "Organização"
+
+#: cryptdlg.rc:36
+#, fuzzy
+msgid "Notice Number="
+msgstr "Número de Série do Certificado="
+
+#: cryptdlg.rc:37
+msgid "Notice Text="
+msgstr ""
 
 #: clock.rc:28
 msgid "&Properties"

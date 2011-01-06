@@ -118,11 +118,11 @@ msgstr ""
 msgid "Prefer Signed Data"
 msgstr ""
 
-#: crypt32.rc:53
+#: crypt32.rc:53 cryptdlg.rc:31
 msgid "CPS"
 msgstr ""
 
-#: crypt32.rc:54
+#: crypt32.rc:54 cryptdlg.rc:32
 msgid "User Notice"
 msgstr ""
 
@@ -839,6 +839,42 @@ msgstr ""
 
 #: crypt32.rc:240
 msgid "Signature CA"
+msgstr ""
+
+#: cryptdlg.rc:27
+msgid "Certificate Policy"
+msgstr ""
+
+#: cryptdlg.rc:28
+msgid "Policy Identifier: "
+msgstr ""
+
+#: cryptdlg.rc:29
+msgid "Policy Qualifier Info"
+msgstr ""
+
+#: cryptdlg.rc:30
+msgid "Policy Qualifier Id="
+msgstr ""
+
+#: cryptdlg.rc:33
+msgid "Qualifier"
+msgstr ""
+
+#: cryptdlg.rc:34
+msgid "Notice Reference"
+msgstr ""
+
+#: cryptdlg.rc:35
+msgid "Organization="
+msgstr ""
+
+#: cryptdlg.rc:36
+msgid "Notice Number="
+msgstr ""
+
+#: cryptdlg.rc:37
+msgid "Notice Text="
 msgstr ""
 
 #: clock.rc:28

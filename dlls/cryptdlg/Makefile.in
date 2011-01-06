@@ -4,22 +4,7 @@ IMPORTS   = cryptui crypt32 wintrust user32 advapi32
 C_SRCS = \
 	main.c
 
-RC_SRCS = \
-	cryptdlg_Da.rc \
-	cryptdlg_De.rc \
-	cryptdlg_En.rc \
-	cryptdlg_Fr.rc \
-	cryptdlg_Hu.rc \
-	cryptdlg_It.rc \
-	cryptdlg_Ko.rc \
-	cryptdlg_Lt.rc \
-	cryptdlg_Nl.rc \
-	cryptdlg_No.rc \
-	cryptdlg_Pl.rc \
-	cryptdlg_Pt.rc \
-	cryptdlg_Ro.rc \
-	cryptdlg_Sr.rc \
-	cryptdlg_Sv.rc \
-	cryptdlg_Uk.rc
+RC_SRCS = cryptdlg.rc
+PO_SRCS = cryptdlg.rc
 
 @MAKE_DLL_RULES@

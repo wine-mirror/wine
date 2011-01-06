@@ -14830,7 +14830,7 @@ wine_fn_config_test dlls/credui/tests credui_test
 wine_fn_config_dll crtdll enable_crtdll implib
 wine_fn_config_dll crypt32 enable_crypt32 po,implib
 wine_fn_config_test dlls/crypt32/tests crypt32_test
-wine_fn_config_dll cryptdlg enable_cryptdlg
+wine_fn_config_dll cryptdlg enable_cryptdlg po
 wine_fn_config_dll cryptdll enable_cryptdll implib
 wine_fn_config_dll cryptnet enable_cryptnet implib
 wine_fn_config_test dlls/cryptnet/tests cryptnet_test
