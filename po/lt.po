@@ -761,11 +761,11 @@ msgstr "Neprieinama"
 msgid "Meets Criteria="
 msgstr "Atitinka kriterijus="
 
-#: crypt32.rc:222 ipconfig.rc:44
+#: crypt32.rc:222 oleaut32.rc:29 ipconfig.rc:44
 msgid "Yes"
 msgstr "Taip"
 
-#: crypt32.rc:223 ipconfig.rc:45
+#: crypt32.rc:223 oleaut32.rc:30 ipconfig.rc:45
 msgid "No"
 msgstr "Ne"
 
@@ -1250,6 +1250,22 @@ msgstr "MS-CRAM"
 #: msvidc32.rc:26
 msgid "Wine Video 1 video codec"
 msgstr "Wine Video 1 vaizdo kodekas"
+
+#: oleaut32.rc:27
+msgid "True"
+msgstr "Tiesa"
+
+#: oleaut32.rc:28
+msgid "False"
+msgstr "Netiesa"
+
+#: oleaut32.rc:31
+msgid "On"
+msgstr "Įjungta"
+
+#: oleaut32.rc:32
+msgid "Off"
+msgstr "Išjungta"
 
 #: clock.rc:28
 msgid "&Properties"

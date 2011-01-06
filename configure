@@ -15117,7 +15117,7 @@ wine_fn_config_dll ole32 enable_ole32 implib
 wine_fn_config_test dlls/ole32/tests ole32_test
 wine_fn_config_dll oleacc enable_oleacc implib
 wine_fn_config_test dlls/oleacc/tests oleacc_test
-wine_fn_config_dll oleaut32 enable_oleaut32 implib
+wine_fn_config_dll oleaut32 enable_oleaut32 po,implib
 wine_fn_config_test dlls/oleaut32/tests oleaut32_test
 wine_fn_config_dll olecli.dll16 enable_win16
 wine_fn_config_dll olecli32 enable_olecli32 implib

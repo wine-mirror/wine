@@ -24,35 +24,8 @@ C_SRCS = \
 	variant.c \
 	vartype.c
 
-RC_SRCS = \
-	oleaut32_Bg.rc \
-	oleaut32_Cy.rc \
-	oleaut32_Cz.rc \
-	oleaut32_Da.rc \
-	oleaut32_De.rc \
-	oleaut32_El.rc \
-	oleaut32_En.rc \
-	oleaut32_Eo.rc \
-	oleaut32_Es.rc \
-	oleaut32_Fr.rc \
-	oleaut32_Hu.rc \
-	oleaut32_It.rc \
-	oleaut32_Ko.rc \
-	oleaut32_Lt.rc \
-	oleaut32_Nl.rc \
-	oleaut32_No.rc \
-	oleaut32_Pl.rc \
-	oleaut32_Pt.rc \
-	oleaut32_Ro.rc \
-	oleaut32_Ru.rc \
-	oleaut32_Si.rc \
-	oleaut32_Sr.rc \
-	oleaut32_Sv.rc \
-	oleaut32_Th.rc \
-	oleaut32_Tr.rc \
-	oleaut32_Uk.rc \
-	oleaut32_Zh.rc \
-	rsrc.rc
+RC_SRCS = oleaut32.rc
+PO_SRCS = oleaut32.rc
 
 IDL_P_SRCS = \
 	oleaut32_oaidl.idl \

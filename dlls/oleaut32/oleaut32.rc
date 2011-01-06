@@ -1,5 +1,7 @@
 /*
- * Copyright 2001 Dmitry Timoshkov
+ * Resources for oleaut32
+ *
+ * Copyright 2003 Jon Griffiths
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,6 +17,22 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
+#include "resource.h"
+
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+  IDS_TRUE  "True"
+  IDS_FALSE "False"
+  IDS_YES   "Yes"
+  IDS_NO    "No"
+  IDS_ON    "On"
+  IDS_OFF   "Off"
+}
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 /* @makedep: oleaut32.rgs */
 1 WINE_REGISTRY oleaut32.rgs

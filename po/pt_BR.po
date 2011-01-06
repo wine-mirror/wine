@@ -761,11 +761,11 @@ msgstr "Não Disponível"
 msgid "Meets Criteria="
 msgstr "Conforme os Critérios="
 
-#: crypt32.rc:222 ipconfig.rc:44
+#: crypt32.rc:222 oleaut32.rc:29 ipconfig.rc:44
 msgid "Yes"
 msgstr "Sim"
 
-#: crypt32.rc:223 ipconfig.rc:45
+#: crypt32.rc:223 oleaut32.rc:30 ipconfig.rc:45
 msgid "No"
 msgstr "Não"
 
@@ -1252,6 +1252,22 @@ msgstr "MS-CRAM"
 #: msvidc32.rc:26
 msgid "Wine Video 1 video codec"
 msgstr "codec video Wine Video 1"
+
+#: oleaut32.rc:27
+msgid "True"
+msgstr "Verdadeiro"
+
+#: oleaut32.rc:28
+msgid "False"
+msgstr "Falso"
+
+#: oleaut32.rc:31
+msgid "On"
+msgstr "Ligado"
+
+#: oleaut32.rc:32
+msgid "Off"
+msgstr "Desligado"
 
 #: clock.rc:28
 msgid "&Properties"
