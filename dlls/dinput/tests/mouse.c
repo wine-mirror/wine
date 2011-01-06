@@ -73,6 +73,12 @@ static void test_acquire(LPDIRECTINPUT pDI, HWND hwnd)
     DIMOUSESTATE m_state;
     HWND hwnd2;
 
+    if (! SetForegroundWindow(hwnd))
+    {
+        skip("Not running as foreground app, skipping acquire tests\n");
+        return;
+    }
+
     hr = IDirectInput_CreateDevice(pDI, &GUID_SysMouse, &pMouse, NULL);
     ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
     if (FAILED(hr)) return;
