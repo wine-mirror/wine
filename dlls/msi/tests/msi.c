@@ -5000,7 +5000,14 @@ static void test_MsiGetProductInfoEx(void)
     r = pMsiGetProductInfoExA(prodcode, usersid,
                               MSIINSTALLCONTEXT_USERUNMANAGED,
                               INSTALLPROPERTY_PRODUCTSTATE, buf, &sz);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(r == ERROR_SUCCESS || broken(r == ERROR_UNKNOWN_PRODUCT), "Expected ERROR_SUCCESS, got %d\n", r);
+    if (r == ERROR_UNKNOWN_PRODUCT)
+    {
+        win_skip("skipping remaining tests for MsiGetProductInfoEx\n");
+        delete_key(prodkey, "", access);
+        RegCloseKey(prodkey);
+        return;
+    }
     ok(!lstrcmpA(buf, "1"), "Expected \"1\", got \"%s\"\n", buf);
     ok(sz == 1, "Expected 1, got %d\n", sz);
 
