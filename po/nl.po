@@ -877,6 +877,22 @@ msgstr "Certificaat serienummer="
 msgid "Notice Text="
 msgstr ""
 
+#: devenum.rc:32
+msgid "Default DirectSound"
+msgstr "Standaard DirectSound"
+
+#: devenum.rc:33
+msgid "DirectSound: %s"
+msgstr "DirectSound: %s"
+
+#: devenum.rc:34
+msgid "Default WaveOut Device"
+msgstr "Standaardapparaat WaveOut"
+
+#: devenum.rc:35
+msgid "Default MidiOut Device"
+msgstr "Standaardapparaat MidiOut"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Eigenschappen"

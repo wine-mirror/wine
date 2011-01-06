@@ -877,6 +877,22 @@ msgstr ""
 msgid "Notice Text="
 msgstr ""
 
+#: devenum.rc:32
+msgid "Default DirectSound"
+msgstr "Подразумевани DirectSound"
+
+#: devenum.rc:33
+msgid "DirectSound: %s"
+msgstr "DirectSound: %s"
+
+#: devenum.rc:34
+msgid "Default WaveOut Device"
+msgstr "Подразумевани WaveOut уређај"
+
+#: devenum.rc:35
+msgid "Default MidiOut Device"
+msgstr "Подразумевани MidiOut уређај"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Својства"

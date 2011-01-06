@@ -10,29 +10,7 @@ C_SRCS = \
 
 IDL_R_SRCS = devenum_classes.idl
 
-RC_SRCS = \
-	Cs.rc \
-	Cy.rc \
-	Da.rc \
-	De.rc \
-	En.rc \
-	Es.rc \
-	Fr.rc \
-	Hu.rc \
-	It.rc \
-	Ja.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	No.rc \
-	Pl.rc \
-	Pt.rc \
-	Ro.rc \
-	Ru.rc \
-	Si.rc \
-	Sr.rc \
-	Sv.rc \
-	Uk.rc \
-	devenum.rc
+RC_SRCS = devenum.rc
+PO_SRCS = devenum.rc
 
 @MAKE_DLL_RULES@

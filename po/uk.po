@@ -877,6 +877,22 @@ msgstr "Серійний номер сертифікату="
 msgid "Notice Text="
 msgstr ""
 
+#: devenum.rc:32
+msgid "Default DirectSound"
+msgstr "Стандартний DirectSound"
+
+#: devenum.rc:33
+msgid "DirectSound: %s"
+msgstr "DirectSound: %s"
+
+#: devenum.rc:34
+msgid "Default WaveOut Device"
+msgstr "Звуковий пристрій виводу по замовчуванні"
+
+#: devenum.rc:35
+msgid "Default MidiOut Device"
+msgstr "Пристрій виводу Midi по замовчуванні"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Властивості"

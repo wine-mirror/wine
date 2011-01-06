@@ -877,6 +877,22 @@ msgstr "Serienummer för certifikat="
 msgid "Notice Text="
 msgstr ""
 
+#: devenum.rc:32
+msgid "Default DirectSound"
+msgstr "Förvalt DirectSound"
+
+#: devenum.rc:33
+msgid "DirectSound: %s"
+msgstr "DirectSound: %s"
+
+#: devenum.rc:34
+msgid "Default WaveOut Device"
+msgstr "Förvald WaveOut-enhet"
+
+#: devenum.rc:35
+msgid "Default MidiOut Device"
+msgstr "Förvald MidiOut-enhet"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Egenskaper"

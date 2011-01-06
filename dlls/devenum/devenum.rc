@@ -23,8 +23,17 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "devenum_private.h"
 
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+    IDS_DEVENUM_DSDEFAULT  "Default DirectSound"
+    IDS_DEVENUM_DS         "DirectSound: %s"
+    IDS_DEVENUM_WODEFAULT  "Default WaveOut Device"
+    IDS_DEVENUM_MIDEFAULT  "Default MidiOut Device"
+}
 
 #define WINE_FILEDESCRIPTION_STR "Wine Device Enumerator Library"
 #define WINE_FILENAME_STR "devenum.dll"

@@ -877,6 +877,22 @@ msgstr "Numărul de serie al certificatului="
 msgid "Notice Text="
 msgstr ""
 
+#: devenum.rc:32
+msgid "Default DirectSound"
+msgstr "DirectSound implicit"
+
+#: devenum.rc:33
+msgid "DirectSound: %s"
+msgstr "DirectSound: %s"
+
+#: devenum.rc:34
+msgid "Default WaveOut Device"
+msgstr "Dispozitiv WaveOut implicit"
+
+#: devenum.rc:35
+msgid "Default MidiOut Device"
+msgstr "Dispozitiv MidiOut implicit"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Proprietăți"

@@ -877,6 +877,22 @@ msgstr "Tanusítvány szériaszám="
 msgid "Notice Text="
 msgstr ""
 
+#: devenum.rc:32
+msgid "Default DirectSound"
+msgstr "Alapértelmezett DirectSound"
+
+#: devenum.rc:33
+msgid "DirectSound: %s"
+msgstr "DirectSound: %s"
+
+#: devenum.rc:34
+msgid "Default WaveOut Device"
+msgstr "Alapértelmezett WaveOut eszköz"
+
+#: devenum.rc:35
+msgid "Default MidiOut Device"
+msgstr "Alapértelmezett MidiOut eszköz"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Beállítások"

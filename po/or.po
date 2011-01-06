@@ -874,6 +874,22 @@ msgstr ""
 msgid "Notice Text="
 msgstr ""
 
+#: devenum.rc:32
+msgid "Default DirectSound"
+msgstr ""
+
+#: devenum.rc:33
+msgid "DirectSound: %s"
+msgstr ""
+
+#: devenum.rc:34
+msgid "Default WaveOut Device"
+msgstr ""
+
+#: devenum.rc:35
+msgid "Default MidiOut Device"
+msgstr ""
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "ସୂଚନା (&o)"

@@ -888,6 +888,22 @@ msgstr ""
 msgid "Notice Text="
 msgstr ""
 
+#: devenum.rc:32
+msgid "Default DirectSound"
+msgstr "Privzeta DirectSound naprava"
+
+#: devenum.rc:33
+msgid "DirectSound: %s"
+msgstr "DirectSound: %s"
+
+#: devenum.rc:34
+msgid "Default WaveOut Device"
+msgstr "Privzeta WaveOut naprava"
+
+#: devenum.rc:35
+msgid "Default MidiOut Device"
+msgstr "Privzeta MidiOut naprava"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Lastnosti"

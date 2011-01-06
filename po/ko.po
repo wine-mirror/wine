@@ -877,6 +877,22 @@ msgstr "인증서 시리얼 번호="
 msgid "Notice Text="
 msgstr ""
 
+#: devenum.rc:32
+msgid "Default DirectSound"
+msgstr "기본 다이렉트 사운드"
+
+#: devenum.rc:33
+msgid "DirectSound: %s"
+msgstr "다이렉트 사운드: %s"
+
+#: devenum.rc:34
+msgid "Default WaveOut Device"
+msgstr "기본 웨이브 출력 장치"
+
+#: devenum.rc:35
+msgid "Default MidiOut Device"
+msgstr "기본 미디출력 장치"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "등록 정보(&P)"
