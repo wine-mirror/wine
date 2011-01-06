@@ -243,8 +243,10 @@ static HRESULT WINAPI IWineD3DTextureImpl_SetPrivateData(IWineD3DTexture *iface,
     return resource_set_private_data((IWineD3DResource *)iface, riid, data, data_size, flags);
 }
 
-static HRESULT WINAPI IWineD3DTextureImpl_GetPrivateData(IWineD3DTexture *iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
-    return resource_get_private_data((IWineD3DResource *)iface, refguid, pData, pSizeOfData);
+static HRESULT WINAPI IWineD3DTextureImpl_GetPrivateData(IWineD3DTexture *iface,
+        REFGUID guid, void *data, DWORD *data_size)
+{
+    return resource_get_private_data((IWineD3DResourceImpl *)iface, guid, data, data_size);
 }
 
 static HRESULT WINAPI IWineD3DTextureImpl_FreePrivateData(IWineD3DTexture *iface, REFGUID refguid)

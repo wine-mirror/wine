@@ -192,33 +192,36 @@ HRESULT resource_set_private_data(IWineD3DResource *iface, REFGUID refguid,
     return WINED3D_OK;
 }
 
-HRESULT resource_get_private_data(IWineD3DResource *iface, REFGUID refguid, void *pData, DWORD *pSizeOfData)
+HRESULT resource_get_private_data(struct IWineD3DResourceImpl *resource, REFGUID guid, void *data, DWORD *data_size)
 {
-    IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
-    struct private_data *data;
+    const struct private_data *d;
 
-    TRACE("(%p) : %p %p %p\n", This, refguid, pData, pSizeOfData);
-    data = resource_find_private_data(This, refguid);
-    if (!data) return WINED3DERR_NOTFOUND;
+    TRACE("resource %p, guid %s, data %p, data_size %p.\n",
+            resource, debugstr_guid(guid), data, data_size);
 
-    if (*pSizeOfData < data->size) {
-        *pSizeOfData = data->size;
+    d = resource_find_private_data(resource, guid);
+    if (!d) return WINED3DERR_NOTFOUND;
+
+    if (*data_size < d->size)
+    {
+        *data_size = d->size;
         return WINED3DERR_MOREDATA;
     }
 
-    if (data->flags & WINED3DSPD_IUNKNOWN) {
-        *(LPUNKNOWN *)pData = data->ptr.object;
-        if (((IWineD3DImpl *)This->resource.device->wined3d)->dxVersion != 7)
+    if (d->flags & WINED3DSPD_IUNKNOWN)
+    {
+        *(IUnknown **)data = d->ptr.object;
+        if (((IWineD3DImpl *)resource->resource.device->wined3d)->dxVersion != 7)
         {
-            /* D3D8 and D3D9 addref the private data, DDraw does not. This can't be handled in
-             * ddraw because it doesn't know if the pointer returned is an IUnknown * or just a
-             * Blob
-             */
-            IUnknown_AddRef(data->ptr.object);
+            /* D3D8 and D3D9 addref the private data, DDraw does not. This
+             * can't be handled in ddraw because it doesn't know if the
+             * pointer returned is an IUnknown * or just a blob. */
+            IUnknown_AddRef(d->ptr.object);
         }
     }
-    else {
-        memcpy(pData, data->ptr.data, data->size);
+    else
+    {
+        memcpy(data, d->ptr.data, d->size);
     }
 
     return WINED3D_OK;

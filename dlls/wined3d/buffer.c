@@ -770,7 +770,7 @@ static HRESULT STDMETHODCALLTYPE buffer_SetPrivateData(IWineD3DBuffer *iface,
 static HRESULT STDMETHODCALLTYPE buffer_GetPrivateData(IWineD3DBuffer *iface,
         REFGUID guid, void *data, DWORD *data_size)
 {
-    return resource_get_private_data((IWineD3DResource *)iface, guid, data, data_size);
+    return resource_get_private_data((IWineD3DResourceImpl *)iface, guid, data, data_size);
 }
 
 static HRESULT STDMETHODCALLTYPE buffer_FreePrivateData(IWineD3DBuffer *iface, REFGUID guid)

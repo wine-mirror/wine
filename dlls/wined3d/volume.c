@@ -156,8 +156,10 @@ static HRESULT WINAPI IWineD3DVolumeImpl_SetPrivateData(IWineD3DVolume *iface,
     return resource_set_private_data((IWineD3DResource *)iface, riid, data, data_size, flags);
 }
 
-static HRESULT WINAPI IWineD3DVolumeImpl_GetPrivateData(IWineD3DVolume *iface, REFGUID  refguid, void* pData, DWORD* pSizeOfData) {
-    return resource_get_private_data((IWineD3DResource *)iface, refguid, pData, pSizeOfData);
+static HRESULT WINAPI IWineD3DVolumeImpl_GetPrivateData(IWineD3DVolume *iface,
+        REFGUID guid, void *data, DWORD *data_size)
+{
+    return resource_get_private_data((IWineD3DResourceImpl *)iface, guid, data, data_size);
 }
 
 static HRESULT WINAPI IWineD3DVolumeImpl_FreePrivateData(IWineD3DVolume *iface, REFGUID refguid)
