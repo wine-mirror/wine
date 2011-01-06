@@ -2251,6 +2251,246 @@ msgstr ""
 "Belirtilen dosyaya yazılamıyor. Yeterli kullanılabilir disk alanına sahip "
 "olduğunuzdan veya ağa bağlı olduğunuzdan emin olun."
 
+#: wldap32.rc:27
+msgid "Success"
+msgstr "Başarılı"
+
+#: wldap32.rc:28
+msgid "Operations Error"
+msgstr "İşlem Hatası"
+
+#: wldap32.rc:29
+msgid "Protocol Error"
+msgstr "İletişim Kuralı Hatası"
+
+#: wldap32.rc:30
+msgid "Time Limit Exceeded"
+msgstr "Zaman Sınırı Aşıldı"
+
+#: wldap32.rc:31
+msgid "Size Limit Exceeded"
+msgstr "Boyut Sınırı Aşıldı"
+
+#: wldap32.rc:32
+msgid "Compare False"
+msgstr "Karşılaştırma Yanlış"
+
+#: wldap32.rc:33
+msgid "Compare True"
+msgstr "Karşılaştırma Doğru"
+
+#: wldap32.rc:34
+msgid "Authentication Method Not Supported"
+msgstr "Yetkilendirme Yöntemi Desteklenmiyor"
+
+#: wldap32.rc:35
+msgid "Strong Authentication Required"
+msgstr "Güçlü Yerkilendirme Gerekli"
+
+#: wldap32.rc:36
+msgid "Referral (v2)"
+msgstr "Başvuru (v2)"
+
+#: wldap32.rc:37
+msgid "Referral"
+msgstr "Başvuru"
+
+#: wldap32.rc:38
+msgid "Administration Limit Exceeded"
+msgstr "Yönetim Sınırı Aşıldı"
+
+#: wldap32.rc:39
+msgid "Unavailable Critical Extension"
+msgstr "Kullanılabilir Olmayan Kritik Uzantı"
+
+#: wldap32.rc:40
+msgid "Confidentiality Required"
+msgstr "Gizli Olarak Gerekli"
+
+#: wldap32.rc:43
+msgid "No Such Attribute"
+msgstr "Böyle Bir Öznitelik Yok"
+
+#: wldap32.rc:44
+msgid "Undefined Type"
+msgstr "Tanımlanmamış Tür"
+
+#: wldap32.rc:45
+msgid "Inappropriate Matching"
+msgstr "Uygunsuz Eşleşme"
+
+#: wldap32.rc:46
+msgid "Constraint Violation"
+msgstr "Kısıtlama İhlali"
+
+#: wldap32.rc:47
+msgid "Attribute Or Value Exists"
+msgstr "Varolan Öznitelik Veya Değer"
+
+#: wldap32.rc:48
+msgid "Invalid Syntax"
+msgstr "Geçersiz Sözdizimi"
+
+#: wldap32.rc:59
+msgid "No Such Object"
+msgstr "Böyle Bir Nesne Yok"
+
+#: wldap32.rc:60
+msgid "Alias Problem"
+msgstr "Takma Ad Sorunu"
+
+#: wldap32.rc:61
+msgid "Invalid DN Syntax"
+msgstr "Geçersiz DN Sözdizimi"
+
+#: wldap32.rc:62
+msgid "Is Leaf"
+msgstr "Yaprak Konumunda"
+
+#: wldap32.rc:63
+msgid "Alias Dereference Problem"
+msgstr "Takma Ad Başvuru Sorunu"
+
+#: wldap32.rc:75
+msgid "Inappropriate Authentication"
+msgstr "Uygunsuz Yetkilendirme"
+
+#: wldap32.rc:76
+msgid "Invalid Credentials"
+msgstr "Geçersiz Belgeler"
+
+#: wldap32.rc:77
+msgid "Insufficient Rights"
+msgstr "Geçersiz Yetkiler"
+
+#: wldap32.rc:78
+msgid "Busy"
+msgstr "Meşgul"
+
+#: wldap32.rc:79
+msgid "Unavailable"
+msgstr "Kullanılabilir Değil"
+
+#: wldap32.rc:80
+msgid "Unwilling To Perform"
+msgstr "Yürütmeye İsteksiz"
+
+#: wldap32.rc:81
+msgid "Loop Detected"
+msgstr "Döngü Algılandı"
+
+#: wldap32.rc:87
+msgid "Sort Control Missing"
+msgstr "Sıralama Denetimi Eksik"
+
+#: wldap32.rc:88
+msgid "Index range error"
+msgstr "Eksik Dizin Aralığı Hatası"
+
+#: wldap32.rc:91
+msgid "Naming Violation"
+msgstr "Adlandırma İhlali"
+
+#: wldap32.rc:92
+msgid "Object Class Violation"
+msgstr "Nesne Sınıfı İhlali"
+
+#: wldap32.rc:93
+msgid "Not allowed on Non-leaf"
+msgstr "Yaprak olmayan konumda izinli değil"
+
+#: wldap32.rc:94
+msgid "Not allowed on RDN"
+msgstr "RDN üzerinde izin verilmiyor"
+
+#: wldap32.rc:95
+msgid "Already Exists"
+msgstr "Zaten Var"
+
+#: wldap32.rc:96
+msgid "No Object Class Mods"
+msgstr "Nesne Sınıfı Modülleri Yok"
+
+#: wldap32.rc:97
+msgid "Results Too Large"
+msgstr "Sonuçlar Çok Büyük"
+
+#: wldap32.rc:98
+msgid "Affects Multiple DSAs"
+msgstr "Birden Fazla DSA Etkilenir"
+
+#: wldap32.rc:107
+msgid "Other"
+msgstr "Diğer"
+
+#: wldap32.rc:108
+msgid "Server Down"
+msgstr "Sunucu Kapalı"
+
+#: wldap32.rc:109
+msgid "Local Error"
+msgstr "Yerel Hata"
+
+#: wldap32.rc:110
+msgid "Encoding Error"
+msgstr "Kodlama Hatası"
+
+#: wldap32.rc:111
+msgid "Decoding Error"
+msgstr "Kod Çözme Hatası"
+
+#: wldap32.rc:112
+msgid "Timeout"
+msgstr "Zaman Aşımı"
+
+#: wldap32.rc:113
+msgid "Auth Unknown"
+msgstr "Yazar Bilinmiyor"
+
+#: wldap32.rc:114
+msgid "Filter Error"
+msgstr "Süzme Hatası"
+
+#: wldap32.rc:115
+msgid "User Cancelled"
+msgstr "Kullanıcı İptal Etti"
+
+#: wldap32.rc:116
+msgid "Parameter Error"
+msgstr "Parametre Hatası"
+
+#: wldap32.rc:117
+msgid "No Memory"
+msgstr "Bellek Yok"
+
+#: wldap32.rc:118
+msgid "Can't connect to the LDAP server"
+msgstr "LDAP sunucusuna bağlanamıyor"
+
+#: wldap32.rc:119
+msgid "Operation not supported by this version of the LDAP protocol"
+msgstr "İşlem LDAP iletişim kuralının bu sürümünce desteklenmiyor."
+
+#: wldap32.rc:120
+msgid "Specified control was not found in message"
+msgstr "İletide belirtilen denetim bulunamadı"
+
+#: wldap32.rc:121
+msgid "No result present in message"
+msgstr "İletide sonuç yok"
+
+#: wldap32.rc:122
+msgid "More results returned"
+msgstr "Dönen diğer sonuçlar"
+
+#: wldap32.rc:123
+msgid "Loop while handling referrals"
+msgstr "Başvuruları işlerken dön"
+
+#: wldap32.rc:124
+msgid "Referral hop limit exceeded"
+msgstr "Paketin gönderildiği yönlendirici sınırı aşıldı"
+
 #: clock.rc:29
 msgid "Ana&log"
 msgstr "Ana&log"

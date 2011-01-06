@@ -2243,6 +2243,246 @@ msgstr ""
 "Неможливо записати до вказаного файлу. Переконайтеся, що на диску є "
 "достатньо вільного простору та що комп'ютер ще підключений до мережі."
 
+#: wldap32.rc:27
+msgid "Success"
+msgstr "Успіх"
+
+#: wldap32.rc:28
+msgid "Operations Error"
+msgstr "Помилка операції"
+
+#: wldap32.rc:29
+msgid "Protocol Error"
+msgstr "Помилка протоколу"
+
+#: wldap32.rc:30
+msgid "Time Limit Exceeded"
+msgstr "Перевищено обмеження в часі"
+
+#: wldap32.rc:31
+msgid "Size Limit Exceeded"
+msgstr "Перевищено обмеження в розмірі"
+
+#: wldap32.rc:32
+msgid "Compare False"
+msgstr "Порівняння невірне"
+
+#: wldap32.rc:33
+msgid "Compare True"
+msgstr "Порівняння вірне"
+
+#: wldap32.rc:34
+msgid "Authentication Method Not Supported"
+msgstr "Метод авторизації не підтримується"
+
+#: wldap32.rc:35
+msgid "Strong Authentication Required"
+msgstr "Потрібна тверда авторизація"
+
+#: wldap32.rc:36
+msgid "Referral (v2)"
+msgstr "Посилання (v2)"
+
+#: wldap32.rc:37
+msgid "Referral"
+msgstr "Посилання"
+
+#: wldap32.rc:38
+msgid "Administration Limit Exceeded"
+msgstr "Перевищено обмеження адміністрування"
+
+#: wldap32.rc:39
+msgid "Unavailable Critical Extension"
+msgstr "Критичне розширення недоступне"
+
+#: wldap32.rc:40
+msgid "Confidentiality Required"
+msgstr "Потрібна конфіденційність"
+
+#: wldap32.rc:43
+msgid "No Such Attribute"
+msgstr "Немає такої властивості"
+
+#: wldap32.rc:44
+msgid "Undefined Type"
+msgstr "Невизначений тип"
+
+#: wldap32.rc:45
+msgid "Inappropriate Matching"
+msgstr "Недоречна відповідність"
+
+#: wldap32.rc:46
+msgid "Constraint Violation"
+msgstr "Порушення обмеження"
+
+#: wldap32.rc:47
+msgid "Attribute Or Value Exists"
+msgstr "Властивість або значення існує"
+
+#: wldap32.rc:48
+msgid "Invalid Syntax"
+msgstr "Неправильний синтакс"
+
+#: wldap32.rc:59
+msgid "No Such Object"
+msgstr "Немає такого об'єкту"
+
+#: wldap32.rc:60
+msgid "Alias Problem"
+msgstr "Проблема з псевдонімом"
+
+#: wldap32.rc:61
+msgid "Invalid DN Syntax"
+msgstr "Невірний DN синтаксис"
+
+#: wldap32.rc:62
+msgid "Is Leaf"
+msgstr "Це лист дерева"
+
+#: wldap32.rc:63
+msgid "Alias Dereference Problem"
+msgstr "Проблема звернення до псевдоніму"
+
+#: wldap32.rc:75
+msgid "Inappropriate Authentication"
+msgstr "Невідповідна ідентифікація"
+
+#: wldap32.rc:76
+msgid "Invalid Credentials"
+msgstr "Невірні облікові дані"
+
+#: wldap32.rc:77
+msgid "Insufficient Rights"
+msgstr "Недостатньо прав"
+
+#: wldap32.rc:78
+msgid "Busy"
+msgstr "Зайнято"
+
+#: wldap32.rc:79
+msgid "Unavailable"
+msgstr "Недоступно"
+
+#: wldap32.rc:80
+msgid "Unwilling To Perform"
+msgstr "Не бажає виконувати"
+
+#: wldap32.rc:81
+msgid "Loop Detected"
+msgstr "Виявлено зациклювання"
+
+#: wldap32.rc:87
+msgid "Sort Control Missing"
+msgstr "Відсутнє управління сортуванням"
+
+#: wldap32.rc:88
+msgid "Index range error"
+msgstr "Помилка діапазону індексу"
+
+#: wldap32.rc:91
+msgid "Naming Violation"
+msgstr "Порушення прав найменування"
+
+#: wldap32.rc:92
+msgid "Object Class Violation"
+msgstr "Порушення класу об'єкту"
+
+#: wldap32.rc:93
+msgid "Not allowed on Non-leaf"
+msgstr "Не дозволено не на листі дерева"
+
+#: wldap32.rc:94
+msgid "Not allowed on RDN"
+msgstr "Не дозволено на RDN"
+
+#: wldap32.rc:95
+msgid "Already Exists"
+msgstr "Вже існує"
+
+#: wldap32.rc:96
+msgid "No Object Class Mods"
+msgstr "Немає режимів класу об'єкту"
+
+#: wldap32.rc:97
+msgid "Results Too Large"
+msgstr "Результати завеликі"
+
+#: wldap32.rc:98
+msgid "Affects Multiple DSAs"
+msgstr "Впливає на декілька DSA"
+
+#: wldap32.rc:107
+msgid "Other"
+msgstr "Інший"
+
+#: wldap32.rc:108
+msgid "Server Down"
+msgstr "Сервер недоступний"
+
+#: wldap32.rc:109
+msgid "Local Error"
+msgstr "Локальна помилка"
+
+#: wldap32.rc:110
+msgid "Encoding Error"
+msgstr "Помилка кодування"
+
+#: wldap32.rc:111
+msgid "Decoding Error"
+msgstr "Помилка декодування"
+
+#: wldap32.rc:112
+msgid "Timeout"
+msgstr "Тайм-аут"
+
+#: wldap32.rc:113
+msgid "Auth Unknown"
+msgstr "Невідома авторизація"
+
+#: wldap32.rc:114
+msgid "Filter Error"
+msgstr "Помилка фільтру"
+
+#: wldap32.rc:115
+msgid "User Cancelled"
+msgstr "Відмінено користувачем"
+
+#: wldap32.rc:116
+msgid "Parameter Error"
+msgstr "Помилка параметра"
+
+#: wldap32.rc:117
+msgid "No Memory"
+msgstr "Немає пам'яті"
+
+#: wldap32.rc:118
+msgid "Can't connect to the LDAP server"
+msgstr "Неможливо підключитись до LDAP сервера"
+
+#: wldap32.rc:119
+msgid "Operation not supported by this version of the LDAP protocol"
+msgstr "Операція не підтримується цією версією протоколу LDAP"
+
+#: wldap32.rc:120
+msgid "Specified control was not found in message"
+msgstr "Вказаний елемент керування не знайдено в повідомленні"
+
+#: wldap32.rc:121
+msgid "No result present in message"
+msgstr "В повідомленні немає результату"
+
+#: wldap32.rc:122
+msgid "More results returned"
+msgstr "Існують ще результати"
+
+#: wldap32.rc:123
+msgid "Loop while handling referrals"
+msgstr "Зациклювання при обробці посилань"
+
+#: wldap32.rc:124
+msgid "Referral hop limit exceeded"
+msgstr "Перевищено граничну кількість пересилання посилань"
+
 #: clock.rc:29
 msgid "Ana&log"
 msgstr "&Анало&говий"

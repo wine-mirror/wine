@@ -2268,6 +2268,246 @@ msgstr ""
 "Nu se poate scrie în fișierul specificat. Asigurați-vă că aveți suficient "
 "spațiu pe disc sau că mai sunteți conectat la rețea."
 
+#: wldap32.rc:27
+msgid "Success"
+msgstr "Succes"
+
+#: wldap32.rc:28
+msgid "Operations Error"
+msgstr "Eroare de operațiuni"
+
+#: wldap32.rc:29
+msgid "Protocol Error"
+msgstr "Eroare de protocol"
+
+#: wldap32.rc:30
+msgid "Time Limit Exceeded"
+msgstr "Limită de timp depășită"
+
+#: wldap32.rc:31
+msgid "Size Limit Exceeded"
+msgstr "Limită de mărime depășită"
+
+#: wldap32.rc:32
+msgid "Compare False"
+msgstr "Comparație falsă"
+
+#: wldap32.rc:33
+msgid "Compare True"
+msgstr "Comparație adevărată"
+
+#: wldap32.rc:34
+msgid "Authentication Method Not Supported"
+msgstr "Metodă de autentificare nesuportată"
+
+#: wldap32.rc:35
+msgid "Strong Authentication Required"
+msgstr "Autentificare puternică necesară"
+
+#: wldap32.rc:36
+msgid "Referral (v2)"
+msgstr "Referent (v2)"
+
+#: wldap32.rc:37
+msgid "Referral"
+msgstr "Referent"
+
+#: wldap32.rc:38
+msgid "Administration Limit Exceeded"
+msgstr "Limită administrativă depășită"
+
+#: wldap32.rc:39
+msgid "Unavailable Critical Extension"
+msgstr "Extensie critică indisponibilă"
+
+#: wldap32.rc:40
+msgid "Confidentiality Required"
+msgstr "Confidențialitate necesară"
+
+#: wldap32.rc:43
+msgid "No Such Attribute"
+msgstr "Atribut necunoscut"
+
+#: wldap32.rc:44
+msgid "Undefined Type"
+msgstr "Tip nedefinit"
+
+#: wldap32.rc:45
+msgid "Inappropriate Matching"
+msgstr "Potrivire necorespunzătoare"
+
+#: wldap32.rc:46
+msgid "Constraint Violation"
+msgstr "Violare de restricție"
+
+#: wldap32.rc:47
+msgid "Attribute Or Value Exists"
+msgstr "Atributul sau valoarea există deja"
+
+#: wldap32.rc:48
+msgid "Invalid Syntax"
+msgstr "Sintaxă nevalidă"
+
+#: wldap32.rc:59
+msgid "No Such Object"
+msgstr "Obiect necunoscut"
+
+#: wldap32.rc:60
+msgid "Alias Problem"
+msgstr "Problemă la alias"
+
+#: wldap32.rc:61
+msgid "Invalid DN Syntax"
+msgstr "Sintaxă DN nevalidă"
+
+#: wldap32.rc:62
+msgid "Is Leaf"
+msgstr "Este o frunză"
+
+#: wldap32.rc:63
+msgid "Alias Dereference Problem"
+msgstr "Problemă de dereferențiere la alias"
+
+#: wldap32.rc:75
+msgid "Inappropriate Authentication"
+msgstr "Autentificare necorespunzătoare"
+
+#: wldap32.rc:76
+msgid "Invalid Credentials"
+msgstr "Autorizații nevalide"
+
+#: wldap32.rc:77
+msgid "Insufficient Rights"
+msgstr "Drepturi insuficiente"
+
+#: wldap32.rc:78
+msgid "Busy"
+msgstr "Ocupat"
+
+#: wldap32.rc:79
+msgid "Unavailable"
+msgstr "Indisponibil"
+
+#: wldap32.rc:80
+msgid "Unwilling To Perform"
+msgstr "Refuză să funcționeze"
+
+#: wldap32.rc:81
+msgid "Loop Detected"
+msgstr "Buclă detectată"
+
+#: wldap32.rc:87
+msgid "Sort Control Missing"
+msgstr "Control de triere lipsă"
+
+#: wldap32.rc:88
+msgid "Index range error"
+msgstr "Eroare de interval la index"
+
+#: wldap32.rc:91
+msgid "Naming Violation"
+msgstr "Violare de denumire"
+
+#: wldap32.rc:92
+msgid "Object Class Violation"
+msgstr "Violare de clasă de obiect"
+
+#: wldap32.rc:93
+msgid "Not allowed on Non-leaf"
+msgstr "Nepermis pe non-frunze"
+
+#: wldap32.rc:94
+msgid "Not allowed on RDN"
+msgstr "Nepermis pe RDN"
+
+#: wldap32.rc:95
+msgid "Already Exists"
+msgstr "Există deja"
+
+#: wldap32.rc:96
+msgid "No Object Class Mods"
+msgstr "Nici o modificare de clasă de obiecte"
+
+#: wldap32.rc:97
+msgid "Results Too Large"
+msgstr "Rezultate prea mari"
+
+#: wldap32.rc:98
+msgid "Affects Multiple DSAs"
+msgstr "Afectează mai multe DSA"
+
+#: wldap32.rc:107
+msgid "Other"
+msgstr "Altul"
+
+#: wldap32.rc:108
+msgid "Server Down"
+msgstr "Server indisponibil"
+
+#: wldap32.rc:109
+msgid "Local Error"
+msgstr "Eroare locală"
+
+#: wldap32.rc:110
+msgid "Encoding Error"
+msgstr "Eroare de codificare"
+
+#: wldap32.rc:111
+msgid "Decoding Error"
+msgstr "Eroare de decodificare"
+
+#: wldap32.rc:112
+msgid "Timeout"
+msgstr "Timp alocat expirat"
+
+#: wldap32.rc:113
+msgid "Auth Unknown"
+msgstr "Autentificare necunoscută"
+
+#: wldap32.rc:114
+msgid "Filter Error"
+msgstr "Eroare de filtrare"
+
+#: wldap32.rc:115
+msgid "User Cancelled"
+msgstr "Anulat de utilizator"
+
+#: wldap32.rc:116
+msgid "Parameter Error"
+msgstr "Eroare de parametri"
+
+#: wldap32.rc:117
+msgid "No Memory"
+msgstr "Memorie insuficientă"
+
+#: wldap32.rc:118
+msgid "Can't connect to the LDAP server"
+msgstr "Nu se poate conecta la serverul LDAP"
+
+#: wldap32.rc:119
+msgid "Operation not supported by this version of the LDAP protocol"
+msgstr "Operațiune nesuportată de această versiune a protocolului LDAP"
+
+#: wldap32.rc:120
+msgid "Specified control was not found in message"
+msgstr "Controlul specificat nu a fost găsit în mesaj"
+
+#: wldap32.rc:121
+msgid "No result present in message"
+msgstr "Nici un rezultat în mesaj"
+
+#: wldap32.rc:122
+msgid "More results returned"
+msgstr "Mai multe rezultate returnate"
+
+#: wldap32.rc:123
+msgid "Loop while handling referrals"
+msgstr "Buclă la gestionarea referenților"
+
+#: wldap32.rc:124
+msgid "Referral hop limit exceeded"
+msgstr "Limită număr referenți depășită"
+
 #: clock.rc:29
 msgid "Ana&log"
 msgstr "Ana&logic"

@@ -2250,6 +2250,246 @@ msgstr ""
 "Невозможно записать в указанный файл. Убедитесь, что на диске достаточно "
 "места, или проверьте сетевое подключение."
 
+#: wldap32.rc:27
+msgid "Success"
+msgstr "Успех"
+
+#: wldap32.rc:28
+msgid "Operations Error"
+msgstr "Ошибка операции"
+
+#: wldap32.rc:29
+msgid "Protocol Error"
+msgstr "Ошибка протокола"
+
+#: wldap32.rc:30
+msgid "Time Limit Exceeded"
+msgstr "Превышено ограничение по времени"
+
+#: wldap32.rc:31
+msgid "Size Limit Exceeded"
+msgstr "Превышено ограничение по размеру"
+
+#: wldap32.rc:32
+msgid "Compare False"
+msgstr "Сравнение неверно"
+
+#: wldap32.rc:33
+msgid "Compare True"
+msgstr "Сравнение верно"
+
+#: wldap32.rc:34
+msgid "Authentication Method Not Supported"
+msgstr "Метод авторизации не поддерживается"
+
+#: wldap32.rc:35
+msgid "Strong Authentication Required"
+msgstr "Требуется строгая авторизация"
+
+#: wldap32.rc:36
+msgid "Referral (v2)"
+msgstr "Ссылка (v2)"
+
+#: wldap32.rc:37
+msgid "Referral"
+msgstr "Ссылка"
+
+#: wldap32.rc:38
+msgid "Administration Limit Exceeded"
+msgstr "Превышено ограничение администрирования"
+
+#: wldap32.rc:39
+msgid "Unavailable Critical Extension"
+msgstr "Критическое расширение недоступно"
+
+#: wldap32.rc:40
+msgid "Confidentiality Required"
+msgstr "Требуется конфиденциальность"
+
+#: wldap32.rc:43
+msgid "No Such Attribute"
+msgstr "Нет такого атрибута"
+
+#: wldap32.rc:44
+msgid "Undefined Type"
+msgstr "Неопределённый тип"
+
+#: wldap32.rc:45
+msgid "Inappropriate Matching"
+msgstr "Неподходящее соответствие"
+
+#: wldap32.rc:46
+msgid "Constraint Violation"
+msgstr "Нарушение ограничения"
+
+#: wldap32.rc:47
+msgid "Attribute Or Value Exists"
+msgstr "Атрибут или значение существует"
+
+#: wldap32.rc:48
+msgid "Invalid Syntax"
+msgstr "Неверный синтаксис"
+
+#: wldap32.rc:59
+msgid "No Such Object"
+msgstr "Нет такого объекта"
+
+#: wldap32.rc:60
+msgid "Alias Problem"
+msgstr "Проблема с псевдонимом"
+
+#: wldap32.rc:61
+msgid "Invalid DN Syntax"
+msgstr "Неверный DN синтаксис"
+
+#: wldap32.rc:62
+msgid "Is Leaf"
+msgstr "Это лист дерева"
+
+#: wldap32.rc:63
+msgid "Alias Dereference Problem"
+msgstr "Проблема обращения по псевдониму"
+
+#: wldap32.rc:75
+msgid "Inappropriate Authentication"
+msgstr "Неподходящая авторизация"
+
+#: wldap32.rc:76
+msgid "Invalid Credentials"
+msgstr "Неверное удостоверение личности"
+
+#: wldap32.rc:77
+msgid "Insufficient Rights"
+msgstr "Недостаточно прав"
+
+#: wldap32.rc:78
+msgid "Busy"
+msgstr "Занято"
+
+#: wldap32.rc:79
+msgid "Unavailable"
+msgstr "Недоступно"
+
+#: wldap32.rc:80
+msgid "Unwilling To Perform"
+msgstr "Не желает выполнить"
+
+#: wldap32.rc:81
+msgid "Loop Detected"
+msgstr "Обнаружено зацикливание"
+
+#: wldap32.rc:87
+msgid "Sort Control Missing"
+msgstr "Отсутствует управление сортировкой"
+
+#: wldap32.rc:88
+msgid "Index range error"
+msgstr "Ошибка диапазона индекса"
+
+#: wldap32.rc:91
+msgid "Naming Violation"
+msgstr "Нарушение правил наименования"
+
+#: wldap32.rc:92
+msgid "Object Class Violation"
+msgstr "Нарушение класса объекта"
+
+#: wldap32.rc:93
+msgid "Not allowed on Non-leaf"
+msgstr "Не разрешено не на листе дерева"
+
+#: wldap32.rc:94
+msgid "Not allowed on RDN"
+msgstr "Не разрешено на RDN"
+
+#: wldap32.rc:95
+msgid "Already Exists"
+msgstr "Уже существует"
+
+#: wldap32.rc:96
+msgid "No Object Class Mods"
+msgstr "Нет режимов класса объекта"
+
+#: wldap32.rc:97
+msgid "Results Too Large"
+msgstr "Результаты слишком велики"
+
+#: wldap32.rc:98
+msgid "Affects Multiple DSAs"
+msgstr "Влияет на несколько DSA"
+
+#: wldap32.rc:107
+msgid "Other"
+msgstr "Другой"
+
+#: wldap32.rc:108
+msgid "Server Down"
+msgstr "Сервер недоступен"
+
+#: wldap32.rc:109
+msgid "Local Error"
+msgstr "Локальная ошибка"
+
+#: wldap32.rc:110
+msgid "Encoding Error"
+msgstr "Ошибка кодирования"
+
+#: wldap32.rc:111
+msgid "Decoding Error"
+msgstr "Ошибка декодирования"
+
+#: wldap32.rc:112
+msgid "Timeout"
+msgstr "Тайм-аут"
+
+#: wldap32.rc:113
+msgid "Auth Unknown"
+msgstr "Неизвестная авторизация"
+
+#: wldap32.rc:114
+msgid "Filter Error"
+msgstr "Ошибка фильтра"
+
+#: wldap32.rc:115
+msgid "User Cancelled"
+msgstr "Отменено пользователем"
+
+#: wldap32.rc:116
+msgid "Parameter Error"
+msgstr "Ошибка параметра"
+
+#: wldap32.rc:117
+msgid "No Memory"
+msgstr "Нет памяти"
+
+#: wldap32.rc:118
+msgid "Can't connect to the LDAP server"
+msgstr "Невозможно подключиться к LDAP серверу"
+
+#: wldap32.rc:119
+msgid "Operation not supported by this version of the LDAP protocol"
+msgstr "Операция не поддерживается этой версией протокола LDAP"
+
+#: wldap32.rc:120
+msgid "Specified control was not found in message"
+msgstr "Указанный управляющий элемент не найден в сообщении"
+
+#: wldap32.rc:121
+msgid "No result present in message"
+msgstr "Результата нет в сообщении"
+
+#: wldap32.rc:122
+msgid "More results returned"
+msgstr "Ещё есть результаты"
+
+#: wldap32.rc:123
+msgid "Loop while handling referrals"
+msgstr "Зацикливание при обработке ссылок"
+
+#: wldap32.rc:124
+msgid "Referral hop limit exceeded"
+msgstr "Предел числа пересылки ссылок превышен"
+
 #: clock.rc:29
 msgid "Ana&log"
 msgstr "&Аналовые"

@@ -25,25 +25,7 @@ C_SRCS = \
 	search.c \
 	value.c
 
-RC_SRCS = \
-	wldap32_Da.rc \
-	wldap32_De.rc \
-	wldap32_En.rc \
-	wldap32_Es.rc \
-	wldap32_Fr.rc \
-	wldap32_Hu.rc \
-	wldap32_It.rc \
-	wldap32_Ko.rc \
-	wldap32_Lt.rc \
-	wldap32_Nl.rc \
-	wldap32_No.rc \
-	wldap32_Pl.rc \
-	wldap32_Pt.rc \
-	wldap32_Ro.rc \
-	wldap32_Ru.rc \
-	wldap32_Sr.rc \
-	wldap32_Sv.rc \
-	wldap32_Tr.rc \
-	wldap32_Uk.rc
+RC_SRCS = wldap32.rc
+PO_SRCS = wldap32.rc
 
 @MAKE_DLL_RULES@

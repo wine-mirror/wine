@@ -2264,6 +2264,246 @@ msgstr ""
 "Impossibile scrivere il file specificato. Controllare di avere spazio libero "
 "sufficiente sul disco o di essere ancora connessi alla rete."
 
+#: wldap32.rc:27
+msgid "Success"
+msgstr "Successo"
+
+#: wldap32.rc:28
+msgid "Operations Error"
+msgstr "Errore nelle operazioni"
+
+#: wldap32.rc:29
+msgid "Protocol Error"
+msgstr "Errore nel protocollo"
+
+#: wldap32.rc:30
+msgid "Time Limit Exceeded"
+msgstr "Superato il tempo limite"
+
+#: wldap32.rc:31
+msgid "Size Limit Exceeded"
+msgstr "Superata la dimensione massima"
+
+#: wldap32.rc:32
+msgid "Compare False"
+msgstr "Compara falso"
+
+#: wldap32.rc:33
+msgid "Compare True"
+msgstr "Compara vero"
+
+#: wldap32.rc:34
+msgid "Authentication Method Not Supported"
+msgstr "Metodo di autenticazione non supportato"
+
+#: wldap32.rc:35
+msgid "Strong Authentication Required"
+msgstr "Autenticazione forte richiesta"
+
+#: wldap32.rc:36
+msgid "Referral (v2)"
+msgstr "Rinvio (v2)"
+
+#: wldap32.rc:37
+msgid "Referral"
+msgstr "Rinvio"
+
+#: wldap32.rc:38
+msgid "Administration Limit Exceeded"
+msgstr "Superato il limite di amministrazione"
+
+#: wldap32.rc:39
+msgid "Unavailable Critical Extension"
+msgstr "Estensione critica non disponibile"
+
+#: wldap32.rc:40
+msgid "Confidentiality Required"
+msgstr "Richiesta confidenzialità"
+
+#: wldap32.rc:43
+msgid "No Such Attribute"
+msgstr "Attributo inesistente"
+
+#: wldap32.rc:44
+msgid "Undefined Type"
+msgstr "Tipo non definito"
+
+#: wldap32.rc:45
+msgid "Inappropriate Matching"
+msgstr "Matching inappropriato"
+
+#: wldap32.rc:46
+msgid "Constraint Violation"
+msgstr "Violazione del vincolo"
+
+#: wldap32.rc:47
+msgid "Attribute Or Value Exists"
+msgstr "Attributo o valore esistente"
+
+#: wldap32.rc:48
+msgid "Invalid Syntax"
+msgstr "Sintassi non valida"
+
+#: wldap32.rc:59
+msgid "No Such Object"
+msgstr "Oggetto inesistente"
+
+#: wldap32.rc:60
+msgid "Alias Problem"
+msgstr "Problema di alias"
+
+#: wldap32.rc:61
+msgid "Invalid DN Syntax"
+msgstr "Sintassi DN non valida"
+
+#: wldap32.rc:62
+msgid "Is Leaf"
+msgstr "È foglia"
+
+#: wldap32.rc:63
+msgid "Alias Dereference Problem"
+msgstr "Problema di dereferenziazione di alias"
+
+#: wldap32.rc:75
+msgid "Inappropriate Authentication"
+msgstr "Autenticazione non appropriata"
+
+#: wldap32.rc:76
+msgid "Invalid Credentials"
+msgstr "Credenziali non valide"
+
+#: wldap32.rc:77
+msgid "Insufficient Rights"
+msgstr "Diritti insufficenti"
+
+#: wldap32.rc:78
+msgid "Busy"
+msgstr "Occupato"
+
+#: wldap32.rc:79
+msgid "Unavailable"
+msgstr "Non disponibile"
+
+#: wldap32.rc:80
+msgid "Unwilling To Perform"
+msgstr "Non intenzionato ad agire"
+
+#: wldap32.rc:81
+msgid "Loop Detected"
+msgstr "Trovato Loop"
+
+#: wldap32.rc:87
+msgid "Sort Control Missing"
+msgstr "Controllo dell'ordine mancante"
+
+#: wldap32.rc:88
+msgid "Index range error"
+msgstr "Errore di range dell'indice"
+
+#: wldap32.rc:91
+msgid "Naming Violation"
+msgstr "Violazione di nominazione"
+
+#: wldap32.rc:92
+msgid "Object Class Violation"
+msgstr "Violazione di classe dell'oggetto"
+
+#: wldap32.rc:93
+msgid "Not allowed on Non-leaf"
+msgstr "Non permesso su non-foglie"
+
+#: wldap32.rc:94
+msgid "Not allowed on RDN"
+msgstr "Non permesso su RDN"
+
+#: wldap32.rc:95
+msgid "Already Exists"
+msgstr "Esiste già"
+
+#: wldap32.rc:96
+msgid "No Object Class Mods"
+msgstr "Nessuna mod di classi di oggetto"
+
+#: wldap32.rc:97
+msgid "Results Too Large"
+msgstr "Risultati troppo grandi"
+
+#: wldap32.rc:98
+msgid "Affects Multiple DSAs"
+msgstr "Ha effetto su molti DSA"
+
+#: wldap32.rc:107
+msgid "Other"
+msgstr "Altro"
+
+#: wldap32.rc:108
+msgid "Server Down"
+msgstr "Server irraggiungibile"
+
+#: wldap32.rc:109
+msgid "Local Error"
+msgstr "Errore locale"
+
+#: wldap32.rc:110
+msgid "Encoding Error"
+msgstr "Errore di codifica"
+
+#: wldap32.rc:111
+msgid "Decoding Error"
+msgstr "Errore di decodifica"
+
+#: wldap32.rc:112
+msgid "Timeout"
+msgstr "Tempo scaduto"
+
+#: wldap32.rc:113
+msgid "Auth Unknown"
+msgstr "Autenticazione sconosciuta"
+
+#: wldap32.rc:114
+msgid "Filter Error"
+msgstr "Errore del filtro"
+
+#: wldap32.rc:115
+msgid "User Cancelled"
+msgstr "Utente eliminato"
+
+#: wldap32.rc:116
+msgid "Parameter Error"
+msgstr "Errore del parametro"
+
+#: wldap32.rc:117
+msgid "No Memory"
+msgstr "Memoria non disponibile"
+
+#: wldap32.rc:118
+msgid "Can't connect to the LDAP server"
+msgstr "Impossibile connettersi al server LDAP"
+
+#: wldap32.rc:119
+msgid "Operation not supported by this version of the LDAP protocol"
+msgstr "Operazione non supportata da questa versione del protocollo LDAP"
+
+#: wldap32.rc:120
+msgid "Specified control was not found in message"
+msgstr "Il controllo specificato non è stato trovato nel messaggio"
+
+#: wldap32.rc:121
+msgid "No result present in message"
+msgstr "Nessun risultato presente nel messaggio"
+
+#: wldap32.rc:122
+msgid "More results returned"
+msgstr "Più risultati ricevuti"
+
+#: wldap32.rc:123
+msgid "Loop while handling referrals"
+msgstr "Loop nel gestire i rinvii"
+
+#: wldap32.rc:124
+msgid "Referral hop limit exceeded"
+msgstr "Ecceduto il limite di salti di rinvio"
+
 #: clock.rc:29
 msgid "Ana&log"
 msgstr "Ana&logico"

@@ -2247,6 +2247,246 @@ msgstr ""
 "Kunne ikke skrive til den specificerede fil. Kontroller at du har nok fri "
 "diskplads, og at du fortsat er tilkoblet netværket."
 
+#: wldap32.rc:27
+msgid "Success"
+msgstr "Success"
+
+#: wldap32.rc:28
+msgid "Operations Error"
+msgstr "Operationsfejl"
+
+#: wldap32.rc:29
+msgid "Protocol Error"
+msgstr "Protokolfejl"
+
+#: wldap32.rc:30
+msgid "Time Limit Exceeded"
+msgstr "Tidsbegrænsning overskredet"
+
+#: wldap32.rc:31
+msgid "Size Limit Exceeded"
+msgstr "Størrelsesbegrænsing overskredet"
+
+#: wldap32.rc:32
+msgid "Compare False"
+msgstr "Sammenligning falsk"
+
+#: wldap32.rc:33
+msgid "Compare True"
+msgstr "Sammenligning sand"
+
+#: wldap32.rc:34
+msgid "Authentication Method Not Supported"
+msgstr "Autentikeringsmetoden understøttes ikke"
+
+#: wldap32.rc:35
+msgid "Strong Authentication Required"
+msgstr "Stærk autentisering kræves"
+
+#: wldap32.rc:36
+msgid "Referral (v2)"
+msgstr "Henvisning (v2)"
+
+#: wldap32.rc:37
+msgid "Referral"
+msgstr "Henvisning"
+
+#: wldap32.rc:38
+msgid "Administration Limit Exceeded"
+msgstr "Administrationsbegrænsing overskredet"
+
+#: wldap32.rc:39
+msgid "Unavailable Critical Extension"
+msgstr "Kritisk udvidelse utilgængelig"
+
+#: wldap32.rc:40
+msgid "Confidentiality Required"
+msgstr "Kræver konfidencialitet"
+
+#: wldap32.rc:43
+msgid "No Such Attribute"
+msgstr "Kender ikke attribut"
+
+#: wldap32.rc:44
+msgid "Undefined Type"
+msgstr "Udefineret type"
+
+#: wldap32.rc:45
+msgid "Inappropriate Matching"
+msgstr "Upassende sammenligning"
+
+#: wldap32.rc:46
+msgid "Constraint Violation"
+msgstr "Begrænsning overskredet"
+
+#: wldap32.rc:47
+msgid "Attribute Or Value Exists"
+msgstr "Attribut eller værdi findes allerede"
+
+#: wldap32.rc:48
+msgid "Invalid Syntax"
+msgstr "Ugyldig syntaks"
+
+#: wldap32.rc:59
+msgid "No Such Object"
+msgstr "Objekt eksistere ikke"
+
+#: wldap32.rc:60
+msgid "Alias Problem"
+msgstr "Alias problem"
+
+#: wldap32.rc:61
+msgid "Invalid DN Syntax"
+msgstr "Ugyldig DN syntaks"
+
+#: wldap32.rc:62
+msgid "Is Leaf"
+msgstr "Er blad"
+
+#: wldap32.rc:63
+msgid "Alias Dereference Problem"
+msgstr "Problem med alias dereference"
+
+#: wldap32.rc:75
+msgid "Inappropriate Authentication"
+msgstr "Upassende autenticering"
+
+#: wldap32.rc:76
+msgid "Invalid Credentials"
+msgstr "Ugyldige kreditiver"
+
+#: wldap32.rc:77
+msgid "Insufficient Rights"
+msgstr "Manglende rettigheder"
+
+#: wldap32.rc:78
+msgid "Busy"
+msgstr "Optaget"
+
+#: wldap32.rc:79
+msgid "Unavailable"
+msgstr "Utilgængelig"
+
+#: wldap32.rc:80
+msgid "Unwilling To Perform"
+msgstr "Uvillig til at udføre"
+
+#: wldap32.rc:81
+msgid "Loop Detected"
+msgstr "Løkke opdaget"
+
+#: wldap32.rc:87
+msgid "Sort Control Missing"
+msgstr "Sorteringskontrol mangler"
+
+#: wldap32.rc:88
+msgid "Index range error"
+msgstr "Fejl i indeksrækkeviden"
+
+#: wldap32.rc:91
+msgid "Naming Violation"
+msgstr "Navngivings overtrædelse"
+
+#: wldap32.rc:92
+msgid "Object Class Violation"
+msgstr "Objektklasse overtrædelse"
+
+#: wldap32.rc:93
+msgid "Not allowed on Non-leaf"
+msgstr "Ikke tilladt på ikke blad"
+
+#: wldap32.rc:94
+msgid "Not allowed on RDN"
+msgstr "Ikke tilladt på RDN"
+
+#: wldap32.rc:95
+msgid "Already Exists"
+msgstr "Findes allerede"
+
+#: wldap32.rc:96
+msgid "No Object Class Mods"
+msgstr "Ingen objektklasse modificerere"
+
+#: wldap32.rc:97
+msgid "Results Too Large"
+msgstr "Resultaterne er for store"
+
+#: wldap32.rc:98
+msgid "Affects Multiple DSAs"
+msgstr "Berører flere DSA'er"
+
+#: wldap32.rc:107
+msgid "Other"
+msgstr "Anden"
+
+#: wldap32.rc:108
+msgid "Server Down"
+msgstr "Server nede"
+
+#: wldap32.rc:109
+msgid "Local Error"
+msgstr "Lokal fejl"
+
+#: wldap32.rc:110
+msgid "Encoding Error"
+msgstr "Kodings fejl"
+
+#: wldap32.rc:111
+msgid "Decoding Error"
+msgstr "Dekodings fejl"
+
+#: wldap32.rc:112
+msgid "Timeout"
+msgstr "Tidsafbrud"
+
+#: wldap32.rc:113
+msgid "Auth Unknown"
+msgstr "Ukendt autentikering"
+
+#: wldap32.rc:114
+msgid "Filter Error"
+msgstr "Filter fejl"
+
+#: wldap32.rc:115
+msgid "User Cancelled"
+msgstr "Bruger afbrød"
+
+#: wldap32.rc:116
+msgid "Parameter Error"
+msgstr "Parameter fejl"
+
+#: wldap32.rc:117
+msgid "No Memory"
+msgstr "Intet hukommelse"
+
+#: wldap32.rc:118
+msgid "Can't connect to the LDAP server"
+msgstr "Kunne ikke tilsluttes til LDAP serveren"
+
+#: wldap32.rc:119
+msgid "Operation not supported by this version of the LDAP protocol"
+msgstr "Operationen understøttes ikke af denne version af LDAP protokollen"
+
+#: wldap32.rc:120
+msgid "Specified control was not found in message"
+msgstr "Den specificerede kontroller blev ikke funndt i beskeden"
+
+#: wldap32.rc:121
+msgid "No result present in message"
+msgstr "Ingen resultater i besked"
+
+#: wldap32.rc:122
+msgid "More results returned"
+msgstr "Flere resultater returneret"
+
+#: wldap32.rc:123
+msgid "Loop while handling referrals"
+msgstr "Løkke under håndtering af henvisninger"
+
+#: wldap32.rc:124
+msgid "Referral hop limit exceeded"
+msgstr "Grænse for henvisnings hop overskredet"
+
 #: clock.rc:29
 msgid "Ana&log"
 msgstr "&Analog"

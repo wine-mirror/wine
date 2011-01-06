@@ -15294,7 +15294,7 @@ wine_fn_config_test dlls/wintab32/tests wintab32_test
 wine_fn_config_dll wintrust enable_wintrust implib
 wine_fn_config_test dlls/wintrust/tests wintrust_test
 wine_fn_config_dll wlanapi enable_wlanapi
-wine_fn_config_dll wldap32 enable_wldap32 implib
+wine_fn_config_dll wldap32 enable_wldap32 po,implib
 wine_fn_config_test dlls/wldap32/tests wldap32_test
 wine_fn_config_dll wmi enable_wmi
 wine_fn_config_dll wmiutils enable_wmiutils

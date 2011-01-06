@@ -2125,6 +2125,246 @@ msgid ""
 "are still connected to the network."
 msgstr ""
 
+#: wldap32.rc:27
+msgid "Success"
+msgstr "Uspeh"
+
+#: wldap32.rc:28
+msgid "Operations Error"
+msgstr "Greška u radnjama"
+
+#: wldap32.rc:29
+msgid "Protocol Error"
+msgstr "Greška u protokolu"
+
+#: wldap32.rc:30
+msgid "Time Limit Exceeded"
+msgstr "Vremensko ograničenje je prekoračeno"
+
+#: wldap32.rc:31
+msgid "Size Limit Exceeded"
+msgstr "Ograničenje veličine je prekoračeno"
+
+#: wldap32.rc:32
+msgid "Compare False"
+msgstr "Netačno"
+
+#: wldap32.rc:33
+msgid "Compare True"
+msgstr "Tačno"
+
+#: wldap32.rc:34
+msgid "Authentication Method Not Supported"
+msgstr "Način potvrde identiteta nije podržan"
+
+#: wldap32.rc:35
+msgid "Strong Authentication Required"
+msgstr "Potrebna je jaka potvrda identiteta"
+
+#: wldap32.rc:36
+msgid "Referral (v2)"
+msgstr "Upućivač (v2)"
+
+#: wldap32.rc:37
+msgid "Referral"
+msgstr "Upućivač"
+
+#: wldap32.rc:38
+msgid "Administration Limit Exceeded"
+msgstr "Administrativno ograničenje je prekoračeno"
+
+#: wldap32.rc:39
+msgid "Unavailable Critical Extension"
+msgstr "Nedostupno je kritičko proširenje"
+
+#: wldap32.rc:40
+msgid "Confidentiality Required"
+msgstr "Potrebna je poverljivost"
+
+#: wldap32.rc:43
+msgid "No Such Attribute"
+msgstr "Ne postoji takva osobina"
+
+#: wldap32.rc:44
+msgid "Undefined Type"
+msgstr "Neodređena vrsta"
+
+#: wldap32.rc:45
+msgid "Inappropriate Matching"
+msgstr "Neprikladno podudaranje"
+
+#: wldap32.rc:46
+msgid "Constraint Violation"
+msgstr "Ograničenje kršenja"
+
+#: wldap32.rc:47
+msgid "Attribute Or Value Exists"
+msgstr "Osobina ili vrednost postoji"
+
+#: wldap32.rc:48
+msgid "Invalid Syntax"
+msgstr "Neispravna sintaksa"
+
+#: wldap32.rc:59
+msgid "No Such Object"
+msgstr "Ne postoji takav objekat"
+
+#: wldap32.rc:60
+msgid "Alias Problem"
+msgstr "Problem u pseudonimu"
+
+#: wldap32.rc:61
+msgid "Invalid DN Syntax"
+msgstr "Neispravna DN sintaksa"
+
+#: wldap32.rc:62
+msgid "Is Leaf"
+msgstr "je list"
+
+#: wldap32.rc:63
+msgid "Alias Dereference Problem"
+msgstr "Problem u deferenciranju pseudonima"
+
+#: wldap32.rc:75
+msgid "Inappropriate Authentication"
+msgstr "Neprikladna potvrda identiteta"
+
+#: wldap32.rc:76
+msgid "Invalid Credentials"
+msgstr "Neispravni akreditivi"
+
+#: wldap32.rc:77
+msgid "Insufficient Rights"
+msgstr "Nedovoljna prava"
+
+#: wldap32.rc:78
+msgid "Busy"
+msgstr "Zauzeto"
+
+#: wldap32.rc:79
+msgid "Unavailable"
+msgstr "Nedostupno"
+
+#: wldap32.rc:80
+msgid "Unwilling To Perform"
+msgstr "Nevoljno za izvršavanje"
+
+#: wldap32.rc:81
+msgid "Loop Detected"
+msgstr "Pronađena je petlja"
+
+#: wldap32.rc:87
+msgid "Sort Control Missing"
+msgstr "Poređaj nedostajuće kontrole"
+
+#: wldap32.rc:88
+msgid "Index range error"
+msgstr "Greška u opsegu popisa"
+
+#: wldap32.rc:91
+msgid "Naming Violation"
+msgstr "Kršenje imenovanja"
+
+#: wldap32.rc:92
+msgid "Object Class Violation"
+msgstr "Kršenje klase objekata"
+
+#: wldap32.rc:93
+msgid "Not allowed on Non-leaf"
+msgstr "Nije dozvoljeno na ne-listu"
+
+#: wldap32.rc:94
+msgid "Not allowed on RDN"
+msgstr "Nije dozvoljeno na RDN-u"
+
+#: wldap32.rc:95
+msgid "Already Exists"
+msgstr "Već postoji"
+
+#: wldap32.rc:96
+msgid "No Object Class Mods"
+msgstr "Neme klase objekata"
+
+#: wldap32.rc:97
+msgid "Results Too Large"
+msgstr "Rezultati su preveliki"
+
+#: wldap32.rc:98
+msgid "Affects Multiple DSAs"
+msgstr "Utiče na višestruke algoritme"
+
+#: wldap32.rc:107
+msgid "Other"
+msgstr "Ostalo"
+
+#: wldap32.rc:108
+msgid "Server Down"
+msgstr "Server trenutno ne radi"
+
+#: wldap32.rc:109
+msgid "Local Error"
+msgstr "Lokalna greška"
+
+#: wldap32.rc:110
+msgid "Encoding Error"
+msgstr "Greška u kodiranju"
+
+#: wldap32.rc:111
+msgid "Decoding Error"
+msgstr "Greška u dekodiranju"
+
+#: wldap32.rc:112
+msgid "Timeout"
+msgstr "Vreme isteka"
+
+#: wldap32.rc:113
+msgid "Auth Unknown"
+msgstr "Nepoznat identitet"
+
+#: wldap32.rc:114
+msgid "Filter Error"
+msgstr "Greška u filteru"
+
+#: wldap32.rc:115
+msgid "User Cancelled"
+msgstr "Korisnik je otkazan"
+
+#: wldap32.rc:116
+msgid "Parameter Error"
+msgstr "Greška u parametru"
+
+#: wldap32.rc:117
+msgid "No Memory"
+msgstr "Nema memorije"
+
+#: wldap32.rc:118
+msgid "Can't connect to the LDAP server"
+msgstr "Povezivanje na LDAP server nije uspelo"
+
+#: wldap32.rc:119
+msgid "Operation not supported by this version of the LDAP protocol"
+msgstr "Radnja nije podržana od strane ovog izdanja LDAP protokola"
+
+#: wldap32.rc:120
+msgid "Specified control was not found in message"
+msgstr "Navedena kontrola nije pronađena u poruci"
+
+#: wldap32.rc:121
+msgid "No result present in message"
+msgstr "Nema rezultata u poruci"
+
+#: wldap32.rc:122
+msgid "More results returned"
+msgstr "Više rezultata"
+
+#: wldap32.rc:123
+msgid "Loop while handling referrals"
+msgstr "Ponavljaj pri rukovanju s upućivačima"
+
+#: wldap32.rc:124
+msgid "Referral hop limit exceeded"
+msgstr "Ograničenje čvora upućivača je prekoračeno"
+
 #: clock.rc:29
 msgid "Ana&log"
 msgstr "&Analogni"

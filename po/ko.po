@@ -2225,6 +2225,246 @@ msgstr ""
 "지정된 파일에 기록할 수 없습니다. 디스크 공간이 충분한지 확인하거나. 네트워크"
 "에 연결중인지 확인하십시오"
 
+#: wldap32.rc:27
+msgid "Success"
+msgstr "성공"
+
+#: wldap32.rc:28
+msgid "Operations Error"
+msgstr "작업 에러"
+
+#: wldap32.rc:29
+msgid "Protocol Error"
+msgstr "프로토콜 에러"
+
+#: wldap32.rc:30
+msgid "Time Limit Exceeded"
+msgstr "시간 제한 도달"
+
+#: wldap32.rc:31
+msgid "Size Limit Exceeded"
+msgstr "크기 제한 도달"
+
+#: wldap32.rc:32
+msgid "Compare False"
+msgstr "잘못된 비교"
+
+#: wldap32.rc:33
+msgid "Compare True"
+msgstr "잘된 비교"
+
+#: wldap32.rc:34
+msgid "Authentication Method Not Supported"
+msgstr "인증방법은 지원하지 않습니다"
+
+#: wldap32.rc:35
+msgid "Strong Authentication Required"
+msgstr "강력한 인증이 요구됩니다"
+
+#: wldap32.rc:36
+msgid "Referral (v2)"
+msgstr "추천 (v2)"
+
+#: wldap32.rc:37
+msgid "Referral"
+msgstr "추천"
+
+#: wldap32.rc:38
+msgid "Administration Limit Exceeded"
+msgstr "관리 한도를 넘었습니다"
+
+#: wldap32.rc:39
+msgid "Unavailable Critical Extension"
+msgstr "치명적 확장은 가능하지 않습니다"
+
+#: wldap32.rc:40
+msgid "Confidentiality Required"
+msgstr "기밀성이 요구됩니다"
+
+#: wldap32.rc:43
+msgid "No Such Attribute"
+msgstr "어떤 속성도 없습니다"
+
+#: wldap32.rc:44
+msgid "Undefined Type"
+msgstr "정의되지 않은 타입"
+
+#: wldap32.rc:45
+msgid "Inappropriate Matching"
+msgstr "어울리지 않습니다"
+
+#: wldap32.rc:46
+msgid "Constraint Violation"
+msgstr "강제 위반"
+
+#: wldap32.rc:47
+msgid "Attribute Or Value Exists"
+msgstr "속성이나 값이 존재합니다"
+
+#: wldap32.rc:48
+msgid "Invalid Syntax"
+msgstr "잘못된 문법"
+
+#: wldap32.rc:59
+msgid "No Such Object"
+msgstr "어떤 객체도 없음"
+
+#: wldap32.rc:60
+msgid "Alias Problem"
+msgstr "Alias 문제"
+
+#: wldap32.rc:61
+msgid "Invalid DN Syntax"
+msgstr "잘못된 DN 문법"
+
+#: wldap32.rc:62
+msgid "Is Leaf"
+msgstr "이즈(IS) 리프(Leaf)"
+
+#: wldap32.rc:63
+msgid "Alias Dereference Problem"
+msgstr "Alias 디레퍼런스 문제"
+
+#: wldap32.rc:75
+msgid "Inappropriate Authentication"
+msgstr "부적절한 인증"
+
+#: wldap32.rc:76
+msgid "Invalid Credentials"
+msgstr "잘못된 증명서"
+
+#: wldap32.rc:77
+msgid "Insufficient Rights"
+msgstr "충분하지 않은 권리"
+
+#: wldap32.rc:78
+msgid "Busy"
+msgstr "바쁨"
+
+#: wldap32.rc:79
+msgid "Unavailable"
+msgstr "불가능"
+
+#: wldap32.rc:80
+msgid "Unwilling To Perform"
+msgstr "실행하는 것이 마음에 내키지 않습니다"
+
+#: wldap32.rc:81
+msgid "Loop Detected"
+msgstr "루프가 발견되었습니다"
+
+#: wldap32.rc:87
+msgid "Sort Control Missing"
+msgstr "정렬 제어가 빠졌습니다"
+
+#: wldap32.rc:88
+msgid "Index range error"
+msgstr "인덱스 범위 에러"
+
+#: wldap32.rc:91
+msgid "Naming Violation"
+msgstr "명명 위반"
+
+#: wldap32.rc:92
+msgid "Object Class Violation"
+msgstr "객체 클래스 위반"
+
+#: wldap32.rc:93
+msgid "Not allowed on Non-leaf"
+msgstr "론-리프를 따를 수 없습니다"
+
+#: wldap32.rc:94
+msgid "Not allowed on RDN"
+msgstr "RDN은 따를수 없습니다"
+
+#: wldap32.rc:95
+msgid "Already Exists"
+msgstr "이미 존재합니다"
+
+#: wldap32.rc:96
+msgid "No Object Class Mods"
+msgstr "어떤 객체 클래스 모드도 없숩니다"
+
+#: wldap32.rc:97
+msgid "Results Too Large"
+msgstr "결과가 너무 큽니다"
+
+#: wldap32.rc:98
+msgid "Affects Multiple DSAs"
+msgstr "다양한 DSAs이 작용합니다."
+
+#: wldap32.rc:107
+msgid "Other"
+msgstr "다른 문제"
+
+#: wldap32.rc:108
+msgid "Server Down"
+msgstr "서바 다운"
+
+#: wldap32.rc:109
+msgid "Local Error"
+msgstr "로컬 에러"
+
+#: wldap32.rc:110
+msgid "Encoding Error"
+msgstr "인코딩 에러"
+
+#: wldap32.rc:111
+msgid "Decoding Error"
+msgstr "디코딩 에러"
+
+#: wldap32.rc:112
+msgid "Timeout"
+msgstr "시간 초과"
+
+#: wldap32.rc:113
+msgid "Auth Unknown"
+msgstr "알수 없는 인증"
+
+#: wldap32.rc:114
+msgid "Filter Error"
+msgstr "필터 에러"
+
+#: wldap32.rc:115
+msgid "User Cancelled"
+msgstr "사용자가 취소함"
+
+#: wldap32.rc:116
+msgid "Parameter Error"
+msgstr "매개변수 에러"
+
+#: wldap32.rc:117
+msgid "No Memory"
+msgstr "메모리 없음"
+
+#: wldap32.rc:118
+msgid "Can't connect to the LDAP server"
+msgstr "LDAP 서버에 연결할수 없습니다"
+
+#: wldap32.rc:119
+msgid "Operation not supported by this version of the LDAP protocol"
+msgstr " LDAP 프로토콜의 이 버젼은 그 작업을 지원하지 않습니다"
+
+#: wldap32.rc:120
+msgid "Specified control was not found in message"
+msgstr "지정된 제어는 메세지에서 발견할 수 없습니다"
+
+#: wldap32.rc:121
+msgid "No result present in message"
+msgstr "어떤 결과도 메세지에 존재하지 않습니다"
+
+#: wldap32.rc:122
+msgid "More results returned"
+msgstr "더 많은 결과가 돌아왔습니다"
+
+#: wldap32.rc:123
+msgid "Loop while handling referrals"
+msgstr "리퍼럴을 다루는 동안의 루프"
+
+#: wldap32.rc:124
+msgid "Referral hop limit exceeded"
+msgstr "리퍼럴 홉 제한에 도달했습니다"
+
 #: clock.rc:29
 msgid "Ana&log"
 msgstr "아날로그(&L)"
