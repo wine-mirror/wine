@@ -1005,6 +1005,110 @@ msgstr "IDTB_TOC_PREV"
 msgid "Cinepak Video codec"
 msgstr ""
 
+#: jscript.rc:25
+msgid "Error converting object to primitive type"
+msgstr "Error converting object to primitive type"
+
+#: jscript.rc:26
+msgid "Invalid procedure call or argument"
+msgstr "Invalid procedure call or argument"
+
+#: jscript.rc:27
+msgid "Subscript out of range"
+msgstr "Subscript out of range"
+
+#: jscript.rc:28
+msgid "Automation server can't create object"
+msgstr "Automation server can't create object"
+
+#: jscript.rc:29
+msgid "Object doesn't support this property or method"
+msgstr "Object doesn't support this property or method"
+
+#: jscript.rc:30
+msgid "Object doesn't support this action"
+msgstr "Object doesn't support this action"
+
+#: jscript.rc:31
+msgid "Argument not optional"
+msgstr "Argument not optional"
+
+#: jscript.rc:32
+msgid "Syntax error"
+msgstr "Syntax error"
+
+#: jscript.rc:33
+msgid "Expected ';'"
+msgstr "Expected ';'"
+
+#: jscript.rc:34
+msgid "Expected '('"
+msgstr "Expected '('"
+
+#: jscript.rc:35
+msgid "Expected ')'"
+msgstr "Expected ')'"
+
+#: jscript.rc:36
+msgid "Unterminated string constant"
+msgstr "Unterminated string constant"
+
+#: jscript.rc:37
+msgid "Conditional compilation is turned off"
+msgstr "Conditional compilation is turned off"
+
+#: jscript.rc:40
+msgid "Number expected"
+msgstr "Number expected"
+
+#: jscript.rc:38
+msgid "Function expected"
+msgstr "Function expected"
+
+#: jscript.rc:39
+msgid "'[object]' is not a date object"
+msgstr "'[object]' is not a date object"
+
+#: jscript.rc:41
+msgid "Object expected"
+msgstr "Object expected"
+
+#: jscript.rc:42
+msgid "Illegal assignment"
+msgstr "Illegal assignment"
+
+#: jscript.rc:43
+msgid "'|' is undefined"
+msgstr "'|' is undefined"
+
+#: jscript.rc:44
+msgid "Boolean object expected"
+msgstr "Boolean object expected"
+
+#: jscript.rc:45
+msgid "VBArray object expected"
+msgstr "VBArray object expected"
+
+#: jscript.rc:46
+msgid "JScript object expected"
+msgstr "JScript object expected"
+
+#: jscript.rc:47
+msgid "Syntax error in regular expression"
+msgstr "Syntax error in regular expression"
+
+#: jscript.rc:48
+msgid "URI to be encoded contains invalid characters"
+msgstr "URI to be encoded contains invalid characters"
+
+#: jscript.rc:49
+msgid "Array length must be a finite positive integer"
+msgstr "Array length must be a finite positive integer"
+
+#: jscript.rc:50
+msgid "Array object expected"
+msgstr "Array object expected"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Properties"

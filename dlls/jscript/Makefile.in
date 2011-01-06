@@ -1,29 +1,6 @@
 MODULE    = jscript.dll
 IMPORTS   = oleaut32 ole32 user32 advapi32
 
-RC_SRCS = \
-	jscript_Da.rc \
-	jscript_De.rc \
-	jscript_En.rc \
-	jscript_Es.rc \
-	jscript_Fr.rc \
-	jscript_Hu.rc \
-	jscript_It.rc \
-	jscript_Ja.rc \
-	jscript_Ko.rc \
-	jscript_Lt.rc \
-	jscript_Nl.rc \
-	jscript_No.rc \
-	jscript_Pl.rc \
-	jscript_Pt.rc \
-	jscript_Ro.rc \
-	jscript_Ru.rc \
-	jscript_Si.rc \
-	jscript_Sr.rc \
-	jscript_Sv.rc \
-	jscript_Uk.rc \
-	rsrc.rc
-
 C_SRCS = \
 	activex.c \
 	array.c \
@@ -44,6 +21,9 @@ C_SRCS = \
 	regexp.c \
 	string.c \
 	vbarray.c
+
+RC_SRCS = jscript.rc
+PO_SRCS = jscript.rc
 
 IDL_TLB_SRCS = jsglobal.idl
 IDL_R_SRCS = jscript_classes.idl

@@ -1009,6 +1009,110 @@ msgstr "IDTB_TOC_PREV"
 msgid "Cinepak Video codec"
 msgstr ""
 
+#: jscript.rc:25
+msgid "Error converting object to primitive type"
+msgstr "Błąd przy przekształcaniu obiektu do typu podstawowego"
+
+#: jscript.rc:26
+msgid "Invalid procedure call or argument"
+msgstr "Niewłaściwe wywołanie procedury lub argument"
+
+#: jscript.rc:27
+msgid "Subscript out of range"
+msgstr "Indeks dolny poza zakresem"
+
+#: jscript.rc:28
+msgid "Automation server can't create object"
+msgstr "Serwer automatyzacji nie może stworzyć obiektu"
+
+#: jscript.rc:29
+msgid "Object doesn't support this property or method"
+msgstr "Obiekt nie wspiera tej właściwości lub metody"
+
+#: jscript.rc:30
+msgid "Object doesn't support this action"
+msgstr "Obiekt nie wspiera tej akcji"
+
+#: jscript.rc:31
+msgid "Argument not optional"
+msgstr "Argument nieopcjonalny"
+
+#: jscript.rc:32
+msgid "Syntax error"
+msgstr "Błąd składni"
+
+#: jscript.rc:33
+msgid "Expected ';'"
+msgstr "Oczekiwane ';'"
+
+#: jscript.rc:34
+msgid "Expected '('"
+msgstr "Oczekiwane '('"
+
+#: jscript.rc:35
+msgid "Expected ')'"
+msgstr "Oczekiwane ')'"
+
+#: jscript.rc:36
+msgid "Unterminated string constant"
+msgstr "Niezakończona stała znakowa"
+
+#: jscript.rc:37
+msgid "Conditional compilation is turned off"
+msgstr "Warunkowa kompilacja jest wyłączona"
+
+#: jscript.rc:40
+msgid "Number expected"
+msgstr "Oczekiwana liczba"
+
+#: jscript.rc:38
+msgid "Function expected"
+msgstr "Oczekiwana funkcja"
+
+#: jscript.rc:39
+msgid "'[object]' is not a date object"
+msgstr "'[obiekt]' nie jest obiektem daty"
+
+#: jscript.rc:41
+msgid "Object expected"
+msgstr "Oczekiwany obiekt"
+
+#: jscript.rc:42
+msgid "Illegal assignment"
+msgstr "Niepoprawne przypisanie"
+
+#: jscript.rc:43
+msgid "'|' is undefined"
+msgstr "'|' jest niezdefiniowany"
+
+#: jscript.rc:44
+msgid "Boolean object expected"
+msgstr "Oczekiwany obiekt boolean"
+
+#: jscript.rc:45
+msgid "VBArray object expected"
+msgstr "Oczekiwany obiekt VBArray"
+
+#: jscript.rc:46
+msgid "JScript object expected"
+msgstr "Oczekiwany obiekt JScript"
+
+#: jscript.rc:47
+msgid "Syntax error in regular expression"
+msgstr "Błąd składni w regularnym wyrażeniu"
+
+#: jscript.rc:48
+msgid "URI to be encoded contains invalid characters"
+msgstr "Kodowane URI zawiera niewłaściwe znaki"
+
+#: jscript.rc:49
+msgid "Array length must be a finite positive integer"
+msgstr "Długość tablicy musi być skończoną dodatnią liczbą stałą"
+
+#: jscript.rc:50
+msgid "Array object expected"
+msgstr "Oczekiwany obiekt tablicowy"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Ustawienia"

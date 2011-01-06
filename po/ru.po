@@ -1017,6 +1017,110 @@ msgstr "Предыдущая глава"
 msgid "Cinepak Video codec"
 msgstr ""
 
+#: jscript.rc:25
+msgid "Error converting object to primitive type"
+msgstr "Ошибка конвертирования объекта в примитивный тип"
+
+#: jscript.rc:26
+msgid "Invalid procedure call or argument"
+msgstr "Неверный вызов процедуры или аргумент"
+
+#: jscript.rc:27
+msgid "Subscript out of range"
+msgstr "Индекс вне диапазона"
+
+#: jscript.rc:28
+msgid "Automation server can't create object"
+msgstr "Сервер автоматизации не может создать объект"
+
+#: jscript.rc:29
+msgid "Object doesn't support this property or method"
+msgstr "Объект не поддерживает это свойство или метод"
+
+#: jscript.rc:30
+msgid "Object doesn't support this action"
+msgstr "Объект не поддерживает это действие"
+
+#: jscript.rc:31
+msgid "Argument not optional"
+msgstr "Отсутствует обязательный аргумент"
+
+#: jscript.rc:32
+msgid "Syntax error"
+msgstr "Синтаксическая ошибка"
+
+#: jscript.rc:33
+msgid "Expected ';'"
+msgstr "Ожидается ';'"
+
+#: jscript.rc:34
+msgid "Expected '('"
+msgstr "Ожидается '('"
+
+#: jscript.rc:35
+msgid "Expected ')'"
+msgstr "Ожидается ')'"
+
+#: jscript.rc:36
+msgid "Unterminated string constant"
+msgstr "Незавершённая строковая константа"
+
+#: jscript.rc:37
+msgid "Conditional compilation is turned off"
+msgstr ""
+
+#: jscript.rc:40
+msgid "Number expected"
+msgstr "Ожидается число"
+
+#: jscript.rc:38
+msgid "Function expected"
+msgstr "Ожидается функция"
+
+#: jscript.rc:39
+msgid "'[object]' is not a date object"
+msgstr "'[object]' не объект типа 'date'"
+
+#: jscript.rc:41
+msgid "Object expected"
+msgstr "Ожидается объект"
+
+#: jscript.rc:42
+msgid "Illegal assignment"
+msgstr "Неверное присваивание"
+
+#: jscript.rc:43
+msgid "'|' is undefined"
+msgstr "'|' не определён"
+
+#: jscript.rc:44
+msgid "Boolean object expected"
+msgstr "Ожидается объект типа 'bool'"
+
+#: jscript.rc:45
+msgid "VBArray object expected"
+msgstr "Ожидается объект типа 'VBArray'"
+
+#: jscript.rc:46
+msgid "JScript object expected"
+msgstr "Ожидается объект типа 'JScript'"
+
+#: jscript.rc:47
+msgid "Syntax error in regular expression"
+msgstr "Синтаксическая ошибка в регулярном выражении"
+
+#: jscript.rc:48
+msgid "URI to be encoded contains invalid characters"
+msgstr "URI содержит неверные символы"
+
+#: jscript.rc:49
+msgid "Array length must be a finite positive integer"
+msgstr "Длиной массива должно быть конечное положительное число"
+
+#: jscript.rc:50
+msgid "Array object expected"
+msgstr "Ожидается объект типа 'Array'"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Свойства"

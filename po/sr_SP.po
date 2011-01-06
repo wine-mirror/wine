@@ -1009,6 +1009,110 @@ msgstr "IDTB_TOC_PREV"
 msgid "Cinepak Video codec"
 msgstr ""
 
+#: jscript.rc:25
+msgid "Error converting object to primitive type"
+msgstr "Грешка у претварању објекта у основну врсту"
+
+#: jscript.rc:26
+msgid "Invalid procedure call or argument"
+msgstr "Неважећи поступак позива или аргумента"
+
+#: jscript.rc:27
+msgid "Subscript out of range"
+msgstr "Потпис је ван домета"
+
+#: jscript.rc:28
+msgid "Automation server can't create object"
+msgstr "Аутоматизовани сервер не може да створи објекат"
+
+#: jscript.rc:29
+msgid "Object doesn't support this property or method"
+msgstr "Објекат не подржава ово својство или методу"
+
+#: jscript.rc:30
+msgid "Object doesn't support this action"
+msgstr "Објекат не подржава ову радњу"
+
+#: jscript.rc:31
+msgid "Argument not optional"
+msgstr "Аргумент је обавезан"
+
+#: jscript.rc:32
+msgid "Syntax error"
+msgstr "Грешка у синтакси"
+
+#: jscript.rc:33
+msgid "Expected ';'"
+msgstr "Очекивано ';'"
+
+#: jscript.rc:34
+msgid "Expected '('"
+msgstr "Очекивано '('"
+
+#: jscript.rc:35
+msgid "Expected ')'"
+msgstr "Очекивано ')'"
+
+#: jscript.rc:36
+msgid "Unterminated string constant"
+msgstr "Незавршена константа ниски"
+
+#: jscript.rc:37
+msgid "Conditional compilation is turned off"
+msgstr ""
+
+#: jscript.rc:40
+msgid "Number expected"
+msgstr "Очекивани број"
+
+#: jscript.rc:38
+msgid "Function expected"
+msgstr "Очекивана функција"
+
+#: jscript.rc:39
+msgid "'[object]' is not a date object"
+msgstr "„[object]“ није временски објекат"
+
+#: jscript.rc:41
+msgid "Object expected"
+msgstr "Очекивани објекат"
+
+#: jscript.rc:42
+msgid "Illegal assignment"
+msgstr "Недозвољен задатак"
+
+#: jscript.rc:43
+msgid "'|' is undefined"
+msgstr "„|“ није одређено"
+
+#: jscript.rc:44
+msgid "Boolean object expected"
+msgstr "Очекивани објекат истинитосне вредности"
+
+#: jscript.rc:45
+msgid "VBArray object expected"
+msgstr "VBArray објекат се очекује"
+
+#: jscript.rc:46
+msgid "JScript object expected"
+msgstr "Очекивани објекат JScript врсте"
+
+#: jscript.rc:47
+msgid "Syntax error in regular expression"
+msgstr "Синтаксна грешка у регуларном изразу"
+
+#: jscript.rc:48
+msgid "URI to be encoded contains invalid characters"
+msgstr "URI садржи неисправне знакове"
+
+#: jscript.rc:49
+msgid "Array length must be a finite positive integer"
+msgstr "Низ дужине мора бити коначан позитиван цео број"
+
+#: jscript.rc:50
+msgid "Array object expected"
+msgstr "Очекивани низ објекта"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Својства"

@@ -1009,6 +1009,110 @@ msgstr "IDTB_TOC_PREV"
 msgid "Cinepak Video codec"
 msgstr ""
 
+#: jscript.rc:25
+msgid "Error converting object to primitive type"
+msgstr "オブジェクトを基本型に変換できません"
+
+#: jscript.rc:26
+msgid "Invalid procedure call or argument"
+msgstr "手続き呼び出しまたは引数が無効です"
+
+#: jscript.rc:27
+msgid "Subscript out of range"
+msgstr "添字が範囲外です"
+
+#: jscript.rc:28
+msgid "Automation server can't create object"
+msgstr "オートメーション サーバはオブジェクトを生成できません"
+
+#: jscript.rc:29
+msgid "Object doesn't support this property or method"
+msgstr "オブジェクトはこのプロパティまたはメソッドをサポートしていません"
+
+#: jscript.rc:30
+msgid "Object doesn't support this action"
+msgstr "オブジェクトはこの操作をサポートしていません"
+
+#: jscript.rc:31
+msgid "Argument not optional"
+msgstr "引数は省略できません"
+
+#: jscript.rc:32
+msgid "Syntax error"
+msgstr "文法エラー"
+
+#: jscript.rc:33
+msgid "Expected ';'"
+msgstr "';'を期待していました"
+
+#: jscript.rc:34
+msgid "Expected '('"
+msgstr "'('を期待していました"
+
+#: jscript.rc:35
+msgid "Expected ')'"
+msgstr "')'を期待していました"
+
+#: jscript.rc:36
+msgid "Unterminated string constant"
+msgstr "文字列定数が終端していません"
+
+#: jscript.rc:37
+msgid "Conditional compilation is turned off"
+msgstr ""
+
+#: jscript.rc:40
+msgid "Number expected"
+msgstr "数値を期待していました"
+
+#: jscript.rc:38
+msgid "Function expected"
+msgstr "関数を期待していました"
+
+#: jscript.rc:39
+msgid "'[object]' is not a date object"
+msgstr "'[object]' は日付オブジェクトではありません"
+
+#: jscript.rc:41
+msgid "Object expected"
+msgstr "オブジェクトを期待していました"
+
+#: jscript.rc:42
+msgid "Illegal assignment"
+msgstr "不正な割り当て"
+
+#: jscript.rc:43
+msgid "'|' is undefined"
+msgstr "'|'は定義されていません"
+
+#: jscript.rc:44
+msgid "Boolean object expected"
+msgstr "Boolean オブジェクトを期待していました"
+
+#: jscript.rc:45
+msgid "VBArray object expected"
+msgstr "VBArray オブジェクトを期待していました"
+
+#: jscript.rc:46
+msgid "JScript object expected"
+msgstr "JScript オブジェクトを期待していました"
+
+#: jscript.rc:47
+msgid "Syntax error in regular expression"
+msgstr "正規表現に文法誤りがあります"
+
+#: jscript.rc:48
+msgid "URI to be encoded contains invalid characters"
+msgstr "エンコードされるURIに無効な文字が含まれています"
+
+#: jscript.rc:49
+msgid "Array length must be a finite positive integer"
+msgstr "配列の長さは有限の正整数でなければなりません"
+
+#: jscript.rc:50
+msgid "Array object expected"
+msgstr "配列オブジェクトを期待していました"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "プロパティ(&P)"

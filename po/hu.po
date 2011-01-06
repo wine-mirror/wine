@@ -1009,6 +1009,112 @@ msgstr "IDTB_TOC_PREV"
 msgid "Cinepak Video codec"
 msgstr ""
 
+#: jscript.rc:25
+msgid "Error converting object to primitive type"
+msgstr "Hiba az objektum primitív típusra való konvertálásánál"
+
+#: jscript.rc:26
+msgid "Invalid procedure call or argument"
+msgstr "Érvénytelen eljáráshívás vagy argmentum"
+
+#: jscript.rc:27
+msgid "Subscript out of range"
+msgstr ""
+
+#: jscript.rc:28
+msgid "Automation server can't create object"
+msgstr "Az automatizáló (automation) kiszolgáló nem tud objektumot létrehozni"
+
+#: jscript.rc:29
+msgid "Object doesn't support this property or method"
+msgstr "Az objektum nem támogatja ezt a tulajdonságot vagy metódust"
+
+#: jscript.rc:30
+#, fuzzy
+msgid "Object doesn't support this action"
+msgstr "Az objektum nem támogatja ezt a tulajdonságot vagy metódust"
+
+#: jscript.rc:31
+msgid "Argument not optional"
+msgstr "Az argumentum nem opcionális"
+
+#: jscript.rc:32
+msgid "Syntax error"
+msgstr "Szinttaktikai hiba"
+
+#: jscript.rc:33
+msgid "Expected ';'"
+msgstr "Hiányzó ';'"
+
+#: jscript.rc:34
+msgid "Expected '('"
+msgstr "Hiányzó '('"
+
+#: jscript.rc:35
+msgid "Expected ')'"
+msgstr "Hiányzó ')'"
+
+#: jscript.rc:36
+msgid "Unterminated string constant"
+msgstr "Lezáratlan sztring konstans"
+
+#: jscript.rc:37
+msgid "Conditional compilation is turned off"
+msgstr ""
+
+#: jscript.rc:40
+msgid "Number expected"
+msgstr "Számot vártam"
+
+#: jscript.rc:38
+msgid "Function expected"
+msgstr "Függvényt vártam"
+
+#: jscript.rc:39
+msgid "'[object]' is not a date object"
+msgstr "'Az [object]' nem egy date (dátum) objektum"
+
+#: jscript.rc:41
+msgid "Object expected"
+msgstr "Objektumot vártam"
+
+#: jscript.rc:42
+msgid "Illegal assignment"
+msgstr "Nem megengedett összerendelés"
+
+#: jscript.rc:43
+msgid "'|' is undefined"
+msgstr "A '|' nem definiált"
+
+#: jscript.rc:44
+msgid "Boolean object expected"
+msgstr "Boolean (igaz-hamis) objektumot vártam"
+
+#: jscript.rc:45
+#, fuzzy
+msgid "VBArray object expected"
+msgstr "Tömb objektumot vártam"
+
+#: jscript.rc:46
+msgid "JScript object expected"
+msgstr "JScript objektumot vártam"
+
+#: jscript.rc:47
+msgid "Syntax error in regular expression"
+msgstr "Szinttaktikai hiba a reguláris kifejezésben"
+
+#: jscript.rc:48
+msgid "URI to be encoded contains invalid characters"
+msgstr "A kódolandó URI érvénytelen karaktereket tartalmaz"
+
+#: jscript.rc:49
+msgid "Array length must be a finite positive integer"
+msgstr "A tömb hosszának egy véges pozitív egész számnak kell lennie"
+
+#: jscript.rc:50
+msgid "Array object expected"
+msgstr "Tömb objektumot vártam"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Beállítások"

@@ -1009,6 +1009,110 @@ msgstr "IDTB_TOC_PREV"
 msgid "Cinepak Video codec"
 msgstr ""
 
+#: jscript.rc:25
+msgid "Error converting object to primitive type"
+msgstr "Помилка конвертування об'єкту в примітивний тип"
+
+#: jscript.rc:26
+msgid "Invalid procedure call or argument"
+msgstr "Невірний виклик процедури або аргумент"
+
+#: jscript.rc:27
+msgid "Subscript out of range"
+msgstr "Індекс поза діапазоном"
+
+#: jscript.rc:28
+msgid "Automation server can't create object"
+msgstr "Сервер автоматизації не може створити об'єкт"
+
+#: jscript.rc:29
+msgid "Object doesn't support this property or method"
+msgstr "Об'єкт не підтримує цю властивість чи метод"
+
+#: jscript.rc:30
+msgid "Object doesn't support this action"
+msgstr "Об'єкт не підтримує цю дію"
+
+#: jscript.rc:31
+msgid "Argument not optional"
+msgstr "Відсутній обов'язковий аргумент"
+
+#: jscript.rc:32
+msgid "Syntax error"
+msgstr "Синтаксична помилка"
+
+#: jscript.rc:33
+msgid "Expected ';'"
+msgstr "Очікується ';'"
+
+#: jscript.rc:34
+msgid "Expected '('"
+msgstr "Очікується '('"
+
+#: jscript.rc:35
+msgid "Expected ')'"
+msgstr "Очікується ')'"
+
+#: jscript.rc:36
+msgid "Unterminated string constant"
+msgstr "Незавершена рядкова константа"
+
+#: jscript.rc:37
+msgid "Conditional compilation is turned off"
+msgstr ""
+
+#: jscript.rc:40
+msgid "Number expected"
+msgstr "Очікується число"
+
+#: jscript.rc:38
+msgid "Function expected"
+msgstr "Очікується функція"
+
+#: jscript.rc:39
+msgid "'[object]' is not a date object"
+msgstr "'[object]' не об'єкт типу date"
+
+#: jscript.rc:41
+msgid "Object expected"
+msgstr "Очікується об'єкт"
+
+#: jscript.rc:42
+msgid "Illegal assignment"
+msgstr "Невірне присвоєння"
+
+#: jscript.rc:43
+msgid "'|' is undefined"
+msgstr "'|' не визначено"
+
+#: jscript.rc:44
+msgid "Boolean object expected"
+msgstr "Очікується об'єкт Boolean"
+
+#: jscript.rc:45
+msgid "VBArray object expected"
+msgstr "Очікується об'єкт VBArray"
+
+#: jscript.rc:46
+msgid "JScript object expected"
+msgstr "Очікується об'єкт JScript"
+
+#: jscript.rc:47
+msgid "Syntax error in regular expression"
+msgstr "Синтаксична помилка в регулярному виразі"
+
+#: jscript.rc:48
+msgid "URI to be encoded contains invalid characters"
+msgstr "URI, що буде закодований, містить неприпустимі символи"
+
+#: jscript.rc:49
+msgid "Array length must be a finite positive integer"
+msgstr "Довжиною масиву повинне бути скінченне додатнє ціле число"
+
+#: jscript.rc:50
+msgid "Array object expected"
+msgstr "Очікується об'єкт Array"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Властивості"

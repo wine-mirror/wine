@@ -1009,6 +1009,110 @@ msgstr "IDTB_TOC_PREV"
 msgid "Cinepak Video codec"
 msgstr ""
 
+#: jscript.rc:25
+msgid "Error converting object to primitive type"
+msgstr "Erro ao converter objecto em tipo primitivo"
+
+#: jscript.rc:26
+msgid "Invalid procedure call or argument"
+msgstr "Argumento ou chamada de procedimento inválida"
+
+#: jscript.rc:27
+msgid "Subscript out of range"
+msgstr "Subscript fora de alcance"
+
+#: jscript.rc:28
+msgid "Automation server can't create object"
+msgstr "O servidor de automação não conseguiu criar o objecto"
+
+#: jscript.rc:29
+msgid "Object doesn't support this property or method"
+msgstr "O objecto não suporta esta propriedade ou método"
+
+#: jscript.rc:30
+msgid "Object doesn't support this action"
+msgstr "O objecto não suporta esta acção"
+
+#: jscript.rc:31
+msgid "Argument not optional"
+msgstr "Argumento não opcional"
+
+#: jscript.rc:32
+msgid "Syntax error"
+msgstr "Erro de sintaxe"
+
+#: jscript.rc:33
+msgid "Expected ';'"
+msgstr "';' esperado"
+
+#: jscript.rc:34
+msgid "Expected '('"
+msgstr "'(' esperado"
+
+#: jscript.rc:35
+msgid "Expected ')'"
+msgstr "')' esperado"
+
+#: jscript.rc:36
+msgid "Unterminated string constant"
+msgstr "Constante de string não terminada"
+
+#: jscript.rc:37
+msgid "Conditional compilation is turned off"
+msgstr ""
+
+#: jscript.rc:40
+msgid "Number expected"
+msgstr "Número esperado"
+
+#: jscript.rc:38
+msgid "Function expected"
+msgstr "Função esperada"
+
+#: jscript.rc:39
+msgid "'[object]' is not a date object"
+msgstr "'[object]' não é um objecto de data"
+
+#: jscript.rc:41
+msgid "Object expected"
+msgstr "Objecto esperado"
+
+#: jscript.rc:42
+msgid "Illegal assignment"
+msgstr "Atribuição ilegal"
+
+#: jscript.rc:43
+msgid "'|' is undefined"
+msgstr "'|' é indefinido"
+
+#: jscript.rc:44
+msgid "Boolean object expected"
+msgstr "Objecto boleano esperado"
+
+#: jscript.rc:45
+msgid "VBArray object expected"
+msgstr "Objecto VBArray esperado"
+
+#: jscript.rc:46
+msgid "JScript object expected"
+msgstr "Objecto JScript esperado"
+
+#: jscript.rc:47
+msgid "Syntax error in regular expression"
+msgstr "Erro de sintaxe na expressão regular"
+
+#: jscript.rc:48
+msgid "URI to be encoded contains invalid characters"
+msgstr "URI a ser codificado contém caracteres inválidos"
+
+#: jscript.rc:49
+msgid "Array length must be a finite positive integer"
+msgstr "Tamanho do vector tem de ser um inteiro finito positivo"
+
+#: jscript.rc:50
+msgid "Array object expected"
+msgstr "Objecto Array esperado"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Propriedades"

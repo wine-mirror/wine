@@ -1009,6 +1009,112 @@ msgstr "IDTB_TOC_PREV"
 msgid "Cinepak Video codec"
 msgstr ""
 
+#: jscript.rc:25
+msgid "Error converting object to primitive type"
+msgstr "Eroare la convertirea obiectului la un tip primitiv"
+
+#: jscript.rc:26
+msgid "Invalid procedure call or argument"
+msgstr "Apel de procedură sau argument nevalid"
+
+#: jscript.rc:27
+msgid "Subscript out of range"
+msgstr ""
+
+#: jscript.rc:28
+msgid "Automation server can't create object"
+msgstr "Serverul de automatizare nu poate crea obiectul"
+
+#: jscript.rc:29
+msgid "Object doesn't support this property or method"
+msgstr "Obiectul nu suportă această proprietate sau metodă"
+
+#: jscript.rc:30
+#, fuzzy
+msgid "Object doesn't support this action"
+msgstr "Obiectul nu suportă această proprietate sau metodă"
+
+#: jscript.rc:31
+msgid "Argument not optional"
+msgstr "Argumentul nu este opțional"
+
+#: jscript.rc:32
+msgid "Syntax error"
+msgstr "Eroare de sintaxă"
+
+#: jscript.rc:33
+msgid "Expected ';'"
+msgstr "Se așteaptă „;”"
+
+#: jscript.rc:34
+msgid "Expected '('"
+msgstr "Se așteaptă „(”"
+
+#: jscript.rc:35
+msgid "Expected ')'"
+msgstr "Se așteaptă „)”"
+
+#: jscript.rc:36
+msgid "Unterminated string constant"
+msgstr "Șir constant neterminat"
+
+#: jscript.rc:37
+msgid "Conditional compilation is turned off"
+msgstr ""
+
+#: jscript.rc:40
+msgid "Number expected"
+msgstr "Se așteaptă un număr"
+
+#: jscript.rc:38
+msgid "Function expected"
+msgstr "Se așteaptă o funcție"
+
+#: jscript.rc:39
+msgid "'[object]' is not a date object"
+msgstr "„[obiect]” nu este un obiect de tip dată"
+
+#: jscript.rc:41
+msgid "Object expected"
+msgstr "Se așteaptă un obiect"
+
+#: jscript.rc:42
+msgid "Illegal assignment"
+msgstr "Atribuire ilegală"
+
+#: jscript.rc:43
+msgid "'|' is undefined"
+msgstr "„|” nu este definit"
+
+#: jscript.rc:44
+msgid "Boolean object expected"
+msgstr "Se așteaptă un obiect boolean"
+
+#: jscript.rc:45
+#, fuzzy
+msgid "VBArray object expected"
+msgstr "Se așteaptă un obiect matrice"
+
+#: jscript.rc:46
+msgid "JScript object expected"
+msgstr "Se așteaptă un obiect JScript"
+
+#: jscript.rc:47
+msgid "Syntax error in regular expression"
+msgstr "Eroare de sintaxă în expresia regulată"
+
+#: jscript.rc:48
+msgid "URI to be encoded contains invalid characters"
+msgstr "URI care trebuie codificat conține caractere nevalide"
+
+#: jscript.rc:49
+msgid "Array length must be a finite positive integer"
+msgstr "Lungimea unei matrice trebuie să fie un număr întreg pozitiv"
+
+#: jscript.rc:50
+msgid "Array object expected"
+msgstr "Se așteaptă un obiect matrice"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Proprietăți"

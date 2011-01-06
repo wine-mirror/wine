@@ -1009,6 +1009,110 @@ msgstr "IDTB_TOC_PREV"
 msgid "Cinepak Video codec"
 msgstr ""
 
+#: jscript.rc:25
+msgid "Error converting object to primitive type"
+msgstr "객페를 기본 형식으로 변환하는 중에 에러 발생"
+
+#: jscript.rc:26
+msgid "Invalid procedure call or argument"
+msgstr "올바르지 않은 프로시져 호출이나 인수"
+
+#: jscript.rc:27
+msgid "Subscript out of range"
+msgstr "첨자가 범위를 벗어남"
+
+#: jscript.rc:28
+msgid "Automation server can't create object"
+msgstr "자동화 서버가 객체를 만들 수 없음"
+
+#: jscript.rc:29
+msgid "Object doesn't support this property or method"
+msgstr "객체는 이 속성이나 메소드를 지원하지 않음"
+
+#: jscript.rc:30
+msgid "Object doesn't support this action"
+msgstr "객체는 이 행동을 지원하지 않음"
+
+#: jscript.rc:31
+msgid "Argument not optional"
+msgstr "인수는 옵션이 아닙니다"
+
+#: jscript.rc:32
+msgid "Syntax error"
+msgstr "문법 에러"
+
+#: jscript.rc:33
+msgid "Expected ';'"
+msgstr "';' 가 필요합니다"
+
+#: jscript.rc:34
+msgid "Expected '('"
+msgstr "'(' 가 필요합니다"
+
+#: jscript.rc:35
+msgid "Expected ')'"
+msgstr "')' 가 필요합니다"
+
+#: jscript.rc:36
+msgid "Unterminated string constant"
+msgstr "띁나지 않은 문자열 상수"
+
+#: jscript.rc:37
+msgid "Conditional compilation is turned off"
+msgstr "조건부 컴파일이 설정되어 있음"
+
+#: jscript.rc:40
+msgid "Number expected"
+msgstr "숫자가 필요합니다"
+
+#: jscript.rc:38
+msgid "Function expected"
+msgstr "함수가 필요합니다"
+
+#: jscript.rc:39
+msgid "'[object]' is not a date object"
+msgstr "'[객체]' 는 날짜 객체가 아님"
+
+#: jscript.rc:41
+msgid "Object expected"
+msgstr "객체가 필요합니다"
+
+#: jscript.rc:42
+msgid "Illegal assignment"
+msgstr "잘못된 할당"
+
+#: jscript.rc:43
+msgid "'|' is undefined"
+msgstr "'|' 는 정의되지 않았음"
+
+#: jscript.rc:44
+msgid "Boolean object expected"
+msgstr "볼린 객제가 필요함"
+
+#: jscript.rc:45
+msgid "VBArray object expected"
+msgstr "VBArray 갹체가 필요함"
+
+#: jscript.rc:46
+msgid "JScript object expected"
+msgstr "JScript 객체가 필요함"
+
+#: jscript.rc:47
+msgid "Syntax error in regular expression"
+msgstr "정규 표현식에 문법에러가 있음"
+
+#: jscript.rc:48
+msgid "URI to be encoded contains invalid characters"
+msgstr "URI 는 올바르지 않은 문자를 포함해서 인코딩되었음"
+
+#: jscript.rc:49
+msgid "Array length must be a finite positive integer"
+msgstr "배열 길이는 반드시  한정된 양의 정수이어야 함"
+
+#: jscript.rc:50
+msgid "Array object expected"
+msgstr "배열 객체가 필요함"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "등록 정보(&P)"

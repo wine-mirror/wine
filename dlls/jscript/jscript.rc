@@ -49,3 +49,11 @@ STRINGTABLE
     IDS_INVALID_LENGTH      "Array length must be a finite positive integer"
     IDS_ARRAY_EXPECTED      "Array object expected"
 }
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+/* @makedep: jscript.rgs */
+2 WINE_REGISTRY jscript.rgs
+
+/* @makedep: jsglobal.tlb */
+1 TYPELIB jsglobal.tlb
