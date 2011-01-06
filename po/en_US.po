@@ -551,7 +551,7 @@ msgstr "Y"
 #: cmd.rc:257 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
-msgstr ""
+msgstr "N"
 
 #: cmd.rc:258
 msgid "File association missing for extension %s\n"
