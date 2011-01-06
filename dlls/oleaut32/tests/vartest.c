@@ -24,6 +24,8 @@
 #include <math.h>
 #include <float.h>
 
+#define CONST_VTABLE
+
 #include "windef.h"
 #include "winbase.h"
 #include "winsock.h"
@@ -399,26 +401,31 @@ static int IsValidVariantClearVT(VARTYPE vt, VARTYPE extraFlags)
 
 typedef struct
 {
-    const IUnknownVtbl *lpVtbl;
-    LONG               ref;
-    LONG               events;
+    IUnknown IUnknown_iface;
+    LONG     ref;
+    LONG     events;
 } test_VariantClearImpl;
+
+static inline test_VariantClearImpl *impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, test_VariantClearImpl, IUnknown_iface);
+}
 
 static HRESULT WINAPI VC_QueryInterface(LPUNKNOWN iface,REFIID riid,LPVOID *ppobj)
 {
-    test_VariantClearImpl *This = (test_VariantClearImpl *)iface;
+    test_VariantClearImpl *This = impl_from_IUnknown(iface);
     This->events |= 0x1;
     return E_NOINTERFACE;
 }
 
 static ULONG WINAPI VC_AddRef(LPUNKNOWN iface) {
-    test_VariantClearImpl *This = (test_VariantClearImpl *)iface;
+    test_VariantClearImpl *This = impl_from_IUnknown(iface);
     This->events |= 0x2;
     return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI VC_Release(LPUNKNOWN iface) {
-    test_VariantClearImpl *This = (test_VariantClearImpl *)iface;
+    test_VariantClearImpl *This = impl_from_IUnknown(iface);
     /* static class, won't be  freed */
     This->events |= 0x4;
     return InterlockedDecrement(&This->ref);
@@ -430,7 +437,7 @@ static const IUnknownVtbl test_VariantClear_vtbl = {
     VC_Release,
 };
 
-static test_VariantClearImpl test_myVariantClearImpl = {&test_VariantClear_vtbl, 1, 0};
+static test_VariantClearImpl test_myVariantClearImpl = {{&test_VariantClear_vtbl}, 1, 0};
 
 static void test_VariantClear(void)
 {
@@ -509,17 +516,17 @@ static void test_VariantClear(void)
 
   /* UNKNOWN */
   V_VT(&v) = VT_UNKNOWN;
-  V_UNKNOWN(&v) = (IUnknown*)&test_myVariantClearImpl;
+  V_UNKNOWN(&v) = &test_myVariantClearImpl.IUnknown_iface;
   test_myVariantClearImpl.events = 0;
   hres = VariantClear(&v);
   ok(hres == S_OK, "ret %08x\n", hres);
   ok(V_VT(&v) == 0, "vt %04x\n", V_VT(&v));
-  ok(V_UNKNOWN(&v) == (IUnknown*)&test_myVariantClearImpl, "unknown %p\n", V_UNKNOWN(&v));
+  ok(V_UNKNOWN(&v) == &test_myVariantClearImpl.IUnknown_iface, "unknown %p\n", V_UNKNOWN(&v));
   /* Check that Release got called, but nothing else */
   ok(test_myVariantClearImpl.events ==  0x4, "Unexpected call. events %08x\n", test_myVariantClearImpl.events);
 
   /* UNKNOWN BYREF */
-  punk = (IUnknown*)&test_myVariantClearImpl;
+  punk = &test_myVariantClearImpl.IUnknown_iface;
   V_VT(&v) = VT_UNKNOWN | VT_BYREF;
   V_UNKNOWNREF(&v) = &punk;
   test_myVariantClearImpl.events = 0;
@@ -542,7 +549,7 @@ static void test_VariantClear(void)
   ok(test_myVariantClearImpl.events ==  0x4, "Unexpected call. events %08x\n", test_myVariantClearImpl.events);
 
   /* DISPATCH BYREF */
-  punk = (IUnknown*)&test_myVariantClearImpl;
+  punk = &test_myVariantClearImpl.IUnknown_iface;
   V_VT(&v) = VT_DISPATCH | VT_BYREF;
   V_DISPATCHREF(&v) = (IDispatch**)&punk;
   test_myVariantClearImpl.events = 0;
