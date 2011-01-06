@@ -893,6 +893,118 @@ msgstr "기본 웨이브 출력 장치"
 msgid "Default MidiOut Device"
 msgstr "기본 미디출력 장치"
 
+#: hhctrl.rc:27
+msgid "&Contents"
+msgstr "목록(&C)"
+
+#: hhctrl.rc:28
+msgid "I&ndex"
+msgstr "인덱스(&N)"
+
+#: hhctrl.rc:29
+msgid "&Search"
+msgstr "찾기(&S)"
+
+#: hhctrl.rc:30
+msgid "Favor&ites"
+msgstr "즐겨찾기(&I)"
+
+#: hhctrl.rc:35
+msgid "Show"
+msgstr "보여주기"
+
+#: hhctrl.rc:36
+msgid "Hide"
+msgstr "숨기기"
+
+#: hhctrl.rc:37
+msgid "Stop"
+msgstr "정지"
+
+#: hhctrl.rc:38
+msgid "Refresh"
+msgstr "새로 고침"
+
+#: hhctrl.rc:39
+msgid "Back"
+msgstr "뒤로"
+
+#: hhctrl.rc:40
+msgid "Home"
+msgstr "홈"
+
+#: hhctrl.rc:41
+msgid "Sync"
+msgstr "동기화"
+
+#: hhctrl.rc:42
+msgid "Print"
+msgstr "인쇄"
+
+#: hhctrl.rc:43
+msgid "Options"
+msgstr "옵션"
+
+#: hhctrl.rc:44
+msgid "Forward"
+msgstr "앞으로"
+
+#: hhctrl.rc:45
+msgid "IDTB_NOTES"
+msgstr "IDTB_NOTES"
+
+#: hhctrl.rc:46
+msgid "IDTB_BROWSE_FWD"
+msgstr "IDTB_BROWSE_FWD"
+
+#: hhctrl.rc:47
+msgid "IDT_BROWSE_BACK"
+msgstr "IDT_BROWSE_BACK"
+
+#: hhctrl.rc:48
+msgid "IDTB_CONTENTS"
+msgstr "IDTB_CONTENTS"
+
+#: hhctrl.rc:49
+msgid "IDTB_INDEX"
+msgstr "IDTB_INDEX"
+
+#: hhctrl.rc:50
+msgid "IDTB_SEARCH"
+msgstr "IDTB_SEARCH"
+
+#: hhctrl.rc:51
+msgid "IDTB_HISTORY"
+msgstr "IDTB_HISTORY"
+
+#: hhctrl.rc:52
+msgid "IDTB_FAVORITES"
+msgstr "IDTB_FAVORITES"
+
+#: hhctrl.rc:53
+msgid "Jump1"
+msgstr "Jump1"
+
+#: hhctrl.rc:54
+msgid "Jump2"
+msgstr "Jump2"
+
+#: hhctrl.rc:55
+msgid "Customize"
+msgstr "사용자정의"
+
+#: hhctrl.rc:56
+msgid "Zoom"
+msgstr "확대"
+
+#: hhctrl.rc:57
+msgid "IDTB_TOC_NEXT"
+msgstr "IDTB_TOC_NEXT"
+
+#: hhctrl.rc:58
+msgid "IDTB_TOC_PREV"
+msgstr "IDTB_TOC_PREV"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "등록 정보(&P)"

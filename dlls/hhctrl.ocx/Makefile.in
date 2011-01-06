@@ -14,33 +14,7 @@ C_SRCS = \
 IDL_TLB_SRCS = hhctrl_tlb.idl
 IDL_R_SRCS   = hhctrl_tlb.idl
 
-RC_SRCS = \
-	Cs.rc \
-	Da.rc \
-	De.rc \
-	El.rc \
-	En.rc \
-	Es.rc \
-	Fi.rc \
-	Fr.rc \
-	He.rc \
-	Hu.rc \
-	It.rc \
-	Ja.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	No.rc \
-	Pl.rc \
-	Pt.rc \
-	Ro.rc \
-	Ru.rc \
-	Si.rc \
-	Sr.rc \
-	Sv.rc \
-	Tr.rc \
-	Uk.rc \
-	Zh.rc \
-	rsrc.rc
+RC_SRCS = hhctrl.rc
+PO_SRCS = hhctrl.rc
 
 @MAKE_DLL_RULES@

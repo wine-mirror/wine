@@ -1,5 +1,3 @@
-# Turkish translations for Wine
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
@@ -8,7 +6,7 @@ msgstr ""
 "PO-Revision-Date: N/A\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
-"Language: Turkish\n"
+"Language: Greek\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -86,8 +84,9 @@ msgid "Unstructured Name"
 msgstr ""
 
 #: crypt32.rc:45
+#, fuzzy
 msgid "Content Type"
-msgstr ""
+msgstr "&Περιεχόμενα"
 
 #: crypt32.rc:46
 msgid "Message Digest"
@@ -242,11 +241,8 @@ msgid "Serial Number"
 msgstr ""
 
 #: crypt32.rc:84
-#, fuzzy
 msgid "CA Version"
 msgstr ""
-"CMD Version %s\n"
-"\n"
 
 #: crypt32.rc:85
 msgid "Cross CA Version"
@@ -269,11 +265,8 @@ msgid "Enrollment Name Value Pair"
 msgstr ""
 
 #: crypt32.rc:90
-#, fuzzy
 msgid "OS Version"
 msgstr ""
-"CMD Version %s\n"
-"\n"
 
 #: crypt32.rc:91
 msgid "Enrollment CSP"
@@ -340,11 +333,8 @@ msgid "CMC Status Info"
 msgstr ""
 
 #: crypt32.rc:107
-#, fuzzy
 msgid "CMC Extensions"
 msgstr ""
-"CMD Version %s\n"
-"\n"
 
 #: crypt32.rc:108
 msgid "CMC Attributes"
@@ -539,9 +529,8 @@ msgid "Smart Card Logon"
 msgstr ""
 
 #: crypt32.rc:156
-#, fuzzy
 msgid "Digital Rights"
-msgstr "Sa&yısal"
+msgstr ""
 
 #: crypt32.rc:157
 msgid "Qualified Subordination"
@@ -552,9 +541,8 @@ msgid "Key Recovery"
 msgstr ""
 
 #: crypt32.rc:159
-#, fuzzy
 msgid "Document Signing"
-msgstr "Argument missing\n"
+msgstr ""
 
 #: crypt32.rc:160
 msgid "IP security IKE intermediate"
@@ -665,9 +653,8 @@ msgid "Subject Type="
 msgstr ""
 
 #: crypt32.rc:195
-#, fuzzy
 msgid "CA"
-msgstr "A"
+msgstr ""
 
 #: crypt32.rc:196
 msgid "End Entity"
@@ -750,8 +737,9 @@ msgid "Superseded"
 msgstr ""
 
 #: crypt32.rc:216
+#, fuzzy
 msgid "Operation Ceased"
-msgstr ""
+msgstr "Επιλογές"
 
 #: crypt32.rc:217
 msgid "Certificate Hold"
@@ -903,59 +891,59 @@ msgstr ""
 
 #: hhctrl.rc:27
 msgid "&Contents"
-msgstr "&İçerik"
+msgstr "&Περιεχόμενα"
 
 #: hhctrl.rc:28
 msgid "I&ndex"
-msgstr "Di&zin"
+msgstr "I&ndex"
 
 #: hhctrl.rc:29
 msgid "&Search"
-msgstr "&Ara"
+msgstr "&Αναζήτηση"
 
 #: hhctrl.rc:30
 msgid "Favor&ites"
-msgstr "&Sık Kullanılanlar"
+msgstr "Α&γαπημένα"
 
 #: hhctrl.rc:35
 msgid "Show"
-msgstr "Göster"
+msgstr "Εμφάνιση"
 
 #: hhctrl.rc:36
 msgid "Hide"
-msgstr "Gizle"
+msgstr "Απόκρυψη"
 
 #: hhctrl.rc:37
 msgid "Stop"
-msgstr "Dur"
+msgstr "Τερματισμός"
 
 #: hhctrl.rc:38
 msgid "Refresh"
-msgstr "Yenile"
+msgstr "Ανανέωση"
 
 #: hhctrl.rc:39
 msgid "Back"
-msgstr "Geri"
+msgstr "Πίσω"
 
 #: hhctrl.rc:40
 msgid "Home"
-msgstr "Ev"
+msgstr "Home"
 
 #: hhctrl.rc:41
 msgid "Sync"
-msgstr "Eşitle"
+msgstr "Sync"
 
 #: hhctrl.rc:42
 msgid "Print"
-msgstr "Yazdır"
+msgstr "Εκτύπωση"
 
 #: hhctrl.rc:43
 msgid "Options"
-msgstr "Seçenekler"
+msgstr "Επιλογές"
 
 #: hhctrl.rc:44
 msgid "Forward"
-msgstr "İleri"
+msgstr "Forward"
 
 #: hhctrl.rc:45
 msgid "IDTB_NOTES"
@@ -999,11 +987,11 @@ msgstr "Jump2"
 
 #: hhctrl.rc:55
 msgid "Customize"
-msgstr "Özelleştir"
+msgstr "Customize"
 
 #: hhctrl.rc:56
 msgid "Zoom"
-msgstr "Yaklaştır"
+msgstr "Zoom"
 
 #: hhctrl.rc:57
 msgid "IDTB_TOC_NEXT"
@@ -1015,51 +1003,51 @@ msgstr "IDTB_TOC_PREV"
 
 #: clock.rc:28
 msgid "&Properties"
-msgstr "&Özellikler"
+msgstr ""
 
 #: clock.rc:29
 msgid "Ana&log"
-msgstr "Ana&log"
+msgstr ""
 
 #: clock.rc:30
 msgid "Digi&tal"
-msgstr "Sa&yısal"
+msgstr ""
 
 #: clock.rc:32
 msgid "&Font..."
-msgstr "&Yazı Tipi..."
+msgstr ""
 
 #: clock.rc:34
 msgid "&Without Titlebar"
-msgstr "&Başlık Çubuğunu Kaldır"
+msgstr ""
 
 #: clock.rc:36
 msgid "&Seconds"
-msgstr "&Saniyeler"
+msgstr ""
 
 #: clock.rc:37
 msgid "&Date"
-msgstr "&Tarih"
+msgstr ""
 
 #: clock.rc:39
 msgid "&Always on Top"
-msgstr "&Her zaman üstte"
+msgstr ""
 
 #: clock.rc:41
 msgid "Inf&o"
-msgstr "B&ilgi"
+msgstr ""
 
 #: clock.rc:42
 msgid "&About Clock..."
-msgstr "&Saat Hakkında..."
+msgstr ""
 
 #: clock.rc:48
 msgid "Clock"
-msgstr "Saat"
+msgstr ""
 
 #: cmd.rc:30
 msgid "ATTRIB shows or changes DOS file attributes.\n"
-msgstr "ATTRIB hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:38
 msgid ""
@@ -1071,47 +1059,40 @@ msgid ""
 "Changes to default directory, environment variables etc made within a\n"
 "called procedure are inherited by the caller.\n"
 msgstr ""
-"CALL <topluişlemdosyası> komutu bir toplu işlem dosyasında başka bir\n"
-"toplu işlem dosyasındaki komutları çalıştırmak için kullanılır. Eğer\n"
-"dosya mevcutsa, denetim yine onu çağıran dosyaya döner. CALL komutu\n"
-"çağrılan yordamlar için parametre verebilir.\n"
-"\n"
-"Çağrılan bir yordamda değiştirilen dizinler, çevre değişkenleri vb.\n"
-"kendisini çağıran tarafından miras alınır.\n"
 
 #: cmd.rc:41
 msgid ""
 "CD <dir> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
-msgstr "CD hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:42
 msgid "CHDIR <dir> changes the current default directory.\n"
-msgstr "CHDIR hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:44
 msgid "CLS clears the console screen.\n"
-msgstr "CLS konsol ekranını temizler\n"
+msgstr ""
 
 #: cmd.rc:46
 msgid "COPY <filename> copies a file.\n"
-msgstr "COPY hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:47
 msgid "CTTY changes the input/output device.\n"
-msgstr "CTTY hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:48
 msgid "DATE shows or changes the system date.\n"
-msgstr "DATE hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:49
 msgid "DEL <filename> deletes a file or set of files.\n"
-msgstr "DEL hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:50
 msgid "DIR lists the contents of a directory.\n"
-msgstr "DIR hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:60
 msgid ""
@@ -1124,18 +1105,10 @@ msgid ""
 "default). The ECHO OFF command can be prevented from displaying by\n"
 "preceding it with an @ sign.\n"
 msgstr ""
-"ECHO <ileti> geçerli uçbirim aygıtında <ileti>'yi gösterir.\n"
-"\n"
-"ECHO ON bir toplu işlem dosyasında tüm komutların çalıştırılmadan önce\n"
-"uçbirim aygıtında görüntülenmesini sağlar\n"
-"\n"
-"ECHO OFF bir önceki ECHO ON (ECHO öntanımlı olarak kapalıdır)komutunun\n"
-"tersini yapar. ECHO OFF çıktısının görüntülenmesini başına @ işareti\n"
-"getirerek engelleyebilirsiniz.\n"
 
 #: cmd.rc:62
 msgid "ERASE <filename> deletes a file or set of files.\n"
-msgstr "ERASE hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:70
 msgid ""
@@ -1146,13 +1119,6 @@ msgid ""
 "The requirement to double the % sign when using FOR in a batch file does\n"
 "not exist in wine's cmd.\n"
 msgstr ""
-"FOR komutu bir dosya kümesinin her öğesi için bir komut çalıştırmada\n"
-"kullanılır.\n"
-"\n"
-"Sözdizim: FOR %değişken IN (küme) DO komut\n"
-"\n"
-"FOR kullanımı için toplu işlem dosyasında % işaretini çift kullanma\n"
-"gereksinimi cmd'de yoktur.\n"
 
 #: cmd.rc:82
 msgid ""
@@ -1167,22 +1133,12 @@ msgid ""
 "\n"
 "GOTO has no effect when used interactively.\n"
 msgstr ""
-"GOTO komutu çalışma satırını toplu işlem dosyasındaki başka bir satıra\n"
-"yönlendirir.\n"
-"\n"
-"GOTO komutunun hedefi olacak etiket en fazla 255 karakterden oluşabilir;\n"
-"ancak boşluk içeremez (bu diğer işletim sistemlerinden farklıdır). Eğer\n"
-"toplu işlem dosyasında aynı etiket bir veya daha fazla yerde kullanılmışsa\n"
-"her zaman ilk etiket kullanılacaktır. GOTO var olmayan bir etiket alırsa\n"
-"toplu işlem dosyası sonlanacaktır.\n"
-"\n"
-"GOTO komutunun etkileşimli olarak kullanımının bir etkisi yoktur.\n"
 
 #: cmd.rc:85
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
-msgstr "HELP hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:95
 msgid ""
@@ -1195,14 +1151,6 @@ msgid ""
 "In the second form of the command, string1 and string2 must be in double\n"
 "quotes. The comparison is not case-sensitive.\n"
 msgstr ""
-"IF bir komutu koşula bağlı olarak çalıştırmada kullanılır.\n"
-"\n"
-"Sözdzimi:   IF [NOT] EXIST dosyaadı komut\n"
-"IF [NOT] dize1==dize2 komut\n"
-"IF [NOT] ERRORLEVEL sayı komut\n"
-"\n"
-"İkinci biçimde dize1 ve dize2 çift tırnak içerisinde olmalıdır.\n"
-"Karşılaştırma BÜYÜK/küçük harf duyarlı değildir.\n"
 
 #: cmd.rc:101
 msgid ""
@@ -1212,19 +1160,14 @@ msgid ""
 "The command will prompt you for the new volume label for the given drive.\n"
 "You can display the disk volume label with the VOL command.\n"
 msgstr ""
-"LABEL bir disk bölümüne etiket verir.\n"
-"\n"
-"Sözdizimi: LABEL [sürücü:]\n"
-"Komut sizden verilen sürücü için yeni bir etiket girmenizi bekleyecektir.\n"
-"Disk bölüm etiketini VOL komutu ile gösterebilirsiniz.\n"
 
 #: cmd.rc:104
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
-msgstr "MD hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:105
 msgid "MKDIR <name> creates a subdirectory.\n"
-msgstr "MKDIR hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:112
 msgid ""
@@ -1236,13 +1179,6 @@ msgid ""
 "\n"
 "MOVE fails if the old and new locations are on different DOS drive letters.\n"
 msgstr ""
-"MOVE bir dosya veya dizini dosya sistemi içinde yeni bir noktaya taşır.\n"
-"\n"
-"Eğer taşınacak öğe bir dizinse dizin içerisindeki tüm dosyalar ve alt\n"
-"dizinler de birlikte taşınacaktır.\n"
-"\n"
-"Eğer eski ve yeni konumlar farklı DOS sürücüleri üzerindeyse MOVE hata\n"
-"verecektir.\n"
 
 #: cmd.rc:123
 msgid ""
@@ -1256,15 +1192,6 @@ msgid ""
 "variable, for example:\n"
 "PATH %PATH%;c:\\temp\n"
 msgstr ""
-"PATH cmd arama yolunu gösterir veya değiştirir.\n"
-"\n"
-"Sadece PATH girmek geçerli PATH ayarını gösterecektir (başlangıçta bu\n"
-"wine.conf dosyanızda verilen değer olacaktır). Ayarı değiştirmek için\n"
-"PATH komutuna yeni değeri ekleyin.\n"
-"\n"
-"Ayrıca PATH ayarını düzenlemek için PATH çevre değikenini de\n"
-"kullanabilirsiniz, örneğin:\n"
-"PATH %PATH%;c:\\temp\n"
 
 #: cmd.rc:129
 msgid ""
@@ -1273,10 +1200,6 @@ msgid ""
 "batch files to allow the user to read the output of a previous command\n"
 "before it scrolls off the screen.\n"
 msgstr ""
-"PAUSE 'Devam etmek için bir tuşa basın' iletisini ekranda gösterip\n"
-"kullanıcının bir tuşa basmasını bekler. Çoğunlukla toplu işlem\n"
-"dosyalarında kullanıcıya önceki komutun çıktısını ekrandan çıkmadan\n"
-"önce okutmak için kullanılır.\n"
 
 #: cmd.rc:150
 msgid ""
@@ -1300,51 +1223,28 @@ msgid ""
 "The prompt can also be changed by altering the PROMPT environment variable,\n"
 "so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'\n"
 msgstr ""
-"PROMPT komut istemini değiştirir.\n"
-"\n"
-"PROMPT komutunu izleyen dize (ve hemen ardından bir boşluk) cmd sizden\n"
-"komut beklerken satır başında görünür.\n"
-"\n"
-"Aşağıdaki karakter dizeleri gösterilen özel anlamları içerir:\n"
-"\n"
-"$$    Dolar işareti       $_    Alt satır           $b    boru işareti (|)\n"
-"$d    Geçerli tarih       $e    Escape              $g    > işareti\n"
-"$l    < işareti           $n    Geçerli sürücü      $p    Geçerli yol\n"
-"$q    Eşittir işareti     $t    Geçerli saat        $v    cmd sürümü\n"
-"\n"
-"Sadece PROMPT komutunu girerseniz komut istemi geçerli dizini (sürücü harfi\n"
-"dahil) ve onu izleyen büyüktür (>) işareti içeren öntanımlı değerlere\n"
-"dönecektir.\n"
-"(PROMPT $p$g komutu gibi).\n"
-"\n"
-"Komut istemi ayrıca PROMPT çevre değişkeni değiştirilerek de "
-"belirlenebilir.\n"
-"Yani 'SET PROMPT=metin' ile 'PROMPT metin' aynı işi görür.\n"
 
 #: cmd.rc:154
 msgid ""
 "A command line beginning REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
 msgstr ""
-"REM (ardından da bir boşluk) ile başlayan bir komut satırının\n"
-"hiçbir işlevi yoktur; dolayısıyla toplu işlem dosyalarında\n"
-"açıklama olarak kullanılabilir.\n"
 
 #: cmd.rc:157
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
-msgstr "REN hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:158
 msgid "RENAME <filename> renames a file\n"
-msgstr "RENAME hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:160
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
-msgstr "RD hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:161
 msgid "RMDIR <dir> deletes a subdirectory.\n"
-msgstr "RMDIR hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:179
 msgid ""
@@ -1365,21 +1265,6 @@ msgid ""
 "many more values than in a native Win32 implementation. Note that it is\n"
 "not possible to affect the operating system environment from within cmd.\n"
 msgstr ""
-"SET cmd çevre değişkenlerini gösterir veya değiştirir.\n"
-"\n"
-"Parametresiz girilen SET geçerli çevrenin tümünü gösterir.\n"
-"\n"
-"Bir çevre değişkenini oluşturmak veya düzenlemek için sözdizimi:\n"
-"\n"
-"SET <değişken>=<değer>\n"
-"\n"
-"<değişken> ve <değer> karakter dizeleridir. Ne eşittir işaretinden\n"
-"önce ne de değişken adı içerisinde boşluk bulunabilir.\n"
-"\n"
-"Wine altında, üzerinde çalışılan işletim sistemi çevresi Win32 çevresine\n"
-"dahil edilir. Dolayısıyla doğal bir Win32 gerçeklemesinden daha fazla\n"
-"değer bulunacaktır. cmd altında işletim sistemi çevresini değiştirmek\n"
-"mümkün değildir.\n"
 
 #: cmd.rc:184
 msgid ""
@@ -1387,26 +1272,20 @@ msgid ""
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
 "if called from the command line.\n"
 msgstr ""
-"SHIFT toplu işlem dosyasında parametre listesinin başından bir tanesini\n"
-"siler. Böylece 2. parametre 1. parametre olacaktır. Komut satırında\n"
-"çağrıldığında bir etkisi yoktur.\n"
 
 #: cmd.rc:186
 msgid "TIME sets or shows the current system time.\n"
-msgstr "TIME hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:188
 msgid "Sets the window title for the cmd window, syntax TITLE [string]\n"
 msgstr ""
-"cmd penceresi için pencere başlığını değiştirir. Sözdizimi: TITLE [dize]\n"
 
 #: cmd.rc:192
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
 msgstr ""
-"TYPE <dosyaadı> komutu <dosyaadı>'nı konsol aygıtına kopyalar (eğer\n"
-"yönlendirilmişse başka yere). Dosyanın okunabilirliği denetlenmez.\n"
 
 #: cmd.rc:201
 msgid ""
@@ -1418,41 +1297,30 @@ msgid ""
 "\n"
 "The verify flag has no function in Wine.\n"
 msgstr ""
-"VERIFY doğrulama bayrağını açar, kapatır veya sınar. Geçerli biçimler:\n"
-"\n"
-"VERIFY ON\tBayrağı aç\n"
-"VERIFY OFF\tBayrağı kaldır\n"
-"VERIFY\t\tBayrağın durumunu gösterir.\n"
-"\n"
-"Doğrulama bayrağının Wine'da bir işlevi yoktur.\n"
 
 #: cmd.rc:204
 msgid "VER displays the version of cmd you are running\n"
-msgstr "VER kullandığınız cmd sürümünü gösterir\n"
+msgstr ""
 
 #: cmd.rc:206
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr "VOL hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:209
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
-"PUSHD <directoryname> saves the current directory onto a\n"
-"stack, and then changes the current directory to the supplied one.\n"
 
 #: cmd.rc:212
 msgid ""
 "POPD changes current directory to the last one saved with\n"
 "PUSHD.\n"
 msgstr ""
-"POPD changes current directory to the last one saved with\n"
-"PUSHD.\n"
 
 #: cmd.rc:214
 msgid "MORE displays output of files or piped input in pages.\n"
-msgstr "MORE displays output of files or piped input in pages.\n"
+msgstr ""
 
 #: cmd.rc:218
 msgid ""
@@ -1466,8 +1334,6 @@ msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
 msgstr ""
-"EXIT geçerli komut oturumunu sonlandırır ve cmd'yi çağırdığınız\n"
-"yerden işletim sistemine döner.\n"
 
 #: cmd.rc:253
 msgid ""
@@ -1503,151 +1369,119 @@ msgid ""
 "\n"
 "Enter HELP <command> for further information on any of the above commands\n"
 msgstr ""
-"CMD dahili komutları:\n"
-"ATTRIB\t\tDOS dosya özelliklerini göster veya değiştir\n"
-"CALL\t\tToplu işlem dosyası içerisinden bir diğerini çalıştır\n"
-"CD (CHDIR)\tGeçerli dizini değiştir\n"
-"CLS\t\tKonsol ekranını temizle\n"
-"COPY\t\tDosya kopyala\n"
-"CTTY\t\tGiriş/çıkış aygıtını değiştir\n"
-"DATE\t\tSistem tarihini göster veya değiştir\n"
-"DEL (ERASE)\tBir veya daha fazla dosyayı sil\n"
-"DIR\t\tDizin içeriğini listele\n"
-"ECHO\t\tMetni doğrudan konsol çıkışına kopyala\n"
-"HELP\t\tBir konu üzerinde özet yardım göster\n"
-"MD (MKDIR)\tAlt dizin oluştur\n"
-"MORE\t\tDisplay output in pages\n"
-"MOVE\t\tBir veya daha fazla dosyayı ya da dizin ağacını taşı\n"
-"PATH\t\tArama yolunu düzenle veya göster\n"
-"POPD\t\tRestores the directory to the last one saved with PUSHD\n"
-"PROMPT\t\tKomut istemini değiştir\n"
-"PUSHD\t\tChanges to a new directory, saving the current one\n"
-"REN (RENAME)\tDosyayı yeniden adlandır\n"
-"RD (RMDIR)\tAlt dizini sil\n"
-"SET\t\tÇevre değişkenlerini düzenle veya göster\n"
-"TIME\t\tGeçerli sistem saatini düzenle veya göster\n"
-"TITLE\t\tCMD oturumu için pencere başlığını belirle\n"
-"TYPE\t\tMetin dosyasının içeriğini göster\n"
-"VER\t\tGeçerli CMD sürümünü göster\n"
-"VOL\t\tDisk aygıtının bölüm etiketini göster\n"
-"EXIT\t\tCMD'yi kapat\n"
-"\n"
-"Yukarıdaki komutlar hakkında daha fazla bilgi için HELP <komut> girin\n"
 
 #: cmd.rc:255
 msgid "Are you sure"
-msgstr "Are you sure"
+msgstr ""
 
 #: cmd.rc:256 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
-msgstr "Y"
+msgstr ""
 
 #: cmd.rc:257 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
-msgstr "N"
+msgstr ""
 
 #: cmd.rc:258
 msgid "File association missing for extension %s\n"
-msgstr "File association missing for extension %s\n"
+msgstr ""
 
 #: cmd.rc:259
 msgid "No open command associated with file type '%s'\n"
-msgstr "No open command associated with file type '%s'\n"
+msgstr ""
 
 #: cmd.rc:260
 msgid "Overwrite %s"
-msgstr "Overwrite %s"
+msgstr ""
 
 #: cmd.rc:261
 msgid "More..."
-msgstr "More..."
+msgstr ""
 
 #: cmd.rc:262
 msgid "Line in Batch processing possibly truncated. Using:\n"
-msgstr "Line in Batch processing possibly truncated. Using:\n"
+msgstr ""
 
 #: cmd.rc:263
 msgid ""
 "Not Yet Implemented\n"
 "\n"
 msgstr ""
-"Not Yet Implemented\n"
-"\n"
 
 #: cmd.rc:264
 msgid "Argument missing\n"
-msgstr "Argument missing\n"
+msgstr ""
 
 #: cmd.rc:265
 msgid "Syntax error\n"
-msgstr "Syntax error\n"
+msgstr ""
 
 #: cmd.rc:266
 msgid "%s : File Not Found\n"
-msgstr "%s : File Not Found\n"
+msgstr ""
 
 #: cmd.rc:267
 msgid "No help available for %s\n"
-msgstr "No help available for %s\n"
+msgstr ""
 
 #: cmd.rc:268
 msgid "Target to GOTO not found\n"
-msgstr "Target to GOTO not found\n"
+msgstr ""
 
 #: cmd.rc:269
 msgid "Current Date is %s\n"
-msgstr "Current Date is %s\n"
+msgstr ""
 
 #: cmd.rc:270
 msgid "Current Time is %s\n"
-msgstr "Current Time is %s\n"
+msgstr ""
 
 #: cmd.rc:271
 msgid "Enter new date: "
-msgstr "Enter new date: "
+msgstr ""
 
 #: cmd.rc:272
 msgid "Enter new time: "
-msgstr "Enter new time: "
+msgstr ""
 
 #: cmd.rc:273
 msgid "Environment variable %s not defined\n"
-msgstr "Environment variable %s not defined\n"
+msgstr ""
 
 #: cmd.rc:274 xcopy.rc:38
 msgid "Failed to open '%s'\n"
-msgstr "Failed to open '%s'\n"
+msgstr ""
 
 #: cmd.rc:275
 msgid "Cannot call batch label outside of a batch script\n"
-msgstr "Cannot call batch label outside of a batch script\n"
+msgstr ""
 
 #: cmd.rc:276 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
-msgstr "A"
+msgstr ""
 
 #: cmd.rc:277
 msgid "%s, Delete"
-msgstr "%s, Delete"
+msgstr ""
 
 #: cmd.rc:278
 msgid "Echo is %s\n"
-msgstr "Echo is %s\n"
+msgstr ""
 
 #: cmd.rc:279
 msgid "Verify is %s\n"
-msgstr "Verify is %s\n"
+msgstr ""
 
 #: cmd.rc:280
 msgid "Verify must be ON or OFF\n"
-msgstr "Verify must be ON or OFF\n"
+msgstr ""
 
 #: cmd.rc:281
 msgid "Parameter error\n"
-msgstr "Parameter error\n"
+msgstr ""
 
 #: cmd.rc:282
 msgid ""
@@ -1655,41 +1489,36 @@ msgid ""
 "Volume Serial Number is %04x-%04x\n"
 "\n"
 msgstr ""
-"Volume in drive %c is %s\n"
-"Volume Serial Number is %04x-%04x\n"
-"\n"
 
 #: cmd.rc:283
 msgid "Volume label (11 characters, ENTER for none)?"
-msgstr "Volume label (11 characters, ENTER for none)?"
+msgstr ""
 
 #: cmd.rc:284
 msgid "PATH not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: cmd.rc:285
 msgid "Press Return key to continue: "
-msgstr "Press Return key to continue: "
+msgstr ""
 
 #: cmd.rc:286
 msgid "Wine Command Prompt"
-msgstr "Wine Command Prompt"
+msgstr ""
 
 #: cmd.rc:287
 msgid ""
 "CMD Version %s\n"
 "\n"
 msgstr ""
-"CMD Version %s\n"
-"\n"
 
 #: cmd.rc:288
 msgid "More? "
-msgstr "More? "
+msgstr ""
 
 #: cmd.rc:289
 msgid "The input line is too long.\n"
-msgstr "The input line is too long.\n"
+msgstr ""
 
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
@@ -1911,26 +1740,6 @@ msgid ""
 "This is free software, and you are welcome to redistribute it\n"
 "under certain conditions; run 'start /L' for details.\n"
 msgstr ""
-"Bir programı veya uzantısı ile ilişkili olan program içinde bir belgeyi "
-"açar.\n"
-"Kullanım:\n"
-"start [seçenekler] program_dosyaadı [...]\n"
-"start [seçenekler] belge_dosyaadı\n"
-"\n"
-"Seçenekler:\n"
-"/M[inimized] Simge halinde başlat.\n"
-"/MAX[imized] Ekranı kaplayacak şekilde başlat.\n"
-"/R[estored]  Programı normal bir şekilde başlat (simge halinde veya "
-"büyütülmüş halde olabilir).\n"
-"/W[ait]      Başlatılmış programın bitmesini bekle, sonra çıkış koduyla "
-"çık.\n"
-"/ProgIDOpen  Open a document using the following progID.\n"
-"/L           Son-kullanıcı lisansını göster.\n"
-"\n"
-"start.exe sürüm 0.2 Telif Hakkı (C) 2003, Dan Kegel\n"
-"Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option.\n"
-"This is free software, and you are welcome to redistribute it\n"
-"under certain conditions; run 'start /L' for details.\n"
 
 #: start.rc:63
 msgid ""
@@ -1951,22 +1760,6 @@ msgid ""
 "\n"
 "See the COPYING.LIB file for license information.\n"
 msgstr ""
-"start.exe sürüm 0.2 Telif Hakkı (C) 2003, Dan Kegel\n"
-"This program is free software; you can redistribute it and/or\n"
-"modify it under the terms of the GNU Lesser Public License\n"
-"as published by the Free Software Foundation; either version 2.1\n"
-"of the License, or (at your option) any later version.\n"
-"\n"
-"This program is distributed in the hope that it will be useful,\n"
-"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-"GNU Lesser Public License for more details.\n"
-"\n"
-"You should have received a copy of the GNU Lesser Public License\n"
-"along with this program; if not, write to the Free Software\n"
-"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n"
-"\n"
-"See the COPYING.LIB file for license information.\n"
 
 #: start.rc:65
 msgid ""
@@ -1974,12 +1767,10 @@ msgid ""
 "specified file.\n"
 "ShellExecuteEx failed"
 msgstr ""
-"Uygulama başlatılamadı veya belirtilen dosya ile ilişkili bir uygulama yok.\n"
-"ShellExecuteEx başarısız"
 
 #: start.rc:67
 msgid "Could not translate the specified Unix filename to a DOS filename."
-msgstr "Could not translate the specified Unix filename to a DOS filename."
+msgstr ""
 
 #: taskkill.rc:27
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
@@ -2040,7 +1831,7 @@ msgstr ""
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"
-msgstr "Wine Uygulama Kaldırıcı"
+msgstr ""
 
 #: uninstaller.rc:27
 msgid ""
@@ -2048,8 +1839,6 @@ msgid ""
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry ?"
 msgstr ""
-"'%s' kaldırma komutu çalıştırılamadı, çalıştırıbilir dosya var olmayabilir.\n"
-"Sistem kaydından bu kaldırma girişini silmek ister misiniz?"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"
@@ -2087,18 +1876,16 @@ msgid "%s? (Yes|No)\n"
 msgstr ""
 
 #: xcopy.rc:36
-#, fuzzy
 msgid "Overwrite %s? (Yes|No|All)\n"
-msgstr "Overwrite %s"
+msgstr ""
 
 #: xcopy.rc:37
 msgid "Copying of '%s' to '%s' failed with r/c %d\n"
 msgstr ""
 
 #: xcopy.rc:39
-#, fuzzy
 msgid "Failed during reading of '%s'\n"
-msgstr "Failed to open '%s'\n"
+msgstr ""
 
 #: xcopy.rc:43
 msgctxt "File key"

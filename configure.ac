@@ -2495,7 +2495,7 @@ WINE_CONFIG_DLL(glu32,,[implib])
 WINE_CONFIG_DLL(gphoto2.ds)
 WINE_CONFIG_DLL(gpkcsp)
 WINE_CONFIG_DLL(hal)
-WINE_CONFIG_DLL(hhctrl.ocx)
+WINE_CONFIG_DLL(hhctrl.ocx,,[po])
 WINE_CONFIG_DLL(hid,,[implib])
 WINE_CONFIG_DLL(hlink,,[implib])
 WINE_CONFIG_TEST(dlls/hlink/tests)
@@ -2934,6 +2934,8 @@ bg \
 cs \
 da \
 de \
+el \
+en \
 en_US \
 eo \
 es \

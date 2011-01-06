@@ -893,6 +893,118 @@ msgstr "デフォルト WaveOut デバイス"
 msgid "Default MidiOut Device"
 msgstr "デフォルト MidiOut デバイス"
 
+#: hhctrl.rc:27
+msgid "&Contents"
+msgstr "目次(&C)"
+
+#: hhctrl.rc:28
+msgid "I&ndex"
+msgstr "索引(&N)"
+
+#: hhctrl.rc:29
+msgid "&Search"
+msgstr "検索(&S)"
+
+#: hhctrl.rc:30
+msgid "Favor&ites"
+msgstr "お気に入り(&I)"
+
+#: hhctrl.rc:35
+msgid "Show"
+msgstr "表示"
+
+#: hhctrl.rc:36
+msgid "Hide"
+msgstr "非表示"
+
+#: hhctrl.rc:37
+msgid "Stop"
+msgstr "中止"
+
+#: hhctrl.rc:38
+msgid "Refresh"
+msgstr "更新"
+
+#: hhctrl.rc:39
+msgid "Back"
+msgstr "戻る"
+
+#: hhctrl.rc:40
+msgid "Home"
+msgstr "ホーム"
+
+#: hhctrl.rc:41
+msgid "Sync"
+msgstr "同期"
+
+#: hhctrl.rc:42
+msgid "Print"
+msgstr "印刷"
+
+#: hhctrl.rc:43
+msgid "Options"
+msgstr "オプション"
+
+#: hhctrl.rc:44
+msgid "Forward"
+msgstr "進む"
+
+#: hhctrl.rc:45
+msgid "IDTB_NOTES"
+msgstr "IDTB_NOTES"
+
+#: hhctrl.rc:46
+msgid "IDTB_BROWSE_FWD"
+msgstr "IDTB_BROWSE_FWD"
+
+#: hhctrl.rc:47
+msgid "IDT_BROWSE_BACK"
+msgstr "IDT_BROWSE_BACK"
+
+#: hhctrl.rc:48
+msgid "IDTB_CONTENTS"
+msgstr "IDTB_CONTENTS"
+
+#: hhctrl.rc:49
+msgid "IDTB_INDEX"
+msgstr "IDTB_INDEX"
+
+#: hhctrl.rc:50
+msgid "IDTB_SEARCH"
+msgstr "IDTB_SEARCH"
+
+#: hhctrl.rc:51
+msgid "IDTB_HISTORY"
+msgstr "IDTB_HISTORY"
+
+#: hhctrl.rc:52
+msgid "IDTB_FAVORITES"
+msgstr "IDTB_FAVORITES"
+
+#: hhctrl.rc:53
+msgid "Jump1"
+msgstr "ジャンプ1"
+
+#: hhctrl.rc:54
+msgid "Jump2"
+msgstr "ジャンプ2"
+
+#: hhctrl.rc:55
+msgid "Customize"
+msgstr "カスタマイズ"
+
+#: hhctrl.rc:56
+msgid "Zoom"
+msgstr "フォント"
+
+#: hhctrl.rc:57
+msgid "IDTB_TOC_NEXT"
+msgstr "IDTB_TOC_NEXT"
+
+#: hhctrl.rc:58
+msgid "IDTB_TOC_PREV"
+msgstr "IDTB_TOC_PREV"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "プロパティ(&P)"

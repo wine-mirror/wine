@@ -901,6 +901,118 @@ msgstr "Звуковое устройство вывода по умолчани
 msgid "Default MidiOut Device"
 msgstr "Устройство вывода MIDI по умолчанию"
 
+#: hhctrl.rc:27
+msgid "&Contents"
+msgstr "&Содержание"
+
+#: hhctrl.rc:28
+msgid "I&ndex"
+msgstr "&Оглавление"
+
+#: hhctrl.rc:29
+msgid "&Search"
+msgstr "&Поиск"
+
+#: hhctrl.rc:30
+msgid "Favor&ites"
+msgstr "&Избранное"
+
+#: hhctrl.rc:35
+msgid "Show"
+msgstr "Показать"
+
+#: hhctrl.rc:36
+msgid "Hide"
+msgstr "Спрятать"
+
+#: hhctrl.rc:37
+msgid "Stop"
+msgstr "Остановить"
+
+#: hhctrl.rc:38
+msgid "Refresh"
+msgstr "Обновить"
+
+#: hhctrl.rc:39
+msgid "Back"
+msgstr "Назад"
+
+#: hhctrl.rc:40
+msgid "Home"
+msgstr "В начало"
+
+#: hhctrl.rc:41
+msgid "Sync"
+msgstr "Синхронизировать"
+
+#: hhctrl.rc:42
+msgid "Print"
+msgstr "Печать"
+
+#: hhctrl.rc:43
+msgid "Options"
+msgstr "Настройки"
+
+#: hhctrl.rc:44
+msgid "Forward"
+msgstr "Вперёд"
+
+#: hhctrl.rc:45
+msgid "IDTB_NOTES"
+msgstr "Записки"
+
+#: hhctrl.rc:46
+msgid "IDTB_BROWSE_FWD"
+msgstr "Просмотр вперёд"
+
+#: hhctrl.rc:47
+msgid "IDT_BROWSE_BACK"
+msgstr "Просмотр назад"
+
+#: hhctrl.rc:48
+msgid "IDTB_CONTENTS"
+msgstr "Содержание"
+
+#: hhctrl.rc:49
+msgid "IDTB_INDEX"
+msgstr "Оглавление"
+
+#: hhctrl.rc:50
+msgid "IDTB_SEARCH"
+msgstr "Поиск"
+
+#: hhctrl.rc:51
+msgid "IDTB_HISTORY"
+msgstr "История"
+
+#: hhctrl.rc:52
+msgid "IDTB_FAVORITES"
+msgstr "Избранное"
+
+#: hhctrl.rc:53
+msgid "Jump1"
+msgstr "Переход 1"
+
+#: hhctrl.rc:54
+msgid "Jump2"
+msgstr "Переход 2"
+
+#: hhctrl.rc:55
+msgid "Customize"
+msgstr "Персонализовать"
+
+#: hhctrl.rc:56
+msgid "Zoom"
+msgstr "Масштаб"
+
+#: hhctrl.rc:57
+msgid "IDTB_TOC_NEXT"
+msgstr "Следующая глава"
+
+#: hhctrl.rc:58
+msgid "IDTB_TOC_PREV"
+msgstr "Предыдущая глава"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Свойства"

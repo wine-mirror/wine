@@ -886,6 +886,118 @@ msgstr ""
 msgid "Default MidiOut Device"
 msgstr ""
 
+#: hhctrl.rc:27
+msgid "&Contents"
+msgstr ""
+
+#: hhctrl.rc:28
+msgid "I&ndex"
+msgstr ""
+
+#: hhctrl.rc:29
+msgid "&Search"
+msgstr ""
+
+#: hhctrl.rc:30
+msgid "Favor&ites"
+msgstr ""
+
+#: hhctrl.rc:35
+msgid "Show"
+msgstr ""
+
+#: hhctrl.rc:36
+msgid "Hide"
+msgstr ""
+
+#: hhctrl.rc:37
+msgid "Stop"
+msgstr ""
+
+#: hhctrl.rc:38
+msgid "Refresh"
+msgstr ""
+
+#: hhctrl.rc:39
+msgid "Back"
+msgstr ""
+
+#: hhctrl.rc:40
+msgid "Home"
+msgstr ""
+
+#: hhctrl.rc:41
+msgid "Sync"
+msgstr ""
+
+#: hhctrl.rc:42
+msgid "Print"
+msgstr ""
+
+#: hhctrl.rc:43
+msgid "Options"
+msgstr ""
+
+#: hhctrl.rc:44
+msgid "Forward"
+msgstr ""
+
+#: hhctrl.rc:45
+msgid "IDTB_NOTES"
+msgstr ""
+
+#: hhctrl.rc:46
+msgid "IDTB_BROWSE_FWD"
+msgstr ""
+
+#: hhctrl.rc:47
+msgid "IDT_BROWSE_BACK"
+msgstr ""
+
+#: hhctrl.rc:48
+msgid "IDTB_CONTENTS"
+msgstr ""
+
+#: hhctrl.rc:49
+msgid "IDTB_INDEX"
+msgstr ""
+
+#: hhctrl.rc:50
+msgid "IDTB_SEARCH"
+msgstr ""
+
+#: hhctrl.rc:51
+msgid "IDTB_HISTORY"
+msgstr ""
+
+#: hhctrl.rc:52
+msgid "IDTB_FAVORITES"
+msgstr ""
+
+#: hhctrl.rc:53
+msgid "Jump1"
+msgstr ""
+
+#: hhctrl.rc:54
+msgid "Jump2"
+msgstr ""
+
+#: hhctrl.rc:55
+msgid "Customize"
+msgstr ""
+
+#: hhctrl.rc:56
+msgid "Zoom"
+msgstr ""
+
+#: hhctrl.rc:57
+msgid "IDTB_TOC_NEXT"
+msgstr ""
+
+#: hhctrl.rc:58
+msgid "IDTB_TOC_PREV"
+msgstr ""
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr ""

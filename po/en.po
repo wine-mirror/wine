@@ -1,4 +1,4 @@
-# Turkish translations for Wine
+# English translations for Wine
 #
 msgid ""
 msgstr ""
@@ -8,854 +8,842 @@ msgstr ""
 "PO-Revision-Date: N/A\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
-"Language: Turkish\n"
+"Language: English\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
-msgstr ""
+msgstr "Authority Key Identifier"
 
 #: crypt32.rc:28
 msgid "Key Attributes"
-msgstr ""
+msgstr "Key Attributes"
 
 #: crypt32.rc:29
 msgid "Key Usage Restriction"
-msgstr ""
+msgstr "Key Usage Restriction"
 
 #: crypt32.rc:30
 msgid "Subject Alternative Name"
-msgstr ""
+msgstr "Subject Alternative Name"
 
 #: crypt32.rc:31
 msgid "Issuer Alternative Name"
-msgstr ""
+msgstr "Issuer Alternative Name"
 
 #: crypt32.rc:32
 msgid "Basic Constraints"
-msgstr ""
+msgstr "Basic Constraints"
 
 #: crypt32.rc:33
 msgid "Key Usage"
-msgstr ""
+msgstr "Key Usage"
 
 #: crypt32.rc:34
 msgid "Certificate Policies"
-msgstr ""
+msgstr "Certificate Policies"
 
 #: crypt32.rc:35
 msgid "Subject Key Identifier"
-msgstr ""
+msgstr "Subject Key Identifier"
 
 #: crypt32.rc:36
 msgid "CRL Reason Code"
-msgstr ""
+msgstr "CRL Reason Code"
 
 #: crypt32.rc:37
 msgid "CRL Distribution Points"
-msgstr ""
+msgstr "CRL Distribution Points"
 
 #: crypt32.rc:38
 msgid "Enhanced Key Usage"
-msgstr ""
+msgstr "Enhanced Key Usage"
 
 #: crypt32.rc:39
 msgid "Authority Information Access"
-msgstr ""
+msgstr "Authority Information Access"
 
 #: crypt32.rc:40
 msgid "Certificate Extensions"
-msgstr ""
+msgstr "Certificate Extensions"
 
 #: crypt32.rc:41
 msgid "Next Update Location"
-msgstr ""
+msgstr "Next Update Location"
 
 #: crypt32.rc:42
 msgid "Yes or No Trust"
-msgstr ""
+msgstr "Yes or No Trust"
 
 #: crypt32.rc:43
 msgid "Email Address"
-msgstr ""
+msgstr "Email Address"
 
 #: crypt32.rc:44
 msgid "Unstructured Name"
-msgstr ""
+msgstr "Unstructured Name"
 
 #: crypt32.rc:45
 msgid "Content Type"
-msgstr ""
+msgstr "Content Type"
 
 #: crypt32.rc:46
 msgid "Message Digest"
-msgstr ""
+msgstr "Message Digest"
 
 #: crypt32.rc:47
 msgid "Signing Time"
-msgstr ""
+msgstr "Signing Time"
 
 #: crypt32.rc:48
 msgid "Counter Sign"
-msgstr ""
+msgstr "Counter Sign"
 
 #: crypt32.rc:49
 msgid "Challenge Password"
-msgstr ""
+msgstr "Challenge Password"
 
 #: crypt32.rc:50
 msgid "Unstructured Address"
-msgstr ""
+msgstr "Unstructured Address"
 
 #: crypt32.rc:51
 msgid "SMIME Capabilities"
-msgstr ""
+msgstr "SMIME Capabilities"
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"
-msgstr ""
+msgstr "Prefer Signed Data"
 
 #: crypt32.rc:53 cryptdlg.rc:31
 msgid "CPS"
-msgstr ""
+msgstr "CPS"
 
 #: crypt32.rc:54 cryptdlg.rc:32
 msgid "User Notice"
-msgstr ""
+msgstr "User Notice"
 
 #: crypt32.rc:55
 msgid "On-line Certificate Status Protocol"
-msgstr ""
+msgstr "On-line Certificate Status Protocol"
 
 #: crypt32.rc:56
 msgid "Certification Authority Issuer"
-msgstr ""
+msgstr "Certification Authority Issuer"
 
 #: crypt32.rc:57
 msgid "Certification Template Name"
-msgstr ""
+msgstr "Certification Template Name"
 
 #: crypt32.rc:58
 msgid "Certificate Type"
-msgstr ""
+msgstr "Certificate Type"
 
 #: crypt32.rc:59
 msgid "Certificate Manifold"
-msgstr ""
+msgstr "Certificate Manifold"
 
 #: crypt32.rc:60
 msgid "Netscape Cert Type"
-msgstr ""
+msgstr "Netscape Cert Type"
 
 #: crypt32.rc:61
 msgid "Netscape Base URL"
-msgstr ""
+msgstr "Netscape Base URL"
 
 #: crypt32.rc:62
 msgid "Netscape Revocation URL"
-msgstr ""
+msgstr "Netscape Revocation URL"
 
 #: crypt32.rc:63
 msgid "Netscape CA Revocation URL"
-msgstr ""
+msgstr "Netscape CA Revocation URL"
 
 #: crypt32.rc:64
 msgid "Netscape Cert Renewal URL"
-msgstr ""
+msgstr "Netscape Cert Renewal URL"
 
 #: crypt32.rc:65
 msgid "Netscape CA Policy URL"
-msgstr ""
+msgstr "Netscape CA Policy URL"
 
 #: crypt32.rc:66
 msgid "Netscape SSL ServerName"
-msgstr ""
+msgstr "Netscape SSL ServerName"
 
 #: crypt32.rc:67
 msgid "Netscape Comment"
-msgstr ""
+msgstr "Netscape Comment"
 
 #: crypt32.rc:68
 msgid "SpcSpAgencyInfo"
-msgstr ""
+msgstr "SpcSpAgencyInfo"
 
 #: crypt32.rc:69
 msgid "SpcFinancialCriteria"
-msgstr ""
+msgstr "SpcFinancialCriteria"
 
 #: crypt32.rc:70
 msgid "SpcMinimalCriteria"
-msgstr ""
+msgstr "SpcMinimalCriteria"
 
 #: crypt32.rc:71
 msgid "Country/Region"
-msgstr ""
+msgstr "Country/Region"
 
 #: crypt32.rc:72
 msgid "Organization"
-msgstr ""
+msgstr "Organization"
 
 #: crypt32.rc:73
 msgid "Organizational Unit"
-msgstr ""
+msgstr "Organizational Unit"
 
 #: crypt32.rc:74
 msgid "Common Name"
-msgstr ""
+msgstr "Common Name"
 
 #: crypt32.rc:75
 msgid "Locality"
-msgstr ""
+msgstr "Locality"
 
 #: crypt32.rc:76
 msgid "State or Province"
-msgstr ""
+msgstr "State or Province"
 
 #: crypt32.rc:77
 msgid "Title"
-msgstr ""
+msgstr "Title"
 
 #: crypt32.rc:78
 msgid "Given Name"
-msgstr ""
+msgstr "Given Name"
 
 #: crypt32.rc:79
 msgid "Initials"
-msgstr ""
+msgstr "Initials"
 
 #: crypt32.rc:80
 msgid "Sur Name"
-msgstr ""
+msgstr "Sur Name"
 
 #: crypt32.rc:81
 msgid "Domain Component"
-msgstr ""
+msgstr "Domain Component"
 
 #: crypt32.rc:82
 msgid "Street Address"
-msgstr ""
+msgstr "Street Address"
 
 #: crypt32.rc:83
 msgid "Serial Number"
-msgstr ""
+msgstr "Serial Number"
 
 #: crypt32.rc:84
-#, fuzzy
 msgid "CA Version"
-msgstr ""
-"CMD Version %s\n"
-"\n"
+msgstr "CA Version"
 
 #: crypt32.rc:85
 msgid "Cross CA Version"
-msgstr ""
+msgstr "Cross CA Version"
 
 #: crypt32.rc:86
 msgid "Serialized Signature Serial Number"
-msgstr ""
+msgstr "Serialized Signature Serial Number"
 
 #: crypt32.rc:87
 msgid "Principal Name"
-msgstr ""
+msgstr "Principal Name"
 
 #: crypt32.rc:88
 msgid "Windows Product Update"
-msgstr ""
+msgstr "Windows Product Update"
 
 #: crypt32.rc:89
 msgid "Enrollment Name Value Pair"
-msgstr ""
+msgstr "Enrollment Name Value Pair"
 
 #: crypt32.rc:90
-#, fuzzy
 msgid "OS Version"
-msgstr ""
-"CMD Version %s\n"
-"\n"
+msgstr "OS Version"
 
 #: crypt32.rc:91
 msgid "Enrollment CSP"
-msgstr ""
+msgstr "Enrollment CSP"
 
 #: crypt32.rc:92
 msgid "CRL Number"
-msgstr ""
+msgstr "CRL Number"
 
 #: crypt32.rc:93
 msgid "Delta CRL Indicator"
-msgstr ""
+msgstr "Delta CRL Indicator"
 
 #: crypt32.rc:94
 msgid "Issuing Distribution Point"
-msgstr ""
+msgstr "Issuing Distribution Point"
 
 #: crypt32.rc:95
 msgid "Freshest CRL"
-msgstr ""
+msgstr "Freshest CRL"
 
 #: crypt32.rc:96
 msgid "Name Constraints"
-msgstr ""
+msgstr "Name Constraints"
 
 #: crypt32.rc:97
 msgid "Policy Mappings"
-msgstr ""
+msgstr "Policy Mappings"
 
 #: crypt32.rc:98
 msgid "Policy Constraints"
-msgstr ""
+msgstr "Policy Constraints"
 
 #: crypt32.rc:99
 msgid "Cross-Certificate Distribution Points"
-msgstr ""
+msgstr "Cross-Certificate Distribution Points"
 
 #: crypt32.rc:100
 msgid "Application Policies"
-msgstr ""
+msgstr "Application Policies"
 
 #: crypt32.rc:101
 msgid "Application Policy Mappings"
-msgstr ""
+msgstr "Application Policy Mappings"
 
 #: crypt32.rc:102
 msgid "Application Policy Constraints"
-msgstr ""
+msgstr "Application Policy Constraints"
 
 #: crypt32.rc:103
 msgid "CMC Data"
-msgstr ""
+msgstr "CMC Data"
 
 #: crypt32.rc:104
 msgid "CMC Response"
-msgstr ""
+msgstr "CMC Response"
 
 #: crypt32.rc:105
 msgid "Unsigned CMC Request"
-msgstr ""
+msgstr "Unsigned CMC Request"
 
 #: crypt32.rc:106
 msgid "CMC Status Info"
-msgstr ""
+msgstr "CMC Status Info"
 
 #: crypt32.rc:107
-#, fuzzy
 msgid "CMC Extensions"
-msgstr ""
-"CMD Version %s\n"
-"\n"
+msgstr "CMC Extensions"
 
 #: crypt32.rc:108
 msgid "CMC Attributes"
-msgstr ""
+msgstr "CMC Attributes"
 
 #: crypt32.rc:109
 msgid "PKCS 7 Data"
-msgstr ""
+msgstr "PKCS 7 Data"
 
 #: crypt32.rc:110
 msgid "PKCS 7 Signed"
-msgstr ""
+msgstr "PKCS 7 Signed"
 
 #: crypt32.rc:111
 msgid "PKCS 7 Enveloped"
-msgstr ""
+msgstr "PKCS 7 Enveloped"
 
 #: crypt32.rc:112
 msgid "PKCS 7 Signed Enveloped"
-msgstr ""
+msgstr "PKCS 7 Signed Enveloped"
 
 #: crypt32.rc:113
 msgid "PKCS 7 Digested"
-msgstr ""
+msgstr "PKCS 7 Digested"
 
 #: crypt32.rc:114
 msgid "PKCS 7 Encrypted"
-msgstr ""
+msgstr "PKCS 7 Encrypted"
 
 #: crypt32.rc:115
 msgid "Previous CA Certificate Hash"
-msgstr ""
+msgstr "Previous CA Certificate Hash"
 
 #: crypt32.rc:116
 msgid "Virtual Base CRL Number"
-msgstr ""
+msgstr "Virtual Base CRL Number"
 
 #: crypt32.rc:117
 msgid "Next CRL Publish"
-msgstr ""
+msgstr "Next CRL Publish"
 
 #: crypt32.rc:118
 msgid "CA Encryption Certificate"
-msgstr ""
+msgstr "CA Encryption Certificate"
 
 #: crypt32.rc:119
 msgid "Key Recovery Agent"
-msgstr ""
+msgstr "Key Recovery Agent"
 
 #: crypt32.rc:120
 msgid "Certificate Template Information"
-msgstr ""
+msgstr "Certificate Template Information"
 
 #: crypt32.rc:121
 msgid "Enterprise Root OID"
-msgstr ""
+msgstr "Enterprise Root OID"
 
 #: crypt32.rc:122
 msgid "Dummy Signer"
-msgstr ""
+msgstr "Dummy Signer"
 
 #: crypt32.rc:123
 msgid "Encrypted Private Key"
-msgstr ""
+msgstr "Encrypted Private Key"
 
 #: crypt32.rc:124
 msgid "Published CRL Locations"
-msgstr ""
+msgstr "Published CRL Locations"
 
 #: crypt32.rc:125
 msgid "Enforce Certificate Chain Policy"
-msgstr ""
+msgstr "Enforce Certificate Chain Policy"
 
 #: crypt32.rc:126
 msgid "Transaction Id"
-msgstr ""
+msgstr "Transaction Id"
 
 #: crypt32.rc:127
 msgid "Sender Nonce"
-msgstr ""
+msgstr "Sender Nonce"
 
 #: crypt32.rc:128
 msgid "Recipient Nonce"
-msgstr ""
+msgstr "Recipient Nonce"
 
 #: crypt32.rc:129
 msgid "Reg Info"
-msgstr ""
+msgstr "Reg Info"
 
 #: crypt32.rc:130
 msgid "Get Certificate"
-msgstr ""
+msgstr "Get Certificate"
 
 #: crypt32.rc:131
 msgid "Get CRL"
-msgstr ""
+msgstr "Get CRL"
 
 #: crypt32.rc:132
 msgid "Revoke Request"
-msgstr ""
+msgstr "Revoke Request"
 
 #: crypt32.rc:133
 msgid "Query Pending"
-msgstr ""
+msgstr "Query Pending"
 
 #: crypt32.rc:134
 msgid "Certificate Trust List"
-msgstr ""
+msgstr "Certificate Trust List"
 
 #: crypt32.rc:135
 msgid "Archived Key Certificate Hash"
-msgstr ""
+msgstr "Archived Key Certificate Hash"
 
 #: crypt32.rc:136
 msgid "Private Key Usage Period"
-msgstr ""
+msgstr "Private Key Usage Period"
 
 #: crypt32.rc:137
 msgid "Client Information"
-msgstr ""
+msgstr "Client Information"
 
 #: crypt32.rc:138
 msgid "Server Authentication"
-msgstr ""
+msgstr "Server Authentication"
 
 #: crypt32.rc:139
 msgid "Client Authentication"
-msgstr ""
+msgstr "Client Authentication"
 
 #: crypt32.rc:140
 msgid "Code Signing"
-msgstr ""
+msgstr "Code Signing"
 
 #: crypt32.rc:141
 msgid "Secure Email"
-msgstr ""
+msgstr "Secure Email"
 
 #: crypt32.rc:142
 msgid "Time Stamping"
-msgstr ""
+msgstr "Time Stamping"
 
 #: crypt32.rc:143
 msgid "Microsoft Trust List Signing"
-msgstr ""
+msgstr "Microsoft Trust List Signing"
 
 #: crypt32.rc:144
 msgid "Microsoft Time Stamping"
-msgstr ""
+msgstr "Microsoft Time Stamping"
 
 #: crypt32.rc:145
 msgid "IP security end system"
-msgstr ""
+msgstr "IP security end system"
 
 #: crypt32.rc:146
 msgid "IP security tunnel termination"
-msgstr ""
+msgstr "IP security tunnel termination"
 
 #: crypt32.rc:147
 msgid "IP security user"
-msgstr ""
+msgstr "IP security user"
 
 #: crypt32.rc:148
 msgid "Encrypting File System"
-msgstr ""
+msgstr "Encrypting File System"
 
 #: crypt32.rc:149
 msgid "Windows Hardware Driver Verification"
-msgstr ""
+msgstr "Windows Hardware Driver Verification"
 
 #: crypt32.rc:150
 msgid "Windows System Component Verification"
-msgstr ""
+msgstr "Windows System Component Verification"
 
 #: crypt32.rc:151
 msgid "OEM Windows System Component Verification"
-msgstr ""
+msgstr "OEM Windows System Component Verification"
 
 #: crypt32.rc:152
 msgid "Embedded Windows System Component Verification"
-msgstr ""
+msgstr "Embedded Windows System Component Verification"
 
 #: crypt32.rc:153
 msgid "Key Pack Licenses"
-msgstr ""
+msgstr "Key Pack Licenses"
 
 #: crypt32.rc:154
 msgid "License Server Verification"
-msgstr ""
+msgstr "License Server Verification"
 
 #: crypt32.rc:155
 msgid "Smart Card Logon"
-msgstr ""
+msgstr "Smart Card Logon"
 
 #: crypt32.rc:156
-#, fuzzy
 msgid "Digital Rights"
-msgstr "Sa&yısal"
+msgstr "Digital Rights"
 
 #: crypt32.rc:157
 msgid "Qualified Subordination"
-msgstr ""
+msgstr "Qualified Subordination"
 
 #: crypt32.rc:158
 msgid "Key Recovery"
-msgstr ""
+msgstr "Key Recovery"
 
 #: crypt32.rc:159
-#, fuzzy
 msgid "Document Signing"
-msgstr "Argument missing\n"
+msgstr "Document Signing"
 
 #: crypt32.rc:160
 msgid "IP security IKE intermediate"
-msgstr ""
+msgstr "IP security IKE intermediate"
 
 #: crypt32.rc:161
 msgid "File Recovery"
-msgstr ""
+msgstr "File Recovery"
 
 #: crypt32.rc:162
 msgid "Root List Signer"
-msgstr ""
+msgstr "Root List Signer"
 
 #: crypt32.rc:163
 msgid "All application policies"
-msgstr ""
+msgstr "All application policies"
 
 #: crypt32.rc:164
 msgid "Directory Service Email Replication"
-msgstr ""
+msgstr "Directory Service Email Replication"
 
 #: crypt32.rc:165
 msgid "Certificate Request Agent"
-msgstr ""
+msgstr "Certificate Request Agent"
 
 #: crypt32.rc:166
 msgid "Lifetime Signing"
-msgstr ""
+msgstr "Lifetime Signing"
 
 #: crypt32.rc:167
 msgid "All issuance policies"
-msgstr ""
+msgstr "All issuance policies"
 
 #: crypt32.rc:172
 msgid "Trusted Root Certification Authorities"
-msgstr ""
+msgstr "Trusted Root Certification Authorities"
 
 #: crypt32.rc:173
 msgid "Personal"
-msgstr ""
+msgstr "Personal"
 
 #: crypt32.rc:174
 msgid "Intermediate Certification Authorities"
-msgstr ""
+msgstr "Intermediate Certification Authorities"
 
 #: crypt32.rc:175
 msgid "Other People"
-msgstr ""
+msgstr "Other People"
 
 #: crypt32.rc:176
 msgid "Trusted Publishers"
-msgstr ""
+msgstr "Trusted Publishers"
 
 #: crypt32.rc:177
 msgid "Untrusted Certificates"
-msgstr ""
+msgstr "Untrusted Certificates"
 
 #: crypt32.rc:182
 msgid "KeyID="
-msgstr ""
+msgstr "KeyID="
 
 #: crypt32.rc:183
 msgid "Certificate Issuer"
-msgstr ""
+msgstr "Certificate Issuer"
 
 #: crypt32.rc:184
 msgid "Certificate Serial Number="
-msgstr ""
+msgstr "Certificate Serial Number="
 
 #: crypt32.rc:185
 msgid "Other Name="
-msgstr ""
+msgstr "Other Name="
 
 #: crypt32.rc:186
 msgid "Email Address="
-msgstr ""
+msgstr "Email Address="
 
 #: crypt32.rc:187
 msgid "DNS Name="
-msgstr ""
+msgstr "DNS Name="
 
 #: crypt32.rc:188
 msgid "Directory Address"
-msgstr ""
+msgstr "Directory Address"
 
 #: crypt32.rc:189
 msgid "URL="
-msgstr ""
+msgstr "URL="
 
 #: crypt32.rc:190
 msgid "IP Address="
-msgstr ""
+msgstr "IP Address="
 
 #: crypt32.rc:191
 msgid "Mask="
-msgstr ""
+msgstr "Mask="
 
 #: crypt32.rc:192
 msgid "Registered ID="
-msgstr ""
+msgstr "Registered ID="
 
 #: crypt32.rc:193
 msgid "Unknown Key Usage"
-msgstr ""
+msgstr "Unknown Key Usage"
 
 #: crypt32.rc:194
 msgid "Subject Type="
-msgstr ""
+msgstr "Subject Type="
 
 #: crypt32.rc:195
-#, fuzzy
 msgid "CA"
-msgstr "A"
+msgstr "CA"
 
 #: crypt32.rc:196
 msgid "End Entity"
-msgstr ""
+msgstr "End Entity"
 
 #: crypt32.rc:197
 msgid "Path Length Constraint="
-msgstr ""
+msgstr "Path Length Constraint="
 
 #: crypt32.rc:198
 msgid "None"
-msgstr ""
+msgstr "None"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
-msgstr ""
+msgstr "Information Not Available"
 
 #: crypt32.rc:200
 msgid "Authority Info Access"
-msgstr ""
+msgstr "Authority Info Access"
 
 #: crypt32.rc:201
 msgid "Access Method="
-msgstr ""
+msgstr "Access Method="
 
 #: crypt32.rc:202
 msgid "OCSP"
-msgstr ""
+msgstr "OCSP"
 
 #: crypt32.rc:203
 msgid "CA Issuers"
-msgstr ""
+msgstr "CA Issuers"
 
 #: crypt32.rc:204
 msgid "Unknown Access Method"
-msgstr ""
+msgstr "Unknown Access Method"
 
 #: crypt32.rc:205
 msgid "Alternative Name"
-msgstr ""
+msgstr "Alternative Name"
 
 #: crypt32.rc:206
 msgid "CRL Distribution Point"
-msgstr ""
+msgstr "CRL Distribution Point"
 
 #: crypt32.rc:207
 msgid "Distribution Point Name"
-msgstr ""
+msgstr "Distribution Point Name"
 
 #: crypt32.rc:208
 msgid "Full Name"
-msgstr ""
+msgstr "Full Name"
 
 #: crypt32.rc:209
 msgid "RDN Name"
-msgstr ""
+msgstr "RDN Name"
 
 #: crypt32.rc:210
 msgid "CRL Reason="
-msgstr ""
+msgstr "CRL Reason="
 
 #: crypt32.rc:211
 msgid "CRL Issuer"
-msgstr ""
+msgstr "CRL Issuer"
 
 #: crypt32.rc:212
 msgid "Key Compromise"
-msgstr ""
+msgstr "Key Compromise"
 
 #: crypt32.rc:213
 msgid "CA Compromise"
-msgstr ""
+msgstr "CA Compromise"
 
 #: crypt32.rc:214
 msgid "Affiliation Changed"
-msgstr ""
+msgstr "Affiliation Changed"
 
 #: crypt32.rc:215
 msgid "Superseded"
-msgstr ""
+msgstr "Superseded"
 
 #: crypt32.rc:216
 msgid "Operation Ceased"
-msgstr ""
+msgstr "Operation Ceased"
 
 #: crypt32.rc:217
 msgid "Certificate Hold"
-msgstr ""
+msgstr "Certificate Hold"
 
 #: crypt32.rc:218
 msgid "Financial Information="
-msgstr ""
+msgstr "Financial Information="
 
 #: crypt32.rc:219
 msgid "Available"
-msgstr ""
+msgstr "Available"
 
 #: crypt32.rc:220
 msgid "Not Available"
-msgstr ""
+msgstr "Not Available"
 
 #: crypt32.rc:221
 msgid "Meets Criteria="
-msgstr ""
+msgstr "Meets Criteria="
 
 #: crypt32.rc:222 ipconfig.rc:44
 msgid "Yes"
-msgstr ""
+msgstr "Yes"
 
 #: crypt32.rc:223 ipconfig.rc:45
 msgid "No"
-msgstr ""
+msgstr "No"
 
 #: crypt32.rc:224
 msgid "Digital Signature"
-msgstr ""
+msgstr "Digital Signature"
 
 #: crypt32.rc:225
 msgid "Non-Repudiation"
-msgstr ""
+msgstr "Non-Repudiation"
 
 #: crypt32.rc:226
 msgid "Key Encipherment"
-msgstr ""
+msgstr "Key Encipherment"
 
 #: crypt32.rc:227
 msgid "Data Encipherment"
-msgstr ""
+msgstr "Data Encipherment"
 
 #: crypt32.rc:228
 msgid "Key Agreement"
-msgstr ""
+msgstr "Key Agreement"
 
 #: crypt32.rc:229
 msgid "Certificate Signing"
-msgstr ""
+msgstr "Certificate Signing"
 
 #: crypt32.rc:230
 msgid "Off-line CRL Signing"
-msgstr ""
+msgstr "Off-line CRL Signing"
 
 #: crypt32.rc:231
 msgid "CRL Signing"
-msgstr ""
+msgstr "CRL Signing"
 
 #: crypt32.rc:232
 msgid "Encipher Only"
-msgstr ""
+msgstr "Encipher Only"
 
 #: crypt32.rc:233
 msgid "Decipher Only"
-msgstr ""
+msgstr "Decipher Only"
 
 #: crypt32.rc:234
 msgid "SSL Client Authentication"
-msgstr ""
+msgstr "SSL Client Authentication"
 
 #: crypt32.rc:235
 msgid "SSL Server Authentication"
-msgstr ""
+msgstr "SSL Server Authentication"
 
 #: crypt32.rc:236
 msgid "S/MIME"
-msgstr ""
+msgstr "S/MIME"
 
 #: crypt32.rc:237
 msgid "Signature"
-msgstr ""
+msgstr "Signature"
 
 #: crypt32.rc:238
 msgid "SSL CA"
-msgstr ""
+msgstr "SSL CA"
 
 #: crypt32.rc:239
 msgid "S/MIME CA"
-msgstr ""
+msgstr "S/MIME CA"
 
 #: crypt32.rc:240
 msgid "Signature CA"
-msgstr ""
+msgstr "Signature CA"
 
 #: cryptdlg.rc:27
 msgid "Certificate Policy"
-msgstr ""
+msgstr "Certificate Policy"
 
 #: cryptdlg.rc:28
 msgid "Policy Identifier: "
-msgstr ""
+msgstr "Policy Identifier: "
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
@@ -875,11 +863,11 @@ msgstr ""
 
 #: cryptdlg.rc:35
 msgid "Organization="
-msgstr ""
+msgstr "Organization="
 
 #: cryptdlg.rc:36
 msgid "Notice Number="
-msgstr ""
+msgstr "Notice Number="
 
 #: cryptdlg.rc:37
 msgid "Notice Text="
@@ -887,75 +875,75 @@ msgstr ""
 
 #: devenum.rc:32
 msgid "Default DirectSound"
-msgstr ""
+msgstr "Default DirectSound"
 
 #: devenum.rc:33
 msgid "DirectSound: %s"
-msgstr ""
+msgstr "DirectSound: %s"
 
 #: devenum.rc:34
 msgid "Default WaveOut Device"
-msgstr ""
+msgstr "Default WaveOut Device"
 
 #: devenum.rc:35
 msgid "Default MidiOut Device"
-msgstr ""
+msgstr "Default MidiOut Device"
 
 #: hhctrl.rc:27
 msgid "&Contents"
-msgstr "&İçerik"
+msgstr "&Contents"
 
 #: hhctrl.rc:28
 msgid "I&ndex"
-msgstr "Di&zin"
+msgstr "I&ndex"
 
 #: hhctrl.rc:29
 msgid "&Search"
-msgstr "&Ara"
+msgstr "&Search"
 
 #: hhctrl.rc:30
 msgid "Favor&ites"
-msgstr "&Sık Kullanılanlar"
+msgstr "Favour&ites"
 
 #: hhctrl.rc:35
 msgid "Show"
-msgstr "Göster"
+msgstr "Show"
 
 #: hhctrl.rc:36
 msgid "Hide"
-msgstr "Gizle"
+msgstr "Hide"
 
 #: hhctrl.rc:37
 msgid "Stop"
-msgstr "Dur"
+msgstr "Stop"
 
 #: hhctrl.rc:38
 msgid "Refresh"
-msgstr "Yenile"
+msgstr "Refresh"
 
 #: hhctrl.rc:39
 msgid "Back"
-msgstr "Geri"
+msgstr "Back"
 
 #: hhctrl.rc:40
 msgid "Home"
-msgstr "Ev"
+msgstr "Home"
 
 #: hhctrl.rc:41
 msgid "Sync"
-msgstr "Eşitle"
+msgstr "Sync"
 
 #: hhctrl.rc:42
 msgid "Print"
-msgstr "Yazdır"
+msgstr "Print"
 
 #: hhctrl.rc:43
 msgid "Options"
-msgstr "Seçenekler"
+msgstr "Options"
 
 #: hhctrl.rc:44
 msgid "Forward"
-msgstr "İleri"
+msgstr "Forward"
 
 #: hhctrl.rc:45
 msgid "IDTB_NOTES"
@@ -999,11 +987,11 @@ msgstr "Jump2"
 
 #: hhctrl.rc:55
 msgid "Customize"
-msgstr "Özelleştir"
+msgstr "Customize"
 
 #: hhctrl.rc:56
 msgid "Zoom"
-msgstr "Yaklaştır"
+msgstr "Zoom"
 
 #: hhctrl.rc:57
 msgid "IDTB_TOC_NEXT"
@@ -1015,7 +1003,7 @@ msgstr "IDTB_TOC_PREV"
 
 #: clock.rc:28
 msgid "&Properties"
-msgstr "&Özellikler"
+msgstr "&Properties"
 
 #: clock.rc:29
 msgid "Ana&log"
@@ -1023,43 +1011,43 @@ msgstr "Ana&log"
 
 #: clock.rc:30
 msgid "Digi&tal"
-msgstr "Sa&yısal"
+msgstr "Digi&tal"
 
 #: clock.rc:32
 msgid "&Font..."
-msgstr "&Yazı Tipi..."
+msgstr "&Font..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
-msgstr "&Başlık Çubuğunu Kaldır"
+msgstr "&Without Titlebar"
 
 #: clock.rc:36
 msgid "&Seconds"
-msgstr "&Saniyeler"
+msgstr "&Seconds"
 
 #: clock.rc:37
 msgid "&Date"
-msgstr "&Tarih"
+msgstr "&Date"
 
 #: clock.rc:39
 msgid "&Always on Top"
-msgstr "&Her zaman üstte"
+msgstr "&Always on Top"
 
 #: clock.rc:41
 msgid "Inf&o"
-msgstr "B&ilgi"
+msgstr "Inf&o"
 
 #: clock.rc:42
 msgid "&About Clock..."
-msgstr "&Saat Hakkında..."
+msgstr "&About Clock..."
 
 #: clock.rc:48
 msgid "Clock"
-msgstr "Saat"
+msgstr "Clock"
 
 #: cmd.rc:30
 msgid "ATTRIB shows or changes DOS file attributes.\n"
-msgstr "ATTRIB hakkında yardım\n"
+msgstr "ATTRIB shows or changes DOS file attributes.\n"
 
 #: cmd.rc:38
 msgid ""
@@ -1071,47 +1059,49 @@ msgid ""
 "Changes to default directory, environment variables etc made within a\n"
 "called procedure are inherited by the caller.\n"
 msgstr ""
-"CALL <topluişlemdosyası> komutu bir toplu işlem dosyasında başka bir\n"
-"toplu işlem dosyasındaki komutları çalıştırmak için kullanılır. Eğer\n"
-"dosya mevcutsa, denetim yine onu çağıran dosyaya döner. CALL komutu\n"
-"çağrılan yordamlar için parametre verebilir.\n"
+"CALL <batchfilename> is used within a batch file to execute commands\n"
+"from another batch file. When the batch file exits, control returns to\n"
+"the file which called it. The CALL command may supply parameters to the\n"
+"called procedure.\n"
 "\n"
-"Çağrılan bir yordamda değiştirilen dizinler, çevre değişkenleri vb.\n"
-"kendisini çağıran tarafından miras alınır.\n"
+"Changes to default directory, environment variables etc made within a\n"
+"called procedure are inherited by the caller.\n"
 
 #: cmd.rc:41
 msgid ""
 "CD <dir> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
-msgstr "CD hakkında yardım\n"
+msgstr ""
+"CD <dir> is the short version of CHDIR. It changes the current\n"
+"default directory.\n"
 
 #: cmd.rc:42
 msgid "CHDIR <dir> changes the current default directory.\n"
-msgstr "CHDIR hakkında yardım\n"
+msgstr "CHDIR <dir> changes the current default directory.\n"
 
 #: cmd.rc:44
 msgid "CLS clears the console screen.\n"
-msgstr "CLS konsol ekranını temizler\n"
+msgstr "CLS clears the console screen.\n"
 
 #: cmd.rc:46
 msgid "COPY <filename> copies a file.\n"
-msgstr "COPY hakkında yardım\n"
+msgstr "COPY <filename> copies a file.\n"
 
 #: cmd.rc:47
 msgid "CTTY changes the input/output device.\n"
-msgstr "CTTY hakkında yardım\n"
+msgstr "CTTY changes the input/output device.\n"
 
 #: cmd.rc:48
 msgid "DATE shows or changes the system date.\n"
-msgstr "DATE hakkında yardım\n"
+msgstr "DATE shows or changes the system date.\n"
 
 #: cmd.rc:49
 msgid "DEL <filename> deletes a file or set of files.\n"
-msgstr "DEL hakkında yardım\n"
+msgstr "DEL <filename> deletes a file or set of files.\n"
 
 #: cmd.rc:50
 msgid "DIR lists the contents of a directory.\n"
-msgstr "DIR hakkında yardım\n"
+msgstr "DIR lists the contents of a directory.\n"
 
 #: cmd.rc:60
 msgid ""
@@ -1124,18 +1114,18 @@ msgid ""
 "default). The ECHO OFF command can be prevented from displaying by\n"
 "preceding it with an @ sign.\n"
 msgstr ""
-"ECHO <ileti> geçerli uçbirim aygıtında <ileti>'yi gösterir.\n"
+"ECHO <string> displays <string> on the current terminal device.\n"
 "\n"
-"ECHO ON bir toplu işlem dosyasında tüm komutların çalıştırılmadan önce\n"
-"uçbirim aygıtında görüntülenmesini sağlar\n"
+"ECHO ON causes all subsequent commands in a batch file to be displayed\n"
+"on the terminal device before they are executed.\n"
 "\n"
-"ECHO OFF bir önceki ECHO ON (ECHO öntanımlı olarak kapalıdır)komutunun\n"
-"tersini yapar. ECHO OFF çıktısının görüntülenmesini başına @ işareti\n"
-"getirerek engelleyebilirsiniz.\n"
+"ECHO OFF reverses the effect of a previous ECHO ON (ECHO is OFF by\n"
+"default). The ECHO OFF command can be prevented from displaying by\n"
+"preceding it with an @ sign.\n"
 
 #: cmd.rc:62
 msgid "ERASE <filename> deletes a file or set of files.\n"
-msgstr "ERASE hakkında yardım\n"
+msgstr "ERASE <filename> deletes a file or set of files.\n"
 
 #: cmd.rc:70
 msgid ""
@@ -1146,13 +1136,12 @@ msgid ""
 "The requirement to double the % sign when using FOR in a batch file does\n"
 "not exist in wine's cmd.\n"
 msgstr ""
-"FOR komutu bir dosya kümesinin her öğesi için bir komut çalıştırmada\n"
-"kullanılır.\n"
+"The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
-"Sözdizim: FOR %değişken IN (küme) DO komut\n"
+"Syntax: FOR %variable IN (set) DO command\n"
 "\n"
-"FOR kullanımı için toplu işlem dosyasında % işaretini çift kullanma\n"
-"gereksinimi cmd'de yoktur.\n"
+"The requirement to double the % sign when using FOR in a batch file does\n"
+"not exist in wine's cmd.\n"
 
 #: cmd.rc:82
 msgid ""
@@ -1167,22 +1156,24 @@ msgid ""
 "\n"
 "GOTO has no effect when used interactively.\n"
 msgstr ""
-"GOTO komutu çalışma satırını toplu işlem dosyasındaki başka bir satıra\n"
-"yönlendirir.\n"
+"The GOTO command transfers execution to another statement within a\n"
+"batch file.\n"
 "\n"
-"GOTO komutunun hedefi olacak etiket en fazla 255 karakterden oluşabilir;\n"
-"ancak boşluk içeremez (bu diğer işletim sistemlerinden farklıdır). Eğer\n"
-"toplu işlem dosyasında aynı etiket bir veya daha fazla yerde kullanılmışsa\n"
-"her zaman ilk etiket kullanılacaktır. GOTO var olmayan bir etiket alırsa\n"
-"toplu işlem dosyası sonlanacaktır.\n"
+"The label which is the target of a GOTO may be up to 255 characters\n"
+"long but may not include spaces (this is different from other operating\n"
+"systems). If two or more identical labels exist in a batch file the\n"
+"first one will always be executed. Attempting to GOTO a nonexistent\n"
+"label terminates the batch file execution.\n"
 "\n"
-"GOTO komutunun etkileşimli olarak kullanımının bir etkisi yoktur.\n"
+"GOTO has no effect when used interactively.\n"
 
 #: cmd.rc:85
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
-msgstr "HELP hakkında yardım\n"
+msgstr ""
+"HELP <command> shows brief help details on a topic.\n"
+"HELP without an argument shows all CMD built-in commands.\n"
 
 #: cmd.rc:95
 msgid ""
@@ -1195,14 +1186,14 @@ msgid ""
 "In the second form of the command, string1 and string2 must be in double\n"
 "quotes. The comparison is not case-sensitive.\n"
 msgstr ""
-"IF bir komutu koşula bağlı olarak çalıştırmada kullanılır.\n"
+"IF is used to conditionally execute a command.\n"
 "\n"
-"Sözdzimi:   IF [NOT] EXIST dosyaadı komut\n"
-"IF [NOT] dize1==dize2 komut\n"
-"IF [NOT] ERRORLEVEL sayı komut\n"
+"Syntax:\tIF [NOT] EXIST filename command\n"
+"IF [NOT] string1==string2 command\n"
+"IF [NOT] ERRORLEVEL number command\n"
 "\n"
-"İkinci biçimde dize1 ve dize2 çift tırnak içerisinde olmalıdır.\n"
-"Karşılaştırma BÜYÜK/küçük harf duyarlı değildir.\n"
+"In the second form of the command, string1 and string2 must be in double\n"
+"quotes. The comparison is not case-sensitive.\n"
 
 #: cmd.rc:101
 msgid ""
@@ -1212,19 +1203,19 @@ msgid ""
 "The command will prompt you for the new volume label for the given drive.\n"
 "You can display the disk volume label with the VOL command.\n"
 msgstr ""
-"LABEL bir disk bölümüne etiket verir.\n"
+"LABEL is used to set a disk volume label.\n"
 "\n"
-"Sözdizimi: LABEL [sürücü:]\n"
-"Komut sizden verilen sürücü için yeni bir etiket girmenizi bekleyecektir.\n"
-"Disk bölüm etiketini VOL komutu ile gösterebilirsiniz.\n"
+"Syntax: LABEL [drive:]\n"
+"The command will prompt you for the new volume label for the given drive.\n"
+"You can display the disk volume label with the VOL command.\n"
 
 #: cmd.rc:104
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
-msgstr "MD hakkında yardım\n"
+msgstr "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 
 #: cmd.rc:105
 msgid "MKDIR <name> creates a subdirectory.\n"
-msgstr "MKDIR hakkında yardım\n"
+msgstr "MKDIR <name> creates a subdirectory.\n"
 
 #: cmd.rc:112
 msgid ""
@@ -1236,13 +1227,13 @@ msgid ""
 "\n"
 "MOVE fails if the old and new locations are on different DOS drive letters.\n"
 msgstr ""
-"MOVE bir dosya veya dizini dosya sistemi içinde yeni bir noktaya taşır.\n"
+"MOVE relocates a file or directory to a new point within the file system.\n"
 "\n"
-"Eğer taşınacak öğe bir dizinse dizin içerisindeki tüm dosyalar ve alt\n"
-"dizinler de birlikte taşınacaktır.\n"
+"If the item being moved is a directory then all the files and "
+"subdirectories\n"
+"below the item are moved as well.\n"
 "\n"
-"Eğer eski ve yeni konumlar farklı DOS sürücüleri üzerindeyse MOVE hata\n"
-"verecektir.\n"
+"MOVE fails if the old and new locations are on different DOS drive letters.\n"
 
 #: cmd.rc:123
 msgid ""
@@ -1256,14 +1247,14 @@ msgid ""
 "variable, for example:\n"
 "PATH %PATH%;c:\\temp\n"
 msgstr ""
-"PATH cmd arama yolunu gösterir veya değiştirir.\n"
+"PATH displays or changes the cmd search path.\n"
 "\n"
-"Sadece PATH girmek geçerli PATH ayarını gösterecektir (başlangıçta bu\n"
-"wine.conf dosyanızda verilen değer olacaktır). Ayarı değiştirmek için\n"
-"PATH komutuna yeni değeri ekleyin.\n"
+"Entering PATH will display the current PATH setting (initially taken\n"
+"from the registry). To change the setting follow the\n"
+"PATH command with the new value.\n"
 "\n"
-"Ayrıca PATH ayarını düzenlemek için PATH çevre değikenini de\n"
-"kullanabilirsiniz, örneğin:\n"
+"It is also possible to modify the PATH by using the PATH environment\n"
+"variable, for example:\n"
 "PATH %PATH%;c:\\temp\n"
 
 #: cmd.rc:129
@@ -1273,10 +1264,10 @@ msgid ""
 "batch files to allow the user to read the output of a previous command\n"
 "before it scrolls off the screen.\n"
 msgstr ""
-"PAUSE 'Devam etmek için bir tuşa basın' iletisini ekranda gösterip\n"
-"kullanıcının bir tuşa basmasını bekler. Çoğunlukla toplu işlem\n"
-"dosyalarında kullanıcıya önceki komutun çıktısını ekrandan çıkmadan\n"
-"önce okutmak için kullanılır.\n"
+"PAUSE displays a message on the screen 'Press Return key to continue'\n"
+"and waits for the user to press the Return key. It is mainly useful in\n"
+"batch files to allow the user to read the output of a previous command\n"
+"before it scrolls off the screen.\n"
 
 #: cmd.rc:150
 msgid ""
@@ -1300,51 +1291,49 @@ msgid ""
 "The prompt can also be changed by altering the PROMPT environment variable,\n"
 "so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'\n"
 msgstr ""
-"PROMPT komut istemini değiştirir.\n"
+"PROMPT sets the command-line prompt.\n"
 "\n"
-"PROMPT komutunu izleyen dize (ve hemen ardından bir boşluk) cmd sizden\n"
-"komut beklerken satır başında görünür.\n"
+"The string following the PROMPT command (and the space immediately after)\n"
+"appears at the beginning of the line when cmd is waiting for input.\n"
 "\n"
-"Aşağıdaki karakter dizeleri gösterilen özel anlamları içerir:\n"
+"The following character strings have the special meaning shown:\n"
 "\n"
-"$$    Dolar işareti       $_    Alt satır           $b    boru işareti (|)\n"
-"$d    Geçerli tarih       $e    Escape              $g    > işareti\n"
-"$l    < işareti           $n    Geçerli sürücü      $p    Geçerli yol\n"
-"$q    Eşittir işareti     $t    Geçerli saat        $v    cmd sürümü\n"
+"$$    Dollar sign         $_    Linefeed            $b    Pipe sign (|)\n"
+"$d    Current date        $e    Escape              $g    > sign\n"
+"$l    < sign              $n    Current drive       $p    Current path\n"
+"$q    Equal sign          $t    Current time        $v    cmd version\n"
 "\n"
-"Sadece PROMPT komutunu girerseniz komut istemi geçerli dizini (sürücü harfi\n"
-"dahil) ve onu izleyen büyüktür (>) işareti içeren öntanımlı değerlere\n"
-"dönecektir.\n"
-"(PROMPT $p$g komutu gibi).\n"
+"Note that entering the PROMPT command without a prompt-string resets the\n"
+"prompt to the default, which is the current directory (which includes the\n"
+"current drive letter) followed by a greater-than (>) sign.\n"
+"(like a command PROMPT $p$g).\n"
 "\n"
-"Komut istemi ayrıca PROMPT çevre değişkeni değiştirilerek de "
-"belirlenebilir.\n"
-"Yani 'SET PROMPT=metin' ile 'PROMPT metin' aynı işi görür.\n"
+"The prompt can also be changed by altering the PROMPT environment variable,\n"
+"so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'\n"
 
 #: cmd.rc:154
 msgid ""
 "A command line beginning REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
 msgstr ""
-"REM (ardından da bir boşluk) ile başlayan bir komut satırının\n"
-"hiçbir işlevi yoktur; dolayısıyla toplu işlem dosyalarında\n"
-"açıklama olarak kullanılabilir.\n"
+"A command line beginning REM (followed by a space) performs no\n"
+"action, and can therefore be used as a comment in a batch file.\n"
 
 #: cmd.rc:157
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
-msgstr "REN hakkında yardım\n"
+msgstr "REN <filename> is the short version of RENAME. It renames a file.\n"
 
 #: cmd.rc:158
 msgid "RENAME <filename> renames a file\n"
-msgstr "RENAME hakkında yardım\n"
+msgstr "RENAME <filename> renames a file\n"
 
 #: cmd.rc:160
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
-msgstr "RD hakkında yardım\n"
+msgstr "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 
 #: cmd.rc:161
 msgid "RMDIR <dir> deletes a subdirectory.\n"
-msgstr "RMDIR hakkında yardım\n"
+msgstr "RMDIR <dir> deletes a subdirectory.\n"
 
 #: cmd.rc:179
 msgid ""
@@ -1365,21 +1354,22 @@ msgid ""
 "many more values than in a native Win32 implementation. Note that it is\n"
 "not possible to affect the operating system environment from within cmd.\n"
 msgstr ""
-"SET cmd çevre değişkenlerini gösterir veya değiştirir.\n"
+"SET displays or changes the cmd environment variables.\n"
 "\n"
-"Parametresiz girilen SET geçerli çevrenin tümünü gösterir.\n"
+"SET without parameters shows all of the current environment.\n"
 "\n"
-"Bir çevre değişkenini oluşturmak veya düzenlemek için sözdizimi:\n"
+"To create or modify an environment variable the syntax is:\n"
 "\n"
-"SET <değişken>=<değer>\n"
+"SET <variable>=<value>\n"
 "\n"
-"<değişken> ve <değer> karakter dizeleridir. Ne eşittir işaretinden\n"
-"önce ne de değişken adı içerisinde boşluk bulunabilir.\n"
+"where <variable> and <value> are character strings. There must be no\n"
+"spaces before the equals sign, nor can the variable name\n"
+"have embedded spaces.\n"
 "\n"
-"Wine altında, üzerinde çalışılan işletim sistemi çevresi Win32 çevresine\n"
-"dahil edilir. Dolayısıyla doğal bir Win32 gerçeklemesinden daha fazla\n"
-"değer bulunacaktır. cmd altında işletim sistemi çevresini değiştirmek\n"
-"mümkün değildir.\n"
+"Under Wine, the environment of the underlying operating system is\n"
+"included into the Win32 environment, there will generally therefore be\n"
+"many more values than in a native Win32 implementation. Note that it is\n"
+"not possible to affect the operating system environment from within cmd.\n"
 
 #: cmd.rc:184
 msgid ""
@@ -1387,26 +1377,25 @@ msgid ""
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
 "if called from the command line.\n"
 msgstr ""
-"SHIFT toplu işlem dosyasında parametre listesinin başından bir tanesini\n"
-"siler. Böylece 2. parametre 1. parametre olacaktır. Komut satırında\n"
-"çağrıldığında bir etkisi yoktur.\n"
+"SHIFT is used in a batch file to remove one parameter from the head of\n"
+"the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
+"if called from the command line.\n"
 
 #: cmd.rc:186
 msgid "TIME sets or shows the current system time.\n"
-msgstr "TIME hakkında yardım\n"
+msgstr "TIME sets or shows the current system time.\n"
 
 #: cmd.rc:188
 msgid "Sets the window title for the cmd window, syntax TITLE [string]\n"
-msgstr ""
-"cmd penceresi için pencere başlığını değiştirir. Sözdizimi: TITLE [dize]\n"
+msgstr "Sets the window title for the cmd window, syntax TITLE [string]\n"
 
 #: cmd.rc:192
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
 msgstr ""
-"TYPE <dosyaadı> komutu <dosyaadı>'nı konsol aygıtına kopyalar (eğer\n"
-"yönlendirilmişse başka yere). Dosyanın okunabilirliği denetlenmez.\n"
+"TYPE <filename> copies <filename> to the console device (or elsewhere\n"
+"if redirected). No check is made that the file is readable text.\n"
 
 #: cmd.rc:201
 msgid ""
@@ -1418,21 +1407,21 @@ msgid ""
 "\n"
 "The verify flag has no function in Wine.\n"
 msgstr ""
-"VERIFY doğrulama bayrağını açar, kapatır veya sınar. Geçerli biçimler:\n"
+"VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
-"VERIFY ON\tBayrağı aç\n"
-"VERIFY OFF\tBayrağı kaldır\n"
-"VERIFY\t\tBayrağın durumunu gösterir.\n"
+"VERIFY ON\tSet the flag\n"
+"VERIFY OFF\tClear the flag\n"
+"VERIFY\t\tDisplays ON or OFF as appropriate.\n"
 "\n"
-"Doğrulama bayrağının Wine'da bir işlevi yoktur.\n"
+"The verify flag has no function in Wine.\n"
 
 #: cmd.rc:204
 msgid "VER displays the version of cmd you are running\n"
-msgstr "VER kullandığınız cmd sürümünü gösterir\n"
+msgstr "VER displays the version of cmd you are running\n"
 
 #: cmd.rc:206
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr "VOL hakkında yardım\n"
+msgstr "VOL shows the volume label of a disk device.\n"
 
 #: cmd.rc:209
 msgid ""
@@ -1460,14 +1449,17 @@ msgid ""
 "presses an allowed Key from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
+"CHOICE displays a text and waits, until the User\n"
+"presses an allowed Key from a selectable list.\n"
+"CHOICE is mainly used to build a menu selection in a batch file.\n"
 
 #: cmd.rc:222
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
 msgstr ""
-"EXIT geçerli komut oturumunu sonlandırır ve cmd'yi çağırdığınız\n"
-"yerden işletim sistemine döner.\n"
+"EXIT terminates the current command session and returns\n"
+"to the operating system or shell from which you invoked cmd.\n"
 
 #: cmd.rc:253
 msgid ""
@@ -1503,36 +1495,37 @@ msgid ""
 "\n"
 "Enter HELP <command> for further information on any of the above commands\n"
 msgstr ""
-"CMD dahili komutları:\n"
-"ATTRIB\t\tDOS dosya özelliklerini göster veya değiştir\n"
-"CALL\t\tToplu işlem dosyası içerisinden bir diğerini çalıştır\n"
-"CD (CHDIR)\tGeçerli dizini değiştir\n"
-"CLS\t\tKonsol ekranını temizle\n"
-"COPY\t\tDosya kopyala\n"
-"CTTY\t\tGiriş/çıkış aygıtını değiştir\n"
-"DATE\t\tSistem tarihini göster veya değiştir\n"
-"DEL (ERASE)\tBir veya daha fazla dosyayı sil\n"
-"DIR\t\tDizin içeriğini listele\n"
-"ECHO\t\tMetni doğrudan konsol çıkışına kopyala\n"
-"HELP\t\tBir konu üzerinde özet yardım göster\n"
-"MD (MKDIR)\tAlt dizin oluştur\n"
+"CMD built-in commands are:\n"
+"ATTRIB\t\tShow or change DOS file attributes\n"
+"CALL\t\tInvoke a batch file from inside another\n"
+"CD (CHDIR)\tChange current default directory\n"
+"CHOICE\t\tWait for an keypress from a selectable list\n"
+"CLS\t\tClear the console screen\n"
+"COPY\t\tCopy file\n"
+"CTTY\t\tChange input/output device\n"
+"DATE\t\tShow or change the system date\n"
+"DEL (ERASE)\tDelete a file or set of files\n"
+"DIR\t\tList the contents of a directory\n"
+"ECHO\t\tCopy text directly to the console output\n"
+"HELP\t\tShow brief help details on a topic\n"
+"MD (MKDIR)\tCreate a subdirectory\n"
 "MORE\t\tDisplay output in pages\n"
-"MOVE\t\tBir veya daha fazla dosyayı ya da dizin ağacını taşı\n"
-"PATH\t\tArama yolunu düzenle veya göster\n"
+"MOVE\t\tMove a file, set of files or directory tree\n"
+"PATH\t\tSet or show the search path\n"
 "POPD\t\tRestores the directory to the last one saved with PUSHD\n"
-"PROMPT\t\tKomut istemini değiştir\n"
+"PROMPT\t\tChange the command prompt\n"
 "PUSHD\t\tChanges to a new directory, saving the current one\n"
-"REN (RENAME)\tDosyayı yeniden adlandır\n"
-"RD (RMDIR)\tAlt dizini sil\n"
-"SET\t\tÇevre değişkenlerini düzenle veya göster\n"
-"TIME\t\tGeçerli sistem saatini düzenle veya göster\n"
-"TITLE\t\tCMD oturumu için pencere başlığını belirle\n"
-"TYPE\t\tMetin dosyasının içeriğini göster\n"
-"VER\t\tGeçerli CMD sürümünü göster\n"
-"VOL\t\tDisk aygıtının bölüm etiketini göster\n"
-"EXIT\t\tCMD'yi kapat\n"
+"REN (RENAME)\tRename a file\n"
+"RD (RMDIR)\tDelete a subdirectory\n"
+"SET\t\tSet or show environment variables\n"
+"TIME\t\tSet or show the current system time\n"
+"TITLE\t\tSet the window title for the CMD session\n"
+"TYPE\t\tType the contents of a text file\n"
+"VER\t\tShow the current version of CMD\n"
+"VOL\t\tShow the volume label of a disk device\n"
+"EXIT\t\tClose down CMD\n"
 "\n"
-"Yukarıdaki komutlar hakkında daha fazla bilgi için HELP <komut> girin\n"
+"Enter HELP <command> for further information on any of the above commands\n"
 
 #: cmd.rc:255
 msgid "Are you sure"
@@ -1693,75 +1686,75 @@ msgstr "The input line is too long.\n"
 
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
-msgstr ""
+msgstr "Usage: ipconfig [ /? | /all ]\n"
 
 #: ipconfig.rc:28
 msgid "Error: Unknown or invalid command line parameters specified\n"
-msgstr ""
+msgstr "Error: Unknown or invalid command line parameters specified\n"
 
 #: ipconfig.rc:29
 msgid "%s adapter %s\n"
-msgstr ""
+msgstr "%s adapter %s\n"
 
 #: ipconfig.rc:30
 msgid "Ethernet"
-msgstr ""
+msgstr "Ethernet"
 
 #: ipconfig.rc:31
 msgid "Unknown"
-msgstr ""
+msgstr "Unknown"
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
-msgstr ""
+msgstr "Connection-specific DNS suffix"
 
 #: ipconfig.rc:33
 msgid "IP address"
-msgstr ""
+msgstr "IP address"
 
 #: ipconfig.rc:34
 msgid "Hostname"
-msgstr ""
+msgstr "Hostname"
 
 #: ipconfig.rc:35
 msgid "Node type"
-msgstr ""
+msgstr "Node type"
 
 #: ipconfig.rc:36
 msgid "Broadcast"
-msgstr ""
+msgstr "Broadcast"
 
 #: ipconfig.rc:37
 msgid "Peer-to-peer"
-msgstr ""
+msgstr "Peer-to-peer"
 
 #: ipconfig.rc:38
 msgid "Mixed"
-msgstr ""
+msgstr "Mixed"
 
 #: ipconfig.rc:39
 msgid "Hybrid"
-msgstr ""
+msgstr "Hybrid"
 
 #: ipconfig.rc:40
 msgid "IP routing enabled"
-msgstr ""
+msgstr "IP routing enabled"
 
 #: ipconfig.rc:41
 msgid "Description"
-msgstr ""
+msgstr "Description"
 
 #: ipconfig.rc:42
 msgid "Physical address"
-msgstr ""
+msgstr "Physical address"
 
 #: ipconfig.rc:43
 msgid "DHCP enabled"
-msgstr ""
+msgstr "DHCP enabled"
 
 #: ipconfig.rc:46
 msgid "Default gateway"
-msgstr ""
+msgstr "Default gateway"
 
 #: net.rc:27
 msgid ""
@@ -1769,54 +1762,57 @@ msgid ""
 "\n"
 "NET [ HELP | START | STOP | USE ]\n"
 msgstr ""
+"The syntax of this command is:\n"
+"\n"
+"NET [ HELP | START | STOP | USE ]\n"
 
 #: net.rc:28
 msgid "Specify service name to start.\n"
-msgstr ""
+msgstr "Specify service name to start.\n"
 
 #: net.rc:29
 msgid "Specify service name to stop.\n"
-msgstr ""
+msgstr "Specify service name to stop.\n"
 
 #: net.rc:30
 msgid "Stopping dependent service: %s\n"
-msgstr ""
+msgstr "Stopping dependent service: %s\n"
 
 #: net.rc:31
 msgid "Could not stop service %s\n"
-msgstr ""
+msgstr "Could not stop service %s\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
-msgstr ""
+msgstr "Could not get handle to service control manager.\n"
 
 #: net.rc:33
 msgid "Could not get handle to service.\n"
-msgstr ""
+msgstr "Could not get handle to service.\n"
 
 #: net.rc:34
 msgid "The %s service is starting.\n"
-msgstr ""
+msgstr "The %s service is starting.\n"
 
 #: net.rc:35
 msgid "The %s service was started successfully.\n"
-msgstr ""
+msgstr "The %s service was started successfully.\n"
 
 #: net.rc:36
 msgid "The %s service failed to start.\n"
-msgstr ""
+msgstr "The %s service failed to start.\n"
 
 #: net.rc:37
 msgid "The %s service is stopping.\n"
-msgstr ""
+msgstr "The %s service is stopping.\n"
 
 #: net.rc:38
 msgid "The %s service was stopped successfully.\n"
-msgstr ""
+msgstr "The %s service was stopped successfully.\n"
 
 #: net.rc:39
 msgid "The %s service failed to stop.\n"
-msgstr ""
+msgstr "The %s service failed to stop.\n"
 
 #: net.rc:40
 msgid ""
@@ -1829,10 +1825,18 @@ msgid ""
 "   Commands available are:\n"
 "   NET HELP    NET START    NET STOP    NET USE\n"
 msgstr ""
+"The syntax of this command is:\n"
+"\n"
+"NET HELP command\n"
+"    -or-\n"
+"NET command /HELP\n"
+"\n"
+"   Commands available are:\n"
+"   NET HELP    NET START    NET STOP    NET USE\n"
 
 #: net.rc:42
 msgid "There are no entries in the list.\n"
-msgstr ""
+msgstr "There are no entries in the list.\n"
 
 #: net.rc:43
 msgid ""
@@ -1840,10 +1844,13 @@ msgid ""
 "Status  Local   Remote\n"
 "---------------------------------------------------------------\n"
 msgstr ""
+"\n"
+"Status  Local   Remote\n"
+"---------------------------------------------------------------\n"
 
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
-msgstr ""
+msgstr "%s      %S      %S      Open resources: %lu\n"
 
 #: reg.rc:27
 msgid ""
@@ -1852,41 +1859,48 @@ msgid ""
 "REG [ ADD | DELETE | QUERY ]\n"
 "REG command /?\n"
 msgstr ""
+"The syntax of this command is:\n"
+"\n"
+"REG [ ADD | DELETE | QUERY ]\n"
+"REG command /?\n"
 
 #: reg.rc:28
 msgid ""
 "REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
 "f]\n"
 msgstr ""
+"REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
+"f]\n"
 
 #: reg.rc:29
 msgid "REG DELETE key_name [/v value_name | /ve | /va] [/f]\n"
-msgstr ""
+msgstr "REG DELETE key_name [/v value_name | /ve | /va] [/f]\n"
 
 #: reg.rc:30
 msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
-msgstr ""
+msgstr "REG QUERY key_name [/v value_name | /ve] [/s]\n"
 
 #: reg.rc:31
 msgid "The operation completed successfully\n"
-msgstr ""
+msgstr "The operation completed successfully\n"
 
 #: reg.rc:32
 msgid "Error: Invalid key name\n"
-msgstr ""
+msgstr "Error: Invalid key name\n"
 
 #: reg.rc:33
 msgid "Error: Invalid command line parameters\n"
-msgstr ""
+msgstr "Error: Invalid command line parameters\n"
 
 #: reg.rc:34
 msgid "Error: Unable to add keys to remote machine\n"
-msgstr ""
+msgstr "Error: Unable to add keys to remote machine\n"
 
 #: reg.rc:35
 msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
 msgstr ""
+"Error: The system was unable to find the specified registry key or value\n"
 
 #: start.rc:45
 msgid ""
@@ -1911,23 +1925,23 @@ msgid ""
 "This is free software, and you are welcome to redistribute it\n"
 "under certain conditions; run 'start /L' for details.\n"
 msgstr ""
-"Bir programı veya uzantısı ile ilişkili olan program içinde bir belgeyi "
-"açar.\n"
-"Kullanım:\n"
-"start [seçenekler] program_dosyaadı [...]\n"
-"start [seçenekler] belge_dosyaadı\n"
+"Start a program, or open a document in the program normally used for files "
+"with that suffix.\n"
+"Usage:\n"
+"start [options] program_filename [...]\n"
+"start [options] document_filename\n"
 "\n"
-"Seçenekler:\n"
-"/M[inimized] Simge halinde başlat.\n"
-"/MAX[imized] Ekranı kaplayacak şekilde başlat.\n"
-"/R[estored]  Programı normal bir şekilde başlat (simge halinde veya "
-"büyütülmüş halde olabilir).\n"
-"/W[ait]      Başlatılmış programın bitmesini bekle, sonra çıkış koduyla "
-"çık.\n"
+"Options:\n"
+"/M[inimized] Start the program minimized.\n"
+"/MAX[imized] Start the program maximized.\n"
+"/R[estored]  Start the program normally (neither minimized nor maximized).\n"
+"/W[ait]      Wait for started program to finish, then exit with its exit "
+"code.\n"
+"/Unix        Use a Unix filename and start the file like windows explorer.\n"
 "/ProgIDOpen  Open a document using the following progID.\n"
-"/L           Son-kullanıcı lisansını göster.\n"
+"/L           Show end-user license.\n"
 "\n"
-"start.exe sürüm 0.2 Telif Hakkı (C) 2003, Dan Kegel\n"
+"start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option.\n"
 "This is free software, and you are welcome to redistribute it\n"
 "under certain conditions; run 'start /L' for details.\n"
@@ -1951,7 +1965,7 @@ msgid ""
 "\n"
 "See the COPYING.LIB file for license information.\n"
 msgstr ""
-"start.exe sürüm 0.2 Telif Hakkı (C) 2003, Dan Kegel\n"
+"start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
 "modify it under the terms of the GNU Lesser Public License\n"
 "as published by the Free Software Foundation; either version 2.1\n"
@@ -1974,8 +1988,9 @@ msgid ""
 "specified file.\n"
 "ShellExecuteEx failed"
 msgstr ""
-"Uygulama başlatılamadı veya belirtilen dosya ile ilişkili bir uygulama yok.\n"
-"ShellExecuteEx başarısız"
+"Application could not be started, or no application associated with the "
+"specified file.\n"
+"ShellExecuteEx failed"
 
 #: start.rc:67
 msgid "Could not translate the specified Unix filename to a DOS filename."
@@ -1983,64 +1998,65 @@ msgstr "Could not translate the specified Unix filename to a DOS filename."
 
 #: taskkill.rc:27
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
-msgstr ""
+msgstr "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
 
 #: taskkill.rc:28
 msgid "Error: Unknown or invalid command line option specified.\n"
-msgstr ""
+msgstr "Error: Unknown or invalid command line option specified.\n"
 
 #: taskkill.rc:29
 msgid "Error: Invalid command line parameter specified.\n"
-msgstr ""
+msgstr "Error: Invalid command line parameter specified.\n"
 
 #: taskkill.rc:30
 msgid "Error: One of options /im or /pid must be specified.\n"
-msgstr ""
+msgstr "Error: One of options /im or /pid must be specified.\n"
 
 #: taskkill.rc:31
 msgid "Error: Option %s expects a command line parameter.\n"
-msgstr ""
+msgstr "Error: Option %s expects a command line parameter.\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
-msgstr ""
+msgstr "Error: Options /im and /pid are mutually exclusive.\n"
 
 #: taskkill.rc:33
 msgid "Close message sent to top-level windows of process with PID %u.\n"
-msgstr ""
+msgstr "Close message sent to top-level windows of process with PID %u.\n"
 
 #: taskkill.rc:34
 msgid ""
 "Close message sent to top-level windows of process \"%s\" with PID %u.\n"
 msgstr ""
+"Close message sent to top-level windows of process \"%s\" with PID %u.\n"
 
 #: taskkill.rc:35
 msgid "Process with PID %u was forcibly terminated.\n"
-msgstr ""
+msgstr "Process with PID %u was forcibly terminated.\n"
 
 #: taskkill.rc:36
 msgid "Process \"%s\" with PID %u was forcibly terminated.\n"
-msgstr ""
+msgstr "Process \"%s\" with PID %u was forcibly terminated.\n"
 
 #: taskkill.rc:37
 msgid "Error: Could not find process \"%s\".\n"
-msgstr ""
+msgstr "Error: Could not find process \"%s\".\n"
 
 #: taskkill.rc:38
 msgid "Error: Unable to enumerate the process list.\n"
-msgstr ""
+msgstr "Error: Unable to enumerate the process list.\n"
 
 #: taskkill.rc:39
 msgid "Error: Unable to terminate process \"%s\".\n"
-msgstr ""
+msgstr "Error: Unable to terminate process \"%s\".\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
-msgstr ""
+msgstr "Error: Process self-termination is not permitted.\n"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"
-msgstr "Wine Uygulama Kaldırıcı"
+msgstr "Wine Application Uninstaller"
 
 #: uninstaller.rc:27
 msgid ""
@@ -2048,32 +2064,33 @@ msgid ""
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry ?"
 msgstr ""
-"'%s' kaldırma komutu çalıştırılamadı, çalıştırıbilir dosya var olmayabilir.\n"
-"Sistem kaydından bu kaldırma girişini silmek ister misiniz?"
+"Execution of uninstall command '%s' failed, perhaps due to missing "
+"executable.\n"
+"Do you want to remove the uninstall entry from the registry ?"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"
-msgstr ""
+msgstr "Starting Wordpad failed"
 
 #: xcopy.rc:27
 msgid "Invalid number of parameters - Use xcopy /? for help\n"
-msgstr ""
+msgstr "Invalid number of parameters - Use xcopy /? for help\n"
 
 #: xcopy.rc:28
 msgid "Invalid parameter '%s' -  Use xcopy /? for help\n"
-msgstr ""
+msgstr "Invalid parameter '%s' -  Use xcopy /? for help\n"
 
 #: xcopy.rc:29
 msgid "Press <enter> to begin copying\n"
-msgstr ""
+msgstr "Press <enter> to begin copying\n"
 
 #: xcopy.rc:30
 msgid "%d file(s) would be copied\n"
-msgstr ""
+msgstr "%d file(s) would be copied\n"
 
 #: xcopy.rc:31
 msgid "%d file(s) copied\n"
-msgstr ""
+msgstr "%d file(s) copied\n"
 
 #: xcopy.rc:34
 msgid ""
@@ -2081,34 +2098,35 @@ msgid ""
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
+"Is '%s' a filename or directory\n"
+"on the target?\n"
+"(F - File, D - Directory)\n"
 
 #: xcopy.rc:35
 msgid "%s? (Yes|No)\n"
-msgstr ""
+msgstr "%s? (Yes|No)\n"
 
 #: xcopy.rc:36
-#, fuzzy
 msgid "Overwrite %s? (Yes|No|All)\n"
-msgstr "Overwrite %s"
+msgstr "Overwrite %s? (Yes|No|All)\n"
 
 #: xcopy.rc:37
 msgid "Copying of '%s' to '%s' failed with r/c %d\n"
-msgstr ""
+msgstr "Copying of '%s' to '%s' failed with r/c %d\n"
 
 #: xcopy.rc:39
-#, fuzzy
 msgid "Failed during reading of '%s'\n"
-msgstr "Failed to open '%s'\n"
+msgstr "Failed during reading of '%s'\n"
 
 #: xcopy.rc:43
 msgctxt "File key"
 msgid "F"
-msgstr ""
+msgstr "F"
 
 #: xcopy.rc:44
 msgctxt "Directory key"
 msgid "D"
-msgstr ""
+msgstr "D"
 
 #: xcopy.rc:77
 msgid ""
@@ -2145,3 +2163,35 @@ msgid ""
 "\t\tthan source\n"
 "\n"
 msgstr ""
+"XCOPY - Copies source files or directory trees to a destination\n"
+"\n"
+"Syntax:\n"
+"XCOPY source [dest] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"\n"
+"Where:\n"
+"\n"
+"[/I]  Assume directory if destination does not exist and copying two or\n"
+"\tmore files\n"
+"[/S]  Copy directories and subdirectories\n"
+"[/E]  Copy directories and subdirectories, including any empty ones\n"
+"[/Q]  Do not list names during copy, ie quiet.\n"
+"[/F]  Show full source and destination names during copy\n"
+"[/L]  Simulate operation, showing names which would be copied\n"
+"[/W]  Prompts before beginning the copy operation\n"
+"[/T]  Creates empty directory structure but does not copy files\n"
+"[/Y]  Suppress prompting when overwriting files\n"
+"[/-Y] Enable prompting when overwriting files\n"
+"[/P]  Prompts on each source file before copying\n"
+"[/N]  Copy using short names\n"
+"[/U]  Copy only files which already exist in destination\n"
+"[/R]  Overwrite any read only files\n"
+"[/H]  Include hidden and system files in the copy\n"
+"[/C]  Continue even if an error occurs during the copy\n"
+"[/A]  Only copy files with archive attribute set\n"
+"[/M]  Only copy files with archive attribute set, removes\n"
+"\tarchive attribute\n"
+"[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
+"\t\tIf no date is supplied, only copy if destination is older\n"
+"\t\tthan source\n"
+"\n"

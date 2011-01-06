@@ -890,6 +890,118 @@ msgstr ""
 msgid "Default MidiOut Device"
 msgstr ""
 
+#: hhctrl.rc:27
+msgid "&Contents"
+msgstr "內容(&C)"
+
+#: hhctrl.rc:28
+msgid "I&ndex"
+msgstr "目錄(&N)"
+
+#: hhctrl.rc:29
+msgid "&Search"
+msgstr "搜尋(&S)"
+
+#: hhctrl.rc:30
+msgid "Favor&ites"
+msgstr "最愛(&I)"
+
+#: hhctrl.rc:35
+msgid "Show"
+msgstr "顯示"
+
+#: hhctrl.rc:36
+msgid "Hide"
+msgstr "隱藏"
+
+#: hhctrl.rc:37
+msgid "Stop"
+msgstr "停止"
+
+#: hhctrl.rc:38
+msgid "Refresh"
+msgstr "刷新"
+
+#: hhctrl.rc:39
+msgid "Back"
+msgstr "向後"
+
+#: hhctrl.rc:40
+msgid "Home"
+msgstr "首頁"
+
+#: hhctrl.rc:41
+msgid "Sync"
+msgstr "同步"
+
+#: hhctrl.rc:42
+msgid "Print"
+msgstr "列印"
+
+#: hhctrl.rc:43
+msgid "Options"
+msgstr "選項"
+
+#: hhctrl.rc:44
+msgid "Forward"
+msgstr "向前"
+
+#: hhctrl.rc:45
+msgid "IDTB_NOTES"
+msgstr "說明"
+
+#: hhctrl.rc:46
+msgid "IDTB_BROWSE_FWD"
+msgstr "向前"
+
+#: hhctrl.rc:47
+msgid "IDT_BROWSE_BACK"
+msgstr "向後"
+
+#: hhctrl.rc:48
+msgid "IDTB_CONTENTS"
+msgstr "內容"
+
+#: hhctrl.rc:49
+msgid "IDTB_INDEX"
+msgstr "目錄"
+
+#: hhctrl.rc:50
+msgid "IDTB_SEARCH"
+msgstr "搜尋"
+
+#: hhctrl.rc:51
+msgid "IDTB_HISTORY"
+msgstr "歷史"
+
+#: hhctrl.rc:52
+msgid "IDTB_FAVORITES"
+msgstr "最愛"
+
+#: hhctrl.rc:53
+msgid "Jump1"
+msgstr "Jump1"
+
+#: hhctrl.rc:54
+msgid "Jump2"
+msgstr "Jump2"
+
+#: hhctrl.rc:55
+msgid "Customize"
+msgstr "個性化"
+
+#: hhctrl.rc:56
+msgid "Zoom"
+msgstr "放大"
+
+#: hhctrl.rc:57
+msgid "IDTB_TOC_NEXT"
+msgstr "後一項"
+
+#: hhctrl.rc:58
+msgid "IDTB_TOC_PREV"
+msgstr "前一項"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "屬性(&P)"
