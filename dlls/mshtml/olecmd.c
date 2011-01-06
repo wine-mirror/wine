@@ -888,8 +888,6 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
     return OLECMDERR_E_UNKNOWNGROUP;
 }
 
-#undef CMDTARGET_THIS
-
 static const IOleCommandTargetVtbl OleCommandTargetVtbl = {
     OleCommandTarget_QueryInterface,
     OleCommandTarget_AddRef,

@@ -659,8 +659,6 @@ static void NSAPI nsDocumentObserver_DoneAddingChildren(nsIDocumentObserver *ifa
     }
 }
 
-#undef NSMUTATIONOBS_THIS
-
 static const nsIDocumentObserverVtbl nsDocumentObserverVtbl = {
     nsDocumentObserver_QueryInterface,
     nsDocumentObserver_AddRef,
