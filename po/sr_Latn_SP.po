@@ -1113,6 +1113,14 @@ msgstr "Niz dužine mora biti konačan pozitivan ceo broj"
 msgid "Array object expected"
 msgstr "Očekivani niz objekta"
 
+#: localspl.rc:28
+msgid "Local Port"
+msgstr "Lokalni port"
+
+#: localspl.rc:29
+msgid "Local Monitor"
+msgstr "Lokalni monitor"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Svojstva"

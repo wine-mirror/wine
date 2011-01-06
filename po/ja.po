@@ -1113,6 +1113,14 @@ msgstr "配列の長さは有限の正整数でなければなりません"
 msgid "Array object expected"
 msgstr "配列オブジェクトを期待していました"
 
+#: localspl.rc:28
+msgid "Local Port"
+msgstr "ローカル ポート"
+
+#: localspl.rc:29
+msgid "Local Monitor"
+msgstr "ローカル モニタ"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "プロパティ(&P)"

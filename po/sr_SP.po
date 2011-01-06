@@ -1113,6 +1113,14 @@ msgstr "Низ дужине мора бити коначан позитиван 
 msgid "Array object expected"
 msgstr "Очекивани низ објекта"
 
+#: localspl.rc:28
+msgid "Local Port"
+msgstr "Локални порт"
+
+#: localspl.rc:29
+msgid "Local Monitor"
+msgstr "Локални монитор"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Својства"

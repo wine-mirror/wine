@@ -1110,6 +1110,14 @@ msgstr ""
 msgid "Array object expected"
 msgstr ""
 
+#: localspl.rc:28
+msgid "Local Port"
+msgstr "本地端口"
+
+#: localspl.rc:29
+msgid "Local Monitor"
+msgstr "本地监视器"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "属性(&P)"

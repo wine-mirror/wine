@@ -1115,6 +1115,14 @@ msgstr "A tömb hosszának egy véges pozitív egész számnak kell lennie"
 msgid "Array object expected"
 msgstr "Tömb objektumot vártam"
 
+#: localspl.rc:28
+msgid "Local Port"
+msgstr "Helyi Port"
+
+#: localspl.rc:29
+msgid "Local Monitor"
+msgstr "Helyi figyelő"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Beállítások"

@@ -1113,6 +1113,14 @@ msgstr "Długość tablicy musi być skończoną dodatnią liczbą stałą"
 msgid "Array object expected"
 msgstr "Oczekiwany obiekt tablicowy"
 
+#: localspl.rc:28
+msgid "Local Port"
+msgstr "Port lokalny"
+
+#: localspl.rc:29
+msgid "Local Monitor"
+msgstr "Monitor lokalny"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Ustawienia"

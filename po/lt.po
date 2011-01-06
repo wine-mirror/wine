@@ -1113,6 +1113,14 @@ msgstr "Masyvo dydis turi būti teigiamas sveikasis skaičius"
 msgid "Array object expected"
 msgstr "Tikėtasi masyvo objekto"
 
+#: localspl.rc:28
+msgid "Local Port"
+msgstr "Vietinis prievadas"
+
+#: localspl.rc:29
+msgid "Local Monitor"
+msgstr "Vietinis monitorius"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Savybės"

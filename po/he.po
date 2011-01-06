@@ -1110,6 +1110,14 @@ msgstr ""
 msgid "Array object expected"
 msgstr ""
 
+#: localspl.rc:28
+msgid "Local Port"
+msgstr "פתחה מקומית"
+
+#: localspl.rc:29
+msgid "Local Monitor"
+msgstr "צג מקומי"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&מאפיינים"

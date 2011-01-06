@@ -1115,6 +1115,14 @@ msgstr "Lungimea unei matrice trebuie să fie un număr întreg pozitiv"
 msgid "Array object expected"
 msgstr "Se așteaptă un obiect matrice"
 
+#: localspl.rc:28
+msgid "Local Port"
+msgstr "Port local"
+
+#: localspl.rc:29
+msgid "Local Monitor"
+msgstr "Monitor local"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Proprietăți"

@@ -1113,6 +1113,14 @@ msgstr "Array-längd måste vara ett positivt ändligt heltal"
 msgid "Array object expected"
 msgstr "Array-objekt förväntades"
 
+#: localspl.rc:28
+msgid "Local Port"
+msgstr "Lokal port"
+
+#: localspl.rc:29
+msgid "Local Monitor"
+msgstr "Lokal skärm"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Egenskaper"

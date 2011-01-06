@@ -15004,7 +15004,7 @@ wine_fn_config_dll keyboard.drv16 enable_win16
 wine_fn_config_dll krnl386.exe16 enable_win16 implib kernel
 wine_fn_config_dll ktmw32 enable_ktmw32
 wine_fn_config_dll loadperf enable_loadperf implib
-wine_fn_config_dll localspl enable_localspl
+wine_fn_config_dll localspl enable_localspl po
 wine_fn_config_test dlls/localspl/tests localspl_test
 wine_fn_config_dll localui enable_localui
 wine_fn_config_test dlls/localui/tests localui_test

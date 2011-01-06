@@ -1113,6 +1113,14 @@ msgstr "Array-Größe muss eine endliche, positive Ganzzahl sein"
 msgid "Array object expected"
 msgstr "Array Objekt erwartet"
 
+#: localspl.rc:28
+msgid "Local Port"
+msgstr "Lokaler Anschluss"
+
+#: localspl.rc:29
+msgid "Local Monitor"
+msgstr "Lokaler Monitor"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Einstellungen"

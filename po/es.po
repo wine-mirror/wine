@@ -1123,6 +1123,14 @@ msgstr "La longitud del arreglo debe ser un entero positivo finito"
 msgid "Array object expected"
 msgstr "Objeto Arreglo esperado"
 
+#: localspl.rc:28
+msgid "Local Port"
+msgstr "Puerto local"
+
+#: localspl.rc:29
+msgid "Local Monitor"
+msgstr "Monitor local"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Propiedades"

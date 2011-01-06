@@ -1115,6 +1115,14 @@ msgstr "Rekkens lengde må være et endelig, positivt tall"
 msgid "Array object expected"
 msgstr "Forventet rekke-objekt"
 
+#: localspl.rc:28
+msgid "Local Port"
+msgstr "Lokal port"
+
+#: localspl.rc:29
+msgid "Local Monitor"
+msgstr "Lokal overvåker"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Egenskaper"

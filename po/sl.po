@@ -1125,6 +1125,14 @@ msgstr "Dožina polja mora bit pozitivno celo število"
 msgid "Array object expected"
 msgstr "Pričakujem Array objekt"
 
+#: localspl.rc:28
+msgid "Local Port"
+msgstr "Lokalna vrata"
+
+#: localspl.rc:29
+msgid "Local Monitor"
+msgstr "Lokalen monitor"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Lastnosti"

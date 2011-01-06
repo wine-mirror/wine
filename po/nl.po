@@ -1113,6 +1113,14 @@ msgstr "Array lengte moet een eindig, positief geheel getal zijn"
 msgid "Array object expected"
 msgstr "Array object verwacht"
 
+#: localspl.rc:28
+msgid "Local Port"
+msgstr "Lokale Poort"
+
+#: localspl.rc:29
+msgid "Local Monitor"
+msgstr "Lokale Monitor"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Eigenschappen"

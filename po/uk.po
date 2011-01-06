@@ -1113,6 +1113,14 @@ msgstr "Довжиною масиву повинне бути скінченне
 msgid "Array object expected"
 msgstr "Очікується об'єкт Array"
 
+#: localspl.rc:28
+msgid "Local Port"
+msgstr "Локальний порт"
+
+#: localspl.rc:29
+msgid "Local Monitor"
+msgstr "Локальний монітор"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Властивості"

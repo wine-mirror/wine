@@ -1113,6 +1113,14 @@ msgstr "배열 길이는 반드시  한정된 양의 정수이어야 함"
 msgid "Array object expected"
 msgstr "배열 객체가 필요함"
 
+#: localspl.rc:28
+msgid "Local Port"
+msgstr "지역 포트"
+
+#: localspl.rc:29
+msgid "Local Monitor"
+msgstr "지역 모니터"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "등록 정보(&P)"

@@ -1113,6 +1113,14 @@ msgstr "La lunghezza dell'array deve essere un intero finito e positivo"
 msgid "Array object expected"
 msgstr "Richiesto un oggetto array"
 
+#: localspl.rc:28
+msgid "Local Port"
+msgstr "Porta locale"
+
+#: localspl.rc:29
+msgid "Local Monitor"
+msgstr "Schermo locale"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Proprietà"

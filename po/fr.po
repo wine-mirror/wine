@@ -1113,6 +1113,14 @@ msgstr "La longueur d'un tableau doit être un entier positif"
 msgid "Array object expected"
 msgstr "Objet tableau attendu"
 
+#: localspl.rc:28
+msgid "Local Port"
+msgstr "Port local"
+
+#: localspl.rc:29
+msgid "Local Monitor"
+msgstr "Moniteur local"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Propriétés"

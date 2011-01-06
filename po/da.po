@@ -1123,6 +1123,14 @@ msgstr "Array længde skal være et endeligt positivt heltal"
 msgid "Array object expected"
 msgstr "Array objekt forventet"
 
+#: localspl.rc:28
+msgid "Local Port"
+msgstr "Lokal port"
+
+#: localspl.rc:29
+msgid "Local Monitor"
+msgstr "Lokal overvåger"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Instillinger"

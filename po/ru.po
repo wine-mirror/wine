@@ -1121,6 +1121,14 @@ msgstr "Длиной массива должно быть конечное по�
 msgid "Array object expected"
 msgstr "Ожидается объект типа 'Array'"
 
+#: localspl.rc:28
+msgid "Local Port"
+msgstr "Локальный порт"
+
+#: localspl.rc:29
+msgid "Local Monitor"
+msgstr "Локальный монитор"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Свойства"

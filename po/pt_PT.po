@@ -1113,6 +1113,14 @@ msgstr "Tamanho do vector tem de ser um inteiro finito positivo"
 msgid "Array object expected"
 msgstr "Objecto Array esperado"
 
+#: localspl.rc:28
+msgid "Local Port"
+msgstr "Porta local"
+
+#: localspl.rc:29
+msgid "Local Monitor"
+msgstr "Monitor Local"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Propriedades"

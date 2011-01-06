@@ -1109,6 +1109,14 @@ msgstr "Array length must be a finite positive integer"
 msgid "Array object expected"
 msgstr "Array object expected"
 
+#: localspl.rc:28
+msgid "Local Port"
+msgstr "Local Port"
+
+#: localspl.rc:29
+msgid "Local Monitor"
+msgstr "Local Monitor"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Properties"
