@@ -1243,6 +1243,14 @@ msgstr ""
 "Wine MS-RLE vaizdo kodekas\n"
 "Autoriaus teisės Michael Günnewig, 2002"
 
+#: msvidc32.rc:25
+msgid "MS-CRAM"
+msgstr "MS-CRAM"
+
+#: msvidc32.rc:26
+msgid "Wine Video 1 video codec"
+msgstr "Wine Video 1 vaizdo kodekas"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Savybės"

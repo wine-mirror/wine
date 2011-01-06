@@ -1237,6 +1237,15 @@ msgstr ""
 "Wine MS-RLE видео кодек\n"
 "Copyright 2002 by Michael Günnewig"
 
+#: msvidc32.rc:25
+msgid "MS-CRAM"
+msgstr ""
+
+#: msvidc32.rc:26
+#, fuzzy
+msgid "Wine Video 1 video codec"
+msgstr "Wine MS-RLE видео кодек"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr ""

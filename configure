@@ -15081,7 +15081,7 @@ wine_fn_config_dll msvcrtd enable_msvcrtd implib
 wine_fn_config_test dlls/msvcrtd/tests msvcrtd_test
 wine_fn_config_dll msvfw32 enable_msvfw32 implib
 wine_fn_config_test dlls/msvfw32/tests msvfw32_test
-wine_fn_config_dll msvidc32 enable_msvidc32
+wine_fn_config_dll msvidc32 enable_msvidc32 po
 wine_fn_config_dll msvideo.dll16 enable_win16
 wine_fn_config_dll mswsock enable_mswsock implib
 wine_fn_config_dll msxml enable_msxml

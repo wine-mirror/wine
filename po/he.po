@@ -1209,6 +1209,15 @@ msgstr ""
 "מקודד הווידאו Wine MS-RLE\n"
 "הזכויות שמורות 2002 ל־Michael Günnewig"
 
+#: msvidc32.rc:25
+msgid "MS-CRAM"
+msgstr ""
+
+#: msvidc32.rc:26
+#, fuzzy
+msgid "Wine Video 1 video codec"
+msgstr "מקודד הווידאו Wine MS-RLE"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&מאפיינים"

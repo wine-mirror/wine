@@ -4,28 +4,7 @@ IMPORTS   = user32
 C_SRCS = \
 	msvideo1.c
 
-RC_SRCS = \
-	msvidc32_Cy.rc \
-	msvidc32_Da.rc \
-	msvidc32_De.rc \
-	msvidc32_En.rc \
-	msvidc32_Es.rc \
-	msvidc32_Fr.rc \
-	msvidc32_Hu.rc \
-	msvidc32_It.rc \
-	msvidc32_Ja.rc \
-	msvidc32_Ko.rc \
-	msvidc32_Lt.rc \
-	msvidc32_Nl.rc \
-	msvidc32_No.rc \
-	msvidc32_Pl.rc \
-	msvidc32_Pt.rc \
-	msvidc32_Ro.rc \
-	msvidc32_Ru.rc \
-	msvidc32_Si.rc \
-	msvidc32_Sr.rc \
-	msvidc32_Sv.rc \
-	msvidc32_Tr.rc \
-	msvidc32_Uk.rc
+RC_SRCS = msvidc32.rc
+PO_SRCS = msvidc32.rc
 
 @MAKE_DLL_RULES@
