@@ -1,8 +1,7 @@
 /*
- * Cefnogaeth iaith Cymraeg
- * Welsh language support
- *
- * Copyright 2010 Ken Sharp
+* MAPI32 English resources
+*
+* Copyright 2009 Owen Rudge for CodeWeavers
 *
 * This library is free software; you can redistribute it and/or
 * modify it under the terms of the GNU Lesser General Public
@@ -22,10 +21,19 @@
 
 #include "res.h"
 
-LANGUAGE LANG_WELSH, SUBLANG_DEFAULT
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-   IDS_NO_MAPI_CLIENT, "Mail anfon methu fel nad oes gennych gleient mail MAPI gorseddedig."
-   IDS_SEND_MAIL, "Anfon Mail"
+   IDS_NO_MAPI_CLIENT, "Mail sending failed as you do not have a MAPI mail client installed."
+   IDS_SEND_MAIL, "Send Mail"
 }
+
+#define WINE_FILEDESCRIPTION_STR "Wine Messaging API"
+#define WINE_FILENAME_STR "mapi32.dll"
+#define WINE_FILEVERSION 1,0,0,0
+#define WINE_FILEVERSION_STR "1.0.0.0"
+#define WINE_PRODUCTVERSION 1,0,0,0
+#define WINE_PRODUCTVERSION_STR "1.0.0.0"
+
+#include "wine/wine_common_ver.rc"

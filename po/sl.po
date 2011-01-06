@@ -1133,6 +1133,14 @@ msgstr "Lokalna vrata"
 msgid "Local Monitor"
 msgstr "Lokalen monitor"
 
+#: mapi32.rc:28
+msgid "Mail sending failed as you do not have a MAPI mail client installed."
+msgstr "Pošiljanje ni uspelo, ker nimate nameščenega MAPI klienta."
+
+#: mapi32.rc:29
+msgid "Send Mail"
+msgstr "Pošlji"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Lastnosti"

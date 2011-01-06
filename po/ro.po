@@ -1123,6 +1123,15 @@ msgstr "Port local"
 msgid "Local Monitor"
 msgstr "Monitor local"
 
+#: mapi32.rc:28
+msgid "Mail sending failed as you do not have a MAPI mail client installed."
+msgstr ""
+"Eroare la trimiterea emailului. Nu aveți un client de email MAPI instalat."
+
+#: mapi32.rc:29
+msgid "Send Mail"
+msgstr "Trimite emailul"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Proprietăți"

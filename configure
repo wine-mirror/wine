@@ -15011,7 +15011,7 @@ wine_fn_config_test dlls/localui/tests localui_test
 wine_fn_config_dll lz32 enable_lz32 implib
 wine_fn_config_test dlls/lz32/tests lz32_test
 wine_fn_config_dll lzexpand.dll16 enable_win16
-wine_fn_config_dll mapi32 enable_mapi32 implib
+wine_fn_config_dll mapi32 enable_mapi32 po,implib
 wine_fn_config_test dlls/mapi32/tests mapi32_test
 wine_fn_config_dll mapistub enable_mapistub
 wine_fn_config_dll mciavi32 enable_mciavi32

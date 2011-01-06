@@ -1121,6 +1121,16 @@ msgstr "Porta local"
 msgid "Local Monitor"
 msgstr "Monitor Local"
 
+#: mapi32.rc:28
+msgid "Mail sending failed as you do not have a MAPI mail client installed."
+msgstr ""
+"O envio de correio falhou porque não existe um cliente de correio MAPI "
+"instalado."
+
+#: mapi32.rc:29
+msgid "Send Mail"
+msgstr "Enviar Correio"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Propriedades"

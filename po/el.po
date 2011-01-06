@@ -1117,6 +1117,14 @@ msgstr ""
 msgid "Local Monitor"
 msgstr ""
 
+#: mapi32.rc:28
+msgid "Mail sending failed as you do not have a MAPI mail client installed."
+msgstr ""
+
+#: mapi32.rc:29
+msgid "Send Mail"
+msgstr ""
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr ""

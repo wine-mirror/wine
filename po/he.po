@@ -1118,6 +1118,14 @@ msgstr "פתחה מקומית"
 msgid "Local Monitor"
 msgstr "צג מקומי"
 
+#: mapi32.rc:28
+msgid "Mail sending failed as you do not have a MAPI mail client installed."
+msgstr "שליחת הודעת הדוא״ל נכשלה כיוון שאין לך לקוח דוא״ל MAPI מותקן."
+
+#: mapi32.rc:29
+msgid "Send Mail"
+msgstr "שליחת דוא״ל"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&מאפיינים"

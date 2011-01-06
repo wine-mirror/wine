@@ -1123,6 +1123,16 @@ msgstr "Helyi Port"
 msgid "Local Monitor"
 msgstr "Helyi figyelő"
 
+#: mapi32.rc:28
+msgid "Mail sending failed as you do not have a MAPI mail client installed."
+msgstr ""
+"A levélküldés sikertelen, mivel Önnek nincsen telepített MAPI "
+"levelezőkliense."
+
+#: mapi32.rc:29
+msgid "Send Mail"
+msgstr "Levélküldés"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Beállítások"

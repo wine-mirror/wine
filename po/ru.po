@@ -1129,6 +1129,14 @@ msgstr "Локальный порт"
 msgid "Local Monitor"
 msgstr "Локальный монитор"
 
+#: mapi32.rc:28
+msgid "Mail sending failed as you do not have a MAPI mail client installed."
+msgstr "Невозможно отправить почту: не установлен почтовый клиент MAPI."
+
+#: mapi32.rc:29
+msgid "Send Mail"
+msgstr "Отправка почты"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "&Свойства"

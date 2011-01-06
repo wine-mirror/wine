@@ -1121,6 +1121,16 @@ msgstr "ローカル ポート"
 msgid "Local Monitor"
 msgstr "ローカル モニタ"
 
+#: mapi32.rc:28
+msgid "Mail sending failed as you do not have a MAPI mail client installed."
+msgstr ""
+"MAPI メール クライアントがインストールされていないため、メール送信に失敗しま"
+"した。"
+
+#: mapi32.rc:29
+msgid "Send Mail"
+msgstr "メール送信"
+
 #: clock.rc:28
 msgid "&Properties"
 msgstr "プロパティ(&P)"

@@ -9,30 +9,7 @@ C_SRCS = \
 	sendmail.c \
 	util.c
 
-RC_SRCS = \
-	Cy.rc \
-	Da.rc \
-	De.rc \
-	En.rc \
-	Es.rc \
-	Fr.rc \
-	Ga.rc \
-	He.rc \
-	Hu.rc \
-	It.rc \
-	Ja.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	No.rc \
-	Pl.rc \
-	Pt.rc \
-	Ro.rc \
-	Ru.rc \
-	Si.rc \
-	Sr.rc \
-	Sv.rc \
-	Uk.rc \
-	version.rc
+RC_SRCS = mapi32.rc
+PO_SRCS = mapi32.rc
 
 @MAKE_DLL_RULES@
