@@ -1838,7 +1838,7 @@ HRESULT resource_init(struct IWineD3DResourceImpl *resource, WINED3DRESOURCETYPE
         WINED3DPOOL pool, void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 WINED3DRESOURCETYPE resource_get_type(IWineD3DResource *iface) DECLSPEC_HIDDEN;
 DWORD resource_set_priority(IWineD3DResource *iface, DWORD new_priority) DECLSPEC_HIDDEN;
-HRESULT resource_set_private_data(IWineD3DResource *iface, REFGUID guid,
+HRESULT resource_set_private_data(struct IWineD3DResourceImpl *resource, REFGUID guid,
         const void *data, DWORD data_size, DWORD flags) DECLSPEC_HIDDEN;
 void resource_unload(IWineD3DResourceImpl *resource) DECLSPEC_HIDDEN;
 

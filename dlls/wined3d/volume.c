@@ -153,7 +153,7 @@ static void * WINAPI IWineD3DVolumeImpl_GetParent(IWineD3DVolume *iface)
 static HRESULT WINAPI IWineD3DVolumeImpl_SetPrivateData(IWineD3DVolume *iface,
         REFGUID riid, const void *data, DWORD data_size, DWORD flags)
 {
-    return resource_set_private_data((IWineD3DResource *)iface, riid, data, data_size, flags);
+    return resource_set_private_data((IWineD3DResourceImpl *)iface, riid, data, data_size, flags);
 }
 
 static HRESULT WINAPI IWineD3DVolumeImpl_GetPrivateData(IWineD3DVolume *iface,

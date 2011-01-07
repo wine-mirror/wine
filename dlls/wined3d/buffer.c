@@ -764,7 +764,7 @@ static void * STDMETHODCALLTYPE buffer_GetParent(IWineD3DBuffer *iface)
 static HRESULT STDMETHODCALLTYPE buffer_SetPrivateData(IWineD3DBuffer *iface,
         REFGUID guid, const void *data, DWORD data_size, DWORD flags)
 {
-    return resource_set_private_data((IWineD3DResource *)iface, guid, data, data_size, flags);
+    return resource_set_private_data((IWineD3DResourceImpl *)iface, guid, data, data_size, flags);
 }
 
 static HRESULT STDMETHODCALLTYPE buffer_GetPrivateData(IWineD3DBuffer *iface,
