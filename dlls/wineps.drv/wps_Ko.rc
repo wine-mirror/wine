@@ -1,6 +1,6 @@
 /*
  * Copyright 2002 Won-kyu Park <wkpark@kldp.org>
- * Copyright 2005 YunSong Hwang
+ * Copyright 2005,2011 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,22 +19,24 @@
 
 #include "psdlg.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 PAPER DIALOG 5, 43, 227, 215
 STYLE  WS_POPUP | WS_CAPTION | WS_CLIPSIBLINGS | WS_VISIBLE
-CAPTION "¡æ¿Ã"
+CAPTION "Ï¢ÖÏù¥"
 FONT 9, "MS Shell Dlg"
 {
- LTEXT "¡æ¿Ã ≈©±‚(&Z):", -1, 10, 6, 100, 8
+ LTEXT "Ï¢ÖÏù¥ ÌÅ¨Í∏∞(&Z):", -1, 10, 6, 100, 8
  LISTBOX IDD_PAPERS, 10, 15, 200, 45, LBS_STANDARD | LBS_HASSTRINGS |
 	 WS_TABSTOP
- GROUPBOX "πÊ«‚", -1, 10, 80, 200, 50
- CONTROL "ºº∑Œ(&P)", IDD_ORIENT_PORTRAIT, "Button", BS_AUTORADIOBUTTON |
+ GROUPBOX "Î∞©Ìñ•", -1, 10, 80, 200, 50
+ CONTROL "ÏÑ∏Î°ú(&P)", IDD_ORIENT_PORTRAIT, "Button", BS_AUTORADIOBUTTON |
 	WS_TABSTOP, 20, 90, 60, 10
- CONTROL "∞°∑Œ(&L)", IDD_ORIENT_LANDSCAPE, "Button", BS_AUTORADIOBUTTON,
+ CONTROL "Í∞ÄÎ°ú(&L)", IDD_ORIENT_LANDSCAPE, "Button", BS_AUTORADIOBUTTON,
 	 20, 110, 60, 10
- LTEXT "æÁπÊ«‚ ≈ÎΩ≈:", IDD_DUPLEX_NAME, 10, 140, 100, 8
+ LTEXT "ÏñëÎ∞©Ìñ• ÌÜµÏã†:", IDD_DUPLEX_NAME, 10, 140, 100, 8
  COMBOBOX IDD_DUPLEX, 10, 151, 200, 20, CBS_DROPDOWNLIST | CBS_HASSTRINGS |
         WS_TABSTOP
 }
