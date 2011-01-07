@@ -233,8 +233,9 @@ static DWORD WINAPI IWineD3DCubeTextureImpl_SetPriority(IWineD3DCubeTexture *ifa
     return resource_set_priority((IWineD3DResource *)iface, PriorityNew);
 }
 
-static DWORD WINAPI IWineD3DCubeTextureImpl_GetPriority(IWineD3DCubeTexture *iface) {
-    return resource_get_priority((IWineD3DResource *)iface);
+static DWORD WINAPI IWineD3DCubeTextureImpl_GetPriority(IWineD3DCubeTexture *iface)
+{
+    return resource_get_priority((IWineD3DResourceImpl *)iface);
 }
 
 /* Do not call while under the GL lock. */

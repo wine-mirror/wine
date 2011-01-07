@@ -132,8 +132,9 @@ DWORD   WINAPI IWineD3DBaseSurfaceImpl_SetPriority(IWineD3DSurface *iface, DWORD
     return resource_set_priority((IWineD3DResource *)iface, PriorityNew);
 }
 
-DWORD   WINAPI IWineD3DBaseSurfaceImpl_GetPriority(IWineD3DSurface *iface) {
-    return resource_get_priority((IWineD3DResource *)iface);
+DWORD WINAPI IWineD3DBaseSurfaceImpl_GetPriority(IWineD3DSurface *iface)
+{
+    return resource_get_priority((IWineD3DResourceImpl *)iface);
 }
 
 WINED3DRESOURCETYPE WINAPI IWineD3DBaseSurfaceImpl_GetType(IWineD3DSurface *iface) {

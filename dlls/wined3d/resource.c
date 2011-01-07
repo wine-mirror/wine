@@ -259,11 +259,10 @@ DWORD resource_set_priority(IWineD3DResource *iface, DWORD PriorityNew)
     return PriorityOld;
 }
 
-DWORD resource_get_priority(IWineD3DResource *iface)
+DWORD resource_get_priority(struct IWineD3DResourceImpl *resource)
 {
-    IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
-    TRACE("(%p) : returning %d\n", This, This->resource.priority );
-    return This->resource.priority;
+    TRACE("resource %p, returning %u.\n", resource, resource->resource.priority);
+    return resource->resource.priority;
 }
 
 WINED3DRESOURCETYPE resource_get_type(IWineD3DResource *iface)

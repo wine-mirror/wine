@@ -785,7 +785,7 @@ static DWORD STDMETHODCALLTYPE buffer_SetPriority(IWineD3DBuffer *iface, DWORD p
 
 static DWORD STDMETHODCALLTYPE buffer_GetPriority(IWineD3DBuffer *iface)
 {
-    return resource_get_priority((IWineD3DResource *)iface);
+    return resource_get_priority((IWineD3DResourceImpl *)iface);
 }
 
 /* The caller provides a context and binds the buffer */

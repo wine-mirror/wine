@@ -171,8 +171,9 @@ static DWORD WINAPI IWineD3DVolumeImpl_SetPriority(IWineD3DVolume *iface, DWORD 
     return resource_set_priority((IWineD3DResource *)iface, PriorityNew);
 }
 
-static DWORD WINAPI IWineD3DVolumeImpl_GetPriority(IWineD3DVolume *iface) {
-    return resource_get_priority((IWineD3DResource *)iface);
+static DWORD WINAPI IWineD3DVolumeImpl_GetPriority(IWineD3DVolume *iface)
+{
+    return resource_get_priority((IWineD3DResourceImpl *)iface);
 }
 
 /* Do not call while under the GL lock. */
