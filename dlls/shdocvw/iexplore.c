@@ -693,50 +693,6 @@ static void create_frame_hwnd(InternetExplorer *This)
             NULL, NULL /* FIXME */, shdocvw_hinstance, This);
 }
 
-static BOOL create_ie_window(LPCSTR cmdline)
-{
-    IWebBrowser2 *wb = NULL;
-
-    InternetExplorer_Create(NULL, &IID_IWebBrowser2, (void**)&wb);
-    if(!wb)
-        return FALSE;
-
-    IWebBrowser2_put_Visible(wb, VARIANT_TRUE);
-    IWebBrowser2_put_MenuBar(wb, VARIANT_TRUE);
-
-    if(!*cmdline) {
-        IWebBrowser2_GoHome(wb);
-    }else {
-        VARIANT var_url;
-        DWORD len;
-        int cmdlen;
-
-        if(!strncasecmp(cmdline, "-nohome", 7))
-            cmdline += 7;
-        while(*cmdline == ' ' || *cmdline == '\t')
-            cmdline++;
-        cmdlen = lstrlenA(cmdline);
-        if(cmdlen > 2 && cmdline[0] == '"' && cmdline[cmdlen-1] == '"') {
-            cmdline++;
-            cmdlen -= 2;
-        }
-
-        V_VT(&var_url) = VT_BSTR;
-
-        len = MultiByteToWideChar(CP_ACP, 0, cmdline, cmdlen, NULL, 0);
-        V_BSTR(&var_url) = SysAllocStringLen(NULL, len);
-        MultiByteToWideChar(CP_ACP, 0, cmdline, cmdlen, V_BSTR(&var_url), len);
-
-        /* navigate to the first page */
-        IWebBrowser2_Navigate2(wb, &var_url, NULL, NULL, NULL, NULL);
-
-        SysFreeString(V_BSTR(&var_url));
-    }
-
-    IWebBrowser2_Release(wb);
-    return TRUE;
-}
-
 static inline IEDocHost *impl_from_DocHost(DocHost *iface)
 {
     return CONTAINING_RECORD(iface, IEDocHost, doc_host);
@@ -799,12 +755,9 @@ static const IDocHostContainerVtbl DocHostContainerVtbl = {
     DocHostContainer_exec
 };
 
-HRESULT InternetExplorer_Create(IUnknown *pOuter, REFIID riid, void **ppv)
+static HRESULT create_ie(InternetExplorer **ret_obj)
 {
     InternetExplorer *ret;
-    HRESULT hres;
-
-    TRACE("(%p %s %p)\n", pOuter, debugstr_guid(riid), ppv);
 
     ret = heap_alloc_zero(sizeof(InternetExplorer));
     if(!ret)
@@ -828,12 +781,27 @@ HRESULT InternetExplorer_Create(IUnknown *pOuter, REFIID riid, void **ppv)
     create_frame_hwnd(ret);
     ret->doc_host->doc_host.frame_hwnd = ret->frame_hwnd;
 
+    InterlockedIncrement(&obj_cnt);
+    *ret_obj = ret;
+    return S_OK;
+}
+
+HRESULT InternetExplorer_Create(IUnknown *pOuter, REFIID riid, void **ppv)
+{
+    InternetExplorer *ret;
+    HRESULT hres;
+
+    TRACE("(%p %s %p)\n", pOuter, debugstr_guid(riid), ppv);
+
+    hres = create_ie(&ret);
+    if(FAILED(hres))
+        return hres;
+
     hres = IWebBrowser2_QueryInterface(&ret->IWebBrowser2_iface, riid, ppv);
     IWebBrowser2_Release(&ret->IWebBrowser2_iface);
     if(FAILED(hres))
         return hres;
 
-    InterlockedIncrement(&obj_cnt);
     return S_OK;
 }
 
@@ -843,9 +811,54 @@ void released_obj(void)
         PostQuitMessage(0);
 }
 
+static BOOL create_ie_window(LPCSTR cmdline)
+{
+    InternetExplorer *ie;
+    HRESULT hres;
+
+    hres = create_ie(&ie);
+    if(FAILED(hres))
+        return FALSE;
+
+    IWebBrowser2_put_Visible(&ie->IWebBrowser2_iface, VARIANT_TRUE);
+    IWebBrowser2_put_MenuBar(&ie->IWebBrowser2_iface, VARIANT_TRUE);
+
+    if(!*cmdline) {
+        IWebBrowser2_GoHome(&ie->IWebBrowser2_iface);
+    }else {
+        VARIANT var_url;
+        DWORD len;
+        int cmdlen;
+
+        if(!strncasecmp(cmdline, "-nohome", 7))
+            cmdline += 7;
+        while(*cmdline == ' ' || *cmdline == '\t')
+            cmdline++;
+        cmdlen = lstrlenA(cmdline);
+        if(cmdlen > 2 && cmdline[0] == '"' && cmdline[cmdlen-1] == '"') {
+            cmdline++;
+            cmdlen -= 2;
+        }
+
+        V_VT(&var_url) = VT_BSTR;
+
+        len = MultiByteToWideChar(CP_ACP, 0, cmdline, cmdlen, NULL, 0);
+        V_BSTR(&var_url) = SysAllocStringLen(NULL, len);
+        MultiByteToWideChar(CP_ACP, 0, cmdline, cmdlen, V_BSTR(&var_url), len);
+
+        /* navigate to the first page */
+        IWebBrowser2_Navigate2(&ie->IWebBrowser2_iface, &var_url, NULL, NULL, NULL, NULL);
+
+        SysFreeString(V_BSTR(&var_url));
+    }
+
+    IWebBrowser2_Release(&ie->IWebBrowser2_iface);
+    return TRUE;
+}
+
 static ULONG open_dde_url(WCHAR *dde_url)
 {
-    IWebBrowser2 *wb;
+    InternetExplorer *ie;
     WCHAR *url, *url_end;
     VARIANT urlv;
     HRESULT hres;
@@ -869,25 +882,25 @@ static ULONG open_dde_url(WCHAR *dde_url)
             url_end = url + strlenW(url);
     }
 
-    hres = InternetExplorer_Create(NULL, &IID_IWebBrowser2, (void**)&wb);
+    hres = create_ie(&ie);
     if(FAILED(hres))
         return 0;
 
-    IWebBrowser2_put_Visible(wb, VARIANT_TRUE);
-    IWebBrowser2_put_MenuBar(wb, VARIANT_TRUE);
+    IWebBrowser2_put_Visible(&ie->IWebBrowser2_iface, VARIANT_TRUE);
+    IWebBrowser2_put_MenuBar(&ie->IWebBrowser2_iface, VARIANT_TRUE);
 
     V_VT(&urlv) = VT_BSTR;
     V_BSTR(&urlv) = SysAllocStringLen(url, url_end-url);
     if(!V_BSTR(&urlv)) {
-        IWebBrowser2_Release(wb);
+        IWebBrowser2_Release(&ie->IWebBrowser2_iface);
         return 0;
     }
 
-    hres = IWebBrowser2_Navigate2(wb, &urlv, NULL, NULL, NULL, NULL);
+    hres = IWebBrowser2_Navigate2(&ie->IWebBrowser2_iface, &urlv, NULL, NULL, NULL, NULL);
     if(FAILED(hres))
         return 0;
 
-    IWebBrowser2_Release(wb);
+    IWebBrowser2_Release(&ie->IWebBrowser2_iface);
     return DDE_FACK;
 }
 
