@@ -1575,23 +1575,6 @@ struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain,
         checkGLcall("glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)");
     }
 
-    if (gl_info->supported[WINED3D_GL_VERSION_2_0])
-    {
-        /* Windows doesn't support to query the glPointParameteri function pointer, so use the
-         * NV_POINT_SPRITE extension.
-         */
-        if (glPointParameteri)
-        {
-            glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN, GL_UPPER_LEFT);
-            checkGLcall("glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN, GL_UPPER_LEFT)");
-        }
-        else if (gl_info->supported[NV_POINT_SPRITE])
-        {
-            GL_EXTCALL(glPointParameteriNV(GL_POINT_SPRITE_COORD_ORIGIN, GL_UPPER_LEFT));
-            checkGLcall("glPointParameteriNV(GL_POINT_SPRITE_COORD_ORIGIN, GL_UPPER_LEFT)");
-        }
-    }
-
     if (gl_info->supported[ARB_PROVOKING_VERTEX])
     {
         GL_EXTCALL(glProvokingVertex(GL_FIRST_VERTEX_CONVENTION));
@@ -2019,27 +2002,9 @@ void context_set_draw_buffer(struct wined3d_context *context, GLenum buffer)
 static inline void context_set_render_offscreen(struct wined3d_context *context, const struct StateEntry *StateTable,
         BOOL offscreen)
 {
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-
     if (context->render_offscreen == offscreen) return;
 
-    if (gl_info->supported[WINED3D_GL_VERSION_2_0])
-    {
-        /* Windows doesn't support to query the glPointParameteri function pointer, so use the
-         * NV_POINT_SPRITE extension.
-         */
-        if (glPointParameteri)
-        {
-            glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN, offscreen ? GL_LOWER_LEFT : GL_UPPER_LEFT);
-            checkGLcall("glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN, ...)");
-        }
-        else if (gl_info->supported[NV_POINT_SPRITE])
-        {
-            GL_EXTCALL(glPointParameteriNV(GL_POINT_SPRITE_COORD_ORIGIN, offscreen ? GL_LOWER_LEFT : GL_UPPER_LEFT));
-            checkGLcall("glPointParameteriNV(GL_POINT_SPRITE_COORD_ORIGIN, ...)");
-        }
-    }
-
+    Context_MarkStateDirty(context, STATE_POINTSPRITECOORDORIGIN, StateTable);
     Context_MarkStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION), StateTable);
     Context_MarkStateDirty(context, STATE_VDECL, StateTable);
     Context_MarkStateDirty(context, STATE_VIEWPORT, StateTable);

@@ -2212,6 +2212,8 @@ const char *debug_d3dstate(DWORD state)
         return "STATE_MATERIAL";
     if (STATE_IS_FRONTFACE(state))
         return "STATE_FRONTFACE";
+    if (STATE_IS_POINTSPRITECOORDORIGIN(state))
+        return "STATE_POINTSPRITECOORDORIGIN";
 
     return wine_dbg_sprintf("UNKNOWN_STATE(%#x)", state);
 }

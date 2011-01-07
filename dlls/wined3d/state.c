@@ -4963,6 +4963,34 @@ static void frontface(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wi
     }
 }
 
+static void psorigin_w(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+{
+    static BOOL warned;
+
+    if (!warned)
+    {
+        WARN("Point sprite coordinate origin switching not supported.\n");
+        warned = TRUE;
+    }
+}
+
+static void psorigin(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    GLint origin = context->render_offscreen ? GL_LOWER_LEFT : GL_UPPER_LEFT;
+
+    if (glPointParameteri)
+    {
+        glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN, origin);
+        checkGLcall("glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN, ...)");
+    }
+    else if (gl_info->supported[NV_POINT_SPRITE])
+    {
+        GL_EXTCALL(glPointParameteriNV(GL_POINT_SPRITE_COORD_ORIGIN, origin));
+        checkGLcall("glPointParameteriNV(GL_POINT_SPRITE_COORD_ORIGIN, ...)");
+    }
+}
+
 const struct StateEntryTemplate misc_state_template[] = {
     { STATE_RENDER(WINED3DRS_SRCBLEND),                   { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3DRS_DESTBLEND),                  { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
@@ -4978,6 +5006,9 @@ const struct StateEntryTemplate misc_state_template[] = {
     { STATE_VDECL,                                        { STATE_VDECL,                                        streamsrc           }, WINED3D_GL_EXT_NONE             },
     { STATE_FRONTFACE,                                    { STATE_FRONTFACE,                                    frontface           }, WINED3D_GL_EXT_NONE             },
     { STATE_SCISSORRECT,                                  { STATE_SCISSORRECT,                                  scissorrect         }, WINED3D_GL_EXT_NONE             },
+    { STATE_POINTSPRITECOORDORIGIN,                       { STATE_POINTSPRITECOORDORIGIN,                       psorigin            }, WINED3D_GL_VERSION_2_0          },
+    { STATE_POINTSPRITECOORDORIGIN,                       { STATE_POINTSPRITECOORDORIGIN,                       psorigin_w          }, WINED3D_GL_EXT_NONE             },
+
     /* TODO: Move shader constant loading to vertex and fragment pipeline repectively, as soon as the pshader and
      * vshader loadings are untied from each other
      */
@@ -5810,6 +5841,7 @@ static void validate_state_table(struct StateEntry *state_table)
         STATE_VIEWPORT,
         STATE_SCISSORRECT,
         STATE_FRONTFACE,
+        STATE_POINTSPRITECOORDORIGIN,
     };
     unsigned int i, current;
 
