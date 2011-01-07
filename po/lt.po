@@ -1,17 +1,18 @@
 # Lithuanian translations for Wine
-#
+# Aurimas Fišeras <aurimas@gmail.com>, 2011.
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: N/A\n"
-"Last-Translator: Automatically generated\n"
-"Language-Team: none\n"
+"PO-Revision-Date: 2011-01-07 18:22+0300\n"
+"Last-Translator: Aurimas Fišeras <aurimas@gmail.com>\n"
+"Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Virtaal 0.6.1\n"
 
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
@@ -838,44 +839,40 @@ msgid "Signature CA"
 msgstr "Parašo LĮ"
 
 #: cryptdlg.rc:27
-#, fuzzy
 msgid "Certificate Policy"
 msgstr "Liudijimo politika"
 
 #: cryptdlg.rc:28
-#, fuzzy
 msgid "Policy Identifier: "
-msgstr "Įstaigos rakto identifikatorius"
+msgstr "Politiko identifikatorius:"
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
-msgstr ""
+msgstr "Politikos kvalifikatoriaus informacija"
 
 #: cryptdlg.rc:30
 msgid "Policy Qualifier Id="
-msgstr ""
+msgstr "Politikos kvalifikatoriaus identifikatorius="
 
 #: cryptdlg.rc:33
 msgid "Qualifier"
-msgstr ""
+msgstr "Kvalifikatorius"
 
 #: cryptdlg.rc:34
 msgid "Notice Reference"
-msgstr ""
+msgstr "Pranešimo nuoroda"
 
 #: cryptdlg.rc:35
-#, fuzzy
 msgid "Organization="
-msgstr "Įstaiga"
+msgstr "Įstaiga="
 
 #: cryptdlg.rc:36
-#, fuzzy
 msgid "Notice Number="
-msgstr "Liudijimo numeris="
+msgstr "Pranešimo numeris="
 
 #: cryptdlg.rc:37
 msgid "Notice Text="
-msgstr ""
+msgstr "Pranešimo tekstas="
 
 #: devenum.rc:32
 msgid "Default DirectSound"
@@ -1007,7 +1004,7 @@ msgstr "IDTB_TOC_PREV"
 
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"
-msgstr ""
+msgstr "Cinepak vaizdo kodekas"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -1329,13 +1326,8 @@ msgid "&Refresh"
 msgstr "Atsiųsti iš &naujo"
 
 #: shdoclc.rc:59 clock.rc:28
-#, fuzzy
 msgid "&Properties"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"&Savybės\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Savy&bės"
+msgstr "Savy&bės"
 
 #: shdoclc.rc:62
 msgid "Image"
@@ -3791,8 +3783,7 @@ msgstr ""
 "/L           Parodyti galutinio naudotojo licenciją.\n"
 "\n"
 "start.exe versija 0.2 (C) 2003, Dan Kegel\n"
-"Start pateikiama BE JOKIŲ GARANTIJŲ; detales rasite paleidę su /L "
-"parametru.\n"
+"Start pateikiama BE JOKIŲ GARANTIJŲ; detales rasite paleidę su /L parametru.\n"
 "Ši programa yra laisva programinė įranga; galite ją platinti\n"
 "tam tikromis sąlygomis; paleiskite „start /L“ išsamiai informacijai gauti.\n"
 
