@@ -774,8 +774,9 @@ static string_t *translate_string( po_file_t po, string_t *str, int *found )
 
     if (msg && !po_message_is_fuzzy( msg ))
     {
-        (*found)++;
         transl = po_message_msgstr( msg );
+        if (!transl[0]) transl = msgid;  /* ignore empty strings */
+        else (*found)++;
     }
     else transl = msgid;
 
