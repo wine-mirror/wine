@@ -40,6 +40,7 @@
 #include "htiframe.h"
 
 #include "wine/unicode.h"
+#include "wine/list.h"
 #include "resource.h"
 
 
@@ -201,7 +202,9 @@ struct InternetExplorer {
     HWND frame_hwnd;
     HWND status_hwnd;
     HMENU menu;
+    BOOL nohome;
 
+    struct list entry;
     IEDocHost *doc_host;
 };
 
