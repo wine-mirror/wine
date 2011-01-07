@@ -372,8 +372,11 @@ static HRESULT WINAPI InternetExplorer_get_Path(IWebBrowser2 *iface, BSTR *Path)
 static HRESULT WINAPI InternetExplorer_get_Visible(IWebBrowser2 *iface, VARIANT_BOOL *pBool)
 {
     InternetExplorer *This = impl_from_IWebBrowser2(iface);
-    FIXME("(%p)->(%p)\n", This, pBool);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pBool);
+
+    *pBool = IsWindowVisible(This->frame_hwnd) ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI InternetExplorer_put_Visible(IWebBrowser2 *iface, VARIANT_BOOL Value)

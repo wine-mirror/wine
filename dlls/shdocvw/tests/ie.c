@@ -27,6 +27,28 @@
 #include "ole2.h"
 #include "exdisp.h"
 
+static void test_visible(IWebBrowser2 *wb)
+{
+    VARIANT_BOOL b;
+    HRESULT hres;
+
+    b = 0x100;
+    hres = IWebBrowser2_get_Visible(wb, &b);
+    ok(hres == S_OK, "get_Visible failed: %08x\n", hres);
+    ok(b == VARIANT_FALSE, "Visible = %x\n", hres);
+
+    hres = IWebBrowser2_put_Visible(wb, VARIANT_TRUE);
+    ok(hres == S_OK, "put_Visible failed: %08x\n", hres);
+
+    b = 0x100;
+    hres = IWebBrowser2_get_Visible(wb, &b);
+    ok(hres == S_OK, "get_Visible failed: %08x\n", hres);
+    ok(b == VARIANT_TRUE, "Visible = %x\n", hres);
+
+    hres = IWebBrowser2_put_Visible(wb, VARIANT_FALSE);
+    ok(hres == S_OK, "put_Visible failed: %08x\n", hres);
+}
+
 static void test_InternetExplorer(void)
 {
     IWebBrowser2 *wb;
@@ -43,6 +65,8 @@ static void test_InternetExplorer(void)
 
     hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
     ok(hres == S_OK, "Could not get IWebBrowser2 interface: %08x\n", hres);
+
+    test_visible(wb);
 
     IWebBrowser2_Release(wb);
     ref = IUnknown_Release(unk);
