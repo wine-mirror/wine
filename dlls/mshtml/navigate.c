@@ -761,11 +761,14 @@ typedef struct {
     HRESULT hres;
 } BufferBSC;
 
-#define BUFFERBSC_THIS(bsc) ((BufferBSC*) bsc)
+static inline BufferBSC *BufferBSC_from_BSCallback(BSCallback *iface)
+{
+    return CONTAINING_RECORD(iface, BufferBSC, bsc);
+}
 
 static void BufferBSC_destroy(BSCallback *bsc)
 {
-    BufferBSC *This = BUFFERBSC_THIS(bsc);
+    BufferBSC *This = BufferBSC_from_BSCallback(bsc);
 
     heap_free(This->buf);
     heap_free(This);
@@ -783,7 +786,7 @@ static HRESULT BufferBSC_start_binding(BSCallback *bsc)
 
 static HRESULT BufferBSC_stop_binding(BSCallback *bsc, HRESULT result)
 {
-    BufferBSC *This = BUFFERBSC_THIS(bsc);
+    BufferBSC *This = BufferBSC_from_BSCallback(bsc);
 
     This->hres = result;
 
@@ -798,7 +801,7 @@ static HRESULT BufferBSC_stop_binding(BSCallback *bsc, HRESULT result)
 
 static HRESULT BufferBSC_read_data(BSCallback *bsc, IStream *stream)
 {
-    BufferBSC *This = BUFFERBSC_THIS(bsc);
+    BufferBSC *This = BufferBSC_from_BSCallback(bsc);
     DWORD readed;
     HRESULT hres;
 
@@ -836,8 +839,6 @@ static HRESULT BufferBSC_beginning_transaction(BSCallback *bsc, WCHAR **addition
 {
     return S_FALSE;
 }
-
-#undef BUFFERBSC_THIS
 
 static const BSCallbackVtbl BufferBSCVtbl = {
     BufferBSC_destroy,
@@ -1029,11 +1030,14 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
     return S_OK;
 }
 
-#define NSCHANNELBSC_THIS(bsc) ((nsChannelBSC*) bsc)
+static inline nsChannelBSC *nsChannelBSC_from_BSCallback(BSCallback *iface)
+{
+    return CONTAINING_RECORD(iface, nsChannelBSC, bsc);
+}
 
 static void nsChannelBSC_destroy(BSCallback *bsc)
 {
-    nsChannelBSC *This = NSCHANNELBSC_THIS(bsc);
+    nsChannelBSC *This = nsChannelBSC_from_BSCallback(bsc);
 
     if(This->nschannel)
         nsIChannel_Release(&This->nschannel->nsIHttpChannel_iface);
@@ -1048,7 +1052,7 @@ static void nsChannelBSC_destroy(BSCallback *bsc)
 
 static HRESULT nsChannelBSC_start_binding(BSCallback *bsc)
 {
-    nsChannelBSC *This = NSCHANNELBSC_THIS(bsc);
+    nsChannelBSC *This = nsChannelBSC_from_BSCallback(bsc);
 
     if(This->window)
         This->window->doc->skip_mutation_notif = FALSE;
@@ -1058,7 +1062,7 @@ static HRESULT nsChannelBSC_start_binding(BSCallback *bsc)
 
 static HRESULT nsChannelBSC_init_bindinfo(BSCallback *bsc)
 {
-    nsChannelBSC *This = NSCHANNELBSC_THIS(bsc);
+    nsChannelBSC *This = nsChannelBSC_from_BSCallback(bsc);
     HRESULT hres;
 
     if(This->nschannel && This->nschannel->post_data_stream) {
@@ -1104,7 +1108,7 @@ static HRESULT async_stop_request(nsChannelBSC *This)
 
 static HRESULT nsChannelBSC_stop_binding(BSCallback *bsc, HRESULT result)
 {
-    nsChannelBSC *This = NSCHANNELBSC_THIS(bsc);
+    nsChannelBSC *This = nsChannelBSC_from_BSCallback(bsc);
 
     if(This->window && SUCCEEDED(result)) {
         result = async_stop_request(This);
@@ -1118,14 +1122,14 @@ static HRESULT nsChannelBSC_stop_binding(BSCallback *bsc, HRESULT result)
 
 static HRESULT nsChannelBSC_read_data(BSCallback *bsc, IStream *stream)
 {
-    nsChannelBSC *This = NSCHANNELBSC_THIS(bsc);
+    nsChannelBSC *This = nsChannelBSC_from_BSCallback(bsc);
 
     return read_stream_data(This, stream);
 }
 
 static HRESULT nsChannelBSC_on_progress(BSCallback *bsc, ULONG status_code, LPCWSTR status_text)
 {
-    nsChannelBSC *This = NSCHANNELBSC_THIS(bsc);
+    nsChannelBSC *This = nsChannelBSC_from_BSCallback(bsc);
 
     switch(status_code) {
     case BINDSTATUS_MIMETYPEAVAILABLE:
@@ -1148,7 +1152,7 @@ static HRESULT nsChannelBSC_on_progress(BSCallback *bsc, ULONG status_code, LPCW
 static HRESULT nsChannelBSC_on_response(BSCallback *bsc, DWORD response_code,
         LPCWSTR response_headers)
 {
-    nsChannelBSC *This = NSCHANNELBSC_THIS(bsc);
+    nsChannelBSC *This = nsChannelBSC_from_BSCallback(bsc);
     HRESULT hres;
 
     This->nschannel->response_status = response_code;
@@ -1172,7 +1176,7 @@ static HRESULT nsChannelBSC_on_response(BSCallback *bsc, DWORD response_code,
 
 static HRESULT nsChannelBSC_beginning_transaction(BSCallback *bsc, WCHAR **additional_headers)
 {
-    nsChannelBSC *This = NSCHANNELBSC_THIS(bsc);
+    nsChannelBSC *This = nsChannelBSC_from_BSCallback(bsc);
     http_header_t *iter;
     DWORD len = 0;
     WCHAR *ptr;
@@ -1218,8 +1222,6 @@ static HRESULT nsChannelBSC_beginning_transaction(BSCallback *bsc, WCHAR **addit
 
     return S_OK;
 }
-
-#undef NSCHANNELBSC_THIS
 
 static const BSCallbackVtbl nsChannelBSCVtbl = {
     nsChannelBSC_destroy,
