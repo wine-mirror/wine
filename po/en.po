@@ -847,19 +847,19 @@ msgstr "Policy Identifier: "
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
-msgstr ""
+msgstr "Policy Qualifier Info"
 
 #: cryptdlg.rc:30
 msgid "Policy Qualifier Id="
-msgstr ""
+msgstr "Policy Qualifier Id="
 
 #: cryptdlg.rc:33
 msgid "Qualifier"
-msgstr ""
+msgstr "Qualifier"
 
 #: cryptdlg.rc:34
 msgid "Notice Reference"
-msgstr ""
+msgstr "Notice Reference"
 
 #: cryptdlg.rc:35
 msgid "Organization="
@@ -871,7 +871,7 @@ msgstr "Notice Number="
 
 #: cryptdlg.rc:37
 msgid "Notice Text="
-msgstr ""
+msgstr "Notice Text="
 
 #: devenum.rc:32
 msgid "Default DirectSound"
@@ -1003,35 +1003,35 @@ msgstr "IDTB_TOC_PREV"
 
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"
-msgstr ""
+msgstr "Cinepak Video codec"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
-msgstr ""
+msgstr "Error converting object to primitive type"
 
 #: jscript.rc:26
 msgid "Invalid procedure call or argument"
-msgstr ""
+msgstr "Invalid procedure call or argument"
 
 #: jscript.rc:27
 msgid "Subscript out of range"
-msgstr ""
+msgstr "Subscript out of range"
 
 #: jscript.rc:28
 msgid "Automation server can't create object"
-msgstr ""
+msgstr "Automation server can't create object"
 
 #: jscript.rc:29
 msgid "Object doesn't support this property or method"
-msgstr ""
+msgstr "Object doesn't support this property or method"
 
 #: jscript.rc:30
 msgid "Object doesn't support this action"
-msgstr ""
+msgstr "Object doesn't support this action"
 
 #: jscript.rc:31
 msgid "Argument not optional"
-msgstr ""
+msgstr "Argument not optional"
 
 #: jscript.rc:32
 msgid "Syntax error"
@@ -1039,75 +1039,75 @@ msgstr "Syntax error"
 
 #: jscript.rc:33
 msgid "Expected ';'"
-msgstr ""
+msgstr "Expected ';'"
 
 #: jscript.rc:34
 msgid "Expected '('"
-msgstr ""
+msgstr "Expected '('"
 
 #: jscript.rc:35
 msgid "Expected ')'"
-msgstr ""
+msgstr "Expected ')'"
 
 #: jscript.rc:36
 msgid "Unterminated string constant"
-msgstr ""
+msgstr "Unterminated string constant"
 
 #: jscript.rc:37
 msgid "Conditional compilation is turned off"
-msgstr ""
+msgstr "Conditional compilation is turned off"
 
 #: jscript.rc:40
 msgid "Number expected"
-msgstr ""
+msgstr "Number expected"
 
 #: jscript.rc:38
 msgid "Function expected"
-msgstr ""
+msgstr "Function expected"
 
 #: jscript.rc:39
 msgid "'[object]' is not a date object"
-msgstr ""
+msgstr "'[object]' is not a date object"
 
 #: jscript.rc:41
 msgid "Object expected"
-msgstr ""
+msgstr "Object expected"
 
 #: jscript.rc:42
 msgid "Illegal assignment"
-msgstr ""
+msgstr "Illegal assignment"
 
 #: jscript.rc:43
 msgid "'|' is undefined"
-msgstr ""
+msgstr "'|' is undefined"
 
 #: jscript.rc:44
 msgid "Boolean object expected"
-msgstr ""
+msgstr "Boolean object expected"
 
 #: jscript.rc:45
 msgid "VBArray object expected"
-msgstr ""
+msgstr "VBArray object expected"
 
 #: jscript.rc:46
 msgid "JScript object expected"
-msgstr ""
+msgstr "JScript object expected"
 
 #: jscript.rc:47
 msgid "Syntax error in regular expression"
-msgstr ""
+msgstr "Syntax error in regular expression"
 
 #: jscript.rc:48
 msgid "URI to be encoded contains invalid characters"
-msgstr ""
+msgstr "URI to be encoded contains invalid characters"
 
 #: jscript.rc:49
 msgid "Array length must be a finite positive integer"
-msgstr ""
+msgstr "Array length must be a finite positive integer"
 
 #: jscript.rc:50
 msgid "Array object expected"
-msgstr ""
+msgstr "Array object expected"
 
 #: localspl.rc:28
 msgid "Local Port"
@@ -1119,26 +1119,27 @@ msgstr "Local Monitor"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."
-msgstr ""
+msgstr "Mail sending failed as you do not have a MAPI mail client installed."
 
 #: mapi32.rc:29
 msgid "Send Mail"
-msgstr ""
+msgstr "Send Mail"
 
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "
 "file path and try again."
 msgstr ""
+"The specified installation package could not be opened.  Please check the "
+"file path and try again."
 
 #: msi.rc:28
-#, fuzzy
 msgid "path %s not found"
-msgstr "PATH not found\n"
+msgstr "path %s not found"
 
 #: msi.rc:29
 msgid "insert disk %s"
-msgstr ""
+msgstr "insert disk %s"
 
 #: msi.rc:30
 msgid ""
@@ -1172,64 +1173,95 @@ msgid ""
 "\t/help\n"
 "\t/?\n"
 msgstr ""
+"Windows Installer %s\n"
+"\n"
+"Usage:\n"
+"msiexec command {required parameter} [optional parameter]\n"
+"\n"
+"Install a product:\n"
+"\t/i {package|productcode} [property]\n"
+"\t/package {package|productcode} [property]\n"
+"\t/a package [property]\n"
+"Repair an installation:\n"
+"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n"
+"Uninstall a product:\n"
+"\t/uninstall {package|productcode} [property]\n"
+"\t/x {package|productcode} [property]\n"
+"Advertise a product:\n"
+"\t/j[u|m] package [/t transform] [/g languageid]\n"
+"Apply a patch:\n"
+"\t/p patchpackage [property]\n"
+"\t/p patchpackage /a package [property]\n"
+"Log and UI Modifiers for above commands:\n"
+"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
+"\t/q{|n|b|r|f|n+|b+|b-}\n"
+"Register MSI Service:\n"
+"\t/y\n"
+"Unregister MSI Service:\n"
+"\t/z\n"
+"Display this help:\n"
+"\t/help\n"
+"\t/?\n"
 
 #: msi.rc:57
 msgid "enter which folder contains %s"
-msgstr ""
+msgstr "enter which folder contains %s"
 
 #: msi.rc:58
 msgid "install source for feature missing"
-msgstr ""
+msgstr "install source for feature missing"
 
 #: msi.rc:59
 msgid "network drive for feature missing"
-msgstr ""
+msgstr "network drive for feature missing"
 
 #: msi.rc:60
 msgid "feature from:"
-msgstr ""
+msgstr "feature from:"
 
 #: msi.rc:61
 msgid "choose which folder contains %s"
-msgstr ""
+msgstr "choose which folder contains %s"
 
 #: msrle32.rc:27
 msgid "WINE-MS-RLE"
-msgstr ""
+msgstr "WINE-MS-RLE"
 
 #: msrle32.rc:28
 msgid "Wine MS-RLE video codec"
-msgstr ""
+msgstr "Wine MS-RLE video codec"
 
 #: msrle32.rc:29
 msgid ""
 "Wine MS-RLE video codec\n"
 "Copyright 2002 by Michael Guennewig"
 msgstr ""
+"Wine MS-RLE video codec\n"
+"Copyright 2002 by Michael Günnewig"
 
 #: msvidc32.rc:25
 msgid "MS-CRAM"
-msgstr ""
+msgstr "MS-CRAM"
 
 #: msvidc32.rc:26
 msgid "Wine Video 1 video codec"
-msgstr ""
+msgstr "Wine Video 1 video codec"
 
 #: oleaut32.rc:27
 msgid "True"
-msgstr ""
+msgstr "True"
 
 #: oleaut32.rc:28
 msgid "False"
-msgstr ""
+msgstr "False"
 
 #: oleaut32.rc:31
 msgid "On"
-msgstr ""
+msgstr "On"
 
 #: oleaut32.rc:32
 msgid "Off"
-msgstr ""
+msgstr "Off"
 
 #: shdoclc.rc:36
 msgid "Default"
@@ -1587,146 +1619,172 @@ msgstr "Scroll Right"
 
 #: shdoclc.rc:25
 msgid "Wine Internet Explorer"
-msgstr ""
+msgstr "Wine Internet Explorer"
 
 #: shdoclc.rc:30
-#, fuzzy
 msgid "&w&bPage &p"
-msgstr "Page Up"
+msgstr "&w&bPage &p"
 
 #: shdoclc.rc:31
 msgid "&u&b&d"
-msgstr ""
+msgstr "&u&b&d"
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
-msgstr ""
+msgstr "The specified command was carried out."
 
 #: winmm.rc:29
 msgid "Undefined external error."
-msgstr ""
+msgstr "Undefined external error."
 
 #: winmm.rc:30
 msgid "A device ID has been used that is out of range for your system."
-msgstr ""
+msgstr "A device ID has been used that is out of range for your system."
 
 #: winmm.rc:31
 msgid "The driver was not enabled."
-msgstr ""
+msgstr "The driver was not enabled."
 
 #: winmm.rc:32
 msgid ""
 "The specified device is already in use. Wait until it is free, and then try "
 "again."
 msgstr ""
+"The specified device is already in use. Wait until it is free, and then try "
+"again."
 
 #: winmm.rc:33
 msgid "The specified device handle is invalid."
-msgstr ""
+msgstr "The specified device handle is invalid."
 
 #: winmm.rc:34
 msgid "There is no driver installed on your system !\n"
-msgstr ""
+msgstr "There is no driver installed on your system !\n"
 
 #: winmm.rc:35
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
 msgstr ""
+"Not enough memory available for this task. Quit one or more applications to "
+"increase available memory, and then try again."
 
 #: winmm.rc:36
 msgid ""
 "This function is not supported. Use the Capabilities function to determine "
 "which functions and messages the driver supports."
 msgstr ""
+"This function is not supported. Use the Capabilities function to determine "
+"which functions and messages the driver supports."
 
 #: winmm.rc:37
 msgid "An error number was specified that is not defined in the system."
-msgstr ""
+msgstr "An error number was specified that is not defined in the system."
 
 #: winmm.rc:38
 msgid "An invalid flag was passed to a system function."
-msgstr ""
+msgstr "An invalid flag was passed to a system function."
 
 #: winmm.rc:39
 msgid "An invalid parameter was passed to a system function."
-msgstr ""
+msgstr "An invalid parameter was passed to a system function."
 
 #: winmm.rc:42
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats"
 msgstr ""
+"The specified format is not supported or cannot be translated. Use the "
+"Capabilities function to determine the supported formats"
 
 #: winmm.rc:43 winmm.rc:49
 msgid ""
 "Cannot perform this operation while media data is still playing. Reset the "
 "device, or wait until the data is finished playing."
 msgstr ""
+"Cannot perform this operation while media data is still playing. Reset the "
+"device, or wait until the data is finished playing."
 
 #: winmm.rc:44
 msgid ""
 "The wave header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
 msgstr ""
+"The wave header was not prepared. Use the Prepare function to prepare the "
+"header, and then try again."
 
 #: winmm.rc:45
 msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
 msgstr ""
+"Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
+"and then try again."
 
 #: winmm.rc:48
 msgid ""
 "The MIDI header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
 msgstr ""
+"The MIDI header was not prepared. Use the Prepare function to prepare the "
+"header, and then try again."
 
 #: winmm.rc:50
 msgid ""
 "A MIDI map was not found. There may be a problem with the driver, or the "
 "MIDIMAP.CFG file may be corrupt or missing."
 msgstr ""
+"A MIDI map was not found. There may be a problem with the driver, or the "
+"MIDIMAP.CFG file may be corrupt or missing."
 
 #: winmm.rc:51
 msgid ""
 "The port is transmitting data to the device. Wait until the data has been "
 "transmitted, and then try again."
 msgstr ""
+"The port is transmitting data to the device. Wait until the data has been "
+"transmitted, and then try again."
 
 #: winmm.rc:52
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system. Use MIDI Mapper to edit the setup."
 msgstr ""
+"The current MIDI Mapper setup refers to a MIDI device that is not installed "
+"on the system. Use MIDI Mapper to edit the setup."
 
 #: winmm.rc:53
 msgid ""
 "The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
 "Windows SYSTEM directory, and then try again."
 msgstr ""
+"The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
+"Windows SYSTEM directory, and then try again."
 
 #: winmm.rc:56
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
 msgstr ""
+"Invalid MCI device ID. Use the ID returned when opening the MCI device."
 
 #: winmm.rc:57
 msgid "The driver cannot recognize the specified command parameter."
-msgstr ""
+msgstr "The driver cannot recognize the specified command parameter."
 
 #: winmm.rc:58
 msgid "The driver cannot recognize the specified command."
-msgstr ""
+msgstr "The driver cannot recognize the specified command."
 
 #: winmm.rc:59
 msgid ""
 "There is a problem with your media device. Make sure it is working correctly "
 "or contact the device manufacturer."
 msgstr ""
+"There is a problem with your media device. Make sure it is working correctly "
+"or contact the device manufacturer."
 
 #: winmm.rc:60
 msgid "The specified device is not open or is not recognized by MCI."
-msgstr ""
+msgstr "The specified device is not open or is not recognized by MCI."
 
 #: winmm.rc:61
 msgid ""
@@ -1734,314 +1792,389 @@ msgid ""
 "Quit one or more applications to increase available memory, and then try "
 "again."
 msgstr ""
+"Not enough memory available for this task.\n"
+"Quit one or more applications to increase available memory, and then try "
+"again."
 
 #: winmm.rc:62
 msgid ""
 "The device name is already being used as an alias by this application. Use a "
 "unique alias."
 msgstr ""
+"The device name is already being used as an alias by this application. Use a "
+"unique alias."
 
 #: winmm.rc:63
 msgid ""
 "There is an undetectable problem in loading the specified device driver."
 msgstr ""
+"There is an undetectable problem in loading the specified device driver."
 
 #: winmm.rc:64
 msgid "No command was specified."
-msgstr ""
+msgstr "No command was specified."
 
 #: winmm.rc:65
 msgid ""
 "The output string was too large to fit in the return buffer. Increase the "
 "size of the buffer."
 msgstr ""
+"The output string was too large to fit in the return buffer. Increase the "
+"size of the buffer."
 
 #: winmm.rc:66
 msgid ""
 "The specified command requires a character-string parameter. Please provide "
 "one."
 msgstr ""
+"The specified command requires a character-string parameter. Please provide "
+"one."
 
 #: winmm.rc:67
 msgid "The specified integer is invalid for this command."
-msgstr ""
+msgstr "The specified integer is invalid for this command."
 
 #: winmm.rc:68
 msgid ""
 "The device driver returned an invalid return type. Check with the device "
 "manufacturer about obtaining a new driver."
 msgstr ""
+"The device driver returned an invalid return type. Check with the device "
+"manufacturer about obtaining a new driver."
 
 #: winmm.rc:69
 msgid ""
 "There is a problem with the device driver. Check with the device "
 "manufacturer about obtaining a new driver."
 msgstr ""
+"There is a problem with the device driver. Check with the device "
+"manufacturer about obtaining a new driver."
 
 #: winmm.rc:70
 msgid "The specified command requires a parameter. Please supply one."
-msgstr ""
+msgstr "The specified command requires a parameter. Please supply one."
 
 #: winmm.rc:71
 msgid "The MCI device you are using does not support the specified command."
-msgstr ""
+msgstr "The MCI device you are using does not support the specified command."
 
 #: winmm.rc:72
 msgid ""
 "Cannot find the specified file. Make sure the path and filename are correct."
 msgstr ""
+"Cannot find the specified file. Make sure the path and filename are correct."
 
 #: winmm.rc:73
 msgid "The device driver is not ready."
-msgstr ""
+msgstr "The device driver is not ready."
 
 #: winmm.rc:74
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
-msgstr ""
+msgstr "A problem occurred in initializing MCI. Try restarting Windows."
 
 #: winmm.rc:75
 msgid ""
 "There is a problem with the device driver. The driver has closed. Cannot "
 "access error."
 msgstr ""
+"There is a problem with the device driver. The driver has closed. Cannot "
+"access error."
 
 #: winmm.rc:76
 msgid "Cannot use 'all' as the device name with the specified command."
-msgstr ""
+msgstr "Cannot use 'all' as the device name with the specified command."
 
 #: winmm.rc:77
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error"
 msgstr ""
+"Errors occurred in more than one device. Specify each command and device "
+"separately to determine which devices caused the error"
 
 #: winmm.rc:78
 msgid "Cannot determine the device type from the given filename extension."
-msgstr ""
+msgstr "Cannot determine the device type from the given filename extension."
 
 #: winmm.rc:79
 msgid "The specified parameter is out of range for the specified command."
-msgstr ""
+msgstr "The specified parameter is out of range for the specified command."
 
 #: winmm.rc:80
 msgid "The specified parameters cannot be used together."
-msgstr ""
+msgstr "The specified parameters cannot be used together."
 
 #: winmm.rc:81
 msgid ""
 "Cannot save the specified file. Make sure you have enough disk space or are "
 "still connected to the network."
 msgstr ""
+"Cannot save the specified file. Make sure you have enough disk space or are "
+"still connected to the network."
 
 #: winmm.rc:82
 msgid ""
 "Cannot find the specified device. Make sure it is installed or that the "
 "device name is spelled correctly."
 msgstr ""
+"Cannot find the specified device. Make sure it is installed or that the "
+"device name is spelled correctly."
 
 #: winmm.rc:83
 msgid ""
 "The specified device is now being closed. Wait a few seconds, and then try "
 "again."
 msgstr ""
+"The specified device is now being closed. Wait a few seconds, and then try "
+"again."
 
 #: winmm.rc:84
 msgid ""
 "The specified alias is already being used in this application. Use a unique "
 "alias."
 msgstr ""
+"The specified alias is already being used in this application. Use a unique "
+"alias."
 
 #: winmm.rc:85
 msgid "The specified parameter is invalid for this command."
-msgstr ""
+msgstr "The specified parameter is invalid for this command."
 
 #: winmm.rc:86
 msgid ""
 "The device driver is already in use. To share it, use the 'shareable' "
 "parameter with each 'open' command."
 msgstr ""
+"The device driver is already in use. To share it, use the 'shareable' "
+"parameter with each 'open' command."
 
 #: winmm.rc:87
 msgid ""
 "The specified command requires an alias, file, driver, or device name. "
 "Please supply one."
 msgstr ""
+"The specified command requires an alias, file, driver, or device name. "
+"Please supply one."
 
 #: winmm.rc:88
 msgid ""
 "The specified value for the time format is invalid. Refer to the MCI "
 "documentation for valid formats."
 msgstr ""
+"The specified value for the time format is invalid. Refer to the MCI "
+"documentation for valid formats."
 
 #: winmm.rc:89
 msgid ""
 "A closing double-quotation mark is missing from the parameter value. Please "
 "supply one."
 msgstr ""
+"A closing double-quotation mark is missing from the parameter value. Please "
+"supply one."
 
 #: winmm.rc:90
 msgid "A parameter or value was specified twice. Only specify it once."
-msgstr ""
+msgstr "A parameter or value was specified twice. Only specify it once."
 
 #: winmm.rc:91
 msgid ""
 "The specified file cannot be played on the specified MCI device. The file "
 "may be corrupt, or not in the correct format."
 msgstr ""
+"The specified file cannot be played on the specified MCI device. The file "
+"may be corrupt, or not in the correct format."
 
 #: winmm.rc:92
 msgid "A null parameter block was passed to MCI."
-msgstr ""
+msgstr "A null parameter block was passed to MCI."
 
 #: winmm.rc:93
 msgid "Cannot save an unnamed file. Supply a filename."
-msgstr ""
+msgstr "Cannot save an unnamed file. Supply a filename."
 
 #: winmm.rc:94
 msgid "You must specify an alias when using the 'new' parameter."
-msgstr ""
+msgstr "You must specify an alias when using the 'new' parameter."
 
 #: winmm.rc:95
 msgid "Cannot use the 'notify' flag with auto-opened devices."
-msgstr ""
+msgstr "Cannot use the 'notify' flag with auto-opened devices."
 
 #: winmm.rc:96
 msgid "Cannot use a filename with the specified device."
-msgstr ""
+msgstr "Cannot use a filename with the specified device."
 
 #: winmm.rc:97
 msgid ""
 "Cannot carry out the commands in the order specified. Correct the command "
 "sequence, and then try again."
 msgstr ""
+"Cannot carry out the commands in the order specified. Correct the command "
+"sequence, and then try again."
 
 #: winmm.rc:98
 msgid ""
 "Cannot carry out the specified command on an auto-opened device. Wait until "
 "the device is closed, and then try again."
 msgstr ""
+"Cannot carry out the specified command on an auto-opened device. Wait until "
+"the device is closed, and then try again."
 
 #: winmm.rc:99
 msgid ""
 "The filename is invalid. Make sure the filename is not longer than 8 "
 "characters, followed by a period and an extension."
 msgstr ""
+"The filename is invalid. Make sure the filename is not longer than 8 "
+"characters, followed by a period and an extension."
 
 #: winmm.rc:100
 msgid ""
 "Cannot specify extra characters after a string enclosed in quotation marks."
 msgstr ""
+"Cannot specify extra characters after a string enclosed in quotation marks."
 
 #: winmm.rc:101
 msgid ""
 "The specified device is not installed on the system. Use the Drivers option "
 "in Control Panel to install the device."
 msgstr ""
+"The specified device is not installed on the system. Use the Drivers option "
+"in Control Panel to install the device."
 
 #: winmm.rc:102
 msgid ""
 "Cannot access the specified file or MCI device. Try changing directories or "
 "restarting your computer."
 msgstr ""
+"Cannot access the specified file or MCI device. Try changing directories or "
+"restarting your computer."
 
 #: winmm.rc:103
 msgid ""
 "Cannot access the specified file or MCI device because the application "
 "cannot change directories."
 msgstr ""
+"Cannot access the specified file or MCI device because the application "
+"cannot change directories."
 
 #: winmm.rc:104
 msgid ""
 "Cannot access specified file or MCI device because the application cannot "
 "change drives."
 msgstr ""
+"Cannot access specified file or MCI device because the application cannot "
+"change drives."
 
 #: winmm.rc:105
 msgid "Specify a device or driver name that is less than 79 characters."
-msgstr ""
+msgstr "Specify a device or driver name that is less than 79 characters."
 
 #: winmm.rc:106
 msgid "Specify a device or driver name that is less than 69 characters."
-msgstr ""
+msgstr "Specify a device or driver name that is less than 69 characters."
 
 #: winmm.rc:107
 msgid ""
 "The specified command requires an integer parameter. Please provide one."
 msgstr ""
+"The specified command requires an integer parameter. Please provide one."
 
 #: winmm.rc:108
 msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
 msgstr ""
+"All wave devices that can play files in the current format are in use. Wait "
+"until a wave device is free, and then try again."
 
 #: winmm.rc:109
 msgid ""
 "Cannot set the current wave device for play back because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
+"Cannot set the current wave device for play back because it is in use. Wait "
+"until the device is free, and then try again."
 
 #: winmm.rc:110
 msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
 msgstr ""
+"All wave devices that can record files in the current format are in use. "
+"Wait until a wave device is free, and then try again."
 
 #: winmm.rc:111
 msgid ""
 "Cannot set the current wave device for recording because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
+"Cannot set the current wave device for recording because it is in use. Wait "
+"until the device is free, and then try again."
 
 #: winmm.rc:112
 msgid "Any compatible waveform playback device may be used."
-msgstr ""
+msgstr "Any compatible waveform playback device may be used."
 
 #: winmm.rc:113
 msgid "Any compatible waveform recording device may be used."
-msgstr ""
+msgstr "Any compatible waveform recording device may be used."
 
 #: winmm.rc:114
 msgid ""
 "No wave device that can play files in the current format is installed. Use "
 "the Drivers option to install the wave device."
 msgstr ""
+"No wave device that can play files in the current format is installed. Use "
+"the Drivers option to install the wave device."
 
 #: winmm.rc:115
 msgid ""
 "The device you are trying to play to cannot recognize the current file "
 "format."
 msgstr ""
+"The device you are trying to play to cannot recognize the current file "
+"format."
 
 #: winmm.rc:116
 msgid ""
 "No wave device that can record files in the current format is installed. Use "
 "the Drivers option to install the wave device."
 msgstr ""
+"No wave device that can record files in the current format is installed. Use "
+"the Drivers option to install the wave device."
 
 #: winmm.rc:117
 msgid ""
 "The device you are trying to record from cannot recognize the current file "
 "format."
 msgstr ""
+"The device you are trying to record from cannot recognize the current file "
+"format."
 
 #: winmm.rc:122
 msgid ""
 "The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
 "You can't use them together."
 msgstr ""
+"The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
+"You can't use them together."
 
 #: winmm.rc:124
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free; then try "
 "again."
 msgstr ""
+"The specified MIDI port is already in use. Wait until it is free; then try "
+"again."
 
 #: winmm.rc:127
 msgid ""
 "The specified MIDI device is not installed on the system. Use the Drivers "
 "option from the Control Panel to install a MIDI device."
 msgstr ""
+"The specified MIDI device is not installed on the system. Use the Drivers "
+"option from the Control Panel to install a MIDI device."
 
 #: winmm.rc:125
 msgid ""
@@ -2049,301 +2182,297 @@ msgid ""
 "on the system. Use the MIDI Mapper option from the Control Panel to edit the "
 "setup."
 msgstr ""
+"The current MIDI Mapper setup refers to a MIDI device that is not installed "
+"on the system. Use the MIDI Mapper option from the Control Panel to edit the "
+"setup."
 
 #: winmm.rc:126
 msgid "An error occurred with the specified port."
-msgstr ""
+msgstr "An error occurred with the specified port."
 
 #: winmm.rc:129
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications; then, try again."
 msgstr ""
+"All multimedia timers are being used by other applications. Quit one of "
+"these applications; then, try again."
 
 #: winmm.rc:128
 msgid "The system doesn't have a current MIDI port specified."
-msgstr ""
+msgstr "The system doesn't have a current MIDI port specified."
 
 #: winmm.rc:123
 msgid ""
 "The system has no installed MIDI devices. Use the Drivers option from the "
 "Control Panel to install a MIDI driver."
 msgstr ""
+"The system has no installed MIDI devices. Use the Drivers option from the "
+"Control Panel to install a MIDI driver."
 
 #: winmm.rc:118
 msgid "There is no display window."
-msgstr ""
+msgstr "There is no display window."
 
 #: winmm.rc:119
-#, fuzzy
 msgid "Could not create or use window."
-msgstr "Could not get handle to service.\n"
+msgstr "Could not create or use window."
 
 #: winmm.rc:120
 msgid ""
 "Cannot read the specified file. Make sure the file is still present, or "
 "check your disk or network connection."
 msgstr ""
+"Cannot read the specified file. Make sure the file is still present, or "
+"check your disk or network connection."
 
 #: winmm.rc:121
 msgid ""
 "Cannot write to the specified file. Make sure you have enough disk space or "
 "are still connected to the network."
 msgstr ""
+"Cannot write to the specified file. Make sure you have enough disk space or "
+"are still connected to the network."
 
 #: wldap32.rc:27
 msgid "Success"
-msgstr ""
+msgstr "Success"
 
 #: wldap32.rc:28
-#, fuzzy
 msgid "Operations Error"
-msgstr "Operation Ceased"
+msgstr "Operations Error"
 
 #: wldap32.rc:29
 msgid "Protocol Error"
-msgstr ""
+msgstr "Protocol Error"
 
 #: wldap32.rc:30
 msgid "Time Limit Exceeded"
-msgstr ""
+msgstr "Time Limit Exceeded"
 
 #: wldap32.rc:31
 msgid "Size Limit Exceeded"
-msgstr ""
+msgstr "Size Limit Exceeded"
 
 #: wldap32.rc:32
 msgid "Compare False"
-msgstr ""
+msgstr "Compare False"
 
 #: wldap32.rc:33
 msgid "Compare True"
-msgstr ""
+msgstr "Compare True"
 
 #: wldap32.rc:34
 msgid "Authentication Method Not Supported"
-msgstr ""
+msgstr "Authentication Method Not Supported"
 
 #: wldap32.rc:35
-#, fuzzy
 msgid "Strong Authentication Required"
-msgstr "Server Authentication"
+msgstr "Strong Authentication Required"
 
 #: wldap32.rc:36
 msgid "Referral (v2)"
-msgstr ""
+msgstr "Referral (v2)"
 
 #: wldap32.rc:37
 msgid "Referral"
-msgstr ""
+msgstr "Referral"
 
 #: wldap32.rc:38
 msgid "Administration Limit Exceeded"
-msgstr ""
+msgstr "Administration Limit Exceeded"
 
 #: wldap32.rc:39
-#, fuzzy
 msgid "Unavailable Critical Extension"
-msgstr "Certificate Extensions"
+msgstr "Unavailable Critical Extension"
 
 #: wldap32.rc:40
 msgid "Confidentiality Required"
-msgstr ""
+msgstr "Confidentiality Required"
 
 #: wldap32.rc:43
-#, fuzzy
 msgid "No Such Attribute"
-msgstr "Key Attributes"
+msgstr "No Such Attribute"
 
 #: wldap32.rc:44
-#, fuzzy
 msgid "Undefined Type"
-msgstr "Content Type"
+msgstr "Undefined Type"
 
 #: wldap32.rc:45
 msgid "Inappropriate Matching"
-msgstr ""
+msgstr "Inappropriate Matching"
 
 #: wldap32.rc:46
 msgid "Constraint Violation"
-msgstr ""
+msgstr "Constraint Violation"
 
 #: wldap32.rc:47
 msgid "Attribute Or Value Exists"
-msgstr ""
+msgstr "Attribute Or Value Exists"
 
 #: wldap32.rc:48
 msgid "Invalid Syntax"
-msgstr ""
+msgstr "Invalid Syntax"
 
 #: wldap32.rc:59
 msgid "No Such Object"
-msgstr ""
+msgstr "No Such Object"
 
 #: wldap32.rc:60
 msgid "Alias Problem"
-msgstr ""
+msgstr "Alias Problem"
 
 #: wldap32.rc:61
 msgid "Invalid DN Syntax"
-msgstr ""
+msgstr "Invalid DN Syntax"
 
 #: wldap32.rc:62
 msgid "Is Leaf"
-msgstr ""
+msgstr "Is Leaf"
 
 #: wldap32.rc:63
 msgid "Alias Dereference Problem"
-msgstr ""
+msgstr "Alias Dereference Problem"
 
 #: wldap32.rc:75
-#, fuzzy
 msgid "Inappropriate Authentication"
-msgstr "Server Authentication"
+msgstr "Inappropriate Authentication"
 
 #: wldap32.rc:76
 msgid "Invalid Credentials"
-msgstr ""
+msgstr "Invalid Credentials"
 
 #: wldap32.rc:77
-#, fuzzy
 msgid "Insufficient Rights"
-msgstr "Digital Rights"
+msgstr "Insufficient Rights"
 
 #: wldap32.rc:78
 msgid "Busy"
-msgstr ""
+msgstr "Busy"
 
 #: wldap32.rc:79
-#, fuzzy
 msgid "Unavailable"
-msgstr "Available"
+msgstr "Unavailable"
 
 #: wldap32.rc:80
 msgid "Unwilling To Perform"
-msgstr ""
+msgstr "Unwilling To Perform"
 
 #: wldap32.rc:81
 msgid "Loop Detected"
-msgstr ""
+msgstr "Loop Detected"
 
 #: wldap32.rc:87
 msgid "Sort Control Missing"
-msgstr ""
+msgstr "Sort Control Missing"
 
 #: wldap32.rc:88
 msgid "Index range error"
-msgstr ""
+msgstr "Index range error"
 
 #: wldap32.rc:91
 msgid "Naming Violation"
-msgstr ""
+msgstr "Naming Violation"
 
 #: wldap32.rc:92
 msgid "Object Class Violation"
-msgstr ""
+msgstr "Object Class Violation"
 
 #: wldap32.rc:93
 msgid "Not allowed on Non-leaf"
-msgstr ""
+msgstr "Not allowed on Non-leaf"
 
 #: wldap32.rc:94
 msgid "Not allowed on RDN"
-msgstr ""
+msgstr "Not allowed on RDN"
 
 #: wldap32.rc:95
 msgid "Already Exists"
-msgstr ""
+msgstr "Already Exists"
 
 #: wldap32.rc:96
 msgid "No Object Class Mods"
-msgstr ""
+msgstr "No Object Class Mods"
 
 #: wldap32.rc:97
 msgid "Results Too Large"
-msgstr ""
+msgstr "Results Too Large"
 
 #: wldap32.rc:98
 msgid "Affects Multiple DSAs"
-msgstr ""
+msgstr "Affects Multiple DSAs"
 
 #: wldap32.rc:107
-#, fuzzy
 msgid "Other"
-msgstr "Other Name="
+msgstr "Other"
 
 #: wldap32.rc:108
-#, fuzzy
 msgid "Server Down"
-msgstr "Scroll Down"
+msgstr "Server Down"
 
 #: wldap32.rc:109
-#, fuzzy
 msgid "Local Error"
-msgstr "Local Port"
+msgstr "Local Error"
 
 #: wldap32.rc:110
-#, fuzzy
 msgid "Encoding Error"
-msgstr "&Encoding"
+msgstr "Encoding Error"
 
 #: wldap32.rc:111
 msgid "Decoding Error"
-msgstr ""
+msgstr "Decoding Error"
 
 #: wldap32.rc:112
 msgid "Timeout"
-msgstr ""
+msgstr "Timeout"
 
 #: wldap32.rc:113
-#, fuzzy
 msgid "Auth Unknown"
-msgstr "Unknown"
+msgstr "Auth Unknown"
 
 #: wldap32.rc:114
 msgid "Filter Error"
-msgstr ""
+msgstr "Filter Error"
 
 #: wldap32.rc:115
 msgid "User Cancelled"
-msgstr ""
+msgstr "User Cancelled"
 
 #: wldap32.rc:116
-#, fuzzy
 msgid "Parameter Error"
-msgstr "Parameter error\n"
+msgstr "Parameter Error"
 
 #: wldap32.rc:117
 msgid "No Memory"
-msgstr ""
+msgstr "No Memory"
 
 #: wldap32.rc:118
 msgid "Can't connect to the LDAP server"
-msgstr ""
+msgstr "Can't connect to the LDAP server"
 
 #: wldap32.rc:119
 msgid "Operation not supported by this version of the LDAP protocol"
-msgstr ""
+msgstr "Operation not supported by this version of the LDAP protocol"
 
 #: wldap32.rc:120
 msgid "Specified control was not found in message"
-msgstr ""
+msgstr "Specified control was not found in message"
 
 #: wldap32.rc:121
 msgid "No result present in message"
-msgstr ""
+msgstr "No result present in message"
 
 #: wldap32.rc:122
 msgid "More results returned"
-msgstr ""
+msgstr "More results returned"
 
 #: wldap32.rc:123
 msgid "Loop while handling referrals"
-msgstr ""
+msgstr "Loop while handling referrals"
 
 #: wldap32.rc:124
 msgid "Referral hop limit exceeded"
-msgstr ""
+msgstr "Referral hop limit exceeded"
 
 #: clock.rc:29
 msgid "Ana&log"

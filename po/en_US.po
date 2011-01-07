@@ -847,19 +847,19 @@ msgstr "Policy Identifier: "
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
-msgstr ""
+msgstr "Policy Qualifier Info"
 
 #: cryptdlg.rc:30
 msgid "Policy Qualifier Id="
-msgstr ""
+msgstr "Policy Qualifier Id="
 
 #: cryptdlg.rc:33
 msgid "Qualifier"
-msgstr ""
+msgstr "Qualifier"
 
 #: cryptdlg.rc:34
 msgid "Notice Reference"
-msgstr ""
+msgstr "Notice Reference"
 
 #: cryptdlg.rc:35
 msgid "Organization="
@@ -871,7 +871,7 @@ msgstr "Notice Number="
 
 #: cryptdlg.rc:37
 msgid "Notice Text="
-msgstr ""
+msgstr "Notice Text="
 
 #: devenum.rc:32
 msgid "Default DirectSound"
@@ -1003,7 +1003,7 @@ msgstr "IDTB_TOC_PREV"
 
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"
-msgstr ""
+msgstr "Cinepak Video codec"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
