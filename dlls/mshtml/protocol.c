@@ -1037,5 +1037,5 @@ HRESULT ProtocolFactory_Create(REFCLSID rclsid, REFIID riid, void **ppv)
         return CLASS_E_CLASSNOTAVAILABLE;
     }
  
-    return IUnknown_QueryInterface((IUnknown*)cf, riid, ppv);
+    return IInternetProtocolInfo_QueryInterface(&cf->IInternetProtocolInfo_iface, riid, ppv);
 }
