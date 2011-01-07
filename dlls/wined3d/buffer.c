@@ -1190,7 +1190,7 @@ end:
 
 static WINED3DRESOURCETYPE STDMETHODCALLTYPE buffer_GetType(IWineD3DBuffer *iface)
 {
-    return resource_get_type((IWineD3DResource *)iface);
+    return resource_get_type((IWineD3DResourceImpl *)iface);
 }
 
 /* IWineD3DBuffer methods */

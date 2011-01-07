@@ -291,8 +291,9 @@ static void WINAPI IWineD3DTextureImpl_UnLoad(IWineD3DTexture *iface) {
     basetexture_unload((IWineD3DBaseTextureImpl *)This);
 }
 
-static WINED3DRESOURCETYPE WINAPI IWineD3DTextureImpl_GetType(IWineD3DTexture *iface) {
-    return resource_get_type((IWineD3DResource *)iface);
+static WINED3DRESOURCETYPE WINAPI IWineD3DTextureImpl_GetType(IWineD3DTexture *iface)
+{
+    return resource_get_type((IWineD3DResourceImpl *)iface);
 }
 
 static void * WINAPI IWineD3DTextureImpl_GetParent(IWineD3DTexture *iface)

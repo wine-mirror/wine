@@ -270,8 +270,9 @@ static void WINAPI IWineD3DCubeTextureImpl_UnLoad(IWineD3DCubeTexture *iface)
     basetexture_unload((IWineD3DBaseTextureImpl *)This);
 }
 
-static WINED3DRESOURCETYPE WINAPI IWineD3DCubeTextureImpl_GetType(IWineD3DCubeTexture *iface) {
-    return resource_get_type((IWineD3DResource *)iface);
+static WINED3DRESOURCETYPE WINAPI IWineD3DCubeTextureImpl_GetType(IWineD3DCubeTexture *iface)
+{
+    return resource_get_type((IWineD3DResourceImpl *)iface);
 }
 
 static void * WINAPI IWineD3DCubeTextureImpl_GetParent(IWineD3DCubeTexture *iface)

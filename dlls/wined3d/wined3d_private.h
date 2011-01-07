@@ -1836,7 +1836,7 @@ HRESULT resource_get_private_data(struct IWineD3DResourceImpl *resource, REFGUID
 HRESULT resource_init(struct IWineD3DResourceImpl *resource, WINED3DRESOURCETYPE resource_type,
         IWineD3DDeviceImpl *device, UINT size, DWORD usage, const struct wined3d_format *format,
         WINED3DPOOL pool, void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
-WINED3DRESOURCETYPE resource_get_type(IWineD3DResource *iface) DECLSPEC_HIDDEN;
+WINED3DRESOURCETYPE resource_get_type(struct IWineD3DResourceImpl *resource) DECLSPEC_HIDDEN;
 DWORD resource_set_priority(struct IWineD3DResourceImpl *resource, DWORD priority) DECLSPEC_HIDDEN;
 HRESULT resource_set_private_data(struct IWineD3DResourceImpl *resource, REFGUID guid,
         const void *data, DWORD data_size, DWORD flags) DECLSPEC_HIDDEN;

@@ -193,8 +193,9 @@ static void WINAPI IWineD3DVolumeImpl_UnLoad(IWineD3DVolume *iface)
     resource_unload((IWineD3DResourceImpl *)iface);
 }
 
-static WINED3DRESOURCETYPE WINAPI IWineD3DVolumeImpl_GetType(IWineD3DVolume *iface) {
-    return resource_get_type((IWineD3DResource *)iface);
+static WINED3DRESOURCETYPE WINAPI IWineD3DVolumeImpl_GetType(IWineD3DVolume *iface)
+{
+    return resource_get_type((IWineD3DResourceImpl *)iface);
 }
 
 static void WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DVOLUME_DESC *desc)

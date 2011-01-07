@@ -264,9 +264,8 @@ DWORD resource_get_priority(struct IWineD3DResourceImpl *resource)
     return resource->resource.priority;
 }
 
-WINED3DRESOURCETYPE resource_get_type(IWineD3DResource *iface)
+WINED3DRESOURCETYPE resource_get_type(struct IWineD3DResourceImpl *resource)
 {
-    IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
-    TRACE("(%p) : returning %d\n", This, This->resource.resourceType);
-    return This->resource.resourceType;
+    TRACE("resource %p, returning %#x.\n", resource, resource->resource.resourceType);
+    return resource->resource.resourceType;
 }
