@@ -1110,6 +1110,18 @@ static inline WebBrowser *impl_from_DocHost(DocHost *iface)
     return CONTAINING_RECORD(iface, WebBrowser, doc_host);
 }
 
+static ULONG WebBrowser_addref(DocHost *iface)
+{
+    WebBrowser *This = impl_from_DocHost(iface);
+    return IWebBrowser2_AddRef(&This->IWebBrowser2_iface);
+}
+
+static ULONG WebBrowser_release(DocHost *iface)
+{
+    WebBrowser *This = impl_from_DocHost(iface);
+    return IWebBrowser2_Release(&This->IWebBrowser2_iface);
+}
+
 static void WINAPI DocHostContainer_GetDocObjRect(DocHost* This, RECT* rc)
 {
     GetClientRect(This->frame_hwnd, rc);
@@ -1156,6 +1168,8 @@ static HRESULT DocHostContainer_exec(DocHost *doc_host, const GUID *cmd_group, D
 }
 
 static const IDocHostContainerVtbl DocHostContainerVtbl = {
+    WebBrowser_addref,
+    WebBrowser_release,
     DocHostContainer_GetDocObjRect,
     DocHostContainer_SetStatusText,
     DocHostContainer_SetURL,

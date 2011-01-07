@@ -50,6 +50,8 @@ static const WCHAR szIEWinFrame[] = { 'I','E','F','r','a','m','e',0 };
 static const WCHAR wszWineInternetExplorer[] =
         {'W','i','n','e',' ','I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r',0};
 
+static LONG obj_cnt;
+
 HRESULT update_ie_statustext(InternetExplorer* This, LPCWSTR text)
 {
     if(!SendMessageW(This->status_hwnd, SB_SETTEXTW, MAKEWORD(SB_SIMPLEID, 0), (LPARAM)text))
@@ -505,8 +507,8 @@ static LRESULT iewnd_OnSize(InternetExplorer *This, INT width, INT height)
 
     adjust_ie_docobj_rect(This->frame_hwnd, &docarea);
 
-    if(This->doc_host.hwnd)
-        SetWindowPos(This->doc_host.hwnd, NULL, docarea.left, docarea.top, docarea.right, docarea.bottom,
+    if(This->doc_host->doc_host.hwnd)
+        SetWindowPos(This->doc_host->doc_host.hwnd, NULL, docarea.left, docarea.top, docarea.right, docarea.bottom,
                      SWP_NOZORDER | SWP_NOACTIVATE);
 
     SetWindowPos(hwndRebar, NULL, 0, 0, width, barHeight, SWP_NOZORDER | SWP_NOACTIVATE);
@@ -551,7 +553,6 @@ static LRESULT iewnd_OnDestroy(InternetExplorer *This)
     free_fav_menu_data(get_fav_menu(This->menu));
     ImageList_Destroy(list);
     This->frame_hwnd = NULL;
-    PostQuitMessage(0); /* FIXME */
 
     return 0;
 }
@@ -565,11 +566,11 @@ static LRESULT iewnd_OnCommand(InternetExplorer *This, HWND hwnd, UINT msg, WPAR
             break;
 
         case ID_BROWSE_PRINT:
-            if(This->doc_host.document)
+            if(This->doc_host->doc_host.document)
             {
                 IOleCommandTarget* target;
 
-                if(FAILED(IUnknown_QueryInterface(This->doc_host.document, &IID_IOleCommandTarget, (LPVOID*)&target)))
+                if(FAILED(IUnknown_QueryInterface(This->doc_host->doc_host.document, &IID_IOleCommandTarget, (LPVOID*)&target)))
                     break;
 
                 IOleCommandTarget_Exec(target, &CGID_MSHTML, IDM_PRINT, OLECMDEXECOPT_DODEFAULT, NULL, NULL);
@@ -587,7 +588,7 @@ static LRESULT iewnd_OnCommand(InternetExplorer *This, HWND hwnd, UINT msg, WPAR
             break;
 
         case ID_BROWSE_QUIT:
-            iewnd_OnDestroy(This);
+            ShowWindow(hwnd, SW_HIDE);
             break;
 
         default:
@@ -624,6 +625,17 @@ ie_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     {
     case WM_CREATE:
         return iewnd_OnCreate(hwnd, (LPCREATESTRUCTW)lparam);
+    case WM_CLOSE:
+        TRACE("WM_CLOSE\n");
+        ShowWindow(hwnd, SW_HIDE);
+        return 0;
+    case WM_SHOWWINDOW:
+        TRACE("WM_SHOWWINDOW %lx\n", wparam);
+        if(wparam)
+            IWebBrowser2_AddRef(&This->IWebBrowser2_iface);
+        else
+            IWebBrowser2_Release(&This->IWebBrowser2_iface);
+        break;
     case WM_DESTROY:
         return iewnd_OnDestroy(This);
     case WM_SIZE:
@@ -633,7 +645,7 @@ ie_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     case WM_NOTIFY:
         return iewnd_OnNotify(This, wparam, lparam);
     case WM_DOCHOSTTASK:
-        return process_dochost_task(&This->doc_host, lparam);
+        return process_dochost_task(&This->doc_host->doc_host, lparam);
     case WM_UPDATEADDRBAR:
         return update_addrbar(This, lparam);
     }
@@ -678,13 +690,13 @@ static void create_frame_hwnd(InternetExplorer *This)
             NULL, NULL /* FIXME */, shdocvw_hinstance, This);
 }
 
-static IWebBrowser2 *create_ie_window(LPCSTR cmdline)
+static BOOL create_ie_window(LPCSTR cmdline)
 {
     IWebBrowser2 *wb = NULL;
 
     InternetExplorer_Create(NULL, &IID_IWebBrowser2, (void**)&wb);
     if(!wb)
-        return NULL;
+        return FALSE;
 
     IWebBrowser2_put_Visible(wb, VARIANT_TRUE);
     IWebBrowser2_put_MenuBar(wb, VARIANT_TRUE);
@@ -718,12 +730,39 @@ static IWebBrowser2 *create_ie_window(LPCSTR cmdline)
         SysFreeString(V_BSTR(&var_url));
     }
 
-    return wb;
+    IWebBrowser2_Release(wb);
+    return TRUE;
 }
 
-static inline InternetExplorer *impl_from_DocHost(DocHost *iface)
+static inline IEDocHost *impl_from_DocHost(DocHost *iface)
 {
-    return CONTAINING_RECORD(iface, InternetExplorer, doc_host);
+    return CONTAINING_RECORD(iface, IEDocHost, doc_host);
+}
+
+static ULONG IEDocHost_addref(DocHost *iface)
+{
+    IEDocHost *This = impl_from_DocHost(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG IEDocHost_release(DocHost *iface)
+{
+    IEDocHost *This = impl_from_DocHost(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        if(This->ie)
+            This->ie->doc_host = NULL;
+        heap_free(This);
+    }
+
+    return ref;
 }
 
 static void WINAPI DocHostContainer_GetDocObjRect(DocHost* This, RECT* rc)
@@ -732,10 +771,10 @@ static void WINAPI DocHostContainer_GetDocObjRect(DocHost* This, RECT* rc)
     adjust_ie_docobj_rect(This->frame_hwnd, rc);
 }
 
-static HRESULT WINAPI DocHostContainer_SetStatusText(DocHost* This, LPCWSTR text)
+static HRESULT WINAPI DocHostContainer_SetStatusText(DocHost *iface, LPCWSTR text)
 {
-    InternetExplorer* ie = impl_from_DocHost(This);
-    return update_ie_statustext(ie, text);
+    IEDocHost *This = impl_from_DocHost(iface);
+    return update_ie_statustext(This->ie, text);
 }
 
 static void WINAPI DocHostContainer_SetURL(DocHost* This, LPCWSTR url)
@@ -749,6 +788,8 @@ static HRESULT DocHostContainer_exec(DocHost* This, const GUID *cmd_group, DWORD
     return S_OK;
 }
 static const IDocHostContainerVtbl DocHostContainerVtbl = {
+    IEDocHost_addref,
+    IEDocHost_release,
     DocHostContainer_GetDocObjRect,
     DocHostContainer_SetStatusText,
     DocHostContainer_SetURL,
@@ -763,25 +804,40 @@ HRESULT InternetExplorer_Create(IUnknown *pOuter, REFIID riid, void **ppv)
     TRACE("(%p %s %p)\n", pOuter, debugstr_guid(riid), ppv);
 
     ret = heap_alloc_zero(sizeof(InternetExplorer));
-    ret->ref = 0;
+    if(!ret)
+        return E_OUTOFMEMORY;
 
-    ret->doc_host.disp = (IDispatch*)&ret->IWebBrowser2_iface;
-    DocHost_Init(&ret->doc_host, (IDispatch*)&ret->IWebBrowser2_iface, &DocHostContainerVtbl);
+    ret->doc_host = heap_alloc_zero(sizeof(IEDocHost));
+    if(!ret->doc_host) {
+        heap_free(ret);
+        return E_OUTOFMEMORY;
+    }
+
+    ret->ref = 1;
+    ret->doc_host->ie = ret;
+
+    DocHost_Init(&ret->doc_host->doc_host, (IDispatch*)&ret->IWebBrowser2_iface, &DocHostContainerVtbl);
 
     InternetExplorer_WebBrowser_Init(ret);
 
-    HlinkFrame_Init(&ret->hlink_frame, (IUnknown*)&ret->IWebBrowser2_iface, &ret->doc_host);
+    HlinkFrame_Init(&ret->hlink_frame, (IUnknown*)&ret->IWebBrowser2_iface, &ret->doc_host->doc_host);
 
     create_frame_hwnd(ret);
-    ret->doc_host.frame_hwnd = ret->frame_hwnd;
+    ret->doc_host->doc_host.frame_hwnd = ret->frame_hwnd;
 
     hres = IWebBrowser2_QueryInterface(&ret->IWebBrowser2_iface, riid, ppv);
-    if(FAILED(hres)) {
-        heap_free(ret);
+    IWebBrowser2_Release(&ret->IWebBrowser2_iface);
+    if(FAILED(hres))
         return hres;
-    }
 
-    return hres;
+    InterlockedIncrement(&obj_cnt);
+    return S_OK;
+}
+
+void released_obj(void)
+{
+    if(!InterlockedDecrement(&obj_cnt))
+        PostQuitMessage(0);
 }
 
 /******************************************************************
@@ -791,7 +847,6 @@ HRESULT InternetExplorer_Create(IUnknown *pOuter, REFIID riid, void **ppv)
  */
 DWORD WINAPI IEWinMain(LPSTR szCommandLine, int nShowWindow)
 {
-    IWebBrowser2 *wb = NULL;
     MSG msg;
     HRESULT hres;
 
@@ -812,8 +867,12 @@ DWORD WINAPI IEWinMain(LPSTR szCommandLine, int nShowWindow)
         ExitProcess(1);
     }
 
-    if(strcasecmp(szCommandLine, "-embedding"))
-        wb = create_ie_window(szCommandLine);
+    if(strcasecmp(szCommandLine, "-embedding")) {
+        if(!create_ie_window(szCommandLine)) {
+            CoUninitialize();
+            ExitProcess(1);
+        }
+    }
 
     /* run the message loop for this thread */
     while (GetMessageW(&msg, 0, 0, 0))
@@ -821,9 +880,6 @@ DWORD WINAPI IEWinMain(LPSTR szCommandLine, int nShowWindow)
         TranslateMessage(&msg);
         DispatchMessageW(&msg);
     }
-
-    if(wb)
-        IWebBrowser2_Release(wb);
 
     register_class_object(FALSE);
 

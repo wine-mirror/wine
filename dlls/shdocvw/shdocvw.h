@@ -86,6 +86,8 @@ typedef struct _task_header_t {
 
 typedef struct _IDocHostContainerVtbl
 {
+    ULONG (*addref)(DocHost*);
+    ULONG (*release)(DocHost*);
     void (WINAPI* GetDocObjRect)(DocHost*,RECT*);
     HRESULT (WINAPI* SetStatusText)(DocHost*,LPCWSTR);
     void (WINAPI* SetURL)(DocHost*,LPCWSTR);
@@ -182,6 +184,14 @@ struct WebBrowser {
     DocHost doc_host;
 };
 
+typedef struct {
+    DocHost doc_host;
+
+    LONG ref;
+
+    InternetExplorer *ie;
+} IEDocHost;
+
 struct InternetExplorer {
     IWebBrowser2 IWebBrowser2_iface;
     HlinkFrame hlink_frame;
@@ -192,7 +202,7 @@ struct InternetExplorer {
     HWND status_hwnd;
     HMENU menu;
 
-    DocHost doc_host;
+    IEDocHost *doc_host;
 };
 
 void WebBrowser_OleObject_Init(WebBrowser*);
@@ -234,6 +244,8 @@ LRESULT  process_dochost_task(DocHost*,LPARAM);
 
 HRESULT InternetExplorer_Create(IUnknown*,REFIID,void**);
 void InternetExplorer_WebBrowser_Init(InternetExplorer*);
+
+void released_obj(void);
 
 HRESULT CUrlHistory_Create(IUnknown*,REFIID,void**);
 

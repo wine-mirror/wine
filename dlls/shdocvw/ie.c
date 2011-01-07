@@ -49,7 +49,7 @@ static HRESULT WINAPI InternetExplorer_QueryInterface(IWebBrowser2 *iface, REFII
         *ppv = &This->IWebBrowser2_iface;
     }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
         TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
-        *ppv = &This->doc_host.cps.IConnectionPointContainer_iface;
+        *ppv = &This->doc_host->doc_host.cps.IConnectionPointContainer_iface;
     }else if(HlinkFrame_QI(&This->hlink_frame, riid, ppv)) {
         return S_OK;
     }
@@ -79,8 +79,17 @@ static ULONG WINAPI InternetExplorer_Release(IWebBrowser2 *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
-        DocHost_Release(&This->doc_host);
+        if(This->doc_host) {
+            DocHost_Release(&This->doc_host->doc_host);
+            if(This->doc_host)
+                This->doc_host->ie = NULL;
+        }
+
+        if(This->frame_hwnd)
+            DestroyWindow(This->frame_hwnd);
         heap_free(This);
+
+        released_obj();
     }
 
     return ref;
@@ -140,7 +149,7 @@ static HRESULT WINAPI InternetExplorer_GoHome(IWebBrowser2 *iface)
 {
     InternetExplorer *This = impl_from_IWebBrowser2(iface);
     TRACE("(%p)\n", This);
-    return go_home(&This->doc_host);
+    return go_home(&This->doc_host->doc_host);
 }
 
 static HRESULT WINAPI InternetExplorer_GoSearch(IWebBrowser2 *iface)
@@ -159,7 +168,7 @@ static HRESULT WINAPI InternetExplorer_Navigate(IWebBrowser2 *iface, BSTR szUrl,
     TRACE("(%p)->(%s %p %p %p %p)\n", This, debugstr_w(szUrl), Flags, TargetFrameName,
           PostData, Headers);
 
-    return navigate_url(&This->doc_host, szUrl, Flags, TargetFrameName, PostData, Headers);
+    return navigate_url(&This->doc_host->doc_host, szUrl, Flags, TargetFrameName, PostData, Headers);
 }
 
 static HRESULT WINAPI InternetExplorer_Refresh(IWebBrowser2 *iface)
@@ -294,7 +303,7 @@ static HRESULT WINAPI InternetExplorer_get_LocationURL(IWebBrowser2 *iface, BSTR
 
     TRACE("(%p)->(%p)\n", This, LocationURL);
 
-    return get_location_url(&This->doc_host, LocationURL);
+    return get_location_url(&This->doc_host->doc_host, LocationURL);
 }
 
 static HRESULT WINAPI InternetExplorer_get_Busy(IWebBrowser2 *iface, VARIANT_BOOL *pBool)
@@ -473,7 +482,7 @@ static HRESULT WINAPI InternetExplorer_Navigate2(IWebBrowser2 *iface, VARIANT *U
         return E_INVALIDARG;
     }
 
-    return navigate_url(&This->doc_host, V_BSTR(URL), Flags, TargetFrameName, PostData, Headers);
+    return navigate_url(&This->doc_host->doc_host, V_BSTR(URL), Flags, TargetFrameName, PostData, Headers);
 }
 
 static HRESULT WINAPI InternetExplorer_QueryStatusWB(IWebBrowser2 *iface, OLECMDID cmdID, OLECMDF *pcmdf)

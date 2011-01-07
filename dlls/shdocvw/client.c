@@ -83,13 +83,13 @@ static HRESULT WINAPI ClientSite_QueryInterface(IOleClientSite *iface, REFIID ri
 static ULONG WINAPI ClientSite_AddRef(IOleClientSite *iface)
 {
     DocHost *This = impl_from_IOleClientSite(iface);
-    return IDispatch_AddRef(This->disp);
+    return This->container_vtbl->addref(This);
 }
 
 static ULONG WINAPI ClientSite_Release(IOleClientSite *iface)
 {
     DocHost *This = impl_from_IOleClientSite(iface);
-    return IDispatch_Release(This->disp);
+    return This->container_vtbl->release(This);
 }
 
 static HRESULT WINAPI ClientSite_SaveObject(IOleClientSite *iface)
