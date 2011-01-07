@@ -250,13 +250,12 @@ HRESULT resource_free_private_data(struct IWineD3DResourceImpl *resource, REFGUI
     return WINED3D_OK;
 }
 
-DWORD resource_set_priority(IWineD3DResource *iface, DWORD PriorityNew)
+DWORD resource_set_priority(struct IWineD3DResourceImpl *resource, DWORD priority)
 {
-    IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
-    DWORD PriorityOld = This->resource.priority;
-    This->resource.priority = PriorityNew;
-    TRACE("(%p) : new priority %d, returning old priority %d\n", This, PriorityNew, PriorityOld );
-    return PriorityOld;
+    DWORD prev = resource->resource.priority;
+    resource->resource.priority = priority;
+    TRACE("resource %p, new priority %u, returning old priority %u.\n", resource, priority, prev);
+    return prev;
 }
 
 DWORD resource_get_priority(struct IWineD3DResourceImpl *resource)

@@ -780,7 +780,7 @@ static HRESULT STDMETHODCALLTYPE buffer_FreePrivateData(IWineD3DBuffer *iface, R
 
 static DWORD STDMETHODCALLTYPE buffer_SetPriority(IWineD3DBuffer *iface, DWORD priority)
 {
-    return resource_set_priority((IWineD3DResource *)iface, priority);
+    return resource_set_priority((IWineD3DResourceImpl *)iface, priority);
 }
 
 static DWORD STDMETHODCALLTYPE buffer_GetPriority(IWineD3DBuffer *iface)

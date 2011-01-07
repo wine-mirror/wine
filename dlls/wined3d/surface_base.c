@@ -128,8 +128,9 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_FreePrivateData(IWineD3DSurface *iface, R
     return resource_free_private_data((IWineD3DResourceImpl *)iface, refguid);
 }
 
-DWORD   WINAPI IWineD3DBaseSurfaceImpl_SetPriority(IWineD3DSurface *iface, DWORD PriorityNew) {
-    return resource_set_priority((IWineD3DResource *)iface, PriorityNew);
+DWORD WINAPI IWineD3DBaseSurfaceImpl_SetPriority(IWineD3DSurface *iface, DWORD priority)
+{
+    return resource_set_priority((IWineD3DResourceImpl *)iface, priority);
 }
 
 DWORD WINAPI IWineD3DBaseSurfaceImpl_GetPriority(IWineD3DSurface *iface)

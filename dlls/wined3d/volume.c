@@ -167,8 +167,9 @@ static HRESULT WINAPI IWineD3DVolumeImpl_FreePrivateData(IWineD3DVolume *iface, 
     return resource_free_private_data((IWineD3DResourceImpl *)iface, refguid);
 }
 
-static DWORD WINAPI IWineD3DVolumeImpl_SetPriority(IWineD3DVolume *iface, DWORD PriorityNew) {
-    return resource_set_priority((IWineD3DResource *)iface, PriorityNew);
+static DWORD WINAPI IWineD3DVolumeImpl_SetPriority(IWineD3DVolume *iface, DWORD priority)
+{
+    return resource_set_priority((IWineD3DResourceImpl *)iface, priority);
 }
 
 static DWORD WINAPI IWineD3DVolumeImpl_GetPriority(IWineD3DVolume *iface)
