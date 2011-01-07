@@ -37,6 +37,7 @@
 #include "winreg.h"
 #include "shlwapi.h"
 #include "intshcut.h"
+#include "ddeml.h"
 
 #include "wine/debug.h"
 
@@ -51,6 +52,8 @@ static const WCHAR wszWineInternetExplorer[] =
         {'W','i','n','e',' ','I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r',0};
 
 static LONG obj_cnt;
+static DWORD dde_inst;
+static HSZ ddestr_iexplore, ddestr_openurl;
 
 HRESULT update_ie_statustext(InternetExplorer* This, LPCWSTR text)
 {
@@ -840,6 +843,138 @@ void released_obj(void)
         PostQuitMessage(0);
 }
 
+static ULONG open_dde_url(WCHAR *dde_url)
+{
+    IWebBrowser2 *wb;
+    WCHAR *url, *url_end;
+    VARIANT urlv;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_w(dde_url));
+
+    url = dde_url;
+    if(*url == '"') {
+        url++;
+        url_end = strchrW(url, '"');
+        if(!url_end) {
+            FIXME("missing string terminator\n");
+            return 0;
+        }
+        *url_end = 0;
+    }else {
+        url_end = strchrW(url, ',');
+        if(url_end)
+            *url_end = 0;
+        else
+            url_end = url + strlenW(url);
+    }
+
+    hres = InternetExplorer_Create(NULL, &IID_IWebBrowser2, (void**)&wb);
+    if(FAILED(hres))
+        return 0;
+
+    IWebBrowser2_put_Visible(wb, VARIANT_TRUE);
+    IWebBrowser2_put_MenuBar(wb, VARIANT_TRUE);
+
+    V_VT(&urlv) = VT_BSTR;
+    V_BSTR(&urlv) = SysAllocStringLen(url, url_end-url);
+    if(!V_BSTR(&urlv)) {
+        IWebBrowser2_Release(wb);
+        return 0;
+    }
+
+    hres = IWebBrowser2_Navigate2(wb, &urlv, NULL, NULL, NULL, NULL);
+    if(FAILED(hres))
+        return 0;
+
+    IWebBrowser2_Release(wb);
+    return DDE_FACK;
+}
+
+static HDDEDATA WINAPI dde_proc(UINT type, UINT uFmt, HCONV hConv, HSZ hsz1, HSZ hsz2, HDDEDATA data,
+        ULONG_PTR dwData1, ULONG_PTR dwData2)
+{
+    switch(type) {
+    case XTYP_CONNECT:
+        TRACE("XTYP_CONNECT %p\n", hsz1);
+        return (HDDEDATA)!DdeCmpStringHandles(hsz1, ddestr_openurl);
+
+    case XTYP_EXECUTE: {
+        WCHAR *url;
+        DWORD size;
+        HDDEDATA ret;
+
+        TRACE("XTYP_EXECUTE %p\n", data);
+
+        size = DdeGetData(data, NULL, 0, 0);
+        if(!size) {
+            WARN("size = 0\n");
+            break;
+        }
+
+        url = heap_alloc(size);
+        if(!url)
+            break;
+
+        if(DdeGetData(data, (BYTE*)url, size, 0) != size) {
+            ERR("error during read\n");
+            break;
+        }
+
+        ret = (HDDEDATA)open_dde_url(url);
+
+        heap_free(url);
+        return ret;
+    }
+
+    case XTYP_REQUEST:
+        FIXME("XTYP_REQUEST\n");
+        break;
+
+    default:
+        TRACE("type %d\n", type);
+    }
+
+    return NULL;
+}
+
+static void init_dde(void)
+{
+    UINT res;
+
+    static const WCHAR iexploreW[] = {'I','E','x','p','l','o','r','e',0};
+    static const WCHAR openurlW[] = {'W','W','W','_','O','p','e','n','U','R','L',0};
+
+    res = DdeInitializeW(&dde_inst, dde_proc, CBF_SKIP_ALLNOTIFICATIONS | CBF_FAIL_ADVISES | CBF_FAIL_POKES, 0);
+    if(res != DMLERR_NO_ERROR) {
+        WARN("DdeInitialize failed: %u\n", res);
+        return;
+    }
+
+    ddestr_iexplore = DdeCreateStringHandleW(dde_inst, iexploreW, CP_WINUNICODE);
+    if(!ddestr_iexplore)
+        WARN("Failed to create string handle: %u\n", DdeGetLastError(dde_inst));
+
+    ddestr_openurl = DdeCreateStringHandleW(dde_inst, openurlW, CP_WINUNICODE);
+    if(!ddestr_openurl)
+        WARN("Failed to create string handle: %u\n", DdeGetLastError(dde_inst));
+
+    res = (ULONG)DdeNameService(dde_inst, ddestr_iexplore, 0, DNS_REGISTER);
+    if(res != DMLERR_NO_ERROR)
+        WARN("DdeNameService failed: %u\n", res);
+}
+
+static void release_dde(void)
+{
+    if(ddestr_iexplore)
+        DdeNameService(dde_inst, ddestr_iexplore, 0, DNS_UNREGISTER);
+    if(ddestr_openurl)
+        DdeFreeStringHandle(dde_inst, ddestr_openurl);
+    if(ddestr_iexplore)
+        DdeFreeStringHandle(dde_inst, ddestr_iexplore);
+    DdeUninitialize(dde_inst);
+}
+
 /******************************************************************
  *		IEWinMain            (SHDOCVW.101)
  *
@@ -867,6 +1002,8 @@ DWORD WINAPI IEWinMain(LPSTR szCommandLine, int nShowWindow)
         ExitProcess(1);
     }
 
+    init_dde();
+
     if(strcasecmp(szCommandLine, "-embedding")) {
         if(!create_ie_window(szCommandLine)) {
             CoUninitialize();
@@ -882,6 +1019,7 @@ DWORD WINAPI IEWinMain(LPSTR szCommandLine, int nShowWindow)
     }
 
     register_class_object(FALSE);
+    release_dde();
 
     CoUninitialize();
 
