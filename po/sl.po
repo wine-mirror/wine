@@ -3359,7 +3359,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Porabljena sredstva: %lu\n"
 
-#: notepad.rc:26 progman.rc:29
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
 msgid "&File"
 msgstr "&Datoteka"
 
@@ -3443,7 +3443,7 @@ msgstr "Najdi na&slednje\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Zamenjaj ...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87
 msgid "&Help"
 msgstr "&Pomoč"
 
@@ -3601,7 +3601,7 @@ msgstr "&Zaženi ..."
 msgid "E&xit Windows..."
 msgstr "Iz&hod ..."
 
-#: progman.rc:41
+#: progman.rc:41 taskmgr.rc:41
 msgid "&Options"
 msgstr "&Možnosti"
 
@@ -3617,7 +3617,7 @@ msgstr "&Pomanjšaj ob zagonu"
 msgid "&Save settings on exit"
 msgstr "Shrani &nastavitve ob izhodu"
 
-#: progman.rc:46
+#: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
 msgid "&Windows"
 msgstr "&Okna"
 
@@ -3915,6 +3915,580 @@ msgstr "Napaka: Procesa  \"%s\" ni mogoče končati.\n"
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr ""
+
+#: taskmgr.rc:37 taskmgr.rc:109
+msgid "&New Task (Run...)"
+msgstr "&Novo opravilo"
+
+#: taskmgr.rc:39
+msgid "E&xit Task Manager"
+msgstr "Iz&hod"
+
+#: taskmgr.rc:43 taskmgr.rc:142
+msgid "&Always On Top"
+msgstr "Vedno na &vrhu"
+
+#: taskmgr.rc:45
+msgid "&Minimize On Use"
+msgstr "Poman&jšaj ob uporabi"
+
+#: taskmgr.rc:47
+msgid "&Hide When Minimized"
+msgstr "&Skrij ob pomanjšanju"
+
+#: taskmgr.rc:49 taskmgr.rc:258
+msgid "&Show 16-bit tasks"
+msgstr "Prika&ži 16-bitna opravila"
+
+#: taskmgr.rc:52
+msgid "&View"
+msgstr "&Pogled"
+
+#: taskmgr.rc:54
+msgid "&Refresh Now"
+msgstr "&Osveži"
+
+#: taskmgr.rc:55
+msgid "&Update Speed"
+msgstr "&Hitrost osveževanja"
+
+#: taskmgr.rc:57 taskmgr.rc:159
+msgid "&High"
+msgstr "&Viskoka"
+
+#: taskmgr.rc:58 taskmgr.rc:163
+msgid "&Normal"
+msgstr "&Običajna"
+
+#: taskmgr.rc:60 taskmgr.rc:167
+msgid "&Low"
+msgstr "&Nizka"
+
+#: taskmgr.rc:61
+msgid "&Paused"
+msgstr "&Zaustavljeno"
+
+#: taskmgr.rc:65 taskmgr.rc:111 taskmgr.rc:253
+msgid "Lar&ge Icons"
+msgstr "Veli&ke ikone"
+
+#: taskmgr.rc:66 taskmgr.rc:112 taskmgr.rc:254
+msgid "S&mall Icons"
+msgstr "M&ale ikone"
+
+#: taskmgr.rc:67 taskmgr.rc:113 taskmgr.rc:255
+msgid "&Details"
+msgstr "&Podrobnosti"
+
+#: taskmgr.rc:68 taskmgr.rc:257
+msgid "&Select Columns..."
+msgstr "&Izberi stolpce ..."
+
+#: taskmgr.rc:69 taskmgr.rc:259
+msgid "&CPU History"
+msgstr "Zgodovina &CPE"
+
+#: taskmgr.rc:71 taskmgr.rc:260
+msgid "&One Graph, All CPUs"
+msgstr "&En graf, vse CPE"
+
+#: taskmgr.rc:73 taskmgr.rc:261
+msgid "One Graph &Per CPU"
+msgstr "En graf za &vsako CPE"
+
+#: taskmgr.rc:76 taskmgr.rc:262
+msgid "&Show Kernel Times"
+msgstr "Prikaži &čase jedra"
+
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124
+msgid "Tile &Horizontally"
+msgstr "&Horizontalna razporeditev"
+
+#: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
+msgid "Tile &Vertically"
+msgstr "&Vertikalna razporeditev"
+
+#: taskmgr.rc:82 taskmgr.rc:99 taskmgr.rc:126
+msgid "&Minimize"
+msgstr "Po&manjšaj"
+
+#: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+msgid "Ma&ximize"
+msgstr "Ra&zširi"
+
+#: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
+msgid "&Cascade"
+msgstr "V &kaskado"
+
+#: taskmgr.rc:85 taskmgr.rc:102 taskmgr.rc:122
+msgid "&Bring To Front"
+msgstr "V &ospredje"
+
+#: taskmgr.rc:89
+msgid "Task Manager &Help Topics"
+msgstr "Teme pomoči"
+
+#: taskmgr.rc:91
+msgid "&About Task Manager"
+msgstr "&O Upravitelju opravil"
+
+#: taskmgr.rc:107 taskmgr.rc:119 taskmgr.rc:137 taskmgr.rc:148
+msgid "DUMMY"
+msgstr "DUMMY"
+
+#: taskmgr.rc:121
+msgid "&Switch To"
+msgstr "&Preklopi na"
+
+#: taskmgr.rc:130
+msgid "&End Task"
+msgstr "Z&aključi opravilo"
+
+#: taskmgr.rc:131
+msgid "&Go To Process"
+msgstr "Poj&di na proces"
+
+#: taskmgr.rc:139
+msgid "&Restore"
+msgstr "O&bnovi"
+
+#: taskmgr.rc:140
+msgid "&Close"
+msgstr "&Zapri"
+
+#: taskmgr.rc:150
+msgid "&End Process"
+msgstr "Za&ključi proces"
+
+#: taskmgr.rc:151
+msgid "End Process &Tree"
+msgstr "Zaključi procesno &drevo"
+
+#: taskmgr.rc:153
+msgid "&Debug"
+msgstr "&Razhroščevanje"
+
+#: taskmgr.rc:155
+msgid "Set &Priority"
+msgstr "Nastavi &prioriteto"
+
+#: taskmgr.rc:157
+msgid "&Realtime"
+msgstr "&Realni čas"
+
+#: taskmgr.rc:161
+msgid "&AboveNormal"
+msgstr "&Nadpovprečna"
+
+#: taskmgr.rc:165
+msgid "&BelowNormal"
+msgstr "Po&dpovprečna"
+
+#: taskmgr.rc:170
+msgid "Set &Affinity..."
+msgstr "Nastavi &afiniteto ..."
+
+#: taskmgr.rc:171
+msgid "Edit Debug &Channels..."
+msgstr "Uredi razhroščevalne &kanale ..."
+
+#: taskmgr.rc:181 taskmgr.rc:182
+msgid "Task Manager"
+msgstr "Upravitelj opravil"
+
+#: taskmgr.rc:183
+msgid "Create New Task"
+msgstr "Create New Task"
+
+#: taskmgr.rc:188
+msgid "Runs a new program"
+msgstr "Zažene nov program"
+
+#: taskmgr.rc:189
+msgid "Task Manager remains in front of all other windows unless minimized"
+msgstr ""
+"Upravitelj opravil ostane na vrhu vseh ostalih oken, razen, če je pomanjšan"
+
+#: taskmgr.rc:191
+msgid "Task Manager is minimized when a SwitchTo operation is performed"
+msgstr "Upravitelj opravil je pomanjpan, kadar izvedete operacijo Preklopi na"
+
+#: taskmgr.rc:192
+msgid "Hide the Task Manager when it is minimized"
+msgstr "Skrije Upravitelja opravil, ko je le-ta pomanjšan"
+
+#: taskmgr.rc:193
+msgid "Force Task Manager to update now, regardless of Update Speed setting"
+msgstr ""
+"Prisili Upravitelja opravil, da osveži, ne glede na hitrost osveževanja"
+
+#: taskmgr.rc:194
+msgid "Displays tasks by using large icons"
+msgstr "Prikaže opravila kot velike ikone"
+
+#: taskmgr.rc:195
+msgid "Displays tasks by using small icons"
+msgstr "Prikaže opravila kot male ikone"
+
+#: taskmgr.rc:196
+msgid "Displays information about each task"
+msgstr "Prikaže podrobnosti o opravilih"
+
+#: taskmgr.rc:197
+msgid "Updates the display twice per second"
+msgstr "Osveži prikaz dvakrat na sekundo"
+
+#: taskmgr.rc:198
+msgid "Updates the display every two seconds"
+msgstr "Osveži prikaz vsaki dve sekundi"
+
+#: taskmgr.rc:199
+msgid "Updates the display every four seconds"
+msgstr "Osveži prikaz vsake štiri sekunde"
+
+#: taskmgr.rc:204
+msgid "Does not automatically update"
+msgstr "Ne osvežuje samodejno"
+
+#: taskmgr.rc:206
+msgid "Tiles the windows horizontally on the desktop"
+msgstr "Horizontalno razvrsti okna po namizju"
+
+#: taskmgr.rc:207
+msgid "Tiles the windows vertically on the desktop"
+msgstr "Vertikalno razvrsti okna po namizju"
+
+#: taskmgr.rc:208
+msgid "Minimizes the windows"
+msgstr "Pomanjša okna"
+
+#: taskmgr.rc:209
+msgid "Maximizes the windows"
+msgstr "Razširi okna"
+
+#: taskmgr.rc:210
+msgid "Cascades the windows diagonally on the desktop"
+msgstr "Razvrsti okna v kaskado"
+
+#: taskmgr.rc:211
+msgid "Brings the window front, but does not switch to it"
+msgstr "Privede okno v ospredje, vendar ne preklopi nanj"
+
+#: taskmgr.rc:212
+msgid "Displays Task Manager help topics"
+msgstr "Prikaže teme pomoči Upravitelja opravil"
+
+#: taskmgr.rc:213
+msgid "Displays program information, version number, and copyright"
+msgstr "Prikaže podatke o programu, različici in avtorskih pravicah"
+
+#: taskmgr.rc:214
+msgid "Exits the Task Manager application"
+msgstr "Izhod iz Upravitelja opravil"
+
+#: taskmgr.rc:216
+msgid "Shows 16-bit tasks under the associated ntvdm.exe"
+msgstr "Prikaže 16-bitna opravila pod ustreznim ntvdm.exe"
+
+#: taskmgr.rc:217
+msgid "Select which columns will be visible on the Process page"
+msgstr "Izbor stolpcev, ki naj bodo prikazani na strani Procesi"
+
+#: taskmgr.rc:218
+msgid "Displays kernel time in the performance graphs"
+msgstr "Prikaže čas jedra na grafih"
+
+#: taskmgr.rc:220
+msgid "A single history graph shows total CPU usage"
+msgstr "Prikaže skupno uporabo vseh CPE na enem samem grafu"
+
+#: taskmgr.rc:221
+msgid "Each CPU has its own history graph"
+msgstr "Vsaka CPE ima svoj graf"
+
+#: taskmgr.rc:223
+msgid "Brings a task to the foreground, switch focus to that task"
+msgstr "Privede opravilo v ospredje"
+
+#: taskmgr.rc:228
+msgid "Tells the selected tasks to close"
+msgstr "Zaključi izbrana opravila"
+
+#: taskmgr.rc:229
+msgid "Switches the focus to the process of the selected task"
+msgstr "Preseli pozornost na proces(e) izbranega opravila"
+
+#: taskmgr.rc:230
+msgid "Restores the Task Manager from its hidden state"
+msgstr "Obnovi Upravitelja opravil iz prikritega stanja"
+
+#: taskmgr.rc:231
+msgid "Removes the process from the system"
+msgstr "Odstrani proces iz sistema"
+
+#: taskmgr.rc:233
+msgid "Removes this process and all descendants from the system"
+msgstr "Odstrani proces in vse njegove potomce iz sistema"
+
+#: taskmgr.rc:234
+msgid "Attaches the debugger to this process"
+msgstr "Izbranemu procesu priključi razhroščevalnik"
+
+#: taskmgr.rc:236
+msgid "Controls which processors the process will be allowed to run on"
+msgstr "Določi, na katerih procesorjih se bo proces lahko izvajal"
+
+#: taskmgr.rc:238
+msgid "Sets process to the REALTIME priority class"
+msgstr "Dodeli proces v REALNOČASNOVNI prioritetni razred"
+
+#: taskmgr.rc:239
+msgid "Sets process to the HIGH priority class"
+msgstr "Dodeli proces v VISOK prioritetni razred"
+
+#: taskmgr.rc:241
+msgid "Sets process to the ABOVE NORMAL priority class"
+msgstr "Dodeli proces v NADPOVPREČNI prioritetni razred"
+
+#: taskmgr.rc:243
+msgid "Sets process to the NORMAL priority class"
+msgstr "Dodeli proces v POVPREČNI prioritetni razred"
+
+#: taskmgr.rc:245
+msgid "Sets process to the BELOW NORMAL priority class"
+msgstr "Dodeli proces v PODPOVPREČNI prioritetni razred"
+
+#: taskmgr.rc:246
+msgid "Sets process to the LOW priority class"
+msgstr "Dodeli proces v NIZEK prioritetni razred"
+
+#: taskmgr.rc:248
+msgid "Controls Debug Channels"
+msgstr "Nadzira kanale razhroščevalnika"
+
+#: taskmgr.rc:263
+msgid "Applications"
+msgstr "Aplikacije"
+
+#: taskmgr.rc:264
+msgid "Processes"
+msgstr "Procesi"
+
+#: taskmgr.rc:265
+msgid "Performance"
+msgstr "Učinkovitost delovanja"
+
+#: taskmgr.rc:266
+msgid "CPU Usage: %3d%%"
+msgstr "Uporaba CPE: %3d%%"
+
+#: taskmgr.rc:267
+msgid "Processes: %d"
+msgstr "Procesi: %d"
+
+#: taskmgr.rc:268
+msgid "Mem Usage: %dK / %dK"
+msgstr "Uporaba pomnilnika: %dK / %dK"
+
+#: taskmgr.rc:273
+msgid "Image Name"
+msgstr "Ime"
+
+#: taskmgr.rc:274
+msgid "PID"
+msgstr "PID"
+
+#: taskmgr.rc:275
+msgid "CPU"
+msgstr "Uporaba CPE"
+
+#: taskmgr.rc:276
+msgid "CPU Time"
+msgstr "Čas CPE"
+
+#: taskmgr.rc:277
+msgid "Mem Usage"
+msgstr "Uporaba pomnilnika"
+
+#: taskmgr.rc:278
+msgid "Mem Delta"
+msgstr "Delata uporabe pomnilnika"
+
+#: taskmgr.rc:279
+msgid "Peak Mem Usage"
+msgstr "Tem. vr. uporabe pomnilnika"
+
+#: taskmgr.rc:280
+msgid "Page Faults"
+msgstr "Napake izmenjevanja"
+
+#: taskmgr.rc:281
+msgid "USER Objects"
+msgstr "USER predmeti"
+
+#: taskmgr.rc:282
+msgid "I/O Reads"
+msgstr "V/I branje"
+
+#: taskmgr.rc:283
+msgid "I/O Read Bytes"
+msgstr "V/I branje (bajti)"
+
+#: taskmgr.rc:284
+msgid "Session ID"
+msgstr "ID seje"
+
+#: taskmgr.rc:285
+msgid "Username"
+msgstr "Uporabniško ime"
+
+#: taskmgr.rc:286
+msgid "PF Delta"
+msgstr "Delta napak izmenjevanja"
+
+#: taskmgr.rc:287
+msgid "VM Size"
+msgstr "Velikost navideznega pomnilnika"
+
+#: taskmgr.rc:288
+msgid "Paged Pool"
+msgstr "Izmenjana zaloga"
+
+#: taskmgr.rc:289
+msgid "NP Pool"
+msgstr "Neizmenjana zaloga"
+
+#: taskmgr.rc:290
+msgid "Base Pri"
+msgstr "Osnovna prioriteta"
+
+#: taskmgr.rc:291
+msgid "Handles"
+msgstr "Število dostopnih kod"
+
+#: taskmgr.rc:292
+msgid "Threads"
+msgstr "Število niti"
+
+#: taskmgr.rc:293
+msgid "GDI Objects"
+msgstr "GDI predmeti"
+
+#: taskmgr.rc:294
+msgid "I/O Writes"
+msgstr "V/I pisanje"
+
+#: taskmgr.rc:295
+msgid "I/O Write Bytes"
+msgstr "V/I pisanje (bajti)"
+
+#: taskmgr.rc:296
+msgid "I/O Other"
+msgstr "V/I drugo"
+
+#: taskmgr.rc:297
+msgid "I/O Other Bytes"
+msgstr "V/I drugo (bajti)"
+
+#: taskmgr.rc:302
+msgid "Task Manager Warning"
+msgstr "Opozorilo upravitelja opravil"
+
+#: taskmgr.rc:305
+msgid ""
+"WARNING: Changing the priority class of this process may\n"
+"cause undesired results including system instability. Are you\n"
+"sure you want to change the priority class?"
+msgstr ""
+"OPOZORILO: Spreminjanje prioritete tega procesa lahko povzroči\n"
+"nezaželjene posledice, vključno z nesabilnostjo sistema. Ali ste\n"
+"prepričani, da želite spremeniti prioriteto?"
+
+#: taskmgr.rc:306
+msgid "Unable to Change Priority"
+msgstr "Ne morem spremeniti prioritete"
+
+#: taskmgr.rc:311
+msgid ""
+"WARNING: Terminating a process can cause undesired\n"
+"results including loss of data and system instability. The\n"
+"process will not be given the chance to save its state or\n"
+"data before it is terminated. Are you sure you want to\n"
+"terminate the process?"
+msgstr ""
+"OPOZORILO: Prekinjanje procesa lahko povzroči nezaželjene\n"
+"posledice, vključno z izgubo podatkov in nestabilnostjo sistema.\n"
+"Pred prekinitvijo proces ne bo imel možnosti shraniti svojega\n"
+"stanja ali podatkov. Ali ste prepričani, da želite\n"
+"prekiniti proces?"
+
+#: taskmgr.rc:312
+msgid "Unable to Terminate Process"
+msgstr "Ne morem prekiniti procesa"
+
+#: taskmgr.rc:314
+msgid ""
+"WARNING: Debugging this process may result in loss of data.\n"
+"Are you sure you wish to attach the debugger?"
+msgstr ""
+"OPOZORILO: Razhroščevanje tega procesa lahko privede do izgube podatkov.\n"
+"Ali res želite dodati razhroščevalnik?"
+
+#: taskmgr.rc:315
+msgid "Unable to Debug Process"
+msgstr "Ne morem dodati razhroščevalnika"
+
+#: taskmgr.rc:316
+msgid "The process must have affinity with at least one processor"
+msgstr "Proces mora imeti afiniteto vsaj z enim procesorjem"
+
+#: taskmgr.rc:317
+msgid "Invalid Option"
+msgstr "Neveljavna opcija"
+
+#: taskmgr.rc:318
+msgid "Unable to Access or Set Process Affinity"
+msgstr "Ne morem dostopati ali nastaviti afinitete procesa"
+
+#: taskmgr.rc:323
+msgid "System Idle Process"
+msgstr "Sistemski nedejavni proces"
+
+#: taskmgr.rc:324
+msgid "Not Responding"
+msgstr "Se ne odziva"
+
+#: taskmgr.rc:325
+msgid "Running"
+msgstr "Se izvaja"
+
+#: taskmgr.rc:326
+msgid "Task"
+msgstr "Opravilo"
+
+#: taskmgr.rc:327
+msgid "Status"
+msgstr "Status"
+
+#: taskmgr.rc:328
+msgid "Debug Channels"
+msgstr "Kanali razhroščevalnika"
+
+#: taskmgr.rc:329
+msgid "Fixme"
+msgstr "Fixme"
+
+#: taskmgr.rc:330
+msgid "Err"
+msgstr "Err"
+
+#: taskmgr.rc:331
+msgid "Warn"
+msgstr "Warn"
+
+#: taskmgr.rc:332
+msgid "Trace"
+msgstr "Trace"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"

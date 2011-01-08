@@ -3354,7 +3354,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S         %S      Открытых ресурсов: %lu\n"
 
-#: notepad.rc:26 progman.rc:29
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
 msgid "&File"
 msgstr "&Файл"
 
@@ -3438,7 +3438,7 @@ msgstr "Найти &далее\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Заменить...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87
 msgid "&Help"
 msgstr "&Справка"
 
@@ -3602,7 +3602,7 @@ msgstr "&Запустить..."
 msgid "E&xit Windows..."
 msgstr "Вы&ход из Wine..."
 
-#: progman.rc:41
+#: progman.rc:41 taskmgr.rc:41
 msgid "&Options"
 msgstr "&Параметры"
 
@@ -3618,7 +3618,7 @@ msgstr "&Свернуть при запуске"
 msgid "&Save settings on exit"
 msgstr "&Сохранять настройки при выходе"
 
-#: progman.rc:46
+#: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
 msgid "&Windows"
 msgstr "&Окна"
 
@@ -3926,6 +3926,579 @@ msgstr "Ошибка: невозможно добавить ключи на уд
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr ""
+
+#: taskmgr.rc:37 taskmgr.rc:109
+msgid "&New Task (Run...)"
+msgstr "&Новая задача (Выполнить...)"
+
+#: taskmgr.rc:39
+msgid "E&xit Task Manager"
+msgstr "&Завершение диспетчера задач"
+
+#: taskmgr.rc:43 taskmgr.rc:142
+msgid "&Always On Top"
+msgstr "Пове&рх остальных окон"
+
+#: taskmgr.rc:45
+msgid "&Minimize On Use"
+msgstr "&Сворачивать после обращения"
+
+#: taskmgr.rc:47
+msgid "&Hide When Minimized"
+msgstr "С&крывать свернутое"
+
+#: taskmgr.rc:49 taskmgr.rc:258
+msgid "&Show 16-bit tasks"
+msgstr "П&оказывать 16-разрядные программы"
+
+#: taskmgr.rc:52
+msgid "&View"
+msgstr "&Вид"
+
+#: taskmgr.rc:54
+msgid "&Refresh Now"
+msgstr "&Обновить"
+
+#: taskmgr.rc:55
+msgid "&Update Speed"
+msgstr "&Скорость обновления"
+
+#: taskmgr.rc:57 taskmgr.rc:159
+msgid "&High"
+msgstr "&Высокая"
+
+#: taskmgr.rc:58 taskmgr.rc:163
+msgid "&Normal"
+msgstr "&Обычная"
+
+#: taskmgr.rc:60 taskmgr.rc:167
+msgid "&Low"
+msgstr "&Низкая"
+
+#: taskmgr.rc:61
+msgid "&Paused"
+msgstr "&Приостановить"
+
+#: taskmgr.rc:65 taskmgr.rc:111 taskmgr.rc:253
+msgid "Lar&ge Icons"
+msgstr "&Крупные значки"
+
+#: taskmgr.rc:66 taskmgr.rc:112 taskmgr.rc:254
+msgid "S&mall Icons"
+msgstr "&Мелкие значки"
+
+#: taskmgr.rc:67 taskmgr.rc:113 taskmgr.rc:255
+msgid "&Details"
+msgstr "&Таблица"
+
+#: taskmgr.rc:68 taskmgr.rc:257
+msgid "&Select Columns..."
+msgstr "В&ыбрать столбцы..."
+
+#: taskmgr.rc:69 taskmgr.rc:259
+msgid "&CPU History"
+msgstr "&Загрузка ЦП"
+
+#: taskmgr.rc:71 taskmgr.rc:260
+msgid "&One Graph, All CPUs"
+msgstr "&Один график на все ЦП"
+
+#: taskmgr.rc:73 taskmgr.rc:261
+msgid "One Graph &Per CPU"
+msgstr "&По графику на каждый ЦП"
+
+#: taskmgr.rc:76 taskmgr.rc:262
+msgid "&Show Kernel Times"
+msgstr "&Вывод времени ядра"
+
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124
+msgid "Tile &Horizontally"
+msgstr "С&лева направо"
+
+#: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
+msgid "Tile &Vertically"
+msgstr "С&верху вниз"
+
+#: taskmgr.rc:82 taskmgr.rc:99 taskmgr.rc:126
+msgid "&Minimize"
+msgstr "&Свернуть"
+
+#: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+msgid "Ma&ximize"
+msgstr "&Развернуть"
+
+#: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
+msgid "&Cascade"
+msgstr "&Каскадом"
+
+#: taskmgr.rc:85 taskmgr.rc:102 taskmgr.rc:122
+msgid "&Bring To Front"
+msgstr "&На передний план"
+
+#: taskmgr.rc:89
+msgid "Task Manager &Help Topics"
+msgstr "&Вызов справки"
+
+#: taskmgr.rc:91
+msgid "&About Task Manager"
+msgstr "&О программе"
+
+#: taskmgr.rc:107 taskmgr.rc:119 taskmgr.rc:137 taskmgr.rc:148
+msgid "DUMMY"
+msgstr "DUMMY"
+
+#: taskmgr.rc:121
+msgid "&Switch To"
+msgstr "&Переключиться"
+
+#: taskmgr.rc:130
+msgid "&End Task"
+msgstr "Снять &задачу"
+
+#: taskmgr.rc:131
+msgid "&Go To Process"
+msgstr "&Перейти к процессам"
+
+#: taskmgr.rc:139
+msgid "&Restore"
+msgstr "&Восстановить"
+
+#: taskmgr.rc:140
+msgid "&Close"
+msgstr "&Закрыть"
+
+#: taskmgr.rc:150
+msgid "&End Process"
+msgstr "&Завершить процесс"
+
+#: taskmgr.rc:151
+msgid "End Process &Tree"
+msgstr "Завершить &дерево процессов"
+
+#: taskmgr.rc:153
+msgid "&Debug"
+msgstr "&Отладка"
+
+#: taskmgr.rc:155
+msgid "Set &Priority"
+msgstr "&Приоритет"
+
+#: taskmgr.rc:157
+msgid "&Realtime"
+msgstr "&Реального времени"
+
+#: taskmgr.rc:161
+msgid "&AboveNormal"
+msgstr "В&ыше среднего"
+
+#: taskmgr.rc:165
+msgid "&BelowNormal"
+msgstr "Н&иже среднего"
+
+#: taskmgr.rc:170
+msgid "Set &Affinity..."
+msgstr "Задать &соответствие..."
+
+#: taskmgr.rc:171
+msgid "Edit Debug &Channels..."
+msgstr "Изменить &каналы отладки..."
+
+#: taskmgr.rc:181 taskmgr.rc:182
+msgid "Task Manager"
+msgstr "Диспетчер задач"
+
+#: taskmgr.rc:183
+msgid "Create New Task"
+msgstr "Создать новую задачу"
+
+#: taskmgr.rc:188
+msgid "Runs a new program"
+msgstr "Запускает новую программу"
+
+#: taskmgr.rc:189
+msgid "Task Manager remains in front of all other windows unless minimized"
+msgstr ""
+"Окно Диспетчера задач отображается поверх других окон, если не свернуто"
+
+#: taskmgr.rc:191
+msgid "Task Manager is minimized when a SwitchTo operation is performed"
+msgstr "Окно Диспетчера задач свертывается при выполнении переключения"
+
+#: taskmgr.rc:192
+msgid "Hide the Task Manager when it is minimized"
+msgstr "Скрывает свернутое окно Диспетчера задач"
+
+#: taskmgr.rc:193
+msgid "Force Task Manager to update now, regardless of Update Speed setting"
+msgstr "Вызывает немедленное обновление окна Диспетчера задач"
+
+#: taskmgr.rc:194
+msgid "Displays tasks by using large icons"
+msgstr "Отображает задачи в виде крупных значков"
+
+#: taskmgr.rc:195
+msgid "Displays tasks by using small icons"
+msgstr "Отображает задачи в виде мелких значков"
+
+#: taskmgr.rc:196
+msgid "Displays information about each task"
+msgstr "Отображает дополнительную информацию о задачах"
+
+#: taskmgr.rc:197
+msgid "Updates the display twice per second"
+msgstr "Обновляет изображение два раза в секунду"
+
+#: taskmgr.rc:198
+msgid "Updates the display every two seconds"
+msgstr "Обновляет изображение один раз в две секунды"
+
+#: taskmgr.rc:199
+msgid "Updates the display every four seconds"
+msgstr "Обновляет изображение один раз в четыре секунды"
+
+#: taskmgr.rc:204
+msgid "Does not automatically update"
+msgstr "Изображение не обновляется автоматически"
+
+#: taskmgr.rc:206
+msgid "Tiles the windows horizontally on the desktop"
+msgstr "Размещает выбранные окна слева направо"
+
+#: taskmgr.rc:207
+msgid "Tiles the windows vertically on the desktop"
+msgstr "Размещает выбранные окна одно над другим"
+
+#: taskmgr.rc:208
+msgid "Minimizes the windows"
+msgstr "Свёртывает окна выбранных задач"
+
+#: taskmgr.rc:209
+msgid "Maximizes the windows"
+msgstr "Развёртывает окна на весь рабочий стол"
+
+#: taskmgr.rc:210
+msgid "Cascades the windows diagonally on the desktop"
+msgstr "Размещает выбранные окна каскадом"
+
+#: taskmgr.rc:211
+msgid "Brings the window front, but does not switch to it"
+msgstr "Перемещает окно на передний план, но не активизирует его"
+
+#: taskmgr.rc:212
+msgid "Displays Task Manager help topics"
+msgstr "Открывает окно встроенной справки Диспетчера задач"
+
+#: taskmgr.rc:213
+msgid "Displays program information, version number, and copyright"
+msgstr "Вывод сведений о программе, её версии и авторских правах"
+
+#: taskmgr.rc:214
+msgid "Exits the Task Manager application"
+msgstr "Завершает Диспетчер задач"
+
+#: taskmgr.rc:216
+msgid "Shows 16-bit tasks under the associated ntvdm.exe"
+msgstr "Отображает 16-разрядные задачи, обрабатываемые ntvdm.exe"
+
+#: taskmgr.rc:217
+msgid "Select which columns will be visible on the Process page"
+msgstr "Определяет список столбцов, отображаемых на вкладке Процессы"
+
+#: taskmgr.rc:218
+msgid "Displays kernel time in the performance graphs"
+msgstr "Отображает время ядра на графиках загруженности"
+
+#: taskmgr.rc:220
+msgid "A single history graph shows total CPU usage"
+msgstr "Один хронологический график общей загрузки ЦП"
+
+#: taskmgr.rc:221
+msgid "Each CPU has its own history graph"
+msgstr "Каждому ЦП соответствует свой график"
+
+#: taskmgr.rc:223
+msgid "Brings a task to the foreground, switch focus to that task"
+msgstr "Перемещает задачи на передний план и передает им управление"
+
+#: taskmgr.rc:228
+msgid "Tells the selected tasks to close"
+msgstr "Завершает выбранный процесс"
+
+#: taskmgr.rc:229
+msgid "Switches the focus to the process of the selected task"
+msgstr "Переключает фокус на процесс выбранной задачи"
+
+#: taskmgr.rc:230
+msgid "Restores the Task Manager from its hidden state"
+msgstr "Восстанавливает скрытое окно Диспетчера задач"
+
+#: taskmgr.rc:231
+msgid "Removes the process from the system"
+msgstr "Удаляет процесс из системы"
+
+#: taskmgr.rc:233
+msgid "Removes this process and all descendants from the system"
+msgstr "Удаляет из системы этот процесс и всех его потомков."
+
+#: taskmgr.rc:234
+msgid "Attaches the debugger to this process"
+msgstr "Применяет отладчик к этому процессу"
+
+#: taskmgr.rc:236
+msgid "Controls which processors the process will be allowed to run on"
+msgstr "Устанавливает, какие ЦП может использовать процесс"
+
+#: taskmgr.rc:238
+msgid "Sets process to the REALTIME priority class"
+msgstr "Устанавливает класс приоритета РЕАЛЬНОГО ВРЕМЕНИ для процесса"
+
+#: taskmgr.rc:239
+msgid "Sets process to the HIGH priority class"
+msgstr "Устанавливает класс приоритета ВЫСОКИЙ для процесса"
+
+#: taskmgr.rc:241
+msgid "Sets process to the ABOVE NORMAL priority class"
+msgstr "Устанавливает класс приоритета ВЫШЕ СРЕДНЕГО для процесса"
+
+#: taskmgr.rc:243
+msgid "Sets process to the NORMAL priority class"
+msgstr "Устанавливает класс приоритета СРЕДНИЙ для процесса"
+
+#: taskmgr.rc:245
+msgid "Sets process to the BELOW NORMAL priority class"
+msgstr "Устанавливает класс приоритета НИЖЕ СРЕДНЕГО для процесса"
+
+#: taskmgr.rc:246
+msgid "Sets process to the LOW priority class"
+msgstr "Устанавливает класс приоритета НИЗКИЙ для процесса"
+
+#: taskmgr.rc:248
+msgid "Controls Debug Channels"
+msgstr "Управляет каналами отладки"
+
+#: taskmgr.rc:263
+msgid "Applications"
+msgstr "Приложения"
+
+#: taskmgr.rc:264
+msgid "Processes"
+msgstr "Процессы"
+
+#: taskmgr.rc:265
+msgid "Performance"
+msgstr "Быстродействие"
+
+#: taskmgr.rc:266
+msgid "CPU Usage: %3d%%"
+msgstr "Загрузка ЦП: %3d%%"
+
+#: taskmgr.rc:267
+msgid "Processes: %d"
+msgstr "Процессов: %d"
+
+#: taskmgr.rc:268
+msgid "Mem Usage: %dK / %dK"
+msgstr "Выделение памяти: %dK / %dK"
+
+#: taskmgr.rc:273
+msgid "Image Name"
+msgstr "Имя образа"
+
+#: taskmgr.rc:274
+msgid "PID"
+msgstr "PID"
+
+#: taskmgr.rc:275
+msgid "CPU"
+msgstr "ЦП"
+
+#: taskmgr.rc:276
+msgid "CPU Time"
+msgstr "Время ЦП"
+
+#: taskmgr.rc:277
+msgid "Mem Usage"
+msgstr "Память"
+
+#: taskmgr.rc:278
+msgid "Mem Delta"
+msgstr "Память (изм)"
+
+#: taskmgr.rc:279
+msgid "Peak Mem Usage"
+msgstr "Пиковое использование памяти"
+
+#: taskmgr.rc:280
+msgid "Page Faults"
+msgstr "Ош. стр."
+
+#: taskmgr.rc:281
+msgid "USER Objects"
+msgstr "Объекты USER"
+
+#: taskmgr.rc:282
+msgid "I/O Reads"
+msgstr "Число чтений"
+
+#: taskmgr.rc:283
+msgid "I/O Read Bytes"
+msgstr "Прочитано байт"
+
+#: taskmgr.rc:284
+msgid "Session ID"
+msgstr "Код сеанса"
+
+#: taskmgr.rc:285
+msgid "Username"
+msgstr "Имя пользователя"
+
+#: taskmgr.rc:286
+msgid "PF Delta"
+msgstr "Ош. стр. (изм)"
+
+#: taskmgr.rc:287
+msgid "VM Size"
+msgstr "Объём виртуальной памяти"
+
+#: taskmgr.rc:288
+msgid "Paged Pool"
+msgstr "Выгр. п."
+
+#: taskmgr.rc:289
+msgid "NP Pool"
+msgstr "Н. выгр. пул."
+
+#: taskmgr.rc:290
+msgid "Base Pri"
+msgstr "Баз. пр"
+
+#: taskmgr.rc:291
+msgid "Handles"
+msgstr "Дескр."
+
+#: taskmgr.rc:292
+msgid "Threads"
+msgstr "Потоков"
+
+#: taskmgr.rc:293
+msgid "GDI Objects"
+msgstr "Объекты GDI"
+
+#: taskmgr.rc:294
+msgid "I/O Writes"
+msgstr "Число записей"
+
+#: taskmgr.rc:295
+msgid "I/O Write Bytes"
+msgstr "Записано байт"
+
+#: taskmgr.rc:296
+msgid "I/O Other"
+msgstr "Прочий ввод-вывод"
+
+#: taskmgr.rc:297
+msgid "I/O Other Bytes"
+msgstr "Прочих байт при вводе-выводе"
+
+#: taskmgr.rc:302
+msgid "Task Manager Warning"
+msgstr "Предупреждение диспетчера задач"
+
+#: taskmgr.rc:305
+msgid ""
+"WARNING: Changing the priority class of this process may\n"
+"cause undesired results including system instability. Are you\n"
+"sure you want to change the priority class?"
+msgstr ""
+"ВНИМАНИЕ! Изменение класса приоритета этого\n"
+"процесса может привести к нежелательным результатам,\n"
+"в том числе к нестабильной работе системы. Вы\n"
+"действительно хотите изменить класс приоритета?"
+
+#: taskmgr.rc:306
+msgid "Unable to Change Priority"
+msgstr "Невозможно сменить приоритет."
+
+#: taskmgr.rc:311
+msgid ""
+"WARNING: Terminating a process can cause undesired\n"
+"results including loss of data and system instability. The\n"
+"process will not be given the chance to save its state or\n"
+"data before it is terminated. Are you sure you want to\n"
+"terminate the process?"
+msgstr ""
+"ВНИМАНИЕ! Завершение процесса может\n"
+"привести к нежелательным результатам, в том числе\n"
+"к потере данных или к нестабильной работе системы.\n"
+"Вы действительно хотите завершить процесс?"
+
+#: taskmgr.rc:312
+msgid "Unable to Terminate Process"
+msgstr "Невозможно завершить процесс"
+
+#: taskmgr.rc:314
+msgid ""
+"WARNING: Debugging this process may result in loss of data.\n"
+"Are you sure you wish to attach the debugger?"
+msgstr ""
+"ВНИМАНИЕ! Отладка этого процесса может привести к потере данных.\n"
+"Вы действительно хотите использовать отладчик?"
+
+#: taskmgr.rc:315
+msgid "Unable to Debug Process"
+msgstr "Отладка процесса невозможна."
+
+#: taskmgr.rc:316
+msgid "The process must have affinity with at least one processor"
+msgstr "Процессу должен соответствовать хотя бы один ЦП."
+
+#: taskmgr.rc:317
+msgid "Invalid Option"
+msgstr "Неправильный параметр"
+
+#: taskmgr.rc:318
+msgid "Unable to Access or Set Process Affinity"
+msgstr "Невозможно получить доступ или установить соответствие процесса"
+
+#: taskmgr.rc:323
+msgid "System Idle Process"
+msgstr "Бездействие системы"
+
+#: taskmgr.rc:324
+msgid "Not Responding"
+msgstr "Не отвечает"
+
+#: taskmgr.rc:325
+msgid "Running"
+msgstr "Работает"
+
+#: taskmgr.rc:326
+msgid "Task"
+msgstr "Задача"
+
+#: taskmgr.rc:327
+msgid "Status"
+msgstr "Состояние"
+
+#: taskmgr.rc:328
+msgid "Debug Channels"
+msgstr "Каналы отладки"
+
+#: taskmgr.rc:329
+msgid "Fixme"
+msgstr "Fixme"
+
+#: taskmgr.rc:330
+msgid "Err"
+msgstr "Err"
+
+#: taskmgr.rc:331
+msgid "Warn"
+msgstr "Warn"
+
+#: taskmgr.rc:332
+msgid "Trace"
+msgstr "Trace"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"

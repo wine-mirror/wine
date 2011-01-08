@@ -3344,7 +3344,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Atverti ištekliai: %lu\n"
 
-#: notepad.rc:26 progman.rc:29
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
 msgid "&File"
 msgstr "&Failas"
 
@@ -3428,7 +3428,7 @@ msgstr "Ieškoti ki&to\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "Pa&keisti...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87
 msgid "&Help"
 msgstr "&Žinynas"
 
@@ -3586,7 +3586,7 @@ msgstr "&Vykdyti..."
 msgid "E&xit Windows..."
 msgstr "Iš&eiti..."
 
-#: progman.rc:41
+#: progman.rc:41 taskmgr.rc:41
 msgid "&Options"
 msgstr "&Parinktys"
 
@@ -3602,7 +3602,7 @@ msgstr "&Suskleisti paleidžiant"
 msgid "&Save settings on exit"
 msgstr "Išsaugoti &nuostatas išeinant"
 
-#: progman.rc:46
+#: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
 msgid "&Windows"
 msgstr "&Langai"
 
@@ -3909,6 +3909,582 @@ msgstr "Klaida: nepavyko nutraukti proceso „%s“.\n"
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr "Klaida: savo proceso priverstinis nutraukimas negalimas.\n"
+
+#: taskmgr.rc:37 taskmgr.rc:109
+msgid "&New Task (Run...)"
+msgstr "&Nauja užduotis (vykdyti...)"
+
+#: taskmgr.rc:39
+msgid "E&xit Task Manager"
+msgstr "Iš&eiti iš užduočių tvarkytuvės"
+
+#: taskmgr.rc:43 taskmgr.rc:142
+msgid "&Always On Top"
+msgstr "&Visada viršuje"
+
+#: taskmgr.rc:45
+msgid "&Minimize On Use"
+msgstr "&Suskleisti naudojant"
+
+#: taskmgr.rc:47
+msgid "&Hide When Minimized"
+msgstr "S&lėpti, kai suskleista"
+
+#: taskmgr.rc:49 taskmgr.rc:258
+msgid "&Show 16-bit tasks"
+msgstr "&Rodyti 16-bitų užduotis"
+
+#: taskmgr.rc:52
+msgid "&View"
+msgstr "&Rodymas"
+
+#: taskmgr.rc:54
+msgid "&Refresh Now"
+msgstr "&Atnaujinti dabar"
+
+#: taskmgr.rc:55
+msgid "&Update Speed"
+msgstr "&Atnaujinimo greitis"
+
+#: taskmgr.rc:57 taskmgr.rc:159
+msgid "&High"
+msgstr "&Didelis"
+
+#: taskmgr.rc:58 taskmgr.rc:163
+msgid "&Normal"
+msgstr "&Normalus"
+
+#: taskmgr.rc:60 taskmgr.rc:167
+msgid "&Low"
+msgstr "&Mažas"
+
+#: taskmgr.rc:61
+msgid "&Paused"
+msgstr "&Pristabdyta"
+
+#: taskmgr.rc:65 taskmgr.rc:111 taskmgr.rc:253
+msgid "Lar&ge Icons"
+msgstr "&Didelės piktogramos"
+
+#: taskmgr.rc:66 taskmgr.rc:112 taskmgr.rc:254
+msgid "S&mall Icons"
+msgstr "&Mažos piktogramos"
+
+#: taskmgr.rc:67 taskmgr.rc:113 taskmgr.rc:255
+msgid "&Details"
+msgstr "&Išsamus"
+
+#: taskmgr.rc:68 taskmgr.rc:257
+msgid "&Select Columns..."
+msgstr "Iš&rinkti stulpelius..."
+
+#: taskmgr.rc:69 taskmgr.rc:259
+msgid "&CPU History"
+msgstr "&CP istorija"
+
+#: taskmgr.rc:71 taskmgr.rc:260
+msgid "&One Graph, All CPUs"
+msgstr "&Viena diagrama visiems CP"
+
+#: taskmgr.rc:73 taskmgr.rc:261
+msgid "One Graph &Per CPU"
+msgstr "Po diagramą &kiekvienam CP"
+
+#: taskmgr.rc:76 taskmgr.rc:262
+msgid "&Show Kernel Times"
+msgstr "&Rodyti branduolio laikus"
+
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124
+msgid "Tile &Horizontally"
+msgstr "Iškloti &gulsčiai"
+
+#: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
+msgid "Tile &Vertically"
+msgstr "Iškloti &stačiai"
+
+#: taskmgr.rc:82 taskmgr.rc:99 taskmgr.rc:126
+msgid "&Minimize"
+msgstr "Susk&leisti"
+
+#: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+msgid "Ma&ximize"
+msgstr "&Išskleisti"
+
+#: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
+msgid "&Cascade"
+msgstr "Išdėstyti pa&kopomis"
+
+#: taskmgr.rc:85 taskmgr.rc:102 taskmgr.rc:122
+msgid "&Bring To Front"
+msgstr "Perkelti į &priekį"
+
+#: taskmgr.rc:89
+msgid "Task Manager &Help Topics"
+msgstr "Užduočių tvarkytuvės &žinynas"
+
+#: taskmgr.rc:91
+msgid "&About Task Manager"
+msgstr "&Apie užduočių tvarkytuvę"
+
+#: taskmgr.rc:107 taskmgr.rc:119 taskmgr.rc:137 taskmgr.rc:148
+msgid "DUMMY"
+msgstr "DUMMY"
+
+#: taskmgr.rc:121
+msgid "&Switch To"
+msgstr "Per&jungti į"
+
+#: taskmgr.rc:130
+msgid "&End Task"
+msgstr "&Baigti užduotį"
+
+#: taskmgr.rc:131
+msgid "&Go To Process"
+msgstr "&Eiti į procesą"
+
+#: taskmgr.rc:139
+msgid "&Restore"
+msgstr "&Atkurti"
+
+#: taskmgr.rc:140
+msgid "&Close"
+msgstr "&Užverti"
+
+#: taskmgr.rc:150
+msgid "&End Process"
+msgstr "&Baigti procesą"
+
+#: taskmgr.rc:151
+msgid "End Process &Tree"
+msgstr "Baigti procesų &medį"
+
+#: taskmgr.rc:153
+msgid "&Debug"
+msgstr "&Derinti"
+
+#: taskmgr.rc:155
+msgid "Set &Priority"
+msgstr "Nustatyti &prioritetą"
+
+#: taskmgr.rc:157
+msgid "&Realtime"
+msgstr "&Tikralaikis"
+
+#: taskmgr.rc:161
+msgid "&AboveNormal"
+msgstr "&ViršNormalaus"
+
+#: taskmgr.rc:165
+msgid "&BelowNormal"
+msgstr "&ŽemiauNormalaus"
+
+#: taskmgr.rc:170
+msgid "Set &Affinity..."
+msgstr "Nustatyti &atitikimą..."
+
+#: taskmgr.rc:171
+msgid "Edit Debug &Channels..."
+msgstr "Redaguoti derinimo &kanalus..."
+
+#: taskmgr.rc:181 taskmgr.rc:182
+msgid "Task Manager"
+msgstr "Užduočių tvarkytuvė"
+
+#: taskmgr.rc:183
+msgid "Create New Task"
+msgstr "Sukurti naują užduotį"
+
+#: taskmgr.rc:188
+msgid "Runs a new program"
+msgstr "Paleidžia naują programą"
+
+#: taskmgr.rc:189
+msgid "Task Manager remains in front of all other windows unless minimized"
+msgstr ""
+"Užduočių tvarkytuvės langas lieka priekyje visų kitų langų, nebent "
+"suskleidžiamas"
+
+#: taskmgr.rc:191
+msgid "Task Manager is minimized when a SwitchTo operation is performed"
+msgstr ""
+"Užduočių tvarkytuvė yra suskleidžiama, kai įvykdoma operacija „perjungti į“"
+
+#: taskmgr.rc:192
+msgid "Hide the Task Manager when it is minimized"
+msgstr "Slepia užduočių tvarkytuvę, kai langas suskleidžiamas"
+
+#: taskmgr.rc:193
+msgid "Force Task Manager to update now, regardless of Update Speed setting"
+msgstr ""
+"Priverčia užduočių tvarkytuvę atnaujinti ekraną dabar, nepaisant atnaujinimo "
+"greičio nuostatos"
+
+#: taskmgr.rc:194
+msgid "Displays tasks by using large icons"
+msgstr "Rodo užduotis didelėmis piktogramomis"
+
+#: taskmgr.rc:195
+msgid "Displays tasks by using small icons"
+msgstr "Rodo užduotis mažomis piktogramomis"
+
+#: taskmgr.rc:196
+msgid "Displays information about each task"
+msgstr "Rodo informaciją apie kiekvieną užduotį"
+
+#: taskmgr.rc:197
+msgid "Updates the display twice per second"
+msgstr "Atnaujina ekraną du kartus per sekundę"
+
+#: taskmgr.rc:198
+msgid "Updates the display every two seconds"
+msgstr "Atnaujina ekraną kas dvi sekundes"
+
+#: taskmgr.rc:199
+msgid "Updates the display every four seconds"
+msgstr "Atnaujina ekraną kas keturias sekundes"
+
+#: taskmgr.rc:204
+msgid "Does not automatically update"
+msgstr "Automatiškai neatnaujina"
+
+#: taskmgr.rc:206
+msgid "Tiles the windows horizontally on the desktop"
+msgstr "Iškloja langus gulsčiai ant darbalaukio"
+
+#: taskmgr.rc:207
+msgid "Tiles the windows vertically on the desktop"
+msgstr "Iškloja langus stačiai ant darbalaukio"
+
+#: taskmgr.rc:208
+msgid "Minimizes the windows"
+msgstr "Suskleidžia langus"
+
+#: taskmgr.rc:209
+msgid "Maximizes the windows"
+msgstr "Išskleidžia langus"
+
+#: taskmgr.rc:210
+msgid "Cascades the windows diagonally on the desktop"
+msgstr "Išdėsto langus pakopomis ant darbalaukio"
+
+#: taskmgr.rc:211
+msgid "Brings the window front, but does not switch to it"
+msgstr "Perkelia langą į priekį, bet į jį neperjungia"
+
+#: taskmgr.rc:212
+msgid "Displays Task Manager help topics"
+msgstr "Rodo užduočių tvarkytuvės žinyną"
+
+#: taskmgr.rc:213
+msgid "Displays program information, version number, and copyright"
+msgstr "Rodo programos informaciją, versijos numerį ir autoriaus teises"
+
+#: taskmgr.rc:214
+msgid "Exits the Task Manager application"
+msgstr "Išeina iš užduočių tvarkytuvės"
+
+#: taskmgr.rc:216
+msgid "Shows 16-bit tasks under the associated ntvdm.exe"
+msgstr "Rodo 16-bitų užduotis po susietu ntvdm.exe"
+
+#: taskmgr.rc:217
+msgid "Select which columns will be visible on the Process page"
+msgstr "Išrenka stulpelius, kurie bus matomi procesų puslapyje"
+
+#: taskmgr.rc:218
+msgid "Displays kernel time in the performance graphs"
+msgstr "Rodo branduolio laiką našumo diagramose"
+
+#: taskmgr.rc:220
+msgid "A single history graph shows total CPU usage"
+msgstr "Viena istorijos diagrama rodo bendrą CP naudojimą"
+
+#: taskmgr.rc:221
+msgid "Each CPU has its own history graph"
+msgstr "Kiekvienas CP turi savo atskirą istorijos diagramą"
+
+#: taskmgr.rc:223
+msgid "Brings a task to the foreground, switch focus to that task"
+msgstr "Perkelia užduotį priekio link ir perjungia židinį į ją"
+
+#: taskmgr.rc:228
+msgid "Tells the selected tasks to close"
+msgstr "Liepia pažymėtoms užduotims užsidaryti"
+
+#: taskmgr.rc:229
+msgid "Switches the focus to the process of the selected task"
+msgstr "Perjungia židinį į pažymėtos užduoties procesą"
+
+#: taskmgr.rc:230
+msgid "Restores the Task Manager from its hidden state"
+msgstr "Atkuria užduočių tvarkytuvę iš paslėptos būsenos"
+
+#: taskmgr.rc:231
+msgid "Removes the process from the system"
+msgstr "Pašalina procesą iš sistemos"
+
+#: taskmgr.rc:233
+msgid "Removes this process and all descendants from the system"
+msgstr "Pašalina procesą ir visus jo palikuonis iš sistemos"
+
+#: taskmgr.rc:234
+msgid "Attaches the debugger to this process"
+msgstr "Prijungia derintuvę prie proceso"
+
+#: taskmgr.rc:236
+msgid "Controls which processors the process will be allowed to run on"
+msgstr "Kontroliuoja, kuriuos procesorius procesas galės naudoti vykdymui"
+
+#: taskmgr.rc:238
+msgid "Sets process to the REALTIME priority class"
+msgstr "Nustato procesui TIKRALAIKĘ prioriteto klasę"
+
+#: taskmgr.rc:239
+msgid "Sets process to the HIGH priority class"
+msgstr "Nustato procesui AUKŠTĄ prioriteto klasę"
+
+#: taskmgr.rc:241
+msgid "Sets process to the ABOVE NORMAL priority class"
+msgstr "Nustato procesui prioriteto klasę VIRŠ NORMALIOS"
+
+#: taskmgr.rc:243
+msgid "Sets process to the NORMAL priority class"
+msgstr "Nustato procesui NORMALIĄ prioriteto klasę"
+
+#: taskmgr.rc:245
+msgid "Sets process to the BELOW NORMAL priority class"
+msgstr "Nustato procesui prioriteto klasę ŽEMIAU NORMALIOS"
+
+#: taskmgr.rc:246
+msgid "Sets process to the LOW priority class"
+msgstr "Nustato procesui ŽEMĄ prioriteto klasę"
+
+#: taskmgr.rc:248
+msgid "Controls Debug Channels"
+msgstr "Kontroliuoja derinimo kanalus"
+
+#: taskmgr.rc:263
+msgid "Applications"
+msgstr "Programos"
+
+#: taskmgr.rc:264
+msgid "Processes"
+msgstr "Procesai"
+
+#: taskmgr.rc:265
+msgid "Performance"
+msgstr "Našumas"
+
+#: taskmgr.rc:266
+msgid "CPU Usage: %3d%%"
+msgstr "CP naudojimas: %3d%%"
+
+#: taskmgr.rc:267
+msgid "Processes: %d"
+msgstr "Procesai: %d"
+
+#: taskmgr.rc:268
+msgid "Mem Usage: %dK / %dK"
+msgstr "Atminties naudojimas: %dK / %dK"
+
+#: taskmgr.rc:273
+msgid "Image Name"
+msgstr "Proceso vardas"
+
+#: taskmgr.rc:274
+msgid "PID"
+msgstr "PID"
+
+#: taskmgr.rc:275
+msgid "CPU"
+msgstr "CP"
+
+#: taskmgr.rc:276
+msgid "CPU Time"
+msgstr "CP laikas"
+
+#: taskmgr.rc:277
+msgid "Mem Usage"
+msgstr "Atm naudojimas"
+
+#: taskmgr.rc:278
+msgid "Mem Delta"
+msgstr "Atm pokytis"
+
+#: taskmgr.rc:279
+msgid "Peak Mem Usage"
+msgstr "Atm naud. pikas"
+
+#: taskmgr.rc:280
+msgid "Page Faults"
+msgstr "Puslap. klaidos"
+
+#: taskmgr.rc:281
+msgid "USER Objects"
+msgstr "USER objektai"
+
+#: taskmgr.rc:282
+msgid "I/O Reads"
+msgstr "I/O skaitymai"
+
+#: taskmgr.rc:283
+msgid "I/O Read Bytes"
+msgstr "I/O persk. baitų"
+
+#: taskmgr.rc:284
+msgid "Session ID"
+msgstr "Seanso ID"
+
+#: taskmgr.rc:285
+msgid "Username"
+msgstr "Naudotojas"
+
+#: taskmgr.rc:286
+msgid "PF Delta"
+msgstr "PK pokytis"
+
+#: taskmgr.rc:287
+msgid "VM Size"
+msgstr "VA dydis"
+
+#: taskmgr.rc:288
+msgid "Paged Pool"
+msgstr "Sukeič. telkinys"
+
+#: taskmgr.rc:289
+msgid "NP Pool"
+msgstr "Nesukeič. telkinys"
+
+#: taskmgr.rc:290
+msgid "Base Pri"
+msgstr "Baz. prioritetas"
+
+#: taskmgr.rc:291
+msgid "Handles"
+msgstr "Rodyklės"
+
+#: taskmgr.rc:292
+msgid "Threads"
+msgstr "Gijos"
+
+#: taskmgr.rc:293
+msgid "GDI Objects"
+msgstr "GDI objektai"
+
+#: taskmgr.rc:294
+msgid "I/O Writes"
+msgstr "I/O rašymai"
+
+#: taskmgr.rc:295
+msgid "I/O Write Bytes"
+msgstr "I/O įraš. baitų"
+
+#: taskmgr.rc:296
+msgid "I/O Other"
+msgstr "I/O kiti"
+
+#: taskmgr.rc:297
+msgid "I/O Other Bytes"
+msgstr "I/O kitų baitų"
+
+#: taskmgr.rc:302
+msgid "Task Manager Warning"
+msgstr "Užduočių tvarkytuvės įspėjimas"
+
+#: taskmgr.rc:305
+msgid ""
+"WARNING: Changing the priority class of this process may\n"
+"cause undesired results including system instability. Are you\n"
+"sure you want to change the priority class?"
+msgstr ""
+"ĮSPĖJIMAS: Šio proceso prioriteto klasės keitimas gali\n"
+"sukelti nepageidaujamų pasekmių, tarp jų sistemos nestabilumą\n"
+"Ar tikrai norite pakeisti prioriteto klasę?"
+
+#: taskmgr.rc:306
+msgid "Unable to Change Priority"
+msgstr "Nepavyko pakeisti prioriteto klasės"
+
+#: taskmgr.rc:311
+msgid ""
+"WARNING: Terminating a process can cause undesired\n"
+"results including loss of data and system instability. The\n"
+"process will not be given the chance to save its state or\n"
+"data before it is terminated. Are you sure you want to\n"
+"terminate the process?"
+msgstr ""
+"ĮSPĖJIMAS: Proceso baigimas gali sukelti nepageidaujamų\n"
+"pasekmių, tarp jų duomenų praradimą ar sistemos nestabilumą.\n"
+"Procesui nebus suteiktas šansas išsaugoti savo būseną ar\n"
+"duomenis prieš jo baigimą. Ar tikrai norite baigti procesą?"
+
+#: taskmgr.rc:312
+msgid "Unable to Terminate Process"
+msgstr "Nepavyko baigti proceso"
+
+#: taskmgr.rc:314
+msgid ""
+"WARNING: Debugging this process may result in loss of data.\n"
+"Are you sure you wish to attach the debugger?"
+msgstr ""
+"ĮSPĖJIMAS: Šio proceso derinimas gali sukelti duomenų praradimą.\n"
+"Ar tikrai norite prijungti derintuvę?"
+
+#: taskmgr.rc:315
+msgid "Unable to Debug Process"
+msgstr "Nepavyko derinti proceso"
+
+#: taskmgr.rc:316
+msgid "The process must have affinity with at least one processor"
+msgstr "Procesas privalo naudoti bent vieną procesorių"
+
+#: taskmgr.rc:317
+msgid "Invalid Option"
+msgstr "Neteisingi parametrai"
+
+#: taskmgr.rc:318
+msgid "Unable to Access or Set Process Affinity"
+msgstr "Nepavyko prieiti prie ar nustatyti proceso atitikimo"
+
+#: taskmgr.rc:323
+msgid "System Idle Process"
+msgstr "Sistemos neveikos procesas"
+
+#: taskmgr.rc:324
+msgid "Not Responding"
+msgstr "Neatsako"
+
+#: taskmgr.rc:325
+msgid "Running"
+msgstr "Vykdoma"
+
+#: taskmgr.rc:326
+msgid "Task"
+msgstr "Užduotis"
+
+#: taskmgr.rc:327
+msgid "Status"
+msgstr "Būsena"
+
+#: taskmgr.rc:328
+msgid "Debug Channels"
+msgstr "Derinimo kanalai"
+
+#: taskmgr.rc:329
+msgid "Fixme"
+msgstr "Fixme (pataisyk)"
+
+#: taskmgr.rc:330
+msgid "Err"
+msgstr "Err (klaida)"
+
+#: taskmgr.rc:331
+msgid "Warn"
+msgstr "Warn (įspėjimas)"
+
+#: taskmgr.rc:332
+msgid "Trace"
+msgstr "Trace (pėdsakas)"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"

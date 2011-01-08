@@ -3364,7 +3364,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Open resources: %lu\n"
 
-#: notepad.rc:26 progman.rc:29
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
 msgid "&File"
 msgstr "&Bestand"
 
@@ -3448,7 +3448,7 @@ msgstr "V&olgende zoeken\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Vervangen...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87
 msgid "&Help"
 msgstr "&Help"
 
@@ -3607,7 +3607,7 @@ msgstr "&Uitvoeren..."
 msgid "E&xit Windows..."
 msgstr "&Afsluiten..."
 
-#: progman.rc:41
+#: progman.rc:41 taskmgr.rc:41
 msgid "&Options"
 msgstr "&Opties"
 
@@ -3623,7 +3623,7 @@ msgstr "&Geminimaliseerd uitvoeren"
 msgid "&Save settings on exit"
 msgstr "&Instellingen opslaan bij afsluiten"
 
-#: progman.rc:46
+#: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
 msgid "&Windows"
 msgstr "&Venster"
 
@@ -3934,6 +3934,581 @@ msgstr "Fout: Kon het proces \"%s\" niet beëindigen.\n"
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr "Fout: Zelf-beëindiging van een proces is niet toegestaan.\n"
+
+#: taskmgr.rc:37 taskmgr.rc:109
+msgid "&New Task (Run...)"
+msgstr "&Nieuwe taak (uitvoeren...)"
+
+#: taskmgr.rc:39
+msgid "E&xit Task Manager"
+msgstr "B&eëindig Taakbeheer"
+
+#: taskmgr.rc:43 taskmgr.rc:142
+msgid "&Always On Top"
+msgstr "&Altijd op de voorgrond"
+
+#: taskmgr.rc:45
+msgid "&Minimize On Use"
+msgstr "&Minimaliseren bij de start"
+
+#: taskmgr.rc:47
+msgid "&Hide When Minimized"
+msgstr "&Verbergen, indien geminimaliseerd"
+
+#: taskmgr.rc:49 taskmgr.rc:258
+msgid "&Show 16-bit tasks"
+msgstr "&Toon 16-bit taken"
+
+#: taskmgr.rc:52
+msgid "&View"
+msgstr "&Beeld"
+
+#: taskmgr.rc:54
+msgid "&Refresh Now"
+msgstr "Ververs &nu"
+
+#: taskmgr.rc:55
+msgid "&Update Speed"
+msgstr "&Verversingstempo"
+
+#: taskmgr.rc:57 taskmgr.rc:159
+msgid "&High"
+msgstr "&Hoog"
+
+#: taskmgr.rc:58 taskmgr.rc:163
+msgid "&Normal"
+msgstr "&Normaal"
+
+#: taskmgr.rc:60 taskmgr.rc:167
+msgid "&Low"
+msgstr "&Laag"
+
+#: taskmgr.rc:61
+msgid "&Paused"
+msgstr "&Pauze"
+
+#: taskmgr.rc:65 taskmgr.rc:111 taskmgr.rc:253
+msgid "Lar&ge Icons"
+msgstr "&Grote pictogrammen"
+
+#: taskmgr.rc:66 taskmgr.rc:112 taskmgr.rc:254
+msgid "S&mall Icons"
+msgstr "&Kleine pictogrammen"
+
+#: taskmgr.rc:67 taskmgr.rc:113 taskmgr.rc:255
+msgid "&Details"
+msgstr "&Details"
+
+#: taskmgr.rc:68 taskmgr.rc:257
+msgid "&Select Columns..."
+msgstr "&Selecteer rijen..."
+
+#: taskmgr.rc:69 taskmgr.rc:259
+msgid "&CPU History"
+msgstr "&CPU geschiedenis"
+
+#: taskmgr.rc:71 taskmgr.rc:260
+msgid "&One Graph, All CPUs"
+msgstr "&Eén grafiek, alle CPU's"
+
+#: taskmgr.rc:73 taskmgr.rc:261
+msgid "One Graph &Per CPU"
+msgstr "Eén grafiek &per CPU"
+
+#: taskmgr.rc:76 taskmgr.rc:262
+msgid "&Show Kernel Times"
+msgstr "&Toon kerneltijden"
+
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124
+msgid "Tile &Horizontally"
+msgstr "&Boven elkaar"
+
+#: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
+msgid "Tile &Vertically"
+msgstr "&Naast elkaar"
+
+#: taskmgr.rc:82 taskmgr.rc:99 taskmgr.rc:126
+msgid "&Minimize"
+msgstr "&Minimaliseren"
+
+#: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+msgid "Ma&ximize"
+msgstr "Ma&xmimaliseren"
+
+#: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
+msgid "&Cascade"
+msgstr "&Achter elkaar"
+
+#: taskmgr.rc:85 taskmgr.rc:102 taskmgr.rc:122
+msgid "&Bring To Front"
+msgstr "Naar de &voorgrond halen"
+
+#: taskmgr.rc:89
+msgid "Task Manager &Help Topics"
+msgstr "Taakbeheer &help-onderwerpen"
+
+#: taskmgr.rc:91
+msgid "&About Task Manager"
+msgstr "&Over Taakbeheer"
+
+#: taskmgr.rc:107 taskmgr.rc:119 taskmgr.rc:137 taskmgr.rc:148
+msgid "DUMMY"
+msgstr "DUMMY"
+
+#: taskmgr.rc:121
+msgid "&Switch To"
+msgstr "&Activeren"
+
+#: taskmgr.rc:130
+msgid "&End Task"
+msgstr "Taak b&eëindigen"
+
+#: taskmgr.rc:131
+msgid "&Go To Process"
+msgstr "&Ga naar proces"
+
+#: taskmgr.rc:139
+msgid "&Restore"
+msgstr "&Herstellen"
+
+#: taskmgr.rc:140
+msgid "&Close"
+msgstr "&Sluiten"
+
+#: taskmgr.rc:150
+msgid "&End Process"
+msgstr "Proces b&eëindigen"
+
+#: taskmgr.rc:151
+msgid "End Process &Tree"
+msgstr "&Beëindig procesboom"
+
+#: taskmgr.rc:153
+msgid "&Debug"
+msgstr "&Debuggen"
+
+#: taskmgr.rc:155
+msgid "Set &Priority"
+msgstr "&Prioriteit zetten"
+
+#: taskmgr.rc:157
+msgid "&Realtime"
+msgstr "&Realtime"
+
+#: taskmgr.rc:161
+msgid "&AboveNormal"
+msgstr "H&oger dan normaal"
+
+#: taskmgr.rc:165
+msgid "&BelowNormal"
+msgstr "&Lager dan normaal"
+
+#: taskmgr.rc:170
+msgid "Set &Affinity..."
+msgstr "&Affiniteit instellen..."
+
+#: taskmgr.rc:171
+msgid "Edit Debug &Channels..."
+msgstr "Debug&kanalen instellen..."
+
+#: taskmgr.rc:181 taskmgr.rc:182
+msgid "Task Manager"
+msgstr "Taakbeheer"
+
+#: taskmgr.rc:183
+msgid "Create New Task"
+msgstr "Start nieuwe taak"
+
+#: taskmgr.rc:188
+msgid "Runs a new program"
+msgstr "Start een nieuw programma"
+
+#: taskmgr.rc:189
+msgid "Task Manager remains in front of all other windows unless minimized"
+msgstr ""
+"Taakbeheer blijft altijd met alle vensters op de voorgrond, totdat hij "
+"geminimaliseerd wordt"
+
+#: taskmgr.rc:191
+msgid "Task Manager is minimized when a SwitchTo operation is performed"
+msgstr ""
+"Taakbeheer minimaliseert zich als een 'Wissel naar' operatie uitgevoerd wordt"
+
+#: taskmgr.rc:192
+msgid "Hide the Task Manager when it is minimized"
+msgstr "Verberg Taakbeheer als hij geminimaliseerd is"
+
+#: taskmgr.rc:193
+msgid "Force Task Manager to update now, regardless of Update Speed setting"
+msgstr "Forceer een verversing, onafhankelijk van het verversingstempo"
+
+#: taskmgr.rc:194
+msgid "Displays tasks by using large icons"
+msgstr "Toon taken met grote pictogrammen"
+
+#: taskmgr.rc:195
+msgid "Displays tasks by using small icons"
+msgstr "Toon taken met kleine pictogrammen"
+
+#: taskmgr.rc:196
+msgid "Displays information about each task"
+msgstr "Toon gedetailleerde informatie over iedere taak"
+
+#: taskmgr.rc:197
+msgid "Updates the display twice per second"
+msgstr "Ververs de weergave tweemaal per seconde"
+
+#: taskmgr.rc:198
+msgid "Updates the display every two seconds"
+msgstr "Ververs de weergave elke 2 seconden"
+
+#: taskmgr.rc:199
+msgid "Updates the display every four seconds"
+msgstr "Ververs de weergave elke 4 seconden"
+
+#: taskmgr.rc:204
+msgid "Does not automatically update"
+msgstr "Niet automatisch verversen"
+
+#: taskmgr.rc:206
+msgid "Tiles the windows horizontally on the desktop"
+msgstr "Plaats de vensters boven elkaar op de desktop"
+
+#: taskmgr.rc:207
+msgid "Tiles the windows vertically on the desktop"
+msgstr "Plaats de vensters naast elkaar op de desktop"
+
+#: taskmgr.rc:208
+msgid "Minimizes the windows"
+msgstr "Minimaliseer de vensters"
+
+#: taskmgr.rc:209
+msgid "Maximizes the windows"
+msgstr "Maximaliseer de vensters"
+
+#: taskmgr.rc:210
+msgid "Cascades the windows diagonally on the desktop"
+msgstr "Plaats de vensters achter elkaar op de desktop"
+
+#: taskmgr.rc:211
+msgid "Brings the window front, but does not switch to it"
+msgstr "Haal het venster naar de voorgrond, maar wissel er niet naartoe"
+
+#: taskmgr.rc:212
+msgid "Displays Task Manager help topics"
+msgstr "Toon de help-onderwerpen van de Taakbeheer"
+
+#: taskmgr.rc:213
+msgid "Displays program information, version number, and copyright"
+msgstr "Toon programma-informatie, versienummer en copyright"
+
+#: taskmgr.rc:214
+msgid "Exits the Task Manager application"
+msgstr "Beëindig Taakbeheer"
+
+#: taskmgr.rc:216
+msgid "Shows 16-bit tasks under the associated ntvdm.exe"
+msgstr "Toon 16-bit taken onder de bijbehorende ntvdm.exe"
+
+#: taskmgr.rc:217
+msgid "Select which columns will be visible on the Process page"
+msgstr "Selecteer de kolommen die op de procespagina zichtbaar moeten zijn"
+
+#: taskmgr.rc:218
+msgid "Displays kernel time in the performance graphs"
+msgstr "Toon de kerneltijden in prestatiegrafieken"
+
+#: taskmgr.rc:220
+msgid "A single history graph shows total CPU usage"
+msgstr "Een enkele geschiedenis-grafiek toont het totale CPU-gebruik"
+
+#: taskmgr.rc:221
+msgid "Each CPU has its own history graph"
+msgstr "Elke CPU heeft zijn eigen geschiedenis-grafiek"
+
+#: taskmgr.rc:223
+msgid "Brings a task to the foreground, switch focus to that task"
+msgstr "Brengt de taak naar de voorgrond en wisselt focus naar de taak"
+
+#: taskmgr.rc:228
+msgid "Tells the selected tasks to close"
+msgstr "Zegt de geselecteerde taken zich te beëindigen"
+
+#: taskmgr.rc:229
+msgid "Switches the focus to the process of the selected task"
+msgstr "Verandert de focus naar het proces van de geselecteerde taak"
+
+#: taskmgr.rc:230
+msgid "Restores the Task Manager from its hidden state"
+msgstr "Herstel Taakbeheer vanuit zijn verborgen status"
+
+#: taskmgr.rc:231
+msgid "Removes the process from the system"
+msgstr "Verwijder het proces van het systeem"
+
+#: taskmgr.rc:233
+msgid "Removes this process and all descendants from the system"
+msgstr "Verwijder het proces en al zijn kindprocessen van het systeem"
+
+#: taskmgr.rc:234
+msgid "Attaches the debugger to this process"
+msgstr "Verbind de debugger met dit proces"
+
+#: taskmgr.rc:236
+msgid "Controls which processors the process will be allowed to run on"
+msgstr "Bepaal op welke processoren een proces uitgevoerd mag worden"
+
+#: taskmgr.rc:238
+msgid "Sets process to the REALTIME priority class"
+msgstr "Zet het proces in de REALTIME-prioriteitsklasse"
+
+#: taskmgr.rc:239
+msgid "Sets process to the HIGH priority class"
+msgstr "Zet het proces in de HOGE-prioriteitsklasse"
+
+#: taskmgr.rc:241
+msgid "Sets process to the ABOVE NORMAL priority class"
+msgstr "Zet het proces in de HOGER DAN NORMAAL-prioriteitsklasse"
+
+#: taskmgr.rc:243
+msgid "Sets process to the NORMAL priority class"
+msgstr "Zet het proces in de NORMAAL-prioriteitsklasse"
+
+#: taskmgr.rc:245
+msgid "Sets process to the BELOW NORMAL priority class"
+msgstr "Zet het proces in de LAGER DAN NORMAAL-prioriteitsklasse"
+
+#: taskmgr.rc:246
+msgid "Sets process to the LOW priority class"
+msgstr "Zet het proces in de LAGE-prioriteitsklasse"
+
+#: taskmgr.rc:248
+msgid "Controls Debug Channels"
+msgstr "Beheer van debugkanalen"
+
+#: taskmgr.rc:263
+msgid "Applications"
+msgstr "Toepassingen"
+
+#: taskmgr.rc:264
+msgid "Processes"
+msgstr "Processen"
+
+#: taskmgr.rc:265
+msgid "Performance"
+msgstr "Prestaties"
+
+#: taskmgr.rc:266
+msgid "CPU Usage: %3d%%"
+msgstr "CPU-gebruik: %3d%%"
+
+#: taskmgr.rc:267
+msgid "Processes: %d"
+msgstr "Processen: %d"
+
+#: taskmgr.rc:268
+msgid "Mem Usage: %dK / %dK"
+msgstr "Geheugengebruik: %dK / %dK"
+
+#: taskmgr.rc:273
+msgid "Image Name"
+msgstr "Procesnaam"
+
+#: taskmgr.rc:274
+msgid "PID"
+msgstr "Proces-ID"
+
+#: taskmgr.rc:275
+msgid "CPU"
+msgstr "CPU-gebruik"
+
+#: taskmgr.rc:276
+msgid "CPU Time"
+msgstr "CPU-tijd"
+
+#: taskmgr.rc:277
+msgid "Mem Usage"
+msgstr "Geheugengebruik"
+
+#: taskmgr.rc:278
+msgid "Mem Delta"
+msgstr "Delta in geheugengebruik"
+
+#: taskmgr.rc:279
+msgid "Peak Mem Usage"
+msgstr "Maximale geheugengebruik"
+
+#: taskmgr.rc:280
+msgid "Page Faults"
+msgstr "Page Faults"
+
+#: taskmgr.rc:281
+msgid "USER Objects"
+msgstr "USER-objecten"
+
+#: taskmgr.rc:282
+msgid "I/O Reads"
+msgstr "I/O (Lezen)"
+
+#: taskmgr.rc:283
+msgid "I/O Read Bytes"
+msgstr "I/O - Bytes (Lezen)"
+
+#: taskmgr.rc:284
+msgid "Session ID"
+msgstr "Sessie-ID"
+
+#: taskmgr.rc:285
+msgid "Username"
+msgstr "Gebruikersnaam"
+
+#: taskmgr.rc:286
+msgid "PF Delta"
+msgstr "Delta van de Page Faults"
+
+#: taskmgr.rc:287
+msgid "VM Size"
+msgstr "VM-grootte"
+
+#: taskmgr.rc:288
+msgid "Paged Pool"
+msgstr "Paged Pool"
+
+#: taskmgr.rc:289
+msgid "NP Pool"
+msgstr "NP Pool"
+
+#: taskmgr.rc:290
+msgid "Base Pri"
+msgstr "Basisprioriteit"
+
+#: taskmgr.rc:291
+msgid "Handles"
+msgstr "Aantal handles"
+
+#: taskmgr.rc:292
+msgid "Threads"
+msgstr "Aantal threads"
+
+#: taskmgr.rc:293
+msgid "GDI Objects"
+msgstr "GDI-objecten"
+
+#: taskmgr.rc:294
+msgid "I/O Writes"
+msgstr "I/O (Schrijven)"
+
+#: taskmgr.rc:295
+msgid "I/O Write Bytes"
+msgstr "I/O - Bytes (Schrijven)"
+
+#: taskmgr.rc:296
+msgid "I/O Other"
+msgstr "I/O (Anders)"
+
+#: taskmgr.rc:297
+msgid "I/O Other Bytes"
+msgstr "I/O - Bytes (Anders)"
+
+#: taskmgr.rc:302
+msgid "Task Manager Warning"
+msgstr "Taakbeheer Waarschuwing"
+
+#: taskmgr.rc:305
+msgid ""
+"WARNING: Changing the priority class of this process may\n"
+"cause undesired results including system instability. Are you\n"
+"sure you want to change the priority class?"
+msgstr ""
+"WAARSCHUWING: Het veranderen van de prioriteitsklasse van dit\n"
+"proces kan ongewenste gevolgen hebben zoals instabiliteit van\n"
+"het systeem. Weet u zeker dat u de prioriteitsklasse wilt veranderen?"
+
+#: taskmgr.rc:306
+msgid "Unable to Change Priority"
+msgstr "Prioriteit kan niet worden veranderd"
+
+#: taskmgr.rc:311
+msgid ""
+"WARNING: Terminating a process can cause undesired\n"
+"results including loss of data and system instability. The\n"
+"process will not be given the chance to save its state or\n"
+"data before it is terminated. Are you sure you want to\n"
+"terminate the process?"
+msgstr ""
+"WAARSCHUWING: Het stoppen van een proces kan ongewenste\n"
+"gevolgen hebben zoals verlies van gegevens en instabiliteit\n"
+"van het systeem. Het proces zal geen mogelijkheid worden gegeven\n"
+"om zijn gegevens of status op te slaan. Weet u zeker dat u dit proces\n"
+"wilt stoppen?"
+
+#: taskmgr.rc:312
+msgid "Unable to Terminate Process"
+msgstr "Proces kan niet worden gestopt"
+
+#: taskmgr.rc:314
+msgid ""
+"WARNING: Debugging this process may result in loss of data.\n"
+"Are you sure you wish to attach the debugger?"
+msgstr ""
+"WAARSCHUWING: Het debuggen van dit proces kan verlies van data tot\n"
+"gevolg hebben. Weet u zeker dat u de debugger wilt koppelen?"
+
+#: taskmgr.rc:315
+msgid "Unable to Debug Process"
+msgstr "Proces kan niet worden gedebugged"
+
+#: taskmgr.rc:316
+msgid "The process must have affinity with at least one processor"
+msgstr "Het proces moet aan tenminste 1 processor worden gekoppeld"
+
+#: taskmgr.rc:317
+msgid "Invalid Option"
+msgstr "Ongeldige optie"
+
+#: taskmgr.rc:318
+msgid "Unable to Access or Set Process Affinity"
+msgstr "Procesaffiniteit kan niet worden gelezen of ingesteld"
+
+#: taskmgr.rc:323
+msgid "System Idle Process"
+msgstr "Niet actief proces"
+
+#: taskmgr.rc:324
+msgid "Not Responding"
+msgstr "Reageert niet"
+
+#: taskmgr.rc:325
+msgid "Running"
+msgstr "Geactiveerd"
+
+#: taskmgr.rc:326
+msgid "Task"
+msgstr "Taak"
+
+#: taskmgr.rc:327
+msgid "Status"
+msgstr "Status"
+
+#: taskmgr.rc:328
+msgid "Debug Channels"
+msgstr "Debugkanalen"
+
+#: taskmgr.rc:329
+msgid "Fixme"
+msgstr "Fixme"
+
+#: taskmgr.rc:330
+msgid "Err"
+msgstr "Err"
+
+#: taskmgr.rc:331
+msgid "Warn"
+msgstr "Warn"
+
+#: taskmgr.rc:332
+msgid "Trace"
+msgstr "Trace"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"

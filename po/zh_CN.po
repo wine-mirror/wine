@@ -3038,7 +3038,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
 msgid "&File"
 msgstr "文件(&F)"
 
@@ -3122,7 +3122,7 @@ msgstr "搜索下一个(&S)\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "替换...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87
 msgid "&Help"
 msgstr "帮助(&H)"
 
@@ -3274,7 +3274,7 @@ msgstr "执行(&E)..."
 msgid "E&xit Windows..."
 msgstr "退出 Windows(&X)..."
 
-#: progman.rc:41
+#: progman.rc:41 taskmgr.rc:41
 msgid "&Options"
 msgstr "选项(&O)"
 
@@ -3290,7 +3290,7 @@ msgstr "运行时最小化(&M)"
 msgid "&Save settings on exit"
 msgstr "退出时保存设置(&S)"
 
-#: progman.rc:46
+#: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
 msgid "&Windows"
 msgstr "窗口(&W)"
 
@@ -3544,6 +3544,578 @@ msgstr ""
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr ""
+
+#: taskmgr.rc:37 taskmgr.rc:109
+msgid "&New Task (Run...)"
+msgstr "新任务(&N)..."
+
+#: taskmgr.rc:39
+msgid "E&xit Task Manager"
+msgstr "退出任务管理器(&X)"
+
+#: taskmgr.rc:43 taskmgr.rc:142
+msgid "&Always On Top"
+msgstr "总是在最上面(&A)"
+
+#: taskmgr.rc:45
+msgid "&Minimize On Use"
+msgstr "启动后最小化(&M)"
+
+#: taskmgr.rc:47
+msgid "&Hide When Minimized"
+msgstr "最小化时隐藏(&H)"
+
+#: taskmgr.rc:49 taskmgr.rc:258
+msgid "&Show 16-bit tasks"
+msgstr "显示16位任务(&S)"
+
+#: taskmgr.rc:52
+msgid "&View"
+msgstr "视图(&V)"
+
+#: taskmgr.rc:54
+msgid "&Refresh Now"
+msgstr "刷新(&R)"
+
+#: taskmgr.rc:55
+msgid "&Update Speed"
+msgstr "更新速度(&U)"
+
+#: taskmgr.rc:57 taskmgr.rc:159
+msgid "&High"
+msgstr "快(&H)"
+
+#: taskmgr.rc:58 taskmgr.rc:163
+msgid "&Normal"
+msgstr "正常(&N)"
+
+#: taskmgr.rc:60 taskmgr.rc:167
+msgid "&Low"
+msgstr "慢(&L)"
+
+#: taskmgr.rc:61
+msgid "&Paused"
+msgstr "暂停(&P)"
+
+#: taskmgr.rc:65 taskmgr.rc:111 taskmgr.rc:253
+msgid "Lar&ge Icons"
+msgstr "大图标(&G)"
+
+#: taskmgr.rc:66 taskmgr.rc:112 taskmgr.rc:254
+msgid "S&mall Icons"
+msgstr "小图标(&M)"
+
+#: taskmgr.rc:67 taskmgr.rc:113 taskmgr.rc:255
+msgid "&Details"
+msgstr "详情列表(&D)"
+
+#: taskmgr.rc:68 taskmgr.rc:257
+msgid "&Select Columns..."
+msgstr "选择列项(&S)..."
+
+#: taskmgr.rc:69 taskmgr.rc:259
+msgid "&CPU History"
+msgstr "&CPU 历史"
+
+#: taskmgr.rc:71 taskmgr.rc:260
+msgid "&One Graph, All CPUs"
+msgstr "一张图显示所有的 &CPU"
+
+#: taskmgr.rc:73 taskmgr.rc:261
+msgid "One Graph &Per CPU"
+msgstr "每一个 C&PU 各一张图"
+
+#: taskmgr.rc:76 taskmgr.rc:262
+msgid "&Show Kernel Times"
+msgstr "显示内核时间(&S)"
+
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124
+msgid "Tile &Horizontally"
+msgstr "横向平铺(&H)"
+
+#: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
+msgid "Tile &Vertically"
+msgstr "纵向平铺(&V)"
+
+#: taskmgr.rc:82 taskmgr.rc:99 taskmgr.rc:126
+msgid "&Minimize"
+msgstr "最小化(&M)"
+
+#: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+msgid "Ma&ximize"
+msgstr "最大化(&X)"
+
+#: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
+msgid "&Cascade"
+msgstr "层叠(&C)"
+
+#: taskmgr.rc:85 taskmgr.rc:102 taskmgr.rc:122
+msgid "&Bring To Front"
+msgstr "移到最前面(&B)"
+
+#: taskmgr.rc:89
+msgid "Task Manager &Help Topics"
+msgstr "帮助内容(&H)"
+
+#: taskmgr.rc:91
+msgid "&About Task Manager"
+msgstr "关于任务管理器(&A)"
+
+#: taskmgr.rc:107 taskmgr.rc:119 taskmgr.rc:137 taskmgr.rc:148
+msgid "DUMMY"
+msgstr "DUMMY"
+
+#: taskmgr.rc:121
+msgid "&Switch To"
+msgstr "转到(&S)"
+
+#: taskmgr.rc:130
+msgid "&End Task"
+msgstr "结束任务(&E)"
+
+#: taskmgr.rc:131
+msgid "&Go To Process"
+msgstr "转此进程(&G)"
+
+#: taskmgr.rc:139
+msgid "&Restore"
+msgstr "恢复(&R)"
+
+#: taskmgr.rc:140
+msgid "&Close"
+msgstr "关闭(&C)"
+
+#: taskmgr.rc:150
+msgid "&End Process"
+msgstr "结束进程(&E)"
+
+#: taskmgr.rc:151
+msgid "End Process &Tree"
+msgstr "结束进程树(&T)"
+
+#: taskmgr.rc:153
+msgid "&Debug"
+msgstr "调试(&D)"
+
+#: taskmgr.rc:155
+msgid "Set &Priority"
+msgstr "指定优先权(&P)"
+
+#: taskmgr.rc:157
+msgid "&Realtime"
+msgstr "实时(&R)"
+
+#: taskmgr.rc:161
+msgid "&AboveNormal"
+msgstr "正常以上(&A)"
+
+#: taskmgr.rc:165
+msgid "&BelowNormal"
+msgstr "正常以下(&B)"
+
+#: taskmgr.rc:170
+msgid "Set &Affinity..."
+msgstr "亲和度指定(&A)..."
+
+#: taskmgr.rc:171
+msgid "Edit Debug &Channels..."
+msgstr "编辑调试频道(&C)..."
+
+#: taskmgr.rc:181 taskmgr.rc:182
+msgid "Task Manager"
+msgstr "任务管理器"
+
+#: taskmgr.rc:183
+msgid "Create New Task"
+msgstr "创建新任务"
+
+#: taskmgr.rc:188
+msgid "Runs a new program"
+msgstr "运行新程序"
+
+#: taskmgr.rc:189
+msgid "Task Manager remains in front of all other windows unless minimized"
+msgstr "任务管理器总是在其他窗口的前面，除非是最小化"
+
+#: taskmgr.rc:191
+msgid "Task Manager is minimized when a SwitchTo operation is performed"
+msgstr "执行“转到”后最小化任务管理器"
+
+#: taskmgr.rc:192
+msgid "Hide the Task Manager when it is minimized"
+msgstr "最小化时隐藏任务管理器"
+
+#: taskmgr.rc:193
+msgid "Force Task Manager to update now, regardless of Update Speed setting"
+msgstr "强制任务管理器立即更新显示，不管设置的更新速度是多少"
+
+#: taskmgr.rc:194
+msgid "Displays tasks by using large icons"
+msgstr "用大图标显示任务"
+
+#: taskmgr.rc:195
+msgid "Displays tasks by using small icons"
+msgstr "用小图标显示任务"
+
+#: taskmgr.rc:196
+msgid "Displays information about each task"
+msgstr "显示每个任务的详细信息"
+
+#: taskmgr.rc:197
+msgid "Updates the display twice per second"
+msgstr "每秒更新显示两次"
+
+#: taskmgr.rc:198
+msgid "Updates the display every two seconds"
+msgstr "每两秒更新显示一次"
+
+#: taskmgr.rc:199
+msgid "Updates the display every four seconds"
+msgstr "每四秒更新显示一次"
+
+#: taskmgr.rc:204
+msgid "Does not automatically update"
+msgstr "不会自动更新"
+
+#: taskmgr.rc:206
+msgid "Tiles the windows horizontally on the desktop"
+msgstr "在桌面上将所有窗口横向平铺"
+
+#: taskmgr.rc:207
+msgid "Tiles the windows vertically on the desktop"
+msgstr "在桌面上将所有窗口纵向平铺"
+
+#: taskmgr.rc:208
+msgid "Minimizes the windows"
+msgstr "最小化窗口"
+
+#: taskmgr.rc:209
+msgid "Maximizes the windows"
+msgstr "最大化窗口"
+
+#: taskmgr.rc:210
+msgid "Cascades the windows diagonally on the desktop"
+msgstr "在桌面上按对角线叠放窗口"
+
+#: taskmgr.rc:211
+msgid "Brings the window front, but does not switch to it"
+msgstr "将窗口调到最前面，但不激活"
+
+#: taskmgr.rc:212
+msgid "Displays Task Manager help topics"
+msgstr "显示任务管理器帮助内容"
+
+#: taskmgr.rc:213
+msgid "Displays program information, version number, and copyright"
+msgstr "显示本程序信息、版本及版权信息"
+
+#: taskmgr.rc:214
+msgid "Exits the Task Manager application"
+msgstr "退出任务管理器"
+
+#: taskmgr.rc:216
+msgid "Shows 16-bit tasks under the associated ntvdm.exe"
+msgstr "在 ntvdm.exe 下显示相关的 16 位任务"
+
+#: taskmgr.rc:217
+msgid "Select which columns will be visible on the Process page"
+msgstr "选择在“进程”标签页显示的列项"
+
+#: taskmgr.rc:218
+msgid "Displays kernel time in the performance graphs"
+msgstr "在性能图上显示内核时间"
+
+#: taskmgr.rc:220
+msgid "A single history graph shows total CPU usage"
+msgstr "一张历史图显示所有 CPU 用量"
+
+#: taskmgr.rc:221
+msgid "Each CPU has its own history graph"
+msgstr "每一个 CPU 有自己的历史图"
+
+#: taskmgr.rc:223
+msgid "Brings a task to the foreground, switch focus to that task"
+msgstr "将任务设为当前任务，并激活"
+
+#: taskmgr.rc:228
+msgid "Tells the selected tasks to close"
+msgstr "通知当前选中的任务关闭"
+
+#: taskmgr.rc:229
+msgid "Switches the focus to the process of the selected task"
+msgstr "将焦点转到当前选中的任务"
+
+#: taskmgr.rc:230
+msgid "Restores the Task Manager from its hidden state"
+msgstr "取消任务管理器隐藏状态"
+
+#: taskmgr.rc:231
+msgid "Removes the process from the system"
+msgstr "将进程从系统中删除"
+
+#: taskmgr.rc:233
+msgid "Removes this process and all descendants from the system"
+msgstr "将进程及其附属进程从系统中删除"
+
+#: taskmgr.rc:234
+msgid "Attaches the debugger to this process"
+msgstr "将调试器连接到本进程"
+
+#: taskmgr.rc:236
+msgid "Controls which processors the process will be allowed to run on"
+msgstr "控制各进程使用哪些处理器"
+
+#: taskmgr.rc:238
+msgid "Sets process to the REALTIME priority class"
+msgstr "将进程设为实时优先级"
+
+#: taskmgr.rc:239
+msgid "Sets process to the HIGH priority class"
+msgstr "将进程设为高优先级"
+
+#: taskmgr.rc:241
+msgid "Sets process to the ABOVE NORMAL priority class"
+msgstr "将进程设为正常以上优先级"
+
+#: taskmgr.rc:243
+msgid "Sets process to the NORMAL priority class"
+msgstr "将进程设为正常优先级"
+
+#: taskmgr.rc:245
+msgid "Sets process to the BELOW NORMAL priority class"
+msgstr "将进程设为正常以下优先级"
+
+#: taskmgr.rc:246
+msgid "Sets process to the LOW priority class"
+msgstr "将进程设为低优先级"
+
+#: taskmgr.rc:248
+msgid "Controls Debug Channels"
+msgstr "控制调试频道"
+
+#: taskmgr.rc:263
+#, fuzzy
+msgid "Applications"
+msgstr "选项"
+
+#: taskmgr.rc:264
+#, fuzzy
+msgid "Processes"
+msgstr "结束进程(&E)"
+
+#: taskmgr.rc:265
+#, fuzzy
+msgid "Performance"
+msgstr "性能表"
+
+#: taskmgr.rc:266
+msgid "CPU Usage: %3d%%"
+msgstr ""
+
+#: taskmgr.rc:267
+msgid "Processes: %d"
+msgstr ""
+
+#: taskmgr.rc:268
+msgid "Mem Usage: %dK / %dK"
+msgstr ""
+
+#: taskmgr.rc:273
+#, fuzzy
+msgid "Image Name"
+msgstr "图片"
+
+#: taskmgr.rc:274
+msgid "PID"
+msgstr ""
+
+#: taskmgr.rc:275
+msgid "CPU"
+msgstr ""
+
+#: taskmgr.rc:276
+msgid "CPU Time"
+msgstr ""
+
+#: taskmgr.rc:277
+msgid "Mem Usage"
+msgstr ""
+
+#: taskmgr.rc:278
+msgid "Mem Delta"
+msgstr ""
+
+#: taskmgr.rc:279
+msgid "Peak Mem Usage"
+msgstr ""
+
+#: taskmgr.rc:280
+#, fuzzy
+msgid "Page Faults"
+msgstr "向左翻页"
+
+#: taskmgr.rc:281
+msgid "USER Objects"
+msgstr ""
+
+#: taskmgr.rc:282
+msgid "I/O Reads"
+msgstr ""
+
+#: taskmgr.rc:283
+msgid "I/O Read Bytes"
+msgstr ""
+
+#: taskmgr.rc:284
+msgid "Session ID"
+msgstr ""
+
+#: taskmgr.rc:285
+msgid "Username"
+msgstr ""
+
+#: taskmgr.rc:286
+msgid "PF Delta"
+msgstr ""
+
+#: taskmgr.rc:287
+msgid "VM Size"
+msgstr ""
+
+#: taskmgr.rc:288
+#, fuzzy
+msgid "Paged Pool"
+msgstr "向下翻页"
+
+#: taskmgr.rc:289
+msgid "NP Pool"
+msgstr ""
+
+#: taskmgr.rc:290
+msgid "Base Pri"
+msgstr ""
+
+#: taskmgr.rc:291
+msgid "Handles"
+msgstr ""
+
+#: taskmgr.rc:292
+msgid "Threads"
+msgstr ""
+
+#: taskmgr.rc:293
+msgid "GDI Objects"
+msgstr ""
+
+#: taskmgr.rc:294
+msgid "I/O Writes"
+msgstr ""
+
+#: taskmgr.rc:295
+msgid "I/O Write Bytes"
+msgstr ""
+
+#: taskmgr.rc:296
+msgid "I/O Other"
+msgstr ""
+
+#: taskmgr.rc:297
+msgid "I/O Other Bytes"
+msgstr ""
+
+#: taskmgr.rc:302
+#, fuzzy
+msgid "Task Manager Warning"
+msgstr "任务管理器"
+
+#: taskmgr.rc:305
+msgid ""
+"WARNING: Changing the priority class of this process may\n"
+"cause undesired results including system instability. Are you\n"
+"sure you want to change the priority class?"
+msgstr ""
+
+#: taskmgr.rc:306
+msgid "Unable to Change Priority"
+msgstr ""
+
+#: taskmgr.rc:311
+msgid ""
+"WARNING: Terminating a process can cause undesired\n"
+"results including loss of data and system instability. The\n"
+"process will not be given the chance to save its state or\n"
+"data before it is terminated. Are you sure you want to\n"
+"terminate the process?"
+msgstr ""
+
+#: taskmgr.rc:312
+msgid "Unable to Terminate Process"
+msgstr ""
+
+#: taskmgr.rc:314
+msgid ""
+"WARNING: Debugging this process may result in loss of data.\n"
+"Are you sure you wish to attach the debugger?"
+msgstr ""
+
+#: taskmgr.rc:315
+msgid "Unable to Debug Process"
+msgstr ""
+
+#: taskmgr.rc:316
+msgid "The process must have affinity with at least one processor"
+msgstr ""
+
+#: taskmgr.rc:317
+msgid "Invalid Option"
+msgstr ""
+
+#: taskmgr.rc:318
+msgid "Unable to Access or Set Process Affinity"
+msgstr ""
+
+#: taskmgr.rc:323
+msgid "System Idle Process"
+msgstr ""
+
+#: taskmgr.rc:324
+msgid "Not Responding"
+msgstr ""
+
+#: taskmgr.rc:325
+msgid "Running"
+msgstr ""
+
+#: taskmgr.rc:326
+#, fuzzy
+msgid "Task"
+msgstr "结束任务(&E)"
+
+#: taskmgr.rc:327
+msgid "Status"
+msgstr ""
+
+#: taskmgr.rc:328
+#, fuzzy
+msgid "Debug Channels"
+msgstr "控制调试频道"
+
+#: taskmgr.rc:329
+msgid "Fixme"
+msgstr ""
+
+#: taskmgr.rc:330
+msgid "Err"
+msgstr ""
+
+#: taskmgr.rc:331
+msgid "Warn"
+msgstr ""
+
+#: taskmgr.rc:332
+#, fuzzy
+msgid "Trace"
+msgstr "跟踪标记"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"

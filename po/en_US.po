@@ -3321,7 +3321,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Open resources: %lu\n"
 
-#: notepad.rc:26 progman.rc:29
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
 msgid "&File"
 msgstr "&File"
 
@@ -3405,7 +3405,7 @@ msgstr "&Search next\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Replace...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87
 msgid "&Help"
 msgstr "&Help"
 
@@ -3561,7 +3561,7 @@ msgstr "&Execute..."
 msgid "E&xit Windows..."
 msgstr "E&xit Windows..."
 
-#: progman.rc:41
+#: progman.rc:41 taskmgr.rc:41
 msgid "&Options"
 msgstr "&Options"
 
@@ -3577,7 +3577,7 @@ msgstr "&Minimize on run"
 msgid "&Save settings on exit"
 msgstr "&Save settings on exit"
 
-#: progman.rc:46
+#: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
 msgid "&Windows"
 msgstr "&Windows"
 
@@ -3878,6 +3878,578 @@ msgstr "Error: Unable to terminate process \"%s\".\n"
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr "Error: Process self-termination is not permitted.\n"
+
+#: taskmgr.rc:37 taskmgr.rc:109
+msgid "&New Task (Run...)"
+msgstr "&New Task (Run...)"
+
+#: taskmgr.rc:39
+msgid "E&xit Task Manager"
+msgstr "E&xit Task Manager"
+
+#: taskmgr.rc:43 taskmgr.rc:142
+msgid "&Always On Top"
+msgstr "&Always On Top"
+
+#: taskmgr.rc:45
+msgid "&Minimize On Use"
+msgstr "&Minimize On Use"
+
+#: taskmgr.rc:47
+msgid "&Hide When Minimized"
+msgstr "&Hide When Minimized"
+
+#: taskmgr.rc:49 taskmgr.rc:258
+msgid "&Show 16-bit tasks"
+msgstr "&Show 16-bit tasks"
+
+#: taskmgr.rc:52
+msgid "&View"
+msgstr "&View"
+
+#: taskmgr.rc:54
+msgid "&Refresh Now"
+msgstr "&Refresh Now"
+
+#: taskmgr.rc:55
+msgid "&Update Speed"
+msgstr "&Update Speed"
+
+#: taskmgr.rc:57 taskmgr.rc:159
+msgid "&High"
+msgstr "&High"
+
+#: taskmgr.rc:58 taskmgr.rc:163
+msgid "&Normal"
+msgstr "&Normal"
+
+#: taskmgr.rc:60 taskmgr.rc:167
+msgid "&Low"
+msgstr "&Low"
+
+#: taskmgr.rc:61
+msgid "&Paused"
+msgstr "&Paused"
+
+#: taskmgr.rc:65 taskmgr.rc:111 taskmgr.rc:253
+msgid "Lar&ge Icons"
+msgstr "Lar&ge Icons"
+
+#: taskmgr.rc:66 taskmgr.rc:112 taskmgr.rc:254
+msgid "S&mall Icons"
+msgstr "S&mall Icons"
+
+#: taskmgr.rc:67 taskmgr.rc:113 taskmgr.rc:255
+msgid "&Details"
+msgstr "&Details"
+
+#: taskmgr.rc:68 taskmgr.rc:257
+msgid "&Select Columns..."
+msgstr "&Select Columns..."
+
+#: taskmgr.rc:69 taskmgr.rc:259
+msgid "&CPU History"
+msgstr "&CPU History"
+
+#: taskmgr.rc:71 taskmgr.rc:260
+msgid "&One Graph, All CPUs"
+msgstr "&One Graph, All CPUs"
+
+#: taskmgr.rc:73 taskmgr.rc:261
+msgid "One Graph &Per CPU"
+msgstr "One Graph &Per CPU"
+
+#: taskmgr.rc:76 taskmgr.rc:262
+msgid "&Show Kernel Times"
+msgstr "&Show Kernel Times"
+
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124
+msgid "Tile &Horizontally"
+msgstr "Tile &Horizontally"
+
+#: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
+msgid "Tile &Vertically"
+msgstr "Tile &Vertically"
+
+#: taskmgr.rc:82 taskmgr.rc:99 taskmgr.rc:126
+msgid "&Minimize"
+msgstr "&Minimize"
+
+#: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+msgid "Ma&ximize"
+msgstr "Ma&ximize"
+
+#: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
+msgid "&Cascade"
+msgstr "&Cascade"
+
+#: taskmgr.rc:85 taskmgr.rc:102 taskmgr.rc:122
+msgid "&Bring To Front"
+msgstr "&Bring To Front"
+
+#: taskmgr.rc:89
+msgid "Task Manager &Help Topics"
+msgstr "Task Manager &Help Topics"
+
+#: taskmgr.rc:91
+msgid "&About Task Manager"
+msgstr "&About Task Manager"
+
+#: taskmgr.rc:107 taskmgr.rc:119 taskmgr.rc:137 taskmgr.rc:148
+msgid "DUMMY"
+msgstr "DUMMY"
+
+#: taskmgr.rc:121
+msgid "&Switch To"
+msgstr "&Switch To"
+
+#: taskmgr.rc:130
+msgid "&End Task"
+msgstr "&End Task"
+
+#: taskmgr.rc:131
+msgid "&Go To Process"
+msgstr "&Go To Process"
+
+#: taskmgr.rc:139
+msgid "&Restore"
+msgstr "&Restore"
+
+#: taskmgr.rc:140
+msgid "&Close"
+msgstr "&Close"
+
+#: taskmgr.rc:150
+msgid "&End Process"
+msgstr "&End Process"
+
+#: taskmgr.rc:151
+msgid "End Process &Tree"
+msgstr "End Process &Tree"
+
+#: taskmgr.rc:153
+msgid "&Debug"
+msgstr "&Debug"
+
+#: taskmgr.rc:155
+msgid "Set &Priority"
+msgstr "Set &Priority"
+
+#: taskmgr.rc:157
+msgid "&Realtime"
+msgstr "&Realtime"
+
+#: taskmgr.rc:161
+msgid "&AboveNormal"
+msgstr "&AboveNormal"
+
+#: taskmgr.rc:165
+msgid "&BelowNormal"
+msgstr "&BelowNormal"
+
+#: taskmgr.rc:170
+msgid "Set &Affinity..."
+msgstr "Set &Affinity..."
+
+#: taskmgr.rc:171
+msgid "Edit Debug &Channels..."
+msgstr "Edit Debug &Channels..."
+
+#: taskmgr.rc:181 taskmgr.rc:182
+msgid "Task Manager"
+msgstr "Task Manager"
+
+#: taskmgr.rc:183
+msgid "Create New Task"
+msgstr "Create New Task"
+
+#: taskmgr.rc:188
+msgid "Runs a new program"
+msgstr "Runs a new program"
+
+#: taskmgr.rc:189
+msgid "Task Manager remains in front of all other windows unless minimized"
+msgstr "Task Manager remains in front of all other windows unless minimized"
+
+#: taskmgr.rc:191
+msgid "Task Manager is minimized when a SwitchTo operation is performed"
+msgstr "Task Manager is minimized when a SwitchTo operation is performed"
+
+#: taskmgr.rc:192
+msgid "Hide the Task Manager when it is minimized"
+msgstr "Hide the Task Manager when it is minimized"
+
+#: taskmgr.rc:193
+msgid "Force Task Manager to update now, regardless of Update Speed setting"
+msgstr "Force Task Manager to update now, regardless of Update Speed setting"
+
+#: taskmgr.rc:194
+msgid "Displays tasks by using large icons"
+msgstr "Displays tasks by using large icons"
+
+#: taskmgr.rc:195
+msgid "Displays tasks by using small icons"
+msgstr "Displays tasks by using small icons"
+
+#: taskmgr.rc:196
+msgid "Displays information about each task"
+msgstr "Displays information about each task"
+
+#: taskmgr.rc:197
+msgid "Updates the display twice per second"
+msgstr "Updates the display twice per second"
+
+#: taskmgr.rc:198
+msgid "Updates the display every two seconds"
+msgstr "Updates the display every two seconds"
+
+#: taskmgr.rc:199
+msgid "Updates the display every four seconds"
+msgstr "Updates the display every four seconds"
+
+#: taskmgr.rc:204
+msgid "Does not automatically update"
+msgstr "Does not automatically update"
+
+#: taskmgr.rc:206
+msgid "Tiles the windows horizontally on the desktop"
+msgstr "Tiles the windows horizontally on the desktop"
+
+#: taskmgr.rc:207
+msgid "Tiles the windows vertically on the desktop"
+msgstr "Tiles the windows vertically on the desktop"
+
+#: taskmgr.rc:208
+msgid "Minimizes the windows"
+msgstr "Minimizes the windows"
+
+#: taskmgr.rc:209
+msgid "Maximizes the windows"
+msgstr "Maximizes the windows"
+
+#: taskmgr.rc:210
+msgid "Cascades the windows diagonally on the desktop"
+msgstr "Cascades the windows diagonally on the desktop"
+
+#: taskmgr.rc:211
+msgid "Brings the window front, but does not switch to it"
+msgstr "Brings the window front, but does not switch to it"
+
+#: taskmgr.rc:212
+msgid "Displays Task Manager help topics"
+msgstr "Displays Task Manager help topics"
+
+#: taskmgr.rc:213
+msgid "Displays program information, version number, and copyright"
+msgstr "Displays program information, version number, and copyright"
+
+#: taskmgr.rc:214
+msgid "Exits the Task Manager application"
+msgstr "Exits the Task Manager application"
+
+#: taskmgr.rc:216
+msgid "Shows 16-bit tasks under the associated ntvdm.exe"
+msgstr "Shows 16-bit tasks under the associated ntvdm.exe"
+
+#: taskmgr.rc:217
+msgid "Select which columns will be visible on the Process page"
+msgstr "Select which columns will be visible on the Process page"
+
+#: taskmgr.rc:218
+msgid "Displays kernel time in the performance graphs"
+msgstr "Displays kernel time in the performance graphs"
+
+#: taskmgr.rc:220
+msgid "A single history graph shows total CPU usage"
+msgstr "A single history graph shows total CPU usage"
+
+#: taskmgr.rc:221
+msgid "Each CPU has its own history graph"
+msgstr "Each CPU has its own history graph"
+
+#: taskmgr.rc:223
+msgid "Brings a task to the foreground, switch focus to that task"
+msgstr "Brings a task to the foreground, switch focus to that task"
+
+#: taskmgr.rc:228
+msgid "Tells the selected tasks to close"
+msgstr "Tells the selected tasks to close"
+
+#: taskmgr.rc:229
+msgid "Switches the focus to the process of the selected task"
+msgstr "Switches the focus to the process of the selected task"
+
+#: taskmgr.rc:230
+msgid "Restores the Task Manager from its hidden state"
+msgstr "Restores the Task Manager from its hidden state"
+
+#: taskmgr.rc:231
+msgid "Removes the process from the system"
+msgstr "Removes the process from the system"
+
+#: taskmgr.rc:233
+msgid "Removes this process and all descendants from the system"
+msgstr "Removes this process and all descendants from the system"
+
+#: taskmgr.rc:234
+msgid "Attaches the debugger to this process"
+msgstr "Attaches the debugger to this process"
+
+#: taskmgr.rc:236
+msgid "Controls which processors the process will be allowed to run on"
+msgstr "Controls which processors the process will be allowed to run on"
+
+#: taskmgr.rc:238
+msgid "Sets process to the REALTIME priority class"
+msgstr "Sets process to the REALTIME priority class"
+
+#: taskmgr.rc:239
+msgid "Sets process to the HIGH priority class"
+msgstr "Sets process to the HIGH priority class"
+
+#: taskmgr.rc:241
+msgid "Sets process to the ABOVE NORMAL priority class"
+msgstr "Sets process to the ABOVE NORMAL priority class"
+
+#: taskmgr.rc:243
+msgid "Sets process to the NORMAL priority class"
+msgstr "Sets process to the NORMAL priority class"
+
+#: taskmgr.rc:245
+msgid "Sets process to the BELOW NORMAL priority class"
+msgstr "Sets process to the BELOW NORMAL priority class"
+
+#: taskmgr.rc:246
+msgid "Sets process to the LOW priority class"
+msgstr "Sets process to the LOW priority class"
+
+#: taskmgr.rc:248
+msgid "Controls Debug Channels"
+msgstr "Controls Debug Channels"
+
+#: taskmgr.rc:263
+msgid "Applications"
+msgstr "Applications"
+
+#: taskmgr.rc:264
+msgid "Processes"
+msgstr "Processes"
+
+#: taskmgr.rc:265
+msgid "Performance"
+msgstr "Performance"
+
+#: taskmgr.rc:266
+msgid "CPU Usage: %3d%%"
+msgstr "CPU Usage: %3d%%"
+
+#: taskmgr.rc:267
+msgid "Processes: %d"
+msgstr "Processes: %d"
+
+#: taskmgr.rc:268
+msgid "Mem Usage: %dK / %dK"
+msgstr "Mem Usage: %dK / %dK"
+
+#: taskmgr.rc:273
+msgid "Image Name"
+msgstr "Image Name"
+
+#: taskmgr.rc:274
+msgid "PID"
+msgstr "PID"
+
+#: taskmgr.rc:275
+msgid "CPU"
+msgstr "CPU"
+
+#: taskmgr.rc:276
+msgid "CPU Time"
+msgstr "CPU Time"
+
+#: taskmgr.rc:277
+msgid "Mem Usage"
+msgstr "Mem Usage"
+
+#: taskmgr.rc:278
+msgid "Mem Delta"
+msgstr "Mem Delta"
+
+#: taskmgr.rc:279
+msgid "Peak Mem Usage"
+msgstr "Peak Mem Usage"
+
+#: taskmgr.rc:280
+msgid "Page Faults"
+msgstr "Page Faults"
+
+#: taskmgr.rc:281
+msgid "USER Objects"
+msgstr "USER Objects"
+
+#: taskmgr.rc:282
+msgid "I/O Reads"
+msgstr "I/O Reads"
+
+#: taskmgr.rc:283
+msgid "I/O Read Bytes"
+msgstr "I/O Read Bytes"
+
+#: taskmgr.rc:284
+msgid "Session ID"
+msgstr "Session ID"
+
+#: taskmgr.rc:285
+msgid "Username"
+msgstr "Username"
+
+#: taskmgr.rc:286
+msgid "PF Delta"
+msgstr "PF Delta"
+
+#: taskmgr.rc:287
+msgid "VM Size"
+msgstr "VM Size"
+
+#: taskmgr.rc:288
+msgid "Paged Pool"
+msgstr "Paged Pool"
+
+#: taskmgr.rc:289
+msgid "NP Pool"
+msgstr "NP Pool"
+
+#: taskmgr.rc:290
+msgid "Base Pri"
+msgstr "Base Pri"
+
+#: taskmgr.rc:291
+msgid "Handles"
+msgstr "Handles"
+
+#: taskmgr.rc:292
+msgid "Threads"
+msgstr "Threads"
+
+#: taskmgr.rc:293
+msgid "GDI Objects"
+msgstr "GDI Objects"
+
+#: taskmgr.rc:294
+msgid "I/O Writes"
+msgstr "I/O Writes"
+
+#: taskmgr.rc:295
+msgid "I/O Write Bytes"
+msgstr "I/O Write Bytes"
+
+#: taskmgr.rc:296
+msgid "I/O Other"
+msgstr "I/O Other"
+
+#: taskmgr.rc:297
+msgid "I/O Other Bytes"
+msgstr "I/O Other Bytes"
+
+#: taskmgr.rc:302
+msgid "Task Manager Warning"
+msgstr "Task Manager Warning"
+
+#: taskmgr.rc:305
+msgid ""
+"WARNING: Changing the priority class of this process may\n"
+"cause undesired results including system instability. Are you\n"
+"sure you want to change the priority class?"
+msgstr ""
+"WARNING: Changing the priority class of this process may\n"
+"cause undesired results including system instability. Are you\n"
+"sure you want to change the priority class?"
+
+#: taskmgr.rc:306
+msgid "Unable to Change Priority"
+msgstr "Unable to Change Priority"
+
+#: taskmgr.rc:311
+msgid ""
+"WARNING: Terminating a process can cause undesired\n"
+"results including loss of data and system instability. The\n"
+"process will not be given the chance to save its state or\n"
+"data before it is terminated. Are you sure you want to\n"
+"terminate the process?"
+msgstr ""
+"WARNING: Terminating a process can cause undesired\n"
+"results including loss of data and system instability. The\n"
+"process will not be given the chance to save its state or\n"
+"data before it is terminated. Are you sure you want to\n"
+"terminate the process?"
+
+#: taskmgr.rc:312
+msgid "Unable to Terminate Process"
+msgstr "Unable to Terminate Process"
+
+#: taskmgr.rc:314
+msgid ""
+"WARNING: Debugging this process may result in loss of data.\n"
+"Are you sure you wish to attach the debugger?"
+msgstr ""
+"WARNING: Debugging this process may result in loss of data.\n"
+"Are you sure you wish to attach the debugger?"
+
+#: taskmgr.rc:315
+msgid "Unable to Debug Process"
+msgstr "Unable to Debug Process"
+
+#: taskmgr.rc:316
+msgid "The process must have affinity with at least one processor"
+msgstr "The process must have affinity with at least one processor"
+
+#: taskmgr.rc:317
+msgid "Invalid Option"
+msgstr "Invalid Option"
+
+#: taskmgr.rc:318
+msgid "Unable to Access or Set Process Affinity"
+msgstr "Unable to Access or Set Process Affinity"
+
+#: taskmgr.rc:323
+msgid "System Idle Process"
+msgstr "System Idle Process"
+
+#: taskmgr.rc:324
+msgid "Not Responding"
+msgstr "Not Responding"
+
+#: taskmgr.rc:325
+msgid "Running"
+msgstr "Running"
+
+#: taskmgr.rc:326
+msgid "Task"
+msgstr "Task"
+
+#: taskmgr.rc:327
+msgid "Status"
+msgstr "Status"
+
+#: taskmgr.rc:328
+msgid "Debug Channels"
+msgstr "Debug Channels"
+
+#: taskmgr.rc:329
+msgid "Fixme"
+msgstr "Fixme"
+
+#: taskmgr.rc:330
+msgid "Err"
+msgstr "Err"
+
+#: taskmgr.rc:331
+msgid "Warn"
+msgstr "Warn"
+
+#: taskmgr.rc:332
+msgid "Trace"
+msgstr "Trace"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"

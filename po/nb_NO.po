@@ -3324,7 +3324,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Åpne ressurser: %lu\n"
 
-#: notepad.rc:26 progman.rc:29
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
 msgid "&File"
 msgstr "&Fil"
 
@@ -3408,7 +3408,7 @@ msgstr "Søk etter nest&e\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "E&rstatt...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87
 msgid "&Help"
 msgstr "&Hjelp"
 
@@ -3565,7 +3565,7 @@ msgstr "K&jør..."
 msgid "E&xit Windows..."
 msgstr "A&vslutt Windows..."
 
-#: progman.rc:41
+#: progman.rc:41 taskmgr.rc:41
 msgid "&Options"
 msgstr "&Innstillinger"
 
@@ -3581,9 +3581,14 @@ msgstr "&Minimer ved oppstart"
 msgid "&Save settings on exit"
 msgstr "Lagre endringer ved av&slutting"
 
-#: progman.rc:46
+#: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
+#, fuzzy
 msgid "&Windows"
-msgstr "&Vinduer"
+msgstr ""
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"&Vinduer\n"
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Vin&duer"
 
 #: progman.rc:47
 msgid "&Overlapped\tShift+F5"
@@ -3888,6 +3893,580 @@ msgstr "Feil: Kan ikke legge til nøkler på ekstern maskin\n"
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr ""
+
+#: taskmgr.rc:37 taskmgr.rc:109
+msgid "&New Task (Run...)"
+msgstr "&Ny oppgave (Kjør...)"
+
+#: taskmgr.rc:39
+msgid "E&xit Task Manager"
+msgstr "&Avslutt oppgavebehandleren"
+
+#: taskmgr.rc:43 taskmgr.rc:142
+msgid "&Always On Top"
+msgstr "&Alltid øverst"
+
+#: taskmgr.rc:45
+msgid "&Minimize On Use"
+msgstr "&Minimer ved bruk"
+
+#: taskmgr.rc:47
+msgid "&Hide When Minimized"
+msgstr "S&kjul når minimert"
+
+#: taskmgr.rc:49 taskmgr.rc:258
+msgid "&Show 16-bit tasks"
+msgstr "Vi&s 16 bit-jobber"
+
+#: taskmgr.rc:52
+msgid "&View"
+msgstr "&Vis"
+
+#: taskmgr.rc:54
+msgid "&Refresh Now"
+msgstr "Oppdate&r nå"
+
+#: taskmgr.rc:55
+msgid "&Update Speed"
+msgstr "&Oppdateringsfrekvens"
+
+#: taskmgr.rc:57 taskmgr.rc:159
+msgid "&High"
+msgstr "&Høy"
+
+#: taskmgr.rc:58 taskmgr.rc:163
+msgid "&Normal"
+msgstr "&Normal"
+
+#: taskmgr.rc:60 taskmgr.rc:167
+msgid "&Low"
+msgstr "&Lav"
+
+#: taskmgr.rc:61
+msgid "&Paused"
+msgstr "&Pause"
+
+#: taskmgr.rc:65 taskmgr.rc:111 taskmgr.rc:253
+msgid "Lar&ge Icons"
+msgstr "S&tore ikoner"
+
+#: taskmgr.rc:66 taskmgr.rc:112 taskmgr.rc:254
+msgid "S&mall Icons"
+msgstr "S&må ikoner"
+
+#: taskmgr.rc:67 taskmgr.rc:113 taskmgr.rc:255
+msgid "&Details"
+msgstr "&Detaljer"
+
+#: taskmgr.rc:68 taskmgr.rc:257
+msgid "&Select Columns..."
+msgstr "&Velg kolonner..."
+
+#: taskmgr.rc:69 taskmgr.rc:259
+msgid "&CPU History"
+msgstr "&Prosessorhistorikk"
+
+#: taskmgr.rc:71 taskmgr.rc:260
+msgid "&One Graph, All CPUs"
+msgstr "En graf, alle pr&osessorer"
+
+#: taskmgr.rc:73 taskmgr.rc:261
+msgid "One Graph &Per CPU"
+msgstr "En graf &per prosessor"
+
+#: taskmgr.rc:76 taskmgr.rc:262
+msgid "&Show Kernel Times"
+msgstr "Vi&s kjernetider"
+
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124
+msgid "Tile &Horizontally"
+msgstr "Still opp &vannrett"
+
+#: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
+msgid "Tile &Vertically"
+msgstr "Still opp &loddrett"
+
+#: taskmgr.rc:82 taskmgr.rc:99 taskmgr.rc:126
+msgid "&Minimize"
+msgstr "&Minimer"
+
+#: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+msgid "Ma&ximize"
+msgstr "Ma&ksimer"
+
+#: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
+msgid "&Cascade"
+msgstr "&Kortstokk"
+
+#: taskmgr.rc:85 taskmgr.rc:102 taskmgr.rc:122
+msgid "&Bring To Front"
+msgstr "&Vis øverst"
+
+#: taskmgr.rc:89
+msgid "Task Manager &Help Topics"
+msgstr "Emner i &hjelp for Oppgavebehandler"
+
+#: taskmgr.rc:91
+msgid "&About Task Manager"
+msgstr "&Om Oppgavebehandler"
+
+#: taskmgr.rc:107 taskmgr.rc:119 taskmgr.rc:137 taskmgr.rc:148
+msgid "DUMMY"
+msgstr "DUMMY"
+
+#: taskmgr.rc:121
+msgid "&Switch To"
+msgstr "B&ytt til"
+
+#: taskmgr.rc:130
+msgid "&End Task"
+msgstr "Avslutt oppgav&e"
+
+#: taskmgr.rc:131
+msgid "&Go To Process"
+msgstr "&Gå til prosess"
+
+#: taskmgr.rc:139
+msgid "&Restore"
+msgstr "Gjenopp&rett"
+
+#: taskmgr.rc:140
+msgid "&Close"
+msgstr "Avlut&t"
+
+#: taskmgr.rc:150
+msgid "&End Process"
+msgstr "Avslutt pros&ess"
+
+#: taskmgr.rc:151
+msgid "End Process &Tree"
+msgstr "Avslu&tt prosesstre"
+
+#: taskmgr.rc:153
+msgid "&Debug"
+msgstr "&Feilsøk"
+
+#: taskmgr.rc:155
+msgid "Set &Priority"
+msgstr "Angi &prioritet"
+
+#: taskmgr.rc:157
+msgid "&Realtime"
+msgstr "&Samtid"
+
+#: taskmgr.rc:161
+msgid "&AboveNormal"
+msgstr "Over norm&al"
+
+#: taskmgr.rc:165
+msgid "&BelowNormal"
+msgstr "&Under normal"
+
+#: taskmgr.rc:170
+msgid "Set &Affinity..."
+msgstr "&Angi slektskap..."
+
+#: taskmgr.rc:171
+msgid "Edit Debug &Channels..."
+msgstr "&Rediger feilsøkingskanaler..."
+
+#: taskmgr.rc:181 taskmgr.rc:182
+msgid "Task Manager"
+msgstr "Oppgavebehandler"
+
+#: taskmgr.rc:183
+msgid "Create New Task"
+msgstr "Create New Task"
+
+#: taskmgr.rc:188
+msgid "Runs a new program"
+msgstr "Kjører et nytt program"
+
+#: taskmgr.rc:189
+msgid "Task Manager remains in front of all other windows unless minimized"
+msgstr ""
+"Oppgavebehandleren vises foran andre programmer med mindre den minimeres"
+
+#: taskmgr.rc:191
+msgid "Task Manager is minimized when a SwitchTo operation is performed"
+msgstr "Oppgavebehandler minimeres når du bytter til en annen prosess"
+
+#: taskmgr.rc:192
+msgid "Hide the Task Manager when it is minimized"
+msgstr "Skjul oppgavebehandleren skjules nå rden minimeres"
+
+#: taskmgr.rc:193
+msgid "Force Task Manager to update now, regardless of Update Speed setting"
+msgstr ""
+"Tving oppgavebehandleren til å oppdatere nå, uansett oppdateringsfrekvens"
+
+#: taskmgr.rc:194
+msgid "Displays tasks by using large icons"
+msgstr "Viser oppgaver med store ikoner"
+
+#: taskmgr.rc:195
+msgid "Displays tasks by using small icons"
+msgstr "Viser oppgaver med små ikoner"
+
+#: taskmgr.rc:196
+msgid "Displays information about each task"
+msgstr "Viser informasjon om hver oppgave"
+
+#: taskmgr.rc:197
+msgid "Updates the display twice per second"
+msgstr "Oppdaterer visningen to ganger per sekund"
+
+#: taskmgr.rc:198
+msgid "Updates the display every two seconds"
+msgstr "Oppdaterer visningen annenhvert sekund"
+
+#: taskmgr.rc:199
+msgid "Updates the display every four seconds"
+msgstr "Oppdaterer visningen hvert fjerde sekund"
+
+#: taskmgr.rc:204
+msgid "Does not automatically update"
+msgstr "Oppdaterer ikke automatisk"
+
+#: taskmgr.rc:206
+msgid "Tiles the windows horizontally on the desktop"
+msgstr "Stiller vinduene opp vannrett på skrivebordet"
+
+#: taskmgr.rc:207
+msgid "Tiles the windows vertically on the desktop"
+msgstr "Stiller vinduene opp loddrett på skrivebordet"
+
+#: taskmgr.rc:208
+msgid "Minimizes the windows"
+msgstr "Minimerer vinduene"
+
+#: taskmgr.rc:209
+msgid "Maximizes the windows"
+msgstr "Maksimerer vinduene"
+
+#: taskmgr.rc:210
+msgid "Cascades the windows diagonally on the desktop"
+msgstr "Viser vinduene oppå hverandre diagonalt over skrivebordet"
+
+#: taskmgr.rc:211
+msgid "Brings the window front, but does not switch to it"
+msgstr "Henter vinduet fram, men setter det ikke i fokus"
+
+#: taskmgr.rc:212
+msgid "Displays Task Manager help topics"
+msgstr "Viser hjelpeemner om oppgavebehandleren"
+
+#: taskmgr.rc:213
+msgid "Displays program information, version number, and copyright"
+msgstr "Viser programinformasjon, versjonnumme og kopirett"
+
+#: taskmgr.rc:214
+msgid "Exits the Task Manager application"
+msgstr "Avslutter Oppgavebehandler"
+
+#: taskmgr.rc:216
+msgid "Shows 16-bit tasks under the associated ntvdm.exe"
+msgstr "Viser 16-biters programmer under 'ntvdm.exe'"
+
+#: taskmgr.rc:217
+msgid "Select which columns will be visible on the Process page"
+msgstr "Velger hvilke kolonner som vises på prosessiden"
+
+#: taskmgr.rc:218
+msgid "Displays kernel time in the performance graphs"
+msgstr "Viser kjernetid i ytelsesgrafene"
+
+#: taskmgr.rc:220
+msgid "A single history graph shows total CPU usage"
+msgstr "En enkelt historikk viser total prosessorbruk"
+
+#: taskmgr.rc:221
+msgid "Each CPU has its own history graph"
+msgstr "Hver prosessor har sin egen graf"
+
+#: taskmgr.rc:223
+msgid "Brings a task to the foreground, switch focus to that task"
+msgstr "Henter en oppgave til forgrunnen, og setter den i fokus"
+
+#: taskmgr.rc:228
+msgid "Tells the selected tasks to close"
+msgstr "Gir den valgte oppgaven beskjed om å avslutte"
+
+#: taskmgr.rc:229
+msgid "Switches the focus to the process of the selected task"
+msgstr "Bytter fokus til den valgte oppgavens prosess"
+
+#: taskmgr.rc:230
+msgid "Restores the Task Manager from its hidden state"
+msgstr "Gjenoppretter oppgavebehandleren fra dens skjulte status"
+
+#: taskmgr.rc:231
+msgid "Removes the process from the system"
+msgstr "Fjerner prosessen fra systemet"
+
+#: taskmgr.rc:233
+msgid "Removes this process and all descendants from the system"
+msgstr "Fjerner denne prosessen og alle etterkommere fra systemet"
+
+#: taskmgr.rc:234
+msgid "Attaches the debugger to this process"
+msgstr "Legger feilsøkeren til denne prosessen"
+
+#: taskmgr.rc:236
+msgid "Controls which processors the process will be allowed to run on"
+msgstr "Kontrollerer hvilke prosessorer prosessen kan kjøre på"
+
+#: taskmgr.rc:238
+msgid "Sets process to the REALTIME priority class"
+msgstr "Gir prosessen til samtidsprioritet"
+
+#: taskmgr.rc:239
+msgid "Sets process to the HIGH priority class"
+msgstr "Gir prosessen høy prioritet"
+
+#: taskmgr.rc:241
+msgid "Sets process to the ABOVE NORMAL priority class"
+msgstr "Gir prosessen over normal prioritet"
+
+#: taskmgr.rc:243
+msgid "Sets process to the NORMAL priority class"
+msgstr "Gir prosessen normal prioritet"
+
+#: taskmgr.rc:245
+msgid "Sets process to the BELOW NORMAL priority class"
+msgstr "Gir prosessen under normal prioritet"
+
+#: taskmgr.rc:246
+msgid "Sets process to the LOW priority class"
+msgstr "Gir prosessen lav prioritet"
+
+#: taskmgr.rc:248
+msgid "Controls Debug Channels"
+msgstr "Kontrollerer feilsøkingskanaler"
+
+#: taskmgr.rc:263
+msgid "Applications"
+msgstr "Programmer"
+
+#: taskmgr.rc:264
+msgid "Processes"
+msgstr "Prosesser"
+
+#: taskmgr.rc:265
+msgid "Performance"
+msgstr "Ytelse"
+
+#: taskmgr.rc:266
+msgid "CPU Usage: %3d%%"
+msgstr "Prosessorbruk: %3d%%"
+
+#: taskmgr.rc:267
+msgid "Processes: %d"
+msgstr "Prosesser: %d"
+
+#: taskmgr.rc:268
+msgid "Mem Usage: %dK / %dK"
+msgstr "Minnebruk: %dK / %dK"
+
+#: taskmgr.rc:273
+msgid "Image Name"
+msgstr "Bildenavn"
+
+#: taskmgr.rc:274
+msgid "PID"
+msgstr "PID"
+
+#: taskmgr.rc:275
+msgid "CPU"
+msgstr "CPU"
+
+#: taskmgr.rc:276
+msgid "CPU Time"
+msgstr "CPU-tid"
+
+#: taskmgr.rc:277
+msgid "Mem Usage"
+msgstr "Minnebruk"
+
+#: taskmgr.rc:278
+msgid "Mem Delta"
+msgstr "Minnedelta"
+
+#: taskmgr.rc:279
+msgid "Peak Mem Usage"
+msgstr "Høyeste minnebruk"
+
+#: taskmgr.rc:280
+msgid "Page Faults"
+msgstr "Sidefeil"
+
+#: taskmgr.rc:281
+msgid "USER Objects"
+msgstr "USER-objekter"
+
+#: taskmgr.rc:282
+msgid "I/O Reads"
+msgstr "I/U leseøkter"
+
+#: taskmgr.rc:283
+msgid "I/O Read Bytes"
+msgstr "I/U leste byte"
+
+#: taskmgr.rc:284
+msgid "Session ID"
+msgstr "Økt-ID"
+
+#: taskmgr.rc:285
+msgid "Username"
+msgstr "Brukernavn"
+
+#: taskmgr.rc:286
+msgid "PF Delta"
+msgstr "PF-delta"
+
+#: taskmgr.rc:287
+msgid "VM Size"
+msgstr "VM-størrelse"
+
+#: taskmgr.rc:288
+msgid "Paged Pool"
+msgstr "Paged Pool"
+
+#: taskmgr.rc:289
+msgid "NP Pool"
+msgstr "NP Pool"
+
+#: taskmgr.rc:290
+msgid "Base Pri"
+msgstr "Basispri."
+
+#: taskmgr.rc:291
+msgid "Handles"
+msgstr "Handles"
+
+#: taskmgr.rc:292
+msgid "Threads"
+msgstr "Tråder"
+
+#: taskmgr.rc:293
+msgid "GDI Objects"
+msgstr "GDI-objekter"
+
+#: taskmgr.rc:294
+msgid "I/O Writes"
+msgstr "I/U skriveøkter"
+
+#: taskmgr.rc:295
+msgid "I/O Write Bytes"
+msgstr "I/U skrevne byte"
+
+#: taskmgr.rc:296
+msgid "I/O Other"
+msgstr "I/U annet"
+
+#: taskmgr.rc:297
+msgid "I/O Other Bytes"
+msgstr "I/O annet, byte"
+
+#: taskmgr.rc:302
+msgid "Task Manager Warning"
+msgstr "Oppgavebehandler - advarsel"
+
+#: taskmgr.rc:305
+msgid ""
+"WARNING: Changing the priority class of this process may\n"
+"cause undesired results including system instability. Are you\n"
+"sure you want to change the priority class?"
+msgstr ""
+"ADVERSEL: Å endre prioritetsklassen for denne prosessen kan\n"
+"føre til uønskede resultater, som et ustabilt system. Er du\n"
+"sikker på at du vil endre prioritetsklassen?"
+
+#: taskmgr.rc:306
+msgid "Unable to Change Priority"
+msgstr "Klarte ikke endre prioriteten"
+
+#: taskmgr.rc:311
+msgid ""
+"WARNING: Terminating a process can cause undesired\n"
+"results including loss of data and system instability. The\n"
+"process will not be given the chance to save its state or\n"
+"data before it is terminated. Are you sure you want to\n"
+"terminate the process?"
+msgstr ""
+"ADVERSEL: Å avbryte en prosess kan føre til uønskede\n"
+"resultater, som tap av data og et ustabilt system.\n"
+"Prosessen vil ikke få anledning til å lagre gjeldende status\n"
+"eller data før den avsluttes. Er du sikker på at du\n"
+"vil avbryte prosessen?"
+
+#: taskmgr.rc:312
+msgid "Unable to Terminate Process"
+msgstr "Klarte ikke avbryte prosessen"
+
+#: taskmgr.rc:314
+msgid ""
+"WARNING: Debugging this process may result in loss of data.\n"
+"Are you sure you wish to attach the debugger?"
+msgstr ""
+"ADVERSEL: Å feilsøke denne prosessen kan føre til tap av data.\n"
+"Er du sikker på at du vil koble til feilsøkeren?"
+
+#: taskmgr.rc:315
+msgid "Unable to Debug Process"
+msgstr "Klarte ikke feilsøke prosessen"
+
+#: taskmgr.rc:316
+msgid "The process must have affinity with at least one processor"
+msgstr "Prosessen må ha tilhørighet til minst én prosessor"
+
+#: taskmgr.rc:317
+msgid "Invalid Option"
+msgstr "Ugyldig valg"
+
+#: taskmgr.rc:318
+msgid "Unable to Access or Set Process Affinity"
+msgstr "Klarte ikke lese eller endre tilhørighet til prosessor"
+
+#: taskmgr.rc:323
+msgid "System Idle Process"
+msgstr "Ledige ressurser"
+
+#: taskmgr.rc:324
+msgid "Not Responding"
+msgstr "Svarer ikke"
+
+#: taskmgr.rc:325
+msgid "Running"
+msgstr "Kjører"
+
+#: taskmgr.rc:326
+msgid "Task"
+msgstr "Oppgave"
+
+#: taskmgr.rc:327
+msgid "Status"
+msgstr "Status"
+
+#: taskmgr.rc:328
+msgid "Debug Channels"
+msgstr "Feilsøkingskanaler"
+
+#: taskmgr.rc:329
+msgid "Fixme"
+msgstr "Fiks meg"
+
+#: taskmgr.rc:330
+msgid "Err"
+msgstr "Feil"
+
+#: taskmgr.rc:331
+msgid "Warn"
+msgstr "Advarsel"
+
+#: taskmgr.rc:332
+msgid "Trace"
+msgstr "Sporing"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"

@@ -48,6 +48,8 @@ RC_SRCS = \
 	Zh.rc \
 	taskmgr.rc
 
+PO_SRCS = taskmgr.rc
+
 SVG_SRCS = \
 	taskmgr.svg
 

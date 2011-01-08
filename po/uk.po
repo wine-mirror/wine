@@ -3334,7 +3334,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Відкритих ресурсів: %lu\n"
 
-#: notepad.rc:26 progman.rc:29
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
 msgid "&File"
 msgstr "&Файл"
 
@@ -3418,14 +3418,10 @@ msgstr "Знайти &далі\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "За&мінити...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87
 #, fuzzy
 msgid "&Help"
-msgstr ""
-"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
-"&Довідка\n"
-"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
-"&Допомога"
+msgstr "&Довідка"
 
 #: notepad.rc:59 progman.rc:54
 msgid "&Search..."
@@ -3579,7 +3575,7 @@ msgstr "&Виконати..."
 msgid "E&xit Windows..."
 msgstr "Ви&хід..."
 
-#: progman.rc:41
+#: progman.rc:41 taskmgr.rc:41
 msgid "&Options"
 msgstr "&Параметри"
 
@@ -3595,7 +3591,7 @@ msgstr "&Згорнути при старті"
 msgid "&Save settings on exit"
 msgstr "Зберегти &налаштування при виході"
 
-#: progman.rc:46
+#: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
 msgid "&Windows"
 msgstr "&Вікна"
 
@@ -3898,6 +3894,581 @@ msgstr "Помилка: Не вдається завершити процес \"
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr "Помилка: Самоприпинення процесу не дозволене.\n"
+
+#: taskmgr.rc:37 taskmgr.rc:109
+msgid "&New Task (Run...)"
+msgstr "&Нове завдання (Виконати...)"
+
+#: taskmgr.rc:39
+msgid "E&xit Task Manager"
+msgstr "За&крити Диспетчер Завдань"
+
+#: taskmgr.rc:43 taskmgr.rc:142
+msgid "&Always On Top"
+msgstr "&Завжди зверху"
+
+#: taskmgr.rc:45
+msgid "&Minimize On Use"
+msgstr "З&горнути після звертання"
+
+#: taskmgr.rc:47
+msgid "&Hide When Minimized"
+msgstr "&Приховати якщо згорнутий"
+
+#: taskmgr.rc:49 taskmgr.rc:258
+msgid "&Show 16-bit tasks"
+msgstr "П&оказувати 16-бітні завдання"
+
+#: taskmgr.rc:52
+msgid "&View"
+msgstr "&Вигляд"
+
+#: taskmgr.rc:54
+msgid "&Refresh Now"
+msgstr "&Оновити"
+
+#: taskmgr.rc:55
+msgid "&Update Speed"
+msgstr "&Швидкість оновлення"
+
+#: taskmgr.rc:57 taskmgr.rc:159
+msgid "&High"
+msgstr "&Висока"
+
+#: taskmgr.rc:58 taskmgr.rc:163
+msgid "&Normal"
+msgstr "&Нормальна"
+
+#: taskmgr.rc:60 taskmgr.rc:167
+msgid "&Low"
+msgstr "&Низька"
+
+#: taskmgr.rc:61
+msgid "&Paused"
+msgstr "&Призупинити"
+
+#: taskmgr.rc:65 taskmgr.rc:111 taskmgr.rc:253
+msgid "Lar&ge Icons"
+msgstr "Ве&ликі значки"
+
+#: taskmgr.rc:66 taskmgr.rc:112 taskmgr.rc:254
+msgid "S&mall Icons"
+msgstr "&Малі значки"
+
+#: taskmgr.rc:67 taskmgr.rc:113 taskmgr.rc:255
+msgid "&Details"
+msgstr "&Детально"
+
+#: taskmgr.rc:68 taskmgr.rc:257
+msgid "&Select Columns..."
+msgstr "&Вибрати стовпці..."
+
+#: taskmgr.rc:69 taskmgr.rc:259
+msgid "&CPU History"
+msgstr "&Історія ЦП"
+
+#: taskmgr.rc:71 taskmgr.rc:260
+msgid "&One Graph, All CPUs"
+msgstr "&Один графік на всі ЦП"
+
+#: taskmgr.rc:73 taskmgr.rc:261
+msgid "One Graph &Per CPU"
+msgstr "Графік для &кожного ЦП"
+
+#: taskmgr.rc:76 taskmgr.rc:262
+msgid "&Show Kernel Times"
+msgstr "&Показати час ядра"
+
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124
+msgid "Tile &Horizontally"
+msgstr "З&ліва направо"
+
+#: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
+msgid "Tile &Vertically"
+msgstr "З&верху вниз"
+
+#: taskmgr.rc:82 taskmgr.rc:99 taskmgr.rc:126
+msgid "&Minimize"
+msgstr "З&горнути"
+
+#: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+msgid "Ma&ximize"
+msgstr "&Розгорнути"
+
+#: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
+msgid "&Cascade"
+msgstr "&Каскадом"
+
+#: taskmgr.rc:85 taskmgr.rc:102 taskmgr.rc:122
+msgid "&Bring To Front"
+msgstr "&На передній план"
+
+#: taskmgr.rc:89
+msgid "Task Manager &Help Topics"
+msgstr "&Виклик довідки"
+
+#: taskmgr.rc:91
+msgid "&About Task Manager"
+msgstr "&Про програму"
+
+#: taskmgr.rc:107 taskmgr.rc:119 taskmgr.rc:137 taskmgr.rc:148
+msgid "DUMMY"
+msgstr "DUMMY"
+
+#: taskmgr.rc:121
+msgid "&Switch To"
+msgstr "&Переключитись"
+
+#: taskmgr.rc:130
+msgid "&End Task"
+msgstr "&Зняти завдання"
+
+#: taskmgr.rc:131
+msgid "&Go To Process"
+msgstr "Йти &до процесу"
+
+#: taskmgr.rc:139
+msgid "&Restore"
+msgstr "&Відновити"
+
+#: taskmgr.rc:140
+msgid "&Close"
+msgstr "&Закрити"
+
+#: taskmgr.rc:150
+msgid "&End Process"
+msgstr "&Завершити процес"
+
+#: taskmgr.rc:151
+msgid "End Process &Tree"
+msgstr "Завершити &дерево процесів"
+
+#: taskmgr.rc:153
+msgid "&Debug"
+msgstr "&Налагодження"
+
+#: taskmgr.rc:155
+msgid "Set &Priority"
+msgstr "&Пріоритет"
+
+#: taskmgr.rc:157
+msgid "&Realtime"
+msgstr "&Реального часу"
+
+#: taskmgr.rc:161
+msgid "&AboveNormal"
+msgstr "&Вище середнього"
+
+#: taskmgr.rc:165
+msgid "&BelowNormal"
+msgstr "&Нижче середнього"
+
+#: taskmgr.rc:170
+msgid "Set &Affinity..."
+msgstr "Задати &відповідність..."
+
+#: taskmgr.rc:171
+msgid "Edit Debug &Channels..."
+msgstr "Змінити &канали налагодження..."
+
+#: taskmgr.rc:181 taskmgr.rc:182
+msgid "Task Manager"
+msgstr "Диспетчер завдань"
+
+#: taskmgr.rc:183
+msgid "Create New Task"
+msgstr "Створити нове завдання"
+
+#: taskmgr.rc:188
+msgid "Runs a new program"
+msgstr "Запускає нову програму"
+
+#: taskmgr.rc:189
+msgid "Task Manager remains in front of all other windows unless minimized"
+msgstr ""
+"Вікно диспетчера завдань залишається поверх інших вікон, якщо його не "
+"згорнуто"
+
+#: taskmgr.rc:191
+msgid "Task Manager is minimized when a SwitchTo operation is performed"
+msgstr "Вікно диспетчера завдань згортається при переключенні"
+
+#: taskmgr.rc:192
+msgid "Hide the Task Manager when it is minimized"
+msgstr "Приховування згорнутого вікна диспетчера завдань"
+
+#: taskmgr.rc:193
+msgid "Force Task Manager to update now, regardless of Update Speed setting"
+msgstr "Спричинює негайне оновлення вікна диспетчера завдань"
+
+#: taskmgr.rc:194
+msgid "Displays tasks by using large icons"
+msgstr "Показує завдання великими значками"
+
+#: taskmgr.rc:195
+msgid "Displays tasks by using small icons"
+msgstr "Показує завдання малими значками"
+
+#: taskmgr.rc:196
+msgid "Displays information about each task"
+msgstr "Показує додаткові відомості про кожне завдання"
+
+#: taskmgr.rc:197
+msgid "Updates the display twice per second"
+msgstr "Оновлює зображення двічі на секунду"
+
+#: taskmgr.rc:198
+msgid "Updates the display every two seconds"
+msgstr "Оновлює зображення раз на дві секунди"
+
+#: taskmgr.rc:199
+msgid "Updates the display every four seconds"
+msgstr "Оновлює зображення раз на чотири секунди"
+
+#: taskmgr.rc:204
+msgid "Does not automatically update"
+msgstr "Не оновлювати автоматично"
+
+#: taskmgr.rc:206
+msgid "Tiles the windows horizontally on the desktop"
+msgstr "Розташовує вікна горизонтально на робочому столі"
+
+#: taskmgr.rc:207
+msgid "Tiles the windows vertically on the desktop"
+msgstr "Розташовує вікна вертикально на робочому столі"
+
+#: taskmgr.rc:208
+msgid "Minimizes the windows"
+msgstr "Згортає вікна"
+
+#: taskmgr.rc:209
+msgid "Maximizes the windows"
+msgstr "Розгортає вікна"
+
+#: taskmgr.rc:210
+msgid "Cascades the windows diagonally on the desktop"
+msgstr "Розташовує вікна каскадом на робочому столі"
+
+#: taskmgr.rc:211
+msgid "Brings the window front, but does not switch to it"
+msgstr "Переміщення вікна на передній план без переходу до нього"
+
+#: taskmgr.rc:212
+msgid "Displays Task Manager help topics"
+msgstr "Показує довідку диспетчера завдань"
+
+#: taskmgr.rc:213
+msgid "Displays program information, version number, and copyright"
+msgstr "Показує відомості про програму, її версію та авторські права"
+
+#: taskmgr.rc:214
+msgid "Exits the Task Manager application"
+msgstr "Закриває диспетчер завдань"
+
+#: taskmgr.rc:216
+msgid "Shows 16-bit tasks under the associated ntvdm.exe"
+msgstr "Показ 16-розрядних завдань, які обробляє ntvdm.exe"
+
+#: taskmgr.rc:217
+msgid "Select which columns will be visible on the Process page"
+msgstr "Виберіть стовпці, які слід відображати на вкладці Процеси"
+
+#: taskmgr.rc:218
+msgid "Displays kernel time in the performance graphs"
+msgstr "Показує час ядра на графіках продуктивності"
+
+#: taskmgr.rc:220
+msgid "A single history graph shows total CPU usage"
+msgstr "Єдиний хронологічний графік загального використання ЦП"
+
+#: taskmgr.rc:221
+msgid "Each CPU has its own history graph"
+msgstr "Кожний ЦП має власний хронологічний графік"
+
+#: taskmgr.rc:223
+msgid "Brings a task to the foreground, switch focus to that task"
+msgstr ""
+"Переміщення завдання на передній план і передача керування цьому завданню"
+
+#: taskmgr.rc:228
+msgid "Tells the selected tasks to close"
+msgstr "Наказує вибраним завданням закритися"
+
+#: taskmgr.rc:229
+msgid "Switches the focus to the process of the selected task"
+msgstr "Передача фокусу до процесу вибраного завдання"
+
+#: taskmgr.rc:230
+msgid "Restores the Task Manager from its hidden state"
+msgstr "Відновлення прихованого вікна диспетчера завдань"
+
+#: taskmgr.rc:231
+msgid "Removes the process from the system"
+msgstr "Видаляє процес із системи"
+
+#: taskmgr.rc:233
+msgid "Removes this process and all descendants from the system"
+msgstr "Видаляє з системи цей процес і всіх його нащадків"
+
+#: taskmgr.rc:234
+msgid "Attaches the debugger to this process"
+msgstr "Застосовує налагоджувач до цього процесу"
+
+#: taskmgr.rc:236
+msgid "Controls which processors the process will be allowed to run on"
+msgstr "Визначає, які процесори може використовувати процес"
+
+#: taskmgr.rc:238
+msgid "Sets process to the REALTIME priority class"
+msgstr "Встановлює клас пріоритету РЕАЛЬНОГО ЧАСУ для процесу"
+
+#: taskmgr.rc:239
+msgid "Sets process to the HIGH priority class"
+msgstr "Встановлює клас пріоритету ВИСОКИЙ для процесу"
+
+#: taskmgr.rc:241
+msgid "Sets process to the ABOVE NORMAL priority class"
+msgstr "Встановлює клас пріоритету ВИЩЕ СЕРЕДНЬОГО для процесу"
+
+#: taskmgr.rc:243
+msgid "Sets process to the NORMAL priority class"
+msgstr "Установлює клас пріоритету СЕРЕДНІЙ для процесу"
+
+#: taskmgr.rc:245
+msgid "Sets process to the BELOW NORMAL priority class"
+msgstr "Установлює клас пріоритету НИЖЧЕ СЕРЕДНЬОГО для процесу"
+
+#: taskmgr.rc:246
+msgid "Sets process to the LOW priority class"
+msgstr "Установлює клас пріоритету НИЗЬКИЙ для процесу"
+
+#: taskmgr.rc:248
+msgid "Controls Debug Channels"
+msgstr "Керує каналами налагодження"
+
+#: taskmgr.rc:263
+msgid "Applications"
+msgstr "Додатки"
+
+#: taskmgr.rc:264
+msgid "Processes"
+msgstr "Процеси"
+
+#: taskmgr.rc:265
+msgid "Performance"
+msgstr "Швидкодія"
+
+#: taskmgr.rc:266
+msgid "CPU Usage: %3d%%"
+msgstr "Використ. ЦП: %3d%%"
+
+#: taskmgr.rc:267
+msgid "Processes: %d"
+msgstr "Процесів: %d"
+
+#: taskmgr.rc:268
+msgid "Mem Usage: %dK / %dK"
+msgstr "Використання пам'яті: %dK / %dK"
+
+#: taskmgr.rc:273
+msgid "Image Name"
+msgstr "Ім'я образу"
+
+#: taskmgr.rc:274
+msgid "PID"
+msgstr "PID"
+
+#: taskmgr.rc:275
+msgid "CPU"
+msgstr "ЦП"
+
+#: taskmgr.rc:276
+msgid "CPU Time"
+msgstr "Час ЦП"
+
+#: taskmgr.rc:277
+msgid "Mem Usage"
+msgstr "Пам'ять"
+
+#: taskmgr.rc:278
+msgid "Mem Delta"
+msgstr "Пам'ять (змін)"
+
+#: taskmgr.rc:279
+msgid "Peak Mem Usage"
+msgstr "Пікове використання пам'яті"
+
+#: taskmgr.rc:280
+msgid "Page Faults"
+msgstr "Помил. стор."
+
+#: taskmgr.rc:281
+msgid "USER Objects"
+msgstr "Об'єкти USER"
+
+#: taskmgr.rc:282
+msgid "I/O Reads"
+msgstr "Кількість читань"
+
+#: taskmgr.rc:283
+msgid "I/O Read Bytes"
+msgstr "Прочитано байтів"
+
+#: taskmgr.rc:284
+msgid "Session ID"
+msgstr "Код сеансу"
+
+#: taskmgr.rc:285
+msgid "Username"
+msgstr "Ім'я користувача"
+
+#: taskmgr.rc:286
+msgid "PF Delta"
+msgstr "Помил. стор. (змін)"
+
+#: taskmgr.rc:287
+msgid "VM Size"
+msgstr "Об'єм віртуальної пам'яті"
+
+#: taskmgr.rc:288
+msgid "Paged Pool"
+msgstr "Вивант. пул"
+
+#: taskmgr.rc:289
+msgid "NP Pool"
+msgstr "Невивант. пул"
+
+#: taskmgr.rc:290
+msgid "Base Pri"
+msgstr "Баз. пріор."
+
+#: taskmgr.rc:291
+msgid "Handles"
+msgstr "Дескрип."
+
+#: taskmgr.rc:292
+msgid "Threads"
+msgstr "Потоків"
+
+#: taskmgr.rc:293
+msgid "GDI Objects"
+msgstr "Об'єкти GDI"
+
+#: taskmgr.rc:294
+msgid "I/O Writes"
+msgstr "Кількість записів"
+
+#: taskmgr.rc:295
+msgid "I/O Write Bytes"
+msgstr "Записано байт"
+
+#: taskmgr.rc:296
+msgid "I/O Other"
+msgstr "Інший ввід-вивід"
+
+#: taskmgr.rc:297
+msgid "I/O Other Bytes"
+msgstr "Інших байтів при вводі-виводі"
+
+#: taskmgr.rc:302
+msgid "Task Manager Warning"
+msgstr "Попередження Диспетчера завдань"
+
+#: taskmgr.rc:305
+msgid ""
+"WARNING: Changing the priority class of this process may\n"
+"cause undesired results including system instability. Are you\n"
+"sure you want to change the priority class?"
+msgstr ""
+"УВАГА: Зміна класу пріоритету цього процесу\n"
+"може призвести до небажаних результатів, в тому числі до\n"
+"нестабільності системи. Змінити клас пріоритету?"
+
+#: taskmgr.rc:306
+msgid "Unable to Change Priority"
+msgstr "Неможливо змінити пріоритет"
+
+#: taskmgr.rc:311
+msgid ""
+"WARNING: Terminating a process can cause undesired\n"
+"results including loss of data and system instability. The\n"
+"process will not be given the chance to save its state or\n"
+"data before it is terminated. Are you sure you want to\n"
+"terminate the process?"
+msgstr ""
+"УВАГА: Завершення цього процесу може призвести до\n"
+"небажаних результатів, включаючи втрату даних та\n"
+"нестабільність системи. Процес не зможе зберегти\n"
+"свою позицію чи дані. Ви справді хочете завершити\n"
+"процес?"
+
+#: taskmgr.rc:312
+msgid "Unable to Terminate Process"
+msgstr "Неможливо завершити процес"
+
+#: taskmgr.rc:314
+msgid ""
+"WARNING: Debugging this process may result in loss of data.\n"
+"Are you sure you wish to attach the debugger?"
+msgstr ""
+"УВАГА: Налагодження цього процесу може спричинити втрату\n"
+"даних. Справді використати налагоджувач?"
+
+#: taskmgr.rc:315
+msgid "Unable to Debug Process"
+msgstr "Налагодження процесу неможливе"
+
+#: taskmgr.rc:316
+msgid "The process must have affinity with at least one processor"
+msgstr "Процесу повинен відповідати хоча б один ЦП"
+
+#: taskmgr.rc:317
+msgid "Invalid Option"
+msgstr "Невірний параметр"
+
+#: taskmgr.rc:318
+msgid "Unable to Access or Set Process Affinity"
+msgstr "Неможливо отримати доступ чи встановити відповідність процесу"
+
+#: taskmgr.rc:323
+msgid "System Idle Process"
+msgstr "Бездіяльність системи"
+
+#: taskmgr.rc:324
+msgid "Not Responding"
+msgstr "Не відповідає"
+
+#: taskmgr.rc:325
+msgid "Running"
+msgstr "Виконується"
+
+#: taskmgr.rc:326
+msgid "Task"
+msgstr "Завдання"
+
+#: taskmgr.rc:327
+msgid "Status"
+msgstr "Стан"
+
+#: taskmgr.rc:328
+msgid "Debug Channels"
+msgstr "Канали налагодження"
+
+#: taskmgr.rc:329
+msgid "Fixme"
+msgstr "Fixme"
+
+#: taskmgr.rc:330
+msgid "Err"
+msgstr "Err"
+
+#: taskmgr.rc:331
+msgid "Warn"
+msgstr "Warn"
+
+#: taskmgr.rc:332
+msgid "Trace"
+msgstr "Trace"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"

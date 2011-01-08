@@ -3312,9 +3312,14 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      열린 리소스: %lu\n"
 
-#: notepad.rc:26 progman.rc:29
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#, fuzzy
 msgid "&File"
-msgstr "파일(&F)"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"파일(&F)\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+" 파일(&F)"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -3396,7 +3401,7 @@ msgstr "다음 찾기(&N)\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "바꾸기(&R)...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87
 msgid "&Help"
 msgstr "도움말(&H)"
 
@@ -3558,7 +3563,7 @@ msgstr "실행(&E)..."
 msgid "E&xit Windows..."
 msgstr "창 종료(&X)..."
 
-#: progman.rc:41
+#: progman.rc:41 taskmgr.rc:41
 msgid "&Options"
 msgstr "옵션(&O)"
 
@@ -3574,7 +3579,7 @@ msgstr "실행시 아이콘 상태로(&M)"
 msgid "&Save settings on exit"
 msgstr "종료시 설정 내용 저장(&S)"
 
-#: progman.rc:46
+#: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
 msgid "&Windows"
 msgstr "창(&W)"
 
@@ -3870,6 +3875,578 @@ msgstr "에러: \"%s\" 프로세스를 중단시킬 수 없습니다.\n"
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr "에러: 프로세스 자가 종료는 허용되지 않습니다.\n"
+
+#: taskmgr.rc:37 taskmgr.rc:109
+msgid "&New Task (Run...)"
+msgstr "새 작업(&N)( 실행...)"
+
+#: taskmgr.rc:39
+msgid "E&xit Task Manager"
+msgstr "작업 관리자 나가기(&x)"
+
+#: taskmgr.rc:43 taskmgr.rc:142
+msgid "&Always On Top"
+msgstr "항상 위에(&A)"
+
+#: taskmgr.rc:45
+msgid "&Minimize On Use"
+msgstr "최소화 상태로 사용(&M)"
+
+#: taskmgr.rc:47
+msgid "&Hide When Minimized"
+msgstr "최소화 상태일 때 숨기기(&H)"
+
+#: taskmgr.rc:49 taskmgr.rc:258
+msgid "&Show 16-bit tasks"
+msgstr "16-bit 작업 보여주기(&S)"
+
+#: taskmgr.rc:52
+msgid "&View"
+msgstr "보기l(&V)"
+
+#: taskmgr.rc:54
+msgid "&Refresh Now"
+msgstr "지금 새로 읽기(&R)"
+
+#: taskmgr.rc:55
+msgid "&Update Speed"
+msgstr "속도 업데이트(&U)"
+
+#: taskmgr.rc:57 taskmgr.rc:159
+msgid "&High"
+msgstr "높음(&H)"
+
+#: taskmgr.rc:58 taskmgr.rc:163
+msgid "&Normal"
+msgstr "정상(&N)"
+
+#: taskmgr.rc:60 taskmgr.rc:167
+msgid "&Low"
+msgstr "낮음(&L)"
+
+#: taskmgr.rc:61
+msgid "&Paused"
+msgstr "정지(&P)"
+
+#: taskmgr.rc:65 taskmgr.rc:111 taskmgr.rc:253
+msgid "Lar&ge Icons"
+msgstr "큰 아이콘(&g)"
+
+#: taskmgr.rc:66 taskmgr.rc:112 taskmgr.rc:254
+msgid "S&mall Icons"
+msgstr "작은 아이콘(&m)"
+
+#: taskmgr.rc:67 taskmgr.rc:113 taskmgr.rc:255
+msgid "&Details"
+msgstr "상세히(&D)"
+
+#: taskmgr.rc:68 taskmgr.rc:257
+msgid "&Select Columns..."
+msgstr "세로 칸 선택(&S)..."
+
+#: taskmgr.rc:69 taskmgr.rc:259
+msgid "&CPU History"
+msgstr "&CPU 기록"
+
+#: taskmgr.rc:71 taskmgr.rc:260
+msgid "&One Graph, All CPUs"
+msgstr "모든  CPU에 하나의 그래프"
+
+#: taskmgr.rc:73 taskmgr.rc:261
+msgid "One Graph &Per CPU"
+msgstr "각각의 CPU마따 하나의 그래프(&P)"
+
+#: taskmgr.rc:76 taskmgr.rc:262
+msgid "&Show Kernel Times"
+msgstr "커널 시간 보이기(&S)"
+
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124
+msgid "Tile &Horizontally"
+msgstr "가로 바둑판 정렬(&H)"
+
+#: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
+msgid "Tile &Vertically"
+msgstr "세로 바둑판 정렬(&V)"
+
+#: taskmgr.rc:82 taskmgr.rc:99 taskmgr.rc:126
+msgid "&Minimize"
+msgstr "최소화(&M)"
+
+#: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+msgid "Ma&ximize"
+msgstr "최대화(&x)"
+
+#: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
+msgid "&Cascade"
+msgstr "정렬(&C)"
+
+#: taskmgr.rc:85 taskmgr.rc:102 taskmgr.rc:122
+msgid "&Bring To Front"
+msgstr "앞으로 가져오기(&B)"
+
+#: taskmgr.rc:89
+msgid "Task Manager &Help Topics"
+msgstr "작업 관리자 도움말 목차(&H)"
+
+#: taskmgr.rc:91
+msgid "&About Task Manager"
+msgstr "작업관리자 정보(&A)"
+
+#: taskmgr.rc:107 taskmgr.rc:119 taskmgr.rc:137 taskmgr.rc:148
+msgid "DUMMY"
+msgstr "더미"
+
+#: taskmgr.rc:121
+msgid "&Switch To"
+msgstr "전환(&S)"
+
+#: taskmgr.rc:130
+msgid "&End Task"
+msgstr "작업 끝(&E)"
+
+#: taskmgr.rc:131
+msgid "&Go To Process"
+msgstr "프로세스로 가기(&G)"
+
+#: taskmgr.rc:139
+msgid "&Restore"
+msgstr "복구(&R)"
+
+#: taskmgr.rc:140
+msgid "&Close"
+msgstr "닫기(&C)"
+
+#: taskmgr.rc:150
+msgid "&End Process"
+msgstr "작업 끝(&E)"
+
+#: taskmgr.rc:151
+msgid "End Process &Tree"
+msgstr "작업 트리 끝(&T)"
+
+#: taskmgr.rc:153
+msgid "&Debug"
+msgstr "디버그(&D)"
+
+#: taskmgr.rc:155
+msgid "Set &Priority"
+msgstr "우선순위 설정(&P)"
+
+#: taskmgr.rc:157
+msgid "&Realtime"
+msgstr "실시간(&R)"
+
+#: taskmgr.rc:161
+msgid "&AboveNormal"
+msgstr "보통보다 위(&A)"
+
+#: taskmgr.rc:165
+msgid "&BelowNormal"
+msgstr "보통보다 아래(&B)"
+
+#: taskmgr.rc:170
+msgid "Set &Affinity..."
+msgstr "친화도 설정(&A)..."
+
+#: taskmgr.rc:171
+msgid "Edit Debug &Channels..."
+msgstr "디버그 채널 편집(&C)..."
+
+#: taskmgr.rc:181 taskmgr.rc:182
+msgid "Task Manager"
+msgstr "작업 관리자"
+
+#: taskmgr.rc:183
+msgid "Create New Task"
+msgstr "새 작업 만들기"
+
+#: taskmgr.rc:188
+msgid "Runs a new program"
+msgstr "새 프로그램 실행"
+
+#: taskmgr.rc:189
+msgid "Task Manager remains in front of all other windows unless minimized"
+msgstr "작업관리자는 최소화 되지 않는 한 다른 창 앞에 있게 됩니다"
+
+#: taskmgr.rc:191
+msgid "Task Manager is minimized when a SwitchTo operation is performed"
+msgstr "작엄관리자는 전환 작업이 완료될 때 최소화됩니다"
+
+#: taskmgr.rc:192
+msgid "Hide the Task Manager when it is minimized"
+msgstr "작업관리자가 최소하 될 때 숨기기"
+
+#: taskmgr.rc:193
+msgid "Force Task Manager to update now, regardless of Update Speed setting"
+msgstr "업데이트 속도 설정과는 상관없이 작업관리자 강제로 업데이트"
+
+#: taskmgr.rc:194
+msgid "Displays tasks by using large icons"
+msgstr "큰 아이콘 사용해서 작업 관리자 보여줌"
+
+#: taskmgr.rc:195
+msgid "Displays tasks by using small icons"
+msgstr "작은 아이콘 사용해서 작업 관리자 보여줌"
+
+#: taskmgr.rc:196
+msgid "Displays information about each task"
+msgstr "각각의 작업 정보 보여줌"
+
+#: taskmgr.rc:197
+msgid "Updates the display twice per second"
+msgstr "1초에 2번 디스플레이 새로 고침"
+
+#: taskmgr.rc:198
+msgid "Updates the display every two seconds"
+msgstr "2초마다 디스플레이 새로 고침"
+
+#: taskmgr.rc:199
+msgid "Updates the display every four seconds"
+msgstr "4초마다 디스플레이 새로 고침"
+
+#: taskmgr.rc:204
+msgid "Does not automatically update"
+msgstr "자동으로 업데이트 할 수 없습니다"
+
+#: taskmgr.rc:206
+msgid "Tiles the windows horizontally on the desktop"
+msgstr "데스크탑에 창 가로 바둑판 정렬"
+
+#: taskmgr.rc:207
+msgid "Tiles the windows vertically on the desktop"
+msgstr "데스크탑에 창 세로 바둑판 정렬"
+
+#: taskmgr.rc:208
+msgid "Minimizes the windows"
+msgstr "창 최소화"
+
+#: taskmgr.rc:209
+msgid "Maximizes the windows"
+msgstr "창 최대화"
+
+#: taskmgr.rc:210
+msgid "Cascades the windows diagonally on the desktop"
+msgstr "데스크탑에 창 대각선으로 정렬"
+
+#: taskmgr.rc:211
+msgid "Brings the window front, but does not switch to it"
+msgstr "차을 앞으로 옮기나, 전환하지는 않음"
+
+#: taskmgr.rc:212
+msgid "Displays Task Manager help topics"
+msgstr "작엄 관리자 도움물 목차 보여주기"
+
+#: taskmgr.rc:213
+msgid "Displays program information, version number, and copyright"
+msgstr "풀그림 정보,버젼 그리고 저작권 보여주기"
+
+#: taskmgr.rc:214
+msgid "Exits the Task Manager application"
+msgstr "작엄 관리자 풀그림 나가기"
+
+#: taskmgr.rc:216
+msgid "Shows 16-bit tasks under the associated ntvdm.exe"
+msgstr " ntvdm.exe 연결 밑의 16비트 작업 보여주기"
+
+#: taskmgr.rc:217
+msgid "Select which columns will be visible on the Process page"
+msgstr "세로줄 선택은 작업페이지의 보여주게 될 것입니다"
+
+#: taskmgr.rc:218
+msgid "Displays kernel time in the performance graphs"
+msgstr "성능 그래프의 커널 타입 보여주기"
+
+#: taskmgr.rc:220
+msgid "A single history graph shows total CPU usage"
+msgstr "모든 CPU  사용을 하나의 기록 그래프로 보여주기"
+
+#: taskmgr.rc:221
+msgid "Each CPU has its own history graph"
+msgstr "각각 CPU를  각자의 기록 그래프로 보여주기"
+
+#: taskmgr.rc:223
+msgid "Brings a task to the foreground, switch focus to that task"
+msgstr "작업을 앞으로 가져오고, 초점을 그 작업으로 이동"
+
+#: taskmgr.rc:228
+msgid "Tells the selected tasks to close"
+msgstr "선택한 작업을 닫으라고 말하기"
+
+#: taskmgr.rc:229
+msgid "Switches the focus to the process of the selected task"
+msgstr "선택된 태스크의 작업으로 초점 전환"
+
+#: taskmgr.rc:230
+msgid "Restores the Task Manager from its hidden state"
+msgstr "숨은 상태에서 작업관리자 복귀"
+
+#: taskmgr.rc:231
+msgid "Removes the process from the system"
+msgstr "시스템에서 작업 제거"
+
+#: taskmgr.rc:233
+msgid "Removes this process and all descendants from the system"
+msgstr "작업과 시스템으로부터의 모든 자식 프로세스를 제거"
+
+#: taskmgr.rc:234
+msgid "Attaches the debugger to this process"
+msgstr "프로세스에 디버거 부착"
+
+#: taskmgr.rc:236
+msgid "Controls which processors the process will be allowed to run on"
+msgstr "각각의 프로세서를 제어하는 것은 작업이 실행되도록 허용할 것입니다"
+
+#: taskmgr.rc:238
+msgid "Sets process to the REALTIME priority class"
+msgstr "작업을 실시간 순위 클래스로 설정"
+
+#: taskmgr.rc:239
+msgid "Sets process to the HIGH priority class"
+msgstr "작업을 높은 순위 클래스로 설정"
+
+#: taskmgr.rc:241
+msgid "Sets process to the ABOVE NORMAL priority class"
+msgstr "작업을 보통보다 높은 순위 클래스로 설정"
+
+#: taskmgr.rc:243
+msgid "Sets process to the NORMAL priority class"
+msgstr "작업을 보통 순위 클래스로 설정"
+
+#: taskmgr.rc:245
+msgid "Sets process to the BELOW NORMAL priority class"
+msgstr "작업을 보통보다 낮은 순위 클래스로 설정"
+
+#: taskmgr.rc:246
+msgid "Sets process to the LOW priority class"
+msgstr "작업을 낮은 순위 클래스로 설정"
+
+#: taskmgr.rc:248
+msgid "Controls Debug Channels"
+msgstr "디버그 채널 제어"
+
+#: taskmgr.rc:263
+msgid "Applications"
+msgstr "프로그램"
+
+#: taskmgr.rc:264
+msgid "Processes"
+msgstr "작업"
+
+#: taskmgr.rc:265
+msgid "Performance"
+msgstr "퍼포먼스"
+
+#: taskmgr.rc:266
+msgid "CPU Usage: %3d%%"
+msgstr "CPU 사용량: %3d%%"
+
+#: taskmgr.rc:267
+msgid "Processes: %d"
+msgstr "프로세스: %d"
+
+#: taskmgr.rc:268
+msgid "Mem Usage: %dK / %dK"
+msgstr "메모리 사용량: %dK / %dK"
+
+#: taskmgr.rc:273
+msgid "Image Name"
+msgstr "이미지 이름"
+
+#: taskmgr.rc:274
+msgid "PID"
+msgstr "PID"
+
+#: taskmgr.rc:275
+msgid "CPU"
+msgstr "CPU"
+
+#: taskmgr.rc:276
+msgid "CPU Time"
+msgstr "CPU 시간"
+
+#: taskmgr.rc:277
+msgid "Mem Usage"
+msgstr "메모리 사용량"
+
+#: taskmgr.rc:278
+msgid "Mem Delta"
+msgstr "메모리 델타"
+
+#: taskmgr.rc:279
+msgid "Peak Mem Usage"
+msgstr "피크 메모리 사용"
+
+#: taskmgr.rc:280
+msgid "Page Faults"
+msgstr "페이지 실패"
+
+#: taskmgr.rc:281
+msgid "USER Objects"
+msgstr "사용자 객체"
+
+#: taskmgr.rc:282
+msgid "I/O Reads"
+msgstr "I/O 읽기"
+
+#: taskmgr.rc:283
+msgid "I/O Read Bytes"
+msgstr "I/O 읽은 바이트"
+
+#: taskmgr.rc:284
+msgid "Session ID"
+msgstr "세션 ID"
+
+#: taskmgr.rc:285
+msgid "Username"
+msgstr "사용자 이름"
+
+#: taskmgr.rc:286
+msgid "PF Delta"
+msgstr "PF 델타"
+
+#: taskmgr.rc:287
+msgid "VM Size"
+msgstr "VM 크기"
+
+#: taskmgr.rc:288
+msgid "Paged Pool"
+msgstr "페이지된 풀"
+
+#: taskmgr.rc:289
+msgid "NP Pool"
+msgstr "NP 풀"
+
+#: taskmgr.rc:290
+msgid "Base Pri"
+msgstr "기본 Pri"
+
+#: taskmgr.rc:291
+msgid "Handles"
+msgstr "핸들"
+
+#: taskmgr.rc:292
+msgid "Threads"
+msgstr "쓰레드"
+
+#: taskmgr.rc:293
+msgid "GDI Objects"
+msgstr "GDI 객체"
+
+#: taskmgr.rc:294
+msgid "I/O Writes"
+msgstr "I/O 쓰기"
+
+#: taskmgr.rc:295
+msgid "I/O Write Bytes"
+msgstr "I/O 쓴 바이트"
+
+#: taskmgr.rc:296
+msgid "I/O Other"
+msgstr "I/O 기타"
+
+#: taskmgr.rc:297
+msgid "I/O Other Bytes"
+msgstr "I/O 기타 바이트"
+
+#: taskmgr.rc:302
+msgid "Task Manager Warning"
+msgstr "작업 관리자 경고"
+
+#: taskmgr.rc:305
+msgid ""
+"WARNING: Changing the priority class of this process may\n"
+"cause undesired results including system instability. Are you\n"
+"sure you want to change the priority class?"
+msgstr ""
+"경고: 프로세스의 우선 순위 클래그를 변경하는 것은\n"
+"시스템 불안정을 포함해서 바람직하지 않은 결과를 가져 올 수 있습니다. 당신은\n"
+"우선 순위 수준을 변경하시겠습니까?"
+
+#: taskmgr.rc:306
+msgid "Unable to Change Priority"
+msgstr "우선순위를 바꿀 수 없습니다"
+
+#: taskmgr.rc:311
+msgid ""
+"WARNING: Terminating a process can cause undesired\n"
+"results including loss of data and system instability. The\n"
+"process will not be given the chance to save its state or\n"
+"data before it is terminated. Are you sure you want to\n"
+"terminate the process?"
+msgstr ""
+"경고: 프로세스를 중단시키는 것은 데이타 손실과\n"
+"시스템 불안정을 포함해서 바람직하지 않은 결과를 가져올 수\n"
+"있습니다. 이 프로세스 데이터나 상태를 저장할 기회가\n"
+"주어지기 전에 종료될 것입니다.\n"
+"정말로 중단시키겠습니까?"
+
+#: taskmgr.rc:312
+msgid "Unable to Terminate Process"
+msgstr "프로세스를 중단시킬 수 없습니다"
+
+#: taskmgr.rc:314
+msgid ""
+"WARNING: Debugging this process may result in loss of data.\n"
+"Are you sure you wish to attach the debugger?"
+msgstr ""
+"경고: 프로세스를 디버그 하는 것은 데이터의 손실을 가져올 수 있습니다.\n"
+"디버거를  사용하시겠습니까?"
+
+#: taskmgr.rc:315
+msgid "Unable to Debug Process"
+msgstr "프로세스를 디버그 할 수 없습니다"
+
+#: taskmgr.rc:316
+msgid "The process must have affinity with at least one processor"
+msgstr "\t이 과정은 적어도 하나의 프로세서와 동질성이 있어야합니다"
+
+#: taskmgr.rc:317
+msgid "Invalid Option"
+msgstr "올바르지 않은 옵션"
+
+#: taskmgr.rc:318
+msgid "Unable to Access or Set Process Affinity"
+msgstr "접근할수 없거나 프로세스 동질성을 설정할수 없습니다"
+
+#: taskmgr.rc:323
+msgid "System Idle Process"
+msgstr "시스템 유휴 작업"
+
+#: taskmgr.rc:324
+msgid "Not Responding"
+msgstr "반응이 없음"
+
+#: taskmgr.rc:325
+msgid "Running"
+msgstr "실행중"
+
+#: taskmgr.rc:326
+msgid "Task"
+msgstr "태스크"
+
+#: taskmgr.rc:327
+msgid "Status"
+msgstr "상태"
+
+#: taskmgr.rc:328
+msgid "Debug Channels"
+msgstr "디버그 채널"
+
+#: taskmgr.rc:329
+msgid "Fixme"
+msgstr " 고정"
+
+#: taskmgr.rc:330
+msgid "Err"
+msgstr " 에러"
+
+#: taskmgr.rc:331
+msgid "Warn"
+msgstr "경고"
+
+#: taskmgr.rc:332
+msgid "Trace"
+msgstr "추적"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"
