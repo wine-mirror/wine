@@ -343,6 +343,11 @@ static unsigned be_x86_64_is_func_call(const void* insn, ADDRESS64* callee)
     }
 }
 
+static unsigned be_x86_64_is_jump(const void* insn, ADDRESS64* jumpee)
+{
+    return FALSE;
+}
+
 extern void be_x86_64_disasm_one_insn(ADDRESS64* addr, int display);
 
 #define DR7_CONTROL_SHIFT	16
@@ -560,6 +565,7 @@ struct backend_cpu be_x86_64 =
     be_x86_64_is_function_return,
     be_x86_64_is_break_insn,
     be_x86_64_is_func_call,
+    be_x86_64_is_jump,
     be_x86_64_disasm_one_insn,
     be_x86_64_insert_Xpoint,
     be_x86_64_remove_Xpoint,

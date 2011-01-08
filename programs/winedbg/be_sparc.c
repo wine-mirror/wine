@@ -78,6 +78,11 @@ static unsigned be_sparc_is_func_call(const void* insn, ADDRESS64* callee)
     return FALSE;
 }
 
+static unsigned be_sparc_is_jump(const void* insn, ADDRESS64* jumpee)
+{
+    return FALSE;
+}
+
 static void be_sparc_disasm_one_insn(ADDRESS64* addr, int display)
 {
     dbg_printf("not done for Sparc\n");
@@ -146,6 +151,7 @@ struct backend_cpu be_sparc =
     be_sparc_is_function_return,
     be_sparc_is_break_insn,
     be_sparc_is_func_call,
+    be_sparc_is_jump,
     be_sparc_disasm_one_insn,
     be_sparc_insert_Xpoint,
     be_sparc_remove_Xpoint,

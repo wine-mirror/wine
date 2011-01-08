@@ -77,6 +77,11 @@ static unsigned be_alpha_is_func_call(const void* insn, ADDRESS64* callee)
     return FALSE;
 }
 
+static unsigned be_alpha_is_jump(const void* insn, ADDRESS64* jumpee)
+{
+    return FALSE;
+}
+
 static void be_alpha_disasm_one_insn(ADDRESS64* addr, int display)
 {
     dbg_printf("Disasm NIY\n");
@@ -159,6 +164,7 @@ struct backend_cpu be_alpha =
     be_alpha_is_function_return,
     be_alpha_is_break_insn,
     be_alpha_is_func_call,
+    be_alpha_is_jump,
     be_alpha_disasm_one_insn,
     be_alpha_insert_Xpoint,
     be_alpha_remove_Xpoint,

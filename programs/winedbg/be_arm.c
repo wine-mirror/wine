@@ -87,6 +87,11 @@ static unsigned be_arm_is_func_call(const void* insn, ADDRESS64* callee)
     return FALSE;
 }
 
+static unsigned be_arm_is_jump(const void* insn, ADDRESS64* jumpee)
+{
+    return FALSE;
+}
+
 static void be_arm_disasm_one_insn(ADDRESS64* addr, int display)
 {
     dbg_printf("Disasm NIY\n");
@@ -181,6 +186,7 @@ struct backend_cpu be_arm =
     be_arm_is_function_return,
     be_arm_is_break_insn,
     be_arm_is_func_call,
+    be_arm_is_jump,
     be_arm_disasm_one_insn,
     be_arm_insert_Xpoint,
     be_arm_remove_Xpoint,

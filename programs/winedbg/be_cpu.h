@@ -78,6 +78,8 @@ struct backend_cpu
     unsigned            (*is_break_insn)(const void*);
     /* Check whether instruction at 'addr' is a function call */
     unsigned            (*is_function_call)(const void* insn, ADDRESS64* callee);
+    /* Check whether instruction at 'addr' is a jump */
+    unsigned            (*is_jump)(const void* insn, ADDRESS64* jumpee);
     /* Ask for disassembling one instruction. If display is true, assembly code
      * will be printed. In all cases, 'addr' is advanced at next instruction
      */
