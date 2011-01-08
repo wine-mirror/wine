@@ -179,7 +179,7 @@ install install-lib install-dev uninstall::
 
 all: @MAINTAINER_MODE@ $(PO_SRCS:%=rsrc.pot)
 
-$(PO_SRCS:%=rsrc.pot): $(WRC) $(PO_SRCS)
+rsrc.pot: $(WRC)
 	$(LDPATH) $(WRC) $(RCFLAGS) -O pot -o $@ $(PO_SRCS)
 
 $(MC_SRCS:.mc=.mc.rc): $(WMC)

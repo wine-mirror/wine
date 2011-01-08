@@ -854,7 +854,7 @@ static int output_src( FILE *file, INCL_FILE *pFile, int *column )
         }
         else if (!strcmp( ext, "rc" ))  /* resource file */
         {
-            *column += fprintf( file, "%s.res: %s", obj, pFile->filename );
+            *column += fprintf( file, "rsrc.pot %s.res: %s", obj, pFile->filename );
         }
         else if (!strcmp( ext, "mc" ))  /* message file */
         {
