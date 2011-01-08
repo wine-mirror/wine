@@ -2967,14 +2967,24 @@ char* WINAPI WS_inet_ntoa(struct WS_in_addr in)
 
 static const char *debugstr_wsaioctl(DWORD ioctl)
 {
+    const char *buf_type, *family;
+
     switch(ioctl & 0x18000000)
     {
-    case WS_IOC_UNIX:
+    case WS_IOC_WS2:
+        family = "IOC_WS2";
+        break;
+    case WS_IOC_PROTOCOL:
+        family = "IOC_PROTOCOL";
+        break;
+    case WS_IOC_VENDOR:
+        family = "IOC_VENDOR";
+        break;
+    default: /* WS_IOC_UNIX */
     {
         BYTE size = (ioctl >> 16) & WS_IOCPARM_MASK;
         char x = (ioctl & 0xff00) >> 8;
         BYTE y = ioctl & 0xff;
-        const char *buf_type;
         char args[14];
 
         switch (ioctl & (WS_IOC_VOID|WS_IOC_INOUT))
@@ -2998,47 +3008,30 @@ static const char *debugstr_wsaioctl(DWORD ioctl)
         }
         return wine_dbg_sprintf("%s(%s)", buf_type, args);
     }
-    default:
-    {
-        USHORT code = ioctl & 0xffff;
-        const char *family, *buf_type;
+    }
 
-        /* This switch looks redundant, but isn't:  the case WS_IOC_UNIX
-         * is handled differently than all others.
-         */
-        switch(ioctl & 0x18000000)
-        {
-        case WS_IOC_WS2:
-            family = "IOC_WS2";
+    /* We are different from WS_IOC_UNIX. */
+    switch (ioctl & (WS_IOC_VOID|WS_IOC_INOUT))
+    {
+        case WS_IOC_VOID:
+            buf_type = "_WSAIO";
             break;
-        case WS_IOC_PROTOCOL:
-            family = "IOC_PROTOCOL";
+        case WS_IOC_INOUT:
+            buf_type = "_WSAIORW";
             break;
-        case WS_IOC_VENDOR:
-            family = "IOC_VENDOR";
+        case WS_IOC_IN:
+            buf_type = "_WSAIOW";
             break;
-        }
-        switch (ioctl & (WS_IOC_VOID|WS_IOC_INOUT))
-        {
-            case WS_IOC_VOID:
-                buf_type = "_WSAIO";
-                break;
-            case WS_IOC_INOUT:
-                buf_type = "_WSAIORW";
-                break;
-            case WS_IOC_IN:
-                buf_type = "_WSAIOW";
-                break;
-            case WS_IOC_OUT:
-                buf_type = "_WSAIOR";
-                break;
-            default:
-                buf_type = "?";
-                break;
-        }
-        return wine_dbg_sprintf("%s(%s, %d)", buf_type, family, code);
+        case WS_IOC_OUT:
+            buf_type = "_WSAIOR";
+            break;
+        default:
+            buf_type = "?";
+            break;
     }
-    }
+
+    return wine_dbg_sprintf("%s(%s, %d)", buf_type, family,
+                            (USHORT)(ioctl & 0xffff));
 }
 
 /**********************************************************************
