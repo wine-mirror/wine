@@ -326,6 +326,7 @@ enum format_info
     DFI_PE,
     DFI_MACHO,
     DFI_DWARF,
+    DFI_PDB,
     DFI_LAST
 };
 
@@ -343,6 +344,7 @@ struct module_format
         struct dwarf2_module_info_s*    dwarf2_info;
         struct pe_module_info*          pe_info;
         struct macho_module_info*	macho_info;
+        struct pdb_module_info*         pdb_info;
     } u;
 };
 

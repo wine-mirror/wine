@@ -81,6 +81,14 @@ struct pdb_file_info
     } u;
 };
 
+/* FIXME: don't make it static */
+#define CV_MAX_MODULES          32
+struct pdb_module_info
+{
+    unsigned                    used_subfiles;
+    struct pdb_file_info        pdb_files[CV_MAX_MODULES];
+};
+
 /*========================================================================
  * Debug file access helper routines
  */
@@ -2167,6 +2175,15 @@ static void pdb_free_file(struct pdb_file_info* pdb_file)
     }
 }
 
+static void pdb_module_remove(struct process* pcsn, struct module_format* modfmt)
+{
+    unsigned    i;
+
+    for (i = 0; i < modfmt->u.pdb_info->used_subfiles; i++)
+        pdb_free_file(&modfmt->u.pdb_info->pdb_files[i]);
+    HeapFree(GetProcessHeap(), 0, modfmt);
+}
+
 static void pdb_convert_types_header(PDB_TYPES* types, const BYTE* image)
 {
     memset(types, 0, sizeof(PDB_TYPES));
@@ -2447,7 +2464,7 @@ static BOOL pdb_init(const struct pdb_lookup* pdb_lookup, struct pdb_file_info* 
 static BOOL pdb_process_internal(const struct process* pcs, 
                                  const struct msc_debug_info* msc_dbg,
                                  const struct pdb_lookup* pdb_lookup,
-                                 struct pdb_file_info* pdb_file,
+                                 struct pdb_module_info* pdb_module_info,
                                  unsigned module_index);
 
 static void pdb_process_symbol_imports(const struct process* pcs, 
@@ -2456,6 +2473,7 @@ static void pdb_process_symbol_imports(const struct process* pcs,
                                        const void* symbols_image,
                                        const char* image,
                                        const struct pdb_lookup* pdb_lookup,
+                                       struct pdb_module_info* pdb_module_info,
                                        unsigned module_index)
 {
     if (module_index == -1 && symbols && symbols->pdbimport_size)
@@ -2465,6 +2483,7 @@ static void pdb_process_symbol_imports(const struct process* pcs,
         const void*             last;
         const char*             ptr;
         int                     i = 0;
+        struct pdb_file_info    sf0 = pdb_module_info->pdb_files[0];
 
         imp = (const PDB_SYMBOL_IMPORT*)((const char*)symbols_image + sizeof(PDB_SYMBOLS) + 
                                          symbols->module_size + symbols->offset_size + 
@@ -2479,11 +2498,11 @@ static void pdb_process_symbol_imports(const struct process* pcs,
             {
                 if (module_index != -1) FIXME("Twice the entry\n");
                 else module_index = i;
+                pdb_module_info->pdb_files[i] = sf0;
             }
             else
             {
                 struct pdb_lookup       imp_pdb_lookup;
-                struct pdb_file_info    pdb_file;
 
                 /* FIXME: this is an import of a JG PDB file
                  * how's a DS PDB handled ?
@@ -2494,13 +2513,19 @@ static void pdb_process_symbol_imports(const struct process* pcs,
                 imp_pdb_lookup.age = imp->Age;
                 TRACE("got for %s: age=%u ts=%x\n",
                       imp->filename, imp->Age, imp->TimeDateStamp);
-                pdb_process_internal(pcs, msc_dbg, &imp_pdb_lookup, &pdb_file, i);
+                pdb_process_internal(pcs, msc_dbg, &imp_pdb_lookup, pdb_module_info, i);
             }
             i++;
             imp = (const PDB_SYMBOL_IMPORT*)((const char*)first + ((ptr - (const char*)first + strlen(ptr) + 1 + 3) & ~3));
         }
+        pdb_module_info->used_subfiles = i;
     }
-    cv_current_module = &cv_zmodules[(module_index == -1) ? 0 : module_index];
+    if (module_index == -1)
+    {
+        module_index = 0;
+        pdb_module_info->used_subfiles = 1;
+    }
+    cv_current_module = &cv_zmodules[module_index];
     if (cv_current_module->allowed) FIXME("Already allowed ??\n");
     cv_current_module->allowed = TRUE;
 }
@@ -2508,7 +2533,7 @@ static void pdb_process_symbol_imports(const struct process* pcs,
 static BOOL pdb_process_internal(const struct process* pcs, 
                                  const struct msc_debug_info* msc_dbg,
                                  const struct pdb_lookup* pdb_lookup,
-                                 struct pdb_file_info* pdb_file,
+                                 struct pdb_module_info* pdb_module_info,
                                  unsigned module_index)
 {
     BOOL        ret = FALSE;
@@ -2518,9 +2543,11 @@ static BOOL pdb_process_internal(const struct process* pcs,
     char*       files_image = NULL;
     DWORD       files_size = 0;
     unsigned    matched;
+    struct pdb_file_info* pdb_file;
 
     TRACE("Processing PDB file %s\n", pdb_lookup->filename);
 
+    pdb_file = &pdb_module_info->pdb_files[module_index == -1 ? 0 : module_index];
     /* Open and map() .PDB file */
     if ((hFile = open_pdb_file(pcs, pdb_lookup, msc_dbg->module)) == NULL ||
         ((hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) == NULL) ||
@@ -2571,7 +2598,8 @@ static BOOL pdb_process_internal(const struct process* pcs,
             }
         }
 
-        pdb_process_symbol_imports(pcs, msc_dbg, &symbols, symbols_image, image, pdb_lookup, module_index);
+        pdb_process_symbol_imports(pcs, msc_dbg, &symbols, symbols_image, image,
+                                   pdb_lookup, pdb_module_info, module_index);
         pdb_process_types(msc_dbg, image, pdb_file);
 
         /* Read global symbol table */
@@ -2604,7 +2632,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
                     codeview_snarf_linetab(msc_dbg,
                                            modimage + sfile.symbol_size,
                                            sfile.lineno_size,
-                                           pdb_lookup->kind == PDB_JG);
+                                           pdb_file->kind == PDB_JG);
                 if (files_image)
                     codeview_snarf_linetab2(msc_dbg, modimage + sfile.symbol_size + sfile.lineno_size,
                                    pdb_get_file_size(pdb_file, sfile.file) - sfile.symbol_size - sfile.lineno_size,
@@ -2621,13 +2649,12 @@ static BOOL pdb_process_internal(const struct process* pcs,
         {
             codeview_snarf_public(msc_dbg, globalimage, 0,
                                   pdb_get_file_size(pdb_file, symbols.gsym_file));
-
             pdb_free(globalimage);
         }
     }
     else
-        pdb_process_symbol_imports(pcs, msc_dbg, NULL, NULL, image, pdb_lookup, 
-                                   module_index);
+        pdb_process_symbol_imports(pcs, msc_dbg, NULL, NULL, image,
+                                   pdb_lookup, pdb_module_info, module_index);
     ret = TRUE;
 
  leave:
@@ -2648,20 +2675,34 @@ static BOOL pdb_process_file(const struct process* pcs,
                              struct pdb_lookup* pdb_lookup)
 {
     BOOL                        ret;
-    struct pdb_file_info        pdb_file;
+    struct module_format*       modfmt;
+    struct pdb_module_info*     pdb_module_info;
+
+    modfmt = HeapAlloc(GetProcessHeap(), 0,
+                       sizeof(struct module_format) + sizeof(struct pdb_module_info));
+    if (!modfmt) return FALSE;
+
+    pdb_module_info = (void*)(modfmt + 1);
+    msc_dbg->module->format_info[DFI_PDB] = modfmt;
+    modfmt->module      = msc_dbg->module;
+    modfmt->remove      = pdb_module_remove;
+    modfmt->loc_compute = NULL;
+    modfmt->u.pdb_info  = pdb_module_info;
 
     memset(cv_zmodules, 0, sizeof(cv_zmodules));
     codeview_init_basic_types(msc_dbg->module);
-    ret = pdb_process_internal(pcs, msc_dbg, pdb_lookup, &pdb_file, -1);
+    ret = pdb_process_internal(pcs, msc_dbg, pdb_lookup,
+                               msc_dbg->module->format_info[DFI_PDB]->u.pdb_info, -1);
     codeview_clear_type_table();
     if (ret)
     {
+        struct pdb_module_info*     pdb_info = msc_dbg->module->format_info[DFI_PDB]->u.pdb_info;
         msc_dbg->module->module.SymType = SymCv;
-        if (pdb_lookup->kind == PDB_JG)
-            msc_dbg->module->module.PdbSig = pdb_file.u.jg.timestamp;
+        if (pdb_info->pdb_files[0].kind == PDB_JG)
+            msc_dbg->module->module.PdbSig = pdb_info->pdb_files[0].u.jg.timestamp;
         else
-            msc_dbg->module->module.PdbSig70 = pdb_file.u.ds.guid;
-        msc_dbg->module->module.PdbAge = pdb_file.age;
+            msc_dbg->module->module.PdbSig70 = pdb_info->pdb_files[0].u.ds.guid;
+        msc_dbg->module->module.PdbAge = pdb_info->pdb_files[0].age;
         MultiByteToWideChar(CP_ACP, 0, pdb_lookup->filename, -1,
                             msc_dbg->module->module.LoadedPdbName,
                             sizeof(msc_dbg->module->module.LoadedPdbName) / sizeof(WCHAR));
