@@ -27,44 +27,6 @@
 
 LANGUAGE LANG_UKRAINIAN, SUBLANG_DEFAULT
 
-/* Menu */
-
-MAIN_MENU MENU
-{
- POPUP "&Файл" {
-   MENUITEM "&Створити...",              	PM_NEW
-   MENUITEM "Відк&рити\tEnter",             	PM_OPEN
-   MENUITEM "&Перемістити...\tF7",             	PM_MOVE,      GRAYED
-   MENUITEM "&Копіювати...\tF8",             	PM_COPY,      GRAYED
-   MENUITEM "Ви&далити\tEntf",           	PM_DELETE
-   MENUITEM "В&ластивості...\tAlt+Enter",       PM_ATTRIBUTES
-   MENUITEM SEPARATOR
-   MENUITEM "&Виконати...",          		PM_EXECUTE
-   MENUITEM SEPARATOR
-   MENUITEM "Ви&хід...",             		PM_EXIT
- }
- POPUP "&Параметри" {
-   MENUITEM "&Впорядкувати автоматично",  		PM_AUTO_ARRANGE
-   MENUITEM "&Згорнути при старті",    			PM_MIN_ON_RUN
-   MENUITEM "Зберегти &налаштування при виході", 	PM_SAVE_SETTINGS
- }
- POPUP "&Вікна" {
-   MENUITEM "&Каскад\tShift+F5",       	PM_OVERLAP
-   MENUITEM "&Поруч\tShift+F4",  	PM_SIDE_BY_SIDE
-   MENUITEM "&Впорядкувати значки",     PM_ARRANGE
- }
-
-POPUP "&Допомога" {
-   MENUITEM "&Зміст",         		PM_CONTENTS
-   MENUITEM "По&шук...",           	PM_SEARCH
-   MENUITEM SEPARATOR
-   MENUITEM "&Використання Довідки",	PM_HELPONHELP
-   MENUITEM "По&сібник",         	PM_TUTORIAL
-   MENUITEM SEPARATOR
-   MENUITEM "&Про Wine",     		PM_ABOUT_WINE
- }
-}
-
 /* Dialog `New' */
 
 DIALOG_NEW DIALOG 0, 0, 170, 65
@@ -184,34 +146,4 @@ DEFPUSHBUTTON "OK",               IDOK,      135,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Скасувати",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "&Огляд...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
 PUSHBUTTON    "&Довідка",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
-}
-
-/* Strings */
-
-STRINGTABLE
-{
-IDS_PROGRAM_MANAGER,		"Диспетчер програм"
-IDS_ERROR,			"ПОМИЛКА"
-IDS_WARNING,			"УВАГА"
-IDS_INFO,			"Інформація"
-IDS_DELETE,			"Видалити"
-IDS_DELETE_GROUP_s,		"Видалити групу `%s' ?"
-IDS_DELETE_PROGRAM_s,		"Видалити програму `%s' ?"
-IDS_NOT_IMPLEMENTED,		"Не реалізовано"
-IDS_FILE_READ_ERROR_s,		"Помилка читання `%s'."
-IDS_FILE_WRITE_ERROR_s,		"Помикла запису `%s'."
-IDS_GRPFILE_READ_ERROR_s,	"\
-Файл групи `%s' неможливо відкрити.\n\
-Спробувати знов наступного разу?"
-IDS_OUT_OF_MEMORY,		"Замало пам'яті."
-IDS_WINHELP_ERROR,		"Довідка не доступна."
-IDS_UNKNOWN_FEATURE_s,		"Невідома ознака в %s"
-IDS_FILE_NOT_OVERWRITTEN_s,	"Файл `%s' існує. Він не був перезаписаний."
-IDS_SAVE_GROUP_AS_s,		"Група зберігається як `%s' щоб уникнути перезапис оригіналів."
-IDS_NO_HOT_KEY,			"Немає"
-IDS_ALL_FILES,			"Всі файли (*.*)"
-IDS_PROGRAMS,			"Програми"
-IDS_LIBRARIES_DLL,		"Бібліотеки (*.dll)"
-IDS_SYMBOL_FILES,		"Файли значків"
-IDS_SYMBOLS_ICO,		"Значки (*.ico)"
 }

@@ -26,44 +26,6 @@
 
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
-/* Menu */
-
-MAIN_MENU MENU
-{
- POPUP "&Файл" {
-   MENUITEM "&Создать",              PM_NEW
-   MENUITEM "О&ткрыть...\tEnter",             PM_OPEN
-   MENUITEM "&Переместить...\tF7",             PM_MOVE,      GRAYED
-   MENUITEM "&Копировать...\tF8",             PM_COPY,      GRAYED
-   MENUITEM "&Удалить\tEntf",           PM_DELETE
-   MENUITEM "&Атрибуты...\tAlt+Enter",       PM_ATTRIBUTES
-   MENUITEM SEPARATOR
-   MENUITEM "&Запустить...",          PM_EXECUTE
-   MENUITEM SEPARATOR
-   MENUITEM "Вы&ход из Wine...",             PM_EXIT
- }
- POPUP "&Параметры" {
-   MENUITEM "&Автоупорядочивание",  PM_AUTO_ARRANGE
-   MENUITEM "&Свернуть при запуске",    PM_MIN_ON_RUN
-   MENUITEM "&Сохранять настройки при выходе", PM_SAVE_SETTINGS
- }
- POPUP "&Окна" {
-   MENUITEM "&Каскад\tShift+F5",       PM_OVERLAP
-   MENUITEM "&Мозаика\tShift+F4",  PM_SIDE_BY_SIDE
-   MENUITEM "&Упорядочить при выходе",       PM_ARRANGE
- }
- 
-POPUP "&Справка" {
-   MENUITEM "&Содержание",         PM_CONTENTS
-   MENUITEM "&Поиск...",           PM_SEARCH
-   MENUITEM SEPARATOR
-   MENUITEM "&Использование справки",     PM_HELPONHELP
-   MENUITEM "&Руководство",         PM_TUTORIAL
-   MENUITEM SEPARATOR
-   MENUITEM "&О Wine",     PM_ABOUT_WINE
- }
-}
-
 /* Dialog `New' */
 
 DIALOG_NEW DIALOG 0, 0, 170, 65
@@ -183,34 +145,4 @@ DEFPUSHBUTTON "OK",               IDOK,      135,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Отмена",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "&Обзор...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
 PUSHBUTTON    "&Справка",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
-}
-
-/* Strings */
-
-STRINGTABLE
-{
-IDS_PROGRAM_MANAGER,		"Диспетчер программ"
-IDS_ERROR,			"ОШИБКА"
-IDS_WARNING,			"ВНИМАНИЕ"
-IDS_INFO,			"Сведения"
-IDS_DELETE,			"Удалить"
-IDS_DELETE_GROUP_s,		"Удалить группу `%s' ?"
-IDS_DELETE_PROGRAM_s,		"Удалить программу `%s' ?"
-IDS_NOT_IMPLEMENTED,		"Ещё не реализовано"
-IDS_FILE_READ_ERROR_s,		"Ошибка чтения `%s'."
-IDS_FILE_WRITE_ERROR_s,		"Ошибка записи `%s'."
-IDS_GRPFILE_READ_ERROR_s,	"\
-Файл группы `%s' не может быть открыт.\n\
-Надо ли в следующий раз пытаться это сделать?"
-IDS_OUT_OF_MEMORY,		"Мало памяти."
-IDS_WINHELP_ERROR,		"Справка не доступна."
-IDS_UNKNOWN_FEATURE_s,		"Неизвестное свойство в %s"
-IDS_FILE_NOT_OVERWRITTEN_s,	"Файл `%s' существует. Он не был перезаписан."
-IDS_SAVE_GROUP_AS_s,		"Группа сохраняется под именем `%s' во избежание перезаписи оригинала."
-IDS_NO_HOT_KEY,			"Нет"
-IDS_ALL_FILES,			"Все файлы (*.*)"
-IDS_PROGRAMS,			"Программы"
-IDS_LIBRARIES_DLL,		"Библиотеки (*.dll)"
-IDS_SYMBOL_FILES,		"Файлы значков"
-IDS_SYMBOLS_ICO,		"Значки (*.ico)"
 }

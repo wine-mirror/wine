@@ -665,7 +665,7 @@ msgstr "Eind Entiteit"
 msgid "Path Length Constraint="
 msgstr "Lengte van pad beperking="
 
-#: crypt32.rc:198
+#: crypt32.rc:198 progman.rc:83
 msgid "None"
 msgstr "Geen"
 
@@ -893,14 +893,10 @@ msgstr "Standaardapparaat WaveOut"
 msgid "Default MidiOut Device"
 msgstr "Standaardapparaat MidiOut"
 
-#: hhctrl.rc:27 notepad.rc:58
+#: hhctrl.rc:27 notepad.rc:58 progman.rc:53
 #, fuzzy
 msgid "&Contents"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Inhoud\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Help-onderwerpen"
+msgstr "Help-onder&werpen"
 
 #: hhctrl.rc:28
 msgid "I&ndex"
@@ -3368,7 +3364,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Open resources: %lu\n"
 
-#: notepad.rc:26
+#: notepad.rc:26 progman.rc:29
 msgid "&File"
 msgstr "&Bestand"
 
@@ -3452,11 +3448,11 @@ msgstr "V&olgende zoeken\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Vervangen...\tCtrl+H"
 
-#: notepad.rc:57
+#: notepad.rc:57 progman.rc:52
 msgid "&Help"
 msgstr "&Help"
 
-#: notepad.rc:59
+#: notepad.rc:59 progman.rc:54
 msgid "&Search..."
 msgstr "&Zoeken..."
 
@@ -3480,15 +3476,15 @@ msgstr "Pagina &p"
 msgid "Notepad"
 msgstr "Kladblok"
 
-#: notepad.rc:72
+#: notepad.rc:72 progman.rc:66
 msgid "ERROR"
 msgstr "FOUT"
 
-#: notepad.rc:73
+#: notepad.rc:73 progman.rc:67
 msgid "WARNING"
 msgstr "WAARSCHUWING"
 
-#: notepad.rc:74
+#: notepad.rc:74 progman.rc:68
 msgid "Information"
 msgstr "Informatie"
 
@@ -3496,7 +3492,7 @@ msgstr "Informatie"
 msgid "Untitled"
 msgstr "Naamloos"
 
-#: notepad.rc:78
+#: notepad.rc:78 progman.rc:84
 msgid "All files (*.*)"
 msgstr "Alle bestanden (*.*)"
 
@@ -3578,6 +3574,156 @@ msgstr ""
 "Klik op Annuleren om deze tekens te behouden, en selecteer\n"
 "daarna een van de Unicode-opties in de coderingskeuzelijst.\n"
 "Wilt u doorgaan?"
+
+#: progman.rc:30
+msgid "&New..."
+msgstr "&Nieuw..."
+
+#: progman.rc:31
+msgid "O&pen\tEnter"
+msgstr "&Openen\tEnter"
+
+#: progman.rc:32
+msgid "&Move...\tF7"
+msgstr "Ve&rplaatsen...\tF7"
+
+#: progman.rc:33
+msgid "&Copy...\tF8"
+msgstr "&Kopiëren...\tF8"
+
+#: progman.rc:34
+msgid "&Delete\tEntf"
+msgstr "&Verwijderen\tEntf"
+
+#: progman.rc:35
+msgid "&Attributes...\tAlt+Enter"
+msgstr "&Eigenschappen...\tAlt+Enter"
+
+#: progman.rc:37
+msgid "&Execute..."
+msgstr "&Uitvoeren..."
+
+#: progman.rc:39
+msgid "E&xit Windows..."
+msgstr "&Afsluiten..."
+
+#: progman.rc:41
+msgid "&Options"
+msgstr "&Opties"
+
+#: progman.rc:42
+msgid "&Arrange automatically"
+msgstr "&Automatisch rangschikken"
+
+#: progman.rc:43
+msgid "&Minimize on run"
+msgstr "&Geminimaliseerd uitvoeren"
+
+#: progman.rc:44
+msgid "&Save settings on exit"
+msgstr "&Instellingen opslaan bij afsluiten"
+
+#: progman.rc:46
+msgid "&Windows"
+msgstr "&Venster"
+
+#: progman.rc:47
+msgid "&Overlapped\tShift+F5"
+msgstr "&Trapsgewijs\tShift+F5"
+
+#: progman.rc:48
+msgid "&Side by side\tShift+F4"
+msgstr "&Naast elkaar\tShift+F4"
+
+#: progman.rc:49
+msgid "&Arrange Icons"
+msgstr "&Pictogrammen schikken"
+
+#: progman.rc:56
+msgid "&Help on Help"
+msgstr "&Hulp bij Help"
+
+#: progman.rc:57
+msgid "&Tutorial"
+msgstr "&Instructie"
+
+#: progman.rc:59
+msgid "&About Wine"
+msgstr "&Over Wine"
+
+#: progman.rc:65
+msgid "Program Manager"
+msgstr "Programmabeheer"
+
+#: progman.rc:69
+msgid "Delete"
+msgstr "Verwijderen"
+
+#: progman.rc:70
+msgid "Delete group `%s' ?"
+msgstr "Wilt u groep `%s' verwijderen?"
+
+#: progman.rc:71
+msgid "Delete program `%s' ?"
+msgstr "Wilt u programma `%s' verwijderen?"
+
+#: progman.rc:72
+msgid "Not implemented"
+msgstr "Niet geïmplementeerd"
+
+#: progman.rc:73
+msgid "Error reading `%s'."
+msgstr "Fout bij het lezen van `%s'."
+
+#: progman.rc:74
+msgid "Error writing `%s'."
+msgstr "Fout bij het schrijven van `%s'."
+
+#: progman.rc:77
+msgid ""
+"The group file `%s' cannot be opened.\n"
+"Should it be tried further on?"
+msgstr ""
+"Het groepsbestand `%s' kan niet worden geopend.\n"
+"Wilt u het nogmaals proberen?"
+
+#: progman.rc:78
+msgid "Out of memory."
+msgstr "Geen geheugen beschikbaar."
+
+#: progman.rc:79
+msgid "Help not available."
+msgstr "Help is niet beschikbaar."
+
+#: progman.rc:80
+msgid "Unknown feature in %s"
+msgstr "Onbekende eigenschap in %s"
+
+#: progman.rc:81
+msgid "File `%s' exists. Not overwritten."
+msgstr "Het bestand `%s' bestaat reeds. Het is niet overschreven."
+
+#: progman.rc:82
+msgid "Save group as `%s to prevent overwriting original files."
+msgstr ""
+"Groep opslaan als `%s om het overschrijven van originele bestanden te "
+"voorkomen."
+
+#: progman.rc:85
+msgid "Programs"
+msgstr "Programma's"
+
+#: progman.rc:86
+msgid "Libraries (*.dll)"
+msgstr "Programmabibliotheekbestanden (*.dll)"
+
+#: progman.rc:87
+msgid "Icon files"
+msgstr "Pictogrambestanden"
+
+#: progman.rc:88
+msgid "Icons (*.ico)"
+msgstr "Pictogrammen (*.ico)"
 
 #: reg.rc:27
 msgid ""

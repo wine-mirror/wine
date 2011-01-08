@@ -24,44 +24,6 @@ LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
 
 #pragma code_page(65001)
 
-/* Menu */
-
-MAIN_MENU MENU
-{
- POPUP "&Arkiv" {
-   MENUITEM "&Ny...",              PM_NEW
-   MENUITEM "Ö&ppna\tEnter",             PM_OPEN
-   MENUITEM "&Flytta...\tF7",             PM_MOVE,      GRAYED
-   MENUITEM "&Kopiera...\tF8",             PM_COPY,      GRAYED
-   MENUITEM "&Ta bort\tEntf",           PM_DELETE
-   MENUITEM "&Attribut...\tAlt+Enter",       PM_ATTRIBUTES
-   MENUITEM SEPARATOR
-   MENUITEM "K&ör...",          PM_EXECUTE
-   MENUITEM SEPARATOR
-   MENUITEM "A&vsluta Windows...",             PM_EXIT
- }
- POPUP "&Inställningar" {
-   MENUITEM "Ordna &automatiskt",  PM_AUTO_ARRANGE
-   MENUITEM "&Minimera vid start",    PM_MIN_ON_RUN
-   MENUITEM "Spara ändringar vid &stängning", PM_SAVE_SETTINGS
- }
- POPUP "&Fönster" {
-   MENUITEM "&Överlappande\tShift+F5",       PM_OVERLAP
-   MENUITEM "&Sida vid sida\tShift+F4",  PM_SIDE_BY_SIDE
-   MENUITEM "Ordna &ikoner",       PM_ARRANGE
- }
-
-POPUP "&Hjälp" {
-   MENUITEM "&Innehåll",         PM_CONTENTS
-   MENUITEM "&Sök...",           PM_SEARCH
-   MENUITEM SEPARATOR
-   MENUITEM "&Hjälp om hjälp",     PM_HELPONHELP
-   MENUITEM "&Guide",         PM_TUTORIAL
-   MENUITEM SEPARATOR
-   MENUITEM "&om Wine",     PM_ABOUT_WINE
- }
-}
-
 /* Dialog `New' */
 
 DIALOG_NEW DIALOG 0, 0, 170, 65
@@ -181,34 +143,4 @@ DEFPUSHBUTTON "OK",               IDOK,      135,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Avbryt",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "B&läddra...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
 PUSHBUTTON    "&Hjälp",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
-}
-
-/* Strings */
-
-STRINGTABLE
-{
-IDS_PROGRAM_MANAGER,		"Programhanteraren"
-IDS_ERROR,			"FEL"
-IDS_WARNING,			"VARNING"
-IDS_INFO,			"Information"
-IDS_DELETE,			"Ta bort"
-IDS_DELETE_GROUP_s,		"Ta bort gruppen '%s'?"
-IDS_DELETE_PROGRAM_s,		"Ta bort programmet '%s'?"
-IDS_NOT_IMPLEMENTED,		"Ej implementerat"
-IDS_FILE_READ_ERROR_s,		"Fel vid läsning av '%s'."
-IDS_FILE_WRITE_ERROR_s,		"Fel vid skrivning till '%s'."
-IDS_GRPFILE_READ_ERROR_s,	"\
-Kunde inte öppna gruppfilen '%s'.\n\
-Ska vidare försök göras?"
-IDS_OUT_OF_MEMORY,		"För lite minne."
-IDS_WINHELP_ERROR,		"Ingen hjälp finns tillgänglig."
-IDS_UNKNOWN_FEATURE_s,		"Okänd egenskap i '%s'"
-IDS_FILE_NOT_OVERWRITTEN_s,	"Filen '%s' fanns redan, och skrevs ej över."
-IDS_SAVE_GROUP_AS_s,		"Spara grupp som '%s' för att undvika att skriva över filer."
-IDS_NO_HOT_KEY,			"Ingen"
-IDS_ALL_FILES,			"Alla filer (*.*)"
-IDS_PROGRAMS,			"Program"
-IDS_LIBRARIES_DLL,		"Bibliotek (*.dll)"
-IDS_SYMBOL_FILES,		"Ikonfiler"
-IDS_SYMBOLS_ICO,		"Ikoner (*.ico)"
 }

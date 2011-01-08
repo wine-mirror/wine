@@ -27,44 +27,6 @@
 
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 
-/* Menu */
-
-MAIN_MENU MENU
-{
- POPUP "文件(&F)" {
-   MENUITEM "新建(&N)...",              PM_NEW
-   MENUITEM "打开(&O)\tEnter",             PM_OPEN
-   MENUITEM "移动(&M)...\tF7",             PM_MOVE,      GRAYED
-   MENUITEM "复制(&C)...\tF8",             PM_COPY,      GRAYED
-   MENUITEM "删除(&D)\tEntf",           PM_DELETE
-   MENUITEM "属性(&A)...\tAlt+Enter",       PM_ATTRIBUTES
-   MENUITEM SEPARATOR
-   MENUITEM "执行(&E)...",          PM_EXECUTE
-   MENUITEM SEPARATOR
-   MENUITEM "退出 Windows(&X)...",             PM_EXIT
- }
- POPUP "选项(&O)" {
-   MENUITEM "自动排列(&A)",  PM_AUTO_ARRANGE
-   MENUITEM "运行时最小化(&M)",    PM_MIN_ON_RUN
-   MENUITEM "退出时保存设置(&S)", PM_SAVE_SETTINGS
- }
- POPUP "窗口(&W)" {
-   MENUITEM "层叠(&O)\tShift+F5",       PM_OVERLAP
-   MENUITEM "并排(&S)\tShift+F4",  PM_SIDE_BY_SIDE
-   MENUITEM "排列图标(&A)",       PM_ARRANGE
- }
-
-POPUP "帮助(&H)" {
-   MENUITEM "内容(&C)",         PM_CONTENTS
-   MENUITEM "搜索(&S)...",           PM_SEARCH
-   MENUITEM SEPARATOR
-   MENUITEM "如何使用帮助(&H)",     PM_HELPONHELP
-   MENUITEM "教程(&T)",         PM_TUTORIAL
-   MENUITEM SEPARATOR
-   MENUITEM "关于 Wine(&A)",     PM_ABOUT_WINE
- }
-}
-
 /* Dialog `New' */
 
 DIALOG_NEW DIALOG 0, 0, 170, 65
@@ -186,73 +148,7 @@ PUSHBUTTON    "浏览(&B)...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
 PUSHBUTTON    "帮助(&H)",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
 }
 
-/* Strings */
-
-STRINGTABLE
-{
-IDS_PROGRAM_MANAGER,		"程序管理器"
-IDS_ERROR,			"错误"
-IDS_WARNING,			"警告"
-IDS_INFO,			"信息"
-IDS_DELETE,			"删除"
-IDS_DELETE_GROUP_s,		"是否删除程序组 `%s' ？"
-IDS_DELETE_PROGRAM_s,		"是否删除程序组 `%s' ?"
-IDS_NOT_IMPLEMENTED,		"此功能未实现"
-IDS_FILE_READ_ERROR_s,		"读取文件 %s 时发生错误。"
-IDS_FILE_WRITE_ERROR_s,		"写入文件 %s 时发生错误。"
-IDS_GRPFILE_READ_ERROR_s,	"不能打开组文件 `%s' 。\n是否继续尝试？"
-IDS_OUT_OF_MEMORY,		"内存溢出。"
-IDS_WINHELP_ERROR,		"没有可用的帮助信息。"
-IDS_UNKNOWN_FEATURE_s,		"在 %s 中发现未知特性"
-IDS_FILE_NOT_OVERWRITTEN_s,	"文件 %s 已经存在。不覆盖已有文件。"
-IDS_SAVE_GROUP_AS_s,		"将程序组保存为 %s 可以避免复盖已有的文件。"
-IDS_NO_HOT_KEY,			"未定义"
-IDS_ALL_FILES,			"所有文件 (*.*)"
-IDS_PROGRAMS,			"程序"
-IDS_LIBRARIES_DLL,		"动态连接库 (*.dll)"
-IDS_SYMBOL_FILES,		"图标文件"
-IDS_SYMBOLS_ICO,		"图标 (*.ico)"
-}
-
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
-
-/* Menu */
-
-MAIN_MENU MENU
-{
- POPUP "檔案(&F)" {
-   MENUITEM "新建(&N)...",           PM_NEW
-   MENUITEM "開啟(&O)\tEnter",        PM_OPEN
-   MENUITEM "移動(&M)...\tF7",        PM_MOVE,      GRAYED
-   MENUITEM "複製(&C)...\tF8",        PM_COPY,      GRAYED
-   MENUITEM "刪除(&D)\tEntf",         PM_DELETE
-   MENUITEM "屬性(&A)...\tAlt+Enter",  PM_ATTRIBUTES
-   MENUITEM SEPARATOR
-   MENUITEM "執行(&E)...",           PM_EXECUTE
-   MENUITEM SEPARATOR
-   MENUITEM "結束 Windows(&X)...",    PM_EXIT
- }
- POPUP "選項(&O)" {
-   MENUITEM "自動排列(&A)",          PM_AUTO_ARRANGE
-   MENUITEM "執行時最小化(&M)",       PM_MIN_ON_RUN
-   MENUITEM "結束時儲存設定(&S)",     PM_SAVE_SETTINGS
- }
- POPUP "窗口(&W)" {
-   MENUITEM "層疊(&O)\tShift+F5",     PM_OVERLAP
-   MENUITEM "並排(&S)\tShift+F4",     PM_SIDE_BY_SIDE
-   MENUITEM "排列圖標(&A)",          PM_ARRANGE
- }
-
-POPUP "幫助(&H)" {
-   MENUITEM "內容(&C)",             PM_CONTENTS
-   MENUITEM "搜索(&S)...",           PM_SEARCH
-   MENUITEM SEPARATOR
-   MENUITEM "如何使用幫助(&H)",      PM_HELPONHELP
-   MENUITEM "教程(&T)",             PM_TUTORIAL
-   MENUITEM SEPARATOR
-   MENUITEM "關於 Wine(&A)",      PM_ABOUT_WINE
- }
-}
 
 /* Dialog `New' */
 
@@ -373,32 +269,4 @@ DEFPUSHBUTTON "確定",           IDOK,      135,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "取消",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "瀏覽(&B)...",     PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
 PUSHBUTTON    "幫助(&H)",       PM_HELP,   135, 65,  60, 15, WS_TABSTOP
-}
-
-/* Strings */
-
-STRINGTABLE
-{
-IDS_PROGRAM_MANAGER,		"程式管理器"
-IDS_ERROR,			"錯誤"
-IDS_WARNING,			"警告"
-IDS_INFO,			"資訊"
-IDS_DELETE,			"刪除"
-IDS_DELETE_GROUP_s,		"是否刪除程式組 `%s' ？"
-IDS_DELETE_PROGRAM_s,		"是否刪除程式組 `%s' ?"
-IDS_NOT_IMPLEMENTED,		"此功能未實現"
-IDS_FILE_READ_ERROR_s,		"讀取檔案 %s 時發生錯誤。"
-IDS_FILE_WRITE_ERROR_s,		"寫入檔案 %s 時發生錯誤。"
-IDS_GRPFILE_READ_ERROR_s,	"不能開啟組檔案 `%s' 。\n是否繼續嘗試？"
-IDS_OUT_OF_MEMORY,		"內存溢出。"
-IDS_WINHELP_ERROR,		"沒有可用的幫助資訊。"
-IDS_UNKNOWN_FEATURE_s,		"在 %s 中發現未知特性"
-IDS_FILE_NOT_OVERWRITTEN_s,	"檔案 %s 已經存在。不覆蓋已有檔案。"
-IDS_SAVE_GROUP_AS_s,		"將程式組儲存為 %s 可以避免復蓋已有的檔案。"
-IDS_NO_HOT_KEY,			"未定義"
-IDS_ALL_FILES,			"所有檔案 (*.*)"
-IDS_PROGRAMS,			"程式"
-IDS_LIBRARIES_DLL,		"動態連接庫 (*.dll)"
-IDS_SYMBOL_FILES,		"圖標檔案"
-IDS_SYMBOLS_ICO,		"圖標 (*.ico)"
 }

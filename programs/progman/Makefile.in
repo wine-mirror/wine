@@ -33,6 +33,8 @@ RC_SRCS = \
 	Tr.rc \
 	Uk.rc \
 	Zh.rc \
-	accel.rc
+	progman.rc
+
+PO_SRCS = progman.rc
 
 @MAKE_PROG_RULES@

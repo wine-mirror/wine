@@ -665,7 +665,7 @@ msgstr "Esybės pabaiga"
 msgid "Path Length Constraint="
 msgstr "Kelio ilgio ribojimas="
 
-#: crypt32.rc:198
+#: crypt32.rc:198 progman.rc:83
 msgid "None"
 msgstr "Nėra"
 
@@ -893,7 +893,7 @@ msgstr "Numatytasis WaveOut įrenginys"
 msgid "Default MidiOut Device"
 msgstr "Numatytasis MidiOut įrenginys"
 
-#: hhctrl.rc:27 notepad.rc:58
+#: hhctrl.rc:27 notepad.rc:58 progman.rc:53
 msgid "&Contents"
 msgstr "&Turinys"
 
@@ -3344,7 +3344,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Atverti ištekliai: %lu\n"
 
-#: notepad.rc:26
+#: notepad.rc:26 progman.rc:29
 msgid "&File"
 msgstr "&Failas"
 
@@ -3428,11 +3428,11 @@ msgstr "Ieškoti ki&to\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "Pa&keisti...\tCtrl+H"
 
-#: notepad.rc:57
+#: notepad.rc:57 progman.rc:52
 msgid "&Help"
 msgstr "&Žinynas"
 
-#: notepad.rc:59
+#: notepad.rc:59 progman.rc:54
 msgid "&Search..."
 msgstr "&Paieška..."
 
@@ -3456,15 +3456,15 @@ msgstr "Puslapis &p"
 msgid "Notepad"
 msgstr "Užrašinė"
 
-#: notepad.rc:72
+#: notepad.rc:72 progman.rc:66
 msgid "ERROR"
 msgstr "KLAIDA"
 
-#: notepad.rc:73
+#: notepad.rc:73 progman.rc:67
 msgid "WARNING"
 msgstr "ĮSPĖJIMAS"
 
-#: notepad.rc:74
+#: notepad.rc:74 progman.rc:68
 msgid "Information"
 msgstr "Informacija"
 
@@ -3472,7 +3472,7 @@ msgstr "Informacija"
 msgid "Untitled"
 msgstr "Be pavadinimo"
 
-#: notepad.rc:78
+#: notepad.rc:78 progman.rc:84
 msgid "All files (*.*)"
 msgstr "Visi failai (*.*)"
 
@@ -3553,6 +3553,154 @@ msgstr ""
 "Norėdami išsaugoti šiuos ženklus, spauskite „Atsisakyti“ ir pasirinkite "
 "vieną iš unikodo nuostatų koduotės išskleidžiamajame sąraše.\n"
 "Tęsti?"
+
+#: progman.rc:30
+msgid "&New..."
+msgstr "&Nauja..."
+
+#: progman.rc:31
+msgid "O&pen\tEnter"
+msgstr "&Atverti\tEnter"
+
+#: progman.rc:32
+msgid "&Move...\tF7"
+msgstr "&Perkelti...\tF7"
+
+#: progman.rc:33
+msgid "&Copy...\tF8"
+msgstr "&Kopijuoti...\tF8"
+
+#: progman.rc:34
+msgid "&Delete\tEntf"
+msgstr "&Šalinti\tEntf"
+
+#: progman.rc:35
+msgid "&Attributes...\tAlt+Enter"
+msgstr "At&ributai...\tAlt+Enter"
+
+#: progman.rc:37
+msgid "&Execute..."
+msgstr "&Vykdyti..."
+
+#: progman.rc:39
+msgid "E&xit Windows..."
+msgstr "Iš&eiti..."
+
+#: progman.rc:41
+msgid "&Options"
+msgstr "&Parinktys"
+
+#: progman.rc:42
+msgid "&Arrange automatically"
+msgstr "Išdėstyti &automatiškai"
+
+#: progman.rc:43
+msgid "&Minimize on run"
+msgstr "&Suskleisti paleidžiant"
+
+#: progman.rc:44
+msgid "&Save settings on exit"
+msgstr "Išsaugoti &nuostatas išeinant"
+
+#: progman.rc:46
+msgid "&Windows"
+msgstr "&Langai"
+
+#: progman.rc:47
+msgid "&Overlapped\tShift+F5"
+msgstr "&Persikloję\tShift+F5"
+
+#: progman.rc:48
+msgid "&Side by side\tShift+F4"
+msgstr "&Greta vienas kito\tShift+F4"
+
+#: progman.rc:49
+msgid "&Arrange Icons"
+msgstr "&Išdėstyti piktogramas"
+
+#: progman.rc:56
+msgid "&Help on Help"
+msgstr "Pa&galba apie žinyną"
+
+#: progman.rc:57
+msgid "&Tutorial"
+msgstr "&Mokymo programa"
+
+#: progman.rc:59
+msgid "&About Wine"
+msgstr "&Apie Wine"
+
+#: progman.rc:65
+msgid "Program Manager"
+msgstr "Programų tvarkytuvė"
+
+#: progman.rc:69
+msgid "Delete"
+msgstr "Šalinti"
+
+#: progman.rc:70
+msgid "Delete group `%s' ?"
+msgstr "Šalinti grupę „%s“?"
+
+#: progman.rc:71
+msgid "Delete program `%s' ?"
+msgstr "Šalinti programą „%s“?"
+
+#: progman.rc:72
+msgid "Not implemented"
+msgstr "Nerealizuota"
+
+#: progman.rc:73
+msgid "Error reading `%s'."
+msgstr "Klaida skaitant „%s“."
+
+#: progman.rc:74
+msgid "Error writing `%s'."
+msgstr "Klaida rašant „%s“."
+
+#: progman.rc:77
+msgid ""
+"The group file `%s' cannot be opened.\n"
+"Should it be tried further on?"
+msgstr ""
+"Nepavyko atidaryti grupės failo „%s“.\n"
+"Mėginti atidaryti toliau?"
+
+#: progman.rc:78
+msgid "Out of memory."
+msgstr "Trūksta atminties."
+
+#: progman.rc:79
+msgid "Help not available."
+msgstr "Žinynas neprieinamas."
+
+#: progman.rc:80
+msgid "Unknown feature in %s"
+msgstr "Nežinoma %s funkcija"
+
+#: progman.rc:81
+msgid "File `%s' exists. Not overwritten."
+msgstr "Failas „%s“ egzistuoja. Neperrašytas."
+
+#: progman.rc:82
+msgid "Save group as `%s to prevent overwriting original files."
+msgstr "Išsaugoti grupę kaip „%s“, taip neperrašant originalių failų."
+
+#: progman.rc:85
+msgid "Programs"
+msgstr "Programos"
+
+#: progman.rc:86
+msgid "Libraries (*.dll)"
+msgstr "Bibliotekos (*.dll)"
+
+#: progman.rc:87
+msgid "Icon files"
+msgstr "Piktogramų failai"
+
+#: progman.rc:88
+msgid "Icons (*.ico)"
+msgstr "Piktogramos (*.ico)"
 
 #: reg.rc:27
 msgid ""

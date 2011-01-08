@@ -666,9 +666,9 @@ msgstr ""
 msgid "Path Length Constraint="
 msgstr ""
 
-#: crypt32.rc:198
+#: crypt32.rc:198 progman.rc:83
 msgid "None"
-msgstr ""
+msgstr "None"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
@@ -890,7 +890,7 @@ msgstr ""
 msgid "Default MidiOut Device"
 msgstr ""
 
-#: hhctrl.rc:27 notepad.rc:58
+#: hhctrl.rc:27 notepad.rc:58 progman.rc:53
 msgid "&Contents"
 msgstr "&תכנים"
 
@@ -3012,7 +3012,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26
+#: notepad.rc:26 progman.rc:29
 msgid "&File"
 msgstr "&קובץ"
 
@@ -3096,11 +3096,11 @@ msgstr "חיפוש ה&בא\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "החל&פה...\tCtrl+H"
 
-#: notepad.rc:57
+#: notepad.rc:57 progman.rc:52
 msgid "&Help"
 msgstr "ע&זרה"
 
-#: notepad.rc:59
+#: notepad.rc:59 progman.rc:54
 msgid "&Search..."
 msgstr "&חיפוש..."
 
@@ -3124,15 +3124,15 @@ msgstr "עמוד &ת"
 msgid "Notepad"
 msgstr "פנקס רשימות"
 
-#: notepad.rc:72
+#: notepad.rc:72 progman.rc:66
 msgid "ERROR"
 msgstr "שגיאה"
 
-#: notepad.rc:73
+#: notepad.rc:73 progman.rc:67
 msgid "WARNING"
 msgstr "אזהרה"
 
-#: notepad.rc:74
+#: notepad.rc:74 progman.rc:68
 msgid "Information"
 msgstr "מידע"
 
@@ -3140,7 +3140,7 @@ msgstr "מידע"
 msgid "Untitled"
 msgstr "ללא שם"
 
-#: notepad.rc:78
+#: notepad.rc:78 progman.rc:84
 msgid "All files (*.*)"
 msgstr "כל הקבצים (*.*)"
 
@@ -3219,6 +3219,154 @@ msgstr ""
 "כדי לשמור על תווים אלו, יש ללחוץ על ביטול, ואז לבחור\n"
 "באחת מאפשרויות היוניקוד ברשימה הנגללת של הקידודים.\n"
 "האם להמשיך?"
+
+#: progman.rc:30
+msgid "&New..."
+msgstr "&חדש..."
+
+#: progman.rc:31
+msgid "O&pen\tEnter"
+msgstr "&פתיחה\tEnter"
+
+#: progman.rc:32
+msgid "&Move...\tF7"
+msgstr "ה&עברה...\tF7"
+
+#: progman.rc:33
+msgid "&Copy...\tF8"
+msgstr "הע&תקה...\tF8"
+
+#: progman.rc:34
+msgid "&Delete\tEntf"
+msgstr "&מחיקה\tEntf"
+
+#: progman.rc:35
+msgid "&Attributes...\tAlt+Enter"
+msgstr "מא&פיינים...\tAlt+Enter"
+
+#: progman.rc:37
+msgid "&Execute..."
+msgstr "הפע&לה..."
+
+#: progman.rc:39
+msgid "E&xit Windows..."
+msgstr "י&ציאה מ־Windows..."
+
+#: progman.rc:41
+msgid "&Options"
+msgstr "&אפשרויות"
+
+#: progman.rc:42
+msgid "&Arrange automatically"
+msgstr "&סידור אוטומטי"
+
+#: progman.rc:43
+msgid "&Minimize on run"
+msgstr "מ&זעור עם ההפעלה"
+
+#: progman.rc:44
+msgid "&Save settings on exit"
+msgstr "&שמירת ההגדרות עם היציאה"
+
+#: progman.rc:46
+msgid "&Windows"
+msgstr "&חלונות"
+
+#: progman.rc:47
+msgid "&Overlapped\tShift+F5"
+msgstr "&חופפים\tShift+F5"
+
+#: progman.rc:48
+msgid "&Side by side\tShift+F4"
+msgstr "&זה לצד זה\tShift+F4"
+
+#: progman.rc:49
+msgid "&Arrange Icons"
+msgstr "&סידור סמלים"
+
+#: progman.rc:56
+msgid "&Help on Help"
+msgstr "&עזרה על העזרה"
+
+#: progman.rc:57
+msgid "&Tutorial"
+msgstr "&מדריך"
+
+#: progman.rc:59
+msgid "&About Wine"
+msgstr "על &אודות Wine"
+
+#: progman.rc:65
+msgid "Program Manager"
+msgstr "Program Manager"
+
+#: progman.rc:69
+msgid "Delete"
+msgstr "Delete"
+
+#: progman.rc:70
+msgid "Delete group `%s' ?"
+msgstr "Delete group `%s' ?"
+
+#: progman.rc:71
+msgid "Delete program `%s' ?"
+msgstr "Delete program `%s' ?"
+
+#: progman.rc:72
+msgid "Not implemented"
+msgstr "Not implemented"
+
+#: progman.rc:73
+msgid "Error reading `%s'."
+msgstr "Error reading `%s'."
+
+#: progman.rc:74
+msgid "Error writing `%s'."
+msgstr "Error writing `%s'."
+
+#: progman.rc:77
+msgid ""
+"The group file `%s' cannot be opened.\n"
+"Should it be tried further on?"
+msgstr ""
+"The group file `%s' cannot be opened.\n"
+"Should it be tried further on?"
+
+#: progman.rc:78
+msgid "Out of memory."
+msgstr "Out of memory."
+
+#: progman.rc:79
+msgid "Help not available."
+msgstr "Help not available."
+
+#: progman.rc:80
+msgid "Unknown feature in %s"
+msgstr "Unknown feature in %s"
+
+#: progman.rc:81
+msgid "File `%s' exists. Not overwritten."
+msgstr "File `%s' exists. Not overwritten."
+
+#: progman.rc:82
+msgid "Save group as `%s to prevent overwriting original files."
+msgstr "Save group as `%s to prevent overwriting original files."
+
+#: progman.rc:85
+msgid "Programs"
+msgstr "Programs"
+
+#: progman.rc:86
+msgid "Libraries (*.dll)"
+msgstr "Libraries (*.dll)"
+
+#: progman.rc:87
+msgid "Icon files"
+msgstr "Icon files"
+
+#: progman.rc:88
+msgid "Icons (*.ico)"
+msgstr "Icons (*.ico)"
 
 #: reg.rc:27
 msgid ""

@@ -666,9 +666,9 @@ msgstr ""
 msgid "Path Length Constraint="
 msgstr ""
 
-#: crypt32.rc:198
+#: crypt32.rc:198 progman.rc:83
 msgid "None"
-msgstr ""
+msgstr "未定義"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
@@ -890,14 +890,9 @@ msgstr ""
 msgid "Default MidiOut Device"
 msgstr ""
 
-#: hhctrl.rc:27 notepad.rc:58
-#, fuzzy
+#: hhctrl.rc:27 notepad.rc:58 progman.rc:53
 msgid "&Contents"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"內容(&C)\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"主要內容(&C)"
+msgstr "內容(&C)"
 
 #: hhctrl.rc:28
 msgid "I&ndex"
@@ -3038,7 +3033,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26
+#: notepad.rc:26 progman.rc:29
 msgid "&File"
 msgstr "檔案(&F)"
 
@@ -3122,13 +3117,18 @@ msgstr "找下一個(&N)\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Replace...\tCtrl+H"
 
-#: notepad.rc:57
+#: notepad.rc:57 progman.rc:52
 msgid "&Help"
 msgstr "幫助(&H)"
 
-#: notepad.rc:59
+#: notepad.rc:59 progman.rc:54
+#, fuzzy
 msgid "&Search..."
-msgstr "搜尋(&S)..."
+msgstr ""
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"搜尋(&S)...\n"
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"搜索(&S)..."
 
 #: notepad.rc:60
 msgid "&Help on help"
@@ -3150,23 +3150,28 @@ msgstr "&p 頁"
 msgid "Notepad"
 msgstr "記事本"
 
-#: notepad.rc:72
+#: notepad.rc:72 progman.rc:66
 msgid "ERROR"
 msgstr "錯誤"
 
-#: notepad.rc:73
+#: notepad.rc:73 progman.rc:67
 msgid "WARNING"
 msgstr "警告"
 
-#: notepad.rc:74
+#: notepad.rc:74 progman.rc:68
+#, fuzzy
 msgid "Information"
-msgstr "信息"
+msgstr ""
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"信息\n"
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"資訊"
 
 #: notepad.rc:76
 msgid "Untitled"
 msgstr "(未命名)"
 
-#: notepad.rc:78
+#: notepad.rc:78 progman.rc:84
 msgid "All files (*.*)"
 msgstr "所有檔案 (*.*)"
 
@@ -3241,6 +3246,154 @@ msgid ""
 "one of the Unicode options in the Encoding drop down list.\n"
 "Continue?"
 msgstr ""
+
+#: progman.rc:30
+msgid "&New..."
+msgstr "新建(&N)..."
+
+#: progman.rc:31
+msgid "O&pen\tEnter"
+msgstr "開啟(&O)\tEnter"
+
+#: progman.rc:32
+msgid "&Move...\tF7"
+msgstr "移動(&M)...\tF7"
+
+#: progman.rc:33
+msgid "&Copy...\tF8"
+msgstr "複製(&C)...\tF8"
+
+#: progman.rc:34
+msgid "&Delete\tEntf"
+msgstr "刪除(&D)\tEntf"
+
+#: progman.rc:35
+msgid "&Attributes...\tAlt+Enter"
+msgstr "屬性(&A)...\tAlt+Enter"
+
+#: progman.rc:37
+msgid "&Execute..."
+msgstr "執行(&E)..."
+
+#: progman.rc:39
+msgid "E&xit Windows..."
+msgstr "結束 Windows(&X)..."
+
+#: progman.rc:41
+msgid "&Options"
+msgstr "選項(&O)"
+
+#: progman.rc:42
+msgid "&Arrange automatically"
+msgstr "自動排列(&A)"
+
+#: progman.rc:43
+msgid "&Minimize on run"
+msgstr "執行時最小化(&M)"
+
+#: progman.rc:44
+msgid "&Save settings on exit"
+msgstr "結束時儲存設定(&S)"
+
+#: progman.rc:46
+msgid "&Windows"
+msgstr "窗口(&W)"
+
+#: progman.rc:47
+msgid "&Overlapped\tShift+F5"
+msgstr "層疊(&O)\tShift+F5"
+
+#: progman.rc:48
+msgid "&Side by side\tShift+F4"
+msgstr "並排(&S)\tShift+F4"
+
+#: progman.rc:49
+msgid "&Arrange Icons"
+msgstr "排列圖標(&A)"
+
+#: progman.rc:56
+msgid "&Help on Help"
+msgstr "如何使用幫助(&H)"
+
+#: progman.rc:57
+msgid "&Tutorial"
+msgstr "教程(&T)"
+
+#: progman.rc:59
+msgid "&About Wine"
+msgstr "關於 Wine(&A)"
+
+#: progman.rc:65
+msgid "Program Manager"
+msgstr "程式管理器"
+
+#: progman.rc:69
+msgid "Delete"
+msgstr "刪除"
+
+#: progman.rc:70
+msgid "Delete group `%s' ?"
+msgstr "是否刪除程式組 `%s' ？"
+
+#: progman.rc:71
+msgid "Delete program `%s' ?"
+msgstr "是否刪除程式組 `%s' ?"
+
+#: progman.rc:72
+msgid "Not implemented"
+msgstr "此功能未實現"
+
+#: progman.rc:73
+msgid "Error reading `%s'."
+msgstr "讀取檔案 %s 時發生錯誤。"
+
+#: progman.rc:74
+msgid "Error writing `%s'."
+msgstr "寫入檔案 %s 時發生錯誤。"
+
+#: progman.rc:77
+msgid ""
+"The group file `%s' cannot be opened.\n"
+"Should it be tried further on?"
+msgstr ""
+"不能開啟組檔案 `%s' 。\n"
+"是否繼續嘗試？"
+
+#: progman.rc:78
+msgid "Out of memory."
+msgstr "內存溢出。"
+
+#: progman.rc:79
+msgid "Help not available."
+msgstr "沒有可用的幫助資訊。"
+
+#: progman.rc:80
+msgid "Unknown feature in %s"
+msgstr "在 %s 中發現未知特性"
+
+#: progman.rc:81
+msgid "File `%s' exists. Not overwritten."
+msgstr "檔案 %s 已經存在。不覆蓋已有檔案。"
+
+#: progman.rc:82
+msgid "Save group as `%s to prevent overwriting original files."
+msgstr "將程式組儲存為 %s 可以避免復蓋已有的檔案。"
+
+#: progman.rc:85
+msgid "Programs"
+msgstr "程式"
+
+#: progman.rc:86
+msgid "Libraries (*.dll)"
+msgstr "動態連接庫 (*.dll)"
+
+#: progman.rc:87
+msgid "Icon files"
+msgstr "圖標檔案"
+
+#: progman.rc:88
+msgid "Icons (*.ico)"
+msgstr "圖標 (*.ico)"
 
 #: reg.rc:27
 msgid ""

@@ -26,44 +26,6 @@
 
 LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
 
-/* Menu */
-
-MAIN_MENU MENU
-{
- POPUP "&קובץ" {
-   MENUITEM "&חדש...",              PM_NEW
-   MENUITEM "&פתיחה\tEnter",             PM_OPEN
-   MENUITEM "ה&עברה...\tF7",             PM_MOVE,      GRAYED
-   MENUITEM "הע&תקה...\tF8",             PM_COPY,      GRAYED
-   MENUITEM "&מחיקה\tEntf",           PM_DELETE
-   MENUITEM "מא&פיינים...\tAlt+Enter",       PM_ATTRIBUTES
-   MENUITEM SEPARATOR
-   MENUITEM "הפע&לה...",          PM_EXECUTE
-   MENUITEM SEPARATOR
-   MENUITEM "י&ציאה מ־Windows...",             PM_EXIT
- }
- POPUP "&אפשרויות" {
-   MENUITEM "&סידור אוטומטי",  PM_AUTO_ARRANGE
-   MENUITEM "מ&זעור עם ההפעלה",    PM_MIN_ON_RUN
-   MENUITEM "&שמירת ההגדרות עם היציאה", PM_SAVE_SETTINGS
- }
- POPUP "&חלונות" {
-   MENUITEM "&חופפים\tShift+F5",       PM_OVERLAP
-   MENUITEM "&זה לצד זה\tShift+F4",  PM_SIDE_BY_SIDE
-   MENUITEM "&סידור סמלים",       PM_ARRANGE
- }
-
-POPUP "ע&זרה" {
-   MENUITEM "&תכנים",         PM_CONTENTS
-   MENUITEM "&חיפוש...",           PM_SEARCH
-   MENUITEM SEPARATOR
-   MENUITEM "&עזרה על העזרה",     PM_HELPONHELP
-   MENUITEM "&מדריך",         PM_TUTORIAL
-   MENUITEM SEPARATOR
-   MENUITEM "על &אודות Wine",     PM_ABOUT_WINE
- }
-}
-
 /* Dialog `New' */
 
 DIALOG_NEW DIALOG 0, 0, 170, 65
@@ -190,34 +152,4 @@ DEFPUSHBUTTON "אישור",               IDOK,      135,  5,  60, 15, WS_TABSTO
 PUSHBUTTON    "ביטול",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "&עיון...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
 PUSHBUTTON    "ע&זרה",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
-}
-
-/* Strings */
-
-STRINGTABLE
-{
-IDS_PROGRAM_MANAGER,		"Program Manager"
-IDS_ERROR,			"ERROR"
-IDS_WARNING,			"WARNING"
-IDS_INFO,			"Information"
-IDS_DELETE,			"Delete"
-IDS_DELETE_GROUP_s,		"Delete group `%s' ?"
-IDS_DELETE_PROGRAM_s,		"Delete program `%s' ?"
-IDS_NOT_IMPLEMENTED,		"Not implemented"
-IDS_FILE_READ_ERROR_s,		"Error reading `%s'."
-IDS_FILE_WRITE_ERROR_s,		"Error writing `%s'."
-IDS_GRPFILE_READ_ERROR_s,	"\
-The group file `%s' cannot be opened.\n\
-Should it be tried further on?"
-IDS_OUT_OF_MEMORY,		"Out of memory."
-IDS_WINHELP_ERROR,		"Help not available."
-IDS_UNKNOWN_FEATURE_s,		"Unknown feature in %s"
-IDS_FILE_NOT_OVERWRITTEN_s,	"File `%s' exists. Not overwritten."
-IDS_SAVE_GROUP_AS_s,		"Save group as `%s to prevent overwriting original files."
-IDS_NO_HOT_KEY,			"None"
-IDS_ALL_FILES,			"All files (*.*)"
-IDS_PROGRAMS,			"Programs"
-IDS_LIBRARIES_DLL,		"Libraries (*.dll)"
-IDS_SYMBOL_FILES,		"Icon files"
-IDS_SYMBOLS_ICO,		"Icons (*.ico)"
 }

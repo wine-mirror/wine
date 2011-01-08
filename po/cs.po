@@ -677,9 +677,9 @@ msgstr ""
 msgid "Path Length Constraint="
 msgstr ""
 
-#: crypt32.rc:198
+#: crypt32.rc:198 progman.rc:83
 msgid "None"
-msgstr ""
+msgstr "Žádná klávesová zkratka."
 
 #: crypt32.rc:199
 msgid "Information Not Available"
@@ -901,7 +901,7 @@ msgstr "Standardní zařízení WaveOut"
 msgid "Default MidiOut Device"
 msgstr "Standardní zařízení MidiOut"
 
-#: hhctrl.rc:27 notepad.rc:58
+#: hhctrl.rc:27 notepad.rc:58 progman.rc:53
 msgid "&Contents"
 msgstr "&Obsah"
 
@@ -3290,7 +3290,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26
+#: notepad.rc:26 progman.rc:29
 msgid "&File"
 msgstr "&Soubor"
 
@@ -3374,11 +3374,11 @@ msgstr "&Najdi další\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "Nah&radit...\tCtrl+H"
 
-#: notepad.rc:57
+#: notepad.rc:57 progman.rc:52
 msgid "&Help"
 msgstr "&Nápověda"
 
-#: notepad.rc:59
+#: notepad.rc:59 progman.rc:54
 msgid "&Search..."
 msgstr "&Najít..."
 
@@ -3402,15 +3402,15 @@ msgstr "Strana &p"
 msgid "Notepad"
 msgstr "Notepad"
 
-#: notepad.rc:72
+#: notepad.rc:72 progman.rc:66
 msgid "ERROR"
 msgstr "CHYBA"
 
-#: notepad.rc:73
+#: notepad.rc:73 progman.rc:67
 msgid "WARNING"
 msgstr "VAROVÁNÍ"
 
-#: notepad.rc:74
+#: notepad.rc:74 progman.rc:68
 msgid "Information"
 msgstr "Informace"
 
@@ -3418,7 +3418,7 @@ msgstr "Informace"
 msgid "Untitled"
 msgstr "(bez názvu)"
 
-#: notepad.rc:78
+#: notepad.rc:78 progman.rc:84
 msgid "All files (*.*)"
 msgstr "Všechny soubory (*.*)"
 
@@ -3494,6 +3494,154 @@ msgid ""
 "one of the Unicode options in the Encoding drop down list.\n"
 "Continue?"
 msgstr ""
+
+#: progman.rc:30
+msgid "&New..."
+msgstr "&Nový..."
+
+#: progman.rc:31
+msgid "O&pen\tEnter"
+msgstr "O&tevřít\tEnter"
+
+#: progman.rc:32
+msgid "&Move...\tF7"
+msgstr "Př&esunout...\tF7"
+
+#: progman.rc:33
+msgid "&Copy...\tF8"
+msgstr "&Kopírovat...\tF8"
+
+#: progman.rc:34
+msgid "&Delete\tEntf"
+msgstr "S&mazat\tEntf"
+
+#: progman.rc:35
+msgid "&Attributes...\tAlt+Enter"
+msgstr "&Atributy...\tAlt+Enter"
+
+#: progman.rc:37
+msgid "&Execute..."
+msgstr "Sp&ustit..."
+
+#: progman.rc:39
+msgid "E&xit Windows..."
+msgstr "&Konec Windows..."
+
+#: progman.rc:41
+msgid "&Options"
+msgstr "&Nastavení"
+
+#: progman.rc:42
+msgid "&Arrange automatically"
+msgstr "&Uspořádat automaticky"
+
+#: progman.rc:43
+msgid "&Minimize on run"
+msgstr "&Minimalizovat za běhu"
+
+#: progman.rc:44
+msgid "&Save settings on exit"
+msgstr "U&ložit nastavení při ukončení"
+
+#: progman.rc:46
+msgid "&Windows"
+msgstr "&Okna"
+
+#: progman.rc:47
+msgid "&Overlapped\tShift+F5"
+msgstr "&Překrývající se\tShift+F5"
+
+#: progman.rc:48
+msgid "&Side by side\tShift+F4"
+msgstr "&Vedle sebe\tShift+F4"
+
+#: progman.rc:49
+msgid "&Arrange Icons"
+msgstr "&Zarovnat ikony"
+
+#: progman.rc:56
+msgid "&Help on Help"
+msgstr "&Pomoc s nápovědou"
+
+#: progman.rc:57
+msgid "&Tutorial"
+msgstr "&Tutorial"
+
+#: progman.rc:59
+msgid "&About Wine"
+msgstr "&O Wine"
+
+#: progman.rc:65
+msgid "Program Manager"
+msgstr "Program manager"
+
+#: progman.rc:69
+msgid "Delete"
+msgstr "Smazat"
+
+#: progman.rc:70
+msgid "Delete group `%s' ?"
+msgstr "Smazat skupinu `%s' ?"
+
+#: progman.rc:71
+msgid "Delete program `%s' ?"
+msgstr "Smazat program `%s' ?"
+
+#: progman.rc:72
+msgid "Not implemented"
+msgstr "Není podporováno"
+
+#: progman.rc:73
+msgid "Error reading `%s'."
+msgstr "Chyba při čtení `%s'."
+
+#: progman.rc:74
+msgid "Error writing `%s'."
+msgstr "Chyba při zápisu `%s'."
+
+#: progman.rc:77
+msgid ""
+"The group file `%s' cannot be opened.\n"
+"Should it be tried further on?"
+msgstr ""
+"Soubor skupiny `%s' nemůže být otevřen.\n"
+"Mám to zkusit znovu ?"
+
+#: progman.rc:78
+msgid "Out of memory."
+msgstr "Došla paměť."
+
+#: progman.rc:79
+msgid "Help not available."
+msgstr "Nápověda není dostupná."
+
+#: progman.rc:80
+msgid "Unknown feature in %s"
+msgstr "Neznámá vlastnost v %s"
+
+#: progman.rc:81
+msgid "File `%s' exists. Not overwritten."
+msgstr "Soubor `%s' existuje. Nebude přepsán."
+
+#: progman.rc:82
+msgid "Save group as `%s to prevent overwriting original files."
+msgstr "Uložit skupinu jako `%s', aby nebyly přepsán originální soubory."
+
+#: progman.rc:85
+msgid "Programs"
+msgstr "Programy"
+
+#: progman.rc:86
+msgid "Libraries (*.dll)"
+msgstr "Knihovny (*.dll)"
+
+#: progman.rc:87
+msgid "Icon files"
+msgstr "Soubory ikon"
+
+#: progman.rc:88
+msgid "Icons (*.ico)"
+msgstr "Ikony (*.ico)"
 
 #: reg.rc:27
 msgid ""

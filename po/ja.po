@@ -665,7 +665,7 @@ msgstr "End Entity"
 msgid "Path Length Constraint="
 msgstr "Path Length Constraint="
 
-#: crypt32.rc:198
+#: crypt32.rc:198 progman.rc:83
 msgid "None"
 msgstr "None"
 
@@ -893,7 +893,7 @@ msgstr "デフォルト WaveOut デバイス"
 msgid "Default MidiOut Device"
 msgstr "デフォルト MidiOut デバイス"
 
-#: hhctrl.rc:27 notepad.rc:58
+#: hhctrl.rc:27 notepad.rc:58 progman.rc:53
 msgid "&Contents"
 msgstr "目次(&C)"
 
@@ -3295,7 +3295,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26
+#: notepad.rc:26 progman.rc:29
 msgid "&File"
 msgstr "ファイル(&F)"
 
@@ -3379,11 +3379,11 @@ msgstr "次を検索(&S)\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "置き換える(&R)...\tCtrl+H"
 
-#: notepad.rc:57
+#: notepad.rc:57 progman.rc:52
 msgid "&Help"
 msgstr "ヘルプ(&H)"
 
-#: notepad.rc:59
+#: notepad.rc:59 progman.rc:54
 msgid "&Search..."
 msgstr "検索(&S)..."
 
@@ -3407,15 +3407,15 @@ msgstr "&p ページ"
 msgid "Notepad"
 msgstr "メモ帳"
 
-#: notepad.rc:72
+#: notepad.rc:72 progman.rc:66
 msgid "ERROR"
 msgstr "エラー"
 
-#: notepad.rc:73
+#: notepad.rc:73 progman.rc:67
 msgid "WARNING"
 msgstr "警告"
 
-#: notepad.rc:74
+#: notepad.rc:74 progman.rc:68
 msgid "Information"
 msgstr "情報"
 
@@ -3423,7 +3423,7 @@ msgstr "情報"
 msgid "Untitled"
 msgstr "(無題)"
 
-#: notepad.rc:78
+#: notepad.rc:78 progman.rc:84
 msgid "All files (*.*)"
 msgstr "全てのファイル (*.*)"
 
@@ -3506,6 +3506,163 @@ msgstr ""
 "ら\n"
 "Unicode のいずれかを選択してください。\n"
 "続行しますか?"
+
+#: progman.rc:30
+msgid "&New..."
+msgstr ""
+
+#: progman.rc:31
+msgid "O&pen\tEnter"
+msgstr ""
+
+#: progman.rc:32
+#, fuzzy
+msgid "&Move...\tF7"
+msgstr "More..."
+
+#: progman.rc:33
+#, fuzzy
+msgid "&Copy...\tF8"
+msgstr "コピー(&C)"
+
+#: progman.rc:34
+#, fuzzy
+msgid "&Delete\tEntf"
+msgstr "削除(&D)"
+
+#: progman.rc:35
+msgid "&Attributes...\tAlt+Enter"
+msgstr ""
+
+#: progman.rc:37
+msgid "&Execute..."
+msgstr ""
+
+#: progman.rc:39
+msgid "E&xit Windows..."
+msgstr ""
+
+#: progman.rc:41
+#, fuzzy
+msgid "&Options"
+msgstr "オプション"
+
+#: progman.rc:42
+msgid "&Arrange automatically"
+msgstr ""
+
+#: progman.rc:43
+msgid "&Minimize on run"
+msgstr ""
+
+#: progman.rc:44
+msgid "&Save settings on exit"
+msgstr ""
+
+#: progman.rc:46
+msgid "&Windows"
+msgstr ""
+
+#: progman.rc:47
+msgid "&Overlapped\tShift+F5"
+msgstr ""
+
+#: progman.rc:48
+msgid "&Side by side\tShift+F4"
+msgstr ""
+
+#: progman.rc:49
+msgid "&Arrange Icons"
+msgstr ""
+
+#: progman.rc:56
+#, fuzzy
+msgid "&Help on Help"
+msgstr "ヘルプの使い方(&H)"
+
+#: progman.rc:57
+msgid "&Tutorial"
+msgstr ""
+
+#: progman.rc:59
+#, fuzzy
+msgid "&About Wine"
+msgstr "メモ帳について(&A)"
+
+#: progman.rc:65
+msgid "Program Manager"
+msgstr ""
+
+#: progman.rc:69
+#, fuzzy
+msgid "Delete"
+msgstr "削除(&D)"
+
+#: progman.rc:70
+msgid "Delete group `%s' ?"
+msgstr ""
+
+#: progman.rc:71
+msgid "Delete program `%s' ?"
+msgstr ""
+
+#: progman.rc:72
+#, fuzzy
+msgid "Not implemented"
+msgstr ""
+"Not Yet Implemented\n"
+"\n"
+
+#: progman.rc:73
+msgid "Error reading `%s'."
+msgstr ""
+
+#: progman.rc:74
+msgid "Error writing `%s'."
+msgstr ""
+
+#: progman.rc:77
+msgid ""
+"The group file `%s' cannot be opened.\n"
+"Should it be tried further on?"
+msgstr ""
+
+#: progman.rc:78
+msgid "Out of memory."
+msgstr ""
+
+#: progman.rc:79
+#, fuzzy
+msgid "Help not available."
+msgstr "Not Available"
+
+#: progman.rc:80
+msgid "Unknown feature in %s"
+msgstr ""
+
+#: progman.rc:81
+msgid "File `%s' exists. Not overwritten."
+msgstr ""
+
+#: progman.rc:82
+msgid "Save group as `%s to prevent overwriting original files."
+msgstr ""
+
+#: progman.rc:85
+msgid "Programs"
+msgstr ""
+
+#: progman.rc:86
+msgid "Libraries (*.dll)"
+msgstr ""
+
+#: progman.rc:87
+msgid "Icon files"
+msgstr ""
+
+#: progman.rc:88
+msgid "Icons (*.ico)"
+msgstr ""
 
 #: reg.rc:27
 msgid ""

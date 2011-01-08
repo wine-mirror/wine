@@ -26,44 +26,6 @@
 
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
-/* Menu */
-
-MAIN_MENU MENU
-{
-POPUP "파일(&F)" {
-   MENUITEM "새 작업(&N)...",              PM_NEW
-   MENUITEM "열기(&P)\tEnter",             PM_OPEN
-   MENUITEM "이동(&M)...\tF7",             PM_MOVE,      GRAYED
-   MENUITEM "복사(&C)...\tF8",             PM_COPY,      GRAYED
-   MENUITEM "지우기(&D)\tEntf",           PM_DELETE
-   MENUITEM "속성(&A)...\tAlt+Enter",       PM_ATTRIBUTES
-   MENUITEM SEPARATOR
-   MENUITEM "실행(&E)...",          PM_EXECUTE
-   MENUITEM SEPARATOR
-   MENUITEM "창 종료(&X)...",             PM_EXIT
- }
- POPUP "옵션(&O)" {
-   MENUITEM "자동 정렬(&A)",  PM_AUTO_ARRANGE
-   MENUITEM "실행시 아이콘 상태로(&M)",    PM_MIN_ON_RUN
-   MENUITEM "종료시 설정 내용 저장(&S)", PM_SAVE_SETTINGS
- }
- POPUP "창(&W)" {
-   MENUITEM "겹치기(&O)\tShift+F5",       PM_OVERLAP
-   MENUITEM "나누기(&S)\tShift+F4",  PM_SIDE_BY_SIDE
-   MENUITEM "아이콘 정렬(&A)",       PM_ARRANGE
- }
- 
-POPUP "도움말(&H)" {
-   MENUITEM "목차(&C)",         PM_CONTENTS
-   MENUITEM "찾기(&S)...",           PM_SEARCH
-   MENUITEM SEPARATOR
-   MENUITEM "도움말 사용법(&H)",     PM_HELPONHELP
-   MENUITEM "자습서(&T)",         PM_TUTORIAL
-   MENUITEM SEPARATOR
-   MENUITEM "WINE 정보(&A)",     PM_ABOUT_WINE
- }
-}
-
 /* Dialog `New' */
 
 DIALOG_NEW DIALOG 0, 0, 170, 65
@@ -190,32 +152,4 @@ DEFPUSHBUTTON "확인",               IDOK,      135,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "취소",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "찾기(&B)...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
 PUSHBUTTON    "도움말(&H)",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
-}
-
-/* Strings */
-
-STRINGTABLE
-{
-IDS_PROGRAM_MANAGER,		"풀그림 관리자"
-IDS_ERROR,			"에러"
-IDS_WARNING,			"경고"
-IDS_INFO,			"정보"
-IDS_DELETE,			"지우기"
-IDS_DELETE_GROUP_s,		"그룹 `%s'을 지우겠습니까 ?"
-IDS_DELETE_PROGRAM_s,		"풀그림 `%s'을 지우겠습니까 ?"
-IDS_NOT_IMPLEMENTED,		"아직 구현되지 않았습니다."
-IDS_FILE_READ_ERROR_s,		"`%s' 읽기 에러."
-IDS_FILE_WRITE_ERROR_s,		"`%s' 쓰기 에러."
-IDS_GRPFILE_READ_ERROR_s,	"\그룹 파일 `%s'을 열 수 없습니다.\n\다시 시도하겠습니까?"
-IDS_OUT_OF_MEMORY,		"메모리 부족."
-IDS_WINHELP_ERROR,		"도움말은 가능하지않습니다."
-IDS_UNKNOWN_FEATURE_s,		"%s의 알수 없는 특징"
-IDS_FILE_NOT_OVERWRITTEN_s,	"파일 %s' 는 존재하므로, 덮어 쓸 수 없습니다."
-IDS_SAVE_GROUP_AS_s,		"`%s를 다른 이름으로 저장해야 원래 파일을 덮어 쓰는 걸 막을 수 있습니다."
-IDS_NO_HOT_KEY,			"없음"
-IDS_ALL_FILES,			"모든 파일 (*.*)"
-IDS_PROGRAMS,			"풀그림"
-IDS_LIBRARIES_DLL,		"라이브러리 파일(*.dll)"
-IDS_SYMBOL_FILES,		"아이콘 파일"
-IDS_SYMBOLS_ICO,		"아이콘 (*.ico)"
 }

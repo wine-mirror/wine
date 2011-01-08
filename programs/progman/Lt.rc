@@ -27,41 +27,6 @@
 
 LANGUAGE LANG_LITHUANIAN, SUBLANG_NEUTRAL
 
-MAIN_MENU MENU
-{
- POPUP "&Failas" {
-   MENUITEM "&Nauja...",                     PM_NEW
-   MENUITEM "&Atverti\tEnter",               PM_OPEN
-   MENUITEM "&Perkelti...\tF7",              PM_MOVE,      GRAYED
-   MENUITEM "&Kopijuoti...\tF8",             PM_COPY,      GRAYED
-   MENUITEM "&Šalinti\tEntf",                PM_DELETE
-   MENUITEM "At&ributai...\tAlt+Enter",      PM_ATTRIBUTES
-   MENUITEM SEPARATOR
-   MENUITEM "&Vykdyti...",                   PM_EXECUTE
-   MENUITEM SEPARATOR
-   MENUITEM "Iš&eiti...",                    PM_EXIT
- }
- POPUP "&Parinktys" {
-   MENUITEM "Išdėstyti &automatiškai",       PM_AUTO_ARRANGE
-   MENUITEM "&Suskleisti paleidžiant",       PM_MIN_ON_RUN
-   MENUITEM "Išsaugoti &nuostatas išeinant", PM_SAVE_SETTINGS
- }
- POPUP "&Langai" {
-   MENUITEM "&Persikloję\tShift+F5",         PM_OVERLAP
-   MENUITEM "&Greta vienas kito\tShift+F4",  PM_SIDE_BY_SIDE
-   MENUITEM "&Išdėstyti piktogramas",        PM_ARRANGE
- }
- POPUP "&Žinynas" {
-   MENUITEM "&Turinys",                      PM_CONTENTS
-   MENUITEM "&Paieška...",                   PM_SEARCH
-   MENUITEM SEPARATOR
-   MENUITEM "Pa&galba apie žinyną",          PM_HELPONHELP
-   MENUITEM "&Mokymo programa",              PM_TUTORIAL
-   MENUITEM SEPARATOR
-   MENUITEM "&Apie Wine",                  PM_ABOUT_WINE
- }
-}
-
 /* Dialog `New' */
 
 DIALOG_NEW DIALOG 0, 0, 170, 65
@@ -181,33 +146,4 @@ DEFPUSHBUTTON "Gerai",               IDOK,      135,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Atsisakyti",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Pari&nkti...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
 PUSHBUTTON    "&Žinynas",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
-}
-
-/* Strings */
-
-STRINGTABLE
-{
-IDS_PROGRAM_MANAGER,        "Programų tvarkytuvė"
-IDS_ERROR,                  "KLAIDA"
-IDS_WARNING,                "ĮSPĖJIMAS"
-IDS_INFO,                   "Informacija"
-IDS_DELETE,                 "Šalinti"
-IDS_DELETE_GROUP_s,         "Šalinti grupę „%s“?"
-IDS_DELETE_PROGRAM_s,       "Šalinti programą „%s“?"
-IDS_NOT_IMPLEMENTED,        "Nerealizuota"
-IDS_FILE_READ_ERROR_s,      "Klaida skaitant „%s“."
-IDS_FILE_WRITE_ERROR_s,     "Klaida rašant „%s“."
-IDS_GRPFILE_READ_ERROR_s,   "Nepavyko atidaryti grupės failo „%s“.\n\
-                            Mėginti atidaryti toliau?"
-IDS_OUT_OF_MEMORY,          "Trūksta atminties."
-IDS_WINHELP_ERROR,          "Žinynas neprieinamas."
-IDS_UNKNOWN_FEATURE_s,      "Nežinoma %s funkcija"
-IDS_FILE_NOT_OVERWRITTEN_s, "Failas „%s“ egzistuoja. Neperrašytas."
-IDS_SAVE_GROUP_AS_s,        "Išsaugoti grupę kaip „%s“, taip neperrašant originalių failų."
-IDS_NO_HOT_KEY,             "Nėra"
-IDS_ALL_FILES,              "Visi failai (*.*)"
-IDS_PROGRAMS,               "Programos"
-IDS_LIBRARIES_DLL,          "Bibliotekos (*.dll)"
-IDS_SYMBOL_FILES,           "Piktogramų failai"
-IDS_SYMBOLS_ICO,            "Piktogramos (*.ico)"
 }

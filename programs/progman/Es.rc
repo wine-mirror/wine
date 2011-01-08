@@ -22,44 +22,6 @@
 
 LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
 
-/* Menu */
-
-MAIN_MENU MENU
-{
- POPUP "&Archivo" {
-   MENUITEM "&Nuevo...",			PM_NEW
-   MENUITEM "A&brir\tEnter",			PM_OPEN
-   MENUITEM "&Mover...\tF7",			PM_MOVE,      GRAYED
-   MENUITEM "&Copiar...\tF8",			PM_COPY,      GRAYED
-   MENUITEM "&Eliminar\tSupr",			PM_DELETE
-   MENUITEM "&Atributos...\tAlt+Enter",		PM_ATTRIBUTES
-   MENUITEM SEPARATOR
-   MENUITEM "&Ejecutar...",			PM_EXECUTE
-   MENUITEM SEPARATOR
-   MENUITEM "&Salir de Windows...",		PM_EXIT
- }
- POPUP "&Opciones" {
-   MENUITEM "&Ordenar automáticamente",		PM_AUTO_ARRANGE
-   MENUITEM "&Minimizar al lanzarse",		PM_MIN_ON_RUN
-   MENUITEM "&Guardar configuración al salir",	PM_SAVE_SETTINGS
- }
- POPUP "&Ventanas" {
-   MENUITEM "&Cascada\tShift+F5",		PM_OVERLAP
-   MENUITEM "&Mosaico\tShift+F4",		PM_SIDE_BY_SIDE
-   MENUITEM "&Ordenar iconos",			PM_ARRANGE
- }
- 
-POPUP "A&yuda" {
-   MENUITEM "&Contenido",			PM_CONTENTS
-   MENUITEM "&Buscar...",			PM_SEARCH
-   MENUITEM SEPARATOR
-   MENUITEM "&Ayuda sobre la ayuda",		PM_HELPONHELP
-   MENUITEM "&Tutorial",			PM_TUTORIAL
-   MENUITEM SEPARATOR
-   MENUITEM "&Acerca de Wine",		PM_ABOUT_WINE
- }
-}
-
 /* Dialog `New' */
 
 DIALOG_NEW DIALOG 0, 0, 170, 65
@@ -179,34 +141,4 @@ DEFPUSHBUTTON "Aceptar",                 IDOK,      135,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Cancelar",                IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "&Explorar...",            PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
 PUSHBUTTON    "A&yuda",                  PM_HELP,   135, 65,  60, 15, WS_TABSTOP
-}
-
-/* Strings */
-
-STRINGTABLE
-{
-IDS_PROGRAM_MANAGER,		"Gestor de programas"
-IDS_ERROR,			"ERROR"
-IDS_WARNING,			"ADVERTENCA"
-IDS_INFO,			"Información"
-IDS_DELETE,			"Eliminar"
-IDS_DELETE_GROUP_s,		"¿Eliminar grupo `%s'?"
-IDS_DELETE_PROGRAM_s,		"¿Eliminar programa `%s'?"
-IDS_NOT_IMPLEMENTED,		"No implementado"
-IDS_FILE_READ_ERROR_s,		"Error leyendo `%s'."
-IDS_FILE_WRITE_ERROR_s,		"Error escribiendo `%s'."
-IDS_GRPFILE_READ_ERROR_s,	"\
-El archivo de grupo `%s' no se puede abrir.\n\
-¿Debe volver a intentarse más adelante?"
-IDS_OUT_OF_MEMORY,		"Sin memoria."
-IDS_WINHELP_ERROR,		"Ayuda no disponible."
-IDS_UNKNOWN_FEATURE_s,		"Característica desconocida en %s"
-IDS_FILE_NOT_OVERWRITTEN_s,	"El archivo `%s' existe. No se ha sobreescrito."
-IDS_SAVE_GROUP_AS_s,		"Guarde el grupo como `%s' para prevenir la sobreescritura de los archivos originales."
-IDS_NO_HOT_KEY,			"Ninguna"
-IDS_ALL_FILES,			"Todos los archivos (*.*)"
-IDS_PROGRAMS,			"Programas"
-IDS_LIBRARIES_DLL,		"Librarías (*.dll)"
-IDS_SYMBOL_FILES,		"Archivos de iconos"
-IDS_SYMBOLS_ICO,		"Iconos (*.ico)"
 }

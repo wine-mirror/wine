@@ -665,7 +665,7 @@ msgstr "Endeinheit"
 msgid "Path Length Constraint="
 msgstr "Einschränkung der Pfadlänge="
 
-#: crypt32.rc:198
+#: crypt32.rc:198 progman.rc:83
 msgid "None"
 msgstr "Keine"
 
@@ -893,7 +893,7 @@ msgstr "Standard WaveOut - Gerät"
 msgid "Default MidiOut Device"
 msgstr "Standard MidiOut - Gerät"
 
-#: hhctrl.rc:27 notepad.rc:58
+#: hhctrl.rc:27 notepad.rc:58 progman.rc:53
 msgid "&Contents"
 msgstr "&Inhalt"
 
@@ -3409,7 +3409,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Offene Ressourcen: %lu\n"
 
-#: notepad.rc:26
+#: notepad.rc:26 progman.rc:29
 msgid "&File"
 msgstr "&Datei"
 
@@ -3493,11 +3493,11 @@ msgstr "&Weitersuchen\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Ersetzen...\tStrg+H"
 
-#: notepad.rc:57
+#: notepad.rc:57 progman.rc:52
 msgid "&Help"
 msgstr "&Hilfe"
 
-#: notepad.rc:59
+#: notepad.rc:59 progman.rc:54
 msgid "&Search..."
 msgstr "&Suchen..."
 
@@ -3521,15 +3521,25 @@ msgstr "Seite &p"
 msgid "Notepad"
 msgstr "Editor"
 
-#: notepad.rc:72
+#: notepad.rc:72 progman.rc:66
+#, fuzzy
 msgid "ERROR"
-msgstr "Fehler"
+msgstr ""
+"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
+"Fehler\n"
+"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
+"FEHLER"
 
-#: notepad.rc:73
+#: notepad.rc:73 progman.rc:67
+#, fuzzy
 msgid "WARNING"
-msgstr "Achtung"
+msgstr ""
+"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
+"Achtung\n"
+"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
+"ACHTUNG"
 
-#: notepad.rc:74
+#: notepad.rc:74 progman.rc:68
 msgid "Information"
 msgstr "Information"
 
@@ -3537,7 +3547,7 @@ msgstr "Information"
 msgid "Untitled"
 msgstr "(unbenannt)"
 
-#: notepad.rc:78
+#: notepad.rc:78 progman.rc:84
 msgid "All files (*.*)"
 msgstr "Alle Dateien (*.*)"
 
@@ -3621,6 +3631,156 @@ msgstr ""
 "Um die Zeichen beizubehalten, klicken Sie Abbrechen und wählen\n"
 "Sie eine der Unicode-Optionen in der Liste.\n"
 "Möchten Sie fortfahren?"
+
+#: progman.rc:30
+msgid "&New..."
+msgstr "&Neu..."
+
+#: progman.rc:31
+msgid "O&pen\tEnter"
+msgstr "Ö&ffnen\tEingabetaste"
+
+#: progman.rc:32
+msgid "&Move...\tF7"
+msgstr "&Verschieben...\tF7"
+
+#: progman.rc:33
+msgid "&Copy...\tF8"
+msgstr "&Kopieren...\tF8"
+
+#: progman.rc:34
+msgid "&Delete\tEntf"
+msgstr "&Löschen\tEntf"
+
+#: progman.rc:35
+msgid "&Attributes...\tAlt+Enter"
+msgstr "&Eigenschaften...\tAlt+Eingabetaste"
+
+#: progman.rc:37
+msgid "&Execute..."
+msgstr "&Ausführen..."
+
+#: progman.rc:39
+msgid "E&xit Windows..."
+msgstr "&Programm-Manager beenden..."
+
+#: progman.rc:41
+msgid "&Options"
+msgstr "&Optionen"
+
+#: progman.rc:42
+msgid "&Arrange automatically"
+msgstr "&Automatisch anordnen"
+
+#: progman.rc:43
+msgid "&Minimize on run"
+msgstr "&Symbol nach Programmstart"
+
+#: progman.rc:44
+msgid "&Save settings on exit"
+msgstr "&Einstellungen beim Beenden speichern"
+
+#: progman.rc:46
+msgid "&Windows"
+msgstr "&Fenster"
+
+#: progman.rc:47
+msgid "&Overlapped\tShift+F5"
+msgstr "Über&lappend\tUmschalt+F5"
+
+#: progman.rc:48
+msgid "&Side by side\tShift+F4"
+msgstr "&Nebeneinander\tUmschalt+F4"
+
+#: progman.rc:49
+msgid "&Arrange Icons"
+msgstr "&Symbole anordnen"
+
+#: progman.rc:56
+msgid "&Help on Help"
+msgstr "Hilfe &benutzen"
+
+#: progman.rc:57
+msgid "&Tutorial"
+msgstr "&Lernprogramm"
+
+#: progman.rc:59
+msgid "&About Wine"
+msgstr "Ü&ber Wine"
+
+#: progman.rc:65
+msgid "Program Manager"
+msgstr "Programm-Manager"
+
+#: progman.rc:69
+msgid "Delete"
+msgstr "Löschen"
+
+#: progman.rc:70
+msgid "Delete group `%s' ?"
+msgstr "Lösche Programmgruppe „%s“?"
+
+#: progman.rc:71
+msgid "Delete program `%s' ?"
+msgstr "Lösche Programm „%s“?"
+
+#: progman.rc:72
+msgid "Not implemented"
+msgstr "Nicht implementiert"
+
+#: progman.rc:73
+msgid "Error reading `%s'."
+msgstr "Fehler beim Lesen von „%s“."
+
+#: progman.rc:74
+msgid "Error writing `%s'."
+msgstr "Fehler beim Schreiben von „%s“."
+
+#: progman.rc:77
+msgid ""
+"The group file `%s' cannot be opened.\n"
+"Should it be tried further on?"
+msgstr ""
+"Die Programmgruppendatei „%s“ kann nicht geöffnet werden.\n"
+"Soll weiterhin versucht werden, diese Datei zu laden?"
+
+#: progman.rc:78
+msgid "Out of memory."
+msgstr "Zu wenig Hauptspeicher."
+
+#: progman.rc:79
+msgid "Help not available."
+msgstr "Keine Hilfe verfügbar."
+
+#: progman.rc:80
+msgid "Unknown feature in %s"
+msgstr "Unbekannte Eigenschaft in %s"
+
+#: progman.rc:81
+msgid "File `%s' exists. Not overwritten."
+msgstr "Datei „%s“ existiert. Sie wird nicht überschrieben."
+
+#: progman.rc:82
+msgid "Save group as `%s to prevent overwriting original files."
+msgstr ""
+"Die Programmgruppe wird als „%s“ gesichert, um das Überschreiben der "
+"Originaldatei zu verhindern."
+
+#: progman.rc:85
+msgid "Programs"
+msgstr "Programme"
+
+#: progman.rc:86
+msgid "Libraries (*.dll)"
+msgstr "Bibliotheken (*.dll)"
+
+#: progman.rc:87
+msgid "Icon files"
+msgstr "Symboldateien"
+
+#: progman.rc:88
+msgid "Icons (*.ico)"
+msgstr "Symbole (*.ico)"
 
 #: reg.rc:27
 msgid ""

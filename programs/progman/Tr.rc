@@ -22,44 +22,6 @@
 
 LANGUAGE LANG_TURKISH, SUBLANG_DEFAULT
 
-/* Menu */
-
-MAIN_MENU MENU
-{
- POPUP "&Dosya" {
-   MENUITEM "&Yeni...",                  PM_NEW
-   MENUITEM "&Aç\tEnter",                PM_OPEN
-   MENUITEM "&Taþý...\tF7",              PM_MOVE,      GRAYED
-   MENUITEM "&Kopyala...\tF8",           PM_COPY,      GRAYED
-   MENUITEM "&Sil\tEntf",                PM_DELETE
-   MENUITEM "&Öznitelikler...\tAlt+Enter",       PM_ATTRIBUTES
-   MENUITEM SEPARATOR
-   MENUITEM "Çalý&þtýr...",              PM_EXECUTE
-   MENUITEM SEPARATOR
-   MENUITEM "Windows'tan &Çýk...",       PM_EXIT
- }
- POPUP "&Seçenekler" {
-   MENUITEM "Otomatik &düzenle",         PM_AUTO_ARRANGE
-   MENUITEM "&Simge halinde çalýþtýr",   PM_MIN_ON_RUN
-   MENUITEM "&Çýkýþta ayarlarý sakla",   PM_SAVE_SETTINGS
- }
- POPUP "&Pencereler" {
-   MENUITEM "&Üst üste diz\tShift+F5",   PM_OVERLAP
-   MENUITEM "&Yan yana diz\tShift+F4",   PM_SIDE_BY_SIDE
-   MENUITEM "&Simgeleri düzenle",        PM_ARRANGE
- }
- 
-POPUP "&Yardým" {
-   MENUITEM "&Ýçindekiler",         PM_CONTENTS
-   MENUITEM "&Ara...",           PM_SEARCH
-   MENUITEM SEPARATOR
-   MENUITEM "&Yardým Kullanýmý",     PM_HELPONHELP
-   MENUITEM "&Öðretici",         PM_TUTORIAL
-   MENUITEM SEPARATOR
-   MENUITEM "&Wine Hakkýnda",     PM_ABOUT_WINE
- }
-}
-
 /* Dialog `New' */
 
 DIALOG_NEW DIALOG 0, 0, 170, 65
@@ -179,34 +141,4 @@ DEFPUSHBUTTON "Tamam",                 IDOK,      135,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Ýptal",                 IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "&Gözat...",             PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
 PUSHBUTTON    "&Yardým",               PM_HELP,   135, 65,  60, 15, WS_TABSTOP
-}
-
-/* Strings */
-
-STRINGTABLE
-{
-IDS_PROGRAM_MANAGER,		"Program Yöneticisi"
-IDS_ERROR,			"HATA"
-IDS_WARNING,			"UYARI"
-IDS_INFO,			"Bilgi"
-IDS_DELETE,			"Sil"
-IDS_DELETE_GROUP_s,		"'%s' grubu silinsin mi?"
-IDS_DELETE_PROGRAM_s,		"'%s' programý silinsin mi?"
-IDS_NOT_IMPLEMENTED,		"Henüz Tanýmlanmadý"
-IDS_FILE_READ_ERROR_s,		"'%s' okunurken hata."
-IDS_FILE_WRITE_ERROR_s,		"'%s' yazýlýrken hata."
-IDS_GRPFILE_READ_ERROR_s,	"\
-'%s' grup dosyasý açýlamadý.\n\
-Daha sonra denensin mi?"
-IDS_OUT_OF_MEMORY,		"Bellek dolu."
-IDS_WINHELP_ERROR,		"Yardým kullanýlabilir deðil."
-IDS_UNKNOWN_FEATURE_s,		"%s içinde bilinmeyen özellik"
-IDS_FILE_NOT_OVERWRITTEN_s,	"'%s' dosyasý mevcut. Üzerine yazýlmadý."
-IDS_SAVE_GROUP_AS_s,		"Asýl dosya üzerine yazmayý engellemek için dosyayý '%s' adýyla kaydet."
-IDS_NO_HOT_KEY,			"Hiçbiri"
-IDS_ALL_FILES,			"Tüm dosyalar (*.*)"
-IDS_PROGRAMS,			"Programlar"
-IDS_LIBRARIES_DLL,		"Kitaplýklar (*.dll)"
-IDS_SYMBOL_FILES,		"Simge dosyalarý"
-IDS_SYMBOLS_ICO,		"Simgeler (*.ico)"
 }

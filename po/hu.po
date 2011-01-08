@@ -665,9 +665,14 @@ msgstr "Vég egyed"
 msgid "Path Length Constraint="
 msgstr "Útvonal hossz megszorítás="
 
-#: crypt32.rc:198
+#: crypt32.rc:198 progman.rc:83
+#, fuzzy
 msgid "None"
-msgstr "Nincs"
+msgstr ""
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"Nincs\n"
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"Semmi"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
@@ -893,14 +898,9 @@ msgstr "Alapértelmezett WaveOut eszköz"
 msgid "Default MidiOut Device"
 msgstr "Alapértelmezett MidiOut eszköz"
 
-#: hhctrl.rc:27 notepad.rc:58
-#, fuzzy
+#: hhctrl.rc:27 notepad.rc:58 progman.rc:53
 msgid "&Contents"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Tartalom\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Témakörök"
+msgstr "&Tartalom"
 
 #: hhctrl.rc:28
 msgid "I&ndex"
@@ -3058,7 +3058,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26
+#: notepad.rc:26 progman.rc:29
 msgid "&File"
 msgstr "&Fájl"
 
@@ -3142,13 +3142,18 @@ msgstr "Köve&tkező keresése\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Replace...\tCtrl+H"
 
-#: notepad.rc:57
+#: notepad.rc:57 progman.rc:52
 msgid "&Help"
 msgstr "&Súgó"
 
-#: notepad.rc:59
+#: notepad.rc:59 progman.rc:54
+#, fuzzy
 msgid "&Search..."
-msgstr "&Keresés..."
+msgstr ""
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"&Keresés...\n"
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"Téma&körök keresése..."
 
 #: notepad.rc:60
 msgid "&Help on help"
@@ -3170,15 +3175,25 @@ msgstr "Oldalszám: &p."
 msgid "Notepad"
 msgstr "Jegyzettömb"
 
-#: notepad.rc:72
+#: notepad.rc:72 progman.rc:66
+#, fuzzy
 msgid "ERROR"
-msgstr "HIBA"
+msgstr ""
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"HIBA\n"
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"hiba"
 
-#: notepad.rc:73
+#: notepad.rc:73 progman.rc:67
+#, fuzzy
 msgid "WARNING"
-msgstr "FIGYELMEZTETÉS"
+msgstr ""
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"FIGYELMEZTETÉS\n"
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"figyelmeztetés"
 
-#: notepad.rc:74
+#: notepad.rc:74 progman.rc:68
 msgid "Information"
 msgstr "Információ"
 
@@ -3186,7 +3201,7 @@ msgstr "Információ"
 msgid "Untitled"
 msgstr "(névtelen)"
 
-#: notepad.rc:78
+#: notepad.rc:78 progman.rc:84
 msgid "All files (*.*)"
 msgstr "Minden fájl (*.*)"
 
@@ -3261,6 +3276,155 @@ msgid ""
 "one of the Unicode options in the Encoding drop down list.\n"
 "Continue?"
 msgstr ""
+
+#: progman.rc:30
+msgid "&New..."
+msgstr "Ú&j..."
+
+#: progman.rc:31
+msgid "O&pen\tEnter"
+msgstr "Meg&nyitás\tEnter"
+
+#: progman.rc:32
+msgid "&Move...\tF7"
+msgstr "&Áthelyezés...\tF7"
+
+#: progman.rc:33
+msgid "&Copy...\tF8"
+msgstr "&Másolás...\tF8"
+
+#: progman.rc:34
+msgid "&Delete\tEntf"
+msgstr "Törlé&s\tEntf"
+
+#: progman.rc:35
+msgid "&Attributes...\tAlt+Enter"
+msgstr "T&ulajdonságok...\tAlt+Enter"
+
+#: progman.rc:37
+msgid "&Execute..."
+msgstr "&Futtatás..."
+
+#: progman.rc:39
+msgid "E&xit Windows..."
+msgstr "&Leállítás..."
+
+#: progman.rc:41
+msgid "&Options"
+msgstr "&Beállítások"
+
+#: progman.rc:42
+msgid "&Arrange automatically"
+msgstr "&Automatikus elrendezés"
+
+#: progman.rc:43
+msgid "&Minimize on run"
+msgstr "&Indításkor kis méret"
+
+#: progman.rc:44
+msgid "&Save settings on exit"
+msgstr "Beállítások &mentése kilépéskor"
+
+#: progman.rc:46
+msgid "&Windows"
+msgstr "&Ablak"
+
+#: progman.rc:47
+msgid "&Overlapped\tShift+F5"
+msgstr "&Lépcsőzetes elrendezés\tShift+F5"
+
+#: progman.rc:48
+msgid "&Side by side\tShift+F4"
+msgstr "&Mozaikszerű elrendezés\tShift+F4"
+
+#: progman.rc:49
+msgid "&Arrange Icons"
+msgstr "&Ikonok elrendezése"
+
+#: progman.rc:56
+msgid "&Help on Help"
+msgstr "&Használat"
+
+#: progman.rc:57
+msgid "&Tutorial"
+msgstr "&Oktatás"
+
+#: progman.rc:59
+msgid "&About Wine"
+msgstr "&Wine névjegye"
+
+#: progman.rc:65
+msgid "Program Manager"
+msgstr "Programkezelő"
+
+#: progman.rc:69
+msgid "Delete"
+msgstr "Törlés"
+
+#: progman.rc:70
+msgid "Delete group `%s' ?"
+msgstr "Biztosan törölni kívánja a következő csoportot: `%s'?"
+
+#: progman.rc:71
+msgid "Delete program `%s' ?"
+msgstr "Biztosan törölni kívánja a következő elemet: `%s'?"
+
+#: progman.rc:72
+msgid "Not implemented"
+msgstr "Nincs implementálva"
+
+#: progman.rc:73
+msgid "Error reading `%s'."
+msgstr "Olvasási hiba `%s'."
+
+#: progman.rc:74
+msgid "Error writing `%s'."
+msgstr "Írási hiba `%s'."
+
+#: progman.rc:77
+msgid ""
+"The group file `%s' cannot be opened.\n"
+"Should it be tried further on?"
+msgstr ""
+"Nem lehet megnyitni a következő programcsoportot: `%s'\n"
+"Későbbiekben újból megpróbálja?"
+
+#: progman.rc:78
+msgid "Out of memory."
+msgstr "Rendkívül kevés a memória"
+
+#: progman.rc:79
+msgid "Help not available."
+msgstr "A súgó nem elérhető."
+
+#: progman.rc:80
+msgid "Unknown feature in %s"
+msgstr "Ismeretlen jellemző a következőben: %s"
+
+#: progman.rc:81
+msgid "File `%s' exists. Not overwritten."
+msgstr "`%s' fájl létezik, ezért nem felülírható!"
+
+#: progman.rc:82
+msgid "Save group as `%s to prevent overwriting original files."
+msgstr ""
+"%s csoport mentése másként, megakadályozza az eredeti fájlok felülírását."
+
+#: progman.rc:85
+msgid "Programs"
+msgstr "Programok"
+
+#: progman.rc:86
+msgid "Libraries (*.dll)"
+msgstr "Eljáráskönyvtár (*.dll)"
+
+#: progman.rc:87
+msgid "Icon files"
+msgstr "Ikon fájlok"
+
+#: progman.rc:88
+msgid "Icons (*.ico)"
+msgstr "Ikonok (*.ico)"
 
 #: reg.rc:27
 msgid ""

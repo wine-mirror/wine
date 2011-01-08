@@ -677,9 +677,9 @@ msgstr ""
 msgid "Path Length Constraint="
 msgstr ""
 
-#: crypt32.rc:198
+#: crypt32.rc:198 progman.rc:83
 msgid "None"
-msgstr ""
+msgstr "Ingen"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
@@ -901,7 +901,7 @@ msgstr "Standard WaveOut Enhed"
 msgid "Default MidiOut Device"
 msgstr "Standard MidiOut Enhed"
 
-#: hhctrl.rc:27 notepad.rc:58
+#: hhctrl.rc:27 notepad.rc:58 progman.rc:53
 msgid "&Contents"
 msgstr "&Indhold"
 
@@ -3330,9 +3330,14 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Åbne resourser: %lu\n"
 
-#: notepad.rc:26
+#: notepad.rc:26 progman.rc:29
+#, fuzzy
 msgid "&File"
-msgstr "&Filer"
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"&Filer\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"&Fil"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -3414,13 +3419,18 @@ msgstr "&Find næste\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Erstat...\tCtrl+H"
 
-#: notepad.rc:57
+#: notepad.rc:57 progman.rc:52
 msgid "&Help"
 msgstr "&Hjælp"
 
-#: notepad.rc:59
+#: notepad.rc:59 progman.rc:54
+#, fuzzy
 msgid "&Search..."
-msgstr "&Søg efter hjælp om..."
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"&Søg efter hjælp om...\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"&Søg..."
 
 #: notepad.rc:60
 msgid "&Help on help"
@@ -3442,15 +3452,20 @@ msgstr "Page &p"
 msgid "Notepad"
 msgstr "Notesblok"
 
-#: notepad.rc:72
+#: notepad.rc:72 progman.rc:66
+#, fuzzy
 msgid "ERROR"
-msgstr "FEJL"
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"FEJL\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"FEIL"
 
-#: notepad.rc:73
+#: notepad.rc:73 progman.rc:67
 msgid "WARNING"
 msgstr "ADVARSEL"
 
-#: notepad.rc:74
+#: notepad.rc:74 progman.rc:68
 msgid "Information"
 msgstr "Information"
 
@@ -3458,7 +3473,7 @@ msgstr "Information"
 msgid "Untitled"
 msgstr "(ikke-navngivet)"
 
-#: notepad.rc:78
+#: notepad.rc:78 progman.rc:84
 msgid "All files (*.*)"
 msgstr "Alle filer (*.*)"
 
@@ -3540,6 +3555,154 @@ msgstr ""
 "For at beholde disse tegn, skal du klikke på Annuller og derefter vælge\n"
 "en af Unicode mulighederne i Kodnings rullelisten.\n"
 "Fortsæt?"
+
+#: progman.rc:30
+msgid "&New..."
+msgstr "&Ny..."
+
+#: progman.rc:31
+msgid "O&pen\tEnter"
+msgstr "Åben\tEnter"
+
+#: progman.rc:32
+msgid "&Move...\tF7"
+msgstr "&Flyt...\tF7"
+
+#: progman.rc:33
+msgid "&Copy...\tF8"
+msgstr "&Kopier...\tF8"
+
+#: progman.rc:34
+msgid "&Delete\tEntf"
+msgstr "&Slet\tEntf"
+
+#: progman.rc:35
+msgid "&Attributes...\tAlt+Enter"
+msgstr "&Attributter...\tAlt+Enter"
+
+#: progman.rc:37
+msgid "&Execute..."
+msgstr "K&ør..."
+
+#: progman.rc:39
+msgid "E&xit Windows..."
+msgstr "A&fslut Wine..."
+
+#: progman.rc:41
+msgid "&Options"
+msgstr "&Indstillinger"
+
+#: progman.rc:42
+msgid "&Arrange automatically"
+msgstr "&Auto arrangér"
+
+#: progman.rc:43
+msgid "&Minimize on run"
+msgstr "&Minimér ved opstart"
+
+#: progman.rc:44
+msgid "&Save settings on exit"
+msgstr "Gem ændringer ved af&slutting"
+
+#: progman.rc:46
+msgid "&Windows"
+msgstr "&Vinduer"
+
+#: progman.rc:47
+msgid "&Overlapped\tShift+F5"
+msgstr "&Overlappet\tShift+F5"
+
+#: progman.rc:48
+msgid "&Side by side\tShift+F4"
+msgstr "&Side ved side\tShift+F4"
+
+#: progman.rc:49
+msgid "&Arrange Icons"
+msgstr "Arrangér &ikoner"
+
+#: progman.rc:56
+msgid "&Help on Help"
+msgstr "&Hjælp til hjælp"
+
+#: progman.rc:57
+msgid "&Tutorial"
+msgstr "&Vejledning"
+
+#: progman.rc:59
+msgid "&About Wine"
+msgstr "&Om Wine"
+
+#: progman.rc:65
+msgid "Program Manager"
+msgstr "Programbehandling"
+
+#: progman.rc:69
+msgid "Delete"
+msgstr "Slet"
+
+#: progman.rc:70
+msgid "Delete group `%s' ?"
+msgstr "Slet gruppen '%s'?"
+
+#: progman.rc:71
+msgid "Delete program `%s' ?"
+msgstr "Slet programmet '%s'?"
+
+#: progman.rc:72
+msgid "Not implemented"
+msgstr "Ikke implementeret"
+
+#: progman.rc:73
+msgid "Error reading `%s'."
+msgstr "Fejl ved læsing af '%s'."
+
+#: progman.rc:74
+msgid "Error writing `%s'."
+msgstr "Fejl ved skrivning til '%s'."
+
+#: progman.rc:77
+msgid ""
+"The group file `%s' cannot be opened.\n"
+"Should it be tried further on?"
+msgstr ""
+"Kunne ikke ?pne gruppefilen '%s'.\n"
+"Vil du pr?ve mer?"
+
+#: progman.rc:78
+msgid "Out of memory."
+msgstr "Ikke nok hukommelse."
+
+#: progman.rc:79
+msgid "Help not available."
+msgstr "hjælp er ikke tilgjengelig."
+
+#: progman.rc:80
+msgid "Unknown feature in %s"
+msgstr "Ukendt feature i '%s'"
+
+#: progman.rc:81
+msgid "File `%s' exists. Not overwritten."
+msgstr "Filen '%s' fandtes allerede, og blev ikke overskrevet."
+
+#: progman.rc:82
+msgid "Save group as `%s to prevent overwriting original files."
+msgstr "Gem gruppen som '%s' for at undgå at overskrive de originale filer."
+
+#: progman.rc:85
+msgid "Programs"
+msgstr "Programmer"
+
+#: progman.rc:86
+msgid "Libraries (*.dll)"
+msgstr "Biblioteker (*.dll)"
+
+#: progman.rc:87
+msgid "Icon files"
+msgstr "Ikon filer"
+
+#: progman.rc:88
+msgid "Icons (*.ico)"
+msgstr "Ikoner (*.ico)"
 
 #: reg.rc:27
 msgid ""

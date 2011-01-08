@@ -665,7 +665,7 @@ msgstr "Sluttenhet"
 msgid "Path Length Constraint="
 msgstr "Begrensning på stilengde="
 
-#: crypt32.rc:198
+#: crypt32.rc:198 progman.rc:83
 msgid "None"
 msgstr "Ingen"
 
@@ -893,7 +893,7 @@ msgstr "Standard enhet for lydavspilling"
 msgid "Default MidiOut Device"
 msgstr "Standard enhet for MIDI-avspilling"
 
-#: hhctrl.rc:27 notepad.rc:58
+#: hhctrl.rc:27 notepad.rc:58 progman.rc:53
 msgid "&Contents"
 msgstr "&Innhold"
 
@@ -3324,7 +3324,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Åpne ressurser: %lu\n"
 
-#: notepad.rc:26
+#: notepad.rc:26 progman.rc:29
 msgid "&File"
 msgstr "&Fil"
 
@@ -3408,11 +3408,11 @@ msgstr "Søk etter nest&e\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "E&rstatt...\tCtrl+H"
 
-#: notepad.rc:57
+#: notepad.rc:57 progman.rc:52
 msgid "&Help"
 msgstr "&Hjelp"
 
-#: notepad.rc:59
+#: notepad.rc:59 progman.rc:54
 msgid "&Search..."
 msgstr "&Søk..."
 
@@ -3436,15 +3436,15 @@ msgstr "Side &s"
 msgid "Notepad"
 msgstr "Notisblokk"
 
-#: notepad.rc:72
+#: notepad.rc:72 progman.rc:66
 msgid "ERROR"
 msgstr "FEIL"
 
-#: notepad.rc:73
+#: notepad.rc:73 progman.rc:67
 msgid "WARNING"
 msgstr "ADVARSEL"
 
-#: notepad.rc:74
+#: notepad.rc:74 progman.rc:68
 msgid "Information"
 msgstr "Informasjon"
 
@@ -3452,7 +3452,7 @@ msgstr "Informasjon"
 msgid "Untitled"
 msgstr "(Uten navn)"
 
-#: notepad.rc:78
+#: notepad.rc:78 progman.rc:84
 msgid "All files (*.*)"
 msgstr "Alle filer (*.*)"
 
@@ -3532,6 +3532,154 @@ msgstr ""
 "Trykk Avbryt og velg et av Unicode-valgene fra listen\n"
 "hvis du vil beholde tegnene.\n"
 "Fortsette?"
+
+#: progman.rc:30
+msgid "&New..."
+msgstr "&Ny..."
+
+#: progman.rc:31
+msgid "O&pen\tEnter"
+msgstr "Å&pne\tEnter"
+
+#: progman.rc:32
+msgid "&Move...\tF7"
+msgstr "&Flytt...\tF7"
+
+#: progman.rc:33
+msgid "&Copy...\tF8"
+msgstr "&Kopier...\tF8"
+
+#: progman.rc:34
+msgid "&Delete\tEntf"
+msgstr "&Slett\tEntf"
+
+#: progman.rc:35
+msgid "&Attributes...\tAlt+Enter"
+msgstr "&Attributter...\tAlt+Enter"
+
+#: progman.rc:37
+msgid "&Execute..."
+msgstr "K&jør..."
+
+#: progman.rc:39
+msgid "E&xit Windows..."
+msgstr "A&vslutt Windows..."
+
+#: progman.rc:41
+msgid "&Options"
+msgstr "&Innstillinger"
+
+#: progman.rc:42
+msgid "&Arrange automatically"
+msgstr "Ordne &automatisk"
+
+#: progman.rc:43
+msgid "&Minimize on run"
+msgstr "&Minimer ved oppstart"
+
+#: progman.rc:44
+msgid "&Save settings on exit"
+msgstr "Lagre endringer ved av&slutting"
+
+#: progman.rc:46
+msgid "&Windows"
+msgstr "&Vinduer"
+
+#: progman.rc:47
+msgid "&Overlapped\tShift+F5"
+msgstr "&Overlappet\tShift+F5"
+
+#: progman.rc:48
+msgid "&Side by side\tShift+F4"
+msgstr "&Side ved side\tShift+F4"
+
+#: progman.rc:49
+msgid "&Arrange Icons"
+msgstr "Ordne &ikoner"
+
+#: progman.rc:56
+msgid "&Help on Help"
+msgstr "&Hjelp til hjelp"
+
+#: progman.rc:57
+msgid "&Tutorial"
+msgstr "&Veiledning"
+
+#: progman.rc:59
+msgid "&About Wine"
+msgstr "&om Wine"
+
+#: progman.rc:65
+msgid "Program Manager"
+msgstr "Programbehandling"
+
+#: progman.rc:69
+msgid "Delete"
+msgstr "Slett"
+
+#: progman.rc:70
+msgid "Delete group `%s' ?"
+msgstr "Slette gruppen '%s'?"
+
+#: progman.rc:71
+msgid "Delete program `%s' ?"
+msgstr "Slette programmet '%s'?"
+
+#: progman.rc:72
+msgid "Not implemented"
+msgstr "Ikke implementert"
+
+#: progman.rc:73
+msgid "Error reading `%s'."
+msgstr "Feil ved lesing av '%s'."
+
+#: progman.rc:74
+msgid "Error writing `%s'."
+msgstr "Feil ved skriving til '%s'."
+
+#: progman.rc:77
+msgid ""
+"The group file `%s' cannot be opened.\n"
+"Should it be tried further on?"
+msgstr ""
+"Kunne ikke åpne gruppefilen '%s'.\n"
+"Vil du prøve mer?"
+
+#: progman.rc:78
+msgid "Out of memory."
+msgstr "Ikke nok minne."
+
+#: progman.rc:79
+msgid "Help not available."
+msgstr "Ingen hjelp er ikke tilgjengelig."
+
+#: progman.rc:80
+msgid "Unknown feature in %s"
+msgstr "Ukjent egenskap i '%s'"
+
+#: progman.rc:81
+msgid "File `%s' exists. Not overwritten."
+msgstr "Filen '%s' fantes allerede, og ble ikke overskrevet."
+
+#: progman.rc:82
+msgid "Save group as `%s to prevent overwriting original files."
+msgstr "Lagre gruppe som '%s' for å unngå å overskrive filer."
+
+#: progman.rc:85
+msgid "Programs"
+msgstr "Programmer"
+
+#: progman.rc:86
+msgid "Libraries (*.dll)"
+msgstr "Biblioteker (*.dll)"
+
+#: progman.rc:87
+msgid "Icon files"
+msgstr "Ikonfiler"
+
+#: progman.rc:88
+msgid "Icons (*.ico)"
+msgstr "Ikoner (*.ico)"
 
 #: reg.rc:27
 msgid ""

@@ -665,9 +665,14 @@ msgstr "Entitate finală"
 msgid "Path Length Constraint="
 msgstr "Constrângere de lungime a căii="
 
-#: crypt32.rc:198
+#: crypt32.rc:198 progman.rc:83
+#, fuzzy
 msgid "None"
-msgstr "Fără"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Fără\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Niciuna"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
@@ -893,14 +898,9 @@ msgstr "Dispozitiv WaveOut implicit"
 msgid "Default MidiOut Device"
 msgstr "Dispozitiv MidiOut implicit"
 
-#: hhctrl.rc:27 notepad.rc:58
-#, fuzzy
+#: hhctrl.rc:27 notepad.rc:58 progman.rc:53
 msgid "&Contents"
-msgstr ""
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"&Cuprins\n"
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"C&onținut"
+msgstr "&Conținut"
 
 #: hhctrl.rc:28
 msgid "I&ndex"
@@ -3364,7 +3364,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Resurse deschise: %lu\n"
 
-#: notepad.rc:26
+#: notepad.rc:26 progman.rc:29
 msgid "&File"
 msgstr "&Fișier"
 
@@ -3448,13 +3448,23 @@ msgstr "Caută &următorul\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Înlocuiește...\tCtrl+H"
 
-#: notepad.rc:57
+#: notepad.rc:57 progman.rc:52
+#, fuzzy
 msgid "&Help"
-msgstr "&Ajutor"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"&Ajutor\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"A&jutor"
 
-#: notepad.rc:59
+#: notepad.rc:59 progman.rc:54
+#, fuzzy
 msgid "&Search..."
-msgstr "&Caută..."
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"&Caută...\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Că&utare..."
 
 #: notepad.rc:60
 msgid "&Help on help"
@@ -3476,23 +3486,33 @@ msgstr "Pagina &p"
 msgid "Notepad"
 msgstr "Notepad"
 
-#: notepad.rc:72
+#: notepad.rc:72 progman.rc:66
 msgid "ERROR"
 msgstr "EROARE"
 
-#: notepad.rc:73
+#: notepad.rc:73 progman.rc:67
+#, fuzzy
 msgid "WARNING"
-msgstr "ATENȚIE"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"ATENȚIE\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"AVERTIZARE"
 
-#: notepad.rc:74
+#: notepad.rc:74 progman.rc:68
+#, fuzzy
 msgid "Information"
-msgstr "Informație"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Informație\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Informații"
 
 #: notepad.rc:76
 msgid "Untitled"
 msgstr "(fără titlu)"
 
-#: notepad.rc:78
+#: notepad.rc:78 progman.rc:84
 msgid "All files (*.*)"
 msgstr "Toate fișierele (*.*)"
 
@@ -3573,6 +3593,155 @@ msgstr ""
 "Pentru a reține aceste caractere dați clic pe „Renunță” și apoi\n"
 "alegeți una din opțiunile unicode din lista de selecție a codificării.\n"
 "Continuă?"
+
+#: progman.rc:30
+msgid "&New..."
+msgstr "&Nou..."
+
+#: progman.rc:31
+msgid "O&pen\tEnter"
+msgstr "Desc&hide\tEnter"
+
+#: progman.rc:32
+msgid "&Move...\tF7"
+msgstr "&Mutare...\tF7"
+
+#: progman.rc:33
+msgid "&Copy...\tF8"
+msgstr "&Copiere...\tF8"
+
+#: progman.rc:34
+msgid "&Delete\tEntf"
+msgstr "&Șterge\tEntf"
+
+#: progman.rc:35
+msgid "&Attributes...\tAlt+Enter"
+msgstr "&Atribute...\tAlt+Enter"
+
+#: progman.rc:37
+msgid "&Execute..."
+msgstr "&Executare..."
+
+#: progman.rc:39
+msgid "E&xit Windows..."
+msgstr "Î&nchidere Windows..."
+
+#: progman.rc:41
+msgid "&Options"
+msgstr "&Opțiuni"
+
+#: progman.rc:42
+msgid "&Arrange automatically"
+msgstr "&Aranjează automat"
+
+#: progman.rc:43
+msgid "&Minimize on run"
+msgstr "&Minimizează la execuție"
+
+#: progman.rc:44
+msgid "&Save settings on exit"
+msgstr "&Salvează configurația la închidere"
+
+#: progman.rc:46
+msgid "&Windows"
+msgstr "F&erestre"
+
+#: progman.rc:47
+msgid "&Overlapped\tShift+F5"
+msgstr "&Cascadă\tShift+F5"
+
+#: progman.rc:48
+msgid "&Side by side\tShift+F4"
+msgstr "&Una lângă alta\tShift+F4"
+
+#: progman.rc:49
+msgid "&Arrange Icons"
+msgstr "&Aranjează pictogramele"
+
+#: progman.rc:56
+msgid "&Help on Help"
+msgstr "A&jutor pentru Ajutor"
+
+#: progman.rc:57
+msgid "&Tutorial"
+msgstr "&Tutorial"
+
+#: progman.rc:59
+msgid "&About Wine"
+msgstr "Des&pre Wine"
+
+#: progman.rc:65
+msgid "Program Manager"
+msgstr "Administrator programe"
+
+#: progman.rc:69
+msgid "Delete"
+msgstr "Șterge"
+
+#: progman.rc:70
+msgid "Delete group `%s' ?"
+msgstr "Se șterge grupul „%s” ?"
+
+#: progman.rc:71
+msgid "Delete program `%s' ?"
+msgstr "Se șterge programul „%s” ?"
+
+#: progman.rc:72
+msgid "Not implemented"
+msgstr "Neimplementat"
+
+#: progman.rc:73
+msgid "Error reading `%s'."
+msgstr "Eroare la citirea „%s”."
+
+#: progman.rc:74
+msgid "Error writing `%s'."
+msgstr "Eroare la scrierea „%s”."
+
+#: progman.rc:77
+msgid ""
+"The group file `%s' cannot be opened.\n"
+"Should it be tried further on?"
+msgstr ""
+"Fișierul grup „%s” nu se poate deschide.\n"
+"Doriți să se mai încerce deschiderea?"
+
+#: progman.rc:78
+msgid "Out of memory."
+msgstr "Memorie insuficientă."
+
+#: progman.rc:79
+msgid "Help not available."
+msgstr "Nu este disponibil ajutor."
+
+#: progman.rc:80
+msgid "Unknown feature in %s"
+msgstr "Caracteristică necunoscută în %s"
+
+#: progman.rc:81
+msgid "File `%s' exists. Not overwritten."
+msgstr "Fișierul „%s” există. Nu a fost suprascris."
+
+#: progman.rc:82
+msgid "Save group as `%s to prevent overwriting original files."
+msgstr ""
+"Salvează grupul ca „%s” pentru a preveni suprascrierea fișierelor originale."
+
+#: progman.rc:85
+msgid "Programs"
+msgstr "Programe"
+
+#: progman.rc:86
+msgid "Libraries (*.dll)"
+msgstr "Biblioteci (*.dll)"
+
+#: progman.rc:87
+msgid "Icon files"
+msgstr "Fișiere pictogramă"
+
+#: progman.rc:88
+msgid "Icons (*.ico)"
+msgstr "Pictograme (*.ico)"
 
 #: reg.rc:27
 msgid ""

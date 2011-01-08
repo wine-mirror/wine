@@ -665,7 +665,7 @@ msgstr "엔티티 끝"
 msgid "Path Length Constraint="
 msgstr "제한된 경로 길이 ="
 
-#: crypt32.rc:198
+#: crypt32.rc:198 progman.rc:83
 msgid "None"
 msgstr "없음"
 
@@ -893,14 +893,10 @@ msgstr "기본 웨이브 출력 장치"
 msgid "Default MidiOut Device"
 msgstr "기본 미디출력 장치"
 
-#: hhctrl.rc:27 notepad.rc:58
+#: hhctrl.rc:27 notepad.rc:58 progman.rc:53
 #, fuzzy
 msgid "&Contents"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"목록(&C)\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"항목(&C)"
+msgstr "목차(&C)"
 
 #: hhctrl.rc:28
 msgid "I&ndex"
@@ -3316,7 +3312,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      열린 리소스: %lu\n"
 
-#: notepad.rc:26
+#: notepad.rc:26 progman.rc:29
 msgid "&File"
 msgstr "파일(&F)"
 
@@ -3400,11 +3396,11 @@ msgstr "다음 찾기(&N)\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "바꾸기(&R)...\tCtrl+H"
 
-#: notepad.rc:57
+#: notepad.rc:57 progman.rc:52
 msgid "&Help"
 msgstr "도움말(&H)"
 
-#: notepad.rc:59
+#: notepad.rc:59 progman.rc:54
 msgid "&Search..."
 msgstr "찾기(&S)..."
 
@@ -3428,15 +3424,20 @@ msgstr "&p 페이지"
 msgid "Notepad"
 msgstr "메모장"
 
-#: notepad.rc:72
+#: notepad.rc:72 progman.rc:66
+#, fuzzy
 msgid "ERROR"
-msgstr "오류"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"오류\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"에러"
 
-#: notepad.rc:73
+#: notepad.rc:73 progman.rc:67
 msgid "WARNING"
 msgstr "경고"
 
-#: notepad.rc:74
+#: notepad.rc:74 progman.rc:68
 msgid "Information"
 msgstr "정보"
 
@@ -3444,7 +3445,7 @@ msgstr "정보"
 msgid "Untitled"
 msgstr "제목 없음"
 
-#: notepad.rc:78
+#: notepad.rc:78 progman.rc:84
 msgid "All files (*.*)"
 msgstr "모든 파일 (*.*)"
 
@@ -3524,6 +3525,155 @@ msgstr ""
 "이 문자를 보존하려면  취소를 클릭하고, 인코딩 드롭다운목록의 유니코드\n"
 "옵션 중의 하나를  선택하십시오t.\n"
 "계속하시겠습니까?"
+
+#: progman.rc:30
+msgid "&New..."
+msgstr "새 작업(&N)..."
+
+#: progman.rc:31
+msgid "O&pen\tEnter"
+msgstr "열기(&P)\tEnter"
+
+#: progman.rc:32
+msgid "&Move...\tF7"
+msgstr "이동(&M)...\tF7"
+
+#: progman.rc:33
+msgid "&Copy...\tF8"
+msgstr "복사(&C)...\tF8"
+
+#: progman.rc:34
+msgid "&Delete\tEntf"
+msgstr "지우기(&D)\tEntf"
+
+#: progman.rc:35
+msgid "&Attributes...\tAlt+Enter"
+msgstr "속성(&A)...\tAlt+Enter"
+
+#: progman.rc:37
+msgid "&Execute..."
+msgstr "실행(&E)..."
+
+#: progman.rc:39
+msgid "E&xit Windows..."
+msgstr "창 종료(&X)..."
+
+#: progman.rc:41
+msgid "&Options"
+msgstr "옵션(&O)"
+
+#: progman.rc:42
+msgid "&Arrange automatically"
+msgstr "자동 정렬(&A)"
+
+#: progman.rc:43
+msgid "&Minimize on run"
+msgstr "실행시 아이콘 상태로(&M)"
+
+#: progman.rc:44
+msgid "&Save settings on exit"
+msgstr "종료시 설정 내용 저장(&S)"
+
+#: progman.rc:46
+msgid "&Windows"
+msgstr "창(&W)"
+
+#: progman.rc:47
+msgid "&Overlapped\tShift+F5"
+msgstr "겹치기(&O)\tShift+F5"
+
+#: progman.rc:48
+msgid "&Side by side\tShift+F4"
+msgstr "나누기(&S)\tShift+F4"
+
+#: progman.rc:49
+msgid "&Arrange Icons"
+msgstr "아이콘 정렬(&A)"
+
+#: progman.rc:56
+msgid "&Help on Help"
+msgstr "도움말 사용법(&H)"
+
+#: progman.rc:57
+msgid "&Tutorial"
+msgstr "자습서(&T)"
+
+#: progman.rc:59
+msgid "&About Wine"
+msgstr "WINE 정보(&A)"
+
+#: progman.rc:65
+msgid "Program Manager"
+msgstr "풀그림 관리자"
+
+#: progman.rc:69
+msgid "Delete"
+msgstr "지우기"
+
+#: progman.rc:70
+msgid "Delete group `%s' ?"
+msgstr "그룹 `%s'을 지우겠습니까 ?"
+
+#: progman.rc:71
+msgid "Delete program `%s' ?"
+msgstr "풀그림 `%s'을 지우겠습니까 ?"
+
+#: progman.rc:72
+msgid "Not implemented"
+msgstr "아직 구현되지 않았습니다."
+
+#: progman.rc:73
+msgid "Error reading `%s'."
+msgstr "`%s' 읽기 에러."
+
+#: progman.rc:74
+msgid "Error writing `%s'."
+msgstr "`%s' 쓰기 에러."
+
+#: progman.rc:77
+msgid ""
+"The group file `%s' cannot be opened.\n"
+"Should it be tried further on?"
+msgstr ""
+"그룹 파일 `%s'을 열 수 없습니다.\n"
+"다시 시도하겠습니까?"
+
+#: progman.rc:78
+msgid "Out of memory."
+msgstr "메모리 부족."
+
+#: progman.rc:79
+msgid "Help not available."
+msgstr "도움말은 가능하지않습니다."
+
+#: progman.rc:80
+msgid "Unknown feature in %s"
+msgstr "%s의 알수 없는 특징"
+
+#: progman.rc:81
+msgid "File `%s' exists. Not overwritten."
+msgstr "파일 %s' 는 존재하므로, 덮어 쓸 수 없습니다."
+
+#: progman.rc:82
+msgid "Save group as `%s to prevent overwriting original files."
+msgstr ""
+"`%s를 다른 이름으로 저장해야 원래 파일을 덮어 쓰는 걸 막을 수 있습니다."
+
+#: progman.rc:85
+msgid "Programs"
+msgstr "풀그림"
+
+#: progman.rc:86
+msgid "Libraries (*.dll)"
+msgstr "라이브러리 파일(*.dll)"
+
+#: progman.rc:87
+msgid "Icon files"
+msgstr "아이콘 파일"
+
+#: progman.rc:88
+msgid "Icons (*.ico)"
+msgstr "아이콘 (*.ico)"
 
 #: reg.rc:27
 msgid ""

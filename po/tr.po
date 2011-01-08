@@ -677,9 +677,9 @@ msgstr ""
 msgid "Path Length Constraint="
 msgstr ""
 
-#: crypt32.rc:198
+#: crypt32.rc:198 progman.rc:83
 msgid "None"
-msgstr ""
+msgstr "Hiçbiri"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
@@ -901,14 +901,9 @@ msgstr ""
 msgid "Default MidiOut Device"
 msgstr ""
 
-#: hhctrl.rc:27 notepad.rc:58
-#, fuzzy
+#: hhctrl.rc:27 notepad.rc:58 progman.rc:53
 msgid "&Contents"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&İçerik\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&İçindekiler"
+msgstr "&İçindekiler"
 
 #: hhctrl.rc:28
 msgid "I&ndex"
@@ -3329,7 +3324,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26
+#: notepad.rc:26 progman.rc:29
 msgid "&File"
 msgstr "&Dosya"
 
@@ -3413,11 +3408,11 @@ msgstr "&Sonrakini bul\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Replace...\tCtrl+H"
 
-#: notepad.rc:57
+#: notepad.rc:57 progman.rc:52
 msgid "&Help"
 msgstr "&Yardım"
 
-#: notepad.rc:59
+#: notepad.rc:59 progman.rc:54
 msgid "&Search..."
 msgstr "&Ara..."
 
@@ -3441,15 +3436,15 @@ msgstr "&p. Sayfa"
 msgid "Notepad"
 msgstr "Not Defteri"
 
-#: notepad.rc:72
+#: notepad.rc:72 progman.rc:66
 msgid "ERROR"
 msgstr "HATA"
 
-#: notepad.rc:73
+#: notepad.rc:73 progman.rc:67
 msgid "WARNING"
 msgstr "UYARI"
 
-#: notepad.rc:74
+#: notepad.rc:74 progman.rc:68
 msgid "Information"
 msgstr "Bilgi"
 
@@ -3457,7 +3452,7 @@ msgstr "Bilgi"
 msgid "Untitled"
 msgstr "Adsız"
 
-#: notepad.rc:78
+#: notepad.rc:78 progman.rc:84
 msgid "All files (*.*)"
 msgstr "Tüm dosyalar (*.*)"
 
@@ -3533,6 +3528,154 @@ msgid ""
 "one of the Unicode options in the Encoding drop down list.\n"
 "Continue?"
 msgstr ""
+
+#: progman.rc:30
+msgid "&New..."
+msgstr "&Yeni..."
+
+#: progman.rc:31
+msgid "O&pen\tEnter"
+msgstr "&Aç\tEnter"
+
+#: progman.rc:32
+msgid "&Move...\tF7"
+msgstr "&Taşı...\tF7"
+
+#: progman.rc:33
+msgid "&Copy...\tF8"
+msgstr "&Kopyala...\tF8"
+
+#: progman.rc:34
+msgid "&Delete\tEntf"
+msgstr "&Sil\tEntf"
+
+#: progman.rc:35
+msgid "&Attributes...\tAlt+Enter"
+msgstr "&Öznitelikler...\tAlt+Enter"
+
+#: progman.rc:37
+msgid "&Execute..."
+msgstr "Çalı&ştır..."
+
+#: progman.rc:39
+msgid "E&xit Windows..."
+msgstr "Windows'tan &Çık..."
+
+#: progman.rc:41
+msgid "&Options"
+msgstr "&Seçenekler"
+
+#: progman.rc:42
+msgid "&Arrange automatically"
+msgstr "Otomatik &düzenle"
+
+#: progman.rc:43
+msgid "&Minimize on run"
+msgstr "&Simge halinde çalıştır"
+
+#: progman.rc:44
+msgid "&Save settings on exit"
+msgstr "&Çıkışta ayarları sakla"
+
+#: progman.rc:46
+msgid "&Windows"
+msgstr "&Pencereler"
+
+#: progman.rc:47
+msgid "&Overlapped\tShift+F5"
+msgstr "&Üst üste diz\tShift+F5"
+
+#: progman.rc:48
+msgid "&Side by side\tShift+F4"
+msgstr "&Yan yana diz\tShift+F4"
+
+#: progman.rc:49
+msgid "&Arrange Icons"
+msgstr "&Simgeleri düzenle"
+
+#: progman.rc:56
+msgid "&Help on Help"
+msgstr "&Yardım Kullanımı"
+
+#: progman.rc:57
+msgid "&Tutorial"
+msgstr "&Öğretici"
+
+#: progman.rc:59
+msgid "&About Wine"
+msgstr "&Wine Hakkında"
+
+#: progman.rc:65
+msgid "Program Manager"
+msgstr "Program Yöneticisi"
+
+#: progman.rc:69
+msgid "Delete"
+msgstr "Sil"
+
+#: progman.rc:70
+msgid "Delete group `%s' ?"
+msgstr "'%s' grubu silinsin mi?"
+
+#: progman.rc:71
+msgid "Delete program `%s' ?"
+msgstr "'%s' programı silinsin mi?"
+
+#: progman.rc:72
+msgid "Not implemented"
+msgstr "Henüz Tanımlanmadı"
+
+#: progman.rc:73
+msgid "Error reading `%s'."
+msgstr "'%s' okunurken hata."
+
+#: progman.rc:74
+msgid "Error writing `%s'."
+msgstr "'%s' yazılırken hata."
+
+#: progman.rc:77
+msgid ""
+"The group file `%s' cannot be opened.\n"
+"Should it be tried further on?"
+msgstr ""
+"'%s' grup dosyası açılamadı.\n"
+"Daha sonra denensin mi?"
+
+#: progman.rc:78
+msgid "Out of memory."
+msgstr "Bellek dolu."
+
+#: progman.rc:79
+msgid "Help not available."
+msgstr "Yardım kullanılabilir değil."
+
+#: progman.rc:80
+msgid "Unknown feature in %s"
+msgstr "%s içinde bilinmeyen özellik"
+
+#: progman.rc:81
+msgid "File `%s' exists. Not overwritten."
+msgstr "'%s' dosyası mevcut. Üzerine yazılmadı."
+
+#: progman.rc:82
+msgid "Save group as `%s to prevent overwriting original files."
+msgstr "Asıl dosya üzerine yazmayı engellemek için dosyayı '%s' adıyla kaydet."
+
+#: progman.rc:85
+msgid "Programs"
+msgstr "Programlar"
+
+#: progman.rc:86
+msgid "Libraries (*.dll)"
+msgstr "Kitaplıklar (*.dll)"
+
+#: progman.rc:87
+msgid "Icon files"
+msgstr "Simge dosyaları"
+
+#: progman.rc:88
+msgid "Icons (*.ico)"
+msgstr "Simgeler (*.ico)"
 
 #: reg.rc:27
 msgid ""

@@ -27,44 +27,6 @@ LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 
 /* Czech strings in CP1250 */
 
-/* Menu */
-
-MAIN_MENU MENU
-{
- POPUP "&Soubor" {
-   MENUITEM "&Nov˝...",              PM_NEW
-   MENUITEM "O&tev¯Ìt\tEnter",             PM_OPEN
-   MENUITEM "P¯&esunout...\tF7",             PM_MOVE,      GRAYED
-   MENUITEM "&KopÌrovat...\tF8",             PM_COPY,      GRAYED
-   MENUITEM "S&mazat\tEntf",           PM_DELETE
-   MENUITEM "&Atributy...\tAlt+Enter",       PM_ATTRIBUTES
-   MENUITEM SEPARATOR
-   MENUITEM "Sp&ustit...",          PM_EXECUTE
-   MENUITEM SEPARATOR
-   MENUITEM "&Konec Windows...",             PM_EXIT
- }
- POPUP "&NastavenÌ" {
-   MENUITEM "&Uspo¯·dat automaticky",  PM_AUTO_ARRANGE
-   MENUITEM "&Minimalizovat za bÏhu",    PM_MIN_ON_RUN
-   MENUITEM "U&loûit nastavenÌ p¯i ukonËenÌ", PM_SAVE_SETTINGS
- }
- POPUP "&Okna" {
-   MENUITEM "&P¯ekr˝vajÌcÌ se\tShift+F5",       PM_OVERLAP
-   MENUITEM "&Vedle sebe\tShift+F4",  PM_SIDE_BY_SIDE
-   MENUITEM "&Zarovnat ikony",       PM_ARRANGE
- }
- 
-POPUP "&N·povÏda" {
-   MENUITEM "&Obsah",         PM_CONTENTS
-   MENUITEM "&NajÌt...",           PM_SEARCH
-   MENUITEM SEPARATOR
-   MENUITEM "&Pomoc s n·povÏdou",     PM_HELPONHELP
-   MENUITEM "&Tutorial",         PM_TUTORIAL
-   MENUITEM SEPARATOR
-   MENUITEM "&O Wine",     PM_ABOUT_WINE
- }
-}
-
 /* Dialog `New' */
 
 DIALOG_NEW DIALOG 0, 0, 170, 65
@@ -184,34 +146,4 @@ DEFPUSHBUTTON "OK",               IDOK,      135,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Storno",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "&Proch·zet...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
 PUSHBUTTON    "&N·povÏda",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
-}
-
-/* Strings */
-
-STRINGTABLE
-{
-IDS_PROGRAM_MANAGER,		"Program manager"
-IDS_ERROR,			"CHYBA"
-IDS_WARNING,			"VAROV¡NÕ"
-IDS_INFO,			"Informace"
-IDS_DELETE,			"Smazat"
-IDS_DELETE_GROUP_s,		"Smazat skupinu `%s' ?"
-IDS_DELETE_PROGRAM_s,		"Smazat program `%s' ?"
-IDS_NOT_IMPLEMENTED,		"NenÌ podporov·no"
-IDS_FILE_READ_ERROR_s,		"Chyba p¯i ËtenÌ `%s'."
-IDS_FILE_WRITE_ERROR_s,		"Chyba p¯i z·pisu `%s'."
-IDS_GRPFILE_READ_ERROR_s,	"\
-Soubor skupiny `%s' nem˘ûe b˝t otev¯en.\n\
-M·m to zkusit znovu ?"
-IDS_OUT_OF_MEMORY,		"Doöla pamÏù."
-IDS_WINHELP_ERROR,		"N·povÏda nenÌ dostupn·."
-IDS_UNKNOWN_FEATURE_s,		"Nezn·m· vlastnost v %s"
-IDS_FILE_NOT_OVERWRITTEN_s,	"Soubor `%s' existuje. Nebude p¯eps·n."
-IDS_SAVE_GROUP_AS_s,		"Uloûit skupinu jako `%s', aby nebyly p¯eps·n origin·lnÌ soubory."
-IDS_NO_HOT_KEY,			"é·dn· kl·vesov· zkratka."
-IDS_ALL_FILES,			"Vöechny soubory (*.*)"
-IDS_PROGRAMS,			"Programy"
-IDS_LIBRARIES_DLL,		"Knihovny (*.dll)"
-IDS_SYMBOL_FILES,		"Soubory ikon"
-IDS_SYMBOLS_ICO,		"Ikony (*.ico)"
 }

@@ -680,9 +680,9 @@ msgstr ""
 msgid "Path Length Constraint="
 msgstr ""
 
-#: crypt32.rc:198
+#: crypt32.rc:198 progman.rc:83
 msgid "None"
-msgstr ""
+msgstr "Brez"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
@@ -904,14 +904,9 @@ msgstr "Privzeta WaveOut naprava"
 msgid "Default MidiOut Device"
 msgstr "Privzeta MidiOut naprava"
 
-#: hhctrl.rc:27 notepad.rc:58
-#, fuzzy
+#: hhctrl.rc:27 notepad.rc:58 progman.rc:53
 msgid "&Contents"
-msgstr ""
-"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
-"&Vsebina\n"
-"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
-"&Teme pomoči"
+msgstr "&Vsebina"
 
 #: hhctrl.rc:28
 msgid "I&ndex"
@@ -3364,7 +3359,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Porabljena sredstva: %lu\n"
 
-#: notepad.rc:26
+#: notepad.rc:26 progman.rc:29
 msgid "&File"
 msgstr "&Datoteka"
 
@@ -3448,11 +3443,11 @@ msgstr "Najdi na&slednje\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Zamenjaj ...\tCtrl+H"
 
-#: notepad.rc:57
+#: notepad.rc:57 progman.rc:52
 msgid "&Help"
 msgstr "&Pomoč"
 
-#: notepad.rc:59
+#: notepad.rc:59 progman.rc:54
 msgid "&Search..."
 msgstr "&Iskanje ..."
 
@@ -3476,15 +3471,15 @@ msgstr "Stran &p"
 msgid "Notepad"
 msgstr "Beležnica"
 
-#: notepad.rc:72
+#: notepad.rc:72 progman.rc:66
 msgid "ERROR"
 msgstr "NAPAKA"
 
-#: notepad.rc:73
+#: notepad.rc:73 progman.rc:67
 msgid "WARNING"
 msgstr "OPOZORILO"
 
-#: notepad.rc:74
+#: notepad.rc:74 progman.rc:68
 msgid "Information"
 msgstr "Informacija"
 
@@ -3492,7 +3487,7 @@ msgstr "Informacija"
 msgid "Untitled"
 msgstr "Neimenovana"
 
-#: notepad.rc:78
+#: notepad.rc:78 progman.rc:84
 msgid "All files (*.*)"
 msgstr "Vse datoteke (*.*)"
 
@@ -3573,6 +3568,154 @@ msgstr ""
 "Da bi te znake obdržali, kliknite Prekliči in izberite\n"
 "eno izmed Unicode možnosti v seznamu kodiranj.\n"
 "Nadaljujem?"
+
+#: progman.rc:30
+msgid "&New..."
+msgstr "&Nova ..."
+
+#: progman.rc:31
+msgid "O&pen\tEnter"
+msgstr "&Odpri\tEnter"
+
+#: progman.rc:32
+msgid "&Move...\tF7"
+msgstr "Pre&makni ...\tF7"
+
+#: progman.rc:33
+msgid "&Copy...\tF8"
+msgstr "&Kopiraj ...\tF8"
+
+#: progman.rc:34
+msgid "&Delete\tEntf"
+msgstr "&Izbriši\tEntf"
+
+#: progman.rc:35
+msgid "&Attributes...\tAlt+Enter"
+msgstr "&Lastnosti ...\tAlt+Enter"
+
+#: progman.rc:37
+msgid "&Execute..."
+msgstr "&Zaženi ..."
+
+#: progman.rc:39
+msgid "E&xit Windows..."
+msgstr "Iz&hod ..."
+
+#: progman.rc:41
+msgid "&Options"
+msgstr "&Možnosti"
+
+#: progman.rc:42
+msgid "&Arrange automatically"
+msgstr "&Samodejno razporedi"
+
+#: progman.rc:43
+msgid "&Minimize on run"
+msgstr "&Pomanjšaj ob zagonu"
+
+#: progman.rc:44
+msgid "&Save settings on exit"
+msgstr "Shrani &nastavitve ob izhodu"
+
+#: progman.rc:46
+msgid "&Windows"
+msgstr "&Okna"
+
+#: progman.rc:47
+msgid "&Overlapped\tShift+F5"
+msgstr "&Prekrivanje\tShift+F5"
+
+#: progman.rc:48
+msgid "&Side by side\tShift+F4"
+msgstr "&Razpostavi\tShift+F4"
+
+#: progman.rc:49
+msgid "&Arrange Icons"
+msgstr "Razporedi &ikone"
+
+#: progman.rc:56
+msgid "&Help on Help"
+msgstr "&O pomoči"
+
+#: progman.rc:57
+msgid "&Tutorial"
+msgstr "&Vadnica"
+
+#: progman.rc:59
+msgid "&About Wine"
+msgstr "&O Wine"
+
+#: progman.rc:65
+msgid "Program Manager"
+msgstr "Upravitelj programov"
+
+#: progman.rc:69
+msgid "Delete"
+msgstr "Brisanje"
+
+#: progman.rc:70
+msgid "Delete group `%s' ?"
+msgstr "Ali ste prepričani, da želite izbrisati skupino '%s' ?"
+
+#: progman.rc:71
+msgid "Delete program `%s' ?"
+msgstr "Ali ste prepričani, da želite izbrisati program '%s' ?"
+
+#: progman.rc:72
+msgid "Not implemented"
+msgstr "Ni (še) na voljo"
+
+#: progman.rc:73
+msgid "Error reading `%s'."
+msgstr "Napaka pri branju iz '%s'."
+
+#: progman.rc:74
+msgid "Error writing `%s'."
+msgstr "Napaka pri pisanju v '%s'."
+
+#: progman.rc:77
+msgid ""
+"The group file `%s' cannot be opened.\n"
+"Should it be tried further on?"
+msgstr ""
+"Datoteke programske skupine '%s' ni mogoče odpreti.\n"
+"Ali želite, da jo poskusim naložiti tudi v prihodnje?"
+
+#: progman.rc:78
+msgid "Out of memory."
+msgstr "Zmanjkalo je pomnilnika."
+
+#: progman.rc:79
+msgid "Help not available."
+msgstr "Pomoč ni na voljo."
+
+#: progman.rc:80
+msgid "Unknown feature in %s"
+msgstr "Neznana možnost v %s"
+
+#: progman.rc:81
+msgid "File `%s' exists. Not overwritten."
+msgstr "Datoteka '%s' že obstaja in ni bila prepisana."
+
+#: progman.rc:82
+msgid "Save group as `%s to prevent overwriting original files."
+msgstr "Shranite skupino kot '%s', da preprečite prepis originalne datoteke."
+
+#: progman.rc:85
+msgid "Programs"
+msgstr "Programi"
+
+#: progman.rc:86
+msgid "Libraries (*.dll)"
+msgstr "Knjižnice (*.dll)"
+
+#: progman.rc:87
+msgid "Icon files"
+msgstr "Ikonske datoteke"
+
+#: progman.rc:88
+msgid "Icons (*.ico)"
+msgstr "Ikone (*.ico)"
 
 #: reg.rc:27
 msgid ""

@@ -666,9 +666,9 @@ msgstr ""
 msgid "Path Length Constraint="
 msgstr ""
 
-#: crypt32.rc:198
+#: crypt32.rc:198 progman.rc:83
 msgid "None"
-msgstr ""
+msgstr "未定义"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
@@ -890,7 +890,7 @@ msgstr ""
 msgid "Default MidiOut Device"
 msgstr ""
 
-#: hhctrl.rc:27 notepad.rc:58
+#: hhctrl.rc:27 notepad.rc:58 progman.rc:53
 msgid "&Contents"
 msgstr "内容(&C)"
 
@@ -3038,7 +3038,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26
+#: notepad.rc:26 progman.rc:29
 msgid "&File"
 msgstr "文件(&F)"
 
@@ -3122,11 +3122,11 @@ msgstr "搜索下一个(&S)\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "替换...\tCtrl+H"
 
-#: notepad.rc:57
+#: notepad.rc:57 progman.rc:52
 msgid "&Help"
 msgstr "帮助(&H)"
 
-#: notepad.rc:59
+#: notepad.rc:59 progman.rc:54
 msgid "&Search..."
 msgstr "搜索(&S)..."
 
@@ -3150,15 +3150,15 @@ msgstr "第 &p 页"
 msgid "Notepad"
 msgstr "记事本"
 
-#: notepad.rc:72
+#: notepad.rc:72 progman.rc:66
 msgid "ERROR"
 msgstr "错误"
 
-#: notepad.rc:73
+#: notepad.rc:73 progman.rc:67
 msgid "WARNING"
 msgstr "警告"
 
-#: notepad.rc:74
+#: notepad.rc:74 progman.rc:68
 msgid "Information"
 msgstr "信息"
 
@@ -3166,7 +3166,7 @@ msgstr "信息"
 msgid "Untitled"
 msgstr "（未命名）"
 
-#: notepad.rc:78
+#: notepad.rc:78 progman.rc:84
 msgid "All files (*.*)"
 msgstr "所有文件 (*.*)"
 
@@ -3241,6 +3241,154 @@ msgstr ""
 "此文件包含 Unicode 字符。如果用 %s 编码保存，这些字符将会丢失。\n"
 "要保留这些字符，请点“取消”，然后选择一种 Unicode 编码。\n"
 "要继续吗？"
+
+#: progman.rc:30
+msgid "&New..."
+msgstr "新建(&N)..."
+
+#: progman.rc:31
+msgid "O&pen\tEnter"
+msgstr "打开(&O)\tEnter"
+
+#: progman.rc:32
+msgid "&Move...\tF7"
+msgstr "移动(&M)...\tF7"
+
+#: progman.rc:33
+msgid "&Copy...\tF8"
+msgstr "复制(&C)...\tF8"
+
+#: progman.rc:34
+msgid "&Delete\tEntf"
+msgstr "删除(&D)\tEntf"
+
+#: progman.rc:35
+msgid "&Attributes...\tAlt+Enter"
+msgstr "属性(&A)...\tAlt+Enter"
+
+#: progman.rc:37
+msgid "&Execute..."
+msgstr "执行(&E)..."
+
+#: progman.rc:39
+msgid "E&xit Windows..."
+msgstr "退出 Windows(&X)..."
+
+#: progman.rc:41
+msgid "&Options"
+msgstr "选项(&O)"
+
+#: progman.rc:42
+msgid "&Arrange automatically"
+msgstr "自动排列(&A)"
+
+#: progman.rc:43
+msgid "&Minimize on run"
+msgstr "运行时最小化(&M)"
+
+#: progman.rc:44
+msgid "&Save settings on exit"
+msgstr "退出时保存设置(&S)"
+
+#: progman.rc:46
+msgid "&Windows"
+msgstr "窗口(&W)"
+
+#: progman.rc:47
+msgid "&Overlapped\tShift+F5"
+msgstr "层叠(&O)\tShift+F5"
+
+#: progman.rc:48
+msgid "&Side by side\tShift+F4"
+msgstr "并排(&S)\tShift+F4"
+
+#: progman.rc:49
+msgid "&Arrange Icons"
+msgstr "排列图标(&A)"
+
+#: progman.rc:56
+msgid "&Help on Help"
+msgstr "如何使用帮助(&H)"
+
+#: progman.rc:57
+msgid "&Tutorial"
+msgstr "教程(&T)"
+
+#: progman.rc:59
+msgid "&About Wine"
+msgstr "关于 Wine(&A)"
+
+#: progman.rc:65
+msgid "Program Manager"
+msgstr "程序管理器"
+
+#: progman.rc:69
+msgid "Delete"
+msgstr "删除"
+
+#: progman.rc:70
+msgid "Delete group `%s' ?"
+msgstr "是否删除程序组 `%s' ？"
+
+#: progman.rc:71
+msgid "Delete program `%s' ?"
+msgstr "是否删除程序组 `%s' ?"
+
+#: progman.rc:72
+msgid "Not implemented"
+msgstr "此功能未实现"
+
+#: progman.rc:73
+msgid "Error reading `%s'."
+msgstr "读取文件 %s 时发生错误。"
+
+#: progman.rc:74
+msgid "Error writing `%s'."
+msgstr "写入文件 %s 时发生错误。"
+
+#: progman.rc:77
+msgid ""
+"The group file `%s' cannot be opened.\n"
+"Should it be tried further on?"
+msgstr ""
+"不能打开组文件 `%s' 。\n"
+"是否继续尝试？"
+
+#: progman.rc:78
+msgid "Out of memory."
+msgstr "内存溢出。"
+
+#: progman.rc:79
+msgid "Help not available."
+msgstr "没有可用的帮助信息。"
+
+#: progman.rc:80
+msgid "Unknown feature in %s"
+msgstr "在 %s 中发现未知特性"
+
+#: progman.rc:81
+msgid "File `%s' exists. Not overwritten."
+msgstr "文件 %s 已经存在。不覆盖已有文件。"
+
+#: progman.rc:82
+msgid "Save group as `%s to prevent overwriting original files."
+msgstr "将程序组保存为 %s 可以避免复盖已有的文件。"
+
+#: progman.rc:85
+msgid "Programs"
+msgstr "程序"
+
+#: progman.rc:86
+msgid "Libraries (*.dll)"
+msgstr "动态连接库 (*.dll)"
+
+#: progman.rc:87
+msgid "Icon files"
+msgstr "图标文件"
+
+#: progman.rc:88
+msgid "Icons (*.ico)"
+msgstr "图标 (*.ico)"
 
 #: reg.rc:27
 msgid ""

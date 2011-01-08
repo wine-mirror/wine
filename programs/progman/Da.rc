@@ -22,44 +22,6 @@
 
 LANGUAGE LANG_DANISH, SUBLANG_DEFAULT
 
-/* Menu */
-
-MAIN_MENU MENU
-{
- POPUP "&Fil" {
-   MENUITEM "&Ny...",                  PM_NEW
-   MENUITEM "Åben\tEnter",             PM_OPEN
-   MENUITEM "&Flyt...\tF7",            PM_MOVE,      GRAYED
-   MENUITEM "&Kopier...\tF8",          PM_COPY,      GRAYED
-   MENUITEM "&Slet\tEntf",           PM_DELETE
-   MENUITEM "&Attributter...\tAlt+Enter", PM_ATTRIBUTES
-   MENUITEM SEPARATOR
-   MENUITEM "K&ør...",                 PM_EXECUTE
-   MENUITEM SEPARATOR
-   MENUITEM "A&fslut Wine...",         PM_EXIT
- }
- POPUP "&Indstillinger" {
-   MENUITEM "&Auto arrangér",  PM_AUTO_ARRANGE
-   MENUITEM "&Minimér ved opstart",    PM_MIN_ON_RUN
-   MENUITEM "Gem ændringer ved af&slutting", PM_SAVE_SETTINGS
- }
- POPUP "&Vinduer" {
-   MENUITEM "&Overlappet\tShift+F5",       PM_OVERLAP
-   MENUITEM "&Side ved side\tShift+F4",  PM_SIDE_BY_SIDE
-   MENUITEM "Arrangér &ikoner",       PM_ARRANGE
- }
-
-POPUP "&Hjælp" {
-   MENUITEM "&Indhold",         PM_CONTENTS
-   MENUITEM "&Søg...",          PM_SEARCH
-   MENUITEM SEPARATOR
-   MENUITEM "&Hjælp til hjælp",     PM_HELPONHELP
-   MENUITEM "&Vejledning",         PM_TUTORIAL
-   MENUITEM SEPARATOR
-   MENUITEM "&Om Wine",     PM_ABOUT_WINE
- }
-}
-
 /* Dialog `New' */
 
 DIALOG_NEW DIALOG 0, 0, 170, 65
@@ -179,34 +141,4 @@ DEFPUSHBUTTON "OK",               IDOK,      135,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Annuller",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "&Gennemse...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
 PUSHBUTTON    "&Hjælp",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
-}
-
-/* Strings */
-
-STRINGTABLE
-{
-IDS_PROGRAM_MANAGER,		"Programbehandling"
-IDS_ERROR,			"FEIL"
-IDS_WARNING,			"ADVARSEL"
-IDS_INFO,			"Information"
-IDS_DELETE,			"Slet"
-IDS_DELETE_GROUP_s,		"Slet gruppen '%s'?"
-IDS_DELETE_PROGRAM_s,		"Slet programmet '%s'?"
-IDS_NOT_IMPLEMENTED,		"Ikke implementeret"
-IDS_FILE_READ_ERROR_s,		"Fejl ved læsing af '%s'."
-IDS_FILE_WRITE_ERROR_s,		"Fejl ved skrivning til '%s'."
-IDS_GRPFILE_READ_ERROR_s,	"\
-Kunne ikke ?pne gruppefilen '%s'.\n\
-Vil du pr?ve mer?"
-IDS_OUT_OF_MEMORY,		"Ikke nok hukommelse."
-IDS_WINHELP_ERROR,		"hjælp er ikke tilgjengelig."
-IDS_UNKNOWN_FEATURE_s,		"Ukendt feature i '%s'"
-IDS_FILE_NOT_OVERWRITTEN_s,	"Filen '%s' fandtes allerede, og blev ikke overskrevet."
-IDS_SAVE_GROUP_AS_s,		"Gem gruppen som '%s' for at undgå at overskrive de originale filer."
-IDS_NO_HOT_KEY,			"Ingen"
-IDS_ALL_FILES,			"Alle filer (*.*)"
-IDS_PROGRAMS,			"Programmer"
-IDS_LIBRARIES_DLL,		"Biblioteker (*.dll)"
-IDS_SYMBOL_FILES,		"Ikon filer"
-IDS_SYMBOLS_ICO,		"Ikoner (*.ico)"
 }

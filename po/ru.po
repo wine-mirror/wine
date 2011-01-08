@@ -677,9 +677,9 @@ msgstr ""
 msgid "Path Length Constraint="
 msgstr ""
 
-#: crypt32.rc:198
+#: crypt32.rc:198 progman.rc:83
 msgid "None"
-msgstr ""
+msgstr "Нет"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
@@ -901,7 +901,7 @@ msgstr "Звуковое устройство вывода по умолчани
 msgid "Default MidiOut Device"
 msgstr "Устройство вывода MIDI по умолчанию"
 
-#: hhctrl.rc:27 notepad.rc:58
+#: hhctrl.rc:27 notepad.rc:58 progman.rc:53
 msgid "&Contents"
 msgstr "&Содержание"
 
@@ -3354,7 +3354,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S         %S      Открытых ресурсов: %lu\n"
 
-#: notepad.rc:26
+#: notepad.rc:26 progman.rc:29
 msgid "&File"
 msgstr "&Файл"
 
@@ -3438,11 +3438,11 @@ msgstr "Найти &далее\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Заменить...\tCtrl+H"
 
-#: notepad.rc:57
+#: notepad.rc:57 progman.rc:52
 msgid "&Help"
 msgstr "&Справка"
 
-#: notepad.rc:59
+#: notepad.rc:59 progman.rc:54
 msgid "&Search..."
 msgstr "&Поиск..."
 
@@ -3466,23 +3466,28 @@ msgstr "Страница &p"
 msgid "Notepad"
 msgstr "Блокнот"
 
-#: notepad.rc:72
+#: notepad.rc:72 progman.rc:66
 msgid "ERROR"
 msgstr "ОШИБКА"
 
-#: notepad.rc:73
+#: notepad.rc:73 progman.rc:67
 msgid "WARNING"
 msgstr "ВНИМАНИЕ"
 
-#: notepad.rc:74
+#: notepad.rc:74 progman.rc:68
+#, fuzzy
 msgid "Information"
-msgstr "Информация"
+msgstr ""
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"Информация\n"
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"Сведения"
 
 #: notepad.rc:76
 msgid "Untitled"
 msgstr "(без заголовка)"
 
-#: notepad.rc:78
+#: notepad.rc:78 progman.rc:84
 msgid "All files (*.*)"
 msgstr "Все файлы (*.*)"
 
@@ -3564,6 +3569,154 @@ msgstr ""
 "выберите\n"
 "один из вариантов сохранения в формате Юникод.\n"
 "Продолжить?"
+
+#: progman.rc:30
+msgid "&New..."
+msgstr "&Создать"
+
+#: progman.rc:31
+msgid "O&pen\tEnter"
+msgstr "О&ткрыть...\tEnter"
+
+#: progman.rc:32
+msgid "&Move...\tF7"
+msgstr "&Переместить...\tF7"
+
+#: progman.rc:33
+msgid "&Copy...\tF8"
+msgstr "&Копировать...\tF8"
+
+#: progman.rc:34
+msgid "&Delete\tEntf"
+msgstr "&Удалить\tEntf"
+
+#: progman.rc:35
+msgid "&Attributes...\tAlt+Enter"
+msgstr "&Атрибуты...\tAlt+Enter"
+
+#: progman.rc:37
+msgid "&Execute..."
+msgstr "&Запустить..."
+
+#: progman.rc:39
+msgid "E&xit Windows..."
+msgstr "Вы&ход из Wine..."
+
+#: progman.rc:41
+msgid "&Options"
+msgstr "&Параметры"
+
+#: progman.rc:42
+msgid "&Arrange automatically"
+msgstr "&Автоупорядочивание"
+
+#: progman.rc:43
+msgid "&Minimize on run"
+msgstr "&Свернуть при запуске"
+
+#: progman.rc:44
+msgid "&Save settings on exit"
+msgstr "&Сохранять настройки при выходе"
+
+#: progman.rc:46
+msgid "&Windows"
+msgstr "&Окна"
+
+#: progman.rc:47
+msgid "&Overlapped\tShift+F5"
+msgstr "&Каскад\tShift+F5"
+
+#: progman.rc:48
+msgid "&Side by side\tShift+F4"
+msgstr "&Мозаика\tShift+F4"
+
+#: progman.rc:49
+msgid "&Arrange Icons"
+msgstr "&Упорядочить при выходе"
+
+#: progman.rc:56
+msgid "&Help on Help"
+msgstr "&Использование справки"
+
+#: progman.rc:57
+msgid "&Tutorial"
+msgstr "&Руководство"
+
+#: progman.rc:59
+msgid "&About Wine"
+msgstr "&О Wine"
+
+#: progman.rc:65
+msgid "Program Manager"
+msgstr "Диспетчер программ"
+
+#: progman.rc:69
+msgid "Delete"
+msgstr "Удалить"
+
+#: progman.rc:70
+msgid "Delete group `%s' ?"
+msgstr "Удалить группу `%s' ?"
+
+#: progman.rc:71
+msgid "Delete program `%s' ?"
+msgstr "Удалить программу `%s' ?"
+
+#: progman.rc:72
+msgid "Not implemented"
+msgstr "Ещё не реализовано"
+
+#: progman.rc:73
+msgid "Error reading `%s'."
+msgstr "Ошибка чтения `%s'."
+
+#: progman.rc:74
+msgid "Error writing `%s'."
+msgstr "Ошибка записи `%s'."
+
+#: progman.rc:77
+msgid ""
+"The group file `%s' cannot be opened.\n"
+"Should it be tried further on?"
+msgstr ""
+"Файл группы `%s' не может быть открыт.\n"
+"Надо ли в следующий раз пытаться это сделать?"
+
+#: progman.rc:78
+msgid "Out of memory."
+msgstr "Мало памяти."
+
+#: progman.rc:79
+msgid "Help not available."
+msgstr "Справка не доступна."
+
+#: progman.rc:80
+msgid "Unknown feature in %s"
+msgstr "Неизвестное свойство в %s"
+
+#: progman.rc:81
+msgid "File `%s' exists. Not overwritten."
+msgstr "Файл `%s' существует. Он не был перезаписан."
+
+#: progman.rc:82
+msgid "Save group as `%s to prevent overwriting original files."
+msgstr "Группа сохраняется под именем `%s' во избежание перезаписи оригинала."
+
+#: progman.rc:85
+msgid "Programs"
+msgstr "Программы"
+
+#: progman.rc:86
+msgid "Libraries (*.dll)"
+msgstr "Библиотеки (*.dll)"
+
+#: progman.rc:87
+msgid "Icon files"
+msgstr "Файлы значков"
+
+#: progman.rc:88
+msgid "Icons (*.ico)"
+msgstr "Значки (*.ico)"
 
 #: reg.rc:27
 msgid ""

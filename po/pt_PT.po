@@ -665,9 +665,14 @@ msgstr "Fim de Entidade"
 msgid "Path Length Constraint="
 msgstr "Restrição de tamanho de caminho="
 
-#: crypt32.rc:198
+#: crypt32.rc:198 progman.rc:83
+#, fuzzy
 msgid "None"
-msgstr "Nenhum"
+msgstr ""
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"Nenhum\n"
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"Nenhuma"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
@@ -893,14 +898,9 @@ msgstr "Dispositivo padrão WaveOut"
 msgid "Default MidiOut Device"
 msgstr "Dispositivo padrão MidiOut"
 
-#: hhctrl.rc:27 notepad.rc:58
-#, fuzzy
+#: hhctrl.rc:27 notepad.rc:58 progman.rc:53
 msgid "&Contents"
-msgstr ""
-"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
-"&Conteúdos\n"
-"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
-"&Conteúdo"
+msgstr "&Conteúdo"
 
 #: hhctrl.rc:28
 msgid "I&ndex"
@@ -3373,7 +3373,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Recursos disponíveis: %lu\n"
 
-#: notepad.rc:26
+#: notepad.rc:26 progman.rc:29
 msgid "&File"
 msgstr "&Ficheiro"
 
@@ -3457,13 +3457,23 @@ msgstr "Localizar &próxima\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Substituir...\tCtrl+H"
 
-#: notepad.rc:57
+#: notepad.rc:57 progman.rc:52
+#, fuzzy
 msgid "&Help"
-msgstr "&Ajuda"
+msgstr ""
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"&Ajuda\n"
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"Aj&uda"
 
-#: notepad.rc:59
+#: notepad.rc:59 progman.rc:54
+#, fuzzy
 msgid "&Search..."
-msgstr "&Procurar..."
+msgstr ""
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"&Procurar...\n"
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"&Pesquisa..."
 
 #: notepad.rc:60
 msgid "&Help on help"
@@ -3485,15 +3495,15 @@ msgstr "Página &p"
 msgid "Notepad"
 msgstr "Notepad"
 
-#: notepad.rc:72
+#: notepad.rc:72 progman.rc:66
 msgid "ERROR"
 msgstr "ERRO"
 
-#: notepad.rc:73
+#: notepad.rc:73 progman.rc:67
 msgid "WARNING"
 msgstr "AVISO"
 
-#: notepad.rc:74
+#: notepad.rc:74 progman.rc:68
 msgid "Information"
 msgstr "Informação"
 
@@ -3501,9 +3511,14 @@ msgstr "Informação"
 msgid "Untitled"
 msgstr "(sem nome)"
 
-#: notepad.rc:78
+#: notepad.rc:78 progman.rc:84
+#, fuzzy
 msgid "All files (*.*)"
-msgstr "Todos os arquivos (*.*)"
+msgstr ""
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"Todos os arquivos (*.*)\n"
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"Todos os ficheiros (*.*)"
 
 #: notepad.rc:79
 msgid "Text files (*.txt)"
@@ -3582,6 +3597,155 @@ msgstr ""
 "Para manter estes caracteres, carregue em Cancelar, e depois seleccione\n"
 "uma das opções Unicode na lista de Codificações.\n"
 "Continuar?"
+
+#: progman.rc:30
+msgid "&New..."
+msgstr "&Novo..."
+
+#: progman.rc:31
+msgid "O&pen\tEnter"
+msgstr "A&brir\tEnter"
+
+#: progman.rc:32
+msgid "&Move...\tF7"
+msgstr "&Mover...\tF7"
+
+#: progman.rc:33
+msgid "&Copy...\tF8"
+msgstr "&Copiar...\tF8"
+
+#: progman.rc:34
+msgid "&Delete\tEntf"
+msgstr "E&xcluir\tEntf"
+
+#: progman.rc:35
+msgid "&Attributes...\tAlt+Enter"
+msgstr "&Atributos...\tAlt+Enter"
+
+#: progman.rc:37
+msgid "&Execute..."
+msgstr "&Executar..."
+
+#: progman.rc:39
+msgid "E&xit Windows..."
+msgstr "Sai&r do Windows..."
+
+#: progman.rc:41
+msgid "&Options"
+msgstr "&Opções"
+
+#: progman.rc:42
+msgid "&Arrange automatically"
+msgstr "&Auto organizar"
+
+#: progman.rc:43
+msgid "&Minimize on run"
+msgstr "&Minimizar na execução"
+
+#: progman.rc:44
+msgid "&Save settings on exit"
+msgstr "&Gravar alterações ao sair"
+
+#: progman.rc:46
+msgid "&Windows"
+msgstr "&Janelas"
+
+#: progman.rc:47
+msgid "&Overlapped\tShift+F5"
+msgstr "&Cascata\tShift+F5"
+
+#: progman.rc:48
+msgid "&Side by side\tShift+F4"
+msgstr "&Lado a lado \tShift+F4"
+
+#: progman.rc:49
+msgid "&Arrange Icons"
+msgstr "&Organizar ícones"
+
+#: progman.rc:56
+msgid "&Help on Help"
+msgstr "&Ajuda da ajuda"
+
+#: progman.rc:57
+msgid "&Tutorial"
+msgstr "&Tutorial"
+
+#: progman.rc:59
+msgid "&About Wine"
+msgstr "Acerca do &Wine"
+
+#: progman.rc:65
+msgid "Program Manager"
+msgstr "Gerênciador de programas"
+
+#: progman.rc:69
+msgid "Delete"
+msgstr "Excluir"
+
+#: progman.rc:70
+msgid "Delete group `%s' ?"
+msgstr "Excluir grupo '%s' ?"
+
+#: progman.rc:71
+msgid "Delete program `%s' ?"
+msgstr "Excluir programa '%s' ?"
+
+#: progman.rc:72
+msgid "Not implemented"
+msgstr "Não implementado"
+
+#: progman.rc:73
+msgid "Error reading `%s'."
+msgstr "Erro ao ler '%s'."
+
+#: progman.rc:74
+msgid "Error writing `%s'."
+msgstr "Erro ao escrever '%s'."
+
+#: progman.rc:77
+msgid ""
+"The group file `%s' cannot be opened.\n"
+"Should it be tried further on?"
+msgstr ""
+"O ficheiro de grupo '%s' não pode ser aberto.\n"
+"Deverá tentar outras vezes?"
+
+#: progman.rc:78
+msgid "Out of memory."
+msgstr "Sem memória."
+
+#: progman.rc:79
+msgid "Help not available."
+msgstr "Ajuda não disponível."
+
+#: progman.rc:80
+msgid "Unknown feature in %s"
+msgstr "Recurso desconhecido em %s"
+
+#: progman.rc:81
+msgid "File `%s' exists. Not overwritten."
+msgstr "Ficheiro '%s' existe. Não sobreescrever."
+
+#: progman.rc:82
+msgid "Save group as `%s to prevent overwriting original files."
+msgstr ""
+"Gravar grupo como '%s' para prevenir a sobreescrita dos ficheiros originais."
+
+#: progman.rc:85
+msgid "Programs"
+msgstr "Programas"
+
+#: progman.rc:86
+msgid "Libraries (*.dll)"
+msgstr "Bibliotecas (*.dll)"
+
+#: progman.rc:87
+msgid "Icon files"
+msgstr "Ficheiros de ícones"
+
+#: progman.rc:88
+msgid "Icons (*.ico)"
+msgstr "Ícones (*.ico)"
 
 #: reg.rc:27
 msgid ""
