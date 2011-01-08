@@ -31,6 +31,7 @@
 #include "winnls.h"
 #include "wine/list.h"
 #include "wine/unicode.h"
+#include "wine/rbtree.h"
 
 #include "cvconst.h"
 
@@ -348,6 +349,7 @@ struct module_format
     } u;
 };
 
+extern const struct wine_rb_functions source_rb_functions;
 struct module
 {
     struct process*             process;
@@ -382,6 +384,7 @@ struct module
     unsigned                    sources_used;
     unsigned                    sources_alloc;
     char*                       sources;
+    struct wine_rb_tree         sources_offsets_tree;
 };
 
 struct process 

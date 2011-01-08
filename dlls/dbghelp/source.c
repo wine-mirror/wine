@@ -29,21 +29,55 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
+static struct module*   rb_module;
+struct source_rb
+{
+    struct wine_rb_entry        entry;
+    unsigned                    source;
+};
+
+static void *source_rb_alloc(size_t size)
+{
+    return HeapAlloc(GetProcessHeap(), 0, size);
+}
+
+static void *source_rb_realloc(void *ptr, size_t size)
+{
+    return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
+}
+
+static void source_rb_free(void *ptr)
+{
+    HeapFree(GetProcessHeap(), 0, ptr);
+}
+
+static int source_rb_compare(const void *key, const struct wine_rb_entry *entry)
+{
+    const struct source_rb *t = WINE_RB_ENTRY_VALUE(entry, const struct source_rb, entry);
+
+    return strcmp((const char*)key, rb_module->sources + t->source);
+}
+
+const struct wine_rb_functions source_rb_functions =
+{
+    source_rb_alloc,
+    source_rb_realloc,
+    source_rb_free,
+    source_rb_compare,
+};
+
 /******************************************************************
  *		source_find
  *
  * check whether a source file has already been stored
  */
-static unsigned source_find(const struct module* module, const char* name)
+static unsigned source_find(const char* name)
 {
-    char*       ptr = module->sources;
+    struct wine_rb_entry*       e;
 
-    while (*ptr)
-    {
-        if (strcmp(ptr, name) == 0) return ptr - module->sources;
-        ptr += strlen(ptr) + 1;
-    }
-    return (unsigned)-1;
+    e = wine_rb_get(&rb_module->sources_offsets_tree, name);
+    if (!e) return -1;
+    return WINE_RB_ENTRY_VALUE(e, struct source_rb, entry)->source;
 }
 
 /******************************************************************
@@ -71,10 +105,13 @@ unsigned source_new(struct module* module, const char* base, const char* name)
         if (tmp[bsz - 1] != '/') tmp[bsz++] = '/';
         strcpy(&tmp[bsz], name);
     }
-    if (!module->sources || (ret = source_find(module, full)) == (unsigned)-1)
+    rb_module = module;
+    if (!module->sources || (ret = source_find(full)) == (unsigned)-1)
     {
         char* new;
         int len = strlen(full) + 1;
+        struct source_rb* rb;
+
         if (module->sources_used + len + 1 > module->sources_alloc)
         {
             if (!module->sources)
@@ -96,6 +133,11 @@ unsigned source_new(struct module* module, const char* base, const char* name)
         memcpy(module->sources + module->sources_used, full, len);
         module->sources_used += len;
         module->sources[module->sources_used] = '\0';
+        if ((rb = pool_alloc(&module->pool, sizeof(*rb))))
+        {
+            rb->source = ret;
+            wine_rb_put(&module->sources_offsets_tree, full, &rb->entry);
+        }
     }
 done:
     HeapFree(GetProcessHeap(), 0, tmp);
