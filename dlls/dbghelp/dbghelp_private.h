@@ -427,21 +427,10 @@ enum pdb_kind {PDB_JG, PDB_DS};
 struct pdb_lookup
 {
     const char*                 filename;
-    DWORD                       age;
     enum pdb_kind               kind;
-    union
-    {
-        struct
-        {
-            DWORD               timestamp;
-            struct PDB_JG_TOC*  toc;
-        } jg;
-        struct
-        {
-            GUID                guid;
-            struct PDB_DS_TOC*  toc;
-        } ds;
-    } u;
+    DWORD                       age;
+    DWORD                       timestamp;
+    GUID                        guid;
 };
 
 struct cpu_stack_walk
@@ -567,7 +556,7 @@ extern BOOL         pe_load_debug_directory(const struct process* pcs,
                                             const BYTE* mapping,
                                             const IMAGE_SECTION_HEADER* sectp, DWORD nsect,
                                             const IMAGE_DEBUG_DIRECTORY* dbg, int nDbg);
-extern BOOL         pdb_fetch_file_info(struct pdb_lookup* pdb_lookup);
+extern BOOL         pdb_fetch_file_info(const struct pdb_lookup* pdb_lookup, unsigned* matched);
 
 /* path.c */
 extern BOOL         path_find_symbol_file(const struct process* pcs, PCSTR full_path,

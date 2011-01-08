@@ -62,6 +62,25 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_msc);
 
 #define MAX_PATHNAME_LEN 1024
 
+struct pdb_file_info
+{
+    enum pdb_kind               kind;
+    DWORD                       age;
+    union
+    {
+        struct
+        {
+            DWORD               timestamp;
+            struct PDB_JG_TOC*  toc;
+        } jg;
+        struct
+        {
+            GUID                guid;
+            struct PDB_DS_TOC*  toc;
+        } ds;
+    } u;
+};
+
 /*========================================================================
  * Debug file access helper routines
  */
@@ -2103,27 +2122,27 @@ static void* pdb_read_ds_file(const struct PDB_DS_HEADER* pdb,
     return pdb_ds_read(pdb, block_list, toc->file_size[file_nr]);
 }
 
-static void* pdb_read_file(const char* image, const struct pdb_lookup* pdb_lookup,
+static void* pdb_read_file(const char* image, const struct pdb_file_info* pdb_file,
                            DWORD file_nr)
 {
-    switch (pdb_lookup->kind)
+    switch (pdb_file->kind)
     {
     case PDB_JG:
-        return pdb_read_jg_file((const struct PDB_JG_HEADER*)image, 
-                                pdb_lookup->u.jg.toc, file_nr);
+        return pdb_read_jg_file((const struct PDB_JG_HEADER*)image,
+                                pdb_file->u.jg.toc, file_nr);
     case PDB_DS:
         return pdb_read_ds_file((const struct PDB_DS_HEADER*)image,
-                                pdb_lookup->u.ds.toc, file_nr);
+                                pdb_file->u.ds.toc, file_nr);
     }
     return NULL;
 }
 
-static unsigned pdb_get_file_size(const struct pdb_lookup* pdb_lookup, DWORD file_nr)
+static unsigned pdb_get_file_size(const struct pdb_file_info* pdb_file, DWORD file_nr)
 {
-    switch (pdb_lookup->kind)
+    switch (pdb_file->kind)
     {
-    case PDB_JG: return pdb_lookup->u.jg.toc->file[file_nr].size;
-    case PDB_DS: return pdb_lookup->u.ds.toc->file_size[file_nr];
+    case PDB_JG: return pdb_file->u.jg.toc->file[file_nr].size;
+    case PDB_DS: return pdb_file->u.ds.toc->file_size[file_nr];
     }
     return 0;
 }
@@ -2133,19 +2152,21 @@ static void pdb_free(void* buffer)
     HeapFree(GetProcessHeap(), 0, buffer);
 }
 
-static void pdb_free_lookup(const struct pdb_lookup* pdb_lookup)
+static void pdb_free_file(struct pdb_file_info* pdb_file)
 {
-    switch (pdb_lookup->kind)
+    switch (pdb_file->kind)
     {
     case PDB_JG:
-        pdb_free(pdb_lookup->u.jg.toc);
+        pdb_free(pdb_file->u.jg.toc);
+        pdb_file->u.jg.toc = NULL;
         break;
     case PDB_DS:
-        pdb_free(pdb_lookup->u.ds.toc);
+        pdb_free(pdb_file->u.ds.toc);
+        pdb_file->u.ds.toc = NULL;
         break;
     }
 }
-    
+
 static void pdb_convert_types_header(PDB_TYPES* types, const BYTE* image)
 {
     memset(types, 0, sizeof(PDB_TYPES));
@@ -2232,11 +2253,11 @@ static HANDLE open_pdb_file(const struct process* pcs,
     switch (lookup->kind)
     {
     case PDB_JG:
-        ret = path_find_symbol_file(pcs, lookup->filename, NULL, lookup->u.jg.timestamp,
+        ret = path_find_symbol_file(pcs, lookup->filename, NULL, lookup->timestamp,
                                     lookup->age, dbg_file_path, &module->module.PdbUnmatched);
         break;
     case PDB_DS:
-        ret = path_find_symbol_file(pcs, lookup->filename, &lookup->u.ds.guid, 0,
+        ret = path_find_symbol_file(pcs, lookup->filename, &lookup->guid, 0,
                                     lookup->age, dbg_file_path, &module->module.PdbUnmatched);
         break;
     }
@@ -2251,12 +2272,13 @@ static HANDLE open_pdb_file(const struct process* pcs,
     return (h == INVALID_HANDLE_VALUE) ? NULL : h;
 }
 
-static void pdb_process_types(const struct msc_debug_info* msc_dbg, 
-                              const char* image, const struct pdb_lookup* pdb_lookup)
+static void pdb_process_types(const struct msc_debug_info* msc_dbg,
+                              const char* image,
+                              const struct pdb_file_info* pdb_file)
 {
     BYTE*       types_image = NULL;
 
-    types_image = pdb_read_file(image, pdb_lookup, 2);
+    types_image = pdb_read_file(image, pdb_file, 2);
     if (types_image)
     {
         PDB_TYPES               types;
@@ -2309,25 +2331,27 @@ static const char       PDB_DS_IDENT[] = "Microsoft C/C++ MSF 7.00\r\n\032DS\0";
  *		pdb_init
  *
  * Tries to load a pdb file
- * if do_fill is TRUE, then it just fills pdb_lookup with the information of the
- *      file
- * if do_fill is FALSE, then it just checks that the kind of PDB (stored in
- *      pdb_lookup) matches what's really in the file
+ * 'matched' is filled with the number of correct matches for this file:
+ *      - age counts for one
+ *      - timestamp or guid depending on kind counts for one
+ * a wrong kind of file returns FALSE (FIXME ?)
  */
-static BOOL pdb_init(struct pdb_lookup* pdb_lookup, const char* image, BOOL do_fill)
+static BOOL pdb_init(const struct pdb_lookup* pdb_lookup, struct pdb_file_info* pdb_file,
+                     const char* image, unsigned* matched)
 {
     BOOL        ret = TRUE;
 
     /* check the file header, and if ok, load the TOC */
     TRACE("PDB(%s): %.40s\n", pdb_lookup->filename, debugstr_an(image, 40));
 
+    *matched = 0;
     if (!memcmp(image, PDB_JG_IDENT, sizeof(PDB_JG_IDENT)))
     {
         const struct PDB_JG_HEADER* pdb = (const struct PDB_JG_HEADER*)image;
         struct PDB_JG_ROOT*         root;
 
-        pdb_lookup->u.jg.toc = pdb_jg_read(pdb, pdb->toc_block, pdb->toc.size);
-        root = pdb_read_jg_file(pdb, pdb_lookup->u.jg.toc, 1);
+        pdb_file->u.jg.toc = pdb_jg_read(pdb, pdb->toc_block, pdb->toc.size);
+        root = pdb_read_jg_file(pdb, pdb_file->u.jg.toc, 1);
         if (!root)
         {
             ERR("-Unable to get root from .PDB in %s\n", pdb_lookup->filename);
@@ -2343,19 +2367,22 @@ static BOOL pdb_init(struct pdb_lookup* pdb_lookup, const char* image, BOOL do_f
         default:
             ERR("-Unknown root block version %d\n", root->Version);
         }
-        if (do_fill)
+        if (pdb_lookup->kind != PDB_JG)
         {
-            pdb_lookup->kind = PDB_JG;
-            pdb_lookup->u.jg.timestamp = root->TimeDateStamp;
-            pdb_lookup->age = root->Age;
+            WARN("Found %s, but wrong PDB kind\n", pdb_lookup->filename);
+            return FALSE;
         }
-        else if (pdb_lookup->kind != PDB_JG ||
-                 pdb_lookup->u.jg.timestamp != root->TimeDateStamp ||
-                 pdb_lookup->age != root->Age)
-            ret = FALSE;
-        TRACE("found JG/%c for %s: age=%x timestamp=%x\n",
-              do_fill ? 'f' : '-', pdb_lookup->filename, root->Age,
-              root->TimeDateStamp);
+        pdb_file->kind = PDB_JG;
+        pdb_file->u.jg.timestamp = root->TimeDateStamp;
+        pdb_file->age = root->Age;
+        if (root->TimeDateStamp == pdb_lookup->timestamp) (*matched)++;
+        else WARN("Found %s, but wrong signature: %08x %08x\n",
+                  pdb_lookup->filename, root->TimeDateStamp, pdb_lookup->timestamp);
+        if (root->Age == pdb_lookup->age) (*matched)++;
+        else WARN("Found %s, but wrong age: %08x %08x\n",
+                  pdb_lookup->filename, root->Age, pdb_lookup->age);
+        TRACE("found JG for %s: age=%x timestamp=%x\n",
+              pdb_lookup->filename, root->Age, root->TimeDateStamp);
         pdb_free(root);
     }
     else if (!memcmp(image, PDB_DS_IDENT, sizeof(PDB_DS_IDENT)))
@@ -2363,11 +2390,11 @@ static BOOL pdb_init(struct pdb_lookup* pdb_lookup, const char* image, BOOL do_f
         const struct PDB_DS_HEADER* pdb = (const struct PDB_DS_HEADER*)image;
         struct PDB_DS_ROOT*         root;
 
-        pdb_lookup->u.ds.toc = 
+        pdb_file->u.ds.toc =
             pdb_ds_read(pdb, 
                         (const DWORD*)((const char*)pdb + pdb->toc_page * pdb->block_size), 
                         pdb->toc_size);
-        root = pdb_read_ds_file(pdb, pdb_lookup->u.ds.toc, 1);
+        root = pdb_read_ds_file(pdb, pdb_file->u.ds.toc, 1);
         if (!root)
         {
             ERR("-Unable to get root from .PDB in %s\n", pdb_lookup->filename);
@@ -2380,19 +2407,18 @@ static BOOL pdb_init(struct pdb_lookup* pdb_lookup, const char* image, BOOL do_f
         default:
             ERR("-Unknown root block version %d\n", root->Version);
         }
-        if (do_fill)
-        {
-            pdb_lookup->kind = PDB_DS;
-            pdb_lookup->u.ds.guid = root->guid;
-            pdb_lookup->age = root->Age;
-        }
-        else if (pdb_lookup->kind != PDB_DS ||
-                 memcmp(&pdb_lookup->u.ds.guid, &root->guid, sizeof(GUID)) ||
-                 pdb_lookup->age != root->Age)
-            ret = FALSE;
-        TRACE("found DS/%c for %s: age=%x guid=%s\n",
-              do_fill ? 'f' : '-', pdb_lookup->filename, root->Age,
-              debugstr_guid(&root->guid));
+        pdb_file->kind = PDB_DS;
+        pdb_file->u.ds.guid = root->guid;
+        pdb_file->age = root->Age;
+        if (!memcmp(&root->guid, &pdb_lookup->guid, sizeof(GUID))) (*matched)++;
+        else WARN("Found %s, but wrong GUID: %s %s\n",
+                  pdb_lookup->filename, debugstr_guid(&root->guid),
+                     debugstr_guid(&pdb_lookup->guid));
+        if (root->Age == pdb_lookup->age) (*matched)++;
+        else WARN("Found %s, but wrong age: %08x %08x\n",
+                  pdb_lookup->filename, root->Age, pdb_lookup->age);
+        TRACE("found DS for %s: age=%x guid=%s\n",
+              pdb_lookup->filename, root->Age, debugstr_guid(&root->guid));
         pdb_free(root);
     }
 
@@ -2400,18 +2426,18 @@ static BOOL pdb_init(struct pdb_lookup* pdb_lookup, const char* image, BOOL do_f
     {
         int     i, num_files;
         
-        switch (pdb_lookup->kind)
+        switch (pdb_file->kind)
         {
-        case PDB_JG: num_files = pdb_lookup->u.jg.toc->num_files; break;
-        case PDB_DS: num_files = pdb_lookup->u.ds.toc->num_files; break;
+        case PDB_JG: num_files = pdb_file->u.jg.toc->num_files; break;
+        case PDB_DS: num_files = pdb_file->u.ds.toc->num_files; break;
         }
 
         for (i = 1; i < num_files; i++)
         {
-            unsigned char* x = pdb_read_file(image, pdb_lookup, i);
+            unsigned char* x = pdb_read_file(image, pdb_file, i);
             FIXME("********************** [%u]: size=%08x\n",
-                  i, pdb_get_file_size(pdb_lookup, i));
-            dump(x, pdb_get_file_size(pdb_lookup, i));
+                  i, pdb_get_file_size(pdb_file, i));
+            dump(x, pdb_get_file_size(pdb_file, i));
             pdb_free(x);
         }
     }
@@ -2420,7 +2446,8 @@ static BOOL pdb_init(struct pdb_lookup* pdb_lookup, const char* image, BOOL do_f
 
 static BOOL pdb_process_internal(const struct process* pcs, 
                                  const struct msc_debug_info* msc_dbg,
-                                 struct pdb_lookup* pdb_lookup,
+                                 const struct pdb_lookup* pdb_lookup,
+                                 struct pdb_file_info* pdb_file,
                                  unsigned module_index);
 
 static void pdb_process_symbol_imports(const struct process* pcs, 
@@ -2456,17 +2483,18 @@ static void pdb_process_symbol_imports(const struct process* pcs,
             else
             {
                 struct pdb_lookup       imp_pdb_lookup;
+                struct pdb_file_info    pdb_file;
 
                 /* FIXME: this is an import of a JG PDB file
                  * how's a DS PDB handled ?
                  */
                 imp_pdb_lookup.filename = imp->filename;
                 imp_pdb_lookup.kind = PDB_JG;
-                imp_pdb_lookup.u.jg.timestamp = imp->TimeDateStamp;
+                imp_pdb_lookup.timestamp = imp->TimeDateStamp;
                 imp_pdb_lookup.age = imp->Age;
                 TRACE("got for %s: age=%u ts=%x\n",
                       imp->filename, imp->Age, imp->TimeDateStamp);
-                pdb_process_internal(pcs, msc_dbg, &imp_pdb_lookup, i);
+                pdb_process_internal(pcs, msc_dbg, &imp_pdb_lookup, &pdb_file, i);
             }
             i++;
             imp = (const PDB_SYMBOL_IMPORT*)((const char*)first + ((ptr - (const char*)first + strlen(ptr) + 1 + 3) & ~3));
@@ -2475,12 +2503,12 @@ static void pdb_process_symbol_imports(const struct process* pcs,
     cv_current_module = &cv_zmodules[(module_index == -1) ? 0 : module_index];
     if (cv_current_module->allowed) FIXME("Already allowed ??\n");
     cv_current_module->allowed = TRUE;
-    pdb_process_types(msc_dbg, image, pdb_lookup);
 }
 
 static BOOL pdb_process_internal(const struct process* pcs, 
                                  const struct msc_debug_info* msc_dbg,
-                                 struct pdb_lookup* pdb_lookup, 
+                                 const struct pdb_lookup* pdb_lookup,
+                                 struct pdb_file_info* pdb_file,
                                  unsigned module_index)
 {
     BOOL        ret = FALSE;
@@ -2489,6 +2517,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
     BYTE*       symbols_image = NULL;
     char*       files_image = NULL;
     DWORD       files_size = 0;
+    unsigned    matched;
 
     TRACE("Processing PDB file %s\n", pdb_lookup->filename);
 
@@ -2500,9 +2529,12 @@ static BOOL pdb_process_internal(const struct process* pcs,
         WARN("Unable to open .PDB file: %s\n", pdb_lookup->filename);
         goto leave;
     }
-    pdb_init(pdb_lookup, image, FALSE);
+    if (!pdb_init(pdb_lookup, pdb_file, image, &matched) || matched != 2)
+    {
+        goto leave;
+    }
 
-    symbols_image = pdb_read_file(image, pdb_lookup, 3);
+    symbols_image = pdb_read_file(image, pdb_file, 3);
     if (symbols_image)
     {
         PDB_SYMBOLS symbols;
@@ -2524,7 +2556,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
                 symbols.version, symbols.version);
         }
 
-        files_image = pdb_read_file(image, pdb_lookup, 12);   /* FIXME: really fixed ??? */
+        files_image = pdb_read_file(image, pdb_file, 12);   /* FIXME: really fixed ??? */
         if (files_image)
         {
             if (*(const DWORD*)files_image == 0xeffeeffe)
@@ -2540,13 +2572,14 @@ static BOOL pdb_process_internal(const struct process* pcs,
         }
 
         pdb_process_symbol_imports(pcs, msc_dbg, &symbols, symbols_image, image, pdb_lookup, module_index);
+        pdb_process_types(msc_dbg, image, pdb_file);
 
         /* Read global symbol table */
-        globalimage = pdb_read_file(image, pdb_lookup, symbols.gsym_file);
+        globalimage = pdb_read_file(image, pdb_file, symbols.gsym_file);
         if (globalimage)
         {
             codeview_snarf(msc_dbg, globalimage, 0,
-                           pdb_get_file_size(pdb_lookup, symbols.gsym_file), FALSE);
+                           pdb_get_file_size(pdb_file, symbols.gsym_file), FALSE);
         }
 
         /* Read per-module symbols' tables */
@@ -2560,7 +2593,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
             HeapValidate(GetProcessHeap(), 0, NULL);
             pdb_convert_symbol_file(&symbols, &sfile, &size, file);
 
-            modimage = pdb_read_file(image, pdb_lookup, sfile.file);
+            modimage = pdb_read_file(image, pdb_file, sfile.file);
             if (modimage)
             {
                 if (sfile.symbol_size)
@@ -2574,7 +2607,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
                                            pdb_lookup->kind == PDB_JG);
                 if (files_image)
                     codeview_snarf_linetab2(msc_dbg, modimage + sfile.symbol_size + sfile.lineno_size,
-                                   pdb_get_file_size(pdb_lookup, sfile.file) - sfile.symbol_size - sfile.lineno_size,
+                                   pdb_get_file_size(pdb_file, sfile.file) - sfile.symbol_size - sfile.lineno_size,
                                    files_image + 12, files_size);
 
                 pdb_free(modimage);
@@ -2587,7 +2620,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
         if (globalimage)
         {
             codeview_snarf_public(msc_dbg, globalimage, 0,
-                                  pdb_get_file_size(pdb_lookup, symbols.gsym_file));
+                                  pdb_get_file_size(pdb_file, symbols.gsym_file));
 
             pdb_free(globalimage);
         }
@@ -2601,7 +2634,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
     /* Cleanup */
     pdb_free(symbols_image);
     pdb_free(files_image);
-    pdb_free_lookup(pdb_lookup);
+    pdb_free_file(pdb_file);
 
     if (image) UnmapViewOfFile(image);
     if (hMap) CloseHandle(hMap);
@@ -2614,20 +2647,21 @@ static BOOL pdb_process_file(const struct process* pcs,
                              const struct msc_debug_info* msc_dbg,
                              struct pdb_lookup* pdb_lookup)
 {
-    BOOL        ret;
+    BOOL                        ret;
+    struct pdb_file_info        pdb_file;
 
     memset(cv_zmodules, 0, sizeof(cv_zmodules));
     codeview_init_basic_types(msc_dbg->module);
-    ret = pdb_process_internal(pcs, msc_dbg, pdb_lookup, -1);
+    ret = pdb_process_internal(pcs, msc_dbg, pdb_lookup, &pdb_file, -1);
     codeview_clear_type_table();
     if (ret)
     {
         msc_dbg->module->module.SymType = SymCv;
         if (pdb_lookup->kind == PDB_JG)
-            msc_dbg->module->module.PdbSig = pdb_lookup->u.jg.timestamp;
+            msc_dbg->module->module.PdbSig = pdb_file.u.jg.timestamp;
         else
-            msc_dbg->module->module.PdbSig70 = pdb_lookup->u.ds.guid;
-        msc_dbg->module->module.PdbAge = pdb_lookup->age;
+            msc_dbg->module->module.PdbSig70 = pdb_file.u.ds.guid;
+        msc_dbg->module->module.PdbAge = pdb_file.age;
         MultiByteToWideChar(CP_ACP, 0, pdb_lookup->filename, -1,
                             msc_dbg->module->module.LoadedPdbName,
                             sizeof(msc_dbg->module->module.LoadedPdbName) / sizeof(WCHAR));
@@ -2641,11 +2675,12 @@ static BOOL pdb_process_file(const struct process* pcs,
     return ret;
 }
 
-BOOL pdb_fetch_file_info(struct pdb_lookup* pdb_lookup)
+BOOL pdb_fetch_file_info(const struct pdb_lookup* pdb_lookup, unsigned* matched)
 {
     HANDLE              hFile, hMap = NULL;
     char*               image = NULL;
     BOOL                ret = TRUE;
+    struct pdb_file_info pdb_file;
 
     if ((hFile = CreateFileA(pdb_lookup->filename, GENERIC_READ, FILE_SHARE_READ, NULL,
                              OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)) == INVALID_HANDLE_VALUE ||
@@ -2657,8 +2692,8 @@ BOOL pdb_fetch_file_info(struct pdb_lookup* pdb_lookup)
     }
     else
     {
-        pdb_init(pdb_lookup, image, TRUE);
-        pdb_free_lookup(pdb_lookup);
+        ret = pdb_init(pdb_lookup, &pdb_file, image, matched);
+        pdb_free_file(&pdb_file);
     }
 
     if (image) UnmapViewOfFile(image);
@@ -2772,8 +2807,7 @@ static BOOL codeview_process_info(const struct process* pcs,
         const CODEVIEW_PDB_DATA* pdb = (const CODEVIEW_PDB_DATA*)msc_dbg->root;
         pdb_lookup.filename = pdb->name;
         pdb_lookup.kind = PDB_JG;
-        pdb_lookup.u.jg.timestamp = pdb->timestamp;
-        pdb_lookup.u.jg.toc = NULL;
+        pdb_lookup.timestamp = pdb->timestamp;
         pdb_lookup.age = pdb->age;
         ret = pdb_process_file(pcs, msc_dbg, &pdb_lookup);
         break;
@@ -2786,8 +2820,7 @@ static BOOL codeview_process_info(const struct process* pcs,
               wine_dbgstr_guid(&rsds->guid), rsds->age, rsds->name);
         pdb_lookup.filename = rsds->name;
         pdb_lookup.kind = PDB_DS;
-        pdb_lookup.u.ds.guid = rsds->guid;
-        pdb_lookup.u.ds.toc = NULL;
+        pdb_lookup.guid = rsds->guid;
         pdb_lookup.age = rsds->age;
         ret = pdb_process_file(pcs, msc_dbg, &pdb_lookup);
         break;
