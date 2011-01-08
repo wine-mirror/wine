@@ -1,7 +1,7 @@
 /*
  * Korean resources for winspool
  *
- * Copyright 2005 YunSong Hwang
+ * Copyright 2005,2011 YunSong Hwang
  * 
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,22 +20,24 @@
 
 #include "wspool.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 FILENAME_DIALOG DIALOG LOADONCALL MOVEABLE DISCARDABLE 6, 18, 245, 47
 STYLE DS_CONTEXTHELP | DS_MODALFRAME | DS_SETFONT | DS_SETFOREGROUND | WS_POPUPWINDOW | WS_VISIBLE | WS_CAPTION
-CAPTION "ÆÄÀÏ·Î ÀÎ¼â"
+CAPTION "íŒŒì¼ë¡œ ì¸ì‡„"
 FONT 9, "MS Shell Dlg"
 BEGIN
-    LTEXT "Ãâ·Â ÆÄÀÏ ÀÌ¸§(&O):", -1, 7, 13, 194, 13, WS_VISIBLE
+    LTEXT "ì¶œë ¥ íŒŒì¼ ì´ë¦„(&O):", -1, 7, 13, 194, 13, WS_VISIBLE
     EDITTEXT EDITBOX, 6, 28, 174, 12, WS_VISIBLE | ES_AUTOHSCROLL
-    DEFPUSHBUTTON "È®ÀÎ", IDOK, 199, 10, 40, 14, WS_VISIBLE
-    PUSHBUTTON "Ãë¼Ò", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
+    DEFPUSHBUTTON "í™•ì¸", IDOK, 199, 10, 40, 14, WS_VISIBLE
+    PUSHBUTTON "ì·¨ì†Œ", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
 
 STRINGTABLE DISCARDABLE
 {
-    IDS_CAPTION "Áö¿ª Æ÷Æ®"
-    IDS_FILE_EXISTS "Ãâ·Â ÆÄÀÏÀº Á¸ÀçÇÕ´Ï´Ù. 'È®ÀÎ'À» ´©¸£¸é µ¤¾î¾²¿©Áú°Ì´Ï´Ù."
-    IDS_CANNOT_OPEN "Ãâ·Â ÆÄÀÏÀ» ¸¸µé¼ö ¾ø½À´Ï´Ù."
+    IDS_CAPTION "ì§€ì—­ í¬íŠ¸"
+    IDS_FILE_EXISTS "ì¶œë ¥ íŒŒì¼ì€ ì¡´ìž¬í•©ë‹ˆë‹¤. 'í™•ì¸'ì„ ëˆ„ë¥´ë©´ ë®ì–´ì“°ì—¬ì§ˆê²ë‹ˆë‹¤."
+    IDS_CANNOT_OPEN "ì¶œë ¥ íŒŒì¼ì„ ë§Œë“¤ìˆ˜ ì—†ìŠµë‹ˆë‹¤."
 }
