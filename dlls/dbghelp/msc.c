@@ -66,6 +66,8 @@ struct pdb_file_info
 {
     enum pdb_kind               kind;
     DWORD                       age;
+    HANDLE                      hMap;
+    const char*                 image;
     union
     {
         struct
@@ -2130,16 +2132,16 @@ static void* pdb_read_ds_file(const struct PDB_DS_HEADER* pdb,
     return pdb_ds_read(pdb, block_list, toc->file_size[file_nr]);
 }
 
-static void* pdb_read_file(const char* image, const struct pdb_file_info* pdb_file,
+static void* pdb_read_file(const struct pdb_file_info* pdb_file,
                            DWORD file_nr)
 {
     switch (pdb_file->kind)
     {
     case PDB_JG:
-        return pdb_read_jg_file((const struct PDB_JG_HEADER*)image,
+        return pdb_read_jg_file((const struct PDB_JG_HEADER*)pdb_file->image,
                                 pdb_file->u.jg.toc, file_nr);
     case PDB_DS:
-        return pdb_read_ds_file((const struct PDB_DS_HEADER*)image,
+        return pdb_read_ds_file((const struct PDB_DS_HEADER*)pdb_file->image,
                                 pdb_file->u.ds.toc, file_nr);
     }
     return NULL;
@@ -2180,7 +2182,13 @@ static void pdb_module_remove(struct process* pcsn, struct module_format* modfmt
     unsigned    i;
 
     for (i = 0; i < modfmt->u.pdb_info->used_subfiles; i++)
+    {
         pdb_free_file(&modfmt->u.pdb_info->pdb_files[i]);
+        if (modfmt->u.pdb_info->pdb_files[i].image)
+            UnmapViewOfFile(modfmt->u.pdb_info->pdb_files[i].image);
+        if (modfmt->u.pdb_info->pdb_files[i].hMap)
+            CloseHandle(modfmt->u.pdb_info->pdb_files[i].hMap);
+    }
     HeapFree(GetProcessHeap(), 0, modfmt);
 }
 
@@ -2259,11 +2267,11 @@ static void pdb_convert_symbol_file(const PDB_SYMBOLS* symbols,
     }
 }
 
-static HANDLE open_pdb_file(const struct process* pcs,
-                            const struct pdb_lookup* lookup,
-                            struct module* module)
+static HANDLE map_pdb_file(const struct process* pcs,
+                           const struct pdb_lookup* lookup,
+                           struct module* module)
 {
-    HANDLE      h;
+    HANDLE      hFile, hMap = NULL;
     char        dbg_file_path[MAX_PATH];
     BOOL        ret = FALSE;
 
@@ -2283,19 +2291,21 @@ static HANDLE open_pdb_file(const struct process* pcs,
         WARN("\tCouldn't find %s\n", lookup->filename);
         return NULL;
     }
-    h = CreateFileA(dbg_file_path, GENERIC_READ, FILE_SHARE_READ, NULL, 
-                    OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    TRACE("%s: %s returns %p\n", lookup->filename, dbg_file_path, h);
-    return (h == INVALID_HANDLE_VALUE) ? NULL : h;
+    if ((hFile = CreateFileA(dbg_file_path, GENERIC_READ, FILE_SHARE_READ, NULL,
+                             OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)) != INVALID_HANDLE_VALUE)
+    {
+        hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
+        CloseHandle(hFile);
+    }
+    return hMap;
 }
 
 static void pdb_process_types(const struct msc_debug_info* msc_dbg,
-                              const char* image,
                               const struct pdb_file_info* pdb_file)
 {
     BYTE*       types_image = NULL;
 
-    types_image = pdb_read_file(image, pdb_file, 2);
+    types_image = pdb_read_file(pdb_file, 2);
     if (types_image)
     {
         PDB_TYPES               types;
@@ -2451,7 +2461,7 @@ static BOOL pdb_init(const struct pdb_lookup* pdb_lookup, struct pdb_file_info* 
 
         for (i = 1; i < num_files; i++)
         {
-            unsigned char* x = pdb_read_file(image, pdb_file, i);
+            unsigned char* x = pdb_read_file(pdb_file, i);
             FIXME("********************** [%u]: size=%08x\n",
                   i, pdb_get_file_size(pdb_file, i));
             dump(x, pdb_get_file_size(pdb_file, i));
@@ -2536,8 +2546,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
                                  struct pdb_module_info* pdb_module_info,
                                  unsigned module_index)
 {
-    BOOL        ret = FALSE;
-    HANDLE      hFile, hMap = NULL;
+    HANDLE      hMap = NULL;
     char*       image = NULL;
     BYTE*       symbols_image = NULL;
     char*       files_image = NULL;
@@ -2549,19 +2558,23 @@ static BOOL pdb_process_internal(const struct process* pcs,
 
     pdb_file = &pdb_module_info->pdb_files[module_index == -1 ? 0 : module_index];
     /* Open and map() .PDB file */
-    if ((hFile = open_pdb_file(pcs, pdb_lookup, msc_dbg->module)) == NULL ||
-        ((hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) == NULL) ||
+    if ((hMap = map_pdb_file(pcs, pdb_lookup, msc_dbg->module)) == NULL ||
         ((image = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) == NULL))
     {
         WARN("Unable to open .PDB file: %s\n", pdb_lookup->filename);
-        goto leave;
+        CloseHandle(hMap);
+        return FALSE;
     }
     if (!pdb_init(pdb_lookup, pdb_file, image, &matched) || matched != 2)
     {
-        goto leave;
+        CloseHandle(hMap);
+        UnmapViewOfFile(image);
+        return FALSE;
     }
 
-    symbols_image = pdb_read_file(image, pdb_file, 3);
+    pdb_file->hMap = hMap;
+    pdb_file->image = image;
+    symbols_image = pdb_read_file(pdb_file, 3);
     if (symbols_image)
     {
         PDB_SYMBOLS symbols;
@@ -2583,7 +2596,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
                 symbols.version, symbols.version);
         }
 
-        files_image = pdb_read_file(image, pdb_file, 12);   /* FIXME: really fixed ??? */
+        files_image = pdb_read_file(pdb_file, 12);   /* FIXME: really fixed ??? */
         if (files_image)
         {
             if (*(const DWORD*)files_image == 0xeffeeffe)
@@ -2600,10 +2613,10 @@ static BOOL pdb_process_internal(const struct process* pcs,
 
         pdb_process_symbol_imports(pcs, msc_dbg, &symbols, symbols_image, image,
                                    pdb_lookup, pdb_module_info, module_index);
-        pdb_process_types(msc_dbg, image, pdb_file);
+        pdb_process_types(msc_dbg, pdb_file);
 
         /* Read global symbol table */
-        globalimage = pdb_read_file(image, pdb_file, symbols.gsym_file);
+        globalimage = pdb_read_file(pdb_file, symbols.gsym_file);
         if (globalimage)
         {
             codeview_snarf(msc_dbg, globalimage, 0,
@@ -2621,7 +2634,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
             HeapValidate(GetProcessHeap(), 0, NULL);
             pdb_convert_symbol_file(&symbols, &sfile, &size, file);
 
-            modimage = pdb_read_file(image, pdb_file, sfile.file);
+            modimage = pdb_read_file(pdb_file, sfile.file);
             if (modimage)
             {
                 if (sfile.symbol_size)
@@ -2655,19 +2668,11 @@ static BOOL pdb_process_internal(const struct process* pcs,
     else
         pdb_process_symbol_imports(pcs, msc_dbg, NULL, NULL, image,
                                    pdb_lookup, pdb_module_info, module_index);
-    ret = TRUE;
 
- leave:
-    /* Cleanup */
     pdb_free(symbols_image);
     pdb_free(files_image);
-    pdb_free_file(pdb_file);
 
-    if (image) UnmapViewOfFile(image);
-    if (hMap) CloseHandle(hMap);
-    if (hFile) CloseHandle(hFile);
-
-    return ret;
+    return TRUE;
 }
 
 static BOOL pdb_process_file(const struct process* pcs, 
@@ -2720,7 +2725,7 @@ BOOL pdb_fetch_file_info(const struct pdb_lookup* pdb_lookup, unsigned* matched)
 {
     HANDLE              hFile, hMap = NULL;
     char*               image = NULL;
-    BOOL                ret = TRUE;
+    BOOL                ret;
     struct pdb_file_info pdb_file;
 
     if ((hFile = CreateFileA(pdb_lookup->filename, GENERIC_READ, FILE_SHARE_READ, NULL,
