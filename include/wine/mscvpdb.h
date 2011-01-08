@@ -1917,6 +1917,22 @@ typedef struct _PDB_SYMBOLS
     DWORD       resvd[5];
 } PDB_SYMBOLS, *PPDB_SYMBOLS;
 
+typedef struct _PDB_FPO_DATA
+{
+    DWORD       start;
+    DWORD       func_size;
+    DWORD       locals_size;
+    DWORD       params_size;
+    DWORD       maxstack_size;
+    DWORD       str_offset;
+    WORD        prolog_size;
+    WORD        savedregs_size;
+#define PDB_FPO_DFL_SEH         0x00000001
+#define PDB_FPO_DFL_EH          0x00000002
+#define PDB_FPO_DFL_IN_BLOCK    0x00000004
+    DWORD       flags;
+} PDB_FPO_DATA;
+
 #include "poppack.h"
 
 /* ----------------------------------------------

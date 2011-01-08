@@ -508,6 +508,59 @@ static void pdb_dump_types(struct pdb_reader* reader)
     free(types);
 }
 
+static void pdb_dump_fpo(struct pdb_reader* reader)
+{
+    FPO_DATA*           fpo;
+    PDB_FPO_DATA*       fpoext;
+    unsigned            i, size, strsize;
+    char*               strbase;
+    const char*         frame_type[4] = {"Fpo", "Trap", "Tss", "NonFpo"};
+
+    fpo = reader->read_file(reader, 5);
+    size = pdb_get_file_size(reader, 5);
+    if (fpo && (size % sizeof(*fpo)) == 0)
+    {
+        size /= sizeof(*fpo);
+        printf("FPO data:\n\t   Start   Length #loc #pmt #prolog #reg frame  SEH /BP\n");
+        for (i = 0; i < size; i++)
+        {
+            printf("\t%08x %08x %4d %4d %7d %4d %6s  %c   %c\n",
+                   fpo[i].ulOffStart, fpo[i].cbProcSize, fpo[i].cdwLocals, fpo[i].cdwParams,
+                   fpo[i].cbProlog, fpo[i].cbRegs, frame_type[fpo[i].cbFrame],
+                   fpo[i].fHasSEH ? 'Y' : 'N', fpo[i].fUseBP ? 'Y' : 'N');
+        }
+    }
+    free(fpo);
+
+    strbase = reader->read_file(reader, 12);   /* FIXME: really fixed ??? */
+    if (!strbase) return;
+
+    if (*(const DWORD*)strbase != 0xeffeeffe)
+    {
+        printf("wrong header %x expecting 0xeffeeffe\n", *(const DWORD*)strbase);
+        free(strbase);
+        return;
+    }
+    strsize = *(const DWORD*)(strbase + 8);
+    fpoext = reader->read_file(reader, 10);
+    size = pdb_get_file_size(reader, 10);
+    if (fpoext && (size % sizeof(*fpoext)) == 0)
+    {
+        size /= sizeof(*fpoext);
+        printf("FPO data (extended):\n"
+               "\t   Start   Length   Locals   Params MaxStack Prolog #SavedRegs    Flags Command\n");
+        for (i = 0; i < size; i++)
+        {
+            printf("\t%08x %08x %8x %8x %8x %6x   %8x %08x %s\n",
+                   fpoext[i].start, fpoext[i].func_size, fpoext[i].locals_size, fpoext[i].params_size,
+                   fpoext[i].maxstack_size, fpoext[i].prolog_size, fpoext[i].savedregs_size, fpoext[i].flags,
+                   fpoext[i].str_offset < strsize ? strbase + 12 + fpoext[i].str_offset : "<out of bounds>");
+        }
+    }
+    free(fpoext);
+    free(strbase);
+}
+
 static const char       pdb2[] = "Microsoft C/C++ program database 2.00";
 
 static void pdb_jg_dump(void)
@@ -662,10 +715,14 @@ static void pdb_ds_dump(void)
            reader.u.ds.header->toc_page);
 
     /* files:
-     * 0: JG says old toc pages, I'd say free pages (tbc, low prio)
-     * 1: root structure
-     * 2: types
-     * 3: modules
+     *  0: JG says old toc pages, I'd say free pages (tbc, low prio)
+     *  1: root structure
+     *  2: types
+     *  3: modules
+     *  5: FPO data
+     *  8: segments
+     * 10: extended FPO data
+     * 12: string table (FPO unwinder, files for linetab2...)
      */
     root = reader.read_file(&reader, 1);
     if (root)
@@ -692,6 +749,7 @@ static void pdb_ds_dump(void)
 
     pdb_dump_types(&reader);
     pdb_dump_symbols(&reader);
+    pdb_dump_fpo(&reader);
 
     pdb_exit(&reader);
 }
