@@ -70,10 +70,10 @@ static IDirect3DDevice9 *init_d3d9(IDirect3DVertexDeclaration9 **vdeclaration,
     };
 
     static const char *vshader_passthru_hlsl =
-        "float4 vshader(float4 pos: POSITION, inout float2 texcoord: TEXCOORD0): POSITION \
-         {                                                                                \
-            return pos;                                                                   \
-         }";
+        "float4 vshader(float4 pos: POSITION, inout float2 texcoord: TEXCOORD0): POSITION\n"
+        "{\n"
+        "   return pos;\n"
+        "}";
 
     IDirect3D9 *d3d9_ptr;
     IDirect3DDevice9 *device_ptr = NULL;
@@ -301,14 +301,14 @@ static void test_swizzle(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_
     };
 
     static const char *swizzle_test_shader =
-        "uniform float4 color;                  \
-        float4 test(): COLOR                    \
-        {                                       \
-            float4 ret = color;                 \
-            ret.gb = ret.ra;                    \
-            ret.ra = float2(0.0101, 0.0404);    \
-            return ret;                         \
-        }";
+        "uniform float4 color;\n"
+        "float4 test(): COLOR\n"
+        "{\n"
+        "    float4 ret = color;\n"
+        "    ret.gb = ret.ra;\n"
+        "    ret.ra = float2(0.0101, 0.0404);\n"
+        "    return ret;\n"
+        "}";
 
     ID3DXConstantTable *constants;
     IDirect3DPixelShader9 *pshader;
@@ -339,14 +339,14 @@ static void test_math(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geo
     };
 
     static const char *order_of_operations_shader =
-        "float4 test(uniform float u, uniform float v, uniform float w, uniform float x, \
-                     uniform float y, uniform float z): COLOR                            \
-        {                                                                                \
-            return float4(x * y - z / w + --u / -v,                                      \
-                    z * x / y + w / -v,                                                  \
-                    u + v - w,                                                           \
-                    x / y / w);                                                          \
-        }";
+        "float4 test(uniform float u, uniform float v, uniform float w, uniform float x,\n"
+        "            uniform float y, uniform float z): COLOR\n"
+        "{\n"
+        "    return float4(x * y - z / w + --u / -v,\n"
+        "            z * x / y + w / -v,\n"
+        "            u + v - w,\n"
+        "            x / y / w);\n"
+        "}";
 
     ID3DXConstantTable *constants;
     IDirect3DPixelShader9 *pshader;
@@ -383,13 +383,13 @@ static void test_conditionals(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *
     };
 
     static const char *if_greater_shader =
-        "float4 test(float2 pos: TEXCOORD0): COLOR \
-        {                                          \
-            if((pos.x * 32.0) > 20.0)              \
-                return float4(0.1, 0.2, 0.3, 0.4); \
-            else                                   \
-                return float4(0.9, 0.8, 0.7, 0.6); \
-        }";
+        "float4 test(float2 pos: TEXCOORD0): COLOR\n"
+        "{\n"
+        "    if((pos.x * 32.0) > 20.0)\n"
+        "        return float4(0.1, 0.2, 0.3, 0.4);\n"
+        "    else\n"
+        "        return float4(0.9, 0.8, 0.7, 0.6);\n"
+        "}";
 
     static const struct hlsl_probe_info ternary_operator_probes[] =
     {
@@ -404,10 +404,10 @@ static void test_conditionals(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *
     };
 
     static const char *ternary_operator_shader =
-        "float4 test(float2 pos: TEXCOORD0): COLOR                                        \
-        {                                                                                 \
-            return (pos.x < 0.5?float4(0.5, 0.25, 0.5, 0.75):float4(0.6, 0.8, 0.1, 0.2)); \
-        }";
+        "float4 test(float2 pos: TEXCOORD0): COLOR\n"
+        "{\n"
+        "    return (pos.x < 0.5?float4(0.5, 0.25, 0.5, 0.75):float4(0.6, 0.8, 0.1, 0.2));\n"
+        "}";
 
     ID3DXConstantTable *constants;
     IDirect3DPixelShader9 *pshader;
@@ -442,15 +442,15 @@ static void test_float_vectors(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 
     };
 
     static const char *vec4_indexing_test1_shader =
-        "float4 test(): COLOR                   \
-        {                                       \
-            float4 color;                       \
-            color[0] = 0.020;                   \
-            color[1] = 0.245;                   \
-            color[2] = 0.351;                   \
-            color[3] = 1.0;                     \
-            return color;                       \
-        }";
+        "float4 test(): COLOR\n"
+        "{\n"
+        "    float4 color;\n"
+        "    color[0] = 0.020;\n"
+        "    color[1] = 0.245;\n"
+        "    color[2] = 0.351;\n"
+        "    color[3] = 1.0;\n"
+        "    return color;\n"
+        "}";
 
     static const struct hlsl_probe_info vec4_indexing_test2_probes[] =
     {
@@ -459,14 +459,14 @@ static void test_float_vectors(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 
 
     /* We have this uniform i here so the compiler can't optimize */
     static const char *vec4_indexing_test2_shader =
-        "uniform int i;                                 \
-        float4 test(): COLOR                            \
-        {                                               \
-            float4 color = float4(0.5, 0.4, 0.3, 0.2);  \
-            color.g = color[i];                         \
-            color.b = 0.8;                              \
-            return color;                               \
-        }";
+        "uniform int i;\n"
+        "float4 test(): COLOR\n"
+        "{\n"
+        "    float4 color = float4(0.5, 0.4, 0.3, 0.2);\n"
+        "    color.g = color[i];\n"
+        "    color.b = 0.8;\n"
+        "    return color;\n"
+        "}";
 
     ID3DXConstantTable *constants;
     IDirect3DPixelShader9 *pshader;
@@ -534,13 +534,13 @@ static void test_trig(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geo
     };
 
     static const char *sincos_shader =
-        "float4 test(float x: TEXCOORD0): COLOR        \
-         {                                             \
-            const float pi2 = 6.2831853;               \
-            float calcd_sin = (sin(x * pi2) + 1)/2;    \
-            float calcd_cos = (cos(x * pi2) + 1)/2;    \
-            return float4(calcd_sin, calcd_cos, 0, 0); \
-         }";
+        "float4 test(float x: TEXCOORD0): COLOR\n"
+        "{\n"
+        "    const float pi2 = 6.2831853;\n"
+        "    float calcd_sin = (sin(x * pi2) + 1)/2;\n"
+        "    float calcd_cos = (cos(x * pi2) + 1)/2;\n"
+        "    return float4(calcd_sin, calcd_cos, 0, 0);\n"
+        "}";
 
     ID3DXConstantTable *constants;
     IDirect3DPixelShader9 *pshader;
