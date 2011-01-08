@@ -1414,11 +1414,11 @@ if test "x$enable_tools" != xno
 then
     if test "$ac_cv_header_gettext_po_h" = "yes"
     then
-        AC_CHECK_LIB(gettextpo,po_file_write,
+        AC_CHECK_LIB(gettextpo,po_message_msgctxt,
                      [AC_DEFINE(HAVE_LIBGETTEXTPO,1,[Define to 1 if you have the `gettextpo' library (-lgettextpo).])
                       AC_SUBST(LIBGETTEXTPO,"-lgettextpo")])
     fi
-    WINE_WARNING_WITH(gettextpo,[test "x$LIBGETTEXTPO" = "x"],[GetText ${notice_platform}development files not found. Internationalization won't be fully supported.])
+    WINE_WARNING_WITH(gettextpo,[test "x$LIBGETTEXTPO" = "x"],[GetText ${notice_platform}development files not found (or too old). Internationalization won't be fully supported.])
 fi
 
 dnl **** Check for EsounD ****

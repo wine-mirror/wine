@@ -10591,9 +10591,9 @@ if test "x$enable_tools" != xno
 then
     if test "$ac_cv_header_gettext_po_h" = "yes"
     then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for po_file_write in -lgettextpo" >&5
-$as_echo_n "checking for po_file_write in -lgettextpo... " >&6; }
-if test "${ac_cv_lib_gettextpo_po_file_write+set}" = set; then :
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for po_message_msgctxt in -lgettextpo" >&5
+$as_echo_n "checking for po_message_msgctxt in -lgettextpo... " >&6; }
+if test "${ac_cv_lib_gettextpo_po_message_msgctxt+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -10607,27 +10607,27 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char po_file_write ();
+char po_message_msgctxt ();
 int
 main ()
 {
-return po_file_write ();
+return po_message_msgctxt ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_gettextpo_po_file_write=yes
+  ac_cv_lib_gettextpo_po_message_msgctxt=yes
 else
-  ac_cv_lib_gettextpo_po_file_write=no
+  ac_cv_lib_gettextpo_po_message_msgctxt=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gettextpo_po_file_write" >&5
-$as_echo "$ac_cv_lib_gettextpo_po_file_write" >&6; }
-if test "x$ac_cv_lib_gettextpo_po_file_write" = x""yes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gettextpo_po_message_msgctxt" >&5
+$as_echo "$ac_cv_lib_gettextpo_po_message_msgctxt" >&6; }
+if test "x$ac_cv_lib_gettextpo_po_message_msgctxt" = x""yes; then :
 
 $as_echo "#define HAVE_LIBGETTEXTPO 1" >>confdefs.h
 
@@ -10638,9 +10638,9 @@ fi
     fi
     if test "x$LIBGETTEXTPO" = "x"; then :
   case "x$with_gettextpo" in
-  x)   as_fn_append wine_warnings "|GetText ${notice_platform}development files not found. Internationalization won't be fully supported." ;;
+  x)   as_fn_append wine_warnings "|GetText ${notice_platform}development files not found (or too old). Internationalization won't be fully supported." ;;
   xno) ;;
-  *)   as_fn_error $? "GetText ${notice_platform}development files not found. Internationalization won't be fully supported.
+  *)   as_fn_error $? "GetText ${notice_platform}development files not found (or too old). Internationalization won't be fully supported.
 This is an error since --with-gettextpo was requested." "$LINENO" 5  ;;
 esac
 fi
