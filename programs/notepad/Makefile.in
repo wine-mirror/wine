@@ -41,7 +41,9 @@ RC_SRCS = \
 	Uk.rc \
 	Wa.rc \
 	Zh.rc \
-	rsrc.rc
+	notepad.rc
+
+PO_SRCS = notepad.rc
 
 MANPAGE = notepad.man
 

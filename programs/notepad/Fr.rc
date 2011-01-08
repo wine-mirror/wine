@@ -28,48 +28,6 @@
 
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
-MAIN_MENU MENU
-{
- POPUP "&Fichier" {
-  MENUITEM "&Nouveau\tCtrl+N",       CMD_NEW
-  MENUITEM "&Ouvrir...\tCtrl+O",   CMD_OPEN
-  MENUITEM "&Enregistrer\tCtrl+S", CMD_SAVE
-  MENUITEM "Enregistrer &sous...", CMD_SAVE_AS
-  MENUITEM SEPARATOR
-  MENUITEM "Im&primer...\tCtrl+P",         CMD_PRINT
-  MENUITEM "&Mise en page...",  CMD_PAGE_SETUP
-  MENUITEM "&Configuration de l'imprimante...", CMD_PRINTER_SETUP
-  MENUITEM SEPARATOR
-  MENUITEM "&Quitter",          CMD_EXIT
- }
-POPUP "É&dition" {
-  MENUITEM "&Annuler\tCtrl+Z",  CMD_UNDO
-  MENUITEM SEPARATOR
-  MENUITEM "Co&uper\tCtrl+X",   CMD_CUT
-  MENUITEM "&Copier\tCtrl+C",   CMD_COPY
-  MENUITEM "C&oller\tCtrl+V",   CMD_PASTE
-  MENUITEM "&Effacer\tDel",     CMD_DELETE
-  MENUITEM SEPARATOR
-  MENUITEM "Tout &sélectionner\tCtrl+A", CMD_SELECT_ALL
-  MENUITEM "&Heure/Date\tF5",   CMD_TIME_DATE
-  MENUITEM SEPARATOR
-  MENUITEM "&Retour à la ligne automatique", CMD_WRAP
-  MENUITEM "&Police...",        CMD_FONT
- }
-POPUP "&Rechercher" {
-  MENUITEM "&Rechercher...\tCtrl+F", CMD_SEARCH
-  MENUITEM "&Suivant\tF3",      CMD_SEARCH_NEXT
-  MENUITEM "&Remplacer...\tCtrl+H", CMD_REPLACE
- }
-POPUP "Aid&e" {
-  MENUITEM "&Sommaire",         CMD_HELP_CONTENTS
-  MENUITEM "&Rechercher...",    CMD_HELP_SEARCH
-  MENUITEM "&Utiliser l'aide",  CMD_HELP_ON_HELP
-  MENUITEM SEPARATOR
-  MENUITEM "À &propos du Bloc-notes", CMD_HELP_ABOUT_NOTEPAD
- }
-}
-
 /* Dialog `Page setup' */
 
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
@@ -104,42 +62,3 @@ BEGIN
   LTEXT "Codage", -1, 5,0, 50,12
   COMBOBOX IDC_OFN_ENCCOMBO, 59,0, 156,48, WS_CHILD | WS_VSCROLL | CBS_DROPDOWNLIST
 END
-
-STRINGTABLE
-{
-STRING_PAGESETUP_HEADERVALUE,   "&f"
-STRING_PAGESETUP_FOOTERVALUE,   "Page &p"
-
-STRING_NOTEPAD,                                 "Bloc-notes"
-STRING_ERROR,                                   "ERREUR"
-STRING_WARNING,                                 "ATTENTION"
-STRING_INFO,                                    "Information"
-
-STRING_UNTITLED,                                "(sans titre)"
-
-STRING_ALL_FILES,                               "Tous les fichiers (*.*)"
-STRING_TEXT_FILES_TXT,                          "Fichiers texte (*.txt)"
-
-STRING_TOOLARGE,                                "Le fichier « %s » est trop grand pour le bloc-notes.\n\
-Veuillez utiliser un autre éditeur."
-STRING_NOTEXT,                                  "Vous n'avez pas entré de texte. \
-Veuillez taper quelque chose et recommencer"
-STRING_DOESNOTEXIST,                            "Le fichier « %s » n'existe pas.\n\n\
-Voulez-vous créer un nouveau fichier ?"
-STRING_NOTSAVED,                                "Le fichier « %s » a été modifié\n\n\
-Voulez-vous enregistrer vos modifications ?"
-STRING_NOTFOUND,                                "« %s » non trouvé."
-STRING_OUT_OF_MEMORY,                           "Pas assez de mémoire pour terminer cette \
-tâche.\nFermez une ou plusieurs applications pour libérer\n\
-de la mémoire."
-
-STRING_UNICODE_LE,     "Unicode (UTF-16)"
-STRING_UNICODE_BE,     "Unicode (UTF-16 big-endian)"
-
-STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
-Ce fichier contient des caractères Unicode qui seront perdus si\n\
-vous le sauvez dans le codage %s.\n\
-Pour conserver ces caractères, cliquez sur Annuler et sélectionnez\n\
-une des alternatives Unicode dans la liste déroulante Codage.\n\
-Continuer ?"
-}

@@ -15345,7 +15345,7 @@ wine_fn_config_program msiexec enable_msiexec install,installbin
 wine_fn_config_program net enable_net po,install
 wine_fn_config_program netsh enable_netsh install
 wine_fn_config_program ngen enable_ngen install
-wine_fn_config_program notepad enable_notepad install,installbin
+wine_fn_config_program notepad enable_notepad po,install,installbin
 wine_fn_config_program oleview enable_oleview install
 wine_fn_config_program ping enable_ping install
 wine_fn_config_program progman enable_progman install
@@ -15401,6 +15401,7 @@ wine_fn_config_tool tools/wmc
 wine_fn_config_tool tools/wrc
 
 LINGUAS="\
+ar \
 bg \
 cs \
 da \
@@ -15410,6 +15411,7 @@ en \
 en_US \
 eo \
 es \
+fa \
 fi \
 fr \
 he \

@@ -893,7 +893,7 @@ msgstr "Звуковий пристрій виводу по замовчуван
 msgid "Default MidiOut Device"
 msgstr "Пристрій виводу Midi по замовчуванні"
 
-#: hhctrl.rc:27
+#: hhctrl.rc:27 notepad.rc:58
 msgid "&Contents"
 msgstr "&Зміст"
 
@@ -901,7 +901,7 @@ msgstr "&Зміст"
 msgid "I&ndex"
 msgstr "&Вказівник"
 
-#: hhctrl.rc:29
+#: hhctrl.rc:29 notepad.rc:52
 msgid "&Search"
 msgstr "&Пошук"
 
@@ -2491,7 +2491,7 @@ msgstr "&Анало&говий"
 msgid "Digi&tal"
 msgstr "&Ци&фровий"
 
-#: clock.rc:32
+#: clock.rc:32 notepad.rc:50
 msgid "&Font..."
 msgstr "&Шрифт..."
 
@@ -3333,6 +3333,214 @@ msgstr ""
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Відкритих ресурсів: %lu\n"
+
+#: notepad.rc:26
+msgid "&File"
+msgstr "&Файл"
+
+#: notepad.rc:27
+msgid "&New\tCtrl+N"
+msgstr "&Новий\tCtrl+N"
+
+#: notepad.rc:28
+msgid "&Open...\tCtrl+O"
+msgstr "&Відкрити...\tCtrl+O"
+
+#: notepad.rc:29
+msgid "&Save\tCtrl+S"
+msgstr "&Зберегти\tCtrl+S"
+
+#: notepad.rc:30
+msgid "Save &as..."
+msgstr "Зберегти &як..."
+
+#: notepad.rc:32
+msgid "&Print...\tCtrl+P"
+msgstr "&Друк...\tCtrl+P"
+
+#: notepad.rc:33
+msgid "Page Se&tup..."
+msgstr "Параметри &сторінки..."
+
+#: notepad.rc:34
+msgid "P&rinter Setup..."
+msgstr "Налаштування &принтера..."
+
+#: notepad.rc:36
+msgid "E&xit"
+msgstr "Ви&хід"
+
+#: notepad.rc:38
+msgid "&Edit"
+msgstr "&Редагування"
+
+#: notepad.rc:39
+msgid "&Undo\tCtrl+Z"
+msgstr "&Назад\tCtrl+Z"
+
+#: notepad.rc:41
+msgid "Cu&t\tCtrl+X"
+msgstr "Ви&різати\tCtrl+X"
+
+#: notepad.rc:42
+msgid "&Copy\tCtrl+C"
+msgstr "&Копіювати\tCtrl+C"
+
+#: notepad.rc:43
+msgid "&Paste\tCtrl+V"
+msgstr "&Вставити\tCtrl+V"
+
+#: notepad.rc:44
+msgid "&Delete\tDel"
+msgstr "Ви&далити\tDel"
+
+#: notepad.rc:46
+msgid "Select &all\tCtrl+A"
+msgstr "Виділити в&се\tCtrl+A"
+
+#: notepad.rc:47
+msgid "&Time/Date\tF5"
+msgstr "&Час/Дата\tF5"
+
+#: notepad.rc:49
+msgid "&Wrap long lines"
+msgstr "&Перенос  слів"
+
+#: notepad.rc:53
+msgid "&Search...\tCtrl+F"
+msgstr "&Знайти...\tCtrl+F"
+
+#: notepad.rc:54
+msgid "&Search next\tF3"
+msgstr "Знайти &далі\tF3"
+
+#: notepad.rc:55
+msgid "&Replace...\tCtrl+H"
+msgstr "За&мінити...\tCtrl+H"
+
+#: notepad.rc:57
+msgid "&Help"
+msgstr "&Довідка"
+
+#: notepad.rc:59
+msgid "&Search..."
+msgstr "По&шук..."
+
+#: notepad.rc:60
+msgid "&Help on help"
+msgstr "&Використання Довідки"
+
+#: notepad.rc:62
+msgid "&About Notepad"
+msgstr "&Про Notepad"
+
+#: notepad.rc:68
+msgid "&f"
+msgstr "&f"
+
+#: notepad.rc:69
+msgid "Page &p"
+msgstr "Сторінка &p"
+
+#: notepad.rc:71
+msgid "Notepad"
+msgstr "Блокнот"
+
+#: notepad.rc:72
+msgid "ERROR"
+msgstr "ПОМИЛКА"
+
+#: notepad.rc:73
+msgid "WARNING"
+msgstr "УВАГА"
+
+#: notepad.rc:74
+msgid "Information"
+msgstr "Інформація"
+
+#: notepad.rc:76
+msgid "Untitled"
+msgstr "Без назви"
+
+#: notepad.rc:78
+msgid "All files (*.*)"
+msgstr "Всі файли (*.*)"
+
+#: notepad.rc:79
+msgid "Text files (*.txt)"
+msgstr "Текстові файли (*.txt)"
+
+#: notepad.rc:82
+msgid ""
+"File '%s' is too large for notepad.\n"
+"Please use a different editor."
+msgstr ""
+"Файл '%s' завеликий для блокноту.\n"
+"Використайте інший редактор."
+
+#: notepad.rc:84
+msgid ""
+"You didn't enter any text.\n"
+"Please type something and try again"
+msgstr ""
+"Ви не ввели жодного тексту.\n"
+"Напишіть щось і спробуйте знов"
+
+#: notepad.rc:86
+msgid ""
+"File '%s' does not exist.\n"
+"\n"
+"Do you want to create a new file?"
+msgstr ""
+"Файл '%s' не існує.\n"
+"\n"
+"Створити новий файл?"
+
+#: notepad.rc:88
+msgid ""
+"File '%s' has been modified.\n"
+"\n"
+"Would you like to save the changes?"
+msgstr ""
+"Файл '%s' було змінено.\n"
+"\n"
+"Хочете зберегти зміни?"
+
+#: notepad.rc:89
+msgid "'%s' could not be found."
+msgstr "'%s' не знайдений."
+
+#: notepad.rc:91
+msgid ""
+"Not enough memory to complete this task.\n"
+"Close one or more applications to increase the amount of free memory."
+msgstr ""
+"Замало пам'яті для завершення цього завдання.\n"
+"Закрийте одну чи кілька програм щоб звільнити пам'ять."
+
+#: notepad.rc:93
+msgid "Unicode (UTF-16)"
+msgstr "Юнікод (UTF-16)"
+
+#: notepad.rc:94
+msgid "Unicode (UTF-16 big-endian)"
+msgstr "Юнікод (UTF-16 big-endian)"
+
+#: notepad.rc:101
+msgid ""
+"%s\n"
+"This file contains Unicode characters which will be lost if\n"
+"you save this file in the %s encoding.\n"
+"To keep these characters, click Cancel, and then select\n"
+"one of the Unicode options in the Encoding drop down list.\n"
+"Continue?"
+msgstr ""
+"%s\n"
+"Файл містить Юнікод-текст, який буде втрачено при збереженні файлу\n"
+"в кодуванні %s .\n"
+"Щоб не втратити цей текст, натисніть Скасувати, та\n"
+"виберіть зі списку один з варіантів Юнікод.\n"
+"Продовжити?"
 
 #: reg.rc:27
 msgid ""

@@ -26,48 +26,6 @@
 
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
-MAIN_MENU MENU
-{
- POPUP "&Datei" {
-  MENUITEM "&Neu\tStrg+N",           CMD_NEW
-  MENUITEM "Ö&ffnen...\tStrg+O",        CMD_OPEN
-  MENUITEM "&Speichern\tStrg+S",        CMD_SAVE
-  MENUITEM "Speichern &unter...",       CMD_SAVE_AS
-  MENUITEM SEPARATOR
-  MENUITEM "&Drucken...\tStrg+P",          CMD_PRINT
-  MENUITEM "Seite ein&richten...",      CMD_PAGE_SETUP
-  MENUITEM "Drucker&einrichtung...",    CMD_PRINTER_SETUP
-  MENUITEM SEPARATOR
-  MENUITEM "&Beenden",          CMD_EXIT
- }
-POPUP "&Bearbeiten" {
-  MENUITEM "&Rückgängig\tStrg+Z",       CMD_UNDO
-  MENUITEM SEPARATOR
-  MENUITEM "&Ausschneiden\tStrg+X",     CMD_CUT
-  MENUITEM "&Kopieren\tStrg+C",         CMD_COPY
-  MENUITEM "&Einfügen\tStrg+V",         CMD_PASTE
-  MENUITEM "&Löschen\tEntf",    CMD_DELETE
-  MENUITEM SEPARATOR
-  MENUITEM "Alles &markieren\tStrg+A",  CMD_SELECT_ALL
-  MENUITEM "&Uhrzeit/Datum\tF5",        CMD_TIME_DATE
-  MENUITEM SEPARATOR
-  MENUITEM "&Zeilenumbruch",    CMD_WRAP
-  MENUITEM "&Schriftarten...",	CMD_FONT
- }
-POPUP "&Suchen" {
-  MENUITEM "Suchen...\tStrg+F", CMD_SEARCH
-  MENUITEM "&Weitersuchen\tF3", CMD_SEARCH_NEXT
-  MENUITEM "&Ersetzen...\tStrg+H", CMD_REPLACE
- }
-POPUP "&Hilfe" {
-  MENUITEM "&Inhalt",           CMD_HELP_CONTENTS
-  MENUITEM "&Suchen...",        CMD_HELP_SEARCH
-  MENUITEM "&Hilfe benutzen",   CMD_HELP_ON_HELP
-  MENUITEM SEPARATOR
-  MENUITEM "Ü&ber Notepad", CMD_HELP_ABOUT_NOTEPAD
- }
-}
-
 /* Dialog `Page setup' */
 
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
@@ -102,43 +60,3 @@ BEGIN
   LTEXT "Kodierung:", -1, 5,0, 50,12
   COMBOBOX IDC_OFN_ENCCOMBO, 53,0, 156,48, WS_CHILD | WS_VSCROLL | CBS_DROPDOWNLIST
 END
-
-STRINGTABLE
-{
-STRING_PAGESETUP_HEADERVALUE,   "&f"
-STRING_PAGESETUP_FOOTERVALUE,   "Seite &p"
-
-STRING_NOTEPAD,                                 "Editor"
-STRING_ERROR,                                   "Fehler"
-STRING_WARNING,                                 "Achtung"
-STRING_INFO,                                    "Information"
-
-STRING_UNTITLED,                                "(unbenannt)"
-
-STRING_ALL_FILES,                               "Alle Dateien (*.*)"
-STRING_TEXT_FILES_TXT,                  "Textdateien (*.txt)"
-
-STRING_TOOLARGE,                                "Die Datei '%s' ist zu groß für den Editor\n \
-Benutzen Sie bitte einen anderen Editor, um diese Datei zu bearbeiten."
-STRING_NOTEXT,                                  "Sie haben keinen Text eingegeben, der \
-gespeichert\n werden könnte. Geben Sie Text ein, und versuchen Sie es \
-\nerneut."
-STRING_DOESNOTEXIST,                            "Die Datei '%s'\nexistiert nicht.\n\n \
-Möchten Sie eine neue Datei erstellen ?"
-STRING_NOTSAVED,                                "Datei %s\n wurde geändert.\n\n \
-Möchten Sie die Änderungen speichern ?"
-STRING_NOTFOUND,                                        "'%s' kann nicht gefunden werden."
-STRING_OUT_OF_MEMORY,                   "Nicht genügend Arbeitsspeicher, \
-um diese Funktion\nabzuschließen. Beenden Sie eine oder mehrere \
-\nAnwendungen, um den verfügbaren Arbeitsspeicher zu\nerhöhen."
-
-STRING_UNICODE_LE,     "Unicode (UTF-16)"
-STRING_UNICODE_BE,     "Unicode (UTF-16 Big-Endian)"
-
-STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
-Diese Datei enthält Unicode-Zeichen, die verloren gehen, wenn\n\
-Sie die Datei mit %s-Zeichenkodierung speichern.\n\
-Um die Zeichen beizubehalten, klicken Sie Abbrechen und wählen\n\
-Sie eine der Unicode-Optionen in der Liste.\n\
-Möchten Sie fortfahren?"
-}

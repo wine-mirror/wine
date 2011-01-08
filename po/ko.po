@@ -893,15 +893,20 @@ msgstr "기본 웨이브 출력 장치"
 msgid "Default MidiOut Device"
 msgstr "기본 미디출력 장치"
 
-#: hhctrl.rc:27
+#: hhctrl.rc:27 notepad.rc:58
+#, fuzzy
 msgid "&Contents"
-msgstr "목록(&C)"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"목록(&C)\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"항목(&C)"
 
 #: hhctrl.rc:28
 msgid "I&ndex"
 msgstr "인덱스(&N)"
 
-#: hhctrl.rc:29
+#: hhctrl.rc:29 notepad.rc:52
 msgid "&Search"
 msgstr "찾기(&S)"
 
@@ -2473,7 +2478,7 @@ msgstr "아날로그(&L)"
 msgid "Digi&tal"
 msgstr "디지털(&T)"
 
-#: clock.rc:32
+#: clock.rc:32 notepad.rc:50
 msgid "&Font..."
 msgstr "글꼴(&F)..."
 
@@ -3310,6 +3315,215 @@ msgstr ""
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      열린 리소스: %lu\n"
+
+#: notepad.rc:26
+msgid "&File"
+msgstr "파일(&F)"
+
+#: notepad.rc:27
+msgid "&New\tCtrl+N"
+msgstr "새로 만들기(&N)\tCtrl+N"
+
+#: notepad.rc:28
+msgid "&Open...\tCtrl+O"
+msgstr "열기(&O)...\tCtrl+O"
+
+#: notepad.rc:29
+msgid "&Save\tCtrl+S"
+msgstr "저장(&S)\tCtrl+S"
+
+#: notepad.rc:30
+msgid "Save &as..."
+msgstr "다른 이름으로 저장(&A)..."
+
+#: notepad.rc:32
+msgid "&Print...\tCtrl+P"
+msgstr "인쇄(&P)...\tCtrl+P"
+
+#: notepad.rc:33
+msgid "Page Se&tup..."
+msgstr "페이지 설정(&T)..."
+
+#: notepad.rc:34
+msgid "P&rinter Setup..."
+msgstr "프린터 설정(&R)..."
+
+#: notepad.rc:36
+msgid "E&xit"
+msgstr "끝내기(&X)"
+
+#: notepad.rc:38
+msgid "&Edit"
+msgstr "편집(&E)"
+
+#: notepad.rc:39
+msgid "&Undo\tCtrl+Z"
+msgstr "실행 취소(&U)\tCtrl+Z"
+
+#: notepad.rc:41
+msgid "Cu&t\tCtrl+X"
+msgstr "잘라내기(&T)\tCtrl+X"
+
+#: notepad.rc:42
+msgid "&Copy\tCtrl+C"
+msgstr "복사(&C)\tCtrl+C"
+
+#: notepad.rc:43
+msgid "&Paste\tCtrl+V"
+msgstr "붙여넣기(&P)\tCtrl+V"
+
+#: notepad.rc:44
+msgid "&Delete\tDel"
+msgstr "삭제(&D)\tDel"
+
+#: notepad.rc:46
+msgid "Select &all\tCtrl+A"
+msgstr "모두 선택(&A)\tCtrl+A"
+
+#: notepad.rc:47
+msgid "&Time/Date\tF5"
+msgstr "시간/날짜(&T)\tF5"
+
+#: notepad.rc:49
+msgid "&Wrap long lines"
+msgstr "자동 줄 바꿈(&W)"
+
+#: notepad.rc:53
+msgid "&Search...\tCtrl+F"
+msgstr "찾기(&S)...\tCtrl+F"
+
+#: notepad.rc:54
+msgid "&Search next\tF3"
+msgstr "다음 찾기(&N)\tF3"
+
+#: notepad.rc:55
+msgid "&Replace...\tCtrl+H"
+msgstr "바꾸기(&R)...\tCtrl+H"
+
+#: notepad.rc:57
+msgid "&Help"
+msgstr "도움말(&H)"
+
+#: notepad.rc:59
+msgid "&Search..."
+msgstr "찾기(&S)..."
+
+#: notepad.rc:60
+msgid "&Help on help"
+msgstr "도움말 사용법(&H)"
+
+#: notepad.rc:62
+msgid "&About Notepad"
+msgstr "노트패드 정보(&A)"
+
+#: notepad.rc:68
+msgid "&f"
+msgstr "&f"
+
+#: notepad.rc:69
+msgid "Page &p"
+msgstr "&p 페이지"
+
+#: notepad.rc:71
+msgid "Notepad"
+msgstr "메모장"
+
+#: notepad.rc:72
+msgid "ERROR"
+msgstr "오류"
+
+#: notepad.rc:73
+msgid "WARNING"
+msgstr "경고"
+
+#: notepad.rc:74
+msgid "Information"
+msgstr "정보"
+
+#: notepad.rc:76
+msgid "Untitled"
+msgstr "제목 없음"
+
+#: notepad.rc:78
+msgid "All files (*.*)"
+msgstr "모든 파일 (*.*)"
+
+#: notepad.rc:79
+msgid "Text files (*.txt)"
+msgstr "텍스트 문서 (*.txt)"
+
+#: notepad.rc:82
+msgid ""
+"File '%s' is too large for notepad.\n"
+"Please use a different editor."
+msgstr ""
+"%s 파일이 너무 커서 메모장으로는 열 수 없습니다.\n"
+" 다른 편집기를 사용하십시오."
+
+#: notepad.rc:84
+msgid ""
+"You didn't enter any text.\n"
+"Please type something and try again"
+msgstr ""
+"입력한 내용이 없습니다.\n"
+"내용을 입력한 후 재시도하십시오"
+
+#: notepad.rc:86
+msgid ""
+"File '%s' does not exist.\n"
+"\n"
+"Do you want to create a new file?"
+msgstr ""
+"%s 파일이 없습니다.\n"
+"\n"
+" 파일을 새로 만드시겠습니까?"
+
+#: notepad.rc:88
+msgid ""
+"File '%s' has been modified.\n"
+"\n"
+"Would you like to save the changes?"
+msgstr ""
+"%s 파일 내용이 변경되었습니다.\n"
+"\n"
+" 변경 내용을 저장하시겠습니까?"
+
+#: notepad.rc:89
+msgid "'%s' could not be found."
+msgstr "%s 문자열을 찾을 수 없습니다."
+
+#: notepad.rc:91
+msgid ""
+"Not enough memory to complete this task.\n"
+"Close one or more applications to increase the amount of free memory."
+msgstr ""
+"이 작업을 완료하는 데 필요한 메모리가 부족합니다.\n"
+"사용 가능한 메모리의 양을 확보하기 위해 하나 이상의 응용 프로그램을 닫아 주십"
+"시오."
+
+#: notepad.rc:93
+msgid "Unicode (UTF-16)"
+msgstr "유니코드 (UTF-16)"
+
+#: notepad.rc:94
+msgid "Unicode (UTF-16 big-endian)"
+msgstr "유니코드  (UTF-16 빅-엔디언)"
+
+#: notepad.rc:101
+msgid ""
+"%s\n"
+"This file contains Unicode characters which will be lost if\n"
+"you save this file in the %s encoding.\n"
+"To keep these characters, click Cancel, and then select\n"
+"one of the Unicode options in the Encoding drop down list.\n"
+"Continue?"
+msgstr ""
+"%s\n"
+"유니코드 문자를 포함하고 있는 이 파일은 만약 당신이 %s 인코딩으로\n"
+"파일을 저장하면 문자의 손실이 있을 것입니다.\n"
+"이 문자를 보존하려면  취소를 클릭하고, 인코딩 드롭다운목록의 유니코드\n"
+"옵션 중의 하나를  선택하십시오t.\n"
+"계속하시겠습니까?"
 
 #: reg.rc:27
 msgid ""

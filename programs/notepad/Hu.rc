@@ -25,48 +25,6 @@
 
 LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
 
-MAIN_MENU MENU
-{
- POPUP "&Fájl" {
-  MENUITEM "Ú&j\tCtrl+N",           CMD_NEW
-  MENUITEM "Meg&nyitás...\tCtrl+O",             CMD_OPEN
-  MENUITEM "&Mentés\tCtrl+S",             CMD_SAVE
-  MENUITEM "Mentés má&sként...",       CMD_SAVE_AS
-  MENUITEM SEPARATOR
-  MENUITEM "Nyom&tatás...\tCtrl+P",            CMD_PRINT
-  MENUITEM "&Oldalbeállítás...",    CMD_PAGE_SETUP
-  MENUITEM "Nyomtató &beállítás...", CMD_PRINTER_SETUP
-  MENUITEM SEPARATOR
-  MENUITEM "&Kilépés",             CMD_EXIT
- }
-POPUP "S&zerkesztés" {
-  MENUITEM "&Visszavonás\tCtrl+Z",     CMD_UNDO
-  MENUITEM SEPARATOR
-  MENUITEM "Kivá&gás\tCtrl+X",      CMD_CUT
-  MENUITEM "&Másolás\tCtrl+C",     CMD_COPY
-  MENUITEM "&Beillesztés\tCtrl+V",    CMD_PASTE
-  MENUITEM "Tör&lés\tDel",      CMD_DELETE
-  MENUITEM SEPARATOR
-  MENUITEM "&Az összes kijelölése",       CMD_SELECT_ALL
-  MENUITEM "&Idõ/dátum\tF5",    CMD_TIME_DATE
-  MENUITEM SEPARATOR
-  MENUITEM "&Hosszú sorok tördelése",  CMD_WRAP
-  MENUITEM "&Font...",          CMD_FONT
- }
-POPUP "&Keresés" {
-  MENUITEM "&Keresés...",           CMD_SEARCH
-  MENUITEM "Köve&tkezõ keresése\tF3",  CMD_SEARCH_NEXT
-  MENUITEM "&Replace...\tCtrl+H", CMD_REPLACE
- }
-POPUP "&Súgó" {
-  MENUITEM "&Témakörök",         CMD_HELP_CONTENTS
-  MENUITEM "&Keresés...",        CMD_HELP_SEARCH
-  MENUITEM "&Használat",     CMD_HELP_ON_HELP
-  MENUITEM SEPARATOR
-  MENUITEM "&About Notepad", CMD_HELP_ABOUT_NOTEPAD
- }
-}
-
 /* Dialog `Page setup' */
 
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
@@ -93,34 +51,4 @@ EDITTEXT IDC_PAGESETUP_BOTTOMVALUE,  130, 73, 35, 11, WS_CHILD | WS_BORDER | WS_
 DEFPUSHBUTTON "OK",         IDOK,                   180,  3, 40, 15, WS_TABSTOP
 PUSHBUTTON    "Mégse",     IDCANCEL,               180, 21, 40, 15, WS_TABSTOP
 PUSHBUTTON    "&Súgó",       IDHELP,                180, 39, 40, 15, WS_TABSTOP
-}
-
-STRINGTABLE
-{
-STRING_PAGESETUP_HEADERVALUE,   "&f"
-STRING_PAGESETUP_FOOTERVALUE,   "Oldalszám: &p."
-
-STRING_NOTEPAD,                                 "Jegyzettömb"
-STRING_ERROR,                                   "HIBA"
-STRING_WARNING,                                 "FIGYELMEZTETÉS"
-STRING_INFO,                                    "Információ"
-
-STRING_UNTITLED,                                "(névtelen)"
-
-STRING_ALL_FILES,                               "Minden fájl (*.*)"
-STRING_TEXT_FILES_TXT,                  "Szövegfájlok (*.txt)"
-
-STRING_TOOLARGE,                                "'%s' fájl túl nagy méretû.\n \
-Kérem használjon másik szövegszerkesztõ programot."
-STRING_NOTEXT,                                  "A szöveg nem tartalmaz karaktert! \
-\nKérem gépeljen be néhány karaktert és próbálja újra!"
-STRING_DOESNOTEXIST,                            "A megadott '%s'\nfájl nem létezik!\n\n \
-Kíván létrehozni új fájlt?"
-STRING_NOTSAVED,                                "'%s' fájl\nmódosult\n\n \
-Szeretné menteni a változásokat?"
-STRING_NOTFOUND,                                        "'%s' nem található!"
-STRING_OUT_OF_MEMORY,                   "Nincs elegendõ szabad memória!\
-\nZárjon be néhány alkalmazást, ezzel növelve a szabad memória méretét\
-!"
-
 }

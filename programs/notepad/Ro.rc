@@ -24,48 +24,6 @@ LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
 
 #pragma code_page(65001)
 
-MAIN_MENU MENU
-{
- POPUP "&Fișier" {
-  MENUITEM "&Nou\tCtrl+N",              CMD_NEW
-  MENUITEM "&Deschide...\tCtrl+O",      CMD_OPEN
-  MENUITEM "&Salvează\tCtrl+S",         CMD_SAVE
-  MENUITEM "Salvează &ca...",           CMD_SAVE_AS
-  MENUITEM SEPARATOR
-  MENUITEM "&Tipărește...\tCtrl+P",     CMD_PRINT
-  MENUITEM "S&etare pagină...",         CMD_PAGE_SETUP
-  MENUITEM "Setare im&primantă...",     CMD_PRINTER_SETUP
-  MENUITEM SEPARATOR
-  MENUITEM "&Ieșire",                   CMD_EXIT
- }
-POPUP "&Editează" {
-  MENUITEM "&Refă\tCtrl+Z",             CMD_UNDO
-  MENUITEM SEPARATOR
-  MENUITEM "&Taie\tCtrl+X",             CMD_CUT
-  MENUITEM "&Copiază\tCtrl+C",          CMD_COPY
-  MENUITEM "&Lipește\tCtrl+V",          CMD_PASTE
-  MENUITEM "&Șterge\tDel",              CMD_DELETE
-  MENUITEM SEPARATOR
-  MENUITEM "S&electeză tot\tCtrl+A",    CMD_SELECT_ALL
-  MENUITEM "&Ora/data\tF5",             CMD_TIME_DATE
-  MENUITEM SEPARATOR
-  MENUITEM "&Desparte liniile lungi",   CMD_WRAP
-  MENUITEM "&Font...",                  CMD_FONT
- }
-POPUP "&Caută" {
-  MENUITEM "&Caută...\tCtrl+F",         CMD_SEARCH
-  MENUITEM "Caută &următorul\tF3",      CMD_SEARCH_NEXT
-  MENUITEM "&Înlocuiește...\tCtrl+H",   CMD_REPLACE
- }
-POPUP "&Ajutor" {
-  MENUITEM "C&onținut",                 CMD_HELP_CONTENTS
-  MENUITEM "&Caută...",                 CMD_HELP_SEARCH
-  MENUITEM "&Ajutor la ajutor",         CMD_HELP_ON_HELP
-  MENUITEM SEPARATOR
-  MENUITEM "&Despre notepad",        CMD_HELP_ABOUT_NOTEPAD
- }
-}
-
 /* Dialog `Page setup' */
 
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
@@ -100,36 +58,3 @@ BEGIN
   LTEXT "Codificare:", -1, 5,0, 50,12
   COMBOBOX IDC_OFN_ENCCOMBO, 53,0, 156,48, WS_CHILD | WS_VSCROLL | CBS_DROPDOWNLIST
 END
-
-STRINGTABLE
-{
-STRING_PAGESETUP_HEADERVALUE,   "&f"
-STRING_PAGESETUP_FOOTERVALUE,   "Pagina &p"
-
-STRING_NOTEPAD,                 "Notepad"
-STRING_ERROR,                   "EROARE"
-STRING_WARNING,                 "ATENȚIE"
-STRING_INFO,                    "Informație"
-
-STRING_UNTITLED,                "(fără titlu)"
-
-STRING_ALL_FILES,               "Toate fișierele (*.*)"
-STRING_TEXT_FILES_TXT,          "Toate fișierele text (*.txt)"
-
-STRING_TOOLARGE,                "Fișierul '%s' este prea mare pentru notepad.\n Folosoți un alt editor."
-STRING_NOTEXT,                  "Nu ați introdus nici un text.\nIntroduceți ceva și încercați din nou."
-STRING_DOESNOTEXIST,            "Fișierul '%s'\nnu există\n\n Vreți să creați un fișier nou?"
-STRING_NOTSAVED,                "Fișierul '%s'\na fost modificat\n\nVreți să salvați modificările?"
-STRING_NOTFOUND,                "'%s' nu a fost găsit."
-STRING_OUT_OF_MEMORY,           "Nu este destulă memorie pentru a completa această sarcină.\nÎnchideți una sau mai multe aplicații pentru a mări memoria liberă."
-
-STRING_UNICODE_LE,              "Unicode (UTF-16)"
-STRING_UNICODE_BE,              "Unicode (UTF-16 big-endian)"
-
-STRING_LOSS_OF_UNICODE_CHARACTERS,      "%s\n\
-Acest document conține caractere unicode care se v-or pierde\n\
-dacă salvați acest fișier în codificarea %s.\n\
-Pentru a reține aceste caractere dați clic pe „Renunță” și apoi\n\
-alegeți una din opțiunile unicode din lista de selecție a codificării.\n\
-Continuă?"
-}

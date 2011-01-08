@@ -25,48 +25,6 @@
 
 LANGUAGE LANG_LITHUANIAN, SUBLANG_NEUTRAL
 
-MAIN_MENU MENU
-{
- POPUP "&Failas" {
-  MENUITEM "&Naujas\tCtrl+N",            CMD_NEW
-  MENUITEM "&Atverti...\tCtrl+O",        CMD_OPEN
-  MENUITEM "&Išsaugoti\tCtrl+S",         CMD_SAVE
-  MENUITEM "Išsaugoti &kaip...",         CMD_SAVE_AS
-  MENUITEM SEPARATOR
-  MENUITEM "S&pausdinti...\tCtrl+P",     CMD_PRINT
-  MENUITEM "Puslapio &nuostatos...",     CMD_PAGE_SETUP
-  MENUITEM "Spaus&dintuvo nuostatos...", CMD_PRINTER_SETUP
-  MENUITEM SEPARATOR
-  MENUITEM "Iš&eiti",                  CMD_EXIT
- }
-POPUP "&Taisa" {
-  MENUITEM "&Atšaukti\tCtrl+Z",       CMD_UNDO
-  MENUITEM SEPARATOR
-  MENUITEM "&Iškirpti\tCtrl+X",       CMD_CUT
-  MENUITEM "&Kopijuoti\tCtrl+C",      CMD_COPY
-  MENUITEM "Į&dėti\tCtrl+V",          CMD_PASTE
-  MENUITEM "&Šalinti\tDel",           CMD_DELETE
-  MENUITEM SEPARATOR
-  MENUITEM "&Pažymėti viską\tCtrl+A", CMD_SELECT_ALL
-  MENUITEM "&Laikas/Data\tF5",        CMD_TIME_DATE
-  MENUITEM SEPARATOR
-  MENUITEM "Skaidyti ilgas &eilutes", CMD_WRAP
-  MENUITEM "Š&riftas...",             CMD_FONT
- }
-POPUP "&Paieška" {
-  MENUITEM "&Ieškoti...\tCtrl+F",  CMD_SEARCH
-  MENUITEM "Ieškoti ki&to\tF3",    CMD_SEARCH_NEXT
-  MENUITEM "Pa&keisti...\tCtrl+H", CMD_REPLACE
- }
-POPUP "&Žinynas" {
-  MENUITEM "&Turinys",             CMD_HELP_CONTENTS
-  MENUITEM "&Paieška...",          CMD_HELP_SEARCH
-  MENUITEM "Pa&galba apie žinyną", CMD_HELP_ON_HELP
-  MENUITEM SEPARATOR
-  MENUITEM "&Apie užrašinę",       CMD_HELP_ABOUT_NOTEPAD
- }
-}
-
 /* Dialog `Page setup' */
 
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
@@ -101,40 +59,3 @@ BEGIN
   LTEXT "Koduotė:", -1, 5,0, 50,12
   COMBOBOX IDC_OFN_ENCCOMBO, 53,0, 156,48, WS_CHILD | WS_VSCROLL | CBS_DROPDOWNLIST
 END
-
-STRINGTABLE
-{
-STRING_PAGESETUP_HEADERVALUE,   "&f"
-STRING_PAGESETUP_FOOTERVALUE,   "Puslapis &p"
-
-STRING_NOTEPAD,                        "Užrašinė"
-STRING_ERROR,                          "KLAIDA"
-STRING_WARNING,                        "ĮSPĖJIMAS"
-STRING_INFO,                           "Informacija"
-
-STRING_UNTITLED,                       "Be pavadinimo"
-
-STRING_ALL_FILES,                      "Visi failai (*.*)"
-STRING_TEXT_FILES_TXT,                 "Tekstiniai failai (*.txt)"
-
-STRING_TOOLARGE,                       "Failas „%s“ yra per didelis užrašinei.\n\
-                                       Prašome naudoti kitą tekstų rengyklę."
-STRING_NOTEXT,                         "Jūs neįvedėte jokio teksto.\n\
-                                       Prašome ką nors įvesti ir mėginti dar kartą"
-STRING_DOESNOTEXIST,                   "Failas „%s“\nneegzistuoja\n\n\
-                                       Ar norite sukurti naują failą?"
-STRING_NOTSAVED,                       "Failas „%s“\nbuvo pakeistas\n\n\
-                                       Ar norite išsaugoti pakeitimus?"
-STRING_NOTFOUND,                       "Frazė „%s“ nerasta."
-STRING_OUT_OF_MEMORY,                  "Neužtenka atminties operacijai užbaigti.\n\
-                                       Norėdami atlaisvinti atminties uždarykite vieną ar daugiau programų."
-
-STRING_UNICODE_LE,                    "Unikodas (UTF-16)"
-STRING_UNICODE_BE,                    "Unikodas (UTF-16 mažėjantys baitai)"
-
-STRING_LOSS_OF_UNICODE_CHARACTERS,    "%s\n\
-                                      Šiame faile yra unikodo ženklų, kurie bus prarasti, jei išsaugosite failą %s koduotėje.\n\
-                                      Norėdami išsaugoti šiuos ženklus, spauskite „Atsisakyti“ ir pasirinkite vieną iš \
-                                      unikodo nuostatų koduotės išskleidžiamajame sąraše.\n\
-                                      Tęsti?"
-}

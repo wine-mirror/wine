@@ -890,17 +890,17 @@ msgstr ""
 msgid "Default MidiOut Device"
 msgstr ""
 
-#: hhctrl.rc:27
+#: hhctrl.rc:27 notepad.rc:58
 msgid "&Contents"
-msgstr ""
+msgstr "Enhavo"
 
 #: hhctrl.rc:28
 msgid "I&ndex"
 msgstr ""
 
-#: hhctrl.rc:29
+#: hhctrl.rc:29 notepad.rc:52
 msgid "&Search"
-msgstr ""
+msgstr "&Seræu"
 
 #: hhctrl.rc:30
 msgid "Favor&ites"
@@ -2372,9 +2372,14 @@ msgstr "Ana&loga"
 msgid "Digi&tal"
 msgstr "Diøi&ta"
 
-#: clock.rc:32
+#: clock.rc:32 notepad.rc:50
+#, fuzzy
 msgid "&Font..."
-msgstr "Ti&paro"
+msgstr ""
+"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
+"Ti&paro\n"
+"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
+"&Impozu tiparon..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -3031,6 +3036,211 @@ msgstr ""
 
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
+msgstr ""
+
+#: notepad.rc:26
+msgid "&File"
+msgstr "Dosiero"
+
+#: notepad.rc:27
+msgid "&New\tCtrl+N"
+msgstr "&Nova\tCtrl+N"
+
+#: notepad.rc:28
+msgid "&Open...\tCtrl+O"
+msgstr "Malfermu\tCtrl+O"
+
+#: notepad.rc:29
+msgid "&Save\tCtrl+S"
+msgstr "Kon&servu\tCtrl+S"
+
+#: notepad.rc:30
+msgid "Save &as..."
+msgstr "Konservu &kiel"
+
+#: notepad.rc:32
+msgid "&Print...\tCtrl+P"
+msgstr "Presu\tCtrl+P"
+
+#: notepad.rc:33
+msgid "Page Se&tup..."
+msgstr "Impozu paøon"
+
+#: notepad.rc:34
+msgid "P&rinter Setup..."
+msgstr "Impozu Printilon"
+
+#: notepad.rc:36
+msgid "E&xit"
+msgstr "Finu"
+
+#: notepad.rc:38
+msgid "&Edit"
+msgstr "&Redakto"
+
+#: notepad.rc:39
+msgid "&Undo\tCtrl+Z"
+msgstr "Nuligu\tCtrl+Z"
+
+#: notepad.rc:41
+msgid "Cu&t\tCtrl+X"
+msgstr "Tondu\tCtrl+X"
+
+#: notepad.rc:42
+msgid "&Copy\tCtrl+C"
+msgstr "Kopiu\tCtrl+C"
+
+#: notepad.rc:43
+msgid "&Paste\tCtrl+V"
+msgstr "Enmetu\tCtrl+V"
+
+#: notepad.rc:44
+msgid "&Delete\tDel"
+msgstr "Forigu\tDel"
+
+#: notepad.rc:46
+msgid "Select &all\tCtrl+A"
+msgstr "Elek&tu æion\tCtrl+A"
+
+#: notepad.rc:47
+msgid "&Time/Date\tF5"
+msgstr "Horo/Dato\tF5"
+
+#: notepad.rc:49
+msgid "&Wrap long lines"
+msgstr "&Alineu aýtomate"
+
+#: notepad.rc:53
+msgid "&Search...\tCtrl+F"
+msgstr "Seræu\tCtrl+F"
+
+#: notepad.rc:54
+msgid "&Search next\tF3"
+msgstr "Seræu sekvanta\tF3"
+
+#: notepad.rc:55
+msgid "&Replace...\tCtrl+H"
+msgstr "&Replace...\tCtrl+H"
+
+#: notepad.rc:57
+msgid "&Help"
+msgstr "&Helpo"
+
+#: notepad.rc:59
+msgid "&Search..."
+msgstr "Seræu..."
+
+#: notepad.rc:60
+msgid "&Help on help"
+msgstr "Pri Helpanto"
+
+#: notepad.rc:62
+msgid "&About Notepad"
+msgstr "Pri Notepad"
+
+#: notepad.rc:68
+msgid "&f"
+msgstr "&f"
+
+#: notepad.rc:69
+msgid "Page &p"
+msgstr "Paøo &p"
+
+#: notepad.rc:71
+msgid "Notepad"
+msgstr "Notbloko"
+
+#: notepad.rc:72
+msgid "ERROR"
+msgstr "ERORO"
+
+#: notepad.rc:73
+msgid "WARNING"
+msgstr "ATENTU"
+
+#: notepad.rc:74
+msgid "Information"
+msgstr "Informo pri"
+
+#: notepad.rc:76
+msgid "Untitled"
+msgstr "(sen-nomo)"
+
+#: notepad.rc:78
+msgid "All files (*.*)"
+msgstr "Tutaj dosieroj (*.*)"
+
+#: notepad.rc:79
+msgid "Text files (*.txt)"
+msgstr "Tekstdosieroj (*.txt)"
+
+#: notepad.rc:82
+msgid ""
+"File '%s' is too large for notepad.\n"
+"Please use a different editor."
+msgstr ""
+"La dosiero '%s' estas tro granda por Notepad.\n"
+" Oni konsilas uzi alian redaktilon."
+
+#: notepad.rc:84
+msgid ""
+"You didn't enter any text.\n"
+"Please type something and try again"
+msgstr ""
+"Ne estas enmetita teksto. \n"
+"Oni konsilas skribi devove kaj reprovi"
+
+#: notepad.rc:86
+msgid ""
+"File '%s' does not exist.\n"
+"\n"
+"Do you want to create a new file?"
+msgstr ""
+"La dosiero '%s'\n"
+"ne eksistas\n"
+"\n"
+" Æu mi devas krei novan dosieron?"
+
+#: notepad.rc:88
+msgid ""
+"File '%s' has been modified.\n"
+"\n"
+"Would you like to save the changes?"
+msgstr ""
+"La dosiero'%s'\n"
+" estis þanøita\n"
+"\n"
+" Æu vi volas konservi la þanøojn?"
+
+#: notepad.rc:89
+msgid "'%s' could not be found."
+msgstr "Mi ne trovis '%s'."
+
+#: notepad.rc:91
+msgid ""
+"Not enough memory to complete this task.\n"
+"Close one or more applications to increase the amount of free memory."
+msgstr ""
+"La memoro estas nesufiæa por kompletigo je la tasko \n"
+"Oni konsilas fermi unu o pluraj programoj por\n"
+"liberigi memoron."
+
+#: notepad.rc:93
+msgid "Unicode (UTF-16)"
+msgstr ""
+
+#: notepad.rc:94
+msgid "Unicode (UTF-16 big-endian)"
+msgstr ""
+
+#: notepad.rc:101
+msgid ""
+"%s\n"
+"This file contains Unicode characters which will be lost if\n"
+"you save this file in the %s encoding.\n"
+"To keep these characters, click Cancel, and then select\n"
+"one of the Unicode options in the Encoding drop down list.\n"
+"Continue?"
 msgstr ""
 
 #: reg.rc:27

@@ -904,15 +904,20 @@ msgstr "Privzeta WaveOut naprava"
 msgid "Default MidiOut Device"
 msgstr "Privzeta MidiOut naprava"
 
-#: hhctrl.rc:27
+#: hhctrl.rc:27 notepad.rc:58
+#, fuzzy
 msgid "&Contents"
-msgstr "&Vsebina"
+msgstr ""
+"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
+"&Vsebina\n"
+"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
+"&Teme pomoči"
 
 #: hhctrl.rc:28
 msgid "I&ndex"
 msgstr "I&ndeks"
 
-#: hhctrl.rc:29
+#: hhctrl.rc:29 notepad.rc:52
 msgid "&Search"
 msgstr "&Iskanje"
 
@@ -2508,9 +2513,14 @@ msgstr "Ana&logna ura"
 msgid "Digi&tal"
 msgstr "Digi&talna ura"
 
-#: clock.rc:32
+#: clock.rc:32 notepad.rc:50
+#, fuzzy
 msgid "&Font..."
-msgstr "&Pisava ..."
+msgstr ""
+"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
+"&Pisava ...\n"
+"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
+"Pi&sava ..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -3353,6 +3363,216 @@ msgstr ""
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Porabljena sredstva: %lu\n"
+
+#: notepad.rc:26
+msgid "&File"
+msgstr "&Datoteka"
+
+#: notepad.rc:27
+msgid "&New\tCtrl+N"
+msgstr "&Nova\tCtrl+N"
+
+#: notepad.rc:28
+msgid "&Open...\tCtrl+O"
+msgstr "&Odpri ...\tCtrl+O"
+
+#: notepad.rc:29
+msgid "&Save\tCtrl+S"
+msgstr "&Shrani\tCtrl+S"
+
+#: notepad.rc:30
+msgid "Save &as..."
+msgstr "Shrani &kot ..."
+
+#: notepad.rc:32
+msgid "&Print...\tCtrl+P"
+msgstr "Na&tisni ...\tCtrl+P"
+
+#: notepad.rc:33
+msgid "Page Se&tup..."
+msgstr "P&riprava strani ..."
+
+#: notepad.rc:34
+msgid "P&rinter Setup..."
+msgstr "&Tiskalnik ..."
+
+#: notepad.rc:36
+msgid "E&xit"
+msgstr "Iz&hod"
+
+#: notepad.rc:38
+msgid "&Edit"
+msgstr "&Urejanje"
+
+#: notepad.rc:39
+msgid "&Undo\tCtrl+Z"
+msgstr "&Razveljavi\tCtrl+Z"
+
+#: notepad.rc:41
+msgid "Cu&t\tCtrl+X"
+msgstr "&Izreži\tCtrl+X"
+
+#: notepad.rc:42
+msgid "&Copy\tCtrl+C"
+msgstr "&Kopiraj\tCtrl+C"
+
+#: notepad.rc:43
+msgid "&Paste\tCtrl+V"
+msgstr "&Prilepi\tCtrl+V"
+
+#: notepad.rc:44
+msgid "&Delete\tDel"
+msgstr "Iznri&ši\tDel"
+
+#: notepad.rc:46
+msgid "Select &all\tCtrl+A"
+msgstr "Izberi &vse\tCtrl+A"
+
+#: notepad.rc:47
+msgid "&Time/Date\tF5"
+msgstr "&Datum/čas\tF5"
+
+#: notepad.rc:49
+msgid "&Wrap long lines"
+msgstr "Pre&lom dolgih vrstic"
+
+#: notepad.rc:53
+msgid "&Search...\tCtrl+F"
+msgstr "&Najdi ...\tCtrl+F"
+
+#: notepad.rc:54
+msgid "&Search next\tF3"
+msgstr "Najdi na&slednje\tF3"
+
+#: notepad.rc:55
+msgid "&Replace...\tCtrl+H"
+msgstr "&Zamenjaj ...\tCtrl+H"
+
+#: notepad.rc:57
+msgid "&Help"
+msgstr "&Pomoč"
+
+#: notepad.rc:59
+msgid "&Search..."
+msgstr "&Iskanje ..."
+
+#: notepad.rc:60
+msgid "&Help on help"
+msgstr "&O pomoči"
+
+#: notepad.rc:62
+msgid "&About Notepad"
+msgstr "&O Beležnici"
+
+#: notepad.rc:68
+msgid "&f"
+msgstr "&f"
+
+#: notepad.rc:69
+msgid "Page &p"
+msgstr "Stran &p"
+
+#: notepad.rc:71
+msgid "Notepad"
+msgstr "Beležnica"
+
+#: notepad.rc:72
+msgid "ERROR"
+msgstr "NAPAKA"
+
+#: notepad.rc:73
+msgid "WARNING"
+msgstr "OPOZORILO"
+
+#: notepad.rc:74
+msgid "Information"
+msgstr "Informacija"
+
+#: notepad.rc:76
+msgid "Untitled"
+msgstr "Neimenovana"
+
+#: notepad.rc:78
+msgid "All files (*.*)"
+msgstr "Vse datoteke (*.*)"
+
+#: notepad.rc:79
+msgid "Text files (*.txt)"
+msgstr "Datoteke z besedilom (*.txt)"
+
+#: notepad.rc:82
+msgid ""
+"File '%s' is too large for notepad.\n"
+"Please use a different editor."
+msgstr ""
+"Datotka '%s' je prevelika za Beležnico.\n"
+" Uporabite drug urejevalnik."
+
+#: notepad.rc:84
+msgid ""
+"You didn't enter any text.\n"
+"Please type something and try again"
+msgstr ""
+"Niste vnesli besedila. \n"
+"Vnesite besedilo in poskusite znova."
+
+#: notepad.rc:86
+msgid ""
+"File '%s' does not exist.\n"
+"\n"
+"Do you want to create a new file?"
+msgstr ""
+"Datoteka '%s'\n"
+"ne obstaja\n"
+"\n"
+" Ali jo želite ustvariti?"
+
+#: notepad.rc:88
+msgid ""
+"File '%s' has been modified.\n"
+"\n"
+"Would you like to save the changes?"
+msgstr ""
+"Datoteka '%s'\n"
+"je bila spremenjena\n"
+"\n"
+" Ali želite shraniti spremembe?"
+
+#: notepad.rc:89
+msgid "'%s' could not be found."
+msgstr "Niza '%s' ni mogoče najti."
+
+#: notepad.rc:91
+msgid ""
+"Not enough memory to complete this task.\n"
+"Close one or more applications to increase the amount of free memory."
+msgstr ""
+"Za dokončanje operacije je na voljo premalo pomnilnika.\n"
+"Zaprite enega ali več programov in poskusite znova."
+
+#: notepad.rc:93
+msgid "Unicode (UTF-16)"
+msgstr "Unicode (UTF-16)"
+
+#: notepad.rc:94
+msgid "Unicode (UTF-16 big-endian)"
+msgstr "Unicode (UTF-16 big-endian)"
+
+#: notepad.rc:101
+msgid ""
+"%s\n"
+"This file contains Unicode characters which will be lost if\n"
+"you save this file in the %s encoding.\n"
+"To keep these characters, click Cancel, and then select\n"
+"one of the Unicode options in the Encoding drop down list.\n"
+"Continue?"
+msgstr ""
+"%s\n"
+"Ta datoteka vsebuje Unicode znake, ki bodo izgubljeni,\n"
+"če datoteko shranite v %s kodiranju.\n"
+"Da bi te znake obdržali, kliknite Prekliči in izberite\n"
+"eno izmed Unicode možnosti v seznamu kodiranj.\n"
+"Nadaljujem?"
 
 #: reg.rc:27
 msgid ""

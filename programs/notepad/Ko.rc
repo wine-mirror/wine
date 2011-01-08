@@ -28,48 +28,6 @@
 
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
-MAIN_MENU MENU
-{
- POPUP "파일(&F)" {
-  MENUITEM "새로 만들기(&N)\tCtrl+N",   CMD_NEW
-  MENUITEM "열기(&O)...\tCtrl+O",       CMD_OPEN
-  MENUITEM "저장(&S)\tCtrl+S",          CMD_SAVE
-  MENUITEM "다른 이름으로 저장(&A)...", CMD_SAVE_AS
-  MENUITEM SEPARATOR
-  MENUITEM "인쇄(&P)...\tCtrl+P",       CMD_PRINT
-  MENUITEM "페이지 설정(&T)...",        CMD_PAGE_SETUP
-  MENUITEM "프린터 설정(&R)...",        CMD_PRINTER_SETUP
-  MENUITEM SEPARATOR
-  MENUITEM "끝내기(&X)",                CMD_EXIT
- }
-POPUP "편집(&E)" {
-  MENUITEM "실행 취소(&U)\tCtrl+Z",     CMD_UNDO
-  MENUITEM SEPARATOR
-  MENUITEM "잘라내기(&T)\tCtrl+X",      CMD_CUT
-  MENUITEM "복사(&C)\tCtrl+C",          CMD_COPY
-  MENUITEM "붙여넣기(&P)\tCtrl+V",      CMD_PASTE
-  MENUITEM "삭제(&D)\tDel",             CMD_DELETE
-  MENUITEM SEPARATOR
-  MENUITEM "모두 선택(&A)\tCtrl+A",     CMD_SELECT_ALL
-  MENUITEM "시간/날짜(&T)\tF5",         CMD_TIME_DATE
-  MENUITEM SEPARATOR
-  MENUITEM "자동 줄 바꿈(&W)",          CMD_WRAP
-  MENUITEM "글꼴(&F)...",               CMD_FONT
- }
-POPUP "찾기(&S)" {
-  MENUITEM "찾기(&S)...\tCtrl+F",       CMD_SEARCH
-  MENUITEM "다음 찾기(&N)\tF3",         CMD_SEARCH_NEXT
-  MENUITEM "바꾸기(&R)...\tCtrl+H", CMD_REPLACE
- }
-POPUP "도움말(&H)" {
-  MENUITEM "항목(&C)",                  CMD_HELP_CONTENTS
-  MENUITEM "찾기(&S)...",               CMD_HELP_SEARCH
-  MENUITEM "도움말 사용법(&H)",         CMD_HELP_ON_HELP
-  MENUITEM SEPARATOR
-  MENUITEM "노트패드 정보(&A)", CMD_HELP_ABOUT_NOTEPAD
- }
-}
-
 /* Dialog `Page setup' */
 
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
@@ -95,43 +53,4 @@ EDITTEXT IDC_PAGESETUP_BOTTOMVALUE,  130, 73, 35, 11, WS_CHILD | WS_BORDER | WS_
 DEFPUSHBUTTON "확인",       IDOK,                   180,  3, 40, 15, WS_TABSTOP
 PUSHBUTTON    "취소",       IDCANCEL,               180, 21, 40, 15, WS_TABSTOP
 PUSHBUTTON    "도움말(&H)", IDHELP,                 180, 39, 40, 15, WS_TABSTOP
-}
-
-STRINGTABLE
-{
-STRING_PAGESETUP_HEADERVALUE,   "&f"
-STRING_PAGESETUP_FOOTERVALUE,   "&p 페이지"
-
-STRING_NOTEPAD,                                 "메모장"
-STRING_ERROR,                                   "오류"
-STRING_WARNING,                                 "경고"
-STRING_INFO,                                    "정보"
-
-STRING_UNTITLED,                                "제목 없음"
-
-STRING_ALL_FILES,                               "모든 파일 (*.*)"
-STRING_TEXT_FILES_TXT,                          "텍스트 문서 (*.txt)"
-
-STRING_TOOLARGE,                                "%s 파일이 너무 커서 메모장으로는 열 수 없습니다.\n \
-다른 편집기를 사용하십시오."
-STRING_NOTEXT,                                  "입력한 내용이 없습니다.\
-\n내용을 입력한 후 재시도하십시오"
-STRING_DOESNOTEXIST,                            "%s\ 파일이 없습니다.\n\n \
-파일을 새로 만드시겠습니까?"
-STRING_NOTSAVED,                                "%s\ 파일 내용이 변경되었습니다.\n\n \
-변경 내용을 저장하시겠습니까?"
-STRING_NOTFOUND,                                "%s 문자열을 찾을 수 없습니다."
-STRING_OUT_OF_MEMORY,                           "이 작업을 완료하는 데 필요한 메모리가 부족합니다.\
-\n사용 가능한 메모리의 양을 확보하기 위해 하나 이상의 응용 프로그램을 닫아 주십시오."
-
-
-STRING_UNICODE_LE,     "유니코드 (UTF-16)"
-STRING_UNICODE_BE,     "유니코드  (UTF-16 빅-엔디언)"
-
-STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
-유니코드 문자를 포함하고 있는 이 파일은 만약 당신이 %s 인코딩으로\n\
-파일을 저장하면 문자의 손실이 있을 것입니다.\n\
-이 문자를 보존하려면  취소를 클릭하고, 인코딩 드롭다운목록의 유니코드\n\
-옵션 중의 하나를  선택하십시오t.\n\
-계속하시겠습니까?"
 }

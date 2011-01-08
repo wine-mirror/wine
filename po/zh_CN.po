@@ -890,7 +890,7 @@ msgstr ""
 msgid "Default MidiOut Device"
 msgstr ""
 
-#: hhctrl.rc:27
+#: hhctrl.rc:27 notepad.rc:58
 msgid "&Contents"
 msgstr "内容(&C)"
 
@@ -898,9 +898,14 @@ msgstr "内容(&C)"
 msgid "I&ndex"
 msgstr "目录(&N)"
 
-#: hhctrl.rc:29
+#: hhctrl.rc:29 notepad.rc:52
+#, fuzzy
 msgid "&Search"
-msgstr "搜寻(&S)"
+msgstr ""
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"搜寻(&S)\n"
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"搜索(&S)"
 
 #: hhctrl.rc:30
 msgid "Favor&ites"
@@ -2372,7 +2377,7 @@ msgstr "模拟时钟(&L)"
 msgid "Digi&tal"
 msgstr "数字时钟(&T)"
 
-#: clock.rc:32
+#: clock.rc:32 notepad.rc:50
 msgid "&Font..."
 msgstr "字体(&F)..."
 
@@ -3032,6 +3037,210 @@ msgstr ""
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
+
+#: notepad.rc:26
+msgid "&File"
+msgstr "文件(&F)"
+
+#: notepad.rc:27
+msgid "&New\tCtrl+N"
+msgstr "新建(&N)\tCtrl+N"
+
+#: notepad.rc:28
+msgid "&Open...\tCtrl+O"
+msgstr "打开(&O)...\tCtrl+O"
+
+#: notepad.rc:29
+msgid "&Save\tCtrl+S"
+msgstr "保存(&S)\tCtrl+S"
+
+#: notepad.rc:30
+msgid "Save &as..."
+msgstr "另存为(&A)..."
+
+#: notepad.rc:32
+msgid "&Print...\tCtrl+P"
+msgstr "打印(&P)...\tCtrl+P"
+
+#: notepad.rc:33
+msgid "Page Se&tup..."
+msgstr "页面设置(&T)..."
+
+#: notepad.rc:34
+msgid "P&rinter Setup..."
+msgstr "打印设置(&R)..."
+
+#: notepad.rc:36
+msgid "E&xit"
+msgstr "退出(&E)"
+
+#: notepad.rc:38
+msgid "&Edit"
+msgstr "编辑(&E)"
+
+#: notepad.rc:39
+msgid "&Undo\tCtrl+Z"
+msgstr "撤消(&U)\tCtrl+Z"
+
+#: notepad.rc:41
+msgid "Cu&t\tCtrl+X"
+msgstr "剪切(&T)\tCtrl+X"
+
+#: notepad.rc:42
+msgid "&Copy\tCtrl+C"
+msgstr "复制(&C)\tCtrl+C"
+
+#: notepad.rc:43
+msgid "&Paste\tCtrl+V"
+msgstr "粘贴(&P)\tCtrl+V"
+
+#: notepad.rc:44
+msgid "&Delete\tDel"
+msgstr "删除(&D)\tDel"
+
+#: notepad.rc:46
+msgid "Select &all\tCtrl+A"
+msgstr "全选(&A)"
+
+#: notepad.rc:47
+msgid "&Time/Date\tF5"
+msgstr "插入日期、时间(&T)\tF5"
+
+#: notepad.rc:49
+msgid "&Wrap long lines"
+msgstr "自动换行(&W)"
+
+#: notepad.rc:53
+msgid "&Search...\tCtrl+F"
+msgstr "搜索(&S)..."
+
+#: notepad.rc:54
+msgid "&Search next\tF3"
+msgstr "搜索下一个(&S)\tF3"
+
+#: notepad.rc:55
+msgid "&Replace...\tCtrl+H"
+msgstr "替换...\tCtrl+H"
+
+#: notepad.rc:57
+msgid "&Help"
+msgstr "帮助(&H)"
+
+#: notepad.rc:59
+msgid "&Search..."
+msgstr "搜索(&S)..."
+
+#: notepad.rc:60
+msgid "&Help on help"
+msgstr "如何使用帮助(&H)"
+
+#: notepad.rc:62
+msgid "&About Notepad"
+msgstr "关于记事本(&A)"
+
+#: notepad.rc:68
+msgid "&f"
+msgstr "&f"
+
+#: notepad.rc:69
+msgid "Page &p"
+msgstr "第 &p 页"
+
+#: notepad.rc:71
+msgid "Notepad"
+msgstr "记事本"
+
+#: notepad.rc:72
+msgid "ERROR"
+msgstr "错误"
+
+#: notepad.rc:73
+msgid "WARNING"
+msgstr "警告"
+
+#: notepad.rc:74
+msgid "Information"
+msgstr "信息"
+
+#: notepad.rc:76
+msgid "Untitled"
+msgstr "（未命名）"
+
+#: notepad.rc:78
+msgid "All files (*.*)"
+msgstr "所有文件 (*.*)"
+
+#: notepad.rc:79
+msgid "Text files (*.txt)"
+msgstr "文本文件 (*.txt)"
+
+#: notepad.rc:82
+msgid ""
+"File '%s' is too large for notepad.\n"
+"Please use a different editor."
+msgstr ""
+"记事本不能打开“%s“这么大的文件。\n"
+"请使用别的编辑器。"
+
+#: notepad.rc:84
+msgid ""
+"You didn't enter any text.\n"
+"Please type something and try again"
+msgstr ""
+"您没有输入任何文本。\n"
+"请输入一些再试。"
+
+#: notepad.rc:86
+msgid ""
+"File '%s' does not exist.\n"
+"\n"
+"Do you want to create a new file?"
+msgstr ""
+"文件“%s”不存在。\n"
+"\n"
+"您想新建一个文件吗？"
+
+#: notepad.rc:88
+msgid ""
+"File '%s' has been modified.\n"
+"\n"
+"Would you like to save the changes?"
+msgstr ""
+"文件“%s”已更改。\n"
+"\n"
+"是否保存更改？"
+
+#: notepad.rc:89
+msgid "'%s' could not be found."
+msgstr "找不到“%s”。"
+
+#: notepad.rc:91
+msgid ""
+"Not enough memory to complete this task.\n"
+"Close one or more applications to increase the amount of free memory."
+msgstr "没有足够的内存可以用来完成此项任务。请关闭一些程序后再试。"
+
+#: notepad.rc:93
+msgid "Unicode (UTF-16)"
+msgstr "Unicode (UTF-16)"
+
+#: notepad.rc:94
+msgid "Unicode (UTF-16 big-endian)"
+msgstr "Unicode (UTF-16 大尾)"
+
+#: notepad.rc:101
+msgid ""
+"%s\n"
+"This file contains Unicode characters which will be lost if\n"
+"you save this file in the %s encoding.\n"
+"To keep these characters, click Cancel, and then select\n"
+"one of the Unicode options in the Encoding drop down list.\n"
+"Continue?"
+msgstr ""
+"%s\n"
+"此文件包含 Unicode 字符。如果用 %s 编码保存，这些字符将会丢失。\n"
+"要保留这些字符，请点“取消”，然后选择一种 Unicode 编码。\n"
+"要继续吗？"
 
 #: reg.rc:27
 msgid ""

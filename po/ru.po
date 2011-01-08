@@ -901,7 +901,7 @@ msgstr "Звуковое устройство вывода по умолчани
 msgid "Default MidiOut Device"
 msgstr "Устройство вывода MIDI по умолчанию"
 
-#: hhctrl.rc:27
+#: hhctrl.rc:27 notepad.rc:58
 msgid "&Contents"
 msgstr "&Содержание"
 
@@ -909,9 +909,14 @@ msgstr "&Содержание"
 msgid "I&ndex"
 msgstr "&Оглавление"
 
-#: hhctrl.rc:29
+#: hhctrl.rc:29 notepad.rc:52
+#, fuzzy
 msgid "&Search"
-msgstr "&Поиск"
+msgstr ""
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"&Поиск\n"
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"П&оиск"
 
 #: hhctrl.rc:30
 msgid "Favor&ites"
@@ -2498,7 +2503,7 @@ msgstr "&Аналовые"
 msgid "Digi&tal"
 msgstr "&Цифровые"
 
-#: clock.rc:32
+#: clock.rc:32 notepad.rc:50
 msgid "&Font..."
 msgstr "&Шрифт..."
 
@@ -3348,6 +3353,217 @@ msgstr ""
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S         %S      Открытых ресурсов: %lu\n"
+
+#: notepad.rc:26
+msgid "&File"
+msgstr "&Файл"
+
+#: notepad.rc:27
+msgid "&New\tCtrl+N"
+msgstr "Созд&ать\tCtrl+N"
+
+#: notepad.rc:28
+msgid "&Open...\tCtrl+O"
+msgstr "&Открыть...\tCtrl+O"
+
+#: notepad.rc:29
+msgid "&Save\tCtrl+S"
+msgstr "&Сохранить\tCtrl+S"
+
+#: notepad.rc:30
+msgid "Save &as..."
+msgstr "Сохранить &как..."
+
+#: notepad.rc:32
+msgid "&Print...\tCtrl+P"
+msgstr "&Печатать...\tCtrl+P"
+
+#: notepad.rc:33
+msgid "Page Se&tup..."
+msgstr "Пара&метры страницы..."
+
+#: notepad.rc:34
+msgid "P&rinter Setup..."
+msgstr "&Настройка принтера..."
+
+#: notepad.rc:36
+msgid "E&xit"
+msgstr "В&ыход"
+
+#: notepad.rc:38
+msgid "&Edit"
+msgstr "&Правка"
+
+#: notepad.rc:39
+msgid "&Undo\tCtrl+Z"
+msgstr "&Отменить\tCtrl+Z"
+
+#: notepad.rc:41
+msgid "Cu&t\tCtrl+X"
+msgstr "&Вырезать\tCtrl+X"
+
+#: notepad.rc:42
+msgid "&Copy\tCtrl+C"
+msgstr "&Копировать\tCtrl+C"
+
+#: notepad.rc:43
+msgid "&Paste\tCtrl+V"
+msgstr "Вст&авить\tCtrl+V"
+
+#: notepad.rc:44
+msgid "&Delete\tDel"
+msgstr "&Удалить\tDel"
+
+#: notepad.rc:46
+msgid "Select &all\tCtrl+A"
+msgstr "Выделить в&сё"
+
+#: notepad.rc:47
+msgid "&Time/Date\tF5"
+msgstr "Врем&я и дата\tF5"
+
+#: notepad.rc:49
+msgid "&Wrap long lines"
+msgstr "&Перенос по словам"
+
+#: notepad.rc:53
+msgid "&Search...\tCtrl+F"
+msgstr "&Найти..."
+
+#: notepad.rc:54
+msgid "&Search next\tF3"
+msgstr "Найти &далее\tF3"
+
+#: notepad.rc:55
+msgid "&Replace...\tCtrl+H"
+msgstr "&Заменить...\tCtrl+H"
+
+#: notepad.rc:57
+msgid "&Help"
+msgstr "&Справка"
+
+#: notepad.rc:59
+msgid "&Search..."
+msgstr "&Поиск..."
+
+#: notepad.rc:60
+msgid "&Help on help"
+msgstr "&Использование справки"
+
+#: notepad.rc:62
+msgid "&About Notepad"
+msgstr "&О Notepad"
+
+#: notepad.rc:68
+msgid "&f"
+msgstr "&f"
+
+#: notepad.rc:69
+msgid "Page &p"
+msgstr "Страница &p"
+
+#: notepad.rc:71
+msgid "Notepad"
+msgstr "Блокнот"
+
+#: notepad.rc:72
+msgid "ERROR"
+msgstr "ОШИБКА"
+
+#: notepad.rc:73
+msgid "WARNING"
+msgstr "ВНИМАНИЕ"
+
+#: notepad.rc:74
+msgid "Information"
+msgstr "Информация"
+
+#: notepad.rc:76
+msgid "Untitled"
+msgstr "(без заголовка)"
+
+#: notepad.rc:78
+msgid "All files (*.*)"
+msgstr "Все файлы (*.*)"
+
+#: notepad.rc:79
+msgid "Text files (*.txt)"
+msgstr "Текстовые файлы (*.txt)"
+
+#: notepad.rc:82
+msgid ""
+"File '%s' is too large for notepad.\n"
+"Please use a different editor."
+msgstr ""
+"Файл '%s' слишком большой для блокнота.\n"
+" Используйте другой редактор."
+
+#: notepad.rc:84
+msgid ""
+"You didn't enter any text.\n"
+"Please type something and try again"
+msgstr ""
+"Вы не ввели никакого текста. \n"
+"Введите что-нибудь и попробуйте еще."
+
+#: notepad.rc:86
+msgid ""
+"File '%s' does not exist.\n"
+"\n"
+"Do you want to create a new file?"
+msgstr ""
+"Файл '%s'\n"
+"не существует\n"
+"\n"
+" Хотите создать новый файл?"
+
+#: notepad.rc:88
+msgid ""
+"File '%s' has been modified.\n"
+"\n"
+"Would you like to save the changes?"
+msgstr ""
+"Файл '%s'\n"
+"был изменён\n"
+"\n"
+" Хотите сохранить изменения?"
+
+#: notepad.rc:89
+msgid "'%s' could not be found."
+msgstr "'%s' не найден."
+
+#: notepad.rc:91
+msgid ""
+"Not enough memory to complete this task.\n"
+"Close one or more applications to increase the amount of free memory."
+msgstr ""
+"Недостаточно памяти для завершения этой операции \n"
+"Закройте одно или несколько приложений и повторите попытку."
+
+#: notepad.rc:93
+msgid "Unicode (UTF-16)"
+msgstr "Юникод (UTF-16)"
+
+#: notepad.rc:94
+msgid "Unicode (UTF-16 big-endian)"
+msgstr "Юникод (UTF-16 big-endian)"
+
+#: notepad.rc:101
+msgid ""
+"%s\n"
+"This file contains Unicode characters which will be lost if\n"
+"you save this file in the %s encoding.\n"
+"To keep these characters, click Cancel, and then select\n"
+"one of the Unicode options in the Encoding drop down list.\n"
+"Continue?"
+msgstr ""
+"%s\n"
+"Этот файл содержит текст в формате Юникод, который будет потерян, если вы "
+"сохраните этот файл как файл в кодировке %s.\n"
+"Чтобы сохранить данные в формате Юникод, нажмите кнопку \"Отмена\" и "
+"выберите\n"
+"один из вариантов сохранения в формате Юникод.\n"
+"Продолжить?"
 
 #: reg.rc:27
 msgid ""

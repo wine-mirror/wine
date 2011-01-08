@@ -24,48 +24,6 @@
 
 LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
-MAIN_MENU MENU
-{
- POPUP "&Fil" {
-  MENUITEM "&Ny\tCtrl+N",           CMD_NEW
-  MENUITEM "&Åpne...\tCtrl+O",     CMD_OPEN
-  MENUITEM "&Lagre\tCtrl+S",     CMD_SAVE
-  MENUITEM "Lagr&e som...",       CMD_SAVE_AS
-  MENUITEM SEPARATOR
-  MENUITEM "&Skriv ut...\tCtrl+P",            CMD_PRINT
-  MENUITEM "Sideoppse&tt...",    CMD_PAGE_SETUP
-  MENUITEM "Sk&riveroppsett...", CMD_PRINTER_SETUP
-  MENUITEM SEPARATOR
-  MENUITEM "&Avslutt",             CMD_EXIT
- }
-POPUP "R&ediger" {
-  MENUITEM "&Angre\tCtrl+Z",     CMD_UNDO
-  MENUITEM SEPARATOR
-  MENUITEM "Klipp u&t\tCtrl+X",      CMD_CUT
-  MENUITEM "&Kopier\tCtrl+C",     CMD_COPY
-  MENUITEM "&Lim inn\tCtrl+V",    CMD_PASTE
-  MENUITEM "&Slett\tDel",      CMD_DELETE
-  MENUITEM SEPARATOR
-  MENUITEM "Merk &alt\tCtrl+A",       CMD_SELECT_ALL
-  MENUITEM "&Tid/Dato\tF5",    CMD_TIME_DATE
-  MENUITEM SEPARATOR
-  MENUITEM "Tekstbrytin&g",  CMD_WRAP
-  MENUITEM "Skr&ift...",          CMD_FONT
- }
-POPUP "&Søk" {
-  MENUITEM "&Søk...\tCtrl+F",   CMD_SEARCH
-  MENUITEM "Søk etter nest&e\tF3",  CMD_SEARCH_NEXT
-  MENUITEM "E&rstatt...\tCtrl+H", CMD_REPLACE
- }
-POPUP "&Hjelp" {
-  MENUITEM "&Innhold",         CMD_HELP_CONTENTS
-  MENUITEM "&Søk...",        CMD_HELP_SEARCH
-  MENUITEM "&Hjelp om hjelp",     CMD_HELP_ON_HELP
-  MENUITEM SEPARATOR
-  MENUITEM "&Om Notepad", CMD_HELP_ABOUT_NOTEPAD
- }
-}
-
 /* Dialog `Page setup' */
 
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
@@ -100,42 +58,3 @@ BEGIN
   LTEXT "Tegnkoding:", -1, 5,0, 50,12
   COMBOBOX IDC_OFN_ENCCOMBO, 53,0, 156,48, WS_CHILD | WS_VSCROLL | CBS_DROPDOWNLIST
 END
-
-STRINGTABLE
-{
-STRING_PAGESETUP_HEADERVALUE,   "&f"
-STRING_PAGESETUP_FOOTERVALUE,   "Side &s"
-
-STRING_NOTEPAD,                                 "Notisblokk"
-STRING_ERROR,                                   "FEIL"
-STRING_WARNING,                                 "ADVARSEL"
-STRING_INFO,                                    "Informasjon"
-
-STRING_UNTITLED,                                "(Uten navn)"
-
-STRING_ALL_FILES,                               "Alle filer (*.*)"
-STRING_TEXT_FILES_TXT,                  "Tekstfiler (*.txt)"
-
-STRING_TOOLARGE,                                "Filen «%s» er for stor for Notisblokk.\n \
-Bruk en annen redigerer."
-STRING_NOTEXT,                                  "Du skrev ikke inn noe tekst. \
-\nSkriv noe og prøv igjen."
-STRING_DOESNOTEXIST,                            "Filen «%s» finnes ikke.\n\n \
-Opprette en ny fil?"
-STRING_NOTSAVED,                                "Filen «%s» er endret.\n\n \
-Lagre endringene?"
-STRING_NOTFOUND,                                        "Klarte ikke finne «%s»."
-STRING_OUT_OF_MEMORY,                   "Ikke nok minne for å fullføre \
-operasjonen.\nLukk et eller flere programmer for å frigjøre\nmer \
-minne."
-
-STRING_UNICODE_LE,     "Unicode (UTF-16)"
-STRING_UNICODE_BE,     "Unicode (UTF-16 big-endian)"
-
-STRING_LOSS_OF_UNICODE_CHARACTERS,         "«%s»\n\
-Denne filen inneholder Unicode-tegn som vil gå tapt hvis\n\
-filen lagres med tegnkodingen %s.\n\
-Trykk Avbryt og velg et av Unicode-valgene fra listen\n\
-hvis du vil beholde tegnene.\n\
-Fortsette?"
-}

@@ -893,15 +893,20 @@ msgstr "Standaardapparaat WaveOut"
 msgid "Default MidiOut Device"
 msgstr "Standaardapparaat MidiOut"
 
-#: hhctrl.rc:27
+#: hhctrl.rc:27 notepad.rc:58
+#, fuzzy
 msgid "&Contents"
-msgstr "&Inhoud"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"&Inhoud\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"&Help-onderwerpen"
 
 #: hhctrl.rc:28
 msgid "I&ndex"
 msgstr "I&ndex"
 
-#: hhctrl.rc:29
+#: hhctrl.rc:29 notepad.rc:52
 msgid "&Search"
 msgstr "&Zoeken"
 
@@ -2501,9 +2506,14 @@ msgstr "&Analoog"
 msgid "Digi&tal"
 msgstr "&Digitaal"
 
-#: clock.rc:32
+#: clock.rc:32 notepad.rc:50
+#, fuzzy
 msgid "&Font..."
-msgstr "&Lettertype..."
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"&Lettertype...\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"&Lettertype instellen..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -3357,6 +3367,217 @@ msgstr ""
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Open resources: %lu\n"
+
+#: notepad.rc:26
+msgid "&File"
+msgstr "&Bestand"
+
+#: notepad.rc:27
+msgid "&New\tCtrl+N"
+msgstr "&Nieuw"
+
+#: notepad.rc:28
+msgid "&Open...\tCtrl+O"
+msgstr "&Openen...\tCtrl+O"
+
+#: notepad.rc:29
+msgid "&Save\tCtrl+S"
+msgstr "O&pslaan\tCtrl+S"
+
+#: notepad.rc:30
+msgid "Save &as..."
+msgstr "Ops&laan als..."
+
+#: notepad.rc:32
+msgid "&Print...\tCtrl+P"
+msgstr "Af&drukken...\tCtrl+P"
+
+#: notepad.rc:33
+msgid "Page Se&tup..."
+msgstr "Pa&gina-instellingen..."
+
+#: notepad.rc:34
+msgid "P&rinter Setup..."
+msgstr "Printerins&tellingen..."
+
+#: notepad.rc:36
+msgid "E&xit"
+msgstr "&Afsluiten"
+
+#: notepad.rc:38
+msgid "&Edit"
+msgstr "Be&werken"
+
+#: notepad.rc:39
+msgid "&Undo\tCtrl+Z"
+msgstr "&Ongedaan maken\tCtrl+Z"
+
+#: notepad.rc:41
+msgid "Cu&t\tCtrl+X"
+msgstr "K&nippen\tCtrl+X"
+
+#: notepad.rc:42
+msgid "&Copy\tCtrl+C"
+msgstr "&Kopiëren\tCtrl+C"
+
+#: notepad.rc:43
+msgid "&Paste\tCtrl+V"
+msgstr "&Plakken\tCtrl+V"
+
+#: notepad.rc:44
+msgid "&Delete\tDel"
+msgstr "&Verwijderen\tDel"
+
+#: notepad.rc:46
+msgid "Select &all\tCtrl+A"
+msgstr "&Alles selecteren\tCtrl+A"
+
+#: notepad.rc:47
+msgid "&Time/Date\tF5"
+msgstr "Tijd/&datum\tF5"
+
+#: notepad.rc:49
+msgid "&Wrap long lines"
+msgstr "A&utomatische terugloop"
+
+#: notepad.rc:53
+msgid "&Search...\tCtrl+F"
+msgstr "&Zoeken...\tCtrl+Z"
+
+#: notepad.rc:54
+msgid "&Search next\tF3"
+msgstr "V&olgende zoeken\tF3"
+
+#: notepad.rc:55
+msgid "&Replace...\tCtrl+H"
+msgstr "&Vervangen...\tCtrl+H"
+
+#: notepad.rc:57
+msgid "&Help"
+msgstr "&Help"
+
+#: notepad.rc:59
+msgid "&Search..."
+msgstr "&Zoeken..."
+
+#: notepad.rc:60
+msgid "&Help on help"
+msgstr "H&ulp bij Help"
+
+#: notepad.rc:62
+msgid "&About Notepad"
+msgstr "&Over Notepad"
+
+#: notepad.rc:68
+msgid "&f"
+msgstr "&f"
+
+#: notepad.rc:69
+msgid "Page &p"
+msgstr "Pagina &p"
+
+#: notepad.rc:71
+msgid "Notepad"
+msgstr "Kladblok"
+
+#: notepad.rc:72
+msgid "ERROR"
+msgstr "FOUT"
+
+#: notepad.rc:73
+msgid "WARNING"
+msgstr "WAARSCHUWING"
+
+#: notepad.rc:74
+msgid "Information"
+msgstr "Informatie"
+
+#: notepad.rc:76
+msgid "Untitled"
+msgstr "Naamloos"
+
+#: notepad.rc:78
+msgid "All files (*.*)"
+msgstr "Alle bestanden (*.*)"
+
+#: notepad.rc:79
+msgid "Text files (*.txt)"
+msgstr "Tekstbestanden (*.txt)"
+
+#: notepad.rc:82
+msgid ""
+"File '%s' is too large for notepad.\n"
+"Please use a different editor."
+msgstr ""
+"Het bestand '%s' is te groot voor Kladblok.\n"
+" Gebruik een andere editor."
+
+#: notepad.rc:84
+msgid ""
+"You didn't enter any text.\n"
+"Please type something and try again"
+msgstr ""
+"U heeft geen tekst ingevoerd. \n"
+"Type uw tekst en probeer het nogmaals"
+
+#: notepad.rc:86
+msgid ""
+"File '%s' does not exist.\n"
+"\n"
+"Do you want to create a new file?"
+msgstr ""
+"Het bestand '%s'\n"
+"bestaat niet\n"
+"\n"
+" Wilt u een nieuw bestand maken?"
+
+#: notepad.rc:88
+msgid ""
+"File '%s' has been modified.\n"
+"\n"
+"Would you like to save the changes?"
+msgstr ""
+"Het bestand '%s'\n"
+"is gewijzigd\n"
+"\n"
+" Wilt u de wijzigingen opslaan?"
+
+#: notepad.rc:89
+msgid "'%s' could not be found."
+msgstr "'%s' kan niet worden gevonden."
+
+#: notepad.rc:91
+msgid ""
+"Not enough memory to complete this task.\n"
+"Close one or more applications to increase the amount of free memory."
+msgstr ""
+"Onvoldoende geheugen. \n"
+"Sluit een of meer applicaties om de hoeveelheid\n"
+"beschikbaar geheugen te vergroten."
+
+#: notepad.rc:93
+msgid "Unicode (UTF-16)"
+msgstr "Unicode (UTF-16)"
+
+#: notepad.rc:94
+msgid "Unicode (UTF-16 big-endian)"
+msgstr "Unicode (UTF-16 big-endian)"
+
+#: notepad.rc:101
+msgid ""
+"%s\n"
+"This file contains Unicode characters which will be lost if\n"
+"you save this file in the %s encoding.\n"
+"To keep these characters, click Cancel, and then select\n"
+"one of the Unicode options in the Encoding drop down list.\n"
+"Continue?"
+msgstr ""
+"%s\n"
+"Dit bestand bevat Unicode tekens die verloren zullen gaan\n"
+"als dit bestand wordt opgeslagen in de %s codering.\n"
+"Klik op Annuleren om deze tekens te behouden, en selecteer\n"
+"daarna een van de Unicode-opties in de coderingskeuzelijst.\n"
+"Wilt u doorgaan?"
 
 #: reg.rc:27
 msgid ""

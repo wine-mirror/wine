@@ -893,7 +893,7 @@ msgstr "Numatytasis WaveOut įrenginys"
 msgid "Default MidiOut Device"
 msgstr "Numatytasis MidiOut įrenginys"
 
-#: hhctrl.rc:27
+#: hhctrl.rc:27 notepad.rc:58
 msgid "&Contents"
 msgstr "&Turinys"
 
@@ -901,7 +901,7 @@ msgstr "&Turinys"
 msgid "I&ndex"
 msgstr "&Rodyklė"
 
-#: hhctrl.rc:29
+#: hhctrl.rc:29 notepad.rc:52
 msgid "&Search"
 msgstr "&Paieška"
 
@@ -2499,9 +2499,14 @@ msgstr "Ana&loginis"
 msgid "Digi&tal"
 msgstr "Skai&tmeninis"
 
-#: clock.rc:32
+#: clock.rc:32 notepad.rc:50
+#, fuzzy
 msgid "&Font..."
-msgstr "&Šriftas..."
+msgstr ""
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"&Šriftas...\n"
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"Š&riftas..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -3338,6 +3343,216 @@ msgstr ""
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Atverti ištekliai: %lu\n"
+
+#: notepad.rc:26
+msgid "&File"
+msgstr "&Failas"
+
+#: notepad.rc:27
+msgid "&New\tCtrl+N"
+msgstr "&Naujas\tCtrl+N"
+
+#: notepad.rc:28
+msgid "&Open...\tCtrl+O"
+msgstr "&Atverti...\tCtrl+O"
+
+#: notepad.rc:29
+msgid "&Save\tCtrl+S"
+msgstr "&Išsaugoti\tCtrl+S"
+
+#: notepad.rc:30
+msgid "Save &as..."
+msgstr "Išsaugoti &kaip..."
+
+#: notepad.rc:32
+msgid "&Print...\tCtrl+P"
+msgstr "S&pausdinti...\tCtrl+P"
+
+#: notepad.rc:33
+msgid "Page Se&tup..."
+msgstr "Puslapio &nuostatos..."
+
+#: notepad.rc:34
+msgid "P&rinter Setup..."
+msgstr "Spaus&dintuvo nuostatos..."
+
+#: notepad.rc:36
+msgid "E&xit"
+msgstr "Iš&eiti"
+
+#: notepad.rc:38
+msgid "&Edit"
+msgstr "&Taisa"
+
+#: notepad.rc:39
+msgid "&Undo\tCtrl+Z"
+msgstr "&Atšaukti\tCtrl+Z"
+
+#: notepad.rc:41
+msgid "Cu&t\tCtrl+X"
+msgstr "&Iškirpti\tCtrl+X"
+
+#: notepad.rc:42
+msgid "&Copy\tCtrl+C"
+msgstr "&Kopijuoti\tCtrl+C"
+
+#: notepad.rc:43
+msgid "&Paste\tCtrl+V"
+msgstr "Į&dėti\tCtrl+V"
+
+#: notepad.rc:44
+msgid "&Delete\tDel"
+msgstr "&Šalinti\tDel"
+
+#: notepad.rc:46
+msgid "Select &all\tCtrl+A"
+msgstr "&Pažymėti viską\tCtrl+A"
+
+#: notepad.rc:47
+msgid "&Time/Date\tF5"
+msgstr "&Laikas/Data\tF5"
+
+#: notepad.rc:49
+msgid "&Wrap long lines"
+msgstr "Skaidyti ilgas &eilutes"
+
+#: notepad.rc:53
+msgid "&Search...\tCtrl+F"
+msgstr "&Ieškoti...\tCtrl+F"
+
+#: notepad.rc:54
+msgid "&Search next\tF3"
+msgstr "Ieškoti ki&to\tF3"
+
+#: notepad.rc:55
+msgid "&Replace...\tCtrl+H"
+msgstr "Pa&keisti...\tCtrl+H"
+
+#: notepad.rc:57
+msgid "&Help"
+msgstr "&Žinynas"
+
+#: notepad.rc:59
+msgid "&Search..."
+msgstr "&Paieška..."
+
+#: notepad.rc:60
+msgid "&Help on help"
+msgstr "Pa&galba apie žinyną"
+
+#: notepad.rc:62
+msgid "&About Notepad"
+msgstr "&Apie užrašinę"
+
+#: notepad.rc:68
+msgid "&f"
+msgstr "&f"
+
+#: notepad.rc:69
+msgid "Page &p"
+msgstr "Puslapis &p"
+
+#: notepad.rc:71
+msgid "Notepad"
+msgstr "Užrašinė"
+
+#: notepad.rc:72
+msgid "ERROR"
+msgstr "KLAIDA"
+
+#: notepad.rc:73
+msgid "WARNING"
+msgstr "ĮSPĖJIMAS"
+
+#: notepad.rc:74
+msgid "Information"
+msgstr "Informacija"
+
+#: notepad.rc:76
+msgid "Untitled"
+msgstr "Be pavadinimo"
+
+#: notepad.rc:78
+msgid "All files (*.*)"
+msgstr "Visi failai (*.*)"
+
+#: notepad.rc:79
+msgid "Text files (*.txt)"
+msgstr "Tekstiniai failai (*.txt)"
+
+#: notepad.rc:82
+msgid ""
+"File '%s' is too large for notepad.\n"
+"Please use a different editor."
+msgstr ""
+"Failas „%s“ yra per didelis užrašinei.\n"
+"Prašome naudoti kitą tekstų rengyklę."
+
+#: notepad.rc:84
+msgid ""
+"You didn't enter any text.\n"
+"Please type something and try again"
+msgstr ""
+"Jūs neįvedėte jokio teksto.\n"
+"Prašome ką nors įvesti ir mėginti dar kartą"
+
+#: notepad.rc:86
+msgid ""
+"File '%s' does not exist.\n"
+"\n"
+"Do you want to create a new file?"
+msgstr ""
+"Failas „%s“\n"
+"neegzistuoja\n"
+"\n"
+"Ar norite sukurti naują failą?"
+
+#: notepad.rc:88
+msgid ""
+"File '%s' has been modified.\n"
+"\n"
+"Would you like to save the changes?"
+msgstr ""
+"Failas „%s“\n"
+"buvo pakeistas\n"
+"\n"
+"Ar norite išsaugoti pakeitimus?"
+
+#: notepad.rc:89
+msgid "'%s' could not be found."
+msgstr "Frazė „%s“ nerasta."
+
+#: notepad.rc:91
+msgid ""
+"Not enough memory to complete this task.\n"
+"Close one or more applications to increase the amount of free memory."
+msgstr ""
+"Neužtenka atminties operacijai užbaigti.\n"
+"Norėdami atlaisvinti atminties uždarykite vieną ar daugiau programų."
+
+#: notepad.rc:93
+msgid "Unicode (UTF-16)"
+msgstr "Unikodas (UTF-16)"
+
+#: notepad.rc:94
+msgid "Unicode (UTF-16 big-endian)"
+msgstr "Unikodas (UTF-16 mažėjantys baitai)"
+
+#: notepad.rc:101
+msgid ""
+"%s\n"
+"This file contains Unicode characters which will be lost if\n"
+"you save this file in the %s encoding.\n"
+"To keep these characters, click Cancel, and then select\n"
+"one of the Unicode options in the Encoding drop down list.\n"
+"Continue?"
+msgstr ""
+"%s\n"
+"Šiame faile yra unikodo ženklų, kurie bus prarasti, jei išsaugosite failą %s "
+"koduotėje.\n"
+"Norėdami išsaugoti šiuos ženklus, spauskite „Atsisakyti“ ir pasirinkite "
+"vieną iš unikodo nuostatų koduotės išskleidžiamajame sąraše.\n"
+"Tęsti?"
 
 #: reg.rc:27
 msgid ""

@@ -893,17 +893,27 @@ msgstr "Périphérique WaveOut par défaut"
 msgid "Default MidiOut Device"
 msgstr "Périphérique MidiOut par défaut"
 
-#: hhctrl.rc:27
+#: hhctrl.rc:27 notepad.rc:58
+#, fuzzy
 msgid "&Contents"
-msgstr "Somm&aire"
+msgstr ""
+"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
+"Somm&aire\n"
+"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
+"&Sommaire"
 
 #: hhctrl.rc:28
 msgid "I&ndex"
 msgstr "I&ndex"
 
-#: hhctrl.rc:29
+#: hhctrl.rc:29 notepad.rc:52
+#, fuzzy
 msgid "&Search"
-msgstr "&Recherche"
+msgstr ""
+"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
+"&Recherche\n"
+"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
+"&Rechercher"
 
 #: hhctrl.rc:30
 msgid "Favor&ites"
@@ -2528,7 +2538,7 @@ msgstr "Ana&logique"
 msgid "Digi&tal"
 msgstr "&Numérique"
 
-#: clock.rc:32
+#: clock.rc:32 notepad.rc:50
 msgid "&Font..."
 msgstr "&Police..."
 
@@ -3385,6 +3395,214 @@ msgstr ""
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Ressources ouvertes : %lu\n"
+
+#: notepad.rc:26
+msgid "&File"
+msgstr "&Fichier"
+
+#: notepad.rc:27
+msgid "&New\tCtrl+N"
+msgstr "&Nouveau\tCtrl+N"
+
+#: notepad.rc:28
+msgid "&Open...\tCtrl+O"
+msgstr "&Ouvrir...\tCtrl+O"
+
+#: notepad.rc:29
+msgid "&Save\tCtrl+S"
+msgstr "&Enregistrer\tCtrl+S"
+
+#: notepad.rc:30
+msgid "Save &as..."
+msgstr "Enregistrer &sous..."
+
+#: notepad.rc:32
+msgid "&Print...\tCtrl+P"
+msgstr "Im&primer...\tCtrl+P"
+
+#: notepad.rc:33
+msgid "Page Se&tup..."
+msgstr "&Mise en page..."
+
+#: notepad.rc:34
+msgid "P&rinter Setup..."
+msgstr "&Configuration de l'imprimante..."
+
+#: notepad.rc:36
+msgid "E&xit"
+msgstr "&Quitter"
+
+#: notepad.rc:38
+msgid "&Edit"
+msgstr "É&dition"
+
+#: notepad.rc:39
+msgid "&Undo\tCtrl+Z"
+msgstr "&Annuler\tCtrl+Z"
+
+#: notepad.rc:41
+msgid "Cu&t\tCtrl+X"
+msgstr "Co&uper\tCtrl+X"
+
+#: notepad.rc:42
+msgid "&Copy\tCtrl+C"
+msgstr "&Copier\tCtrl+C"
+
+#: notepad.rc:43
+msgid "&Paste\tCtrl+V"
+msgstr "C&oller\tCtrl+V"
+
+#: notepad.rc:44
+msgid "&Delete\tDel"
+msgstr "&Effacer\tDel"
+
+#: notepad.rc:46
+msgid "Select &all\tCtrl+A"
+msgstr "Tout &sélectionner\tCtrl+A"
+
+#: notepad.rc:47
+msgid "&Time/Date\tF5"
+msgstr "&Heure/Date\tF5"
+
+#: notepad.rc:49
+msgid "&Wrap long lines"
+msgstr "&Retour à la ligne automatique"
+
+#: notepad.rc:53
+msgid "&Search...\tCtrl+F"
+msgstr "&Rechercher...\tCtrl+F"
+
+#: notepad.rc:54
+msgid "&Search next\tF3"
+msgstr "&Suivant\tF3"
+
+#: notepad.rc:55
+msgid "&Replace...\tCtrl+H"
+msgstr "&Remplacer...\tCtrl+H"
+
+#: notepad.rc:57
+msgid "&Help"
+msgstr "Aid&e"
+
+#: notepad.rc:59
+msgid "&Search..."
+msgstr "&Rechercher..."
+
+#: notepad.rc:60
+msgid "&Help on help"
+msgstr "&Utiliser l'aide"
+
+#: notepad.rc:62
+msgid "&About Notepad"
+msgstr "À &propos du Bloc-notes"
+
+#: notepad.rc:68
+msgid "&f"
+msgstr "&f"
+
+#: notepad.rc:69
+msgid "Page &p"
+msgstr "Page &p"
+
+#: notepad.rc:71
+msgid "Notepad"
+msgstr "Bloc-notes"
+
+#: notepad.rc:72
+msgid "ERROR"
+msgstr "ERREUR"
+
+#: notepad.rc:73
+msgid "WARNING"
+msgstr "ATTENTION"
+
+#: notepad.rc:74
+msgid "Information"
+msgstr "Information"
+
+#: notepad.rc:76
+msgid "Untitled"
+msgstr "(sans titre)"
+
+#: notepad.rc:78
+msgid "All files (*.*)"
+msgstr "Tous les fichiers (*.*)"
+
+#: notepad.rc:79
+msgid "Text files (*.txt)"
+msgstr "Fichiers texte (*.txt)"
+
+#: notepad.rc:82
+msgid ""
+"File '%s' is too large for notepad.\n"
+"Please use a different editor."
+msgstr ""
+"Le fichier « %s » est trop grand pour le bloc-notes.\n"
+"Veuillez utiliser un autre éditeur."
+
+#: notepad.rc:84
+msgid ""
+"You didn't enter any text.\n"
+"Please type something and try again"
+msgstr ""
+"Vous n'avez pas entré de texte. Veuillez taper quelque chose et recommencer"
+
+#: notepad.rc:86
+msgid ""
+"File '%s' does not exist.\n"
+"\n"
+"Do you want to create a new file?"
+msgstr ""
+"Le fichier « %s » n'existe pas.\n"
+"\n"
+"Voulez-vous créer un nouveau fichier ?"
+
+#: notepad.rc:88
+msgid ""
+"File '%s' has been modified.\n"
+"\n"
+"Would you like to save the changes?"
+msgstr ""
+"Le fichier « %s » a été modifié\n"
+"\n"
+"Voulez-vous enregistrer vos modifications ?"
+
+#: notepad.rc:89
+msgid "'%s' could not be found."
+msgstr "« %s » non trouvé."
+
+#: notepad.rc:91
+msgid ""
+"Not enough memory to complete this task.\n"
+"Close one or more applications to increase the amount of free memory."
+msgstr ""
+"Pas assez de mémoire pour terminer cette tâche.\n"
+"Fermez une ou plusieurs applications pour libérer\n"
+"de la mémoire."
+
+#: notepad.rc:93
+msgid "Unicode (UTF-16)"
+msgstr "Unicode (UTF-16)"
+
+#: notepad.rc:94
+msgid "Unicode (UTF-16 big-endian)"
+msgstr "Unicode (UTF-16 big-endian)"
+
+#: notepad.rc:101
+msgid ""
+"%s\n"
+"This file contains Unicode characters which will be lost if\n"
+"you save this file in the %s encoding.\n"
+"To keep these characters, click Cancel, and then select\n"
+"one of the Unicode options in the Encoding drop down list.\n"
+"Continue?"
+msgstr ""
+"%s\n"
+"Ce fichier contient des caractères Unicode qui seront perdus si\n"
+"vous le sauvez dans le codage %s.\n"
+"Pour conserver ces caractères, cliquez sur Annuler et sélectionnez\n"
+"une des alternatives Unicode dans la liste déroulante Codage.\n"
+"Continuer ?"
 
 #: reg.rc:27
 msgid ""

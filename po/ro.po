@@ -893,17 +893,27 @@ msgstr "Dispozitiv WaveOut implicit"
 msgid "Default MidiOut Device"
 msgstr "Dispozitiv MidiOut implicit"
 
-#: hhctrl.rc:27
+#: hhctrl.rc:27 notepad.rc:58
+#, fuzzy
 msgid "&Contents"
-msgstr "&Cuprins"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"&Cuprins\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"C&onținut"
 
 #: hhctrl.rc:28
 msgid "I&ndex"
 msgstr "I&ndex"
 
-#: hhctrl.rc:29
+#: hhctrl.rc:29 notepad.rc:52
+#, fuzzy
 msgid "&Search"
-msgstr "C&aută"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"C&aută\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"&Caută"
 
 #: hhctrl.rc:30
 msgid "Favor&ites"
@@ -2516,7 +2526,7 @@ msgstr "Ana&logic"
 msgid "Digi&tal"
 msgstr "Digi&tal"
 
-#: clock.rc:32
+#: clock.rc:32 notepad.rc:50
 msgid "&Font..."
 msgstr "&Font..."
 
@@ -3353,6 +3363,216 @@ msgstr ""
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Resurse deschise: %lu\n"
+
+#: notepad.rc:26
+msgid "&File"
+msgstr "&Fișier"
+
+#: notepad.rc:27
+msgid "&New\tCtrl+N"
+msgstr "&Nou\tCtrl+N"
+
+#: notepad.rc:28
+msgid "&Open...\tCtrl+O"
+msgstr "&Deschide...\tCtrl+O"
+
+#: notepad.rc:29
+msgid "&Save\tCtrl+S"
+msgstr "&Salvează\tCtrl+S"
+
+#: notepad.rc:30
+msgid "Save &as..."
+msgstr "Salvează &ca..."
+
+#: notepad.rc:32
+msgid "&Print...\tCtrl+P"
+msgstr "&Tipărește...\tCtrl+P"
+
+#: notepad.rc:33
+msgid "Page Se&tup..."
+msgstr "S&etare pagină..."
+
+#: notepad.rc:34
+msgid "P&rinter Setup..."
+msgstr "Setare im&primantă..."
+
+#: notepad.rc:36
+msgid "E&xit"
+msgstr "&Ieșire"
+
+#: notepad.rc:38
+msgid "&Edit"
+msgstr "&Editează"
+
+#: notepad.rc:39
+msgid "&Undo\tCtrl+Z"
+msgstr "&Refă\tCtrl+Z"
+
+#: notepad.rc:41
+msgid "Cu&t\tCtrl+X"
+msgstr "&Taie\tCtrl+X"
+
+#: notepad.rc:42
+msgid "&Copy\tCtrl+C"
+msgstr "&Copiază\tCtrl+C"
+
+#: notepad.rc:43
+msgid "&Paste\tCtrl+V"
+msgstr "&Lipește\tCtrl+V"
+
+#: notepad.rc:44
+msgid "&Delete\tDel"
+msgstr "&Șterge\tDel"
+
+#: notepad.rc:46
+msgid "Select &all\tCtrl+A"
+msgstr "S&electeză tot\tCtrl+A"
+
+#: notepad.rc:47
+msgid "&Time/Date\tF5"
+msgstr "&Ora/data\tF5"
+
+#: notepad.rc:49
+msgid "&Wrap long lines"
+msgstr "&Desparte liniile lungi"
+
+#: notepad.rc:53
+msgid "&Search...\tCtrl+F"
+msgstr "&Caută...\tCtrl+F"
+
+#: notepad.rc:54
+msgid "&Search next\tF3"
+msgstr "Caută &următorul\tF3"
+
+#: notepad.rc:55
+msgid "&Replace...\tCtrl+H"
+msgstr "&Înlocuiește...\tCtrl+H"
+
+#: notepad.rc:57
+msgid "&Help"
+msgstr "&Ajutor"
+
+#: notepad.rc:59
+msgid "&Search..."
+msgstr "&Caută..."
+
+#: notepad.rc:60
+msgid "&Help on help"
+msgstr "&Ajutor la ajutor"
+
+#: notepad.rc:62
+msgid "&About Notepad"
+msgstr "&Despre notepad"
+
+#: notepad.rc:68
+msgid "&f"
+msgstr "&f"
+
+#: notepad.rc:69
+msgid "Page &p"
+msgstr "Pagina &p"
+
+#: notepad.rc:71
+msgid "Notepad"
+msgstr "Notepad"
+
+#: notepad.rc:72
+msgid "ERROR"
+msgstr "EROARE"
+
+#: notepad.rc:73
+msgid "WARNING"
+msgstr "ATENȚIE"
+
+#: notepad.rc:74
+msgid "Information"
+msgstr "Informație"
+
+#: notepad.rc:76
+msgid "Untitled"
+msgstr "(fără titlu)"
+
+#: notepad.rc:78
+msgid "All files (*.*)"
+msgstr "Toate fișierele (*.*)"
+
+#: notepad.rc:79
+msgid "Text files (*.txt)"
+msgstr "Toate fișierele text (*.txt)"
+
+#: notepad.rc:82
+msgid ""
+"File '%s' is too large for notepad.\n"
+"Please use a different editor."
+msgstr ""
+"Fișierul '%s' este prea mare pentru notepad.\n"
+" Folosoți un alt editor."
+
+#: notepad.rc:84
+msgid ""
+"You didn't enter any text.\n"
+"Please type something and try again"
+msgstr ""
+"Nu ați introdus nici un text.\n"
+"Introduceți ceva și încercați din nou."
+
+#: notepad.rc:86
+msgid ""
+"File '%s' does not exist.\n"
+"\n"
+"Do you want to create a new file?"
+msgstr ""
+"Fișierul '%s'\n"
+"nu există\n"
+"\n"
+" Vreți să creați un fișier nou?"
+
+#: notepad.rc:88
+msgid ""
+"File '%s' has been modified.\n"
+"\n"
+"Would you like to save the changes?"
+msgstr ""
+"Fișierul '%s'\n"
+"a fost modificat\n"
+"\n"
+"Vreți să salvați modificările?"
+
+#: notepad.rc:89
+msgid "'%s' could not be found."
+msgstr "'%s' nu a fost găsit."
+
+#: notepad.rc:91
+msgid ""
+"Not enough memory to complete this task.\n"
+"Close one or more applications to increase the amount of free memory."
+msgstr ""
+"Nu este destulă memorie pentru a completa această sarcină.\n"
+"Închideți una sau mai multe aplicații pentru a mări memoria liberă."
+
+#: notepad.rc:93
+msgid "Unicode (UTF-16)"
+msgstr "Unicode (UTF-16)"
+
+#: notepad.rc:94
+msgid "Unicode (UTF-16 big-endian)"
+msgstr "Unicode (UTF-16 big-endian)"
+
+#: notepad.rc:101
+msgid ""
+"%s\n"
+"This file contains Unicode characters which will be lost if\n"
+"you save this file in the %s encoding.\n"
+"To keep these characters, click Cancel, and then select\n"
+"one of the Unicode options in the Encoding drop down list.\n"
+"Continue?"
+msgstr ""
+"%s\n"
+"Acest document conține caractere unicode care se v-or pierde\n"
+"dacă salvați acest fișier în codificarea %s.\n"
+"Pentru a reține aceste caractere dați clic pe „Renunță” și apoi\n"
+"alegeți una din opțiunile unicode din lista de selecție a codificării.\n"
+"Continuă?"
 
 #: reg.rc:27
 msgid ""

@@ -890,17 +890,17 @@ msgstr ""
 msgid "Default MidiOut Device"
 msgstr ""
 
-#: hhctrl.rc:27
+#: hhctrl.rc:27 notepad.rc:58
 msgid "&Contents"
-msgstr ""
+msgstr "เนื้อหา"
 
 #: hhctrl.rc:28
 msgid "I&ndex"
 msgstr ""
 
-#: hhctrl.rc:29
+#: hhctrl.rc:29 notepad.rc:52
 msgid "&Search"
-msgstr ""
+msgstr "คันหา"
 
 #: hhctrl.rc:30
 msgid "Favor&ites"
@@ -2341,9 +2341,14 @@ msgstr "ธรรมดา"
 msgid "Digi&tal"
 msgstr "ดิจิตัล"
 
-#: clock.rc:32
+#: clock.rc:32 notepad.rc:50
+#, fuzzy
 msgid "&Font..."
-msgstr "รูปแบบต้วอักษร..."
+msgstr ""
+"#-#-#-#-#  th.po (Wine)  #-#-#-#-#\n"
+"รูปแบบต้วอักษร...\n"
+"#-#-#-#-#  th.po (Wine)  #-#-#-#-#\n"
+"รูปแบบดัวอักษร..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -3000,6 +3005,207 @@ msgstr ""
 
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
+msgstr ""
+
+#: notepad.rc:26
+msgid "&File"
+msgstr "แฟ้ม"
+
+#: notepad.rc:27
+msgid "&New\tCtrl+N"
+msgstr "สร้างใหม่\tCtrl+N"
+
+#: notepad.rc:28
+msgid "&Open...\tCtrl+O"
+msgstr "เปิด...\tCtrl+O"
+
+#: notepad.rc:29
+msgid "&Save\tCtrl+S"
+msgstr "บันทืก\tCtrl+S"
+
+#: notepad.rc:30
+msgid "Save &as..."
+msgstr "บันทืกเป็น..."
+
+#: notepad.rc:32
+msgid "&Print...\tCtrl+P"
+msgstr "พิมพ์\tCtrl+P"
+
+#: notepad.rc:33
+msgid "Page Se&tup..."
+msgstr "ปรับแต่งหน้า..."
+
+#: notepad.rc:34
+msgid "P&rinter Setup..."
+msgstr "ปรับแต่งเครื่องพิมพ์..."
+
+#: notepad.rc:36
+msgid "E&xit"
+msgstr "ออก"
+
+#: notepad.rc:38
+msgid "&Edit"
+msgstr "แก้ไข"
+
+#: notepad.rc:39
+msgid "&Undo\tCtrl+Z"
+msgstr "เรียกคืน\tCtrl+Z"
+
+#: notepad.rc:41
+msgid "Cu&t\tCtrl+X"
+msgstr "ตัด\tCtrl+X"
+
+#: notepad.rc:42
+msgid "&Copy\tCtrl+C"
+msgstr "ตัดลอก\tCtrl+C"
+
+#: notepad.rc:43
+msgid "&Paste\tCtrl+V"
+msgstr "วาง\tCtrl+V"
+
+#: notepad.rc:44
+msgid "&Delete\tDel"
+msgstr "ลบ\tDel"
+
+#: notepad.rc:46
+msgid "Select &all\tCtrl+A"
+msgstr "เลือกทั้งหมด\tCtrl+A"
+
+#: notepad.rc:47
+msgid "&Time/Date\tF5"
+msgstr "วันที่/\tF5"
+
+#: notepad.rc:49
+msgid "&Wrap long lines"
+msgstr "ห่อบรรทัดยาว"
+
+#: notepad.rc:53
+msgid "&Search...\tCtrl+F"
+msgstr "ค้นหา\tCtrl+F"
+
+#: notepad.rc:54
+msgid "&Search next\tF3"
+msgstr "ค้นหาต่อไป\tF3"
+
+#: notepad.rc:55
+msgid "&Replace...\tCtrl+H"
+msgstr "&Replace...\tCtrl+H"
+
+#: notepad.rc:57
+msgid "&Help"
+msgstr "ช่วยเหลีอ"
+
+#: notepad.rc:59
+msgid "&Search..."
+msgstr "ค้นหา..."
+
+#: notepad.rc:60
+msgid "&Help on help"
+msgstr "เกี่ยวกับช่วยเหลีอ"
+
+#: notepad.rc:62
+msgid "&About Notepad"
+msgstr "&About Notepad"
+
+#: notepad.rc:68
+msgid "&f"
+msgstr "&f"
+
+#: notepad.rc:69
+msgid "Page &p"
+msgstr "หน้า &p"
+
+#: notepad.rc:71
+msgid "Notepad"
+msgstr "Notepad"
+
+#: notepad.rc:72
+msgid "ERROR"
+msgstr "ความปิด"
+
+#: notepad.rc:73
+msgid "WARNING"
+msgstr "คําตือน"
+
+#: notepad.rc:74
+msgid "Information"
+msgstr "รายละเอียด"
+
+#: notepad.rc:76
+msgid "Untitled"
+msgstr "ไม่กําหนดชึ่อ"
+
+#: notepad.rc:78
+msgid "All files (*.*)"
+msgstr "ทุกแฟ้ม (*.*)"
+
+#: notepad.rc:79
+msgid "Text files (*.txt)"
+msgstr "แฟ้มตํารา (*.txt)"
+
+#: notepad.rc:82
+msgid ""
+"File '%s' is too large for notepad.\n"
+"Please use a different editor."
+msgstr "แฟ้ม '%s' ใหญ่เกินไป"
+
+#: notepad.rc:84
+msgid ""
+"You didn't enter any text.\n"
+"Please type something and try again"
+msgstr ""
+"คุณไม่ใดเขียนอะไร\n"
+"กรุณาลองใหม่"
+
+#: notepad.rc:86
+msgid ""
+"File '%s' does not exist.\n"
+"\n"
+"Do you want to create a new file?"
+msgstr ""
+"ไม่พบแฟ้ม '%s' ที่ต้องการเปิด\n"
+"คุณต้องการสร้างใหม่ไม่ ?"
+
+#: notepad.rc:88
+msgid ""
+"File '%s' has been modified.\n"
+"\n"
+"Would you like to save the changes?"
+msgstr ""
+"มีการเปลี่ยนแปลงกับเอกสาร\n"
+"\n"
+"'%s'\n"
+"\n"
+"คุณต้องการบันทึกมันหรือไม่ ?"
+
+#: notepad.rc:89
+msgid "'%s' could not be found."
+msgstr "ไม่พบข้อความ '%s' ที่ต้องการค้นหา"
+
+#: notepad.rc:91
+msgid ""
+"Not enough memory to complete this task.\n"
+"Close one or more applications to increase the amount of free memory."
+msgstr ""
+"ความจําหมด\n"
+"กรุณาลองใหม่"
+
+#: notepad.rc:93
+msgid "Unicode (UTF-16)"
+msgstr ""
+
+#: notepad.rc:94
+msgid "Unicode (UTF-16 big-endian)"
+msgstr ""
+
+#: notepad.rc:101
+msgid ""
+"%s\n"
+"This file contains Unicode characters which will be lost if\n"
+"you save this file in the %s encoding.\n"
+"To keep these characters, click Cancel, and then select\n"
+"one of the Unicode options in the Encoding drop down list.\n"
+"Continue?"
 msgstr ""
 
 #: reg.rc:27

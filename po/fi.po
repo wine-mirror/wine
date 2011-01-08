@@ -890,15 +890,20 @@ msgstr ""
 msgid "Default MidiOut Device"
 msgstr ""
 
-#: hhctrl.rc:27
+#: hhctrl.rc:27 notepad.rc:58
+#, fuzzy
 msgid "&Contents"
-msgstr "&Sisällys"
+msgstr ""
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"&Sisällys\n"
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"&Sisältö"
 
 #: hhctrl.rc:28
 msgid "I&ndex"
 msgstr "&Hakemisto"
 
-#: hhctrl.rc:29
+#: hhctrl.rc:29 notepad.rc:52
 msgid "&Search"
 msgstr "&Etsi"
 
@@ -2384,9 +2389,14 @@ msgstr "&Analoginen"
 msgid "Digi&tal"
 msgstr "Di&gitaalinen"
 
-#: clock.rc:32
+#: clock.rc:32 notepad.rc:50
+#, fuzzy
 msgid "&Font..."
-msgstr "&Fontti..."
+msgstr ""
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"&Fontti...\n"
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"&Font..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -3043,6 +3053,211 @@ msgstr ""
 
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
+msgstr ""
+
+#: notepad.rc:26
+msgid "&File"
+msgstr "&Tiedosto"
+
+#: notepad.rc:27
+msgid "&New\tCtrl+N"
+msgstr "&Uusi\tCtrl+N"
+
+#: notepad.rc:28
+msgid "&Open...\tCtrl+O"
+msgstr "&Avaa...\tCtrl+O"
+
+#: notepad.rc:29
+msgid "&Save\tCtrl+S"
+msgstr "Ta&lleta\tCtrl+S"
+
+#: notepad.rc:30
+msgid "Save &as..."
+msgstr "Talleta &nimellä..."
+
+#: notepad.rc:32
+msgid "&Print...\tCtrl+P"
+msgstr "T&ulosta...\tCtrl+P"
+
+#: notepad.rc:33
+msgid "Page Se&tup..."
+msgstr "&Sivun asetukset..."
+
+#: notepad.rc:34
+msgid "P&rinter Setup..."
+msgstr "&Kirjoittimen asetukset..."
+
+#: notepad.rc:36
+msgid "E&xit"
+msgstr "&Poistu"
+
+#: notepad.rc:38
+msgid "&Edit"
+msgstr "&Muokkaa"
+
+#: notepad.rc:39
+msgid "&Undo\tCtrl+Z"
+msgstr "&Palauta\tCtrl+Z"
+
+#: notepad.rc:41
+msgid "Cu&t\tCtrl+X"
+msgstr "&Leikkaa\tCtrl+X"
+
+#: notepad.rc:42
+msgid "&Copy\tCtrl+C"
+msgstr "&Kopioi\tCtrl+C"
+
+#: notepad.rc:43
+msgid "&Paste\tCtrl+V"
+msgstr "L&iitä\tCtrl+V"
+
+#: notepad.rc:44
+msgid "&Delete\tDel"
+msgstr "P&oista\tDel"
+
+#: notepad.rc:46
+msgid "Select &all\tCtrl+A"
+msgstr "&Valitse kaikki"
+
+#: notepad.rc:47
+msgid "&Time/Date\tF5"
+msgstr "&Aika/Päivämäärä\tF5"
+
+#: notepad.rc:49
+msgid "&Wrap long lines"
+msgstr "Ka&tkaise pitkä rivi"
+
+#: notepad.rc:53
+msgid "&Search...\tCtrl+F"
+msgstr "Etsi..."
+
+#: notepad.rc:54
+msgid "&Search next\tF3"
+msgstr "Etsi &seuraava\tF3"
+
+#: notepad.rc:55
+msgid "&Replace...\tCtrl+H"
+msgstr "&Korvaa...\tCtrl+H"
+
+#: notepad.rc:57
+msgid "&Help"
+msgstr "&Apua"
+
+#: notepad.rc:59
+msgid "&Search..."
+msgstr "&Etsi..."
+
+#: notepad.rc:60
+msgid "&Help on help"
+msgstr "Apua &Opastuksesta"
+
+#: notepad.rc:62
+msgid "&About Notepad"
+msgstr "&About Notepad"
+
+#: notepad.rc:68
+msgid "&f"
+msgstr "&f"
+
+#: notepad.rc:69
+msgid "Page &p"
+msgstr "Sivu &p"
+
+#: notepad.rc:71
+msgid "Notepad"
+msgstr "Notepad"
+
+#: notepad.rc:72
+msgid "ERROR"
+msgstr "VIRHE"
+
+#: notepad.rc:73
+msgid "WARNING"
+msgstr "VAROITUS"
+
+#: notepad.rc:74
+msgid "Information"
+msgstr "Tiedoitus"
+
+#: notepad.rc:76
+msgid "Untitled"
+msgstr "(otsikoimaton)"
+
+#: notepad.rc:78
+msgid "All files (*.*)"
+msgstr "Kaikki tiedostot (*.*)"
+
+#: notepad.rc:79
+msgid "Text files (*.txt)"
+msgstr "Teksti tiedostot (*.txt)"
+
+#: notepad.rc:82
+msgid ""
+"File '%s' is too large for notepad.\n"
+"Please use a different editor."
+msgstr ""
+"Tiedosto '%s' on liian suuri.\n"
+" Please use a different editor."
+
+#: notepad.rc:84
+msgid ""
+"You didn't enter any text.\n"
+"Please type something and try again"
+msgstr ""
+"Et syöttänyt lainkaan tekstiä. \n"
+"Kirjoita jotain ja yritä uudelleen"
+
+#: notepad.rc:86
+msgid ""
+"File '%s' does not exist.\n"
+"\n"
+"Do you want to create a new file?"
+msgstr ""
+"File '%s'\n"
+"does not exist\n"
+"\n"
+" Do you want to create a new file ?"
+
+#: notepad.rc:88
+msgid ""
+"File '%s' has been modified.\n"
+"\n"
+"Would you like to save the changes?"
+msgstr ""
+"File '%s'\n"
+"has been modified\n"
+"\n"
+" Would you like to save the changes ?"
+
+#: notepad.rc:89
+msgid "'%s' could not be found."
+msgstr "'%s' ei löydy."
+
+#: notepad.rc:91
+msgid ""
+"Not enough memory to complete this task.\n"
+"Close one or more applications to increase the amount of free memory."
+msgstr ""
+"Muistia ei ole riittävästi tämän \n"
+"tehtävän tekemiseksi. Sulje jokin sovellus vapauttaaksesi\n"
+" muistia."
+
+#: notepad.rc:93
+msgid "Unicode (UTF-16)"
+msgstr ""
+
+#: notepad.rc:94
+msgid "Unicode (UTF-16 big-endian)"
+msgstr ""
+
+#: notepad.rc:101
+msgid ""
+"%s\n"
+"This file contains Unicode characters which will be lost if\n"
+"you save this file in the %s encoding.\n"
+"To keep these characters, click Cancel, and then select\n"
+"one of the Unicode options in the Encoding drop down list.\n"
+"Continue?"
 msgstr ""
 
 #: reg.rc:27

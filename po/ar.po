@@ -1,4 +1,4 @@
-# Hungarian translations for Wine
+# Arabic translations for Wine
 #
 msgid ""
 msgstr ""
@@ -8,844 +8,847 @@ msgstr ""
 "PO-Revision-Date: N/A\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
-"Language: Hungarian\n"
+"Language: Arabic\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
-msgstr "Hitelesítési kulcs azonosító"
+msgstr ""
 
 #: crypt32.rc:28
 msgid "Key Attributes"
-msgstr "Kulcs attribútumok"
+msgstr ""
 
 #: crypt32.rc:29
 msgid "Key Usage Restriction"
-msgstr "Kulcs használati korlátozás"
+msgstr ""
 
 #: crypt32.rc:30
 msgid "Subject Alternative Name"
-msgstr "Tárgy alternatív neve"
+msgstr ""
 
 #: crypt32.rc:31
 msgid "Issuer Alternative Name"
-msgstr "Kiadó alternatív neve"
+msgstr ""
 
 #: crypt32.rc:32
 msgid "Basic Constraints"
-msgstr "Alap megszorítások"
+msgstr ""
 
 #: crypt32.rc:33
 msgid "Key Usage"
-msgstr "Kulcs használat"
+msgstr ""
 
 #: crypt32.rc:34
 msgid "Certificate Policies"
-msgstr "Tanusítvány szabályok"
+msgstr ""
 
 #: crypt32.rc:35
 msgid "Subject Key Identifier"
-msgstr "Tárgy kulcs azonosító"
+msgstr ""
 
 #: crypt32.rc:36
 msgid "CRL Reason Code"
-msgstr "CRL ok kód"
+msgstr ""
 
 #: crypt32.rc:37
 msgid "CRL Distribution Points"
-msgstr "CRL terjesztési pontok"
+msgstr ""
 
 #: crypt32.rc:38
 msgid "Enhanced Key Usage"
-msgstr "Kibővített kulcs használat"
+msgstr ""
 
 #: crypt32.rc:39
 msgid "Authority Information Access"
-msgstr "Mighatalmazási információ hozzáférés"
+msgstr ""
 
 #: crypt32.rc:40
 msgid "Certificate Extensions"
-msgstr "Tanusítvány kiterjesztések"
+msgstr ""
 
 #: crypt32.rc:41
 msgid "Next Update Location"
-msgstr "Következő frissítési hely"
+msgstr ""
 
 #: crypt32.rc:42
 msgid "Yes or No Trust"
-msgstr "Igen vagy nem bizalom"
+msgstr ""
 
 #: crypt32.rc:43
 msgid "Email Address"
-msgstr "Email cím"
+msgstr ""
 
 #: crypt32.rc:44
 msgid "Unstructured Name"
-msgstr "Strukturálatlan név"
+msgstr ""
 
 #: crypt32.rc:45
+#, fuzzy
 msgid "Content Type"
-msgstr "Tartalom típusa"
+msgstr "الم&حتويات"
 
 #: crypt32.rc:46
 msgid "Message Digest"
-msgstr "Üzenet összesítő"
+msgstr ""
 
 #: crypt32.rc:47
 msgid "Signing Time"
-msgstr "Aláírási idő"
+msgstr ""
 
 #: crypt32.rc:48
 msgid "Counter Sign"
-msgstr "Aláírás számláló"
+msgstr ""
 
 #: crypt32.rc:49
 msgid "Challenge Password"
-msgstr "Kihívási jelszó"
+msgstr ""
 
 #: crypt32.rc:50
 msgid "Unstructured Address"
-msgstr "Struktúrálatlan cím"
+msgstr ""
 
 #: crypt32.rc:51
 msgid "SMIME Capabilities"
-msgstr "SMIME képességek"
+msgstr ""
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"
-msgstr "Aláírt adat előnyben részesítése"
+msgstr ""
 
 #: crypt32.rc:53 cryptdlg.rc:31
 msgid "CPS"
-msgstr "CPS"
+msgstr ""
 
 #: crypt32.rc:54 cryptdlg.rc:32
 msgid "User Notice"
-msgstr "Felhasználó figyelmeztetés"
+msgstr ""
 
 #: crypt32.rc:55
 msgid "On-line Certificate Status Protocol"
-msgstr "On-line tanusítvány állapot protokoll"
+msgstr ""
 
 #: crypt32.rc:56
 msgid "Certification Authority Issuer"
-msgstr "Tanusítvány hitelesítés szolgáltató"
+msgstr ""
 
 #: crypt32.rc:57
 msgid "Certification Template Name"
-msgstr "Tanusítási sablon név"
+msgstr ""
 
 #: crypt32.rc:58
 msgid "Certificate Type"
-msgstr "Tanusítvány típusa"
+msgstr ""
 
 #: crypt32.rc:59
 msgid "Certificate Manifold"
-msgstr "Tanusítvány sokszorosítás"
+msgstr ""
 
 #: crypt32.rc:60
 msgid "Netscape Cert Type"
-msgstr "Netscape Tanusítvány típus"
+msgstr ""
 
 #: crypt32.rc:61
 msgid "Netscape Base URL"
-msgstr "Netscape alap URL"
+msgstr ""
 
 #: crypt32.rc:62
 msgid "Netscape Revocation URL"
-msgstr "Netscape visszavonási URL"
+msgstr ""
 
 #: crypt32.rc:63
 msgid "Netscape CA Revocation URL"
-msgstr "Netscape CA visszavonási URL"
+msgstr ""
 
 #: crypt32.rc:64
 msgid "Netscape Cert Renewal URL"
-msgstr "Netscape Cert megújítási URL"
+msgstr ""
 
 #: crypt32.rc:65
 msgid "Netscape CA Policy URL"
-msgstr "Netscape CA szabályzat URL"
+msgstr ""
 
 #: crypt32.rc:66
 msgid "Netscape SSL ServerName"
-msgstr "Netscape SSL KiszolgálóNév (ServerName)"
+msgstr ""
 
 #: crypt32.rc:67
 msgid "Netscape Comment"
-msgstr "Netscape megjgyzés"
+msgstr ""
 
 #: crypt32.rc:68
 msgid "SpcSpAgencyInfo"
-msgstr "SpcSpAgencyInfo"
+msgstr ""
 
 #: crypt32.rc:69
 msgid "SpcFinancialCriteria"
-msgstr "SpcFinancialCriteria"
+msgstr ""
 
 #: crypt32.rc:70
 msgid "SpcMinimalCriteria"
-msgstr "SpcMinimalCriteria"
+msgstr ""
 
 #: crypt32.rc:71
 msgid "Country/Region"
-msgstr "Ország/Régió"
+msgstr ""
 
 #: crypt32.rc:72
 msgid "Organization"
-msgstr "Szervezet"
+msgstr ""
 
 #: crypt32.rc:73
 msgid "Organizational Unit"
-msgstr "Szervezeti egység"
+msgstr ""
 
 #: crypt32.rc:74
 msgid "Common Name"
-msgstr "Egyszerű név"
+msgstr ""
 
 #: crypt32.rc:75
 msgid "Locality"
-msgstr "Helység"
+msgstr ""
 
 #: crypt32.rc:76
 msgid "State or Province"
-msgstr "Állam vagy tartomány"
+msgstr ""
 
 #: crypt32.rc:77
+#, fuzzy
 msgid "Title"
-msgstr "Cím"
+msgstr "بلا عنوان"
 
 #: crypt32.rc:78
 msgid "Given Name"
-msgstr "Keresztnév"
+msgstr ""
 
 #: crypt32.rc:79
 msgid "Initials"
-msgstr "Aláírások"
+msgstr ""
 
 #: crypt32.rc:80
 msgid "Sur Name"
-msgstr "Vezetéknév"
+msgstr ""
 
 #: crypt32.rc:81
 msgid "Domain Component"
-msgstr "Domain komponens"
+msgstr ""
 
 #: crypt32.rc:82
 msgid "Street Address"
-msgstr "Utca cím"
+msgstr ""
 
 #: crypt32.rc:83
 msgid "Serial Number"
-msgstr "Sorozatszám"
+msgstr ""
 
 #: crypt32.rc:84
 msgid "CA Version"
-msgstr "CA verzió"
+msgstr ""
 
 #: crypt32.rc:85
 msgid "Cross CA Version"
-msgstr "Kereszt CA verzió"
+msgstr ""
 
 #: crypt32.rc:86
 msgid "Serialized Signature Serial Number"
-msgstr "Szerializált aláírás sorozatszám"
+msgstr ""
 
 #: crypt32.rc:87
 msgid "Principal Name"
-msgstr "Előjáró neve"
+msgstr ""
 
 #: crypt32.rc:88
 msgid "Windows Product Update"
-msgstr "Windows termékfrissítés"
+msgstr ""
 
 #: crypt32.rc:89
 msgid "Enrollment Name Value Pair"
-msgstr "Felvételi név értékpár"
+msgstr ""
 
 #: crypt32.rc:90
 msgid "OS Version"
-msgstr "OS verzió"
+msgstr ""
 
 #: crypt32.rc:91
 msgid "Enrollment CSP"
-msgstr "Felvételi CSP"
+msgstr ""
 
 #: crypt32.rc:92
 msgid "CRL Number"
-msgstr "CRL szám"
+msgstr ""
 
 #: crypt32.rc:93
 msgid "Delta CRL Indicator"
-msgstr "Delta CRL jelző"
+msgstr ""
 
 #: crypt32.rc:94
 msgid "Issuing Distribution Point"
-msgstr "Kiállító disztribúciós pont"
+msgstr ""
 
 #: crypt32.rc:95
 msgid "Freshest CRL"
-msgstr "Legfrisebb CRL"
+msgstr ""
 
 #: crypt32.rc:96
 msgid "Name Constraints"
-msgstr "Név megszorítások"
+msgstr ""
 
 #: crypt32.rc:97
 msgid "Policy Mappings"
-msgstr "Szabály hozzárendelések"
+msgstr ""
 
 #: crypt32.rc:98
 msgid "Policy Constraints"
-msgstr "Szabály megszorítások"
+msgstr ""
 
 #: crypt32.rc:99
 msgid "Cross-Certificate Distribution Points"
-msgstr "Kereszttanusítvány disztribúciós pontok"
+msgstr ""
 
 #: crypt32.rc:100
 msgid "Application Policies"
-msgstr "Alkalmazás szabályok"
+msgstr ""
 
 #: crypt32.rc:101
 msgid "Application Policy Mappings"
-msgstr "Alkalmazás szabály hozzárendelések"
+msgstr ""
 
 #: crypt32.rc:102
 msgid "Application Policy Constraints"
-msgstr "Alkalmazás szabály megszorítások"
+msgstr ""
 
 #: crypt32.rc:103
 msgid "CMC Data"
-msgstr "CMC adat"
+msgstr ""
 
 #: crypt32.rc:104
 msgid "CMC Response"
-msgstr "CMC válasz"
+msgstr ""
 
 #: crypt32.rc:105
 msgid "Unsigned CMC Request"
-msgstr "Aláíratlan CMC kérés"
+msgstr ""
 
 #: crypt32.rc:106
 msgid "CMC Status Info"
-msgstr "CMC állapot információ"
+msgstr ""
 
 #: crypt32.rc:107
 msgid "CMC Extensions"
-msgstr "CMC kiterjesztések"
+msgstr ""
 
 #: crypt32.rc:108
 msgid "CMC Attributes"
-msgstr "CMC attribútumok"
+msgstr ""
 
 #: crypt32.rc:109
 msgid "PKCS 7 Data"
-msgstr "PKCS 7 adat"
+msgstr ""
 
 #: crypt32.rc:110
 msgid "PKCS 7 Signed"
-msgstr "PKCS 7 aláírt"
+msgstr ""
 
 #: crypt32.rc:111
 msgid "PKCS 7 Enveloped"
-msgstr "PKCS 7 borítékolt"
+msgstr ""
 
 #: crypt32.rc:112
 msgid "PKCS 7 Signed Enveloped"
-msgstr "PKCS 7 aláírt és borítékolt"
+msgstr ""
 
 #: crypt32.rc:113
 msgid "PKCS 7 Digested"
-msgstr "PKCS 7 összegzett"
+msgstr ""
 
 #: crypt32.rc:114
 msgid "PKCS 7 Encrypted"
-msgstr "PKCS 7 titkosított"
+msgstr ""
 
 #: crypt32.rc:115
 msgid "Previous CA Certificate Hash"
-msgstr "Előző CA tanusítvány hash"
+msgstr ""
 
 #: crypt32.rc:116
 msgid "Virtual Base CRL Number"
-msgstr "Virtuális alap CRL szám"
+msgstr ""
 
 #: crypt32.rc:117
 msgid "Next CRL Publish"
-msgstr "Következő CRL kibocsátás"
+msgstr ""
 
 #: crypt32.rc:118
 msgid "CA Encryption Certificate"
-msgstr "CA titkosítási tanusítvány"
+msgstr ""
 
 #: crypt32.rc:119
 msgid "Key Recovery Agent"
-msgstr "Kulcs helyreállítási ügynök"
+msgstr ""
 
 #: crypt32.rc:120
 msgid "Certificate Template Information"
-msgstr "Tanusítvány sablon információ"
+msgstr ""
 
 #: crypt32.rc:121
 msgid "Enterprise Root OID"
-msgstr "Enterprise gyökér OID"
+msgstr ""
 
 #: crypt32.rc:122
 msgid "Dummy Signer"
-msgstr "Látszólagos aláíró"
+msgstr ""
 
 #: crypt32.rc:123
 msgid "Encrypted Private Key"
-msgstr "Titkosított privát kulcs"
+msgstr ""
 
 #: crypt32.rc:124
 msgid "Published CRL Locations"
-msgstr "Közzétett CRL helyek"
+msgstr ""
 
 #: crypt32.rc:125
 msgid "Enforce Certificate Chain Policy"
-msgstr "Tanusítványlánc szabályok megkövetelése"
+msgstr ""
 
 #: crypt32.rc:126
 msgid "Transaction Id"
-msgstr "Tranzakciós azonosító"
+msgstr ""
 
 #: crypt32.rc:127
 msgid "Sender Nonce"
-msgstr "Küldő egyszer"
+msgstr ""
 
 #: crypt32.rc:128
 msgid "Recipient Nonce"
-msgstr "Címzett egszer"
+msgstr ""
 
 #: crypt32.rc:129
 msgid "Reg Info"
-msgstr "Reg Info"
+msgstr ""
 
 #: crypt32.rc:130
 msgid "Get Certificate"
-msgstr "Tanusítvány beszerzés"
+msgstr ""
 
 #: crypt32.rc:131
 msgid "Get CRL"
-msgstr "CRL beszerzés"
+msgstr ""
 
 #: crypt32.rc:132
 msgid "Revoke Request"
-msgstr "Kérés visszavonása"
+msgstr ""
 
 #: crypt32.rc:133
 msgid "Query Pending"
-msgstr "Folyamatban lévők lekérése"
+msgstr ""
 
 #: crypt32.rc:134
 msgid "Certificate Trust List"
-msgstr "Tanusítvány bizalmi lista"
+msgstr ""
 
 #: crypt32.rc:135
 msgid "Archived Key Certificate Hash"
-msgstr "Alchívált kulcs tanusítvány hash"
+msgstr ""
 
 #: crypt32.rc:136
 msgid "Private Key Usage Period"
-msgstr "Privát kulcs használati időköz"
+msgstr ""
 
 #: crypt32.rc:137
+#, fuzzy
 msgid "Client Information"
-msgstr "Kliens információk"
+msgstr "معلومات"
 
 #: crypt32.rc:138
 msgid "Server Authentication"
-msgstr "Kiszolgáló hitelesítés"
+msgstr ""
 
 #: crypt32.rc:139
 msgid "Client Authentication"
-msgstr "Kliens hitelesítés"
+msgstr ""
 
 #: crypt32.rc:140
 msgid "Code Signing"
-msgstr "Kód aláírás"
+msgstr ""
 
 #: crypt32.rc:141
 msgid "Secure Email"
-msgstr "Biztonságos email"
+msgstr ""
 
 #: crypt32.rc:142
 msgid "Time Stamping"
-msgstr "Időbélyegzés"
+msgstr ""
 
 #: crypt32.rc:143
 msgid "Microsoft Trust List Signing"
-msgstr "Microsoft bizalmi lista aláírás"
+msgstr ""
 
 #: crypt32.rc:144
 msgid "Microsoft Time Stamping"
-msgstr "Microsoft időbélyegzés"
+msgstr ""
 
 #: crypt32.rc:145
 msgid "IP security end system"
-msgstr "IP biztonsági végrendszer"
+msgstr ""
 
 #: crypt32.rc:146
 msgid "IP security tunnel termination"
-msgstr "IP biztonsági alagút végberendezés"
+msgstr ""
 
 #: crypt32.rc:147
 msgid "IP security user"
-msgstr "IP biztonsági felhasználó"
+msgstr ""
 
 #: crypt32.rc:148
 msgid "Encrypting File System"
-msgstr "Titkosító fájlrendszer"
+msgstr ""
 
 #: crypt32.rc:149
 msgid "Windows Hardware Driver Verification"
-msgstr "Windows hardver meghajtó ellenőrzés"
+msgstr ""
 
 #: crypt32.rc:150
 msgid "Windows System Component Verification"
-msgstr "Windows rendszerkomponens ellenőrzés"
+msgstr ""
 
 #: crypt32.rc:151
 msgid "OEM Windows System Component Verification"
-msgstr "OEM Windows rendszerkomponens ellenőrzés"
+msgstr ""
 
 #: crypt32.rc:152
 msgid "Embedded Windows System Component Verification"
-msgstr "Beágyazott Windows rendszerkomponens ellenőrzés"
+msgstr ""
 
 #: crypt32.rc:153
 msgid "Key Pack Licenses"
-msgstr "Kulcs csomag licenszek"
+msgstr ""
 
 #: crypt32.rc:154
 msgid "License Server Verification"
-msgstr "Licensz kiszolgáló ellenőrzés"
+msgstr ""
 
 #: crypt32.rc:155
 msgid "Smart Card Logon"
-msgstr "Smart Card bejentkezés"
+msgstr ""
 
 #: crypt32.rc:156
 msgid "Digital Rights"
-msgstr "Digitális jogok"
+msgstr ""
 
 #: crypt32.rc:157
 msgid "Qualified Subordination"
-msgstr "Feltételes alárendelés"
+msgstr ""
 
 #: crypt32.rc:158
 msgid "Key Recovery"
-msgstr "Kulcs helyreállítás"
+msgstr ""
 
 #: crypt32.rc:159
 msgid "Document Signing"
-msgstr "Dokumentum aláírás"
+msgstr ""
 
 #: crypt32.rc:160
 msgid "IP security IKE intermediate"
-msgstr "IP biztonsági IKE közbeeső"
+msgstr ""
 
 #: crypt32.rc:161
 msgid "File Recovery"
-msgstr "Fájl helyreállítás"
+msgstr ""
 
 #: crypt32.rc:162
 msgid "Root List Signer"
-msgstr "Gyökér lista aláíró"
+msgstr ""
 
 #: crypt32.rc:163
 msgid "All application policies"
-msgstr "Összes alkalmazás szabályok"
+msgstr ""
 
 #: crypt32.rc:164
 msgid "Directory Service Email Replication"
-msgstr "Könyvtárszolgáltatás (DS) Email replikáció"
+msgstr ""
 
 #: crypt32.rc:165
 msgid "Certificate Request Agent"
-msgstr "Tanusítvány kérési ügynök"
+msgstr ""
 
 #: crypt32.rc:166
 msgid "Lifetime Signing"
-msgstr "Élettartam aláírás"
+msgstr ""
 
 #: crypt32.rc:167
 msgid "All issuance policies"
-msgstr "Összes kiadási szabályok"
+msgstr ""
 
 #: crypt32.rc:172
 msgid "Trusted Root Certification Authorities"
-msgstr "Megbízható gyökér tanusítvány kiadók"
+msgstr ""
 
 #: crypt32.rc:173
 msgid "Personal"
-msgstr "Személyes"
+msgstr ""
 
 #: crypt32.rc:174
 msgid "Intermediate Certification Authorities"
-msgstr "Közbeeső tanusítvány kiadók"
+msgstr ""
 
 #: crypt32.rc:175
 msgid "Other People"
-msgstr "Egyéb emberek"
+msgstr ""
 
 #: crypt32.rc:176
 msgid "Trusted Publishers"
-msgstr "Megbízható kiadók"
+msgstr ""
 
 #: crypt32.rc:177
 msgid "Untrusted Certificates"
-msgstr "Nem megbízható tanusítványok"
+msgstr ""
 
 #: crypt32.rc:182
 msgid "KeyID="
-msgstr "KulcsID="
+msgstr ""
 
 #: crypt32.rc:183
 msgid "Certificate Issuer"
-msgstr "Tanusítvány kiadó"
+msgstr ""
 
 #: crypt32.rc:184
 msgid "Certificate Serial Number="
-msgstr "Tanusítvány szériaszám="
+msgstr ""
 
 #: crypt32.rc:185
 msgid "Other Name="
-msgstr "Egyéb név="
+msgstr ""
 
 #: crypt32.rc:186
 msgid "Email Address="
-msgstr "Email cím="
+msgstr ""
 
 #: crypt32.rc:187
 msgid "DNS Name="
-msgstr "DNS név="
+msgstr ""
 
 #: crypt32.rc:188
 msgid "Directory Address"
-msgstr "Könyvtár (Directory) cím"
+msgstr ""
 
 #: crypt32.rc:189
 msgid "URL="
-msgstr "URL="
+msgstr ""
 
 #: crypt32.rc:190
 msgid "IP Address="
-msgstr "IP cím="
+msgstr ""
 
 #: crypt32.rc:191
 msgid "Mask="
-msgstr "Maszk="
+msgstr ""
 
 #: crypt32.rc:192
 msgid "Registered ID="
-msgstr "Regisztrált ID="
+msgstr ""
 
 #: crypt32.rc:193
 msgid "Unknown Key Usage"
-msgstr "Ismeretlen kulcshasználat"
+msgstr ""
 
 #: crypt32.rc:194
 msgid "Subject Type="
-msgstr "Tárgy típus="
+msgstr ""
 
 #: crypt32.rc:195
 msgid "CA"
-msgstr "CA"
+msgstr ""
 
 #: crypt32.rc:196
 msgid "End Entity"
-msgstr "Vég egyed"
+msgstr ""
 
 #: crypt32.rc:197
 msgid "Path Length Constraint="
-msgstr "Útvonal hossz megszorítás="
+msgstr ""
 
 #: crypt32.rc:198
 msgid "None"
-msgstr "Nincs"
+msgstr ""
 
 #: crypt32.rc:199
+#, fuzzy
 msgid "Information Not Available"
-msgstr "Információ nem elérhető"
+msgstr "معلومات"
 
 #: crypt32.rc:200
 msgid "Authority Info Access"
-msgstr "Hatósági információs hozzáférés"
+msgstr ""
 
 #: crypt32.rc:201
 msgid "Access Method="
-msgstr "Hozzáférési mód="
+msgstr ""
 
 #: crypt32.rc:202
 msgid "OCSP"
-msgstr "OCSP"
+msgstr ""
 
 #: crypt32.rc:203
 msgid "CA Issuers"
-msgstr "CA kiadók"
+msgstr ""
 
 #: crypt32.rc:204
 msgid "Unknown Access Method"
-msgstr "Ismeretlen hozzáférési mód"
+msgstr ""
 
 #: crypt32.rc:205
 msgid "Alternative Name"
-msgstr "Alternatív név"
+msgstr ""
 
 #: crypt32.rc:206
 msgid "CRL Distribution Point"
-msgstr "CRL disztribúciós pont"
+msgstr ""
 
 #: crypt32.rc:207
 msgid "Distribution Point Name"
-msgstr "Disztribúciós pont név"
+msgstr ""
 
 #: crypt32.rc:208
 msgid "Full Name"
-msgstr "Teljes név"
+msgstr ""
 
 #: crypt32.rc:209
 msgid "RDN Name"
-msgstr "RDN név"
+msgstr ""
 
 #: crypt32.rc:210
 msgid "CRL Reason="
-msgstr "CRL ok="
+msgstr ""
 
 #: crypt32.rc:211
 msgid "CRL Issuer"
-msgstr "CRL Kiadó"
+msgstr ""
 
 #: crypt32.rc:212
 msgid "Key Compromise"
-msgstr "Kulcs megállapodás"
+msgstr ""
 
 #: crypt32.rc:213
 msgid "CA Compromise"
-msgstr "CA megállapodás"
+msgstr ""
 
 #: crypt32.rc:214
 msgid "Affiliation Changed"
-msgstr "Kapcsolat megváltozott"
+msgstr ""
 
 #: crypt32.rc:215
 msgid "Superseded"
-msgstr "Hatálytalanítva"
+msgstr ""
 
 #: crypt32.rc:216
 msgid "Operation Ceased"
-msgstr "Művelet lejárt"
+msgstr ""
 
 #: crypt32.rc:217
 msgid "Certificate Hold"
-msgstr "Tanusítvány tartva"
+msgstr ""
 
 #: crypt32.rc:218
+#, fuzzy
 msgid "Financial Information="
-msgstr "Pénzügyi információ="
+msgstr "معلومات"
 
 #: crypt32.rc:219
 msgid "Available"
-msgstr "Elérhető"
+msgstr ""
 
 #: crypt32.rc:220
 msgid "Not Available"
-msgstr "Nem elérhető"
+msgstr ""
 
 #: crypt32.rc:221
 msgid "Meets Criteria="
-msgstr "Megfelelőségi feltétel="
+msgstr ""
 
 #: crypt32.rc:222 oleaut32.rc:29 ipconfig.rc:44
 msgid "Yes"
-msgstr "Igen"
+msgstr ""
 
 #: crypt32.rc:223 oleaut32.rc:30 ipconfig.rc:45
 msgid "No"
-msgstr "Nem"
+msgstr ""
 
 #: crypt32.rc:224
 msgid "Digital Signature"
-msgstr "Digitális aláírás"
+msgstr ""
 
 #: crypt32.rc:225
 msgid "Non-Repudiation"
-msgstr "Nem elutasítható"
+msgstr ""
 
 #: crypt32.rc:226
 msgid "Key Encipherment"
-msgstr "Kulcs titkosítás"
+msgstr ""
 
 #: crypt32.rc:227
 msgid "Data Encipherment"
-msgstr "Adat titkosítás"
+msgstr ""
 
 #: crypt32.rc:228
 msgid "Key Agreement"
-msgstr "Kulcs megegyezés"
+msgstr ""
 
 #: crypt32.rc:229
 msgid "Certificate Signing"
-msgstr "Tanusítvány aláírás"
+msgstr ""
 
 #: crypt32.rc:230
 msgid "Off-line CRL Signing"
-msgstr "Off-line CRL aláírás"
+msgstr ""
 
 #: crypt32.rc:231
 msgid "CRL Signing"
-msgstr "CRL aláírás"
+msgstr ""
 
 #: crypt32.rc:232
 msgid "Encipher Only"
-msgstr "Csak titkosítás"
+msgstr ""
 
 #: crypt32.rc:233
 msgid "Decipher Only"
-msgstr "Csak dekódolás"
+msgstr ""
 
 #: crypt32.rc:234
 msgid "SSL Client Authentication"
-msgstr "SSL kliens hitelesítés"
+msgstr ""
 
 #: crypt32.rc:235
 msgid "SSL Server Authentication"
-msgstr "SSL kiszolgáló hitelesítés"
+msgstr ""
 
 #: crypt32.rc:236
 msgid "S/MIME"
-msgstr "S/MIME"
+msgstr ""
 
 #: crypt32.rc:237
 msgid "Signature"
-msgstr "Aláírás"
+msgstr ""
 
 #: crypt32.rc:238
 msgid "SSL CA"
-msgstr "SSL CA"
+msgstr ""
 
 #: crypt32.rc:239
 msgid "S/MIME CA"
-msgstr "S/MIME CA"
+msgstr ""
 
 #: crypt32.rc:240
 msgid "Signature CA"
-msgstr "Aláírás CA"
+msgstr ""
 
 #: cryptdlg.rc:27
-#, fuzzy
 msgid "Certificate Policy"
-msgstr "Tanusítvány szabályok"
+msgstr ""
 
 #: cryptdlg.rc:28
-#, fuzzy
 msgid "Policy Identifier: "
-msgstr "Hitelesítési kulcs azonosító"
+msgstr ""
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
@@ -864,14 +867,12 @@ msgid "Notice Reference"
 msgstr ""
 
 #: cryptdlg.rc:35
-#, fuzzy
 msgid "Organization="
-msgstr "Szervezet"
+msgstr ""
 
 #: cryptdlg.rc:36
-#, fuzzy
 msgid "Notice Number="
-msgstr "Tanusítvány szériaszám="
+msgstr ""
 
 #: cryptdlg.rc:37
 msgid "Notice Text="
@@ -879,141 +880,131 @@ msgstr ""
 
 #: devenum.rc:32
 msgid "Default DirectSound"
-msgstr "Alapértelmezett DirectSound"
+msgstr ""
 
 #: devenum.rc:33
 msgid "DirectSound: %s"
-msgstr "DirectSound: %s"
+msgstr ""
 
 #: devenum.rc:34
 msgid "Default WaveOut Device"
-msgstr "Alapértelmezett WaveOut eszköz"
+msgstr ""
 
 #: devenum.rc:35
 msgid "Default MidiOut Device"
-msgstr "Alapértelmezett MidiOut eszköz"
+msgstr ""
 
 #: hhctrl.rc:27 notepad.rc:58
-#, fuzzy
 msgid "&Contents"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Tartalom\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Témakörök"
+msgstr "الم&حتويات"
 
 #: hhctrl.rc:28
 msgid "I&ndex"
-msgstr "I&ndex"
+msgstr ""
 
 #: hhctrl.rc:29 notepad.rc:52
 msgid "&Search"
-msgstr "&Keresés"
+msgstr "&مساعدة"
 
 #: hhctrl.rc:30
 msgid "Favor&ites"
-msgstr "Kedven&cek"
+msgstr ""
 
 #: hhctrl.rc:35
 msgid "Show"
-msgstr "Megjelenítés"
+msgstr ""
 
 #: hhctrl.rc:36
 msgid "Hide"
-msgstr "Elrejtés"
+msgstr ""
 
 #: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194
-#, fuzzy
 msgid "Stop"
 msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Megállítás\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Leállítás"
 
 #: hhctrl.rc:38
 msgid "Refresh"
-msgstr "Frissítés"
+msgstr ""
 
 #: hhctrl.rc:39
 msgid "Back"
-msgstr "Vissza"
+msgstr ""
 
 #: hhctrl.rc:40
 msgid "Home"
-msgstr "Kezdőlap"
+msgstr ""
 
 #: hhctrl.rc:41
 msgid "Sync"
-msgstr "Szink."
+msgstr ""
 
 #: hhctrl.rc:42
 msgid "Print"
-msgstr "Nyomtatás"
+msgstr ""
 
 #: hhctrl.rc:43
 msgid "Options"
-msgstr "Opciók"
+msgstr ""
 
 #: hhctrl.rc:44
 msgid "Forward"
-msgstr "Előre"
+msgstr ""
 
 #: hhctrl.rc:45
 msgid "IDTB_NOTES"
-msgstr "IDTB_NOTES"
+msgstr ""
 
 #: hhctrl.rc:46
 msgid "IDTB_BROWSE_FWD"
-msgstr "IDTB_BROWSE_FWD"
+msgstr ""
 
 #: hhctrl.rc:47
 msgid "IDT_BROWSE_BACK"
-msgstr "IDT_BROWSE_BACK"
+msgstr ""
 
 #: hhctrl.rc:48
 msgid "IDTB_CONTENTS"
-msgstr "IDTB_CONTENTS"
+msgstr ""
 
 #: hhctrl.rc:49
 msgid "IDTB_INDEX"
-msgstr "IDTB_INDEX"
+msgstr ""
 
 #: hhctrl.rc:50
 msgid "IDTB_SEARCH"
-msgstr "IDTB_SEARCH"
+msgstr ""
 
 #: hhctrl.rc:51
 msgid "IDTB_HISTORY"
-msgstr "IDTB_HISTORY"
+msgstr ""
 
 #: hhctrl.rc:52
 msgid "IDTB_FAVORITES"
-msgstr "IDTB_FAVORITES"
+msgstr ""
 
 #: hhctrl.rc:53
 msgid "Jump1"
-msgstr "Jump1"
+msgstr ""
 
 #: hhctrl.rc:54
 msgid "Jump2"
-msgstr "Jump2"
+msgstr ""
 
 #: hhctrl.rc:55
 msgid "Customize"
-msgstr "Testreszabás"
+msgstr ""
 
 #: hhctrl.rc:56
 msgid "Zoom"
-msgstr "Zoom"
+msgstr ""
 
 #: hhctrl.rc:57
 msgid "IDTB_TOC_NEXT"
-msgstr "IDTB_TOC_NEXT"
+msgstr ""
 
 #: hhctrl.rc:58
 msgid "IDTB_TOC_PREV"
-msgstr "IDTB_TOC_PREV"
+msgstr ""
 
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"
@@ -1021,11 +1012,11 @@ msgstr ""
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
-msgstr "Hiba az objektum primitív típusra való konvertálásánál"
+msgstr ""
 
 #: jscript.rc:26
 msgid "Invalid procedure call or argument"
-msgstr "Érvénytelen eljáráshívás vagy argmentum"
+msgstr ""
 
 #: jscript.rc:27
 msgid "Subscript out of range"
@@ -1033,40 +1024,39 @@ msgstr ""
 
 #: jscript.rc:28
 msgid "Automation server can't create object"
-msgstr "Az automatizáló (automation) kiszolgáló nem tud objektumot létrehozni"
+msgstr ""
 
 #: jscript.rc:29
 msgid "Object doesn't support this property or method"
-msgstr "Az objektum nem támogatja ezt a tulajdonságot vagy metódust"
+msgstr ""
 
 #: jscript.rc:30
-#, fuzzy
 msgid "Object doesn't support this action"
-msgstr "Az objektum nem támogatja ezt a tulajdonságot vagy metódust"
+msgstr ""
 
 #: jscript.rc:31
 msgid "Argument not optional"
-msgstr "Az argumentum nem opcionális"
+msgstr ""
 
 #: jscript.rc:32
 msgid "Syntax error"
-msgstr "Szinttaktikai hiba"
+msgstr ""
 
 #: jscript.rc:33
 msgid "Expected ';'"
-msgstr "Hiányzó ';'"
+msgstr ""
 
 #: jscript.rc:34
 msgid "Expected '('"
-msgstr "Hiányzó '('"
+msgstr ""
 
 #: jscript.rc:35
 msgid "Expected ')'"
-msgstr "Hiányzó ')'"
+msgstr ""
 
 #: jscript.rc:36
 msgid "Unterminated string constant"
-msgstr "Lezáratlan sztring konstans"
+msgstr ""
 
 #: jscript.rc:37
 msgid "Conditional compilation is turned off"
@@ -1074,90 +1064,85 @@ msgstr ""
 
 #: jscript.rc:40
 msgid "Number expected"
-msgstr "Számot vártam"
+msgstr ""
 
 #: jscript.rc:38
 msgid "Function expected"
-msgstr "Függvényt vártam"
+msgstr ""
 
 #: jscript.rc:39
 msgid "'[object]' is not a date object"
-msgstr "'Az [object]' nem egy date (dátum) objektum"
+msgstr ""
 
 #: jscript.rc:41
 msgid "Object expected"
-msgstr "Objektumot vártam"
+msgstr ""
 
 #: jscript.rc:42
 msgid "Illegal assignment"
-msgstr "Nem megengedett összerendelés"
+msgstr ""
 
 #: jscript.rc:43
 msgid "'|' is undefined"
-msgstr "A '|' nem definiált"
+msgstr ""
 
 #: jscript.rc:44
 msgid "Boolean object expected"
-msgstr "Boolean (igaz-hamis) objektumot vártam"
+msgstr ""
 
 #: jscript.rc:45
-#, fuzzy
 msgid "VBArray object expected"
-msgstr "Tömb objektumot vártam"
+msgstr ""
 
 #: jscript.rc:46
 msgid "JScript object expected"
-msgstr "JScript objektumot vártam"
+msgstr ""
 
 #: jscript.rc:47
 msgid "Syntax error in regular expression"
-msgstr "Szinttaktikai hiba a reguláris kifejezésben"
+msgstr ""
 
 #: jscript.rc:48
 msgid "URI to be encoded contains invalid characters"
-msgstr "A kódolandó URI érvénytelen karaktereket tartalmaz"
+msgstr ""
 
 #: jscript.rc:49
 msgid "Array length must be a finite positive integer"
-msgstr "A tömb hosszának egy véges pozitív egész számnak kell lennie"
+msgstr ""
 
 #: jscript.rc:50
 msgid "Array object expected"
-msgstr "Tömb objektumot vártam"
+msgstr ""
 
 #: localspl.rc:28
 msgid "Local Port"
-msgstr "Helyi Port"
+msgstr ""
 
 #: localspl.rc:29
 msgid "Local Monitor"
-msgstr "Helyi figyelő"
+msgstr ""
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."
 msgstr ""
-"A levélküldés sikertelen, mivel Önnek nincsen telepített MAPI "
-"levelezőkliense."
 
 #: mapi32.rc:29
 msgid "Send Mail"
-msgstr "Levélküldés"
+msgstr ""
 
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "
 "file path and try again."
 msgstr ""
-"The specified installation package could not be opened.  Please check the "
-"file path and try again."
 
 #: msi.rc:28
 msgid "path %s not found"
-msgstr "%s útvonal nem található"
+msgstr ""
 
 #: msi.rc:29
 msgid "insert disk %s"
-msgstr "helyezze be a lemezt: %s"
+msgstr ""
 
 #: msi.rc:30
 msgid ""
@@ -1191,466 +1176,442 @@ msgid ""
 "\t/help\n"
 "\t/?\n"
 msgstr ""
-"Windows Installer %s\n"
-"\n"
-"Usage:\n"
-"msiexec command {required parameter} [optional parammeter]\n"
-"\n"
-"Install a product:\n"
-"\t/i {package|productcode} [property]\n"
-"\t/package {package|productcode} [property]\n"
-"\t/a package [property]\n"
-"Repair an installation:\n"
-"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n"
-"Uninstall a product:\n"
-"\t/uninstall {package|productcode} [property]\n"
-"\t/x {package|productcode} [property]\n"
-"Advertise a product:\n"
-"\t/j[u|m] package [/t transform] [/g languageid]\n"
-"Apply a patch:\n"
-"\t/p patchpackage [property]\n"
-"\t/p patchpackage /a package [property]\n"
-"Log and UI Modifiers for above commands:\n"
-"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
-"\t/q{|n|b|r|f|n+|b+|b-}\n"
-"Register MSI Service:\n"
-"\t/y\n"
-"Unregister MSI Service:\n"
-"\t/z\n"
-"Display this help:\n"
-"\t/help\n"
-"\t/?\n"
 
 #: msi.rc:57
 msgid "enter which folder contains %s"
-msgstr "adja meg melyik mappa tartalmazza ezt: %s"
+msgstr ""
 
 #: msi.rc:58
 msgid "install source for feature missing"
-msgstr "hiányzó tulajdonság a telepítési forráshoz"
+msgstr ""
 
 #: msi.rc:59
 msgid "network drive for feature missing"
-msgstr "hiányzó tulajdonság a hálózati meghajtóhoz"
+msgstr ""
 
 #: msi.rc:60
 msgid "feature from:"
-msgstr "tulajdonság innen:"
+msgstr ""
 
 #: msi.rc:61
 msgid "choose which folder contains %s"
-msgstr "válassza ki, melyik mappa tartalmazza ezt: %s"
+msgstr ""
 
 #: msrle32.rc:27
 msgid "WINE-MS-RLE"
-msgstr "WINE-MS-RLE"
+msgstr ""
 
 #: msrle32.rc:28
 msgid "Wine MS-RLE video codec"
-msgstr "Wine MS-RLE video kodek"
+msgstr ""
 
 #: msrle32.rc:29
 msgid ""
 "Wine MS-RLE video codec\n"
 "Copyright 2002 by Michael Guennewig"
 msgstr ""
-"Wine MS-RLE video kodek\n"
-"Copyright 2002, Michael Günnewig"
 
 #: msvidc32.rc:25
 msgid "MS-CRAM"
-msgstr "MS-CRAM"
+msgstr ""
 
 #: msvidc32.rc:26
 msgid "Wine Video 1 video codec"
-msgstr "Wine Video 1 video kodek"
+msgstr ""
 
 #: oleaut32.rc:27
 msgid "True"
-msgstr "Igaz"
+msgstr ""
 
 #: oleaut32.rc:28
 msgid "False"
-msgstr "Hamis"
+msgstr ""
 
 #: oleaut32.rc:31
 msgid "On"
-msgstr "Be"
+msgstr ""
 
 #: oleaut32.rc:32
 msgid "Off"
-msgstr "Ki"
+msgstr ""
 
 #: shdoclc.rc:36
 msgid "Default"
-msgstr "Default"
+msgstr ""
 
 #: shdoclc.rc:38
 msgid "&Back"
-msgstr "&Vissza"
+msgstr ""
 
 #: shdoclc.rc:39
 msgid "F&orward"
-msgstr "El&őre"
+msgstr ""
 
 #: shdoclc.rc:41
+#, fuzzy
 msgid "&Save Background As..."
-msgstr "&Háttér mentése..."
+msgstr "احفظ &ك‍..."
 
 #: shdoclc.rc:42
 msgid "Set As Back&ground"
-msgstr "Beállítás há&ttérként"
+msgstr ""
 
 #: shdoclc.rc:43
 msgid "&Copy Background"
-msgstr "Háttér &másolása"
+msgstr ""
 
 #: shdoclc.rc:44
 msgid "Set as &Desktop Item"
-msgstr "Beállítás &asztalelemként"
+msgstr ""
 
 #: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121
+#, fuzzy
 msgid "Select &All"
-msgstr "M&indet kijelöli"
+msgstr "اختر ال&كل\tCtrl+A"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
 #: shdoclc.rc:189
+#, fuzzy
 msgid "&Paste"
-msgstr "&Beillesztés"
+msgstr "ا&لصق\tCtrl+V"
 
 #: shdoclc.rc:49
 msgid "Create Shor&tcut"
-msgstr "Parancsi&kon létrehozása"
+msgstr ""
 
 #: shdoclc.rc:50
 msgid "Add to &Favorites"
-msgstr "Hozzáa&dás a kedvencekhez"
+msgstr ""
 
 #: shdoclc.rc:51
 msgid "&View Source"
-msgstr "&Forrás megjelenítése"
+msgstr ""
 
 #: shdoclc.rc:53
 msgid "&Encoding"
-msgstr "K&ódolás"
+msgstr ""
 
 #: shdoclc.rc:55
 msgid "Pr&int"
-msgstr "&Nyomtatás"
+msgstr ""
 
 #: shdoclc.rc:56
 msgid "&Refresh"
-msgstr "F&rissítés"
+msgstr ""
 
 #: shdoclc.rc:59 clock.rc:28
-#, fuzzy
 msgid "&Properties"
 msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Beállítások\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Tula&jdonságok"
 
 #: shdoclc.rc:62
 msgid "Image"
-msgstr "Image"
+msgstr ""
 
 #: shdoclc.rc:64 shdoclc.rc:151 shdoclc.rc:176
 msgid "&Open Link"
-msgstr "&Link megnyitása"
+msgstr ""
 
 #: shdoclc.rc:65 shdoclc.rc:152 shdoclc.rc:177
 msgid "Open Link in &New Window"
-msgstr "Li&nk megnyitása új ablakban"
+msgstr ""
 
 #: shdoclc.rc:66 shdoclc.rc:130 shdoclc.rc:153 shdoclc.rc:178
+#, fuzzy
 msgid "Save Target &As..."
-msgstr "Cél ment&ése..."
+msgstr "احفظ &ك‍..."
 
 #: shdoclc.rc:67 shdoclc.rc:131 shdoclc.rc:154 shdoclc.rc:179
 msgid "&Print Target"
-msgstr "&Cél nyomtatása"
+msgstr ""
 
 #: shdoclc.rc:69 shdoclc.rc:156 shdoclc.rc:181
 msgid "S&how Picture"
-msgstr "Kép megjelen&ítése"
+msgstr ""
 
 #: shdoclc.rc:70 shdoclc.rc:182
+#, fuzzy
 msgid "&Save Picture As..."
-msgstr "&Kép mentése..."
+msgstr "احفظ &ك‍..."
 
 #: shdoclc.rc:71
 msgid "&E-mail Picture..."
-msgstr "Kép elküldése &e-mail-ben..."
+msgstr ""
 
 #: shdoclc.rc:72
 msgid "Pr&int Picture..."
-msgstr "Kép n&yomtatása..."
+msgstr ""
 
 #: shdoclc.rc:73
 msgid "&Go to My Pictures"
-msgstr "&Ugrás a Képek-hez"
+msgstr ""
 
 #: shdoclc.rc:74 shdoclc.rc:158 shdoclc.rc:183
 msgid "Set as Back&ground"
-msgstr "Beállíttás há&ttérként"
+msgstr ""
 
 #: shdoclc.rc:75 shdoclc.rc:159 shdoclc.rc:184
 msgid "Set as &Desktop Item..."
-msgstr "Beállíttás &asztalelemként..."
+msgstr ""
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
 msgid "Cu&t"
-msgstr "K&ivágás"
+msgstr ""
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
 #: shdoclc.rc:187
 msgid "&Copy"
-msgstr "&Másolás"
+msgstr ""
 
 #: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
 msgid "Copy Shor&tcut"
-msgstr "Parancs&ikon másolása"
+msgstr ""
 
 #: shdoclc.rc:82 shdoclc.rc:138 shdoclc.rc:166 shdoclc.rc:191
 msgid "Add to &Favorites..."
-msgstr "Hozzáa&dás a kedvencekhez..."
+msgstr ""
 
 #: shdoclc.rc:85 shdoclc.rc:141 shdoclc.rc:171 shdoclc.rc:198
 msgid "P&roperties"
-msgstr "Tula&jdonságok"
+msgstr ""
 
 #: shdoclc.rc:88
 msgid "Control"
-msgstr "Control"
+msgstr ""
 
 #: shdoclc.rc:90
 msgid "&Undo"
-msgstr "&Visszavonás"
+msgstr ""
 
 #: shdoclc.rc:95
+#, fuzzy
 msgid "&Delete"
-msgstr "&Törlés"
+msgstr "اح&ذف\tDel"
 
 #: shdoclc.rc:101
 msgid "Table"
-msgstr "Table"
+msgstr ""
 
 #: shdoclc.rc:103
 msgid "&Select"
-msgstr "&Kiválasztás"
+msgstr ""
 
 #: shdoclc.rc:105
 msgid "&Cell"
-msgstr "&Cella"
+msgstr ""
 
 #: shdoclc.rc:106
 msgid "&Row"
-msgstr "&Sor"
+msgstr ""
 
 #: shdoclc.rc:107
 msgid "&Column"
-msgstr "&Oszlop"
+msgstr ""
 
 #: shdoclc.rc:108
 msgid "&Table"
-msgstr "&Tábla"
+msgstr ""
 
 #: shdoclc.rc:112
 msgid "&Cell Properties"
-msgstr "&Cella tulajdonságai"
+msgstr ""
 
 #: shdoclc.rc:113
 msgid "&Table Properties"
-msgstr "&Tábla tulajdonságai"
+msgstr ""
 
 #: shdoclc.rc:116
 msgid "1DSite Select"
-msgstr "1DSite Select"
+msgstr ""
 
 #: shdoclc.rc:120
 msgid "Paste"
-msgstr "Beillesztés"
+msgstr ""
 
 #: shdoclc.rc:122
 msgid "&Print"
-msgstr "&Nyomtatás"
+msgstr ""
 
 #: shdoclc.rc:126
 msgid "Anchor"
-msgstr "Anchor"
+msgstr ""
 
 #: shdoclc.rc:128
 msgid "&Open"
-msgstr "&Megnyitás"
+msgstr ""
 
 #: shdoclc.rc:129
 msgid "Open in &New Window"
-msgstr "Megnyitás &új ablakban"
+msgstr ""
 
 #: shdoclc.rc:133
 msgid "Cut"
-msgstr "Kivágás"
+msgstr ""
 
 #: shdoclc.rc:144
 msgid "Context Unknown"
-msgstr "Context Unknown"
+msgstr ""
 
 #: shdoclc.rc:149
 msgid "DYNSRC Image"
-msgstr "DYNSRC Image"
+msgstr ""
 
 #: shdoclc.rc:157
+#, fuzzy
 msgid "&Save Video As..."
-msgstr "&Video mentése..."
+msgstr "احفظ &ك‍..."
 
 #: shdoclc.rc:169 shdoclc.rc:193
 msgid "Play"
-msgstr "Lejátszás"
+msgstr ""
 
 #: shdoclc.rc:174
 msgid "ART Image"
-msgstr "ART Image"
+msgstr ""
 
 #: shdoclc.rc:195
 msgid "Rewind"
-msgstr "Visszatekerés"
+msgstr ""
 
 #: shdoclc.rc:201
 msgid "Debug"
-msgstr "Debug"
+msgstr ""
 
 #: shdoclc.rc:203
 msgid "Trace Tags"
-msgstr "Trace Tag-ek"
+msgstr ""
 
 #: shdoclc.rc:204
 msgid "Resource Failures"
-msgstr "Erőforrás hibák"
+msgstr ""
 
 #: shdoclc.rc:205
 msgid "Dump Tracking Info"
-msgstr "Nyomkövetési info dumplása"
+msgstr ""
 
 #: shdoclc.rc:206
 msgid "Debug Break"
-msgstr "Hibakeresés megszakítása"
+msgstr ""
 
 #: shdoclc.rc:207
 msgid "Debug View"
-msgstr "Hibakeresési nézet"
+msgstr ""
 
 #: shdoclc.rc:208
 msgid "Dump Tree"
-msgstr "Fa dumpolása"
+msgstr ""
 
 #: shdoclc.rc:209
 msgid "Dump Lines"
-msgstr "Sorok dumpolása"
+msgstr ""
 
 #: shdoclc.rc:210
 msgid "Dump DisplayTree"
-msgstr "DisplayTree dumpolása"
+msgstr ""
 
 #: shdoclc.rc:211
 msgid "Dump FormatCaches"
-msgstr "FormatCaches dumpolása"
+msgstr ""
 
 #: shdoclc.rc:212
 msgid "Dump LayoutRects"
-msgstr "LayoutRects dumpolása"
+msgstr ""
 
 #: shdoclc.rc:213
 msgid "Memory Monitor"
-msgstr "Memóriafigyelő"
+msgstr ""
 
 #: shdoclc.rc:214
 msgid "Performance Meters"
-msgstr "Teljesítménymérő"
+msgstr ""
 
 #: shdoclc.rc:215
 msgid "Save HTML"
-msgstr "HTML mentése"
+msgstr ""
 
 #: shdoclc.rc:217
 msgid "&Browse View"
-msgstr "&Nézet tallózása"
+msgstr ""
 
 #: shdoclc.rc:218
+#, fuzzy
 msgid "&Edit View"
-msgstr "N&ézet szerkesztése"
+msgstr "&مساعدة"
 
 #: shdoclc.rc:221
 msgid "Vertical Scrollbar"
-msgstr "Vertical Scrollbar"
+msgstr ""
 
 #: shdoclc.rc:223 shdoclc.rc:237
 msgid "Scroll Here"
-msgstr "Görgetés itt"
+msgstr ""
 
 #: shdoclc.rc:225
 msgid "Top"
-msgstr "Felül"
+msgstr ""
 
 #: shdoclc.rc:226
 msgid "Bottom"
-msgstr "Alul"
+msgstr ""
 
 #: shdoclc.rc:228
+#, fuzzy
 msgid "Page Up"
-msgstr "Lap fel"
+msgstr "صفحة &p"
 
 #: shdoclc.rc:229
+#, fuzzy
 msgid "Page Down"
-msgstr "Lap le"
+msgstr "صفحة &p"
 
 #: shdoclc.rc:231
 msgid "Scroll Up"
-msgstr "Görgetés fel"
+msgstr ""
 
 #: shdoclc.rc:232
 msgid "Scroll Down"
-msgstr "Görgetés le"
+msgstr ""
 
 #: shdoclc.rc:235
 msgid "Horizontal Scrollbar"
-msgstr "Horizontal Scrollbar"
+msgstr ""
 
 #: shdoclc.rc:239
 msgid "Left Edge"
-msgstr "Bal széle"
+msgstr ""
 
 #: shdoclc.rc:240
 msgid "Right Edge"
-msgstr "Jobb széle"
+msgstr ""
 
 #: shdoclc.rc:242
+#, fuzzy
 msgid "Page Left"
-msgstr "Lap balra"
+msgstr "صفحة &p"
 
 #: shdoclc.rc:243
 msgid "Page Right"
-msgstr "Lap jobbra"
+msgstr ""
 
 #: shdoclc.rc:245
 msgid "Scroll Left"
-msgstr "Görgetés balra"
+msgstr ""
 
 #: shdoclc.rc:246
 msgid "Scroll Right"
-msgstr "Görgetés jobbra"
+msgstr ""
 
 #: shdoclc.rc:25
 msgid "Wine Internet Explorer"
-msgstr "Wine Internet Explorer"
+msgstr ""
 
 #: shdoclc.rc:30
+#, fuzzy
 msgid "&w&bPage &p"
-msgstr "&w&bOldal &p"
+msgstr "صفحة &p"
 
 #: shdoclc.rc:31
 msgid "&u&b&d"
-msgstr "&u&b&d"
+msgstr ""
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
@@ -1683,10 +1644,13 @@ msgid "There is no driver installed on your system !\n"
 msgstr ""
 
 #: winmm.rc:35
+#, fuzzy
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
 msgstr ""
+"لا تكفي الذاكرة المتاحة لإنهاء هذه المهمة.\n"
+"أغلق واحدا أو أكثر من التطبيقات لزيادة الذاكرة المتاحة."
 
 #: winmm.rc:36
 msgid ""
@@ -1783,11 +1747,14 @@ msgid "The specified device is not open or is not recognized by MCI."
 msgstr ""
 
 #: winmm.rc:61
+#, fuzzy
 msgid ""
 "Not enough memory available for this task.\n"
 "Quit one or more applications to increase available memory, and then try "
 "again."
 msgstr ""
+"لا تكفي الذاكرة المتاحة لإنهاء هذه المهمة.\n"
+"أغلق واحدا أو أكثر من التطبيقات لزيادة الذاكرة المتاحة."
 
 #: winmm.rc:62
 msgid ""
@@ -2146,288 +2113,283 @@ msgstr ""
 
 #: wldap32.rc:27
 msgid "Success"
-msgstr "Sikeres"
+msgstr ""
 
 #: wldap32.rc:28
 msgid "Operations Error"
-msgstr "Műveleti hiba"
+msgstr ""
 
 #: wldap32.rc:29
 msgid "Protocol Error"
-msgstr "Protokoll hiba"
+msgstr ""
 
 #: wldap32.rc:30
 msgid "Time Limit Exceeded"
-msgstr "Időkorlát túllépés"
+msgstr ""
 
 #: wldap32.rc:31
 msgid "Size Limit Exceeded"
-msgstr "Méretkorlát túllépés"
+msgstr ""
 
 #: wldap32.rc:32
 msgid "Compare False"
-msgstr "Hasonlítás hamis"
+msgstr ""
 
 #: wldap32.rc:33
 msgid "Compare True"
-msgstr "Hasonlítás igaz"
+msgstr ""
 
 #: wldap32.rc:34
 msgid "Authentication Method Not Supported"
-msgstr "Hitelesítési mód nem támogatott"
+msgstr ""
 
 #: wldap32.rc:35
 msgid "Strong Authentication Required"
-msgstr "erős hitelesítés szükséges"
+msgstr ""
 
 #: wldap32.rc:36
 msgid "Referral (v2)"
-msgstr "Beszámoló (v2)"
+msgstr ""
 
 #: wldap32.rc:37
 msgid "Referral"
-msgstr "Beszámoló"
+msgstr ""
 
 #: wldap32.rc:38
 msgid "Administration Limit Exceeded"
-msgstr "Adminisztrációs korlát túllépés"
+msgstr ""
 
 #: wldap32.rc:39
 msgid "Unavailable Critical Extension"
-msgstr "Nem elérhető kritikus kiterjesztés"
+msgstr ""
 
 #: wldap32.rc:40
 msgid "Confidentiality Required"
-msgstr "Bizalmasság szükséges"
+msgstr ""
 
 #: wldap32.rc:43
 msgid "No Such Attribute"
-msgstr "Nincs ilyen attribútum"
+msgstr ""
 
 #: wldap32.rc:44
 msgid "Undefined Type"
-msgstr "Definiálatlan típus"
+msgstr ""
 
 #: wldap32.rc:45
 msgid "Inappropriate Matching"
-msgstr "Alkalmatlan egyezés"
+msgstr ""
 
 #: wldap32.rc:46
 msgid "Constraint Violation"
-msgstr "Megszorítás megsértés"
+msgstr ""
 
 #: wldap32.rc:47
 msgid "Attribute Or Value Exists"
-msgstr "Attribútum vagy érték létezik"
+msgstr ""
 
 #: wldap32.rc:48
 msgid "Invalid Syntax"
-msgstr "Érvénytelen szintakszis"
+msgstr ""
 
 #: wldap32.rc:59
 msgid "No Such Object"
-msgstr "Nincs ilyen objektum"
+msgstr ""
 
 #: wldap32.rc:60
 msgid "Alias Problem"
-msgstr "Álnév probléma"
+msgstr ""
 
 #: wldap32.rc:61
 msgid "Invalid DN Syntax"
-msgstr "Érvénytelen DN szintakszis"
+msgstr ""
 
 #: wldap32.rc:62
 msgid "Is Leaf"
-msgstr "Ez egy levél"
+msgstr ""
 
 #: wldap32.rc:63
 msgid "Alias Dereference Problem"
-msgstr "Álnév dereferencia probléma"
+msgstr ""
 
 #: wldap32.rc:75
 msgid "Inappropriate Authentication"
-msgstr "Nem megfelelő hitelesítés"
+msgstr ""
 
 #: wldap32.rc:76
 msgid "Invalid Credentials"
-msgstr "Érvénytelen azonosítók"
+msgstr ""
 
 #: wldap32.rc:77
 msgid "Insufficient Rights"
-msgstr "Nem elegendő jogok"
+msgstr ""
 
 #: wldap32.rc:78
 msgid "Busy"
-msgstr "Foglalt"
+msgstr ""
 
 #: wldap32.rc:79
 msgid "Unavailable"
-msgstr "Nem elérhető"
+msgstr ""
 
 #: wldap32.rc:80
 msgid "Unwilling To Perform"
-msgstr "Nem akarja végrehajtani"
+msgstr ""
 
 #: wldap32.rc:81
 msgid "Loop Detected"
-msgstr "Ciklus találva"
+msgstr ""
 
 #: wldap32.rc:87
 msgid "Sort Control Missing"
-msgstr "Rendezési vezérlés hiányzik"
+msgstr ""
 
 #: wldap32.rc:88
 msgid "Index range error"
-msgstr "Index tartomány hiba"
+msgstr ""
 
 #: wldap32.rc:91
 msgid "Naming Violation"
-msgstr "Elnevezési összeférhetetlenség"
+msgstr ""
 
 #: wldap32.rc:92
 msgid "Object Class Violation"
-msgstr "Objektum osztály összeférhetetlenség"
+msgstr ""
 
 #: wldap32.rc:93
 msgid "Not allowed on Non-leaf"
-msgstr "Nem negedélyezett nem levélen"
+msgstr ""
 
 #: wldap32.rc:94
 msgid "Not allowed on RDN"
-msgstr "Nem engedélyezett RDN-en"
+msgstr ""
 
 #: wldap32.rc:95
 msgid "Already Exists"
-msgstr "Már létezik"
+msgstr ""
 
 #: wldap32.rc:96
 msgid "No Object Class Mods"
-msgstr "Nincsenek objektum osztály modok"
+msgstr ""
 
 #: wldap32.rc:97
 msgid "Results Too Large"
-msgstr "Eredmény túl nagy"
+msgstr ""
 
 #: wldap32.rc:98
 msgid "Affects Multiple DSAs"
-msgstr "Több DSA-ra van hatással"
+msgstr ""
 
 #: wldap32.rc:107
 msgid "Other"
-msgstr "Egyéb"
+msgstr ""
 
 #: wldap32.rc:108
 msgid "Server Down"
-msgstr "Kiszolgáló nem elérhető"
+msgstr ""
 
 #: wldap32.rc:109
 msgid "Local Error"
-msgstr "Helyi hiba"
+msgstr ""
 
 #: wldap32.rc:110
 msgid "Encoding Error"
-msgstr "Kódolási hiba"
+msgstr ""
 
 #: wldap32.rc:111
 msgid "Decoding Error"
-msgstr "Dekódolási hiba"
+msgstr ""
 
 #: wldap32.rc:112
 msgid "Timeout"
-msgstr "Időtúllépés"
+msgstr ""
 
 #: wldap32.rc:113
 msgid "Auth Unknown"
-msgstr "Ismeretlen hitelesítés"
+msgstr ""
 
 #: wldap32.rc:114
 msgid "Filter Error"
-msgstr "Szűrő hiba"
+msgstr ""
 
 #: wldap32.rc:115
 msgid "User Cancelled"
-msgstr "Felhasználó megszakította"
+msgstr ""
 
 #: wldap32.rc:116
 msgid "Parameter Error"
-msgstr "Paraméter hiba"
+msgstr ""
 
 #: wldap32.rc:117
 msgid "No Memory"
-msgstr "Nincs memória"
+msgstr ""
 
 #: wldap32.rc:118
 msgid "Can't connect to the LDAP server"
-msgstr "Nem tudok csatlakozni az LDAP kiszolgálóhoz"
+msgstr ""
 
 #: wldap32.rc:119
 msgid "Operation not supported by this version of the LDAP protocol"
-msgstr "A műveletet az LDAP protokoll ezen verziója nem támogatja"
+msgstr ""
 
 #: wldap32.rc:120
 msgid "Specified control was not found in message"
-msgstr "A megadott vezérlő nem található az üzenetben"
+msgstr ""
 
 #: wldap32.rc:121
 msgid "No result present in message"
-msgstr "Nincs eredmény az üzenetben"
+msgstr ""
 
 #: wldap32.rc:122
 msgid "More results returned"
-msgstr "Több eredmény jött vissza"
+msgstr ""
 
 #: wldap32.rc:123
 msgid "Loop while handling referrals"
-msgstr "Ciklus a beszámolók kezelése közben"
+msgstr ""
 
 #: wldap32.rc:124
 msgid "Referral hop limit exceeded"
-msgstr "Beszámolási ugrás limit túllépve"
+msgstr ""
 
 #: clock.rc:29
 msgid "Ana&log"
-msgstr "Ana&lóg"
+msgstr ""
 
 #: clock.rc:30
 msgid "Digi&tal"
-msgstr "Digi&tális"
+msgstr ""
 
 #: clock.rc:32 notepad.rc:50
-#, fuzzy
 msgid "&Font..."
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Betűtípus...\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Font..."
+msgstr "ال&خط..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
-msgstr "&Címsor nélkül"
+msgstr ""
 
 #: clock.rc:36
 msgid "&Seconds"
-msgstr "&Másodperc"
+msgstr ""
 
 #: clock.rc:37
 msgid "&Date"
-msgstr "&Dátum"
+msgstr ""
 
 #: clock.rc:39
 msgid "&Always on Top"
-msgstr "&Mindig legfelül"
+msgstr ""
 
 #: clock.rc:41
 msgid "Inf&o"
-msgstr "Inf&ormáció"
+msgstr ""
 
 #: clock.rc:42
 msgid "&About Clock..."
-msgstr "&Óra névjegy..."
+msgstr ""
 
 #: clock.rc:48
 msgid "Clock"
-msgstr "Óra"
+msgstr ""
 
 #: cmd.rc:30
 msgid "ATTRIB shows or changes DOS file attributes.\n"
@@ -3060,103 +3022,103 @@ msgstr ""
 
 #: notepad.rc:26
 msgid "&File"
-msgstr "&Fájl"
+msgstr "&مساعدة"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
-msgstr "Ú&j\tCtrl+N"
+msgstr "&جديد\tCtrl+N"
 
 #: notepad.rc:28
 msgid "&Open...\tCtrl+O"
-msgstr "Meg&nyitás...\tCtrl+O"
+msgstr "ا&فتح...\tCtrl+O"
 
 #: notepad.rc:29
 msgid "&Save\tCtrl+S"
-msgstr "&Mentés\tCtrl+S"
+msgstr "ا&حفظ\tCtrl+S"
 
 #: notepad.rc:30
 msgid "Save &as..."
-msgstr "Mentés má&sként..."
+msgstr "احفظ &ك‍..."
 
 #: notepad.rc:32
 msgid "&Print...\tCtrl+P"
-msgstr "Nyom&tatás...\tCtrl+P"
+msgstr "ا&طبع...\tCtrl+P"
 
 #: notepad.rc:33
 msgid "Page Se&tup..."
-msgstr "&Oldalbeállítás..."
+msgstr "إ&عداد الصفحة..."
 
 #: notepad.rc:34
 msgid "P&rinter Setup..."
-msgstr "Nyomtató &beállítás..."
+msgstr "إعداد الطاب&عة..."
 
 #: notepad.rc:36
 msgid "E&xit"
-msgstr "&Kilépés"
+msgstr "ا&خرج"
 
 #: notepad.rc:38
 msgid "&Edit"
-msgstr "S&zerkesztés"
+msgstr "&مساعدة"
 
 #: notepad.rc:39
 msgid "&Undo\tCtrl+Z"
-msgstr "&Visszavonás\tCtrl+Z"
+msgstr "&تراجع\tCtrl+Z"
 
 #: notepad.rc:41
 msgid "Cu&t\tCtrl+X"
-msgstr "Kivá&gás\tCtrl+X"
+msgstr "&قص\tCtrl+X"
 
 #: notepad.rc:42
 msgid "&Copy\tCtrl+C"
-msgstr "&Másolás\tCtrl+C"
+msgstr "ا&نسخ\tCtrl+C"
 
 #: notepad.rc:43
 msgid "&Paste\tCtrl+V"
-msgstr "&Beillesztés\tCtrl+V"
+msgstr "ا&لصق\tCtrl+V"
 
 #: notepad.rc:44
 msgid "&Delete\tDel"
-msgstr "Tör&lés\tDel"
+msgstr "اح&ذف\tDel"
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
-msgstr "&Az összes kijelölése"
+msgstr "اختر ال&كل\tCtrl+A"
 
 #: notepad.rc:47
 msgid "&Time/Date\tF5"
-msgstr "&Idő/dátum\tF5"
+msgstr "ال&وقت\\التاريخ\tF5"
 
 #: notepad.rc:49
 msgid "&Wrap long lines"
-msgstr "&Hosszú sorok tördelése"
+msgstr "ا&كسر السطور الطويلة"
 
 #: notepad.rc:53
 msgid "&Search...\tCtrl+F"
-msgstr "&Keresés..."
+msgstr "اب&بحث...\tCtrl+F"
 
 #: notepad.rc:54
 msgid "&Search next\tF3"
-msgstr "Köve&tkező keresése\tF3"
+msgstr "اب&حث عن التالي\tF3"
 
 #: notepad.rc:55
 msgid "&Replace...\tCtrl+H"
-msgstr "&Replace...\tCtrl+H"
+msgstr "ا&ستبدل...\tCtrl+H"
 
 #: notepad.rc:57
 msgid "&Help"
-msgstr "&Súgó"
+msgstr "&مساعدة"
 
 #: notepad.rc:59
 msgid "&Search..."
-msgstr "&Keresés..."
+msgstr "ا&بحث..."
 
 #: notepad.rc:60
 msgid "&Help on help"
-msgstr "&Használat"
+msgstr "&مساعدة المساعدة"
 
 #: notepad.rc:62
 msgid "&About Notepad"
-msgstr "&About Notepad"
+msgstr "&عن لوح الملاحظات"
 
 #: notepad.rc:68
 msgid "&f"
@@ -3164,51 +3126,51 @@ msgstr "&f"
 
 #: notepad.rc:69
 msgid "Page &p"
-msgstr "Oldalszám: &p."
+msgstr "صفحة &p"
 
 #: notepad.rc:71
 msgid "Notepad"
-msgstr "Jegyzettömb"
+msgstr "لوح الملاحظات"
 
 #: notepad.rc:72
 msgid "ERROR"
-msgstr "HIBA"
+msgstr "خطأ"
 
 #: notepad.rc:73
 msgid "WARNING"
-msgstr "FIGYELMEZTETÉS"
+msgstr "تحذير"
 
 #: notepad.rc:74
 msgid "Information"
-msgstr "Információ"
+msgstr "معلومات"
 
 #: notepad.rc:76
 msgid "Untitled"
-msgstr "(névtelen)"
+msgstr "بلا عنوان"
 
 #: notepad.rc:78
 msgid "All files (*.*)"
-msgstr "Minden fájl (*.*)"
+msgstr "كل الملفات (*.*)"
 
 #: notepad.rc:79
 msgid "Text files (*.txt)"
-msgstr "Szövegfájlok (*.txt)"
+msgstr "ملفات النصوص (*.txt)"
 
 #: notepad.rc:82
 msgid ""
 "File '%s' is too large for notepad.\n"
 "Please use a different editor."
 msgstr ""
-"'%s' fájl túl nagy méretű.\n"
-" Kérem használjon másik szövegszerkesztő programot."
+"الملف '%s' كبير جدا على لوح النصوص.\n"
+"من فضلك استخدم محررا آخر."
 
 #: notepad.rc:84
 msgid ""
 "You didn't enter any text.\n"
 "Please type something and try again"
 msgstr ""
-"A szöveg nem tartalmaz karaktert! \n"
-"Kérem gépeljen be néhány karaktert és próbálja újra!"
+"لم تكتب أي نص.\n"
+"من فضلك اكتب أي شيء ثم حاول ثانيا"
 
 #: notepad.rc:86
 msgid ""
@@ -3216,10 +3178,9 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"A megadott '%s'\n"
-"fájl nem létezik!\n"
+"الملف '%s' غير موجود.\n"
 "\n"
-" Kíván létrehozni új fájlt?"
+"أتريد إنشاء ملف جديد؟"
 
 #: notepad.rc:88
 msgid ""
@@ -3227,30 +3188,29 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"'%s' fájl\n"
-"módosult\n"
+"حدثت تغييرات على الملف '%s'.\n"
 "\n"
-" Szeretné menteni a változásokat?"
+"أتريد حفظ التغييرات؟"
 
 #: notepad.rc:89
 msgid "'%s' could not be found."
-msgstr "'%s' nem található!"
+msgstr "تعذّر إيجاد '%s'."
 
 #: notepad.rc:91
 msgid ""
 "Not enough memory to complete this task.\n"
 "Close one or more applications to increase the amount of free memory."
 msgstr ""
-"Nincs elegendő szabad memória!\n"
-"Zárjon be néhány alkalmazást, ezzel növelve a szabad memória méretét!"
+"لا تكفي الذاكرة المتاحة لإنهاء هذه المهمة.\n"
+"أغلق واحدا أو أكثر من التطبيقات لزيادة الذاكرة المتاحة."
 
 #: notepad.rc:93
 msgid "Unicode (UTF-16)"
-msgstr ""
+msgstr "يونيكود (UTF-16)"
 
 #: notepad.rc:94
 msgid "Unicode (UTF-16 big-endian)"
-msgstr ""
+msgstr "يونيكود (UTF-16 Big Endian)"
 
 #: notepad.rc:101
 msgid ""
@@ -3261,6 +3221,12 @@ msgid ""
 "one of the Unicode options in the Encoding drop down list.\n"
 "Continue?"
 msgstr ""
+"%s\n"
+"يحتوي هذه الملف على محارف يونيكود لكنها ستُفقد إذا حفظت\n"
+"الملف بترميز %s.\n"
+"للحفاظ على هذه المحارف انقر على ألغِ، ثم اختر واحدا من\n"
+"خيارات يونيكود من قائمة الترميز المنسدلة.\n"
+"أأتابع؟"
 
 #: reg.rc:27
 msgid ""
@@ -3419,7 +3385,7 @@ msgstr ""
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"
-msgstr "Wine Alkalamazás eltávolító"
+msgstr ""
 
 #: uninstaller.rc:27
 msgid ""
@@ -3427,10 +3393,6 @@ msgid ""
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry ?"
 msgstr ""
-"Az eltávolítási parancs '%s' végrehajtása sikertelen, feltehetőleg a hiányzó "
-"futtatható állomány miatt.\n"
-"El szeretné távolítani az eltávolítási bejegyzést a regisztrációs "
-"adatbázisból ?"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

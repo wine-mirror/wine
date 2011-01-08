@@ -2874,7 +2874,7 @@ WINE_CONFIG_PROGRAM(msiexec,,[install,installbin])
 WINE_CONFIG_PROGRAM(net,,[po,install])
 WINE_CONFIG_PROGRAM(netsh,,[install])
 WINE_CONFIG_PROGRAM(ngen,,[install])
-WINE_CONFIG_PROGRAM(notepad,,[install,installbin])
+WINE_CONFIG_PROGRAM(notepad,,[po,install,installbin])
 WINE_CONFIG_PROGRAM(oleview,,[install])
 WINE_CONFIG_PROGRAM(ping,,[install])
 WINE_CONFIG_PROGRAM(progman,,[install])
@@ -2930,6 +2930,7 @@ WINE_CONFIG_TOOL(tools/wmc)
 WINE_CONFIG_TOOL(tools/wrc)
 
 AC_SUBST([LINGUAS],["\
+ar \
 bg \
 cs \
 da \
@@ -2939,6 +2940,7 @@ en \
 en_US \
 eo \
 es \
+fa \
 fi \
 fr \
 he \

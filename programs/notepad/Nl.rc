@@ -22,48 +22,6 @@
 
 LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 
-MAIN_MENU MENU
-{
- POPUP "&Bestand" {
-  MENUITEM "&Nieuw",		     CMD_NEW
-  MENUITEM "&Openen...\tCtrl+O",	     CMD_OPEN
-  MENUITEM "O&pslaan\tCtrl+S",	     CMD_SAVE
-  MENUITEM "Ops&laan als...",	     CMD_SAVE_AS
-  MENUITEM SEPARATOR
-  MENUITEM "Af&drukken...\tCtrl+P",      CMD_PRINT
-  MENUITEM "Pa&gina-instellingen...",    CMD_PAGE_SETUP
-  MENUITEM "Printerins&tellingen...",    CMD_PRINTER_SETUP
-  MENUITEM SEPARATOR
-  MENUITEM "&Afsluiten",             CMD_EXIT
- }
-POPUP "Be&werken" {
-  MENUITEM "&Ongedaan maken\tCtrl+Z",    CMD_UNDO
-  MENUITEM SEPARATOR
-  MENUITEM "K&nippen\tCtrl+X",           CMD_CUT
-  MENUITEM "&Kopiëren\tCtrl+C",          CMD_COPY
-  MENUITEM "&Plakken\tCtrl+V",           CMD_PASTE
-  MENUITEM "&Verwijderen\tDel",          CMD_DELETE
-  MENUITEM SEPARATOR
-  MENUITEM "&Alles selecteren\tCtrl+A",  CMD_SELECT_ALL
-  MENUITEM "Tijd/&datum\tF5",            CMD_TIME_DATE
-  MENUITEM SEPARATOR
-  MENUITEM "A&utomatische terugloop",    CMD_WRAP
-  MENUITEM "&Lettertype instellen...",   CMD_FONT
- }
-POPUP "&Zoeken" {
-  MENUITEM "&Zoeken...\tCtrl+Z",    CMD_SEARCH
-  MENUITEM "V&olgende zoeken\tF3",  CMD_SEARCH_NEXT
-  MENUITEM "&Vervangen...\tCtrl+H", CMD_REPLACE
- }
-POPUP "&Help" {
-  MENUITEM "&Help-onderwerpen",  CMD_HELP_CONTENTS
-  MENUITEM "&Zoeken...",         CMD_HELP_SEARCH
-  MENUITEM "H&ulp bij Help",     CMD_HELP_ON_HELP
-  MENUITEM SEPARATOR
-  MENUITEM "&Over Notepad", CMD_HELP_ABOUT_NOTEPAD
- }
-}
-
 /* Dialog `Page setup' */
 
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
@@ -98,41 +56,3 @@ BEGIN
   LTEXT "Codering:", -1, 5,0, 50,12
   COMBOBOX IDC_OFN_ENCCOMBO, 53,0, 156,48, WS_CHILD | WS_VSCROLL | CBS_DROPDOWNLIST
 END
-
-STRINGTABLE
-{
-STRING_PAGESETUP_HEADERVALUE,   "&f"
-STRING_PAGESETUP_FOOTERVALUE,   "Pagina &p"
-
-STRING_NOTEPAD,                                 "Kladblok"
-STRING_ERROR,                                   "FOUT"
-STRING_WARNING,                                 "WAARSCHUWING"
-STRING_INFO,                                    "Informatie"
-
-STRING_UNTITLED,                                "Naamloos"
-
-STRING_ALL_FILES,                               "Alle bestanden (*.*)"
-STRING_TEXT_FILES_TXT,                          "Tekstbestanden (*.txt)"
-
-STRING_TOOLARGE,                                "Het bestand '%s' is te groot voor Kladblok.\n \
-Gebruik een andere editor."
-STRING_NOTEXT,                                  "U heeft geen tekst ingevoerd. \
-\nType uw tekst en probeer het nogmaals"
-STRING_DOESNOTEXIST,                            "Het bestand '%s'\nbestaat niet\n\n \
-Wilt u een nieuw bestand maken?"
-STRING_NOTSAVED,                                "Het bestand '%s'\nis gewijzigd\n\n \
-Wilt u de wijzigingen opslaan?"
-STRING_NOTFOUND,                                "'%s' kan niet worden gevonden."
-STRING_OUT_OF_MEMORY,                           "Onvoldoende geheugen. \
-\nSluit een of meer applicaties om de hoeveelheid\nbeschikbaar geheugen te vergroten."
-
-STRING_UNICODE_LE,     "Unicode (UTF-16)"
-STRING_UNICODE_BE,     "Unicode (UTF-16 big-endian)"
-
-STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
-Dit bestand bevat Unicode tekens die verloren zullen gaan\n\
-als dit bestand wordt opgeslagen in de %s codering.\n\
-Klik op Annuleren om deze tekens te behouden, en selecteer\n\
-daarna een van de Unicode-opties in de coderingskeuzelijst.\n\
-Wilt u doorgaan?"
-}

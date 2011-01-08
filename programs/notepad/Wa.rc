@@ -26,48 +26,6 @@
 
 LANGUAGE LANG_WALON, SUBLANG_DEFAULT
 
-MAIN_MENU MENU
-{
- POPUP "&Fitchî" {
-  MENUITEM "&Novea\tCtrl+N",         CMD_NEW
-  MENUITEM "&Drovî...\tCtrl+O",            CMD_OPEN
-  MENUITEM "&Schaper\tCtrl+S",          CMD_SAVE
-  MENUITEM "Schaper èt r&lomer...",     CMD_SAVE_AS
-  MENUITEM SEPARATOR
-  MENUITEM "&Rexhe...\tCtrl+P",            CMD_PRINT
-  MENUITEM "Arrandjmint del &Pådje...", CMD_PAGE_SETUP
-  MENUITEM "&Apontiaedje del scrirece...",      CMD_PRINTER_SETUP
-  MENUITEM SEPARATOR
-  MENUITEM "Moussî &Foû",       CMD_EXIT
- }
-POPUP "&Candjî" {
-  MENUITEM "&Disfé\tCtrl+Z",    CMD_UNDO
-  MENUITEM SEPARATOR
-  MENUITEM "Cô&per\tCtrl+X",    CMD_CUT
-  MENUITEM "&Copyî\tCtrl+C",    CMD_COPY
-  MENUITEM "C&laper\tCtrl+V",   CMD_PASTE
-  MENUITEM "&Rafacer\tDel",     CMD_DELETE
-  MENUITEM SEPARATOR
-  MENUITEM "&Tchwezi totafwait",        CMD_SELECT_ALL
-  MENUITEM "&Eure/Date\tF5",    CMD_TIME_DATE
-  MENUITEM SEPARATOR
-  MENUITEM "Côper les ro&yes",  CMD_WRAP
-  MENUITEM "&Font...",          CMD_FONT
- }
-POPUP "C&werî" {
-  MENUITEM "Cwerî...",          CMD_SEARCH
-  MENUITEM "&Shûvant\tF3",      CMD_SEARCH_NEXT
-  MENUITEM "&Replaecî...\tCtrl+H", CMD_REPLACE
- }
-POPUP "&Aide" {
-  MENUITEM "Å&dvins",           CMD_HELP_CONTENTS
-  MENUITEM "C&werî...",         CMD_HELP_SEARCH
-  MENUITEM "&Aide so l' Aide",  CMD_HELP_ON_HELP
-  MENUITEM SEPARATOR
-  MENUITEM "&About Notepad", CMD_HELP_ABOUT_NOTEPAD
- }
-}
-
 /* Dialog `Page setup' */
 
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
@@ -93,35 +51,6 @@ EDITTEXT IDC_PAGESETUP_BOTTOMVALUE,  130, 73, 35, 11, WS_CHILD | WS_BORDER | WS_
 DEFPUSHBUTTON "I Va",         IDOK,                   180,  3, 40, 15, WS_TABSTOP
 PUSHBUTTON    "Rinoncî",     IDCANCEL,               180, 21, 40, 15, WS_TABSTOP
 PUSHBUTTON    "&Aide",       IDHELP,                180, 39, 40, 15, WS_TABSTOP
-}
-
-STRINGTABLE
-{
-STRING_PAGESETUP_HEADERVALUE,   "&f"
-STRING_PAGESETUP_FOOTERVALUE,   "Pådje &p"
-
-STRING_NOTEPAD,                                 "Notepad"
-STRING_ERROR,                                   "AROKE"
-STRING_WARNING,                                 "ADVERTIXHMINT"
-STRING_INFO,                                    "Informåcion"
-
-STRING_UNTITLED,                                "(sin tite)"
-
-STRING_ALL_FILES,                               "Tos les fitchîs (*.*)"
-STRING_TEXT_FILES_TXT,                  "Fitchîs tekse (*.txt)"
-
-STRING_TOOLARGE,                                "Li fitchî '%s' est trop gros pol notepad.\n \
-Eployoz on ôte aspougneu di tekse."
-STRING_NOTEXT,                                  "Vos n' avoz rén sicrît. \
-\nTapez ene sacwe èt rasayez"
-STRING_DOESNOTEXIST,                            "File '%s'\ndoes not exist\n\n \
-Do you want to create a new file ?"
-STRING_NOTSAVED,                                "Li fitchî '%s'\na candjî\n\n \
-El voloz schaper ?"
-STRING_NOTFOUND,                                        "'%s' pout nén esse trové."
-STRING_OUT_OF_MEMORY,                   "Li memwere est plinne.\n\
-Cloyoz on programe ou pus po monter li memwere libe."
-
 }
 
 #endif  /* LANG_WALON */

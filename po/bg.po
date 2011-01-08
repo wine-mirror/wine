@@ -1,3 +1,5 @@
+# Bulgarian translations for Wine
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
@@ -887,17 +889,17 @@ msgstr ""
 msgid "Default MidiOut Device"
 msgstr ""
 
-#: hhctrl.rc:27
+#: hhctrl.rc:27 notepad.rc:58
 msgid "&Contents"
-msgstr ""
+msgstr "&Съдържание"
 
 #: hhctrl.rc:28
 msgid "I&ndex"
 msgstr ""
 
-#: hhctrl.rc:29
+#: hhctrl.rc:29 notepad.rc:52
 msgid "&Search"
-msgstr ""
+msgstr "&Търсене"
 
 #: hhctrl.rc:30
 msgid "Favor&ites"
@@ -2372,9 +2374,9 @@ msgstr ""
 msgid "Digi&tal"
 msgstr ""
 
-#: clock.rc:32
+#: clock.rc:32 notepad.rc:50
 msgid "&Font..."
-msgstr ""
+msgstr "&Шрифт..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -3031,6 +3033,210 @@ msgstr ""
 
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
+msgstr ""
+
+#: notepad.rc:26
+msgid "&File"
+msgstr "&Файл"
+
+#: notepad.rc:27
+msgid "&New\tCtrl+N"
+msgstr "&Нов\tCtrl+N"
+
+#: notepad.rc:28
+msgid "&Open...\tCtrl+O"
+msgstr "&Отвори...\tCtrl+O"
+
+#: notepad.rc:29
+msgid "&Save\tCtrl+S"
+msgstr "&Съхрани\tCtrl+S"
+
+#: notepad.rc:30
+msgid "Save &as..."
+msgstr "Съхрани &като..."
+
+#: notepad.rc:32
+msgid "&Print...\tCtrl+P"
+msgstr "&Печат...\tCtrl+P"
+
+#: notepad.rc:33
+msgid "Page Se&tup..."
+msgstr "Наст&ройки на страницата..."
+
+#: notepad.rc:34
+msgid "P&rinter Setup..."
+msgstr "Настро&йки на печатането..."
+
+#: notepad.rc:36
+msgid "E&xit"
+msgstr "&Изход"
+
+#: notepad.rc:38
+msgid "&Edit"
+msgstr "&Редактиране"
+
+#: notepad.rc:39
+msgid "&Undo\tCtrl+Z"
+msgstr "&Отмени\tCtrl+Z"
+
+#: notepad.rc:41
+msgid "Cu&t\tCtrl+X"
+msgstr "&Изрежи\tCtrl+X"
+
+#: notepad.rc:42
+msgid "&Copy\tCtrl+C"
+msgstr "&Копирай\tCtrl+C"
+
+#: notepad.rc:43
+msgid "&Paste\tCtrl+V"
+msgstr "&Вмъкни\tCtrl+V"
+
+#: notepad.rc:44
+msgid "&Delete\tDel"
+msgstr "Из&трий\tDel"
+
+#: notepad.rc:46
+msgid "Select &all\tCtrl+A"
+msgstr "Маркирай &всичко\tCtrl+A"
+
+#: notepad.rc:47
+msgid "&Time/Date\tF5"
+msgstr "Време/&Дата\tF5"
+
+#: notepad.rc:49
+msgid "&Wrap long lines"
+msgstr "&Пренасяй дълги редове"
+
+#: notepad.rc:53
+msgid "&Search...\tCtrl+F"
+msgstr "&Търси...\tCtrl+F"
+
+#: notepad.rc:54
+msgid "&Search next\tF3"
+msgstr "Намери &следващ\tF3"
+
+#: notepad.rc:55
+msgid "&Replace...\tCtrl+H"
+msgstr "&Замяна...\tCtrl+H"
+
+#: notepad.rc:57
+msgid "&Help"
+msgstr "&Помощ"
+
+#: notepad.rc:59
+msgid "&Search..."
+msgstr "&Търси..."
+
+#: notepad.rc:60
+msgid "&Help on help"
+msgstr "&Помощ за помощта"
+
+#: notepad.rc:62
+msgid "&About Notepad"
+msgstr "&About Notepad"
+
+#: notepad.rc:68
+msgid "&f"
+msgstr "&f"
+
+#: notepad.rc:69
+msgid "Page &p"
+msgstr "Page &p"
+
+#: notepad.rc:71
+msgid "Notepad"
+msgstr "Бележник"
+
+#: notepad.rc:72
+msgid "ERROR"
+msgstr "ГРЕШКА"
+
+#: notepad.rc:73
+msgid "WARNING"
+msgstr "ПРЕДУПРЕЖДЕНИЯ"
+
+#: notepad.rc:74
+msgid "Information"
+msgstr "Информация"
+
+#: notepad.rc:76
+msgid "Untitled"
+msgstr "(неозаглавен)"
+
+#: notepad.rc:78
+msgid "All files (*.*)"
+msgstr "Всички файлове (*.*)"
+
+#: notepad.rc:79
+msgid "Text files (*.txt)"
+msgstr "Текстови файлове (*.txt)"
+
+#: notepad.rc:82
+msgid ""
+"File '%s' is too large for notepad.\n"
+"Please use a different editor."
+msgstr ""
+"Файлът '%s' е прекалено голям, за да бъде отворен.\n"
+" Използвайте друг редактор."
+
+#: notepad.rc:84
+msgid ""
+"You didn't enter any text.\n"
+"Please type something and try again"
+msgstr ""
+"Не сте въвели никакъв текст. \n"
+"Напишете нещо и опитайте отново."
+
+#: notepad.rc:86
+msgid ""
+"File '%s' does not exist.\n"
+"\n"
+"Do you want to create a new file?"
+msgstr ""
+"Файлът '%s'\n"
+"не съществува\n"
+"\n"
+" Искате ли да създадете нов файл?"
+
+#: notepad.rc:88
+msgid ""
+"File '%s' has been modified.\n"
+"\n"
+"Would you like to save the changes?"
+msgstr ""
+"Файлът '%s'\n"
+"е бил променен\n"
+"\n"
+" Искате ли да съхраните промените?"
+
+#: notepad.rc:89
+msgid "'%s' could not be found."
+msgstr "'%s' не може да бъде намерен."
+
+#: notepad.rc:91
+msgid ""
+"Not enough memory to complete this task.\n"
+"Close one or more applications to increase the amount of free memory."
+msgstr ""
+"Няма достатъчно памет за завършване на тази задача.\n"
+"Затворете няколко приложения, за да увеличите размера на свободната памет."
+
+#: notepad.rc:93
+msgid "Unicode (UTF-16)"
+msgstr ""
+
+#: notepad.rc:94
+msgid "Unicode (UTF-16 big-endian)"
+msgstr ""
+
+#: notepad.rc:101
+msgid ""
+"%s\n"
+"This file contains Unicode characters which will be lost if\n"
+"you save this file in the %s encoding.\n"
+"To keep these characters, click Cancel, and then select\n"
+"one of the Unicode options in the Encoding drop down list.\n"
+"Continue?"
 msgstr ""
 
 #: reg.rc:27

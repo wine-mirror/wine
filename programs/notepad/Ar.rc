@@ -24,48 +24,6 @@
 
 LANGUAGE LANG_ARABIC, SUBLANG_NEUTRAL
 
-MAIN_MENU MENU
-{
- POPUP "&مساعدة" {
-  MENUITEM "&جديد\tCtrl+N",      CMD_NEW
-  MENUITEM "ا&فتح...\tCtrl+O",  CMD_OPEN
-  MENUITEM "ا&حفظ\tCtrl+S",     CMD_SAVE
-  MENUITEM "احفظ &ك‍...",       CMD_SAVE_AS
-  MENUITEM SEPARATOR
-  MENUITEM "ا&طبع...\tCtrl+P",            CMD_PRINT
-  MENUITEM "إ&عداد الصفحة...",    CMD_PAGE_SETUP
-  MENUITEM "إعداد الطاب&عة...", CMD_PRINTER_SETUP
-  MENUITEM SEPARATOR
-  MENUITEM "ا&خرج",             CMD_EXIT
- }
-POPUP "&مساعدة" {
-  MENUITEM "&تراجع\tCtrl+Z",     CMD_UNDO
-  MENUITEM SEPARATOR
-  MENUITEM "&قص\tCtrl+X",      CMD_CUT
-  MENUITEM "ا&نسخ\tCtrl+C",     CMD_COPY
-  MENUITEM "ا&لصق\tCtrl+V",    CMD_PASTE
-  MENUITEM "اح&ذف\tDel",      CMD_DELETE
-  MENUITEM SEPARATOR
-  MENUITEM "اختر ال&كل\tCtrl+A",       CMD_SELECT_ALL
-  MENUITEM "ال&وقت\\التاريخ\tF5",    CMD_TIME_DATE
-  MENUITEM SEPARATOR
-  MENUITEM "ا&كسر السطور الطويلة",  CMD_WRAP
-  MENUITEM "ال&خط...",          CMD_FONT
- }
-POPUP "&مساعدة" {
-  MENUITEM "اب&بحث...\tCtrl+F",   CMD_SEARCH
-  MENUITEM "اب&حث عن التالي\tF3",  CMD_SEARCH_NEXT
-  MENUITEM "ا&ستبدل...\tCtrl+H", CMD_REPLACE
- }
-POPUP "&مساعدة" {
-  MENUITEM "الم&حتويات",         CMD_HELP_CONTENTS
-  MENUITEM "ا&بحث...",        CMD_HELP_SEARCH
-  MENUITEM "&مساعدة المساعدة",     CMD_HELP_ON_HELP
-  MENUITEM SEPARATOR
-  MENUITEM "&عن لوح الملاحظات", CMD_HELP_ABOUT_NOTEPAD
- }
-}
-
 /* Dialog `Page setup' */
 
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
@@ -102,31 +60,3 @@ BEGIN
   LTEXT "الترميز:", -1, 5,0, 50,12
   COMBOBOX IDC_OFN_ENCCOMBO, 53,0, 156,48, WS_CHILD | WS_VSCROLL | CBS_DROPDOWNLIST
 END
-
-STRINGTABLE
-{
-STRING_PAGESETUP_HEADERVALUE,   "&f"
-STRING_PAGESETUP_FOOTERVALUE,   "صفحة &p"
-
-STRING_NOTEPAD,                                 "لوح الملاحظات"
-STRING_ERROR,                                   "خطأ"
-STRING_WARNING,                                 "تحذير"
-STRING_INFO,                                    "معلومات"
-
-STRING_UNTITLED,                                "بلا عنوان"
-
-STRING_ALL_FILES,                               "كل الملفات (*.*)"
-STRING_TEXT_FILES_TXT,                  "ملفات النصوص (*.txt)"
-
-STRING_TOOLARGE,                                "الملف '%s' كبير جدا على لوح النصوص.\nمن فضلك استخدم محررا آخر."
-STRING_NOTEXT,                                  "لم تكتب أي نص.\nمن فضلك اكتب أي شيء ثم حاول ثانيا"
-STRING_DOESNOTEXIST,                            "الملف '%s' غير موجود.\n\nأتريد إنشاء ملف جديد؟"
-STRING_NOTSAVED,                                "حدثت تغييرات على الملف '%s'.\n\nأتريد حفظ التغييرات؟"
-STRING_NOTFOUND,                                        "تعذّر إيجاد '%s'."
-STRING_OUT_OF_MEMORY,                   "لا تكفي الذاكرة المتاحة لإنهاء هذه المهمة.\nأغلق واحدا أو أكثر من التطبيقات لزيادة الذاكرة المتاحة."
-
-STRING_UNICODE_LE,     "يونيكود (UTF-16)"
-STRING_UNICODE_BE,     "يونيكود (UTF-16 Big Endian)"
-
-STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\nيحتوي هذه الملف على محارف يونيكود لكنها ستُفقد إذا حفظت\nالملف بترميز %s.\nللحفاظ على هذه المحارف انقر على ألغِ، ثم اختر واحدا من\nخيارات يونيكود من قائمة الترميز المنسدلة.\nأأتابع؟"
-}

@@ -890,15 +890,20 @@ msgstr ""
 msgid "Default MidiOut Device"
 msgstr ""
 
-#: hhctrl.rc:27
+#: hhctrl.rc:27 notepad.rc:58
+#, fuzzy
 msgid "&Contents"
-msgstr "內容(&C)"
+msgstr ""
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"內容(&C)\n"
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"主要內容(&C)"
 
 #: hhctrl.rc:28
 msgid "I&ndex"
 msgstr "目錄(&N)"
 
-#: hhctrl.rc:29
+#: hhctrl.rc:29 notepad.rc:52
 msgid "&Search"
 msgstr "搜尋(&S)"
 
@@ -2372,7 +2377,7 @@ msgstr "模擬時鐘(&L)"
 msgid "Digi&tal"
 msgstr "數字時鐘(&T)"
 
-#: clock.rc:32
+#: clock.rc:32 notepad.rc:50
 msgid "&Font..."
 msgstr "字型(&F)..."
 
@@ -3031,6 +3036,210 @@ msgstr ""
 
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
+msgstr ""
+
+#: notepad.rc:26
+msgid "&File"
+msgstr "檔案(&F)"
+
+#: notepad.rc:27
+msgid "&New\tCtrl+N"
+msgstr "新建(&N)\tCtrl+N"
+
+#: notepad.rc:28
+msgid "&Open...\tCtrl+O"
+msgstr "開啟(&O)...\tCtrl+O"
+
+#: notepad.rc:29
+msgid "&Save\tCtrl+S"
+msgstr "儲存(&S)\tCtrl+S"
+
+#: notepad.rc:30
+msgid "Save &as..."
+msgstr "另存為(&A)..."
+
+#: notepad.rc:32
+msgid "&Print...\tCtrl+P"
+msgstr "列印(&P)...\tCtrl+P"
+
+#: notepad.rc:33
+msgid "Page Se&tup..."
+msgstr "版面設定(&T)..."
+
+#: notepad.rc:34
+msgid "P&rinter Setup..."
+msgstr "列印設定(&R)..."
+
+#: notepad.rc:36
+msgid "E&xit"
+msgstr "結束(&E)"
+
+#: notepad.rc:38
+msgid "&Edit"
+msgstr "編輯(&E)"
+
+#: notepad.rc:39
+msgid "&Undo\tCtrl+Z"
+msgstr "復原(&U)\tCtrl+Z"
+
+#: notepad.rc:41
+msgid "Cu&t\tCtrl+X"
+msgstr "剪下(&T)\tCtrl+X"
+
+#: notepad.rc:42
+msgid "&Copy\tCtrl+C"
+msgstr "複製(&C)\tCtrl+C"
+
+#: notepad.rc:43
+msgid "&Paste\tCtrl+V"
+msgstr "貼上(&P)\tCtrl+V"
+
+#: notepad.rc:44
+msgid "&Delete\tDel"
+msgstr "刪除(&D)\tDel"
+
+#: notepad.rc:46
+msgid "Select &all\tCtrl+A"
+msgstr "全選(&A)"
+
+#: notepad.rc:47
+msgid "&Time/Date\tF5"
+msgstr "插入日期時間(&T)\tF5"
+
+#: notepad.rc:49
+msgid "&Wrap long lines"
+msgstr "自動換行(&W)"
+
+#: notepad.rc:53
+msgid "&Search...\tCtrl+F"
+msgstr "尋找(&S)..."
+
+#: notepad.rc:54
+msgid "&Search next\tF3"
+msgstr "找下一個(&N)\tF3"
+
+#: notepad.rc:55
+msgid "&Replace...\tCtrl+H"
+msgstr "&Replace...\tCtrl+H"
+
+#: notepad.rc:57
+msgid "&Help"
+msgstr "幫助(&H)"
+
+#: notepad.rc:59
+msgid "&Search..."
+msgstr "搜尋(&S)..."
+
+#: notepad.rc:60
+msgid "&Help on help"
+msgstr "如何使用幫助(&H)"
+
+#: notepad.rc:62
+msgid "&About Notepad"
+msgstr "關於記事本(&A)"
+
+#: notepad.rc:68
+msgid "&f"
+msgstr "&f"
+
+#: notepad.rc:69
+msgid "Page &p"
+msgstr "&p 頁"
+
+#: notepad.rc:71
+msgid "Notepad"
+msgstr "記事本"
+
+#: notepad.rc:72
+msgid "ERROR"
+msgstr "錯誤"
+
+#: notepad.rc:73
+msgid "WARNING"
+msgstr "警告"
+
+#: notepad.rc:74
+msgid "Information"
+msgstr "信息"
+
+#: notepad.rc:76
+msgid "Untitled"
+msgstr "(未命名)"
+
+#: notepad.rc:78
+msgid "All files (*.*)"
+msgstr "所有檔案 (*.*)"
+
+#: notepad.rc:79
+msgid "Text files (*.txt)"
+msgstr "文本檔案 (*.txt)"
+
+#: notepad.rc:82
+msgid ""
+"File '%s' is too large for notepad.\n"
+"Please use a different editor."
+msgstr ""
+"記事本不能開啟 '%s' 這麼大的檔案,\n"
+"請使用別的編輯器。"
+
+#: notepad.rc:84
+msgid ""
+"You didn't enter any text.\n"
+"Please type something and try again"
+msgstr ""
+"您沒有輸入任何文本。\n"
+"請輸入一些再試"
+
+#: notepad.rc:86
+msgid ""
+"File '%s' does not exist.\n"
+"\n"
+"Do you want to create a new file?"
+msgstr ""
+"檔案 '%s'\n"
+"不存在\n"
+"\n"
+"您想新建一個檔案嗎？"
+
+#: notepad.rc:88
+msgid ""
+"File '%s' has been modified.\n"
+"\n"
+"Would you like to save the changes?"
+msgstr ""
+"檔案 '%s'\n"
+"正文已更改\n"
+"\n"
+"是否儲存更改？"
+
+#: notepad.rc:89
+msgid "'%s' could not be found."
+msgstr "找不到: '%s'"
+
+#: notepad.rc:91
+msgid ""
+"Not enough memory to complete this task.\n"
+"Close one or more applications to increase the amount of free memory."
+msgstr ""
+"沒有足夠的內存來完成此項任務,\n"
+"請關閉一些程式後再試。"
+
+#: notepad.rc:93
+msgid "Unicode (UTF-16)"
+msgstr ""
+
+#: notepad.rc:94
+msgid "Unicode (UTF-16 big-endian)"
+msgstr ""
+
+#: notepad.rc:101
+msgid ""
+"%s\n"
+"This file contains Unicode characters which will be lost if\n"
+"you save this file in the %s encoding.\n"
+"To keep these characters, click Cancel, and then select\n"
+"one of the Unicode options in the Encoding drop down list.\n"
+"Continue?"
 msgstr ""
 
 #: reg.rc:27

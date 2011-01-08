@@ -22,48 +22,6 @@
 
 LANGUAGE LANG_BULGARIAN, SUBLANG_DEFAULT
 
-MAIN_MENU MENU
-{
- POPUP "&Файл" {
-  MENUITEM "&Нов\tCtrl+N",           CMD_NEW
-  MENUITEM "&Отвори...\tCtrl+O",     CMD_OPEN
-  MENUITEM "&Съхрани\tCtrl+S",     CMD_SAVE
-  MENUITEM "Съхрани &като...",       CMD_SAVE_AS
-  MENUITEM SEPARATOR
-  MENUITEM "&Печат...\tCtrl+P",            CMD_PRINT
-  MENUITEM "Наст&ройки на страницата...",    CMD_PAGE_SETUP
-  MENUITEM "Настро&йки на печатането...", CMD_PRINTER_SETUP
-  MENUITEM SEPARATOR
-  MENUITEM "&Изход",             CMD_EXIT
- }
-POPUP "&Редактиране" {
-  MENUITEM "&Отмени\tCtrl+Z",     CMD_UNDO
-  MENUITEM SEPARATOR
-  MENUITEM "&Изрежи\tCtrl+X",      CMD_CUT
-  MENUITEM "&Копирай\tCtrl+C",     CMD_COPY
-  MENUITEM "&Вмъкни\tCtrl+V",    CMD_PASTE
-  MENUITEM "Из&трий\tDel",      CMD_DELETE
-  MENUITEM SEPARATOR
-  MENUITEM "Маркирай &всичко\tCtrl+A",       CMD_SELECT_ALL
-  MENUITEM "Време/&Дата\tF5",    CMD_TIME_DATE
-  MENUITEM SEPARATOR
-  MENUITEM "&Пренасяй дълги редове",  CMD_WRAP
-  MENUITEM "&Шрифт...",          CMD_FONT
- }
-POPUP "&Търсене" {
-  MENUITEM "&Търси...\tCtrl+F",   CMD_SEARCH
-  MENUITEM "Намери &следващ\tF3",  CMD_SEARCH_NEXT
-  MENUITEM "&Замяна...\tCtrl+H", CMD_REPLACE
- }
-POPUP "&Помощ" {
-  MENUITEM "&Съдържание",         CMD_HELP_CONTENTS
-  MENUITEM "&Търси...",        CMD_HELP_SEARCH
-  MENUITEM "&Помощ за помощта",     CMD_HELP_ON_HELP
-  MENUITEM SEPARATOR
-  MENUITEM "&About Notepad", CMD_HELP_ABOUT_NOTEPAD
- }
-}
-
 /* Dialog `Page setup' */
 
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
@@ -89,33 +47,4 @@ EDITTEXT IDC_PAGESETUP_BOTTOMVALUE,  130, 73, 35, 11, WS_CHILD | WS_BORDER | WS_
 DEFPUSHBUTTON "OK",         IDOK,                   180,  3, 40, 15, WS_TABSTOP
 PUSHBUTTON    "Отмени",     IDCANCEL,               180, 21, 40, 15, WS_TABSTOP
 PUSHBUTTON    "&Помощ",       IDHELP,                180, 39, 40, 15, WS_TABSTOP
-}
-
-STRINGTABLE
-{
-STRING_PAGESETUP_HEADERVALUE,   "&f"
-STRING_PAGESETUP_FOOTERVALUE,   "Page &p"
-
-STRING_NOTEPAD,                                 "Бележник"
-STRING_ERROR,                                   "ГРЕШКА"
-STRING_WARNING,                                 "ПРЕДУПРЕЖДЕНИЯ"
-STRING_INFO,                                    "Информация"
-
-STRING_UNTITLED,                                "(неозаглавен)"
-
-STRING_ALL_FILES,                               "Всички файлове (*.*)"
-STRING_TEXT_FILES_TXT,                  "Текстови файлове (*.txt)"
-
-STRING_TOOLARGE,                                "Файлът '%s' е прекалено голям, за да бъде отворен.\n \
-Използвайте друг редактор."
-STRING_NOTEXT,                                  "Не сте въвели никакъв текст. \
-\nНапишете нещо и опитайте отново."
-STRING_DOESNOTEXIST,                            "Файлът '%s'\nне съществува\n\n \
-Искате ли да създадете нов файл?"
-STRING_NOTSAVED,                                "Файлът '%s'\nе бил променен\n\n \
-Искате ли да съхраните промените?"
-STRING_NOTFOUND,                                        "'%s' не може да бъде намерен."
-STRING_OUT_OF_MEMORY,                   "Няма достатъчно памет за завършване на тази \
-задача.\nЗатворете няколко приложения, за да увеличите размера на свободната памет."
-
 }

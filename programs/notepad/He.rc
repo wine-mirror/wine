@@ -24,48 +24,6 @@
 
 LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
 
-MAIN_MENU MENU
-{
- POPUP "&קובץ" {
-  MENUITEM "&חדש\tCtrl+N",      CMD_NEW
-  MENUITEM "&פתיחה...\tCtrl+O",  CMD_OPEN
-  MENUITEM "&שמירה\tCtrl+S",     CMD_SAVE
-  MENUITEM "שמירה &בשם...",       CMD_SAVE_AS
-  MENUITEM SEPARATOR
-  MENUITEM "ה&דפסה...\tCtrl+P",            CMD_PRINT
-  MENUITEM "ה&גדרות עמוד...",    CMD_PAGE_SETUP
-  MENUITEM "הגדרות מ&דפסת...", CMD_PRINTER_SETUP
-  MENUITEM SEPARATOR
-  MENUITEM "י&ציאה",             CMD_EXIT
- }
-POPUP "ע&ריכה" {
-  MENUITEM "&ביטול\tCtrl+Z",     CMD_UNDO
-  MENUITEM SEPARATOR
-  MENUITEM "ג&זירה\tCtrl+X",      CMD_CUT
-  MENUITEM "ה&עתקה\tCtrl+C",     CMD_COPY
-  MENUITEM "ה&דבקה\tCtrl+V",    CMD_PASTE
-  MENUITEM "&מחיקה\tDel",      CMD_DELETE
-  MENUITEM SEPARATOR
-  MENUITEM "בחירת ה&כול\tCtrl+A",       CMD_SELECT_ALL
-  MENUITEM "&שעה/תאריך\tF5",    CMD_TIME_DATE
-  MENUITEM SEPARATOR
-  MENUITEM "שבירת שורות &ארוכות",  CMD_WRAP
-  MENUITEM "&גופן...",          CMD_FONT
- }
-POPUP "&חיפוש" {
-  MENUITEM "&חיפוש...\tCtrl+F",   CMD_SEARCH
-  MENUITEM "חיפוש ה&בא\tF3",  CMD_SEARCH_NEXT
-  MENUITEM "החל&פה...\tCtrl+H", CMD_REPLACE
- }
-POPUP "ע&זרה" {
-  MENUITEM "&תכנים",         CMD_HELP_CONTENTS
-  MENUITEM "&חיפוש...",        CMD_HELP_SEARCH
-  MENUITEM "ע&זרה לעזרה",     CMD_HELP_ON_HELP
-  MENUITEM SEPARATOR
-  MENUITEM "על &אודות פנקס רשימות", CMD_HELP_ABOUT_NOTEPAD
- }
-}
-
 /* Dialog `Page setup' */
 
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
@@ -102,41 +60,3 @@ BEGIN
   LTEXT "קידוד:", -1, 5,0, 50,12
   COMBOBOX IDC_OFN_ENCCOMBO, 53,0, 156,48, WS_CHILD | WS_VSCROLL | CBS_DROPDOWNLIST
 END
-
-STRINGTABLE
-{
-STRING_PAGESETUP_HEADERVALUE,   "&ע"
-STRING_PAGESETUP_FOOTERVALUE,   "עמוד &ת"
-
-STRING_NOTEPAD,                                 "פנקס רשימות"
-STRING_ERROR,                                   "שגיאה"
-STRING_WARNING,                                 "אזהרה"
-STRING_INFO,                                    "מידע"
-
-STRING_UNTITLED,                                "ללא שם"
-
-STRING_ALL_FILES,                               "כל הקבצים (*.*)"
-STRING_TEXT_FILES_TXT,                  "קובצי טקסט (*.txt)"
-
-STRING_TOOLARGE,                                "הקובץ '%s' גדול מדי עבור פנקס רשימות.\n\
-נא להשתמש בעורך אחר."
-STRING_NOTEXT,                                  "לא הוזן טקסט כלל.\
-\nיש לכתוב משהו ולנסות שוב"
-STRING_DOESNOTEXIST,                            "הקובץ '%s' אינו קיים.\n\n\
-האם ברצונך ליצור קובץ חדש?"
-STRING_NOTSAVED,                                "הקובץ '%s' השתנה.\n\n\
-האם ברצונך לשמור את השינויים?"
-STRING_NOTFOUND,                                        "'%s' לא נמצא."
-STRING_OUT_OF_MEMORY,                   "אין די זיכרון כדי להשלים \
-משימה זו.\nנא לסגור יישום אחד או יותר כדי להגדיל את כמות הזיכרון החופשית."
-
-STRING_UNICODE_LE,     "יוניקוד (UTF-16)"
-STRING_UNICODE_BE,     "יוניקוד (UTF-16 big-endian)"
-
-STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
-הקובץ מכיל תווי יוניקוד שעלולים ללכת לאיבוד אם קובץ זה\n\
-יישמר עם הקידוד %s.\n\
-כדי לשמור על תווים אלו, יש ללחוץ על ביטול, ואז לבחור\n\
-באחת מאפשרויות היוניקוד ברשימה הנגללת של הקידודים.\n\
-האם להמשיך?"
-}

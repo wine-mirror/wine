@@ -901,7 +901,7 @@ msgstr "Standard WaveOut Enhed"
 msgid "Default MidiOut Device"
 msgstr "Standard MidiOut Enhed"
 
-#: hhctrl.rc:27
+#: hhctrl.rc:27 notepad.rc:58
 msgid "&Contents"
 msgstr "&Indhold"
 
@@ -909,7 +909,7 @@ msgstr "&Indhold"
 msgid "I&ndex"
 msgstr "I&ndeks"
 
-#: hhctrl.rc:29
+#: hhctrl.rc:29 notepad.rc:52
 msgid "&Search"
 msgstr "&Søg"
 
@@ -2495,7 +2495,7 @@ msgstr "&Analog"
 msgid "Digi&tal"
 msgstr "&Digital"
 
-#: clock.rc:32
+#: clock.rc:32 notepad.rc:50
 msgid "&Font..."
 msgstr "&Skrifttype..."
 
@@ -3329,6 +3329,217 @@ msgstr ""
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Åbne resourser: %lu\n"
+
+#: notepad.rc:26
+msgid "&File"
+msgstr "&Filer"
+
+#: notepad.rc:27
+msgid "&New\tCtrl+N"
+msgstr "&Ny\tCtrl+N"
+
+#: notepad.rc:28
+msgid "&Open...\tCtrl+O"
+msgstr "Å&bn...\tCtrl+O"
+
+#: notepad.rc:29
+msgid "&Save\tCtrl+S"
+msgstr "&Gem\tCtrl+S"
+
+#: notepad.rc:30
+msgid "Save &as..."
+msgstr "Gem so&m..."
+
+#: notepad.rc:32
+msgid "&Print...\tCtrl+P"
+msgstr "&Udskriv...\tCtrl+P"
+
+#: notepad.rc:33
+msgid "Page Se&tup..."
+msgstr "Side&opsætning..."
+
+#: notepad.rc:34
+msgid "P&rinter Setup..."
+msgstr "&Indstil printer..."
+
+#: notepad.rc:36
+msgid "E&xit"
+msgstr "&Afslut"
+
+#: notepad.rc:38
+msgid "&Edit"
+msgstr "&Rediger"
+
+#: notepad.rc:39
+msgid "&Undo\tCtrl+Z"
+msgstr "&Fortryd\tCtrl+Z"
+
+#: notepad.rc:41
+msgid "Cu&t\tCtrl+X"
+msgstr "&Klip\tCtrl+X"
+
+#: notepad.rc:42
+msgid "&Copy\tCtrl+C"
+msgstr "K&opier\tCtrl+C"
+
+#: notepad.rc:43
+msgid "&Paste\tCtrl+V"
+msgstr "&Indsæt\tCtrl+V"
+
+#: notepad.rc:44
+msgid "&Delete\tDel"
+msgstr "&Slet\tDel"
+
+#: notepad.rc:46
+msgid "Select &all\tCtrl+A"
+msgstr "Marker &alt\tCtrl+A"
+
+#: notepad.rc:47
+msgid "&Time/Date\tF5"
+msgstr "&Dato og klokkeslæt\tF5"
+
+#: notepad.rc:49
+msgid "&Wrap long lines"
+msgstr "&Tekstombrydning"
+
+#: notepad.rc:53
+msgid "&Search...\tCtrl+F"
+msgstr "&Søg..."
+
+#: notepad.rc:54
+msgid "&Search next\tF3"
+msgstr "&Find næste\tF3"
+
+#: notepad.rc:55
+msgid "&Replace...\tCtrl+H"
+msgstr "&Erstat...\tCtrl+H"
+
+#: notepad.rc:57
+msgid "&Help"
+msgstr "&Hjælp"
+
+#: notepad.rc:59
+msgid "&Search..."
+msgstr "&Søg efter hjælp om..."
+
+#: notepad.rc:60
+msgid "&Help on help"
+msgstr "&Brug af Hjælp"
+
+#: notepad.rc:62
+msgid "&About Notepad"
+msgstr "&Om Notesblok"
+
+#: notepad.rc:68
+msgid "&f"
+msgstr "&f"
+
+#: notepad.rc:69
+msgid "Page &p"
+msgstr "Page &p"
+
+#: notepad.rc:71
+msgid "Notepad"
+msgstr "Notesblok"
+
+#: notepad.rc:72
+msgid "ERROR"
+msgstr "FEJL"
+
+#: notepad.rc:73
+msgid "WARNING"
+msgstr "ADVARSEL"
+
+#: notepad.rc:74
+msgid "Information"
+msgstr "Information"
+
+#: notepad.rc:76
+msgid "Untitled"
+msgstr "(ikke-navngivet)"
+
+#: notepad.rc:78
+msgid "All files (*.*)"
+msgstr "Alle filer (*.*)"
+
+#: notepad.rc:79
+msgid "Text files (*.txt)"
+msgstr "Tekst filer (*.txt)"
+
+#: notepad.rc:82
+msgid ""
+"File '%s' is too large for notepad.\n"
+"Please use a different editor."
+msgstr ""
+"Filen '%s' er for stor til Notesblok. \n"
+"Brug en anden editor til at redigere filen."
+
+#: notepad.rc:84
+msgid ""
+"You didn't enter any text.\n"
+"Please type something and try again"
+msgstr ""
+"Du har ikke skrevet noget tekst. \n"
+"Skriv noget tekst, og prøv så igen"
+
+#: notepad.rc:86
+msgid ""
+"File '%s' does not exist.\n"
+"\n"
+"Do you want to create a new file?"
+msgstr ""
+"Filen '%s'\n"
+"findes ikke\n"
+"\n"
+" Ønsker du at oprette en ny fil ?"
+
+#: notepad.rc:88
+msgid ""
+"File '%s' has been modified.\n"
+"\n"
+"Would you like to save the changes?"
+msgstr ""
+"Filen '%s'\n"
+"er blevet ændret\n"
+"\n"
+" Vil du gemme ændringerne ?"
+
+#: notepad.rc:89
+msgid "'%s' could not be found."
+msgstr "Kan ikke finde '%s'."
+
+#: notepad.rc:91
+msgid ""
+"Not enough memory to complete this task.\n"
+"Close one or more applications to increase the amount of free memory."
+msgstr ""
+"Der er ikke nok hukommelse til at udføre denne operation.\n"
+"Afslut et eller flere aktive programmer for at frigøre hukommelse, og prøv "
+"igen."
+
+#: notepad.rc:93
+msgid "Unicode (UTF-16)"
+msgstr "Unicode (UTF-16)"
+
+#: notepad.rc:94
+msgid "Unicode (UTF-16 big-endian)"
+msgstr "Unicode (UTF-16 big-endian)"
+
+#: notepad.rc:101
+msgid ""
+"%s\n"
+"This file contains Unicode characters which will be lost if\n"
+"you save this file in the %s encoding.\n"
+"To keep these characters, click Cancel, and then select\n"
+"one of the Unicode options in the Encoding drop down list.\n"
+"Continue?"
+msgstr ""
+"%s\n"
+"Denne fil indeholder Unicode-tegn, som vil gå tabt, hvis\n"
+"du gemmer denne fil med %s som kodning.\n"
+"For at beholde disse tegn, skal du klikke på Annuller og derefter vælge\n"
+"en af Unicode mulighederne i Kodnings rullelisten.\n"
+"Fortsæt?"
 
 #: reg.rc:27
 msgid ""

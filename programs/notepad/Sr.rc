@@ -27,48 +27,6 @@
 
 LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_CYRILLIC
 
-MAIN_MENU MENU
-{
- POPUP "&Датотека" {
-  MENUITEM "&Ново\tCtrl+N",      CMD_NEW
-  MENUITEM "&Отвори...\tCtrl+O",  CMD_OPEN
-  MENUITEM "&Сачувај\tCtrl+S",     CMD_SAVE
-  MENUITEM "Сачувај &као...",       CMD_SAVE_AS
-  MENUITEM SEPARATOR
-  MENUITEM "&Штампај...\tCtrl+P",            CMD_PRINT
-  MENUITEM "Поставке &стране...",    CMD_PAGE_SETUP
-  MENUITEM "Поставке &штампе...", CMD_PRINTER_SETUP
-  MENUITEM SEPARATOR
-  MENUITEM "&Излаз",             CMD_EXIT
- }
-POPUP "&Уређивање" {
-  MENUITEM "&Опозови\tCtrl+Z",     CMD_UNDO
-  MENUITEM SEPARATOR
-  MENUITEM "&Исеци\tCtrl+X",      CMD_CUT
-  MENUITEM "&Умножи\tCtrl+C",     CMD_COPY
-  MENUITEM "&Налепи\tCtrl+V",    CMD_PASTE
-  MENUITEM "&Избриши\tDel",      CMD_DELETE
-  MENUITEM SEPARATOR
-  MENUITEM "Изабери &све\tCtrl+A",       CMD_SELECT_ALL
-  MENUITEM "&Време/датум\tF5",    CMD_TIME_DATE
-  MENUITEM SEPARATOR
-  MENUITEM "&Преломи дуге линије",  CMD_WRAP
-  MENUITEM "&Фонт...",          CMD_FONT
- }
-POPUP "&Претрага" {
-  MENUITEM "&Пронађи...\tCtrl+F",   CMD_SEARCH
-  MENUITEM "&Пронађи следеће\tF3",  CMD_SEARCH_NEXT
-  MENUITEM "&Замени...\tCtrl+H", CMD_REPLACE
- }
-POPUP "&Помоћ" {
-  MENUITEM "&Садржаји",         CMD_HELP_CONTENTS
-  MENUITEM "&Претражи...",        CMD_HELP_SEARCH
-  MENUITEM "&Помоћ за помоћ",     CMD_HELP_ON_HELP
-  MENUITEM SEPARATOR
-  MENUITEM "&О Бележници", CMD_HELP_ABOUT_NOTEPAD
- }
-}
-
 /* Dialog `Page setup' */
 
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
@@ -104,87 +62,7 @@ BEGIN
   COMBOBOX IDC_OFN_ENCCOMBO, 53,0, 156,48, WS_CHILD | WS_VSCROLL | CBS_DROPDOWNLIST
 END
 
-STRINGTABLE
-{
-STRING_PAGESETUP_HEADERVALUE,   "&f"
-STRING_PAGESETUP_FOOTERVALUE,   "Страна &p"
-
-STRING_NOTEPAD,                                 "Бележница"
-STRING_ERROR,                                   "Грешка"
-STRING_WARNING,                                 "Упозорење"
-STRING_INFO,                                    "Подаци"
-
-STRING_UNTITLED,                                "Неименовано"
-
-STRING_ALL_FILES,                               "Све датотеке (*.*)"
-STRING_TEXT_FILES_TXT,                  "Текстуалне датотеке (*.txt)"
-
-STRING_TOOLARGE,                                "Датотека „%s“ је превелика за Бележницу.\n\
-Користите други уређивач текста."
-STRING_NOTEXT,                                  "Нисте унели никакав текст.\
-\nУнесите нешто и покушајте поново"
-STRING_DOESNOTEXIST,                            "Датотека „%s“ не постоји.\n\n\
-Желите ли да направите нову датотеку?"
-STRING_NOTSAVED,                                "Датотека „%s“ је измењена.\n\n\
-Желите ли да сачувате измене?"
-STRING_NOTFOUND,                                        "Датотека „%s“ није пронађена."
-STRING_OUT_OF_MEMORY,                   "Нема довољно меморије за извршавање овог \
-задатка.\nЗатворите један или више програма да бисте повећали износ слободне меморије."
-
-STRING_UNICODE_LE,     "Уникод (UTF-16)"
-STRING_UNICODE_BE,     "Уникод (UTF-16 big-endian)"
-
-STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
-Ова датотека садржи знакове уникода који ће бити\n\
-изгубљени ако је сачувате у %s кодном распореду.\n\
-Да бисте задржали ове знакове, кликните на „Откажи“\n\
-и изаберите једну од уникод опција у падајућем менију.\n\
-Желите ли да наставите?"
-}
-
 LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
-
-MAIN_MENU MENU
-{
- POPUP "&Datoteka" {
-  MENUITEM "&Novo\tCtrl+N",      CMD_NEW
-  MENUITEM "&Otvori...\tCtrl+O",  CMD_OPEN
-  MENUITEM "&Sačuvaj\tCtrl+S",     CMD_SAVE
-  MENUITEM "Sačuvaj &kao...",       CMD_SAVE_AS
-  MENUITEM SEPARATOR
-  MENUITEM "&Štampaj...\tCtrl+P",            CMD_PRINT
-  MENUITEM "Postavke &strane...",    CMD_PAGE_SETUP
-  MENUITEM "Postavke &štampe...", CMD_PRINTER_SETUP
-  MENUITEM SEPARATOR
-  MENUITEM "&Izlaz",             CMD_EXIT
- }
-POPUP "&Uređivanje" {
-  MENUITEM "&Opozovi\tCtrl+Z",     CMD_UNDO
-  MENUITEM SEPARATOR
-  MENUITEM "&Iseci\tCtrl+X",      CMD_CUT
-  MENUITEM "&Umnoži\tCtrl+C",     CMD_COPY
-  MENUITEM "&Nalepi\tCtrl+V",    CMD_PASTE
-  MENUITEM "&Izbriši\tDel",      CMD_DELETE
-  MENUITEM SEPARATOR
-  MENUITEM "Izaberi &sve\tCtrl+A",       CMD_SELECT_ALL
-  MENUITEM "&Vreme/datum\tF5",    CMD_TIME_DATE
-  MENUITEM SEPARATOR
-  MENUITEM "&Prelomi duge linije",  CMD_WRAP
-  MENUITEM "&Font...",          CMD_FONT
- }
-POPUP "&Pretraga" {
-  MENUITEM "&Pronađi...\tCtrl+F",   CMD_SEARCH
-  MENUITEM "&Pronađi sledeće\tF3",  CMD_SEARCH_NEXT
-  MENUITEM "&Zameni...\tCtrl+H", CMD_REPLACE
- }
-POPUP "&Pomoć" {
-  MENUITEM "&Sadržaji",         CMD_HELP_CONTENTS
-  MENUITEM "&Pretraži...",        CMD_HELP_SEARCH
-  MENUITEM "&Pomoć za pomoć",     CMD_HELP_ON_HELP
-  MENUITEM SEPARATOR
-  MENUITEM "&O Beležnici", CMD_HELP_ABOUT_NOTEPAD
- }
-}
 
 /* Dialog `Page setup' */
 
@@ -220,41 +98,3 @@ BEGIN
   LTEXT "Kodni raspored:", -1, 5,0, 50,12
   COMBOBOX IDC_OFN_ENCCOMBO, 53,0, 156,48, WS_CHILD | WS_VSCROLL | CBS_DROPDOWNLIST
 END
-
-STRINGTABLE
-{
-STRING_PAGESETUP_HEADERVALUE,   "&f"
-STRING_PAGESETUP_FOOTERVALUE,   "Strana &p"
-
-STRING_NOTEPAD,                                 "Beležnica"
-STRING_ERROR,                                   "Greška"
-STRING_WARNING,                                 "Upozorenje"
-STRING_INFO,                                    "Podaci"
-
-STRING_UNTITLED,                                "Neimenovano"
-
-STRING_ALL_FILES,                               "Sve datoteke (*.*)"
-STRING_TEXT_FILES_TXT,                  "Tekstualne datoteke (*.txt)"
-
-STRING_TOOLARGE,                                "Datoteka „%s“ je prevelika za Beležnicu.\n\
-Koristite drugi uređivač teksta."
-STRING_NOTEXT,                                  "Niste uneli nikakav tekst.\
-\nUnesite nešto i pokušajte ponovo"
-STRING_DOESNOTEXIST,                            "Datoteka „%s“ ne postoji.\n\n\
-Želite li da napravite novu datoteku?"
-STRING_NOTSAVED,                                "Datoteka „%s“ je izmenjena.\n\n\
-Želite li da sačuvate izmene?"
-STRING_NOTFOUND,                                        "Datoteka „%s“ nije pronađena."
-STRING_OUT_OF_MEMORY,                   "Nema dovoljno memorije za izvršavanje ovog \
-zadatka.\nZatvorite jedan ili više programa da biste povećali iznos slobodne memorije."
-
-STRING_UNICODE_LE,     "Unikod (UTF-16)"
-STRING_UNICODE_BE,     "Unikod (UTF-16 big-endian)"
-
-STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
-Ova datoteka sadrži znakove unikoda koji će biti\n\
-izgubljeni ako je sačuvate u %s kodnom rasporedu.\n\
-Da biste zadržali ove znakove, kliknite na „Otkaži“\n\
-i izaberite jednu od unikod opcija u padajućem meniju.\n\
-Želite li da nastavite?"
-}

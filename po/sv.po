@@ -893,7 +893,7 @@ msgstr "Förvald WaveOut-enhet"
 msgid "Default MidiOut Device"
 msgstr "Förvald MidiOut-enhet"
 
-#: hhctrl.rc:27
+#: hhctrl.rc:27 notepad.rc:58
 msgid "&Contents"
 msgstr "&Innehåll"
 
@@ -901,7 +901,7 @@ msgstr "&Innehåll"
 msgid "I&ndex"
 msgstr "I&ndex"
 
-#: hhctrl.rc:29
+#: hhctrl.rc:29 notepad.rc:52
 msgid "&Search"
 msgstr "&Sök"
 
@@ -2483,9 +2483,14 @@ msgstr "Ana&log"
 msgid "Digi&tal"
 msgstr "Digi&tal"
 
-#: clock.rc:32
+#: clock.rc:32 notepad.rc:50
+#, fuzzy
 msgid "&Font..."
-msgstr "&Typsnitt..."
+msgstr ""
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"&Typsnitt...\n"
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"&Font..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -3328,6 +3333,217 @@ msgstr ""
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Öppna resurser: %lu\n"
+
+#: notepad.rc:26
+msgid "&File"
+msgstr "&Arkiv"
+
+#: notepad.rc:27
+msgid "&New\tCtrl+N"
+msgstr "&Ny\tCtrl+N"
+
+#: notepad.rc:28
+msgid "&Open...\tCtrl+O"
+msgstr "Ö&ppna...\tCtrl+O"
+
+#: notepad.rc:29
+msgid "&Save\tCtrl+S"
+msgstr "&Spara\tCtrl+S"
+
+#: notepad.rc:30
+msgid "Save &as..."
+msgstr "Spara s&om..."
+
+#: notepad.rc:32
+msgid "&Print...\tCtrl+P"
+msgstr "&Skriv ut...\tCtrl+P"
+
+#: notepad.rc:33
+msgid "Page Se&tup..."
+msgstr "Sidla&yout..."
+
+#: notepad.rc:34
+msgid "P&rinter Setup..."
+msgstr "Skrivar&konfiguration..."
+
+#: notepad.rc:36
+msgid "E&xit"
+msgstr "&Avsluta"
+
+#: notepad.rc:38
+msgid "&Edit"
+msgstr "&Redigera"
+
+#: notepad.rc:39
+msgid "&Undo\tCtrl+Z"
+msgstr "&Ångra\tCtrl+Z"
+
+#: notepad.rc:41
+msgid "Cu&t\tCtrl+X"
+msgstr "Klipp &ut\tCtrl+X"
+
+#: notepad.rc:42
+msgid "&Copy\tCtrl+C"
+msgstr "&Kopiera\tCtrl+C"
+
+#: notepad.rc:43
+msgid "&Paste\tCtrl+V"
+msgstr "Klistra &in\tCtrl+V"
+
+#: notepad.rc:44
+msgid "&Delete\tDel"
+msgstr "&Ta bort\tDel"
+
+#: notepad.rc:46
+msgid "Select &all\tCtrl+A"
+msgstr "Markera &allt"
+
+#: notepad.rc:47
+msgid "&Time/Date\tF5"
+msgstr "&Tid/Datum\tF5"
+
+#: notepad.rc:49
+msgid "&Wrap long lines"
+msgstr "&Dela långa meningar"
+
+#: notepad.rc:53
+msgid "&Search...\tCtrl+F"
+msgstr "Sök..."
+
+#: notepad.rc:54
+msgid "&Search next\tF3"
+msgstr "&Sök nästa\tF3"
+
+#: notepad.rc:55
+msgid "&Replace...\tCtrl+H"
+msgstr "&Ersätt...\tCtrl+H"
+
+#: notepad.rc:57
+msgid "&Help"
+msgstr "&Hjälp"
+
+#: notepad.rc:59
+msgid "&Search..."
+msgstr "&Sök..."
+
+#: notepad.rc:60
+msgid "&Help on help"
+msgstr "Användning &av hjälp"
+
+#: notepad.rc:62
+msgid "&About Notepad"
+msgstr "&Om Anteckningar"
+
+#: notepad.rc:68
+msgid "&f"
+msgstr "&f"
+
+#: notepad.rc:69
+msgid "Page &p"
+msgstr "Sida &p"
+
+#: notepad.rc:71
+msgid "Notepad"
+msgstr "Anteckningar"
+
+#: notepad.rc:72
+msgid "ERROR"
+msgstr "FEL"
+
+#: notepad.rc:73
+msgid "WARNING"
+msgstr "VARNING"
+
+#: notepad.rc:74
+msgid "Information"
+msgstr "Information"
+
+#: notepad.rc:76
+msgid "Untitled"
+msgstr "(namnlös)"
+
+#: notepad.rc:78
+msgid "All files (*.*)"
+msgstr "Alla filer (*.*)"
+
+#: notepad.rc:79
+msgid "Text files (*.txt)"
+msgstr "Textfiler (*.txt)"
+
+#: notepad.rc:82
+msgid ""
+"File '%s' is too large for notepad.\n"
+"Please use a different editor."
+msgstr ""
+"Filen '%s' är för stor för Anteckningar.\n"
+" Använd en annan redigerare."
+
+#: notepad.rc:84
+msgid ""
+"You didn't enter any text.\n"
+"Please type something and try again"
+msgstr ""
+"Du skrev inte in någon text. \n"
+"Skriv något och försök sedan igen"
+
+#: notepad.rc:86
+msgid ""
+"File '%s' does not exist.\n"
+"\n"
+"Do you want to create a new file?"
+msgstr ""
+"Filen '%s'\n"
+"finns inte\n"
+"\n"
+" Vill du skapa en ny fil?"
+
+#: notepad.rc:88
+msgid ""
+"File '%s' has been modified.\n"
+"\n"
+"Would you like to save the changes?"
+msgstr ""
+"Filen '%s'\n"
+"har ändrats\n"
+"\n"
+" Vill du spara ändringarna?"
+
+#: notepad.rc:89
+msgid "'%s' could not be found."
+msgstr "'%s' hittades inte."
+
+#: notepad.rc:91
+msgid ""
+"Not enough memory to complete this task.\n"
+"Close one or more applications to increase the amount of free memory."
+msgstr ""
+"Det finns inte tillräckligt med minne för att slutföra den här uppgiften.\n"
+"Avsluta ett eller flera program för att öka mängden\n"
+"ledigt minne."
+
+#: notepad.rc:93
+msgid "Unicode (UTF-16)"
+msgstr "Unicode (UTF-16)"
+
+#: notepad.rc:94
+msgid "Unicode (UTF-16 big-endian)"
+msgstr "Unicode (UTF-16 big-endian)"
+
+#: notepad.rc:101
+msgid ""
+"%s\n"
+"This file contains Unicode characters which will be lost if\n"
+"you save this file in the %s encoding.\n"
+"To keep these characters, click Cancel, and then select\n"
+"one of the Unicode options in the Encoding drop down list.\n"
+"Continue?"
+msgstr ""
+"%s\n"
+"Denna fil innehåller Unicode-tecken vilka kommer att gå\n"
+"förlorade om du sparar filen under kodningen %s.\n"
+"Klicka Avbryt och välj sedan ett av Unicode-alternativen\n"
+"i teckenkodningslistan för att behålla dessa tecken.\n"
+"Vill du fortsätta?"
 
 #: reg.rc:27
 msgid ""

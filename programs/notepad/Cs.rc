@@ -28,48 +28,6 @@ LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 
 /* Czech strings in CP1250 */
 
-MAIN_MENU MENU
-{
- POPUP "&Soubor" {
-  MENUITEM "&Nový\tCtrl+N",           CMD_NEW
-  MENUITEM "&Otevøít...\tCtrl+O",     CMD_OPEN
-  MENUITEM "&Uložit\tCtrl+S",     CMD_SAVE
-  MENUITEM "Uložit j&ako...",       CMD_SAVE_AS
-  MENUITEM SEPARATOR
-  MENUITEM "&Tisk...\tCtrl+P",            CMD_PRINT
-  MENUITEM "Nas&tavení stránky...",    CMD_PAGE_SETUP
-  MENUITEM "Nastavení tiská&rny...", CMD_PRINTER_SETUP
-  MENUITEM SEPARATOR
-  MENUITEM "&Konec",             CMD_EXIT
- }
-POPUP "U&pravit" {
-  MENUITEM "&Zpìt\tCtrl+Z",     CMD_UNDO
-  MENUITEM SEPARATOR
-  MENUITEM "Vyjmou&t\tCtrl+X",      CMD_CUT
-  MENUITEM "&Kopírovat\tCtrl+C",     CMD_COPY
-  MENUITEM "&Vložit\tCtrl+V",    CMD_PASTE
-  MENUITEM "&Smazat\tDel",      CMD_DELETE
-  MENUITEM SEPARATOR
-  MENUITEM "Vybrat vš&e\tCtrl+A",       CMD_SELECT_ALL
-  MENUITEM "È&as/Datum\tF5",    CMD_TIME_DATE
-  MENUITEM SEPARATOR
-  MENUITEM "Zalo&mit dlouhé øádky",  CMD_WRAP
-  MENUITEM "&Písmo...",          CMD_FONT
- }
-POPUP "&Hledání" {
-  MENUITEM "&Hledej...\tCtrl+F",   CMD_SEARCH
-  MENUITEM "&Najdi další\tF3",  CMD_SEARCH_NEXT
-  MENUITEM "Nah&radit...\tCtrl+H", CMD_REPLACE
- }
-POPUP "&Nápovìda" {
-  MENUITEM "&Obsah",         CMD_HELP_CONTENTS
-  MENUITEM "&Najít...",        CMD_HELP_SEARCH
-  MENUITEM "&Pomoc k nápovìdì",     CMD_HELP_ON_HELP
-  MENUITEM SEPARATOR
-  MENUITEM "&About Notepad...", CMD_HELP_ABOUT_NOTEPAD
- }
-}
-
 /* Dialog `Page setup' */
 
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
@@ -95,34 +53,4 @@ EDITTEXT IDC_PAGESETUP_BOTTOMVALUE,  130, 73, 35, 11, WS_CHILD | WS_BORDER | WS_
 DEFPUSHBUTTON "OK",         IDOK,                   180,  3, 40, 15, WS_TABSTOP
 PUSHBUTTON    "Storno",     IDCANCEL,               180, 21, 40, 15, WS_TABSTOP
 PUSHBUTTON    "&Nápovìda",       IDHELP,                180, 39, 40, 15, WS_TABSTOP
-}
-
-STRINGTABLE
-{
-STRING_PAGESETUP_HEADERVALUE,   "&f"
-STRING_PAGESETUP_FOOTERVALUE,   "Strana &p"
-
-STRING_NOTEPAD,                                 "Notepad"
-STRING_ERROR,                                   "CHYBA"
-STRING_WARNING,                                 "VAROVÁNÍ"
-STRING_INFO,                                    "Informace"
-
-STRING_UNTITLED,                                "(bez názvu)"
-
-STRING_ALL_FILES,                               "Všechny soubory (*.*)"
-STRING_TEXT_FILES_TXT,                  "Textové soubory (*.txt)"
-
-STRING_TOOLARGE,                                "Soubor '%s' je pro notepad pøíliš velký.\n \
-Použijte jiný editor, prosím."
-STRING_NOTEXT,                                  "Nebyl zadán žádný text. \
-\nPlease type something and try again"
-STRING_DOESNOTEXIST,                            "Soubor '%s'\nneexistuje.\n\n \
-Chcete ho vytvoøit ?"
-STRING_NOTSAVED,                                "Soubor '%s'\nbyl zmìnìn.\n\n \
-Chcete uložit zmìny ?"
-STRING_NOTFOUND,                                        "'%s' nebyl nalezen."
-STRING_OUT_OF_MEMORY,                   "Není dost pamìti na dokonèení této úlohy. \
-\nUzavøete jednu èi více aplikací abyste získali více\nvolné \
-pamìti."
-
 }

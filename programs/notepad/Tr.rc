@@ -22,48 +22,6 @@
 
 LANGUAGE LANG_TURKISH, SUBLANG_DEFAULT
 
-MAIN_MENU MENU
-{
- POPUP "&Dosya" {
-  MENUITEM "&Yeni\tCtrl+N",    CMD_NEW
-  MENUITEM "&Aç...\tCtrl+O",         CMD_OPEN
-  MENUITEM "&Kaydet\tCtrl+S",     CMD_SAVE
-  MENUITEM "&Farklý Kaydet...",   CMD_SAVE_AS
-  MENUITEM SEPARATOR
-  MENUITEM "Ya&zdýr...\tCtrl+P",     CMD_PRINT
-  MENUITEM "Sa&yfa Ayarý...",     CMD_PAGE_SETUP
-  MENUITEM "Yazýcý &Ayarlarý...", CMD_PRINTER_SETUP
-  MENUITEM SEPARATOR
-  MENUITEM "&Çýkýþ",              CMD_EXIT
- }
-POPUP "D&üzenle" {
-  MENUITEM "&Geri Al\tCtrl+Z",     CMD_UNDO
-  MENUITEM SEPARATOR
-  MENUITEM "&Kes\tCtrl+X",         CMD_CUT
-  MENUITEM "K&opyala\tCtrl+C",     CMD_COPY
-  MENUITEM "Ya&pýþtýr\tCtrl+V",    CMD_PASTE
-  MENUITEM "&Sil\tDel",            CMD_DELETE
-  MENUITEM SEPARATOR
-  MENUITEM "&Tümünü seç\tCtrl+A",  CMD_SELECT_ALL
-  MENUITEM "S&aat/Tarih\tF5",      CMD_TIME_DATE
-  MENUITEM SEPARATOR
-  MENUITEM "&Uzun satýrlarý kýrp", CMD_WRAP
-  MENUITEM "&Yazý Tipi...",        CMD_FONT
- }
-POPUP "&Bul" {
-  MENUITEM "&Bul...\tCtrl+F",         CMD_SEARCH
-  MENUITEM "&Sonrakini bul\tF3",   CMD_SEARCH_NEXT
-  MENUITEM "&Replace...\tCtrl+H",  CMD_REPLACE
- }
-POPUP "&Yardým" {
-  MENUITEM "&Ýçindekiler",              CMD_HELP_CONTENTS
-  MENUITEM "&Ara...",              CMD_HELP_SEARCH
-  MENUITEM "&Yardým kullanýmý",    CMD_HELP_ON_HELP
-  MENUITEM SEPARATOR
-  MENUITEM "&About Notepad", CMD_HELP_ABOUT_NOTEPAD
- }
-}
-
 /* Dialog `Page setup' */
 
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
@@ -89,34 +47,4 @@ EDITTEXT IDC_PAGESETUP_BOTTOMVALUE,  130, 73, 35, 11, WS_CHILD | WS_BORDER | WS_
 DEFPUSHBUTTON "Tamam",         IDOK,                   180,  3, 40, 15, WS_TABSTOP
 PUSHBUTTON    "Ýptal",     IDCANCEL,               180, 21, 40, 15, WS_TABSTOP
 PUSHBUTTON    "&Yardým",       IDHELP,                180, 39, 40, 15, WS_TABSTOP
-}
-
-STRINGTABLE
-{
-STRING_PAGESETUP_HEADERVALUE,   "&f"
-STRING_PAGESETUP_FOOTERVALUE,   "&p. Sayfa"
-
-STRING_NOTEPAD,                                 "Not Defteri"
-STRING_ERROR,                                   "HATA"
-STRING_WARNING,                                 "UYARI"
-STRING_INFO,                                    "Bilgi"
-
-STRING_UNTITLED,                                "Adsýz"
-
-STRING_ALL_FILES,                               "Tüm dosyalar (*.*)"
-STRING_TEXT_FILES_TXT,                  "Metin Dosyalarý (*.txt)"
-
-STRING_TOOLARGE,                                "'%s' dosyasý not defteri için çok büyük.\n \
-Lütfen deðiþik bir düzenleyici kullanýn."
-STRING_NOTEXT,                                  "Hiçbir metin yazmadýnýz. \
-\nLütfen birþey yazýn ve tekrar deneyin"
-STRING_DOESNOTEXIST,                            "'%s' dosyasý\nmevcut deðil\n\n \
-Yeni bir dosya oluþturmak ister misiniz?"
-STRING_NOTSAVED,                                "'%s' dosyasý\ndeðiþtirildi\n\n \
-Deðiþiklikleri kaydetmek ister misiniz?"
-STRING_NOTFOUND,                                        "'%s' bulunamýyor."
-STRING_OUT_OF_MEMORY,                   "Bu iþlemi tamamlamak için yeterli bellek\
-alaný yok.\nBir veya daha fazla uygulamayý kapatarak boþ bellek miktarýný\narttýrmayý \
-deneyin."
-
 }

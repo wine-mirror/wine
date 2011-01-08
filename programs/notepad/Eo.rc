@@ -22,48 +22,6 @@
 
 LANGUAGE LANG_ESPERANTO, SUBLANG_DEFAULT
 
-MAIN_MENU MENU
-{
- POPUP "Dosiero" {
-  MENUITEM "&Nova\tCtrl+N",           CMD_NEW
-  MENUITEM "Malfermu\tCtrl+O",     CMD_OPEN
-  MENUITEM "Kon&servu\tCtrl+S",     CMD_SAVE
-  MENUITEM "Konservu &kiel",       CMD_SAVE_AS
-  MENUITEM SEPARATOR
-  MENUITEM "Presu\tCtrl+P",            CMD_PRINT
-  MENUITEM "Impozu paøon",    CMD_PAGE_SETUP
-  MENUITEM "Impozu Printilon", CMD_PRINTER_SETUP
-  MENUITEM SEPARATOR
-  MENUITEM "Finu",             CMD_EXIT
- }
-POPUP "&Redakto" {
-  MENUITEM "Nuligu\tCtrl+Z",     CMD_UNDO
-  MENUITEM SEPARATOR
-  MENUITEM "Tondu\tCtrl+X",      CMD_CUT
-  MENUITEM "Kopiu\tCtrl+C",     CMD_COPY
-  MENUITEM "Enmetu\tCtrl+V",    CMD_PASTE
-  MENUITEM "Forigu\tDel",      CMD_DELETE
-  MENUITEM SEPARATOR
-  MENUITEM "Elek&tu æion\tCtrl+A",       CMD_SELECT_ALL
-  MENUITEM "Horo/Dato\tF5",    CMD_TIME_DATE
-  MENUITEM SEPARATOR
-  MENUITEM "&Alineu aýtomate",  CMD_WRAP
-  MENUITEM "&Impozu tiparon...",          CMD_FONT
- }
-POPUP "&Seræu" {
-  MENUITEM "Seræu\tCtrl+F",   CMD_SEARCH
-  MENUITEM "Seræu sekvanta\tF3",  CMD_SEARCH_NEXT
-  MENUITEM "&Replace...\tCtrl+H", CMD_REPLACE
- }
-POPUP "&Helpo" {
-  MENUITEM "Enhavo",         CMD_HELP_CONTENTS
-  MENUITEM "Seræu...",        CMD_HELP_SEARCH
-  MENUITEM "Pri Helpanto",     CMD_HELP_ON_HELP
-  MENUITEM SEPARATOR
-  MENUITEM "Pri Notepad",  CMD_HELP_ABOUT_NOTEPAD
- }
-}
-
 /* Dialog `Page setup' */
 
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
@@ -89,33 +47,4 @@ EDITTEXT IDC_PAGESETUP_BOTTOMVALUE,  130, 73, 35, 11, WS_CHILD | WS_BORDER | WS_
 DEFPUSHBUTTON "Bone",         IDOK,                   180,  3, 40, 15, WS_TABSTOP
 PUSHBUTTON    "Rezigni",     IDCANCEL,               180, 21, 40, 15, WS_TABSTOP
 PUSHBUTTON    "Helpo",       IDHELP,                180, 39, 40, 15, WS_TABSTOP
-}
-
-STRINGTABLE
-{
-STRING_PAGESETUP_HEADERVALUE,   "&f"
-STRING_PAGESETUP_FOOTERVALUE,   "Paøo &p"
-
-STRING_NOTEPAD,                                 "Notbloko"
-STRING_ERROR,                                   "ERORO"
-STRING_WARNING,                                 "ATENTU"
-STRING_INFO,                                    "Informo pri"
-
-STRING_UNTITLED,                                "(sen-nomo)"
-
-STRING_ALL_FILES,                               "Tutaj dosieroj (*.*)"
-STRING_TEXT_FILES_TXT,                  "Tekstdosieroj (*.txt)"
-
-STRING_TOOLARGE,                                "La dosiero '%s' estas tro granda por Notepad.\n \
-Oni konsilas uzi alian redaktilon."
-STRING_NOTEXT,                                  "Ne estas enmetita teksto. \
-\nOni konsilas skribi devove kaj reprovi"
-STRING_DOESNOTEXIST,                            "La dosiero '%s'\nne eksistas\n\n \
-Æu mi devas krei novan dosieron?"
-STRING_NOTSAVED,                                "La dosiero'%s'\n estis þanøita\n\n \
-Æu vi volas konservi la þanøojn?"
-STRING_NOTFOUND,                                        "Mi ne trovis '%s'."
-STRING_OUT_OF_MEMORY,                   "La memoro estas nesufiæa por kompletigo je la tasko \
-\nOni konsilas fermi unu o pluraj programoj por\nliberigi memoron."
-
 }

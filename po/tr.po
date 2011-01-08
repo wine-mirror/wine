@@ -901,17 +901,27 @@ msgstr ""
 msgid "Default MidiOut Device"
 msgstr ""
 
-#: hhctrl.rc:27
+#: hhctrl.rc:27 notepad.rc:58
+#, fuzzy
 msgid "&Contents"
-msgstr "&İçerik"
+msgstr ""
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&İçerik\n"
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&İçindekiler"
 
 #: hhctrl.rc:28
 msgid "I&ndex"
 msgstr "Di&zin"
 
-#: hhctrl.rc:29
+#: hhctrl.rc:29 notepad.rc:52
+#, fuzzy
 msgid "&Search"
-msgstr "&Ara"
+msgstr ""
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&Ara\n"
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&Bul"
 
 #: hhctrl.rc:30
 msgid "Favor&ites"
@@ -2499,7 +2509,7 @@ msgstr "Ana&log"
 msgid "Digi&tal"
 msgstr "Sa&yısal"
 
-#: clock.rc:32
+#: clock.rc:32 notepad.rc:50
 msgid "&Font..."
 msgstr "&Yazı Tipi..."
 
@@ -3317,6 +3327,211 @@ msgstr ""
 
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
+msgstr ""
+
+#: notepad.rc:26
+msgid "&File"
+msgstr "&Dosya"
+
+#: notepad.rc:27
+msgid "&New\tCtrl+N"
+msgstr "&Yeni\tCtrl+N"
+
+#: notepad.rc:28
+msgid "&Open...\tCtrl+O"
+msgstr "&Aç...\tCtrl+O"
+
+#: notepad.rc:29
+msgid "&Save\tCtrl+S"
+msgstr "&Kaydet\tCtrl+S"
+
+#: notepad.rc:30
+msgid "Save &as..."
+msgstr "&Farklı Kaydet..."
+
+#: notepad.rc:32
+msgid "&Print...\tCtrl+P"
+msgstr "Ya&zdır...\tCtrl+P"
+
+#: notepad.rc:33
+msgid "Page Se&tup..."
+msgstr "Sa&yfa Ayarı..."
+
+#: notepad.rc:34
+msgid "P&rinter Setup..."
+msgstr "Yazıcı &Ayarları..."
+
+#: notepad.rc:36
+msgid "E&xit"
+msgstr "&Çıkış"
+
+#: notepad.rc:38
+msgid "&Edit"
+msgstr "D&üzenle"
+
+#: notepad.rc:39
+msgid "&Undo\tCtrl+Z"
+msgstr "&Geri Al\tCtrl+Z"
+
+#: notepad.rc:41
+msgid "Cu&t\tCtrl+X"
+msgstr "&Kes\tCtrl+X"
+
+#: notepad.rc:42
+msgid "&Copy\tCtrl+C"
+msgstr "K&opyala\tCtrl+C"
+
+#: notepad.rc:43
+msgid "&Paste\tCtrl+V"
+msgstr "Ya&pıştır\tCtrl+V"
+
+#: notepad.rc:44
+msgid "&Delete\tDel"
+msgstr "&Sil\tDel"
+
+#: notepad.rc:46
+msgid "Select &all\tCtrl+A"
+msgstr "&Tümünü seç\tCtrl+A"
+
+#: notepad.rc:47
+msgid "&Time/Date\tF5"
+msgstr "S&aat/Tarih\tF5"
+
+#: notepad.rc:49
+msgid "&Wrap long lines"
+msgstr "&Uzun satırları kırp"
+
+#: notepad.rc:53
+msgid "&Search...\tCtrl+F"
+msgstr "&Bul...\tCtrl+F"
+
+#: notepad.rc:54
+msgid "&Search next\tF3"
+msgstr "&Sonrakini bul\tF3"
+
+#: notepad.rc:55
+msgid "&Replace...\tCtrl+H"
+msgstr "&Replace...\tCtrl+H"
+
+#: notepad.rc:57
+msgid "&Help"
+msgstr "&Yardım"
+
+#: notepad.rc:59
+msgid "&Search..."
+msgstr "&Ara..."
+
+#: notepad.rc:60
+msgid "&Help on help"
+msgstr "&Yardım kullanımı"
+
+#: notepad.rc:62
+msgid "&About Notepad"
+msgstr "&About Notepad"
+
+#: notepad.rc:68
+msgid "&f"
+msgstr "&f"
+
+#: notepad.rc:69
+msgid "Page &p"
+msgstr "&p. Sayfa"
+
+#: notepad.rc:71
+msgid "Notepad"
+msgstr "Not Defteri"
+
+#: notepad.rc:72
+msgid "ERROR"
+msgstr "HATA"
+
+#: notepad.rc:73
+msgid "WARNING"
+msgstr "UYARI"
+
+#: notepad.rc:74
+msgid "Information"
+msgstr "Bilgi"
+
+#: notepad.rc:76
+msgid "Untitled"
+msgstr "Adsız"
+
+#: notepad.rc:78
+msgid "All files (*.*)"
+msgstr "Tüm dosyalar (*.*)"
+
+#: notepad.rc:79
+msgid "Text files (*.txt)"
+msgstr "Metin Dosyaları (*.txt)"
+
+#: notepad.rc:82
+msgid ""
+"File '%s' is too large for notepad.\n"
+"Please use a different editor."
+msgstr ""
+"'%s' dosyası not defteri için çok büyük.\n"
+" Lütfen değişik bir düzenleyici kullanın."
+
+#: notepad.rc:84
+msgid ""
+"You didn't enter any text.\n"
+"Please type something and try again"
+msgstr ""
+"Hiçbir metin yazmadınız. \n"
+"Lütfen birşey yazın ve tekrar deneyin"
+
+#: notepad.rc:86
+msgid ""
+"File '%s' does not exist.\n"
+"\n"
+"Do you want to create a new file?"
+msgstr ""
+"'%s' dosyası\n"
+"mevcut değil\n"
+"\n"
+" Yeni bir dosya oluşturmak ister misiniz?"
+
+#: notepad.rc:88
+msgid ""
+"File '%s' has been modified.\n"
+"\n"
+"Would you like to save the changes?"
+msgstr ""
+"'%s' dosyası\n"
+"değiştirildi\n"
+"\n"
+" Değişiklikleri kaydetmek ister misiniz?"
+
+#: notepad.rc:89
+msgid "'%s' could not be found."
+msgstr "'%s' bulunamıyor."
+
+#: notepad.rc:91
+msgid ""
+"Not enough memory to complete this task.\n"
+"Close one or more applications to increase the amount of free memory."
+msgstr ""
+"Bu işlemi tamamlamak için yeterli bellekalanı yok.\n"
+"Bir veya daha fazla uygulamayı kapatarak boş bellek miktarını\n"
+"arttırmayı deneyin."
+
+#: notepad.rc:93
+msgid "Unicode (UTF-16)"
+msgstr ""
+
+#: notepad.rc:94
+msgid "Unicode (UTF-16 big-endian)"
+msgstr ""
+
+#: notepad.rc:101
+msgid ""
+"%s\n"
+"This file contains Unicode characters which will be lost if\n"
+"you save this file in the %s encoding.\n"
+"To keep these characters, click Cancel, and then select\n"
+"one of the Unicode options in the Encoding drop down list.\n"
+"Continue?"
 msgstr ""
 
 #: reg.rc:27
