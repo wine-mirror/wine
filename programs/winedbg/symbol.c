@@ -535,7 +535,15 @@ enum dbg_line_status symbol_get_function_line_status(const ADDRESS64* addr)
 
     /* do we have some info for lin address ? */
     if (!SymFromAddr(dbg_curr_process->handle, lin, &disp64, sym))
+    {
+        ADDRESS64   jumpee;
+        /* some compilers insert thunks in their code without debug info associated
+         * take care of this situation
+         */
+        if (be_cpu->is_jump((void*)lin, &jumpee))
+            return symbol_get_function_line_status(&jumpee);
         return dbg_no_line_info;
+    }
 
     switch (sym->Tag)
     {
