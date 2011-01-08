@@ -559,6 +559,12 @@ extern BOOL         pe_load_debug_directory(const struct process* pcs,
                                             const IMAGE_SECTION_HEADER* sectp, DWORD nsect,
                                             const IMAGE_DEBUG_DIRECTORY* dbg, int nDbg);
 extern BOOL         pdb_fetch_file_info(const struct pdb_lookup* pdb_lookup, unsigned* matched);
+struct pdb_cmd_pair {
+    const char*         name;
+    DWORD*              pvalue;
+};
+extern BOOL         pdb_virtual_unwind(struct cpu_stack_walk* csw, DWORD_PTR ip,
+                                       CONTEXT* context, struct pdb_cmd_pair* cpair);
 
 /* path.c */
 extern BOOL         path_find_symbol_file(const struct process* pcs, PCSTR full_path,

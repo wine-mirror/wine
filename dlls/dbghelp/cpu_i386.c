@@ -214,12 +214,26 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
 #ifdef __i386__
         if (curr_mode == stm_32bit)
         {
-            DWORD_PTR       xframe;
+            DWORD_PTR           xframe;
+            struct pdb_cmd_pair cpair[4];
 
             if (dwarf2_virtual_unwind(csw, frame->AddrPC.Offset - deltapc, context, &xframe))
             {
                 frame->AddrStack.Mode = frame->AddrFrame.Mode = frame->AddrReturn.Mode = AddrModeFlat;
                 frame->AddrStack.Offset = context->Esp = xframe;
+                frame->AddrFrame.Offset = context->Ebp;
+                frame->AddrReturn.Offset = context->Eip;
+                goto done_pep;
+            }
+            cpair[0].name = "$ebp"; cpair[0].pvalue = &context->Ebp;
+            cpair[1].name = "$esp"; cpair[1].pvalue = &context->Esp;
+            cpair[2].name = "$eip"; cpair[2].pvalue = &context->Eip;
+            cpair[3].name = NULL;   cpair[3].pvalue = NULL;
+
+            if (pdb_virtual_unwind(csw, frame->AddrPC.Offset - deltapc, context, cpair))
+            {
+                frame->AddrStack.Mode = frame->AddrFrame.Mode = frame->AddrReturn.Mode = AddrModeFlat;
+                frame->AddrStack.Offset = context->Esp;
                 frame->AddrFrame.Offset = context->Ebp;
                 frame->AddrReturn.Offset = context->Eip;
                 goto done_pep;
@@ -353,12 +367,26 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
             else
             {
 #ifdef __i386__
-                DWORD_PTR       xframe;
+                DWORD_PTR               xframe;
+                struct pdb_cmd_pair     cpair[4];
 
                 if (dwarf2_virtual_unwind(csw, frame->AddrPC.Offset - deltapc, context, &xframe))
                 {
                     frame->AddrStack.Mode = frame->AddrFrame.Mode = frame->AddrReturn.Mode = AddrModeFlat;
                     frame->AddrStack.Offset = context->Esp = xframe;
+                    frame->AddrFrame.Offset = context->Ebp;
+                    frame->AddrReturn.Offset = context->Eip;
+                    goto done_pep;
+                }
+                cpair[0].name = "$ebp"; cpair[0].pvalue = &context->Ebp;
+                cpair[1].name = "$esp"; cpair[1].pvalue = &context->Esp;
+                cpair[2].name = "$eip"; cpair[2].pvalue = &context->Eip;
+                cpair[3].name = NULL;   cpair[3].pvalue = NULL;
+
+                if (pdb_virtual_unwind(csw, frame->AddrPC.Offset - deltapc, context, cpair))
+                {
+                    frame->AddrStack.Mode = frame->AddrFrame.Mode = frame->AddrReturn.Mode = AddrModeFlat;
+                    frame->AddrStack.Offset = context->Esp;
                     frame->AddrFrame.Offset = context->Ebp;
                     frame->AddrReturn.Offset = context->Eip;
                     goto done_pep;

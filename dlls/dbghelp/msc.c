@@ -2750,6 +2750,310 @@ BOOL pdb_fetch_file_info(const struct pdb_lookup* pdb_lookup, unsigned* matched)
 }
 
 /*========================================================================
+ * FPO unwinding code
+ */
+
+/* Stack unwinding is based on postfixed operations.
+ * Let's define our Postfix EValuator
+ */
+#define PEV_MAX_LEN      32
+struct pevaluator
+{
+    struct cpu_stack_walk*  csw;
+    struct pool             pool;
+    struct vector           stack;
+    unsigned                stk_index;
+    struct hash_table       values;
+    char                    error[64];
+};
+
+struct zvalue
+{
+    DWORD_PTR                   value;
+    struct hash_table_elt       elt;
+};
+
+#define PEV_ERROR(pev, msg)       snprintf((pev)->error, sizeof((pev)->error), "%s", (msg)),FALSE
+#define PEV_ERROR1(pev, msg, pmt) snprintf((pev)->error, sizeof((pev)->error), (msg), (pmt)),FALSE
+
+#if 0
+static void pev_dump_stack(struct pevaluator* pev)
+{
+    unsigned i;
+    FIXME("stack #%d\n", pev->stk_index);
+    for (i = 0; i < pev->stk_index; i++)
+    {
+        FIXME("\t%d) %s\n", i, *(char**)vector_at(&pev->stack, i));
+    }
+}
+#endif
+
+/* get the value out of an operand (variable or literal) */
+static BOOL  pev_get_val(struct pevaluator* pev, const char* str, DWORD_PTR* val)
+{
+    char*                       n;
+    struct hash_table_iter      hti;
+    void*                       ptr;
+
+    switch (str[0])
+    {
+    case '$':
+    case '.':
+        hash_table_iter_init(&pev->values, &hti, str);
+        if (!(ptr = hash_table_iter_up(&hti)))
+            return PEV_ERROR1(pev, "get_zvalue: no value found (%s)", str);
+        *val = GET_ENTRY(ptr, struct zvalue, elt)->value;
+        return TRUE;
+    default:
+        *val = strtol(str, &n, 10);
+        if (n == str || *n != '\0')
+            return PEV_ERROR1(pev, "get_val: not a literal (%s)", str);
+        return TRUE;
+    }
+}
+
+/* push an operand onto the stack */
+static BOOL  pev_push(struct pevaluator* pev, const char* elt)
+{
+    char**      at;
+    if (pev->stk_index < vector_length(&pev->stack))
+        at = vector_at(&pev->stack, pev->stk_index);
+    else
+        at = vector_add(&pev->stack, &pev->pool);
+    if (!at) return PEV_ERROR(pev, "push: out of memory");
+    *at = pool_strdup(&pev->pool, elt);
+    pev->stk_index++;
+    return TRUE;
+}
+
+/* pop an operand from the stack */
+static BOOL  pev_pop(struct pevaluator* pev, char* elt)
+{
+    char**      at = vector_at(&pev->stack, --pev->stk_index);
+    if (!at) return PEV_ERROR(pev, "pop: stack empty");
+    strcpy(elt, *at);
+    return TRUE;
+}
+
+/* pop an operand from the stack, and gets its value */
+static BOOL  pev_pop_val(struct pevaluator* pev, DWORD_PTR* val)
+{
+    char        p[PEV_MAX_LEN];
+
+    return pev_pop(pev, p) && pev_get_val(pev, p, val);
+}
+
+/* set var 'name' a new value (creates the var if it doesn't exist) */
+static BOOL  pev_set_value(struct pevaluator* pev, const char* name, DWORD_PTR val)
+{
+    struct hash_table_iter      hti;
+    void*                       ptr;
+
+    hash_table_iter_init(&pev->values, &hti, name);
+    if (!(ptr = hash_table_iter_up(&hti)))
+    {
+        struct zvalue* zv = pool_alloc(&pev->pool, sizeof(*zv));
+        if (!zv) return PEV_ERROR(pev, "set_value: out of memory");
+        zv->value = val;
+
+        zv->elt.name = pool_strdup(&pev->pool, name);
+        hash_table_add(&pev->values, &zv->elt);
+    }
+    else GET_ENTRY(ptr, struct zvalue, elt)->value = val;
+    return TRUE;
+}
+
+/* execute a binary operand from the two top most values on the stack.
+ * puts result on top of the stack */
+static BOOL  pev_binop(struct pevaluator* pev, char op)
+{
+    char        res[PEV_MAX_LEN];
+    DWORD_PTR   v1, v2, c;
+
+    if (!pev_pop_val(pev, &v1) || !pev_pop_val(pev, &v2)) return FALSE;
+    switch (op)
+    {
+    case '+': c = v1 + v2; break;
+    case '-': c = v1 - v2; break;
+    case '*': c = v1 * v2; break;
+    case '/': c = v1 / v2; break;
+    case '%': c = v1 % v2; break;
+    default: return PEV_ERROR1(pev, "binop: unknown op (%c)", op);
+    }
+    snprintf(res, sizeof(res), "%ld", c);
+    pev_push(pev, res);
+    return TRUE;
+}
+
+/* pops top most operand, dereference it, on pushes the result on top of the stack */
+static BOOL  pev_deref(struct pevaluator* pev)
+{
+    char        res[PEV_MAX_LEN];
+    DWORD_PTR   v1, v2;
+
+    if (!pev_pop_val(pev, &v1)) return FALSE;
+    if (!sw_read_mem(pev->csw, v1, &v2, sizeof(v2)))
+        return PEV_ERROR1(pev, "deref: cannot read mem at %lx\n", v1);
+    snprintf(res, sizeof(res), "%ld", v2);
+    pev_push(pev, res);
+    return TRUE;
+}
+
+/* assign value to variable (from two top most operands) */
+static BOOL  pev_assign(struct pevaluator* pev)
+{
+    char                p2[PEV_MAX_LEN];
+    DWORD_PTR           v1;
+
+    if (!pev_pop_val(pev, &v1) || !pev_pop(pev, p2)) return FALSE;
+    if (p2[0] != '$') return PEV_ERROR1(pev, "assign: %s isn't a variable", p2);
+    pev_set_value(pev, p2, v1);
+
+    return TRUE;
+}
+
+/* initializes the postfix evaluator */
+static void  pev_init(struct pevaluator* pev, struct cpu_stack_walk* csw,
+                      PDB_FPO_DATA* fpoext, struct pdb_cmd_pair* cpair)
+{
+    pev->csw = csw;
+    pool_init(&pev->pool, 512);
+    vector_init(&pev->stack, sizeof(char*), 8);
+    pev->stk_index = 0;
+    hash_table_init(&pev->pool, &pev->values, 8);
+    pev->error[0] = '\0';
+    for (; cpair->name; cpair++)
+        pev_set_value(pev, cpair->name, *cpair->pvalue);
+    pev_set_value(pev, ".raSearchStart", fpoext->start);
+    pev_set_value(pev, ".cbLocals",      fpoext->locals_size);
+    pev_set_value(pev, ".cbParams",      fpoext->params_size);
+    pev_set_value(pev, ".cbSavedRegs",   fpoext->savedregs_size);
+}
+
+static BOOL  pev_free(struct pevaluator* pev, struct pdb_cmd_pair* cpair)
+{
+    DWORD_PTR   val;
+
+    if (cpair) for (; cpair->name; cpair++)
+    {
+        if (pev_get_val(pev, cpair->name, &val))
+            *cpair->pvalue = val;
+    }
+    pool_destroy(&pev->pool);
+    return TRUE;
+}
+
+static BOOL  pdb_parse_cmd_string(struct cpu_stack_walk* csw, PDB_FPO_DATA* fpoext,
+                                  const char* cmd, struct pdb_cmd_pair* cpair)
+{
+    char                token[PEV_MAX_LEN];
+    char*               ptok = token;
+    const char*         ptr;
+    BOOL                over = FALSE;
+    struct pevaluator   pev;
+
+    pev_init(&pev, csw, fpoext, cpair);
+    for (ptr = cmd; !over; ptr++)
+    {
+        if (*ptr == ' ' || (over = *ptr == '\0'))
+        {
+            *ptok = '\0';
+
+            if (!strcmp(token, "+") || !strcmp(token, "-") || !strcmp(token, "*") ||
+                !strcmp(token, "/") || !strcmp(token, "%"))
+            {
+                if (!pev_binop(&pev, token[0])) goto done;
+            }
+            else if (!strcmp(token, "^"))
+            {
+                if (!pev_deref(&pev)) goto done;
+            }
+            else if (!strcmp(token, "="))
+            {
+                if (!pev_assign(&pev)) goto done;
+            }
+            else
+            {
+                if (!pev_push(&pev, token)) goto done;
+            }
+            ptok = token;
+        }
+        else
+        {
+            if (ptok - token >= PEV_MAX_LEN - 1)
+            {
+                PEV_ERROR1(&pev, "parse: token too long (%s)", ptr - (ptok - token));
+                goto done;
+            }
+            *ptok++ = *ptr;
+        }
+    }
+    pev_free(&pev, cpair);
+    return TRUE;
+done:
+    FIXME("Couldn't evaluate %s => %s\n", wine_dbgstr_a(cmd), pev.error);
+    pev_free(&pev, NULL);
+    return FALSE;
+}
+
+BOOL         pdb_virtual_unwind(struct cpu_stack_walk* csw, DWORD_PTR ip,
+                                CONTEXT* context, struct pdb_cmd_pair* cpair)
+{
+    struct module_pair          pair;
+    struct pdb_module_info*     pdb_info;
+    PDB_FPO_DATA*               fpoext;
+    unsigned                    i, size, strsize;
+    char*                       strbase;
+    BOOL                        ret = TRUE;
+
+    if (!(pair.pcs = process_find_by_handle(csw->hProcess)) ||
+        !(pair.requested = module_find_by_addr(pair.pcs, ip, DMT_UNKNOWN)) ||
+        !module_get_debug(&pair))
+        return FALSE;
+    if (!pair.effective->format_info[DFI_PDB]) return FALSE;
+    pdb_info = pair.effective->format_info[DFI_PDB]->u.pdb_info;
+    TRACE("searching %lx => %lx\n", ip, ip - (DWORD_PTR)pair.effective->module.BaseOfImage);
+    ip -= (DWORD_PTR)pair.effective->module.BaseOfImage;
+
+    strbase = pdb_read_file(&pdb_info->pdb_files[0], 12);   /* FIXME: really fixed index ??? */
+    if (!strbase) return FALSE;
+    if (*(const DWORD*)strbase != 0xeffeeffe)
+    {
+        pdb_free(strbase);
+        return FALSE;
+    }
+    strsize = *(const DWORD*)(strbase + 8);
+    fpoext = pdb_read_file(&pdb_info->pdb_files[0], 10);
+    size = pdb_get_file_size(&pdb_info->pdb_files[0], 10);
+    if (fpoext && (size % sizeof(*fpoext)) == 0)
+    {
+        size /= sizeof(*fpoext);
+        for (i = 0; i < size; i++)
+        {
+            if (fpoext[i].start <= ip && ip < fpoext[i].start + fpoext[i].func_size)
+            {
+                TRACE("\t%08x %08x %8x %8x %4x %4x %4x %08x %s\n",
+                      fpoext[i].start, fpoext[i].func_size, fpoext[i].locals_size,
+                      fpoext[i].params_size, fpoext[i].maxstack_size, fpoext[i].prolog_size,
+                      fpoext[i].savedregs_size, fpoext[i].flags,
+                      fpoext[i].str_offset < strsize ?
+                          wine_dbgstr_a(strbase + 12 + fpoext[i].str_offset) : "<out of bounds>");
+                if (fpoext[i].str_offset < strsize)
+                    ret = pdb_parse_cmd_string(csw, fpoext, strbase + 12 + fpoext[i].str_offset, cpair);
+                else
+                    ret = FALSE;
+                break;
+            }
+        }
+    }
+    else ret = FALSE;
+    pdb_free(fpoext);
+    pdb_free(strbase);
+
+    return ret;
+}
+
+/*========================================================================
  * Process CodeView debug information.
  */
 
