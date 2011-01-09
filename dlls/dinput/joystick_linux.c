@@ -107,6 +107,14 @@ static inline JoystickImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W 
 {
     return (JoystickImpl *) iface;
 }
+static inline IDirectInputDevice8A *IDirectInputDevice8A_from_impl(JoystickImpl *This)
+{
+    return (IDirectInputDevice8A *)This;
+}
+static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl(JoystickImpl *This)
+{
+    return (IDirectInputDevice8W *)This;
+}
 
 static const GUID DInput_Wine_Joystick_GUID = { /* 9e573ed9-7734-11d2-8d4a-23903fb6bdf7 */
   0x9e573ed9,
@@ -502,14 +510,14 @@ const struct dinput_device joystick_linux_device = {
 /******************************************************************************
   *     Acquire : gets exclusive control of the joystick
   */
-static HRESULT WINAPI JoystickLinuxAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
+static HRESULT WINAPI JoystickLinuxWImpl_Acquire(LPDIRECTINPUTDEVICE8W iface)
 {
-    JoystickImpl *This = impl_from_IDirectInputDevice8A(iface);
+    JoystickImpl *This = impl_from_IDirectInputDevice8W(iface);
     HRESULT res;
 
     TRACE("(%p)\n",This);
 
-    res = IDirectInputDevice2AImpl_Acquire(iface);
+    res = IDirectInputDevice2WImpl_Acquire(iface);
     if (res != DI_OK)
         return res;
 
@@ -520,7 +528,7 @@ static HRESULT WINAPI JoystickLinuxAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
         This->joyfd = open(This->joydev->device, O_RDONLY);
         if (This->joyfd==-1) {
             ERR("open(%s) failed: %s\n", This->joydev->device, strerror(errno));
-            IDirectInputDevice2AImpl_Unacquire(iface);
+            IDirectInputDevice2WImpl_Unacquire(iface);
             return DIERR_NOTFOUND;
         }
     }
@@ -528,17 +536,23 @@ static HRESULT WINAPI JoystickLinuxAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
     return DI_OK;
 }
 
+static HRESULT WINAPI JoystickLinuxAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
+{
+    JoystickImpl *This = impl_from_IDirectInputDevice8A(iface);
+    return JoystickLinuxWImpl_Acquire(IDirectInputDevice8W_from_impl(This));
+}
+
 /******************************************************************************
   *     Unacquire : frees the joystick
   */
-static HRESULT WINAPI JoystickLinuxAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
+static HRESULT WINAPI JoystickLinuxWImpl_Unacquire(LPDIRECTINPUTDEVICE8W iface)
 {
-    JoystickImpl *This = impl_from_IDirectInputDevice8A(iface);
+    JoystickImpl *This = impl_from_IDirectInputDevice8W(iface);
     HRESULT res;
 
     TRACE("(%p)\n",This);
 
-    res = IDirectInputDevice2AImpl_Unacquire(iface);
+    res = IDirectInputDevice2WImpl_Unacquire(iface);
 
     if (res != DI_OK)
         return res;
@@ -551,6 +565,12 @@ static HRESULT WINAPI JoystickLinuxAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
     }
 
     return DI_NOEFFECT;
+}
+
+static HRESULT WINAPI JoystickLinuxAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
+{
+    JoystickImpl *This = impl_from_IDirectInputDevice8A(iface);
+    return JoystickLinuxWImpl_Unacquire(IDirectInputDevice8W_from_impl(This));
 }
 
 static void joy_polldev(LPDIRECTINPUTDEVICE8A iface)
@@ -665,12 +685,6 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
 	IDirectInputDevice8AImpl_GetImageInfo
 };
 
-#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)	(typeof(JoystickWvt.fun))
-#else
-# define XCAST(fun)	(void*)
-#endif
-
 static const IDirectInputDevice8WVtbl JoystickWvt =
 {
     IDirectInputDevice2WImpl_QueryInterface,
@@ -680,8 +694,8 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
     IDirectInputDevice2WImpl_EnumObjects,
     JoystickWGenericImpl_GetProperty,
     JoystickWGenericImpl_SetProperty,
-	XCAST(Acquire)JoystickLinuxAImpl_Acquire,
-	XCAST(Unacquire)JoystickLinuxAImpl_Unacquire,
+    JoystickLinuxWImpl_Acquire,
+    JoystickLinuxWImpl_Unacquire,
     JoystickWGenericImpl_GetDeviceState,
     IDirectInputDevice2WImpl_GetDeviceData,
     IDirectInputDevice2WImpl_SetDataFormat,
@@ -706,7 +720,6 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
     IDirectInputDevice8WImpl_SetActionMap,
     IDirectInputDevice8WImpl_GetImageInfo
 };
-#undef XCAST
 
 #else  /* HAVE_LINUX_22_JOYSTICK_API */
 
