@@ -58,6 +58,14 @@ static inline SysKeyboardImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice
 {
     return (SysKeyboardImpl *) iface;
 }
+static inline IDirectInputDevice8A *IDirectInputDevice8A_from_impl(SysKeyboardImpl *This)
+{
+    return (IDirectInputDevice8A *)This;
+}
+static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl(SysKeyboardImpl *This)
+{
+    return (IDirectInputDevice8W *)This;
+}
 
 static BYTE map_dik_code(DWORD scanCode, DWORD vkCode)
 {
@@ -302,11 +310,9 @@ const struct dinput_device keyboard_device = {
   keyboarddev_create_deviceW
 };
 
-static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
-	LPDIRECTINPUTDEVICE8A iface,DWORD len,LPVOID ptr
-)
+static HRESULT WINAPI SysKeyboardWImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W iface, DWORD len, LPVOID ptr)
 {
-    SysKeyboardImpl *This = impl_from_IDirectInputDevice8A(iface);
+    SysKeyboardImpl *This = impl_from_IDirectInputDevice8W(iface);
     TRACE("(%p)->(%d,%p)\n", This, len, ptr);
 
     if (!This->base.acquired) return DIERR_NOTACQUIRED;
@@ -330,14 +336,18 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
     return DI_OK;
 }
 
+static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(LPDIRECTINPUTDEVICE8A iface, DWORD len, LPVOID ptr)
+{
+    SysKeyboardImpl *This = impl_from_IDirectInputDevice8A(iface);
+    return SysKeyboardWImpl_GetDeviceState(IDirectInputDevice8W_from_impl(This), len, ptr);
+}
+
 /******************************************************************************
   *     GetCapabilities : get the device capabilities
   */
-static HRESULT WINAPI SysKeyboardAImpl_GetCapabilities(
-	LPDIRECTINPUTDEVICE8A iface,
-	LPDIDEVCAPS lpDIDevCaps)
+static HRESULT WINAPI SysKeyboardWImpl_GetCapabilities(LPDIRECTINPUTDEVICE8W iface, LPDIDEVCAPS lpDIDevCaps)
 {
-    SysKeyboardImpl *This = impl_from_IDirectInputDevice8A(iface);
+    SysKeyboardImpl *This = impl_from_IDirectInputDevice8W(iface);
     DIDEVCAPS devcaps;
 
     TRACE("(this=%p,%p)\n",This,lpDIDevCaps);
@@ -346,7 +356,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetCapabilities(
         WARN("invalid parameter\n");
         return DIERR_INVALIDPARAM;
     }
-    
+
     devcaps.dwSize = lpDIDevCaps->dwSize;
     devcaps.dwFlags = DIDC_ATTACHED;
     if (This->base.dinput->dwVersion >= 0x0800)
@@ -363,8 +373,14 @@ static HRESULT WINAPI SysKeyboardAImpl_GetCapabilities(
     devcaps.dwFFDriverVersion = 0;
 
     memcpy(lpDIDevCaps, &devcaps, lpDIDevCaps->dwSize);
-    
+
     return DI_OK;
+}
+
+static HRESULT WINAPI SysKeyboardAImpl_GetCapabilities(LPDIRECTINPUTDEVICE8A iface, LPDIDEVCAPS lpDIDevCaps)
+{
+    SysKeyboardImpl *This = impl_from_IDirectInputDevice8A(iface);
+    return SysKeyboardWImpl_GetCapabilities(IDirectInputDevice8W_from_impl(This), lpDIDevCaps);
 }
 
 /******************************************************************************
@@ -450,9 +466,11 @@ static HRESULT WINAPI SysKeyboardWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface
 /******************************************************************************
  *      GetProperty : Retrieves information about the input device.
  */
-static HRESULT WINAPI SysKeyboardAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
-        REFGUID rguid, LPDIPROPHEADER pdiph)
+static HRESULT WINAPI SysKeyboardWImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface,
+                                                   REFGUID rguid, LPDIPROPHEADER pdiph)
 {
+    SysKeyboardImpl *This = impl_from_IDirectInputDevice8W(iface);
+
     TRACE("(%p) %s,%p\n", iface, debugstr_guid(rguid), pdiph);
     _dump_DIPROPHEADER(pdiph);
 
@@ -471,72 +489,72 @@ static HRESULT WINAPI SysKeyboardAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
 
             didoi.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW);
 
-            hr = SysKeyboardWImpl_GetObjectInfo((LPDIRECTINPUTDEVICE8W)iface , &didoi,
-                                                 ps->diph.dwObj, ps->diph.dwHow);
+            hr = SysKeyboardWImpl_GetObjectInfo(iface, &didoi, ps->diph.dwObj, ps->diph.dwHow);
             if (hr == DI_OK)
                 memcpy(ps->wsz, didoi.tszName, sizeof(ps->wsz));
             return hr;
         }
         default:
-            return IDirectInputDevice2AImpl_GetProperty( iface, rguid, pdiph );
+            return IDirectInputDevice2AImpl_GetProperty( IDirectInputDevice8A_from_impl(This), rguid, pdiph );
     }
     return DI_OK;
 }
 
+static HRESULT WINAPI SysKeyboardAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
+                                                   REFGUID rguid, LPDIPROPHEADER pdiph)
+{
+    SysKeyboardImpl *This = impl_from_IDirectInputDevice8A(iface);
+    return SysKeyboardWImpl_GetProperty(IDirectInputDevice8W_from_impl(This), rguid, pdiph);
+}
+
 static const IDirectInputDevice8AVtbl SysKeyboardAvt =
 {
-	IDirectInputDevice2AImpl_QueryInterface,
-	IDirectInputDevice2AImpl_AddRef,
-        IDirectInputDevice2AImpl_Release,
-	SysKeyboardAImpl_GetCapabilities,
-        IDirectInputDevice2AImpl_EnumObjects,
-        SysKeyboardAImpl_GetProperty,
-	IDirectInputDevice2AImpl_SetProperty,
-	IDirectInputDevice2AImpl_Acquire,
-	IDirectInputDevice2AImpl_Unacquire,
-	SysKeyboardAImpl_GetDeviceState,
-	IDirectInputDevice2AImpl_GetDeviceData,
-	IDirectInputDevice2AImpl_SetDataFormat,
-	IDirectInputDevice2AImpl_SetEventNotification,
-	IDirectInputDevice2AImpl_SetCooperativeLevel,
-	SysKeyboardAImpl_GetObjectInfo,
-	SysKeyboardAImpl_GetDeviceInfo,
-	IDirectInputDevice2AImpl_RunControlPanel,
-	IDirectInputDevice2AImpl_Initialize,
-	IDirectInputDevice2AImpl_CreateEffect,
-	IDirectInputDevice2AImpl_EnumEffects,
-	IDirectInputDevice2AImpl_GetEffectInfo,
-	IDirectInputDevice2AImpl_GetForceFeedbackState,
-	IDirectInputDevice2AImpl_SendForceFeedbackCommand,
-	IDirectInputDevice2AImpl_EnumCreatedEffectObjects,
-	IDirectInputDevice2AImpl_Escape,
-        IDirectInputDevice2AImpl_Poll,
-        IDirectInputDevice2AImpl_SendDeviceData,
-        IDirectInputDevice7AImpl_EnumEffectsInFile,
-        IDirectInputDevice7AImpl_WriteEffectToFile,
-        IDirectInputDevice8AImpl_BuildActionMap,
-        IDirectInputDevice8AImpl_SetActionMap,
-        IDirectInputDevice8AImpl_GetImageInfo
+    IDirectInputDevice2AImpl_QueryInterface,
+    IDirectInputDevice2AImpl_AddRef,
+    IDirectInputDevice2AImpl_Release,
+    SysKeyboardAImpl_GetCapabilities,
+    IDirectInputDevice2AImpl_EnumObjects,
+    SysKeyboardAImpl_GetProperty,
+    IDirectInputDevice2AImpl_SetProperty,
+    IDirectInputDevice2AImpl_Acquire,
+    IDirectInputDevice2AImpl_Unacquire,
+    SysKeyboardAImpl_GetDeviceState,
+    IDirectInputDevice2AImpl_GetDeviceData,
+    IDirectInputDevice2AImpl_SetDataFormat,
+    IDirectInputDevice2AImpl_SetEventNotification,
+    IDirectInputDevice2AImpl_SetCooperativeLevel,
+    SysKeyboardAImpl_GetObjectInfo,
+    SysKeyboardAImpl_GetDeviceInfo,
+    IDirectInputDevice2AImpl_RunControlPanel,
+    IDirectInputDevice2AImpl_Initialize,
+    IDirectInputDevice2AImpl_CreateEffect,
+    IDirectInputDevice2AImpl_EnumEffects,
+    IDirectInputDevice2AImpl_GetEffectInfo,
+    IDirectInputDevice2AImpl_GetForceFeedbackState,
+    IDirectInputDevice2AImpl_SendForceFeedbackCommand,
+    IDirectInputDevice2AImpl_EnumCreatedEffectObjects,
+    IDirectInputDevice2AImpl_Escape,
+    IDirectInputDevice2AImpl_Poll,
+    IDirectInputDevice2AImpl_SendDeviceData,
+    IDirectInputDevice7AImpl_EnumEffectsInFile,
+    IDirectInputDevice7AImpl_WriteEffectToFile,
+    IDirectInputDevice8AImpl_BuildActionMap,
+    IDirectInputDevice8AImpl_SetActionMap,
+    IDirectInputDevice8AImpl_GetImageInfo
 };
-
-#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)	(typeof(SysKeyboardWvt.fun))
-#else
-# define XCAST(fun)	(void*)
-#endif
 
 static const IDirectInputDevice8WVtbl SysKeyboardWvt =
 {
     IDirectInputDevice2WImpl_QueryInterface,
     IDirectInputDevice2WImpl_AddRef,
     IDirectInputDevice2WImpl_Release,
-	XCAST(GetCapabilities)SysKeyboardAImpl_GetCapabilities,
+    SysKeyboardWImpl_GetCapabilities,
     IDirectInputDevice2WImpl_EnumObjects,
-        XCAST(GetProperty)SysKeyboardAImpl_GetProperty,
+    SysKeyboardWImpl_GetProperty,
     IDirectInputDevice2WImpl_SetProperty,
     IDirectInputDevice2WImpl_Acquire,
     IDirectInputDevice2WImpl_Unacquire,
-	XCAST(GetDeviceState)SysKeyboardAImpl_GetDeviceState,
+    SysKeyboardWImpl_GetDeviceState,
     IDirectInputDevice2WImpl_GetDeviceData,
     IDirectInputDevice2WImpl_SetDataFormat,
     IDirectInputDevice2WImpl_SetEventNotification,
@@ -560,4 +578,3 @@ static const IDirectInputDevice8WVtbl SysKeyboardWvt =
     IDirectInputDevice8WImpl_SetActionMap,
     IDirectInputDevice8WImpl_GetImageInfo
 };
-#undef XCAST
