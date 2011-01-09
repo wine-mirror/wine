@@ -844,7 +844,7 @@ HRESULT linuxinput_create_effect(
 
     newEffect->entry = parent_list_entry;
 
-    *peff = (LPDIRECTINPUTEFFECT)newEffect; 
+    *peff = &newEffect->IDirectInputEffect_iface;
 
     TRACE("Creating linux input system effect (%p) with guid %s\n", 
 	  *peff, _dump_dinput_GUID(rguid));
