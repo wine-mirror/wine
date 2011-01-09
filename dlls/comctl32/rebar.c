@@ -1264,18 +1264,33 @@ static int REBAR_ShrinkBandsLTR(const REBAR_INFO *infoPtr, INT iBeginBand, INT i
 
 /* Tries to move a band to a given offset within a row. */
 static int REBAR_MoveBandToRowOffset(REBAR_INFO *infoPtr, INT iBand, INT iFirstBand,
-    INT iLastBand, INT xOff)
+    INT iLastBand, INT xOff, BOOL reorder)
 {
     REBAR_BAND *insertBand = REBAR_GetBand(infoPtr, iBand);
     int xPos = 0, i;
     const BOOL setBreak = REBAR_GetBand(infoPtr, iFirstBand)->fStyle & RBBS_BREAK;
 
     /* Find the band's new position */
-    for (i = iFirstBand; i < iLastBand; i = next_visible(infoPtr, i))
+    if(reorder)
     {
-        if(xPos > xOff)
-            break;
-        xPos += REBAR_GetBand(infoPtr, i)->cxEffective + SEP_WIDTH;
+        /* Used during an LR band reorder drag */
+        for (i = iFirstBand; i < iLastBand; i = next_visible(infoPtr, i))
+        {
+            if(xPos > xOff)
+                break;
+            xPos += REBAR_GetBand(infoPtr, i)->cxEffective + SEP_WIDTH;
+        }
+    }
+    else
+    {
+        /* Used during a UD band insertion drag */
+        for (i = iFirstBand; i < iLastBand; i = next_visible(infoPtr, i))
+        {
+            const REBAR_BAND *band = REBAR_GetBand(infoPtr, i);
+            if(xPos + band->cxMinBand / 2 > xOff)
+                break;
+            xPos += band->cxEffective + SEP_WIDTH;
+        }
     }
 
     /* Move the band to its new position */
@@ -2036,8 +2051,6 @@ REBAR_HandleLRDrag (REBAR_INFO *infoPtr, const POINT *ptsmove)
      /*  Gripper drag within a row. It will not implement "out-   */
      /*  of-row" drags. (They are detected and handled in         */
      /*  REBAR_MouseMove.)                                        */
-     /*  **** FIXME Switching order of bands in a row not   ****  */
-     /*  ****       yet implemented.                        ****  */
 {
     REBAR_BAND *hitBand;
     INT iHitBand, iRowBegin, iRowEnd;
@@ -2088,7 +2101,7 @@ REBAR_HandleLRDrag (REBAR_INFO *infoPtr, const POINT *ptsmove)
         /* It was not possible to move the band by shrinking bands.
          * Try relocating the band instead. */
         REBAR_MoveBandToRowOffset(infoPtr, iHitBand, iRowBegin,
-            iRowEnd, xBand + movement);
+            iRowEnd, xBand + movement, TRUE);
     }
 
     REBAR_SetRowRectsX(infoPtr, iRowBegin, iRowEnd);
@@ -2099,6 +2112,71 @@ REBAR_HandleLRDrag (REBAR_INFO *infoPtr, const POINT *ptsmove)
     REBAR_MoveChildWindows(infoPtr, iRowBegin, iRowEnd);
 }
 
+static void
+REBAR_HandleUDDrag (REBAR_INFO *infoPtr, const POINT *ptsmove)
+{
+    INT yOff = (infoPtr->dwStyle & CCS_VERT) ? ptsmove->x : ptsmove->y;
+    INT iHitBand, iRowBegin, iNextRowBegin;
+    REBAR_BAND *hitBand, *rowBeginBand;
+
+    if(infoPtr->uNumBands <= 0)
+        ERR("There are no bands in this rebar");
+
+    /* Up/down dragging can only occur when there is more than one
+     * band in the rebar */
+    if(infoPtr->uNumBands <= 1)
+        return;
+
+    iHitBand = infoPtr->iGrabbedBand;
+    hitBand = REBAR_GetBand(infoPtr, iHitBand);
+
+    /* If we're taking a band that has the RBBS_BREAK style set, this
+     * style needs to be reapplied to the band that is going to become
+     * the new start of the row. */
+    if((hitBand->fStyle & RBBS_BREAK) &&
+        (iHitBand < infoPtr->uNumBands - 1))
+        REBAR_GetBand(infoPtr, iHitBand + 1)->fStyle |= RBBS_BREAK;
+
+    if(yOff < 0)
+    {
+        /* Place the band above the current top row */
+        DPA_DeletePtr(infoPtr->bands, iHitBand);
+        hitBand->fStyle &= RBBS_BREAK;
+        REBAR_GetBand(infoPtr, 0)->fStyle |= RBBS_BREAK;
+        infoPtr->iGrabbedBand = DPA_InsertPtr(
+            infoPtr->bands, 0, hitBand);
+    }
+    else if(yOff > REBAR_GetBand(infoPtr, infoPtr->uNumBands - 1)->rcBand.bottom)
+    {
+        /* Place the band below the current bottom row */
+        DPA_DeletePtr(infoPtr->bands, iHitBand);
+        hitBand->fStyle |= RBBS_BREAK;
+        infoPtr->iGrabbedBand = DPA_InsertPtr(
+            infoPtr->bands, infoPtr->uNumBands - 1, hitBand);
+    }
+    else
+    {
+        /* Place the band in the prexisting row the mouse is hovering over */
+        iRowBegin = first_visible(infoPtr);
+        while(iRowBegin < infoPtr->uNumBands)
+        {
+            iNextRowBegin = get_row_end_for_band(infoPtr, iRowBegin);
+            rowBeginBand = REBAR_GetBand(infoPtr, iRowBegin);
+            if(rowBeginBand->rcBand.bottom > yOff)
+            {
+                REBAR_MoveBandToRowOffset(
+                    infoPtr, iHitBand, iRowBegin, iNextRowBegin,
+                    ((infoPtr->dwStyle & CCS_VERT) ? ptsmove->y : ptsmove->x)
+                        - REBAR_PRE_GRIPPER - infoPtr->ihitoffset, FALSE);
+                break;
+            }
+
+            iRowBegin = iNextRowBegin;
+        }
+    }
+
+    REBAR_Layout(infoPtr);
+}
 
 
 /* << REBAR_BeginDrag >> */
@@ -3098,7 +3176,7 @@ REBAR_MouseMove (REBAR_INFO *infoPtr, LPARAM lParam)
         /* Test for valid drag case - must not be first band in row */
         if ((yPtMove < band->rcBand.top) ||
               (yPtMove > band->rcBand.bottom)) {
-            FIXME("Cannot drag to other rows yet!!\n");
+            REBAR_HandleUDDrag (infoPtr, &ptMove);
         }
         else {
             REBAR_HandleLRDrag (infoPtr, &ptMove);
