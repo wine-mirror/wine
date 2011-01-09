@@ -41,6 +41,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
+static inline IDirectInputDeviceImpl *impl_from_IDirectInputDevice8A(IDirectInputDevice8A *iface)
+{
+    return (IDirectInputDeviceImpl *) iface;
+}
+static inline IDirectInputDeviceImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
+{
+    return (IDirectInputDeviceImpl *) iface;
+}
+
 /******************************************************************************
  *	Various debugging tools
  */
@@ -535,7 +544,7 @@ int find_property(const DataFormat *df, LPCDIPROPHEADER ph)
 
 void queue_event(LPDIRECTINPUTDEVICE8A iface, int inst_id, DWORD data, DWORD time, DWORD seq)
 {
-    IDirectInputDeviceImpl *This = (IDirectInputDeviceImpl *)iface;
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
     int next_pos, ofs = id_to_offset(&This->data_format, inst_id);
 
     /* Event is being set regardless of the queue state */
@@ -568,7 +577,7 @@ void queue_event(LPDIRECTINPUTDEVICE8A iface, int inst_id, DWORD data, DWORD tim
 
 HRESULT WINAPI IDirectInputDevice2AImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 {
-    IDirectInputDeviceImpl *This = (IDirectInputDeviceImpl *)iface;
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
     HRESULT res;
 
     if (!This->data_format.user_df) return DIERR_INVALIDPARAM;
@@ -594,7 +603,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 
 HRESULT WINAPI IDirectInputDevice2AImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
 {
-    IDirectInputDeviceImpl *This = (IDirectInputDeviceImpl *)iface;
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
     HRESULT res;
 
     EnterCriticalSection(&This->crit);
@@ -614,7 +623,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
 HRESULT WINAPI IDirectInputDevice2AImpl_SetDataFormat(
         LPDIRECTINPUTDEVICE8A iface, LPCDIDATAFORMAT df)
 {
-    IDirectInputDeviceImpl *This = (IDirectInputDeviceImpl *)iface;
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
     HRESULT res = DI_OK;
 
     if (!df) return E_POINTER;
@@ -641,7 +650,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SetDataFormat(
 HRESULT WINAPI IDirectInputDevice2AImpl_SetCooperativeLevel(
         LPDIRECTINPUTDEVICE8A iface, HWND hwnd, DWORD dwflags)
 {
-    IDirectInputDeviceImpl *This = (IDirectInputDeviceImpl *)iface;
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
 
     TRACE("(%p) %p,0x%08x\n", This, hwnd, dwflags);
     _dump_cooperativelevel_DI(dwflags);
@@ -679,7 +688,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SetCooperativeLevel(
 HRESULT WINAPI IDirectInputDevice2AImpl_SetEventNotification(
 	LPDIRECTINPUTDEVICE8A iface, HANDLE event)
 {
-    IDirectInputDeviceImpl *This = (IDirectInputDeviceImpl *)iface;
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
 
     TRACE("(%p) %p\n", This, event);
 
@@ -691,7 +700,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SetEventNotification(
 
 ULONG WINAPI IDirectInputDevice2AImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 {
-    IDirectInputDeviceImpl *This = (IDirectInputDeviceImpl *)iface;
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
     ULONG ref;
 
     ref = InterlockedDecrement(&(This->ref));
@@ -725,7 +734,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_QueryInterface(
 	LPDIRECTINPUTDEVICE8A iface,REFIID riid,LPVOID *ppobj
 )
 {
-    IDirectInputDeviceImpl *This = (IDirectInputDeviceImpl *)iface;
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
     
     TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
     if (IsEqualGUID(&IID_IUnknown,riid)) {
@@ -761,8 +770,8 @@ HRESULT WINAPI IDirectInputDevice2WImpl_QueryInterface(
 	LPDIRECTINPUTDEVICE8W iface,REFIID riid,LPVOID *ppobj
 )
 {
-    IDirectInputDeviceImpl *This = (IDirectInputDeviceImpl *)iface;
-    
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
+
     TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
     if (IsEqualGUID(&IID_IUnknown,riid)) {
 	IDirectInputDevice2_AddRef(iface);
@@ -796,14 +805,14 @@ HRESULT WINAPI IDirectInputDevice2WImpl_QueryInterface(
 ULONG WINAPI IDirectInputDevice2AImpl_AddRef(
 	LPDIRECTINPUTDEVICE8A iface)
 {
-    IDirectInputDeviceImpl *This = (IDirectInputDeviceImpl *)iface;
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
     return InterlockedIncrement(&(This->ref));
 }
 
 HRESULT WINAPI IDirectInputDevice2AImpl_EnumObjects(LPDIRECTINPUTDEVICE8A iface,
         LPDIENUMDEVICEOBJECTSCALLBACKA lpCallback, LPVOID lpvRef, DWORD dwFlags)
 {
-    IDirectInputDeviceImpl *This = (IDirectInputDeviceImpl *)iface;
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
     DIDEVICEOBJECTINSTANCEA ddoi;
     int i;
 
@@ -833,7 +842,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_EnumObjects(LPDIRECTINPUTDEVICE8A iface,
 HRESULT WINAPI IDirectInputDevice2WImpl_EnumObjects(LPDIRECTINPUTDEVICE8W iface,
         LPDIENUMDEVICEOBJECTSCALLBACKW lpCallback, LPVOID lpvRef, DWORD dwFlags)
 {
-    IDirectInputDeviceImpl *This = (IDirectInputDeviceImpl *)iface;
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
     DIDEVICEOBJECTINSTANCEW ddoi;
     int i;
 
@@ -867,7 +876,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_EnumObjects(LPDIRECTINPUTDEVICE8W iface,
 HRESULT WINAPI IDirectInputDevice2AImpl_GetProperty(
 	LPDIRECTINPUTDEVICE8A iface, REFGUID rguid, LPDIPROPHEADER pdiph)
 {
-    IDirectInputDeviceImpl *This = (IDirectInputDeviceImpl *)iface;
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
 
     TRACE("(%p) %s,%p\n", iface, debugstr_guid(rguid), pdiph);
     _dump_DIPROPHEADER(pdiph);
@@ -901,7 +910,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_GetProperty(
 HRESULT WINAPI IDirectInputDevice2AImpl_SetProperty(
         LPDIRECTINPUTDEVICE8A iface, REFGUID rguid, LPCDIPROPHEADER pdiph)
 {
-    IDirectInputDeviceImpl *This = (IDirectInputDeviceImpl *)iface;
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
 
     TRACE("(%p) %s,%p\n", iface, debugstr_guid(rguid), pdiph);
     _dump_DIPROPHEADER(pdiph);
@@ -995,7 +1004,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetObjectInfo(
 	DWORD dwObj,
 	DWORD dwHow)
 {
-    IDirectInputDeviceImpl *This = (IDirectInputDeviceImpl *)iface;
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
     DWORD dwSize;
     LPDIOBJECTDATAFORMAT odf;
     int idx = -1;
@@ -1046,7 +1055,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_GetDeviceData(
         LPDIRECTINPUTDEVICE8A iface, DWORD dodsize, LPDIDEVICEOBJECTDATA dod,
         LPDWORD entries, DWORD flags)
 {
-    IDirectInputDeviceImpl *This = (IDirectInputDeviceImpl *)iface;
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
     HRESULT ret = DI_OK;
     int len;
 
@@ -1217,7 +1226,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_Escape(
 HRESULT WINAPI IDirectInputDevice2AImpl_Poll(
 	LPDIRECTINPUTDEVICE8A iface)
 {
-    IDirectInputDeviceImpl *This = (IDirectInputDeviceImpl *)iface;
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
 
     if (!This->acquired) return DIERR_NOTACQUIRED;
     /* Because wine devices do not need to be polled, just return DI_NOEFFECT */
