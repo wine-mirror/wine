@@ -1079,14 +1079,9 @@ static HRESULT WINAPI xmlnode_selectSingleNode(
     return r;
 }
 
-static HRESULT WINAPI xmlnode_get_namespaceURI(
-    IXMLDOMNode *iface,
-    BSTR* namespaceURI)
+HRESULT node_get_namespaceURI(xmlnode *This, BSTR *namespaceURI)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
     xmlNsPtr *ns;
-
-    TRACE("(%p)->(%p)\n", This, namespaceURI );
 
     if(!namespaceURI)
         return E_INVALIDARG;
@@ -1174,9 +1169,7 @@ static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
     NULL,
     xmlnode_transformNode,
     xmlnode_selectNodes,
-    xmlnode_selectSingleNode,
-    NULL,
-    xmlnode_get_namespaceURI
+    xmlnode_selectSingleNode
 };
 
 void destroy_xmlnode(xmlnode *This)
@@ -1672,7 +1665,8 @@ static HRESULT WINAPI unknode_get_namespaceURI(
     BSTR* p)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_get_namespaceURI( IXMLDOMNode_from_impl(&This->node), p );
+    TRACE("(%p)->(%p)\n", This, p);
+    return node_get_namespaceURI(&This->node, p);
 }
 
 static HRESULT WINAPI unknode_get_prefix(

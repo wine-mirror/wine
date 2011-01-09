@@ -273,6 +273,7 @@ extern HRESULT node_get_xml(xmlnode*,BOOL,BOOL,BSTR*);
 extern HRESULT node_clone(xmlnode*,VARIANT_BOOL,IXMLDOMNode**);
 extern HRESULT node_get_prefix(xmlnode*,BSTR*);
 extern HRESULT node_get_base_name(xmlnode*,BSTR*);
+extern HRESULT node_get_namespaceURI(xmlnode*,BSTR*);
 
 extern HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document);
 extern HRESULT SchemaCache_validate_tree(IXMLDOMSchemaCollection2* iface, xmlNodePtr tree);

@@ -1425,7 +1425,8 @@ static HRESULT WINAPI domdoc_get_namespaceURI(
     BSTR* namespaceURI )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_get_namespaceURI( IXMLDOMNode_from_impl(&This->node), namespaceURI );
+    TRACE("(%p)->(%p)\n", This, namespaceURI);
+    return node_get_namespaceURI(&This->node, namespaceURI);
 }
 
 
