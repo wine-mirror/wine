@@ -78,6 +78,15 @@ struct SysMouseImpl
     WARP_MOUSE                      warp_override;
 };
 
+static inline SysMouseImpl *impl_from_IDirectInputDevice8A(IDirectInputDevice8A *iface)
+{
+    return (SysMouseImpl *) iface;
+}
+static inline SysMouseImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
+{
+    return (SysMouseImpl *) iface;
+}
+
 static int dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam );
 
 const GUID DInput_Wine_Mouse_GUID = { /* 9e573ed8-7734-11d2-8d4a-23903fb6bdf7 */
@@ -289,7 +298,7 @@ const struct dinput_device mouse_device = {
 static int dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam )
 {
     MSLLHOOKSTRUCT *hook = (MSLLHOOKSTRUCT *)lparam;
-    SysMouseImpl* This = (SysMouseImpl*) iface;
+    SysMouseImpl* This = impl_from_IDirectInputDevice8A(iface);
     DWORD dwCoop;
     int wdata = 0, inst_id = -1, ret;
 
@@ -412,7 +421,7 @@ static BOOL dinput_window_check(SysMouseImpl* This) {
   */
 static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 {
-    SysMouseImpl *This = (SysMouseImpl *)iface;
+    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
     RECT  rect;
     POINT point;
     HRESULT res;
@@ -482,9 +491,9 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
   */
 static HRESULT WINAPI SysMouseAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
 {
-    SysMouseImpl *This = (SysMouseImpl *)iface;
+    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
     HRESULT res;
-    
+
     TRACE("(this=%p)\n",This);
 
     if ((res = IDirectInputDevice2AImpl_Unacquire(iface)) != DI_OK) return res;
@@ -514,7 +523,7 @@ static HRESULT WINAPI SysMouseAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
 static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
 	LPDIRECTINPUTDEVICE8A iface,DWORD len,LPVOID ptr
 ) {
-    SysMouseImpl *This = (SysMouseImpl *)iface;
+    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
 
     if(This->base.acquired == 0) return DIERR_NOTACQUIRED;
 
@@ -555,7 +564,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
 static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
         DWORD dodsize, LPDIDEVICEOBJECTDATA dod, LPDWORD entries, DWORD flags)
 {
-    SysMouseImpl *This = (SysMouseImpl *)iface;
+    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
     HRESULT res;
 
     res = IDirectInputDevice2AImpl_GetDeviceData(iface, dodsize, dod, entries, flags);
@@ -582,11 +591,11 @@ static HRESULT WINAPI SysMouseAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
 						REFGUID rguid,
 						LPDIPROPHEADER pdiph)
 {
-    SysMouseImpl *This = (SysMouseImpl *)iface;
-    
+    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
+
     TRACE("(%p) %s,%p\n", This, debugstr_guid(rguid), pdiph);
     _dump_DIPROPHEADER(pdiph);
-    
+
     if (IS_DIPROP(rguid)) {
 	switch (LOWORD(rguid)) {
 	    case (DWORD_PTR) DIPROP_GRANULARITY: {
@@ -629,7 +638,7 @@ static HRESULT WINAPI SysMouseAImpl_GetCapabilities(
 	LPDIRECTINPUTDEVICE8A iface,
 	LPDIDEVCAPS lpDIDevCaps)
 {
-    SysMouseImpl *This = (SysMouseImpl *)iface;
+    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
     DIDEVCAPS devcaps;
 
     TRACE("(this=%p,%p)\n",This,lpDIDevCaps);
@@ -712,7 +721,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceInfo(
 	LPDIRECTINPUTDEVICE8A iface,
 	LPDIDEVICEINSTANCEA pdidi)
 {
-    SysMouseImpl *This = (SysMouseImpl *)iface;
+    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
     TRACE("(this=%p,%p)\n", This, pdidi);
 
     if (pdidi->dwSize != sizeof(DIDEVICEINSTANCEA)) {
@@ -727,7 +736,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceInfo(
 
 static HRESULT WINAPI SysMouseWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface, LPDIDEVICEINSTANCEW pdidi)
 {
-    SysMouseImpl *This = (SysMouseImpl *)iface;
+    SysMouseImpl *This = impl_from_IDirectInputDevice8W(iface);
     TRACE("(this=%p,%p)\n", This, pdidi);
 
     if (pdidi->dwSize != sizeof(DIDEVICEINSTANCEW)) {
