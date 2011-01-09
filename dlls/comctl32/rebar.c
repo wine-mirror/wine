@@ -2044,20 +2044,6 @@ REBAR_HandleLRDrag (REBAR_INFO *infoPtr, const POINT *ptsmove)
     INT movement, xBand, cxLeft = 0;
     BOOL shrunkBands = FALSE;
 
-    /* on first significant mouse movement, issue notify */
-    if (!(infoPtr->fStatus & BEGIN_DRAG_ISSUED)) {
-	if (REBAR_Notify_NMREBAR (infoPtr, -1, RBN_BEGINDRAG)) {
-	    /* Notify returned TRUE - abort drag */
-	    infoPtr->dragStart.x = 0;
-	    infoPtr->dragStart.y = 0;
-	    infoPtr->dragNow = infoPtr->dragStart;
-	    infoPtr->iGrabbedBand = -1;
-	    ReleaseCapture ();
-	    return ;
-	}
-	infoPtr->fStatus |= BEGIN_DRAG_ISSUED;
-    }
-
     iHitBand = infoPtr->iGrabbedBand;
     iRowBegin = get_row_begin_for_band(infoPtr, iHitBand);
     iRowEnd = get_row_end_for_band(infoPtr, iHitBand);
@@ -3094,6 +3080,20 @@ REBAR_MouseMove (REBAR_INFO *infoPtr, LPARAM lParam)
         /* if mouse did not move much, exit */
         if ((abs(ptMove.x - infoPtr->dragNow.x) <= mindragx) &&
             (abs(ptMove.y - infoPtr->dragNow.y) <= mindragy)) return 0;
+
+        /* on first significant mouse movement, issue notify */
+        if (!(infoPtr->fStatus & BEGIN_DRAG_ISSUED)) {
+            if (REBAR_Notify_NMREBAR (infoPtr, -1, RBN_BEGINDRAG)) {
+                /* Notify returned TRUE - abort drag */
+                infoPtr->dragStart.x = 0;
+                infoPtr->dragStart.y = 0;
+                infoPtr->dragNow = infoPtr->dragStart;
+                infoPtr->iGrabbedBand = -1;
+                ReleaseCapture ();
+                return 0;
+            }
+            infoPtr->fStatus |= BEGIN_DRAG_ISSUED;
+        }
 
         /* Test for valid drag case - must not be first band in row */
         if ((yPtMove < band->rcBand.top) ||
