@@ -223,7 +223,7 @@ static SysMouseImpl *alloc_device(REFGUID rguid, const void *mvt, IDirectInputIm
             df->rgodf[i].dwType = DIDFT_MAKEINSTANCE(i) | DIDFT_PSHBUTTON;
 
     newDevice->base.data_format.wine_df = df;
-    IDirectInput_AddRef((LPDIRECTINPUTDEVICE8A)newDevice->base.dinput);
+    IDirectInput_AddRef(&newDevice->base.dinput->IDirectInput7A_iface);
     return newDevice;
 
 failed:

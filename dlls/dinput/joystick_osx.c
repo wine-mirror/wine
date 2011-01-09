@@ -807,7 +807,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     /* initialize default properties */
     get_osx_device_elements_props(newDevice);
 
-    IDirectInput_AddRef((LPDIRECTINPUTDEVICE8A)newDevice->generic.base.dinput);
+    IDirectInput_AddRef(&newDevice->generic.base.dinput->IDirectInput7A_iface);
 
     newDevice->generic.devcaps.dwSize = sizeof(newDevice->generic.devcaps);
     newDevice->generic.devcaps.dwFlags = DIDC_ATTACHED;

@@ -712,7 +712,7 @@ ULONG WINAPI IDirectInputDevice2AImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     list_remove( &This->entry );
     LeaveCriticalSection( &This->dinput->crit );
 
-    IDirectInput_Release((LPDIRECTINPUTDEVICE8A)This->dinput);
+    IDirectInput_Release(&This->dinput->IDirectInput7A_iface);
     This->crit.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->crit);
 

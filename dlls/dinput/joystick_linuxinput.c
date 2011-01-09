@@ -504,7 +504,7 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
     if (newDevice->joydev->has_ff)
         newDevice->generic.devcaps.dwFlags |= DIDC_FORCEFEEDBACK;
 
-    IDirectInput_AddRef((LPDIRECTINPUTDEVICE8A)newDevice->generic.base.dinput);
+    IDirectInput_AddRef(&newDevice->generic.base.dinput->IDirectInput7A_iface);
     return newDevice;
 
 failed:

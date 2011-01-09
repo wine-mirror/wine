@@ -236,7 +236,7 @@ static SysKeyboardImpl *alloc_device(REFGUID rguid, const void *kvt, IDirectInpu
     df->dwNumObjs = idx;
 
     newDevice->base.data_format.wine_df = df;
-    IDirectInput_AddRef((LPDIRECTINPUTDEVICE8A)newDevice->base.dinput);
+    IDirectInput_AddRef(&newDevice->base.dinput->IDirectInput7A_iface);
     return newDevice;
 
 failed:

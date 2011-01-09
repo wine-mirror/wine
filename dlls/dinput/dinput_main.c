@@ -153,7 +153,7 @@ HRESULT WINAPI DirectInputCreateEx(
 
     if (!check_hook_thread())
     {
-        IUnknown_Release( (LPDIRECTINPUT7A)This );
+        IUnknown_Release( &This->IDirectInput7A_iface );
         return DIERR_GENERIC;
     }
 
