@@ -86,6 +86,14 @@ static inline SysMouseImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W 
 {
     return (SysMouseImpl *) iface;
 }
+static inline IDirectInputDevice8A *IDirectInputDevice8A_from_impl(SysMouseImpl *This)
+{
+    return (IDirectInputDevice8A *)This;
+}
+static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl(SysMouseImpl *This)
+{
+    return (IDirectInputDevice8W *)This;
+}
 
 static int dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam );
 
@@ -419,16 +427,16 @@ static BOOL dinput_window_check(SysMouseImpl* This) {
 /******************************************************************************
   *     Acquire : gets exclusive control of the mouse
   */
-static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
+static HRESULT WINAPI SysMouseWImpl_Acquire(LPDIRECTINPUTDEVICE8W iface)
 {
-    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
+    SysMouseImpl *This = impl_from_IDirectInputDevice8W(iface);
     RECT  rect;
     POINT point;
     HRESULT res;
-    
+
     TRACE("(this=%p)\n",This);
 
-    if ((res = IDirectInputDevice2AImpl_Acquire(iface)) != DI_OK) return res;
+    if ((res = IDirectInputDevice2WImpl_Acquire(iface)) != DI_OK) return res;
 
     /* Init the mouse state */
     GetCursorPos( &point );
@@ -486,17 +494,23 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
     return DI_OK;
 }
 
+static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
+{
+    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
+    return SysMouseWImpl_Acquire(IDirectInputDevice8W_from_impl(This));
+}
+
 /******************************************************************************
   *     Unacquire : frees the mouse
   */
-static HRESULT WINAPI SysMouseAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
+static HRESULT WINAPI SysMouseWImpl_Unacquire(LPDIRECTINPUTDEVICE8W iface)
 {
-    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
+    SysMouseImpl *This = impl_from_IDirectInputDevice8W(iface);
     HRESULT res;
 
     TRACE("(this=%p)\n",This);
 
-    if ((res = IDirectInputDevice2AImpl_Unacquire(iface)) != DI_OK) return res;
+    if ((res = IDirectInputDevice2WImpl_Unacquire(iface)) != DI_OK) return res;
 
     if (This->base.dwCoopLevel & DISCL_EXCLUSIVE)
     {
@@ -510,8 +524,14 @@ static HRESULT WINAPI SysMouseAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
       TRACE(" warping mouse back to (%d , %d)\n", This->org_coords.x, This->org_coords.y);
       SetCursorPos(This->org_coords.x, This->org_coords.y);
     }
-	
+
     return DI_OK;
+}
+
+static HRESULT WINAPI SysMouseAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
+{
+    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
+    return SysMouseWImpl_Unacquire(IDirectInputDevice8W_from_impl(This));
 }
 
 /******************************************************************************
@@ -520,10 +540,9 @@ static HRESULT WINAPI SysMouseAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
   *   For the moment, only the "standard" return structure (DIMOUSESTATE) is
   *   supported.
   */
-static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
-	LPDIRECTINPUTDEVICE8A iface,DWORD len,LPVOID ptr
-) {
-    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
+static HRESULT WINAPI SysMouseWImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W iface, DWORD len, LPVOID ptr)
+{
+    SysMouseImpl *This = impl_from_IDirectInputDevice8W(iface);
 
     if(This->base.acquired == 0) return DIERR_NOTACQUIRED;
 
@@ -554,20 +573,26 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
 
         This->need_warp = FALSE;
     }
-    
+
     return DI_OK;
+}
+
+static HRESULT WINAPI SysMouseAImpl_GetDeviceState(LPDIRECTINPUTDEVICE8A iface, DWORD len, LPVOID ptr)
+{
+    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
+    return SysMouseWImpl_GetDeviceState(IDirectInputDevice8W_from_impl(This), len, ptr);
 }
 
 /******************************************************************************
   *     GetDeviceData : gets buffered input data.
   */
-static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
+static HRESULT WINAPI SysMouseWImpl_GetDeviceData(LPDIRECTINPUTDEVICE8W iface,
         DWORD dodsize, LPDIDEVICEOBJECTDATA dod, LPDWORD entries, DWORD flags)
 {
-    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
+    SysMouseImpl *This = impl_from_IDirectInputDevice8W(iface);
     HRESULT res;
 
-    res = IDirectInputDevice2AImpl_GetDeviceData(iface, dodsize, dod, entries, flags);
+    res = IDirectInputDevice2WImpl_GetDeviceData(iface, dodsize, dod, entries, flags);
     if (FAILED(res)) return res;
 
     /* Check if we need to do a mouse warping */
@@ -584,14 +609,19 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
     return res;
 }
 
+static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
+        DWORD dodsize, LPDIDEVICEOBJECTDATA dod, LPDWORD entries, DWORD flags)
+{
+    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
+    return SysMouseWImpl_GetDeviceData(IDirectInputDevice8W_from_impl(This), dodsize, dod, entries, flags);
+}
+
 /******************************************************************************
   *     GetProperty : get input device properties
   */
-static HRESULT WINAPI SysMouseAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
-						REFGUID rguid,
-						LPDIPROPHEADER pdiph)
+static HRESULT WINAPI SysMouseWImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface, REFGUID rguid, LPDIPROPHEADER pdiph)
 {
-    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
+    SysMouseImpl *This = impl_from_IDirectInputDevice8W(iface);
 
     TRACE("(%p) %s,%p\n", This, debugstr_guid(rguid), pdiph);
     _dump_DIPROPHEADER(pdiph);
@@ -624,21 +654,25 @@ static HRESULT WINAPI SysMouseAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
 	    }
 
 	    default:
-                return IDirectInputDevice2AImpl_GetProperty(iface, rguid, pdiph);
+                return IDirectInputDevice2WImpl_GetProperty(iface, rguid, pdiph);
         }
     }
-    
+
     return DI_OK;
+}
+
+static HRESULT WINAPI SysMouseAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface, REFGUID rguid, LPDIPROPHEADER pdiph)
+{
+    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
+    return SysMouseWImpl_GetProperty(IDirectInputDevice8W_from_impl(This), rguid, pdiph);
 }
 
 /******************************************************************************
   *     GetCapabilities : get the device capabilities
   */
-static HRESULT WINAPI SysMouseAImpl_GetCapabilities(
-	LPDIRECTINPUTDEVICE8A iface,
-	LPDIDEVCAPS lpDIDevCaps)
+static HRESULT WINAPI SysMouseWImpl_GetCapabilities(LPDIRECTINPUTDEVICE8W iface, LPDIDEVCAPS lpDIDevCaps)
 {
-    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
+    SysMouseImpl *This = impl_from_IDirectInputDevice8W(iface);
     DIDEVCAPS devcaps;
 
     TRACE("(this=%p,%p)\n",This,lpDIDevCaps);
@@ -664,8 +698,14 @@ static HRESULT WINAPI SysMouseAImpl_GetCapabilities(
     devcaps.dwFFDriverVersion = 0;
 
     memcpy(lpDIDevCaps, &devcaps, lpDIDevCaps->dwSize);
-    
+
     return DI_OK;
+}
+
+static HRESULT WINAPI SysMouseAImpl_GetCapabilities(LPDIRECTINPUTDEVICE8A iface, LPDIDEVCAPS lpDIDevCaps)
+{
+    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
+    return SysMouseWImpl_GetCapabilities(IDirectInputDevice8W_from_impl(This), lpDIDevCaps);
 }
 
 /******************************************************************************
@@ -697,12 +737,13 @@ static HRESULT WINAPI SysMouseWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface,
 static HRESULT WINAPI SysMouseAImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8A iface,
         LPDIDEVICEOBJECTINSTANCEA pdidoi, DWORD dwObj, DWORD dwHow)
 {
+    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
     HRESULT res;
     DIDEVICEOBJECTINSTANCEW didoiW;
     DWORD dwSize = pdidoi->dwSize;
 
     didoiW.dwSize = sizeof(didoiW);
-    res = SysMouseWImpl_GetObjectInfo((LPDIRECTINPUTDEVICE8W)iface, &didoiW, dwObj, dwHow);
+    res = SysMouseWImpl_GetObjectInfo(IDirectInputDevice8W_from_impl(This), &didoiW, dwObj, dwHow);
     if (res != DI_OK) return res;
 
     memset(pdidoi, 0, pdidoi->dwSize);
@@ -786,25 +827,19 @@ static const IDirectInputDevice8AVtbl SysMouseAvt =
     IDirectInputDevice8AImpl_GetImageInfo
 };
 
-#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)	(typeof(SysMouseWvt.fun))
-#else
-# define XCAST(fun)	(void*)
-#endif
-
 static const IDirectInputDevice8WVtbl SysMouseWvt =
 {
     IDirectInputDevice2WImpl_QueryInterface,
     IDirectInputDevice2WImpl_AddRef,
     IDirectInputDevice2WImpl_Release,
-    XCAST(GetCapabilities)SysMouseAImpl_GetCapabilities,
+    SysMouseWImpl_GetCapabilities,
     IDirectInputDevice2WImpl_EnumObjects,
-    XCAST(GetProperty)SysMouseAImpl_GetProperty,
+    SysMouseWImpl_GetProperty,
     IDirectInputDevice2WImpl_SetProperty,
-    XCAST(Acquire)SysMouseAImpl_Acquire,
-    XCAST(Unacquire)SysMouseAImpl_Unacquire,
-    XCAST(GetDeviceState)SysMouseAImpl_GetDeviceState,
-    XCAST(GetDeviceData)SysMouseAImpl_GetDeviceData,
+    SysMouseWImpl_Acquire,
+    SysMouseWImpl_Unacquire,
+    SysMouseWImpl_GetDeviceState,
+    SysMouseWImpl_GetDeviceData,
     IDirectInputDevice2WImpl_SetDataFormat,
     IDirectInputDevice2WImpl_SetEventNotification,
     IDirectInputDevice2WImpl_SetCooperativeLevel,
@@ -827,4 +862,3 @@ static const IDirectInputDevice8WVtbl SysMouseWvt =
     IDirectInputDevice8WImpl_SetActionMap,
     IDirectInputDevice8WImpl_GetImageInfo
 };
-#undef XCAST
