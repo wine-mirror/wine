@@ -2228,7 +2228,9 @@ typedef struct
 
 static void expect_ff(const TEXTMETRICA *tmA, const TT_OS2_V2 *os2, WORD family, const char *name)
 {
-    ok((tmA->tmPitchAndFamily & 0xf0) == family, "%s: expected family %02x got %02x. panose %d-%d-%d-%d-...\n",
+    ok((tmA->tmPitchAndFamily & 0xf0) == family ||
+       broken(PRIMARYLANGID(GetSystemDefaultLangID()) != LANG_ENGLISH),
+       "%s: expected family %02x got %02x. panose %d-%d-%d-%d-...\n",
        name, family, tmA->tmPitchAndFamily, os2->panose.bFamilyType, os2->panose.bSerifStyle,
        os2->panose.bWeight, os2->panose.bProportion);
 }
@@ -2387,7 +2389,9 @@ static void test_text_metrics(const LOGFONTA *lf)
     const char *font_name = lf->lfFaceName;
     DWORD cmap_first = 0, cmap_last = 0;
     cmap_type cmap_type;
+    BOOL sys_lang_non_english;
 
+    sys_lang_non_english = PRIMARYLANGID(GetSystemDefaultLangID()) != LANG_ENGLISH;
     hdc = GetDC(0);
 
     SetLastError(0xdeadbeef);
@@ -2486,7 +2490,8 @@ static void test_text_metrics(const LOGFONTA *lf)
            "A: tmLastChar for %s got %02x expected %02x\n", font_name, tmA.tmLastChar, expect_last_A);
         ok(tmA.tmBreakChar == expect_break_A, "A: tmBreakChar for %s got %02x expected %02x\n",
            font_name, tmA.tmBreakChar, expect_break_A);
-        ok(tmA.tmDefaultChar == expect_default_A, "A: tmDefaultChar for %s got %02x expected %02x\n",
+        ok(tmA.tmDefaultChar == expect_default_A || broken(sys_lang_non_english),
+           "A: tmDefaultChar for %s got %02x expected %02x\n",
            font_name, tmA.tmDefaultChar, expect_default_A);
 
 
@@ -2513,7 +2518,8 @@ static void test_text_metrics(const LOGFONTA *lf)
                    font_name, tmW.tmLastChar, expect_last_W);
             ok(tmW.tmBreakChar == expect_break_W, "W: tmBreakChar for %s got %02x expected %02x\n",
                font_name, tmW.tmBreakChar, expect_break_W);
-            ok(tmW.tmDefaultChar == expect_default_W, "W: tmDefaultChar for %s got %02x expected %02x\n",
+            ok(tmW.tmDefaultChar == expect_default_W || broken(sys_lang_non_english),
+               "W: tmDefaultChar for %s got %02x expected %02x\n",
                font_name, tmW.tmDefaultChar, expect_default_W);
 
             /* Test the aspect ratio while we have tmW */
