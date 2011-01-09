@@ -99,6 +99,15 @@ struct JoystickImpl
         POINTL                          povs[4];
 };
 
+static inline JoystickImpl *impl_from_IDirectInputDevice8A(IDirectInputDevice8A *iface)
+{
+    return (JoystickImpl *) iface;
+}
+static inline JoystickImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
+{
+    return (JoystickImpl *) iface;
+}
+
 static const GUID DInput_Wine_Joystick_GUID = { /* 9e573ed9-7734-11d2-8d4a-23903fb6bdf7 */
   0x9e573ed9,
   0x7734,
@@ -495,7 +504,7 @@ const struct dinput_device joystick_linux_device = {
   */
 static HRESULT WINAPI JoystickLinuxAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 {
-    JoystickImpl *This = (JoystickImpl *)iface;
+    JoystickImpl *This = impl_from_IDirectInputDevice8A(iface);
     HRESULT res;
 
     TRACE("(%p)\n",This);
@@ -524,7 +533,7 @@ static HRESULT WINAPI JoystickLinuxAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
   */
 static HRESULT WINAPI JoystickLinuxAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
 {
-    JoystickImpl *This = (JoystickImpl *)iface;
+    JoystickImpl *This = impl_from_IDirectInputDevice8A(iface);
     HRESULT res;
 
     TRACE("(%p)\n",This);
@@ -548,7 +557,7 @@ static void joy_polldev(LPDIRECTINPUTDEVICE8A iface)
 {
     struct pollfd plfd;
     struct js_event jse;
-    JoystickImpl *This = (JoystickImpl*) iface;
+    JoystickImpl *This = impl_from_IDirectInputDevice8A(iface);
 
     TRACE("(%p)\n", This);
 
