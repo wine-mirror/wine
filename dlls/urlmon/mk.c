@@ -22,29 +22,32 @@
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
 typedef struct {
-    const IInternetProtocolVtbl  *lpIInternetProtocolVtbl;
+    IInternetProtocol IInternetProtocol_iface;
 
     LONG ref;
 
     IStream *stream;
 } MkProtocol;
 
-#define PROTOCOL_THIS(iface) DEFINE_THIS(MkProtocol, IInternetProtocol, iface)
+static inline MkProtocol *impl_from_IInternetProtocol(IInternetProtocol *iface)
+{
+    return CONTAINING_RECORD(iface, MkProtocol, IInternetProtocol_iface);
+}
 
 static HRESULT WINAPI MkProtocol_QueryInterface(IInternetProtocol *iface, REFIID riid, void **ppv)
 {
-    MkProtocol *This = PROTOCOL_THIS(iface);
+    MkProtocol *This = impl_from_IInternetProtocol(iface);
 
     *ppv = NULL;
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = PROTOCOL(This);
+        *ppv = &This->IInternetProtocol_iface;
     }else if(IsEqualGUID(&IID_IInternetProtocolRoot, riid)) {
         TRACE("(%p)->(IID_IInternetProtocolRoot %p)\n", This, ppv);
-        *ppv = PROTOCOL(This);
+        *ppv = &This->IInternetProtocol_iface;
     }else if(IsEqualGUID(&IID_IInternetProtocol, riid)) {
         TRACE("(%p)->(IID_IInternetProtocol %p)\n", This, ppv);
-        *ppv = PROTOCOL(This);
+        *ppv = &This->IInternetProtocol_iface;
     }
 
     if(*ppv) {
@@ -58,7 +61,7 @@ static HRESULT WINAPI MkProtocol_QueryInterface(IInternetProtocol *iface, REFIID
 
 static ULONG WINAPI MkProtocol_AddRef(IInternetProtocol *iface)
 {
-    MkProtocol *This = PROTOCOL_THIS(iface);
+    MkProtocol *This = impl_from_IInternetProtocol(iface);
     LONG ref = InterlockedIncrement(&This->ref);
     TRACE("(%p) ref=%d\n", This, ref);
     return ref;
@@ -66,7 +69,7 @@ static ULONG WINAPI MkProtocol_AddRef(IInternetProtocol *iface)
 
 static ULONG WINAPI MkProtocol_Release(IInternetProtocol *iface)
 {
-    MkProtocol *This = PROTOCOL_THIS(iface);
+    MkProtocol *This = impl_from_IInternetProtocol(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -93,7 +96,7 @@ static HRESULT WINAPI MkProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         IInternetProtocolSink *pOIProtSink, IInternetBindInfo *pOIBindInfo,
         DWORD grfPI, HANDLE_PTR dwReserved)
 {
-    MkProtocol *This = PROTOCOL_THIS(iface);
+    MkProtocol *This = impl_from_IInternetProtocol(iface);
     IParseDisplayName *pdn;
     IMoniker *mon;
     LPWSTR mime, progid, display_name;
@@ -188,7 +191,7 @@ static HRESULT WINAPI MkProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
 static HRESULT WINAPI MkProtocol_Continue(IInternetProtocol *iface, PROTOCOLDATA *pProtocolData)
 {
-    MkProtocol *This = PROTOCOL_THIS(iface);
+    MkProtocol *This = impl_from_IInternetProtocol(iface);
     FIXME("(%p)->(%p)\n", This, pProtocolData);
     return E_NOTIMPL;
 }
@@ -196,14 +199,14 @@ static HRESULT WINAPI MkProtocol_Continue(IInternetProtocol *iface, PROTOCOLDATA
 static HRESULT WINAPI MkProtocol_Abort(IInternetProtocol *iface, HRESULT hrReason,
         DWORD dwOptions)
 {
-    MkProtocol *This = PROTOCOL_THIS(iface);
+    MkProtocol *This = impl_from_IInternetProtocol(iface);
     FIXME("(%p)->(%08x %08x)\n", This, hrReason, dwOptions);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI MkProtocol_Terminate(IInternetProtocol *iface, DWORD dwOptions)
 {
-    MkProtocol *This = PROTOCOL_THIS(iface);
+    MkProtocol *This = impl_from_IInternetProtocol(iface);
 
     TRACE("(%p)->(%08x)\n", This, dwOptions);
 
@@ -212,14 +215,14 @@ static HRESULT WINAPI MkProtocol_Terminate(IInternetProtocol *iface, DWORD dwOpt
 
 static HRESULT WINAPI MkProtocol_Suspend(IInternetProtocol *iface)
 {
-    MkProtocol *This = PROTOCOL_THIS(iface);
+    MkProtocol *This = impl_from_IInternetProtocol(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI MkProtocol_Resume(IInternetProtocol *iface)
 {
-    MkProtocol *This = PROTOCOL_THIS(iface);
+    MkProtocol *This = impl_from_IInternetProtocol(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
@@ -227,7 +230,7 @@ static HRESULT WINAPI MkProtocol_Resume(IInternetProtocol *iface)
 static HRESULT WINAPI MkProtocol_Read(IInternetProtocol *iface, void *pv,
         ULONG cb, ULONG *pcbRead)
 {
-    MkProtocol *This = PROTOCOL_THIS(iface);
+    MkProtocol *This = impl_from_IInternetProtocol(iface);
 
     TRACE("(%p)->(%p %u %p)\n", This, pv, cb, pcbRead);
 
@@ -240,14 +243,14 @@ static HRESULT WINAPI MkProtocol_Read(IInternetProtocol *iface, void *pv,
 static HRESULT WINAPI MkProtocol_Seek(IInternetProtocol *iface, LARGE_INTEGER dlibMove,
         DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
 {
-    MkProtocol *This = PROTOCOL_THIS(iface);
+    MkProtocol *This = impl_from_IInternetProtocol(iface);
     FIXME("(%p)->(%d %d %p)\n", This, dlibMove.u.LowPart, dwOrigin, plibNewPosition);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI MkProtocol_LockRequest(IInternetProtocol *iface, DWORD dwOptions)
 {
-    MkProtocol *This = PROTOCOL_THIS(iface);
+    MkProtocol *This = impl_from_IInternetProtocol(iface);
 
     TRACE("(%p)->(%08x)\n", This, dwOptions);
 
@@ -256,14 +259,12 @@ static HRESULT WINAPI MkProtocol_LockRequest(IInternetProtocol *iface, DWORD dwO
 
 static HRESULT WINAPI MkProtocol_UnlockRequest(IInternetProtocol *iface)
 {
-    MkProtocol *This = PROTOCOL_THIS(iface);
+    MkProtocol *This = impl_from_IInternetProtocol(iface);
 
     TRACE("(%p)\n", This);
 
     return S_OK;
 }
-
-#undef PROTOCOL_THIS
 
 static const IInternetProtocolVtbl MkProtocolVtbl = {
     MkProtocol_QueryInterface,
@@ -291,14 +292,14 @@ HRESULT MkProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
 
     ret = heap_alloc(sizeof(MkProtocol));
 
-    ret->lpIInternetProtocolVtbl = &MkProtocolVtbl;
+    ret->IInternetProtocol_iface.lpVtbl = &MkProtocolVtbl;
     ret->ref = 1;
     ret->stream = NULL;
 
     /* NOTE:
      * Native returns NULL ppobj and S_OK in CreateInstance if called with IID_IUnknown riid.
      */
-    *ppobj = PROTOCOL(ret);
+    *ppobj = &ret->IInternetProtocol_iface;
 
     return S_OK;
 }
