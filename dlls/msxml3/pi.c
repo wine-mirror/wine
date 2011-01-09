@@ -437,7 +437,8 @@ static HRESULT WINAPI dom_pi_get_nodeTypedValue(
     VARIANT* var1)
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    return IXMLDOMNode_get_nodeTypedValue( IXMLDOMNode_from_impl(&This->node), var1 );
+    FIXME("(%p)->(%p)\n", This, var1);
+    return return_null_var(var1);
 }
 
 static HRESULT WINAPI dom_pi_put_nodeTypedValue(

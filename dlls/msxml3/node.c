@@ -836,43 +836,6 @@ static inline HRESULT VARIANT_from_xmlChar(xmlChar *str, VARIANT *v, BSTR type)
     return S_OK;
 }
 
-static HRESULT WINAPI xmlnode_get_nodeTypedValue(
-    IXMLDOMNode *iface,
-    VARIANT* typedValue)
-{
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
-    VARIANT type;
-    xmlChar *content;
-    HRESULT hres = S_FALSE;
-
-    TRACE("(%p)->(%p)\n", This, typedValue);
-
-    if(!typedValue)
-        return E_INVALIDARG;
-
-    V_VT(typedValue) = VT_NULL;
-
-    if (This->node->type == XML_ENTITY_REF_NODE)
-    {
-        VariantInit(&type);
-        hres = IXMLDOMNode_get_dataType(This->iface, &type);
-
-        if(hres != S_OK)
-            return IXMLDOMNode_get_nodeValue(This->iface, typedValue);
-
-        content = xmlNodeGetContent(This->node);
-        hres = VARIANT_from_xmlChar(content, typedValue, hres==S_OK ? V_BSTR(&type) : NULL);
-        VariantClear(&type);
-        xmlFree(content);
-    }
-    else
-    {
-        FIXME("need to handle node type %i\n", This->node->type);
-    }
-
-    return hres;
-}
-
 BSTR EnsureCorrectEOL(BSTR sInput)
 {
     int nNum = 0;
@@ -1204,7 +1167,7 @@ static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
     NULL,
     NULL,
     NULL,
-    xmlnode_get_nodeTypedValue,
+    NULL,
     NULL,
     NULL,
     NULL,
@@ -1624,7 +1587,8 @@ static HRESULT WINAPI unknode_get_nodeTypedValue(
     VARIANT* var1)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_get_nodeTypedValue( IXMLDOMNode_from_impl(&This->node), var1 );
+    FIXME("(%p)->(%p)\n", This, var1);
+    return return_null_var(var1);
 }
 
 static HRESULT WINAPI unknode_put_nodeTypedValue(

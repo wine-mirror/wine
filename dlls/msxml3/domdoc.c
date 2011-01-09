@@ -1280,7 +1280,8 @@ static HRESULT WINAPI domdoc_get_nodeTypedValue(
     VARIANT* typedValue )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_get_nodeTypedValue( IXMLDOMNode_from_impl(&This->node), typedValue );
+    FIXME("(%p)->(%p)\n", This, typedValue);
+    return return_null_var(typedValue);
 }
 
 static HRESULT WINAPI domdoc_put_nodeTypedValue(

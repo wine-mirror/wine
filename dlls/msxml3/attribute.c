@@ -418,7 +418,8 @@ static HRESULT WINAPI domattr_get_nodeTypedValue(
     VARIANT* var1)
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
-    return IXMLDOMNode_get_nodeTypedValue( IXMLDOMNode_from_impl(&This->node), var1 );
+    FIXME("(%p)->(%p)\n", This, var1);
+    return return_null_var(var1);
 }
 
 static HRESULT WINAPI domattr_put_nodeTypedValue(
