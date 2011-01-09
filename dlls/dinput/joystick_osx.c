@@ -135,6 +135,15 @@ struct JoystickImpl
     ObjProps               **propmap;
 };
 
+static inline JoystickImpl *impl_from_IDirectInputDevice8A(IDirectInputDevice8A *iface)
+{
+    return (JoystickImpl *) iface;
+}
+static inline JoystickImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
+{
+    return (JoystickImpl *) iface;
+}
+
 static const GUID DInput_Wine_OsX_Joystick_GUID = { /* 59CAD8F6-E617-41E2-8EB7-47B23EEEDC5A */
   0x59CAD8F6, 0xE617, 0x41E2, {0x8E, 0xB7, 0x47, 0xB2, 0x3E, 0xEE, 0xDC, 0x5A}
 };
@@ -519,7 +528,7 @@ static void get_osx_device_elements_props(JoystickImpl *device)
 
 static void poll_osx_device_state(LPDIRECTINPUTDEVICE8A iface)
 {
-    JoystickImpl *device = (JoystickImpl*)iface;
+    JoystickImpl *device = impl_from_IDirectInputDevice8A(iface);
     IOHIDElementRef tIOHIDTopElementRef;
     IOHIDDeviceRef tIOHIDDeviceRef;
     CFArrayRef gElementCFArrayRef = device->elementCFArrayRef;
