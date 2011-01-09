@@ -43,20 +43,20 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 static inline IDirectInputDeviceImpl *impl_from_IDirectInputDevice8A(IDirectInputDevice8A *iface)
 {
-    return (IDirectInputDeviceImpl *) iface;
+    return CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8A_iface);
 }
 static inline IDirectInputDeviceImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
 {
-    return (IDirectInputDeviceImpl *) iface;
+    return CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface);
 }
 
 static inline IDirectInputDevice8A *IDirectInputDevice8A_from_impl(IDirectInputDeviceImpl *This)
 {
-    return (IDirectInputDevice8A *)This;
+    return &This->IDirectInputDevice8A_iface;
 }
 static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl(IDirectInputDeviceImpl *This)
 {
-    return (IDirectInputDevice8W *)This;
+    return &This->IDirectInputDevice8W_iface;
 }
 
 /******************************************************************************

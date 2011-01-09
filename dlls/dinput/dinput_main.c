@@ -76,6 +76,15 @@ static inline IDirectInputImpl *impl_from_IDirectInput8W( IDirectInput8W *iface 
     return CONTAINING_RECORD( iface, IDirectInputImpl, IDirectInput8W_iface );
 }
 
+static inline IDirectInputDeviceImpl *impl_from_IDirectInputDevice8A(IDirectInputDevice8A *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8A_iface);
+}
+static inline IDirectInputDeviceImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface);
+}
+
 static const struct dinput_device *dinput_devices[] =
 {
     &mouse_device,
@@ -498,8 +507,10 @@ static HRESULT WINAPI IDirectInput7AImpl_CreateDeviceEx(LPDIRECTINPUT7A iface, R
     if (!dinput_devices[i]->create_deviceA) continue;
     if ((ret = dinput_devices[i]->create_deviceA(This, rguid, riid, (LPDIRECTINPUTDEVICEA*) pvOut)) == DI_OK)
     {
+      IDirectInputDeviceImpl *dev = impl_from_IDirectInputDevice8A(*pvOut);
+
       EnterCriticalSection( &This->crit );
-      list_add_tail( &This->devices_list, &(*(IDirectInputDeviceImpl**)pvOut)->entry );
+      list_add_tail( &This->devices_list, &dev->entry );
       LeaveCriticalSection( &This->crit );
       return DI_OK;
     }
@@ -534,8 +545,10 @@ static HRESULT WINAPI IDirectInput7WImpl_CreateDeviceEx(LPDIRECTINPUT7W iface, R
     if (!dinput_devices[i]->create_deviceW) continue;
     if ((ret = dinput_devices[i]->create_deviceW(This, rguid, riid, (LPDIRECTINPUTDEVICEW*) pvOut)) == DI_OK)
     {
+      IDirectInputDeviceImpl *dev = impl_from_IDirectInputDevice8W(*pvOut);
+
       EnterCriticalSection( &This->crit );
-      list_add_tail( &This->devices_list, &(*(IDirectInputDeviceImpl**)pvOut)->entry );
+      list_add_tail( &This->devices_list, &dev->entry );
       LeaveCriticalSection( &This->crit );
       return DI_OK;
     }
@@ -922,7 +935,7 @@ static LRESULT CALLBACK LL_hook_proc( int code, WPARAM wparam, LPARAM lparam )
             if (dev->acquired && dev->event_proc)
             {
                 TRACE("calling %p->%p (%lx %lx)\n", dev, dev->event_proc, wparam, lparam);
-                skip |= dev->event_proc( (LPDIRECTINPUTDEVICE8A)dev, wparam, lparam );
+                skip |= dev->event_proc( &dev->IDirectInputDevice8A_iface, wparam, lparam );
             }
         LeaveCriticalSection( &dinput->crit );
     }
@@ -957,7 +970,7 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
             if (msg->hwnd == dev->win && msg->hwnd != foreground)
             {
                 TRACE( "%p window is not foreground - unacquiring %p\n", dev->win, dev );
-                IDirectInputDevice_Unacquire( (LPDIRECTINPUTDEVICE8A)dev );
+                IDirectInputDevice_Unacquire( &dev->IDirectInputDevice8A_iface );
             }
         }
         LeaveCriticalSection( &dinput->crit );
@@ -1097,7 +1110,7 @@ void check_dinput_hooks(LPDIRECTINPUTDEVICE8W iface)
 {
     static HHOOK callwndproc_hook;
     static ULONG foreground_cnt;
-    IDirectInputDeviceImpl *dev = (IDirectInputDeviceImpl *)iface;
+    IDirectInputDeviceImpl *dev = impl_from_IDirectInputDevice8W(iface);
 
     EnterCriticalSection(&dinput_hook_crit);
 

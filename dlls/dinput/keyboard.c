@@ -52,19 +52,19 @@ struct SysKeyboardImpl
 
 static inline SysKeyboardImpl *impl_from_IDirectInputDevice8A(IDirectInputDevice8A *iface)
 {
-    return (SysKeyboardImpl *) iface;
+    return CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8A_iface), SysKeyboardImpl, base);
 }
 static inline SysKeyboardImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
 {
-    return (SysKeyboardImpl *) iface;
+    return CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface), SysKeyboardImpl, base);
 }
 static inline IDirectInputDevice8A *IDirectInputDevice8A_from_impl(SysKeyboardImpl *This)
 {
-    return (IDirectInputDevice8A *)This;
+    return &This->base.IDirectInputDevice8A_iface;
 }
 static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl(SysKeyboardImpl *This)
 {
-    return (IDirectInputDevice8W *)This;
+    return &This->base.IDirectInputDevice8W_iface;
 }
 
 static BYTE map_dik_code(DWORD scanCode, DWORD vkCode)
@@ -220,14 +220,15 @@ static BOOL keyboarddev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEI
   return FALSE;
 }
 
-static SysKeyboardImpl *alloc_device(REFGUID rguid, const void *kvt, IDirectInputImpl *dinput)
+static SysKeyboardImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput)
 {
     SysKeyboardImpl* newDevice;
     LPDIDATAFORMAT df = NULL;
     int i, idx = 0;
 
     newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SysKeyboardImpl));
-    newDevice->base.lpVtbl = kvt;
+    newDevice->base.IDirectInputDevice8A_iface.lpVtbl = &SysKeyboardAvt;
+    newDevice->base.IDirectInputDevice8W_iface.lpVtbl = &SysKeyboardWvt;
     newDevice->base.ref = 1;
     memcpy(&newDevice->base.guid, rguid, sizeof(*rguid));
     newDevice->base.dinput = dinput;
@@ -273,9 +274,14 @@ static HRESULT keyboarddev_create_deviceA(IDirectInputImpl *dinput, REFGUID rgui
 	IsEqualGUID(&IID_IDirectInputDevice2A,riid) ||
 	IsEqualGUID(&IID_IDirectInputDevice7A,riid) ||
 	IsEqualGUID(&IID_IDirectInputDevice8A,riid)) {
-      *pdev = (IDirectInputDeviceA*) alloc_device(rguid, &SysKeyboardAvt, dinput);
+
+      SysKeyboardImpl *This = alloc_device(rguid, dinput);
+      if (!This) {
+        *pdev = NULL;
+        return DIERR_OUTOFMEMORY;
+      }
+      *pdev = (IDirectInputDeviceA*) &This->base.IDirectInputDevice8A_iface;
       TRACE("Creating a Keyboard device (%p)\n", *pdev);
-      if (!*pdev) return DIERR_OUTOFMEMORY;
       return DI_OK;
     } else
       return DIERR_NOINTERFACE;
@@ -292,9 +298,14 @@ static HRESULT keyboarddev_create_deviceW(IDirectInputImpl *dinput, REFGUID rgui
 	IsEqualGUID(&IID_IDirectInputDevice2W,riid) ||
 	IsEqualGUID(&IID_IDirectInputDevice7W,riid) ||
 	IsEqualGUID(&IID_IDirectInputDevice8W,riid)) {
-      *pdev = (IDirectInputDeviceW*) alloc_device(rguid, &SysKeyboardWvt, dinput);
+
+      SysKeyboardImpl *This = alloc_device(rguid, dinput);
+      if (!This) {
+        *pdev = NULL;
+        return DIERR_OUTOFMEMORY;
+      }
+      *pdev = (IDirectInputDeviceW*) &This->base.IDirectInputDevice8W_iface;
       TRACE("Creating a Keyboard device (%p)\n", *pdev);
-      if (!*pdev) return DIERR_OUTOFMEMORY;
       return DI_OK;
     } else
       return DIERR_NOINTERFACE;

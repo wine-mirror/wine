@@ -135,19 +135,21 @@ struct JoystickImpl
 
 static inline JoystickImpl *impl_from_IDirectInputDevice8A(IDirectInputDevice8A *iface)
 {
-    return (JoystickImpl *) iface;
+    return CONTAINING_RECORD(CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8A_iface),
+           JoystickGenericImpl, base), JoystickImpl, generic);
 }
 static inline JoystickImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
 {
-    return (JoystickImpl *) iface;
+    return CONTAINING_RECORD(CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface),
+           JoystickGenericImpl, base), JoystickImpl, generic);
 }
 static inline IDirectInputDevice8A *IDirectInputDevice8A_from_impl(JoystickImpl *This)
 {
-    return (IDirectInputDevice8A *) This;
+    return &This->generic.base.IDirectInputDevice8A_iface;
 }
 static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl(JoystickImpl *This)
 {
-    return (IDirectInputDevice8W *) This;
+    return &This->generic.base.IDirectInputDevice8W_iface;
 }
 
 static void fake_current_js_state(JoystickImpl *ji);
@@ -390,7 +392,7 @@ static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
   return FALSE;
 }
 
-static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *dinput, unsigned short index)
+static JoystickImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput, unsigned short index)
 {
     JoystickImpl* newDevice;
     LPDIDATAFORMAT df = NULL;
@@ -400,7 +402,8 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
     newDevice = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(JoystickImpl));
     if (!newDevice) return NULL;
 
-    newDevice->generic.base.lpVtbl = jvt;
+    newDevice->generic.base.IDirectInputDevice8A_iface.lpVtbl = &JoystickAvt;
+    newDevice->generic.base.IDirectInputDevice8W_iface.lpVtbl = &JoystickWvt;
     newDevice->generic.base.ref    = 1;
     newDevice->generic.base.guid   = *rguid;
     newDevice->generic.base.dinput = dinput;
@@ -567,14 +570,16 @@ static HRESULT joydev_create_deviceA(IDirectInputImpl *dinput, REFGUID rguid, RE
             IsEqualGUID(&IID_IDirectInputDevice7A, riid) ||
             IsEqualGUID(&IID_IDirectInputDevice8A, riid))
         {
-            *pdev = (IDirectInputDeviceA*) alloc_device(rguid, &JoystickAvt, dinput, index);
-            TRACE("Created a Joystick device (%p)\n", *pdev);
+            JoystickImpl *This = alloc_device(rguid, dinput, index);
+            TRACE("Created a Joystick device (%p)\n", This);
 
-            if (*pdev == NULL)
+            if (!This)
             {
                 ERR("out of memory\n");
+                *pdev = NULL;
                 return DIERR_OUTOFMEMORY;
             }
+            *pdev = (IDirectInputDeviceA*) &This->generic.base.IDirectInputDevice8A_iface;
             return DI_OK;
         }
 
@@ -601,14 +606,15 @@ static HRESULT joydev_create_deviceW(IDirectInputImpl *dinput, REFGUID rguid, RE
             IsEqualGUID(&IID_IDirectInputDevice7W, riid) ||
             IsEqualGUID(&IID_IDirectInputDevice8W, riid))
         {
-            *pdev = (IDirectInputDeviceW*) alloc_device(rguid, &JoystickWvt, dinput, index);
-            TRACE("Created a Joystick device (%p)\n", *pdev);
+            JoystickImpl *This = alloc_device(rguid, dinput, index);
+            TRACE("Created a Joystick device (%p)\n", This);
 
-            if (*pdev == NULL)
+            if (!This)
             {
                 ERR("out of memory\n");
                 return DIERR_OUTOFMEMORY;
             }
+            *pdev = (IDirectInputDeviceW*) &This->generic.base.IDirectInputDevice8W_iface;
             return DI_OK;
         }
         WARN("no interface\n");

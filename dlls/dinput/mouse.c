@@ -80,19 +80,19 @@ struct SysMouseImpl
 
 static inline SysMouseImpl *impl_from_IDirectInputDevice8A(IDirectInputDevice8A *iface)
 {
-    return (SysMouseImpl *) iface;
+    return CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8A_iface), SysMouseImpl, base);
 }
 static inline SysMouseImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
 {
-    return (SysMouseImpl *) iface;
+    return CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface), SysMouseImpl, base);
 }
 static inline IDirectInputDevice8A *IDirectInputDevice8A_from_impl(SysMouseImpl *This)
 {
-    return (IDirectInputDevice8A *)This;
+    return &This->base.IDirectInputDevice8A_iface;
 }
 static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl(SysMouseImpl *This)
 {
-    return (IDirectInputDevice8W *)This;
+    return &This->base.IDirectInputDevice8W_iface;
 }
 
 static int dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam );
@@ -196,7 +196,7 @@ static BOOL mousedev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINST
     return FALSE;
 }
 
-static SysMouseImpl *alloc_device(REFGUID rguid, const void *mvt, IDirectInputImpl *dinput)
+static SysMouseImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput)
 {
     SysMouseImpl* newDevice;
     LPDIDATAFORMAT df = NULL;
@@ -206,7 +206,8 @@ static SysMouseImpl *alloc_device(REFGUID rguid, const void *mvt, IDirectInputIm
 
     newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SysMouseImpl));
     if (!newDevice) return NULL;
-    newDevice->base.lpVtbl = mvt;
+    newDevice->base.IDirectInputDevice8A_iface.lpVtbl = &SysMouseAvt;
+    newDevice->base.IDirectInputDevice8W_iface.lpVtbl = &SysMouseWvt;
     newDevice->base.ref = 1;
     newDevice->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
     newDevice->base.guid = *rguid;
@@ -259,9 +260,15 @@ static HRESULT mousedev_create_deviceA(IDirectInputImpl *dinput, REFGUID rguid, 
 	    IsEqualGUID(&IID_IDirectInputDevice2A,riid) ||
 	    IsEqualGUID(&IID_IDirectInputDevice7A,riid) ||
 	    IsEqualGUID(&IID_IDirectInputDevice8A,riid)) {
-	    *pdev = (IDirectInputDeviceA*) alloc_device(rguid, &SysMouseAvt, dinput);
-	    TRACE("Creating a Mouse device (%p)\n", *pdev);
-            if (!*pdev) return DIERR_OUTOFMEMORY;
+
+            SysMouseImpl* This = alloc_device(rguid, dinput);
+            TRACE("Created a Mouse device (%p)\n", This);
+
+            if (!This) {
+                *pdev = NULL;
+                return DIERR_OUTOFMEMORY;
+            }
+            *pdev = (IDirectInputDeviceA*) &This->base.IDirectInputDevice8A_iface;
 	    return DI_OK;
 	} else
 	    return DIERR_NOINTERFACE;
@@ -279,9 +286,15 @@ static HRESULT mousedev_create_deviceW(IDirectInputImpl *dinput, REFGUID rguid, 
 	    IsEqualGUID(&IID_IDirectInputDevice2W,riid) ||
 	    IsEqualGUID(&IID_IDirectInputDevice7W,riid) ||
 	    IsEqualGUID(&IID_IDirectInputDevice8W,riid)) {
-	    *pdev = (IDirectInputDeviceW*) alloc_device(rguid, &SysMouseWvt, dinput);
-	    TRACE("Creating a Mouse device (%p)\n", *pdev);
-            if (!*pdev) return DIERR_OUTOFMEMORY;
+
+            SysMouseImpl* This = alloc_device(rguid, dinput);
+            TRACE("Created a Mouse device (%p)\n", This);
+
+            if (!This) {
+                *pdev = NULL;
+                return DIERR_OUTOFMEMORY;
+            }
+            *pdev = (IDirectInputDeviceW*) &This->base.IDirectInputDevice8W_iface;
 	    return DI_OK;
 	} else
 	    return DIERR_NOINTERFACE;

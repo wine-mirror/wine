@@ -137,11 +137,13 @@ struct JoystickImpl
 
 static inline JoystickImpl *impl_from_IDirectInputDevice8A(IDirectInputDevice8A *iface)
 {
-    return (JoystickImpl *) iface;
+    return CONTAINING_RECORD(CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8A_iface),
+           JoystickGenericImpl, base), JoystickImpl, generic);
 }
 static inline JoystickImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
 {
-    return (JoystickImpl *) iface;
+    return CONTAINING_RECORD(CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface),
+           JoystickGenericImpl, base), JoystickImpl, generic);
 }
 
 static const GUID DInput_Wine_OsX_Joystick_GUID = { /* 59CAD8F6-E617-41E2-8EB7-47B23EEEDC5A */
@@ -716,8 +718,8 @@ static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
     return FALSE;
 }
 
-static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *dinput,
-    LPDIRECTINPUTDEVICEA* pdev, unsigned short index)
+static HRESULT alloc_device(REFGUID rguid, IDirectInputImpl *dinput,
+                            JoystickImpl **pdev, unsigned short index)
 {
     DWORD i;
     JoystickImpl* newDevice;
@@ -728,7 +730,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     int axis_map[8]; /* max axes */
     int slider_count = 0;
 
-    TRACE("%s %p %p %p %hu\n", debugstr_guid(rguid), jvt, dinput, pdev, index);
+    TRACE("%s %p %p %hu\n", debugstr_guid(rguid), dinput, pdev, index);
 
     newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(JoystickImpl));
     if (newDevice == 0) {
@@ -763,7 +765,8 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
         newDevice->generic.devcaps.dwButtons = 128;
     }
 
-    newDevice->generic.base.lpVtbl = jvt;
+    newDevice->generic.base.IDirectInputDevice8A_iface.lpVtbl = &JoystickAvt;
+    newDevice->generic.base.IDirectInputDevice8W_iface.lpVtbl = &JoystickWvt;
     newDevice->generic.base.ref = 1;
     newDevice->generic.base.dinput = dinput;
     newDevice->generic.base.guid = *rguid;
@@ -835,7 +838,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
         _dump_DIDEVCAPS(&newDevice->generic.devcaps);
     }
 
-    *pdev = (LPDIRECTINPUTDEVICEA)newDevice;
+    *pdev = newDevice;
 
     return DI_OK;
 
@@ -891,7 +894,11 @@ static HRESULT joydev_create_deviceA(IDirectInputImpl *dinput, REFGUID rguid, RE
         IsEqualGUID(&IID_IDirectInputDevice7A, riid) ||
         IsEqualGUID(&IID_IDirectInputDevice8A, riid))
         {
-            return alloc_device(rguid, &JoystickAvt, dinput, pdev, index);
+            JoystickImpl *This;
+            HRESULT hr = alloc_device(rguid, dinput, &This, index);
+
+            *pdev = (LPDIRECTINPUTDEVICEA)(This ? &This->generic.base.IDirectInputDevice8A_iface : NULL);
+            return hr;
         }
 
         WARN("no interface\n");
@@ -921,7 +928,11 @@ static HRESULT joydev_create_deviceW(IDirectInputImpl *dinput, REFGUID rguid, RE
         IsEqualGUID(&IID_IDirectInputDevice7W, riid) ||
         IsEqualGUID(&IID_IDirectInputDevice8W, riid))
         {
-            return alloc_device(rguid, &JoystickWvt, dinput, (LPDIRECTINPUTDEVICEA *)pdev, index);
+            JoystickImpl *This;
+            HRESULT hr = alloc_device(rguid, dinput, &This, index);
+
+            *pdev = (LPDIRECTINPUTDEVICEW)(This ? &This->generic.base.IDirectInputDevice8W_iface : NULL);
+            return hr;
         }
         WARN("no interface\n");
         return DIERR_NOINTERFACE;

@@ -34,19 +34,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 static inline JoystickGenericImpl *impl_from_IDirectInputDevice8A(IDirectInputDevice8A *iface)
 {
-    return (JoystickGenericImpl *) iface;
+    return CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8A_iface), JoystickGenericImpl, base);
 }
 static inline JoystickGenericImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
 {
-    return (JoystickGenericImpl *) iface;
+    return CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface), JoystickGenericImpl, base);
 }
 static inline IDirectInputDevice8A *IDirectInputDevice8A_from_impl(JoystickGenericImpl *This)
 {
-    return (IDirectInputDevice8A *)This;
+    return &This->base.IDirectInputDevice8A_iface;
 }
 static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl(JoystickGenericImpl *This)
 {
-    return (IDirectInputDevice8W *)This;
+    return &This->base.IDirectInputDevice8W_iface;
 }
 
 /******************************************************************************

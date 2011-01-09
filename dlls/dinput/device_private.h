@@ -51,7 +51,8 @@ typedef struct
 typedef struct IDirectInputDeviceImpl IDirectInputDeviceImpl;
 struct IDirectInputDeviceImpl
 {
-    const void                 *lpVtbl;
+    IDirectInputDevice8A        IDirectInputDevice8A_iface;
+    IDirectInputDevice8W        IDirectInputDevice8W_iface;
     LONG                        ref;
     GUID                        guid;
     CRITICAL_SECTION            crit;
