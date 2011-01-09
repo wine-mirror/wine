@@ -208,6 +208,86 @@ static int running_on_visible_desktop (void)
     return IsWindowVisible(desktop);
 }
 
+static int running_as_admin (void)
+{
+    PSID administrators = NULL;
+    SID_IDENTIFIER_AUTHORITY nt_authority = { SECURITY_NT_AUTHORITY };
+    HANDLE token;
+    DWORD groups_size;
+    PTOKEN_GROUPS groups;
+    DWORD group_index;
+
+    /* Create a well-known SID for the Administrators group. */
+    if (! AllocateAndInitializeSid(&nt_authority, 2, SECURITY_BUILTIN_DOMAIN_RID,
+                                   DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0,
+                                   &administrators))
+        return -1;
+
+    /* Get the process token */
+    if (! OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
+    {
+        FreeSid(administrators);
+        return -1;
+    }
+
+    /* Get the group info from the token */
+    groups_size = 0;
+    GetTokenInformation(token, TokenGroups, NULL, 0, &groups_size);
+    groups = heap_alloc(groups_size);
+    if (groups == NULL)
+    {
+        CloseHandle(token);
+        FreeSid(administrators);
+        return -1;
+    }
+    if (! GetTokenInformation(token, TokenGroups, groups, groups_size, &groups_size))
+    {
+        heap_free(groups);
+        CloseHandle(token);
+        FreeSid(administrators);
+        return -1;
+    }
+    CloseHandle(token);
+
+    /* Now check if the token groups include the Administrators group */
+    for (group_index = 0; group_index < groups->GroupCount; group_index++)
+    {
+        if (EqualSid(groups->Groups[group_index].Sid, administrators))
+        {
+            heap_free(groups);
+            FreeSid(administrators);
+            return 1;
+        }
+    }
+
+    /* If we end up here we didn't find the Administrators group */
+    heap_free(groups);
+    FreeSid(administrators);
+    return 0;
+}
+
+static int running_elevated (void)
+{
+    HANDLE token;
+    TOKEN_ELEVATION elevation_info;
+    DWORD size;
+
+    /* Get the process token */
+    if (! OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
+        return -1;
+
+    /* Get the elevation info from the token */
+    if (! GetTokenInformation(token, TokenElevation, &elevation_info,
+                              sizeof(TOKEN_ELEVATION), &size))
+    {
+        CloseHandle(token);
+        return -1;
+    }
+    CloseHandle(token);
+
+    return elevation_info.TokenIsElevated;
+}
+
 /* check for native dll when running under wine */
 static BOOL is_native_dll( HMODULE module )
 {
@@ -243,7 +323,7 @@ static void print_version (void)
 #endif
     OSVERSIONINFOEX ver;
     BOOL ext;
-    int is_win2k3_r2;
+    int is_win2k3_r2, is_admin, is_elevated;
     const char *(CDECL *wine_get_build_id)(void);
     void (CDECL *wine_get_host_version)( const char **sysname, const char **release );
     BOOL (WINAPI *pGetProductInfo)(DWORD, DWORD, DWORD, DWORD, DWORD *);
@@ -258,6 +338,15 @@ static void print_version (void)
     xprintf ("    Platform=%s%s\n", platform, is_wow64 ? " (WOW64)" : "");
     xprintf ("    bRunningUnderWine=%d\n", running_under_wine ());
     xprintf ("    bRunningOnVisibleDesktop=%d\n", running_on_visible_desktop ());
+    is_admin = running_as_admin ();
+    if (0 <= is_admin)
+    {
+        xprintf ("    Account=%s", is_admin ? "admin" : "non-admin");
+        is_elevated = running_elevated ();
+        if (0 <= is_elevated)
+            xprintf(", %s", is_elevated ? "elevated" : "not elevated");
+        xprintf ("\n");
+    }
     xprintf ("    Submitter=%s\n", email );
     if (description)
         xprintf ("    Description=%s\n", description );
