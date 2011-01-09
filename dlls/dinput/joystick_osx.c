@@ -975,24 +975,18 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
     IDirectInputDevice8AImpl_GetImageInfo
 };
 
-#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun) (typeof(JoystickWvt.fun))
-#else
-# define XCAST(fun) (void*)
-#endif
-
 static const IDirectInputDevice8WVtbl JoystickWvt =
 {
     IDirectInputDevice2WImpl_QueryInterface,
     IDirectInputDevice2WImpl_AddRef,
     IDirectInputDevice2WImpl_Release,
-    XCAST(GetCapabilities)JoystickAGenericImpl_GetCapabilities,
+    JoystickWGenericImpl_GetCapabilities,
     IDirectInputDevice2WImpl_EnumObjects,
-    XCAST(GetProperty)JoystickAGenericImpl_GetProperty,
-    XCAST(SetProperty)JoystickAGenericImpl_SetProperty,
+    JoystickWGenericImpl_GetProperty,
+    JoystickWGenericImpl_SetProperty,
     IDirectInputDevice2WImpl_Acquire,
     IDirectInputDevice2WImpl_Unacquire,
-    XCAST(GetDeviceState)JoystickAGenericImpl_GetDeviceState,
+    JoystickWGenericImpl_GetDeviceState,
     IDirectInputDevice2WImpl_GetDeviceData,
     IDirectInputDevice2WImpl_SetDataFormat,
     IDirectInputDevice2WImpl_SetEventNotification,
@@ -1008,7 +1002,7 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
     IDirectInputDevice2WImpl_SendForceFeedbackCommand,
     IDirectInputDevice2WImpl_EnumCreatedEffectObjects,
     IDirectInputDevice2WImpl_Escape,
-    XCAST(Poll)JoystickAGenericImpl_Poll,
+    JoystickWGenericImpl_Poll,
     IDirectInputDevice2WImpl_SendDeviceData,
     IDirectInputDevice7WImpl_EnumEffectsInFile,
     IDirectInputDevice7WImpl_WriteEffectToFile,
@@ -1016,7 +1010,6 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
     IDirectInputDevice8WImpl_SetActionMap,
     IDirectInputDevice8WImpl_GetImageInfo
 };
-#undef XCAST
 
 #else /* HAVE_IOHIDMANAGERCREATE */
 
