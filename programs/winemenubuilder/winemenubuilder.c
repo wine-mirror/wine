@@ -2752,9 +2752,12 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
             hr = IPropertyStorage_ReadMultiple(pPropStg, 2, ps, pv);
             if (SUCCEEDED(hr))
             {
-                icon_name = extract_icon( pv[0].u.pwszVal, pv[1].u.iVal, NULL, bWait );
+                if (pv[0].vt == VT_LPWSTR && pv[0].u.pwszVal)
+                {
+                    icon_name = extract_icon( pv[0].u.pwszVal, pv[1].u.iVal, NULL, bWait );
 
-                WINE_TRACE("URL icon path: %s icon index: %d icon name: %s\n", wine_dbgstr_w(pv[0].u.pwszVal), pv[1].u.iVal, icon_name);
+                    WINE_TRACE("URL icon path: %s icon index: %d icon name: %s\n", wine_dbgstr_w(pv[0].u.pwszVal), pv[1].u.iVal, icon_name);
+                }
                 PropVariantClear(&pv[0]);
                 PropVariantClear(&pv[1]);
             }
