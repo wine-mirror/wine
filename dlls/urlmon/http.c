@@ -80,6 +80,145 @@ static LPWSTR query_http_info(HttpProtocol *This, DWORD option)
     return ret;
 }
 
+static inline BOOL set_security_flag(HttpProtocol *This, DWORD new_flag)
+{
+    DWORD flags, size = sizeof(flags);
+    BOOL res;
+
+    res = InternetQueryOptionW(This->base.request, INTERNET_OPTION_SECURITY_FLAGS, &flags, &size);
+    if(res) {
+        flags |= new_flag;
+        res = InternetSetOptionW(This->base.request, INTERNET_OPTION_SECURITY_FLAGS, &flags, size);
+    }
+    if(!res)
+        ERR("Failed to set security flag(s): %x\n", new_flag);
+
+    return res;
+}
+
+static inline HRESULT internet_error_to_hres(DWORD error)
+{
+    switch(error)
+    {
+    case ERROR_INTERNET_SEC_CERT_DATE_INVALID:
+    case ERROR_INTERNET_SEC_CERT_CN_INVALID:
+    case ERROR_INTERNET_INVALID_CA:
+    case ERROR_INTERNET_CLIENT_AUTH_CERT_NEEDED:
+        return INET_E_INVALID_CERTIFICATE;
+    case ERROR_INTERNET_HTTP_TO_HTTPS_ON_REDIR:
+    case ERROR_INTERNET_HTTPS_TO_HTTP_ON_REDIR:
+    case ERROR_HTTP_REDIRECT_NEEDS_CONFIRMATION:
+        return INET_E_REDIRECT_FAILED;
+    default:
+        return INET_E_DOWNLOAD_FAILURE;
+    }
+}
+
+static HRESULT handle_http_error(HttpProtocol *This, DWORD error)
+{
+    IServiceProvider *serv_prov;
+    IWindowForBindingUI *wfb_ui;
+    IHttpSecurity *http_security;
+    BOOL security_problem;
+    HRESULT hres;
+
+    switch(error) {
+    case ERROR_INTERNET_SEC_CERT_DATE_INVALID:
+    case ERROR_INTERNET_SEC_CERT_CN_INVALID:
+    case ERROR_INTERNET_HTTP_TO_HTTPS_ON_REDIR:
+    case ERROR_INTERNET_HTTPS_TO_HTTP_ON_REDIR:
+    case ERROR_HTTP_REDIRECT_NEEDS_CONFIRMATION:
+    case ERROR_INTERNET_INVALID_CA:
+    case ERROR_INTERNET_CLIENT_AUTH_CERT_NEEDED:
+        security_problem = TRUE;
+        break;
+    default:
+        security_problem = FALSE;
+    }
+
+    hres = IInternetProtocolSink_QueryInterface(This->base.protocol_sink, &IID_IServiceProvider,
+                                                (void**)&serv_prov);
+    if(FAILED(hres)) {
+        ERR("Failed to get IServiceProvider.\n");
+        return E_ABORT;
+    }
+
+    if(security_problem) {
+        hres = IServiceProvider_QueryService(serv_prov, &IID_IHttpSecurity, &IID_IHttpSecurity,
+                                             (void**)&http_security);
+        if(SUCCEEDED(hres)) {
+            hres = IHttpSecurity_OnSecurityProblem(http_security, error);
+            IHttpSecurity_Release(http_security);
+
+            if(hres != S_FALSE)
+            {
+                BOOL res = FALSE;
+
+                IServiceProvider_Release(serv_prov);
+
+                if(hres == S_OK) {
+                    if(error == ERROR_INTERNET_SEC_CERT_DATE_INVALID)
+                        res = set_security_flag(This, SECURITY_FLAG_IGNORE_CERT_DATE_INVALID);
+                    else if(error == ERROR_INTERNET_SEC_CERT_CN_INVALID)
+                        res = set_security_flag(This, SECURITY_FLAG_IGNORE_CERT_CN_INVALID);
+                    else if(error == ERROR_INTERNET_INVALID_CA)
+                        res = set_security_flag(This, SECURITY_FLAG_IGNORE_UNKNOWN_CA);
+
+                    if(res)
+                        return RPC_E_RETRY;
+
+                    FIXME("Don't know how to ignore error %d\n", error);
+                    return E_ABORT;
+                }
+
+                if(hres == E_ABORT)
+                    return E_ABORT;
+                if(hres == RPC_E_RETRY)
+                    return RPC_E_RETRY;
+
+                return internet_error_to_hres(error);
+            }
+        }
+    }
+
+    hres = IServiceProvider_QueryService(serv_prov, &IID_IWindowForBindingUI, &IID_IWindowForBindingUI,
+                                         (void**)&wfb_ui);
+    if(SUCCEEDED(hres)) {
+        HWND hwnd;
+        const IID *iid_reason;
+
+        if(security_problem)
+            iid_reason = &IID_IHttpSecurity;
+        else if(error == ERROR_INTERNET_INCORRECT_PASSWORD)
+            iid_reason = &IID_IAuthenticate;
+        else
+            iid_reason = &IID_IWindowForBindingUI;
+
+        hres = IWindowForBindingUI_GetWindow(wfb_ui, iid_reason, &hwnd);
+        if(SUCCEEDED(hres) && hwnd)
+        {
+            DWORD res;
+
+            res = InternetErrorDlg(hwnd, This->base.request, error,
+                                   FLAGS_ERROR_UI_FLAGS_CHANGE_OPTIONS | FLAGS_ERROR_UI_FLAGS_GENERATE_DATA,
+                                   NULL);
+
+            if(res == ERROR_INTERNET_FORCE_RETRY || res == ERROR_SUCCESS)
+                hres = RPC_E_RETRY;
+            else
+                hres = E_FAIL;
+        }
+        IWindowForBindingUI_Release(wfb_ui);
+    }
+
+    IServiceProvider_Release(serv_prov);
+
+    if(hres == RPC_E_RETRY)
+        return hres;
+
+    return internet_error_to_hres(error);
+}
+
 static ULONG send_http_request(HttpProtocol *This)
 {
     INTERNET_BUFFERSW send_buffer = {sizeof(INTERNET_BUFFERSW)};
@@ -285,13 +424,18 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, IUri *uri, DWORD reques
     if(!res)
         WARN("InternetSetOption(INTERNET_OPTION_HTTP_DECODING) failed: %08x\n", GetLastError());
 
-    error = send_http_request(This);
+    do {
+        error = send_http_request(This);
 
-    if(error == ERROR_IO_PENDING || error == ERROR_SUCCESS)
-        return S_OK;
+        if(error == ERROR_IO_PENDING || error == ERROR_SUCCESS)
+            return S_OK;
+
+        hres = handle_http_error(This, error);
+
+    } while(hres == RPC_E_RETRY);
 
     WARN("HttpSendRequest failed: %d\n", error);
-    return INET_E_DOWNLOAD_FAILURE;
+    return hres;
 }
 
 static HRESULT HttpProtocol_end_request(Protocol *protocol)
@@ -393,7 +537,26 @@ static void HttpProtocol_close_connection(Protocol *prot)
 
 static void HttpProtocol_on_error(Protocol *prot, DWORD error)
 {
-    FIXME("(%p) %d - stub\n", prot, error);
+    HttpProtocol *This = impl_from_Protocol(prot);
+    HRESULT hres;
+
+    TRACE("(%p) %d\n", prot, error);
+
+    if(prot->flags & FLAG_FIRST_CONTINUE_COMPLETE) {
+        FIXME("Not handling error %d\n", error);
+        return;
+    }
+
+    while((hres = handle_http_error(This, error)) == RPC_E_RETRY) {
+        error = send_http_request(This);
+
+        if(error == ERROR_IO_PENDING || error == ERROR_SUCCESS)
+            return;
+    }
+
+    protocol_abort(prot, hres);
+    protocol_close_connection(prot);
+    return;
 }
 
 static const ProtocolVtbl AsyncProtocolVtbl = {
