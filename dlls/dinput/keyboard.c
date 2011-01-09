@@ -50,6 +50,15 @@ struct SysKeyboardImpl
     BYTE DInputKeyState[WINE_DINPUT_KEYBOARD_MAX_KEYS];
 };
 
+static inline SysKeyboardImpl *impl_from_IDirectInputDevice8A(IDirectInputDevice8A *iface)
+{
+    return (SysKeyboardImpl *) iface;
+}
+static inline SysKeyboardImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
+{
+    return (SysKeyboardImpl *) iface;
+}
+
 static BYTE map_dik_code(DWORD scanCode, DWORD vkCode)
 {
     static const BYTE asciiCodes[] =
@@ -76,7 +85,7 @@ static BYTE map_dik_code(DWORD scanCode, DWORD vkCode)
 
 static int KeyboardCallback( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam )
 {
-    SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
+    SysKeyboardImpl *This = impl_from_IDirectInputDevice8A(iface);
     int dik_code, ret = This->base.dwCoopLevel & DISCL_EXCLUSIVE;
     KBDLLHOOKSTRUCT *hook = (KBDLLHOOKSTRUCT *)lparam;
     BYTE new_diks;
@@ -297,7 +306,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
 	LPDIRECTINPUTDEVICE8A iface,DWORD len,LPVOID ptr
 )
 {
-    SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
+    SysKeyboardImpl *This = impl_from_IDirectInputDevice8A(iface);
     TRACE("(%p)->(%d,%p)\n", This, len, ptr);
 
     if (!This->base.acquired) return DIERR_NOTACQUIRED;
@@ -328,7 +337,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetCapabilities(
 	LPDIRECTINPUTDEVICE8A iface,
 	LPDIDEVCAPS lpDIDevCaps)
 {
-    SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
+    SysKeyboardImpl *This = impl_from_IDirectInputDevice8A(iface);
     DIDEVCAPS devcaps;
 
     TRACE("(this=%p,%p)\n",This,lpDIDevCaps);
@@ -410,7 +419,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceInfo(
 	LPDIRECTINPUTDEVICE8A iface,
 	LPDIDEVICEINSTANCEA pdidi)
 {
-    SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
+    SysKeyboardImpl *This = impl_from_IDirectInputDevice8A(iface);
     TRACE("(this=%p,%p)\n", This, pdidi);
 
     if (pdidi->dwSize != sizeof(DIDEVICEINSTANCEA)) {
@@ -423,9 +432,9 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceInfo(
     return DI_OK;
 }
 
-static HRESULT WINAPI SysKeyboardWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface, LPDIDEVICEINSTANCEW pdidi) 
+static HRESULT WINAPI SysKeyboardWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface, LPDIDEVICEINSTANCEW pdidi)
 {
-    SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
+    SysKeyboardImpl *This = impl_from_IDirectInputDevice8W(iface);
     TRACE("(this=%p,%p)\n", This, pdidi);
 
     if (pdidi->dwSize != sizeof(DIDEVICEINSTANCEW)) {
