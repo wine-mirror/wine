@@ -108,7 +108,7 @@ static int KeyboardCallback( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM 
     TRACE(" setting %02X to %02X\n", dik_code, This->DInputKeyState[dik_code]);
 
     EnterCriticalSection(&This->base.crit);
-    queue_event((LPDIRECTINPUTDEVICE8A)This, DIDFT_MAKEINSTANCE(dik_code) | DIDFT_PSHBUTTON,
+    queue_event(iface, DIDFT_MAKEINSTANCE(dik_code) | DIDFT_PSHBUTTON,
                 new_diks, hook->time, This->base.dinput->evsequence++);
     LeaveCriticalSection(&This->base.crit);
 
