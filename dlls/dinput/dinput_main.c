@@ -1093,7 +1093,7 @@ static BOOL check_hook_thread(void)
     return hook_thread_id != 0;
 }
 
-void check_dinput_hooks(LPDIRECTINPUTDEVICE8A iface)
+void check_dinput_hooks(LPDIRECTINPUTDEVICE8W iface)
 {
     static HHOOK callwndproc_hook;
     static ULONG foreground_cnt;

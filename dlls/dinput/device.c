@@ -590,7 +590,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
     if (res == DI_OK)
     {
         This->queue_head = This->queue_tail = This->overflow = 0;
-        check_dinput_hooks(iface);
+        check_dinput_hooks((LPDIRECTINPUTDEVICE8W)iface);
     }
     LeaveCriticalSection(&This->crit);
 
@@ -610,7 +610,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
     res = !This->acquired ? DI_NOEFFECT : DI_OK;
     This->acquired = 0;
     if (res == DI_OK)
-        check_dinput_hooks(iface);
+        check_dinput_hooks((LPDIRECTINPUTDEVICE8W)iface);
     LeaveCriticalSection(&This->crit);
 
     return res;
