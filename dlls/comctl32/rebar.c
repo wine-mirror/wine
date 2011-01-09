@@ -1180,8 +1180,6 @@ static void REBAR_SetRowRectsX(const REBAR_INFO *infoPtr, INT iBeginBand, INT iE
     for (i = iBeginBand; i < iEndBand; i = next_visible(infoPtr, i))
     {
         REBAR_BAND *lpBand = REBAR_GetBand(infoPtr, i);
-
-        lpBand = REBAR_GetBand(infoPtr, i);
         if (lpBand->rcBand.left != xPos || lpBand->rcBand.right != xPos + lpBand->cxEffective) {
             lpBand->fDraw |= NTF_INVALIDATE;
             TRACE("Setting rect %d to %d,%d\n", i, xPos, xPos + lpBand->cxEffective);
