@@ -284,25 +284,32 @@ static HRESULT WINAPI TgaDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     /* Read footer if there is one */
     seek.QuadPart = -sizeof(tga_footer);
     hr = IStream_Seek(pIStream, seek, STREAM_SEEK_END, NULL);
-    if (FAILED(hr)) goto end;
 
-    hr = IStream_Read(pIStream, &footer, sizeof(tga_footer), &bytesread);
-    if (SUCCEEDED(hr) && bytesread != sizeof(tga_footer))
-    {
-        TRACE("got only %u footer bytes\n", bytesread);
-        hr = E_FAIL;
-    }
-    if (FAILED(hr)) goto end;
+    if (SUCCEEDED(hr)) {
+        hr = IStream_Read(pIStream, &footer, sizeof(tga_footer), &bytesread);
+        if (SUCCEEDED(hr) && bytesread != sizeof(tga_footer))
+        {
+            TRACE("got only %u footer bytes\n", bytesread);
+            hr = E_FAIL;
+        }
 
-    if (memcmp(footer.magic, tga_footer_magic, sizeof(tga_footer_magic)) == 0)
-    {
-        This->extension_area_offset = footer.extension_area_offset;
-        This->developer_directory_offset = footer.developer_directory_offset;
+        if (memcmp(footer.magic, tga_footer_magic, sizeof(tga_footer_magic)) == 0)
+        {
+            This->extension_area_offset = footer.extension_area_offset;
+            This->developer_directory_offset = footer.developer_directory_offset;
+        }
+        else
+        {
+            This->extension_area_offset = 0;
+            This->developer_directory_offset = 0;
+        }
     }
     else
     {
+        /* File is too small to have a footer. */
         This->extension_area_offset = 0;
         This->developer_directory_offset = 0;
+        hr = S_OK;
     }
 
     if (This->extension_area_offset)
