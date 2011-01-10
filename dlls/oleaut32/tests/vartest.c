@@ -106,7 +106,7 @@ static void init(void)
     HRESULT res;
 
     res = VarBstrFromBool(VARIANT_TRUE, LANG_USER_DEFAULT, VAR_LOCALBOOL, &bstr);
-    ok(SUCCEEDED(res) && (lstrlenW(bstr) > 0),
+    ok(res == S_OK && (lstrlenW(bstr) > 0),
         "Expected localized string for 'True'\n");
     /* lstrcpyW / lstrcatW do not work on win95 */
     memcpy(sz12_true, sz12, sizeof(sz12));
@@ -114,7 +114,7 @@ static void init(void)
     SysFreeString(bstr);
 
     res = VarBstrFromBool(VARIANT_FALSE, LANG_USER_DEFAULT, VAR_LOCALBOOL, &bstr);
-    ok(SUCCEEDED(res) && (lstrlenW(bstr) > 0),
+    ok(res == S_OK && (lstrlenW(bstr) > 0),
         "Expected localized string for 'False'\n");
     memcpy(sz12_false, sz12, sizeof(sz12));
     if (bstr) memcpy(&sz12_false[2], bstr, SysStringByteLen(bstr) + sizeof(WCHAR));
@@ -1582,7 +1582,7 @@ static void test_UdateFromDate( int line, DATE dt, ULONG flags, HRESULT r, WORD 
 
     memset(&ud, 0, sizeof(ud));
     res = pVarUdateFromDate(dt, flags, &ud);
-    ok_(__FILE__,line)(r == res && (FAILED(res) || (ud.st.wYear == y && ud.st.wMonth == m && ud.st.wDay == d &&
+    ok_(__FILE__,line)(r == res && (res != S_OK || (ud.st.wYear == y && ud.st.wMonth == m && ud.st.wDay == d &&
                        ud.st.wHour == h && ud.st.wMinute == mn && ud.st.wSecond == s &&
                        ud.st.wMilliseconds == ms && ud.st.wDayOfWeek == dw && ud.wDayOfYear == dy)),
                        "%.16g expected res(%x) %d,%d,%d,%d,%d,%d,%d  %d %d, got res(%x) %d,%d,%d,%d,%d,%d,%d  %d %d\n",
@@ -1643,7 +1643,7 @@ static void test_DateFromUDate( int line, WORD d, WORD m, WORD y, WORD h, WORD m
     ud.st.wDayOfWeek = dw;
     ud.wDayOfYear = dy;
     res = pVarDateFromUdate(&ud, flags, &out);
-    ok_(__FILE__,line)(r == res && (FAILED(r) || EQ_DOUBLE(out, dt)),
+    ok_(__FILE__,line)(r == res && (r != S_OK || EQ_DOUBLE(out, dt)),
                        "expected %x, %.16g, got %x, %.16g\n", r, dt, res, out);
 }
 #define UD2T(d,m,y,h,mn,s,ms,dw,dy,flags,r,dt) test_DateFromUDate(__LINE__,d,m,y,h,mn,s,ms,dw,dy,flags,r,dt)
