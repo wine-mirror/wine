@@ -186,7 +186,7 @@ static void testProps(void)
     spec.ulKind = PRSPEC_PROPID;
     U(spec).propid = PIDSI_THUMBNAIL;
     hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
-    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08x\n", hr);
+    ok(hr == S_OK, "ReadMultiple failed: 0x%08x\n", hr);
     ok(var.vt == VT_CF, "variant type wrong\n");
     ok(U(var).pclipdata->ulClipFmt == CF_ENHMETAFILE,
         "clipboard type wrong\n");

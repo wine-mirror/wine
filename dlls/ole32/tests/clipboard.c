@@ -826,15 +826,15 @@ static void test_set_clipboard(void)
     cf_onemore = RegisterClipboardFormatA("one more format");
 
     hr = DataObjectImpl_CreateText("data1", &data1);
-    ok(SUCCEEDED(hr), "Failed to create data1 object: 0x%08x\n", hr);
+    ok(hr == S_OK, "Failed to create data1 object: 0x%08x\n", hr);
     if(FAILED(hr))
         return;
     hr = DataObjectImpl_CreateText("data2", &data2);
-    ok(SUCCEEDED(hr), "Failed to create data2 object: 0x%08x\n", hr);
+    ok(hr == S_OK, "Failed to create data2 object: 0x%08x\n", hr);
     if(FAILED(hr))
         return;
     hr = DataObjectImpl_CreateComplex(&data_cmpl);
-    ok(SUCCEEDED(hr), "Failed to create complex data object: 0x%08x\n", hr);
+    ok(hr == S_OK, "Failed to create complex data object: 0x%08x\n", hr);
     if(FAILED(hr))
         return;
 
