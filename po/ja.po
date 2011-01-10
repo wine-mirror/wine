@@ -2473,7 +2473,7 @@ msgstr "アナログ(&L)"
 msgid "Digi&tal"
 msgstr "デジタル(&T)"
 
-#: clock.rc:32 notepad.rc:50
+#: clock.rc:32 notepad.rc:50 winefile.rc:97
 msgid "&Font..."
 msgstr "フォント(&F)..."
 
@@ -3295,7 +3295,8 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winhlp32.rc:28
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
+#: winhlp32.rc:28
 msgid "&File"
 msgstr "ファイル(&F)"
 
@@ -3351,7 +3352,7 @@ msgstr "コピー(&C)\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "貼り付け(&P)\tCtrl+V"
 
-#: notepad.rc:44
+#: notepad.rc:44 winefile.rc:30
 msgid "&Delete\tDel"
 msgstr "削除(&D)\tDel"
 
@@ -3379,7 +3380,7 @@ msgstr "次を検索(&S)\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "置き換える(&R)...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winhlp32.rc:60
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
 msgid "&Help"
 msgstr "ヘルプ(&H)"
 
@@ -3520,15 +3521,13 @@ msgstr ""
 msgid "O&pen\tEnter"
 msgstr ""
 
-#: progman.rc:32
-#, fuzzy
+#: progman.rc:32 winefile.rc:27
 msgid "&Move...\tF7"
-msgstr "More..."
+msgstr "移動(&M)...\tF7"
 
-#: progman.rc:33
-#, fuzzy
+#: progman.rc:33 winefile.rc:28
 msgid "&Copy...\tF8"
-msgstr "コピー(&C)"
+msgstr "コピー(&C)...\tF8"
 
 #: progman.rc:34
 #, fuzzy
@@ -3547,7 +3546,7 @@ msgstr ""
 msgid "E&xit Windows..."
 msgstr ""
 
-#: progman.rc:41 taskmgr.rc:41 winemine.rc:34 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:95 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
 msgstr "オプション(&O)"
 
@@ -3555,13 +3554,13 @@ msgstr "オプション(&O)"
 msgid "&Arrange automatically"
 msgstr ""
 
-#: progman.rc:43
+#: progman.rc:43 winefile.rc:107
 msgid "&Minimize on run"
-msgstr ""
+msgstr "&Minimize on run"
 
-#: progman.rc:44
+#: progman.rc:44 winefile.rc:108
 msgid "&Save settings on exit"
-msgstr ""
+msgstr "終了時に設定を保存(&S)"
 
 #: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
 msgid "&Windows"
@@ -3894,7 +3893,7 @@ msgstr "最小化時に隠す(&H)"
 msgid "&Show 16-bit tasks"
 msgstr "16bit タスクの表示(&S)"
 
-#: taskmgr.rc:52
+#: taskmgr.rc:52 winefile.rc:76
 msgid "&View"
 msgstr "表示(&V)"
 
@@ -3954,7 +3953,7 @@ msgstr "CPU ごとに 1 グラフ(&P)"
 msgid "&Show Kernel Times"
 msgstr "カーネル時間を表示する(&S)"
 
-#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:121
 msgid "Tile &Horizontally"
 msgstr "上下に並べて表示(&H)"
 
@@ -4600,6 +4599,334 @@ msgstr ""
 msgid "(unidentified)"
 msgstr ""
 
+#: winefile.rc:26
+msgid "&Open\tEnter"
+msgstr "開く(&O)\tEnter"
+
+#: winefile.rc:29
+msgid "&In Clipboard...\tF9"
+msgstr "&In Clipboard...\tF9"
+
+#: winefile.rc:31
+msgid "Re&name..."
+msgstr "名前の変更(&N)..."
+
+#: winefile.rc:32
+msgid "Propert&ies...\tAlt+Enter"
+msgstr "プロパティ(&I)...\tAlt+Enter"
+
+#: winefile.rc:34
+msgid "C&ompress..."
+msgstr "圧縮(&O)..."
+
+#: winefile.rc:35
+msgid "Dec&ompress..."
+msgstr "解凍(&O)..."
+
+#: winefile.rc:37
+msgid "&Run..."
+msgstr "実行(&R)..."
+
+#: winefile.rc:38
+msgid "&Print..."
+msgstr "印刷(&P)..."
+
+#: winefile.rc:39
+msgid "Associate..."
+msgstr "関連付け..."
+
+#: winefile.rc:41
+msgid "Cr&eate Directory..."
+msgstr "ディレクトリを作成(&E)..."
+
+#: winefile.rc:42
+msgid "Searc&h..."
+msgstr "検索(&H)..."
+
+#: winefile.rc:43
+msgid "&Select Files..."
+msgstr "ファイルを選択(&S)..."
+
+#: winefile.rc:46 winemine.rc:44
+msgid "E&xit\tAlt+X"
+msgstr "終了(&X)\tAlt+X"
+
+#: winefile.rc:52
+msgid "&Disk"
+msgstr "ディスク(&D)"
+
+#: winefile.rc:53
+msgid "&Copy Disk..."
+msgstr "ディスクをコピー(&C)..."
+
+#: winefile.rc:54
+msgid "&Label Disk..."
+msgstr "&Label Disk..."
+
+#: winefile.rc:56
+msgid "&Format Disk..."
+msgstr "ディスクをフォーマット(&F)..."
+
+#: winefile.rc:58
+msgid "Connect &Network Drive"
+msgstr "ネットワークドライブに接続(&N)"
+
+#: winefile.rc:59
+msgid "&Disconnect Network Drive"
+msgstr "ネットワークドライブを切断(&D)"
+
+#: winefile.rc:61
+msgid "Share as..."
+msgstr "Share as..."
+
+#: winefile.rc:62
+msgid "&Remove Share..."
+msgstr "&Remove Share..."
+
+#: winefile.rc:64
+msgid "&Select Drive..."
+msgstr "ドライブを選択(&S)..."
+
+#: winefile.rc:67
+msgid "Di&rectories"
+msgstr "ディレクトリ(&R)"
+
+#: winefile.rc:68
+msgid "&Next Level\t+"
+msgstr "&Next Level\t+"
+
+#: winefile.rc:69
+msgid "Expand &Tree\t*"
+msgstr "ツリーを展開(&T)\t*"
+
+#: winefile.rc:70
+msgid "Expand &all\tStrg+*"
+msgstr "すべてを展開(&A)\tStrg+*"
+
+#: winefile.rc:71
+msgid "Collapse &Tree\t-"
+msgstr "ツリーを折り畳む(&T)\t-"
+
+#: winefile.rc:73
+msgid "&Mark Children"
+msgstr "&Mark Children"
+
+#: winefile.rc:77
+msgid "T&ree and Directory"
+msgstr "ツリーとディレクトリ(&R)"
+
+#: winefile.rc:78
+msgid "Tr&ee Only"
+msgstr "ツリーのみ(&E)"
+
+#: winefile.rc:79
+msgid "Directory &Only"
+msgstr "ディレクトリのみ(&O)"
+
+#: winefile.rc:81
+msgid "Sp&lit"
+msgstr "分割(&L)"
+
+#: winefile.rc:83
+msgid "&Name"
+msgstr "名前(&N)"
+
+#: winefile.rc:84
+msgid "&All File Details"
+msgstr "すべてのファイル詳細(&A)"
+
+#: winefile.rc:85
+msgid "&Partial Details..."
+msgstr "部分詳細(&P)..."
+
+#: winefile.rc:87
+msgid "&Sort by Name"
+msgstr "名前で並べ替え(&S)"
+
+#: winefile.rc:88
+msgid "Sort &by Type"
+msgstr "種類で並べ替え(&B)"
+
+#: winefile.rc:89
+msgid "Sort by Si&ze"
+msgstr "サイズで並べ替え(&Z)"
+
+#: winefile.rc:90
+msgid "Sort by &Date"
+msgstr "日付で並べ替え(&D)"
+
+#: winefile.rc:92
+msgid "Filter by &..."
+msgstr "Filter by &..."
+
+#: winefile.rc:96
+msgid "&Confirmation..."
+msgstr "確認(&C)..."
+
+#: winefile.rc:98
+msgid "Customize Tool&bar..."
+msgstr "ツールバーをカスタマイズ(&B)..."
+
+#: winefile.rc:100
+msgid "&Toolbar"
+msgstr "ツールバー(&T)"
+
+#: winefile.rc:101
+msgid "&Drivebar"
+msgstr "ドライブバー(&D)"
+
+#: winefile.rc:102
+msgid "&Status Bar"
+msgstr "ステータスバー(&S)"
+
+#: winefile.rc:104
+msgid "F&ull Screen\tCtrl+Shift+S"
+msgstr "全画面表示(&U)\tCtrl+Shift+S"
+
+#: winefile.rc:112
+msgid "&Security"
+msgstr "セキュリティ(&S)"
+
+#: winefile.rc:113
+msgid "&Access..."
+msgstr "&Access..."
+
+#: winefile.rc:114
+msgid "&Logging..."
+msgstr "&Logging..."
+
+#: winefile.rc:115
+msgid "&Owner..."
+msgstr "&Owner..."
+
+#: winefile.rc:118
+msgid "&Window"
+msgstr "ウィンドウ(&W)"
+
+#: winefile.rc:119
+msgid "New &Window"
+msgstr "新規ウィンドウ(&W)"
+
+#: winefile.rc:120
+msgid "Cascading\tCtrl+F5"
+msgstr "重ねて表示\tCtrl+F5"
+
+#: winefile.rc:122
+msgid "Tile &Vertically\tCtrl+F4"
+msgstr "左右に並べて表示(&V)\tCtrl+F4"
+
+#: winefile.rc:124
+msgid "Arrange Automatically"
+msgstr "Arrange Automatically"
+
+#: winefile.rc:126
+msgid "Arrange &Symbols"
+msgstr "Arrange &Symbols"
+
+#: winefile.rc:127
+msgid "&Refresh\tF5"
+msgstr "更新(&R)\tF5"
+
+#: winefile.rc:131
+msgid "&Help Topics\tF1"
+msgstr "ヘルプ トピック(&H)\tF1"
+
+#: winefile.rc:132
+msgid "Help &Search...\tF1"
+msgstr "ヘルプの検索(&S)...\tF1"
+
+#: winefile.rc:133
+msgid "&Using Help\tF1"
+msgstr "ヘルプを使う(&U)\tF1"
+
+#: winefile.rc:135
+msgid "&About Winefile..."
+msgstr "Winefile について(&A)..."
+
+#: winefile.rc:141
+msgid "Applying font settings"
+msgstr "Applying font settings"
+
+#: winefile.rc:142
+msgid "Error while selecting new font."
+msgstr "Error while selecting new font."
+
+#: winefile.rc:147
+msgid "Wine File Manager"
+msgstr "Wine ファイルマネージャ"
+
+#: winefile.rc:148
+msgid "Error"
+msgstr "Error"
+
+#: winefile.rc:149
+msgid "root fs"
+msgstr "root fs"
+
+#: winefile.rc:150
+msgid "unixfs"
+msgstr "unixfs"
+
+#: winefile.rc:151
+msgid "Desktop"
+msgstr "Desktop"
+
+#: winefile.rc:152
+msgid "Shell"
+msgstr "シェル"
+
+#: winefile.rc:153
+msgid "%s - %s"
+msgstr "%s - %s"
+
+#: winefile.rc:154
+msgid "Not yet implemented"
+msgstr "未実装"
+
+#: winefile.rc:155
+msgid "Wine File"
+msgstr "Wine File"
+
+#: winefile.rc:160
+msgid "Name"
+msgstr "名前"
+
+#: winefile.rc:161
+msgid "Size"
+msgstr "サイズ"
+
+#: winefile.rc:162
+msgid "CDate"
+msgstr "CDate"
+
+#: winefile.rc:163
+msgid "ADate"
+msgstr "ADate"
+
+#: winefile.rc:164
+msgid "MDate"
+msgstr "MDate"
+
+#: winefile.rc:165
+msgid "Index/Inode"
+msgstr "Index/Inode"
+
+#: winefile.rc:166
+msgid "Links"
+msgstr "リンク"
+
+#: winefile.rc:167
+msgid "Attributes"
+msgstr "属性"
+
+#: winefile.rc:168
+msgid "Security"
+msgstr "セキュリティ"
+
+#: winefile.rc:170
+msgid "%s of %s free"
+msgstr "%s of %s free"
+
 #: winemine.rc:35
 msgid "&New\tF2"
 msgstr "スタート(&N)\tF2"
@@ -4623,10 +4950,6 @@ msgstr "上級(&E)"
 #: winemine.rc:42
 msgid "&Custom..."
 msgstr "盤面の変更(&C)"
-
-#: winemine.rc:44
-msgid "E&xit\tAlt+X"
-msgstr "終了(&X)\tAlt+X"
 
 #: winemine.rc:46
 msgid "&Info"

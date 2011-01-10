@@ -2382,7 +2382,7 @@ msgstr "模拟时钟(&L)"
 msgid "Digi&tal"
 msgstr "数字时钟(&T)"
 
-#: clock.rc:32 notepad.rc:50
+#: clock.rc:32 notepad.rc:50 winefile.rc:97
 msgid "&Font..."
 msgstr "字体(&F)..."
 
@@ -3043,7 +3043,8 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winhlp32.rc:28
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
+#: winhlp32.rc:28
 msgid "&File"
 msgstr "文件(&F)"
 
@@ -3104,7 +3105,7 @@ msgstr "复制(&C)\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "粘贴(&P)\tCtrl+V"
 
-#: notepad.rc:44
+#: notepad.rc:44 winefile.rc:30
 msgid "&Delete\tDel"
 msgstr "删除(&D)\tDel"
 
@@ -3132,9 +3133,14 @@ msgstr "搜索下一个(&S)\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "替换...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winhlp32.rc:60
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
+#, fuzzy
 msgid "&Help"
-msgstr "帮助(&H)"
+msgstr ""
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"帮助(&H)\n"
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"&?"
 
 #: notepad.rc:59 progman.rc:54
 msgid "&Search..."
@@ -3260,11 +3266,11 @@ msgstr "新建(&N)..."
 msgid "O&pen\tEnter"
 msgstr "打开(&O)\tEnter"
 
-#: progman.rc:32
+#: progman.rc:32 winefile.rc:27
 msgid "&Move...\tF7"
 msgstr "移动(&M)...\tF7"
 
-#: progman.rc:33
+#: progman.rc:33 winefile.rc:28
 msgid "&Copy...\tF8"
 msgstr "复制(&C)...\tF8"
 
@@ -3284,7 +3290,7 @@ msgstr "执行(&E)..."
 msgid "E&xit Windows..."
 msgstr "退出 Windows(&X)..."
 
-#: progman.rc:41 taskmgr.rc:41 winemine.rc:34 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:95 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
 msgstr "选项(&O)"
 
@@ -3292,11 +3298,16 @@ msgstr "选项(&O)"
 msgid "&Arrange automatically"
 msgstr "自动排列(&A)"
 
-#: progman.rc:43
+#: progman.rc:43 winefile.rc:107
+#, fuzzy
 msgid "&Minimize on run"
-msgstr "运行时最小化(&M)"
+msgstr ""
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"运行时最小化(&M)\n"
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"启动后最小化(&M)"
 
-#: progman.rc:44
+#: progman.rc:44 winefile.rc:108
 msgid "&Save settings on exit"
 msgstr "退出时保存设置(&S)"
 
@@ -3584,7 +3595,7 @@ msgstr "最小化时隐藏(&H)"
 msgid "&Show 16-bit tasks"
 msgstr "显示16位任务(&S)"
 
-#: taskmgr.rc:52
+#: taskmgr.rc:52 winefile.rc:76
 msgid "&View"
 msgstr "视图(&V)"
 
@@ -3644,9 +3655,14 @@ msgstr "每一个 C&PU 各一张图"
 msgid "&Show Kernel Times"
 msgstr "显示内核时间(&S)"
 
-#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:121
+#, fuzzy
 msgid "Tile &Horizontally"
-msgstr "横向平铺(&H)"
+msgstr ""
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"横向平铺(&H)\n"
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"水平平铺(&H)"
 
 #: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
 msgid "Tile &Vertically"
@@ -4295,6 +4311,346 @@ msgstr ""
 msgid "(unidentified)"
 msgstr ""
 
+#: winefile.rc:26
+msgid "&Open\tEnter"
+msgstr "打开(&O)\tEnter"
+
+#: winefile.rc:29
+msgid "&In Clipboard...\tF9"
+msgstr "位于剪贴板(&I)...\tF9"
+
+#: winefile.rc:31
+msgid "Re&name..."
+msgstr "改名(&N)..."
+
+#: winefile.rc:32
+msgid "Propert&ies...\tAlt+Enter"
+msgstr "属性(&I)...\tAlt+Enter"
+
+#: winefile.rc:34
+msgid "C&ompress..."
+msgstr "压缩(&O)..."
+
+#: winefile.rc:35
+msgid "Dec&ompress..."
+msgstr "解压缩(&O)..."
+
+#: winefile.rc:37
+msgid "&Run..."
+msgstr "运行(&R)..."
+
+#: winefile.rc:38
+msgid "&Print..."
+msgstr "打印(&P)..."
+
+#: winefile.rc:39
+msgid "Associate..."
+msgstr "配置文件相关..."
+
+#: winefile.rc:41
+msgid "Cr&eate Directory..."
+msgstr "建立目录(&E)..."
+
+#: winefile.rc:42
+msgid "Searc&h..."
+msgstr "查找(&H)..."
+
+#: winefile.rc:43
+msgid "&Select Files..."
+msgstr "选择文件(&S)..."
+
+#: winefile.rc:46 winemine.rc:44
+msgid "E&xit\tAlt+X"
+msgstr "退出(&X)\tAlt+X"
+
+#: winefile.rc:52
+msgid "&Disk"
+msgstr "磁盘(&D)"
+
+#: winefile.rc:53
+msgid "&Copy Disk..."
+msgstr "复制(&C)..."
+
+#: winefile.rc:54
+msgid "&Label Disk..."
+msgstr "命名(&L)..."
+
+#: winefile.rc:56
+msgid "&Format Disk..."
+msgstr "格式化(&)..."
+
+#: winefile.rc:58
+msgid "Connect &Network Drive"
+msgstr "连接网络驱动器(&N)"
+
+#: winefile.rc:59
+msgid "&Disconnect Network Drive"
+msgstr "断开网络驱动器连接(&D)"
+
+#: winefile.rc:61
+msgid "Share as..."
+msgstr "共享为..."
+
+#: winefile.rc:62
+msgid "&Remove Share..."
+msgstr "删除共享(&R)..."
+
+#: winefile.rc:64
+msgid "&Select Drive..."
+msgstr "选择驱动器(&S)..."
+
+#: winefile.rc:67
+msgid "Di&rectories"
+msgstr "目录(&D)"
+
+#: winefile.rc:68
+msgid "&Next Level\t+"
+msgstr "下一层(&N)\t+"
+
+#: winefile.rc:69
+msgid "Expand &Tree\t*"
+msgstr "展开(&T)\t*"
+
+#: winefile.rc:70
+msgid "Expand &all\tStrg+*"
+msgstr "全部展开(&A)\tStrg+*"
+
+#: winefile.rc:71
+msgid "Collapse &Tree\t-"
+msgstr "折叠(&R)\t-"
+
+#: winefile.rc:73
+msgid "&Mark Children"
+msgstr "标记子目录(&M)"
+
+#: winefile.rc:77
+msgid "T&ree and Directory"
+msgstr "目录树机器内容(&R)"
+
+#: winefile.rc:78
+msgid "Tr&ee Only"
+msgstr "仅显示目录树(&E)"
+
+#: winefile.rc:79
+msgid "Directory &Only"
+msgstr "仅显示目录内容(&O)"
+
+#: winefile.rc:81
+msgid "Sp&lit"
+msgstr "分割(&L)"
+
+#: winefile.rc:83
+msgid "&Name"
+msgstr "文件名称(&N)"
+
+#: winefile.rc:84
+msgid "&All File Details"
+msgstr "文件详情列表(&A)"
+
+#: winefile.rc:85
+msgid "&Partial Details..."
+msgstr "部分属性(&P)..."
+
+#: winefile.rc:87
+msgid "&Sort by Name"
+msgstr "按文件名排序(&S)"
+
+#: winefile.rc:88
+msgid "Sort &by Type"
+msgstr "按类型排序(&B)"
+
+#: winefile.rc:89
+msgid "Sort by Si&ze"
+msgstr "按大小排序(&Z)"
+
+#: winefile.rc:90
+msgid "Sort by &Date"
+msgstr "按日期排序(&D)"
+
+#: winefile.rc:92
+msgid "Filter by &..."
+msgstr "定制排序..."
+
+#: winefile.rc:96
+msgid "&Confirmation..."
+msgstr "确定方式(&C)..."
+
+#: winefile.rc:98
+msgid "Customize Tool&bar..."
+msgstr "定制工具条(&B)..."
+
+#: winefile.rc:100
+msgid "&Toolbar"
+msgstr "工具条(&T)"
+
+#: winefile.rc:101
+msgid "&Drivebar"
+msgstr "驱动器列表(&D)"
+
+#: winefile.rc:102
+msgid "&Status Bar"
+msgstr "状态栏(&S)"
+
+#: winefile.rc:104
+msgid "F&ull Screen\tCtrl+Shift+S"
+msgstr "全屏(&U)\tCtrl+Shift+S"
+
+#: winefile.rc:112
+msgid "&Security"
+msgstr "安全(&S)"
+
+#: winefile.rc:113
+msgid "&Access..."
+msgstr "访问(&A)..."
+
+#: winefile.rc:114
+msgid "&Logging..."
+msgstr "登录(&L)..."
+
+#: winefile.rc:115
+msgid "&Owner..."
+msgstr "所有者(&O)..."
+
+#: winefile.rc:118
+msgid "&Window"
+msgstr "窗口(&W)"
+
+#: winefile.rc:119
+msgid "New &Window"
+msgstr "新建(&W)"
+
+#: winefile.rc:120
+msgid "Cascading\tCtrl+F5"
+msgstr "层叠\tCtrl+F5"
+
+#: winefile.rc:122
+msgid "Tile &Vertically\tCtrl+F4"
+msgstr "垂直平铺(&)\tCtrl+F4"
+
+#: winefile.rc:124
+msgid "Arrange Automatically"
+msgstr "自动排列"
+
+#: winefile.rc:126
+msgid "Arrange &Symbols"
+msgstr "自动排列图标(&S)"
+
+#: winefile.rc:127
+msgid "&Refresh\tF5"
+msgstr "刷新(&R)\tF5"
+
+#: winefile.rc:131
+msgid "&Help Topics\tF1"
+msgstr "帮助主题(&H)\tF1"
+
+#: winefile.rc:132
+msgid "Help &Search...\tF1"
+msgstr "搜索帮助(&S)...\tF1"
+
+#: winefile.rc:133
+msgid "&Using Help\tF1"
+msgstr "使用帮助(&U)\tF1"
+
+#: winefile.rc:135
+msgid "&About Winefile..."
+msgstr "&关于 Winefile..."
+
+#: winefile.rc:141
+msgid "Applying font settings"
+msgstr ""
+
+#: winefile.rc:142
+msgid "Error while selecting new font."
+msgstr ""
+
+#: winefile.rc:147
+msgid "Wine File Manager"
+msgstr ""
+
+#: winefile.rc:148
+#, fuzzy
+msgid "Error"
+msgstr "本地端口"
+
+#: winefile.rc:149
+msgid "root fs"
+msgstr ""
+
+#: winefile.rc:150
+msgid "unixfs"
+msgstr ""
+
+#: winefile.rc:151
+msgid "Desktop"
+msgstr ""
+
+#: winefile.rc:152
+msgid "Shell"
+msgstr ""
+
+#: winefile.rc:153
+msgid "%s - %s"
+msgstr ""
+
+#: winefile.rc:154
+#, fuzzy
+msgid "Not yet implemented"
+msgstr ""
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"此功能未实现\n"
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"未实现"
+
+#: winefile.rc:155
+#, fuzzy
+msgid "Wine File"
+msgstr "Wine地雷"
+
+#: winefile.rc:160
+#, fuzzy
+msgid "Name"
+msgstr "文件名称(&N)"
+
+#: winefile.rc:161
+msgid "Size"
+msgstr ""
+
+#: winefile.rc:162
+#, fuzzy
+msgid "CDate"
+msgstr "日期(&D)"
+
+#: winefile.rc:163
+#, fuzzy
+msgid "ADate"
+msgstr "日期(&D)"
+
+#: winefile.rc:164
+#, fuzzy
+msgid "MDate"
+msgstr "日期(&D)"
+
+#: winefile.rc:165
+msgid "Index/Inode"
+msgstr ""
+
+#: winefile.rc:166
+msgid "Links"
+msgstr ""
+
+#: winefile.rc:167
+msgid "Attributes"
+msgstr ""
+
+#: winefile.rc:168
+#, fuzzy
+msgid "Security"
+msgstr "安全(&S)"
+
+#: winefile.rc:170
+msgid "%s of %s free"
+msgstr ""
+
 #: winemine.rc:35
 msgid "&New\tF2"
 msgstr "新游戏(&N)\tF2"
@@ -4318,10 +4674,6 @@ msgstr "专家(&E)"
 #: winemine.rc:42
 msgid "&Custom..."
 msgstr "自定义(&C)"
-
-#: winemine.rc:44
-msgid "E&xit\tAlt+X"
-msgstr "退出(&X)\tAlt+X"
 
 #: winemine.rc:46
 msgid "&Info"

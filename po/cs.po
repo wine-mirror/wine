@@ -2470,7 +2470,7 @@ msgstr "Ana&logové"
 msgid "Digi&tal"
 msgstr "Digi&tální"
 
-#: clock.rc:32 notepad.rc:50
+#: clock.rc:32 notepad.rc:50 winefile.rc:97
 msgid "&Font..."
 msgstr "&Písmo..."
 
@@ -3293,7 +3293,8 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winhlp32.rc:28
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
+#: winhlp32.rc:28
 msgid "&File"
 msgstr "&Soubor"
 
@@ -3354,7 +3355,7 @@ msgstr "&Kopírovat\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "&Vložit\tCtrl+V"
 
-#: notepad.rc:44
+#: notepad.rc:44 winefile.rc:30
 msgid "&Delete\tDel"
 msgstr "&Smazat\tDel"
 
@@ -3382,9 +3383,14 @@ msgstr "&Najdi další\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "Nah&radit...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winhlp32.rc:60
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
+#, fuzzy
 msgid "&Help"
-msgstr "&Nápověda"
+msgstr ""
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"&Nápověda\n"
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"&?"
 
 #: notepad.rc:59 progman.rc:54
 msgid "&Search..."
@@ -3511,11 +3517,16 @@ msgstr "&Nový..."
 msgid "O&pen\tEnter"
 msgstr "O&tevřít\tEnter"
 
-#: progman.rc:32
+#: progman.rc:32 winefile.rc:27
+#, fuzzy
 msgid "&Move...\tF7"
-msgstr "Př&esunout...\tF7"
+msgstr ""
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"Př&esunout...\tF7\n"
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"&Přesunout...\tF7"
 
-#: progman.rc:33
+#: progman.rc:33 winefile.rc:28
 msgid "&Copy...\tF8"
 msgstr "&Kopírovat...\tF8"
 
@@ -3535,26 +3546,31 @@ msgstr "Sp&ustit..."
 msgid "E&xit Windows..."
 msgstr "&Konec Windows..."
 
-#: progman.rc:41 taskmgr.rc:41 winemine.rc:34 winhlp32.rc:44
-#, fuzzy
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:95 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
-msgstr ""
-"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
-"&Nastavení\n"
-"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
-"N&astavení"
+msgstr "&Nastavení"
 
 #: progman.rc:42
 msgid "&Arrange automatically"
 msgstr "&Uspořádat automaticky"
 
-#: progman.rc:43
+#: progman.rc:43 winefile.rc:107
+#, fuzzy
 msgid "&Minimize on run"
-msgstr "&Minimalizovat za běhu"
+msgstr ""
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"&Minimalizovat za běhu\n"
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"&Minimalizovat při spuštění"
 
-#: progman.rc:44
+#: progman.rc:44 winefile.rc:108
+#, fuzzy
 msgid "&Save settings on exit"
-msgstr "U&ložit nastavení při ukončení"
+msgstr ""
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"U&ložit nastavení při ukončení\n"
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"&Uložit nastavení při vypnutí"
 
 #: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
 msgid "&Windows"
@@ -3879,9 +3895,9 @@ msgstr ""
 msgid "&Show 16-bit tasks"
 msgstr ""
 
-#: taskmgr.rc:52
+#: taskmgr.rc:52 winefile.rc:76
 msgid "&View"
-msgstr ""
+msgstr "&Zobrazení"
 
 #: taskmgr.rc:54
 #, fuzzy
@@ -3942,9 +3958,9 @@ msgstr ""
 msgid "&Show Kernel Times"
 msgstr ""
 
-#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:121
 msgid "Tile &Horizontally"
-msgstr ""
+msgstr "Uspořádat &horizontálně"
 
 #: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
 msgid "Tile &Vertically"
@@ -4576,6 +4592,339 @@ msgstr ""
 msgid "(unidentified)"
 msgstr ""
 
+#: winefile.rc:26
+msgid "&Open\tEnter"
+msgstr "&Otevřít\tEnter"
+
+#: winefile.rc:29
+msgid "&In Clipboard...\tF9"
+msgstr "&Ve schránce...\tF9"
+
+#: winefile.rc:31
+msgid "Re&name..."
+msgstr "Př&ejmenovat..."
+
+#: winefile.rc:32
+msgid "Propert&ies...\tAlt+Enter"
+msgstr "V&lastnosti...\tAlt+Enter"
+
+#: winefile.rc:34
+msgid "C&ompress..."
+msgstr "&Komprese..."
+
+#: winefile.rc:35
+msgid "Dec&ompress..."
+msgstr "&Dekomprese..."
+
+#: winefile.rc:37
+msgid "&Run..."
+msgstr "&Spustit..."
+
+#: winefile.rc:38
+msgid "&Print..."
+msgstr "&Tisknout..."
+
+#: winefile.rc:39
+msgid "Associate..."
+msgstr "Asociovat..."
+
+#: winefile.rc:41
+msgid "Cr&eate Directory..."
+msgstr "V&ytvořit adresář..."
+
+#: winefile.rc:42
+msgid "Searc&h..."
+msgstr "&Hledat..."
+
+#: winefile.rc:43
+msgid "&Select Files..."
+msgstr "&Zvolit voubory..."
+
+#: winefile.rc:46 winemine.rc:44
+#, fuzzy
+msgid "E&xit\tAlt+X"
+msgstr ""
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"&Konec\tAlt+K\n"
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"K&onec\tAlt+X"
+
+#: winefile.rc:52
+msgid "&Disk"
+msgstr "&Disk"
+
+#: winefile.rc:53
+msgid "&Copy Disk..."
+msgstr "&Kopírovat disk..."
+
+#: winefile.rc:54
+msgid "&Label Disk..."
+msgstr "&Jmenovka disk..."
+
+#: winefile.rc:56
+msgid "&Format Disk..."
+msgstr "&Formátovat disk..."
+
+#: winefile.rc:58
+msgid "Connect &Network Drive"
+msgstr "Připojit &síťové zařízení"
+
+#: winefile.rc:59
+msgid "&Disconnect Network Drive"
+msgstr "&Odpojit &síťové zařízení"
+
+#: winefile.rc:61
+msgid "Share as..."
+msgstr "Sdílet jako..."
+
+#: winefile.rc:62
+msgid "&Remove Share..."
+msgstr "&Odstranit sdílení..."
+
+#: winefile.rc:64
+msgid "&Select Drive..."
+msgstr "&Zvolit zařízení..."
+
+#: winefile.rc:67
+msgid "Di&rectories"
+msgstr "&Adresáře"
+
+#: winefile.rc:68
+msgid "&Next Level\t+"
+msgstr "&Další úroveň\t+"
+
+#: winefile.rc:69
+msgid "Expand &Tree\t*"
+msgstr "Rozbalit &strom\t*"
+
+#: winefile.rc:70
+msgid "Expand &all\tStrg+*"
+msgstr "Rozbalit &vše\tStrg+*"
+
+#: winefile.rc:71
+msgid "Collapse &Tree\t-"
+msgstr "Sbalit &strom\t-"
+
+#: winefile.rc:73
+msgid "&Mark Children"
+msgstr "&Označit potomky"
+
+#: winefile.rc:77
+msgid "T&ree and Directory"
+msgstr "&Strom a adresáře"
+
+#: winefile.rc:78
+msgid "Tr&ee Only"
+msgstr "&Jen strom"
+
+#: winefile.rc:79
+msgid "Directory &Only"
+msgstr "Jen &adresáře"
+
+#: winefile.rc:81
+msgid "Sp&lit"
+msgstr "&Rozdělit"
+
+#: winefile.rc:83
+msgid "&Name"
+msgstr "&Jméno"
+
+#: winefile.rc:84
+msgid "&All File Details"
+msgstr "&Detaily všech souborů"
+
+#: winefile.rc:85
+msgid "&Partial Details..."
+msgstr "Čá&stečné detaily..."
+
+#: winefile.rc:87
+msgid "&Sort by Name"
+msgstr "&Třídit podle jména"
+
+#: winefile.rc:88
+msgid "Sort &by Type"
+msgstr "Třídit &podle typu"
+
+#: winefile.rc:89
+msgid "Sort by Si&ze"
+msgstr "Třídit podle &velikosti"
+
+#: winefile.rc:90
+msgid "Sort by &Date"
+msgstr "Třídit podle &data"
+
+#: winefile.rc:92
+msgid "Filter by &..."
+msgstr "Třídit podle &..."
+
+#: winefile.rc:96
+msgid "&Confirmation..."
+msgstr "&Potvrzování..."
+
+#: winefile.rc:98
+msgid "Customize Tool&bar..."
+msgstr "Upravit panel &nástrojů..."
+
+#: winefile.rc:100
+msgid "&Toolbar"
+msgstr "&Panel nástrojů"
+
+#: winefile.rc:101
+msgid "&Drivebar"
+msgstr "&Panel zaříení"
+
+#: winefile.rc:102
+msgid "&Status Bar"
+msgstr "&Stavový řádek"
+
+#: winefile.rc:104
+msgid "F&ull Screen\tCtrl+Shift+S"
+msgstr "&Celaá obrazovka\tCtrl+Shift+S"
+
+#: winefile.rc:112
+msgid "&Security"
+msgstr "&Zabezpečení"
+
+#: winefile.rc:113
+msgid "&Access..."
+msgstr "&Přístup..."
+
+#: winefile.rc:114
+msgid "&Logging..."
+msgstr "&Logování..."
+
+#: winefile.rc:115
+msgid "&Owner..."
+msgstr "&Vlastník..."
+
+#: winefile.rc:118
+msgid "&Window"
+msgstr "&Okno"
+
+#: winefile.rc:119
+msgid "New &Window"
+msgstr "Nové &okno"
+
+#: winefile.rc:120
+msgid "Cascading\tCtrl+F5"
+msgstr "Kaskádování\tCtrl+F5"
+
+#: winefile.rc:122
+msgid "Tile &Vertically\tCtrl+F4"
+msgstr "Uspořádat &vertikálně\tCtrl+F4"
+
+#: winefile.rc:124
+msgid "Arrange Automatically"
+msgstr "Zarovnat automaticky"
+
+#: winefile.rc:126
+msgid "Arrange &Symbols"
+msgstr "Zarovnat &symboly"
+
+#: winefile.rc:127
+msgid "&Refresh\tF5"
+msgstr "&Aktualizovat\tF5"
+
+#: winefile.rc:131
+msgid "&Help Topics\tF1"
+msgstr "&Témata nápovědy\tF1"
+
+#: winefile.rc:132
+msgid "Help &Search...\tF1"
+msgstr "Hledání v &nápovědě...\tF1"
+
+#: winefile.rc:133
+msgid "&Using Help\tF1"
+msgstr "&Jak používat nápovědu\tF1"
+
+#: winefile.rc:135
+msgid "&About Winefile..."
+msgstr "&Informace o Winefile..."
+
+#: winefile.rc:141
+msgid "Applying font settings"
+msgstr "Aplikování nastavení písma"
+
+#: winefile.rc:142
+msgid "Error while selecting new font."
+msgstr "Chyba při volbě nového písma."
+
+#: winefile.rc:147
+msgid "Wine File Manager"
+msgstr "Winefile"
+
+#: winefile.rc:148
+msgid "Error"
+msgstr "Chyba"
+
+#: winefile.rc:149
+msgid "root fs"
+msgstr "root fs"
+
+#: winefile.rc:150
+msgid "unixfs"
+msgstr "unixfs"
+
+#: winefile.rc:151
+msgid "Desktop"
+msgstr "Plocha"
+
+#: winefile.rc:152
+msgid "Shell"
+msgstr "Příkazový řádek"
+
+#: winefile.rc:153
+msgid "%s - %s"
+msgstr "%s - %s"
+
+#: winefile.rc:154
+msgid "Not yet implemented"
+msgstr "Zatím neimplementováno"
+
+#: winefile.rc:155
+msgid "Wine File"
+msgstr "Wine File"
+
+#: winefile.rc:160
+msgid "Name"
+msgstr "Jméno"
+
+#: winefile.rc:161
+msgid "Size"
+msgstr "Velikost"
+
+#: winefile.rc:162
+msgid "CDate"
+msgstr "Datum vytvoření"
+
+#: winefile.rc:163
+msgid "ADate"
+msgstr "Datum posledního přístupu"
+
+#: winefile.rc:164
+msgid "MDate"
+msgstr "Datum poslední modifikace"
+
+#: winefile.rc:165
+msgid "Index/Inode"
+msgstr "Index/Inode"
+
+#: winefile.rc:166
+msgid "Links"
+msgstr "Linky"
+
+#: winefile.rc:167
+msgid "Attributes"
+msgstr "Atributy"
+
+#: winefile.rc:168
+msgid "Security"
+msgstr "Zabezpečení"
+
+#: winefile.rc:170
+msgid "%s of %s free"
+msgstr "%s z %s volného"
+
 #: winemine.rc:35
 msgid "&New\tF2"
 msgstr "&Nová\tF2"
@@ -4599,10 +4948,6 @@ msgstr "&Expert"
 #: winemine.rc:42
 msgid "&Custom..."
 msgstr "&Dle libosti"
-
-#: winemine.rc:44
-msgid "E&xit\tAlt+X"
-msgstr "&Konec\tAlt+K"
 
 #: winemine.rc:46
 msgid "&Info"

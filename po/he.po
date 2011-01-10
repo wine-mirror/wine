@@ -2371,7 +2371,7 @@ msgstr "&אנלוגי"
 msgid "Digi&tal"
 msgstr "&דיגיטלי"
 
-#: clock.rc:32 notepad.rc:50
+#: clock.rc:32 notepad.rc:50 winefile.rc:97
 msgid "&Font..."
 msgstr "&גופן..."
 
@@ -3032,7 +3032,8 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winhlp32.rc:28
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
+#: winhlp32.rc:28
 msgid "&File"
 msgstr "&קובץ"
 
@@ -3088,7 +3089,7 @@ msgstr "ה&עתקה\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "ה&דבקה\tCtrl+V"
 
-#: notepad.rc:44
+#: notepad.rc:44 winefile.rc:30
 msgid "&Delete\tDel"
 msgstr "&מחיקה\tDel"
 
@@ -3116,7 +3117,7 @@ msgstr "חיפוש ה&בא\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "החל&פה...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winhlp32.rc:60
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
 msgid "&Help"
 msgstr "ע&זרה"
 
@@ -3248,11 +3249,11 @@ msgstr "&חדש..."
 msgid "O&pen\tEnter"
 msgstr "&פתיחה\tEnter"
 
-#: progman.rc:32
+#: progman.rc:32 winefile.rc:27
 msgid "&Move...\tF7"
 msgstr "ה&עברה...\tF7"
 
-#: progman.rc:33
+#: progman.rc:33 winefile.rc:28
 msgid "&Copy...\tF8"
 msgstr "הע&תקה...\tF8"
 
@@ -3272,7 +3273,7 @@ msgstr "הפע&לה..."
 msgid "E&xit Windows..."
 msgstr "י&ציאה מ־Windows..."
 
-#: progman.rc:41 taskmgr.rc:41 winemine.rc:34 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:95 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
 msgstr "&אפשרויות"
 
@@ -3280,13 +3281,18 @@ msgstr "&אפשרויות"
 msgid "&Arrange automatically"
 msgstr "&סידור אוטומטי"
 
-#: progman.rc:43
+#: progman.rc:43 winefile.rc:107
 msgid "&Minimize on run"
 msgstr "מ&זעור עם ההפעלה"
 
-#: progman.rc:44
+#: progman.rc:44 winefile.rc:108
+#, fuzzy
 msgid "&Save settings on exit"
-msgstr "&שמירת ההגדרות עם היציאה"
+msgstr ""
+"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
+"&שמירת ההגדרות עם היציאה\n"
+"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
+"&שמירת השינויים ביציאה"
 
 #: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
 msgid "&Windows"
@@ -3572,9 +3578,14 @@ msgstr "הסתרה &בעת מזעור"
 msgid "&Show 16-bit tasks"
 msgstr "ה&צגת משימות 16 סיביות"
 
-#: taskmgr.rc:52
+#: taskmgr.rc:52 winefile.rc:76
+#, fuzzy
 msgid "&View"
-msgstr "&תצוגה"
+msgstr ""
+"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
+"&תצוגה\n"
+"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
+"ת&צוגה"
 
 #: taskmgr.rc:54
 msgid "&Refresh Now"
@@ -3632,9 +3643,14 @@ msgstr "תרשים &אחד לכול מעבד"
 msgid "&Show Kernel Times"
 msgstr "הצגת זמני ה&קרנל"
 
-#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:121
+#, fuzzy
 msgid "Tile &Horizontally"
-msgstr "פריסה או&פקית"
+msgstr ""
+"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
+"פריסה או&פקית\n"
+"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
+"פריסה &אנכית"
 
 #: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
 msgid "Tile &Vertically"
@@ -4284,6 +4300,334 @@ msgstr "Internal errors - invalid parameters received"
 msgid "(unidentified)"
 msgstr "(unidentified)"
 
+#: winefile.rc:26
+msgid "&Open\tEnter"
+msgstr "&פתיחה\tEnter"
+
+#: winefile.rc:29
+msgid "&In Clipboard...\tF9"
+msgstr "&בלוח הגזירים...\tF9"
+
+#: winefile.rc:31
+msgid "Re&name..."
+msgstr "&שינוי שם..."
+
+#: winefile.rc:32
+msgid "Propert&ies...\tAlt+Enter"
+msgstr "מ&אפייניםs...\tAlt+Enter"
+
+#: winefile.rc:34
+msgid "C&ompress..."
+msgstr "&דחיסה..."
+
+#: winefile.rc:35
+msgid "Dec&ompress..."
+msgstr "פ&ריסה..."
+
+#: winefile.rc:37
+msgid "&Run..."
+msgstr "הפע&לה..."
+
+#: winefile.rc:38
+msgid "&Print..."
+msgstr "ה&דפסה..."
+
+#: winefile.rc:39
+msgid "Associate..."
+msgstr "שיוך..."
+
+#: winefile.rc:41
+msgid "Cr&eate Directory..."
+msgstr "&יצירת תיקייה..."
+
+#: winefile.rc:42
+msgid "Searc&h..."
+msgstr "&חיפוש..."
+
+#: winefile.rc:43
+msgid "&Select Files..."
+msgstr "בחירת &קבצים..."
+
+#: winefile.rc:46 winemine.rc:44
+msgid "E&xit\tAlt+X"
+msgstr "י&ציאה\tAlt+X"
+
+#: winefile.rc:52
+msgid "&Disk"
+msgstr "&כונן"
+
+#: winefile.rc:53
+msgid "&Copy Disk..."
+msgstr "ה&עתקת כונן..."
+
+#: winefile.rc:54
+msgid "&Label Disk..."
+msgstr "&תווית הכונן..."
+
+#: winefile.rc:56
+msgid "&Format Disk..."
+msgstr "&פרמוט הכונן..."
+
+#: winefile.rc:58
+msgid "Connect &Network Drive"
+msgstr "התחבר לכונן &רשת"
+
+#: winefile.rc:59
+msgid "&Disconnect Network Drive"
+msgstr "&ניתוק כונן רשת"
+
+#: winefile.rc:61
+msgid "Share as..."
+msgstr "שיתוף בשם..."
+
+#: winefile.rc:62
+msgid "&Remove Share..."
+msgstr "ה&סרת שיתוף..."
+
+#: winefile.rc:64
+msgid "&Select Drive..."
+msgstr "&בחירת כונן..."
+
+#: winefile.rc:67
+msgid "Di&rectories"
+msgstr "&תיקיות"
+
+#: winefile.rc:68
+msgid "&Next Level\t+"
+msgstr "הרמה ה&באה\t+"
+
+#: winefile.rc:69
+msgid "Expand &Tree\t*"
+msgstr "הר&חבת העץ\t*"
+
+#: winefile.rc:70
+msgid "Expand &all\tStrg+*"
+msgstr "הרחבת ה&כול\tStrg+*"
+
+#: winefile.rc:71
+msgid "Collapse &Tree\t-"
+msgstr "&צמצום העץ\t-"
+
+#: winefile.rc:73
+msgid "&Mark Children"
+msgstr "&סימון ה&צאצאים"
+
+#: winefile.rc:77
+msgid "T&ree and Directory"
+msgstr "ע&ץ ותיקייה"
+
+#: winefile.rc:78
+msgid "Tr&ee Only"
+msgstr "עץ &בלבד"
+
+#: winefile.rc:79
+msgid "Directory &Only"
+msgstr "Directory &Only"
+
+#: winefile.rc:81
+msgid "Sp&lit"
+msgstr "&פיצול"
+
+#: winefile.rc:83
+msgid "&Name"
+msgstr "&שם"
+
+#: winefile.rc:84
+msgid "&All File Details"
+msgstr "&כל פרטי הקובץ"
+
+#: winefile.rc:85
+msgid "&Partial Details..."
+msgstr "פרטים &חלקיים..."
+
+#: winefile.rc:87
+msgid "&Sort by Name"
+msgstr "&סידור לפי שם"
+
+#: winefile.rc:88
+msgid "Sort &by Type"
+msgstr "סידור לפי &סוג"
+
+#: winefile.rc:89
+msgid "Sort by Si&ze"
+msgstr "סידור לפי &גודל"
+
+#: winefile.rc:90
+msgid "Sort by &Date"
+msgstr "סידור לפי ת&אריך"
+
+#: winefile.rc:92
+msgid "Filter by &..."
+msgstr "סינון לפי &..."
+
+#: winefile.rc:96
+msgid "&Confirmation..."
+msgstr "&אישור..."
+
+#: winefile.rc:98
+msgid "Customize Tool&bar..."
+msgstr "הת&אמת סרגל הכלים..."
+
+#: winefile.rc:100
+msgid "&Toolbar"
+msgstr "&סרגל הכלים"
+
+#: winefile.rc:101
+msgid "&Drivebar"
+msgstr "סרגל הכוננים"
+
+#: winefile.rc:102
+msgid "&Status Bar"
+msgstr "&שורת המצב"
+
+#: winefile.rc:104
+msgid "F&ull Screen\tCtrl+Shift+S"
+msgstr "מ&סך מלא\tCtrl+Shift+S"
+
+#: winefile.rc:112
+msgid "&Security"
+msgstr "א&בטחה"
+
+#: winefile.rc:113
+msgid "&Access..."
+msgstr "&גישה..."
+
+#: winefile.rc:114
+msgid "&Logging..."
+msgstr "&רישום..."
+
+#: winefile.rc:115
+msgid "&Owner..."
+msgstr "&בעלים..."
+
+#: winefile.rc:118
+msgid "&Window"
+msgstr "&חלון"
+
+#: winefile.rc:119
+msgid "New &Window"
+msgstr "&חלון חדש"
+
+#: winefile.rc:120
+msgid "Cascading\tCtrl+F5"
+msgstr "Cascading\tCtrl+F5"
+
+#: winefile.rc:122
+msgid "Tile &Vertically\tCtrl+F4"
+msgstr "פריסה &אופקית\tCtrl+F4"
+
+#: winefile.rc:124
+msgid "Arrange Automatically"
+msgstr "סידור אוטומטי"
+
+#: winefile.rc:126
+msgid "Arrange &Symbols"
+msgstr "Arrange &Symbols"
+
+#: winefile.rc:127
+msgid "&Refresh\tF5"
+msgstr "&רענון\tF5"
+
+#: winefile.rc:131
+msgid "&Help Topics\tF1"
+msgstr "&נושאי העזרה\tF1"
+
+#: winefile.rc:132
+msgid "Help &Search...\tF1"
+msgstr "&חיפוש בעזרה...\tF1"
+
+#: winefile.rc:133
+msgid "&Using Help\tF1"
+msgstr "&שימוש בעזרה\tF1"
+
+#: winefile.rc:135
+msgid "&About Winefile..."
+msgstr "על &אודות Winefile..."
+
+#: winefile.rc:141
+msgid "Applying font settings"
+msgstr "הגדרות הגופן חלות"
+
+#: winefile.rc:142
+msgid "Error while selecting new font."
+msgstr "שגיאה בעת הגדרת הגופן החדש."
+
+#: winefile.rc:147
+msgid "Wine File Manager"
+msgstr "מנהל הקבצים של Wine"
+
+#: winefile.rc:148
+msgid "Error"
+msgstr "שגיאה"
+
+#: winefile.rc:149
+msgid "root fs"
+msgstr "root fs"
+
+#: winefile.rc:150
+msgid "unixfs"
+msgstr "unixfs"
+
+#: winefile.rc:151
+msgid "Desktop"
+msgstr "שולחן העבודה"
+
+#: winefile.rc:152
+msgid "Shell"
+msgstr "מעטפת"
+
+#: winefile.rc:153
+msgid "%s - %s"
+msgstr "%s - %s"
+
+#: winefile.rc:154
+msgid "Not yet implemented"
+msgstr "לא מוטמע עדיין"
+
+#: winefile.rc:155
+msgid "Wine File"
+msgstr "קובץ Wine"
+
+#: winefile.rc:160
+msgid "Name"
+msgstr "שם"
+
+#: winefile.rc:161
+msgid "Size"
+msgstr "גודל"
+
+#: winefile.rc:162
+msgid "CDate"
+msgstr "ת.יצירה"
+
+#: winefile.rc:163
+msgid "ADate"
+msgstr "ת.גישה"
+
+#: winefile.rc:164
+msgid "MDate"
+msgstr "ת.שינוי"
+
+#: winefile.rc:165
+msgid "Index/Inode"
+msgstr "מפתח/Inode"
+
+#: winefile.rc:166
+msgid "Links"
+msgstr "קישורים"
+
+#: winefile.rc:167
+msgid "Attributes"
+msgstr "מאפיינים"
+
+#: winefile.rc:168
+msgid "Security"
+msgstr "אבטחה"
+
+#: winefile.rc:170
+msgid "%s of %s free"
+msgstr "%s מתוך %s פנויים"
+
 #: winemine.rc:35
 msgid "&New\tF2"
 msgstr "&חדש\tF2"
@@ -4307,10 +4651,6 @@ msgstr "מומ&חים"
 #: winemine.rc:42
 msgid "&Custom..."
 msgstr "ה&תאמה אישית..."
-
-#: winemine.rc:44
-msgid "E&xit\tAlt+X"
-msgstr "י&ציאה\tAlt+X"
 
 #: winemine.rc:46
 msgid "&Info"

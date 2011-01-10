@@ -15,7 +15,6 @@ RC_SRCS = \
 	Es.rc \
 	Fr.rc \
 	He.rc \
-	Hu.rc \
 	It.rc \
 	Ja.rc \
 	Ko.rc \
@@ -30,8 +29,9 @@ RC_SRCS = \
 	Sv.rc \
 	Tr.rc \
 	Uk.rc \
-	Zh.rc \
-	rsrc.rc
+	winefile.rc
+
+PO_SRCS = winefile.rc
 
 MANPAGE = winefile.man
 

@@ -2496,7 +2496,7 @@ msgstr "&Анало&говий"
 msgid "Digi&tal"
 msgstr "&Ци&фровий"
 
-#: clock.rc:32 notepad.rc:50
+#: clock.rc:32 notepad.rc:50 winefile.rc:97
 msgid "&Font..."
 msgstr "&Шрифт..."
 
@@ -3339,7 +3339,8 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Відкритих ресурсів: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winhlp32.rc:28
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
+#: winhlp32.rc:28
 msgid "&File"
 msgstr "&Файл"
 
@@ -3405,9 +3406,14 @@ msgstr "&Копіювати\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "&Вставити\tCtrl+V"
 
-#: notepad.rc:44
+#: notepad.rc:44 winefile.rc:30
+#, fuzzy
 msgid "&Delete\tDel"
-msgstr "Ви&далити\tDel"
+msgstr ""
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Ви&далити\tDel\n"
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Вида&лити\tDel"
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
@@ -3433,9 +3439,14 @@ msgstr "Знайти &далі\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "За&мінити...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winhlp32.rc:60
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
+#, fuzzy
 msgid "&Help"
-msgstr "&Довідка"
+msgstr ""
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"&Довідка\n"
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Довідк&а"
 
 #: notepad.rc:59 progman.rc:54
 msgid "&Search..."
@@ -3565,11 +3576,11 @@ msgstr "&Створити..."
 msgid "O&pen\tEnter"
 msgstr "Відк&рити\tEnter"
 
-#: progman.rc:32
+#: progman.rc:32 winefile.rc:27
 msgid "&Move...\tF7"
 msgstr "&Перемістити...\tF7"
 
-#: progman.rc:33
+#: progman.rc:33 winefile.rc:28
 msgid "&Copy...\tF8"
 msgstr "&Копіювати...\tF8"
 
@@ -3602,13 +3613,23 @@ msgstr ""
 msgid "&Arrange automatically"
 msgstr "&Впорядкувати автоматично"
 
-#: progman.rc:43
+#: progman.rc:43 winefile.rc:107
+#, fuzzy
 msgid "&Minimize on run"
-msgstr "&Згорнути при старті"
+msgstr ""
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"&Згорнути при старті\n"
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"&Мінімізувати при запуску"
 
-#: progman.rc:44
+#: progman.rc:44 winefile.rc:108
+#, fuzzy
 msgid "&Save settings on exit"
-msgstr "Зберегти &налаштування при виході"
+msgstr ""
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Зберегти &налаштування при виході\n"
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"&Зберегти налаштування перед виходом"
 
 #: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
 msgid "&Windows"
@@ -3943,7 +3964,7 @@ msgstr "&Приховати якщо згорнутий"
 msgid "&Show 16-bit tasks"
 msgstr "П&оказувати 16-бітні завдання"
 
-#: taskmgr.rc:52
+#: taskmgr.rc:52 winefile.rc:76
 msgid "&View"
 msgstr "&Вигляд"
 
@@ -4003,9 +4024,14 @@ msgstr "Графік для &кожного ЦП"
 msgid "&Show Kernel Times"
 msgstr "&Показати час ядра"
 
-#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:121
+#, fuzzy
 msgid "Tile &Horizontally"
-msgstr "З&ліва направо"
+msgstr ""
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"З&ліва направо\n"
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Вікна &зверху вниз"
 
 #: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
 msgid "Tile &Vertically"
@@ -4658,6 +4684,339 @@ msgstr "Внутрішні помилки - отримані невірні па
 msgid "(unidentified)"
 msgstr "(не визначено)"
 
+#: winefile.rc:26
+msgid "&Open\tEnter"
+msgstr "&Відкрити\tEnter"
+
+#: winefile.rc:29
+msgid "&In Clipboard...\tF9"
+msgstr "В &буфер обміну...\tF9"
+
+#: winefile.rc:31
+msgid "Re&name..."
+msgstr "Пере&йменувати..."
+
+#: winefile.rc:32
+msgid "Propert&ies...\tAlt+Enter"
+msgstr "Властивос&ті...\tAlt+Enter"
+
+#: winefile.rc:34
+msgid "C&ompress..."
+msgstr "Запак&увати..."
+
+#: winefile.rc:35
+msgid "Dec&ompress..."
+msgstr "Р&озпакувати..."
+
+#: winefile.rc:37
+msgid "&Run..."
+msgstr "&Запустити..."
+
+#: winefile.rc:38
+msgid "&Print..."
+msgstr "&Друк..."
+
+#: winefile.rc:39
+msgid "Associate..."
+msgstr "Асоціювати..."
+
+#: winefile.rc:41
+msgid "Cr&eate Directory..."
+msgstr "Створити директорі&ю..."
+
+#: winefile.rc:42
+msgid "Searc&h..."
+msgstr "По&шук..."
+
+#: winefile.rc:43
+msgid "&Select Files..."
+msgstr "Виділити &файли..."
+
+#: winefile.rc:46 winemine.rc:44
+#, fuzzy
+msgid "E&xit\tAlt+X"
+msgstr ""
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"&Вихід\tAlt+X\n"
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Ви&хід\tAlt+X"
+
+#: winefile.rc:52
+msgid "&Disk"
+msgstr "&Диск"
+
+#: winefile.rc:53
+msgid "&Copy Disk..."
+msgstr "&Копіювати диск..."
+
+#: winefile.rc:54
+msgid "&Label Disk..."
+msgstr "&Мітка тому..."
+
+#: winefile.rc:56
+msgid "&Format Disk..."
+msgstr "&Форматувати диск..."
+
+#: winefile.rc:58
+msgid "Connect &Network Drive"
+msgstr "&Підключити мережний диск"
+
+#: winefile.rc:59
+msgid "&Disconnect Network Drive"
+msgstr "&Відключити мережний диск"
+
+#: winefile.rc:61
+msgid "Share as..."
+msgstr "Зробити спільним як..."
+
+#: winefile.rc:62
+msgid "&Remove Share..."
+msgstr "&Закрити спільний доступ..."
+
+#: winefile.rc:64
+msgid "&Select Drive..."
+msgstr "Ви&брати диск..."
+
+#: winefile.rc:67
+msgid "Di&rectories"
+msgstr "Ди&ректорії"
+
+#: winefile.rc:68
+msgid "&Next Level\t+"
+msgstr "&Наступний рівень\t+"
+
+#: winefile.rc:69
+msgid "Expand &Tree\t*"
+msgstr "Розгорнути &дерево\t*"
+
+#: winefile.rc:70
+msgid "Expand &all\tStrg+*"
+msgstr "Розгорнути &все\tStrg+*"
+
+#: winefile.rc:71
+msgid "Collapse &Tree\t-"
+msgstr "Згорнути д&ерево\t-"
+
+#: winefile.rc:73
+msgid "&Mark Children"
+msgstr "Відмітити &гілки"
+
+#: winefile.rc:77
+msgid "T&ree and Directory"
+msgstr "&Дерево і директорія"
+
+#: winefile.rc:78
+msgid "Tr&ee Only"
+msgstr "Лише д&ерево"
+
+#: winefile.rc:79
+msgid "Directory &Only"
+msgstr "Лише д&иректорія"
+
+#: winefile.rc:81
+msgid "Sp&lit"
+msgstr "Роз&бити"
+
+#: winefile.rc:83
+msgid "&Name"
+msgstr "&Ім'я"
+
+#: winefile.rc:84
+msgid "&All File Details"
+msgstr "Всі дані про фай&л"
+
+#: winefile.rc:85
+msgid "&Partial Details..."
+msgstr "&Часткові дані..."
+
+#: winefile.rc:87
+msgid "&Sort by Name"
+msgstr "&Сортувати за ім'ям"
+
+#: winefile.rc:88
+msgid "Sort &by Type"
+msgstr "Сортувати за &типом"
+
+#: winefile.rc:89
+msgid "Sort by Si&ze"
+msgstr "Сортувати за ро&зміром"
+
+#: winefile.rc:90
+msgid "Sort by &Date"
+msgstr "Сортувати за  д&атою"
+
+#: winefile.rc:92
+msgid "Filter by &..."
+msgstr "Сортувати за &..."
+
+#: winefile.rc:96
+msgid "&Confirmation..."
+msgstr "&Підтвердження..."
+
+#: winefile.rc:98
+msgid "Customize Tool&bar..."
+msgstr "Налаштувати &панель інструментів..."
+
+#: winefile.rc:100
+msgid "&Toolbar"
+msgstr "Панель &інструментів"
+
+#: winefile.rc:101
+msgid "&Drivebar"
+msgstr "Панель &дисків"
+
+#: winefile.rc:102
+msgid "&Status Bar"
+msgstr "&Рядок стану"
+
+#: winefile.rc:104
+msgid "F&ull Screen\tCtrl+Shift+S"
+msgstr "В&есь екран\tCtrl+Shift+S"
+
+#: winefile.rc:112
+msgid "&Security"
+msgstr "&Безпека"
+
+#: winefile.rc:113
+msgid "&Access..."
+msgstr "&Доступ..."
+
+#: winefile.rc:114
+msgid "&Logging..."
+msgstr "&Протоколи..."
+
+#: winefile.rc:115
+msgid "&Owner..."
+msgstr "&Власник..."
+
+#: winefile.rc:118
+msgid "&Window"
+msgstr "Ві&кно"
+
+#: winefile.rc:119
+msgid "New &Window"
+msgstr "Нове &Вікно"
+
+#: winefile.rc:120
+msgid "Cascading\tCtrl+F5"
+msgstr "Вікна каскадом\tCtrl+F5"
+
+#: winefile.rc:122
+msgid "Tile &Vertically\tCtrl+F4"
+msgstr "Вікна зліва &направо\tCtrl+F4"
+
+#: winefile.rc:124
+msgid "Arrange Automatically"
+msgstr "Впорядкувати автоматично"
+
+#: winefile.rc:126
+msgid "Arrange &Symbols"
+msgstr "Розмістити &Символи"
+
+#: winefile.rc:127
+msgid "&Refresh\tF5"
+msgstr "&Оновити\tF5"
+
+#: winefile.rc:131
+msgid "&Help Topics\tF1"
+msgstr "&Розділи довідки\tF1"
+
+#: winefile.rc:132
+msgid "Help &Search...\tF1"
+msgstr "По&шук...\tF1"
+
+#: winefile.rc:133
+msgid "&Using Help\tF1"
+msgstr "&Користування довідкою\tF1"
+
+#: winefile.rc:135
+msgid "&About Winefile..."
+msgstr "&Про Winefile..."
+
+#: winefile.rc:141
+msgid "Applying font settings"
+msgstr "Застосування параметрів шрифта"
+
+#: winefile.rc:142
+msgid "Error while selecting new font."
+msgstr "Помилка при виборі нового шрифта."
+
+#: winefile.rc:147
+msgid "Wine File Manager"
+msgstr "Wine File Manager"
+
+#: winefile.rc:148
+msgid "Error"
+msgstr "Помилка"
+
+#: winefile.rc:149
+msgid "root fs"
+msgstr "root fs"
+
+#: winefile.rc:150
+msgid "unixfs"
+msgstr "unixfs"
+
+#: winefile.rc:151
+msgid "Desktop"
+msgstr "Робочий стіл"
+
+#: winefile.rc:152
+msgid "Shell"
+msgstr "Shell"
+
+#: winefile.rc:153
+msgid "%s - %s"
+msgstr "%s - %s"
+
+#: winefile.rc:154
+msgid "Not yet implemented"
+msgstr "Ще не реалізовано"
+
+#: winefile.rc:155
+msgid "Wine File"
+msgstr "Wine File"
+
+#: winefile.rc:160
+msgid "Name"
+msgstr "Ім'я"
+
+#: winefile.rc:161
+msgid "Size"
+msgstr "Розмір"
+
+#: winefile.rc:162
+msgid "CDate"
+msgstr "Дата створення"
+
+#: winefile.rc:163
+msgid "ADate"
+msgstr "Дата останнього доступу"
+
+#: winefile.rc:164
+msgid "MDate"
+msgstr "Дата останньої зміни"
+
+#: winefile.rc:165
+msgid "Index/Inode"
+msgstr "Index/Inode"
+
+#: winefile.rc:166
+msgid "Links"
+msgstr "Посилання"
+
+#: winefile.rc:167
+msgid "Attributes"
+msgstr "Атрибути"
+
+#: winefile.rc:168
+msgid "Security"
+msgstr "Безпека"
+
+#: winefile.rc:170
+msgid "%s of %s free"
+msgstr "%s з %s вільно"
+
 #: winemine.rc:35
 msgid "&New\tF2"
 msgstr "&Нова\tF2"
@@ -4681,10 +5040,6 @@ msgstr "&Експерт"
 #: winemine.rc:42
 msgid "&Custom..."
 msgstr "&Свої параметри..."
-
-#: winemine.rc:44
-msgid "E&xit\tAlt+X"
-msgstr "&Вихід\tAlt+X"
 
 #: winemine.rc:46
 msgid "&Info"

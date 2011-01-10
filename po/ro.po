@@ -2536,7 +2536,7 @@ msgstr "Ana&logic"
 msgid "Digi&tal"
 msgstr "Digi&tal"
 
-#: clock.rc:32 notepad.rc:50
+#: clock.rc:32 notepad.rc:50 winefile.rc:97
 msgid "&Font..."
 msgstr "&Font..."
 
@@ -3374,7 +3374,8 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Resurse deschise: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winhlp32.rc:28
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
+#: winhlp32.rc:28
 msgid "&File"
 msgstr "&Fișier"
 
@@ -3435,9 +3436,14 @@ msgstr "&Copiază\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "&Lipește\tCtrl+V"
 
-#: notepad.rc:44
+#: notepad.rc:44 winefile.rc:30
+#, fuzzy
 msgid "&Delete\tDel"
-msgstr "&Șterge\tDel"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"&Șterge\tDel\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Șter&ge\tDel"
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
@@ -3617,11 +3623,11 @@ msgstr "&Nou..."
 msgid "O&pen\tEnter"
 msgstr "Desc&hide\tEnter"
 
-#: progman.rc:32
+#: progman.rc:32 winefile.rc:27
 msgid "&Move...\tF7"
 msgstr "&Mutare...\tF7"
 
-#: progman.rc:33
+#: progman.rc:33 winefile.rc:28
 msgid "&Copy...\tF8"
 msgstr "&Copiere...\tF8"
 
@@ -3641,7 +3647,7 @@ msgstr "&Executare..."
 msgid "E&xit Windows..."
 msgstr "Î&nchidere Windows..."
 
-#: progman.rc:41 taskmgr.rc:41 winemine.rc:34 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:95 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
 msgstr "&Opțiuni"
 
@@ -3649,11 +3655,11 @@ msgstr "&Opțiuni"
 msgid "&Arrange automatically"
 msgstr "&Aranjează automat"
 
-#: progman.rc:43
+#: progman.rc:43 winefile.rc:107
 msgid "&Minimize on run"
 msgstr "&Minimizează la execuție"
 
-#: progman.rc:44
+#: progman.rc:44 winefile.rc:108
 msgid "&Save settings on exit"
 msgstr "&Salvează configurația la închidere"
 
@@ -3996,7 +4002,7 @@ msgstr "&Ascunde când este minimizat"
 msgid "&Show 16-bit tasks"
 msgstr "Afișează &sarcinile de 16 biți"
 
-#: taskmgr.rc:52
+#: taskmgr.rc:52 winefile.rc:76
 msgid "&View"
 msgstr "&Vizualizare"
 
@@ -4056,7 +4062,7 @@ msgstr "Un grafic pentru fiecare procesor"
 msgid "&Show Kernel Times"
 msgstr "&Afișează timpurile în nucleu"
 
-#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:121
 msgid "Tile &Horizontally"
 msgstr "Mozaic &orizontal"
 
@@ -4717,6 +4723,339 @@ msgstr "Erori interne - s-au recepționat parametri nevalizi"
 msgid "(unidentified)"
 msgstr "(neidentificat)"
 
+#: winefile.rc:26
+msgid "&Open\tEnter"
+msgstr "Desc&hide\tEnter"
+
+#: winefile.rc:29
+msgid "&In Clipboard...\tF9"
+msgstr "În cl&ipboard...\tF9"
+
+#: winefile.rc:31
+msgid "Re&name..."
+msgstr "Rede&numire..."
+
+#: winefile.rc:32
+msgid "Propert&ies...\tAlt+Enter"
+msgstr "Proprietăț&i...\tAlt+Enter"
+
+#: winefile.rc:34
+msgid "C&ompress..."
+msgstr "C&omprimare..."
+
+#: winefile.rc:35
+msgid "Dec&ompress..."
+msgstr "Dec&omprimare..."
+
+#: winefile.rc:37
+msgid "&Run..."
+msgstr "E&xecutare..."
+
+#: winefile.rc:38
+msgid "&Print..."
+msgstr "Im&primare..."
+
+#: winefile.rc:39
+msgid "Associate..."
+msgstr "Asociere..."
+
+#: winefile.rc:41
+msgid "Cr&eate Directory..."
+msgstr "Cr&eare director..."
+
+#: winefile.rc:42
+msgid "Searc&h..."
+msgstr "Că&utare..."
+
+#: winefile.rc:43
+msgid "&Select Files..."
+msgstr "&Selectare fișiere..."
+
+#: winefile.rc:46 winemine.rc:44
+#, fuzzy
+msgid "E&xit\tAlt+X"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"&Ieşire\tAlt+X\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Înc&hideAlt+X"
+
+#: winefile.rc:52
+msgid "&Disk"
+msgstr "&Disc"
+
+#: winefile.rc:53
+msgid "&Copy Disk..."
+msgstr "&Copiere disc..."
+
+#: winefile.rc:54
+msgid "&Label Disk..."
+msgstr "E&tichetare disc..."
+
+#: winefile.rc:56
+msgid "&Format Disk..."
+msgstr "&Formatare disc..."
+
+#: winefile.rc:58
+msgid "Connect &Network Drive"
+msgstr "Co&nectează unitatea de rețea"
+
+#: winefile.rc:59
+msgid "&Disconnect Network Drive"
+msgstr "&Deconectează unitatea de rețea"
+
+#: winefile.rc:61
+msgid "Share as..."
+msgstr "Partajare ca..."
+
+#: winefile.rc:62
+msgid "&Remove Share..."
+msgstr "Elimina&re partajare..."
+
+#: winefile.rc:64
+msgid "&Select Drive..."
+msgstr "&Selectare unitate..."
+
+#: winefile.rc:67
+msgid "Di&rectories"
+msgstr "Di&rectoare"
+
+#: winefile.rc:68
+msgid "&Next Level\t+"
+msgstr "&Nivelul următor\t+"
+
+#: winefile.rc:69
+msgid "Expand &Tree\t*"
+msgstr "Extinde ar&borele\t*"
+
+#: winefile.rc:70
+msgid "Expand &all\tStrg+*"
+msgstr "Extinde t&ot\tStrg+*"
+
+#: winefile.rc:71
+msgid "Collapse &Tree\t-"
+msgstr "Restrân&ge arborele\t-"
+
+#: winefile.rc:73
+msgid "&Mark Children"
+msgstr "&Marchează copiii"
+
+#: winefile.rc:77
+msgid "T&ree and Directory"
+msgstr "Arbo&re și director"
+
+#: winefile.rc:78
+msgid "Tr&ee Only"
+msgstr "Numai arbor&ele"
+
+#: winefile.rc:79
+msgid "Directory &Only"
+msgstr "Numai direct&orul"
+
+#: winefile.rc:81
+msgid "Sp&lit"
+msgstr "Sep&ară"
+
+#: winefile.rc:83
+msgid "&Name"
+msgstr "&Nume"
+
+#: winefile.rc:84
+msgid "&All File Details"
+msgstr "To&ate detaliile "
+
+#: winefile.rc:85
+msgid "&Partial Details..."
+msgstr "Detalii &parțiale..."
+
+#: winefile.rc:87
+msgid "&Sort by Name"
+msgstr "&Sortează după nume"
+
+#: winefile.rc:88
+msgid "Sort &by Type"
+msgstr "Sortează după &tip"
+
+#: winefile.rc:89
+msgid "Sort by Si&ze"
+msgstr "Sortează după &mărime"
+
+#: winefile.rc:90
+msgid "Sort by &Date"
+msgstr "Sortează după &dată"
+
+#: winefile.rc:92
+msgid "Filter by &..."
+msgstr "Filtrare după &..."
+
+#: winefile.rc:96
+msgid "&Confirmation..."
+msgstr "&Confirmare..."
+
+#: winefile.rc:98
+msgid "Customize Tool&bar..."
+msgstr "Personalizare &bară de unelte..."
+
+#: winefile.rc:100
+msgid "&Toolbar"
+msgstr "Bara de unel&te"
+
+#: winefile.rc:101
+msgid "&Drivebar"
+msgstr "Bara &de unitate"
+
+#: winefile.rc:102
+msgid "&Status Bar"
+msgstr "Bara de &stare"
+
+#: winefile.rc:104
+msgid "F&ull Screen\tCtrl+Shift+S"
+msgstr "Pe tot ecran&ul\tCtrl+Shift+S"
+
+#: winefile.rc:112
+msgid "&Security"
+msgstr "&Securitate"
+
+#: winefile.rc:113
+msgid "&Access..."
+msgstr "&Acces..."
+
+#: winefile.rc:114
+msgid "&Logging..."
+msgstr "Înre&gistrare..."
+
+#: winefile.rc:115
+msgid "&Owner..."
+msgstr "Pr&oprietar..."
+
+#: winefile.rc:118
+msgid "&Window"
+msgstr "&Fereastră"
+
+#: winefile.rc:119
+msgid "New &Window"
+msgstr "&Fereastră nouă"
+
+#: winefile.rc:120
+msgid "Cascading\tCtrl+F5"
+msgstr "Cascadă\tCtrl+F5"
+
+#: winefile.rc:122
+msgid "Tile &Vertically\tCtrl+F4"
+msgstr "Mozaic &vertical\tCtrl+F4"
+
+#: winefile.rc:124
+msgid "Arrange Automatically"
+msgstr "Aranjează automat"
+
+#: winefile.rc:126
+msgid "Arrange &Symbols"
+msgstr "Aranjează &simbolurile"
+
+#: winefile.rc:127
+msgid "&Refresh\tF5"
+msgstr "Actualiza&re\tF5"
+
+#: winefile.rc:131
+msgid "&Help Topics\tF1"
+msgstr "&Subiecte în ajutor...\tF1"
+
+#: winefile.rc:132
+msgid "Help &Search...\tF1"
+msgstr "&Căutare în ajutor...\tF1"
+
+#: winefile.rc:133
+msgid "&Using Help\tF1"
+msgstr "&Utilizare ajutor\tF1"
+
+#: winefile.rc:135
+msgid "&About Winefile..."
+msgstr "Des&pre Winefile..."
+
+#: winefile.rc:141
+msgid "Applying font settings"
+msgstr "Se aplică opțiunile de font"
+
+#: winefile.rc:142
+msgid "Error while selecting new font."
+msgstr "Eroare la selectarea unui nou font."
+
+#: winefile.rc:147
+msgid "Wine File Manager"
+msgstr "Administrator Wine File"
+
+#: winefile.rc:148
+msgid "Error"
+msgstr "Eroare"
+
+#: winefile.rc:149
+msgid "root fs"
+msgstr "director rădăcină"
+
+#: winefile.rc:150
+msgid "unixfs"
+msgstr "director unix"
+
+#: winefile.rc:151
+msgid "Desktop"
+msgstr "Desktop"
+
+#: winefile.rc:152
+msgid "Shell"
+msgstr "Shell"
+
+#: winefile.rc:153
+msgid "%s - %s"
+msgstr "%s - %s"
+
+#: winefile.rc:154
+msgid "Not yet implemented"
+msgstr "Neimplementat încă"
+
+#: winefile.rc:155
+msgid "Wine File"
+msgstr "Wine File"
+
+#: winefile.rc:160
+msgid "Name"
+msgstr "Nume"
+
+#: winefile.rc:161
+msgid "Size"
+msgstr "Dimensiune"
+
+#: winefile.rc:162
+msgid "CDate"
+msgstr "Ultima schimbare de stare (ctime)"
+
+#: winefile.rc:163
+msgid "ADate"
+msgstr "Ultima accesare"
+
+#: winefile.rc:164
+msgid "MDate"
+msgstr "Ultima modificare"
+
+#: winefile.rc:165
+msgid "Index/Inode"
+msgstr "Index/Inode"
+
+#: winefile.rc:166
+msgid "Links"
+msgstr "Legături"
+
+#: winefile.rc:167
+msgid "Attributes"
+msgstr "Atribute"
+
+#: winefile.rc:168
+msgid "Security"
+msgstr "Securitate"
+
+#: winefile.rc:170
+msgid "%s of %s free"
+msgstr "%s din %s liber"
+
 #: winemine.rc:35
 msgid "&New\tF2"
 msgstr "&Nou\tF2"
@@ -4740,10 +5079,6 @@ msgstr "&Expert"
 #: winemine.rc:42
 msgid "&Custom..."
 msgstr "&Personalizat"
-
-#: winemine.rc:44
-msgid "E&xit\tAlt+X"
-msgstr "&Ieşire\tAlt+X"
 
 #: winemine.rc:46
 msgid "&Info"

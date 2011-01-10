@@ -3346,7 +3346,8 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Atverti ištekliai: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winhlp32.rc:28
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
+#: winhlp32.rc:28
 msgid "&File"
 msgstr "&Failas"
 
@@ -3402,7 +3403,7 @@ msgstr "&Kopijuoti\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "Į&dėti\tCtrl+V"
 
-#: notepad.rc:44
+#: notepad.rc:44 winefile.rc:30
 msgid "&Delete\tDel"
 msgstr "&Šalinti\tDel"
 
@@ -3430,7 +3431,7 @@ msgstr "Ieškoti ki&to\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "Pa&keisti...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winhlp32.rc:60
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
 msgid "&Help"
 msgstr "&Žinynas"
 
@@ -3564,11 +3565,16 @@ msgstr "&Nauja..."
 msgid "O&pen\tEnter"
 msgstr "&Atverti\tEnter"
 
-#: progman.rc:32
+#: progman.rc:32 winefile.rc:27
+#, fuzzy
 msgid "&Move...\tF7"
-msgstr "&Perkelti...\tF7"
+msgstr ""
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"&Perkelti...\tF7\n"
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"Pe&rkelti...\tF7"
 
-#: progman.rc:33
+#: progman.rc:33 winefile.rc:28
 msgid "&Copy...\tF8"
 msgstr "&Kopijuoti...\tF8"
 
@@ -3588,7 +3594,7 @@ msgstr "&Vykdyti..."
 msgid "E&xit Windows..."
 msgstr "Iš&eiti..."
 
-#: progman.rc:41 taskmgr.rc:41 winemine.rc:34 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:95 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
 msgstr "&Parinktys"
 
@@ -3596,13 +3602,23 @@ msgstr "&Parinktys"
 msgid "&Arrange automatically"
 msgstr "Išdėstyti &automatiškai"
 
-#: progman.rc:43
+#: progman.rc:43 winefile.rc:107
+#, fuzzy
 msgid "&Minimize on run"
-msgstr "&Suskleisti paleidžiant"
+msgstr ""
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"&Suskleisti paleidžiant\n"
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"&Suskleisti vykdant"
 
-#: progman.rc:44
+#: progman.rc:44 winefile.rc:108
+#, fuzzy
 msgid "&Save settings on exit"
-msgstr "Išsaugoti &nuostatas išeinant"
+msgstr ""
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"Išsaugoti &nuostatas išeinant\n"
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"&Išeinant išsaugoti nuostatas"
 
 #: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
 msgid "&Windows"
@@ -3936,7 +3952,7 @@ msgstr "S&lėpti, kai suskleista"
 msgid "&Show 16-bit tasks"
 msgstr "&Rodyti 16-bitų užduotis"
 
-#: taskmgr.rc:52
+#: taskmgr.rc:52 winefile.rc:76
 msgid "&View"
 msgstr "&Rodymas"
 
@@ -3996,7 +4012,7 @@ msgstr "Po diagramą &kiekvienam CP"
 msgid "&Show Kernel Times"
 msgstr "&Rodyti branduolio laikus"
 
-#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:121
 msgid "Tile &Horizontally"
 msgstr "Iškloti &gulsčiai"
 
@@ -4653,6 +4669,334 @@ msgstr "Vidinės klaidos - gauti neteisingi parametrai"
 msgid "(unidentified)"
 msgstr "(nenustatytas)"
 
+#: winefile.rc:26
+msgid "&Open\tEnter"
+msgstr "&Atverti\tEnter"
+
+#: winefile.rc:29
+msgid "&In Clipboard...\tF9"
+msgstr "Iškarpin&ėje...\tF9"
+
+#: winefile.rc:31
+msgid "Re&name..."
+msgstr "Per&vadinti..."
+
+#: winefile.rc:32
+msgid "Propert&ies...\tAlt+Enter"
+msgstr "Savy&bės...\tAlt+Enter"
+
+#: winefile.rc:34
+msgid "C&ompress..."
+msgstr "&Glaudinti..."
+
+#: winefile.rc:35
+msgid "Dec&ompress..."
+msgstr "Išsk&leisti..."
+
+#: winefile.rc:37
+msgid "&Run..."
+msgstr "&Vykdyti..."
+
+#: winefile.rc:38
+msgid "&Print..."
+msgstr "&Spausdinti..."
+
+#: winefile.rc:39
+msgid "Associate..."
+msgstr "Susieti..."
+
+#: winefile.rc:41
+msgid "Cr&eate Directory..."
+msgstr "Suk&urti katalogą..."
+
+#: winefile.rc:42
+msgid "Searc&h..."
+msgstr "&Ieškoti..."
+
+#: winefile.rc:43
+msgid "&Select Files..."
+msgstr "&Pažymėti failus..."
+
+#: winefile.rc:46 winemine.rc:44
+msgid "E&xit\tAlt+X"
+msgstr "Iš&eiti\tAlt+X"
+
+#: winefile.rc:52
+msgid "&Disk"
+msgstr "&Diskas"
+
+#: winefile.rc:53
+msgid "&Copy Disk..."
+msgstr "&Kopijuoti diską..."
+
+#: winefile.rc:54
+msgid "&Label Disk..."
+msgstr "&Pavadinti diską..."
+
+#: winefile.rc:56
+msgid "&Format Disk..."
+msgstr "&Ženklinti diską..."
+
+#: winefile.rc:58
+msgid "Connect &Network Drive"
+msgstr "Pri&jungti tinklo diską"
+
+#: winefile.rc:59
+msgid "&Disconnect Network Drive"
+msgstr "&Atjungti tinklo diską"
+
+#: winefile.rc:61
+msgid "Share as..."
+msgstr "&Bendrinti kaip..."
+
+#: winefile.rc:62
+msgid "&Remove Share..."
+msgstr "&Panaikinti bendrumą..."
+
+#: winefile.rc:64
+msgid "&Select Drive..."
+msgstr "&Išrinkti diską..."
+
+#: winefile.rc:67
+msgid "Di&rectories"
+msgstr "&Katalogai"
+
+#: winefile.rc:68
+msgid "&Next Level\t+"
+msgstr "&Kitas lygis\t+"
+
+#: winefile.rc:69
+msgid "Expand &Tree\t*"
+msgstr "Išskleisti &medį\t*"
+
+#: winefile.rc:70
+msgid "Expand &all\tStrg+*"
+msgstr "Išskleisti &viską\tStrg+*"
+
+#: winefile.rc:71
+msgid "Collapse &Tree\t-"
+msgstr "Suskleisti m&edį\t-"
+
+#: winefile.rc:73
+msgid "&Mark Children"
+msgstr "&Pažymėti vaikus"
+
+#: winefile.rc:77
+msgid "T&ree and Directory"
+msgstr "&Medis ir katalogai"
+
+#: winefile.rc:78
+msgid "Tr&ee Only"
+msgstr "&Tik medis"
+
+#: winefile.rc:79
+msgid "Directory &Only"
+msgstr "Tik &katalogai"
+
+#: winefile.rc:81
+msgid "Sp&lit"
+msgstr "&Skaidyti"
+
+#: winefile.rc:83
+msgid "&Name"
+msgstr "&Vardas"
+
+#: winefile.rc:84
+msgid "&All File Details"
+msgstr "Visa failo &informacija"
+
+#: winefile.rc:85
+msgid "&Partial Details..."
+msgstr "&Dalinė informacija..."
+
+#: winefile.rc:87
+msgid "&Sort by Name"
+msgstr "&Rikiuoti pagal vardą"
+
+#: winefile.rc:88
+msgid "Sort &by Type"
+msgstr "Rikiuoti &pagal tipą"
+
+#: winefile.rc:89
+msgid "Sort by Si&ze"
+msgstr "Rikiuoti pagal d&ydį"
+
+#: winefile.rc:90
+msgid "Sort by &Date"
+msgstr "Rikiuoti pagal d&atą"
+
+#: winefile.rc:92
+msgid "Filter by &..."
+msgstr "&Filtruoti pagal..."
+
+#: winefile.rc:96
+msgid "&Confirmation..."
+msgstr "&Patvirtinimas..."
+
+#: winefile.rc:98
+msgid "Customize Tool&bar..."
+msgstr "Adaptuoti įrankių &juostą..."
+
+#: winefile.rc:100
+msgid "&Toolbar"
+msgstr "&Įrankių juosta"
+
+#: winefile.rc:101
+msgid "&Drivebar"
+msgstr "&Diskų juosta"
+
+#: winefile.rc:102
+msgid "&Status Bar"
+msgstr "&Būsenos juosta"
+
+#: winefile.rc:104
+msgid "F&ull Screen\tCtrl+Shift+S"
+msgstr "&Visas ekranas\tCtrl+Shift+S"
+
+#: winefile.rc:112
+msgid "&Security"
+msgstr "&Saugumas"
+
+#: winefile.rc:113
+msgid "&Access..."
+msgstr "&Prieiga..."
+
+#: winefile.rc:114
+msgid "&Logging..."
+msgstr "&Registravimas..."
+
+#: winefile.rc:115
+msgid "&Owner..."
+msgstr "&Savininkas..."
+
+#: winefile.rc:118
+msgid "&Window"
+msgstr "&Langas"
+
+#: winefile.rc:119
+msgid "New &Window"
+msgstr "Naujas &langas"
+
+#: winefile.rc:120
+msgid "Cascading\tCtrl+F5"
+msgstr "Išdėstyti pa&kopomis\tCtrl+F5"
+
+#: winefile.rc:122
+msgid "Tile &Vertically\tCtrl+F4"
+msgstr "Iškloti &stačiai\tCtrl+F4"
+
+#: winefile.rc:124
+msgid "Arrange Automatically"
+msgstr "Išdėstyti &automatiškai"
+
+#: winefile.rc:126
+msgid "Arrange &Symbols"
+msgstr "Išdėstyti si&mbolius"
+
+#: winefile.rc:127
+msgid "&Refresh\tF5"
+msgstr "At&naujinti\tF5"
+
+#: winefile.rc:131
+msgid "&Help Topics\tF1"
+msgstr "Žinyno &temos\tF1"
+
+#: winefile.rc:132
+msgid "Help &Search...\tF1"
+msgstr "&Paieška žinyne...\tF1"
+
+#: winefile.rc:133
+msgid "&Using Help\tF1"
+msgstr "Žinyno &naudojimas\tF1"
+
+#: winefile.rc:135
+msgid "&About Winefile..."
+msgstr "&Apie Winefile..."
+
+#: winefile.rc:141
+msgid "Applying font settings"
+msgstr "Pritaikomos šrifto nuostatos"
+
+#: winefile.rc:142
+msgid "Error while selecting new font."
+msgstr "Klaida parenkant naują šriftą."
+
+#: winefile.rc:147
+msgid "Wine File Manager"
+msgstr "Wine failų tvarkytuvė"
+
+#: winefile.rc:148
+msgid "Error"
+msgstr "Klaida"
+
+#: winefile.rc:149
+msgid "root fs"
+msgstr "šakninė fs"
+
+#: winefile.rc:150
+msgid "unixfs"
+msgstr "unix fs"
+
+#: winefile.rc:151
+msgid "Desktop"
+msgstr "Darbalaukis"
+
+#: winefile.rc:152
+msgid "Shell"
+msgstr "Apvalkalas"
+
+#: winefile.rc:153
+msgid "%s - %s"
+msgstr "%s - %s"
+
+#: winefile.rc:154
+msgid "Not yet implemented"
+msgstr "Dar nerealizuota"
+
+#: winefile.rc:155
+msgid "Wine File"
+msgstr "Wine failas"
+
+#: winefile.rc:160
+msgid "Name"
+msgstr "Vardas"
+
+#: winefile.rc:161
+msgid "Size"
+msgstr "Dydis"
+
+#: winefile.rc:162
+msgid "CDate"
+msgstr "KData"
+
+#: winefile.rc:163
+msgid "ADate"
+msgstr "PData"
+
+#: winefile.rc:164
+msgid "MDate"
+msgstr "MData"
+
+#: winefile.rc:165
+msgid "Index/Inode"
+msgstr "Indeksas/Inode"
+
+#: winefile.rc:166
+msgid "Links"
+msgstr "Saitai"
+
+#: winefile.rc:167
+msgid "Attributes"
+msgstr "Požymiai"
+
+#: winefile.rc:168
+msgid "Security"
+msgstr "Saugumas"
+
+#: winefile.rc:170
+msgid "%s of %s free"
+msgstr "%s iš %s laisva"
+
 #: winemine.rc:35
 msgid "&New\tF2"
 msgstr "&Naujas\tF2"
@@ -4676,10 +5020,6 @@ msgstr "Ek&spertas"
 #: winemine.rc:42
 msgid "&Custom..."
 msgstr "Pasirin&ktas..."
-
-#: winemine.rc:44
-msgid "E&xit\tAlt+X"
-msgstr "Iš&eiti\tAlt+X"
 
 #: winemine.rc:46
 msgid "&Info"

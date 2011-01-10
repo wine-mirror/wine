@@ -3063,7 +3063,8 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winhlp32.rc:28
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
+#: winhlp32.rc:28
 msgid "&File"
 msgstr "&Fájl"
 
@@ -3124,9 +3125,14 @@ msgstr "&Másolás\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "&Beillesztés\tCtrl+V"
 
-#: notepad.rc:44
+#: notepad.rc:44 winefile.rc:30
+#, fuzzy
 msgid "&Delete\tDel"
-msgstr "Tör&lés\tDel"
+msgstr ""
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"Tör&lés\tDel\n"
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"&Törlés\tDel"
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
@@ -3152,9 +3158,14 @@ msgstr "Köve&tkező keresése\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Replace...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winhlp32.rc:60
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
+#, fuzzy
 msgid "&Help"
-msgstr "&Súgó"
+msgstr ""
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"&Súgó\n"
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"&?"
 
 #: notepad.rc:59 progman.rc:54
 #, fuzzy
@@ -3285,11 +3296,16 @@ msgstr "Ú&j..."
 msgid "O&pen\tEnter"
 msgstr "Meg&nyitás\tEnter"
 
-#: progman.rc:32
+#: progman.rc:32 winefile.rc:27
+#, fuzzy
 msgid "&Move...\tF7"
-msgstr "&Áthelyezés...\tF7"
+msgstr ""
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"&Áthelyezés...\tF7\n"
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"Át&helyezés...\tF7"
 
-#: progman.rc:33
+#: progman.rc:33 winefile.rc:28
 msgid "&Copy...\tF8"
 msgstr "&Másolás...\tF8"
 
@@ -3309,26 +3325,31 @@ msgstr "&Futtatás..."
 msgid "E&xit Windows..."
 msgstr "&Leállítás..."
 
-#: progman.rc:41 taskmgr.rc:41 winemine.rc:34 winhlp32.rc:44
-#, fuzzy
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:95 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Beállítások\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Options"
+msgstr "&Beállítások"
 
 #: progman.rc:42
 msgid "&Arrange automatically"
 msgstr "&Automatikus elrendezés"
 
-#: progman.rc:43
+#: progman.rc:43 winefile.rc:107
+#, fuzzy
 msgid "&Minimize on run"
-msgstr "&Indításkor kis méret"
+msgstr ""
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"&Indításkor kis méret\n"
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"Programfuttatás utáni &szimbólum"
 
-#: progman.rc:44
+#: progman.rc:44 winefile.rc:108
+#, fuzzy
 msgid "&Save settings on exit"
-msgstr "Beállítások &mentése kilépéskor"
+msgstr ""
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"Beállítások &mentése kilépéskor\n"
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"Megszüntetés a tárolás végén"
 
 #: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
 msgid "&Windows"
@@ -3612,10 +3633,9 @@ msgstr ""
 msgid "&Show 16-bit tasks"
 msgstr ""
 
-#: taskmgr.rc:52
-#, fuzzy
+#: taskmgr.rc:52 winefile.rc:76
 msgid "&View"
-msgstr "N&ézet szerkesztése"
+msgstr "&Nézet"
 
 #: taskmgr.rc:54
 #, fuzzy
@@ -3676,9 +3696,9 @@ msgstr ""
 msgid "&Show Kernel Times"
 msgstr ""
 
-#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:121
 msgid "Tile &Horizontally"
-msgstr ""
+msgstr "Mozaikszerű elrendezés &vízszintesen"
 
 #: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
 msgid "Tile &Vertically"
@@ -4324,6 +4344,343 @@ msgstr ""
 msgid "(unidentified)"
 msgstr ""
 
+#: winefile.rc:26
+msgid "&Open\tEnter"
+msgstr "&Megynitás\tEnter"
+
+#: winefile.rc:29
+msgid "&In Clipboard...\tF9"
+msgstr "&Vágólapon...\tF9"
+
+#: winefile.rc:31
+msgid "Re&name..."
+msgstr "Át&nevezés..."
+
+#: winefile.rc:32
+msgid "Propert&ies...\tAlt+Enter"
+msgstr "T&ulajdonságok...\tAlt+Enter"
+
+#: winefile.rc:34
+msgid "C&ompress..."
+msgstr "&Becsomagolás..."
+
+#: winefile.rc:35
+msgid "Dec&ompress..."
+msgstr "K&icsomagolás..."
+
+#: winefile.rc:37
+msgid "&Run..."
+msgstr "&Futtatás..."
+
+#: winefile.rc:38
+msgid "&Print..."
+msgstr "&Nyomtatás..."
+
+#: winefile.rc:39
+msgid "Associate..."
+msgstr "Társítás..."
+
+#: winefile.rc:41
+msgid "Cr&eate Directory..."
+msgstr "Új &mappa..."
+
+#: winefile.rc:42
+msgid "Searc&h..."
+msgstr "Kere&sés..."
+
+#: winefile.rc:43
+msgid "&Select Files..."
+msgstr "Fájlok ki&választása..."
+
+#: winefile.rc:46 winemine.rc:44
+msgid "E&xit\tAlt+X"
+msgstr "&Kilépés\tAlt+X"
+
+#: winefile.rc:52
+msgid "&Disk"
+msgstr "&Lemez"
+
+#: winefile.rc:53
+msgid "&Copy Disk..."
+msgstr "Lemez &másolása..."
+
+#: winefile.rc:54
+msgid "&Label Disk..."
+msgstr "&Lemezcimke..."
+
+#: winefile.rc:56
+msgid "&Format Disk..."
+msgstr "&Formatálás..."
+
+#: winefile.rc:58
+msgid "Connect &Network Drive"
+msgstr "&Hálózati meghajtó csatlakoztatása"
+
+#: winefile.rc:59
+msgid "&Disconnect Network Drive"
+msgstr "Hálózati meghajtó leválasztása"
+
+#: winefile.rc:61
+msgid "Share as..."
+msgstr "Megosztás..."
+
+#: winefile.rc:62
+msgid "&Remove Share..."
+msgstr "Megosztás &megszüntetése..."
+
+#: winefile.rc:64
+msgid "&Select Drive..."
+msgstr "Meghajtó ki&választása..."
+
+#: winefile.rc:67
+msgid "Di&rectories"
+msgstr "&Mappák"
+
+#: winefile.rc:68
+msgid "&Next Level\t+"
+msgstr "&Következő szint\t+"
+
+#: winefile.rc:69
+msgid "Expand &Tree\t*"
+msgstr "&Fa kinyitása\t*"
+
+#: winefile.rc:70
+msgid "Expand &all\tStrg+*"
+msgstr "&Minden kinyitása\tStrg+*"
+
+#: winefile.rc:71
+msgid "Collapse &Tree\t-"
+msgstr "Fa &becsukása\t-"
+
+#: winefile.rc:73
+msgid "&Mark Children"
+msgstr "&Gyermekek kijelölése"
+
+#: winefile.rc:77
+msgid "T&ree and Directory"
+msgstr "&Teljes"
+
+#: winefile.rc:78
+msgid "Tr&ee Only"
+msgstr "&Könyvtárfa"
+
+#: winefile.rc:79
+msgid "Directory &Only"
+msgstr "&Csak mappák"
+
+#: winefile.rc:81
+msgid "Sp&lit"
+msgstr "&Felosztás"
+
+#: winefile.rc:83
+msgid "&Name"
+msgstr "&Név"
+
+#: winefile.rc:84
+msgid "&All File Details"
+msgstr "&Minden részlet"
+
+#: winefile.rc:85
+msgid "&Partial Details..."
+msgstr "&Egyedi..."
+
+#: winefile.rc:87
+msgid "&Sort by Name"
+msgstr "&Rendezés név szerint"
+
+#: winefile.rc:88
+msgid "Sort &by Type"
+msgstr "Rendezés k&iterjesztés szerint"
+
+#: winefile.rc:89
+msgid "Sort by Si&ze"
+msgstr "Rendezés &méret szerint"
+
+#: winefile.rc:90
+msgid "Sort by &Date"
+msgstr "Rendezés &dátum szerint"
+
+#: winefile.rc:92
+msgid "Filter by &..."
+msgstr "Egyedi rendezés &..."
+
+#: winefile.rc:96
+msgid "&Confirmation..."
+msgstr "&Megerősítés..."
+
+#: winefile.rc:98
+msgid "Customize Tool&bar..."
+msgstr "E&gyedi eszköztár..."
+
+#: winefile.rc:100
+msgid "&Toolbar"
+msgstr "&Eszköztár"
+
+#: winefile.rc:101
+msgid "&Drivebar"
+msgstr "&Lemeztár"
+
+#: winefile.rc:102
+msgid "&Status Bar"
+msgstr "&Állapotsor"
+
+#: winefile.rc:104
+msgid "F&ull Screen\tCtrl+Shift+S"
+msgstr "&Teljes képernyős\tCtrl+Shift+S"
+
+#: winefile.rc:112
+msgid "&Security"
+msgstr "&Biztonság"
+
+#: winefile.rc:113
+msgid "&Access..."
+msgstr "&Hozzáférés..."
+
+#: winefile.rc:114
+msgid "&Logging..."
+msgstr "&Naplózás..."
+
+#: winefile.rc:115
+msgid "&Owner..."
+msgstr "&Tulajdonos..."
+
+#: winefile.rc:118
+msgid "&Window"
+msgstr "&Ablakok"
+
+#: winefile.rc:119
+msgid "New &Window"
+msgstr "Új a&blak"
+
+#: winefile.rc:120
+msgid "Cascading\tCtrl+F5"
+msgstr "Lépcsőzetes elrendezés\tCtrl+F5"
+
+#: winefile.rc:122
+msgid "Tile &Vertically\tCtrl+F4"
+msgstr "Mozaikszerű elrendezés fü&ggőlegesen\tCtrl+F4"
+
+#: winefile.rc:124
+msgid "Arrange Automatically"
+msgstr "Automatikus elrendezés"
+
+#: winefile.rc:126
+msgid "Arrange &Symbols"
+msgstr "&Szimbólum elrendezés"
+
+#: winefile.rc:127
+msgid "&Refresh\tF5"
+msgstr "&Frissítés\tF5"
+
+#: winefile.rc:131
+msgid "&Help Topics\tF1"
+msgstr "&Súgó témakörök\tF1"
+
+#: winefile.rc:132
+msgid "Help &Search...\tF1"
+msgstr "Súgó &keresés...\tF1"
+
+#: winefile.rc:133
+msgid "&Using Help\tF1"
+msgstr "&Használat\tF1"
+
+#: winefile.rc:135
+msgid "&About Winefile..."
+msgstr "&Winefile-ról..."
+
+#: winefile.rc:141
+msgid "Applying font settings"
+msgstr ""
+
+#: winefile.rc:142
+msgid "Error while selecting new font."
+msgstr ""
+
+#: winefile.rc:147
+msgid "Wine File Manager"
+msgstr ""
+
+#: winefile.rc:148
+#, fuzzy
+msgid "Error"
+msgstr "Helyi hiba"
+
+#: winefile.rc:149
+msgid "root fs"
+msgstr ""
+
+#: winefile.rc:150
+msgid "unixfs"
+msgstr ""
+
+#: winefile.rc:151
+msgid "Desktop"
+msgstr ""
+
+#: winefile.rc:152
+msgid "Shell"
+msgstr ""
+
+#: winefile.rc:153
+msgid "%s - %s"
+msgstr ""
+
+#: winefile.rc:154
+#, fuzzy
+msgid "Not yet implemented"
+msgstr "Nincs implementálva"
+
+#: winefile.rc:155
+#, fuzzy
+msgid "Wine File"
+msgstr "Wine súgó"
+
+#: winefile.rc:160
+#, fuzzy
+msgid "Name"
+msgstr "&Név"
+
+#: winefile.rc:161
+msgid "Size"
+msgstr ""
+
+#: winefile.rc:162
+#, fuzzy
+msgid "CDate"
+msgstr "&Dátum"
+
+#: winefile.rc:163
+#, fuzzy
+msgid "ADate"
+msgstr "&Dátum"
+
+#: winefile.rc:164
+#, fuzzy
+msgid "MDate"
+msgstr "&Dátum"
+
+#: winefile.rc:165
+msgid "Index/Inode"
+msgstr ""
+
+#: winefile.rc:166
+msgid "Links"
+msgstr ""
+
+#: winefile.rc:167
+#, fuzzy
+msgid "Attributes"
+msgstr "Kulcs attribútumok"
+
+#: winefile.rc:168
+#, fuzzy
+msgid "Security"
+msgstr "&Biztonság"
+
+#: winefile.rc:170
+msgid "%s of %s free"
+msgstr ""
+
 #: winemine.rc:35
 msgid "&New\tF2"
 msgstr ""
@@ -4348,11 +4705,6 @@ msgstr ""
 #, fuzzy
 msgid "&Custom..."
 msgstr "Testreszabás"
-
-#: winemine.rc:44
-#, fuzzy
-msgid "E&xit\tAlt+X"
-msgstr "&Kilépés"
 
 #: winemine.rc:46
 #, fuzzy

@@ -2520,9 +2520,14 @@ msgstr "&Analog"
 msgid "Digi&tal"
 msgstr "&Digital"
 
-#: clock.rc:32 notepad.rc:50
+#: clock.rc:32 notepad.rc:50 winefile.rc:97
+#, fuzzy
 msgid "&Font..."
-msgstr "&Skrifttype..."
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"&Skrifttype...\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Skri&fttype..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -3416,7 +3421,7 @@ msgstr "K&opier\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "&Indsæt\tCtrl+V"
 
-#: notepad.rc:44
+#: notepad.rc:44 winefile.rc:30
 msgid "&Delete\tDel"
 msgstr "&Slet\tDel"
 
@@ -3444,7 +3449,7 @@ msgstr "&Find næste\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Erstat...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winhlp32.rc:60
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
 msgid "&Help"
 msgstr "&Hjælp"
 
@@ -3589,11 +3594,11 @@ msgstr "&Ny..."
 msgid "O&pen\tEnter"
 msgstr "Åben\tEnter"
 
-#: progman.rc:32
+#: progman.rc:32 winefile.rc:27
 msgid "&Move...\tF7"
 msgstr "&Flyt...\tF7"
 
-#: progman.rc:33
+#: progman.rc:33 winefile.rc:28
 msgid "&Copy...\tF8"
 msgstr "&Kopier...\tF8"
 
@@ -3613,26 +3618,31 @@ msgstr "K&ør..."
 msgid "E&xit Windows..."
 msgstr "A&fslut Wine..."
 
-#: progman.rc:41 taskmgr.rc:41 winemine.rc:34 winhlp32.rc:44
-#, fuzzy
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:95 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Indstillinger\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Options"
+msgstr "&Indstillinger"
 
 #: progman.rc:42
 msgid "&Arrange automatically"
 msgstr "&Auto arrangér"
 
-#: progman.rc:43
+#: progman.rc:43 winefile.rc:107
+#, fuzzy
 msgid "&Minimize on run"
-msgstr "&Minimér ved opstart"
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"&Minimér ved opstart\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"&Minimer ved start"
 
-#: progman.rc:44
+#: progman.rc:44 winefile.rc:108
+#, fuzzy
 msgid "&Save settings on exit"
-msgstr "Gem ændringer ved af&slutting"
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Gem ændringer ved af&slutting\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Gem ind&stillinger ved afslutning"
 
 #: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
 #, fuzzy
@@ -3969,7 +3979,7 @@ msgstr "S&kjul når minimert"
 msgid "&Show 16-bit tasks"
 msgstr "Vi&s 16-bits job"
 
-#: taskmgr.rc:52
+#: taskmgr.rc:52 winefile.rc:76
 msgid "&View"
 msgstr "&Vis"
 
@@ -4029,9 +4039,14 @@ msgstr "En graf &per processor"
 msgid "&Show Kernel Times"
 msgstr "Vi&s kernetider"
 
-#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:121
+#, fuzzy
 msgid "Tile &Horizontally"
-msgstr "Opstil &vandret"
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Opstil &vandret\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Stil &vandret"
 
 #: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
 msgid "Tile &Vertically"
@@ -4682,6 +4697,339 @@ msgstr "Interne fejl - ugyldige parametre modtaget."
 msgid "(unidentified)"
 msgstr "(Uidentificerede)"
 
+#: winefile.rc:26
+msgid "&Open\tEnter"
+msgstr "&Åben\tEnter"
+
+#: winefile.rc:29
+msgid "&In Clipboard...\tF9"
+msgstr "&På klippebordet...\tF9"
+
+#: winefile.rc:31
+msgid "Re&name..."
+msgstr "Omdøb..."
+
+#: winefile.rc:32
+msgid "Propert&ies...\tAlt+Enter"
+msgstr "&Egenskaper...\tAlt+Enter"
+
+#: winefile.rc:34
+msgid "C&ompress..."
+msgstr "K&omprimer..."
+
+#: winefile.rc:35
+msgid "Dec&ompress..."
+msgstr "De&komprimer..."
+
+#: winefile.rc:37
+msgid "&Run..."
+msgstr "Kø&r..."
+
+#: winefile.rc:38
+msgid "&Print..."
+msgstr "&Udskriv..."
+
+#: winefile.rc:39
+msgid "Associate..."
+msgstr "Associer..."
+
+#: winefile.rc:41
+msgid "Cr&eate Directory..."
+msgstr "Opr&et folder..."
+
+#: winefile.rc:42
+msgid "Searc&h..."
+msgstr "S&øg..."
+
+#: winefile.rc:43
+msgid "&Select Files..."
+msgstr "&Vælg filer..."
+
+#: winefile.rc:46 winemine.rc:44
+#, fuzzy
+msgid "E&xit\tAlt+X"
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Afslut&t\tAlt+X\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"&Afslut\tAlt+X"
+
+#: winefile.rc:52
+msgid "&Disk"
+msgstr "&Diskette"
+
+#: winefile.rc:53
+msgid "&Copy Disk..."
+msgstr "&Kopier diskette..."
+
+#: winefile.rc:54
+msgid "&Label Disk..."
+msgstr "Sæt vol&umenavn..."
+
+#: winefile.rc:56
+msgid "&Format Disk..."
+msgstr "&Formater diskette..."
+
+#: winefile.rc:58
+msgid "Connect &Network Drive"
+msgstr "&Tilslut netværksdrev"
+
+#: winefile.rc:59
+msgid "&Disconnect Network Drive"
+msgstr "Frakobl &netværksdrev"
+
+#: winefile.rc:61
+msgid "Share as..."
+msgstr "Del som..."
+
+#: winefile.rc:62
+msgid "&Remove Share..."
+msgstr "Fje&rn delt resourse..."
+
+#: winefile.rc:64
+msgid "&Select Drive..."
+msgstr "Vælg &enhed..."
+
+#: winefile.rc:67
+msgid "Di&rectories"
+msgstr "Kataloge&r"
+
+#: winefile.rc:68
+msgid "&Next Level\t+"
+msgstr "&Næste niveau\t+"
+
+#: winefile.rc:69
+msgid "Expand &Tree\t*"
+msgstr "Udvid t&ræ\t*"
+
+#: winefile.rc:70
+msgid "Expand &all\tStrg+*"
+msgstr "Udvid &alle\tStrg+*"
+
+#: winefile.rc:71
+msgid "Collapse &Tree\t-"
+msgstr "Kolaps &træ\t-"
+
+#: winefile.rc:73
+msgid "&Mark Children"
+msgstr "&Marker underelementer"
+
+#: winefile.rc:77
+msgid "T&ree and Directory"
+msgstr "T&ræ og folder"
+
+#: winefile.rc:78
+msgid "Tr&ee Only"
+msgstr "Kun tr&æ"
+
+#: winefile.rc:79
+msgid "Directory &Only"
+msgstr "Kun &folder"
+
+#: winefile.rc:81
+msgid "Sp&lit"
+msgstr "&Visning opdeling"
+
+#: winefile.rc:83
+msgid "&Name"
+msgstr "&Navn"
+
+#: winefile.rc:84
+msgid "&All File Details"
+msgstr "&Alle fildetaljer"
+
+#: winefile.rc:85
+msgid "&Partial Details..."
+msgstr "Del&vise detaljer..."
+
+#: winefile.rc:87
+msgid "&Sort by Name"
+msgstr "&Sorter efter navn"
+
+#: winefile.rc:88
+msgid "Sort &by Type"
+msgstr "Sorter efter &type"
+
+#: winefile.rc:89
+msgid "Sort by Si&ze"
+msgstr "Sorter efter st&ørrelse"
+
+#: winefile.rc:90
+msgid "Sort by &Date"
+msgstr "Sorter efter &dato"
+
+#: winefile.rc:92
+msgid "Filter by &..."
+msgstr "Filtrer med '&'..."
+
+#: winefile.rc:96
+msgid "&Confirmation..."
+msgstr "&Bekræftelse..."
+
+#: winefile.rc:98
+msgid "Customize Tool&bar..."
+msgstr "Tilpas &værktøjslinien..."
+
+#: winefile.rc:100
+msgid "&Toolbar"
+msgstr "Værk&tøjlinie"
+
+#: winefile.rc:101
+msgid "&Drivebar"
+msgstr "&Enhedslinie"
+
+#: winefile.rc:102
+msgid "&Status Bar"
+msgstr "&Statuslinie"
+
+#: winefile.rc:104
+msgid "F&ull Screen\tCtrl+Shift+S"
+msgstr "F&uldskærm\tCtrl+Shift+S"
+
+#: winefile.rc:112
+msgid "&Security"
+msgstr "&Sikkerhed"
+
+#: winefile.rc:113
+msgid "&Access..."
+msgstr "Tilg&ang..."
+
+#: winefile.rc:114
+msgid "&Logging..."
+msgstr "&Logføring..."
+
+#: winefile.rc:115
+msgid "&Owner..."
+msgstr "&Ejer..."
+
+#: winefile.rc:118
+msgid "&Window"
+msgstr "Vind&ue"
+
+#: winefile.rc:119
+msgid "New &Window"
+msgstr "Nyt &vindue"
+
+#: winefile.rc:120
+msgid "Cascading\tCtrl+F5"
+msgstr "Kortstak\tCtrl+F5"
+
+#: winefile.rc:122
+msgid "Tile &Vertically\tCtrl+F4"
+msgstr "Stil &lodret\tCtrl+F4"
+
+#: winefile.rc:124
+msgid "Arrange Automatically"
+msgstr "Ordne automatisk"
+
+#: winefile.rc:126
+msgid "Arrange &Symbols"
+msgstr "Ordne &symboler"
+
+#: winefile.rc:127
+msgid "&Refresh\tF5"
+msgstr "Opdate&r\tF5"
+
+#: winefile.rc:131
+msgid "&Help Topics\tF1"
+msgstr "Emner i &hjælp\tF1"
+
+#: winefile.rc:132
+msgid "Help &Search...\tF1"
+msgstr "&Søg i hjælp...\tF1"
+
+#: winefile.rc:133
+msgid "&Using Help\tF1"
+msgstr "Br&ug af hjælp\tF1"
+
+#: winefile.rc:135
+msgid "&About Winefile..."
+msgstr "&Information om Filbehandling..."
+
+#: winefile.rc:141
+msgid "Applying font settings"
+msgstr "Aktiver skriftindstillinger"
+
+#: winefile.rc:142
+msgid "Error while selecting new font."
+msgstr "Fejl ved valg af ny skrifttype."
+
+#: winefile.rc:147
+msgid "Wine File Manager"
+msgstr "Filbehandling"
+
+#: winefile.rc:148
+msgid "Error"
+msgstr "Fejl"
+
+#: winefile.rc:149
+msgid "root fs"
+msgstr "Rodfilsystem"
+
+#: winefile.rc:150
+msgid "unixfs"
+msgstr "Unix-filsystem"
+
+#: winefile.rc:151
+msgid "Desktop"
+msgstr "Skrivebord"
+
+#: winefile.rc:152
+msgid "Shell"
+msgstr "Skal"
+
+#: winefile.rc:153
+msgid "%s - %s"
+msgstr "%s - %s"
+
+#: winefile.rc:154
+msgid "Not yet implemented"
+msgstr "Ikke implementeret endnu"
+
+#: winefile.rc:155
+msgid "Wine File"
+msgstr "Filbehandling"
+
+#: winefile.rc:160
+msgid "Name"
+msgstr "Navn"
+
+#: winefile.rc:161
+msgid "Size"
+msgstr "Størrelse"
+
+#: winefile.rc:162
+msgid "CDate"
+msgstr "C-dato"
+
+#: winefile.rc:163
+msgid "ADate"
+msgstr "A-dato"
+
+#: winefile.rc:164
+msgid "MDate"
+msgstr "M-dato"
+
+#: winefile.rc:165
+msgid "Index/Inode"
+msgstr "Indeks/Inode"
+
+#: winefile.rc:166
+msgid "Links"
+msgstr "Genveje"
+
+#: winefile.rc:167
+msgid "Attributes"
+msgstr "Attributter"
+
+#: winefile.rc:168
+msgid "Security"
+msgstr "Sikkerhed"
+
+#: winefile.rc:170
+msgid "%s of %s free"
+msgstr "%s af %s ledig"
+
 #: winemine.rc:35
 msgid "&New\tF2"
 msgstr "&Nyt spil\tF2"
@@ -4705,10 +5053,6 @@ msgstr "&Ekspert"
 #: winemine.rc:42
 msgid "&Custom..."
 msgstr "B&rugerdefineret"
-
-#: winemine.rc:44
-msgid "E&xit\tAlt+X"
-msgstr "Afslut&t\tAlt+X"
 
 #: winemine.rc:46
 msgid "&Info"

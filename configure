@@ -15376,7 +15376,7 @@ wine_fn_config_program winecfg enable_winecfg install,installbin
 wine_fn_config_program wineconsole enable_wineconsole po,install,installbin
 wine_fn_config_program winedbg enable_winedbg po,install,installbin
 wine_fn_config_program winedevice enable_winedevice install
-wine_fn_config_program winefile enable_winefile install,installbin
+wine_fn_config_program winefile enable_winefile po,install,installbin
 wine_fn_config_program winemenubuilder enable_winemenubuilder install
 wine_fn_config_program winemine enable_winemine po,install,installbin
 wine_fn_config_program winepath enable_winepath install,installbin
