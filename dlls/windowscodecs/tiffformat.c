@@ -800,19 +800,10 @@ static HRESULT TiffFrameDecode_ReadTile(TiffFrameDecode *This, UINT tile_x, UINT
     {
         if (This->decode_info.bps == 8)
         {
-            UINT i, total_pixels, sample_count;
-            BYTE *pixel, temp;
+            UINT sample_count = This->decode_info.samples;
 
-            total_pixels = This->decode_info.tile_width * This->decode_info.tile_height;
-            pixel = This->cached_tile;
-            sample_count = This->decode_info.samples;
-            for (i=0; i<total_pixels; i++)
-            {
-                temp = pixel[2];
-                pixel[2] = pixel[0];
-                pixel[0] = temp;
-                pixel += sample_count;
-            }
+            reverse_bgr8(sample_count, This->cached_tile, This->decode_info.tile_width,
+                This->decode_info.tile_height, This->decode_info.tile_width * sample_count);
         }
     }
 

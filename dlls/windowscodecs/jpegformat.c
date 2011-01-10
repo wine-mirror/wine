@@ -577,7 +577,7 @@ static HRESULT WINAPI JpegDecoder_Frame_CopyPixels(IWICBitmapFrameDecode *iface,
         UINT first_scanline = This->cinfo.output_scanline;
         UINT max_rows;
         JSAMPROW out_rows[4];
-        UINT i, j;
+        UINT i;
         JDIMENSION ret;
 
         max_rows = min(This->cinfo.output_height-first_scanline, 4);
@@ -596,18 +596,9 @@ static HRESULT WINAPI JpegDecoder_Frame_CopyPixels(IWICBitmapFrameDecode *iface,
         if (bpp == 24)
         {
             /* libjpeg gives us RGB data and we want BGR, so byteswap the data */
-            for (i=first_scanline; i<This->cinfo.output_scanline; i++)
-            {
-                BYTE *pixel = This->image_data + stride * i;
-                for (j=0; j<This->cinfo.output_width; j++)
-                {
-                    BYTE red=pixel[0];
-                    BYTE blue=pixel[2];
-                    pixel[0]=blue;
-                    pixel[2]=red;
-                    pixel+=3;
-                }
-            }
+            reverse_bgr8(3, This->image_data + stride * first_scanline,
+                This->cinfo.output_width, This->cinfo.output_scanline - first_scanline,
+                stride);
         }
 
         if (This->cinfo.out_color_space == JCS_CMYK && This->cinfo.saw_Adobe_marker)
