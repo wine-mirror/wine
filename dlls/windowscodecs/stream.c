@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
  *
  */
 typedef struct StreamOnMemory {
-    const IStreamVtbl *lpVtbl;
+    IStream IStream_iface;
     LONG ref;
 
     BYTE *pbMemory;
@@ -45,6 +45,11 @@ typedef struct StreamOnMemory {
 
     CRITICAL_SECTION lock; /* must be held when pbMemory or dwCurPos is accessed */
 } StreamOnMemory;
+
+static inline StreamOnMemory *StreamOnMemory_from_IStream(IStream *iface)
+{
+    return CONTAINING_RECORD(iface, StreamOnMemory, IStream_iface);
+}
 
 static HRESULT WINAPI StreamOnMemory_QueryInterface(IStream *iface,
     REFIID iid, void **ppv)
@@ -69,7 +74,7 @@ static HRESULT WINAPI StreamOnMemory_QueryInterface(IStream *iface,
 
 static ULONG WINAPI StreamOnMemory_AddRef(IStream *iface)
 {
-    StreamOnMemory *This = (StreamOnMemory*)iface;
+    StreamOnMemory *This = StreamOnMemory_from_IStream(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -79,7 +84,7 @@ static ULONG WINAPI StreamOnMemory_AddRef(IStream *iface)
 
 static ULONG WINAPI StreamOnMemory_Release(IStream *iface)
 {
-    StreamOnMemory *This = (StreamOnMemory*)iface;
+    StreamOnMemory *This = StreamOnMemory_from_IStream(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -95,7 +100,7 @@ static ULONG WINAPI StreamOnMemory_Release(IStream *iface)
 static HRESULT WINAPI StreamOnMemory_Read(IStream *iface,
     void *pv, ULONG cb, ULONG *pcbRead)
 {
-    StreamOnMemory *This = (StreamOnMemory*)iface;
+    StreamOnMemory *This = StreamOnMemory_from_IStream(iface);
     ULONG uBytesRead;
     TRACE("(%p)\n", This);
 
@@ -115,7 +120,7 @@ static HRESULT WINAPI StreamOnMemory_Read(IStream *iface,
 static HRESULT WINAPI StreamOnMemory_Write(IStream *iface,
     void const *pv, ULONG cb, ULONG *pcbWritten)
 {
-    StreamOnMemory *This = (StreamOnMemory*)iface;
+    StreamOnMemory *This = StreamOnMemory_from_IStream(iface);
     HRESULT hr;
     TRACE("(%p)\n", This);
 
@@ -139,7 +144,7 @@ static HRESULT WINAPI StreamOnMemory_Write(IStream *iface,
 static HRESULT WINAPI StreamOnMemory_Seek(IStream *iface,
     LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
 {
-    StreamOnMemory *This = (StreamOnMemory*)iface;
+    StreamOnMemory *This = StreamOnMemory_from_IStream(iface);
     LARGE_INTEGER NewPosition;
     HRESULT hr=S_OK;
     TRACE("(%p)\n", This);
@@ -216,7 +221,7 @@ static HRESULT WINAPI StreamOnMemory_UnlockRegion(IStream *iface,
 static HRESULT WINAPI StreamOnMemory_Stat(IStream *iface,
     STATSTG *pstatstg, DWORD grfStatFlag)
 {
-    StreamOnMemory *This = (StreamOnMemory*)iface;
+    StreamOnMemory *This = StreamOnMemory_from_IStream(iface);
     TRACE("(%p)\n", This);
 
     if (!pstatstg) return E_INVALIDARG;
@@ -265,7 +270,7 @@ const IStreamVtbl StreamOnMemory_Vtbl =
  *
  */
 typedef struct StreamOnStreamRange {
-    const IStreamVtbl *lpVtbl;
+    IStream IStream_iface;
     LONG ref;
 
     IStream *stream;
@@ -275,6 +280,11 @@ typedef struct StreamOnStreamRange {
 
     CRITICAL_SECTION lock;
 } StreamOnStreamRange;
+
+static inline StreamOnStreamRange *StreamOnStreamRange_from_IStream(IStream *iface)
+{
+    return CONTAINING_RECORD(iface, StreamOnStreamRange, IStream_iface);
+}
 
 static HRESULT WINAPI StreamOnStreamRange_QueryInterface(IStream *iface,
     REFIID iid, void **ppv)
@@ -299,7 +309,7 @@ static HRESULT WINAPI StreamOnStreamRange_QueryInterface(IStream *iface,
 
 static ULONG WINAPI StreamOnStreamRange_AddRef(IStream *iface)
 {
-    StreamOnStreamRange *This = (StreamOnStreamRange*)iface;
+    StreamOnStreamRange *This = StreamOnStreamRange_from_IStream(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -309,7 +319,7 @@ static ULONG WINAPI StreamOnStreamRange_AddRef(IStream *iface)
 
 static ULONG WINAPI StreamOnStreamRange_Release(IStream *iface)
 {
-    StreamOnStreamRange *This = (StreamOnStreamRange*)iface;
+    StreamOnStreamRange *This = StreamOnStreamRange_from_IStream(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -326,7 +336,7 @@ static ULONG WINAPI StreamOnStreamRange_Release(IStream *iface)
 static HRESULT WINAPI StreamOnStreamRange_Read(IStream *iface,
     void *pv, ULONG cb, ULONG *pcbRead)
 {
-    StreamOnStreamRange *This = (StreamOnStreamRange*)iface;
+    StreamOnStreamRange *This = StreamOnStreamRange_from_IStream(iface);
     ULONG uBytesRead=0;
     HRESULT hr;
     ULARGE_INTEGER OldPosition;
@@ -369,7 +379,7 @@ static HRESULT WINAPI StreamOnStreamRange_Read(IStream *iface,
 static HRESULT WINAPI StreamOnStreamRange_Write(IStream *iface,
     void const *pv, ULONG cb, ULONG *pcbWritten)
 {
-    StreamOnStreamRange *This = (StreamOnStreamRange*)iface;
+    StreamOnStreamRange *This = StreamOnStreamRange_from_IStream(iface);
     HRESULT hr;
     ULARGE_INTEGER OldPosition;
     LARGE_INTEGER SetPosition;
@@ -412,7 +422,7 @@ static HRESULT WINAPI StreamOnStreamRange_Write(IStream *iface,
 static HRESULT WINAPI StreamOnStreamRange_Seek(IStream *iface,
     LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
 {
-    StreamOnStreamRange *This = (StreamOnStreamRange*)iface;
+    StreamOnStreamRange *This = StreamOnStreamRange_from_IStream(iface);
     ULARGE_INTEGER NewPosition, actual_size;
     HRESULT hr=S_OK;
     STATSTG statstg;
@@ -499,7 +509,7 @@ static HRESULT WINAPI StreamOnStreamRange_UnlockRegion(IStream *iface,
 static HRESULT WINAPI StreamOnStreamRange_Stat(IStream *iface,
     STATSTG *pstatstg, DWORD grfStatFlag)
 {
-    StreamOnStreamRange *This = (StreamOnStreamRange*)iface;
+    StreamOnStreamRange *This = StreamOnStreamRange_from_IStream(iface);
     HRESULT hr;
     TRACE("(%p)\n", This);
 
@@ -556,16 +566,21 @@ const IStreamVtbl StreamOnStreamRange_Vtbl =
  */
 typedef struct IWICStreamImpl
 {
-    const IWICStreamVtbl *lpVtbl;
+    IWICStream IWICStream_iface;
     LONG ref;
 
     IStream *pStream;
 } IWICStreamImpl;
 
+static inline IWICStreamImpl *impl_from_IWICStream(IWICStream *iface)
+{
+    return CONTAINING_RECORD(iface, IWICStreamImpl, IWICStream_iface);
+}
+
 static HRESULT WINAPI IWICStreamImpl_QueryInterface(IWICStream *iface,
     REFIID iid, void **ppv)
 {
-    IWICStreamImpl *This = (IWICStreamImpl*)iface;
+    IWICStreamImpl *This = impl_from_IWICStream(iface);
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
@@ -586,7 +601,7 @@ static HRESULT WINAPI IWICStreamImpl_QueryInterface(IWICStream *iface,
 
 static ULONG WINAPI IWICStreamImpl_AddRef(IWICStream *iface)
 {
-    IWICStreamImpl *This = (IWICStreamImpl*)iface;
+    IWICStreamImpl *This = impl_from_IWICStream(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -596,7 +611,7 @@ static ULONG WINAPI IWICStreamImpl_AddRef(IWICStream *iface)
 
 static ULONG WINAPI IWICStreamImpl_Release(IWICStream *iface)
 {
-    IWICStreamImpl *This = (IWICStreamImpl*)iface;
+    IWICStreamImpl *This = impl_from_IWICStream(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -611,7 +626,7 @@ static ULONG WINAPI IWICStreamImpl_Release(IWICStream *iface)
 static HRESULT WINAPI IWICStreamImpl_Read(IWICStream *iface,
     void *pv, ULONG cb, ULONG *pcbRead)
 {
-    IWICStreamImpl *This = (IWICStreamImpl*)iface;
+    IWICStreamImpl *This = impl_from_IWICStream(iface);
     TRACE("(%p): relay\n", This);
 
     if (!This->pStream) return WINCODEC_ERR_NOTINITIALIZED;
@@ -621,7 +636,7 @@ static HRESULT WINAPI IWICStreamImpl_Read(IWICStream *iface,
 static HRESULT WINAPI IWICStreamImpl_Write(IWICStream *iface,
     void const *pv, ULONG cb, ULONG *pcbWritten)
 {
-    IWICStreamImpl *This = (IWICStreamImpl*)iface;
+    IWICStreamImpl *This = impl_from_IWICStream(iface);
     TRACE("(%p): relay\n", This);
 
     if (!This->pStream) return WINCODEC_ERR_NOTINITIALIZED;
@@ -631,7 +646,7 @@ static HRESULT WINAPI IWICStreamImpl_Write(IWICStream *iface,
 static HRESULT WINAPI IWICStreamImpl_Seek(IWICStream *iface,
     LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
 {
-    IWICStreamImpl *This = (IWICStreamImpl*)iface;
+    IWICStreamImpl *This = impl_from_IWICStream(iface);
     TRACE("(%p): relay\n", This);
 
     if (!This->pStream) return WINCODEC_ERR_NOTINITIALIZED;
@@ -641,7 +656,7 @@ static HRESULT WINAPI IWICStreamImpl_Seek(IWICStream *iface,
 static HRESULT WINAPI IWICStreamImpl_SetSize(IWICStream *iface,
     ULARGE_INTEGER libNewSize)
 {
-    IWICStreamImpl *This = (IWICStreamImpl*)iface;
+    IWICStreamImpl *This = impl_from_IWICStream(iface);
     TRACE("(%p): relay\n", This);
 
     if (!This->pStream) return WINCODEC_ERR_NOTINITIALIZED;
@@ -651,7 +666,7 @@ static HRESULT WINAPI IWICStreamImpl_SetSize(IWICStream *iface,
 static HRESULT WINAPI IWICStreamImpl_CopyTo(IWICStream *iface,
     IStream *pstm, ULARGE_INTEGER cb, ULARGE_INTEGER *pcbRead, ULARGE_INTEGER *pcbWritten)
 {
-    IWICStreamImpl *This = (IWICStreamImpl*)iface;
+    IWICStreamImpl *This = impl_from_IWICStream(iface);
     TRACE("(%p): relay\n", This);
 
     if (!This->pStream) return WINCODEC_ERR_NOTINITIALIZED;
@@ -661,7 +676,7 @@ static HRESULT WINAPI IWICStreamImpl_CopyTo(IWICStream *iface,
 static HRESULT WINAPI IWICStreamImpl_Commit(IWICStream *iface,
     DWORD grfCommitFlags)
 {
-    IWICStreamImpl *This = (IWICStreamImpl*)iface;
+    IWICStreamImpl *This = impl_from_IWICStream(iface);
     TRACE("(%p): relay\n", This);
 
     if (!This->pStream) return WINCODEC_ERR_NOTINITIALIZED;
@@ -670,7 +685,7 @@ static HRESULT WINAPI IWICStreamImpl_Commit(IWICStream *iface,
 
 static HRESULT WINAPI IWICStreamImpl_Revert(IWICStream *iface)
 {
-    IWICStreamImpl *This = (IWICStreamImpl*)iface;
+    IWICStreamImpl *This = impl_from_IWICStream(iface);
     TRACE("(%p): relay\n", This);
 
     if (!This->pStream) return WINCODEC_ERR_NOTINITIALIZED;
@@ -680,7 +695,7 @@ static HRESULT WINAPI IWICStreamImpl_Revert(IWICStream *iface)
 static HRESULT WINAPI IWICStreamImpl_LockRegion(IWICStream *iface,
     ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
 {
-    IWICStreamImpl *This = (IWICStreamImpl*)iface;
+    IWICStreamImpl *This = impl_from_IWICStream(iface);
     TRACE("(%p): relay\n", This);
 
     if (!This->pStream) return WINCODEC_ERR_NOTINITIALIZED;
@@ -690,7 +705,7 @@ static HRESULT WINAPI IWICStreamImpl_LockRegion(IWICStream *iface,
 static HRESULT WINAPI IWICStreamImpl_UnlockRegion(IWICStream *iface,
     ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
 {
-    IWICStreamImpl *This = (IWICStreamImpl*)iface;
+    IWICStreamImpl *This = impl_from_IWICStream(iface);
     TRACE("(%p): relay\n", This);
 
     if (!This->pStream) return WINCODEC_ERR_NOTINITIALIZED;
@@ -700,7 +715,7 @@ static HRESULT WINAPI IWICStreamImpl_UnlockRegion(IWICStream *iface,
 static HRESULT WINAPI IWICStreamImpl_Stat(IWICStream *iface,
     STATSTG *pstatstg, DWORD grfStatFlag)
 {
-    IWICStreamImpl *This = (IWICStreamImpl*)iface;
+    IWICStreamImpl *This = impl_from_IWICStream(iface);
     TRACE("(%p): relay\n", This);
 
     if (!This->pStream) return WINCODEC_ERR_NOTINITIALIZED;
@@ -710,7 +725,7 @@ static HRESULT WINAPI IWICStreamImpl_Stat(IWICStream *iface,
 static HRESULT WINAPI IWICStreamImpl_Clone(IWICStream *iface,
     IStream **ppstm)
 {
-    IWICStreamImpl *This = (IWICStreamImpl*)iface;
+    IWICStreamImpl *This = impl_from_IWICStream(iface);
     TRACE("(%p): relay\n", This);
 
     if (!This->pStream) return WINCODEC_ERR_NOTINITIALIZED;
@@ -727,7 +742,7 @@ static HRESULT WINAPI IWICStreamImpl_InitializeFromIStream(IWICStream *iface,
 static HRESULT WINAPI IWICStreamImpl_InitializeFromFilename(IWICStream *iface,
     LPCWSTR wzFileName, DWORD dwDesiredAccess)
 {
-    IWICStreamImpl *This = (IWICStreamImpl*)iface;
+    IWICStreamImpl *This = impl_from_IWICStream(iface);
     HRESULT hr;
     DWORD dwMode;
     IStream *stream;
@@ -777,7 +792,7 @@ static HRESULT WINAPI IWICStreamImpl_InitializeFromFilename(IWICStream *iface,
 static HRESULT WINAPI IWICStreamImpl_InitializeFromMemory(IWICStream *iface,
     BYTE *pbBuffer, DWORD cbBufferSize)
 {
-    IWICStreamImpl *This = (IWICStreamImpl*)iface;
+    IWICStreamImpl *This = impl_from_IWICStream(iface);
     StreamOnMemory *pObject;
     TRACE("(%p,%p)\n", iface, pbBuffer);
 
@@ -787,7 +802,7 @@ static HRESULT WINAPI IWICStreamImpl_InitializeFromMemory(IWICStream *iface,
     pObject = HeapAlloc(GetProcessHeap(), 0, sizeof(StreamOnMemory));
     if (!pObject) return E_OUTOFMEMORY;
 
-    pObject->lpVtbl = &StreamOnMemory_Vtbl;
+    pObject->IStream_iface.lpVtbl = &StreamOnMemory_Vtbl;
     pObject->ref = 1;
     pObject->pbMemory = pbBuffer;
     pObject->dwMemsize = cbBufferSize;
@@ -798,7 +813,7 @@ static HRESULT WINAPI IWICStreamImpl_InitializeFromMemory(IWICStream *iface,
     if (InterlockedCompareExchangePointer((void**)&This->pStream, pObject, NULL))
     {
         /* Some other thread set the stream first. */
-        IStream_Release((IStream*)pObject);
+        IStream_Release(&pObject->IStream_iface);
         return WINCODEC_ERR_WRONGSTATE;
     }
 
@@ -808,7 +823,7 @@ static HRESULT WINAPI IWICStreamImpl_InitializeFromMemory(IWICStream *iface,
 static HRESULT WINAPI IWICStreamImpl_InitializeFromIStreamRegion(IWICStream *iface,
     IStream *pIStream, ULARGE_INTEGER ulOffset, ULARGE_INTEGER ulMaxSize)
 {
-    IWICStreamImpl *This = (IWICStreamImpl*)iface;
+    IWICStreamImpl *This = impl_from_IWICStream(iface);
     StreamOnStreamRange *pObject;
     TRACE("(%p,%p)\n", iface, pIStream);
 
@@ -818,7 +833,7 @@ static HRESULT WINAPI IWICStreamImpl_InitializeFromIStreamRegion(IWICStream *ifa
     pObject = HeapAlloc(GetProcessHeap(), 0, sizeof(StreamOnStreamRange));
     if (!pObject) return E_OUTOFMEMORY;
 
-    pObject->lpVtbl = &StreamOnStreamRange_Vtbl;
+    pObject->IStream_iface.lpVtbl = &StreamOnStreamRange_Vtbl;
     pObject->ref = 1;
     IStream_AddRef(pIStream);
     pObject->stream = pIStream;
@@ -831,7 +846,7 @@ static HRESULT WINAPI IWICStreamImpl_InitializeFromIStreamRegion(IWICStream *ifa
     if (InterlockedCompareExchangePointer((void**)&This->pStream, pObject, NULL))
     {
         /* Some other thread set the stream first. */
-        IStream_Release((IStream*)pObject);
+        IStream_Release(&pObject->IStream_iface);
         return WINCODEC_ERR_WRONGSTATE;
     }
 
@@ -877,11 +892,11 @@ HRESULT StreamImpl_Create(IWICStream **stream)
         return E_OUTOFMEMORY;
     }
 
-    pObject->lpVtbl = &WICStream_Vtbl;
+    pObject->IWICStream_iface.lpVtbl = &WICStream_Vtbl;
     pObject->ref = 1;
     pObject->pStream = NULL;
 
-    *stream = (IWICStream*)pObject;
+    *stream = &pObject->IWICStream_iface;
 
     return S_OK;
 }
