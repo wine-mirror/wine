@@ -7829,7 +7829,7 @@ static void test_removefiles(void)
     ok( r == ERROR_SUCCESS, "cost init failed\n");
 
     r = MsiDoAction( hpkg, "FileCost");
-    ok( r == ERROR_SUCCESS, "cost finalize failed\n");
+    ok( r == ERROR_SUCCESS, "file cost failed\n");
 
     installed = action = 0xdeadbeef;
     r = MsiGetComponentState( hpkg, "oxygen", &installed, &action );
@@ -7841,10 +7841,18 @@ static void test_removefiles(void)
     ok( r == ERROR_SUCCESS, "cost finalize failed\n");
 
     r = MsiDoAction( hpkg, "InstallValidate");
-    ok( r == ERROR_SUCCESS, "cost finalize failed\n");
+    ok( r == ERROR_SUCCESS, "install validate failed\n");
 
     r = MsiSetComponentState( hpkg, "hydrogen", INSTALLSTATE_ABSENT );
     ok( r == ERROR_SUCCESS, "failed to set component state: %d\n", r);
+
+    installed = action = 0xdeadbeef;
+    r = MsiGetComponentState( hpkg, "hydrogen", &installed, &action );
+    ok( r == ERROR_SUCCESS, "failed to get component state %u\n", r );
+    todo_wine {
+    ok( installed == INSTALLSTATE_UNKNOWN, "expected INSTALLSTATE_UNKNOWN, got %d\n", installed );
+    ok( action == INSTALLSTATE_UNKNOWN, "expected INSTALLSTATE_UNKNOWN, got %d\n", action );
+    }
 
     r = MsiSetComponentState( hpkg, "helium", INSTALLSTATE_LOCAL );
     ok( r == ERROR_SUCCESS, "failed to set component state: %d\n", r);
