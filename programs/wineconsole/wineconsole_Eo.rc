@@ -22,25 +22,6 @@
 
 LANGUAGE LANG_ESPERANTO, SUBLANG_DEFAULT
 
-STRINGTABLE
-BEGIN
-IDS_EDIT,		"&Redaktu"
-IDS_DEFAULT,		"Agordu &Defaýltojn"
-IDS_PROPERTIES,		"E&coj"
-IDS_MARK,		"&Punkto"
-IDS_COPY,		"&Kopiu"
-IDS_PASTE,		"En&metu"
-IDS_SELECTALL,		"&Elekton æion"
-IDS_SCROLL,		"&Ruliøu"
-IDS_SEARCH,		"&Seræu"
-IDS_FNT_DISPLAY,	"Tipo estas larøa %ld bilderojn kaj alta %ld bilderojn"
-IDS_FNT_PREVIEW,	"Æi tiu estas provo"
-IDS_DLG_TIT_DEFAULT,    "Defaýltaj Agordoj"
-IDS_DLG_TIT_CURRENT,    "Nunaj Agordoj"
-IDS_DLG_TIT_ERROR,	"Eroro de agordado"
-IDS_DLG_ERR_SBWINSIZE,	"Ekran-bufra grandeco devas esti pli granda aý egala ol fenestr-bufra tiu"
-END
-
 IDD_OPTION DIALOG 36, 24, 140, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " Opcioj "

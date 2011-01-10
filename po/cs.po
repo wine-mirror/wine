@@ -1287,9 +1287,9 @@ msgid "Select &All"
 msgstr ""
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189
+#: shdoclc.rc:189 wineconsole.rc:30
 msgid "&Paste"
-msgstr ""
+msgstr "Vl&ožit"
 
 #: shdoclc.rc:49
 msgid "Create Shor&tcut"
@@ -1317,9 +1317,14 @@ msgstr ""
 msgid "&Refresh"
 msgstr "Obnovit"
 
-#: shdoclc.rc:59 clock.rc:28
+#: shdoclc.rc:59 clock.rc:28 wineconsole.rc:27
+#, fuzzy
 msgid "&Properties"
-msgstr "&Vlastnosti"
+msgstr ""
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"&Vlastnosti\n"
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"V&lastnosti"
 
 #: shdoclc.rc:62
 msgid "Image"
@@ -1374,9 +1379,9 @@ msgid "Cu&t"
 msgstr ""
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187
+#: shdoclc.rc:187 wineconsole.rc:29
 msgid "&Copy"
-msgstr ""
+msgstr "&Kopírovat"
 
 #: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
 msgid "Copy Shor&tcut"
@@ -3326,9 +3331,14 @@ msgstr "Nastavení tiská&rny..."
 msgid "E&xit"
 msgstr "&Konec"
 
-#: notepad.rc:38
+#: notepad.rc:38 wineconsole.rc:25
+#, fuzzy
 msgid "&Edit"
-msgstr "U&pravit"
+msgstr ""
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"U&pravit\n"
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"Ú&pravy"
 
 #: notepad.rc:39
 msgid "&Undo\tCtrl+Z"
@@ -4449,6 +4459,102 @@ msgstr "&Dolů"
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "Obyčejný prohlížeč metasouborů"
+
+#: wineconsole.rc:26
+msgid "Set &Defaults"
+msgstr "Nastavit &výchozí"
+
+#: wineconsole.rc:28
+msgid "&Mark"
+msgstr "V&ybrat"
+
+#: wineconsole.rc:31
+msgid "&Select all"
+msgstr "Vy&brat vše"
+
+#: wineconsole.rc:32
+msgid "Sc&roll"
+msgstr "Rolova&t"
+
+#: wineconsole.rc:33
+msgid "S&earch"
+msgstr "Hl&edat"
+
+#: wineconsole.rc:36
+msgid "Setup - Default settings"
+msgstr "Setup - Defaultní nastavení"
+
+#: wineconsole.rc:37
+msgid "Setup - Current settings"
+msgstr "Setup - Současné nastavení"
+
+#: wineconsole.rc:38
+msgid "Configuration error"
+msgstr "Chyba nastavení"
+
+#: wineconsole.rc:39
+msgid "Screen buffer size must be greater or equal to the window's one"
+msgstr "Zásobník obrazovky musí být větší nebo stejně velký jakzásobník okna."
+
+#: wineconsole.rc:34
+msgid "Each character is %ld pixels wide on %ld pixels high"
+msgstr "Každý znak je %ld pixelů široký a %ld pixelů vysoký"
+
+#: wineconsole.rc:35
+msgid "This is a test"
+msgstr "Toto je test"
+
+#: wineconsole.rc:41
+msgid "wineconsole: Couldn't parse event id\n"
+msgstr ""
+
+#: wineconsole.rc:42
+msgid "wineconsole: Invalid backend\n"
+msgstr ""
+
+#: wineconsole.rc:43
+msgid "wineconsole: Unrecognized command line option\n"
+msgstr ""
+
+#: wineconsole.rc:44
+msgid "Starts a program in a Wine console\n"
+msgstr ""
+
+#: wineconsole.rc:45
+msgid ""
+"wineconsole: Starting program %s failed.\n"
+"The command is invalid.\n"
+msgstr ""
+
+#: wineconsole.rc:48
+msgid ""
+"\n"
+"Usage:\n"
+"  wineconsole [options] <command>\n"
+"\n"
+"Options:\n"
+msgstr ""
+
+#: wineconsole.rc:49
+msgid ""
+"  --backend={user|curses}  Choosing user will spawn a new window, curses "
+"will\n"
+"                            try to setup the current terminal as a Wine "
+"console\n"
+msgstr ""
+
+#: wineconsole.rc:51
+msgid "  <command>                 The Wine program to launch in the console\n"
+msgstr ""
+
+#: wineconsole.rc:52
+msgid ""
+"\n"
+"Example:\n"
+"  wineconsole cmd\n"
+"Starts the Wine command prompt in a Wine console\n"
+"\n"
+msgstr ""
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

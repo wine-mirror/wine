@@ -1303,7 +1303,7 @@ msgid "Select &All"
 msgstr "&Alles selecteren"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189
+#: shdoclc.rc:189 wineconsole.rc:30
 msgid "&Paste"
 msgstr "&Plakken"
 
@@ -1331,7 +1331,7 @@ msgstr "Af&drukken"
 msgid "&Refresh"
 msgstr "A&ctualiseren"
 
-#: shdoclc.rc:59 clock.rc:28
+#: shdoclc.rc:59 clock.rc:28 wineconsole.rc:27
 msgid "&Properties"
 msgstr "&Eigenschappen"
 
@@ -1388,7 +1388,7 @@ msgid "Cu&t"
 msgstr "K&nippen"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187
+#: shdoclc.rc:187 wineconsole.rc:29
 msgid "&Copy"
 msgstr "&Kopiëren"
 
@@ -3400,9 +3400,14 @@ msgstr "Printerins&tellingen..."
 msgid "E&xit"
 msgstr "&Afsluiten"
 
-#: notepad.rc:38
+#: notepad.rc:38 wineconsole.rc:25
+#, fuzzy
 msgid "&Edit"
-msgstr "Be&werken"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Be&werken\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"&Bewerken"
 
 #: notepad.rc:39
 msgid "&Undo\tCtrl+Z"
@@ -4551,6 +4556,121 @@ msgstr "O&mlaag"
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "Algemene Metafile weergave"
+
+#: wineconsole.rc:26
+msgid "Set &Defaults"
+msgstr "&Standaardinstellingen"
+
+#: wineconsole.rc:28
+msgid "&Mark"
+msgstr "&Markeren"
+
+#: wineconsole.rc:31
+msgid "&Select all"
+msgstr "&Alles selecteren"
+
+#: wineconsole.rc:32
+msgid "Sc&roll"
+msgstr "Sc&rollen"
+
+#: wineconsole.rc:33
+msgid "S&earch"
+msgstr "&Zoeken"
+
+#: wineconsole.rc:36
+msgid "Setup - Default settings"
+msgstr "Configuratie - standaard instelllingen"
+
+#: wineconsole.rc:37
+msgid "Setup - Current settings"
+msgstr "Configuratie - huidige instellingen"
+
+#: wineconsole.rc:38
+msgid "Configuration error"
+msgstr "Configuratiefout"
+
+#: wineconsole.rc:39
+msgid "Screen buffer size must be greater or equal to the window's one"
+msgstr "De schermbuffer moet groter dan of gelijk zijn aan de vensterbuffer"
+
+#: wineconsole.rc:34
+msgid "Each character is %ld pixels wide on %ld pixels high"
+msgstr "Elk karakter is %ld pixels breed en %ld pixels hoog"
+
+#: wineconsole.rc:35
+msgid "This is a test"
+msgstr "Dit is een test"
+
+#: wineconsole.rc:41
+msgid "wineconsole: Couldn't parse event id\n"
+msgstr "wineconsole: Fout in verwerken gebeurtenis id\n"
+
+#: wineconsole.rc:42
+msgid "wineconsole: Invalid backend\n"
+msgstr "wineconsole: Onjuiste backend\n"
+
+#: wineconsole.rc:43
+msgid "wineconsole: Unrecognized command line option\n"
+msgstr "wineconsole: Niet herkende opdrachtregel optie\n"
+
+#: wineconsole.rc:44
+msgid "Starts a program in a Wine console\n"
+msgstr "Dit start een programma in een Wine console-omgeving\n"
+
+#: wineconsole.rc:45
+msgid ""
+"wineconsole: Starting program %s failed.\n"
+"The command is invalid.\n"
+msgstr ""
+"wineconsole: Starten van programma %s mislukt.\n"
+"Het commando is onjuist.\n"
+
+#: wineconsole.rc:48
+msgid ""
+"\n"
+"Usage:\n"
+"  wineconsole [options] <command>\n"
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Gebruik:\n"
+"  wineconsole [opties] <commando>\n"
+"\n"
+"Opties:\n"
+
+#: wineconsole.rc:49
+msgid ""
+"  --backend={user|curses}  Choosing user will spawn a new window, curses "
+"will\n"
+"                            try to setup the current terminal as a Wine "
+"console\n"
+msgstr ""
+"  --backend={user|curses}  Kiezen voor user zal een nieuw window doen "
+"verschijnen,\n"
+"                            curses zal proberen de huidige terminal om te "
+"zetten\n"
+"                            in een Wine console\n"
+
+#: wineconsole.rc:51
+msgid "  <command>                 The Wine program to launch in the console\n"
+msgstr ""
+"  <commando>                Het Wine programma dat zal starten in de Wine "
+"console\n"
+
+#: wineconsole.rc:52
+msgid ""
+"\n"
+"Example:\n"
+"  wineconsole cmd\n"
+"Starts the Wine command prompt in a Wine console\n"
+"\n"
+msgstr ""
+"\n"
+"Voorbeeld:\n"
+"  wineconsole cmd\n"
+"Start de Wine command prompt in een Wine console\n"
+"\n"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

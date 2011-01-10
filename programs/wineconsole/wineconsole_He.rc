@@ -23,39 +23,6 @@
 
 LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
 
-STRINGTABLE
-BEGIN
-IDS_EDIT,		"ע&ריכה"
-IDS_DEFAULT,		"הגדרת &בררות מחדל"
-IDS_PROPERTIES,		"מ&אפינים"
-IDS_MARK,		"&סימון"
-IDS_COPY,		"ה&עתקה"
-IDS_PASTE,		"ה&דבקה"
-IDS_SELECTALL,		"בחירת ה&כול"
-IDS_SCROLL,		"&גלילה"
-IDS_SEARCH,		"&חיפוש"
-IDS_FNT_DISPLAY,	"כל תו הוא ברוחב %ld פיקסלים על גובה של %ld פיקסלים"
-IDS_FNT_PREVIEW,	"זוהי בדיקה"
-IDS_DLG_TIT_DEFAULT,    "תצורה - הגדרות בררת המחדל"
-IDS_DLG_TIT_CURRENT,    "תצורה - ההגדרות הנוכחיות"
-IDS_DLG_TIT_ERROR,	"שגיאת תצוגה"
-IDS_DLG_ERR_SBWINSIZE,	"גודל מאגר המסך חייב להיות גדול או שווה לזה של החלון"
-
-IDS_CMD_INVALID_EVENT_ID   "wineconsole: Couldn't parse event id\n"
-IDS_CMD_INVALID_BACKEND    "wineconsole: Invalid backend\n"
-IDS_CMD_INVALID_OPTION     "wineconsole: Unrecognized command line option\n"
-IDS_CMD_ABOUT              "Starts a program in a Wine console\n"
-IDS_CMD_LAUNCH_FAILED      "wineconsole: Starting program %s failed.\n"\
-                           "The command is invalid.\n"
-
-IDS_USAGE_HEADER           "\nUsage:\n  wineconsole [options] <command>\n\nOptions:\n"
-IDS_USAGE_BACKEND          "  --backend={user|curses}  Choosing user will spawn a new window, curses will\n"\
-                           "                            try to setup the current terminal as a Wine console\n"
-IDS_USAGE_COMMAND          "  <command>                 The Wine program to launch in the console\n"
-IDS_USAGE_FOOTER           "\nExample:\n  wineconsole cmd\nStarts the Wine command prompt in a Wine console\n\n"
-
-END
-
 IDD_OPTION DIALOG 36, 24, 140, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_LAYOUTRTL

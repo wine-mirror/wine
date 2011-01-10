@@ -15373,7 +15373,7 @@ wine_fn_config_program view enable_view po
 wine_fn_config_program wineboot enable_wineboot install,installbin
 wine_fn_config_program winebrowser enable_winebrowser install
 wine_fn_config_program winecfg enable_winecfg install,installbin
-wine_fn_config_program wineconsole enable_wineconsole install,installbin
+wine_fn_config_program wineconsole enable_wineconsole po,install,installbin
 wine_fn_config_program winedbg enable_winedbg install,installbin
 wine_fn_config_program winedevice enable_winedevice install
 wine_fn_config_program winefile enable_winefile install,installbin

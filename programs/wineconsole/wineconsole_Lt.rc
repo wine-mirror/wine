@@ -23,39 +23,6 @@
 
 LANGUAGE LANG_LITHUANIAN, SUBLANG_NEUTRAL
 
-STRINGTABLE
-BEGIN
-IDS_EDIT,                  "&Taisa"
-IDS_DEFAULT,               "Nustatyti &numatytąsias"
-IDS_PROPERTIES,            "&Savybės"
-IDS_MARK,                  "&Žymėti"
-IDS_COPY,                  "&Kopijuoti"
-IDS_PASTE,                 "Į&dėti"
-IDS_SELECTALL,             "&Pažymėti viską"
-IDS_SCROLL,                "&Slinkti"
-IDS_SEARCH,                "&Ieškoti"
-IDS_FNT_DISPLAY,           "Kiekvienas simbolis yra %ld pikselių pločio ir %ld pikselių aukščio"
-IDS_FNT_PREVIEW,         "Čia yra testas"
-IDS_DLG_TIT_DEFAULT,       "Konfigūracija - numatytosios nuostatos"
-IDS_DLG_TIT_CURRENT,       "Konfigūracija - dabartinės nuostatos"
-IDS_DLG_TIT_ERROR,         "Konfigūracijos klaida"
-IDS_DLG_ERR_SBWINSIZE,     "Ekrano buferio dydis turi būti didesnis arba lygus lango buferiui"
-
-IDS_CMD_INVALID_EVENT_ID   "wineconsole: nepavyko išnagrinėti įvykio identifikatoriaus\n"
-IDS_CMD_INVALID_BACKEND    "wineconsole: neteisinga posistemė\n"
-IDS_CMD_INVALID_OPTION     "wineconsole: neatpažintas komandinės eilutės parametras\n"
-IDS_CMD_ABOUT              "Paleidžia programą Wine pulte\n"
-IDS_CMD_LAUNCH_FAILED      "wineconsole: nepavyko paleisti programos %s.\n"\
-                           "Neteisinga komanda.\n"
-
-IDS_USAGE_HEADER           "\nNaudojimas:\n  wineconsole [parametrai] <komanda>\n\nParametrai:\n"
-IDS_USAGE_BACKEND          "  --backend={user|curses}  „User“ sukurs naują langą, „curses“ mėgins\n"\
-                           "                            sukonfigūruoti dabartinį terminalą kaip Wine pultą\n"
-IDS_USAGE_COMMAND          "  <komanda>                 Wine programa paleidimui pulte\n"
-IDS_USAGE_FOOTER           "\nPavyzdys:\n  wineconsole cmd\nPaleidžia Wine komandų interpretatorių Wine pulte\n\n"
-
-END
-
 IDD_OPTION DIALOG 36, 24, 140, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " Parinktys "

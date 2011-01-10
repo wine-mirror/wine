@@ -22,25 +22,6 @@
 
 LANGUAGE LANG_TURKISH, SUBLANG_DEFAULT
 
-STRINGTABLE
-BEGIN
-IDS_EDIT,		"&Düzenle"
-IDS_DEFAULT,		"&Öntanýmlý Ayarlar"
-IDS_PROPERTIES,		"Ö&zellikler"
-IDS_MARK,		"&Ýþaretle"
-IDS_COPY,		"K&opyala"
-IDS_PASTE,		"Ya&pýþtýr"
-IDS_SELECTALL,		"&Tümünü seç"
-IDS_SCROLL,		"Ka&ydýr"
-IDS_SEARCH,		"A&ra"
-IDS_FNT_DISPLAY,	"Her karakter %ld piksel geniþliðinde ve %ld piksel yüksekliðinde"
-IDS_FNT_PREVIEW,	"Bu bir sýnamadýr"
-IDS_DLG_TIT_DEFAULT,    "Ayarla - Öntanýmlý ayarlar"
-IDS_DLG_TIT_CURRENT,    "Ayarla - Geçerli ayarlar"
-IDS_DLG_TIT_ERROR,	"Yapýlandýrma hatasý"
-IDS_DLG_ERR_SBWINSIZE,	"Ekran tamponu en az pencereninki kadar büyük olmalýdýr"
-END
-
 IDD_OPTION DIALOG 36, 24, 140, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " Seçenekler "

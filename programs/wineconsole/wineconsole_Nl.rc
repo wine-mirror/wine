@@ -23,40 +23,6 @@
 
 LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 
-STRINGTABLE
-BEGIN
-IDS_EDIT,		"&Bewerken"
-IDS_DEFAULT,		"&Standaardinstellingen"
-IDS_PROPERTIES,		"&Eigenschappen"
-IDS_MARK,		"&Markeren"
-IDS_COPY,		"&Kopiëren"
-IDS_PASTE,		"&Plakken"
-IDS_SELECTALL,		"&Alles selecteren"
-IDS_SCROLL,		"Sc&rollen"
-IDS_SEARCH,		"&Zoeken"
-IDS_FNT_DISPLAY,	"Elk karakter is %ld pixels breed en %ld pixels hoog"
-IDS_FNT_PREVIEW,	"Dit is een test"
-IDS_DLG_TIT_DEFAULT,    "Configuratie - standaard instelllingen"
-IDS_DLG_TIT_CURRENT,    "Configuratie - huidige instellingen"
-IDS_DLG_TIT_ERROR,	"Configuratiefout"
-IDS_DLG_ERR_SBWINSIZE,	"De schermbuffer moet groter dan of gelijk zijn aan de vensterbuffer"
-
-IDS_CMD_INVALID_EVENT_ID   "wineconsole: Fout in verwerken gebeurtenis id\n"
-IDS_CMD_INVALID_BACKEND    "wineconsole: Onjuiste backend\n"
-IDS_CMD_INVALID_OPTION     "wineconsole: Niet herkende opdrachtregel optie\n"
-IDS_CMD_ABOUT              "Dit start een programma in een Wine console-omgeving\n"
-IDS_CMD_LAUNCH_FAILED      "wineconsole: Starten van programma %s mislukt.\n"\
-                           "Het commando is onjuist.\n"
-
-IDS_USAGE_HEADER           "\nGebruik:\n  wineconsole [opties] <commando>\n\nOpties:\n"
-IDS_USAGE_BACKEND          "  --backend={user|curses}  Kiezen voor user zal een nieuw window doen verschijnen,\n"\
-                           "                            curses zal proberen de huidige terminal om te zetten\n"\
-                           "                            in een Wine console\n"
-IDS_USAGE_COMMAND          "  <commando>                Het Wine programma dat zal starten in de Wine console\n"
-IDS_USAGE_FOOTER           "\nVoorbeeld:\n  wineconsole cmd\nStart de Wine command prompt in een Wine console\n\n"
-
-END
-
 IDD_OPTION DIALOG 36, 24, 140, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " Opties "

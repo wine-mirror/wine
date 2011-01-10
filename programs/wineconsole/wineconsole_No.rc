@@ -23,39 +23,6 @@
 
 LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
-STRINGTABLE
-BEGIN
-IDS_EDIT,		"R&ediger"
-IDS_DEFAULT,		"Angi stan&dardverdier"
-IDS_PROPERTIES,		"Egenska&per"
-IDS_MARK,		"&Marker"
-IDS_COPY,		"&Kopier"
-IDS_PASTE,		"&Lim inn"
-IDS_SELECTALL,		"Merk &alt"
-IDS_SCROLL,		"&Rull"
-IDS_SEARCH,		"&Søk"
-IDS_FNT_DISPLAY,	"Hvert tegn er %ld piksler bredt og %ld piksler høyt"
-IDS_FNT_PREVIEW,	"Dette er en test"
-IDS_DLG_TIT_DEFAULT,    "Oppsett - Standardinnstillinger"
-IDS_DLG_TIT_CURRENT,    "Oppsett - Gjeldende innstillinger"
-IDS_DLG_TIT_ERROR,	"Konfigurasjonsfeil"
-IDS_DLG_ERR_SBWINSIZE,	"Skjermens hurtigminnestørrelse må være større eller lik vinduets"
-
-IDS_CMD_INVALID_EVENT_ID   "wineconsole: Klarte ikke lese hendelse-id\n"
-IDS_CMD_INVALID_BACKEND    "wineconsole: Ugyldig motor\n"
-IDS_CMD_INVALID_OPTION     "wineconsole: Ukjent kommandolinjeopsjon\n"
-IDS_CMD_ABOUT              "Starter et program i en Wine-konsoll\n"
-IDS_CMD_LAUNCH_FAILED      "wineconsole: Klarte ikke å starte programmet %s.\n"\
-                           "Ugyldig kommando.\n"
-
-IDS_USAGE_HEADER           "\nBruk:\n  wineconsole [alternativer] <kommando>\n\nAlternativer:\n"
-IDS_USAGE_BACKEND          "  --backend={user|curses}  «user» lager et nytt vindu, mens «curses»\n"\
-                           "                            prøve å bruke gjeldende terminal som Wine-konsoll\n"
-IDS_USAGE_COMMAND          "  <kommando>                Wine-programmet som skal kjøres i konsollet\n"
-IDS_USAGE_FOOTER           "\nEksempel:\n  wineconsole cmd\nStarter Wine-ledeteksten i et Wine-konsoll\n\n"
-
-END
-
 IDD_OPTION DIALOG 36, 24, 140, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " Innstillinger "

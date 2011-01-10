@@ -1293,7 +1293,7 @@ msgid "Select &All"
 msgstr "全選(&A)"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189
+#: shdoclc.rc:189 wineconsole.rc:30
 msgid "&Paste"
 msgstr "貼上(&P)"
 
@@ -1321,7 +1321,7 @@ msgstr "列印(&I)"
 msgid "&Refresh"
 msgstr "刷新(&R)"
 
-#: shdoclc.rc:59 clock.rc:28
+#: shdoclc.rc:59 clock.rc:28 wineconsole.rc:27
 msgid "&Properties"
 msgstr "屬性(&P)"
 
@@ -1378,7 +1378,7 @@ msgid "Cu&t"
 msgstr "剪下(&T)"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187
+#: shdoclc.rc:187 wineconsole.rc:29
 msgid "&Copy"
 msgstr "複製(&C)"
 
@@ -3074,7 +3074,7 @@ msgstr ""
 "#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
 "結束(&x)"
 
-#: notepad.rc:38
+#: notepad.rc:38 wineconsole.rc:25
 msgid "&Edit"
 msgstr "編輯(&E)"
 
@@ -4172,6 +4172,102 @@ msgstr "下(&D)"
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "普通 Metafile 閱讀器"
+
+#: wineconsole.rc:26
+msgid "Set &Defaults"
+msgstr "設為默認值(&D)"
+
+#: wineconsole.rc:28
+msgid "&Mark"
+msgstr "標記(&M)"
+
+#: wineconsole.rc:31
+msgid "&Select all"
+msgstr "全選(&S)"
+
+#: wineconsole.rc:32
+msgid "Sc&roll"
+msgstr "滾動(&R)"
+
+#: wineconsole.rc:33
+msgid "S&earch"
+msgstr "搜索(&E)"
+
+#: wineconsole.rc:36
+msgid "Setup - Default settings"
+msgstr "配置 - 默認設定"
+
+#: wineconsole.rc:37
+msgid "Setup - Current settings"
+msgstr "配置 - 當前設定"
+
+#: wineconsole.rc:38
+msgid "Configuration error"
+msgstr "配置錯誤"
+
+#: wineconsole.rc:39
+msgid "Screen buffer size must be greater or equal to the window's one"
+msgstr "螢幕緩存大小必須大於或等於視窗緩存"
+
+#: wineconsole.rc:34
+msgid "Each character is %ld pixels wide on %ld pixels high"
+msgstr "每個字都是 %ld 個像素寬，%ld 個像素高"
+
+#: wineconsole.rc:35
+msgid "This is a test"
+msgstr "這是一段測試語句"
+
+#: wineconsole.rc:41
+msgid "wineconsole: Couldn't parse event id\n"
+msgstr ""
+
+#: wineconsole.rc:42
+msgid "wineconsole: Invalid backend\n"
+msgstr ""
+
+#: wineconsole.rc:43
+msgid "wineconsole: Unrecognized command line option\n"
+msgstr ""
+
+#: wineconsole.rc:44
+msgid "Starts a program in a Wine console\n"
+msgstr ""
+
+#: wineconsole.rc:45
+msgid ""
+"wineconsole: Starting program %s failed.\n"
+"The command is invalid.\n"
+msgstr ""
+
+#: wineconsole.rc:48
+msgid ""
+"\n"
+"Usage:\n"
+"  wineconsole [options] <command>\n"
+"\n"
+"Options:\n"
+msgstr ""
+
+#: wineconsole.rc:49
+msgid ""
+"  --backend={user|curses}  Choosing user will spawn a new window, curses "
+"will\n"
+"                            try to setup the current terminal as a Wine "
+"console\n"
+msgstr ""
+
+#: wineconsole.rc:51
+msgid "  <command>                 The Wine program to launch in the console\n"
+msgstr ""
+
+#: wineconsole.rc:52
+msgid ""
+"\n"
+"Example:\n"
+"  wineconsole cmd\n"
+"Starts the Wine command prompt in a Wine console\n"
+"\n"
+msgstr ""
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

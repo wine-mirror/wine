@@ -22,39 +22,6 @@
 
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
-STRINGTABLE
-BEGIN
-IDS_EDIT,		"Edi&tieren"
-IDS_DEFAULT,		"Stan&dard"
-IDS_PROPERTIES,		"&Eigenschaften"
-IDS_MARK,		"&Markieren"
-IDS_COPY,		"&Kopieren"
-IDS_PASTE,		"&Einfügen"
-IDS_SELECTALL,		"&Alles auswählen"
-IDS_SCROLL,		"Sc&rollen"
-IDS_SEARCH,		"&Suchen"
-IDS_FNT_DISPLAY,	"Jeder Buchstabe ist %ld Pixel breit und %ld Pixel hoch"
-IDS_FNT_PREVIEW,	"Dies ist ein Test"
-IDS_DLG_TIT_DEFAULT,    "Setup - Standardeinstellungen"
-IDS_DLG_TIT_CURRENT,    "Setup - aktuelle Einstellungen"
-IDS_DLG_TIT_ERROR,      "Konfigurationsfehler"
-IDS_DLG_ERR_SBWINSIZE,  "Die Bildschirmgröße muß größer oder gleich der des Fensters sein"
-
-IDS_CMD_INVALID_EVENT_ID   "wineconsole: Kann Event-ID nicht parsen\n"
-IDS_CMD_INVALID_BACKEND    "wineconsole: Ungültiges backend\n"
-IDS_CMD_INVALID_OPTION     "wineconsole: Nicht erkannte Befehlszeilenoption\n"
-IDS_CMD_ABOUT              "Startet ein Programm in einer Wine-Konsole.\n"
-IDS_CMD_LAUNCH_FAILED      "wineconsole: Starten des Programms %s fehlgeschlagen.\n"\
-                           "Der Befehl ist ungültig.\n"
-
-IDS_USAGE_HEADER           "\nAufruf:\n  wineconsole [Optionen] <Befehl>\n\nOptionen:\n"
-IDS_USAGE_BACKEND          "  --backend={user|curses}  Auswahl von ‚user‘ erstellt ein neues Fenster,\n"\
-                           "                            ‚curses‘ versucht das aktuelle Terminal als Wine-\n"\
-                           "                            Konsole einzurichten\n"
-IDS_USAGE_COMMAND          "  <Befehl>                  Das in der Konsole zu startende Wine-Programm\n"
-IDS_USAGE_FOOTER           "\nBespiel:\n  wineconsole cmd\nStartet die Wine-Befehlszeile in einer Wine-Konsole\n\n"
-END
-
 IDD_OPTION DIALOG 36, 24, 140, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " Optionen "

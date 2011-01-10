@@ -21,25 +21,6 @@
 
 LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
 
-STRINGTABLE
-BEGIN
-IDS_EDIT,		"&Szerkesztés"
-IDS_DEFAULT,		"Ala&pértékek"
-IDS_PROPERTIES,		"&Beállítások"
-IDS_MARK,		"&Jelölés"
-IDS_COPY,		"&Másolás"
-IDS_PASTE,		"&Beillesztés"
-IDS_SELECTALL,		"&Az összes kijelölése"
-IDS_SCROLL,		"&Görgetés"
-IDS_SEARCH,		"&Keresés"
-IDS_FNT_DISPLAY,	"Minden karakter %ld pixel széles és %ld pixel magas"
-IDS_FNT_PREVIEW,	"Ez egy teszt"
-IDS_DLG_TIT_DEFAULT,    "Beállítás - alapértelmezett beállítások"
-IDS_DLG_TIT_CURRENT,    "Beállítás - aktuális beállítások"
-IDS_DLG_TIT_ERROR,      "Configuration error"
-IDS_DLG_ERR_SBWINSIZE,  "Screen buffer size must be greater or equal to the window's one"
-END
-
 IDD_OPTION DIALOG 36, 24, 140, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " Beállítások "

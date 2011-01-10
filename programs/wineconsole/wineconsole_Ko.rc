@@ -23,39 +23,6 @@
 
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
-STRINGTABLE
-BEGIN
-IDS_EDIT,		"편집(&E)"
-IDS_DEFAULT,		"기본으로 설정(&D)"
-IDS_PROPERTIES,		"속성(&P)"
-IDS_MARK,		"&Mark"
-IDS_COPY,		"복사(&C)"
-IDS_PASTE,		"붙여넣기(&P)"
-IDS_SELECTALL,		"모두 선택(&S)"
-IDS_SCROLL,		"스크롤(&R)"
-IDS_SEARCH,		"찾기(&E)"
-IDS_FNT_DISPLAY,	"각각의 글자는 %ld  픽셀 너비에 %ld 픽셀 높이를 가집니다"
-IDS_FNT_PREVIEW,	"이것은 테스트입니다"
-IDS_DLG_TIT_DEFAULT,    "설치 - 기본 설정"
-IDS_DLG_TIT_CURRENT,    "설치 - 현재 설정"
-IDS_DLG_TIT_ERROR,	"설정 에러"
-IDS_DLG_ERR_SBWINSIZE, 	"스크린 버퍼 크기는 반드시 창보다 같거나 커야합니다."
-
-IDS_CMD_INVALID_EVENT_ID  "wineconsole: 이벤트 id를 붙여 넣을 수 없습니다\n"
-IDS_CMD_INVALID_BACKEND    "wineconsole: 올바르지 않은 백엔드\n"
-IDS_CMD_INVALID_OPTION    "wineconsole: 이해할수 없는 명령 라인 옵션\n"
-IDS_CMD_ABOUT              "Wine 콘솔에서 프로그램 시작\n"
-IDS_CMD_LAUNCH_FAILED      "wineconsole: 풀그림 %s 시작 실패.\n"\
-                           "이 명령은 올바르지 않습니다.\n"
-
-IDS_USAGE_HEADER           "\n사용법:\n  wineconsole [옵션] <명령>\n\n옵션:\n"
-IDS_USAGE_BACKEND          "  --backend={user|curses}  사용자가 새 창을 열 것인지,\n"\
-                           "                            curses가 Wine 콘솔처럼 현재 터미널에  나타낼 것인지 선택\n"
-IDS_USAGE_COMMAND          "  <명령>                 The Wine 프로그램은 콘솔을 통해서 시작됨\n"
-IDS_USAGE_FOOTER           "\n예:\n  wineconsole cmd\nWine 콘솔에서 Wine 명령 프롬프트 시작\n\n"
-
-END
-
 IDD_OPTION DIALOG 36, 24, 208, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " 옵션 "

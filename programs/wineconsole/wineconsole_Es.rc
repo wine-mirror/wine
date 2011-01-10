@@ -23,38 +23,6 @@
 
 LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
 
-STRINGTABLE
-BEGIN
-IDS_EDIT,		"&Editar"
-IDS_DEFAULT,		"Por &defecto"
-IDS_PROPERTIES,		"&Propiedades"
-IDS_MARK,		"&Marcar"
-IDS_COPY,		"&Copiar"
-IDS_PASTE,		"&Pegar"
-IDS_SELECTALL,		"&Seleccionar todo"
-IDS_SCROLL,		"Desplaza&r"
-IDS_SEARCH,		"&Buscar"
-IDS_FNT_DISPLAY,	"Cada caracter tiene %ld píxeles de ancho por %ld píxeles de alto"
-IDS_FNT_PREVIEW,	"Esto es una prueba"
-IDS_DLG_TIT_DEFAULT,    "Configuración - Valores por defecto"
-IDS_DLG_TIT_CURRENT,    "Configuración - Valores actuales"
-IDS_DLG_TIT_ERROR,	"Error de configuración"
-IDS_DLG_ERR_SBWINSIZE,	"El tamaño del buffer de la pantalla debe ser mayor o igual que el de la ventana"
-
-IDS_CMD_INVALID_EVENT_ID   "wineconsole: No se pudo procesar el id del evento\n"
-IDS_CMD_INVALID_BACKEND    "wineconsole: Final invalido\n"
-IDS_CMD_INVALID_OPTION     "wineconsole: Linea de comando no reconocida\n"
-IDS_CMD_ABOUT              "Inicia un programa en una consola de Wine\n"
-IDS_CMD_LAUNCH_FAILED      "wineconsole: El arranque del programa %s falló.\n"\
-                           "El comando es inválido.\n"
-
-IDS_USAGE_HEADER           "\nUso:\n  wineconsole [opciones] <comando>\n\nOpciones:\n"
-IDS_USAGE_BACKEND          "  --backend={user|curses}  Seleccionando user generará una nueva ventana, curses\n"\
-                           "                            intentara configurar el terminal actual como una consola de Wine\n"
-IDS_USAGE_COMMAND          "  <comando>                 EL programa de Wine que se iniciará en la consola\n"
-IDS_USAGE_FOOTER           "\nEjemplo:\n  wineconsole cmd\nInicia el simbolo del sistema de Wine en una consola Wine\n\n"
-END
-
 IDD_OPTION DIALOG 36, 24, 140, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " Opciones "

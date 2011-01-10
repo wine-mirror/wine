@@ -20,39 +20,6 @@
 
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
-STRINGTABLE
-BEGIN
-IDS_EDIT,		"&Edit"
-IDS_DEFAULT,		"Set &Defaults"
-IDS_PROPERTIES,		"&Properties"
-IDS_MARK,		"&Mark"
-IDS_COPY,		"&Copy"
-IDS_PASTE,		"&Paste"
-IDS_SELECTALL,		"&Select all"
-IDS_SCROLL,		"Sc&roll"
-IDS_SEARCH,		"S&earch"
-IDS_FNT_DISPLAY,	"Each character is %ld pixels wide on %ld pixels high"
-IDS_FNT_PREVIEW,	"This is a test"
-IDS_DLG_TIT_DEFAULT,    "Setup - Default settings"
-IDS_DLG_TIT_CURRENT,    "Setup - Current settings"
-IDS_DLG_TIT_ERROR,	"Configuration error"
-IDS_DLG_ERR_SBWINSIZE,	"Screen buffer size must be greater or equal to the window's one"
-
-IDS_CMD_INVALID_EVENT_ID   "wineconsole: Couldn't parse event id\n"
-IDS_CMD_INVALID_BACKEND    "wineconsole: Invalid backend\n"
-IDS_CMD_INVALID_OPTION     "wineconsole: Unrecognized command line option\n"
-IDS_CMD_ABOUT              "Starts a program in a Wine console\n"
-IDS_CMD_LAUNCH_FAILED      "wineconsole: Starting program %s failed.\n"\
-                           "The command is invalid.\n"
-
-IDS_USAGE_HEADER           "\nUsage:\n  wineconsole [options] <command>\n\nOptions:\n"
-IDS_USAGE_BACKEND          "  --backend={user|curses}  Choosing user will spawn a new window, curses will\n"\
-                           "                            try to setup the current terminal as a Wine console\n"
-IDS_USAGE_COMMAND          "  <command>                 The Wine program to launch in the console\n"
-IDS_USAGE_FOOTER           "\nExample:\n  wineconsole cmd\nStarts the Wine command prompt in a Wine console\n\n"
-
-END
-
 IDD_OPTION DIALOG 36, 24, 140, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " Options "

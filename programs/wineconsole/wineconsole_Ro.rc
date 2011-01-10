@@ -24,46 +24,6 @@ LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
 
 #pragma code_page(65001)
 
-STRINGTABLE
-BEGIN
-IDS_EDIT,               "&Editare"
-IDS_DEFAULT,            "Setări &implicite"
-IDS_PROPERTIES,         "&Proprietăți"
-IDS_MARK,               "&Marchează"
-IDS_COPY,               "&Copiază"
-IDS_PASTE,              "Li&pește"
-IDS_SELECTALL,          "&Selectează tot"
-IDS_SCROLL,             "De&rulează"
-IDS_SEARCH,             "Cau&tă"
-IDS_FNT_DISPLAY,        "Fiecare caracter are %ld pixeli lățime și %ld pixeli înălțime"
-IDS_FNT_PREVIEW,        "Acesta este un test"
-IDS_DLG_TIT_DEFAULT,    "Configurație implicită"
-IDS_DLG_TIT_CURRENT,    "Configurație curentă"
-IDS_DLG_TIT_ERROR,      "Eroare de configurare"
-IDS_DLG_ERR_SBWINSIZE,  "Mărimea memoriei tampon a ecranului trebuie să fie egală sau mai mare decât cea a ferestrei"
-
-IDS_CMD_INVALID_EVENT_ID "wineconsole: Nu a putut fi descifrat identificatorul evenimentului\n"
-IDS_CMD_INVALID_BACKEND "wineconsole: backend nevalid\n"
-IDS_CMD_INVALID_OPTION  "wineconsole: Opțiune nerecunoscută pentru linia de comandă\n"
-IDS_CMD_ABOUT           "Pornește un program într-o consolă Wine\n"
-IDS_CMD_LAUNCH_FAILED   "wineconsole: Pornirea programului %s a eșuat.\nComanda nu este validă.\n"
-
-IDS_USAGE_HEADER        "\n\
-Utilizare:\n\
-\  wineconsole [opțiuni] <comandă>\n\n\
-Opțiuni:\n"
-IDS_USAGE_BACKEND
-"  --backend={user|curses}  Dacă alegeți user, se va deschide o nouă\n\
-\                           fereastră, curses va încerca să configureze\n\
-\                           terminalul curent ca fiind consolă Wine\n"
-IDS_USAGE_COMMAND
-"  <comandă>                De executat programul Wine în consolă\n"
-IDS_USAGE_FOOTER        "\n\
-Exemplu:\n\
-\  wineconsole cmd\n\
-Pornește caseta de comandă pentru Wine într-o consolă Wine\n\n"
-END
-
 IDD_OPTION DIALOG 36, 24, 140, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " Opțiuni "

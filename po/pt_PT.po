@@ -1317,9 +1317,14 @@ msgid "Select &All"
 msgstr "&Seleccionar tudo"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189
+#: shdoclc.rc:189 wineconsole.rc:30
+#, fuzzy
 msgid "&Paste"
-msgstr "C&olar"
+msgstr ""
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"C&olar\n"
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"&Colar"
 
 #: shdoclc.rc:49
 msgid "Create Shor&tcut"
@@ -1345,7 +1350,7 @@ msgstr "I&mprimir"
 msgid "&Refresh"
 msgstr "Actuali&zar"
 
-#: shdoclc.rc:59 clock.rc:28
+#: shdoclc.rc:59 clock.rc:28 wineconsole.rc:27
 msgid "&Properties"
 msgstr "&Propriedades"
 
@@ -1402,9 +1407,14 @@ msgid "Cu&t"
 msgstr "&Cortar"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187
+#: shdoclc.rc:187 wineconsole.rc:29
+#, fuzzy
 msgid "&Copy"
-msgstr "C&opiar"
+msgstr ""
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"C&opiar\n"
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"&Copiar"
 
 #: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
 msgid "Copy Shor&tcut"
@@ -3409,7 +3419,7 @@ msgstr "Configurar i&mpressora..."
 msgid "E&xit"
 msgstr "Sai&r"
 
-#: notepad.rc:38
+#: notepad.rc:38 wineconsole.rc:25
 msgid "&Edit"
 msgstr "&Editar"
 
@@ -4568,6 +4578,118 @@ msgstr "A&baixo"
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "Visualizador Regular de Ficheiros Meta"
+
+#: wineconsole.rc:26
+msgid "Set &Defaults"
+msgstr "&Definir predefinições"
+
+#: wineconsole.rc:28
+msgid "&Mark"
+msgstr "&Marcar"
+
+#: wineconsole.rc:31
+msgid "&Select all"
+msgstr "&Seleccionar tudo"
+
+#: wineconsole.rc:32
+msgid "Sc&roll"
+msgstr "&Rolar"
+
+#: wineconsole.rc:33
+msgid "S&earch"
+msgstr "&Pesquisar"
+
+#: wineconsole.rc:36
+msgid "Setup - Default settings"
+msgstr "Configuração - configurações predefinidas"
+
+#: wineconsole.rc:37
+msgid "Setup - Current settings"
+msgstr "Configuração - configurações actuais"
+
+#: wineconsole.rc:38
+msgid "Configuration error"
+msgstr "Erro de configuração"
+
+#: wineconsole.rc:39
+msgid "Screen buffer size must be greater or equal to the window's one"
+msgstr "O tamanho do 'buffer' do ecrã deve ser maior ou igual ao da janela"
+
+#: wineconsole.rc:34
+msgid "Each character is %ld pixels wide on %ld pixels high"
+msgstr "Cada caracter tem %ld pixels de largura por %ld pixels de altura"
+
+#: wineconsole.rc:35
+msgid "This is a test"
+msgstr "Este é um teste"
+
+#: wineconsole.rc:41
+msgid "wineconsole: Couldn't parse event id\n"
+msgstr "wineconsole: Impossível extrair o id do evento\n"
+
+#: wineconsole.rc:42
+msgid "wineconsole: Invalid backend\n"
+msgstr "wineconsole: Estrutura inválida\n"
+
+#: wineconsole.rc:43
+msgid "wineconsole: Unrecognized command line option\n"
+msgstr "wineconsole: Opção de linha de comandos desconhecida\n"
+
+#: wineconsole.rc:44
+msgid "Starts a program in a Wine console\n"
+msgstr "Arranca um programa numa consola do Wine\n"
+
+#: wineconsole.rc:45
+msgid ""
+"wineconsole: Starting program %s failed.\n"
+"The command is invalid.\n"
+msgstr ""
+"wineconsole: O arranque do programa %s falhou.\n"
+"O comando é inválido.\n"
+
+#: wineconsole.rc:48
+msgid ""
+"\n"
+"Usage:\n"
+"  wineconsole [options] <command>\n"
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Uso:\n"
+"  wineconsole [opções] <comando>\n"
+"\n"
+"Opções:\n"
+
+#: wineconsole.rc:49
+msgid ""
+"  --backend={user|curses}  Choosing user will spawn a new window, curses "
+"will\n"
+"                            try to setup the current terminal as a Wine "
+"console\n"
+msgstr ""
+"  --backend={user|curses}  Se escolher user vai abrir uma nova janela, "
+"curses vai\n"
+"                            tentar configurar o terminal actual como uma "
+"consola Wine\n"
+
+#: wineconsole.rc:51
+msgid "  <command>                 The Wine program to launch in the console\n"
+msgstr "  <comando>                 O programa Wine a lançar na consola\n"
+
+#: wineconsole.rc:52
+msgid ""
+"\n"
+"Example:\n"
+"  wineconsole cmd\n"
+"Starts the Wine command prompt in a Wine console\n"
+"\n"
+msgstr ""
+"\n"
+"Exemplo:\n"
+"  wineconsole cmd\n"
+"Arranca a linha de comandos do Wine numa consola Wine\n"
+"\n"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

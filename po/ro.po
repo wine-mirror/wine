@@ -1313,9 +1313,14 @@ msgid "Select &All"
 msgstr "Selectează t&ot"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189
+#: shdoclc.rc:189 wineconsole.rc:30
+#, fuzzy
 msgid "&Paste"
-msgstr "&Lipește"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"&Lipește\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Li&pește"
 
 #: shdoclc.rc:49
 msgid "Create Shor&tcut"
@@ -1403,7 +1408,7 @@ msgid "Cu&t"
 msgstr "&Taie"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187
+#: shdoclc.rc:187 wineconsole.rc:29
 msgid "&Copy"
 msgstr "&Copiază"
 
@@ -3405,9 +3410,14 @@ msgstr "Setare im&primantă..."
 msgid "E&xit"
 msgstr "&Ieșire"
 
-#: notepad.rc:38
+#: notepad.rc:38 wineconsole.rc:25
+#, fuzzy
 msgid "&Edit"
-msgstr "&Editează"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"&Editează\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"&Editare"
 
 #: notepad.rc:39
 msgid "&Undo\tCtrl+Z"
@@ -4576,6 +4586,119 @@ msgstr "&Jos"
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "Vizualizator de fișiere metafile normale"
+
+#: wineconsole.rc:26
+msgid "Set &Defaults"
+msgstr "Setări &implicite"
+
+#: wineconsole.rc:28
+msgid "&Mark"
+msgstr "&Marchează"
+
+#: wineconsole.rc:31
+msgid "&Select all"
+msgstr "&Selectează tot"
+
+#: wineconsole.rc:32
+msgid "Sc&roll"
+msgstr "De&rulează"
+
+#: wineconsole.rc:33
+msgid "S&earch"
+msgstr "Cau&tă"
+
+#: wineconsole.rc:36
+msgid "Setup - Default settings"
+msgstr "Configurație implicită"
+
+#: wineconsole.rc:37
+msgid "Setup - Current settings"
+msgstr "Configurație curentă"
+
+#: wineconsole.rc:38
+msgid "Configuration error"
+msgstr "Eroare de configurare"
+
+#: wineconsole.rc:39
+msgid "Screen buffer size must be greater or equal to the window's one"
+msgstr ""
+"Mărimea memoriei tampon a ecranului trebuie să fie egală sau mai mare decât "
+"cea a ferestrei"
+
+#: wineconsole.rc:34
+msgid "Each character is %ld pixels wide on %ld pixels high"
+msgstr "Fiecare caracter are %ld pixeli lățime și %ld pixeli înălțime"
+
+#: wineconsole.rc:35
+msgid "This is a test"
+msgstr "Acesta este un test"
+
+#: wineconsole.rc:41
+msgid "wineconsole: Couldn't parse event id\n"
+msgstr "wineconsole: Nu a putut fi descifrat identificatorul evenimentului\n"
+
+#: wineconsole.rc:42
+msgid "wineconsole: Invalid backend\n"
+msgstr "wineconsole: backend nevalid\n"
+
+#: wineconsole.rc:43
+msgid "wineconsole: Unrecognized command line option\n"
+msgstr "wineconsole: Opțiune nerecunoscută pentru linia de comandă\n"
+
+#: wineconsole.rc:44
+msgid "Starts a program in a Wine console\n"
+msgstr "Pornește un program într-o consolă Wine\n"
+
+#: wineconsole.rc:45
+msgid ""
+"wineconsole: Starting program %s failed.\n"
+"The command is invalid.\n"
+msgstr ""
+"wineconsole: Pornirea programului %s a eșuat.\n"
+"Comanda nu este validă.\n"
+
+#: wineconsole.rc:48
+msgid ""
+"\n"
+"Usage:\n"
+"  wineconsole [options] <command>\n"
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Utilizare:\n"
+"  wineconsole [opțiuni] <comandă>\n"
+"\n"
+"Opțiuni:\n"
+
+#: wineconsole.rc:49
+msgid ""
+"  --backend={user|curses}  Choosing user will spawn a new window, curses "
+"will\n"
+"                            try to setup the current terminal as a Wine "
+"console\n"
+msgstr ""
+"  --backend={user|curses}  Dacă alegeți user, se va deschide o nouă\n"
+"                           fereastră, curses va încerca să configureze\n"
+"                           terminalul curent ca fiind consolă Wine\n"
+
+#: wineconsole.rc:51
+msgid "  <command>                 The Wine program to launch in the console\n"
+msgstr "  <comandă>                De executat programul Wine în consolă\n"
+
+#: wineconsole.rc:52
+msgid ""
+"\n"
+"Example:\n"
+"  wineconsole cmd\n"
+"Starts the Wine command prompt in a Wine console\n"
+"\n"
+msgstr ""
+"\n"
+"Exemplu:\n"
+"  wineconsole cmd\n"
+"Pornește caseta de comandă pentru Wine într-o consolă Wine\n"
+"\n"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

@@ -1297,7 +1297,7 @@ msgid "Select &All"
 msgstr "Pažymėti &viską"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189
+#: shdoclc.rc:189 wineconsole.rc:30
 msgid "&Paste"
 msgstr "Į&dėti"
 
@@ -1325,9 +1325,14 @@ msgstr "&Spausdinti"
 msgid "&Refresh"
 msgstr "Atsiųsti iš &naujo"
 
-#: shdoclc.rc:59 clock.rc:28
+#: shdoclc.rc:59 clock.rc:28 wineconsole.rc:27
+#, fuzzy
 msgid "&Properties"
-msgstr "Savy&bės"
+msgstr ""
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"Savy&bės\n"
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"&Savybės"
 
 #: shdoclc.rc:62
 msgid "Image"
@@ -1382,7 +1387,7 @@ msgid "Cu&t"
 msgstr "&Iškirpti"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187
+#: shdoclc.rc:187 wineconsole.rc:29
 msgid "&Copy"
 msgstr "&Kopijuoti"
 
@@ -3372,7 +3377,7 @@ msgstr "Spaus&dintuvo nuostatos..."
 msgid "E&xit"
 msgstr "Iš&eiti"
 
-#: notepad.rc:38
+#: notepad.rc:38 wineconsole.rc:25
 msgid "&Edit"
 msgstr "&Taisa"
 
@@ -4519,6 +4524,117 @@ msgstr "&Aukštyn"
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "Įprastinė metafailų žiūryklė"
+
+#: wineconsole.rc:26
+msgid "Set &Defaults"
+msgstr "Nustatyti &numatytąsias"
+
+#: wineconsole.rc:28
+msgid "&Mark"
+msgstr "&Žymėti"
+
+#: wineconsole.rc:31
+msgid "&Select all"
+msgstr "&Pažymėti viską"
+
+#: wineconsole.rc:32
+msgid "Sc&roll"
+msgstr "&Slinkti"
+
+#: wineconsole.rc:33
+msgid "S&earch"
+msgstr "&Ieškoti"
+
+#: wineconsole.rc:36
+msgid "Setup - Default settings"
+msgstr "Konfigūracija - numatytosios nuostatos"
+
+#: wineconsole.rc:37
+msgid "Setup - Current settings"
+msgstr "Konfigūracija - dabartinės nuostatos"
+
+#: wineconsole.rc:38
+msgid "Configuration error"
+msgstr "Konfigūracijos klaida"
+
+#: wineconsole.rc:39
+msgid "Screen buffer size must be greater or equal to the window's one"
+msgstr "Ekrano buferio dydis turi būti didesnis arba lygus lango buferiui"
+
+#: wineconsole.rc:34
+msgid "Each character is %ld pixels wide on %ld pixels high"
+msgstr "Kiekvienas simbolis yra %ld pikselių pločio ir %ld pikselių aukščio"
+
+#: wineconsole.rc:35
+msgid "This is a test"
+msgstr "Čia yra testas"
+
+#: wineconsole.rc:41
+msgid "wineconsole: Couldn't parse event id\n"
+msgstr "wineconsole: nepavyko išnagrinėti įvykio identifikatoriaus\n"
+
+#: wineconsole.rc:42
+msgid "wineconsole: Invalid backend\n"
+msgstr "wineconsole: neteisinga posistemė\n"
+
+#: wineconsole.rc:43
+msgid "wineconsole: Unrecognized command line option\n"
+msgstr "wineconsole: neatpažintas komandinės eilutės parametras\n"
+
+#: wineconsole.rc:44
+msgid "Starts a program in a Wine console\n"
+msgstr "Paleidžia programą Wine pulte\n"
+
+#: wineconsole.rc:45
+msgid ""
+"wineconsole: Starting program %s failed.\n"
+"The command is invalid.\n"
+msgstr ""
+"wineconsole: nepavyko paleisti programos %s.\n"
+"Neteisinga komanda.\n"
+
+#: wineconsole.rc:48
+msgid ""
+"\n"
+"Usage:\n"
+"  wineconsole [options] <command>\n"
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Naudojimas:\n"
+"  wineconsole [parametrai] <komanda>\n"
+"\n"
+"Parametrai:\n"
+
+#: wineconsole.rc:49
+msgid ""
+"  --backend={user|curses}  Choosing user will spawn a new window, curses "
+"will\n"
+"                            try to setup the current terminal as a Wine "
+"console\n"
+msgstr ""
+"  --backend={user|curses}  „User“ sukurs naują langą, „curses“ mėgins\n"
+"                            sukonfigūruoti dabartinį terminalą kaip Wine "
+"pultą\n"
+
+#: wineconsole.rc:51
+msgid "  <command>                 The Wine program to launch in the console\n"
+msgstr "  <komanda>                 Wine programa paleidimui pulte\n"
+
+#: wineconsole.rc:52
+msgid ""
+"\n"
+"Example:\n"
+"  wineconsole cmd\n"
+"Starts the Wine command prompt in a Wine console\n"
+"\n"
+msgstr ""
+"\n"
+"Pavyzdys:\n"
+"  wineconsole cmd\n"
+"Paleidžia Wine komandų interpretatorių Wine pulte\n"
+"\n"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

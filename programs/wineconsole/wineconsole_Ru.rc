@@ -26,40 +26,6 @@
 
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
-STRINGTABLE
-BEGIN
-IDS_EDIT,		"&Правка"
-IDS_DEFAULT,		"По &умолчанию"
-IDS_PROPERTIES,		"С&войства"
-IDS_MARK,		"&Выделить"
-IDS_COPY,		"&Копировать"
-IDS_PASTE,		"&Вставить"
-IDS_SELECTALL,		"Выделить в&сё"
-IDS_SCROLL,		"Прок&рутить"
-IDS_SEARCH,		"По&иск"
-IDS_FNT_DISPLAY,	"Каждый символ %ld пикселей в ширину и %ld пикселей в высоту"
-IDS_FNT_PREVIEW,	"Это тест"
-IDS_DLG_TIT_DEFAULT,       "Настройка - Установки по умолчанию"
-IDS_DLG_TIT_CURRENT,       "Настройка - Текущие установки"
-IDS_DLG_TIT_ERROR,         "Ошибка настройки"
-IDS_DLG_ERR_SBWINSIZE,     "Размер буфера экрана должен быть не менее буфера окна"
-
-IDS_CMD_INVALID_EVENT_ID   "wineconsole: Неверно указан код события\n"
-IDS_CMD_INVALID_BACKEND    "wineconsole: Неизвестный backend\n"
-IDS_CMD_INVALID_OPTION     "wineconsole: Неверный параметр командной строки\n"
-IDS_CMD_ABOUT              "Запуск программы в консоли Wine\n"
-IDS_CMD_LAUNCH_FAILED      "wineconsole: Не удался запуск программы '%s'.\n"\
-                           "Неверно указана команда.\n"
-
-IDS_USAGE_HEADER           "\nВызов:\n  wineconsole [параметры] <команда>\n\nПараметры:\n"
-IDS_USAGE_BACKEND          "  --backend={user|curses}  Выбор 'user' откроет новое окно с полной поддержкой\n"\
-                           "                            всех режимов работы консоли. 'curses' - использует\n"\
-                           "                            текущее окно с ограниченной функциональностью\n"\
-IDS_USAGE_COMMAND          "  <команда>                Название программы для запуска в консоли Wine\n"
-IDS_USAGE_FOOTER           "\nНапример:\n  wineconsole cmd\nЗапустить командный процессор Wine в консоли Wine\n\n"
-
-END
-
 IDD_OPTION DIALOG 36, 24, 140, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " Параметры "

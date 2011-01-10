@@ -21,39 +21,6 @@
 
 LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 
-STRINGTABLE
-BEGIN
-IDS_EDIT,		"&Edytuj"
-IDS_DEFAULT,		"Ustaw &domyœlne"
-IDS_PROPERTIES,		"&Ustawienia"
-IDS_MARK,		"&Zaznacz"
-IDS_COPY,		"&Kopiuj"
-IDS_PASTE,		"&Wklej"
-IDS_SELECTALL,		"Z&aznacz wszystko"
-IDS_SCROLL,		"&Przewijaj"
-IDS_SEARCH,		"Sz&ukaj"
-IDS_FNT_DISPLAY,	"Ka¿dy znak ma szerokoœæ %ld i wysokoœæ %ld punktów"
-IDS_FNT_PREVIEW,	"To jest test"
-IDS_DLG_TIT_DEFAULT,    "Setup - Domyœlne ustawienia"
-IDS_DLG_TIT_CURRENT,    "Setup - Wybrane ustawienia"
-IDS_DLG_TIT_ERROR,	"B³¹d konfiguracji"
-IDS_DLG_ERR_SBWINSIZE,	"Wielkoœæ bufora ekranu musi byæ wiêksza ni¿ wielkoœæ bufora okna."
-
-IDS_CMD_INVALID_EVENT_ID   "wineconsole: Z³y format 'event id'\n"
-IDS_CMD_INVALID_BACKEND    "wineconsole: Niew³aœciwa wartoœæ opcji 'backend'\n"
-IDS_CMD_INVALID_OPTION     "wineconsole: Nieznana opcja na linii poleceñ\n"
-IDS_CMD_ABOUT              "Uruchamia program w konsoli Wine\n"
-IDS_CMD_LAUNCH_FAILED      "wineconsole: Nie uda³o siê uruchomiæ programu %s.\n"\
-                           "Polecenie jest niew³aœciwe.\n"
-
-IDS_USAGE_HEADER           "\nU¿ycie:\n  wineconsole [opcje] <polecenie>\n\nOpcje:\n"
-IDS_USAGE_BACKEND          "  --backend={user|curses}  Wybór 'user' spowoduje wyœwietlenie nowego okna, 'curses'\n"\
-                           "                            spróbuje przerobiæ aktualnie u¿ywany terminal na konsolê Wine\n"
-IDS_USAGE_COMMAND          "  <polecenie>               Program Wine który nale¿y uruchomiæ\n"
-IDS_USAGE_FOOTER           "\nPrzyk³ad:\n  wineconsole cmd\nUruchamia wiersz poleceñ Wine w konsoli Wine\n\n"
-
-END
-
 IDD_OPTION DIALOG 36, 24, 140, 111
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " Opcje "

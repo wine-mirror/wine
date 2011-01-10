@@ -25,25 +25,6 @@ LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 
 /* Czech strings in CP1250 */
 
-STRINGTABLE
-BEGIN
-IDS_EDIT,		"Ú&pravy"
-IDS_DEFAULT,		"Nastavit &výchozí"
-IDS_PROPERTIES,		"V&lastnosti"
-IDS_MARK,		"V&ybrat"
-IDS_COPY,		"&Kopírovat"
-IDS_PASTE,		"Vl&ožit"
-IDS_SELECTALL,		"Vy&brat vše"
-IDS_SCROLL,		"Rolova&t"
-IDS_SEARCH,		"Hl&edat"
-IDS_FNT_DISPLAY,	"Každý znak je %ld pixelù široký a %ld pixelù vysoký"
-IDS_FNT_PREVIEW,	"Toto je test"
-IDS_DLG_TIT_DEFAULT,    "Setup - Defaultní nastavení"
-IDS_DLG_TIT_CURRENT,    "Setup - Souèasné nastavení"
-IDS_DLG_TIT_ERROR,	"Chyba nastavení"
-IDS_DLG_ERR_SBWINSIZE,	"Zásobník obrazovky musí být vìtší nebo stejnì velký jakzásobník okna."
-END
-
 IDD_OPTION DIALOG 36, 24, 140, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " Volby "

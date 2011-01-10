@@ -20,39 +20,6 @@
 
 LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
 
-STRINGTABLE
-BEGIN
-IDS_EDIT,		"R&edigera"
-IDS_DEFAULT,		"Ställ in s&tandardvärden"
-IDS_PROPERTIES,		"E&genskaper"
-IDS_MARK,		"&Markera"
-IDS_COPY,		"&Kopiera"
-IDS_PASTE,		"Klistra &in"
-IDS_SELECTALL,		"&Markera allt"
-IDS_SCROLL,		"R&ulla"
-IDS_SEARCH,		"S&ök"
-IDS_FNT_DISPLAY,	"Varje bokstav är %ld bildpunkter bred och %ld bildpunkter hög"
-IDS_FNT_PREVIEW,	"Det här är ett test"
-IDS_DLG_TIT_DEFAULT,    "Setup - Standardinställningar"
-IDS_DLG_TIT_CURRENT,    "Setup - Aktuella inställningar"
-IDS_DLG_TIT_ERROR,	"Konfigurationsfel"
-IDS_DLG_ERR_SBWINSIZE,	"Screen buffer size must be greater or equal to the window's one"
-
-IDS_CMD_INVALID_EVENT_ID   "wineconsole: Couldn't parse event id\n"
-IDS_CMD_INVALID_BACKEND    "wineconsole: Invalid backend\n"
-IDS_CMD_INVALID_OPTION     "wineconsole: Unrecognized command line option\n"
-IDS_CMD_ABOUT              "Startar ett program i en Wine-konsoll\n"
-IDS_CMD_LAUNCH_FAILED      "wineconsole: Start av programmet %s misslyckades.\n"\
-                           "Kommandot är ogiltigt.\n"
-
-IDS_USAGE_HEADER           "\nAnvändning:\n  wineconsole [flaggor] <kommando>\n\nFlaggor:\n"
-IDS_USAGE_BACKEND          "  --backend={user|curses}  Välj user för att starta ett nytt fönster,\n"\
-                           "                            curses för att ange aktuell terminal som en Wine-konsoll\n"
-IDS_USAGE_COMMAND          "  <kommando>                Wine-program att starta i konsollen\n"
-IDS_USAGE_FOOTER           "\nExempel:\n  wineconsole cmd\nStartar Wines kommandoprompt i en Wine-konsoll\n\n"
-
-END
-
 IDD_OPTION DIALOG 36, 24, 140, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " Alternativ "

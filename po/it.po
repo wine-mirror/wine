@@ -1312,9 +1312,14 @@ msgid "Select &All"
 msgstr "Seleziona &tutto"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189
+#: shdoclc.rc:189 wineconsole.rc:30
+#, fuzzy
 msgid "&Paste"
-msgstr "I&ncolla"
+msgstr ""
+"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
+"I&ncolla\n"
+"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
+"&Incolla"
 
 #: shdoclc.rc:49
 msgid "Create Shor&tcut"
@@ -1402,7 +1407,7 @@ msgid "Cu&t"
 msgstr "Ta&glia"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187
+#: shdoclc.rc:187 wineconsole.rc:29
 msgid "&Copy"
 msgstr "&Copia"
 
@@ -3420,7 +3425,7 @@ msgstr "&Configurazione stampante..."
 msgid "E&xit"
 msgstr "E&sci"
 
-#: notepad.rc:38
+#: notepad.rc:38 wineconsole.rc:25
 msgid "&Edit"
 msgstr "&Modifica"
 
@@ -4588,6 +4593,121 @@ msgstr "&Basso"
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "Visualizzatore di Metafile Regolari"
+
+#: wineconsole.rc:26
+msgid "Set &Defaults"
+msgstr "Imposta pre&definite"
+
+#: wineconsole.rc:28
+msgid "&Mark"
+msgstr "Ma&rca"
+
+#: wineconsole.rc:31
+msgid "&Select all"
+msgstr "&Seleziona tutto"
+
+#: wineconsole.rc:32
+msgid "Sc&roll"
+msgstr "Sc&orri"
+
+#: wineconsole.rc:33
+msgid "S&earch"
+msgstr "C&erca"
+
+#: wineconsole.rc:36
+msgid "Setup - Default settings"
+msgstr "Impostazioni predefinite"
+
+#: wineconsole.rc:37
+msgid "Setup - Current settings"
+msgstr "Impostazioni correnti"
+
+#: wineconsole.rc:38
+msgid "Configuration error"
+msgstr "Errore di configurazione"
+
+#: wineconsole.rc:39
+msgid "Screen buffer size must be greater or equal to the window's one"
+msgstr ""
+"Il buffer dello schermo deve essere uguale o più grande di quello della "
+"finestra"
+
+#: wineconsole.rc:34
+msgid "Each character is %ld pixels wide on %ld pixels high"
+msgstr "Il carattere è largo %ld pixel e alto %ld pixel"
+
+#: wineconsole.rc:35
+msgid "This is a test"
+msgstr "Questa è una prova"
+
+#: wineconsole.rc:41
+msgid "wineconsole: Couldn't parse event id\n"
+msgstr "wineconsole: impossibile analizzare id evento\n"
+
+#: wineconsole.rc:42
+msgid "wineconsole: Invalid backend\n"
+msgstr "wineconsole: backend non valido\n"
+
+#: wineconsole.rc:43
+msgid "wineconsole: Unrecognized command line option\n"
+msgstr "wineconsole: opzione della linea di comando non riconosciuta\n"
+
+#: wineconsole.rc:44
+msgid "Starts a program in a Wine console\n"
+msgstr "Avvia un programma in una console Wine\n"
+
+#: wineconsole.rc:45
+msgid ""
+"wineconsole: Starting program %s failed.\n"
+"The command is invalid.\n"
+msgstr ""
+"wineconsole: impossibile avviare %s.\n"
+"Il comando non è valido.\n"
+
+#: wineconsole.rc:48
+msgid ""
+"\n"
+"Usage:\n"
+"  wineconsole [options] <command>\n"
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Uso:\n"
+"  wineconsole [opzioni] <comando>\n"
+"\n"
+"Opzioni:\n"
+
+#: wineconsole.rc:49
+msgid ""
+"  --backend={user|curses}  Choosing user will spawn a new window, curses "
+"will\n"
+"                            try to setup the current terminal as a Wine "
+"console\n"
+msgstr ""
+"  --backend={user|curses}  Scegliere user farà aprire una nuova finestra, "
+"curses proverà\n"
+"                            a inizializzare il terminale corrente come una "
+"console Wine\n"
+
+#: wineconsole.rc:51
+msgid "  <command>                 The Wine program to launch in the console\n"
+msgstr ""
+"  <comando>                 Il programma di Wine da lanciare in una console\n"
+
+#: wineconsole.rc:52
+msgid ""
+"\n"
+"Example:\n"
+"  wineconsole cmd\n"
+"Starts the Wine command prompt in a Wine console\n"
+"\n"
+msgstr ""
+"\n"
+"Esempio:\n"
+"  wineconsole cmd\n"
+"Avvia il prompt dei comandi di Wine in una console Wine\n"
+"\n"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

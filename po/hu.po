@@ -1314,7 +1314,7 @@ msgid "Select &All"
 msgstr "M&indet kijelöli"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189
+#: shdoclc.rc:189 wineconsole.rc:30
 msgid "&Paste"
 msgstr "&Beillesztés"
 
@@ -1404,7 +1404,7 @@ msgid "Cu&t"
 msgstr "K&ivágás"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187
+#: shdoclc.rc:187 wineconsole.rc:29
 msgid "&Copy"
 msgstr "&Másolás"
 
@@ -3094,9 +3094,14 @@ msgstr "Nyomtató &beállítás..."
 msgid "E&xit"
 msgstr "&Kilépés"
 
-#: notepad.rc:38
+#: notepad.rc:38 wineconsole.rc:25
+#, fuzzy
 msgid "&Edit"
-msgstr "S&zerkesztés"
+msgstr ""
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"S&zerkesztés\n"
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"&Szerkesztés"
 
 #: notepad.rc:39
 msgid "&Undo\tCtrl+Z"
@@ -4209,6 +4214,102 @@ msgstr ""
 
 #: view.rc:46
 msgid "Regular Metafile Viewer"
+msgstr ""
+
+#: wineconsole.rc:26
+msgid "Set &Defaults"
+msgstr "Ala&pértékek"
+
+#: wineconsole.rc:28
+msgid "&Mark"
+msgstr "&Jelölés"
+
+#: wineconsole.rc:31
+msgid "&Select all"
+msgstr "&Az összes kijelölése"
+
+#: wineconsole.rc:32
+msgid "Sc&roll"
+msgstr "&Görgetés"
+
+#: wineconsole.rc:33
+msgid "S&earch"
+msgstr "&Keresés"
+
+#: wineconsole.rc:36
+msgid "Setup - Default settings"
+msgstr "Beállítás - alapértelmezett beállítások"
+
+#: wineconsole.rc:37
+msgid "Setup - Current settings"
+msgstr "Beállítás - aktuális beállítások"
+
+#: wineconsole.rc:38
+msgid "Configuration error"
+msgstr "Configuration error"
+
+#: wineconsole.rc:39
+msgid "Screen buffer size must be greater or equal to the window's one"
+msgstr "Screen buffer size must be greater or equal to the window's one"
+
+#: wineconsole.rc:34
+msgid "Each character is %ld pixels wide on %ld pixels high"
+msgstr "Minden karakter %ld pixel széles és %ld pixel magas"
+
+#: wineconsole.rc:35
+msgid "This is a test"
+msgstr "Ez egy teszt"
+
+#: wineconsole.rc:41
+msgid "wineconsole: Couldn't parse event id\n"
+msgstr ""
+
+#: wineconsole.rc:42
+msgid "wineconsole: Invalid backend\n"
+msgstr ""
+
+#: wineconsole.rc:43
+msgid "wineconsole: Unrecognized command line option\n"
+msgstr ""
+
+#: wineconsole.rc:44
+msgid "Starts a program in a Wine console\n"
+msgstr ""
+
+#: wineconsole.rc:45
+msgid ""
+"wineconsole: Starting program %s failed.\n"
+"The command is invalid.\n"
+msgstr ""
+
+#: wineconsole.rc:48
+msgid ""
+"\n"
+"Usage:\n"
+"  wineconsole [options] <command>\n"
+"\n"
+"Options:\n"
+msgstr ""
+
+#: wineconsole.rc:49
+msgid ""
+"  --backend={user|curses}  Choosing user will spawn a new window, curses "
+"will\n"
+"                            try to setup the current terminal as a Wine "
+"console\n"
+msgstr ""
+
+#: wineconsole.rc:51
+msgid "  <command>                 The Wine program to launch in the console\n"
+msgstr ""
+
+#: wineconsole.rc:52
+msgid ""
+"\n"
+"Example:\n"
+"  wineconsole cmd\n"
+"Starts the Wine command prompt in a Wine console\n"
+"\n"
 msgstr ""
 
 #: write.rc:27

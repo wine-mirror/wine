@@ -24,39 +24,6 @@
 
 LANGUAGE LANG_UKRAINIAN, SUBLANG_DEFAULT
 
-STRINGTABLE
-BEGIN
-IDS_EDIT,		"Реда&гування"
-IDS_DEFAULT,		"За &замовчанням"
-IDS_PROPERTIES,		"&Властивості"
-IDS_MARK,		"Ві&дзначити"
-IDS_COPY,		"&Копіювати"
-IDS_PASTE,		"В&ставити"
-IDS_SELECTALL,		"Вид&ілити все"
-IDS_SCROLL,		"Прок&рутити"
-IDS_SEARCH,		"По&шук"
-IDS_FNT_DISPLAY,	"Кожен символ має %ld пікселів в ширину і %ld пікселів в висоту"
-IDS_FNT_PREVIEW,	"Це тест"
-IDS_DLG_TIT_DEFAULT,    "Налаштування - Станд. параметри"
-IDS_DLG_TIT_CURRENT,    "Налаштування - Поточні параметри"
-IDS_DLG_TIT_ERROR,	"Помилка конфігурації"
-IDS_DLG_ERR_SBWINSIZE,	"Розмір буфера екрану повинен бути не менший буфера вікна"
-
-IDS_CMD_INVALID_EVENT_ID   "wineconsole: Невірний код події\n"
-IDS_CMD_INVALID_BACKEND    "wineconsole: Невірний backend\n"
-IDS_CMD_INVALID_OPTION     "wineconsole: Невідомий параметр командного рядка\n"
-IDS_CMD_ABOUT              "Запуск програми в консолі Wine\n"
-IDS_CMD_LAUNCH_FAILED      "wineconsole: Запуск програми %s не вдався.\n"\
-                           "Команда невірна.\n"
-
-IDS_USAGE_HEADER           "\nВикористання:\n  wineconsole [параметри] <команда>\n\nПараметри:\n"
-IDS_USAGE_BACKEND          "  --backend={user|curses}  Вибір user відкриє нове вікно, curses спробує\n"\
-                           "                            налаштувати поточний термінал як консоль Wine\n"
-IDS_USAGE_COMMAND          "  <команда>                 Назва програми для запуску в консолі Wine\n"
-IDS_USAGE_FOOTER           "\nПриклад:\n  wineconsole cmd\nЗапуск командного рядка Wine в консолі Wine\n\n"
-
-END
-
 IDD_OPTION DIALOG 36, 24, 140, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " Параметри "

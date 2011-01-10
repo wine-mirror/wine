@@ -1302,9 +1302,14 @@ msgid "Select &All"
 msgstr "&Markera allt"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189
+#: shdoclc.rc:189 wineconsole.rc:30
+#, fuzzy
 msgid "&Paste"
-msgstr "K&listra in"
+msgstr ""
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"K&listra in\n"
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"Klistra &in"
 
 #: shdoclc.rc:49
 msgid "Create Shor&tcut"
@@ -1330,9 +1335,14 @@ msgstr "Skriv &ut"
 msgid "&Refresh"
 msgstr "Upp&datera"
 
-#: shdoclc.rc:59 clock.rc:28
+#: shdoclc.rc:59 clock.rc:28 wineconsole.rc:27
+#, fuzzy
 msgid "&Properties"
-msgstr "&Egenskaper"
+msgstr ""
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"&Egenskaper\n"
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"E&genskaper"
 
 #: shdoclc.rc:62
 msgid "Image"
@@ -1387,9 +1397,14 @@ msgid "Cu&t"
 msgstr "&Klipp ut"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187
+#: shdoclc.rc:187 wineconsole.rc:29
+#, fuzzy
 msgid "&Copy"
-msgstr "K&opiera"
+msgstr ""
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"K&opiera\n"
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"&Kopiera"
 
 #: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
 msgid "Copy Shor&tcut"
@@ -3370,9 +3385,14 @@ msgstr "Skrivar&konfiguration..."
 msgid "E&xit"
 msgstr "&Avsluta"
 
-#: notepad.rc:38
+#: notepad.rc:38 wineconsole.rc:25
+#, fuzzy
 msgid "&Edit"
-msgstr "&Redigera"
+msgstr ""
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"&Redigera\n"
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"R&edigera"
 
 #: notepad.rc:39
 msgid "&Undo\tCtrl+Z"
@@ -4513,6 +4533,117 @@ msgstr "&Ner"
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "Regular Metafile viewer"
+
+#: wineconsole.rc:26
+msgid "Set &Defaults"
+msgstr "Ställ in s&tandardvärden"
+
+#: wineconsole.rc:28
+msgid "&Mark"
+msgstr "&Markera"
+
+#: wineconsole.rc:31
+msgid "&Select all"
+msgstr "&Markera allt"
+
+#: wineconsole.rc:32
+msgid "Sc&roll"
+msgstr "R&ulla"
+
+#: wineconsole.rc:33
+msgid "S&earch"
+msgstr "S&ök"
+
+#: wineconsole.rc:36
+msgid "Setup - Default settings"
+msgstr "Setup - Standardinställningar"
+
+#: wineconsole.rc:37
+msgid "Setup - Current settings"
+msgstr "Setup - Aktuella inställningar"
+
+#: wineconsole.rc:38
+msgid "Configuration error"
+msgstr "Konfigurationsfel"
+
+#: wineconsole.rc:39
+msgid "Screen buffer size must be greater or equal to the window's one"
+msgstr "Screen buffer size must be greater or equal to the window's one"
+
+#: wineconsole.rc:34
+msgid "Each character is %ld pixels wide on %ld pixels high"
+msgstr "Varje bokstav är %ld bildpunkter bred och %ld bildpunkter hög"
+
+#: wineconsole.rc:35
+msgid "This is a test"
+msgstr "Det här är ett test"
+
+#: wineconsole.rc:41
+msgid "wineconsole: Couldn't parse event id\n"
+msgstr "wineconsole: Couldn't parse event id\n"
+
+#: wineconsole.rc:42
+msgid "wineconsole: Invalid backend\n"
+msgstr "wineconsole: Invalid backend\n"
+
+#: wineconsole.rc:43
+msgid "wineconsole: Unrecognized command line option\n"
+msgstr "wineconsole: Unrecognized command line option\n"
+
+#: wineconsole.rc:44
+msgid "Starts a program in a Wine console\n"
+msgstr "Startar ett program i en Wine-konsoll\n"
+
+#: wineconsole.rc:45
+msgid ""
+"wineconsole: Starting program %s failed.\n"
+"The command is invalid.\n"
+msgstr ""
+"wineconsole: Start av programmet %s misslyckades.\n"
+"Kommandot är ogiltigt.\n"
+
+#: wineconsole.rc:48
+msgid ""
+"\n"
+"Usage:\n"
+"  wineconsole [options] <command>\n"
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Användning:\n"
+"  wineconsole [flaggor] <kommando>\n"
+"\n"
+"Flaggor:\n"
+
+#: wineconsole.rc:49
+msgid ""
+"  --backend={user|curses}  Choosing user will spawn a new window, curses "
+"will\n"
+"                            try to setup the current terminal as a Wine "
+"console\n"
+msgstr ""
+"  --backend={user|curses}  Välj user för att starta ett nytt fönster,\n"
+"                            curses för att ange aktuell terminal som en Wine-"
+"konsoll\n"
+
+#: wineconsole.rc:51
+msgid "  <command>                 The Wine program to launch in the console\n"
+msgstr "  <kommando>                Wine-program att starta i konsollen\n"
+
+#: wineconsole.rc:52
+msgid ""
+"\n"
+"Example:\n"
+"  wineconsole cmd\n"
+"Starts the Wine command prompt in a Wine console\n"
+"\n"
+msgstr ""
+"\n"
+"Exempel:\n"
+"  wineconsole cmd\n"
+"Startar Wines kommandoprompt i en Wine-konsoll\n"
+"\n"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"
