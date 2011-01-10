@@ -616,32 +616,33 @@ HRESULT WINAPI RevokeBindStatusCallback(IBindCtx *pbc, IBindStatusCallback *pbsc
 }
 
 typedef struct {
-    const IBindCtxVtbl *lpBindCtxVtbl;
+    IBindCtx IBindCtx_iface;
 
     LONG ref;
 
     IBindCtx *bindctx;
 } AsyncBindCtx;
 
-#define BINDCTX(x)  ((IBindCtx*)  &(x)->lpBindCtxVtbl)
-
-#define BINDCTX_THIS(iface) DEFINE_THIS(AsyncBindCtx, BindCtx, iface)
+static inline AsyncBindCtx *impl_from_IBindCtx(IBindCtx *iface)
+{
+    return CONTAINING_RECORD(iface, AsyncBindCtx, IBindCtx_iface);
+}
 
 static HRESULT WINAPI AsyncBindCtx_QueryInterface(IBindCtx *iface, REFIID riid, void **ppv)
 {
-    AsyncBindCtx *This = BINDCTX_THIS(iface);
+    AsyncBindCtx *This = impl_from_IBindCtx(iface);
 
     *ppv = NULL;
 
     if(IsEqualGUID(riid, &IID_IUnknown)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = BINDCTX(This);
+        *ppv = &This->IBindCtx_iface;
     }else if(IsEqualGUID(riid, &IID_IBindCtx)) {
         TRACE("(%p)->(IID_IBindCtx %p)\n", This, ppv);
-        *ppv = BINDCTX(This);
+        *ppv = &This->IBindCtx_iface;
     }else if(IsEqualGUID(riid, &IID_IAsyncBindCtx)) {
         TRACE("(%p)->(IID_IAsyncBindCtx %p)\n", This, ppv);
-        *ppv = BINDCTX(This);
+        *ppv = &This->IBindCtx_iface;
     }
 
     if(*ppv) {
@@ -655,7 +656,7 @@ static HRESULT WINAPI AsyncBindCtx_QueryInterface(IBindCtx *iface, REFIID riid, 
 
 static ULONG WINAPI AsyncBindCtx_AddRef(IBindCtx *iface)
 {
-    AsyncBindCtx *This = BINDCTX_THIS(iface);
+    AsyncBindCtx *This = impl_from_IBindCtx(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -665,7 +666,7 @@ static ULONG WINAPI AsyncBindCtx_AddRef(IBindCtx *iface)
 
 static ULONG WINAPI AsyncBindCtx_Release(IBindCtx *iface)
 {
-    AsyncBindCtx *This = BINDCTX_THIS(iface);
+    AsyncBindCtx *This = impl_from_IBindCtx(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -680,7 +681,7 @@ static ULONG WINAPI AsyncBindCtx_Release(IBindCtx *iface)
 
 static HRESULT WINAPI AsyncBindCtx_RegisterObjectBound(IBindCtx *iface, IUnknown *punk)
 {
-    AsyncBindCtx *This = BINDCTX_THIS(iface);
+    AsyncBindCtx *This = impl_from_IBindCtx(iface);
 
     TRACE("(%p)->(%p)\n", This, punk);
 
@@ -689,7 +690,7 @@ static HRESULT WINAPI AsyncBindCtx_RegisterObjectBound(IBindCtx *iface, IUnknown
 
 static HRESULT WINAPI AsyncBindCtx_RevokeObjectBound(IBindCtx *iface, IUnknown *punk)
 {
-    AsyncBindCtx *This = BINDCTX_THIS(iface);
+    AsyncBindCtx *This = impl_from_IBindCtx(iface);
 
     TRACE("(%p %p)\n", This, punk);
 
@@ -698,7 +699,7 @@ static HRESULT WINAPI AsyncBindCtx_RevokeObjectBound(IBindCtx *iface, IUnknown *
 
 static HRESULT WINAPI AsyncBindCtx_ReleaseBoundObjects(IBindCtx *iface)
 {
-    AsyncBindCtx *This = BINDCTX_THIS(iface);
+    AsyncBindCtx *This = impl_from_IBindCtx(iface);
 
     TRACE("(%p)\n", This);
 
@@ -707,7 +708,7 @@ static HRESULT WINAPI AsyncBindCtx_ReleaseBoundObjects(IBindCtx *iface)
 
 static HRESULT WINAPI AsyncBindCtx_SetBindOptions(IBindCtx *iface, BIND_OPTS *pbindopts)
 {
-    AsyncBindCtx *This = BINDCTX_THIS(iface);
+    AsyncBindCtx *This = impl_from_IBindCtx(iface);
 
     TRACE("(%p)->(%p)\n", This, pbindopts);
 
@@ -716,7 +717,7 @@ static HRESULT WINAPI AsyncBindCtx_SetBindOptions(IBindCtx *iface, BIND_OPTS *pb
 
 static HRESULT WINAPI AsyncBindCtx_GetBindOptions(IBindCtx *iface, BIND_OPTS *pbindopts)
 {
-    AsyncBindCtx *This = BINDCTX_THIS(iface);
+    AsyncBindCtx *This = impl_from_IBindCtx(iface);
 
     TRACE("(%p)->(%p)\n", This, pbindopts);
 
@@ -725,7 +726,7 @@ static HRESULT WINAPI AsyncBindCtx_GetBindOptions(IBindCtx *iface, BIND_OPTS *pb
 
 static HRESULT WINAPI AsyncBindCtx_GetRunningObjectTable(IBindCtx *iface, IRunningObjectTable **pprot)
 {
-    AsyncBindCtx *This = BINDCTX_THIS(iface);
+    AsyncBindCtx *This = impl_from_IBindCtx(iface);
 
     TRACE("(%p)->(%p)\n", This, pprot);
 
@@ -734,7 +735,7 @@ static HRESULT WINAPI AsyncBindCtx_GetRunningObjectTable(IBindCtx *iface, IRunni
 
 static HRESULT WINAPI AsyncBindCtx_RegisterObjectParam(IBindCtx *iface, LPOLESTR pszkey, IUnknown *punk)
 {
-    AsyncBindCtx *This = BINDCTX_THIS(iface);
+    AsyncBindCtx *This = impl_from_IBindCtx(iface);
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(pszkey), punk);
 
@@ -743,7 +744,7 @@ static HRESULT WINAPI AsyncBindCtx_RegisterObjectParam(IBindCtx *iface, LPOLESTR
 
 static HRESULT WINAPI AsyncBindCtx_GetObjectParam(IBindCtx* iface, LPOLESTR pszkey, IUnknown **punk)
 {
-    AsyncBindCtx *This = BINDCTX_THIS(iface);
+    AsyncBindCtx *This = impl_from_IBindCtx(iface);
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(pszkey), punk);
 
@@ -752,7 +753,7 @@ static HRESULT WINAPI AsyncBindCtx_GetObjectParam(IBindCtx* iface, LPOLESTR pszk
 
 static HRESULT WINAPI AsyncBindCtx_RevokeObjectParam(IBindCtx *iface, LPOLESTR pszkey)
 {
-    AsyncBindCtx *This = BINDCTX_THIS(iface);
+    AsyncBindCtx *This = impl_from_IBindCtx(iface);
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(pszkey));
 
@@ -761,14 +762,12 @@ static HRESULT WINAPI AsyncBindCtx_RevokeObjectParam(IBindCtx *iface, LPOLESTR p
 
 static HRESULT WINAPI AsyncBindCtx_EnumObjectParam(IBindCtx *iface, IEnumString **pszkey)
 {
-    AsyncBindCtx *This = BINDCTX_THIS(iface);
+    AsyncBindCtx *This = impl_from_IBindCtx(iface);
 
     TRACE("(%p)->(%p)\n", This, pszkey);
 
     return IBindCtx_EnumObjectParam(This->bindctx, pszkey);
 }
-
-#undef BINDCTX_THIS
 
 static const IBindCtxVtbl AsyncBindCtxVtbl =
 {
@@ -876,16 +875,16 @@ HRESULT WINAPI CreateAsyncBindCtxEx(IBindCtx *ibind, DWORD options,
 
     ret = heap_alloc(sizeof(AsyncBindCtx));
 
-    ret->lpBindCtxVtbl = &AsyncBindCtxVtbl;
+    ret->IBindCtx_iface.lpVtbl = &AsyncBindCtxVtbl;
     ret->ref = 1;
     ret->bindctx = bindctx;
 
-    hres = init_bindctx(BINDCTX(ret), options, callback, format);
+    hres = init_bindctx(&ret->IBindCtx_iface, options, callback, format);
     if(FAILED(hres)) {
-        IBindCtx_Release(BINDCTX(ret));
+        IBindCtx_Release(&ret->IBindCtx_iface);
         return hres;
     }
 
-    *pbind = BINDCTX(ret);
+    *pbind = &ret->IBindCtx_iface;
     return S_OK;
 }
