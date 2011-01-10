@@ -277,6 +277,30 @@ static HRESULT ReadIcoDib(IStream *stream, IcoFrameDecode *result)
             IWICBitmapFrameDecode_Release(framedecode);
         }
 
+        if (SUCCEEDED(hr) && has_alpha)
+        {
+            /* If the alpha channel is fully transparent, we should ignore it. */
+            int nonzero_alpha = 0;
+            int i;
+
+            for (i=0; i<(result->height*result->width); i++)
+            {
+                if (result->bits[i*4+3] != 0)
+                {
+                    nonzero_alpha = 1;
+                    break;
+                }
+            }
+
+            if (!nonzero_alpha)
+            {
+                for (i=0; i<(result->height*result->width); i++)
+                    result->bits[i*4+3] = 0xff;
+
+                has_alpha = FALSE;
+            }
+        }
+
         if (SUCCEEDED(hr) && !has_alpha)
         {
             /* set alpha data based on the AND mask */
