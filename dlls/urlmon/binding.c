@@ -28,7 +28,7 @@ static WCHAR cbinding_contextW[] = {'C','B','i','n','d','i','n','g',' ','C','o',
 static WCHAR bscb_holderW[] = { '_','B','S','C','B','_','H','o','l','d','e','r','_',0 };
 
 typedef struct {
-    const IUnknownVtbl *lpUnknownVtbl;
+    IUnknown IUnknown_iface;
 
     LONG ref;
 
@@ -54,8 +54,6 @@ typedef struct {
 struct _stgmed_obj_t {
     const stgmed_obj_vtbl *vtbl;
 };
-
-#define STGMEDUNK(x)  ((IUnknown*) &(x)->lpUnknownVtbl)
 
 typedef enum {
     BEFORE_DOWNLOAD,
@@ -360,19 +358,22 @@ static void cache_file_available(Binding *This, const WCHAR *file_name)
     }
 }
 
-#define STGMEDUNK_THIS(iface) DEFINE_THIS(stgmed_buf_t, Unknown, iface)
+static inline stgmed_buf_t *impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, stgmed_buf_t, IUnknown_iface);
+}
 
 static HRESULT WINAPI StgMedUnk_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
 {
-    stgmed_buf_t *This = STGMEDUNK_THIS(iface);
+    stgmed_buf_t *This = impl_from_IUnknown(iface);
 
     *ppv = NULL;
 
     if(IsEqualGUID(riid, &IID_IUnknown)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
 
-        *ppv = STGMEDUNK(This);
-        IUnknown_AddRef(STGMEDUNK(This));
+        *ppv = &This->IUnknown_iface;
+        IUnknown_AddRef(&This->IUnknown_iface);
         return S_OK;
     }
 
@@ -382,7 +383,7 @@ static HRESULT WINAPI StgMedUnk_QueryInterface(IUnknown *iface, REFIID riid, voi
 
 static ULONG WINAPI StgMedUnk_AddRef(IUnknown *iface)
 {
-    stgmed_buf_t *This = STGMEDUNK_THIS(iface);
+    stgmed_buf_t *This = impl_from_IUnknown(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -392,7 +393,7 @@ static ULONG WINAPI StgMedUnk_AddRef(IUnknown *iface)
 
 static ULONG WINAPI StgMedUnk_Release(IUnknown *iface)
 {
-    stgmed_buf_t *This = STGMEDUNK_THIS(iface);
+    stgmed_buf_t *This = impl_from_IUnknown(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -410,8 +411,6 @@ static ULONG WINAPI StgMedUnk_Release(IUnknown *iface)
     return ref;
 }
 
-#undef STGMEDUNK_THIS
-
 static const IUnknownVtbl StgMedUnkVtbl = {
     StgMedUnk_QueryInterface,
     StgMedUnk_AddRef,
@@ -422,7 +421,7 @@ static stgmed_buf_t *create_stgmed_buf(IInternetProtocolEx *protocol)
 {
     stgmed_buf_t *ret = heap_alloc(sizeof(*ret));
 
-    ret->lpUnknownVtbl = &StgMedUnkVtbl;
+    ret->IUnknown_iface.lpVtbl = &StgMedUnkVtbl;
     ret->ref = 1;
     ret->size = 0;
     ret->init = FALSE;
@@ -494,7 +493,7 @@ static ULONG WINAPI ProtocolStream_Release(IStream *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
-        IUnknown_Release(STGMEDUNK(This->buf));
+        IUnknown_Release(&This->buf->IUnknown_iface);
         heap_free(This);
 
         URLMON_UnlockModule();
@@ -687,7 +686,7 @@ static HRESULT stgmed_stream_fill_stgmed(stgmed_obj_t *obj, STGMEDIUM *stgmed)
 
     stgmed->tymed = TYMED_ISTREAM;
     stgmed->u.pstm = STREAM(stream);
-    stgmed->pUnkForRelease = STGMEDUNK(stream->buf);
+    stgmed->pUnkForRelease = &stream->buf->IUnknown_iface;
 
     return S_OK;
 }
@@ -724,7 +723,7 @@ static stgmed_obj_t *create_stgmed_stream(stgmed_buf_t *buf)
     ret->lpStreamVtbl = &ProtocolStreamVtbl;
     ret->ref = 1;
 
-    IUnknown_AddRef(STGMEDUNK(buf));
+    IUnknown_AddRef(&buf->IUnknown_iface);
     ret->buf = buf;
 
     URLMON_LockModule();
@@ -736,7 +735,7 @@ static void stgmed_file_release(stgmed_obj_t *obj)
 {
     stgmed_file_obj_t *file_obj = (stgmed_file_obj_t*)obj;
 
-    IUnknown_Release(STGMEDUNK(file_obj->buf));
+    IUnknown_Release(&file_obj->buf->IUnknown_iface);
     heap_free(file_obj);
 }
 
@@ -753,7 +752,7 @@ static HRESULT stgmed_file_fill_stgmed(stgmed_obj_t *obj, STGMEDIUM *stgmed)
 
     stgmed->tymed = TYMED_FILE;
     stgmed->u.lpszFileName = file_obj->buf->cache_file;
-    stgmed->pUnkForRelease = STGMEDUNK(file_obj->buf);
+    stgmed->pUnkForRelease = &file_obj->buf->IUnknown_iface;
 
     return S_OK;
 }
@@ -775,7 +774,7 @@ static stgmed_obj_t *create_stgmed_file(stgmed_buf_t *buf)
 
     ret->stgmed_obj.vtbl = &stgmed_file_vtbl;
 
-    IUnknown_AddRef(STGMEDUNK(buf));
+    IUnknown_AddRef(&buf->IUnknown_iface);
     ret->buf = buf;
 
     return &ret->stgmed_obj;
@@ -867,7 +866,7 @@ static ULONG WINAPI Binding_Release(IBinding *iface)
         if(This->service_provider)
             IServiceProvider_Release(This->service_provider);
         if(This->stgmed_buf)
-            IUnknown_Release(STGMEDUNK(This->stgmed_buf));
+            IUnknown_Release(&This->stgmed_buf->IUnknown_iface);
         if(This->stgmed_obj)
             This->stgmed_obj->vtbl->release(This->stgmed_obj);
         if(This->obj)
@@ -1499,7 +1498,7 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, IUri *uri, IB
 
     if(binding_ctx) {
         ret->stgmed_buf = binding_ctx->stgmed_buf;
-        IUnknown_AddRef(STGMEDUNK(ret->stgmed_buf));
+        IUnknown_AddRef(&ret->stgmed_buf->IUnknown_iface);
         ret->clipboard_format = binding_ctx->clipboard_format;
     }else {
         ret->stgmed_buf = create_stgmed_buf(PROTOCOLEX(ret->protocol));
