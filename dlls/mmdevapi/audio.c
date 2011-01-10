@@ -313,7 +313,10 @@ HRESULT AudioClient_Create(MMDevice *parent, IAudioClient **ppv)
 static void AudioClient_Destroy(ACImpl *This)
 {
     if (This->timer_id)
+    {
         DeleteTimerQueueTimer(NULL, This->timer_id, INVALID_HANDLE_VALUE);
+        This->timer_id = 0;
+    }
     if (This->render)
         AudioRenderClient_Destroy(This->render);
     if (This->capture)

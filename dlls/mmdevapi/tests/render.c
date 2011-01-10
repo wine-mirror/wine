@@ -334,6 +334,52 @@ static void test_references(void)
     ok(ref == 0, "AudioClock_Release gave wrong refcount: %u\n", ref);
 }
 
+static void test_event(void)
+{
+    HANDLE event;
+    HRESULT hr;
+    IAudioClient *ac;
+    WAVEFORMATEX *pwfx;
+
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ac);
+    ok(hr == S_OK, "Activation failed with %08x\n", hr);
+    if(hr != S_OK)
+        return;
+
+    hr = IAudioClient_GetMixFormat(ac, &pwfx);
+    ok(hr == S_OK, "GetMixFormat failed: %08x\n", hr);
+    if(hr != S_OK)
+        return;
+
+    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED,
+            AUDCLNT_STREAMFLAGS_EVENTCALLBACK, 5000000,
+            0, pwfx, NULL);
+    ok(hr == S_OK, "Initialize failed: %08x\n", hr);
+
+    event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(event != NULL, "CreateEvent failed\n");
+
+    hr = IAudioClient_Start(ac);
+    ok(hr == AUDCLNT_E_EVENTHANDLE_NOT_SET, "Start failed: %08x\n", hr);
+
+    hr = IAudioClient_SetEventHandle(ac, event);
+    ok(hr == S_OK, "SetEventHandle failed: %08x\n", hr);
+
+    hr = IAudioClient_Start(ac);
+    ok(hr == S_OK, "Start failed: %08x\n", hr);
+
+    hr = IAudioClient_Stop(ac);
+    ok(hr == S_OK, "Start failed: %08x\n", hr);
+
+    /* test releasing a playing stream */
+    hr = IAudioClient_Start(ac);
+    ok(hr == S_OK, "Start failed: %08x\n", hr);
+    IAudioClient_Release(ac);
+
+    CloseHandle(event);
+}
+
 START_TEST(render)
 {
     HRESULT hr;
@@ -360,6 +406,7 @@ START_TEST(render)
 
     test_audioclient();
     test_references();
+    test_event();
 
     IMMDevice_Release(dev);
 
