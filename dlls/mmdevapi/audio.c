@@ -1115,12 +1115,14 @@ static HRESULT AudioRenderClient_Create(ACImpl *parent, ACRender **ppv)
     This->lpVtbl = &ACRender_Vtbl;
     This->ref = 0;
     This->parent = parent;
+    AC_AddRef((IAudioClient*)This->parent);
     return S_OK;
 }
 
 static void AudioRenderClient_Destroy(ACRender *This)
 {
     This->parent->render = NULL;
+    AC_Release((IAudioClient*)This->parent);
     HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -1313,12 +1315,14 @@ static HRESULT AudioCaptureClient_Create(ACImpl *parent, ACCapture **ppv)
     This->lpVtbl = &ACCapture_Vtbl;
     This->ref = 0;
     This->parent = parent;
+    AC_AddRef((IAudioClient*)This->parent);
     return S_OK;
 }
 
 static void AudioCaptureClient_Destroy(ACCapture *This)
 {
     This->parent->capture = NULL;
+    AC_Release((IAudioClient*)This->parent);
     HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -1444,12 +1448,14 @@ static HRESULT AudioSessionControl_Create(ACImpl *parent, ACSession **ppv)
     This->lpVtbl = &ACSession_Vtbl;
     This->ref = 0;
     This->parent = parent;
+    AC_AddRef((IAudioClient*)This->parent);
     return S_OK;
 }
 
 static void AudioSessionControl_Destroy(ACSession *This)
 {
     This->parent->session = NULL;
+    AC_Release((IAudioClient*)This->parent);
     HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -1650,12 +1656,14 @@ static HRESULT AudioSimpleVolume_Create(ACImpl *parent, ASVolume **ppv)
     This->lpVtbl = &ASVolume_Vtbl;
     This->ref = 0;
     This->parent = parent;
+    AC_AddRef((IAudioClient*)This->parent);
     return S_OK;
 }
 
 static void AudioSimpleVolume_Destroy(ASVolume *This)
 {
     This->parent->svolume = NULL;
+    AC_Release((IAudioClient*)This->parent);
     HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -1756,12 +1764,14 @@ static HRESULT AudioClock_Create(ACImpl *parent, AClock **ppv)
     This->lp2Vtbl = &AClock2_Vtbl;
     This->ref = 0;
     This->parent = parent;
+    AC_AddRef((IAudioClient*)This->parent);
     return S_OK;
 }
 
 static void AudioClock_Destroy(AClock *This)
 {
     This->parent->clock = NULL;
+    AC_Release((IAudioClient*)This->parent);
     HeapFree(GetProcessHeap(), 0, This);
 }
 

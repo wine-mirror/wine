@@ -34,6 +34,8 @@
 #include "mmdeviceapi.h"
 #include "audioclient.h"
 
+static IMMDevice *dev = NULL;
+
 static void test_uninitialized(IAudioClient *ac)
 {
     HRESULT hr;
@@ -70,15 +72,23 @@ static void test_uninitialized(IAudioClient *ac)
     CloseHandle(handle);
 }
 
-static void test_audioclient(IAudioClient *ac)
+static void test_audioclient(void)
 {
+    IAudioClient *ac;
     IUnknown *unk;
     HRESULT hr;
     ULONG ref;
     WAVEFORMATEX *pwfx, *pwfx2;
     REFERENCE_TIME t1, t2;
+    HANDLE handle;
 
-    HANDLE handle = CreateEventW(NULL, FALSE, FALSE, NULL);
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ac);
+    ok(hr == S_OK, "Activation failed with %08x\n", hr);
+    if(hr != S_OK)
+        return;
+
+    handle = CreateEventW(NULL, FALSE, FALSE, NULL);
 
     hr = IAudioClient_QueryInterface(ac, &IID_IUnknown, NULL);
     ok(hr == E_POINTER, "QueryInterface(NULL) returned %08x\n", hr);
@@ -224,16 +234,110 @@ static void test_audioclient(IAudioClient *ac)
     hr = IAudioClient_Start(ac);
     ok(hr == S_OK, "Start on a stopped stream returns %08x\n", hr);
 
+    IAudioClient_Release(ac);
+
     CloseHandle(handle);
     CoTaskMemFree(pwfx);
+}
+
+static void test_references(void)
+{
+    IAudioClient *ac;
+    IAudioRenderClient *rc;
+    ISimpleAudioVolume *sav;
+    IAudioClock *acl;
+    WAVEFORMATEX *pwfx;
+    HRESULT hr;
+    ULONG ref;
+
+    /* IAudioRenderClient */
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ac);
+    ok(hr == S_OK, "Activation failed with %08x\n", hr);
+    if(hr != S_OK)
+        return;
+
+    hr = IAudioClient_GetMixFormat(ac, &pwfx);
+    ok(hr == S_OK, "GetMixFormat failed: %08x\n", hr);
+    if(hr != S_OK)
+        return;
+
+    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000,
+            0, pwfx, NULL);
+    ok(hr == S_OK, "Initialize failed: %08x\n", hr);
+
+    hr = IAudioClient_GetService(ac, &IID_IAudioRenderClient, (void**)&rc);
+    ok(hr == S_OK, "GetService failed: %08x\n", hr);
+
+    IAudioRenderClient_AddRef(rc);
+    ref = IAudioRenderClient_Release(rc);
+    ok(ref != 0, "RenderClient_Release gave wrong refcount: %u\n", ref);
+
+    ref = IAudioClient_Release(ac);
+    ok(ref != 0, "Client_Release gave wrong refcount: %u\n", ref);
+
+    ref = IAudioRenderClient_Release(rc);
+    ok(ref == 0, "RenderClient_Release gave wrong refcount: %u\n", ref);
+
+    /* ISimpleAudioVolume */
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ac);
+    ok(hr == S_OK, "Activation failed with %08x\n", hr);
+    if(hr != S_OK)
+        return;
+
+    hr = IAudioClient_GetMixFormat(ac, &pwfx);
+    ok(hr == S_OK, "GetMixFormat failed: %08x\n", hr);
+
+    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000,
+            0, pwfx, NULL);
+    ok(hr == S_OK, "Initialize failed: %08x\n", hr);
+
+    hr = IAudioClient_GetService(ac, &IID_ISimpleAudioVolume, (void**)&sav);
+    ok(hr == S_OK, "GetService failed: %08x\n", hr);
+
+    ISimpleAudioVolume_AddRef(sav);
+    ref = ISimpleAudioVolume_Release(sav);
+    ok(ref != 0, "SimpleAudioVolume_Release gave wrong refcount: %u\n", ref);
+
+    ref = IAudioClient_Release(ac);
+    ok(ref != 0, "Client_Release gave wrong refcount: %u\n", ref);
+
+    ref = ISimpleAudioVolume_Release(sav);
+    ok(ref == 0, "SimpleAudioVolume_Release gave wrong refcount: %u\n", ref);
+
+    /* IAudioClock */
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ac);
+    ok(hr == S_OK, "Activation failed with %08x\n", hr);
+    if(hr != S_OK)
+        return;
+
+    hr = IAudioClient_GetMixFormat(ac, &pwfx);
+    ok(hr == S_OK, "GetMixFormat failed: %08x\n", hr);
+
+    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000,
+            0, pwfx, NULL);
+    ok(hr == S_OK, "Initialize failed: %08x\n", hr);
+
+    hr = IAudioClient_GetService(ac, &IID_IAudioClock, (void**)&acl);
+    ok(hr == S_OK, "GetService failed: %08x\n", hr);
+
+    IAudioClock_AddRef(acl);
+    ref = IAudioClock_Release(acl);
+    ok(ref != 0, "AudioClock_Release gave wrong refcount: %u\n", ref);
+
+    ref = IAudioClient_Release(ac);
+    ok(ref != 0, "Client_Release gave wrong refcount: %u\n", ref);
+
+    ref = IAudioClock_Release(acl);
+    ok(ref == 0, "AudioClock_Release gave wrong refcount: %u\n", ref);
 }
 
 START_TEST(render)
 {
     HRESULT hr;
     IMMDeviceEnumerator *mme = NULL;
-    IMMDevice *dev = NULL;
-    IAudioClient *ac = NULL;
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
     hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&mme);
@@ -254,13 +358,9 @@ START_TEST(render)
         goto cleanup;
     }
 
-    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER, NULL, (void**)&ac);
-    ok(hr == S_OK, "Activation failed with %08x\n", hr);
-    if (ac)
-    {
-        test_audioclient(ac);
-        IAudioClient_Release(ac);
-    }
+    test_audioclient();
+    test_references();
+
     IMMDevice_Release(dev);
 
 cleanup:
