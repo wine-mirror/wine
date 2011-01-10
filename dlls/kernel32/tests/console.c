@@ -1857,9 +1857,15 @@ static void test_FillConsoleOutputAttribute(HANDLE output_handle)
 
 START_TEST(console)
 {
+    static const char font_name[] = "Lucida Console";
     HANDLE hConIn, hConOut;
     BOOL ret;
     CONSOLE_SCREEN_BUFFER_INFO	sbi;
+    LONG err;
+    HKEY console_key;
+    char old_font[LF_FACESIZE];
+    BOOL delete = FALSE;
+    DWORD size;
 
     init_function_pointers();
 
@@ -1870,9 +1876,55 @@ START_TEST(console)
      * the curses backend
      */
 
-    /* first, we detach and open a fresh console to play with */
+    /* ReadConsoleOutputW doesn't retrieve characters from the output buffer
+     * correctly for characters that don't have a glyph in the console font. So,
+     * we first set the console font to Lucida Console (which has a wider
+     * selection of glyphs available than the default raster fonts). We want
+     * to be able to restore the original font afterwards, so don't change
+     * if we can't read the original font.
+     */
+    err = RegOpenKeyExA(HKEY_CURRENT_USER, "Console", 0,
+                        KEY_QUERY_VALUE | KEY_SET_VALUE, &console_key);
+    if (err == ERROR_SUCCESS)
+    {
+        size = sizeof(old_font);
+        err = RegQueryValueExA(console_key, "FaceName", NULL, NULL,
+                               (LPBYTE) old_font, &size);
+        if (err == ERROR_SUCCESS || err == ERROR_FILE_NOT_FOUND)
+        {
+            delete = (err == ERROR_FILE_NOT_FOUND);
+            err = RegSetValueExA(console_key, "FaceName", 0, REG_SZ,
+                                 (const BYTE *) font_name, sizeof(font_name));
+            if (err != ERROR_SUCCESS)
+                trace("Unable to change default console font, error %d\n", err);
+        }
+        else
+        {
+            trace("Unable to query default console font, error %d\n", err);
+            RegCloseKey(console_key);
+            console_key = NULL;
+        }
+    }
+    else
+    {
+        trace("Unable to open HKCU\\Console, error %d\n", err);
+        console_key = NULL;
+    }
+
+    /* Now detach and open a fresh console to play with */
     FreeConsole();
     ok(AllocConsole(), "Couldn't alloc console\n");
+
+    /* Restore default console font if needed */
+    if (console_key != NULL)
+    {
+        if (delete)
+            err = RegDeleteValueA(console_key, "FaceName");
+        else
+            err = RegSetValueExA(console_key, "FaceName", 0, REG_SZ,
+                                 (const BYTE *) old_font, strlen(old_font) + 1);
+        ok(err == ERROR_SUCCESS, "Unable to restore default console font, error %d\n", err);
+    }
     hConIn = CreateFileA("CONIN$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
     hConOut = CreateFileA("CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
 
