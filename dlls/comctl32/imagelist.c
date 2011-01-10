@@ -1519,7 +1519,6 @@ ImageList_Duplicate (HIMAGELIST himlSrc)
                     himlSrc->hdcMask, 0, 0, SRCCOPY);
 
 	himlDst->cCurImage = himlSrc->cCurImage;
-	himlDst->cMaxImage = himlSrc->cMaxImage;
         if (himlSrc->has_alpha && himlDst->has_alpha)
             memcpy( himlDst->has_alpha, himlSrc->has_alpha, himlDst->cCurImage );
     }
