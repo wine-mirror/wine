@@ -399,6 +399,27 @@ fail:
     return hr;
 }
 
+static HRESULT BmpFrameDecode_ReadRGB8(BmpDecoder* This)
+{
+    HRESULT hr;
+    UINT width, height;
+
+    hr = IWICBitmapFrameDecode_GetSize((IWICBitmapFrameDecode*)&This->lpFrameVtbl, &width, &height);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = BmpFrameDecode_ReadUncompressed(This);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        reverse_bgr8(This->bitsperpixel/8, This->imagedatastart,
+            width, height, This->stride);
+    }
+
+    return hr;
+}
+
 static HRESULT ReadByte(IStream *stream, BYTE *buffer, ULONG buffer_size,
     ULONG *cursor, ULONG *bytesread, BYTE *result)
 {
@@ -705,6 +726,7 @@ static const struct bitfields_format bitfields_formats[] = {
     {16,0xf800,0x7e0,0x1f,0,&GUID_WICPixelFormat16bppBGR565,BmpFrameDecode_ReadUncompressed},
     {32,0xff0000,0xff00,0xff,0,&GUID_WICPixelFormat32bppBGR,BmpFrameDecode_ReadUncompressed},
     {32,0xff0000,0xff00,0xff,0xff000000,&GUID_WICPixelFormat32bppBGRA,BmpFrameDecode_ReadUncompressed},
+    {32,0xff,0xff00,0xff0000,0,&GUID_WICPixelFormat32bppBGR,BmpFrameDecode_ReadRGB8},
     {0}
 };
 
