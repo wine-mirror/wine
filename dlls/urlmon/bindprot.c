@@ -21,64 +21,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
-typedef struct BindProtocol BindProtocol;
+typedef void (*task_proc_t)(BindProtocol*,task_header_t*);
 
-struct _task_header_t;
-
-typedef void (*task_proc_t)(BindProtocol*,struct _task_header_t*);
-
-typedef struct _task_header_t {
+struct _task_header_t {
     task_proc_t proc;
-    struct _task_header_t *next;
-} task_header_t;
-
-struct BindProtocol {
-    const IInternetProtocolExVtbl    *lpIInternetProtocolExVtbl;
-    const IInternetBindInfoVtbl      *lpInternetBindInfoVtbl;
-    const IInternetPriorityVtbl      *lpInternetPriorityVtbl;
-    const IServiceProviderVtbl       *lpServiceProviderVtbl;
-    const IInternetProtocolSinkVtbl  *lpIInternetProtocolSinkVtbl;
-    const IWinInetHttpInfoVtbl       *lpIWinInetHttpInfoVtbl;
-
-    LONG ref;
-
-    IInternetProtocol *protocol;
-    IInternetBindInfo *bind_info;
-    IInternetProtocolSink *protocol_sink;
-    IServiceProvider *service_provider;
-    IWinInetInfo *wininet_info;
-
-    struct {
-        IInternetProtocol IInternetProtocol_iface;
-    } default_protocol_handler;
-    IInternetProtocol *protocol_handler;
-
-    LONG priority;
-
-    BOOL reported_result;
-    BOOL reported_mime;
-    BOOL from_urlmon;
-    DWORD pi;
-
-    DWORD apartment_thread;
-    HWND notif_hwnd;
-    DWORD continue_call;
-
-    CRITICAL_SECTION section;
-    task_header_t *task_queue_head, *task_queue_tail;
-
-    BYTE *buf;
-    DWORD buf_size;
-    LPWSTR mime;
-    IUri *uri;
-    ProtocolProxy *filter_proxy;
+    task_header_t *next;
 };
 
 #define BINDINFO(x)  ((IInternetBindInfo*) &(x)->lpInternetBindInfoVtbl)
 #define PRIORITY(x)  ((IInternetPriority*) &(x)->lpInternetPriorityVtbl)
 #define HTTPINFO(x)  ((IWinInetHttpInfo*)  &(x)->lpIWinInetHttpInfoVtbl)
 #define SERVPROV(x)  ((IServiceProvider*)  &(x)->lpServiceProviderVtbl)
-#define PROTOCOLEX(x)  ((IInternetProtocolEx*)  &(x)->lpIInternetProtocolExVtbl)
 
 #define PROTOCOLHANDLER(x)  ((IInternetProtocol*)  &(x)->lpIInternetProtocolHandlerVtbl)
 
@@ -390,7 +343,7 @@ static ULONG WINAPI BindProtocol_Release(IInternetProtocolEx *iface)
         if(This->uri)
             IUri_Release(This->uri);
 
-        set_binding_sink(PROTOCOLEX(This), NULL, NULL);
+        set_binding_sink(This, NULL, NULL);
 
         if(This->notif_hwnd)
             release_notif_hwnd(This->notif_hwnd);
@@ -576,7 +529,7 @@ static HRESULT WINAPI BindProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUr
     if(urlmon_protocol)
         IInternetProtocol_QueryInterface(protocol, &IID_IWinInetInfo, (void**)&This->wininet_info);
 
-    set_binding_sink(PROTOCOLEX(This), pOIProtSink, pOIBindInfo);
+    set_binding_sink(This, pOIProtSink, pOIBindInfo);
 
     hres = IInternetProtocol_QueryInterface(protocol, &IID_IInternetPriority, (void**)&priority);
     if(SUCCEEDED(hres)) {
@@ -602,9 +555,8 @@ static HRESULT WINAPI BindProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUr
     return hres;
 }
 
-void set_binding_sink(IInternetProtocolEx *bind_protocol, IInternetProtocolSink *sink, IInternetBindInfo *bind_info)
+void set_binding_sink(BindProtocol *This, IInternetProtocolSink *sink, IInternetBindInfo *bind_info)
 {
-    BindProtocol *This = PROTOCOL_THIS(bind_protocol);
     IInternetProtocolSink *prev_sink;
     IServiceProvider *service_provider = NULL;
 
@@ -625,13 +577,6 @@ void set_binding_sink(IInternetProtocolEx *bind_protocol, IInternetProtocolSink 
     bind_info = InterlockedExchangePointer((void**)&This->bind_info, bind_info);
     if(bind_info)
         IInternetBindInfo_Release(bind_info);
-}
-
-IWinInetInfo *get_wininet_info(IInternetProtocolEx *bind_protocol)
-{
-    BindProtocol *This = PROTOCOL_THIS(bind_protocol);
-
-    return This->wininet_info;
 }
 
 #undef PROTOCOL_THIS
@@ -726,7 +671,7 @@ static HRESULT WINAPI ProtocolHandler_Terminate(IInternetProtocol *iface, DWORD 
         This->filter_proxy = NULL;
     }
 
-    set_binding_sink(PROTOCOLEX(This), NULL, NULL);
+    set_binding_sink(This, NULL, NULL);
 
     if(This->bind_info) {
         IInternetBindInfo_Release(This->bind_info);
@@ -1336,7 +1281,7 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
     BPServiceProvider_QueryService
 };
 
-HRESULT create_binding_protocol(BOOL from_urlmon, IInternetProtocolEx **protocol)
+HRESULT create_binding_protocol(BOOL from_urlmon, BindProtocol **protocol)
 {
     BindProtocol *ret = heap_alloc_zero(sizeof(BindProtocol));
 
@@ -1358,6 +1303,6 @@ HRESULT create_binding_protocol(BOOL from_urlmon, IInternetProtocolEx **protocol
 
     URLMON_LockModule();
 
-    *protocol = PROTOCOLEX(ret);
+    *protocol = ret;
     return S_OK;
 }

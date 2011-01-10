@@ -76,9 +76,6 @@ void free_session(void);
 HRESULT bind_to_storage(IUri*,IBindCtx*,REFIID,void**);
 HRESULT bind_to_object(IMoniker*,IUri*,IBindCtx*,REFIID,void**ppv);
 
-HRESULT create_binding_protocol(BOOL,IInternetProtocolEx**);
-void set_binding_sink(IInternetProtocolEx*,IInternetProtocolSink*,IInternetBindInfo*);
-IWinInetInfo *get_wininet_info(IInternetProtocolEx*);
 HRESULT create_default_callback(IBindStatusCallback**);
 HRESULT wrap_callback(IBindStatusCallback*,IBindStatusCallback**);
 
@@ -168,6 +165,55 @@ typedef struct {
 #define PROTSINK(x)  ((IInternetProtocolSink*)   &(x)->lpIInternetProtocolSinkVtbl)
 
 HRESULT create_protocol_proxy(IInternetProtocol*,IInternetProtocolSink*,ProtocolProxy**);
+
+typedef struct _task_header_t task_header_t;
+
+typedef struct {
+    const IInternetProtocolExVtbl    *lpIInternetProtocolExVtbl;
+    const IInternetBindInfoVtbl      *lpInternetBindInfoVtbl;
+    const IInternetPriorityVtbl      *lpInternetPriorityVtbl;
+    const IServiceProviderVtbl       *lpServiceProviderVtbl;
+    const IInternetProtocolSinkVtbl  *lpIInternetProtocolSinkVtbl;
+    const IWinInetHttpInfoVtbl       *lpIWinInetHttpInfoVtbl;
+
+    LONG ref;
+
+    IInternetProtocol *protocol;
+    IInternetBindInfo *bind_info;
+    IInternetProtocolSink *protocol_sink;
+    IServiceProvider *service_provider;
+    IWinInetInfo *wininet_info;
+
+    struct {
+        IInternetProtocol IInternetProtocol_iface;
+    } default_protocol_handler;
+    IInternetProtocol *protocol_handler;
+
+    LONG priority;
+
+    BOOL reported_result;
+    BOOL reported_mime;
+    BOOL from_urlmon;
+    DWORD pi;
+
+    DWORD apartment_thread;
+    HWND notif_hwnd;
+    DWORD continue_call;
+
+    CRITICAL_SECTION section;
+    task_header_t *task_queue_head, *task_queue_tail;
+
+    BYTE *buf;
+    DWORD buf_size;
+    LPWSTR mime;
+    IUri *uri;
+    ProtocolProxy *filter_proxy;
+}  BindProtocol;
+
+#define PROTOCOLEX(x)  ((IInternetProtocolEx*)  &(x)->lpIInternetProtocolExVtbl)
+
+HRESULT create_binding_protocol(BOOL,BindProtocol**);
+void set_binding_sink(BindProtocol*,IInternetProtocolSink*,IInternetBindInfo*);
 
 typedef struct {
     HWND notif_hwnd;
