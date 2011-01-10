@@ -412,16 +412,21 @@ static const IWICBitmapFrameEncodeVtbl BmpFrameEncode_Vtbl = {
 };
 
 typedef struct BmpEncoder {
-    const IWICBitmapEncoderVtbl *lpVtbl;
+    IWICBitmapEncoder IWICBitmapEncoder_iface;
     LONG ref;
     IStream *stream;
     BmpFrameEncode *frame;
 } BmpEncoder;
 
+static inline BmpEncoder *impl_from_IWICBitmapEncoder(IWICBitmapEncoder *iface)
+{
+    return CONTAINING_RECORD(iface, BmpEncoder, IWICBitmapEncoder_iface);
+}
+
 static HRESULT WINAPI BmpEncoder_QueryInterface(IWICBitmapEncoder *iface, REFIID iid,
     void **ppv)
 {
-    BmpEncoder *This = (BmpEncoder*)iface;
+    BmpEncoder *This = impl_from_IWICBitmapEncoder(iface);
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
@@ -443,7 +448,7 @@ static HRESULT WINAPI BmpEncoder_QueryInterface(IWICBitmapEncoder *iface, REFIID
 
 static ULONG WINAPI BmpEncoder_AddRef(IWICBitmapEncoder *iface)
 {
-    BmpEncoder *This = (BmpEncoder*)iface;
+    BmpEncoder *This = impl_from_IWICBitmapEncoder(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -453,7 +458,7 @@ static ULONG WINAPI BmpEncoder_AddRef(IWICBitmapEncoder *iface)
 
 static ULONG WINAPI BmpEncoder_Release(IWICBitmapEncoder *iface)
 {
-    BmpEncoder *This = (BmpEncoder*)iface;
+    BmpEncoder *This = impl_from_IWICBitmapEncoder(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -471,7 +476,7 @@ static ULONG WINAPI BmpEncoder_Release(IWICBitmapEncoder *iface)
 static HRESULT WINAPI BmpEncoder_Initialize(IWICBitmapEncoder *iface,
     IStream *pIStream, WICBitmapEncoderCacheOption cacheOption)
 {
-    BmpEncoder *This = (BmpEncoder*)iface;
+    BmpEncoder *This = impl_from_IWICBitmapEncoder(iface);
 
     TRACE("(%p,%p,%u)\n", iface, pIStream, cacheOption);
 
@@ -523,7 +528,7 @@ static HRESULT WINAPI BmpEncoder_SetPreview(IWICBitmapEncoder *iface, IWICBitmap
 static HRESULT WINAPI BmpEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
     IWICBitmapFrameEncode **ppIFrameEncode, IPropertyBag2 **ppIEncoderOptions)
 {
-    BmpEncoder *This = (BmpEncoder*)iface;
+    BmpEncoder *This = impl_from_IWICBitmapEncoder(iface);
     BmpFrameEncode *encode;
     HRESULT hr;
 
@@ -565,7 +570,7 @@ static HRESULT WINAPI BmpEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
 
 static HRESULT WINAPI BmpEncoder_Commit(IWICBitmapEncoder *iface)
 {
-    BmpEncoder *This = (BmpEncoder*)iface;
+    BmpEncoder *This = impl_from_IWICBitmapEncoder(iface);
     TRACE("(%p)\n", iface);
 
     if (!This->frame || !This->frame->committed) return WINCODEC_ERR_WRONGSTATE;
@@ -610,13 +615,13 @@ HRESULT BmpEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(BmpEncoder));
     if (!This) return E_OUTOFMEMORY;
 
-    This->lpVtbl = &BmpEncoder_Vtbl;
+    This->IWICBitmapEncoder_iface.lpVtbl = &BmpEncoder_Vtbl;
     This->ref = 1;
     This->stream = NULL;
     This->frame = NULL;
 
-    ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
-    IUnknown_Release((IUnknown*)This);
+    ret = IWICBitmapEncoder_QueryInterface(&This->IWICBitmapEncoder_iface, iid, ppv);
+    IWICBitmapEncoder_Release(&This->IWICBitmapEncoder_iface);
 
     return ret;
 }
