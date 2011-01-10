@@ -165,7 +165,7 @@ static BOOL expect_InPlaceUIWindow_SetActiveObject_active = TRUE;
 static BOOL ipsex, ipsw;
 static BOOL set_clientsite, container_locked, navigated_load;
 static BOOL readystate_set_loading = FALSE, readystate_set_interactive = FALSE, load_from_stream;
-static BOOL editmode = FALSE, show_failed;
+static BOOL editmode = FALSE;
 static BOOL inplace_deactivated, open_call;
 static int stream_read, protocol_read;
 static enum load_state_t {
@@ -2044,14 +2044,6 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
                 expect_status_text = (load_state == LD_COMPLETE ? (LPCOLESTR)0xdeadbeef : NULL);
 
                 hres = IOleDocumentView_Show(view, TRUE);
-                if(FAILED(hres)) {
-                    win_skip("Show failed\n");
-                    if(activeobj)
-                        IOleInPlaceActiveObject_Release(activeobj);
-                    IOleDocument_Release(document);
-                    show_failed = TRUE;
-                    return S_OK;
-                }
                 ok(hres == S_OK, "Show failed: %08x\n", hres);
 
                 CHECK_CALLED(CanInPlaceActivate);
@@ -4769,10 +4761,6 @@ static void test_HTMLDocument_hlink(void)
     test_GetCurMoniker((IUnknown*)doc, NULL, NULL);
     test_Persist(doc, &Moniker);
     test_Navigate(doc);
-    if(show_failed) {
-        IUnknown_Release(doc);
-        return;
-    }
 
     test_download(DWL_CSS|DWL_TRYCSS);
 
@@ -4874,11 +4862,6 @@ static void test_HTMLDocument_http(void)
     test_GetCurMoniker((IUnknown*)doc, NULL, NULL);
     test_Persist(doc, http_mon);
     test_Navigate(doc);
-    if(show_failed) {
-        IUnknown_Release(doc);
-        return;
-    }
-
     test_download(DWL_HTTP);
     test_cookies(doc);
     test_IsDirty(doc, S_FALSE);
@@ -5405,21 +5388,19 @@ START_TEST(htmldoc)
     register_protocol();
 
     test_HTMLDocument_hlink();
-    if(!show_failed) {
-        test_HTMLDocument(FALSE);
-        test_HTMLDocument(TRUE);
-        test_HTMLDocument_StreamLoad();
-        test_HTMLDocument_StreamInitNew();
-        test_editing_mode(FALSE);
-        test_editing_mode(TRUE);
-        test_HTMLDocument_http();
-        test_UIActivate(FALSE, FALSE, FALSE);
-        test_UIActivate(FALSE, TRUE, FALSE);
-        test_UIActivate(FALSE, TRUE, TRUE);
-        test_UIActivate(TRUE, FALSE, FALSE);
-        test_UIActivate(TRUE, TRUE, FALSE);
-        test_UIActivate(TRUE, TRUE, TRUE);
-    }
+    test_HTMLDocument(FALSE);
+    test_HTMLDocument(TRUE);
+    test_HTMLDocument_StreamLoad();
+    test_HTMLDocument_StreamInitNew();
+    test_editing_mode(FALSE);
+    test_editing_mode(TRUE);
+    test_HTMLDocument_http();
+    test_UIActivate(FALSE, FALSE, FALSE);
+    test_UIActivate(FALSE, TRUE, FALSE);
+    test_UIActivate(FALSE, TRUE, TRUE);
+    test_UIActivate(TRUE, FALSE, FALSE);
+    test_UIActivate(TRUE, TRUE, FALSE);
+    test_UIActivate(TRUE, TRUE, TRUE);
     test_HTMLDoc_ISupportErrorInfo();
     test_IPersistHistory();
 
