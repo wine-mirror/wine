@@ -796,3 +796,13 @@ LANGID WINAPI GetThreadUILanguage( void )
     FIXME(": stub, returning default language.\n");
     return lang;
 }
+
+/***********************************************************************
+ *              GetThreadIOPendingFlag (KERNEL32.@)
+ */
+BOOL WINAPI GetThreadIOPendingFlag( HANDLE thread, PBOOL io_pending )
+{
+    FIXME("%p, %p\n", thread, io_pending);
+    *io_pending = FALSE;
+    return TRUE;
+}

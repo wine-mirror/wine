@@ -649,7 +649,7 @@
 @ stdcall GetThreadContext(long ptr)
 @ stdcall GetThreadErrorMode()
 @ stdcall GetThreadId(ptr)
-# @ stub GetThreadIOPendingFlag
+@ stdcall GetThreadIOPendingFlag(long ptr)
 @ stdcall GetThreadLocale()
 @ stdcall GetThreadPriority(long)
 @ stdcall GetThreadPriorityBoost(long ptr)
