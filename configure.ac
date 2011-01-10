@@ -2912,7 +2912,7 @@ WINE_CONFIG_PROGRAM(winepath,,[install,installbin])
 WINE_CONFIG_PROGRAM(winetest)
 WINE_CONFIG_PROGRAM(winevdm,enable_win16,[install])
 WINE_CONFIG_PROGRAM(winhelp.exe16,enable_win16,[install])
-WINE_CONFIG_PROGRAM(winhlp32,,[install])
+WINE_CONFIG_PROGRAM(winhlp32,,[po,install])
 WINE_CONFIG_PROGRAM(winoldap.mod16,enable_win16,[install])
 WINE_CONFIG_PROGRAM(winver,,[install])
 WINE_CONFIG_PROGRAM(wmic,,[install])
@@ -2958,6 +2958,7 @@ pa \
 pl \
 pt_BR \
 pt_PT \
+rm \
 ro \
 ru \
 sk \

@@ -1286,11 +1286,11 @@ msgstr "Açık"
 msgid "Off"
 msgstr "Kapalı"
 
-#: shdoclc.rc:36
+#: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
 msgid "Default"
 msgstr "Default"
 
-#: shdoclc.rc:38
+#: shdoclc.rc:38 winhlp32.rc:101
 msgid "&Back"
 msgstr "&Geri"
 
@@ -1482,15 +1482,20 @@ msgstr "1DSite Select"
 msgid "Paste"
 msgstr "Ya&pıştır"
 
-#: shdoclc.rc:122
+#: shdoclc.rc:122 winhlp32.rc:31
+#, fuzzy
 msgid "&Print"
-msgstr "&Yazdır"
+msgstr ""
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&Yazdır\n"
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"Ya&zdır"
 
 #: shdoclc.rc:126
 msgid "Anchor"
 msgstr "Anchor"
 
-#: shdoclc.rc:128 view.rc:30
+#: shdoclc.rc:128 view.rc:30 winhlp32.rc:29
 msgid "&Open"
 msgstr "&Aç"
 
@@ -3334,7 +3339,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winhlp32.rc:28
 msgid "&File"
 msgstr "&Dosya"
 
@@ -3366,11 +3371,11 @@ msgstr "Sa&yfa Ayarı..."
 msgid "P&rinter Setup..."
 msgstr "Yazıcı &Ayarları..."
 
-#: notepad.rc:36 view.rc:31
+#: notepad.rc:36 view.rc:31 winhlp32.rc:34
 msgid "E&xit"
 msgstr "&Çıkış"
 
-#: notepad.rc:38 wineconsole.rc:25
+#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36
 #, fuzzy
 msgid "&Edit"
 msgstr ""
@@ -3423,7 +3428,7 @@ msgstr "&Sonrakini bul\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Replace...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winhlp32.rc:60
 msgid "&Help"
 msgstr "&Yardım"
 
@@ -3451,15 +3456,15 @@ msgstr "&p. Sayfa"
 msgid "Notepad"
 msgstr "Not Defteri"
 
-#: notepad.rc:72 progman.rc:66
+#: notepad.rc:72 progman.rc:66 winhlp32.rc:94
 msgid "ERROR"
 msgstr "HATA"
 
-#: notepad.rc:73 progman.rc:67
+#: notepad.rc:73 progman.rc:67 winhlp32.rc:95
 msgid "WARNING"
 msgstr "UYARI"
 
-#: notepad.rc:74 progman.rc:68
+#: notepad.rc:74 progman.rc:68 winhlp32.rc:96
 msgid "Information"
 msgstr "Bilgi"
 
@@ -3467,7 +3472,7 @@ msgstr "Bilgi"
 msgid "Untitled"
 msgstr "Adsız"
 
-#: notepad.rc:78 progman.rc:84
+#: notepad.rc:78 progman.rc:84 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Tüm dosyalar (*.*)"
 
@@ -3576,9 +3581,14 @@ msgstr "Çalı&ştır..."
 msgid "E&xit Windows..."
 msgstr "Windows'tan &Çık..."
 
-#: progman.rc:41 taskmgr.rc:41 winemine.rc:34
+#: progman.rc:41 taskmgr.rc:41 winemine.rc:34 winhlp32.rc:44
+#, fuzzy
 msgid "&Options"
-msgstr "&Seçenekler"
+msgstr ""
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&Seçenekler\n"
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&Options"
 
 #: progman.rc:42
 msgid "&Arrange automatically"
@@ -3636,9 +3646,14 @@ msgstr "'%s' grubu silinsin mi?"
 msgid "Delete program `%s' ?"
 msgstr "'%s' programı silinsin mi?"
 
-#: progman.rc:72
+#: progman.rc:72 winhlp32.rc:97
+#, fuzzy
 msgid "Not implemented"
-msgstr "Henüz Tanımlanmadı"
+msgstr ""
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"Henüz Tanımlanmadı\n"
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"Henüz tamamlanmadı"
 
 #: progman.rc:73
 msgid "Error reading `%s'."
@@ -4664,6 +4679,121 @@ msgstr "Hiç kimse"
 #: winemine.rc:29
 msgid "Copyright 2000 Joshua Thielen"
 msgstr "Telif hakkı 2000, Joshua Thielen"
+
+#: winhlp32.rc:32
+msgid "Printer &setup..."
+msgstr "&Yazıcı ayarları..."
+
+#: winhlp32.rc:37
+msgid "&Copy..."
+msgstr "K&opyala..."
+
+#: winhlp32.rc:39
+msgid "&Annotate..."
+msgstr "&Annotate..."
+
+#: winhlp32.rc:41
+msgid "&Bookmark"
+msgstr "Yer İ&mleri"
+
+#: winhlp32.rc:42
+msgid "&Define..."
+msgstr "&Tanımla..."
+
+#: winhlp32.rc:45 winhlp32.rc:81
+msgid "Help always visible"
+msgstr "Help always visible"
+
+#: winhlp32.rc:48 winhlp32.rc:84
+msgid "Visible"
+msgstr "Visible"
+
+#: winhlp32.rc:49 winhlp32.rc:85
+msgid "Non visible"
+msgstr "Non visible"
+
+#: winhlp32.rc:51
+msgid "History"
+msgstr "History"
+
+#: winhlp32.rc:52 winhlp32.rc:75
+msgid "Fonts"
+msgstr "Fonts"
+
+#: winhlp32.rc:54 winhlp32.rc:77
+msgid "Small"
+msgstr "Small"
+
+#: winhlp32.rc:55 winhlp32.rc:78
+msgid "Normal"
+msgstr "Normal"
+
+#: winhlp32.rc:56 winhlp32.rc:79
+msgid "Large"
+msgstr "Large"
+
+#: winhlp32.rc:58 winhlp32.rc:87
+msgid "Use system colors"
+msgstr "Use system colors"
+
+#: winhlp32.rc:61
+msgid "Help &on help"
+msgstr "&Yardım Kullanımı"
+
+#: winhlp32.rc:62
+msgid "Always on &top"
+msgstr "&Her Zaman Üstte"
+
+#: winhlp32.rc:64
+msgid "&About Wine Help"
+msgstr "&Bilgi..."
+
+#: winhlp32.rc:72
+#, fuzzy
+msgid "Annotation..."
+msgstr "&Annotate..."
+
+#: winhlp32.rc:73
+#, fuzzy
+msgid "Copy"
+msgstr "K&opyala"
+
+#: winhlp32.rc:74
+#, fuzzy
+msgid "Print..."
+msgstr "Yazdır"
+
+#: winhlp32.rc:93
+msgid "Wine Help"
+msgstr "Wine Yardım"
+
+#: winhlp32.rc:98
+msgid "Error while reading the help file `%s'"
+msgstr "'%s' yardım dosyası açılırken hata"
+
+#: winhlp32.rc:100
+msgid "Summary"
+msgstr "Summary"
+
+#: winhlp32.rc:99
+msgid "&Index"
+msgstr "&İçindekiler"
+
+#: winhlp32.rc:103
+msgid "Help files (*.hlp)"
+msgstr "Yardım dosyaları (*.hlp)"
+
+#: winhlp32.rc:104
+msgid "Cannot find '%s'. Do you want to find this file yourself?"
+msgstr "Cannot find '%s'. Do you want to find this file yourself?"
+
+#: winhlp32.rc:105
+msgid "Cannot find a richedit implementation... Aborting"
+msgstr "Cannot find a richedit implementation... Aborting"
+
+#: winhlp32.rc:106
+msgid "Help topics: "
+msgstr ""
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

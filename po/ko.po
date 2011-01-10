@@ -1267,11 +1267,11 @@ msgstr "작동"
 msgid "Off"
 msgstr "비작동"
 
-#: shdoclc.rc:36
+#: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
 msgid "Default"
 msgstr "기본"
 
-#: shdoclc.rc:38
+#: shdoclc.rc:38 winhlp32.rc:101
 msgid "&Back"
 msgstr "뒤로(&B)"
 
@@ -1458,7 +1458,7 @@ msgstr "1DSite 선택"
 msgid "Paste"
 msgstr "붙여넣기"
 
-#: shdoclc.rc:122
+#: shdoclc.rc:122 winhlp32.rc:31
 msgid "&Print"
 msgstr "인쇄(&P)"
 
@@ -1466,9 +1466,14 @@ msgstr "인쇄(&P)"
 msgid "Anchor"
 msgstr "닻"
 
-#: shdoclc.rc:128 view.rc:30
+#: shdoclc.rc:128 view.rc:30 winhlp32.rc:29
+#, fuzzy
 msgid "&Open"
-msgstr "열기(&O)"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"열기(&O)\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"열기(&O)..."
 
 #: shdoclc.rc:129
 msgid "Open in &New Window"
@@ -3312,7 +3317,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      열린 리소스: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winhlp32.rc:28
 msgid "&File"
 msgstr "파일(&F)"
 
@@ -3344,7 +3349,7 @@ msgstr "페이지 설정(&T)..."
 msgid "P&rinter Setup..."
 msgstr "프린터 설정(&R)..."
 
-#: notepad.rc:36 view.rc:31
+#: notepad.rc:36 view.rc:31 winhlp32.rc:34
 #, fuzzy
 msgid "E&xit"
 msgstr ""
@@ -3353,7 +3358,7 @@ msgstr ""
 "#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
 "나가기(&X)"
 
-#: notepad.rc:38 wineconsole.rc:25
+#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36
 msgid "&Edit"
 msgstr "편집(&E)"
 
@@ -3401,7 +3406,7 @@ msgstr "다음 찾기(&N)\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "바꾸기(&R)...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winhlp32.rc:60
 msgid "&Help"
 msgstr "도움말(&H)"
 
@@ -3429,7 +3434,7 @@ msgstr "&p 페이지"
 msgid "Notepad"
 msgstr "메모장"
 
-#: notepad.rc:72 progman.rc:66
+#: notepad.rc:72 progman.rc:66 winhlp32.rc:94
 #, fuzzy
 msgid "ERROR"
 msgstr ""
@@ -3438,11 +3443,11 @@ msgstr ""
 "#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
 "에러"
 
-#: notepad.rc:73 progman.rc:67
+#: notepad.rc:73 progman.rc:67 winhlp32.rc:95
 msgid "WARNING"
 msgstr "경고"
 
-#: notepad.rc:74 progman.rc:68
+#: notepad.rc:74 progman.rc:68 winhlp32.rc:96
 msgid "Information"
 msgstr "정보"
 
@@ -3450,7 +3455,7 @@ msgstr "정보"
 msgid "Untitled"
 msgstr "제목 없음"
 
-#: notepad.rc:78 progman.rc:84
+#: notepad.rc:78 progman.rc:84 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "모든 파일 (*.*)"
 
@@ -3563,7 +3568,7 @@ msgstr "실행(&E)..."
 msgid "E&xit Windows..."
 msgstr "창 종료(&X)..."
 
-#: progman.rc:41 taskmgr.rc:41 winemine.rc:34
+#: progman.rc:41 taskmgr.rc:41 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
 msgstr "옵션(&O)"
 
@@ -3623,9 +3628,14 @@ msgstr "그룹 `%s'을 지우겠습니까 ?"
 msgid "Delete program `%s' ?"
 msgstr "풀그림 `%s'을 지우겠습니까 ?"
 
-#: progman.rc:72
+#: progman.rc:72 winhlp32.rc:97
+#, fuzzy
 msgid "Not implemented"
-msgstr "아직 구현되지 않았습니다."
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"아직 구현되지 않았습니다.\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"구현되지 않았음"
 
 #: progman.rc:73
 msgid "Error reading `%s'."
@@ -4663,6 +4673,118 @@ msgstr "아무개"
 #: winemine.rc:29
 msgid "Copyright 2000 Joshua Thielen"
 msgstr "Copyright 2000 Joshua Thielen"
+
+#: winhlp32.rc:32
+msgid "Printer &setup..."
+msgstr "프린터 설정(&S)..."
+
+#: winhlp32.rc:37
+msgid "&Copy..."
+msgstr "복사(&C)..."
+
+#: winhlp32.rc:39
+msgid "&Annotate..."
+msgstr "주석(&A)..."
+
+#: winhlp32.rc:41
+msgid "&Bookmark"
+msgstr "책갈피(&B)"
+
+#: winhlp32.rc:42
+msgid "&Define..."
+msgstr "정의(&D)..."
+
+#: winhlp32.rc:45 winhlp32.rc:81
+msgid "Help always visible"
+msgstr "가능한 도움말 보이기"
+
+#: winhlp32.rc:48 winhlp32.rc:84
+msgid "Visible"
+msgstr "보이기"
+
+#: winhlp32.rc:49 winhlp32.rc:85
+msgid "Non visible"
+msgstr "보여주지 않기"
+
+#: winhlp32.rc:51
+msgid "History"
+msgstr "기록"
+
+#: winhlp32.rc:52 winhlp32.rc:75
+msgid "Fonts"
+msgstr "글꼴"
+
+#: winhlp32.rc:54 winhlp32.rc:77
+msgid "Small"
+msgstr "작게"
+
+#: winhlp32.rc:55 winhlp32.rc:78
+msgid "Normal"
+msgstr "보통"
+
+#: winhlp32.rc:56 winhlp32.rc:79
+msgid "Large"
+msgstr "크게"
+
+#: winhlp32.rc:58 winhlp32.rc:87
+msgid "Use system colors"
+msgstr "시스템 색상 사용"
+
+#: winhlp32.rc:61
+msgid "Help &on help"
+msgstr "도움말 사용법(&O)"
+
+#: winhlp32.rc:62
+msgid "Always on &top"
+msgstr "항상 위(&T)"
+
+#: winhlp32.rc:64
+msgid "&About Wine Help"
+msgstr "Wine 도움말 정보(&I)..."
+
+#: winhlp32.rc:72
+msgid "Annotation..."
+msgstr "주석..."
+
+#: winhlp32.rc:73
+msgid "Copy"
+msgstr "복사"
+
+#: winhlp32.rc:74
+msgid "Print..."
+msgstr "인쇄..."
+
+#: winhlp32.rc:93
+msgid "Wine Help"
+msgstr "Wine 도움말"
+
+#: winhlp32.rc:98
+msgid "Error while reading the help file `%s'"
+msgstr "도움말 파일 `%s'를 읽는 도중 오류 발생"
+
+#: winhlp32.rc:100
+msgid "Summary"
+msgstr "요약"
+
+#: winhlp32.rc:99
+msgid "&Index"
+msgstr "목차(&C)"
+
+#: winhlp32.rc:103
+msgid "Help files (*.hlp)"
+msgstr "도움말 파일 (*.hlp)"
+
+#: winhlp32.rc:104
+msgid "Cannot find '%s'. Do you want to find this file yourself?"
+msgstr "%s을 찾을 수 없습니다'. 이 파일을 직접 찾겠습니까?"
+
+#: winhlp32.rc:105
+msgid "Cannot find a richedit implementation... Aborting"
+msgstr "richedit  구현을 찾을수 업습니다.. 취소중"
+
+#: winhlp32.rc:106
+msgid "Help topics: "
+msgstr "도움말 목차: "
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

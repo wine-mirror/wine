@@ -1279,13 +1279,18 @@ msgstr "Vključeno"
 msgid "Off"
 msgstr "Izključeno"
 
-#: shdoclc.rc:36
+#: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
 msgid "Default"
 msgstr "Privzeto"
 
-#: shdoclc.rc:38
+#: shdoclc.rc:38 winhlp32.rc:101
+#, fuzzy
 msgid "&Back"
-msgstr "&Naprej"
+msgstr ""
+"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
+"&Naprej\n"
+"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
+"&Nazaj"
 
 #: shdoclc.rc:39
 msgid "F&orward"
@@ -1470,15 +1475,20 @@ msgstr "1DSite Select"
 msgid "Paste"
 msgstr "Prilepi"
 
-#: shdoclc.rc:122
+#: shdoclc.rc:122 winhlp32.rc:31
+#, fuzzy
 msgid "&Print"
-msgstr "Na&tisni"
+msgstr ""
+"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
+"Na&tisni\n"
+"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
+"&Natisni"
 
 #: shdoclc.rc:126
 msgid "Anchor"
 msgstr "Sidro"
 
-#: shdoclc.rc:128 view.rc:30
+#: shdoclc.rc:128 view.rc:30 winhlp32.rc:29
 msgid "&Open"
 msgstr "&Odpri"
 
@@ -3359,7 +3369,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Porabljena sredstva: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winhlp32.rc:28
 msgid "&File"
 msgstr "&Datoteka"
 
@@ -3391,11 +3401,11 @@ msgstr "P&riprava strani ..."
 msgid "P&rinter Setup..."
 msgstr "&Tiskalnik ..."
 
-#: notepad.rc:36 view.rc:31
+#: notepad.rc:36 view.rc:31 winhlp32.rc:34
 msgid "E&xit"
 msgstr "Iz&hod"
 
-#: notepad.rc:38 wineconsole.rc:25
+#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36
 msgid "&Edit"
 msgstr "&Urejanje"
 
@@ -3443,7 +3453,7 @@ msgstr "Najdi na&slednje\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Zamenjaj ...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winhlp32.rc:60
 msgid "&Help"
 msgstr "&Pomoč"
 
@@ -3471,15 +3481,15 @@ msgstr "Stran &p"
 msgid "Notepad"
 msgstr "Beležnica"
 
-#: notepad.rc:72 progman.rc:66
+#: notepad.rc:72 progman.rc:66 winhlp32.rc:94
 msgid "ERROR"
 msgstr "NAPAKA"
 
-#: notepad.rc:73 progman.rc:67
+#: notepad.rc:73 progman.rc:67 winhlp32.rc:95
 msgid "WARNING"
 msgstr "OPOZORILO"
 
-#: notepad.rc:74 progman.rc:68
+#: notepad.rc:74 progman.rc:68 winhlp32.rc:96
 msgid "Information"
 msgstr "Informacija"
 
@@ -3487,7 +3497,7 @@ msgstr "Informacija"
 msgid "Untitled"
 msgstr "Neimenovana"
 
-#: notepad.rc:78 progman.rc:84
+#: notepad.rc:78 progman.rc:84 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Vse datoteke (*.*)"
 
@@ -3601,7 +3611,7 @@ msgstr "&Zaženi ..."
 msgid "E&xit Windows..."
 msgstr "Iz&hod ..."
 
-#: progman.rc:41 taskmgr.rc:41 winemine.rc:34
+#: progman.rc:41 taskmgr.rc:41 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
 msgstr "&Možnosti"
 
@@ -3661,7 +3671,7 @@ msgstr "Ali ste prepričani, da želite izbrisati skupino '%s' ?"
 msgid "Delete program `%s' ?"
 msgstr "Ali ste prepričani, da želite izbrisati program '%s' ?"
 
-#: progman.rc:72
+#: progman.rc:72 winhlp32.rc:97
 msgid "Not implemented"
 msgstr "Ni (še) na voljo"
 
@@ -4708,6 +4718,118 @@ msgstr "Nihče"
 #: winemine.rc:29
 msgid "Copyright 2000 Joshua Thielen"
 msgstr "Copyright 2000 Joshua Thielen"
+
+#: winhlp32.rc:32
+msgid "Printer &setup..."
+msgstr "Priprava &tiskalnika ..."
+
+#: winhlp32.rc:37
+msgid "&Copy..."
+msgstr "&Kopiraj ..."
+
+#: winhlp32.rc:39
+msgid "&Annotate..."
+msgstr "&Opombe ..."
+
+#: winhlp32.rc:41
+msgid "&Bookmark"
+msgstr "&Zaznamki"
+
+#: winhlp32.rc:42
+msgid "&Define..."
+msgstr "Do&loči ..."
+
+#: winhlp32.rc:45 winhlp32.rc:81
+msgid "Help always visible"
+msgstr "Pomoč vedno vidna"
+
+#: winhlp32.rc:48 winhlp32.rc:84
+msgid "Visible"
+msgstr "Vidna"
+
+#: winhlp32.rc:49 winhlp32.rc:85
+msgid "Non visible"
+msgstr "Skrita"
+
+#: winhlp32.rc:51
+msgid "History"
+msgstr "Zgodovina"
+
+#: winhlp32.rc:52 winhlp32.rc:75
+msgid "Fonts"
+msgstr "Pisava"
+
+#: winhlp32.rc:54 winhlp32.rc:77
+msgid "Small"
+msgstr "Majhna"
+
+#: winhlp32.rc:55 winhlp32.rc:78
+msgid "Normal"
+msgstr "Običajna"
+
+#: winhlp32.rc:56 winhlp32.rc:79
+msgid "Large"
+msgstr "Velika"
+
+#: winhlp32.rc:58 winhlp32.rc:87
+msgid "Use system colors"
+msgstr "Uporabi sistemske barve"
+
+#: winhlp32.rc:61
+msgid "Help &on help"
+msgstr "&O pomoči"
+
+#: winhlp32.rc:62
+msgid "Always on &top"
+msgstr "Vedno na &vrhu"
+
+#: winhlp32.rc:64
+msgid "&About Wine Help"
+msgstr "&Informacije ..."
+
+#: winhlp32.rc:72
+msgid "Annotation..."
+msgstr "Opomba ..."
+
+#: winhlp32.rc:73
+msgid "Copy"
+msgstr "Kopiraj"
+
+#: winhlp32.rc:74
+msgid "Print..."
+msgstr "Natisni ..."
+
+#: winhlp32.rc:93
+msgid "Wine Help"
+msgstr "Wine Pomoč"
+
+#: winhlp32.rc:98
+msgid "Error while reading the help file `%s'"
+msgstr "Napaka pri branju datoteke s pomočjo '%s'"
+
+#: winhlp32.rc:100
+msgid "Summary"
+msgstr "Vsebina"
+
+#: winhlp32.rc:99
+msgid "&Index"
+msgstr "&Indeks"
+
+#: winhlp32.rc:103
+msgid "Help files (*.hlp)"
+msgstr "Datoteke s pomočjo (*.hlp)"
+
+#: winhlp32.rc:104
+msgid "Cannot find '%s'. Do you want to find this file yourself?"
+msgstr "Ne najdem datoteke '%s'. Ali jo želite poiskati sami?"
+
+#: winhlp32.rc:105
+msgid "Cannot find a richedit implementation... Aborting"
+msgstr "Ne morem najti knjižnice richedit ... Prekinjam"
+
+#: winhlp32.rc:106
+msgid "Help topics: "
+msgstr "Teme pomoči: "
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

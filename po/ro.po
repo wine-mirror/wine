@@ -1280,11 +1280,11 @@ msgstr "Activat"
 msgid "Off"
 msgstr "Dezactivat"
 
-#: shdoclc.rc:36
+#: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
 msgid "Default"
 msgstr "Implicit"
 
-#: shdoclc.rc:38
+#: shdoclc.rc:38 winhlp32.rc:101
 msgid "&Back"
 msgstr "În&apoi"
 
@@ -1476,7 +1476,7 @@ msgstr "Selecție Pagini1D"
 msgid "Paste"
 msgstr "&Lipește"
 
-#: shdoclc.rc:122
+#: shdoclc.rc:122 winhlp32.rc:31
 msgid "&Print"
 msgstr "&Tipărește"
 
@@ -1484,7 +1484,7 @@ msgstr "&Tipărește"
 msgid "Anchor"
 msgstr "Ancorare"
 
-#: shdoclc.rc:128 view.rc:30
+#: shdoclc.rc:128 view.rc:30 winhlp32.rc:29
 #, fuzzy
 msgid "&Open"
 msgstr ""
@@ -3374,7 +3374,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Resurse deschise: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winhlp32.rc:28
 msgid "&File"
 msgstr "&Fișier"
 
@@ -3406,11 +3406,11 @@ msgstr "S&etare pagină..."
 msgid "P&rinter Setup..."
 msgstr "Setare im&primantă..."
 
-#: notepad.rc:36 view.rc:31
+#: notepad.rc:36 view.rc:31 winhlp32.rc:34
 msgid "E&xit"
 msgstr "&Ieșire"
 
-#: notepad.rc:38 wineconsole.rc:25
+#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36
 #, fuzzy
 msgid "&Edit"
 msgstr ""
@@ -3463,9 +3463,14 @@ msgstr "Caută &următorul\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Înlocuiește...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winhlp32.rc:60
+#, fuzzy
 msgid "&Help"
-msgstr "A&jutor"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"A&jutor\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"&Ajutor"
 
 #: notepad.rc:59 progman.rc:54
 #, fuzzy
@@ -3496,11 +3501,11 @@ msgstr "Pagina &p"
 msgid "Notepad"
 msgstr "Notepad"
 
-#: notepad.rc:72 progman.rc:66
+#: notepad.rc:72 progman.rc:66 winhlp32.rc:94
 msgid "ERROR"
 msgstr "EROARE"
 
-#: notepad.rc:73 progman.rc:67
+#: notepad.rc:73 progman.rc:67 winhlp32.rc:95
 #, fuzzy
 msgid "WARNING"
 msgstr ""
@@ -3509,7 +3514,7 @@ msgstr ""
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
 "AVERTIZARE"
 
-#: notepad.rc:74 progman.rc:68
+#: notepad.rc:74 progman.rc:68 winhlp32.rc:96
 #, fuzzy
 msgid "Information"
 msgstr ""
@@ -3522,7 +3527,7 @@ msgstr ""
 msgid "Untitled"
 msgstr "(fără titlu)"
 
-#: notepad.rc:78 progman.rc:84
+#: notepad.rc:78 progman.rc:84 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Toate fișierele (*.*)"
 
@@ -3636,7 +3641,7 @@ msgstr "&Executare..."
 msgid "E&xit Windows..."
 msgstr "Î&nchidere Windows..."
 
-#: progman.rc:41 taskmgr.rc:41 winemine.rc:34
+#: progman.rc:41 taskmgr.rc:41 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
 msgstr "&Opțiuni"
 
@@ -3701,7 +3706,7 @@ msgstr "Se șterge grupul „%s” ?"
 msgid "Delete program `%s' ?"
 msgstr "Se șterge programul „%s” ?"
 
-#: progman.rc:72
+#: progman.rc:72 winhlp32.rc:97
 msgid "Not implemented"
 msgstr "Neimplementat"
 
@@ -4763,6 +4768,118 @@ msgstr "Nimeni"
 #: winemine.rc:29
 msgid "Copyright 2000 Joshua Thielen"
 msgstr "Copyright 2000 Joshua Thielen"
+
+#: winhlp32.rc:32
+msgid "Printer &setup..."
+msgstr "&Setare imprimantă"
+
+#: winhlp32.rc:37
+msgid "&Copy..."
+msgstr "&Copiază..."
+
+#: winhlp32.rc:39
+msgid "&Annotate..."
+msgstr "&Adnotează..."
+
+#: winhlp32.rc:41
+msgid "&Bookmark"
+msgstr "&Se&mn de carte"
+
+#: winhlp32.rc:42
+msgid "&Define..."
+msgstr "&Definește..."
+
+#: winhlp32.rc:45 winhlp32.rc:81
+msgid "Help always visible"
+msgstr "&Ajutor întotdeauna vizibil"
+
+#: winhlp32.rc:48 winhlp32.rc:84
+msgid "Visible"
+msgstr "Vizibil"
+
+#: winhlp32.rc:49 winhlp32.rc:85
+msgid "Non visible"
+msgstr "Invizibil"
+
+#: winhlp32.rc:51
+msgid "History"
+msgstr "Istorie"
+
+#: winhlp32.rc:52 winhlp32.rc:75
+msgid "Fonts"
+msgstr "&Font"
+
+#: winhlp32.rc:54 winhlp32.rc:77
+msgid "Small"
+msgstr "Mic"
+
+#: winhlp32.rc:55 winhlp32.rc:78
+msgid "Normal"
+msgstr "Normal"
+
+#: winhlp32.rc:56 winhlp32.rc:79
+msgid "Large"
+msgstr "Mare"
+
+#: winhlp32.rc:58 winhlp32.rc:87
+msgid "Use system colors"
+msgstr "Utilizează culorile sistemului"
+
+#: winhlp32.rc:61
+msgid "Help &on help"
+msgstr "Ajut&or despre ajutor"
+
+#: winhlp32.rc:62
+msgid "Always on &top"
+msgstr "În&totdeauna deasupra"
+
+#: winhlp32.rc:64
+msgid "&About Wine Help"
+msgstr "&Informații..."
+
+#: winhlp32.rc:72
+msgid "Annotation..."
+msgstr "Adnotare..."
+
+#: winhlp32.rc:73
+msgid "Copy"
+msgstr "Copiază"
+
+#: winhlp32.rc:74
+msgid "Print..."
+msgstr "Tipărește..."
+
+#: winhlp32.rc:93
+msgid "Wine Help"
+msgstr "Ajutor Wine"
+
+#: winhlp32.rc:98
+msgid "Error while reading the help file `%s'"
+msgstr "Eroare la citirea fișierului de ajutor „%s”"
+
+#: winhlp32.rc:100
+msgid "Summary"
+msgstr "Rezumat"
+
+#: winhlp32.rc:99
+msgid "&Index"
+msgstr "&Index"
+
+#: winhlp32.rc:103
+msgid "Help files (*.hlp)"
+msgstr "Fișierele de ajutor (*.hlp)"
+
+#: winhlp32.rc:104
+msgid "Cannot find '%s'. Do you want to find this file yourself?"
+msgstr "Fișierul „%s” nu poate fi găsit. Vreți să-l cautați?"
+
+#: winhlp32.rc:105
+msgid "Cannot find a richedit implementation... Aborting"
+msgstr "Nu am găsit o implementare pentru richedit... Abandonez"
+
+#: winhlp32.rc:106
+msgid "Help topics: "
+msgstr "Subiecte de ajutor:"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

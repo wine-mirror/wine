@@ -1275,11 +1275,16 @@ msgstr "Włączone"
 msgid "Off"
 msgstr "Wyłączone"
 
-#: shdoclc.rc:36
+#: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
+#, fuzzy
 msgid "Default"
-msgstr "Domyślne"
+msgstr ""
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"Domyślne\n"
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"Domyślnie"
 
-#: shdoclc.rc:38
+#: shdoclc.rc:38 winhlp32.rc:101
 msgid "&Back"
 msgstr "&Wstecz"
 
@@ -1471,22 +1476,22 @@ msgstr "1DSite Select"
 msgid "Paste"
 msgstr "Wkl&ej"
 
-#: shdoclc.rc:122
+#: shdoclc.rc:122 winhlp32.rc:31
+#, fuzzy
 msgid "&Print"
-msgstr "D&rukuj"
+msgstr ""
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"D&rukuj\n"
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"&Drukuj"
 
 #: shdoclc.rc:126
 msgid "Anchor"
 msgstr "Kotwica"
 
-#: shdoclc.rc:128 view.rc:30
-#, fuzzy
+#: shdoclc.rc:128 view.rc:30 winhlp32.rc:29
 msgid "&Open"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Otwórz\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Otwórz..."
+msgstr "&Otwórz"
 
 #: shdoclc.rc:129
 msgid "Open in &New Window"
@@ -3358,7 +3363,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Otwarte zasoby: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winhlp32.rc:28
 msgid "&File"
 msgstr "&Plik"
 
@@ -3390,7 +3395,7 @@ msgstr "&Ustawienia strony..."
 msgid "P&rinter Setup..."
 msgstr "Ustawienia &drukarki..."
 
-#: notepad.rc:36 view.rc:31
+#: notepad.rc:36 view.rc:31 winhlp32.rc:34
 #, fuzzy
 msgid "E&xit"
 msgstr ""
@@ -3399,7 +3404,7 @@ msgstr ""
 "#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
 "&Zakończ"
 
-#: notepad.rc:38 wineconsole.rc:25
+#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36
 #, fuzzy
 msgid "&Edit"
 msgstr ""
@@ -3452,9 +3457,14 @@ msgstr "Z&najdź następny\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Zamień...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winhlp32.rc:60
+#, fuzzy
 msgid "&Help"
-msgstr "&Pomoc"
+msgstr ""
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"&Pomoc\n"
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"Pomo&c"
 
 #: notepad.rc:59 progman.rc:54
 msgid "&Search..."
@@ -3480,15 +3490,15 @@ msgstr "Strona &p"
 msgid "Notepad"
 msgstr "Notatnik"
 
-#: notepad.rc:72 progman.rc:66
+#: notepad.rc:72 progman.rc:66 winhlp32.rc:94
 msgid "ERROR"
 msgstr "BŁĄD"
 
-#: notepad.rc:73 progman.rc:67
+#: notepad.rc:73 progman.rc:67 winhlp32.rc:95
 msgid "WARNING"
 msgstr "OSTRZEŻENIE"
 
-#: notepad.rc:74 progman.rc:68
+#: notepad.rc:74 progman.rc:68 winhlp32.rc:96
 msgid "Information"
 msgstr "Informacja"
 
@@ -3496,7 +3506,7 @@ msgstr "Informacja"
 msgid "Untitled"
 msgstr "(bez tytułu)"
 
-#: notepad.rc:78 progman.rc:84
+#: notepad.rc:78 progman.rc:84 winhlp32.rc:102
 #, fuzzy
 msgid "All files (*.*)"
 msgstr ""
@@ -3614,9 +3624,14 @@ msgstr "&Uruchom..."
 msgid "E&xit Windows..."
 msgstr "&Zakończ Windows..."
 
-#: progman.rc:41 taskmgr.rc:41 winemine.rc:34
+#: progman.rc:41 taskmgr.rc:41 winemine.rc:34 winhlp32.rc:44
+#, fuzzy
 msgid "&Options"
-msgstr "&Opcje"
+msgstr ""
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"&Opcje\n"
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"&Options"
 
 #: progman.rc:42
 msgid "&Arrange automatically"
@@ -3674,9 +3689,14 @@ msgstr "Usunąć grupę `%s' ?"
 msgid "Delete program `%s' ?"
 msgstr "Usunąć program `%s' ?"
 
-#: progman.rc:72
+#: progman.rc:72 winhlp32.rc:97
+#, fuzzy
 msgid "Not implemented"
-msgstr "Nie zaimplementowano"
+msgstr ""
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"Nie zaimplementowano\n"
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"Nie zaimplementowane"
 
 #: progman.rc:73
 msgid "Error reading `%s'."
@@ -4723,6 +4743,120 @@ msgstr "Anonim"
 #: winemine.rc:29
 msgid "Copyright 2000 Joshua Thielen"
 msgstr "Copyright 2000 Joshua Thielen"
+
+#: winhlp32.rc:32
+msgid "Printer &setup..."
+msgstr "&Ustawienia drukarki..."
+
+#: winhlp32.rc:37
+msgid "&Copy..."
+msgstr "&Kopiuj..."
+
+#: winhlp32.rc:39
+msgid "&Annotate..."
+msgstr "&Skomentuj..."
+
+#: winhlp32.rc:41
+msgid "&Bookmark"
+msgstr "&Zakładka"
+
+#: winhlp32.rc:42
+msgid "&Define..."
+msgstr "&Zdefiniuj..."
+
+#: winhlp32.rc:45 winhlp32.rc:81
+msgid "Help always visible"
+msgstr "Pomoc zawsze widoczna"
+
+#: winhlp32.rc:48 winhlp32.rc:84
+msgid "Visible"
+msgstr "Widoczna"
+
+#: winhlp32.rc:49 winhlp32.rc:85
+msgid "Non visible"
+msgstr "Niewidoczna"
+
+#: winhlp32.rc:51
+msgid "History"
+msgstr "Historia"
+
+#: winhlp32.rc:52 winhlp32.rc:75
+msgid "Fonts"
+msgstr "Czcionki"
+
+#: winhlp32.rc:54 winhlp32.rc:77
+msgid "Small"
+msgstr "Małe"
+
+#: winhlp32.rc:55 winhlp32.rc:78
+msgid "Normal"
+msgstr "Normalne"
+
+#: winhlp32.rc:56 winhlp32.rc:79
+msgid "Large"
+msgstr "Duże"
+
+#: winhlp32.rc:58 winhlp32.rc:87
+msgid "Use system colors"
+msgstr "Użyj kolorów systemowych"
+
+#: winhlp32.rc:61
+msgid "Help &on help"
+msgstr "&Pomoc"
+
+#: winhlp32.rc:62
+msgid "Always on &top"
+msgstr "&Zawsze na wierzchu"
+
+#: winhlp32.rc:64
+msgid "&About Wine Help"
+msgstr "&O programie..."
+
+#: winhlp32.rc:72
+msgid "Annotation..."
+msgstr "Adnotacja..."
+
+#: winhlp32.rc:73
+msgid "Copy"
+msgstr "Kopiuj"
+
+#: winhlp32.rc:74
+msgid "Print..."
+msgstr "Drukuj..."
+
+#: winhlp32.rc:93
+msgid "Wine Help"
+msgstr "Wine - Pomoc"
+
+#: winhlp32.rc:98
+msgid "Error while reading the help file `%s'"
+msgstr "Błąd w trakcie odczytu pliku pomocy `%s'"
+
+#: winhlp32.rc:100
+msgid "Summary"
+msgstr "&Szukaj"
+
+#: winhlp32.rc:99
+msgid "&Index"
+msgstr "&Zawartość"
+
+#: winhlp32.rc:103
+msgid "Help files (*.hlp)"
+msgstr "Pliki pomocy (*.hlp)"
+
+#: winhlp32.rc:104
+msgid "Cannot find '%s'. Do you want to find this file yourself?"
+msgstr ""
+"Nie znaleziono pliku '%s'. Czy chcesz poszukać tego pliku samodzielnie?"
+
+#: winhlp32.rc:105
+msgid "Cannot find a richedit implementation... Aborting"
+msgstr ""
+"Nie znaleziono implementacji richedit... Wyświetlenie pomocy nie jest możliwe"
+
+#: winhlp32.rc:106
+msgid "Help topics: "
+msgstr "Tematy pomocy: "
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

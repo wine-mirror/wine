@@ -1,4 +1,4 @@
-# Dutch translations for Wine
+# Romansh translations for Wine
 #
 msgid ""
 msgstr ""
@@ -8,844 +8,845 @@ msgstr ""
 "PO-Revision-Date: N/A\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
-"Language: Dutch\n"
+"Language: Romansh\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
-msgstr "Autoriteits Sleutel Identificatie nummer"
+msgstr ""
 
 #: crypt32.rc:28
 msgid "Key Attributes"
-msgstr "Sleutel Attributen"
+msgstr ""
 
 #: crypt32.rc:29
 msgid "Key Usage Restriction"
-msgstr "Sleutel Gebruiksbeperkingen"
+msgstr ""
 
 #: crypt32.rc:30
 msgid "Subject Alternative Name"
-msgstr "Onderwerp's Alternatieve Naam"
+msgstr ""
 
 #: crypt32.rc:31
 msgid "Issuer Alternative Name"
-msgstr "Verstrekker's Alternatieve Naam"
+msgstr ""
 
 #: crypt32.rc:32
 msgid "Basic Constraints"
-msgstr "Basis Beperkingen"
+msgstr ""
 
 #: crypt32.rc:33
 msgid "Key Usage"
-msgstr "Sleutel Gebruik"
+msgstr ""
 
 #: crypt32.rc:34
 msgid "Certificate Policies"
-msgstr "Certificaat Beleid"
+msgstr ""
 
 #: crypt32.rc:35
 msgid "Subject Key Identifier"
-msgstr "Onderwerp's Sleutel Identificatie nummer"
+msgstr ""
 
 #: crypt32.rc:36
 msgid "CRL Reason Code"
-msgstr "CRL Reden Code"
+msgstr ""
 
 #: crypt32.rc:37
 msgid "CRL Distribution Points"
-msgstr "CRL Distributie Locaties"
+msgstr ""
 
 #: crypt32.rc:38
 msgid "Enhanced Key Usage"
-msgstr "Uitgebreid Sleutel Gebruik"
+msgstr ""
 
 #: crypt32.rc:39
 msgid "Authority Information Access"
-msgstr "Autoriteits Informatie Toegang"
+msgstr ""
 
 #: crypt32.rc:40
 msgid "Certificate Extensions"
-msgstr "Certificaat Extensies"
+msgstr ""
 
 #: crypt32.rc:41
 msgid "Next Update Location"
-msgstr "Volgende Update Locatie"
+msgstr ""
 
 #: crypt32.rc:42
 msgid "Yes or No Trust"
-msgstr "Wel of Geen Vertrouwen"
+msgstr ""
 
 #: crypt32.rc:43
 msgid "Email Address"
-msgstr "Email Adres"
+msgstr ""
 
 #: crypt32.rc:44
 msgid "Unstructured Name"
-msgstr "Ongestructureerde Naam"
+msgstr ""
 
 #: crypt32.rc:45
 msgid "Content Type"
-msgstr "Inhoud Type"
+msgstr ""
 
 #: crypt32.rc:46
 msgid "Message Digest"
-msgstr "Boodschap Samenvatting"
+msgstr ""
 
 #: crypt32.rc:47
 msgid "Signing Time"
-msgstr "Tijd van Ondertekening"
+msgstr ""
 
 #: crypt32.rc:48
 msgid "Counter Sign"
-msgstr "Tegen handtekening"
+msgstr ""
 
 #: crypt32.rc:49
 msgid "Challenge Password"
-msgstr "Geheime Vraag Wachtwoord"
+msgstr ""
 
 #: crypt32.rc:50
 msgid "Unstructured Address"
-msgstr "Ongestructureerd Adres"
+msgstr ""
 
 #: crypt32.rc:51
 msgid "SMIME Capabilities"
-msgstr "SMIME Mogelijkheden"
+msgstr ""
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"
-msgstr "Prefereer Getekende Data"
+msgstr ""
 
 #: crypt32.rc:53 cryptdlg.rc:31
 msgid "CPS"
-msgstr "CPS"
+msgstr ""
 
 #: crypt32.rc:54 cryptdlg.rc:32
 msgid "User Notice"
-msgstr "Gebruikers Mededeling"
+msgstr ""
 
 #: crypt32.rc:55
 msgid "On-line Certificate Status Protocol"
-msgstr "On-line Certificaat Status Protocol"
+msgstr ""
 
 #: crypt32.rc:56
 msgid "Certification Authority Issuer"
-msgstr "Certificatie Autoriteits Verstrekker"
+msgstr ""
 
 #: crypt32.rc:57
 msgid "Certification Template Name"
-msgstr "Certificatie Template Naam"
+msgstr ""
 
 #: crypt32.rc:58
 msgid "Certificate Type"
-msgstr "Type Certificaat"
+msgstr ""
 
 #: crypt32.rc:59
 msgid "Certificate Manifold"
-msgstr "Certificaat Verspreider"
+msgstr ""
 
 #: crypt32.rc:60
 msgid "Netscape Cert Type"
-msgstr "Netscape Certificaat Type"
+msgstr ""
 
 #: crypt32.rc:61
 msgid "Netscape Base URL"
-msgstr "Netscape Basis URL"
+msgstr ""
 
 #: crypt32.rc:62
 msgid "Netscape Revocation URL"
-msgstr "Netscape Terugroep URL"
+msgstr ""
 
 #: crypt32.rc:63
 msgid "Netscape CA Revocation URL"
-msgstr "Netscape CA Terugroep URL"
+msgstr ""
 
 #: crypt32.rc:64
 msgid "Netscape Cert Renewal URL"
-msgstr "Netscape Cert Verversings URL"
+msgstr ""
 
 #: crypt32.rc:65
 msgid "Netscape CA Policy URL"
-msgstr "Netscape CA Beleids URL"
+msgstr ""
 
 #: crypt32.rc:66
 msgid "Netscape SSL ServerName"
-msgstr "Netscape SSL Server Naam"
+msgstr ""
 
 #: crypt32.rc:67
 msgid "Netscape Comment"
-msgstr "Netscape Commentaar"
+msgstr ""
 
 #: crypt32.rc:68
 msgid "SpcSpAgencyInfo"
-msgstr "SPC SP Agency Informatie"
+msgstr ""
 
 #: crypt32.rc:69
 msgid "SpcFinancialCriteria"
-msgstr "SPC Financiele Criteria"
+msgstr ""
 
 #: crypt32.rc:70
 msgid "SpcMinimalCriteria"
-msgstr "SPC Minimale Criteria"
+msgstr ""
 
 #: crypt32.rc:71
 msgid "Country/Region"
-msgstr "Land/Regio"
+msgstr ""
 
 #: crypt32.rc:72
 msgid "Organization"
-msgstr "Organisatie"
+msgstr ""
 
 #: crypt32.rc:73
 msgid "Organizational Unit"
-msgstr "Organisatie Onderdeel"
+msgstr ""
 
 #: crypt32.rc:74
 msgid "Common Name"
-msgstr "Gemeenschappelijke Naam"
+msgstr ""
 
 #: crypt32.rc:75
 msgid "Locality"
-msgstr "Localiteit"
+msgstr ""
 
 #: crypt32.rc:76
 msgid "State or Province"
-msgstr "Staat of Provincie"
+msgstr ""
 
 #: crypt32.rc:77
 msgid "Title"
-msgstr "Titel"
+msgstr ""
 
 #: crypt32.rc:78
 msgid "Given Name"
-msgstr "Voornaam"
+msgstr ""
 
 #: crypt32.rc:79
 msgid "Initials"
-msgstr "Initialen"
+msgstr ""
 
 #: crypt32.rc:80
 msgid "Sur Name"
-msgstr "Achternaam"
+msgstr ""
 
 #: crypt32.rc:81
 msgid "Domain Component"
-msgstr "Domein Component"
+msgstr ""
 
 #: crypt32.rc:82
 msgid "Street Address"
-msgstr "Straat/Adres"
+msgstr ""
 
 #: crypt32.rc:83
 msgid "Serial Number"
-msgstr "Registratie Nummer"
+msgstr ""
 
 #: crypt32.rc:84
 msgid "CA Version"
-msgstr "CA Versie"
+msgstr ""
 
 #: crypt32.rc:85
 msgid "Cross CA Version"
-msgstr "Cross CA Versie"
+msgstr ""
 
 #: crypt32.rc:86
 msgid "Serialized Signature Serial Number"
-msgstr "Geautomatiseerde Handtekening Serienummer"
+msgstr ""
 
 #: crypt32.rc:87
 msgid "Principal Name"
-msgstr "Hoofd Naam"
+msgstr ""
 
 #: crypt32.rc:88
 msgid "Windows Product Update"
-msgstr "Windows Produkt Update"
+msgstr ""
 
 #: crypt32.rc:89
 msgid "Enrollment Name Value Pair"
-msgstr "Inschrijvingsnaam Waarde Paar"
+msgstr ""
 
 #: crypt32.rc:90
 msgid "OS Version"
-msgstr "OS Versie"
+msgstr ""
 
 #: crypt32.rc:91
 msgid "Enrollment CSP"
-msgstr "Inschrijving CSP"
+msgstr ""
 
 #: crypt32.rc:92
 msgid "CRL Number"
-msgstr "CRL Nummer"
+msgstr ""
 
 #: crypt32.rc:93
 msgid "Delta CRL Indicator"
-msgstr "Delta CRL Indicatie"
+msgstr ""
 
 #: crypt32.rc:94
 msgid "Issuing Distribution Point"
-msgstr "Verstrekkend Distributie Punt"
+msgstr ""
 
 #: crypt32.rc:95
 msgid "Freshest CRL"
-msgstr "Nieuwste CRL"
+msgstr ""
 
 #: crypt32.rc:96
 msgid "Name Constraints"
-msgstr "Beperkingen op Naam"
+msgstr ""
 
 #: crypt32.rc:97
 msgid "Policy Mappings"
-msgstr "Beleids Mappingen"
+msgstr ""
 
 #: crypt32.rc:98
 msgid "Policy Constraints"
-msgstr "Beperkingen op Beleid"
+msgstr ""
 
 #: crypt32.rc:99
 msgid "Cross-Certificate Distribution Points"
-msgstr "Trans-Certificaat Distributie Punten"
+msgstr ""
 
 #: crypt32.rc:100
 msgid "Application Policies"
-msgstr "Applicatie Beleid"
+msgstr ""
 
 #: crypt32.rc:101
 msgid "Application Policy Mappings"
-msgstr "Applicatie Beleids Mappingen"
+msgstr ""
 
 #: crypt32.rc:102
 msgid "Application Policy Constraints"
-msgstr "Applicatie Beperkingen op Beleid"
+msgstr ""
 
 #: crypt32.rc:103
 msgid "CMC Data"
-msgstr "CMC Data"
+msgstr ""
 
 #: crypt32.rc:104
 msgid "CMC Response"
-msgstr "CMC Antwoord"
+msgstr ""
 
 #: crypt32.rc:105
 msgid "Unsigned CMC Request"
-msgstr "Ongetekend CMC Verzoek"
+msgstr ""
 
 #: crypt32.rc:106
 msgid "CMC Status Info"
-msgstr "CMC Status Informatie"
+msgstr ""
 
 #: crypt32.rc:107
 msgid "CMC Extensions"
-msgstr "CMC Extensies"
+msgstr ""
 
 #: crypt32.rc:108
 msgid "CMC Attributes"
-msgstr "CMC Attributen"
+msgstr ""
 
 #: crypt32.rc:109
 msgid "PKCS 7 Data"
-msgstr "PKCS 7 Data"
+msgstr ""
 
 #: crypt32.rc:110
 msgid "PKCS 7 Signed"
-msgstr "PKCS 7 Ondertekend"
+msgstr ""
 
 #: crypt32.rc:111
 msgid "PKCS 7 Enveloped"
-msgstr "PKCS 7 Omsloten"
+msgstr ""
 
 #: crypt32.rc:112
 msgid "PKCS 7 Signed Enveloped"
-msgstr "PKCS 7 Getekend Omsloten"
+msgstr ""
 
 #: crypt32.rc:113
 msgid "PKCS 7 Digested"
-msgstr "PKCS 7 Samengevat"
+msgstr ""
 
 #: crypt32.rc:114
 msgid "PKCS 7 Encrypted"
-msgstr "PKCS 7 Gecodeerd"
+msgstr ""
 
 #: crypt32.rc:115
 msgid "Previous CA Certificate Hash"
-msgstr "Vorige CA Certificaat Hash"
+msgstr ""
 
 #: crypt32.rc:116
 msgid "Virtual Base CRL Number"
-msgstr "Virtueel Basis CRL Nummer"
+msgstr ""
 
 #: crypt32.rc:117
 msgid "Next CRL Publish"
-msgstr "Volgende CRL Publicatie"
+msgstr ""
 
 #: crypt32.rc:118
 msgid "CA Encryption Certificate"
-msgstr "CA Coderings Certificaat"
+msgstr ""
 
 #: crypt32.rc:119
 msgid "Key Recovery Agent"
-msgstr "Sleutel Herstel Agent"
+msgstr ""
 
 #: crypt32.rc:120
 msgid "Certificate Template Information"
-msgstr "Certificaat Template Information"
+msgstr ""
 
 #: crypt32.rc:121
 msgid "Enterprise Root OID"
-msgstr "Ondernemings Basis OID"
+msgstr ""
 
 #: crypt32.rc:122
 msgid "Dummy Signer"
-msgstr "Dummie Tekenaar"
+msgstr ""
 
 #: crypt32.rc:123
 msgid "Encrypted Private Key"
-msgstr "Gecodeerde Persoonlijke Sleutel"
+msgstr ""
 
 #: crypt32.rc:124
 msgid "Published CRL Locations"
-msgstr "Gepubliseerde CRL Locaties"
+msgstr ""
 
 #: crypt32.rc:125
 msgid "Enforce Certificate Chain Policy"
-msgstr "Afdwingen Certificaat Keten Beleid"
+msgstr ""
 
 #: crypt32.rc:126
 msgid "Transaction Id"
-msgstr "Transactie Nummer"
+msgstr ""
 
 #: crypt32.rc:127
 msgid "Sender Nonce"
-msgstr "Zender Nonce"
+msgstr ""
 
 #: crypt32.rc:128
 msgid "Recipient Nonce"
-msgstr "Ontvanger Nonce"
+msgstr ""
 
 #: crypt32.rc:129
 msgid "Reg Info"
-msgstr "Registratie Informatie"
+msgstr ""
 
 #: crypt32.rc:130
 msgid "Get Certificate"
-msgstr "Haal Certificaat op"
+msgstr ""
 
 #: crypt32.rc:131
 msgid "Get CRL"
-msgstr "Haal CRL op"
+msgstr ""
 
 #: crypt32.rc:132
 msgid "Revoke Request"
-msgstr "Trek Verzoek In"
+msgstr ""
 
 #: crypt32.rc:133
 msgid "Query Pending"
-msgstr "Verzoek in behandeling"
+msgstr ""
 
 #: crypt32.rc:134
 msgid "Certificate Trust List"
-msgstr "Certificaat Vertrouwenslijst"
+msgstr ""
 
 #: crypt32.rc:135
 msgid "Archived Key Certificate Hash"
-msgstr "Gearchiveerde Sleutel Certificaat Hash"
+msgstr ""
 
 #: crypt32.rc:136
 msgid "Private Key Usage Period"
-msgstr "Prive Sleutel Gebruik Periode"
+msgstr ""
 
 #: crypt32.rc:137
+#, fuzzy
 msgid "Client Information"
-msgstr "Cliënt Informatie"
+msgstr "INFUORMAZIUN"
 
 #: crypt32.rc:138
 msgid "Server Authentication"
-msgstr "Server Authentificatie"
+msgstr ""
 
 #: crypt32.rc:139
 msgid "Client Authentication"
-msgstr "Cliënt Authentificatie"
+msgstr ""
 
 #: crypt32.rc:140
 msgid "Code Signing"
-msgstr "Code Ondertekenen"
+msgstr ""
 
 #: crypt32.rc:141
 msgid "Secure Email"
-msgstr "Beveiligde Email"
+msgstr ""
 
 #: crypt32.rc:142
 msgid "Time Stamping"
-msgstr "Tijd Stempel Toekennen"
+msgstr ""
 
 #: crypt32.rc:143
 msgid "Microsoft Trust List Signing"
-msgstr "Microsoft Trust Lijst Ondertekenen"
+msgstr ""
 
 #: crypt32.rc:144
 msgid "Microsoft Time Stamping"
-msgstr "Microsoft Tijd Stempel Toekennen"
+msgstr ""
 
 #: crypt32.rc:145
 msgid "IP security end system"
-msgstr "IP beveiliging eind systeem"
+msgstr ""
 
 #: crypt32.rc:146
 msgid "IP security tunnel termination"
-msgstr "IP beveiliging tunnel afsluiting"
+msgstr ""
 
 #: crypt32.rc:147
 msgid "IP security user"
-msgstr "IP beveiliging gebruiker"
+msgstr ""
 
 #: crypt32.rc:148
 msgid "Encrypting File System"
-msgstr "Versleutelen Bestand Systeem"
+msgstr ""
 
 #: crypt32.rc:149
 msgid "Windows Hardware Driver Verification"
-msgstr "Windows Hardware Driver Verificatie"
+msgstr ""
 
 #: crypt32.rc:150
 msgid "Windows System Component Verification"
-msgstr "Windows Systeem Component Verificatie"
+msgstr ""
 
 #: crypt32.rc:151
 msgid "OEM Windows System Component Verification"
-msgstr "OEM Windows Systeem Component Verificatie"
+msgstr ""
 
 #: crypt32.rc:152
 msgid "Embedded Windows System Component Verification"
-msgstr "Ingebed Windows Systeem Componenten Verificatie"
+msgstr ""
 
 #: crypt32.rc:153
 msgid "Key Pack Licenses"
-msgstr "Sleutel Verzameling Licenties"
+msgstr ""
 
 #: crypt32.rc:154
 msgid "License Server Verification"
-msgstr "Licentie Server Verificatie"
+msgstr ""
 
 #: crypt32.rc:155
 msgid "Smart Card Logon"
-msgstr "Smart Card Aanmelden"
+msgstr ""
 
 #: crypt32.rc:156
 msgid "Digital Rights"
-msgstr "Digitale Rechten"
+msgstr ""
 
 #: crypt32.rc:157
 msgid "Qualified Subordination"
-msgstr "Gekwalificeerde Ondergeschiktheid"
+msgstr ""
 
 #: crypt32.rc:158
 msgid "Key Recovery"
-msgstr "Sleutel Herstellen"
+msgstr ""
 
 #: crypt32.rc:159
 msgid "Document Signing"
-msgstr "Document Ondertekenen"
+msgstr ""
 
 #: crypt32.rc:160
 msgid "IP security IKE intermediate"
-msgstr "IP beveiliging IKE tussenpersoon"
+msgstr ""
 
 #: crypt32.rc:161
 msgid "File Recovery"
-msgstr "Bestand Herstellen"
+msgstr ""
 
 #: crypt32.rc:162
 msgid "Root List Signer"
-msgstr "Basis Lijst Ondertekenaar"
+msgstr ""
 
 #: crypt32.rc:163
 msgid "All application policies"
-msgstr "Alle applicaties beleid"
+msgstr ""
 
 #: crypt32.rc:164
 msgid "Directory Service Email Replication"
-msgstr "Directory Service Email Replicatie"
+msgstr ""
 
 #: crypt32.rc:165
 msgid "Certificate Request Agent"
-msgstr "Certificaat Verzoek Agent"
+msgstr ""
 
 #: crypt32.rc:166
 msgid "Lifetime Signing"
-msgstr "Levensduur Ondertekenen"
+msgstr ""
 
 #: crypt32.rc:167
 msgid "All issuance policies"
-msgstr "Alle uitgifte beleid"
+msgstr ""
 
 #: crypt32.rc:172
 msgid "Trusted Root Certification Authorities"
-msgstr "Vertrouwde Basis Certificatie Autoriteiten"
+msgstr ""
 
 #: crypt32.rc:173
 msgid "Personal"
-msgstr "Persoonlijk"
+msgstr ""
 
 #: crypt32.rc:174
 msgid "Intermediate Certification Authorities"
-msgstr "Certificatie Tussen-Autoriteiten"
+msgstr ""
 
 #: crypt32.rc:175
 msgid "Other People"
-msgstr "Overige Personen"
+msgstr ""
 
 #: crypt32.rc:176
 msgid "Trusted Publishers"
-msgstr "Vertrouwde uitgevers"
+msgstr ""
 
 #: crypt32.rc:177
 msgid "Untrusted Certificates"
-msgstr "Niet-vertrouwde certificaten"
+msgstr ""
 
 #: crypt32.rc:182
 msgid "KeyID="
-msgstr "SleutelID="
+msgstr ""
 
 #: crypt32.rc:183
 msgid "Certificate Issuer"
-msgstr "Certificaat verstrekker"
+msgstr ""
 
 #: crypt32.rc:184
 msgid "Certificate Serial Number="
-msgstr "Certificaat serienummer="
+msgstr ""
 
 #: crypt32.rc:185
 msgid "Other Name="
-msgstr "Andere naam="
+msgstr ""
 
 #: crypt32.rc:186
 msgid "Email Address="
-msgstr "Email Adres="
+msgstr ""
 
 #: crypt32.rc:187
 msgid "DNS Name="
-msgstr "DNS naam="
+msgstr ""
 
 #: crypt32.rc:188
 msgid "Directory Address"
-msgstr "Directory naam="
+msgstr ""
 
 #: crypt32.rc:189
 msgid "URL="
-msgstr "URL="
+msgstr ""
 
 #: crypt32.rc:190
 msgid "IP Address="
-msgstr "IP adres="
+msgstr ""
 
 #: crypt32.rc:191
 msgid "Mask="
-msgstr "Masker="
+msgstr ""
 
 #: crypt32.rc:192
 msgid "Registered ID="
-msgstr "Geregistreerd ID="
+msgstr ""
 
 #: crypt32.rc:193
 msgid "Unknown Key Usage"
-msgstr "Onbekend gebruik van sleutel"
+msgstr ""
 
 #: crypt32.rc:194
 msgid "Subject Type="
-msgstr "Onderwerp type="
+msgstr ""
 
 #: crypt32.rc:195
 msgid "CA"
-msgstr "CA"
+msgstr ""
 
 #: crypt32.rc:196
 msgid "End Entity"
-msgstr "Eind Entiteit"
+msgstr ""
 
 #: crypt32.rc:197
 msgid "Path Length Constraint="
-msgstr "Lengte van pad beperking="
+msgstr ""
 
 #: crypt32.rc:198 progman.rc:83
 msgid "None"
-msgstr "Geen"
+msgstr ""
 
 #: crypt32.rc:199
+#, fuzzy
 msgid "Information Not Available"
-msgstr "Informatie niet beschikbaar"
+msgstr "INFUORMAZIUN"
 
 #: crypt32.rc:200
 msgid "Authority Info Access"
-msgstr "Authoriteit Informatie Toegang"
+msgstr ""
 
 #: crypt32.rc:201
 msgid "Access Method="
-msgstr "Toegang methode="
+msgstr ""
 
 #: crypt32.rc:202
 msgid "OCSP"
-msgstr "OCSP"
+msgstr ""
 
 #: crypt32.rc:203
 msgid "CA Issuers"
-msgstr "CA verstrekkers"
+msgstr ""
 
 #: crypt32.rc:204
 msgid "Unknown Access Method"
-msgstr "Onbekende toegangsmethode"
+msgstr ""
 
 #: crypt32.rc:205
 msgid "Alternative Name"
-msgstr "Alternatieve Naam"
+msgstr ""
 
 #: crypt32.rc:206
 msgid "CRL Distribution Point"
-msgstr "CRL Distributie Punt"
+msgstr ""
 
 #: crypt32.rc:207
 msgid "Distribution Point Name"
-msgstr "Naam distributiepunt"
+msgstr ""
 
 #: crypt32.rc:208
 msgid "Full Name"
-msgstr "Volledige naam"
+msgstr ""
 
 #: crypt32.rc:209
 msgid "RDN Name"
-msgstr "RDN naam"
+msgstr ""
 
 #: crypt32.rc:210
 msgid "CRL Reason="
-msgstr "CRL reden="
+msgstr ""
 
 #: crypt32.rc:211
 msgid "CRL Issuer"
-msgstr "CRL verstrekker"
+msgstr ""
 
 #: crypt32.rc:212
 msgid "Key Compromise"
-msgstr "Sleutel besmet"
+msgstr ""
 
 #: crypt32.rc:213
 msgid "CA Compromise"
-msgstr "CA besmet"
+msgstr ""
 
 #: crypt32.rc:214
 msgid "Affiliation Changed"
-msgstr "Samenwerking gewijzigd"
+msgstr ""
 
 #: crypt32.rc:215
 msgid "Superseded"
-msgstr "Verouderd"
+msgstr ""
 
 #: crypt32.rc:216
 msgid "Operation Ceased"
-msgstr "Werkzaamheden gestaakt"
+msgstr ""
 
 #: crypt32.rc:217
 msgid "Certificate Hold"
-msgstr "Certificaat bevroren"
+msgstr ""
 
 #: crypt32.rc:218
+#, fuzzy
 msgid "Financial Information="
-msgstr "Financiele informatie="
+msgstr "INFUORMAZIUN"
 
 #: crypt32.rc:219
 msgid "Available"
-msgstr "Beschikbaar"
+msgstr ""
 
 #: crypt32.rc:220
 msgid "Not Available"
-msgstr "Niet beschikbaar"
+msgstr ""
 
 #: crypt32.rc:221
 msgid "Meets Criteria="
-msgstr "Past bij criteria="
+msgstr ""
 
 #: crypt32.rc:222 oleaut32.rc:29 ipconfig.rc:44
 msgid "Yes"
-msgstr "Ja"
+msgstr ""
 
 #: crypt32.rc:223 oleaut32.rc:30 ipconfig.rc:45
 msgid "No"
-msgstr "Nee"
+msgstr ""
 
 #: crypt32.rc:224
 msgid "Digital Signature"
-msgstr "Digitale handtekening"
+msgstr ""
 
 #: crypt32.rc:225
 msgid "Non-Repudiation"
-msgstr "Non-Repudiatie"
+msgstr ""
 
 #: crypt32.rc:226
 msgid "Key Encipherment"
-msgstr "sleutel codering"
+msgstr ""
 
 #: crypt32.rc:227
 msgid "Data Encipherment"
-msgstr "Data codering"
+msgstr ""
 
 #: crypt32.rc:228
 msgid "Key Agreement"
-msgstr "Sleutel overeenkomst"
+msgstr ""
 
 #: crypt32.rc:229
 msgid "Certificate Signing"
-msgstr "Certificaat tekenen"
+msgstr ""
 
 #: crypt32.rc:230
 msgid "Off-line CRL Signing"
-msgstr "Off-line CRL Certificeren"
+msgstr ""
 
 #: crypt32.rc:231
 msgid "CRL Signing"
-msgstr "CRL Certificeren"
+msgstr ""
 
 #: crypt32.rc:232
 msgid "Encipher Only"
-msgstr "Codeer alleen"
+msgstr ""
 
 #: crypt32.rc:233
 msgid "Decipher Only"
-msgstr "Decodeer alleen"
+msgstr ""
 
 #: crypt32.rc:234
 msgid "SSL Client Authentication"
-msgstr "SSL Client Authentificatie"
+msgstr ""
 
 #: crypt32.rc:235
 msgid "SSL Server Authentication"
-msgstr "SSL Server Authentificatie"
+msgstr ""
 
 #: crypt32.rc:236
 msgid "S/MIME"
-msgstr "S/MIME"
+msgstr ""
 
 #: crypt32.rc:237
 msgid "Signature"
-msgstr "Handtekening"
+msgstr ""
 
 #: crypt32.rc:238
 msgid "SSL CA"
-msgstr "SSL CA"
+msgstr ""
 
 #: crypt32.rc:239
 msgid "S/MIME CA"
-msgstr "S/MIME CA"
+msgstr ""
 
 #: crypt32.rc:240
 msgid "Signature CA"
-msgstr "Handtekening CA"
+msgstr ""
 
 #: cryptdlg.rc:27
-#, fuzzy
 msgid "Certificate Policy"
-msgstr "Certificaat Beleid"
+msgstr ""
 
 #: cryptdlg.rc:28
-#, fuzzy
 msgid "Policy Identifier: "
-msgstr "Autoriteits Sleutel Identificatie nummer"
+msgstr ""
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
@@ -864,14 +865,12 @@ msgid "Notice Reference"
 msgstr ""
 
 #: cryptdlg.rc:35
-#, fuzzy
 msgid "Organization="
-msgstr "Organisatie"
+msgstr ""
 
 #: cryptdlg.rc:36
-#, fuzzy
 msgid "Notice Number="
-msgstr "Certificaat serienummer="
+msgstr ""
 
 #: cryptdlg.rc:37
 msgid "Notice Text="
@@ -879,132 +878,135 @@ msgstr ""
 
 #: devenum.rc:32
 msgid "Default DirectSound"
-msgstr "Standaard DirectSound"
+msgstr ""
 
 #: devenum.rc:33
 msgid "DirectSound: %s"
-msgstr "DirectSound: %s"
+msgstr ""
 
 #: devenum.rc:34
 msgid "Default WaveOut Device"
-msgstr "Standaardapparaat WaveOut"
+msgstr ""
 
 #: devenum.rc:35
 msgid "Default MidiOut Device"
-msgstr "Standaardapparaat MidiOut"
+msgstr ""
 
 #: hhctrl.rc:27 notepad.rc:58 progman.rc:53
-#, fuzzy
 msgid "&Contents"
-msgstr "Help-onder&werpen"
+msgstr ""
 
 #: hhctrl.rc:28
+#, fuzzy
 msgid "I&ndex"
-msgstr "I&ndex"
+msgstr "&Cuntgn�"
 
 #: hhctrl.rc:29 notepad.rc:52
 msgid "&Search"
-msgstr "&Zoeken"
+msgstr ""
 
 #: hhctrl.rc:30
 msgid "Favor&ites"
-msgstr "&Favorieten"
+msgstr ""
 
 #: hhctrl.rc:35
 msgid "Show"
-msgstr "Weergeven"
+msgstr ""
 
 #: hhctrl.rc:36
 msgid "Hide"
-msgstr "Verbergen"
+msgstr ""
 
 #: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194
 msgid "Stop"
-msgstr "Stop"
+msgstr ""
 
 #: hhctrl.rc:38
 msgid "Refresh"
-msgstr "Actualiseren"
+msgstr ""
 
 #: hhctrl.rc:39
+#, fuzzy
 msgid "Back"
-msgstr "Terug"
+msgstr "&Inavo"
 
 #: hhctrl.rc:40
 msgid "Home"
-msgstr "Startpagina"
+msgstr ""
 
 #: hhctrl.rc:41
 msgid "Sync"
-msgstr "Synchroniseren"
+msgstr ""
 
 #: hhctrl.rc:42
+#, fuzzy
 msgid "Print"
-msgstr "Afdrukken"
+msgstr "&Stampar tema"
 
 #: hhctrl.rc:43
+#, fuzzy
 msgid "Options"
-msgstr "Instellingen"
+msgstr "&Options"
 
 #: hhctrl.rc:44
 msgid "Forward"
-msgstr "Vooruit"
+msgstr ""
 
 #: hhctrl.rc:45
 msgid "IDTB_NOTES"
-msgstr "IDTB_NOTES"
+msgstr ""
 
 #: hhctrl.rc:46
 msgid "IDTB_BROWSE_FWD"
-msgstr "IDTB_BROWSE_FWD"
+msgstr ""
 
 #: hhctrl.rc:47
 msgid "IDT_BROWSE_BACK"
-msgstr "IDT_BROWSE_BACK"
+msgstr ""
 
 #: hhctrl.rc:48
 msgid "IDTB_CONTENTS"
-msgstr "IDTB_CONTENTS"
+msgstr ""
 
 #: hhctrl.rc:49
 msgid "IDTB_INDEX"
-msgstr "IDTB_INDEX"
+msgstr ""
 
 #: hhctrl.rc:50
 msgid "IDTB_SEARCH"
-msgstr "IDTB_SEARCH"
+msgstr ""
 
 #: hhctrl.rc:51
 msgid "IDTB_HISTORY"
-msgstr "IDTB_HISTORY"
+msgstr ""
 
 #: hhctrl.rc:52
 msgid "IDTB_FAVORITES"
-msgstr "IDTB_FAVORITES"
+msgstr ""
 
 #: hhctrl.rc:53
 msgid "Jump1"
-msgstr "Sprong1"
+msgstr ""
 
 #: hhctrl.rc:54
 msgid "Jump2"
-msgstr "Sprong2"
+msgstr ""
 
 #: hhctrl.rc:55
 msgid "Customize"
-msgstr "Aanpassen"
+msgstr ""
 
 #: hhctrl.rc:56
 msgid "Zoom"
-msgstr "Vergroten"
+msgstr ""
 
 #: hhctrl.rc:57
 msgid "IDTB_TOC_NEXT"
-msgstr "IDTB_TOC_NEXT"
+msgstr ""
 
 #: hhctrl.rc:58
 msgid "IDTB_TOC_PREV"
-msgstr "IDTB_TOC_PREV"
+msgstr ""
 
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"
@@ -1012,141 +1014,137 @@ msgstr ""
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
-msgstr "Fout bij het omzetten van het object naar een primitief type"
+msgstr ""
 
 #: jscript.rc:26
 msgid "Invalid procedure call or argument"
-msgstr "Ongeldige procedure-aanroep of argument"
+msgstr ""
 
 #: jscript.rc:27
 msgid "Subscript out of range"
-msgstr "Index buiten bereik"
+msgstr ""
 
 #: jscript.rc:28
 msgid "Automation server can't create object"
-msgstr "Automatiseringsserver kan het object niet creëren"
+msgstr ""
 
 #: jscript.rc:29
 msgid "Object doesn't support this property or method"
-msgstr "Dit object ondersteunt deze eigenschap of methode niet"
+msgstr ""
 
 #: jscript.rc:30
 msgid "Object doesn't support this action"
-msgstr "Dit object ondersteunt deze actie niet"
+msgstr ""
 
 #: jscript.rc:31
 msgid "Argument not optional"
-msgstr "Argument is niet optioneel"
+msgstr ""
 
 #: jscript.rc:32
 msgid "Syntax error"
-msgstr "Syntax fout"
+msgstr ""
 
 #: jscript.rc:33
 msgid "Expected ';'"
-msgstr "';' verwacht"
+msgstr ""
 
 #: jscript.rc:34
 msgid "Expected '('"
-msgstr "'(' verwacht"
+msgstr ""
 
 #: jscript.rc:35
 msgid "Expected ')'"
-msgstr "')' verwacht"
+msgstr ""
 
 #: jscript.rc:36
 msgid "Unterminated string constant"
-msgstr "Onafgesloten tekenreeksconstante"
+msgstr ""
 
 #: jscript.rc:37
 msgid "Conditional compilation is turned off"
-msgstr "Conditionele compilatie is uitgeschakeld"
+msgstr ""
 
 #: jscript.rc:40
 msgid "Number expected"
-msgstr "Getal verwacht"
+msgstr ""
 
 #: jscript.rc:38
 msgid "Function expected"
-msgstr "Functie verwacht"
+msgstr ""
 
 #: jscript.rc:39
 msgid "'[object]' is not a date object"
-msgstr "'[object]' is geen datum object"
+msgstr ""
 
 #: jscript.rc:41
 msgid "Object expected"
-msgstr "Object verwacht"
+msgstr ""
 
 #: jscript.rc:42
 msgid "Illegal assignment"
-msgstr "Ongeldige toekenning"
+msgstr ""
 
 #: jscript.rc:43
 msgid "'|' is undefined"
-msgstr "'|' is ongedefinieerd"
+msgstr ""
 
 #: jscript.rc:44
 msgid "Boolean object expected"
-msgstr "Boolean object verwacht"
+msgstr ""
 
 #: jscript.rc:45
 msgid "VBArray object expected"
-msgstr "VBArray object verwacht"
+msgstr ""
 
 #: jscript.rc:46
 msgid "JScript object expected"
-msgstr "JScript object verwacht"
+msgstr ""
 
 #: jscript.rc:47
 msgid "Syntax error in regular expression"
-msgstr "Syntax fout in reguliere expressie"
+msgstr ""
 
 #: jscript.rc:48
 msgid "URI to be encoded contains invalid characters"
-msgstr "De te coderen URI bevat ongeldige tekens"
+msgstr ""
 
 #: jscript.rc:49
 msgid "Array length must be a finite positive integer"
-msgstr "Array lengte moet een eindig, positief geheel getal zijn"
+msgstr ""
 
 #: jscript.rc:50
 msgid "Array object expected"
-msgstr "Array object verwacht"
+msgstr ""
 
 #: localspl.rc:28
 msgid "Local Port"
-msgstr "Lokale Poort"
+msgstr ""
 
 #: localspl.rc:29
 msgid "Local Monitor"
-msgstr "Lokale Monitor"
+msgstr ""
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."
 msgstr ""
-"Mail kan niet worden verstuurd aangezien er geen MAPI mail client is "
-"geïnstalleerd."
 
 #: mapi32.rc:29
 msgid "Send Mail"
-msgstr "Verstuur Mail"
+msgstr ""
 
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "
 "file path and try again."
 msgstr ""
-"Het opgegeven installatie pakket kon niet worden geopend.  Verifieer het "
-"bestandspad en probeer opnieuw."
 
 #: msi.rc:28
 msgid "path %s not found"
-msgstr "Pad %s niet gevonden"
+msgstr ""
 
 #: msi.rc:29
 msgid "insert disk %s"
-msgstr "Plaats disk %s"
+msgstr ""
 
 #: msi.rc:30
 msgid ""
@@ -1180,620 +1178,564 @@ msgid ""
 "\t/help\n"
 "\t/?\n"
 msgstr ""
-"Windows Installer %s\n"
-"\n"
-"Gebruik:\n"
-"msiexec commando {vereiste parameter} [optionele parameter]\n"
-"\n"
-"Installeer een product:\n"
-"\t/i {pakket|productcode} [eigenschap]\n"
-"\t/package {pakket|productcode} [eigenschap]\n"
-"\t/a pakket [eigenschap]\n"
-"Herstel een installatie:\n"
-"\t/f[p|o|e|d|c|a|u|m|s|v] {pakket|productcode}\n"
-"Verwijder een product:\n"
-"\t/uninstall {pakket|productcode} [eigenschap]\n"
-"\t/x {pakket|productcode} [eigenschap]\n"
-"Adverteer een product:\n"
-"\t/j[u|m] pakket [/t transform] [/g languageid]\n"
-"Pas een patch toe:\n"
-"\t/p patchpakket [eigenschap]\n"
-"\t/p patchpakket /a pakket [eigenschap]\n"
-"Log en UI Modifiers voor bovenstaande commando's:\n"
-"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logbestand\n"
-"\t/q{|n|b|r|f|n+|b+|b-}\n"
-"Registreer MSI Service:\n"
-"\t/y\n"
-"Maak registratie MSI Service ongedaan:\n"
-"\t/z\n"
-"Laat dit helpvenster zien:\n"
-"\t/help\n"
-"\t/?\n"
 
 #: msi.rc:57
 msgid "enter which folder contains %s"
-msgstr "Voer de map in die %s bevat"
+msgstr ""
 
 #: msi.rc:58
 msgid "install source for feature missing"
-msgstr "De installatiebron van de feature ontbreekt"
+msgstr ""
 
 #: msi.rc:59
 msgid "network drive for feature missing"
-msgstr "De netwerkschijf met de feature ontbreekt"
+msgstr ""
 
 #: msi.rc:60
 msgid "feature from:"
-msgstr "Feature van:"
+msgstr ""
 
 #: msi.rc:61
 msgid "choose which folder contains %s"
-msgstr "Kies de map die %s bevat"
+msgstr ""
 
 #: msrle32.rc:27
 msgid "WINE-MS-RLE"
-msgstr "WINE-MS-RLE"
+msgstr ""
 
 #: msrle32.rc:28
 msgid "Wine MS-RLE video codec"
-msgstr "Wine MS-RLE videodecoder"
+msgstr ""
 
 #: msrle32.rc:29
 msgid ""
 "Wine MS-RLE video codec\n"
 "Copyright 2002 by Michael Guennewig"
 msgstr ""
-"Wine MS-RLE videodecoder\n"
-"Copyright 2002 Michael Günnewig"
 
 #: msvidc32.rc:25
 msgid "MS-CRAM"
-msgstr "MS-CRAM"
+msgstr ""
 
 #: msvidc32.rc:26
 msgid "Wine Video 1 video codec"
-msgstr "Wine Video 1 video codec"
+msgstr ""
 
 #: oleaut32.rc:27
 msgid "True"
-msgstr "Waar"
+msgstr ""
 
 #: oleaut32.rc:28
 msgid "False"
-msgstr "Onwaar"
+msgstr ""
 
 #: oleaut32.rc:31
 msgid "On"
-msgstr "Aan"
+msgstr ""
 
 #: oleaut32.rc:32
 msgid "Off"
-msgstr "Uit"
+msgstr ""
 
 #: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
 msgid "Default"
-msgstr "Standaard"
+msgstr "Default"
 
 #: shdoclc.rc:38 winhlp32.rc:101
 msgid "&Back"
-msgstr "&Terug"
+msgstr "&Inavo"
 
 #: shdoclc.rc:39
 msgid "F&orward"
-msgstr "V&ooruit"
+msgstr ""
 
 #: shdoclc.rc:41
 msgid "&Save Background As..."
-msgstr "Achtergrond ops&laan als..."
+msgstr ""
 
 #: shdoclc.rc:42
 msgid "Set As Back&ground"
-msgstr "Als achtergrond instellen"
+msgstr ""
 
 #: shdoclc.rc:43
 msgid "&Copy Background"
-msgstr "Achtergrond &kopiëren"
+msgstr ""
 
 #: shdoclc.rc:44
 msgid "Set as &Desktop Item"
-msgstr "Als desktopelement instellen..."
+msgstr ""
 
 #: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121
 msgid "Select &All"
-msgstr "&Alles selecteren"
+msgstr ""
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
 #: shdoclc.rc:189 wineconsole.rc:30
 msgid "&Paste"
-msgstr "&Plakken"
+msgstr ""
 
 #: shdoclc.rc:49
 msgid "Create Shor&tcut"
-msgstr "&Snelkoppeling aanmaken"
+msgstr ""
 
 #: shdoclc.rc:50
 msgid "Add to &Favorites"
-msgstr "Aan &favorieten toevoegen"
+msgstr ""
 
 #: shdoclc.rc:51
 msgid "&View Source"
-msgstr "&Bronweergave"
+msgstr ""
 
 #: shdoclc.rc:53
 msgid "&Encoding"
-msgstr "&Tekstcodering"
+msgstr ""
 
 #: shdoclc.rc:55
 msgid "Pr&int"
-msgstr "Af&drukken"
+msgstr ""
 
 #: shdoclc.rc:56
 msgid "&Refresh"
-msgstr "A&ctualiseren"
+msgstr ""
 
 #: shdoclc.rc:59 clock.rc:28 wineconsole.rc:27
 msgid "&Properties"
-msgstr "&Eigenschappen"
+msgstr ""
 
 #: shdoclc.rc:62
 msgid "Image"
-msgstr "Afbeelding"
+msgstr ""
 
 #: shdoclc.rc:64 shdoclc.rc:151 shdoclc.rc:176
+#, fuzzy
 msgid "&Open Link"
-msgstr "&Open link"
+msgstr "&Rivir"
 
 #: shdoclc.rc:65 shdoclc.rc:152 shdoclc.rc:177
 msgid "Open Link in &New Window"
-msgstr "Open link in &nieuw venster"
+msgstr ""
 
 #: shdoclc.rc:66 shdoclc.rc:130 shdoclc.rc:153 shdoclc.rc:178
 msgid "Save Target &As..."
-msgstr "Doel ops&laan als..."
+msgstr ""
 
 #: shdoclc.rc:67 shdoclc.rc:131 shdoclc.rc:154 shdoclc.rc:179
+#, fuzzy
 msgid "&Print Target"
-msgstr "Doel af&drukken"
+msgstr "&Stampar tema"
 
 #: shdoclc.rc:69 shdoclc.rc:156 shdoclc.rc:181
 msgid "S&how Picture"
-msgstr "&Toon afbeelding"
+msgstr ""
 
 #: shdoclc.rc:70 shdoclc.rc:182
 msgid "&Save Picture As..."
-msgstr "Af&beelding opslaan als..."
+msgstr ""
 
 #: shdoclc.rc:71
 msgid "&E-mail Picture..."
-msgstr "Afbeelding &versturen..."
+msgstr ""
 
 #: shdoclc.rc:72
 msgid "Pr&int Picture..."
-msgstr "Afbeelding &afdrukken..."
+msgstr ""
 
 #: shdoclc.rc:73
 msgid "&Go to My Pictures"
-msgstr "&Ga naar Mijn Afbeeldingen"
+msgstr ""
 
 #: shdoclc.rc:74 shdoclc.rc:158 shdoclc.rc:183
 msgid "Set as Back&ground"
-msgstr "Als achtergrond instellen"
+msgstr ""
 
 #: shdoclc.rc:75 shdoclc.rc:159 shdoclc.rc:184
 msgid "Set as &Desktop Item..."
-msgstr "Als desktopelement instellen..."
+msgstr ""
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
 msgid "Cu&t"
-msgstr "K&nippen"
+msgstr ""
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
 #: shdoclc.rc:187 wineconsole.rc:29
+#, fuzzy
 msgid "&Copy"
-msgstr "&Kopiëren"
+msgstr "Capchar"
 
 #: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
 msgid "Copy Shor&tcut"
-msgstr "&Snelkoppeling kopiëren"
+msgstr ""
 
 #: shdoclc.rc:82 shdoclc.rc:138 shdoclc.rc:166 shdoclc.rc:191
 msgid "Add to &Favorites..."
-msgstr "Aan &favorieten toevoegen..."
+msgstr ""
 
 #: shdoclc.rc:85 shdoclc.rc:141 shdoclc.rc:171 shdoclc.rc:198
 msgid "P&roperties"
-msgstr "&Eigenschappen"
+msgstr ""
 
 #: shdoclc.rc:88
 msgid "Control"
-msgstr "Besturing"
+msgstr ""
 
 #: shdoclc.rc:90
 msgid "&Undo"
-msgstr "&Ongedaan maken"
+msgstr ""
 
 #: shdoclc.rc:95
 msgid "&Delete"
-msgstr "&Verwijderen"
+msgstr ""
 
 #: shdoclc.rc:101
 msgid "Table"
-msgstr "Tabellen"
+msgstr ""
 
 #: shdoclc.rc:103
 msgid "&Select"
-msgstr "&Selecteren"
+msgstr ""
 
 #: shdoclc.rc:105
 msgid "&Cell"
-msgstr "&Cel"
+msgstr ""
 
 #: shdoclc.rc:106
 msgid "&Row"
-msgstr "&Regel"
+msgstr ""
 
 #: shdoclc.rc:107
 msgid "&Column"
-msgstr "&Kolom"
+msgstr ""
 
 #: shdoclc.rc:108
 msgid "&Table"
-msgstr "&Tabel"
+msgstr ""
 
 #: shdoclc.rc:112
 msgid "&Cell Properties"
-msgstr "Cel&eigenschappen"
+msgstr ""
 
 #: shdoclc.rc:113
 msgid "&Table Properties"
-msgstr "Tabelei&genschappen"
+msgstr ""
 
 #: shdoclc.rc:116
 msgid "1DSite Select"
-msgstr "1DPaginakeuze"
+msgstr ""
 
 #: shdoclc.rc:120
 msgid "Paste"
-msgstr "&Plakken"
+msgstr ""
 
 #: shdoclc.rc:122 winhlp32.rc:31
 msgid "&Print"
-msgstr "Af&drukken"
+msgstr "&Stampar tema"
 
 #: shdoclc.rc:126
 msgid "Anchor"
-msgstr "Anker"
+msgstr ""
 
 #: shdoclc.rc:128 view.rc:30 winhlp32.rc:29
 msgid "&Open"
-msgstr "&Openen"
+msgstr "&Rivir"
 
 #: shdoclc.rc:129
 msgid "Open in &New Window"
-msgstr "In nieuw &venster openen"
+msgstr ""
 
 #: shdoclc.rc:133
 msgid "Cut"
-msgstr "K&nippen"
+msgstr ""
 
 #: shdoclc.rc:144
 msgid "Context Unknown"
-msgstr "Context Onbekend"
+msgstr ""
 
 #: shdoclc.rc:149
 msgid "DYNSRC Image"
-msgstr "DYNSRC Afbeelding"
+msgstr ""
 
 #: shdoclc.rc:157
 msgid "&Save Video As..."
-msgstr "Af&beelding opslaan als..."
+msgstr ""
 
 #: shdoclc.rc:169 shdoclc.rc:193
 msgid "Play"
-msgstr "Afspelen"
+msgstr ""
 
 #: shdoclc.rc:174
 msgid "ART Image"
-msgstr "ART Afbeelding"
+msgstr ""
 
 #: shdoclc.rc:195
 msgid "Rewind"
-msgstr "Terugspoelen"
+msgstr ""
 
 #: shdoclc.rc:201
 msgid "Debug"
-msgstr "Debug"
+msgstr ""
 
 #: shdoclc.rc:203
 msgid "Trace Tags"
-msgstr "Traceer Labels"
+msgstr ""
 
 #: shdoclc.rc:204
 msgid "Resource Failures"
-msgstr "Resource Fouten"
+msgstr ""
 
 #: shdoclc.rc:205
 msgid "Dump Tracking Info"
-msgstr "Log Tracerings Informatie"
+msgstr ""
 
 #: shdoclc.rc:206
 msgid "Debug Break"
-msgstr "Debug Onderbreking"
+msgstr ""
 
 #: shdoclc.rc:207
 msgid "Debug View"
-msgstr "Debug Beeld"
+msgstr ""
 
 #: shdoclc.rc:208
 msgid "Dump Tree"
-msgstr "Log Gehele Boom"
+msgstr ""
 
 #: shdoclc.rc:209
 msgid "Dump Lines"
-msgstr "Log Regels"
+msgstr ""
 
 #: shdoclc.rc:210
 msgid "Dump DisplayTree"
-msgstr "Log Beeld Boom"
+msgstr ""
 
 #: shdoclc.rc:211
 msgid "Dump FormatCaches"
-msgstr "Log Formaat Caches"
+msgstr ""
 
 #: shdoclc.rc:212
 msgid "Dump LayoutRects"
-msgstr "Log Layout Rects"
+msgstr ""
 
 #: shdoclc.rc:213
 msgid "Memory Monitor"
-msgstr "Geheugen Monitor"
+msgstr ""
 
 #: shdoclc.rc:214
 msgid "Performance Meters"
-msgstr "Performance Meters"
+msgstr ""
 
 #: shdoclc.rc:215
 msgid "Save HTML"
-msgstr "Sla HTML op"
+msgstr ""
 
 #: shdoclc.rc:217
 msgid "&Browse View"
-msgstr "&Bladeren Beeld"
+msgstr ""
 
 #: shdoclc.rc:218
+#, fuzzy
 msgid "&Edit View"
-msgstr "&Wijzigen Beeld"
+msgstr "&Lavurar"
 
 #: shdoclc.rc:221
 msgid "Vertical Scrollbar"
-msgstr "Verticale scrollbalk"
+msgstr ""
 
 #: shdoclc.rc:223 shdoclc.rc:237
 msgid "Scroll Here"
-msgstr "Scroll hier"
+msgstr ""
 
 #: shdoclc.rc:225
 msgid "Top"
-msgstr "Boven"
+msgstr ""
 
 #: shdoclc.rc:226
 msgid "Bottom"
-msgstr "Onder"
+msgstr ""
 
 #: shdoclc.rc:228
 msgid "Page Up"
-msgstr "Pagina naar boven"
+msgstr ""
 
 #: shdoclc.rc:229
 msgid "Page Down"
-msgstr "Pagina naar onder"
+msgstr ""
 
 #: shdoclc.rc:231
 msgid "Scroll Up"
-msgstr "Scroll omhoog"
+msgstr ""
 
 #: shdoclc.rc:232
 msgid "Scroll Down"
-msgstr "Scroll omlaag"
+msgstr ""
 
 #: shdoclc.rc:235
 msgid "Horizontal Scrollbar"
-msgstr "Horizontale scrollbalk"
+msgstr ""
 
 #: shdoclc.rc:239
 msgid "Left Edge"
-msgstr "Linkerrand"
+msgstr ""
 
 #: shdoclc.rc:240
 msgid "Right Edge"
-msgstr "Rechterrand"
+msgstr ""
 
 #: shdoclc.rc:242
 msgid "Page Left"
-msgstr "Pagina naar links"
+msgstr ""
 
 #: shdoclc.rc:243
 msgid "Page Right"
-msgstr "Pagina naar rechts"
+msgstr ""
 
 #: shdoclc.rc:245
 msgid "Scroll Left"
-msgstr "Scroll naar links"
+msgstr ""
 
 #: shdoclc.rc:246
 msgid "Scroll Right"
-msgstr "Scroll naar rechts"
+msgstr ""
 
 #: shdoclc.rc:25
 msgid "Wine Internet Explorer"
-msgstr "Wine Internet Verkenner"
+msgstr ""
 
 #: shdoclc.rc:30
 msgid "&w&bPage &p"
-msgstr "&w&bPagina &p"
+msgstr ""
 
 #: shdoclc.rc:31
 msgid "&u&b&d"
-msgstr "&u&b&d"
+msgstr ""
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
-msgstr "De gespecificeerde opdracht is uitgevoerd."
+msgstr ""
 
 #: winmm.rc:29
 msgid "Undefined external error."
-msgstr "Ongedefinieerde fout van buitenaf."
+msgstr ""
 
 #: winmm.rc:30
 msgid "A device ID has been used that is out of range for your system."
 msgstr ""
-"Een apparaat-ID werd gebruikt dat buiten de grenzen van uw systeem ligt."
 
 #: winmm.rc:31
 msgid "The driver was not enabled."
-msgstr "De driver is niet geactiveerd."
+msgstr ""
 
 #: winmm.rc:32
 msgid ""
 "The specified device is already in use. Wait until it is free, and then try "
 "again."
 msgstr ""
-"Het gewenste apparaat is in gebruik. Wacht totdat het vrijkomt en probeer "
-"het dan opnieuw."
 
 #: winmm.rc:33
 msgid "The specified device handle is invalid."
-msgstr "De gespecificeerde apparaatverwijzing is ongeldig."
+msgstr ""
 
 #: winmm.rc:34
 msgid "There is no driver installed on your system !\n"
-msgstr "Er is geen driver geïnstalleerd op uw systeem !\n"
+msgstr ""
 
 #: winmm.rc:35
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
 msgstr ""
-"Er is niet genoeg geheugen beschikbaar voor deze taak. Sluit enkele "
-"programma's af om meer geheugen vrij te krijgen en doe dan nog een poging."
 
 #: winmm.rc:36
 msgid ""
 "This function is not supported. Use the Capabilities function to determine "
 "which functions and messages the driver supports."
 msgstr ""
-"Deze functie wordt niet ondersteund. Gebruik de 'Capabilities' functie om "
-"uit te zoeken welke toepassingen en boodschappen de driver ondersteund."
 
 #: winmm.rc:37
 msgid "An error number was specified that is not defined in the system."
-msgstr "Een niet binnen het systeem bekend foutnummer werd gebruikt."
+msgstr ""
 
 #: winmm.rc:38
 msgid "An invalid flag was passed to a system function."
-msgstr "Een ongeldige vlag werd aan een systeemfunctie gevoerd."
+msgstr ""
 
 #: winmm.rc:39
 msgid "An invalid parameter was passed to a system function."
-msgstr "Een systeemfunctie kreeg een ongeldige parameter te eten."
+msgstr ""
 
 #: winmm.rc:42
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats"
 msgstr ""
-"Het aangegeven formaat wordt niet ondersteund of geconverteerd. Gebruik de "
-"'Capabilities' functie om de ondersteunde formaten te vinden"
 
 #: winmm.rc:43 winmm.rc:49
 msgid ""
 "Cannot perform this operation while media data is still playing. Reset the "
 "device, or wait until the data is finished playing."
 msgstr ""
-"Kan deze opdracht niet uitvoeren zolang er afgespeeld wordt. Herstart het "
-"apparaat of wacht totdat het apparaat klaar is met spelen."
 
 #: winmm.rc:44
 msgid ""
 "The wave header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
 msgstr ""
-"De Wave Header was niet aanwezig. Gebruik de 'Prepare' functie om de Header "
-"te genereren en probeer het dan opnieuw."
 
 #: winmm.rc:45
 msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
 msgstr ""
-"Kan het apparaat niet openen zonder de WAVE_ALLOWSYNC vlag. Zet de vlag en "
-"probeer opnieuw."
 
 #: winmm.rc:48
 msgid ""
 "The MIDI header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
 msgstr ""
-"De MIDI Header was niet aanwezig. Gebruik de 'Prepare' functie om de Header "
-"te genereren en probeer het dan opnieuw."
 
 #: winmm.rc:50
 msgid ""
 "A MIDI map was not found. There may be a problem with the driver, or the "
 "MIDIMAP.CFG file may be corrupt or missing."
 msgstr ""
-"Er is geen MIDI Map gevonden. Er zou een driver probleem kunnen zijn of de "
-"MIDIMAP.CFG file is verminkt of afwezig."
 
 #: winmm.rc:51
 msgid ""
 "The port is transmitting data to the device. Wait until the data has been "
 "transmitted, and then try again."
 msgstr ""
-"De poort is bezig data ter versturen naar het apparaat. Wacht totdat alle "
-"data is verstuurd en probeer het dan opnieuw."
 
 #: winmm.rc:52
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system. Use MIDI Mapper to edit the setup."
 msgstr ""
-"De huidige MIDI Mapper setup verwijst naar een MIDI-apparaat dat niet op het "
-"systeem aanwezig is. Gebruik MIDI Mapper om de instellingen aan te passen."
 
 #: winmm.rc:53
 msgid ""
 "The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
 "Windows SYSTEM directory, and then try again."
 msgstr ""
-"De huidige MIDI setup is beschadigd. Kopieer de originele MIDIMAP.CFG file "
-"naar de Windows SYSTEM directory en probeer het daarna weer."
 
 #: winmm.rc:56
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
 msgstr ""
-"Ongeldig MCI-apparaat-ID. Gebruik het teruggegeven ID als u dit MCI-apparaat "
-"opent."
 
 #: winmm.rc:57
 msgid "The driver cannot recognize the specified command parameter."
-msgstr "De driver herkent de opgegeven opdrachtparameter niet."
+msgstr ""
 
 #: winmm.rc:58
 msgid "The driver cannot recognize the specified command."
-msgstr "De driver herkent de opgegeven opdracht niet."
+msgstr ""
 
 #: winmm.rc:59
 msgid ""
 "There is a problem with your media device. Make sure it is working correctly "
 "or contact the device manufacturer."
 msgstr ""
-"Er is een probleem met uw media-apparaat. Controleer of hij correct werkt of "
-"neem contact op met de leverancier."
 
 #: winmm.rc:60
 msgid "The specified device is not open or is not recognized by MCI."
-msgstr "Het opgegeven apparaat is niet geopend of wordt niet door MCI herkend."
+msgstr ""
 
 #: winmm.rc:61
 msgid ""
@@ -1801,400 +1743,314 @@ msgid ""
 "Quit one or more applications to increase available memory, and then try "
 "again."
 msgstr ""
-"Er is niet genoeg geheugen beschikbaar voor deze taak. Sluit enkele "
-"programma's af om meer geheugen vrij te krijgen en probeer opnieuw."
 
 #: winmm.rc:62
 msgid ""
 "The device name is already being used as an alias by this application. Use a "
 "unique alias."
 msgstr ""
-"Een apparaat met die naam is al als alias in gebruik door deze applicatie. "
-"Gebruik een unieke alias."
 
 #: winmm.rc:63
 msgid ""
 "There is an undetectable problem in loading the specified device driver."
 msgstr ""
-"Er is een onbekende fout ontstaan tijdens het laden van de apparaatdriver."
 
 #: winmm.rc:64
 msgid "No command was specified."
-msgstr "Er was geen opdracht opgegeven."
+msgstr ""
 
 #: winmm.rc:65
 msgid ""
 "The output string was too large to fit in the return buffer. Increase the "
 "size of the buffer."
 msgstr ""
-"De output string was te groot om in de antwoordbuffer te passen. Vergroot de "
-"buffer."
 
 #: winmm.rc:66
 msgid ""
 "The specified command requires a character-string parameter. Please provide "
 "one."
 msgstr ""
-"De gegeven opdracht vereist een character-stringparameter. Lever er s.v.p. "
-"één aan"
 
 #: winmm.rc:67
 msgid "The specified integer is invalid for this command."
-msgstr "De gegeven integer is niet geldig bij dit commando."
+msgstr ""
 
 #: winmm.rc:68
 msgid ""
 "The device driver returned an invalid return type. Check with the device "
 "manufacturer about obtaining a new driver."
 msgstr ""
-"De apparaat driver retourneerde een ongeldige waarde. Vraag de fabrikant om "
-"een andere driver."
 
 #: winmm.rc:69
 msgid ""
 "There is a problem with the device driver. Check with the device "
 "manufacturer about obtaining a new driver."
 msgstr ""
-"Er is een probleem met de apparaat driver. Vraag de fabrikant om een andere "
-"driver."
 
 #: winmm.rc:70
 msgid "The specified command requires a parameter. Please supply one."
-msgstr "De gegeven opdracht heeft een parameter nodig. Vult u deze a.u.b. in."
+msgstr ""
 
 #: winmm.rc:71
 msgid "The MCI device you are using does not support the specified command."
-msgstr "Het MCI-apparaat dat u gebruikt ondersteund het gegeven commando niet."
+msgstr ""
 
 #: winmm.rc:72
 msgid ""
 "Cannot find the specified file. Make sure the path and filename are correct."
 msgstr ""
-"Kan het opgegeven bestand niet vinden. Zorg ervoor dat het pad en de "
-"bestandsnaam correct zijn."
 
 #: winmm.rc:73
 msgid "The device driver is not ready."
-msgstr "De apparaatdriver is niet gereed."
+msgstr ""
 
 #: winmm.rc:74
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
 msgstr ""
-"Tijdens het initialiseren van MCI ontstond een probleem. Probeer dit te "
-"verhelpen door Windows opnieuw te starten."
 
 #: winmm.rc:75
 msgid ""
 "There is a problem with the device driver. The driver has closed. Cannot "
 "access error."
 msgstr ""
-"Er is een probleem met de apparaatdriver. Daarom is de driver afgesloten. "
-"Derhalve een toegangsfout."
 
 #: winmm.rc:76
 msgid "Cannot use 'all' as the device name with the specified command."
-msgstr "Kan 'all' niet gebruiken als apparaatnaam bij het opgegeven commando."
+msgstr ""
 
 #: winmm.rc:77
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error"
 msgstr ""
-"In meer dan één apparaat zijn fouten opgetreden. Geef elk commando en "
-"apparaat apart op om te achterhalen welke apparaten fouten veroorzaken."
 
 #: winmm.rc:78
 msgid "Cannot determine the device type from the given filename extension."
 msgstr ""
-"Kan het apparaat type niet achterhalen uit de gegeven bestandsextensie."
 
 #: winmm.rc:79
 msgid "The specified parameter is out of range for the specified command."
-msgstr "De gegeven parameter is buiten het bereik van het opgegeven commando."
+msgstr ""
 
 #: winmm.rc:80
 msgid "The specified parameters cannot be used together."
-msgstr "De gegeven parameters kunnen niet samen gebruikt worden."
+msgstr ""
 
 #: winmm.rc:81
 msgid ""
 "Cannot save the specified file. Make sure you have enough disk space or are "
 "still connected to the network."
 msgstr ""
-"Kan de opgegeven file niet opslaan. Zorg ervoor dat er voldoende "
-"schijfruimte is of dat u nog steeds met het netwerk verbonden bent."
 
 #: winmm.rc:82
 msgid ""
 "Cannot find the specified device. Make sure it is installed or that the "
 "device name is spelled correctly."
 msgstr ""
-"Kan het opgegeven apparaat niet vinden. Verzeker u ervan dat het correct "
-"geïnstalleerd is en dat de apparaatnaam correct is opgegeven."
 
 #: winmm.rc:83
 msgid ""
 "The specified device is now being closed. Wait a few seconds, and then try "
 "again."
 msgstr ""
-"Het opgegeven apparaat wordt nu gesloten. Wacht s.v.p. enkele seconden en "
-"probeer het dan opnieuw."
 
 #: winmm.rc:84
 msgid ""
 "The specified alias is already being used in this application. Use a unique "
 "alias."
 msgstr ""
-"De opgegeven alias is al in gebruik door dit programma. Gebruik een unieke "
-"alias."
 
 #: winmm.rc:85
 msgid "The specified parameter is invalid for this command."
-msgstr "De opgegeven parameter is ongeldig voor dit commando."
+msgstr ""
 
 #: winmm.rc:86
 msgid ""
 "The device driver is already in use. To share it, use the 'shareable' "
 "parameter with each 'open' command."
 msgstr ""
-"De apparaatdriver is al in gebruik. Om het te delen, gebruik de 'deelbaar' "
-"parameter met elk 'open' commando."
 
 #: winmm.rc:87
 msgid ""
 "The specified command requires an alias, file, driver, or device name. "
 "Please supply one."
 msgstr ""
-"Het gegeven commando vereist een alias, bestand, driver of apparaatnaam. "
-"Geeft u er svp een in."
 
 #: winmm.rc:88
 msgid ""
 "The specified value for the time format is invalid. Refer to the MCI "
 "documentation for valid formats."
 msgstr ""
-"De gegeven waarde voor het tijdsformaat is ongeldig. Zoek in de MCI "
-"handleidingen naar geldige formaten."
 
 #: winmm.rc:89
 msgid ""
 "A closing double-quotation mark is missing from the parameter value. Please "
 "supply one."
 msgstr ""
-"Een afsluitende dubbele apostrof ontbreekt van de parameter waarde. Geeft u "
-"er s.v.p. één op."
 
 #: winmm.rc:90
 msgid "A parameter or value was specified twice. Only specify it once."
 msgstr ""
-"Een parameter of waarde werd dubbel opgegeven. Doe dat s.v.p. maar één keer."
 
 #: winmm.rc:91
 msgid ""
 "The specified file cannot be played on the specified MCI device. The file "
 "may be corrupt, or not in the correct format."
 msgstr ""
-"Het gegeven bestand kan niet op het MCI-apparaat worden afgespeeld. Het "
-"bestand is misschien corrupt of niet in het juiste formaat."
 
 #: winmm.rc:92
 msgid "A null parameter block was passed to MCI."
-msgstr "Een leeg parameterblok werd doorgegeven aan MCI."
+msgstr ""
 
 #: winmm.rc:93
 msgid "Cannot save an unnamed file. Supply a filename."
-msgstr "Kan een bestand zonder naam niet opslaan. Geef een bestandsnaam s.v.p."
+msgstr ""
 
 #: winmm.rc:94
 msgid "You must specify an alias when using the 'new' parameter."
-msgstr "U moet een alias opgeven als u de 'new' parameter gebruikt."
+msgstr ""
 
 #: winmm.rc:95
 msgid "Cannot use the 'notify' flag with auto-opened devices."
 msgstr ""
-"Kan de 'notify' vlag niet gebruiken met automatisch geopende apparaten."
 
 #: winmm.rc:96
 msgid "Cannot use a filename with the specified device."
-msgstr "Kan voor het huidige apparaat geen bestandsnaam gebruiken."
+msgstr ""
 
 #: winmm.rc:97
 msgid ""
 "Cannot carry out the commands in the order specified. Correct the command "
 "sequence, and then try again."
 msgstr ""
-"Kan de opgegeven commando's niet in deze volgorde uitvoeren. Corrigeer de "
-"commandoreeks en probeer opnieuw."
 
 #: winmm.rc:98
 msgid ""
 "Cannot carry out the specified command on an auto-opened device. Wait until "
 "the device is closed, and then try again."
 msgstr ""
-"Kan het opgegeven commando niet uitvoeren op een automatisch geopend "
-"apparaat. Wacht totdat het apparaat is afgesloten en probeer het dan opnieuw."
 
 #: winmm.rc:99
 msgid ""
 "The filename is invalid. Make sure the filename is not longer than 8 "
 "characters, followed by a period and an extension."
 msgstr ""
-"De bestandsnaam is ongeldig. Zorg ervoor dat de bestandsnaam aan het 8.3 "
-"formaat voldoet."
 
 #: winmm.rc:100
 msgid ""
 "Cannot specify extra characters after a string enclosed in quotation marks."
 msgstr ""
-"Het is niet mogelijk om extra lettertekens toe te voegen na een string in "
-"aanhalingstekens."
 
 #: winmm.rc:101
 msgid ""
 "The specified device is not installed on the system. Use the Drivers option "
 "in Control Panel to install the device."
 msgstr ""
-"Het opgegeven apparaat is niet geïnstalleerd op het systeem. Gebruik de "
-"'Drivers'-optie in het Configuratiescherm om het apparaat te installeren."
 
 #: winmm.rc:102
 msgid ""
 "Cannot access the specified file or MCI device. Try changing directories or "
 "restarting your computer."
 msgstr ""
-"Kan het opgegeven bestand of MCI-apparaat niet openen. Probeer de directory "
-"te wijzigen of de computer opnieuw te starten."
 
 #: winmm.rc:103
 msgid ""
 "Cannot access the specified file or MCI device because the application "
 "cannot change directories."
 msgstr ""
-"Kan het opgegeven bestand of MCI-apparaat niet openen omdat de applicatie de "
-"directory niet kan wijzigen."
 
 #: winmm.rc:104
 msgid ""
 "Cannot access specified file or MCI device because the application cannot "
 "change drives."
 msgstr ""
-"Kan het opgegeven bestand of MCI-apparaat niet openen omdat de applicatie de "
-"directory niet kan wijzigen."
 
 #: winmm.rc:105
 msgid "Specify a device or driver name that is less than 79 characters."
-msgstr "Geef een apparaat of driver naam op met minder dan 79 lettertekens."
+msgstr ""
 
 #: winmm.rc:106
 msgid "Specify a device or driver name that is less than 69 characters."
-msgstr "Geef een apparaat of driver naam op met minder dan 79 lettertekens."
+msgstr ""
 
 #: winmm.rc:107
 msgid ""
 "The specified command requires an integer parameter. Please provide one."
 msgstr ""
-"Het gegeven commando vereist een integer parameter. Geef er s.v.p. één."
 
 #: winmm.rc:108
 msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
 msgstr ""
-"Alle WAVE-apparaten die in staat zijn om een bestand in dit formaat af te "
-"spelen, zijn in gebruik. Wacht totdat een WAVE-apparaat vrij is en probeer "
-"het dan opnieuw."
 
 #: winmm.rc:109
 msgid ""
 "Cannot set the current wave device for play back because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
-"Kan het huidige WAVE-apparaat niet gebruiken omdat het in gebruik is. Wacht "
-"totdat het apparaat vrij is en probeer het dan opnieuw."
 
 #: winmm.rc:110
 msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
 msgstr ""
-"Alle WAVE-apparaten die in staat zijn om een bestand in dit formaat op te "
-"nemen, zijn in gebruik. Wacht totdat een WAVE-apparaat vrij is en probeer "
-"het dan opnieuw."
 
 #: winmm.rc:111
 msgid ""
 "Cannot set the current wave device for recording because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
-"Kan het huidige WAVE-apparaat niet gebruiken om op te nemen omdat het in "
-"gebruik is. Wacht totdat het apparaat vrij is en probeer het dan opnieuw."
 
 #: winmm.rc:112
 msgid "Any compatible waveform playback device may be used."
-msgstr "Elk compatibel WAVE-afspeelapparaat kan worden gebruikt."
+msgstr ""
 
 #: winmm.rc:113
 msgid "Any compatible waveform recording device may be used."
-msgstr "Elk compatibel WAVE-opnameapparaat kan worden gebruikt."
+msgstr ""
 
 #: winmm.rc:114
 msgid ""
 "No wave device that can play files in the current format is installed. Use "
 "the Drivers option to install the wave device."
 msgstr ""
-"Er is momenteel geen WAVE-apparaat geïnstalleerd dat bestanden in het "
-"huidige formaat kan afspelen. Gebruik de 'Drivers' optie om zo'n WAVE-"
-"apparaat te installeren."
 
 #: winmm.rc:115
 msgid ""
 "The device you are trying to play to cannot recognize the current file "
 "format."
 msgstr ""
-"Het apparaat waar u mee probeert af te spelen is niet in staat om het "
-"huidige formaat te herkennen."
 
 #: winmm.rc:116
 msgid ""
 "No wave device that can record files in the current format is installed. Use "
 "the Drivers option to install the wave device."
 msgstr ""
-"Er is momenteel geen WAVE-apparaat geïnstalleerd dat bestanden in het "
-"huidige formaat kan opnemen. Gebruik de 'Drivers' optie om zo'n WAVE-"
-"apparaat te installeren."
 
 #: winmm.rc:117
 msgid ""
 "The device you are trying to record from cannot recognize the current file "
 "format."
 msgstr ""
-"Het apparaat waar u mee probeert op te nemen is niet in staat om het huidige "
-"formaat te herkennen."
 
 #: winmm.rc:122
 msgid ""
 "The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
 "You can't use them together."
 msgstr ""
-"Van tijdsformaten van 'song pointer' en SMPTE kan er maar een in gebruik "
-"zijn. U kunt ze niet beide tegelijkertijd gebruiken."
 
 #: winmm.rc:124
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free; then try "
 "again."
 msgstr ""
-"De opgegeven MIDI poort is al in gebruik. Wacht totdat deze vrij is en "
-"probeer dan opnieuw."
 
 #: winmm.rc:127
 msgid ""
 "The specified MIDI device is not installed on the system. Use the Drivers "
 "option from the Control Panel to install a MIDI device."
 msgstr ""
-"Het opgegeven MIDI Mapper apparaat is niet op het systeem geïnstalleerd. "
-"Gebruik de 'MIDI mapper'-optie in het Configuratiescherm om het te "
-"installeren."
 
 #: winmm.rc:125
 msgid ""
@@ -2202,346 +2058,332 @@ msgid ""
 "on the system. Use the MIDI Mapper option from the Control Panel to edit the "
 "setup."
 msgstr ""
-"De huidige MIDI Mapper setup verwijst naar een MIDI-apparaat dat niet op het "
-"systeem is geïnstalleerd. Gebruik de 'MIDI mapper'-optie in het "
-"Configuratiescherm om een MIDI-apparaat te installeren."
 
 #: winmm.rc:126
 msgid "An error occurred with the specified port."
-msgstr "Er is een fout opgetreden bij de opgegeven poort."
+msgstr ""
 
 #: winmm.rc:129
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications; then, try again."
 msgstr ""
-"Alle multimedia timers zijn in gebruik door andere applicaties. Sluit een "
-"van deze applicaties, probeer het dan opnieuw."
 
 #: winmm.rc:128
 msgid "The system doesn't have a current MIDI port specified."
-msgstr "Het systeem heeft momenteel geen aangewezen MIDI poort."
+msgstr ""
 
 #: winmm.rc:123
 msgid ""
 "The system has no installed MIDI devices. Use the Drivers option from the "
 "Control Panel to install a MIDI driver."
 msgstr ""
-"Het systeem heeft geen MIDI apparaten geïnstalleerd. Gebruik de 'Drivers'-"
-"optie in het Configuratiescherm om een MIDI-apparaat te installeren."
 
 #: winmm.rc:118
 msgid "There is no display window."
-msgstr "Er is geen weergave venster."
+msgstr ""
 
 #: winmm.rc:119
 msgid "Could not create or use window."
-msgstr "Kon geen venster maken of gebruiken."
+msgstr ""
 
 #: winmm.rc:120
 msgid ""
 "Cannot read the specified file. Make sure the file is still present, or "
 "check your disk or network connection."
 msgstr ""
-"Kan het opgegeven bestand niet lezen. Controleer of het bestand nog steeds "
-"bestaat, en controleer de verbinding naar de disk of het netwerk."
 
 #: winmm.rc:121
 msgid ""
 "Cannot write to the specified file. Make sure you have enough disk space or "
 "are still connected to the network."
 msgstr ""
-"Kan het opgegeven bestand niet schrijven. Controleer of er voldoende "
-"schijfruimte is, en controleer de verbinding met het netwerk."
 
 #: wldap32.rc:27
 msgid "Success"
-msgstr "Succes"
+msgstr ""
 
 #: wldap32.rc:28
 msgid "Operations Error"
-msgstr "Operationele fout"
+msgstr ""
 
 #: wldap32.rc:29
 msgid "Protocol Error"
-msgstr "Protocolfout"
+msgstr ""
 
 #: wldap32.rc:30
 msgid "Time Limit Exceeded"
-msgstr "Tijdlimiet overschreden"
+msgstr ""
 
 #: wldap32.rc:31
 msgid "Size Limit Exceeded"
-msgstr "Maximum omvang overschreden"
+msgstr ""
 
 #: wldap32.rc:32
 msgid "Compare False"
-msgstr "Vergelijking niet waar"
+msgstr ""
 
 #: wldap32.rc:33
 msgid "Compare True"
-msgstr "Vergelijking waar"
+msgstr ""
 
 #: wldap32.rc:34
 msgid "Authentication Method Not Supported"
-msgstr "Authenticatiemethode wordt niet ondersteund"
+msgstr ""
 
 #: wldap32.rc:35
 msgid "Strong Authentication Required"
-msgstr "Sterke authenticatie vereist"
+msgstr ""
 
 #: wldap32.rc:36
 msgid "Referral (v2)"
-msgstr "Verwijzing (v2)"
+msgstr ""
 
 #: wldap32.rc:37
 msgid "Referral"
-msgstr "Verwijzing"
+msgstr ""
 
 #: wldap32.rc:38
 msgid "Administration Limit Exceeded"
-msgstr "Administratieve limiet overschreden"
+msgstr ""
 
 #: wldap32.rc:39
 msgid "Unavailable Critical Extension"
-msgstr "Kritieke extensie niet beschikbaar"
+msgstr ""
 
 #: wldap32.rc:40
 msgid "Confidentiality Required"
-msgstr "Vertrouwelijkheid vereist"
+msgstr ""
 
 #: wldap32.rc:43
 msgid "No Such Attribute"
-msgstr "Attribuut bestaat niet"
+msgstr ""
 
 #: wldap32.rc:44
 msgid "Undefined Type"
-msgstr "Ongedefinieerd type"
+msgstr ""
 
 #: wldap32.rc:45
 msgid "Inappropriate Matching"
-msgstr "Foutieve vergelijking"
+msgstr ""
 
 #: wldap32.rc:46
 msgid "Constraint Violation"
-msgstr "Schending van restrictie"
+msgstr ""
 
 #: wldap32.rc:47
 msgid "Attribute Or Value Exists"
-msgstr "Attribuut of waarde bestaat"
+msgstr ""
 
 #: wldap32.rc:48
 msgid "Invalid Syntax"
-msgstr "Ongeldige syntax"
+msgstr ""
 
 #: wldap32.rc:59
 msgid "No Such Object"
-msgstr "Object bestaat niet"
+msgstr ""
 
 #: wldap32.rc:60
 msgid "Alias Problem"
-msgstr "Aliasprobleem"
+msgstr ""
 
 #: wldap32.rc:61
 msgid "Invalid DN Syntax"
-msgstr "Ongeldige DN-syntax"
+msgstr ""
 
 #: wldap32.rc:62
 msgid "Is Leaf"
-msgstr "Eindknoop"
+msgstr ""
 
 #: wldap32.rc:63
 msgid "Alias Dereference Problem"
-msgstr "Alias volgprobleem"
+msgstr ""
 
 #: wldap32.rc:75
 msgid "Inappropriate Authentication"
-msgstr "Foutieve authenticatie"
+msgstr ""
 
 #: wldap32.rc:76
 msgid "Invalid Credentials"
-msgstr "Ongeldige aanmeldingsgegevens"
+msgstr ""
 
 #: wldap32.rc:77
 msgid "Insufficient Rights"
-msgstr "Onvoldoende rechten"
+msgstr ""
 
 #: wldap32.rc:78
 msgid "Busy"
-msgstr "Bezig"
+msgstr ""
 
 #: wldap32.rc:79
 msgid "Unavailable"
-msgstr "Niet beschikbaar"
+msgstr ""
 
 #: wldap32.rc:80
 msgid "Unwilling To Perform"
-msgstr "Uitvoering geweigerd"
+msgstr ""
 
 #: wldap32.rc:81
 msgid "Loop Detected"
-msgstr "Lus gedetecteerd"
+msgstr ""
 
 #: wldap32.rc:87
 msgid "Sort Control Missing"
-msgstr "Besturingselement voor sorteren ontbreekt"
+msgstr ""
 
 #: wldap32.rc:88
 msgid "Index range error"
-msgstr "Buiten indexbereik"
+msgstr ""
 
 #: wldap32.rc:91
 msgid "Naming Violation"
-msgstr "Naamgevingsfout"
+msgstr ""
 
 #: wldap32.rc:92
 msgid "Object Class Violation"
-msgstr "Schending objectklassedefinitie"
+msgstr ""
 
 #: wldap32.rc:93
 msgid "Not allowed on Non-leaf"
-msgstr "Niet toegestaan op niet-eindknopen"
+msgstr ""
 
 #: wldap32.rc:94
 msgid "Not allowed on RDN"
-msgstr "Niet toegestaan op RDN"
+msgstr ""
 
 #: wldap32.rc:95
 msgid "Already Exists"
-msgstr "Bestaat reeds"
+msgstr ""
 
 #: wldap32.rc:96
 msgid "No Object Class Mods"
-msgstr "Geen objectklassemodificaties"
+msgstr ""
 
 #: wldap32.rc:97
 msgid "Results Too Large"
-msgstr "Resultaten te groot"
+msgstr ""
 
 #: wldap32.rc:98
 msgid "Affects Multiple DSAs"
-msgstr "Betreft meerdere DSA's"
+msgstr ""
 
 #: wldap32.rc:107
 msgid "Other"
-msgstr "Anders"
+msgstr ""
 
 #: wldap32.rc:108
 msgid "Server Down"
-msgstr "Server plat"
+msgstr ""
 
 #: wldap32.rc:109
 msgid "Local Error"
-msgstr "Lokale fout"
+msgstr ""
 
 #: wldap32.rc:110
 msgid "Encoding Error"
-msgstr "Codeerfout"
+msgstr ""
 
 #: wldap32.rc:111
 msgid "Decoding Error"
-msgstr "Decodeerfout"
+msgstr ""
 
 #: wldap32.rc:112
 msgid "Timeout"
-msgstr "Timeout"
+msgstr ""
 
 #: wldap32.rc:113
 msgid "Auth Unknown"
-msgstr "Onbekende authenticatiemethode"
+msgstr ""
 
 #: wldap32.rc:114
 msgid "Filter Error"
-msgstr "Filterfout"
+msgstr ""
 
 #: wldap32.rc:115
 msgid "User Cancelled"
-msgstr "Afgebroken door gebruiker"
+msgstr ""
 
 #: wldap32.rc:116
 msgid "Parameter Error"
-msgstr "Parameterfout"
+msgstr ""
 
 #: wldap32.rc:117
 msgid "No Memory"
-msgstr "Onvoldoende geheugen"
+msgstr ""
 
 #: wldap32.rc:118
 msgid "Can't connect to the LDAP server"
-msgstr "Kan geen verbinding maken met LDAP-server"
+msgstr ""
 
 #: wldap32.rc:119
 msgid "Operation not supported by this version of the LDAP protocol"
-msgstr "Operatie niet ondersteund door deze versie van het LDAP-protocol"
+msgstr ""
 
 #: wldap32.rc:120
 msgid "Specified control was not found in message"
-msgstr "Opgegeven besturingselement niet gevonden in bericht"
+msgstr ""
 
 #: wldap32.rc:121
 msgid "No result present in message"
-msgstr "Geen resultaat aanwezig in bericht"
+msgstr ""
 
 #: wldap32.rc:122
 msgid "More results returned"
-msgstr "Meer resultaten teruggekregen"
+msgstr ""
 
 #: wldap32.rc:123
 msgid "Loop while handling referrals"
-msgstr "Lus gevonden bij het verwerken van verwijzingen"
+msgstr ""
 
 #: wldap32.rc:124
 msgid "Referral hop limit exceeded"
-msgstr "Overschrijding van limiet op verwijzingen"
+msgstr ""
 
 #: clock.rc:29
 msgid "Ana&log"
-msgstr "&Analoog"
+msgstr ""
 
 #: clock.rc:30
 msgid "Digi&tal"
-msgstr "&Digitaal"
+msgstr ""
 
 #: clock.rc:32 notepad.rc:50
 #, fuzzy
 msgid "&Font..."
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Lettertype...\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Lettertype instellen..."
+msgstr "Fonts"
 
 #: clock.rc:34
 msgid "&Without Titlebar"
-msgstr "&Zonder titelbalk"
+msgstr ""
 
 #: clock.rc:36
 msgid "&Seconds"
-msgstr "&Seconden"
+msgstr ""
 
 #: clock.rc:37
 msgid "&Date"
-msgstr "Da&tum"
+msgstr ""
 
 #: clock.rc:39
+#, fuzzy
 msgid "&Always on Top"
-msgstr "&Altijd op de voorgrond"
+msgstr "Ad�na da&vant"
 
 #: clock.rc:41
 msgid "Inf&o"
-msgstr "Inf&o"
+msgstr ""
 
 #: clock.rc:42
 msgid "&About Clock..."
-msgstr "&Over Klok..."
+msgstr ""
 
 #: clock.rc:48
 msgid "Clock"
-msgstr "Klok"
+msgstr ""
 
 #: cmd.rc:30
 msgid "ATTRIB shows or changes DOS file attributes.\n"
-msgstr "ATTRIB toont of wijzigt DOS bestandsattributen.\n"
+msgstr ""
 
 #: cmd.rc:38
 msgid ""
@@ -2553,50 +2395,40 @@ msgid ""
 "Changes to default directory, environment variables etc made within a\n"
 "called procedure are inherited by the caller.\n"
 msgstr ""
-"CALL <batchbestandsnaam> wordt gebruikt binnen een batchbestand om\n"
-"opdrachten uit een ander batchbestand aan te roepen. Als het batchbestand\n"
-"bestaat keert de controle terug naar het bestand dat het aanriep. De CALL\n"
-"opdracht kan parameters meegeven aan de aan te roepen procedure.\n"
-"\n"
-"Veranderingen m.b.t , map, omgevingsvariabelen, etc die tot stand komen\n"
-"binnen een aangeroepen procedure worden geërfd door de aanroepende "
-"procedure.\n"
 
 #: cmd.rc:41
 msgid ""
 "CD <dir> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr ""
-"CD <mapnaam> is de korte versie van CHDIR. Het wijzigt de huidige map.\n"
 
 #: cmd.rc:42
 msgid "CHDIR <dir> changes the current default directory.\n"
-msgstr "CHDIR <mapnaam> wijzigt de huidige map.\n"
+msgstr ""
 
 #: cmd.rc:44
 msgid "CLS clears the console screen.\n"
-msgstr "CLS wist het scherm\n"
+msgstr ""
 
 #: cmd.rc:46
 msgid "COPY <filename> copies a file.\n"
-msgstr "COPY <bestandsnaam> kopieert een bestand.\n"
+msgstr ""
 
 #: cmd.rc:47
 msgid "CTTY changes the input/output device.\n"
-msgstr "CTTY wijzigt het invoer-/uitvoerapparaat.\n"
+msgstr ""
 
 #: cmd.rc:48
 msgid "DATE shows or changes the system date.\n"
-msgstr "DATE toont of wijzigt de systeemdatum.\n"
+msgstr ""
 
 #: cmd.rc:49
 msgid "DEL <filename> deletes a file or set of files.\n"
 msgstr ""
-"DEL <bestandsnaam> verwijdert een bestand of een verzameling bestanden.\n"
 
 #: cmd.rc:50
 msgid "DIR lists the contents of a directory.\n"
-msgstr "DIR toont de inhoud van een map.\n"
+msgstr ""
 
 #: cmd.rc:60
 msgid ""
@@ -2609,20 +2441,10 @@ msgid ""
 "default). The ECHO OFF command can be prevented from displaying by\n"
 "preceding it with an @ sign.\n"
 msgstr ""
-"ECHO <tekenreeks> geeft <tekenreeks> weer op het actieve uitvoerapparaat.\n"
-"\n"
-"ECHO ON zorgt ervoor dat alle hierop volgende opdrachten in een "
-"batchbestand\n"
-"worden weergegeven op het uitvoerapparaat voordat ze worden uitgevoerd.\n"
-"\n"
-"ECHO OFF keert het effect van een voorafgaande ECHO ON om (ECHO OFF is\n"
-"de standaardinstelling). Weergave van de ECHO OFF opdracht kan worden\n"
-"voorkomen door het te laten voorafgaan door het @-teken.\n"
 
 #: cmd.rc:62
 msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr ""
-"ERASE <bestandsnaam> verwijdert een bestand of een verzameling bestanden.\n"
 
 #: cmd.rc:70
 msgid ""
@@ -2633,13 +2455,6 @@ msgid ""
 "The requirement to double the % sign when using FOR in a batch file does\n"
 "not exist in wine's cmd.\n"
 msgstr ""
-"De FOR opdracht wordt gebruikt om een opdracht uit te voeren voor ieder\n"
-"van een verzameling bestanden.\n"
-"\n"
-"Syntax: FOR %variabele IN (verzameling) DO opdracht\n"
-"\n"
-"In cmd is het niet vereist om het %-teken in een FOR opdracht in een\n"
-"batchbestand te verdubbelen.\n"
 
 #: cmd.rc:82
 msgid ""
@@ -2654,27 +2469,12 @@ msgid ""
 "\n"
 "GOTO has no effect when used interactively.\n"
 msgstr ""
-"De GOTO opdracht verplaatst uitvoering naar een andere opdracht binnen een\n"
-"batchbestand.\n"
-"\n"
-"Het doel van een GOTO opdracht wordt aangegeven met een label. Dat label\n"
-"mag uit maximaal 255 tekens bestaan maar er mogen geen spaties in voorkomen\n"
-"(dit verschilt bij andere besturingssystemen). Als er twee of meer\n"
-"identieke labels bestaan in een batchbestand dan wordt altijd naar de "
-"eerste\n"
-"gesprongen. Een poging om te springen naar een niet bestaand label "
-"beëindigt\n"
-"het uitvoeren van het batchbestand.\n"
-"\n"
-"GOTO heeft geen effect als het in een interactieve sessie wordt gebruikt.\n"
 
 #: cmd.rc:85
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
 msgstr ""
-"HELP <opdracht> toont een korte uitleg over een onderwerp.\n"
-"Help zonder argument laat alle ingebouwde opdrachten van CMD zien.\n"
 
 #: cmd.rc:95
 msgid ""
@@ -2687,15 +2487,6 @@ msgid ""
 "In the second form of the command, string1 and string2 must be in double\n"
 "quotes. The comparison is not case-sensitive.\n"
 msgstr ""
-"IF wordt gebruikt om een opdracht voorwaardelijk uit te voeren.\n"
-"\n"
-"Syntax:\tIF [NOT] EXIST bestandsnaam opdracht\n"
-"IF [NOT] tekenreeks1==tekenreeks2 opdracht\n"
-"IF [NOT] ERRORLEVEL getal opdracht\n"
-"\n"
-"In de tweede vorm van de opdracht moeten tekenreeks1 en tekenreeks2 tussen\n"
-"dubbele aanhalingsteken staan. De vergelijking is niet gevoelig voor het\n"
-"onderscheid tussen hoofd- en kleine letters.\n"
 
 #: cmd.rc:101
 msgid ""
@@ -2705,20 +2496,14 @@ msgid ""
 "The command will prompt you for the new volume label for the given drive.\n"
 "You can display the disk volume label with the VOL command.\n"
 msgstr ""
-"LABEL wordt gebruikt om een schijflabel te wijzigen.\n"
-"\n"
-"Syntax: LABEL [schijf:]\n"
-"De opdracht vraagt u om een nieuw label in te tikken voor de opgegeven "
-"schijf.\n"
-"U kunt het label van een schijf tonen met behulp van de VOL opdracht.\n"
 
 #: cmd.rc:104
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
-msgstr "MD <naam> is de korte versie van MKDIR. Het maakt een map aan.\n"
+msgstr ""
 
 #: cmd.rc:105
 msgid "MKDIR <name> creates a subdirectory.\n"
-msgstr "MKDIR <naam> maakt een map aan\n"
+msgstr ""
 
 #: cmd.rc:112
 msgid ""
@@ -2730,14 +2515,6 @@ msgid ""
 "\n"
 "MOVE fails if the old and new locations are on different DOS drive letters.\n"
 msgstr ""
-"MOVE verplaatst een bestand of map naar een andere plek binnen het\n"
-"bestandssysteem.\n"
-"\n"
-"Als het om een map gaat dan worden alle bestanden en mappen\n"
-"daaronder ook verplaatst.\n"
-"\n"
-"MOVE werkt niet als de oude en nieuwe locaties zich op verschillende\n"
-"DOS-schijven bevinden.\n"
 
 #: cmd.rc:123
 msgid ""
@@ -2751,15 +2528,6 @@ msgid ""
 "variable, for example:\n"
 "PATH %PATH%;c:\\temp\n"
 msgstr ""
-"PATH toon of wijzigt het zoekpad van cmd.\n"
-"\n"
-"De opdracht PATH toont het huidige zoekpad (de beginwaarde wordt uit\n"
-"het register gehaald). Om het zoekpad te wijzigen laat\n"
-"u de PATH opdracht volgen door de nieuwe waarde.\n"
-"\n"
-"Het is ook mogelijk om het zoekpad te wijzigen met behulp van de PATH\n"
-"omgevingsvariabele, bij voorbeeld:\n"
-"PATH %PATH%;c:\\temp\n"
 
 #: cmd.rc:129
 msgid ""
@@ -2768,10 +2536,6 @@ msgid ""
 "batch files to allow the user to read the output of a previous command\n"
 "before it scrolls off the screen.\n"
 msgstr ""
-"PAUSE toont een bericht op het scherm: 'Toets Enter om door te gaan'\n"
-"en wacht totdat de gebruiker de Enter-toets indrukt. Dit is vooral handig\n"
-"in batchbestanden om de gebruiker in staat te stellen om de uitvoer van\n"
-"een voorafgaande opdracht te bekijken, voordat het van het scherm schuift.\n"
 
 #: cmd.rc:150
 msgid ""
@@ -2795,53 +2559,28 @@ msgid ""
 "The prompt can also be changed by altering the PROMPT environment variable,\n"
 "so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'\n"
 msgstr ""
-"PROMPT wijzigt de prompt van de opdrachtregel.\n"
-"\n"
-"De tekenreeks volgend op de PROMPT opdracht (en de spatie direct daarna)\n"
-"verschijnt vooraan op de regel als cmd wacht op invoer.\n"
-"\n"
-"De volgende tekenreeksen hebben een speciale betekenis:\n"
-"\n"
-"$$    dollar-teken             $_    nieuwe regel      $b    pijp-teken (|)\n"
-"$d    huidige datum            $e    escape            $g    groter-dan-"
-"teken (>)\n"
-"$l    kleiner-dan-teken (<)    $n    huidige schijf    $p    huidige map\n"
-"$q    is-gelijk-teken (=)      $t    huidige tijd      $v    cmd versie\n"
-"\n"
-"Merk op dat het uitvoeren van de PROMPT opdracht zonder een tekenreeks de\n"
-"prompt terugzet naar de standaardinstelling. Dat is de huidige map\n"
-"(inclusief schijfaanduiding) gevolgd een groter-dan-teken (>).\n"
-"(dat staat gelijk aan de opdracht: PROMPT $p$g).\n"
-"\n"
-"De prompt kan ook gewijzigd worden via de PROMPT omgevingsvariabele,\n"
-"dus de opdracht 'SET PROMPT=tekenreeks' heeft hetzelfde effect als 'PROMPT\n"
-"tekenreeks'\n"
 
 #: cmd.rc:154
 msgid ""
 "A command line beginning REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
 msgstr ""
-"Een opdrachtregel die begint met REM (gevold door een spatie) wordt niet\n"
-"uitgevoerd, en kan daarom worden gebruikt als een commentaar-regel in een\n"
-"batchbestand.\n"
 
 #: cmd.rc:157
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr ""
-"REN <bestandsnaam> is de korte versie van RENAME. Het hernoemt een bestand.\n"
 
 #: cmd.rc:158
 msgid "RENAME <filename> renames a file\n"
-msgstr "RENAME hernoemt een bestand.\n"
+msgstr ""
 
 #: cmd.rc:160
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
-msgstr "RD <mapnaam> is de korte versie van RMDIR. Het verwijdert een map.\n"
+msgstr ""
 
 #: cmd.rc:161
 msgid "RMDIR <dir> deletes a subdirectory.\n"
-msgstr "RMDIR <mapnaam> verwijdert een map.\n"
+msgstr ""
 
 #: cmd.rc:179
 msgid ""
@@ -2862,23 +2601,6 @@ msgid ""
 "many more values than in a native Win32 implementation. Note that it is\n"
 "not possible to affect the operating system environment from within cmd.\n"
 msgstr ""
-"SET toont of wijzigt omgevingsvariabelen van cmd.\n"
-"\n"
-"SET zonder parameters toont alle omgevingsvariabelen.\n"
-"\n"
-"De syntax voor het maken of wijzigen van een omgevingsvariabele is:\n"
-"\n"
-"SET <variable>=<waarde>\n"
-"\n"
-"waarbij <variable> en <waarde> uit tekenreeksen bestaan. Er mogen geen\n"
-"spaties voor het is-gelijk-teken staan, noch mogen er in de variabelenaam\n"
-"spaties voorkomen.\n"
-"\n"
-"Onder Wine worden de omgevingsvariabelen van het onderliggende\n"
-"besturingssysteem opgenomen in de Win32 omgeving. Er zullen daarom\n"
-"doorgaans veel meer variabelen in voorkomen dan in een oorspronkelijke\n"
-"Win32 implementatie. Merk op dat het niet mogelijk is om de omgevings-\n"
-"variabelen van het onderliggende besturingssysteem te wijzigen vanuit cmd.\n"
 
 #: cmd.rc:184
 msgid ""
@@ -2886,26 +2608,20 @@ msgid ""
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
 "if called from the command line.\n"
 msgstr ""
-"SHIFT wordt gebruikt in een batchbestand om een parameter te verwijderen\n"
-"van het begin van de lijst. Dus de tweede parameter wordt dan de eerste,\n"
-"enzovoort. Deze opdracht heeft geen effect als hij wordt aangeroepen vanaf\n"
-"de opdrachtregel.\n"
 
 #: cmd.rc:186
 msgid "TIME sets or shows the current system time.\n"
-msgstr "TIME wijzigt of toont de systeemtijd.\n"
+msgstr ""
 
 #: cmd.rc:188
 msgid "Sets the window title for the cmd window, syntax TITLE [string]\n"
-msgstr "Wijzigt de naam van het cmd-venster, syntax: TITLE [tekenreeks]\n"
+msgstr ""
 
 #: cmd.rc:192
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
 msgstr ""
-"TYPE <bestandsnaam> kopieert <bestandsnaam> naar het uitvoerapparaat.\n"
-"Er wordt niet gecontroleerd of het bestand leesbare tekst bevat.\n"
 
 #: cmd.rc:201
 msgid ""
@@ -2917,44 +2633,30 @@ msgid ""
 "\n"
 "The verify flag has no function in Wine.\n"
 msgstr ""
-"VERIFY wordt gebruikt om de VERIFY-schakelaar aan of uit te zetten of\n"
-"om hem te testen. Geldige aanroepen zijn:\n"
-"\n"
-"VERIFY ON\tZet de schakelaar aan\n"
-"VERIFY OFF\tZet de schakelaar uit\n"
-"VERIFY\t\tToont ON of OFF naar gelang de stand.\n"
-"\n"
-"De verify-schakelaar heeft geen functie binnen Wine.\n"
 
 #: cmd.rc:204
 msgid "VER displays the version of cmd you are running\n"
-msgstr "VER toont de versie van cmd die u draait\n"
+msgstr ""
 
 #: cmd.rc:206
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr "VOL toont het label van een schijf\n"
+msgstr ""
 
 #: cmd.rc:209
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
-"PUSHD <mapnaam> bewaart de huidige map op een\n"
-"stapel, en verandert dan de huidige map naar de opgegeven naam.\n"
 
 #: cmd.rc:212
 msgid ""
 "POPD changes current directory to the last one saved with\n"
 "PUSHD.\n"
 msgstr ""
-"POPD verandert de huidige map naar de meest recente die\n"
-"op de stapel werd gezet met PUSHD.\n"
 
 #: cmd.rc:214
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr ""
-"MORE toont de uitvoer van programma's of herleidde invoer\n"
-"per bladzijde.\n"
 
 #: cmd.rc:218
 msgid ""
@@ -2962,18 +2664,12 @@ msgid ""
 "presses an allowed Key from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
-"CHOICE laat een tekst zien en wacht tot de Gebruiker\n"
-"op een toegestane Toets uit een selecteerbare lijst drukt.\n"
-"CHOICE wordt hoofdzakelijk gebruikt om een selectie uit een menu te maken\n"
-"in een batch bestand.\n"
 
 #: cmd.rc:222
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
 msgstr ""
-"EXIT beëindigt de lopende sessie en keert terug\n"
-"naar het besturingssysteem of de schil van waaruit cmd werd gestart.\n"
 
 #: cmd.rc:253
 msgid ""
@@ -3009,150 +2705,120 @@ msgid ""
 "\n"
 "Enter HELP <command> for further information on any of the above commands\n"
 msgstr ""
-"CMD's ingebouwde opdrachten zijn:\n"
-"ATTRIB\t\tToon of wijzig DOS bestandsattributen\n"
-"CALL\t\tRoep een batchbestand aan vanuit een ander bestand\n"
-"CD (CHDIR)\tWijzig de huidige map\n"
-"CLS\t\tWis het scherm\n"
-"COPY\t\tKopieer een bestand\n"
-"CTTY\t\tWijzig het invoer-/uitvoerapparaat\n"
-"DATE\t\tToon of wijzig de systeemdatum\n"
-"DEL (ERASE)\tVerwijder een bestand of een verzameling van bestanden\n"
-"DIR\t\tToon de inhoud van een map\n"
-"ECHO\t\tKopieer tekst direct naar het uitvoerapparaat\n"
-"HELP\t\tToon een korte uitleg over een onderwerp\n"
-"MD (MKDIR)\tMaak een map\n"
-"MORE\t\tDisplay output in pages\n"
-"MOVE\t\tVerplaats een bestand, een verzameling bestanden of een map\n"
-"PATH\t\tWijzig of toon het zoekpad\n"
-"PROMPT\t\tWijzig de prompt\n"
-"REN (RENAME)\tHernoem een bestand\n"
-"RD (RMDIR)\tVerwijder een map\n"
-"SET\t\tWijzig of toon de omgevingsvariabelen\n"
-"TIME\t\tWijzig of toon de systeemtijd\n"
-"TITLE\t\tWijzig de vensternaam van de CMD-sessie\n"
-"TYPE\t\tToon de inhoud van een tekstbestand\n"
-"VER\t\tToon de versie van CMD\n"
-"VOL\t\tToon het label van een schijf\n"
-"EXIT\t\tSluit CMD af\n"
-"\n"
-"type HELP <opdracht> voor meer informatie over bovengenoemde opdrachten\n"
 
 #: cmd.rc:255
 msgid "Are you sure"
-msgstr "Bent u zeker"
+msgstr ""
 
 #: cmd.rc:256 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
-msgstr "J"
+msgstr ""
 
 #: cmd.rc:257 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
-msgstr "N"
+msgstr ""
 
 #: cmd.rc:258
 msgid "File association missing for extension %s\n"
-msgstr "Bestandsassociatie ontbreekt voor extensie %s\n"
+msgstr ""
 
 #: cmd.rc:259
 msgid "No open command associated with file type '%s'\n"
-msgstr "Geen open commando verbonden met bestand type '%s'\n"
+msgstr ""
 
 #: cmd.rc:260
 msgid "Overwrite %s"
-msgstr "Overschrijf %s"
+msgstr ""
 
 #: cmd.rc:261
 msgid "More..."
-msgstr "Meer..."
+msgstr ""
 
 #: cmd.rc:262
 msgid "Line in Batch processing possibly truncated. Using:\n"
-msgstr "Regel in Batch proces mogelijk afgebroken. We gebruiken:\n"
+msgstr ""
 
 #: cmd.rc:263
+#, fuzzy
 msgid ""
 "Not Yet Implemented\n"
 "\n"
-msgstr ""
-"Nog niet geïmplementeerd\n"
-"\n"
+msgstr "Na implementa"
 
 #: cmd.rc:264
 msgid "Argument missing\n"
-msgstr "Argument ontbreekt\n"
+msgstr ""
 
 #: cmd.rc:265
 msgid "Syntax error\n"
-msgstr "Fout in de syntax\n"
+msgstr ""
 
 #: cmd.rc:266
 msgid "%s : File Not Found\n"
-msgstr "%s : Bestand Niet Gevonden\n"
+msgstr ""
 
 #: cmd.rc:267
 msgid "No help available for %s\n"
-msgstr "Geen help beschikbaar voor %s\n"
+msgstr ""
 
 #: cmd.rc:268
 msgid "Target to GOTO not found\n"
-msgstr "Doel opgegeven bij GOTO niet gevonden\n"
+msgstr ""
 
 #: cmd.rc:269
 msgid "Current Date is %s\n"
-msgstr "Huidige Datum is %s\n"
+msgstr ""
 
 #: cmd.rc:270
 msgid "Current Time is %s\n"
-msgstr "Huidige Tijd is %s\n"
+msgstr ""
 
 #: cmd.rc:271
 msgid "Enter new date: "
-msgstr "Voer de nieuwe datum in: "
+msgstr ""
 
 #: cmd.rc:272
 msgid "Enter new time: "
-msgstr "voer de nieuwe tijd in: "
+msgstr ""
 
 #: cmd.rc:273
 msgid "Environment variable %s not defined\n"
-msgstr "Omgevingsvariable %s niet gedefinieerd\n"
+msgstr ""
 
 #: cmd.rc:274 xcopy.rc:38
 msgid "Failed to open '%s'\n"
-msgstr "Openen van '%s' is mislukt\n"
+msgstr ""
 
 #: cmd.rc:275
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr ""
-"Onmogelijk om een batch label aan te roepen van buiten een batch script\n"
 
 #: cmd.rc:276 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
-msgstr "A"
+msgstr ""
 
 #: cmd.rc:277
 msgid "%s, Delete"
-msgstr "%s, Verwijderen"
+msgstr ""
 
 #: cmd.rc:278
 msgid "Echo is %s\n"
-msgstr "Echo staat %s\n"
+msgstr ""
 
 #: cmd.rc:279
 msgid "Verify is %s\n"
-msgstr "Verify staat %s\n"
+msgstr ""
 
 #: cmd.rc:280
 msgid "Verify must be ON or OFF\n"
-msgstr "Verify moet ON of OFF zijn\n"
+msgstr ""
 
 #: cmd.rc:281
 msgid "Parameter error\n"
-msgstr "Parameter onjuist\n"
+msgstr ""
 
 #: cmd.rc:282
 msgid ""
@@ -3160,113 +2826,109 @@ msgid ""
 "Volume Serial Number is %04x-%04x\n"
 "\n"
 msgstr ""
-"Schijf in drive %c is %s\n"
-"Het serienummer van de schijf is %04x-%04x\n"
-"\n"
 
 #: cmd.rc:283
 msgid "Volume label (11 characters, ENTER for none)?"
-msgstr "Schijf naam (11 karakters, ENTER voor geen)?"
+msgstr ""
 
 #: cmd.rc:284
 msgid "PATH not found\n"
-msgstr "PATH niet gevonden\n"
+msgstr ""
 
 #: cmd.rc:285
 msgid "Press Return key to continue: "
-msgstr "Druk op de Return-toets om verder te gaan: "
+msgstr ""
 
 #: cmd.rc:286
 msgid "Wine Command Prompt"
-msgstr "Wine Command Prompt"
+msgstr ""
 
 #: cmd.rc:287
 msgid ""
 "CMD Version %s\n"
 "\n"
 msgstr ""
-"CMD Versie %s\n"
-"\n"
 
 #: cmd.rc:288
 msgid "More? "
-msgstr "Meer? "
+msgstr ""
 
 #: cmd.rc:289
 msgid "The input line is too long.\n"
-msgstr "De invoerregel is te lang.\n"
+msgstr ""
 
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
-msgstr "Gebruik: ipconfig [ /? | /all ]\n"
+msgstr ""
 
 #: ipconfig.rc:28
 msgid "Error: Unknown or invalid command line parameters specified\n"
-msgstr "Fout: Onbekende of ongeldige commandoregelparameters gespecificeerd\n"
+msgstr ""
 
 #: ipconfig.rc:29
 msgid "%s adapter %s\n"
-msgstr "%s adapter %s\n"
+msgstr ""
 
 #: ipconfig.rc:30
 msgid "Ethernet"
-msgstr "Ethernet"
+msgstr ""
 
 #: ipconfig.rc:31
 msgid "Unknown"
-msgstr "Onbekend"
+msgstr ""
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
-msgstr "Verbindings-specifiek DNS-achtervoegsel"
+msgstr ""
 
 #: ipconfig.rc:33
 msgid "IP address"
-msgstr "IP-adres"
+msgstr ""
 
 #: ipconfig.rc:34
 msgid "Hostname"
-msgstr "Hostnaam"
+msgstr ""
 
 #: ipconfig.rc:35
 msgid "Node type"
-msgstr "Node-type"
+msgstr ""
 
 #: ipconfig.rc:36
 msgid "Broadcast"
-msgstr "Broadcast"
+msgstr ""
 
 #: ipconfig.rc:37
 msgid "Peer-to-peer"
-msgstr "Peer-to-peer"
+msgstr ""
 
 #: ipconfig.rc:38
 msgid "Mixed"
-msgstr "Gemixt"
+msgstr ""
 
 #: ipconfig.rc:39
 msgid "Hybrid"
-msgstr "Hybride"
+msgstr ""
 
 #: ipconfig.rc:40
 msgid "IP routing enabled"
-msgstr "IP-routing geactiveerd"
+msgstr ""
 
 #: ipconfig.rc:41
 msgid "Description"
-msgstr "Beschrijving"
+msgstr ""
 
 #: ipconfig.rc:42
 msgid "Physical address"
-msgstr "Fysiek adres"
+msgstr ""
 
 #: ipconfig.rc:43
 msgid "DHCP enabled"
-msgstr "DHCP geactiveerd"
+msgstr ""
 
 #: ipconfig.rc:46
+#, fuzzy
 msgid "Default gateway"
-msgstr "Standaard gateway"
+msgstr "Default"
 
 #: net.rc:27
 msgid ""
@@ -3274,57 +2936,54 @@ msgid ""
 "\n"
 "NET [ HELP | START | STOP | USE ]\n"
 msgstr ""
-"Gebruik van dit commando is:\n"
-"\n"
-"NET [ HELP | START | STOP | USE ]\n"
 
 #: net.rc:28
 msgid "Specify service name to start.\n"
-msgstr "Specificeer de te starten service naam.\n"
+msgstr ""
 
 #: net.rc:29
 msgid "Specify service name to stop.\n"
-msgstr "Specificeer de te stoppen service naam.\n"
+msgstr ""
 
 #: net.rc:30
 msgid "Stopping dependent service: %s\n"
-msgstr "Stoppen van afhankelijke service: %s\n"
+msgstr ""
 
 #: net.rc:31
 msgid "Could not stop service %s\n"
-msgstr "Kon service %s niet stoppen\n"
+msgstr ""
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
-msgstr "Kon geen handle krijgen naar de service controle manager.\n"
+msgstr ""
 
 #: net.rc:33
 msgid "Could not get handle to service.\n"
-msgstr "Kon geen handle krijgen naar de service.\n"
+msgstr ""
 
 #: net.rc:34
 msgid "The %s service is starting.\n"
-msgstr "De %s service is aan het starten.\n"
+msgstr ""
 
 #: net.rc:35
 msgid "The %s service was started successfully.\n"
-msgstr "De %s service was succesvol gestart.\n"
+msgstr ""
 
 #: net.rc:36
 msgid "The %s service failed to start.\n"
-msgstr "De %s service start is mislukt.\n"
+msgstr ""
 
 #: net.rc:37
 msgid "The %s service is stopping.\n"
-msgstr "De %s service is aan het stoppen.\n"
+msgstr ""
 
 #: net.rc:38
 msgid "The %s service was stopped successfully.\n"
-msgstr "De %s service was succesvol gestopt.\n"
+msgstr ""
 
 #: net.rc:39
 msgid "The %s service failed to stop.\n"
-msgstr "De %s service wilde niet stoppen.\n"
+msgstr ""
 
 #: net.rc:40
 msgid ""
@@ -3337,18 +2996,10 @@ msgid ""
 "   Commands available are:\n"
 "   NET HELP    NET START    NET STOP    NET USE\n"
 msgstr ""
-"Gebruik van dit commando is:\n"
-"\n"
-"NET HELP commando\n"
-"    -of-\n"
-"NET commando /HELP\n"
-"\n"
-"   Beschikbare commando's zijn:\n"
-"   NET HELP    NET START    NET STOP    NET USE\n"
 
 #: net.rc:42
 msgid "There are no entries in the list.\n"
-msgstr "De opgegeven lijst is leeg.\n"
+msgstr ""
 
 #: net.rc:43
 msgid ""
@@ -3356,170 +3007,163 @@ msgid ""
 "Status  Local   Remote\n"
 "---------------------------------------------------------------\n"
 msgstr ""
-"\n"
-"Status    Lokaal  Op afstand\n"
-"---------------------------------------------------------------\n"
 
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
-msgstr "%s      %S      %S      Open resources: %lu\n"
+msgstr ""
 
 #: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winhlp32.rc:28
 msgid "&File"
-msgstr "&Bestand"
+msgstr "&Datoteca"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
-msgstr "&Nieuw"
+msgstr ""
 
 #: notepad.rc:28
 msgid "&Open...\tCtrl+O"
-msgstr "&Openen...\tCtrl+O"
+msgstr ""
 
 #: notepad.rc:29
 msgid "&Save\tCtrl+S"
-msgstr "O&pslaan\tCtrl+S"
+msgstr ""
 
 #: notepad.rc:30
 msgid "Save &as..."
-msgstr "Ops&laan als..."
+msgstr ""
 
 #: notepad.rc:32
 msgid "&Print...\tCtrl+P"
-msgstr "Af&drukken...\tCtrl+P"
+msgstr ""
 
 #: notepad.rc:33
+#, fuzzy
 msgid "Page Se&tup..."
-msgstr "Pa&gina-instellingen..."
+msgstr "&Installaziun dal stampader..."
 
 #: notepad.rc:34
+#, fuzzy
 msgid "P&rinter Setup..."
-msgstr "Printerins&tellingen..."
+msgstr "&Installaziun dal stampader..."
 
 #: notepad.rc:36 view.rc:31 winhlp32.rc:34
 msgid "E&xit"
-msgstr "&Afsluiten"
+msgstr "&Finir"
 
 #: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36
-#, fuzzy
 msgid "&Edit"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Be&werken\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Bewerken"
+msgstr "&Lavurar"
 
 #: notepad.rc:39
 msgid "&Undo\tCtrl+Z"
-msgstr "&Ongedaan maken\tCtrl+Z"
+msgstr ""
 
 #: notepad.rc:41
 msgid "Cu&t\tCtrl+X"
-msgstr "K&nippen\tCtrl+X"
+msgstr ""
 
 #: notepad.rc:42
 msgid "&Copy\tCtrl+C"
-msgstr "&Kopiëren\tCtrl+C"
+msgstr ""
 
 #: notepad.rc:43
 msgid "&Paste\tCtrl+V"
-msgstr "&Plakken\tCtrl+V"
+msgstr ""
 
 #: notepad.rc:44
 msgid "&Delete\tDel"
-msgstr "&Verwijderen\tDel"
+msgstr ""
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
-msgstr "&Alles selecteren\tCtrl+A"
+msgstr ""
 
 #: notepad.rc:47
 msgid "&Time/Date\tF5"
-msgstr "Tijd/&datum\tF5"
+msgstr ""
 
 #: notepad.rc:49
 msgid "&Wrap long lines"
-msgstr "A&utomatische terugloop"
+msgstr ""
 
 #: notepad.rc:53
 msgid "&Search...\tCtrl+F"
-msgstr "&Zoeken...\tCtrl+Z"
+msgstr ""
 
 #: notepad.rc:54
 msgid "&Search next\tF3"
-msgstr "V&olgende zoeken\tF3"
+msgstr ""
 
 #: notepad.rc:55
 msgid "&Replace...\tCtrl+H"
-msgstr "&Vervangen...\tCtrl+H"
+msgstr ""
 
 #: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winhlp32.rc:60
 msgid "&Help"
-msgstr "&Help"
+msgstr "&Ag�d"
 
 #: notepad.rc:59 progman.rc:54
 msgid "&Search..."
-msgstr "&Zoeken..."
+msgstr ""
 
 #: notepad.rc:60
+#, fuzzy
 msgid "&Help on help"
-msgstr "H&ulp bij Help"
+msgstr "&Douvrar l'ag�d"
 
 #: notepad.rc:62
+#, fuzzy
 msgid "&About Notepad"
-msgstr "&Over Notepad"
+msgstr "I&nfuormaziuns"
 
 #: notepad.rc:68
 msgid "&f"
-msgstr "&f"
+msgstr ""
 
 #: notepad.rc:69
 msgid "Page &p"
-msgstr "Pagina &p"
+msgstr ""
 
 #: notepad.rc:71
 msgid "Notepad"
-msgstr "Kladblok"
+msgstr ""
 
 #: notepad.rc:72 progman.rc:66 winhlp32.rc:94
 msgid "ERROR"
-msgstr "FOUT"
+msgstr "SBAGL"
 
 #: notepad.rc:73 progman.rc:67 winhlp32.rc:95
 msgid "WARNING"
-msgstr "WAARSCHUWING"
+msgstr "ATTENZIUN"
 
 #: notepad.rc:74 progman.rc:68 winhlp32.rc:96
 msgid "Information"
-msgstr "Informatie"
+msgstr "INFUORMAZIUN"
 
 #: notepad.rc:76
 msgid "Untitled"
-msgstr "Naamloos"
+msgstr ""
 
 #: notepad.rc:78 progman.rc:84 winhlp32.rc:102
 msgid "All files (*.*)"
-msgstr "Alle bestanden (*.*)"
+msgstr "Tuot las datotecas (*.*)"
 
 #: notepad.rc:79
+#, fuzzy
 msgid "Text files (*.txt)"
-msgstr "Tekstbestanden (*.txt)"
+msgstr "Tuot las datotecas (*.*)"
 
 #: notepad.rc:82
 msgid ""
 "File '%s' is too large for notepad.\n"
 "Please use a different editor."
 msgstr ""
-"Het bestand '%s' is te groot voor Kladblok.\n"
-" Gebruik een andere editor."
 
 #: notepad.rc:84
 msgid ""
 "You didn't enter any text.\n"
 "Please type something and try again"
 msgstr ""
-"U heeft geen tekst ingevoerd. \n"
-"Type uw tekst en probeer het nogmaals"
 
 #: notepad.rc:86
 msgid ""
@@ -3527,10 +3171,6 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"Het bestand '%s'\n"
-"bestaat niet\n"
-"\n"
-" Wilt u een nieuw bestand maken?"
 
 #: notepad.rc:88
 msgid ""
@@ -3538,31 +3178,24 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"Het bestand '%s'\n"
-"is gewijzigd\n"
-"\n"
-" Wilt u de wijzigingen opslaan?"
 
 #: notepad.rc:89
 msgid "'%s' could not be found."
-msgstr "'%s' kan niet worden gevonden."
+msgstr ""
 
 #: notepad.rc:91
 msgid ""
 "Not enough memory to complete this task.\n"
 "Close one or more applications to increase the amount of free memory."
 msgstr ""
-"Onvoldoende geheugen. \n"
-"Sluit een of meer applicaties om de hoeveelheid\n"
-"beschikbaar geheugen te vergroten."
 
 #: notepad.rc:93
 msgid "Unicode (UTF-16)"
-msgstr "Unicode (UTF-16)"
+msgstr ""
 
 #: notepad.rc:94
 msgid "Unicode (UTF-16 big-endian)"
-msgstr "Unicode (UTF-16 big-endian)"
+msgstr ""
 
 #: notepad.rc:101
 msgid ""
@@ -3573,162 +3206,156 @@ msgid ""
 "one of the Unicode options in the Encoding drop down list.\n"
 "Continue?"
 msgstr ""
-"%s\n"
-"Dit bestand bevat Unicode tekens die verloren zullen gaan\n"
-"als dit bestand wordt opgeslagen in de %s codering.\n"
-"Klik op Annuleren om deze tekens te behouden, en selecteer\n"
-"daarna een van de Unicode-opties in de coderingskeuzelijst.\n"
-"Wilt u doorgaan?"
 
 #: progman.rc:30
 msgid "&New..."
-msgstr "&Nieuw..."
+msgstr ""
 
 #: progman.rc:31
 msgid "O&pen\tEnter"
-msgstr "&Openen\tEnter"
+msgstr ""
 
 #: progman.rc:32
 msgid "&Move...\tF7"
-msgstr "Ve&rplaatsen...\tF7"
+msgstr ""
 
 #: progman.rc:33
+#, fuzzy
 msgid "&Copy...\tF8"
-msgstr "&Kopiëren...\tF8"
+msgstr "Capchar"
 
 #: progman.rc:34
 msgid "&Delete\tEntf"
-msgstr "&Verwijderen\tEntf"
+msgstr ""
 
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
-msgstr "&Eigenschappen...\tAlt+Enter"
+msgstr ""
 
 #: progman.rc:37
 msgid "&Execute..."
-msgstr "&Uitvoeren..."
+msgstr ""
 
 #: progman.rc:39
 msgid "E&xit Windows..."
-msgstr "&Afsluiten..."
+msgstr ""
 
 #: progman.rc:41 taskmgr.rc:41 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
-msgstr "&Opties"
+msgstr "&Options"
 
 #: progman.rc:42
 msgid "&Arrange automatically"
-msgstr "&Automatisch rangschikken"
+msgstr ""
 
 #: progman.rc:43
 msgid "&Minimize on run"
-msgstr "&Geminimaliseerd uitvoeren"
+msgstr ""
 
 #: progman.rc:44
 msgid "&Save settings on exit"
-msgstr "&Instellingen opslaan bij afsluiten"
+msgstr ""
 
 #: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
 msgid "&Windows"
-msgstr "&Venster"
+msgstr ""
 
 #: progman.rc:47
 msgid "&Overlapped\tShift+F5"
-msgstr "&Trapsgewijs\tShift+F5"
+msgstr ""
 
 #: progman.rc:48
 msgid "&Side by side\tShift+F4"
-msgstr "&Naast elkaar\tShift+F4"
+msgstr ""
 
 #: progman.rc:49
 msgid "&Arrange Icons"
-msgstr "&Pictogrammen schikken"
+msgstr ""
 
 #: progman.rc:56
+#, fuzzy
 msgid "&Help on Help"
-msgstr "&Hulp bij Help"
+msgstr "&Douvrar l'ag�d"
 
 #: progman.rc:57
 msgid "&Tutorial"
-msgstr "&Instructie"
+msgstr ""
 
 #: progman.rc:59
+#, fuzzy
 msgid "&About Wine"
-msgstr "&Over Wine"
+msgstr "I&nfuormaziuns"
 
 #: progman.rc:65
 msgid "Program Manager"
-msgstr "Programmabeheer"
+msgstr ""
 
 #: progman.rc:69
 msgid "Delete"
-msgstr "Verwijderen"
+msgstr ""
 
 #: progman.rc:70
 msgid "Delete group `%s' ?"
-msgstr "Wilt u groep `%s' verwijderen?"
+msgstr ""
 
 #: progman.rc:71
 msgid "Delete program `%s' ?"
-msgstr "Wilt u programma `%s' verwijderen?"
+msgstr ""
 
 #: progman.rc:72 winhlp32.rc:97
 msgid "Not implemented"
-msgstr "Niet geïmplementeerd"
+msgstr "Na implementa"
 
 #: progman.rc:73
+#, fuzzy
 msgid "Error reading `%s'."
-msgstr "Fout bij het lezen van `%s'."
+msgstr "Sbagl cun leger la datoteca d'ag�d `%s'"
 
 #: progman.rc:74
 msgid "Error writing `%s'."
-msgstr "Fout bij het schrijven van `%s'."
+msgstr ""
 
 #: progman.rc:77
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
 msgstr ""
-"Het groepsbestand `%s' kan niet worden geopend.\n"
-"Wilt u het nogmaals proberen?"
 
 #: progman.rc:78
 msgid "Out of memory."
-msgstr "Geen geheugen beschikbaar."
+msgstr ""
 
 #: progman.rc:79
 msgid "Help not available."
-msgstr "Help is niet beschikbaar."
+msgstr ""
 
 #: progman.rc:80
 msgid "Unknown feature in %s"
-msgstr "Onbekende eigenschap in %s"
+msgstr ""
 
 #: progman.rc:81
 msgid "File `%s' exists. Not overwritten."
-msgstr "Het bestand `%s' bestaat reeds. Het is niet overschreven."
+msgstr ""
 
 #: progman.rc:82
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr ""
-"Groep opslaan als `%s om het overschrijven van originele bestanden te "
-"voorkomen."
 
 #: progman.rc:85
 msgid "Programs"
-msgstr "Programma's"
+msgstr ""
 
 #: progman.rc:86
 msgid "Libraries (*.dll)"
-msgstr "Programmabibliotheekbestanden (*.dll)"
+msgstr ""
 
 #: progman.rc:87
 msgid "Icon files"
-msgstr "Pictogrambestanden"
+msgstr ""
 
 #: progman.rc:88
 msgid "Icons (*.ico)"
-msgstr "Pictogrammen (*.ico)"
+msgstr ""
 
 #: reg.rc:27
 msgid ""
@@ -3737,49 +3364,41 @@ msgid ""
 "REG [ ADD | DELETE | QUERY ]\n"
 "REG command /?\n"
 msgstr ""
-"Gebruik van dit commando is:\n"
-"\n"
-"REG [ ADD | DELETE | QUERY ]\n"
-"REG commando /?\n"
 
 #: reg.rc:28
 msgid ""
 "REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
 "f]\n"
 msgstr ""
-"REG ADD sleutel_naam [/v waarde_naam | /ve] [/t type] [/s scheidingsteken] [/"
-"d data] [/f]\n"
 
 #: reg.rc:29
 msgid "REG DELETE key_name [/v value_name | /ve | /va] [/f]\n"
-msgstr "REG DELETE sleutel_naam [/v waarde_naam | /ve | /va] [/f]\n"
+msgstr ""
 
 #: reg.rc:30
 msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
-msgstr "REG QUERY sleutel_naam [/v waarde_naam | /ve] [/s]\n"
+msgstr ""
 
 #: reg.rc:31
 msgid "The operation completed successfully\n"
-msgstr "De bewerking is succesvol voltooid\n"
+msgstr ""
 
 #: reg.rc:32
 msgid "Error: Invalid key name\n"
-msgstr "Fout: Foutieve sleutelnaam\n"
+msgstr ""
 
 #: reg.rc:33
 msgid "Error: Invalid command line parameters\n"
-msgstr "Fout: Foutieve commandoregel-parameters\n"
+msgstr ""
 
 #: reg.rc:34
 msgid "Error: Unable to add keys to remote machine\n"
-msgstr "Fout: Sleutels konden niet toegevoegd worden aan de remote machine\n"
+msgstr ""
 
 #: reg.rc:35
 msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
 msgstr ""
-"Fout: Het systeem kon de gespecificeerde registersleutel of waarde niet "
-"vinden\n"
 
 #: start.rc:45
 msgid ""
@@ -3804,29 +3423,6 @@ msgid ""
 "This is free software, and you are welcome to redistribute it\n"
 "under certain conditions; run 'start /L' for details.\n"
 msgstr ""
-"Start een programma, of open een document met het programma dat normaal voor "
-"bestanden met die extensie gebruikt wordt.\n"
-"Gebruik:\n"
-"start [opties] programma_naam [...]\n"
-"start [opties] document_naam\n"
-"\n"
-"Opties:\n"
-"/M[inimized] Start het programma geminimaliseerd.\n"
-"/MAX[imized] Start het programma gemaximaliseerd.\n"
-"/R[estored]  Start het programma normaal (noch geminimaliseerd noch "
-"gemaximaliseerd).\n"
-"/W[ait]      Wacht totdat het gestarte programma is beëindigd, eindig dan "
-"met de exit code van dat programma.\n"
-"/Unix        Gebruik een Unix bestandsnaam en start het bestand als de "
-"Windows verkenner.\n"
-"/ProgIDOpen  Open een document met behulp van het volgende progID.\n"
-"/L           Laat de gebruikerslicentie zien.\n"
-"\n"
-"start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
-"Start wordt u ABSOLUUT ZONDER GARANTIE aangeboden; draai dit programma met "
-"de /L optie voor details.\n"
-"Dit is vrije software, en u wordt uitgenodigd om het verder te verspreiden\n"
-"onder bepaalde voorwaarden; draai 'start /L' voor details.\n"
 
 #: start.rc:63
 msgid ""
@@ -3847,22 +3443,6 @@ msgid ""
 "\n"
 "See the COPYING.LIB file for license information.\n"
 msgstr ""
-"start.exe versie 0.2 Copyright (C) 2003, Dan Kegel\n"
-"This program is free software; you can redistribute it and/or\n"
-"modify it under the terms of the GNU Lesser Public License\n"
-"as published by the Free Software Foundation; either version 2.1\n"
-"of the License, or (at your option) any later version.\n"
-"\n"
-"This program is distributed in the hope that it will be useful,\n"
-"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-"GNU Lesser Public License for more details.\n"
-"\n"
-"You should have received a copy of the GNU Lesser Public License\n"
-"along with this program; if not, write to the Free Software\n"
-"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n"
-"\n"
-"Bekijk het COPYING.LIB bestand voor informatie over de licentie.\n"
 
 #: start.rc:65
 msgid ""
@@ -3870,554 +3450,549 @@ msgid ""
 "specified file.\n"
 "ShellExecuteEx failed"
 msgstr ""
-"Programma kan niet worden gestart, of er is geen programma verbonden met het "
-"opgegeven bestand.\n"
-"ShellExecuteEx is mislukt"
 
 #: start.rc:67
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr ""
-"Kon de opgegeven Unix bestandsnaam niet omzetten naar een DOS bestandsnaam."
 
 #: taskkill.rc:27
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
-msgstr "Gebruik: taskkill [/?] [/f] [/im ProcesNaam | /pid ProcesID]\n"
+msgstr ""
 
 #: taskkill.rc:28
 msgid "Error: Unknown or invalid command line option specified.\n"
-msgstr "Fout: Onbekende of ongeldige commandoregeloptie gespecificeerd.\n"
+msgstr ""
 
 #: taskkill.rc:29
 msgid "Error: Invalid command line parameter specified.\n"
-msgstr "Fout: Ongeldige commandoregelparameter gespecificeerd.\n"
+msgstr ""
 
 #: taskkill.rc:30
 msgid "Error: One of options /im or /pid must be specified.\n"
-msgstr "Fout: Eén van de opties /im of /pid moet zijn gespecificeerd.\n"
+msgstr ""
 
 #: taskkill.rc:31
 msgid "Error: Option %s expects a command line parameter.\n"
-msgstr "Fout: Optie %s verwacht een commandoregelparameter.\n"
+msgstr ""
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
-msgstr "Fout: Opties /im en /pid spreken elkaar tegen.\n"
+msgstr ""
 
 #: taskkill.rc:33
 msgid "Close message sent to top-level windows of process with PID %u.\n"
 msgstr ""
-"Bericht om te sluiten verzonden naar top-level vensters van het proces met "
-"PID %u.\n"
 
 #: taskkill.rc:34
 msgid ""
 "Close message sent to top-level windows of process \"%s\" with PID %u.\n"
 msgstr ""
-"Bericht om te sluiten verzonden naar top-level vensters van het proces \"%s"
-"\" met PID %u.\n"
 
 #: taskkill.rc:35
 msgid "Process with PID %u was forcibly terminated.\n"
-msgstr "Proces met PID %u is geforceerd beëindigd.\n"
+msgstr ""
 
 #: taskkill.rc:36
 msgid "Process \"%s\" with PID %u was forcibly terminated.\n"
-msgstr "Proces \"%s\" met PID %u is geforceerd beëindigd.\n"
+msgstr ""
 
 #: taskkill.rc:37
 msgid "Error: Could not find process \"%s\".\n"
-msgstr "Fout: Kon proces \"%s\" niet vinden.\n"
+msgstr ""
 
 #: taskkill.rc:38
 msgid "Error: Unable to enumerate the process list.\n"
-msgstr "Fout: Kon de proceslijst niet opsommen.\n"
+msgstr ""
 
 #: taskkill.rc:39
 msgid "Error: Unable to terminate process \"%s\".\n"
-msgstr "Fout: Kon het proces \"%s\" niet beëindigen.\n"
+msgstr ""
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
-msgstr "Fout: Zelf-beëindiging van een proces is niet toegestaan.\n"
+msgstr ""
 
 #: taskmgr.rc:37 taskmgr.rc:109
 msgid "&New Task (Run...)"
-msgstr "&Nieuwe taak (uitvoeren...)"
+msgstr ""
 
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
-msgstr "B&eëindig Taakbeheer"
+msgstr ""
 
 #: taskmgr.rc:43 taskmgr.rc:142
+#, fuzzy
 msgid "&Always On Top"
-msgstr "&Altijd op de voorgrond"
+msgstr "Ad�na da&vant"
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
-msgstr "&Minimaliseren bij de start"
+msgstr ""
 
 #: taskmgr.rc:47
 msgid "&Hide When Minimized"
-msgstr "&Verbergen, indien geminimaliseerd"
+msgstr ""
 
 #: taskmgr.rc:49 taskmgr.rc:258
 msgid "&Show 16-bit tasks"
-msgstr "&Toon 16-bit taken"
+msgstr ""
 
 #: taskmgr.rc:52
 msgid "&View"
-msgstr "&Beeld"
+msgstr ""
 
 #: taskmgr.rc:54
 msgid "&Refresh Now"
-msgstr "Ververs &nu"
+msgstr ""
 
 #: taskmgr.rc:55
 msgid "&Update Speed"
-msgstr "&Verversingstempo"
+msgstr ""
 
 #: taskmgr.rc:57 taskmgr.rc:159
 msgid "&High"
-msgstr "&Hoog"
+msgstr ""
 
 #: taskmgr.rc:58 taskmgr.rc:163
+#, fuzzy
 msgid "&Normal"
-msgstr "&Normaal"
+msgstr "Normal"
 
 #: taskmgr.rc:60 taskmgr.rc:167
 msgid "&Low"
-msgstr "&Laag"
+msgstr ""
 
 #: taskmgr.rc:61
 msgid "&Paused"
-msgstr "&Pauze"
+msgstr ""
 
 #: taskmgr.rc:65 taskmgr.rc:111 taskmgr.rc:253
 msgid "Lar&ge Icons"
-msgstr "&Grote pictogrammen"
+msgstr ""
 
 #: taskmgr.rc:66 taskmgr.rc:112 taskmgr.rc:254
 msgid "S&mall Icons"
-msgstr "&Kleine pictogrammen"
+msgstr ""
 
 #: taskmgr.rc:67 taskmgr.rc:113 taskmgr.rc:255
 msgid "&Details"
-msgstr "&Details"
+msgstr ""
 
 #: taskmgr.rc:68 taskmgr.rc:257
 msgid "&Select Columns..."
-msgstr "&Selecteer rijen..."
+msgstr ""
 
 #: taskmgr.rc:69 taskmgr.rc:259
+#, fuzzy
 msgid "&CPU History"
-msgstr "&CPU geschiedenis"
+msgstr "History"
 
 #: taskmgr.rc:71 taskmgr.rc:260
 msgid "&One Graph, All CPUs"
-msgstr "&Eén grafiek, alle CPU's"
+msgstr ""
 
 #: taskmgr.rc:73 taskmgr.rc:261
 msgid "One Graph &Per CPU"
-msgstr "Eén grafiek &per CPU"
+msgstr ""
 
 #: taskmgr.rc:76 taskmgr.rc:262
 msgid "&Show Kernel Times"
-msgstr "&Toon kerneltijden"
+msgstr ""
 
 #: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124
 msgid "Tile &Horizontally"
-msgstr "&Boven elkaar"
+msgstr ""
 
 #: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
 msgid "Tile &Vertically"
-msgstr "&Naast elkaar"
+msgstr ""
 
 #: taskmgr.rc:82 taskmgr.rc:99 taskmgr.rc:126
 msgid "&Minimize"
-msgstr "&Minimaliseren"
+msgstr ""
 
 #: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
 msgid "Ma&ximize"
-msgstr "Ma&xmimaliseren"
+msgstr ""
 
 #: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
 msgid "&Cascade"
-msgstr "&Achter elkaar"
+msgstr ""
 
 #: taskmgr.rc:85 taskmgr.rc:102 taskmgr.rc:122
 msgid "&Bring To Front"
-msgstr "Naar de &voorgrond halen"
+msgstr ""
 
 #: taskmgr.rc:89
 msgid "Task Manager &Help Topics"
-msgstr "Taakbeheer &help-onderwerpen"
+msgstr ""
 
 #: taskmgr.rc:91
 msgid "&About Task Manager"
-msgstr "&Over Taakbeheer"
+msgstr ""
 
 #: taskmgr.rc:107 taskmgr.rc:119 taskmgr.rc:137 taskmgr.rc:148
 msgid "DUMMY"
-msgstr "DUMMY"
+msgstr ""
 
 #: taskmgr.rc:121
 msgid "&Switch To"
-msgstr "&Activeren"
+msgstr ""
 
 #: taskmgr.rc:130
 msgid "&End Task"
-msgstr "Taak b&eëindigen"
+msgstr ""
 
 #: taskmgr.rc:131
 msgid "&Go To Process"
-msgstr "&Ga naar proces"
+msgstr ""
 
 #: taskmgr.rc:139
 msgid "&Restore"
-msgstr "&Herstellen"
+msgstr ""
 
 #: taskmgr.rc:140
 msgid "&Close"
-msgstr "&Sluiten"
+msgstr ""
 
 #: taskmgr.rc:150
 msgid "&End Process"
-msgstr "Proces b&eëindigen"
+msgstr ""
 
 #: taskmgr.rc:151
 msgid "End Process &Tree"
-msgstr "&Beëindig procesboom"
+msgstr ""
 
 #: taskmgr.rc:153 winedbg.rc:29
 msgid "&Debug"
-msgstr "&Debuggen"
+msgstr ""
 
 #: taskmgr.rc:155
 msgid "Set &Priority"
-msgstr "&Prioriteit zetten"
+msgstr ""
 
 #: taskmgr.rc:157
 msgid "&Realtime"
-msgstr "&Realtime"
+msgstr ""
 
 #: taskmgr.rc:161
+#, fuzzy
 msgid "&AboveNormal"
-msgstr "H&oger dan normaal"
+msgstr "Normal"
 
 #: taskmgr.rc:165
+#, fuzzy
 msgid "&BelowNormal"
-msgstr "&Lager dan normaal"
+msgstr "Normal"
 
 #: taskmgr.rc:170
 msgid "Set &Affinity..."
-msgstr "&Affiniteit instellen..."
+msgstr ""
 
 #: taskmgr.rc:171
 msgid "Edit Debug &Channels..."
-msgstr "Debug&kanalen instellen..."
+msgstr ""
 
 #: taskmgr.rc:181 taskmgr.rc:182
 msgid "Task Manager"
-msgstr "Taakbeheer"
+msgstr ""
 
 #: taskmgr.rc:183
 msgid "Create New Task"
-msgstr "Start nieuwe taak"
+msgstr ""
 
 #: taskmgr.rc:188
 msgid "Runs a new program"
-msgstr "Start een nieuw programma"
+msgstr ""
 
 #: taskmgr.rc:189
 msgid "Task Manager remains in front of all other windows unless minimized"
 msgstr ""
-"Taakbeheer blijft altijd met alle vensters op de voorgrond, totdat hij "
-"geminimaliseerd wordt"
 
 #: taskmgr.rc:191
 msgid "Task Manager is minimized when a SwitchTo operation is performed"
 msgstr ""
-"Taakbeheer minimaliseert zich als een 'Wissel naar' operatie uitgevoerd wordt"
 
 #: taskmgr.rc:192
 msgid "Hide the Task Manager when it is minimized"
-msgstr "Verberg Taakbeheer als hij geminimaliseerd is"
+msgstr ""
 
 #: taskmgr.rc:193
 msgid "Force Task Manager to update now, regardless of Update Speed setting"
-msgstr "Forceer een verversing, onafhankelijk van het verversingstempo"
+msgstr ""
 
 #: taskmgr.rc:194
 msgid "Displays tasks by using large icons"
-msgstr "Toon taken met grote pictogrammen"
+msgstr ""
 
 #: taskmgr.rc:195
 msgid "Displays tasks by using small icons"
-msgstr "Toon taken met kleine pictogrammen"
+msgstr ""
 
 #: taskmgr.rc:196
 msgid "Displays information about each task"
-msgstr "Toon gedetailleerde informatie over iedere taak"
+msgstr ""
 
 #: taskmgr.rc:197
 msgid "Updates the display twice per second"
-msgstr "Ververs de weergave tweemaal per seconde"
+msgstr ""
 
 #: taskmgr.rc:198
 msgid "Updates the display every two seconds"
-msgstr "Ververs de weergave elke 2 seconden"
+msgstr ""
 
 #: taskmgr.rc:199
 msgid "Updates the display every four seconds"
-msgstr "Ververs de weergave elke 4 seconden"
+msgstr ""
 
 #: taskmgr.rc:204
 msgid "Does not automatically update"
-msgstr "Niet automatisch verversen"
+msgstr ""
 
 #: taskmgr.rc:206
 msgid "Tiles the windows horizontally on the desktop"
-msgstr "Plaats de vensters boven elkaar op de desktop"
+msgstr ""
 
 #: taskmgr.rc:207
 msgid "Tiles the windows vertically on the desktop"
-msgstr "Plaats de vensters naast elkaar op de desktop"
+msgstr ""
 
 #: taskmgr.rc:208
 msgid "Minimizes the windows"
-msgstr "Minimaliseer de vensters"
+msgstr ""
 
 #: taskmgr.rc:209
 msgid "Maximizes the windows"
-msgstr "Maximaliseer de vensters"
+msgstr ""
 
 #: taskmgr.rc:210
 msgid "Cascades the windows diagonally on the desktop"
-msgstr "Plaats de vensters achter elkaar op de desktop"
+msgstr ""
 
 #: taskmgr.rc:211
 msgid "Brings the window front, but does not switch to it"
-msgstr "Haal het venster naar de voorgrond, maar wissel er niet naartoe"
+msgstr ""
 
 #: taskmgr.rc:212
 msgid "Displays Task Manager help topics"
-msgstr "Toon de help-onderwerpen van de Taakbeheer"
+msgstr ""
 
 #: taskmgr.rc:213
 msgid "Displays program information, version number, and copyright"
-msgstr "Toon programma-informatie, versienummer en copyright"
+msgstr ""
 
 #: taskmgr.rc:214
 msgid "Exits the Task Manager application"
-msgstr "Beëindig Taakbeheer"
+msgstr ""
 
 #: taskmgr.rc:216
 msgid "Shows 16-bit tasks under the associated ntvdm.exe"
-msgstr "Toon 16-bit taken onder de bijbehorende ntvdm.exe"
+msgstr ""
 
 #: taskmgr.rc:217
 msgid "Select which columns will be visible on the Process page"
-msgstr "Selecteer de kolommen die op de procespagina zichtbaar moeten zijn"
+msgstr ""
 
 #: taskmgr.rc:218
 msgid "Displays kernel time in the performance graphs"
-msgstr "Toon de kerneltijden in prestatiegrafieken"
+msgstr ""
 
 #: taskmgr.rc:220
 msgid "A single history graph shows total CPU usage"
-msgstr "Een enkele geschiedenis-grafiek toont het totale CPU-gebruik"
+msgstr ""
 
 #: taskmgr.rc:221
 msgid "Each CPU has its own history graph"
-msgstr "Elke CPU heeft zijn eigen geschiedenis-grafiek"
+msgstr ""
 
 #: taskmgr.rc:223
 msgid "Brings a task to the foreground, switch focus to that task"
-msgstr "Brengt de taak naar de voorgrond en wisselt focus naar de taak"
+msgstr ""
 
 #: taskmgr.rc:228
 msgid "Tells the selected tasks to close"
-msgstr "Zegt de geselecteerde taken zich te beëindigen"
+msgstr ""
 
 #: taskmgr.rc:229
 msgid "Switches the focus to the process of the selected task"
-msgstr "Verandert de focus naar het proces van de geselecteerde taak"
+msgstr ""
 
 #: taskmgr.rc:230
 msgid "Restores the Task Manager from its hidden state"
-msgstr "Herstel Taakbeheer vanuit zijn verborgen status"
+msgstr ""
 
 #: taskmgr.rc:231
 msgid "Removes the process from the system"
-msgstr "Verwijder het proces van het systeem"
+msgstr ""
 
 #: taskmgr.rc:233
 msgid "Removes this process and all descendants from the system"
-msgstr "Verwijder het proces en al zijn kindprocessen van het systeem"
+msgstr ""
 
 #: taskmgr.rc:234
 msgid "Attaches the debugger to this process"
-msgstr "Verbind de debugger met dit proces"
+msgstr ""
 
 #: taskmgr.rc:236
 msgid "Controls which processors the process will be allowed to run on"
-msgstr "Bepaal op welke processoren een proces uitgevoerd mag worden"
+msgstr ""
 
 #: taskmgr.rc:238
 msgid "Sets process to the REALTIME priority class"
-msgstr "Zet het proces in de REALTIME-prioriteitsklasse"
+msgstr ""
 
 #: taskmgr.rc:239
 msgid "Sets process to the HIGH priority class"
-msgstr "Zet het proces in de HOGE-prioriteitsklasse"
+msgstr ""
 
 #: taskmgr.rc:241
 msgid "Sets process to the ABOVE NORMAL priority class"
-msgstr "Zet het proces in de HOGER DAN NORMAAL-prioriteitsklasse"
+msgstr ""
 
 #: taskmgr.rc:243
 msgid "Sets process to the NORMAL priority class"
-msgstr "Zet het proces in de NORMAAL-prioriteitsklasse"
+msgstr ""
 
 #: taskmgr.rc:245
 msgid "Sets process to the BELOW NORMAL priority class"
-msgstr "Zet het proces in de LAGER DAN NORMAAL-prioriteitsklasse"
+msgstr ""
 
 #: taskmgr.rc:246
 msgid "Sets process to the LOW priority class"
-msgstr "Zet het proces in de LAGE-prioriteitsklasse"
+msgstr ""
 
 #: taskmgr.rc:248
 msgid "Controls Debug Channels"
-msgstr "Beheer van debugkanalen"
+msgstr ""
 
 #: taskmgr.rc:263
+#, fuzzy
 msgid "Applications"
-msgstr "Toepassingen"
+msgstr "&Options"
 
 #: taskmgr.rc:264
 msgid "Processes"
-msgstr "Processen"
+msgstr ""
 
 #: taskmgr.rc:265
 msgid "Performance"
-msgstr "Prestaties"
+msgstr ""
 
 #: taskmgr.rc:266
 msgid "CPU Usage: %3d%%"
-msgstr "CPU-gebruik: %3d%%"
+msgstr ""
 
 #: taskmgr.rc:267
 msgid "Processes: %d"
-msgstr "Processen: %d"
+msgstr ""
 
 #: taskmgr.rc:268
 msgid "Mem Usage: %dK / %dK"
-msgstr "Geheugengebruik: %dK / %dK"
+msgstr ""
 
 #: taskmgr.rc:273
 msgid "Image Name"
-msgstr "Procesnaam"
+msgstr ""
 
 #: taskmgr.rc:274
 msgid "PID"
-msgstr "Proces-ID"
+msgstr ""
 
 #: taskmgr.rc:275
 msgid "CPU"
-msgstr "CPU-gebruik"
+msgstr ""
 
 #: taskmgr.rc:276
 msgid "CPU Time"
-msgstr "CPU-tijd"
+msgstr ""
 
 #: taskmgr.rc:277
 msgid "Mem Usage"
-msgstr "Geheugengebruik"
+msgstr ""
 
 #: taskmgr.rc:278
 msgid "Mem Delta"
-msgstr "Delta in geheugengebruik"
+msgstr ""
 
 #: taskmgr.rc:279
 msgid "Peak Mem Usage"
-msgstr "Maximale geheugengebruik"
+msgstr ""
 
 #: taskmgr.rc:280
 msgid "Page Faults"
-msgstr "Page Faults"
+msgstr ""
 
 #: taskmgr.rc:281
 msgid "USER Objects"
-msgstr "USER-objecten"
+msgstr ""
 
 #: taskmgr.rc:282
 msgid "I/O Reads"
-msgstr "I/O (Lezen)"
+msgstr ""
 
 #: taskmgr.rc:283
 msgid "I/O Read Bytes"
-msgstr "I/O - Bytes (Lezen)"
+msgstr ""
 
 #: taskmgr.rc:284
 msgid "Session ID"
-msgstr "Sessie-ID"
+msgstr ""
 
 #: taskmgr.rc:285
 msgid "Username"
-msgstr "Gebruikersnaam"
+msgstr ""
 
 #: taskmgr.rc:286
 msgid "PF Delta"
-msgstr "Delta van de Page Faults"
+msgstr ""
 
 #: taskmgr.rc:287
 msgid "VM Size"
-msgstr "VM-grootte"
+msgstr ""
 
 #: taskmgr.rc:288
 msgid "Paged Pool"
-msgstr "Paged Pool"
+msgstr ""
 
 #: taskmgr.rc:289
 msgid "NP Pool"
-msgstr "NP Pool"
+msgstr ""
 
 #: taskmgr.rc:290
 msgid "Base Pri"
-msgstr "Basisprioriteit"
+msgstr ""
 
 #: taskmgr.rc:291
 msgid "Handles"
-msgstr "Aantal handles"
+msgstr ""
 
 #: taskmgr.rc:292
 msgid "Threads"
-msgstr "Aantal threads"
+msgstr ""
 
 #: taskmgr.rc:293
 msgid "GDI Objects"
-msgstr "GDI-objecten"
+msgstr ""
 
 #: taskmgr.rc:294
 msgid "I/O Writes"
-msgstr "I/O (Schrijven)"
+msgstr ""
 
 #: taskmgr.rc:295
 msgid "I/O Write Bytes"
-msgstr "I/O - Bytes (Schrijven)"
+msgstr ""
 
 #: taskmgr.rc:296
 msgid "I/O Other"
-msgstr "I/O (Anders)"
+msgstr ""
 
 #: taskmgr.rc:297
 msgid "I/O Other Bytes"
-msgstr "I/O - Bytes (Anders)"
+msgstr ""
 
 #: taskmgr.rc:302
 msgid "Task Manager Warning"
-msgstr "Taakbeheer Waarschuwing"
+msgstr ""
 
 #: taskmgr.rc:305
 msgid ""
@@ -4425,13 +4000,10 @@ msgid ""
 "cause undesired results including system instability. Are you\n"
 "sure you want to change the priority class?"
 msgstr ""
-"WAARSCHUWING: Het veranderen van de prioriteitsklasse van dit\n"
-"proces kan ongewenste gevolgen hebben zoals instabiliteit van\n"
-"het systeem. Weet u zeker dat u de prioriteitsklasse wilt veranderen?"
 
 #: taskmgr.rc:306
 msgid "Unable to Change Priority"
-msgstr "Prioriteit kan niet worden veranderd"
+msgstr ""
 
 #: taskmgr.rc:311
 msgid ""
@@ -4441,83 +4013,76 @@ msgid ""
 "data before it is terminated. Are you sure you want to\n"
 "terminate the process?"
 msgstr ""
-"WAARSCHUWING: Het stoppen van een proces kan ongewenste\n"
-"gevolgen hebben zoals verlies van gegevens en instabiliteit\n"
-"van het systeem. Het proces zal geen mogelijkheid worden gegeven\n"
-"om zijn gegevens of status op te slaan. Weet u zeker dat u dit proces\n"
-"wilt stoppen?"
 
 #: taskmgr.rc:312
 msgid "Unable to Terminate Process"
-msgstr "Proces kan niet worden gestopt"
+msgstr ""
 
 #: taskmgr.rc:314
 msgid ""
 "WARNING: Debugging this process may result in loss of data.\n"
 "Are you sure you wish to attach the debugger?"
 msgstr ""
-"WAARSCHUWING: Het debuggen van dit proces kan verlies van data tot\n"
-"gevolg hebben. Weet u zeker dat u de debugger wilt koppelen?"
 
 #: taskmgr.rc:315
 msgid "Unable to Debug Process"
-msgstr "Proces kan niet worden gedebugged"
+msgstr ""
 
 #: taskmgr.rc:316
 msgid "The process must have affinity with at least one processor"
-msgstr "Het proces moet aan tenminste 1 processor worden gekoppeld"
+msgstr ""
 
 #: taskmgr.rc:317
 msgid "Invalid Option"
-msgstr "Ongeldige optie"
+msgstr ""
 
 #: taskmgr.rc:318
 msgid "Unable to Access or Set Process Affinity"
-msgstr "Procesaffiniteit kan niet worden gelezen of ingesteld"
+msgstr ""
 
 #: taskmgr.rc:323
 msgid "System Idle Process"
-msgstr "Niet actief proces"
+msgstr ""
 
 #: taskmgr.rc:324
 msgid "Not Responding"
-msgstr "Reageert niet"
+msgstr ""
 
 #: taskmgr.rc:325
 msgid "Running"
-msgstr "Geactiveerd"
+msgstr ""
 
 #: taskmgr.rc:326
 msgid "Task"
-msgstr "Taak"
+msgstr ""
 
 #: taskmgr.rc:327
 msgid "Status"
-msgstr "Status"
+msgstr ""
 
 #: taskmgr.rc:328
 msgid "Debug Channels"
-msgstr "Debugkanalen"
+msgstr ""
 
 #: taskmgr.rc:329
 msgid "Fixme"
-msgstr "Fixme"
+msgstr ""
 
 #: taskmgr.rc:330
 msgid "Err"
-msgstr "Err"
+msgstr ""
 
 #: taskmgr.rc:331
 msgid "Warn"
-msgstr "Warn"
+msgstr ""
 
 #: taskmgr.rc:332
 msgid "Trace"
-msgstr "Trace"
+msgstr ""
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"
-msgstr "Programma verwijderen"
+msgstr ""
 
 #: uninstaller.rc:27
 msgid ""
@@ -4525,105 +4090,101 @@ msgid ""
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry ?"
 msgstr ""
-"Het uitvoeren van de verwijderopdracht '%s' is mislukt, wellicht vanwege een "
-"ontbrekend bestand.\n"
-"Wilt u de verwijdersleutel verwijderen uit het register?"
 
 #: view.rc:33
 msgid "&Pan"
-msgstr "&Verplaatsen"
+msgstr ""
 
 #: view.rc:35
 msgid "&Scale to Window"
-msgstr "&Schalen naar venstergrootte"
+msgstr ""
 
 #: view.rc:37
 msgid "&Left"
-msgstr "&Links"
+msgstr ""
 
 #: view.rc:38
 msgid "&Right"
-msgstr "&Rechts"
+msgstr ""
 
 #: view.rc:39
 msgid "&Up"
-msgstr "&Omhoog"
+msgstr ""
 
 #: view.rc:40
 msgid "&Down"
-msgstr "O&mlaag"
+msgstr ""
 
 #: view.rc:46
 msgid "Regular Metafile Viewer"
-msgstr "Algemene Metafile weergave"
+msgstr ""
 
 #: wineconsole.rc:26
+#, fuzzy
 msgid "Set &Defaults"
-msgstr "&Standaardinstellingen"
+msgstr "Default"
 
 #: wineconsole.rc:28
 msgid "&Mark"
-msgstr "&Markeren"
+msgstr ""
 
 #: wineconsole.rc:31
 msgid "&Select all"
-msgstr "&Alles selecteren"
+msgstr ""
 
 #: wineconsole.rc:32
 msgid "Sc&roll"
-msgstr "Sc&rollen"
+msgstr ""
 
 #: wineconsole.rc:33
 msgid "S&earch"
-msgstr "&Zoeken"
+msgstr ""
 
 #: wineconsole.rc:36
 msgid "Setup - Default settings"
-msgstr "Configuratie - standaard instelllingen"
+msgstr ""
 
 #: wineconsole.rc:37
 msgid "Setup - Current settings"
-msgstr "Configuratie - huidige instellingen"
+msgstr ""
 
 #: wineconsole.rc:38
 msgid "Configuration error"
-msgstr "Configuratiefout"
+msgstr ""
 
 #: wineconsole.rc:39
 msgid "Screen buffer size must be greater or equal to the window's one"
-msgstr "De schermbuffer moet groter dan of gelijk zijn aan de vensterbuffer"
+msgstr ""
 
 #: wineconsole.rc:34
 msgid "Each character is %ld pixels wide on %ld pixels high"
-msgstr "Elk karakter is %ld pixels breed en %ld pixels hoog"
+msgstr ""
 
 #: wineconsole.rc:35
 msgid "This is a test"
-msgstr "Dit is een test"
+msgstr ""
 
 #: wineconsole.rc:41
 msgid "wineconsole: Couldn't parse event id\n"
-msgstr "wineconsole: Fout in verwerken gebeurtenis id\n"
+msgstr ""
 
 #: wineconsole.rc:42
 msgid "wineconsole: Invalid backend\n"
-msgstr "wineconsole: Onjuiste backend\n"
+msgstr ""
 
 #: wineconsole.rc:43
 msgid "wineconsole: Unrecognized command line option\n"
-msgstr "wineconsole: Niet herkende opdrachtregel optie\n"
+msgstr ""
 
 #: wineconsole.rc:44
 msgid "Starts a program in a Wine console\n"
-msgstr "Dit start een programma in een Wine console-omgeving\n"
+msgstr ""
 
 #: wineconsole.rc:45
 msgid ""
 "wineconsole: Starting program %s failed.\n"
 "The command is invalid.\n"
 msgstr ""
-"wineconsole: Starten van programma %s mislukt.\n"
-"Het commando is onjuist.\n"
 
 #: wineconsole.rc:48
 msgid ""
@@ -4633,11 +4194,6 @@ msgid ""
 "\n"
 "Options:\n"
 msgstr ""
-"\n"
-"Gebruik:\n"
-"  wineconsole [opties] <commando>\n"
-"\n"
-"Opties:\n"
 
 #: wineconsole.rc:49
 msgid ""
@@ -4646,17 +4202,10 @@ msgid ""
 "                            try to setup the current terminal as a Wine "
 "console\n"
 msgstr ""
-"  --backend={user|curses}  Kiezen voor user zal een nieuw window doen "
-"verschijnen,\n"
-"                            curses zal proberen de huidige terminal om te "
-"zetten\n"
-"                            in een Wine console\n"
 
 #: wineconsole.rc:51
 msgid "  <command>                 The Wine program to launch in the console\n"
 msgstr ""
-"  <commando>                Het Wine programma dat zal starten in de Wine "
-"console\n"
 
 #: wineconsole.rc:52
 msgid ""
@@ -4666,211 +4215,210 @@ msgid ""
 "Starts the Wine command prompt in a Wine console\n"
 "\n"
 msgstr ""
-"\n"
-"Voorbeeld:\n"
-"  wineconsole cmd\n"
-"Start de Wine command prompt in een Wine console\n"
-"\n"
 
 #: winedbg.rc:35
 msgid "Wine program crash"
-msgstr "Wine programma crash"
+msgstr ""
 
 #: winedbg.rc:36
 msgid "Internal errors - invalid parameters received"
-msgstr "Interne fouten - foutieve parameters ontvangen"
+msgstr ""
 
 #: winedbg.rc:37
 msgid "(unidentified)"
-msgstr "(onbekend)"
+msgstr ""
 
 #: winemine.rc:35
 msgid "&New\tF2"
-msgstr "&Nieuw spel\tF2"
+msgstr ""
 
 #: winemine.rc:37
 msgid "&Mark Question"
-msgstr "&Markeer vraag"
+msgstr ""
 
 #: winemine.rc:39
 msgid "&Beginner"
-msgstr "&Beginner"
+msgstr ""
 
 #: winemine.rc:40
 msgid "&Advanced"
-msgstr "&Gevorderde"
+msgstr ""
 
 #: winemine.rc:41
 msgid "&Expert"
-msgstr "&Expert"
+msgstr ""
 
 #: winemine.rc:42
 msgid "&Custom..."
-msgstr "Aange&past spel"
+msgstr ""
 
 #: winemine.rc:44
+#, fuzzy
 msgid "E&xit\tAlt+X"
-msgstr "&Afsluiten\tAlt+X"
+msgstr "&Finir"
 
 #: winemine.rc:46
 msgid "&Info"
-msgstr "&Info"
+msgstr ""
 
 #: winemine.rc:47
 msgid "&Fastest Times..."
-msgstr "&Snelste tijden..."
+msgstr ""
 
 #: winemine.rc:48
 msgid "&About"
-msgstr "&Over WineMine"
+msgstr ""
 
 #: winemine.rc:27
 msgid "WineMine"
-msgstr "WineMine"
+msgstr ""
 
 #: winemine.rc:28
 msgid "Nobody"
-msgstr "Niemand"
+msgstr ""
 
 #: winemine.rc:29
 msgid "Copyright 2000 Joshua Thielen"
-msgstr "Copyright 2000 Joshua Thielen"
+msgstr ""
 
 #: winhlp32.rc:32
 msgid "Printer &setup..."
-msgstr "&Pagina-instellingen..."
+msgstr "&Installaziun dal stampader..."
 
 #: winhlp32.rc:37
 msgid "&Copy..."
-msgstr "&Kopiëren..."
+msgstr "Capchar"
 
 #: winhlp32.rc:39
 msgid "&Annotate..."
-msgstr "&Annoteren..."
+msgstr "&Annotaziun..."
 
 #: winhlp32.rc:41
 msgid "&Bookmark"
-msgstr "&Favorieten"
+msgstr "&Marca"
 
 #: winhlp32.rc:42
 msgid "&Define..."
-msgstr "&Aanmaken..."
+msgstr "&Definir..."
 
 #: winhlp32.rc:45 winhlp32.rc:81
 msgid "Help always visible"
-msgstr "Help altijd zichtbaar"
+msgstr "Help always visible"
 
 #: winhlp32.rc:48 winhlp32.rc:84
 msgid "Visible"
-msgstr "Zichtbaar"
+msgstr "Visible"
 
 #: winhlp32.rc:49 winhlp32.rc:85
 msgid "Non visible"
-msgstr "Niet zichtbaar"
+msgstr "Non visible"
 
 #: winhlp32.rc:51
 msgid "History"
-msgstr "Geschiedenis"
+msgstr "History"
 
 #: winhlp32.rc:52 winhlp32.rc:75
 msgid "Fonts"
-msgstr "Lettertype"
+msgstr "Fonts"
 
 #: winhlp32.rc:54 winhlp32.rc:77
 msgid "Small"
-msgstr "Klein"
+msgstr "Small"
 
 #: winhlp32.rc:55 winhlp32.rc:78
 msgid "Normal"
-msgstr "Standaard"
+msgstr "Normal"
 
 #: winhlp32.rc:56 winhlp32.rc:79
 msgid "Large"
-msgstr "Groot"
+msgstr "Large"
 
 #: winhlp32.rc:58 winhlp32.rc:87
 msgid "Use system colors"
-msgstr "Gebruik systeemkleuren"
+msgstr "Use system colors"
 
 #: winhlp32.rc:61
 msgid "Help &on help"
-msgstr "Hulp &bij help"
+msgstr "&Douvrar l'ag�d"
 
 #: winhlp32.rc:62
 msgid "Always on &top"
-msgstr "Altijd &zichtbaar"
+msgstr "Ad�na da&vant"
 
 #: winhlp32.rc:64
 msgid "&About Wine Help"
-msgstr "&Info..."
+msgstr "I&nfuormaziuns"
 
 #: winhlp32.rc:72
+#, fuzzy
 msgid "Annotation..."
-msgstr "Annotering..."
+msgstr "&Annotaziun..."
 
 #: winhlp32.rc:73
+#, fuzzy
 msgid "Copy"
-msgstr "Kopiëren"
+msgstr "Capchar"
 
 #: winhlp32.rc:74
+#, fuzzy
 msgid "Print..."
-msgstr "Afdrukken..."
+msgstr "&Stampar tema"
 
 #: winhlp32.rc:93
 msgid "Wine Help"
-msgstr "Wine Help"
+msgstr "Wine ag�d"
 
 #: winhlp32.rc:98
 msgid "Error while reading the help file `%s'"
-msgstr "Fout bij het lezen van het helpbestand '%s'"
+msgstr "Sbagl cun leger la datoteca d'ag�d `%s'"
 
 #: winhlp32.rc:100
 msgid "Summary"
-msgstr "&Inhoudsopgave"
+msgstr "Summary"
 
 #: winhlp32.rc:99
 msgid "&Index"
-msgstr "Inde&x"
+msgstr "&Cuntgn�"
 
 #: winhlp32.rc:103
 msgid "Help files (*.hlp)"
-msgstr "Helpbestanden (*.hlp)"
+msgstr "Datotecas d'ag�d (*.hlp)"
 
 #: winhlp32.rc:104
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
-msgstr "Kan '%s' niet openen. Wilt u zelf dit bestand zoeken?"
+msgstr "Cannot find '%s'. Do you want to find this file yourself?"
 
 #: winhlp32.rc:105
 msgid "Cannot find a richedit implementation... Aborting"
-msgstr "Kan geen richedit implementatie vinden... Actie afgebroken"
+msgstr "Cannot find a richedit implementation... Aborting"
 
 #: winhlp32.rc:106
 msgid "Help topics: "
-msgstr "Help-onderwerpen: "
+msgstr ""
 
 #: write.rc:27
 msgid "Starting Wordpad failed"
-msgstr "Starten van Wordpad mislukt"
+msgstr ""
 
 #: xcopy.rc:27
 msgid "Invalid number of parameters - Use xcopy /? for help\n"
-msgstr "Onjuist aantal parameters - Gebruik xcopy /? om hulp te krijgen\n"
+msgstr ""
 
 #: xcopy.rc:28
 msgid "Invalid parameter '%s' -  Use xcopy /? for help\n"
-msgstr "Onjuiste parameter '%s' -  Gebruik xcopy /? om hulp te krijgen\n"
+msgstr ""
 
 #: xcopy.rc:29
 msgid "Press <enter> to begin copying\n"
-msgstr "Druk op <enter> om te beginnen met kopiëren\n"
+msgstr ""
 
 #: xcopy.rc:30
 msgid "%d file(s) would be copied\n"
-msgstr "%d bestand(en) zouden worden gekopieerd\n"
+msgstr ""
 
 #: xcopy.rc:31
 msgid "%d file(s) copied\n"
-msgstr "%d bestand(en) gekopieerd\n"
+msgstr ""
 
 #: xcopy.rc:34
 msgid ""
@@ -4878,35 +4426,32 @@ msgid ""
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
-"Is '%s' een bestand of een map\n"
-"op de bestemming?\n"
-"(B - Bestand, D - Directory)\n"
 
 #: xcopy.rc:35
 msgid "%s? (Yes|No)\n"
-msgstr "%s? (Ja|Nee)\n"
+msgstr ""
 
 #: xcopy.rc:36
 msgid "Overwrite %s? (Yes|No|All)\n"
-msgstr "Overschrijven %s? (Ja|Nee|Alles)\n"
+msgstr ""
 
 #: xcopy.rc:37
 msgid "Copying of '%s' to '%s' failed with r/c %d\n"
-msgstr "Kopiëren van '%s' naar '%s' mislukt met r/c %d\n"
+msgstr ""
 
 #: xcopy.rc:39
 msgid "Failed during reading of '%s'\n"
-msgstr "Fout tijdens lezen van '%s'\n"
+msgstr ""
 
 #: xcopy.rc:43
 msgctxt "File key"
 msgid "F"
-msgstr "B"
+msgstr ""
 
 #: xcopy.rc:44
 msgctxt "Directory key"
 msgid "D"
-msgstr "D"
+msgstr ""
 
 #: xcopy.rc:77
 msgid ""
@@ -4943,36 +4488,3 @@ msgid ""
 "\t\tthan source\n"
 "\n"
 msgstr ""
-"XCOPY - Kopieert bronbestanden of -mappen naar een bestemming\n"
-"\n"
-"Gebruik:\n"
-"XCOPY bron [bestemming] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
-"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
-"\n"
-"Parameters:\n"
-"\n"
-"[/I]  Als bestemming niet bestaat en 2 of meer bestanden worden\n"
-"\tgekopieerd, neem aan dat een map werd bedoeld\n"
-"[/S]  Kopieer mappen en submappen\n"
-"[/E]  Kopieer mappen en submappen, inclusief lege\n"
-"[/Q]  Toon geen namen tijdens kopiëren (stil).\n"
-"[/F]  Toon volledige bron- en bestemmingnamen tijdens kopiëren\n"
-"[/L]  Simuleer de actie, toon de namen die gekopieerd zouden worden\n"
-"[/W]  Wacht op actie van de gebruiker voor het kopiëren begint\n"
-"[/T]  Creëert een lege mapstructuur, maar kopieert geen bestanden\n"
-"[/Y]  Onderdrukt gebruikersactie wanneer bestanden worden overschreven\n"
-"[/-Y] Vraagt gebruikersactie wanneer bestanden worden overschreven\n"
-"[/P]  Vraagt gebruikersactie voor ieder bronbestand voor kopiëren\n"
-"[/N]  Kopieer m.b.v korte bestandsnamen\n"
-"[/U]  Kopieer alleen bestanden die al bestaan op de bestemming\n"
-"[/R]  Overschrijf alle schrijf-beveiligde bestanden\n"
-"[/H]  Inclusief verborgen en systeem bestanden\n"
-"[/C]  Ga door zelfs als er een fout optreed tijdens het kopiëren\n"
-"[/A]  Kopieer alleen bestanden met archiveringsattribuut aan\n"
-"[/M]  Kopieer alleen bestanden met archiveringsattribuut aan, verwijdert\n"
-"\tdit archiveringsattribuut\n"
-"[/D | /D:m-d-y] Kopieer bestanden die nieuw zijn of gewijzigd zijn na de "
-"opgegeven\n"
-"\t\tdatum. Als geen datum wordt gegeven, kopieer alleen als bron nieuwer "
-"is.\n"
-"\n"

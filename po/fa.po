@@ -1235,11 +1235,11 @@ msgstr ""
 msgid "Off"
 msgstr ""
 
-#: shdoclc.rc:36
+#: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
 msgid "Default"
 msgstr ""
 
-#: shdoclc.rc:38
+#: shdoclc.rc:38 winhlp32.rc:101
 msgid "&Back"
 msgstr ""
 
@@ -1427,7 +1427,7 @@ msgstr ""
 msgid "Paste"
 msgstr ""
 
-#: shdoclc.rc:122
+#: shdoclc.rc:122 winhlp32.rc:31
 msgid "&Print"
 msgstr ""
 
@@ -1435,7 +1435,7 @@ msgstr ""
 msgid "Anchor"
 msgstr ""
 
-#: shdoclc.rc:128 view.rc:30
+#: shdoclc.rc:128 view.rc:30 winhlp32.rc:29
 msgid "&Open"
 msgstr ""
 
@@ -3022,7 +3022,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winhlp32.rc:28
 msgid "&File"
 msgstr "&پرونده"
 
@@ -3054,11 +3054,11 @@ msgstr "تنظیمات &صفحه..."
 msgid "P&rinter Setup..."
 msgstr "&تنظیمات چاپ‌گر..."
 
-#: notepad.rc:36 view.rc:31
+#: notepad.rc:36 view.rc:31 winhlp32.rc:34
 msgid "E&xit"
 msgstr "&خروج"
 
-#: notepad.rc:38 wineconsole.rc:25
+#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36
 msgid "&Edit"
 msgstr "&ویرایش"
 
@@ -3106,7 +3106,7 @@ msgstr "جست‌و‌جوی &بعدی\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "جای&‌گزین کردن...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winhlp32.rc:60
 msgid "&Help"
 msgstr "&کمک"
 
@@ -3134,15 +3134,15 @@ msgstr "صفحه &p"
 msgid "Notepad"
 msgstr "نت‌پد"
 
-#: notepad.rc:72 progman.rc:66
+#: notepad.rc:72 progman.rc:66 winhlp32.rc:94
 msgid "ERROR"
 msgstr "خطا"
 
-#: notepad.rc:73 progman.rc:67
+#: notepad.rc:73 progman.rc:67 winhlp32.rc:95
 msgid "WARNING"
 msgstr "اخطار"
 
-#: notepad.rc:74 progman.rc:68
+#: notepad.rc:74 progman.rc:68 winhlp32.rc:96
 msgid "Information"
 msgstr "اطلاعات"
 
@@ -3150,7 +3150,7 @@ msgstr "اطلاعات"
 msgid "Untitled"
 msgstr "نام‌گذاری نشده"
 
-#: notepad.rc:78 progman.rc:84
+#: notepad.rc:78 progman.rc:84 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "همه‌ی پرونده‌ها (*.*)"
 
@@ -3264,7 +3264,7 @@ msgstr ""
 msgid "E&xit Windows..."
 msgstr ""
 
-#: progman.rc:41 taskmgr.rc:41 winemine.rc:34
+#: progman.rc:41 taskmgr.rc:41 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
 msgstr ""
 
@@ -3327,7 +3327,7 @@ msgstr ""
 msgid "Delete program `%s' ?"
 msgstr ""
 
-#: progman.rc:72
+#: progman.rc:72 winhlp32.rc:97
 msgid "Not implemented"
 msgstr ""
 
@@ -4303,6 +4303,124 @@ msgstr ""
 
 #: winemine.rc:29
 msgid "Copyright 2000 Joshua Thielen"
+msgstr ""
+
+#: winhlp32.rc:32
+#, fuzzy
+msgid "Printer &setup..."
+msgstr "&تنظیمات چاپ‌گر..."
+
+#: winhlp32.rc:37
+msgid "&Copy..."
+msgstr ""
+
+#: winhlp32.rc:39
+msgid "&Annotate..."
+msgstr ""
+
+#: winhlp32.rc:41
+msgid "&Bookmark"
+msgstr ""
+
+#: winhlp32.rc:42
+msgid "&Define..."
+msgstr ""
+
+#: winhlp32.rc:45 winhlp32.rc:81
+msgid "Help always visible"
+msgstr ""
+
+#: winhlp32.rc:48 winhlp32.rc:84
+msgid "Visible"
+msgstr ""
+
+#: winhlp32.rc:49 winhlp32.rc:85
+msgid "Non visible"
+msgstr ""
+
+#: winhlp32.rc:51
+msgid "History"
+msgstr ""
+
+#: winhlp32.rc:52 winhlp32.rc:75
+#, fuzzy
+msgid "Fonts"
+msgstr "&قلم‌ها..."
+
+#: winhlp32.rc:54 winhlp32.rc:77
+msgid "Small"
+msgstr ""
+
+#: winhlp32.rc:55 winhlp32.rc:78
+msgid "Normal"
+msgstr ""
+
+#: winhlp32.rc:56 winhlp32.rc:79
+msgid "Large"
+msgstr ""
+
+#: winhlp32.rc:58 winhlp32.rc:87
+msgid "Use system colors"
+msgstr ""
+
+#: winhlp32.rc:61
+#, fuzzy
+msgid "Help &on help"
+msgstr "&کمک برای کمک"
+
+#: winhlp32.rc:62
+msgid "Always on &top"
+msgstr ""
+
+#: winhlp32.rc:64
+#, fuzzy
+msgid "&About Wine Help"
+msgstr "&درباره نت‌پد"
+
+#: winhlp32.rc:72
+msgid "Annotation..."
+msgstr ""
+
+#: winhlp32.rc:73
+msgid "Copy"
+msgstr ""
+
+#: winhlp32.rc:74
+#, fuzzy
+msgid "Print..."
+msgstr "&چاپ‌کردن...\tCtrl+P"
+
+#: winhlp32.rc:93
+msgid "Wine Help"
+msgstr ""
+
+#: winhlp32.rc:98
+msgid "Error while reading the help file `%s'"
+msgstr ""
+
+#: winhlp32.rc:100
+msgid "Summary"
+msgstr ""
+
+#: winhlp32.rc:99
+msgid "&Index"
+msgstr ""
+
+#: winhlp32.rc:103
+#, fuzzy
+msgid "Help files (*.hlp)"
+msgstr "همه‌ی پرونده‌ها (*.*)"
+
+#: winhlp32.rc:104
+msgid "Cannot find '%s'. Do you want to find this file yourself?"
+msgstr ""
+
+#: winhlp32.rc:105
+msgid "Cannot find a richedit implementation... Aborting"
+msgstr ""
+
+#: winhlp32.rc:106
+msgid "Help topics: "
 msgstr ""
 
 #: write.rc:27

@@ -1272,11 +1272,16 @@ msgstr ""
 msgid "Off"
 msgstr ""
 
-#: shdoclc.rc:36
+#: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
+#, fuzzy
 msgid "Default"
-msgstr "Oletus"
+msgstr ""
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"Oletus\n"
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"Default"
 
-#: shdoclc.rc:38
+#: shdoclc.rc:38 winhlp32.rc:101
 msgid "&Back"
 msgstr "&Takaisin"
 
@@ -1463,7 +1468,7 @@ msgstr "1DSivun Valinta"
 msgid "Paste"
 msgstr "L&iitä"
 
-#: shdoclc.rc:122
+#: shdoclc.rc:122 winhlp32.rc:31
 msgid "&Print"
 msgstr "&Tulosta"
 
@@ -1471,9 +1476,14 @@ msgstr "&Tulosta"
 msgid "Anchor"
 msgstr "Ankkuri"
 
-#: shdoclc.rc:128 view.rc:30
+#: shdoclc.rc:128 view.rc:30 winhlp32.rc:29
+#, fuzzy
 msgid "&Open"
-msgstr "&Avaa"
+msgstr ""
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"&Avaa\n"
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"&Avaa..."
 
 #: shdoclc.rc:129
 msgid "Open in &New Window"
@@ -3055,7 +3065,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winhlp32.rc:28
 msgid "&File"
 msgstr "&Tiedosto"
 
@@ -3087,11 +3097,16 @@ msgstr "&Sivun asetukset..."
 msgid "P&rinter Setup..."
 msgstr "&Kirjoittimen asetukset..."
 
-#: notepad.rc:36 view.rc:31
+#: notepad.rc:36 view.rc:31 winhlp32.rc:34
+#, fuzzy
 msgid "E&xit"
-msgstr "&Poistu"
+msgstr ""
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"&Poistu\n"
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"&Lopeta"
 
-#: notepad.rc:38 wineconsole.rc:25
+#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36
 msgid "&Edit"
 msgstr "&Muokkaa"
 
@@ -3139,9 +3154,14 @@ msgstr "Etsi &seuraava\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Korvaa...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winhlp32.rc:60
+#, fuzzy
 msgid "&Help"
-msgstr "&Apua"
+msgstr ""
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"&Apua\n"
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"&Ohje"
 
 #: notepad.rc:59 progman.rc:54
 msgid "&Search..."
@@ -3167,23 +3187,28 @@ msgstr "Sivu &p"
 msgid "Notepad"
 msgstr "Notepad"
 
-#: notepad.rc:72 progman.rc:66
+#: notepad.rc:72 progman.rc:66 winhlp32.rc:94
 msgid "ERROR"
 msgstr "VIRHE"
 
-#: notepad.rc:73 progman.rc:67
+#: notepad.rc:73 progman.rc:67 winhlp32.rc:95
 msgid "WARNING"
 msgstr "VAROITUS"
 
-#: notepad.rc:74 progman.rc:68
+#: notepad.rc:74 progman.rc:68 winhlp32.rc:96
+#, fuzzy
 msgid "Information"
-msgstr "Tiedoitus"
+msgstr ""
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"Tiedoitus\n"
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"Tietoja"
 
 #: notepad.rc:76
 msgid "Untitled"
 msgstr "(otsikoimaton)"
 
-#: notepad.rc:78 progman.rc:84
+#: notepad.rc:78 progman.rc:84 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Kaikki tiedostot (*.*)"
 
@@ -3294,9 +3319,14 @@ msgstr ""
 msgid "E&xit Windows..."
 msgstr ""
 
-#: progman.rc:41 taskmgr.rc:41 winemine.rc:34
+#: progman.rc:41 taskmgr.rc:41 winemine.rc:34 winhlp32.rc:44
+#, fuzzy
 msgid "&Options"
-msgstr "&Valinnat"
+msgstr ""
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"&Valinnat\n"
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"&Options"
 
 #: progman.rc:42
 msgid "&Arrange automatically"
@@ -3357,9 +3387,9 @@ msgstr ""
 msgid "Delete program `%s' ?"
 msgstr ""
 
-#: progman.rc:72
+#: progman.rc:72 winhlp32.rc:97
 msgid "Not implemented"
-msgstr ""
+msgstr "Ei käytettävissä"
 
 #: progman.rc:73
 msgid "Error reading `%s'."
@@ -4346,6 +4376,121 @@ msgstr "Ei kukaan"
 #: winemine.rc:29
 msgid "Copyright 2000 Joshua Thielen"
 msgstr "Copyright 2000 Joshua Thielen"
+
+#: winhlp32.rc:32
+msgid "Printer &setup..."
+msgstr "&Kirjoittimen asetukset..."
+
+#: winhlp32.rc:37
+msgid "&Copy..."
+msgstr "&Kopioi..."
+
+#: winhlp32.rc:39
+msgid "&Annotate..."
+msgstr "&Huomautus..."
+
+#: winhlp32.rc:41
+msgid "&Bookmark"
+msgstr "&Kirjanmerkki"
+
+#: winhlp32.rc:42
+msgid "&Define..."
+msgstr "&Aseta..."
+
+#: winhlp32.rc:45 winhlp32.rc:81
+msgid "Help always visible"
+msgstr "Help always visible"
+
+#: winhlp32.rc:48 winhlp32.rc:84
+msgid "Visible"
+msgstr "Visible"
+
+#: winhlp32.rc:49 winhlp32.rc:85
+msgid "Non visible"
+msgstr "Non visible"
+
+#: winhlp32.rc:51
+msgid "History"
+msgstr "History"
+
+#: winhlp32.rc:52 winhlp32.rc:75
+msgid "Fonts"
+msgstr "Fonts"
+
+#: winhlp32.rc:54 winhlp32.rc:77
+msgid "Small"
+msgstr "Small"
+
+#: winhlp32.rc:55 winhlp32.rc:78
+msgid "Normal"
+msgstr "Normal"
+
+#: winhlp32.rc:56 winhlp32.rc:79
+msgid "Large"
+msgstr "Large"
+
+#: winhlp32.rc:58 winhlp32.rc:87
+msgid "Use system colors"
+msgstr "Use system colors"
+
+#: winhlp32.rc:61
+msgid "Help &on help"
+msgstr "&Ohjeen käyttö"
+
+#: winhlp32.rc:62
+msgid "Always on &top"
+msgstr "&Aina päällimmäisenä"
+
+#: winhlp32.rc:64
+msgid "&About Wine Help"
+msgstr "T&ietoja..."
+
+#: winhlp32.rc:72
+#, fuzzy
+msgid "Annotation..."
+msgstr "&Huomautus..."
+
+#: winhlp32.rc:73
+#, fuzzy
+msgid "Copy"
+msgstr "Ko&pioi"
+
+#: winhlp32.rc:74
+#, fuzzy
+msgid "Print..."
+msgstr "Tulosta"
+
+#: winhlp32.rc:93
+msgid "Wine Help"
+msgstr "Wine Ohje"
+
+#: winhlp32.rc:98
+msgid "Error while reading the help file `%s'"
+msgstr "Virhe luettaessa ohjetiedostoa `%s'"
+
+#: winhlp32.rc:100
+msgid "Summary"
+msgstr "Summary"
+
+#: winhlp32.rc:99
+msgid "&Index"
+msgstr "&Sisällys"
+
+#: winhlp32.rc:103
+msgid "Help files (*.hlp)"
+msgstr "Ohjetiedostot (*.hlp)"
+
+#: winhlp32.rc:104
+msgid "Cannot find '%s'. Do you want to find this file yourself?"
+msgstr "Cannot find '%s'. Do you want to find this file yourself?"
+
+#: winhlp32.rc:105
+msgid "Cannot find a richedit implementation... Aborting"
+msgstr "Cannot find a richedit implementation... Aborting"
+
+#: winhlp32.rc:106
+msgid "Help topics: "
+msgstr ""
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

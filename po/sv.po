@@ -1269,11 +1269,11 @@ msgstr "På"
 msgid "Off"
 msgstr "Av"
 
-#: shdoclc.rc:36
+#: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
 msgid "Default"
 msgstr "Standard"
 
-#: shdoclc.rc:38
+#: shdoclc.rc:38 winhlp32.rc:101
 msgid "&Back"
 msgstr "&Bakåt"
 
@@ -1470,15 +1470,20 @@ msgstr "1DSite Select"
 msgid "Paste"
 msgstr "K&listra in"
 
-#: shdoclc.rc:122
+#: shdoclc.rc:122 winhlp32.rc:31
+#, fuzzy
 msgid "&Print"
-msgstr "Skriv &ut"
+msgstr ""
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"Skriv &ut\n"
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"&Skriv ut"
 
 #: shdoclc.rc:126
 msgid "Anchor"
 msgstr "Ankare"
 
-#: shdoclc.rc:128 view.rc:30
+#: shdoclc.rc:128 view.rc:30 winhlp32.rc:29
 msgid "&Open"
 msgstr "&Öppna"
 
@@ -3349,7 +3354,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Öppna resurser: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winhlp32.rc:28
 msgid "&File"
 msgstr "&Arkiv"
 
@@ -3381,18 +3386,18 @@ msgstr "Sidla&yout..."
 msgid "P&rinter Setup..."
 msgstr "Skrivar&konfiguration..."
 
-#: notepad.rc:36 view.rc:31
-msgid "E&xit"
-msgstr "&Avsluta"
-
-#: notepad.rc:38 wineconsole.rc:25
+#: notepad.rc:36 view.rc:31 winhlp32.rc:34
 #, fuzzy
-msgid "&Edit"
+msgid "E&xit"
 msgstr ""
 "#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Redigera\n"
+"&Avsluta\n"
 "#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"R&edigera"
+"A&vsluta"
+
+#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36
+msgid "&Edit"
+msgstr "R&edigera"
 
 #: notepad.rc:39
 msgid "&Undo\tCtrl+Z"
@@ -3438,7 +3443,7 @@ msgstr "&Sök nästa\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Ersätt...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winhlp32.rc:60
 msgid "&Help"
 msgstr "&Hjälp"
 
@@ -3466,15 +3471,15 @@ msgstr "Sida &p"
 msgid "Notepad"
 msgstr "Anteckningar"
 
-#: notepad.rc:72 progman.rc:66
+#: notepad.rc:72 progman.rc:66 winhlp32.rc:94
 msgid "ERROR"
 msgstr "FEL"
 
-#: notepad.rc:73 progman.rc:67
+#: notepad.rc:73 progman.rc:67 winhlp32.rc:95
 msgid "WARNING"
 msgstr "VARNING"
 
-#: notepad.rc:74 progman.rc:68
+#: notepad.rc:74 progman.rc:68 winhlp32.rc:96
 msgid "Information"
 msgstr "Information"
 
@@ -3482,7 +3487,7 @@ msgstr "Information"
 msgid "Untitled"
 msgstr "(namnlös)"
 
-#: notepad.rc:78 progman.rc:84
+#: notepad.rc:78 progman.rc:84 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Alla filer (*.*)"
 
@@ -3597,14 +3602,9 @@ msgstr "K&ör..."
 msgid "E&xit Windows..."
 msgstr "A&vsluta Windows..."
 
-#: progman.rc:41 taskmgr.rc:41 winemine.rc:34
-#, fuzzy
+#: progman.rc:41 taskmgr.rc:41 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Inställningar\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"A&lternativ"
+msgstr "A&lternativ"
 
 #: progman.rc:42
 msgid "&Arrange automatically"
@@ -3662,9 +3662,14 @@ msgstr "Ta bort gruppen '%s'?"
 msgid "Delete program `%s' ?"
 msgstr "Ta bort programmet '%s'?"
 
-#: progman.rc:72
+#: progman.rc:72 winhlp32.rc:97
+#, fuzzy
 msgid "Not implemented"
-msgstr "Ej implementerat"
+msgstr ""
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"Ej implementerat\n"
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"Inte implementerat"
 
 #: progman.rc:73
 msgid "Error reading `%s'."
@@ -4713,6 +4718,118 @@ msgstr "Ingen"
 #: winemine.rc:29
 msgid "Copyright 2000 Joshua Thielen"
 msgstr "Copyright 2000 Joshua Thielen"
+
+#: winhlp32.rc:32
+msgid "Printer &setup..."
+msgstr "Skrivar&konfiguration..."
+
+#: winhlp32.rc:37
+msgid "&Copy..."
+msgstr "&Kopiera..."
+
+#: winhlp32.rc:39
+msgid "&Annotate..."
+msgstr "&Kommentera..."
+
+#: winhlp32.rc:41
+msgid "&Bookmark"
+msgstr "&Bokmärke"
+
+#: winhlp32.rc:42
+msgid "&Define..."
+msgstr "&Definiera..."
+
+#: winhlp32.rc:45 winhlp32.rc:81
+msgid "Help always visible"
+msgstr "Hjälpen alltid synlig"
+
+#: winhlp32.rc:48 winhlp32.rc:84
+msgid "Visible"
+msgstr "Synlig"
+
+#: winhlp32.rc:49 winhlp32.rc:85
+msgid "Non visible"
+msgstr "Inte synlig"
+
+#: winhlp32.rc:51
+msgid "History"
+msgstr "Historik"
+
+#: winhlp32.rc:52 winhlp32.rc:75
+msgid "Fonts"
+msgstr "Typsnitt"
+
+#: winhlp32.rc:54 winhlp32.rc:77
+msgid "Small"
+msgstr "Litet"
+
+#: winhlp32.rc:55 winhlp32.rc:78
+msgid "Normal"
+msgstr "Normalt"
+
+#: winhlp32.rc:56 winhlp32.rc:79
+msgid "Large"
+msgstr "Stort"
+
+#: winhlp32.rc:58 winhlp32.rc:87
+msgid "Use system colors"
+msgstr "Använd systemfärger"
+
+#: winhlp32.rc:61
+msgid "Help &on help"
+msgstr "Hjälp &för hjälp"
+
+#: winhlp32.rc:62
+msgid "Always on &top"
+msgstr "Alltid &överst"
+
+#: winhlp32.rc:64
+msgid "&About Wine Help"
+msgstr "&Info..."
+
+#: winhlp32.rc:72
+msgid "Annotation..."
+msgstr "Kommentar..."
+
+#: winhlp32.rc:73
+msgid "Copy"
+msgstr "Kopiera"
+
+#: winhlp32.rc:74
+msgid "Print..."
+msgstr "Skriv ut..."
+
+#: winhlp32.rc:93
+msgid "Wine Help"
+msgstr "Wine Hjälp"
+
+#: winhlp32.rc:98
+msgid "Error while reading the help file `%s'"
+msgstr "Fel vid läsning av hjälpfilen `%s'"
+
+#: winhlp32.rc:100
+msgid "Summary"
+msgstr "Sammandrag"
+
+#: winhlp32.rc:99
+msgid "&Index"
+msgstr "&Innehåll"
+
+#: winhlp32.rc:103
+msgid "Help files (*.hlp)"
+msgstr "Hjälpfiler (*.hlp)"
+
+#: winhlp32.rc:104
+msgid "Cannot find '%s'. Do you want to find this file yourself?"
+msgstr "Kan inte hitta '%s'. Vill du söka efter denna fil?"
+
+#: winhlp32.rc:105
+msgid "Cannot find a richedit implementation... Aborting"
+msgstr "Kan inte hitta en implementation av richedit... Avslutar"
+
+#: winhlp32.rc:106
+msgid "Help topics: "
+msgstr "Hjälprubriker: "
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

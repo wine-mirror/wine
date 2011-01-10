@@ -2,7 +2,6 @@
  * Help Viewer
  *
  * Copyright 1996 Ulrich Schmid
- * Copyright 1999 Pablo Saratxaga
  * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *
  * This library is free software; you can redistribute it and/or
@@ -22,29 +21,25 @@
 
 #include "winhelp_res.h"
 
-#ifdef LANG_WALON
-
-LANGUAGE LANG_WALON, SUBLANG_DEFAULT
-
-/* Menu */
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 MAIN_MENU MENU
 {
- POPUP "&Fitchî" {
-  MENUITEM "&Drovî...", MNID_FILE_OPEN
+ POPUP "&File" {
+  MENUITEM "&Open", MNID_FILE_OPEN
   MENUITEM SEPARATOR
-  MENUITEM "&Rexhe", MNID_FILE_PRINT
-  MENUITEM "&Apontiaedje del scrirece...", MNID_FILE_SETUP
+  MENUITEM "&Print", MNID_FILE_PRINT
+  MENUITEM "Printer &setup...", MNID_FILE_SETUP
    MENUITEM SEPARATOR
-  MENUITEM "Moussî &Foû", MNID_FILE_EXIT
+  MENUITEM "E&xit", MNID_FILE_EXIT
  }
- POPUP "&Candjî" {
-   MENUITEM "&Copyî...", MNID_EDIT_COPYDLG
+ POPUP "&Edit" {
+   MENUITEM "&Copy...", MNID_EDIT_COPYDLG
    MENUITEM SEPARATOR
-   MENUITEM "&Sicrîre...", MNID_EDIT_ANNOTATE
+   MENUITEM "&Annotate...", MNID_EDIT_ANNOTATE
  }
- POPUP "&Rimårkes" {
-   MENUITEM "&Defini...", MNID_BKMK_DEFINE
+ POPUP "&Bookmark" {
+   MENUITEM "&Define...", MNID_BKMK_DEFINE
  }
  POPUP "&Options" {
    POPUP	"Help always visible"
@@ -62,31 +57,56 @@ MAIN_MENU MENU
   END
   MENUITEM "Use system colors",	MNID_OPTS_SYSTEM_COLORS
  }
- POPUP "&Aide" {
-   MENUITEM "&Aide so l' Aide", MNID_HELP_HELPON
-   MENUITEM "Todi &Visibe", MNID_HELP_HELPTOP
+ POPUP "&Help" {
+   MENUITEM "Help &on help", MNID_HELP_HELPON
+   MENUITEM "Always on &top", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
-   MENUITEM "&Informåcion...", MNID_HELP_ABOUT
+   MENUITEM "&About Wine Help", MNID_HELP_ABOUT
  }
 }
 
-/* Strings */
+CONTEXT_MENU MENU
+BEGIN
+	POPUP ""
+	BEGIN
+		MENUITEM "Annotation...",       MNID_CTXT_ANNOTATE
+		MENUITEM "Copy",                MNID_CTXT_COPY
+		MENUITEM "Print...",            MNID_CTXT_PRINT
+		POPUP    "Fonts"
+		BEGIN
+			MENUITEM "Small",       MNID_CTXT_FONTS_SMALL
+			MENUITEM "Normal",      MNID_CTXT_FONTS_NORMAL
+			MENUITEM "Large",       MNID_CTXT_FONTS_LARGE
+		END
+		POPUP   "Help always visible"
+		BEGIN
+			MENUITEM "Default",     MNID_CTXT_HELP_DEFAULT
+			MENUITEM "Visible",     MNID_CTXT_HELP_VISIBLE
+			MENUITEM "Non visible", MNID_CTXT_HELP_NONVISIBLE
+		END
+		MENUITEM "Use system colors",   MNID_CTXT_SYSTEM_COLORS
+	END
+END
 
 STRINGTABLE
 {
-STID_WINE_HELP, 	"Aidance di Wine"
-STID_WHERROR, 		"AROKE"
-STID_WARNING,  		"ADVERTIXHMINT"
-STID_INFO,  		"Informåcion"
-STID_NOT_IMPLEMENTED, 	"Nén co possibe"
-STID_HLPFILE_ERROR_s, 	"Yåk n' a nén stî å moumint di lere li fitchî d' aide `%s'"
-STID_INDEX, 		"Å&dvins"
+STID_WINE_HELP, 	"Wine Help"
+STID_WHERROR, 		"ERROR"
+STID_WARNING,  		"WARNING"
+STID_INFO,  		"Information"
+STID_NOT_IMPLEMENTED, 	"Not implemented"
+STID_HLPFILE_ERROR_s, 	"Error while reading the help file `%s'"
+STID_INDEX, 		"&Index"
 STID_CONTENTS,		"Summary"
-STID_BACK, 		"Èn &Erî"
-STID_ALL_FILES, 	"Tos les fitchîs (*.*)"
-STID_HELP_FILES_HLP, 	"Fitchîs d' aide (*.hlp)"
+STID_BACK, 		"&Back"
+STID_ALL_FILES, 	"All files (*.*)"
+STID_HELP_FILES_HLP, 	"Help files (*.hlp)"
 STID_FILE_NOT_FOUND_s	"Cannot find '%s'. Do you want to find this file yourself?"
 STID_NO_RICHEDIT	"Cannot find a richedit implementation... Aborting"
+STID_PSH_INDEX,		"Help topics: "
 }
 
-#endif  /* LANG_WALON */
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+/* @makedep: winhelp.ico */
+IDI_WINHELP ICON winhelp.ico

@@ -15383,7 +15383,7 @@ wine_fn_config_program winepath enable_winepath install,installbin
 wine_fn_config_program winetest enable_winetest
 wine_fn_config_program winevdm enable_win16 install
 wine_fn_config_program winhelp.exe16 enable_win16 install
-wine_fn_config_program winhlp32 enable_winhlp32 install
+wine_fn_config_program winhlp32 enable_winhlp32 po,install
 wine_fn_config_program winoldap.mod16 enable_win16 install
 wine_fn_config_program winver enable_winver install
 wine_fn_config_program wmic enable_wmic install
@@ -15429,6 +15429,7 @@ pa \
 pl \
 pt_BR \
 pt_PT \
+rm \
 ro \
 ru \
 sk \

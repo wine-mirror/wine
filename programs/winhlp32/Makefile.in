@@ -13,17 +13,12 @@ C_SRCS = \
 LEX_SRCS = macro.lex.l
 
 RC_SRCS = \
-	Bg.rc \
-	Cs.rc \
 	Da.rc \
 	De.rc \
 	En.rc \
-	Eo.rc \
 	Es.rc \
-	Fi.rc \
 	Fr.rc \
 	He.rc \
-	Hu.rc \
 	It.rc \
 	Ja.rc \
 	Ko.rc \
@@ -32,18 +27,16 @@ RC_SRCS = \
 	No.rc \
 	Pl.rc \
 	Pt.rc \
-	Rm.rc \
 	Ro.rc \
 	Ru.rc \
 	Si.rc \
-	Sk.rc \
 	Sr.rc \
 	Sv.rc \
-	Tr.rc \
 	Uk.rc \
-	Wa.rc \
 	Zh.rc \
-	rsrc.rc
+	winhlp32.rc
+
+PO_SRCS = winhlp32.rc
 
 SVG_SRCS = winhelp.svg
 

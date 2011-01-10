@@ -1265,13 +1265,18 @@ msgstr "开"
 msgid "Off"
 msgstr "关"
 
-#: shdoclc.rc:36
+#: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
 msgid "Default"
 msgstr "默认"
 
-#: shdoclc.rc:38
+#: shdoclc.rc:38 winhlp32.rc:101
+#, fuzzy
 msgid "&Back"
-msgstr "向后(&B)"
+msgstr ""
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"向后(&B)\n"
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"返回(&B)"
 
 #: shdoclc.rc:39
 msgid "F&orward"
@@ -1451,7 +1456,7 @@ msgstr "1DSite Select"
 msgid "Paste"
 msgstr "粘贴"
 
-#: shdoclc.rc:122
+#: shdoclc.rc:122 winhlp32.rc:31
 msgid "&Print"
 msgstr "打印(&P)"
 
@@ -1459,7 +1464,7 @@ msgstr "打印(&P)"
 msgid "Anchor"
 msgstr "Anchor"
 
-#: shdoclc.rc:128 view.rc:30
+#: shdoclc.rc:128 view.rc:30 winhlp32.rc:29
 msgid "&Open"
 msgstr "打开(&O)"
 
@@ -3038,7 +3043,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winhlp32.rc:28
 msgid "&File"
 msgstr "文件(&F)"
 
@@ -3070,7 +3075,7 @@ msgstr "页面设置(&T)..."
 msgid "P&rinter Setup..."
 msgstr "打印设置(&R)..."
 
-#: notepad.rc:36 view.rc:31
+#: notepad.rc:36 view.rc:31 winhlp32.rc:34
 #, fuzzy
 msgid "E&xit"
 msgstr ""
@@ -3079,7 +3084,7 @@ msgstr ""
 "#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
 "退出(&x)"
 
-#: notepad.rc:38 wineconsole.rc:25
+#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36
 msgid "&Edit"
 msgstr "编辑(&E)"
 
@@ -3127,7 +3132,7 @@ msgstr "搜索下一个(&S)\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "替换...\tCtrl+H"
 
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winhlp32.rc:60
 msgid "&Help"
 msgstr "帮助(&H)"
 
@@ -3155,15 +3160,15 @@ msgstr "第 &p 页"
 msgid "Notepad"
 msgstr "记事本"
 
-#: notepad.rc:72 progman.rc:66
+#: notepad.rc:72 progman.rc:66 winhlp32.rc:94
 msgid "ERROR"
 msgstr "错误"
 
-#: notepad.rc:73 progman.rc:67
+#: notepad.rc:73 progman.rc:67 winhlp32.rc:95
 msgid "WARNING"
 msgstr "警告"
 
-#: notepad.rc:74 progman.rc:68
+#: notepad.rc:74 progman.rc:68 winhlp32.rc:96
 msgid "Information"
 msgstr "信息"
 
@@ -3171,7 +3176,7 @@ msgstr "信息"
 msgid "Untitled"
 msgstr "（未命名）"
 
-#: notepad.rc:78 progman.rc:84
+#: notepad.rc:78 progman.rc:84 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "所有文件 (*.*)"
 
@@ -3279,7 +3284,7 @@ msgstr "执行(&E)..."
 msgid "E&xit Windows..."
 msgstr "退出 Windows(&X)..."
 
-#: progman.rc:41 taskmgr.rc:41 winemine.rc:34
+#: progman.rc:41 taskmgr.rc:41 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
 msgstr "选项(&O)"
 
@@ -3339,9 +3344,14 @@ msgstr "是否删除程序组 `%s' ？"
 msgid "Delete program `%s' ?"
 msgstr "是否删除程序组 `%s' ?"
 
-#: progman.rc:72
+#: progman.rc:72 winhlp32.rc:97
+#, fuzzy
 msgid "Not implemented"
-msgstr "此功能未实现"
+msgstr ""
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"此功能未实现\n"
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"未实现"
 
 #: progman.rc:73
 msgid "Error reading `%s'."
@@ -4336,6 +4346,118 @@ msgstr "无人"
 #: winemine.rc:29
 msgid "Copyright 2000 Joshua Thielen"
 msgstr "Copyright 2000 Joshua Thielen"
+
+#: winhlp32.rc:32
+msgid "Printer &setup..."
+msgstr "打印机设置(&S)..."
+
+#: winhlp32.rc:37
+msgid "&Copy..."
+msgstr "复制(&C)..."
+
+#: winhlp32.rc:39
+msgid "&Annotate..."
+msgstr "注释(&A)..."
+
+#: winhlp32.rc:41
+msgid "&Bookmark"
+msgstr "书签(&B)"
+
+#: winhlp32.rc:42
+msgid "&Define..."
+msgstr "定义(&D)..."
+
+#: winhlp32.rc:45 winhlp32.rc:81
+msgid "Help always visible"
+msgstr "总是显示帮助"
+
+#: winhlp32.rc:48 winhlp32.rc:84
+msgid "Visible"
+msgstr "显示"
+
+#: winhlp32.rc:49 winhlp32.rc:85
+msgid "Non visible"
+msgstr "不显示"
+
+#: winhlp32.rc:51
+msgid "History"
+msgstr "历史"
+
+#: winhlp32.rc:52 winhlp32.rc:75
+msgid "Fonts"
+msgstr "字体"
+
+#: winhlp32.rc:54 winhlp32.rc:77
+msgid "Small"
+msgstr "小号"
+
+#: winhlp32.rc:55 winhlp32.rc:78
+msgid "Normal"
+msgstr "中号"
+
+#: winhlp32.rc:56 winhlp32.rc:79
+msgid "Large"
+msgstr "大号"
+
+#: winhlp32.rc:58 winhlp32.rc:87
+msgid "Use system colors"
+msgstr "使用系统颜色"
+
+#: winhlp32.rc:61
+msgid "Help &on help"
+msgstr "如何使用帮助(&O)"
+
+#: winhlp32.rc:62
+msgid "Always on &top"
+msgstr "总是在最前面(&T)"
+
+#: winhlp32.rc:64
+msgid "&About Wine Help"
+msgstr "关于 Wine 帮助(&I)..."
+
+#: winhlp32.rc:72
+msgid "Annotation..."
+msgstr "注释..."
+
+#: winhlp32.rc:73
+msgid "Copy"
+msgstr "复制"
+
+#: winhlp32.rc:74
+msgid "Print..."
+msgstr "打印..."
+
+#: winhlp32.rc:93
+msgid "Wine Help"
+msgstr "Wine 帮助"
+
+#: winhlp32.rc:98
+msgid "Error while reading the help file `%s'"
+msgstr "读入帮助文件“%s”时发生错误"
+
+#: winhlp32.rc:100
+msgid "Summary"
+msgstr "概要"
+
+#: winhlp32.rc:99
+msgid "&Index"
+msgstr "索引(&I)"
+
+#: winhlp32.rc:103
+msgid "Help files (*.hlp)"
+msgstr "帮助文件 (*.hlp)"
+
+#: winhlp32.rc:104
+msgid "Cannot find '%s'. Do you want to find this file yourself?"
+msgstr "找不到文件“%s”。 你想要自己找这个文件吗？"
+
+#: winhlp32.rc:105
+msgid "Cannot find a richedit implementation... Aborting"
+msgstr "找不到 richedit 的实现……终止"
+
+#: winhlp32.rc:106
+msgid "Help topics: "
+msgstr "帮助主题："
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

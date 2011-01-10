@@ -26,50 +26,6 @@
 
 LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
 
-/* Menu */
-
-MAIN_MENU MENU
-{
- POPUP "&Arkiv" {
-  MENUITEM "&Öppna", MNID_FILE_OPEN
-  MENUITEM SEPARATOR
-  MENUITEM "&Skriv ut", MNID_FILE_PRINT
-  MENUITEM "Skrivar&konfiguration...", MNID_FILE_SETUP
-   MENUITEM SEPARATOR
-  MENUITEM "A&vsluta", MNID_FILE_EXIT
- }
- POPUP "R&edigera" {
-   MENUITEM "&Kopiera...", MNID_EDIT_COPYDLG
-   MENUITEM SEPARATOR
-   MENUITEM "&Kommentera...", MNID_EDIT_ANNOTATE
- }
- POPUP "&Bokmärke" {
-   MENUITEM "&Definiera...", MNID_BKMK_DEFINE
- }
- POPUP "A&lternativ" {
-   POPUP	"Hjälpen alltid synlig"
-   BEGIN
-     MENUITEM "Standard",	MNID_OPTS_HELP_DEFAULT
-     MENUITEM "Synlig",	MNID_OPTS_HELP_VISIBLE
-     MENUITEM "Inte synlig",	MNID_OPTS_HELP_NONVISIBLE
-  END
-  MENUITEM "Historik",		MNID_OPTS_HISTORY
-  POPUP    "Typsnitt"
-  BEGIN
-    MENUITEM "Litet",		MNID_OPTS_FONTS_SMALL
-    MENUITEM "Normalt",    	MNID_OPTS_FONTS_NORMAL
-    MENUITEM "Stort",     	MNID_OPTS_FONTS_LARGE
-  END
-  MENUITEM "Använd systemfärger",	MNID_OPTS_SYSTEM_COLORS
- }
- POPUP "&Hjälp" {
-   MENUITEM "Hjälp &för hjälp", MNID_HELP_HELPON
-   MENUITEM "Alltid &överst", MNID_HELP_HELPTOP
-   MENUITEM SEPARATOR
-   MENUITEM "&Info...", MNID_HELP_ABOUT
- }
-}
-
 IDD_INDEX DIALOG 0, 0, 200, 190
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 FONT 8, "MS Shell Dlg"
@@ -85,45 +41,3 @@ CAPTION "Sök"
 {
     LTEXT  "Inte implementerat ännu", -1, 10, 10, 180, 150
 }
-
-/* Strings */
-STRINGTABLE
-{
-STID_WINE_HELP, 	"Wine Hjälp"
-STID_WHERROR, 		"FEL"
-STID_WARNING,  		"VARNING"
-STID_INFO,  		"Information"
-STID_NOT_IMPLEMENTED, 	"Inte implementerat"
-STID_HLPFILE_ERROR_s, 	"Fel vid läsning av hjälpfilen `%s'"
-STID_INDEX, 		"&Innehåll"
-STID_CONTENTS,		"Sammandrag"
-STID_BACK, 		"&Bakåt"
-STID_ALL_FILES, 	"Alla filer (*.*)"
-STID_HELP_FILES_HLP, 	"Hjälpfiler (*.hlp)"
-STID_FILE_NOT_FOUND_s	"Kan inte hitta '%s'. Vill du söka efter denna fil?"
-STID_NO_RICHEDIT	"Kan inte hitta en implementation av richedit... Avslutar"
-STID_PSH_INDEX,		"Hjälprubriker: "
-}
-
-CONTEXT_MENU MENU
-BEGIN
-    POPUP ""
-    BEGIN
-        MENUITEM "Kommentar...",        MNID_CTXT_ANNOTATE
-        MENUITEM "Kopiera",              MNID_CTXT_COPY
-        MENUITEM "Skriv ut...",         MNID_CTXT_PRINT
-        POPUP    "Typsnitt"
-        BEGIN
-            MENUITEM "Litet",       MNID_CTXT_FONTS_SMALL
-            MENUITEM "Normalt",      MNID_CTXT_FONTS_NORMAL
-            MENUITEM "Stort",        MNID_CTXT_FONTS_LARGE
-        END
-        POPUP   "Hjälp alltid synlig"
-        BEGIN
-            MENUITEM "Standard",     MNID_CTXT_HELP_DEFAULT
-            MENUITEM "Synlig",       MNID_CTXT_HELP_VISIBLE
-            MENUITEM "Ej synlig",  MNID_CTXT_HELP_NONVISIBLE
-        END
-        MENUITEM "Använd systemfärger",   MNID_CTXT_SYSTEM_COLORS
-    END
-END
