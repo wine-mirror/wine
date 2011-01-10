@@ -181,7 +181,8 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
         uninstlen = 0;
         if (!RegQueryValueExW(hkeyApp, DisplayNameW, 0, 0, NULL, &displen))
         {
-            if (!RegQueryValueExW(hkeyApp, WindowsInstallerW, NULL, &dwType, NULL, &value)
+            DWORD size = sizeof(value);
+            if (!RegQueryValueExW(hkeyApp, WindowsInstallerW, NULL, &dwType, (LPBYTE)&value, &size)
                 && dwType == REG_DWORD && value == 1)
             {
                 static const WCHAR fmtW[] = {'m','s','i','e','x','e','c',' ','/','x','%','s',0};
@@ -282,7 +283,8 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
             /* Fetch the modify path */
             if (!dwNoModify)
             {
-                if (!RegQueryValueExW(hkeyApp, WindowsInstallerW, NULL, &dwType, NULL, &value)
+                size = sizeof(value);
+                if (!RegQueryValueExW(hkeyApp, WindowsInstallerW, NULL, &dwType, (LPBYTE)&value, &size)
                     && dwType == REG_DWORD && value == 1)
                 {
                     static const WCHAR fmtW[] = {'m','s','i','e','x','e','c',' ','/','i','%','s',0};
