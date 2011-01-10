@@ -3717,10 +3717,10 @@ msgstr ""
 msgid "End Process &Tree"
 msgstr ""
 
-#: taskmgr.rc:153
+#: taskmgr.rc:153 winedbg.rc:29
 #, fuzzy
 msgid "&Debug"
-msgstr "Отклањач грешака"
+msgstr "&Отклањач грешака"
 
 #: taskmgr.rc:155
 msgid "Set &Priority"
@@ -4285,6 +4285,18 @@ msgid ""
 "Starts the Wine command prompt in a Wine console\n"
 "\n"
 msgstr ""
+
+#: winedbg.rc:35
+msgid "Wine program crash"
+msgstr "Пад Wine програма"
+
+#: winedbg.rc:36
+msgid "Internal errors - invalid parameters received"
+msgstr "Унутрашње грешке — примљени су неисправни параметри"
+
+#: winedbg.rc:37
+msgid "(unidentified)"
+msgstr "(неидентификовано)"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

@@ -26,14 +26,6 @@
 
 LANGUAGE LANG_UKRAINIAN, SUBLANG_DEFAULT
 
-IDM_DEBUG_POPUP MENU
-BEGIN
-    POPUP ""
-    BEGIN
-        MENUITEM "&Налагодження", ID_DEBUG
-    END
-END
-
 IDD_CRASH_DLG DIALOGEX 100, 100, 273, 175
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Помилка програми"
@@ -49,11 +41,4 @@ BEGIN
                     Якщо ця проблема не присутня під Windows і ще не була зареєстрована, \
                     ви можете повідомити про неї на http://bugs.winehq.org.",IDC_STATIC_TXT2,27,60,224,100
     DEFPUSHBUTTON   "Закрити", IDOK, 205, 151, 60, 16, WS_TABSTOP
-END
-
-STRINGTABLE
-BEGIN
-    IDS_AUTO_CAPTION     "Крах програми Wine"
-    IDS_INVALID_PARAMS   "Внутрішні помилки - отримані невірні параметри"
-    IDS_UNIDENTIFIED     "(не визначено)"
 END

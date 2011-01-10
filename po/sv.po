@@ -4067,7 +4067,7 @@ msgstr "Avsluta proc&ess"
 msgid "End Process &Tree"
 msgstr "Avslu&ta processträd"
 
-#: taskmgr.rc:153
+#: taskmgr.rc:153 winedbg.rc:29
 msgid "&Debug"
 msgstr "&Felsök"
 
@@ -4644,6 +4644,18 @@ msgstr ""
 "  wineconsole cmd\n"
 "Startar Wines kommandoprompt i en Wine-konsoll\n"
 "\n"
+
+#: winedbg.rc:35
+msgid "Wine program crash"
+msgstr "Krasch i Wine-program"
+
+#: winedbg.rc:36
+msgid "Internal errors - invalid parameters received"
+msgstr "Interna fel - ogiltiga parametrar mottogs"
+
+#: winedbg.rc:37
+msgid "(unidentified)"
+msgstr "(oidentifierad)"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

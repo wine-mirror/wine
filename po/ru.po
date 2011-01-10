@@ -1345,7 +1345,7 @@ msgstr "Пе&чать"
 msgid "&Refresh"
 msgstr "О&бновить"
 
-#: shdoclc.rc:59 clock.rc:28
+#: shdoclc.rc:59 clock.rc:28 wineconsole.rc:27
 #, fuzzy
 msgid "&Properties"
 msgstr ""
@@ -4080,7 +4080,7 @@ msgstr "&Завершить процесс"
 msgid "End Process &Tree"
 msgstr "Завершить &дерево процессов"
 
-#: taskmgr.rc:153
+#: taskmgr.rc:153 winedbg.rc:29
 msgid "&Debug"
 msgstr "&Отладка"
 
@@ -4660,6 +4660,18 @@ msgstr ""
 "  wineconsole cmd\n"
 "Запустить командный процессор Wine в консоли Wine\n"
 "\n"
+
+#: winedbg.rc:35
+msgid "Wine program crash"
+msgstr "Ошибка Wine"
+
+#: winedbg.rc:36
+msgid "Internal errors - invalid parameters received"
+msgstr "Внутренние ошибки - получены неверные параметры"
+
+#: winedbg.rc:37
+msgid "(unidentified)"
+msgstr "(неопределено)"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

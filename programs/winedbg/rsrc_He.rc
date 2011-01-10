@@ -25,14 +25,6 @@
 
 LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
 
-IDM_DEBUG_POPUP MENU
-BEGIN
-    POPUP ""
-    BEGIN
-        MENUITEM "&ניפוי שגיאות", ID_DEBUG
-    END
-END
-
 IDD_CRASH_DLG DIALOGEX 100, 100, 273, 175
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_LAYOUTRTL
@@ -49,11 +41,4 @@ BEGIN
                     אם תקלה זו אינה קיימת בעת הרצת Windows ולא דווח עליה עדיין, \
                     ניתן לדווח עליה בכתובת http://bugs.winehq.org.",IDC_STATIC_TXT2,27,60,224,100
     DEFPUSHBUTTON   "סגירה", IDOK, 205, 151, 60, 16, WS_TABSTOP
-END
-
-STRINGTABLE
-BEGIN
-    IDS_AUTO_CAPTION     "Wine program crash"
-    IDS_INVALID_PARAMS   "Internal errors - invalid parameters received"
-    IDS_UNIDENTIFIED     "(unidentified)"
 END

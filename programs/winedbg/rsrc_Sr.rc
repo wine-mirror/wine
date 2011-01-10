@@ -26,14 +26,6 @@
 
 LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_CYRILLIC
 
-IDM_DEBUG_POPUP MENU
-BEGIN
-    POPUP ""
-    BEGIN
-        MENUITEM "&Отклањач грешака", ID_DEBUG
-    END
-END
-
 IDD_CRASH_DLG DIALOGEX 100, 100, 273, 175
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Програмска грешка"
@@ -51,22 +43,7 @@ BEGIN
     DEFPUSHBUTTON   "Затвори", IDOK, 205, 151, 60, 16, WS_TABSTOP
 END
 
-STRINGTABLE
-BEGIN
-    IDS_AUTO_CAPTION     "Пад Wine програма"
-    IDS_INVALID_PARAMS   "Унутрашње грешке — примљени су неисправни параметри"
-    IDS_UNIDENTIFIED     "(неидентификовано)"
-END
-
 LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
-
-IDM_DEBUG_POPUP MENU
-BEGIN
-    POPUP ""
-    BEGIN
-        MENUITEM "&Otklanjač grešaka", ID_DEBUG
-    END
-END
 
 IDD_CRASH_DLG DIALOGEX 100, 100, 273, 175
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
@@ -83,11 +60,4 @@ BEGIN
                     Ako ovaj problem nije prisutan pod Windows-om i još uvek nije \
                     prijavljen, prijavite ga na http://bugs.winehq.org.",IDC_STATIC_TXT2,27,60,224,100
     DEFPUSHBUTTON   "Zatvori", IDOK, 205, 151, 60, 16, WS_TABSTOP
-END
-
-STRINGTABLE
-BEGIN
-    IDS_AUTO_CAPTION     "Pad Wine programa"
-    IDS_INVALID_PARAMS   "Unutrašnje greške — primljeni su neispravni parametri"
-    IDS_UNIDENTIFIED     "(neidentifikovano)"
 END

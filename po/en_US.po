@@ -4027,7 +4027,7 @@ msgstr "&End Process"
 msgid "End Process &Tree"
 msgstr "End Process &Tree"
 
-#: taskmgr.rc:153
+#: taskmgr.rc:153 winedbg.rc:29
 msgid "&Debug"
 msgstr "&Debug"
 
@@ -4605,6 +4605,18 @@ msgstr ""
 "  wineconsole cmd\n"
 "Starts the Wine command prompt in a Wine console\n"
 "\n"
+
+#: winedbg.rc:35
+msgid "Wine program crash"
+msgstr "Wine program crash"
+
+#: winedbg.rc:36
+msgid "Internal errors - invalid parameters received"
+msgstr "Internal errors - invalid parameters received"
+
+#: winedbg.rc:37
+msgid "(unidentified)"
+msgstr "(unidentified)"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

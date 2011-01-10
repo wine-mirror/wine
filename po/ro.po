@@ -1346,7 +1346,7 @@ msgstr "&Tipărește"
 msgid "&Refresh"
 msgstr "&Actualizează"
 
-#: shdoclc.rc:59 clock.rc:28
+#: shdoclc.rc:59 clock.rc:28 wineconsole.rc:27
 #, fuzzy
 msgid "&Properties"
 msgstr ""
@@ -4115,7 +4115,7 @@ msgstr "T&ermină procesul"
 msgid "End Process &Tree"
 msgstr "&Termină arborele procesului"
 
-#: taskmgr.rc:153
+#: taskmgr.rc:153 winedbg.rc:29
 msgid "&Debug"
 msgstr "&Depanează"
 
@@ -4699,6 +4699,18 @@ msgstr ""
 "  wineconsole cmd\n"
 "Pornește caseta de comandă pentru Wine într-o consolă Wine\n"
 "\n"
+
+#: winedbg.rc:35
+msgid "Wine program crash"
+msgstr "Avarie program Wine"
+
+#: winedbg.rc:36
+msgid "Internal errors - invalid parameters received"
+msgstr "Erori interne - s-au recepționat parametri nevalizi"
+
+#: winedbg.rc:37
+msgid "(unidentified)"
+msgstr "(neidentificat)"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

@@ -1330,7 +1330,7 @@ msgstr "Skr&iv ut"
 msgid "&Refresh"
 msgstr "Oppdate&r"
 
-#: shdoclc.rc:59 clock.rc:28
+#: shdoclc.rc:59 clock.rc:28 wineconsole.rc:27
 #, fuzzy
 msgid "&Properties"
 msgstr ""
@@ -4042,7 +4042,7 @@ msgstr "Avslutt pros&ess"
 msgid "End Process &Tree"
 msgstr "Avslu&tt prosesstre"
 
-#: taskmgr.rc:153
+#: taskmgr.rc:153 winedbg.rc:29
 msgid "&Debug"
 msgstr "&Feilsøk"
 
@@ -4621,6 +4621,18 @@ msgstr ""
 "  wineconsole cmd\n"
 "Starter Wine-ledeteksten i et Wine-konsoll\n"
 "\n"
+
+#: winedbg.rc:35
+msgid "Wine program crash"
+msgstr "Wine programfeil"
+
+#: winedbg.rc:36
+msgid "Internal errors - invalid parameters received"
+msgstr "Interne feil - mottok ugyldig parameter"
+
+#: winedbg.rc:37
+msgid "(unidentified)"
+msgstr "(uidentifisert)"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

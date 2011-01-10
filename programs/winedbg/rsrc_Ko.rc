@@ -25,14 +25,6 @@
 
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
-IDM_DEBUG_POPUP MENU
-BEGIN
-    POPUP ""
-    BEGIN
-        MENUITEM "디버그(&D)", ID_DEBUG
-    END
-END
-
 IDD_CRASH_DLG DIALOGEX 100, 100, 273, 175
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "프로그램 에러"
@@ -48,11 +40,4 @@ BEGIN
                     만약 이 문제가 윈도우에서는 존재하지 않고, 아직 버그로 보고되지 않았으면 \
 		    , 당신은 http://bugs.winehq.org에 버그로 보고할 수 있습니다.",IDC_STATIC_TXT2,27,60,224,100
     DEFPUSHBUTTON   "닫기", IDOK, 205, 151, 60, 16, WS_TABSTOP
-END
-
-STRINGTABLE
-BEGIN
-    IDS_AUTO_CAPTION     "Wine 프로그램 충돌"
-    IDS_INVALID_PARAMS   "내부 에러 -올바르지 않은 매개변수가 들어옴"
-    IDS_UNIDENTIFIED     "(알수 없음)"
 END

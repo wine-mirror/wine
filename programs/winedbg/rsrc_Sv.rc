@@ -25,14 +25,6 @@
 
 LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
 
-IDM_DEBUG_POPUP MENU
-BEGIN
-    POPUP ""
-    BEGIN
-        MENUITEM "&Felsök", ID_DEBUG
-    END
-END
-
 IDD_CRASH_DLG DIALOGEX 100, 100, 273, 175
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Programfel"
@@ -48,11 +40,4 @@ BEGIN
                     Om problemet inte uppstår i Windows och ännu inte har rapporterats \
                     så kan du rapportera det på http://bugs.winehq.org.",IDC_STATIC_TXT2,27,60,224,100
     DEFPUSHBUTTON   "Stäng", IDOK, 205, 151, 60, 16, WS_TABSTOP
-END
-
-STRINGTABLE
-BEGIN
-    IDS_AUTO_CAPTION     "Krasch i Wine-program"
-    IDS_INVALID_PARAMS   "Interna fel - ogiltiga parametrar mottogs"
-    IDS_UNIDENTIFIED     "(oidentifierad)"
 END

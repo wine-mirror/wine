@@ -24,14 +24,6 @@
 
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 
-IDM_DEBUG_POPUP MENU
-BEGIN
-    POPUP ""
-    BEGIN
-        MENUITEM "&Debug", ID_DEBUG
-    END
-END
-
 IDD_CRASH_DLG DIALOGEX 100, 100, 273, 175
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Napaka v programu"
@@ -47,11 +39,4 @@ BEGIN
                     Če ta težava ni prisotna na Windows sistemu in še ni bila prijavljena \
                     na http://bugs.winehq.org, prosim napišite prijavo.",IDC_STATIC_TXT2,27,60,224,100
     DEFPUSHBUTTON   "Zapri", IDOK, 205, 151, 60, 16, WS_TABSTOP
-END
-
-STRINGTABLE
-BEGIN
-    IDS_AUTO_CAPTION     "Program Wine je naletel na napako"
-    IDS_INVALID_PARAMS   "Interne napake - prejeti nepravilni parametri"
-    IDS_UNIDENTIFIED     "(nedefinirano)"
 END

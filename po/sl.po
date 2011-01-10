@@ -1340,7 +1340,7 @@ msgstr "Na&tisni"
 msgid "&Refresh"
 msgstr "&Osveži"
 
-#: shdoclc.rc:59 clock.rc:28
+#: shdoclc.rc:59 clock.rc:28 wineconsole.rc:27
 #, fuzzy
 msgid "&Properties"
 msgstr ""
@@ -4064,7 +4064,7 @@ msgstr "Za&ključi proces"
 msgid "End Process &Tree"
 msgstr "Zaključi procesno &drevo"
 
-#: taskmgr.rc:153
+#: taskmgr.rc:153 winedbg.rc:29
 msgid "&Debug"
 msgstr "&Razhroščevanje"
 
@@ -4644,6 +4644,18 @@ msgstr ""
 "  wineconsole cmd\n"
 "Zagon Wine ukaznega poziva (cmd) v Wine konzoli.\n"
 "\n"
+
+#: winedbg.rc:35
+msgid "Wine program crash"
+msgstr "Program Wine je naletel na napako"
+
+#: winedbg.rc:36
+msgid "Internal errors - invalid parameters received"
+msgstr "Interne napake - prejeti nepravilni parametri"
+
+#: winedbg.rc:37
+msgid "(unidentified)"
+msgstr "(nedefinirano)"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

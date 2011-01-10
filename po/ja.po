@@ -4016,7 +4016,7 @@ msgstr "プロセスの終了(&E)"
 msgid "End Process &Tree"
 msgstr "プロセスツリーの終了(&T)"
 
-#: taskmgr.rc:153
+#: taskmgr.rc:153 winedbg.rc:29
 msgid "&Debug"
 msgstr "デバッグ(&D)"
 
@@ -4584,6 +4584,18 @@ msgid ""
 "  wineconsole cmd\n"
 "Starts the Wine command prompt in a Wine console\n"
 "\n"
+msgstr ""
+
+#: winedbg.rc:35
+msgid "Wine program crash"
+msgstr ""
+
+#: winedbg.rc:36
+msgid "Internal errors - invalid parameters received"
+msgstr ""
+
+#: winedbg.rc:37
+msgid "(unidentified)"
 msgstr ""
 
 #: write.rc:27

@@ -25,14 +25,6 @@
 
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
-IDM_DEBUG_POPUP MENU
-BEGIN
-    POPUP ""
-    BEGIN
-        MENUITEM "&Debug", ID_DEBUG
-    END
-END
-
 IDD_CRASH_DLG DIALOGEX 100, 100, 273, 175
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Errore del programma"
@@ -48,11 +40,4 @@ BEGIN
                     Se questo problema non è presente sotto Windows e non è stato ancora segnalato, \
                     puoi segnalarlo su http://bugs.winehq.org.",IDC_STATIC_TXT2,27,60,224,100
     DEFPUSHBUTTON   "Chiudi", IDOK, 205, 151, 60, 16, WS_TABSTOP
-END
-
-STRINGTABLE
-BEGIN
-    IDS_AUTO_CAPTION     "Crash di Wine"
-    IDS_INVALID_PARAMS   "Errori interni - ricevuti parametri non validi"
-    IDS_UNIDENTIFIED     "(non identificato)"
 END

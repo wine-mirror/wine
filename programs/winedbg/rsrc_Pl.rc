@@ -22,14 +22,6 @@
 
 LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 
-IDM_DEBUG_POPUP MENU
-BEGIN
-    POPUP ""
-    BEGIN
-        MENUITEM "&Debug", ID_DEBUG
-    END
-END
-
 IDD_CRASH_DLG DIALOGEX 100, 100, 273, 175
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "B³¹d programu"
@@ -45,11 +37,4 @@ BEGIN
                     Je¿eli problem ten nie wystêpuje pod Windowsem i nie zosta³ jeszcze zg³oszony \
                     to mo¿esz poinformowaæ o tym pod adresem http://bugs.winehq.org.",IDC_STATIC_TXT2,27,60,224,100
     DEFPUSHBUTTON   "Zamknij", IDOK, 205, 151, 60, 16, WS_TABSTOP
-END
-
-STRINGTABLE
-BEGIN
-    IDS_AUTO_CAPTION     "Awaria programu Wine"
-    IDS_INVALID_PARAMS   "Wewnêtrzne b³êdy – otrzymano niew³aœciwe parametry"
-    IDS_UNIDENTIFIED     "(nieznane)"
 END
