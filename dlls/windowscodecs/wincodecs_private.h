@@ -40,7 +40,6 @@ extern HRESULT JpegDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void*
 extern HRESULT TiffDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
 extern HRESULT IcnsEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
 
-extern HRESULT IcoDibDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
 extern HRESULT TgaDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
 
 extern HRESULT FlipRotator_Create(IWICBitmapFlipRotator **fliprotator);
@@ -58,6 +57,10 @@ extern HRESULT CreatePropertyBag2(IPropertyBag2 **ppPropertyBag2);
 extern HRESULT CreateComponentInfo(REFCLSID clsid, IWICComponentInfo **ppIInfo);
 extern HRESULT CreateComponentEnumerator(DWORD componentTypes, DWORD options, IEnumUnknown **ppIEnumUnknown);
 
-void BmpDecoder_FindIconMask(IWICBitmapDecoder *decoder, ULONG *mask_offset, int *topdown);
+typedef struct BmpDecoder BmpDecoder;
+
+extern HRESULT IcoDibDecoder_CreateInstance(BmpDecoder **ppDecoder);
+extern void BmpDecoder_GetWICDecoder(BmpDecoder *This, IWICBitmapDecoder **ppDecoder);
+extern void BmpDecoder_FindIconMask(BmpDecoder *This, ULONG *mask_offset, int *topdown);
 
 #endif /* WINCODECS_PRIVATE_H */

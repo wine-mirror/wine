@@ -220,6 +220,7 @@ static inline void pixel_set_trans(DWORD* pixel, BOOL transparent)
 static HRESULT ReadIcoDib(IStream *stream, IcoFrameDecode *result)
 {
     HRESULT hr;
+    BmpDecoder *bmp_decoder;
     IWICBitmapDecoder *decoder;
     IWICBitmapFrameDecode *framedecode;
     WICPixelFormatGUID pixelformat;
@@ -227,9 +228,10 @@ static HRESULT ReadIcoDib(IStream *stream, IcoFrameDecode *result)
     int has_alpha=FALSE; /* if TRUE, alpha data might be in the image data */
     WICRect rc;
 
-    hr = IcoDibDecoder_CreateInstance(NULL, &IID_IWICBitmapDecoder, (void**)&decoder);
+    hr = IcoDibDecoder_CreateInstance(&bmp_decoder);
     if (SUCCEEDED(hr))
     {
+        BmpDecoder_GetWICDecoder(bmp_decoder, &decoder);
         hr = IWICBitmapDecoder_Initialize(decoder, stream, WICDecodeMetadataCacheOnLoad);
 
         if (SUCCEEDED(hr))
@@ -317,7 +319,7 @@ static HRESULT ReadIcoDib(IStream *stream, IcoFrameDecode *result)
             LARGE_INTEGER seek;
             int topdown;
 
-            BmpDecoder_FindIconMask(decoder, &offset, &topdown);
+            BmpDecoder_FindIconMask(bmp_decoder, &offset, &topdown);
 
             if (offset)
             {

@@ -59,10 +59,9 @@ typedef struct {
     DWORD bc2AppData;
 } BITMAPCOREHEADER2;
 
-struct BmpDecoder;
-typedef HRESULT (*ReadDataFunc)(struct BmpDecoder* This);
+typedef HRESULT (*ReadDataFunc)(BmpDecoder* This);
 
-typedef struct BmpDecoder {
+struct BmpDecoder {
     const IWICBitmapDecoderVtbl *lpVtbl;
     const IWICBitmapFrameDecodeVtbl *lpFrameVtbl;
     LONG ref;
@@ -80,7 +79,7 @@ typedef struct BmpDecoder {
     CRITICAL_SECTION lock; /* must be held when initialized/imagedata is set or stream is accessed */
     int packed; /* If TRUE, don't look for a file header and assume a packed DIB. */
     int icoframe; /* If TRUE, this is a frame of a .ico file. */
-} BmpDecoder;
+};
 
 static inline BmpDecoder *impl_from_frame(IWICBitmapFrameDecode *iface)
 {
@@ -1142,16 +1141,9 @@ static const IWICBitmapDecoderVtbl BmpDecoder_Vtbl = {
     BmpDecoder_GetFrame
 };
 
-static HRESULT BmpDecoder_Construct(int packed, int icoframe, IUnknown *pUnkOuter, REFIID iid, void** ppv)
+static HRESULT BmpDecoder_Create(int packed, int icoframe, BmpDecoder **ppDecoder)
 {
     BmpDecoder *This;
-    HRESULT ret;
-
-    TRACE("(%p,%s,%p)\n", pUnkOuter, debugstr_guid(iid), ppv);
-
-    *ppv = NULL;
-
-    if (pUnkOuter) return CLASS_E_NOAGGREGATION;
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(BmpDecoder));
     if (!This) return E_OUTOFMEMORY;
@@ -1166,6 +1158,25 @@ static HRESULT BmpDecoder_Construct(int packed, int icoframe, IUnknown *pUnkOute
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": BmpDecoder.lock");
     This->packed = packed;
     This->icoframe = icoframe;
+
+    *ppDecoder = This;
+
+    return S_OK;
+}
+
+static HRESULT BmpDecoder_Construct(int packed, int icoframe, IUnknown *pUnkOuter, REFIID iid, void** ppv)
+{
+    BmpDecoder *This;
+    HRESULT ret;
+
+    TRACE("(%p,%s,%p)\n", pUnkOuter, debugstr_guid(iid), ppv);
+
+    *ppv = NULL;
+
+    if (pUnkOuter) return CLASS_E_NOAGGREGATION;
+
+    ret = BmpDecoder_Create(packed, icoframe, &This);
+    if (FAILED(ret)) return ret;
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
@@ -1183,17 +1194,19 @@ HRESULT DibDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     return BmpDecoder_Construct(TRUE, FALSE, pUnkOuter, iid, ppv);
 }
 
-HRESULT IcoDibDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
+HRESULT IcoDibDecoder_CreateInstance(BmpDecoder **ppDecoder)
 {
-    return BmpDecoder_Construct(TRUE, TRUE, pUnkOuter, iid, ppv);
+    return BmpDecoder_Create(TRUE, TRUE, ppDecoder);
+}
+
+void BmpDecoder_GetWICDecoder(BmpDecoder *This, IWICBitmapDecoder **ppDecoder)
+{
+    *ppDecoder = (IWICBitmapDecoder*)This;
 }
 
 /* Return the offset where the mask of an icon might be, or 0 for failure. */
-void BmpDecoder_FindIconMask(IWICBitmapDecoder *decoder, ULONG *mask_offset, int *topdown)
+void BmpDecoder_FindIconMask(BmpDecoder *This, ULONG *mask_offset, int *topdown)
 {
-    BmpDecoder *This = (BmpDecoder*)decoder;
-
-    assert(This->lpVtbl == &BmpDecoder_Vtbl);
     assert(This->stream != NULL);
 
     if (This->read_data_func == BmpFrameDecode_ReadUncompressed)
