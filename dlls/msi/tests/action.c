@@ -1361,6 +1361,95 @@ static const char rmi_install_exec_seq_dat[] =
     "PublishProduct\t\t5200\n"
     "InstallFinalize\t\t6000\n";
 
+static const char pa_file_dat[] =
+    "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+    "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+    "File\tFile\n"
+    "win32.txt\twin32\twin32.txt\t1000\t\t\t8192\t1\n"
+    "manifest.txt\twin32\tmanifest.txt\t1000\t\t\t8192\t1\n"
+    "win32_local.txt\twin32_local\twin32_local.txt\t1000\t\t\t8192\t1\n"
+    "manifest_local.txt\twin32_local\tmanifest_local.txt\t1000\t\t\t8192\t1\n"
+    "dotnet.txt\tdotnet\tdotnet.txt\t1000\t\t\t8192\t1\n"
+    "dotnet_local.txt\tdotnet_local\tdotnet_local.txt\t1000\t\t\t8192\t1\n"
+    "application_win32.txt\twin32_local\tapplication_win32.txt\t1000\t\t\t8192\t1\n"
+    "application_dotnet.txt\tdotnet_local\tapplication_dotnet.txt\t1000\t\t\t8192\t1\n";
+
+static const char pa_feature_dat[] =
+    "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+    "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+    "Feature\tFeature\n"
+    "assembly\t\t\tassembly feature\t1\t2\tMSITESTDIR\t0\n";
+
+static const char pa_feature_comp_dat[] =
+    "Feature_\tComponent_\n"
+    "s38\ts72\n"
+    "FeatureComponents\tFeature_\tComponent_\n"
+    "assembly\twin32\n"
+    "assembly\twin32_local\n"
+    "assembly\tdotnet\n"
+    "assembly\tdotnet_local\n";
+
+static const char pa_component_dat[] =
+    "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+    "s72\tS38\ts72\ti2\tS255\tS72\n"
+    "Component\tComponent\n"
+    "win32\t{F515549E-7E61-425D-AAC1-9BEF2E066D06}\tMSITESTDIR\t0\t\twin32.txt\n"
+    "win32_local\t{D34D3FBA-6789-4E57-AD1A-1281297DC201}\tMSITESTDIR\t0\t\twin32_local.txt\n"
+    "dotnet\t{8943164F-2B31-4C09-A894-493A8CBDE0A4}\tMSITESTDIR\t0\t\tdotnet.txt\n"
+    "dotnet_local\t{4E8567E8-8EAE-4E36-90F1-B99D33C663F8}\tMSITESTDIR\t0\t\tdotnet_local.txt\n";
+
+static const char pa_msi_assembly_dat[] =
+    "Component_\tFeature_\tFile_Manifest\tFile_Application\tAttributes\n"
+    "s72\ts38\tS72\tS72\tI2\n"
+    "MsiAssembly\tComponent_\n"
+    "win32\tassembly\tmanifest.txt\t\t1\n"
+    "win32_local\tassembly\tmanifest_local.txt\tapplication_win32.txt\t1\n"
+    "dotnet\tassembly\t\t\t0\n"
+    "dotnet_local\tassembly\t\tapplication_dotnet.txt\t0\n";
+
+static const char pa_msi_assembly_name_dat[] =
+    "Component_\tName\tValue\n"
+    "s72\ts255\ts255\n"
+    "MsiAssemblyName\tComponent_\tName\n"
+    "win32\tName\tWine.Win32.Assembly\n"
+    "win32\tprocessorArchitecture\tx86\n"
+    "win32\tpublicKeyToken\tabcdef0123456789\n"
+    "win32\ttype\twin32\n"
+    "win32\tversion\t1.0.0.0\n"
+    "win32_local\tName\tWine.Win32.Local.Assembly\n"
+    "win32_local\tprocessorArchitecture\tx86\n"
+    "win32_local\tpublicKeyToken\tabcdef0123456789\n"
+    "win32_local\ttype\twin32\n"
+    "win32_local\tversion\t1.0.0.0\n"
+    "dotnet\tName\tWine.Dotnet.Assembly\n"
+    "dotnet\tprocessorArchitecture\tMSIL\n"
+    "dotnet\tpublicKeyToken\tabcdef0123456789\n"
+    "dotnet\tculture\tneutral\n"
+    "dotnet\tversion\t1.0.0.0\n"
+    "dotnet_local\tName\tWine.Dotnet.Local.Assembly\n"
+    "dotnet_local\tprocessorArchitecture\tMSIL\n"
+    "dotnet_local\tpublicKeyToken\tabcdef0123456789\n"
+    "dotnet_local\tculture\tneutral\n"
+    "dotnet_local\tversion\t1.0.0.0\n";
+
+static const char pa_install_exec_seq_dat[] =
+    "Action\tCondition\tSequence\n"
+    "s72\tS255\tI2\n"
+    "InstallExecuteSequence\tAction\n"
+    "LaunchConditions\t\t100\n"
+    "CostInitialize\t\t800\n"
+    "FileCost\t\t900\n"
+    "CostFinalize\t\t1000\n"
+    "InstallValidate\t\t1400\n"
+    "InstallInitialize\t\t1500\n"
+    "ProcessComponents\t\t1600\n"
+    "MsiPublishAssemblies\t\t3000\n"
+    "MsiUnpublishAssemblies\t\t4000\n"
+    "RegisterProduct\t\t5000\n"
+    "PublishFeatures\t\t5100\n"
+    "PublishProduct\t\t5200\n"
+    "InstallFinalize\t\t6000\n";
+
 typedef struct _msi_table
 {
     const char *filename;
@@ -1700,6 +1789,20 @@ static const msi_table rmi_tables[] =
     ADD_TABLE(rmi_verb),
     ADD_TABLE(rmi_mime),
     ADD_TABLE(rmi_install_exec_seq),
+    ADD_TABLE(media),
+    ADD_TABLE(property)
+};
+
+static const msi_table pa_tables[] =
+{
+    ADD_TABLE(directory),
+    ADD_TABLE(pa_component),
+    ADD_TABLE(pa_feature),
+    ADD_TABLE(pa_feature_comp),
+    ADD_TABLE(pa_file),
+    ADD_TABLE(pa_msi_assembly),
+    ADD_TABLE(pa_msi_assembly_name),
+    ADD_TABLE(pa_install_exec_seq),
     ADD_TABLE(media),
     ADD_TABLE(property)
 };
@@ -5711,6 +5814,131 @@ error:
     DeleteFile(msifile);
 }
 
+static void test_publish_assemblies(void)
+{
+    static const char manifest[] =
+        "<assemblyIdentity type=\"win32\" name=\"Wine.Win32.Assembly\" "
+        "version=\"1.0.0.0\" publicKeyToken=\"abcdef0123456789\" "
+        "processorArchitecture=\"x86\"/>";
+    static const char manifest_local[] =
+        "<assemblyIdentity type=\"win32\" name=\"Wine.Win32.Local.Assembly\" "
+        "version=\"1.0.0.0\" publicKeyToken=\"abcdef0123456789\" "
+        "processorArchitecture=\"x86\"/>";
+    static const char path_dotnet[] =
+        "Software\\Microsoft\\Installer\\Assemblies\\Global";
+    static const char path_dotnet_local[] =
+        "Software\\Microsoft\\Installer\\Assemblies\\C:|Program Files|msitest|application_dotnet.txt";
+    static const char path_dotnet_local_wow64[] =
+        "Software\\Microsoft\\Installer\\Assemblies\\C:|Program Files (x86)|msitest|application_dotnet.txt";
+    static const char path_win32[] =
+        "Software\\Microsoft\\Installer\\Win32Assemblies\\Global";
+    static const char path_win32_local[] =
+        "Software\\Microsoft\\Installer\\Win32Assemblies\\C:|Program Files|msitest|application_win32.txt";
+    static const char path_win32_local_wow64[] =
+        "Software\\Microsoft\\Installer\\Win32Assemblies\\C:|Program Files (x86)|msitest|application_win32.txt";
+    static const char name_dotnet[] =
+        "Wine.Dotnet.Assembly,processorArchitecture=\"MSIL\",publicKeyToken=\"abcdef0123456789\","
+        "version=\"1.0.0.0\",culture=\"neutral\"";
+    static const char name_dotnet_local[] =
+        "Wine.Dotnet.Local.Assembly,processorArchitecture=\"MSIL\",publicKeyToken=\"abcdef0123456789\","
+        "version=\"1.0.0.0\",culture=\"neutral\"";
+    static const char name_win32[] =
+        "Wine.Win32.Assembly,processorArchitecture=\"x86\",publicKeyToken=\"abcdef0123456789\","
+        "type=\"win32\",version=\"1.0.0.0\"";
+    static const char name_win32_local[] =
+        "Wine.Win32.Local.Assembly,processorArchitecture=\"x86\",publicKeyToken=\"abcdef0123456789\","
+        "type=\"win32\",version=\"1.0.0.0\"";
+    UINT r;
+    LONG res;
+    HKEY hkey;
+    const char *path;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
+    create_test_files();
+    create_file("msitest\\win32.txt", 1000);
+    create_file("msitest\\win32_local.txt", 1000);
+    create_file("msitest\\dotnet.txt", 1000);
+    create_file("msitest\\dotnet_local.txt", 1000);
+    create_file_data("msitest\\manifest.txt", manifest, 0);
+    create_file_data("msitest\\manifest_local.txt", manifest_local, 0);
+    create_file("msitest\\application_win32.txt", 1000);
+    create_file("msitest\\application_dotnet.txt", 1000);
+    create_database(msifile, pa_tables, sizeof(pa_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto done;
+    }
+    if (r == ERROR_INSTALL_FAILURE)
+    {
+        skip("No support for installing side-by-side assemblies\n");
+        goto done;
+    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    todo_wine {
+    res = RegOpenKeyA(HKEY_CURRENT_USER, path_dotnet, &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    CHECK_REG_STR(hkey, name_dotnet, "rcHQPHq?CA@Uv-XqMI1e>Z'q,T*76M@=YEg6My?~]");
+    RegCloseKey(hkey);
+
+    path = (is_wow64 || is_64bit) ? path_dotnet_local_wow64 : path_dotnet_local;
+    res = RegOpenKeyA(HKEY_CURRENT_USER, path, &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    CHECK_REG_STR(hkey, name_dotnet_local, "rcHQPHq?CA@Uv-XqMI1e>LF,8A?0d.AW@vcZ$Cgox");
+    RegCloseKey(hkey);
+
+    res = RegOpenKeyA(HKEY_CURRENT_USER, path_win32, &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    CHECK_REG_STR(hkey, name_win32, "rcHQPHq?CA@Uv-XqMI1e>}NJjwR'%D9v1p!v{WV(%");
+    RegCloseKey(hkey);
+
+    path = (is_wow64 || is_64bit) ? path_win32_local_wow64 : path_win32_local;
+    res = RegOpenKeyA(HKEY_CURRENT_USER, path, &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    CHECK_REG_STR(hkey, name_win32_local, "rcHQPHq?CA@Uv-XqMI1e>C)Uvlj*53A)u(QQ9=)X!");
+    RegCloseKey(hkey);
+    }
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    res = RegOpenKeyA(HKEY_CURRENT_USER, path_dotnet, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
+    path = (is_wow64 || is_64bit) ? path_dotnet_local_wow64 : path_dotnet_local;
+    res = RegOpenKeyA(HKEY_CURRENT_USER, path, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
+    res = RegOpenKeyA(HKEY_CURRENT_USER, path_win32, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
+    path = (is_wow64 || is_64bit) ? path_win32_local_wow64 : path_win32_local;
+    res = RegOpenKeyA(HKEY_CURRENT_USER, path, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
+done:
+    DeleteFileA("msitest\\win32.txt");
+    DeleteFileA("msitest\\win32_local.txt");
+    DeleteFileA("msitest\\dotnet.txt");
+    DeleteFileA("msitest\\dotnet_local.txt");
+    DeleteFileA("msitest\\manifest.txt");
+    DeleteFileA("msitest\\manifest_local.txt");
+    DeleteFileA("msitest\\application_win32.txt");
+    DeleteFileA("msitest\\application_dotnet.txt");
+    delete_test_files();
+    DeleteFile(msifile);
+}
+
 START_TEST(action)
 {
     DWORD len;
@@ -5789,6 +6017,7 @@ START_TEST(action)
     test_register_class_info();
     test_register_extension_info();
     test_register_mime_info();
+    test_publish_assemblies();
 
     DeleteFileA(log_file);
 
