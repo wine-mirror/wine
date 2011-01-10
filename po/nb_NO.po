@@ -3565,7 +3565,7 @@ msgstr "K&jør..."
 msgid "E&xit Windows..."
 msgstr "A&vslutt Windows..."
 
-#: progman.rc:41 taskmgr.rc:41
+#: progman.rc:41 taskmgr.rc:41 winemine.rc:34
 msgid "&Options"
 msgstr "&Innstillinger"
 
@@ -4633,6 +4633,58 @@ msgstr "Interne feil - mottok ugyldig parameter"
 #: winedbg.rc:37
 msgid "(unidentified)"
 msgstr "(uidentifisert)"
+
+#: winemine.rc:35
+msgid "&New\tF2"
+msgstr "&Ny\tF2"
+
+#: winemine.rc:37
+msgid "&Mark Question"
+msgstr "&Merk spørsmål"
+
+#: winemine.rc:39
+msgid "&Beginner"
+msgstr "Ny&begynner"
+
+#: winemine.rc:40
+msgid "&Advanced"
+msgstr "&Avansert"
+
+#: winemine.rc:41
+msgid "&Expert"
+msgstr "&Ekspert"
+
+#: winemine.rc:42
+msgid "&Custom..."
+msgstr "E&gendefinert"
+
+#: winemine.rc:44
+msgid "E&xit\tAlt+X"
+msgstr "Avslut&t\tAlt+X"
+
+#: winemine.rc:46
+msgid "&Info"
+msgstr "&Hjelp"
+
+#: winemine.rc:47
+msgid "&Fastest Times..."
+msgstr "&Beste tider"
+
+#: winemine.rc:48
+msgid "&About"
+msgstr "&Om"
+
+#: winemine.rc:27
+msgid "WineMine"
+msgstr "Minesveiper"
+
+#: winemine.rc:28
+msgid "Nobody"
+msgstr "Ingen"
+
+#: winemine.rc:29
+msgid "Copyright 2000 Joshua Thielen"
+msgstr "Kopirett 2000 tilhører Joshua Thielen"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

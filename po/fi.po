@@ -3294,10 +3294,9 @@ msgstr ""
 msgid "E&xit Windows..."
 msgstr ""
 
-#: progman.rc:41 taskmgr.rc:41
-#, fuzzy
+#: progman.rc:41 taskmgr.rc:41 winemine.rc:34
 msgid "&Options"
-msgstr "Valinnat"
+msgstr "&Valinnat"
 
 #: progman.rc:42
 msgid "&Arrange automatically"
@@ -4295,6 +4294,58 @@ msgstr ""
 #: winedbg.rc:37
 msgid "(unidentified)"
 msgstr ""
+
+#: winemine.rc:35
+msgid "&New\tF2"
+msgstr "&Uusi\tF2"
+
+#: winemine.rc:37
+msgid "&Mark Question"
+msgstr "&Merkitse"
+
+#: winemine.rc:39
+msgid "&Beginner"
+msgstr "&Aloittelija"
+
+#: winemine.rc:40
+msgid "&Advanced"
+msgstr "&Kehittynyt"
+
+#: winemine.rc:41
+msgid "&Expert"
+msgstr "&Expertti"
+
+#: winemine.rc:42
+msgid "&Custom..."
+msgstr "Mukau&ta"
+
+#: winemine.rc:44
+msgid "E&xit\tAlt+X"
+msgstr "&Poistu\tAlt+X"
+
+#: winemine.rc:46
+msgid "&Info"
+msgstr "&Info"
+
+#: winemine.rc:47
+msgid "&Fastest Times..."
+msgstr "&Nopeimmat ajat"
+
+#: winemine.rc:48
+msgid "&About"
+msgstr "&Tietoja"
+
+#: winemine.rc:27
+msgid "WineMine"
+msgstr "WineMine"
+
+#: winemine.rc:28
+msgid "Nobody"
+msgstr "Ei kukaan"
+
+#: winemine.rc:29
+msgid "Copyright 2000 Joshua Thielen"
+msgstr "Copyright 2000 Joshua Thielen"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

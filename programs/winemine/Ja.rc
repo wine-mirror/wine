@@ -27,32 +27,6 @@
 
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 
-STRINGTABLE {
-     IDS_APPNAME, "WineMine"
-     IDS_NOBODY,  "Nobody"
-     IDS_ABOUT,   "Copyright 2000 Joshua Thielen"
-}
-
-MENU_WINEMINE MENU
-{
-    POPUP "オプション(&O)" {
-        MENUITEM "スタート(&N)\tF2",       IDM_NEW
-        MENUITEM SEPARATOR
-        MENUITEM "?マークを使用(&M)", IDM_MARKQ
-        MENUITEM SEPARATOR
-        MENUITEM "初級(&B)",      IDM_BEGINNER
-        MENUITEM "中級(&A)",      IDM_ADVANCED
-        MENUITEM "上級(&E)",        IDM_EXPERT
-        MENUITEM "盤面の変更(&C)",        IDM_CUSTOM
-        MENUITEM SEPARATOR
-        MENUITEM "終了(&X)\tAlt+X",   IDM_EXIT
-    }
-    POPUP "情報(&I)" {
-        MENUITEM "ハイスコア(&F)",    IDM_TIMES
-        MENUITEM "WineMine について(&A)",         IDM_ABOUT
-    }
-}
-
 DLG_TIMES DIALOG 0, 0, 160, 80
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP

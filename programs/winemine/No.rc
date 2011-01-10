@@ -23,32 +23,6 @@
 
 LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
-STRINGTABLE {
-     IDS_APPNAME, "Minesveiper"
-     IDS_NOBODY,  "Ingen"
-     IDS_ABOUT,   "Kopirett 2000 tilhører Joshua Thielen"
-}
-
-MENU_WINEMINE MENU
-{
-    POPUP "&Innstillinger" {
-        MENUITEM "&Ny\tF2",       IDM_NEW
-        MENUITEM SEPARATOR
-        MENUITEM "&Merk spørsmål", IDM_MARKQ
-        MENUITEM SEPARATOR
-        MENUITEM "Ny&begynner",      IDM_BEGINNER
-        MENUITEM "&Avansert",      IDM_ADVANCED
-        MENUITEM "&Ekspert",        IDM_EXPERT
-        MENUITEM "E&gendefinert",        IDM_CUSTOM
-        MENUITEM SEPARATOR
-        MENUITEM "Avslut&t\tAlt+X",   IDM_EXIT
-    }
-    POPUP "&Hjelp" {
-        MENUITEM "&Beste tider",    IDM_TIMES
-        MENUITEM "&Om",         IDM_ABOUT
-    }
-}
-
 DLG_TIMES DIALOG 0, 0, 160, 80
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP

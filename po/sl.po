@@ -3601,7 +3601,7 @@ msgstr "&Zaženi ..."
 msgid "E&xit Windows..."
 msgstr "Iz&hod ..."
 
-#: progman.rc:41 taskmgr.rc:41
+#: progman.rc:41 taskmgr.rc:41 winemine.rc:34
 msgid "&Options"
 msgstr "&Možnosti"
 
@@ -4656,6 +4656,58 @@ msgstr "Interne napake - prejeti nepravilni parametri"
 #: winedbg.rc:37
 msgid "(unidentified)"
 msgstr "(nedefinirano)"
+
+#: winemine.rc:35
+msgid "&New\tF2"
+msgstr "&Nova igra\tF2"
+
+#: winemine.rc:37
+msgid "&Mark Question"
+msgstr "&Vprašaji"
+
+#: winemine.rc:39
+msgid "&Beginner"
+msgstr "&Začetnik"
+
+#: winemine.rc:40
+msgid "&Advanced"
+msgstr "&Napreden"
+
+#: winemine.rc:41
+msgid "&Expert"
+msgstr "&Strokovnjak"
+
+#: winemine.rc:42
+msgid "&Custom..."
+msgstr "&Poljubno"
+
+#: winemine.rc:44
+msgid "E&xit\tAlt+X"
+msgstr "Iz&hod\tAlt+X"
+
+#: winemine.rc:46
+msgid "&Info"
+msgstr "&Info"
+
+#: winemine.rc:47
+msgid "&Fastest Times..."
+msgstr "&Najboljši časi"
+
+#: winemine.rc:48
+msgid "&About"
+msgstr "&O programu"
+
+#: winemine.rc:27
+msgid "WineMine"
+msgstr "WineMine"
+
+#: winemine.rc:28
+msgid "Nobody"
+msgstr "Nihče"
+
+#: winemine.rc:29
+msgid "Copyright 2000 Joshua Thielen"
+msgstr "Copyright 2000 Joshua Thielen"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

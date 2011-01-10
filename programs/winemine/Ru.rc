@@ -26,32 +26,6 @@
 
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
-STRINGTABLE {
-     IDS_APPNAME, "WineMine"
-     IDS_NOBODY,  "Nobody"
-     IDS_ABOUT,   "Copyright 2000 Joshua Thielen"
-}
-
-MENU_WINEMINE MENU
-{
-    POPUP "&Игра" {
-        MENUITEM "&Новая игра\tF2", IDM_NEW
-        MENUITEM SEPARATOR
-        MENUITEM "&Вопросительные знаки", IDM_MARKQ
-        MENUITEM SEPARATOR
-        MENUITEM "Нови&чок",       IDM_BEGINNER
-        MENUITEM "&Мастер",        IDM_ADVANCED
-        MENUITEM "&Эксперт",       IDM_EXPERT
-        MENUITEM "Нестандартные &параметры",   IDM_CUSTOM
-        MENUITEM SEPARATOR
-        MENUITEM "&Закрыть\tAlt+X",       IDM_EXIT
-    }
-    POPUP "&Справка" {
-        MENUITEM "&Лучшее время",  IDM_TIMES
-        MENUITEM "&О программе",   IDM_ABOUT
-    }
-}
-
 DLG_TIMES DIALOG 0, 0, 160, 80
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP

@@ -3537,9 +3537,14 @@ msgstr "Sp&ustit..."
 msgid "E&xit Windows..."
 msgstr "&Konec Windows..."
 
-#: progman.rc:41 taskmgr.rc:41
+#: progman.rc:41 taskmgr.rc:41 winemine.rc:34
+#, fuzzy
 msgid "&Options"
-msgstr "&Nastavení"
+msgstr ""
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"&Nastavení\n"
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"N&astavení"
 
 #: progman.rc:42
 msgid "&Arrange automatically"
@@ -4567,6 +4572,58 @@ msgstr ""
 #: winedbg.rc:37
 msgid "(unidentified)"
 msgstr ""
+
+#: winemine.rc:35
+msgid "&New\tF2"
+msgstr "&Nová\tF2"
+
+#: winemine.rc:37
+msgid "&Mark Question"
+msgstr "&Označovat nerozhodnuté"
+
+#: winemine.rc:39
+msgid "&Beginner"
+msgstr "&Začátečník"
+
+#: winemine.rc:40
+msgid "&Advanced"
+msgstr "&Pokročilý"
+
+#: winemine.rc:41
+msgid "&Expert"
+msgstr "&Expert"
+
+#: winemine.rc:42
+msgid "&Custom..."
+msgstr "&Dle libosti"
+
+#: winemine.rc:44
+msgid "E&xit\tAlt+X"
+msgstr "&Konec\tAlt+K"
+
+#: winemine.rc:46
+msgid "&Info"
+msgstr "&Informace"
+
+#: winemine.rc:47
+msgid "&Fastest Times..."
+msgstr "Ne&jlepší časy"
+
+#: winemine.rc:48
+msgid "&About"
+msgstr "&O aplikaci"
+
+#: winemine.rc:27
+msgid "WineMine"
+msgstr "WineMine"
+
+#: winemine.rc:28
+msgid "Nobody"
+msgstr "Nikdo"
+
+#: winemine.rc:29
+msgid "Copyright 2000 Joshua Thielen"
+msgstr "Copyright 2000 Joshua Thielen"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

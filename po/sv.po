@@ -3597,9 +3597,14 @@ msgstr "K&ör..."
 msgid "E&xit Windows..."
 msgstr "A&vsluta Windows..."
 
-#: progman.rc:41 taskmgr.rc:41
+#: progman.rc:41 taskmgr.rc:41 winemine.rc:34
+#, fuzzy
 msgid "&Options"
-msgstr "&Inställningar"
+msgstr ""
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"&Inställningar\n"
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"A&lternativ"
 
 #: progman.rc:42
 msgid "&Arrange automatically"
@@ -4656,6 +4661,58 @@ msgstr "Interna fel - ogiltiga parametrar mottogs"
 #: winedbg.rc:37
 msgid "(unidentified)"
 msgstr "(oidentifierad)"
+
+#: winemine.rc:35
+msgid "&New\tF2"
+msgstr "&Nytt\tF2"
+
+#: winemine.rc:37
+msgid "&Mark Question"
+msgstr "&Markera fråga"
+
+#: winemine.rc:39
+msgid "&Beginner"
+msgstr "Ny&börjare"
+
+#: winemine.rc:40
+msgid "&Advanced"
+msgstr "&Avancerad"
+
+#: winemine.rc:41
+msgid "&Expert"
+msgstr "&Expert"
+
+#: winemine.rc:42
+msgid "&Custom..."
+msgstr "An&passad..."
+
+#: winemine.rc:44
+msgid "E&xit\tAlt+X"
+msgstr "A&vsluta\tAlt+X"
+
+#: winemine.rc:46
+msgid "&Info"
+msgstr "&Info"
+
+#: winemine.rc:47
+msgid "&Fastest Times..."
+msgstr "&Snabbaste tider..."
+
+#: winemine.rc:48
+msgid "&About"
+msgstr "&Om"
+
+#: winemine.rc:27
+msgid "WineMine"
+msgstr "Minor"
+
+#: winemine.rc:28
+msgid "Nobody"
+msgstr "Ingen"
+
+#: winemine.rc:29
+msgid "Copyright 2000 Joshua Thielen"
+msgstr "Copyright 2000 Joshua Thielen"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

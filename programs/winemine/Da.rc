@@ -23,32 +23,6 @@
 
 LANGUAGE LANG_DANISH, SUBLANG_DEFAULT
 
-STRINGTABLE {
-     IDS_APPNAME, "Minerydder"
-     IDS_NOBODY,  "Ingen"
-     IDS_ABOUT,   "Ophavsret 2000 tilhører Joshua Thielen"
-}
-
-MENU_WINEMINE MENU
-{
-    POPUP "&Indstillinger" {
-        MENUITEM "&Nyt spil\tF2",   IDM_NEW
-        MENUITEM SEPARATOR
-        MENUITEM "&Brug spørgsmålstegn",IDM_MARKQ
-        MENUITEM SEPARATOR
-        MENUITEM "Ny&begynder",     IDM_BEGINNER
-        MENUITEM "&Avanceret",      IDM_ADVANCED
-        MENUITEM "&Ekspert",        IDM_EXPERT
-        MENUITEM "B&rugerdefineret" IDM_CUSTOM
-        MENUITEM SEPARATOR
-        MENUITEM "Afslut&t\tAlt+X", IDM_EXIT
-    }
-    POPUP "&Hjælp" {
-        MENUITEM "&Bedste tider",   IDM_TIMES
-        MENUITEM "&Om",             IDM_ABOUT
-    }
-}
-
 DLG_TIMES DIALOG 0, 0, 160, 80
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP

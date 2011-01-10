@@ -28,32 +28,6 @@ LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 
 /* Czech strings in CP1250 */
 
-STRINGTABLE {
-     IDS_APPNAME, "WineMine"
-     IDS_NOBODY,  "Nikdo"
-     IDS_ABOUT,   "Copyright 2000 Joshua Thielen"
-}
-
-MENU_WINEMINE MENU
-{
-    POPUP "N&astavení" {
-        MENUITEM "&Nová\tF2",       IDM_NEW
-        MENUITEM SEPARATOR
-        MENUITEM "&Oznaèovat nerozhodnuté", IDM_MARKQ
-        MENUITEM SEPARATOR
-        MENUITEM "&Zaèáteèník",      IDM_BEGINNER
-        MENUITEM "&Pokroèilý",      IDM_ADVANCED
-        MENUITEM "&Expert",        IDM_EXPERT
-        MENUITEM "&Dle libosti",        IDM_CUSTOM
-        MENUITEM SEPARATOR
-        MENUITEM "&Konec\tAlt+K",   IDM_EXIT
-    }
-    POPUP "&Informace" {
-        MENUITEM "Ne&jlepší èasy",    IDM_TIMES
-        MENUITEM "&O aplikaci",         IDM_ABOUT
-    }
-}
-
 DLG_TIMES DIALOG 0, 0, 160, 80
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP

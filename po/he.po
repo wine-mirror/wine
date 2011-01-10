@@ -3257,7 +3257,7 @@ msgstr "הפע&לה..."
 msgid "E&xit Windows..."
 msgstr "י&ציאה מ־Windows..."
 
-#: progman.rc:41 taskmgr.rc:41
+#: progman.rc:41 taskmgr.rc:41 winemine.rc:34
 msgid "&Options"
 msgstr "&אפשרויות"
 
@@ -4263,6 +4263,58 @@ msgstr "Internal errors - invalid parameters received"
 #: winedbg.rc:37
 msgid "(unidentified)"
 msgstr "(unidentified)"
+
+#: winemine.rc:35
+msgid "&New\tF2"
+msgstr "&חדש\tF2"
+
+#: winemine.rc:37
+msgid "&Mark Question"
+msgstr "&סימון בשאלה"
+
+#: winemine.rc:39
+msgid "&Beginner"
+msgstr "מ&תחילים"
+
+#: winemine.rc:40
+msgid "&Advanced"
+msgstr "מת&קדמים"
+
+#: winemine.rc:41
+msgid "&Expert"
+msgstr "מומ&חים"
+
+#: winemine.rc:42
+msgid "&Custom..."
+msgstr "ה&תאמה אישית..."
+
+#: winemine.rc:44
+msgid "E&xit\tAlt+X"
+msgstr "י&ציאה\tAlt+X"
+
+#: winemine.rc:46
+msgid "&Info"
+msgstr "&מידע"
+
+#: winemine.rc:47
+msgid "&Fastest Times..."
+msgstr "&שיאים..."
+
+#: winemine.rc:48
+msgid "&About"
+msgstr "על &אודות"
+
+#: winemine.rc:27
+msgid "WineMine"
+msgstr "WineMine"
+
+#: winemine.rc:28
+msgid "Nobody"
+msgstr "אף אחד"
+
+#: winemine.rc:29
+msgid "Copyright 2000 Joshua Thielen"
+msgstr "כל הזכויות שמורות 2000 Joshua Thielen"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

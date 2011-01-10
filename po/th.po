@@ -3241,7 +3241,7 @@ msgstr ""
 msgid "E&xit Windows..."
 msgstr ""
 
-#: progman.rc:41 taskmgr.rc:41
+#: progman.rc:41 taskmgr.rc:41 winemine.rc:34
 msgid "&Options"
 msgstr ""
 
@@ -4224,6 +4224,60 @@ msgstr ""
 
 #: winedbg.rc:37
 msgid "(unidentified)"
+msgstr ""
+
+#: winemine.rc:35
+msgid "&New\tF2"
+msgstr ""
+
+#: winemine.rc:37
+msgid "&Mark Question"
+msgstr ""
+
+#: winemine.rc:39
+msgid "&Beginner"
+msgstr ""
+
+#: winemine.rc:40
+msgid "&Advanced"
+msgstr ""
+
+#: winemine.rc:41
+msgid "&Expert"
+msgstr ""
+
+#: winemine.rc:42
+msgid "&Custom..."
+msgstr ""
+
+#: winemine.rc:44
+#, fuzzy
+msgid "E&xit\tAlt+X"
+msgstr "ออก"
+
+#: winemine.rc:46
+msgid "&Info"
+msgstr ""
+
+#: winemine.rc:47
+msgid "&Fastest Times..."
+msgstr ""
+
+#: winemine.rc:48
+#, fuzzy
+msgid "&About"
+msgstr "&About Notepad"
+
+#: winemine.rc:27
+msgid "WineMine"
+msgstr ""
+
+#: winemine.rc:28
+msgid "Nobody"
+msgstr ""
+
+#: winemine.rc:29
+msgid "Copyright 2000 Joshua Thielen"
 msgstr ""
 
 #: write.rc:27

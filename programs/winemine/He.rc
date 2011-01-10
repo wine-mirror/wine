@@ -27,32 +27,6 @@
 
 LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
 
-STRINGTABLE {
-     IDS_APPNAME, "WineMine"
-     IDS_NOBODY,  "אף אחד"
-     IDS_ABOUT,   "כל הזכויות שמורות 2000 Joshua Thielen"
-}
-
-MENU_WINEMINE MENU
-{
-    POPUP "&אפשרויות" {
-        MENUITEM "&חדש\tF2",       IDM_NEW
-        MENUITEM SEPARATOR
-        MENUITEM "&סימון בשאלה", IDM_MARKQ
-        MENUITEM SEPARATOR
-        MENUITEM "מ&תחילים",      IDM_BEGINNER
-        MENUITEM "מת&קדמים",      IDM_ADVANCED
-        MENUITEM "מומ&חים",        IDM_EXPERT
-        MENUITEM "ה&תאמה אישית...",     IDM_CUSTOM
-        MENUITEM SEPARATOR
-        MENUITEM "י&ציאה\tAlt+X",   IDM_EXIT
-    }
-    POPUP "&מידע" {
-        MENUITEM "&שיאים...", IDM_TIMES
-        MENUITEM "על &אודות",         IDM_ABOUT
-    }
-}
-
 DLG_TIMES DIALOG 0, 0, 160, 80
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP

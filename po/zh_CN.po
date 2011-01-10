@@ -3279,7 +3279,7 @@ msgstr "执行(&E)..."
 msgid "E&xit Windows..."
 msgstr "退出 Windows(&X)..."
 
-#: progman.rc:41 taskmgr.rc:41
+#: progman.rc:41 taskmgr.rc:41 winemine.rc:34
 msgid "&Options"
 msgstr "选项(&O)"
 
@@ -4284,6 +4284,58 @@ msgstr ""
 #: winedbg.rc:37
 msgid "(unidentified)"
 msgstr ""
+
+#: winemine.rc:35
+msgid "&New\tF2"
+msgstr "新游戏(&N)\tF2"
+
+#: winemine.rc:37
+msgid "&Mark Question"
+msgstr "允许问号标记(&M)"
+
+#: winemine.rc:39
+msgid "&Beginner"
+msgstr "初学者(&B)"
+
+#: winemine.rc:40
+msgid "&Advanced"
+msgstr "高级(&A)"
+
+#: winemine.rc:41
+msgid "&Expert"
+msgstr "专家(&E)"
+
+#: winemine.rc:42
+msgid "&Custom..."
+msgstr "自定义(&C)"
+
+#: winemine.rc:44
+msgid "E&xit\tAlt+X"
+msgstr "退出(&X)\tAlt+X"
+
+#: winemine.rc:46
+msgid "&Info"
+msgstr "信息(&I)"
+
+#: winemine.rc:47
+msgid "&Fastest Times..."
+msgstr "最快时间(&F)"
+
+#: winemine.rc:48
+msgid "&About"
+msgstr "关于(&A)"
+
+#: winemine.rc:27
+msgid "WineMine"
+msgstr "Wine地雷"
+
+#: winemine.rc:28
+msgid "Nobody"
+msgstr "无人"
+
+#: winemine.rc:29
+msgid "Copyright 2000 Joshua Thielen"
+msgstr "Copyright 2000 Joshua Thielen"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

@@ -31,7 +31,9 @@ RC_SRCS = \
 	Tr.rc \
 	Uk.rc \
 	Zh.rc \
-	rsrc.rc
+	winemine.rc
+
+PO_SRCS = winemine.rc
 
 MANPAGE = winemine.man
 

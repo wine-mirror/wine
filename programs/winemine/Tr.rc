@@ -23,32 +23,6 @@
 
 LANGUAGE LANG_TURKISH, SUBLANG_DEFAULT
 
-STRINGTABLE {
-     IDS_APPNAME, "Wine Mayýn Tarlasý"
-     IDS_NOBODY,  "Hiç kimse"
-     IDS_ABOUT,   "Telif hakký 2000, Joshua Thielen"
-}
-
-MENU_WINEMINE MENU
-{
-    POPUP "&Seçenekler" {
-        MENUITEM "&Yeni\tF2",      IDM_NEW
-        MENUITEM SEPARATOR
-        MENUITEM "&Soru Ýþareti",  IDM_MARKQ
-        MENUITEM SEPARATOR
-        MENUITEM "&Acemi",         IDM_BEGINNER
-        MENUITEM "&Geliþmiþ",      IDM_ADVANCED
-        MENUITEM "&Uzman",         IDM_EXPERT
-        MENUITEM "&Özel",          IDM_CUSTOM
-        MENUITEM SEPARATOR
-        MENUITEM "&Çýkýþ\tAlt+X",  IDM_EXIT
-    }
-    POPUP "&Bilgi" {
-        MENUITEM "&En Kýsa Süreler",    IDM_TIMES
-        MENUITEM "&Hakkýnda",      IDM_ABOUT
-    }
-}
-
 DLG_TIMES DIALOG 0, 0, 160, 80
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP

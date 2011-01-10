@@ -3585,9 +3585,14 @@ msgstr "&Виконати..."
 msgid "E&xit Windows..."
 msgstr "Ви&хід..."
 
-#: progman.rc:41 taskmgr.rc:41
+#: progman.rc:41 taskmgr.rc:41 winemine.rc:34
+#, fuzzy
 msgid "&Options"
-msgstr "&Параметри"
+msgstr ""
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"&Параметри\n"
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"&Гра"
 
 #: progman.rc:42
 msgid "&Arrange automatically"
@@ -4643,6 +4648,58 @@ msgstr "Внутрішні помилки - отримані невірні па
 #: winedbg.rc:37
 msgid "(unidentified)"
 msgstr "(не визначено)"
+
+#: winemine.rc:35
+msgid "&New\tF2"
+msgstr "&Нова\tF2"
+
+#: winemine.rc:37
+msgid "&Mark Question"
+msgstr "&Знаки питання"
+
+#: winemine.rc:39
+msgid "&Beginner"
+msgstr "Н&овачок"
+
+#: winemine.rc:40
+msgid "&Advanced"
+msgstr "&Майстер"
+
+#: winemine.rc:41
+msgid "&Expert"
+msgstr "&Експерт"
+
+#: winemine.rc:42
+msgid "&Custom..."
+msgstr "&Свої параметри..."
+
+#: winemine.rc:44
+msgid "E&xit\tAlt+X"
+msgstr "&Вихід\tAlt+X"
+
+#: winemine.rc:46
+msgid "&Info"
+msgstr "&Довідка"
+
+#: winemine.rc:47
+msgid "&Fastest Times..."
+msgstr "&Кращий час..."
+
+#: winemine.rc:48
+msgid "&About"
+msgstr "&Про програму"
+
+#: winemine.rc:27
+msgid "WineMine"
+msgstr "WineMine"
+
+#: winemine.rc:28
+msgid "Nobody"
+msgstr "Nobody"
+
+#: winemine.rc:29
+msgid "Copyright 2000 Joshua Thielen"
+msgstr "Copyright 2000 Joshua Thielen"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

@@ -29,32 +29,6 @@
 
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
-STRINGTABLE {
-     IDS_APPNAME, "Démineur de Wine"
-     IDS_NOBODY,  "Anonyme"
-     IDS_ABOUT,   "Copyright 2000 Joshua Thielen"
-}
-
-MENU_WINEMINE MENU
-{
-    POPUP "&Options" {
-        MENUITEM "&Nouveau\tF2",           IDM_NEW
-        MENUITEM SEPARATOR
-        MENUITEM "&Marquage des cases suspectes", IDM_MARKQ
-        MENUITEM SEPARATOR
-        MENUITEM "&Débutant",      IDM_BEGINNER
-        MENUITEM "&Avancé",      IDM_ADVANCED
-        MENUITEM "&Expert",        IDM_EXPERT
-        MENUITEM "&Personnalisé...",        IDM_CUSTOM
-        MENUITEM SEPARATOR
-        MENUITEM "&Quitter\tAlt+X",          IDM_EXIT
-    }
-    POPUP "&Info" {
-        MENUITEM "Meilleurs &temps",    IDM_TIMES
-        MENUITEM "À &propos",         IDM_ABOUT
-    }
-}
-
 DLG_TIMES DIALOG 0, 0, 160, 80
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP

@@ -22,32 +22,6 @@
 
 LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 
-STRINGTABLE {
-     IDS_APPNAME, "WineMine"
-     IDS_NOBODY,  "Niemand"
-     IDS_ABOUT,   "Copyright 2000 Joshua Thielen"
-}
-
-MENU_WINEMINE MENU
-{
-    POPUP "&Opties" {
-        MENUITEM "&Nieuw spel\tF2", IDM_NEW
-        MENUITEM SEPARATOR
-        MENUITEM "&Markeer vraag",  IDM_MARKQ
-        MENUITEM SEPARATOR
-        MENUITEM "&Beginner",       IDM_BEGINNER
-        MENUITEM "&Gevorderde",     IDM_ADVANCED
-        MENUITEM "&Expert",         IDM_EXPERT
-        MENUITEM "Aange&past spel", IDM_CUSTOM
-        MENUITEM SEPARATOR
-        MENUITEM "&Afsluiten\tAlt+X", IDM_EXIT
-    }
-    POPUP "&Info" {
-        MENUITEM "&Snelste tijden...", IDM_TIMES
-        MENUITEM "&Over WineMine",   IDM_ABOUT
-    }
-}
-
 DLG_TIMES DIALOG 0, 0, 160, 80
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP

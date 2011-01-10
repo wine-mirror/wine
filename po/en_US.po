@@ -3561,7 +3561,7 @@ msgstr "&Execute..."
 msgid "E&xit Windows..."
 msgstr "E&xit Windows..."
 
-#: progman.rc:41 taskmgr.rc:41
+#: progman.rc:41 taskmgr.rc:41 winemine.rc:34
 msgid "&Options"
 msgstr "&Options"
 
@@ -4617,6 +4617,58 @@ msgstr "Internal errors - invalid parameters received"
 #: winedbg.rc:37
 msgid "(unidentified)"
 msgstr "(unidentified)"
+
+#: winemine.rc:35
+msgid "&New\tF2"
+msgstr "&New\tF2"
+
+#: winemine.rc:37
+msgid "&Mark Question"
+msgstr "&Mark Question"
+
+#: winemine.rc:39
+msgid "&Beginner"
+msgstr "&Beginner"
+
+#: winemine.rc:40
+msgid "&Advanced"
+msgstr "&Advanced"
+
+#: winemine.rc:41
+msgid "&Expert"
+msgstr "&Expert"
+
+#: winemine.rc:42
+msgid "&Custom..."
+msgstr "&Custom..."
+
+#: winemine.rc:44
+msgid "E&xit\tAlt+X"
+msgstr "E&xit\tAlt+X"
+
+#: winemine.rc:46
+msgid "&Info"
+msgstr "&Info"
+
+#: winemine.rc:47
+msgid "&Fastest Times..."
+msgstr "&Fastest Times..."
+
+#: winemine.rc:48
+msgid "&About"
+msgstr "&About"
+
+#: winemine.rc:27
+msgid "WineMine"
+msgstr "WineMine"
+
+#: winemine.rc:28
+msgid "Nobody"
+msgstr "Nobody"
+
+#: winemine.rc:29
+msgid "Copyright 2000 Joshua Thielen"
+msgstr "Copyright 2000 Joshua Thielen"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

@@ -26,32 +26,6 @@
 
 LANGUAGE LANG_LITHUANIAN, SUBLANG_NEUTRAL
 
-STRINGTABLE {
-     IDS_APPNAME, "WineMine"
-     IDS_NOBODY,  "Niekas"
-     IDS_ABOUT,   "Autoriaus teisės 2000 Joshua Thielen"
-}
-
-MENU_WINEMINE MENU
-{
-    POPUP "&Parinktys" {
-        MENUITEM "&Naujas\tF2",       IDM_NEW
-        MENUITEM SEPARATOR
-        MENUITEM "&Žymėti klaustuku", IDM_MARKQ
-        MENUITEM SEPARATOR
-        MENUITEM "P&radedantis",      IDM_BEGINNER
-        MENUITEM "&Pažengęs",         IDM_ADVANCED
-        MENUITEM "Ek&spertas",        IDM_EXPERT
-        MENUITEM "Pasirin&ktas...",   IDM_CUSTOM
-        MENUITEM SEPARATOR
-        MENUITEM "Iš&eiti\tAlt+X",    IDM_EXIT
-    }
-    POPUP "&Informacija" {
-        MENUITEM "&Geriausi laikai",  IDM_TIMES
-        MENUITEM "&Apie",             IDM_ABOUT
-    }
-}
-
 DLG_TIMES DIALOG 0, 0, 160, 80
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP

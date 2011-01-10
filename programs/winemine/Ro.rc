@@ -25,32 +25,6 @@ LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
 
 #pragma code_page(65001)
 
-STRINGTABLE {
-     IDS_APPNAME, "WineMine"
-     IDS_NOBODY,  "Nimeni"
-     IDS_ABOUT,   "Copyright 2000 Joshua Thielen"
-}
-
-MENU_WINEMINE MENU
-{
-    POPUP "&Opţiuni" {
-        MENUITEM "&Nou\tF2",       IDM_NEW
-        MENUITEM SEPARATOR
-        MENUITEM "&Mark Question", IDM_MARKQ
-        MENUITEM SEPARATOR
-        MENUITEM "&Începător",     IDM_BEGINNER
-        MENUITEM "&Avansat",       IDM_ADVANCED
-        MENUITEM "&Expert",        IDM_EXPERT
-        MENUITEM "&Personalizat",  IDM_CUSTOM
-        MENUITEM SEPARATOR
-        MENUITEM "&Ieşire\tAlt+X", IDM_EXIT
-    }
-    POPUP "&Informaţii" {
-        MENUITEM "&Scoruri maxime", IDM_TIMES
-        MENUITEM "&Despre",         IDM_ABOUT
-    }
-}
-
 DLG_TIMES DIALOG 0, 0, 160, 80
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP

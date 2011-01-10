@@ -26,32 +26,6 @@
 
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 
-STRINGTABLE {
-     IDS_APPNAME, "Wine地雷"
-     IDS_NOBODY,  "无人"
-     IDS_ABOUT,   "Copyright 2000 Joshua Thielen"
-}
-
-MENU_WINEMINE MENU
-{
-    POPUP "选项(&O)" {
-        MENUITEM "新游戏(&N)\tF2", IDM_NEW
-        MENUITEM SEPARATOR
-        MENUITEM "允许问号标记(&M)", IDM_MARKQ
-        MENUITEM SEPARATOR
-        MENUITEM "初学者(&B)", IDM_BEGINNER
-        MENUITEM "高级(&A)", IDM_ADVANCED
-        MENUITEM "专家(&E)", IDM_EXPERT
-        MENUITEM "自定义(&C)", IDM_CUSTOM
-        MENUITEM SEPARATOR
-        MENUITEM "退出(&X)\tAlt+X", IDM_EXIT
-    }
-    POPUP "信息(&I)" {
-        MENUITEM "最快时间(&F)", IDM_TIMES
-        MENUITEM "关于(&A)", IDM_ABOUT
-    }
-}
-
 DLG_TIMES DIALOG 0, 0, 160, 80
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
@@ -96,32 +70,6 @@ CAPTION "自定义游戏"
 }
 
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
-
-STRINGTABLE {
-     IDS_APPNAME, "Wine地雷"
-     IDS_NOBODY,  "無人"
-     IDS_ABOUT,   "Copyright 2000 Joshua Thielen"
-}
-
-MENU_WINEMINE MENU
-{
-    POPUP "選項(&O)" {
-        MENUITEM "新遊戲(&N)\tF2", IDM_NEW
-        MENUITEM SEPARATOR
-        MENUITEM "標出問題(&M)", IDM_MARKQ
-        MENUITEM SEPARATOR
-        MENUITEM "初學者(&B)", IDM_BEGINNER
-        MENUITEM "高級(&A)", IDM_ADVANCED
-        MENUITEM "專家(&E)", IDM_EXPERT
-        MENUITEM "自定義(&C)", IDM_CUSTOM
-        MENUITEM SEPARATOR
-        MENUITEM "結束(&X)\tAlt+X", IDM_EXIT
-    }
-    POPUP "資訊(&I)" {
-        MENUITEM "最快時間(&F)", IDM_TIMES
-        MENUITEM "關於(&A)", IDM_ABOUT
-    }
-}
 
 DLG_TIMES DIALOG 0, 0, 160, 80
 STYLE  DS_MODALFRAME | DS_3DLOOK |

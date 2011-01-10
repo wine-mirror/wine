@@ -3563,7 +3563,7 @@ msgstr "실행(&E)..."
 msgid "E&xit Windows..."
 msgstr "창 종료(&X)..."
 
-#: progman.rc:41 taskmgr.rc:41
+#: progman.rc:41 taskmgr.rc:41 winemine.rc:34
 msgid "&Options"
 msgstr "옵션(&O)"
 
@@ -4611,6 +4611,58 @@ msgstr "내부 에러 -올바르지 않은 매개변수가 들어옴"
 #: winedbg.rc:37
 msgid "(unidentified)"
 msgstr "(알수 없음)"
+
+#: winemine.rc:35
+msgid "&New\tF2"
+msgstr "새 게임(&N)\tF2"
+
+#: winemine.rc:37
+msgid "&Mark Question"
+msgstr "물음표 표시(&M)"
+
+#: winemine.rc:39
+msgid "&Beginner"
+msgstr "초보자(&B)"
+
+#: winemine.rc:40
+msgid "&Advanced"
+msgstr "중급자(&A)"
+
+#: winemine.rc:41
+msgid "&Expert"
+msgstr "상급자(&E)"
+
+#: winemine.rc:42
+msgid "&Custom..."
+msgstr "사용자 정의(&C)"
+
+#: winemine.rc:44
+msgid "E&xit\tAlt+X"
+msgstr "나가기(&X)\tAlt+X"
+
+#: winemine.rc:46
+msgid "&Info"
+msgstr "도움말(&I)"
+
+#: winemine.rc:47
+msgid "&Fastest Times..."
+msgstr "가장 빠른 시간(&F)"
+
+#: winemine.rc:48
+msgid "&About"
+msgstr "정보(&A)"
+
+#: winemine.rc:27
+msgid "WineMine"
+msgstr "Wine지뢰찾기"
+
+#: winemine.rc:28
+msgid "Nobody"
+msgstr "아무개"
+
+#: winemine.rc:29
+msgid "Copyright 2000 Joshua Thielen"
+msgstr "Copyright 2000 Joshua Thielen"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"
