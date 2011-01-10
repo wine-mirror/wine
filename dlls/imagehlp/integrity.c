@@ -77,7 +77,7 @@ static int IMAGEHLP_GetNTHeaders(HANDLE handle, DWORD *pe_offset, IMAGE_NT_HEADE
         return HDR_FAIL;
 
     /* verify magic number of 'MZ' */
-    if (dos_hdr.e_magic != 0x5A4D)
+    if (dos_hdr.e_magic != IMAGE_DOS_SIGNATURE)
         return HDR_FAIL;
 
     if (pe_offset != NULL)
