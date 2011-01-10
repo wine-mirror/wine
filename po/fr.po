@@ -1483,7 +1483,7 @@ msgstr "&Imprimer"
 msgid "Anchor"
 msgstr "Ancre"
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
 msgid "&Open"
 msgstr "Ou&vrir"
 
@@ -3396,7 +3396,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Ressources ouvertes : %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr "&Fichier"
 
@@ -3428,7 +3428,7 @@ msgstr "&Mise en page..."
 msgid "P&rinter Setup..."
 msgstr "&Configuration de l'imprimante..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
 msgid "E&xit"
 msgstr "&Quitter"
 
@@ -4568,6 +4568,34 @@ msgstr ""
 "Erreur lors de l'excution de la commande de désinstallation « %s ». "
 "L'exécutable n'a peut-être pas été trouvé.\n"
 "Souhaitez-vous supprimmer l'entrée de la base de registre ?"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr "&Déplacement"
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr "&Mettre à l'échelle"
+
+#: view.rc:37
+msgid "&Left"
+msgstr "&Gauche"
+
+#: view.rc:38
+msgid "&Right"
+msgstr "&Droite"
+
+#: view.rc:39
+msgid "&Up"
+msgstr "&Haut"
+
+#: view.rc:40
+msgid "&Down"
+msgstr "&Bas"
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr "Visionneuse de fichiers Metafile réguliers"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

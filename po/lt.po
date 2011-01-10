@@ -1458,7 +1458,7 @@ msgstr "&Spausdinti"
 msgid "Anchor"
 msgstr "Žymė"
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
 msgid "&Open"
 msgstr "&Atverti"
 
@@ -3336,7 +3336,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Atverti ištekliai: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr "&Failas"
 
@@ -3368,7 +3368,7 @@ msgstr "Puslapio &nuostatos..."
 msgid "P&rinter Setup..."
 msgstr "Spaus&dintuvo nuostatos..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
 msgid "E&xit"
 msgstr "Iš&eiti"
 
@@ -3783,7 +3783,8 @@ msgstr ""
 "/L           Parodyti galutinio naudotojo licenciją.\n"
 "\n"
 "start.exe versija 0.2 (C) 2003, Dan Kegel\n"
-"Start pateikiama BE JOKIŲ GARANTIJŲ; detales rasite paleidę su /L parametru.\n"
+"Start pateikiama BE JOKIŲ GARANTIJŲ; detales rasite paleidę su /L "
+"parametru.\n"
 "Ši programa yra laisva programinė įranga; galite ją platinti\n"
 "tam tikromis sąlygomis; paleiskite „start /L“ išsamiai informacijai gauti.\n"
 
@@ -4490,6 +4491,34 @@ msgstr ""
 "Nepavyko įvykdyti programos pašalinimo komandos „%s“, greičiausiai dėl "
 "trūkstamo vykdomojo failo.\n"
 "Ar norite pašalinti programos šalinimo įrašą iš registro?"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr "&Perkelti"
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr "&Sutalpinti į langą"
+
+#: view.rc:37
+msgid "&Left"
+msgstr "&Dešinėn"
+
+#: view.rc:38
+msgid "&Right"
+msgstr "&Kairėn"
+
+#: view.rc:39
+msgid "&Up"
+msgstr "&Žemyn"
+
+#: view.rc:40
+msgid "&Down"
+msgstr "&Aukštyn"
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr "Įprastinė metafailų žiūryklė"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

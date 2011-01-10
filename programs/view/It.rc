@@ -28,50 +28,7 @@
 
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
-/*
- *
- * Menu
- *
- */
-
-VIEW MENU
-BEGIN
-    POPUP "&File"
-    BEGIN
-	MENUITEM "&Apri",			IDM_OPEN
-        MENUITEM "E&sci",                       IDM_EXIT
-    END
-    POPUP "&Pan"
-    BEGIN
-      MENUITEM "&Adatta alla finestra",              IDM_SET_EXT_TO_WIN
-      MENUITEM SEPARATOR
-      MENUITEM "&Sinistra",				IDM_LEFT
-      MENUITEM "&Destra",			IDM_RIGHT
-      MENUITEM "A&lto",				IDM_UP
-      MENUITEM "&Basso",				IDM_DOWN
-    END
-END
-
-
-/*
- *
- * Accelerator
- *
- */
-
 VIEW ACCELERATORS
 BEGIN
     "Q", IDM_EXIT, VIRTKEY, CONTROL
-END
-
-
-/*
- *
- * String Table
- *
- */
-
-STRINGTABLE
-BEGIN
-    IDS_DESCRIPTION         "Visualizzatore di Metafile Regolari"
 END

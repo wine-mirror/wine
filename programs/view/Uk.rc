@@ -28,50 +28,7 @@
 
 LANGUAGE LANG_UKRAINIAN, SUBLANG_DEFAULT
 
-/*
- *
- * Menu
- *
- */
-
-VIEW MENU
-BEGIN
-    POPUP "&Файл"
-    BEGIN
-	MENUITEM "&Відкрити",			IDM_OPEN
-        MENUITEM "В&ихід",                      IDM_EXIT
-    END
-    POPUP "&Pan"
-    BEGIN
-      MENUITEM "&Розширити до розмірів вікна",  IDM_SET_EXT_TO_WIN
-      MENUITEM SEPARATOR
-      MENUITEM "В&ліво",			IDM_LEFT
-      MENUITEM "В&право",			IDM_RIGHT
-      MENUITEM "В&верх",			IDM_UP
-      MENUITEM "В&низ",				IDM_DOWN
-    END
-END
-
-
-/*
- *
- * Accelerator
- *
- */
-
 VIEW ACCELERATORS
 BEGIN
     "Q", IDM_EXIT, VIRTKEY, CONTROL
-END
-
-
-/*
- *
- * String Table
- *
- */
-
-STRINGTABLE
-BEGIN
-    IDS_DESCRIPTION         "Переглядач звичайних метафайлів"
 END

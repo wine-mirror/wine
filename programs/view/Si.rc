@@ -25,50 +25,7 @@
 
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 
-/*
- *
- * Menu
- *
- */
-
-VIEW MENU
-BEGIN
-    POPUP "&Datoteka"
-    BEGIN
-	MENUITEM "&Odpri",			IDM_OPEN
-        MENUITEM "Iz&hod",                       IDM_EXIT
-    END
-    POPUP "&Razteg"
-    BEGIN
-      MENUITEM "&Raztegnjeno (prilagodi velikosti okna)",              IDM_SET_EXT_TO_WIN
-      MENUITEM SEPARATOR
-      MENUITEM "&Levo",				IDM_LEFT
-      MENUITEM "&Desno",			IDM_RIGHT
-      MENUITEM "&Gor",				IDM_UP
-      MENUITEM "&Dol",				IDM_DOWN
-    END
-END
-
-
-/*
- *
- * Accelerator
- *
- */
-
 VIEW ACCELERATORS
 BEGIN
     "Q", IDM_EXIT, VIRTKEY, CONTROL
-END
-
-
-/*
- *
- * String Table
- *
- */
-
-STRINGTABLE
-BEGIN
-    IDS_DESCRIPTION         "Program za ogled Metafile slik"
 END

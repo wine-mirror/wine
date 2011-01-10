@@ -23,51 +23,7 @@
 
 LANGUAGE LANG_TURKISH, SUBLANG_DEFAULT
 
-/*
- *
- * Menu
- *
- */
-
-VIEW MENU
-BEGIN
-    POPUP "&Dosya"
-    BEGIN
-	MENUITEM "&Aç",    			IDM_OPEN
-        MENUITEM "&Çýkýþ",                      IDM_EXIT
-    END
-    POPUP "&Tava"
-    BEGIN
-      MENUITEM "&Pencere Ölçekle",              IDM_SET_EXT_TO_WIN
-      MENUITEM SEPARATOR
-      MENUITEM "S&ol",				IDM_LEFT
-      MENUITEM "S&að",  			IDM_RIGHT
-      MENUITEM "&Yukarý",			IDM_UP
-      MENUITEM "A&þaðý",			IDM_DOWN
-    END
-END
-
-
-/*
- *
- * Accelerator
- *
- */
-
 VIEW ACCELERATORS
 BEGIN
     "Q", IDM_EXIT, VIRTKEY, CONTROL
-END
-
-
-/*
- *
- * String Table
- *
- */
-
-/*FIXME: to be completed*/
-STRINGTABLE
-BEGIN
-    IDS_DESCRIPTION         "Regular Metafile Viewer"
 END

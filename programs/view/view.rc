@@ -1,8 +1,8 @@
 /*
- * View (Simplified and Traditional Chinese Resource)
+ * View resources
  *
- * Copyright 2008 Hongbo Ni <hongbo.at.njstar.com>
- * Copyright 2010 Cheer Xiao <xiaqqaix.at.gmail.com>
+ * Copyright 1998 Douglas Ridgway
+ * Copyright 2003 Marcelo Duarte
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,19 +21,27 @@
 
 #include "resource.h"
 
-/* Chinese text is encoded in UTF-8 */
-#pragma code_page(65001)
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
-LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
-
-VIEW ACCELERATORS
+VIEW MENU
 BEGIN
-    "Q", IDM_EXIT, VIRTKEY, CONTROL
+    POPUP "&File"
+    BEGIN
+	MENUITEM "&Open",			IDM_OPEN
+        MENUITEM "E&xit",                       IDM_EXIT
+    END
+    POPUP "&Pan"
+    BEGIN
+      MENUITEM "&Scale to Window",              IDM_SET_EXT_TO_WIN
+      MENUITEM SEPARATOR
+      MENUITEM "&Left",				IDM_LEFT
+      MENUITEM "&Right",			IDM_RIGHT
+      MENUITEM "&Up",				IDM_UP
+      MENUITEM "&Down",				IDM_DOWN
+    END
 END
 
-LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
-
-VIEW ACCELERATORS
+STRINGTABLE
 BEGIN
-    "Q", IDM_EXIT, VIRTKEY, CONTROL
+    IDS_DESCRIPTION         "Regular Metafile Viewer"
 END

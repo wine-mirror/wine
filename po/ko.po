@@ -1466,7 +1466,7 @@ msgstr "인쇄(&P)"
 msgid "Anchor"
 msgstr "닻"
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
 msgid "&Open"
 msgstr "열기(&O)"
 
@@ -3312,14 +3312,9 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      열린 리소스: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
-#, fuzzy
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"파일(&F)\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-" 파일(&F)"
+msgstr "파일(&F)"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -3349,9 +3344,14 @@ msgstr "페이지 설정(&T)..."
 msgid "P&rinter Setup..."
 msgstr "프린터 설정(&R)..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
+#, fuzzy
 msgid "E&xit"
-msgstr "끝내기(&X)"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"끝내기(&X)\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"나가기(&X)"
 
 #: notepad.rc:38
 msgid "&Edit"
@@ -4460,6 +4460,34 @@ msgid ""
 msgstr ""
 "언인스톨 명령 '%s' 실행 실패,  실행파일이 없는 것 같습니다.\n"
 "당신은 레지스트리에서 언인스톨 등록키를 제거하겠습니까 ?"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr "회전(&P)"
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr "화면 가득 채우기(&S)"
+
+#: view.rc:37
+msgid "&Left"
+msgstr "왼쪽(&L)"
+
+#: view.rc:38
+msgid "&Right"
+msgstr "오른쪽(&R)"
+
+#: view.rc:39
+msgid "&Up"
+msgstr "위(&U)"
+
+#: view.rc:40
+msgid "&Down"
+msgstr "아래(&D)"
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr "정규 메타파일 보기"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

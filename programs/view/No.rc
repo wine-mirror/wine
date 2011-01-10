@@ -23,50 +23,7 @@
 
 LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
-/*
- *
- * Menu
- *
- */
-
-VIEW MENU
-BEGIN
-    POPUP "&Fil"
-    BEGIN
-	MENUITEM "&Åpne",			IDM_OPEN
-        MENUITEM "&Avslutt",                       IDM_EXIT
-    END
-    POPUP "&Panorer"
-    BEGIN
-      MENUITEM "&Skaler til vindu",              IDM_SET_EXT_TO_WIN
-      MENUITEM SEPARATOR
-      MENUITEM "&Venstre",				IDM_LEFT
-      MENUITEM "Høy&re",			IDM_RIGHT
-      MENUITEM "&Opp",				IDM_UP
-      MENUITEM "Ne&d",				IDM_DOWN
-    END
-END
-
-
-/*
- *
- * Accelerator
- *
- */
-
 VIEW ACCELERATORS
 BEGIN
     "Q", IDM_EXIT, VIRTKEY, CONTROL
-END
-
-
-/*
- *
- * String Table
- *
- */
-
-STRINGTABLE
-BEGIN
-    IDS_DESCRIPTION         "Vanlig metafil-framviser"
 END

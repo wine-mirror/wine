@@ -1478,7 +1478,7 @@ msgstr "&Imprimir"
 msgid "Anchor"
 msgstr "Âncora"
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
 msgid "&Open"
 msgstr "&Abrir"
 
@@ -3373,7 +3373,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Recursos disponíveis: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr "&Ficheiro"
 
@@ -3405,7 +3405,7 @@ msgstr "C&onfigurar página..."
 msgid "P&rinter Setup..."
 msgstr "Configurar i&mpressora..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
 msgid "E&xit"
 msgstr "Sai&r"
 
@@ -4540,6 +4540,34 @@ msgstr ""
 "Execução do comando de desinstalação '%s' falhado, talvez devido a faltar o "
 "executável.\n"
 "Deseja remover a entrada de desinstalação do registo ?"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr "&Pan"
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr "Ajustar &janela"
+
+#: view.rc:37
+msgid "&Left"
+msgstr "&Esquerda"
+
+#: view.rc:38
+msgid "&Right"
+msgstr "&Direita"
+
+#: view.rc:39
+msgid "&Up"
+msgstr "&Acima"
+
+#: view.rc:40
+msgid "&Down"
+msgstr "A&baixo"
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr "Visualizador Regular de Ficheiros Meta"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

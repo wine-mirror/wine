@@ -1471,7 +1471,7 @@ msgstr "&Tulosta"
 msgid "Anchor"
 msgstr "Ankkuri"
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
 msgid "&Open"
 msgstr "&Avaa"
 
@@ -3055,7 +3055,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr "&Tiedosto"
 
@@ -3087,7 +3087,7 @@ msgstr "&Sivun asetukset..."
 msgid "P&rinter Setup..."
 msgstr "&Kirjoittimen asetukset..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
 msgid "E&xit"
 msgstr "&Poistu"
 
@@ -4153,6 +4153,35 @@ msgid ""
 msgstr ""
 "Poistokomento '%s' epäonnistui, johtuen ehkä puuttuvasta tiedostosta.\n"
 "Haluatko poistaa ohjelman rekisteristä?"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr ""
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr ""
+
+#: view.rc:37
+msgid "&Left"
+msgstr ""
+
+#: view.rc:38
+#, fuzzy
+msgid "&Right"
+msgstr "Oikea Reuna"
+
+#: view.rc:39
+msgid "&Up"
+msgstr ""
+
+#: view.rc:40
+msgid "&Down"
+msgstr ""
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr ""
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

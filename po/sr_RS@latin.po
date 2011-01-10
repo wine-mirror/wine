@@ -1466,7 +1466,7 @@ msgstr "&Štampaj"
 msgid "Anchor"
 msgstr "Veznik"
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
 msgid "&Open"
 msgstr "&Otvori"
 
@@ -3040,7 +3040,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr "&Datoteka"
 
@@ -3072,7 +3072,7 @@ msgstr "Postavke &strane..."
 msgid "P&rinter Setup..."
 msgstr "Postavke &štampe..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
 msgid "E&xit"
 msgstr "&Izlaz"
 
@@ -4155,6 +4155,35 @@ msgstr ""
 "Izvršavanje naredbe za deinstalaciju „%s“ nije uspelo verovatno zbog toga "
 "što nedostaje izvršna datoteka.\n"
 "Želite li da uklonite deinstalacioni unos iz registra?"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr ""
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr ""
+
+#: view.rc:37
+msgid "&Left"
+msgstr ""
+
+#: view.rc:38
+#, fuzzy
+msgid "&Right"
+msgstr "Desna ivica"
+
+#: view.rc:39
+msgid "&Up"
+msgstr ""
+
+#: view.rc:40
+msgid "&Down"
+msgstr ""
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr ""
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

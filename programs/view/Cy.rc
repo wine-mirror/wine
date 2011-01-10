@@ -23,50 +23,7 @@
 
 LANGUAGE LANG_WELSH, SUBLANG_DEFAULT
 
-/*
- *
- * Menu
- *
- */
-
-VIEW MENU
-BEGIN
-    POPUP "&Ffeil"
-    BEGIN
-	MENUITEM "&Agored",			IDM_OPEN
-        MENUITEM "A&llanfa",                       IDM_EXIT
-    END
-    POPUP "&Pan"
-    BEGIN
-      MENUITEM "&Graddfa i Ffenestr",              IDM_SET_EXT_TO_WIN
-      MENUITEM SEPARATOR
-      MENUITEM "&Chwith",				IDM_LEFT
-      MENUITEM "&Iawn",			IDM_RIGHT
-      MENUITEM "i F&yny",				IDM_UP
-      MENUITEM "i &Lawr",				IDM_DOWN
-    END
-END
-
-
-/*
- *
- * Accelerator
- *
- */
-
 VIEW ACCELERATORS
 BEGIN
     "Q", IDM_EXIT, VIRTKEY, CONTROL
-END
-
-
-/*
- *
- * String Table
- *
- */
-
-STRINGTABLE
-BEGIN
-    IDS_DESCRIPTION         "Viewer Rheolaidd Metafile"
 END

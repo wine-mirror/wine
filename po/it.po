@@ -1478,7 +1478,7 @@ msgstr "&Stampa"
 msgid "Anchor"
 msgstr "Anchor"
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
 msgid "&Open"
 msgstr "&Apri"
 
@@ -3384,7 +3384,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Risorse aperte: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr "&File"
 
@@ -3416,7 +3416,7 @@ msgstr "&Imposta pagina..."
 msgid "P&rinter Setup..."
 msgstr "&Configurazione stampante..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
 msgid "E&xit"
 msgstr "E&sci"
 
@@ -4560,6 +4560,34 @@ msgstr ""
 "L'esecuzione del comando di disinstallazione '%s' è fallita, forse a causa "
 "di un eseguibile mancante.\n"
 "Vuoi rimuovere dal registro la voce di disinstallazione?"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr "&Pan"
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr "&Adatta alla finestra"
+
+#: view.rc:37
+msgid "&Left"
+msgstr "&Sinistra"
+
+#: view.rc:38
+msgid "&Right"
+msgstr "&Destra"
+
+#: view.rc:39
+msgid "&Up"
+msgstr "A&lto"
+
+#: view.rc:40
+msgid "&Down"
+msgstr "&Basso"
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr "Visualizzatore di Metafile Regolari"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

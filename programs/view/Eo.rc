@@ -23,50 +23,7 @@
 
 LANGUAGE LANG_ESPERANTO, SUBLANG_DEFAULT
 
-/*
- *
- * Menu
- *
- */
-
-VIEW MENU
-BEGIN
-    POPUP "&Dosiero"
-    BEGIN
-	MENUITEM "&Malfermu",			IDM_OPEN
-        MENUITEM "&Fermu",                       IDM_EXIT
-    END
-    POPUP "&Movo"
-    BEGIN
-      MENUITEM "&Aløustigu la fenestron",              IDM_SET_EXT_TO_WIN
-      MENUITEM SEPARATOR
-      MENUITEM "&Maldekstre",				IDM_LEFT
-      MENUITEM "&Dekstre",			IDM_RIGHT
-      MENUITEM "&Supre",				IDM_UP
-      MENUITEM "&Sube",				IDM_DOWN
-    END
-END
-
-
-/*
- *
- * Accelerator
- *
- */
-
 VIEW ACCELERATORS
 BEGIN
     "Q", IDM_EXIT, VIRTKEY, CONTROL
-END
-
-
-/*
- *
- * String Table
- *
- */
-
-STRINGTABLE
-BEGIN
-    IDS_DESCRIPTION         "Videbligilo laý Regulaj Metadosieroj"
 END

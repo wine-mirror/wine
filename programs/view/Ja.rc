@@ -27,50 +27,7 @@
 
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 
-/*
- *
- * Menu
- *
- */
-
-VIEW MENU
-BEGIN
-    POPUP "ファイル(&F)"
-    BEGIN
-	MENUITEM "開く(&O)",			IDM_OPEN
-        MENUITEM "終了(&X)",                       IDM_EXIT
-    END
-    POPUP "パン(&P)"
-    BEGIN
-      MENUITEM "ウィンドウに合わせる(&S)",              IDM_SET_EXT_TO_WIN
-      MENUITEM SEPARATOR
-      MENUITEM "左(&L)",				IDM_LEFT
-      MENUITEM "右(&R)",			IDM_RIGHT
-      MENUITEM "上(&U)",				IDM_UP
-      MENUITEM "下(&D)",				IDM_DOWN
-    END
-END
-
-
-/*
- *
- * Accelerator
- *
- */
-
 VIEW ACCELERATORS
 BEGIN
     "Q", IDM_EXIT, VIRTKEY, CONTROL
-END
-
-
-/*
- *
- * String Table
- *
- */
-
-STRINGTABLE
-BEGIN
-    IDS_DESCRIPTION         "標準メタファイル ビュアー"
 END

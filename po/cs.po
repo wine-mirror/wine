@@ -1456,9 +1456,9 @@ msgstr "Tisk"
 msgid "Anchor"
 msgstr ""
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
 msgid "&Open"
-msgstr ""
+msgstr "&Otevřít"
 
 #: shdoclc.rc:129
 msgid "Open in &New Window"
@@ -3290,7 +3290,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr "&Soubor"
 
@@ -3322,7 +3322,7 @@ msgstr "Nas&tavení stránky..."
 msgid "P&rinter Setup..."
 msgstr "Nastavení tiská&rny..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
 msgid "E&xit"
 msgstr "&Konec"
 
@@ -4421,6 +4421,34 @@ msgid ""
 msgstr ""
 "Spuštění příkazu %s selhalo, možná příčína je chybějící aplikace.\n"
 "Přejete si odstranit instalační záznam z registru?"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr "&Posun"
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr "Přizpůs&obit oknu"
+
+#: view.rc:37
+msgid "&Left"
+msgstr "V&levo"
+
+#: view.rc:38
+msgid "&Right"
+msgstr "Vp&ravo"
+
+#: view.rc:39
+msgid "&Up"
+msgstr "Nahor&u"
+
+#: view.rc:40
+msgid "&Down"
+msgstr "&Dolů"
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr "Obyčejný prohlížeč metasouborů"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

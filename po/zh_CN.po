@@ -1459,7 +1459,7 @@ msgstr "打印(&P)"
 msgid "Anchor"
 msgstr "Anchor"
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
 msgid "&Open"
 msgstr "打开(&O)"
 
@@ -3038,7 +3038,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr "文件(&F)"
 
@@ -3070,9 +3070,14 @@ msgstr "页面设置(&T)..."
 msgid "P&rinter Setup..."
 msgstr "打印设置(&R)..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
+#, fuzzy
 msgid "E&xit"
-msgstr "退出(&E)"
+msgstr ""
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"退出(&E)\n"
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"退出(&x)"
 
 #: notepad.rc:38
 msgid "&Edit"
@@ -4129,6 +4134,34 @@ msgid ""
 msgstr ""
 "卸载命令 '%s' 运行失败，可能是找不到可执行程序。\n"
 "你想把这项卸载命令从注册表中删除吗？"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr "平移(&P)"
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr "缩放至窗口(&S)"
+
+#: view.rc:37
+msgid "&Left"
+msgstr "左(&L)"
+
+#: view.rc:38
+msgid "&Right"
+msgstr "右(&R)"
+
+#: view.rc:39
+msgid "&Up"
+msgstr "上(&U)"
+
+#: view.rc:40
+msgid "&Down"
+msgstr "下(&D)"
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr "普通 Metafile 阅读器"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

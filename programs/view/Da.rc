@@ -23,50 +23,7 @@
 
 LANGUAGE LANG_DANISH, SUBLANG_DEFAULT
 
-/*
- *
- * Menu
- *
- */
-
-VIEW MENU
-BEGIN
-    POPUP "&Fil"
-    BEGIN
-	MENUITEM "&Åben",			IDM_OPEN
-        MENUITEM "&Afslut",                     IDM_EXIT
-    END
-    POPUP "&Panorér"
-    BEGIN
-      MENUITEM "&Skalér til vindue",            IDM_SET_EXT_TO_WIN
-      MENUITEM SEPARATOR
-      MENUITEM "&Venstre",			IDM_LEFT
-      MENUITEM "Høj&re",			IDM_RIGHT
-      MENUITEM "&Op",				IDM_UP
-      MENUITEM "Ne&d",				IDM_DOWN
-    END
-END
-
-
-/*
- *
- * Accelerator
- *
- */
-
 VIEW ACCELERATORS
 BEGIN
     "Q", IDM_EXIT, VIRTKEY, CONTROL
-END
-
-
-/*
- *
- * String Table
- *
- */
-
-STRINGTABLE
-BEGIN
-    IDS_DESCRIPTION         "Normal metafil-fremviser"
 END

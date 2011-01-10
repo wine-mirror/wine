@@ -24,50 +24,7 @@
 
 LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 
-/*
- *
- * Menu
- *
- */
-
-VIEW MENU
-BEGIN
-    POPUP "&Plik"
-    BEGIN
-        MENUITEM "&Otwórz...",			IDM_OPEN
-        MENUITEM "&Zakoñcz",                       IDM_EXIT
-    END
-    POPUP "&Umieszczenie"
-    BEGIN
-      MENUITEM "Do&stosuj do rozmiaru okna",              IDM_SET_EXT_TO_WIN
-      MENUITEM SEPARATOR
-      MENUITEM "Przesuñ w &lewo",				IDM_LEFT
-      MENUITEM "Przesuñ w &prawo",			IDM_RIGHT
-      MENUITEM "Przesuñ w &górê",				IDM_UP
-      MENUITEM "Przesuñ w &dó³",				IDM_DOWN
-    END
-END
-
-
-/*
- *
- * Accelerator
- *
- */
-
 VIEW ACCELERATORS
 BEGIN
     "Q", IDM_EXIT, VIRTKEY, CONTROL
-END
-
-
-/*
- *
- * String Table
- *
- */
-
-STRINGTABLE
-BEGIN
-    IDS_DESCRIPTION         "Podgl¹d plików WMF (Regular Metafile)"
 END

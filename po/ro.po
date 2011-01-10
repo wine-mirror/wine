@@ -1479,9 +1479,14 @@ msgstr "&Tipărește"
 msgid "Anchor"
 msgstr "Ancorare"
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
+#, fuzzy
 msgid "&Open"
-msgstr "Deschide &legătura"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Deschide &legătura\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"&Deschide"
 
 #: shdoclc.rc:129
 msgid "Open in &New Window"
@@ -3364,7 +3369,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Resurse deschise: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr "&Fișier"
 
@@ -3396,7 +3401,7 @@ msgstr "S&etare pagină..."
 msgid "P&rinter Setup..."
 msgstr "Setare im&primantă..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
 msgid "E&xit"
 msgstr "&Ieșire"
 
@@ -4543,6 +4548,34 @@ msgstr ""
 "Execuția comenzi de dezinstalare '%s' a eșuat, probabil din lipsa fișierului "
 "executabil.\n"
 "Doriți să ștergeți înregistrarea de dezinstalare din registru?"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr "&Plasare"
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr "&Scalează la fereastră"
+
+#: view.rc:37
+msgid "&Left"
+msgstr "&Stânga"
+
+#: view.rc:38
+msgid "&Right"
+msgstr "D&reapta"
+
+#: view.rc:39
+msgid "&Up"
+msgstr "&Sus"
+
+#: view.rc:40
+msgid "&Down"
+msgstr "&Jos"
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr "Vizualizator de fișiere metafile normale"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

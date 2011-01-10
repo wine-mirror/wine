@@ -1483,7 +1483,7 @@ msgstr "&Imprimir"
 msgid "Anchor"
 msgstr "Anchor"
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
 msgid "&Open"
 msgstr "&Abrir"
 
@@ -3376,7 +3376,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr "&Archivo"
 
@@ -3408,7 +3408,7 @@ msgstr "Configurar &página..."
 msgid "P&rinter Setup..."
 msgstr "Configuración &impresora..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
 msgid "E&xit"
 msgstr "&Salir"
 
@@ -4552,6 +4552,34 @@ msgstr ""
 "Ejecución del comando de desinstalación '%s' ha fallado, tal vez se deba a "
 "que no exista el ejecutable.\n"
 "¿Desea eliminar la entrada de desinstalación de esta aplicación del registro?"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr "&Pan"
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr "A&justar a ventana"
+
+#: view.rc:37
+msgid "&Left"
+msgstr "&Izquierda"
+
+#: view.rc:38
+msgid "&Right"
+msgstr "&Derecha"
+
+#: view.rc:39
+msgid "&Up"
+msgstr "&Arriba"
+
+#: view.rc:40
+msgid "&Down"
+msgstr "A&bajo"
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr "Regular Metafile Viewer"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

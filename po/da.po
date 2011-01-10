@@ -1477,7 +1477,7 @@ msgstr "&Udskriv"
 msgid "Anchor"
 msgstr "Anker"
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
 msgid "&Open"
 msgstr "&Åben"
 
@@ -3330,8 +3330,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Åbne resourser: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
-#, fuzzy
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr "&Fil"
 
@@ -3363,7 +3362,7 @@ msgstr "Side&opsætning..."
 msgid "P&rinter Setup..."
 msgstr "&Indstil printer..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
 msgid "E&xit"
 msgstr "&Afslut"
 
@@ -4497,6 +4496,34 @@ msgstr ""
 "Køring af afinstallerings kommandoen '%s' fejlede, måske er det på grund af "
 "en manglende programfil.\n"
 "Vil du fjerne afinstallerings opførselen fra registeringsdatabasen?"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr "&Panorér"
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr "&Skalér til vindue"
+
+#: view.rc:37
+msgid "&Left"
+msgstr "&Venstre"
+
+#: view.rc:38
+msgid "&Right"
+msgstr "Høj&re"
+
+#: view.rc:39
+msgid "&Up"
+msgstr "&Op"
+
+#: view.rc:40
+msgid "&Down"
+msgstr "Ne&d"
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr "Normal metafil-fremviser"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

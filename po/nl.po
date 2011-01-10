@@ -1464,7 +1464,7 @@ msgstr "Af&drukken"
 msgid "Anchor"
 msgstr "Anker"
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
 msgid "&Open"
 msgstr "&Openen"
 
@@ -3364,7 +3364,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Open resources: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr "&Bestand"
 
@@ -3396,7 +3396,7 @@ msgstr "Pa&gina-instellingen..."
 msgid "P&rinter Setup..."
 msgstr "Printerins&tellingen..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
 msgid "E&xit"
 msgstr "&Afsluiten"
 
@@ -4523,6 +4523,34 @@ msgstr ""
 "Het uitvoeren van de verwijderopdracht '%s' is mislukt, wellicht vanwege een "
 "ontbrekend bestand.\n"
 "Wilt u de verwijdersleutel verwijderen uit het register?"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr "&Verplaatsen"
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr "&Schalen naar venstergrootte"
+
+#: view.rc:37
+msgid "&Left"
+msgstr "&Links"
+
+#: view.rc:38
+msgid "&Right"
+msgstr "&Rechts"
+
+#: view.rc:39
+msgid "&Up"
+msgstr "&Omhoog"
+
+#: view.rc:40
+msgid "&Down"
+msgstr "O&mlaag"
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr "Algemene Metafile weergave"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

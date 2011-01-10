@@ -1478,7 +1478,7 @@ msgstr "Na&tisni"
 msgid "Anchor"
 msgstr "Sidro"
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
 msgid "&Open"
 msgstr "&Odpri"
 
@@ -3359,7 +3359,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Porabljena sredstva: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr "&Datoteka"
 
@@ -3391,7 +3391,7 @@ msgstr "P&riprava strani ..."
 msgid "P&rinter Setup..."
 msgstr "&Tiskalnik ..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
 msgid "E&xit"
 msgstr "Iz&hod"
 
@@ -4503,6 +4503,34 @@ msgstr ""
 "Izvedba odstranitvenega ukaza '%s' ni uspela, morda zaradi manjkajoče "
 "izvršljive datoteke.\n"
 "Ali želite odstraniti odstranitveni ključ iz registra?"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr "&Razteg"
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr "&Raztegnjeno (prilagodi velikosti okna)"
+
+#: view.rc:37
+msgid "&Left"
+msgstr "&Levo"
+
+#: view.rc:38
+msgid "&Right"
+msgstr "&Desno"
+
+#: view.rc:39
+msgid "&Up"
+msgstr "&Gor"
+
+#: view.rc:40
+msgid "&Down"
+msgstr "&Dol"
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr "Program za ogled Metafile slik"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

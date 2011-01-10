@@ -23,50 +23,7 @@
 
 LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
 
-/*
- *
- * Menu
- *
- */
-
-VIEW MENU
-BEGIN
-    POPUP "&Arkiv"
-    BEGIN
-	MENUITEM "&Öppna",                   IDM_OPEN
-        MENUITEM "&Avsluta",                 IDM_EXIT
-    END
-    POPUP "&Panorera"
-    BEGIN
-      MENUITEM "&Skala till fönster",           IDM_SET_EXT_TO_WIN
-      MENUITEM SEPARATOR
-      MENUITEM "&Vänster",                      IDM_LEFT
-      MENUITEM "&Höger",                        IDM_RIGHT
-      MENUITEM "&Upp",                          IDM_UP
-      MENUITEM "&Ner",                          IDM_DOWN
-    END
-END
-
-
-/*
- *
- * Accelerator
- *
- */
-
 VIEW ACCELERATORS
 BEGIN
     "Q", IDM_EXIT, VIRTKEY, CONTROL
-END
-
-
-/*
- *
- * String Table
- *
- */
-
-STRINGTABLE
-BEGIN
-    IDS_DESCRIPTION         "Regular Metafile viewer"
 END

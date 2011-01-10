@@ -1466,7 +1466,7 @@ msgstr "&Друк"
 msgid "Anchor"
 msgstr "Anchor"
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
 msgid "&Open"
 msgstr "&Відкрити"
 
@@ -3334,7 +3334,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Відкритих ресурсів: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr "&Файл"
 
@@ -3366,9 +3366,14 @@ msgstr "Параметри &сторінки..."
 msgid "P&rinter Setup..."
 msgstr "Налаштування &принтера..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
+#, fuzzy
 msgid "E&xit"
-msgstr "Ви&хід"
+msgstr ""
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Ви&хід\n"
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"В&ихід"
 
 #: notepad.rc:38
 msgid "&Edit"
@@ -4482,6 +4487,34 @@ msgid ""
 msgstr ""
 "Помилка виконання команди видалення '%s', можливо через відсутність файлу.\n"
 "Видалити дані про встановлення з реєстру ?"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr "&Pan"
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr "&Розширити до розмірів вікна"
+
+#: view.rc:37
+msgid "&Left"
+msgstr "В&ліво"
+
+#: view.rc:38
+msgid "&Right"
+msgstr "В&право"
+
+#: view.rc:39
+msgid "&Up"
+msgstr "В&верх"
+
+#: view.rc:40
+msgid "&Down"
+msgstr "В&низ"
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr "Переглядач звичайних метафайлів"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

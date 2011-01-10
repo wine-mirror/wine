@@ -26,52 +26,7 @@
 
 LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 
-/* Czech strings in CP1250 */
-
-/*
- *
- * Menu
- *
- */
-
-VIEW MENU
-BEGIN
-    POPUP "&Soubor"
-    BEGIN
-	MENUITEM "&Otevøít",			IDM_OPEN
-        MENUITEM "&Konec",                       IDM_EXIT
-    END
-    POPUP "&Posun"
-    BEGIN
-      MENUITEM "Pøizpùs&obit oknu",              IDM_SET_EXT_TO_WIN
-      MENUITEM SEPARATOR
-      MENUITEM "V&levo",			IDM_LEFT
-      MENUITEM "Vp&ravo",			IDM_RIGHT
-      MENUITEM "Nahor&u",			IDM_UP
-      MENUITEM "&Dolù",				IDM_DOWN
-    END
-END
-
-
-/*
- *
- * Accelerator
- *
- */
-
 VIEW ACCELERATORS
 BEGIN
     "Q", IDM_EXIT, VIRTKEY, CONTROL
-END
-
-
-/*
- *
- * String Table
- *
- */
-
-STRINGTABLE
-BEGIN
-    IDS_DESCRIPTION         "Obyèejný prohlížeè metasouborù"
 END

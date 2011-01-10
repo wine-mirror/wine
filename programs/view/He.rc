@@ -27,50 +27,7 @@
 
 LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
 
-/*
- *
- * Menu
- *
- */
-
-VIEW MENU
-BEGIN
-    POPUP "&קובץ"
-    BEGIN
-	MENUITEM "&פתיחה",			IDM_OPEN
-        MENUITEM "י&ציאה",                       IDM_EXIT
-    END
-    POPUP "ה&זחה"
-    BEGIN
-      MENUITEM "ה&תאמה לחלון",              IDM_SET_EXT_TO_WIN
-      MENUITEM SEPARATOR
-      MENUITEM "&שמאלה",				IDM_LEFT
-      MENUITEM "&ימינה",			IDM_RIGHT
-      MENUITEM "למ&עלה",				IDM_UP
-      MENUITEM "למ&טה",				IDM_DOWN
-    END
-END
-
-
-/*
- *
- * Accelerator
- *
- */
-
 VIEW ACCELERATORS
 BEGIN
     "Q", IDM_EXIT, VIRTKEY, CONTROL
-END
-
-
-/*
- *
- * String Table
- *
- */
-
-STRINGTABLE
-BEGIN
-    IDS_DESCRIPTION         "מציג קובצי על רגיל"
 END

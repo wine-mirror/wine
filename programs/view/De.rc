@@ -25,50 +25,7 @@
 
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
-/*
- *
- * Menu
- *
- */
-
-VIEW MENU
-BEGIN
-    POPUP "&Datei"
-    BEGIN
-	MENUITEM "&Öffnen",			IDM_OPEN
-        MENUITEM "&Beenden",                    IDM_EXIT
-    END
-    POPUP "&Verschieben"
-    BEGIN
-      MENUITEM "&Passend ins Fenster",          IDM_SET_EXT_TO_WIN
-      MENUITEM SEPARATOR
-      MENUITEM "&Links",			IDM_LEFT
-      MENUITEM "&Rechts",			IDM_RIGHT
-      MENUITEM "&Oben",				IDM_UP
-      MENUITEM "&Unten",			IDM_DOWN
-    END
-END
-
-
-/*
- *
- * Accelerator
- *
- */
-
 VIEW ACCELERATORS
 BEGIN
     "Q", IDM_EXIT, VIRTKEY, CONTROL
-END
-
-
-/*
- *
- * String Table
- *
- */
-
-STRINGTABLE
-BEGIN
-    IDS_DESCRIPTION         "Regulärer Metafile Betrachter"
 END

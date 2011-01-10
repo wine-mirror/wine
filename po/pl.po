@@ -1474,9 +1474,14 @@ msgstr "D&rukuj"
 msgid "Anchor"
 msgstr "Kotwica"
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
+#, fuzzy
 msgid "&Open"
-msgstr "&Otwórz"
+msgstr ""
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"&Otwórz\n"
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"&Otwórz..."
 
 #: shdoclc.rc:129
 msgid "Open in &New Window"
@@ -3348,7 +3353,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Otwarte zasoby: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr "&Plik"
 
@@ -3380,9 +3385,14 @@ msgstr "&Ustawienia strony..."
 msgid "P&rinter Setup..."
 msgstr "Ustawienia &drukarki..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
+#, fuzzy
 msgid "E&xit"
-msgstr "Zakoń&cz"
+msgstr ""
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"Zakoń&cz\n"
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"&Zakończ"
 
 #: notepad.rc:38
 msgid "&Edit"
@@ -4499,6 +4509,34 @@ msgstr ""
 "Nie udało się wykonać polecenia '%s', które powinno usunąć progam. Być może "
 "już był usunięty.\n"
 "Czy chcesz usunąć jego wpis z tej listy?"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr "&Umieszczenie"
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr "Do&stosuj do rozmiaru okna"
+
+#: view.rc:37
+msgid "&Left"
+msgstr "Przesuń w &lewo"
+
+#: view.rc:38
+msgid "&Right"
+msgstr "Przesuń w &prawo"
+
+#: view.rc:39
+msgid "&Up"
+msgstr "Przesuń w &górę"
+
+#: view.rc:40
+msgid "&Down"
+msgstr "Przesuń w &dół"
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr "Podgląd plików WMF (Regular Metafile)"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

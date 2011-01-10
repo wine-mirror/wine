@@ -26,50 +26,7 @@
 
 LANGUAGE LANG_LITHUANIAN, SUBLANG_NEUTRAL
 
-/*
- *
- * Menu
- *
- */
-
-VIEW MENU
-BEGIN
-    POPUP "&Failas"
-    BEGIN
-      MENUITEM "&Atverti",            IDM_OPEN
-      MENUITEM "Iš&eiti",             IDM_EXIT
-    END
-    POPUP "&Perkelti"
-    BEGIN
-      MENUITEM "&Sutalpinti į langą", IDM_SET_EXT_TO_WIN
-      MENUITEM SEPARATOR
-      MENUITEM "&Dešinėn",            IDM_LEFT
-      MENUITEM "&Kairėn",             IDM_RIGHT
-      MENUITEM "&Žemyn",              IDM_UP
-      MENUITEM "&Aukštyn",            IDM_DOWN
-    END
-END
-
-
-/*
- *
- * Accelerator
- *
- */
-
 VIEW ACCELERATORS
 BEGIN
     "Q", IDM_EXIT, VIRTKEY, CONTROL
-END
-
-
-/*
- *
- * String Table
- *
- */
-
-STRINGTABLE
-BEGIN
-    IDS_DESCRIPTION         "Įprastinė metafailų žiūryklė"
 END

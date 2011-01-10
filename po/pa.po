@@ -1428,7 +1428,7 @@ msgstr ""
 msgid "Anchor"
 msgstr ""
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
 msgid "&Open"
 msgstr ""
 
@@ -3002,7 +3002,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr ""
 
@@ -3034,7 +3034,7 @@ msgstr ""
 msgid "P&rinter Setup..."
 msgstr ""
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
 msgid "E&xit"
 msgstr ""
 
@@ -4065,6 +4065,34 @@ msgid ""
 "Execution of uninstall command '%s' failed, perhaps due to missing "
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry ?"
+msgstr ""
+
+#: view.rc:33
+msgid "&Pan"
+msgstr ""
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr ""
+
+#: view.rc:37
+msgid "&Left"
+msgstr ""
+
+#: view.rc:38
+msgid "&Right"
+msgstr ""
+
+#: view.rc:39
+msgid "&Up"
+msgstr ""
+
+#: view.rc:40
+msgid "&Down"
+msgstr ""
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
 msgstr ""
 
 #: write.rc:27

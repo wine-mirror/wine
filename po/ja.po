@@ -1438,7 +1438,7 @@ msgstr "印刷(&P)"
 msgid "Anchor"
 msgstr "Anchor"
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
 msgid "&Open"
 msgstr "開く(&O)"
 
@@ -3295,7 +3295,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr "ファイル(&F)"
 
@@ -3327,7 +3327,7 @@ msgstr "ページ設定(&T)..."
 msgid "P&rinter Setup..."
 msgstr "プリンタの設定(&R)..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
 msgid "E&xit"
 msgstr "終了(&X)"
 
@@ -4456,6 +4456,34 @@ msgstr ""
 "アンインストール コマンド '%s' の実行に失敗しました。コマンドが存在しないため"
 "かもしれません。\n"
 "レジストリからこの登録を削除しますか?"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr "パン(&P)"
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr "ウィンドウに合わせる(&S)"
+
+#: view.rc:37
+msgid "&Left"
+msgstr "左(&L)"
+
+#: view.rc:38
+msgid "&Right"
+msgstr "右(&R)"
+
+#: view.rc:39
+msgid "&Up"
+msgstr "上(&U)"
+
+#: view.rc:40
+msgid "&Down"
+msgstr "下(&D)"
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr "標準メタファイル ビュアー"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

@@ -1478,7 +1478,7 @@ msgstr "Пе&чать"
 msgid "Anchor"
 msgstr "Anchor"
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
 msgid "&Open"
 msgstr "&Открыть"
 
@@ -3354,7 +3354,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S         %S      Открытых ресурсов: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr "&Файл"
 
@@ -3386,7 +3386,7 @@ msgstr "Пара&метры страницы..."
 msgid "P&rinter Setup..."
 msgstr "&Настройка принтера..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
 msgid "E&xit"
 msgstr "В&ыход"
 
@@ -4513,6 +4513,34 @@ msgstr ""
 "Ошибка выполнения команды удаления '%s', возможно из-за потери файлов "
 "приложения.\n"
 "Удалить информацию об установке из реестра?"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr "&Положение"
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr "&Расширить по окну"
+
+#: view.rc:37
+msgid "&Left"
+msgstr "В&лево"
+
+#: view.rc:38
+msgid "&Right"
+msgstr "В&право"
+
+#: view.rc:39
+msgid "&Up"
+msgstr "В&верх"
+
+#: view.rc:40
+msgid "&Down"
+msgstr "В&низ"
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr "Просмотрщик обычных метафайлов"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

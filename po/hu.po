@@ -1480,7 +1480,7 @@ msgstr "&Nyomtatás"
 msgid "Anchor"
 msgstr "Anchor"
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
 msgid "&Open"
 msgstr "&Megnyitás"
 
@@ -3058,7 +3058,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr "&Fájl"
 
@@ -3090,7 +3090,7 @@ msgstr "&Oldalbeállítás..."
 msgid "P&rinter Setup..."
 msgstr "Nyomtató &beállítás..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
 msgid "E&xit"
 msgstr "&Kilépés"
 
@@ -4181,6 +4181,35 @@ msgstr ""
 "futtatható állomány miatt.\n"
 "El szeretné távolítani az eltávolítási bejegyzést a regisztrációs "
 "adatbázisból ?"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr ""
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr ""
+
+#: view.rc:37
+msgid "&Left"
+msgstr ""
+
+#: view.rc:38
+#, fuzzy
+msgid "&Right"
+msgstr "Jobb széle"
+
+#: view.rc:39
+msgid "&Up"
+msgstr ""
+
+#: view.rc:40
+msgid "&Down"
+msgstr ""
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr ""
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

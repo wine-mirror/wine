@@ -1433,7 +1433,7 @@ msgstr "הד&פסה"
 msgid "Anchor"
 msgstr "Anchor"
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
 msgid "&Open"
 msgstr "&פתיחה"
 
@@ -3012,7 +3012,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr "&קובץ"
 
@@ -3044,7 +3044,7 @@ msgstr "ה&גדרות עמוד..."
 msgid "P&rinter Setup..."
 msgstr "הגדרות מ&דפסת..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
 msgid "E&xit"
 msgstr "י&ציאה"
 
@@ -4105,6 +4105,34 @@ msgid ""
 msgstr ""
 "הפעלת פקודת ההסרה '%s' נכשלה, כנראה עקב חוסר בקובץ הפעלה.\n"
 "האם ברצונך להסיר את רשומת ההסרה מרישומי המערכת ?"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr "ה&זחה"
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr "ה&תאמה לחלון"
+
+#: view.rc:37
+msgid "&Left"
+msgstr "&שמאלה"
+
+#: view.rc:38
+msgid "&Right"
+msgstr "&ימינה"
+
+#: view.rc:39
+msgid "&Up"
+msgstr "למ&עלה"
+
+#: view.rc:40
+msgid "&Down"
+msgstr "למ&טה"
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr "מציג קובצי על רגיל"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

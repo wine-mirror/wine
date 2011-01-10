@@ -1478,7 +1478,7 @@ msgstr "&Drucken"
 msgid "Anchor"
 msgstr "Anker"
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
 msgid "&Open"
 msgstr "&Öffnen"
 
@@ -3409,7 +3409,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Offene Ressourcen: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr "&Datei"
 
@@ -3441,7 +3441,7 @@ msgstr "Seite ein&richten..."
 msgid "P&rinter Setup..."
 msgstr "Drucker&einrichtung..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
 msgid "E&xit"
 msgstr "&Beenden"
 
@@ -4580,6 +4580,34 @@ msgstr ""
 "Die Ausführung des Entfernungsbefehls '%s' ist fehlgeschlagen, "
 "wahrscheinlich durch eine fehlende, ausführbare Datei.\n"
 "Möchten Sie, dass der Anwendungseintrag aus der Registry entfernt wird?"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr "&Verschieben"
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr "&Passend ins Fenster"
+
+#: view.rc:37
+msgid "&Left"
+msgstr "&Links"
+
+#: view.rc:38
+msgid "&Right"
+msgstr "&Rechts"
+
+#: view.rc:39
+msgid "&Up"
+msgstr "&Oben"
+
+#: view.rc:40
+msgid "&Down"
+msgstr "&Unten"
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr "Regulärer Metafile Betrachter"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

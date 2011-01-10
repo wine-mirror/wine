@@ -1466,7 +1466,7 @@ msgstr "&Штампај"
 msgid "Anchor"
 msgstr "Везник"
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
 msgid "&Open"
 msgstr "&Отвори"
 
@@ -3040,7 +3040,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr "&Датотека"
 
@@ -3072,7 +3072,7 @@ msgstr "Поставке &стране..."
 msgid "P&rinter Setup..."
 msgstr "Поставке &штампе..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
 msgid "E&xit"
 msgstr "&Излаз"
 
@@ -4155,6 +4155,35 @@ msgstr ""
 "Извршавање наредбе за деинсталацију „%s“ није успело вероватно због тога што "
 "недостаје извршна датотека.\n"
 "Желите ли да уклоните деинсталациони унос из регистра?"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr ""
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr ""
+
+#: view.rc:37
+msgid "&Left"
+msgstr ""
+
+#: view.rc:38
+#, fuzzy
+msgid "&Right"
+msgstr "Десна ивица"
+
+#: view.rc:39
+msgid "&Up"
+msgstr ""
+
+#: view.rc:40
+msgid "&Down"
+msgstr ""
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr ""
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

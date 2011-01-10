@@ -1480,7 +1480,7 @@ msgstr "&Yazdır"
 msgid "Anchor"
 msgstr "Anchor"
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
 msgid "&Open"
 msgstr "&Aç"
 
@@ -3324,7 +3324,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr "&Dosya"
 
@@ -3356,7 +3356,7 @@ msgstr "Sa&yfa Ayarı..."
 msgid "P&rinter Setup..."
 msgstr "Yazıcı &Ayarları..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
 msgid "E&xit"
 msgstr "&Çıkış"
 
@@ -4461,6 +4461,34 @@ msgid ""
 msgstr ""
 "'%s' kaldırma komutu çalıştırılamadı, çalıştırıbilir dosya var olmayabilir.\n"
 "Sistem kaydından bu kaldırma girişini silmek ister misiniz?"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr "&Tava"
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr "&Pencere Ölçekle"
+
+#: view.rc:37
+msgid "&Left"
+msgstr "S&ol"
+
+#: view.rc:38
+msgid "&Right"
+msgstr "S&ağ"
+
+#: view.rc:39
+msgid "&Up"
+msgstr "&Yukarı"
+
+#: view.rc:40
+msgid "&Down"
+msgstr "A&şağı"
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr "Regular Metafile Viewer"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

@@ -1457,7 +1457,7 @@ msgstr "&Print"
 msgid "Anchor"
 msgstr "Anchor"
 
-#: shdoclc.rc:128
+#: shdoclc.rc:128 view.rc:30
 msgid "&Open"
 msgstr "&Open"
 
@@ -3321,7 +3321,7 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Open resources: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
 msgid "&File"
 msgstr "&File"
 
@@ -3353,7 +3353,7 @@ msgstr "Page Se&tup..."
 msgid "P&rinter Setup..."
 msgstr "P&rinter Setup..."
 
-#: notepad.rc:36
+#: notepad.rc:36 view.rc:31
 msgid "E&xit"
 msgstr "E&xit"
 
@@ -4464,6 +4464,34 @@ msgstr ""
 "Execution of uninstall command '%s' failed, perhaps due to missing "
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry ?"
+
+#: view.rc:33
+msgid "&Pan"
+msgstr "&Pan"
+
+#: view.rc:35
+msgid "&Scale to Window"
+msgstr "&Scale to Window"
+
+#: view.rc:37
+msgid "&Left"
+msgstr "&Left"
+
+#: view.rc:38
+msgid "&Right"
+msgstr "&Right"
+
+#: view.rc:39
+msgid "&Up"
+msgstr "&Up"
+
+#: view.rc:40
+msgid "&Down"
+msgstr "&Down"
+
+#: view.rc:46
+msgid "Regular Metafile Viewer"
+msgstr "Regular Metafile Viewer"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

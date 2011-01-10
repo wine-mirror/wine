@@ -25,83 +25,9 @@
 
 #pragma code_page(65001)
 
-/*
- *
- * Menu
- *
- */
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
-
-VIEW MENU
-BEGIN
-    POPUP "&Arquivo"
-    BEGIN
-	MENUITEM "&Abrir",			IDM_OPEN
-        MENUITEM "Sai&r",                       IDM_EXIT
-    END
-    POPUP "&Pan"
-    BEGIN
-      MENUITEM "Ajustar a &janela",              IDM_SET_EXT_TO_WIN
-      MENUITEM SEPARATOR
-      MENUITEM "&Esquerda",				IDM_LEFT
-      MENUITEM "&Direita",			IDM_RIGHT
-      MENUITEM "&Acima",				IDM_UP
-      MENUITEM "A&baixo",				IDM_DOWN
-    END
-END
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
-
-VIEW MENU
-BEGIN
-    POPUP "&Ficheiro"
-    BEGIN
-	MENUITEM "&Abrir",			IDM_OPEN
-        MENUITEM "Sai&r",                       IDM_EXIT
-    END
-    POPUP "&Pan"
-    BEGIN
-      MENUITEM "Ajustar &janela",              IDM_SET_EXT_TO_WIN
-      MENUITEM SEPARATOR
-      MENUITEM "&Esquerda",				IDM_LEFT
-      MENUITEM "&Direita",			IDM_RIGHT
-      MENUITEM "&Acima",				IDM_UP
-      MENUITEM "A&baixo",				IDM_DOWN
-    END
-END
-
-
-/*
- *
- * Accelerator
- *
- */
-
 LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 VIEW ACCELERATORS
 BEGIN
     "Q", IDM_EXIT, VIRTKEY, CONTROL
-END
-
-
-/*
- *
- * String Table
- *
- */
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
-
-STRINGTABLE
-BEGIN
-    IDS_DESCRIPTION         "Visualizador Regular de Metafiles"
-END
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
-
-STRINGTABLE
-BEGIN
-    IDS_DESCRIPTION         "Visualizador Regular de Ficheiros Meta"
 END
