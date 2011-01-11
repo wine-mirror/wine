@@ -2236,6 +2236,18 @@ int msi_compare_file_versions( VS_FIXEDFILEINFO *fi, const WCHAR *version )
     return 0;
 }
 
+static int msi_compare_font_versions( const WCHAR *ver1, const WCHAR *ver2 )
+{
+    DWORD ms1, ms2;
+
+    msi_parse_version_string( ver1, &ms1, NULL );
+    msi_parse_version_string( ver2, &ms2, NULL );
+
+    if (ms1 > ms2) return 1;
+    else if (ms1 < ms2) return -1;
+    return 0;
+}
+
 static DWORD get_disk_file_size( LPCWSTR filename )
 {
     HANDLE file;
@@ -2305,6 +2317,7 @@ static void set_target_path( MSIPACKAGE *package, MSIFILE *file )
 static UINT set_file_install_states( MSIPACKAGE *package )
 {
     VS_FIXEDFILEINFO *file_version;
+    WCHAR *font_version;
     MSIFILE *file;
 
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
@@ -2326,26 +2339,46 @@ static UINT set_file_install_states( MSIPACKAGE *package )
             comp->Cost += file->FileSize;
             continue;
         }
-        if (file->Version && (file_version = msi_get_disk_file_version( file->TargetPath )))
+        if (file->Version)
         {
-            TRACE("new %s old %u.%u.%u.%u\n", debugstr_w(file->Version),
-                  HIWORD(file_version->dwFileVersionMS),
-                  LOWORD(file_version->dwFileVersionMS),
-                  HIWORD(file_version->dwFileVersionLS),
-                  LOWORD(file_version->dwFileVersionLS));
+            if ((file_version = msi_get_disk_file_version( file->TargetPath )))
+            {
+                TRACE("new %s old %u.%u.%u.%u\n", debugstr_w(file->Version),
+                      HIWORD(file_version->dwFileVersionMS),
+                      LOWORD(file_version->dwFileVersionMS),
+                      HIWORD(file_version->dwFileVersionLS),
+                      LOWORD(file_version->dwFileVersionLS));
 
-            if (msi_compare_file_versions( file_version, file->Version ) < 0)
-            {
-                file->state = msifs_overwrite;
-                comp->Cost += file->FileSize;
+                if (msi_compare_file_versions( file_version, file->Version ) < 0)
+                {
+                    file->state = msifs_overwrite;
+                    comp->Cost += file->FileSize;
+                }
+                else
+                {
+                    TRACE("Destination file version equal or greater, not overwriting\n");
+                    file->state = msifs_present;
+                }
+                msi_free( file_version );
+                continue;
             }
-            else
+            else if ((font_version = font_version_from_file( file->TargetPath )))
             {
-                TRACE("Destination file version equal or greater, not overwriting\n");
-                file->state = msifs_present;
+                TRACE("new %s old %s\n", debugstr_w(file->Version), debugstr_w(font_version));
+
+                if (msi_compare_font_versions( font_version, file->Version ) < 0)
+                {
+                    file->state = msifs_overwrite;
+                    comp->Cost += file->FileSize;
+                }
+                else
+                {
+                    TRACE("Destination file version equal or greater, not overwriting\n");
+                    file->state = msifs_present;
+                }
+                msi_free( font_version );
+                continue;
             }
-            msi_free( file_version );
-            continue;
         }
         if ((file_size = get_disk_file_size( file->TargetPath )) != file->FileSize)
         {

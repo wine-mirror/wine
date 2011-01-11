@@ -71,7 +71,7 @@ void msi_parse_version_string(LPCWSTR verStr, PDWORD ms, PDWORD ls)
         x4 = atoiW(ptr + 1);
     /* FIXME: byte-order dependent? */
     *ms = x1 << 16 | x2;
-    *ls = x3 << 16 | x4;
+    if (ls) *ls = x3 << 16 | x4;
 }
 
 /* Fills in sig with the values from the Signature table, where name is the
