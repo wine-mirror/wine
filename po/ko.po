@@ -938,11 +938,11 @@ msgstr "홈"
 msgid "Sync"
 msgstr "동기화"
 
-#: hhctrl.rc:42
+#: hhctrl.rc:42 wordpad.rc:162
 msgid "Print"
 msgstr "인쇄"
 
-#: hhctrl.rc:43
+#: hhctrl.rc:43 wordpad.rc:155
 msgid "Options"
 msgstr "옵션"
 
@@ -1300,7 +1300,7 @@ msgid "Select &All"
 msgstr "모두 선택(&A)"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30
+#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
 msgid "&Paste"
 msgstr "붙여넣기(&P)"
 
@@ -1386,11 +1386,12 @@ msgid "Set as &Desktop Item..."
 msgstr "데스크탑 아이템으로 설정(&D)..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
+#: wordpad.rc:101
 msgid "Cu&t"
 msgstr "잘라내기(&T)"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 wineconsole.rc:29
+#: shdoclc.rc:187 wineconsole.rc:29 wordpad.rc:102
 msgid "&Copy"
 msgstr "복사(&C)"
 
@@ -2479,7 +2480,7 @@ msgstr "아날로그(&L)"
 msgid "Digi&tal"
 msgstr "디지털(&T)"
 
-#: clock.rc:32 notepad.rc:50 winefile.rc:97
+#: clock.rc:32 notepad.rc:50 winefile.rc:97 wordpad.rc:81
 msgid "&Font..."
 msgstr "글꼴(&F)..."
 
@@ -3318,7 +3319,7 @@ msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      열린 리소스: %lu\n"
 
 #: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
-#: winhlp32.rc:28
+#: winhlp32.rc:28 wordpad.rc:26
 msgid "&File"
 msgstr "파일(&F)"
 
@@ -3326,19 +3327,19 @@ msgstr "파일(&F)"
 msgid "&New\tCtrl+N"
 msgstr "새로 만들기(&N)\tCtrl+N"
 
-#: notepad.rc:28
+#: notepad.rc:28 wordpad.rc:29
 msgid "&Open...\tCtrl+O"
 msgstr "열기(&O)...\tCtrl+O"
 
-#: notepad.rc:29
+#: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
 msgstr "저장(&S)\tCtrl+S"
 
-#: notepad.rc:30
+#: notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr "다른 이름으로 저장(&A)..."
 
-#: notepad.rc:32
+#: notepad.rc:32 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
 msgstr "인쇄(&P)...\tCtrl+P"
 
@@ -3350,7 +3351,7 @@ msgstr "페이지 설정(&T)..."
 msgid "P&rinter Setup..."
 msgstr "프린터 설정(&R)..."
 
-#: notepad.rc:36 view.rc:31 winhlp32.rc:34
+#: notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
 #, fuzzy
 msgid "E&xit"
 msgstr ""
@@ -3359,23 +3360,28 @@ msgstr ""
 "#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
 "나가기(&X)"
 
-#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36
+#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 msgid "&Edit"
 msgstr "편집(&E)"
 
-#: notepad.rc:39
+#: notepad.rc:39 wordpad.rc:41
+#, fuzzy
 msgid "&Undo\tCtrl+Z"
-msgstr "실행 취소(&U)\tCtrl+Z"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"실행 취소(&U)\tCtrl+Z\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"되돌리기(&U)\tCtrl+Z"
 
-#: notepad.rc:41
+#: notepad.rc:41 wordpad.rc:44
 msgid "Cu&t\tCtrl+X"
 msgstr "잘라내기(&T)\tCtrl+X"
 
-#: notepad.rc:42
+#: notepad.rc:42 wordpad.rc:45
 msgid "&Copy\tCtrl+C"
 msgstr "복사(&C)\tCtrl+C"
 
-#: notepad.rc:43
+#: notepad.rc:43 wordpad.rc:46
 msgid "&Paste\tCtrl+V"
 msgstr "붙여넣기(&P)\tCtrl+V"
 
@@ -3408,11 +3414,17 @@ msgstr "찾기(&S)...\tCtrl+F"
 msgid "&Search next\tF3"
 msgstr "다음 찾기(&N)\tF3"
 
-#: notepad.rc:55
+#: notepad.rc:55 wordpad.rc:52
+#, fuzzy
 msgid "&Replace...\tCtrl+H"
-msgstr "바꾸기(&R)...\tCtrl+H"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"바꾸기(&R)...\tCtrl+H\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+" 바꾸기(&R)...\tCtrl+H"
 
 #: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
+#: wordpad.rc:91
 msgid "&Help"
 msgstr "도움말(&H)"
 
@@ -3926,7 +3938,7 @@ msgstr "최소화 상태일 때 숨기기(&H)"
 msgid "&Show 16-bit tasks"
 msgstr "16-bit 작업 보여주기(&S)"
 
-#: taskmgr.rc:52 winefile.rc:76
+#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
 #, fuzzy
 msgid "&View"
 msgstr ""
@@ -4821,7 +4833,7 @@ msgstr "확인(&C)..."
 msgid "Customize Tool&bar..."
 msgstr "도구바 사용자 정의(&b)..."
 
-#: winefile.rc:100
+#: winefile.rc:100 wordpad.rc:68
 msgid "&Toolbar"
 msgstr "도구바(&T)"
 
@@ -5140,6 +5152,354 @@ msgstr "richedit  구현을 찾을수 업습니다.. 취소중"
 #: winhlp32.rc:106
 msgid "Help topics: "
 msgstr "도움말 목차: "
+
+#: wordpad.rc:28
+msgid "&New...\tCtrl+N"
+msgstr "새 파일(&N)...\tCtrl+N"
+
+#: wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "인쇄 미리보기(&W)..."
+
+#: wordpad.rc:35
+msgid "Pag&e setup..."
+msgstr " 인쇄 설정(&E)..."
+
+#: wordpad.rc:42
+msgid "R&edo\tCtrl+Y"
+msgstr "다시 실행(&E)\tCtrl+Y"
+
+#: wordpad.rc:47
+msgid "&Clear\tDEL"
+msgstr "지우기(&C)\tDEL"
+
+#: wordpad.rc:48
+msgid "&Select all\tCtrl+A"
+msgstr "모두 선택(&S)\tCtrl+A"
+
+#: wordpad.rc:50
+msgid "&Find...\tCtrl+F"
+msgstr "찾기(&F)...\tCtrl+F"
+
+#: wordpad.rc:51
+msgid "Find &next\tF3"
+msgstr "다음 찾기(&N)\tF3"
+
+#: wordpad.rc:54
+msgid "Read-&only"
+msgstr "읽기 전용(&O)"
+
+#: wordpad.rc:55
+msgid "&Modified"
+msgstr "수정 가능(&M)"
+
+#: wordpad.rc:57
+msgid "E&xtras"
+msgstr "기타(&X)"
+
+#: wordpad.rc:59
+msgid "Selection &info"
+msgstr "선택 영역 정보(&I)"
+
+#: wordpad.rc:60
+msgid "Character &format"
+msgstr "문자 형식(&F)"
+
+#: wordpad.rc:61
+msgid "&Def. char format"
+msgstr "정의된 문자열 형식(&D)"
+
+#: wordpad.rc:62
+msgid "Paragrap&h format"
+msgstr "단락 형식(&H)"
+
+#: wordpad.rc:63
+msgid "&Get text"
+msgstr "문자열 얻기(&G)"
+
+#: wordpad.rc:69
+msgid "&Formatbar"
+msgstr "형식바(&F)"
+
+#: wordpad.rc:70
+msgid "&Ruler"
+msgstr "눈금바(&R)"
+
+#: wordpad.rc:71
+msgid "&Statusbar"
+msgstr "상태바(&S)"
+
+#: wordpad.rc:73
+msgid "&Options..."
+msgstr " 옵션(&O)..."
+
+#: wordpad.rc:75
+msgid "&Insert"
+msgstr "삽입(&I)"
+
+#: wordpad.rc:77
+msgid "&Date and time..."
+msgstr "날짜와 시간(&D)..."
+
+#: wordpad.rc:79
+msgid "F&ormat"
+msgstr "형식(&O)"
+
+#: wordpad.rc:82 wordpad.rc:105
+msgid "&Bullet points"
+msgstr "강조 점(&U)"
+
+#: wordpad.rc:83 wordpad.rc:106
+msgid "&Paragraph..."
+msgstr "단락(&P)..."
+
+#: wordpad.rc:84
+msgid "&Tabs..."
+msgstr "탭(&T)..."
+
+#: wordpad.rc:85
+msgid "Backgroun&d"
+msgstr "배경(&B)"
+
+#: wordpad.rc:87
+msgid "&System\tCtrl+1"
+msgstr "시스템(&S)\tCtrl+1"
+
+#: wordpad.rc:88
+msgid "&PostThat yellowish\tCtrl+2"
+msgstr "노랑색으로(&P)\tCtrl+2"
+
+#: wordpad.rc:93
+msgid "&About Wine Wordpad"
+msgstr "Wine 워드패드 정보(&A)"
+
+#: wordpad.rc:114
+msgid "Black"
+msgstr "검정"
+
+#: wordpad.rc:115
+msgid "Maroon"
+msgstr "밤색"
+
+#: wordpad.rc:116
+msgid "Green"
+msgstr "녹색"
+
+#: wordpad.rc:117
+msgid "Olive"
+msgstr "올리브색"
+
+#: wordpad.rc:118
+msgid "Navy"
+msgstr "짙은 남색"
+
+#: wordpad.rc:119
+msgid "Purple"
+msgstr "심홍색"
+
+#: wordpad.rc:120
+msgid "Teal"
+msgstr "검은 물오리색"
+
+#: wordpad.rc:121
+msgid "Gray"
+msgstr "회색"
+
+#: wordpad.rc:122
+msgid "Silver"
+msgstr "은색"
+
+#: wordpad.rc:123
+msgid "Red"
+msgstr "빨강"
+
+#: wordpad.rc:124
+msgid "Lime"
+msgstr "라임색"
+
+#: wordpad.rc:125
+msgid "Yellow"
+msgstr "노랑"
+
+#: wordpad.rc:126
+msgid "Blue"
+msgstr "파랑"
+
+#: wordpad.rc:127
+msgid "Fuchsia"
+msgstr "자홍색"
+
+#: wordpad.rc:128
+msgid "Aqua"
+msgstr "물색"
+
+#: wordpad.rc:129
+msgid "White"
+msgstr "하양"
+
+#: wordpad.rc:130
+msgid "Automatic"
+msgstr "자동"
+
+#: wordpad.rc:136
+msgid "All documents (*.*)"
+msgstr "모든 문서 (*.*)"
+
+#: wordpad.rc:137
+msgid "Text documents (*.txt)"
+msgstr "텍스트 파일 (*.txt)"
+
+#: wordpad.rc:138
+msgid "Unicode text document (*.txt)"
+msgstr "유니코드 텍스트 문서 (*.txt)"
+
+#: wordpad.rc:139
+msgid "Rich text format (*.rtf)"
+msgstr "리치 텍스트 파일형식 (*.rtf)"
+
+#: wordpad.rc:140
+msgid "Rich text document"
+msgstr "리치 텍스트 문서"
+
+#: wordpad.rc:141
+msgid "Text document"
+msgstr "텍스트 문서"
+
+#: wordpad.rc:142
+msgid "Unicode text document"
+msgstr "유니코드 텍스트 문서"
+
+#: wordpad.rc:143
+msgid "Printer files (*.PRN)"
+msgstr "프린터 파일 (*.PRN)"
+
+#: wordpad.rc:148
+msgid "Left"
+msgstr "왼쪽"
+
+#: wordpad.rc:149
+msgid "Right"
+msgstr "오른쪽"
+
+#: wordpad.rc:150
+msgid "Center"
+msgstr "가운데"
+
+#: wordpad.rc:156
+msgid "Text"
+msgstr "텍스트"
+
+#: wordpad.rc:157
+msgid "Rich text"
+msgstr "리치 텍스트"
+
+#: wordpad.rc:163
+msgid "Next page"
+msgstr "다음 페이지"
+
+#: wordpad.rc:164
+msgid "Previous page"
+msgstr "이전 페이지"
+
+#: wordpad.rc:165
+msgid "Two pages"
+msgstr "두 페이지"
+
+#: wordpad.rc:166
+msgid "One page"
+msgstr "한 페이지"
+
+#: wordpad.rc:167
+msgid "Zoom in"
+msgstr "확대"
+
+#: wordpad.rc:168
+msgid "Zoom out"
+msgstr "축소"
+
+#: wordpad.rc:169
+msgid "Close"
+msgstr "닫기"
+
+#: wordpad.rc:170
+msgid "Page"
+msgstr "페이지"
+
+#: wordpad.rc:171
+msgid "Pages"
+msgstr "페이지들"
+
+#: wordpad.rc:172
+msgid "cm"
+msgstr "cm"
+
+#: wordpad.rc:173
+msgid "in"
+msgstr "in"
+
+#: wordpad.rc:174
+msgid "inch"
+msgstr "인치"
+
+#: wordpad.rc:175
+msgid "pt"
+msgstr "pt"
+
+#: wordpad.rc:180
+msgid "Document"
+msgstr "문서"
+
+#: wordpad.rc:181
+msgid "Save changes to '%s'?"
+msgstr "'%s'의 바뀐 것을 저장하겠습니까?"
+
+#: wordpad.rc:182
+msgid "Finished searching the document."
+msgstr "문서에서 찾기 끝."
+
+#: wordpad.rc:183
+msgid "Failed to load the RichEdit library."
+msgstr "리치텍스트 라이브러리 불러오기 실패."
+
+#: wordpad.rc:184
+msgid ""
+"You have chosen to save in plain text format, which will cause all "
+"formatting to be lost. Are you sure that you wish to do this?"
+msgstr ""
+"당신은 보통 텍스트 형식으로 저장하기를 선택했습니다, 이것은 포맷팅을 없엘 것"
+"입니다. 당신은 정말로 저장하기를 원합니까?"
+
+#: wordpad.rc:187
+msgid "Invalid number format"
+msgstr "올바르지 않은 숫자 형식"
+
+#: wordpad.rc:188
+msgid "OLE storage documents are not supported"
+msgstr "OLE 저장 문서는 지원되지 않습니다"
+
+#: wordpad.rc:189
+msgid "Could not save the file."
+msgstr "파일을 저장할 수 없습니다."
+
+#: wordpad.rc:190
+msgid "You do not have access to save the file."
+msgstr "파일을 저장할 권한이 없습니다."
+
+#: wordpad.rc:191
+msgid "Could not open the file."
+msgstr "파일을 열 수 없습니다."
+
+#: wordpad.rc:192
+msgid "You do not have access to open the file."
+msgstr "파일을 열 권한이 없습니다."
+
+#: wordpad.rc:193
+msgid "Printing not implemented"
+msgstr "인쇄는 지원되지 않습니다"
+
+#: wordpad.rc:194
+msgid "Cannot add more than 32 tab stops."
+msgstr " 탭중지는 32개 이상 추가 할 수 없습니다."
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

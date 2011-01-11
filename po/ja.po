@@ -942,11 +942,11 @@ msgstr "ホーム"
 msgid "Sync"
 msgstr "同期"
 
-#: hhctrl.rc:42
+#: hhctrl.rc:42 wordpad.rc:162
 msgid "Print"
 msgstr "印刷"
 
-#: hhctrl.rc:43
+#: hhctrl.rc:43 wordpad.rc:155
 msgid "Options"
 msgstr "オプション"
 
@@ -1277,7 +1277,7 @@ msgid "Select &All"
 msgstr "すべて選択(&A)"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30
+#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
 msgid "&Paste"
 msgstr "貼り付け(&P)"
 
@@ -1358,11 +1358,12 @@ msgid "Set as &Desktop Item..."
 msgstr "デスクトップ項目として設定(&D)..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
+#: wordpad.rc:101
 msgid "Cu&t"
 msgstr "切り取り(&T)"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 wineconsole.rc:29
+#: shdoclc.rc:187 wineconsole.rc:29 wordpad.rc:102
 msgid "&Copy"
 msgstr "コピー(&C)"
 
@@ -2473,7 +2474,7 @@ msgstr "アナログ(&L)"
 msgid "Digi&tal"
 msgstr "デジタル(&T)"
 
-#: clock.rc:32 notepad.rc:50 winefile.rc:97
+#: clock.rc:32 notepad.rc:50 winefile.rc:97 wordpad.rc:81
 msgid "&Font..."
 msgstr "フォント(&F)..."
 
@@ -3296,7 +3297,7 @@ msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
 #: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
-#: winhlp32.rc:28
+#: winhlp32.rc:28 wordpad.rc:26
 msgid "&File"
 msgstr "ファイル(&F)"
 
@@ -3304,19 +3305,24 @@ msgstr "ファイル(&F)"
 msgid "&New\tCtrl+N"
 msgstr "新規作成(&N)\tCtrl+N"
 
-#: notepad.rc:28
+#: notepad.rc:28 wordpad.rc:29
 msgid "&Open...\tCtrl+O"
 msgstr "開く(&O)...\tCtrl+O"
 
-#: notepad.rc:29
+#: notepad.rc:29 wordpad.rc:30
+#, fuzzy
 msgid "&Save\tCtrl+S"
-msgstr "保存(&S)\tCtrl+S"
+msgstr ""
+"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
+"保存(&S)\tCtrl+S\n"
+"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
+"上書き保存(&S)\tCtrl+S"
 
-#: notepad.rc:30
+#: notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr "名前を付けて保存(&A)..."
 
-#: notepad.rc:32
+#: notepad.rc:32 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
 msgstr "印刷(&P)...\tCtrl+P"
 
@@ -3328,27 +3334,27 @@ msgstr "ページ設定(&T)..."
 msgid "P&rinter Setup..."
 msgstr "プリンタの設定(&R)..."
 
-#: notepad.rc:36 view.rc:31 winhlp32.rc:34
+#: notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
 msgid "E&xit"
 msgstr "終了(&X)"
 
-#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36
+#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 msgid "&Edit"
 msgstr "編集(&E)"
 
-#: notepad.rc:39
+#: notepad.rc:39 wordpad.rc:41
 msgid "&Undo\tCtrl+Z"
 msgstr "元に戻す(&U)\tCtrl+Z"
 
-#: notepad.rc:41
+#: notepad.rc:41 wordpad.rc:44
 msgid "Cu&t\tCtrl+X"
 msgstr "切り取り(&T)\tCtrl+X"
 
-#: notepad.rc:42
+#: notepad.rc:42 wordpad.rc:45
 msgid "&Copy\tCtrl+C"
 msgstr "コピー(&C)\tCtrl+C"
 
-#: notepad.rc:43
+#: notepad.rc:43 wordpad.rc:46
 msgid "&Paste\tCtrl+V"
 msgstr "貼り付け(&P)\tCtrl+V"
 
@@ -3376,11 +3382,17 @@ msgstr "検索(&S)...\tCtrl+F"
 msgid "&Search next\tF3"
 msgstr "次を検索(&S)\tF3"
 
-#: notepad.rc:55
+#: notepad.rc:55 wordpad.rc:52
+#, fuzzy
 msgid "&Replace...\tCtrl+H"
-msgstr "置き換える(&R)...\tCtrl+H"
+msgstr ""
+"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
+"置き換える(&R)...\tCtrl+H\n"
+"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
+"置換(&R)...\tCtrl+H"
 
 #: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
+#: wordpad.rc:91
 msgid "&Help"
 msgstr "ヘルプ(&H)"
 
@@ -3893,7 +3905,7 @@ msgstr "最小化時に隠す(&H)"
 msgid "&Show 16-bit tasks"
 msgstr "16bit タスクの表示(&S)"
 
-#: taskmgr.rc:52 winefile.rc:76
+#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
 msgid "&View"
 msgstr "表示(&V)"
 
@@ -4767,7 +4779,7 @@ msgstr "確認(&C)..."
 msgid "Customize Tool&bar..."
 msgstr "ツールバーをカスタマイズ(&B)..."
 
-#: winefile.rc:100
+#: winefile.rc:100 wordpad.rc:68
 msgid "&Toolbar"
 msgstr "ツールバー(&T)"
 
@@ -5086,6 +5098,354 @@ msgstr "リッチエディット実装が見つかりません... 終了しま�
 #: winhlp32.rc:106
 msgid "Help topics: "
 msgstr "ヘルプ トピック: "
+
+#: wordpad.rc:28
+msgid "&New...\tCtrl+N"
+msgstr "新規作成(&N)...\tCtrl+N"
+
+#: wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "印刷プレビュー(&W)..."
+
+#: wordpad.rc:35
+msgid "Pag&e setup..."
+msgstr "ページ設定(&E)..."
+
+#: wordpad.rc:42
+msgid "R&edo\tCtrl+Y"
+msgstr "やり直し(&E)\tCtrl+Y"
+
+#: wordpad.rc:47
+msgid "&Clear\tDEL"
+msgstr "クリア(&C)\tDEL"
+
+#: wordpad.rc:48
+msgid "&Select all\tCtrl+A"
+msgstr "すべて選択(&S)\tCtrl+A"
+
+#: wordpad.rc:50
+msgid "&Find...\tCtrl+F"
+msgstr "検索(&F)...\tCtrl+F"
+
+#: wordpad.rc:51
+msgid "Find &next\tF3"
+msgstr "次を検索(&N)\tF3"
+
+#: wordpad.rc:54
+msgid "Read-&only"
+msgstr "読み取り専用(&O)"
+
+#: wordpad.rc:55
+msgid "&Modified"
+msgstr "変更あり(&M)"
+
+#: wordpad.rc:57
+msgid "E&xtras"
+msgstr "E&xtras"
+
+#: wordpad.rc:59
+msgid "Selection &info"
+msgstr "Selection &info"
+
+#: wordpad.rc:60
+msgid "Character &format"
+msgstr "Character &format"
+
+#: wordpad.rc:61
+msgid "&Def. char format"
+msgstr "&Def. char format"
+
+#: wordpad.rc:62
+msgid "Paragrap&h format"
+msgstr "Paragrap&h format"
+
+#: wordpad.rc:63
+msgid "&Get text"
+msgstr "&Get text"
+
+#: wordpad.rc:69
+msgid "&Formatbar"
+msgstr "書式バー(&F)"
+
+#: wordpad.rc:70
+msgid "&Ruler"
+msgstr "ルーラー(&R)"
+
+#: wordpad.rc:71
+msgid "&Statusbar"
+msgstr "ステータス バー(&S)"
+
+#: wordpad.rc:73
+msgid "&Options..."
+msgstr "オプション(&O)..."
+
+#: wordpad.rc:75
+msgid "&Insert"
+msgstr "挿入(&I)"
+
+#: wordpad.rc:77
+msgid "&Date and time..."
+msgstr "日付と時刻(&D)..."
+
+#: wordpad.rc:79
+msgid "F&ormat"
+msgstr "書式(&O)"
+
+#: wordpad.rc:82 wordpad.rc:105
+msgid "&Bullet points"
+msgstr "箇条書き(&B)"
+
+#: wordpad.rc:83 wordpad.rc:106
+msgid "&Paragraph..."
+msgstr "段落(&P)..."
+
+#: wordpad.rc:84
+msgid "&Tabs..."
+msgstr "タブ(&T)..."
+
+#: wordpad.rc:85
+msgid "Backgroun&d"
+msgstr "背景(&D)"
+
+#: wordpad.rc:87
+msgid "&System\tCtrl+1"
+msgstr "システム(&S)\tCtrl+1"
+
+#: wordpad.rc:88
+msgid "&PostThat yellowish\tCtrl+2"
+msgstr "&PostThat yellowish\tCtrl+2"
+
+#: wordpad.rc:93
+msgid "&About Wine Wordpad"
+msgstr "Wine Wordpadについて(&A)"
+
+#: wordpad.rc:114
+msgid "Black"
+msgstr "黒"
+
+#: wordpad.rc:115
+msgid "Maroon"
+msgstr "茶色"
+
+#: wordpad.rc:116
+msgid "Green"
+msgstr "緑"
+
+#: wordpad.rc:117
+msgid "Olive"
+msgstr "オリーブ"
+
+#: wordpad.rc:118
+msgid "Navy"
+msgstr "紺"
+
+#: wordpad.rc:119
+msgid "Purple"
+msgstr "紫"
+
+#: wordpad.rc:120
+msgid "Teal"
+msgstr "青緑"
+
+#: wordpad.rc:121
+msgid "Gray"
+msgstr "灰色"
+
+#: wordpad.rc:122
+msgid "Silver"
+msgstr "銀色"
+
+#: wordpad.rc:123
+msgid "Red"
+msgstr "赤"
+
+#: wordpad.rc:124
+msgid "Lime"
+msgstr "黄緑"
+
+#: wordpad.rc:125
+msgid "Yellow"
+msgstr "黄"
+
+#: wordpad.rc:126
+msgid "Blue"
+msgstr "青"
+
+#: wordpad.rc:127
+msgid "Fuchsia"
+msgstr "赤紫"
+
+#: wordpad.rc:128
+msgid "Aqua"
+msgstr "水色"
+
+#: wordpad.rc:129
+msgid "White"
+msgstr "白"
+
+#: wordpad.rc:130
+msgid "Automatic"
+msgstr "自動"
+
+#: wordpad.rc:136
+msgid "All documents (*.*)"
+msgstr "すべてのファイル (*.*)"
+
+#: wordpad.rc:137
+msgid "Text documents (*.txt)"
+msgstr "テキスト文書 (*.txt)"
+
+#: wordpad.rc:138
+msgid "Unicode text document (*.txt)"
+msgstr "Unicodeテキスト文書(*.txt)"
+
+#: wordpad.rc:139
+msgid "Rich text format (*.rtf)"
+msgstr "リッチテキスト形式 (*.rtf)"
+
+#: wordpad.rc:140
+msgid "Rich text document"
+msgstr "リッチテキスト文書"
+
+#: wordpad.rc:141
+msgid "Text document"
+msgstr "テキスト文書"
+
+#: wordpad.rc:142
+msgid "Unicode text document"
+msgstr "Unicodeテキスト文書"
+
+#: wordpad.rc:143
+msgid "Printer files (*.PRN)"
+msgstr "プリンタファイル (*.PRN)"
+
+#: wordpad.rc:148
+msgid "Left"
+msgstr "左"
+
+#: wordpad.rc:149
+msgid "Right"
+msgstr "右"
+
+#: wordpad.rc:150
+msgid "Center"
+msgstr "中央"
+
+#: wordpad.rc:156
+msgid "Text"
+msgstr "テキスト"
+
+#: wordpad.rc:157
+msgid "Rich text"
+msgstr "リッチテキスト"
+
+#: wordpad.rc:163
+msgid "Next page"
+msgstr "次のページ"
+
+#: wordpad.rc:164
+msgid "Previous page"
+msgstr "前のページ"
+
+#: wordpad.rc:165
+msgid "Two pages"
+msgstr "2ページ"
+
+#: wordpad.rc:166
+msgid "One page"
+msgstr "1ページ"
+
+#: wordpad.rc:167
+msgid "Zoom in"
+msgstr "拡大"
+
+#: wordpad.rc:168
+msgid "Zoom out"
+msgstr "縮小"
+
+#: wordpad.rc:169
+msgid "Close"
+msgstr "閉じる"
+
+#: wordpad.rc:170
+msgid "Page"
+msgstr "ページ"
+
+#: wordpad.rc:171
+msgid "Pages"
+msgstr "ページ"
+
+#: wordpad.rc:172
+msgid "cm"
+msgstr "cm"
+
+#: wordpad.rc:173
+msgid "in"
+msgstr "in"
+
+#: wordpad.rc:174
+msgid "inch"
+msgstr "インチ"
+
+#: wordpad.rc:175
+msgid "pt"
+msgstr "pt"
+
+#: wordpad.rc:180
+msgid "Document"
+msgstr "文書"
+
+#: wordpad.rc:181
+msgid "Save changes to '%s'?"
+msgstr "'%s'への変更を保存しますか?"
+
+#: wordpad.rc:182
+msgid "Finished searching the document."
+msgstr "文書の検索を完了。"
+
+#: wordpad.rc:183
+msgid "Failed to load the RichEdit library."
+msgstr "RichEditライブラリの読み込みに失敗。"
+
+#: wordpad.rc:184
+msgid ""
+"You have chosen to save in plain text format, which will cause all "
+"formatting to be lost. Are you sure that you wish to do this?"
+msgstr ""
+"プレーンテキスト形式で保存すると、すべての書式が失われます。それでもよいです"
+"か？"
+
+#: wordpad.rc:187
+msgid "Invalid number format"
+msgstr "数の書式が不正"
+
+#: wordpad.rc:188
+msgid "OLE storage documents are not supported"
+msgstr "OLEストレージ文書はサポートされていません。"
+
+#: wordpad.rc:189
+msgid "Could not save the file."
+msgstr "ファイルを保存できません。"
+
+#: wordpad.rc:190
+msgid "You do not have access to save the file."
+msgstr "ファイルに保存する権限がありません。"
+
+#: wordpad.rc:191
+msgid "Could not open the file."
+msgstr "ファイルを開けません。"
+
+#: wordpad.rc:192
+msgid "You do not have access to open the file."
+msgstr "ファイルを開く権限がありません。"
+
+#: wordpad.rc:193
+msgid "Printing not implemented"
+msgstr "プリントが実装されていません。"
+
+#: wordpad.rc:194
+msgid "Cannot add more than 32 tab stops."
+msgstr "32以上なタブを追加できません。"
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

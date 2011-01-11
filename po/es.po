@@ -950,11 +950,11 @@ msgstr "Inicio"
 msgid "Sync"
 msgstr "Sincronizar"
 
-#: hhctrl.rc:42
+#: hhctrl.rc:42 wordpad.rc:162
 msgid "Print"
 msgstr "Imprimir"
 
-#: hhctrl.rc:43
+#: hhctrl.rc:43 wordpad.rc:155
 msgid "Options"
 msgstr "Opciones"
 
@@ -1327,7 +1327,7 @@ msgid "Select &All"
 msgstr "Seleccionar &todo"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30
+#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
 msgid "&Paste"
 msgstr "&Pegar"
 
@@ -1413,11 +1413,12 @@ msgid "Set as &Desktop Item..."
 msgstr "A&ñadir al escritorio..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
+#: wordpad.rc:101
 msgid "Cu&t"
 msgstr "Cor&tar"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 wineconsole.rc:29
+#: shdoclc.rc:187 wineconsole.rc:29 wordpad.rc:102
 msgid "&Copy"
 msgstr "&Copiar"
 
@@ -2549,7 +2550,7 @@ msgstr "&Analógico"
 msgid "Digi&tal"
 msgstr "&Digital"
 
-#: clock.rc:32 notepad.rc:50
+#: clock.rc:32 notepad.rc:50 winefile.rc:97 wordpad.rc:81
 #, fuzzy
 msgid "&Font..."
 msgstr ""
@@ -3392,7 +3393,7 @@ msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
 #: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
-#: winhlp32.rc:28
+#: winhlp32.rc:28 wordpad.rc:26
 msgid "&File"
 msgstr "&Archivo"
 
@@ -3400,19 +3401,19 @@ msgstr "&Archivo"
 msgid "&New\tCtrl+N"
 msgstr "&Nuevo\tCtrl+N"
 
-#: notepad.rc:28
+#: notepad.rc:28 wordpad.rc:29
 msgid "&Open...\tCtrl+O"
 msgstr "&Abrir...\tCtrl+O"
 
-#: notepad.rc:29
+#: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
 msgstr "&Guardar\tCtrl+S"
 
-#: notepad.rc:30
+#: notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr "Guardar &como..."
 
-#: notepad.rc:32
+#: notepad.rc:32 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
 msgstr "&Imprimir...\tCtrl+P"
 
@@ -3424,27 +3425,27 @@ msgstr "Configurar &página..."
 msgid "P&rinter Setup..."
 msgstr "Configuración &impresora..."
 
-#: notepad.rc:36 view.rc:31 winhlp32.rc:34
+#: notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
 msgid "E&xit"
 msgstr "&Salir"
 
-#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36
+#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 msgid "&Edit"
 msgstr "&Editar"
 
-#: notepad.rc:39
+#: notepad.rc:39 wordpad.rc:41
 msgid "&Undo\tCtrl+Z"
 msgstr "&Deshacer\tCtrl+Z"
 
-#: notepad.rc:41
+#: notepad.rc:41 wordpad.rc:44
 msgid "Cu&t\tCtrl+X"
 msgstr "Cor&tar\tCtrl+X"
 
-#: notepad.rc:42
+#: notepad.rc:42 wordpad.rc:45
 msgid "&Copy\tCtrl+C"
 msgstr "&Copiar\tCtrl+C"
 
-#: notepad.rc:43
+#: notepad.rc:43 wordpad.rc:46
 msgid "&Paste\tCtrl+V"
 msgstr "&Pegar\tCtrl+V"
 
@@ -3477,11 +3478,12 @@ msgstr "&Buscar...\tCtrl+F"
 msgid "&Search next\tF3"
 msgstr "Buscar &siguiente\tF3"
 
-#: notepad.rc:55
+#: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
 msgstr "&Reemplazar...\tCtrl+H"
 
 #: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
+#: wordpad.rc:91
 #, fuzzy
 msgid "&Help"
 msgstr ""
@@ -4025,7 +4027,7 @@ msgstr ""
 msgid "&Show 16-bit tasks"
 msgstr ""
 
-#: taskmgr.rc:52 winefile.rc:76
+#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
 msgid "&View"
 msgstr "&Ver"
 
@@ -4921,7 +4923,7 @@ msgstr "&Confirmación..."
 msgid "Customize Tool&bar..."
 msgstr "Personalizar barra &herramientas..."
 
-#: winefile.rc:100
+#: winefile.rc:100 wordpad.rc:68
 msgid "&Toolbar"
 msgstr "&Barra de herramientas"
 
@@ -5243,6 +5245,385 @@ msgstr "No se pudo encontrar una implementación de richedit... Abortando"
 #: winhlp32.rc:106
 msgid "Help topics: "
 msgstr "Temas de ayuda: "
+
+#: wordpad.rc:28
+#, fuzzy
+msgid "&New...\tCtrl+N"
+msgstr "&Nuevo\tCtrl+N"
+
+#: wordpad.rc:34
+#, fuzzy
+msgid "Print previe&w..."
+msgstr "I&mprimir imagen..."
+
+#: wordpad.rc:35
+#, fuzzy
+msgid "Pag&e setup..."
+msgstr "Configurar &página..."
+
+#: wordpad.rc:42
+#, fuzzy
+msgid "R&edo\tCtrl+Y"
+msgstr "&Deshacer\tCtrl+Z"
+
+#: wordpad.rc:47
+msgid "&Clear\tDEL"
+msgstr ""
+
+#: wordpad.rc:48
+#, fuzzy
+msgid "&Select all\tCtrl+A"
+msgstr "Seleccionar t&odo\tCtrl+A"
+
+#: wordpad.rc:50
+#, fuzzy
+msgid "&Find...\tCtrl+F"
+msgstr "&Imprimir...\tCtrl+P"
+
+#: wordpad.rc:51
+msgid "Find &next\tF3"
+msgstr ""
+
+#: wordpad.rc:54
+msgid "Read-&only"
+msgstr ""
+
+#: wordpad.rc:55
+msgid "&Modified"
+msgstr ""
+
+#: wordpad.rc:57
+msgid "E&xtras"
+msgstr ""
+
+#: wordpad.rc:59
+#, fuzzy
+msgid "Selection &info"
+msgstr "Seleccionar &todo"
+
+#: wordpad.rc:60
+msgid "Character &format"
+msgstr ""
+
+#: wordpad.rc:61
+msgid "&Def. char format"
+msgstr ""
+
+#: wordpad.rc:62
+msgid "Paragrap&h format"
+msgstr ""
+
+#: wordpad.rc:63
+msgid "&Get text"
+msgstr ""
+
+#: wordpad.rc:69
+msgid "&Formatbar"
+msgstr ""
+
+#: wordpad.rc:70
+msgid "&Ruler"
+msgstr ""
+
+#: wordpad.rc:71
+#, fuzzy
+msgid "&Statusbar"
+msgstr "Barra de &estado"
+
+#: wordpad.rc:73
+#, fuzzy
+msgid "&Options..."
+msgstr "&Opciones"
+
+#: wordpad.rc:75
+msgid "&Insert"
+msgstr ""
+
+#: wordpad.rc:77
+msgid "&Date and time..."
+msgstr ""
+
+#: wordpad.rc:79
+#, fuzzy
+msgid "F&ormat"
+msgstr "Ade&lante"
+
+#: wordpad.rc:82 wordpad.rc:105
+msgid "&Bullet points"
+msgstr ""
+
+#: wordpad.rc:83 wordpad.rc:106
+#, fuzzy
+msgid "&Paragraph..."
+msgstr "&Buscar..."
+
+#: wordpad.rc:84
+#, fuzzy
+msgid "&Tabs..."
+msgstr "Guardar &como..."
+
+#: wordpad.rc:85
+#, fuzzy
+msgid "Backgroun&d"
+msgstr "&Copiar fondo"
+
+#: wordpad.rc:87
+#, fuzzy
+msgid "&System\tCtrl+1"
+msgstr "&Pegar\tCtrl+V"
+
+#: wordpad.rc:88
+msgid "&PostThat yellowish\tCtrl+2"
+msgstr ""
+
+#: wordpad.rc:93
+#, fuzzy
+msgid "&About Wine Wordpad"
+msgstr "&Info..."
+
+#: wordpad.rc:114
+msgid "Black"
+msgstr ""
+
+#: wordpad.rc:115
+msgid "Maroon"
+msgstr ""
+
+#: wordpad.rc:116
+msgid "Green"
+msgstr ""
+
+#: wordpad.rc:117
+msgid "Olive"
+msgstr ""
+
+#: wordpad.rc:118
+msgid "Navy"
+msgstr ""
+
+#: wordpad.rc:119
+msgid "Purple"
+msgstr ""
+
+#: wordpad.rc:120
+msgid "Teal"
+msgstr ""
+
+#: wordpad.rc:121
+msgid "Gray"
+msgstr ""
+
+#: wordpad.rc:122
+msgid "Silver"
+msgstr ""
+
+#: wordpad.rc:123
+#, fuzzy
+msgid "Red"
+msgstr "Re&bobinar"
+
+#: wordpad.rc:124
+msgid "Lime"
+msgstr ""
+
+#: wordpad.rc:125
+msgid "Yellow"
+msgstr ""
+
+#: wordpad.rc:126
+msgid "Blue"
+msgstr ""
+
+#: wordpad.rc:127
+msgid "Fuchsia"
+msgstr ""
+
+#: wordpad.rc:128
+msgid "Aqua"
+msgstr ""
+
+#: wordpad.rc:129
+msgid "White"
+msgstr ""
+
+#: wordpad.rc:130
+#, fuzzy
+msgid "Automatic"
+msgstr "A&linear automáticamente"
+
+#: wordpad.rc:136
+#, fuzzy
+msgid "All documents (*.*)"
+msgstr "Todos los archivos (*.*)"
+
+#: wordpad.rc:137
+#, fuzzy
+msgid "Text documents (*.txt)"
+msgstr "Documentos de texto (*.txt)"
+
+#: wordpad.rc:138
+msgid "Unicode text document (*.txt)"
+msgstr ""
+
+#: wordpad.rc:139
+msgid "Rich text format (*.rtf)"
+msgstr ""
+
+#: wordpad.rc:140
+msgid "Rich text document"
+msgstr ""
+
+#: wordpad.rc:141
+msgid "Text document"
+msgstr ""
+
+#: wordpad.rc:142
+msgid "Unicode text document"
+msgstr ""
+
+#: wordpad.rc:143
+#, fuzzy
+msgid "Printer files (*.PRN)"
+msgstr "Documentos de texto (*.txt)"
+
+#: wordpad.rc:148
+#, fuzzy
+msgid "Left"
+msgstr "&Izquierda"
+
+#: wordpad.rc:149
+#, fuzzy
+msgid "Right"
+msgstr "&Derecha"
+
+#: wordpad.rc:150
+msgid "Center"
+msgstr ""
+
+#: wordpad.rc:156
+msgid "Text"
+msgstr ""
+
+#: wordpad.rc:157
+msgid "Rich text"
+msgstr ""
+
+#: wordpad.rc:163
+msgid "Next page"
+msgstr ""
+
+#: wordpad.rc:164
+msgid "Previous page"
+msgstr ""
+
+#: wordpad.rc:165
+msgid "Two pages"
+msgstr ""
+
+#: wordpad.rc:166
+msgid "One page"
+msgstr ""
+
+#: wordpad.rc:167
+#, fuzzy
+msgid "Zoom in"
+msgstr "Zoom"
+
+#: wordpad.rc:168
+#, fuzzy
+msgid "Zoom out"
+msgstr "Zoom"
+
+#: wordpad.rc:169
+msgid "Close"
+msgstr ""
+
+#: wordpad.rc:170
+#, fuzzy
+msgid "Page"
+msgstr "Página a&rriba"
+
+#: wordpad.rc:171
+#, fuzzy
+msgid "Pages"
+msgstr "Página a&rriba"
+
+#: wordpad.rc:172
+msgid "cm"
+msgstr ""
+
+#: wordpad.rc:173
+msgid "in"
+msgstr ""
+
+#: wordpad.rc:174
+msgid "inch"
+msgstr ""
+
+#: wordpad.rc:175
+msgid "pt"
+msgstr ""
+
+#: wordpad.rc:180
+#, fuzzy
+msgid "Document"
+msgstr "Argumento faltante\n"
+
+#: wordpad.rc:181
+msgid "Save changes to '%s'?"
+msgstr ""
+
+#: wordpad.rc:182
+msgid "Finished searching the document."
+msgstr ""
+
+#: wordpad.rc:183
+msgid "Failed to load the RichEdit library."
+msgstr ""
+
+#: wordpad.rc:184
+msgid ""
+"You have chosen to save in plain text format, which will cause all "
+"formatting to be lost. Are you sure that you wish to do this?"
+msgstr ""
+
+#: wordpad.rc:187
+msgid "Invalid number format"
+msgstr ""
+
+#: wordpad.rc:188
+msgid "OLE storage documents are not supported"
+msgstr ""
+
+#: wordpad.rc:189
+#, fuzzy
+msgid "Could not save the file."
+msgstr "No puede crearse o usar una ventana."
+
+#: wordpad.rc:190
+msgid "You do not have access to save the file."
+msgstr ""
+
+#: wordpad.rc:191
+msgid "Could not open the file."
+msgstr ""
+
+#: wordpad.rc:192
+msgid "You do not have access to open the file."
+msgstr ""
+
+#: wordpad.rc:193
+#, fuzzy
+msgid "Printing not implemented"
+msgstr ""
+"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
+"No implementado\n"
+"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
+"Aún no implementado"
+
+#: wordpad.rc:194
+msgid "Cannot add more than 32 tab stops."
+msgstr ""
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

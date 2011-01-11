@@ -947,11 +947,11 @@ msgstr "Acasă"
 msgid "Sync"
 msgstr "Sincronizează"
 
-#: hhctrl.rc:42
+#: hhctrl.rc:42 wordpad.rc:162
 msgid "Print"
 msgstr "Imprimă"
 
-#: hhctrl.rc:43
+#: hhctrl.rc:43 wordpad.rc:155
 msgid "Options"
 msgstr "Opțiuni"
 
@@ -1313,7 +1313,7 @@ msgid "Select &All"
 msgstr "Selectează t&ot"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30
+#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
 #, fuzzy
 msgid "&Paste"
 msgstr ""
@@ -1404,11 +1404,12 @@ msgid "Set as &Desktop Item..."
 msgstr "&Definește ca element de desktop..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
+#: wordpad.rc:101
 msgid "Cu&t"
 msgstr "&Taie"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 wineconsole.rc:29
+#: shdoclc.rc:187 wineconsole.rc:29 wordpad.rc:102
 msgid "&Copy"
 msgstr "&Copiază"
 
@@ -2536,7 +2537,7 @@ msgstr "Ana&logic"
 msgid "Digi&tal"
 msgstr "Digi&tal"
 
-#: clock.rc:32 notepad.rc:50 winefile.rc:97
+#: clock.rc:32 notepad.rc:50 winefile.rc:97 wordpad.rc:81
 msgid "&Font..."
 msgstr "&Font..."
 
@@ -3375,7 +3376,7 @@ msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Resurse deschise: %lu\n"
 
 #: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
-#: winhlp32.rc:28
+#: winhlp32.rc:28 wordpad.rc:26
 msgid "&File"
 msgstr "&Fișier"
 
@@ -3383,21 +3384,31 @@ msgstr "&Fișier"
 msgid "&New\tCtrl+N"
 msgstr "&Nou\tCtrl+N"
 
-#: notepad.rc:28
+#: notepad.rc:28 wordpad.rc:29
 msgid "&Open...\tCtrl+O"
 msgstr "&Deschide...\tCtrl+O"
 
-#: notepad.rc:29
+#: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
 msgstr "&Salvează\tCtrl+S"
 
-#: notepad.rc:30
+#: notepad.rc:30 wordpad.rc:31
+#, fuzzy
 msgid "Save &as..."
-msgstr "Salvează &ca..."
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Salvează &ca...\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"S&alvează ca..."
 
-#: notepad.rc:32
+#: notepad.rc:32 wordpad.rc:33
+#, fuzzy
 msgid "&Print...\tCtrl+P"
-msgstr "&Tipărește...\tCtrl+P"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"&Tipărește...\tCtrl+P\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Im&primă...\tCtrl+P"
 
 #: notepad.rc:33
 msgid "Page Se&tup..."
@@ -3407,34 +3418,39 @@ msgstr "S&etare pagină..."
 msgid "P&rinter Setup..."
 msgstr "Setare im&primantă..."
 
-#: notepad.rc:36 view.rc:31 winhlp32.rc:34
+#: notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
 msgid "E&xit"
 msgstr "&Ieșire"
 
-#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36
-#, fuzzy
+#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 msgid "&Edit"
+msgstr "&Editare"
+
+#: notepad.rc:39 wordpad.rc:41
+#, fuzzy
+msgid "&Undo\tCtrl+Z"
 msgstr ""
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"&Editează\n"
+"&Refă\tCtrl+Z\n"
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"&Editare"
+"&Anulează\tCtrl+Z"
 
-#: notepad.rc:39
-msgid "&Undo\tCtrl+Z"
-msgstr "&Refă\tCtrl+Z"
-
-#: notepad.rc:41
+#: notepad.rc:41 wordpad.rc:44
 msgid "Cu&t\tCtrl+X"
 msgstr "&Taie\tCtrl+X"
 
-#: notepad.rc:42
+#: notepad.rc:42 wordpad.rc:45
 msgid "&Copy\tCtrl+C"
 msgstr "&Copiază\tCtrl+C"
 
-#: notepad.rc:43
+#: notepad.rc:43 wordpad.rc:46
+#, fuzzy
 msgid "&Paste\tCtrl+V"
-msgstr "&Lipește\tCtrl+V"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"&Lipește\tCtrl+V\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Li&pește\tCtrl+V"
 
 #: notepad.rc:44 winefile.rc:30
 #, fuzzy
@@ -3465,18 +3481,19 @@ msgstr "&Caută...\tCtrl+F"
 msgid "&Search next\tF3"
 msgstr "Caută &următorul\tF3"
 
-#: notepad.rc:55
-msgid "&Replace...\tCtrl+H"
-msgstr "&Înlocuiește...\tCtrl+H"
-
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winhlp32.rc:60
+#: notepad.rc:55 wordpad.rc:52
 #, fuzzy
-msgid "&Help"
+msgid "&Replace...\tCtrl+H"
 msgstr ""
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"A&jutor\n"
+"&Înlocuiește...\tCtrl+H\n"
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"&Ajutor"
+"Î&nlocuire...\tCtrl+H"
+
+#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
+#: wordpad.rc:91
+msgid "&Help"
+msgstr "&Ajutor"
 
 #: notepad.rc:59 progman.rc:54
 #, fuzzy
@@ -4002,7 +4019,7 @@ msgstr "&Ascunde când este minimizat"
 msgid "&Show 16-bit tasks"
 msgstr "Afișează &sarcinile de 16 biți"
 
-#: taskmgr.rc:52 winefile.rc:76
+#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
 msgid "&View"
 msgstr "&Vizualizare"
 
@@ -4896,7 +4913,7 @@ msgstr "&Confirmare..."
 msgid "Customize Tool&bar..."
 msgstr "Personalizare &bară de unelte..."
 
-#: winefile.rc:100
+#: winefile.rc:100 wordpad.rc:68
 msgid "&Toolbar"
 msgstr "Bara de unel&te"
 
@@ -5215,6 +5232,354 @@ msgstr "Nu am găsit o implementare pentru richedit... Abandonez"
 #: winhlp32.rc:106
 msgid "Help topics: "
 msgstr "Subiecte de ajutor:"
+
+#: wordpad.rc:28
+msgid "&New...\tCtrl+N"
+msgstr "&Nou...\tCtrl+N"
+
+#: wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "Pre&vizualizare imprimare..."
+
+#: wordpad.rc:35
+msgid "Pag&e setup..."
+msgstr "&Opțiuni pagină..."
+
+#: wordpad.rc:42
+msgid "R&edo\tCtrl+Y"
+msgstr "R&efă\tCtrl+Y"
+
+#: wordpad.rc:47
+msgid "&Clear\tDEL"
+msgstr "&Curăță\tDEL"
+
+#: wordpad.rc:48
+msgid "&Select all\tCtrl+A"
+msgstr "&Selectează tot\tCtrl+A"
+
+#: wordpad.rc:50
+msgid "&Find...\tCtrl+F"
+msgstr "Cău&tare...\tCrtl+F"
+
+#: wordpad.rc:51
+msgid "Find &next\tF3"
+msgstr "Caută &următorul\tF3"
+
+#: wordpad.rc:54
+msgid "Read-&only"
+msgstr "D&oar citire"
+
+#: wordpad.rc:55
+msgid "&Modified"
+msgstr "&Modificat"
+
+#: wordpad.rc:57
+msgid "E&xtras"
+msgstr "S&uplimente"
+
+#: wordpad.rc:59
+msgid "Selection &info"
+msgstr "Detal&ii pentru selecție"
+
+#: wordpad.rc:60
+msgid "Character &format"
+msgstr "&Format caracter"
+
+#: wordpad.rc:61
+msgid "&Def. char format"
+msgstr "For&mat caracter implicit"
+
+#: wordpad.rc:62
+msgid "Paragrap&h format"
+msgstr "Format &paragraf"
+
+#: wordpad.rc:63
+msgid "&Get text"
+msgstr "Extra&ge textul"
+
+#: wordpad.rc:69
+msgid "&Formatbar"
+msgstr "Bara de &format"
+
+#: wordpad.rc:70
+msgid "&Ruler"
+msgstr "&Riglă"
+
+#: wordpad.rc:71
+msgid "&Statusbar"
+msgstr "Bară de &stare"
+
+#: wordpad.rc:73
+msgid "&Options..."
+msgstr "&Opțiuni..."
+
+#: wordpad.rc:75
+msgid "&Insert"
+msgstr "&Inserare"
+
+#: wordpad.rc:77
+msgid "&Date and time..."
+msgstr "&Data și ora..."
+
+#: wordpad.rc:79
+msgid "F&ormat"
+msgstr "F&ormat"
+
+#: wordpad.rc:82 wordpad.rc:105
+msgid "&Bullet points"
+msgstr "Punct &bulină"
+
+#: wordpad.rc:83 wordpad.rc:106
+msgid "&Paragraph..."
+msgstr "&Paragraf..."
+
+#: wordpad.rc:84
+msgid "&Tabs..."
+msgstr "&Taburi..."
+
+#: wordpad.rc:85
+msgid "Backgroun&d"
+msgstr "Fun&dal"
+
+#: wordpad.rc:87
+msgid "&System\tCtrl+1"
+msgstr "&Sistem\tCtrl+1"
+
+#: wordpad.rc:88
+msgid "&PostThat yellowish\tCtrl+2"
+msgstr "Gălbui de &post-it\tCtrl+2"
+
+#: wordpad.rc:93
+msgid "&About Wine Wordpad"
+msgstr "&Despre Wine Wordpad"
+
+#: wordpad.rc:114
+msgid "Black"
+msgstr "Negru"
+
+#: wordpad.rc:115
+msgid "Maroon"
+msgstr "Maro"
+
+#: wordpad.rc:116
+msgid "Green"
+msgstr "Verde"
+
+#: wordpad.rc:117
+msgid "Olive"
+msgstr "Oliv"
+
+#: wordpad.rc:118
+msgid "Navy"
+msgstr "Bleumarin"
+
+#: wordpad.rc:119
+msgid "Purple"
+msgstr "Violet"
+
+#: wordpad.rc:120
+msgid "Teal"
+msgstr "Verde-albăstrui"
+
+#: wordpad.rc:121
+msgid "Gray"
+msgstr "Gri"
+
+#: wordpad.rc:122
+msgid "Silver"
+msgstr "Argintiu"
+
+#: wordpad.rc:123
+msgid "Red"
+msgstr "Roșu"
+
+#: wordpad.rc:124
+msgid "Lime"
+msgstr "Lămâie verde"
+
+#: wordpad.rc:125
+msgid "Yellow"
+msgstr "Galben"
+
+#: wordpad.rc:126
+msgid "Blue"
+msgstr "Albastru"
+
+#: wordpad.rc:127
+msgid "Fuchsia"
+msgstr "Fuchsia"
+
+#: wordpad.rc:128
+msgid "Aqua"
+msgstr "Culoarea apei"
+
+#: wordpad.rc:129
+msgid "White"
+msgstr "Alb"
+
+#: wordpad.rc:130
+msgid "Automatic"
+msgstr "Automatic"
+
+#: wordpad.rc:136
+msgid "All documents (*.*)"
+msgstr "Toate documentele (*.*)"
+
+#: wordpad.rc:137
+msgid "Text documents (*.txt)"
+msgstr "Documentele text (*.txt)"
+
+#: wordpad.rc:138
+msgid "Unicode text document (*.txt)"
+msgstr "Documentele text unicode (*.txt)"
+
+#: wordpad.rc:139
+msgid "Rich text format (*.rtf)"
+msgstr "Formatul de text îmbogățit (*.rtf)"
+
+#: wordpad.rc:140
+msgid "Rich text document"
+msgstr "Document text îmbogățit"
+
+#: wordpad.rc:141
+msgid "Text document"
+msgstr "Document text"
+
+#: wordpad.rc:142
+msgid "Unicode text document"
+msgstr "Document text unicode"
+
+#: wordpad.rc:143
+msgid "Printer files (*.PRN)"
+msgstr "Fișiere de imprimat (*.PRN)"
+
+#: wordpad.rc:148
+msgid "Left"
+msgstr "Stânga"
+
+#: wordpad.rc:149
+msgid "Right"
+msgstr "Dreapta"
+
+#: wordpad.rc:150
+msgid "Center"
+msgstr "Centru"
+
+#: wordpad.rc:156
+msgid "Text"
+msgstr "Text"
+
+#: wordpad.rc:157
+msgid "Rich text"
+msgstr "Text îmbogățit"
+
+#: wordpad.rc:163
+msgid "Next page"
+msgstr "Pagina următoare"
+
+#: wordpad.rc:164
+msgid "Previous page"
+msgstr "Pagina precedentă"
+
+#: wordpad.rc:165
+msgid "Two pages"
+msgstr "Două pagini"
+
+#: wordpad.rc:166
+msgid "One page"
+msgstr "O pagină"
+
+#: wordpad.rc:167
+msgid "Zoom in"
+msgstr "Mărește"
+
+#: wordpad.rc:168
+msgid "Zoom out"
+msgstr "Micșorează"
+
+#: wordpad.rc:169
+msgid "Close"
+msgstr "Închide"
+
+#: wordpad.rc:170
+msgid "Page"
+msgstr "Pagină"
+
+#: wordpad.rc:171
+msgid "Pages"
+msgstr "Pagini"
+
+#: wordpad.rc:172
+msgid "cm"
+msgstr "cm"
+
+#: wordpad.rc:173
+msgid "in"
+msgstr "in"
+
+#: wordpad.rc:174
+msgid "inch"
+msgstr "țol"
+
+#: wordpad.rc:175
+msgid "pt"
+msgstr "pt"
+
+#: wordpad.rc:180
+msgid "Document"
+msgstr "Document"
+
+#: wordpad.rc:181
+msgid "Save changes to '%s'?"
+msgstr "Salvați modificările la „%s”?"
+
+#: wordpad.rc:182
+msgid "Finished searching the document."
+msgstr "S-a terminat căutarea în document."
+
+#: wordpad.rc:183
+msgid "Failed to load the RichEdit library."
+msgstr "Nu s-a putut încărca biblioteca RichEdit."
+
+#: wordpad.rc:184
+msgid ""
+"You have chosen to save in plain text format, which will cause all "
+"formatting to be lost. Are you sure that you wish to do this?"
+msgstr ""
+"Ați ales să salvați în formatul de text simplu, care va pierde formatarea. "
+"Sigur doriți să continuați?"
+
+#: wordpad.rc:187
+msgid "Invalid number format"
+msgstr "Formatul de număr nu este valid."
+
+#: wordpad.rc:188
+msgid "OLE storage documents are not supported"
+msgstr "Documentele de depozitare OLE nu sunt suportate."
+
+#: wordpad.rc:189
+msgid "Could not save the file."
+msgstr "Nu s-a putut salva fișierul."
+
+#: wordpad.rc:190
+msgid "You do not have access to save the file."
+msgstr "Nu aveți permisiunea să salvați fișierul."
+
+#: wordpad.rc:191
+msgid "Could not open the file."
+msgstr "Nu s-a putut deschide fișierul."
+
+#: wordpad.rc:192
+msgid "You do not have access to open the file."
+msgstr "Nu aveți permisiunea de a deschide fișierul."
+
+#: wordpad.rc:193
+msgid "Printing not implemented"
+msgstr "Imprimarea nu este implementată."
+
+#: wordpad.rc:194
+msgid "Cannot add more than 32 tab stops."
+msgstr "Nu se pot adăuga mai mult de 32 de taburi."
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

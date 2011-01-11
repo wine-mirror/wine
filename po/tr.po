@@ -955,11 +955,11 @@ msgstr "Ev"
 msgid "Sync"
 msgstr "Eşitle"
 
-#: hhctrl.rc:42
+#: hhctrl.rc:42 wordpad.rc:162
 msgid "Print"
 msgstr "Yazdır"
 
-#: hhctrl.rc:43
+#: hhctrl.rc:43 wordpad.rc:155
 msgid "Options"
 msgstr "Seçenekler"
 
@@ -1319,7 +1319,7 @@ msgid "Select &All"
 msgstr "&Tümünü Seç"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30
+#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
 #, fuzzy
 msgid "&Paste"
 msgstr ""
@@ -1410,13 +1410,24 @@ msgid "Set as &Desktop Item..."
 msgstr "Masaüstü Ö&ğesi Yap..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
+#: wordpad.rc:101
+#, fuzzy
 msgid "Cu&t"
-msgstr "K&es"
+msgstr ""
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"K&es\n"
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"Ke&s"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 wineconsole.rc:29
+#: shdoclc.rc:187 wineconsole.rc:29 wordpad.rc:102
+#, fuzzy
 msgid "&Copy"
-msgstr "K&opyala"
+msgstr ""
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"K&opyala\n"
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&Kopyala"
 
 #: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
 msgid "Copy Shor&tcut"
@@ -2519,9 +2530,14 @@ msgstr "Ana&log"
 msgid "Digi&tal"
 msgstr "Sa&yısal"
 
-#: clock.rc:32 notepad.rc:50 winefile.rc:97
+#: clock.rc:32 notepad.rc:50 winefile.rc:97 wordpad.rc:81
+#, fuzzy
 msgid "&Font..."
-msgstr "&Yazı Tipi..."
+msgstr ""
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&Yazı Tipi...\n"
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&Font..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -3340,7 +3356,7 @@ msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
 #: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
-#: winhlp32.rc:28
+#: winhlp32.rc:28 wordpad.rc:26
 msgid "&File"
 msgstr "&Dosya"
 
@@ -3348,21 +3364,26 @@ msgstr "&Dosya"
 msgid "&New\tCtrl+N"
 msgstr "&Yeni\tCtrl+N"
 
-#: notepad.rc:28
+#: notepad.rc:28 wordpad.rc:29
 msgid "&Open...\tCtrl+O"
 msgstr "&Aç...\tCtrl+O"
 
-#: notepad.rc:29
+#: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
 msgstr "&Kaydet\tCtrl+S"
 
-#: notepad.rc:30
+#: notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr "&Farklı Kaydet..."
 
-#: notepad.rc:32
+#: notepad.rc:32 wordpad.rc:33
+#, fuzzy
 msgid "&Print...\tCtrl+P"
-msgstr "Ya&zdır...\tCtrl+P"
+msgstr ""
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"Ya&zdır...\tCtrl+P\n"
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&Print...\tCtrl+P"
 
 #: notepad.rc:33
 msgid "Page Se&tup..."
@@ -3372,32 +3393,42 @@ msgstr "Sa&yfa Ayarı..."
 msgid "P&rinter Setup..."
 msgstr "Yazıcı &Ayarları..."
 
-#: notepad.rc:36 view.rc:31 winhlp32.rc:34
-msgid "E&xit"
-msgstr "&Çıkış"
-
-#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36
+#: notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
 #, fuzzy
-msgid "&Edit"
+msgid "E&xit"
 msgstr ""
 "#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"D&üzenle\n"
+"&Çıkış\n"
 "#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Düzenle"
+"&Çık"
 
-#: notepad.rc:39
+#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
+msgid "&Edit"
+msgstr "&Düzen"
+
+#: notepad.rc:39 wordpad.rc:41
 msgid "&Undo\tCtrl+Z"
 msgstr "&Geri Al\tCtrl+Z"
 
-#: notepad.rc:41
+#: notepad.rc:41 wordpad.rc:44
+#, fuzzy
 msgid "Cu&t\tCtrl+X"
-msgstr "&Kes\tCtrl+X"
+msgstr ""
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&Kes\tCtrl+X\n"
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"Ke&s\tCtrl+X"
 
-#: notepad.rc:42
+#: notepad.rc:42 wordpad.rc:45
+#, fuzzy
 msgid "&Copy\tCtrl+C"
-msgstr "K&opyala\tCtrl+C"
+msgstr ""
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"K&opyala\tCtrl+C\n"
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&Kopyala\tCtrl+C"
 
-#: notepad.rc:43
+#: notepad.rc:43 wordpad.rc:46
 msgid "&Paste\tCtrl+V"
 msgstr "Ya&pıştır\tCtrl+V"
 
@@ -3425,13 +3456,19 @@ msgstr "&Bul...\tCtrl+F"
 msgid "&Search next\tF3"
 msgstr "&Sonrakini bul\tF3"
 
-#: notepad.rc:55
+#: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
 msgstr "&Replace...\tCtrl+H"
 
 #: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
+#: wordpad.rc:91
+#, fuzzy
 msgid "&Help"
-msgstr "&Yardım"
+msgstr ""
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&Yardım\n"
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&Help"
 
 #: notepad.rc:59 progman.rc:54
 msgid "&Search..."
@@ -3935,9 +3972,14 @@ msgstr "Küçültüldüğünde &Gizle"
 msgid "&Show 16-bit tasks"
 msgstr "&16-bit görevleri göster"
 
-#: taskmgr.rc:52 winefile.rc:76
+#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+#, fuzzy
 msgid "&View"
-msgstr "&Görünüm"
+msgstr ""
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&Görünüm\n"
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&View"
 
 #: taskmgr.rc:54
 msgid "&Refresh Now"
@@ -4807,9 +4849,14 @@ msgstr "&Onaylama..."
 msgid "Customize Tool&bar..."
 msgstr "Araç Çubuğunu &Özelleştir..."
 
-#: winefile.rc:100
+#: winefile.rc:100 wordpad.rc:68
+#, fuzzy
 msgid "&Toolbar"
-msgstr "&Araç Çubuğu"
+msgstr ""
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&Araç Çubuğu\n"
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&Toolbar"
 
 #: winefile.rc:101
 msgid "&Drivebar"
@@ -5128,6 +5175,369 @@ msgstr "Cannot find a richedit implementation... Aborting"
 
 #: winhlp32.rc:106
 msgid "Help topics: "
+msgstr ""
+
+#: wordpad.rc:28
+msgid "&New...\tCtrl+N"
+msgstr "&Yeni...\tCtrl+N"
+
+#: wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "Print previe&w..."
+
+#: wordpad.rc:35
+msgid "Pag&e setup..."
+msgstr "Pag&e setup..."
+
+#: wordpad.rc:42
+msgid "R&edo\tCtrl+Y"
+msgstr "&Yinele\tCtrl+Y"
+
+#: wordpad.rc:47
+msgid "&Clear\tDEL"
+msgstr "&Sil\tDel"
+
+#: wordpad.rc:48
+msgid "&Select all\tCtrl+A"
+msgstr "&Tümünü seç\tCtrl+A"
+
+#: wordpad.rc:50
+msgid "&Find...\tCtrl+F"
+msgstr "&Find...\tCtrl+F"
+
+#: wordpad.rc:51
+msgid "Find &next\tF3"
+msgstr "Find &next\tF3"
+
+#: wordpad.rc:54
+msgid "Read-&only"
+msgstr "Salt-&okunur"
+
+#: wordpad.rc:55
+msgid "&Modified"
+msgstr "&Değişmiş"
+
+#: wordpad.rc:57
+msgid "E&xtras"
+msgstr "D&iğerleri"
+
+#: wordpad.rc:59
+msgid "Selection &info"
+msgstr "Seçim &bilgisi"
+
+#: wordpad.rc:60
+msgid "Character &format"
+msgstr "Karakter bi&çimi"
+
+#: wordpad.rc:61
+msgid "&Def. char format"
+msgstr "&Öntanımlı kar. biçimi"
+
+#: wordpad.rc:62
+msgid "Paragrap&h format"
+msgstr "Paragra&f biçimi"
+
+#: wordpad.rc:63
+msgid "&Get text"
+msgstr "&Metni al"
+
+#: wordpad.rc:69
+msgid "&Formatbar"
+msgstr "&Formatbar"
+
+#: wordpad.rc:70
+msgid "&Ruler"
+msgstr "&Ruler"
+
+#: wordpad.rc:71
+msgid "&Statusbar"
+msgstr "&Statusbar"
+
+#: wordpad.rc:73
+msgid "&Options..."
+msgstr "&Options..."
+
+#: wordpad.rc:75
+msgid "&Insert"
+msgstr "&Insert"
+
+#: wordpad.rc:77
+msgid "&Date and time..."
+msgstr "&Date and time..."
+
+#: wordpad.rc:79
+msgid "F&ormat"
+msgstr "&Biçim"
+
+#: wordpad.rc:82 wordpad.rc:105
+msgid "&Bullet points"
+msgstr "&Bullet points"
+
+#: wordpad.rc:83 wordpad.rc:106
+msgid "&Paragraph..."
+msgstr "&Paragraph..."
+
+#: wordpad.rc:84
+msgid "&Tabs..."
+msgstr "&Tabs..."
+
+#: wordpad.rc:85
+msgid "Backgroun&d"
+msgstr "&Arkaplan"
+
+#: wordpad.rc:87
+msgid "&System\tCtrl+1"
+msgstr "S&istem\tCtrl+1"
+
+#: wordpad.rc:88
+msgid "&PostThat yellowish\tCtrl+2"
+msgstr "&Sarımtırak\tCtrl+2"
+
+#: wordpad.rc:93
+msgid "&About Wine Wordpad"
+msgstr "&About Wine Wordpad"
+
+#: wordpad.rc:114
+msgid "Black"
+msgstr "Siyah"
+
+#: wordpad.rc:115
+msgid "Maroon"
+msgstr "Koyu Kırmızı"
+
+#: wordpad.rc:116
+msgid "Green"
+msgstr "Yeşil"
+
+#: wordpad.rc:117
+msgid "Olive"
+msgstr "Koyu Sarı"
+
+#: wordpad.rc:118
+msgid "Navy"
+msgstr "Koyu Mavi"
+
+#: wordpad.rc:119
+msgid "Purple"
+msgstr "Mor"
+
+#: wordpad.rc:120
+msgid "Teal"
+msgstr "Deniz Mavisi"
+
+#: wordpad.rc:121
+msgid "Gray"
+msgstr "Gri"
+
+#: wordpad.rc:122
+msgid "Silver"
+msgstr "Gümüş"
+
+#: wordpad.rc:123
+msgid "Red"
+msgstr "Kırmızı"
+
+#: wordpad.rc:124
+msgid "Lime"
+msgstr "Parlak Yeşil"
+
+#: wordpad.rc:125
+msgid "Yellow"
+msgstr "Sarı"
+
+#: wordpad.rc:126
+msgid "Blue"
+msgstr "Mavi"
+
+#: wordpad.rc:127
+msgid "Fuchsia"
+msgstr "Pembe"
+
+#: wordpad.rc:128
+msgid "Aqua"
+msgstr "Turkuaz"
+
+#: wordpad.rc:129
+msgid "White"
+msgstr "Beyaz"
+
+#: wordpad.rc:130
+msgid "Automatic"
+msgstr "Automatic"
+
+#: wordpad.rc:136
+#, fuzzy
+msgid "All documents (*.*)"
+msgstr "Tüm dosyalar (*.*)"
+
+#: wordpad.rc:137
+#, fuzzy
+msgid "Text documents (*.txt)"
+msgstr "Metin Dosyaları (*.txt)"
+
+#: wordpad.rc:138
+msgid "Unicode text document (*.txt)"
+msgstr ""
+
+#: wordpad.rc:139
+msgid "Rich text format (*.rtf)"
+msgstr ""
+
+#: wordpad.rc:140
+msgid "Rich text document"
+msgstr ""
+
+#: wordpad.rc:141
+msgid "Text document"
+msgstr ""
+
+#: wordpad.rc:142
+msgid "Unicode text document"
+msgstr ""
+
+#: wordpad.rc:143
+#, fuzzy
+msgid "Printer files (*.PRN)"
+msgstr "Metin Dosyaları (*.txt)"
+
+#: wordpad.rc:148
+#, fuzzy
+msgid "Left"
+msgstr "S&ol"
+
+#: wordpad.rc:149
+#, fuzzy
+msgid "Right"
+msgstr "S&ağ"
+
+#: wordpad.rc:150
+msgid "Center"
+msgstr ""
+
+#: wordpad.rc:156
+msgid "Text"
+msgstr ""
+
+#: wordpad.rc:157
+msgid "Rich text"
+msgstr ""
+
+#: wordpad.rc:163
+msgid "Next page"
+msgstr ""
+
+#: wordpad.rc:164
+msgid "Previous page"
+msgstr ""
+
+#: wordpad.rc:165
+msgid "Two pages"
+msgstr ""
+
+#: wordpad.rc:166
+msgid "One page"
+msgstr ""
+
+#: wordpad.rc:167
+#, fuzzy
+msgid "Zoom in"
+msgstr "Yaklaştır"
+
+#: wordpad.rc:168
+#, fuzzy
+msgid "Zoom out"
+msgstr "Yaklaştır"
+
+#: wordpad.rc:169
+#, fuzzy
+msgid "Close"
+msgstr "&Kapat"
+
+#: wordpad.rc:170
+#, fuzzy
+msgid "Page"
+msgstr "Üstteki Sayfa"
+
+#: wordpad.rc:171
+#, fuzzy
+msgid "Pages"
+msgstr "Üstteki Sayfa"
+
+#: wordpad.rc:172
+msgid "cm"
+msgstr ""
+
+#: wordpad.rc:173
+msgid "in"
+msgstr ""
+
+#: wordpad.rc:174
+msgid "inch"
+msgstr ""
+
+#: wordpad.rc:175
+msgid "pt"
+msgstr ""
+
+#: wordpad.rc:180
+#, fuzzy
+msgid "Document"
+msgstr "Argument missing\n"
+
+#: wordpad.rc:181
+msgid "Save changes to '%s'?"
+msgstr ""
+
+#: wordpad.rc:182
+msgid "Finished searching the document."
+msgstr ""
+
+#: wordpad.rc:183
+msgid "Failed to load the RichEdit library."
+msgstr ""
+
+#: wordpad.rc:184
+msgid ""
+"You have chosen to save in plain text format, which will cause all "
+"formatting to be lost. Are you sure that you wish to do this?"
+msgstr ""
+
+#: wordpad.rc:187
+msgid "Invalid number format"
+msgstr ""
+
+#: wordpad.rc:188
+msgid "OLE storage documents are not supported"
+msgstr ""
+
+#: wordpad.rc:189
+#, fuzzy
+msgid "Could not save the file."
+msgstr "Pencere oluşturulamıyor veya kullanılamıyor."
+
+#: wordpad.rc:190
+msgid "You do not have access to save the file."
+msgstr ""
+
+#: wordpad.rc:191
+msgid "Could not open the file."
+msgstr ""
+
+#: wordpad.rc:192
+msgid "You do not have access to open the file."
+msgstr ""
+
+#: wordpad.rc:193
+#, fuzzy
+msgid "Printing not implemented"
+msgstr ""
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"Henüz Tanımlanmadı\n"
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"Henüz tamamlanmadı"
+
+#: wordpad.rc:194
+msgid "Cannot add more than 32 tab stops."
 msgstr ""
 
 #: write.rc:27

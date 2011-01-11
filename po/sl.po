@@ -948,11 +948,11 @@ msgstr "Domov"
 msgid "Sync"
 msgstr "Sinhroniziraj"
 
-#: hhctrl.rc:42
+#: hhctrl.rc:42 wordpad.rc:162
 msgid "Print"
 msgstr "Natisni"
 
-#: hhctrl.rc:43
+#: hhctrl.rc:43 wordpad.rc:155
 msgid "Options"
 msgstr "Možnosti"
 
@@ -1317,7 +1317,7 @@ msgid "Select &All"
 msgstr "Izberi &vse"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30
+#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
 msgid "&Paste"
 msgstr "&Prilepi"
 
@@ -1403,11 +1403,12 @@ msgid "Set as &Desktop Item..."
 msgstr "Nastavi kot p&redmet Namizja ..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
+#: wordpad.rc:101
 msgid "Cu&t"
 msgstr "&Izreži"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 wineconsole.rc:29
+#: shdoclc.rc:187 wineconsole.rc:29 wordpad.rc:102
 msgid "&Copy"
 msgstr "&Kopiraj"
 
@@ -2518,7 +2519,7 @@ msgstr "Ana&logna ura"
 msgid "Digi&tal"
 msgstr "Digi&talna ura"
 
-#: clock.rc:32 notepad.rc:50
+#: clock.rc:32 notepad.rc:50 winefile.rc:97 wordpad.rc:81
 #, fuzzy
 msgid "&Font..."
 msgstr ""
@@ -3370,27 +3371,32 @@ msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Porabljena sredstva: %lu\n"
 
 #: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
-#: winhlp32.rc:28
+#: winhlp32.rc:28 wordpad.rc:26
+#, fuzzy
 msgid "&File"
-msgstr "&Datoteka"
+msgstr ""
+"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
+"&Datoteka\n"
+"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
+"&Datotka"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Nova\tCtrl+N"
 
-#: notepad.rc:28
+#: notepad.rc:28 wordpad.rc:29
 msgid "&Open...\tCtrl+O"
 msgstr "&Odpri ...\tCtrl+O"
 
-#: notepad.rc:29
+#: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
 msgstr "&Shrani\tCtrl+S"
 
-#: notepad.rc:30
+#: notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr "Shrani &kot ..."
 
-#: notepad.rc:32
+#: notepad.rc:32 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
 msgstr "Na&tisni ...\tCtrl+P"
 
@@ -3402,27 +3408,32 @@ msgstr "P&riprava strani ..."
 msgid "P&rinter Setup..."
 msgstr "&Tiskalnik ..."
 
-#: notepad.rc:36 view.rc:31 winhlp32.rc:34
+#: notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
 msgid "E&xit"
 msgstr "Iz&hod"
 
-#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36
+#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 msgid "&Edit"
 msgstr "&Urejanje"
 
-#: notepad.rc:39
+#: notepad.rc:39 wordpad.rc:41
+#, fuzzy
 msgid "&Undo\tCtrl+Z"
-msgstr "&Razveljavi\tCtrl+Z"
+msgstr ""
+"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
+"&Razveljavi\tCtrl+Z\n"
+"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
+"Ra&zveljavi\tCtrl+Z"
 
-#: notepad.rc:41
+#: notepad.rc:41 wordpad.rc:44
 msgid "Cu&t\tCtrl+X"
 msgstr "&Izreži\tCtrl+X"
 
-#: notepad.rc:42
+#: notepad.rc:42 wordpad.rc:45
 msgid "&Copy\tCtrl+C"
 msgstr "&Kopiraj\tCtrl+C"
 
-#: notepad.rc:43
+#: notepad.rc:43 wordpad.rc:46
 msgid "&Paste\tCtrl+V"
 msgstr "&Prilepi\tCtrl+V"
 
@@ -3455,11 +3466,17 @@ msgstr "&Najdi ...\tCtrl+F"
 msgid "&Search next\tF3"
 msgstr "Najdi na&slednje\tF3"
 
-#: notepad.rc:55
+#: notepad.rc:55 wordpad.rc:52
+#, fuzzy
 msgid "&Replace...\tCtrl+H"
-msgstr "&Zamenjaj ...\tCtrl+H"
+msgstr ""
+"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
+"&Zamenjaj ...\tCtrl+H\n"
+"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
+"Za&menjaj ...\tCtrl+H"
 
 #: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
+#: wordpad.rc:91
 msgid "&Help"
 msgstr "&Pomoč"
 
@@ -3976,7 +3993,7 @@ msgstr "&Skrij ob pomanjšanju"
 msgid "&Show 16-bit tasks"
 msgstr "Prika&ži 16-bitna opravila"
 
-#: taskmgr.rc:52 winefile.rc:76
+#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
 #, fuzzy
 msgid "&View"
 msgstr ""
@@ -4866,9 +4883,14 @@ msgstr "Potr&ditev ..."
 msgid "Customize Tool&bar..."
 msgstr "Uredi &orodno vrstico ..."
 
-#: winefile.rc:100
+#: winefile.rc:100 wordpad.rc:68
+#, fuzzy
 msgid "&Toolbar"
-msgstr "&Orodna vrstica"
+msgstr ""
+"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
+"&Orodna vrstica\n"
+"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
+"O&rodna vrstica"
 
 #: winefile.rc:101
 msgid "&Drivebar"
@@ -5185,6 +5207,354 @@ msgstr "Ne morem najti knjižnice richedit ... Prekinjam"
 #: winhlp32.rc:106
 msgid "Help topics: "
 msgstr "Teme pomoči: "
+
+#: wordpad.rc:28
+msgid "&New...\tCtrl+N"
+msgstr "&Nova ...\tCtrl+N"
+
+#: wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "Pre&dogled tiskanja ..."
+
+#: wordpad.rc:35
+msgid "Pag&e setup..."
+msgstr "Pri&prava strani ..."
+
+#: wordpad.rc:42
+msgid "R&edo\tCtrl+Y"
+msgstr "Po&novi\tCtrl+Y"
+
+#: wordpad.rc:47
+msgid "&Clear\tDEL"
+msgstr "Po&briši\tDEL"
+
+#: wordpad.rc:48
+msgid "&Select all\tCtrl+A"
+msgstr "Izberi &vse\tCtrl+A"
+
+#: wordpad.rc:50
+msgid "&Find...\tCtrl+F"
+msgstr "Na&jdi ...\tCtrl+F"
+
+#: wordpad.rc:51
+msgid "Find &next\tF3"
+msgstr "Najdi n&aslednje\tF3"
+
+#: wordpad.rc:54
+msgid "Read-&only"
+msgstr "Samo za b&ranje"
+
+#: wordpad.rc:55
+msgid "&Modified"
+msgstr "Spr&emenjeno"
+
+#: wordpad.rc:57
+msgid "E&xtras"
+msgstr "Do&datno"
+
+#: wordpad.rc:59
+msgid "Selection &info"
+msgstr "Poda&tki o izbiri"
+
+#: wordpad.rc:60
+msgid "Character &format"
+msgstr "Oblika zna&kov"
+
+#: wordpad.rc:61
+msgid "&Def. char format"
+msgstr "Pr&ivzeta oblika znakov"
+
+#: wordpad.rc:62
+msgid "Paragrap&h format"
+msgstr "Ob&lika odstavka"
+
+#: wordpad.rc:63
+msgid "&Get text"
+msgstr "Pridobi &besedilo"
+
+#: wordpad.rc:69
+msgid "&Formatbar"
+msgstr "O&blikovna vrstica"
+
+#: wordpad.rc:70
+msgid "&Ruler"
+msgstr "&Ravnilo"
+
+#: wordpad.rc:71
+msgid "&Statusbar"
+msgstr "&Vrstica stanja"
+
+#: wordpad.rc:73
+msgid "&Options..."
+msgstr "&Možnosti ..."
+
+#: wordpad.rc:75
+msgid "&Insert"
+msgstr "&Vstavi"
+
+#: wordpad.rc:77
+msgid "&Date and time..."
+msgstr "&Datum in čas ..."
+
+#: wordpad.rc:79
+msgid "F&ormat"
+msgstr "O&blika"
+
+#: wordpad.rc:82 wordpad.rc:105
+msgid "&Bullet points"
+msgstr "&Vrstične oznake"
+
+#: wordpad.rc:83 wordpad.rc:106
+msgid "&Paragraph..."
+msgstr "O&dstavek ..."
+
+#: wordpad.rc:84
+msgid "&Tabs..."
+msgstr "&Tabulator ..."
+
+#: wordpad.rc:85
+msgid "Backgroun&d"
+msgstr "Ozad&je"
+
+#: wordpad.rc:87
+msgid "&System\tCtrl+1"
+msgstr "&Sistemsko\tCtrl+1"
+
+#: wordpad.rc:88
+msgid "&PostThat yellowish\tCtrl+2"
+msgstr "&PostThat rumenkasto\tCtrl+2"
+
+#: wordpad.rc:93
+msgid "&About Wine Wordpad"
+msgstr "&O Wine Wordpadu"
+
+#: wordpad.rc:114
+msgid "Black"
+msgstr "Črna"
+
+#: wordpad.rc:115
+msgid "Maroon"
+msgstr "Kostanjeva"
+
+#: wordpad.rc:116
+msgid "Green"
+msgstr "Zelena"
+
+#: wordpad.rc:117
+msgid "Olive"
+msgstr "Olivna"
+
+#: wordpad.rc:118
+msgid "Navy"
+msgstr "Mornariška"
+
+#: wordpad.rc:119
+msgid "Purple"
+msgstr "Vijolična"
+
+#: wordpad.rc:120
+msgid "Teal"
+msgstr "Zelenomodra"
+
+#: wordpad.rc:121
+msgid "Gray"
+msgstr "Siva"
+
+#: wordpad.rc:122
+msgid "Silver"
+msgstr "Srebrna"
+
+#: wordpad.rc:123
+msgid "Red"
+msgstr "Rdeča"
+
+#: wordpad.rc:124
+msgid "Lime"
+msgstr "Citronska"
+
+#: wordpad.rc:125
+msgid "Yellow"
+msgstr "Rumena"
+
+#: wordpad.rc:126
+msgid "Blue"
+msgstr "Modra"
+
+#: wordpad.rc:127
+msgid "Fuchsia"
+msgstr "Roza"
+
+#: wordpad.rc:128
+msgid "Aqua"
+msgstr "Akvamarin"
+
+#: wordpad.rc:129
+msgid "White"
+msgstr "Bela"
+
+#: wordpad.rc:130
+msgid "Automatic"
+msgstr "Automatic"
+
+#: wordpad.rc:136
+msgid "All documents (*.*)"
+msgstr "Vsi dokumenti (*.*)"
+
+#: wordpad.rc:137
+msgid "Text documents (*.txt)"
+msgstr "Dokument z besedilom (*.txt)"
+
+#: wordpad.rc:138
+msgid "Unicode text document (*.txt)"
+msgstr "Dokument z Unicode besedilom (*.txt)"
+
+#: wordpad.rc:139
+msgid "Rich text format (*.rtf)"
+msgstr "Dokument z obogatenim besedilom (*.rtf)"
+
+#: wordpad.rc:140
+msgid "Rich text document"
+msgstr "Dokument z obogatenim besedilom"
+
+#: wordpad.rc:141
+msgid "Text document"
+msgstr "Dokument z besedilom"
+
+#: wordpad.rc:142
+msgid "Unicode text document"
+msgstr "Dokument z Unicode besedilom"
+
+#: wordpad.rc:143
+msgid "Printer files (*.PRN)"
+msgstr "Tiskalnikova datoteka (*.PRN)"
+
+#: wordpad.rc:148
+msgid "Left"
+msgstr "Levo"
+
+#: wordpad.rc:149
+msgid "Right"
+msgstr "Desno"
+
+#: wordpad.rc:150
+msgid "Center"
+msgstr "Sredina"
+
+#: wordpad.rc:156
+msgid "Text"
+msgstr "Besedilo"
+
+#: wordpad.rc:157
+msgid "Rich text"
+msgstr "Obogateno besedilo"
+
+#: wordpad.rc:163
+msgid "Next page"
+msgstr "Naslednja"
+
+#: wordpad.rc:164
+msgid "Previous page"
+msgstr "Prejšnja"
+
+#: wordpad.rc:165
+msgid "Two pages"
+msgstr "Dve strani"
+
+#: wordpad.rc:166
+msgid "One page"
+msgstr "Ena stran"
+
+#: wordpad.rc:167
+msgid "Zoom in"
+msgstr "Zoom in"
+
+#: wordpad.rc:168
+msgid "Zoom out"
+msgstr "Zoom out"
+
+#: wordpad.rc:169
+msgid "Close"
+msgstr "Zapri"
+
+#: wordpad.rc:170
+msgid "Page"
+msgstr "Stran"
+
+#: wordpad.rc:171
+msgid "Pages"
+msgstr "Strani"
+
+#: wordpad.rc:172
+msgid "cm"
+msgstr "cm"
+
+#: wordpad.rc:173
+msgid "in"
+msgstr "in"
+
+#: wordpad.rc:174
+msgid "inch"
+msgstr "inch"
+
+#: wordpad.rc:175
+msgid "pt"
+msgstr "pt"
+
+#: wordpad.rc:180
+msgid "Document"
+msgstr "Dokument"
+
+#: wordpad.rc:181
+msgid "Save changes to '%s'?"
+msgstr "Ali naj shranim spremembe v '%s'?"
+
+#: wordpad.rc:182
+msgid "Finished searching the document."
+msgstr "Konec iskanja po dokumentu."
+
+#: wordpad.rc:183
+msgid "Failed to load the RichEdit library."
+msgstr "Napaka pri nalaganju RichEdit knjižnice."
+
+#: wordpad.rc:184
+msgid ""
+"You have chosen to save in plain text format, which will cause all "
+"formatting to be lost. Are you sure that you wish to do this?"
+msgstr ""
+"Izbrali ste shranjevanje v čisti besedilni obliki, kar bo povzročilo izgubo "
+"oblikovanja. Ali ste prepričani, da želite shraniti dokument v tej obliki?"
+
+#: wordpad.rc:187
+msgid "Invalid number format"
+msgstr "Neveljavna oblika števila"
+
+#: wordpad.rc:188
+msgid "OLE storage documents are not supported"
+msgstr "Dokumenti z OLE predmeti niso podprti"
+
+#: wordpad.rc:189
+msgid "Could not save the file."
+msgstr "Napaka pri shranjevanju datoteke."
+
+#: wordpad.rc:190
+msgid "You do not have access to save the file."
+msgstr "Nimate pravic za shranjevanje te datoteke."
+
+#: wordpad.rc:191
+msgid "Could not open the file."
+msgstr "Napaka pri odpiranju datoteke."
+
+#: wordpad.rc:192
+msgid "You do not have access to open the file."
+msgstr "Nimate pravic za odpiranje te datoteke."
+
+#: wordpad.rc:193
+msgid "Printing not implemented"
+msgstr "Tiskanje (še) ni na voljo"
+
+#: wordpad.rc:194
+msgid "Cannot add more than 32 tab stops."
+msgstr "Ne morem vstaviti več kot 32 položajev tabulatorja."
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

@@ -950,11 +950,11 @@ msgstr "В начало"
 msgid "Sync"
 msgstr "Синхронизировать"
 
-#: hhctrl.rc:42
+#: hhctrl.rc:42 wordpad.rc:162
 msgid "Print"
 msgstr "Печать"
 
-#: hhctrl.rc:43
+#: hhctrl.rc:43 wordpad.rc:155
 msgid "Options"
 msgstr "Настройки"
 
@@ -1317,7 +1317,7 @@ msgid "Select &All"
 msgstr "Выделить вс&ё"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30
+#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
 #, fuzzy
 msgid "&Paste"
 msgstr ""
@@ -1408,13 +1408,24 @@ msgid "Set as &Desktop Item..."
 msgstr "Сохранить как &элемент рабочего стола..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
+#: wordpad.rc:101
+#, fuzzy
 msgid "Cu&t"
-msgstr "&Вырезать"
+msgstr ""
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"&Вырезать\n"
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"&Вырезать\tCtrl+X"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 wineconsole.rc:29
+#: shdoclc.rc:187 wineconsole.rc:29 wordpad.rc:102
+#, fuzzy
 msgid "&Copy"
-msgstr "&Копировать"
+msgstr ""
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"&Копировать\n"
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"&Копировать\tCtrl+C"
 
 #: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
 msgid "Copy Shor&tcut"
@@ -2518,7 +2529,7 @@ msgstr "&Аналовые"
 msgid "Digi&tal"
 msgstr "&Цифровые"
 
-#: clock.rc:32 notepad.rc:50 winefile.rc:97
+#: clock.rc:32 notepad.rc:50 winefile.rc:97 wordpad.rc:81
 msgid "&Font..."
 msgstr "&Шрифт..."
 
@@ -3370,7 +3381,7 @@ msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S         %S      Открытых ресурсов: %lu\n"
 
 #: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
-#: winhlp32.rc:28
+#: winhlp32.rc:28 wordpad.rc:26
 msgid "&File"
 msgstr "&Файл"
 
@@ -3378,21 +3389,26 @@ msgstr "&Файл"
 msgid "&New\tCtrl+N"
 msgstr "Созд&ать\tCtrl+N"
 
-#: notepad.rc:28
+#: notepad.rc:28 wordpad.rc:29
 msgid "&Open...\tCtrl+O"
 msgstr "&Открыть...\tCtrl+O"
 
-#: notepad.rc:29
+#: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
 msgstr "&Сохранить\tCtrl+S"
 
-#: notepad.rc:30
+#: notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr "Сохранить &как..."
 
-#: notepad.rc:32
+#: notepad.rc:32 wordpad.rc:33
+#, fuzzy
 msgid "&Print...\tCtrl+P"
-msgstr "&Печатать...\tCtrl+P"
+msgstr ""
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"&Печатать...\tCtrl+P\n"
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"&Печать...\tCtrl+P"
 
 #: notepad.rc:33
 msgid "Page Se&tup..."
@@ -3402,34 +3418,34 @@ msgstr "Пара&метры страницы..."
 msgid "P&rinter Setup..."
 msgstr "&Настройка принтера..."
 
-#: notepad.rc:36 view.rc:31 winhlp32.rc:34
-#, fuzzy
+#: notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
 msgid "E&xit"
-msgstr ""
-"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
-"В&ыход\n"
-"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
-"&Выход"
+msgstr "В&ыход"
 
-#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36
+#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 msgid "&Edit"
 msgstr "&Правка"
 
-#: notepad.rc:39
+#: notepad.rc:39 wordpad.rc:41
 msgid "&Undo\tCtrl+Z"
 msgstr "&Отменить\tCtrl+Z"
 
-#: notepad.rc:41
+#: notepad.rc:41 wordpad.rc:44
 msgid "Cu&t\tCtrl+X"
 msgstr "&Вырезать\tCtrl+X"
 
-#: notepad.rc:42
+#: notepad.rc:42 wordpad.rc:45
 msgid "&Copy\tCtrl+C"
 msgstr "&Копировать\tCtrl+C"
 
-#: notepad.rc:43
+#: notepad.rc:43 wordpad.rc:46
+#, fuzzy
 msgid "&Paste\tCtrl+V"
-msgstr "Вст&авить\tCtrl+V"
+msgstr ""
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"Вст&авить\tCtrl+V\n"
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"&Вставить\tCtrl+V"
 
 #: notepad.rc:44 winefile.rc:30
 msgid "&Delete\tDel"
@@ -3455,11 +3471,12 @@ msgstr "&Найти..."
 msgid "&Search next\tF3"
 msgstr "Найти &далее\tF3"
 
-#: notepad.rc:55
+#: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
 msgstr "&Заменить...\tCtrl+H"
 
 #: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
+#: wordpad.rc:91
 msgid "&Help"
 msgstr "&Справка"
 
@@ -3623,7 +3640,7 @@ msgstr "&Запустить..."
 msgid "E&xit Windows..."
 msgstr "Вы&ход из Wine..."
 
-#: progman.rc:41 taskmgr.rc:41 winemine.rc:34 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:95 winemine.rc:34 winhlp32.rc:44
 #, fuzzy
 msgid "&Options"
 msgstr ""
@@ -3992,7 +4009,7 @@ msgstr "С&крывать свернутое"
 msgid "&Show 16-bit tasks"
 msgstr "П&оказывать 16-разрядные программы"
 
-#: taskmgr.rc:52 winefile.rc:76
+#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
 msgid "&View"
 msgstr "&Вид"
 
@@ -4887,9 +4904,14 @@ msgstr "Под&тверждения..."
 msgid "Customize Tool&bar..."
 msgstr "&Настроить панель инструментов..."
 
-#: winefile.rc:100
+#: winefile.rc:100 wordpad.rc:68
+#, fuzzy
 msgid "&Toolbar"
-msgstr "&Панель инструментов"
+msgstr ""
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"&Панель инструментов\n"
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"Панель &инструментов"
 
 #: winefile.rc:101
 msgid "&Drivebar"
@@ -5206,6 +5228,354 @@ msgstr "Не могу найти richedit"
 #: winhlp32.rc:106
 msgid "Help topics: "
 msgstr "Содержание: "
+
+#: wordpad.rc:28
+msgid "&New...\tCtrl+N"
+msgstr "Созд&ать...\tCtrl+N"
+
+#: wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "Пред&варительный просмотр..."
+
+#: wordpad.rc:35
+msgid "Pag&e setup..."
+msgstr "&Макет страницы..."
+
+#: wordpad.rc:42
+msgid "R&edo\tCtrl+Y"
+msgstr "&Повторить\tCtrl+Y"
+
+#: wordpad.rc:47
+msgid "&Clear\tDEL"
+msgstr "&Удалить\tDEL"
+
+#: wordpad.rc:48
+msgid "&Select all\tCtrl+A"
+msgstr "Выделить в&сё\tCtrl+A"
+
+#: wordpad.rc:50
+msgid "&Find...\tCtrl+F"
+msgstr "&Найти...\tCtrl+F"
+
+#: wordpad.rc:51
+msgid "Find &next\tF3"
+msgstr "На&йти далее\tF3"
+
+#: wordpad.rc:54
+msgid "Read-&only"
+msgstr "&Только для чтения"
+
+#: wordpad.rc:55
+msgid "&Modified"
+msgstr "&Изменён"
+
+#: wordpad.rc:57
+msgid "E&xtras"
+msgstr "&Дополнительно"
+
+#: wordpad.rc:59
+msgid "Selection &info"
+msgstr "&Информация о выделении"
+
+#: wordpad.rc:60
+msgid "Character &format"
+msgstr "&Формат символов"
+
+#: wordpad.rc:61
+msgid "&Def. char format"
+msgstr "Формат символов &по умолчанию"
+
+#: wordpad.rc:62
+msgid "Paragrap&h format"
+msgstr "Формат &абзаца"
+
+#: wordpad.rc:63
+msgid "&Get text"
+msgstr "П&олучить текст"
+
+#: wordpad.rc:69
+msgid "&Formatbar"
+msgstr "П&анель форматирования"
+
+#: wordpad.rc:70
+msgid "&Ruler"
+msgstr "&Линейка"
+
+#: wordpad.rc:71
+msgid "&Statusbar"
+msgstr "&Строка состояния"
+
+#: wordpad.rc:73
+msgid "&Options..."
+msgstr "&Параметры..."
+
+#: wordpad.rc:75
+msgid "&Insert"
+msgstr "Вст&авка"
+
+#: wordpad.rc:77
+msgid "&Date and time..."
+msgstr "&Дата и время..."
+
+#: wordpad.rc:79
+msgid "F&ormat"
+msgstr "Фор&мат"
+
+#: wordpad.rc:82 wordpad.rc:105
+msgid "&Bullet points"
+msgstr "&Маркер"
+
+#: wordpad.rc:83 wordpad.rc:106
+msgid "&Paragraph..."
+msgstr "&Абзац..."
+
+#: wordpad.rc:84
+msgid "&Tabs..."
+msgstr "&Табуляция..."
+
+#: wordpad.rc:85
+msgid "Backgroun&d"
+msgstr "&Фон"
+
+#: wordpad.rc:87
+msgid "&System\tCtrl+1"
+msgstr "&Системный\tCtrl+1"
+
+#: wordpad.rc:88
+msgid "&PostThat yellowish\tCtrl+2"
+msgstr "&Желтоватый PostThat\tCtrl+2"
+
+#: wordpad.rc:93
+msgid "&About Wine Wordpad"
+msgstr "&О Wine Wordpad"
+
+#: wordpad.rc:114
+msgid "Black"
+msgstr "Чёрный"
+
+#: wordpad.rc:115
+msgid "Maroon"
+msgstr "Тёмно-бордовый"
+
+#: wordpad.rc:116
+msgid "Green"
+msgstr "Зелёный"
+
+#: wordpad.rc:117
+msgid "Olive"
+msgstr "Оливковый"
+
+#: wordpad.rc:118
+msgid "Navy"
+msgstr "Тёмно-синий"
+
+#: wordpad.rc:119
+msgid "Purple"
+msgstr "Пурпурный"
+
+#: wordpad.rc:120
+msgid "Teal"
+msgstr "Морской волны"
+
+#: wordpad.rc:121
+msgid "Gray"
+msgstr "Серый"
+
+#: wordpad.rc:122
+msgid "Silver"
+msgstr "Серебряный"
+
+#: wordpad.rc:123
+msgid "Red"
+msgstr "Красный"
+
+#: wordpad.rc:124
+msgid "Lime"
+msgstr "Лимонный"
+
+#: wordpad.rc:125
+msgid "Yellow"
+msgstr "Жёлтый"
+
+#: wordpad.rc:126
+msgid "Blue"
+msgstr "Синий"
+
+#: wordpad.rc:127
+msgid "Fuchsia"
+msgstr "Ярко-розовый"
+
+#: wordpad.rc:128
+msgid "Aqua"
+msgstr "Голубой"
+
+#: wordpad.rc:129
+msgid "White"
+msgstr "Белый"
+
+#: wordpad.rc:130
+msgid "Automatic"
+msgstr "Автоматически"
+
+#: wordpad.rc:136
+msgid "All documents (*.*)"
+msgstr "Все документы (*.*)"
+
+#: wordpad.rc:137
+msgid "Text documents (*.txt)"
+msgstr "Текстовые документы (*.txt)"
+
+#: wordpad.rc:138
+msgid "Unicode text document (*.txt)"
+msgstr "Документы Unicode (*.txt)"
+
+#: wordpad.rc:139
+msgid "Rich text format (*.rtf)"
+msgstr "Файлы RTF (*.rtf)"
+
+#: wordpad.rc:140
+msgid "Rich text document"
+msgstr "Файл RTF"
+
+#: wordpad.rc:141
+msgid "Text document"
+msgstr "Текстовый документ"
+
+#: wordpad.rc:142
+msgid "Unicode text document"
+msgstr "Документ в формате Unicode"
+
+#: wordpad.rc:143
+msgid "Printer files (*.PRN)"
+msgstr "Файлы принтера (*.PRN)"
+
+#: wordpad.rc:148
+msgid "Left"
+msgstr "По левому краю"
+
+#: wordpad.rc:149
+msgid "Right"
+msgstr "По правому краю"
+
+#: wordpad.rc:150
+msgid "Center"
+msgstr "По центру"
+
+#: wordpad.rc:156
+msgid "Text"
+msgstr "Текст"
+
+#: wordpad.rc:157
+msgid "Rich text"
+msgstr "Файл RTF"
+
+#: wordpad.rc:163
+msgid "Next page"
+msgstr "Следующая"
+
+#: wordpad.rc:164
+msgid "Previous page"
+msgstr "Предыдущая"
+
+#: wordpad.rc:165
+msgid "Two pages"
+msgstr "По две"
+
+#: wordpad.rc:166
+msgid "One page"
+msgstr "По одной"
+
+#: wordpad.rc:167
+msgid "Zoom in"
+msgstr "Приблизить"
+
+#: wordpad.rc:168
+msgid "Zoom out"
+msgstr "Отдалить"
+
+#: wordpad.rc:169
+msgid "Close"
+msgstr "Закрыть"
+
+#: wordpad.rc:170
+msgid "Page"
+msgstr "Страница"
+
+#: wordpad.rc:171
+msgid "Pages"
+msgstr "Страницы"
+
+#: wordpad.rc:172
+msgid "cm"
+msgstr "см"
+
+#: wordpad.rc:173
+msgid "in"
+msgstr "in"
+
+#: wordpad.rc:174
+msgid "inch"
+msgstr "inch"
+
+#: wordpad.rc:175
+msgid "pt"
+msgstr "pt"
+
+#: wordpad.rc:180
+msgid "Document"
+msgstr "Документ"
+
+#: wordpad.rc:181
+msgid "Save changes to '%s'?"
+msgstr "Сохранить изменения в '%s'?"
+
+#: wordpad.rc:182
+msgid "Finished searching the document."
+msgstr "Поиск в документе завершен."
+
+#: wordpad.rc:183
+msgid "Failed to load the RichEdit library."
+msgstr "Ошибка загрузки библиотеки RichEdit."
+
+#: wordpad.rc:184
+msgid ""
+"You have chosen to save in plain text format, which will cause all "
+"formatting to be lost. Are you sure that you wish to do this?"
+msgstr ""
+"Сохранение документа в виде неформатированного текста приведёт к потере "
+"форматирования. Подтверждаете выполнениеэтой операции?"
+
+#: wordpad.rc:187
+msgid "Invalid number format"
+msgstr "Неправильный числовой формат."
+
+#: wordpad.rc:188
+msgid "OLE storage documents are not supported"
+msgstr "OLE storage документы не поддерживаются."
+
+#: wordpad.rc:189
+msgid "Could not save the file."
+msgstr "Невозможно сохранить файл."
+
+#: wordpad.rc:190
+msgid "You do not have access to save the file."
+msgstr "Недостаточно прав для сохранения файла."
+
+#: wordpad.rc:191
+msgid "Could not open the file."
+msgstr "Невозможно открыть файл."
+
+#: wordpad.rc:192
+msgid "You do not have access to open the file."
+msgstr "Недостаточно прав для открытия файла."
+
+#: wordpad.rc:193
+msgid "Printing not implemented"
+msgstr "Печать не поддерживается."
+
+#: wordpad.rc:194
+msgid "Cannot add more than 32 tab stops."
+msgstr "Нельзя добавить более 32 позиций табуляции."
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

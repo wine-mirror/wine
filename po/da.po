@@ -945,13 +945,18 @@ msgstr "Hjem"
 msgid "Sync"
 msgstr "Synkroniser"
 
-#: hhctrl.rc:42
+#: hhctrl.rc:42 wordpad.rc:162
 msgid "Print"
 msgstr "Udskriv"
 
-#: hhctrl.rc:43
+#: hhctrl.rc:43 wordpad.rc:155
+#, fuzzy
 msgid "Options"
-msgstr "Indstillinger"
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Indstillinger\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Alternativer"
 
 #: hhctrl.rc:44
 msgid "Forward"
@@ -1321,7 +1326,7 @@ msgid "Select &All"
 msgstr "Markér &alt"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30
+#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
 msgid "&Paste"
 msgstr "&Indsæt"
 
@@ -1407,18 +1412,14 @@ msgid "Set as &Desktop Item..."
 msgstr "Brug som skrivebor&dsobjekt..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
+#: wordpad.rc:101
 msgid "Cu&t"
 msgstr "&Klip"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 wineconsole.rc:29
-#, fuzzy
+#: shdoclc.rc:187 wineconsole.rc:29 wordpad.rc:102
 msgid "&Copy"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"K&opier\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Kopier"
+msgstr "K&opier"
 
 #: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
 msgid "Copy Shor&tcut"
@@ -2520,14 +2521,9 @@ msgstr "&Analog"
 msgid "Digi&tal"
 msgstr "&Digital"
 
-#: clock.rc:32 notepad.rc:50 winefile.rc:97
-#, fuzzy
+#: clock.rc:32 notepad.rc:50 winefile.rc:97 wordpad.rc:81
 msgid "&Font..."
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Skrifttype...\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Skri&fttype..."
+msgstr "&Skrifttype..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -3360,7 +3356,8 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Åbne resourser: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winhlp32.rc:28
+#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
+#: winhlp32.rc:28 wordpad.rc:26
 #, fuzzy
 msgid "&File"
 msgstr ""
@@ -3373,19 +3370,34 @@ msgstr ""
 msgid "&New\tCtrl+N"
 msgstr "&Ny\tCtrl+N"
 
-#: notepad.rc:28
+#: notepad.rc:28 wordpad.rc:29
+#, fuzzy
 msgid "&Open...\tCtrl+O"
-msgstr "Å&bn...\tCtrl+O"
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Å&bn...\tCtrl+O\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"&Åben...\tCtrl+O"
 
-#: notepad.rc:29
+#: notepad.rc:29 wordpad.rc:30
+#, fuzzy
 msgid "&Save\tCtrl+S"
-msgstr "&Gem\tCtrl+S"
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"&Gem\tCtrl+S\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"&Gemme\tCtrl+S"
 
-#: notepad.rc:30
+#: notepad.rc:30 wordpad.rc:31
+#, fuzzy
 msgid "Save &as..."
-msgstr "Gem so&m..."
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Gem so&m...\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Gemme &som..."
 
-#: notepad.rc:32
+#: notepad.rc:32 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
 msgstr "&Udskriv...\tCtrl+P"
 
@@ -3397,27 +3409,32 @@ msgstr "Side&opsætning..."
 msgid "P&rinter Setup..."
 msgstr "&Indstil printer..."
 
-#: notepad.rc:36 view.rc:31 winhlp32.rc:34
+#: notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
 msgid "E&xit"
 msgstr "&Afslut"
 
-#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36
+#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
+#, fuzzy
 msgid "&Edit"
-msgstr "&Rediger"
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"&Rediger\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"R&ediger"
 
-#: notepad.rc:39
+#: notepad.rc:39 wordpad.rc:41
 msgid "&Undo\tCtrl+Z"
 msgstr "&Fortryd\tCtrl+Z"
 
-#: notepad.rc:41
+#: notepad.rc:41 wordpad.rc:44
 msgid "Cu&t\tCtrl+X"
 msgstr "&Klip\tCtrl+X"
 
-#: notepad.rc:42
+#: notepad.rc:42 wordpad.rc:45
 msgid "&Copy\tCtrl+C"
 msgstr "K&opier\tCtrl+C"
 
-#: notepad.rc:43
+#: notepad.rc:43 wordpad.rc:46
 msgid "&Paste\tCtrl+V"
 msgstr "&Indsæt\tCtrl+V"
 
@@ -3445,11 +3462,17 @@ msgstr "&Søg..."
 msgid "&Search next\tF3"
 msgstr "&Find næste\tF3"
 
-#: notepad.rc:55
+#: notepad.rc:55 wordpad.rc:52
+#, fuzzy
 msgid "&Replace...\tCtrl+H"
-msgstr "&Erstat...\tCtrl+H"
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"&Erstat...\tCtrl+H\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"E&rstat...\tCtrl+H"
 
 #: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
+#: wordpad.rc:91
 msgid "&Help"
 msgstr "&Hjælp"
 
@@ -3979,7 +4002,7 @@ msgstr "S&kjul når minimert"
 msgid "&Show 16-bit tasks"
 msgstr "Vi&s 16-bits job"
 
-#: taskmgr.rc:52 winefile.rc:76
+#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
 msgid "&View"
 msgstr "&Vis"
 
@@ -4870,9 +4893,14 @@ msgstr "&Bekræftelse..."
 msgid "Customize Tool&bar..."
 msgstr "Tilpas &værktøjslinien..."
 
-#: winefile.rc:100
+#: winefile.rc:100 wordpad.rc:68
+#, fuzzy
 msgid "&Toolbar"
-msgstr "Værk&tøjlinie"
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Værk&tøjlinie\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Værk&tøjslinie"
 
 #: winefile.rc:101
 msgid "&Drivebar"
@@ -5189,6 +5217,354 @@ msgstr "Kan ikke finde en 'richedit' implementering... Afbryder"
 #: winhlp32.rc:106
 msgid "Help topics: "
 msgstr ""
+
+#: wordpad.rc:28
+msgid "&New...\tCtrl+N"
+msgstr "&Ny...\tCtrl+N"
+
+#: wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "&Forhåndsvisning..."
+
+#: wordpad.rc:35
+msgid "Pag&e setup..."
+msgstr "&Side indstillinger..."
+
+#: wordpad.rc:42
+msgid "R&edo\tCtrl+Y"
+msgstr "&Gendag\tCtrl+Y"
+
+#: wordpad.rc:47
+msgid "&Clear\tDEL"
+msgstr "&Fjern\tDEL"
+
+#: wordpad.rc:48
+msgid "&Select all\tCtrl+A"
+msgstr "&Marker alt\tCtrl+A"
+
+#: wordpad.rc:50
+msgid "&Find...\tCtrl+F"
+msgstr "&Søg efter...\tCtrl+F"
+
+#: wordpad.rc:51
+msgid "Find &next\tF3"
+msgstr "Søg efter &næste\tF3"
+
+#: wordpad.rc:54
+msgid "Read-&only"
+msgstr "S&krivebeskyttet"
+
+#: wordpad.rc:55
+msgid "&Modified"
+msgstr "Æ&ndret"
+
+#: wordpad.rc:57
+msgid "E&xtras"
+msgstr "&Ekstra"
+
+#: wordpad.rc:59
+msgid "Selection &info"
+msgstr "&Information om markeret område"
+
+#: wordpad.rc:60
+msgid "Character &format"
+msgstr "Tegn&format"
+
+#: wordpad.rc:61
+msgid "&Def. char format"
+msgstr "Stan&dard tegnformat"
+
+#: wordpad.rc:62
+msgid "Paragrap&h format"
+msgstr "&Afsnitsformat"
+
+#: wordpad.rc:63
+msgid "&Get text"
+msgstr "&Hent tekst"
+
+#: wordpad.rc:69
+msgid "&Formatbar"
+msgstr "&Formatteringlinie"
+
+#: wordpad.rc:70
+msgid "&Ruler"
+msgstr "&Lineal"
+
+#: wordpad.rc:71
+msgid "&Statusbar"
+msgstr "&Statuslinie"
+
+#: wordpad.rc:73
+msgid "&Options..."
+msgstr "&Alternativer..."
+
+#: wordpad.rc:75
+msgid "&Insert"
+msgstr "&Indsæt"
+
+#: wordpad.rc:77
+msgid "&Date and time..."
+msgstr "&Dato og tid..."
+
+#: wordpad.rc:79
+msgid "F&ormat"
+msgstr "F&ormat"
+
+#: wordpad.rc:82 wordpad.rc:105
+msgid "&Bullet points"
+msgstr "&Bullets"
+
+#: wordpad.rc:83 wordpad.rc:106
+msgid "&Paragraph..."
+msgstr "&Afsnit..."
+
+#: wordpad.rc:84
+msgid "&Tabs..."
+msgstr "&Tabulatorer..."
+
+#: wordpad.rc:85
+msgid "Backgroun&d"
+msgstr "&Baggrund"
+
+#: wordpad.rc:87
+msgid "&System\tCtrl+1"
+msgstr "&System\tCtrl+1"
+
+#: wordpad.rc:88
+msgid "&PostThat yellowish\tCtrl+2"
+msgstr "&Huskeseddel\tCtrl+2"
+
+#: wordpad.rc:93
+msgid "&About Wine Wordpad"
+msgstr "&Om Wine Wordpad"
+
+#: wordpad.rc:114
+msgid "Black"
+msgstr "Sort"
+
+#: wordpad.rc:115
+msgid "Maroon"
+msgstr "Mørkerød"
+
+#: wordpad.rc:116
+msgid "Green"
+msgstr "Grøn"
+
+#: wordpad.rc:117
+msgid "Olive"
+msgstr "Oliven"
+
+#: wordpad.rc:118
+msgid "Navy"
+msgstr "Navy"
+
+#: wordpad.rc:119
+msgid "Purple"
+msgstr "Lilla"
+
+#: wordpad.rc:120
+msgid "Teal"
+msgstr "Teal"
+
+#: wordpad.rc:121
+msgid "Gray"
+msgstr "Grå"
+
+#: wordpad.rc:122
+msgid "Silver"
+msgstr "Sølv"
+
+#: wordpad.rc:123
+msgid "Red"
+msgstr "Rød"
+
+#: wordpad.rc:124
+msgid "Lime"
+msgstr "Lime"
+
+#: wordpad.rc:125
+msgid "Yellow"
+msgstr "Gul"
+
+#: wordpad.rc:126
+msgid "Blue"
+msgstr "Blå"
+
+#: wordpad.rc:127
+msgid "Fuchsia"
+msgstr "Violet"
+
+#: wordpad.rc:128
+msgid "Aqua"
+msgstr "Cyan"
+
+#: wordpad.rc:129
+msgid "White"
+msgstr "Hvid"
+
+#: wordpad.rc:130
+msgid "Automatic"
+msgstr "Automatic"
+
+#: wordpad.rc:136
+msgid "All documents (*.*)"
+msgstr "Alle filer (*.*)"
+
+#: wordpad.rc:137
+msgid "Text documents (*.txt)"
+msgstr "Tekstdokument (*.txt)"
+
+#: wordpad.rc:138
+msgid "Unicode text document (*.txt)"
+msgstr "Unicode-tekstdokument (*.txt)"
+
+#: wordpad.rc:139
+msgid "Rich text format (*.rtf)"
+msgstr "Rig tekstformat (*.rtf)"
+
+#: wordpad.rc:140
+msgid "Rich text document"
+msgstr "Rig tekstdokument"
+
+#: wordpad.rc:141
+msgid "Text document"
+msgstr "Tekstdokument"
+
+#: wordpad.rc:142
+msgid "Unicode text document"
+msgstr "Tekstdokument (Unicode)"
+
+#: wordpad.rc:143
+msgid "Printer files (*.PRN)"
+msgstr "Printerfiler (*.PRN)"
+
+#: wordpad.rc:148
+msgid "Left"
+msgstr "Venstrestillet"
+
+#: wordpad.rc:149
+msgid "Right"
+msgstr "Højrestillet"
+
+#: wordpad.rc:150
+msgid "Center"
+msgstr "Midterstillet"
+
+#: wordpad.rc:156
+msgid "Text"
+msgstr "Tekst"
+
+#: wordpad.rc:157
+msgid "Rich text"
+msgstr "Rig tekst"
+
+#: wordpad.rc:163
+msgid "Next page"
+msgstr "Næste side"
+
+#: wordpad.rc:164
+msgid "Previous page"
+msgstr "Forrige side"
+
+#: wordpad.rc:165
+msgid "Two pages"
+msgstr "To sider"
+
+#: wordpad.rc:166
+msgid "One page"
+msgstr "Én side"
+
+#: wordpad.rc:167
+msgid "Zoom in"
+msgstr "Zoom in"
+
+#: wordpad.rc:168
+msgid "Zoom out"
+msgstr "Zoom out"
+
+#: wordpad.rc:169
+msgid "Close"
+msgstr "Luk"
+
+#: wordpad.rc:170
+msgid "Page"
+msgstr "Side"
+
+#: wordpad.rc:171
+msgid "Pages"
+msgstr "Sider"
+
+#: wordpad.rc:172
+msgid "cm"
+msgstr "cm"
+
+#: wordpad.rc:173
+msgid "in"
+msgstr "tomme"
+
+#: wordpad.rc:174
+msgid "inch"
+msgstr "tommer"
+
+#: wordpad.rc:175
+msgid "pt"
+msgstr "pkt"
+
+#: wordpad.rc:180
+msgid "Document"
+msgstr "Dokument"
+
+#: wordpad.rc:181
+msgid "Save changes to '%s'?"
+msgstr "Gemme ændringer i «%s»?"
+
+#: wordpad.rc:182
+msgid "Finished searching the document."
+msgstr "Færdig med at søge i dokumentet."
+
+#: wordpad.rc:183
+msgid "Failed to load the RichEdit library."
+msgstr "Kunne ikke indlæse RichEdit-biblioteket."
+
+#: wordpad.rc:184
+msgid ""
+"You have chosen to save in plain text format, which will cause all "
+"formatting to be lost. Are you sure that you wish to do this?"
+msgstr ""
+"Du har valgt at gemme i rent tekstformat, noget som vil medføre at al "
+"formatering går tabt. Er du sikker på at du vil fortsætte?"
+
+#: wordpad.rc:187
+msgid "Invalid number format"
+msgstr "Ugyldigt talformat"
+
+#: wordpad.rc:188
+msgid "OLE storage documents are not supported"
+msgstr "OLE storage dokumenter er ikke understøttet"
+
+#: wordpad.rc:189
+msgid "Could not save the file."
+msgstr "Kunne ikke gemme filen."
+
+#: wordpad.rc:190
+msgid "You do not have access to save the file."
+msgstr "Filen kunne ikke gemmes, adgang nægtet."
+
+#: wordpad.rc:191
+msgid "Could not open the file."
+msgstr "Kunne ikke åbne filen."
+
+#: wordpad.rc:192
+msgid "You do not have access to open the file."
+msgstr "Filen kunne ikke åbnes, adgang nægtet."
+
+#: wordpad.rc:193
+msgid "Printing not implemented"
+msgstr "Udskrivning er endnu ikke implementeret."
+
+#: wordpad.rc:194
+msgid "Cannot add more than 32 tab stops."
+msgstr "Kan ikke tilføje mere end 32 tabulatorer."
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

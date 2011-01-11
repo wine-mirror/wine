@@ -934,11 +934,11 @@ msgstr "דף הבית"
 msgid "Sync"
 msgstr "סנכרון"
 
-#: hhctrl.rc:42
+#: hhctrl.rc:42 wordpad.rc:162
 msgid "Print"
 msgstr "הדפסה"
 
-#: hhctrl.rc:43
+#: hhctrl.rc:43 wordpad.rc:155
 msgid "Options"
 msgstr "אפשרויות"
 
@@ -1277,7 +1277,7 @@ msgid "Select &All"
 msgstr "ב&חירת הכול"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30
+#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
 #, fuzzy
 msgid "&Paste"
 msgstr ""
@@ -1368,11 +1368,17 @@ msgid "Set as &Desktop Item..."
 msgstr "הגדרה כ&פריט שולחן העבודה..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
+#: wordpad.rc:101
+#, fuzzy
 msgid "Cu&t"
-msgstr "ג&זירה"
+msgstr ""
+"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
+"ג&זירה\n"
+"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
+"&גזירה"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 wineconsole.rc:29
+#: shdoclc.rc:187 wineconsole.rc:29 wordpad.rc:102
 msgid "&Copy"
 msgstr "ה&עתקה"
 
@@ -2371,7 +2377,7 @@ msgstr "&אנלוגי"
 msgid "Digi&tal"
 msgstr "&דיגיטלי"
 
-#: clock.rc:32 notepad.rc:50 winefile.rc:97
+#: clock.rc:32 notepad.rc:50 winefile.rc:97 wordpad.rc:81
 msgid "&Font..."
 msgstr "&גופן..."
 
@@ -3033,7 +3039,7 @@ msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
 #: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
-#: winhlp32.rc:28
+#: winhlp32.rc:28 wordpad.rc:26
 msgid "&File"
 msgstr "&קובץ"
 
@@ -3041,19 +3047,19 @@ msgstr "&קובץ"
 msgid "&New\tCtrl+N"
 msgstr "&חדש\tCtrl+N"
 
-#: notepad.rc:28
+#: notepad.rc:28 wordpad.rc:29
 msgid "&Open...\tCtrl+O"
 msgstr "&פתיחה...\tCtrl+O"
 
-#: notepad.rc:29
+#: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
 msgstr "&שמירה\tCtrl+S"
 
-#: notepad.rc:30
+#: notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr "שמירה &בשם..."
 
-#: notepad.rc:32
+#: notepad.rc:32 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
 msgstr "ה&דפסה...\tCtrl+P"
 
@@ -3065,27 +3071,32 @@ msgstr "ה&גדרות עמוד..."
 msgid "P&rinter Setup..."
 msgstr "הגדרות מ&דפסת..."
 
-#: notepad.rc:36 view.rc:31 winhlp32.rc:34
+#: notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
 msgid "E&xit"
 msgstr "י&ציאה"
 
-#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36
+#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 msgid "&Edit"
 msgstr "ע&ריכה"
 
-#: notepad.rc:39
+#: notepad.rc:39 wordpad.rc:41
 msgid "&Undo\tCtrl+Z"
 msgstr "&ביטול\tCtrl+Z"
 
-#: notepad.rc:41
+#: notepad.rc:41 wordpad.rc:44
+#, fuzzy
 msgid "Cu&t\tCtrl+X"
-msgstr "ג&זירה\tCtrl+X"
+msgstr ""
+"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
+"ג&זירה\tCtrl+X\n"
+"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
+"&גזירה\tCtrl+X"
 
-#: notepad.rc:42
+#: notepad.rc:42 wordpad.rc:45
 msgid "&Copy\tCtrl+C"
 msgstr "ה&עתקה\tCtrl+C"
 
-#: notepad.rc:43
+#: notepad.rc:43 wordpad.rc:46
 msgid "&Paste\tCtrl+V"
 msgstr "ה&דבקה\tCtrl+V"
 
@@ -3113,11 +3124,17 @@ msgstr "&חיפוש...\tCtrl+F"
 msgid "&Search next\tF3"
 msgstr "חיפוש ה&בא\tF3"
 
-#: notepad.rc:55
+#: notepad.rc:55 wordpad.rc:52
+#, fuzzy
 msgid "&Replace...\tCtrl+H"
-msgstr "החל&פה...\tCtrl+H"
+msgstr ""
+"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
+"החל&פה...\tCtrl+H\n"
+"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
+"הח&לפה...\tCtrl+H"
 
 #: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
+#: wordpad.rc:91
 msgid "&Help"
 msgstr "ע&זרה"
 
@@ -3578,7 +3595,7 @@ msgstr "הסתרה &בעת מזעור"
 msgid "&Show 16-bit tasks"
 msgstr "ה&צגת משימות 16 סיביות"
 
-#: taskmgr.rc:52 winefile.rc:76
+#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
 #, fuzzy
 msgid "&View"
 msgstr ""
@@ -4468,9 +4485,14 @@ msgstr "&אישור..."
 msgid "Customize Tool&bar..."
 msgstr "הת&אמת סרגל הכלים..."
 
-#: winefile.rc:100
+#: winefile.rc:100 wordpad.rc:68
+#, fuzzy
 msgid "&Toolbar"
-msgstr "&סרגל הכלים"
+msgstr ""
+"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
+"&סרגל הכלים\n"
+"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
+"&סרגל כלים"
 
 #: winefile.rc:101
 msgid "&Drivebar"
@@ -4787,6 +4809,354 @@ msgstr "לא ניתן למצוא יישום של richedit... התכנית תצא
 #: winhlp32.rc:106
 msgid "Help topics: "
 msgstr "נושאי העזרה: "
+
+#: wordpad.rc:28
+msgid "&New...\tCtrl+N"
+msgstr "&חדש...\tCtrl+N"
+
+#: wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "הצגה &לפני הדפסה..."
+
+#: wordpad.rc:35
+msgid "Pag&e setup..."
+msgstr "ה&גדרת עמוד..."
+
+#: wordpad.rc:42
+msgid "R&edo\tCtrl+Y"
+msgstr "ח&זרה\tCtrl+Y"
+
+#: wordpad.rc:47
+msgid "&Clear\tDEL"
+msgstr "&ניקוי\tDEL"
+
+#: wordpad.rc:48
+msgid "&Select all\tCtrl+A"
+msgstr "בחי&רת הכול\tCtrl+A"
+
+#: wordpad.rc:50
+msgid "&Find...\tCtrl+F"
+msgstr "&חיפוש...\tCtrl+F"
+
+#: wordpad.rc:51
+msgid "Find &next\tF3"
+msgstr "חיפוש הב&א\tF3"
+
+#: wordpad.rc:54
+msgid "Read-&only"
+msgstr "&קריאה בלבד"
+
+#: wordpad.rc:55
+msgid "&Modified"
+msgstr "ני&תן לשינוי"
+
+#: wordpad.rc:57
+msgid "E&xtras"
+msgstr "&תוספות"
+
+#: wordpad.rc:59
+msgid "Selection &info"
+msgstr "פרטי ה&בחירה"
+
+#: wordpad.rc:60
+msgid "Character &format"
+msgstr "עיצוב ה&תווים"
+
+#: wordpad.rc:61
+msgid "&Def. char format"
+msgstr "עיצוב התווים כ&בררת המחדל"
+
+#: wordpad.rc:62
+msgid "Paragrap&h format"
+msgstr "עיצוב ה&פסקה"
+
+#: wordpad.rc:63
+msgid "&Get text"
+msgstr "&קבלת טקסט"
+
+#: wordpad.rc:69
+msgid "&Formatbar"
+msgstr "סרגל &עיצוב"
+
+#: wordpad.rc:70
+msgid "&Ruler"
+msgstr "סרגל &מדידה"
+
+#: wordpad.rc:71
+msgid "&Statusbar"
+msgstr "&שורת מצב"
+
+#: wordpad.rc:73
+msgid "&Options..."
+msgstr "&אפשרויות..."
+
+#: wordpad.rc:75
+msgid "&Insert"
+msgstr "הו&ספה"
+
+#: wordpad.rc:77
+msgid "&Date and time..."
+msgstr "&תאריך ושעה..."
+
+#: wordpad.rc:79
+msgid "F&ormat"
+msgstr "&עיצוב"
+
+#: wordpad.rc:82 wordpad.rc:105
+msgid "&Bullet points"
+msgstr "&נקודות תבליט"
+
+#: wordpad.rc:83 wordpad.rc:106
+msgid "&Paragraph..."
+msgstr "&פסקה..."
+
+#: wordpad.rc:84
+msgid "&Tabs..."
+msgstr "&טאבים..."
+
+#: wordpad.rc:85
+msgid "Backgroun&d"
+msgstr "ר&קע"
+
+#: wordpad.rc:87
+msgid "&System\tCtrl+1"
+msgstr "מ&ערכת\tCtrl+1"
+
+#: wordpad.rc:88
+msgid "&PostThat yellowish\tCtrl+2"
+msgstr "צהבהב כמו ב&פתקיות\tCtrl+2"
+
+#: wordpad.rc:93
+msgid "&About Wine Wordpad"
+msgstr "על &אודות כתבן Wine"
+
+#: wordpad.rc:114
+msgid "Black"
+msgstr "שחור"
+
+#: wordpad.rc:115
+msgid "Maroon"
+msgstr "אדום כהה"
+
+#: wordpad.rc:116
+msgid "Green"
+msgstr "ירוק"
+
+#: wordpad.rc:117
+msgid "Olive"
+msgstr "זית"
+
+#: wordpad.rc:118
+msgid "Navy"
+msgstr "כחול כהה"
+
+#: wordpad.rc:119
+msgid "Purple"
+msgstr "סגול"
+
+#: wordpad.rc:120
+msgid "Teal"
+msgstr "כחול ים"
+
+#: wordpad.rc:121
+msgid "Gray"
+msgstr "אפור"
+
+#: wordpad.rc:122
+msgid "Silver"
+msgstr "כסף"
+
+#: wordpad.rc:123
+msgid "Red"
+msgstr "אדום"
+
+#: wordpad.rc:124
+msgid "Lime"
+msgstr "ירקרק"
+
+#: wordpad.rc:125
+msgid "Yellow"
+msgstr "צהוב"
+
+#: wordpad.rc:126
+msgid "Blue"
+msgstr "כחול"
+
+#: wordpad.rc:127
+msgid "Fuchsia"
+msgstr "פוקסיה"
+
+#: wordpad.rc:128
+msgid "Aqua"
+msgstr "תכלת"
+
+#: wordpad.rc:129
+msgid "White"
+msgstr "לבן"
+
+#: wordpad.rc:130
+msgid "Automatic"
+msgstr "אוטומטי"
+
+#: wordpad.rc:136
+msgid "All documents (*.*)"
+msgstr "כל המסמכים (*.*)"
+
+#: wordpad.rc:137
+msgid "Text documents (*.txt)"
+msgstr "מסמכי טקסט (*.txt)"
+
+#: wordpad.rc:138
+msgid "Unicode text document (*.txt)"
+msgstr "מסמך טקסט יוניקוד (*.txt)"
+
+#: wordpad.rc:139
+msgid "Rich text format (*.rtf)"
+msgstr "מבנה טקסט עשיר (*.rtf)"
+
+#: wordpad.rc:140
+msgid "Rich text document"
+msgstr "מסמך טקסט עשיר"
+
+#: wordpad.rc:141
+msgid "Text document"
+msgstr "מסמך טקסט"
+
+#: wordpad.rc:142
+msgid "Unicode text document"
+msgstr "מסמך טקסט יוניקוד"
+
+#: wordpad.rc:143
+msgid "Printer files (*.PRN)"
+msgstr "קובצי מדפסת (*.PRN)"
+
+#: wordpad.rc:148
+msgid "Left"
+msgstr "שמאל"
+
+#: wordpad.rc:149
+msgid "Right"
+msgstr "ימין"
+
+#: wordpad.rc:150
+msgid "Center"
+msgstr "מרכז"
+
+#: wordpad.rc:156
+msgid "Text"
+msgstr "טקסט"
+
+#: wordpad.rc:157
+msgid "Rich text"
+msgstr "טקסט עשיר"
+
+#: wordpad.rc:163
+msgid "Next page"
+msgstr "העמוד הבא"
+
+#: wordpad.rc:164
+msgid "Previous page"
+msgstr "העמוד הקודם"
+
+#: wordpad.rc:165
+msgid "Two pages"
+msgstr "שני עמודים"
+
+#: wordpad.rc:166
+msgid "One page"
+msgstr "עמוד אחד"
+
+#: wordpad.rc:167
+msgid "Zoom in"
+msgstr "התקרבות"
+
+#: wordpad.rc:168
+msgid "Zoom out"
+msgstr "התרחקות"
+
+#: wordpad.rc:169
+msgid "Close"
+msgstr "סגירה"
+
+#: wordpad.rc:170
+msgid "Page"
+msgstr "עמודים"
+
+#: wordpad.rc:171
+msgid "Pages"
+msgstr "עמודים"
+
+#: wordpad.rc:172
+msgid "cm"
+msgstr "ס״מ"
+
+#: wordpad.rc:173
+msgid "in"
+msgstr "אי׳"
+
+#: wordpad.rc:174
+msgid "inch"
+msgstr "אינטש"
+
+#: wordpad.rc:175
+msgid "pt"
+msgstr "נק׳"
+
+#: wordpad.rc:180
+msgid "Document"
+msgstr "מסמך"
+
+#: wordpad.rc:181
+msgid "Save changes to '%s'?"
+msgstr "האם לשמור את השינויים לקובץ '%s'?"
+
+#: wordpad.rc:182
+msgid "Finished searching the document."
+msgstr "החיפוש במסמך הסתיים."
+
+#: wordpad.rc:183
+msgid "Failed to load the RichEdit library."
+msgstr "אירע כשל בעריכת הספרייה RichEdit."
+
+#: wordpad.rc:184
+msgid ""
+"You have chosen to save in plain text format, which will cause all "
+"formatting to be lost. Are you sure that you wish to do this?"
+msgstr ""
+"בחרת לשמור את הקובץ במבנה טקסט פשוט, מה שעלול לגרום לאבדן העיצוב. האם אכן "
+"ברצונך לעשות זאת?"
+
+#: wordpad.rc:187
+msgid "Invalid number format"
+msgstr "תבנית המספרים שגויה"
+
+#: wordpad.rc:188
+msgid "OLE storage documents are not supported"
+msgstr "מסמכי אחסון OLE אינם נתמכים"
+
+#: wordpad.rc:189
+msgid "Could not save the file."
+msgstr "לא ניתן לשמור את הקובץ."
+
+#: wordpad.rc:190
+msgid "You do not have access to save the file."
+msgstr "אין לך גישה לשמירת הקובץ."
+
+#: wordpad.rc:191
+msgid "Could not open the file."
+msgstr "לא ניתן לפתוח את הקובץ."
+
+#: wordpad.rc:192
+msgid "You do not have access to open the file."
+msgstr "אין לך גישה לפתיחת קובץ זה."
+
+#: wordpad.rc:193
+msgid "Printing not implemented"
+msgstr "תכונות ההדפסה אינן מוטמעות עדיין"
+
+#: wordpad.rc:194
+msgid "Cannot add more than 32 tab stops."
+msgstr "לא ניתן להוסיף יותר מ־32 טאבי עצירה."
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

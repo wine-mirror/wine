@@ -937,11 +937,11 @@ msgstr "Додому"
 msgid "Sync"
 msgstr "Синхронізувати"
 
-#: hhctrl.rc:42
+#: hhctrl.rc:42 wordpad.rc:162
 msgid "Print"
 msgstr "Друк"
 
-#: hhctrl.rc:43
+#: hhctrl.rc:43 wordpad.rc:155
 msgid "Options"
 msgstr "Параметри"
 
@@ -1305,7 +1305,7 @@ msgid "Select &All"
 msgstr "Виділити вс&е"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30
+#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
 msgid "&Paste"
 msgstr "В&ставити"
 
@@ -1391,11 +1391,12 @@ msgid "Set as &Desktop Item..."
 msgstr "Set as &Desktop Item..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
+#: wordpad.rc:101
 msgid "Cu&t"
 msgstr "Ви&різати"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 wineconsole.rc:29
+#: shdoclc.rc:187 wineconsole.rc:29 wordpad.rc:102
 msgid "&Copy"
 msgstr "&Копіювати"
 
@@ -2496,7 +2497,7 @@ msgstr "&Анало&говий"
 msgid "Digi&tal"
 msgstr "&Ци&фровий"
 
-#: clock.rc:32 notepad.rc:50 winefile.rc:97
+#: clock.rc:32 notepad.rc:50 winefile.rc:97 wordpad.rc:81
 msgid "&Font..."
 msgstr "&Шрифт..."
 
@@ -3340,7 +3341,7 @@ msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Відкритих ресурсів: %lu\n"
 
 #: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
-#: winhlp32.rc:28
+#: winhlp32.rc:28 wordpad.rc:26
 msgid "&File"
 msgstr "&Файл"
 
@@ -3348,19 +3349,19 @@ msgstr "&Файл"
 msgid "&New\tCtrl+N"
 msgstr "&Новий\tCtrl+N"
 
-#: notepad.rc:28
+#: notepad.rc:28 wordpad.rc:29
 msgid "&Open...\tCtrl+O"
 msgstr "&Відкрити...\tCtrl+O"
 
-#: notepad.rc:29
+#: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
 msgstr "&Зберегти\tCtrl+S"
 
-#: notepad.rc:30
+#: notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr "Зберегти &як..."
 
-#: notepad.rc:32
+#: notepad.rc:32 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
 msgstr "&Друк...\tCtrl+P"
 
@@ -3372,7 +3373,7 @@ msgstr "Параметри &сторінки..."
 msgid "P&rinter Setup..."
 msgstr "Налаштування &принтера..."
 
-#: notepad.rc:36 view.rc:31 winhlp32.rc:34
+#: notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
 #, fuzzy
 msgid "E&xit"
 msgstr ""
@@ -3381,7 +3382,7 @@ msgstr ""
 "#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
 "В&ихід"
 
-#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36
+#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 #, fuzzy
 msgid "&Edit"
 msgstr ""
@@ -3390,19 +3391,19 @@ msgstr ""
 "#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
 "Реда&гування"
 
-#: notepad.rc:39
+#: notepad.rc:39 wordpad.rc:41
 msgid "&Undo\tCtrl+Z"
 msgstr "&Назад\tCtrl+Z"
 
-#: notepad.rc:41
+#: notepad.rc:41 wordpad.rc:44
 msgid "Cu&t\tCtrl+X"
 msgstr "Ви&різати\tCtrl+X"
 
-#: notepad.rc:42
+#: notepad.rc:42 wordpad.rc:45
 msgid "&Copy\tCtrl+C"
 msgstr "&Копіювати\tCtrl+C"
 
-#: notepad.rc:43
+#: notepad.rc:43 wordpad.rc:46
 msgid "&Paste\tCtrl+V"
 msgstr "&Вставити\tCtrl+V"
 
@@ -3435,11 +3436,12 @@ msgstr "&Знайти...\tCtrl+F"
 msgid "&Search next\tF3"
 msgstr "Знайти &далі\tF3"
 
-#: notepad.rc:55
+#: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
 msgstr "За&мінити...\tCtrl+H"
 
 #: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
+#: wordpad.rc:91
 #, fuzzy
 msgid "&Help"
 msgstr ""
@@ -3600,7 +3602,7 @@ msgstr "&Виконати..."
 msgid "E&xit Windows..."
 msgstr "Ви&хід..."
 
-#: progman.rc:41 taskmgr.rc:41 winemine.rc:34 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:95 winemine.rc:34 winhlp32.rc:44
 #, fuzzy
 msgid "&Options"
 msgstr ""
@@ -3964,7 +3966,7 @@ msgstr "&Приховати якщо згорнутий"
 msgid "&Show 16-bit tasks"
 msgstr "П&оказувати 16-бітні завдання"
 
-#: taskmgr.rc:52 winefile.rc:76
+#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
 msgid "&View"
 msgstr "&Вигляд"
 
@@ -4857,7 +4859,7 @@ msgstr "&Підтвердження..."
 msgid "Customize Tool&bar..."
 msgstr "Налаштувати &панель інструментів..."
 
-#: winefile.rc:100
+#: winefile.rc:100 wordpad.rc:68
 msgid "&Toolbar"
 msgstr "Панель &інструментів"
 
@@ -5176,6 +5178,389 @@ msgstr "Не можу знайти richedit... Скасовую"
 #: winhlp32.rc:106
 msgid "Help topics: "
 msgstr "Розділи Довідки: "
+
+#: wordpad.rc:28
+#, fuzzy
+msgid "&New...\tCtrl+N"
+msgstr "&Новий\tCtrl+N"
+
+#: wordpad.rc:34
+#, fuzzy
+msgid "Print previe&w..."
+msgstr "Др&ук малюнка..."
+
+#: wordpad.rc:35
+#, fuzzy
+msgid "Pag&e setup..."
+msgstr "Параметри &сторінки..."
+
+#: wordpad.rc:42
+#, fuzzy
+msgid "R&edo\tCtrl+Y"
+msgstr "&Назад\tCtrl+Z"
+
+#: wordpad.rc:47
+msgid "&Clear\tDEL"
+msgstr ""
+
+#: wordpad.rc:48
+#, fuzzy
+msgid "&Select all\tCtrl+A"
+msgstr "Виділити в&се\tCtrl+A"
+
+#: wordpad.rc:50
+#, fuzzy
+msgid "&Find...\tCtrl+F"
+msgstr "&Друк...\tCtrl+P"
+
+#: wordpad.rc:51
+msgid "Find &next\tF3"
+msgstr ""
+
+#: wordpad.rc:54
+msgid "Read-&only"
+msgstr ""
+
+#: wordpad.rc:55
+msgid "&Modified"
+msgstr ""
+
+#: wordpad.rc:57
+msgid "E&xtras"
+msgstr ""
+
+#: wordpad.rc:59
+#, fuzzy
+msgid "Selection &info"
+msgstr "Виділити вс&е"
+
+#: wordpad.rc:60
+msgid "Character &format"
+msgstr ""
+
+#: wordpad.rc:61
+msgid "&Def. char format"
+msgstr ""
+
+#: wordpad.rc:62
+msgid "Paragrap&h format"
+msgstr ""
+
+#: wordpad.rc:63
+msgid "&Get text"
+msgstr ""
+
+#: wordpad.rc:69
+msgid "&Formatbar"
+msgstr ""
+
+#: wordpad.rc:70
+msgid "&Ruler"
+msgstr ""
+
+#: wordpad.rc:71
+#, fuzzy
+msgid "&Statusbar"
+msgstr "&Рядок стану"
+
+#: wordpad.rc:73
+#, fuzzy
+msgid "&Options..."
+msgstr ""
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"&Параметри\n"
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"&Гра"
+
+#: wordpad.rc:75
+msgid "&Insert"
+msgstr ""
+
+#: wordpad.rc:77
+msgid "&Date and time..."
+msgstr ""
+
+#: wordpad.rc:79
+#, fuzzy
+msgid "F&ormat"
+msgstr "&Нормальна"
+
+#: wordpad.rc:82 wordpad.rc:105
+msgid "&Bullet points"
+msgstr ""
+
+#: wordpad.rc:83 wordpad.rc:106
+#, fuzzy
+msgid "&Paragraph..."
+msgstr "По&шук..."
+
+#: wordpad.rc:84
+#, fuzzy
+msgid "&Tabs..."
+msgstr "Зберегти &як..."
+
+#: wordpad.rc:85
+#, fuzzy
+msgid "Backgroun&d"
+msgstr "&Копіювати тло"
+
+#: wordpad.rc:87
+#, fuzzy
+msgid "&System\tCtrl+1"
+msgstr "&Вставити\tCtrl+V"
+
+#: wordpad.rc:88
+msgid "&PostThat yellowish\tCtrl+2"
+msgstr ""
+
+#: wordpad.rc:93
+#, fuzzy
+msgid "&About Wine Wordpad"
+msgstr "&Інформація..."
+
+#: wordpad.rc:114
+msgid "Black"
+msgstr ""
+
+#: wordpad.rc:115
+msgid "Maroon"
+msgstr ""
+
+#: wordpad.rc:116
+msgid "Green"
+msgstr ""
+
+#: wordpad.rc:117
+msgid "Olive"
+msgstr ""
+
+#: wordpad.rc:118
+msgid "Navy"
+msgstr ""
+
+#: wordpad.rc:119
+msgid "Purple"
+msgstr ""
+
+#: wordpad.rc:120
+msgid "Teal"
+msgstr ""
+
+#: wordpad.rc:121
+msgid "Gray"
+msgstr ""
+
+#: wordpad.rc:122
+msgid "Silver"
+msgstr ""
+
+#: wordpad.rc:123
+#, fuzzy
+msgid "Red"
+msgstr "Перемотати"
+
+#: wordpad.rc:124
+msgid "Lime"
+msgstr ""
+
+#: wordpad.rc:125
+msgid "Yellow"
+msgstr ""
+
+#: wordpad.rc:126
+msgid "Blue"
+msgstr ""
+
+#: wordpad.rc:127
+msgid "Fuchsia"
+msgstr ""
+
+#: wordpad.rc:128
+msgid "Aqua"
+msgstr ""
+
+#: wordpad.rc:129
+msgid "White"
+msgstr ""
+
+#: wordpad.rc:130
+#, fuzzy
+msgid "Automatic"
+msgstr "Впорядкувати автоматично"
+
+#: wordpad.rc:136
+#, fuzzy
+msgid "All documents (*.*)"
+msgstr "Всі файли (*.*)"
+
+#: wordpad.rc:137
+#, fuzzy
+msgid "Text documents (*.txt)"
+msgstr "Текстові файли (*.txt)"
+
+#: wordpad.rc:138
+msgid "Unicode text document (*.txt)"
+msgstr ""
+
+#: wordpad.rc:139
+msgid "Rich text format (*.rtf)"
+msgstr ""
+
+#: wordpad.rc:140
+msgid "Rich text document"
+msgstr ""
+
+#: wordpad.rc:141
+msgid "Text document"
+msgstr ""
+
+#: wordpad.rc:142
+msgid "Unicode text document"
+msgstr ""
+
+#: wordpad.rc:143
+#, fuzzy
+msgid "Printer files (*.PRN)"
+msgstr "Текстові файли (*.txt)"
+
+#: wordpad.rc:148
+msgid "Left"
+msgstr "По Лівому Краю"
+
+#: wordpad.rc:149
+msgid "Right"
+msgstr "По правому Краю"
+
+#: wordpad.rc:150
+msgid "Center"
+msgstr "По Центру"
+
+#: wordpad.rc:156
+msgid "Text"
+msgstr ""
+
+#: wordpad.rc:157
+msgid "Rich text"
+msgstr ""
+
+#: wordpad.rc:163
+msgid "Next page"
+msgstr ""
+
+#: wordpad.rc:164
+msgid "Previous page"
+msgstr ""
+
+#: wordpad.rc:165
+msgid "Two pages"
+msgstr ""
+
+#: wordpad.rc:166
+msgid "One page"
+msgstr ""
+
+#: wordpad.rc:167
+#, fuzzy
+msgid "Zoom in"
+msgstr "Збільшення"
+
+#: wordpad.rc:168
+#, fuzzy
+msgid "Zoom out"
+msgstr "Збільшення"
+
+#: wordpad.rc:169
+#, fuzzy
+msgid "Close"
+msgstr "&Закрити"
+
+#: wordpad.rc:170
+#, fuzzy
+msgid "Page"
+msgstr "Сторінка вверх"
+
+#: wordpad.rc:171
+#, fuzzy
+msgid "Pages"
+msgstr "Сторінка вверх"
+
+#: wordpad.rc:172
+msgid "cm"
+msgstr ""
+
+#: wordpad.rc:173
+msgid "in"
+msgstr ""
+
+#: wordpad.rc:174
+msgid "inch"
+msgstr ""
+
+#: wordpad.rc:175
+msgid "pt"
+msgstr ""
+
+#: wordpad.rc:180
+#, fuzzy
+msgid "Document"
+msgstr "Підписання документу"
+
+#: wordpad.rc:181
+msgid "Save changes to '%s'?"
+msgstr ""
+
+#: wordpad.rc:182
+msgid "Finished searching the document."
+msgstr ""
+
+#: wordpad.rc:183
+msgid "Failed to load the RichEdit library."
+msgstr ""
+
+#: wordpad.rc:184
+msgid ""
+"You have chosen to save in plain text format, which will cause all "
+"formatting to be lost. Are you sure that you wish to do this?"
+msgstr ""
+
+#: wordpad.rc:187
+msgid "Invalid number format"
+msgstr ""
+
+#: wordpad.rc:188
+msgid "OLE storage documents are not supported"
+msgstr ""
+
+#: wordpad.rc:189
+#, fuzzy
+msgid "Could not save the file."
+msgstr "Неможливо отримати доступ до служби.\n"
+
+#: wordpad.rc:190
+msgid "You do not have access to save the file."
+msgstr ""
+
+#: wordpad.rc:191
+#, fuzzy
+msgid "Could not open the file."
+msgstr "Неможливо зупинити службу %s\n"
+
+#: wordpad.rc:192
+msgid "You do not have access to open the file."
+msgstr ""
+
+#: wordpad.rc:193
+#, fuzzy
+msgid "Printing not implemented"
+msgstr ""
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Не реалізовано\n"
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Не впроваджено"
+
+#: wordpad.rc:194
+msgid "Cannot add more than 32 tab stops."
+msgstr ""
 
 #: write.rc:27
 msgid "Starting Wordpad failed"

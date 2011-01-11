@@ -17,7 +17,6 @@ RC_SRCS = \
 	En.rc \
 	Fr.rc \
 	He.rc \
-	Hu.rc \
 	It.rc \
 	Ja.rc \
 	Ko.rc \
@@ -30,10 +29,11 @@ RC_SRCS = \
 	Ru.rc \
 	Si.rc \
 	Sv.rc \
-	Tr.rc \
 	Uk.rc \
 	Zh.rc \
-	rsrc.rc
+	wordpad.rc
+
+PO_SRCS = wordpad.rc
 
 SVG_SRCS = \
 	formatbar.svg \
