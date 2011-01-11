@@ -109,6 +109,7 @@ static void test_TypeComp(void)
     BINDPTR bindptr;
     ITypeInfo *pTypeInfo;
     ITypeInfo *pFontTypeInfo;
+    ITypeComp *pTypeComp_tmp;
     static WCHAR wszStdFunctions[] = {'S','t','d','F','u','n','c','t','i','o','n','s',0};
     static WCHAR wszSavePicture[] = {'S','a','v','e','P','i','c','t','u','r','e',0};
     static WCHAR wszOLE_TRISTATE[] = {'O','L','E','_','T','R','I','S','T','A','T','E',0};
@@ -254,6 +255,41 @@ static void test_TypeComp(void)
         desckind);
     ok(!pTypeInfo, "pTypeInfo should have been set to NULL\n");
     ok(!bindptr.lptcomp, "bindptr should have been set to NULL\n");
+
+    /* test basic BindType argument handling */
+    ulHash = LHashValOfNameSys(SYS_WIN32, LOCALE_NEUTRAL, wszGUID);
+    hr = ITypeComp_BindType(pTypeComp, wszGUID, ulHash, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Got %08x\n", hr);
+
+    ulHash = LHashValOfNameSys(SYS_WIN32, LOCALE_NEUTRAL, wszGUID);
+    pTypeInfo = (void*)0xdeadbeef;
+    hr = ITypeComp_BindType(pTypeComp, wszGUID, ulHash, &pTypeInfo, NULL);
+    ok(hr == E_INVALIDARG, "Got %08x\n", hr);
+    ok(pTypeInfo == (void*)0xdeadbeef, "Got %p\n", pTypeInfo);
+
+    ulHash = LHashValOfNameSys(SYS_WIN32, LOCALE_NEUTRAL, wszGUID);
+    pTypeComp_tmp = (void*)0xdeadbeef;
+    hr = ITypeComp_BindType(pTypeComp, wszGUID, ulHash, NULL, &pTypeComp_tmp);
+    ok(hr == E_INVALIDARG, "Got %08x\n", hr);
+    ok(pTypeComp_tmp == (void*)0xdeadbeef, "Got %p\n", pTypeComp_tmp);
+
+    ulHash = LHashValOfNameSys(SYS_WIN32, LOCALE_NEUTRAL, wszGUID);
+    pTypeComp_tmp = (void*)0xdeadbeef;
+    pTypeInfo = (void*)0xdeadbeef;
+    hr = ITypeComp_BindType(pTypeComp, NULL, ulHash, &pTypeInfo, &pTypeComp_tmp);
+    ok(hr == E_INVALIDARG, "Got %08x\n", hr);
+    ok(pTypeInfo == (void*)0xdeadbeef, "Got %p\n", pTypeInfo);
+    ok(pTypeComp_tmp == (void*)0xdeadbeef, "Got %p\n", pTypeComp_tmp);
+
+    ulHash = LHashValOfNameSys(SYS_WIN32, LOCALE_NEUTRAL, wszGUID);
+    pTypeComp_tmp = (void*)0xdeadbeef;
+    pTypeInfo = (void*)0xdeadbeef;
+    hr = ITypeComp_BindType(pTypeComp, wszGUID, ulHash, &pTypeInfo, &pTypeComp_tmp);
+    ok_ole_success(hr, ITypeComp_BindType);
+    ok(pTypeInfo != NULL, "Got NULL pTypeInfo\n");
+    todo_wine ok(pTypeComp_tmp == NULL, "Got pTypeComp_tmp %p\n", pTypeComp_tmp);
+    ITypeInfo_Release(pTypeInfo);
+    if(pTypeComp_tmp) ITypeComp_Release(pTypeComp_tmp); /* fixme */
 
     ITypeComp_Release(pTypeComp);
 

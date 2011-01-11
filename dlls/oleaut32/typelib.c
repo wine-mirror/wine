@@ -4908,6 +4908,9 @@ static HRESULT WINAPI ITypeLibComp_fnBindType(
 
     TRACE("(%s, %x, %p, %p)\n", debugstr_w(szName), lHash, ppTInfo, ppTComp);
 
+    if(!szName || !ppTInfo || !ppTComp)
+        return E_INVALIDARG;
+
     for (pTypeInfo = This->pTypeInfo; pTypeInfo; pTypeInfo = pTypeInfo->next)
     {
         /* FIXME: should use lHash to do the search */
