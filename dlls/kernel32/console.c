@@ -836,15 +836,26 @@ BOOL WINAPI ReadConsoleOutputCharacterA(HANDLE hConsoleOutput, LPSTR lpstr, DWOR
 {
     DWORD read;
     BOOL ret;
-    LPWSTR wptr = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR));
+    LPWSTR wptr;
 
-    if (read_count) *read_count = 0;
-    if (!wptr) return FALSE;
+    if (!read_count)
+    {
+        SetLastError(ERROR_INVALID_ACCESS);
+        return FALSE;
+    }
+
+    *read_count = 0;
+
+    if (!(wptr = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR))))
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return FALSE;
+    }
 
     if ((ret = ReadConsoleOutputCharacterW( hConsoleOutput, wptr, count, coord, &read )))
     {
         read = WideCharToMultiByte( GetConsoleOutputCP(), 0, wptr, read, lpstr, count, NULL, NULL);
-        if (read_count) *read_count = read;
+        *read_count = read;
     }
     HeapFree( GetProcessHeap(), 0, wptr );
     return ret;
