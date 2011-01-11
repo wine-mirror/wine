@@ -690,7 +690,9 @@ static void	WCUSER_CopySelectionToClipboard(const struct inner_data* data)
 	for (y = 0; y < h; y++, c.Y++)
 	{
 	    LPWSTR end;
-            ReadConsoleOutputCharacterW(data->hConOut, p, w - 1, c, NULL);
+	    DWORD count;
+
+	    ReadConsoleOutputCharacterW(data->hConOut, p, w - 1, c, &count);
 
 	    /* strip spaces from the end of the line */
 	    end = p + w - 1;
