@@ -908,6 +908,14 @@ BOOL WINAPI ReadConsoleOutputAttribute(HANDLE hConsoleOutput, LPWORD lpAttribute
     TRACE("(%p,%p,%d,%dx%d,%p)\n",
           hConsoleOutput, lpAttribute, length, coord.X, coord.Y, read_count);
 
+    if (!read_count)
+    {
+        SetLastError(ERROR_INVALID_ACCESS);
+        return FALSE;
+    }
+
+    *read_count = 0;
+
     SERVER_START_REQ( read_console_output )
     {
         req->handle = console_handle_unmap(hConsoleOutput);
@@ -917,9 +925,7 @@ BOOL WINAPI ReadConsoleOutputAttribute(HANDLE hConsoleOutput, LPWORD lpAttribute
         req->wrap   = TRUE;
         wine_server_set_reply( req, lpAttribute, length * sizeof(WORD) );
         if ((ret = !wine_server_call_err( req )))
-        {
-            if (read_count) *read_count = wine_server_reply_size(reply) / sizeof(WORD);
-        }
+            *read_count = wine_server_reply_size(reply) / sizeof(WORD);
     }
     SERVER_END_REQ;
     return ret;
