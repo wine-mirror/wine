@@ -13,6 +13,10 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: browseui.rc:25
+msgid "Cancelling..."
+msgstr "취소하는 중.."
+
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
 msgstr "접근 키 식별자"

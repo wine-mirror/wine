@@ -14807,7 +14807,7 @@ wine_fn_config_test dlls/avifil32/tests avifil32_test
 wine_fn_config_dll avifile.dll16 enable_win16
 wine_fn_config_dll avrt enable_avrt implib
 wine_fn_config_dll bcrypt enable_bcrypt
-wine_fn_config_dll browseui enable_browseui
+wine_fn_config_dll browseui enable_browseui po
 wine_fn_config_test dlls/browseui/tests browseui_test
 wine_fn_config_dll cabinet enable_cabinet implib
 wine_fn_config_test dlls/cabinet/tests cabinet_test

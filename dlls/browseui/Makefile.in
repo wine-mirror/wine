@@ -12,6 +12,7 @@ C_SRCS = \
 IDL_R_SRCS = browseui_classes.idl
 
 RC_SRCS = \
+	browseui.rc \
 	rsrc_Da.rc \
 	rsrc_De.rc \
 	rsrc_En.rc \
@@ -33,7 +34,8 @@ RC_SRCS = \
 	rsrc_Sr.rc \
 	rsrc_Sv.rc \
 	rsrc_Uk.rc \
-	rsrc_Zh.rc \
-	version.rc
+	rsrc_Zh.rc
+
+PO_SRCS = browseui.rc
 
 @MAKE_DLL_RULES@

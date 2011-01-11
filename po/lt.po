@@ -14,6 +14,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Virtaal 0.6.1\n"
 
+#: browseui.rc:25
+msgid "Cancelling..."
+msgstr "Atsisakoma..."
+
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
 msgstr "Įstaigos rakto identifikatorius"
