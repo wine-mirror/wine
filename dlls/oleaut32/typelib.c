@@ -4914,7 +4914,7 @@ static HRESULT WINAPI ITypeLibComp_fnBindType(
     for (pTypeInfo = This->pTypeInfo; pTypeInfo; pTypeInfo = pTypeInfo->next)
     {
         /* FIXME: should use lHash to do the search */
-        if (pTypeInfo->Name && !strcmpW(pTypeInfo->Name, szName))
+        if (pTypeInfo->Name && !strcmpiW(pTypeInfo->Name, szName))
         {
             TRACE("returning %p\n", pTypeInfo);
             *ppTInfo = (ITypeInfo *)&pTypeInfo->lpVtbl;

@@ -117,6 +117,7 @@ static void test_TypeComp(void)
     static WCHAR wszIUnknown[] = {'I','U','n','k','n','o','w','n',0};
     static WCHAR wszFont[] = {'F','o','n','t',0};
     static WCHAR wszGUID[] = {'G','U','I','D',0};
+    static WCHAR wszguid[] = {'g','u','i','d',0};
     static WCHAR wszStdPicture[] = {'S','t','d','P','i','c','t','u','r','e',0};
     static WCHAR wszOLE_COLOR[] = {'O','L','E','_','C','O','L','O','R',0};
     static WCHAR wszClone[] = {'C','l','o','n','e',0};
@@ -285,6 +286,17 @@ static void test_TypeComp(void)
     pTypeComp_tmp = (void*)0xdeadbeef;
     pTypeInfo = (void*)0xdeadbeef;
     hr = ITypeComp_BindType(pTypeComp, wszGUID, ulHash, &pTypeInfo, &pTypeComp_tmp);
+    ok_ole_success(hr, ITypeComp_BindType);
+    ok(pTypeInfo != NULL, "Got NULL pTypeInfo\n");
+    todo_wine ok(pTypeComp_tmp == NULL, "Got pTypeComp_tmp %p\n", pTypeComp_tmp);
+    ITypeInfo_Release(pTypeInfo);
+    if(pTypeComp_tmp) ITypeComp_Release(pTypeComp_tmp); /* fixme */
+
+    /* test BindType case-insensitivity */
+    ulHash = LHashValOfNameSys(SYS_WIN32, LOCALE_NEUTRAL, wszguid);
+    pTypeComp_tmp = (void*)0xdeadbeef;
+    pTypeInfo = (void*)0xdeadbeef;
+    hr = ITypeComp_BindType(pTypeComp, wszguid, ulHash, &pTypeInfo, &pTypeComp_tmp);
     ok_ole_success(hr, ITypeComp_BindType);
     ok(pTypeInfo != NULL, "Got NULL pTypeInfo\n");
     todo_wine ok(pTypeComp_tmp == NULL, "Got pTypeComp_tmp %p\n", pTypeComp_tmp);
