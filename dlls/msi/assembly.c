@@ -268,7 +268,8 @@ static BOOL check_assembly_installed( MSIPACKAGE *package, MSIASSEMBLY *assembly
 
     if (assembly->application)
     {
-        /* FIXME: we should probably check the manifest file here */
+        FIXME("we should probably check the manifest file here\n");
+        if (msi_get_property_int( package->db, szInstalled, 0 )) return TRUE;
         return FALSE;
     }
 
