@@ -862,6 +862,14 @@ BOOL WINAPI ReadConsoleOutputCharacterW( HANDLE hConsoleOutput, LPWSTR buffer, D
 
     TRACE( "(%p,%p,%d,%dx%d,%p)\n", hConsoleOutput, buffer, count, coord.X, coord.Y, read_count );
 
+    if (!read_count)
+    {
+        SetLastError(ERROR_INVALID_ACCESS);
+        return FALSE;
+    }
+
+    *read_count = 0;
+
     SERVER_START_REQ( read_console_output )
     {
         req->handle = console_handle_unmap(hConsoleOutput);
@@ -871,9 +879,7 @@ BOOL WINAPI ReadConsoleOutputCharacterW( HANDLE hConsoleOutput, LPWSTR buffer, D
         req->wrap   = TRUE;
         wine_server_set_reply( req, buffer, count * sizeof(WCHAR) );
         if ((ret = !wine_server_call_err( req )))
-        {
-            if (read_count) *read_count = wine_server_reply_size(reply) / sizeof(WCHAR);
-        }
+            *read_count = wine_server_reply_size(reply) / sizeof(WCHAR);
     }
     SERVER_END_REQ;
     return ret;
