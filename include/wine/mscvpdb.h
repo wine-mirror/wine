@@ -1914,7 +1914,10 @@ typedef struct _PDB_SYMBOLS
     DWORD       hash_size;
     DWORD       srcmodule_size;
     DWORD       pdbimport_size;
-    DWORD       resvd[5];
+    DWORD       resvd[3];
+    WORD        resvd3;
+    WORD        machine;
+    DWORD       resvd4;
 } PDB_SYMBOLS, *PPDB_SYMBOLS;
 
 typedef struct _PDB_FPO_DATA

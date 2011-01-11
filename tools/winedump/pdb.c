@@ -178,23 +178,24 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
         printf("-Unknown symbol info version %d\n", symbols->version);
     }
     printf("Symbols:\n"
-           "\tsignature:      %08x\n"
-           "\tversion:        %u\n"
-           "\tunknown:        %08x\n"
-           "\thash1_file:     %08x\n"
-           "\thash2_file:     %08x\n"
-           "\tgsym_file:      %04x\n"
-           "\tunknown1:       %04x\n"
-           "\tmodule_size:    %08x\n"
-           "\toffset_size:    %08x\n"
-           "\thash_size:      %08x\n"
-           "\tsrc_module_size %08x\n"
-           "\tpdbimport_size  %08x\n"
-           "\tresvd[0]        %08x\n"
-           "\tresvd[1]        %08x\n"
-           "\tresvd[2]        %08x\n"
-           "\tresvd[3]        %08x\n"
-           "\tresvd[4]        %08x\n",
+           "\tsignature:       %08x\n"
+           "\tversion:         %u\n"
+           "\tunknown:         %08x\n"
+           "\thash1_file:      %08x\n"
+           "\thash2_file:      %08x\n"
+           "\tgsym_file:       %04x\n"
+           "\tunknown1:        %04x\n"
+           "\tmodule_size:     %08x\n"
+           "\toffset_size:     %08x\n"
+           "\thash_size:       %08x\n"
+           "\tsrc_module_size: %08x\n"
+           "\tpdbimport_size:  %08x\n"
+           "\tresvd[0]         %08x\n"
+           "\tresvd[1]         %08x\n"
+           "\tresvd[2]         %08x\n"
+           "\tresvd[3]         %04x\n"
+           "\tmachine:         %s\n"
+           "\tresvd[4]         %08x\n",
            symbols->signature,
            symbols->version,
            symbols->unknown,
@@ -210,8 +211,9 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
            symbols->resvd[0],
            symbols->resvd[1],
            symbols->resvd[2],
-           symbols->resvd[3],
-           symbols->resvd[4]);
+           symbols->resvd3,
+           get_machine_str( symbols->machine ),
+           symbols->resvd4);
 
     if (symbols->offset_size)
     {
