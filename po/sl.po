@@ -17,6 +17,26 @@ msgstr ""
 msgid "Cancelling..."
 msgstr "Preklicujem ..."
 
+#: comctl32.rc:39
+msgid "Separator"
+msgstr "Ločilo"
+
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:83
+msgid "None"
+msgstr "Brez"
+
+#: comctl32.rc:28 wordpad.rc:169
+msgid "Close"
+msgstr "Zapri"
+
+#: comctl32.rc:33
+msgid "Today:"
+msgstr "Danes:"
+
+#: comctl32.rc:34
+msgid "Go to today"
+msgstr "Pojdi na danes"
+
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
 msgstr ""
@@ -683,10 +703,6 @@ msgstr ""
 #: crypt32.rc:197
 msgid "Path Length Constraint="
 msgstr ""
-
-#: crypt32.rc:198 progman.rc:83
-msgid "None"
-msgstr "Brez"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
@@ -5475,10 +5491,6 @@ msgstr "Zoom in"
 #: wordpad.rc:168
 msgid "Zoom out"
 msgstr "Zoom out"
-
-#: wordpad.rc:169
-msgid "Close"
-msgstr "Zapri"
 
 #: wordpad.rc:170
 msgid "Page"

@@ -17,6 +17,31 @@ msgstr ""
 msgid "Cancelling..."
 msgstr "Megszakítás..."
 
+#: comctl32.rc:39
+msgid "Separator"
+msgstr "Elválasztó"
+
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:83
+#, fuzzy
+msgid "None"
+msgstr ""
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"Nincs\n"
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"Semmi"
+
+#: comctl32.rc:28 wordpad.rc:169
+msgid "Close"
+msgstr "Bezárás"
+
+#: comctl32.rc:33
+msgid "Today:"
+msgstr "Ma:"
+
+#: comctl32.rc:34
+msgid "Go to today"
+msgstr "Ugrás mára"
+
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
 msgstr "Hitelesítési kulcs azonosító"
@@ -668,15 +693,6 @@ msgstr "Vég egyed"
 #: crypt32.rc:197
 msgid "Path Length Constraint="
 msgstr "Útvonal hossz megszorítás="
-
-#: crypt32.rc:198 progman.rc:83
-#, fuzzy
-msgid "None"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Nincs\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Semmi"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
@@ -5170,10 +5186,6 @@ msgstr "Zoom"
 #, fuzzy
 msgid "Zoom out"
 msgstr "Zoom"
-
-#: wordpad.rc:169
-msgid "Close"
-msgstr ""
 
 #: wordpad.rc:170
 #, fuzzy

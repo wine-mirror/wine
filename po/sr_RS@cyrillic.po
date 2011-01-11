@@ -17,6 +17,26 @@ msgstr ""
 msgid "Cancelling..."
 msgstr "Отказивање..."
 
+#: comctl32.rc:39
+msgid "Separator"
+msgstr "Раздвајач"
+
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:83
+msgid "None"
+msgstr "Ништа"
+
+#: comctl32.rc:28 wordpad.rc:169
+msgid "Close"
+msgstr "Затвори"
+
+#: comctl32.rc:33
+msgid "Today:"
+msgstr "Данас:"
+
+#: comctl32.rc:34
+msgid "Go to today"
+msgstr "Пређи на данашњи дан"
+
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
 msgstr ""
@@ -671,10 +691,6 @@ msgstr ""
 
 #: crypt32.rc:197
 msgid "Path Length Constraint="
-msgstr ""
-
-#: crypt32.rc:198 progman.rc:83
-msgid "None"
 msgstr ""
 
 #: crypt32.rc:199
@@ -5110,10 +5126,6 @@ msgstr "Увећај"
 #, fuzzy
 msgid "Zoom out"
 msgstr "Увећај"
-
-#: wordpad.rc:169
-msgid "Close"
-msgstr ""
 
 #: wordpad.rc:170
 #, fuzzy

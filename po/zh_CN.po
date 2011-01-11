@@ -17,6 +17,31 @@ msgstr ""
 msgid "Cancelling..."
 msgstr "正在取消..."
 
+#: comctl32.rc:39
+msgid "Separator"
+msgstr "分隔符"
+
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:83
+#, fuzzy
+msgid "None"
+msgstr ""
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"未定义\n"
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"无"
+
+#: comctl32.rc:28 wordpad.rc:169
+msgid "Close"
+msgstr "关闭"
+
+#: comctl32.rc:33
+msgid "Today:"
+msgstr "今天:"
+
+#: comctl32.rc:34
+msgid "Go to today"
+msgstr "转到今天"
+
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
 msgstr ""
@@ -669,10 +694,6 @@ msgstr ""
 #: crypt32.rc:197
 msgid "Path Length Constraint="
 msgstr ""
-
-#: crypt32.rc:198 progman.rc:83
-msgid "None"
-msgstr "未定义"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
@@ -5090,10 +5111,6 @@ msgstr "放大"
 #: wordpad.rc:168
 msgid "Zoom out"
 msgstr "缩小"
-
-#: wordpad.rc:169
-msgid "Close"
-msgstr "关闭"
 
 #: wordpad.rc:170
 msgid "Page"

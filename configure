@@ -14817,7 +14817,7 @@ wine_fn_config_dll cfgmgr32 enable_cfgmgr32 implib
 wine_fn_config_dll clusapi enable_clusapi implib
 wine_fn_config_dll comcat enable_comcat
 wine_fn_config_test dlls/comcat/tests comcat_test
-wine_fn_config_dll comctl32 enable_comctl32 implib
+wine_fn_config_dll comctl32 enable_comctl32 po,implib
 wine_fn_config_test dlls/comctl32/tests comctl32_test
 wine_fn_config_dll comdlg32 enable_comdlg32 implib
 wine_fn_config_test dlls/comdlg32/tests comdlg32_test

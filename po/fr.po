@@ -17,6 +17,31 @@ msgstr ""
 msgid "Cancelling..."
 msgstr "Annulation..."
 
+#: comctl32.rc:39
+msgid "Separator"
+msgstr "Séparateur"
+
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:83
+#, fuzzy
+msgid "None"
+msgstr ""
+"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
+"Aucune\n"
+"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
+"Aucun"
+
+#: comctl32.rc:28 wordpad.rc:169
+msgid "Close"
+msgstr "Fermer"
+
+#: comctl32.rc:33
+msgid "Today:"
+msgstr "Aujourd'hui :"
+
+#: comctl32.rc:34
+msgid "Go to today"
+msgstr "Aller à aujourd'hui"
+
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
 msgstr "Identifiant de l'autorité de la clé"
@@ -668,15 +693,6 @@ msgstr "Entité terminale"
 #: crypt32.rc:197
 msgid "Path Length Constraint="
 msgstr "Contrainte de longueur de chemin ="
-
-#: crypt32.rc:198 progman.rc:83
-#, fuzzy
-msgid "None"
-msgstr ""
-"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
-"Aucune\n"
-"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
-"Aucun"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
@@ -5528,10 +5544,6 @@ msgstr "Zoom avant"
 #: wordpad.rc:168
 msgid "Zoom out"
 msgstr "Zoom arrière"
-
-#: wordpad.rc:169
-msgid "Close"
-msgstr "Fermer"
 
 #: wordpad.rc:170
 msgid "Page"

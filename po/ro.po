@@ -17,6 +17,31 @@ msgstr ""
 msgid "Cancelling..."
 msgstr "Renunț..."
 
+#: comctl32.rc:39
+msgid "Separator"
+msgstr "Separator"
+
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:83
+#, fuzzy
+msgid "None"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Fără\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Niciuna"
+
+#: comctl32.rc:28 wordpad.rc:169
+msgid "Close"
+msgstr "Închide"
+
+#: comctl32.rc:33
+msgid "Today:"
+msgstr "Azi:"
+
+#: comctl32.rc:34
+msgid "Go to today"
+msgstr "Mergi la Azi"
+
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
 msgstr "Identificatorul cheii autorității"
@@ -668,15 +693,6 @@ msgstr "Entitate finală"
 #: crypt32.rc:197
 msgid "Path Length Constraint="
 msgstr "Constrângere de lungime a căii="
-
-#: crypt32.rc:198 progman.rc:83
-#, fuzzy
-msgid "None"
-msgstr ""
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"Fără\n"
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"Niciuna"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
@@ -5500,10 +5516,6 @@ msgstr "Mărește"
 #: wordpad.rc:168
 msgid "Zoom out"
 msgstr "Micșorează"
-
-#: wordpad.rc:169
-msgid "Close"
-msgstr "Închide"
 
 #: wordpad.rc:170
 msgid "Page"

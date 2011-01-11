@@ -21,6 +21,29 @@
 
 #include "comctl32.h"
 
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+    IDS_CLOSE    "Close"
+}
+
+STRINGTABLE
+{
+    IDM_TODAY    "Today:"
+    IDM_GOTODAY  "Go to today"
+}
+
+STRINGTABLE
+{
+    IDS_SEPARATOR "Separator"
+}
+
+STRINGTABLE
+{
+    HKY_NONE "None"
+}
+
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 #define WINE_FILEDESCRIPTION_STR "Wine Common Controls"

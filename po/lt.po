@@ -18,6 +18,31 @@ msgstr ""
 msgid "Cancelling..."
 msgstr "Atsisakoma..."
 
+#: comctl32.rc:39
+msgid "Separator"
+msgstr "Skirtukas"
+
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:83
+#, fuzzy
+msgid "None"
+msgstr ""
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"Nėra\n"
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"Joks"
+
+#: comctl32.rc:28 wordpad.rc:169
+msgid "Close"
+msgstr "Užverti"
+
+#: comctl32.rc:33
+msgid "Today:"
+msgstr "Šiandien:"
+
+#: comctl32.rc:34
+msgid "Go to today"
+msgstr "Eiti į šiandien"
+
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
 msgstr "Įstaigos rakto identifikatorius"
@@ -669,10 +694,6 @@ msgstr "Esybės pabaiga"
 #: crypt32.rc:197
 msgid "Path Length Constraint="
 msgstr "Kelio ilgio ribojimas="
-
-#: crypt32.rc:198 progman.rc:83
-msgid "None"
-msgstr "Nėra"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
@@ -5426,10 +5447,6 @@ msgstr "Didinti"
 #: wordpad.rc:168
 msgid "Zoom out"
 msgstr "Mažinti"
-
-#: wordpad.rc:169
-msgid "Close"
-msgstr "Užverti"
 
 #: wordpad.rc:170
 msgid "Page"

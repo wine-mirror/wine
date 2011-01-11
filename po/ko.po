@@ -17,6 +17,26 @@ msgstr ""
 msgid "Cancelling..."
 msgstr "취소하는 중.."
 
+#: comctl32.rc:39
+msgid "Separator"
+msgstr "분리자"
+
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:83
+msgid "None"
+msgstr "없음"
+
+#: comctl32.rc:28 wordpad.rc:169
+msgid "Close"
+msgstr "닫기"
+
+#: comctl32.rc:33
+msgid "Today:"
+msgstr "오늘:"
+
+#: comctl32.rc:34
+msgid "Go to today"
+msgstr "오늘로 가기"
+
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
 msgstr "접근 키 식별자"
@@ -668,10 +688,6 @@ msgstr "엔티티 끝"
 #: crypt32.rc:197
 msgid "Path Length Constraint="
 msgstr "제한된 경로 길이 ="
-
-#: crypt32.rc:198 progman.rc:83
-msgid "None"
-msgstr "없음"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
@@ -5420,10 +5436,6 @@ msgstr "확대"
 #: wordpad.rc:168
 msgid "Zoom out"
 msgstr "축소"
-
-#: wordpad.rc:169
-msgid "Close"
-msgstr "닫기"
 
 #: wordpad.rc:170
 msgid "Page"

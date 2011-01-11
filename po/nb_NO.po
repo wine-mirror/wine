@@ -17,6 +17,26 @@ msgstr ""
 msgid "Cancelling..."
 msgstr "Avbryter..."
 
+#: comctl32.rc:39
+msgid "Separator"
+msgstr "Adskiller"
+
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:83
+msgid "None"
+msgstr "Ingen"
+
+#: comctl32.rc:28 wordpad.rc:169
+msgid "Close"
+msgstr "Lukk"
+
+#: comctl32.rc:33
+msgid "Today:"
+msgstr "Idag:"
+
+#: comctl32.rc:34
+msgid "Go to today"
+msgstr "Gå til idag"
+
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
 msgstr "Identifikator for autentiseringsnøkkel"
@@ -668,10 +688,6 @@ msgstr "Sluttenhet"
 #: crypt32.rc:197
 msgid "Path Length Constraint="
 msgstr "Begrensning på stilengde="
-
-#: crypt32.rc:198 progman.rc:83
-msgid "None"
-msgstr "Ingen"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
@@ -5422,10 +5438,6 @@ msgstr "Forstørr"
 #: wordpad.rc:168
 msgid "Zoom out"
 msgstr "Forminsk"
-
-#: wordpad.rc:169
-msgid "Close"
-msgstr "Lukk"
 
 #: wordpad.rc:170
 msgid "Page"

@@ -17,6 +17,26 @@ msgstr ""
 msgid "Cancelling..."
 msgstr "Cancelling..."
 
+#: comctl32.rc:39
+msgid "Separator"
+msgstr "Separator"
+
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:83
+msgid "None"
+msgstr "None"
+
+#: comctl32.rc:28 wordpad.rc:169
+msgid "Close"
+msgstr "Close"
+
+#: comctl32.rc:33
+msgid "Today:"
+msgstr "Today:"
+
+#: comctl32.rc:34
+msgid "Go to today"
+msgstr "Go to today"
+
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
 msgstr "Authority Key Identifier"
@@ -668,10 +688,6 @@ msgstr "End Entity"
 #: crypt32.rc:197
 msgid "Path Length Constraint="
 msgstr "Path Length Constraint="
-
-#: crypt32.rc:198 progman.rc:83
-msgid "None"
-msgstr "None"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
@@ -5376,10 +5392,6 @@ msgstr "Zoom in"
 #: wordpad.rc:168
 msgid "Zoom out"
 msgstr "Zoom out"
-
-#: wordpad.rc:169
-msgid "Close"
-msgstr "Close"
 
 #: wordpad.rc:170
 msgid "Page"

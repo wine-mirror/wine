@@ -17,6 +17,26 @@ msgstr ""
 msgid "Cancelling..."
 msgstr ""
 
+#: comctl32.rc:39
+msgid "Separator"
+msgstr "Dividilo"
+
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:83
+msgid "None"
+msgstr "Neniu"
+
+#: comctl32.rc:28 wordpad.rc:169
+msgid "Close"
+msgstr "Fermu"
+
+#: comctl32.rc:33
+msgid "Today:"
+msgstr "Hodiaý:"
+
+#: comctl32.rc:34
+msgid "Go to today"
+msgstr "Iru a la hodiaý"
+
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
 msgstr ""
@@ -668,10 +688,6 @@ msgstr ""
 
 #: crypt32.rc:197
 msgid "Path Length Constraint="
-msgstr ""
-
-#: crypt32.rc:198 progman.rc:83
-msgid "None"
 msgstr ""
 
 #: crypt32.rc:199
@@ -5090,10 +5106,6 @@ msgstr ""
 
 #: wordpad.rc:168
 msgid "Zoom out"
-msgstr ""
-
-#: wordpad.rc:169
-msgid "Close"
 msgstr ""
 
 #: wordpad.rc:170

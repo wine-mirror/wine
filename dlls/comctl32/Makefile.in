@@ -43,6 +43,7 @@ C_SRCS = \
 	updown.c
 
 RC_SRCS = \
+	comctl32.rc \
 	comctl_Bg.rc \
 	comctl_Cs.rc \
 	comctl_Da.rc \
@@ -71,8 +72,9 @@ RC_SRCS = \
 	comctl_Th.rc \
 	comctl_Tr.rc \
 	comctl_Uk.rc \
-	comctl_Zh.rc \
-	rsrc.rc
+	comctl_Zh.rc
+
+PO_SRCS = comctl32.rc
 
 SVG_SRCS = \
 	idb_hist_large.svg \

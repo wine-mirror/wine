@@ -17,6 +17,26 @@ msgstr ""
 msgid "Cancelling..."
 msgstr "Trwa anulowanie..."
 
+#: comctl32.rc:39
+msgid "Separator"
+msgstr "Odstęp"
+
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:83
+msgid "None"
+msgstr "Brak"
+
+#: comctl32.rc:28 wordpad.rc:169
+msgid "Close"
+msgstr "Zamknij"
+
+#: comctl32.rc:33
+msgid "Today:"
+msgstr "Dziś:"
+
+#: comctl32.rc:34
+msgid "Go to today"
+msgstr "Idź do dziś"
+
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
 msgstr "Identyfikator klucza urzędu"
@@ -668,10 +688,6 @@ msgstr "Jednostka końcowa"
 #: crypt32.rc:197
 msgid "Path Length Constraint="
 msgstr "Warunki ograniczające długość ścieżki="
-
-#: crypt32.rc:198 progman.rc:83
-msgid "None"
-msgstr "Brak"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
@@ -5482,10 +5498,6 @@ msgstr "Zbliż"
 #: wordpad.rc:168
 msgid "Zoom out"
 msgstr "Oddal"
-
-#: wordpad.rc:169
-msgid "Close"
-msgstr "Zamknij"
 
 #: wordpad.rc:170
 msgid "Page"

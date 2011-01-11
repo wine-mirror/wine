@@ -17,6 +17,26 @@ msgstr ""
 msgid "Cancelling..."
 msgstr ""
 
+#: comctl32.rc:39
+msgid "Separator"
+msgstr "Ayraç"
+
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:83
+msgid "None"
+msgstr "Hiçbiri"
+
+#: comctl32.rc:28 wordpad.rc:169
+msgid "Close"
+msgstr "Kapat"
+
+#: comctl32.rc:33
+msgid "Today:"
+msgstr "Bugün:"
+
+#: comctl32.rc:34
+msgid "Go to today"
+msgstr "Bugüne git"
+
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
 msgstr ""
@@ -680,10 +700,6 @@ msgstr ""
 #: crypt32.rc:197
 msgid "Path Length Constraint="
 msgstr ""
-
-#: crypt32.rc:198 progman.rc:83
-msgid "None"
-msgstr "Hiçbiri"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
@@ -5451,11 +5467,6 @@ msgstr "Yaklaştır"
 #, fuzzy
 msgid "Zoom out"
 msgstr "Yaklaştır"
-
-#: wordpad.rc:169
-#, fuzzy
-msgid "Close"
-msgstr "&Kapat"
 
 #: wordpad.rc:170
 #, fuzzy
