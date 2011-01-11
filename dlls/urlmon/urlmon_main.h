@@ -169,7 +169,7 @@ HRESULT create_protocol_proxy(IInternetProtocol*,IInternetProtocolSink*,Protocol
 typedef struct _task_header_t task_header_t;
 
 typedef struct {
-    const IInternetProtocolExVtbl    *lpIInternetProtocolExVtbl;
+    IInternetProtocolEx   IInternetProtocolEx_iface;
     const IInternetBindInfoVtbl      *lpInternetBindInfoVtbl;
     const IInternetPriorityVtbl      *lpInternetPriorityVtbl;
     const IServiceProviderVtbl       *lpServiceProviderVtbl;
@@ -209,8 +209,6 @@ typedef struct {
     IUri *uri;
     ProtocolProxy *filter_proxy;
 }  BindProtocol;
-
-#define PROTOCOLEX(x)  ((IInternetProtocolEx*)  &(x)->lpIInternetProtocolExVtbl)
 
 HRESULT create_binding_protocol(BOOL,BindProtocol**);
 void set_binding_sink(BindProtocol*,IInternetProtocolSink*,IInternetBindInfo*);

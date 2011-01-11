@@ -437,7 +437,7 @@ static HRESULT WINAPI InternetSession_CreateBinding(IInternetSession *iface,
     if(FAILED(hres))
         return hres;
 
-    *ppOInetProt = (IInternetProtocol*)PROTOCOLEX(protocol);
+    *ppOInetProt = (IInternetProtocol*)&protocol->IInternetProtocolEx_iface;
     return S_OK;
 }
 

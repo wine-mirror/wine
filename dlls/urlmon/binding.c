@@ -200,7 +200,7 @@ static void mime_available(Binding *This, LPCWSTR mime)
 static void stop_binding(Binding *binding, HRESULT hres, LPCWSTR str)
 {
     if(binding->state & BINDING_LOCKED) {
-        IInternetProtocolEx_UnlockRequest(PROTOCOLEX(binding->protocol));
+        IInternetProtocolEx_UnlockRequest(&binding->protocol->IInternetProtocolEx_iface);
         binding->state &= ~BINDING_LOCKED;
     }
 
@@ -342,7 +342,7 @@ static void create_object(Binding *binding)
 
     stop_binding(binding, hres, NULL);
     if(FAILED(hres))
-        IInternetProtocolEx_Terminate(PROTOCOLEX(binding->protocol), 0);
+        IInternetProtocolEx_Terminate(&binding->protocol->IInternetProtocolEx_iface, 0);
 }
 
 static void cache_file_available(Binding *This, const WCHAR *file_name)
@@ -862,7 +862,7 @@ static ULONG WINAPI Binding_Release(IBinding *iface)
         if(This->callback)
             IBindStatusCallback_Release(This->callback);
         if(This->protocol)
-            IInternetProtocolEx_Release(PROTOCOLEX(This->protocol));
+            IInternetProtocolEx_Release(&This->protocol->IInternetProtocolEx_iface);
         if(This->service_provider)
             IServiceProvider_Release(This->service_provider);
         if(This->stgmed_buf)
@@ -898,7 +898,8 @@ static HRESULT WINAPI Binding_Abort(IBinding *iface)
     if(This->state & BINDING_ABORTED)
         return E_FAIL;
 
-    hres = IInternetProtocolEx_Abort(PROTOCOLEX(This->protocol), E_ABORT, ERROR_SUCCESS);
+    hres = IInternetProtocolEx_Abort(&This->protocol->IInternetProtocolEx_iface, E_ABORT,
+            ERROR_SUCCESS);
     if(FAILED(hres))
         return hres;
 
@@ -1115,7 +1116,8 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
         HRESULT hres;
 
         if(!(This->state & BINDING_LOCKED)) {
-            HRESULT hres = IInternetProtocolEx_LockRequest(PROTOCOLEX(This->protocol), 0);
+            HRESULT hres = IInternetProtocolEx_LockRequest(
+                    &This->protocol->IInternetProtocolEx_iface, 0);
             if(SUCCEEDED(hres))
                 This->state |= BINDING_LOCKED;
         }
@@ -1156,7 +1158,7 @@ static HRESULT WINAPI InternetProtocolSink_ReportResult(IInternetProtocolSink *i
     TRACE("(%p)->(%08x %d %s)\n", This, hrResult, dwError, debugstr_w(szResult));
 
     stop_binding(This, hrResult, szResult);
-    IInternetProtocolEx_Terminate(PROTOCOLEX(This->protocol), 0);
+    IInternetProtocolEx_Terminate(&This->protocol->IInternetProtocolEx_iface, 0);
     return S_OK;
 }
 
@@ -1459,7 +1461,7 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, IUri *uri, IB
 
     if(binding_ctx) {
         ret->protocol = binding_ctx->protocol;
-        IInternetProtocolEx_AddRef(PROTOCOLEX(ret->protocol));
+        IInternetProtocolEx_AddRef(&ret->protocol->IInternetProtocolEx_iface);
     }else {
         hres = create_binding_protocol(TRUE, &ret->protocol);
         if(FAILED(hres)) {
@@ -1501,7 +1503,7 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, IUri *uri, IB
         IUnknown_AddRef(&ret->stgmed_buf->IUnknown_iface);
         ret->clipboard_format = binding_ctx->clipboard_format;
     }else {
-        ret->stgmed_buf = create_stgmed_buf(PROTOCOLEX(ret->protocol));
+        ret->stgmed_buf = create_stgmed_buf(&ret->protocol->IInternetProtocolEx_iface);
     }
 
     if(to_obj) {
@@ -1547,8 +1549,8 @@ static HRESULT start_binding(IMoniker *mon, Binding *binding_ctx, IUri *uri, IBi
         report_data(binding, BSCF_FIRSTDATANOTIFICATION | (binding_ctx->download_state == END_DOWNLOAD ? BSCF_LASTDATANOTIFICATION : 0),
                 0, 0);
     }else {
-        hres = IInternetProtocolEx_StartEx(PROTOCOLEX(binding->protocol), uri, PROTSINK(binding),
-                 BINDINF(binding), PI_APARTMENTTHREADED|PI_MIMEVERIFICATION, 0);
+        hres = IInternetProtocolEx_StartEx(&binding->protocol->IInternetProtocolEx_iface, uri,
+                PROTSINK(binding), BINDINF(binding), PI_APARTMENTTHREADED|PI_MIMEVERIFICATION, 0);
 
         TRACE("start ret %08x\n", hres);
 
@@ -1590,7 +1592,7 @@ HRESULT bind_to_storage(IUri *uri, IBindCtx *pbc, REFIID riid, void **ppv)
 
     if(binding->hres == S_OK && binding->stgmed_buf->init) {
         if((binding->state & BINDING_STOPPED) && (binding->state & BINDING_LOCKED))
-            IInternetProtocolEx_UnlockRequest(PROTOCOLEX(binding->protocol));
+            IInternetProtocolEx_UnlockRequest(&binding->protocol->IInternetProtocolEx_iface);
 
         hres = binding->stgmed_obj->vtbl->get_result(binding->stgmed_obj, binding->bindf, ppv);
     }else if(binding->bindf & BINDF_ASYNCHRONOUS) {
