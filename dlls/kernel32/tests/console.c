@@ -1223,9 +1223,11 @@ static void test_GetNumberOfConsoleInputEvents(HANDLE input_handle)
 
 static void test_WriteConsoleInputA(HANDLE input_handle)
 {
-    INPUT_RECORD event, temp;
+    INPUT_RECORD event;
+    INPUT_RECORD event_list[5];
     MOUSE_EVENT_RECORD mouse_event = { {0, 0}, 0, 0, MOUSE_MOVED };
-    DWORD count;
+    KEY_EVENT_RECORD key_event;
+    DWORD count, console_mode;
     BOOL ret;
     int i;
 
@@ -1262,6 +1264,27 @@ static void test_WriteConsoleInputA(HANDLE input_handle)
         {input_handle, &event, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
         {input_handle, &event, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
     };
+
+    /* Suppress external sources of input events for the duration of the test. */
+    ret = GetConsoleMode(input_handle, &console_mode);
+    ok(ret == TRUE, "Expected GetConsoleMode to return TRUE, got %d\n", ret);
+    if (!ret)
+    {
+        skip("GetConsoleMode failed with last error %u\n", GetLastError());
+        return;
+    }
+
+    ret = SetConsoleMode(input_handle, console_mode & ~(ENABLE_MOUSE_INPUT | ENABLE_WINDOW_INPUT));
+    ok(ret == TRUE, "Expected SetConsoleMode to return TRUE, got %d\n", ret);
+    if (!ret)
+    {
+        skip("SetConsoleMode failed with last error %u\n", GetLastError());
+        return;
+    }
+
+    /* Discard any events queued before the tests. */
+    ret = FlushConsoleInputBuffer(input_handle);
+    ok(ret == TRUE, "Expected FlushConsoleInputBuffer to return TRUE, got %d\n", ret);
 
     event.EventType = MOUSE_EVENT;
     event.Event.MouseEvent = mouse_event;
@@ -1304,11 +1327,141 @@ static void test_WriteConsoleInputA(HANDLE input_handle)
     ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
     ok(count == 1, "Expected count to be 1, got %u\n", count);
 
-    /* Discard the queued input event by reading it. */
-    count = 0xdeadbeef;
-    ret = ReadConsoleInputA(input_handle, &temp, 1, &count);
-    ok(ret == TRUE, "Expected ReadConsoleInputA to return TRUE, got %d\n", ret);
+    ret = FlushConsoleInputBuffer(input_handle);
+    ok(ret == TRUE, "Expected FlushConsoleInputBuffer to return TRUE, got %d\n", ret);
+
+    /* Writing a single mouse event doesn't seem to affect the count if an adjacent mouse event is already queued. */
+    event.EventType = MOUSE_EVENT;
+    event.Event.MouseEvent = mouse_event;
+
+    ret = WriteConsoleInputA(input_handle, &event, 1, &count);
+    ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
     ok(count == 1, "Expected count to be 1, got %u\n", count);
+
+    ret = GetNumberOfConsoleInputEvents(input_handle, &count);
+    ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
+    ok(count == 1, "Expected count to be 1, got %u\n", count);
+
+    ret = WriteConsoleInputA(input_handle, &event, 1, &count);
+    ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
+    ok(count == 1, "Expected count to be 1, got %u\n", count);
+
+    ret = GetNumberOfConsoleInputEvents(input_handle, &count);
+    ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
+    todo_wine
+    ok(count == 1, "Expected count to be 1, got %u\n", count);
+
+    ret = FlushConsoleInputBuffer(input_handle);
+    ok(ret == TRUE, "Expected FlushConsoleInputBuffer to return TRUE, got %d\n", ret);
+
+    for (i = 0; i < sizeof(event_list)/sizeof(event_list[0]); i++)
+    {
+        event_list[i].EventType = MOUSE_EVENT;
+        event_list[i].Event.MouseEvent = mouse_event;
+    }
+
+    /* Writing consecutive chunks of mouse events appears to work. */
+    ret = WriteConsoleInputA(input_handle, event_list, sizeof(event_list)/sizeof(event_list[0]), &count);
+    ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
+    ok(count == sizeof(event_list)/sizeof(event_list[0]),
+       "Expected count to be event list length, got %u\n", count);
+
+    ret = GetNumberOfConsoleInputEvents(input_handle, &count);
+    ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
+    ok(count == sizeof(event_list)/sizeof(event_list[0]),
+       "Expected count to be event list length, got %u\n", count);
+
+    ret = WriteConsoleInputA(input_handle, event_list, sizeof(event_list)/sizeof(event_list[0]), &count);
+    ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
+    ok(count == sizeof(event_list)/sizeof(event_list[0]),
+       "Expected count to be event list length, got %u\n", count);
+
+    ret = GetNumberOfConsoleInputEvents(input_handle, &count);
+    ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
+    ok(count == 2*sizeof(event_list)/sizeof(event_list[0]),
+       "Expected count to be twice event list length, got %u\n", count);
+
+    /* Again, writing a single mouse event with adjacent mouse events queued doesn't appear to affect the count. */
+    ret = WriteConsoleInputA(input_handle, &event, 1, &count);
+    ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
+    ok(count == 1, "Expected count to be 1, got %u\n", count);
+
+    ret = GetNumberOfConsoleInputEvents(input_handle, &count);
+    ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
+    todo_wine
+    ok(count == 2*sizeof(event_list)/sizeof(event_list[0]),
+       "Expected count to be twice event list length, got %u\n", count);
+
+    ret = FlushConsoleInputBuffer(input_handle);
+    ok(ret == TRUE, "Expected FlushConsoleInputBuffer to return TRUE, got %d\n", ret);
+
+    key_event.bKeyDown = FALSE;
+    key_event.wRepeatCount = 0;
+    key_event.wVirtualKeyCode = VK_SPACE;
+    key_event.wVirtualScanCode = VK_SPACE;
+    key_event.uChar.AsciiChar = ' ';
+    key_event.dwControlKeyState = 0;
+
+    event.EventType = KEY_EVENT;
+    event.Event.KeyEvent = key_event;
+
+    /* Key events don't exhibit the same behavior as mouse events. */
+    ret = WriteConsoleInputA(input_handle, &event, 1, &count);
+    ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
+    ok(count == 1, "Expected count to be 1, got %u\n", count);
+
+    ret = GetNumberOfConsoleInputEvents(input_handle, &count);
+    ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
+    ok(count == 1, "Expected count to be 1, got %u\n", count);
+
+    ret = WriteConsoleInputA(input_handle, &event, 1, &count);
+    ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
+    ok(count == 1, "Expected count to be 1, got %u\n", count);
+
+    ret = GetNumberOfConsoleInputEvents(input_handle, &count);
+    ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
+    ok(count == 2, "Expected count to be 2, got %u\n", count);
+
+    ret = FlushConsoleInputBuffer(input_handle);
+    ok(ret == TRUE, "Expected FlushConsoleInputBuffer to return TRUE, got %d\n", ret);
+
+    /* Try interleaving mouse and key events. */
+    event.EventType = MOUSE_EVENT;
+    event.Event.MouseEvent = mouse_event;
+
+    ret = WriteConsoleInputA(input_handle, &event, 1, &count);
+    ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
+    ok(count == 1, "Expected count to be 1, got %u\n", count);
+
+    ret = GetNumberOfConsoleInputEvents(input_handle, &count);
+    ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
+    ok(count == 1, "Expected count to be 1, got %u\n", count);
+
+    event.EventType = KEY_EVENT;
+    event.Event.KeyEvent = key_event;
+
+    ret = WriteConsoleInputA(input_handle, &event, 1, &count);
+    ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
+    ok(count == 1, "Expected count to be 1, got %u\n", count);
+
+    ret = GetNumberOfConsoleInputEvents(input_handle, &count);
+    ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
+    ok(count == 2, "Expected count to be 2, got %u\n", count);
+
+    event.EventType = MOUSE_EVENT;
+    event.Event.MouseEvent = mouse_event;
+
+    ret = WriteConsoleInputA(input_handle, &event, 1, &count);
+    ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
+    ok(count == 1, "Expected count to be 1, got %u\n", count);
+
+    ret = GetNumberOfConsoleInputEvents(input_handle, &count);
+    ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
+    ok(count == 3, "Expected count to be 3, got %u\n", count);
+
+    /* Restore the old console mode. */
+    ret = SetConsoleMode(input_handle, console_mode);
+    ok(ret == TRUE, "Expected SetConsoleMode to return TRUE, got %d\n", ret);
 }
 
 static void test_WriteConsoleInputW(HANDLE input_handle)
