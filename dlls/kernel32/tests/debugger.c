@@ -267,6 +267,7 @@ static void doDebugger(int argc, char** argv)
 static void crash_and_debug(HKEY hkey, const char* argv0, const char* dbgtasks)
 {
     static BOOL skip_crash_and_debug = FALSE;
+    BOOL bRet;
     DWORD ret;
     HANDLE start_event, done_event;
     char* cmd;
@@ -327,7 +328,8 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* dbgtasks)
     }
 #endif
     ok(wait_code == WAIT_OBJECT_0, "Timed out waiting for the child to crash\n");
-    ok(GetExitCodeProcess(info.hProcess, &exit_code), "GetExitCodeProcess failed: err=%d\n", GetLastError());
+    bRet = GetExitCodeProcess(info.hProcess, &exit_code);
+    ok(bRet, "GetExitCodeProcess failed: err=%d\n", GetLastError());
     if (strstr(dbgtasks, "code2"))
     {
         /* If, after attaching to the debuggee, the debugger exits without
@@ -381,6 +383,7 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* dbgtasks)
 
 static void crash_and_winedbg(HKEY hkey, const char* argv0)
 {
+    BOOL bRet;
     DWORD ret;
     char* cmd;
     PROCESS_INFORMATION	info;
@@ -404,7 +407,8 @@ static void crash_and_winedbg(HKEY hkey, const char* argv0)
 
     trace("waiting for child exit...\n");
     ok(WaitForSingleObject(info.hProcess, 60000) == WAIT_OBJECT_0, "Timed out waiting for the child to crash\n");
-    ok(GetExitCodeProcess(info.hProcess, &exit_code), "GetExitCodeProcess failed: err=%d\n", GetLastError());
+    bRet = GetExitCodeProcess(info.hProcess, &exit_code);
+    ok(bRet, "GetExitCodeProcess failed: err=%d\n", GetLastError());
     ok(exit_code == STATUS_ACCESS_VIOLATION, "exit code = %08x\n", exit_code);
     CloseHandle(info.hProcess);
 }

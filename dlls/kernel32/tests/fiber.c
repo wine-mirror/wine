@@ -101,7 +101,8 @@ static void test_ConvertFiberToThread(void)
 {
     if (pConvertFiberToThread)
     {
-        ok(pConvertFiberToThread() , "ConvertFiberToThread failed with error %d\n", GetLastError());
+        BOOL ret = pConvertFiberToThread();
+        ok(ret, "ConvertFiberToThread failed with error %d\n", GetLastError());
     }
     else
     {

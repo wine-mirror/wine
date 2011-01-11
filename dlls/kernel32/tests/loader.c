@@ -279,8 +279,8 @@ static void test_Loader(void)
         }
 
         SetLastError(0xdeadbeef);
-        ok(WriteFile(hfile, td[i].dos_header, td[i].size_of_dos_header, &dummy, NULL),
-           "WriteFile error %d\n", GetLastError());
+        ret = WriteFile(hfile, td[i].dos_header, td[i].size_of_dos_header, &dummy, NULL);
+        ok(ret, "WriteFile error %d\n", GetLastError());
 
         nt_header.FileHeader.NumberOfSections = td[i].number_of_sections;
         nt_header.FileHeader.SizeOfOptionalHeader = td[i].size_of_optional_header;
@@ -290,23 +290,23 @@ static void test_Loader(void)
         nt_header.OptionalHeader.SizeOfImage = td[i].size_of_image;
         nt_header.OptionalHeader.SizeOfHeaders = td[i].size_of_headers;
         SetLastError(0xdeadbeef);
-        ok(WriteFile(hfile, &nt_header, sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER), &dummy, NULL),
-           "WriteFile error %d\n", GetLastError());
+        ret = WriteFile(hfile, &nt_header, sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER), &dummy, NULL);
+        ok(ret, "WriteFile error %d\n", GetLastError());
 
         if (nt_header.FileHeader.SizeOfOptionalHeader)
         {
             SetLastError(0xdeadbeef);
-            ok(WriteFile(hfile, &nt_header.OptionalHeader,
-                         min(nt_header.FileHeader.SizeOfOptionalHeader, sizeof(IMAGE_OPTIONAL_HEADER)),
-                         &dummy, NULL),
-               "WriteFile error %d\n", GetLastError());
+            ret = WriteFile(hfile, &nt_header.OptionalHeader,
+                            min(nt_header.FileHeader.SizeOfOptionalHeader, sizeof(IMAGE_OPTIONAL_HEADER)),
+                            &dummy, NULL);
+            ok(ret, "WriteFile error %d\n", GetLastError());
             if (nt_header.FileHeader.SizeOfOptionalHeader > sizeof(IMAGE_OPTIONAL_HEADER))
             {
                 file_align = nt_header.FileHeader.SizeOfOptionalHeader - sizeof(IMAGE_OPTIONAL_HEADER);
                 assert(file_align < sizeof(filler));
                 SetLastError(0xdeadbeef);
-                ok(WriteFile(hfile, filler, file_align, &dummy, NULL),
-                   "WriteFile error %d\n", GetLastError());
+                ret = WriteFile(hfile, filler, file_align, &dummy, NULL);
+                ok(ret, "WriteFile error %d\n", GetLastError());
             }
         }
 
@@ -327,13 +327,13 @@ static void test_Loader(void)
             }
 
             SetLastError(0xdeadbeef);
-            ok(WriteFile(hfile, &section, sizeof(section), &dummy, NULL),
-               "WriteFile error %d\n", GetLastError());
+            ret = WriteFile(hfile, &section, sizeof(section), &dummy, NULL);
+            ok(ret, "WriteFile error %d\n", GetLastError());
 
             /* section data */
             SetLastError(0xdeadbeef);
-            ok(WriteFile(hfile, section_data, sizeof(section_data), &dummy, NULL),
-               "WriteFile error %d\n", GetLastError());
+            ret = WriteFile(hfile, section_data, sizeof(section_data), &dummy, NULL);
+            ok(ret, "WriteFile error %d\n", GetLastError());
         }
 
         file_size = GetFileSize(hfile, NULL);
@@ -500,7 +500,8 @@ static void test_Loader(void)
         }
 
         SetLastError(0xdeadbeef);
-        ok(DeleteFile(dll_name), "DeleteFile error %d\n", GetLastError());
+        ret = DeleteFile(dll_name);
+        ok(ret, "DeleteFile error %d\n", GetLastError());
     }
 }
 

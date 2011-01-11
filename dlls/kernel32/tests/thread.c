@@ -71,14 +71,16 @@ static HANDLE create_target_process(const char *arg)
     char **argv;
     char cmdline[MAX_PATH];
     PROCESS_INFORMATION pi;
+    BOOL ret;
     STARTUPINFO si = { 0 };
     si.cb = sizeof(si);
 
     winetest_get_mainargs( &argv );
     sprintf(cmdline, "%s %s %s", argv[0], argv[1], arg);
-    ok(CreateProcess(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL,
-                     &si, &pi) != 0, "error: %u\n", GetLastError());
-    ok(CloseHandle(pi.hThread) != 0, "error %u\n", GetLastError());
+    ret = CreateProcess(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "error: %u\n", GetLastError());
+    ret = CloseHandle(pi.hThread);
+    ok(ret, "error %u\n", GetLastError());
     return pi.hProcess;
 }
 
@@ -368,6 +370,7 @@ static VOID test_CreateThread_basic(void)
    DWORD i,j;
    DWORD GLE, ret;
    DWORD tid;
+   BOOL bRet;
 
    /* lstrlenA contains an exception handler so this makes sure exceptions work in the main thread */
    ok( lstrlenA( (char *)0xdeadbeef ) == 0, "lstrlenA: unexpected success\n" );
@@ -423,7 +426,8 @@ static VOID test_CreateThread_basic(void)
   }
 
   SetLastError(0xCAFEF00D);
-  ok(TlsFree(tlsIndex)!=0,"TlsFree failed: %08x\n", GetLastError());
+  bRet = TlsFree(tlsIndex);
+  ok(bRet, "TlsFree failed: %08x\n", GetLastError());
   ok(GetLastError()==0xCAFEF00D,
      "GetLastError: expected 0xCAFEF00D, got %08x\n", GetLastError());
 

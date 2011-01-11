@@ -1518,6 +1518,7 @@ static void test_OpenProcess(void)
     void *addr1;
     MEMORY_BASIC_INFORMATION info;
     SIZE_T dummy, read_bytes;
+    BOOL ret;
 
     /* not exported in all windows versions */
     if ((!pVirtualAllocEx) || (!pVirtualFreeEx)) {
@@ -1542,8 +1543,8 @@ static void test_OpenProcess(void)
 
     read_bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
-    ok(ReadProcessMemory(hproc, test_OpenProcess, &dummy, sizeof(dummy), &read_bytes),
-       "ReadProcessMemory error %d\n", GetLastError());
+    ret = ReadProcessMemory(hproc, test_OpenProcess, &dummy, sizeof(dummy), &read_bytes);
+    ok(ret, "ReadProcessMemory error %d\n", GetLastError());
     ok(read_bytes == sizeof(dummy), "wrong read bytes %ld\n", read_bytes);
 
     CloseHandle(hproc);
@@ -1573,8 +1574,8 @@ static void test_OpenProcess(void)
     hproc = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, GetCurrentProcessId());
 
     memset(&info, 0xcc, sizeof(info));
-    ok(VirtualQueryEx(hproc, addr1, &info, sizeof(info)) == sizeof(info),
-       "VirtualQueryEx error %d\n", GetLastError());
+    read_bytes = VirtualQueryEx(hproc, addr1, &info, sizeof(info));
+    ok(read_bytes == sizeof(info), "VirtualQueryEx error %d\n", GetLastError());
 
     ok(info.BaseAddress == addr1, "%p != %p\n", info.BaseAddress, addr1);
     ok(info.AllocationBase == addr1, "%p != %p\n", info.AllocationBase, addr1);
