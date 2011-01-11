@@ -1558,6 +1558,7 @@ static BOOL get_glyph_indices(INT charset, UINT code_page, WORD *idx, UINT count
     INT cs;
     DWORD i, ret;
     char name[64];
+    DWORD (WINAPI *pGdiGetCodePage)(HDC);
 
     assert(count <= 128);
 
@@ -1599,6 +1600,16 @@ static BOOL get_glyph_indices(INT charset, UINT code_page, WORD *idx, UINT count
     }
     ok(csi.ciACP == code_page, "expected %d, got %d\n", code_page, csi.ciACP);
 
+    pGdiGetCodePage = (void *) GetProcAddress(GetModuleHandleA("gdi32.dll"),
+                                              "GdiGetCodePage");
+    if (pGdiGetCodePage != NULL && pGdiGetCodePage(hdc) != code_page)
+    {
+        skip("Font code page %d, looking for code page %d\n",
+             pGdiGetCodePage(hdc), code_page);
+        ReleaseDC(0, hdc);
+        return FALSE;
+    }
+
     if (unicode)
     {
         char ansi_buf[128];
@@ -1610,7 +1621,8 @@ static BOOL get_glyph_indices(INT charset, UINT code_page, WORD *idx, UINT count
 
         SetLastError(0xdeadbeef);
         ret = pGetGlyphIndicesW(hdc, unicode_buf, count, idx, 0);
-        ok(ret == count, "GetGlyphIndicesW error %u\n", GetLastError());
+        ok(ret == count, "GetGlyphIndicesW expected %d got %d, error %u\n",
+           count, ret, GetLastError());
     }
     else
     {
@@ -1620,7 +1632,8 @@ static BOOL get_glyph_indices(INT charset, UINT code_page, WORD *idx, UINT count
 
         SetLastError(0xdeadbeef);
         ret = pGetGlyphIndicesA(hdc, ansi_buf, count, idx, 0);
-        ok(ret == count, "GetGlyphIndicesA error %u\n", GetLastError());
+        ok(ret == count, "GetGlyphIndicesA expected %d got %d, error %u\n",
+           count, ret, GetLastError());
     }
 
     SelectObject(hdc, hfont_old);
@@ -1668,9 +1681,9 @@ static void test_font_charset(void)
                 break;
             }
         }
-        get_glyph_indices(cd[i].charset, cd[i].code_page, cd[i].font_idxA, 128, FALSE);
-        get_glyph_indices(cd[i].charset, cd[i].code_page, cd[i].font_idxW, 128, TRUE);
-        ok(!memcmp(cd[i].font_idxA, cd[i].font_idxW, 128*sizeof(WORD)), "%d: indices don't match\n", i);
+        if (get_glyph_indices(cd[i].charset, cd[i].code_page, cd[i].font_idxA, 128, FALSE) &&
+            get_glyph_indices(cd[i].charset, cd[i].code_page, cd[i].font_idxW, 128, TRUE))
+            ok(!memcmp(cd[i].font_idxA, cd[i].font_idxW, 128*sizeof(WORD)), "%d: indices don't match\n", i);
     }
 
     ok(memcmp(cd[0].font_idxW, cd[1].font_idxW, 128*sizeof(WORD)), "0 vs 1: indices shouldn't match\n");
