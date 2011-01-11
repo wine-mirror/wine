@@ -2119,12 +2119,8 @@ static void* pdb_read_ds_file(const struct PDB_DS_HEADER* pdb,
     DWORD                       i;
 
     if (!toc || file_nr >= toc->num_files) return NULL;
+    if (toc->file_size[file_nr] == 0 || toc->file_size[file_nr] == 0xFFFFFFFF) return NULL;
 
-    if (toc->file_size[file_nr] == 0 || toc->file_size[file_nr] == 0xFFFFFFFF)
-    {
-        FIXME(">>> requesting NULL stream (%u)\n", file_nr);
-        return NULL;
-    }
     block_list = &toc->file_size[toc->num_files];
     for (i = 0; i < file_nr; i++)
         block_list += (toc->file_size[i] + pdb->block_size - 1) / pdb->block_size;
@@ -2175,6 +2171,23 @@ static void pdb_free_file(struct pdb_file_info* pdb_file)
         pdb_file->u.ds.toc = NULL;
         break;
     }
+}
+
+static void* pdb_read_strings(const struct pdb_file_info* pdb_file)
+{
+    void *ret;
+
+    /* FIXME: how to determine the correct file number? */
+    /* 4 and 12 have been observed, there may be others */
+
+    ret = pdb_read_file( pdb_file, 4 );
+    if (ret && *(const DWORD *)ret == 0xeffeeffe) return ret;
+    pdb_free( ret );
+    ret = pdb_read_file( pdb_file, 12 );
+    if (ret && *(const DWORD *)ret == 0xeffeeffe) return ret;
+    pdb_free( ret );
+    WARN("string table not found\n");
+    return NULL;
 }
 
 static void pdb_module_remove(struct process* pcsn, struct module_format* modfmt)
@@ -2596,20 +2609,8 @@ static BOOL pdb_process_internal(const struct process* pcs,
                 symbols.version, symbols.version);
         }
 
-        files_image = pdb_read_file(pdb_file, 12);   /* FIXME: really fixed ??? */
-        if (files_image)
-        {
-            if (*(const DWORD*)files_image == 0xeffeeffe)
-            {
-                files_size = *(const DWORD*)(files_image + 8);
-            }
-            else
-            {
-                WARN("wrong header %x expecting 0xeffeeffe\n", *(const DWORD*)files_image);
-                pdb_free(files_image);
-                files_image = NULL;
-            }
-        }
+        files_image = pdb_read_strings(pdb_file);
+        if (files_image) files_size = *(const DWORD*)(files_image + 8);
 
         pdb_process_symbol_imports(pcs, msc_dbg, &symbols, symbols_image, image,
                                    pdb_lookup, pdb_module_info, module_index);
@@ -3015,13 +3016,8 @@ BOOL         pdb_virtual_unwind(struct cpu_stack_walk* csw, DWORD_PTR ip,
     TRACE("searching %lx => %lx\n", ip, ip - (DWORD_PTR)pair.effective->module.BaseOfImage);
     ip -= (DWORD_PTR)pair.effective->module.BaseOfImage;
 
-    strbase = pdb_read_file(&pdb_info->pdb_files[0], 12);   /* FIXME: really fixed index ??? */
+    strbase = pdb_read_strings(&pdb_info->pdb_files[0]);
     if (!strbase) return FALSE;
-    if (*(const DWORD*)strbase != 0xeffeeffe)
-    {
-        pdb_free(strbase);
-        return FALSE;
-    }
     strsize = *(const DWORD*)(strbase + 8);
     fpoext = pdb_read_file(&pdb_info->pdb_files[0], 10);
     size = pdb_get_file_size(&pdb_info->pdb_files[0], 10);
