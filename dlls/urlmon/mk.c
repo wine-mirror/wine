@@ -205,8 +205,8 @@ static HRESULT WINAPI MkProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUri,
     LPWSTR mime, progid, display_name, colon_ptr;
     DWORD path_size = INTERNET_MAX_URL_LENGTH;
     DWORD bindf=0, eaten=0, scheme=0, len;
+    BSTR url, path_tmp, path = NULL;
     IParseDisplayName *pdn;
-    BSTR url, path = NULL;
     BINDINFO bindinfo;
     STATSTG statstg;
     IMoniker *mon;
@@ -244,14 +244,22 @@ static HRESULT WINAPI MkProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUri,
         CoTaskMemFree(mime);
     }
 
-    hres = IUri_GetPath(pUri, &path);
+    hres = IUri_GetPath(pUri, &path_tmp);
     if(FAILED(hres))
         return hres;
+    path = heap_alloc(path_size);
+    hres = UrlUnescapeW((LPWSTR)path_tmp, path, &path_size, 0);
+    SysFreeString(path_tmp);
+    if (FAILED(hres))
+    {
+        heap_free(path);
+        return report_result(pOIProtSink, INET_E_RESOURCE_NOT_FOUND, ERROR_INVALID_PARAMETER);
+    }
     progid = path+1; /* skip '@' symbol */
     colon_ptr = strchrW(path, ':');
     if(!colon_ptr)
     {
-        SysFreeString(path);
+        heap_free(path);
         return report_result(pOIProtSink, INET_E_RESOURCE_NOT_FOUND, ERROR_INVALID_PARAMETER);
     }
 
@@ -261,7 +269,7 @@ static HRESULT WINAPI MkProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUri,
 
     progid[colon_ptr-progid] = 0; /* overwrite ':' with NULL terminator */
     hres = CLSIDFromProgID(progid, &clsid);
-    SysFreeString(path);
+    heap_free(path);
     if(FAILED(hres))
     {
         heap_free(display_name);
