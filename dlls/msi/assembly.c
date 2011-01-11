@@ -283,7 +283,7 @@ static BOOL check_assembly_installed( MSIPACKAGE *package, MSIASSEMBLY *assembly
     memset( &info, 0, sizeof(info) );
     info.cbAssemblyInfo = sizeof(info);
     hr = IAssemblyCache_QueryAssemblyInfo( cache, QUERYASMINFO_FLAG_VALIDATE, assembly->display_name, &info );
-    if (hr != S_OK)
+    if (hr != HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER))
         return FALSE;
 
     return (info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED);
