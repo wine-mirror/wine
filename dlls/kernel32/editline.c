@@ -186,6 +186,7 @@ static inline void WCEL_WriteNChars(WCEL_Context* ctx, char ch, int count)
 static inline void WCEL_Update(WCEL_Context* ctx, int beg, int len)
 {
     int         i, last;
+    DWORD       count;
     WCHAR       tmp[2];
 
     /* bare console case is handled in CONSOLE_ReadLine (we always reprint the whole string) */
@@ -198,25 +199,25 @@ static inline void WCEL_Update(WCEL_Context* ctx, int beg, int len)
             if (last != i)
             {
                 WriteConsoleOutputCharacterW(ctx->hConOut, &ctx->line[last], i - last,
-                                             WCEL_GetCoord(ctx, last), NULL);
+                                             WCEL_GetCoord(ctx, last), &count);
                 FillConsoleOutputAttribute(ctx->hConOut, ctx->csbi.wAttributes, i - last,
-                                           WCEL_GetCoord(ctx, last), NULL);
+                                           WCEL_GetCoord(ctx, last), &count);
             }
             tmp[0] = '^';
             tmp[1] = '@' + ctx->line[i];
             WriteConsoleOutputCharacterW(ctx->hConOut, tmp, 2,
-                                         WCEL_GetCoord(ctx, i), NULL);
+                                         WCEL_GetCoord(ctx, i), &count);
             FillConsoleOutputAttribute(ctx->hConOut, ctx->csbi.wAttributes, 2,
-                                       WCEL_GetCoord(ctx, i), NULL);
+                                       WCEL_GetCoord(ctx, i), &count);
             last = i + 1;
         }
     }
     if (last != beg + len)
     {
         WriteConsoleOutputCharacterW(ctx->hConOut, &ctx->line[last], i - last,
-                                     WCEL_GetCoord(ctx, last), NULL);
+                                     WCEL_GetCoord(ctx, last), &count);
         FillConsoleOutputAttribute(ctx->hConOut, ctx->csbi.wAttributes, i - last,
-                                   WCEL_GetCoord(ctx, last), NULL);
+                                   WCEL_GetCoord(ctx, last), &count);
     }
 }
 
