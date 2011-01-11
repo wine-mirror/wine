@@ -1461,10 +1461,10 @@ enum FileSig get_kind_exec(void)
             if (*pdw == IMAGE_NT_SIGNATURE)                     return SIG_PE;
             if (*(const WORD *)pdw == IMAGE_OS2_SIGNATURE)      return SIG_NE;
             if (*(const WORD *)pdw == IMAGE_VXD_SIGNATURE)      return SIG_LE;
-            return SIG_DOS;
         }
+        return SIG_DOS;
     }
-    return 0;
+    return SIG_UNKNOWN;
 }
 
 void pe_dump(void)
