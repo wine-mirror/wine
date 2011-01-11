@@ -170,11 +170,11 @@ typedef struct _task_header_t task_header_t;
 
 typedef struct {
     IInternetProtocolEx   IInternetProtocolEx_iface;
-    const IInternetBindInfoVtbl      *lpInternetBindInfoVtbl;
-    const IInternetPriorityVtbl      *lpInternetPriorityVtbl;
-    const IServiceProviderVtbl       *lpServiceProviderVtbl;
-    const IInternetProtocolSinkVtbl  *lpIInternetProtocolSinkVtbl;
-    const IWinInetHttpInfoVtbl       *lpIWinInetHttpInfoVtbl;
+    IInternetBindInfo     IInternetBindInfo_iface;
+    IInternetPriority     IInternetPriority_iface;
+    IServiceProvider      IServiceProvider_iface;
+    IInternetProtocolSink IInternetProtocolSink_iface;
+    IWinInetHttpInfo      IWinInetHttpInfo_iface;
 
     LONG ref;
 
