@@ -20,6 +20,7 @@
 #include <math.h>
 
 #define COBJMACROS
+#define CONST_VTABLE
 
 #include "windef.h"
 #include "objbase.h"
@@ -37,10 +38,15 @@ typedef struct bitmap_data {
 } bitmap_data;
 
 typedef struct BitmapTestSrc {
-    const IWICBitmapSourceVtbl *lpVtbl;
+    IWICBitmapSource IWICBitmapSource_iface;
     LONG ref;
     const bitmap_data *data;
 } BitmapTestSrc;
+
+static inline BitmapTestSrc *impl_from_IWICBitmapSource(IWICBitmapSource *iface)
+{
+    return CONTAINING_RECORD(iface, BitmapTestSrc, IWICBitmapSource_iface);
+}
 
 static HRESULT WINAPI BitmapTestSrc_QueryInterface(IWICBitmapSource *iface, REFIID iid,
     void **ppv)
@@ -59,14 +65,14 @@ static HRESULT WINAPI BitmapTestSrc_QueryInterface(IWICBitmapSource *iface, REFI
 
 static ULONG WINAPI BitmapTestSrc_AddRef(IWICBitmapSource *iface)
 {
-    BitmapTestSrc *This = (BitmapTestSrc*)iface;
+    BitmapTestSrc *This = impl_from_IWICBitmapSource(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
     return ref;
 }
 
 static ULONG WINAPI BitmapTestSrc_Release(IWICBitmapSource *iface)
 {
-    BitmapTestSrc *This = (BitmapTestSrc*)iface;
+    BitmapTestSrc *This = impl_from_IWICBitmapSource(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
     return ref;
 }
@@ -74,7 +80,7 @@ static ULONG WINAPI BitmapTestSrc_Release(IWICBitmapSource *iface)
 static HRESULT WINAPI BitmapTestSrc_GetSize(IWICBitmapSource *iface,
     UINT *puiWidth, UINT *puiHeight)
 {
-    BitmapTestSrc *This = (BitmapTestSrc*)iface;
+    BitmapTestSrc *This = impl_from_IWICBitmapSource(iface);
     *puiWidth = This->data->width;
     *puiHeight = This->data->height;
     return S_OK;
@@ -83,7 +89,7 @@ static HRESULT WINAPI BitmapTestSrc_GetSize(IWICBitmapSource *iface,
 static HRESULT WINAPI BitmapTestSrc_GetPixelFormat(IWICBitmapSource *iface,
     WICPixelFormatGUID *pPixelFormat)
 {
-    BitmapTestSrc *This = (BitmapTestSrc*)iface;
+    BitmapTestSrc *This = impl_from_IWICBitmapSource(iface);
     memcpy(pPixelFormat, This->data->format, sizeof(GUID));
     return S_OK;
 }
@@ -91,7 +97,7 @@ static HRESULT WINAPI BitmapTestSrc_GetPixelFormat(IWICBitmapSource *iface,
 static HRESULT WINAPI BitmapTestSrc_GetResolution(IWICBitmapSource *iface,
     double *pDpiX, double *pDpiY)
 {
-    BitmapTestSrc *This = (BitmapTestSrc*)iface;
+    BitmapTestSrc *This = impl_from_IWICBitmapSource(iface);
     *pDpiX = This->data->xres;
     *pDpiY = This->data->yres;
     return S_OK;
@@ -106,7 +112,7 @@ static HRESULT WINAPI BitmapTestSrc_CopyPalette(IWICBitmapSource *iface,
 static HRESULT WINAPI BitmapTestSrc_CopyPixels(IWICBitmapSource *iface,
     const WICRect *prc, UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer)
 {
-    BitmapTestSrc *This = (BitmapTestSrc*)iface;
+    BitmapTestSrc *This = impl_from_IWICBitmapSource(iface);
     UINT bytesperrow;
     UINT srcstride;
     UINT row_offset;
@@ -171,26 +177,22 @@ static const IWICBitmapSourceVtbl BitmapTestSrc_Vtbl = {
     BitmapTestSrc_CopyPixels
 };
 
-static void CreateTestBitmap(const bitmap_data *data, IWICBitmapSource **bitmap)
+static void CreateTestBitmap(const bitmap_data *data, BitmapTestSrc **This)
 {
-    BitmapTestSrc *This = HeapAlloc(GetProcessHeap(), 0, sizeof(BitmapTestSrc));
+    *This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
 
-    if (This)
+    if (*This)
     {
-        This->lpVtbl = &BitmapTestSrc_Vtbl;
-        This->ref = 1;
-        This->data = data;
-        *bitmap = (IWICBitmapSource*)This;
+        (*This)->IWICBitmapSource_iface.lpVtbl = &BitmapTestSrc_Vtbl;
+        (*This)->ref = 1;
+        (*This)->data = data;
     }
-    else
-        *bitmap = NULL;
 }
 
-static void DeleteTestBitmap(IWICBitmapSource *bitmap)
+static void DeleteTestBitmap(BitmapTestSrc *This)
 {
-    BitmapTestSrc *This = (BitmapTestSrc*)bitmap;
-    ok(This->lpVtbl == &BitmapTestSrc_Vtbl, "test bitmap %p deleted with incorrect vtable\n", bitmap);
-    ok(This->ref == 1, "test bitmap %p deleted with %i references instead of 1\n", bitmap, This->ref);
+    ok(This->IWICBitmapSource_iface.lpVtbl == &BitmapTestSrc_Vtbl, "test bitmap %p deleted with incorrect vtable\n", This);
+    ok(This->ref == 1, "test bitmap %p deleted with %i references instead of 1\n", This, This->ref);
     HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -289,12 +291,13 @@ static const struct bitmap_data testdata_32bppBGRA = {
 
 static void test_conversion(const struct bitmap_data *src, const struct bitmap_data *dst, const char *name, BOOL todo)
 {
-    IWICBitmapSource *src_bitmap, *dst_bitmap;
+    BitmapTestSrc *src_obj;
+    IWICBitmapSource *dst_bitmap;
     HRESULT hr;
 
-    CreateTestBitmap(src, &src_bitmap);
+    CreateTestBitmap(src, &src_obj);
 
-    hr = WICConvertBitmapSource(dst->format, src_bitmap, &dst_bitmap);
+    hr = WICConvertBitmapSource(dst->format, &src_obj->IWICBitmapSource_iface, &dst_bitmap);
     if (todo)
         todo_wine ok(SUCCEEDED(hr), "WICConvertBitmapSource(%s) failed, hr=%x\n", name, hr);
     else
@@ -307,31 +310,32 @@ static void test_conversion(const struct bitmap_data *src, const struct bitmap_d
         IWICBitmapSource_Release(dst_bitmap);
     }
 
-    DeleteTestBitmap(src_bitmap);
+    DeleteTestBitmap(src_obj);
 }
 
 static void test_invalid_conversion(void)
 {
-    IWICBitmapSource *src_bitmap, *dst_bitmap;
+    BitmapTestSrc *src_obj;
+    IWICBitmapSource *dst_bitmap;
     HRESULT hr;
 
-    CreateTestBitmap(&testdata_32bppBGRA, &src_bitmap);
+    CreateTestBitmap(&testdata_32bppBGRA, &src_obj);
 
     /* convert to a non-pixel-format GUID */
-    hr = WICConvertBitmapSource(&GUID_VendorMicrosoft, src_bitmap, &dst_bitmap);
+    hr = WICConvertBitmapSource(&GUID_VendorMicrosoft, &src_obj->IWICBitmapSource_iface, &dst_bitmap);
     ok(hr == WINCODEC_ERR_COMPONENTNOTFOUND, "WICConvertBitmapSource returned %x\n", hr);
 
-    DeleteTestBitmap(src_bitmap);
+    DeleteTestBitmap(src_obj);
 }
 
 static void test_default_converter(void)
 {
-    IWICBitmapSource *src_bitmap;
+    BitmapTestSrc *src_obj;
     IWICFormatConverter *converter;
     BOOL can_convert=1;
     HRESULT hr;
 
-    CreateTestBitmap(&testdata_32bppBGRA, &src_bitmap);
+    CreateTestBitmap(&testdata_32bppBGRA, &src_obj);
 
     hr = CoCreateInstance(&CLSID_WICDefaultFormatConverter, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICFormatConverter, (void**)&converter);
@@ -343,7 +347,7 @@ static void test_default_converter(void)
         ok(SUCCEEDED(hr), "CanConvert returned %x\n", hr);
         ok(can_convert, "expected TRUE, got %i\n", can_convert);
 
-        hr = IWICFormatConverter_Initialize(converter, src_bitmap,
+        hr = IWICFormatConverter_Initialize(converter, &src_obj->IWICBitmapSource_iface,
             &GUID_WICPixelFormat32bppBGR, WICBitmapDitherTypeNone, NULL, 0.0,
             WICBitmapPaletteTypeCustom);
         ok(SUCCEEDED(hr), "Initialize returned %x\n", hr);
@@ -354,7 +358,7 @@ static void test_default_converter(void)
         IWICFormatConverter_Release(converter);
     }
 
-    DeleteTestBitmap(src_bitmap);
+    DeleteTestBitmap(src_obj);
 }
 
 static void test_encoder(const struct bitmap_data *src, const CLSID* clsid_encoder,
@@ -362,7 +366,7 @@ static void test_encoder(const struct bitmap_data *src, const CLSID* clsid_encod
 {
     HRESULT hr;
     IWICBitmapEncoder *encoder;
-    IWICBitmapSource *src_bitmap;
+    BitmapTestSrc *src_obj;
     HGLOBAL hglobal;
     IStream *stream;
     IWICBitmapFrameEncode *frameencode;
@@ -371,7 +375,7 @@ static void test_encoder(const struct bitmap_data *src, const CLSID* clsid_encod
     IWICBitmapFrameDecode *framedecode;
     WICPixelFormatGUID pixelformat;
 
-    CreateTestBitmap(src, &src_bitmap);
+    CreateTestBitmap(src, &src_obj);
 
     hr = CoCreateInstance(clsid_encoder, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICBitmapEncoder, (void**)&encoder);
@@ -406,7 +410,7 @@ static void test_encoder(const struct bitmap_data *src, const CLSID* clsid_encod
                 hr = IWICBitmapFrameEncode_SetSize(frameencode, src->width, src->height);
                 ok(SUCCEEDED(hr), "SetSize failed, hr=%x\n", hr);
 
-                hr = IWICBitmapFrameEncode_WriteSource(frameencode, src_bitmap, NULL);
+                hr = IWICBitmapFrameEncode_WriteSource(frameencode, &src_obj->IWICBitmapSource_iface, NULL);
                 ok(SUCCEEDED(hr), "WriteSource failed, hr=%x\n", hr);
 
                 hr = IWICBitmapFrameEncode_Commit(frameencode);
@@ -450,7 +454,7 @@ static void test_encoder(const struct bitmap_data *src, const CLSID* clsid_encod
         IWICBitmapEncoder_Release(encoder);
     }
 
-    DeleteTestBitmap(src_bitmap);
+    DeleteTestBitmap(src_obj);
 }
 
 START_TEST(converter)
