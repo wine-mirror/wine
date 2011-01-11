@@ -440,7 +440,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
              */
             codeview_dump_linetab2((const char*)modimage + symbol_size + lineno_size,
                                    total_size - (symbol_size + lineno_size),
-                                   filesimage + 12, filessize, "        ");
+                                   filesimage ? filesimage + 12 : NULL, filessize, "        ");
             /* what's that part ??? */
             if (0)
                 dump_data(modimage + symbol_size + lineno_size, total_size - (symbol_size + lineno_size), "    ");
