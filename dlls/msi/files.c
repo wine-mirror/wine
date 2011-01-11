@@ -68,7 +68,8 @@ static void schedule_install_files(MSIPACKAGE *package)
     {
         MSICOMPONENT *comp = file->Component;
 
-        if (comp->ActionRequest != INSTALLSTATE_LOCAL || !comp->Enabled)
+        if (comp->ActionRequest != INSTALLSTATE_LOCAL || !comp->Enabled ||
+            (comp->assembly && comp->assembly->installed))
         {
             TRACE("File %s is not scheduled for install\n", debugstr_w(file->File));
             file->state = msifs_skipped;
