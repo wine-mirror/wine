@@ -2151,6 +2151,116 @@ static void test_import_export(void)
 
     CryptDestroyKey(hPrivKey);
 }
+
+static void test_import_hmac(void)
+{
+    /* Test cases from RFC 2202, section 3 */
+    static const struct rfc2202_test_case {
+        const char *key;
+        DWORD key_len;
+        const char *data;
+        const DWORD data_len;
+        const char *digest;
+    } cases[] = {
+        { "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b"
+          "\x0b\x0b\x0b\x0b", 20,
+          "Hi There", 8,
+          "\xb6\x17\x31\x86\x55\x05\x72\x64\xe2\x8b\xc0\xb6\xfb\x37\x8c\x8e"
+          "\xf1\x46\xbe\x00" },
+        { "Jefe", 4,
+          "what do ya want for nothing?", 28,
+          "\xef\xfc\xdf\x6a\xe5\xeb\x2f\xa2\xd2\x74\x16\xd5\xf1\x84\xdf\x9c"
+          "\x25\x9a\x7c\x79" },
+        { "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
+          "\xaa\xaa\xaa\xaa", 20,
+          "\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd"
+          "\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd"
+          "\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd"
+          "\xdd\xdd", 50,
+          "\x12\x5d\x73\x42\xb9\xac\x11\xcd\x91\xa3\x9a\xf4\x8a\xa1\x7b\x4f"
+          "\x63\xf1\x75\xd3" },
+        { "\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10"
+          "\x11\x12\x13\x14\x15\x16\x17\x18\x19", 25,
+          "\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
+          "\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
+          "\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
+          "\xcd\xcd", 50,
+          "\x4c\x90\x07\xF4\x02\x62\x50\xc6\xbc\x84\x14\xf9\xbf\x50\xc8\x6c"
+          "\x2d\x72\x35\xda" },
+        { "\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c"
+          "\x0c\x0c\x0c\x0c", 20,
+          "Test With Truncation", 20,
+          "\x4c\x1a\x03\x42\x4b\x55\xe0\x7f\xe7\xf2\x7b\xe1\xd5\x8b\xb9\x32"
+          "\x4a\x9a\x5a\x04" },
+        { "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
+          "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
+          "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
+          "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
+          "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa",
+          80,
+          "Test Using Larger Than Block-Size Key - Hash Key First", 54,
+          "\xaa\x4a\xe5\xe1\x52\x72\xd0\x0e\x95\x70\x56\x37\xce\x8a\x3b\x55"
+          "\xed\x40\x21\x12" },
+        { "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
+          "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
+          "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
+          "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
+          "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa",
+          80,
+          "Test Using Larger Than Block-Size Key and Larger "
+          "Than One Block-Size Data", 73,
+          "\xe8\xe9\x9D\x0f\x45\x23\x7d\x78\x6d\x6b\xba\xa7\x96\x5c\x78\x08"
+          "\xbb\xff\x1a\x91" }
+    };
+    DWORD i;
+
+    for (i = 0; i < sizeof(cases) / sizeof(cases[0]); i++)
+    {
+        const struct rfc2202_test_case *test_case = &cases[i];
+        DWORD size = sizeof(BLOBHEADER) + sizeof(DWORD) + test_case->key_len;
+        BYTE *blob = HeapAlloc(GetProcessHeap(), 0, size);
+
+        if (blob)
+        {
+            BLOBHEADER *header = (BLOBHEADER *)blob;
+            DWORD *key_len = (DWORD *)(header + 1);
+            BYTE *key_bytes = (BYTE *)(key_len + 1);
+            BOOL result;
+            HCRYPTKEY key;
+
+            header->bType = PLAINTEXTKEYBLOB;
+            header->bVersion = CUR_BLOB_VERSION;
+            header->reserved = 0;
+            header->aiKeyAlg = CALG_RC2;
+            *key_len = test_case->key_len;
+            memcpy(key_bytes, test_case->key, *key_len);
+            result = CryptImportKey(hProv, blob, size, 0, CRYPT_IPSEC_HMAC_KEY, &key);
+            todo_wine
+            ok(result || broken(GetLastError() == NTE_BAD_FLAGS /* Win2k */), "CryptImportKey failed on test case %d: %08x\n", i, GetLastError());
+            if (result)
+            {
+                HCRYPTHASH hash;
+                HMAC_INFO hmac_info = { CALG_SHA1, 0 };
+                BYTE digest[20];
+                DWORD digest_size;
+
+                result = CryptCreateHash(hProv, CALG_HMAC, key, 0, &hash);
+                ok(result, "CryptCreateHash failed on test case %d: %08x\n", i, GetLastError());
+                result = CryptSetHashParam(hash, HP_HMAC_INFO, (BYTE *)&hmac_info, 0);
+                ok(result, "CryptSetHashParam failed on test case %d: %08x\n", i, GetLastError());
+                result = CryptHashData(hash, (const BYTE *)test_case->data, test_case->data_len, 0);
+                ok(result, "CryptHashData failed on test case %d: %08x\n", i, GetLastError());
+                digest_size = sizeof(digest);
+                result = CryptGetHashParam(hash, HP_HASHVAL, digest, &digest_size, 0);
+                ok(result, "CryptGetHashParam failed on test case %d: %08x\n", i, GetLastError());
+                ok(!memcmp(digest, test_case->digest, sizeof(digest)), "Unexpected valued on test case %d\n", i);
+                CryptDestroyHash(hash);
+                CryptDestroyKey(key);
+            }
+            HeapFree(GetProcessHeap(), 0, blob);
+        }
+    }
+}
         
 static void test_schannel_provider(void)
 {
@@ -2856,6 +2966,7 @@ START_TEST(rsaenh)
     test_verify_signature();
     test_rsa_encrypt();
     test_import_export();
+    test_import_hmac();
     test_enum_container();
     clean_up_base_environment();
     test_key_permissions();
