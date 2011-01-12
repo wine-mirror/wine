@@ -47,12 +47,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 164, 10, 50, 14, WS_VISIBLE
     PUSHBUTTON "Abbrechen", IDCANCEL, 164, 27, 50, 14, WS_VISIBLE
 END
-
-
-STRINGTABLE
-{
-    IDS_LOCALPORT "Lokaler Anschluss"
-    IDS_INVALIDNAME "'%s' ist kein gültiger Anschlussname"
-    IDS_PORTEXISTS "Der Anschluss %s existiert bereits"
-    IDS_NOTHINGTOCONFIG "Dieser Anschluss hat keine Optionen zum Konfigurieren"
-}

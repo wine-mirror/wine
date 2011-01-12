@@ -1733,13 +1733,25 @@ msgstr "Array length must be a finite positive integer"
 msgid "Array object expected"
 msgstr "Array object expected"
 
-#: localspl.rc:28
+#: localspl.rc:28 localui.rc:28
 msgid "Local Port"
 msgstr "Local Port"
 
 #: localspl.rc:29
 msgid "Local Monitor"
 msgstr "Local Monitor"
+
+#: localui.rc:29
+msgid "'%s' is not a valid port name"
+msgstr "'%s' is not a valid port name"
+
+#: localui.rc:30
+msgid "Port %s already exists"
+msgstr "Port %s already exists"
+
+#: localui.rc:31
+msgid "This port has no options to configure"
+msgstr "This port has no options to configure"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."

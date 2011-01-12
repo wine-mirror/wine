@@ -50,12 +50,3 @@ BEGIN
     DEFPUSHBUTTON "אישור", IDOK, 164, 10, 50, 14, WS_VISIBLE
     PUSHBUTTON "ביטול", IDCANCEL, 164, 27, 50, 14, WS_VISIBLE
 END
-
-
-STRINGTABLE
-{
-    IDS_LOCALPORT "פתחה מקומית"
-    IDS_INVALIDNAME "'%s' אינו שם תקני לפתחה"
-    IDS_PORTEXISTS "הפתחה %s כבר קיימת"
-    IDS_NOTHINGTOCONFIG "לפתחה זו אין אפשרויות להגדרה"
-}

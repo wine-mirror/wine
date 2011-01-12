@@ -1816,13 +1816,25 @@ msgstr "La lunghezza dell'array deve essere un intero finito e positivo"
 msgid "Array object expected"
 msgstr "Richiesto un oggetto array"
 
-#: localspl.rc:28
+#: localspl.rc:28 localui.rc:28
 msgid "Local Port"
 msgstr "Porta locale"
 
 #: localspl.rc:29
 msgid "Local Monitor"
 msgstr "Schermo locale"
+
+#: localui.rc:29
+msgid "'%s' is not a valid port name"
+msgstr "'%s' non è un nome di porta valido"
+
+#: localui.rc:30
+msgid "Port %s already exists"
+msgstr "La porta %s già esiste"
+
+#: localui.rc:31
+msgid "This port has no options to configure"
+msgstr "Questa porta non ha opzioni da configurare"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."

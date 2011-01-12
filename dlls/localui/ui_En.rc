@@ -45,12 +45,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 164, 10, 50, 14, WS_VISIBLE
     PUSHBUTTON "Cancel", IDCANCEL, 164, 27, 50, 14, WS_VISIBLE
 END
-
-
-STRINGTABLE
-{
-    IDS_LOCALPORT "Local Port"
-    IDS_INVALIDNAME "'%s' is not a valid port name"
-    IDS_PORTEXISTS "Port %s already exists"
-    IDS_NOTHINGTOCONFIG "This port has no options to configure"
-}

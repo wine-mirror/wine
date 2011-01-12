@@ -1829,13 +1829,25 @@ msgstr "Lungimea unei matrice trebuie să fie un număr întreg pozitiv"
 msgid "Array object expected"
 msgstr "Se așteaptă un obiect matrice"
 
-#: localspl.rc:28
+#: localspl.rc:28 localui.rc:28
 msgid "Local Port"
 msgstr "Port local"
 
 #: localspl.rc:29
 msgid "Local Monitor"
 msgstr "Monitor local"
+
+#: localui.rc:29
+msgid "'%s' is not a valid port name"
+msgstr "'%s' nu este un nume valid de port"
+
+#: localui.rc:30
+msgid "Port %s already exists"
+msgstr "Portul %s existsă deja"
+
+#: localui.rc:31
+msgid "This port has no options to configure"
+msgstr "Acest port nu are opțiuni de configurat"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."

@@ -48,12 +48,3 @@ BEGIN
     DEFPUSHBUTTON "확인", IDOK, 164, 10, 50, 14, WS_VISIBLE
     PUSHBUTTON "취소", IDCANCEL, 164, 27, 50, 14, WS_VISIBLE
 END
-
-
-STRINGTABLE
-{
-    IDS_LOCALPORT "지역 포트"
-    IDS_INVALIDNAME "'%s'는 올바른 포트 이름이 아닙니다"
-    IDS_PORTEXISTS "포트 %s는 이미 존재합니다"
-    IDS_NOTHINGTOCONFIG "이 포트는 설정할 옵션이 없습니다"
-}

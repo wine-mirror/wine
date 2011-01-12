@@ -1831,13 +1831,25 @@ msgstr "Array lengte moet een eindig, positief geheel getal zijn"
 msgid "Array object expected"
 msgstr "Array object verwacht"
 
-#: localspl.rc:28
+#: localspl.rc:28 localui.rc:28
 msgid "Local Port"
 msgstr "Lokale Poort"
 
 #: localspl.rc:29
 msgid "Local Monitor"
 msgstr "Lokale Monitor"
+
+#: localui.rc:29
+msgid "'%s' is not a valid port name"
+msgstr "'%s' is geen valide poort naam"
+
+#: localui.rc:30
+msgid "Port %s already exists"
+msgstr "Poort %s bestaat reeds"
+
+#: localui.rc:31
+msgid "This port has no options to configure"
+msgstr "Deze poort heeft geen opties om in te stellen"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."

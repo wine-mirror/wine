@@ -1745,13 +1745,25 @@ msgstr "Masyvo dydis turi būti teigiamas sveikasis skaičius"
 msgid "Array object expected"
 msgstr "Tikėtasi masyvo objekto"
 
-#: localspl.rc:28
+#: localspl.rc:28 localui.rc:28
 msgid "Local Port"
 msgstr "Vietinis prievadas"
 
 #: localspl.rc:29
 msgid "Local Monitor"
 msgstr "Vietinis monitorius"
+
+#: localui.rc:29
+msgid "'%s' is not a valid port name"
+msgstr "„%s“ yra netinkamas prievado vardas"
+
+#: localui.rc:30
+msgid "Port %s already exists"
+msgstr "Prievadas %s jau egzistuoja"
+
+#: localui.rc:31
+msgid "This port has no options to configure"
+msgstr "Šis prievadas neturi parinkčių konfigūravimui"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."

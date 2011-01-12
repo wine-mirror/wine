@@ -1699,12 +1699,24 @@ msgstr ""
 msgid "Array object expected"
 msgstr ""
 
-#: localspl.rc:28
+#: localspl.rc:28 localui.rc:28
 msgid "Local Port"
 msgstr ""
 
 #: localspl.rc:29
 msgid "Local Monitor"
+msgstr ""
+
+#: localui.rc:29
+msgid "'%s' is not a valid port name"
+msgstr ""
+
+#: localui.rc:30
+msgid "Port %s already exists"
+msgstr ""
+
+#: localui.rc:31
+msgid "This port has no options to configure"
 msgstr ""
 
 #: mapi32.rc:28

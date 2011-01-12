@@ -1742,13 +1742,25 @@ msgstr "Array længde skal være et endeligt positivt heltal"
 msgid "Array object expected"
 msgstr "Array objekt forventet"
 
-#: localspl.rc:28
+#: localspl.rc:28 localui.rc:28
 msgid "Local Port"
 msgstr "Lokal port"
 
 #: localspl.rc:29
 msgid "Local Monitor"
 msgstr "Lokal overvåger"
+
+#: localui.rc:29
+msgid "'%s' is not a valid port name"
+msgstr "'%s' er ikke et gyldigt port navn"
+
+#: localui.rc:30
+msgid "Port %s already exists"
+msgstr "Porten %s findes allerede"
+
+#: localui.rc:31
+msgid "This port has no options to configure"
+msgstr "Denne port har ingen indstillinger"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."

@@ -45,12 +45,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 164, 10, 50, 14, WS_VISIBLE
     PUSHBUTTON "Annuleren", IDCANCEL, 164, 27, 50, 14, WS_VISIBLE
 END
-
-
-STRINGTABLE
-{
-    IDS_LOCALPORT "Lokale Poort"
-    IDS_INVALIDNAME "'%s' is geen valide poort naam"
-    IDS_PORTEXISTS "Poort %s bestaat reeds"
-    IDS_NOTHINGTOCONFIG "Deze poort heeft geen opties om in te stellen"
-}

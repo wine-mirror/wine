@@ -48,12 +48,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 164, 10, 50, 14, WS_VISIBLE
     PUSHBUTTON "キャンセル", IDCANCEL, 164, 27, 50, 14, WS_VISIBLE
 END
-
-
-STRINGTABLE
-{
-    IDS_LOCALPORT "ローカル ポート"
-    IDS_INVALIDNAME "'%s' はポート名として正しくありません"
-    IDS_PORTEXISTS "ポート %s はすでに存在します"
-    IDS_NOTHINGTOCONFIG "このポートには設定項目がありません"
-}

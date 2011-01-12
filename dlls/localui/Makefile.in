@@ -29,4 +29,6 @@ RC_SRCS = \
 	ui_Uk.rc \
 	ui_Zh.rc
 
+PO_SRCS = localui.rc
+
 @MAKE_DLL_RULES@

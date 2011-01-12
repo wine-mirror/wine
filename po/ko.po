@@ -1798,13 +1798,25 @@ msgstr "배열 길이는 반드시  한정된 양의 정수이어야 함"
 msgid "Array object expected"
 msgstr "배열 객체가 필요함"
 
-#: localspl.rc:28
+#: localspl.rc:28 localui.rc:28
 msgid "Local Port"
 msgstr "지역 포트"
 
 #: localspl.rc:29
 msgid "Local Monitor"
 msgstr "지역 모니터"
+
+#: localui.rc:29
+msgid "'%s' is not a valid port name"
+msgstr "'%s'는 올바른 포트 이름이 아닙니다"
+
+#: localui.rc:30
+msgid "Port %s already exists"
+msgstr "포트 %s는 이미 존재합니다"
+
+#: localui.rc:31
+msgid "This port has no options to configure"
+msgstr "이 포트는 설정할 옵션이 없습니다"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."

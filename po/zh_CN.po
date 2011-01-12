@@ -1715,13 +1715,25 @@ msgstr ""
 msgid "Array object expected"
 msgstr ""
 
-#: localspl.rc:28
+#: localspl.rc:28 localui.rc:28
 msgid "Local Port"
 msgstr "本地端口"
 
 #: localspl.rc:29
 msgid "Local Monitor"
 msgstr "本地监视器"
+
+#: localui.rc:29
+msgid "'%s' is not a valid port name"
+msgstr "'%s' 不是有效的端口名称"
+
+#: localui.rc:30
+msgid "Port %s already exists"
+msgstr "端口 %s 已经存在"
+
+#: localui.rc:31
+msgid "This port has no options to configure"
+msgstr "这个端口没有可设置选项"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."

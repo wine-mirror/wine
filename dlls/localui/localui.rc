@@ -21,6 +21,18 @@
 
 #include "localui.h"
 
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+    IDS_LOCALPORT "Local Port"
+    IDS_INVALIDNAME "'%s' is not a valid port name"
+    IDS_PORTEXISTS "Port %s already exists"
+    IDS_NOTHINGTOCONFIG "This port has no options to configure"
+}
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
 #define WINE_FILENAME_STR "localui.dll"
 #define WINE_FILEDESCRIPTION_STR "User Interface for the Local Monitor"
 

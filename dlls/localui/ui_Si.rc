@@ -47,12 +47,3 @@ BEGIN
     DEFPUSHBUTTON "V redu", IDOK, 164, 10, 50, 14, WS_VISIBLE
     PUSHBUTTON "Prekliči", IDCANCEL, 164, 27, 50, 14, WS_VISIBLE
 END
-
-
-STRINGTABLE
-{
-    IDS_LOCALPORT "Lokalna vrata"
-    IDS_INVALIDNAME "'%s' ni veljavno ime vrat"
-    IDS_PORTEXISTS "Vrata z imenom %s že obstajajo"
-    IDS_NOTHINGTOCONFIG "Ta vrata nimajo možnosti nastavitve"
-}

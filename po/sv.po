@@ -1768,13 +1768,25 @@ msgstr "Array-längd måste vara ett positivt ändligt heltal"
 msgid "Array object expected"
 msgstr "Array-objekt förväntades"
 
-#: localspl.rc:28
+#: localspl.rc:28 localui.rc:28
 msgid "Local Port"
 msgstr "Lokal port"
 
 #: localspl.rc:29
 msgid "Local Monitor"
 msgstr "Lokal skärm"
+
+#: localui.rc:29
+msgid "'%s' is not a valid port name"
+msgstr "'%s' är inte ett giltigt portnamn"
+
+#: localui.rc:30
+msgid "Port %s already exists"
+msgstr "Porten %s finns redan"
+
+#: localui.rc:31
+msgid "This port has no options to configure"
+msgstr "Denna port har inga alternativ att konfigurera"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."

@@ -1740,13 +1740,25 @@ msgstr "配列の長さは有限の正整数でなければなりません"
 msgid "Array object expected"
 msgstr "配列オブジェクトを期待していました"
 
-#: localspl.rc:28
+#: localspl.rc:28 localui.rc:28
 msgid "Local Port"
 msgstr "ローカル ポート"
 
 #: localspl.rc:29
 msgid "Local Monitor"
 msgstr "ローカル モニタ"
+
+#: localui.rc:29
+msgid "'%s' is not a valid port name"
+msgstr "'%s' はポート名として正しくありません"
+
+#: localui.rc:30
+msgid "Port %s already exists"
+msgstr "ポート %s はすでに存在します"
+
+#: localui.rc:31
+msgid "This port has no options to configure"
+msgstr "このポートには設定項目がありません"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."

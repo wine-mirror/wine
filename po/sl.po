@@ -1739,13 +1739,25 @@ msgstr "Dožina polja mora bit pozitivno celo število"
 msgid "Array object expected"
 msgstr "Pričakujem Array objekt"
 
-#: localspl.rc:28
+#: localspl.rc:28 localui.rc:28
 msgid "Local Port"
 msgstr "Lokalna vrata"
 
 #: localspl.rc:29
 msgid "Local Monitor"
 msgstr "Lokalen monitor"
+
+#: localui.rc:29
+msgid "'%s' is not a valid port name"
+msgstr "'%s' ni veljavno ime vrat"
+
+#: localui.rc:30
+msgid "Port %s already exists"
+msgstr "Vrata z imenom %s že obstajajo"
+
+#: localui.rc:31
+msgid "This port has no options to configure"
+msgstr "Ta vrata nimajo možnosti nastavitve"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."

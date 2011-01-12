@@ -49,15 +49,6 @@ BEGIN
     PUSHBUTTON "Откажи", IDCANCEL, 164, 27, 50, 14, WS_VISIBLE
 END
 
-
-STRINGTABLE
-{
-    IDS_LOCALPORT "Локални порт"
-    IDS_INVALIDNAME "„%s“ није исправан назив порта"
-    IDS_PORTEXISTS "Порт %s већ постоји"
-    IDS_NOTHINGTOCONFIG "Овај порт нема опција за подешавање"
-}
-
 LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
 
 ADDPORT_DIALOG DIALOG 6, 18, 245, 47
@@ -83,12 +74,3 @@ BEGIN
     DEFPUSHBUTTON "U redu", IDOK, 164, 10, 50, 14, WS_VISIBLE
     PUSHBUTTON "Otkaži", IDCANCEL, 164, 27, 50, 14, WS_VISIBLE
 END
-
-
-STRINGTABLE
-{
-    IDS_LOCALPORT "Lokalni port"
-    IDS_INVALIDNAME "„%s“ nije ispravan naziv porta"
-    IDS_PORTEXISTS "Port %s već postoji"
-    IDS_NOTHINGTOCONFIG "Ovaj port nema opcija za podešavanje"
-}

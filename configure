@@ -15006,7 +15006,7 @@ wine_fn_config_dll ktmw32 enable_ktmw32
 wine_fn_config_dll loadperf enable_loadperf implib
 wine_fn_config_dll localspl enable_localspl po
 wine_fn_config_test dlls/localspl/tests localspl_test
-wine_fn_config_dll localui enable_localui
+wine_fn_config_dll localui enable_localui po
 wine_fn_config_test dlls/localui/tests localui_test
 wine_fn_config_dll lz32 enable_lz32 implib
 wine_fn_config_test dlls/lz32/tests lz32_test

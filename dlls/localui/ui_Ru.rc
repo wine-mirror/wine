@@ -48,12 +48,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 164, 10, 50, 14, WS_VISIBLE
     PUSHBUTTON "Отмена", IDCANCEL, 164, 27, 50, 14, WS_VISIBLE
 END
-
-
-STRINGTABLE
-{
-    IDS_LOCALPORT "Локальный порт"
-    IDS_INVALIDNAME "Неправильное название порта '%s'"
-    IDS_PORTEXISTS "Порт '%s' уже существует"
-    IDS_NOTHINGTOCONFIG "Этот порт не имеет настроек"
-}

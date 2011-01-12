@@ -1720,13 +1720,25 @@ msgstr "Низ дужине мора бити коначан позитиван 
 msgid "Array object expected"
 msgstr "Очекивани низ објекта"
 
-#: localspl.rc:28
+#: localspl.rc:28 localui.rc:28
 msgid "Local Port"
 msgstr "Локални порт"
 
 #: localspl.rc:29
 msgid "Local Monitor"
 msgstr "Локални монитор"
+
+#: localui.rc:29
+msgid "'%s' is not a valid port name"
+msgstr "„%s“ није исправан назив порта"
+
+#: localui.rc:30
+msgid "Port %s already exists"
+msgstr "Порт %s већ постоји"
+
+#: localui.rc:31
+msgid "This port has no options to configure"
+msgstr "Овај порт нема опција за подешавање"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."

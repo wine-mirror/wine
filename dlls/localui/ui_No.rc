@@ -45,12 +45,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 164, 10, 50, 14, WS_VISIBLE
     PUSHBUTTON "Avbryt", IDCANCEL, 164, 27, 50, 14, WS_VISIBLE
 END
-
-
-STRINGTABLE
-{
-    IDS_LOCALPORT "Lokal port"
-    IDS_INVALIDNAME "«%s» er ikke et gyldig portnavn"
-    IDS_PORTEXISTS "Porten %s finnes allerede"
-    IDS_NOTHINGTOCONFIG "Denne porten har ingen innstillinger"
-}

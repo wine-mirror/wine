@@ -1747,13 +1747,25 @@ msgstr "La longitud del arreglo debe ser un entero positivo finito"
 msgid "Array object expected"
 msgstr "Objeto Arreglo esperado"
 
-#: localspl.rc:28
+#: localspl.rc:28 localui.rc:28
 msgid "Local Port"
 msgstr "Puerto local"
 
 #: localspl.rc:29
 msgid "Local Monitor"
 msgstr "Monitor local"
+
+#: localui.rc:29
+msgid "'%s' is not a valid port name"
+msgstr "'%s' no es un nombre de puerto válido"
+
+#: localui.rc:30
+msgid "Port %s already exists"
+msgstr "El puerto %s ya existe"
+
+#: localui.rc:31
+msgid "This port has no options to configure"
+msgstr "Este puerto no tiene opciones para configurar"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."

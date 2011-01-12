@@ -1773,13 +1773,25 @@ msgstr "La longueur d'un tableau doit être un entier positif"
 msgid "Array object expected"
 msgstr "Objet tableau attendu"
 
-#: localspl.rc:28
+#: localspl.rc:28 localui.rc:28
 msgid "Local Port"
 msgstr "Port local"
 
 #: localspl.rc:29
 msgid "Local Monitor"
 msgstr "Moniteur local"
+
+#: localui.rc:29
+msgid "'%s' is not a valid port name"
+msgstr "« %s » n'est pas un nom de port valide"
+
+#: localui.rc:30
+msgid "Port %s already exists"
+msgstr "Le port %s existe déjà"
+
+#: localui.rc:31
+msgid "This port has no options to configure"
+msgstr "Ce port n'a pas d'options de configuration"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."

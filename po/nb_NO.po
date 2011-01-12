@@ -1815,13 +1815,25 @@ msgstr "Rekkens lengde må være et endelig, positivt tall"
 msgid "Array object expected"
 msgstr "Forventet rekke-objekt"
 
-#: localspl.rc:28
+#: localspl.rc:28 localui.rc:28
 msgid "Local Port"
 msgstr "Lokal port"
 
 #: localspl.rc:29
 msgid "Local Monitor"
 msgstr "Lokal overvåker"
+
+#: localui.rc:29
+msgid "'%s' is not a valid port name"
+msgstr "«%s» er ikke et gyldig portnavn"
+
+#: localui.rc:30
+msgid "Port %s already exists"
+msgstr "Porten %s finnes allerede"
+
+#: localui.rc:31
+msgid "This port has no options to configure"
+msgstr "Denne porten har ingen innstillinger"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."

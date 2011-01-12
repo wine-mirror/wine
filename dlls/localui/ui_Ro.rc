@@ -46,12 +46,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 164, 10, 50, 14, WS_VISIBLE
     PUSHBUTTON "Renunță", IDCANCEL, 164, 27, 50, 14, WS_VISIBLE
 END
-
-
-STRINGTABLE
-{
-    IDS_LOCALPORT "Port local"
-    IDS_INVALIDNAME "'%s' nu este un nume valid de port"
-    IDS_PORTEXISTS "Portul %s existsă deja"
-    IDS_NOTHINGTOCONFIG "Acest port nu are opțiuni de configurat"
-}

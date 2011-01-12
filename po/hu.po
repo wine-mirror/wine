@@ -1752,13 +1752,30 @@ msgstr "A tömb hosszának egy véges pozitív egész számnak kell lennie"
 msgid "Array object expected"
 msgstr "Tömb objektumot vártam"
 
-#: localspl.rc:28
+#: localspl.rc:28 localui.rc:28
+#, fuzzy
 msgid "Local Port"
-msgstr "Helyi Port"
+msgstr ""
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"Helyi Port\n"
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"Helyi port"
 
 #: localspl.rc:29
 msgid "Local Monitor"
 msgstr "Helyi figyelő"
+
+#: localui.rc:29
+msgid "'%s' is not a valid port name"
+msgstr "A(z) '%s' nem egy érvényes portnév"
+
+#: localui.rc:30
+msgid "Port %s already exists"
+msgstr "A port: %s már létezik"
+
+#: localui.rc:31
+msgid "This port has no options to configure"
+msgstr "Ennek a portnak nincsenek beállítható tulajdonságai"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."

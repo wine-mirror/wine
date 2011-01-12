@@ -48,12 +48,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 164, 10, 50, 14, WS_VISIBLE
     PUSHBUTTON "Mégse", IDCANCEL, 164, 27, 50, 14, WS_VISIBLE
 END
-
-
-STRINGTABLE
-{
-    IDS_LOCALPORT "Helyi port"
-    IDS_INVALIDNAME "A(z) '%s' nem egy érvényes portnév"
-    IDS_PORTEXISTS "A port: %s már létezik"
-    IDS_NOTHINGTOCONFIG "Ennek a portnak nincsenek beállítható tulajdonságai"
-}
