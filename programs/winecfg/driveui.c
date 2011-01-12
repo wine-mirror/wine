@@ -307,6 +307,7 @@ static void on_add_click(HWND dialog)
     char new = 'C'; /* we skip A and B, they are historically floppy drives */
     ULONG mask = ~drive_available_mask(0); /* the mask is now which drives aren't available */
     int i, c;
+    INT_PTR ret;
 
     while (mask & (1 << (new - 'A')))
     {
@@ -319,9 +320,10 @@ static void on_add_click(HWND dialog)
     }
 
 
-    new = DialogBoxParam(0, MAKEINTRESOURCE(IDD_DRIVECHOOSE), dialog, drivechoose_dlgproc, new);
+    ret = DialogBoxParam(0, MAKEINTRESOURCE(IDD_DRIVECHOOSE), dialog, drivechoose_dlgproc, new);
 
-    if( new == -1) return;
+    if( ret == -1) return;
+    new = ret;
 
     WINE_TRACE("selected drive letter %c\n", new);
 
