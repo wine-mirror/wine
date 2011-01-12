@@ -299,7 +299,8 @@ done:
     return r;
 }
 
-static UINT get_patch_product_codes( LPCWSTR szPatchPackage, WCHAR **product_codes )
+
+static UINT get_patch_product_codes( LPCWSTR szPatchPackage, WCHAR ***product_codes )
 {
     MSIHANDLE patch, info = 0;
     UINT r, type;
@@ -332,23 +333,22 @@ static UINT get_patch_product_codes( LPCWSTR szPatchPackage, WCHAR **product_cod
     }
 
     r = MsiSummaryInfoGetPropertyW( info, PID_TEMPLATE, &type, NULL, NULL, codes, &size );
-    if (r != ERROR_SUCCESS)
-        msi_free( codes );
-    else
-        *product_codes = codes;
+    if (r == ERROR_SUCCESS)
+        *product_codes = msi_split_string( codes, ';' );
 
 done:
     MsiCloseHandle( info );
     MsiCloseHandle( patch );
+    msi_free( codes );
     return r;
 }
 
 static UINT MSI_ApplyPatchW(LPCWSTR szPatchPackage, LPCWSTR szProductCode, LPCWSTR szCommandLine)
 {
-    UINT r;
+    UINT r, i;
     DWORD size;
     LPCWSTR cmd_ptr = szCommandLine;
-    LPWSTR beg, end, cmd, codes = NULL;
+    LPWSTR cmd, *codes = NULL;
     BOOL succeeded = FALSE;
 
     static const WCHAR fmt[] = {'%','s',' ','P','A','T','C','H','=','"','%','s','"',0};
@@ -376,17 +376,14 @@ static UINT MSI_ApplyPatchW(LPCWSTR szPatchPackage, LPCWSTR szProductCode, LPCWS
         r = MsiConfigureProductExW(szProductCode, INSTALLLEVEL_DEFAULT, INSTALLSTATE_DEFAULT, cmd);
     else
     {
-        beg = codes;
-        while ((end = strchrW(beg, '}')))
+        for (i = 0; codes[i]; i++)
         {
-            *(end + 1) = '\0';
-            r = MsiConfigureProductExW(beg, INSTALLLEVEL_DEFAULT, INSTALLSTATE_DEFAULT, cmd);
+            r = MsiConfigureProductExW(codes[i], INSTALLLEVEL_DEFAULT, INSTALLSTATE_DEFAULT, cmd);
             if (r == ERROR_SUCCESS)
             {
                 TRACE("patch applied\n");
                 succeeded = TRUE;
             }
-            beg = end + 2;
         }
 
         if (succeeded)

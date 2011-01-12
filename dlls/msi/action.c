@@ -465,8 +465,7 @@ UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine,
     return ERROR_SUCCESS;
 }
 
-
-static LPWSTR* msi_split_string( LPCWSTR str, WCHAR sep )
+WCHAR **msi_split_string( const WCHAR *str, WCHAR sep )
 {
     LPCWSTR pc;
     LPWSTR p, *ret = NULL;

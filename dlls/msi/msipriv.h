@@ -958,6 +958,7 @@ extern void msi_feature_set_state(MSIPACKAGE *, MSIFEATURE *, INSTALLSTATE);
 extern MSIASSEMBLY *load_assembly(MSIPACKAGE *, MSICOMPONENT *);
 extern UINT install_assembly(MSIPACKAGE *, MSICOMPONENT *);
 extern WCHAR *font_version_from_file(const WCHAR *);
+extern WCHAR **msi_split_string(const WCHAR *, WCHAR);
 
 /* media */
 
