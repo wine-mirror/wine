@@ -37,4 +37,6 @@ RC_SRCS = \
 	Zh.rc \
 	winspool.rc
 
+PO_SRCS = winspool.rc
+
 @MAKE_DLL_RULES@

@@ -1742,7 +1742,7 @@ msgstr "Array længde skal være et endeligt positivt heltal"
 msgid "Array object expected"
 msgstr "Array objekt forventet"
 
-#: localspl.rc:28 localui.rc:28
+#: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"
 msgstr "Lokal port"
 
@@ -3090,6 +3090,14 @@ msgid ""
 msgstr ""
 "Kunne ikke skrive til den specificerede fil. Kontroller at du har nok fri "
 "diskplads, og at du fortsat er tilkoblet netværket."
+
+#: winspool.rc:28
+msgid "The output file already exists.  Click OK to overwrite."
+msgstr "Filen findes allerede.  Vælg «OK» for at overskrive den."
+
+#: winspool.rc:29
+msgid "Unable to create the output file."
+msgstr "Kunne ikke gemme filen."
 
 #: wldap32.rc:27
 msgid "Success"

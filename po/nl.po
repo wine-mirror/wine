@@ -1846,9 +1846,14 @@ msgstr "Array lengte moet een eindig, positief geheel getal zijn"
 msgid "Array object expected"
 msgstr "Array object verwacht"
 
-#: localspl.rc:28 localui.rc:28
+#: localspl.rc:28 localui.rc:28 winspool.rc:27
+#, fuzzy
 msgid "Local Port"
-msgstr "Lokale Poort"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Lokale Poort\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Lokale aansluiting"
 
 #: localspl.rc:29
 msgid "Local Monitor"
@@ -3164,6 +3169,14 @@ msgid ""
 msgstr ""
 "Kan het opgegeven bestand niet schrijven. Controleer of er voldoende "
 "schijfruimte is, en controleer de verbinding met het netwerk."
+
+#: winspool.rc:28
+msgid "The output file already exists.  Click OK to overwrite."
+msgstr "Het afdrukbestand bestaat al. Klik OK om het te overschrijven."
+
+#: winspool.rc:29
+msgid "Unable to create the output file."
+msgstr "Het afdrukbestand kon niet geschreven worden."
 
 #: wldap32.rc:27
 msgid "Success"

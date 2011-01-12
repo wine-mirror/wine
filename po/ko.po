@@ -1803,7 +1803,7 @@ msgstr "배열 길이는 반드시  한정된 양의 정수이어야 함"
 msgid "Array object expected"
 msgstr "배열 객체가 필요함"
 
-#: localspl.rc:28 localui.rc:28
+#: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"
 msgstr "지역 포트"
 
@@ -3096,6 +3096,14 @@ msgid ""
 msgstr ""
 "지정된 파일에 기록할 수 없습니다. 디스크 공간이 충분한지 확인하거나. 네트워크"
 "에 연결중인지 확인하십시오"
+
+#: winspool.rc:28
+msgid "The output file already exists.  Click OK to overwrite."
+msgstr "출력 파일은 존재합니다. '확인'을 누르면 덮어쓰여질겁니다."
+
+#: winspool.rc:29
+msgid "Unable to create the output file."
+msgstr "출력 파일을 만들수 없습니다."
 
 #: wldap32.rc:27
 msgid "Success"

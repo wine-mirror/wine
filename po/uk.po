@@ -1742,7 +1742,7 @@ msgstr "Довжиною масиву повинне бути скінченне
 msgid "Array object expected"
 msgstr "Очікується об'єкт Array"
 
-#: localspl.rc:28 localui.rc:28
+#: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"
 msgstr "Локальний порт"
 
@@ -3060,6 +3060,14 @@ msgid ""
 msgstr ""
 "Неможливо записати до вказаного файлу. Переконайтеся, що на диску є "
 "достатньо вільного простору та що комп'ютер ще підключений до мережі."
+
+#: winspool.rc:28
+msgid "The output file already exists.  Click OK to overwrite."
+msgstr "Кінцевий файл вже існує.  Натисніть OK щоб його перезаписати."
+
+#: winspool.rc:29
+msgid "Unable to create the output file."
+msgstr "Неможливо створити кінцевий файл."
 
 #: wldap32.rc:27
 msgid "Success"

@@ -1778,7 +1778,7 @@ msgstr "La longueur d'un tableau doit être un entier positif"
 msgid "Array object expected"
 msgstr "Objet tableau attendu"
 
-#: localspl.rc:28 localui.rc:28
+#: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"
 msgstr "Port local"
 
@@ -3156,6 +3156,14 @@ msgstr ""
 "Il est impossible d'écrire des informations dans le fichier spécifié. "
 "Vérifiez que vous avez assez d'espace disque ou que vous êtes toujours "
 "connecté au réseau."
+
+#: winspool.rc:28
+msgid "The output file already exists.  Click OK to overwrite."
+msgstr "Le fichier de sortie existe déjà. Cliquez sur OK pour l'écraser."
+
+#: winspool.rc:29
+msgid "Unable to create the output file."
+msgstr "Impossible de créer le fichier de sortie."
 
 #: wldap32.rc:27
 msgid "Success"

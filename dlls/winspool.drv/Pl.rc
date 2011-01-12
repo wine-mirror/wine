@@ -33,10 +33,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "Anuluj", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
-
-STRINGTABLE
-{
-    IDS_CAPTION "Port lokalny"
-    IDS_FILE_EXISTS "Plik ju¿ istnieje. Wybierz OK aby zast¹piæ plik."
-    IDS_CANNOT_OPEN "Nie mogê utworzyæ pliku."
-}

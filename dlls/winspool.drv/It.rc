@@ -35,10 +35,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "Annulla", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
-
-STRINGTABLE
-{
-    IDS_CAPTION "Porta Locale"
-    IDS_FILE_EXISTS "Il file in uscita esiste già.  Clicca su OK per sovrascriverlo."
-    IDS_CANNOT_OPEN "Impossibile creare il file in uscita."
-}

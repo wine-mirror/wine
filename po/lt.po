@@ -1750,9 +1750,14 @@ msgstr "Masyvo dydis turi būti teigiamas sveikasis skaičius"
 msgid "Array object expected"
 msgstr "Tikėtasi masyvo objekto"
 
-#: localspl.rc:28 localui.rc:28
+#: localspl.rc:28 localui.rc:28 winspool.rc:27
+#, fuzzy
 msgid "Local Port"
-msgstr "Vietinis prievadas"
+msgstr ""
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"Vietinis prievadas\n"
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"Lokalus prievadas"
 
 #: localspl.rc:29
 msgid "Local Monitor"
@@ -3064,6 +3069,15 @@ msgid ""
 msgstr ""
 "Nepavyko rašyti į nurodytą failą. Įsitikinkite, kad yra pakankamai laisvos "
 "vietos diske, ar vis dar prisijungę prie tinklo."
+
+#: winspool.rc:28
+msgid "The output file already exists.  Click OK to overwrite."
+msgstr ""
+"Išvesties failas jau egzistuoja.  Norėdami failą keisti spauskite Gerai."
+
+#: winspool.rc:29
+msgid "Unable to create the output file."
+msgstr "Nepavyko sukurti išvesties failo."
 
 #: wldap32.rc:27
 msgid "Success"

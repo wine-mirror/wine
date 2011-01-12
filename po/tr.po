@@ -1735,9 +1735,9 @@ msgstr ""
 msgid "Array object expected"
 msgstr ""
 
-#: localspl.rc:28 localui.rc:28
+#: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"
-msgstr ""
+msgstr "Yerel Bağlantı Noktası"
 
 #: localspl.rc:29
 msgid "Local Monitor"
@@ -3085,6 +3085,14 @@ msgid ""
 msgstr ""
 "Belirtilen dosyaya yazılamıyor. Yeterli kullanılabilir disk alanına sahip "
 "olduğunuzdan veya ağa bağlı olduğunuzdan emin olun."
+
+#: winspool.rc:28
+msgid "The output file already exists.  Click OK to overwrite."
+msgstr "Çıkış dosyası zaten var. Üzerine yazmak için Tamam'ı tıklayın."
+
+#: winspool.rc:29
+msgid "Unable to create the output file."
+msgstr "Çıkış dosyası oluşturulamıyor."
 
 #: wldap32.rc:27
 msgid "Success"

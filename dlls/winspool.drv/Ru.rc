@@ -35,10 +35,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "Отмена", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
-
-STRINGTABLE
-{
-    IDS_CAPTION "Локальный порт"
-    IDS_FILE_EXISTS "Такой файл уже существует.  Нажмите OK для его замены."
-    IDS_CANNOT_OPEN "Невозможно создать выходной файл."
-}

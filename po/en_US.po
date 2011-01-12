@@ -1733,7 +1733,7 @@ msgstr "Array length must be a finite positive integer"
 msgid "Array object expected"
 msgstr "Array object expected"
 
-#: localspl.rc:28 localui.rc:28
+#: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"
 msgstr "Local Port"
 
@@ -3030,6 +3030,14 @@ msgid ""
 msgstr ""
 "Cannot write to the specified file. Make sure you have enough disk space or "
 "are still connected to the network."
+
+#: winspool.rc:28
+msgid "The output file already exists.  Click OK to overwrite."
+msgstr "The output file already exists.  Click OK to overwrite."
+
+#: winspool.rc:29
+msgid "Unable to create the output file."
+msgstr "Unable to create the output file."
 
 #: wldap32.rc:27
 msgid "Success"

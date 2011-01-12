@@ -20,6 +20,15 @@
 
 #include "wspool.h"
 
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+    IDS_CAPTION "Local Port"
+    IDS_FILE_EXISTS "The output file already exists.  Click OK to overwrite."
+    IDS_CANNOT_OPEN "Unable to create the output file."
+}
+
 #define WINE_FILENAME_STR "winspool.drv"
 #define WINE_FILEDESCRIPTION_STR "Wine core printer driver"
 

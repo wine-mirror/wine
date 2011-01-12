@@ -32,10 +32,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "Avbryt", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
-
-STRINGTABLE
-{
-    IDS_CAPTION "Lokal port"
-    IDS_FILE_EXISTS "Utdatafilen finns redan.  Klicka på OK för att skriva över."
-    IDS_CANNOT_OPEN "Kunde inte skapa utdatafilen."
-}

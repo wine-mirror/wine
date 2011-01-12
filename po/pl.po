@@ -1778,7 +1778,7 @@ msgstr "Długość tablicy musi być skończoną dodatnią liczbą stałą"
 msgid "Array object expected"
 msgstr "Oczekiwany obiekt tablicowy"
 
-#: localspl.rc:28 localui.rc:28
+#: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"
 msgstr "Port lokalny"
 
@@ -3136,6 +3136,14 @@ msgid ""
 msgstr ""
 "Nie można zapisać do podanego pliku. Upewnij się że masz wystarczająco "
 "miejsca na dysku lub czy jesteś nadal podłączony do sieci."
+
+#: winspool.rc:28
+msgid "The output file already exists.  Click OK to overwrite."
+msgstr "Plik już istnieje. Wybierz OK aby zastąpić plik."
+
+#: winspool.rc:29
+msgid "Unable to create the output file."
+msgstr "Nie mogę utworzyć pliku."
 
 #: wldap32.rc:27
 msgid "Success"

@@ -33,10 +33,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "Renunță", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
-
-STRINGTABLE
-{
-    IDS_CAPTION "Port local"
-    IDS_FILE_EXISTS "Fișierul de ieșire există deja.  Dați clic pe OK pentru al suprascrie."
-    IDS_CANNOT_OPEN "Nu am putut crea fișierul de ieșire."
-}

@@ -35,10 +35,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "Mégse", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
-
-STRINGTABLE
-{
-    IDS_CAPTION "Helyi port"
-    IDS_FILE_EXISTS "A kimeneti fájl már létezik.  Kattintson az OK gombra a felülíráshoz."
-    IDS_CANNOT_OPEN "Nem tudom létrehozni a kimeneti fájlt."
-}

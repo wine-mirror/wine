@@ -34,10 +34,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "Abbrechen", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
-
-STRINGTABLE
-{
-    IDS_CAPTION "Lokaler Anschluß"
-    IDS_FILE_EXISTS "Die Ausgabedatei existiert schon.  Drücken Sie OK zum Überschreiben."
-    IDS_CANNOT_OPEN "Die Ausgabedatei konnte nicht erzeugt werden."
-}

@@ -34,10 +34,3 @@ BEGIN
     DEFPUSHBUTTON "확인", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "취소", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
-
-STRINGTABLE
-{
-    IDS_CAPTION "지역 포트"
-    IDS_FILE_EXISTS "출력 파일은 존재합니다. '확인'을 누르면 덮어쓰여질겁니다."
-    IDS_CANNOT_OPEN "출력 파일을 만들수 없습니다."
-}

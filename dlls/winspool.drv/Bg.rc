@@ -32,10 +32,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "Отмени", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
-
-STRINGTABLE
-{
-    IDS_CAPTION "Локален порт"
-    IDS_FILE_EXISTS "Файлът вече съществува. Изберете ОК, за да го презапишете."
-    IDS_CANNOT_OPEN "Файлът не може да бъде създаден."
-}

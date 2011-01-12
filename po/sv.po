@@ -1773,7 +1773,7 @@ msgstr "Array-längd måste vara ett positivt ändligt heltal"
 msgid "Array object expected"
 msgstr "Array-objekt förväntades"
 
-#: localspl.rc:28 localui.rc:28
+#: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"
 msgstr "Lokal port"
 
@@ -3101,6 +3101,14 @@ msgid ""
 msgstr ""
 "Kan inte skriva till angiven fil. Kontrollera att du har tillräckligt minne "
 "eller är ansluten till nätverket."
+
+#: winspool.rc:28
+msgid "The output file already exists.  Click OK to overwrite."
+msgstr "Utdatafilen finns redan.  Klicka på OK för att skriva över."
+
+#: winspool.rc:29
+msgid "Unable to create the output file."
+msgstr "Kunde inte skapa utdatafilen."
 
 #: wldap32.rc:27
 msgid "Success"

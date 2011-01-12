@@ -35,10 +35,3 @@ BEGIN
     DEFPUSHBUTTON "Gerai", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "Atsisakyti", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
-
-STRINGTABLE
-{
-    IDS_CAPTION "Lokalus prievadas"
-    IDS_FILE_EXISTS "Išvesties failas jau egzistuoja.  Norėdami failą keisti spauskite Gerai."
-    IDS_CANNOT_OPEN "Nepavyko sukurti išvesties failo."
-}

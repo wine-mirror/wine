@@ -32,10 +32,3 @@ BEGIN
     DEFPUSHBUTTON "Tamam", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "Ýptal", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
-
-STRINGTABLE
-{
-    IDS_CAPTION "Yerel Baðlantý Noktasý"
-    IDS_FILE_EXISTS "Çýkýþ dosyasý zaten var. Üzerine yazmak için Tamam'ý týklayýn."
-    IDS_CANNOT_OPEN "Çýkýþ dosyasý oluþturulamýyor."
-}

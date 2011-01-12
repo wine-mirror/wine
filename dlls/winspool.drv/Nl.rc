@@ -32,10 +32,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "Annuleren", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
-
-STRINGTABLE
-{
-    IDS_CAPTION "Lokale aansluiting"
-    IDS_FILE_EXISTS "Het afdrukbestand bestaat al. Klik OK om het te overschrijven."
-    IDS_CANNOT_OPEN "Het afdrukbestand kon niet geschreven worden."
-}

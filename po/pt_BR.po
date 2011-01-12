@@ -1822,14 +1822,9 @@ msgstr "Tamanho do vetor tem que ser um inteiro finito positivo"
 msgid "Array object expected"
 msgstr "Objeto Array esperado"
 
-#: localspl.rc:28 localui.rc:28
-#, fuzzy
+#: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Porta local\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Porta Local"
+msgstr "Porta Local"
 
 #: localspl.rc:29
 msgid "Local Monitor"
@@ -3176,6 +3171,14 @@ msgid ""
 msgstr ""
 "Não é possível gravar no arquivo especificado. Certifique-se que você possui "
 "espaço em disco suficiente ou que ainda esteja conectado na rede."
+
+#: winspool.rc:28
+msgid "The output file already exists.  Click OK to overwrite."
+msgstr "O arquivo de destino já existe. Clique OK para sobrescrever."
+
+#: winspool.rc:29
+msgid "Unable to create the output file."
+msgstr "Impossível criar o arquivo de destino."
 
 #: wldap32.rc:27
 msgid "Success"

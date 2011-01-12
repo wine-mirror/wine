@@ -36,10 +36,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "キャンセル", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
-
-STRINGTABLE
-{
-    IDS_CAPTION "ローカル ポート"
-    IDS_FILE_EXISTS "出力ファイルはすでに存在します。上書きするには OK をクリックしてください。"
-    IDS_CANNOT_OPEN "出力ファイルを作成できませんでした。"
-}

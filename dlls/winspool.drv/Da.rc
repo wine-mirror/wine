@@ -32,10 +32,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "Annuller", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
-
-STRINGTABLE
-{
-    IDS_CAPTION "Lokal port"
-    IDS_FILE_EXISTS "Filen findes allerede.  Vælg «OK» for at overskrive den."
-    IDS_CANNOT_OPEN "Kunne ikke gemme filen."
-}

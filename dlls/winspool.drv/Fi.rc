@@ -32,10 +32,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "Peruuta", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
-
-STRINGTABLE
-{
-    IDS_CAPTION "Paikallinen Portti"
-    IDS_FILE_EXISTS "Tiedosto on jo olemassa. Klikkaa OK ylikirjoittaaksesi sen."
-    IDS_CANNOT_OPEN "Tiedostoa ei voitu luoda."
-}

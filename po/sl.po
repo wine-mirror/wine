@@ -1744,7 +1744,7 @@ msgstr "Dožina polja mora bit pozitivno celo število"
 msgid "Array object expected"
 msgstr "Pričakujem Array objekt"
 
-#: localspl.rc:28 localui.rc:28
+#: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"
 msgstr "Lokalna vrata"
 
@@ -3068,6 +3068,14 @@ msgid ""
 msgstr ""
 "V navedeno datoteko ni mogoče pisati. Preverite, ali je na disku še dovolj "
 "prostora oz. ali je vaš računalnik še povezan z omrežjem."
+
+#: winspool.rc:28
+msgid "The output file already exists.  Click OK to overwrite."
+msgstr "Izhodna datoteka že obstaja. Za prepis kliknite gumb V redu."
+
+#: winspool.rc:29
+msgid "Unable to create the output file."
+msgstr "Izhodne datoteke ni mogoče ustvariti."
 
 #: wldap32.rc:27
 msgid "Success"

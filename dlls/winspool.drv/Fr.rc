@@ -35,10 +35,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "Annuler", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
-
-STRINGTABLE
-{
-    IDS_CAPTION "Port local"
-    IDS_FILE_EXISTS "Le fichier de sortie existe déjà. Cliquez sur OK pour l'écraser."
-    IDS_CANNOT_OPEN "Impossible de créer le fichier de sortie."
-}

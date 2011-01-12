@@ -32,10 +32,3 @@ BEGIN
     DEFPUSHBUTTON "Bone", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "Nuligi", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
-
-STRINGTABLE
-{
-    IDS_CAPTION "Loka Pordo"
-    IDS_FILE_EXISTS "La elira dosiero jam ekzistas.  Kliku 'Bone' por surskribi øin."
-    IDS_CANNOT_OPEN "Estas neeble krei la eliran dosieron."
-}

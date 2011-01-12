@@ -1740,7 +1740,7 @@ msgstr "配列の長さは有限の正整数でなければなりません"
 msgid "Array object expected"
 msgstr "配列オブジェクトを期待していました"
 
-#: localspl.rc:28 localui.rc:28
+#: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"
 msgstr "ローカル ポート"
 
@@ -3017,6 +3017,15 @@ msgid ""
 msgstr ""
 "指定されたファイルに書き込めません。ディスクに十分な空き容量があるか、あるい"
 "はネットワークに接続されているか確認して下さい。"
+
+#: winspool.rc:28
+msgid "The output file already exists.  Click OK to overwrite."
+msgstr ""
+"出力ファイルはすでに存在します。上書きするには OK をクリックしてください。"
+
+#: winspool.rc:29
+msgid "Unable to create the output file."
+msgstr "出力ファイルを作成できませんでした。"
 
 #: wldap32.rc:27
 msgid "Success"

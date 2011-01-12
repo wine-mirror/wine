@@ -36,10 +36,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "Скасувати", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
-
-STRINGTABLE
-{
-    IDS_CAPTION "Локальний порт"
-    IDS_FILE_EXISTS "Кінцевий файл вже існує.  Натисніть OK щоб його перезаписати."
-    IDS_CANNOT_OPEN "Неможливо створити кінцевий файл."
-}

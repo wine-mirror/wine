@@ -32,10 +32,3 @@ BEGIN
     DEFPUSHBUTTON "Aceptar", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "Cancelar", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
-
-STRINGTABLE
-{
-    IDS_CAPTION "Puerto local"
-    IDS_FILE_EXISTS "El archivo de salida ya existe.  Pulse Aceptar para sobreescribir."
-    IDS_CANNOT_OPEN "Incapaz de crear el archivo de salida."
-}

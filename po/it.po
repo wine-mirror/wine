@@ -1816,9 +1816,14 @@ msgstr "La lunghezza dell'array deve essere un intero finito e positivo"
 msgid "Array object expected"
 msgstr "Richiesto un oggetto array"
 
-#: localspl.rc:28 localui.rc:28
+#: localspl.rc:28 localui.rc:28 winspool.rc:27
+#, fuzzy
 msgid "Local Port"
-msgstr "Porta locale"
+msgstr ""
+"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
+"Porta locale\n"
+"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
+"Porta Locale"
 
 #: localspl.rc:29
 msgid "Local Monitor"
@@ -3175,6 +3180,14 @@ msgid ""
 msgstr ""
 "Impossibile scrivere il file specificato. Controllare di avere spazio libero "
 "sufficiente sul disco o di essere ancora connessi alla rete."
+
+#: winspool.rc:28
+msgid "The output file already exists.  Click OK to overwrite."
+msgstr "Il file in uscita esiste già.  Clicca su OK per sovrascriverlo."
+
+#: winspool.rc:29
+msgid "Unable to create the output file."
+msgstr "Impossibile creare il file in uscita."
 
 #: wldap32.rc:27
 msgid "Success"

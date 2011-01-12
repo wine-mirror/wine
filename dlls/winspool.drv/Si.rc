@@ -34,10 +34,3 @@ BEGIN
     DEFPUSHBUTTON "V redu", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "Prekliči", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
-
-STRINGTABLE
-{
-    IDS_CAPTION "Lokalna vrata"
-    IDS_FILE_EXISTS "Izhodna datoteka že obstaja. Za prepis kliknite gumb V redu."
-    IDS_CANNOT_OPEN "Izhodne datoteke ni mogoče ustvariti."
-}

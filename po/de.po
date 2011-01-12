@@ -1793,9 +1793,14 @@ msgstr "Array-Größe muss eine endliche, positive Ganzzahl sein"
 msgid "Array object expected"
 msgstr "Array Objekt erwartet"
 
-#: localspl.rc:28 localui.rc:28
+#: localspl.rc:28 localui.rc:28 winspool.rc:27
+#, fuzzy
 msgid "Local Port"
-msgstr "Lokaler Anschluss"
+msgstr ""
+"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
+"Lokaler Anschluss\n"
+"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
+"Lokaler Anschluß"
 
 #: localspl.rc:29
 msgid "Local Monitor"
@@ -3137,6 +3142,14 @@ msgstr ""
 "Die Datei konnte nicht geschrieben werden. Stellen Sie sicher, dass genügend "
 "Platz auf dem Datenträger verfügbar ist, oder dass die Netzwerkverbindung "
 "noch besteht."
+
+#: winspool.rc:28
+msgid "The output file already exists.  Click OK to overwrite."
+msgstr "Die Ausgabedatei existiert schon.  Drücken Sie OK zum Überschreiben."
+
+#: winspool.rc:29
+msgid "Unable to create the output file."
+msgstr "Die Ausgabedatei konnte nicht erzeugt werden."
 
 #: wldap32.rc:27
 msgid "Success"

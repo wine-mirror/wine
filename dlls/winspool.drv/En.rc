@@ -32,10 +32,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "Cancel", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
-
-STRINGTABLE
-{
-    IDS_CAPTION "Local Port"
-    IDS_FILE_EXISTS "The output file already exists.  Click OK to overwrite."
-    IDS_CANNOT_OPEN "Unable to create the output file."
-}

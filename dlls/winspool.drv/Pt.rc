@@ -48,22 +48,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "Cancelar", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
-
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
-
-STRINGTABLE
-{
-    IDS_CAPTION "Porta Local"
-    IDS_FILE_EXISTS "O arquivo de destino já existe. Clique OK para sobrescrever."
-    IDS_CANNOT_OPEN "Impossível criar o arquivo de destino."
-}
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
-
-STRINGTABLE
-{
-    IDS_CAPTION "Porta Local"
-    IDS_FILE_EXISTS "O ficheiro de destino já existe. Clique OK para reescrever."
-    IDS_CANNOT_OPEN "Impossível criar o ficheiro de destino."
-}

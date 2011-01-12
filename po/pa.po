@@ -1690,7 +1690,7 @@ msgstr ""
 msgid "Array object expected"
 msgstr ""
 
-#: localspl.rc:28 localui.rc:28
+#: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"
 msgstr ""
 
@@ -2847,6 +2847,14 @@ msgstr ""
 msgid ""
 "Cannot write to the specified file. Make sure you have enough disk space or "
 "are still connected to the network."
+msgstr ""
+
+#: winspool.rc:28
+msgid "The output file already exists.  Click OK to overwrite."
+msgstr ""
+
+#: winspool.rc:29
+msgid "Unable to create the output file."
 msgstr ""
 
 #: wldap32.rc:27

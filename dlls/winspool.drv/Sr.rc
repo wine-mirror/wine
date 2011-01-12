@@ -36,13 +36,6 @@ BEGIN
     PUSHBUTTON "Откажи", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
 
-STRINGTABLE
-{
-    IDS_CAPTION "Локални порт"
-    IDS_FILE_EXISTS "Одредишна датотека већ постоји.  Кликните на дугме „У реду“ да је замените."
-    IDS_CANNOT_OPEN "Прављење одредишне датотеке није успело."
-}
-
 LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
 
 FILENAME_DIALOG DIALOG 6, 18, 245, 47
@@ -55,10 +48,3 @@ BEGIN
     DEFPUSHBUTTON "U redu", IDOK, 199, 10, 40, 14, WS_VISIBLE
     PUSHBUTTON "Otkaži", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
-
-STRINGTABLE
-{
-    IDS_CAPTION "Lokalni port"
-    IDS_FILE_EXISTS "Odredišna datoteka već postoji.  Kliknite na dugme „U redu“ da je zamenite."
-    IDS_CANNOT_OPEN "Pravljenje odredišne datoteke nije uspelo."
-}
