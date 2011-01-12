@@ -867,6 +867,8 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR ico
         int height = iconDirEntries[i].bHeight ? iconDirEntries[i].bHeight : 256;
 
         WINE_TRACE("[%d]: %d x %d @ %d\n", i, width, height, iconDirEntries[i].wBitCount);
+        if (height != width)
+            continue;
         slot = size_to_slot(width);
         if (slot < 0)
             continue;
