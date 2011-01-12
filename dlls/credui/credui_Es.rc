@@ -43,13 +43,3 @@ BEGIN
     DEFPUSHBUTTON   "Aceptar",IDOK,97,128,50,14
     PUSHBUTTON      "Cancelar",IDCANCEL,156,128,50,14
 END
-
-STRINGTABLE
-{
-    IDS_TITLEFORMAT     "Conectar a %s"
-    IDS_MESSAGEFORMAT   "Conectando to %s"
-    IDS_INCORRECTPASSWORDTITLE  "Identificación incorrecta"
-    IDS_INCORRECTPASSWORD       "Asegúrese que su nombre de usuario\ny contraseña son correctos."
-    IDS_CAPSLOCKONTITLE "Bloq Mayus está activado"
-    IDS_CAPSLOCKON      "El Bloq Mayus activado puede hacer que entre su contraseña incorrectamente.\n\nPulse la tecla Bloq Mayus de su teclado para desactivar Bloq Mayus antes\n de introducir su contraseña."
-}

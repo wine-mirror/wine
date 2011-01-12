@@ -14825,7 +14825,7 @@ wine_fn_config_dll comm.drv16 enable_win16
 wine_fn_config_dll commdlg.dll16 enable_win16
 wine_fn_config_dll compobj.dll16 enable_win16
 wine_fn_config_dll compstui enable_compstui implib
-wine_fn_config_dll credui enable_credui implib
+wine_fn_config_dll credui enable_credui po,implib
 wine_fn_config_test dlls/credui/tests credui_test
 wine_fn_config_dll crtdll enable_crtdll implib
 wine_fn_config_dll crypt32 enable_crypt32 po,implib

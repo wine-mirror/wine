@@ -44,13 +44,3 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,97,128,50,14
     PUSHBUTTON      "Скасувати",IDCANCEL,156,128,50,14
 END
-
-STRINGTABLE
-{
-    IDS_TITLEFORMAT     "Під'єднатись до %s"
-    IDS_MESSAGEFORMAT   "Під'єднуюсь до %s"
-    IDS_INCORRECTPASSWORDTITLE  "Вхід не відбувся"
-    IDS_INCORRECTPASSWORD       "Переконайтесь що ім'я користувача\nі пароль правильні."
-    IDS_CAPSLOCKONTITLE "Caps Lock включений"
-    IDS_CAPSLOCKON      "Пароль може бути введений неправильно через натиснену клавішу Caps Lock.\n\nВимкніть Caps Lock перед\nвведенням паролю."
-}

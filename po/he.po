@@ -42,6 +42,42 @@ msgstr "היום:"
 msgid "Go to today"
 msgstr "מעבר ליום הנוכחי"
 
+#: credui.rc:27
+msgid "Connect to %s"
+msgstr "התחברות אל %s"
+
+#: credui.rc:28
+msgid "Connecting to %s"
+msgstr "בהליכי התחברות אל %s"
+
+#: credui.rc:29
+msgid "Logon unsuccessful"
+msgstr "הכניסה נכשלה"
+
+#: credui.rc:30
+msgid ""
+"Make sure that your user name\n"
+"and password are correct."
+msgstr ""
+"נא לוודא כי שם המשתמש\n"
+"והססמה שלך נכונים."
+
+#: credui.rc:32
+msgid ""
+"Having Caps Lock on may cause you to enter your password incorrectly.\n"
+"\n"
+"Press the Caps Lock key on your keyboard to turn off Caps Lock before\n"
+"entering your password."
+msgstr ""
+"כאשר מקש ה־Caps Lock פעיל יתכן שהזנת ססמה לא נכונה.\n"
+"\n"
+"נא ללחוץ על מקש ה־Caps Lock במקלדת שלך כדי לכבות את ה־Caps Lock בטרם\n"
+"הזנת הססמה שלך."
+
+#: credui.rc:31
+msgid "Caps Lock is On"
+msgstr "ה־Caps Lock פעיל"
+
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
 msgstr ""

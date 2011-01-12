@@ -44,13 +44,3 @@ BEGIN
     DEFPUSHBUTTON   "אישור",IDOK,97,128,50,14
     PUSHBUTTON      "ביטול",IDCANCEL,156,128,50,14
 END
-
-STRINGTABLE
-{
-    IDS_TITLEFORMAT     "התחברות אל %s"
-    IDS_MESSAGEFORMAT   "בהליכי התחברות אל %s"
-    IDS_INCORRECTPASSWORDTITLE  "הכניסה נכשלה"
-    IDS_INCORRECTPASSWORD       "נא לוודא כי שם המשתמש\nוהססמה שלך נכונים."
-    IDS_CAPSLOCKONTITLE "ה־Caps Lock פעיל"
-    IDS_CAPSLOCKON      "כאשר מקש ה־Caps Lock פעיל יתכן שהזנת ססמה לא נכונה.\n\nנא ללחוץ על מקש ה־Caps Lock במקלדת שלך כדי לכבות את ה־Caps Lock בטרם\nהזנת הססמה שלך."
-}

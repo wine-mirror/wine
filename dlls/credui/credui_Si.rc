@@ -42,13 +42,3 @@ BEGIN
     DEFPUSHBUTTON   "V redu",IDOK,97,128,50,14
     PUSHBUTTON      "Prekliči",IDCANCEL,156,128,50,14
 END
-
-STRINGTABLE
-{
-    IDS_TITLEFORMAT     "Poveži se na %s"
-    IDS_MESSAGEFORMAT   "Povezovanje na %s"
-    IDS_INCORRECTPASSWORDTITLE  "Prijava ni uspela"
-    IDS_INCORRECTPASSWORD       "Preverite, ali ste vnesli pravilno uporabniško ime in/ali geslo."
-    IDS_CAPSLOCKONTITLE "Caps Lock je vključen"
-    IDS_CAPSLOCKON      "Vključen Caps Lock je lahko vzrok nepravilnega vnosa gesla.\n\nPritisnite tipko Caps Lock, s čimer ga izklopite\nin ponovno vnesite geslo."
-}

@@ -20,5 +20,19 @@
 
 #include "credui_resources.h"
 
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+    IDS_TITLEFORMAT     "Connect to %s"
+    IDS_MESSAGEFORMAT   "Connecting to %s"
+    IDS_INCORRECTPASSWORDTITLE  "Logon unsuccessful"
+    IDS_INCORRECTPASSWORD       "Make sure that your user name\nand password are correct."
+    IDS_CAPSLOCKONTITLE "Caps Lock is On"
+    IDS_CAPSLOCKON      "Having Caps Lock on may cause you to enter your password incorrectly.\n\nPress the Caps Lock key on your keyboard to turn off Caps Lock before\nentering your password."
+}
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
 /* @makedep: banner.bmp */
 IDB_BANNER BITMAP banner.bmp

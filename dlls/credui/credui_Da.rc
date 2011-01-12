@@ -43,13 +43,3 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,97,128,50,14
     PUSHBUTTON      "Annuller",IDCANCEL,156,128,50,14
 END
-
-STRINGTABLE
-{
-    IDS_TITLEFORMAT     "Tilslut til %s"
-    IDS_MESSAGEFORMAT   "Tilslutter til %s"
-    IDS_INCORRECTPASSWORDTITLE  "Tilslutning fejlede"
-    IDS_INCORRECTPASSWORD       "Vær sikker på at dit brugernavn\nog kodeord er korrekt."
-    IDS_CAPSLOCKONTITLE "Caps Lock er på"
-    IDS_CAPSLOCKON      "Du har sat Caps Lock til, dette kan være årsagen til at du indtaster kodeordet forkert.\n\nTryk på Caps Lock tasten for at slå det fra før du indtaster dit kodeord."
-}

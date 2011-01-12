@@ -40,13 +40,3 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,97,128,50,14
     PUSHBUTTON      "Annuleren",IDCANCEL,156,128,50,14
 END
-
-STRINGTABLE
-{
-    IDS_TITLEFORMAT     "Verbind met %s"
-    IDS_MESSAGEFORMAT   "Verbinden met %s"
-    IDS_INCORRECTPASSWORDTITLE  "Inloggen mislukt"
-    IDS_INCORRECTPASSWORD       "Controleer of uw gebruikersnaam\nen wachtwoord correct zijn."
-    IDS_CAPSLOCKONTITLE "Caps Lock staat Aan"
-    IDS_CAPSLOCKON      "Met Caps Lock aan kan uw wachtwoord verkeerd worden ingevoerd.\n\nDruk op de Caps Lock toets op uw toetsenbord om Caps Lock uit\nte zetten voor invoer van uw wachtwoord."
-}

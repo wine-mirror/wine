@@ -44,16 +44,6 @@ BEGIN
     PUSHBUTTON      "Откажи",IDCANCEL,156,128,50,14
 END
 
-STRINGTABLE
-{
-    IDS_TITLEFORMAT     "Повежи се са %s"
-    IDS_MESSAGEFORMAT   "Повезивање на %s"
-    IDS_INCORRECTPASSWORDTITLE  "Пријављивање није успело"
-    IDS_INCORRECTPASSWORD       "Проверите да ли су подаци\nкоје сте унели исправни."
-    IDS_CAPSLOCKONTITLE "Caps Lock је укључен"
-    IDS_CAPSLOCKON      "Caps Lock може бити разлог неисправности унетих података.\n\nПритисните тастер Caps Lock на тастатури да бисте искључили велика слова пре\nуношења лозинке."
-}
-
 LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
 
 IDD_CREDDIALOG DIALOG  0, 0, 213, 149
@@ -74,13 +64,3 @@ BEGIN
     DEFPUSHBUTTON   "U redu",IDOK,97,128,50,14
     PUSHBUTTON      "Otkaži",IDCANCEL,156,128,50,14
 END
-
-STRINGTABLE
-{
-    IDS_TITLEFORMAT     "Poveži se sa %s"
-    IDS_MESSAGEFORMAT   "Povezivanje na %s"
-    IDS_INCORRECTPASSWORDTITLE  "Prijavljivanje nije uspelo"
-    IDS_INCORRECTPASSWORD       "Proverite da li su podaci\nkoje ste uneli ispravni."
-    IDS_CAPSLOCKONTITLE "Caps Lock je uključen"
-    IDS_CAPSLOCKON      "Caps Lock može biti razlog neispravnosti unetih podataka.\n\nPritisnite taster Caps Lock na tastaturi da biste isključili velika slova pre\nunošenja lozinke."
-}

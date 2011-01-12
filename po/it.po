@@ -37,6 +37,43 @@ msgstr "Oggi:"
 msgid "Go to today"
 msgstr "Vai a oggi"
 
+#: credui.rc:27
+msgid "Connect to %s"
+msgstr "Connetti a %s"
+
+#: credui.rc:28
+msgid "Connecting to %s"
+msgstr "Connettendo a %s"
+
+#: credui.rc:29
+msgid "Logon unsuccessful"
+msgstr "Accesso fallito"
+
+#: credui.rc:30
+msgid ""
+"Make sure that your user name\n"
+"and password are correct."
+msgstr ""
+"Assicurati che il tuo nome utente\n"
+"e password siano corrette."
+
+#: credui.rc:32
+msgid ""
+"Having Caps Lock on may cause you to enter your password incorrectly.\n"
+"\n"
+"Press the Caps Lock key on your keyboard to turn off Caps Lock before\n"
+"entering your password."
+msgstr ""
+"Avere Caps Lock acceso può portarti a immettere la password "
+"incorrettamente.\n"
+"\n"
+"Premere il tasto Caps Lock sulla tua tastiera per spegnere Caps Lock prima\n"
+" di immettere la tua password."
+
+#: credui.rc:31
+msgid "Caps Lock is On"
+msgstr "Il Caps Lock è acceso"
+
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
 msgstr "Identificatore chiave autorità"

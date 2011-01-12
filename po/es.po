@@ -42,6 +42,42 @@ msgstr "Hoy:"
 msgid "Go to today"
 msgstr "Ir a hoy"
 
+#: credui.rc:27
+msgid "Connect to %s"
+msgstr "Conectar a %s"
+
+#: credui.rc:28
+msgid "Connecting to %s"
+msgstr "Conectando to %s"
+
+#: credui.rc:29
+msgid "Logon unsuccessful"
+msgstr "Identificación incorrecta"
+
+#: credui.rc:30
+msgid ""
+"Make sure that your user name\n"
+"and password are correct."
+msgstr ""
+"Asegúrese que su nombre de usuario\n"
+"y contraseña son correctos."
+
+#: credui.rc:32
+msgid ""
+"Having Caps Lock on may cause you to enter your password incorrectly.\n"
+"\n"
+"Press the Caps Lock key on your keyboard to turn off Caps Lock before\n"
+"entering your password."
+msgstr ""
+"El Bloq Mayus activado puede hacer que entre su contraseña incorrectamente.\n"
+"\n"
+"Pulse la tecla Bloq Mayus de su teclado para desactivar Bloq Mayus antes\n"
+" de introducir su contraseña."
+
+#: credui.rc:31
+msgid "Caps Lock is On"
+msgstr "Bloq Mayus está activado"
+
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
 msgstr ""

@@ -43,13 +43,3 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,97,128,50,14
     PUSHBUTTON      "Annulla",IDCANCEL,156,128,50,14
 END
-
-STRINGTABLE
-{
-    IDS_TITLEFORMAT     "Connetti a %s"
-    IDS_MESSAGEFORMAT   "Connettendo a %s"
-    IDS_INCORRECTPASSWORDTITLE  "Accesso fallito"
-    IDS_INCORRECTPASSWORD       "Assicurati che il tuo nome utente\ne password siano corrette."
-    IDS_CAPSLOCKONTITLE "Il Caps Lock è acceso"
-    IDS_CAPSLOCKON      "Avere Caps Lock acceso può portarti a immettere la password incorrettamente.\n\nPremere il tasto Caps Lock sulla tua tastiera per spegnere Caps Lock prima\n di immettere la tua password."
-}

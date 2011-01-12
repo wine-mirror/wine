@@ -37,6 +37,36 @@ msgstr "Dnes:"
 msgid "Go to today"
 msgstr "Choď na dnešok"
 
+#: credui.rc:27
+msgid "Connect to %s"
+msgstr ""
+
+#: credui.rc:28
+msgid "Connecting to %s"
+msgstr ""
+
+#: credui.rc:29
+msgid "Logon unsuccessful"
+msgstr ""
+
+#: credui.rc:30
+msgid ""
+"Make sure that your user name\n"
+"and password are correct."
+msgstr ""
+
+#: credui.rc:32
+msgid ""
+"Having Caps Lock on may cause you to enter your password incorrectly.\n"
+"\n"
+"Press the Caps Lock key on your keyboard to turn off Caps Lock before\n"
+"entering your password."
+msgstr ""
+
+#: credui.rc:31
+msgid "Caps Lock is On"
+msgstr ""
+
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
 msgstr ""

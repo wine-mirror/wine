@@ -43,13 +43,3 @@ BEGIN
     DEFPUSHBUTTON   "Gerai",IDOK,97,128,50,14
     PUSHBUTTON      "Atsisakyti",IDCANCEL,156,128,50,14
 END
-
-STRINGTABLE
-{
-    IDS_TITLEFORMAT     "Užmegzti ryšį su %s"
-    IDS_MESSAGEFORMAT   "Jungiamasi prie %s"
-    IDS_INCORRECTPASSWORDTITLE  "Prisijungimas nesėkmingas"
-    IDS_INCORRECTPASSWORD       "Įsitikinkite, kad naudotojo vardas\nir slaptažodis yra teisingi."
-    IDS_CAPSLOCKONTITLE "Didžiųjų raidžių būsena įjungta"
-    IDS_CAPSLOCKON      "Kai įjungta didžiųjų raidžių būsena, savo slaptažodį galite įvesti neteisingai.\n\nPaspauskite didžiųjų raidžių klaviatūros klavišą didžiųjų raidžių būsenai išjungti\nprieš rinkdami savo slaptažodį."
-}

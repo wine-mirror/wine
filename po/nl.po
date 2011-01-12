@@ -37,6 +37,42 @@ msgstr "Vandaag:"
 msgid "Go to today"
 msgstr "Ga naar vandaag"
 
+#: credui.rc:27
+msgid "Connect to %s"
+msgstr "Verbind met %s"
+
+#: credui.rc:28
+msgid "Connecting to %s"
+msgstr "Verbinden met %s"
+
+#: credui.rc:29
+msgid "Logon unsuccessful"
+msgstr "Inloggen mislukt"
+
+#: credui.rc:30
+msgid ""
+"Make sure that your user name\n"
+"and password are correct."
+msgstr ""
+"Controleer of uw gebruikersnaam\n"
+"en wachtwoord correct zijn."
+
+#: credui.rc:32
+msgid ""
+"Having Caps Lock on may cause you to enter your password incorrectly.\n"
+"\n"
+"Press the Caps Lock key on your keyboard to turn off Caps Lock before\n"
+"entering your password."
+msgstr ""
+"Met Caps Lock aan kan uw wachtwoord verkeerd worden ingevoerd.\n"
+"\n"
+"Druk op de Caps Lock toets op uw toetsenbord om Caps Lock uit\n"
+"te zetten voor invoer van uw wachtwoord."
+
+#: credui.rc:31
+msgid "Caps Lock is On"
+msgstr "Caps Lock staat Aan"
+
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
 msgstr "Autoriteits Sleutel Identificatie nummer"

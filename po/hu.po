@@ -42,6 +42,43 @@ msgstr "Ma:"
 msgid "Go to today"
 msgstr "Ugrás mára"
 
+#: credui.rc:27
+msgid "Connect to %s"
+msgstr "Kapcsolódás: %s"
+
+#: credui.rc:28
+msgid "Connecting to %s"
+msgstr "Kapcsolódás: %s"
+
+#: credui.rc:29
+msgid "Logon unsuccessful"
+msgstr "Bejelentkezés sikertelen"
+
+#: credui.rc:30
+msgid ""
+"Make sure that your user name\n"
+"and password are correct."
+msgstr ""
+"Kérem ellenőrizze a felhasználóneve\n"
+"és a jelszava helyességét."
+
+#: credui.rc:32
+msgid ""
+"Having Caps Lock on may cause you to enter your password incorrectly.\n"
+"\n"
+"Press the Caps Lock key on your keyboard to turn off Caps Lock before\n"
+"entering your password."
+msgstr ""
+"Ha Caps Lock be van kapcsolva, elképzelhető hogy hibásan írja be a "
+"jelszavát.\n"
+"\n"
+"Nyomja meg a Caps Lock gombot a billentyűzetén a Caps Lock kikapcsolásához\n"
+"mielőtt megadja a jelszavát."
+
+#: credui.rc:31
+msgid "Caps Lock is On"
+msgstr "A Caps Lock be van kapcsolva"
+
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
 msgstr "Hitelesítési kulcs azonosító"

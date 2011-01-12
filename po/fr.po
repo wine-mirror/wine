@@ -42,6 +42,44 @@ msgstr "Aujourd'hui :"
 msgid "Go to today"
 msgstr "Aller à aujourd'hui"
 
+#: credui.rc:27
+msgid "Connect to %s"
+msgstr "Se connecter à %s"
+
+#: credui.rc:28
+msgid "Connecting to %s"
+msgstr "Connexion à %s"
+
+#: credui.rc:29
+msgid "Logon unsuccessful"
+msgstr "Échec lors de la connexion"
+
+#: credui.rc:30
+msgid ""
+"Make sure that your user name\n"
+"and password are correct."
+msgstr ""
+"Assurez-vous que votre nom d'utilisateur\n"
+"et votre mot de passe sont corrects."
+
+#: credui.rc:32
+msgid ""
+"Having Caps Lock on may cause you to enter your password incorrectly.\n"
+"\n"
+"Press the Caps Lock key on your keyboard to turn off Caps Lock before\n"
+"entering your password."
+msgstr ""
+"Le verrouillage majuscule étant activé, cela pourrait provoquer une erreur "
+"lors de la saisie de votre mot de passe.\n"
+"\n"
+"Appuyez sur la touche VERR.MAJ de votre clavier afin de désactiver le "
+"verrouilage majuscule avant\n"
+"de saisir votre mot de passe."
+
+#: credui.rc:31
+msgid "Caps Lock is On"
+msgstr "VERR.MAJ est activé"
+
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
 msgstr "Identifiant de l'autorité de la clé"

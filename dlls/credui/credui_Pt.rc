@@ -64,28 +64,3 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,97,128,50,14
     PUSHBUTTON      "Cancelar",IDCANCEL,156,128,50,14
 END
-
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
-
-STRINGTABLE
-{
-    IDS_TITLEFORMAT     "Conectar a %s"
-    IDS_MESSAGEFORMAT   "Conectando a %s"
-    IDS_INCORRECTPASSWORDTITLE  "Logon mal sucedido"
-    IDS_INCORRECTPASSWORD       "Certifique-se de que nome de usuário\ne senha estão corretos."
-    IDS_CAPSLOCKONTITLE "Caps Lock ligado"
-    IDS_CAPSLOCKON      "Ter o Caps Lock ligado pode provocar a introdução incorreta da sua senha.\n\nPressione a tecla Caps Lock no seu teclado para desligar o Caps Lock antes\nde introduzir a senha."
-}
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
-
-STRINGTABLE
-{
-    IDS_TITLEFORMAT     "Ligar a %s"
-    IDS_MESSAGEFORMAT   "A ligar a %s"
-    IDS_INCORRECTPASSWORDTITLE  "Logon mal sucedido"
-    IDS_INCORRECTPASSWORD       "Verifique que o seu nome de utilizador\ne password estão correctos."
-    IDS_CAPSLOCKONTITLE "Caps Lock ligado"
-    IDS_CAPSLOCKON      "Tendo o Caps Lock ligado pode provocar que introduza a sua password incorrectamente.\n\nPressione a tecla Caps Lock no seu teclado para desligar o Caps Lock antes\nde introduzir a password."
-}

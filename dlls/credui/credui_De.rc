@@ -42,13 +42,3 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,97,128,50,14
     PUSHBUTTON      "Abbrechen",IDCANCEL,156,128,50,14
 END
-
-STRINGTABLE
-{
-    IDS_TITLEFORMAT     "Mit %s verbinden"
-    IDS_MESSAGEFORMAT   "Verbindung mit %s wird hergestellt"
-    IDS_INCORRECTPASSWORDTITLE  "Anmeldung fehlgeschlagen"
-    IDS_INCORRECTPASSWORD       "Bitte überprüfen Sie Ihren Benutzernamen\nund geben Sie das Kennwort neu ein."
-    IDS_CAPSLOCKONTITLE "Die Feststelltaste ist aktiviert"
-    IDS_CAPSLOCKON      "Mit aktivierter Feststelltaste könnte das Kennwort falsch eingeben werden.\n\nVor der Eingabe des Kennworts sollten Sie die Feststelltaste deaktivieren."
-}

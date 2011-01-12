@@ -43,13 +43,3 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,97,128,50,14
     PUSHBUTTON      "Mégse",IDCANCEL,156,128,50,14
 END
-
-STRINGTABLE
-{
-    IDS_TITLEFORMAT     "Kapcsolódás: %s"
-    IDS_MESSAGEFORMAT   "Kapcsolódás: %s"
-    IDS_INCORRECTPASSWORDTITLE  "Bejelentkezés sikertelen"
-    IDS_INCORRECTPASSWORD       "Kérem ellenőrizze a felhasználóneve\nés a jelszava helyességét."
-    IDS_CAPSLOCKONTITLE "A Caps Lock be van kapcsolva"
-    IDS_CAPSLOCKON      "Ha Caps Lock be van kapcsolva, elképzelhető hogy hibásan írja be a jelszavát.\n\nNyomja meg a Caps Lock gombot a billentyűzetén a Caps Lock kikapcsolásához\nmielőtt megadja a jelszavát."
-}
