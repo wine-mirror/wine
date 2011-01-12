@@ -230,42 +230,26 @@ extern "C" {
 #define DUMMYUNIONNAME8  u8
 #endif /* !defined(NONAMELESSUNION) */
 
-#ifndef __C89_NAMELESSSTRUCT
+#ifndef __C89_NAMELESS
 # if !defined(__WINESRC__) && !defined(WINE_NO_NAMELESS_EXTENSION)
 #  ifdef __GNUC__
     /* Anonymous structs support starts with gcc 2.96/g++ 2.95 */
 #   if (__GNUC__ > 2) || ((__GNUC__ == 2) && ((__GNUC_MINOR__ > 95) || ((__GNUC_MINOR__ == 95) && defined(__cplusplus))))
-#    define __C89_NAMELESSSTRUCT __extension__
+#    define __C89_NAMELESS __extension__
 #   endif
 #  elif defined(_MSC_VER)
-#   define __C89_NAMELESSSTRUCT
+#   define __C89_NAMELESS
 #  endif
-# endif
-# ifdef __C89_NAMELESSSTRUCT
-#   define __C89_NAMELESSSTRUCTNAME
-# else
-#   define __C89_NAMELESSSTRUCT
-#   define __C89_NAMELESSSTRUCTNAME DUMMYSTRUCTNAME
 # endif
 #endif
 
-#ifndef __C89_NAMELESSUNION
-# if !defined(__WINESRC__) && !defined(WINE_NO_NAMELESS_EXTENSION)
-#  ifdef __GNUC__
-    /* Anonymous unions support starts with gcc 2.96/g++ 2.95 */
-#   if (__GNUC__ > 2) || ((__GNUC__ == 2) && ((__GNUC_MINOR__ > 95) || ((__GNUC_MINOR__ == 95) && defined(__cplusplus))))
-#    define __C89_NAMELESSUNION __extension__
-#   endif
-#  elif defined(_MSC_VER)
-#   define __C89_NAMELESSUNION
-#  endif
-# endif
-# ifdef __C89_NAMELESSUNION
-#   define __C89_NAMELESSUNIONNAME
-# else
-#   define __C89_NAMELESSUNION
-#   define __C89_NAMELESSUNIONNAME DUMMYUNIONNAME
-# endif
+#ifdef __C89_NAMELESS
+#  define __C89_NAMELESSSTRUCTNAME
+#  define __C89_NAMELESSUNIONNAME
+#else
+#  define __C89_NAMELESS
+#  define __C89_NAMELESSSTRUCTNAME DUMMYSTRUCTNAME
+#  define __C89_NAMELESSUNIONNAME DUMMYUNIONNAME
 #endif
 
 /* C99 restrict support */
