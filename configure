@@ -10879,9 +10879,9 @@ ALSALIBS=""
 
 if test "$ac_cv_header_sys_asoundlib_h" = "yes" -o "$ac_cv_header_alsa_asoundlib_h" = "yes"
 then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for snd_pcm_hw_params_get_access in -lasound" >&5
-$as_echo_n "checking for snd_pcm_hw_params_get_access in -lasound... " >&6; }
-if test "${ac_cv_lib_asound_snd_pcm_hw_params_get_access+set}" = set; then :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for snd_pcm_hw_params_get_access_mask in -lasound" >&5
+$as_echo_n "checking for snd_pcm_hw_params_get_access_mask in -lasound... " >&6; }
+if test "${ac_cv_lib_asound_snd_pcm_hw_params_get_access_mask+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -10895,27 +10895,27 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char snd_pcm_hw_params_get_access ();
+char snd_pcm_hw_params_get_access_mask ();
 int
 main ()
 {
-return snd_pcm_hw_params_get_access ();
+return snd_pcm_hw_params_get_access_mask ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_asound_snd_pcm_hw_params_get_access=yes
+  ac_cv_lib_asound_snd_pcm_hw_params_get_access_mask=yes
 else
-  ac_cv_lib_asound_snd_pcm_hw_params_get_access=no
+  ac_cv_lib_asound_snd_pcm_hw_params_get_access_mask=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_asound_snd_pcm_hw_params_get_access" >&5
-$as_echo "$ac_cv_lib_asound_snd_pcm_hw_params_get_access" >&6; }
-if test "x$ac_cv_lib_asound_snd_pcm_hw_params_get_access" = x""yes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_asound_snd_pcm_hw_params_get_access_mask" >&5
+$as_echo "$ac_cv_lib_asound_snd_pcm_hw_params_get_access_mask" >&6; }
+if test "x$ac_cv_lib_asound_snd_pcm_hw_params_get_access_mask" = x""yes; then :
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #ifdef HAVE_ALSA_ASOUNDLIB_H
@@ -10926,7 +10926,7 @@ if test "x$ac_cv_lib_asound_snd_pcm_hw_params_get_access" = x""yes; then :
 int
 main ()
 {
-int ret = snd_pcm_hw_params_get_access(NULL, NULL)
+int ret = snd_pcm_hw_params_get_access_mask(NULL, NULL)
   ;
   return 0;
 }

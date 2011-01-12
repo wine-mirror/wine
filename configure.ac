@@ -1479,12 +1479,12 @@ dnl **** Check for ALSA 1.x ****
 AC_SUBST(ALSALIBS,"")
 if test "$ac_cv_header_sys_asoundlib_h" = "yes" -o "$ac_cv_header_alsa_asoundlib_h" = "yes"
 then
-    AC_CHECK_LIB(asound,snd_pcm_hw_params_get_access,
+    AC_CHECK_LIB(asound,snd_pcm_hw_params_get_access_mask,
         [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#ifdef HAVE_ALSA_ASOUNDLIB_H
 #include <alsa/asoundlib.h>
 #elif defined(HAVE_SYS_ASOUNDLIB_H)
 #include <sys/asoundlib.h>
-#endif]], [[int ret = snd_pcm_hw_params_get_access(NULL, NULL)]])],
+#endif]], [[int ret = snd_pcm_hw_params_get_access_mask(NULL, NULL)]])],
                         [AC_DEFINE(HAVE_ALSA,1,[Define if you have ALSA 1.x including devel headers])
                          ALSALIBS="-lasound"],[])])
 fi
