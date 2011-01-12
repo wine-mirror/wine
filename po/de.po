@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-01-11 19:58+0100\n"
+"PO-Revision-Date: 2011-01-12 20:41+0100\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -441,13 +441,8 @@ msgid "CA Encryption Certificate"
 msgstr "CA Verschlüsselungszertifikat"
 
 #: crypt32.rc:119 cryptui.rc:145
-#, fuzzy
 msgid "Key Recovery Agent"
-msgstr ""
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Agent zur Schlüsselwiederherstellung\n"
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Schlüsselwiederherstellung"
+msgstr "Agent zur Schlüsselwiederherstellung"
 
 #: crypt32.rc:120
 msgid "Certificate Template Information"
@@ -582,31 +577,16 @@ msgid "Embedded Windows System Component Verification"
 msgstr "Embedded Windows System Komponenten Verifizierung"
 
 #: crypt32.rc:153 cryptui.rc:140
-#, fuzzy
 msgid "Key Pack Licenses"
-msgstr ""
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Schlüsselpaketlizenzen\n"
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Lizenzschlüssel"
+msgstr "Schlüsselpaketlizenzen"
 
 #: crypt32.rc:154 cryptui.rc:141
-#, fuzzy
 msgid "License Server Verification"
-msgstr ""
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Lizenzserver Verifizierung\n"
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Lizenz Server Verifizierung"
+msgstr "Lizenzserver Verifizierung"
 
 #: crypt32.rc:155 cryptui.rc:143
-#, fuzzy
 msgid "Smart Card Logon"
-msgstr ""
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Smartcard Login\n"
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Smart Card Anmeldung"
+msgstr "Smart Card Anmeldung"
 
 #: crypt32.rc:156 cryptui.rc:139
 msgid "Digital Rights"
@@ -621,66 +601,36 @@ msgid "Key Recovery"
 msgstr "Schlüsselwiederherstellung"
 
 #: crypt32.rc:159 cryptui.rc:137
-#, fuzzy
 msgid "Document Signing"
-msgstr ""
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Dokumentensignatur\n"
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Dokument signieren"
+msgstr "Dokumentensignatur"
 
 #: crypt32.rc:160
 msgid "IP security IKE intermediate"
 msgstr "Dazwischenliegende IP Sicherheits-IKE"
 
 #: crypt32.rc:161 cryptui.rc:129
-#, fuzzy
 msgid "File Recovery"
-msgstr ""
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Dateiwiederherstellung\n"
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Datenwiederherstellung"
+msgstr "Datenwiederherstellung"
 
 #: crypt32.rc:162 cryptui.rc:134
-#, fuzzy
 msgid "Root List Signer"
-msgstr ""
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Stammlistengeber\n"
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Stammlisten Signierer"
+msgstr "Stammlisten Signierer"
 
 #: crypt32.rc:163
 msgid "All application policies"
 msgstr "Alle Anwendungsrichtlinien"
 
 #: crypt32.rc:164 cryptui.rc:146
-#, fuzzy
 msgid "Directory Service Email Replication"
-msgstr ""
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Verzeichnisdienst für E-Mail Replikation\n"
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Verzeichnissdienst E-Mail-Replikation"
+msgstr "Verzeichnisdienst für E-Mail Replikation"
 
 #: crypt32.rc:165 cryptui.rc:142
-#, fuzzy
 msgid "Certificate Request Agent"
-msgstr ""
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Agent für Zertifikationsanforderung\n"
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Zertifikatsanfrage"
+msgstr "Dienst für Zertifikationsanforderung"
 
 #: crypt32.rc:166 cryptui.rc:138
-#, fuzzy
 msgid "Lifetime Signing"
-msgstr ""
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Lebensdauersignatur\n"
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Lebensdauer signieren"
+msgstr "Lebensdauersignatur"
 
 #: crypt32.rc:167
 msgid "All issuance policies"
@@ -1584,26 +1534,16 @@ msgid "Stop"
 msgstr "Stopp"
 
 #: hhctrl.rc:38 shdocvw.rc:66
-#, fuzzy
 msgid "Refresh"
-msgstr ""
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Aktualisieren\n"
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Neu laden"
+msgstr "Neu laden"
 
 #: hhctrl.rc:39 shdocvw.rc:63
 msgid "Back"
 msgstr "Zurück"
 
 #: hhctrl.rc:40 shdocvw.rc:67
-#, fuzzy
 msgid "Home"
-msgstr ""
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Startseite\n"
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Start"
+msgstr "Start"
 
 #: hhctrl.rc:41
 msgid "Sync"
@@ -1794,13 +1734,8 @@ msgid "Array object expected"
 msgstr "Array Objekt erwartet"
 
 #: localspl.rc:28 localui.rc:28 winspool.rc:27
-#, fuzzy
 msgid "Local Port"
-msgstr ""
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Lokaler Anschluss\n"
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Lokaler Anschluß"
+msgstr "Lokaler Anschluss"
 
 #: localspl.rc:29
 msgid "Local Monitor"
@@ -2395,13 +2330,8 @@ msgid "&Save"
 msgstr "&Speichern"
 
 #: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
-#, fuzzy
 msgid "Save &as..."
-msgstr ""
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Speichern &unter...\n"
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Speichern &als..."
+msgstr "Speichern &unter..."
 
 #: shdocvw.rc:35
 msgid "Print &format..."
@@ -2409,29 +2339,19 @@ msgstr "Seite &einrichten..."
 
 #: shdocvw.rc:36
 msgid "Pr&int..."
-msgstr "Dr&ucken..."
+msgstr "&Drucken..."
 
 #: shdocvw.rc:37 wordpad.rc:34
-#, fuzzy
 msgid "Print previe&w..."
-msgstr ""
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Seitenansi&cht\n"
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Seiten&vorschau..."
+msgstr "Seitenansi&cht"
 
 #: shdocvw.rc:39
 msgid "&Properties..."
 msgstr "Ei&genschaften..."
 
 #: shdocvw.rc:40 taskmgr.rc:140
-#, fuzzy
 msgid "&Close"
-msgstr ""
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"&Schließen\n"
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"&Beenden"
+msgstr "&Beenden"
 
 #: shdocvw.rc:42 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
 msgid "&View"
