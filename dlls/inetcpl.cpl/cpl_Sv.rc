@@ -25,12 +25,6 @@
 
 LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
 
-STRINGTABLE DISCARDABLE
-BEGIN
-    IDS_CPL_NAME        "Internetinställningar"
-    IDS_CPL_INFO        "Konfigurera Wines webbläsare och tillhörande inställningar"
-END
-
 /* "General" propsheet */
 IDD_GENERAL DIALOG  0, 0, 320, 220
 STYLE WS_CAPTION | WS_CHILD | WS_DISABLED

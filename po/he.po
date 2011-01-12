@@ -1608,6 +1608,14 @@ msgstr "IDTB_TOC_PREV"
 msgid "Cinepak Video codec"
 msgstr ""
 
+#: inetcpl.rc:28
+msgid "Internet Settings"
+msgstr "הגדרות אינטרנט"
+
+#: inetcpl.rc:29
+msgid "Configure Wine Internet Browser and related settings"
+msgstr "הגדרת דפדפן האינטרנט של Wine והגדרות שקשורות בו"
+
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
 msgstr ""

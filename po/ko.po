@@ -1686,6 +1686,14 @@ msgstr "IDTB_TOC_PREV"
 msgid "Cinepak Video codec"
 msgstr ""
 
+#: inetcpl.rc:28
+msgid "Internet Settings"
+msgstr "인터넷 설정"
+
+#: inetcpl.rc:29
+msgid "Configure Wine Internet Browser and related settings"
+msgstr "Wine 인터넷 브라우저와 관련 설정 처리"
+
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
 msgstr "객페를 기본 형식으로 변환하는 중에 에러 발생"

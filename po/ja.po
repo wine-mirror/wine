@@ -1628,6 +1628,14 @@ msgstr "IDTB_TOC_PREV"
 msgid "Cinepak Video codec"
 msgstr ""
 
+#: inetcpl.rc:28
+msgid "Internet Settings"
+msgstr "インターネット設定"
+
+#: inetcpl.rc:29
+msgid "Configure Wine Internet Browser and related settings"
+msgstr "Wine インターネット ブラウザや関連する設定を構成します"
+
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
 msgstr "オブジェクトを基本型に変換できません"

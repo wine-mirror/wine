@@ -21,6 +21,16 @@
 
 #include "inetcpl.h"
 
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_CPL_NAME        "Internet Settings"
+    IDS_CPL_INFO        "Configure Wine Internet Browser and related settings" 
+END
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
 #define WINE_FILENAME_STR "inetcpl.cpl"
 #define WINE_FILEDESCRIPTION_STR "Internet Control Panel"
 

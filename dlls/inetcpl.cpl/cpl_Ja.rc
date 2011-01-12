@@ -27,12 +27,6 @@
 
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 
-STRINGTABLE DISCARDABLE
-BEGIN
-    IDS_CPL_NAME        "インターネット設定"
-    IDS_CPL_INFO        "Wine インターネット ブラウザや関連する設定を構成します"
-END
-
 /* "General" propsheet */
 IDD_GENERAL DIALOG  0, 0, 320, 220
 STYLE WS_CAPTION | WS_CHILD | WS_DISABLED

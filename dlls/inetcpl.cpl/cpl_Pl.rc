@@ -23,12 +23,6 @@
 
 LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 
-STRINGTABLE DISCARDABLE
-BEGIN
-    IDS_CPL_NAME        "Ustawienia internetowe"
-    IDS_CPL_INFO        "Pozwala skonfigurowaæ przegl¹darkê internetow¹ Wine i odpowiadaj¹ce jej ustawienia"
-END
-
 /* "General" propsheet */
 IDD_GENERAL DIALOG  0, 0, 320, 220
 STYLE WS_CAPTION | WS_CHILD | WS_DISABLED

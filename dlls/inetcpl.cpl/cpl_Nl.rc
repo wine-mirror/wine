@@ -23,12 +23,6 @@
 
 LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 
-STRINGTABLE DISCARDABLE
-BEGIN
-    IDS_CPL_NAME        "Internet-instellingen"
-    IDS_CPL_INFO        "Configureer Wine Internet Browser en gerelateerde instellingen"
-END
-
 /* "General" propsheet */
 IDD_GENERAL DIALOG  0, 0, 320, 220
 STYLE WS_CAPTION | WS_CHILD | WS_DISABLED

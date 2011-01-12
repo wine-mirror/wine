@@ -26,12 +26,6 @@
 
 LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
 
-STRINGTABLE DISCARDABLE
-BEGIN
-    IDS_CPL_NAME        "הגדרות אינטרנט"
-    IDS_CPL_INFO        "הגדרת דפדפן האינטרנט של Wine והגדרות שקשורות בו"
-END
-
 /* "General" propsheet */
 IDD_GENERAL DIALOG  0, 0, 320, 220
 STYLE WS_CAPTION | WS_CHILD | WS_DISABLED

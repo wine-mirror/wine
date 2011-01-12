@@ -1627,6 +1627,14 @@ msgstr "Предыдущая глава"
 msgid "Cinepak Video codec"
 msgstr ""
 
+#: inetcpl.rc:28
+msgid "Internet Settings"
+msgstr ""
+
+#: inetcpl.rc:29
+msgid "Configure Wine Internet Browser and related settings"
+msgstr ""
+
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
 msgstr "Ошибка конвертирования объекта в примитивный тип"
