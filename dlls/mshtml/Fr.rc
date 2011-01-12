@@ -27,18 +27,6 @@
 
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
-STRINGTABLE
-{
-    IDS_STATUS_DONE            "Terminé"
-    IDS_STATUS_DOWNLOADINGFROM "Téléchargement depuis %s..."
-}
-
-STRINGTABLE
-{
-    IDS_HTMLDISABLED    "Le rendu HTML est actuellement désactivé."
-    IDS_HTMLDOCUMENT    "Document HTML"
-}
-
 IDD_HYPERLINK DIALOG 0, 0, 250, 65
 STYLE DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Hyperlien"

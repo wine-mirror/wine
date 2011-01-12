@@ -1752,6 +1752,22 @@ msgstr "שליחת דוא״ל"
 msgid "Entire Network"
 msgstr "הרשת כולה"
 
+#: mshtml.rc:31
+msgid "HTML rendering is currently disabled."
+msgstr "עיבוד HTML מנוטרל כעת."
+
+#: mshtml.rc:32
+msgid "HTML Document"
+msgstr "מסמך HTML"
+
+#: mshtml.rc:26
+msgid "Downloading from %s..."
+msgstr "הורדה מהכתובת %s..."
+
+#: mshtml.rc:25
+msgid "Done"
+msgstr "הסתיימה"
+
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "

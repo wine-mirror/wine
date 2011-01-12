@@ -1771,6 +1771,22 @@ msgstr "Pošlji"
 msgid "Entire Network"
 msgstr "Celotno omrežje"
 
+#: mshtml.rc:31
+msgid "HTML rendering is currently disabled."
+msgstr "Prikazovanje HTML dokumentov je trenutno onemogočeno."
+
+#: mshtml.rc:32
+msgid "HTML Document"
+msgstr "HTML dokument"
+
+#: mshtml.rc:26
+msgid "Downloading from %s..."
+msgstr "Prenašam iz %s ..."
+
+#: mshtml.rc:25
+msgid "Done"
+msgstr "Končano"
+
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "

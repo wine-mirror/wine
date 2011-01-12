@@ -22,18 +22,6 @@
 
 LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 
-STRINGTABLE
-{
-    IDS_STATUS_DONE            "Klaar"
-    IDS_STATUS_DOWNLOADINGFROM "Downloaden van %s..."
-}
-
-STRINGTABLE
-{
-    IDS_HTMLDISABLED  "De HTML weergave is op dit moment uitgeschakeld."
-    IDS_HTMLDOCUMENT  "HTML document"
-}
-
 IDD_HYPERLINK DIALOG 0, 0, 250, 65
 STYLE DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Webverwijzing"

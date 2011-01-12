@@ -1764,6 +1764,22 @@ msgstr "Pošalji poruku"
 msgid "Entire Network"
 msgstr "Cela mreža"
 
+#: mshtml.rc:31
+msgid "HTML rendering is currently disabled."
+msgstr "HTML iscrtavanje je onemogućeno."
+
+#: mshtml.rc:32
+msgid "HTML Document"
+msgstr "HTML dokument"
+
+#: mshtml.rc:26
+msgid "Downloading from %s..."
+msgstr "Preuzimanje iz %s..."
+
+#: mshtml.rc:25
+msgid "Done"
+msgstr "Završeno"
+
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "

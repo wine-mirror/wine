@@ -1774,6 +1774,22 @@ msgstr "Відсилання пошти"
 msgid "Entire Network"
 msgstr "Вся Мережа"
 
+#: mshtml.rc:31
+msgid "HTML rendering is currently disabled."
+msgstr "В даний момент відображення HTML вимкнено."
+
+#: mshtml.rc:32
+msgid "HTML Document"
+msgstr "Документ HTML"
+
+#: mshtml.rc:26
+msgid "Downloading from %s..."
+msgstr "Завантаження з %s..."
+
+#: mshtml.rc:25
+msgid "Done"
+msgstr "Готово"
+
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "

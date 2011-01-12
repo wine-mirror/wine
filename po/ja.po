@@ -1774,6 +1774,22 @@ msgstr "メール送信"
 msgid "Entire Network"
 msgstr "ネットワーク全体"
 
+#: mshtml.rc:31
+msgid "HTML rendering is currently disabled."
+msgstr "HTML レンダリングは現在、無効です。"
+
+#: mshtml.rc:32
+msgid "HTML Document"
+msgstr "HTML 文書"
+
+#: mshtml.rc:26
+msgid "Downloading from %s..."
+msgstr "%s からダウンロード中..."
+
+#: mshtml.rc:25
+msgid "Done"
+msgstr "完了"
+
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "

@@ -15049,7 +15049,7 @@ wine_fn_config_dll msftedit enable_msftedit
 wine_fn_config_dll msg711.acm enable_msg711_acm
 wine_fn_config_dll msgsm32.acm enable_msgsm32_acm
 wine_fn_config_dll mshtml.tlb enable_mshtml_tlb
-wine_fn_config_dll mshtml enable_mshtml implib
+wine_fn_config_dll mshtml enable_mshtml po,implib
 wine_fn_config_test dlls/mshtml/tests mshtml_test
 wine_fn_config_dll msi enable_msi po,implib
 wine_fn_config_test dlls/msi/tests msi_test

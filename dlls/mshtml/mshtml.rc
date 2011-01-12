@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Milko Krachounov
+ * Copyright 2005 Jacek Caban
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,10 +18,34 @@
 
 #include "resource.h"
 
-LANGUAGE LANG_BULGARIAN, SUBLANG_DEFAULT
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-    IDS_HTMLDISABLED    "HTML изобразяването е изключено."
-    IDS_HTMLDOCUMENT    "HTML документ"
+    IDS_STATUS_DONE            "Done"
+    IDS_STATUS_DOWNLOADINGFROM "Downloading from %s..."
 }
+
+STRINGTABLE
+{
+    IDS_HTMLDISABLED    "HTML rendering is currently disabled."
+    IDS_HTMLDOCUMENT    "HTML Document"
+}
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+#define WINE_FILEDESCRIPTION_STR "Wine HTML Viewer"
+#define WINE_FILENAME_STR "mshtml.dll"
+#define WINE_FILEVERSION 6,0,2800,1106
+#define WINE_FILEVERSION_STR "6.0.2800.1106"
+#define WINE_PRODUCTVERSION 6,0,2800,1106
+#define WINE_PRODUCTVERSION_STR "6.0.2800.1106"
+#define WINE_EXTRAVALUES VALUE "OLESelfRegister",""
+
+#include "wine/wine_common_ver.rc"
+
+/* @makedep: mshtml.inf */
+REGINST REGINST mshtml.inf
+
+/* @makedep: blank.htm */
+blank.htm HTML "blank.htm"

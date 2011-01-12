@@ -1777,6 +1777,22 @@ msgstr "Laiškų siuntimas"
 msgid "Entire Network"
 msgstr "Visas tinklas"
 
+#: mshtml.rc:31
+msgid "HTML rendering is currently disabled."
+msgstr "HTML atvaizdavimas yra išjungtas."
+
+#: mshtml.rc:32
+msgid "HTML Document"
+msgstr "HTML dokumentas"
+
+#: mshtml.rc:26
+msgid "Downloading from %s..."
+msgstr "Atsiunčiama iš %s..."
+
+#: mshtml.rc:25
+msgid "Done"
+msgstr "Baigta"
+
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "

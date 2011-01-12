@@ -1847,6 +1847,22 @@ msgstr "Send e-post"
 msgid "Entire Network"
 msgstr "Hele nettverket"
 
+#: mshtml.rc:31
+msgid "HTML rendering is currently disabled."
+msgstr "HTML-tegning er for øyeblikket deaktivert."
+
+#: mshtml.rc:32
+msgid "HTML Document"
+msgstr "HTML-dokument"
+
+#: mshtml.rc:26
+msgid "Downloading from %s..."
+msgstr ""
+
+#: mshtml.rc:25
+msgid "Done"
+msgstr ""
+
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "

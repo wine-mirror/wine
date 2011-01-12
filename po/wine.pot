@@ -1716,6 +1716,22 @@ msgstr ""
 msgid "Entire Network"
 msgstr ""
 
+#: mshtml.rc:31
+msgid "HTML rendering is currently disabled."
+msgstr ""
+
+#: mshtml.rc:32
+msgid "HTML Document"
+msgstr ""
+
+#: mshtml.rc:26
+msgid "Downloading from %s..."
+msgstr ""
+
+#: mshtml.rc:25
+msgid "Done"
+msgstr ""
+
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "

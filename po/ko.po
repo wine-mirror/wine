@@ -1830,6 +1830,22 @@ msgstr "메일 보내기"
 msgid "Entire Network"
 msgstr "전체 네트워크"
 
+#: mshtml.rc:31
+msgid "HTML rendering is currently disabled."
+msgstr "HTML 렌더링은 현재 가능하지 않음."
+
+#: mshtml.rc:32
+msgid "HTML Document"
+msgstr "HTML 문서"
+
+#: mshtml.rc:26
+msgid "Downloading from %s..."
+msgstr "%s로부터 다운로드중..."
+
+#: mshtml.rc:25
+msgid "Done"
+msgstr "끝남"
+
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "

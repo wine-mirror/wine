@@ -1862,6 +1862,22 @@ msgstr "Trimite emailul"
 msgid "Entire Network"
 msgstr "Toată rețeaua"
 
+#: mshtml.rc:31
+msgid "HTML rendering is currently disabled."
+msgstr "Afișarea de pagini HTML este în prezent dezactivată."
+
+#: mshtml.rc:32
+msgid "HTML Document"
+msgstr "Document HTML"
+
+#: mshtml.rc:26
+msgid "Downloading from %s..."
+msgstr ""
+
+#: mshtml.rc:25
+msgid "Done"
+msgstr ""
+
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "

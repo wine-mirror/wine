@@ -1861,6 +1861,22 @@ msgstr "Enviar E-mail"
 msgid "Entire Network"
 msgstr "Toda a rede"
 
+#: mshtml.rc:31
+msgid "HTML rendering is currently disabled."
+msgstr "A interpretação de HTML está desativada."
+
+#: mshtml.rc:32
+msgid "HTML Document"
+msgstr "Documento HTML"
+
+#: mshtml.rc:26
+msgid "Downloading from %s..."
+msgstr "Fazendo o download de %s..."
+
+#: mshtml.rc:25
+msgid "Done"
+msgstr "Concluído"
+
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "

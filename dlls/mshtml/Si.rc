@@ -22,18 +22,6 @@
 
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 
-STRINGTABLE
-{
-    IDS_STATUS_DONE            "Končano"
-    IDS_STATUS_DOWNLOADINGFROM "Prenašam iz %s ..."
-}
-
-STRINGTABLE
-{
-    IDS_HTMLDISABLED    "Prikazovanje HTML dokumentov je trenutno onemogočeno."
-    IDS_HTMLDOCUMENT    "HTML dokument"
-}
-
 IDD_HYPERLINK DIALOG 0, 0, 250, 65
 STYLE DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Hiperpovezava"
