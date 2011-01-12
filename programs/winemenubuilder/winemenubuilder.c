@@ -863,17 +863,18 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR ico
     for (i = 0; i < numEntries; i++)
     {
         int slot;
+        int width = iconDirEntries[i].bWidth ? iconDirEntries[i].bWidth : 256;
+        int height = iconDirEntries[i].bHeight ? iconDirEntries[i].bHeight : 256;
 
-        WINE_TRACE("[%d]: %d x %d @ %d\n", i, iconDirEntries[i].bWidth,
-            iconDirEntries[i].bHeight, iconDirEntries[i].wBitCount);
-        slot = size_to_slot(iconDirEntries[i].bWidth);
+        WINE_TRACE("[%d]: %d x %d @ %d\n", i, width, height, iconDirEntries[i].wBitCount);
+        slot = size_to_slot(width);
         if (slot < 0)
             continue;
         if (iconDirEntries[i].wBitCount >= best[slot].maxBits &&
-            (iconDirEntries[i].bHeight * iconDirEntries[i].bWidth) >= best[slot].maxPixels)
+            (height * width) >= best[slot].maxPixels)
         {
             best[slot].index = i;
-            best[slot].maxPixels = iconDirEntries[i].bHeight * iconDirEntries[i].bWidth;
+            best[slot].maxPixels = height * width;
             best[slot].maxBits = iconDirEntries[i].wBitCount;
         }
     }
