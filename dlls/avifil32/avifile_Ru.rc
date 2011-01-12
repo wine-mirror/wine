@@ -48,7 +48,7 @@ STRINGTABLE
   IDS_WAVESTREAMFORMAT	"Звуковой поток: %s"
   IDS_WAVEFILETYPE	"Звуковой поток"
   IDS_ALLMULTIMEDIA	"Все файлы мультимедиа"
-  IDS_ALLFILES		"Все файлы (*.*)@*.*"
+  IDS_ALLFILES		"Все файлы (*.*)"
   IDS_VIDEO		"видео"
   IDS_AUDIO		"аудио"
   IDS_AVISTREAMFORMAT	"%s %s #%d"

@@ -47,7 +47,7 @@ STRINGTABLE
   IDS_WAVESTREAMFORMAT	"Waveform: %s"
   IDS_WAVEFILETYPE	"Waveform"
   IDS_ALLMULTIMEDIA	"כל קובצי המולטימדיה"
-  IDS_ALLFILES		"כל הקבצים (*.*)@*.*"
+  IDS_ALLFILES		"כל הקבצים (*.*)"
   IDS_VIDEO		"וידאו"
   IDS_AUDIO		"שמע"
   IDS_AVISTREAMFORMAT	"%s %s מס׳ %d"

@@ -995,6 +995,7 @@ HRESULT WINAPI AVIBuildFilterA(LPSTR szFilter, LONG cbFilter, BOOL fSaving)
  */
 HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving)
 {
+  static const WCHAR all_files[] = { '*','.','*',0,0 };
   static const WCHAR szClsid[] = {'C','L','S','I','D',0};
   static const WCHAR szExtensionFmt[] = {';','*','.','%','s',0};
   static const WCHAR szAVIFileExtensions[] =
@@ -1117,22 +1118,12 @@ HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving)
 
   /* add "All files" "*.*" filter if enough space left */
   size = LoadStringW(AVIFILE_hModule, IDS_ALLFILES,
-		     szAllFiles, sizeof(szAllFiles)/sizeof(szAllFiles[0])) + 1;
+                     szAllFiles, (sizeof(szAllFiles) - sizeof(all_files))/sizeof(WCHAR)) + 1;
+  memcpy( szAllFiles + size, all_files, sizeof(all_files) );
+  size += sizeof(all_files) / sizeof(WCHAR);
+
   if (cbFilter > size) {
-    int i;
-
-    /* replace '@' with \000 to separate description of filter */
-    for (i = 0; i < size && szAllFiles[i] != 0; i++) {
-      if (szAllFiles[i] == '@') {
-	szAllFiles[i] = 0;
-	break;
-      }
-    }
-      
     memcpy(szFilter, szAllFiles, size * sizeof(szAllFiles[0]));
-    szFilter += size;
-    szFilter[0] = 0;
-
     return AVIERR_OK;
   } else {
     szFilter[0] = 0;

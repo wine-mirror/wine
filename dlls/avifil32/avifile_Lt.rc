@@ -46,7 +46,7 @@ STRINGTABLE
   IDS_WAVESTREAMFORMAT "Bangos forma: %s"
   IDS_WAVEFILETYPE     "Bangos forma"
   IDS_ALLMULTIMEDIA    "Visi multimedijos failai"
-  IDS_ALLFILES         "Visi failai (*.*)@*.*"
+  IDS_ALLFILES         "Visi failai (*.*)"
   IDS_VIDEO            "vaizdas"
   IDS_AUDIO            "garsas"
   IDS_AVISTREAMFORMAT  "%s %s #%d"

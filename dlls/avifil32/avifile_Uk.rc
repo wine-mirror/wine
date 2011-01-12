@@ -43,7 +43,7 @@ STRINGTABLE
   IDS_WAVESTREAMFORMAT	"«вуковий пот≥к: %s"
   IDS_WAVEFILETYPE	"«вуковий пот≥к"
   IDS_ALLMULTIMEDIA	"”с≥ мультимед≥йн≥ файли"
-  IDS_ALLFILES		"”с≥ файли (*.*)@*.*"
+  IDS_ALLFILES		"”с≥ файли (*.*)"
   IDS_VIDEO		"в≥део"
   IDS_AUDIO		"ауд≥о"
   IDS_AVISTREAMFORMAT	"%s %s #%d"

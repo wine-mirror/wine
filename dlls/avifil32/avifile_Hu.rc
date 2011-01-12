@@ -43,7 +43,7 @@ STRINGTABLE
   IDS_WAVESTREAMFORMAT	"Hullámforma: %s"
   IDS_WAVEFILETYPE	"Hullámforma"
   IDS_ALLMULTIMEDIA	"Minden multimédia fájl"
-  IDS_ALLFILES		"Minden fájl (*.*)@*.*"
+  IDS_ALLFILES		"Minden fájl (*.*)"
   IDS_VIDEO		"video"
   IDS_AUDIO		"hang"
   IDS_AVISTREAMFORMAT	"%s %s #%d"

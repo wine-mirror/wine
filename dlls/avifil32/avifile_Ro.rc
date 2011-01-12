@@ -48,7 +48,7 @@ STRINGTABLE
   IDS_WAVESTREAMFORMAT	"Forma de undă: %s"
   IDS_WAVEFILETYPE	"Formă de undă"
   IDS_ALLMULTIMEDIA	"Toate fișierele multimedia"
-  IDS_ALLFILES		"Toate fișierele (*.*)@*.*"
+  IDS_ALLFILES		"Toate fișierele (*.*)"
   IDS_VIDEO		"video"
   IDS_AUDIO		"audio"
   IDS_AVISTREAMFORMAT	"%s %s #%d"

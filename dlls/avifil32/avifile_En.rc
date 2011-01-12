@@ -43,7 +43,7 @@ STRINGTABLE
   IDS_WAVESTREAMFORMAT	"Waveform: %s"
   IDS_WAVEFILETYPE	"Waveform"
   IDS_ALLMULTIMEDIA	"All multimedia files"
-  IDS_ALLFILES		"All files (*.*)@*.*"
+  IDS_ALLFILES		"All files (*.*)"
   IDS_VIDEO		"video"
   IDS_AUDIO		"audio"
   IDS_AVISTREAMFORMAT	"%s %s #%d"

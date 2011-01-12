@@ -46,7 +46,7 @@ STRINGTABLE
   IDS_WAVESTREAMFORMAT	"파형: %s"
   IDS_WAVEFILETYPE	"파형"
   IDS_ALLMULTIMEDIA	"모든 멀티미디어 파일"
-  IDS_ALLFILES		"모든 파일 (*.*)@*.*"
+  IDS_ALLFILES		"모든 파일 (*.*)"
   IDS_VIDEO		"비디오"
   IDS_AUDIO		"오디오"
   IDS_AVISTREAMFORMAT	"%s %s #%d"

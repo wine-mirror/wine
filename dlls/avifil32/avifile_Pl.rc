@@ -44,7 +44,7 @@ STRINGTABLE
   IDS_WAVESTREAMFORMAT	"Kszta³t fali: %s"
   IDS_WAVEFILETYPE	"Kszta³t fali"
   IDS_ALLMULTIMEDIA	"Wszystkie pliki multimedialne"
-  IDS_ALLFILES		"Wszystkie pliki (*.*)@*.*"
+  IDS_ALLFILES		"Wszystkie pliki (*.*)"
   IDS_VIDEO		"obraz"
   IDS_AUDIO		"dŸwiêk"
   IDS_AVISTREAMFORMAT	"%s %s #%d"
