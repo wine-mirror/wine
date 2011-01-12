@@ -1184,9 +1184,14 @@ msgstr "Magazyn certyfikatów seryjnych firmy Microsoft (*.sst)"
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
 msgstr "Certyfikaty CMS/PKCS #7 (*.spc; *.p7b)"
 
-#: cryptui.rc:80
-msgid "All Files (*.*)"
-msgstr "Wszystkie pliki (*.*)"
+#: cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+#, fuzzy
+msgid "All files (*.*)"
+msgstr ""
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"Wszystkie piki (*.*)\n"
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"Wszystkie pliki (*.*)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
@@ -4359,15 +4364,6 @@ msgstr "Informacja"
 #: notepad.rc:76
 msgid "Untitled"
 msgstr "(bez tytułu)"
-
-#: notepad.rc:78 progman.rc:84 winhlp32.rc:102
-#, fuzzy
-msgid "All files (*.*)"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Wszystkie piki (*.*)\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Wszystkie pliki (*.*)"
 
 #: notepad.rc:79
 msgid "Text files (*.txt)"

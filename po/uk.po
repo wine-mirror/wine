@@ -1167,8 +1167,8 @@ msgstr "Сховище серійних сертифікатів Microsoft (*.ss
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
 msgstr "Повідомлення CMS/PKCS #7 (*.spc; *.p7b)"
 
-#: cryptui.rc:80
-msgid "All Files (*.*)"
+#: cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+msgid "All files (*.*)"
 msgstr "Всі файли (*.*)"
 
 #: cryptui.rc:81
@@ -4282,10 +4282,6 @@ msgstr "Інформація"
 #: notepad.rc:76
 msgid "Untitled"
 msgstr "Без назви"
-
-#: notepad.rc:78 progman.rc:84 winhlp32.rc:102
-msgid "All files (*.*)"
-msgstr "Всі файли (*.*)"
 
 #: notepad.rc:79
 msgid "Text files (*.txt)"

@@ -1225,8 +1225,8 @@ msgstr "Microsoft 연속 인증서 보관소 (*.sst)"
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
 msgstr "CMS/PKCS #7 메세지 (*.spc; *.p7b)"
 
-#: cryptui.rc:80
-msgid "All Files (*.*)"
+#: cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+msgid "All files (*.*)"
 msgstr "모든 파일 (*.*)"
 
 #: cryptui.rc:81
@@ -4323,10 +4323,6 @@ msgstr "정보"
 #: notepad.rc:76
 msgid "Untitled"
 msgstr "제목 없음"
-
-#: notepad.rc:78 progman.rc:84 winhlp32.rc:102
-msgid "All files (*.*)"
-msgstr "모든 파일 (*.*)"
 
 #: notepad.rc:79
 msgid "Text files (*.txt)"

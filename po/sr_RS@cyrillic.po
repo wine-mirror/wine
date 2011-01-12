@@ -1161,9 +1161,8 @@ msgstr ""
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
 msgstr ""
 
-#: cryptui.rc:80
-#, fuzzy
-msgid "All Files (*.*)"
+#: cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+msgid "All files (*.*)"
 msgstr "Све датотеке (*.*)"
 
 #: cryptui.rc:81
@@ -3936,10 +3935,6 @@ msgstr "Подаци"
 #: notepad.rc:76
 msgid "Untitled"
 msgstr "Неименовано"
-
-#: notepad.rc:78 progman.rc:84 winhlp32.rc:102
-msgid "All files (*.*)"
-msgstr "Све датотеке (*.*)"
 
 #: notepad.rc:79
 msgid "Text files (*.txt)"

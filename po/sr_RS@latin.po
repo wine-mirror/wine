@@ -1165,9 +1165,9 @@ msgstr ""
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
 msgstr ""
 
-#: cryptui.rc:80
+#: cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
 #, fuzzy
-msgid "All Files (*.*)"
+msgid "All files (*.*)"
 msgstr ""
 "#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
 "Sve datoteke (*.*)\n"
@@ -3978,15 +3978,6 @@ msgstr ""
 #: notepad.rc:76
 msgid "Untitled"
 msgstr "Neimenovano"
-
-#: notepad.rc:78 progman.rc:84 winhlp32.rc:102
-#, fuzzy
-msgid "All files (*.*)"
-msgstr ""
-"#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
-"Sve datoteke (*.*)\n"
-"#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
-"Svi fajlovi (*.*)"
 
 #: notepad.rc:79
 msgid "Text files (*.txt)"

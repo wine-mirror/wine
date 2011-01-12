@@ -1205,8 +1205,8 @@ msgstr "Microsoft Speicher serieller Zertifikate (*.sst)"
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
 msgstr "CMS/PKCS #7 Zertifikate (*.spc; *.p7b)"
 
-#: cryptui.rc:80
-msgid "All Files (*.*)"
+#: cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+msgid "All files (*.*)"
 msgstr "Alle Dateien (*.*)"
 
 #: cryptui.rc:81
@@ -4379,10 +4379,6 @@ msgstr "Information"
 #: notepad.rc:76
 msgid "Untitled"
 msgstr "(unbenannt)"
-
-#: notepad.rc:78 progman.rc:84 winhlp32.rc:102
-msgid "All files (*.*)"
-msgstr "Alle Dateien (*.*)"
 
 #: notepad.rc:79
 msgid "Text files (*.txt)"

@@ -1237,9 +1237,14 @@ msgstr "Conjunto de Certificados Serializados da Microsoft (*.sst)"
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
 msgstr "Mensagens CMS/PKCS #7 (*.spc; *.p7b)"
 
-#: cryptui.rc:80
-msgid "All Files (*.*)"
-msgstr "Todos os Ficheiros (*.*)"
+#: cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+#, fuzzy
+msgid "All files (*.*)"
+msgstr ""
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"Todos os arquivos (*.*)\n"
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"Todos os ficheiros (*.*)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
@@ -4460,15 +4465,6 @@ msgstr "Informação"
 #: notepad.rc:76
 msgid "Untitled"
 msgstr "(sem nome)"
-
-#: notepad.rc:78 progman.rc:84 winhlp32.rc:102
-#, fuzzy
-msgid "All files (*.*)"
-msgstr ""
-"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
-"Todos os arquivos (*.*)\n"
-"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
-"Todos os ficheiros (*.*)"
 
 #: notepad.rc:79
 msgid "Text files (*.txt)"

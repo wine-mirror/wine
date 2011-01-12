@@ -1245,8 +1245,8 @@ msgstr "Microsoft seriële certificatenopslag (*.sst)"
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
 msgstr "CMS/PKCS #7 berichten (*.spc; *.p7b)"
 
-#: cryptui.rc:80
-msgid "All Files (*.*)"
+#: cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+msgid "All files (*.*)"
 msgstr "Alle bestanden (*.*)"
 
 #: cryptui.rc:81
@@ -4415,10 +4415,6 @@ msgstr "Informatie"
 #: notepad.rc:76
 msgid "Untitled"
 msgstr "Naamloos"
-
-#: notepad.rc:78 progman.rc:84 winhlp32.rc:102
-msgid "All files (*.*)"
-msgstr "Alle bestanden (*.*)"
 
 #: notepad.rc:79
 msgid "Text files (*.txt)"

@@ -1184,8 +1184,8 @@ msgstr "Magasin de certificats sérialisés Microsoft (*.sst)"
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
 msgstr "Messages CMS/PKCS #7 (*.spc ; *.p7b)"
 
-#: cryptui.rc:80
-msgid "All Files (*.*)"
+#: cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+msgid "All files (*.*)"
 msgstr "Tous les fichiers (*.*)"
 
 #: cryptui.rc:81
@@ -4398,10 +4398,6 @@ msgstr "Information"
 #: notepad.rc:76
 msgid "Untitled"
 msgstr "(sans titre)"
-
-#: notepad.rc:78 progman.rc:84 winhlp32.rc:102
-msgid "All files (*.*)"
-msgstr "Tous les fichiers (*.*)"
 
 #: notepad.rc:79
 msgid "Text files (*.txt)"
