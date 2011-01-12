@@ -1449,7 +1449,7 @@ static void test_overlapped(void)
 {
     DWORD tid, num;
     HANDLE thread, pipe;
-    int ret;
+    BOOL ret;
     struct overlapped_server_args args;
 
     args.pipe_created = CreateEventA(0, 1, 0, 0);
@@ -1463,7 +1463,7 @@ static void test_overlapped(void)
     Sleep(1);
 
     ret = WriteFile(pipe, "x", 1, &num, NULL);
-    ok(ret == 1, "ret %d\n", ret);
+    ok(ret, "WriteFile failed with error %d\n", GetLastError());
 
     WaitForSingleObject(thread, INFINITE);
     CloseHandle(pipe);
