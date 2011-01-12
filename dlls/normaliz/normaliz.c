@@ -29,7 +29,7 @@
 #include "winbase.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(authz);
+WINE_DEFAULT_DEBUG_CHANNEL(normaliz);
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
