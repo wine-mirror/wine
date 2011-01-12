@@ -155,6 +155,21 @@ static void pdb_exit(struct pdb_reader* reader)
         free((char*)reader->u.ds.toc);
 }
 
+static void *read_string_table(struct pdb_reader* reader)
+{
+    void *ret;
+
+    /* FIXME: how to determine the correct file number? */
+    /* 4 and 12 have been observed, there may be others */
+    ret = reader->read_file(reader, 4);
+    if (ret && *(const DWORD*)ret == 0xeffeeffe) return ret;
+    free( ret );
+    ret = reader->read_file(reader, 12);
+    if (ret && *(const DWORD*)ret == 0xeffeeffe) return ret;
+    free( ret );
+    return NULL;
+}
+
 static void pdb_dump_symbols(struct pdb_reader* reader)
 {
     PDB_SYMBOLS*    symbols;
@@ -224,20 +239,8 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
         dump_data(src, symbols->offset_size, "    ");
     }
 
-    filesimage = reader->read_file(reader, 12);   /* FIXME: really fixed ??? */
-    if (filesimage)
-    {
-        if (*(const DWORD*)filesimage == 0xeffeeffe)
-        {
-            filessize = *(const DWORD*)(filesimage + 8);
-        }
-        else
-        {
-            printf("wrong header %x expecting 0xeffeeffe\n", *(const DWORD*)filesimage);
-            free(filesimage);
-            filesimage = NULL;
-        }
-    }
+    if (!(filesimage = read_string_table(reader))) printf("string table not found\n");
+    else filessize = *(const DWORD*)(filesimage + 8);
 
     if (symbols->srcmodule_size)
     {
@@ -721,6 +724,7 @@ static void pdb_ds_dump(void)
      *  1: root structure
      *  2: types
      *  3: modules
+     *  4: string table (FIXME: in which case?)
      *  5: FPO data
      *  8: segments
      * 10: extended FPO data
