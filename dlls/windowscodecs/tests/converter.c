@@ -179,7 +179,7 @@ static const IWICBitmapSourceVtbl BitmapTestSrc_Vtbl = {
 
 static void CreateTestBitmap(const bitmap_data *data, BitmapTestSrc **This)
 {
-    *This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    *This = HeapAlloc(GetProcessHeap(), 0, sizeof(**This));
 
     if (*This)
     {
