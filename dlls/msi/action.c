@@ -2735,6 +2735,7 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
     {
         ERR("Could not create key %s\n", debugstr_w(keypath));
         msi_free(uikey);
+        msi_free(keypath);
         return ERROR_SUCCESS;
     }
 
@@ -2786,6 +2787,7 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
     msi_free(value_data);
     msi_free(deformated);
     msi_free(uikey);
+    msi_free(keypath);
 
     return ERROR_SUCCESS;
 }
