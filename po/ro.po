@@ -445,9 +445,14 @@ msgstr "Următorul editor CRL"
 msgid "CA Encryption Certificate"
 msgstr "Certificat de criptare CA"
 
-#: crypt32.rc:119
+#: crypt32.rc:119 cryptui.rc:145
+#, fuzzy
 msgid "Key Recovery Agent"
-msgstr "Agent de recuperare a cheilor"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Agent de recuperare a cheilor\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Agent recuperare chei"
 
 #: crypt32.rc:120
 msgid "Certificate Template Information"
@@ -505,9 +510,14 @@ msgstr "Cerere de revocare"
 msgid "Query Pending"
 msgstr "Interogare în curs"
 
-#: crypt32.rc:134
+#: crypt32.rc:134 cryptui.rc:92
+#, fuzzy
 msgid "Certificate Trust List"
-msgstr "Lista certificatelor de încredere"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Lista certificatelor de încredere\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Lista certificatelor acreditate"
 
 #: crypt32.rc:135
 msgid "Archived Key Certificate Hash"
@@ -565,59 +575,109 @@ msgstr "Utilizator de securitate IP"
 msgid "Encrypting File System"
 msgstr "Sistem de fișiere criptat"
 
-#: crypt32.rc:149
+#: crypt32.rc:149 cryptui.rc:130
+#, fuzzy
 msgid "Windows Hardware Driver Verification"
-msgstr "Verificarea driverelor hardware Windows"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Verificarea driverelor hardware Windows\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Verificarea driverelor de hardware din Windows"
 
-#: crypt32.rc:150
+#: crypt32.rc:150 cryptui.rc:131
+#, fuzzy
 msgid "Windows System Component Verification"
-msgstr "Verificarea componentelor sistem Windows"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Verificarea componentelor sistem Windows\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Verificarea componentelor de sistem din Windows"
 
-#: crypt32.rc:151
+#: crypt32.rc:151 cryptui.rc:132
+#, fuzzy
 msgid "OEM Windows System Component Verification"
-msgstr "Verificarea componentelor sistem Windows OEM"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Verificarea componentelor sistem Windows OEM\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Verificarea componentelor de sistem din Windows OEM"
 
-#: crypt32.rc:152
+#: crypt32.rc:152 cryptui.rc:133
+#, fuzzy
 msgid "Embedded Windows System Component Verification"
-msgstr "Verificarea componentelor sistem Windows Embedded"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Verificarea componentelor sistem Windows Embedded\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Verificarea componentelor de sistem din Windows Embedded"
 
-#: crypt32.rc:153
+#: crypt32.rc:153 cryptui.rc:140
+#, fuzzy
 msgid "Key Pack Licenses"
-msgstr "Licențiere pachet de chei"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Licențiere pachet de chei\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Licențe de pachete de chei"
 
-#: crypt32.rc:154
+#: crypt32.rc:154 cryptui.rc:141
+#, fuzzy
 msgid "License Server Verification"
-msgstr "Verificarea serverului de licență"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Verificarea serverului de licență\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Verificare a serverului de licențe"
 
-#: crypt32.rc:155
+#: crypt32.rc:155 cryptui.rc:143
+#, fuzzy
 msgid "Smart Card Logon"
-msgstr "Log on cu Smart Card"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Log on cu Smart Card\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Autentificare prin Smart Card"
 
-#: crypt32.rc:156
+#: crypt32.rc:156 cryptui.rc:139
 msgid "Digital Rights"
 msgstr "Drepturi digitale"
 
-#: crypt32.rc:157
+#: crypt32.rc:157 cryptui.rc:135
 msgid "Qualified Subordination"
 msgstr "Subordonare calificată"
 
-#: crypt32.rc:158
+#: crypt32.rc:158 cryptui.rc:136
+#, fuzzy
 msgid "Key Recovery"
-msgstr "Recuperare de chei"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Recuperare de chei\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Recuperarea cheilor"
 
-#: crypt32.rc:159
+#: crypt32.rc:159 cryptui.rc:137
+#, fuzzy
 msgid "Document Signing"
-msgstr "Semnare de documente"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Semnare de documente\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Semnarea documentelor"
 
 #: crypt32.rc:160
 msgid "IP security IKE intermediate"
 msgstr "Intermediar IKE de securitate IP"
 
-#: crypt32.rc:161
+#: crypt32.rc:161 cryptui.rc:129
+#, fuzzy
 msgid "File Recovery"
-msgstr "Recuperare de fișiere"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Recuperare de fișiere\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Recupererea fișierelor"
 
-#: crypt32.rc:162
+#: crypt32.rc:162 cryptui.rc:134
 msgid "Root List Signer"
 msgstr "Semnatarul listei rădăcină"
 
@@ -625,17 +685,32 @@ msgstr "Semnatarul listei rădăcină"
 msgid "All application policies"
 msgstr "Toate politicile de aplicație"
 
-#: crypt32.rc:164
+#: crypt32.rc:164 cryptui.rc:146
+#, fuzzy
 msgid "Directory Service Email Replication"
-msgstr "Replicarea serviciilor repertoar de e-mail"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Replicarea serviciilor repertoar de e-mail\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Serviciu Registru pentru replicare email"
 
-#: crypt32.rc:165
+#: crypt32.rc:165 cryptui.rc:142
+#, fuzzy
 msgid "Certificate Request Agent"
-msgstr "Agent de cerere de certificate"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Agent de cerere de certificate\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Agent solicitare certificat"
 
-#: crypt32.rc:166
+#: crypt32.rc:166 cryptui.rc:138
+#, fuzzy
 msgid "Lifetime Signing"
-msgstr "Semnare pe toată durata vieții"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Semnare pe toată durata vieții\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Semnătură pe viață"
 
 #: crypt32.rc:167
 msgid "All issuance policies"
@@ -821,11 +896,11 @@ msgstr "Indisponibilă"
 msgid "Meets Criteria="
 msgstr "Îndeplinește criteriul="
 
-#: crypt32.rc:222 oleaut32.rc:29 ipconfig.rc:44
+#: crypt32.rc:222 cryptui.rc:163 oleaut32.rc:29 ipconfig.rc:44
 msgid "Yes"
 msgstr "Da"
 
-#: crypt32.rc:223 oleaut32.rc:30 ipconfig.rc:45
+#: crypt32.rc:223 cryptui.rc:164 oleaut32.rc:30 ipconfig.rc:45
 msgid "No"
 msgstr "Nu"
 
@@ -936,6 +1011,572 @@ msgstr "Numărul de serie al certificatului="
 #: cryptdlg.rc:37
 msgid "Notice Text="
 msgstr ""
+
+#: cryptui.rc:27 cryptui.rc:90
+msgid "Certificate"
+msgstr "Certificat"
+
+#: cryptui.rc:28
+msgid "Certificate Information"
+msgstr "Informații certificat"
+
+#: cryptui.rc:29
+msgid ""
+"This certificate has an invalid signature.  The certificate may have been "
+"altered or corrupted."
+msgstr ""
+"Acest certificat are o semnătură nevalidă.  Se poate ca certificatul să fi "
+"fost alterat sau corupt."
+
+#: cryptui.rc:30
+msgid ""
+"This root certificate is not trusted.  To trust it, add it to your system's "
+"trusted root certificate store."
+msgstr ""
+"Acest certificat rădăcină nu este acreditat.  Pentru a-l acredita, adăugați-"
+"l în depozitul de certificate rădăcină acreditate al sistemului."
+
+#: cryptui.rc:31
+msgid "This certificate could not be validated to a trusted root certificate."
+msgstr ""
+"Acest certificat nu a putut fi validat față de un certificat rădăcină "
+"acreditat."
+
+#: cryptui.rc:32
+msgid "This certificate's issuer could not be found."
+msgstr "Emitentul acestui certificat nu a putut fi aflat."
+
+#: cryptui.rc:33
+msgid "All the intended purposes of this certificate could not be verified."
+msgstr ""
+"Nu au putut fi verificate toate rolurile intenționate pentru acest "
+"certificat."
+
+#: cryptui.rc:34
+msgid "This certificate is intended for the following purposes:"
+msgstr "Acest certificat este intenționat pentru următoarele roluri:"
+
+#: cryptui.rc:35
+msgid "Issued to: "
+msgstr "Emis pentru: "
+
+#: cryptui.rc:36
+msgid "Issued by: "
+msgstr "Emis de: "
+
+#: cryptui.rc:37
+msgid "Valid from "
+msgstr "Valid de la "
+
+#: cryptui.rc:38
+msgid " to "
+msgstr " la "
+
+#: cryptui.rc:39
+msgid "This certificate has an invalid signature."
+msgstr "Acest certificat are o semnătură nevalabilă."
+
+#: cryptui.rc:40
+msgid "This certificate has expired or is not yet valid."
+msgstr "Acest certificat a expirat sau încă nu este valabil."
+
+#: cryptui.rc:41
+msgid "This certificate's validity period exceeds that of its issuer."
+msgstr ""
+"Perioada de valabilitate a acestui certificat o depășește pe cea a "
+"emitentului său."
+
+#: cryptui.rc:42
+msgid "This certificate was revoked by its issuer."
+msgstr "Acest certificat a fost revocat de către emitentul său."
+
+#: cryptui.rc:43
+msgid "This certificate is OK."
+msgstr "Acest certificat este valabil."
+
+#: cryptui.rc:44
+msgid "Field"
+msgstr "Câmp"
+
+#: cryptui.rc:45
+msgid "Value"
+msgstr "Valoare"
+
+#: cryptui.rc:46 cryptui.rc:99 cryptui.rc:105
+msgid "<All>"
+msgstr "<Toate>"
+
+#: cryptui.rc:47
+msgid "Version 1 Fields Only"
+msgstr "Doar câmpurile versiunii 1"
+
+#: cryptui.rc:48
+msgid "Extensions Only"
+msgstr "Doar extensii"
+
+#: cryptui.rc:49
+msgid "Critical Extensions Only"
+msgstr "Doar extensii critice"
+
+#: cryptui.rc:50
+msgid "Properties Only"
+msgstr "Doar proprietăți"
+
+#: cryptui.rc:51
+msgid "Version"
+msgstr "Versiune"
+
+#: cryptui.rc:52
+msgid "Serial number"
+msgstr "Număr de serie"
+
+#: cryptui.rc:53
+msgid "Issuer"
+msgstr "Emitent"
+
+#: cryptui.rc:54
+msgid "Valid from"
+msgstr "Valabil de la"
+
+#: cryptui.rc:55
+msgid "Valid to"
+msgstr "Valabil până la"
+
+#: cryptui.rc:56
+msgid "Subject"
+msgstr "Subiect"
+
+#: cryptui.rc:57
+msgid "Public key"
+msgstr "Cheie publică"
+
+#: cryptui.rc:58
+msgid "%s (%d bits)"
+msgstr "%s (%d biți)"
+
+#: cryptui.rc:59
+msgid "SHA1 hash"
+msgstr "Hash SHA1"
+
+#: cryptui.rc:60
+msgid "Enhanced key usage (property)"
+msgstr "Utilizări adiționale ale cheii (proprietate)"
+
+#: cryptui.rc:61
+msgid "Friendly name"
+msgstr "Nume uzual"
+
+#: cryptui.rc:62 ipconfig.rc:41
+msgid "Description"
+msgstr "Descriere"
+
+#: cryptui.rc:63
+msgid "Certificate Properties"
+msgstr "Proprietățile certificatului"
+
+#: cryptui.rc:64
+msgid "Please enter an OID in the form 1.2.3.4"
+msgstr "Introduceți OID sub forma 1.2.3.4"
+
+#: cryptui.rc:65
+msgid "The OID you entered already exists."
+msgstr "OID introdus există deja."
+
+#: cryptui.rc:66
+msgid "Select Certificate Store"
+msgstr "Selectare depozit de certificate"
+
+#: cryptui.rc:67
+msgid "Please select a certificate store."
+msgstr "Selectați un depozit de certificate."
+
+#: cryptui.rc:68
+msgid "Certificate Import Wizard"
+msgstr "Asistent de importare a certificatelor"
+
+#: cryptui.rc:69
+msgid ""
+"The file contains objects that do not match the given criteria.  Please "
+"select another file."
+msgstr ""
+"Fișierul conține obiecte care nu respectă criteriile date.  Selectați alt "
+"fișier."
+
+#: cryptui.rc:70
+msgid "File to Import"
+msgstr "Importare fișier"
+
+#: cryptui.rc:71
+msgid "Specify the file you want to import."
+msgstr "Specificați fișierul pe care doriți să-l importați."
+
+#: cryptui.rc:72 cryptui.rc:95
+msgid "Certificate Store"
+msgstr "Depozit de certificate"
+
+#: cryptui.rc:73
+msgid ""
+"Certificate stores are collections of certificates, certificate revocation "
+"lists, and certificate trust lists."
+msgstr ""
+"Depozitele de certificate sunt colecții de certificate, liste de certificate "
+"revocate și liste de certificate acreditate."
+
+#: cryptui.rc:74
+msgid "X.509 Certificate (*.cer; *.crt)"
+msgstr "Certificat X.509 (*.cer; *.crt)"
+
+#: cryptui.rc:75
+msgid "Personal Information Exchange (*.pfx; *.p12)"
+msgstr "Schimb de informații personale (*.pfx; *.p12)"
+
+#: cryptui.rc:76 cryptui.rc:155
+msgid "Certificate Revocation List (*.crl)"
+msgstr "Listă de certificate revocate (*.crl)"
+
+#: cryptui.rc:77 cryptui.rc:156
+msgid "Certificate Trust List (*.stl)"
+msgstr "Listă de certificate acreditate (*.stl)"
+
+#: cryptui.rc:78
+msgid "Microsoft Serialized Certificate Store (*.sst)"
+msgstr "Depozit Microsoft înseriat de certificate (*.sst)"
+
+#: cryptui.rc:79
+msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
+msgstr "Mesaje CMS/PKCS #7 (*.spc; *.p7b)"
+
+#: cryptui.rc:80
+msgid "All Files (*.*)"
+msgstr "Toate fișierele (*.*)"
+
+#: cryptui.rc:81
+msgid "Please select a file."
+msgstr "Selectați un fișier."
+
+#: cryptui.rc:82
+msgid "The file format is not recognized.  Please select another file."
+msgstr "Formatul fișierului nu este recunoscut.  Selectați alt fișier."
+
+#: cryptui.rc:83
+msgid "Could not open "
+msgstr "Nu s-a putut deschide "
+
+#: cryptui.rc:84
+msgid "Determined by the program"
+msgstr "Determinat de program"
+
+#: cryptui.rc:85
+msgid "Please select a store"
+msgstr "Selectați un depozit"
+
+#: cryptui.rc:86
+msgid "Certificate Store Selected"
+msgstr "Depozitul de certificate selectat"
+
+#: cryptui.rc:87
+msgid "Automatically determined by the program"
+msgstr "Determinat automat de către program"
+
+#: cryptui.rc:88
+msgid "File"
+msgstr "Fișier"
+
+#: cryptui.rc:89
+msgid "Content"
+msgstr "Conținut"
+
+#: cryptui.rc:91
+msgid "Certificate Revocation List"
+msgstr "Lista certificatelor revocate"
+
+#: cryptui.rc:93
+msgid "CMS/PKCS #7 Message"
+msgstr "Mesaj CMS/PKCS #7"
+
+#: cryptui.rc:94
+msgid "Personal Information Exchange"
+msgstr "Schimb de informații personale"
+
+#: cryptui.rc:96
+msgid "The import was successful."
+msgstr "Importarea s-a realizat cu succes."
+
+#: cryptui.rc:97
+msgid "The import failed."
+msgstr "Importarea a eșuat."
+
+#: cryptui.rc:98
+msgid "Arial"
+msgstr "Arial"
+
+#: cryptui.rc:100
+msgid "<Advanced Purposes>"
+msgstr "<Roluri avansate>"
+
+#: cryptui.rc:101
+msgid "Issued To"
+msgstr "Emis pentru"
+
+#: cryptui.rc:102
+msgid "Issued By"
+msgstr "Emis de"
+
+#: cryptui.rc:103
+msgid "Expiration Date"
+msgstr "Data de expirare"
+
+#: cryptui.rc:104
+msgid "Friendly Name"
+msgstr "Nume uzual"
+
+#: cryptui.rc:106 cryptui.rc:120
+msgid "<None>"
+msgstr "<Niciunul>"
+
+#: cryptui.rc:107
+msgid ""
+"You will no longer be able to decrypt messages with this certificate, or "
+"sign messages with it.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"Nu veți mai putea decripta sau semna mesaje cu acest certificat.\n"
+"Sigur doriți să eliminați acest certificat?"
+
+#: cryptui.rc:108
+msgid ""
+"You will no longer be able to decrypt messages with these certificates, or "
+"sign messages with them.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"Nu veți mai putea decripta sau semna mesaje cu aceste certificate.\n"
+"Sigur doriți să eliminați aceste certificate?"
+
+#: cryptui.rc:109
+msgid ""
+"You will no longer be able to encrypt messages with this certificate, or "
+"verify messages signed with it.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"Nu veți mai putea cripta sau verifica mesaje semnate cu acest certificat.\n"
+"Sigur doriți să eliminați acest certificat?"
+
+#: cryptui.rc:110
+msgid ""
+"You will no longer be able to encrypt messages with these certificates, or "
+"verify messages signed with it.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"Nu veți mai putea cripta sau verifica mesaje semnate cu aceste certificate.\n"
+"Sigur doriți să eliminați aceste certificate?"
+
+#: cryptui.rc:111
+msgid ""
+"Certificates issued by this certification authority will no longer be "
+"trusted.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"Certificatele emise de către această autoritate de certificare nu vor mai fi "
+"acreditate.\n"
+"Sigur doriți să eliminați acest certificat?"
+
+#: cryptui.rc:112
+msgid ""
+"Certificates issued by these certification authorities will no longer be "
+"trusted.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"Certificatele emise de către aceste autorități de certificare nu vor mai fi "
+"acreditate.\n"
+"Sigur doriți să eliminați aceste certificate?"
+
+#: cryptui.rc:113
+msgid ""
+"Certificates issued by this root certification authority, or any "
+"certification authorities it issued, will no longer be trusted.\n"
+"Are you sure you want to remove this trusted root certificate?"
+msgstr ""
+"Certificatele emise de către această autoritate de certificare rădăcină, sau "
+"de către orice alte autorități de certificare validate de ea, nu vor mai fi "
+"acreditate.\n"
+"Sigur doriți să eliminați acest certificat rădăcină acreditat?"
+
+#: cryptui.rc:114
+msgid ""
+"Certificates issued by these root certification authorities, or any "
+"certification authorities they issued, will no longer be trusted.\n"
+"Are you sure you want to remove these trusted root certificates?"
+msgstr ""
+"Certificatele emise de către aceste autorități de certificare rădăcină, sau "
+"de către orice alte autorități de certificare validate de ele, nu vor mai fi "
+"acreditate.\n"
+"Sigur doriți să eliminați aceste certificate rădăcină acreditate?"
+
+#: cryptui.rc:115
+msgid ""
+"Software signed by this publisher will no longer be trusted.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"Aplicațiile software semnate de către acest editor nu vor mai fi "
+"acreditate.\n"
+"Sigur doriți să eliminați acest certificat?"
+
+#: cryptui.rc:116
+msgid ""
+"Software signed by these publishers will no longer be trusted.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"Aplicațiile software semnate de către acești editori nu vor mai fi "
+"acreditate.\n"
+"Sigur doriți să eliminați aceste certificate?"
+
+#: cryptui.rc:117
+msgid "Are you sure you want to remove this certificate?"
+msgstr "Sigur doriți să eliminați acest certificat?"
+
+#: cryptui.rc:118
+msgid "Are you sure you want to remove these certificates?"
+msgstr "Sigur doriți să eliminați aceste certificate?"
+
+#: cryptui.rc:119
+msgid "Certificates"
+msgstr "Certificate"
+
+#: cryptui.rc:121
+msgid "Ensures the identity of a remote computer"
+msgstr "Asigură identificarea unui calculator de la distanță"
+
+#: cryptui.rc:122
+msgid "Proves your identity to a remote computer"
+msgstr "Vă dovedește identitatea pentru un calculator de la distanță"
+
+#: cryptui.rc:123
+msgid ""
+"Ensures software came from software publisher\n"
+"Protects software from alteration after publication"
+msgstr ""
+"Garantează că aplicația provine de la un anumit editor de software\n"
+"Protejează aplicația de alterări după publicare"
+
+#: cryptui.rc:124
+msgid "Protects e-mail messages"
+msgstr "Protejează mesajele de email"
+
+#: cryptui.rc:125
+msgid "Allows secure communication over the Internet"
+msgstr "Permite comunicarea securizată pe Internet"
+
+#: cryptui.rc:126
+msgid "Allows data to be signed with the current time"
+msgstr "Permite semnarea datelor cu ora curentă"
+
+#: cryptui.rc:127
+msgid "Allows you to digitally sign a certificate trust list"
+msgstr "Vă permite să semnați digital o listă de certificate acreditate"
+
+#: cryptui.rc:128
+msgid "Allows data on disk to be encrypted"
+msgstr "Permite criptarea datelor de pe disc"
+
+#: cryptui.rc:144
+msgid "Private Key Archival"
+msgstr "Arhivare chei private"
+
+#: cryptui.rc:147
+msgid "Certificate Export Wizard"
+msgstr "Asistent de exportare a certificatelor"
+
+#: cryptui.rc:148
+msgid "Export Format"
+msgstr "Format pentru exportare"
+
+#: cryptui.rc:149
+msgid "Choose the format in which the content will be saved."
+msgstr "Alegeți formatul în care va fi salvat conținutul."
+
+#: cryptui.rc:150
+msgid "Export Filename"
+msgstr "Nume de fișier pentru exportare"
+
+#: cryptui.rc:151
+msgid "Specify the name of the file in which the content will be saved."
+msgstr "Specificați numele de fișier cu care va fi salvat conținutul."
+
+#: cryptui.rc:152
+msgid "The specified file already exists.  Do you want to replace it?"
+msgstr "Fișierul specificat există deja.  Doriți să îl înlocuiți?"
+
+#: cryptui.rc:153
+msgid "DER-Encoded Binary X.509 (*.cer)"
+msgstr "Binar X.509 codificat în DER (*.cer)"
+
+#: cryptui.rc:154
+msgid "Base64-Encoded X.509 (*.cer)"
+msgstr "Binar X.509 codificat în Base64 (*.cer)"
+
+#: cryptui.rc:157
+msgid "CMS/PKCS #7 Messages (*.p7b)"
+msgstr "Mesaje CMS/PKCS #7 (*.p7b)"
+
+#: cryptui.rc:158
+msgid "Personal Information Exchange (*.pfx)"
+msgstr "Schimb de informații personale (*.pfx)"
+
+#: cryptui.rc:159
+msgid "Serialized Certificate Store (*.sst)"
+msgstr "Depozit înseriat de certificate (*.sst)"
+
+#: cryptui.rc:160
+msgid "File Format"
+msgstr "Format fișier"
+
+#: cryptui.rc:161
+msgid "Include all certificates in certificate path"
+msgstr "Include toate certificatele din calea de certificate"
+
+#: cryptui.rc:162
+msgid "Export keys"
+msgstr "Exportă cheile"
+
+#: cryptui.rc:165
+msgid "The export was successful."
+msgstr "Exportarea s-a realizat cu succes."
+
+#: cryptui.rc:166
+msgid "The export failed."
+msgstr "Exportarea a eșuat."
+
+#: cryptui.rc:167
+msgid "Export Private Key"
+msgstr "Exportare cheie privată"
+
+#: cryptui.rc:168
+msgid ""
+"The certificate contains a private key which may be exported along with the "
+"certificate."
+msgstr ""
+"Certificatul conține o cheie privată care poate fi exportată odată cu "
+"certificatul."
+
+#: cryptui.rc:169
+msgid "Enter Password"
+msgstr "Introducere parolă"
+
+#: cryptui.rc:170
+msgid "You may password-protect a private key."
+msgstr "Puteți proteja o cheie privată cu o parolă."
+
+#: cryptui.rc:171
+msgid "The passwords do not match."
+msgstr "Parolele nu se potrivesc."
+
+#: cryptui.rc:172
+msgid "Note: The private key for this certificate could not be opened."
+msgstr "Notă: Cheia privată pentru acest certificat nu a putut fi deschisă."
+
+#: cryptui.rc:173
+msgid "Note: The private  key for this certificate is not exportable."
+msgstr "Notă: Cheia privată pentru acest certificat nu este exportabilă."
 
 #: devenum.rc:32
 msgid "Default DirectSound"
@@ -3316,10 +3957,6 @@ msgstr ""
 
 #: ipconfig.rc:40
 msgid "IP routing enabled"
-msgstr ""
-
-#: ipconfig.rc:41
-msgid "Description"
 msgstr ""
 
 #: ipconfig.rc:42

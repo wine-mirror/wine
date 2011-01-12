@@ -446,9 +446,14 @@ msgstr "Próxima Publicação CRL"
 msgid "CA Encryption Certificate"
 msgstr "Certificado de Encriptação CA"
 
-#: crypt32.rc:119
+#: crypt32.rc:119 cryptui.rc:145
+#, fuzzy
 msgid "Key Recovery Agent"
-msgstr "Agente Recuperador de Chaves"
+msgstr ""
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Agente Recuperador de Chaves\n"
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Agente de Recuperação de Chave"
 
 #: crypt32.rc:120
 msgid "Certificate Template Information"
@@ -506,7 +511,7 @@ msgstr "Revogar Pedido"
 msgid "Query Pending"
 msgstr "Consulta Pendente"
 
-#: crypt32.rc:134
+#: crypt32.rc:134 cryptui.rc:92
 msgid "Certificate Trust List"
 msgstr "Lista de Certificados Confiáveis"
 
@@ -566,47 +571,92 @@ msgstr "Usuário de segurança IP"
 msgid "Encrypting File System"
 msgstr "Encriptando Sistema de Arquivos"
 
-#: crypt32.rc:149
+#: crypt32.rc:149 cryptui.rc:130
+#, fuzzy
 msgid "Windows Hardware Driver Verification"
-msgstr "Verificação de Driver de Hardware Windows"
+msgstr ""
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Verificação de Driver de Hardware Windows\n"
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Verificação de Driver de Hardware do Windows"
 
-#: crypt32.rc:150
+#: crypt32.rc:150 cryptui.rc:131
+#, fuzzy
 msgid "Windows System Component Verification"
-msgstr "Verificação de Componentes de Sistema Windows"
+msgstr ""
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Verificação de Componentes de Sistema Windows\n"
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Verificação de Componente de Sistema do Windows"
 
-#: crypt32.rc:151
+#: crypt32.rc:151 cryptui.rc:132
+#, fuzzy
 msgid "OEM Windows System Component Verification"
-msgstr "Verificação de Componentes de Sistema Windows OEM"
+msgstr ""
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Verificação de Componentes de Sistema Windows OEM\n"
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Verificação de Componente de Sistema do Windows OEM"
 
-#: crypt32.rc:152
+#: crypt32.rc:152 cryptui.rc:133
+#, fuzzy
 msgid "Embedded Windows System Component Verification"
-msgstr "Verificação de Componentes de Sistema Windows Embebida"
+msgstr ""
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Verificação de Componentes de Sistema Windows Embebida\n"
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Verificação de Componente de Sistema do Windows Embebido"
 
-#: crypt32.rc:153
+#: crypt32.rc:153 cryptui.rc:140
+#, fuzzy
 msgid "Key Pack Licenses"
-msgstr "Licenças de Pacotes de Chaves"
+msgstr ""
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Licenças de Pacotes de Chaves\n"
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Key Pack Licenses"
 
-#: crypt32.rc:154
+#: crypt32.rc:154 cryptui.rc:141
+#, fuzzy
 msgid "License Server Verification"
-msgstr "Verificação de Licença de Servidor"
+msgstr ""
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Verificação de Licença de Servidor\n"
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"License Server Verification"
 
-#: crypt32.rc:155
+#: crypt32.rc:155 cryptui.rc:143
+#, fuzzy
 msgid "Smart Card Logon"
-msgstr "Logon Smart Card"
+msgstr ""
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Logon Smart Card\n"
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Logon de Smart Card"
 
-#: crypt32.rc:156
+#: crypt32.rc:156 cryptui.rc:139
+#, fuzzy
 msgid "Digital Rights"
-msgstr "Direitos Digitais"
+msgstr ""
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Direitos Digitais\n"
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Direito Digital"
 
-#: crypt32.rc:157
+#: crypt32.rc:157 cryptui.rc:135
 msgid "Qualified Subordination"
 msgstr "Subordinação Qualificada"
 
-#: crypt32.rc:158
+#: crypt32.rc:158 cryptui.rc:136
+#, fuzzy
 msgid "Key Recovery"
-msgstr "Recuperação de chaves"
+msgstr ""
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Recuperação de chaves\n"
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Recuperação de Chaves"
 
-#: crypt32.rc:159
+#: crypt32.rc:159 cryptui.rc:137
 msgid "Document Signing"
 msgstr "Assinatura de Documento"
 
@@ -614,11 +664,11 @@ msgstr "Assinatura de Documento"
 msgid "IP security IKE intermediate"
 msgstr "Segurança IP intermédia IKE"
 
-#: crypt32.rc:161
+#: crypt32.rc:161 cryptui.rc:129
 msgid "File Recovery"
 msgstr "Recuperação de Arquivos"
 
-#: crypt32.rc:162
+#: crypt32.rc:162 cryptui.rc:134
 msgid "Root List Signer"
 msgstr "Assinador de Lista Raiz"
 
@@ -626,17 +676,32 @@ msgstr "Assinador de Lista Raiz"
 msgid "All application policies"
 msgstr "Políticas para todas as aplicações"
 
-#: crypt32.rc:164
+#: crypt32.rc:164 cryptui.rc:146
+#, fuzzy
 msgid "Directory Service Email Replication"
-msgstr "Replicação do Diretório de Serviço E-mail"
+msgstr ""
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Replicação do Diretório de Serviço E-mail\n"
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Directory Service Email Replication"
 
-#: crypt32.rc:165
+#: crypt32.rc:165 cryptui.rc:142
+#, fuzzy
 msgid "Certificate Request Agent"
-msgstr "Agente de Requisição de Certificados"
+msgstr ""
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Agente de Requisição de Certificados\n"
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Agente de Requerimento de Certificado"
 
-#: crypt32.rc:166
+#: crypt32.rc:166 cryptui.rc:138
+#, fuzzy
 msgid "Lifetime Signing"
-msgstr "Assinatura de Tempo de Vida"
+msgstr ""
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Assinatura de Tempo de Vida\n"
+"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
+"Assinatura de Lifetime"
 
 #: crypt32.rc:167
 msgid "All issuance policies"
@@ -822,11 +887,11 @@ msgstr "Não Disponível"
 msgid "Meets Criteria="
 msgstr "Conforme os Critérios="
 
-#: crypt32.rc:222 oleaut32.rc:29 ipconfig.rc:44
+#: crypt32.rc:222 cryptui.rc:163 oleaut32.rc:29 ipconfig.rc:44
 msgid "Yes"
 msgstr "Sim"
 
-#: crypt32.rc:223 oleaut32.rc:30 ipconfig.rc:45
+#: crypt32.rc:223 cryptui.rc:164 oleaut32.rc:30 ipconfig.rc:45
 msgid "No"
 msgstr "Não"
 
@@ -937,6 +1002,571 @@ msgstr "Número de Série do Certificado="
 #: cryptdlg.rc:37
 msgid "Notice Text="
 msgstr ""
+
+#: cryptui.rc:27 cryptui.rc:90
+msgid "Certificate"
+msgstr "Certificado"
+
+#: cryptui.rc:28
+msgid "Certificate Information"
+msgstr "Informação do Certificado"
+
+#: cryptui.rc:29
+msgid ""
+"This certificate has an invalid signature.  The certificate may have been "
+"altered or corrupted."
+msgstr ""
+"Este certificado tem uma assinatura inválida. O certificado pode ter sido "
+"alterado ou corrompido."
+
+#: cryptui.rc:30
+msgid ""
+"This root certificate is not trusted.  To trust it, add it to your system's "
+"trusted root certificate store."
+msgstr ""
+"Este certificado raíz não é confiável. Para ficar confiável, adicione-o ao "
+"conjunto de certificados raíz confiáveis do seu sistema."
+
+#: cryptui.rc:31
+msgid "This certificate could not be validated to a trusted root certificate."
+msgstr "Este certificado não foi validado num certificado raíz confiável."
+
+#: cryptui.rc:32
+msgid "This certificate's issuer could not be found."
+msgstr "O emissor deste certificado não foi encontrado."
+
+#: cryptui.rc:33
+msgid "All the intended purposes of this certificate could not be verified."
+msgstr "Todos os propósitos deste certificado não foram verificados."
+
+#: cryptui.rc:34
+msgid "This certificate is intended for the following purposes:"
+msgstr "Este certificado é intencionado com os seguintes propósitos::"
+
+#: cryptui.rc:35
+msgid "Issued to: "
+msgstr "Emitido a: "
+
+#: cryptui.rc:36
+msgid "Issued by: "
+msgstr "Emitido por: "
+
+#: cryptui.rc:37
+msgid "Valid from "
+msgstr "Válido de "
+
+#: cryptui.rc:38
+msgid " to "
+msgstr " para "
+
+#: cryptui.rc:39
+msgid "This certificate has an invalid signature."
+msgstr "Este certificado tem uma assinatura inválida."
+
+#: cryptui.rc:40
+msgid "This certificate has expired or is not yet valid."
+msgstr "Este certificado expirou ou ainda não é válido."
+
+#: cryptui.rc:41
+msgid "This certificate's validity period exceeds that of its issuer."
+msgstr "O período de validade deste certificado excede o do seu emissor."
+
+#: cryptui.rc:42
+msgid "This certificate was revoked by its issuer."
+msgstr "Este certificado foi revogado pelo seu emissor."
+
+#: cryptui.rc:43
+msgid "This certificate is OK."
+msgstr "Este certificado está OK."
+
+#: cryptui.rc:44
+msgid "Field"
+msgstr "Campo"
+
+#: cryptui.rc:45
+msgid "Value"
+msgstr "Valor"
+
+#: cryptui.rc:46 cryptui.rc:99 cryptui.rc:105
+msgid "<All>"
+msgstr "<Todos>"
+
+#: cryptui.rc:47
+msgid "Version 1 Fields Only"
+msgstr "Campos da Versão 1 Apenas"
+
+#: cryptui.rc:48
+msgid "Extensions Only"
+msgstr "Extensões Apenas"
+
+#: cryptui.rc:49
+msgid "Critical Extensions Only"
+msgstr "Extensões Críticas Apenas"
+
+#: cryptui.rc:50
+msgid "Properties Only"
+msgstr "Propriedades Apenas"
+
+#: cryptui.rc:51
+msgid "Version"
+msgstr "Versão"
+
+#: cryptui.rc:52
+msgid "Serial number"
+msgstr "Número de Série"
+
+#: cryptui.rc:53
+msgid "Issuer"
+msgstr "Emissor"
+
+#: cryptui.rc:54
+msgid "Valid from"
+msgstr "Válido desde"
+
+#: cryptui.rc:55
+msgid "Valid to"
+msgstr "Válido até"
+
+#: cryptui.rc:56
+msgid "Subject"
+msgstr "Sujeito"
+
+#: cryptui.rc:57
+msgid "Public key"
+msgstr "Chave Pública"
+
+#: cryptui.rc:58
+msgid "%s (%d bits)"
+msgstr "%s (%d bits)"
+
+#: cryptui.rc:59
+msgid "SHA1 hash"
+msgstr "SHA1 hash"
+
+#: cryptui.rc:60
+msgid "Enhanced key usage (property)"
+msgstr "Uso de chave avançado (propriedade)"
+
+#: cryptui.rc:61
+msgid "Friendly name"
+msgstr "Nome amigável"
+
+#: cryptui.rc:62 ipconfig.rc:41
+msgid "Description"
+msgstr "Descrição"
+
+#: cryptui.rc:63
+msgid "Certificate Properties"
+msgstr "Propriedades do Certificado"
+
+#: cryptui.rc:64
+msgid "Please enter an OID in the form 1.2.3.4"
+msgstr "Por favor insira um OID na forma 1.2.3.4"
+
+#: cryptui.rc:65
+msgid "The OID you entered already exists."
+msgstr "O OID inserido já existe."
+
+#: cryptui.rc:66
+msgid "Select Certificate Store"
+msgstr "Selecione o Conjunto de Certificados"
+
+#: cryptui.rc:67
+msgid "Please select a certificate store."
+msgstr "Por favor selecione um conjunto de certificados."
+
+#: cryptui.rc:68
+msgid "Certificate Import Wizard"
+msgstr "Assistente de Importação de Certificados"
+
+#: cryptui.rc:69
+msgid ""
+"The file contains objects that do not match the given criteria.  Please "
+"select another file."
+msgstr ""
+"O arquivo contém objetos que não correspondem ao critério dado. Por favor "
+"selecione outro arquivo."
+
+#: cryptui.rc:70
+msgid "File to Import"
+msgstr "Arquivo a Importar"
+
+#: cryptui.rc:71
+msgid "Specify the file you want to import."
+msgstr "Especifique o arquivo que deseja importar."
+
+#: cryptui.rc:72 cryptui.rc:95
+msgid "Certificate Store"
+msgstr "Conjunto de Certificados"
+
+#: cryptui.rc:73
+msgid ""
+"Certificate stores are collections of certificates, certificate revocation "
+"lists, and certificate trust lists."
+msgstr ""
+"Os Conjuntos de Certificados são colecões de certificados, listas de "
+"revogação de certificados e listas de certificados confiáveis."
+
+#: cryptui.rc:74
+msgid "X.509 Certificate (*.cer; *.crt)"
+msgstr "Certificado X.509 (*.cer; *.crt)"
+
+#: cryptui.rc:75
+msgid "Personal Information Exchange (*.pfx; *.p12)"
+msgstr "Troca de Informações Pessoais (*.pfx; *.p12)"
+
+#: cryptui.rc:76 cryptui.rc:155
+msgid "Certificate Revocation List (*.crl)"
+msgstr "Lista de Revogação de Certificados (*.crl)"
+
+#: cryptui.rc:77 cryptui.rc:156
+msgid "Certificate Trust List (*.stl)"
+msgstr "Lista de Certificados Confiáveis (*.stl)"
+
+#: cryptui.rc:78
+msgid "Microsoft Serialized Certificate Store (*.sst)"
+msgstr "Conjunto de Certificados Serializados da Microsoft (*.sst)"
+
+#: cryptui.rc:79
+msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
+msgstr "Mensagens CMS/PKCS #7 (*.spc; *.p7b)"
+
+#: cryptui.rc:80
+msgid "All Files (*.*)"
+msgstr "Todos os Arquivos (*.*)"
+
+#: cryptui.rc:81
+msgid "Please select a file."
+msgstr "Por favor selecione um arquivo."
+
+#: cryptui.rc:82
+msgid "The file format is not recognized.  Please select another file."
+msgstr ""
+"O formato do arquivo não é reconhecido. Por favor selecione outro arquivo."
+
+#: cryptui.rc:83
+msgid "Could not open "
+msgstr "Não foi possível abrir "
+
+#: cryptui.rc:84
+msgid "Determined by the program"
+msgstr "Determinado pelo programa"
+
+#: cryptui.rc:85
+msgid "Please select a store"
+msgstr "Por favor selecione um conjunto"
+
+#: cryptui.rc:86
+msgid "Certificate Store Selected"
+msgstr "Conjunto de Certificados Selecionado"
+
+#: cryptui.rc:87
+msgid "Automatically determined by the program"
+msgstr "Determinado automaticamente pelo programa"
+
+#: cryptui.rc:88
+msgid "File"
+msgstr "Arquivo"
+
+#: cryptui.rc:89
+msgid "Content"
+msgstr "Conteúdo"
+
+#: cryptui.rc:91
+msgid "Certificate Revocation List"
+msgstr "Lista de Revogação de Certificados"
+
+#: cryptui.rc:93
+msgid "CMS/PKCS #7 Message"
+msgstr "Mensagem CMS/PKCS #7"
+
+#: cryptui.rc:94
+msgid "Personal Information Exchange"
+msgstr "Troca de Informações Pessoais"
+
+#: cryptui.rc:96
+msgid "The import was successful."
+msgstr "A importação foi bem sucedida."
+
+#: cryptui.rc:97
+msgid "The import failed."
+msgstr "A importação falhou."
+
+#: cryptui.rc:98
+msgid "Arial"
+msgstr "Arial"
+
+#: cryptui.rc:100
+msgid "<Advanced Purposes>"
+msgstr "<Propósitos Avançados>"
+
+#: cryptui.rc:101
+msgid "Issued To"
+msgstr "Emitido para"
+
+#: cryptui.rc:102
+msgid "Issued By"
+msgstr "Emitido por"
+
+#: cryptui.rc:103
+msgid "Expiration Date"
+msgstr "Data de Validade"
+
+#: cryptui.rc:104
+msgid "Friendly Name"
+msgstr "Nome Amigável"
+
+#: cryptui.rc:106 cryptui.rc:120
+msgid "<None>"
+msgstr "<Nenhum>"
+
+#: cryptui.rc:107
+msgid ""
+"You will no longer be able to decrypt messages with this certificate, or "
+"sign messages with it.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"Não será mais possível continuar a decifrar ou assinar mensagens com este "
+"certificado.\n"
+"Tem certeza que deseja remover este certificado?"
+
+#: cryptui.rc:108
+msgid ""
+"You will no longer be able to decrypt messages with these certificates, or "
+"sign messages with them.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"Não será mais possível continuar a decifrar ou assinar mensagens com estes "
+"certificados.\n"
+"Tem certeza que deseja remover estes certificados?"
+
+#: cryptui.rc:109
+msgid ""
+"You will no longer be able to encrypt messages with this certificate, or "
+"verify messages signed with it.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"Não será mais possível continuar a cifrar ou verificar mensagens com este "
+"certificado.\n"
+"Tem certeza que deseja remover este certificado?"
+
+#: cryptui.rc:110
+msgid ""
+"You will no longer be able to encrypt messages with these certificates, or "
+"verify messages signed with it.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"Não será mais possível continuar a cifrar ou verificar mensagens com estes "
+"certificados.\n"
+"Tem certeza que deseja remover estes certificados?"
+
+#: cryptui.rc:111
+msgid ""
+"Certificates issued by this certification authority will no longer be "
+"trusted.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"Os certificados emitidos por esta autoridade de certificação não serão "
+"considerados confiáveis de agora em diante.\n"
+"Tem certeza que deseja remover este certificado?"
+
+#: cryptui.rc:112
+msgid ""
+"Certificates issued by these certification authorities will no longer be "
+"trusted.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"Os certificados emitidos por estas autoridades de certificação não serão "
+"considerados confiáveis de agora em diante.\n"
+"Tem certeza que deseja remover estes certificados?"
+
+#: cryptui.rc:113
+msgid ""
+"Certificates issued by this root certification authority, or any "
+"certification authorities it issued, will no longer be trusted.\n"
+"Are you sure you want to remove this trusted root certificate?"
+msgstr ""
+"Os certificados emitidos por esta autoridade de certificação raíz ou "
+"quaisquer autoridades de certificação por ela emitidas não serão "
+"consideradas confiáveis de agora em diante.\n"
+"Tem certeza que deseja remover este certificado raíz confiável?"
+
+#: cryptui.rc:114
+msgid ""
+"Certificates issued by these root certification authorities, or any "
+"certification authorities they issued, will no longer be trusted.\n"
+"Are you sure you want to remove these trusted root certificates?"
+msgstr ""
+"Os certificados emitidos por estas autoridades de certificação raíz ou "
+"quaisquer autoridades de certificação por elas emitidas não serão "
+"consideradas confiáveis de agora em diante.\n"
+"Tem certeza que deseja remover estes certificados raíz confiáveis?"
+
+#: cryptui.rc:115
+msgid ""
+"Software signed by this publisher will no longer be trusted.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"Os softwares assinados por este editor não continuarão a ser considerado "
+"confiáveis.\n"
+"Tem certeza que deseja remover este certificado?"
+
+#: cryptui.rc:116
+msgid ""
+"Software signed by these publishers will no longer be trusted.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"Os softwares assinado por estes editores não continuarão a ser considerados "
+"confiáveis.\n"
+"Tem certeza que deseja remover estes certificados?"
+
+#: cryptui.rc:117
+msgid "Are you sure you want to remove this certificate?"
+msgstr "Tem certeza que deseja remover este certificado?"
+
+#: cryptui.rc:118
+msgid "Are you sure you want to remove these certificates?"
+msgstr "Tem certeza que deseja remover estes certificados?"
+
+#: cryptui.rc:119
+msgid "Certificates"
+msgstr "Certificados"
+
+#: cryptui.rc:121
+msgid "Ensures the identity of a remote computer"
+msgstr "Assegura a identidade de um computador remoto"
+
+#: cryptui.rc:122
+msgid "Proves your identity to a remote computer"
+msgstr "Prova a sua identidade a um computador remoto"
+
+#: cryptui.rc:123
+msgid ""
+"Ensures software came from software publisher\n"
+"Protects software from alteration after publication"
+msgstr ""
+"Assegura que o software veio de uma editora de software\n"
+"Protege o software de alterações após a publicação"
+
+#: cryptui.rc:124
+msgid "Protects e-mail messages"
+msgstr "Protege mensagens de e-mail"
+
+#: cryptui.rc:125
+msgid "Allows secure communication over the Internet"
+msgstr "Permite comunicação segura pela Internet"
+
+#: cryptui.rc:126
+msgid "Allows data to be signed with the current time"
+msgstr "Permite que os dados sejam assinados com o tempo atual"
+
+#: cryptui.rc:127
+msgid "Allows you to digitally sign a certificate trust list"
+msgstr "Permite assinar digitalmente uma lista de certificados confiáveis"
+
+#: cryptui.rc:128
+msgid "Allows data on disk to be encrypted"
+msgstr "Permite que os dados em disco sejam encriptados"
+
+#: cryptui.rc:144
+msgid "Private Key Archival"
+msgstr "Arquivação de Chave Privada"
+
+#: cryptui.rc:147
+msgid "Certificate Export Wizard"
+msgstr "Assistente de Exportação de Certificados"
+
+#: cryptui.rc:148
+msgid "Export Format"
+msgstr "Formato de Exportação"
+
+#: cryptui.rc:149
+msgid "Choose the format in which the content will be saved."
+msgstr "Escolha o formato em que o conteúdo será salvo."
+
+#: cryptui.rc:150
+msgid "Export Filename"
+msgstr "Exportar Arquivo"
+
+#: cryptui.rc:151
+msgid "Specify the name of the file in which the content will be saved."
+msgstr "Especifique o nome do arquivo em que o conteúdo será salvo."
+
+#: cryptui.rc:152
+msgid "The specified file already exists.  Do you want to replace it?"
+msgstr "O arquivo especificado já existe. Deseja substituí-lo?"
+
+#: cryptui.rc:153
+msgid "DER-Encoded Binary X.509 (*.cer)"
+msgstr "Binário DER-Codificado X.509 (*.cer)"
+
+#: cryptui.rc:154
+msgid "Base64-Encoded X.509 (*.cer)"
+msgstr "Base64-Codificado X.509 (*.cer)"
+
+#: cryptui.rc:157
+msgid "CMS/PKCS #7 Messages (*.p7b)"
+msgstr "Mensagens CMS/PKCS #7 (*.p7b)"
+
+#: cryptui.rc:158
+msgid "Personal Information Exchange (*.pfx)"
+msgstr "Troca de Informações Pessoais (*.pfx)"
+
+#: cryptui.rc:159
+msgid "Serialized Certificate Store (*.sst)"
+msgstr "Conjunto de Certificados Serializados (*.sst)"
+
+#: cryptui.rc:160
+msgid "File Format"
+msgstr "Formato do Arquivo"
+
+#: cryptui.rc:161
+msgid "Include all certificates in certificate path"
+msgstr "Incluir todos os certificados no caminho do certificado"
+
+#: cryptui.rc:162
+msgid "Export keys"
+msgstr "Exportar Chaves"
+
+#: cryptui.rc:165
+msgid "The export was successful."
+msgstr "A exportação foi bem sucedida."
+
+#: cryptui.rc:166
+msgid "The export failed."
+msgstr "A exportação falhou."
+
+#: cryptui.rc:167
+msgid "Export Private Key"
+msgstr "Exportar Chave Privada"
+
+#: cryptui.rc:168
+msgid ""
+"The certificate contains a private key which may be exported along with the "
+"certificate."
+msgstr ""
+"O certificado contém uma chave privada que pode ser exportada em conjunto "
+"com o certificado."
+
+#: cryptui.rc:169
+msgid "Enter Password"
+msgstr "Digite Palavra Chave"
+
+#: cryptui.rc:170
+msgid "You may password-protect a private key."
+msgstr "Você pode proteger uma chave privada com uma palavra chave."
+
+#: cryptui.rc:171
+msgid "The passwords do not match."
+msgstr "As palavras chave não coincidem."
+
+#: cryptui.rc:172
+msgid "Note: The private key for this certificate could not be opened."
+msgstr "Nota: A chave privada para este certificado não pôde ser aberta."
+
+#: cryptui.rc:173
+msgid "Note: The private  key for this certificate is not exportable."
+msgstr "Nota: A chave privada para este certificado não é exportável."
 
 #: devenum.rc:32
 msgid "Default DirectSound"
@@ -3329,10 +3959,6 @@ msgstr ""
 
 #: ipconfig.rc:40
 msgid "IP routing enabled"
-msgstr ""
-
-#: ipconfig.rc:41
-msgid "Description"
 msgstr ""
 
 #: ipconfig.rc:42

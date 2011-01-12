@@ -441,9 +441,14 @@ msgstr "다음 CRL 발행"
 msgid "CA Encryption Certificate"
 msgstr "CA 암호 인증"
 
-#: crypt32.rc:119
+#: crypt32.rc:119 cryptui.rc:145
+#, fuzzy
 msgid "Key Recovery Agent"
-msgstr "키 복구 관리자"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"키 복구 관리자\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"키 복구 에이전트"
 
 #: crypt32.rc:120
 msgid "Certificate Template Information"
@@ -501,9 +506,14 @@ msgstr "취소 요청"
 msgid "Query Pending"
 msgstr "질문하는 중"
 
-#: crypt32.rc:134
+#: crypt32.rc:134 cryptui.rc:92
+#, fuzzy
 msgid "Certificate Trust List"
-msgstr "인증된 신뢰 목록"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"인증된 신뢰 목록\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"인증서 신뢰 목록"
 
 #: crypt32.rc:135
 msgid "Archived Key Certificate Hash"
@@ -561,47 +571,87 @@ msgstr "IP 보안 사용자"
 msgid "Encrypting File System"
 msgstr "암호화된 파일 시스템"
 
-#: crypt32.rc:149
+#: crypt32.rc:149 cryptui.rc:130
+#, fuzzy
 msgid "Windows Hardware Driver Verification"
-msgstr "윈도우즈 하드웨어 드라이버 검증"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"윈도우즈 하드웨어 드라이버 검증\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"윈도우즈 하드웨어 드라이버 확인"
 
-#: crypt32.rc:150
+#: crypt32.rc:150 cryptui.rc:131
+#, fuzzy
 msgid "Windows System Component Verification"
-msgstr "윈도우즈 시스템 구성요소 검증"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"윈도우즈 시스템 구성요소 검증\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"윈도우즈 시스템 컴포넌트 확인"
 
-#: crypt32.rc:151
+#: crypt32.rc:151 cryptui.rc:132
+#, fuzzy
 msgid "OEM Windows System Component Verification"
-msgstr "OEM 윈도우즈 시스템 구성요소 검증"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"OEM 윈도우즈 시스템 구성요소 검증\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"OEM 윈도우즈 시스템 컴포넌트 확인"
 
-#: crypt32.rc:152
+#: crypt32.rc:152 cryptui.rc:133
+#, fuzzy
 msgid "Embedded Windows System Component Verification"
-msgstr "내장된 윈도우즈 시스탬 구성요소 검중"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"내장된 윈도우즈 시스탬 구성요소 검중\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"임베디드 윈도우즈 시스템 컴포넌트 확인"
 
-#: crypt32.rc:153
+#: crypt32.rc:153 cryptui.rc:140
 msgid "Key Pack Licenses"
 msgstr "키 팩 라이센스"
 
-#: crypt32.rc:154
+#: crypt32.rc:154 cryptui.rc:141
+#, fuzzy
 msgid "License Server Verification"
-msgstr "라이센스 서버 검증"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"라이센스 서버 검증\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"라이센스 서버 확인"
 
-#: crypt32.rc:155
+#: crypt32.rc:155 cryptui.rc:143
+#, fuzzy
 msgid "Smart Card Logon"
-msgstr "스마트 카드 로그인"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"스마트 카드 로그인\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"스마트 카드 로그온"
 
-#: crypt32.rc:156
+#: crypt32.rc:156 cryptui.rc:139
+#, fuzzy
 msgid "Digital Rights"
-msgstr "디지털 저작권"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"디지털 저작권\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"디지털 권리"
 
-#: crypt32.rc:157
+#: crypt32.rc:157 cryptui.rc:135
+#, fuzzy
 msgid "Qualified Subordination"
-msgstr "자격있는 종속관계"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"자격있는 종속관계\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"자격있는 종속"
 
-#: crypt32.rc:158
+#: crypt32.rc:158 cryptui.rc:136
 msgid "Key Recovery"
 msgstr "키 복구"
 
-#: crypt32.rc:159
+#: crypt32.rc:159 cryptui.rc:137
 msgid "Document Signing"
 msgstr "문서 서명"
 
@@ -609,11 +659,11 @@ msgstr "문서 서명"
 msgid "IP security IKE intermediate"
 msgstr "IP 보안  IKE 수단(intermediate)"
 
-#: crypt32.rc:161
+#: crypt32.rc:161 cryptui.rc:129
 msgid "File Recovery"
 msgstr "파일 복구"
 
-#: crypt32.rc:162
+#: crypt32.rc:162 cryptui.rc:134
 msgid "Root List Signer"
 msgstr "루트 목록 서명자"
 
@@ -621,17 +671,32 @@ msgstr "루트 목록 서명자"
 msgid "All application policies"
 msgstr "모든 프로그램의 방침"
 
-#: crypt32.rc:164
+#: crypt32.rc:164 cryptui.rc:146
+#, fuzzy
 msgid "Directory Service Email Replication"
-msgstr "디렉토리 서비스 이메일 응답"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"디렉토리 서비스 이메일 응답\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"디렉토리 서비스 전자우편 복제"
 
-#: crypt32.rc:165
+#: crypt32.rc:165 cryptui.rc:142
+#, fuzzy
 msgid "Certificate Request Agent"
-msgstr "인증 요구 관리자"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"인증 요구 관리자\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"인증서 요청 에이전트"
 
-#: crypt32.rc:166
+#: crypt32.rc:166 cryptui.rc:138
+#, fuzzy
 msgid "Lifetime Signing"
-msgstr "평생 서명"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"평생 서명\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"유효기간"
 
 #: crypt32.rc:167
 msgid "All issuance policies"
@@ -817,11 +882,11 @@ msgstr "불가능함"
 msgid "Meets Criteria="
 msgstr "맞는 기준 ="
 
-#: crypt32.rc:222 oleaut32.rc:29 ipconfig.rc:44
+#: crypt32.rc:222 cryptui.rc:163 oleaut32.rc:29 ipconfig.rc:44
 msgid "Yes"
 msgstr "예"
 
-#: crypt32.rc:223 oleaut32.rc:30 ipconfig.rc:45
+#: crypt32.rc:223 cryptui.rc:164 oleaut32.rc:30 ipconfig.rc:45
 msgid "No"
 msgstr "아니오"
 
@@ -932,6 +997,561 @@ msgstr "인증서 시리얼 번호="
 #: cryptdlg.rc:37
 msgid "Notice Text="
 msgstr ""
+
+#: cryptui.rc:27 cryptui.rc:90
+msgid "Certificate"
+msgstr "인증서"
+
+#: cryptui.rc:28
+msgid "Certificate Information"
+msgstr "인증서 정보"
+
+#: cryptui.rc:29
+msgid ""
+"This certificate has an invalid signature.  The certificate may have been "
+"altered or corrupted."
+msgstr ""
+"이 인증서는 올바르지 않은 서명을 가지고 있습니다.  이 인증서는 아마도 고쳐졌"
+"거나 망가진 것같습니가"
+
+#: cryptui.rc:30
+msgid ""
+"This root certificate is not trusted.  To trust it, add it to your system's "
+"trusted root certificate store."
+msgstr ""
+"이 루트 인증서는 신뢰 할 수 없습니다.  이것을 신뢰하려면,당신의 시스템의 신뢰"
+"된  루트 인증서 보관소에 추가하십시오."
+
+#: cryptui.rc:31
+msgid "This certificate could not be validated to a trusted root certificate."
+msgstr "이 인증서는 신뢰된 루트 인증서로 허가될 수 없습니다."
+
+#: cryptui.rc:32
+msgid "This certificate's issuer could not be found."
+msgstr "이 인증서의 발행자를 찾을 수 없습니다."
+
+#: cryptui.rc:33
+msgid "All the intended purposes of this certificate could not be verified."
+msgstr "이 인증서의 모든 계획된 목적은 검증될 수 없습니다."
+
+#: cryptui.rc:34
+msgid "This certificate is intended for the following purposes:"
+msgstr "이 인증서는 다음의 목적으로 계획되어있습니다:"
+
+#: cryptui.rc:35
+msgid "Issued to: "
+msgstr "발행대상: "
+
+#: cryptui.rc:36
+msgid "Issued by: "
+msgstr "발행자: "
+
+#: cryptui.rc:37
+msgid "Valid from "
+msgstr "유효기간(시작) "
+
+#: cryptui.rc:38
+msgid " to "
+msgstr "유효기간(끝) "
+
+#: cryptui.rc:39
+msgid "This certificate has an invalid signature."
+msgstr "이 인증서는 올바르지 않은 서명을 가지고 있습니다."
+
+#: cryptui.rc:40
+msgid "This certificate has expired or is not yet valid."
+msgstr "이 인증서는 만료되었거나 아직 유효하지 않습니다."
+
+#: cryptui.rc:41
+msgid "This certificate's validity period exceeds that of its issuer."
+msgstr "이 인증서는 발행자가 정한 유효시간을 초과했습니다"
+
+#: cryptui.rc:42
+msgid "This certificate was revoked by its issuer."
+msgstr "이 인증서는 발행자에 의하여 취소되었습니다."
+
+#: cryptui.rc:43
+msgid "This certificate is OK."
+msgstr "이 인증서는 올바릅니다.."
+
+#: cryptui.rc:44
+msgid "Field"
+msgstr "필드"
+
+#: cryptui.rc:45
+msgid "Value"
+msgstr "값"
+
+#: cryptui.rc:46 cryptui.rc:99 cryptui.rc:105
+msgid "<All>"
+msgstr "<모두>"
+
+#: cryptui.rc:47
+msgid "Version 1 Fields Only"
+msgstr "오직 버젼 1 필드만"
+
+#: cryptui.rc:48
+msgid "Extensions Only"
+msgstr "오직 확장만"
+
+#: cryptui.rc:49
+msgid "Critical Extensions Only"
+msgstr "오직 중요한 확장만"
+
+#: cryptui.rc:50
+msgid "Properties Only"
+msgstr "오직 속성만"
+
+#: cryptui.rc:51
+msgid "Version"
+msgstr "버젼"
+
+#: cryptui.rc:52
+msgid "Serial number"
+msgstr "시리얼 번호"
+
+#: cryptui.rc:53
+msgid "Issuer"
+msgstr "발행자"
+
+#: cryptui.rc:54
+msgid "Valid from"
+msgstr "유효기간(시작)"
+
+#: cryptui.rc:55
+msgid "Valid to"
+msgstr "유효기간(끝)"
+
+#: cryptui.rc:56
+msgid "Subject"
+msgstr "제목"
+
+#: cryptui.rc:57
+msgid "Public key"
+msgstr "공용 키"
+
+#: cryptui.rc:58
+msgid "%s (%d bits)"
+msgstr "%s (%d 비트)"
+
+#: cryptui.rc:59
+msgid "SHA1 hash"
+msgstr "SHA1 해쉬"
+
+#: cryptui.rc:60
+msgid "Enhanced key usage (property)"
+msgstr "확장 키 사용 (속성)"
+
+#: cryptui.rc:61
+msgid "Friendly name"
+msgstr "애칭"
+
+#: cryptui.rc:62 ipconfig.rc:41
+msgid "Description"
+msgstr "설명"
+
+#: cryptui.rc:63
+msgid "Certificate Properties"
+msgstr "인증서 속성"
+
+#: cryptui.rc:64
+msgid "Please enter an OID in the form 1.2.3.4"
+msgstr "폼 1,2,3,4에 하나의 OID를 입력하십시오"
+
+#: cryptui.rc:65
+msgid "The OID you entered already exists."
+msgstr "당신이 입력한 OID는 이미 존재합니다."
+
+#: cryptui.rc:66
+msgid "Select Certificate Store"
+msgstr "인증서 저장소 선택"
+
+#: cryptui.rc:67
+msgid "Please select a certificate store."
+msgstr "인증서 저장소를 선택하십시오."
+
+#: cryptui.rc:68
+msgid "Certificate Import Wizard"
+msgstr "인증서 가져오기 마법사"
+
+#: cryptui.rc:69
+msgid ""
+"The file contains objects that do not match the given criteria.  Please "
+"select another file."
+msgstr ""
+"이 파일은 주어진 기존에 맞지 않는 객체를 포함하고 있습니다. 다른 파일을 선택"
+"하십시오."
+
+#: cryptui.rc:70
+msgid "File to Import"
+msgstr "가져올 파일"
+
+#: cryptui.rc:71
+msgid "Specify the file you want to import."
+msgstr "가져올 파일 선택."
+
+#: cryptui.rc:72 cryptui.rc:95
+msgid "Certificate Store"
+msgstr "인증서 보관소"
+
+#: cryptui.rc:73
+msgid ""
+"Certificate stores are collections of certificates, certificate revocation "
+"lists, and certificate trust lists."
+msgstr ""
+"인증서 보관소는 인증서, 인증서 파기 목록, 인증서 신뢰 목록의 집합소입니다."
+
+#: cryptui.rc:74
+msgid "X.509 Certificate (*.cer; *.crt)"
+msgstr "X.509 인증서 (*.cer; *.crt)"
+
+#: cryptui.rc:75
+msgid "Personal Information Exchange (*.pfx; *.p12)"
+msgstr "개인 정보 교환 (*.pfx; *.p12)"
+
+#: cryptui.rc:76 cryptui.rc:155
+msgid "Certificate Revocation List (*.crl)"
+msgstr "인증소 파기 목록 (*.crl)"
+
+#: cryptui.rc:77 cryptui.rc:156
+msgid "Certificate Trust List (*.stl)"
+msgstr "인증서 신뢰 목록 (*.stl)"
+
+#: cryptui.rc:78
+msgid "Microsoft Serialized Certificate Store (*.sst)"
+msgstr "Microsoft 연속 인증서 보관소 (*.sst)"
+
+#: cryptui.rc:79
+msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
+msgstr "CMS/PKCS #7 메세지 (*.spc; *.p7b)"
+
+#: cryptui.rc:80
+msgid "All Files (*.*)"
+msgstr "모든 파일 (*.*)"
+
+#: cryptui.rc:81
+msgid "Please select a file."
+msgstr "파일을 선택하십시오."
+
+#: cryptui.rc:82
+msgid "The file format is not recognized.  Please select another file."
+msgstr "이 파일 형식은 인식할 수 없습니다. 다른 파일을 선택하십시오."
+
+#: cryptui.rc:83
+msgid "Could not open "
+msgstr "열수 없습니다 "
+
+#: cryptui.rc:84
+msgid "Determined by the program"
+msgstr "프로그램에 의해 결정"
+
+#: cryptui.rc:85
+msgid "Please select a store"
+msgstr "보관소를 선택하십시오"
+
+#: cryptui.rc:86
+msgid "Certificate Store Selected"
+msgstr "인증서 보관소가 선택됨"
+
+#: cryptui.rc:87
+msgid "Automatically determined by the program"
+msgstr "자동으로 프로그램에 의해 결정"
+
+#: cryptui.rc:88
+msgid "File"
+msgstr "파일"
+
+#: cryptui.rc:89
+msgid "Content"
+msgstr "내용"
+
+#: cryptui.rc:91
+msgid "Certificate Revocation List"
+msgstr "인증서 파기 목록"
+
+#: cryptui.rc:93
+msgid "CMS/PKCS #7 Message"
+msgstr "CMS/PKCS #7 메세지"
+
+#: cryptui.rc:94
+msgid "Personal Information Exchange"
+msgstr "개인 정보 교환"
+
+#: cryptui.rc:96
+msgid "The import was successful."
+msgstr "가져오기 성공."
+
+#: cryptui.rc:97
+msgid "The import failed."
+msgstr "가져오기 실패."
+
+#: cryptui.rc:98
+msgid "Arial"
+msgstr "Arial"
+
+#: cryptui.rc:100
+msgid "<Advanced Purposes>"
+msgstr "<추가 용도>"
+
+#: cryptui.rc:101
+msgid "Issued To"
+msgstr "발행목적"
+
+#: cryptui.rc:102
+msgid "Issued By"
+msgstr "발행자"
+
+#: cryptui.rc:103
+msgid "Expiration Date"
+msgstr "만기일"
+
+#: cryptui.rc:104
+msgid "Friendly Name"
+msgstr "애칭"
+
+#: cryptui.rc:106 cryptui.rc:120
+msgid "<None>"
+msgstr "<없음>"
+
+#: cryptui.rc:107
+msgid ""
+"You will no longer be able to decrypt messages with this certificate, or "
+"sign messages with it.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"당신은 더 이상 이 인증서를 이용해서 메세지를 해독하거나,아니면 서명을 할 수 "
+"없을 것입니다.\n"
+"당신은 정말로 이 인증서를 제거하기를 원합니까?"
+
+#: cryptui.rc:108
+msgid ""
+"You will no longer be able to decrypt messages with these certificates, or "
+"sign messages with them.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"당신은 더 이상 이 인증서다들를 이용해서 메세지를 해독하거나,아니면 서명을 할 "
+"수 없을 것입니다.\n"
+"당신은 정말로 이 인증서들를 제거하기를 원합니까??"
+
+#: cryptui.rc:109
+msgid ""
+"You will no longer be able to encrypt messages with this certificate, or "
+"verify messages signed with it.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"당신은 더 이상 이 인증서를 이용해서 메세지를 암호하거나,아니면 서명된 것을 검"
+"증할 수 없을 것입니다.\n"
+"당신은 정말로 이 인증서를 제거하기를 원합니까?"
+
+#: cryptui.rc:110
+msgid ""
+"You will no longer be able to encrypt messages with these certificates, or "
+"verify messages signed with it.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"당신은 더 이상 이 인증서들를 이용해서 메세지를 암호하거나,아니면 서명된 것을 "
+"검증할 수 없을 것입니다.\n"
+"당신은 정말로 이 인증서들를 제거하기를 원합니까?"
+
+#: cryptui.rc:111
+msgid ""
+"Certificates issued by this certification authority will no longer be "
+"trusted.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"이 인증 기관이 발급한 인증서를 더 이상 신뢰할 수 없을 것입니다.\n"
+"당신은 정말로 이 인증서를 제거하기를 원합니까?"
+
+#: cryptui.rc:112
+msgid ""
+"Certificates issued by these certification authorities will no longer be "
+"trusted.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"이 인증 기관이 발급한 인증서들를 더 이상 신뢰할 수 없을 것입니다.\n"
+"당신은 정말로 이 인증서들를 제거하기를 원합니까?"
+
+#: cryptui.rc:113
+msgid ""
+"Certificates issued by this root certification authority, or any "
+"certification authorities it issued, will no longer be trusted.\n"
+"Are you sure you want to remove this trusted root certificate?"
+msgstr ""
+"이 루트인증 기관이나 다른 어떤 인증기관에에서 발급한 인증서를 더 이상 신뢰할 "
+"수 없을 것입니다.\n"
+"당신은 정말로 이 신뢰된 루트인증서를 제거하기를 원합니까?"
+
+#: cryptui.rc:114
+msgid ""
+"Certificates issued by these root certification authorities, or any "
+"certification authorities they issued, will no longer be trusted.\n"
+"Are you sure you want to remove these trusted root certificates?"
+msgstr ""
+"이 루트인증 기관이나 다른 어떤 인증기관에에서 발급한 인증서를 더 이상 신뢰할 "
+"수 없을 것입니다.\n"
+"당신은 정말로 이 신뢰된 루트인증서들를 제거하기를 원합니까?"
+
+#: cryptui.rc:115
+msgid ""
+"Software signed by this publisher will no longer be trusted.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"이 발행자에 의해 서명된 소프트웨어는 더 이상 신뢰할 수 없을 것입니다.\n"
+"당신은 정말로 이 인증서를 제거하기를 원합니까?"
+
+#: cryptui.rc:116
+msgid ""
+"Software signed by these publishers will no longer be trusted.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"이 발행자들에 의해 서명된 소프트웨어는 더 이상 신뢰할 수 없을 것입니다.\n"
+"당신은 정말로 이 인증서들를 제거하기를 원합니까?"
+
+#: cryptui.rc:117
+msgid "Are you sure you want to remove this certificate?"
+msgstr "이 인증거를 제거하기를 원합니까?"
+
+#: cryptui.rc:118
+msgid "Are you sure you want to remove these certificates?"
+msgstr "이 인증서들를 제거하기를 원합니까?"
+
+#: cryptui.rc:119
+msgid "Certificates"
+msgstr "인증서"
+
+#: cryptui.rc:121
+msgid "Ensures the identity of a remote computer"
+msgstr "원격 컴퓨터의 동일성 보증"
+
+#: cryptui.rc:122
+msgid "Proves your identity to a remote computer"
+msgstr "당신의 신원을 원격컴퓨터로 인증"
+
+#: cryptui.rc:123
+msgid ""
+"Ensures software came from software publisher\n"
+"Protects software from alteration after publication"
+msgstr ""
+"소프트웨어 발행자로부터 온 소프트웨어 보증\n"
+"발행된 후의 소프트웨어를 개조로부터 보호"
+
+#: cryptui.rc:124
+msgid "Protects e-mail messages"
+msgstr "전자우편 메시지 보호"
+
+#: cryptui.rc:125
+msgid "Allows secure communication over the Internet"
+msgstr "인터넷을 통한 보안 통신 허용"
+
+#: cryptui.rc:126
+msgid "Allows data to be signed with the current time"
+msgstr "현재 시간에 따른 서명 허용"
+
+#: cryptui.rc:127
+msgid "Allows you to digitally sign a certificate trust list"
+msgstr "신뢰할 수 있는 증명서 목록에 전자 서명 허용"
+
+#: cryptui.rc:128
+msgid "Allows data on disk to be encrypted"
+msgstr "디스크에 데이타 암호화 허용"
+
+#: cryptui.rc:144
+msgid "Private Key Archival"
+msgstr "사적 키 보관소"
+
+#: cryptui.rc:147
+msgid "Certificate Export Wizard"
+msgstr "인증서 내보내기 마법사"
+
+#: cryptui.rc:148
+msgid "Export Format"
+msgstr "내보낼 형식"
+
+#: cryptui.rc:149
+msgid "Choose the format in which the content will be saved."
+msgstr "내용을 저장할 형식 선택."
+
+#: cryptui.rc:150
+msgid "Export Filename"
+msgstr "내보낼 파일이름"
+
+#: cryptui.rc:151
+msgid "Specify the name of the file in which the content will be saved."
+msgstr "내용을 저장할 파일 이름 지정."
+
+#: cryptui.rc:152
+msgid "The specified file already exists.  Do you want to replace it?"
+msgstr "지정된 파일은 이미 존재합니다.덮어 쓰시겠습니까?"
+
+#: cryptui.rc:153
+msgid "DER-Encoded Binary X.509 (*.cer)"
+msgstr "DER-암호화된 바이너리 X.509 (*.cer)"
+
+#: cryptui.rc:154
+msgid "Base64-Encoded X.509 (*.cer)"
+msgstr "Base64-암호화된 X.509 (*.cer)"
+
+#: cryptui.rc:157
+msgid "CMS/PKCS #7 Messages (*.p7b)"
+msgstr "CMS/PKCS #7 메세지 (*.p7b)"
+
+#: cryptui.rc:158
+msgid "Personal Information Exchange (*.pfx)"
+msgstr "개인 정보 교환 (*.pfx)"
+
+#: cryptui.rc:159
+msgid "Serialized Certificate Store (*.sst)"
+msgstr "나열된 인증서 저장소 (*.sst)"
+
+#: cryptui.rc:160
+msgid "File Format"
+msgstr "파일 형식"
+
+#: cryptui.rc:161
+msgid "Include all certificates in certificate path"
+msgstr "인증 경로에 있는 모든 인증서 포함"
+
+#: cryptui.rc:162
+msgid "Export keys"
+msgstr "내보낼 키"
+
+#: cryptui.rc:165
+msgid "The export was successful."
+msgstr "내보내기 성공."
+
+#: cryptui.rc:166
+msgid "The export failed."
+msgstr "내보내기 실패."
+
+#: cryptui.rc:167
+msgid "Export Private Key"
+msgstr "내보낼 개인 키"
+
+#: cryptui.rc:168
+msgid ""
+"The certificate contains a private key which may be exported along with the "
+"certificate."
+msgstr "이 인증서는  인증서를 내보낼 때 같이 나갈 개인키를 포함하고 있습니다."
+
+#: cryptui.rc:169
+msgid "Enter Password"
+msgstr "암호 입력"
+
+#: cryptui.rc:170
+msgid "You may password-protect a private key."
+msgstr "이 개인키는 아마도 암호로 보호되어있는 것 같습니다."
+
+#: cryptui.rc:171
+msgid "The passwords do not match."
+msgstr "이 암호는 맞지 않습니다."
+
+#: cryptui.rc:172
+msgid "Note: The private key for this certificate could not be opened."
+msgstr "주의: 이 인증서를 위한 개인 키를 열 수 없습니다."
+
+#: cryptui.rc:173
+msgid "Note: The private  key for this certificate is not exportable."
+msgstr "주의: 이 인증서를 위한 개인 키를 내보낼 수 없습니다."
 
 #: devenum.rc:32
 msgid "Default DirectSound"
@@ -3261,10 +3881,6 @@ msgstr "Hybrid"
 #: ipconfig.rc:40
 msgid "IP routing enabled"
 msgstr "IP 라우팅 가능"
-
-#: ipconfig.rc:41
-msgid "Description"
-msgstr "설명"
 
 #: ipconfig.rc:42
 msgid "Physical address"

@@ -449,7 +449,7 @@ msgstr "Kitas ALS publikavimas"
 msgid "CA Encryption Certificate"
 msgstr "LĮ užšifravimo liudijimas"
 
-#: crypt32.rc:119
+#: crypt32.rc:119 cryptui.rc:145
 msgid "Key Recovery Agent"
 msgstr "Rakto atkūrimo priemonė"
 
@@ -509,7 +509,7 @@ msgstr "Atšaukti užklausą"
 msgid "Query Pending"
 msgstr "Laukia užklausa"
 
-#: crypt32.rc:134
+#: crypt32.rc:134 cryptui.rc:92
 msgid "Certificate Trust List"
 msgstr "Patikintų liudijimų sąrašas"
 
@@ -569,47 +569,47 @@ msgstr "IP saugumo naudotojas"
 msgid "Encrypting File System"
 msgstr "Failų šifravimo sistema"
 
-#: crypt32.rc:149
+#: crypt32.rc:149 cryptui.rc:130
 msgid "Windows Hardware Driver Verification"
 msgstr "Windows tvarkyklių patikra"
 
-#: crypt32.rc:150
+#: crypt32.rc:150 cryptui.rc:131
 msgid "Windows System Component Verification"
 msgstr "Windows sistemos komponentų patikra"
 
-#: crypt32.rc:151
+#: crypt32.rc:151 cryptui.rc:132
 msgid "OEM Windows System Component Verification"
 msgstr "OEM Windows sistemos komponentų patikra"
 
-#: crypt32.rc:152
+#: crypt32.rc:152 cryptui.rc:133
 msgid "Embedded Windows System Component Verification"
 msgstr "Įtaisytų Windows sistemos komponentų patikra"
 
-#: crypt32.rc:153
+#: crypt32.rc:153 cryptui.rc:140
 msgid "Key Pack Licenses"
 msgstr "Kodų pako licencijos"
 
-#: crypt32.rc:154
+#: crypt32.rc:154 cryptui.rc:141
 msgid "License Server Verification"
 msgstr "Licencijų serverio patikra"
 
-#: crypt32.rc:155
+#: crypt32.rc:155 cryptui.rc:143
 msgid "Smart Card Logon"
 msgstr "Lustinių kortelių įvedimas"
 
-#: crypt32.rc:156
+#: crypt32.rc:156 cryptui.rc:139
 msgid "Digital Rights"
 msgstr "Skaitmeninės teisės"
 
-#: crypt32.rc:157
+#: crypt32.rc:157 cryptui.rc:135
 msgid "Qualified Subordination"
 msgstr "Patikslintoji hierarchija"
 
-#: crypt32.rc:158
+#: crypt32.rc:158 cryptui.rc:136
 msgid "Key Recovery"
 msgstr "Rakto atkūrimas"
 
-#: crypt32.rc:159
+#: crypt32.rc:159 cryptui.rc:137
 msgid "Document Signing"
 msgstr "Dokumentų pasirašymas"
 
@@ -617,11 +617,16 @@ msgstr "Dokumentų pasirašymas"
 msgid "IP security IKE intermediate"
 msgstr "IP saugumo IKE tarpininkas"
 
-#: crypt32.rc:161
+#: crypt32.rc:161 cryptui.rc:129
+#, fuzzy
 msgid "File Recovery"
-msgstr "Failo atkūrimas"
+msgstr ""
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"Failo atkūrimas\n"
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"Failų atkūrimas"
 
-#: crypt32.rc:162
+#: crypt32.rc:162 cryptui.rc:134
 msgid "Root List Signer"
 msgstr "Pagrindinio sąrašo pasirašytojas"
 
@@ -629,15 +634,15 @@ msgstr "Pagrindinio sąrašo pasirašytojas"
 msgid "All application policies"
 msgstr "Visos programų politikos"
 
-#: crypt32.rc:164
+#: crypt32.rc:164 cryptui.rc:146
 msgid "Directory Service Email Replication"
 msgstr "Katalogų serverio el. pašto dauginimas"
 
-#: crypt32.rc:165
+#: crypt32.rc:165 cryptui.rc:142
 msgid "Certificate Request Agent"
 msgstr "Liudijimo užklausos priemonė"
 
-#: crypt32.rc:166
+#: crypt32.rc:166 cryptui.rc:138
 msgid "Lifetime Signing"
 msgstr "Gyvavimo ciklo pasirašymas"
 
@@ -825,11 +830,11 @@ msgstr "Neprieinama"
 msgid "Meets Criteria="
 msgstr "Atitinka kriterijus="
 
-#: crypt32.rc:222 oleaut32.rc:29 ipconfig.rc:44
+#: crypt32.rc:222 cryptui.rc:163 oleaut32.rc:29 ipconfig.rc:44
 msgid "Yes"
 msgstr "Taip"
 
-#: crypt32.rc:223 oleaut32.rc:30 ipconfig.rc:45
+#: crypt32.rc:223 cryptui.rc:164 oleaut32.rc:30 ipconfig.rc:45
 msgid "No"
 msgstr "Ne"
 
@@ -936,6 +941,565 @@ msgstr "Pranešimo numeris="
 #: cryptdlg.rc:37
 msgid "Notice Text="
 msgstr "Pranešimo tekstas="
+
+#: cryptui.rc:27 cryptui.rc:90
+msgid "Certificate"
+msgstr "Liudijimas"
+
+#: cryptui.rc:28
+msgid "Certificate Information"
+msgstr "Liudijimo informacija"
+
+#: cryptui.rc:29
+msgid ""
+"This certificate has an invalid signature.  The certificate may have been "
+"altered or corrupted."
+msgstr ""
+"Šis liudijimas turi neteisingą parašą. Liudijimas galėjo būti pakeistas ar "
+"pažeistas."
+
+#: cryptui.rc:30
+msgid ""
+"This root certificate is not trusted.  To trust it, add it to your system's "
+"trusted root certificate store."
+msgstr ""
+"Šis vyriausiasis liudijimas yra nepatikimas. Norėdami juo pasitikėti "
+"įtraukite jį į sistemos patikimų vyriausiųjų liudijimų saugyklą."
+
+#: cryptui.rc:31
+msgid "This certificate could not be validated to a trusted root certificate."
+msgstr ""
+"Nepavyko patvirtinti šio liudijimo pagal patikimą vyriausiąjį liudijimą."
+
+#: cryptui.rc:32
+msgid "This certificate's issuer could not be found."
+msgstr "Nepavyko rasti liudijimo išdavėjo."
+
+#: cryptui.rc:33
+msgid "All the intended purposes of this certificate could not be verified."
+msgstr "Nepavyko patikrinti visų šio liudijimo paskirties tikslų."
+
+#: cryptui.rc:34
+msgid "This certificate is intended for the following purposes:"
+msgstr "Šis liudijimas yra skirtas šiems tikslams:"
+
+#: cryptui.rc:35
+msgid "Issued to: "
+msgstr "Kam išduota: "
+
+#: cryptui.rc:36
+msgid "Issued by: "
+msgstr "Išdavė: "
+
+#: cryptui.rc:37
+msgid "Valid from "
+msgstr "Galioja nuo "
+
+#: cryptui.rc:38
+msgid " to "
+msgstr " iki "
+
+#: cryptui.rc:39
+msgid "This certificate has an invalid signature."
+msgstr "Šis liudijimas turi neteisingą parašą."
+
+#: cryptui.rc:40
+msgid "This certificate has expired or is not yet valid."
+msgstr "Šis liudijimas jau nebegalioja arba dar negalioja."
+
+#: cryptui.rc:41
+msgid "This certificate's validity period exceeds that of its issuer."
+msgstr "Šio liudijimo galiojimo periodas yra didesnis už išdavėjo."
+
+#: cryptui.rc:42
+msgid "This certificate was revoked by its issuer."
+msgstr "Šis liudijimas buvo panaikintas išdavėjo."
+
+#: cryptui.rc:43
+msgid "This certificate is OK."
+msgstr "Šis liudijimas yra geras."
+
+#: cryptui.rc:44
+msgid "Field"
+msgstr "Laukas"
+
+#: cryptui.rc:45
+msgid "Value"
+msgstr "Reikšmė"
+
+#: cryptui.rc:46 cryptui.rc:99 cryptui.rc:105
+msgid "<All>"
+msgstr "<visi laukai>"
+
+#: cryptui.rc:47
+msgid "Version 1 Fields Only"
+msgstr "Tik pirmos versijos laukai"
+
+#: cryptui.rc:48
+msgid "Extensions Only"
+msgstr "Tik plėtiniai"
+
+#: cryptui.rc:49
+msgid "Critical Extensions Only"
+msgstr "Tik būtini plėtiniai"
+
+#: cryptui.rc:50
+msgid "Properties Only"
+msgstr "Tik savybės"
+
+#: cryptui.rc:51
+msgid "Version"
+msgstr "Versija"
+
+#: cryptui.rc:52
+msgid "Serial number"
+msgstr "Numeris"
+
+#: cryptui.rc:53
+msgid "Issuer"
+msgstr "Išdavėjas"
+
+#: cryptui.rc:54
+msgid "Valid from"
+msgstr "Galioja nuo"
+
+#: cryptui.rc:55
+msgid "Valid to"
+msgstr "Galioja iki"
+
+#: cryptui.rc:56
+msgid "Subject"
+msgstr "Subjektas"
+
+#: cryptui.rc:57
+msgid "Public key"
+msgstr "Viešasis raktas"
+
+#: cryptui.rc:58
+msgid "%s (%d bits)"
+msgstr "%s (%d bitai)"
+
+#: cryptui.rc:59
+msgid "SHA1 hash"
+msgstr "maiša SHA1"
+
+#: cryptui.rc:60
+msgid "Enhanced key usage (property)"
+msgstr "Ypatingas rakto naudojimas (savybė)"
+
+#: cryptui.rc:61
+msgid "Friendly name"
+msgstr "Draugiškas vardas"
+
+#: cryptui.rc:62 ipconfig.rc:41
+msgid "Description"
+msgstr "Aprašas"
+
+#: cryptui.rc:63
+msgid "Certificate Properties"
+msgstr "Liudijimo savybės"
+
+#: cryptui.rc:64
+msgid "Please enter an OID in the form 1.2.3.4"
+msgstr "Prašau įveskite organizacijos identifikatorių tokia forma: 1.2.3.4"
+
+#: cryptui.rc:65
+msgid "The OID you entered already exists."
+msgstr "Įvestas organizacijos identifikatorius jau egzistuoja."
+
+#: cryptui.rc:66
+msgid "Select Certificate Store"
+msgstr "Išrinkite liudijimų saugyklą"
+
+#: cryptui.rc:67
+msgid "Please select a certificate store."
+msgstr "Prašau išrinkite liudijimų saugyklą."
+
+#: cryptui.rc:68
+msgid "Certificate Import Wizard"
+msgstr "Liudijimo importo vediklis"
+
+#: cryptui.rc:69
+msgid ""
+"The file contains objects that do not match the given criteria.  Please "
+"select another file."
+msgstr ""
+"Faile yra objektų, kurie neatitinka nustatytų kriterijų. Prašau išrinkite "
+"kitą failą."
+
+#: cryptui.rc:70
+msgid "File to Import"
+msgstr "Importo failas"
+
+#: cryptui.rc:71
+msgid "Specify the file you want to import."
+msgstr "Nurodykite failą importui."
+
+#: cryptui.rc:72 cryptui.rc:95
+msgid "Certificate Store"
+msgstr "Liudijimų saugykla"
+
+#: cryptui.rc:73
+msgid ""
+"Certificate stores are collections of certificates, certificate revocation "
+"lists, and certificate trust lists."
+msgstr ""
+"Liudijimų saugyklos yra liudijimų rinkiniai, atšauktų liudijimų sąrašai ir "
+"patikintų liudijimų sąrašai."
+
+#: cryptui.rc:74
+msgid "X.509 Certificate (*.cer; *.crt)"
+msgstr "X.509 liudijimas (*.cer; *.crt)"
+
+#: cryptui.rc:75
+msgid "Personal Information Exchange (*.pfx; *.p12)"
+msgstr "Asmeninės informacijos mainai (*.pfx; *.p12)"
+
+#: cryptui.rc:76 cryptui.rc:155
+msgid "Certificate Revocation List (*.crl)"
+msgstr "Atšauktų liudijimų sąrašas (*.crl)"
+
+#: cryptui.rc:77 cryptui.rc:156
+msgid "Certificate Trust List (*.stl)"
+msgstr "Patikintų liudijimų sąrašas (*.stl)"
+
+#: cryptui.rc:78
+msgid "Microsoft Serialized Certificate Store (*.sst)"
+msgstr "Išdėstyta serijomis liudijimų saugykla (*.sst)"
+
+#: cryptui.rc:79
+msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
+msgstr "CMS/PKCS #7 pranešimai (*.spc; *.p7b)"
+
+#: cryptui.rc:80
+msgid "All Files (*.*)"
+msgstr "Visi failai (*.*)"
+
+#: cryptui.rc:81
+msgid "Please select a file."
+msgstr "Prašau išrinkite failą."
+
+#: cryptui.rc:82
+msgid "The file format is not recognized.  Please select another file."
+msgstr "Neatpažintas failo formatas. Prašau išrinkite kitą failą."
+
+#: cryptui.rc:83
+msgid "Could not open "
+msgstr "Nepavyko atverti "
+
+#: cryptui.rc:84
+msgid "Determined by the program"
+msgstr "Nustatyta programos"
+
+#: cryptui.rc:85
+msgid "Please select a store"
+msgstr "Prašau išrinkite saugyklą"
+
+#: cryptui.rc:86
+msgid "Certificate Store Selected"
+msgstr "Išrinkta liudijimų saugykla"
+
+#: cryptui.rc:87
+msgid "Automatically determined by the program"
+msgstr "Automatiškai nustatyta programos"
+
+#: cryptui.rc:88
+msgid "File"
+msgstr "Failas"
+
+#: cryptui.rc:89
+msgid "Content"
+msgstr "Turinys"
+
+#: cryptui.rc:91
+msgid "Certificate Revocation List"
+msgstr "Atšauktų liudijimų sąrašas"
+
+#: cryptui.rc:93
+msgid "CMS/PKCS #7 Message"
+msgstr "CMS/PKCS #7 pranešimas"
+
+#: cryptui.rc:94
+msgid "Personal Information Exchange"
+msgstr "Asmeninės informacijos mainai"
+
+#: cryptui.rc:96
+msgid "The import was successful."
+msgstr "Importas sėkmingas."
+
+#: cryptui.rc:97
+msgid "The import failed."
+msgstr "Importas nepavyko."
+
+#: cryptui.rc:98
+msgid "Arial"
+msgstr "Arial"
+
+#: cryptui.rc:100
+msgid "<Advanced Purposes>"
+msgstr "<papildomos paskirtys>"
+
+#: cryptui.rc:101
+msgid "Issued To"
+msgstr "Kam išduotas"
+
+#: cryptui.rc:102
+msgid "Issued By"
+msgstr "Išdavė"
+
+#: cryptui.rc:103
+msgid "Expiration Date"
+msgstr "Galiojimo data"
+
+#: cryptui.rc:104
+msgid "Friendly Name"
+msgstr "Draugiškas vardas"
+
+#: cryptui.rc:106 cryptui.rc:120
+msgid "<None>"
+msgstr "<jokios>"
+
+#: cryptui.rc:107
+msgid ""
+"You will no longer be able to decrypt messages with this certificate, or "
+"sign messages with it.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"Su šiuo liudijimu jūs daugiau nebegalėsite iššifruoti pranešimų ar "
+"pasirašyti pranešimų.\n"
+"Ar tikrai norite pašalinti šį liudijimą?"
+
+#: cryptui.rc:108
+msgid ""
+"You will no longer be able to decrypt messages with these certificates, or "
+"sign messages with them.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"Su šiuo liudijimu jūs daugiau nebegalėsite iššifruoti pranešimų ar "
+"pasirašyti pranešimų.\n"
+"Ar tikrai norite pašalinti šiuos liudijimus?"
+
+#: cryptui.rc:109
+msgid ""
+"You will no longer be able to encrypt messages with this certificate, or "
+"verify messages signed with it.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"Su šiuo liudijimu jūs daugiau nebegalėsite iššifruoti pranešimų ar "
+"patikrinti pasirašytų pranešimų.\n"
+"Ar tikrai norite pašalinti šį liudijimą?"
+
+#: cryptui.rc:110
+msgid ""
+"You will no longer be able to encrypt messages with these certificates, or "
+"verify messages signed with it.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"Su šiuo liudijimu jūs daugiau nebegalėsite iššifruoti pranešimų ar "
+"patikrinti pasirašytų pranešimų.\n"
+"Ar tikrai norite pašalinti šiuos liudijimus?"
+
+#: cryptui.rc:111
+msgid ""
+"Certificates issued by this certification authority will no longer be "
+"trusted.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"Liudijimais, išduotais šios liudijimo įstaigos, nebebus pasitikima.\n"
+"Ar tikrai norite pašalinti šį liudijimą?"
+
+#: cryptui.rc:112
+msgid ""
+"Certificates issued by these certification authorities will no longer be "
+"trusted.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"Liudijimais, išduotais šių liudijimo įstaigų, nebebus pasitikima.\n"
+"Ar tikrai norite pašalinti šiuos liudijimus?"
+
+#: cryptui.rc:113
+msgid ""
+"Certificates issued by this root certification authority, or any "
+"certification authorities it issued, will no longer be trusted.\n"
+"Are you sure you want to remove this trusted root certificate?"
+msgstr ""
+"Liudijimais, išduotais šios vyriausiosios liudijimo įstaigos, ar bet kurios "
+"jos išduotos liudijimų įstaigos liudijimais, nebebus pasitikima.\n"
+"Ar tikrai norite pašalinti šį patikimą vyriausiąjį liudijimą?"
+
+#: cryptui.rc:114
+msgid ""
+"Certificates issued by these root certification authorities, or any "
+"certification authorities they issued, will no longer be trusted.\n"
+"Are you sure you want to remove these trusted root certificates?"
+msgstr ""
+"Liudijimais, išduotais šių vyriausiųjų liudijimo įstaigų, ar bet kurių jų "
+"išduotų liudijimų įstaigų liudijimais, nebebus pasitikima.\n"
+"Ar tikrai norite pašalinti šiuos patikimus vyriausiuosius liudijimus?"
+
+#: cryptui.rc:115
+msgid ""
+"Software signed by this publisher will no longer be trusted.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"Nebebus pasitikima programine įranga pasirašyta šio leidėjo.\n"
+"Ar tikrai norite pašalinti šį liudijimą?"
+
+#: cryptui.rc:116
+msgid ""
+"Software signed by these publishers will no longer be trusted.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"Nebebus pasitikima programine įranga pasirašyta šių leidėjų.\n"
+"Ar tikrai norite pašalinti šiuos liudijimus?"
+
+#: cryptui.rc:117
+msgid "Are you sure you want to remove this certificate?"
+msgstr "Ar tikrai norite pašalinti šį liudijimą?"
+
+#: cryptui.rc:118
+msgid "Are you sure you want to remove these certificates?"
+msgstr "Ar tikrai norite pašalinti šiuos liudijimus?"
+
+#: cryptui.rc:119
+msgid "Certificates"
+msgstr "Liudijimai"
+
+#: cryptui.rc:121
+msgid "Ensures the identity of a remote computer"
+msgstr "Garantuoja nutolusio kompiuterio tapatumą"
+
+#: cryptui.rc:122
+msgid "Proves your identity to a remote computer"
+msgstr "Įrodo jūsų tapatumą nutolusiam kompiuteriui"
+
+#: cryptui.rc:123
+msgid ""
+"Ensures software came from software publisher\n"
+"Protects software from alteration after publication"
+msgstr ""
+"Garantuoja, kad programinė įranga yra iš šio leidėjo\n"
+"Apsaugo programinę įrangą nuo pakeitimų po išleidimo"
+
+#: cryptui.rc:124
+msgid "Protects e-mail messages"
+msgstr "Apsaugo el. pašto pranešimus"
+
+#: cryptui.rc:125
+msgid "Allows secure communication over the Internet"
+msgstr "Leidžia saugu ryšį internete"
+
+#: cryptui.rc:126
+msgid "Allows data to be signed with the current time"
+msgstr "Leidžia pasirašyti duomenis dabartiniu laiku"
+
+#: cryptui.rc:127
+msgid "Allows you to digitally sign a certificate trust list"
+msgstr "Leidžia skaitmeniškai pasirašyti patikintų liudijimų sąrašą"
+
+#: cryptui.rc:128
+msgid "Allows data on disk to be encrypted"
+msgstr "Leidžia užšifruoti duomenis diske"
+
+#: cryptui.rc:144
+msgid "Private Key Archival"
+msgstr "Privačiojo rakto archyvavimas"
+
+#: cryptui.rc:147
+msgid "Certificate Export Wizard"
+msgstr "Liudijimo eksporto vediklis"
+
+#: cryptui.rc:148
+msgid "Export Format"
+msgstr "Eksporto formatas"
+
+#: cryptui.rc:149
+msgid "Choose the format in which the content will be saved."
+msgstr "Išsirinkite formatą duomenims išsaugoti."
+
+#: cryptui.rc:150
+msgid "Export Filename"
+msgstr "Eksporto failas"
+
+#: cryptui.rc:151
+msgid "Specify the name of the file in which the content will be saved."
+msgstr "Nurodykite failą, kuriame bus išsaugoti duomenys."
+
+#: cryptui.rc:152
+msgid "The specified file already exists.  Do you want to replace it?"
+msgstr "Nurodytas failas egzistuoja. Ar norite jį perrašyti?"
+
+#: cryptui.rc:153
+msgid "DER-Encoded Binary X.509 (*.cer)"
+msgstr "DER-užkoduotas dvejetainis X.509 (*.cer)"
+
+#: cryptui.rc:154
+msgid "Base64-Encoded X.509 (*.cer)"
+msgstr "Base64-užkoduotas X.509 (*.cer)"
+
+#: cryptui.rc:157
+msgid "CMS/PKCS #7 Messages (*.p7b)"
+msgstr "CMS/PKCS #7 pranešimai (*.p7b)"
+
+#: cryptui.rc:158
+msgid "Personal Information Exchange (*.pfx)"
+msgstr "Asmeninės informacijos mainai (*.pfx)"
+
+#: cryptui.rc:159
+msgid "Serialized Certificate Store (*.sst)"
+msgstr "Išdėstyta serijomis liudijimų saugykla (*.sst)"
+
+#: cryptui.rc:160
+msgid "File Format"
+msgstr "Failo formatas"
+
+#: cryptui.rc:161
+msgid "Include all certificates in certificate path"
+msgstr "Apimti visus liudijimus liudijimų kelyje"
+
+#: cryptui.rc:162
+msgid "Export keys"
+msgstr "Eksportuoti raktus"
+
+#: cryptui.rc:165
+msgid "The export was successful."
+msgstr "Eksportas sėkmingas."
+
+#: cryptui.rc:166
+msgid "The export failed."
+msgstr "Eksportas nepavyko."
+
+#: cryptui.rc:167
+msgid "Export Private Key"
+msgstr "Eksportuoti privatųjį raktą"
+
+#: cryptui.rc:168
+msgid ""
+"The certificate contains a private key which may be exported along with the "
+"certificate."
+msgstr ""
+"Liudijimas turi privatųjį raktą, kuris gali būti išeksportuotas kartu su "
+"liudijimu."
+
+#: cryptui.rc:169
+msgid "Enter Password"
+msgstr "Įveskite slaptažodį"
+
+#: cryptui.rc:170
+msgid "You may password-protect a private key."
+msgstr "Jūs galite apsaugoti privatųjį raktą slaptažodžiu."
+
+#: cryptui.rc:171
+msgid "The passwords do not match."
+msgstr "Slaptažodžiai nesutampa."
+
+#: cryptui.rc:172
+msgid "Note: The private key for this certificate could not be opened."
+msgstr "Pastaba: nepavyko atverti privačiojo rakto šiam liudijimui."
+
+#: cryptui.rc:173
+msgid "Note: The private  key for this certificate is not exportable."
+msgstr "Pastaba: šio liudijimo privatusis raktas neišeksportuojamas."
 
 #: devenum.rc:32
 msgid "Default DirectSound"
@@ -3297,10 +3861,6 @@ msgstr "Mišrusis"
 #: ipconfig.rc:40
 msgid "IP routing enabled"
 msgstr "IP maršruto parinkimas įjungtas"
-
-#: ipconfig.rc:41
-msgid "Description"
-msgstr "Aprašas"
 
 #: ipconfig.rc:42
 msgid "Physical address"

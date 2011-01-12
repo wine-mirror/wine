@@ -441,9 +441,14 @@ msgstr "Neste CRL-utgiving"
 msgid "CA Encryption Certificate"
 msgstr "CA-krypteringssertifikat"
 
-#: crypt32.rc:119
+#: crypt32.rc:119 cryptui.rc:145
+#, fuzzy
 msgid "Key Recovery Agent"
-msgstr "Agent for nøkkelgjenoppretting"
+msgstr ""
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Agent for nøkkelgjenoppretting\n"
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Agent for gjenoppretting av nøkler"
 
 #: crypt32.rc:120
 msgid "Certificate Template Information"
@@ -501,9 +506,14 @@ msgstr "Gjenoppliv forespørsel"
 msgid "Query Pending"
 msgstr "Spørring venter"
 
-#: crypt32.rc:134
+#: crypt32.rc:134 cryptui.rc:92
+#, fuzzy
 msgid "Certificate Trust List"
-msgstr "Tillitsliste for sertifikater"
+msgstr ""
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Tillitsliste for sertifikater\n"
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Liste over tiltrodde sertifikater"
 
 #: crypt32.rc:135
 msgid "Archived Key Certificate Hash"
@@ -561,47 +571,92 @@ msgstr "IP-sikkerhetsbruker"
 msgid "Encrypting File System"
 msgstr "Krypterer filsystem"
 
-#: crypt32.rc:149
+#: crypt32.rc:149 cryptui.rc:130
+#, fuzzy
 msgid "Windows Hardware Driver Verification"
-msgstr "Windows maskinvaredriver-godkjenning"
+msgstr ""
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Windows maskinvaredriver-godkjenning\n"
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Kontroll av maskinvaredrivere for Windows"
 
-#: crypt32.rc:150
+#: crypt32.rc:150 cryptui.rc:131
+#, fuzzy
 msgid "Windows System Component Verification"
-msgstr "Windows sytemkomponent-godkjenning"
+msgstr ""
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Windows sytemkomponent-godkjenning\n"
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Kontroll av systemkomponenter for Windows"
 
-#: crypt32.rc:151
+#: crypt32.rc:151 cryptui.rc:132
+#, fuzzy
 msgid "OEM Windows System Component Verification"
-msgstr "OEM Windows systemkomponent-godkjenning"
+msgstr ""
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"OEM Windows systemkomponent-godkjenning\n"
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Kontroll av Windows-komponenter fra PC-leverandører"
 
-#: crypt32.rc:152
+#: crypt32.rc:152 cryptui.rc:133
+#, fuzzy
 msgid "Embedded Windows System Component Verification"
-msgstr "Innebygget Windows systemkomponent-godkjenning"
+msgstr ""
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Innebygget Windows systemkomponent-godkjenning\n"
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Kontroll av innebygde Windows-komponenter"
 
-#: crypt32.rc:153
+#: crypt32.rc:153 cryptui.rc:140
+#, fuzzy
 msgid "Key Pack Licenses"
-msgstr "Nøkkelpakkelisenser"
+msgstr ""
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Nøkkelpakkelisenser\n"
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Lisenser for nøkkelpakker"
 
-#: crypt32.rc:154
+#: crypt32.rc:154 cryptui.rc:141
+#, fuzzy
 msgid "License Server Verification"
-msgstr "Lisenstjener-verifisering"
+msgstr ""
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Lisenstjener-verifisering\n"
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Kontroll av lisenstjener"
 
-#: crypt32.rc:155
+#: crypt32.rc:155 cryptui.rc:143
 msgid "Smart Card Logon"
 msgstr "Smart Card-pålogging"
 
-#: crypt32.rc:156
+#: crypt32.rc:156 cryptui.rc:139
+#, fuzzy
 msgid "Digital Rights"
-msgstr "Digitale rettigheter"
+msgstr ""
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Digitale rettigheter\n"
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Kontroll av opphavsrett"
 
-#: crypt32.rc:157
+#: crypt32.rc:157 cryptui.rc:135
+#, fuzzy
 msgid "Qualified Subordination"
-msgstr "Kvalifisert underordinering"
+msgstr ""
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Kvalifisert underordinering\n"
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Kvalifisert underenhet"
 
-#: crypt32.rc:158
+#: crypt32.rc:158 cryptui.rc:136
+#, fuzzy
 msgid "Key Recovery"
-msgstr "Nøkkelgjenoppretting"
+msgstr ""
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Nøkkelgjenoppretting\n"
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Gjenoppretting av nøkler"
 
-#: crypt32.rc:159
+#: crypt32.rc:159 cryptui.rc:137
 msgid "Document Signing"
 msgstr "Dokumentsignering"
 
@@ -609,29 +664,44 @@ msgstr "Dokumentsignering"
 msgid "IP security IKE intermediate"
 msgstr "IP-sikkerhet IKE viderekommen"
 
-#: crypt32.rc:161
+#: crypt32.rc:161 cryptui.rc:129
 msgid "File Recovery"
 msgstr "Filgjenoppretting"
 
-#: crypt32.rc:162
+#: crypt32.rc:162 cryptui.rc:134
+#, fuzzy
 msgid "Root List Signer"
-msgstr "Rotlistesignerer"
+msgstr ""
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Rotlistesignerer\n"
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Rotsignerer for lister"
 
 #: crypt32.rc:163
 msgid "All application policies"
 msgstr "Alle framgangsmåter for programmer"
 
-#: crypt32.rc:164
+#: crypt32.rc:164 cryptui.rc:146
+#, fuzzy
 msgid "Directory Service Email Replication"
-msgstr "Katalogtjeneste e-postreplikering"
+msgstr ""
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Katalogtjeneste e-postreplikering\n"
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Kopiering av e-post fra katalogtjenester"
 
-#: crypt32.rc:165
+#: crypt32.rc:165 cryptui.rc:142
 msgid "Certificate Request Agent"
 msgstr "Agent for sertifikatforespørsler"
 
-#: crypt32.rc:166
+#: crypt32.rc:166 cryptui.rc:138
+#, fuzzy
 msgid "Lifetime Signing"
-msgstr "Livstidsignering"
+msgstr ""
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Livstidsignering\n"
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"Livstidssignering"
 
 #: crypt32.rc:167
 msgid "All issuance policies"
@@ -817,11 +887,11 @@ msgstr "Ikke tilgjengelig"
 msgid "Meets Criteria="
 msgstr "Møter kriterier="
 
-#: crypt32.rc:222 oleaut32.rc:29 ipconfig.rc:44
+#: crypt32.rc:222 cryptui.rc:163 oleaut32.rc:29 ipconfig.rc:44
 msgid "Yes"
 msgstr "Ja"
 
-#: crypt32.rc:223 oleaut32.rc:30 ipconfig.rc:45
+#: crypt32.rc:223 cryptui.rc:164 oleaut32.rc:30 ipconfig.rc:45
 msgid "No"
 msgstr "Nei"
 
@@ -932,6 +1002,567 @@ msgstr "Serienummer="
 #: cryptdlg.rc:37
 msgid "Notice Text="
 msgstr ""
+
+#: cryptui.rc:27 cryptui.rc:90
+msgid "Certificate"
+msgstr "Sertifikat"
+
+#: cryptui.rc:28
+msgid "Certificate Information"
+msgstr "Sertifikatinformasjon"
+
+#: cryptui.rc:29
+msgid ""
+"This certificate has an invalid signature.  The certificate may have been "
+"altered or corrupted."
+msgstr ""
+"Dette sertifikatet har en ugyldig signatur. Sertifikatet kan ha blitt endret "
+"eller skadet."
+
+#: cryptui.rc:30
+msgid ""
+"This root certificate is not trusted.  To trust it, add it to your system's "
+"trusted root certificate store."
+msgstr ""
+"Dette rotsertifikatet er ikke tiltrodd. Legg det til i systemets "
+"lagringssted for tiltrodde sertifikater hvis du ønsker å stole på det."
+
+#: cryptui.rc:31
+msgid "This certificate could not be validated to a trusted root certificate."
+msgstr "Dette sertifikatet kunne ikke godkjennes med et rotsertifikat."
+
+#: cryptui.rc:32
+msgid "This certificate's issuer could not be found."
+msgstr "Klarte ikke finne sertifikatets utsteder."
+
+#: cryptui.rc:33
+msgid "All the intended purposes of this certificate could not be verified."
+msgstr "Klarte ikke godkjenne alle formålene til dette sertifikatet."
+
+#: cryptui.rc:34
+msgid "This certificate is intended for the following purposes:"
+msgstr "Dette sertifikatet er ment for følgende formål:"
+
+#: cryptui.rc:35
+msgid "Issued to: "
+msgstr "Utstedt til: "
+
+#: cryptui.rc:36
+msgid "Issued by: "
+msgstr "Utstedt av: "
+
+#: cryptui.rc:37
+msgid "Valid from "
+msgstr "Gyldig fra "
+
+#: cryptui.rc:38
+msgid " to "
+msgstr " til "
+
+#: cryptui.rc:39
+msgid "This certificate has an invalid signature."
+msgstr "Dette sertifikatet har en ugyldig signatur."
+
+#: cryptui.rc:40
+msgid "This certificate has expired or is not yet valid."
+msgstr "Dette sertifikatet har utgått eller er ikke gyldig ennå."
+
+#: cryptui.rc:41
+msgid "This certificate's validity period exceeds that of its issuer."
+msgstr "Dette sertifikatets gyldighetsperiode er lenger enn utstederens."
+
+#: cryptui.rc:42
+msgid "This certificate was revoked by its issuer."
+msgstr "Dette sertifikatet ble tilbakekalt av utstederen."
+
+#: cryptui.rc:43
+msgid "This certificate is OK."
+msgstr "Dette sertifikatet er OK."
+
+#: cryptui.rc:44
+msgid "Field"
+msgstr "Felt"
+
+#: cryptui.rc:45
+msgid "Value"
+msgstr "Verdi"
+
+#: cryptui.rc:46 cryptui.rc:99 cryptui.rc:105
+msgid "<All>"
+msgstr "<Alle>"
+
+#: cryptui.rc:47
+msgid "Version 1 Fields Only"
+msgstr "Kun versjon 1 felt"
+
+#: cryptui.rc:48
+msgid "Extensions Only"
+msgstr "Kun utvidelser"
+
+#: cryptui.rc:49
+msgid "Critical Extensions Only"
+msgstr "Kun kritiske utvidelser"
+
+#: cryptui.rc:50
+msgid "Properties Only"
+msgstr "Kun egenskaper"
+
+#: cryptui.rc:51
+msgid "Version"
+msgstr "Versjon"
+
+#: cryptui.rc:52
+msgid "Serial number"
+msgstr "Serienummer"
+
+#: cryptui.rc:53
+msgid "Issuer"
+msgstr "Utsteder"
+
+#: cryptui.rc:54
+msgid "Valid from"
+msgstr "Gyldig fra"
+
+#: cryptui.rc:55
+msgid "Valid to"
+msgstr "Gyldig til"
+
+#: cryptui.rc:56
+msgid "Subject"
+msgstr "Emne"
+
+#: cryptui.rc:57
+msgid "Public key"
+msgstr "Offentlig nøkkel"
+
+#: cryptui.rc:58
+msgid "%s (%d bits)"
+msgstr "%s (%d bits)"
+
+#: cryptui.rc:59
+msgid "SHA1 hash"
+msgstr "SHA1-kode"
+
+#: cryptui.rc:60
+msgid "Enhanced key usage (property)"
+msgstr "Utvidet nøkkelbruk (egenskap)"
+
+#: cryptui.rc:61
+msgid "Friendly name"
+msgstr "Vennlig navn"
+
+#: cryptui.rc:62 ipconfig.rc:41
+msgid "Description"
+msgstr "Beskrivelse"
+
+#: cryptui.rc:63
+msgid "Certificate Properties"
+msgstr "Sertifikategenskaper"
+
+#: cryptui.rc:64
+msgid "Please enter an OID in the form 1.2.3.4"
+msgstr "Angi en OID på formen 1.2.3.4"
+
+#: cryptui.rc:65
+msgid "The OID you entered already exists."
+msgstr "OID'en du oppgav finnes allerede."
+
+#: cryptui.rc:66
+msgid "Select Certificate Store"
+msgstr "Velg sertifikatlager"
+
+#: cryptui.rc:67
+msgid "Please select a certificate store."
+msgstr "Velg et lagringssted for sertifikater."
+
+#: cryptui.rc:68
+msgid "Certificate Import Wizard"
+msgstr "Veiviser for import av sertifikater"
+
+#: cryptui.rc:69
+msgid ""
+"The file contains objects that do not match the given criteria.  Please "
+"select another file."
+msgstr ""
+"Filen inneholder objekter som ikke passer de oppgitte kriteriene. Velg en "
+"annen fil."
+
+#: cryptui.rc:70
+msgid "File to Import"
+msgstr "Fil å importere"
+
+#: cryptui.rc:71
+msgid "Specify the file you want to import."
+msgstr "Velg filen du ønsker å importere."
+
+#: cryptui.rc:72 cryptui.rc:95
+msgid "Certificate Store"
+msgstr "Sertifikatlager"
+
+#: cryptui.rc:73
+msgid ""
+"Certificate stores are collections of certificates, certificate revocation "
+"lists, and certificate trust lists."
+msgstr ""
+"Sertifikatlagre er samlinger av sertifikater, tilbakekallingslister og "
+"lister over tiltrodde sertifikater."
+
+#: cryptui.rc:74
+msgid "X.509 Certificate (*.cer; *.crt)"
+msgstr "X.509-sertifikat (*.cer; *.crt)"
+
+#: cryptui.rc:75
+msgid "Personal Information Exchange (*.pfx; *.p12)"
+msgstr "Personlig informasjonsutveksling (*.pfx; *.p12)"
+
+#: cryptui.rc:76 cryptui.rc:155
+msgid "Certificate Revocation List (*.crl)"
+msgstr "Liste over tilbakekalte sertifikater (*.crl)"
+
+#: cryptui.rc:77 cryptui.rc:156
+msgid "Certificate Trust List (*.stl)"
+msgstr "Liste over tiltrodde sertifikater (*.stl)"
+
+#: cryptui.rc:78
+msgid "Microsoft Serialized Certificate Store (*.sst)"
+msgstr "Microsoft Serialized Certificate Store (*.sst)"
+
+#: cryptui.rc:79
+msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
+msgstr "CMS/PKCS #7 meldinger (*.spc; *.p7b)"
+
+#: cryptui.rc:80
+msgid "All Files (*.*)"
+msgstr "Alle filer (*.*)"
+
+#: cryptui.rc:81
+msgid "Please select a file."
+msgstr "Velg en fil."
+
+#: cryptui.rc:82
+msgid "The file format is not recognized.  Please select another file."
+msgstr "Filformatet ble ikke gjenkjent. Velg en annen fil."
+
+#: cryptui.rc:83
+msgid "Could not open "
+msgstr "Klarte ikke åpne "
+
+#: cryptui.rc:84
+msgid "Determined by the program"
+msgstr "Bestemt av programmet"
+
+#: cryptui.rc:85
+msgid "Please select a store"
+msgstr "Velg en lagringsplass"
+
+#: cryptui.rc:86
+msgid "Certificate Store Selected"
+msgstr "Sertifikatlager valgt"
+
+#: cryptui.rc:87
+msgid "Automatically determined by the program"
+msgstr "Bestemt av proggramet"
+
+#: cryptui.rc:88
+msgid "File"
+msgstr "Fil"
+
+#: cryptui.rc:89
+msgid "Content"
+msgstr "Innhold"
+
+#: cryptui.rc:91
+msgid "Certificate Revocation List"
+msgstr "Liste over tilbakekalte sertifikater"
+
+#: cryptui.rc:93
+msgid "CMS/PKCS #7 Message"
+msgstr "CMS/PKCS #7 meldinger"
+
+#: cryptui.rc:94
+msgid "Personal Information Exchange"
+msgstr "Personlig informasjonsutveksling"
+
+#: cryptui.rc:96
+msgid "The import was successful."
+msgstr "Importeringen var vellykket."
+
+#: cryptui.rc:97
+msgid "The import failed."
+msgstr "Klarte ikke importere."
+
+#: cryptui.rc:98
+msgid "Arial"
+msgstr "Arial"
+
+#: cryptui.rc:100
+msgid "<Advanced Purposes>"
+msgstr "<Avanserte formål>"
+
+#: cryptui.rc:101
+msgid "Issued To"
+msgstr "Utstedt til"
+
+#: cryptui.rc:102
+msgid "Issued By"
+msgstr "Utstedt av"
+
+#: cryptui.rc:103
+msgid "Expiration Date"
+msgstr "Utløpsdato"
+
+#: cryptui.rc:104
+msgid "Friendly Name"
+msgstr "Vennlig navn"
+
+#: cryptui.rc:106 cryptui.rc:120
+msgid "<None>"
+msgstr "<Ingen>"
+
+#: cryptui.rc:107
+msgid ""
+"You will no longer be able to decrypt messages with this certificate, or "
+"sign messages with it.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"Du vil ikke lenger ha mulighet til å dekryptere meldinger med dette "
+"sertifikatet, eller til å signere med det.\n"
+"Er du sikker på at du vil fjerne dette sertifikatet?"
+
+#: cryptui.rc:108
+msgid ""
+"You will no longer be able to decrypt messages with these certificates, or "
+"sign messages with them.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"Du vil ikke lenger ha mulighet til å dekryptere meldinger med disse "
+"sertifikatene, eller til å signere med dem.\n"
+"Er du sikker på at du vil fjerne disse sertifikatene?"
+
+#: cryptui.rc:109
+msgid ""
+"You will no longer be able to encrypt messages with this certificate, or "
+"verify messages signed with it.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"Du vil ikke lenger ha mulighet til å kryptere meldinger med dette "
+"sertifikatet, eller til å kontrollere meldinger som er signert med det.\n"
+"Er du sikker på at du vil fjerne dette sertifikatet?"
+
+#: cryptui.rc:110
+msgid ""
+"You will no longer be able to encrypt messages with these certificates, or "
+"verify messages signed with it.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"Du vil ikke lenger ha mulighet til å kryptere meldinger med disse "
+"sertifikatene, eller til å kontrollere meldinger som er signert med dem.\n"
+"Er du sikker på at du vil fjerne disse sertifikatene?"
+
+#: cryptui.rc:111
+msgid ""
+"Certificates issued by this certification authority will no longer be "
+"trusted.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"Sertifikater utstedt av denne sertifiseringsenheten vil ikke lenger være "
+"tiltrodd.\n"
+"Er du sikker på at du vil fjerne dette sertifikatet?"
+
+#: cryptui.rc:112
+msgid ""
+"Certificates issued by these certification authorities will no longer be "
+"trusted.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"Sertifikater utstedt av disse sertifiseringsenhetene vil ikke lenger være "
+"tiltrodde.\n"
+"Er du sikker på at du vil fjerne disse sertifikatene?"
+
+#: cryptui.rc:113
+msgid ""
+"Certificates issued by this root certification authority, or any "
+"certification authorities it issued, will no longer be trusted.\n"
+"Are you sure you want to remove this trusted root certificate?"
+msgstr ""
+"Sertifikater utstedt av denne rotsertifikatenheten, eller underenheter av "
+"denne, vil ikke lenger være tiltrodd.\n"
+"Er du sikker på at du vil fjerne dette rotsertifikatet?"
+
+#: cryptui.rc:114
+msgid ""
+"Certificates issued by these root certification authorities, or any "
+"certification authorities they issued, will no longer be trusted.\n"
+"Are you sure you want to remove these trusted root certificates?"
+msgstr ""
+"Sertifikater utstedt av disse rotsertifikatenhetene, eller underenheter av "
+"disse, vil ikke lenger være tiltrodde.\n"
+"Er du sikker på at du vil fjerne disse rotsertifikatene?"
+
+#: cryptui.rc:115
+msgid ""
+"Software signed by this publisher will no longer be trusted.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"Programvare signert av denne utgiveren vil ikke lenger være tiltrodd.\n"
+"Er du sikker på at du vil fjerne dette sertifikatet?"
+
+#: cryptui.rc:116
+msgid ""
+"Software signed by these publishers will no longer be trusted.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"Programvare signert av disse utgiverne vil ikke lenger være tiltrodd.\n"
+"Er du sikker på at du vil fjerne disse sertifikatene?"
+
+#: cryptui.rc:117
+msgid "Are you sure you want to remove this certificate?"
+msgstr "Er du sikker på at du vil fjerne dette sertifikatet?"
+
+#: cryptui.rc:118
+msgid "Are you sure you want to remove these certificates?"
+msgstr "Er du sikker på at du vil fjerne disse sertifikatene?"
+
+#: cryptui.rc:119
+msgid "Certificates"
+msgstr "Sertifikater"
+
+#: cryptui.rc:121
+msgid "Ensures the identity of a remote computer"
+msgstr "Kontrollerer identiteten til en ekstern datamaskin"
+
+#: cryptui.rc:122
+msgid "Proves your identity to a remote computer"
+msgstr "Bekrefter din identitet overfor en ekstern datamaskin"
+
+#: cryptui.rc:123
+msgid ""
+"Ensures software came from software publisher\n"
+"Protects software from alteration after publication"
+msgstr ""
+"Forsikrer at programvare kommer fra den originale utgiveren\n"
+"Beskytter programvare mot endringer"
+
+#: cryptui.rc:124
+msgid "Protects e-mail messages"
+msgstr "Beskytter e-postmeldinger"
+
+#: cryptui.rc:125
+msgid "Allows secure communication over the Internet"
+msgstr "Muliggjør sikker kommunikasjon over Internett"
+
+#: cryptui.rc:126
+msgid "Allows data to be signed with the current time"
+msgstr "Gjør det mulig å signere data med klokkeslett"
+
+#: cryptui.rc:127
+msgid "Allows you to digitally sign a certificate trust list"
+msgstr "Gjør det mulig å signere en liste over tiltrodde sertifikater digitalt"
+
+#: cryptui.rc:128
+msgid "Allows data on disk to be encrypted"
+msgstr "Gjør det mulig å kryptere data på disken"
+
+#: cryptui.rc:144
+msgid "Private Key Archival"
+msgstr "Arkivering av private nøkler"
+
+#: cryptui.rc:147
+msgid "Certificate Export Wizard"
+msgstr "Veiviser for eksport av sertifikater"
+
+#: cryptui.rc:148
+msgid "Export Format"
+msgstr "Eksportformat"
+
+#: cryptui.rc:149
+msgid "Choose the format in which the content will be saved."
+msgstr "Velg formatet du vil lagre innholdet i."
+
+#: cryptui.rc:150
+msgid "Export Filename"
+msgstr "Filnavn"
+
+#: cryptui.rc:151
+msgid "Specify the name of the file in which the content will be saved."
+msgstr "Angi navnet på filen som innholdet skal lagres i."
+
+#: cryptui.rc:152
+msgid "The specified file already exists.  Do you want to replace it?"
+msgstr "Filen finnes fra før. Vil du erstatte den?"
+
+#: cryptui.rc:153
+msgid "DER-Encoded Binary X.509 (*.cer)"
+msgstr "DER-kodet binær X.509 (*.cer)"
+
+#: cryptui.rc:154
+msgid "Base64-Encoded X.509 (*.cer)"
+msgstr "Base64-kodet X.509 (*.cer)"
+
+#: cryptui.rc:157
+msgid "CMS/PKCS #7 Messages (*.p7b)"
+msgstr "CMS/PKCS #7 meldinger (*.p7b)"
+
+#: cryptui.rc:158
+msgid "Personal Information Exchange (*.pfx)"
+msgstr "Personlig informasjonsutveksling (*.pfx)"
+
+#: cryptui.rc:159
+msgid "Serialized Certificate Store (*.sst)"
+msgstr "Serialized Certificate Store (*.sst)"
+
+#: cryptui.rc:160
+msgid "File Format"
+msgstr "Filformat"
+
+#: cryptui.rc:161
+msgid "Include all certificates in certificate path"
+msgstr "Ta med alle sertifikater i sertifikatstien"
+
+#: cryptui.rc:162
+msgid "Export keys"
+msgstr "Eksportér nøkler"
+
+#: cryptui.rc:165
+msgid "The export was successful."
+msgstr "Eksporteringen var vellykket."
+
+#: cryptui.rc:166
+msgid "The export failed."
+msgstr "Eksporteringen mislyktes."
+
+#: cryptui.rc:167
+msgid "Export Private Key"
+msgstr "Eksportér privat nøkkel"
+
+#: cryptui.rc:168
+msgid ""
+"The certificate contains a private key which may be exported along with the "
+"certificate."
+msgstr ""
+"Sertifikatet inneholder en privat nøkkel som kan bli eksportert sammen med "
+"sertifikatet."
+
+#: cryptui.rc:169
+msgid "Enter Password"
+msgstr "Angi passord"
+
+#: cryptui.rc:170
+msgid "You may password-protect a private key."
+msgstr "Du kan passordbeskytte en privat nøkkel."
+
+#: cryptui.rc:171
+msgid "The passwords do not match."
+msgstr "Passordene er ikke like."
+
+#: cryptui.rc:172
+msgid "Note: The private key for this certificate could not be opened."
+msgstr "Merk: Klarte ikke åpne den private nøkkelen for dette sertifikatet."
+
+#: cryptui.rc:173
+msgid "Note: The private  key for this certificate is not exportable."
+msgstr ""
+"Merk: Den private nøkkelen for dette sertifikatet kan ikke eksporteres."
 
 #: devenum.rc:32
 msgid "Default DirectSound"
@@ -3277,10 +3908,6 @@ msgstr ""
 
 #: ipconfig.rc:40
 msgid "IP routing enabled"
-msgstr ""
-
-#: ipconfig.rc:41
-msgid "Description"
 msgstr ""
 
 #: ipconfig.rc:42

@@ -446,7 +446,7 @@ msgstr "Наступна публікація CRL"
 msgid "CA Encryption Certificate"
 msgstr "Сертифікат шифрування CA"
 
-#: crypt32.rc:119
+#: crypt32.rc:119 cryptui.rc:145
 msgid "Key Recovery Agent"
 msgstr "Агент відновлення ключів"
 
@@ -506,7 +506,7 @@ msgstr "Відхилити запит"
 msgid "Query Pending"
 msgstr "Очікування запиту"
 
-#: crypt32.rc:134
+#: crypt32.rc:134 cryptui.rc:92
 msgid "Certificate Trust List"
 msgstr "Список довірених сертифікатів"
 
@@ -566,47 +566,47 @@ msgstr "IP security user"
 msgid "Encrypting File System"
 msgstr "Encrypting File System"
 
-#: crypt32.rc:149
+#: crypt32.rc:149 cryptui.rc:130
 msgid "Windows Hardware Driver Verification"
 msgstr "Перевірка драйверів обладнання Windows"
 
-#: crypt32.rc:150
+#: crypt32.rc:150 cryptui.rc:131
 msgid "Windows System Component Verification"
 msgstr "Перевірка системних компонентів Windows"
 
-#: crypt32.rc:151
+#: crypt32.rc:151 cryptui.rc:132
 msgid "OEM Windows System Component Verification"
 msgstr "Перевірка системних компонентів OEM Windows"
 
-#: crypt32.rc:152
+#: crypt32.rc:152 cryptui.rc:133
 msgid "Embedded Windows System Component Verification"
 msgstr "Перевірка системних компонентів Embedded Windows"
 
-#: crypt32.rc:153
+#: crypt32.rc:153 cryptui.rc:140
 msgid "Key Pack Licenses"
 msgstr "Ліцензії пакету ключів"
 
-#: crypt32.rc:154
+#: crypt32.rc:154 cryptui.rc:141
 msgid "License Server Verification"
 msgstr "Перевірка сервера ліцензії"
 
-#: crypt32.rc:155
+#: crypt32.rc:155 cryptui.rc:143
 msgid "Smart Card Logon"
 msgstr "Вхід для смарт-карт"
 
-#: crypt32.rc:156
+#: crypt32.rc:156 cryptui.rc:139
 msgid "Digital Rights"
 msgstr "Цифрові права"
 
-#: crypt32.rc:157
+#: crypt32.rc:157 cryptui.rc:135
 msgid "Qualified Subordination"
 msgstr "Кваліфікована субординація"
 
-#: crypt32.rc:158
+#: crypt32.rc:158 cryptui.rc:136
 msgid "Key Recovery"
 msgstr "Відновлення ключів"
 
-#: crypt32.rc:159
+#: crypt32.rc:159 cryptui.rc:137
 msgid "Document Signing"
 msgstr "Підписання документу"
 
@@ -614,11 +614,11 @@ msgstr "Підписання документу"
 msgid "IP security IKE intermediate"
 msgstr "IP security IKE intermediate"
 
-#: crypt32.rc:161
+#: crypt32.rc:161 cryptui.rc:129
 msgid "File Recovery"
 msgstr "Відновлення файлів"
 
-#: crypt32.rc:162
+#: crypt32.rc:162 cryptui.rc:134
 msgid "Root List Signer"
 msgstr "Особа, що підписала кореневий список"
 
@@ -626,15 +626,15 @@ msgstr "Особа, що підписала кореневий список"
 msgid "All application policies"
 msgstr "Політика всіх додатків"
 
-#: crypt32.rc:164
+#: crypt32.rc:164 cryptui.rc:146
 msgid "Directory Service Email Replication"
 msgstr "Тиражування Email служби каталогів"
 
-#: crypt32.rc:165
+#: crypt32.rc:165 cryptui.rc:142
 msgid "Certificate Request Agent"
 msgstr "Агент запиту сертифікату"
 
-#: crypt32.rc:166
+#: crypt32.rc:166 cryptui.rc:138
 msgid "Lifetime Signing"
 msgstr "Підписання на час життя"
 
@@ -822,11 +822,11 @@ msgstr "Недоступно"
 msgid "Meets Criteria="
 msgstr "Відповідає критеріям="
 
-#: crypt32.rc:222 oleaut32.rc:29 ipconfig.rc:44
+#: crypt32.rc:222 cryptui.rc:163 oleaut32.rc:29 ipconfig.rc:44
 msgid "Yes"
 msgstr "Так"
 
-#: crypt32.rc:223 oleaut32.rc:30 ipconfig.rc:45
+#: crypt32.rc:223 cryptui.rc:164 oleaut32.rc:30 ipconfig.rc:45
 msgid "No"
 msgstr "Ні"
 
@@ -937,6 +937,566 @@ msgstr "Серійний номер сертифікату="
 #: cryptdlg.rc:37
 msgid "Notice Text="
 msgstr ""
+
+#: cryptui.rc:27 cryptui.rc:90
+msgid "Certificate"
+msgstr "Сертифікат"
+
+#: cryptui.rc:28
+msgid "Certificate Information"
+msgstr "Інформація про сертифікат"
+
+#: cryptui.rc:29
+msgid ""
+"This certificate has an invalid signature.  The certificate may have been "
+"altered or corrupted."
+msgstr ""
+"Цей сертифікат має недійсний підпис.  Сертифікат може бути змінений або "
+"пошкоджений."
+
+#: cryptui.rc:30
+msgid ""
+"This root certificate is not trusted.  To trust it, add it to your system's "
+"trusted root certificate store."
+msgstr ""
+"Цей кореневий сертифікат не є довіреним.  Щоб довіряти йому, додайте його в "
+"системне сховище довірених кореневих сертифікатів."
+
+#: cryptui.rc:31
+msgid "This certificate could not be validated to a trusted root certificate."
+msgstr ""
+"Даний сертифікат не може бути затверджений як довірений кореневий сертифікат."
+
+#: cryptui.rc:32
+msgid "This certificate's issuer could not be found."
+msgstr "Не знайдено видавця даного сертифікату."
+
+#: cryptui.rc:33
+msgid "All the intended purposes of this certificate could not be verified."
+msgstr "Неможливо перевірити всі цілі призначення цього сертифікату."
+
+#: cryptui.rc:34
+msgid "This certificate is intended for the following purposes:"
+msgstr "Цей сертифікат призначений для наступних цілей:"
+
+#: cryptui.rc:35
+msgid "Issued to: "
+msgstr "Кому видано: "
+
+#: cryptui.rc:36
+msgid "Issued by: "
+msgstr "Ким видано: "
+
+#: cryptui.rc:37
+msgid "Valid from "
+msgstr "Дійсний з "
+
+#: cryptui.rc:38
+msgid " to "
+msgstr " до "
+
+#: cryptui.rc:39
+msgid "This certificate has an invalid signature."
+msgstr "Цей сертифікат має недійсний підпис."
+
+#: cryptui.rc:40
+msgid "This certificate has expired or is not yet valid."
+msgstr "Час дії цього сертифікату закінчився або ще не розпочався."
+
+#: cryptui.rc:41
+msgid "This certificate's validity period exceeds that of its issuer."
+msgstr "Термін дії цього сертифікату перевищує вказаний його видавцем."
+
+#: cryptui.rc:42
+msgid "This certificate was revoked by its issuer."
+msgstr "Цей сертифікат був анульований його видавцем."
+
+#: cryptui.rc:43
+msgid "This certificate is OK."
+msgstr "Цей сертифікат дійсний."
+
+#: cryptui.rc:44
+msgid "Field"
+msgstr "Поле"
+
+#: cryptui.rc:45
+msgid "Value"
+msgstr "Значення"
+
+#: cryptui.rc:46 cryptui.rc:99 cryptui.rc:105
+msgid "<All>"
+msgstr "<Всі>"
+
+#: cryptui.rc:47
+msgid "Version 1 Fields Only"
+msgstr "Лише поля версії 1"
+
+#: cryptui.rc:48
+msgid "Extensions Only"
+msgstr "Лише розширення"
+
+#: cryptui.rc:49
+msgid "Critical Extensions Only"
+msgstr "Лише критичні розширення"
+
+#: cryptui.rc:50
+msgid "Properties Only"
+msgstr "Лише властивості"
+
+#: cryptui.rc:51
+msgid "Version"
+msgstr "Версія"
+
+#: cryptui.rc:52
+msgid "Serial number"
+msgstr "Серійний номер"
+
+#: cryptui.rc:53
+msgid "Issuer"
+msgstr "Видавець"
+
+#: cryptui.rc:54
+msgid "Valid from"
+msgstr "Дійсний з"
+
+#: cryptui.rc:55
+msgid "Valid to"
+msgstr "Дійсний до"
+
+#: cryptui.rc:56
+msgid "Subject"
+msgstr "Предмет"
+
+#: cryptui.rc:57
+msgid "Public key"
+msgstr "Публічний ключ"
+
+#: cryptui.rc:58
+msgid "%s (%d bits)"
+msgstr "%s (%d bits)"
+
+#: cryptui.rc:59
+msgid "SHA1 hash"
+msgstr "SHA1 hash"
+
+#: cryptui.rc:60
+msgid "Enhanced key usage (property)"
+msgstr "Розширене використання ключа (властивість)"
+
+#: cryptui.rc:61
+msgid "Friendly name"
+msgstr "Дружня назва"
+
+#: cryptui.rc:62 ipconfig.rc:41
+msgid "Description"
+msgstr "Опис"
+
+#: cryptui.rc:63
+msgid "Certificate Properties"
+msgstr "Властивості сертифікату"
+
+#: cryptui.rc:64
+msgid "Please enter an OID in the form 1.2.3.4"
+msgstr "Будь-ласка, введіть OID в формі 1.2.3.4"
+
+#: cryptui.rc:65
+msgid "The OID you entered already exists."
+msgstr "OID, який ви ввели, вже існує."
+
+#: cryptui.rc:66
+msgid "Select Certificate Store"
+msgstr "Вибір сховища сертифікатів"
+
+#: cryptui.rc:67
+msgid "Please select a certificate store."
+msgstr "Будь-ласка, виберіть сховище сертифікатів."
+
+#: cryptui.rc:68
+msgid "Certificate Import Wizard"
+msgstr "Майстер імпорту сертифікатів"
+
+#: cryptui.rc:69
+msgid ""
+"The file contains objects that do not match the given criteria.  Please "
+"select another file."
+msgstr ""
+"Файл містить об'єкти, що не відповідають заданим критеріям.  Виберіть інший "
+"файл."
+
+#: cryptui.rc:70
+msgid "File to Import"
+msgstr "Файл для імпорту"
+
+#: cryptui.rc:71
+msgid "Specify the file you want to import."
+msgstr "Виберіть файл, який треба імпортувати."
+
+#: cryptui.rc:72 cryptui.rc:95
+msgid "Certificate Store"
+msgstr "Сховище сертифікатів"
+
+#: cryptui.rc:73
+msgid ""
+"Certificate stores are collections of certificates, certificate revocation "
+"lists, and certificate trust lists."
+msgstr ""
+"Сховища сертифікатів це колекції сертифікатів, списки анульованих "
+"сертифікатів, та списки довірених сертифікатів."
+
+#: cryptui.rc:74
+msgid "X.509 Certificate (*.cer; *.crt)"
+msgstr "Сертифікат X.509 (*.cer; *.crt)"
+
+#: cryptui.rc:75
+msgid "Personal Information Exchange (*.pfx; *.p12)"
+msgstr "Обмін особистою інформацією (*.pfx; *.p12)"
+
+#: cryptui.rc:76 cryptui.rc:155
+msgid "Certificate Revocation List (*.crl)"
+msgstr "Список анульованих сертифікатів (*.crl)"
+
+#: cryptui.rc:77 cryptui.rc:156
+msgid "Certificate Trust List (*.stl)"
+msgstr "Список довірених сертифікатів (*.stl)"
+
+#: cryptui.rc:78
+msgid "Microsoft Serialized Certificate Store (*.sst)"
+msgstr "Сховище серійних сертифікатів Microsoft (*.sst)"
+
+#: cryptui.rc:79
+msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
+msgstr "Повідомлення CMS/PKCS #7 (*.spc; *.p7b)"
+
+#: cryptui.rc:80
+msgid "All Files (*.*)"
+msgstr "Всі файли (*.*)"
+
+#: cryptui.rc:81
+msgid "Please select a file."
+msgstr "Виберіть файл."
+
+#: cryptui.rc:82
+msgid "The file format is not recognized.  Please select another file."
+msgstr "Формат файлу не розпізнаний.  Виберіть інший файл."
+
+#: cryptui.rc:83
+msgid "Could not open "
+msgstr "Неможливо відкрити "
+
+#: cryptui.rc:84
+msgid "Determined by the program"
+msgstr "Визначено програмою"
+
+#: cryptui.rc:85
+msgid "Please select a store"
+msgstr "Виберіть сховище"
+
+#: cryptui.rc:86
+msgid "Certificate Store Selected"
+msgstr "Сховище сертифікатів вибране"
+
+#: cryptui.rc:87
+msgid "Automatically determined by the program"
+msgstr "Автоматично визначено програмою"
+
+#: cryptui.rc:88
+msgid "File"
+msgstr "Файл"
+
+#: cryptui.rc:89
+msgid "Content"
+msgstr "Вміст"
+
+#: cryptui.rc:91
+msgid "Certificate Revocation List"
+msgstr "Список анульованих сертифікатів"
+
+#: cryptui.rc:93
+msgid "CMS/PKCS #7 Message"
+msgstr "Повідомлення CMS/PKCS #7"
+
+#: cryptui.rc:94
+msgid "Personal Information Exchange"
+msgstr "Обмін особистою інформацією"
+
+#: cryptui.rc:96
+msgid "The import was successful."
+msgstr "Імпорт завершено успішно."
+
+#: cryptui.rc:97
+msgid "The import failed."
+msgstr "Імпорт не вдався."
+
+#: cryptui.rc:98
+msgid "Arial"
+msgstr "Arial"
+
+#: cryptui.rc:100
+msgid "<Advanced Purposes>"
+msgstr "<Розширені цілі>"
+
+#: cryptui.rc:101
+msgid "Issued To"
+msgstr "Кому видано"
+
+#: cryptui.rc:102
+msgid "Issued By"
+msgstr "Ким видано"
+
+#: cryptui.rc:103
+msgid "Expiration Date"
+msgstr "Дата закінчення дії"
+
+#: cryptui.rc:104
+msgid "Friendly Name"
+msgstr "Дружня назва"
+
+#: cryptui.rc:106 cryptui.rc:120
+msgid "<None>"
+msgstr "<Немає>"
+
+#: cryptui.rc:107
+msgid ""
+"You will no longer be able to decrypt messages with this certificate, or "
+"sign messages with it.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"Ви більше не зможете розшифровувати чи підписувати повідомлення цим "
+"сертифікатом.\n"
+"Ви дійсно хочете видалити цей сертифікат?"
+
+#: cryptui.rc:108
+msgid ""
+"You will no longer be able to decrypt messages with these certificates, or "
+"sign messages with them.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"Ви більше не зможете розшифровувати чи підписувати повідомлення цими "
+"сертифікатами.\n"
+"Ви дійсно хочете видалити ці сертифікати?"
+
+#: cryptui.rc:109
+msgid ""
+"You will no longer be able to encrypt messages with this certificate, or "
+"verify messages signed with it.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"Ви більше не зможете зашифровувати чи перевіряти повідомлення цим "
+"сертифікатом.\n"
+"Ви дійсно хочете видалити цей сертифікат?"
+
+#: cryptui.rc:110
+msgid ""
+"You will no longer be able to encrypt messages with these certificates, or "
+"verify messages signed with it.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"Ви більше не зможете зашифровувати чи перевіряти повідомлення цими "
+"сертифікатами.\n"
+"Ви дійсно хочете видалити ці сертифікати?"
+
+#: cryptui.rc:111
+msgid ""
+"Certificates issued by this certification authority will no longer be "
+"trusted.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"Сертифікати, видані цим органом сертифікації, втратять довіру.\n"
+"Ви дійсно хочете видалити цей сертифікат?"
+
+#: cryptui.rc:112
+msgid ""
+"Certificates issued by these certification authorities will no longer be "
+"trusted.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"Сертифікати, видані цими органами сертифікації, втратять довіру.\n"
+"Ви дійсно хочете видалити ці сертифікати?"
+
+#: cryptui.rc:113
+msgid ""
+"Certificates issued by this root certification authority, or any "
+"certification authorities it issued, will no longer be trusted.\n"
+"Are you sure you want to remove this trusted root certificate?"
+msgstr ""
+"Сертифікати, видані цим органом кореневої сертифікації, чи іншим органом "
+"сертифікації, який їх видав, втратять довіру.\n"
+"Ви дійсно хочете видалити цей довірений кореневий сертифікат?"
+
+#: cryptui.rc:114
+msgid ""
+"Certificates issued by these root certification authorities, or any "
+"certification authorities they issued, will no longer be trusted.\n"
+"Are you sure you want to remove these trusted root certificates?"
+msgstr ""
+"Сертифікати, видані цими органами кореневої сертифікації, чи іншими органами "
+"сертифікації, які їх видали, втратять довіру.\n"
+"Ви дійсно хочете видалити ці довірені кореневі сертифікати?"
+
+#: cryptui.rc:115
+msgid ""
+"Software signed by this publisher will no longer be trusted.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"ПЗ, підписане цим видавцем втратить довіру.\n"
+"Ви дійсно хочете видалити цей сертифікат?"
+
+#: cryptui.rc:116
+msgid ""
+"Software signed by these publishers will no longer be trusted.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"ПЗ, підписане цими видавцями втратить довіру.\n"
+"Ви дійсно хочете видалити ці сертифікати?"
+
+#: cryptui.rc:117
+msgid "Are you sure you want to remove this certificate?"
+msgstr "Ви дійсно хочете видалити цей сертифікат?"
+
+#: cryptui.rc:118
+msgid "Are you sure you want to remove these certificates?"
+msgstr "Ви дійсно хочете видалити ці сертифікати?"
+
+#: cryptui.rc:119
+msgid "Certificates"
+msgstr "Сертифікати"
+
+#: cryptui.rc:121
+msgid "Ensures the identity of a remote computer"
+msgstr "Забезпечує ідентифікацію віддаленого комп'ютера"
+
+#: cryptui.rc:122
+msgid "Proves your identity to a remote computer"
+msgstr "Забезпечує ваше виявлення на віддаленому комп'ютері"
+
+#: cryptui.rc:123
+msgid ""
+"Ensures software came from software publisher\n"
+"Protects software from alteration after publication"
+msgstr ""
+"Гарантує, що програмне забезпечення прийшло від\n"
+" видавця ПЗ.Захищає ПЗ від змін після публікації"
+
+#: cryptui.rc:124
+msgid "Protects e-mail messages"
+msgstr "Захищає повідомлення e-mail"
+
+#: cryptui.rc:125
+msgid "Allows secure communication over the Internet"
+msgstr "Забезпечує безпечний зв'язок через Інтернет"
+
+#: cryptui.rc:126
+msgid "Allows data to be signed with the current time"
+msgstr "Дозволяє підписати дані поточним часом"
+
+#: cryptui.rc:127
+msgid "Allows you to digitally sign a certificate trust list"
+msgstr "Дозвіл на цифровий підпис списку довірених сертифікатів"
+
+#: cryptui.rc:128
+msgid "Allows data on disk to be encrypted"
+msgstr "Дозволяє шифрувати дані на диску"
+
+#: cryptui.rc:144
+msgid "Private Key Archival"
+msgstr "Архівний приватний ключ"
+
+#: cryptui.rc:147
+msgid "Certificate Export Wizard"
+msgstr "Майстер експорту сертифікатів"
+
+#: cryptui.rc:148
+msgid "Export Format"
+msgstr "Формат експорту"
+
+#: cryptui.rc:149
+msgid "Choose the format in which the content will be saved."
+msgstr "Виберіть формат, в якому буде збережено вміст."
+
+#: cryptui.rc:150
+msgid "Export Filename"
+msgstr "Назва експортованого файлу"
+
+#: cryptui.rc:151
+msgid "Specify the name of the file in which the content will be saved."
+msgstr "Вкажіть ім'я файлу, в якому буде збережений вміст."
+
+#: cryptui.rc:152
+msgid "The specified file already exists.  Do you want to replace it?"
+msgstr "Вказаний файл вже існує.  Ви хочете його замінити?"
+
+#: cryptui.rc:153
+msgid "DER-Encoded Binary X.509 (*.cer)"
+msgstr "DER-Encoded Binary X.509 (*.cer)"
+
+#: cryptui.rc:154
+msgid "Base64-Encoded X.509 (*.cer)"
+msgstr "Base64-Encoded X.509 (*.cer)"
+
+#: cryptui.rc:157
+msgid "CMS/PKCS #7 Messages (*.p7b)"
+msgstr "Повідомлення CMS/PKCS #7 (*.p7b)"
+
+#: cryptui.rc:158
+msgid "Personal Information Exchange (*.pfx)"
+msgstr "Обмін особистою інформацією (*.pfx)"
+
+#: cryptui.rc:159
+msgid "Serialized Certificate Store (*.sst)"
+msgstr "Сховище серійних сертифікатів (*.sst)"
+
+#: cryptui.rc:160
+msgid "File Format"
+msgstr "Формат файлу"
+
+#: cryptui.rc:161
+msgid "Include all certificates in certificate path"
+msgstr "Включити всі сертифікати за вказаним шляхом"
+
+#: cryptui.rc:162
+msgid "Export keys"
+msgstr "Експортовані ключі"
+
+#: cryptui.rc:165
+msgid "The export was successful."
+msgstr "Експорт завершено успішно."
+
+#: cryptui.rc:166
+msgid "The export failed."
+msgstr "Експорт не вдався."
+
+#: cryptui.rc:167
+msgid "Export Private Key"
+msgstr "Експорт приватного ключа"
+
+#: cryptui.rc:168
+msgid ""
+"The certificate contains a private key which may be exported along with the "
+"certificate."
+msgstr ""
+"Сертифікат містить приватний ключ, який може бути експортований разом з "
+"сертифікатом."
+
+#: cryptui.rc:169
+msgid "Enter Password"
+msgstr "Введіть пароль"
+
+#: cryptui.rc:170
+msgid "You may password-protect a private key."
+msgstr "Ви можете захистити паролем привантий ключ."
+
+#: cryptui.rc:171
+msgid "The passwords do not match."
+msgstr "Паролі не співпадають."
+
+#: cryptui.rc:172
+msgid "Note: The private key for this certificate could not be opened."
+msgstr "Увага: Приватний ключ для цього сертифікату не може бути відкритий."
+
+#: cryptui.rc:173
+msgid "Note: The private  key for this certificate is not exportable."
+msgstr ""
+"Увага: Приватний ключ для цього сертифікату не може бути експортований."
 
 #: devenum.rc:32
 msgid "Default DirectSound"
@@ -3288,10 +3848,6 @@ msgstr "Гібрид"
 #: ipconfig.rc:40
 msgid "IP routing enabled"
 msgstr "IP-маршрутизація включена"
-
-#: ipconfig.rc:41
-msgid "Description"
-msgstr "Опис"
 
 #: ipconfig.rc:42
 msgid "Physical address"

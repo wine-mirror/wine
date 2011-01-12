@@ -23,4 +23,6 @@ RC_SRCS = \
 	cryptui_Sv.rc \
 	cryptui_Uk.rc
 
+PO_SRCS = cryptui.rc
+
 @MAKE_DLL_RULES@

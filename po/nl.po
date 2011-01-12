@@ -441,9 +441,14 @@ msgstr "Volgende CRL Publicatie"
 msgid "CA Encryption Certificate"
 msgstr "CA Coderings Certificaat"
 
-#: crypt32.rc:119
+#: crypt32.rc:119 cryptui.rc:145
+#, fuzzy
 msgid "Key Recovery Agent"
-msgstr "Sleutel Herstel Agent"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Sleutel Herstel Agent\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Sleutel herstel agent"
 
 #: crypt32.rc:120
 msgid "Certificate Template Information"
@@ -501,9 +506,14 @@ msgstr "Trek Verzoek In"
 msgid "Query Pending"
 msgstr "Verzoek in behandeling"
 
-#: crypt32.rc:134
+#: crypt32.rc:134 cryptui.rc:92
+#, fuzzy
 msgid "Certificate Trust List"
-msgstr "Certificaat Vertrouwenslijst"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Certificaat Vertrouwenslijst\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Certificaat vertrouwenslijst"
 
 #: crypt32.rc:135
 msgid "Archived Key Certificate Hash"
@@ -561,77 +571,147 @@ msgstr "IP beveiliging gebruiker"
 msgid "Encrypting File System"
 msgstr "Versleutelen Bestand Systeem"
 
-#: crypt32.rc:149
+#: crypt32.rc:149 cryptui.rc:130
 msgid "Windows Hardware Driver Verification"
 msgstr "Windows Hardware Driver Verificatie"
 
-#: crypt32.rc:150
+#: crypt32.rc:150 cryptui.rc:131
+#, fuzzy
 msgid "Windows System Component Verification"
-msgstr "Windows Systeem Component Verificatie"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Windows Systeem Component Verificatie\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Windows System Component Verificatie"
 
-#: crypt32.rc:151
+#: crypt32.rc:151 cryptui.rc:132
 msgid "OEM Windows System Component Verification"
 msgstr "OEM Windows Systeem Component Verificatie"
 
-#: crypt32.rc:152
+#: crypt32.rc:152 cryptui.rc:133
+#, fuzzy
 msgid "Embedded Windows System Component Verification"
-msgstr "Ingebed Windows Systeem Componenten Verificatie"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Ingebed Windows Systeem Componenten Verificatie\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Ingebed Windows Systeem Component Verificatie"
 
-#: crypt32.rc:153
+#: crypt32.rc:153 cryptui.rc:140
+#, fuzzy
 msgid "Key Pack Licenses"
-msgstr "Sleutel Verzameling Licenties"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Sleutel Verzameling Licenties\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Sleutelbos licenties"
 
-#: crypt32.rc:154
+#: crypt32.rc:154 cryptui.rc:141
+#, fuzzy
 msgid "License Server Verification"
-msgstr "Licentie Server Verificatie"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Licentie Server Verificatie\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Licentieserver verificatie"
 
-#: crypt32.rc:155
+#: crypt32.rc:155 cryptui.rc:143
+#, fuzzy
 msgid "Smart Card Logon"
-msgstr "Smart Card Aanmelden"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Smart Card Aanmelden\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Smartcard aanloggen"
 
-#: crypt32.rc:156
+#: crypt32.rc:156 cryptui.rc:139
+#, fuzzy
 msgid "Digital Rights"
-msgstr "Digitale Rechten"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Digitale Rechten\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Digitale rechten"
 
-#: crypt32.rc:157
+#: crypt32.rc:157 cryptui.rc:135
+#, fuzzy
 msgid "Qualified Subordination"
-msgstr "Gekwalificeerde Ondergeschiktheid"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Gekwalificeerde Ondergeschiktheid\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Gekwalificeerde ondergeschiktheid"
 
-#: crypt32.rc:158
+#: crypt32.rc:158 cryptui.rc:136
+#, fuzzy
 msgid "Key Recovery"
-msgstr "Sleutel Herstellen"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Sleutel Herstellen\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Sleutel herstellen"
 
-#: crypt32.rc:159
+#: crypt32.rc:159 cryptui.rc:137
+#, fuzzy
 msgid "Document Signing"
-msgstr "Document Ondertekenen"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Document Ondertekenen\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Document ondertekening"
 
 #: crypt32.rc:160
 msgid "IP security IKE intermediate"
 msgstr "IP beveiliging IKE tussenpersoon"
 
-#: crypt32.rc:161
+#: crypt32.rc:161 cryptui.rc:129
+#, fuzzy
 msgid "File Recovery"
-msgstr "Bestand Herstellen"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Bestand Herstellen\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Bestandsherstel"
 
-#: crypt32.rc:162
+#: crypt32.rc:162 cryptui.rc:134
+#, fuzzy
 msgid "Root List Signer"
-msgstr "Basis Lijst Ondertekenaar"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Basis Lijst Ondertekenaar\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Basislijst Ondertekenaar"
 
 #: crypt32.rc:163
 msgid "All application policies"
 msgstr "Alle applicaties beleid"
 
-#: crypt32.rc:164
+#: crypt32.rc:164 cryptui.rc:146
+#, fuzzy
 msgid "Directory Service Email Replication"
-msgstr "Directory Service Email Replicatie"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Directory Service Email Replicatie\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Directory service email replicatie"
 
-#: crypt32.rc:165
+#: crypt32.rc:165 cryptui.rc:142
+#, fuzzy
 msgid "Certificate Request Agent"
-msgstr "Certificaat Verzoek Agent"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Certificaat Verzoek Agent\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Certificaatverzoek agent"
 
-#: crypt32.rc:166
+#: crypt32.rc:166 cryptui.rc:138
+#, fuzzy
 msgid "Lifetime Signing"
-msgstr "Levensduur Ondertekenen"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Levensduur Ondertekenen\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Levenslang ondertekenen"
 
 #: crypt32.rc:167
 msgid "All issuance policies"
@@ -817,11 +897,11 @@ msgstr "Niet beschikbaar"
 msgid "Meets Criteria="
 msgstr "Past bij criteria="
 
-#: crypt32.rc:222 oleaut32.rc:29 ipconfig.rc:44
+#: crypt32.rc:222 cryptui.rc:163 oleaut32.rc:29 ipconfig.rc:44
 msgid "Yes"
 msgstr "Ja"
 
-#: crypt32.rc:223 oleaut32.rc:30 ipconfig.rc:45
+#: crypt32.rc:223 cryptui.rc:164 oleaut32.rc:30 ipconfig.rc:45
 msgid "No"
 msgstr "Nee"
 
@@ -932,6 +1012,574 @@ msgstr "Certificaat serienummer="
 #: cryptdlg.rc:37
 msgid "Notice Text="
 msgstr ""
+
+#: cryptui.rc:27 cryptui.rc:90
+msgid "Certificate"
+msgstr "Certificaat"
+
+#: cryptui.rc:28
+msgid "Certificate Information"
+msgstr "Certificaat informatie"
+
+#: cryptui.rc:29
+msgid ""
+"This certificate has an invalid signature.  The certificate may have been "
+"altered or corrupted."
+msgstr ""
+"Dit certificaat heeft een foutieve handtekening. Het certificaat kan "
+"gewijzigd of corrupt zijn."
+
+#: cryptui.rc:30
+msgid ""
+"This root certificate is not trusted.  To trust it, add it to your system's "
+"trusted root certificate store."
+msgstr ""
+"Dit basis certificaat wordt niet vertrouwd. Om het te vertrouwen, voeg het "
+"toe aan uw systeem's vertrouwde basis certificatenopslag."
+
+#: cryptui.rc:31
+msgid "This certificate could not be validated to a trusted root certificate."
+msgstr ""
+"Dit certificaat kon niet worden getraceerd naar een vertrouwd basis "
+"certificaat."
+
+#: cryptui.rc:32
+msgid "This certificate's issuer could not be found."
+msgstr "De uitgever van dit certificaat kon niet gevonden worden."
+
+#: cryptui.rc:33
+msgid "All the intended purposes of this certificate could not be verified."
+msgstr "De doeleinden voor dit certificaat konden niet geverifieerd worden."
+
+#: cryptui.rc:34
+msgid "This certificate is intended for the following purposes:"
+msgstr "Dit certificaat is bedoeld voor de volgende doeleinden:"
+
+#: cryptui.rc:35
+msgid "Issued to: "
+msgstr "Verstrekt aan: "
+
+#: cryptui.rc:36
+msgid "Issued by: "
+msgstr "Uitgegeven door: "
+
+#: cryptui.rc:37
+msgid "Valid from "
+msgstr "geldig vanaf "
+
+#: cryptui.rc:38
+msgid " to "
+msgstr " tot "
+
+#: cryptui.rc:39
+msgid "This certificate has an invalid signature."
+msgstr "Dit certificaat heeft een foutieve handtekening."
+
+#: cryptui.rc:40
+msgid "This certificate has expired or is not yet valid."
+msgstr "Dit certificaat is verlopen of is nog niet geldig."
+
+#: cryptui.rc:41
+msgid "This certificate's validity period exceeds that of its issuer."
+msgstr ""
+"De geldigheidsperiode van dit certificaat is groter dan die van zijn "
+"uitgever."
+
+#: cryptui.rc:42
+msgid "This certificate was revoked by its issuer."
+msgstr "Dit certificaat was teruggeroepen door de uitgever."
+
+#: cryptui.rc:43
+msgid "This certificate is OK."
+msgstr "Dit certificaat is OK."
+
+#: cryptui.rc:44
+msgid "Field"
+msgstr "Veld"
+
+#: cryptui.rc:45
+msgid "Value"
+msgstr "Waarde"
+
+#: cryptui.rc:46 cryptui.rc:99 cryptui.rc:105
+msgid "<All>"
+msgstr "<Alle>"
+
+#: cryptui.rc:47
+msgid "Version 1 Fields Only"
+msgstr "Alleen versie 1 velden"
+
+#: cryptui.rc:48
+msgid "Extensions Only"
+msgstr "Alleen extensies"
+
+#: cryptui.rc:49
+msgid "Critical Extensions Only"
+msgstr "Alleen kritieke extensies"
+
+#: cryptui.rc:50
+msgid "Properties Only"
+msgstr "Alleen eigenschappen"
+
+#: cryptui.rc:51
+msgid "Version"
+msgstr "Versie"
+
+#: cryptui.rc:52
+msgid "Serial number"
+msgstr "Serienummer"
+
+#: cryptui.rc:53
+msgid "Issuer"
+msgstr "Uitgever"
+
+#: cryptui.rc:54
+msgid "Valid from"
+msgstr "Geldig vanaf"
+
+#: cryptui.rc:55
+msgid "Valid to"
+msgstr "Geldig tot"
+
+#: cryptui.rc:56
+msgid "Subject"
+msgstr "Onderwerp"
+
+#: cryptui.rc:57
+msgid "Public key"
+msgstr "Publieke sleutel"
+
+#: cryptui.rc:58
+msgid "%s (%d bits)"
+msgstr "%s (%d bits)"
+
+#: cryptui.rc:59
+msgid "SHA1 hash"
+msgstr "SHA1 hash"
+
+#: cryptui.rc:60
+msgid "Enhanced key usage (property)"
+msgstr "Uitgebreid sleutel gebruik (eigenschap)"
+
+#: cryptui.rc:61
+msgid "Friendly name"
+msgstr "Naam alias"
+
+#: cryptui.rc:62 ipconfig.rc:41
+msgid "Description"
+msgstr "Beschrijving"
+
+#: cryptui.rc:63
+msgid "Certificate Properties"
+msgstr "Certificaat eigenschappen"
+
+#: cryptui.rc:64
+msgid "Please enter an OID in the form 1.2.3.4"
+msgstr "Geef aub. een OID in in de vorm van 1.2.3.4"
+
+#: cryptui.rc:65
+msgid "The OID you entered already exists."
+msgstr "De ingegeven OID bestaat reeds."
+
+#: cryptui.rc:66
+msgid "Select Certificate Store"
+msgstr "Selecteer certificatenopslag"
+
+#: cryptui.rc:67
+msgid "Please select a certificate store."
+msgstr "Selecteer aub. een certificatenopslag."
+
+#: cryptui.rc:68
+msgid "Certificate Import Wizard"
+msgstr "Certificaat importeerhulp"
+
+#: cryptui.rc:69
+msgid ""
+"The file contains objects that do not match the given criteria.  Please "
+"select another file."
+msgstr ""
+"Het bestand bevat objecten die niet voldoen aan de opgegeven criteria. "
+"Selecteer aub. een ander bestand."
+
+#: cryptui.rc:70
+msgid "File to Import"
+msgstr "Bestand om te importeren"
+
+#: cryptui.rc:71
+msgid "Specify the file you want to import."
+msgstr "Specificeer het bestand dat u wilt importeren."
+
+#: cryptui.rc:72 cryptui.rc:95
+msgid "Certificate Store"
+msgstr "Certificatenopslag"
+
+#: cryptui.rc:73
+msgid ""
+"Certificate stores are collections of certificates, certificate revocation "
+"lists, and certificate trust lists."
+msgstr ""
+"Certificatenopslagen zijn verzamelingen van certificaten, certificaat "
+"terugroeplijsten en certificaat vertrouwenslijsten."
+
+#: cryptui.rc:74
+msgid "X.509 Certificate (*.cer; *.crt)"
+msgstr "X.509 Certificaat (*.cer; *.crt)"
+
+#: cryptui.rc:75
+msgid "Personal Information Exchange (*.pfx; *.p12)"
+msgstr "Persoonlijke informatie uitwisseling (*.pfx; *.p12)"
+
+#: cryptui.rc:76 cryptui.rc:155
+msgid "Certificate Revocation List (*.crl)"
+msgstr "Certificaat terugroeplijst (*.crl)"
+
+#: cryptui.rc:77 cryptui.rc:156
+msgid "Certificate Trust List (*.stl)"
+msgstr "Certificaat vertrouwenslijst (*.stl)"
+
+#: cryptui.rc:78
+msgid "Microsoft Serialized Certificate Store (*.sst)"
+msgstr "Microsoft seriële certificatenopslag (*.sst)"
+
+#: cryptui.rc:79
+msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
+msgstr "CMS/PKCS #7 berichten (*.spc; *.p7b)"
+
+#: cryptui.rc:80
+msgid "All Files (*.*)"
+msgstr "Alle bestanden (*.*)"
+
+#: cryptui.rc:81
+msgid "Please select a file."
+msgstr "Selecteer een bestand."
+
+#: cryptui.rc:82
+msgid "The file format is not recognized.  Please select another file."
+msgstr ""
+"Het bestandsformaat wordt niet herkend. Selecteer aub. een ander bestand."
+
+#: cryptui.rc:83
+msgid "Could not open "
+msgstr "Openen mislukt voor "
+
+#: cryptui.rc:84
+msgid "Determined by the program"
+msgstr "Bepaald door het programma"
+
+#: cryptui.rc:85
+msgid "Please select a store"
+msgstr "Selecteer een opslag"
+
+#: cryptui.rc:86
+msgid "Certificate Store Selected"
+msgstr "Geselecteerde certificatenopslag"
+
+#: cryptui.rc:87
+msgid "Automatically determined by the program"
+msgstr "Automatisch bepaald door het programma"
+
+#: cryptui.rc:88
+msgid "File"
+msgstr "Bestand"
+
+#: cryptui.rc:89
+msgid "Content"
+msgstr "Inhoud"
+
+#: cryptui.rc:91
+msgid "Certificate Revocation List"
+msgstr "Certificaat terugroeplijst"
+
+#: cryptui.rc:93
+msgid "CMS/PKCS #7 Message"
+msgstr "CMS/PKCS #7 bericht"
+
+#: cryptui.rc:94
+msgid "Personal Information Exchange"
+msgstr "Persoonlijke informatie uitwisseling"
+
+#: cryptui.rc:96
+msgid "The import was successful."
+msgstr "Het importeren was succesvol."
+
+#: cryptui.rc:97
+msgid "The import failed."
+msgstr "Het importeren is mislukt."
+
+#: cryptui.rc:98
+msgid "Arial"
+msgstr "Arial"
+
+#: cryptui.rc:100
+msgid "<Advanced Purposes>"
+msgstr "<Geavanceerde doeleinden>"
+
+#: cryptui.rc:101
+msgid "Issued To"
+msgstr "Verstrekt aan"
+
+#: cryptui.rc:102
+msgid "Issued By"
+msgstr "Uitgegeven door"
+
+#: cryptui.rc:103
+msgid "Expiration Date"
+msgstr "Verloop datum"
+
+#: cryptui.rc:104
+msgid "Friendly Name"
+msgstr "Naam alias"
+
+#: cryptui.rc:106 cryptui.rc:120
+msgid "<None>"
+msgstr "<Geen>"
+
+#: cryptui.rc:107
+msgid ""
+"You will no longer be able to decrypt messages with this certificate, or "
+"sign messages with it.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"U kunt niet langer berichten ontcijferen of ondertekenen met dit "
+"certificaat.\n"
+"Weet u zeker dat u dit certificaat wilt verwijderen?"
+
+#: cryptui.rc:108
+msgid ""
+"You will no longer be able to decrypt messages with these certificates, or "
+"sign messages with them.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"U kunt niet langer berichten ontcijferen of ondertekenen met deze "
+"certificaten.\n"
+"Weet u zeker dat u deze certificaten wilt verwijderen?"
+
+#: cryptui.rc:109
+msgid ""
+"You will no longer be able to encrypt messages with this certificate, or "
+"verify messages signed with it.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"U kunt niet langer berichten coderen of verifiëren met dit certificaat.\n"
+"Weet u zeker dat u dit certificaat wilt verwijderen?"
+
+#: cryptui.rc:110
+msgid ""
+"You will no longer be able to encrypt messages with these certificates, or "
+"verify messages signed with it.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"U kunt niet langer berichten coderen of verifiëren met deze certificaten.\n"
+"Weet u zeker dat u deze certificaten wilt verwijderen?"
+
+#: cryptui.rc:111
+msgid ""
+"Certificates issued by this certification authority will no longer be "
+"trusted.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"Certificaten uitgegeven door deze certificaten autoriteit zullen niet meer "
+"vertrouwd worden.\n"
+"Weet u zeker dat u dit certificaat wilt verwijderen?"
+
+#: cryptui.rc:112
+msgid ""
+"Certificates issued by these certification authorities will no longer be "
+"trusted.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"Certificaten uitgegeven door deze certificaten autoriteiten zullen niet meer "
+"vertrouwd worden.\n"
+"Weet u zeker dat u deze certificaten wilt verwijderen?"
+
+#: cryptui.rc:113
+msgid ""
+"Certificates issued by this root certification authority, or any "
+"certification authorities it issued, will no longer be trusted.\n"
+"Are you sure you want to remove this trusted root certificate?"
+msgstr ""
+"Certificaten uitgegeven door deze basic certificaten autoriteit, alsmede "
+"enige certificatie autoriteit die hij verstrekt, zullen niet meer vertrouwd "
+"worden.\n"
+"Weet u zeker dat u dit vertrouwde basic certificaat wilt verwijderen?"
+
+#: cryptui.rc:114
+msgid ""
+"Certificates issued by these root certification authorities, or any "
+"certification authorities they issued, will no longer be trusted.\n"
+"Are you sure you want to remove these trusted root certificates?"
+msgstr ""
+"Certificaten uitgegeven door deze basic certificaten autoriteiten, alsmede "
+"enige certificatie autoriteit die zij verstrekken, zullen niet meer "
+"vertrouwd worden.\n"
+"Weet u zeker dat u deze vertrouwde basic certificaten wilt verwijderen?"
+
+#: cryptui.rc:115
+msgid ""
+"Software signed by this publisher will no longer be trusted.\n"
+"Are you sure you want to remove this certificate?"
+msgstr ""
+"Software ondertekend door deze uitgever zal niet meer vertrouwd worden.\n"
+"Weet u zeker dat u dit certificaat wilt verwijderen?"
+
+#: cryptui.rc:116
+msgid ""
+"Software signed by these publishers will no longer be trusted.\n"
+"Are you sure you want to remove these certificates?"
+msgstr ""
+"Software ondertekend door deze uitgevers zal niet meer vertrouwd worden.\n"
+"Weet u zeker dat u deze certificaten wilt verwijderen?"
+
+#: cryptui.rc:117
+msgid "Are you sure you want to remove this certificate?"
+msgstr "Weet u zeker dat u dit certificaat wilt verwijderen?"
+
+#: cryptui.rc:118
+msgid "Are you sure you want to remove these certificates?"
+msgstr "Weet u zeker dat u deze certificaten wilt verwijderen?"
+
+#: cryptui.rc:119
+msgid "Certificates"
+msgstr "Certificaten"
+
+#: cryptui.rc:121
+msgid "Ensures the identity of a remote computer"
+msgstr "Bewijst de identiteit van een remote computer"
+
+#: cryptui.rc:122
+msgid "Proves your identity to a remote computer"
+msgstr "Bewijst uw identiteit aan een remote computer"
+
+#: cryptui.rc:123
+msgid ""
+"Ensures software came from software publisher\n"
+"Protects software from alteration after publication"
+msgstr ""
+"Bewijst dat de software kwam van de software uitgever\n"
+"Beschermt software tegen wijzigingen na publicatie"
+
+#: cryptui.rc:124
+msgid "Protects e-mail messages"
+msgstr "Beschermt e-mail berichten"
+
+#: cryptui.rc:125
+msgid "Allows secure communication over the Internet"
+msgstr "Staat beveiligde communicatie over het Internet toe"
+
+#: cryptui.rc:126
+msgid "Allows data to be signed with the current time"
+msgstr "Laat data ondertekend worden met de huidige tijd"
+
+#: cryptui.rc:127
+msgid "Allows you to digitally sign a certificate trust list"
+msgstr "Laat u een certificaat vertrouwenslijst digitaal ondertekenen"
+
+#: cryptui.rc:128
+msgid "Allows data on disk to be encrypted"
+msgstr "Laat data op de disk gecodeerd worden"
+
+#: cryptui.rc:144
+msgid "Private Key Archival"
+msgstr "Persoonlijke sleutel archiefbescheiden"
+
+#: cryptui.rc:147
+msgid "Certificate Export Wizard"
+msgstr "Certificaat Exporteerhulp"
+
+#: cryptui.rc:148
+msgid "Export Format"
+msgstr "Export formaat"
+
+#: cryptui.rc:149
+msgid "Choose the format in which the content will be saved."
+msgstr "Selecteer het formaat waarin de inhoud zal worden opgeslagen."
+
+#: cryptui.rc:150
+msgid "Export Filename"
+msgstr "Exporteer bestandsnaam"
+
+#: cryptui.rc:151
+msgid "Specify the name of the file in which the content will be saved."
+msgstr "Geef de naam van het bestand waarin de inhoud zal worden opgeslagen."
+
+#: cryptui.rc:152
+msgid "The specified file already exists.  Do you want to replace it?"
+msgstr "Het gekozen bestand bestaat reeds. Wilt u het overschrijven?"
+
+#: cryptui.rc:153
+msgid "DER-Encoded Binary X.509 (*.cer)"
+msgstr "DER-Encoded Binary X.509 (*.cer)"
+
+#: cryptui.rc:154
+msgid "Base64-Encoded X.509 (*.cer)"
+msgstr "Base64-geëncodeerd X.509 (*.cer)"
+
+#: cryptui.rc:157
+msgid "CMS/PKCS #7 Messages (*.p7b)"
+msgstr "CMS/PKCS #7 berichten (*.p7b)"
+
+#: cryptui.rc:158
+msgid "Personal Information Exchange (*.pfx)"
+msgstr "Persoonlijke informatie uitwisseling (*.pfx)"
+
+#: cryptui.rc:159
+msgid "Serialized Certificate Store (*.sst)"
+msgstr "Seriële certificatenopslag (*.sst)"
+
+#: cryptui.rc:160
+msgid "File Format"
+msgstr "Bestandsformaat"
+
+#: cryptui.rc:161
+msgid "Include all certificates in certificate path"
+msgstr "Neem alle certificaten in het certificatiepad op"
+
+#: cryptui.rc:162
+msgid "Export keys"
+msgstr "Exporteer sleutels"
+
+#: cryptui.rc:165
+msgid "The export was successful."
+msgstr "Het exporteren is gelukt."
+
+#: cryptui.rc:166
+msgid "The export failed."
+msgstr "Het exporteren is mislukt."
+
+#: cryptui.rc:167
+msgid "Export Private Key"
+msgstr "Exporteer persoonlijke sleutel"
+
+#: cryptui.rc:168
+msgid ""
+"The certificate contains a private key which may be exported along with the "
+"certificate."
+msgstr ""
+"Het certificaat bevat een persoonlijke sleutel die mee kan worden "
+"geëxporteerd met het certificaat."
+
+#: cryptui.rc:169
+msgid "Enter Password"
+msgstr "Voer wachtwoord in"
+
+#: cryptui.rc:170
+msgid "You may password-protect a private key."
+msgstr "U kunt een persoonlijke sleutel beveiligen met een wachtwoord."
+
+#: cryptui.rc:171
+msgid "The passwords do not match."
+msgstr "De wachtwoorden zijn niet gelijk."
+
+#: cryptui.rc:172
+msgid "Note: The private key for this certificate could not be opened."
+msgstr ""
+"NB: De persoonlijke sleutel voor dit certificaat kon niet geopend worden."
+
+#: cryptui.rc:173
+msgid "Note: The private  key for this certificate is not exportable."
+msgstr ""
+"Note: De persoonlijke sleutel voor dit certificaat kan niet geëxporteerd "
+"worden."
 
 #: devenum.rc:32
 msgid "Default DirectSound"
@@ -3313,10 +3961,6 @@ msgstr "Hybride"
 #: ipconfig.rc:40
 msgid "IP routing enabled"
 msgstr "IP-routing geactiveerd"
-
-#: ipconfig.rc:41
-msgid "Description"
-msgstr "Beschrijving"
 
 #: ipconfig.rc:42
 msgid "Physical address"
