@@ -1987,6 +1987,27 @@ msgstr "작동"
 msgid "Off"
 msgstr "비작동"
 
+#: setupapi.rc:28
+msgid "The file '%s' on %s is needed"
+msgstr "이 파일  '%s' 은 %s에서 필요로 합니다"
+
+#: setupapi.rc:29 ipconfig.rc:31
+#, fuzzy
+msgid "Unknown"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"알 수 없음\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"알수 없음"
+
+#: setupapi.rc:30
+msgid "Copy files from:"
+msgstr "복사할 파일이 위치한 곳:"
+
+#: setupapi.rc:31
+msgid "Type the path where the file is located, and then click OK."
+msgstr "파일이 위치한 경로를 입력하고, 확인을 클릭하십시오."
+
 #: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
 msgid "Default"
 msgstr "기본"
@@ -3885,10 +3906,6 @@ msgstr "%s 어댑터 %s\n"
 #: ipconfig.rc:30
 msgid "Ethernet"
 msgstr "이더넷"
-
-#: ipconfig.rc:31
-msgid "Unknown"
-msgstr "알 수 없음"
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"

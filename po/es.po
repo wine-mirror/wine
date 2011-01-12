@@ -1939,6 +1939,23 @@ msgstr "Activado"
 msgid "Off"
 msgstr "Desactivado"
 
+#: setupapi.rc:28
+msgid "The file '%s' on %s is needed"
+msgstr "El archivo '%s' en %s es necesario"
+
+#: setupapi.rc:29 ipconfig.rc:31
+msgid "Unknown"
+msgstr "Desconocido"
+
+#: setupapi.rc:30
+msgid "Copy files from:"
+msgstr "Copiar archivos desde:"
+
+#: setupapi.rc:31
+msgid "Type the path where the file is located, and then click OK."
+msgstr ""
+"Escriba la ruta en donde se encuentra el archivo, y luego haga clic en OK."
+
 #: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
 #, fuzzy
 msgid "Default"
@@ -3903,10 +3920,6 @@ msgstr ""
 
 #: ipconfig.rc:30
 msgid "Ethernet"
-msgstr ""
-
-#: ipconfig.rc:31
-msgid "Unknown"
 msgstr ""
 
 #: ipconfig.rc:32

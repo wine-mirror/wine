@@ -1922,6 +1922,23 @@ msgstr "Uključeno"
 msgid "Off"
 msgstr "Isključeno"
 
+#: setupapi.rc:28
+msgid "The file '%s' on %s is needed"
+msgstr "„%s“ datoteka na %s je neophodna"
+
+#: setupapi.rc:29 ipconfig.rc:31
+msgid "Unknown"
+msgstr "Nepoznato"
+
+#: setupapi.rc:30
+msgid "Copy files from:"
+msgstr "Umnoži datoteke iz:"
+
+#: setupapi.rc:31
+msgid "Type the path where the file is located, and then click OK."
+msgstr ""
+"Unesite putanju gde su datoteke smeštene, pa kliknite na dugme „U redu“."
+
 #: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
 #, fuzzy
 msgid "Default"
@@ -3557,10 +3574,6 @@ msgstr "%s adapter %s\n"
 #: ipconfig.rc:30
 msgid "Ethernet"
 msgstr "Eternet"
-
-#: ipconfig.rc:31
-msgid "Unknown"
-msgstr "Nepoznato"
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"

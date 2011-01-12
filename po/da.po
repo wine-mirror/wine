@@ -1933,6 +1933,22 @@ msgstr "Til"
 msgid "Off"
 msgstr "Fra"
 
+#: setupapi.rc:28
+msgid "The file '%s' on %s is needed"
+msgstr "Filen '%s' fra %s mangler"
+
+#: setupapi.rc:29 ipconfig.rc:31
+msgid "Unknown"
+msgstr "Ukendt"
+
+#: setupapi.rc:30
+msgid "Copy files from:"
+msgstr "Kopiere filer fra:"
+
+#: setupapi.rc:31
+msgid "Type the path where the file is located, and then click OK."
+msgstr "Skriv den sti, hvor filen er placeret, og klik derefter på OK."
+
 #: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
 #, fuzzy
 msgid "Default"
@@ -3852,10 +3868,6 @@ msgstr ""
 
 #: ipconfig.rc:30
 msgid "Ethernet"
-msgstr ""
-
-#: ipconfig.rc:31
-msgid "Unknown"
 msgstr ""
 
 #: ipconfig.rc:32

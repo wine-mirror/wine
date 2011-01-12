@@ -47,6 +47,9 @@ RC_SRCS = \
 	Sv.rc \
 	Tr.rc \
 	Uk.rc \
-	Zh.rc
+	Zh.rc \
+	setupapi.rc
+
+PO_SRCS = setupapi.rc
 
 @MAKE_DLL_RULES@

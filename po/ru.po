@@ -1928,6 +1928,22 @@ msgstr "Включено"
 msgid "Off"
 msgstr "Выключено"
 
+#: setupapi.rc:28
+msgid "The file '%s' on %s is needed"
+msgstr "Файл '%s' на %s необходим"
+
+#: setupapi.rc:29 ipconfig.rc:31
+msgid "Unknown"
+msgstr "Неизвестно"
+
+#: setupapi.rc:30
+msgid "Copy files from:"
+msgstr "Копировать файлы из:"
+
+#: setupapi.rc:31
+msgid "Type the path where the file is located, and then click OK."
+msgstr "Введите путь к файлу и нажмите OK."
+
 #: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
 #, fuzzy
 msgid "Default"
@@ -3875,10 +3891,6 @@ msgstr ""
 
 #: ipconfig.rc:30
 msgid "Ethernet"
-msgstr ""
-
-#: ipconfig.rc:31
-msgid "Unknown"
 msgstr ""
 
 #: ipconfig.rc:32

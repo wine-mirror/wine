@@ -2020,6 +2020,22 @@ msgstr "Activat"
 msgid "Off"
 msgstr "Dezactivat"
 
+#: setupapi.rc:28
+msgid "The file '%s' on %s is needed"
+msgstr "Fișierul '%s' de pe %s este necesitat"
+
+#: setupapi.rc:29 ipconfig.rc:31
+msgid "Unknown"
+msgstr "Necunoscut"
+
+#: setupapi.rc:30
+msgid "Copy files from:"
+msgstr "Copiază fișierele din:"
+
+#: setupapi.rc:31
+msgid "Type the path where the file is located, and then click OK."
+msgstr "Introduceți calea unde fișierul poate fi găsit și apăsați OK."
+
 #: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
 msgid "Default"
 msgstr "Implicit"
@@ -3961,10 +3977,6 @@ msgstr ""
 
 #: ipconfig.rc:30
 msgid "Ethernet"
-msgstr ""
-
-#: ipconfig.rc:31
-msgid "Unknown"
 msgstr ""
 
 #: ipconfig.rc:32

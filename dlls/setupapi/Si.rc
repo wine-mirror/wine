@@ -24,14 +24,6 @@
 
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 
-STRINGTABLE
-{
-        IDS_PROMPTDISK   "Potrebujem datoteko '%s' na %s"
-        IDS_UNKNOWN      "Neznan"
-        IDS_COPYFROM     "Kopiraj datoteke iz:"
-        IDS_INFO         "Napiši pot do datoteke in pritisni V redu."
-}
-
 COPYFILEDLGORD DIALOG 20, 20, 208, 105
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Kopiranje datotek ..."

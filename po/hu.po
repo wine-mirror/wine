@@ -1949,6 +1949,23 @@ msgstr "Be"
 msgid "Off"
 msgstr "Ki"
 
+#: setupapi.rc:28
+msgid "The file '%s' on %s is needed"
+msgstr "A(z) '%s' fájl szükséges ezen: %s"
+
+#: setupapi.rc:29 ipconfig.rc:31
+msgid "Unknown"
+msgstr "Ismeretlen"
+
+#: setupapi.rc:30
+msgid "Copy files from:"
+msgstr "Fájlok másolása innen:"
+
+#: setupapi.rc:31
+msgid "Type the path where the file is located, and then click OK."
+msgstr ""
+"Írja be az útvonalat ahol a fájl található majd nyomja meg az OK gombot."
+
 #: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
 msgid "Default"
 msgstr "Default"
@@ -3607,10 +3624,6 @@ msgstr ""
 
 #: ipconfig.rc:30
 msgid "Ethernet"
-msgstr ""
-
-#: ipconfig.rc:31
-msgid "Unknown"
 msgstr ""
 
 #: ipconfig.rc:32

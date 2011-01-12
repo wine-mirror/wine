@@ -1932,6 +1932,22 @@ msgstr "Ввімкнено"
 msgid "Off"
 msgstr "Вимкнено"
 
+#: setupapi.rc:28
+msgid "The file '%s' on %s is needed"
+msgstr "Файл '%s' на %s потрібний"
+
+#: setupapi.rc:29 ipconfig.rc:31
+msgid "Unknown"
+msgstr "Невідомо"
+
+#: setupapi.rc:30
+msgid "Copy files from:"
+msgstr "Скопіюйте файли з:"
+
+#: setupapi.rc:31
+msgid "Type the path where the file is located, and then click OK."
+msgstr "Надрукуйте шлях до файлу і натисніть OK."
+
 #: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
 #, fuzzy
 msgid "Default"
@@ -3852,10 +3868,6 @@ msgstr "%s адаптер %s\n"
 #: ipconfig.rc:30
 msgid "Ethernet"
 msgstr "Ethernet"
-
-#: ipconfig.rc:31
-msgid "Unknown"
-msgstr "Невідомо"
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"

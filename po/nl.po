@@ -2023,6 +2023,22 @@ msgstr "Aan"
 msgid "Off"
 msgstr "Uit"
 
+#: setupapi.rc:28
+msgid "The file '%s' on %s is needed"
+msgstr "Het bestand '%s' op %s is benodigd"
+
+#: setupapi.rc:29 ipconfig.rc:31
+msgid "Unknown"
+msgstr "Onbekend"
+
+#: setupapi.rc:30
+msgid "Copy files from:"
+msgstr "Kopieer bestanden van:"
+
+#: setupapi.rc:31
+msgid "Type the path where the file is located, and then click OK."
+msgstr "Voer het pad in waar het bestand zich bevind, en klik dan op OK."
+
 #: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
 msgid "Default"
 msgstr "Standaard"
@@ -3965,10 +3981,6 @@ msgstr "%s adapter %s\n"
 #: ipconfig.rc:30
 msgid "Ethernet"
 msgstr "Ethernet"
-
-#: ipconfig.rc:31
-msgid "Unknown"
-msgstr "Onbekend"
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"

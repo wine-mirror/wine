@@ -25,14 +25,6 @@
 
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
-STRINGTABLE
-{
-        IDS_PROMPTDISK   "Файл '%s' на %s необходим"
-        IDS_UNKNOWN      "Неизвестно"
-        IDS_COPYFROM     "Копировать файлы из:"
-        IDS_INFO         "Введите путь к файлу и нажмите OK."
-}
-
 COPYFILEDLGORD DIALOG 20, 20, 208, 105
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Копирование файлов..."

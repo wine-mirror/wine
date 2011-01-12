@@ -25,14 +25,6 @@
 
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
-STRINGTABLE
-{
-        IDS_PROMPTDISK   "Die Datei '%s' von %s wird benötigt."
-        IDS_UNKNOWN      "Unbekannt"
-        IDS_COPYFROM     "Dateien kopieren von:"
-        IDS_INFO         "Geben Sie den Pfad zur Datei ein und klicken Sie OK."
-}
-
 COPYFILEDLGORD DIALOG 20, 20, 208, 105
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Dateien kopieren..."

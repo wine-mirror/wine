@@ -1847,6 +1847,22 @@ msgstr ""
 msgid "Off"
 msgstr ""
 
+#: setupapi.rc:28
+msgid "The file '%s' on %s is needed"
+msgstr ""
+
+#: setupapi.rc:29 ipconfig.rc:31
+msgid "Unknown"
+msgstr ""
+
+#: setupapi.rc:30
+msgid "Copy files from:"
+msgstr ""
+
+#: setupapi.rc:31
+msgid "Type the path where the file is located, and then click OK."
+msgstr ""
+
 #: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
 msgid "Default"
 msgstr ""
@@ -3479,10 +3495,6 @@ msgstr ""
 
 #: ipconfig.rc:30
 msgid "Ethernet"
-msgstr ""
-
-#: ipconfig.rc:31
-msgid "Unknown"
 msgstr ""
 
 #: ipconfig.rc:32

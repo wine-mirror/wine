@@ -27,14 +27,6 @@
 
 LANGUAGE LANG_UKRAINIAN, SUBLANG_DEFAULT
 
-STRINGTABLE
-{
-        IDS_PROMPTDISK   "Файл '%s' на %s потрібний"
-        IDS_UNKNOWN      "Невідомо"
-        IDS_COPYFROM     "Скопіюйте файли з:"
-        IDS_INFO         "Надрукуйте шлях до файлу і натисніть OK."
-}
-
 COPYFILEDLGORD DIALOG 20, 20, 208, 105
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Копіювання Файлів..."

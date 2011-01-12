@@ -26,14 +26,6 @@
 
 LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
 
-STRINGTABLE
-{
-        IDS_PROMPTDISK   "הקובץ '%s' שב־%s דרוש"
-        IDS_UNKNOWN      "לא ידוע"
-        IDS_COPYFROM     "העתקת קבצים מ־:"
-        IDS_INFO         "נא להזין את נתיב מיקום הקבצים ואז ללחוץ על אישור."
-}
-
 COPYFILEDLGORD DIALOG 20, 20, 208, 105
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
 EXSTYLE WS_EX_LAYOUTRTL

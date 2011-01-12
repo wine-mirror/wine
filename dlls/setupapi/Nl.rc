@@ -23,14 +23,6 @@
 
 LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 
-STRINGTABLE
-{
-        IDS_PROMPTDISK   "Het bestand '%s' op %s is benodigd"
-        IDS_UNKNOWN      "Onbekend"
-        IDS_COPYFROM     "Kopieer bestanden van:"
-        IDS_INFO         "Voer het pad in waar het bestand zich bevind, en klik dan op OK."
-}
-
 COPYFILEDLGORD DIALOG 20, 20, 208, 105
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Bestanden worden gekopieerd..."

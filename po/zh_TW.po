@@ -1900,6 +1900,22 @@ msgstr "開"
 msgid "Off"
 msgstr "關"
 
+#: setupapi.rc:28
+msgid "The file '%s' on %s is needed"
+msgstr "需要檔案 '%s' 存於 %s"
+
+#: setupapi.rc:29 ipconfig.rc:31
+msgid "Unknown"
+msgstr "未知"
+
+#: setupapi.rc:30
+msgid "Copy files from:"
+msgstr "從複製檔案:"
+
+#: setupapi.rc:31
+msgid "Type the path where the file is located, and then click OK."
+msgstr "輸入檔案位置，並選擇確認。"
+
 #: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
 msgid "Default"
 msgstr "默認"
@@ -3544,10 +3560,6 @@ msgstr ""
 
 #: ipconfig.rc:30
 msgid "Ethernet"
-msgstr ""
-
-#: ipconfig.rc:31
-msgid "Unknown"
 msgstr ""
 
 #: ipconfig.rc:32

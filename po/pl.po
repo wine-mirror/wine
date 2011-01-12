@@ -1960,6 +1960,27 @@ msgstr "Włączone"
 msgid "Off"
 msgstr "Wyłączone"
 
+#: setupapi.rc:28
+msgid "The file '%s' on %s is needed"
+msgstr "Potrzebny plik o nazwie '%s' znajdujący się  na %s"
+
+#: setupapi.rc:29 ipconfig.rc:31
+#, fuzzy
+msgid "Unknown"
+msgstr ""
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"Nieznane\n"
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"Nieznany"
+
+#: setupapi.rc:30
+msgid "Copy files from:"
+msgstr "Kopiuj pliki z:"
+
+#: setupapi.rc:31
+msgid "Type the path where the file is located, and then click OK."
+msgstr "Podaj ścieżkę do pliku, a następnie naciśnij przycisk OK."
+
 #: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
 #, fuzzy
 msgid "Default"
@@ -3901,10 +3922,6 @@ msgstr "%s karta %s\n"
 #: ipconfig.rc:30
 msgid "Ethernet"
 msgstr "Ethernet"
-
-#: ipconfig.rc:31
-msgid "Unknown"
-msgstr "Nieznane"
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"

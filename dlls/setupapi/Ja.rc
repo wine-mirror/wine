@@ -25,14 +25,6 @@
 
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 
-STRINGTABLE
-{
-        IDS_PROMPTDISK   "ファイル '%s' (%s 上) が必要です。"
-        IDS_UNKNOWN      "不明"
-        IDS_COPYFROM     "コピー元:"
-        IDS_INFO         "このファイルがあるパスを入力し、[OK]をクリックしてください。"
-}
-
 COPYFILEDLGORD DIALOG 20, 20, 208, 105
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "ファイルをコピーしています..."

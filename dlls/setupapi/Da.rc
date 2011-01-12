@@ -25,14 +25,6 @@
 
 LANGUAGE LANG_DANISH, SUBLANG_DEFAULT
 
-STRINGTABLE
-{
-        IDS_PROMPTDISK   "Filen '%s' fra %s mangler"
-        IDS_UNKNOWN      "Ukendt"
-        IDS_COPYFROM     "Kopiere filer fra:"
-        IDS_INFO         "Skriv den sti, hvor filen er placeret, og klik derefter på OK."
-}
-
 COPYFILEDLGORD DIALOG 20, 20, 208, 105
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Kopierer filer..."

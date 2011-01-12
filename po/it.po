@@ -2008,6 +2008,22 @@ msgstr "On"
 msgid "Off"
 msgstr "Off"
 
+#: setupapi.rc:28
+msgid "The file '%s' on %s is needed"
+msgstr "Il file '%s' su %s è necessario"
+
+#: setupapi.rc:29 ipconfig.rc:31
+msgid "Unknown"
+msgstr "Sconosciuto"
+
+#: setupapi.rc:30
+msgid "Copy files from:"
+msgstr "Copia i file da:"
+
+#: setupapi.rc:31
+msgid "Type the path where the file is located, and then click OK."
+msgstr "Scrivi il percorso del file, poi clicca OK."
+
 #: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
 msgid "Default"
 msgstr "Predefinito"
@@ -3985,10 +4001,6 @@ msgstr "%s adattatore %s\n"
 #: ipconfig.rc:30
 msgid "Ethernet"
 msgstr "Ethernet"
-
-#: ipconfig.rc:31
-msgid "Unknown"
-msgstr "Sconosciuto"
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"

@@ -23,14 +23,6 @@
 
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
-STRINGTABLE
-{
-        IDS_PROMPTDISK   "The file '%s' on %s is needed"
-        IDS_UNKNOWN      "Unknown"
-        IDS_COPYFROM     "Copy files from:"
-        IDS_INFO         "Type the path where the file is located, and then click OK."
-}
-
 COPYFILEDLGORD DIALOG 20, 20, 208, 105
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Copying Files..."

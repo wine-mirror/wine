@@ -24,14 +24,6 @@
 
 LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
-STRINGTABLE
-{
-        IDS_PROMPTDISK   "Programmet trenger filen «%s» på %s"
-        IDS_UNKNOWN      "Ukjent"
-        IDS_COPYFROM     "Kopier filer fra:"
-        IDS_INFO         "Skriv inn plasseringen til filen, og trykk OK."
-}
-
 COPYFILEDLGORD DIALOG 20, 20, 208, 105
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Kopierer filer..."

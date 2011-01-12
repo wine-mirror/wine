@@ -25,14 +25,6 @@
 
 LANGUAGE LANG_LITHUANIAN, SUBLANG_NEUTRAL
 
-STRINGTABLE
-{
-        IDS_PROMPTDISK   "Reikalingas failas „%s“ esantis %s"
-        IDS_UNKNOWN      "Nežinomas"
-        IDS_COPYFROM     "Kopijuoti failus iš:"
-        IDS_INFO         "Įveskite kelią iki failo, o tada spauskite Gerai."
-}
-
 COPYFILEDLGORD DIALOG 20, 20, 208, 105
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Kopijuojami failai..."

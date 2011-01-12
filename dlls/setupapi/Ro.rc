@@ -23,14 +23,6 @@ LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
 
 #pragma code_page(65001)
 
-STRINGTABLE
-{
-        IDS_PROMPTDISK   "Fișierul '%s' de pe %s este necesitat"
-        IDS_UNKNOWN      "Necunoscut"
-        IDS_COPYFROM     "Copiază fișierele din:"
-        IDS_INFO         "Introduceți calea unde fișierul poate fi găsit și apăsați OK."
-}
-
 COPYFILEDLGORD DIALOG 20, 20, 208, 105
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Copiez fișiere..."

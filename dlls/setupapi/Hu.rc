@@ -25,14 +25,6 @@
 
 LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
 
-STRINGTABLE
-{
-        IDS_PROMPTDISK   "A(z) '%s' fájl szükséges ezen: %s"
-        IDS_UNKNOWN      "Ismeretlen"
-        IDS_COPYFROM     "Fájlok másolása innen:"
-        IDS_INFO         "Írja be az útvonalat ahol a fájl található majd nyomja meg az OK gombot."
-}
-
 COPYFILEDLGORD DIALOG 20, 20, 208, 105
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Fájlok másolása..."

@@ -26,14 +26,6 @@
 
 LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_CYRILLIC
 
-STRINGTABLE
-{
-    IDS_PROMPTDISK   "„%s“ датотека на %s је неопходна"
-    IDS_UNKNOWN      "Непознато"
-    IDS_COPYFROM     "Умножи датотеке из:"
-    IDS_INFO         "Унесите путању где су датотеке смештене, па кликните на дугме „У реду“."
-}
-
 COPYFILEDLGORD DIALOG 20, 20, 208, 105
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Умножавање датотека..."
@@ -62,14 +54,6 @@ BEGIN
 END
 
 LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
-
-STRINGTABLE
-{
-    IDS_PROMPTDISK   "„%s“ datoteka na %s je neophodna"
-    IDS_UNKNOWN      "Nepoznato"
-    IDS_COPYFROM     "Umnoži datoteke iz:"
-    IDS_INFO         "Unesite putanju gde su datoteke smeštene, pa kliknite na dugme „U redu“."
-}
 
 COPYFILEDLGORD DIALOG 20, 20, 208, 105
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION

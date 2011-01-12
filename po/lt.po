@@ -1935,6 +1935,22 @@ msgstr "Įjungta"
 msgid "Off"
 msgstr "Išjungta"
 
+#: setupapi.rc:28
+msgid "The file '%s' on %s is needed"
+msgstr "Reikalingas failas „%s“ esantis %s"
+
+#: setupapi.rc:29 ipconfig.rc:31
+msgid "Unknown"
+msgstr "Nežinomas"
+
+#: setupapi.rc:30
+msgid "Copy files from:"
+msgstr "Kopijuoti failus iš:"
+
+#: setupapi.rc:31
+msgid "Type the path where the file is located, and then click OK."
+msgstr "Įveskite kelią iki failo, o tada spauskite Gerai."
+
 #: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
 #, fuzzy
 msgid "Default"
@@ -3865,10 +3881,6 @@ msgstr "%s adapteris %s\n"
 #: ipconfig.rc:30
 msgid "Ethernet"
 msgstr "Eterneto"
-
-#: ipconfig.rc:31
-msgid "Unknown"
-msgstr "Nežinomas"
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"

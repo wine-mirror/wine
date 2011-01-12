@@ -23,14 +23,6 @@
 
 LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
 
-STRINGTABLE
-{
-        IDS_PROMPTDISK   "El archivo '%s' en %s es necesario"
-        IDS_UNKNOWN      "Desconocido"
-        IDS_COPYFROM     "Copiar archivos desde:"
-        IDS_INFO         "Escriba la ruta en donde se encuentra el archivo, y luego haga clic en OK."
-}
-
 COPYFILEDLGORD DIALOG 20, 20, 208, 105
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Copiando archivos..."

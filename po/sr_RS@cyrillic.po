@@ -1910,6 +1910,23 @@ msgstr "Укључено"
 msgid "Off"
 msgstr "Искључено"
 
+#: setupapi.rc:28
+msgid "The file '%s' on %s is needed"
+msgstr "„%s“ датотека на %s је неопходна"
+
+#: setupapi.rc:29 ipconfig.rc:31
+msgid "Unknown"
+msgstr "Непознато"
+
+#: setupapi.rc:30
+msgid "Copy files from:"
+msgstr "Умножи датотеке из:"
+
+#: setupapi.rc:31
+msgid "Type the path where the file is located, and then click OK."
+msgstr ""
+"Унесите путању где су датотеке смештене, па кликните на дугме „У реду“."
+
 #: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
 msgid "Default"
 msgstr "Подразумевано"
@@ -3540,10 +3557,6 @@ msgstr "%s адаптер %s\n"
 #: ipconfig.rc:30
 msgid "Ethernet"
 msgstr "Етернет"
-
-#: ipconfig.rc:31
-msgid "Unknown"
-msgstr "Непознато"
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"

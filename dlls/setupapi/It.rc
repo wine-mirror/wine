@@ -26,14 +26,6 @@
 
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
-STRINGTABLE
-{
-        IDS_PROMPTDISK   "Il file '%s' su %s è necessario"
-        IDS_UNKNOWN      "Sconosciuto"
-        IDS_COPYFROM     "Copia i file da:"
-        IDS_INFO         "Scrivi il percorso del file, poi clicca OK."
-}
-
 COPYFILEDLGORD DIALOG 20, 20, 208, 105
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Copia dei file in corso..."

@@ -27,27 +27,6 @@
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
-STRINGTABLE
-{
-        IDS_PROMPTDISK   "O arquivo '%s' em %s é necessário"
-        IDS_UNKNOWN      "Desconhecido"
-        IDS_COPYFROM     "Copiar arquivos de:"
-        IDS_INFO         "Insira o caminho onde se encontram os arquivos, depois clique em OK."
-}
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
-
-STRINGTABLE
-{
-        IDS_PROMPTDISK   "O ficheiro '%s' em %s é necessário"
-        IDS_UNKNOWN      "Desconhecido"
-        IDS_COPYFROM     "Copiar ficheiros de:"
-        IDS_INFO         "Insira o caminho onde se encontram os ficheiros, depois carregue em OK."
-}
-
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
-
 COPYFILEDLGORD DIALOG 20, 20, 208, 105
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Copiando arquivos..."
