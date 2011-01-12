@@ -49,8 +49,3 @@ FONT 8, "MS Shell Dlg"
     EDITTEXT 895,89,76,22,12
     LTEXT "Kio/sec",896,115,78,26,10
 }
-
-STRINGTABLE
-{
-    IDS_FULLFRAMES "Images complètes (non compressées)"
-}

@@ -47,8 +47,3 @@ FONT 8, "MS Shell Dlg"
     EDITTEXT 895,88,76,22,12
     LTEXT "KB/s",896,114,78,31,10
 }
-
-STRINGTABLE
-{
-    IDS_FULLFRAMES "Pe³ne ramki (bez kompresji)"
-}

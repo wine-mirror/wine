@@ -1947,6 +1947,10 @@ msgstr ""
 "Wine MS-RLE Videodekoder\n"
 "Copyright 2002 by Michael Günnewig"
 
+#: msvfw32.rc:25
+msgid "Full Frames (Uncompressed)"
+msgstr "Vollständige Frames (Unkomprimiert)"
+
 #: msvidc32.rc:25
 msgid "MS-CRAM"
 msgstr "MS-CRAM"

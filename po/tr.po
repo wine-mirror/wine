@@ -1898,6 +1898,10 @@ msgstr ""
 "Wine MS-RLE vidyo çözücü\n"
 "Telif Hakkı 2002 Michael Günnewig"
 
+#: msvfw32.rc:25
+msgid "Full Frames (Uncompressed)"
+msgstr "Tüm Çerçeveler (Sıkıştırılmamış)"
+
 #: msvidc32.rc:25
 msgid "MS-CRAM"
 msgstr "MS-CRAM"

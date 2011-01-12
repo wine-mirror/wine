@@ -1991,6 +1991,10 @@ msgstr ""
 "Wine MS-RLE codificador/decodificador de vídeo\n"
 "Copyright 2002 por Michael Günnewig"
 
+#: msvfw32.rc:25
+msgid "Full Frames (Uncompressed)"
+msgstr "Imagens Completas (Descomprimidas)"
+
 #: msvidc32.rc:25
 msgid "MS-CRAM"
 msgstr "MS-CRAM"

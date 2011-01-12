@@ -1823,6 +1823,10 @@ msgid ""
 "Copyright 2002 by Michael Guennewig"
 msgstr ""
 
+#: msvfw32.rc:25
+msgid "Full Frames (Uncompressed)"
+msgstr ""
+
 #: msvidc32.rc:25
 msgid "MS-CRAM"
 msgstr ""

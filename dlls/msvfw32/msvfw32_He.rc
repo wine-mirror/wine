@@ -50,8 +50,3 @@ FONT 8, "MS Shell Dlg"
     EDITTEXT 895,78,76,22,12
     LTEXT "ק״ב/שנייה",896,102,78,26,10
 }
-
-STRINGTABLE
-{
-    IDS_FULLFRAMES "כל השקופיות (ללא דחיסה)"
-}

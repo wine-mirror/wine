@@ -1932,6 +1932,10 @@ msgstr ""
 "Koder-dekoder Wine MS-RLE\n"
 "Copyright 2002 - Michael Günnewig"
 
+#: msvfw32.rc:25
+msgid "Full Frames (Uncompressed)"
+msgstr "Pełne ramki (bez kompresji)"
+
 #: msvidc32.rc:25
 msgid "MS-CRAM"
 msgstr "MS-CRAM"

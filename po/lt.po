@@ -1907,6 +1907,10 @@ msgstr ""
 "Wine MS-RLE vaizdo kodekas\n"
 "Autoriaus teisės Michael Günnewig, 2002"
 
+#: msvfw32.rc:25
+msgid "Full Frames (Uncompressed)"
+msgstr "Pilni kadrai (neglaudinti)"
+
 #: msvidc32.rc:25
 msgid "MS-CRAM"
 msgstr "MS-CRAM"

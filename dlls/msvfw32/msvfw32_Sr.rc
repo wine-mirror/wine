@@ -50,11 +50,6 @@ FONT 8, "MS Shell Dlg"
     LTEXT "KB/с",896,102,78,26,10
 }
 
-STRINGTABLE
-{
-    IDS_FULLFRAMES "Цели кадрови (несажето)"
-}
-
 LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
 
 ICM_CHOOSE_COMPRESSOR DIALOG  36, 24, 187, 95
@@ -82,9 +77,4 @@ FONT 8, "MS Shell Dlg"
     CONTROL "&Protok podataka",894,"Button",BS_AUTOCHECKBOX|WS_TABSTOP,9,76,66,12
     EDITTEXT 895,78,76,22,12
     LTEXT "KB/s",896,102,78,26,10
-}
-
-STRINGTABLE
-{
-    IDS_FULLFRAMES "Celi kadrovi (nesažeto)"
 }

@@ -1937,6 +1937,10 @@ msgstr ""
 "Wine : codec vidéo MS-RLE\n"
 "Copyright 2002 par Michael Günnewig"
 
+#: msvfw32.rc:25
+msgid "Full Frames (Uncompressed)"
+msgstr "Images complètes (non compressées)"
+
 #: msvidc32.rc:25
 msgid "MS-CRAM"
 msgstr "MS-CRAM"

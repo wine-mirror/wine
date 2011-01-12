@@ -1905,6 +1905,10 @@ msgstr ""
 "Wine MS-RLE videokodeks\n"
 "Ophavsret 2002 tilhører Michael Günnewig"
 
+#: msvfw32.rc:25
+msgid "Full Frames (Uncompressed)"
+msgstr "Fulde billeder (ukomprimeret)"
+
 #: msvidc32.rc:25
 msgid "MS-CRAM"
 msgstr "MS-CRAM"

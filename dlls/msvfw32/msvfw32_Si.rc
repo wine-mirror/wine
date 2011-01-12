@@ -48,8 +48,3 @@ FONT 8, "MS Shell Dlg"
     EDITTEXT 895,78,76,22,12
     LTEXT "kb/s",896,102,78,26,10
 }
-
-STRINGTABLE
-{
-    IDS_FULLFRAMES "Polne slike (nestisnjeno)"
-}

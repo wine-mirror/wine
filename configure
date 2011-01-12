@@ -15079,7 +15079,7 @@ wine_fn_config_dll msvcrt20 enable_msvcrt20 implib
 wine_fn_config_dll msvcrt40 enable_msvcrt40 implib
 wine_fn_config_dll msvcrtd enable_msvcrtd implib
 wine_fn_config_test dlls/msvcrtd/tests msvcrtd_test
-wine_fn_config_dll msvfw32 enable_msvfw32 implib
+wine_fn_config_dll msvfw32 enable_msvfw32 po,implib
 wine_fn_config_test dlls/msvfw32/tests msvfw32_test
 wine_fn_config_dll msvidc32 enable_msvidc32 po
 wine_fn_config_dll msvideo.dll16 enable_win16

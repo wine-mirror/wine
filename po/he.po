@@ -1851,6 +1851,10 @@ msgstr ""
 "מקודד הווידאו Wine MS-RLE\n"
 "הזכויות שמורות 2002 ל־Michael Günnewig"
 
+#: msvfw32.rc:25
+msgid "Full Frames (Uncompressed)"
+msgstr "כל השקופיות (ללא דחיסה)"
+
 #: msvidc32.rc:25
 msgid "MS-CRAM"
 msgstr ""

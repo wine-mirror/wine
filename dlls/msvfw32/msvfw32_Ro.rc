@@ -50,8 +50,3 @@ FONT 8, "MS Shell Dlg"
     EDITTEXT 895,93,76,22,12
     LTEXT "KO/sec",896,118,78,22,10
 }
-
-STRINGTABLE
-{
-    IDS_FULLFRAMES "Cadre întregi (necomprimate)"
-}

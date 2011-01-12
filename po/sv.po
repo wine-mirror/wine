@@ -1932,6 +1932,10 @@ msgstr ""
 "Wine MS-RLE videokodek\n"
 "Copyright 2002 Michael Günnewig"
 
+#: msvfw32.rc:25
+msgid "Full Frames (Uncompressed)"
+msgstr "Hela bildrutor (okomprimerat)"
+
 #: msvidc32.rc:25
 msgid "MS-CRAM"
 msgstr "MS-CRAM"

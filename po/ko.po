@@ -1959,6 +1959,10 @@ msgstr ""
 "Wine MS-RLE 비디오 코덱\n"
 "Copyright 2002 by Michael Günnewig"
 
+#: msvfw32.rc:25
+msgid "Full Frames (Uncompressed)"
+msgstr "전채 프레임(비압축)"
+
 #: msvidc32.rc:25
 msgid "MS-CRAM"
 msgstr "MS-CRAM"

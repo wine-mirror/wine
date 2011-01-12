@@ -1882,6 +1882,10 @@ msgstr ""
 "Wine MS-RLE видео кодек\n"
 "Copyright ©2002 by Michael Günnewig"
 
+#: msvfw32.rc:25
+msgid "Full Frames (Uncompressed)"
+msgstr "Цели кадрови (несажето)"
+
 #: msvidc32.rc:25
 msgid "MS-CRAM"
 msgstr "MS-CRAM"
