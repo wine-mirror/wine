@@ -2415,6 +2415,22 @@ msgstr "&Apie interneto naršyklę..."
 msgid "Address"
 msgstr "Adresas"
 
+#: shlwapi.rc:27
+msgid "%ld bytes"
+msgstr "%ld baitai"
+
+#: shlwapi.rc:28
+msgid " hr"
+msgstr " val"
+
+#: shlwapi.rc:29
+msgid " min"
+msgstr " min"
+
+#: shlwapi.rc:30
+msgid " sec"
+msgstr " sek"
+
 #: winmm.rc:28
 msgid "The specified command was carried out."
 msgstr "Nurodyta komanda buvo atlikta."

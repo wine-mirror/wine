@@ -2472,6 +2472,22 @@ msgstr "인터넷 익스플로어 정보(&A)..."
 msgid "Address"
 msgstr "주소"
 
+#: shlwapi.rc:27
+msgid "%ld bytes"
+msgstr "%ld 바이트"
+
+#: shlwapi.rc:28
+msgid " hr"
+msgstr "시"
+
+#: shlwapi.rc:29
+msgid " min"
+msgstr " 분"
+
+#: shlwapi.rc:30
+msgid " sec"
+msgstr " 초"
+
 #: winmm.rc:28
 msgid "The specified command was carried out."
 msgstr "지정된 명령이 실행되었습니다."

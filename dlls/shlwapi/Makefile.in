@@ -21,6 +21,7 @@ C_SRCS = \
 	wsprintf.c
 
 RC_SRCS = \
+	shlwapi.rc \
 	shlwapi_Da.rc \
 	shlwapi_De.rc \
 	shlwapi_En.rc \
@@ -46,7 +47,8 @@ RC_SRCS = \
 	shlwapi_Sv.rc \
 	shlwapi_Tr.rc \
 	shlwapi_Uk.rc \
-	shlwapi_Zh.rc \
-	version.rc
+	shlwapi_Zh.rc
+
+PO_SRCS = shlwapi.rc
 
 @MAKE_DLL_RULES@

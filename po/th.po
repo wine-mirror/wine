@@ -2327,6 +2327,22 @@ msgstr "&About Notepad"
 msgid "Address"
 msgstr ""
 
+#: shlwapi.rc:27
+msgid "%ld bytes"
+msgstr ""
+
+#: shlwapi.rc:28
+msgid " hr"
+msgstr ""
+
+#: shlwapi.rc:29
+msgid " min"
+msgstr ""
+
+#: shlwapi.rc:30
+msgid " sec"
+msgstr ""
+
 #: winmm.rc:28
 msgid "The specified command was carried out."
 msgstr ""

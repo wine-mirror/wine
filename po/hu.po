@@ -2474,6 +2474,22 @@ msgstr "Wine Internet Explorer"
 msgid "Address"
 msgstr "IP cím="
 
+#: shlwapi.rc:27
+msgid "%ld bytes"
+msgstr "%ld bájt"
+
+#: shlwapi.rc:28
+msgid " hr"
+msgstr " óra"
+
+#: shlwapi.rc:29
+msgid " min"
+msgstr " perc"
+
+#: shlwapi.rc:30
+msgid " sec"
+msgstr " mp"
+
 #: winmm.rc:28
 msgid "The specified command was carried out."
 msgstr ""

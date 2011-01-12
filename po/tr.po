@@ -2445,6 +2445,22 @@ msgstr "Winefile hakkında &bilgi..."
 msgid "Address"
 msgstr ""
 
+#: shlwapi.rc:27
+msgid "%ld bytes"
+msgstr "%ld bytes"
+
+#: shlwapi.rc:28
+msgid " hr"
+msgstr " hr"
+
+#: shlwapi.rc:29
+msgid " min"
+msgstr " min"
+
+#: shlwapi.rc:30
+msgid " sec"
+msgstr " sec"
+
 #: winmm.rc:28
 msgid "The specified command was carried out."
 msgstr "Belirtilen komut gerçekleştirildi."

@@ -1,7 +1,7 @@
 /*
- * Copyright 2005
+ * Resources for shlwapi
  *
- * Stefan Leichter
+ * Copyright 2004 Jon Griffiths
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,6 +17,18 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
+#include "resource.h"
+
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+    IDS_BYTES_FORMAT    "%ld bytes"
+    IDS_TIME_INTERVAL_HOURS    " hr"
+    IDS_TIME_INTERVAL_MINUTES  " min"
+    IDS_TIME_INTERVAL_SECONDS  " sec"
+}
 
 #define WINE_FILENAME_STR "shlwapi.dll"
 #define WINE_FILEVERSION 6,0,2800,1692

@@ -2380,6 +2380,22 @@ msgstr "על &אודות Internet Explorer..."
 msgid "Address"
 msgstr "כתובת"
 
+#: shlwapi.rc:27
+msgid "%ld bytes"
+msgstr "%ld בתים"
+
+#: shlwapi.rc:28
+msgid " hr"
+msgstr " שעות"
+
+#: shlwapi.rc:29
+msgid " min"
+msgstr " דקות"
+
+#: shlwapi.rc:30
+msgid " sec"
+msgstr " שניות"
+
 #: winmm.rc:28
 msgid "The specified command was carried out."
 msgstr ""

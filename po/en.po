@@ -2391,6 +2391,22 @@ msgstr "Wine Internet Explorer"
 msgid "Address"
 msgstr "IP Address="
 
+#: shlwapi.rc:27
+msgid "%ld bytes"
+msgstr ""
+
+#: shlwapi.rc:28
+msgid " hr"
+msgstr ""
+
+#: shlwapi.rc:29
+msgid " min"
+msgstr ""
+
+#: shlwapi.rc:30
+msgid " sec"
+msgstr ""
+
 #: winmm.rc:28
 msgid "The specified command was carried out."
 msgstr "The specified command was carried out."

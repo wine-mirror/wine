@@ -2381,6 +2381,22 @@ msgstr "&О Internet Explorer-у..."
 msgid "Address"
 msgstr "Адреса"
 
+#: shlwapi.rc:27
+msgid "%ld bytes"
+msgstr "%ld бајтова"
+
+#: shlwapi.rc:28
+msgid " hr"
+msgstr " ч."
+
+#: shlwapi.rc:29
+msgid " min"
+msgstr " мин."
+
+#: shlwapi.rc:30
+msgid " sec"
+msgstr " сек."
+
 #: winmm.rc:28
 msgid "The specified command was carried out."
 msgstr ""

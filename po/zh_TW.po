@@ -2384,6 +2384,22 @@ msgstr "Wine Internet Explorer"
 msgid "Address"
 msgstr ""
 
+#: shlwapi.rc:27
+msgid "%ld bytes"
+msgstr "%ld 字節"
+
+#: shlwapi.rc:28
+msgid " hr"
+msgstr " 小時"
+
+#: shlwapi.rc:29
+msgid " min"
+msgstr " 分"
+
+#: shlwapi.rc:30
+msgid " sec"
+msgstr " 秒"
+
 #: winmm.rc:28
 msgid "The specified command was carried out."
 msgstr ""

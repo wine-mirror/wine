@@ -2549,6 +2549,22 @@ msgstr "Explorador de Internet Wine"
 msgid "Address"
 msgstr "Endereço IP="
 
+#: shlwapi.rc:27
+msgid "%ld bytes"
+msgstr "%ld bytes"
+
+#: shlwapi.rc:28
+msgid " hr"
+msgstr " hr"
+
+#: shlwapi.rc:29
+msgid " min"
+msgstr " min"
+
+#: shlwapi.rc:30
+msgid " sec"
+msgstr " seg"
+
 #: winmm.rc:28
 msgid "The specified command was carried out."
 msgstr "O comando indicado foi realizado."

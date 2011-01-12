@@ -2511,6 +2511,22 @@ msgstr "Wine Internet Explorer"
 msgid "Address"
 msgstr "Adresa IP="
 
+#: shlwapi.rc:27
+msgid "%ld bytes"
+msgstr "%ld octeți"
+
+#: shlwapi.rc:28
+msgid " hr"
+msgstr " ore"
+
+#: shlwapi.rc:29
+msgid " min"
+msgstr " min"
+
+#: shlwapi.rc:30
+msgid " sec"
+msgstr " sec"
+
 #: winmm.rc:28
 msgid "The specified command was carried out."
 msgstr "Comanda specificată a fost executată."

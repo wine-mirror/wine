@@ -2465,6 +2465,22 @@ msgstr "Über &Internet Explorer..."
 msgid "Address"
 msgstr "Adresse"
 
+#: shlwapi.rc:27
+msgid "%ld bytes"
+msgstr "%ld Bytes"
+
+#: shlwapi.rc:28
+msgid " hr"
+msgstr " Std"
+
+#: shlwapi.rc:29
+msgid " min"
+msgstr " Min"
+
+#: shlwapi.rc:30
+msgid " sec"
+msgstr " Sek"
+
 #: winmm.rc:28
 msgid "The specified command was carried out."
 msgstr "Der angeforderte Befehl wurde ausgeführt."

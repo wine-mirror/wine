@@ -2429,6 +2429,22 @@ msgstr "O programu Internet Explorer ..."
 msgid "Address"
 msgstr "Naslov"
 
+#: shlwapi.rc:27
+msgid "%ld bytes"
+msgstr "%ld bajtov"
+
+#: shlwapi.rc:28
+msgid " hr"
+msgstr " ur"
+
+#: shlwapi.rc:29
+msgid " min"
+msgstr " min"
+
+#: shlwapi.rc:30
+msgid " sec"
+msgstr " sek"
+
 #: winmm.rc:28
 msgid "The specified command was carried out."
 msgstr "Navedeni ukaz je bil uspešno izveden."
