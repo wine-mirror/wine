@@ -257,17 +257,9 @@ static void init_gzip_stream(http_request_t *req)
     gzip_stream_t *gzip_stream;
     int index, zres;
 
-    gzip_stream = HeapAlloc(GetProcessHeap(), 0, sizeof(gzip_stream_t));
+    gzip_stream = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(gzip_stream_t));
     gzip_stream->zstream.zalloc = wininet_zalloc;
     gzip_stream->zstream.zfree = wininet_zfree;
-    gzip_stream->zstream.opaque = NULL;
-    gzip_stream->zstream.next_in = NULL;
-    gzip_stream->zstream.avail_in = 0;
-    gzip_stream->zstream.next_out = NULL;
-    gzip_stream->zstream.avail_out = 0;
-    gzip_stream->buf_pos = 0;
-    gzip_stream->buf_size = 0;
-    gzip_stream->end_of_data = FALSE;
 
     zres = inflateInit2(&gzip_stream->zstream, 0x1f);
     if(zres != Z_OK) {
