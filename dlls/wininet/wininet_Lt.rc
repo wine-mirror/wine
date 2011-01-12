@@ -74,12 +74,3 @@ FONT 8, "MS Shell Dlg"
  PUSHBUTTON "Taip", IDOK, 40, 66, 56, 14, WS_GROUP | WS_TABSTOP | BS_DEFPUSHBUTTON
  PUSHBUTTON "Ne", IDCANCEL, 100, 66, 56, 14, WS_GROUP | WS_TABSTOP
 }
-
-STRINGTABLE
-{
-  IDS_LANCONNECTION "Vietinio tinklo ryšys"
-  IDS_CERT_CA_INVALID   "Liudijimas yra išduotas nežinomo arba nepatikimo leidėjo."
-  IDS_CERT_DATE_INVALID "Liudijimo data yra neteisinga."
-  IDS_CERT_CN_INVALID   "Liudijimo pavadinimas neatitinka svetainės."
-  IDS_CERT_ERRORS       "Yra mažiausiai viena nenustatyta saugumo problema su šiuo liudijimu."
-}

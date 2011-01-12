@@ -77,12 +77,3 @@ FONT 8, "MS Shell Dlg"
  PUSHBUTTON "כן", IDOK, 40, 66, 56, 14, WS_GROUP | WS_TABSTOP | BS_DEFPUSHBUTTON
  PUSHBUTTON "לא", IDCANCEL, 100, 66, 56, 14, WS_GROUP | WS_TABSTOP
 }
-
-STRINGTABLE
-{
-  IDS_LANCONNECTION "חיבור רשת מקומית"
-  IDS_CERT_CA_INVALID   "האישור הונפק על ידי מפיץ בלתי ידוע או בלתי מהימן."
-  IDS_CERT_DATE_INVALID "התאריך על האישור שגוי."
-  IDS_CERT_CN_INVALID   "השם על האישור אינו תואם את שם האתר."
-  IDS_CERT_ERRORS       "ישנה לפחות בעיית אבטחה אחת שלא צוינה עם אישור זה."
-}

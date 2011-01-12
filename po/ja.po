@@ -2395,6 +2395,28 @@ msgstr " min"
 msgid " sec"
 msgstr " sec"
 
+#: wininet.rc:25
+msgid "LAN Connection"
+msgstr "LAN 接続"
+
+#: wininet.rc:26
+msgid "The certificate is issued by an unknown or untrusted publisher."
+msgstr ""
+
+#: wininet.rc:27
+#, fuzzy
+msgid "The date on the certificate is invalid."
+msgstr "注意: この証明書の秘密鍵はエクスポートできません。"
+
+#: wininet.rc:28
+msgid "The name on the certificate does not match the site."
+msgstr ""
+
+#: wininet.rc:29
+msgid ""
+"There is at least one unspecified security problem with this certificate."
+msgstr ""
+
 #: winmm.rc:28
 msgid "The specified command was carried out."
 msgstr "指定されたコマンドを実行できませんでした。"

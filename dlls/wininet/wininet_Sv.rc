@@ -71,12 +71,3 @@ FONT 8, "MS Shell Dlg"
  PUSHBUTTON "Ja", IDOK, 40, 66, 56, 14, WS_GROUP | WS_TABSTOP | BS_DEFPUSHBUTTON
  PUSHBUTTON "Nej", IDCANCEL, 100, 66, 56, 14, WS_GROUP | WS_TABSTOP
 }
-
-STRINGTABLE
-{
-  IDS_LANCONNECTION "LAN-anslutning"
-  IDS_CERT_CA_INVALID   "Certifikatet är utfärdat av en okänd eller ej betrodd utgivare."
-  IDS_CERT_DATE_INVALID "Certifikatets datum är ogiltigt."
-  IDS_CERT_CN_INVALID   "Namnet på certifikatet matchar inte sitens namn."
-  IDS_CERT_ERRORS       "Certifikatet har minst ett ospecificerat säkerhetsproblem."
-}

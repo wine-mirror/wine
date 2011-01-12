@@ -2501,6 +2501,27 @@ msgstr " min"
 msgid " sec"
 msgstr " s"
 
+#: wininet.rc:25
+msgid "LAN Connection"
+msgstr "Connexion réseau local (LAN)"
+
+#: wininet.rc:26
+msgid "The certificate is issued by an unknown or untrusted publisher."
+msgstr "Le certificat est délivré par un éditeur inconnu ou non fiable."
+
+#: wininet.rc:27
+msgid "The date on the certificate is invalid."
+msgstr "La date sur le certificat est invalide."
+
+#: wininet.rc:28
+msgid "The name on the certificate does not match the site."
+msgstr "Le nom sur le certificat ne correspond pas au nom du site."
+
+#: wininet.rc:29
+msgid ""
+"There is at least one unspecified security problem with this certificate."
+msgstr "Ce certificat comporte au moins un problème de sécurité indéterminé."
+
 #: winmm.rc:28
 msgid "The specified command was carried out."
 msgstr "La commande spécifiée a été exécutée."

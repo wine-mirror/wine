@@ -15278,7 +15278,7 @@ wine_fn_config_dll wing.dll16 enable_win16
 wine_fn_config_dll wing32 enable_wing32
 wine_fn_config_dll winhttp enable_winhttp implib
 wine_fn_config_test dlls/winhttp/tests winhttp_test
-wine_fn_config_dll wininet enable_wininet implib
+wine_fn_config_dll wininet enable_wininet po,implib
 wine_fn_config_test dlls/wininet/tests wininet_test
 wine_fn_config_dll winmm enable_winmm po,implib
 wine_fn_config_test dlls/winmm/tests winmm_test

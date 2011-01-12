@@ -74,12 +74,3 @@ FONT 8, "MS Shell Dlg"
  PUSHBUTTON "Ja", IDOK, 40, 66, 56, 14, WS_GROUP | WS_TABSTOP | BS_DEFPUSHBUTTON
  PUSHBUTTON "Nein", IDCANCEL, 100, 66, 56, 14, WS_GROUP | WS_TABSTOP
 }
-
-STRINGTABLE
-{
-  IDS_LANCONNECTION "LAN Verbindung"
-  IDS_CERT_CA_INVALID   "Das Zertifikat wurde von einem unbekannten oder vertrauensunwürdigen Herausgeber ausgestellt."
-  IDS_CERT_DATE_INVALID "Das Datum des Zertifkats ist ungültig."
-  IDS_CERT_CN_INVALID   "Der Name auf dem Zertifikat entspricht nicht der Seite."
-  IDS_CERT_ERRORS       "Es gibt mindestens ein unbekanntes Sicherheitsproblem mit diesem Zertifikat."
-}

@@ -2396,6 +2396,27 @@ msgstr " דקות"
 msgid " sec"
 msgstr " שניות"
 
+#: wininet.rc:25
+msgid "LAN Connection"
+msgstr "חיבור רשת מקומית"
+
+#: wininet.rc:26
+msgid "The certificate is issued by an unknown or untrusted publisher."
+msgstr "האישור הונפק על ידי מפיץ בלתי ידוע או בלתי מהימן."
+
+#: wininet.rc:27
+msgid "The date on the certificate is invalid."
+msgstr "התאריך על האישור שגוי."
+
+#: wininet.rc:28
+msgid "The name on the certificate does not match the site."
+msgstr "השם על האישור אינו תואם את שם האתר."
+
+#: wininet.rc:29
+msgid ""
+"There is at least one unspecified security problem with this certificate."
+msgstr "ישנה לפחות בעיית אבטחה אחת שלא צוינה עם אישור זה."
+
 #: winmm.rc:28
 msgid "The specified command was carried out."
 msgstr ""

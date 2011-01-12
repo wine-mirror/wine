@@ -2431,6 +2431,27 @@ msgstr " min"
 msgid " sec"
 msgstr " sek"
 
+#: wininet.rc:25
+msgid "LAN Connection"
+msgstr "Vietinio tinklo ryšys"
+
+#: wininet.rc:26
+msgid "The certificate is issued by an unknown or untrusted publisher."
+msgstr "Liudijimas yra išduotas nežinomo arba nepatikimo leidėjo."
+
+#: wininet.rc:27
+msgid "The date on the certificate is invalid."
+msgstr "Liudijimo data yra neteisinga."
+
+#: wininet.rc:28
+msgid "The name on the certificate does not match the site."
+msgstr "Liudijimo pavadinimas neatitinka svetainės."
+
+#: wininet.rc:29
+msgid ""
+"There is at least one unspecified security problem with this certificate."
+msgstr "Yra mažiausiai viena nenustatyta saugumo problema su šiuo liudijimu."
+
 #: winmm.rc:28
 msgid "The specified command was carried out."
 msgstr "Nurodyta komanda buvo atlikta."
