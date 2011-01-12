@@ -2706,7 +2706,7 @@ todo_wine /* Wine uses Arial for all substitutions */
        !lstrcmpiA(buf, "MS Sans Serif"), /* win2k3 */
        "Got %s\n", buf);
     cs = GetTextCharset(hdc);
-    ok(cs == expected_cs, "expected %d, got %d\n", expected_cs, cs);
+    ok(cs == expected_cs || cs == ANSI_CHARSET, "expected %d, got %d\n", expected_cs, cs);
     DeleteObject(SelectObject(hdc, hfont));
 
     memset(&lf, 0, sizeof(lf));
@@ -2771,7 +2771,7 @@ todo_wine /* Wine uses Arial for all substitutions */
            !lstrcmpiA(buf, "MS Sans Serif"), /* win2k3 */
            "got %s for font %s\n", buf, font_subst[i].name);
         cs = GetTextCharset(hdc);
-        ok(cs == expected_cs, "expected %d, got %d for font %s\n", expected_cs, cs, font_subst[i].name);
+        ok(cs == expected_cs || cs == ANSI_CHARSET, "expected %d, got %d for font %s\n", expected_cs, cs, font_subst[i].name);
         DeleteObject(SelectObject(hdc, hfont));
     }
 
