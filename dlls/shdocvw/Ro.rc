@@ -34,27 +34,3 @@ FONT 8, "MS Shell Dlg"
     DEFPUSHBUTTON "&OK", IDOK, 35, 50, 50, 15
     PUSHBUTTON "&Renunță", IDCANCEL, 95, 50, 50, 15
 }
-
-IDR_BROWSE_MAIN_MENU MENU
-{
-    POPUP "&Fișier"
-    {
-        POPUP "&Nou"
-        {
-            MENUITEM "&Fereastră",                      ID_BROWSE_NEW_WINDOW
-        }
-        MENUITEM "&Deschidere...",                      ID_BROWSE_OPEN
-        MENUITEM "&Salvează",                           ID_BROWSE_SAVE
-        MENUITEM "S&alvare ca...",                      ID_BROWSE_SAVE_AS
-        MENUITEM SEPARATOR
-        MENUITEM "&Format tipărire...",                 ID_BROWSE_PRINT_FORMAT
-        MENUITEM "T&ipărire...",                        ID_BROWSE_PRINT
-        MENUITEM "Pre&vizualizare imprimare...",        ID_BROWSE_PRINT_PREVIEW
-        MENUITEM SEPARATOR
-        MENUITEM "&Proprietăți...",                     ID_BROWSE_PROPERTIES
-    }
-    POPUP "&Ajutor"
-    {
-        MENUITEM "&Despre Internet Explorer...",        ID_BROWSE_ABOUT
-    }
-}

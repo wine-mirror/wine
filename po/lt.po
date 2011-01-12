@@ -1541,27 +1541,32 @@ msgstr "Rodyti"
 msgid "Hide"
 msgstr "Slėpti"
 
-#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194
+#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
 msgid "Stop"
 msgstr "Stabdyti"
 
-#: hhctrl.rc:38
+#: hhctrl.rc:38 shdocvw.rc:66
 msgid "Refresh"
 msgstr "Atnaujinti"
 
-#: hhctrl.rc:39
+#: hhctrl.rc:39 shdocvw.rc:63
 msgid "Back"
 msgstr "Atgal"
 
-#: hhctrl.rc:40
+#: hhctrl.rc:40 shdocvw.rc:67
+#, fuzzy
 msgid "Home"
-msgstr "Į pradžią"
+msgstr ""
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"Į pradžią\n"
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"Pradžia"
 
 #: hhctrl.rc:41
 msgid "Sync"
 msgstr "Sinchronizuoti"
 
-#: hhctrl.rc:42 wordpad.rc:162
+#: hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
 msgid "Print"
 msgstr "Spausdinti"
 
@@ -1569,7 +1574,7 @@ msgstr "Spausdinti"
 msgid "Options"
 msgstr "Parinktys"
 
-#: hhctrl.rc:44
+#: hhctrl.rc:44 shdocvw.rc:64
 msgid "Forward"
 msgstr "Pirmyn"
 
@@ -2327,6 +2332,88 @@ msgstr "&w&bPuslapis &p"
 #: shdoclc.rc:31
 msgid "&u&b&d"
 msgstr "&u&b&d"
+
+#: shdocvw.rc:25 notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
+#: winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
+msgid "&File"
+msgstr "&Failas"
+
+#: shdocvw.rc:27
+msgid "&New"
+msgstr "&Naujas"
+
+#: shdocvw.rc:29 winefile.rc:118
+msgid "&Window"
+msgstr "&Langas"
+
+#: shdocvw.rc:31
+msgid "&Open..."
+msgstr "&Atverti..."
+
+#: shdocvw.rc:32
+msgid "&Save"
+msgstr "&Išsaugoti"
+
+#: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
+msgid "Save &as..."
+msgstr "Išsaugoti &kaip..."
+
+#: shdocvw.rc:35
+msgid "Print &format..."
+msgstr "Spaudinio &formatas..."
+
+#: shdocvw.rc:36
+msgid "Pr&int..."
+msgstr "S&pausdinti..."
+
+#: shdocvw.rc:37 wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "Spaudinio pe&ržiūra..."
+
+#: shdocvw.rc:39
+msgid "&Properties..."
+msgstr "&Savybės..."
+
+#: shdocvw.rc:40 taskmgr.rc:140
+msgid "&Close"
+msgstr "&Užverti"
+
+#: shdocvw.rc:42 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+msgid "&View"
+msgstr "&Rodymas"
+
+#: shdocvw.rc:44
+msgid "&Toolbars"
+msgstr "&Įrankių juosta"
+
+#: shdocvw.rc:46
+msgid "&Standard bar"
+msgstr "Į&prastinė juosta"
+
+#: shdocvw.rc:47
+msgid "&Address bar"
+msgstr "&Adreso juosta"
+
+#: shdocvw.rc:50
+msgid "&Favorites"
+msgstr "&Adresynas"
+
+#: shdocvw.rc:52
+msgid "&Add to Favorites..."
+msgstr "Į&rašyti į adresyną..."
+
+#: shdocvw.rc:55 notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130
+#: winhlp32.rc:60 wordpad.rc:91
+msgid "&Help"
+msgstr "&Žinynas"
+
+#: shdocvw.rc:57
+msgid "&About Internet Explorer..."
+msgstr "&Apie interneto naršyklę..."
+
+#: shdocvw.rc:73
+msgid "Address"
+msgstr "Adresas"
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
@@ -4026,11 +4113,6 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Atverti ištekliai: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
-#: winhlp32.rc:28 wordpad.rc:26
-msgid "&File"
-msgstr "&Failas"
-
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Naujas\tCtrl+N"
@@ -4042,10 +4124,6 @@ msgstr "&Atverti...\tCtrl+O"
 #: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
 msgstr "&Išsaugoti\tCtrl+S"
-
-#: notepad.rc:30 wordpad.rc:31
-msgid "Save &as..."
-msgstr "Išsaugoti &kaip..."
 
 #: notepad.rc:32 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
@@ -4110,11 +4188,6 @@ msgstr "Ieškoti ki&to\tF3"
 #: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
 msgstr "Pa&keisti...\tCtrl+H"
-
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
-#: wordpad.rc:91
-msgid "&Help"
-msgstr "&Žinynas"
 
 #: notepad.rc:59 progman.rc:54
 msgid "&Search..."
@@ -4633,10 +4706,6 @@ msgstr "S&lėpti, kai suskleista"
 msgid "&Show 16-bit tasks"
 msgstr "&Rodyti 16-bitų užduotis"
 
-#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
-msgid "&View"
-msgstr "&Rodymas"
-
 #: taskmgr.rc:54
 msgid "&Refresh Now"
 msgstr "&Atnaujinti dabar"
@@ -4744,10 +4813,6 @@ msgstr "&Eiti į procesą"
 #: taskmgr.rc:139
 msgid "&Restore"
 msgstr "&Atkurti"
-
-#: taskmgr.rc:140
-msgid "&Close"
-msgstr "&Užverti"
 
 #: taskmgr.rc:150
 msgid "&End Process"
@@ -5550,10 +5615,6 @@ msgstr "&Registravimas..."
 msgid "&Owner..."
 msgstr "&Savininkas..."
 
-#: winefile.rc:118
-msgid "&Window"
-msgstr "&Langas"
-
 #: winefile.rc:119
 msgid "New &Window"
 msgstr "Naujas &langas"
@@ -5841,10 +5902,6 @@ msgstr "Žinyno temos: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Naujas...\tCtrl+N"
-
-#: wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "Spaudinio pe&ržiūra..."
 
 #: wordpad.rc:35
 msgid "Pag&e setup..."

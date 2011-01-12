@@ -1622,19 +1622,29 @@ msgstr "Weergeven"
 msgid "Hide"
 msgstr "Verbergen"
 
-#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194
+#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
+#, fuzzy
 msgid "Stop"
-msgstr "Stop"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Stop\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Stoppen"
 
-#: hhctrl.rc:38
+#: hhctrl.rc:38 shdocvw.rc:66
+#, fuzzy
 msgid "Refresh"
-msgstr "Actualiseren"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Actualiseren\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Vernieuwen"
 
-#: hhctrl.rc:39
+#: hhctrl.rc:39 shdocvw.rc:63
 msgid "Back"
 msgstr "Terug"
 
-#: hhctrl.rc:40
+#: hhctrl.rc:40 shdocvw.rc:67
 msgid "Home"
 msgstr "Startpagina"
 
@@ -1642,9 +1652,14 @@ msgstr "Startpagina"
 msgid "Sync"
 msgstr "Synchroniseren"
 
-#: hhctrl.rc:42 wordpad.rc:162
+#: hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
+#, fuzzy
 msgid "Print"
-msgstr "Afdrukken"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Afdrukken\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Printen"
 
 #: hhctrl.rc:43 wordpad.rc:155
 #, fuzzy
@@ -1655,7 +1670,7 @@ msgstr ""
 "#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
 "Opties"
 
-#: hhctrl.rc:44
+#: hhctrl.rc:44 shdocvw.rc:64
 msgid "Forward"
 msgstr "Vooruit"
 
@@ -2405,6 +2420,93 @@ msgstr "&w&bPagina &p"
 #: shdoclc.rc:31
 msgid "&u&b&d"
 msgstr "&u&b&d"
+
+#: shdocvw.rc:25 notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
+#: winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
+msgid "&File"
+msgstr "&Bestand"
+
+#: shdocvw.rc:27
+msgid "&New"
+msgstr "&Nieuw"
+
+#: shdocvw.rc:29 winefile.rc:118
+msgid "&Window"
+msgstr "&Venster"
+
+#: shdocvw.rc:31
+msgid "&Open..."
+msgstr "&Openen..."
+
+#: shdocvw.rc:32
+msgid "&Save"
+msgstr "Op&slaan"
+
+#: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
+msgid "Save &as..."
+msgstr "Ops&laan als..."
+
+#: shdocvw.rc:35
+msgid "Print &format..."
+msgstr "Pa&gina-instellingen..."
+
+#: shdocvw.rc:36
+msgid "Pr&int..."
+msgstr "Af&drukken..."
+
+#: shdocvw.rc:37 wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "Afdruk&voorbeeld..."
+
+#: shdocvw.rc:39
+msgid "&Properties..."
+msgstr "&Eigenschappen..."
+
+#: shdocvw.rc:40 taskmgr.rc:140
+#, fuzzy
+msgid "&Close"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"&Sluiten\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"&Afsluiten"
+
+#: shdocvw.rc:42 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+msgid "&View"
+msgstr "Bee&ld"
+
+#: shdocvw.rc:44
+msgid "&Toolbars"
+msgstr "&Werkbalken"
+
+#: shdocvw.rc:46
+msgid "&Standard bar"
+msgstr "&Standaardbalk"
+
+#: shdocvw.rc:47
+msgid "&Address bar"
+msgstr "&Adresbalk"
+
+#: shdocvw.rc:50
+msgid "&Favorites"
+msgstr "&Favorieten"
+
+#: shdocvw.rc:52
+msgid "&Add to Favorites..."
+msgstr "&Toevoegen aan Favorieten..."
+
+#: shdocvw.rc:55 notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130
+#: winhlp32.rc:60 wordpad.rc:91
+msgid "&Help"
+msgstr "&Help"
+
+#: shdocvw.rc:57
+msgid "&About Internet Explorer..."
+msgstr "&Over Internet Explorer..."
+
+#: shdocvw.rc:73
+msgid "Address"
+msgstr "Adres"
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
@@ -4126,11 +4228,6 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Open resources: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
-#: winhlp32.rc:28 wordpad.rc:26
-msgid "&File"
-msgstr "&Bestand"
-
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Nieuw"
@@ -4147,10 +4244,6 @@ msgstr ""
 "O&pslaan\tCtrl+S\n"
 "#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
 "Op&slaan\tCtrl+S"
-
-#: notepad.rc:30 wordpad.rc:31
-msgid "Save &as..."
-msgstr "Ops&laan als..."
 
 #: notepad.rc:32 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
@@ -4230,11 +4323,6 @@ msgstr ""
 "&Vervangen...\tCtrl+H\n"
 "#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
 "Ve&rvangen...\tCtrl+H"
-
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
-#: wordpad.rc:91
-msgid "&Help"
-msgstr "&Help"
 
 #: notepad.rc:59 progman.rc:54
 msgid "&Search..."
@@ -4753,15 +4841,6 @@ msgstr "&Verbergen, indien geminimaliseerd"
 msgid "&Show 16-bit tasks"
 msgstr "&Toon 16-bit taken"
 
-#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
-#, fuzzy
-msgid "&View"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Beeld\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Bekijken"
-
 #: taskmgr.rc:54
 msgid "&Refresh Now"
 msgstr "Ververs &nu"
@@ -4869,10 +4948,6 @@ msgstr "&Ga naar proces"
 #: taskmgr.rc:139
 msgid "&Restore"
 msgstr "&Herstellen"
-
-#: taskmgr.rc:140
-msgid "&Close"
-msgstr "&Sluiten"
 
 #: taskmgr.rc:150
 msgid "&End Process"
@@ -5678,10 +5753,6 @@ msgstr "&Loggen..."
 msgid "&Owner..."
 msgstr "&Eigenaar..."
 
-#: winefile.rc:118
-msgid "&Window"
-msgstr "&Venster"
-
 #: winefile.rc:119
 msgid "New &Window"
 msgstr "&Nieuw venster"
@@ -5969,10 +6040,6 @@ msgstr "Help-onderwerpen: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Nieuw...\tCtrl+N"
-
-#: wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "Afdruk&voorbeeld..."
 
 #: wordpad.rc:35
 msgid "Pag&e setup..."

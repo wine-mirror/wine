@@ -1541,7 +1541,7 @@ msgstr "Megjelenítés"
 msgid "Hide"
 msgstr "Elrejtés"
 
-#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194
+#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
 #, fuzzy
 msgid "Stop"
 msgstr ""
@@ -1550,15 +1550,15 @@ msgstr ""
 "#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
 "Leállítás"
 
-#: hhctrl.rc:38
+#: hhctrl.rc:38 shdocvw.rc:66
 msgid "Refresh"
 msgstr "Frissítés"
 
-#: hhctrl.rc:39
+#: hhctrl.rc:39 shdocvw.rc:63
 msgid "Back"
 msgstr "Vissza"
 
-#: hhctrl.rc:40
+#: hhctrl.rc:40 shdocvw.rc:67
 msgid "Home"
 msgstr "Kezdőlap"
 
@@ -1566,7 +1566,7 @@ msgstr "Kezdőlap"
 msgid "Sync"
 msgstr "Szink."
 
-#: hhctrl.rc:42 wordpad.rc:162
+#: hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
 msgid "Print"
 msgstr "Nyomtatás"
 
@@ -1574,7 +1574,7 @@ msgstr "Nyomtatás"
 msgid "Options"
 msgstr "Opciók"
 
-#: hhctrl.rc:44
+#: hhctrl.rc:44 shdocvw.rc:64
 msgid "Forward"
 msgstr "Előre"
 
@@ -2357,6 +2357,122 @@ msgstr "&w&bOldal &p"
 #: shdoclc.rc:31
 msgid "&u&b&d"
 msgstr "&u&b&d"
+
+#: shdocvw.rc:25 notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
+#: winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
+msgid "&File"
+msgstr "&Fájl"
+
+#: shdocvw.rc:27
+#, fuzzy
+msgid "&New"
+msgstr "Ú&j..."
+
+#: shdocvw.rc:29 winefile.rc:118
+msgid "&Window"
+msgstr "&Ablakok"
+
+#: shdocvw.rc:31
+#, fuzzy
+msgid "&Open..."
+msgstr ""
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"&Megnyitás\n"
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"&Megnyitás..."
+
+#: shdocvw.rc:32
+msgid "&Save"
+msgstr ""
+
+#: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
+msgid "Save &as..."
+msgstr "Mentés má&sként..."
+
+#: shdocvw.rc:35
+#, fuzzy
+msgid "Print &format..."
+msgstr "Nyomtatás"
+
+#: shdocvw.rc:36
+#, fuzzy
+msgid "Pr&int..."
+msgstr "Nyomtatás"
+
+#: shdocvw.rc:37 wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "Print previe&w..."
+
+#: shdocvw.rc:39
+#, fuzzy
+msgid "&Properties..."
+msgstr ""
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"&Beállítások\n"
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"Tula&jdonságok"
+
+#: shdocvw.rc:40 taskmgr.rc:140
+msgid "&Close"
+msgstr ""
+
+#: shdocvw.rc:42 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+#, fuzzy
+msgid "&View"
+msgstr ""
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"&Nézet\n"
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"&View"
+
+#: shdocvw.rc:44
+#, fuzzy
+msgid "&Toolbars"
+msgstr ""
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"&Eszköztár\n"
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"&Toolbar"
+
+#: shdocvw.rc:46
+#, fuzzy
+msgid "&Standard bar"
+msgstr "&Statusbar"
+
+#: shdocvw.rc:47
+#, fuzzy
+msgid "&Address bar"
+msgstr "IP cím="
+
+#: shdocvw.rc:50
+#, fuzzy
+msgid "&Favorites"
+msgstr "Kedven&cek"
+
+#: shdocvw.rc:52
+#, fuzzy
+msgid "&Add to Favorites..."
+msgstr "Hozzáa&dás a kedvencekhez..."
+
+#: shdocvw.rc:55 notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130
+#: winhlp32.rc:60 wordpad.rc:91
+#, fuzzy
+msgid "&Help"
+msgstr ""
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"&Súgó\n"
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"&?"
+
+#: shdocvw.rc:57
+#, fuzzy
+msgid "&About Internet Explorer..."
+msgstr "Wine Internet Explorer"
+
+#: shdocvw.rc:73
+#, fuzzy
+msgid "Address"
+msgstr "IP cím="
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
@@ -3756,11 +3872,6 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
-#: winhlp32.rc:28 wordpad.rc:26
-msgid "&File"
-msgstr "&Fájl"
-
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "Ú&j\tCtrl+N"
@@ -3782,10 +3893,6 @@ msgstr ""
 "&Mentés\tCtrl+S\n"
 "#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
 "M&entés\tCtrl+S"
-
-#: notepad.rc:30 wordpad.rc:31
-msgid "Save &as..."
-msgstr "Mentés má&sként..."
 
 #: notepad.rc:32 wordpad.rc:33
 #, fuzzy
@@ -3870,16 +3977,6 @@ msgstr "Köve&tkező keresése\tF3"
 #: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
 msgstr "&Replace...\tCtrl+H"
-
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
-#: wordpad.rc:91
-#, fuzzy
-msgid "&Help"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Súgó\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&?"
 
 #: notepad.rc:59 progman.rc:54
 #, fuzzy
@@ -4347,15 +4444,6 @@ msgstr ""
 msgid "&Show 16-bit tasks"
 msgstr ""
 
-#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
-#, fuzzy
-msgid "&View"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Nézet\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&View"
-
 #: taskmgr.rc:54
 #, fuzzy
 msgid "&Refresh Now"
@@ -4468,10 +4556,6 @@ msgstr "&Ugrás a Képek-hez"
 
 #: taskmgr.rc:139
 msgid "&Restore"
-msgstr ""
-
-#: taskmgr.rc:140
-msgid "&Close"
 msgstr ""
 
 #: taskmgr.rc:150
@@ -5268,10 +5352,6 @@ msgstr "&Naplózás..."
 msgid "&Owner..."
 msgstr "&Tulajdonos..."
 
-#: winefile.rc:118
-msgid "&Window"
-msgstr "&Ablakok"
-
 #: winefile.rc:119
 msgid "New &Window"
 msgstr "Új a&blak"
@@ -5574,10 +5654,6 @@ msgstr ""
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Új...\tCtrl+N"
-
-#: wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "Print previe&w..."
 
 #: wordpad.rc:35
 msgid "Pag&e setup..."

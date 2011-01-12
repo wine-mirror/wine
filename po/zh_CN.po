@@ -1511,19 +1511,19 @@ msgstr "显示"
 msgid "Hide"
 msgstr "隐藏"
 
-#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194
+#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
 msgid "Stop"
 msgstr "停止"
 
-#: hhctrl.rc:38
+#: hhctrl.rc:38 shdocvw.rc:66
 msgid "Refresh"
 msgstr "刷新"
 
-#: hhctrl.rc:39
+#: hhctrl.rc:39 shdocvw.rc:63
 msgid "Back"
 msgstr "向后"
 
-#: hhctrl.rc:40
+#: hhctrl.rc:40 shdocvw.rc:67
 msgid "Home"
 msgstr "首页"
 
@@ -1531,7 +1531,7 @@ msgstr "首页"
 msgid "Sync"
 msgstr "同步"
 
-#: hhctrl.rc:42 wordpad.rc:162
+#: hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
 msgid "Print"
 msgstr "打印"
 
@@ -1539,7 +1539,7 @@ msgstr "打印"
 msgid "Options"
 msgstr "选项"
 
-#: hhctrl.rc:44
+#: hhctrl.rc:44 shdocvw.rc:64
 msgid "Forward"
 msgstr "向前"
 
@@ -2288,6 +2288,102 @@ msgstr "&w&bPage &p"
 #: shdoclc.rc:31
 msgid "&u&b&d"
 msgstr "&u&b&d"
+
+#: shdocvw.rc:25 notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
+#: winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
+msgid "&File"
+msgstr "文件(&F)"
+
+#: shdocvw.rc:27
+#, fuzzy
+msgid "&New"
+msgstr "新建(&N)..."
+
+#: shdocvw.rc:29 winefile.rc:118
+msgid "&Window"
+msgstr "窗口(&W)"
+
+#: shdocvw.rc:31
+#, fuzzy
+msgid "&Open..."
+msgstr "打开(&O)"
+
+#: shdocvw.rc:32
+msgid "&Save"
+msgstr ""
+
+#: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
+msgid "Save &as..."
+msgstr "另存为(&A)..."
+
+#: shdocvw.rc:35
+#, fuzzy
+msgid "Print &format..."
+msgstr "打印..."
+
+#: shdocvw.rc:36
+#, fuzzy
+msgid "Pr&int..."
+msgstr "打印..."
+
+#: shdocvw.rc:37 wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "打印预览(&W)..."
+
+#: shdocvw.rc:39
+#, fuzzy
+msgid "&Properties..."
+msgstr "属性(&P)"
+
+#: shdocvw.rc:40 taskmgr.rc:140
+msgid "&Close"
+msgstr "关闭(&C)"
+
+#: shdocvw.rc:42 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+msgid "&View"
+msgstr "视图(&V)"
+
+#: shdocvw.rc:44
+#, fuzzy
+msgid "&Toolbars"
+msgstr ""
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"工具条(&T)\n"
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"工具栏(&T)"
+
+#: shdocvw.rc:46
+#, fuzzy
+msgid "&Standard bar"
+msgstr "状态栏(&S)"
+
+#: shdocvw.rc:47
+msgid "&Address bar"
+msgstr ""
+
+#: shdocvw.rc:50
+#, fuzzy
+msgid "&Favorites"
+msgstr "最爱(&I)"
+
+#: shdocvw.rc:52
+#, fuzzy
+msgid "&Add to Favorites..."
+msgstr "添加到我的最爱(&F)"
+
+#: shdocvw.rc:55 notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130
+#: winhlp32.rc:60 wordpad.rc:91
+msgid "&Help"
+msgstr "帮助(&H)"
+
+#: shdocvw.rc:57
+#, fuzzy
+msgid "&About Internet Explorer..."
+msgstr "Wine Internet Explorer"
+
+#: shdocvw.rc:73
+msgid "Address"
+msgstr ""
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
@@ -3693,11 +3789,6 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
-#: winhlp32.rc:28 wordpad.rc:26
-msgid "&File"
-msgstr "文件(&F)"
-
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "新建(&N)\tCtrl+N"
@@ -3709,10 +3800,6 @@ msgstr "打开(&O)...\tCtrl+O"
 #: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
 msgstr "保存(&S)\tCtrl+S"
-
-#: notepad.rc:30 wordpad.rc:31
-msgid "Save &as..."
-msgstr "另存为(&A)..."
 
 #: notepad.rc:32 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
@@ -3787,11 +3874,6 @@ msgstr ""
 "替换...\tCtrl+H\n"
 "#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
 "替换(&R)...\tCtrl+H"
-
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
-#: wordpad.rc:91
-msgid "&Help"
-msgstr "帮助(&H)"
 
 #: notepad.rc:59 progman.rc:54
 msgid "&Search..."
@@ -4246,10 +4328,6 @@ msgstr "最小化时隐藏(&H)"
 msgid "&Show 16-bit tasks"
 msgstr "显示16位任务(&S)"
 
-#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
-msgid "&View"
-msgstr "视图(&V)"
-
 #: taskmgr.rc:54
 msgid "&Refresh Now"
 msgstr "刷新(&R)"
@@ -4362,10 +4440,6 @@ msgstr "转此进程(&G)"
 #: taskmgr.rc:139
 msgid "&Restore"
 msgstr "恢复(&R)"
-
-#: taskmgr.rc:140
-msgid "&Close"
-msgstr "关闭(&C)"
 
 #: taskmgr.rc:150
 msgid "&End Process"
@@ -5167,10 +5241,6 @@ msgstr "登录(&L)..."
 msgid "&Owner..."
 msgstr "所有者(&O)..."
 
-#: winefile.rc:118
-msgid "&Window"
-msgstr "窗口(&W)"
-
 #: winefile.rc:119
 msgid "New &Window"
 msgstr "新建(&W)"
@@ -5470,10 +5540,6 @@ msgstr "帮助主题："
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "新建(&N)...\tCtrl+N"
-
-#: wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "打印预览(&W)..."
 
 #: wordpad.rc:35
 msgid "Pag&e setup..."

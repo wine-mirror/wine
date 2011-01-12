@@ -1563,32 +1563,37 @@ msgstr "Afficher"
 msgid "Hide"
 msgstr "Cacher"
 
-#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194
-#, fuzzy
+#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
 msgid "Stop"
+msgstr "Arrêter"
+
+#: hhctrl.rc:38 shdocvw.rc:66
+#, fuzzy
+msgid "Refresh"
 msgstr ""
 "#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
-"Arrêter\n"
+"A&ctualiser\n"
 "#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
-"Arrêt"
+"Recharger"
 
-#: hhctrl.rc:38
-msgid "Refresh"
-msgstr "A&ctualiser"
-
-#: hhctrl.rc:39
+#: hhctrl.rc:39 shdocvw.rc:63
 msgid "Back"
 msgstr "Précédent"
 
-#: hhctrl.rc:40
+#: hhctrl.rc:40 shdocvw.rc:67
+#, fuzzy
 msgid "Home"
-msgstr "Sommaire"
+msgstr ""
+"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
+"Sommaire\n"
+"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
+"Accueil"
 
 #: hhctrl.rc:41
 msgid "Sync"
 msgstr "Synchroniser"
 
-#: hhctrl.rc:42 wordpad.rc:162
+#: hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
 msgid "Print"
 msgstr "Imprimer"
 
@@ -1596,7 +1601,7 @@ msgstr "Imprimer"
 msgid "Options"
 msgstr "Options"
 
-#: hhctrl.rc:44
+#: hhctrl.rc:44 shdocvw.rc:64
 msgid "Forward"
 msgstr "Suivant"
 
@@ -2372,6 +2377,113 @@ msgstr "&w&bPage &p"
 #: shdoclc.rc:31
 msgid "&u&b&d"
 msgstr "&u&b&d"
+
+#: shdocvw.rc:25 notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
+#: winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
+msgid "&File"
+msgstr "&Fichier"
+
+#: shdocvw.rc:27
+msgid "&New"
+msgstr "&Nouvelle"
+
+#: shdocvw.rc:29 winefile.rc:118
+#, fuzzy
+msgid "&Window"
+msgstr ""
+"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
+"Fe&nêtre\n"
+"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
+"&Fenêtre"
+
+#: shdocvw.rc:31
+msgid "&Open..."
+msgstr "&Ouvrir..."
+
+#: shdocvw.rc:32
+msgid "&Save"
+msgstr "&Enregistrer"
+
+#: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
+msgid "Save &as..."
+msgstr "Enregistrer &sous..."
+
+#: shdocvw.rc:35
+msgid "Print &format..."
+msgstr "&Format d'impression..."
+
+#: shdocvw.rc:36
+msgid "Pr&int..."
+msgstr "&Imprimer..."
+
+#: shdocvw.rc:37 wordpad.rc:34
+#, fuzzy
+msgid "Print previe&w..."
+msgstr ""
+"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
+"A&perçu avant impression...\n"
+"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
+"&Aperçu avant impression..."
+
+#: shdocvw.rc:39
+msgid "&Properties..."
+msgstr "&Propriétés..."
+
+#: shdocvw.rc:40 taskmgr.rc:140
+#, fuzzy
+msgid "&Close"
+msgstr ""
+"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
+"&Fermer\n"
+"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
+"&Quitter"
+
+#: shdocvw.rc:42 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+#, fuzzy
+msgid "&View"
+msgstr ""
+"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
+"&Affichage\n"
+"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
+"&Afficher"
+
+#: shdocvw.rc:44
+msgid "&Toolbars"
+msgstr "&Barres d'outils"
+
+#: shdocvw.rc:46
+msgid "&Standard bar"
+msgstr "Barre &standard"
+
+#: shdocvw.rc:47
+msgid "&Address bar"
+msgstr "Barre d'&adresse"
+
+#: shdocvw.rc:50
+msgid "&Favorites"
+msgstr "&Favoris"
+
+#: shdocvw.rc:52
+msgid "&Add to Favorites..."
+msgstr "&Ajouter aux favoris..."
+
+#: shdocvw.rc:55 notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130
+#: winhlp32.rc:60 wordpad.rc:91
+#, fuzzy
+msgid "&Help"
+msgstr ""
+"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
+"Aid&e\n"
+"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
+"A&ide"
+
+#: shdocvw.rc:57
+msgid "&About Internet Explorer..."
+msgstr "À &propos d'Internet Explorer..."
+
+#: shdocvw.rc:73
+msgid "Address"
+msgstr "Adresse"
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
@@ -4106,11 +4218,6 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Ressources ouvertes : %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
-#: winhlp32.rc:28 wordpad.rc:26
-msgid "&File"
-msgstr "&Fichier"
-
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Nouveau\tCtrl+N"
@@ -4122,10 +4229,6 @@ msgstr "&Ouvrir...\tCtrl+O"
 #: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
 msgstr "&Enregistrer\tCtrl+S"
-
-#: notepad.rc:30 wordpad.rc:31
-msgid "Save &as..."
-msgstr "Enregistrer &sous..."
 
 #: notepad.rc:32 wordpad.rc:33
 #, fuzzy
@@ -4210,11 +4313,6 @@ msgstr "&Suivant\tF3"
 #: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
 msgstr "&Remplacer...\tCtrl+H"
-
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
-#: wordpad.rc:91
-msgid "&Help"
-msgstr "Aid&e"
 
 #: notepad.rc:59 progman.rc:54
 msgid "&Search..."
@@ -4727,10 +4825,6 @@ msgstr "&Masquer l'icône réduite"
 msgid "&Show 16-bit tasks"
 msgstr "&Montrer les tâches 16 bits"
 
-#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
-msgid "&View"
-msgstr "&Affichage"
-
 #: taskmgr.rc:54
 msgid "&Refresh Now"
 msgstr "&Actualiser maintenant"
@@ -4843,10 +4937,6 @@ msgstr "&Suivre le processus"
 #: taskmgr.rc:139
 msgid "&Restore"
 msgstr "&Restaurer"
-
-#: taskmgr.rc:140
-msgid "&Close"
-msgstr "&Fermer"
 
 #: taskmgr.rc:150
 msgid "&End Process"
@@ -5660,10 +5750,6 @@ msgstr "&Journalisation..."
 msgid "&Owner..."
 msgstr "&Propriétaire..."
 
-#: winefile.rc:118
-msgid "&Window"
-msgstr "Fe&nêtre"
-
 #: winefile.rc:119
 msgid "New &Window"
 msgstr "Nouvelle &fenêtre"
@@ -5953,10 +6039,6 @@ msgstr "Rubriques d'aide : "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Nouveau...\tCtrl+N"
-
-#: wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "A&perçu avant impression..."
 
 #: wordpad.rc:35
 msgid "Pag&e setup..."

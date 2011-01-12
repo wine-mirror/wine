@@ -1535,19 +1535,19 @@ msgstr "Показать"
 msgid "Hide"
 msgstr "Спрятать"
 
-#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194
+#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
 msgid "Stop"
 msgstr "Остановить"
 
-#: hhctrl.rc:38
+#: hhctrl.rc:38 shdocvw.rc:66
 msgid "Refresh"
 msgstr "Обновить"
 
-#: hhctrl.rc:39
+#: hhctrl.rc:39 shdocvw.rc:63
 msgid "Back"
 msgstr "Назад"
 
-#: hhctrl.rc:40
+#: hhctrl.rc:40 shdocvw.rc:67
 msgid "Home"
 msgstr "В начало"
 
@@ -1555,7 +1555,7 @@ msgstr "В начало"
 msgid "Sync"
 msgstr "Синхронизировать"
 
-#: hhctrl.rc:42 wordpad.rc:162
+#: hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
 msgid "Print"
 msgstr "Печать"
 
@@ -1563,7 +1563,7 @@ msgstr "Печать"
 msgid "Options"
 msgstr "Настройки"
 
-#: hhctrl.rc:44
+#: hhctrl.rc:44 shdocvw.rc:64
 msgid "Forward"
 msgstr "Вперёд"
 
@@ -2340,6 +2340,106 @@ msgstr "&w&bСтраница &p"
 #: shdoclc.rc:31
 msgid "&u&b&d"
 msgstr "&u&b&d"
+
+#: shdocvw.rc:25 notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
+#: winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
+msgid "&File"
+msgstr "&Файл"
+
+#: shdocvw.rc:27
+#, fuzzy
+msgid "&New"
+msgstr "&Создать"
+
+#: shdocvw.rc:29 winefile.rc:118
+msgid "&Window"
+msgstr "&Окно"
+
+#: shdocvw.rc:31
+#, fuzzy
+msgid "&Open..."
+msgstr "&Открыть"
+
+#: shdocvw.rc:32
+msgid "&Save"
+msgstr ""
+
+#: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
+msgid "Save &as..."
+msgstr "Сохранить &как..."
+
+#: shdocvw.rc:35
+#, fuzzy
+msgid "Print &format..."
+msgstr "Печать..."
+
+#: shdocvw.rc:36
+#, fuzzy
+msgid "Pr&int..."
+msgstr "Печать..."
+
+#: shdocvw.rc:37 wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "Пред&варительный просмотр..."
+
+#: shdocvw.rc:39
+#, fuzzy
+msgid "&Properties..."
+msgstr ""
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"&Свойства\n"
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"Сво&йства"
+
+#: shdocvw.rc:40 taskmgr.rc:140
+msgid "&Close"
+msgstr "&Закрыть"
+
+#: shdocvw.rc:42 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+msgid "&View"
+msgstr "&Вид"
+
+#: shdocvw.rc:44
+#, fuzzy
+msgid "&Toolbars"
+msgstr ""
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"&Панель инструментов\n"
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"Панель &инструментов"
+
+#: shdocvw.rc:46
+#, fuzzy
+msgid "&Standard bar"
+msgstr "&Строка состояния"
+
+#: shdocvw.rc:47
+msgid "&Address bar"
+msgstr ""
+
+#: shdocvw.rc:50
+#, fuzzy
+msgid "&Favorites"
+msgstr "&Избранное"
+
+#: shdocvw.rc:52
+#, fuzzy
+msgid "&Add to Favorites..."
+msgstr "Добавить в &избранное"
+
+#: shdocvw.rc:55 notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130
+#: winhlp32.rc:60 wordpad.rc:91
+msgid "&Help"
+msgstr "&Справка"
+
+#: shdocvw.rc:57
+#, fuzzy
+msgid "&About Internet Explorer..."
+msgstr "Wine Internet Explorer"
+
+#: shdocvw.rc:73
+msgid "Address"
+msgstr ""
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
@@ -4037,11 +4137,6 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S         %S      Открытых ресурсов: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
-#: winhlp32.rc:28 wordpad.rc:26
-msgid "&File"
-msgstr "&Файл"
-
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "Созд&ать\tCtrl+N"
@@ -4053,10 +4148,6 @@ msgstr "&Открыть...\tCtrl+O"
 #: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
 msgstr "&Сохранить\tCtrl+S"
-
-#: notepad.rc:30 wordpad.rc:31
-msgid "Save &as..."
-msgstr "Сохранить &как..."
 
 #: notepad.rc:32 wordpad.rc:33
 #, fuzzy
@@ -4131,11 +4222,6 @@ msgstr "Найти &далее\tF3"
 #: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
 msgstr "&Заменить...\tCtrl+H"
-
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
-#: wordpad.rc:91
-msgid "&Help"
-msgstr "&Справка"
 
 #: notepad.rc:59 progman.rc:54
 msgid "&Search..."
@@ -4666,10 +4752,6 @@ msgstr "С&крывать свернутое"
 msgid "&Show 16-bit tasks"
 msgstr "П&оказывать 16-разрядные программы"
 
-#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
-msgid "&View"
-msgstr "&Вид"
-
 #: taskmgr.rc:54
 msgid "&Refresh Now"
 msgstr "&Обновить"
@@ -4782,10 +4864,6 @@ msgstr "&Перейти к процессам"
 #: taskmgr.rc:139
 msgid "&Restore"
 msgstr "&Восстановить"
-
-#: taskmgr.rc:140
-msgid "&Close"
-msgstr "&Закрыть"
 
 #: taskmgr.rc:150
 msgid "&End Process"
@@ -5598,10 +5676,6 @@ msgstr "&Протоколы..."
 msgid "&Owner..."
 msgstr "&Владелец..."
 
-#: winefile.rc:118
-msgid "&Window"
-msgstr "&Окно"
-
 #: winefile.rc:119
 msgid "New &Window"
 msgstr "Новое &окно"
@@ -5889,10 +5963,6 @@ msgstr "Содержание: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "Созд&ать...\tCtrl+N"
-
-#: wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "Пред&варительный просмотр..."
 
 #: wordpad.rc:35
 msgid "Pag&e setup..."

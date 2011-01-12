@@ -1516,19 +1516,19 @@ msgstr "Прикажи"
 msgid "Hide"
 msgstr "Сакриј"
 
-#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194
+#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
 msgid "Stop"
 msgstr "Заустави"
 
-#: hhctrl.rc:38
+#: hhctrl.rc:38 shdocvw.rc:66
 msgid "Refresh"
 msgstr "Освежи"
 
-#: hhctrl.rc:39
+#: hhctrl.rc:39 shdocvw.rc:63
 msgid "Back"
 msgstr "Назад"
 
-#: hhctrl.rc:40
+#: hhctrl.rc:40 shdocvw.rc:67
 msgid "Home"
 msgstr "Почетна"
 
@@ -1536,7 +1536,7 @@ msgstr "Почетна"
 msgid "Sync"
 msgstr "Усклади"
 
-#: hhctrl.rc:42 wordpad.rc:162
+#: hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
 msgid "Print"
 msgstr "Штампај"
 
@@ -1544,9 +1544,14 @@ msgstr "Штампај"
 msgid "Options"
 msgstr "Опције"
 
-#: hhctrl.rc:44
+#: hhctrl.rc:44 shdocvw.rc:64
+#, fuzzy
 msgid "Forward"
-msgstr "Проследи"
+msgstr ""
+"#-#-#-#-#  sr_RS@cyrillic.po (Wine)  #-#-#-#-#\n"
+"Проследи\n"
+"#-#-#-#-#  sr_RS@cyrillic.po (Wine)  #-#-#-#-#\n"
+"Напред"
 
 #: hhctrl.rc:45
 msgid "IDTB_NOTES"
@@ -2293,6 +2298,88 @@ msgstr "&w&bСтрана &p од &P"
 #: shdoclc.rc:31
 msgid "&u&b&d"
 msgstr "&u&b&d"
+
+#: shdocvw.rc:25 notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
+#: winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
+msgid "&File"
+msgstr "&Датотека"
+
+#: shdocvw.rc:27
+msgid "&New"
+msgstr "&Ново"
+
+#: shdocvw.rc:29 winefile.rc:118
+msgid "&Window"
+msgstr "&Прозор"
+
+#: shdocvw.rc:31
+msgid "&Open..."
+msgstr "&Отвори..."
+
+#: shdocvw.rc:32
+msgid "&Save"
+msgstr "&Сачувај"
+
+#: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
+msgid "Save &as..."
+msgstr "Сачувај &као..."
+
+#: shdocvw.rc:35
+msgid "Print &format..."
+msgstr "Формат &штампе..."
+
+#: shdocvw.rc:36
+msgid "Pr&int..."
+msgstr "&Штампај..."
+
+#: shdocvw.rc:37 wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "&Преглед штампе..."
+
+#: shdocvw.rc:39
+msgid "&Properties..."
+msgstr "&Својства..."
+
+#: shdocvw.rc:40 taskmgr.rc:140
+msgid "&Close"
+msgstr "&Затвори"
+
+#: shdocvw.rc:42 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+msgid "&View"
+msgstr "&Приказ"
+
+#: shdocvw.rc:44
+msgid "&Toolbars"
+msgstr "&Алатнице"
+
+#: shdocvw.rc:46
+msgid "&Standard bar"
+msgstr "&Стандардна трака"
+
+#: shdocvw.rc:47
+msgid "&Address bar"
+msgstr "&Трака за навигацију"
+
+#: shdocvw.rc:50
+msgid "&Favorites"
+msgstr "&Омиљено"
+
+#: shdocvw.rc:52
+msgid "&Add to Favorites..."
+msgstr "&Додај у омиљене..."
+
+#: shdocvw.rc:55 notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130
+#: winhlp32.rc:60 wordpad.rc:91
+msgid "&Help"
+msgstr "&Помоћ"
+
+#: shdocvw.rc:57
+msgid "&About Internet Explorer..."
+msgstr "&О Internet Explorer-у..."
+
+#: shdocvw.rc:73
+msgid "Address"
+msgstr "Адреса"
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
@@ -3688,11 +3775,6 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
-#: winhlp32.rc:28 wordpad.rc:26
-msgid "&File"
-msgstr "&Датотека"
-
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Ново\tCtrl+N"
@@ -3704,10 +3786,6 @@ msgstr "&Отвори...\tCtrl+O"
 #: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
 msgstr "&Сачувај\tCtrl+S"
-
-#: notepad.rc:30 wordpad.rc:31
-msgid "Save &as..."
-msgstr "Сачувај &као..."
 
 #: notepad.rc:32 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
@@ -3772,11 +3850,6 @@ msgstr "&Пронађи следеће\tF3"
 #: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
 msgstr "&Замени...\tCtrl+H"
-
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
-#: wordpad.rc:91
-msgid "&Help"
-msgstr "&Помоћ"
 
 #: notepad.rc:59 progman.rc:54
 msgid "&Search..."
@@ -4239,11 +4312,6 @@ msgstr ""
 msgid "&Show 16-bit tasks"
 msgstr ""
 
-#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
-#, fuzzy
-msgid "&View"
-msgstr "&Уређивање"
-
 #: taskmgr.rc:54
 #, fuzzy
 msgid "&Refresh Now"
@@ -4353,10 +4421,6 @@ msgstr "Пређи на &фотографије"
 
 #: taskmgr.rc:139
 msgid "&Restore"
-msgstr ""
-
-#: taskmgr.rc:140
-msgid "&Close"
 msgstr ""
 
 #: taskmgr.rc:150
@@ -5158,10 +5222,6 @@ msgstr ""
 msgid "&Owner..."
 msgstr ""
 
-#: winefile.rc:118
-msgid "&Window"
-msgstr ""
-
 #: winefile.rc:119
 #, fuzzy
 msgid "New &Window"
@@ -5472,11 +5532,6 @@ msgstr ""
 #, fuzzy
 msgid "&New...\tCtrl+N"
 msgstr "&Ново\tCtrl+N"
-
-#: wordpad.rc:34
-#, fuzzy
-msgid "Print previe&w..."
-msgstr "Штампај &слику..."
 
 #: wordpad.rc:35
 #, fuzzy

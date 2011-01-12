@@ -1529,19 +1529,19 @@ msgstr "Show"
 msgid "Hide"
 msgstr "Hide"
 
-#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194
+#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
 msgid "Stop"
 msgstr "Stop"
 
-#: hhctrl.rc:38
+#: hhctrl.rc:38 shdocvw.rc:66
 msgid "Refresh"
 msgstr "Refresh"
 
-#: hhctrl.rc:39
+#: hhctrl.rc:39 shdocvw.rc:63
 msgid "Back"
 msgstr "Back"
 
-#: hhctrl.rc:40
+#: hhctrl.rc:40 shdocvw.rc:67
 msgid "Home"
 msgstr "Home"
 
@@ -1549,7 +1549,7 @@ msgstr "Home"
 msgid "Sync"
 msgstr "Sync"
 
-#: hhctrl.rc:42 wordpad.rc:162
+#: hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
 msgid "Print"
 msgstr "Print"
 
@@ -1557,7 +1557,7 @@ msgstr "Print"
 msgid "Options"
 msgstr "Options"
 
-#: hhctrl.rc:44
+#: hhctrl.rc:44 shdocvw.rc:64
 msgid "Forward"
 msgstr "Forward"
 
@@ -2305,6 +2305,88 @@ msgstr "&w&bPage &p"
 #: shdoclc.rc:31
 msgid "&u&b&d"
 msgstr "&u&b&d"
+
+#: shdocvw.rc:25 notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
+#: winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
+msgid "&File"
+msgstr "&File"
+
+#: shdocvw.rc:27
+msgid "&New"
+msgstr "&New"
+
+#: shdocvw.rc:29 winefile.rc:118
+msgid "&Window"
+msgstr "&Window"
+
+#: shdocvw.rc:31
+msgid "&Open..."
+msgstr "&Open..."
+
+#: shdocvw.rc:32
+msgid "&Save"
+msgstr "&Save"
+
+#: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
+msgid "Save &as..."
+msgstr "Save &as..."
+
+#: shdocvw.rc:35
+msgid "Print &format..."
+msgstr "Print &format..."
+
+#: shdocvw.rc:36
+msgid "Pr&int..."
+msgstr "Pr&int..."
+
+#: shdocvw.rc:37 wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "Print previe&w..."
+
+#: shdocvw.rc:39
+msgid "&Properties..."
+msgstr "&Properties..."
+
+#: shdocvw.rc:40 taskmgr.rc:140
+msgid "&Close"
+msgstr "&Close"
+
+#: shdocvw.rc:42 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+msgid "&View"
+msgstr "&View"
+
+#: shdocvw.rc:44
+msgid "&Toolbars"
+msgstr "&Toolbars"
+
+#: shdocvw.rc:46
+msgid "&Standard bar"
+msgstr "&Standard bar"
+
+#: shdocvw.rc:47
+msgid "&Address bar"
+msgstr "&Address bar"
+
+#: shdocvw.rc:50
+msgid "&Favorites"
+msgstr "&Favorites"
+
+#: shdocvw.rc:52
+msgid "&Add to Favorites..."
+msgstr "&Add to Favorites..."
+
+#: shdocvw.rc:55 notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130
+#: winhlp32.rc:60 wordpad.rc:91
+msgid "&Help"
+msgstr "&Help"
+
+#: shdocvw.rc:57
+msgid "&About Internet Explorer..."
+msgstr "&About Internet Explorer..."
+
+#: shdocvw.rc:73
+msgid "Address"
+msgstr "Address"
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
@@ -3990,11 +4072,6 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Open resources: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
-#: winhlp32.rc:28 wordpad.rc:26
-msgid "&File"
-msgstr "&File"
-
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&New\tCtrl+N"
@@ -4006,10 +4083,6 @@ msgstr "&Open...\tCtrl+O"
 #: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
 msgstr "&Save\tCtrl+S"
-
-#: notepad.rc:30 wordpad.rc:31
-msgid "Save &as..."
-msgstr "Save &as..."
 
 #: notepad.rc:32 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
@@ -4074,11 +4147,6 @@ msgstr "&Search next\tF3"
 #: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
 msgstr "&Replace...\tCtrl+H"
-
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
-#: wordpad.rc:91
-msgid "&Help"
-msgstr "&Help"
 
 #: notepad.rc:59 progman.rc:54
 msgid "&Search..."
@@ -4574,10 +4642,6 @@ msgstr "&Hide When Minimized"
 msgid "&Show 16-bit tasks"
 msgstr "&Show 16-bit tasks"
 
-#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
-msgid "&View"
-msgstr "&View"
-
 #: taskmgr.rc:54
 msgid "&Refresh Now"
 msgstr "&Refresh Now"
@@ -4685,10 +4749,6 @@ msgstr "&Go To Process"
 #: taskmgr.rc:139
 msgid "&Restore"
 msgstr "&Restore"
-
-#: taskmgr.rc:140
-msgid "&Close"
-msgstr "&Close"
 
 #: taskmgr.rc:150
 msgid "&End Process"
@@ -5489,10 +5549,6 @@ msgstr "&Logging..."
 msgid "&Owner..."
 msgstr "&Owner..."
 
-#: winefile.rc:118
-msgid "&Window"
-msgstr "&Window"
-
 #: winefile.rc:119
 msgid "New &Window"
 msgstr "New &Window"
@@ -5780,10 +5836,6 @@ msgstr "Help topics: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&New...\tCtrl+N"
-
-#: wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "Print previe&w..."
 
 #: wordpad.rc:35
 msgid "Pag&e setup..."

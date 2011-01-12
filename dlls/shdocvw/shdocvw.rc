@@ -16,6 +16,65 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "resource.h"
+
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+IDR_BROWSE_MAIN_MENU MENU
+{
+    POPUP "&File"
+    {
+        POPUP "&New"
+        {
+            MENUITEM "&Window",                 ID_BROWSE_NEW_WINDOW
+        }
+        MENUITEM "&Open...",                    ID_BROWSE_OPEN
+        MENUITEM "&Save",                       ID_BROWSE_SAVE
+        MENUITEM "Save &as...",                 ID_BROWSE_SAVE_AS
+        MENUITEM SEPARATOR
+        MENUITEM "Print &format...",            ID_BROWSE_PRINT_FORMAT
+        MENUITEM "Pr&int...",                   ID_BROWSE_PRINT
+        MENUITEM "Print previe&w...",           ID_BROWSE_PRINT_PREVIEW
+        MENUITEM SEPARATOR
+        MENUITEM "&Properties...",              ID_BROWSE_PROPERTIES
+        MENUITEM "&Close",                      ID_BROWSE_QUIT
+    }
+    POPUP "&View"
+    {
+        POPUP "&Toolbars"
+        {
+            MENUITEM "&Standard bar",           ID_BROWSE_BAR_STD
+            MENUITEM "&Address bar",            ID_BROWSE_BAR_ADDR
+        }
+    }
+    POPUP "&Favorites"
+    {
+        MENUITEM "&Add to Favorites...",        ID_BROWSE_ADDFAV
+        MENUITEM SEPARATOR
+    }
+    POPUP "&Help"
+    {
+        MENUITEM "&About Internet Explorer...", ID_BROWSE_ABOUT
+    }
+}
+
+STRINGTABLE
+{
+    IDS_TB_BACK             "Back"
+    IDS_TB_FORWARD          "Forward"
+    IDS_TB_STOP             "Stop"
+    IDS_TB_REFRESH          "Refresh"
+    IDS_TB_HOME             "Home"
+    IDS_TB_PRINT            "Print"
+}
+
+STRINGTABLE
+{
+    IDS_ADDRESS             "Address"
+}
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
 #define WINE_FILEDESCRIPTION_STR "Wine core dll"
 #define WINE_FILENAME_STR "shdocvw.dll"
 #define WINE_FILEVERSION 6,0,2900,2180
@@ -25,8 +84,6 @@
 #define WINE_EXTRAVALUES VALUE "OLESelfRegister",""
 
 #include "wine/wine_common_ver.rc"
-
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 /* @makedep: shdocvw_v1.tlb */
 1 TYPELIB shdocvw_v1.tlb

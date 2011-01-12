@@ -1564,19 +1564,24 @@ msgstr "Visa"
 msgid "Hide"
 msgstr "Dölj"
 
-#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194
+#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
+#, fuzzy
 msgid "Stop"
-msgstr "Stoppa"
+msgstr ""
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"Stoppa\n"
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"Stopp"
 
-#: hhctrl.rc:38
+#: hhctrl.rc:38 shdocvw.rc:66
 msgid "Refresh"
 msgstr "Uppdatera"
 
-#: hhctrl.rc:39
+#: hhctrl.rc:39 shdocvw.rc:63
 msgid "Back"
 msgstr "Bakåt"
 
-#: hhctrl.rc:40
+#: hhctrl.rc:40 shdocvw.rc:67
 msgid "Home"
 msgstr "Hem"
 
@@ -1584,7 +1589,7 @@ msgstr "Hem"
 msgid "Sync"
 msgstr "Synkronisera"
 
-#: hhctrl.rc:42 wordpad.rc:162
+#: hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
 msgid "Print"
 msgstr "Skriv ut"
 
@@ -1592,7 +1597,7 @@ msgstr "Skriv ut"
 msgid "Options"
 msgstr "Alternativ"
 
-#: hhctrl.rc:44
+#: hhctrl.rc:44 shdocvw.rc:64
 msgid "Forward"
 msgstr "Framåt"
 
@@ -2362,6 +2367,103 @@ msgstr "&w&bSida &p"
 #: shdoclc.rc:31
 msgid "&u&b&d"
 msgstr "&u&b&d"
+
+#: shdocvw.rc:25 notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
+#: winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
+msgid "&File"
+msgstr "&Arkiv"
+
+#: shdocvw.rc:27
+msgid "&New"
+msgstr "&Nytt"
+
+#: shdocvw.rc:29 winefile.rc:118
+msgid "&Window"
+msgstr "&Fönster"
+
+#: shdocvw.rc:31
+msgid "&Open..."
+msgstr "&Öppna..."
+
+#: shdocvw.rc:32
+msgid "&Save"
+msgstr "&Spara"
+
+#: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
+#, fuzzy
+msgid "Save &as..."
+msgstr ""
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"Spara s&om...\n"
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"S&para som..."
+
+#: shdocvw.rc:35
+msgid "Print &format..."
+msgstr "U&tskriftsformat..."
+
+#: shdocvw.rc:36
+msgid "Pr&int..."
+msgstr "Skriv &ut..."
+
+#: shdocvw.rc:37 wordpad.rc:34
+#, fuzzy
+msgid "Print previe&w..."
+msgstr ""
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"&Förhandsgranskning...\n"
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"&Förhandsgranska..."
+
+#: shdocvw.rc:39
+msgid "&Properties..."
+msgstr "&Egenskaper..."
+
+#: shdocvw.rc:40 taskmgr.rc:140
+#, fuzzy
+msgid "&Close"
+msgstr ""
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"&Stäng\n"
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"Stä&ng"
+
+#: shdocvw.rc:42 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+msgid "&View"
+msgstr "&Visa"
+
+#: shdocvw.rc:44
+msgid "&Toolbars"
+msgstr "Verktygs&fält"
+
+#: shdocvw.rc:46
+msgid "&Standard bar"
+msgstr "&Standardfält"
+
+#: shdocvw.rc:47
+msgid "&Address bar"
+msgstr "&Adressfält"
+
+#: shdocvw.rc:50
+msgid "&Favorites"
+msgstr "&Favoriter"
+
+#: shdocvw.rc:52
+msgid "&Add to Favorites..."
+msgstr "&Lägg till favoriter..."
+
+#: shdocvw.rc:55 notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130
+#: winhlp32.rc:60 wordpad.rc:91
+msgid "&Help"
+msgstr "&Hjälp"
+
+#: shdocvw.rc:57
+msgid "&About Internet Explorer..."
+msgstr "&Om Internet Explorer..."
+
+#: shdocvw.rc:73
+msgid "Address"
+msgstr "Adress"
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
@@ -4054,11 +4156,6 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Öppna resurser: %lu\n"
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
-#: winhlp32.rc:28 wordpad.rc:26
-msgid "&File"
-msgstr "&Arkiv"
-
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Ny\tCtrl+N"
@@ -4075,10 +4172,6 @@ msgstr ""
 #: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
 msgstr "&Spara\tCtrl+S"
-
-#: notepad.rc:30 wordpad.rc:31
-msgid "Save &as..."
-msgstr "Spara s&om..."
 
 #: notepad.rc:32 wordpad.rc:33
 #, fuzzy
@@ -4153,11 +4246,6 @@ msgstr "&Sök nästa\tF3"
 #: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
 msgstr "&Ersätt...\tCtrl+H"
-
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
-#: wordpad.rc:91
-msgid "&Help"
-msgstr "&Hjälp"
 
 #: notepad.rc:59 progman.rc:54
 msgid "&Search..."
@@ -4680,10 +4768,6 @@ msgstr "&Dölj vid minimering"
 msgid "&Show 16-bit tasks"
 msgstr "&Visa 16-bitarsaktiviteter"
 
-#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
-msgid "&View"
-msgstr "&Visa"
-
 #: taskmgr.rc:54
 msgid "&Refresh Now"
 msgstr "Upp&datera nu"
@@ -4791,10 +4875,6 @@ msgstr "&Gå till process"
 #: taskmgr.rc:139
 msgid "&Restore"
 msgstr "&Återställ"
-
-#: taskmgr.rc:140
-msgid "&Close"
-msgstr "&Stäng"
 
 #: taskmgr.rc:150
 msgid "&End Process"
@@ -5599,10 +5679,6 @@ msgstr "&Loggning..."
 msgid "&Owner..."
 msgstr "&Ägare..."
 
-#: winefile.rc:118
-msgid "&Window"
-msgstr "&Fönster"
-
 #: winefile.rc:119
 msgid "New &Window"
 msgstr "Nytt &fönster"
@@ -5890,10 +5966,6 @@ msgstr "Hjälprubriker: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Nytt...\tCtrl+N"
-
-#: wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "&Förhandsgranskning..."
 
 #: wordpad.rc:35
 msgid "Pag&e setup..."

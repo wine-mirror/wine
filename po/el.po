@@ -1490,19 +1490,19 @@ msgstr "Εμφάνιση"
 msgid "Hide"
 msgstr "Απόκρυψη"
 
-#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194
+#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
 msgid "Stop"
 msgstr "Τερματισμός"
 
-#: hhctrl.rc:38
+#: hhctrl.rc:38 shdocvw.rc:66
 msgid "Refresh"
 msgstr "Ανανέωση"
 
-#: hhctrl.rc:39
+#: hhctrl.rc:39 shdocvw.rc:63
 msgid "Back"
 msgstr "Πίσω"
 
-#: hhctrl.rc:40
+#: hhctrl.rc:40 shdocvw.rc:67
 msgid "Home"
 msgstr "Home"
 
@@ -1510,7 +1510,7 @@ msgstr "Home"
 msgid "Sync"
 msgstr "Sync"
 
-#: hhctrl.rc:42 wordpad.rc:162
+#: hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
 msgid "Print"
 msgstr "Εκτύπωση"
 
@@ -1518,7 +1518,7 @@ msgstr "Εκτύπωση"
 msgid "Options"
 msgstr "Επιλογές"
 
-#: hhctrl.rc:44
+#: hhctrl.rc:44 shdocvw.rc:64
 msgid "Forward"
 msgstr "Forward"
 
@@ -2238,6 +2238,94 @@ msgstr ""
 
 #: shdoclc.rc:31
 msgid "&u&b&d"
+msgstr ""
+
+#: shdocvw.rc:25 notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
+#: winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
+msgid "&File"
+msgstr ""
+
+#: shdocvw.rc:27
+msgid "&New"
+msgstr ""
+
+#: shdocvw.rc:29 winefile.rc:118
+msgid "&Window"
+msgstr ""
+
+#: shdocvw.rc:31
+msgid "&Open..."
+msgstr ""
+
+#: shdocvw.rc:32
+msgid "&Save"
+msgstr ""
+
+#: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
+msgid "Save &as..."
+msgstr ""
+
+#: shdocvw.rc:35
+#, fuzzy
+msgid "Print &format..."
+msgstr "Εκτύπωση"
+
+#: shdocvw.rc:36
+#, fuzzy
+msgid "Pr&int..."
+msgstr "Εκτύπωση"
+
+#: shdocvw.rc:37 wordpad.rc:34
+#, fuzzy
+msgid "Print previe&w..."
+msgstr "Εκτύπωση"
+
+#: shdocvw.rc:39
+#, fuzzy
+msgid "&Properties..."
+msgstr "Επιλογές"
+
+#: shdocvw.rc:40 taskmgr.rc:140
+msgid "&Close"
+msgstr ""
+
+#: shdocvw.rc:42 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+msgid "&View"
+msgstr ""
+
+#: shdocvw.rc:44
+msgid "&Toolbars"
+msgstr ""
+
+#: shdocvw.rc:46
+msgid "&Standard bar"
+msgstr ""
+
+#: shdocvw.rc:47
+msgid "&Address bar"
+msgstr ""
+
+#: shdocvw.rc:50
+#, fuzzy
+msgid "&Favorites"
+msgstr "Α&γαπημένα"
+
+#: shdocvw.rc:52
+#, fuzzy
+msgid "&Add to Favorites..."
+msgstr "Α&γαπημένα"
+
+#: shdocvw.rc:55 notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130
+#: winhlp32.rc:60 wordpad.rc:91
+msgid "&Help"
+msgstr ""
+
+#: shdocvw.rc:57
+msgid "&About Internet Explorer..."
+msgstr ""
+
+#: shdocvw.rc:73
+msgid "Address"
 msgstr ""
 
 #: winmm.rc:28
@@ -3635,11 +3723,6 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
-#: notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25
-#: winhlp32.rc:28 wordpad.rc:26
-msgid "&File"
-msgstr ""
-
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr ""
@@ -3650,10 +3733,6 @@ msgstr ""
 
 #: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
-msgstr ""
-
-#: notepad.rc:30 wordpad.rc:31
-msgid "Save &as..."
 msgstr ""
 
 #: notepad.rc:32 wordpad.rc:33
@@ -3719,11 +3798,6 @@ msgstr "&Αναζήτηση"
 
 #: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
-msgstr ""
-
-#: notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60
-#: wordpad.rc:91
-msgid "&Help"
 msgstr ""
 
 #: notepad.rc:59 progman.rc:54
@@ -4155,10 +4229,6 @@ msgstr ""
 msgid "&Show 16-bit tasks"
 msgstr ""
 
-#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
-msgid "&View"
-msgstr ""
-
 #: taskmgr.rc:54
 #, fuzzy
 msgid "&Refresh Now"
@@ -4266,10 +4336,6 @@ msgstr ""
 
 #: taskmgr.rc:139
 msgid "&Restore"
-msgstr ""
-
-#: taskmgr.rc:140
-msgid "&Close"
 msgstr ""
 
 #: taskmgr.rc:150
@@ -5048,10 +5114,6 @@ msgstr ""
 msgid "&Owner..."
 msgstr ""
 
-#: winefile.rc:118
-msgid "&Window"
-msgstr ""
-
 #: winefile.rc:119
 msgid "New &Window"
 msgstr ""
@@ -5344,11 +5406,6 @@ msgstr ""
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr ""
-
-#: wordpad.rc:34
-#, fuzzy
-msgid "Print previe&w..."
-msgstr "Εκτύπωση"
 
 #: wordpad.rc:35
 msgid "Pag&e setup..."
