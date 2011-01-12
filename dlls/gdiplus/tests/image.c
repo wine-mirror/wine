@@ -1568,7 +1568,7 @@ static void test_palette(void)
     expect(0xff000000, color);
 
     stat = GdipBitmapSetPixel(bitmap, 0, 1, 0xffffffff);
-    todo_wine ok((stat == Ok) ||
+    ok((stat == Ok) ||
        broken(stat == InvalidParameter) /* pre-win7 */, "stat=%.8x\n", stat);
 
     if (stat == Ok)
@@ -1601,7 +1601,7 @@ static void test_palette(void)
     expect(0xff000000, color);
 
     stat = GdipBitmapSetPixel(bitmap, 0, 1, 0xffff00ff);
-    todo_wine ok((stat == Ok) ||
+    ok((stat == Ok) ||
        broken(stat == InvalidParameter) /* pre-win7 */, "stat=%.8x\n", stat);
 
     if (stat == Ok)
@@ -1634,7 +1634,7 @@ static void test_palette(void)
     expect(0xff000000, color);
 
     stat = GdipBitmapSetPixel(bitmap, 0, 1, 0xffcccccc);
-    todo_wine ok((stat == Ok) ||
+    ok((stat == Ok) ||
        broken(stat == InvalidParameter) /* pre-win7 */, "stat=%.8x\n", stat);
 
     if (stat == Ok)
