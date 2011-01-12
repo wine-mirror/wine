@@ -839,7 +839,6 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR ico
     int numEntries;
     struct {
         int index;
-        int maxPixels;
         int maxBits;
     } best[ICNS_SLOTS];
     int indexes[ICNS_SLOTS];
@@ -857,7 +856,6 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR ico
     for (i = 0; i < ICNS_SLOTS; i++)
     {
         best[i].index = -1;
-        best[i].maxPixels = 0;
         best[i].maxBits = 0;
     }
     for (i = 0; i < numEntries; i++)
@@ -872,11 +870,9 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR ico
         slot = size_to_slot(width);
         if (slot < 0)
             continue;
-        if (iconDirEntries[i].wBitCount >= best[slot].maxBits &&
-            (height * width) >= best[slot].maxPixels)
+        if (iconDirEntries[i].wBitCount >= best[slot].maxBits)
         {
             best[slot].index = i;
-            best[slot].maxPixels = height * width;
             best[slot].maxBits = iconDirEntries[i].wBitCount;
         }
     }
