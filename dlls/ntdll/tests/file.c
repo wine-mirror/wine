@@ -816,6 +816,46 @@ static void read_file_test(void)
     CloseHandle( event );
 }
 
+static void append_file_test(void)
+{
+    const char text[] = "foobar";
+    HANDLE handle;
+    NTSTATUS status;
+    IO_STATUS_BLOCK iosb;
+    DWORD written;
+    char buffer[128];
+
+    GetTempFileNameA( ".", "foo", 0, buffer );
+    /* It is possible to open a file with only FILE_APPEND_DATA access flags.
+       It matches the O_WRONLY|O_APPEND open() posix behavior */
+    handle = CreateFileA(buffer, FILE_APPEND_DATA, 0, NULL, CREATE_ALWAYS,
+                         FILE_FLAG_DELETE_ON_CLOSE, 0);
+    ok( handle != INVALID_HANDLE_VALUE, "Failed to create a temp file in FILE_APPEND_DATA mode.\n" );
+    if(handle == INVALID_HANDLE_VALUE)
+    {
+        skip("Couldn't create a temporary file, skipping FILE_APPEND_DATA test\n");
+        return;
+    }
+
+    iosb.Status = STATUS_PENDING;
+    iosb.Information = 0;
+
+    status = NtWriteFile(handle, NULL, NULL, NULL, &iosb,
+                         text, sizeof(text), NULL, NULL);
+
+    if (status == STATUS_PENDING)
+    {
+        WaitForSingleObject( handle, INFINITE );
+        status = iosb.Status;
+    }
+    written = iosb.Information;
+
+    todo_wine
+    ok(status == STATUS_SUCCESS && written == sizeof(text), "FILE_APPEND_DATA NtWriteFile failed\n");
+
+    CloseHandle(handle);
+}
+
 static void nt_mailslot_test(void)
 {
     HANDLE hslot;
@@ -1555,6 +1595,7 @@ START_TEST(file)
     open_file_test();
     delete_file_test();
     read_file_test();
+    append_file_test();
     nt_mailslot_test();
     test_iocompletion();
     test_file_basic_information();
