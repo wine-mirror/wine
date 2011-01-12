@@ -258,11 +258,11 @@ static Uri *get_uri_obj(IUri *uri)
 }
 
 static inline BOOL is_alpha(WCHAR val) {
-	return ((val >= 'a' && val <= 'z') || (val >= 'A' && val <= 'Z'));
+    return ((val >= 'a' && val <= 'z') || (val >= 'A' && val <= 'Z'));
 }
 
 static inline BOOL is_num(WCHAR val) {
-	return (val >= '0' && val <= '9');
+    return (val >= '0' && val <= '9');
 }
 
 static inline BOOL is_drive_path(const WCHAR *str) {
@@ -614,7 +614,7 @@ static const WCHAR *str_last_of(const WCHAR *str, const WCHAR *end, WCHAR ch) {
  * a valid domain name it will assign 'domain_start' the offset
  * into 'host' where the domain name starts.
  *
- * It's implied that if a domain name its range is implied to be
+ * It's implied that if there is a domain name its range is:
  * [host+domain_start, host+host_len).
  */
 static void find_domain_name(const WCHAR *host, DWORD host_len,
@@ -809,12 +809,12 @@ static INT find_file_extension(const WCHAR *path, DWORD path_len) {
  *
  * NOTES:
  *  Windows will expand an elision if the elision only represents 1 h16
- *  component of the URI.
+ *  component of the address.
  *
  *  Ex: [1::2:3:4:5:6:7] -> [1:0:2:3:4:5:6:7]
  *
  *  If the IPv6 address contains an IPv4 address, the IPv4 address is also
- *  considered for being included as part of an elision if all it's components
+ *  considered for being included as part of an elision if all its components
  *  are zeros.
  *
  *  Ex: [1:2:3:4:5:6:0.0.0.0] -> [1:2:3:4:5:6::]
@@ -987,7 +987,7 @@ static USHORT h16tous(h16 component) {
     return ret;
 }
 
-/* Converts an IPv6 address into it's 128 bits (16 bytes) numerical value.
+/* Converts an IPv6 address into its 128 bits (16 bytes) numerical value.
  *
  * This function assumes that the ipv6_address has already been validated.
  */
@@ -998,7 +998,7 @@ static BOOL ipv6_to_number(const ipv6_address *address, USHORT number[8]) {
     for(i = 0; i < address->h16_count; ++i) {
         if(address->elision) {
             if(address->components[i].str > address->elision && !already_passed_elision) {
-                /* Means we just passed the elision and need to add it's values to
+                /* Means we just passed the elision and need to add its values to
                  * 'number' before we do anything else.
                  */
                 DWORD j = 0;
