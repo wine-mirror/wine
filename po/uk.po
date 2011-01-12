@@ -1770,6 +1770,10 @@ msgstr "Неможливо відіслати пошту: не встановл�
 msgid "Send Mail"
 msgstr "Відсилання пошти"
 
+#: mpr.rc:27
+msgid "Entire Network"
+msgstr "Вся Мережа"
+
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "

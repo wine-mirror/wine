@@ -1773,6 +1773,10 @@ msgstr "Nepavyko išsiųsti laiškų, nes neturite įdiegto MAPI pašto kliento.
 msgid "Send Mail"
 msgstr "Laiškų siuntimas"
 
+#: mpr.rc:27
+msgid "Entire Network"
+msgstr "Visas tinklas"
+
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "

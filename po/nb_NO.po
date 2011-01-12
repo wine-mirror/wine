@@ -1843,6 +1843,10 @@ msgstr "Klarte ikke sende e-post fordi en MAPI-klient ikke er installert."
 msgid "Send Mail"
 msgstr "Send e-post"
 
+#: mpr.rc:27
+msgid "Entire Network"
+msgstr "Hele nettverket"
+
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "

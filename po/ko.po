@@ -1826,6 +1826,10 @@ msgstr "설치된 MAPI 메일 클라이언트가 없어서 메일 보내기 실�
 msgid "Send Mail"
 msgstr "메일 보내기"
 
+#: mpr.rc:27
+msgid "Entire Network"
+msgstr "전체 네트워크"
+
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "

@@ -1760,6 +1760,10 @@ msgstr "Slanje poruke nije uspelo jer MAPI poštanski klijent nije instaliran."
 msgid "Send Mail"
 msgstr "Pošalji poruku"
 
+#: mpr.rc:27
+msgid "Entire Network"
+msgstr "Cela mreža"
+
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "

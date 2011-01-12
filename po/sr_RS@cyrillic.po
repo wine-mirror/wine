@@ -1748,6 +1748,10 @@ msgstr "Слање поруке није успело јер MAPI поштанс
 msgid "Send Mail"
 msgstr "Пошаљи поруку"
 
+#: mpr.rc:27
+msgid "Entire Network"
+msgstr "Цела мрежа"
+
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "

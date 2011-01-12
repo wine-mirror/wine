@@ -1858,6 +1858,10 @@ msgstr ""
 msgid "Send Mail"
 msgstr "Trimite emailul"
 
+#: mpr.rc:27
+msgid "Entire Network"
+msgstr "Toată rețeaua"
+
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "

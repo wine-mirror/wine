@@ -1761,6 +1761,10 @@ msgstr "Mail sending failed as you do not have a MAPI mail client installed."
 msgid "Send Mail"
 msgstr "Send Mail"
 
+#: mpr.rc:27
+msgid "Entire Network"
+msgstr "Entire Network"
+
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "

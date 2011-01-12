@@ -1787,6 +1787,10 @@ msgstr ""
 msgid "Send Mail"
 msgstr "Levélküldés"
 
+#: mpr.rc:27
+msgid "Entire Network"
+msgstr "Teljes hálózat"
+
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "

@@ -1802,6 +1802,10 @@ msgstr ""
 msgid "Send Mail"
 msgstr "Envoyer un courriel"
 
+#: mpr.rc:27
+msgid "Entire Network"
+msgstr "Le réseau entier"
+
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "

@@ -1748,6 +1748,10 @@ msgstr "שליחת הודעת הדוא״ל נכשלה כיוון שאין לך �
 msgid "Send Mail"
 msgstr "שליחת דוא״ל"
 
+#: mpr.rc:27
+msgid "Entire Network"
+msgstr "הרשת כולה"
+
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "

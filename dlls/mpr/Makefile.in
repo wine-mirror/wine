@@ -11,6 +11,7 @@ C_SRCS = \
 	wnet.c
 
 RC_SRCS = \
+	mpr.rc \
 	mpr_Bg.rc \
 	mpr_Cs.rc \
 	mpr_Da.rc \
@@ -36,7 +37,8 @@ RC_SRCS = \
 	mpr_Sv.rc \
 	mpr_Tr.rc \
 	mpr_Uk.rc \
-	mpr_Zh.rc \
-	version.rc
+	mpr_Zh.rc
+
+PO_SRCS = mpr.rc
 
 @MAKE_DLL_RULES@

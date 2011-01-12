@@ -1767,6 +1767,10 @@ msgstr "Pošiljanje ni uspelo, ker nimate nameščenega MAPI klienta."
 msgid "Send Mail"
 msgstr "Pošlji"
 
+#: mpr.rc:27
+msgid "Entire Network"
+msgstr "Celotno omrežje"
+
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened.  Please check the "
