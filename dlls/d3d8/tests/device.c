@@ -1541,6 +1541,7 @@ struct wndproc_thread_param
     HWND dummy_window;
     HANDLE window_created;
     HANDLE test_finished;
+    BOOL running_in_foreground;
 };
 
 static LRESULT CALLBACK test_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
@@ -1584,6 +1585,7 @@ static DWORD WINAPI wndproc_thread(void *param)
 
     p->dummy_window = CreateWindowA("d3d8_test_wndproc_wc", "d3d8_test",
             WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, 640, 480, 0, 0, 0, 0);
+    p->running_in_foreground = SetForegroundWindow(p->dummy_window);
 
     ret = SetEvent(p->window_created);
     ok(ret, "SetEvent failed, last error %#x.\n", GetLastError());
@@ -1667,9 +1669,14 @@ static void test_wndproc(void)
 
     tmp = GetFocus();
     ok(tmp == device_window, "Expected focus %p, got %p.\n", device_window, tmp);
-    tmp = GetForegroundWindow();
-    ok(tmp == thread_params.dummy_window, "Expected foreground window %p, got %p.\n",
-            thread_params.dummy_window, tmp);
+    if (thread_params.running_in_foreground)
+    {
+        tmp = GetForegroundWindow();
+        ok(tmp == thread_params.dummy_window, "Expected foreground window %p, got %p.\n",
+                thread_params.dummy_window, tmp);
+    }
+    else
+        skip("Not running in foreground, skip foreground window test\n");
 
     flush_events();
 
@@ -1806,9 +1813,14 @@ static void test_wndproc_windowed(void)
 
     tmp = GetFocus();
     ok(tmp == device_window, "Expected focus %p, got %p.\n", device_window, tmp);
-    tmp = GetForegroundWindow();
-    ok(tmp == thread_params.dummy_window, "Expected foreground window %p, got %p.\n",
-            thread_params.dummy_window, tmp);
+    if (thread_params.running_in_foreground)
+    {
+        tmp = GetForegroundWindow();
+        ok(tmp == thread_params.dummy_window, "Expected foreground window %p, got %p.\n",
+                thread_params.dummy_window, tmp);
+    }
+    else
+        skip("Not running in foreground, skip foreground window test\n");
 
     filter_messages = focus_window;
 
