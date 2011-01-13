@@ -42,7 +42,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Nebyl zadán žádný příkaz."
 
-#: appwiz.rc:35 winefile.rc:160
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 winefile.rc:160
 msgid "Name"
 msgstr "Jméno"
 
@@ -66,8 +66,8 @@ msgstr ""
 msgid "Programs (*.exe)"
 msgstr "Programy"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 notepad.rc:78 progman.rc:84
-#: winhlp32.rc:102
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
+#: progman.rc:84 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Všechny soubory (*.*)"
 
@@ -1208,9 +1208,9 @@ msgstr ""
 msgid "Friendly name"
 msgstr ""
 
-#: cryptui.rc:62 ipconfig.rc:41
+#: cryptui.rc:62 shell32.rc:239 ipconfig.rc:41
 msgid "Description"
-msgstr ""
+msgstr "Description"
 
 #: cryptui.rc:63
 #, fuzzy
@@ -1314,10 +1314,9 @@ msgstr ""
 msgid "Automatically determined by the program"
 msgstr ""
 
-#: cryptui.rc:88
-#, fuzzy
+#: cryptui.rc:88 shell32.rc:122
 msgid "File"
-msgstr "&Soubor"
+msgstr "Název"
 
 #: cryptui.rc:89
 #, fuzzy
@@ -1640,9 +1639,14 @@ msgstr "Skrýt"
 msgid "Stop"
 msgstr "Zastavit"
 
-#: hhctrl.rc:38 shdocvw.rc:66
+#: hhctrl.rc:38 shdocvw.rc:66 shell32.rc:59
+#, fuzzy
 msgid "Refresh"
-msgstr "Obnovit"
+msgstr ""
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"Obnovit\n"
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"A&ktualizovat"
 
 #: hhctrl.rc:39 shdocvw.rc:63
 msgid "Back"
@@ -2283,7 +2287,7 @@ msgstr ""
 "Vložen obsah souboru jako objekt do Vašeho dokumentu, takže ho můžete "
 "upravit programem, kterým byl vytvořen."
 
-#: oledlg.rc:27
+#: oledlg.rc:27 shell32.rc:181
 msgid "Browse"
 msgstr "Procházet"
 
@@ -2439,7 +2443,7 @@ msgstr ""
 msgid "&Refresh"
 msgstr "Obnovit"
 
-#: shdoclc.rc:59 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 #, fuzzy
 msgid "&Properties"
 msgstr ""
@@ -2502,7 +2506,7 @@ msgid "Cu&t"
 msgstr ""
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 wineconsole.rc:29 wordpad.rc:102
+#: shdoclc.rc:187 shell32.rc:87 wineconsole.rc:29 wordpad.rc:102
 msgid "&Copy"
 msgstr "&Kopírovat"
 
@@ -2528,18 +2532,17 @@ msgstr ""
 msgid "&Undo"
 msgstr ""
 
-#: shdoclc.rc:95
-#, fuzzy
+#: shdoclc.rc:95 shell32.rc:90
 msgid "&Delete"
-msgstr "%s, Delete"
+msgstr "O&dstranit"
 
 #: shdoclc.rc:101
 msgid "Table"
 msgstr ""
 
-#: shdoclc.rc:103
+#: shdoclc.rc:103 shell32.rc:82
 msgid "&Select"
-msgstr ""
+msgstr "&Select"
 
 #: shdoclc.rc:105
 msgid "&Cell"
@@ -2571,9 +2574,9 @@ msgstr "&Vlastnosti"
 msgid "1DSite Select"
 msgstr ""
 
-#: shdoclc.rc:120
+#: shdoclc.rc:120 shell32.rc:61
 msgid "Paste"
-msgstr ""
+msgstr "V&ložit"
 
 #: shdoclc.rc:122 winhlp32.rc:31
 msgid "&Print"
@@ -2583,9 +2586,14 @@ msgstr "&Tisk"
 msgid "Anchor"
 msgstr ""
 
-#: shdoclc.rc:128 view.rc:30 winhlp32.rc:29
+#: shdoclc.rc:128 shell32.rc:84 view.rc:30 winhlp32.rc:29
+#, fuzzy
 msgid "&Open"
-msgstr "&Otevřít"
+msgstr ""
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"&Otevřít\n"
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"O&tevřít"
 
 #: shdoclc.rc:129
 msgid "Open in &New Window"
@@ -2755,8 +2763,8 @@ msgstr ""
 msgid "&u&b&d"
 msgstr ""
 
-#: shdocvw.rc:25 notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
-#: winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
+#: shdocvw.rc:25 shell32.rc:99 notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: view.rc:28 winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
 msgid "&File"
 msgstr "&Soubor"
 
@@ -2810,9 +2818,15 @@ msgstr ""
 msgid "&Close"
 msgstr ""
 
-#: shdocvw.rc:42 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 taskmgr.rc:52 winefile.rc:76
+#: wordpad.rc:66
+#, fuzzy
 msgid "&View"
-msgstr "&Zobrazení"
+msgstr ""
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"&Zobrazení\n"
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"Z&obrazit"
 
 #: shdocvw.rc:44
 #, fuzzy
@@ -2838,8 +2852,8 @@ msgstr "Oblí&bené"
 msgid "&Add to Favorites..."
 msgstr "Oblí&bené"
 
-#: shdocvw.rc:55 notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130
-#: winhlp32.rc:60 wordpad.rc:91
+#: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 progman.rc:52 taskmgr.rc:87
+#: winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
 #, fuzzy
 msgid "&Help"
 msgstr ""
@@ -2855,6 +2869,525 @@ msgstr "&Informace o Winefile..."
 
 #: shdocvw.rc:73
 msgid "Address"
+msgstr ""
+
+#: shell32.rc:27 shell32.rc:42 shell32.rc:107 shell32.rc:147 taskmgr.rc:65
+#: taskmgr.rc:111 taskmgr.rc:253
+msgid "Lar&ge Icons"
+msgstr "&Vedle sebe"
+
+#: shell32.rc:28 shell32.rc:43 shell32.rc:108 shell32.rc:148 taskmgr.rc:66
+#: taskmgr.rc:112 taskmgr.rc:254
+msgid "S&mall Icons"
+msgstr "&Ikony"
+
+#: shell32.rc:29 shell32.rc:44 shell32.rc:109 shell32.rc:149
+msgid "&List"
+msgstr "&Seznam"
+
+#: shell32.rc:30 shell32.rc:45 shell32.rc:110 shell32.rc:150 taskmgr.rc:67
+#: taskmgr.rc:113 taskmgr.rc:255
+msgid "&Details"
+msgstr "&Podrobnosti"
+
+#: shell32.rc:48
+msgid "Arrange &Icons"
+msgstr "Seřadit &ikony"
+
+#: shell32.rc:50
+msgid "By &Name"
+msgstr "Podle &Názvu"
+
+#: shell32.rc:51
+msgid "By &Type"
+msgstr "Podle &Typu"
+
+#: shell32.rc:52
+msgid "By &Size"
+msgstr "Podle &Velikosti"
+
+#: shell32.rc:53
+msgid "By &Date"
+msgstr "Podle &Data"
+
+#: shell32.rc:55
+msgid "&Auto Arrange"
+msgstr "&Rovnat automaticky"
+
+#: shell32.rc:57
+msgid "Line up Icons"
+msgstr "Zarovnat ikony"
+
+#: shell32.rc:62
+msgid "Paste as Link"
+msgstr "Vložit zást&upce"
+
+#: shell32.rc:64
+msgid "New"
+msgstr "&Nový"
+
+#: shell32.rc:66
+msgid "New &Folder"
+msgstr "Nová &složka"
+
+#: shell32.rc:67
+msgid "New &Link"
+msgstr "Nový &zástupce"
+
+#: shell32.rc:71
+msgid "Properties"
+msgstr "&Vlastnosti"
+
+#: shell32.rc:83
+msgid "E&xplore"
+msgstr "P&rozkoumat"
+
+#: shell32.rc:86
+msgid "C&ut"
+msgstr "Vyj&mout"
+
+#: shell32.rc:89
+msgid "Create &Link"
+msgstr "Vytvořit zástupc&e"
+
+#: shell32.rc:91
+msgid "&Rename"
+msgstr "&Přejmenovat"
+
+#: shell32.rc:102 notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
+msgid "E&xit"
+msgstr "&Konec"
+
+#: shell32.rc:115
+msgid "&About Control Panel..."
+msgstr "&About Control Panel..."
+
+#: shell32.rc:123 shell32.rc:127 winefile.rc:161
+msgid "Size"
+msgstr "Velikost"
+
+#: shell32.rc:124
+msgid "Type"
+msgstr "Typ"
+
+#: shell32.rc:125
+msgid "Modified"
+msgstr "Změněno"
+
+#: shell32.rc:126 winefile.rc:167
+msgid "Attributes"
+msgstr "Atributy"
+
+#: shell32.rc:128
+msgid "Size available"
+msgstr "Volné místo"
+
+#: shell32.rc:130
+msgid "Comments"
+msgstr "Komentář"
+
+#: shell32.rc:131
+msgid "Owner"
+msgstr "Owner"
+
+#: shell32.rc:132
+msgid "Group"
+msgstr "Group"
+
+#: shell32.rc:133
+msgid "Original location"
+msgstr "Original location"
+
+#: shell32.rc:134
+msgid "Date deleted"
+msgstr "Date deleted"
+
+#: shell32.rc:141 shell32.rc:195 winefile.rc:151
+msgid "Desktop"
+msgstr "Plocha"
+
+#: shell32.rc:142
+msgid "My Computer"
+msgstr "Tento počítač"
+
+#: shell32.rc:144
+msgid "Control Panel"
+msgstr "Control Panel"
+
+#: shell32.rc:151
+msgid "Select"
+msgstr "Vybrat"
+
+#: shell32.rc:152
+msgid "Open"
+msgstr "Otevřít"
+
+#: shell32.rc:173
+msgid "Restart"
+msgstr ""
+
+#: shell32.rc:174
+msgid "Do you want to simulate a Windows reboot?"
+msgstr ""
+
+#: shell32.rc:175
+msgid "Shutdown"
+msgstr ""
+
+#: shell32.rc:176
+msgid "Do you want to shutdown your Wine session?"
+msgstr ""
+
+#: shell32.rc:186
+msgid "Start Menu\\Programs"
+msgstr ""
+
+#: shell32.rc:187
+#, fuzzy
+msgid "My Documents"
+msgstr "Argument missing\n"
+
+#: shell32.rc:188
+#, fuzzy
+msgid "Favorites"
+msgstr "Oblí&bené"
+
+#: shell32.rc:189
+msgid "Start Menu\\Programs\\StartUp"
+msgstr ""
+
+#: shell32.rc:190
+msgid "Recent"
+msgstr ""
+
+#: shell32.rc:191
+msgid "SendTo"
+msgstr ""
+
+#: shell32.rc:192
+msgid "Start Menu"
+msgstr ""
+
+#: shell32.rc:193
+msgid "My Music"
+msgstr ""
+
+#: shell32.rc:194
+msgid "My Videos"
+msgstr ""
+
+#: shell32.rc:196
+msgid "NetHood"
+msgstr ""
+
+#: shell32.rc:197
+msgid "Templates"
+msgstr ""
+
+#: shell32.rc:198
+#, fuzzy
+msgid "Application Data"
+msgstr "Volby"
+
+#: shell32.rc:199
+#, fuzzy
+msgid "PrintHood"
+msgstr "Tisk"
+
+#: shell32.rc:200
+msgid "Local Settings\\Application Data"
+msgstr ""
+
+#: shell32.rc:201
+msgid "Local Settings\\Temporary Internet Files"
+msgstr ""
+
+#: shell32.rc:202
+msgid "Cookies"
+msgstr ""
+
+#: shell32.rc:203
+msgid "Local Settings\\History"
+msgstr ""
+
+#: shell32.rc:204
+#, fuzzy
+msgid "Program Files"
+msgstr "Programy"
+
+#: shell32.rc:206
+msgid "My Pictures"
+msgstr ""
+
+#: shell32.rc:207
+msgid "Program Files\\Common Files"
+msgstr ""
+
+#: shell32.rc:209 shell32.rc:135 shell32.rc:231
+#, fuzzy
+msgid "Documents"
+msgstr "Argument missing\n"
+
+#: shell32.rc:210
+msgid "Start Menu\\Programs\\Administrative Tools"
+msgstr ""
+
+#: shell32.rc:211
+msgid "Music"
+msgstr ""
+
+#: shell32.rc:212
+msgid "Pictures"
+msgstr ""
+
+#: shell32.rc:213
+#, fuzzy
+msgid "Videos"
+msgstr "video"
+
+#: shell32.rc:214
+msgid "Local Settings\\Application Data\\Microsoft\\CD Burning"
+msgstr ""
+
+#: shell32.rc:205
+#, fuzzy
+msgid "Program Files (x86)"
+msgstr "Programy"
+
+#: shell32.rc:208
+msgid "Program Files (x86)\\Common Files"
+msgstr ""
+
+#: shell32.rc:215
+#, fuzzy
+msgid "Contacts"
+msgstr "&Obsah"
+
+#: shell32.rc:216 winefile.rc:166
+msgid "Links"
+msgstr "Linky"
+
+#: shell32.rc:217
+msgid "Pictures\\Slide Shows"
+msgstr ""
+
+#: shell32.rc:218
+msgid "Music\\Playlists"
+msgstr ""
+
+#: shell32.rc:219 shell32.rc:232
+msgid "Downloads"
+msgstr ""
+
+#: shell32.rc:136 taskmgr.rc:327
+msgid "Status"
+msgstr ""
+
+#: shell32.rc:137
+#, fuzzy
+msgid "Location"
+msgstr "Volby"
+
+#: shell32.rc:138
+msgid "Model"
+msgstr ""
+
+#: shell32.rc:220
+msgid "Microsoft\\Windows\\GameExplorer"
+msgstr ""
+
+#: shell32.rc:221
+msgid "Microsoft\\Windows\\Libraries"
+msgstr ""
+
+#: shell32.rc:222
+msgid "Microsoft\\Windows\\Ringtones"
+msgstr ""
+
+#: shell32.rc:223
+msgid "Music\\Sample Music"
+msgstr ""
+
+#: shell32.rc:224
+msgid "Pictures\\Sample Pictures"
+msgstr ""
+
+#: shell32.rc:225
+msgid "Music\\Sample Playlists"
+msgstr ""
+
+#: shell32.rc:226
+msgid "Videos\\Sample Videos"
+msgstr ""
+
+#: shell32.rc:227
+#, fuzzy
+msgid "Saved Games"
+msgstr "Uložit j&ako..."
+
+#: shell32.rc:228
+#, fuzzy
+msgid "Searches"
+msgstr ""
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"&Hledat\n"
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"&Hledání"
+
+#: shell32.rc:229
+msgid "Users"
+msgstr ""
+
+#: shell32.rc:230
+#, fuzzy
+msgid "OEM Links"
+msgstr "Linky"
+
+#: shell32.rc:233
+msgid "AppData\\LocalLow"
+msgstr ""
+
+#: shell32.rc:154
+msgid "Unable to create new Folder: Permission denied."
+msgstr "Nelze vytvořit novou složku protože přístup byl odepřen."
+
+#: shell32.rc:155
+msgid "Error during creation of a new folder"
+msgstr "Chyba při pokusu vytvořit nový adresář"
+
+#: shell32.rc:156
+msgid "Confirm file deletion"
+msgstr "Potvrdit odstranění souboru"
+
+#: shell32.rc:157
+msgid "Confirm folder deletion"
+msgstr "Potvrdit odstranění adresáře"
+
+#: shell32.rc:158
+msgid "Are you sure you want to delete '%1'?"
+msgstr "Opravdu chcete odstranit '%1'?"
+
+#: shell32.rc:159
+msgid "Are you sure you want to delete these %1 items?"
+msgstr "Opravdu chcete odstranit těchto %1 položek?"
+
+#: shell32.rc:166
+msgid "Confirm file overwrite"
+msgstr "Potvrdit přepsání souboru"
+
+#: shell32.rc:165
+msgid ""
+"This folder already contains a file called '%1'.\n"
+"\n"
+"Do you want to replace it?"
+msgstr ""
+"This folder already contains a file called '%1'.\n"
+"\n"
+"Do you want to replace it?"
+
+#: shell32.rc:160
+msgid "Are you sure you want to delete the selected item(s)?"
+msgstr "Are you sure you want to delete the selected item(s)?"
+
+#: shell32.rc:162
+msgid ""
+"Are you sure that you want to send '%1' and all its content to the Trash?"
+msgstr ""
+"Are you sure that you want to send '%1' and all its content to the Trash?"
+
+#: shell32.rc:161
+msgid "Are you sure that you want to send '%1' to the Trash?"
+msgstr "Are you sure that you want to send '%1' to the Trash?"
+
+#: shell32.rc:163
+msgid "Are you sure that you want to send these %1 items to the Trash?"
+msgstr "Are you sure that you want to send these %1 items to the Trash?"
+
+#: shell32.rc:164
+msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
+msgstr ""
+"The item '%1' can't be sent to Trash. Do you want to delete it instead?"
+
+#: shell32.rc:167
+msgid ""
+"This folder already contains a folder named '%1'.\n"
+"\n"
+"If the files in the destination folder have the same names as files in the\n"
+"selected folder they will be replaced. Do you still want to move or copy\n"
+"the folder?"
+msgstr ""
+"This folder already contains a folder named '%1'.\n"
+"\n"
+"If the files in the destination folder have the same names as files in the\n"
+"selected folder they will be replaced. Do you still want to move or copy\n"
+"the folder?"
+
+#: shell32.rc:235
+msgid "New Folder"
+msgstr "New Folder"
+
+#: shell32.rc:237
+msgid "Wine Control Panel"
+msgstr "Wine Control Panel"
+
+#: shell32.rc:179
+msgid "Unable to display Run File dialog box (internal error)"
+msgstr ""
+
+#: shell32.rc:180
+msgid "Unable to display Browse dialog box (internal error)"
+msgstr ""
+
+#: shell32.rc:182
+#, fuzzy
+msgid "Executable files (*.exe)"
+msgstr "Textové soubory (*.txt)"
+
+#: shell32.rc:241
+msgid "There is no Windows program configured to open this type of file."
+msgstr ""
+
+#: shell32.rc:258
+#, fuzzy
+msgid ""
+"Wine is free software; you can redistribute it and/or modify it under the "
+"terms of the GNU Lesser General Public License as published by the Free "
+"Software Foundation; either version 2.1 of the License, or (at your option) "
+"any later version.\n"
+"\n"
+"Wine is distributed in the hope that it will be useful, but WITHOUT ANY "
+"WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
+"FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for "
+"more details.\n"
+"\n"
+"You should have received a copy of the GNU Lesser General Public License "
+"along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
+"Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
+msgstr ""
+"start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
+"This program is free software; you can redistribute it and/or\n"
+"modify it under the terms of the GNU Lesser Public License\n"
+"as published by the Free Software Foundation; either version 2.1\n"
+"of the License, or (at your option) any later version.\n"
+"\n"
+"This program is distributed in the hope that it will be useful,\n"
+"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"GNU Lesser Public License for more details.\n"
+"\n"
+"You should have received a copy of the GNU Lesser Public License\n"
+"along with this program; if not, write to the Free Software\n"
+"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n"
+"\n"
+"Přečtěte si soubor COPYING.LIB pro získání informací o licenci.\n"
+
+#: shell32.rc:246
+#, fuzzy
+msgid "Wine License"
+msgstr "WineMine"
+
+#: shell32.rc:143
+msgid "Trash"
 msgstr ""
 
 #: shlwapi.rc:27
@@ -4577,10 +5110,6 @@ msgstr "Nas&tavení stránky..."
 msgid "P&rinter Setup..."
 msgstr "Nastavení tiská&rny..."
 
-#: notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
-msgid "E&xit"
-msgstr "&Konec"
-
 #: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 #, fuzzy
 msgid "&Edit"
@@ -5158,20 +5687,6 @@ msgstr ""
 msgid "&Paused"
 msgstr ""
 
-#: taskmgr.rc:65 taskmgr.rc:111 taskmgr.rc:253
-#, fuzzy
-msgid "Lar&ge Icons"
-msgstr "&Zarovnat ikony"
-
-#: taskmgr.rc:66 taskmgr.rc:112 taskmgr.rc:254
-#, fuzzy
-msgid "S&mall Icons"
-msgstr "&Zarovnat ikony"
-
-#: taskmgr.rc:67 taskmgr.rc:113 taskmgr.rc:255
-msgid "&Details"
-msgstr ""
-
 #: taskmgr.rc:68 taskmgr.rc:257
 msgid "&Select Columns..."
 msgstr ""
@@ -5644,10 +6159,6 @@ msgstr ""
 msgid "Task"
 msgstr ""
 
-#: taskmgr.rc:327
-msgid "Status"
-msgstr ""
-
 #: taskmgr.rc:328
 msgid "Debug Channels"
 msgstr ""
@@ -6086,10 +6597,6 @@ msgstr "root fs"
 msgid "unixfs"
 msgstr "unixfs"
 
-#: winefile.rc:151
-msgid "Desktop"
-msgstr "Plocha"
-
 #: winefile.rc:152
 msgid "Shell"
 msgstr "Příkazový řádek"
@@ -6106,10 +6613,6 @@ msgstr "Zatím neimplementováno"
 msgid "Wine File"
 msgstr "Wine File"
 
-#: winefile.rc:161
-msgid "Size"
-msgstr "Velikost"
-
 #: winefile.rc:162
 msgid "CDate"
 msgstr "Datum vytvoření"
@@ -6125,14 +6628,6 @@ msgstr "Datum poslední modifikace"
 #: winefile.rc:165
 msgid "Index/Inode"
 msgstr "Index/Inode"
-
-#: winefile.rc:166
-msgid "Links"
-msgstr "Linky"
-
-#: winefile.rc:167
-msgid "Attributes"
-msgstr "Atributy"
 
 #: winefile.rc:168
 msgid "Security"

@@ -54,6 +54,7 @@ C_SRCS = \
 	xdg.c
 
 RC_SRCS = \
+	shell32.rc \
 	shell32_Bg.rc \
 	shell32_Ca.rc \
 	shell32_Cs.rc \
@@ -83,9 +84,9 @@ RC_SRCS = \
 	shell32_Tr.rc \
 	shell32_Uk.rc \
 	shell32_Wa.rc \
-	shell32_Zh.rc \
-	shres.rc \
-	version.rc
+	shell32_Zh.rc
+
+PO_SRCS = shell32.rc
 
 SVG_SRCS = \
 	cdrom.svg \

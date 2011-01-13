@@ -41,7 +41,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "지정되지 않음"
 
-#: appwiz.rc:35 winefile.rc:160
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 winefile.rc:160
 msgid "Name"
 msgstr "이름"
 
@@ -61,8 +61,8 @@ msgstr "설치 프로그램"
 msgid "Programs (*.exe)"
 msgstr "프로그램 (*.exe)"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 notepad.rc:78 progman.rc:84
-#: winhlp32.rc:102
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
+#: progman.rc:84 winhlp32.rc:102
 #, fuzzy
 msgid "All files (*.*)"
 msgstr ""
@@ -1256,7 +1256,7 @@ msgstr "확장 키 사용 (속성)"
 msgid "Friendly name"
 msgstr "애칭"
 
-#: cryptui.rc:62 ipconfig.rc:41
+#: cryptui.rc:62 shell32.rc:239 ipconfig.rc:41
 msgid "Description"
 msgstr "설명"
 
@@ -1363,7 +1363,7 @@ msgstr "인증서 보관소가 선택됨"
 msgid "Automatically determined by the program"
 msgstr "자동으로 프로그램에 의해 결정"
 
-#: cryptui.rc:88
+#: cryptui.rc:88 shell32.rc:122
 msgid "File"
 msgstr "파일"
 
@@ -1709,7 +1709,7 @@ msgstr ""
 "#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
 "멈추기"
 
-#: hhctrl.rc:38 shdocvw.rc:66
+#: hhctrl.rc:38 shdocvw.rc:66 shell32.rc:59
 msgid "Refresh"
 msgstr "새로 고침"
 
@@ -2370,7 +2370,7 @@ msgstr ""
 "작성한 풀그림을 사용하여 활성화시킬수 있는 객체를 문서파일 내용으로 삽입하시"
 "오."
 
-#: oledlg.rc:27
+#: oledlg.rc:27 shell32.rc:181
 msgid "Browse"
 msgstr "찾기"
 
@@ -2530,7 +2530,7 @@ msgstr "인쇄(&I)"
 msgid "&Refresh"
 msgstr "다시 읽기(&R)"
 
-#: shdoclc.rc:59 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 #, fuzzy
 msgid "&Properties"
 msgstr ""
@@ -2593,7 +2593,7 @@ msgid "Cu&t"
 msgstr "잘라내기(&T)"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 wineconsole.rc:29 wordpad.rc:102
+#: shdoclc.rc:187 shell32.rc:87 wineconsole.rc:29 wordpad.rc:102
 msgid "&Copy"
 msgstr "복사(&C)"
 
@@ -2617,7 +2617,7 @@ msgstr "제어"
 msgid "&Undo"
 msgstr "되돌리기(&U)"
 
-#: shdoclc.rc:95
+#: shdoclc.rc:95 shell32.rc:90
 msgid "&Delete"
 msgstr "지우기(&D)"
 
@@ -2625,7 +2625,7 @@ msgstr "지우기(&D)"
 msgid "Table"
 msgstr "표"
 
-#: shdoclc.rc:103
+#: shdoclc.rc:103 shell32.rc:82
 msgid "&Select"
 msgstr "선택(&S)"
 
@@ -2657,7 +2657,7 @@ msgstr "표 속성(&T)"
 msgid "1DSite Select"
 msgstr "1DSite 선택"
 
-#: shdoclc.rc:120
+#: shdoclc.rc:120 shell32.rc:61
 msgid "Paste"
 msgstr "붙여넣기"
 
@@ -2669,14 +2669,9 @@ msgstr "인쇄(&P)"
 msgid "Anchor"
 msgstr "닻"
 
-#: shdoclc.rc:128 view.rc:30 winhlp32.rc:29
-#, fuzzy
+#: shdoclc.rc:128 shell32.rc:84 view.rc:30 winhlp32.rc:29
 msgid "&Open"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"열기(&O)\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"열기(&O)..."
+msgstr "열기(&O)"
 
 #: shdoclc.rc:129
 msgid "Open in &New Window"
@@ -2846,8 +2841,8 @@ msgstr "&w&b페이지 &p"
 msgid "&u&b&d"
 msgstr "&u&b&d"
 
-#: shdocvw.rc:25 notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
-#: winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
+#: shdocvw.rc:25 shell32.rc:99 notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: view.rc:28 winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
 msgid "&File"
 msgstr "파일(&F)"
 
@@ -2891,7 +2886,8 @@ msgstr "속성(&P)..."
 msgid "&Close"
 msgstr "닫기(&C)"
 
-#: shdocvw.rc:42 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 taskmgr.rc:52 winefile.rc:76
+#: wordpad.rc:66
 msgid "&View"
 msgstr "보기(&V)"
 
@@ -2915,8 +2911,8 @@ msgstr "즐겨찾기(&F)"
 msgid "&Add to Favorites..."
 msgstr "즐겨찾기 추가(&A)..."
 
-#: shdocvw.rc:55 notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130
-#: winhlp32.rc:60 wordpad.rc:91
+#: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 progman.rc:52 taskmgr.rc:87
+#: winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
 msgid "&Help"
 msgstr "도움말(&H)"
 
@@ -2927,6 +2923,521 @@ msgstr "인터넷 익스플로어 정보(&A)..."
 #: shdocvw.rc:73
 msgid "Address"
 msgstr "주소"
+
+#: shell32.rc:27 shell32.rc:42 shell32.rc:107 shell32.rc:147 taskmgr.rc:65
+#: taskmgr.rc:111 taskmgr.rc:253
+#, fuzzy
+msgid "Lar&ge Icons"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"큰 아이콘(&g)\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"큰 아이콘(&G)"
+
+#: shell32.rc:28 shell32.rc:43 shell32.rc:108 shell32.rc:148 taskmgr.rc:66
+#: taskmgr.rc:112 taskmgr.rc:254
+#, fuzzy
+msgid "S&mall Icons"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"작은 아이콘(&m)\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"작은 아이콘(&M)"
+
+#: shell32.rc:29 shell32.rc:44 shell32.rc:109 shell32.rc:149
+msgid "&List"
+msgstr "목록(&L)"
+
+#: shell32.rc:30 shell32.rc:45 shell32.rc:110 shell32.rc:150 taskmgr.rc:67
+#: taskmgr.rc:113 taskmgr.rc:255
+#, fuzzy
+msgid "&Details"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"상세히(&D)\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"자세히(&D)"
+
+#: shell32.rc:48
+msgid "Arrange &Icons"
+msgstr "아이콘 정렬(&I)"
+
+#: shell32.rc:50
+msgid "By &Name"
+msgstr "이름으로(&N)"
+
+#: shell32.rc:51
+msgid "By &Type"
+msgstr "형식으로(&T)"
+
+#: shell32.rc:52
+msgid "By &Size"
+msgstr "크기로(&S)"
+
+#: shell32.rc:53
+msgid "By &Date"
+msgstr "날짜로(&D)"
+
+#: shell32.rc:55
+msgid "&Auto Arrange"
+msgstr "자동 정렬(&A)"
+
+#: shell32.rc:57
+msgid "Line up Icons"
+msgstr "아이콘 정렬"
+
+#: shell32.rc:62
+msgid "Paste as Link"
+msgstr "링크로 붙여넣기"
+
+#: shell32.rc:64
+msgid "New"
+msgstr "새 작업"
+
+#: shell32.rc:66
+msgid "New &Folder"
+msgstr "새 폴더(&F)"
+
+#: shell32.rc:67
+msgid "New &Link"
+msgstr "새 링크(&L)"
+
+#: shell32.rc:71
+msgid "Properties"
+msgstr "속성"
+
+#: shell32.rc:83
+msgid "E&xplore"
+msgstr "탐색(&X)"
+
+#: shell32.rc:86
+msgid "C&ut"
+msgstr "잘라내기(&U)"
+
+#: shell32.rc:89
+msgid "Create &Link"
+msgstr "링크 만들기(&L)"
+
+#: shell32.rc:91
+msgid "&Rename"
+msgstr "이름 바꾸기(&R)"
+
+#: shell32.rc:102 notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
+#, fuzzy
+msgid "E&xit"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"끝내기(&X)\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"나가기(&X)"
+
+#: shell32.rc:115
+msgid "&About Control Panel..."
+msgstr "제어판 정보(&A)..."
+
+#: shell32.rc:123 shell32.rc:127 winefile.rc:161
+msgid "Size"
+msgstr "크기"
+
+#: shell32.rc:124
+msgid "Type"
+msgstr "형식"
+
+#: shell32.rc:125
+msgid "Modified"
+msgstr "수정날짜"
+
+#: shell32.rc:126 winefile.rc:167
+msgid "Attributes"
+msgstr "속성"
+
+#: shell32.rc:128
+msgid "Size available"
+msgstr "가능한 크기"
+
+#: shell32.rc:130
+msgid "Comments"
+msgstr "주석"
+
+#: shell32.rc:131
+msgid "Owner"
+msgstr "소유자"
+
+#: shell32.rc:132
+msgid "Group"
+msgstr "그룹"
+
+#: shell32.rc:133
+msgid "Original location"
+msgstr "원래 위치"
+
+#: shell32.rc:134
+msgid "Date deleted"
+msgstr "지워진 날짜"
+
+#: shell32.rc:141 shell32.rc:195 winefile.rc:151
+msgid "Desktop"
+msgstr "데스크탑"
+
+#: shell32.rc:142
+msgid "My Computer"
+msgstr "내 컴퓨터"
+
+#: shell32.rc:144
+msgid "Control Panel"
+msgstr "제어판"
+
+#: shell32.rc:151
+msgid "Select"
+msgstr "선택"
+
+#: shell32.rc:152
+msgid "Open"
+msgstr "열기"
+
+#: shell32.rc:173
+msgid "Restart"
+msgstr "다시 시작"
+
+#: shell32.rc:174
+msgid "Do you want to simulate a Windows reboot?"
+msgstr "당신은 윈도우즈 재부팅을  재현하겠습니까?"
+
+#: shell32.rc:175
+msgid "Shutdown"
+msgstr "끄기"
+
+#: shell32.rc:176
+msgid "Do you want to shutdown your Wine session?"
+msgstr "당신은  Wine 세션을 끄겠습니까?"
+
+#: shell32.rc:186
+msgid "Start Menu\\Programs"
+msgstr "시작 메뉴\\프로그램"
+
+#: shell32.rc:187
+msgid "My Documents"
+msgstr "내 문서"
+
+#: shell32.rc:188
+msgid "Favorites"
+msgstr "즐겨찾기"
+
+#: shell32.rc:189
+msgid "Start Menu\\Programs\\StartUp"
+msgstr "시작 메뉴\\프로그램\\시작 프로그램"
+
+#: shell32.rc:190
+msgid "Recent"
+msgstr "최근 파일"
+
+#: shell32.rc:191
+msgid "SendTo"
+msgstr "보내기"
+
+#: shell32.rc:192
+msgid "Start Menu"
+msgstr "시작 메뉴"
+
+#: shell32.rc:193
+msgid "My Music"
+msgstr "내 음악"
+
+#: shell32.rc:194
+msgid "My Videos"
+msgstr "내 비디오"
+
+#: shell32.rc:196
+msgid "NetHood"
+msgstr "네트워크 환경"
+
+#: shell32.rc:197
+msgid "Templates"
+msgstr "Templates"
+
+#: shell32.rc:198
+msgid "Application Data"
+msgstr "Application Data"
+
+#: shell32.rc:199
+msgid "PrintHood"
+msgstr "네트워크 환경"
+
+#: shell32.rc:200
+msgid "Local Settings\\Application Data"
+msgstr "Local Settings\\Application Data"
+
+#: shell32.rc:201
+msgid "Local Settings\\Temporary Internet Files"
+msgstr "Local Settings\\Temporary Internet Files"
+
+#: shell32.rc:202
+msgid "Cookies"
+msgstr "Cookies"
+
+#: shell32.rc:203
+msgid "Local Settings\\History"
+msgstr "Local Settings\\History"
+
+#: shell32.rc:204
+msgid "Program Files"
+msgstr "Program Files"
+
+#: shell32.rc:206
+msgid "My Pictures"
+msgstr "내 그림"
+
+#: shell32.rc:207
+msgid "Program Files\\Common Files"
+msgstr "Program Files\\Common Files"
+
+#: shell32.rc:209 shell32.rc:135 shell32.rc:231
+msgid "Documents"
+msgstr "문서"
+
+#: shell32.rc:210
+msgid "Start Menu\\Programs\\Administrative Tools"
+msgstr "시작메뉴\\프로그램\\관리 도구"
+
+#: shell32.rc:211
+msgid "Music"
+msgstr "내 음악"
+
+#: shell32.rc:212
+msgid "Pictures"
+msgstr "내 그림"
+
+#: shell32.rc:213
+msgid "Videos"
+msgstr "내 비디오"
+
+#: shell32.rc:214
+msgid "Local Settings\\Application Data\\Microsoft\\CD Burning"
+msgstr "Local Settings\\Application Data\\Microsoft\\CD Burning"
+
+#: shell32.rc:205
+msgid "Program Files (x86)"
+msgstr "Program Files (x86)"
+
+#: shell32.rc:208
+msgid "Program Files (x86)\\Common Files"
+msgstr "Program Files (x86)\\Common Files"
+
+#: shell32.rc:215
+msgid "Contacts"
+msgstr "Contacts"
+
+#: shell32.rc:216 winefile.rc:166
+msgid "Links"
+msgstr "링크"
+
+#: shell32.rc:217
+msgid "Pictures\\Slide Shows"
+msgstr "Pictures\\Slide Shows"
+
+#: shell32.rc:218
+msgid "Music\\Playlists"
+msgstr "Music\\Playlists"
+
+#: shell32.rc:219 shell32.rc:232
+msgid "Downloads"
+msgstr "Downloads"
+
+#: shell32.rc:136 taskmgr.rc:327
+msgid "Status"
+msgstr "상태"
+
+#: shell32.rc:137
+#, fuzzy
+msgid "Location"
+msgstr "랜 연결"
+
+#: shell32.rc:138
+msgid "Model"
+msgstr ""
+
+#: shell32.rc:220
+msgid "Microsoft\\Windows\\GameExplorer"
+msgstr "Microsoft\\Windows\\GameExplorer"
+
+#: shell32.rc:221
+msgid "Microsoft\\Windows\\Libraries"
+msgstr "Microsoft\\Windows\\Libraries"
+
+#: shell32.rc:222
+msgid "Microsoft\\Windows\\Ringtones"
+msgstr "Microsoft\\Windows\\Ringtones"
+
+#: shell32.rc:223
+msgid "Music\\Sample Music"
+msgstr "Music\\Sample Music"
+
+#: shell32.rc:224
+msgid "Pictures\\Sample Pictures"
+msgstr "Pictures\\Sample Pictures"
+
+#: shell32.rc:225
+msgid "Music\\Sample Playlists"
+msgstr "Music\\Sample Playlists"
+
+#: shell32.rc:226
+msgid "Videos\\Sample Videos"
+msgstr "Videos\\Sample Videos"
+
+#: shell32.rc:227
+msgid "Saved Games"
+msgstr "Saved Games"
+
+#: shell32.rc:228
+msgid "Searches"
+msgstr "Searches"
+
+#: shell32.rc:229
+msgid "Users"
+msgstr "Users"
+
+#: shell32.rc:230
+msgid "OEM Links"
+msgstr "OEM Links"
+
+#: shell32.rc:233
+msgid "AppData\\LocalLow"
+msgstr "AppData\\LocalLow"
+
+#: shell32.rc:154
+msgid "Unable to create new Folder: Permission denied."
+msgstr "새 폴더를 만들 수 없습니다: 만들 권한이 없습니다."
+
+#: shell32.rc:155
+msgid "Error during creation of a new folder"
+msgstr "새 폴더를 만드는 과정에서 에러발생"
+
+#: shell32.rc:156
+msgid "Confirm file deletion"
+msgstr "파일 지우기 확인"
+
+#: shell32.rc:157
+msgid "Confirm folder deletion"
+msgstr "폴더 지우기 확인"
+
+#: shell32.rc:158
+msgid "Are you sure you want to delete '%1'?"
+msgstr "당신은  '%1'을 지우기를 바랍니까?"
+
+#: shell32.rc:159
+msgid "Are you sure you want to delete these %1 items?"
+msgstr "당신은 %1 아이템(들)을 지우기를 바랍니까?"
+
+#: shell32.rc:166
+msgid "Confirm file overwrite"
+msgstr "파일 덮어쓰기 확인"
+
+#: shell32.rc:165
+msgid ""
+"This folder already contains a file called '%1'.\n"
+"\n"
+"Do you want to replace it?"
+msgstr ""
+"이 폴더는 이미 '%1' 파일을 가지고 있습니다.\n"
+"\n"
+"바꾸겠습니까?"
+
+#: shell32.rc:160
+msgid "Are you sure you want to delete the selected item(s)?"
+msgstr "당신은 선택된 아이템(들)을 지우기를 바랍니까?"
+
+#: shell32.rc:162
+msgid ""
+"Are you sure that you want to send '%1' and all its content to the Trash?"
+msgstr "당신은 '%1' 과 그 안의 내용을 휴지통으로 보내기를 바랍니까?"
+
+#: shell32.rc:161
+msgid "Are you sure that you want to send '%1' to the Trash?"
+msgstr "당신은 '%1' 을(를) 휴지통으로 보내기를 바랍니까?"
+
+#: shell32.rc:163
+msgid "Are you sure that you want to send these %1 items to the Trash?"
+msgstr "당신은 '%1' 들을(를) 휴지통으로 보내기를 바랍니까?"
+
+#: shell32.rc:164
+msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
+msgstr "이 아이템'%1'을 휴지통으로 보낼 수 없습니다. 대신 지우겠습니까?"
+
+#: shell32.rc:167
+msgid ""
+"This folder already contains a folder named '%1'.\n"
+"\n"
+"If the files in the destination folder have the same names as files in the\n"
+"selected folder they will be replaced. Do you still want to move or copy\n"
+"the folder?"
+msgstr ""
+"  이 폴더는 이미 '%1'이란 이름을 가진 폴더를 포함하고 있습니다.\n"
+"\n"
+"만약 당신이 같은 이름으로 대상 폴더를 지정한다면 선택된 폴더는 대체될 것입니"
+"다\n"
+" 대체될 것입니다. 당신은 이 폴더를 이동시키거나 복사하겠습니까?"
+
+#: shell32.rc:235
+msgid "New Folder"
+msgstr "새 폴더"
+
+#: shell32.rc:237
+msgid "Wine Control Panel"
+msgstr "Wine 제어판"
+
+#: shell32.rc:179
+msgid "Unable to display Run File dialog box (internal error)"
+msgstr "파일 실행 대화 상자를 보여줄수 없습니다(내부 에러)"
+
+#: shell32.rc:180
+msgid "Unable to display Browse dialog box (internal error)"
+msgstr "찾기 대화 상자를 보여 줄 수 없습니다(내부 에러)"
+
+#: shell32.rc:182
+msgid "Executable files (*.exe)"
+msgstr "실행 파일 (*.exe)"
+
+#: shell32.rc:241
+msgid "There is no Windows program configured to open this type of file."
+msgstr "이 형식의 파일을 도록 구성된 윈도우 프로그램이 없습니다."
+
+#: shell32.rc:258
+msgid ""
+"Wine is free software; you can redistribute it and/or modify it under the "
+"terms of the GNU Lesser General Public License as published by the Free "
+"Software Foundation; either version 2.1 of the License, or (at your option) "
+"any later version.\n"
+"\n"
+"Wine is distributed in the hope that it will be useful, but WITHOUT ANY "
+"WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
+"FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for "
+"more details.\n"
+"\n"
+"You should have received a copy of the GNU Lesser General Public License "
+"along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
+"Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
+msgstr ""
+"Wine is free software; you can redistribute it and/or modify it under the "
+"terms of the GNU Lesser General Public License as published by the Free "
+"Software Foundation; either version 2.1 of the License, or (at your option) "
+"any later version.\n"
+"\n"
+"Wine is distributed in the hope that it will be useful, but WITHOUT ANY "
+"WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
+"FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for "
+"more details.\n"
+"\n"
+"You should have received a copy of the GNU Lesser General Public License "
+"along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
+"Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
+
+#: shell32.rc:246
+msgid "Wine License"
+msgstr "Wine 라이센스"
+
+#: shell32.rc:143
+msgid "Trash"
+msgstr "휴지통"
 
 #: shlwapi.rc:27
 msgid "%ld bytes"
@@ -4659,15 +5170,6 @@ msgstr "페이지 설정(&T)..."
 msgid "P&rinter Setup..."
 msgstr "프린터 설정(&R)..."
 
-#: notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
-#, fuzzy
-msgid "E&xit"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"끝내기(&X)\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"나가기(&X)"
-
 #: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 msgid "&Edit"
 msgstr "편집(&E)"
@@ -5261,18 +5763,6 @@ msgstr "낮음(&L)"
 msgid "&Paused"
 msgstr "정지(&P)"
 
-#: taskmgr.rc:65 taskmgr.rc:111 taskmgr.rc:253
-msgid "Lar&ge Icons"
-msgstr "큰 아이콘(&g)"
-
-#: taskmgr.rc:66 taskmgr.rc:112 taskmgr.rc:254
-msgid "S&mall Icons"
-msgstr "작은 아이콘(&m)"
-
-#: taskmgr.rc:67 taskmgr.rc:113 taskmgr.rc:255
-msgid "&Details"
-msgstr "상세히(&D)"
-
 #: taskmgr.rc:68 taskmgr.rc:257
 msgid "&Select Columns..."
 msgstr "세로 칸 선택(&S)..."
@@ -5754,10 +6244,6 @@ msgstr "실행중"
 msgid "Task"
 msgstr "태스크"
 
-#: taskmgr.rc:327
-msgid "Status"
-msgstr "상태"
-
 #: taskmgr.rc:328
 msgid "Debug Channels"
 msgstr "디버그 채널"
@@ -6211,10 +6697,6 @@ msgstr "루트 파일시스템"
 msgid "unixfs"
 msgstr "유닉스 파일시스템"
 
-#: winefile.rc:151
-msgid "Desktop"
-msgstr "데스크탑"
-
 #: winefile.rc:152
 msgid "Shell"
 msgstr "셀"
@@ -6231,10 +6713,6 @@ msgstr "아직 구현안됨"
 msgid "Wine File"
 msgstr "Wine 파일"
 
-#: winefile.rc:161
-msgid "Size"
-msgstr "크기"
-
 #: winefile.rc:162
 msgid "CDate"
 msgstr "시(CDate)"
@@ -6250,14 +6728,6 @@ msgstr "분(MDate)"
 #: winefile.rc:165
 msgid "Index/Inode"
 msgstr "인덱스/아이노드"
-
-#: winefile.rc:166
-msgid "Links"
-msgstr "링크"
-
-#: winefile.rc:167
-msgid "Attributes"
-msgstr "속성"
 
 #: winefile.rc:168
 msgid "Security"

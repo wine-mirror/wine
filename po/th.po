@@ -37,7 +37,7 @@ msgstr ""
 msgid "Not specified"
 msgstr ""
 
-#: appwiz.rc:35 winefile.rc:160
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 winefile.rc:160
 msgid "Name"
 msgstr ""
 
@@ -57,8 +57,8 @@ msgstr ""
 msgid "Programs (*.exe)"
 msgstr ""
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 notepad.rc:78 progman.rc:84
-#: winhlp32.rc:102
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
+#: progman.rc:84 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "ทุกแฟ้ม (*.*)"
 
@@ -1170,7 +1170,7 @@ msgstr ""
 msgid "Friendly name"
 msgstr ""
 
-#: cryptui.rc:62 ipconfig.rc:41
+#: cryptui.rc:62 shell32.rc:239 ipconfig.rc:41
 msgid "Description"
 msgstr ""
 
@@ -1275,7 +1275,7 @@ msgstr ""
 msgid "Automatically determined by the program"
 msgstr ""
 
-#: cryptui.rc:88
+#: cryptui.rc:88 shell32.rc:122
 #, fuzzy
 msgid "File"
 msgstr "แฟ้ม"
@@ -1590,7 +1590,7 @@ msgstr ""
 msgid "Stop"
 msgstr ""
 
-#: hhctrl.rc:38 shdocvw.rc:66
+#: hhctrl.rc:38 shdocvw.rc:66 shell32.rc:59
 msgid "Refresh"
 msgstr ""
 
@@ -2221,7 +2221,7 @@ msgid ""
 "may activate it using the program which created it."
 msgstr ""
 
-#: oledlg.rc:27
+#: oledlg.rc:27 shell32.rc:181
 msgid "Browse"
 msgstr ""
 
@@ -2365,7 +2365,7 @@ msgstr ""
 msgid "&Refresh"
 msgstr ""
 
-#: shdoclc.rc:59 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 msgid "&Properties"
 msgstr "ปรับแต่งนาฬิกา"
 
@@ -2423,7 +2423,7 @@ msgid "Cu&t"
 msgstr ""
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 wineconsole.rc:29 wordpad.rc:102
+#: shdoclc.rc:187 shell32.rc:87 wineconsole.rc:29 wordpad.rc:102
 msgid "&Copy"
 msgstr ""
 
@@ -2448,7 +2448,7 @@ msgstr ""
 msgid "&Undo"
 msgstr ""
 
-#: shdoclc.rc:95
+#: shdoclc.rc:95 shell32.rc:90
 msgid "&Delete"
 msgstr ""
 
@@ -2456,7 +2456,7 @@ msgstr ""
 msgid "Table"
 msgstr ""
 
-#: shdoclc.rc:103
+#: shdoclc.rc:103 shell32.rc:82
 msgid "&Select"
 msgstr ""
 
@@ -2490,7 +2490,7 @@ msgstr "ปรับแต่งนาฬิกา"
 msgid "1DSite Select"
 msgstr ""
 
-#: shdoclc.rc:120
+#: shdoclc.rc:120 shell32.rc:61
 msgid "Paste"
 msgstr ""
 
@@ -2502,7 +2502,7 @@ msgstr ""
 msgid "Anchor"
 msgstr ""
 
-#: shdoclc.rc:128 view.rc:30 winhlp32.rc:29
+#: shdoclc.rc:128 shell32.rc:84 view.rc:30 winhlp32.rc:29
 msgid "&Open"
 msgstr ""
 
@@ -2674,8 +2674,8 @@ msgstr ""
 msgid "&u&b&d"
 msgstr ""
 
-#: shdocvw.rc:25 notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
-#: winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
+#: shdocvw.rc:25 shell32.rc:99 notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: view.rc:28 winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
 msgid "&File"
 msgstr "แฟ้ม"
 
@@ -2724,7 +2724,8 @@ msgstr "ปรับแต่งนาฬิกา"
 msgid "&Close"
 msgstr ""
 
-#: shdocvw.rc:42 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 taskmgr.rc:52 winefile.rc:76
+#: wordpad.rc:66
 msgid "&View"
 msgstr ""
 
@@ -2748,8 +2749,8 @@ msgstr ""
 msgid "&Add to Favorites..."
 msgstr ""
 
-#: shdocvw.rc:55 notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130
-#: winhlp32.rc:60 wordpad.rc:91
+#: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 progman.rc:52 taskmgr.rc:87
+#: winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
 msgid "&Help"
 msgstr "ช่วยเหลีอ"
 
@@ -2760,6 +2761,491 @@ msgstr "&About Notepad"
 
 #: shdocvw.rc:73
 msgid "Address"
+msgstr ""
+
+#: shell32.rc:27 shell32.rc:42 shell32.rc:107 shell32.rc:147 taskmgr.rc:65
+#: taskmgr.rc:111 taskmgr.rc:253
+msgid "Lar&ge Icons"
+msgstr ""
+
+#: shell32.rc:28 shell32.rc:43 shell32.rc:108 shell32.rc:148 taskmgr.rc:66
+#: taskmgr.rc:112 taskmgr.rc:254
+msgid "S&mall Icons"
+msgstr ""
+
+#: shell32.rc:29 shell32.rc:44 shell32.rc:109 shell32.rc:149
+msgid "&List"
+msgstr ""
+
+#: shell32.rc:30 shell32.rc:45 shell32.rc:110 shell32.rc:150 taskmgr.rc:67
+#: taskmgr.rc:113 taskmgr.rc:255
+msgid "&Details"
+msgstr ""
+
+#: shell32.rc:48
+msgid "Arrange &Icons"
+msgstr ""
+
+#: shell32.rc:50
+msgid "By &Name"
+msgstr ""
+
+#: shell32.rc:51
+msgid "By &Type"
+msgstr ""
+
+#: shell32.rc:52
+msgid "By &Size"
+msgstr ""
+
+#: shell32.rc:53
+#, fuzzy
+msgid "By &Date"
+msgstr "วันที่"
+
+#: shell32.rc:55
+msgid "&Auto Arrange"
+msgstr ""
+
+#: shell32.rc:57
+msgid "Line up Icons"
+msgstr ""
+
+#: shell32.rc:62
+msgid "Paste as Link"
+msgstr ""
+
+#: shell32.rc:64
+msgid "New"
+msgstr ""
+
+#: shell32.rc:66
+msgid "New &Folder"
+msgstr ""
+
+#: shell32.rc:67
+msgid "New &Link"
+msgstr ""
+
+#: shell32.rc:71
+#, fuzzy
+msgid "Properties"
+msgstr "ปรับแต่งนาฬิกา"
+
+#: shell32.rc:83
+msgid "E&xplore"
+msgstr ""
+
+#: shell32.rc:86
+msgid "C&ut"
+msgstr ""
+
+#: shell32.rc:89
+msgid "Create &Link"
+msgstr ""
+
+#: shell32.rc:91
+msgid "&Rename"
+msgstr ""
+
+#: shell32.rc:102 notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
+msgid "E&xit"
+msgstr "ออก"
+
+#: shell32.rc:115
+#, fuzzy
+msgid "&About Control Panel..."
+msgstr "&About Notepad"
+
+#: shell32.rc:123 shell32.rc:127 winefile.rc:161
+msgid "Size"
+msgstr ""
+
+#: shell32.rc:124
+msgid "Type"
+msgstr ""
+
+#: shell32.rc:125
+msgid "Modified"
+msgstr ""
+
+#: shell32.rc:126 winefile.rc:167
+msgid "Attributes"
+msgstr ""
+
+#: shell32.rc:128
+msgid "Size available"
+msgstr ""
+
+#: shell32.rc:130
+#, fuzzy
+msgid "Comments"
+msgstr "เนื้อหา"
+
+#: shell32.rc:131
+msgid "Owner"
+msgstr ""
+
+#: shell32.rc:132
+msgid "Group"
+msgstr ""
+
+#: shell32.rc:133
+msgid "Original location"
+msgstr ""
+
+#: shell32.rc:134
+#, fuzzy
+msgid "Date deleted"
+msgstr "ลบ\tDel"
+
+#: shell32.rc:141 shell32.rc:195 winefile.rc:151
+msgid "Desktop"
+msgstr ""
+
+#: shell32.rc:142
+msgid "My Computer"
+msgstr ""
+
+#: shell32.rc:144
+msgid "Control Panel"
+msgstr ""
+
+#: shell32.rc:151
+#, fuzzy
+msgid "Select"
+msgstr "เลือกทั้งหมด\tCtrl+A"
+
+#: shell32.rc:152
+#, fuzzy
+msgid "Open"
+msgstr "เปิด...\tCtrl+O"
+
+#: shell32.rc:173
+msgid "Restart"
+msgstr ""
+
+#: shell32.rc:174
+msgid "Do you want to simulate a Windows reboot?"
+msgstr ""
+
+#: shell32.rc:175
+msgid "Shutdown"
+msgstr ""
+
+#: shell32.rc:176
+msgid "Do you want to shutdown your Wine session?"
+msgstr ""
+
+#: shell32.rc:186
+msgid "Start Menu\\Programs"
+msgstr ""
+
+#: shell32.rc:187
+msgid "My Documents"
+msgstr ""
+
+#: shell32.rc:188
+msgid "Favorites"
+msgstr ""
+
+#: shell32.rc:189
+msgid "Start Menu\\Programs\\StartUp"
+msgstr ""
+
+#: shell32.rc:190
+msgid "Recent"
+msgstr ""
+
+#: shell32.rc:191
+msgid "SendTo"
+msgstr ""
+
+#: shell32.rc:192
+msgid "Start Menu"
+msgstr ""
+
+#: shell32.rc:193
+msgid "My Music"
+msgstr ""
+
+#: shell32.rc:194
+msgid "My Videos"
+msgstr ""
+
+#: shell32.rc:196
+msgid "NetHood"
+msgstr ""
+
+#: shell32.rc:197
+msgid "Templates"
+msgstr ""
+
+#: shell32.rc:198
+msgid "Application Data"
+msgstr ""
+
+#: shell32.rc:199
+msgid "PrintHood"
+msgstr ""
+
+#: shell32.rc:200
+msgid "Local Settings\\Application Data"
+msgstr ""
+
+#: shell32.rc:201
+msgid "Local Settings\\Temporary Internet Files"
+msgstr ""
+
+#: shell32.rc:202
+msgid "Cookies"
+msgstr ""
+
+#: shell32.rc:203
+msgid "Local Settings\\History"
+msgstr ""
+
+#: shell32.rc:204
+msgid "Program Files"
+msgstr ""
+
+#: shell32.rc:206
+msgid "My Pictures"
+msgstr ""
+
+#: shell32.rc:207
+msgid "Program Files\\Common Files"
+msgstr ""
+
+#: shell32.rc:209 shell32.rc:135 shell32.rc:231
+msgid "Documents"
+msgstr ""
+
+#: shell32.rc:210
+msgid "Start Menu\\Programs\\Administrative Tools"
+msgstr ""
+
+#: shell32.rc:211
+msgid "Music"
+msgstr ""
+
+#: shell32.rc:212
+msgid "Pictures"
+msgstr ""
+
+#: shell32.rc:213
+msgid "Videos"
+msgstr ""
+
+#: shell32.rc:214
+msgid "Local Settings\\Application Data\\Microsoft\\CD Burning"
+msgstr ""
+
+#: shell32.rc:205
+msgid "Program Files (x86)"
+msgstr ""
+
+#: shell32.rc:208
+msgid "Program Files (x86)\\Common Files"
+msgstr ""
+
+#: shell32.rc:215
+#, fuzzy
+msgid "Contacts"
+msgstr "เนื้อหา"
+
+#: shell32.rc:216 winefile.rc:166
+msgid "Links"
+msgstr ""
+
+#: shell32.rc:217
+msgid "Pictures\\Slide Shows"
+msgstr ""
+
+#: shell32.rc:218
+msgid "Music\\Playlists"
+msgstr ""
+
+#: shell32.rc:219 shell32.rc:232
+msgid "Downloads"
+msgstr ""
+
+#: shell32.rc:136 taskmgr.rc:327
+msgid "Status"
+msgstr ""
+
+#: shell32.rc:137
+#, fuzzy
+msgid "Location"
+msgstr "รายละเอียด"
+
+#: shell32.rc:138
+msgid "Model"
+msgstr ""
+
+#: shell32.rc:220
+msgid "Microsoft\\Windows\\GameExplorer"
+msgstr ""
+
+#: shell32.rc:221
+msgid "Microsoft\\Windows\\Libraries"
+msgstr ""
+
+#: shell32.rc:222
+msgid "Microsoft\\Windows\\Ringtones"
+msgstr ""
+
+#: shell32.rc:223
+msgid "Music\\Sample Music"
+msgstr ""
+
+#: shell32.rc:224
+msgid "Pictures\\Sample Pictures"
+msgstr ""
+
+#: shell32.rc:225
+msgid "Music\\Sample Playlists"
+msgstr ""
+
+#: shell32.rc:226
+msgid "Videos\\Sample Videos"
+msgstr ""
+
+#: shell32.rc:227
+#, fuzzy
+msgid "Saved Games"
+msgstr "บันทืกเป็น..."
+
+#: shell32.rc:228
+#, fuzzy
+msgid "Searches"
+msgstr "คันหา"
+
+#: shell32.rc:229
+msgid "Users"
+msgstr ""
+
+#: shell32.rc:230
+msgid "OEM Links"
+msgstr ""
+
+#: shell32.rc:233
+msgid "AppData\\LocalLow"
+msgstr ""
+
+#: shell32.rc:154
+msgid "Unable to create new Folder: Permission denied."
+msgstr ""
+
+#: shell32.rc:155
+msgid "Error during creation of a new folder"
+msgstr ""
+
+#: shell32.rc:156
+msgid "Confirm file deletion"
+msgstr ""
+
+#: shell32.rc:157
+msgid "Confirm folder deletion"
+msgstr ""
+
+#: shell32.rc:158
+msgid "Are you sure you want to delete '%1'?"
+msgstr ""
+
+#: shell32.rc:159
+msgid "Are you sure you want to delete these %1 items?"
+msgstr ""
+
+#: shell32.rc:166
+msgid "Confirm file overwrite"
+msgstr ""
+
+#: shell32.rc:165
+msgid ""
+"This folder already contains a file called '%1'.\n"
+"\n"
+"Do you want to replace it?"
+msgstr ""
+
+#: shell32.rc:160
+msgid "Are you sure you want to delete the selected item(s)?"
+msgstr ""
+
+#: shell32.rc:162
+msgid ""
+"Are you sure that you want to send '%1' and all its content to the Trash?"
+msgstr ""
+
+#: shell32.rc:161
+msgid "Are you sure that you want to send '%1' to the Trash?"
+msgstr ""
+
+#: shell32.rc:163
+msgid "Are you sure that you want to send these %1 items to the Trash?"
+msgstr ""
+
+#: shell32.rc:164
+msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
+msgstr ""
+
+#: shell32.rc:167
+msgid ""
+"This folder already contains a folder named '%1'.\n"
+"\n"
+"If the files in the destination folder have the same names as files in the\n"
+"selected folder they will be replaced. Do you still want to move or copy\n"
+"the folder?"
+msgstr ""
+
+#: shell32.rc:235
+msgid "New Folder"
+msgstr ""
+
+#: shell32.rc:237
+msgid "Wine Control Panel"
+msgstr ""
+
+#: shell32.rc:179
+msgid "Unable to display Run File dialog box (internal error)"
+msgstr ""
+
+#: shell32.rc:180
+msgid "Unable to display Browse dialog box (internal error)"
+msgstr ""
+
+#: shell32.rc:182
+#, fuzzy
+msgid "Executable files (*.exe)"
+msgstr "แฟ้มตํารา (*.txt)"
+
+#: shell32.rc:241
+msgid "There is no Windows program configured to open this type of file."
+msgstr ""
+
+#: shell32.rc:258
+msgid ""
+"Wine is free software; you can redistribute it and/or modify it under the "
+"terms of the GNU Lesser General Public License as published by the Free "
+"Software Foundation; either version 2.1 of the License, or (at your option) "
+"any later version.\n"
+"\n"
+"Wine is distributed in the hope that it will be useful, but WITHOUT ANY "
+"WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
+"FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for "
+"more details.\n"
+"\n"
+"You should have received a copy of the GNU Lesser General Public License "
+"along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
+"Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
+msgstr ""
+
+#: shell32.rc:246
+msgid "Wine License"
+msgstr ""
+
+#: shell32.rc:143
+msgid "Trash"
 msgstr ""
 
 #: shlwapi.rc:27
@@ -4226,10 +4712,6 @@ msgstr "ปรับแต่งหน้า..."
 msgid "P&rinter Setup..."
 msgstr "ปรับแต่งเครื่องพิมพ์..."
 
-#: notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
-msgid "E&xit"
-msgstr "ออก"
-
 #: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 msgid "&Edit"
 msgstr "แก้ไข"
@@ -4741,18 +5223,6 @@ msgstr ""
 msgid "&Paused"
 msgstr ""
 
-#: taskmgr.rc:65 taskmgr.rc:111 taskmgr.rc:253
-msgid "Lar&ge Icons"
-msgstr ""
-
-#: taskmgr.rc:66 taskmgr.rc:112 taskmgr.rc:254
-msgid "S&mall Icons"
-msgstr ""
-
-#: taskmgr.rc:67 taskmgr.rc:113 taskmgr.rc:255
-msgid "&Details"
-msgstr ""
-
 #: taskmgr.rc:68 taskmgr.rc:257
 msgid "&Select Columns..."
 msgstr ""
@@ -5220,10 +5690,6 @@ msgstr ""
 msgid "Task"
 msgstr ""
 
-#: taskmgr.rc:327
-msgid "Status"
-msgstr ""
-
 #: taskmgr.rc:328
 msgid "Debug Channels"
 msgstr ""
@@ -5667,10 +6133,6 @@ msgstr ""
 msgid "unixfs"
 msgstr ""
 
-#: winefile.rc:151
-msgid "Desktop"
-msgstr ""
-
 #: winefile.rc:152
 msgid "Shell"
 msgstr ""
@@ -5685,10 +6147,6 @@ msgstr ""
 
 #: winefile.rc:155
 msgid "Wine File"
-msgstr ""
-
-#: winefile.rc:161
-msgid "Size"
 msgstr ""
 
 #: winefile.rc:162
@@ -5708,14 +6166,6 @@ msgstr "วันที่"
 
 #: winefile.rc:165
 msgid "Index/Inode"
-msgstr ""
-
-#: winefile.rc:166
-msgid "Links"
-msgstr ""
-
-#: winefile.rc:167
-msgid "Attributes"
 msgstr ""
 
 #: winefile.rc:168

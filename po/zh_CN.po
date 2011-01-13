@@ -37,7 +37,7 @@ msgstr "不能运行卸载程序 '%s'. 你想把这个卸载程序从注册表�
 msgid "Not specified"
 msgstr "没指定"
 
-#: appwiz.rc:35 winefile.rc:160
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 winefile.rc:160
 msgid "Name"
 msgstr "名称"
 
@@ -57,8 +57,8 @@ msgstr "安装程序"
 msgid "Programs (*.exe)"
 msgstr "程序 (*.exe)"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 notepad.rc:78 progman.rc:84
-#: winhlp32.rc:102
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
+#: progman.rc:84 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "所有文件 (*.*)"
 
@@ -1177,9 +1177,9 @@ msgstr ""
 msgid "Friendly name"
 msgstr ""
 
-#: cryptui.rc:62 ipconfig.rc:41
+#: cryptui.rc:62 shell32.rc:239 ipconfig.rc:41
 msgid "Description"
-msgstr ""
+msgstr "描述"
 
 #: cryptui.rc:63
 #, fuzzy
@@ -1283,10 +1283,9 @@ msgstr ""
 msgid "Automatically determined by the program"
 msgstr ""
 
-#: cryptui.rc:88
-#, fuzzy
+#: cryptui.rc:88 shell32.rc:122
 msgid "File"
-msgstr "文件(&F)"
+msgstr "文件"
 
 #: cryptui.rc:89
 #, fuzzy
@@ -1609,7 +1608,7 @@ msgstr "隐藏"
 msgid "Stop"
 msgstr "停止"
 
-#: hhctrl.rc:38 shdocvw.rc:66
+#: hhctrl.rc:38 shdocvw.rc:66 shell32.rc:59
 msgid "Refresh"
 msgstr "刷新"
 
@@ -2281,7 +2280,7 @@ msgid ""
 msgstr ""
 "将文件的内容以对象的方式插入到你的文件以便你可以用创建本文件的程序来激活它."
 
-#: oledlg.rc:27
+#: oledlg.rc:27 shell32.rc:181
 msgid "Browse"
 msgstr "浏览"
 
@@ -2436,7 +2435,7 @@ msgstr "打印(&I)"
 msgid "&Refresh"
 msgstr "刷新(&R)"
 
-#: shdoclc.rc:59 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 msgid "&Properties"
 msgstr "属性(&P)"
 
@@ -2494,7 +2493,7 @@ msgid "Cu&t"
 msgstr "剪切(&T)"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 wineconsole.rc:29 wordpad.rc:102
+#: shdoclc.rc:187 shell32.rc:87 wineconsole.rc:29 wordpad.rc:102
 msgid "&Copy"
 msgstr "复制(&C)"
 
@@ -2518,15 +2517,15 @@ msgstr "控制"
 msgid "&Undo"
 msgstr "撤销(&U)"
 
-#: shdoclc.rc:95
+#: shdoclc.rc:95 shell32.rc:90
 msgid "&Delete"
-msgstr "删除(&D"
+msgstr "删除(&D)"
 
 #: shdoclc.rc:101
 msgid "Table"
 msgstr "表格"
 
-#: shdoclc.rc:103
+#: shdoclc.rc:103 shell32.rc:82
 msgid "&Select"
 msgstr "选择(&S)"
 
@@ -2558,7 +2557,7 @@ msgstr "表格属性(&T)"
 msgid "1DSite Select"
 msgstr "1DSite Select"
 
-#: shdoclc.rc:120
+#: shdoclc.rc:120 shell32.rc:61
 msgid "Paste"
 msgstr "粘贴"
 
@@ -2570,7 +2569,7 @@ msgstr "打印(&P)"
 msgid "Anchor"
 msgstr "Anchor"
 
-#: shdoclc.rc:128 view.rc:30 winhlp32.rc:29
+#: shdoclc.rc:128 shell32.rc:84 view.rc:30 winhlp32.rc:29
 msgid "&Open"
 msgstr "打开(&O)"
 
@@ -2742,8 +2741,8 @@ msgstr "&w&bPage &p"
 msgid "&u&b&d"
 msgstr "&u&b&d"
 
-#: shdocvw.rc:25 notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
-#: winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
+#: shdocvw.rc:25 shell32.rc:99 notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: view.rc:28 winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
 msgid "&File"
 msgstr "文件(&F)"
 
@@ -2792,9 +2791,15 @@ msgstr "属性(&P)"
 msgid "&Close"
 msgstr "关闭(&C)"
 
-#: shdocvw.rc:42 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 taskmgr.rc:52 winefile.rc:76
+#: wordpad.rc:66
+#, fuzzy
 msgid "&View"
-msgstr "视图(&V)"
+msgstr ""
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"视图(&V)\n"
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"查看 (&V)"
 
 #: shdocvw.rc:44
 #, fuzzy
@@ -2824,8 +2829,8 @@ msgstr "最爱(&I)"
 msgid "&Add to Favorites..."
 msgstr "添加到我的最爱(&F)"
 
-#: shdocvw.rc:55 notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130
-#: winhlp32.rc:60 wordpad.rc:91
+#: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 progman.rc:52 taskmgr.rc:87
+#: winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
 msgid "&Help"
 msgstr "帮助(&H)"
 
@@ -2837,6 +2842,518 @@ msgstr "Wine Internet Explorer"
 #: shdocvw.rc:73
 msgid "Address"
 msgstr ""
+
+#: shell32.rc:27 shell32.rc:42 shell32.rc:107 shell32.rc:147 taskmgr.rc:65
+#: taskmgr.rc:111 taskmgr.rc:253
+#, fuzzy
+msgid "Lar&ge Icons"
+msgstr ""
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"大图标(&G)\n"
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"大图标 (&G)"
+
+#: shell32.rc:28 shell32.rc:43 shell32.rc:108 shell32.rc:148 taskmgr.rc:66
+#: taskmgr.rc:112 taskmgr.rc:254
+#, fuzzy
+msgid "S&mall Icons"
+msgstr ""
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"小图标(&M)\n"
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"小图标 (&M)"
+
+#: shell32.rc:29 shell32.rc:44 shell32.rc:109 shell32.rc:149
+msgid "&List"
+msgstr "列表 (&L)"
+
+#: shell32.rc:30 shell32.rc:45 shell32.rc:110 shell32.rc:150 taskmgr.rc:67
+#: taskmgr.rc:113 taskmgr.rc:255
+#, fuzzy
+msgid "&Details"
+msgstr ""
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"详情列表(&D)\n"
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"详细信息 (&D)"
+
+#: shell32.rc:48
+msgid "Arrange &Icons"
+msgstr "排列图标 (&I)"
+
+#: shell32.rc:50
+msgid "By &Name"
+msgstr "按名字 (&N)"
+
+#: shell32.rc:51
+msgid "By &Type"
+msgstr "按类型 (&T)"
+
+#: shell32.rc:52
+msgid "By &Size"
+msgstr "按大小 (&S)"
+
+#: shell32.rc:53
+msgid "By &Date"
+msgstr "按日期 (&D)"
+
+#: shell32.rc:55
+msgid "&Auto Arrange"
+msgstr "自动排列 (&A)"
+
+#: shell32.rc:57
+msgid "Line up Icons"
+msgstr "对齐图标"
+
+#: shell32.rc:62
+msgid "Paste as Link"
+msgstr "粘贴快捷方式"
+
+#: shell32.rc:64
+msgid "New"
+msgstr "新建"
+
+#: shell32.rc:66
+msgid "New &Folder"
+msgstr "新文件夹 (&F)"
+
+#: shell32.rc:67
+msgid "New &Link"
+msgstr "新快捷方式 (&L)"
+
+#: shell32.rc:71
+msgid "Properties"
+msgstr "属性"
+
+#: shell32.rc:83
+msgid "E&xplore"
+msgstr "文件管理器(&X)"
+
+#: shell32.rc:86
+msgid "C&ut"
+msgstr "剪切(&U)"
+
+#: shell32.rc:89
+msgid "Create &Link"
+msgstr "创建快捷方式(&L)"
+
+#: shell32.rc:91
+msgid "&Rename"
+msgstr "改名(&R)"
+
+#: shell32.rc:102 notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
+#, fuzzy
+msgid "E&xit"
+msgstr ""
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"退出(&X)\n"
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"退出(&x)"
+
+#: shell32.rc:115
+msgid "&About Control Panel..."
+msgstr "关于控制面板(&A)..."
+
+#: shell32.rc:123 shell32.rc:127 winefile.rc:161
+msgid "Size"
+msgstr "大小"
+
+#: shell32.rc:124
+msgid "Type"
+msgstr "类型"
+
+#: shell32.rc:125
+msgid "Modified"
+msgstr "修改"
+
+#: shell32.rc:126 winefile.rc:167
+msgid "Attributes"
+msgstr "属性"
+
+#: shell32.rc:128
+msgid "Size available"
+msgstr "剩余空间"
+
+#: shell32.rc:130
+msgid "Comments"
+msgstr "备注"
+
+#: shell32.rc:131
+msgid "Owner"
+msgstr "所有者"
+
+#: shell32.rc:132
+msgid "Group"
+msgstr "群组"
+
+#: shell32.rc:133
+msgid "Original location"
+msgstr "原位置"
+
+#: shell32.rc:134
+msgid "Date deleted"
+msgstr "删除日期"
+
+#: shell32.rc:141 shell32.rc:195 winefile.rc:151
+msgid "Desktop"
+msgstr "桌面"
+
+#: shell32.rc:142
+msgid "My Computer"
+msgstr "我的电脑"
+
+#: shell32.rc:144
+msgid "Control Panel"
+msgstr "控制面板"
+
+#: shell32.rc:151
+msgid "Select"
+msgstr "选择"
+
+#: shell32.rc:152
+msgid "Open"
+msgstr "打开"
+
+#: shell32.rc:173
+msgid "Restart"
+msgstr "重启"
+
+#: shell32.rc:174
+msgid "Do you want to simulate a Windows reboot?"
+msgstr "要模拟 Windows 重启吗?"
+
+#: shell32.rc:175
+msgid "Shutdown"
+msgstr "关闭"
+
+#: shell32.rc:176
+msgid "Do you want to shutdown your Wine session?"
+msgstr "要关闭 Wine 会话吗?"
+
+#: shell32.rc:186
+msgid "Start Menu\\Programs"
+msgstr "Start Menu\\Programs"
+
+#: shell32.rc:187
+msgid "My Documents"
+msgstr "My Documents"
+
+#: shell32.rc:188
+msgid "Favorites"
+msgstr "Favorites"
+
+#: shell32.rc:189
+msgid "Start Menu\\Programs\\StartUp"
+msgstr "Start Menu\\Programs\\StartUp"
+
+#: shell32.rc:190
+msgid "Recent"
+msgstr "Recent"
+
+#: shell32.rc:191
+msgid "SendTo"
+msgstr "SendTo"
+
+#: shell32.rc:192
+msgid "Start Menu"
+msgstr "Start Menu"
+
+#: shell32.rc:193
+msgid "My Music"
+msgstr "My Music"
+
+#: shell32.rc:194
+msgid "My Videos"
+msgstr "My Videos"
+
+#: shell32.rc:196
+msgid "NetHood"
+msgstr "NetHood"
+
+#: shell32.rc:197
+msgid "Templates"
+msgstr "Templates"
+
+#: shell32.rc:198
+msgid "Application Data"
+msgstr "Application Data"
+
+#: shell32.rc:199
+msgid "PrintHood"
+msgstr "PrintHood"
+
+#: shell32.rc:200
+msgid "Local Settings\\Application Data"
+msgstr "Local Settings\\Application Data"
+
+#: shell32.rc:201
+msgid "Local Settings\\Temporary Internet Files"
+msgstr "Local Settings\\Temporary Internet Files"
+
+#: shell32.rc:202
+msgid "Cookies"
+msgstr "Cookies"
+
+#: shell32.rc:203
+msgid "Local Settings\\History"
+msgstr "Local Settings\\History"
+
+#: shell32.rc:204
+msgid "Program Files"
+msgstr "Program Files"
+
+#: shell32.rc:206
+msgid "My Pictures"
+msgstr "My Pictures"
+
+#: shell32.rc:207
+msgid "Program Files\\Common Files"
+msgstr "Program Files\\Common Files"
+
+#: shell32.rc:209 shell32.rc:135 shell32.rc:231
+msgid "Documents"
+msgstr "Documents"
+
+#: shell32.rc:210
+msgid "Start Menu\\Programs\\Administrative Tools"
+msgstr "Start Menu\\Programs\\Administrative Tools"
+
+#: shell32.rc:211
+msgid "Music"
+msgstr "Music"
+
+#: shell32.rc:212
+msgid "Pictures"
+msgstr "Pictures"
+
+#: shell32.rc:213
+msgid "Videos"
+msgstr "Videos"
+
+#: shell32.rc:214
+msgid "Local Settings\\Application Data\\Microsoft\\CD Burning"
+msgstr "Local Settings\\Application Data\\Microsoft\\CD Burning"
+
+#: shell32.rc:205
+msgid "Program Files (x86)"
+msgstr "Program Files (x86)"
+
+#: shell32.rc:208
+msgid "Program Files (x86)\\Common Files"
+msgstr "Program Files (x86)\\Common Files"
+
+#: shell32.rc:215
+msgid "Contacts"
+msgstr "Contacts"
+
+#: shell32.rc:216 winefile.rc:166
+msgid "Links"
+msgstr "Links"
+
+#: shell32.rc:217
+msgid "Pictures\\Slide Shows"
+msgstr "Pictures\\Slide Shows"
+
+#: shell32.rc:218
+msgid "Music\\Playlists"
+msgstr "Music\\Playlists"
+
+#: shell32.rc:219 shell32.rc:232
+msgid "Downloads"
+msgstr "Downloads"
+
+#: shell32.rc:136 taskmgr.rc:327
+msgid "Status"
+msgstr "状态"
+
+#: shell32.rc:137
+msgid "Location"
+msgstr "位置"
+
+#: shell32.rc:138
+msgid "Model"
+msgstr "型号"
+
+#: shell32.rc:220
+msgid "Microsoft\\Windows\\GameExplorer"
+msgstr "Microsoft\\Windows\\GameExplorer"
+
+#: shell32.rc:221
+msgid "Microsoft\\Windows\\Libraries"
+msgstr "Microsoft\\Windows\\Libraries"
+
+#: shell32.rc:222
+msgid "Microsoft\\Windows\\Ringtones"
+msgstr "Microsoft\\Windows\\Ringtones"
+
+#: shell32.rc:223
+msgid "Music\\Sample Music"
+msgstr "Music\\Sample Music"
+
+#: shell32.rc:224
+msgid "Pictures\\Sample Pictures"
+msgstr "Pictures\\Sample Pictures"
+
+#: shell32.rc:225
+msgid "Music\\Sample Playlists"
+msgstr "Music\\Sample Playlists"
+
+#: shell32.rc:226
+msgid "Videos\\Sample Videos"
+msgstr "Videos\\Sample Videos"
+
+#: shell32.rc:227
+msgid "Saved Games"
+msgstr "Saved Games"
+
+#: shell32.rc:228
+msgid "Searches"
+msgstr "Searches"
+
+#: shell32.rc:229
+msgid "Users"
+msgstr "Users"
+
+#: shell32.rc:230
+msgid "OEM Links"
+msgstr "OEM Links"
+
+#: shell32.rc:233
+msgid "AppData\\LocalLow"
+msgstr "AppData\\LocalLow"
+
+#: shell32.rc:154
+msgid "Unable to create new Folder: Permission denied."
+msgstr "无法创建新文件夹: 拒绝访问."
+
+#: shell32.rc:155
+msgid "Error during creation of a new folder"
+msgstr "创建新文件夹时发生了错误"
+
+#: shell32.rc:156
+msgid "Confirm file deletion"
+msgstr "确认删除文件"
+
+#: shell32.rc:157
+msgid "Confirm folder deletion"
+msgstr "确认删除文件夹"
+
+#: shell32.rc:158
+msgid "Are you sure you want to delete '%1'?"
+msgstr "真的删除 '%1'?"
+
+#: shell32.rc:159
+msgid "Are you sure you want to delete these %1 items?"
+msgstr "真的删除这 %1 项?"
+
+#: shell32.rc:166
+msgid "Confirm file overwrite"
+msgstr "确认覆盖文件"
+
+#: shell32.rc:165
+msgid ""
+"This folder already contains a file called '%1'.\n"
+"\n"
+"Do you want to replace it?"
+msgstr ""
+"已存在名为 '%1' 的文件.\n"
+"\n"
+"要替换吗?"
+
+#: shell32.rc:160
+msgid "Are you sure you want to delete the selected item(s)?"
+msgstr "真的删除选中项?"
+
+#: shell32.rc:162
+msgid ""
+"Are you sure that you want to send '%1' and all its content to the Trash?"
+msgstr "真的把 '%1' 及其全部内容送入回收站?"
+
+#: shell32.rc:161
+msgid "Are you sure that you want to send '%1' to the Trash?"
+msgstr "真的把 '%1' 送入回收站?"
+
+#: shell32.rc:163
+msgid "Are you sure that you want to send these %1 items to the Trash?"
+msgstr "真的把这 %1 项送入回收站?"
+
+#: shell32.rc:164
+msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
+msgstr "'%1' 一项无法送入回收站. 要彻底删除吗?"
+
+#: shell32.rc:167
+msgid ""
+"This folder already contains a folder named '%1'.\n"
+"\n"
+"If the files in the destination folder have the same names as files in the\n"
+"selected folder they will be replaced. Do you still want to move or copy\n"
+"the folder?"
+msgstr ""
+"已存在名为 '%1' 的文件夹.\n"
+"\n"
+"若选择合并原有同名文件将被替换. 真的要合并吗?"
+
+#: shell32.rc:235
+msgid "New Folder"
+msgstr "新文件夹"
+
+#: shell32.rc:237
+msgid "Wine Control Panel"
+msgstr "Wine 控制面板"
+
+#: shell32.rc:179
+msgid "Unable to display Run File dialog box (internal error)"
+msgstr "无法显示运行文件对话框 (内部错误)"
+
+#: shell32.rc:180
+msgid "Unable to display Browse dialog box (internal error)"
+msgstr "无法显示浏览对话框 (内部错误)"
+
+#: shell32.rc:182
+msgid "Executable files (*.exe)"
+msgstr "可执行文件 (*.exe)"
+
+#: shell32.rc:241
+msgid "There is no Windows program configured to open this type of file."
+msgstr "找不到用于打开此类文件的 Windows 程序."
+
+#: shell32.rc:258
+msgid ""
+"Wine is free software; you can redistribute it and/or modify it under the "
+"terms of the GNU Lesser General Public License as published by the Free "
+"Software Foundation; either version 2.1 of the License, or (at your option) "
+"any later version.\n"
+"\n"
+"Wine is distributed in the hope that it will be useful, but WITHOUT ANY "
+"WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
+"FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for "
+"more details.\n"
+"\n"
+"You should have received a copy of the GNU Lesser General Public License "
+"along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
+"Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
+msgstr ""
+"Wine is free software; you can redistribute it and/or modify it under the "
+"terms of the GNU Lesser General Public License as published by the Free "
+"Software Foundation; either version 2.1 of the License, or (at your option) "
+"any later version.\n"
+"\n"
+"Wine is distributed in the hope that it will be useful, but WITHOUT ANY "
+"WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
+"FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for "
+"more details.\n"
+"\n"
+"You should have received a copy of the GNU Lesser General Public License "
+"along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
+"Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
+
+#: shell32.rc:246
+msgid "Wine License"
+msgstr "Wine 使用许可"
+
+#: shell32.rc:143
+msgid "Trash"
+msgstr "Trash"
 
 #: shlwapi.rc:27
 msgid "%ld bytes"
@@ -4307,10 +4824,6 @@ msgstr "页面设置(&T)..."
 msgid "P&rinter Setup..."
 msgstr "打印设置(&R)..."
 
-#: notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
-msgid "E&xit"
-msgstr "退出(&X)"
-
 #: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 msgid "&Edit"
 msgstr "编辑(&E)"
@@ -4842,18 +5355,6 @@ msgstr "慢(&L)"
 msgid "&Paused"
 msgstr "暂停(&P)"
 
-#: taskmgr.rc:65 taskmgr.rc:111 taskmgr.rc:253
-msgid "Lar&ge Icons"
-msgstr "大图标(&G)"
-
-#: taskmgr.rc:66 taskmgr.rc:112 taskmgr.rc:254
-msgid "S&mall Icons"
-msgstr "小图标(&M)"
-
-#: taskmgr.rc:67 taskmgr.rc:113 taskmgr.rc:255
-msgid "&Details"
-msgstr "详情列表(&D)"
-
 #: taskmgr.rc:68 taskmgr.rc:257
 msgid "&Select Columns..."
 msgstr "选择列项(&S)..."
@@ -5332,10 +5833,6 @@ msgstr ""
 msgid "Task"
 msgstr "结束任务(&E)"
 
-#: taskmgr.rc:327
-msgid "Status"
-msgstr ""
-
 #: taskmgr.rc:328
 #, fuzzy
 msgid "Debug Channels"
@@ -5791,10 +6288,6 @@ msgstr ""
 msgid "unixfs"
 msgstr ""
 
-#: winefile.rc:151
-msgid "Desktop"
-msgstr ""
-
 #: winefile.rc:152
 msgid "Shell"
 msgstr ""
@@ -5817,10 +6310,6 @@ msgstr ""
 msgid "Wine File"
 msgstr "Wine地雷"
 
-#: winefile.rc:161
-msgid "Size"
-msgstr ""
-
 #: winefile.rc:162
 #, fuzzy
 msgid "CDate"
@@ -5838,14 +6327,6 @@ msgstr "日期(&D)"
 
 #: winefile.rc:165
 msgid "Index/Inode"
-msgstr ""
-
-#: winefile.rc:166
-msgid "Links"
-msgstr ""
-
-#: winefile.rc:167
-msgid "Attributes"
 msgstr ""
 
 #: winefile.rc:168

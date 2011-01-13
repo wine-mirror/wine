@@ -15187,7 +15187,7 @@ wine_fn_config_dll shdoclc enable_shdoclc po
 wine_fn_config_dll shdocvw enable_shdocvw po,implib
 wine_fn_config_test dlls/shdocvw/tests shdocvw_test
 wine_fn_config_dll shell.dll16 enable_win16
-wine_fn_config_dll shell32 enable_shell32 implib
+wine_fn_config_dll shell32 enable_shell32 po,implib
 wine_fn_config_test dlls/shell32/tests shell32_test
 wine_fn_config_dll shfolder enable_shfolder implib
 wine_fn_config_dll shlwapi enable_shlwapi po,implib

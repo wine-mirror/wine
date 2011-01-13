@@ -41,7 +41,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Inte angivet"
 
-#: appwiz.rc:35 winefile.rc:160
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 winefile.rc:160
 msgid "Name"
 msgstr "Namn"
 
@@ -61,8 +61,8 @@ msgstr "Installationsprogram"
 msgid "Programs (*.exe)"
 msgstr "Program (*.exe)"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 notepad.rc:78 progman.rc:84
-#: winhlp32.rc:102
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
+#: progman.rc:84 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Alla filer (*.*)"
 
@@ -1215,7 +1215,7 @@ msgstr "Utökad nyckelanvändning (egenskap)"
 msgid "Friendly name"
 msgstr "Vänligt namn"
 
-#: cryptui.rc:62 ipconfig.rc:41
+#: cryptui.rc:62 shell32.rc:239 ipconfig.rc:41
 msgid "Description"
 msgstr "Beskrivning"
 
@@ -1323,7 +1323,7 @@ msgstr "Certifikatlager valt"
 msgid "Automatically determined by the program"
 msgstr "Automatiskt bestämt av programmet"
 
-#: cryptui.rc:88
+#: cryptui.rc:88 shell32.rc:122
 msgid "File"
 msgstr "Fil"
 
@@ -1673,7 +1673,7 @@ msgstr ""
 "#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
 "Stopp"
 
-#: hhctrl.rc:38 shdocvw.rc:66
+#: hhctrl.rc:38 shdocvw.rc:66 shell32.rc:59
 msgid "Refresh"
 msgstr "Uppdatera"
 
@@ -2337,7 +2337,7 @@ msgstr ""
 "Insert the contents of the file as an object into your document so that you "
 "may activate it using the program which created it."
 
-#: oledlg.rc:27
+#: oledlg.rc:27 shell32.rc:181
 msgid "Browse"
 msgstr "Bläddra"
 
@@ -2501,7 +2501,7 @@ msgstr "Skriv &ut"
 msgid "&Refresh"
 msgstr "Upp&datera"
 
-#: shdoclc.rc:59 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 #, fuzzy
 msgid "&Properties"
 msgstr ""
@@ -2569,7 +2569,7 @@ msgstr ""
 "Klipp &ut"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 wineconsole.rc:29 wordpad.rc:102
+#: shdoclc.rc:187 shell32.rc:87 wineconsole.rc:29 wordpad.rc:102
 msgid "&Copy"
 msgstr "&Kopiera"
 
@@ -2593,7 +2593,7 @@ msgstr "Kontroll"
 msgid "&Undo"
 msgstr "&Ångra"
 
-#: shdoclc.rc:95
+#: shdoclc.rc:95 shell32.rc:90
 msgid "&Delete"
 msgstr "&Ta bort"
 
@@ -2601,9 +2601,14 @@ msgstr "&Ta bort"
 msgid "Table"
 msgstr "Tabell"
 
-#: shdoclc.rc:103
+#: shdoclc.rc:103 shell32.rc:82
+#, fuzzy
 msgid "&Select"
-msgstr "&Markera"
+msgstr ""
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"&Markera\n"
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"&Välj"
 
 #: shdoclc.rc:105
 msgid "&Cell"
@@ -2633,9 +2638,14 @@ msgstr "&Tabellegenskaper"
 msgid "1DSite Select"
 msgstr "1DSite Select"
 
-#: shdoclc.rc:120
+#: shdoclc.rc:120 shell32.rc:61
+#, fuzzy
 msgid "Paste"
-msgstr "K&listra in"
+msgstr ""
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"K&listra in\n"
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"Klistra in"
 
 #: shdoclc.rc:122 winhlp32.rc:31
 #, fuzzy
@@ -2650,7 +2660,7 @@ msgstr ""
 msgid "Anchor"
 msgstr "Ankare"
 
-#: shdoclc.rc:128 view.rc:30 winhlp32.rc:29
+#: shdoclc.rc:128 shell32.rc:84 view.rc:30 winhlp32.rc:29
 msgid "&Open"
 msgstr "&Öppna"
 
@@ -2822,8 +2832,8 @@ msgstr "&w&bSida &p"
 msgid "&u&b&d"
 msgstr "&u&b&d"
 
-#: shdocvw.rc:25 notepad.rc:26 progman.rc:29 taskmgr.rc:35 view.rc:28
-#: winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
+#: shdocvw.rc:25 shell32.rc:99 notepad.rc:26 progman.rc:29 taskmgr.rc:35
+#: view.rc:28 winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
 msgid "&File"
 msgstr "&Arkiv"
 
@@ -2882,7 +2892,8 @@ msgstr ""
 "#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
 "Stä&ng"
 
-#: shdocvw.rc:42 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 taskmgr.rc:52 winefile.rc:76
+#: wordpad.rc:66
 msgid "&View"
 msgstr "&Visa"
 
@@ -2906,8 +2917,8 @@ msgstr "&Favoriter"
 msgid "&Add to Favorites..."
 msgstr "&Lägg till favoriter..."
 
-#: shdocvw.rc:55 notepad.rc:57 progman.rc:52 taskmgr.rc:87 winefile.rc:130
-#: winhlp32.rc:60 wordpad.rc:91
+#: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 progman.rc:52 taskmgr.rc:87
+#: winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
 msgid "&Help"
 msgstr "&Hjälp"
 
@@ -2918,6 +2929,517 @@ msgstr "&Om Internet Explorer..."
 #: shdocvw.rc:73
 msgid "Address"
 msgstr "Adress"
+
+#: shell32.rc:27 shell32.rc:42 shell32.rc:107 shell32.rc:147 taskmgr.rc:65
+#: taskmgr.rc:111 taskmgr.rc:253
+#, fuzzy
+msgid "Lar&ge Icons"
+msgstr ""
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"S&tora ikoner\n"
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"&Stora ikoner"
+
+#: shell32.rc:28 shell32.rc:43 shell32.rc:108 shell32.rc:148 taskmgr.rc:66
+#: taskmgr.rc:112 taskmgr.rc:254
+msgid "S&mall Icons"
+msgstr "S&må ikoner"
+
+#: shell32.rc:29 shell32.rc:44 shell32.rc:109 shell32.rc:149
+msgid "&List"
+msgstr "&Lista"
+
+#: shell32.rc:30 shell32.rc:45 shell32.rc:110 shell32.rc:150 taskmgr.rc:67
+#: taskmgr.rc:113 taskmgr.rc:255
+msgid "&Details"
+msgstr "&Detaljer"
+
+#: shell32.rc:48
+msgid "Arrange &Icons"
+msgstr "Ordna &ikoner"
+
+#: shell32.rc:50
+msgid "By &Name"
+msgstr "Efter &namn"
+
+#: shell32.rc:51
+msgid "By &Type"
+msgstr "Efter &typ"
+
+#: shell32.rc:52
+msgid "By &Size"
+msgstr "Efter &storlek"
+
+#: shell32.rc:53
+msgid "By &Date"
+msgstr "Efter &datum"
+
+#: shell32.rc:55
+msgid "&Auto Arrange"
+msgstr "Ordna &automatiskt"
+
+#: shell32.rc:57
+msgid "Line up Icons"
+msgstr "Rada upp ikoner"
+
+#: shell32.rc:62
+msgid "Paste as Link"
+msgstr "Klistra in som genväg"
+
+#: shell32.rc:64
+msgid "New"
+msgstr "Ny"
+
+#: shell32.rc:66
+msgid "New &Folder"
+msgstr "Ny &mapp"
+
+#: shell32.rc:67
+msgid "New &Link"
+msgstr "Ny &genväg"
+
+#: shell32.rc:71
+msgid "Properties"
+msgstr "Egenskaper"
+
+#: shell32.rc:83
+msgid "E&xplore"
+msgstr "Ut&forska"
+
+#: shell32.rc:86
+msgid "C&ut"
+msgstr "Klipp &ut"
+
+#: shell32.rc:89
+msgid "Create &Link"
+msgstr "Skapa &länk"
+
+#: shell32.rc:91
+msgid "&Rename"
+msgstr "&Byt namn"
+
+#: shell32.rc:102 notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
+#, fuzzy
+msgid "E&xit"
+msgstr ""
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"&Avsluta\n"
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"A&vsluta"
+
+#: shell32.rc:115
+msgid "&About Control Panel..."
+msgstr "&Om Kontrollpanelen..."
+
+#: shell32.rc:123 shell32.rc:127 winefile.rc:161
+msgid "Size"
+msgstr "Storlek"
+
+#: shell32.rc:124
+msgid "Type"
+msgstr "Typ"
+
+#: shell32.rc:125
+msgid "Modified"
+msgstr "Ändrad"
+
+#: shell32.rc:126 winefile.rc:167
+#, fuzzy
+msgid "Attributes"
+msgstr ""
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"Attribut\n"
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"Egenskaper"
+
+#: shell32.rc:128
+msgid "Size available"
+msgstr "Ledigt utrymme"
+
+#: shell32.rc:130
+msgid "Comments"
+msgstr "Kommentarer"
+
+#: shell32.rc:131
+msgid "Owner"
+msgstr "Ägare"
+
+#: shell32.rc:132
+msgid "Group"
+msgstr "Grupp"
+
+#: shell32.rc:133
+msgid "Original location"
+msgstr "Ursprunglig plats"
+
+#: shell32.rc:134
+msgid "Date deleted"
+msgstr "Borttagningsdatum"
+
+#: shell32.rc:141 shell32.rc:195 winefile.rc:151
+msgid "Desktop"
+msgstr "Skrivbord"
+
+#: shell32.rc:142
+msgid "My Computer"
+msgstr "Min dator"
+
+#: shell32.rc:144
+msgid "Control Panel"
+msgstr "Kontrollpanel"
+
+#: shell32.rc:151
+msgid "Select"
+msgstr "Välj"
+
+#: shell32.rc:152
+msgid "Open"
+msgstr "Öppna"
+
+#: shell32.rc:173
+msgid "Restart"
+msgstr "Starta om"
+
+#: shell32.rc:174
+msgid "Do you want to simulate a Windows reboot?"
+msgstr "Vill du simulera en omstart av Windows?"
+
+#: shell32.rc:175
+msgid "Shutdown"
+msgstr "Avsluta"
+
+#: shell32.rc:176
+msgid "Do you want to shutdown your Wine session?"
+msgstr "Vill du avsluta Wine?"
+
+#: shell32.rc:186
+msgid "Start Menu\\Programs"
+msgstr "Start-meny\\Program"
+
+#: shell32.rc:187
+msgid "My Documents"
+msgstr "Mina dokument"
+
+#: shell32.rc:188
+msgid "Favorites"
+msgstr "Favoriter"
+
+#: shell32.rc:189
+msgid "Start Menu\\Programs\\StartUp"
+msgstr "Start-meny\\Program\\Uppstart"
+
+#: shell32.rc:190
+msgid "Recent"
+msgstr "Senaste"
+
+#: shell32.rc:191
+msgid "SendTo"
+msgstr "SendTo"
+
+#: shell32.rc:192
+msgid "Start Menu"
+msgstr "Start-meny"
+
+#: shell32.rc:193
+msgid "My Music"
+msgstr "Min musik"
+
+#: shell32.rc:194
+msgid "My Videos"
+msgstr "Mina videoklipp"
+
+#: shell32.rc:196
+msgid "NetHood"
+msgstr "Nätverket"
+
+#: shell32.rc:197
+msgid "Templates"
+msgstr "Mallar"
+
+#: shell32.rc:198
+msgid "Application Data"
+msgstr "Programdata"
+
+#: shell32.rc:199
+msgid "PrintHood"
+msgstr "Skrivare"
+
+#: shell32.rc:200
+msgid "Local Settings\\Application Data"
+msgstr "Lokala inställningar\\Programdata"
+
+#: shell32.rc:201
+msgid "Local Settings\\Temporary Internet Files"
+msgstr "Lokala inställningar\\Temporary Internet Files"
+
+#: shell32.rc:202
+msgid "Cookies"
+msgstr "Cookies"
+
+#: shell32.rc:203
+msgid "Local Settings\\History"
+msgstr "Lokala inställningar\\Tidigare"
+
+#: shell32.rc:204
+msgid "Program Files"
+msgstr "Program"
+
+#: shell32.rc:206
+msgid "My Pictures"
+msgstr "Mina bilder"
+
+#: shell32.rc:207
+msgid "Program Files\\Common Files"
+msgstr "Program\\Gemensamma filer"
+
+#: shell32.rc:209 shell32.rc:135 shell32.rc:231
+msgid "Documents"
+msgstr "Dokument"
+
+#: shell32.rc:210
+msgid "Start Menu\\Programs\\Administrative Tools"
+msgstr "Start-meny\\Program\\Administrationsverktyg"
+
+#: shell32.rc:211
+msgid "Music"
+msgstr "Musik"
+
+#: shell32.rc:212
+msgid "Pictures"
+msgstr "Bilder"
+
+#: shell32.rc:213
+msgid "Videos"
+msgstr "Videoklipp"
+
+#: shell32.rc:214
+msgid "Local Settings\\Application Data\\Microsoft\\CD Burning"
+msgstr "Lokala inställningar\\Programdata\\Microsoft\\CD-bränning"
+
+#: shell32.rc:205
+msgid "Program Files (x86)"
+msgstr "Program (x86)"
+
+#: shell32.rc:208
+msgid "Program Files (x86)\\Common Files"
+msgstr "Program (x86)\\Gemensamma filer"
+
+#: shell32.rc:215
+msgid "Contacts"
+msgstr "Kontakter"
+
+#: shell32.rc:216 winefile.rc:166
+msgid "Links"
+msgstr "Länkar"
+
+#: shell32.rc:217
+msgid "Pictures\\Slide Shows"
+msgstr "Bilder\\Slide Shows"
+
+#: shell32.rc:218
+msgid "Music\\Playlists"
+msgstr "Musik\\Playlists"
+
+#: shell32.rc:219 shell32.rc:232
+msgid "Downloads"
+msgstr "Nedladdningar"
+
+#: shell32.rc:136 taskmgr.rc:327
+msgid "Status"
+msgstr "Status"
+
+#: shell32.rc:137
+msgid "Location"
+msgstr "Plats"
+
+#: shell32.rc:138
+msgid "Model"
+msgstr "Modell"
+
+#: shell32.rc:220
+msgid "Microsoft\\Windows\\GameExplorer"
+msgstr "Microsoft\\Windows\\GameExplorer"
+
+#: shell32.rc:221
+msgid "Microsoft\\Windows\\Libraries"
+msgstr "Microsoft\\Windows\\Libraries"
+
+#: shell32.rc:222
+msgid "Microsoft\\Windows\\Ringtones"
+msgstr "Microsoft\\Windows\\Ringsignaler"
+
+#: shell32.rc:223
+msgid "Music\\Sample Music"
+msgstr "Musik\\Sample Music"
+
+#: shell32.rc:224
+msgid "Pictures\\Sample Pictures"
+msgstr "Bilder\\Sample Pictures"
+
+#: shell32.rc:225
+msgid "Music\\Sample Playlists"
+msgstr "Musik\\Sample Playlists"
+
+#: shell32.rc:226
+msgid "Videos\\Sample Videos"
+msgstr "Videoklipp\\Sample Videos"
+
+#: shell32.rc:227
+msgid "Saved Games"
+msgstr "Sparade spel"
+
+#: shell32.rc:228
+msgid "Searches"
+msgstr "Sökningar"
+
+#: shell32.rc:229
+msgid "Users"
+msgstr "Användare"
+
+#: shell32.rc:230
+msgid "OEM Links"
+msgstr "OEM Links"
+
+#: shell32.rc:233
+msgid "AppData\\LocalLow"
+msgstr "AppData\\LocalLow"
+
+#: shell32.rc:154
+msgid "Unable to create new Folder: Permission denied."
+msgstr "Kunde inte skapa ny mapp: tillgång nekad."
+
+#: shell32.rc:155
+msgid "Error during creation of a new folder"
+msgstr "Ett fel uppstod under skapande av ny mapp"
+
+#: shell32.rc:156
+msgid "Confirm file deletion"
+msgstr "Bekräfta filborttagning"
+
+#: shell32.rc:157
+msgid "Confirm folder deletion"
+msgstr "Bekräfta borttagning av mapp"
+
+#: shell32.rc:158
+msgid "Are you sure you want to delete '%1'?"
+msgstr "Är du säker du vill ta bort «%1»?"
+
+#: shell32.rc:159
+msgid "Are you sure you want to delete these %1 items?"
+msgstr "Är du säker du vill ta bort dessa %1 element?"
+
+#: shell32.rc:166
+msgid "Confirm file overwrite"
+msgstr "Bekräfta överskrivning av fil"
+
+#: shell32.rc:165
+msgid ""
+"This folder already contains a file called '%1'.\n"
+"\n"
+"Do you want to replace it?"
+msgstr ""
+"Denna mapp innehåller redan en fil kallad '%1'.\n"
+"\n"
+"Vill du skriva över den?"
+
+#: shell32.rc:160
+msgid "Are you sure you want to delete the selected item(s)?"
+msgstr "Är du säker du vill ta bort valt element?"
+
+#: shell32.rc:162
+msgid ""
+"Are you sure that you want to send '%1' and all its content to the Trash?"
+msgstr "Är du säker du vill sända «%1» och allt innehåll till papperskorgen?"
+
+#: shell32.rc:161
+msgid "Are you sure that you want to send '%1' to the Trash?"
+msgstr "Är du säker du vill sända «%1» till papperskorgen?"
+
+#: shell32.rc:163
+msgid "Are you sure that you want to send these %1 items to the Trash?"
+msgstr "Är du säker du vill sända dessa %1 elementen till papperskorgen?"
+
+#: shell32.rc:164
+msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
+msgstr ""
+"Elementet «%1» kan inte sändas till papperskorgen. Vill du ta bort det i "
+"stället?"
+
+#: shell32.rc:167
+msgid ""
+"This folder already contains a folder named '%1'.\n"
+"\n"
+"If the files in the destination folder have the same names as files in the\n"
+"selected folder they will be replaced. Do you still want to move or copy\n"
+"the folder?"
+msgstr ""
+"Denna mapp innehåller redan en mapp kallad '%1'.\n"
+"\n"
+"Om filerna i målmappen har samma namn som filer i den valda\n"
+"mappen så kommer de bli ersatta. Vill du ändå flytta eller kopiera\n"
+"mappen?"
+
+#: shell32.rc:235
+msgid "New Folder"
+msgstr "Ny mapp"
+
+#: shell32.rc:237
+msgid "Wine Control Panel"
+msgstr "Wines kontrollpanel"
+
+#: shell32.rc:179
+msgid "Unable to display Run File dialog box (internal error)"
+msgstr "Kunde inte visa Kör-fönstret (internt fel)"
+
+#: shell32.rc:180
+msgid "Unable to display Browse dialog box (internal error)"
+msgstr "Kunde inte visa Bläddra-fönstret (internt fel)"
+
+#: shell32.rc:182
+msgid "Executable files (*.exe)"
+msgstr "Programfiler (*.exe)"
+
+#: shell32.rc:241
+msgid "There is no Windows program configured to open this type of file."
+msgstr "Inget Windows-program är inställt för att öppna denna filtyp."
+
+#: shell32.rc:258
+msgid ""
+"Wine is free software; you can redistribute it and/or modify it under the "
+"terms of the GNU Lesser General Public License as published by the Free "
+"Software Foundation; either version 2.1 of the License, or (at your option) "
+"any later version.\n"
+"\n"
+"Wine is distributed in the hope that it will be useful, but WITHOUT ANY "
+"WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
+"FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for "
+"more details.\n"
+"\n"
+"You should have received a copy of the GNU Lesser General Public License "
+"along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
+"Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
+msgstr ""
+"Wine är fri programvara; du kan distribuera det och/eller ändra det enligt "
+"villkoren i GNU Lesser General Public License som den publicerats av the "
+"Free Software Foundation; antingen version 2.1 av licensen, eller (om du så "
+"önskar) någon senare version.\n"
+"\n"
+"Wine utges i förhoppningen att det ska komma till nytta, men UTAN NÅGON SOM "
+"HELST GARANTI; även utan underförstådd garanti om SÄLJBARHET eller "
+"LÄMPLIGHET FÖR NÅGOT SPECIELLT ÄNDAMÅL.  Se GNU Lesser General Public "
+"License för fler detaljer.\n"
+"\n"
+"Du bör ha fått ett exemplar av GNU Lesser General Public License tillsammans "
+"med Wine; om inte, skriv till: the Free Software Foundation, Inc., 51 "
+"Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
+
+#: shell32.rc:246
+msgid "Wine License"
+msgstr "Wine-licens"
+
+#: shell32.rc:143
+msgid "Trash"
+msgstr "Papperskorg"
 
 #: shlwapi.rc:27
 msgid "%ld bytes"
@@ -4685,10 +5207,6 @@ msgstr "Sidla&yout..."
 msgid "P&rinter Setup..."
 msgstr "Skrivar&konfiguration..."
 
-#: notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
-msgid "E&xit"
-msgstr "&Avsluta"
-
 #: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 #, fuzzy
 msgid "&Edit"
@@ -5283,18 +5801,6 @@ msgstr "&Låg"
 msgid "&Paused"
 msgstr "&Pausad"
 
-#: taskmgr.rc:65 taskmgr.rc:111 taskmgr.rc:253
-msgid "Lar&ge Icons"
-msgstr "S&tora ikoner"
-
-#: taskmgr.rc:66 taskmgr.rc:112 taskmgr.rc:254
-msgid "S&mall Icons"
-msgstr "S&må ikoner"
-
-#: taskmgr.rc:67 taskmgr.rc:113 taskmgr.rc:255
-msgid "&Details"
-msgstr "&Detaljer"
-
 #: taskmgr.rc:68 taskmgr.rc:257
 msgid "&Select Columns..."
 msgstr "&Välj kolumner..."
@@ -5772,10 +6278,6 @@ msgstr "Kör"
 msgid "Task"
 msgstr "Aktivitet"
 
-#: taskmgr.rc:327
-msgid "Status"
-msgstr "Status"
-
 #: taskmgr.rc:328
 msgid "Debug Channels"
 msgstr "Felsökningskanaler"
@@ -6230,10 +6732,6 @@ msgstr "root fs"
 msgid "unixfs"
 msgstr "unixfs"
 
-#: winefile.rc:151
-msgid "Desktop"
-msgstr "Skrivbord"
-
 #: winefile.rc:152
 msgid "Shell"
 msgstr "Skal"
@@ -6250,10 +6748,6 @@ msgstr "Inte implementerat ännu"
 msgid "Wine File"
 msgstr "Winefile"
 
-#: winefile.rc:161
-msgid "Size"
-msgstr "Storlek"
-
 #: winefile.rc:162
 msgid "CDate"
 msgstr "CDatum"
@@ -6269,14 +6763,6 @@ msgstr "MDatum"
 #: winefile.rc:165
 msgid "Index/Inode"
 msgstr "Index/Inode"
-
-#: winefile.rc:166
-msgid "Links"
-msgstr "Länkar"
-
-#: winefile.rc:167
-msgid "Attributes"
-msgstr "Attribut"
 
 #: winefile.rc:168
 msgid "Security"

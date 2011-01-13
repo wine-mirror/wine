@@ -20,50 +20,6 @@
 
 LANGUAGE LANG_SLOVAK, SUBLANG_DEFAULT
 
-/*
- shellview item menu
-*/
-MENU_SHV_FILE MENU
-BEGIN
-	POPUP ""
-	BEGIN
-	  MENUITEM "&Select"		FCIDM_SHVIEW_OPEN
-	  MENUITEM "E&xplore",		FCIDM_SHVIEW_EXPLORE
-	  MENUITEM "&Open",		FCIDM_SHVIEW_OPEN
-	  MENUITEM SEPARATOR
-	  MENUITEM "C&ut",		FCIDM_SHVIEW_CUT
-	  MENUITEM "&Copy",		FCIDM_SHVIEW_COPY
-	  MENUITEM SEPARATOR
-	  MENUITEM "Create &Link",	FCIDM_SHVIEW_CREATELINK
-	  MENUITEM "&Delete",		FCIDM_SHVIEW_DELETE
-	  MENUITEM "&Rename",		FCIDM_SHVIEW_RENAME
-	  MENUITEM SEPARATOR
-	  MENUITEM "&Properties",	FCIDM_SHVIEW_PROPERTIES
-	END
-END
-
-MENU_CPANEL MENU
-BEGIN
-    POPUP "&File"
-    BEGIN
-        MENUITEM SEPARATOR
-        MENUITEM "E&xit", IDM_CPANEL_EXIT
-    END
-
-    POPUP "&View"
-    BEGIN
-        MENUITEM "Lar&ge Icons", FCIDM_SHVIEW_BIGICON
-        MENUITEM "S&mall Icons", FCIDM_SHVIEW_SMALLICON
-        MENUITEM "&List", FCIDM_SHVIEW_LISTVIEW
-        MENUITEM "&Details", FCIDM_SHVIEW_REPORTVIEW
-    END
-
-    POPUP "&Help"
-    BEGIN
-        MENUITEM "&About Control Panel...", IDM_CPANEL_ABOUT
-    END
-END
-
 SHELL_ABOUT_MSGBOX DIALOG 15, 40, 220, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "O programe %s"
@@ -92,20 +48,3 @@ FONT 8, "MS Shell Dlg"
  PUSHBUTTON "Cancel", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
  PUSHBUTTON "&Browse...", 12288, 170, 63, 50, 14, WS_TABSTOP
 }
-
-/*      columns in the shellview        */
-STRINGTABLE
-BEGIN
-        IDS_SHV_COLUMN1         "S˙bor"
-        IDS_SHV_COLUMN2         "Veækosù"
-        IDS_SHV_COLUMN3         "Typ"
-        IDS_SHV_COLUMN4         "Modifikovan˝"
-        IDS_SHV_COLUMN5         "Atrib˙ty"
-        IDS_SHV_COLUMN6         "Veækosù"
-        IDS_SHV_COLUMN7         "Veækosù k dispozÌcii"
-	IDS_SHV_COLUMN8		"Name" /*FIXME*/
-	IDS_SHV_COLUMN9		"Comments" /*FIXME*/
-
-	IDS_CPANEL_NAME		"Name"
-	IDS_CPANEL_DESCRIPTION	"Description"
-END
