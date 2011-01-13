@@ -2694,6 +2694,12 @@ static BOOL import_private_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
     CONST RSAPUBKEY *pRSAPubKey = (CONST RSAPUBKEY*)(pBlobHeader+1);
     BOOL ret;
 
+    if (dwFlags & CRYPT_IPSEC_HMAC_KEY)
+    {
+        FIXME("unimplemented for CRYPT_IPSEC_HMAC_KEY\n");
+        SetLastError(NTE_BAD_FLAGS);
+        return FALSE;
+    }
     if (!lookup_handle(&handle_table, hProv, RSAENH_MAGIC_CONTAINER,
                        (OBJECTHDR**)&pKeyContainer))
     {
@@ -2770,6 +2776,12 @@ static BOOL import_public_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwData
     ALG_ID algID;
     BOOL ret;
 
+    if (dwFlags & CRYPT_IPSEC_HMAC_KEY)
+    {
+        FIXME("unimplemented for CRYPT_IPSEC_HMAC_KEY\n");
+        SetLastError(NTE_BAD_FLAGS);
+        return FALSE;
+    }
     if (!lookup_handle(&handle_table, hProv, RSAENH_MAGIC_CONTAINER,
                        (OBJECTHDR**)&pKeyContainer))
     {
@@ -2844,6 +2856,12 @@ static BOOL import_symmetric_key(HCRYPTPROV hProv, CONST BYTE *pbData,
     BYTE *pbDecrypted;
     DWORD dwKeyLen;
 
+    if (dwFlags & CRYPT_IPSEC_HMAC_KEY)
+    {
+        FIXME("unimplemented for CRYPT_IPSEC_HMAC_KEY\n");
+        SetLastError(NTE_BAD_FLAGS);
+        return FALSE;
+    }
     if (!lookup_handle(&handle_table, hPubKey, RSAENH_MAGIC_KEY, (OBJECTHDR**)&pPubKey) ||
         pPubKey->aiAlgid != CALG_RSA_KEYX)
     {
@@ -2913,6 +2931,12 @@ static BOOL import_plaintext_key(HCRYPTPROV hProv, CONST BYTE *pbData,
     CONST DWORD *pKeyLen = (CONST DWORD *)(pBlobHeader + 1);
     CONST BYTE *pbKeyStream = (CONST BYTE*)(pKeyLen + 1);
 
+    if (dwFlags & CRYPT_IPSEC_HMAC_KEY)
+    {
+        FIXME("unimplemented for CRYPT_IPSEC_HMAC_KEY\n");
+        SetLastError(NTE_BAD_FLAGS);
+        return FALSE;
+    }
     if (dwDataLen < sizeof(BLOBHEADER)+sizeof(DWORD)+*pKeyLen)
     {
         SetLastError(NTE_BAD_DATA); /* FIXME: error code */
@@ -3026,12 +3050,6 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
     TRACE("(hProv=%08lx, pbData=%p, dwDataLen=%d, hPubKey=%08lx, dwFlags=%08x, phKey=%p)\n",
         hProv, pbData, dwDataLen, hPubKey, dwFlags, phKey);
 
-    if (dwFlags & CRYPT_IPSEC_HMAC_KEY)
-    {
-        FIXME("unimplemented for CRYPT_IPSEC_HMAC_KEY\n");
-        SetLastError(NTE_BAD_FLAGS);
-        return FALSE;
-    }
     return import_key(hProv, pbData, dwDataLen, hPubKey, dwFlags, TRUE, phKey);
 }
 
