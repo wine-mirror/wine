@@ -356,7 +356,7 @@ BOOL symt_add_function_signature_parameter(struct module* module,
     return TRUE;
 }
 
-struct symt_pointer* symt_new_pointer(struct module* module, struct symt* ref_type)
+struct symt_pointer* symt_new_pointer(struct module* module, struct symt* ref_type, unsigned long size)
 {
     struct symt_pointer*        sym;
 
@@ -364,6 +364,7 @@ struct symt_pointer* symt_new_pointer(struct module* module, struct symt* ref_ty
     {
         sym->symt.tag = SymTagPointerType;
         sym->pointsto = ref_type;
+        sym->size     = size;
         symt_add_type(module, &sym->symt);
     }
     return sym;
@@ -639,7 +640,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
             X(DWORD64) = ((const struct symt_function*)type)->size;
             break;
         case SymTagPointerType:
-            X(DWORD64) = sizeof(void*);
+            X(DWORD64) = ((const struct symt_pointer*)type)->size;
             break;
         case SymTagUDT:
             X(DWORD64) = ((const struct symt_udt*)type)->size;

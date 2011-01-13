@@ -287,6 +287,7 @@ struct symt_pointer
 {
     struct symt                 symt;
     struct symt*                pointsto;
+    unsigned long               size;
 };
 
 struct symt_typedef
@@ -724,7 +725,8 @@ extern BOOL         symt_add_function_signature_parameter(struct module* module,
                                                           struct symt* param);
 extern struct symt_pointer*
                     symt_new_pointer(struct module* module, 
-                                     struct symt* ref_type);
+                                     struct symt* ref_type,
+                                     unsigned long size);
 extern struct symt_typedef*
                     symt_new_typedef(struct module* module, struct symt* ref, 
                                      const char* name);

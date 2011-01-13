@@ -1098,13 +1098,13 @@ static struct symt* dwarf2_parse_pointer_type(dwarf2_parse_context_t* ctx,
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
 
-    if (!dwarf2_find_attribute(ctx, di, DW_AT_byte_size, &size)) size.u.uvalue = 0;
+    if (!dwarf2_find_attribute(ctx, di, DW_AT_byte_size, &size)) size.u.uvalue = sizeof(void *);
     if (!(ref_type = dwarf2_lookup_type(ctx, di)))
     {
         ref_type = ctx->symt_cache[sc_void];
         assert(ref_type);
     }
-    di->symt = &symt_new_pointer(ctx->module, ref_type)->symt;
+    di->symt = &symt_new_pointer(ctx->module, ref_type, size.u.uvalue)->symt;
     if (di->abbrev->have_child) FIXME("Unsupported children\n");
     return di->symt;
 }
@@ -1199,7 +1199,7 @@ static struct symt* dwarf2_parse_reference_type(dwarf2_parse_context_t* ctx,
 
     ref_type = dwarf2_lookup_type(ctx, di);
     /* FIXME: for now, we hard-wire C++ references to pointers */
-    di->symt = &symt_new_pointer(ctx->module, ref_type)->symt;
+    di->symt = &symt_new_pointer(ctx->module, ref_type, sizeof(void *))->symt;
 
     if (di->abbrev->have_child) FIXME("Unsupported children\n");
 
