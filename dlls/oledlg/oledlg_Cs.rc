@@ -51,12 +51,3 @@ BEGIN
     LTEXT           "Soubor:",IDC_FILELBL,83,27,20,8, NOT WS_VISIBLE
     EDITTEXT        IDC_FILE,83,37,132,13,ES_AUTOHSCROLL | NOT WS_VISIBLE
 END
-
-STRINGTABLE
-{
-  IDS_RESULTOBJDESC	"Vložen nový %s objekt do Vašeho dokumentu"
-  IDS_RESULTFILEOBJDESC	"Vložen obsah souboru jako objekt do Vašeho dokumentu, takže ho mùžete upravit programem, kterým byl vytvoøen."
-  IDS_BROWSE            "Procházet"
-  IDS_NOTOLEMOD         "Soubor není platným OLE modulem. Nelze registrovat OLE propojení."
-  IDS_NOTOLEMODCAPTION  "Pøidat propojení"
-}

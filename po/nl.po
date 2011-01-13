@@ -2409,6 +2409,98 @@ msgstr "Aan"
 msgid "Off"
 msgstr "Uit"
 
+#: oledlg.rc:25
+msgid "Insert a new %s object into your document"
+msgstr "Voeg een nieuw %s object in uw document in"
+
+#: oledlg.rc:26
+msgid ""
+"Insert the contents of the file as an object into your document so that you "
+"may activate it using the program which created it."
+msgstr ""
+"Voeg de inhoud van het bestand als object in uw document in, zodat u het "
+"later kunt bewerken met het programma waarmee u het heeft gemaakt."
+
+#: oledlg.rc:27
+msgid "Browse"
+msgstr "Bladeren"
+
+#: oledlg.rc:28
+msgid ""
+"File does not appear to be a valid OLE module. Unable to register OLE "
+"control."
+msgstr "Het bestand is geen geldig OLE bestand. De registratie is mislukt."
+
+#: oledlg.rc:29
+msgid "Add Control"
+msgstr "Toevoegen"
+
+#: oledlg.rc:34
+msgid "Inserts the contents of the clipboard into your document as %s."
+msgstr "Voegt de inhoud van het klembord in uw document in als %s."
+
+#: oledlg.rc:35
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s."
+msgstr ""
+"Voegt de inhoud van het klembord in uw document in zodat u het kan activeren "
+"met %s."
+
+#: oledlg.rc:36
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s.  It will be displayed as an icon."
+msgstr ""
+"Voegt de inhoud van het klembord in uw document in zodat u het kan activeren "
+"met %s. Het zal getoond worden als een icoon."
+
+#: oledlg.rc:37
+msgid ""
+"Inserts the contents of the clipboard into your document as %s.  The data is "
+"linked to the source file so that changes to the file will be reflected in "
+"your document."
+msgstr ""
+"Voegt de inhoud van het klembord in uw document in als %s. De data is "
+"verbonden met het bron bestand zodat wijzigingen in dat bestand worden "
+"getoond in uw document."
+
+#: oledlg.rc:38
+msgid ""
+"Inserts a picture of the clipboard contents into your document.  The picture "
+"is linked to the source file so that changes to the file will be reflected "
+"in your document."
+msgstr ""
+"Voegt een afbeelding vanuit het klembord in uw document in. De afbeelding is "
+"verbonden met het bronbestand, zodat wijzigingen in dat bestand worden "
+"getoond in uw document."
+
+#: oledlg.rc:39
+msgid ""
+"Inserts a shortcut which points to the location of the clipboard contents.  "
+"The shortcut is linked to the source file so that changes to the file will "
+"be reflected in your document."
+msgstr ""
+"Voegt een verwijzing in die wijst naar de locatie van de inhoud van het "
+"klembord. De verwijzing is verbonden met het bronbestand, zodat wijzigingen "
+"in dat bestand worden getoond in uw document."
+
+#: oledlg.rc:40
+msgid "Inserts the contents of the clipboard into your document."
+msgstr "Voegt de inhoud van het klembord in uw document."
+
+#: oledlg.rc:41
+msgid "Unknown Type"
+msgstr "Onbekend type"
+
+#: oledlg.rc:42
+msgid "Unknown Source"
+msgstr "Onbekende bron"
+
+#: oledlg.rc:43
+msgid "the program which created it"
+msgstr "het programma die het gecreëerd heeft"
+
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
 msgstr "Het bestand '%s' op %s is benodigd"

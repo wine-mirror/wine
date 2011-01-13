@@ -2373,6 +2373,100 @@ msgstr "Ligado"
 msgid "Off"
 msgstr "Desligado"
 
+#: oledlg.rc:25
+msgid "Insert a new %s object into your document"
+msgstr "Inserir um novo objeto %s no documento"
+
+#: oledlg.rc:26
+msgid ""
+"Insert the contents of the file as an object into your document so that you "
+"may activate it using the program which created it."
+msgstr ""
+"Inserir o conteúdo do arquivo como um objeto no documento de modo que possa "
+"ativá-lo usando o programa que o criou."
+
+#: oledlg.rc:27
+msgid "Browse"
+msgstr "Procurar"
+
+#: oledlg.rc:28
+msgid ""
+"File does not appear to be a valid OLE module. Unable to register OLE "
+"control."
+msgstr ""
+"O arquivo não parece ser um módulo OLE válido. Impossível registrar o "
+"controle OLE."
+
+#: oledlg.rc:29
+msgid "Add Control"
+msgstr "Adicionar Controle"
+
+#: oledlg.rc:34
+msgid "Inserts the contents of the clipboard into your document as %s."
+msgstr "Insere o conteúdo da área de transferência no seu documento como %s."
+
+#: oledlg.rc:35
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s."
+msgstr ""
+"Insere o conteúdo da área de transferência no seu documento para que seja "
+"possível ativá-lo usando %s."
+
+#: oledlg.rc:36
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s.  It will be displayed as an icon."
+msgstr ""
+"Insere o conteúdo da área de transferência no seu documento para que seja "
+"possível ativá-lo usando %s.  Será mostrado como um ícone."
+
+#: oledlg.rc:37
+msgid ""
+"Inserts the contents of the clipboard into your document as %s.  The data is "
+"linked to the source file so that changes to the file will be reflected in "
+"your document."
+msgstr ""
+"Insere o conteúdo da área de transferência no seu documento como %s.  Os "
+"dados estão ligados ao arquivo de origem para que alterações ao arquivo se "
+"reflitam no seu documento."
+
+#: oledlg.rc:38
+msgid ""
+"Inserts a picture of the clipboard contents into your document.  The picture "
+"is linked to the source file so that changes to the file will be reflected "
+"in your document."
+msgstr ""
+"Insere uma imagem da área de transferência no seu documento.  A imagem fica "
+"ligada ao arquivo de origem para que alterações ao arquivo se reflitam no "
+"seu documento."
+
+#: oledlg.rc:39
+msgid ""
+"Inserts a shortcut which points to the location of the clipboard contents.  "
+"The shortcut is linked to the source file so that changes to the file will "
+"be reflected in your document."
+msgstr ""
+"Insere um atalho que aponta para a localização do conteúdo na área de "
+"transferência.  O atalho fica ligado ao arquivo de origem para que "
+"alterações ao arquivo se reflitam no seu documento."
+
+#: oledlg.rc:40
+msgid "Inserts the contents of the clipboard into your document."
+msgstr "Insere o conteúdo da área de transferência no seu documento."
+
+#: oledlg.rc:41
+msgid "Unknown Type"
+msgstr "Tipo Desconhecido"
+
+#: oledlg.rc:42
+msgid "Unknown Source"
+msgstr "Origem Desconhecida"
+
+#: oledlg.rc:43
+msgid "the program which created it"
+msgstr "o programa que o criou"
+
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
 msgstr "O arquivo '%s' em %s é necessário"

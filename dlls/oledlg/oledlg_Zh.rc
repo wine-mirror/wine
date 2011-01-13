@@ -52,15 +52,6 @@ BEGIN
     EDITTEXT        IDC_FILE,83,37,132,13,ES_AUTOHSCROLL | NOT WS_VISIBLE
 END
 
-STRINGTABLE
-{
-  IDS_RESULTOBJDESC	    "在你的文件中插入一个新的 %s 对象"
-  IDS_RESULTFILEOBJDESC	"将文件的内容以对象的方式插入到你的文件以便你可以用创建本文件的程序来激活它."
-  IDS_BROWSE            "浏览"
-  IDS_NOTOLEMOD         "本文件不像是一个有效的 OLE 模型. 不能注册 OLE 控件."
-  IDS_NOTOLEMODCAPTION  "添加控件"
-}
-
 IDD_PASTESPECIAL4 DIALOG 3, 15, 293, 140
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "特殊粘贴"
@@ -86,20 +77,6 @@ BEGIN
     CONTROL       "结果", -1, "Button", BS_GROUPBOX | WS_GROUP | WS_VISIBLE, 6, 90, 212, 48
     CONTROL       "", IDC_PS_SOURCETEXT, "Edit", ES_READONLY | ES_AUTOHSCROLL | WS_VISIBLE, 37, 9, 180, 8
 END
-
-STRINGTABLE
-{
-    IDS_PS_PASTE_DATA                 "将剪贴板的内容以 %s 插入到你的文件."
-    IDS_PS_PASTE_OBJECT               "将剪贴板的内容插入到你的文件以便你可以使用 %s."
-    IDS_PS_PASTE_OBJECT_AS_ICON       "将剪贴板的内容插入到你的文件以便你可以用 %s 激活它, 一般显示为图标."
-    IDS_PS_PASTE_LINK_DATA            "将剪贴板的内容以 %s 插入到你的文件. 数据是链接到源文件的, 对源文件的任何改动都会反应到你的文件."
-    IDS_PS_PASTE_LINK_OBJECT          "将剪贴板的图像插入到你的文件. 图像是链接到源文件的, 对源文件的任何改动都会反应到你的文件."
-    IDS_PS_PASTE_LINK_OBJECT_AS_ICON  "将剪贴板的捷径插入到你的文件. 捷径是链接到源文件的, 对源文件的任何改动都会反应到你的文件."
-    IDS_PS_NON_OLE                    "将剪贴板的内容插入到你的文件."
-    IDS_PS_UNKNOWN_TYPE               "不明类型"
-    IDS_PS_UNKNOWN_SRC                "不明来源"
-    IDS_PS_UNKNOWN_APP                "不明应用程序"
-}
 
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
 
@@ -130,15 +107,6 @@ BEGIN
     EDITTEXT        IDC_FILE,83,37,132,13,ES_AUTOHSCROLL | NOT WS_VISIBLE
 END
 
-STRINGTABLE
-{
-  IDS_RESULTOBJDESC	    "在你的檔案中插入一個新的 %s 對象"
-  IDS_RESULTFILEOBJDESC	"將檔案的內容以對象的方式插入到你的檔案以便你可以用創建本檔案的程式來激活它."
-  IDS_BROWSE            "瀏覽"
-  IDS_NOTOLEMOD         "本檔案不像是一個有效的 OLE 模型. 不能註冊 OLE 控件."
-  IDS_NOTOLEMODCAPTION  "添加控件"
-}
-
 IDD_PASTESPECIAL4 DIALOG 3, 15, 293, 140
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "特殊貼上"
@@ -164,17 +132,3 @@ BEGIN
     CONTROL       "結果", -1, "Button", BS_GROUPBOX | WS_GROUP | WS_VISIBLE, 6, 90, 212, 48
     CONTROL       "", IDC_PS_SOURCETEXT, "Edit", ES_READONLY | ES_AUTOHSCROLL | WS_VISIBLE, 37, 9, 180, 8
 END
-
-STRINGTABLE
-{
-    IDS_PS_PASTE_DATA                 "將剪貼板的內容以 %s 插入到你的檔案."
-    IDS_PS_PASTE_OBJECT               "將剪貼板的內容插入到你的檔案以便你可以使用 %s."
-    IDS_PS_PASTE_OBJECT_AS_ICON       "將剪貼板的內容插入到你的檔案以便你可以用 %s 激活它, 一般顯示為圖標."
-    IDS_PS_PASTE_LINK_DATA            "將剪貼板的內容以 %s 插入到你的檔案. 數據是鏈接到源檔案的, 對源檔案的任何改動都會反應到你的檔案."
-    IDS_PS_PASTE_LINK_OBJECT          "將剪貼板的圖像插入到你的檔案. 圖像是鏈接到源檔案的, 對源檔案的任何改動都會反應到你的檔案."
-    IDS_PS_PASTE_LINK_OBJECT_AS_ICON  "將剪貼板的捷徑插入到你的檔案. 捷徑是鏈接到源檔案的, 對源檔案的任何改動都會反應到你的檔案."
-    IDS_PS_NON_OLE                    "將剪貼板的內容插入到你的檔案."
-    IDS_PS_UNKNOWN_TYPE               "不明類型"
-    IDS_PS_UNKNOWN_SRC                "不明來源"
-    IDS_PS_UNKNOWN_APP                "不明應用程式"
-}

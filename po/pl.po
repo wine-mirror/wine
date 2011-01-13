@@ -2336,6 +2336,100 @@ msgstr "Włączone"
 msgid "Off"
 msgstr "Wyłączone"
 
+#: oledlg.rc:25
+msgid "Insert a new %s object into your document"
+msgstr "Wstaw nowy obiekt %s do dokumentu"
+
+#: oledlg.rc:26
+msgid ""
+"Insert the contents of the file as an object into your document so that you "
+"may activate it using the program which created it."
+msgstr ""
+"Wstaw zawartość pliku jako obiekt do dokumentu. Będzie można go aktywować "
+"używając programu, który go stworzył."
+
+#: oledlg.rc:27
+msgid "Browse"
+msgstr "Przeglądaj"
+
+#: oledlg.rc:28
+msgid ""
+"File does not appear to be a valid OLE module. Unable to register OLE "
+"control."
+msgstr ""
+"Plik nie wydaje się być poprawnym modułem OLE. Nie udało się zarejestrować "
+"kontrolki OLE."
+
+#: oledlg.rc:29
+msgid "Add Control"
+msgstr "Dodaj kontrolkę"
+
+#: oledlg.rc:34
+msgid "Inserts the contents of the clipboard into your document as %s."
+msgstr "Wstawia zawartość schowka do dokumentu jako %s."
+
+#: oledlg.rc:35
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s."
+msgstr ""
+"Wstawia zawartość schowka do dokumentu, tak aby mógł być aktywowany za "
+"pomocą %s."
+
+#: oledlg.rc:36
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s.  It will be displayed as an icon."
+msgstr ""
+"Wstawia zawartość schowka do dokumentu, tak aby mógł być aktywowany za "
+"pomocą %s. Będzie wyświetlany jako ikona."
+
+#: oledlg.rc:37
+msgid ""
+"Inserts the contents of the clipboard into your document as %s.  The data is "
+"linked to the source file so that changes to the file will be reflected in "
+"your document."
+msgstr ""
+"Wstawia zawartość schowka do dokumentu jako %s. Dane będą połączone z "
+"plikiem źródłowym, dzięki czemu zmiany w pliku będą odzwierciedlone w "
+"dokumencie."
+
+#: oledlg.rc:38
+msgid ""
+"Inserts a picture of the clipboard contents into your document.  The picture "
+"is linked to the source file so that changes to the file will be reflected "
+"in your document."
+msgstr ""
+"Wstawia zawartość schowka do dokumentu jako obraz. Obraz będzie połączony z "
+"plikiem źródłowym, dzięki czemu zmiany w pliku będą odzwierciedlone w "
+"dokumencie."
+
+#: oledlg.rc:39
+msgid ""
+"Inserts a shortcut which points to the location of the clipboard contents.  "
+"The shortcut is linked to the source file so that changes to the file will "
+"be reflected in your document."
+msgstr ""
+"Wstawia do documentu skrót do zawartości schowka. Skrót będzie połączony z "
+"plikiem źródłowym, dzięki czemu zmiany w pliku będą odzwierciedlone w "
+"dokumencie."
+
+#: oledlg.rc:40
+msgid "Inserts the contents of the clipboard into your document."
+msgstr "Wstawia zawartość schowka do dokumentu"
+
+#: oledlg.rc:41
+msgid "Unknown Type"
+msgstr "Nieznany typ"
+
+#: oledlg.rc:42
+msgid "Unknown Source"
+msgstr "Nieznane źródło"
+
+#: oledlg.rc:43
+msgid "the program which created it"
+msgstr "program, który go stworzył"
+
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
 msgstr "Potrzebny plik o nazwie '%s' znajdujący się  na %s"

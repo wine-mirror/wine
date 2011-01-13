@@ -2284,6 +2284,96 @@ msgstr "Uključeno"
 msgid "Off"
 msgstr "Isključeno"
 
+#: oledlg.rc:25
+msgid "Insert a new %s object into your document"
+msgstr "Unesite novi %s objekat u dokument"
+
+#: oledlg.rc:26
+msgid ""
+"Insert the contents of the file as an object into your document so that you "
+"may activate it using the program which created it."
+msgstr ""
+"Unesite sadržaj datoteke kao objekat u dokumentu kako biste ga aktivirali "
+"koristeći program koji ga je napravio."
+
+#: oledlg.rc:27
+msgid "Browse"
+msgstr "Potraži"
+
+#: oledlg.rc:28
+msgid ""
+"File does not appear to be a valid OLE module. Unable to register OLE "
+"control."
+msgstr ""
+"Datoteka nije ispravan OLE modul. Registrovanje OLE kontrole nije uspelo."
+
+#: oledlg.rc:29
+msgid "Add Control"
+msgstr "Dodaj kontrolu"
+
+#: oledlg.rc:34
+msgid "Inserts the contents of the clipboard into your document as %s."
+msgstr "Umeće sadržaj iz ostave u dokument kao %s."
+
+#: oledlg.rc:35
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s."
+msgstr ""
+"Umeće sadržaj iz ostave u dokument kako biste ga mogli aktivirati koristeći "
+"%s."
+
+#: oledlg.rc:36
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s.  It will be displayed as an icon."
+msgstr ""
+"Umeće sadržaj iz ostave u dokument kako biste ga mogli aktivirati koristeći "
+"%s.  Biće prikazano kao ikonica."
+
+#: oledlg.rc:37
+msgid ""
+"Inserts the contents of the clipboard into your document as %s.  The data is "
+"linked to the source file so that changes to the file will be reflected in "
+"your document."
+msgstr ""
+"Umeće sadržaj iz ostave u dokument kao %s.  Podaci su povezani s izvorišnom "
+"datotekom, tako da će izmene datoteke biti reflektovane u dokumentu."
+
+#: oledlg.rc:38
+msgid ""
+"Inserts a picture of the clipboard contents into your document.  The picture "
+"is linked to the source file so that changes to the file will be reflected "
+"in your document."
+msgstr ""
+"Umeće sliku iz ostave u dokument.  Slika je povezana s izvorišnom datotekom, "
+"tako da će izmene datoteke biti reflektovane u dokumentu."
+
+#: oledlg.rc:39
+msgid ""
+"Inserts a shortcut which points to the location of the clipboard contents.  "
+"The shortcut is linked to the source file so that changes to the file will "
+"be reflected in your document."
+msgstr ""
+"Umeće prečicu koja vodi do lokacije sadržaja ostave.  Prečica je povezana s "
+"izvorišnom datotekom, tako da će izmene biti reflektovane u dokumentu."
+
+#: oledlg.rc:40
+msgid "Inserts the contents of the clipboard into your document."
+msgstr "Umeće sadržaj iz ostave u dokument."
+
+#: oledlg.rc:41
+msgid "Unknown Type"
+msgstr "Nepoznata vrsta"
+
+#: oledlg.rc:42
+msgid "Unknown Source"
+msgstr "Nepoznat izvor"
+
+#: oledlg.rc:43
+msgid "the program which created it"
+msgstr "program koji ga je napravio"
+
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
 msgstr "„%s“ datoteka na %s je neophodna"

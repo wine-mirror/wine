@@ -2214,6 +2214,83 @@ msgstr ""
 msgid "Off"
 msgstr ""
 
+#: oledlg.rc:25
+msgid "Insert a new %s object into your document"
+msgstr ""
+
+#: oledlg.rc:26
+msgid ""
+"Insert the contents of the file as an object into your document so that you "
+"may activate it using the program which created it."
+msgstr ""
+
+#: oledlg.rc:27
+msgid "Browse"
+msgstr ""
+
+#: oledlg.rc:28
+msgid ""
+"File does not appear to be a valid OLE module. Unable to register OLE "
+"control."
+msgstr ""
+
+#: oledlg.rc:29
+msgid "Add Control"
+msgstr ""
+
+#: oledlg.rc:34
+msgid "Inserts the contents of the clipboard into your document as %s."
+msgstr ""
+
+#: oledlg.rc:35
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s."
+msgstr ""
+
+#: oledlg.rc:36
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s.  It will be displayed as an icon."
+msgstr ""
+
+#: oledlg.rc:37
+msgid ""
+"Inserts the contents of the clipboard into your document as %s.  The data is "
+"linked to the source file so that changes to the file will be reflected in "
+"your document."
+msgstr ""
+
+#: oledlg.rc:38
+msgid ""
+"Inserts a picture of the clipboard contents into your document.  The picture "
+"is linked to the source file so that changes to the file will be reflected "
+"in your document."
+msgstr ""
+
+#: oledlg.rc:39
+msgid ""
+"Inserts a shortcut which points to the location of the clipboard contents.  "
+"The shortcut is linked to the source file so that changes to the file will "
+"be reflected in your document."
+msgstr ""
+
+#: oledlg.rc:40
+msgid "Inserts the contents of the clipboard into your document."
+msgstr ""
+
+#: oledlg.rc:41
+msgid "Unknown Type"
+msgstr ""
+
+#: oledlg.rc:42
+msgid "Unknown Source"
+msgstr ""
+
+#: oledlg.rc:43
+msgid "the program which created it"
+msgstr ""
+
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
 msgstr ""

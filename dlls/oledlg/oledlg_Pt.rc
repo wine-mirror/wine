@@ -81,30 +81,6 @@ BEGIN
     EDITTEXT        IDC_FILE,83,37,132,13,ES_AUTOHSCROLL | NOT WS_VISIBLE
 END
 
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
-
-STRINGTABLE
-{
-  IDS_RESULTOBJDESC	"Inserir um novo objeto %s no documento"
-  IDS_RESULTFILEOBJDESC	"Inserir o conteúdo do arquivo como um objeto no documento de modo que possa ativá-lo usando o programa que o criou."
-  IDS_BROWSE            "Procurar"
-  IDS_NOTOLEMOD         "O arquivo não parece ser um módulo OLE válido. Impossível registrar o controle OLE."
-  IDS_NOTOLEMODCAPTION  "Adicionar Controle"
-}
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
-
-STRINGTABLE
-{
-  IDS_RESULTOBJDESC	"Inserir novo objecto %s no documento"
-  IDS_RESULTFILEOBJDESC	"Inserir conteúdo do ficheiro como um objecto no documento de modo que opossa activar usando o programa que o criou."
-  IDS_BROWSE            "Procurar"
-  IDS_NOTOLEMOD         "O ficheiro não parece ser um módulo OLE válido. Impossível registrar o controlo OLE."
-  IDS_NOTOLEMODCAPTION  "Adicionar Controlo"
-}
-
-
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 IDD_PASTESPECIAL4 DIALOG 3, 15, 293, 140
@@ -160,36 +136,3 @@ BEGIN
     CONTROL       "Resultado", -1, "Button", BS_GROUPBOX | WS_GROUP | WS_VISIBLE, 6, 90, 212, 48
     CONTROL       "", IDC_PS_SOURCETEXT, "Edit", ES_READONLY | ES_AUTOHSCROLL | WS_VISIBLE, 37, 9, 180, 8
 END
-
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
-
-STRINGTABLE
-{
-    IDS_PS_PASTE_DATA                     "Insere o conteúdo da área de transferência no seu documento como %s."
-    IDS_PS_PASTE_OBJECT                   "Insere o conteúdo da área de transferência no seu documento para que seja possível ativá-lo usando %s."
-    IDS_PS_PASTE_OBJECT_AS_ICON           "Insere o conteúdo da área de transferência no seu documento para que seja possível ativá-lo usando %s.  Será mostrado como um ícone."
-    IDS_PS_PASTE_LINK_DATA                "Insere o conteúdo da área de transferência no seu documento como %s.  Os dados estão ligados ao arquivo de origem para que alterações ao arquivo se reflitam no seu documento."
-    IDS_PS_PASTE_LINK_OBJECT              "Insere uma imagem da área de transferência no seu documento.  A imagem fica ligada ao arquivo de origem para que alterações ao arquivo se reflitam no seu documento."
-    IDS_PS_PASTE_LINK_OBJECT_AS_ICON      "Insere um atalho que aponta para a localização do conteúdo na área de transferência.  O atalho fica ligado ao arquivo de origem para que alterações ao arquivo se reflitam no seu documento."
-    IDS_PS_NON_OLE                        "Insere o conteúdo da área de transferência no seu documento."
-    IDS_PS_UNKNOWN_TYPE                   "Tipo Desconhecido"
-    IDS_PS_UNKNOWN_SRC                    "Origem Desconhecida"
-    IDS_PS_UNKNOWN_APP                    "o programa que o criou"
-}
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
-
-STRINGTABLE
-{
-    IDS_PS_PASTE_DATA                     "Insere o conteúdo da área de transferência no seu documento como %s."
-    IDS_PS_PASTE_OBJECT                   "Insere o conteúdo da área de transferência no seu documento para que o possa activar usando %s."
-    IDS_PS_PASTE_OBJECT_AS_ICON           "Insere o conteúdo da área de transferência no seu documento para que o possa activar usando %s.  Vai ser mostrado como um icone."
-    IDS_PS_PASTE_LINK_DATA                "Insere o conteúdo da área de transferência no seu documento como %s.  Os dados estão ligados ao ficheiro de origem para que alterações ao ficheiro se reflictam no seu documento."
-    IDS_PS_PASTE_LINK_OBJECT              "Insere uma imagem da área de transferência no seu documento.  A imagem fica ligada ao ficheiro de origem para que alterações ao ficheiro se reflictam no seu documento."
-    IDS_PS_PASTE_LINK_OBJECT_AS_ICON      "Insere um atalho que aponta para a localização do conteúdo na área de transferência.  O atalho fica ligado ao ficheiro de origem para que alterações ao ficheiro se reflictam no seu documento."
-    IDS_PS_NON_OLE                        "Insere o conteúdo da área de transferência no seu documento."
-    IDS_PS_UNKNOWN_TYPE                   "Tipo Desconhecido"
-    IDS_PS_UNKNOWN_SRC                    "Origem Desconhecida"
-    IDS_PS_UNKNOWN_APP                    "o programa que o criou"
-}

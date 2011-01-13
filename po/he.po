@@ -2253,6 +2253,93 @@ msgstr ""
 msgid "Off"
 msgstr ""
 
+#: oledlg.rc:25
+msgid "Insert a new %s object into your document"
+msgstr "הוספת עצם חדש מסוג %s למסמך שלך"
+
+#: oledlg.rc:26
+msgid ""
+"Insert the contents of the file as an object into your document so that you "
+"may activate it using the program which created it."
+msgstr ""
+"הוספת תוכן הקובץ כעצם לתוך המסמך כדי שניתן יהיה להפעיל אותו באמצעות התכנית "
+"שיצרה אותו."
+
+#: oledlg.rc:27
+msgid "Browse"
+msgstr "עיון"
+
+#: oledlg.rc:28
+msgid ""
+"File does not appear to be a valid OLE module. Unable to register OLE "
+"control."
+msgstr "נראה כי הקובץ אינו מודול OLE תקני. לא ניתן לרשום את פקד ה־OLE."
+
+#: oledlg.rc:29
+msgid "Add Control"
+msgstr "הוספת פקד"
+
+#: oledlg.rc:34
+msgid "Inserts the contents of the clipboard into your document as %s."
+msgstr "הוספת תוכן לוח הגזירים למסמך שלך בתור %s."
+
+#: oledlg.rc:35
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s."
+msgstr "הוספת תוכן לוח הגזירים למסמך שלך כדי שניתן יהיה להפעילו באמצעות %s."
+
+#: oledlg.rc:36
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s.  It will be displayed as an icon."
+msgstr ""
+"הוספת תוכן לוח הגזירים למסמך שלך כדי שניתן יהיה להפעילו באמצעות %s. העצם "
+"יוצג כסמל."
+
+#: oledlg.rc:37
+msgid ""
+"Inserts the contents of the clipboard into your document as %s.  The data is "
+"linked to the source file so that changes to the file will be reflected in "
+"your document."
+msgstr ""
+"הוספת תוכן לוח הגזירים למסמך שלך כדי שניתן יהיה להפעילו באמצעות %s. הנתונים "
+"יהיו מקושרים לקובץ המקור כך ששינויים בקובץ המקור ישפיעו גם על המסמך שלך."
+
+#: oledlg.rc:38
+msgid ""
+"Inserts a picture of the clipboard contents into your document.  The picture "
+"is linked to the source file so that changes to the file will be reflected "
+"in your document."
+msgstr ""
+"הוספת תמונה מתוכן לוח הגזירים למסמך שלך. התמונה מקושרת לקובץ המקור כך "
+"ששינויים לקובץ ישפיעו גם על המסמך שלך."
+
+#: oledlg.rc:39
+msgid ""
+"Inserts a shortcut which points to the location of the clipboard contents.  "
+"The shortcut is linked to the source file so that changes to the file will "
+"be reflected in your document."
+msgstr ""
+"הוספת קיצור דרך המצביע אל מיקום תוכן לוח הגזירים.  קיצור הדרך מקושר לקובץ "
+"המקור כך ששינויים לקובץ המקור ישפיעו גם על המסמך שלך."
+
+#: oledlg.rc:40
+msgid "Inserts the contents of the clipboard into your document."
+msgstr "הוספת תוכן לוח הגזירים למסמך שלך."
+
+#: oledlg.rc:41
+msgid "Unknown Type"
+msgstr "סוג לא ידוע"
+
+#: oledlg.rc:42
+msgid "Unknown Source"
+msgstr "מקור לא ידוע"
+
+#: oledlg.rc:43
+msgid "the program which created it"
+msgstr "התכנית שיצרה אותו"
+
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
 msgstr "הקובץ '%s' שב־%s דרוש"

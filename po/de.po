@@ -2289,6 +2289,100 @@ msgstr "Ein"
 msgid "Off"
 msgstr "Aus"
 
+#: oledlg.rc:25
+msgid "Insert a new %s object into your document"
+msgstr "Fügt ein neues %s - Objekt in Ihr Dokument ein."
+
+#: oledlg.rc:26
+msgid ""
+"Insert the contents of the file as an object into your document so that you "
+"may activate it using the program which created it."
+msgstr ""
+"Fügt den Inhalt der Datei als Objekt so in Ihr Dokument ein, dass Sie es mit "
+"dem Programm aktivieren können, mit dem es erstellt wurde."
+
+#: oledlg.rc:27
+msgid "Browse"
+msgstr "Durchsuchen"
+
+#: oledlg.rc:28
+msgid ""
+"File does not appear to be a valid OLE module. Unable to register OLE "
+"control."
+msgstr ""
+"Die Datei ist offenbar kein gültiges OLE - Steuermodul. Die OLE - Steuerung "
+"konnte nicht registiert werden."
+
+#: oledlg.rc:29
+msgid "Add Control"
+msgstr "Steuerung hinzufügen"
+
+#: oledlg.rc:34
+msgid "Inserts the contents of the clipboard into your document as %s."
+msgstr "Fügt den Inhalt der Zwischenablage in Ihr Dokument als %s ein."
+
+#: oledlg.rc:35
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s."
+msgstr ""
+"Fügt den Inhalt der Zwischenablage so in Ihr Dokument ein dass Sie es mit %s "
+"aktivieren können."
+
+#: oledlg.rc:36
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s.  It will be displayed as an icon."
+msgstr ""
+"Fügt den Inhalt der Zwischenablage so in Ihr Dokument ein dass Sie es mit %s "
+"aktivieren können.  Wird als Symbol dargestellt."
+
+#: oledlg.rc:37
+msgid ""
+"Inserts the contents of the clipboard into your document as %s.  The data is "
+"linked to the source file so that changes to the file will be reflected in "
+"your document."
+msgstr ""
+"Fügt den Inhalt der Zwischenablage in Ihr Dokument als %s ein.  Die Daten "
+"sind mit der Ursprungsdatei verknüpft so dass Änderungen an dieser in Ihrem "
+"Dokument erscheinen."
+
+#: oledlg.rc:38
+msgid ""
+"Inserts a picture of the clipboard contents into your document.  The picture "
+"is linked to the source file so that changes to the file will be reflected "
+"in your document."
+msgstr ""
+"Fügt ein Bild des Zwischenablagen-Inhalts in Ihr Dokument ein.  Das Bild ist "
+"mit der Ursprungsdatei verknüpft so dass Änderungen an dieser in Ihrem "
+"Dokument erscheinen."
+
+#: oledlg.rc:39
+msgid ""
+"Inserts a shortcut which points to the location of the clipboard contents.  "
+"The shortcut is linked to the source file so that changes to the file will "
+"be reflected in your document."
+msgstr ""
+"Fügt eine Verknüpfung ein die auf den Ort des Zwischenablagen-Inhalts "
+"zeigt.  Die Verknüpfung ist mit der Ursprungsdatei verknüpft so dass "
+"Änderungen an dieser in Ihrem Dokument erscheinen."
+
+#: oledlg.rc:40
+msgid "Inserts the contents of the clipboard into your document."
+msgstr "Fügt den Inhalt der Zwischenablage in Ihr Dokument als ein."
+
+#: oledlg.rc:41
+msgid "Unknown Type"
+msgstr "Unbekannter Typ"
+
+#: oledlg.rc:42
+msgid "Unknown Source"
+msgstr "Unbekannte Quelle"
+
+#: oledlg.rc:43
+msgid "the program which created it"
+msgstr "dem Erzeugerprogramm"
+
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
 msgstr "Die Datei '%s' von %s wird benötigt."

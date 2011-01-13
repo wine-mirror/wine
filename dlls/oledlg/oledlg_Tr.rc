@@ -48,12 +48,3 @@ BEGIN
     LTEXT           "Dosya:",IDC_FILELBL,83,27,20,8, NOT WS_VISIBLE
     EDITTEXT        IDC_FILE,83,37,132,13,ES_AUTOHSCROLL | NOT WS_VISIBLE
 END
-
-STRINGTABLE
-{
-  IDS_RESULTOBJDESC	"Belgenize yeni bir %s nesnesi ekle"
-  IDS_RESULTFILEOBJDESC	"Dosya içeriðini belgenize nesne olarak ekleyin. Böylece kendisini oluþturan programý kullanarak onu etkinleþtirebilirsiniz."
-  IDS_BROWSE            "Gözat"
-  IDS_NOTOLEMOD         "Dosya geçerli bir OLE modülü olarak görünmüyor. OLE denetimi kaydedilemiyor."
-  IDS_NOTOLEMODCAPTION  "Denetim Ekle"
-}

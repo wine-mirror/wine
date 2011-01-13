@@ -2273,6 +2273,90 @@ msgstr "開"
 msgid "Off"
 msgstr "關"
 
+#: oledlg.rc:25
+msgid "Insert a new %s object into your document"
+msgstr "在你的檔案中插入一個新的 %s 對象"
+
+#: oledlg.rc:26
+msgid ""
+"Insert the contents of the file as an object into your document so that you "
+"may activate it using the program which created it."
+msgstr ""
+"將檔案的內容以對象的方式插入到你的檔案以便你可以用創建本檔案的程式來激活它."
+
+#: oledlg.rc:27
+msgid "Browse"
+msgstr "瀏覽"
+
+#: oledlg.rc:28
+msgid ""
+"File does not appear to be a valid OLE module. Unable to register OLE "
+"control."
+msgstr "本檔案不像是一個有效的 OLE 模型. 不能註冊 OLE 控件."
+
+#: oledlg.rc:29
+msgid "Add Control"
+msgstr "添加控件"
+
+#: oledlg.rc:34
+msgid "Inserts the contents of the clipboard into your document as %s."
+msgstr "將剪貼板的內容以 %s 插入到你的檔案."
+
+#: oledlg.rc:35
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s."
+msgstr "將剪貼板的內容插入到你的檔案以便你可以使用 %s."
+
+#: oledlg.rc:36
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s.  It will be displayed as an icon."
+msgstr "將剪貼板的內容插入到你的檔案以便你可以用 %s 激活它, 一般顯示為圖標."
+
+#: oledlg.rc:37
+msgid ""
+"Inserts the contents of the clipboard into your document as %s.  The data is "
+"linked to the source file so that changes to the file will be reflected in "
+"your document."
+msgstr ""
+"將剪貼板的內容以 %s 插入到你的檔案. 數據是鏈接到源檔案的, 對源檔案的任何改動"
+"都會反應到你的檔案."
+
+#: oledlg.rc:38
+msgid ""
+"Inserts a picture of the clipboard contents into your document.  The picture "
+"is linked to the source file so that changes to the file will be reflected "
+"in your document."
+msgstr ""
+"將剪貼板的圖像插入到你的檔案. 圖像是鏈接到源檔案的, 對源檔案的任何改動都會反"
+"應到你的檔案."
+
+#: oledlg.rc:39
+msgid ""
+"Inserts a shortcut which points to the location of the clipboard contents.  "
+"The shortcut is linked to the source file so that changes to the file will "
+"be reflected in your document."
+msgstr ""
+"將剪貼板的捷徑插入到你的檔案. 捷徑是鏈接到源檔案的, 對源檔案的任何改動都會反"
+"應到你的檔案."
+
+#: oledlg.rc:40
+msgid "Inserts the contents of the clipboard into your document."
+msgstr "將剪貼板的內容插入到你的檔案."
+
+#: oledlg.rc:41
+msgid "Unknown Type"
+msgstr "不明類型"
+
+#: oledlg.rc:42
+msgid "Unknown Source"
+msgstr "不明來源"
+
+#: oledlg.rc:43
+msgid "the program which created it"
+msgstr "不明應用程式"
+
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
 msgstr "需要檔案 '%s' 存於 %s"

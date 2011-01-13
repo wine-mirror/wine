@@ -2379,6 +2379,100 @@ msgstr "On"
 msgid "Off"
 msgstr "Off"
 
+#: oledlg.rc:25
+msgid "Insert a new %s object into your document"
+msgstr "Inserisci un nuovo oggetto %s nel documento"
+
+#: oledlg.rc:26
+msgid ""
+"Insert the contents of the file as an object into your document so that you "
+"may activate it using the program which created it."
+msgstr ""
+"Inserisci i contenuti del file come un oggetto nel documento in modo da "
+"poterlo attivare usando il programma che lo ha creato."
+
+#: oledlg.rc:27
+msgid "Browse"
+msgstr "Esplora"
+
+#: oledlg.rc:28
+msgid ""
+"File does not appear to be a valid OLE module. Unable to register OLE "
+"control."
+msgstr ""
+"Il file non sembra essere un modulo OLE valido. Impossibile registrare il "
+"controllo OLE."
+
+#: oledlg.rc:29
+msgid "Add Control"
+msgstr "Aggiungi controllo"
+
+#: oledlg.rc:34
+msgid "Inserts the contents of the clipboard into your document as %s."
+msgstr "Inserisce i contenuti degli appunti nel tuo documento come %s."
+
+#: oledlg.rc:35
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s."
+msgstr ""
+"Inserisce i contenuti degli appunti nel tuo documento permettendoti di "
+"attivarlo usando %s."
+
+#: oledlg.rc:36
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s.  It will be displayed as an icon."
+msgstr ""
+"Inserisce i contenuti degli appunti nel tuo documento permettendoti di "
+"attivarlo usando %s.  Sarà mostrato come un'icona."
+
+#: oledlg.rc:37
+msgid ""
+"Inserts the contents of the clipboard into your document as %s.  The data is "
+"linked to the source file so that changes to the file will be reflected in "
+"your document."
+msgstr ""
+"Inserisce i contenuti degli appunti nel tuo documento come %s. I dati sono "
+"collegati al file sorgente in modo che i cambiamenti in quello si riflettano "
+"sul tuo documento."
+
+#: oledlg.rc:38
+msgid ""
+"Inserts a picture of the clipboard contents into your document.  The picture "
+"is linked to the source file so that changes to the file will be reflected "
+"in your document."
+msgstr ""
+"Inserisce un'immagine degli appunti nel tuo documento. L'immagine è "
+"collegata al file sorgente in modo che i cambiamenti in quello si riflettano "
+"sul tuo documento."
+
+#: oledlg.rc:39
+msgid ""
+"Inserts a shortcut which points to the location of the clipboard contents.  "
+"The shortcut is linked to the source file so that changes to the file will "
+"be reflected in your document."
+msgstr ""
+"Inserisce una scorciatoia che punta alla locazione dei contenuti degli "
+"appunti. La scorciatoia è collegata al file sorgente in modo che i "
+"cambiamenti in quello si riflettano sul tuo documento."
+
+#: oledlg.rc:40
+msgid "Inserts the contents of the clipboard into your document."
+msgstr "Inserisce i contenuti degli appunti nel tuo documento."
+
+#: oledlg.rc:41
+msgid "Unknown Type"
+msgstr "Tipo sconosciuto"
+
+#: oledlg.rc:42
+msgid "Unknown Source"
+msgstr "Sorgente sconosciuta"
+
+#: oledlg.rc:43
+msgid "the program which created it"
+msgstr "Il programma che lo ha creato"
+
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
 msgstr "Il file '%s' su %s è necessario"

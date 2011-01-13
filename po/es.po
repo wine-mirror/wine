@@ -2301,6 +2301,100 @@ msgstr "Activado"
 msgid "Off"
 msgstr "Desactivado"
 
+#: oledlg.rc:25
+msgid "Insert a new %s object into your document"
+msgstr "Inserta un nuevo objeto %s en su documento"
+
+#: oledlg.rc:26
+msgid ""
+"Insert the contents of the file as an object into your document so that you "
+"may activate it using the program which created it."
+msgstr ""
+"Inserta el contenido del archivo como un objeto en su documento, con lo que "
+"podrá activarlo utilizando el programa que lo creó."
+
+#: oledlg.rc:27
+msgid "Browse"
+msgstr "Explorar"
+
+#: oledlg.rc:28
+msgid ""
+"File does not appear to be a valid OLE module. Unable to register OLE "
+"control."
+msgstr ""
+"El archivo no parece ser un módulo OLE válido. Incapaz de registrar el "
+"control OLE."
+
+#: oledlg.rc:29
+msgid "Add Control"
+msgstr "Añadir control"
+
+#: oledlg.rc:34
+msgid "Inserts the contents of the clipboard into your document as %s."
+msgstr "Inserta el contenido del portapapeles en su documento como %s."
+
+#: oledlg.rc:35
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s."
+msgstr ""
+"Inserta el contenido del portapapeles en su documento de modo que pueda "
+"activarlo usando %s."
+
+#: oledlg.rc:36
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s.  It will be displayed as an icon."
+msgstr ""
+"Inserta el contenido del portapapeles en su documento de modo que pueda "
+"activarlo usando %s.  Será mostrado como un icono."
+
+#: oledlg.rc:37
+msgid ""
+"Inserts the contents of the clipboard into your document as %s.  The data is "
+"linked to the source file so that changes to the file will be reflected in "
+"your document."
+msgstr ""
+"Inserta el contenido del portapapeles en su documento como %s.  Los datos "
+"estarán enlazados al archivo de origen, por lo que los cambios en el archivo "
+"se reflejarán en su documento."
+
+#: oledlg.rc:38
+msgid ""
+"Inserts a picture of the clipboard contents into your document.  The picture "
+"is linked to the source file so that changes to the file will be reflected "
+"in your document."
+msgstr ""
+"Inserta una imagen del contenido del portapapeles en su documento.  La "
+"imagen estará enlazada al archivo de origen, por lo que los cambios en el "
+"archivo se reflejarán en su documento."
+
+#: oledlg.rc:39
+msgid ""
+"Inserts a shortcut which points to the location of the clipboard contents.  "
+"The shortcut is linked to the source file so that changes to the file will "
+"be reflected in your document."
+msgstr ""
+"Inserta un acceso directo que apunte a la localización del contenido del "
+"portapapeles.  El acceso directo estará enlazado al archivo de origen, por "
+"lo que los cambios en el archivo se reflejarán en su documento."
+
+#: oledlg.rc:40
+msgid "Inserts the contents of the clipboard into your document."
+msgstr "Inserta el contenido del portapapeles en su documento."
+
+#: oledlg.rc:41
+msgid "Unknown Type"
+msgstr "Tipo desconocido"
+
+#: oledlg.rc:42
+msgid "Unknown Source"
+msgstr "Origen desconocido"
+
+#: oledlg.rc:43
+msgid "the program which created it"
+msgstr "el programa que lo creó"
+
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
 msgstr "El archivo '%s' en %s es necesario"

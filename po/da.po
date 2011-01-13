@@ -2317,6 +2317,97 @@ msgstr "Til"
 msgid "Off"
 msgstr "Fra"
 
+#: oledlg.rc:25
+msgid "Insert a new %s object into your document"
+msgstr "Indsæt nyt %s objekt i dokumentet"
+
+#: oledlg.rc:26
+msgid ""
+"Insert the contents of the file as an object into your document so that you "
+"may activate it using the program which created it."
+msgstr ""
+"Indsæt filens indhold som objekt ind i dokumentet, så du kan aktivere det "
+"med programmet som har lavet det."
+
+#: oledlg.rc:27
+msgid "Browse"
+msgstr "Gennemse"
+
+#: oledlg.rc:28
+msgid ""
+"File does not appear to be a valid OLE module. Unable to register OLE "
+"control."
+msgstr ""
+"Filen ser ikke ud til at være et gyldig OLE modul. Kunne ikke registrere OLE "
+"control'en."
+
+#: oledlg.rc:29
+msgid "Add Control"
+msgstr "Tilføj control"
+
+#: oledlg.rc:34
+msgid "Inserts the contents of the clipboard into your document as %s."
+msgstr "Indsætter indholdet fra klippebordet ind i dokumentet som %s."
+
+#: oledlg.rc:35
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s."
+msgstr ""
+"Indsætter indholdet fra klippebordet ind i dokumentet, så du kan aktivere "
+"det med %s."
+
+#: oledlg.rc:36
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s.  It will be displayed as an icon."
+msgstr ""
+"Indsætter indholdet fra klippebordet ind i dokumentet, så du kan aktivere "
+"det med %s. Det vises som et ikon."
+
+#: oledlg.rc:37
+msgid ""
+"Inserts the contents of the clipboard into your document as %s.  The data is "
+"linked to the source file so that changes to the file will be reflected in "
+"your document."
+msgstr ""
+"Indsætter indholdet fra klippebordet ind i dokumentet som %s. Den kobles til "
+"kildefilen så ændreringer også sker i dokumentet."
+
+#: oledlg.rc:38
+msgid ""
+"Inserts a picture of the clipboard contents into your document.  The picture "
+"is linked to the source file so that changes to the file will be reflected "
+"in your document."
+msgstr ""
+"Indsætter et billede af klippebordet i dokumentet. Billedet kobles til "
+"kildefilen så ændringer også sker i dokumentet ."
+
+#: oledlg.rc:39
+msgid ""
+"Inserts a shortcut which points to the location of the clipboard contents.  "
+"The shortcut is linked to the source file so that changes to the file will "
+"be reflected in your document."
+msgstr ""
+"Indsætter en genvej som peger på placeringen af indholdet på klippebordet. "
+"Genvejen kobles til kildefilen så ændringer også sker i dokumentet."
+
+#: oledlg.rc:40
+msgid "Inserts the contents of the clipboard into your document."
+msgstr "Indsætter indholdet fra klippebordet ind i dokumentet."
+
+#: oledlg.rc:41
+msgid "Unknown Type"
+msgstr "Ukendt type"
+
+#: oledlg.rc:42
+msgid "Unknown Source"
+msgstr "Ukendt kilde"
+
+#: oledlg.rc:43
+msgid "the program which created it"
+msgstr "programmet der lavede det"
+
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
 msgstr "Filen '%s' fra %s mangler"

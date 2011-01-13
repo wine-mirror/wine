@@ -2283,6 +2283,96 @@ msgstr ""
 msgid "Off"
 msgstr ""
 
+#: oledlg.rc:25
+msgid "Insert a new %s object into your document"
+msgstr "ドキュメントに新しい %s オブジェクトを挿入します"
+
+#: oledlg.rc:26
+msgid ""
+"Insert the contents of the file as an object into your document so that you "
+"may activate it using the program which created it."
+msgstr ""
+"ファイルの内容をオブジェクトとしてドキュメントに挿入します。オブジェクトは作"
+"成したプログラムから有効にできます。"
+
+#: oledlg.rc:27
+msgid "Browse"
+msgstr "参照"
+
+#: oledlg.rc:28
+msgid ""
+"File does not appear to be a valid OLE module. Unable to register OLE "
+"control."
+msgstr ""
+"ファイルは有効なOLEモジュールではないようです。OLEコントロールを登録できませ"
+"ん。"
+
+#: oledlg.rc:29
+msgid "Add Control"
+msgstr "コントロールを追加"
+
+#: oledlg.rc:34
+msgid "Inserts the contents of the clipboard into your document as %s."
+msgstr "クリップボードの内容を %s として、文書に挿入します。"
+
+#: oledlg.rc:35
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s."
+msgstr "クリップボードの内容を文書に挿入します。 %s を利用して、編集できます。"
+
+#: oledlg.rc:36
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s.  It will be displayed as an icon."
+msgstr ""
+"クリップボードの内容を文書に挿入します。 %s を利用して、編集できます。アイコ"
+"ンとして表示されます。"
+
+#: oledlg.rc:37
+msgid ""
+"Inserts the contents of the clipboard into your document as %s.  The data is "
+"linked to the source file so that changes to the file will be reflected in "
+"your document."
+msgstr ""
+"クリップボードの内容を %s として、文書に挿入します。データは元のファイルとリ"
+"ンクしているため、元のファイルへの変更はこの文書に反映されます。"
+
+#: oledlg.rc:38
+msgid ""
+"Inserts a picture of the clipboard contents into your document.  The picture "
+"is linked to the source file so that changes to the file will be reflected "
+"in your document."
+msgstr ""
+"クリップボードの内容を示す絵を文書に挿入します。絵は元のファイルとリンクして"
+"いるため、元のファイルへの変更はこの文書に反映されます。"
+
+#: oledlg.rc:39
+msgid ""
+"Inserts a shortcut which points to the location of the clipboard contents.  "
+"The shortcut is linked to the source file so that changes to the file will "
+"be reflected in your document."
+msgstr ""
+"クリップボードの内容の場所を指すショートカットを挿入します。ショートカットは"
+"元のファイルとリンクしているため、元のファイルへの変更はこの文書に反映されま"
+"す。"
+
+#: oledlg.rc:40
+msgid "Inserts the contents of the clipboard into your document."
+msgstr "クリップボードの内容を挿入します。"
+
+#: oledlg.rc:41
+msgid "Unknown Type"
+msgstr "不明な形式"
+
+#: oledlg.rc:42
+msgid "Unknown Source"
+msgstr "不明"
+
+#: oledlg.rc:43
+msgid "the program which created it"
+msgstr "作成プログラム"
+
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
 msgstr "ファイル '%s' (%s 上) が必要です。"

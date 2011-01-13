@@ -2305,6 +2305,98 @@ msgstr "Включено"
 msgid "Off"
 msgstr "Выключено"
 
+#: oledlg.rc:25
+msgid "Insert a new %s object into your document"
+msgstr "Добавление нового объекта %s в документ"
+
+#: oledlg.rc:26
+msgid ""
+"Insert the contents of the file as an object into your document so that you "
+"may activate it using the program which created it."
+msgstr ""
+"Добавление объекта из файла в документ. Работать с объектом можно будет в "
+"создавшей его программе."
+
+#: oledlg.rc:27
+msgid "Browse"
+msgstr "Просмотр"
+
+#: oledlg.rc:28
+msgid ""
+"File does not appear to be a valid OLE module. Unable to register OLE "
+"control."
+msgstr ""
+"Файл не является корректным модулем OLE. Невозможно зарегистрировать элемент "
+"управления OLE."
+
+#: oledlg.rc:29
+msgid "Add Control"
+msgstr "Добавить элемент управления"
+
+#: oledlg.rc:34
+msgid "Inserts the contents of the clipboard into your document as %s."
+msgstr "Вставка содержимого буфера обмена в документ как %s."
+
+#: oledlg.rc:35
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s."
+msgstr ""
+"Вставка содержимого буфера обмена в документ так, что его можно "
+"активировать, используя %s."
+
+#: oledlg.rc:36
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s.  It will be displayed as an icon."
+msgstr ""
+"Вставка содержимого буфера обмена в документ так, что его можно "
+"активировать, используя %s. Он будет отображаться в виде значка."
+
+#: oledlg.rc:37
+msgid ""
+"Inserts the contents of the clipboard into your document as %s.  The data is "
+"linked to the source file so that changes to the file will be reflected in "
+"your document."
+msgstr ""
+"Вставка содержимого буфера обмена в документ как %s. Данные будут связаны с "
+"исходным файлом, так что изменения в нём будут отражаться в документе."
+
+#: oledlg.rc:38
+msgid ""
+"Inserts a picture of the clipboard contents into your document.  The picture "
+"is linked to the source file so that changes to the file will be reflected "
+"in your document."
+msgstr ""
+"Вставка изображения из буфера обмена в документ. Избражение будет связано с "
+"исходным файлом, так что изменения в нём будут отражаться в документе."
+
+#: oledlg.rc:39
+msgid ""
+"Inserts a shortcut which points to the location of the clipboard contents.  "
+"The shortcut is linked to the source file so that changes to the file will "
+"be reflected in your document."
+msgstr ""
+"Вставка ссылки, которая будет указывать на расположение содержимого буфера "
+"обмена. Ссылка будет связана с исходным файлом, так что изменения в нём "
+"будут отражаться в документе."
+
+#: oledlg.rc:40
+msgid "Inserts the contents of the clipboard into your document."
+msgstr "Вставка содержимое буфера обмена в документ."
+
+#: oledlg.rc:41
+msgid "Unknown Type"
+msgstr "Неизвестный тип"
+
+#: oledlg.rc:42
+msgid "Unknown Source"
+msgstr "Неизвестный источник"
+
+#: oledlg.rc:43
+msgid "the program which created it"
+msgstr "программа, которая его создала"
+
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
 msgstr "Файл '%s' на %s необходим"

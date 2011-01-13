@@ -2362,6 +2362,98 @@ msgstr "På"
 msgid "Off"
 msgstr "Av"
 
+#: oledlg.rc:25
+msgid "Insert a new %s object into your document"
+msgstr "Sett inn et nytt %s-objekt i dokumentet"
+
+#: oledlg.rc:26
+msgid ""
+"Insert the contents of the file as an object into your document so that you "
+"may activate it using the program which created it."
+msgstr ""
+"Sett filens innhold inn som et objekt i dokumentet, slik at du kan aktivere "
+"det ved hjelp av programmet som laget den."
+
+#: oledlg.rc:27
+msgid "Browse"
+msgstr "Bla gjennom"
+
+#: oledlg.rc:28
+msgid ""
+"File does not appear to be a valid OLE module. Unable to register OLE "
+"control."
+msgstr ""
+"Filen ser ikke ut til å være en gyldig OLE-modul.  Kunne ikke registrere OLE-"
+"kontroller."
+
+#: oledlg.rc:29
+msgid "Add Control"
+msgstr "Legg til kontroller"
+
+#: oledlg.rc:34
+msgid "Inserts the contents of the clipboard into your document as %s."
+msgstr "Setter innholdet fra utklippstavlen inn i dokumentet som %s."
+
+#: oledlg.rc:35
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s."
+msgstr ""
+"Setter innholdet fra utklippstavlen inn i dokumentet så du kan aktivere det "
+"med %s."
+
+#: oledlg.rc:36
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s.  It will be displayed as an icon."
+msgstr ""
+"Setter innholdet fra utklippstavlen inn i dokumentet så du kan aktivere det "
+"med %s.  Det vises som et ikon."
+
+#: oledlg.rc:37
+msgid ""
+"Inserts the contents of the clipboard into your document as %s.  The data is "
+"linked to the source file so that changes to the file will be reflected in "
+"your document."
+msgstr ""
+"Setter innholdet fra utklippstavlen inn i dokumentet som %s.  Det kobles til "
+"kildefilen så endringer i denne også skjer i dokumentet."
+
+#: oledlg.rc:38
+msgid ""
+"Inserts a picture of the clipboard contents into your document.  The picture "
+"is linked to the source file so that changes to the file will be reflected "
+"in your document."
+msgstr ""
+"Setter inn et bilde av utklippstavleinnholdet i dokumentet.  Bildet kobles "
+"til kildefilen så endringer i denne også skjer i dokumentet."
+
+#: oledlg.rc:39
+msgid ""
+"Inserts a shortcut which points to the location of the clipboard contents.  "
+"The shortcut is linked to the source file so that changes to the file will "
+"be reflected in your document."
+msgstr ""
+"Setter inn en snarvei som peker til plasseringen av innholdet på "
+"utklippstavlen.  Snarveien kobles til kildefilen så endringer i denne også "
+"skjer i dokumentet."
+
+#: oledlg.rc:40
+msgid "Inserts the contents of the clipboard into your document."
+msgstr "Setter innholdet fra utklippstavlen inn i dokumentet."
+
+#: oledlg.rc:41
+msgid "Unknown Type"
+msgstr "Ukjent type"
+
+#: oledlg.rc:42
+msgid "Unknown Source"
+msgstr "Ukjent kilde"
+
+#: oledlg.rc:43
+msgid "the program which created it"
+msgstr "programmet som laget det"
+
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
 msgstr "Programmet trenger filen «%s» på %s"

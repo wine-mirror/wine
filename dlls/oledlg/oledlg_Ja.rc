@@ -50,15 +50,6 @@ BEGIN
     EDITTEXT        IDC_FILE,83,37,132,13,ES_AUTOHSCROLL | NOT WS_VISIBLE
 END
 
-STRINGTABLE
-{
-  IDS_RESULTOBJDESC	"ドキュメントに新しい %s オブジェクトを挿入します"
-  IDS_RESULTFILEOBJDESC	"ファイルの内容をオブジェクトとしてドキュメントに挿入します。オブジェクトは作成したプログラムから有効にできます。"
-  IDS_BROWSE            "参照"
-  IDS_NOTOLEMOD         "ファイルは有効なOLEモジュールではないようです。OLEコントロールを登録できません。"
-  IDS_NOTOLEMODCAPTION  "コントロールを追加"
-}
-
 IDD_PASTESPECIAL4 DIALOG 3, 15, 293, 140
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "形式を選択して貼り付け"
@@ -84,17 +75,3 @@ BEGIN
     CONTROL       "結果", -1, "Button", BS_GROUPBOX | WS_GROUP | WS_VISIBLE, 6, 90, 212, 48
     CONTROL       "", IDC_PS_SOURCETEXT, "Edit", ES_READONLY | ES_AUTOHSCROLL | WS_VISIBLE, 37, 9, 180, 8
 END
-
-STRINGTABLE
-{
-    IDS_PS_PASTE_DATA                     "クリップボードの内容を %s として、文書に挿入します。"
-    IDS_PS_PASTE_OBJECT                   "クリップボードの内容を文書に挿入します。 %s を利用して、編集できます。"
-    IDS_PS_PASTE_OBJECT_AS_ICON           "クリップボードの内容を文書に挿入します。 %s を利用して、編集できます。アイコンとして表示されます。"
-    IDS_PS_PASTE_LINK_DATA                "クリップボードの内容を %s として、文書に挿入します。データは元のファイルとリンクしているため、元のファイルへの変更はこの文書に反映されます。"
-    IDS_PS_PASTE_LINK_OBJECT              "クリップボードの内容を示す絵を文書に挿入します。絵は元のファイルとリンクしているため、元のファイルへの変更はこの文書に反映されます。"
-    IDS_PS_PASTE_LINK_OBJECT_AS_ICON      "クリップボードの内容の場所を指すショートカットを挿入します。ショートカットは元のファイルとリンクしているため、元のファイルへの変更はこの文書に反映されます。"
-    IDS_PS_NON_OLE                        "クリップボードの内容を挿入します。"
-    IDS_PS_UNKNOWN_TYPE                   "不明な形式"
-    IDS_PS_UNKNOWN_SRC                    "不明"
-    IDS_PS_UNKNOWN_APP                    "作成プログラム"
-}

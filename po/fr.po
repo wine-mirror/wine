@@ -2336,6 +2336,100 @@ msgstr "Actif"
 msgid "Off"
 msgstr "Inactif"
 
+#: oledlg.rc:25
+msgid "Insert a new %s object into your document"
+msgstr "Insérer un nouvel object %s dans votre document"
+
+#: oledlg.rc:26
+msgid ""
+"Insert the contents of the file as an object into your document so that you "
+"may activate it using the program which created it."
+msgstr ""
+"Insère le contenu du fichier comme un objet dans votre document afin que "
+"vous puissiez l'activer en utilisant le programme avec lequel il a été créé."
+
+#: oledlg.rc:27
+msgid "Browse"
+msgstr "Parcourir"
+
+#: oledlg.rc:28
+msgid ""
+"File does not appear to be a valid OLE module. Unable to register OLE "
+"control."
+msgstr ""
+"Le fichier ne semble pas être un module OLE valide. Impossible d'enregistrer "
+"le contrôle OLE."
+
+#: oledlg.rc:29
+msgid "Add Control"
+msgstr "Ajouter un contrôle"
+
+#: oledlg.rc:34
+msgid "Inserts the contents of the clipboard into your document as %s."
+msgstr "Insère le contenu du presse-papiers dans votre document comme %s."
+
+#: oledlg.rc:35
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s."
+msgstr ""
+"Insère le contenu du presse-papiers dans votre document de sorte que vous "
+"puissiez l'activer en utilisant %s."
+
+#: oledlg.rc:36
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s.  It will be displayed as an icon."
+msgstr ""
+"Insère le contenu du presse-papiers dans votre document de sorte que vous "
+"puissiez l'activer en utilisant %s. Il sera affiché comme une icône."
+
+#: oledlg.rc:37
+msgid ""
+"Inserts the contents of the clipboard into your document as %s.  The data is "
+"linked to the source file so that changes to the file will be reflected in "
+"your document."
+msgstr ""
+"Insère le contenu du presse-papiers dans votre document comme %s. Les "
+"données sont liées au fichier source de sorte que les modifications de "
+"celles-ci seront répercutées dans votre document."
+
+#: oledlg.rc:38
+msgid ""
+"Inserts a picture of the clipboard contents into your document.  The picture "
+"is linked to the source file so that changes to the file will be reflected "
+"in your document."
+msgstr ""
+"Insère une image du contenu du presse-papiers dans votre document. L'image "
+"est liée au fichier source de sorte que les modifications de celui-ci seront "
+"répercutées dans votre document."
+
+#: oledlg.rc:39
+msgid ""
+"Inserts a shortcut which points to the location of the clipboard contents.  "
+"The shortcut is linked to the source file so that changes to the file will "
+"be reflected in your document."
+msgstr ""
+"Insère un raccourci qui pointe vers l'emplacement du contenu du presse-"
+"papiers. Le raccourci est lié au fichier source de sorte que les "
+"modifications de celui-ci seront répercutées dans votre document."
+
+#: oledlg.rc:40
+msgid "Inserts the contents of the clipboard into your document."
+msgstr "Insère le contenu du presse-papiers dans votre document."
+
+#: oledlg.rc:41
+msgid "Unknown Type"
+msgstr "Type inconnu"
+
+#: oledlg.rc:42
+msgid "Unknown Source"
+msgstr "Source inconnue"
+
+#: oledlg.rc:43
+msgid "the program which created it"
+msgstr "le programme avec lequel il a été créé"
+
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
 msgstr "Le fichier « %s » sur %s est requis"

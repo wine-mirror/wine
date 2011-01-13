@@ -2358,6 +2358,96 @@ msgstr "작동"
 msgid "Off"
 msgstr "비작동"
 
+#: oledlg.rc:25
+msgid "Insert a new %s object into your document"
+msgstr "새  %s 객체를 문서에 삽입"
+
+#: oledlg.rc:26
+msgid ""
+"Insert the contents of the file as an object into your document so that you "
+"may activate it using the program which created it."
+msgstr ""
+"작성한 풀그림을 사용하여 활성화시킬수 있는 객체를 문서파일 내용으로 삽입하시"
+"오."
+
+#: oledlg.rc:27
+msgid "Browse"
+msgstr "찾기"
+
+#: oledlg.rc:28
+msgid ""
+"File does not appear to be a valid OLE module. Unable to register OLE "
+"control."
+msgstr ""
+"이 파일은 올바른 OLE모듈이 아닌거로 보입니다. OLE컨트롤을 등록할수 없습니다."
+
+#: oledlg.rc:29
+msgid "Add Control"
+msgstr "컨트롤 더하기"
+
+#: oledlg.rc:34
+msgid "Inserts the contents of the clipboard into your document as %s."
+msgstr "당신의 문서 %s에 클립보드의 내용 삽입하기."
+
+#: oledlg.rc:35
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s."
+msgstr ""
+"당신의 문서에 클립보드의 내용들을 첨부하면  %s를 사용해서 이것을 실행할 수 있"
+"습니다."
+
+#: oledlg.rc:36
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s.  It will be displayed as an icon."
+msgstr ""
+"당신의 문서에 클립보드의 내용들을 첨부하면  %s를 사용해서 이것을 실행할 수 있"
+"습니다. 이것은 아이콘으로 나타내질 겁니다."
+
+#: oledlg.rc:37
+msgid ""
+"Inserts the contents of the clipboard into your document as %s.  The data is "
+"linked to the source file so that changes to the file will be reflected in "
+"your document."
+msgstr ""
+"당신의 문서 %s에 클립보드의 내용 삽입하기.  이 데이터는 원본 파일에 연결되어 "
+"있어서 파일이 바뀌면 당신의 문서도 바뀔겁니다."
+
+#: oledlg.rc:38
+msgid ""
+"Inserts a picture of the clipboard contents into your document.  The picture "
+"is linked to the source file so that changes to the file will be reflected "
+"in your document."
+msgstr ""
+"당신의 문서에 클립보드에 있는 그림을 집어넣습니다.  이 그림은 원본 파일에 연"
+"결되어 있어서 파일이 바뀌면 당신의 문서도 바뀔겁니다."
+
+#: oledlg.rc:39
+msgid ""
+"Inserts a shortcut which points to the location of the clipboard contents.  "
+"The shortcut is linked to the source file so that changes to the file will "
+"be reflected in your document."
+msgstr ""
+"당신의 문서에 클립보드에 있는 단축아이콘을 집어넣습니다.  이 단축아이콘은 원"
+"본 파일에 연결되어 있어서 파일이 바뀌면 당신의 문서도 바뀔겁니다t."
+
+#: oledlg.rc:40
+msgid "Inserts the contents of the clipboard into your document."
+msgstr "당신의 문서에 클립보드의 내용 삽입하기."
+
+#: oledlg.rc:41
+msgid "Unknown Type"
+msgstr "알수 없는 형식"
+
+#: oledlg.rc:42
+msgid "Unknown Source"
+msgstr "알수 없는 원본"
+
+#: oledlg.rc:43
+msgid "the program which created it"
+msgstr "내가 만든 프로그램"
+
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
 msgstr "이 파일  '%s' 은 %s에서 필요로 합니다"

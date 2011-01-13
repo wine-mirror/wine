@@ -2302,6 +2302,100 @@ msgstr "Be"
 msgid "Off"
 msgstr "Ki"
 
+#: oledlg.rc:25
+msgid "Insert a new %s object into your document"
+msgstr "Új %s objektum behelyezése az Ön dokumentumába"
+
+#: oledlg.rc:26
+msgid ""
+"Insert the contents of the file as an object into your document so that you "
+"may activate it using the program which created it."
+msgstr ""
+"Kérem illesssze be a fájl tartalmát, mint objektumot a dokumentumába, azzal "
+"a programmal amivel létrehozta."
+
+#: oledlg.rc:27
+msgid "Browse"
+msgstr "Tallózás"
+
+#: oledlg.rc:28
+msgid ""
+"File does not appear to be a valid OLE module. Unable to register OLE "
+"control."
+msgstr ""
+"A fájl úgy tűnik nem egy érvényes OLE modul. Nem tudom regisztrálni az OLE "
+"vezérlőt."
+
+#: oledlg.rc:29
+msgid "Add Control"
+msgstr "Vezérlő hozzáadása"
+
+#: oledlg.rc:34
+msgid "Inserts the contents of the clipboard into your document as %s."
+msgstr "A vágólap tartalmának beillesztése az Ön dokumentumába mint: %s."
+
+#: oledlg.rc:35
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s."
+msgstr ""
+"A vágólap tartalmának beillesztése az Ön dokumentumába, amit a következő "
+"használatával aktiválhat: %s."
+
+#: oledlg.rc:36
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s.  It will be displayed as an icon."
+msgstr ""
+"A vágólap tartalmának beillesztése az Ön dokumentumába, amit a következő "
+"használatával aktiválhat: %s. Ikonként fog megjelnni."
+
+#: oledlg.rc:37
+msgid ""
+"Inserts the contents of the clipboard into your document as %s.  The data is "
+"linked to the source file so that changes to the file will be reflected in "
+"your document."
+msgstr ""
+"A vágólap tartalmának beillesztése az Ön dokumentumába mint: %s. Az adat "
+"össze van kapcsolva a forrásfájllal, így a fájl módosítása hatással lesz a "
+"dokumentumra."
+
+#: oledlg.rc:38
+msgid ""
+"Inserts a picture of the clipboard contents into your document.  The picture "
+"is linked to the source file so that changes to the file will be reflected "
+"in your document."
+msgstr ""
+"A vágólap tartalmának képe beillesztése az Ön dokumentumába mint: %s. A kép "
+"össze van kapcsolva a forrásfájllal, így a fájl módosítása hatással lesz a "
+"dokumentumra."
+
+#: oledlg.rc:39
+msgid ""
+"Inserts a shortcut which points to the location of the clipboard contents.  "
+"The shortcut is linked to the source file so that changes to the file will "
+"be reflected in your document."
+msgstr ""
+"A vágólapra mutató parancsikon beillesztése az Ön dokumentumába mint: %s. A "
+"parancsikon össze van kapcsolva a forrásfájllal, így a fájl módosítása "
+"hatással lesz a dokumentumra."
+
+#: oledlg.rc:40
+msgid "Inserts the contents of the clipboard into your document."
+msgstr "A vágólap tartalmának beillesztése az Ön dokumentumába."
+
+#: oledlg.rc:41
+msgid "Unknown Type"
+msgstr "Ismeretlen típus"
+
+#: oledlg.rc:42
+msgid "Unknown Source"
+msgstr "Ismeretlen forrás"
+
+#: oledlg.rc:43
+msgid "the program which created it"
+msgstr "a program ami létrehozta"
+
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
 msgstr "A(z) '%s' fájl szükséges ezen: %s"

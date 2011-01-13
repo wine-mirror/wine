@@ -2284,6 +2284,100 @@ msgstr "On"
 msgid "Off"
 msgstr "Off"
 
+#: oledlg.rc:25
+msgid "Insert a new %s object into your document"
+msgstr "Insert a new %s object into your document"
+
+#: oledlg.rc:26
+msgid ""
+"Insert the contents of the file as an object into your document so that you "
+"may activate it using the program which created it."
+msgstr ""
+"Insert the contents of the file as an object into your document so that you "
+"may activate it using the program which created it."
+
+#: oledlg.rc:27
+msgid "Browse"
+msgstr "Browse"
+
+#: oledlg.rc:28
+msgid ""
+"File does not appear to be a valid OLE module. Unable to register OLE "
+"control."
+msgstr ""
+"File does not appear to be a valid OLE module. Unable to register OLE "
+"control."
+
+#: oledlg.rc:29
+msgid "Add Control"
+msgstr "Add Control"
+
+#: oledlg.rc:34
+msgid "Inserts the contents of the clipboard into your document as %s."
+msgstr "Inserts the contents of the clipboard into your document as %s."
+
+#: oledlg.rc:35
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s."
+msgstr ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s."
+
+#: oledlg.rc:36
+msgid ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s.  It will be displayed as an icon."
+msgstr ""
+"Inserts the contents of the clipboard into your document so that you can "
+"activate it using %s.  It will be displayed as an icon."
+
+#: oledlg.rc:37
+msgid ""
+"Inserts the contents of the clipboard into your document as %s.  The data is "
+"linked to the source file so that changes to the file will be reflected in "
+"your document."
+msgstr ""
+"Inserts the contents of the clipboard into your document as %s.  The data is "
+"linked to the source file so that changes to the file will be reflected in "
+"your document."
+
+#: oledlg.rc:38
+msgid ""
+"Inserts a picture of the clipboard contents into your document.  The picture "
+"is linked to the source file so that changes to the file will be reflected "
+"in your document."
+msgstr ""
+"Inserts a picture of the clipboard contents into your document.  The picture "
+"is linked to the source file so that changes to the file will be reflected "
+"in your document."
+
+#: oledlg.rc:39
+msgid ""
+"Inserts a shortcut which points to the location of the clipboard contents.  "
+"The shortcut is linked to the source file so that changes to the file will "
+"be reflected in your document."
+msgstr ""
+"Inserts a shortcut which points to the location of the clipboard contents.  "
+"The shortcut is linked to the source file so that changes to the file will "
+"be reflected in your document."
+
+#: oledlg.rc:40
+msgid "Inserts the contents of the clipboard into your document."
+msgstr "Inserts the contents of the clipboard into your document."
+
+#: oledlg.rc:41
+msgid "Unknown Type"
+msgstr "Unknown Type"
+
+#: oledlg.rc:42
+msgid "Unknown Source"
+msgstr "Unknown Source"
+
+#: oledlg.rc:43
+msgid "the program which created it"
+msgstr "the program which created it"
+
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
 msgstr "The file '%s' on %s is needed"
