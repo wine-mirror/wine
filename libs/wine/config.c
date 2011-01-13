@@ -470,7 +470,6 @@ static void preloader_exec( char **argv, int use_preloader )
         execv( full_name, new_argv );
         free( new_argv );
         free( full_name );
-        return;
     }
 #endif
     execv( argv[0], argv );
