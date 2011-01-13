@@ -24,7 +24,7 @@ msgid ""
 msgstr ""
 "תכנית זו מאפשר לך להתקין תכניות חדשות או להסיר תכניות קיימות מהמחשב שלך."
 
-#: appwiz.rc:30 taskmgr.rc:263
+#: appwiz.rc:30 taskmgr.rc:263 winecfg.rc:38
 msgid "Applications"
 msgstr "יישומים"
 
@@ -127,7 +127,7 @@ msgstr "בהליכי ביטול..."
 msgid "Separator"
 msgstr "מפריד"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:83
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:83 winecfg.rc:76
 #, fuzzy
 msgid "None"
 msgstr ""
@@ -2998,7 +2998,7 @@ msgstr "המיקום המקורי"
 msgid "Date deleted"
 msgstr "תאריך המחיקה"
 
-#: shell32.rc:141 shell32.rc:195 winefile.rc:151
+#: shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
 msgid "Desktop"
 msgstr "שולחן העבודה"
 
@@ -6530,6 +6530,438 @@ msgstr "למ&טה"
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "מציג קובצי על רגיל"
+
+#: winecfg.rc:32
+#, fuzzy
+msgid "Configure"
+msgstr "שגיאת תצוגה"
+
+#: winecfg.rc:39
+#, fuzzy
+msgid "Libraries"
+msgstr "ספריות סוג"
+
+#: winecfg.rc:40
+#, fuzzy
+msgid "Drives"
+msgstr "סרגל הכוננים"
+
+#: winecfg.rc:41
+msgid "Select the unix target directory, please."
+msgstr ""
+
+#: winecfg.rc:43
+#, fuzzy
+msgid "Show &Advanced"
+msgstr "מת&קדמים"
+
+#: winecfg.rc:42
+#, fuzzy
+msgid "Hide &Advanced"
+msgstr "מת&קדמים"
+
+#: winecfg.rc:44
+msgid "(No Theme)"
+msgstr ""
+
+#: winecfg.rc:45
+msgid "Graphics"
+msgstr ""
+
+#: winecfg.rc:46
+msgid "Desktop Integration"
+msgstr ""
+
+#: winecfg.rc:47
+#, fuzzy
+msgid "Audio"
+msgstr "שמע"
+
+#: winecfg.rc:48
+#, fuzzy
+msgid "About"
+msgstr "על &אודות"
+
+#: winecfg.rc:49
+#, fuzzy
+msgid "Wine configuration"
+msgstr "&תצורת המערכת..."
+
+#: winecfg.rc:51
+msgid "Theme files (*.msstyles; *.theme)"
+msgstr ""
+
+#: winecfg.rc:52
+#, fuzzy
+msgid "Select a theme file"
+msgstr "לא ניתן לשמור את הקובץ."
+
+#: winecfg.rc:54
+#, fuzzy
+msgid "Folder"
+msgstr "תיקייה חדשה"
+
+#: winecfg.rc:55
+#, fuzzy
+msgid "Links to"
+msgstr "קישורים"
+
+#: winecfg.rc:50
+#, fuzzy
+msgid "Wine configuration for %s"
+msgstr "שגיאת תצוגה"
+
+#: winecfg.rc:53
+msgid ""
+"There is no audio driver currently specified in the registry.\n"
+"\n"
+"A recommended driver has been selected for you.\n"
+"You can use this driver or select another driver if available.\n"
+"\n"
+"You must click Apply for the selection to take effect."
+msgstr ""
+
+#: winecfg.rc:60
+msgid ""
+"Changing the load order of this library is not recommended.\n"
+"Are you sure you want to do this?"
+msgstr ""
+
+#: winecfg.rc:61
+msgid "Warning: system library"
+msgstr ""
+
+#: winecfg.rc:62
+msgid "native"
+msgstr ""
+
+#: winecfg.rc:63
+msgid "builtin"
+msgstr ""
+
+#: winecfg.rc:64
+msgid "native, builtin"
+msgstr ""
+
+#: winecfg.rc:65
+msgid "builtin, native"
+msgstr ""
+
+#: winecfg.rc:66
+#, fuzzy
+msgid "disabled"
+msgstr "Table"
+
+#: winecfg.rc:67
+#, fuzzy
+msgid "Default Settings"
+msgstr "תצורה - הגדרות בררת המחדל"
+
+#: winecfg.rc:68
+#, fuzzy
+msgid "Wine Programs (*.exe,*.exe.so)"
+msgstr "תכניות (*.exe)"
+
+#: winecfg.rc:69
+#, fuzzy
+msgid "Use global settings"
+msgstr "תצורה - הגדרות בררת המחדל"
+
+#: winecfg.rc:70
+msgid "Select an executable file"
+msgstr ""
+
+#: winecfg.rc:75
+msgid "Hardware"
+msgstr ""
+
+#: winecfg.rc:81
+#, fuzzy
+msgid "Autodetect"
+msgstr "אוטומטי"
+
+#: winecfg.rc:82
+msgid "Local hard disk"
+msgstr ""
+
+#: winecfg.rc:83
+msgid "Network share"
+msgstr ""
+
+#: winecfg.rc:84
+msgid "Floppy disk"
+msgstr ""
+
+#: winecfg.rc:85
+msgid "CD-ROM"
+msgstr ""
+
+#: winecfg.rc:86
+msgid ""
+"You cannot add any more drives.\n"
+"\n"
+"Each drive must have a letter, from A to Z, so you cannot have more than 26"
+msgstr ""
+
+#: winecfg.rc:87
+#, fuzzy
+msgid "System drive"
+msgstr "תהליך חוסר פעילות המערכת"
+
+#: winecfg.rc:88
+msgid ""
+"Are you sure you want to delete drive C?\n"
+"\n"
+"Most Windows applications expect drive C to exist, and will die messily if "
+"it doesn't. If you proceed remember to recreate it!"
+msgstr ""
+
+#: winecfg.rc:89
+msgid "Letter"
+msgstr ""
+
+#: winecfg.rc:90
+msgid "Drive Mapping"
+msgstr ""
+
+#: winecfg.rc:91
+msgid ""
+"You don't have a drive C. This is not so great.\n"
+"\n"
+"Remember to click 'Add' in the Drives tab to create one!\n"
+msgstr ""
+
+#: winecfg.rc:96
+msgid "Full"
+msgstr ""
+
+#: winecfg.rc:97
+#, fuzzy
+msgid "Standard"
+msgstr "סרגל הכלים ה&רגיל"
+
+#: winecfg.rc:98
+msgid "Basic"
+msgstr ""
+
+#: winecfg.rc:99
+#, fuzzy
+msgid "Emulation"
+msgstr "מידע"
+
+#: winecfg.rc:100
+#, fuzzy
+msgid "ALSA Driver"
+msgstr "סרגל הכוננים"
+
+#: winecfg.rc:101
+msgid "EsounD Driver"
+msgstr ""
+
+#: winecfg.rc:102
+#, fuzzy
+msgid "OSS Driver"
+msgstr "סרגל הכוננים"
+
+#: winecfg.rc:103
+#, fuzzy
+msgid "JACK Driver"
+msgstr "סרגל הכוננים"
+
+#: winecfg.rc:104
+#, fuzzy
+msgid "NAS Driver"
+msgstr "סרגל הכוננים"
+
+#: winecfg.rc:105
+msgid "CoreAudio Driver"
+msgstr ""
+
+#: winecfg.rc:106
+#, fuzzy
+msgid "Couldn't open %s!"
+msgstr "לא ניתן לפתוח את הקובץ."
+
+#: winecfg.rc:107
+msgid "Sound Drivers"
+msgstr ""
+
+#: winecfg.rc:108
+msgid "Wave Out Devices"
+msgstr ""
+
+#: winecfg.rc:109
+msgid "Wave In Devices"
+msgstr ""
+
+#: winecfg.rc:110
+msgid "MIDI Out Devices"
+msgstr ""
+
+#: winecfg.rc:111
+msgid "MIDI In Devices"
+msgstr ""
+
+#: winecfg.rc:112
+msgid "Aux Devices"
+msgstr ""
+
+#: winecfg.rc:113
+msgid "Mixer Devices"
+msgstr ""
+
+#: winecfg.rc:114
+msgid ""
+"Found driver in registry that is not available!\n"
+"\n"
+"Remove '%s' from registry?"
+msgstr ""
+
+#: winecfg.rc:115
+#, fuzzy
+msgid "Warning"
+msgstr "אזהרה"
+
+#: winecfg.rc:120
+#, fuzzy
+msgid "Controls Background"
+msgstr "הע&תקת הרקע"
+
+#: winecfg.rc:121
+#, fuzzy
+msgid "Controls Text"
+msgstr "Control"
+
+#: winecfg.rc:123
+#, fuzzy
+msgid "Menu Background"
+msgstr "ר&קע"
+
+#: winecfg.rc:124
+#, fuzzy
+msgid "Menu Text"
+msgstr "טקסט"
+
+#: winecfg.rc:125
+#, fuzzy
+msgid "Scrollbar"
+msgstr "גלילה לכאן"
+
+#: winecfg.rc:126
+#, fuzzy
+msgid "Selection Background"
+msgstr "הגדרה &כרקע"
+
+#: winecfg.rc:127
+#, fuzzy
+msgid "Selection Text"
+msgstr "פרטי ה&בחירה"
+
+#: winecfg.rc:128
+#, fuzzy
+msgid "ToolTip Background"
+msgstr "הע&תקת הרקע"
+
+#: winecfg.rc:129
+msgid "ToolTip Text"
+msgstr ""
+
+#: winecfg.rc:130
+#, fuzzy
+msgid "Window Background"
+msgstr "הע&תקת הרקע"
+
+#: winecfg.rc:131
+#, fuzzy
+msgid "Window Text"
+msgstr "&חלון"
+
+#: winecfg.rc:132
+#, fuzzy
+msgid "Active Title Bar"
+msgstr "&ללא שורת כותרת"
+
+#: winecfg.rc:133
+msgid "Active Title Text"
+msgstr ""
+
+#: winecfg.rc:134
+msgid "Inactive Title Bar"
+msgstr ""
+
+#: winecfg.rc:135
+msgid "Inactive Title Text"
+msgstr ""
+
+#: winecfg.rc:136
+msgid "Message Box Text"
+msgstr ""
+
+#: winecfg.rc:137
+#, fuzzy
+msgid "Application Workspace"
+msgstr "יישומים"
+
+#: winecfg.rc:138
+#, fuzzy
+msgid "Window Frame"
+msgstr "&חלון"
+
+#: winecfg.rc:139
+msgid "Active Border"
+msgstr ""
+
+#: winecfg.rc:140
+msgid "Inactive Border"
+msgstr ""
+
+#: winecfg.rc:141
+#, fuzzy
+msgid "Controls Shadow"
+msgstr "לוח הבקרה"
+
+#: winecfg.rc:142
+#, fuzzy
+msgid "Gray Text"
+msgstr "אפור"
+
+#: winecfg.rc:143
+msgid "Controls Highlight"
+msgstr ""
+
+#: winecfg.rc:144
+#, fuzzy
+msgid "Controls Dark Shadow"
+msgstr "שליטה בערוצי ניפוי השגיאות"
+
+#: winecfg.rc:145
+#, fuzzy
+msgid "Controls Light"
+msgstr "Control"
+
+#: winecfg.rc:146
+msgid "Controls Alternate Background"
+msgstr ""
+
+#: winecfg.rc:147
+msgid "Hot Tracked Item"
+msgstr ""
+
+#: winecfg.rc:148
+msgid "Active Title Bar Gradient"
+msgstr ""
+
+#: winecfg.rc:149
+msgid "Inactive Title Bar Gradient"
+msgstr ""
+
+#: winecfg.rc:150
+msgid "Menu Highlight"
+msgstr ""
+
+#: winecfg.rc:151
+msgid "Menu Bar"
+msgstr ""
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"

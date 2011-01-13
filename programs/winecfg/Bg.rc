@@ -25,14 +25,6 @@
 
 LANGUAGE LANG_BULGARIAN, SUBLANG_DEFAULT
 
-IDR_WINECFG MENU
-BEGIN
-    POPUP ""
-    BEGIN
-        MENUITEM "Настройка", IDC_AUDIO_CONFIGURE
-    END
-END
-
 IDD_ABOUTCFG DIALOGEX 0, 0, 260, 220
 STYLE WS_CHILD
 FONT 8, "MS Shell Dlg"
@@ -206,86 +198,4 @@ BEGIN
     CONTROL         "Връзка към:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,55,13
     EDITTEXT         IDC_EDIT_SFPATH,70,195,140,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
     PUSHBUTTON      "Избор",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
-END
-
-STRINGTABLE
-BEGIN
-    IDS_TAB_APPLICATIONS    "Приложения"
-    IDS_TAB_DLLS            "Библиотеки"
-    IDS_TAB_DRIVES          "Устройства"
-    IDS_CHOOSE_PATH         "Изберете Unix директория"
-    IDS_HIDE_ADVANCED       "Скрий допълнителните"
-    IDS_SHOW_ADVANCED       "Покажи допълнителните"
-    IDS_NOTHEME             "(без тема)"
-    IDS_TAB_GRAPHICS        "Графика"
-    IDS_TAB_DESKTOP_INTEGRATION "Интеграция"
-    IDS_TAB_AUDIO           "Звук"
-    IDS_TAB_ABOUT           "Относно"
-    IDS_WINECFG_TITLE       "Настройки на Wine"
-    IDS_WINECFG_TITLE_APP   "Настройки на Wine за %s"
-    IDS_THEMEFILE           "Файлове с теми (*.msstyles; *.theme)"
-    IDS_THEMEFILE_SELECT    "Изберете файл с тема"
-    IDS_AUDIO_MISSING       "Няма настроен звуков драйвер.\n\nЗа вас беше избран драйвер по подразбиране.\nМоже да го използвате или да изберете друг.\n\nТрябва да щракнете на Потвърди, за да влезе в сила избора."
-    IDS_SHELL_FOLDER        "Папка"
-    IDS_LINKS_TO            "Връзка към"
-END
-
-STRINGTABLE
-BEGIN
-    IDS_DLL_WARNING         "Промяната на реда на зареждане не е препоръчителна. Сигурни ли сте, че искате да направите това?"
-    IDS_DLL_WARNING_CAPTION "Внимание: системна библиотека"
-    IDS_DLL_NATIVE          "собствена"
-    IDS_DLL_BUILTIN         "вградена"
-    IDS_DLL_NATIVE_BUILTIN  "собствена, вградена"
-    IDS_DLL_BUILTIN_NATIVE  "вградена, собствена"
-    IDS_DLL_DISABLED        "забранена"
-    IDS_DEFAULT_SETTINGS    "Default Settings"
-    IDS_EXECUTABLE_FILTER   "Wine Programs (*.exe,*.exe.so)"
-    IDS_USE_GLOBAL_SETTINGS "Use global settings"
-    IDS_SELECT_EXECUTABLE   "Select an executable file"
-END
-
-STRINGTABLE
-BEGIN
-    IDS_SHADER_MODE_HARDWARE    "Hardware"
-    IDS_SHADER_MODE_NONE        "None"
-END
-
-STRINGTABLE
-BEGIN
-    IDS_DRIVE_UNKNOWN           "Autodetect"
-    IDS_DRIVE_FIXED             "Local hard disk"
-    IDS_DRIVE_REMOTE            "Network share"
-    IDS_DRIVE_REMOVABLE         "Floppy disk"
-    IDS_DRIVE_CDROM             "CD-ROM"
-    IDS_DRIVE_LETTERS_EXCEEDED  "You cannot add any more drives.\n\nEach drive must have a letter, from A to Z, so you cannot have more than 26"
-    IDS_SYSTEM_DRIVE_LABEL      "System drive"
-    IDS_CONFIRM_DELETE_C        "Are you sure you want to delete drive C?\n\nMost Windows applications expect drive C to exist, and will die messily if it doesn't. If you proceed remember to recreate it!"
-    IDS_COL_DRIVELETTER         "Letter"
-    IDS_COL_DRIVEMAPPING        "Drive Mapping"
-    IDS_NO_DRIVE_C              "You don't have a drive C. This is not so great.\n\nRemember to click 'Add' in the Drives tab to create one!\n"
-END
-
-STRINGTABLE
-BEGIN
-    IDS_ACCEL_FULL              "Full"
-    IDS_ACCEL_STANDARD          "Standard"
-    IDS_ACCEL_BASIC             "Basic"
-    IDS_ACCEL_EMULATION         "Emulation"
-    IDS_DRIVER_ALSA             "ALSA Driver"
-    IDS_DRIVER_ESOUND           "EsounD Driver"
-    IDS_DRIVER_OSS              "OSS Driver"
-    IDS_DRIVER_JACK             "JACK Driver"
-    IDS_DRIVER_NAS              "NAS Driver"
-    IDS_DRIVER_COREAUDIO        "CoreAudio Driver"
-    IDS_OPEN_DRIVER_ERROR       "Couldn't open %s!"
-    IDS_SOUNDDRIVERS            "Sound Drivers"
-    IDS_DEVICES_WAVEOUT         "Wave Out Devices"
-    IDS_DEVICES_WAVEIN          "Wave In Devices"
-    IDS_DEVICES_MIDIOUT         "MIDI Out Devices"
-    IDS_DEVICES_MIDIIN          "MIDI In Devices"
-    IDS_DEVICES_AUX             "Aux Devices"
-    IDS_DEVICES_MIXER           "Mixer Devices"
-    IDS_UNAVAILABLE_DRIVER      "Found driver in registry that is not available!\n\nRemove \"%s\" from registry?"
-    IDS_WARNING                 "Warning"
 END

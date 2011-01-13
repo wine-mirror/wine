@@ -25,14 +25,9 @@ msgstr ""
 "Hiermee installeert u nieuwe software, of verwijdert u bestaande software "
 "van uw computer."
 
-#: appwiz.rc:30 taskmgr.rc:263
-#, fuzzy
+#: appwiz.rc:30 taskmgr.rc:263 winecfg.rc:38
 msgid "Applications"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Toepassingen\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Programma's"
+msgstr "Toepassingen"
 
 #: appwiz.rc:32
 msgid ""
@@ -135,7 +130,7 @@ msgstr "Annuleren..."
 msgid "Separator"
 msgstr "Scheidingsteken"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:83
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:83 winecfg.rc:76
 msgid "None"
 msgstr "Geen"
 
@@ -3125,7 +3120,7 @@ msgstr "Originele locatie"
 msgid "Date deleted"
 msgstr "Datum verwijderd"
 
-#: shell32.rc:141 shell32.rc:195 winefile.rc:151
+#: shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
 msgid "Desktop"
 msgstr "Bureaublad"
 
@@ -7087,6 +7082,420 @@ msgstr "O&mlaag"
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "Algemene Metafile weergave"
+
+#: winecfg.rc:32
+msgid "Configure"
+msgstr "Instellen"
+
+#: winecfg.rc:39
+msgid "Libraries"
+msgstr "Bibliotheken"
+
+#: winecfg.rc:40
+msgid "Drives"
+msgstr "Stations"
+
+#: winecfg.rc:41
+msgid "Select the unix target directory, please."
+msgstr "Selecteer a.u.b. de Unix map."
+
+#: winecfg.rc:43
+msgid "Show &Advanced"
+msgstr "Toon uitgebreid"
+
+#: winecfg.rc:42
+msgid "Hide &Advanced"
+msgstr "Verberg uitgebreid"
+
+#: winecfg.rc:44
+msgid "(No Theme)"
+msgstr "(Geen Thema)"
+
+#: winecfg.rc:45
+msgid "Graphics"
+msgstr "Grafisch"
+
+#: winecfg.rc:46
+msgid "Desktop Integration"
+msgstr "Desktop Integratie"
+
+#: winecfg.rc:47
+msgid "Audio"
+msgstr "Geluid"
+
+#: winecfg.rc:48
+msgid "About"
+msgstr "Over Wine"
+
+#: winecfg.rc:49
+msgid "Wine configuration"
+msgstr "Wine configuratie"
+
+#: winecfg.rc:51
+msgid "Theme files (*.msstyles; *.theme)"
+msgstr "Thema-bestanden (*.msstyles; *.theme)"
+
+#: winecfg.rc:52
+msgid "Select a theme file"
+msgstr "Thema-bestanden kiezen"
+
+#: winecfg.rc:54
+msgid "Folder"
+msgstr "Persoonlijke map"
+
+#: winecfg.rc:55
+msgid "Links to"
+msgstr "Verwijst naar"
+
+#: winecfg.rc:50
+msgid "Wine configuration for %s"
+msgstr "Wine configuratie voor %s"
+
+#: winecfg.rc:53
+msgid ""
+"There is no audio driver currently specified in the registry.\n"
+"\n"
+"A recommended driver has been selected for you.\n"
+"You can use this driver or select another driver if available.\n"
+"\n"
+"You must click Apply for the selection to take effect."
+msgstr ""
+"Op dit moment is er geen stuurprogramma voor geluid ingesteld in het "
+"register.\n"
+"\n"
+"Een aanbevolen stuurprogramma is voor u geselecteerd.\n"
+"U kunt dit stuurprogramma gebruiken of (indien beschikbaar) een ander "
+"selecteren.\n"
+"\n"
+"Klik op Toepassen om deze selectie te activeren."
+
+#: winecfg.rc:60
+msgid ""
+"Changing the load order of this library is not recommended.\n"
+"Are you sure you want to do this?"
+msgstr ""
+"Veranderen van de laadvolgorde van deze bibliotheek wordt niet aanbevolen\n"
+". Weet u zeker dat u dit wilt doen?"
+
+#: winecfg.rc:61
+msgid "Warning: system library"
+msgstr "Waarschuwing: systeembibliotheek"
+
+#: winecfg.rc:62
+msgid "native"
+msgstr "native"
+
+#: winecfg.rc:63
+msgid "builtin"
+msgstr "builtin"
+
+#: winecfg.rc:64
+msgid "native, builtin"
+msgstr "native, builtin"
+
+#: winecfg.rc:65
+msgid "builtin, native"
+msgstr "builtin, native"
+
+#: winecfg.rc:66
+msgid "disabled"
+msgstr "uitgeschakeld"
+
+#: winecfg.rc:67
+msgid "Default Settings"
+msgstr "Standaardinstellingen"
+
+#: winecfg.rc:68
+msgid "Wine Programs (*.exe,*.exe.so)"
+msgstr "Wine toepassingen (*.exe,*.exe.so)"
+
+#: winecfg.rc:69
+msgid "Use global settings"
+msgstr "Gebruik globale instellingen"
+
+#: winecfg.rc:70
+msgid "Select an executable file"
+msgstr "Selecteer een uitvoerbaar bestand"
+
+#: winecfg.rc:75
+msgid "Hardware"
+msgstr "Hardware"
+
+#: winecfg.rc:81
+msgid "Autodetect"
+msgstr "Automatisch detecteren"
+
+#: winecfg.rc:82
+msgid "Local hard disk"
+msgstr "Lokaal station"
+
+#: winecfg.rc:83
+msgid "Network share"
+msgstr "Netwerkverbinding"
+
+#: winecfg.rc:84
+msgid "Floppy disk"
+msgstr "Diskettestation"
+
+#: winecfg.rc:85
+msgid "CD-ROM"
+msgstr "CD-ROM"
+
+#: winecfg.rc:86
+msgid ""
+"You cannot add any more drives.\n"
+"\n"
+"Each drive must have a letter, from A to Z, so you cannot have more than 26"
+msgstr ""
+"U kunt geen stations meer toevoegen.\n"
+"\n"
+"Elk station moet een letter, van A tot Z, hebben zodat er niet meer dan 26 "
+"kunnen zijn"
+
+#: winecfg.rc:87
+msgid "System drive"
+msgstr "Systeem station"
+
+#: winecfg.rc:88
+msgid ""
+"Are you sure you want to delete drive C?\n"
+"\n"
+"Most Windows applications expect drive C to exist, and will die messily if "
+"it doesn't. If you proceed remember to recreate it!"
+msgstr ""
+"Weet u zeker dat u station C wilt verwijderen?\n"
+"De meeste Windows toepassingen verwachten dat station C bestaat en zullen, "
+"met onverwachte resultaten, afbreken. Als u doorgaat vergeet dan niet om "
+"station C opnieuw aan te maken!"
+
+#: winecfg.rc:89
+msgid "Letter"
+msgstr "Letter"
+
+#: winecfg.rc:90
+msgid "Drive Mapping"
+msgstr "Toewijzing"
+
+#: winecfg.rc:91
+msgid ""
+"You don't have a drive C. This is not so great.\n"
+"\n"
+"Remember to click 'Add' in the Drives tab to create one!\n"
+msgstr ""
+"U heeft geen C station. Dit kan tot problemen leiden.\n"
+"\n"
+"Vergeet niet om m.b.v. de knop 'Toevoegen' in de Stations tab een C station "
+"aan te maken!\n"
+
+#: winecfg.rc:96
+msgid "Full"
+msgstr "Volledig"
+
+#: winecfg.rc:97
+msgid "Standard"
+msgstr "Standaard"
+
+#: winecfg.rc:98
+msgid "Basic"
+msgstr "Eenvoudig"
+
+#: winecfg.rc:99
+msgid "Emulation"
+msgstr "Emulatie"
+
+#: winecfg.rc:100
+msgid "ALSA Driver"
+msgstr "ALSA Stuurprogramma"
+
+#: winecfg.rc:101
+msgid "EsounD Driver"
+msgstr "EsounD Stuurprogramma"
+
+#: winecfg.rc:102
+msgid "OSS Driver"
+msgstr "OSS Stuurprogramma"
+
+#: winecfg.rc:103
+msgid "JACK Driver"
+msgstr "JACK Stuurprogramma"
+
+#: winecfg.rc:104
+msgid "NAS Driver"
+msgstr "NAS Stuurprogramma"
+
+#: winecfg.rc:105
+msgid "CoreAudio Driver"
+msgstr "CoreAudio Stuurprogramma"
+
+#: winecfg.rc:106
+msgid "Couldn't open %s!"
+msgstr "%s kon niet worden geopend!"
+
+#: winecfg.rc:107
+msgid "Sound Drivers"
+msgstr "Stuurprogramma's voor geluid"
+
+#: winecfg.rc:108
+msgid "Wave Out Devices"
+msgstr "Wave Out Apparaten"
+
+#: winecfg.rc:109
+msgid "Wave In Devices"
+msgstr "Wave In Apparaten"
+
+#: winecfg.rc:110
+msgid "MIDI Out Devices"
+msgstr "MIDI Out Apparaten"
+
+#: winecfg.rc:111
+msgid "MIDI In Devices"
+msgstr "MIDI In Apparaten"
+
+#: winecfg.rc:112
+msgid "Aux Devices"
+msgstr "Aux Apparaten"
+
+#: winecfg.rc:113
+msgid "Mixer Devices"
+msgstr "Mixer Apparaten"
+
+#: winecfg.rc:114
+msgid ""
+"Found driver in registry that is not available!\n"
+"\n"
+"Remove '%s' from registry?"
+msgstr ""
+"Stuurprogramma in het register is niet beschikbaar!\n"
+"\n"
+"Verwijder \"%s\" uit het register?"
+
+#: winecfg.rc:115
+msgid "Warning"
+msgstr "Waarschuwing"
+
+#: winecfg.rc:120
+msgid "Controls Background"
+msgstr "Instellingen Achtergrond"
+
+#: winecfg.rc:121
+msgid "Controls Text"
+msgstr "Instellingen Tekst"
+
+#: winecfg.rc:123
+msgid "Menu Background"
+msgstr "Menu Achtergrond"
+
+#: winecfg.rc:124
+msgid "Menu Text"
+msgstr "Menu Tekst"
+
+#: winecfg.rc:125
+msgid "Scrollbar"
+msgstr "Scrollbalk"
+
+#: winecfg.rc:126
+msgid "Selection Background"
+msgstr "Selectie Achtergrond"
+
+#: winecfg.rc:127
+msgid "Selection Text"
+msgstr "Selectie Tekst"
+
+#: winecfg.rc:128
+msgid "ToolTip Background"
+msgstr "ToolTip Achtergrond"
+
+#: winecfg.rc:129
+msgid "ToolTip Text"
+msgstr "ToolTip Tekst"
+
+#: winecfg.rc:130
+msgid "Window Background"
+msgstr "Venster Achtergrond"
+
+#: winecfg.rc:131
+msgid "Window Text"
+msgstr "Venster Tekst"
+
+#: winecfg.rc:132
+msgid "Active Title Bar"
+msgstr "Actieve Titelbalk"
+
+#: winecfg.rc:133
+msgid "Active Title Text"
+msgstr "Actieve Titeltekst"
+
+#: winecfg.rc:134
+msgid "Inactive Title Bar"
+msgstr "Inactieve Titelbalk"
+
+#: winecfg.rc:135
+msgid "Inactive Title Text"
+msgstr "Inactieve Titeltekst"
+
+#: winecfg.rc:136
+msgid "Message Box Text"
+msgstr "Meldingsvenster Tekst"
+
+#: winecfg.rc:137
+msgid "Application Workspace"
+msgstr "Applicatie Werkruimte"
+
+#: winecfg.rc:138
+msgid "Window Frame"
+msgstr "Vensterraamwerk"
+
+#: winecfg.rc:139
+msgid "Active Border"
+msgstr "Actieve Rand"
+
+#: winecfg.rc:140
+msgid "Inactive Border"
+msgstr "Inactieve Rand"
+
+#: winecfg.rc:141
+msgid "Controls Shadow"
+msgstr "Knopschaduw"
+
+#: winecfg.rc:142
+msgid "Gray Text"
+msgstr "Grijze Tekst"
+
+#: winecfg.rc:143
+msgid "Controls Highlight"
+msgstr "Knoppen Gemarkeerd"
+
+#: winecfg.rc:144
+msgid "Controls Dark Shadow"
+msgstr "Knoppen Donkere Schaduw"
+
+#: winecfg.rc:145
+msgid "Controls Light"
+msgstr "Knoppen Licht"
+
+#: winecfg.rc:146
+msgid "Controls Alternate Background"
+msgstr "Knoppen Alternatieve Achtergrond"
+
+#: winecfg.rc:147
+msgid "Hot Tracked Item"
+msgstr "Hot-Tracked Onderdeel"
+
+#: winecfg.rc:148
+msgid "Active Title Bar Gradient"
+msgstr "Actieve Titelbalk Verloop"
+
+#: winecfg.rc:149
+msgid "Inactive Title Bar Gradient"
+msgstr "Inactieve Titelbalk Verloop"
+
+#: winecfg.rc:150
+msgid "Menu Highlight"
+msgstr "Menu Gemarkeerd"
+
+#: winecfg.rc:151
+msgid "Menu Bar"
+msgstr "Menubalk"
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"

@@ -24,7 +24,7 @@ msgid ""
 msgstr ""
 "Permite instalarea sau dezinstalarea de aplicații pe calculatorul d-voastră."
 
-#: appwiz.rc:30 taskmgr.rc:263
+#: appwiz.rc:30 taskmgr.rc:263 winecfg.rc:38
 msgid "Applications"
 msgstr "Aplicații"
 
@@ -127,7 +127,7 @@ msgstr "Renunț..."
 msgid "Separator"
 msgstr "Separator"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:83
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:83 winecfg.rc:76
 #, fuzzy
 msgid "None"
 msgstr ""
@@ -3137,7 +3137,7 @@ msgstr "Locația originală"
 msgid "Date deleted"
 msgstr "Data ștergerii"
 
-#: shell32.rc:141 shell32.rc:195 winefile.rc:151
+#: shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
 #, fuzzy
 msgid "Desktop"
 msgstr ""
@@ -7094,6 +7094,418 @@ msgstr "&Jos"
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "Vizualizator de fișiere metafile normale"
+
+#: winecfg.rc:32
+msgid "Configure"
+msgstr "Configurează"
+
+#: winecfg.rc:39
+msgid "Libraries"
+msgstr "Librării"
+
+#: winecfg.rc:40
+msgid "Drives"
+msgstr "Dispozitive"
+
+#: winecfg.rc:41
+msgid "Select the unix target directory, please."
+msgstr "Selectați vă rog dosarul unix destinație."
+
+#: winecfg.rc:43
+msgid "Show &Advanced"
+msgstr "Afișează opțiunile a&vansate"
+
+#: winecfg.rc:42
+msgid "Hide &Advanced"
+msgstr "Ascunde opțiunile a&vansate"
+
+#: winecfg.rc:44
+msgid "(No Theme)"
+msgstr "(Fără tematică)"
+
+#: winecfg.rc:45
+msgid "Graphics"
+msgstr "Grafică"
+
+#: winecfg.rc:46
+msgid "Desktop Integration"
+msgstr "Integrare ecran"
+
+#: winecfg.rc:47
+msgid "Audio"
+msgstr "Audio"
+
+#: winecfg.rc:48
+msgid "About"
+msgstr "Despre"
+
+#: winecfg.rc:49
+msgid "Wine configuration"
+msgstr "Setări Wine"
+
+#: winecfg.rc:51
+msgid "Theme files (*.msstyles; *.theme)"
+msgstr "Fișere de tematică (*.msstyles; *.theme)"
+
+#: winecfg.rc:52
+msgid "Select a theme file"
+msgstr "Selectează un fișier de tematică"
+
+#: winecfg.rc:54
+msgid "Folder"
+msgstr "Dosarul de sistem"
+
+#: winecfg.rc:55
+msgid "Links to"
+msgstr "Legat la"
+
+#: winecfg.rc:50
+msgid "Wine configuration for %s"
+msgstr "Setări Wine pentru %s"
+
+#: winecfg.rc:53
+msgid ""
+"There is no audio driver currently specified in the registry.\n"
+"\n"
+"A recommended driver has been selected for you.\n"
+"You can use this driver or select another driver if available.\n"
+"\n"
+"You must click Apply for the selection to take effect."
+msgstr ""
+"Nici un driver audio nu este specificat în registru.\n"
+"\n"
+"Un driver recomandat a fost ales pentru D-voastră.\n"
+"Puteți folosi acest driver ori alegeți un alt driver disponibil.\n"
+"\n"
+"Dați clic pe OK ca să activați setarea."
+
+#: winecfg.rc:60
+msgid ""
+"Changing the load order of this library is not recommended.\n"
+"Are you sure you want to do this?"
+msgstr ""
+"Nu se recomandează schimbarea ordinei de încărcare pentru această librărie.\n"
+"Doriți întradevăr să schimbați ordinea de încărcare?"
+
+#: winecfg.rc:61
+msgid "Warning: system library"
+msgstr "Avertizare: librărie de sistem"
+
+#: winecfg.rc:62
+msgid "native"
+msgstr "native"
+
+#: winecfg.rc:63
+msgid "builtin"
+msgstr "builtin"
+
+#: winecfg.rc:64
+msgid "native, builtin"
+msgstr "native, builtin"
+
+#: winecfg.rc:65
+msgid "builtin, native"
+msgstr "builtin, native"
+
+#: winecfg.rc:66
+msgid "disabled"
+msgstr "dezactivat"
+
+#: winecfg.rc:67
+msgid "Default Settings"
+msgstr "Setări implicite"
+
+#: winecfg.rc:68
+msgid "Wine Programs (*.exe,*.exe.so)"
+msgstr "Programe Wine (*.exe,*.exe.so)"
+
+#: winecfg.rc:69
+msgid "Use global settings"
+msgstr "Folosește setările globale"
+
+#: winecfg.rc:70
+msgid "Select an executable file"
+msgstr "Selectează un fișier executabil"
+
+#: winecfg.rc:75
+msgid "Hardware"
+msgstr "Hardware"
+
+#: winecfg.rc:81
+msgid "Autodetect"
+msgstr "Detectează automat"
+
+#: winecfg.rc:82
+msgid "Local hard disk"
+msgstr "Hard disk local"
+
+#: winecfg.rc:83
+msgid "Network share"
+msgstr "Resursă din rețea"
+
+#: winecfg.rc:84
+msgid "Floppy disk"
+msgstr "Dischetă"
+
+#: winecfg.rc:85
+msgid "CD-ROM"
+msgstr "CD-ROM"
+
+#: winecfg.rc:86
+msgid ""
+"You cannot add any more drives.\n"
+"\n"
+"Each drive must have a letter, from A to Z, so you cannot have more than 26"
+msgstr ""
+"Nu mai puteți adăuga nici o unitate.\n"
+"\n"
+"Fiecare unitate trebuie să aibă o literă de la A la Z associată cu ea. Acest "
+"fapt limitează numărul de unități la 26."
+
+#: winecfg.rc:87
+msgid "System drive"
+msgstr "Unitate de sistem"
+
+#: winecfg.rc:88
+msgid ""
+"Are you sure you want to delete drive C?\n"
+"\n"
+"Most Windows applications expect drive C to exist, and will die messily if "
+"it doesn't. If you proceed remember to recreate it!"
+msgstr ""
+"Sunteți sigur că vreți să ștergeți unitatea C?\n"
+"\n"
+"Foarte multe aplicații Windows presupun că unitatea C există! Dacă nu, vor "
+"termina în mod neașteptat! Dacă executați stergerea nu uitați să recreați "
+"unitatea C!"
+
+#: winecfg.rc:89
+msgid "Letter"
+msgstr "Litera"
+
+#: winecfg.rc:90
+msgid "Drive Mapping"
+msgstr "Mapare disc"
+
+#: winecfg.rc:91
+msgid ""
+"You don't have a drive C. This is not so great.\n"
+"\n"
+"Remember to click 'Add' in the Drives tab to create one!\n"
+msgstr ""
+"Nu aveți unitatea C. Nu-i bine de loc.\n"
+"\n"
+"Nu uitați să o adăugați în subfereastra „Mapare de discuri”!\n"
+
+#: winecfg.rc:96
+msgid "Full"
+msgstr "Completă"
+
+#: winecfg.rc:97
+msgid "Standard"
+msgstr "Standard"
+
+#: winecfg.rc:98
+msgid "Basic"
+msgstr "De bază"
+
+#: winecfg.rc:99
+msgid "Emulation"
+msgstr "Emulare"
+
+#: winecfg.rc:100
+msgid "ALSA Driver"
+msgstr "Driver ALSA"
+
+#: winecfg.rc:101
+msgid "EsounD Driver"
+msgstr "Driver Esound"
+
+#: winecfg.rc:102
+msgid "OSS Driver"
+msgstr "Driver OSS"
+
+#: winecfg.rc:103
+msgid "JACK Driver"
+msgstr "Driver JACK"
+
+#: winecfg.rc:104
+msgid "NAS Driver"
+msgstr "Driver NAS"
+
+#: winecfg.rc:105
+msgid "CoreAudio Driver"
+msgstr "Driver CoreAudio"
+
+#: winecfg.rc:106
+msgid "Couldn't open %s!"
+msgstr "Nu pot deschide %s!"
+
+#: winecfg.rc:107
+msgid "Sound Drivers"
+msgstr "Drivere de sunet"
+
+#: winecfg.rc:108
+msgid "Wave Out Devices"
+msgstr "Dispozitive Wave Out"
+
+#: winecfg.rc:109
+msgid "Wave In Devices"
+msgstr "Dispozitive Wave In"
+
+#: winecfg.rc:110
+msgid "MIDI Out Devices"
+msgstr "Dispozitive MIDI Out"
+
+#: winecfg.rc:111
+msgid "MIDI In Devices"
+msgstr "Dispozitive MIDI In"
+
+#: winecfg.rc:112
+msgid "Aux Devices"
+msgstr "Dispozitive Aux"
+
+#: winecfg.rc:113
+msgid "Mixer Devices"
+msgstr "Dispozitive Mixer"
+
+#: winecfg.rc:114
+msgid ""
+"Found driver in registry that is not available!\n"
+"\n"
+"Remove '%s' from registry?"
+msgstr ""
+"Un driver indisponibil este setat în registru!\n"
+"\n"
+"Doriți să ștergeți driver-ul „%s” din registru?"
+
+#: winecfg.rc:115
+msgid "Warning"
+msgstr "Avertizare"
+
+#: winecfg.rc:120
+msgid "Controls Background"
+msgstr "Fundal controale"
+
+#: winecfg.rc:121
+msgid "Controls Text"
+msgstr "Text controale"
+
+#: winecfg.rc:123
+msgid "Menu Background"
+msgstr "Fundal meniu"
+
+#: winecfg.rc:124
+msgid "Menu Text"
+msgstr "Text meniu"
+
+#: winecfg.rc:125
+msgid "Scrollbar"
+msgstr "Bare de defilare"
+
+#: winecfg.rc:126
+msgid "Selection Background"
+msgstr "Fundal selecție"
+
+#: winecfg.rc:127
+msgid "Selection Text"
+msgstr "Text selecție"
+
+#: winecfg.rc:128
+msgid "ToolTip Background"
+msgstr "Fundal baloane de ajutor"
+
+#: winecfg.rc:129
+msgid "ToolTip Text"
+msgstr "Text baloane de ajutor"
+
+#: winecfg.rc:130
+msgid "Window Background"
+msgstr "Fundal fereastră"
+
+#: winecfg.rc:131
+msgid "Window Text"
+msgstr "Text fereastră"
+
+#: winecfg.rc:132
+msgid "Active Title Bar"
+msgstr "Bară de titlu activă"
+
+#: winecfg.rc:133
+msgid "Active Title Text"
+msgstr "Text bară de titlu activă"
+
+#: winecfg.rc:134
+msgid "Inactive Title Bar"
+msgstr "Bară de titlu inactivă"
+
+#: winecfg.rc:135
+msgid "Inactive Title Text"
+msgstr "Text bară de titlu inactivă"
+
+#: winecfg.rc:136
+msgid "Message Box Text"
+msgstr "Text casetă de mesaje"
+
+#: winecfg.rc:137
+msgid "Application Workspace"
+msgstr "Spațiul de lucru al aplicației"
+
+#: winecfg.rc:138
+msgid "Window Frame"
+msgstr "Cadru de fereastră"
+
+#: winecfg.rc:139
+msgid "Active Border"
+msgstr "Margini active"
+
+#: winecfg.rc:140
+msgid "Inactive Border"
+msgstr "Margini inactive"
+
+#: winecfg.rc:141
+msgid "Controls Shadow"
+msgstr "Umbră pentru controale"
+
+#: winecfg.rc:142
+msgid "Gray Text"
+msgstr "Text gri"
+
+#: winecfg.rc:143
+msgid "Controls Highlight"
+msgstr "Evidențiere controale"
+
+#: winecfg.rc:144
+msgid "Controls Dark Shadow"
+msgstr "Umbră întunecată pentru controale"
+
+#: winecfg.rc:145
+msgid "Controls Light"
+msgstr "Lumină pentru controale"
+
+#: winecfg.rc:146
+msgid "Controls Alternate Background"
+msgstr "Fundal alternativ pentru controale"
+
+#: winecfg.rc:147
+msgid "Hot Tracked Item"
+msgstr "Element cu urmărire fierbinte"
+
+#: winecfg.rc:148
+msgid "Active Title Bar Gradient"
+msgstr "Gradient bară de titlu activă"
+
+#: winecfg.rc:149
+msgid "Inactive Title Bar Gradient"
+msgstr "Gradient bară de titlu inactivă"
+
+#: winecfg.rc:150
+msgid "Menu Highlight"
+msgstr "Evidențiere meniu"
+
+#: winecfg.rc:151
+msgid "Menu Bar"
+msgstr "Bară de meniu"
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"

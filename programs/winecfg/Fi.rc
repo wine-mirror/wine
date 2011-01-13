@@ -26,14 +26,6 @@
 
 LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
 
-IDR_WINECFG MENU
-BEGIN
-    POPUP ""
-    BEGIN
-        MENUITEM "Asetukset", IDC_AUDIO_CONFIGURE
-    END
-END
-
 IDD_ABOUTCFG DIALOGEX 0, 0, 260, 220
 STYLE WS_CHILD
 FONT 8, "MS Shell Dlg"
@@ -201,85 +193,4 @@ BEGIN
     CONTROL         "Link to:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
     EDITTEXT         IDC_EDIT_SFPATH,65,195,145,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
     PUSHBUTTON      "Browse",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
-END
-
-STRINGTABLE
-BEGIN
-    IDS_TAB_APPLICATIONS    "Sovellukset"
-    IDS_TAB_DLLS            "Kirjastot"
-    IDS_TAB_DRIVES          "Asemat"
-    IDS_CHOOSE_PATH         "Valitse unix-kohdekansio."
-    IDS_HIDE_ADVANCED       "Piilota lisäasetukset"
-    IDS_SHOW_ADVANCED       "Näytä lisäasetukset"
-    IDS_NOTHEME             "(Ei teemaa)"
-    IDS_TAB_GRAPHICS        "Grafiikka"
-    IDS_TAB_DESKTOP_INTEGRATION "Työpöytäintegraatio"
-    IDS_TAB_AUDIO           "Ääni"
-    IDS_TAB_ABOUT           "Tietoja"
-    IDS_WINECFG_TITLE       "Winen asetukset"
-    IDS_WINECFG_TITLE_APP   "Wine configuration for %s"
-    IDS_THEMEFILE           "Teematiedostot (*.msstyles; *.theme)"
-    IDS_THEMEFILE_SELECT    "Valitse teematiedosto"
-    IDS_SHELL_FOLDER        "Shell Folder"
-    IDS_LINKS_TO            "Links to"
-END
-
-STRINGTABLE
-BEGIN
-    IDS_DLL_WARNING         "Tämän kirjaston lataamisjärjestyksen muuttamista ei suositella.\nHaluatko silti jatkaa?"
-    IDS_DLL_WARNING_CAPTION "Varoitus: järjestelmäkirjasto"
-    IDS_DLL_NATIVE          "natiivi"
-    IDS_DLL_BUILTIN         "sisäinen"
-    IDS_DLL_NATIVE_BUILTIN  "natiivi, sisäinen"
-    IDS_DLL_BUILTIN_NATIVE  "sisäinen, natiivi"
-    IDS_DLL_DISABLED        "ei käytössä"
-    IDS_DEFAULT_SETTINGS    "Default Settings"
-    IDS_EXECUTABLE_FILTER   "Wine Programs (*.exe,*.exe.so)"
-    IDS_USE_GLOBAL_SETTINGS "Use global settings"
-    IDS_SELECT_EXECUTABLE   "Select an executable file"
-END
-
-STRINGTABLE
-BEGIN
-    IDS_SHADER_MODE_HARDWARE    "Hardware"
-    IDS_SHADER_MODE_NONE        "None"
-END
-
-STRINGTABLE
-BEGIN
-    IDS_DRIVE_UNKNOWN           "Autodetect"
-    IDS_DRIVE_FIXED             "Local hard disk"
-    IDS_DRIVE_REMOTE            "Network share"
-    IDS_DRIVE_REMOVABLE         "Floppy disk"
-    IDS_DRIVE_CDROM             "CD-ROM"
-    IDS_DRIVE_LETTERS_EXCEEDED  "You cannot add any more drives.\n\nEach drive must have a letter, from A to Z, so you cannot have more than 26"
-    IDS_SYSTEM_DRIVE_LABEL      "System drive"
-    IDS_CONFIRM_DELETE_C        "Are you sure you want to delete drive C?\n\nMost Windows applications expect drive C to exist, and will die messily if it doesn't. If you proceed remember to recreate it!"
-    IDS_COL_DRIVELETTER         "Letter"
-    IDS_COL_DRIVEMAPPING        "Drive Mapping"
-    IDS_NO_DRIVE_C              "You don't have a drive C. This is not so great.\n\nRemember to click 'Add' in the Drives tab to create one!\n"
-END
-
-STRINGTABLE
-BEGIN
-    IDS_ACCEL_FULL              "Full"
-    IDS_ACCEL_STANDARD          "Standard"
-    IDS_ACCEL_BASIC             "Basic"
-    IDS_ACCEL_EMULATION         "Emulation"
-    IDS_DRIVER_ALSA             "ALSA Driver"
-    IDS_DRIVER_ESOUND           "EsounD Driver"
-    IDS_DRIVER_OSS              "OSS Driver"
-    IDS_DRIVER_JACK             "JACK Driver"
-    IDS_DRIVER_NAS              "NAS Driver"
-    IDS_DRIVER_COREAUDIO        "CoreAudio Driver"
-    IDS_OPEN_DRIVER_ERROR       "Couldn't open %s!"
-    IDS_SOUNDDRIVERS            "Sound Drivers"
-    IDS_DEVICES_WAVEOUT         "Wave Out Devices"
-    IDS_DEVICES_WAVEIN          "Wave In Devices"
-    IDS_DEVICES_MIDIOUT         "MIDI Out Devices"
-    IDS_DEVICES_MIDIIN          "MIDI In Devices"
-    IDS_DEVICES_AUX             "Aux Devices"
-    IDS_DEVICES_MIXER           "Mixer Devices"
-    IDS_UNAVAILABLE_DRIVER      "Found driver in registry that is not available!\n\nRemove \"%s\" from registry?"
-    IDS_WARNING                 "Warning"
 END

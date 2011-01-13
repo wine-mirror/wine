@@ -25,7 +25,7 @@ msgstr ""
 "새 소프트웨어를 설치하거나,이미 설치된 소프트웨어를 당신의 컴퓨터에서 삭제 "
 "할 수 있습니다."
 
-#: appwiz.rc:30 taskmgr.rc:263
+#: appwiz.rc:30 taskmgr.rc:263 winecfg.rc:38
 msgid "Applications"
 msgstr "프로그램"
 
@@ -135,7 +135,7 @@ msgstr "취소하는 중.."
 msgid "Separator"
 msgstr "분리자"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:83
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:83 winecfg.rc:76
 msgid "None"
 msgstr "없음"
 
@@ -3117,9 +3117,14 @@ msgstr "원래 위치"
 msgid "Date deleted"
 msgstr "지워진 날짜"
 
-#: shell32.rc:141 shell32.rc:195 winefile.rc:151
+#: shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
+#, fuzzy
 msgid "Desktop"
-msgstr "데스크탑"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"데스크탑\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"바탕화면"
 
 #: shell32.rc:142 regedit.rc:206
 msgid "My Computer"
@@ -6980,6 +6985,417 @@ msgstr "아래(&D)"
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "정규 메타파일 보기"
+
+#: winecfg.rc:32
+msgid "Configure"
+msgstr "설정"
+
+#: winecfg.rc:39
+msgid "Libraries"
+msgstr "라이브러리"
+
+#: winecfg.rc:40
+msgid "Drives"
+msgstr "드라이브"
+
+#: winecfg.rc:41
+msgid "Select the unix target directory, please."
+msgstr "유닉스 목적 폴더를 선택하십시오."
+
+#: winecfg.rc:43
+msgid "Show &Advanced"
+msgstr "추가옵션 보이기(&A)"
+
+#: winecfg.rc:42
+msgid "Hide &Advanced"
+msgstr "추가옵션 숨기기(&A)"
+
+#: winecfg.rc:44
+msgid "(No Theme)"
+msgstr "(테마 없음)"
+
+#: winecfg.rc:45
+msgid "Graphics"
+msgstr "그래픽"
+
+#: winecfg.rc:46
+msgid "Desktop Integration"
+msgstr "데스크탑 설정"
+
+#: winecfg.rc:47
+msgid "Audio"
+msgstr "오디오"
+
+#: winecfg.rc:48
+msgid "About"
+msgstr "정보"
+
+#: winecfg.rc:49
+msgid "Wine configuration"
+msgstr "Wine 설정"
+
+#: winecfg.rc:51
+msgid "Theme files (*.msstyles; *.theme)"
+msgstr "테마 파일 (*.msstyles; *.theme)"
+
+#: winecfg.rc:52
+msgid "Select a theme file"
+msgstr "테마 파일 선택"
+
+#: winecfg.rc:54
+msgid "Folder"
+msgstr "폴더"
+
+#: winecfg.rc:55
+msgid "Links to"
+msgstr "연결 위치"
+
+#: winecfg.rc:50
+msgid "Wine configuration for %s"
+msgstr "%s를 위한 Wine 설정"
+
+#: winecfg.rc:53
+msgid ""
+"There is no audio driver currently specified in the registry.\n"
+"\n"
+"A recommended driver has been selected for you.\n"
+"You can use this driver or select another driver if available.\n"
+"\n"
+"You must click Apply for the selection to take effect."
+msgstr ""
+"현재 레지스트리에 오디오 드라이버가 지정되어 있지 않습니다.\n"
+"\n"
+"추천 드라이버가 선택되었습니다.\n"
+"이 드라이버를 사용하거나 가능한 다른 드라이버를 선택할 수 있습니다.\n"
+"\n"
+"선택 사항이 효과를 나타내기 위해서는 적용 버튼을 눌러야 합니다."
+
+#: winecfg.rc:60
+msgid ""
+"Changing the load order of this library is not recommended.\n"
+"Are you sure you want to do this?"
+msgstr ""
+"이 라이브러리의 로드 순서를 바꾸는 것을 추천하지 않습니다..\n"
+"정말로 바꾸시겠습니까?"
+
+#: winecfg.rc:61
+msgid "Warning: system library"
+msgstr "경고: 시스템 라이브러리"
+
+#: winecfg.rc:62
+msgid "native"
+msgstr "네이티브"
+
+#: winecfg.rc:63
+msgid "builtin"
+msgstr "내장"
+
+#: winecfg.rc:64
+msgid "native, builtin"
+msgstr "네이티브, 내장"
+
+#: winecfg.rc:65
+msgid "builtin, native"
+msgstr "내장, 네이티브"
+
+#: winecfg.rc:66
+msgid "disabled"
+msgstr "사용하지 않음"
+
+#: winecfg.rc:67
+msgid "Default Settings"
+msgstr "기본 설정"
+
+#: winecfg.rc:68
+msgid "Wine Programs (*.exe,*.exe.so)"
+msgstr "Wine 프로그램 (*.exe,*.exe.so)"
+
+#: winecfg.rc:69
+msgid "Use global settings"
+msgstr "전체 설정 사용"
+
+#: winecfg.rc:70
+msgid "Select an executable file"
+msgstr "실행 파일 선택"
+
+#: winecfg.rc:75
+msgid "Hardware"
+msgstr "하드웨어"
+
+#: winecfg.rc:81
+msgid "Autodetect"
+msgstr "자동으로 찾기"
+
+#: winecfg.rc:82
+msgid "Local hard disk"
+msgstr "연결된 하드 디스크"
+
+#: winecfg.rc:83
+msgid "Network share"
+msgstr "네트워크 공유"
+
+#: winecfg.rc:84
+msgid "Floppy disk"
+msgstr "플로피 디스크"
+
+#: winecfg.rc:85
+msgid "CD-ROM"
+msgstr "CD-ROM"
+
+#: winecfg.rc:86
+msgid ""
+"You cannot add any more drives.\n"
+"\n"
+"Each drive must have a letter, from A to Z, so you cannot have more than 26"
+msgstr ""
+"당신은 더 이상 드라이브를 추가할 수 없습니다.\n"
+"\n"
+"각 드라이브는 반드시 A~Z까지의 문자를 가집니다, 그래서 당신은 26개보다 더 많"
+"이 추가할 수 없습니다"
+
+#: winecfg.rc:87
+msgid "System drive"
+msgstr "시스템 드라이브"
+
+#: winecfg.rc:88
+msgid ""
+"Are you sure you want to delete drive C?\n"
+"\n"
+"Most Windows applications expect drive C to exist, and will die messily if "
+"it doesn't. If you proceed remember to recreate it!"
+msgstr ""
+"당신은 하드 드라이브  C를 지우기를 원합니까?\n"
+"\n"
+"대부분의 윈도우 프로그램은 C드라이브가 있다고 예상하고,  없으면 다운될것입니"
+"다. 만약 당신이 계속 진행하기를 원한다면 반드시 다시 만드십시오!"
+
+#: winecfg.rc:89
+msgid "Letter"
+msgstr "문자"
+
+#: winecfg.rc:90
+msgid "Drive Mapping"
+msgstr "드라이브 할당"
+
+#: winecfg.rc:91
+msgid ""
+"You don't have a drive C. This is not so great.\n"
+"\n"
+"Remember to click 'Add' in the Drives tab to create one!\n"
+msgstr ""
+"당신은  C드라이브를 가지고 있지 않습니다. 이것은 좋은 일이 아닙니다.\n"
+"\n"
+"드라이브 탭에서 '추가'를 클릭해서 만드는 것을 잊지 마십시오!\n"
+
+#: winecfg.rc:96
+msgid "Full"
+msgstr "전체"
+
+#: winecfg.rc:97
+msgid "Standard"
+msgstr "표준"
+
+#: winecfg.rc:98
+msgid "Basic"
+msgstr "기본"
+
+#: winecfg.rc:99
+msgid "Emulation"
+msgstr "애뮬레이션"
+
+#: winecfg.rc:100
+msgid "ALSA Driver"
+msgstr "ALSA 드라이버"
+
+#: winecfg.rc:101
+msgid "EsounD Driver"
+msgstr "EsounD 드라이버"
+
+#: winecfg.rc:102
+msgid "OSS Driver"
+msgstr "OSS 드라이버"
+
+#: winecfg.rc:103
+msgid "JACK Driver"
+msgstr "JACK 드라이버"
+
+#: winecfg.rc:104
+msgid "NAS Driver"
+msgstr "NAS 드라이버"
+
+#: winecfg.rc:105
+msgid "CoreAudio Driver"
+msgstr "CoreAudio 드라이버"
+
+#: winecfg.rc:106
+msgid "Couldn't open %s!"
+msgstr "%s를 열 수 없습니다!"
+
+#: winecfg.rc:107
+msgid "Sound Drivers"
+msgstr "사운드 드라이버"
+
+#: winecfg.rc:108
+msgid "Wave Out Devices"
+msgstr "Wave 출력 장치"
+
+#: winecfg.rc:109
+msgid "Wave In Devices"
+msgstr "Wave 입력 장치"
+
+#: winecfg.rc:110
+msgid "MIDI Out Devices"
+msgstr "MIDI 출력 장치"
+
+#: winecfg.rc:111
+msgid "MIDI In Devices"
+msgstr "MIDI 입력 장치"
+
+#: winecfg.rc:112
+msgid "Aux Devices"
+msgstr "Aux 장치"
+
+#: winecfg.rc:113
+msgid "Mixer Devices"
+msgstr "Mixer 장치"
+
+#: winecfg.rc:114
+msgid ""
+"Found driver in registry that is not available!\n"
+"\n"
+"Remove '%s' from registry?"
+msgstr ""
+"레지스트리에서 가능하지 않은 드라이버가 발견되었습니다!\n"
+"\n"
+" '%s'를 레지스트리에서 지우겠습니까?"
+
+#: winecfg.rc:115
+msgid "Warning"
+msgstr "경고"
+
+#: winecfg.rc:120
+msgid "Controls Background"
+msgstr "컨트롤 배경"
+
+#: winecfg.rc:121
+msgid "Controls Text"
+msgstr "컨트롤 문자"
+
+#: winecfg.rc:123
+msgid "Menu Background"
+msgstr "메뉴 배경"
+
+#: winecfg.rc:124
+msgid "Menu Text"
+msgstr "메뉴 문자"
+
+#: winecfg.rc:125
+msgid "Scrollbar"
+msgstr "목록바"
+
+#: winecfg.rc:126
+msgid "Selection Background"
+msgstr "선택된 배경"
+
+#: winecfg.rc:127
+msgid "Selection Text"
+msgstr "선택된 문자"
+
+#: winecfg.rc:128
+msgid "ToolTip Background"
+msgstr "도구팁 배경"
+
+#: winecfg.rc:129
+msgid "ToolTip Text"
+msgstr "도구팁 문자"
+
+#: winecfg.rc:130
+msgid "Window Background"
+msgstr "창 배경"
+
+#: winecfg.rc:131
+msgid "Window Text"
+msgstr "창 문자"
+
+#: winecfg.rc:132
+msgid "Active Title Bar"
+msgstr "활성된 제목 막대"
+
+#: winecfg.rc:133
+msgid "Active Title Text"
+msgstr "활성된 제목 문자"
+
+#: winecfg.rc:134
+msgid "Inactive Title Bar"
+msgstr "비활성된 제목 막대"
+
+#: winecfg.rc:135
+msgid "Inactive Title Text"
+msgstr "비활성된 제목 문자"
+
+#: winecfg.rc:136
+msgid "Message Box Text"
+msgstr "메세지 상자 텍스트"
+
+#: winecfg.rc:137
+msgid "Application Workspace"
+msgstr "어플리케이션 작업공간"
+
+#: winecfg.rc:138
+msgid "Window Frame"
+msgstr "창 프레임"
+
+#: winecfg.rc:139
+msgid "Active Border"
+msgstr "활성화된 창틀"
+
+#: winecfg.rc:140
+msgid "Inactive Border"
+msgstr "비 활성화된 창틀"
+
+#: winecfg.rc:141
+msgid "Controls Shadow"
+msgstr "컨트롤 그함지"
+
+#: winecfg.rc:142
+msgid "Gray Text"
+msgstr "회색 문자"
+
+#: winecfg.rc:143
+msgid "Controls Highlight"
+msgstr "컨트롤 하이라이트"
+
+#: winecfg.rc:144
+msgid "Controls Dark Shadow"
+msgstr "컨트롤 어두운 그림자"
+
+#: winecfg.rc:145
+msgid "Controls Light"
+msgstr "컨트롤 밝음"
+
+#: winecfg.rc:146
+msgid "Controls Alternate Background"
+msgstr "컨트롤 바뀔때 배경"
+
+#: winecfg.rc:147
+msgid "Hot Tracked Item"
+msgstr "핫 트랙된 아이템"
+
+#: winecfg.rc:148
+msgid "Active Title Bar Gradient"
+msgstr "활성화된  제목 바  색깔 변화"
+
+#: winecfg.rc:149
+msgid "Inactive Title Bar Gradient"
+msgstr "비활성화된 제목바 색깔 변화"
+
+#: winecfg.rc:150
+msgid "Menu Highlight"
+msgstr "메뉴 하이라이트"
+
+#: winecfg.rc:151
+msgid "Menu Bar"
+msgstr "메뉴바"
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"

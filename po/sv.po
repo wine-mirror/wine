@@ -25,7 +25,7 @@ msgstr ""
 "Låter dig installera ny programvara, eller ta bort befintlig programvara "
 "från din dator."
 
-#: appwiz.rc:30 taskmgr.rc:263
+#: appwiz.rc:30 taskmgr.rc:263 winecfg.rc:38
 msgid "Applications"
 msgstr "Program"
 
@@ -129,7 +129,7 @@ msgstr "Avbryter..."
 msgid "Separator"
 msgstr "Separator"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:83
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:83 winecfg.rc:76
 msgid "None"
 msgstr "Ingen"
 
@@ -3088,7 +3088,7 @@ msgstr "Ursprunglig plats"
 msgid "Date deleted"
 msgstr "Borttagningsdatum"
 
-#: shell32.rc:141 shell32.rc:195 winefile.rc:151
+#: shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
 msgid "Desktop"
 msgstr "Skrivbord"
 
@@ -6982,6 +6982,416 @@ msgstr "&Ner"
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "Regular Metafile viewer"
+
+#: winecfg.rc:32
+msgid "Configure"
+msgstr "Konfigurera"
+
+#: winecfg.rc:39
+msgid "Libraries"
+msgstr "Bibliotek"
+
+#: winecfg.rc:40
+msgid "Drives"
+msgstr "Enheter"
+
+#: winecfg.rc:41
+msgid "Select the unix target directory, please."
+msgstr "Välj unix-målkatalog, tack."
+
+#: winecfg.rc:43
+msgid "Show &Advanced"
+msgstr "Visa &avancerat"
+
+#: winecfg.rc:42
+msgid "Hide &Advanced"
+msgstr "Dölj &avancerat"
+
+#: winecfg.rc:44
+msgid "(No Theme)"
+msgstr "(Inget tema)"
+
+#: winecfg.rc:45
+msgid "Graphics"
+msgstr "Grafik"
+
+#: winecfg.rc:46
+msgid "Desktop Integration"
+msgstr "Skrivbordsintegration"
+
+#: winecfg.rc:47
+msgid "Audio"
+msgstr "Ljud"
+
+#: winecfg.rc:48
+msgid "About"
+msgstr "Om"
+
+#: winecfg.rc:49
+msgid "Wine configuration"
+msgstr "Konfiguration av Wine"
+
+#: winecfg.rc:51
+msgid "Theme files (*.msstyles; *.theme)"
+msgstr "Temafiler (*.msstyles; *.theme)"
+
+#: winecfg.rc:52
+msgid "Select a theme file"
+msgstr "Välj en temafil"
+
+#: winecfg.rc:54
+msgid "Folder"
+msgstr "Shell-mapp"
+
+#: winecfg.rc:55
+msgid "Links to"
+msgstr "Länkar till"
+
+#: winecfg.rc:50
+msgid "Wine configuration for %s"
+msgstr "Wine-konfiguration för %s"
+
+#: winecfg.rc:53
+msgid ""
+"There is no audio driver currently specified in the registry.\n"
+"\n"
+"A recommended driver has been selected for you.\n"
+"You can use this driver or select another driver if available.\n"
+"\n"
+"You must click Apply for the selection to take effect."
+msgstr ""
+"Det finns ingen ljuddrivrutin för närvarande angiven i registret.\n"
+"\n"
+"En rekommenderad drivrutin har valts åt dig.\n"
+"Du kan använda denna drivrutin eller välja en annan tillgänglig drivrutin.\n"
+"\n"
+"Du måste klicka på Verkställ för att valet ska börja gälla."
+
+#: winecfg.rc:60
+msgid ""
+"Changing the load order of this library is not recommended.\n"
+"Are you sure you want to do this?"
+msgstr ""
+"Ändring av inläsningsordningen för detta bibliotek rekommenderas inte.\n"
+"Är du säker på att du vill göra detta?"
+
+#: winecfg.rc:61
+msgid "Warning: system library"
+msgstr "Varning: systembibliotek"
+
+#: winecfg.rc:62
+msgid "native"
+msgstr "ursprunglig"
+
+#: winecfg.rc:63
+msgid "builtin"
+msgstr "inbyggd"
+
+#: winecfg.rc:64
+msgid "native, builtin"
+msgstr "ursprunglig, inbyggd"
+
+#: winecfg.rc:65
+msgid "builtin, native"
+msgstr "inbyggd, ursprunglig"
+
+#: winecfg.rc:66
+msgid "disabled"
+msgstr "inaktiverad"
+
+#: winecfg.rc:67
+msgid "Default Settings"
+msgstr "Standardinställningar"
+
+#: winecfg.rc:68
+msgid "Wine Programs (*.exe,*.exe.so)"
+msgstr "Wine-program (*.exe,*.exe.so)"
+
+#: winecfg.rc:69
+msgid "Use global settings"
+msgstr "Använd globala inställningar"
+
+#: winecfg.rc:70
+msgid "Select an executable file"
+msgstr "Välj en körbar fil"
+
+#: winecfg.rc:75
+msgid "Hardware"
+msgstr "Hårdvara"
+
+#: winecfg.rc:81
+msgid "Autodetect"
+msgstr "Upptäck automatiskt"
+
+#: winecfg.rc:82
+msgid "Local hard disk"
+msgstr "Lokal hårddisk"
+
+#: winecfg.rc:83
+msgid "Network share"
+msgstr "Nätverksutdelning"
+
+#: winecfg.rc:84
+msgid "Floppy disk"
+msgstr "Diskett"
+
+#: winecfg.rc:85
+msgid "CD-ROM"
+msgstr "Cd-rom"
+
+#: winecfg.rc:86
+msgid ""
+"You cannot add any more drives.\n"
+"\n"
+"Each drive must have a letter, from A to Z, so you cannot have more than 26"
+msgstr ""
+"Du kan inte lägga till fler enheter.\n"
+"\n"
+"Varje enhet måste ha en bokstav, från A till Z, så du kan inte ha fler än 26"
+
+#: winecfg.rc:87
+msgid "System drive"
+msgstr "Systemenhet"
+
+#: winecfg.rc:88
+msgid ""
+"Are you sure you want to delete drive C?\n"
+"\n"
+"Most Windows applications expect drive C to exist, and will die messily if "
+"it doesn't. If you proceed remember to recreate it!"
+msgstr ""
+"Är du säker på att du vill ta bort enheten C?\n"
+"\n"
+"De flesta Windows-program förväntar att enhet C finns, och kommer att dö om "
+"den inte finns. Om du fortsätter bör du komma ihåg att återskapa den!"
+
+#: winecfg.rc:89
+msgid "Letter"
+msgstr "Bokstav"
+
+#: winecfg.rc:90
+msgid "Drive Mapping"
+msgstr "Enhetsmappning"
+
+#: winecfg.rc:91
+msgid ""
+"You don't have a drive C. This is not so great.\n"
+"\n"
+"Remember to click 'Add' in the Drives tab to create one!\n"
+msgstr ""
+"Du saknar enhet C. Det här är inte så bra.\n"
+"\n"
+"Kom ihåg att klicka på ‘Lägg till’ i fliken Enheter för att skapa en!\n"
+
+#: winecfg.rc:96
+msgid "Full"
+msgstr "Fullständig"
+
+#: winecfg.rc:97
+msgid "Standard"
+msgstr "Standard"
+
+#: winecfg.rc:98
+msgid "Basic"
+msgstr "Grundläggande"
+
+#: winecfg.rc:99
+msgid "Emulation"
+msgstr "Emulering"
+
+#: winecfg.rc:100
+msgid "ALSA Driver"
+msgstr "ALSA-drivrutin"
+
+#: winecfg.rc:101
+msgid "EsounD Driver"
+msgstr "EsounD-drivrutin"
+
+#: winecfg.rc:102
+msgid "OSS Driver"
+msgstr "OSS-drivrutin"
+
+#: winecfg.rc:103
+msgid "JACK Driver"
+msgstr "JACK-drivrutin"
+
+#: winecfg.rc:104
+msgid "NAS Driver"
+msgstr "NAS-drivrutin"
+
+#: winecfg.rc:105
+msgid "CoreAudio Driver"
+msgstr "CoreAudio Driver"
+
+#: winecfg.rc:106
+msgid "Couldn't open %s!"
+msgstr "Kunde inte öppna %s!"
+
+#: winecfg.rc:107
+msgid "Sound Drivers"
+msgstr "Ljuddrivrutiner"
+
+#: winecfg.rc:108
+msgid "Wave Out Devices"
+msgstr "Wave Out-enheter"
+
+#: winecfg.rc:109
+msgid "Wave In Devices"
+msgstr "Wave In-enheter"
+
+#: winecfg.rc:110
+msgid "MIDI Out Devices"
+msgstr "MIDI Out-enheter"
+
+#: winecfg.rc:111
+msgid "MIDI In Devices"
+msgstr "MIDI In-enheter"
+
+#: winecfg.rc:112
+msgid "Aux Devices"
+msgstr "Aux-enheter"
+
+#: winecfg.rc:113
+msgid "Mixer Devices"
+msgstr "Mixerenheter"
+
+#: winecfg.rc:114
+msgid ""
+"Found driver in registry that is not available!\n"
+"\n"
+"Remove '%s' from registry?"
+msgstr ""
+"Hittade drivrutin i registret som inte finns tillgänglig!\n"
+"\n"
+"Ta bort “%s” från registret?"
+
+#: winecfg.rc:115
+msgid "Warning"
+msgstr "Varning"
+
+#: winecfg.rc:120
+msgid "Controls Background"
+msgstr "Bakgrund i kontroller"
+
+#: winecfg.rc:121
+msgid "Controls Text"
+msgstr "Text i kontroller"
+
+#: winecfg.rc:123
+msgid "Menu Background"
+msgstr "Menybakgrund"
+
+#: winecfg.rc:124
+msgid "Menu Text"
+msgstr "Menytext"
+
+#: winecfg.rc:125
+msgid "Scrollbar"
+msgstr "Rullningslist"
+
+#: winecfg.rc:126
+msgid "Selection Background"
+msgstr "Bakgrund för markering"
+
+#: winecfg.rc:127
+msgid "Selection Text"
+msgstr "Text för markering"
+
+#: winecfg.rc:128
+msgid "ToolTip Background"
+msgstr "Bakgrund för verktygstips"
+
+#: winecfg.rc:129
+msgid "ToolTip Text"
+msgstr "Text för verktygstips"
+
+#: winecfg.rc:130
+msgid "Window Background"
+msgstr "Fönsterbakgrund"
+
+#: winecfg.rc:131
+msgid "Window Text"
+msgstr "Fönstertext"
+
+#: winecfg.rc:132
+msgid "Active Title Bar"
+msgstr "Aktiv titellist"
+
+#: winecfg.rc:133
+msgid "Active Title Text"
+msgstr "Aktiv titeltext"
+
+#: winecfg.rc:134
+msgid "Inactive Title Bar"
+msgstr "Inaktiv titellist"
+
+#: winecfg.rc:135
+msgid "Inactive Title Text"
+msgstr "Inaktiv titeltext"
+
+#: winecfg.rc:136
+msgid "Message Box Text"
+msgstr "Text i meddelandefönster"
+
+#: winecfg.rc:137
+msgid "Application Workspace"
+msgstr "Arbetsyta i program"
+
+#: winecfg.rc:138
+msgid "Window Frame"
+msgstr "Fönsterram"
+
+#: winecfg.rc:139
+msgid "Active Border"
+msgstr "Aktiv kant"
+
+#: winecfg.rc:140
+msgid "Inactive Border"
+msgstr "Inaktiv kant"
+
+#: winecfg.rc:141
+msgid "Controls Shadow"
+msgstr "Skugga i kontroller"
+
+#: winecfg.rc:142
+msgid "Gray Text"
+msgstr "Grå text"
+
+#: winecfg.rc:143
+msgid "Controls Highlight"
+msgstr "Markering i kontroller"
+
+#: winecfg.rc:144
+msgid "Controls Dark Shadow"
+msgstr "Mörk skugga i kontroller"
+
+#: winecfg.rc:145
+msgid "Controls Light"
+msgstr "Ljus i kontroller"
+
+#: winecfg.rc:146
+msgid "Controls Alternate Background"
+msgstr "Alternativ bakgrund i kontroller"
+
+#: winecfg.rc:147
+msgid "Hot Tracked Item"
+msgstr "Hovrat föremål"
+
+#: winecfg.rc:148
+msgid "Active Title Bar Gradient"
+msgstr "Gradient för aktiv titellist"
+
+#: winecfg.rc:149
+msgid "Inactive Title Bar Gradient"
+msgstr "Gradient för inaktiv titellist"
+
+#: winecfg.rc:150
+msgid "Menu Highlight"
+msgstr "Menymarkering"
+
+#: winecfg.rc:151
+msgid "Menu Bar"
+msgstr "Menyrad"
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"

@@ -25,7 +25,7 @@ msgstr ""
 "Giver dig mulighed for at installere ny software, eller fjerne eksisterende "
 "software fra din computer."
 
-#: appwiz.rc:30 taskmgr.rc:263
+#: appwiz.rc:30 taskmgr.rc:263 winecfg.rc:38
 #, fuzzy
 msgid "Applications"
 msgstr ""
@@ -138,7 +138,7 @@ msgstr "Annullering..."
 msgid "Separator"
 msgstr "Separator"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:83
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:83 winecfg.rc:76
 msgid "None"
 msgstr "Ingen"
 
@@ -3101,7 +3101,7 @@ msgstr "Original sted"
 msgid "Date deleted"
 msgstr "Dato slettet"
 
-#: shell32.rc:141 shell32.rc:195 winefile.rc:151
+#: shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
 msgid "Desktop"
 msgstr "Skrivebord"
 
@@ -7013,6 +7013,415 @@ msgstr "Ne&d"
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "Normal metafil-fremviser"
+
+#: winecfg.rc:32
+msgid "Configure"
+msgstr "Konfigurér"
+
+#: winecfg.rc:39
+msgid "Libraries"
+msgstr "Biblioteker"
+
+#: winecfg.rc:40
+msgid "Drives"
+msgstr "Enheder"
+
+#: winecfg.rc:41
+msgid "Select the unix target directory, please."
+msgstr "Vælg venlight en unix folder."
+
+#: winecfg.rc:43
+msgid "Show &Advanced"
+msgstr "Vis &advanceret"
+
+#: winecfg.rc:42
+msgid "Hide &Advanced"
+msgstr "Gem &advanceret"
+
+#: winecfg.rc:44
+msgid "(No Theme)"
+msgstr "(Intet tema)"
+
+#: winecfg.rc:45
+msgid "Graphics"
+msgstr "Grafik"
+
+#: winecfg.rc:46
+msgid "Desktop Integration"
+msgstr "Desktop integrering"
+
+#: winecfg.rc:47
+msgid "Audio"
+msgstr "Lyd"
+
+#: winecfg.rc:48
+msgid "About"
+msgstr "Om"
+
+#: winecfg.rc:49
+msgid "Wine configuration"
+msgstr "Wine configurering"
+
+#: winecfg.rc:51
+msgid "Theme files (*.msstyles; *.theme)"
+msgstr "Tema filer (*.msstyles; *.theme)"
+
+#: winecfg.rc:52
+msgid "Select a theme file"
+msgstr "Vælg en tema fil"
+
+#: winecfg.rc:54
+msgid "Folder"
+msgstr "Shell folder"
+
+#: winecfg.rc:55
+msgid "Links to"
+msgstr "Links to"
+
+#: winecfg.rc:50
+msgid "Wine configuration for %s"
+msgstr "Wine configurering for %s"
+
+#: winecfg.rc:53
+msgid ""
+"There is no audio driver currently specified in the registry.\n"
+"\n"
+"A recommended driver has been selected for you.\n"
+"You can use this driver or select another driver if available.\n"
+"\n"
+"You must click Apply for the selection to take effect."
+msgstr ""
+"Der er øjeblikket ingen lyd driver angivet i registreringsdatabasen.\n"
+"\n"
+"En anbefalet driver er blevet valgt for dig.\n"
+"Du kan bruge denne driver eller vælge en anden.\n"
+"Du skal klikke på 'Anvend' for at få dit valg til at træde i kraft."
+
+#: winecfg.rc:60
+msgid ""
+"Changing the load order of this library is not recommended.\n"
+"Are you sure you want to do this?"
+msgstr ""
+"At ændre indlæsnings rækkefølge af dette bibliotek er ikke recommenderet.\n"
+"Er du sikker på at du vil gøre dette?"
+
+#: winecfg.rc:61
+msgid "Warning: system library"
+msgstr "Advarsel: system bibliotek"
+
+#: winecfg.rc:62
+msgid "native"
+msgstr "indfødt"
+
+#: winecfg.rc:63
+msgid "builtin"
+msgstr "indbygget"
+
+#: winecfg.rc:64
+msgid "native, builtin"
+msgstr "indfødt, indbygget"
+
+#: winecfg.rc:65
+msgid "builtin, native"
+msgstr "indbygget, indfødt"
+
+#: winecfg.rc:66
+msgid "disabled"
+msgstr "disabled"
+
+#: winecfg.rc:67
+msgid "Default Settings"
+msgstr "Standard indstillinger"
+
+#: winecfg.rc:68
+msgid "Wine Programs (*.exe,*.exe.so)"
+msgstr "Wine programmer (*.exe,*.exe.so)"
+
+#: winecfg.rc:69
+msgid "Use global settings"
+msgstr "Brug globale indstillinger"
+
+#: winecfg.rc:70
+msgid "Select an executable file"
+msgstr "Vælg en program fil"
+
+#: winecfg.rc:75
+msgid "Hardware"
+msgstr "Hardware"
+
+#: winecfg.rc:81
+msgid "Autodetect"
+msgstr "Autodetekter"
+
+#: winecfg.rc:82
+msgid "Local hard disk"
+msgstr "Lokal harddisk"
+
+#: winecfg.rc:83
+msgid "Network share"
+msgstr "Networkresourse"
+
+#: winecfg.rc:84
+msgid "Floppy disk"
+msgstr "Diskettedrev"
+
+#: winecfg.rc:85
+msgid "CD-ROM"
+msgstr "CD-ROM"
+
+#: winecfg.rc:86
+msgid ""
+"You cannot add any more drives.\n"
+"\n"
+"Each drive must have a letter, from A to Z, so you cannot have more than 26"
+msgstr ""
+"Du kan ikke tilføje flere drev.\n"
+"\n"
+"Hvert drev skal have et bogstav, fra A to Z, så du kan ikke have mere end 26."
+
+#: winecfg.rc:87
+msgid "System drive"
+msgstr "Systemdrev"
+
+#: winecfg.rc:88
+msgid ""
+"Are you sure you want to delete drive C?\n"
+"\n"
+"Most Windows applications expect drive C to exist, and will die messily if "
+"it doesn't. If you proceed remember to recreate it!"
+msgstr ""
+"Er du sikker på at du vil slette C drever?\n"
+"\n"
+"De fleste Windows programmer regner med at C drevet eksistere, og vil gå ned "
+"hvis det ikke gør. Hvis du forsætter, så husk at lave det igen!"
+
+#: winecfg.rc:89
+msgid "Letter"
+msgstr "Bogstav"
+
+#: winecfg.rc:90
+msgid "Drive Mapping"
+msgstr "Peger på"
+
+#: winecfg.rc:91
+msgid ""
+"You don't have a drive C. This is not so great.\n"
+"\n"
+"Remember to click 'Add' in the Drives tab to create one!\n"
+msgstr ""
+"Du har ikke et C drev. Dette er ikke så godt.\n"
+"\n"
+"Husk at klikke Tilføj i Drev tabben for lave en!\n"
+
+#: winecfg.rc:96
+msgid "Full"
+msgstr "Fuld"
+
+#: winecfg.rc:97
+msgid "Standard"
+msgstr "Standard"
+
+#: winecfg.rc:98
+msgid "Basic"
+msgstr "Grundlæggende"
+
+#: winecfg.rc:99
+msgid "Emulation"
+msgstr "Emuléring"
+
+#: winecfg.rc:100
+msgid "ALSA Driver"
+msgstr "ALSA-driver"
+
+#: winecfg.rc:101
+msgid "EsounD Driver"
+msgstr "EsounD-driver"
+
+#: winecfg.rc:102
+msgid "OSS Driver"
+msgstr "OSS-driver"
+
+#: winecfg.rc:103
+msgid "JACK Driver"
+msgstr "JACK-driver"
+
+#: winecfg.rc:104
+msgid "NAS Driver"
+msgstr "NAS-driver"
+
+#: winecfg.rc:105
+msgid "CoreAudio Driver"
+msgstr "CoreAudio-driver"
+
+#: winecfg.rc:106
+msgid "Couldn't open %s!"
+msgstr "Kunne ikke åbne %s!"
+
+#: winecfg.rc:107
+msgid "Sound Drivers"
+msgstr "lyddrivere"
+
+#: winecfg.rc:108
+msgid "Wave Out Devices"
+msgstr "Lyd ud enheder"
+
+#: winecfg.rc:109
+msgid "Wave In Devices"
+msgstr "Lyd ind enheder"
+
+#: winecfg.rc:110
+msgid "MIDI Out Devices"
+msgstr "MIDI ud enheder"
+
+#: winecfg.rc:111
+msgid "MIDI In Devices"
+msgstr "MIDI ind enheder"
+
+#: winecfg.rc:112
+msgid "Aux Devices"
+msgstr "Aux enheder"
+
+#: winecfg.rc:113
+msgid "Mixer Devices"
+msgstr "Mixerenheder"
+
+#: winecfg.rc:114
+msgid ""
+"Found driver in registry that is not available!\n"
+"\n"
+"Remove '%s' from registry?"
+msgstr ""
+"Fandt driver i registrering databasen, der ikke er tilgængelig!\n"
+"\n"
+"Fjern %s fra registrering databasen?"
+
+#: winecfg.rc:115
+msgid "Warning"
+msgstr "Advarsel"
+
+#: winecfg.rc:120
+msgid "Controls Background"
+msgstr "Controls baggrund"
+
+#: winecfg.rc:121
+msgid "Controls Text"
+msgstr "Controls tekst"
+
+#: winecfg.rc:123
+msgid "Menu Background"
+msgstr "Menubaggrund"
+
+#: winecfg.rc:124
+msgid "Menu Text"
+msgstr "Menutekst"
+
+#: winecfg.rc:125
+msgid "Scrollbar"
+msgstr "Scrollbar"
+
+#: winecfg.rc:126
+msgid "Selection Background"
+msgstr "Markeret baggrund"
+
+#: winecfg.rc:127
+msgid "Selection Text"
+msgstr "Markeret tekst"
+
+#: winecfg.rc:128
+msgid "ToolTip Background"
+msgstr "Baggrund i værktøjstip"
+
+#: winecfg.rc:129
+msgid "ToolTip Text"
+msgstr "Tekst i værktøjstip"
+
+#: winecfg.rc:130
+msgid "Window Background"
+msgstr "vinduesbaggrund"
+
+#: winecfg.rc:131
+msgid "Window Text"
+msgstr "vinduestekst"
+
+#: winecfg.rc:132
+msgid "Active Title Bar"
+msgstr "Aktiv titellinie"
+
+#: winecfg.rc:133
+msgid "Active Title Text"
+msgstr "Aktiv titeltekst"
+
+#: winecfg.rc:134
+msgid "Inactive Title Bar"
+msgstr "Inaktiv titellinie"
+
+#: winecfg.rc:135
+msgid "Inactive Title Text"
+msgstr "Inaktiv titeltekst"
+
+#: winecfg.rc:136
+msgid "Message Box Text"
+msgstr "Meldingsvinduestekst"
+
+#: winecfg.rc:137
+msgid "Application Workspace"
+msgstr "Arbejdsområde i program"
+
+#: winecfg.rc:138
+msgid "Window Frame"
+msgstr "Vinduesramme"
+
+#: winecfg.rc:139
+msgid "Active Border"
+msgstr "Aktiv kant"
+
+#: winecfg.rc:140
+msgid "Inactive Border"
+msgstr "Inaktiv kant"
+
+#: winecfg.rc:141
+msgid "Controls Shadow"
+msgstr "Controls skygge"
+
+#: winecfg.rc:142
+msgid "Gray Text"
+msgstr "Grå tekst"
+
+#: winecfg.rc:143
+msgid "Controls Highlight"
+msgstr "Markeret controls"
+
+#: winecfg.rc:144
+msgid "Controls Dark Shadow"
+msgstr "Controls mørk skygge"
+
+#: winecfg.rc:145
+msgid "Controls Light"
+msgstr "Controls lys"
+
+#: winecfg.rc:146
+msgid "Controls Alternate Background"
+msgstr "Baggrund for skiftende controls"
+
+#: winecfg.rc:147
+msgid "Hot Tracked Item"
+msgstr "Markeret element"
+
+#: winecfg.rc:148
+msgid "Active Title Bar Gradient"
+msgstr "Gradient for aktiv titellinie"
+
+#: winecfg.rc:149
+msgid "Inactive Title Bar Gradient"
+msgstr "Gradient for Inaktiv titellinie"
+
+#: winecfg.rc:150
+msgid "Menu Highlight"
+msgstr "Markeret menu"
+
+#: winecfg.rc:151
+msgid "Menu Bar"
+msgstr "Menulinie"
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"

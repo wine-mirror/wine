@@ -23,9 +23,14 @@ msgid ""
 "computer."
 msgstr "允許你安裝新軟件, 和從你的電腦裡刪除現有程式."
 
-#: appwiz.rc:30 taskmgr.rc:263
+#: appwiz.rc:30 taskmgr.rc:263 winecfg.rc:38
+#, fuzzy
 msgid "Applications"
-msgstr "運用程式"
+msgstr ""
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"運用程式\n"
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"應用程式"
 
 #: appwiz.rc:32
 msgid ""
@@ -124,7 +129,7 @@ msgstr "正在取消..."
 msgid "Separator"
 msgstr "分隔符"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:83
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:83 winecfg.rc:76
 #, fuzzy
 msgid "None"
 msgstr ""
@@ -3018,9 +3023,9 @@ msgstr ""
 msgid "Date deleted"
 msgstr "刪除"
 
-#: shell32.rc:141 shell32.rc:195 winefile.rc:151
+#: shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
 msgid "Desktop"
-msgstr ""
+msgstr "桌面"
 
 #: shell32.rc:142 regedit.rc:206
 msgid "My Computer"
@@ -6581,6 +6586,433 @@ msgstr "下(&D)"
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "普通 Metafile 閱讀器"
+
+#: winecfg.rc:32
+msgid "Configure"
+msgstr "設定"
+
+#: winecfg.rc:39
+msgid "Libraries"
+msgstr "函式庫"
+
+#: winecfg.rc:40
+msgid "Drives"
+msgstr "儲存槽"
+
+#: winecfg.rc:41
+msgid "Select the unix target directory, please."
+msgstr "請選擇 unix 資料夾。"
+
+#: winecfg.rc:43
+msgid "Show &Advanced"
+msgstr "顯示進階選項(&A)"
+
+#: winecfg.rc:42
+msgid "Hide &Advanced"
+msgstr "隱藏進階選項(&A)"
+
+#: winecfg.rc:44
+msgid "(No Theme)"
+msgstr "（無佈景主題）"
+
+#: winecfg.rc:45
+msgid "Graphics"
+msgstr "顯示"
+
+#: winecfg.rc:46
+msgid "Desktop Integration"
+msgstr "桌面整合"
+
+#: winecfg.rc:47
+msgid "Audio"
+msgstr "音效"
+
+#: winecfg.rc:48
+msgid "About"
+msgstr "關於"
+
+#: winecfg.rc:49
+msgid "Wine configuration"
+msgstr "Wine 設定"
+
+#: winecfg.rc:51
+msgid "Theme files (*.msstyles; *.theme)"
+msgstr "佈景主題檔案 (*.msstyles; *.theme)"
+
+#: winecfg.rc:52
+msgid "Select a theme file"
+msgstr "選擇一個佈景主題檔案"
+
+#: winecfg.rc:54
+msgid "Folder"
+msgstr "特殊資料夾"
+
+#: winecfg.rc:55
+msgid "Links to"
+msgstr "連結至"
+
+#: winecfg.rc:50
+msgid "Wine configuration for %s"
+msgstr "Wine 於 %s 的設定"
+
+#: winecfg.rc:53
+msgid ""
+"There is no audio driver currently specified in the registry.\n"
+"\n"
+"A recommended driver has been selected for you.\n"
+"You can use this driver or select another driver if available.\n"
+"\n"
+"You must click Apply for the selection to take effect."
+msgstr ""
+"目前在登錄資訊裡沒有指定任何音效驅動程式。\n"
+"\n"
+"一個推薦的驅動程式已預先幫你選擇。\n"
+"你可以使用此驅動程式，或是選擇其他可用的。\n"
+"\n"
+"你必須點選「套用」使選擇生效。"
+
+#: winecfg.rc:60
+msgid ""
+"Changing the load order of this library is not recommended.\n"
+"Are you sure you want to do this?"
+msgstr ""
+"不建議對這個函式庫更改載入順序。\n"
+"你確定要如此嗎？"
+
+#: winecfg.rc:61
+msgid "Warning: system library"
+msgstr "警告：系統函式庫"
+
+#: winecfg.rc:62
+msgid "native"
+msgstr "原生"
+
+#: winecfg.rc:63
+msgid "builtin"
+msgstr "內建"
+
+#: winecfg.rc:64
+msgid "native, builtin"
+msgstr "原生，內建"
+
+#: winecfg.rc:65
+msgid "builtin, native"
+msgstr "內建、原生"
+
+#: winecfg.rc:66
+msgid "disabled"
+msgstr "停用"
+
+#: winecfg.rc:67
+msgid "Default Settings"
+msgstr "預設設定"
+
+#: winecfg.rc:68
+msgid "Wine Programs (*.exe,*.exe.so)"
+msgstr "Wine 程式 (*.exe,*.exe.so)"
+
+#: winecfg.rc:69
+msgid "Use global settings"
+msgstr "使用全域設定"
+
+#: winecfg.rc:70
+msgid "Select an executable file"
+msgstr "選擇一個可執行檔"
+
+#: winecfg.rc:75
+msgid "Hardware"
+msgstr "硬體"
+
+#: winecfg.rc:81
+msgid "Autodetect"
+msgstr "自動偵測"
+
+#: winecfg.rc:82
+msgid "Local hard disk"
+msgstr "本機硬碟"
+
+#: winecfg.rc:83
+msgid "Network share"
+msgstr "網路分享"
+
+#: winecfg.rc:84
+msgid "Floppy disk"
+msgstr "軟碟機"
+
+#: winecfg.rc:85
+msgid "CD-ROM"
+msgstr "光碟"
+
+#: winecfg.rc:86
+msgid ""
+"You cannot add any more drives.\n"
+"\n"
+"Each drive must have a letter, from A to Z, so you cannot have more than 26"
+msgstr ""
+"你無法再增加任何儲存槽。\n"
+"\n"
+"每個儲存槽比需要有一個從 A 到 Z 之間的英文字， 所以你不能擁有超過 26"
+
+#: winecfg.rc:87
+msgid "System drive"
+msgstr "系統儲存槽"
+
+#: winecfg.rc:88
+msgid ""
+"Are you sure you want to delete drive C?\n"
+"\n"
+"Most Windows applications expect drive C to exist, and will die messily if "
+"it doesn't. If you proceed remember to recreate it!"
+msgstr ""
+"你確定要刪除 C 槽嗎？\n"
+"\n"
+"大部分的 Windows 程式都假定 C 槽存在， 而沒有 C 槽時就會死得很嚴重。 如果你刪"
+"除了它， 請記得要重新建立一個！"
+
+#: winecfg.rc:89
+msgid "Letter"
+msgstr "字母"
+
+#: winecfg.rc:90
+msgid "Drive Mapping"
+msgstr "儲存槽對映"
+
+#: winecfg.rc:91
+msgid ""
+"You don't have a drive C. This is not so great.\n"
+"\n"
+"Remember to click 'Add' in the Drives tab to create one!\n"
+msgstr ""
+"你沒有 C 槽。 這不是件好事。\n"
+"\n"
+"請記得點選「儲存槽」頁籤的「加入」來建立一個！\n"
+
+#: winecfg.rc:96
+msgid "Full"
+msgstr "完全"
+
+#: winecfg.rc:97
+msgid "Standard"
+msgstr "標準"
+
+#: winecfg.rc:98
+msgid "Basic"
+msgstr "基本"
+
+#: winecfg.rc:99
+msgid "Emulation"
+msgstr "軟體模擬"
+
+#: winecfg.rc:100
+msgid "ALSA Driver"
+msgstr "ALSA 驅動"
+
+#: winecfg.rc:101
+msgid "EsounD Driver"
+msgstr "EsounD 驅動"
+
+#: winecfg.rc:102
+msgid "OSS Driver"
+msgstr "OSS 驅動"
+
+#: winecfg.rc:103
+msgid "JACK Driver"
+msgstr "JACK 驅動"
+
+#: winecfg.rc:104
+msgid "NAS Driver"
+msgstr "NAS 驅動"
+
+#: winecfg.rc:105
+msgid "CoreAudio Driver"
+msgstr "CoreAudio 驅動"
+
+#: winecfg.rc:106
+msgid "Couldn't open %s!"
+msgstr "無法開啟 %s ！"
+
+#: winecfg.rc:107
+msgid "Sound Drivers"
+msgstr "音效驅動程式"
+
+#: winecfg.rc:108
+msgid "Wave Out Devices"
+msgstr "Wave 輸出裝置"
+
+#: winecfg.rc:109
+msgid "Wave In Devices"
+msgstr "Wave 輸入裝置"
+
+#: winecfg.rc:110
+msgid "MIDI Out Devices"
+msgstr "MIDI 輸出裝置"
+
+#: winecfg.rc:111
+msgid "MIDI In Devices"
+msgstr "MIDI 輸入裝置"
+
+#: winecfg.rc:112
+msgid "Aux Devices"
+msgstr "輔助裝置"
+
+#: winecfg.rc:113
+msgid "Mixer Devices"
+msgstr "混音器裝置"
+
+#: winecfg.rc:114
+msgid ""
+"Found driver in registry that is not available!\n"
+"\n"
+"Remove '%s' from registry?"
+msgstr ""
+"在登錄資訊裡記錄的驅動程式不可使用！\n"
+"\n"
+"是否將 %s 從登錄資訊裡移除？"
+
+#: winecfg.rc:115
+msgid "Warning"
+msgstr "警告"
+
+#: winecfg.rc:120
+msgid "Controls Background"
+msgstr "按鈕背景"
+
+#: winecfg.rc:121
+msgid "Controls Text"
+msgstr "按鈕文字"
+
+#: winecfg.rc:123
+msgid "Menu Background"
+msgstr "功能表背景"
+
+#: winecfg.rc:124
+msgid "Menu Text"
+msgstr "功能表文字"
+
+#: winecfg.rc:125
+msgid "Scrollbar"
+msgstr "捲軸"
+
+#: winecfg.rc:126
+msgid "Selection Background"
+msgstr "選择區背景"
+
+#: winecfg.rc:127
+msgid "Selection Text"
+msgstr "選择區文字"
+
+#: winecfg.rc:128
+msgid "ToolTip Background"
+msgstr "提示區背景"
+
+#: winecfg.rc:129
+msgid "ToolTip Text"
+msgstr "提示區文字"
+
+#: winecfg.rc:130
+msgid "Window Background"
+msgstr "視窗背景"
+
+#: winecfg.rc:131
+msgid "Window Text"
+msgstr "視窗文字"
+
+#: winecfg.rc:132
+msgid "Active Title Bar"
+msgstr "當前標題欄"
+
+#: winecfg.rc:133
+msgid "Active Title Text"
+msgstr "當前標題欄文字"
+
+#: winecfg.rc:134
+msgid "Inactive Title Bar"
+msgstr "非當前標題欄"
+
+#: winecfg.rc:135
+msgid "Inactive Title Text"
+msgstr "非當前標題欄文字"
+
+#: winecfg.rc:136
+msgid "Message Box Text"
+msgstr ""
+
+#: winecfg.rc:137
+#, fuzzy
+msgid "Application Workspace"
+msgstr ""
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"運用程式\n"
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"應用程式"
+
+#: winecfg.rc:138
+#, fuzzy
+msgid "Window Frame"
+msgstr "視窗文字"
+
+#: winecfg.rc:139
+#, fuzzy
+msgid "Active Border"
+msgstr "當前標題欄"
+
+#: winecfg.rc:140
+#, fuzzy
+msgid "Inactive Border"
+msgstr "非當前標題欄"
+
+#: winecfg.rc:141
+#, fuzzy
+msgid "Controls Shadow"
+msgstr "按鈕背景"
+
+#: winecfg.rc:142
+#, fuzzy
+msgid "Gray Text"
+msgstr "文本文字"
+
+#: winecfg.rc:143
+#, fuzzy
+msgid "Controls Highlight"
+msgstr "按鈕文字"
+
+#: winecfg.rc:144
+#, fuzzy
+msgid "Controls Dark Shadow"
+msgstr "按鈕背景"
+
+#: winecfg.rc:145
+#, fuzzy
+msgid "Controls Light"
+msgstr "按鈕文字"
+
+#: winecfg.rc:146
+#, fuzzy
+msgid "Controls Alternate Background"
+msgstr "按鈕背景"
+
+#: winecfg.rc:147
+msgid "Hot Tracked Item"
+msgstr ""
+
+#: winecfg.rc:148
+#, fuzzy
+msgid "Active Title Bar Gradient"
+msgstr "當前標題欄"
+
+#: winecfg.rc:149
+#, fuzzy
+msgid "Inactive Title Bar Gradient"
+msgstr "非當前標題欄"
+
+#: winecfg.rc:150
+msgid "Menu Highlight"
+msgstr ""
+
+#: winecfg.rc:151
+#, fuzzy
+msgid "Menu Bar"
+msgstr "功能表背景"
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"

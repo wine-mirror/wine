@@ -25,7 +25,7 @@ msgstr ""
 "Omogoča namestitev novih programov oziroma odstranitev programov z vašega "
 "računalnika."
 
-#: appwiz.rc:30 taskmgr.rc:263
+#: appwiz.rc:30 taskmgr.rc:263 winecfg.rc:38
 #, fuzzy
 msgid "Applications"
 msgstr ""
@@ -133,7 +133,7 @@ msgstr "Preklicujem ..."
 msgid "Separator"
 msgstr "Ločilo"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:83
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:83 winecfg.rc:76
 msgid "None"
 msgstr "Brez"
 
@@ -3060,7 +3060,7 @@ msgstr "Prvotna lokacija"
 msgid "Date deleted"
 msgstr "Datum izbrisa"
 
-#: shell32.rc:141 shell32.rc:195 winefile.rc:151
+#: shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
 msgid "Desktop"
 msgstr "Namizje"
 
@@ -6981,6 +6981,416 @@ msgstr "&Dol"
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "Program za ogled Metafile slik"
+
+#: winecfg.rc:32
+msgid "Configure"
+msgstr "Nastavitve"
+
+#: winecfg.rc:39
+msgid "Libraries"
+msgstr "Knjižnice"
+
+#: winecfg.rc:40
+msgid "Drives"
+msgstr "Pogoni"
+
+#: winecfg.rc:41
+msgid "Select the unix target directory, please."
+msgstr "Prosim, izberite unix ciljni imenik."
+
+#: winecfg.rc:43
+msgid "Show &Advanced"
+msgstr "Pokaži &napredno"
+
+#: winecfg.rc:42
+msgid "Hide &Advanced"
+msgstr "Skrij &napredno"
+
+#: winecfg.rc:44
+msgid "(No Theme)"
+msgstr "(Brez teme)"
+
+#: winecfg.rc:45
+msgid "Graphics"
+msgstr "Grafika"
+
+#: winecfg.rc:46
+msgid "Desktop Integration"
+msgstr "Vključitev v namizje"
+
+#: winecfg.rc:47
+msgid "Audio"
+msgstr "Zvok"
+
+#: winecfg.rc:48
+msgid "About"
+msgstr "O programu"
+
+#: winecfg.rc:49
+msgid "Wine configuration"
+msgstr "Wine nastavitve"
+
+#: winecfg.rc:51
+msgid "Theme files (*.msstyles; *.theme)"
+msgstr "Datoteke s temami (*.msstyles; *.theme)"
+
+#: winecfg.rc:52
+msgid "Select a theme file"
+msgstr "Izberite datoteko s temo"
+
+#: winecfg.rc:54
+msgid "Folder"
+msgstr "Mapa"
+
+#: winecfg.rc:55
+msgid "Links to"
+msgstr "Povezano z"
+
+#: winecfg.rc:50
+msgid "Wine configuration for %s"
+msgstr "Wine nastavitve za %s"
+
+#: winecfg.rc:53
+msgid ""
+"There is no audio driver currently specified in the registry.\n"
+"\n"
+"A recommended driver has been selected for you.\n"
+"You can use this driver or select another driver if available.\n"
+"\n"
+"You must click Apply for the selection to take effect."
+msgstr ""
+"V registru trenutno ni naveden noben zvočni gonilnik.\n"
+"\n"
+"Kot privzeta nastavitev bo izbran priporočen gonilnik.\n"
+"Če želite, lahko uporabite drug razpoložljiv gonilnik\n"
+"\n"
+"Za uporabo izbranega gonilnika kliknite na gumb Uporabi."
+
+#: winecfg.rc:60
+msgid ""
+"Changing the load order of this library is not recommended.\n"
+"Are you sure you want to do this?"
+msgstr ""
+"Spreminjanje vrstnega reda nalaganja za to knjižnico ni priporočljivo.\n"
+"Ali ste prepričani, da ga želite spremeniti?"
+
+#: winecfg.rc:61
+msgid "Warning: system library"
+msgstr "Opozorilo: sistemska knjižnica"
+
+#: winecfg.rc:62
+msgid "native"
+msgstr "izvorno"
+
+#: winecfg.rc:63
+msgid "builtin"
+msgstr "vgrajeno"
+
+#: winecfg.rc:64
+msgid "native, builtin"
+msgstr "izvorno, vgrajeno"
+
+#: winecfg.rc:65
+msgid "builtin, native"
+msgstr "vgrajeno, izvorno"
+
+#: winecfg.rc:66
+msgid "disabled"
+msgstr "onemogočeno"
+
+#: winecfg.rc:67
+msgid "Default Settings"
+msgstr "Privzete (sistemske) nastavitve"
+
+#: winecfg.rc:68
+msgid "Wine Programs (*.exe,*.exe.so)"
+msgstr "Wine programi (*.exe,*.exe.so)"
+
+#: winecfg.rc:69
+msgid "Use global settings"
+msgstr "Uporabi sistemske nastavitve"
+
+#: winecfg.rc:70
+msgid "Select an executable file"
+msgstr "Izberite izvršljivo datoteko"
+
+#: winecfg.rc:75
+msgid "Hardware"
+msgstr "Strojno"
+
+#: winecfg.rc:81
+msgid "Autodetect"
+msgstr "Samozaznaj"
+
+#: winecfg.rc:82
+msgid "Local hard disk"
+msgstr "Lokalen trdi disk"
+
+#: winecfg.rc:83
+msgid "Network share"
+msgstr "Mrežni disk v skupni rabi"
+
+#: winecfg.rc:84
+msgid "Floppy disk"
+msgstr "Disketa"
+
+#: winecfg.rc:85
+msgid "CD-ROM"
+msgstr "CD-ROM"
+
+#: winecfg.rc:86
+msgid ""
+"You cannot add any more drives.\n"
+"\n"
+"Each drive must have a letter, from A to Z, so you cannot have more than 26"
+msgstr ""
+"Ni mogoče dodati novega pogona.\n"
+"\n"
+"Za oznake pogonov so na voljo črke od A do Z, torej največ 26 pogonov."
+
+#: winecfg.rc:87
+msgid "System drive"
+msgstr "Sistemski pogon"
+
+#: winecfg.rc:88
+msgid ""
+"Are you sure you want to delete drive C?\n"
+"\n"
+"Most Windows applications expect drive C to exist, and will die messily if "
+"it doesn't. If you proceed remember to recreate it!"
+msgstr ""
+"Ali ste prepričani, da želite odstraniti pogon C?\n"
+"\n"
+"Večina programov za Okna za pravilno delovanje pričakuje obstoj pogona C. Če "
+"boste pogon odstranili, ga pozneje ne pozabite ponovno dodati!"
+
+#: winecfg.rc:89
+msgid "Letter"
+msgstr "Črka"
+
+#: winecfg.rc:90
+msgid "Drive Mapping"
+msgstr "Preslikava pogona"
+
+#: winecfg.rc:91
+msgid ""
+"You don't have a drive C. This is not so great.\n"
+"\n"
+"Remember to click 'Add' in the Drives tab to create one!\n"
+msgstr ""
+"Nimate določenega pogona C, kar zna biti problematično.\n"
+"\n"
+"Če ga želite dodati, uporabite gumb Dodaj v zavihku Pogoni!\n"
+
+#: winecfg.rc:96
+msgid "Full"
+msgstr "Polno"
+
+#: winecfg.rc:97
+msgid "Standard"
+msgstr "Standardno"
+
+#: winecfg.rc:98
+msgid "Basic"
+msgstr "Osnovno"
+
+#: winecfg.rc:99
+msgid "Emulation"
+msgstr "Emulacija"
+
+#: winecfg.rc:100
+msgid "ALSA Driver"
+msgstr "ALSA gonilnik"
+
+#: winecfg.rc:101
+msgid "EsounD Driver"
+msgstr "EsounD gonilnik"
+
+#: winecfg.rc:102
+msgid "OSS Driver"
+msgstr "OSS gonilnik"
+
+#: winecfg.rc:103
+msgid "JACK Driver"
+msgstr "JACK gonilnik"
+
+#: winecfg.rc:104
+msgid "NAS Driver"
+msgstr "NAS gonilnik"
+
+#: winecfg.rc:105
+msgid "CoreAudio Driver"
+msgstr "CoreAudio gonilnik"
+
+#: winecfg.rc:106
+msgid "Couldn't open %s!"
+msgstr "Gonilnika %s ni mogoče odpreti!"
+
+#: winecfg.rc:107
+msgid "Sound Drivers"
+msgstr "Zvočni gonilniki"
+
+#: winecfg.rc:108
+msgid "Wave Out Devices"
+msgstr "Wave Out naprave"
+
+#: winecfg.rc:109
+msgid "Wave In Devices"
+msgstr "Wave In naprave"
+
+#: winecfg.rc:110
+msgid "MIDI Out Devices"
+msgstr "MIDI Out naprave"
+
+#: winecfg.rc:111
+msgid "MIDI In Devices"
+msgstr "MIDI In naprave"
+
+#: winecfg.rc:112
+msgid "Aux Devices"
+msgstr "Pomožne (Aux) naprave"
+
+#: winecfg.rc:113
+msgid "Mixer Devices"
+msgstr "Mešalne naprave"
+
+#: winecfg.rc:114
+msgid ""
+"Found driver in registry that is not available!\n"
+"\n"
+"Remove '%s' from registry?"
+msgstr ""
+"V registru sem našel naveden gonilnik, ki ni na voljo!\n"
+"\n"
+"Ali naj odstranim '%s' iz registra?"
+
+#: winecfg.rc:115
+msgid "Warning"
+msgstr "Opozorilo"
+
+#: winecfg.rc:120
+msgid "Controls Background"
+msgstr "Kontrole: ozadje"
+
+#: winecfg.rc:121
+msgid "Controls Text"
+msgstr "Kontrole: besedilo"
+
+#: winecfg.rc:123
+msgid "Menu Background"
+msgstr "Meni: ozadje"
+
+#: winecfg.rc:124
+msgid "Menu Text"
+msgstr "Meni: besedilo"
+
+#: winecfg.rc:125
+msgid "Scrollbar"
+msgstr "Drsnik"
+
+#: winecfg.rc:126
+msgid "Selection Background"
+msgstr "Izbira: ozadje"
+
+#: winecfg.rc:127
+msgid "Selection Text"
+msgstr "Izbira: besedilo"
+
+#: winecfg.rc:128
+msgid "ToolTip Background"
+msgstr "Namig orodja: ozadje"
+
+#: winecfg.rc:129
+msgid "ToolTip Text"
+msgstr "Namig orodja: besedilo"
+
+#: winecfg.rc:130
+msgid "Window Background"
+msgstr "Okno: ozadje"
+
+#: winecfg.rc:131
+msgid "Window Text"
+msgstr "Okno: besedilo"
+
+#: winecfg.rc:132
+msgid "Active Title Bar"
+msgstr "Naslov akt. okna: ozadje"
+
+#: winecfg.rc:133
+msgid "Active Title Text"
+msgstr "Naslov akt. okna: besedilo"
+
+#: winecfg.rc:134
+msgid "Inactive Title Bar"
+msgstr "Nasov neakt. okna: ozadje"
+
+#: winecfg.rc:135
+msgid "Inactive Title Text"
+msgstr "Naslov neakt. okna: besedilo"
+
+#: winecfg.rc:136
+msgid "Message Box Text"
+msgstr "Okno s sporočilom: besedilo"
+
+#: winecfg.rc:137
+msgid "Application Workspace"
+msgstr "Delovni prostor programa"
+
+#: winecfg.rc:138
+msgid "Window Frame"
+msgstr "Okvir okna"
+
+#: winecfg.rc:139
+msgid "Active Border"
+msgstr "Rob akt. okna"
+
+#: winecfg.rc:140
+msgid "Inactive Border"
+msgstr "Rob neakt. okna"
+
+#: winecfg.rc:141
+msgid "Controls Shadow"
+msgstr "Kontrole: senca"
+
+#: winecfg.rc:142
+msgid "Gray Text"
+msgstr "Sivo besedilo"
+
+#: winecfg.rc:143
+msgid "Controls Highlight"
+msgstr "Kontrole: osvetljeno"
+
+#: winecfg.rc:144
+msgid "Controls Dark Shadow"
+msgstr "Kontole: temna senca"
+
+#: winecfg.rc:145
+msgid "Controls Light"
+msgstr "Kontrole: svetlo"
+
+#: winecfg.rc:146
+msgid "Controls Alternate Background"
+msgstr "Kontrole: alt. ozadje"
+
+#: winecfg.rc:147
+msgid "Hot Tracked Item"
+msgstr "Element z 'vročim sledenjem'"
+
+#: winecfg.rc:148
+msgid "Active Title Bar Gradient"
+msgstr "Naslov akt. okna: gradient"
+
+#: winecfg.rc:149
+msgid "Inactive Title Bar Gradient"
+msgstr "Naslov neakt. okna: gradient"
+
+#: winecfg.rc:150
+msgid "Menu Highlight"
+msgstr "Meni: osvetljen"
+
+#: winecfg.rc:151
+msgid "Menu Bar"
+msgstr "Meni: vrstica"
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"

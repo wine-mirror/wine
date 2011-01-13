@@ -25,7 +25,7 @@ msgstr ""
 "Pozwala na instalację nowego lub usunięcie już istniejącego oprogramowania z "
 "twojego komputera."
 
-#: appwiz.rc:30 taskmgr.rc:263
+#: appwiz.rc:30 taskmgr.rc:263 winecfg.rc:38
 msgid "Applications"
 msgstr "Aplikacje"
 
@@ -130,7 +130,7 @@ msgstr "Trwa anulowanie..."
 msgid "Separator"
 msgstr "Odstęp"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:83
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:83 winecfg.rc:76
 msgid "None"
 msgstr "Brak"
 
@@ -3114,7 +3114,7 @@ msgstr "Oryginalne położenie"
 msgid "Date deleted"
 msgstr "Data usunięcia"
 
-#: shell32.rc:141 shell32.rc:195 winefile.rc:151
+#: shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
 msgid "Desktop"
 msgstr "Pulpit"
 
@@ -7018,6 +7018,417 @@ msgstr "Przesuń w &dół"
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "Podgląd plików WMF (Regular Metafile)"
+
+#: winecfg.rc:32
+msgid "Configure"
+msgstr "Konfiguruj"
+
+#: winecfg.rc:39
+msgid "Libraries"
+msgstr "Biblioteki"
+
+#: winecfg.rc:40
+msgid "Drives"
+msgstr "Dyski"
+
+#: winecfg.rc:41
+msgid "Select the unix target directory, please."
+msgstr "Proszę wybrać docelowy katalog Uniksowy."
+
+#: winecfg.rc:43
+msgid "Show &Advanced"
+msgstr "Opcje zaawansowane >>"
+
+#: winecfg.rc:42
+msgid "Hide &Advanced"
+msgstr "Ukryj zaawansowane <<"
+
+#: winecfg.rc:44
+msgid "(No Theme)"
+msgstr "(brak motywu)"
+
+#: winecfg.rc:45
+msgid "Graphics"
+msgstr "Grafika"
+
+#: winecfg.rc:46
+msgid "Desktop Integration"
+msgstr "Integracja z pulpitem"
+
+#: winecfg.rc:47
+msgid "Audio"
+msgstr "Dźwięk"
+
+#: winecfg.rc:48
+msgid "About"
+msgstr "Informacje"
+
+#: winecfg.rc:49
+msgid "Wine configuration"
+msgstr "Konfiguracje Wine"
+
+#: winecfg.rc:51
+msgid "Theme files (*.msstyles; *.theme)"
+msgstr "Pliki motywu (*.msstyles; *.theme)"
+
+#: winecfg.rc:52
+msgid "Select a theme file"
+msgstr "Wybierz plik motywu"
+
+#: winecfg.rc:54
+msgid "Folder"
+msgstr "Folder"
+
+#: winecfg.rc:55
+msgid "Links to"
+msgstr "Dowiązany do"
+
+#: winecfg.rc:50
+msgid "Wine configuration for %s"
+msgstr "Konfiguracje Wine dla %s"
+
+#: winecfg.rc:53
+msgid ""
+"There is no audio driver currently specified in the registry.\n"
+"\n"
+"A recommended driver has been selected for you.\n"
+"You can use this driver or select another driver if available.\n"
+"\n"
+"You must click Apply for the selection to take effect."
+msgstr ""
+"Nie wybrano sterownika dźwięku.\n"
+"\n"
+"Zalecany sterownik został właśnie zaznaczony.\n"
+"Możesz go użyć lub wybrać jakiś inny.\n"
+"\n"
+"Aby wybór został zapamiętany, użyj 'Zastosuj'."
+
+#: winecfg.rc:60
+msgid ""
+"Changing the load order of this library is not recommended.\n"
+"Are you sure you want to do this?"
+msgstr ""
+"Zmiana reguły dla tej biblioteki nie jest zalecana.\n"
+"Czy na pewno chcesz to zrobić?"
+
+#: winecfg.rc:61
+msgid "Warning: system library"
+msgstr "Uwaga: biblioteka systemowa"
+
+#: winecfg.rc:62
+msgid "native"
+msgstr "zewnętrzna"
+
+#: winecfg.rc:63
+msgid "builtin"
+msgstr "wbudowana"
+
+#: winecfg.rc:64
+msgid "native, builtin"
+msgstr "zewnętrzna, wbudowana"
+
+#: winecfg.rc:65
+msgid "builtin, native"
+msgstr "wbudowana, zewnętrzna"
+
+#: winecfg.rc:66
+msgid "disabled"
+msgstr "wyłączona"
+
+#: winecfg.rc:67
+msgid "Default Settings"
+msgstr "Ustawienia standardowe"
+
+#: winecfg.rc:68
+msgid "Wine Programs (*.exe,*.exe.so)"
+msgstr "Programy Wine (*.exe,*.exe.so)"
+
+#: winecfg.rc:69
+msgid "Use global settings"
+msgstr "Użyj ustawień globalnych"
+
+#: winecfg.rc:70
+msgid "Select an executable file"
+msgstr "Wybierz plik wykonywalny"
+
+#: winecfg.rc:75
+msgid "Hardware"
+msgstr "Sprzętowa"
+
+#: winecfg.rc:81
+msgid "Autodetect"
+msgstr "Automatyczne wykrywanie"
+
+#: winecfg.rc:82
+msgid "Local hard disk"
+msgstr "Lokalny dysk twardy"
+
+#: winecfg.rc:83
+msgid "Network share"
+msgstr "Zasób sieciowy"
+
+#: winecfg.rc:84
+msgid "Floppy disk"
+msgstr "Stacja dyskietek"
+
+#: winecfg.rc:85
+msgid "CD-ROM"
+msgstr "CD-ROM"
+
+#: winecfg.rc:86
+msgid ""
+"You cannot add any more drives.\n"
+"\n"
+"Each drive must have a letter, from A to Z, so you cannot have more than 26"
+msgstr ""
+"Nie możesz dodać kolejnego dysku.\n"
+"\n"
+"Każdy dysk musi mieć literę od A do Z, co ogranicza ich liczbę do 26"
+
+#: winecfg.rc:87
+msgid "System drive"
+msgstr "Dysk systemowy"
+
+#: winecfg.rc:88
+msgid ""
+"Are you sure you want to delete drive C?\n"
+"\n"
+"Most Windows applications expect drive C to exist, and will die messily if "
+"it doesn't. If you proceed remember to recreate it!"
+msgstr ""
+"Czy na pewno chcesz usunąć dysk C?\n"
+"\n"
+"Większość programów dla Windows zakłada istnienie takiego dysku i mogą "
+"przestać działać gdy go zabraknie. Jeżeli go skasujesz, nie zapomnij o "
+"ponownym jego utworzeniu!"
+
+#: winecfg.rc:89
+msgid "Letter"
+msgstr "Litera"
+
+#: winecfg.rc:90
+msgid "Drive Mapping"
+msgstr "Przyporządkowany do"
+
+#: winecfg.rc:91
+msgid ""
+"You don't have a drive C. This is not so great.\n"
+"\n"
+"Remember to click 'Add' in the Drives tab to create one!\n"
+msgstr ""
+"Nie masz dysku C. To może powodować problemy.\n"
+"\n"
+"Nie zapomnij użyć 'Dodaj' w zakładce 'Dyski', aby go utworzyć!\n"
+
+#: winecfg.rc:96
+msgid "Full"
+msgstr "Pełne"
+
+#: winecfg.rc:97
+msgid "Standard"
+msgstr "Standardowe"
+
+#: winecfg.rc:98
+msgid "Basic"
+msgstr "Podstawowe"
+
+#: winecfg.rc:99
+msgid "Emulation"
+msgstr "Emulacja"
+
+#: winecfg.rc:100
+msgid "ALSA Driver"
+msgstr "Sterownik ALSA"
+
+#: winecfg.rc:101
+msgid "EsounD Driver"
+msgstr "Sterownik EsounD"
+
+#: winecfg.rc:102
+msgid "OSS Driver"
+msgstr "Sterownik OSS"
+
+#: winecfg.rc:103
+msgid "JACK Driver"
+msgstr "Sterownik JACK"
+
+#: winecfg.rc:104
+msgid "NAS Driver"
+msgstr "Sterownik NAS"
+
+#: winecfg.rc:105
+msgid "CoreAudio Driver"
+msgstr "Sterownik CoreAudio"
+
+#: winecfg.rc:106
+msgid "Couldn't open %s!"
+msgstr "Nie mogę otworzyć %s!"
+
+#: winecfg.rc:107
+msgid "Sound Drivers"
+msgstr "Sterowniki dźwiękowe"
+
+#: winecfg.rc:108
+msgid "Wave Out Devices"
+msgstr "Urządzenia Wave Out"
+
+#: winecfg.rc:109
+msgid "Wave In Devices"
+msgstr "Urządzenia Wave In"
+
+#: winecfg.rc:110
+msgid "MIDI Out Devices"
+msgstr "Wyjścia MIDI"
+
+#: winecfg.rc:111
+msgid "MIDI In Devices"
+msgstr "Wejścia MIDI"
+
+#: winecfg.rc:112
+msgid "Aux Devices"
+msgstr "Urządzenia Aux"
+
+#: winecfg.rc:113
+msgid "Mixer Devices"
+msgstr "Miksery"
+
+#: winecfg.rc:114
+msgid ""
+"Found driver in registry that is not available!\n"
+"\n"
+"Remove '%s' from registry?"
+msgstr ""
+"Sterownik, który jest skonfigurowany w rejestrze jest niedostępny!\n"
+"\n"
+"Usunąć wpis “%s” z rejestru?"
+
+#: winecfg.rc:115
+msgid "Warning"
+msgstr "Ostrzeżenie"
+
+#: winecfg.rc:120
+msgid "Controls Background"
+msgstr "Kontrolki - tło"
+
+#: winecfg.rc:121
+msgid "Controls Text"
+msgstr "Kontrolki - tekst"
+
+#: winecfg.rc:123
+msgid "Menu Background"
+msgstr "Tło menu"
+
+#: winecfg.rc:124
+msgid "Menu Text"
+msgstr "Tekst menu"
+
+#: winecfg.rc:125
+msgid "Scrollbar"
+msgstr "Pasek przewijania"
+
+#: winecfg.rc:126
+msgid "Selection Background"
+msgstr "Tło zaznaczonego obszaru"
+
+#: winecfg.rc:127
+msgid "Selection Text"
+msgstr "Zaznaczony tekst"
+
+#: winecfg.rc:128
+msgid "ToolTip Background"
+msgstr "Tło podpowiedzi"
+
+#: winecfg.rc:129
+msgid "ToolTip Text"
+msgstr "Tekst podpowiedzi"
+
+#: winecfg.rc:130
+msgid "Window Background"
+msgstr "Tło okna"
+
+#: winecfg.rc:131
+msgid "Window Text"
+msgstr "Tekst okna"
+
+#: winecfg.rc:132
+msgid "Active Title Bar"
+msgstr "Tło nagłówka aktywnego okna"
+
+#: winecfg.rc:133
+msgid "Active Title Text"
+msgstr "Tytuł aktywnego okna"
+
+#: winecfg.rc:134
+msgid "Inactive Title Bar"
+msgstr "Tło nagłówka nieaktywnego okna"
+
+#: winecfg.rc:135
+msgid "Inactive Title Text"
+msgstr "Tytuł nieaktywnego okna"
+
+#: winecfg.rc:136
+msgid "Message Box Text"
+msgstr "Tekst okien komunikatów"
+
+#: winecfg.rc:137
+msgid "Application Workspace"
+msgstr "Wnętrze okna aplikacji"
+
+#: winecfg.rc:138
+msgid "Window Frame"
+msgstr "Ramka okna"
+
+#: winecfg.rc:139
+msgid "Active Border"
+msgstr "Obramowanie aktywnego okna"
+
+#: winecfg.rc:140
+msgid "Inactive Border"
+msgstr "Obramowanie nieaktywnego okna"
+
+#: winecfg.rc:141
+msgid "Controls Shadow"
+msgstr "Kontrolki - cień"
+
+#: winecfg.rc:142
+msgid "Gray Text"
+msgstr "Szary tekst"
+
+#: winecfg.rc:143
+msgid "Controls Highlight"
+msgstr "Kontrolki - podświetlenie"
+
+#: winecfg.rc:144
+msgid "Controls Dark Shadow"
+msgstr "Kontrolki - głębszy cień"
+
+#: winecfg.rc:145
+msgid "Controls Light"
+msgstr "Kontrolki - jaśniejszy cień"
+
+#: winecfg.rc:146
+msgid "Controls Alternate Background"
+msgstr "Kontrolki - alternatywne tło"
+
+#: winecfg.rc:147
+msgid "Hot Tracked Item"
+msgstr "Śledzony element"
+
+#: winecfg.rc:148
+msgid "Active Title Bar Gradient"
+msgstr "Gradient nagłówka aktywnego okna"
+
+#: winecfg.rc:149
+msgid "Inactive Title Bar Gradient"
+msgstr "Gradient nagłówka nieaktywnego okna"
+
+#: winecfg.rc:150
+msgid "Menu Highlight"
+msgstr "Podświetlone menu"
+
+#: winecfg.rc:151
+msgid "Menu Bar"
+msgstr "Pasek menu"
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"

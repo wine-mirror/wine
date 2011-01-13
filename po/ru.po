@@ -25,7 +25,7 @@ msgstr ""
 "Позволяет устанавливать новое ПО или удалять существующее с вашего "
 "компьютера."
 
-#: appwiz.rc:30 taskmgr.rc:263
+#: appwiz.rc:30 taskmgr.rc:263 winecfg.rc:38
 msgid "Applications"
 msgstr "Приложения"
 
@@ -131,9 +131,14 @@ msgstr "Отмена..."
 msgid "Separator"
 msgstr "Разделитель"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:83
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:83 winecfg.rc:76
+#, fuzzy
 msgid "None"
-msgstr "Нет"
+msgstr ""
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"Нет\n"
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"Выключены"
 
 #: comctl32.rc:28 wordpad.rc:169
 msgid "Close"
@@ -3077,9 +3082,14 @@ msgstr "Исходное местонаходение"
 msgid "Date deleted"
 msgstr "Время удаления"
 
-#: shell32.rc:141 shell32.rc:195 winefile.rc:151
+#: shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
+#, fuzzy
 msgid "Desktop"
-msgstr "Рабочий стол"
+msgstr ""
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"Рабочий стол\n"
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"Стол"
 
 #: shell32.rc:142 regedit.rc:206
 #, fuzzy
@@ -7008,6 +7018,416 @@ msgstr "В&низ"
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "Просмотрщик обычных метафайлов"
+
+#: winecfg.rc:32
+msgid "Configure"
+msgstr "Настроить"
+
+#: winecfg.rc:39
+msgid "Libraries"
+msgstr "Библиотеки"
+
+#: winecfg.rc:40
+msgid "Drives"
+msgstr "Диски"
+
+#: winecfg.rc:41
+msgid "Select the unix target directory, please."
+msgstr "Выберите целевой каталог в системе:"
+
+#: winecfg.rc:43
+msgid "Show &Advanced"
+msgstr "Показать дополнительные"
+
+#: winecfg.rc:42
+msgid "Hide &Advanced"
+msgstr "Скрыть дополнительные"
+
+#: winecfg.rc:44
+msgid "(No Theme)"
+msgstr "(без темы)"
+
+#: winecfg.rc:45
+msgid "Graphics"
+msgstr "Графика"
+
+#: winecfg.rc:46
+msgid "Desktop Integration"
+msgstr "Вид и интеграция"
+
+#: winecfg.rc:47
+msgid "Audio"
+msgstr "Аудио"
+
+#: winecfg.rc:48
+msgid "About"
+msgstr "О программе"
+
+#: winecfg.rc:49
+msgid "Wine configuration"
+msgstr "Настройка Wine"
+
+#: winecfg.rc:51
+msgid "Theme files (*.msstyles; *.theme)"
+msgstr "Файлы тем (*.msstyles; *.theme)"
+
+#: winecfg.rc:52
+msgid "Select a theme file"
+msgstr "Выберите файл с темой"
+
+#: winecfg.rc:54
+msgid "Folder"
+msgstr "Стандартные папки"
+
+#: winecfg.rc:55
+msgid "Links to"
+msgstr "Связано с"
+
+#: winecfg.rc:50
+msgid "Wine configuration for %s"
+msgstr "Настройка Wine для %s"
+
+#: winecfg.rc:53
+msgid ""
+"There is no audio driver currently specified in the registry.\n"
+"\n"
+"A recommended driver has been selected for you.\n"
+"You can use this driver or select another driver if available.\n"
+"\n"
+"You must click Apply for the selection to take effect."
+msgstr ""
+"Конфигурация звукового драйвера не найдена.\n"
+"\n"
+"Выбран драйвер по умолчанию. При необходимости можно выбрать другой драйвер "
+"из списка доступных.\n"
+"\n"
+"Для сохранения изменений нажмите кнопку Применить."
+
+#: winecfg.rc:60
+msgid ""
+"Changing the load order of this library is not recommended.\n"
+"Are you sure you want to do this?"
+msgstr ""
+"Изменение порядка загрузки этой библиотеки не рекомендуется.\n"
+"Вы действительно хотите изменить порядок?"
+
+#: winecfg.rc:61
+msgid "Warning: system library"
+msgstr "Внимание: системная библиотека"
+
+#: winecfg.rc:62
+msgid "native"
+msgstr "сторонняя"
+
+#: winecfg.rc:63
+msgid "builtin"
+msgstr "встроенная"
+
+#: winecfg.rc:64
+msgid "native, builtin"
+msgstr "сторонняя, встроенная"
+
+#: winecfg.rc:65
+msgid "builtin, native"
+msgstr "встроенная, сторонняя"
+
+#: winecfg.rc:66
+msgid "disabled"
+msgstr "отключена"
+
+#: winecfg.rc:67
+msgid "Default Settings"
+msgstr "Установки по умолчанию"
+
+#: winecfg.rc:68
+msgid "Wine Programs (*.exe,*.exe.so)"
+msgstr "Программы Wine (*.exe,*.exe.so)"
+
+#: winecfg.rc:69
+msgid "Use global settings"
+msgstr "Использовать по умолчанию"
+
+#: winecfg.rc:70
+msgid "Select an executable file"
+msgstr "Выберите исполняемый файл"
+
+#: winecfg.rc:75
+msgid "Hardware"
+msgstr "Включены"
+
+#: winecfg.rc:81
+msgid "Autodetect"
+msgstr "Автоопределение"
+
+#: winecfg.rc:82
+msgid "Local hard disk"
+msgstr "Жёсткий диск"
+
+#: winecfg.rc:83
+msgid "Network share"
+msgstr "Сетевой диск"
+
+#: winecfg.rc:84
+msgid "Floppy disk"
+msgstr "Дисковод"
+
+#: winecfg.rc:85
+msgid "CD-ROM"
+msgstr "CD-ROM"
+
+#: winecfg.rc:86
+msgid ""
+"You cannot add any more drives.\n"
+"\n"
+"Each drive must have a letter, from A to Z, so you cannot have more than 26"
+msgstr ""
+"Невозможно создать новый диск.\n"
+"\n"
+"У каждого диска должна быть буква - от A до Z, и у вас уже 26 дисков."
+
+#: winecfg.rc:87
+msgid "System drive"
+msgstr "Системный диск"
+
+#: winecfg.rc:88
+msgid ""
+"Are you sure you want to delete drive C?\n"
+"\n"
+"Most Windows applications expect drive C to exist, and will die messily if "
+"it doesn't. If you proceed remember to recreate it!"
+msgstr ""
+"Действительно удалить диск C?\n"
+"\n"
+"Большинство Windows-программ перестанут работать без диска C. Если вы всё же "
+"решили удалить диск, не забудьте создать новый!"
+
+#: winecfg.rc:89
+msgid "Letter"
+msgstr "Диск"
+
+#: winecfg.rc:90
+msgid "Drive Mapping"
+msgstr "Путь"
+
+#: winecfg.rc:91
+msgid ""
+"You don't have a drive C. This is not so great.\n"
+"\n"
+"Remember to click 'Add' in the Drives tab to create one!\n"
+msgstr ""
+"Вы не назначили диск C.\n"
+"\n"
+"Не забудьте его создать!\n"
+
+#: winecfg.rc:96
+msgid "Full"
+msgstr "Полное"
+
+#: winecfg.rc:97
+msgid "Standard"
+msgstr "Стандартное"
+
+#: winecfg.rc:98
+msgid "Basic"
+msgstr "Минимальное"
+
+#: winecfg.rc:99
+msgid "Emulation"
+msgstr "Эмуляция"
+
+#: winecfg.rc:100
+msgid "ALSA Driver"
+msgstr "ALSA драйвер"
+
+#: winecfg.rc:101
+msgid "EsounD Driver"
+msgstr "EsounD драйвер"
+
+#: winecfg.rc:102
+msgid "OSS Driver"
+msgstr "OSS драйвер"
+
+#: winecfg.rc:103
+msgid "JACK Driver"
+msgstr "JACK драйвер"
+
+#: winecfg.rc:104
+msgid "NAS Driver"
+msgstr "NAS драйвер"
+
+#: winecfg.rc:105
+msgid "CoreAudio Driver"
+msgstr "CoreAudio драйвер"
+
+#: winecfg.rc:106
+msgid "Couldn't open %s!"
+msgstr "Невозможно открыть %s!"
+
+#: winecfg.rc:107
+msgid "Sound Drivers"
+msgstr "Аудио драйвера"
+
+#: winecfg.rc:108
+msgid "Wave Out Devices"
+msgstr "Устройство вывода звука"
+
+#: winecfg.rc:109
+msgid "Wave In Devices"
+msgstr "Устройство ввода звука"
+
+#: winecfg.rc:110
+msgid "MIDI Out Devices"
+msgstr "Устройство вывода MIDI"
+
+#: winecfg.rc:111
+msgid "MIDI In Devices"
+msgstr "Устройство ввода MIDI"
+
+#: winecfg.rc:112
+msgid "Aux Devices"
+msgstr "Дополнительное устройство"
+
+#: winecfg.rc:113
+msgid "Mixer Devices"
+msgstr "Устройство микширования"
+
+#: winecfg.rc:114
+msgid ""
+"Found driver in registry that is not available!\n"
+"\n"
+"Remove '%s' from registry?"
+msgstr ""
+"Драйвер, указанный в реестре, не найден!\n"
+"\n"
+"Удалить \"%s\" из реестра?"
+
+#: winecfg.rc:115
+msgid "Warning"
+msgstr "Внимание"
+
+#: winecfg.rc:120
+msgid "Controls Background"
+msgstr "Элементы управления - фон"
+
+#: winecfg.rc:121
+msgid "Controls Text"
+msgstr "Элементы управления - текст"
+
+#: winecfg.rc:123
+msgid "Menu Background"
+msgstr "Меню - фон"
+
+#: winecfg.rc:124
+msgid "Menu Text"
+msgstr "Меню - текст"
+
+#: winecfg.rc:125
+msgid "Scrollbar"
+msgstr "Полоса прокрутки"
+
+#: winecfg.rc:126
+msgid "Selection Background"
+msgstr "Выделение - фон"
+
+#: winecfg.rc:127
+msgid "Selection Text"
+msgstr "Выделение - текст"
+
+#: winecfg.rc:128
+msgid "ToolTip Background"
+msgstr "Подсказка - фон"
+
+#: winecfg.rc:129
+msgid "ToolTip Text"
+msgstr "Подсказка - текст"
+
+#: winecfg.rc:130
+msgid "Window Background"
+msgstr "Содержимое окна - фон"
+
+#: winecfg.rc:131
+msgid "Window Text"
+msgstr "Содержимое окна - текст"
+
+#: winecfg.rc:132
+msgid "Active Title Bar"
+msgstr "Активное окно"
+
+#: winecfg.rc:133
+msgid "Active Title Text"
+msgstr "Активное окно - текст"
+
+#: winecfg.rc:134
+msgid "Inactive Title Bar"
+msgstr "Пассивное окно"
+
+#: winecfg.rc:135
+msgid "Inactive Title Text"
+msgstr "Пассивное окно - текст"
+
+#: winecfg.rc:136
+msgid "Message Box Text"
+msgstr "Окно сообщения - текст"
+
+#: winecfg.rc:137
+msgid "Application Workspace"
+msgstr "Содержимое окна MDI - фон"
+
+#: winecfg.rc:138
+msgid "Window Frame"
+msgstr "Окно - рамка"
+
+#: winecfg.rc:139
+msgid "Active Border"
+msgstr "Активное окно - рамка"
+
+#: winecfg.rc:140
+msgid "Inactive Border"
+msgstr "Пассивное окно - рамка"
+
+#: winecfg.rc:141
+msgid "Controls Shadow"
+msgstr "Элементы управления - тень"
+
+#: winecfg.rc:142
+msgid "Gray Text"
+msgstr "Недоступный элемент"
+
+#: winecfg.rc:143
+msgid "Controls Highlight"
+msgstr "Элементы управления - светлая рамка"
+
+#: winecfg.rc:144
+msgid "Controls Dark Shadow"
+msgstr "Элементы управления - темная тень"
+
+#: winecfg.rc:145
+msgid "Controls Light"
+msgstr "Элементы управления - свет"
+
+#: winecfg.rc:146
+msgid "Controls Alternate Background"
+msgstr "Элементы управления - фон 2"
+
+#: winecfg.rc:147
+msgid "Hot Tracked Item"
+msgstr "Ссылка, Подсветка"
+
+#: winecfg.rc:148
+msgid "Active Title Bar Gradient"
+msgstr "Градиент активного окна"
+
+#: winecfg.rc:149
+msgid "Inactive Title Bar Gradient"
+msgstr "Градиент пассивного окна"
+
+#: winecfg.rc:150
+msgid "Menu Highlight"
+msgstr "Плоское меню - подсветка"
+
+#: winecfg.rc:151
+msgid "Menu Bar"
+msgstr "Плоское меню - фон"
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"
