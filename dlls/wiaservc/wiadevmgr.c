@@ -29,14 +29,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wia);
 
-static inline wiadevmgr *impl_from_WiaDevMgr(IWiaDevMgr *iface)
+static inline wiadevmgr *impl_from_IWiaDevMgr(IWiaDevMgr *iface)
 {
-    return (wiadevmgr *)((char*)iface - FIELD_OFFSET(wiadevmgr, lpVtbl));
+    return CONTAINING_RECORD(iface, wiadevmgr, IWiaDevMgr_iface);
 }
 
 static HRESULT WINAPI wiadevmgr_QueryInterface(IWiaDevMgr *iface, REFIID riid, void **ppvObject)
 {
-    wiadevmgr *This = impl_from_WiaDevMgr(iface);
+    wiadevmgr *This = impl_from_IWiaDevMgr(iface);
 
     TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), ppvObject);
 
@@ -54,14 +54,14 @@ static HRESULT WINAPI wiadevmgr_QueryInterface(IWiaDevMgr *iface, REFIID riid, v
 
 static ULONG WINAPI wiadevmgr_AddRef(IWiaDevMgr *iface)
 {
-    wiadevmgr *This = impl_from_WiaDevMgr(iface);
+    wiadevmgr *This = impl_from_IWiaDevMgr(iface);
     return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI wiadevmgr_Release(IWiaDevMgr *iface)
 {
     ULONG ref;
-    wiadevmgr *This = impl_from_WiaDevMgr(iface);
+    wiadevmgr *This = impl_from_IWiaDevMgr(iface);
 
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0)
@@ -71,14 +71,14 @@ static ULONG WINAPI wiadevmgr_Release(IWiaDevMgr *iface)
 
 static HRESULT WINAPI wiadevmgr_EnumDeviceInfo(IWiaDevMgr *iface, LONG lFlag, IEnumWIA_DEV_INFO **ppIEnum)
 {
-    wiadevmgr *This = impl_from_WiaDevMgr(iface);
+    wiadevmgr *This = impl_from_IWiaDevMgr(iface);
     FIXME("(%p, %d, %p): stub\n", This, lFlag, ppIEnum);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI wiadevmgr_CreateDevice(IWiaDevMgr *iface, BSTR bstrDeviceID, IWiaItem **ppWiaItemRoot)
 {
-    wiadevmgr *This = impl_from_WiaDevMgr(iface);
+    wiadevmgr *This = impl_from_IWiaDevMgr(iface);
     FIXME("(%p, %s, %p): stub\n", This, debugstr_w(bstrDeviceID), ppWiaItemRoot);
     return E_NOTIMPL;
 }
@@ -86,7 +86,7 @@ static HRESULT WINAPI wiadevmgr_CreateDevice(IWiaDevMgr *iface, BSTR bstrDeviceI
 static HRESULT WINAPI wiadevmgr_SelectDeviceDlg(IWiaDevMgr *iface, HWND hwndParent, LONG lDeviceType,
                                                 LONG lFlags, BSTR *pbstrDeviceID, IWiaItem **ppItemRoot)
 {
-    wiadevmgr *This = impl_from_WiaDevMgr(iface);
+    wiadevmgr *This = impl_from_IWiaDevMgr(iface);
     FIXME("(%p, %p, %d, 0x%x, %p, %p): stub\n", This, hwndParent, lDeviceType, lFlags, pbstrDeviceID, ppItemRoot);
     return E_NOTIMPL;
 }
@@ -94,7 +94,7 @@ static HRESULT WINAPI wiadevmgr_SelectDeviceDlg(IWiaDevMgr *iface, HWND hwndPare
 static HRESULT WINAPI wiadevmgr_SelectDeviceDlgID(IWiaDevMgr *iface, HWND hwndParent, LONG lDeviceType,
                                                   LONG lFlags, BSTR *pbstrDeviceID)
 {
-    wiadevmgr *This = impl_from_WiaDevMgr(iface);
+    wiadevmgr *This = impl_from_IWiaDevMgr(iface);
     FIXME("(%p, %p, %d, 0x%x, %p): stub\n", This, hwndParent, lDeviceType, lFlags, pbstrDeviceID);
     return E_NOTIMPL;
 }
@@ -103,7 +103,7 @@ static HRESULT WINAPI wiadevmgr_GetImageDlg(IWiaDevMgr *iface, HWND hwndParent, 
                                             LONG lFlags, LONG lIntent, IWiaItem *pItemRoot,
                                             BSTR bstrFilename, GUID *pguidFormat)
 {
-    wiadevmgr *This = impl_from_WiaDevMgr(iface);
+    wiadevmgr *This = impl_from_IWiaDevMgr(iface);
     FIXME("(%p, %p, %d, 0x%x, %d, %p, %s, %s): stub\n", This, hwndParent, lDeviceType, lFlags,
         lIntent, pItemRoot, debugstr_w(bstrFilename), debugstr_guid(pguidFormat));
     return E_NOTIMPL;
@@ -113,7 +113,7 @@ static HRESULT WINAPI wiadevmgr_RegisterEventCallbackProgram(IWiaDevMgr *iface, 
                                                              const GUID *pEventGUID, BSTR bstrCommandline,
                                                              BSTR bstrName, BSTR bstrDescription, BSTR bstrIcon)
 {
-    wiadevmgr *This = impl_from_WiaDevMgr(iface);
+    wiadevmgr *This = impl_from_IWiaDevMgr(iface);
     FIXME("(%p, 0x%x, %s, %s, %s, %s, %s, %s): stub\n", This, lFlags, debugstr_w(bstrDeviceID),
         debugstr_guid(pEventGUID), debugstr_w(bstrCommandline), debugstr_w(bstrName),
         debugstr_w(bstrDescription), debugstr_w(bstrIcon));
@@ -124,7 +124,7 @@ static HRESULT WINAPI wiadevmgr_RegisterEventCallbackInterface(IWiaDevMgr *iface
                                                                const GUID *pEventGUID, IWiaEventCallback *pIWiaEventCallback,
                                                                IUnknown **pEventObject)
 {
-    wiadevmgr *This = impl_from_WiaDevMgr(iface);
+    wiadevmgr *This = impl_from_IWiaDevMgr(iface);
     FIXME("(%p, 0x%x, %s, %s, %p, %p): stub\n", This, lFlags, debugstr_w(bstrDeviceID),
         debugstr_guid(pEventGUID), pIWiaEventCallback, pEventObject);
     return E_NOTIMPL;
@@ -134,7 +134,7 @@ static HRESULT WINAPI wiadevmgr_RegisterEventCallbackCLSID(IWiaDevMgr *iface, LO
                                                            const GUID *pEventGUID, const GUID *pClsID, BSTR bstrName,
                                                            BSTR bstrDescription, BSTR bstrIcon)
 {
-    wiadevmgr *This = impl_from_WiaDevMgr(iface);
+    wiadevmgr *This = impl_from_IWiaDevMgr(iface);
     FIXME("(%p, 0x%x, %s, %s, %s, %s, %s, %s): stub\n", This, lFlags, debugstr_w(bstrDeviceID),
         debugstr_guid(pEventGUID), debugstr_guid(pClsID), debugstr_w(bstrName),
         debugstr_w(bstrDescription), debugstr_w(bstrIcon));
@@ -143,7 +143,7 @@ static HRESULT WINAPI wiadevmgr_RegisterEventCallbackCLSID(IWiaDevMgr *iface, LO
 
 static HRESULT WINAPI wiadevmgr_AddDeviceDlg(IWiaDevMgr *iface, HWND hwndParent, LONG lFlags)
 {
-    wiadevmgr *This = impl_from_WiaDevMgr(iface);
+    wiadevmgr *This = impl_from_IWiaDevMgr(iface);
     FIXME("(%p, %p, 0x%x): stub\n", This, hwndParent, lFlags);
     return E_NOTIMPL;
 }
@@ -171,7 +171,7 @@ HRESULT wiadevmgr_Constructor(IUnknown *pUnkOuter, LPVOID *ppObj)
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(wiadevmgr));
     if (This)
     {
-        This->lpVtbl = &WIASERVC_IWiaDevMgr_Vtbl;
+        This->IWiaDevMgr_iface.lpVtbl = &WIASERVC_IWiaDevMgr_Vtbl;
         This->ref = 1;
         *ppObj = This;
         return S_OK;

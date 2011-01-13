@@ -30,7 +30,7 @@ extern ClassFactoryImpl WIASERVC_ClassFactory;
 
 typedef struct
 {
-    const IWiaDevMgrVtbl *lpVtbl;
+    IWiaDevMgr IWiaDevMgr_iface;
     LONG ref;
 } wiadevmgr;
 
