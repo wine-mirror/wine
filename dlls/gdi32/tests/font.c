@@ -973,7 +973,6 @@ static void test_GetCharABCWidths(void)
         memset(a, 0, sizeof a);
         memset(w, 0, sizeof w);
         hfont = SelectObject(hdc, hfont);
-        todo_wine
         ok(pGetCharABCWidthsA(hdc, c[i].a, c[i].a + 1, a) &&
            pGetCharABCWidthsW(hdc, c[i].w, c[i].w + 1, w) &&
            memcmp(a, w, sizeof a) == 0,

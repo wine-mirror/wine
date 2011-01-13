@@ -2296,18 +2296,33 @@ BOOL WINAPI GetAspectRatioFilterEx( HDC hdc, LPSIZE pAspectRatio )
 BOOL WINAPI GetCharABCWidthsA(HDC hdc, UINT firstChar, UINT lastChar,
                                   LPABC abc )
 {
-    INT i, wlen, count = (INT)(lastChar - firstChar + 1);
+    INT i, wlen;
+    UINT c;
     LPSTR str;
     LPWSTR wstr;
     BOOL ret = TRUE;
 
-    if(count <= 0) return FALSE;
+    if (lastChar < firstChar)
+        return FALSE;
 
-    str = HeapAlloc(GetProcessHeap(), 0, count);
-    for(i = 0; i < count; i++)
-	str[i] = (BYTE)(firstChar + i);
+    str = HeapAlloc(GetProcessHeap(), 0, (lastChar - firstChar + 1) * 2 + 1);
+    if (str == NULL)
+        return FALSE;
 
-    wstr = FONT_mbtowc(hdc, str, count, &wlen, NULL);
+    for(i = 0, c = firstChar; c <= lastChar; i++, c++)
+    {
+        if (c > 0xff)
+            str[i++] = (BYTE)(c >> 8);
+        str[i] = (BYTE)c;
+    }
+    str[i] = '\0';
+
+    wstr = FONT_mbtowc(hdc, str, -1, &wlen, NULL);
+    if (wstr == NULL)
+    {
+        HeapFree(GetProcessHeap(), 0, str);
+        return FALSE;
+    }
 
     for(i = 0; i < wlen; i++)
     {
