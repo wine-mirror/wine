@@ -13,6 +13,85 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: appwiz.rc:28
+msgid "Add/Remove Programs"
+msgstr "Dodaj/odstrani programe"
+
+#: appwiz.rc:29
+msgid ""
+"Allows you to install new software, or remove existing software from your "
+"computer."
+msgstr ""
+"Omogoča namestitev novih programov oziroma odstranitev programov z vašega "
+"računalnika."
+
+#: appwiz.rc:30 taskmgr.rc:263
+#, fuzzy
+msgid "Applications"
+msgstr ""
+"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
+"Aplikacije\n"
+"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
+"Programi"
+
+#: appwiz.rc:32
+msgid ""
+"Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
+"entry for this program from the registry?"
+msgstr ""
+"Napaka pri zaganjanju odstranitvenega programa '%s'. Ali želite izbrisati "
+"odstranitveni vnos za ta program iz registra?"
+
+#: appwiz.rc:33
+msgid "Not specified"
+msgstr "Ni navedeno"
+
+#: appwiz.rc:35 winefile.rc:160
+msgid "Name"
+msgstr "Ime"
+
+#: appwiz.rc:36
+msgid "Publisher"
+msgstr "Založnik"
+
+#: appwiz.rc:37 cryptui.rc:51
+msgid "Version"
+msgstr "Različica"
+
+#: appwiz.rc:38
+msgid "Installation programs"
+msgstr "Instalacijski programi"
+
+#: appwiz.rc:39
+msgid "Programs (*.exe)"
+msgstr "Programi (*.exe)"
+
+#: appwiz.rc:40 cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+msgid "All files (*.*)"
+msgstr "Vse datoteke (*.*)"
+
+#: appwiz.rc:42
+msgid "&Remove..."
+msgstr "&Odstrani ..."
+
+#: appwiz.rc:43
+msgid "&Modify/Remove..."
+msgstr "&Modify/Remove ..."
+
+#: appwiz.rc:48
+msgid "Downloading..."
+msgstr "Nalagam ..."
+
+#: appwiz.rc:49
+msgid "Installing..."
+msgstr "Nameščam ..."
+
+#: appwiz.rc:50
+msgid ""
+"Unexpected checksum of downloaded file. Aborting installation of corrupted "
+"file."
+msgstr ""
+
 #: browseui.rc:25
 msgid "Cancelling..."
 msgstr "Preklicujem ..."
@@ -1055,13 +1134,6 @@ msgstr ""
 "#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
 "Lastnost&i"
 
-#: cryptui.rc:51
-#, fuzzy
-msgid "Version"
-msgstr ""
-"CMD različica %s\n"
-"\n"
-
 #: cryptui.rc:52
 msgid "Serial number"
 msgstr ""
@@ -1180,10 +1252,6 @@ msgstr ""
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
 msgstr ""
-
-#: cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
-msgid "All files (*.*)"
-msgstr "Vse datoteke (*.*)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
@@ -5093,10 +5161,6 @@ msgstr "Dodeli proces v NIZEK prioritetni razred"
 msgid "Controls Debug Channels"
 msgstr "Nadzira kanale razhroščevalnika"
 
-#: taskmgr.rc:263
-msgid "Applications"
-msgstr "Aplikacije"
-
 #: taskmgr.rc:264
 msgid "Processes"
 msgstr "Procesi"
@@ -5772,10 +5836,6 @@ msgstr "Ni (še) na voljo"
 #: winefile.rc:155
 msgid "Wine File"
 msgstr "Wine File"
-
-#: winefile.rc:160
-msgid "Name"
-msgstr "Ime"
 
 #: winefile.rc:161
 msgid "Size"

@@ -13,6 +13,77 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: appwiz.rc:28
+msgid "Add/Remove Programs"
+msgstr ""
+
+#: appwiz.rc:29
+msgid ""
+"Allows you to install new software, or remove existing software from your "
+"computer."
+msgstr ""
+
+#: appwiz.rc:30 taskmgr.rc:263
+#, fuzzy
+msgid "Applications"
+msgstr "Επιλογές"
+
+#: appwiz.rc:32
+msgid ""
+"Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
+"entry for this program from the registry?"
+msgstr ""
+
+#: appwiz.rc:33
+msgid "Not specified"
+msgstr ""
+
+#: appwiz.rc:35 winefile.rc:160
+msgid "Name"
+msgstr ""
+
+#: appwiz.rc:36
+msgid "Publisher"
+msgstr ""
+
+#: appwiz.rc:37 cryptui.rc:51
+msgid "Version"
+msgstr ""
+
+#: appwiz.rc:38
+msgid "Installation programs"
+msgstr ""
+
+#: appwiz.rc:39
+msgid "Programs (*.exe)"
+msgstr ""
+
+#: appwiz.rc:40 cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+msgid "All files (*.*)"
+msgstr ""
+
+#: appwiz.rc:42
+msgid "&Remove..."
+msgstr ""
+
+#: appwiz.rc:43
+msgid "&Modify/Remove..."
+msgstr ""
+
+#: appwiz.rc:48
+msgid "Downloading..."
+msgstr ""
+
+#: appwiz.rc:49
+msgid "Installing..."
+msgstr ""
+
+#: appwiz.rc:50
+msgid ""
+"Unexpected checksum of downloaded file. Aborting installation of corrupted "
+"file."
+msgstr ""
+
 #: browseui.rc:25
 msgid "Cancelling..."
 msgstr ""
@@ -1025,10 +1096,6 @@ msgstr ""
 msgid "Properties Only"
 msgstr ""
 
-#: cryptui.rc:51
-msgid "Version"
-msgstr ""
-
 #: cryptui.rc:52
 msgid "Serial number"
 msgstr ""
@@ -1143,10 +1210,6 @@ msgstr ""
 
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
-msgstr ""
-
-#: cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
-msgid "All files (*.*)"
 msgstr ""
 
 #: cryptui.rc:81
@@ -4587,11 +4650,6 @@ msgstr ""
 msgid "Controls Debug Channels"
 msgstr ""
 
-#: taskmgr.rc:263
-#, fuzzy
-msgid "Applications"
-msgstr "Επιλογές"
-
 #: taskmgr.rc:264
 msgid "Processes"
 msgstr ""
@@ -5239,10 +5297,6 @@ msgstr ""
 
 #: winefile.rc:155
 msgid "Wine File"
-msgstr ""
-
-#: winefile.rc:160
-msgid "Name"
 msgstr ""
 
 #: winefile.rc:161

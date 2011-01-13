@@ -28,33 +28,6 @@
 
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
-STRINGTABLE
-{
-   IDS_CPL_TITLE, "Ajout/Suppression de programmes"
-   IDS_CPL_DESC, "Vous permet d'installer un nouveau logiciel, ou supprimer un logiciel existant de votre ordinateur."
-   IDS_TAB1_TITLE, "Applications"
-
-   IDS_UNINSTALL_FAILED, "Impossible d'exécuter le désinstalleur « %s ». Voulez-vous supprimer l'entrée de désinstallation de ce programme de la base de registre ?"
-   IDS_NOT_SPECIFIED, "Non spécifié"
-
-   IDS_COLUMN_NAME, "Nom"
-   IDS_COLUMN_PUBLISHER, "Éditeur"
-   IDS_COLUMN_VERSION, "Version"
-   IDS_FILTER_INSTALLS, "Programmes d'installation"
-   IDS_FILTER_PROGRAMS, "Programmes (*.exe)"
-   IDS_FILTER_ALL,      "Tous les fichiers (*.*)"
-
-   IDS_REMOVE, "&Supprimer..."
-   IDS_MODIFY_REMOVE, "&Modifier/Supprimer..."
-}
-
-STRINGTABLE
-{
-    IDS_DOWNLOADING     "Téléchargement..."
-    IDS_INSTALLING      "Installation..."
-    IDS_INVALID_SHA     "Somme de contrôle du fichier téléchargé inattendue. Abandon de l'installation d'un fichier corrompu."
-}
-
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Installation/Désinstallation"

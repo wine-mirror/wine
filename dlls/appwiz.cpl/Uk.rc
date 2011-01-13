@@ -27,32 +27,6 @@
 
 LANGUAGE LANG_UKRAINIAN, SUBLANG_DEFAULT
 
-STRINGTABLE
-{
-   IDS_CPL_TITLE, "Встановлення/Видалення Програм"
-   IDS_CPL_DESC, "Дозволяє встановити нове ПЗ та видалити наявне з вашого комп'ютера."
-   IDS_TAB1_TITLE, "Програми"
-
-   IDS_UNINSTALL_FAILED, "Неможливо виконати видалення, '%s'. Вилучити дані про встановлену програму з реєстру?"
-   IDS_NOT_SPECIFIED, "Не зазначено"
-
-   IDS_COLUMN_NAME, "Назва"
-   IDS_COLUMN_PUBLISHER, "Видавець"
-   IDS_COLUMN_VERSION, "Версія"
-   IDS_FILTER_INSTALLS, "Програми встановлення"
-   IDS_FILTER_PROGRAMS, "Програми (*.exe)"
-   IDS_FILTER_ALL,      "Всі Файли (*.*)"
-
-   IDS_REMOVE, "&Видалити..."
-   IDS_MODIFY_REMOVE, "&Змінити/Видалити..."
-}
-
-STRINGTABLE
-{
-    IDS_DOWNLOADING     "Завантаження..."
-    IDS_INSTALLING      "Встановлення..."
-}
-
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Встановлення/Видалення"

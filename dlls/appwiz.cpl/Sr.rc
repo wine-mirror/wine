@@ -27,32 +27,6 @@
 
 LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
 
-STRINGTABLE
-{
-   IDS_CPL_TITLE, "Dodaj/ukloni programe"
-   IDS_CPL_DESC, "Instaliranje novog programa ili brisanje postojećeg."
-   IDS_TAB1_TITLE, "Programi"
-
-   IDS_UNINSTALL_FAILED, "Izvršavanje deinstalacionog programa za  „%s“ nije uspelo. Želite li da uklonite registarski unos ovog programa?"
-   IDS_NOT_SPECIFIED, "Nije određeno"
-
-   IDS_COLUMN_NAME, "Ime"
-   IDS_COLUMN_PUBLISHER, "Izdavač"
-   IDS_COLUMN_VERSION, "Izdanje"
-   IDS_FILTER_INSTALLS, "Instalacioni programi"
-   IDS_FILTER_PROGRAMS, "Izvršne datoteke (*.exe)"
-   IDS_FILTER_ALL,      "Sve datoteke (*.*)"
-
-   IDS_REMOVE, "&Ukloni..."
-   IDS_MODIFY_REMOVE, "&Izmeni/ukloni..."
-}
-
-STRINGTABLE
-{
-    IDS_DOWNLOADING     "Preuzimanje..."
-    IDS_INSTALLING      "Instaliranje..."
-}
-
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Instaliraj/ukloni"
@@ -96,32 +70,6 @@ FONT 8, "MS Shell Dlg"
 }
 
 LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_CYRILLIC
-
-STRINGTABLE
-{
-   IDS_CPL_TITLE, "Додај/уклони програме"
-   IDS_CPL_DESC, "Инсталирање новог програма или брисање постојећег."
-   IDS_TAB1_TITLE, "Програми"
-
-   IDS_UNINSTALL_FAILED, "Извршавање деинсталационог програма за  „%s“ није успело. Желите ли да уклоните регистарски унос овог програма?"
-   IDS_NOT_SPECIFIED, "Није одређено"
-
-   IDS_COLUMN_NAME, "Име"
-   IDS_COLUMN_PUBLISHER, "Издавач"
-   IDS_COLUMN_VERSION, "Издање"
-   IDS_FILTER_INSTALLS, "Инсталациони програми"
-   IDS_FILTER_PROGRAMS, "Извршне датотеке (*.exe)"
-   IDS_FILTER_ALL,      "Све датотеке (*.*)"
-
-   IDS_REMOVE, "&Уклони..."
-   IDS_MODIFY_REMOVE, "&Измени/уклони..."
-}
-
-STRINGTABLE
-{
-    IDS_DOWNLOADING     "Преузимање..."
-    IDS_INSTALLING      "Инсталирање..."
-}
 
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU

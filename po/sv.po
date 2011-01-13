@@ -13,6 +13,81 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: appwiz.rc:28
+msgid "Add/Remove Programs"
+msgstr "Lägg till/Ta bort program"
+
+#: appwiz.rc:29
+msgid ""
+"Allows you to install new software, or remove existing software from your "
+"computer."
+msgstr ""
+"Låter dig installera ny programvara, eller ta bort befintlig programvara "
+"från din dator."
+
+#: appwiz.rc:30 taskmgr.rc:263
+msgid "Applications"
+msgstr "Program"
+
+#: appwiz.rc:32
+msgid ""
+"Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
+"entry for this program from the registry?"
+msgstr ""
+"Kunde inte köra avinstalleraren, '%s'. Vill du ta bort "
+"avinstallationsobjektet för detta program från registret?"
+
+#: appwiz.rc:33
+msgid "Not specified"
+msgstr "Inte angivet"
+
+#: appwiz.rc:35 winefile.rc:160
+msgid "Name"
+msgstr "Namn"
+
+#: appwiz.rc:36
+msgid "Publisher"
+msgstr "Utgivare"
+
+#: appwiz.rc:37 cryptui.rc:51
+msgid "Version"
+msgstr "Version"
+
+#: appwiz.rc:38
+msgid "Installation programs"
+msgstr "Installationsprogram"
+
+#: appwiz.rc:39
+msgid "Programs (*.exe)"
+msgstr "Program (*.exe)"
+
+#: appwiz.rc:40 cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+msgid "All files (*.*)"
+msgstr "Alla filer (*.*)"
+
+#: appwiz.rc:42
+msgid "&Remove..."
+msgstr "&Ta bort..."
+
+#: appwiz.rc:43
+msgid "&Modify/Remove..."
+msgstr "&Ändra/Ta bort..."
+
+#: appwiz.rc:48
+msgid "Downloading..."
+msgstr "Hämtar..."
+
+#: appwiz.rc:49
+msgid "Installing..."
+msgstr "Installerar..."
+
+#: appwiz.rc:50
+msgid ""
+"Unexpected checksum of downloaded file. Aborting installation of corrupted "
+"file."
+msgstr ""
+"Oväntad kontrollsumma på hämtad fil. Avbryter installation av korrupt fil."
+
 #: browseui.rc:25
 msgid "Cancelling..."
 msgstr "Avbryter..."
@@ -1067,10 +1142,6 @@ msgstr "Enbart kritiska tillägg"
 msgid "Properties Only"
 msgstr "Enbart egenskaper"
 
-#: cryptui.rc:51
-msgid "Version"
-msgstr "Version"
-
 #: cryptui.rc:52
 msgid "Serial number"
 msgstr "Serienummer"
@@ -1190,10 +1261,6 @@ msgstr "Microsoft Serialized Certificate Store (*.sst)"
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
 msgstr "CMS/PKCS #7-meddelanden (*.spc; *.p7b)"
-
-#: cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
-msgid "All files (*.*)"
-msgstr "Alla filer (*.*)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
@@ -5126,10 +5193,6 @@ msgstr "Ger processen låg prioritet"
 msgid "Controls Debug Channels"
 msgstr "Ställer in felsökningskanaler"
 
-#: taskmgr.rc:263
-msgid "Applications"
-msgstr "Program"
-
 #: taskmgr.rc:264
 msgid "Processes"
 msgstr "Processer"
@@ -5803,10 +5866,6 @@ msgstr "Inte implementerat ännu"
 #: winefile.rc:155
 msgid "Wine File"
 msgstr "Winefile"
-
-#: winefile.rc:160
-msgid "Name"
-msgstr "Namn"
 
 #: winefile.rc:161
 msgid "Size"

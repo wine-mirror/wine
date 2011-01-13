@@ -13,6 +13,83 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: appwiz.rc:28
+msgid "Add/Remove Programs"
+msgstr "Установка/Удаление программ"
+
+#: appwiz.rc:29
+msgid ""
+"Allows you to install new software, or remove existing software from your "
+"computer."
+msgstr ""
+"Позволяет устанавливать новое ПО или удалять существующее с вашего "
+"компьютера."
+
+#: appwiz.rc:30 taskmgr.rc:263
+msgid "Applications"
+msgstr "Приложения"
+
+#: appwiz.rc:32
+msgid ""
+"Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
+"entry for this program from the registry?"
+msgstr "Невозможно выполнить, '%s'. Вы хотите удалить программу из списка?"
+
+#: appwiz.rc:33
+msgid "Not specified"
+msgstr "Отсутствует"
+
+#: appwiz.rc:35 winefile.rc:160
+#, fuzzy
+msgid "Name"
+msgstr ""
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"Имя\n"
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"Название"
+
+#: appwiz.rc:36
+msgid "Publisher"
+msgstr "Издатель"
+
+#: appwiz.rc:37 cryptui.rc:51
+msgid "Version"
+msgstr "Версия"
+
+#: appwiz.rc:38
+msgid "Installation programs"
+msgstr "Установщики"
+
+#: appwiz.rc:39
+msgid "Programs (*.exe)"
+msgstr "Программы (*.exe)"
+
+#: appwiz.rc:40 cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+msgid "All files (*.*)"
+msgstr "Все файлы (*.*)"
+
+#: appwiz.rc:42
+msgid "&Remove..."
+msgstr "&Удалить..."
+
+#: appwiz.rc:43
+msgid "&Modify/Remove..."
+msgstr "&Изменить/Удалить..."
+
+#: appwiz.rc:48
+msgid "Downloading..."
+msgstr "Загрузка..."
+
+#: appwiz.rc:49
+msgid "Installing..."
+msgstr "Установка..."
+
+#: appwiz.rc:50
+msgid ""
+"Unexpected checksum of downloaded file. Aborting installation of corrupted "
+"file."
+msgstr ""
+
 #: browseui.rc:25
 msgid "Cancelling..."
 msgstr "Отмена..."
@@ -1055,13 +1132,6 @@ msgstr ""
 "#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
 "Сво&йства"
 
-#: cryptui.rc:51
-#, fuzzy
-msgid "Version"
-msgstr ""
-"Версия CMD %s\n"
-"\n"
-
 #: cryptui.rc:52
 msgid "Serial number"
 msgstr ""
@@ -1180,10 +1250,6 @@ msgstr ""
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
 msgstr ""
-
-#: cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
-msgid "All files (*.*)"
-msgstr "Все файлы (*.*)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
@@ -5115,10 +5181,6 @@ msgstr "Устанавливает класс приоритета НИЗКИЙ 
 msgid "Controls Debug Channels"
 msgstr "Управляет каналами отладки"
 
-#: taskmgr.rc:263
-msgid "Applications"
-msgstr "Приложения"
-
 #: taskmgr.rc:264
 msgid "Processes"
 msgstr "Процессы"
@@ -5800,10 +5862,6 @@ msgstr "Ещё не реализовано"
 #: winefile.rc:155
 msgid "Wine File"
 msgstr "Wine File"
-
-#: winefile.rc:160
-msgid "Name"
-msgstr "Имя"
 
 #: winefile.rc:161
 msgid "Size"

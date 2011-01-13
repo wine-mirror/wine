@@ -13,6 +13,93 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: appwiz.rc:28
+msgid "Add/Remove Programs"
+msgstr "Встановлення/Видалення Програм"
+
+#: appwiz.rc:29
+msgid ""
+"Allows you to install new software, or remove existing software from your "
+"computer."
+msgstr "Дозволяє встановити нове ПЗ та видалити наявне з вашого комп'ютера."
+
+#: appwiz.rc:30 taskmgr.rc:263
+#, fuzzy
+msgid "Applications"
+msgstr ""
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Додатки\n"
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Програми"
+
+#: appwiz.rc:32
+msgid ""
+"Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
+"entry for this program from the registry?"
+msgstr ""
+"Неможливо виконати видалення, '%s'. Вилучити дані про встановлену програму з "
+"реєстру?"
+
+#: appwiz.rc:33
+msgid "Not specified"
+msgstr "Не зазначено"
+
+#: appwiz.rc:35 winefile.rc:160
+#, fuzzy
+msgid "Name"
+msgstr ""
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Ім'я\n"
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Назва"
+
+#: appwiz.rc:36
+msgid "Publisher"
+msgstr "Видавець"
+
+#: appwiz.rc:37 cryptui.rc:51
+msgid "Version"
+msgstr "Версія"
+
+#: appwiz.rc:38
+msgid "Installation programs"
+msgstr "Програми встановлення"
+
+#: appwiz.rc:39
+msgid "Programs (*.exe)"
+msgstr "Програми (*.exe)"
+
+#: appwiz.rc:40 cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+#, fuzzy
+msgid "All files (*.*)"
+msgstr ""
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Всі файли (*.*)\n"
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Всі Файли (*.*)"
+
+#: appwiz.rc:42
+msgid "&Remove..."
+msgstr "&Видалити..."
+
+#: appwiz.rc:43
+msgid "&Modify/Remove..."
+msgstr "&Змінити/Видалити..."
+
+#: appwiz.rc:48
+msgid "Downloading..."
+msgstr "Завантаження..."
+
+#: appwiz.rc:49
+msgid "Installing..."
+msgstr "Встановлення..."
+
+#: appwiz.rc:50
+msgid ""
+"Unexpected checksum of downloaded file. Aborting installation of corrupted "
+"file."
+msgstr ""
+
 #: browseui.rc:25
 msgid "Cancelling..."
 msgstr "Скасування..."
@@ -1043,10 +1130,6 @@ msgstr "Лише критичні розширення"
 msgid "Properties Only"
 msgstr "Лише властивості"
 
-#: cryptui.rc:51
-msgid "Version"
-msgstr "Версія"
-
 #: cryptui.rc:52
 msgid "Serial number"
 msgstr "Серійний номер"
@@ -1166,10 +1249,6 @@ msgstr "Сховище серійних сертифікатів Microsoft (*.ss
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
 msgstr "Повідомлення CMS/PKCS #7 (*.spc; *.p7b)"
-
-#: cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
-msgid "All files (*.*)"
-msgstr "Всі файли (*.*)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
@@ -5079,10 +5158,6 @@ msgstr "Установлює клас пріоритету НИЗЬКИЙ для
 msgid "Controls Debug Channels"
 msgstr "Керує каналами налагодження"
 
-#: taskmgr.rc:263
-msgid "Applications"
-msgstr "Додатки"
-
 #: taskmgr.rc:264
 msgid "Processes"
 msgstr "Процеси"
@@ -5755,10 +5830,6 @@ msgstr "Ще не реалізовано"
 #: winefile.rc:155
 msgid "Wine File"
 msgstr "Wine File"
-
-#: winefile.rc:160
-msgid "Name"
-msgstr "Ім'я"
 
 #: winefile.rc:161
 msgid "Size"

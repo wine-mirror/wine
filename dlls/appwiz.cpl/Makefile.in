@@ -12,7 +12,6 @@ RC_SRCS = \
 	De.rc \
 	En.rc \
 	Es.rc \
-	Fi.rc \
 	Fr.rc \
 	He.rc \
 	Hu.rc \
@@ -33,6 +32,8 @@ RC_SRCS = \
 	Uk.rc \
 	Zh.rc \
 	appwiz.rc
+
+PO_SRCS = appwiz.rc
 
 SVG_SRCS = \
 	appwiz.svg

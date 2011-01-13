@@ -26,33 +26,6 @@
 
 LANGUAGE LANG_LITHUANIAN, SUBLANG_NEUTRAL
 
-STRINGTABLE
-{
-   IDS_CPL_TITLE, "Pridėti/pašalinti programas"
-   IDS_CPL_DESC, "Leidžia įdiegti naują programinę įrangą, ar pašalinti jau įdiegtą iš jūsų kompiuterio."
-   IDS_TAB1_TITLE, "Programos"
-
-   IDS_UNINSTALL_FAILED, "Nepavyko įvykdyti programos pašalinimo komandos „%s“. Ar norite pašalinti programos šalinimo įrašą iš registro?"
-   IDS_NOT_SPECIFIED, "Nenurodyta"
-
-   IDS_COLUMN_NAME, "Vardas"
-   IDS_COLUMN_PUBLISHER, "Leidėjas"
-   IDS_COLUMN_VERSION, "Versija"
-   IDS_FILTER_INSTALLS, "Diegimo programos"
-   IDS_FILTER_PROGRAMS, "Programos (*.exe)"
-   IDS_FILTER_ALL,      "Visi failai (*.*)"
-
-   IDS_REMOVE, "Pa&šalinti..."
-   IDS_MODIFY_REMOVE, "Pa&keisti/pašalinti..."
-}
-
-STRINGTABLE
-{
-    IDS_DOWNLOADING     "Atsiunčiama..."
-    IDS_INSTALLING      "Įdiegiama..."
-    IDS_INVALID_SHA     "Netikėta atsiųsto failo kontrolinė suma. Nutraukiamas pažeisto failo įdiegimas."
-}
-
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Įdiegti/Pašalinti"

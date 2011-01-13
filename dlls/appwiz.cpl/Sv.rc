@@ -27,33 +27,6 @@
 
 LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
 
-STRINGTABLE
-{
-   IDS_CPL_TITLE, "Lägg till/Ta bort program"
-   IDS_CPL_DESC, "Låter dig installera ny programvara, eller ta bort befintlig programvara från din dator."
-   IDS_TAB1_TITLE, "Program"
-
-   IDS_UNINSTALL_FAILED, "Kunde inte köra avinstalleraren, '%s'. Vill du ta bort avinstallationsobjektet för detta program från registret?"
-   IDS_NOT_SPECIFIED, "Inte angivet"
-
-   IDS_COLUMN_NAME, "Namn"
-   IDS_COLUMN_PUBLISHER, "Utgivare"
-   IDS_COLUMN_VERSION, "Version"
-   IDS_FILTER_INSTALLS, "Installationsprogram"
-   IDS_FILTER_PROGRAMS, "Program (*.exe)"
-   IDS_FILTER_ALL,      "Alla filer (*.*)"
-
-   IDS_REMOVE, "&Ta bort..."
-   IDS_MODIFY_REMOVE, "&Ändra/Ta bort..."
-}
-
-STRINGTABLE
-{
-    IDS_DOWNLOADING     "Hämtar..."
-    IDS_INSTALLING      "Installerar..."
-    IDS_INVALID_SHA     "Oväntad kontrollsumma på hämtad fil. Avbryter installation av korrupt fil."
-}
-
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Installera/Avinstallera"

@@ -26,32 +26,6 @@
 
 LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
 
-STRINGTABLE
-{
-   IDS_CPL_TITLE, "הוספה/הסרה של תכניות"
-   IDS_CPL_DESC, "תכנית זו מאפשר לך להתקין תכניות חדשות או להסיר תכניות קיימות מהמחשב שלך."
-   IDS_TAB1_TITLE, "יישומים"
-
-   IDS_UNINSTALL_FAILED, "לא ניתן להפעיל את תכנית ההסרה, '%s'. האם ברצונך להסיר את הרשומה של תכנית זו מרישום המערכת?"
-   IDS_NOT_SPECIFIED, "לא מוגדר"
-
-   IDS_COLUMN_NAME, "שם"
-   IDS_COLUMN_PUBLISHER, "מפיץ"
-   IDS_COLUMN_VERSION, "גרסה"
-   IDS_FILTER_INSTALLS, "תכניות התקנה"
-   IDS_FILTER_PROGRAMS, "תכניות (*.exe)"
-   IDS_FILTER_ALL,      "כל הקבצים (*.*)"
-
-   IDS_REMOVE, "ה&סרה..."
-   IDS_MODIFY_REMOVE, "&שינוי/הסרה..."
-}
-
-STRINGTABLE
-{
-    IDS_DOWNLOADING     "הורדה..."
-    IDS_INSTALLING      "התקנה..."
-}
-
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_LAYOUTRTL

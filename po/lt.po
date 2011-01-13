@@ -14,6 +14,82 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Virtaal 0.6.1\n"
 
+#: appwiz.rc:28
+msgid "Add/Remove Programs"
+msgstr "Pridėti/pašalinti programas"
+
+#: appwiz.rc:29
+msgid ""
+"Allows you to install new software, or remove existing software from your "
+"computer."
+msgstr ""
+"Leidžia įdiegti naują programinę įrangą, ar pašalinti jau įdiegtą iš jūsų "
+"kompiuterio."
+
+#: appwiz.rc:30 taskmgr.rc:263
+msgid "Applications"
+msgstr "Programos"
+
+#: appwiz.rc:32
+msgid ""
+"Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
+"entry for this program from the registry?"
+msgstr ""
+"Nepavyko įvykdyti programos pašalinimo komandos „%s“. Ar norite pašalinti "
+"programos šalinimo įrašą iš registro?"
+
+#: appwiz.rc:33
+msgid "Not specified"
+msgstr "Nenurodyta"
+
+#: appwiz.rc:35 winefile.rc:160
+msgid "Name"
+msgstr "Vardas"
+
+#: appwiz.rc:36
+msgid "Publisher"
+msgstr "Leidėjas"
+
+#: appwiz.rc:37 cryptui.rc:51
+msgid "Version"
+msgstr "Versija"
+
+#: appwiz.rc:38
+msgid "Installation programs"
+msgstr "Diegimo programos"
+
+#: appwiz.rc:39
+msgid "Programs (*.exe)"
+msgstr "Programos (*.exe)"
+
+#: appwiz.rc:40 cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+msgid "All files (*.*)"
+msgstr "Visi failai (*.*)"
+
+#: appwiz.rc:42
+msgid "&Remove..."
+msgstr "Pa&šalinti..."
+
+#: appwiz.rc:43
+msgid "&Modify/Remove..."
+msgstr "Pa&keisti/pašalinti..."
+
+#: appwiz.rc:48
+msgid "Downloading..."
+msgstr "Atsiunčiama..."
+
+#: appwiz.rc:49
+msgid "Installing..."
+msgstr "Įdiegiama..."
+
+#: appwiz.rc:50
+msgid ""
+"Unexpected checksum of downloaded file. Aborting installation of corrupted "
+"file."
+msgstr ""
+"Netikėta atsiųsto failo kontrolinė suma. Nutraukiamas pažeisto failo "
+"įdiegimas."
+
 #: browseui.rc:25
 msgid "Cancelling..."
 msgstr "Atsisakoma..."
@@ -1047,10 +1123,6 @@ msgstr "Tik būtini plėtiniai"
 msgid "Properties Only"
 msgstr "Tik savybės"
 
-#: cryptui.rc:51
-msgid "Version"
-msgstr "Versija"
-
 #: cryptui.rc:52
 msgid "Serial number"
 msgstr "Numeris"
@@ -1170,10 +1242,6 @@ msgstr "Išdėstyta serijomis liudijimų saugykla (*.sst)"
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
 msgstr "CMS/PKCS #7 pranešimai (*.spc; *.p7b)"
-
-#: cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
-msgid "All files (*.*)"
-msgstr "Visi failai (*.*)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
@@ -5074,10 +5142,6 @@ msgstr "Nustato procesui ŽEMĄ prioriteto klasę"
 msgid "Controls Debug Channels"
 msgstr "Kontroliuoja derinimo kanalus"
 
-#: taskmgr.rc:263
-msgid "Applications"
-msgstr "Programos"
-
 #: taskmgr.rc:264
 msgid "Processes"
 msgstr "Procesai"
@@ -5745,10 +5809,6 @@ msgstr "Dar nerealizuota"
 #: winefile.rc:155
 msgid "Wine File"
 msgstr "Wine failas"
-
-#: winefile.rc:160
-msgid "Name"
-msgstr "Vardas"
 
 #: winefile.rc:161
 msgid "Size"

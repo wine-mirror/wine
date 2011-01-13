@@ -25,32 +25,6 @@
 
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 
-STRINGTABLE
-{
-   IDS_CPL_TITLE, "Dodaj/odstrani programe"
-   IDS_CPL_DESC, "Omogoča namestitev novih programov oziroma odstranitev programov z vašega računalnika."
-   IDS_TAB1_TITLE, "Programi"
-
-   IDS_UNINSTALL_FAILED, "Napaka pri zaganjanju odstranitvenega programa '%s'. Ali želite izbrisati odstranitveni vnos za ta program iz registra?"
-   IDS_NOT_SPECIFIED, "Ni navedeno"
-
-   IDS_COLUMN_NAME, "Ime"
-   IDS_COLUMN_PUBLISHER, "Založnik"
-   IDS_COLUMN_VERSION, "Različica"
-   IDS_FILTER_INSTALLS, "Instalacijski programi"
-   IDS_FILTER_PROGRAMS, "Programi (*.exe)"
-   IDS_FILTER_ALL,      "Vse datoteke (*.*)"
-
-   IDS_REMOVE, "&Odstrani ..."
-   IDS_MODIFY_REMOVE, "&Modify/Remove ..."
-}
-
-STRINGTABLE
-{
-    IDS_DOWNLOADING     "Nalagam ..."
-    IDS_INSTALLING      "Nameščam ..."
-}
-
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Dodaj/odstrani programe"

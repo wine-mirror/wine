@@ -13,6 +13,85 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: appwiz.rc:28
+msgid "Add/Remove Programs"
+msgstr "プログラムの追加と削除"
+
+#: appwiz.rc:29
+msgid ""
+"Allows you to install new software, or remove existing software from your "
+"computer."
+msgstr ""
+"新しいソフトウェアをインストールするか、既存のソフトウェアを削除することがで"
+"きます。"
+
+#: appwiz.rc:30 taskmgr.rc:263
+msgid "Applications"
+msgstr "アプリケーション"
+
+#: appwiz.rc:32
+msgid ""
+"Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
+"entry for this program from the registry?"
+msgstr ""
+"アンインストーラー '%s' を起動することができません。このプログラムに対するア"
+"ンインストール項目をレジストリから削除しますか？"
+
+#: appwiz.rc:33
+msgid "Not specified"
+msgstr "指定されていません"
+
+#: appwiz.rc:35 winefile.rc:160
+msgid "Name"
+msgstr "名前"
+
+#: appwiz.rc:36
+msgid "Publisher"
+msgstr "発行元"
+
+#: appwiz.rc:37 cryptui.rc:51
+msgid "Version"
+msgstr "バージョン"
+
+#: appwiz.rc:38
+msgid "Installation programs"
+msgstr "インストールプログラム"
+
+#: appwiz.rc:39
+msgid "Programs (*.exe)"
+msgstr "プログラム(*.exe)"
+
+#: appwiz.rc:40 cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+#, fuzzy
+msgid "All files (*.*)"
+msgstr ""
+"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
+"全てのファイル (*.*)\n"
+"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
+"すべてのファイル (*.*)"
+
+#: appwiz.rc:42
+msgid "&Remove..."
+msgstr "削除(&R)..."
+
+#: appwiz.rc:43
+msgid "&Modify/Remove..."
+msgstr "変更と削除(&M)..."
+
+#: appwiz.rc:48
+msgid "Downloading..."
+msgstr "ダウンロードしています..."
+
+#: appwiz.rc:49
+msgid "Installing..."
+msgstr "インストールしています..."
+
+#: appwiz.rc:50
+msgid ""
+"Unexpected checksum of downloaded file. Aborting installation of corrupted "
+"file."
+msgstr ""
+
 #: browseui.rc:25
 msgid "Cancelling..."
 msgstr "キャンセル…"
@@ -1042,10 +1121,6 @@ msgstr "必須とする拡張フィールドのみ"
 msgid "Properties Only"
 msgstr "プロパティのみ"
 
-#: cryptui.rc:51
-msgid "Version"
-msgstr "バージョン"
-
 #: cryptui.rc:52
 msgid "Serial number"
 msgstr "シリアル番号"
@@ -1163,15 +1238,6 @@ msgstr "Microsoft シリアル化された証明書ストア (*.sst)"
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
 msgstr "CMS/PKCS #7 Messages (*.spc; *.p7b)"
-
-#: cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
-#, fuzzy
-msgid "All files (*.*)"
-msgstr ""
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"全てのファイル (*.*)\n"
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"すべてのファイル (*.*)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
@@ -5014,10 +5080,6 @@ msgstr "プロセスの優先クラスを 低 に設定します。"
 msgid "Controls Debug Channels"
 msgstr "デバッグのチャンネルをコントロールします。"
 
-#: taskmgr.rc:263
-msgid "Applications"
-msgstr "アプリケーション"
-
 #: taskmgr.rc:264
 msgid "Processes"
 msgstr "プロセス"
@@ -5675,10 +5737,6 @@ msgstr "未実装"
 #: winefile.rc:155
 msgid "Wine File"
 msgstr "Wine File"
-
-#: winefile.rc:160
-msgid "Name"
-msgstr "名前"
 
 #: winefile.rc:161
 msgid "Size"

@@ -13,6 +13,82 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: appwiz.rc:28
+msgid "Add/Remove Programs"
+msgstr "Aggiungi/Rimuovi Programmi"
+
+#: appwiz.rc:29
+msgid ""
+"Allows you to install new software, or remove existing software from your "
+"computer."
+msgstr ""
+"Ti permette di installare nuovi software o di rimuovere quelli presenti dal "
+"tuo computer."
+
+#: appwiz.rc:30 taskmgr.rc:263
+msgid "Applications"
+msgstr "Applicazioni"
+
+#: appwiz.rc:32
+msgid ""
+"Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
+"entry for this program from the registry?"
+msgstr ""
+"Impossibile eseguire il disinstallatore, '%s'. Vuoi rimuovere la voce di "
+"disinstallazione di questo programma dal registro?"
+
+#: appwiz.rc:33
+msgid "Not specified"
+msgstr "Non specificato"
+
+#: appwiz.rc:35 winefile.rc:160
+msgid "Name"
+msgstr "Nome"
+
+#: appwiz.rc:36
+msgid "Publisher"
+msgstr "Editore"
+
+#: appwiz.rc:37 cryptui.rc:51
+msgid "Version"
+msgstr "Versione"
+
+#: appwiz.rc:38
+msgid "Installation programs"
+msgstr "Programmi d'installazione"
+
+#: appwiz.rc:39
+msgid "Programs (*.exe)"
+msgstr "Programmi (*.exe)"
+
+#: appwiz.rc:40 cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+msgid "All files (*.*)"
+msgstr "Tutti i file (*.*)"
+
+#: appwiz.rc:42
+msgid "&Remove..."
+msgstr "&Rimuovi..."
+
+#: appwiz.rc:43
+msgid "&Modify/Remove..."
+msgstr "&Modifica/Rimuovi..."
+
+#: appwiz.rc:48
+msgid "Downloading..."
+msgstr "Scaricamento..."
+
+#: appwiz.rc:49
+msgid "Installing..."
+msgstr "Installazione..."
+
+#: appwiz.rc:50
+msgid ""
+"Unexpected checksum of downloaded file. Aborting installation of corrupted "
+"file."
+msgstr ""
+"Checksum inaspettato del file scaricato. Interruzione dell'installazione del "
+"file corrotto."
+
 #: browseui.rc:25
 msgid "Cancelling..."
 msgstr "Annullando..."
@@ -1105,10 +1181,6 @@ msgstr "Solo estensioni critiche"
 msgid "Properties Only"
 msgstr "Solo proprietà"
 
-#: cryptui.rc:51
-msgid "Version"
-msgstr "Versione"
-
 #: cryptui.rc:52
 msgid "Serial number"
 msgstr "Numero seriale"
@@ -1228,10 +1300,6 @@ msgstr "Deposito Certificati Serializzato Microsoft (*.sst)"
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
 msgstr "Messaggi CMS/PKCS #7 (*.spc; *.p7b)"
-
-#: cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
-msgid "All files (*.*)"
-msgstr "Tutti i file (*.*)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
@@ -5230,10 +5298,6 @@ msgstr "Mette il processo nella classe di priorità 'Bassa'"
 msgid "Controls Debug Channels"
 msgstr "Controlla i canali di debug"
 
-#: taskmgr.rc:263
-msgid "Applications"
-msgstr "Applicazioni"
-
 #: taskmgr.rc:264
 msgid "Processes"
 msgstr "Processi"
@@ -5907,10 +5971,6 @@ msgstr "Non ancora implementato"
 #: winefile.rc:155
 msgid "Wine File"
 msgstr "Wine File"
-
-#: winefile.rc:160
-msgid "Name"
-msgstr "Nome"
 
 #: winefile.rc:161
 msgid "Size"

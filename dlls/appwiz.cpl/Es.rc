@@ -25,32 +25,6 @@
 
 LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
 
-STRINGTABLE
-{
-   IDS_CPL_TITLE, "Agregar/Quitar Programas"
-   IDS_CPL_DESC, "Te permite instalar nuevo software, o desinstalar el software existente de tu computador."
-   IDS_TAB1_TITLE, "Aplicaciones"
-
-   IDS_UNINSTALL_FAILED, "Imposible ejecutar el desinstalador, '%s'. ¿Desea quitar la entrada de desinstalación de este programa del registro?"
-   IDS_NOT_SPECIFIED, "No especificado"
-
-   IDS_COLUMN_NAME, "Nombre"
-   IDS_COLUMN_PUBLISHER, "Editor"
-   IDS_COLUMN_VERSION, "Versión"
-   IDS_FILTER_INSTALLS, "Programas de instalación"
-   IDS_FILTER_PROGRAMS, "Programas (*.exe)"
-   IDS_FILTER_ALL,      "Todos los archivos (*.*)"
-
-   IDS_REMOVE, "&Quitar..."
-   IDS_MODIFY_REMOVE, "&Modificar/Quitar..."
-}
-
-STRINGTABLE
-{
-    IDS_DOWNLOADING     "Descargando..."
-    IDS_INSTALLING      "Instalando..."
-}
-
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Instalar/Desinstalar"

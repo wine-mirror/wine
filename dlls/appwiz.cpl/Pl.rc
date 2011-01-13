@@ -24,33 +24,6 @@
 
 LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 
-STRINGTABLE
-{
-   IDS_CPL_TITLE, "Dodaj/Usuñ programy"
-   IDS_CPL_DESC, "Pozwala na instalacjê nowego lub usuniêcie ju¿ istniej¹cego oprogramowania z twojego komputera."
-   IDS_TAB1_TITLE, "Aplikacje"
-
-   IDS_UNINSTALL_FAILED, "Nie mo¿na uruchomiæ programu odinstalowuj¹cego, '%s'. Czy chcesz usun¹æ wpis o tym programie z rejestru?"
-   IDS_NOT_SPECIFIED, "Nie okreœlone"
-
-   IDS_COLUMN_NAME, "Nazwa"
-   IDS_COLUMN_PUBLISHER, "Wydawca"
-   IDS_COLUMN_VERSION, "Wersja"
-   IDS_FILTER_INSTALLS, "Programy instalacyjne"
-   IDS_FILTER_PROGRAMS, "Programy (*.exe)"
-   IDS_FILTER_ALL,      "Wszystkie pliki (*.*)"
-
-   IDS_REMOVE, "&Usuñ..."
-   IDS_MODIFY_REMOVE, "&Zmieñ/Usuñ..."
-}
-
-STRINGTABLE
-{
-    IDS_DOWNLOADING     "Pobieranie..."
-    IDS_INSTALLING      "Instalowanie..."
-    IDS_INVALID_SHA     "Nieoczekiwana suma pobranego pliku. Przerywanie instalacji uszkodzonego pliku."
-}
-
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Zainstaluj/Odinstaluj"

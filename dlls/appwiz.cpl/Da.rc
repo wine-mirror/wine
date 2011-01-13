@@ -29,32 +29,6 @@
 
 LANGUAGE LANG_DANISH, SUBLANG_DEFAULT
 
-STRINGTABLE
-{
-   IDS_CPL_TITLE,        "Tilføj/Fjern Programmer"
-   IDS_CPL_DESC,         "Giver dig mulighed for at installere ny software, eller fjerne eksisterende software fra din computer."
-   IDS_TAB1_TITLE,       "Applikationer"
-
-   IDS_UNINSTALL_FAILED, "Er ikke i stand til at starte afinstallationen, '%s'. Ønsker du at fjerne fjernes posten, for dette program fra registreringsdatabasen?"
-   IDS_NOT_SPECIFIED,    "Ikke specificeret"
-
-   IDS_COLUMN_NAME,      "Navn"
-   IDS_COLUMN_PUBLISHER, "Udgiver"
-   IDS_COLUMN_VERSION,   "Version"
-   IDS_FILTER_INSTALLS,  "Installations Programmer"
-   IDS_FILTER_PROGRAMS,  "Programmer (*.exe)"
-   IDS_FILTER_ALL,       "Alle Filer (*.*)"
-
-   IDS_REMOVE,           "&Fjern..."
-   IDS_MODIFY_REMOVE,    "&Rediger/Fjern..."
-}
-
-STRINGTABLE
-{
-    IDS_DOWNLOADING     "Henter..."
-    IDS_INSTALLING      "Installerer..."
-}
-
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Installer/Fjern"

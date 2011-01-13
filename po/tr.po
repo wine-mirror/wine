@@ -13,6 +13,88 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: appwiz.rc:28
+msgid "Add/Remove Programs"
+msgstr ""
+
+#: appwiz.rc:29
+msgid ""
+"Allows you to install new software, or remove existing software from your "
+"computer."
+msgstr ""
+
+#: appwiz.rc:30 taskmgr.rc:263
+#, fuzzy
+msgid "Applications"
+msgstr "Seçenekler"
+
+#: appwiz.rc:32
+#, fuzzy
+msgid ""
+"Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
+"entry for this program from the registry?"
+msgstr ""
+"'%s' kaldırma komutu çalıştırılamadı, çalıştırıbilir dosya var olmayabilir.\n"
+"Sistem kaydından bu kaldırma girişini silmek ister misiniz?"
+
+#: appwiz.rc:33
+#, fuzzy
+msgid "Not specified"
+msgstr "Komut belirtilmemiş."
+
+#: appwiz.rc:35 winefile.rc:160
+msgid "Name"
+msgstr "Ad"
+
+#: appwiz.rc:36
+msgid "Publisher"
+msgstr ""
+
+#: appwiz.rc:37 cryptui.rc:51
+#, fuzzy
+msgid "Version"
+msgstr ""
+"CMD Version %s\n"
+"\n"
+
+#: appwiz.rc:38
+#, fuzzy
+msgid "Installation programs"
+msgstr "Yeni bir program çalıştırır"
+
+#: appwiz.rc:39
+#, fuzzy
+msgid "Programs (*.exe)"
+msgstr "Programlar"
+
+#: appwiz.rc:40 cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+msgid "All files (*.*)"
+msgstr "Tüm dosyalar (*.*)"
+
+#: appwiz.rc:42
+#, fuzzy
+msgid "&Remove..."
+msgstr "Paylaşımı S&il..."
+
+#: appwiz.rc:43
+#, fuzzy
+msgid "&Modify/Remove..."
+msgstr "Paylaşımı S&il..."
+
+#: appwiz.rc:48
+msgid "Downloading..."
+msgstr "İndiriliyor..."
+
+#: appwiz.rc:49
+msgid "Installing..."
+msgstr "Kuruluyor..."
+
+#: appwiz.rc:50
+msgid ""
+"Unexpected checksum of downloaded file. Aborting installation of corrupted "
+"file."
+msgstr ""
+
 #: browseui.rc:25
 msgid "Cancelling..."
 msgstr ""
@@ -1047,13 +1129,6 @@ msgstr ""
 "#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
 "Ö&zellikler"
 
-#: cryptui.rc:51
-#, fuzzy
-msgid "Version"
-msgstr ""
-"CMD Version %s\n"
-"\n"
-
 #: cryptui.rc:52
 msgid "Serial number"
 msgstr ""
@@ -1172,10 +1247,6 @@ msgstr ""
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
 msgstr ""
-
-#: cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
-msgid "All files (*.*)"
-msgstr "Tüm dosyalar (*.*)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
@@ -5069,11 +5140,6 @@ msgstr "Süreci DÜŞÜK öncelik sınıfında çalışmaya ayarlar"
 msgid "Controls Debug Channels"
 msgstr "Controls Debug Channels"
 
-#: taskmgr.rc:263
-#, fuzzy
-msgid "Applications"
-msgstr "Seçenekler"
-
 #: taskmgr.rc:264
 #, fuzzy
 msgid "Processes"
@@ -5736,10 +5802,6 @@ msgstr "Henüz tamamlanmadı"
 #: winefile.rc:155
 msgid "Wine File"
 msgstr "Wine Dosya Yöneticisi"
-
-#: winefile.rc:160
-msgid "Name"
-msgstr "Ad"
 
 #: winefile.rc:161
 msgid "Size"

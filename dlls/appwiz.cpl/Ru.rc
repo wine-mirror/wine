@@ -27,33 +27,6 @@
 
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
-STRINGTABLE
-{
-   IDS_CPL_TITLE, "Установка/Удаление программ"
-   IDS_CPL_DESC, "Позволяет устанавливать новое ПО или удалять существующее с вашего компьютера."
-   IDS_TAB1_TITLE, "Приложения"
-
-   IDS_UNINSTALL_FAILED, "Невозможно выполнить, '%s'. Вы хотите удалить программу из списка?"
-   IDS_NOT_SPECIFIED, "Отсутствует"
-
-   IDS_COLUMN_NAME, "Название"
-   IDS_COLUMN_PUBLISHER, "Издатель"
-   IDS_COLUMN_VERSION, "Версия"
-   IDS_FILTER_INSTALLS, "Установщики"
-   IDS_FILTER_PROGRAMS, "Программы (*.exe)"
-   IDS_FILTER_ALL,      "Все файлы (*.*)"
-
-
-   IDS_REMOVE, "&Удалить..."
-   IDS_MODIFY_REMOVE, "&Изменить/Удалить..."
-}
-
-STRINGTABLE
-{
-    IDS_DOWNLOADING     "Загрузка..."
-    IDS_INSTALLING      "Установка..."
-}
-
 IDD_MAIN DIALOG 0, 0, 320, 235
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Установка/Удаление"

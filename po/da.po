@@ -13,6 +13,90 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: appwiz.rc:28
+msgid "Add/Remove Programs"
+msgstr "Tilføj/Fjern Programmer"
+
+#: appwiz.rc:29
+msgid ""
+"Allows you to install new software, or remove existing software from your "
+"computer."
+msgstr ""
+"Giver dig mulighed for at installere ny software, eller fjerne eksisterende "
+"software fra din computer."
+
+#: appwiz.rc:30 taskmgr.rc:263
+#, fuzzy
+msgid "Applications"
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Programmer\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Applikationer"
+
+#: appwiz.rc:32
+msgid ""
+"Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
+"entry for this program from the registry?"
+msgstr ""
+"Er ikke i stand til at starte afinstallationen, '%s'. Ønsker du at fjerne "
+"fjernes posten, for dette program fra registreringsdatabasen?"
+
+#: appwiz.rc:33
+msgid "Not specified"
+msgstr "Ikke specificeret"
+
+#: appwiz.rc:35 winefile.rc:160
+msgid "Name"
+msgstr "Navn"
+
+#: appwiz.rc:36
+msgid "Publisher"
+msgstr "Udgiver"
+
+#: appwiz.rc:37 cryptui.rc:51
+msgid "Version"
+msgstr "Version"
+
+#: appwiz.rc:38
+msgid "Installation programs"
+msgstr "Installations Programmer"
+
+#: appwiz.rc:39
+msgid "Programs (*.exe)"
+msgstr "Programmer (*.exe)"
+
+#: appwiz.rc:40 cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+#, fuzzy
+msgid "All files (*.*)"
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Alle filer (*.*)\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Alle Filer (*.*)"
+
+#: appwiz.rc:42
+msgid "&Remove..."
+msgstr "&Fjern..."
+
+#: appwiz.rc:43
+msgid "&Modify/Remove..."
+msgstr "&Rediger/Fjern..."
+
+#: appwiz.rc:48
+msgid "Downloading..."
+msgstr "Henter..."
+
+#: appwiz.rc:49
+msgid "Installing..."
+msgstr "Installerer..."
+
+#: appwiz.rc:50
+msgid ""
+"Unexpected checksum of downloaded file. Aborting installation of corrupted "
+"file."
+msgstr ""
+
 #: browseui.rc:25
 msgid "Cancelling..."
 msgstr "Annullering..."
@@ -1052,13 +1136,6 @@ msgstr ""
 "#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
 "Egenska&per"
 
-#: cryptui.rc:51
-#, fuzzy
-msgid "Version"
-msgstr ""
-"CMD Version %s\n"
-"\n"
-
 #: cryptui.rc:52
 msgid "Serial number"
 msgstr ""
@@ -1177,10 +1254,6 @@ msgstr ""
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
 msgstr ""
-
-#: cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
-msgid "All files (*.*)"
-msgstr "Alle filer (*.*)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
@@ -5113,10 +5186,6 @@ msgstr "Sætter processen til lav prioritet"
 msgid "Controls Debug Channels"
 msgstr "Kontrollere Fejlsøgnings Kanaler"
 
-#: taskmgr.rc:263
-msgid "Applications"
-msgstr "Programmer"
-
 #: taskmgr.rc:264
 msgid "Processes"
 msgstr "Processer"
@@ -5794,10 +5863,6 @@ msgstr "Ikke implementeret endnu"
 #: winefile.rc:155
 msgid "Wine File"
 msgstr "Filbehandling"
-
-#: winefile.rc:160
-msgid "Name"
-msgstr "Navn"
 
 #: winefile.rc:161
 msgid "Size"

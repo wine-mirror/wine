@@ -13,6 +13,78 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: appwiz.rc:28
+msgid "Add/Remove Programs"
+msgstr "Legg til/Fjern programmer"
+
+#: appwiz.rc:29
+msgid ""
+"Allows you to install new software, or remove existing software from your "
+"computer."
+msgstr "Lar deg installere ny programvare eller fjerne installerte programmer."
+
+#: appwiz.rc:30 taskmgr.rc:263
+msgid "Applications"
+msgstr "Programmer"
+
+#: appwiz.rc:32
+msgid ""
+"Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
+"entry for this program from the registry?"
+msgstr ""
+"Klarte ikke kjøre avinstalleringsprogrammet, «%s». Vil du fjerne oppføringen "
+"fra listen over installerte programmer?"
+
+#: appwiz.rc:33
+msgid "Not specified"
+msgstr "Ikke oppgitt"
+
+#: appwiz.rc:35 winefile.rc:160
+msgid "Name"
+msgstr "Navn"
+
+#: appwiz.rc:36
+msgid "Publisher"
+msgstr "Utgiver"
+
+#: appwiz.rc:37 cryptui.rc:51
+msgid "Version"
+msgstr "Versjon"
+
+#: appwiz.rc:38
+msgid "Installation programs"
+msgstr "Installasjonsprogrammer"
+
+#: appwiz.rc:39
+msgid "Programs (*.exe)"
+msgstr "Programmer (*.exe)"
+
+#: appwiz.rc:40 cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+msgid "All files (*.*)"
+msgstr "Alle filer (*.*)"
+
+#: appwiz.rc:42
+msgid "&Remove..."
+msgstr "Fje&rn..."
+
+#: appwiz.rc:43
+msgid "&Modify/Remove..."
+msgstr "&Endre/Fjern..."
+
+#: appwiz.rc:48
+msgid "Downloading..."
+msgstr "Laster ned..."
+
+#: appwiz.rc:49
+msgid "Installing..."
+msgstr "Installerer..."
+
+#: appwiz.rc:50
+msgid ""
+"Unexpected checksum of downloaded file. Aborting installation of corrupted "
+"file."
+msgstr ""
+
 #: browseui.rc:25
 msgid "Cancelling..."
 msgstr "Avbryter..."
@@ -1107,10 +1179,6 @@ msgstr "Kun kritiske utvidelser"
 msgid "Properties Only"
 msgstr "Kun egenskaper"
 
-#: cryptui.rc:51
-msgid "Version"
-msgstr "Versjon"
-
 #: cryptui.rc:52
 msgid "Serial number"
 msgstr "Serienummer"
@@ -1230,10 +1298,6 @@ msgstr "Microsoft Serialized Certificate Store (*.sst)"
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
 msgstr "CMS/PKCS #7 meldinger (*.spc; *.p7b)"
-
-#: cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
-msgid "All files (*.*)"
-msgstr "Alle filer (*.*)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
@@ -5130,10 +5194,6 @@ msgstr "Gir prosessen lav prioritet"
 msgid "Controls Debug Channels"
 msgstr "Kontrollerer feilsøkingskanaler"
 
-#: taskmgr.rc:263
-msgid "Applications"
-msgstr "Programmer"
-
 #: taskmgr.rc:264
 msgid "Processes"
 msgstr "Prosesser"
@@ -5808,10 +5868,6 @@ msgstr "Ikke implementert ennå"
 #: winefile.rc:155
 msgid "Wine File"
 msgstr "Filbehandling"
-
-#: winefile.rc:160
-msgid "Name"
-msgstr "Navn"
 
 #: winefile.rc:161
 msgid "Size"

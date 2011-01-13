@@ -26,33 +26,6 @@
 
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
-STRINGTABLE
-{
-   IDS_CPL_TITLE, "Aggiungi/Rimuovi Programmi"
-   IDS_CPL_DESC, "Ti permette di installare nuovi software o di rimuovere quelli presenti dal tuo computer."
-   IDS_TAB1_TITLE, "Applicazioni"
-
-   IDS_UNINSTALL_FAILED, "Impossibile eseguire il disinstallatore, '%s'. Vuoi rimuovere la voce di disinstallazione di questo programma dal registro?"
-   IDS_NOT_SPECIFIED, "Non specificato"
-
-   IDS_COLUMN_NAME, "Nome"
-   IDS_COLUMN_PUBLISHER, "Editore"
-   IDS_COLUMN_VERSION, "Versione"
-   IDS_FILTER_INSTALLS, "Programmi d'installazione"
-   IDS_FILTER_PROGRAMS, "Programmi (*.exe)"
-   IDS_FILTER_ALL,      "Tutti i file (*.*)"
-
-   IDS_REMOVE, "&Rimuovi..."
-   IDS_MODIFY_REMOVE, "&Modifica/Rimuovi..."
-}
-
-STRINGTABLE
-{
-    IDS_DOWNLOADING     "Scaricamento..."
-    IDS_INSTALLING      "Installazione..."
-    IDS_INVALID_SHA     "Checksum inaspettato del file scaricato. Interruzione dell'installazione del file corrotto."
-}
-
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Installa/Disinstalla"

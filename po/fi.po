@@ -13,6 +13,81 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: appwiz.rc:28
+msgid "Add/Remove Programs"
+msgstr ""
+
+#: appwiz.rc:29
+msgid ""
+"Allows you to install new software, or remove existing software from your "
+"computer."
+msgstr ""
+
+#: appwiz.rc:30 taskmgr.rc:263
+#, fuzzy
+msgid "Applications"
+msgstr "Valinnat"
+
+#: appwiz.rc:32
+#, fuzzy
+msgid ""
+"Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
+"entry for this program from the registry?"
+msgstr ""
+"Poistokomento '%s' epäonnistui, johtuen ehkä puuttuvasta tiedostosta.\n"
+"Haluatko poistaa ohjelman rekisteristä?"
+
+#: appwiz.rc:33
+msgid "Not specified"
+msgstr ""
+
+#: appwiz.rc:35 winefile.rc:160
+msgid "Name"
+msgstr ""
+
+#: appwiz.rc:36
+msgid "Publisher"
+msgstr ""
+
+#: appwiz.rc:37 cryptui.rc:51
+msgid "Version"
+msgstr ""
+
+#: appwiz.rc:38
+msgid "Installation programs"
+msgstr ""
+
+#: appwiz.rc:39
+msgid "Programs (*.exe)"
+msgstr ""
+
+#: appwiz.rc:40 cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+msgid "All files (*.*)"
+msgstr "Kaikki tiedostot (*.*)"
+
+#: appwiz.rc:42
+#, fuzzy
+msgid "&Remove..."
+msgstr "&Huomautus..."
+
+#: appwiz.rc:43
+msgid "&Modify/Remove..."
+msgstr ""
+
+#: appwiz.rc:48
+msgid "Downloading..."
+msgstr "Downloading..."
+
+#: appwiz.rc:49
+msgid "Installing..."
+msgstr "Installing..."
+
+#: appwiz.rc:50
+msgid ""
+"Unexpected checksum of downloaded file. Aborting installation of corrupted "
+"file."
+msgstr ""
+
 #: browseui.rc:25
 msgid "Cancelling..."
 msgstr ""
@@ -1035,10 +1110,6 @@ msgstr ""
 "#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
 "O&minaisuudet"
 
-#: cryptui.rc:51
-msgid "Version"
-msgstr ""
-
 #: cryptui.rc:52
 msgid "Serial number"
 msgstr ""
@@ -1155,10 +1226,6 @@ msgstr ""
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
 msgstr ""
-
-#: cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
-msgid "All files (*.*)"
-msgstr "Kaikki tiedostot (*.*)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
@@ -4713,11 +4780,6 @@ msgstr ""
 msgid "Controls Debug Channels"
 msgstr ""
 
-#: taskmgr.rc:263
-#, fuzzy
-msgid "Applications"
-msgstr "Valinnat"
-
 #: taskmgr.rc:264
 msgid "Processes"
 msgstr ""
@@ -5398,10 +5460,6 @@ msgstr "Ei käytettävissä"
 #, fuzzy
 msgid "Wine File"
 msgstr "WineMine"
-
-#: winefile.rc:160
-msgid "Name"
-msgstr ""
 
 #: winefile.rc:161
 msgid "Size"

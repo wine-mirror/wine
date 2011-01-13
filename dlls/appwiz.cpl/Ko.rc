@@ -26,32 +26,6 @@
 
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
-STRINGTABLE
-{
-   IDS_CPL_TITLE, "프로그램 추가/삭제"
-   IDS_CPL_DESC, "새 소프트웨어를 설치하거나,이미 설치된 소프트웨어를 당신의 컴퓨터에서 삭제 할 수 있습니다."
-   IDS_TAB1_TITLE, "프로그램"
-
-   IDS_UNINSTALL_FAILED, "언인스톨러를 실행할 수 없습니다, '%s'. 당신은 이 프로그램의 언인스톨 정보를 레지스트리에서 지우겠습니까?"
-   IDS_NOT_SPECIFIED, "지정되지 않음"
-   IDS_COLUMN_NAME, "이름"
-   IDS_COLUMN_PUBLISHER, "제작사"
-   IDS_COLUMN_VERSION, "버젼"
-   IDS_FILTER_INSTALLS, "설치 프로그램"
-   IDS_FILTER_PROGRAMS, "프로그램 (*.exe)"
-   IDS_FILTER_ALL,      "모든 파일들 (*.*)"
-
-   IDS_REMOVE, "제거(&R)..."
-   IDS_MODIFY_REMOVE, "고치기(&M)/제거..."
-}
-
-STRINGTABLE
-{
-    IDS_DOWNLOADING     "다운로드중..."
-    IDS_INSTALLING      "설치하는 중..."
-    IDS_INVALID_SHA     "다운로드한 파일의 체크섬에 문제가 있습니다..망가진 파일의 설치를 취소하는 중입니다."
-}
-
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "설치/삭제"

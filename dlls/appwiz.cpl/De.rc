@@ -26,33 +26,6 @@
 
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
-STRINGTABLE
-{
-   IDS_CPL_TITLE, "Software"
-   IDS_CPL_DESC, "Erlaubt ihnen neue Software hinzuzufügen oder zu entfernen."
-   IDS_TAB1_TITLE, "Anwendungen"
-
-   IDS_UNINSTALL_FAILED, "Der Uninstaller konnte nicht gestartet werden, '%s'. Möchten Sie den Uninstall-Eintrag für dieses Programm aus der Registrierung entfernen?"
-   IDS_NOT_SPECIFIED, "Nicht angegeben"
-
-   IDS_COLUMN_NAME, "Name"
-   IDS_COLUMN_PUBLISHER, "Herausgeber"
-   IDS_COLUMN_VERSION, "Version"
-   IDS_FILTER_INSTALLS, "Setup-Programme"
-   IDS_FILTER_PROGRAMS, "Programme (*.exe)"
-   IDS_FILTER_ALL,      "Alle Dateien (*.*)"
-
-   IDS_REMOVE, "&Entfernen..."
-   IDS_MODIFY_REMOVE, "Än&dern/Entfernen..."
-}
-
-STRINGTABLE
-{
-    IDS_DOWNLOADING   "Lade herunter..."
-    IDS_INSTALLING    "Installiere..."
-    IDS_INVALID_SHA   "Unerwartete Prüfsumme der heruntergeladenen Datei. Breche Installation der beschädigten Datei ab."
-}
-
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Software"

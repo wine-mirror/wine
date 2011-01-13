@@ -27,32 +27,6 @@
 
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 
-STRINGTABLE
-{
-   IDS_CPL_TITLE, "添加/删除程序"
-   IDS_CPL_DESC, "允许你安装新软件或删除现有程序."
-   IDS_TAB1_TITLE, "应用程序"
-
-   IDS_UNINSTALL_FAILED, "不能运行卸载程序 '%s'. 你想把这个卸载程序从注册表中删除吗?"
-   IDS_NOT_SPECIFIED, "没指定"
-
-   IDS_COLUMN_NAME, "名称"
-   IDS_COLUMN_PUBLISHER, "生产商"
-   IDS_COLUMN_VERSION, "版本"
-   IDS_FILTER_INSTALLS, "安装程序"
-   IDS_FILTER_PROGRAMS, "程序 (*.exe)"
-   IDS_FILTER_ALL,      "所有文件 (*.*)"
-
-   IDS_REMOVE, "删除 (&R)..."
-   IDS_MODIFY_REMOVE, "修改或删除 (&M)..."
-}
-
-STRINGTABLE
-{
-    IDS_DOWNLOADING     "正在下载..."
-    IDS_INSTALLING      "正在安装..."
-}
-
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "安装/卸载"
@@ -109,32 +83,6 @@ FONT 9, "MS Shell Dlg"
 }
 
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
-
-STRINGTABLE
-{
-   IDS_CPL_TITLE, "添加/刪除程式"
-   IDS_CPL_DESC, "允許你安裝新軟件, 和從你的電腦裡刪除現有程式."
-   IDS_TAB1_TITLE, "運用程式"
-
-   IDS_UNINSTALL_FAILED, "不能執行卸載程式 '%s'. 你想把這個卸載程式從註冊表中刪除嗎?"
-   IDS_NOT_SPECIFIED, "沒指定"
-
-   IDS_COLUMN_NAME, "名稱"
-   IDS_COLUMN_PUBLISHER, "生產商"
-   IDS_COLUMN_VERSION, "版本"
-   IDS_FILTER_INSTALLS, "Installation Programs"
-   IDS_FILTER_PROGRAMS, "Programs (*.exe)"
-   IDS_FILTER_ALL,      "All files (*.*)"
-
-   IDS_REMOVE, "&Remove..."
-   IDS_MODIFY_REMOVE, "&Modify/Remove..."
-}
-
-STRINGTABLE
-{
-    IDS_DOWNLOADING     "正在下載..."
-    IDS_INSTALLING      "正在安裝..."
-}
 
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU

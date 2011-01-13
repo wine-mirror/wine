@@ -26,32 +26,6 @@
 
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 
-STRINGTABLE
-{
-   IDS_CPL_TITLE, "プログラムの追加と削除"
-   IDS_CPL_DESC, "新しいソフトウェアをインストールするか、既存のソフトウェアを削除することができます。"
-   IDS_TAB1_TITLE, "アプリケーション"
-
-   IDS_UNINSTALL_FAILED, "アンインストーラー '%s' を起動することができません。このプログラムに対するアンインストール項目をレジストリから削除しますか？"
-   IDS_NOT_SPECIFIED, "指定されていません"
-
-   IDS_COLUMN_NAME, "名前"
-   IDS_COLUMN_PUBLISHER, "発行元"
-   IDS_COLUMN_VERSION, "バージョン"
-   IDS_FILTER_INSTALLS, "インストールプログラム"
-   IDS_FILTER_PROGRAMS, "プログラム(*.exe)"
-   IDS_FILTER_ALL,      "すべてのファイル (*.*)"
-
-   IDS_REMOVE, "削除(&R)..."
-   IDS_MODIFY_REMOVE, "変更と削除(&M)..."
-}
-
-STRINGTABLE
-{
-    IDS_DOWNLOADING     "ダウンロードしています..."
-    IDS_INSTALLING      "インストールしています..."
-}
-
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "インストールとアンインストール"

@@ -26,32 +26,6 @@
 
 LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
 
-STRINGTABLE
-{
-   IDS_CPL_TITLE, "Programok hozzáadása/eltávolítása"
-   IDS_CPL_DESC, "Lehetõvé teszi új programok telepítését illetve eltávolítását az Ön számítógépérõl."
-   IDS_TAB1_TITLE, "Alkalmazások"
-
-   IDS_UNINSTALL_FAILED, "Nem tudom elindítani az eltávolító programot: '%s'. Szeretné az ehhez a programhoz tartozó eltávolítási bejegyzést törölni a regisztrációs adatbázisból?"
-   IDS_NOT_SPECIFIED, "Nincs megadva"
-
-   IDS_COLUMN_NAME, "Név"
-   IDS_COLUMN_PUBLISHER, "Kiadó"
-   IDS_COLUMN_VERSION, "Verzió"
-   IDS_FILTER_INSTALLS, "Telepítõ programok"
-   IDS_FILTER_PROGRAMS, "Programok (*.exe)"
-   IDS_FILTER_ALL,      "Minden fájl (*.*)"
-
-   IDS_REMOVE, "&Eltávolítás..."
-   IDS_MODIFY_REMOVE, "&Módosítás/Eltávolítás..."
-}
-
-STRINGTABLE
-{
-    IDS_DOWNLOADING     "Letöltés..."
-    IDS_INSTALLING      "Telepítés..."
-}
-
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Telepítés/Eltávolítás"

@@ -26,57 +26,6 @@
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
-STRINGTABLE
-{
-   IDS_CPL_TITLE, "Adicionar/Remover Programas"
-   IDS_CPL_DESC, "Permite a instalação de novo software, ou a remoção de software existente no seu computador."
-   IDS_TAB1_TITLE, "Aplicativos"
-
-   IDS_UNINSTALL_FAILED, "Não foi possível executar o desinstalador, '%s'. Deseja remover do registro a entrada de desinstalação para este programa?"
-   IDS_NOT_SPECIFIED, "Não especificado"
-
-   IDS_COLUMN_NAME, "Nome"
-   IDS_COLUMN_PUBLISHER, "Editor"
-   IDS_COLUMN_VERSION, "Versão"
-   IDS_FILTER_INSTALLS, "Programas de Instalação"
-   IDS_FILTER_PROGRAMS, "Programas (*.exe)"
-   IDS_FILTER_ALL,      "Todos os arquivos (*.*)"
-
-   IDS_REMOVE, "&Remover..."
-   IDS_MODIFY_REMOVE, "&Modificar/Remover..."
-}
-
-STRINGTABLE
-{
-    IDS_DOWNLOADING     "Fazendo o download..."
-    IDS_INSTALLING      "Instalando..."
-}
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
-
-STRINGTABLE
-{
-   IDS_CPL_TITLE, "Adicionar/Remover Programas"
-   IDS_CPL_DESC, "Permite a instalação de novo software, ou a remoção de software existente no seu computador."
-   IDS_TAB1_TITLE, "Aplicações"
-
-   IDS_UNINSTALL_FAILED, "Não foi possível executar o desinstalador, '%s'. Deseja remover do registo a entrada de desinstalação para este programa?"
-   IDS_NOT_SPECIFIED, "Não especificado"
-
-   IDS_COLUMN_NAME, "Nome"
-   IDS_COLUMN_PUBLISHER, "Editor"
-   IDS_COLUMN_VERSION, "Versão"
-   IDS_FILTER_INSTALLS, "Programas de Instalação"
-   IDS_FILTER_PROGRAMS, "Programas (*.exe)"
-   IDS_FILTER_ALL,      "Todos os ficheiros (*.*)"
-
-   IDS_REMOVE, "&Remover..."
-   IDS_MODIFY_REMOVE, "&Modificar/Remover..."
-}
-
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
-
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Instalar/Desinstalar"
@@ -111,12 +60,6 @@ FONT 8, "MS Shell Dlg"
  CONTROL "&Modificar...", IDC_MODIFY, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 172, 198, 68, 14
  CONTROL "&Remover...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 244, 198, 68, 14
  CONTROL 3, 1003, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 57, 21, 20
-}
-
-STRINGTABLE
-{
-    IDS_DOWNLOADING     "A descarregar..."
-    IDS_INSTALLING      "A instalar..."
 }
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN

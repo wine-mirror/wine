@@ -26,32 +26,6 @@ LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
 
 #pragma code_page(65001)
 
-STRINGTABLE
-{
-   IDS_CPL_TITLE, "Adăugare/eliminare programe"
-   IDS_CPL_DESC, "Permite instalarea sau dezinstalarea de aplicații pe calculatorul d-voastră."
-   IDS_TAB1_TITLE, "Aplicații"
-
-   IDS_UNINSTALL_FAILED, "Nu am putut rula dezinstalarea pentru „%s”. Vreți să înlăturați înregistrarea de dezinstalare a acestei aplicații?"
-   IDS_NOT_SPECIFIED, "Ne specificat"
-
-   IDS_COLUMN_NAME, "Nume"
-   IDS_COLUMN_PUBLISHER, "Emitent"
-   IDS_COLUMN_VERSION, "Versiune"
-   IDS_FILTER_INSTALLS, "Programe de instalare"
-   IDS_FILTER_PROGRAMS, "Programe (*.exe)"
-   IDS_FILTER_ALL,      "Toate fișierele (*.*)"
-
-   IDS_REMOVE, "&Sterge..."
-   IDS_MODIFY_REMOVE, "&Modifică/Șterge..."
-}
-
-STRINGTABLE
-{
-    IDS_DOWNLOADING     "Descarc..."
-    IDS_INSTALLING      "Instalez..."
-}
-
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Instalare/dezinstalare"

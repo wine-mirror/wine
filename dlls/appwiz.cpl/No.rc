@@ -26,32 +26,6 @@
 
 LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
-STRINGTABLE
-{
-   IDS_CPL_TITLE, "Legg til/Fjern programmer"
-   IDS_CPL_DESC, "Lar deg installere ny programvare eller fjerne installerte programmer."
-   IDS_TAB1_TITLE, "Programmer"
-
-   IDS_UNINSTALL_FAILED, "Klarte ikke kjøre avinstalleringsprogrammet, «%s». Vil du fjerne oppføringen fra listen over installerte programmer?"
-   IDS_NOT_SPECIFIED, "Ikke oppgitt"
-
-   IDS_COLUMN_NAME, "Navn"
-   IDS_COLUMN_PUBLISHER, "Utgiver"
-   IDS_COLUMN_VERSION, "Versjon"
-   IDS_FILTER_INSTALLS, "Installasjonsprogrammer"
-   IDS_FILTER_PROGRAMS, "Programmer (*.exe)"
-   IDS_FILTER_ALL,      "Alle filer (*.*)"
-
-   IDS_REMOVE, "Fje&rn..."
-   IDS_MODIFY_REMOVE, "&Endre/Fjern..."
-}
-
-STRINGTABLE
-{
-    IDS_DOWNLOADING     "Laster ned..."
-    IDS_INSTALLING      "Installerer..."
-}
-
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Installer/Avinstaller"

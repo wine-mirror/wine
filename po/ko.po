@@ -13,6 +13,87 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: appwiz.rc:28
+msgid "Add/Remove Programs"
+msgstr "프로그램 추가/삭제"
+
+#: appwiz.rc:29
+msgid ""
+"Allows you to install new software, or remove existing software from your "
+"computer."
+msgstr ""
+"새 소프트웨어를 설치하거나,이미 설치된 소프트웨어를 당신의 컴퓨터에서 삭제 "
+"할 수 있습니다."
+
+#: appwiz.rc:30 taskmgr.rc:263
+msgid "Applications"
+msgstr "프로그램"
+
+#: appwiz.rc:32
+msgid ""
+"Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
+"entry for this program from the registry?"
+msgstr ""
+"언인스톨러를 실행할 수 없습니다, '%s'. 당신은 이 프로그램의 언인스톨 정보를 "
+"레지스트리에서 지우겠습니까?"
+
+#: appwiz.rc:33
+msgid "Not specified"
+msgstr "지정되지 않음"
+
+#: appwiz.rc:35 winefile.rc:160
+msgid "Name"
+msgstr "이름"
+
+#: appwiz.rc:36
+msgid "Publisher"
+msgstr "제작사"
+
+#: appwiz.rc:37 cryptui.rc:51
+msgid "Version"
+msgstr "버젼"
+
+#: appwiz.rc:38
+msgid "Installation programs"
+msgstr "설치 프로그램"
+
+#: appwiz.rc:39
+msgid "Programs (*.exe)"
+msgstr "프로그램 (*.exe)"
+
+#: appwiz.rc:40 cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+#, fuzzy
+msgid "All files (*.*)"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"모든 파일 (*.*)\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"모든 파일들 (*.*)"
+
+#: appwiz.rc:42
+msgid "&Remove..."
+msgstr "제거(&R)..."
+
+#: appwiz.rc:43
+msgid "&Modify/Remove..."
+msgstr "고치기(&M)/제거..."
+
+#: appwiz.rc:48
+msgid "Downloading..."
+msgstr "다운로드중..."
+
+#: appwiz.rc:49
+msgid "Installing..."
+msgstr "설치하는 중..."
+
+#: appwiz.rc:50
+msgid ""
+"Unexpected checksum of downloaded file. Aborting installation of corrupted "
+"file."
+msgstr ""
+"다운로드한 파일의 체크섬에 문제가 있습니다..망가진 파일의 설치를 취소하는 중"
+"입니다."
+
 #: browseui.rc:25
 msgid "Cancelling..."
 msgstr "취소하는 중.."
@@ -1102,10 +1183,6 @@ msgstr "오직 중요한 확장만"
 msgid "Properties Only"
 msgstr "오직 속성만"
 
-#: cryptui.rc:51
-msgid "Version"
-msgstr "버젼"
-
 #: cryptui.rc:52
 msgid "Serial number"
 msgstr "시리얼 번호"
@@ -1224,10 +1301,6 @@ msgstr "Microsoft 연속 인증서 보관소 (*.sst)"
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
 msgstr "CMS/PKCS #7 메세지 (*.spc; *.p7b)"
-
-#: cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
-msgid "All files (*.*)"
-msgstr "모든 파일 (*.*)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
@@ -5106,10 +5179,6 @@ msgstr "작업을 낮은 순위 클래스로 설정"
 msgid "Controls Debug Channels"
 msgstr "디버그 채널 제어"
 
-#: taskmgr.rc:263
-msgid "Applications"
-msgstr "프로그램"
-
 #: taskmgr.rc:264
 msgid "Processes"
 msgstr "작업"
@@ -5782,10 +5851,6 @@ msgstr "아직 구현안됨"
 #: winefile.rc:155
 msgid "Wine File"
 msgstr "Wine 파일"
-
-#: winefile.rc:160
-msgid "Name"
-msgstr "이름"
 
 #: winefile.rc:161
 msgid "Size"

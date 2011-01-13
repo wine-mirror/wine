@@ -13,6 +13,81 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: appwiz.rc:28
+msgid "Add/Remove Programs"
+msgstr "添加/刪除程式"
+
+#: appwiz.rc:29
+msgid ""
+"Allows you to install new software, or remove existing software from your "
+"computer."
+msgstr "允許你安裝新軟件, 和從你的電腦裡刪除現有程式."
+
+#: appwiz.rc:30 taskmgr.rc:263
+msgid "Applications"
+msgstr "運用程式"
+
+#: appwiz.rc:32
+msgid ""
+"Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
+"entry for this program from the registry?"
+msgstr "不能執行卸載程式 '%s'. 你想把這個卸載程式從註冊表中刪除嗎?"
+
+#: appwiz.rc:33
+msgid "Not specified"
+msgstr "沒指定"
+
+#: appwiz.rc:35 winefile.rc:160
+msgid "Name"
+msgstr "名稱"
+
+#: appwiz.rc:36
+msgid "Publisher"
+msgstr "生產商"
+
+#: appwiz.rc:37 cryptui.rc:51
+msgid "Version"
+msgstr "版本"
+
+#: appwiz.rc:38
+msgid "Installation programs"
+msgstr "Installation Programs"
+
+#: appwiz.rc:39
+msgid "Programs (*.exe)"
+msgstr "Programs (*.exe)"
+
+#: appwiz.rc:40 cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+#, fuzzy
+msgid "All files (*.*)"
+msgstr ""
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"所有檔案 (*.*)\n"
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"All files (*.*)"
+
+#: appwiz.rc:42
+msgid "&Remove..."
+msgstr "&Remove..."
+
+#: appwiz.rc:43
+msgid "&Modify/Remove..."
+msgstr "&Modify/Remove..."
+
+#: appwiz.rc:48
+msgid "Downloading..."
+msgstr "正在下載..."
+
+#: appwiz.rc:49
+msgid "Installing..."
+msgstr "正在安裝..."
+
+#: appwiz.rc:50
+msgid ""
+"Unexpected checksum of downloaded file. Aborting installation of corrupted "
+"file."
+msgstr ""
+
 #: browseui.rc:25
 msgid "Cancelling..."
 msgstr "正在取消..."
@@ -1038,10 +1113,6 @@ msgstr ""
 msgid "Properties Only"
 msgstr "屬性(&P)"
 
-#: cryptui.rc:51
-msgid "Version"
-msgstr ""
-
 #: cryptui.rc:52
 msgid "Serial number"
 msgstr ""
@@ -1158,10 +1229,6 @@ msgstr ""
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
 msgstr ""
-
-#: cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
-msgid "All files (*.*)"
-msgstr "所有檔案 (*.*)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
@@ -4698,11 +4765,6 @@ msgstr "將進程設為低優先級"
 msgid "Controls Debug Channels"
 msgstr "Controls Debug Channels"
 
-#: taskmgr.rc:263
-#, fuzzy
-msgid "Applications"
-msgstr "選項"
-
 #: taskmgr.rc:264
 #, fuzzy
 msgid "Processes"
@@ -5366,11 +5428,6 @@ msgstr ""
 #, fuzzy
 msgid "Wine File"
 msgstr "Wine地雷"
-
-#: winefile.rc:160
-#, fuzzy
-msgid "Name"
-msgstr "檔案名稱(&N)"
 
 #: winefile.rc:161
 msgid "Size"
