@@ -1038,15 +1038,15 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_CompareIDs(IShellFolder2* iface, 
     else if (isEmpty2)
         return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (WORD)1);
 
-    if (_ILIsFolder(pidl1) && !_ILIsFolder(pidl2)) 
-        return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (WORD)-1);
-    if (!_ILIsFolder(pidl1) && _ILIsFolder(pidl2))
-        return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (WORD)1);
-
     compare = CompareStringA(LOCALE_USER_DEFAULT, NORM_IGNORECASE, 
                              _ILGetTextPointer(pidl1), -1,
                              _ILGetTextPointer(pidl2), -1);
-    
+
+    if ((compare != CSTR_EQUAL) && _ILIsFolder(pidl1) && !_ILIsFolder(pidl2))
+        return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (WORD)-1);
+    if ((compare != CSTR_EQUAL) && !_ILIsFolder(pidl1) && _ILIsFolder(pidl2))
+        return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (WORD)1);
+
     if ((compare == CSTR_LESS_THAN) || (compare == CSTR_GREATER_THAN)) 
         return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (WORD)((compare == CSTR_LESS_THAN)?-1:1));
 
