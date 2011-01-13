@@ -23,7 +23,7 @@
 
 typedef struct
 {
-    const IClassFactoryVtbl *lpVtbl;
+    IClassFactory IClassFactory_iface;
 } ClassFactoryImpl;
 
 extern ClassFactoryImpl WIASERVC_ClassFactory;

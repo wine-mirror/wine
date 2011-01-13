@@ -95,9 +95,8 @@ StartCount(void)
         return FALSE;
 
     hr = CoRegisterClassObject(&CLSID_WiaDevMgr,
-                               (IUnknown *) &WIASERVC_ClassFactory,
-                               CLSCTX_LOCAL_SERVER, REGCLS_MULTIPLEUSE,
-                               &dwReg);
+                               (IUnknown *) &WIASERVC_ClassFactory.IClassFactory_iface,
+                               CLSCTX_LOCAL_SERVER, REGCLS_MULTIPLEUSE, &dwReg);
     if (FAILED(hr))
         return FALSE;
 

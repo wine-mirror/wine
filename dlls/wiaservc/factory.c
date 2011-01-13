@@ -32,6 +32,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wia);
 
+static inline ClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, ClassFactoryImpl, IClassFactory_iface);
+}
+
 static ULONG WINAPI
 WIASERVC_IClassFactory_AddRef(LPCLASSFACTORY iface)
 {
@@ -42,11 +47,11 @@ static HRESULT WINAPI
 WIASERVC_IClassFactory_QueryInterface(LPCLASSFACTORY iface, REFIID riid,
                                       LPVOID *ppvObj)
 {
-    ClassFactoryImpl *This = (ClassFactoryImpl *) iface;
+    ClassFactoryImpl *This = impl_from_IClassFactory(iface);
 
     if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IClassFactory))
     {
-        *ppvObj = &This->lpVtbl;
+        *ppvObj = &This->IClassFactory_iface;
         return S_OK;
     }
 
@@ -99,5 +104,5 @@ static const IClassFactoryVtbl WIASERVC_IClassFactory_Vtbl =
 
 ClassFactoryImpl WIASERVC_ClassFactory =
 {
-    &WIASERVC_IClassFactory_Vtbl
+    { &WIASERVC_IClassFactory_Vtbl }
 };
