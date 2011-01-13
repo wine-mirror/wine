@@ -307,7 +307,15 @@ static BOOL InitOpenFileName(HWND hWnd, OPENFILENAMEW *pofn)
     pofn->hInstance = hInst;
 
     if (FilterBuffer[0] == 0)
-        LoadStringW(hInst, IDS_FILEDIALOG_FILTER, FilterBuffer, _MAX_PATH);
+    {
+        static const WCHAR filterW[] = {'%','s','%','c','*','.','r','e','g','%','c','%','s','%','c','*','.','r','e','g','%','c','%','s','%','c','*','.','*','%','c',0};
+        WCHAR filter_reg[MAX_PATH], filter_reg4[MAX_PATH], filter_all[MAX_PATH];
+
+        LoadStringW(hInst, IDS_FILEDIALOG_FILTER_REG, filter_reg, MAX_PATH);
+        LoadStringW(hInst, IDS_FILEDIALOG_FILTER_REG4, filter_reg4, MAX_PATH);
+        LoadStringW(hInst, IDS_FILEDIALOG_FILTER_ALL, filter_all, MAX_PATH);
+        snprintfW( FilterBuffer, MAX_PATH, filterW, filter_reg, 0, 0, filter_reg4, 0, 0, filter_all, 0, 0 );
+    }
     pofn->lpstrFilter = FilterBuffer;
     pofn->nFilterIndex = 2;
     pofn->lpstrFile = FileNameBuffer;

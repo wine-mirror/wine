@@ -312,7 +312,9 @@ STRINGTABLE
 BEGIN
    IDS_FILEDIALOG_IMPORT_TITLE   "레이지스트 파일 불러오기"
    IDS_FILEDIALOG_EXPORT_TITLE   "레지스트리 파일 내보내기"
-   IDS_FILEDIALOG_FILTER         "레지스트리 파일\0*.reg\0Win9x/NT4 레지스트리 파일 (REGEDIT4)\0*.reg\0모든 파일 (*.*)\0*.*\0\0"
+   IDS_FILEDIALOG_FILTER_REG     "레지스트리 파일 (*.reg)"
+   IDS_FILEDIALOG_FILTER_REG4    "Win9x/NT4 레지스트리 파일 (REGEDIT4)"
+   IDS_FILEDIALOG_FILTER_ALL     "모든 파일 (*.*)"
 END
 
 STRINGTABLE

@@ -307,7 +307,9 @@ STRINGTABLE
 BEGIN
     IDS_FILEDIALOG_IMPORT_TITLE   "Registerbestand importeren"
     IDS_FILEDIALOG_EXPORT_TITLE   "Registerbestand exporteren"
-    IDS_FILEDIALOG_FILTER         "Register Bestanden\0*.reg\0Win9x/NT4 Register Bestanden (REGEDIT4)\0*.reg\0Alle Bestanden (*.*)\0*.*\0\0"
+    IDS_FILEDIALOG_FILTER_REG     "Register Bestanden (*.reg)"
+    IDS_FILEDIALOG_FILTER_REG4    "Win9x/NT4 Register Bestanden (REGEDIT4)"
+    IDS_FILEDIALOG_FILTER_ALL     "Alle Bestanden (*.*)"
 END
 
 STRINGTABLE

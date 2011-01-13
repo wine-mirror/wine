@@ -308,7 +308,9 @@ STRINGTABLE
 BEGIN
     IDS_FILEDIALOG_IMPORT_TITLE   "レジストリ ファイルのインポート"
     IDS_FILEDIALOG_EXPORT_TITLE   "レジストリ ファイルのエクスポート"
-    IDS_FILEDIALOG_FILTER         "登録ファイル\0*.reg\0Win9x/NT4 登録ファイル (REGEDIT4)\0*.reg\0すべてのファイル (*.*)\0*.*\0\0"
+    IDS_FILEDIALOG_FILTER_REG     "登録ファイル (*.reg)"
+    IDS_FILEDIALOG_FILTER_REG4    "Win9x/NT4 登録ファイル (REGEDIT4)"
+    IDS_FILEDIALOG_FILTER_ALL     "すべてのファイル (*.*)"
 END
 
 STRINGTABLE

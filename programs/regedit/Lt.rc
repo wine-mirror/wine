@@ -307,7 +307,9 @@ STRINGTABLE
 BEGIN
     IDS_FILEDIALOG_IMPORT_TITLE   "Importuoti registro failą"
     IDS_FILEDIALOG_EXPORT_TITLE   "Eksportuoti registro failą"
-    IDS_FILEDIALOG_FILTER         "Registro failai\0*.reg\0Win9x/NT4 registro failai (REGEDIT4)\0*.reg\0Visi failai (*.*)\0*.*\0\0"
+    IDS_FILEDIALOG_FILTER_REG     "Registro failai (*.reg)"
+    IDS_FILEDIALOG_FILTER_REG4    "Win9x/NT4 registro failai (REGEDIT4)"
+    IDS_FILEDIALOG_FILTER_ALL     "Visi failai (*.*)"
 END
 
 STRINGTABLE

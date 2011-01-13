@@ -318,7 +318,9 @@ STRINGTABLE
 BEGIN
     IDS_FILEDIALOG_IMPORT_TITLE   "יבוא קובץ רישום מערכת"
     IDS_FILEDIALOG_EXPORT_TITLE   "יצוא קובץ רישום מערכת"
-    IDS_FILEDIALOG_FILTER         "קובצי רישום מערכת\0*.reg\0קובצי רישום מערכת שלWin9x/NT4 (REGEDIT4)\0*.reg\0כל הקבצים (*.*)\0*.*\0\0"
+    IDS_FILEDIALOG_FILTER_REG     "קובצי רישום מערכת (*.reg)"
+    IDS_FILEDIALOG_FILTER_REG4    "קובצי רישום מערכת שלWin9x/NT4 (REGEDIT4)"
+    IDS_FILEDIALOG_FILTER_ALL     "כל הקבצים (*.*)"
 END
 
 STRINGTABLE

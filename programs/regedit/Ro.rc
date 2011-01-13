@@ -309,7 +309,9 @@ STRINGTABLE
 BEGIN
     IDS_FILEDIALOG_IMPORT_TITLE   "Importă fișierul registru"
     IDS_FILEDIALOG_EXPORT_TITLE   "Exportă fișierul registru"
-    IDS_FILEDIALOG_FILTER         "Fișiere registru\\0*.reg\\0Win9x/NT4 Fișiere registru (REGEDIT4)\\0*.reg\\0Toate fișierele (*.*)\\0*.*\\0\\0"
+    IDS_FILEDIALOG_FILTER_REG     "Fișiere registru (*.reg)"
+    IDS_FILEDIALOG_FILTER_REG4    "Win9x/NT4 Fișiere registru (REGEDIT4)"
+    IDS_FILEDIALOG_FILTER_ALL     "Toate fișierele (*.*)"
 END
 
 STRINGTABLE

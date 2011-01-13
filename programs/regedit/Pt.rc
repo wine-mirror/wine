@@ -483,7 +483,9 @@ STRINGTABLE
 BEGIN
     IDS_FILEDIALOG_IMPORT_TITLE   "Importar Arquivo de Registro"
     IDS_FILEDIALOG_EXPORT_TITLE   "Exportar Arquivo de Registro"
-    IDS_FILEDIALOG_FILTER         "Arquivos de Registro\0*.reg\0Arquivos de Registro Win9x/NT4 (REGEDIT4)\0*.reg\0Todos os Arquivos (*.*)\0*.*\0\0"
+    IDS_FILEDIALOG_FILTER_REG     "Arquivos de Registro (*.reg)"
+    IDS_FILEDIALOG_FILTER_REG4    "Arquivos de Registro Win9x/NT4 (REGEDIT4)"
+    IDS_FILEDIALOG_FILTER_ALL     "Todos os Arquivos (*.*)"
 END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -492,7 +494,9 @@ STRINGTABLE
 BEGIN
     IDS_FILEDIALOG_IMPORT_TITLE   "Importar Ficheiro de Registo"
     IDS_FILEDIALOG_EXPORT_TITLE   "Exportar Ficheiro de Registo"
-    IDS_FILEDIALOG_FILTER         "Ficheiros de Registo\0*.reg\0Ficheiros de Registo Win9x/NT4 (REGEDIT4)\0*.reg\0Todos os Ficheiros (*.*)\0*.*\0\0"
+    IDS_FILEDIALOG_FILTER_REG     "Ficheiros de Registo (*.reg)"
+    IDS_FILEDIALOG_FILTER_REG4    "Ficheiros de Registo Win9x/NT4 (REGEDIT4)"
+    IDS_FILEDIALOG_FILTER_ALL     "Todos os Ficheiros (*.*)"
 END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL

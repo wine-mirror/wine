@@ -306,7 +306,9 @@ STRINGTABLE
 BEGIN
     IDS_FILEDIALOG_IMPORT_TITLE   "Importuj plik rejestrów"
     IDS_FILEDIALOG_EXPORT_TITLE   "Eksportuj plik rejestrów"
-    IDS_FILEDIALOG_FILTER         "Pliki rejestrów\0*.reg\0Pliki rejestrów Win9x/NT4 (REGEDIT4)\0*.reg\0Wszystkie pliki (*.*)\0*.*\0\0"
+    IDS_FILEDIALOG_FILTER_REG     "Pliki rejestrów (*.reg)"
+    IDS_FILEDIALOG_FILTER_REG4    "Pliki rejestrów Win9x/NT4 (REGEDIT4)"
+    IDS_FILEDIALOG_FILTER_ALL     "Wszystkie pliki (*.*)"
 END
 
 STRINGTABLE

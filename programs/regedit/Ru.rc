@@ -308,7 +308,9 @@ STRINGTABLE
 BEGIN
     IDS_FILEDIALOG_IMPORT_TITLE   "Импорт файла реестра"
     IDS_FILEDIALOG_EXPORT_TITLE   "Экспорт файла реестра"
-    IDS_FILEDIALOG_FILTER         "Все файлы реестра\0*.reg\0Файлы реестра для Win9x/NT4 (REGEDIT4)\0*.reg\0Все файлы (*.*)\0*.*\0\0"
+    IDS_FILEDIALOG_FILTER_REG     "Все файлы реестра (*.reg)"
+    IDS_FILEDIALOG_FILTER_REG4    "Файлы реестра для Win9x/NT4 (REGEDIT4)"
+    IDS_FILEDIALOG_FILTER_ALL     "Все файлы (*.*)"
 END
 
 STRINGTABLE

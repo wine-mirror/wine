@@ -307,7 +307,9 @@ STRINGTABLE
 BEGIN
     IDS_FILEDIALOG_IMPORT_TITLE   "Uvozi registrsko datoteko"
     IDS_FILEDIALOG_EXPORT_TITLE   "Izvozi registrsko datoteko"
-    IDS_FILEDIALOG_FILTER         "Registrske datoteke\0*.reg\0Win9x/NT4 registrske datoteke (REGEDIT4)\0*.reg\0Vse datoteke (*.*)\0*.*\0\0"
+    IDS_FILEDIALOG_FILTER_REG     "Registrske datoteke (*.reg)"
+    IDS_FILEDIALOG_FILTER_REG4    "Win9x/NT4 registrske datoteke (REGEDIT4)"
+    IDS_FILEDIALOG_FILTER_ALL     "Vse datoteke (*.*)"
 END
 
 STRINGTABLE

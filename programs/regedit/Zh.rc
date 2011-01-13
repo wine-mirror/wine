@@ -302,7 +302,9 @@ STRINGTABLE
 BEGIN
     IDS_FILEDIALOG_IMPORT_TITLE   "导入注册表文件"
     IDS_FILEDIALOG_EXPORT_TITLE   "导出注册表文件"
-    IDS_FILEDIALOG_FILTER         "注册表文件\0*.reg\0Win9x/NT4 注册表文件 (REGEDIT4)\0*.reg\0所有文件 (*.*)\0*.*\0\0"
+    IDS_FILEDIALOG_FILTER_REG     "注册表文件 (*.reg)"
+    IDS_FILEDIALOG_FILTER_REG4    "Win9x/NT4 注册表文件 (REGEDIT4)"
+    IDS_FILEDIALOG_FILTER_ALL     "所有文件 (*.*)"
 END
 
 STRINGTABLE
@@ -609,7 +611,9 @@ STRINGTABLE
 BEGIN
     IDS_FILEDIALOG_IMPORT_TITLE   "導入註冊表檔案"
     IDS_FILEDIALOG_EXPORT_TITLE   "導出註冊表檔案"
-    IDS_FILEDIALOG_FILTER         "註冊表檔案\0*.reg\0Win9x/NT4 註冊表檔案 (REGEDIT4)\0*.reg\0所有檔案 (*.*)\0*.*\0\0"
+    IDS_FILEDIALOG_FILTER_REG     "註冊表檔案 (*.reg)"
+    IDS_FILEDIALOG_FILTER_REG4    "Win9x/NT4 註冊表檔案 (REGEDIT4)"
+    IDS_FILEDIALOG_FILTER_ALL     "所有檔案 (*.*)"
 END
 
 STRINGTABLE
