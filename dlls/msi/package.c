@@ -112,6 +112,9 @@ static void free_extension( MSIEXTENSION *ext )
 
 static void free_assembly( MSIASSEMBLY *assembly )
 {
+    msi_free( assembly->feature );
+    msi_free( assembly->manifest );
+    msi_free( assembly->application );
     msi_free( assembly->display_name );
     if (assembly->tempdir) RemoveDirectoryW( assembly->tempdir );
     msi_free( assembly->tempdir );
