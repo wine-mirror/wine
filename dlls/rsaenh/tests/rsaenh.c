@@ -2235,7 +2235,6 @@ static void test_import_hmac(void)
             *key_len = test_case->key_len;
             memcpy(key_bytes, test_case->key, *key_len);
             result = CryptImportKey(hProv, blob, size, 0, CRYPT_IPSEC_HMAC_KEY, &key);
-            todo_wine
             ok(result || broken(GetLastError() == NTE_BAD_FLAGS /* Win2k */), "CryptImportKey failed on test case %d: %08x\n", i, GetLastError());
             if (result)
             {
@@ -2253,7 +2252,7 @@ static void test_import_hmac(void)
                 digest_size = sizeof(digest);
                 result = CryptGetHashParam(hash, HP_HASHVAL, digest, &digest_size, 0);
                 ok(result, "CryptGetHashParam failed on test case %d: %08x\n", i, GetLastError());
-                ok(!memcmp(digest, test_case->digest, sizeof(digest)), "Unexpected valued on test case %d\n", i);
+                ok(!memcmp(digest, test_case->digest, sizeof(digest)), "Unexpected value on test case %d\n", i);
                 CryptDestroyHash(hash);
                 CryptDestroyKey(key);
             }

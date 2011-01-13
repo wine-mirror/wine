@@ -74,7 +74,7 @@ typedef struct tagCRYPTHASH
  * CRYPTKEY - key objects
  */
 #define RSAENH_MAGIC_KEY           0x73620457u
-#define RSAENH_MAX_KEY_SIZE        48
+#define RSAENH_MAX_KEY_SIZE        64
 #define RSAENH_MAX_BLOCK_SIZE      24
 #define RSAENH_KEYSTATE_IDLE       0
 #define RSAENH_KEYSTATE_ENCRYPTING 1
@@ -105,6 +105,7 @@ typedef struct tagCRYPTKEY
     BYTE        abInitVector[RSAENH_MAX_BLOCK_SIZE];
     BYTE        abChainVector[RSAENH_MAX_BLOCK_SIZE];
     RSAENH_SCHANNEL_INFO siSChannelInfo;
+    CRYPT_DATA_BLOB blobHmacKey;
 } CRYPTKEY;
 
 /******************************************************************************
@@ -732,6 +733,7 @@ static void destroy_key(OBJECTHDR *pObject)
     free_key_impl(pCryptKey->aiAlgid, &pCryptKey->context);
     free_data_blob(&pCryptKey->siSChannelInfo.blobClientRandom);
     free_data_blob(&pCryptKey->siSChannelInfo.blobServerRandom);
+    free_data_blob(&pCryptKey->blobHmacKey);
     HeapFree(GetProcessHeap(), 0, pCryptKey);
 }
 
@@ -825,7 +827,13 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTK
                 return (HCRYPTKEY)INVALID_HANDLE_VALUE;
             }
             break;
-        
+
+        case CALG_HMAC:
+            /* Avoid the key length check for HMAC keys, which have unlimited
+             * length.
+             */
+            break;
+
         default:
             if (dwKeyLen % 8 || 
                 dwKeyLen > peaAlgidInfo->dwMaxLen || 
@@ -859,6 +867,7 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTK
         memset(pCryptKey->abInitVector, 0, sizeof(pCryptKey->abInitVector));
         init_data_blob(&pCryptKey->siSChannelInfo.blobClientRandom);
         init_data_blob(&pCryptKey->siSChannelInfo.blobServerRandom);
+        init_data_blob(&pCryptKey->blobHmacKey);
             
         switch(aiAlgid)
         {
@@ -890,6 +899,11 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTK
             case CALG_RSA_KEYX:
             case CALG_RSA_SIGN:
                 pCryptKey->dwBlockLen = dwKeyLen >> 3;
+                pCryptKey->dwMode = 0;
+                break;
+
+            case CALG_HMAC:
+                pCryptKey->dwBlockLen = 0;
                 pCryptKey->dwMode = 0;
                 break;
         }
@@ -2931,25 +2945,53 @@ static BOOL import_plaintext_key(HCRYPTPROV hProv, CONST BYTE *pbData,
     CONST DWORD *pKeyLen = (CONST DWORD *)(pBlobHeader + 1);
     CONST BYTE *pbKeyStream = (CONST BYTE*)(pKeyLen + 1);
 
-    if (dwFlags & CRYPT_IPSEC_HMAC_KEY)
-    {
-        FIXME("unimplemented for CRYPT_IPSEC_HMAC_KEY\n");
-        SetLastError(NTE_BAD_FLAGS);
-        return FALSE;
-    }
     if (dwDataLen < sizeof(BLOBHEADER)+sizeof(DWORD)+*pKeyLen)
     {
         SetLastError(NTE_BAD_DATA); /* FIXME: error code */
         return FALSE;
     }
 
-    *phKey = new_key(hProv, pBlobHeader->aiKeyAlg, *pKeyLen<<19, &pCryptKey);
-    if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE)
-        return FALSE;
-    memcpy(pCryptKey->abKeyValue, pbKeyStream, *pKeyLen);
-    setup_key(pCryptKey);
-    if (dwFlags & CRYPT_EXPORTABLE)
-        pCryptKey->dwPermissions |= CRYPT_EXPORT;
+    if (dwFlags & CRYPT_IPSEC_HMAC_KEY)
+    {
+        *phKey = new_key(hProv, CALG_HMAC, 0, &pCryptKey);
+        if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE)
+            return FALSE;
+        if (*pKeyLen <= sizeof(pCryptKey->abKeyValue))
+        {
+            memcpy(pCryptKey->abKeyValue, pbKeyStream, *pKeyLen);
+            pCryptKey->dwKeyLen = *pKeyLen;
+        }
+        else
+        {
+            CRYPT_DATA_BLOB blobHmacKey = { *pKeyLen, (BYTE *)pbKeyStream };
+
+            /* In order to initialize an HMAC key, the key material is hashed,
+             * and the output of the hash function is used as the key material.
+             * Unfortunately, the way the Crypto API is designed, we don't know
+             * the hash algorithm yet, so we have to copy the entire key
+             * material.
+             */
+            if (!copy_data_blob(&pCryptKey->blobHmacKey, &blobHmacKey))
+            {
+                release_handle(&handle_table, *phKey, RSAENH_MAGIC_KEY);
+                *phKey = (HCRYPTKEY)INVALID_HANDLE_VALUE;
+                return FALSE;
+            }
+        }
+        setup_key(pCryptKey);
+        if (dwFlags & CRYPT_EXPORTABLE)
+            pCryptKey->dwPermissions |= CRYPT_EXPORT;
+    }
+    else
+    {
+        *phKey = new_key(hProv, pBlobHeader->aiKeyAlg, *pKeyLen<<19, &pCryptKey);
+        if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE)
+            return FALSE;
+        memcpy(pCryptKey->abKeyValue, pbKeyStream, *pKeyLen);
+        setup_key(pCryptKey);
+        if (dwFlags & CRYPT_EXPORTABLE)
+            pCryptKey->dwPermissions |= CRYPT_EXPORT;
+    }
     return TRUE;
 }
 
@@ -4172,6 +4214,27 @@ BOOL WINAPI RSAENH_CPSetHashParam(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwPa
                 return FALSE;
             }
 
+            if (pCryptKey->aiAlgid == CALG_HMAC && !pCryptKey->dwKeyLen) {
+                HCRYPTHASH hKeyHash;
+
+                if (!RSAENH_CPCreateHash(hProv, ((PHMAC_INFO)pbData)->HashAlgid, 0, 0,
+                    &hKeyHash))
+                    return FALSE;
+                if (!RSAENH_CPHashData(hProv, hKeyHash, pCryptKey->blobHmacKey.pbData,
+                    pCryptKey->blobHmacKey.cbData, 0))
+                {
+                    RSAENH_CPDestroyHash(hProv, hKeyHash);
+                    return FALSE;
+                }
+                pCryptKey->dwKeyLen = sizeof(pCryptKey->abKeyValue);
+                if (!RSAENH_CPGetHashParam(hProv, hKeyHash, HP_HASHVAL, pCryptKey->abKeyValue,
+                    &pCryptKey->dwKeyLen, 0))
+                {
+                    RSAENH_CPDestroyHash(hProv, hKeyHash);
+                    return FALSE;
+                }
+                RSAENH_CPDestroyHash(hProv, hKeyHash);
+            }
             for (i=0; i<RSAENH_MIN(pCryptKey->dwKeyLen,pCryptHash->pHMACInfo->cbInnerString); i++) {
                 pCryptHash->pHMACInfo->pbInnerString[i] ^= pCryptKey->abKeyValue[i];
             }
