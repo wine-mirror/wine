@@ -114,7 +114,10 @@ typedef struct {
     const char *redirected_url;
     const char *host;
     const char *path;
+    const char *headers;
     DWORD flags;
+    const char *post_data;
+    const char *content;
 } test_data_t;
 
 static const test_data_t test_data[] = {
@@ -123,6 +126,7 @@ static const test_data_t test_data[] = {
         "http://test.winehq.org/hello.html",
         "test.winehq.org",
         "/testredirect",
+        "",
         TESTF_REDIRECT
     },
     {
@@ -130,7 +134,18 @@ static const test_data_t test_data[] = {
         "http://www.codeweavers.com/",
         "www.codeweavers.com",
         "",
+        "Accept-Encoding: gzip, deflate",
         TESTF_COMPRESSED|TESTF_ALLOW_COOKIE
+    },
+    {
+        "http://crossover.codeweavers.com/posttest.php",
+        "http://crossover.codeweavers.com/posttest.php",
+        "crossover.codeweavers.com",
+        "/posttest.php",
+        "Content-Type: application/x-www-form-urlencoded",
+        0,
+        "mode=Test",
+        "mode => Test\n"
     }
 };
 
@@ -270,9 +285,10 @@ static VOID WINAPI callback(
 
 static void InternetReadFile_test(int flags, const test_data_t *test)
 {
+    char *post_data = NULL;
     BOOL res;
     CHAR buffer[4000];
-    DWORD length;
+    DWORD length, post_len = 0;
     DWORD out;
     const char *types[2] = { "*", NULL };
     HINTERNET hi, hic = 0, hor = 0;
@@ -305,7 +321,7 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
 
     trace("HttpOpenRequestA <--\n");
-    hor = HttpOpenRequestA(hic, "GET", test->path, NULL, NULL, types,
+    hor = HttpOpenRequestA(hic, test->post_data ? "POST" : "GET", test->path, NULL, NULL, types,
                            INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_RESYNCHRONIZE,
                            0xdeadbead);
     if (hor == 0x0 && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED) {
@@ -383,8 +399,13 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     }
 
     trace("HttpSendRequestA -->\n");
+    if(test->post_data) {
+        post_len = strlen(test->post_data);
+        post_data = HeapAlloc(GetProcessHeap(), 0, post_len);
+        memcpy(post_data, test->post_data, post_len);
+    }
     SetLastError(0xdeadbeef);
-    res = HttpSendRequestA(hor, (test->flags & TESTF_COMPRESSED) ? "Accept-Encoding: gzip, deflate" : "", -1, NULL, 0);
+    res = HttpSendRequestA(hor, test->headers, -1, post_data, post_len);
     if (flags & INTERNET_FLAG_ASYNC)
         ok(!res && (GetLastError() == ERROR_IO_PENDING),
             "Asynchronous HttpSendRequest NOT returning 0 with error ERROR_IO_PENDING\n");
@@ -395,6 +416,7 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
 
     if (flags & INTERNET_FLAG_ASYNC)
         WaitForSingleObject(hCompleteEvent, INFINITE);
+    HeapFree(GetProcessHeap(), 0, post_data);
 
     if(test->flags & TESTF_ALLOW_COOKIE) {
         CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
@@ -501,6 +523,8 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
 
             trace("ReadFile -> %s %i\n",res?"TRUE":"FALSE",length);
 
+            if(test->content)
+                ok(!strcmp(buffer, test->content), "buffer = '%s', expected '%s'\n", buffer, test->content);
             HeapFree(GetProcessHeap(),0,buffer);
         }
         if (length == 0)
@@ -3178,4 +3202,5 @@ START_TEST(http)
     test_bogus_accept_types_array();
     InternetReadFile_chunked_test();
     HttpSendRequestEx_test();
+    InternetReadFile_test(INTERNET_FLAG_ASYNC, &test_data[2]);
 }
