@@ -446,14 +446,23 @@ static void UpdateButtons(HWND hWnd)
  */
 static void InstallProgram(HWND hWnd)
 {
+    static const WCHAR filters[] = {'%','s','%','c','*','i','n','s','t','a','l','*','.','e','x','e',';','*','s','e','t','u','p','*','.','e','x','e',';','*','.','m','s','i','%','c','%','s','%','c','*','.','e','x','e','%','c','%','s','%','c','*','.','*','%','c',0}
+;
     OPENFILENAMEW ofn;
     WCHAR titleW[MAX_STRING_LEN];
-    WCHAR FilterBufferW[MAX_STRING_LEN];
+    WCHAR filter_installs[MAX_STRING_LEN];
+    WCHAR filter_programs[MAX_STRING_LEN];
+    WCHAR filter_all[MAX_STRING_LEN];
+    WCHAR FilterBufferW[MAX_PATH];
     WCHAR FileNameBufferW[MAX_PATH];
 
     LoadStringW(hInst, IDS_CPL_TITLE, titleW, sizeof(titleW)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_INSTALL_FILTER, FilterBufferW, sizeof(FilterBufferW)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_FILTER_INSTALLS, filter_installs, sizeof(filter_installs)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_FILTER_PROGRAMS, filter_programs, sizeof(filter_programs)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_FILTER_ALL, filter_all, sizeof(filter_all)/sizeof(WCHAR));
 
+    snprintfW( FilterBufferW, MAX_PATH, filters, filter_installs, 0, 0,
+               filter_programs, 0, 0, filter_all, 0, 0 );
     memset(&ofn, 0, sizeof(OPENFILENAMEW));
     ofn.lStructSize = sizeof(OPENFILENAMEW);
     ofn.hwndOwner = hWnd;

@@ -37,7 +37,9 @@ STRINGTABLE
    IDS_COLUMN_NAME, "Ime"
    IDS_COLUMN_PUBLISHER, "Založnik"
    IDS_COLUMN_VERSION, "Različica"
-   IDS_INSTALL_FILTER, "Instalacijski programi\0*instal*.exe;*setup*.exe;*.msi\0Programi (*.exe)\0*.exe\0Vse datoteke (*.*)\0*.*\0\0"
+   IDS_FILTER_INSTALLS, "Instalacijski programi"
+   IDS_FILTER_PROGRAMS, "Programi (*.exe)"
+   IDS_FILTER_ALL,      "Vse datoteke (*.*)"
 
    IDS_REMOVE, "&Odstrani ..."
    IDS_MODIFY_REMOVE, "&Modify/Remove ..."

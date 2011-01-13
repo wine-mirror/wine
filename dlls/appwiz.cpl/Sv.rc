@@ -39,7 +39,9 @@ STRINGTABLE
    IDS_COLUMN_NAME, "Namn"
    IDS_COLUMN_PUBLISHER, "Utgivare"
    IDS_COLUMN_VERSION, "Version"
-   IDS_INSTALL_FILTER, "Installationsprogram\0*instal*.exe;*setup*.exe;*.msi\0Program (*.exe)\0*.exe\0Alla filer (*.*)\0*.*\0\0"
+   IDS_FILTER_INSTALLS, "Installationsprogram"
+   IDS_FILTER_PROGRAMS, "Program (*.exe)"
+   IDS_FILTER_ALL,      "Alla filer (*.*)"
 
    IDS_REMOVE, "&Ta bort..."
    IDS_MODIFY_REMOVE, "&Ändra/Ta bort..."

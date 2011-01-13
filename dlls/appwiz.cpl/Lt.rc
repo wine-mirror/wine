@@ -38,7 +38,9 @@ STRINGTABLE
    IDS_COLUMN_NAME, "Vardas"
    IDS_COLUMN_PUBLISHER, "Leidėjas"
    IDS_COLUMN_VERSION, "Versija"
-   IDS_INSTALL_FILTER, "Diegimo programos\0*instal*.exe;*setup*.exe;*.msi\0Programos (*.exe)\0*.exe\0Visi failai (*.*)\0*.*\0\0"
+   IDS_FILTER_INSTALLS, "Diegimo programos"
+   IDS_FILTER_PROGRAMS, "Programos (*.exe)"
+   IDS_FILTER_ALL,      "Visi failai (*.*)"
 
    IDS_REMOVE, "Pa&šalinti..."
    IDS_MODIFY_REMOVE, "Pa&keisti/pašalinti..."

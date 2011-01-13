@@ -38,7 +38,9 @@ STRINGTABLE
    IDS_COLUMN_NAME, "名前"
    IDS_COLUMN_PUBLISHER, "発行元"
    IDS_COLUMN_VERSION, "バージョン"
-   IDS_INSTALL_FILTER, "インストールプログラム\0*instal*.exe;*setup*.exe;*.msi\0プログラム(*.exe)\0*.exe\0すべてのファイル (*.*)\0*.*\0\0"
+   IDS_FILTER_INSTALLS, "インストールプログラム"
+   IDS_FILTER_PROGRAMS, "プログラム(*.exe)"
+   IDS_FILTER_ALL,      "すべてのファイル (*.*)"
 
    IDS_REMOVE, "削除(&R)..."
    IDS_MODIFY_REMOVE, "変更と削除(&M)..."

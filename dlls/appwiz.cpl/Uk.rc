@@ -39,7 +39,9 @@ STRINGTABLE
    IDS_COLUMN_NAME, "Назва"
    IDS_COLUMN_PUBLISHER, "Видавець"
    IDS_COLUMN_VERSION, "Версія"
-   IDS_INSTALL_FILTER, "Програми встановлення\0*instal*.exe;*setup*.exe;*.msi\0Програми (*.exe)\0*.exe\0Всі Файли (*.*)\0*.*\0\0"
+   IDS_FILTER_INSTALLS, "Програми встановлення"
+   IDS_FILTER_PROGRAMS, "Програми (*.exe)"
+   IDS_FILTER_ALL,      "Всі Файли (*.*)"
 
    IDS_REMOVE, "&Видалити..."
    IDS_MODIFY_REMOVE, "&Змінити/Видалити..."

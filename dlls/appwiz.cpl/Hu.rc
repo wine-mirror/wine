@@ -38,7 +38,9 @@ STRINGTABLE
    IDS_COLUMN_NAME, "Név"
    IDS_COLUMN_PUBLISHER, "Kiadó"
    IDS_COLUMN_VERSION, "Verzió"
-   IDS_INSTALL_FILTER, "Telepítõ programok\0*instal*.exe;*setup*.exe;*.msi\0Programok (*.exe)\0*.exe\0Minden fájl (*.*)\0*.*\0\0"
+   IDS_FILTER_INSTALLS, "Telepítõ programok"
+   IDS_FILTER_PROGRAMS, "Programok (*.exe)"
+   IDS_FILTER_ALL,      "Minden fájl (*.*)"
 
    IDS_REMOVE, "&Eltávolítás..."
    IDS_MODIFY_REMOVE, "&Módosítás/Eltávolítás..."

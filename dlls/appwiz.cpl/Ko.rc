@@ -37,7 +37,9 @@ STRINGTABLE
    IDS_COLUMN_NAME, "이름"
    IDS_COLUMN_PUBLISHER, "제작사"
    IDS_COLUMN_VERSION, "버젼"
-   IDS_INSTALL_FILTER, "설치 프로그램0*instal*.exe;*setup*.exe;*.msi\0프로그램 (*.exe)\0*.exe\0모든 파일들 (*.*)\0*.*\0\0"
+   IDS_FILTER_INSTALLS, "설치 프로그램"
+   IDS_FILTER_PROGRAMS, "프로그램 (*.exe)"
+   IDS_FILTER_ALL,      "모든 파일들 (*.*)"
 
    IDS_REMOVE, "제거(&R)..."
    IDS_MODIFY_REMOVE, "고치기(&M)/제거..."

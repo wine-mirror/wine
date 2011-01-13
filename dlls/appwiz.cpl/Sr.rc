@@ -39,7 +39,9 @@ STRINGTABLE
    IDS_COLUMN_NAME, "Ime"
    IDS_COLUMN_PUBLISHER, "Izdavač"
    IDS_COLUMN_VERSION, "Izdanje"
-   IDS_INSTALL_FILTER, "Instalacioni programi\0*instal*.exe;*setup*.exe;*.msi\0Izvršne datoteke (*.exe)\0*.exe\0Sve datoteke (*.*)\0*.*\0\0"
+   IDS_FILTER_INSTALLS, "Instalacioni programi"
+   IDS_FILTER_PROGRAMS, "Izvršne datoteke (*.exe)"
+   IDS_FILTER_ALL,      "Sve datoteke (*.*)"
 
    IDS_REMOVE, "&Ukloni..."
    IDS_MODIFY_REMOVE, "&Izmeni/ukloni..."
@@ -107,7 +109,9 @@ STRINGTABLE
    IDS_COLUMN_NAME, "Име"
    IDS_COLUMN_PUBLISHER, "Издавач"
    IDS_COLUMN_VERSION, "Издање"
-   IDS_INSTALL_FILTER, "Инсталациони програми\0*instal*.exe;*setup*.exe;*.msi\0Извршне датотеке (*.exe)\0*.exe\0Све датотеке (*.*)\0*.*\0\0"
+   IDS_FILTER_INSTALLS, "Инсталациони програми"
+   IDS_FILTER_PROGRAMS, "Извршне датотеке (*.exe)"
+   IDS_FILTER_ALL,      "Све датотеке (*.*)"
 
    IDS_REMOVE, "&Уклони..."
    IDS_MODIFY_REMOVE, "&Измени/уклони..."

@@ -38,7 +38,9 @@ STRINGTABLE
    IDS_COLUMN_NAME, "Nume"
    IDS_COLUMN_PUBLISHER, "Emitent"
    IDS_COLUMN_VERSION, "Versiune"
-   IDS_INSTALL_FILTER, "Programe de instalare\0*instal*.exe;*setup*.exe;*.msi\0Programe (*.exe)\0*.exe\0Toate fișierele (*.*)\0*.*\0\0"
+   IDS_FILTER_INSTALLS, "Programe de instalare"
+   IDS_FILTER_PROGRAMS, "Programe (*.exe)"
+   IDS_FILTER_ALL,      "Toate fișierele (*.*)"
 
    IDS_REMOVE, "&Sterge..."
    IDS_MODIFY_REMOVE, "&Modifică/Șterge..."

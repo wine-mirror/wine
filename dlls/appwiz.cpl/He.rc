@@ -38,7 +38,9 @@ STRINGTABLE
    IDS_COLUMN_NAME, "שם"
    IDS_COLUMN_PUBLISHER, "מפיץ"
    IDS_COLUMN_VERSION, "גרסה"
-   IDS_INSTALL_FILTER, "תכניות התקנה\0*instal*.exe;*setup*.exe;*.msi\0תכניות (*.exe)\0*.exe\0כל הקבצים (*.*)\0*.*\0\0"
+   IDS_FILTER_INSTALLS, "תכניות התקנה"
+   IDS_FILTER_PROGRAMS, "תכניות (*.exe)"
+   IDS_FILTER_ALL,      "כל הקבצים (*.*)"
 
    IDS_REMOVE, "ה&סרה..."
    IDS_MODIFY_REMOVE, "&שינוי/הסרה..."
