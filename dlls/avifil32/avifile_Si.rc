@@ -39,16 +39,3 @@ BEGIN
     DEFPUSHBUTTON   "V redu",IDOK,170,42,50,14
     PUSHBUTTON      "Prekliči",IDCANCEL,170,61,50,14
 END
-
-STRINGTABLE
-{
-  IDS_WAVESTREAMFORMAT	"Waveform: %s"
-  IDS_WAVEFILETYPE	"Waveform"
-  IDS_ALLMULTIMEDIA	"Vse večpredstavnostne datoteke"
-  IDS_ALLFILES		"Vse datoteke (*.*)"
-  IDS_VIDEO		"video"
-  IDS_AUDIO		"avdio"
-  IDS_AVISTREAMFORMAT	"%s %s #%d"
-  IDS_AVIFILETYPE	"Wine privzeti-upravljalec-AVI-datotek"
-  IDS_UNCOMPRESSED      "nestisnjeno"
-}

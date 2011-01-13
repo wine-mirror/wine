@@ -37,16 +37,3 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,170,42,50,14
     PUSHBUTTON      "Avbryt",IDCANCEL,170,61,50,14
 END
-
-STRINGTABLE
-{
-  IDS_WAVESTREAMFORMAT	"Vågform: %s"
-  IDS_WAVEFILETYPE	"Vågform"
-  IDS_ALLMULTIMEDIA	"Alla multimediafiler"
-  IDS_ALLFILES		"Alla filer (*.*)"
-  IDS_VIDEO		"video"
-  IDS_AUDIO		"ljud"
-  IDS_AVISTREAMFORMAT	"%s %s #%d"
-  IDS_AVIFILETYPE	"Wine AVI-standardfilhanterare"
-  IDS_UNCOMPRESSED      "okomprimerad"
-}

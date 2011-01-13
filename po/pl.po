@@ -61,7 +61,8 @@ msgstr "Programy instalacyjne"
 msgid "Programs (*.exe)"
 msgstr "Programy (*.exe)"
 
-#: appwiz.rc:40 cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 notepad.rc:78 progman.rc:84
+#: winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Wszystkie pliki (*.*)"
 
@@ -88,6 +89,38 @@ msgid ""
 msgstr ""
 "Nieoczekiwana suma pobranego pliku. Przerywanie instalacji uszkodzonego "
 "pliku."
+
+#: avifil32.rc:27
+msgid "Waveform: %s"
+msgstr "Kształt fali: %s"
+
+#: avifil32.rc:28
+msgid "Waveform"
+msgstr "Kształt fali"
+
+#: avifil32.rc:29
+msgid "All multimedia files"
+msgstr "Wszystkie pliki multimedialne"
+
+#: avifil32.rc:31
+msgid "video"
+msgstr "obraz"
+
+#: avifil32.rc:32
+msgid "audio"
+msgstr "dźwięk"
+
+#: avifil32.rc:33
+msgid "%s %s #%d"
+msgstr "%s %s #%d"
+
+#: avifil32.rc:34
+msgid "Wine AVI-default-filehandler"
+msgstr "Wine AVI-domyślna-obsługa-pliku"
+
+#: avifil32.rc:35
+msgid "uncompressed"
+msgstr "nie skompresowany"
 
 #: browseui.rc:25
 msgid "Cancelling..."

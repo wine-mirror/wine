@@ -42,16 +42,3 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,170,42,50,14
     PUSHBUTTON      "Renunță",IDCANCEL,170,61,50,14
 END
-
-STRINGTABLE
-{
-  IDS_WAVESTREAMFORMAT	"Forma de undă: %s"
-  IDS_WAVEFILETYPE	"Formă de undă"
-  IDS_ALLMULTIMEDIA	"Toate fișierele multimedia"
-  IDS_ALLFILES		"Toate fișierele (*.*)"
-  IDS_VIDEO		"video"
-  IDS_AUDIO		"audio"
-  IDS_AVISTREAMFORMAT	"%s %s #%d"
-  IDS_AVIFILETYPE	"Tratare implicită Wine pentru AVI"
-  IDS_UNCOMPRESSED	"necomprimat"
-}

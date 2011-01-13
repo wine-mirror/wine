@@ -59,7 +59,8 @@ msgstr "Setup-Programme"
 msgid "Programs (*.exe)"
 msgstr "Programme (*.exe)"
 
-#: appwiz.rc:40 cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 notepad.rc:78 progman.rc:84
+#: winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Alle Dateien (*.*)"
 
@@ -86,6 +87,38 @@ msgid ""
 msgstr ""
 "Unerwartete Prüfsumme der heruntergeladenen Datei. Breche Installation der "
 "beschädigten Datei ab."
+
+#: avifil32.rc:27
+msgid "Waveform: %s"
+msgstr "Waveform: %s"
+
+#: avifil32.rc:28
+msgid "Waveform"
+msgstr "Waveform"
+
+#: avifil32.rc:29
+msgid "All multimedia files"
+msgstr "Alle Multimedia-Dateien"
+
+#: avifil32.rc:31
+msgid "video"
+msgstr "Video"
+
+#: avifil32.rc:32
+msgid "audio"
+msgstr "Audio"
+
+#: avifil32.rc:33
+msgid "%s %s #%d"
+msgstr "%s %s #%d"
+
+#: avifil32.rc:34
+msgid "Wine AVI-default-filehandler"
+msgstr "Wine AVI-Standard-Dateibehandlungsroutine"
+
+#: avifil32.rc:35
+msgid "uncompressed"
+msgstr "Unkomprimiert"
 
 #: browseui.rc:25
 msgid "Cancelling..."

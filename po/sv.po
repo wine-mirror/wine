@@ -61,7 +61,8 @@ msgstr "Installationsprogram"
 msgid "Programs (*.exe)"
 msgstr "Program (*.exe)"
 
-#: appwiz.rc:40 cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 notepad.rc:78 progman.rc:84
+#: winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Alla filer (*.*)"
 
@@ -87,6 +88,38 @@ msgid ""
 "file."
 msgstr ""
 "Oväntad kontrollsumma på hämtad fil. Avbryter installation av korrupt fil."
+
+#: avifil32.rc:27
+msgid "Waveform: %s"
+msgstr "Vågform: %s"
+
+#: avifil32.rc:28
+msgid "Waveform"
+msgstr "Vågform"
+
+#: avifil32.rc:29
+msgid "All multimedia files"
+msgstr "Alla multimediafiler"
+
+#: avifil32.rc:31
+msgid "video"
+msgstr "video"
+
+#: avifil32.rc:32
+msgid "audio"
+msgstr "ljud"
+
+#: avifil32.rc:33
+msgid "%s %s #%d"
+msgstr "%s %s #%d"
+
+#: avifil32.rc:34
+msgid "Wine AVI-default-filehandler"
+msgstr "Wine AVI-standardfilhanterare"
+
+#: avifil32.rc:35
+msgid "uncompressed"
+msgstr "okomprimerad"
 
 #: browseui.rc:25
 msgid "Cancelling..."

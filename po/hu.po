@@ -62,7 +62,8 @@ msgstr "Telepítõ programok"
 msgid "Programs (*.exe)"
 msgstr "Programok (*.exe)"
 
-#: appwiz.rc:40 cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 notepad.rc:78 progman.rc:84
+#: winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Minden fájl (*.*)"
 
@@ -87,6 +88,38 @@ msgid ""
 "Unexpected checksum of downloaded file. Aborting installation of corrupted "
 "file."
 msgstr ""
+
+#: avifil32.rc:27
+msgid "Waveform: %s"
+msgstr "Hullámforma: %s"
+
+#: avifil32.rc:28
+msgid "Waveform"
+msgstr "Hullámforma"
+
+#: avifil32.rc:29
+msgid "All multimedia files"
+msgstr "Minden multimédia fájl"
+
+#: avifil32.rc:31
+msgid "video"
+msgstr "video"
+
+#: avifil32.rc:32
+msgid "audio"
+msgstr "hang"
+
+#: avifil32.rc:33
+msgid "%s %s #%d"
+msgstr "%s %s #%d"
+
+#: avifil32.rc:34
+msgid "Wine AVI-default-filehandler"
+msgstr "Wine AVI-alapértelmezett-fájlkezelő"
+
+#: avifil32.rc:35
+msgid "uncompressed"
+msgstr "tömörítetlen"
 
 #: browseui.rc:25
 msgid "Cancelling..."

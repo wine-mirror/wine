@@ -37,16 +37,3 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,170,42,50,14
     PUSHBUTTON      "Mégse",IDCANCEL,170,61,50,14
 END
-
-STRINGTABLE
-{
-  IDS_WAVESTREAMFORMAT	"Hullámforma: %s"
-  IDS_WAVEFILETYPE	"Hullámforma"
-  IDS_ALLMULTIMEDIA	"Minden multimédia fájl"
-  IDS_ALLFILES		"Minden fájl (*.*)"
-  IDS_VIDEO		"video"
-  IDS_AUDIO		"hang"
-  IDS_AVISTREAMFORMAT	"%s %s #%d"
-  IDS_AVIFILETYPE	"Wine AVI-alapértelmezett-fájlkezelõ"
-  IDS_UNCOMPRESSED      "tömörítetlen"
-}

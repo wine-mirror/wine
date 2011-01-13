@@ -37,16 +37,3 @@ BEGIN
     DEFPUSHBUTTON   "Tamam",IDOK,170,42,50,14
     PUSHBUTTON      "Ýptal",IDCANCEL,170,61,50,14
 END
-
-STRINGTABLE
-{
-  IDS_WAVESTREAMFORMAT	"Waveform: %s"
-  IDS_WAVEFILETYPE	"Waveform"
-  IDS_ALLMULTIMEDIA	"Tüm çokluortam dosyalarý"
-  IDS_ALLFILES		"Tüm dosyalar (*.*)"
-  IDS_VIDEO		"vidyo"
-  IDS_AUDIO		"ses"
-  IDS_AVISTREAMFORMAT	"%s %s #%d"
-  IDS_AVIFILETYPE	"Wine AVI-default-filehandler"
-  IDS_UNCOMPRESSED      "sýkýþtýrýlmamýþ"
-}

@@ -66,7 +66,8 @@ msgstr ""
 msgid "Programs (*.exe)"
 msgstr ""
 
-#: appwiz.rc:40 cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 notepad.rc:78 progman.rc:84
+#: winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr ""
 
@@ -91,6 +92,38 @@ msgstr ""
 msgid ""
 "Unexpected checksum of downloaded file. Aborting installation of corrupted "
 "file."
+msgstr ""
+
+#: avifil32.rc:27
+msgid "Waveform: %s"
+msgstr ""
+
+#: avifil32.rc:28
+msgid "Waveform"
+msgstr ""
+
+#: avifil32.rc:29
+msgid "All multimedia files"
+msgstr ""
+
+#: avifil32.rc:31
+msgid "video"
+msgstr ""
+
+#: avifil32.rc:32
+msgid "audio"
+msgstr ""
+
+#: avifil32.rc:33
+msgid "%s %s #%d"
+msgstr ""
+
+#: avifil32.rc:34
+msgid "Wine AVI-default-filehandler"
+msgstr ""
+
+#: avifil32.rc:35
+msgid "uncompressed"
 msgstr ""
 
 #: browseui.rc:25

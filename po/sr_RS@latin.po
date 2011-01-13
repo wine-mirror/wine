@@ -59,7 +59,8 @@ msgstr "Instalacioni programi"
 msgid "Programs (*.exe)"
 msgstr "Izvršne datoteke (*.exe)"
 
-#: appwiz.rc:40 cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 notepad.rc:78 progman.rc:84
+#: winhlp32.rc:102
 #, fuzzy
 msgid "All files (*.*)"
 msgstr ""
@@ -89,6 +90,38 @@ msgid ""
 "Unexpected checksum of downloaded file. Aborting installation of corrupted "
 "file."
 msgstr ""
+
+#: avifil32.rc:27
+msgid "Waveform: %s"
+msgstr "Talasni oblik: %s"
+
+#: avifil32.rc:28
+msgid "Waveform"
+msgstr "Talasni oblik"
+
+#: avifil32.rc:29
+msgid "All multimedia files"
+msgstr "Sve multimedijalne datoteke"
+
+#: avifil32.rc:31
+msgid "video"
+msgstr "video zapis"
+
+#: avifil32.rc:32
+msgid "audio"
+msgstr "audio zapis"
+
+#: avifil32.rc:33
+msgid "%s %s #%d"
+msgstr "%s %s #%d"
+
+#: avifil32.rc:34
+msgid "Wine AVI-default-filehandler"
+msgstr "Wine AVI-default-filehandler"
+
+#: avifil32.rc:35
+msgid "uncompressed"
+msgstr "nesažeto"
 
 #: browseui.rc:25
 msgid "Cancelling..."

@@ -37,16 +37,3 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,145,42,45,14
     PUSHBUTTON      "Скасувати",IDCANCEL,145,61,45,14
 END
-
-STRINGTABLE
-{
-  IDS_WAVESTREAMFORMAT	"Звуковий потік: %s"
-  IDS_WAVEFILETYPE	"Звуковий потік"
-  IDS_ALLMULTIMEDIA	"Усі мультимедійні файли"
-  IDS_ALLFILES		"Усі файли (*.*)"
-  IDS_VIDEO		"відео"
-  IDS_AUDIO		"аудіо"
-  IDS_AVISTREAMFORMAT	"%s %s #%d"
-  IDS_AVIFILETYPE	"Wine обробник AVI-файлів за замовчуванням"
-  IDS_UNCOMPRESSED      "без стиснення"
-}

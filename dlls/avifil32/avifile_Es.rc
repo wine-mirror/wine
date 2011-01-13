@@ -37,16 +37,3 @@ BEGIN
     DEFPUSHBUTTON   "Aceptar",IDOK,170,42,50,14
     PUSHBUTTON      "Cancelar",IDCANCEL,170,61,50,14
 END
-
-STRINGTABLE
-{
-  IDS_WAVESTREAMFORMAT	"Formato de ondas: %s"
-  IDS_WAVEFILETYPE	"Formato de ondas"
-  IDS_ALLMULTIMEDIA	"Todos los archivos multimedia"
-  IDS_ALLFILES		"Todos los archivos (*.*)"
-  IDS_VIDEO		"vídeo"
-  IDS_AUDIO		"audio"
-  IDS_AVISTREAMFORMAT	"%s %s #%d"
-  IDS_AVIFILETYPE	"Manejador de archivo AVI por defecto de Wine"
-  IDS_UNCOMPRESSED      "sin compresión"
-}

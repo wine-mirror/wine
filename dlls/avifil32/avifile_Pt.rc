@@ -61,34 +61,3 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,170,42,50,14
     PUSHBUTTON      "Cancelar",IDCANCEL,170,61,50,14
 END
-
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
-
-STRINGTABLE
-{
-  IDS_WAVESTREAMFORMAT	"Formato wave: %s"
-  IDS_WAVEFILETYPE	"Formato wave"
-  IDS_ALLMULTIMEDIA	"Todos arquivos multimídia"
-  IDS_ALLFILES		"Todos os arquivos (*.*)"
-  IDS_VIDEO		"vídeo"
-  IDS_AUDIO		"áudio"
-  IDS_AVISTREAMFORMAT	"%s %s #%d"
-  IDS_AVIFILETYPE	"Manipulador de AVI padrão do Wine"
-  IDS_UNCOMPRESSED      "sem compressão"
-}
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
-
-STRINGTABLE
-{
-  IDS_WAVESTREAMFORMAT	"Formato wave: %s"
-  IDS_WAVEFILETYPE	"Formato wave"
-  IDS_ALLMULTIMEDIA	"Todos os ficheiros multimédia"
-  IDS_ALLFILES		"Todos os ficheiros (*.*)"
-  IDS_VIDEO		"vídeo"
-  IDS_AUDIO		"áudio"
-  IDS_AVISTREAMFORMAT	"%s %s #%d"
-  IDS_AVIFILETYPE	"Manipulador AVI Wine predefinido"
-  IDS_UNCOMPRESSED      "sem compressão"
-}

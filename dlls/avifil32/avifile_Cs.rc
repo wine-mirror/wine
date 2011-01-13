@@ -43,16 +43,3 @@ BEGIN
     DEFPUSHBUTTON   "Budiž",IDOK,170,42,50,14
     PUSHBUTTON      "Zrušit",IDCANCEL,170,61,50,14
 END
-
-STRINGTABLE
-{
-  IDS_WAVESTREAMFORMAT	"Waveform: %s"
-  IDS_WAVEFILETYPE	"Waveform"
-  IDS_ALLMULTIMEDIA	"Všechny soubory multimédií"
-  IDS_ALLFILES		"Všechny soubory (*.*)"
-  IDS_VIDEO		"video"
-  IDS_AUDIO		"audio"
-  IDS_AVISTREAMFORMAT	"%s %s #%d"
-  IDS_AVIFILETYPE	"Wine AVI-default-filehandler"
-  IDS_UNCOMPRESSED      "nekomprimovaný"
-}

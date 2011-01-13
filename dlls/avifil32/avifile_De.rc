@@ -39,16 +39,3 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,170,42,50,14
     PUSHBUTTON      "Abbrechen",IDCANCEL,170,61,50,14
 END
-
-STRINGTABLE
-{
-  IDS_WAVESTREAMFORMAT	"Waveform: %s"
-  IDS_WAVEFILETYPE	"Waveform"
-  IDS_ALLMULTIMEDIA	"Alle Multimedia-Dateien"
-  IDS_ALLFILES		"Alle Dateien (*.*)"
-  IDS_VIDEO		"Video"
-  IDS_AUDIO		"Audio"
-  IDS_AVISTREAMFORMAT	"%s %s #%d"
-  IDS_AVIFILETYPE	"Wine AVI-Standard-Dateibehandlungsroutine"
-  IDS_UNCOMPRESSED      "Unkomprimiert"
-}

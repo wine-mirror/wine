@@ -20,6 +20,23 @@
 
 #include "avifile_private.h"
 
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+  IDS_WAVESTREAMFORMAT	"Waveform: %s"
+  IDS_WAVEFILETYPE	"Waveform"
+  IDS_ALLMULTIMEDIA	"All multimedia files"
+  IDS_ALLFILES		"All files (*.*)"
+  IDS_VIDEO		"video"
+  IDS_AUDIO		"audio"
+  IDS_AVISTREAMFORMAT	"%s %s #%d"
+  IDS_AVIFILETYPE	"Wine AVI-default-filehandler"
+  IDS_UNCOMPRESSED      "uncompressed"
+}
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
 /* @makedep: avifile.rgs */
 1 WINE_REGISTRY avifile.rgs
 

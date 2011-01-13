@@ -62,7 +62,8 @@ msgstr "Diegimo programos"
 msgid "Programs (*.exe)"
 msgstr "Programos (*.exe)"
 
-#: appwiz.rc:40 cryptui.rc:80 notepad.rc:78 progman.rc:84 winhlp32.rc:102
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 notepad.rc:78 progman.rc:84
+#: winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Visi failai (*.*)"
 
@@ -89,6 +90,38 @@ msgid ""
 msgstr ""
 "Netikėta atsiųsto failo kontrolinė suma. Nutraukiamas pažeisto failo "
 "įdiegimas."
+
+#: avifil32.rc:27
+msgid "Waveform: %s"
+msgstr "Bangos forma: %s"
+
+#: avifil32.rc:28
+msgid "Waveform"
+msgstr "Bangos forma"
+
+#: avifil32.rc:29
+msgid "All multimedia files"
+msgstr "Visi multimedijos failai"
+
+#: avifil32.rc:31
+msgid "video"
+msgstr "vaizdas"
+
+#: avifil32.rc:32
+msgid "audio"
+msgstr "garsas"
+
+#: avifil32.rc:33
+msgid "%s %s #%d"
+msgstr "%s %s #%d"
+
+#: avifil32.rc:34
+msgid "Wine AVI-default-filehandler"
+msgstr "Wine numatyta-AVI-doroklė"
+
+#: avifil32.rc:35
+msgid "uncompressed"
+msgstr "neglaudintas"
 
 #: browseui.rc:25
 msgid "Cancelling..."

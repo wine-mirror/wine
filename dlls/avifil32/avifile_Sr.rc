@@ -41,19 +41,6 @@ BEGIN
     PUSHBUTTON      "Откажи",IDCANCEL,170,61,50,14
 END
 
-STRINGTABLE
-{
-  IDS_WAVESTREAMFORMAT	"Таласни облик: %s"
-  IDS_WAVEFILETYPE	"Таласни облик"
-  IDS_ALLMULTIMEDIA	"Све мултимедијалне датотеке"
-  IDS_ALLFILES		"Све датотеке (*.*)"
-  IDS_VIDEO		"видео запис"
-  IDS_AUDIO		"аудио запис"
-  IDS_AVISTREAMFORMAT	"%s %s #%d"
-  IDS_AVIFILETYPE	"Wine AVI-default-filehandler"
-  IDS_UNCOMPRESSED      "несажето"
-}
-
 LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
 
 IDD_SAVEOPTIONS DIALOG  43, 37, 226, 82
@@ -73,16 +60,3 @@ BEGIN
     DEFPUSHBUTTON   "U redu",IDOK,170,42,50,14
     PUSHBUTTON      "Otkaži",IDCANCEL,170,61,50,14
 END
-
-STRINGTABLE
-{
-  IDS_WAVESTREAMFORMAT	"Talasni oblik: %s"
-  IDS_WAVEFILETYPE	"Talasni oblik"
-  IDS_ALLMULTIMEDIA	"Sve multimedijalne datoteke"
-  IDS_ALLFILES		"Sve datoteke (*.*)"
-  IDS_VIDEO		"video zapis"
-  IDS_AUDIO		"audio zapis"
-  IDS_AVISTREAMFORMAT	"%s %s #%d"
-  IDS_AVIFILETYPE	"Wine AVI-default-filehandler"
-  IDS_UNCOMPRESSED      "nesažeto"
-}

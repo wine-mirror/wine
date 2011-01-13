@@ -42,16 +42,3 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,170,42,50,14
     PUSHBUTTON      "Отмена",IDCANCEL,170,61,50,14
 END
-
-STRINGTABLE
-{
-  IDS_WAVESTREAMFORMAT	"Звуковой поток: %s"
-  IDS_WAVEFILETYPE	"Звуковой поток"
-  IDS_ALLMULTIMEDIA	"Все файлы мультимедиа"
-  IDS_ALLFILES		"Все файлы (*.*)"
-  IDS_VIDEO		"видео"
-  IDS_AUDIO		"аудио"
-  IDS_AVISTREAMFORMAT	"%s %s #%d"
-  IDS_AVIFILETYPE	"Обработчик по умолчанию avi-файлов в Wine"
-  IDS_UNCOMPRESSED      "без сжатия"
-}

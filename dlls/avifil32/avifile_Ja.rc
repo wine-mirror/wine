@@ -40,16 +40,3 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,170,42,50,14
     PUSHBUTTON      "キャンセル",IDCANCEL,170,61,50,14
 END
-
-STRINGTABLE
-{
-  IDS_WAVESTREAMFORMAT	"Waveファイル: %s"
-  IDS_WAVEFILETYPE	"Waveファイル"
-  IDS_ALLMULTIMEDIA	"全てのマルチメディアファイル"
-  IDS_ALLFILES		"全てのファイル (*.*)"
-  IDS_VIDEO		"ビデオ"
-  IDS_AUDIO		"音声"
-  IDS_AVISTREAMFORMAT	"%s %s #%d"
-  IDS_AVIFILETYPE	"Wine AVI-default-filehandler"
-  IDS_UNCOMPRESSED      "未圧縮"
-}

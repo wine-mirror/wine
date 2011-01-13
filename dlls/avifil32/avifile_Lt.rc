@@ -40,16 +40,3 @@ BEGIN
     DEFPUSHBUTTON   "Gerai",IDOK,170,42,50,14
     PUSHBUTTON      "Atsisakyti",IDCANCEL,170,61,50,14
 END
-
-STRINGTABLE
-{
-  IDS_WAVESTREAMFORMAT "Bangos forma: %s"
-  IDS_WAVEFILETYPE     "Bangos forma"
-  IDS_ALLMULTIMEDIA    "Visi multimedijos failai"
-  IDS_ALLFILES         "Visi failai (*.*)"
-  IDS_VIDEO            "vaizdas"
-  IDS_AUDIO            "garsas"
-  IDS_AVISTREAMFORMAT  "%s %s #%d"
-  IDS_AVIFILETYPE      "Wine numatyta-AVI-doroklė"
-  IDS_UNCOMPRESSED     "neglaudintas"
-}
