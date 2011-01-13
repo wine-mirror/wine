@@ -49,7 +49,7 @@ extern LONG dll_refs;
  */
 typedef struct
 {
-    IClassFactoryVtbl *lpVtbl;
+    IClassFactory IClassFactory_iface;
     LONG ref;
 } ClassFactoryImpl;
 

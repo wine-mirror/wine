@@ -54,7 +54,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
     *ppv = NULL;
 
     if (IsEqualGUID(rclsid, &CLSID_DsObjectPicker))
-        return IClassFactory_QueryInterface((IClassFactory*)&OBJSEL_ClassFactory, iid, ppv);
+        return IClassFactory_QueryInterface(&OBJSEL_ClassFactory.IClassFactory_iface, iid, ppv);
 
     FIXME("CLSID: %s, IID: %s\n", debugstr_guid(rclsid), debugstr_guid(iid));
     return CLASS_E_CLASSNOTAVAILABLE;
