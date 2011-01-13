@@ -954,7 +954,9 @@ static void check_menu_item_info( int line, HMENU hmenu, BOOL ansi, UINT mask, U
                              "wrong bmpitem %p/%p\n", info.hbmpItem, item );
     ok_(__FILE__, line)( info.dwTypeData == type_data || (ULONG_PTR)info.dwTypeData == LOWORD(type_data),
                          "wrong type data %p/%p\n", info.dwTypeData, type_data );
-    ok_(__FILE__, line)( info.cch == out_len, "wrong len %x/%x\n", info.cch, out_len );
+    ok_(__FILE__, line)( info.cch == out_len ||
+                         broken(! ansi && info.cch == 2 * out_len) /* East-Asian */,
+                         "wrong len %x/%x\n", info.cch, out_len );
     if (expname)
     {
         if(ansi)
