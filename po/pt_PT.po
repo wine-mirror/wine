@@ -2536,19 +2536,19 @@ msgstr "&Copiar fundo"
 msgid "Set as &Desktop Item"
 msgstr "Definir como &item do Ambiente de Trabalho"
 
-#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121
-msgid "Select &All"
-msgstr "&Seleccionar tudo"
-
-#: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
+#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:49
 #, fuzzy
-msgid "&Paste"
+msgid "Select &All"
 msgstr ""
 "#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
-"C&olar\n"
+"&Seleccionar tudo\n"
 "#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
-"&Colar"
+"Seleccionar &Tudo"
+
+#: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
+#: shdoclc.rc:189 user32.rc:46 wineconsole.rc:30 wordpad.rc:103
+msgid "&Paste"
+msgstr "Co&lar"
 
 #: shdoclc.rc:49
 msgid "Create Shor&tcut"
@@ -2627,19 +2627,19 @@ msgid "Set as &Desktop Item..."
 msgstr "Definir como &item do Ambiente de Trabalho..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
-#: wordpad.rc:101
-msgid "Cu&t"
-msgstr "&Cortar"
-
-#: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 wineconsole.rc:29 wordpad.rc:102
+#: user32.rc:44 wordpad.rc:101
 #, fuzzy
-msgid "&Copy"
+msgid "Cu&t"
 msgstr ""
 "#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
-"C&opiar\n"
+"&Cortar\n"
 "#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
-"&Copiar"
+"&Recortar"
+
+#: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
+#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
+msgid "&Copy"
+msgstr "&Copiar"
 
 #: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
 msgid "Copy Shor&tcut"
@@ -2657,18 +2657,18 @@ msgstr "&Propriedades"
 msgid "Control"
 msgstr "Controlo"
 
-#: shdoclc.rc:90
-msgid "&Undo"
-msgstr "&Desfazer"
-
-#: shdoclc.rc:95 shell32.rc:90
+#: shdoclc.rc:90 user32.rc:42
 #, fuzzy
-msgid "&Delete"
+msgid "&Undo"
 msgstr ""
 "#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
-"&Apagar\n"
+"&Desfazer\n"
 "#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
-"Re&mover"
+"&Voltar"
+
+#: shdoclc.rc:95 shell32.rc:90 user32.rc:47
+msgid "&Delete"
+msgstr "&Limpar"
 
 #: shdoclc.rc:101
 msgid "Table"
@@ -3539,6 +3539,42 @@ msgstr " min"
 #: shlwapi.rc:30
 msgid " sec"
 msgstr " seg"
+
+#: user32.rc:27 taskmgr.rc:139
+msgid "&Restore"
+msgstr "&Restaurar"
+
+#: user32.rc:28
+msgid "&Move"
+msgstr "&Mover"
+
+#: user32.rc:29
+msgid "&Size"
+msgstr "&Tamanho"
+
+#: user32.rc:30
+msgid "Mi&nimize"
+msgstr "Mi&nimizar"
+
+#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+msgid "Ma&ximize"
+msgstr "Ma&ximizar"
+
+#: user32.rc:33
+msgid "&Close\tAlt-F4"
+msgstr "&Fechar\tAlt-F4"
+
+#: user32.rc:35
+msgid "&About Wine..."
+msgstr "&Acerca do Wine..."
+
+#: user32.rc:55 winefile.rc:148
+msgid "Error"
+msgstr "Erro"
+
+#: user32.rc:56
+msgid "&More Windows..."
+msgstr "&Mais Janelas..."
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -5957,10 +5993,6 @@ msgstr "Em mosaico na &Vertical"
 msgid "&Minimize"
 msgstr "&Minimizar"
 
-#: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
-msgid "Ma&ximize"
-msgstr "Ma&ximizar"
-
 #: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
 msgid "&Cascade"
 msgstr "&Em cascata"
@@ -5992,10 +6024,6 @@ msgstr "&Terminar Tarefa"
 #: taskmgr.rc:131
 msgid "&Go To Process"
 msgstr "&Ir para Processo"
-
-#: taskmgr.rc:139
-msgid "&Restore"
-msgstr "&Restaurar"
 
 #: taskmgr.rc:150
 msgid "&End Process"
@@ -6854,10 +6882,6 @@ msgstr "Erro ao seleccionar novo tipo de letra."
 #: winefile.rc:147
 msgid "Wine File Manager"
 msgstr "Winefile"
-
-#: winefile.rc:148
-msgid "Error"
-msgstr "Erro"
 
 #: winefile.rc:149
 msgid "root fs"

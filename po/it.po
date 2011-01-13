@@ -2527,19 +2527,19 @@ msgstr "&Copia sfondo"
 msgid "Set as &Desktop Item"
 msgstr "Aggiungi come &oggetto del Desktop"
 
-#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121
-msgid "Select &All"
-msgstr "Seleziona &tutto"
-
-#: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
+#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:49
 #, fuzzy
-msgid "&Paste"
+msgid "Select &All"
 msgstr ""
 "#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
-"I&ncolla\n"
+"Seleziona &tutto\n"
 "#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
-"&Incolla"
+"Sele&ziona tutto"
+
+#: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
+#: shdoclc.rc:189 user32.rc:46 wineconsole.rc:30 wordpad.rc:103
+msgid "&Paste"
+msgstr "&Incolla"
 
 #: shdoclc.rc:49
 msgid "Create Shor&tcut"
@@ -2623,7 +2623,7 @@ msgid "Set as &Desktop Item..."
 msgstr "Aggiungi come &oggetto del Desktop..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
-#: wordpad.rc:101
+#: user32.rc:44 wordpad.rc:101
 #, fuzzy
 msgid "Cu&t"
 msgstr ""
@@ -2633,7 +2633,7 @@ msgstr ""
 "&Taglia"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 wineconsole.rc:29 wordpad.rc:102
+#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
 msgid "&Copy"
 msgstr "&Copia"
 
@@ -2653,11 +2653,11 @@ msgstr "P&roprietà"
 msgid "Control"
 msgstr "Controllo"
 
-#: shdoclc.rc:90
+#: shdoclc.rc:90 user32.rc:42
 msgid "&Undo"
 msgstr "&Annulla"
 
-#: shdoclc.rc:95 shell32.rc:90
+#: shdoclc.rc:95 shell32.rc:90 user32.rc:47
 #, fuzzy
 msgid "&Delete"
 msgstr ""
@@ -3505,6 +3505,42 @@ msgstr " min"
 #: shlwapi.rc:30
 msgid " sec"
 msgstr " sec"
+
+#: user32.rc:27 taskmgr.rc:139
+msgid "&Restore"
+msgstr "&Ripristina"
+
+#: user32.rc:28
+msgid "&Move"
+msgstr "&Muovi"
+
+#: user32.rc:29
+msgid "&Size"
+msgstr "&Dimensione"
+
+#: user32.rc:30
+msgid "Mi&nimize"
+msgstr "Mi&nimizza"
+
+#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+msgid "Ma&ximize"
+msgstr "Ma&ssimizza"
+
+#: user32.rc:33
+msgid "&Close\tAlt-F4"
+msgstr "&Chiudi\tAlt-F4"
+
+#: user32.rc:35
+msgid "&About Wine..."
+msgstr "&Informazioni su Wine..."
+
+#: user32.rc:55 winefile.rc:148
+msgid "Error"
+msgstr "Errore"
+
+#: user32.rc:56
+msgid "&More Windows..."
+msgstr "&Più finestre..."
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -5928,10 +5964,6 @@ msgstr "Ordina &verticalmente"
 msgid "&Minimize"
 msgstr "&Minimizza"
 
-#: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
-msgid "Ma&ximize"
-msgstr "Ma&ssimizza"
-
 #: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
 msgid "&Cascade"
 msgstr "&A cascata"
@@ -5963,10 +5995,6 @@ msgstr "&Termina processo"
 #: taskmgr.rc:131
 msgid "&Go To Process"
 msgstr "Vai al &processo"
-
-#: taskmgr.rc:139
-msgid "&Restore"
-msgstr "&Ripristina"
 
 #: taskmgr.rc:150
 msgid "&End Process"
@@ -6819,10 +6847,6 @@ msgstr "Si è verificato un errore durante la selezione del nuovo carattere."
 #: winefile.rc:147
 msgid "Wine File Manager"
 msgstr "Gestore di file di Wine"
-
-#: winefile.rc:148
-msgid "Error"
-msgstr "Errore"
 
 #: winefile.rc:149
 msgid "root fs"

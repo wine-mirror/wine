@@ -24,34 +24,6 @@
 
 LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
 
-SYSMENU MENU
-{
-    MENUITEM "&Povrati", 61728
-    MENUITEM "Pr&emesti", 61456
-    MENUITEM "&Veličina", 61440
-    MENUITEM "&Umanji", 61472
-    MENUITEM "U&većaj", 61488
-    MENUITEM SEPARATOR
-    MENUITEM "&Zatvori\tAlt-F4", 61536
-    MENUITEM SEPARATOR
-    MENUITEM "&O Wine-u...", 61761
-}
-
-EDITMENU MENU
-{
-    POPUP ""
-    BEGIN
-        MENUITEM "&Opozivi", EM_UNDO
-        MENUITEM SEPARATOR
-        MENUITEM "&Iseci", WM_CUT
-        MENUITEM "&Umnoži", WM_COPY
-        MENUITEM "&Ubaci", WM_PASTE
-        MENUITEM "Iz&briši", WM_CLEAR
-        MENUITEM SEPARATOR
-        MENUITEM "Izaberi &sve", EM_SETSEL
-    END
-}
-
 MSGBOX DIALOG 100, 80, 216, 168
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 BEGIN
@@ -79,41 +51,7 @@ BEGIN
     PUSHBUTTON      "Otkaži", IDCANCEL, 120, 100, 35, 14
 END
 
-STRINGTABLE
-{
-    IDS_ERROR "Greška"
-    IDS_MDI_MOREWINDOWS "&Više prozora..."
-}
-
 LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_CYRILLIC
-
-SYSMENU MENU
-{
-    MENUITEM "&Поврати", 61728
-    MENUITEM "Пр&емести", 61456
-    MENUITEM "&Величина", 61440
-    MENUITEM "&Умањи", 61472
-    MENUITEM "У&већај", 61488
-    MENUITEM SEPARATOR
-    MENUITEM "&Затвори\tAlt-F4", 61536
-    MENUITEM SEPARATOR
-    MENUITEM "&О Wine-у...", 61761
-}
-
-EDITMENU MENU
-{
-    POPUP ""
-    BEGIN
-        MENUITEM "&Опозиви", EM_UNDO
-        MENUITEM SEPARATOR
-        MENUITEM "&Исеци", WM_CUT
-        MENUITEM "&Умножи", WM_COPY
-        MENUITEM "&Убаци", WM_PASTE
-        MENUITEM "Из&бриши", WM_CLEAR
-        MENUITEM SEPARATOR
-        MENUITEM "Изабери &све", EM_SETSEL
-    END
-}
 
 MSGBOX DIALOG 100, 80, 216, 168
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
@@ -141,9 +79,3 @@ BEGIN
     DEFPUSHBUTTON   "У реду", IDOK, 75, 100, 35, 14
     PUSHBUTTON      "Откажи", IDCANCEL, 120, 100, 35, 14
 END
-
-STRINGTABLE
-{
-    IDS_ERROR "Грешка"
-    IDS_MDI_MOREWINDOWS "&Више прозора..."
-}

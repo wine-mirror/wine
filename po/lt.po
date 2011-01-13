@@ -2447,12 +2447,17 @@ msgstr "Kopijuoti &foną"
 msgid "Set as &Desktop Item"
 msgstr "Nustatyti da&rbalaukio elementu"
 
-#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121
+#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:49
+#, fuzzy
 msgid "Select &All"
-msgstr "Pažymėti &viską"
+msgstr ""
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"Pažymėti &viską\n"
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"&Pažymėti viską"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
+#: shdoclc.rc:189 user32.rc:46 wineconsole.rc:30 wordpad.rc:103
 msgid "&Paste"
 msgstr "Į&dėti"
 
@@ -2538,12 +2543,12 @@ msgid "Set as &Desktop Item..."
 msgstr "Nustatyti da&rbalaukio elementu..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
-#: wordpad.rc:101
+#: user32.rc:44 wordpad.rc:101
 msgid "Cu&t"
 msgstr "&Iškirpti"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 wineconsole.rc:29 wordpad.rc:102
+#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
 msgid "&Copy"
 msgstr "&Kopijuoti"
 
@@ -2563,13 +2568,18 @@ msgstr "Savy&bės"
 msgid "Control"
 msgstr "Valdiklis"
 
-#: shdoclc.rc:90
+#: shdoclc.rc:90 user32.rc:42
 msgid "&Undo"
 msgstr "&Atšaukti"
 
-#: shdoclc.rc:95 shell32.rc:90
+#: shdoclc.rc:95 shell32.rc:90 user32.rc:47
+#, fuzzy
 msgid "&Delete"
-msgstr "&Šalinti"
+msgstr ""
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"&Šalinti\n"
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"Iš&valyti"
 
 #: shdoclc.rc:101
 msgid "Table"
@@ -3411,6 +3421,52 @@ msgstr " min"
 #: shlwapi.rc:30
 msgid " sec"
 msgstr " sek"
+
+#: user32.rc:27 taskmgr.rc:139
+#, fuzzy
+msgid "&Restore"
+msgstr ""
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"&Atkurti\n"
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"A&tkurti"
+
+#: user32.rc:28
+msgid "&Move"
+msgstr "Pe&rkelti"
+
+#: user32.rc:29
+msgid "&Size"
+msgstr "D&ydis"
+
+#: user32.rc:30
+msgid "Mi&nimize"
+msgstr "Su&skleisti"
+
+#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+#, fuzzy
+msgid "Ma&ximize"
+msgstr ""
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"&Išskleisti\n"
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"Pa&didinti"
+
+#: user32.rc:33
+msgid "&Close\tAlt-F4"
+msgstr "&Užverti\tAlt-F4"
+
+#: user32.rc:35
+msgid "&About Wine..."
+msgstr "&Apie Wine..."
+
+#: user32.rc:55 winefile.rc:148
+msgid "Error"
+msgstr "Klaida"
+
+#: user32.rc:56
+msgid "&More Windows..."
+msgstr "&Daugiau langų..."
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -5777,10 +5833,6 @@ msgstr "Iškloti &stačiai"
 msgid "&Minimize"
 msgstr "Susk&leisti"
 
-#: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
-msgid "Ma&ximize"
-msgstr "&Išskleisti"
-
 #: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
 msgid "&Cascade"
 msgstr "Išdėstyti pa&kopomis"
@@ -5812,10 +5864,6 @@ msgstr "&Baigti užduotį"
 #: taskmgr.rc:131
 msgid "&Go To Process"
 msgstr "&Eiti į procesą"
-
-#: taskmgr.rc:139
-msgid "&Restore"
-msgstr "&Atkurti"
 
 #: taskmgr.rc:150
 msgid "&End Process"
@@ -6661,10 +6709,6 @@ msgstr "Klaida parenkant naują šriftą."
 #: winefile.rc:147
 msgid "Wine File Manager"
 msgstr "Wine failų tvarkytuvė"
-
-#: winefile.rc:148
-msgid "Error"
-msgstr "Klaida"
 
 #: winefile.rc:149
 msgid "root fs"

@@ -2402,12 +2402,12 @@ msgstr "复制背景(&C)"
 msgid "Set as &Desktop Item"
 msgstr "设置到桌面(&D)"
 
-#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121
+#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:49
 msgid "Select &All"
 msgstr "全选(&A)"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
+#: shdoclc.rc:189 user32.rc:46 wineconsole.rc:30 wordpad.rc:103
 msgid "&Paste"
 msgstr "粘贴(&P)"
 
@@ -2488,12 +2488,12 @@ msgid "Set as &Desktop Item..."
 msgstr "设为桌面项目(&D)..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
-#: wordpad.rc:101
+#: user32.rc:44 wordpad.rc:101
 msgid "Cu&t"
 msgstr "剪切(&T)"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 wineconsole.rc:29 wordpad.rc:102
+#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
 msgid "&Copy"
 msgstr "复制(&C)"
 
@@ -2513,11 +2513,16 @@ msgstr "属性(&R)"
 msgid "Control"
 msgstr "控制"
 
-#: shdoclc.rc:90
+#: shdoclc.rc:90 user32.rc:42
+#, fuzzy
 msgid "&Undo"
-msgstr "撤销(&U)"
+msgstr ""
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"撤销(&U)\n"
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"撤消(&U)"
 
-#: shdoclc.rc:95 shell32.rc:90
+#: shdoclc.rc:95 shell32.rc:90 user32.rc:47
 msgid "&Delete"
 msgstr "删除(&D)"
 
@@ -3370,6 +3375,42 @@ msgstr " 分"
 #: shlwapi.rc:30
 msgid " sec"
 msgstr " 秒"
+
+#: user32.rc:27 taskmgr.rc:139
+msgid "&Restore"
+msgstr "恢复(&R)"
+
+#: user32.rc:28
+msgid "&Move"
+msgstr "移动(&M)"
+
+#: user32.rc:29
+msgid "&Size"
+msgstr "大小(&S)"
+
+#: user32.rc:30
+msgid "Mi&nimize"
+msgstr "最小化(&N)"
+
+#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+msgid "Ma&ximize"
+msgstr "最大化(&X)"
+
+#: user32.rc:33
+msgid "&Close\tAlt-F4"
+msgstr "关闭(&N)\tAlt-F4"
+
+#: user32.rc:35
+msgid "&About Wine..."
+msgstr "关于Wine (&A)..."
+
+#: user32.rc:55 winefile.rc:148
+msgid "Error"
+msgstr "错误"
+
+#: user32.rc:56
+msgid "&More Windows..."
+msgstr "更多窗口(&M)..."
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -5392,10 +5433,6 @@ msgstr "纵向平铺(&V)"
 msgid "&Minimize"
 msgstr "最小化(&M)"
 
-#: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
-msgid "Ma&ximize"
-msgstr "最大化(&X)"
-
 #: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
 msgid "&Cascade"
 msgstr "层叠(&C)"
@@ -5427,10 +5464,6 @@ msgstr "结束任务(&E)"
 #: taskmgr.rc:131
 msgid "&Go To Process"
 msgstr "转此进程(&G)"
-
-#: taskmgr.rc:139
-msgid "&Restore"
-msgstr "恢复(&R)"
 
 #: taskmgr.rc:150
 msgid "&End Process"
@@ -6274,11 +6307,6 @@ msgstr ""
 #: winefile.rc:147
 msgid "Wine File Manager"
 msgstr ""
-
-#: winefile.rc:148
-#, fuzzy
-msgid "Error"
-msgstr "本地端口"
 
 #: winefile.rc:149
 msgid "root fs"

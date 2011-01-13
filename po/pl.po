@@ -2484,12 +2484,12 @@ msgstr "Kop&iuj tło"
 msgid "Set as &Desktop Item"
 msgstr "Ustaw jako &element pulpitu..."
 
-#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121
+#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:49
 msgid "Select &All"
 msgstr "&Zaznacz wszystko"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
+#: shdoclc.rc:189 user32.rc:46 wineconsole.rc:30 wordpad.rc:103
 #, fuzzy
 msgid "&Paste"
 msgstr ""
@@ -2580,7 +2580,7 @@ msgid "Set as &Desktop Item..."
 msgstr "Ustaw jako &element pulpitu..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
-#: wordpad.rc:101
+#: user32.rc:44 wordpad.rc:101
 #, fuzzy
 msgid "Cu&t"
 msgstr ""
@@ -2590,7 +2590,7 @@ msgstr ""
 "Wy&tnij"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 wineconsole.rc:29 wordpad.rc:102
+#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
 msgid "&Copy"
 msgstr "&Kopiuj"
 
@@ -2610,11 +2610,16 @@ msgstr "Właś&ciwości"
 msgid "Control"
 msgstr "Sterowanie"
 
-#: shdoclc.rc:90
+#: shdoclc.rc:90 user32.rc:42
+#, fuzzy
 msgid "&Undo"
-msgstr "&Confij"
+msgstr ""
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"&Confij\n"
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"&Cofnij"
 
-#: shdoclc.rc:95 shell32.rc:90
+#: shdoclc.rc:95 shell32.rc:90 user32.rc:47
 msgid "&Delete"
 msgstr "&Usuń"
 
@@ -3490,6 +3495,47 @@ msgstr " min."
 #: shlwapi.rc:30
 msgid " sec"
 msgstr " s"
+
+#: user32.rc:27 taskmgr.rc:139
+msgid "&Restore"
+msgstr "&Przywróć"
+
+#: user32.rc:28
+msgid "&Move"
+msgstr "Prze&suń"
+
+#: user32.rc:29
+msgid "&Size"
+msgstr "&Rozmiar"
+
+#: user32.rc:30
+msgid "Mi&nimize"
+msgstr "Do &ikony"
+
+#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+#, fuzzy
+msgid "Ma&ximize"
+msgstr ""
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"M&aksymalizuj\n"
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"Pełny &ekran"
+
+#: user32.rc:33
+msgid "&Close\tAlt-F4"
+msgstr "&Zamknij\tAlt-F4"
+
+#: user32.rc:35
+msgid "&About Wine..."
+msgstr "&O programie Wine..."
+
+#: user32.rc:55 winefile.rc:148
+msgid "Error"
+msgstr "Błąd"
+
+#: user32.rc:56
+msgid "&More Windows..."
+msgstr "&Więcej okien..."
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -5865,10 +5911,6 @@ msgstr "Sąs&iadująco w poziomie"
 msgid "&Minimize"
 msgstr "&Minimalizuj"
 
-#: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
-msgid "Ma&ximize"
-msgstr "M&aksymalizuj"
-
 #: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
 msgid "&Cascade"
 msgstr "&Kaskada"
@@ -5900,10 +5942,6 @@ msgstr "&Zakończy zadanie"
 #: taskmgr.rc:131
 msgid "&Go To Process"
 msgstr "&Idź do procesu"
-
-#: taskmgr.rc:139
-msgid "&Restore"
-msgstr "&Przywróć"
 
 #: taskmgr.rc:150
 msgid "&End Process"
@@ -6752,10 +6790,6 @@ msgstr "Błąd przy wybieraniu czcionki"
 #: winefile.rc:147
 msgid "Wine File Manager"
 msgstr "Winefile"
-
-#: winefile.rc:148
-msgid "Error"
-msgstr "Błąd"
 
 #: winefile.rc:149
 msgid "root fs"

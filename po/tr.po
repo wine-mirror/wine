@@ -2436,12 +2436,12 @@ msgstr "Arkaplanı Ko&pyala"
 msgid "Set as &Desktop Item"
 msgstr "&Masaüstü Öğesi Yap"
 
-#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121
+#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:49
 msgid "Select &All"
 msgstr "&Tümünü Seç"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
+#: shdoclc.rc:189 user32.rc:46 wineconsole.rc:30 wordpad.rc:103
 #, fuzzy
 msgid "&Paste"
 msgstr ""
@@ -2532,7 +2532,7 @@ msgid "Set as &Desktop Item..."
 msgstr "Masaüstü Ö&ğesi Yap..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
-#: wordpad.rc:101
+#: user32.rc:44 wordpad.rc:101
 #, fuzzy
 msgid "Cu&t"
 msgstr ""
@@ -2542,7 +2542,7 @@ msgstr ""
 "Ke&s"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 wineconsole.rc:29 wordpad.rc:102
+#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
 #, fuzzy
 msgid "&Copy"
 msgstr ""
@@ -2567,11 +2567,11 @@ msgstr "Ö&zellikler"
 msgid "Control"
 msgstr "Control"
 
-#: shdoclc.rc:90
+#: shdoclc.rc:90 user32.rc:42
 msgid "&Undo"
 msgstr "&Geri Al"
 
-#: shdoclc.rc:95 shell32.rc:90
+#: shdoclc.rc:95 shell32.rc:90 user32.rc:47
 msgid "&Delete"
 msgstr "&Sil"
 
@@ -3450,6 +3450,42 @@ msgstr " min"
 #: shlwapi.rc:30
 msgid " sec"
 msgstr " sec"
+
+#: user32.rc:27 taskmgr.rc:139
+msgid "&Restore"
+msgstr "&Geri Yükle"
+
+#: user32.rc:28
+msgid "&Move"
+msgstr "&Taşı"
+
+#: user32.rc:29
+msgid "&Size"
+msgstr "&Boyutlandır"
+
+#: user32.rc:30
+msgid "Mi&nimize"
+msgstr "Kü&çült"
+
+#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+msgid "Ma&ximize"
+msgstr "Bü&yüt"
+
+#: user32.rc:33
+msgid "&Close\tAlt-F4"
+msgstr "&Kapat\tAlt-F4"
+
+#: user32.rc:35
+msgid "&About Wine..."
+msgstr "&Wine Hakkında..."
+
+#: user32.rc:55 winefile.rc:148
+msgid "Error"
+msgstr "Hata"
+
+#: user32.rc:56
+msgid "&More Windows..."
+msgstr "&Daha Fazla Pencere..."
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -5786,10 +5822,6 @@ msgstr "&Dikey Döşe"
 msgid "&Minimize"
 msgstr "&Simge Durumuna Küçült"
 
-#: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
-msgid "Ma&ximize"
-msgstr "Bü&yüt"
-
 #: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
 msgid "&Cascade"
 msgstr "&Diz"
@@ -5821,10 +5853,6 @@ msgstr "&Görevi Sonlandır"
 #: taskmgr.rc:131
 msgid "&Go To Process"
 msgstr "S&ürece Git"
-
-#: taskmgr.rc:139
-msgid "&Restore"
-msgstr "&Geri Yükle"
 
 #: taskmgr.rc:150
 msgid "&End Process"
@@ -6661,10 +6689,6 @@ msgstr "Yeni yazı tipi seçerken hata."
 #: winefile.rc:147
 msgid "Wine File Manager"
 msgstr "Winefile"
-
-#: winefile.rc:148
-msgid "Error"
-msgstr "Hata"
 
 #: winefile.rc:149
 msgid "root fs"

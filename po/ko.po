@@ -2497,12 +2497,17 @@ msgstr "배경으로 복사(&C)"
 msgid "Set as &Desktop Item"
 msgstr "데스크탑 아이템으로 설정(&D)"
 
-#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121
+#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:49
+#, fuzzy
 msgid "Select &All"
-msgstr "모두 선택(&A)"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"모두 선택(&A)\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"전체 선택(&A)"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
+#: shdoclc.rc:189 user32.rc:46 wineconsole.rc:30 wordpad.rc:103
 msgid "&Paste"
 msgstr "붙여넣기(&P)"
 
@@ -2588,12 +2593,12 @@ msgid "Set as &Desktop Item..."
 msgstr "데스크탑 아이템으로 설정(&D)..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
-#: wordpad.rc:101
+#: user32.rc:44 wordpad.rc:101
 msgid "Cu&t"
 msgstr "잘라내기(&T)"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 wineconsole.rc:29 wordpad.rc:102
+#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
 msgid "&Copy"
 msgstr "복사(&C)"
 
@@ -2613,13 +2618,23 @@ msgstr "속성(&R)"
 msgid "Control"
 msgstr "제어"
 
-#: shdoclc.rc:90
+#: shdoclc.rc:90 user32.rc:42
+#, fuzzy
 msgid "&Undo"
-msgstr "되돌리기(&U)"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"되돌리기(&U)\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"실행 취소(&U)"
 
-#: shdoclc.rc:95 shell32.rc:90
+#: shdoclc.rc:95 shell32.rc:90 user32.rc:47
+#, fuzzy
 msgid "&Delete"
-msgstr "지우기(&D)"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"지우기(&D)\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"삭제(&D)"
 
 #: shdoclc.rc:101
 msgid "Table"
@@ -3454,6 +3469,52 @@ msgstr " 분"
 #: shlwapi.rc:30
 msgid " sec"
 msgstr " 초"
+
+#: user32.rc:27 taskmgr.rc:139
+#, fuzzy
+msgid "&Restore"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"복구(&R)\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"복귀(&R)"
+
+#: user32.rc:28
+msgid "&Move"
+msgstr "이동(&M)"
+
+#: user32.rc:29
+msgid "&Size"
+msgstr "크기 변경(&S)"
+
+#: user32.rc:30
+msgid "Mi&nimize"
+msgstr "아이콘 표시(&N)"
+
+#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+#, fuzzy
+msgid "Ma&ximize"
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"최대화(&x)\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"전체 화면 표시(&M)"
+
+#: user32.rc:33
+msgid "&Close\tAlt-F4"
+msgstr "닫기(&C)\tAlt-F4"
+
+#: user32.rc:35
+msgid "&About Wine..."
+msgstr "Wine에 관하여..."
+
+#: user32.rc:55 winefile.rc:148
+msgid "Error"
+msgstr "에러"
+
+#: user32.rc:56
+msgid "&More Windows..."
+msgstr "더 많은 창들(&M)..."
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -5800,10 +5861,6 @@ msgstr "세로 바둑판 정렬(&V)"
 msgid "&Minimize"
 msgstr "최소화(&M)"
 
-#: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
-msgid "Ma&ximize"
-msgstr "최대화(&x)"
-
 #: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
 msgid "&Cascade"
 msgstr "정렬(&C)"
@@ -5835,10 +5892,6 @@ msgstr "작업 끝(&E)"
 #: taskmgr.rc:131
 msgid "&Go To Process"
 msgstr "프로세스로 가기(&G)"
-
-#: taskmgr.rc:139
-msgid "&Restore"
-msgstr "복구(&R)"
 
 #: taskmgr.rc:150
 msgid "&End Process"
@@ -6684,10 +6737,6 @@ msgstr "새 글꼴 선택 에러."
 #: winefile.rc:147
 msgid "Wine File Manager"
 msgstr "Winefile"
-
-#: winefile.rc:148
-msgid "Error"
-msgstr "에러"
 
 #: winefile.rc:149
 msgid "root fs"

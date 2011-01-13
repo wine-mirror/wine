@@ -15226,7 +15226,7 @@ wine_fn_config_dll urlmon enable_urlmon implib
 wine_fn_config_test dlls/urlmon/tests urlmon_test
 wine_fn_config_dll usbd.sys enable_usbd_sys implib
 wine_fn_config_dll user.exe16 enable_win16
-wine_fn_config_dll user32 enable_user32 implib
+wine_fn_config_dll user32 enable_user32 po,implib
 wine_fn_config_test dlls/user32/tests user32_test
 wine_fn_config_dll userenv enable_userenv implib
 wine_fn_config_test dlls/userenv/tests userenv_test
@@ -15403,6 +15403,7 @@ wine_fn_config_tool tools/wrc
 LINGUAS="\
 ar \
 bg \
+ca \
 cs \
 da \
 de \

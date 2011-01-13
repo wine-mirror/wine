@@ -21,34 +21,6 @@
 
 LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
 
-SYSMENU MENU
-BEGIN
- MENUITEM "&Elõzõ méret", 61728
- MENUITEM "Át&helyzés", 61456
- MENUITEM "&Méret", 61440
- MENUITEM "&Kis méret", 61472
- MENUITEM "&Teljes méret", 61488
- MENUITEM SEPARATOR
- MENUITEM "&Bezárás\tAlt-F4", 61536
- MENUITEM SEPARATOR
- MENUITEM "A &Wine-ról...", 61761
-END
-
-EDITMENU MENU
-BEGIN
-        POPUP ""
-        BEGIN
-                MENUITEM "&Visszavonás", EM_UNDO
-                MENUITEM SEPARATOR
-                MENUITEM "&Kivágás", WM_CUT
-                MENUITEM "&Másolás", WM_COPY
-                MENUITEM "&Beillesztés", WM_PASTE
-                MENUITEM "&Törlés", WM_CLEAR
-                MENUITEM SEPARATOR
-                MENUITEM "&Az összes kijelölése", EM_SETSEL
-        END
-END
-
 MSGBOX DIALOG 100, 80, 216, 168
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 BEGIN
@@ -75,9 +47,3 @@ BEGIN
     DEFPUSHBUTTON   "OK", IDOK, 75, 100, 35, 14
     PUSHBUTTON      "Mégse", IDCANCEL, 120, 100, 35, 14
 END
-
-STRINGTABLE
-{
-    IDS_ERROR "Hiba"
-    IDS_MDI_MOREWINDOWS  "&További ablakok..." /* defined in mdi.h */
-}

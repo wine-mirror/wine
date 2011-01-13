@@ -2462,12 +2462,17 @@ msgstr "&Kopier baggrund"
 msgid "Set as &Desktop Item"
 msgstr "Brug som skrivebor&dsobjekt"
 
-#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121
+#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:49
+#, fuzzy
 msgid "Select &All"
-msgstr "Markér &alt"
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Markér &alt\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Marker &Alt"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
+#: shdoclc.rc:189 user32.rc:46 wineconsole.rc:30 wordpad.rc:103
 msgid "&Paste"
 msgstr "&Indsæt"
 
@@ -2553,12 +2558,12 @@ msgid "Set as &Desktop Item..."
 msgstr "Brug som skrivebor&dsobjekt..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
-#: wordpad.rc:101
+#: user32.rc:44 wordpad.rc:101
 msgid "Cu&t"
 msgstr "&Klip"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 wineconsole.rc:29 wordpad.rc:102
+#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
 #, fuzzy
 msgid "&Copy"
 msgstr ""
@@ -2583,11 +2588,11 @@ msgstr "Egenskabe&r"
 msgid "Control"
 msgstr "Control"
 
-#: shdoclc.rc:90
+#: shdoclc.rc:90 user32.rc:42
 msgid "&Undo"
 msgstr "&Fortryd"
 
-#: shdoclc.rc:95 shell32.rc:90
+#: shdoclc.rc:95 shell32.rc:90 user32.rc:47
 msgid "&Delete"
 msgstr "&Slet"
 
@@ -2649,7 +2654,7 @@ msgstr ""
 msgid "Anchor"
 msgstr "Anker"
 
-#: shdoclc.rc:128 view.rc:30 winhlp32.rc:29
+#: shdoclc.rc:128 shell32.rc:84 view.rc:30 winhlp32.rc:29
 #, fuzzy
 msgid "&Open"
 msgstr ""
@@ -3482,6 +3487,52 @@ msgstr " min"
 #: shlwapi.rc:30
 msgid " sec"
 msgstr " sec"
+
+#: user32.rc:27 taskmgr.rc:139
+#, fuzzy
+msgid "&Restore"
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Genop&ret\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"&Gendan"
+
+#: user32.rc:28
+msgid "&Move"
+msgstr "&Flyt"
+
+#: user32.rc:29
+msgid "&Size"
+msgstr "&Størrelse"
+
+#: user32.rc:30
+msgid "Mi&nimize"
+msgstr "Mi&nimer"
+
+#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+#, fuzzy
+msgid "Ma&ximize"
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Ma&ksimér\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Ma&ksimer"
+
+#: user32.rc:33
+msgid "&Close\tAlt-F4"
+msgstr "&Luk\tAlt-F4"
+
+#: user32.rc:35
+msgid "&About Wine..."
+msgstr "&Om Wine..."
+
+#: user32.rc:55 winefile.rc:148
+msgid "Error"
+msgstr "Fejl"
+
+#: user32.rc:56
+msgid "&More Windows..."
+msgstr "&Flere vinduer..."
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -5857,10 +5908,6 @@ msgstr "Opstil &lodret"
 msgid "&Minimize"
 msgstr "&Minimér"
 
-#: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
-msgid "Ma&ximize"
-msgstr "Ma&ksimér"
-
 #: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
 msgid "&Cascade"
 msgstr "&Kortstak"
@@ -5892,10 +5939,6 @@ msgstr "Afslut opgav&e"
 #: taskmgr.rc:131
 msgid "&Go To Process"
 msgstr "&Gå til process"
-
-#: taskmgr.rc:139
-msgid "&Restore"
-msgstr "Genop&ret"
 
 #: taskmgr.rc:150
 msgid "&End Process"
@@ -6747,10 +6790,6 @@ msgstr "Fejl ved valg af ny skrifttype."
 #: winefile.rc:147
 msgid "Wine File Manager"
 msgstr "Filbehandling"
-
-#: winefile.rc:148
-msgid "Error"
-msgstr "Fejl"
 
 #: winefile.rc:149
 msgid "root fs"

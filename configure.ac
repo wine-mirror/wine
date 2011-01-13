@@ -2755,7 +2755,7 @@ WINE_CONFIG_DLL(urlmon,,[implib])
 WINE_CONFIG_TEST(dlls/urlmon/tests)
 WINE_CONFIG_DLL(usbd.sys,,[implib])
 WINE_CONFIG_DLL(user.exe16,enable_win16)
-WINE_CONFIG_DLL(user32,,[implib])
+WINE_CONFIG_DLL(user32,,[po,implib])
 WINE_CONFIG_TEST(dlls/user32/tests)
 WINE_CONFIG_DLL(userenv,,[implib])
 WINE_CONFIG_TEST(dlls/userenv/tests)
@@ -2932,6 +2932,7 @@ WINE_CONFIG_TOOL(tools/wrc)
 AC_SUBST([LINGUAS],["\
 ar \
 bg \
+ca \
 cs \
 da \
 de \

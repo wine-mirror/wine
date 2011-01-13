@@ -2521,19 +2521,19 @@ msgstr "&Copiază fundalul"
 msgid "Set as &Desktop Item"
 msgstr "&Definește ca element de desktop"
 
-#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121
-msgid "Select &All"
-msgstr "Selectează t&ot"
-
-#: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
+#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:49
 #, fuzzy
-msgid "&Paste"
+msgid "Select &All"
 msgstr ""
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"&Lipește\n"
+"Selectează t&ot\n"
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"Li&pește"
+"&Selectează tot"
+
+#: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
+#: shdoclc.rc:189 user32.rc:46 wineconsole.rc:30 wordpad.rc:103
+msgid "&Paste"
+msgstr "&Inserează"
 
 #: shdoclc.rc:49
 msgid "Create Shor&tcut"
@@ -2617,12 +2617,12 @@ msgid "Set as &Desktop Item..."
 msgstr "&Definește ca element de desktop..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
-#: wordpad.rc:101
+#: user32.rc:44 wordpad.rc:101
 msgid "Cu&t"
 msgstr "&Taie"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 wineconsole.rc:29 wordpad.rc:102
+#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
 msgid "&Copy"
 msgstr "&Copiază"
 
@@ -2642,11 +2642,16 @@ msgstr "P&roprietăți"
 msgid "Control"
 msgstr "Control"
 
-#: shdoclc.rc:90
+#: shdoclc.rc:90 user32.rc:42
+#, fuzzy
 msgid "&Undo"
-msgstr "&Refă"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"&Refă\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"&Des-face"
 
-#: shdoclc.rc:95 shell32.rc:90
+#: shdoclc.rc:95 shell32.rc:90 user32.rc:47
 msgid "&Delete"
 msgstr "&Șterge"
 
@@ -3527,6 +3532,47 @@ msgstr " min"
 #: shlwapi.rc:30
 msgid " sec"
 msgstr " sec"
+
+#: user32.rc:27 taskmgr.rc:139
+#, fuzzy
+msgid "&Restore"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"&Restaurează\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"&Restabilește"
+
+#: user32.rc:28
+msgid "&Move"
+msgstr "&Mută"
+
+#: user32.rc:29
+msgid "&Size"
+msgstr "M&ărime"
+
+#: user32.rc:30
+msgid "Mi&nimize"
+msgstr "Mi&nimizează"
+
+#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+msgid "Ma&ximize"
+msgstr "Ma&ximizează"
+
+#: user32.rc:33
+msgid "&Close\tAlt-F4"
+msgstr "&Închide\tAlt-F4"
+
+#: user32.rc:35
+msgid "&About Wine..."
+msgstr "&Despre Wine..."
+
+#: user32.rc:55 winefile.rc:148
+msgid "Error"
+msgstr "Eroare"
+
+#: user32.rc:56
+msgid "&More Windows..."
+msgstr "&Mai multe ferestre..."
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -5932,10 +5978,6 @@ msgstr "Mozaic &vertical"
 msgid "&Minimize"
 msgstr "&Minimizează"
 
-#: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
-msgid "Ma&ximize"
-msgstr "Ma&ximizează"
-
 #: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
 msgid "&Cascade"
 msgstr "&Cascadă"
@@ -5967,10 +6009,6 @@ msgstr "T&ermină sarcina"
 #: taskmgr.rc:131
 msgid "&Go To Process"
 msgstr "Salt &la proces"
-
-#: taskmgr.rc:139
-msgid "&Restore"
-msgstr "&Restaurează"
 
 #: taskmgr.rc:150
 msgid "&End Process"
@@ -6825,10 +6863,6 @@ msgstr "Eroare la selectarea unui nou font."
 #: winefile.rc:147
 msgid "Wine File Manager"
 msgstr "Administrator Wine File"
-
-#: winefile.rc:148
-msgid "Error"
-msgstr "Eroare"
 
 #: winefile.rc:149
 msgid "root fs"

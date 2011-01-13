@@ -2375,14 +2375,19 @@ msgstr ""
 msgid "Set as &Desktop Item"
 msgstr ""
 
-#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121
+#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:49
 msgid "Select &All"
-msgstr ""
+msgstr "Elektu æion"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
+#: shdoclc.rc:189 user32.rc:46 wineconsole.rc:30 wordpad.rc:103
+#, fuzzy
 msgid "&Paste"
-msgstr "En&metu"
+msgstr ""
+"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
+"En&metu\n"
+"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
+"&Enmetu"
 
 #: shdoclc.rc:49
 msgid "Create Shor&tcut"
@@ -2466,19 +2471,14 @@ msgid "Set as &Desktop Item..."
 msgstr ""
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
-#: wordpad.rc:101
+#: user32.rc:44 wordpad.rc:101
 msgid "Cu&t"
-msgstr ""
+msgstr "El&tondu"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 wineconsole.rc:29 wordpad.rc:102
-#, fuzzy
+#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
 msgid "&Copy"
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Kopiu\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"Kopiu"
+msgstr "&Kopiu"
 
 #: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
 msgid "Copy Shor&tcut"
@@ -2497,13 +2497,18 @@ msgstr "&Ecoj"
 msgid "Control"
 msgstr ""
 
-#: shdoclc.rc:90
+#: shdoclc.rc:90 user32.rc:42
 msgid "&Undo"
-msgstr ""
+msgstr "&Nuligu"
 
-#: shdoclc.rc:95 shell32.rc:90
+#: shdoclc.rc:95 shell32.rc:90 user32.rc:47
+#, fuzzy
 msgid "&Delete"
-msgstr "Forigu"
+msgstr ""
+"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
+"Forigu\n"
+"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
+"&Forigu"
 
 #: shdoclc.rc:101
 msgid "Table"
@@ -3342,6 +3347,42 @@ msgstr " min"
 #: shlwapi.rc:30
 msgid " sec"
 msgstr " sec"
+
+#: user32.rc:27 taskmgr.rc:139
+msgid "&Restore"
+msgstr "&Renormaligu"
+
+#: user32.rc:28
+msgid "&Move"
+msgstr "&Movi"
+
+#: user32.rc:29
+msgid "&Size"
+msgstr "&Grandeco"
+
+#: user32.rc:30
+msgid "Mi&nimize"
+msgstr "E&tigu"
+
+#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+msgid "Ma&ximize"
+msgstr "&Egigu"
+
+#: user32.rc:33
+msgid "&Close\tAlt-F4"
+msgstr "&Fermu\tAlt-F4"
+
+#: user32.rc:35
+msgid "&About Wine..."
+msgstr "&Pri Wine..."
+
+#: user32.rc:55 winefile.rc:148
+msgid "Error"
+msgstr "Eroro"
+
+#: user32.rc:56
+msgid "&More Windows..."
+msgstr "&Pli Fenestroj..."
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -5348,10 +5389,6 @@ msgstr ""
 msgid "&Minimize"
 msgstr ""
 
-#: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
-msgid "Ma&ximize"
-msgstr ""
-
 #: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
 msgid "&Cascade"
 msgstr ""
@@ -5383,10 +5420,6 @@ msgstr ""
 
 #: taskmgr.rc:131
 msgid "&Go To Process"
-msgstr ""
-
-#: taskmgr.rc:139
-msgid "&Restore"
 msgstr ""
 
 #: taskmgr.rc:150
@@ -6221,10 +6254,6 @@ msgstr ""
 
 #: winefile.rc:147
 msgid "Wine File Manager"
-msgstr ""
-
-#: winefile.rc:148
-msgid "Error"
 msgstr ""
 
 #: winefile.rc:149

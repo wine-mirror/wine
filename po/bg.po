@@ -2384,12 +2384,17 @@ msgstr "&Копирай фона"
 msgid "Set as &Desktop Item"
 msgstr "Постави като елемент на &работния плот"
 
-#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121
+#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:49
+#, fuzzy
 msgid "Select &All"
-msgstr "Маркирай &всичко"
+msgstr ""
+"#-#-#-#-#  bg.po (Wine)  #-#-#-#-#\n"
+"Маркирай &всичко\n"
+"#-#-#-#-#  bg.po (Wine)  #-#-#-#-#\n"
+"&Маркирай всичко"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
+#: shdoclc.rc:189 user32.rc:46 wineconsole.rc:30 wordpad.rc:103
 msgid "&Paste"
 msgstr "&Вмъкни"
 
@@ -2475,12 +2480,12 @@ msgid "Set as &Desktop Item..."
 msgstr "Постави като елемент на &работния плот..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
-#: wordpad.rc:101
+#: user32.rc:44 wordpad.rc:101
 msgid "Cu&t"
 msgstr "&Изрежи"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 wineconsole.rc:29 wordpad.rc:102
+#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
 msgid "&Copy"
 msgstr "&Копирай"
 
@@ -2500,11 +2505,11 @@ msgstr "Сво&йства"
 msgid "Control"
 msgstr "Control"
 
-#: shdoclc.rc:90
+#: shdoclc.rc:90 user32.rc:42
 msgid "&Undo"
 msgstr "&Отмени"
 
-#: shdoclc.rc:95 shell32.rc:90
+#: shdoclc.rc:95 shell32.rc:90 user32.rc:47
 msgid "&Delete"
 msgstr "Из&трий"
 
@@ -3333,6 +3338,42 @@ msgstr ""
 #: shlwapi.rc:30
 msgid " sec"
 msgstr ""
+
+#: user32.rc:27 taskmgr.rc:139
+msgid "&Restore"
+msgstr "&Възстанови"
+
+#: user32.rc:28
+msgid "&Move"
+msgstr "&Премести"
+
+#: user32.rc:29
+msgid "&Size"
+msgstr "&Размер"
+
+#: user32.rc:30
+msgid "Mi&nimize"
+msgstr "&Намали"
+
+#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+msgid "Ma&ximize"
+msgstr "&Увеличи"
+
+#: user32.rc:33
+msgid "&Close\tAlt-F4"
+msgstr "&Затвори\tAlt-F4"
+
+#: user32.rc:35
+msgid "&About Wine..."
+msgstr "&Относно Wine..."
+
+#: user32.rc:55 winefile.rc:148
+msgid "Error"
+msgstr "Грешка"
+
+#: user32.rc:56
+msgid "&More Windows..."
+msgstr "&Още прозорци..."
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -5331,10 +5372,6 @@ msgstr ""
 msgid "&Minimize"
 msgstr ""
 
-#: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
-msgid "Ma&ximize"
-msgstr ""
-
 #: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
 msgid "&Cascade"
 msgstr ""
@@ -5368,10 +5405,6 @@ msgstr ""
 #, fuzzy
 msgid "&Go To Process"
 msgstr "И&ди в Моите Снимки"
-
-#: taskmgr.rc:139
-msgid "&Restore"
-msgstr ""
 
 #: taskmgr.rc:150
 msgid "&End Process"
@@ -6215,10 +6248,6 @@ msgstr ""
 
 #: winefile.rc:147
 msgid "Wine File Manager"
-msgstr ""
-
-#: winefile.rc:148
-msgid "Error"
 msgstr ""
 
 #: winefile.rc:149

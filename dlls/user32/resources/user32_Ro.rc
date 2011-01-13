@@ -23,34 +23,6 @@ LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
 
 #pragma code_page(65001)
 
-SYSMENU MENU
-{
-    MENUITEM "&Restabilește", 61728
-    MENUITEM "&Mută", 61456
-    MENUITEM "M&ărime", 61440
-    MENUITEM "Mi&nimizează", 61472
-    MENUITEM "Ma&ximizează", 61488
-    MENUITEM SEPARATOR
-    MENUITEM "&Închide\tAlt-F4", 61536
-    MENUITEM SEPARATOR
-    MENUITEM "&Despre Wine...", 61761
-}
-
-EDITMENU MENU
-{
-    POPUP ""
-    BEGIN
-        MENUITEM "&Des-face", EM_UNDO
-        MENUITEM SEPARATOR
-        MENUITEM "&Taie", WM_CUT
-        MENUITEM "&Copiază", WM_COPY
-        MENUITEM "&Inserează", WM_PASTE
-        MENUITEM "&Șterge", WM_CLEAR
-        MENUITEM SEPARATOR
-        MENUITEM "&Selectează tot", EM_SETSEL
-    END
-}
-
 MSGBOX DIALOG 100, 80, 216, 168
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 BEGIN
@@ -77,10 +49,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 75, 100, 35, 14
     PUSHBUTTON    "Renunță", IDCANCEL, 120, 100, 35, 14
 END
-
-
-STRINGTABLE
-{
-    IDS_ERROR "Eroare"
-    IDS_MDI_MOREWINDOWS "&Mai multe ferestre..."
-}

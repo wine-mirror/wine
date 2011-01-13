@@ -2450,14 +2450,24 @@ msgstr "&Копіювати тло"
 msgid "Set as &Desktop Item"
 msgstr "Set as &Desktop Item"
 
-#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121
+#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:49
+#, fuzzy
 msgid "Select &All"
-msgstr "Виділити вс&е"
+msgstr ""
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Виділити вс&е\n"
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Виділити в&се"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
+#: shdoclc.rc:189 user32.rc:46 wineconsole.rc:30 wordpad.rc:103
+#, fuzzy
 msgid "&Paste"
-msgstr "В&ставити"
+msgstr ""
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"В&ставити\n"
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Вст&авити"
 
 #: shdoclc.rc:49
 msgid "Create Shor&tcut"
@@ -2541,19 +2551,19 @@ msgid "Set as &Desktop Item..."
 msgstr "Set as &Desktop Item..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
-#: wordpad.rc:101
-msgid "Cu&t"
-msgstr "Ви&різати"
-
-#: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 wineconsole.rc:29 wordpad.rc:102
+#: user32.rc:44 wordpad.rc:101
 #, fuzzy
-msgid "&Copy"
+msgid "Cu&t"
 msgstr ""
 "#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
-"&Копіювати\n"
+"Ви&різати\n"
 "#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
-"&Копія"
+"&Вирізати"
+
+#: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
+#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
+msgid "&Copy"
+msgstr "&Копіювати"
 
 #: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
 msgid "Copy Shor&tcut"
@@ -2571,13 +2581,23 @@ msgstr "Властивост&і"
 msgid "Control"
 msgstr "Control"
 
-#: shdoclc.rc:90
+#: shdoclc.rc:90 user32.rc:42
+#, fuzzy
 msgid "&Undo"
-msgstr "&Відмінити"
+msgstr ""
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"&Відмінити\n"
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Ве&рнути"
 
-#: shdoclc.rc:95 shell32.rc:90
+#: shdoclc.rc:95 shell32.rc:90 user32.rc:47
+#, fuzzy
 msgid "&Delete"
-msgstr "Ви&далити"
+msgstr ""
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Ви&далити\n"
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"&Очистити"
 
 #: shdoclc.rc:101
 msgid "Table"
@@ -3427,6 +3447,52 @@ msgstr " хв"
 #: shlwapi.rc:30
 msgid " sec"
 msgstr " сек."
+
+#: user32.rc:27 taskmgr.rc:139
+#, fuzzy
+msgid "&Restore"
+msgstr ""
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"&Відновити\n"
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"По&вернути"
+
+#: user32.rc:28
+msgid "&Move"
+msgstr "&Пересунути"
+
+#: user32.rc:29
+msgid "&Size"
+msgstr "Роз&мір"
+
+#: user32.rc:30
+msgid "Mi&nimize"
+msgstr "&Згорнути"
+
+#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+msgid "Ma&ximize"
+msgstr "&Розгорнути"
+
+#: user32.rc:33
+msgid "&Close\tAlt-F4"
+msgstr "&Закрити\tAlt-F4"
+
+#: user32.rc:35
+msgid "&About Wine..."
+msgstr "Пр&о проект Wine..."
+
+#: user32.rc:55 winefile.rc:148
+#, fuzzy
+msgid "Error"
+msgstr ""
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Помилка\n"
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"ПОМИЛКА"
+
+#: user32.rc:56
+msgid "&More Windows..."
+msgstr "&Ще вікна..."
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -5797,10 +5863,6 @@ msgstr "З&верху вниз"
 msgid "&Minimize"
 msgstr "З&горнути"
 
-#: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
-msgid "Ma&ximize"
-msgstr "&Розгорнути"
-
 #: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
 msgid "&Cascade"
 msgstr "&Каскадом"
@@ -5832,10 +5894,6 @@ msgstr "&Зняти завдання"
 #: taskmgr.rc:131
 msgid "&Go To Process"
 msgstr "Йти &до процесу"
-
-#: taskmgr.rc:139
-msgid "&Restore"
-msgstr "&Відновити"
 
 #: taskmgr.rc:150
 msgid "&End Process"
@@ -6684,10 +6742,6 @@ msgstr "Помилка при виборі нового шрифта."
 #: winefile.rc:147
 msgid "Wine File Manager"
 msgstr "Wine File Manager"
-
-#: winefile.rc:148
-msgid "Error"
-msgstr "Помилка"
 
 #: winefile.rc:149
 msgid "root fs"

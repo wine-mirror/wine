@@ -24,34 +24,6 @@
 
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
-SYSMENU MENU
-{
- MENUITEM "&Ripristina", 61728
- MENUITEM "&Muovi", 61456
- MENUITEM "&Dimensione", 61440
- MENUITEM "Mi&nimizza", 61472
- MENUITEM "Ma&ssimizza", 61488
- MENUITEM SEPARATOR
- MENUITEM "&Chiudi\tAlt-F4", 61536
- MENUITEM SEPARATOR
- MENUITEM "&Informazioni su Wine...", 61761
-}
-
-EDITMENU MENU
-{
-	POPUP ""
-	BEGIN
-                MENUITEM "&Annulla", EM_UNDO
-		MENUITEM SEPARATOR
-                MENUITEM "&Taglia", WM_CUT
-                MENUITEM "&Copia", WM_COPY
-                MENUITEM "&Incolla", WM_PASTE
-                MENUITEM "&Elimina", WM_CLEAR
-		MENUITEM SEPARATOR
-                MENUITEM "Sele&ziona tutto", EM_SETSEL
-	END
-}
-
 MSGBOX DIALOG 100, 80, 216, 168
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 BEGIN
@@ -78,10 +50,3 @@ BEGIN
     DEFPUSHBUTTON   "OK", IDOK, 75, 100, 35, 14
     PUSHBUTTON      "Annulla", IDCANCEL, 120, 100, 35, 14
 END
-
-
-STRINGTABLE
-{
-    IDS_ERROR "Errore"
-    IDS_MDI_MOREWINDOWS "&Più finestre..."
-}

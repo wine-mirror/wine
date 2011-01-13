@@ -2545,12 +2545,12 @@ msgstr "Achtergrond &kopiëren"
 msgid "Set as &Desktop Item"
 msgstr "Als desktopelement instellen..."
 
-#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121
+#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:49
 msgid "Select &All"
 msgstr "&Alles selecteren"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
+#: shdoclc.rc:189 user32.rc:46 wineconsole.rc:30 wordpad.rc:103
 msgid "&Paste"
 msgstr "&Plakken"
 
@@ -2631,12 +2631,12 @@ msgid "Set as &Desktop Item..."
 msgstr "Als desktopelement instellen..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
-#: wordpad.rc:101
+#: user32.rc:44 wordpad.rc:101
 msgid "Cu&t"
 msgstr "K&nippen"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 wineconsole.rc:29 wordpad.rc:102
+#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
 msgid "&Copy"
 msgstr "&Kopiëren"
 
@@ -2656,11 +2656,11 @@ msgstr "&Eigenschappen"
 msgid "Control"
 msgstr "Besturing"
 
-#: shdoclc.rc:90
+#: shdoclc.rc:90 user32.rc:42
 msgid "&Undo"
 msgstr "&Ongedaan maken"
 
-#: shdoclc.rc:95 shell32.rc:90
+#: shdoclc.rc:95 shell32.rc:90 user32.rc:47
 #, fuzzy
 msgid "&Delete"
 msgstr ""
@@ -3503,6 +3503,52 @@ msgstr " min"
 #: shlwapi.rc:30
 msgid " sec"
 msgstr " sec"
+
+#: user32.rc:27 taskmgr.rc:139
+#, fuzzy
+msgid "&Restore"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"&Herstellen\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"&Vorig formaat"
+
+#: user32.rc:28
+msgid "&Move"
+msgstr "Ve&rplaatsen"
+
+#: user32.rc:29
+msgid "&Size"
+msgstr "&Grootte"
+
+#: user32.rc:30
+msgid "Mi&nimize"
+msgstr "Mi&nimaliseren"
+
+#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+#, fuzzy
+msgid "Ma&ximize"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Ma&xmimaliseren\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"&Maximaliseren"
+
+#: user32.rc:33
+msgid "&Close\tAlt-F4"
+msgstr "&Sluiten\tAlt-F4"
+
+#: user32.rc:35
+msgid "&About Wine..."
+msgstr "&Info over Wine..."
+
+#: user32.rc:55 winefile.rc:148
+msgid "Error"
+msgstr "Fout"
+
+#: user32.rc:56
+msgid "&More Windows..."
+msgstr "Ov&erige vensters..."
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -5912,10 +5958,6 @@ msgstr "&Naast elkaar"
 msgid "&Minimize"
 msgstr "&Minimaliseren"
 
-#: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
-msgid "Ma&ximize"
-msgstr "Ma&xmimaliseren"
-
 #: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
 msgid "&Cascade"
 msgstr "&Achter elkaar"
@@ -5947,10 +5989,6 @@ msgstr "Taak b&eëindigen"
 #: taskmgr.rc:131
 msgid "&Go To Process"
 msgstr "&Ga naar proces"
-
-#: taskmgr.rc:139
-msgid "&Restore"
-msgstr "&Herstellen"
 
 #: taskmgr.rc:150
 msgid "&End Process"
@@ -6799,10 +6837,6 @@ msgstr "Probleem tijdens het selecteren van het nieuwe lettertype."
 #: winefile.rc:147
 msgid "Wine File Manager"
 msgstr "Winefile"
-
-#: winefile.rc:148
-msgid "Error"
-msgstr "Fout"
 
 #: winefile.rc:149
 msgid "root fs"

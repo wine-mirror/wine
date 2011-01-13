@@ -2422,12 +2422,17 @@ msgstr "背景をコピー(&C)"
 msgid "Set as &Desktop Item"
 msgstr "デスクトップ項目として設定(&D)"
 
-#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121
+#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:49
+#, fuzzy
 msgid "Select &All"
-msgstr "すべて選択(&A)"
+msgstr ""
+"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
+"すべて選択(&A)\n"
+"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
+"選択(&A)"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 wineconsole.rc:30 wordpad.rc:103
+#: shdoclc.rc:189 user32.rc:46 wineconsole.rc:30 wordpad.rc:103
 msgid "&Paste"
 msgstr "貼り付け(&P)"
 
@@ -2508,12 +2513,12 @@ msgid "Set as &Desktop Item..."
 msgstr "デスクトップ項目として設定(&D)..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
-#: wordpad.rc:101
+#: user32.rc:44 wordpad.rc:101
 msgid "Cu&t"
 msgstr "切り取り(&T)"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 wineconsole.rc:29 wordpad.rc:102
+#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
 msgid "&Copy"
 msgstr "コピー(&C)"
 
@@ -2533,11 +2538,11 @@ msgstr "プロパティ(&R)"
 msgid "Control"
 msgstr "Control"
 
-#: shdoclc.rc:90
+#: shdoclc.rc:90 user32.rc:42
 msgid "&Undo"
 msgstr "元に戻す(&U)"
 
-#: shdoclc.rc:95 shell32.rc:90
+#: shdoclc.rc:95 shell32.rc:90 user32.rc:47
 msgid "&Delete"
 msgstr "削除(&D)"
 
@@ -3385,6 +3390,52 @@ msgstr " min"
 #: shlwapi.rc:30
 msgid " sec"
 msgstr " sec"
+
+#: user32.rc:27 taskmgr.rc:139
+msgid "&Restore"
+msgstr "元のサイズに戻す(&R)"
+
+#: user32.rc:28
+msgid "&Move"
+msgstr "移動(&M)"
+
+#: user32.rc:29
+msgid "&Size"
+msgstr "サイズ変更(&S)"
+
+#: user32.rc:30
+msgid "Mi&nimize"
+msgstr "アイコン化(&N)"
+
+#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+#, fuzzy
+msgid "Ma&ximize"
+msgstr ""
+"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
+"最大化(&X)\n"
+"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
+"最大表示(&X)"
+
+#: user32.rc:33
+msgid "&Close\tAlt-F4"
+msgstr "閉じる(&C)\tAlt-F4"
+
+#: user32.rc:35
+msgid "&About Wine..."
+msgstr "Wineについて(&A)..."
+
+#: user32.rc:55 winefile.rc:148
+#, fuzzy
+msgid "Error"
+msgstr ""
+"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
+"Error\n"
+"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
+"エラー"
+
+#: user32.rc:56
+msgid "&More Windows..."
+msgstr "&More Windows..."
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -5728,10 +5779,6 @@ msgstr "左右に並べて表示(&V)"
 msgid "&Minimize"
 msgstr "最小化(&M)"
 
-#: taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
-msgid "Ma&ximize"
-msgstr "最大化(&X)"
-
 #: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
 msgid "&Cascade"
 msgstr "重ねて表示(&C)"
@@ -5763,10 +5810,6 @@ msgstr "タスクの終了(&E)"
 #: taskmgr.rc:131
 msgid "&Go To Process"
 msgstr "プロセスの表示(&G)"
-
-#: taskmgr.rc:139
-msgid "&Restore"
-msgstr "元のサイズに戻す(&R)"
 
 #: taskmgr.rc:150
 msgid "&End Process"
@@ -6601,10 +6644,6 @@ msgstr "Error while selecting new font."
 #: winefile.rc:147
 msgid "Wine File Manager"
 msgstr "Wine ファイルマネージャ"
-
-#: winefile.rc:148
-msgid "Error"
-msgstr "Error"
 
 #: winefile.rc:149
 msgid "root fs"
