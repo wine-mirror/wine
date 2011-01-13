@@ -258,7 +258,8 @@ STRINGTABLE
 	    IDS_RUNDLG_ERROR           "无法显示运行文件对话框 (内部错误)"
 	    IDS_RUNDLG_BROWSE_ERROR    "无法显示浏览对话框 (内部错误)"
 	    IDS_RUNDLG_BROWSE_CAPTION  "浏览"
-	    IDS_RUNDLG_BROWSE_FILTER   "可执行文件\0*.exe\0所有文件\0*.*\0\0"
+	    IDS_RUNDLG_BROWSE_FILTER_EXE "可执行文件 (*.exe)"
+            IDS_RUNDLG_BROWSE_FILTER_ALL "所有文件 (*.*)"
 
 	    /* shell folder path default values */
 	IDS_PROGRAMS                "Start Menu\\Programs"

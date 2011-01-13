@@ -255,7 +255,8 @@ STRINGTABLE
         IDS_RUNDLG_ERROR           "Konnte Ausführen-Dialog nicht anzeigen (interner Fehler)"
         IDS_RUNDLG_BROWSE_ERROR    "Konnte Durchsuchen-Dialog nicht anzeigen (interner Fehler)"
         IDS_RUNDLG_BROWSE_CAPTION  "Durchsuchen"
-        IDS_RUNDLG_BROWSE_FILTER   "Programme\0*.exe\0Alle Dateien\0*.*\0\0"
+        IDS_RUNDLG_BROWSE_FILTER_EXE "Programme (*.exe)"
+        IDS_RUNDLG_BROWSE_FILTER_ALL "Alle Dateien (*.*)"
 
         /* shell folder path default values */
 	IDS_PROGRAMS		"Startmenü\\Programme"

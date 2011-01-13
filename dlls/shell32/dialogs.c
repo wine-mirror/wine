@@ -254,20 +254,23 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
 
                 case IDC_RUNDLG_BROWSE :
                     {
+                    static const WCHAR filterW[] = {'%','s','%','c','*','.','e','x','e','%','c','%','s','%','c','*','.','*','%','c',0};
                     HMODULE hComdlg = NULL ;
                     LPFNOFN ofnProc = NULL ;
                     static const WCHAR comdlg32W[] = {'c','o','m','d','l','g','3','2',0};
                     WCHAR szFName[1024] = {0};
-                    WCHAR *pszFilter, szCaption[MAX_PATH];
+                    WCHAR filter_exe[256], filter_all[256], filter[MAX_PATH], szCaption[MAX_PATH];
                     OPENFILENAMEW ofn;
 
-                    LoadStringW(shell32_hInstance, IDS_RUNDLG_BROWSE_FILTER, (LPWSTR)&pszFilter, 0);
+                    LoadStringW(shell32_hInstance, IDS_RUNDLG_BROWSE_FILTER_EXE, filter_exe, 256);
+                    LoadStringW(shell32_hInstance, IDS_RUNDLG_BROWSE_FILTER_ALL, filter_all, 256);
                     LoadStringW(shell32_hInstance, IDS_RUNDLG_BROWSE_CAPTION, szCaption, MAX_PATH);
+                    snprintfW( filter, MAX_PATH, filterW, filter_exe, 0, 0, filter_all, 0 );
 
                     ZeroMemory(&ofn, sizeof(ofn));
                     ofn.lStructSize = sizeof(OPENFILENAMEW);
                     ofn.hwndOwner = hwnd;
-                    ofn.lpstrFilter = pszFilter;
+                    ofn.lpstrFilter = filter;
                     ofn.lpstrFile = szFName;
                     ofn.nMaxFile = 1023;
                     ofn.lpstrTitle = szCaption;

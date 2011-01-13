@@ -256,7 +256,8 @@ STRINGTABLE
         IDS_RUNDLG_ERROR           "Kan ikke vise Kør Fil dialogboksen (intern fejl)"
         IDS_RUNDLG_BROWSE_ERROR    "Kan ikke vise Gennemse dialogboksen (intern fejl)"
         IDS_RUNDLG_BROWSE_CAPTION  "Gennemse"
-        IDS_RUNDLG_BROWSE_FILTER   "Program Filer\0*.exe\0Alle Filer\0*.*\0\0"
+        IDS_RUNDLG_BROWSE_FILTER_EXE "Program Filer (*.exe)"
+        IDS_RUNDLG_BROWSE_FILTER_ALL "Alle Filer (*.*)"
 
         /* shell folder path default values */
         IDS_PROGRAMS                "Start Menu\\Programmer"

@@ -255,7 +255,8 @@ STRINGTABLE
         IDS_RUNDLG_ERROR           "Klarte ikke vise Kjør-vinduet (intern feil)"
         IDS_RUNDLG_BROWSE_ERROR    "Klarte ikke vise Bla gjennom-vinduet (intern feil)"
         IDS_RUNDLG_BROWSE_CAPTION  "Bla gjennom"
-        IDS_RUNDLG_BROWSE_FILTER   "Programfiler\0*.exe\0Alle filer\0*.*\0\0"
+        IDS_RUNDLG_BROWSE_FILTER_EXE "Programfiler (*.exe)"
+        IDS_RUNDLG_BROWSE_FILTER_ALL "Alle filer (*.*)"
 
         /* shell folder path default values */
 	IDS_PROGRAMS                "Start-meny\\Programmer"

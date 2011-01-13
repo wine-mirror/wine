@@ -396,7 +396,8 @@ STRINGTABLE
         IDS_RUNDLG_ERROR           "Não é possível mostrar a caixa de diálogo Executar Arquivo (erro interno)"
         IDS_RUNDLG_BROWSE_ERROR    "Não é possível mostrar a caixa de diálogo de Procura (erro interno)"
         IDS_RUNDLG_BROWSE_CAPTION  "Procurar"
-        IDS_RUNDLG_BROWSE_FILTER   "Arquivos executáveis\0*.exe\0Todos os arquivos\0*.*\0\0"
+        IDS_RUNDLG_BROWSE_FILTER_EXE "Arquivos executáveis (*.exe)"
+        IDS_RUNDLG_BROWSE_FILTER_ALL "Todos os arquivos (*.*)"
 
         /* shell folder path default values */
 	IDS_PROGRAMS                "Menu Iniciar\\Programas"
@@ -520,7 +521,8 @@ STRINGTABLE
         IDS_RUNDLG_ERROR           "Não é possível mostrar a caixa de diálogo Executar Ficheiro (erro interno)"
         IDS_RUNDLG_BROWSE_ERROR    "Não é possível mostrar a caixa de diálogo de Procura (erro interno)"
         IDS_RUNDLG_BROWSE_CAPTION  "Procurar"
-        IDS_RUNDLG_BROWSE_FILTER   "Ficheiros executáveis\0*.exe\0Todos os ficheiros\0*.*\0\0"
+        IDS_RUNDLG_BROWSE_FILTER_EXE "Ficheiros executáveis (*.exe)"
+        IDS_RUNDLG_BROWSE_FILTER_ALL "Todos os ficheiros (*.*)"
 
         /* shell folder path default values */
 	IDS_PROGRAMS                "Menu Iniciar\\Programas"

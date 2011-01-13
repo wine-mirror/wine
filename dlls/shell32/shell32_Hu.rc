@@ -255,7 +255,8 @@ STRINGTABLE
         IDS_RUNDLG_ERROR           "Nem tudom megjeleníteni a fájl futtatás dialógusablakot (belső hiba)"
         IDS_RUNDLG_BROWSE_ERROR    "Nem tudom megjeleníteni a tallózás dialógusablakot (belső hiba)"
         IDS_RUNDLG_BROWSE_CAPTION  "Tallózás"
-        IDS_RUNDLG_BROWSE_FILTER   "Futtatható fájlok\0*.exe\0Összes fájl\0*.*\0\0"
+        IDS_RUNDLG_BROWSE_FILTER_EXE "Futtatható fájlok (*.exe)"
+        IDS_RUNDLG_BROWSE_FILTER_ALL "Összes fájl (*.*)"
 
         /* shell folder path default values */
 	IDS_PROGRAMS                "Start Menu\\Programs"

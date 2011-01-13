@@ -256,7 +256,8 @@ STRINGTABLE
         IDS_RUNDLG_ERROR           "Fout tijdens tonen venster 'Uitvoeren Bestand' (interne fout)"
         IDS_RUNDLG_BROWSE_ERROR    "Fout tijdens tonen van Bladeren venster (interne fout)"
         IDS_RUNDLG_BROWSE_CAPTION  "Bladeren"
-        IDS_RUNDLG_BROWSE_FILTER   "Uitvoerbare bestanden\0*.exe\0Alle bestanden\0*.*\0\0"
+        IDS_RUNDLG_BROWSE_FILTER_EXE "Uitvoerbare bestanden (*.exe)"
+        IDS_RUNDLG_BROWSE_FILTER_ALL "Alle bestanden (*.*)"
 
         /* shell folder path default values */
 	IDS_PROGRAMS                "Start Menu\\Programma's"

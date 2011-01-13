@@ -255,7 +255,8 @@ IDS_SHUTDOWN_PROMPT     "당신은  Wine 세션을 끄겠습니까?"
 IDS_RUNDLG_ERROR           "파일 실행 대화 상자를 보여줄수 없습니다(내부 에러)"
 IDS_RUNDLG_BROWSE_ERROR    "찾기 대화 상자를 보여 줄 수 없습니다(내부 에러)"
 IDS_RUNDLG_BROWSE_CAPTION  "찾기"
-IDS_RUNDLG_BROWSE_FILTER   "실행 파일\0*.exe\0A모든 파일\0*.*\0\0"
+IDS_RUNDLG_BROWSE_FILTER_EXE "실행 파일 (*.exe)"
+IDS_RUNDLG_BROWSE_FILTER_ALL "A모든 파일 (*.*)"
 
 /* shell folder path default values */
 IDS_PROGRAMS                "시작 메뉴\\프로그램"

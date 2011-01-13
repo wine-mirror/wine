@@ -259,7 +259,8 @@ STRINGTABLE
         IDS_RUNDLG_ERROR           "Impossible d'afficher la boîte de dialogue « Exécuter » (erreur interne)"
         IDS_RUNDLG_BROWSE_ERROR    "Impossible d'afficher la boîte de dialogue « Parcourir » (erreur interne)"
         IDS_RUNDLG_BROWSE_CAPTION  "Parcourir"
-        IDS_RUNDLG_BROWSE_FILTER   "Fichiers exécutables\0*.exe\0Tous les fichiers\0*.*\0\0"
+        IDS_RUNDLG_BROWSE_FILTER_EXE "Fichiers exécutables (*.exe)"
+        IDS_RUNDLG_BROWSE_FILTER_ALL "Tous les fichiers (*.*)"
 
 /* shell folder path default values */
  IDS_PROGRAMS                "Menu Démarrer\\Programmes"

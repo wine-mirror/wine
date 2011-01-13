@@ -253,7 +253,8 @@ STRINGTABLE
     IDS_RUNDLG_ERROR           "Dialoga 'Zagon programa' ni mogoče prikazati (notranja napaka)"
     IDS_RUNDLG_BROWSE_ERROR    "Dialoga 'Brskanje' ni mogoče prikazati (notranja napaka)"
     IDS_RUNDLG_BROWSE_CAPTION  "Brskanje"
-    IDS_RUNDLG_BROWSE_FILTER   "Izvršljive datoteke\0*.exe\0All Files\0*.*\0\0"
+    IDS_RUNDLG_BROWSE_FILTER_EXE "Izvršljive datoteke (*.exe)"
+    IDS_RUNDLG_BROWSE_FILTER_ALL "All Files (*.*)"
 
     /* shell folder path default values */
 	IDS_PROGRAMS                "Meni Start\\Programi"

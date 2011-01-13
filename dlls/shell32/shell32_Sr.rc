@@ -256,7 +256,8 @@ STRINGTABLE
         IDS_RUNDLG_ERROR           "Prikazivanje prozorčeta za pokretanje datoteke nije uspelo (unutrašnja greška)"
         IDS_RUNDLG_BROWSE_ERROR    "Prikazivanje prozorčeta za razgledanje nije uspelo (unutrašnja greška)"
         IDS_RUNDLG_BROWSE_CAPTION  "Razgledaj"
-        IDS_RUNDLG_BROWSE_FILTER   "Izvršne datoteke\0*.exe\0Sve datoteke\0*.*\0\0"
+        IDS_RUNDLG_BROWSE_FILTER_EXE "Izvršne datoteke (*.exe)"
+        IDS_RUNDLG_BROWSE_FILTER_ALL "Sve datoteke (*.*)"
 
         /* shell folder path default values */
         IDS_PROGRAMS                "„Start“ meni\\Programi"
@@ -566,7 +567,8 @@ STRINGTABLE
     IDS_RUNDLG_ERROR           "Приказивање прозорчета за покретање датотеке није успело (унутрашња грешка)"
     IDS_RUNDLG_BROWSE_ERROR    "Приказивање прозорчета за разгледање није успело (унутрашња грешка)"
     IDS_RUNDLG_BROWSE_CAPTION  "Разгледај"
-    IDS_RUNDLG_BROWSE_FILTER   "Извршне датотеке\0*.exe\0Све датотеке\0*.*\0\0"
+    IDS_RUNDLG_BROWSE_FILTER_EXE "Извршне датотеке (*.exe)"
+    IDS_RUNDLG_BROWSE_FILTER_ALL "Све датотеке (*.*)"
 
     /* shell folder path default values */
     IDS_PROGRAMS                "„Старт“ мени\\Програми"

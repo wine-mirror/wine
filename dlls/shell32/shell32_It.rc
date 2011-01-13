@@ -258,7 +258,8 @@ STRINGTABLE
         IDS_RUNDLG_ERROR           "Impossibile mostrare la finestra Esegui file (errore interno)"
         IDS_RUNDLG_BROWSE_ERROR    "Impossibile mostrare la finestra Sfoglia (errore interno)"
         IDS_RUNDLG_BROWSE_CAPTION  "Sfoglia"
-        IDS_RUNDLG_BROWSE_FILTER   "File eseguibili\0*.exe\0Tutti i file\0*.*\0\0"
+        IDS_RUNDLG_BROWSE_FILTER_EXE "File eseguibili (*.exe)"
+        IDS_RUNDLG_BROWSE_FILTER_ALL "Tutti i file (*.*)"
 
 	/* shell folder path default values */
 	IDS_STARTMENU               "Menu Start"
