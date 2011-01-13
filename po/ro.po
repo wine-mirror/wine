@@ -40,7 +40,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Ne specificat"
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 winefile.rc:160
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:160
 msgid "Name"
 msgstr "Nume"
 
@@ -61,7 +61,7 @@ msgid "Programs (*.exe)"
 msgstr "Programe (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
-#: oleview.rc:101 progman.rc:84 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:84 regedit.rc:201 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Toate fișierele (*.*)"
 
@@ -2896,7 +2896,7 @@ msgstr "&u&b&d"
 msgid "&File"
 msgstr "&Fișier"
 
-#: shdocvw.rc:27
+#: shdocvw.rc:27 regedit.rc:47 regedit.rc:98
 msgid "&New"
 msgstr "&Nou"
 
@@ -2937,7 +2937,7 @@ msgid "&Close"
 msgstr "În&chide"
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+#: regedit.rc:65 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
 msgid "&View"
 msgstr "&Vizualizare"
 
@@ -2955,18 +2955,18 @@ msgstr "Bară de &stare"
 msgid "&Address bar"
 msgstr "Adresa IP="
 
-#: shdocvw.rc:50
+#: shdocvw.rc:50 regedit.rc:73
 #, fuzzy
 msgid "&Favorites"
 msgstr "Favor&ite"
 
-#: shdocvw.rc:52
+#: shdocvw.rc:52 regedit.rc:75
 #, fuzzy
 msgid "&Add to Favorites..."
 msgstr "Adaugă la &favorite..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
+#: regedit.rc:78 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
 #, fuzzy
 msgid "&Help"
 msgstr ""
@@ -3074,19 +3074,19 @@ msgstr "Dec&upează"
 msgid "Create &Link"
 msgstr "Crează &link"
 
-#: shell32.rc:91
-msgid "&Rename"
-msgstr "&Redenumește"
-
-#: shell32.rc:102 notepad.rc:36 oleview.rc:35 view.rc:31 winhlp32.rc:34
-#: wordpad.rc:37
+#: shell32.rc:91 regedit.rc:94
 #, fuzzy
-msgid "E&xit"
+msgid "&Rename"
 msgstr ""
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"&Ieșire\n"
+"&Redenumește\n"
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"În&chide"
+"&Redenumește\tF2"
+
+#: shell32.rc:102 notepad.rc:36 oleview.rc:35 regedit.rc:41 view.rc:31
+#: winhlp32.rc:34 wordpad.rc:37
+msgid "E&xit"
+msgstr "Înc&hide"
 
 #: shell32.rc:115
 msgid "&About Control Panel..."
@@ -3101,7 +3101,7 @@ msgstr ""
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
 "Mărime"
 
-#: shell32.rc:124
+#: shell32.rc:124 regedit.rc:125
 msgid "Type"
 msgstr "Tip"
 
@@ -3146,9 +3146,14 @@ msgstr ""
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
 "Birou"
 
-#: shell32.rc:142
+#: shell32.rc:142 regedit.rc:206
+#, fuzzy
 msgid "My Computer"
-msgstr "Computerul meu"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Computerul meu\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Calculatorul meu"
 
 #: shell32.rc:144
 msgid "Control Panel"
@@ -3568,7 +3573,7 @@ msgstr "&Închide\tAlt-F4"
 msgid "&About Wine..."
 msgstr "&Despre Wine..."
 
-#: user32.rc:55 winefile.rc:148
+#: user32.rc:55 regedit.rc:182 winefile.rc:148
 msgid "Error"
 msgstr "Eroare"
 
@@ -5336,7 +5341,7 @@ msgstr "S&etare pagină..."
 msgid "P&rinter Setup..."
 msgstr "Setare im&primantă..."
 
-#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
+#: notepad.rc:38 regedit.rc:43 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 msgid "&Edit"
 msgstr "&Editare"
 
@@ -5366,7 +5371,7 @@ msgstr ""
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
 "Li&pește\tCtrl+V"
 
-#: notepad.rc:44 winefile.rc:30
+#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
 #, fuzzy
 msgid "&Delete\tDel"
 msgstr ""
@@ -5626,9 +5631,14 @@ msgstr ""
 msgid "&Status Bar"
 msgstr "Bara de &stare"
 
-#: oleview.rc:67 winefile.rc:127
+#: oleview.rc:67 regedit.rc:71 winefile.rc:127
+#, fuzzy
 msgid "&Refresh\tF5"
-msgstr "Actualiza&re\tF5"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Actualiza&re\tF5\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Actua&lizează\tF5"
 
 #: oleview.rc:71
 msgid "&About OleView"
@@ -6034,6 +6044,313 @@ msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
 msgstr ""
 "Eroare: Sistemul nu a putut găsi cheia sau valoarea de registru specificată\n"
+
+#: regedit.rc:31
+msgid "&Registry"
+msgstr "&Registru"
+
+#: regedit.rc:33
+msgid "&Import Registry File..."
+msgstr "&Importare fișier registru..."
+
+#: regedit.rc:34
+msgid "&Export Registry File..."
+msgstr "&Exportare fișier registru..."
+
+#: regedit.rc:36
+msgid "&Connect Network Registry..."
+msgstr "&Conectare registru rețea..."
+
+#: regedit.rc:37
+msgid "&Disconnect Network Registry..."
+msgstr "&Deconectare registru rețea..."
+
+#: regedit.rc:39
+msgid "&Print\tCtrl+P"
+msgstr "Im&primare\tCtrl+P"
+
+#: regedit.rc:45 regedit.rc:90
+msgid "&Modify"
+msgstr "&Modifică"
+
+#: regedit.rc:49 regedit.rc:100
+msgid "&Key"
+msgstr "Che&ie"
+
+#: regedit.rc:51 regedit.rc:102
+msgid "&String Value"
+msgstr "&Valoare șir"
+
+#: regedit.rc:52 regedit.rc:103
+msgid "&Binary Value"
+msgstr "Valoare &binară"
+
+#: regedit.rc:53 regedit.rc:104
+msgid "&DWORD Value"
+msgstr "Valoare &DWORD"
+
+#: regedit.rc:54 regedit.rc:105
+msgid "&Multi String Value"
+msgstr "Valoare șir &multiplu"
+
+#: regedit.rc:58 regedit.rc:109
+msgid "&Rename\tF2"
+msgstr "&Redenumește\tF2"
+
+#: regedit.rc:60 regedit.rc:112
+msgid "&Copy Key Name"
+msgstr "&Copiază numele cheii"
+
+#: regedit.rc:62 regedit.rc:114
+msgid "&Find\tCtrl+F"
+msgstr "&Caută\tCtrl+F"
+
+#: regedit.rc:63
+msgid "Find Ne&xt\tF3"
+msgstr "Caută urmă&torul\tF3"
+
+#: regedit.rc:67
+msgid "Status &Bar"
+msgstr "&Bara de stare"
+
+#: regedit.rc:69 winefile.rc:81
+#, fuzzy
+msgid "Sp&lit"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Sep&ară\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Se&pară"
+
+#: regedit.rc:76
+msgid "&Remove Favorite..."
+msgstr "Elimina&re favorită..."
+
+#: regedit.rc:80 winefile.rc:131
+#, fuzzy
+msgid "&Help Topics\tF1"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"&Subiecte în ajutor...\tF1\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Subiecte în a&jutor\tF1"
+
+#: regedit.rc:82
+msgid "&About Registry Editor"
+msgstr "Des&pre editorul de registru"
+
+#: regedit.rc:91
+msgid "Modify Binary Data"
+msgstr "Modifică date binare"
+
+#: regedit.rc:111
+msgid "&Export..."
+msgstr "&Exportare..."
+
+#: regedit.rc:136
+msgid "Contains commands for working with the whole registry"
+msgstr "Conține comenzi pentru lucrul cu întregul registru"
+
+#: regedit.rc:137
+msgid "Contains commands for editing values or keys"
+msgstr "Conține comenzi pentru editare de valori sau chei"
+
+#: regedit.rc:138
+msgid "Contains commands for customising the registry window"
+msgstr "Conține comenzi pentru personalizarea ferestrei de registru"
+
+#: regedit.rc:139
+msgid "Contains commands for accessing frequently used keys"
+msgstr "Conține comenzi pentru accesarea cheilor utilizate frecvent"
+
+#: regedit.rc:140
+msgid ""
+"Contains commands for displaying help and information about registry editor"
+msgstr ""
+"Conține comenzi pentru afișare ajutor și informații despre editorul de "
+"registru"
+
+#: regedit.rc:141
+msgid "Contains commands for creating new keys or values"
+msgstr "Conține comenzi pentru crearea de chei sau valori noi"
+
+#: regedit.rc:126
+msgid "Data"
+msgstr "Date"
+
+#: regedit.rc:131
+msgid "Registry Editor"
+msgstr "Editor registru"
+
+#: regedit.rc:197
+msgid "Import Registry File"
+msgstr "Importă fișierul registru"
+
+#: regedit.rc:198
+msgid "Export Registry File"
+msgstr "Exportă fișierul registru"
+
+#: regedit.rc:199
+#, fuzzy
+msgid "Registry files (*.reg)"
+msgstr "Fișiere registru (*.reg)"
+
+#: regedit.rc:200
+#, fuzzy
+msgid "Win9x/NT4 Registry files (REGEDIT4)"
+msgstr "Win9x/NT4 Fișiere registru (REGEDIT4)"
+
+#: regedit.rc:207
+msgid "(Default)"
+msgstr "(Implicit)"
+
+#: regedit.rc:208
+msgid "(value not set)"
+msgstr "(valoare nestabilită)"
+
+#: regedit.rc:209
+msgid "(cannot display value)"
+msgstr "(valoarea nu poate fi afișată)"
+
+#: regedit.rc:210
+msgid "(unknown %d)"
+msgstr "(%d necunoscut)"
+
+#: regedit.rc:166
+msgid "Quits the registry editor"
+msgstr "Închide editorul de registru"
+
+#: regedit.rc:167
+msgid "Adds keys to the favorites list"
+msgstr "Adaugă chei în lista de favorite"
+
+#: regedit.rc:168
+msgid "Removes keys from the favorites list"
+msgstr "Elimină chei din lista de favorite"
+
+#: regedit.rc:169
+msgid "Shows or hides the status bar"
+msgstr "Afișează sau ascunde bara de stare"
+
+#: regedit.rc:170
+msgid "Change position of split between two panes"
+msgstr "Schimbă poziția separatorului între două panouri"
+
+#: regedit.rc:171
+msgid "Refreshes the window"
+msgstr "Actualizează fereastra"
+
+#: regedit.rc:172
+msgid "Deletes the selection"
+msgstr "Șterge selecția"
+
+#: regedit.rc:173
+msgid "Renames the selection"
+msgstr "Redenumește selecția"
+
+#: regedit.rc:174
+msgid "Copies the name of the selected key to the clipboard"
+msgstr "Copiază numele cheii selectate în clipboard"
+
+#: regedit.rc:175
+msgid "Finds a text string in a key, value or data"
+msgstr "Caută un șir text într-o cheie, valoare sau dată"
+
+#: regedit.rc:176
+msgid "Finds next occurrence of text specified in previous search"
+msgstr "Caută următoarea apariție a textului specificat în căutarea precedentă"
+
+#: regedit.rc:146
+msgid "Modifies the value's data"
+msgstr "Modifică datele valorii"
+
+#: regedit.rc:147
+msgid "Adds a new key"
+msgstr "Adaugă o nouă cheie"
+
+#: regedit.rc:148
+msgid "Adds a new string value"
+msgstr "Adaugă o nouă valoare de șir"
+
+#: regedit.rc:149
+msgid "Adds a new binary value"
+msgstr "Adaugă o nouă valoare de binar"
+
+#: regedit.rc:150
+msgid "Adds a new double word value"
+msgstr "Adaugă o nouă valoare de DWORD"
+
+#: regedit.rc:152
+msgid "Imports a text file into the registry"
+msgstr "Importă un fișier text în registru"
+
+#: regedit.rc:154
+msgid "Exports all or part of the registry to a text file"
+msgstr "Exportă întregul registru sau o parte ca fișier text"
+
+#: regedit.rc:156
+msgid "Connects to a remote computer's registry"
+msgstr "Se conectează la registrul unui calculator de la distanță"
+
+#: regedit.rc:158
+msgid "Disconnects from a remote computer's registry"
+msgstr "Se deconectează de la registrul unui calculator de la distanță"
+
+#: regedit.rc:159
+msgid "Prints all or part of the registry"
+msgstr "Imprimă întregul registru sau o parte"
+
+#: regedit.rc:161
+msgid "Displays program information, version number and copyright"
+msgstr "Afișează informații despre program, numărul versiunii și licența"
+
+#: regedit.rc:184
+msgid "Can't query value '%s'"
+msgstr "Nu se poate interoga valoarea „%s”"
+
+#: regedit.rc:185
+msgid "Can't edit keys of this type (%u)"
+msgstr "Nu se pot edita chei de acest tip (%u)"
+
+#: regedit.rc:186
+msgid "Value is too big (%u)"
+msgstr "Valoarea este prea mare (%u)"
+
+#: regedit.rc:187
+msgid "Confirm Value Delete"
+msgstr "Confirmă ștergerea valorii"
+
+#: regedit.rc:188
+msgid "Are you sure you want to delete value '%s'?"
+msgstr "Sigur doriți să ștergeți valoarea „%s”?"
+
+#: regedit.rc:192
+msgid "Search string '%s' not found"
+msgstr "Șirul de căutare „%s” nu a fost găsit"
+
+#: regedit.rc:189
+msgid "Are you sure you want to delete these values?"
+msgstr "Sigur doriți să ștergeți aceste valori?"
+
+#: regedit.rc:190
+msgid "New Key #%d"
+msgstr "Cheie nouă #%d"
+
+#: regedit.rc:191
+msgid "New Value #%d"
+msgstr "Valoare nouă #%d"
+
+#: regedit.rc:183
+msgid "Can't query key '%s'"
+msgstr "Nu se poate interoga cheia „%s”"
+
+#: regedit.rc:151
+msgid "Adds a new multi string value"
+msgstr "Adaugă o nouă valoare de șir multiplu"
+
+#: regedit.rc:177
+msgid "Exports selected branch of the registry to a text file"
+msgstr "Exportă ramura de registru selectată ca fișier text"
 
 #: start.rc:45
 msgid ""
@@ -7032,10 +7349,6 @@ msgstr "Numai arbor&ele"
 msgid "Directory &Only"
 msgstr "Numai direct&orul"
 
-#: winefile.rc:81
-msgid "Sp&lit"
-msgstr "Sep&ară"
-
 #: winefile.rc:83
 msgid "&Name"
 msgstr "&Nume"
@@ -7119,10 +7432,6 @@ msgstr "Aranjează automat"
 #: winefile.rc:126
 msgid "Arrange &Symbols"
 msgstr "Aranjează &simbolurile"
-
-#: winefile.rc:131
-msgid "&Help Topics\tF1"
-msgstr "&Subiecte în ajutor...\tF1"
 
 #: winefile.rc:132
 msgid "Help &Search...\tF1"

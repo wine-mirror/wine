@@ -39,7 +39,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Ikke oppgitt"
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 winefile.rc:160
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:160
 msgid "Name"
 msgstr "Navn"
 
@@ -60,7 +60,7 @@ msgid "Programs (*.exe)"
 msgstr "Programmer (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
-#: oleview.rc:101 progman.rc:84 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:84 regedit.rc:201 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Alle filer (*.*)"
 
@@ -2868,10 +2868,9 @@ msgstr "&u&b&d"
 msgid "&File"
 msgstr "&Fil"
 
-#: shdocvw.rc:27
-#, fuzzy
+#: shdocvw.rc:27 regedit.rc:47 regedit.rc:98
 msgid "&New"
-msgstr "&Ny..."
+msgstr "&Ny"
 
 #: shdocvw.rc:29 winefile.rc:118
 msgid "&Window"
@@ -2928,7 +2927,7 @@ msgstr ""
 "&Lukk"
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+#: regedit.rc:65 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
 msgid "&View"
 msgstr "&Vis"
 
@@ -2947,18 +2946,16 @@ msgstr "&Statuslinje"
 msgid "&Address bar"
 msgstr "IP-adresse="
 
-#: shdocvw.rc:50
-#, fuzzy
+#: shdocvw.rc:50 regedit.rc:73
 msgid "&Favorites"
-msgstr "Favor&itter"
+msgstr "&Favoritter"
 
-#: shdocvw.rc:52
-#, fuzzy
+#: shdocvw.rc:52 regedit.rc:75
 msgid "&Add to Favorites..."
-msgstr "Legg til i &favoritter..."
+msgstr "Legg til i f&avoritter..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
+#: regedit.rc:78 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
 msgid "&Help"
 msgstr "&Hjelp"
 
@@ -3056,12 +3053,12 @@ msgstr "Klipp &ut"
 msgid "Create &Link"
 msgstr "&Opprett snarvei"
 
-#: shell32.rc:91
+#: shell32.rc:91 regedit.rc:94
 msgid "&Rename"
 msgstr "&Gi nytt navn"
 
-#: shell32.rc:102 notepad.rc:36 oleview.rc:35 view.rc:31 winhlp32.rc:34
-#: wordpad.rc:37
+#: shell32.rc:102 notepad.rc:36 oleview.rc:35 regedit.rc:41 view.rc:31
+#: winhlp32.rc:34 wordpad.rc:37
 msgid "E&xit"
 msgstr "&Avslutt"
 
@@ -3073,7 +3070,7 @@ msgstr "&Om Kontrollpanel..."
 msgid "Size"
 msgstr "Størrelse"
 
-#: shell32.rc:124
+#: shell32.rc:124 regedit.rc:125
 msgid "Type"
 msgstr "Type"
 
@@ -3118,7 +3115,7 @@ msgstr "Dato slettet"
 msgid "Desktop"
 msgstr "Skrivebord"
 
-#: shell32.rc:142
+#: shell32.rc:142 regedit.rc:206
 msgid "My Computer"
 msgstr "Min datamaskin"
 
@@ -3534,7 +3531,7 @@ msgstr "&Lukk\tAlt-F4"
 msgid "&About Wine..."
 msgstr "&Om Wine..."
 
-#: user32.rc:55 winefile.rc:148
+#: user32.rc:55 regedit.rc:182 winefile.rc:148
 msgid "Error"
 msgstr "Feil"
 
@@ -5269,7 +5266,7 @@ msgstr "Sideoppse&tt..."
 msgid "P&rinter Setup..."
 msgstr "Sk&riveroppsett..."
 
-#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
+#: notepad.rc:38 regedit.rc:43 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 msgid "&Edit"
 msgstr "R&ediger"
 
@@ -5289,7 +5286,7 @@ msgstr "&Kopier\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "&Lim inn\tCtrl+V"
 
-#: notepad.rc:44 winefile.rc:30
+#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
 msgid "&Delete\tDel"
 msgstr "&Slett\tDel"
 
@@ -5518,7 +5515,7 @@ msgstr "Verk&tøylinje"
 msgid "&Status Bar"
 msgstr "&Statuslinje"
 
-#: oleview.rc:67 winefile.rc:127
+#: oleview.rc:67 regedit.rc:71 winefile.rc:127
 msgid "&Refresh\tF5"
 msgstr "Oppdate&r\tF5"
 
@@ -5927,6 +5924,307 @@ msgid ""
 msgstr ""
 "Feil: Systemet klarte ikke finne den angitte registernøkkelen eller -"
 "verdien\n"
+
+#: regedit.rc:31
+msgid "&Registry"
+msgstr "&Register"
+
+#: regedit.rc:33
+msgid "&Import Registry File..."
+msgstr "&Importer registerfil..."
+
+#: regedit.rc:34
+msgid "&Export Registry File..."
+msgstr "&Eksporter registerfil..."
+
+#: regedit.rc:36
+msgid "&Connect Network Registry..."
+msgstr "Koble &til nettverksregister..."
+
+#: regedit.rc:37
+msgid "&Disconnect Network Registry..."
+msgstr "Koble &fra nettverksregister..."
+
+#: regedit.rc:39
+msgid "&Print\tCtrl+P"
+msgstr "&Skriv ut\tCtrl+P"
+
+#: regedit.rc:45 regedit.rc:90
+msgid "&Modify"
+msgstr "&Endre"
+
+#: regedit.rc:49 regedit.rc:100
+msgid "&Key"
+msgstr "Nø&kkel"
+
+#: regedit.rc:51 regedit.rc:102
+msgid "&String Value"
+msgstr "&Strengverdi"
+
+#: regedit.rc:52 regedit.rc:103
+msgid "&Binary Value"
+msgstr "&Binærverdi"
+
+#: regedit.rc:53 regedit.rc:104
+msgid "&DWORD Value"
+msgstr "&DWORD-verdi"
+
+#: regedit.rc:54 regedit.rc:105
+msgid "&Multi String Value"
+msgstr "&Flerstrengverdi"
+
+#: regedit.rc:58 regedit.rc:109
+msgid "&Rename\tF2"
+msgstr "&Gi nytt navn\tF2"
+
+#: regedit.rc:60 regedit.rc:112
+msgid "&Copy Key Name"
+msgstr "&Kopier nøkkelnavn"
+
+#: regedit.rc:62 regedit.rc:114
+msgid "&Find\tCtrl+F"
+msgstr "&Finn\tCtrl+F"
+
+#: regedit.rc:63
+msgid "Find Ne&xt\tF3"
+msgstr "Finn &neste\tF3"
+
+#: regedit.rc:67
+msgid "Status &Bar"
+msgstr "&Statuslinje"
+
+#: regedit.rc:69 winefile.rc:81
+#, fuzzy
+msgid "Sp&lit"
+msgstr ""
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"De&l opp visning\n"
+"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
+"De&l opp"
+
+#: regedit.rc:76
+msgid "&Remove Favorite..."
+msgstr "Fje&rn favoritt..."
+
+#: regedit.rc:80 winefile.rc:131
+msgid "&Help Topics\tF1"
+msgstr "Emner i &hjelp\tF1"
+
+#: regedit.rc:82
+msgid "&About Registry Editor"
+msgstr "&Om Registerredigering"
+
+#: regedit.rc:91
+msgid "Modify Binary Data"
+msgstr "Endre binærdata"
+
+#: regedit.rc:111
+msgid "&Export..."
+msgstr "&Eksporter..."
+
+#: regedit.rc:136
+msgid "Contains commands for working with the whole registry"
+msgstr "Inneholder kommandoer for å arbeide med hele registeret"
+
+#: regedit.rc:137
+msgid "Contains commands for editing values or keys"
+msgstr "Inneholder kommandoer for å redigere verdier og nøkler"
+
+#: regedit.rc:138
+msgid "Contains commands for customising the registry window"
+msgstr "Inneholder kommanoder for å tilpasse registervinduet"
+
+#: regedit.rc:139
+msgid "Contains commands for accessing frequently used keys"
+msgstr "Inneholder kommandoer for å få tilgang til nøkler som brukes ofte"
+
+#: regedit.rc:140
+msgid ""
+"Contains commands for displaying help and information about registry editor"
+msgstr ""
+"Inneholder kommandoer for å vise hjelp og informasjon om Registerredigering"
+
+#: regedit.rc:141
+msgid "Contains commands for creating new keys or values"
+msgstr "Inneholder kommandoer for å opprette nye nøkler eller verdier"
+
+#: regedit.rc:126
+msgid "Data"
+msgstr "Data"
+
+#: regedit.rc:131
+msgid "Registry Editor"
+msgstr "Registerredigering"
+
+#: regedit.rc:197
+msgid "Import Registry File"
+msgstr "Importer registerfil"
+
+#: regedit.rc:198
+msgid "Export Registry File"
+msgstr "Eksporter registerfil"
+
+#: regedit.rc:199
+#, fuzzy
+msgid "Registry files (*.reg)"
+msgstr "Registerfiler (*.reg)"
+
+#: regedit.rc:200
+#, fuzzy
+msgid "Win9x/NT4 Registry files (REGEDIT4)"
+msgstr "Win9x-/NT4-registerfiler (REGEDIT4)"
+
+#: regedit.rc:207
+msgid "(Default)"
+msgstr "(Standard)"
+
+#: regedit.rc:208
+msgid "(value not set)"
+msgstr "(verdi ikke oppgitt)"
+
+#: regedit.rc:209
+msgid "(cannot display value)"
+msgstr "(klarte ikke vise verdi)"
+
+#: regedit.rc:210
+msgid "(unknown %d)"
+msgstr "(ukjent %d)"
+
+#: regedit.rc:166
+msgid "Quits the registry editor"
+msgstr "Avslutter Registerredigering"
+
+#: regedit.rc:167
+msgid "Adds keys to the favorites list"
+msgstr "Legger nøkler til i favorittlisten"
+
+#: regedit.rc:168
+msgid "Removes keys from the favorites list"
+msgstr "Fjerner nøkler fra favorittlisten"
+
+#: regedit.rc:169
+msgid "Shows or hides the status bar"
+msgstr "Viser eller skjuler statuslinjens"
+
+#: regedit.rc:170
+msgid "Change position of split between two panes"
+msgstr "Endrer posisjonen til delingslinjen mellom to ruter"
+
+#: regedit.rc:171
+msgid "Refreshes the window"
+msgstr "Oppdaterer vinduet"
+
+#: regedit.rc:172
+msgid "Deletes the selection"
+msgstr "Sletter utvalget"
+
+#: regedit.rc:173
+msgid "Renames the selection"
+msgstr "Gir nytt navn til utvalget"
+
+#: regedit.rc:174
+msgid "Copies the name of the selected key to the clipboard"
+msgstr "Kopierer navnet til den valgte nøkkelen til utklippstavlen"
+
+#: regedit.rc:175
+msgid "Finds a text string in a key, value or data"
+msgstr "Finner en tekststreng i en nøkkel, verdi eller data"
+
+#: regedit.rc:176
+msgid "Finds next occurrence of text specified in previous search"
+msgstr "Finner neste treff til teksten spesifisert i forrige søk"
+
+#: regedit.rc:146
+msgid "Modifies the value's data"
+msgstr "Endrer verdiens data"
+
+#: regedit.rc:147
+msgid "Adds a new key"
+msgstr "Legger til en ny nøkkel"
+
+#: regedit.rc:148
+msgid "Adds a new string value"
+msgstr "Legger til en ny strengverdi"
+
+#: regedit.rc:149
+msgid "Adds a new binary value"
+msgstr "Legger til en ny binærverdis"
+
+#: regedit.rc:150
+msgid "Adds a new double word value"
+msgstr "Legger til en ny dobbeltord-verdi"
+
+#: regedit.rc:152
+msgid "Imports a text file into the registry"
+msgstr "Importerer en tekstfil inn i registeret"
+
+#: regedit.rc:154
+msgid "Exports all or part of the registry to a text file"
+msgstr "Eksporterer hele eller deler av registeret til en tekstfil"
+
+#: regedit.rc:156
+msgid "Connects to a remote computer's registry"
+msgstr "Kobler til registeret på en annen maskin"
+
+#: regedit.rc:158
+msgid "Disconnects from a remote computer's registry"
+msgstr "Kobler fra registeret på en annen maskin"
+
+#: regedit.rc:159
+msgid "Prints all or part of the registry"
+msgstr "Skriver ut hele eller deler av registeret"
+
+#: regedit.rc:161
+msgid "Displays program information, version number and copyright"
+msgstr "Viser programinformasjon, versjonnummer og kopirett"
+
+#: regedit.rc:184
+msgid "Can't query value '%s'"
+msgstr "Klarte ikke lese verdien «%s»"
+
+#: regedit.rc:185
+msgid "Can't edit keys of this type (%u)"
+msgstr "Kan ikke redigere nøkler av typen «%u»"
+
+#: regedit.rc:186
+msgid "Value is too big (%u)"
+msgstr "Verdien er for stor (%u)"
+
+#: regedit.rc:187
+msgid "Confirm Value Delete"
+msgstr "Bekreft sletting av verdi"
+
+#: regedit.rc:188
+msgid "Are you sure you want to delete value '%s'?"
+msgstr "Virkelig slette verdien «%s»?"
+
+#: regedit.rc:192
+msgid "Search string '%s' not found"
+msgstr "Fant ikke søkestrengen «%s»"
+
+#: regedit.rc:189
+msgid "Are you sure you want to delete these values?"
+msgstr "Virkelig slette disse verdiene?"
+
+#: regedit.rc:190
+msgid "New Key #%d"
+msgstr "Ny nøkkel #%d"
+
+#: regedit.rc:191
+msgid "New Value #%d"
+msgstr "Ny verdi #%d"
+
+#: regedit.rc:183
+msgid "Can't query key '%s'"
+msgstr "Klarte ikke lese nøkkelen «%s»"
+
+#: regedit.rc:151
+msgid "Adds a new multi string value"
+msgstr "Legger til en ny flerstrengverdi"
+
+#: regedit.rc:177
+msgid "Exports selected branch of the registry to a text file"
+msgstr "Eksporterer den valgte greinen av registeret til en tekstfil"
 
 #: start.rc:45
 msgid ""
@@ -6924,10 +7222,6 @@ msgstr "Kun tr&e"
 msgid "Directory &Only"
 msgstr "Kun katal&og"
 
-#: winefile.rc:81
-msgid "Sp&lit"
-msgstr "De&l opp visning"
-
 #: winefile.rc:83
 msgid "&Name"
 msgstr "&Navn"
@@ -7011,10 +7305,6 @@ msgstr "Ordne automatisk"
 #: winefile.rc:126
 msgid "Arrange &Symbols"
 msgstr "Ordne &symboler"
-
-#: winefile.rc:131
-msgid "&Help Topics\tF1"
-msgstr "Emner i &hjelp\tF1"
 
 #: winefile.rc:132
 msgid "Help &Search...\tF1"

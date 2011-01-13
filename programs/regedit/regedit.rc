@@ -1,0 +1,245 @@
+/*
+ * Regedit resources
+ *
+ * Copyright 2002 Robert Dickenson
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resource.h"
+
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+/*
+ * Menus
+ */
+
+IDR_REGEDIT_MENU MENU
+BEGIN
+    POPUP "&Registry"
+    BEGIN
+        MENUITEM "&Import Registry File...",    ID_REGISTRY_IMPORTREGISTRYFILE
+        MENUITEM "&Export Registry File...",    ID_REGISTRY_EXPORTREGISTRYFILE
+        MENUITEM SEPARATOR
+        MENUITEM "&Connect Network Registry...", ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "&Disconnect Network Registry...", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&Print\tCtrl+P",              ID_REGISTRY_PRINT, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       ID_REGISTRY_EXIT
+    END
+    POPUP "&Edit"
+    BEGIN
+        MENUITEM "&Modify",                     ID_EDIT_MODIFY
+        MENUITEM SEPARATOR
+        POPUP "&New"
+        BEGIN
+            MENUITEM "&Key",                        ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "&String Value",               ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Binary Value",               ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&DWORD Value",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Multi String Value",         ID_EDIT_NEW_MULTI_STRINGVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Delete\tDel",                ID_EDIT_DELETE
+        MENUITEM "&Rename\tF2",                 ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Copy Key Name",              ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Find\tCtrl+F",               ID_EDIT_FIND, GRAYED
+        MENUITEM "Find Ne&xt\tF3",              ID_EDIT_FINDNEXT, GRAYED
+    END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "Status &Bar",                 ID_VIEW_STATUSBAR
+        MENUITEM SEPARATOR
+        MENUITEM "Sp&lit",                      ID_VIEW_SPLIT
+        MENUITEM SEPARATOR
+        MENUITEM "&Refresh\tF5",                ID_VIEW_REFRESH
+    END
+    POPUP "&Favorites"
+    BEGIN
+        MENUITEM "&Add to Favorites...",          ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "&Remove Favorite...",           ID_FAVORITES_REMOVEFAVORITE
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&Help Topics\tF1",            ID_HELP_HELPTOPICS
+        MENUITEM SEPARATOR
+        MENUITEM "&About Registry Editor",      ID_HELP_ABOUT
+    END
+END
+
+IDR_POPUP_MENUS MENU
+BEGIN
+  POPUP ""
+  BEGIN
+	MENUITEM "&Modify",                     ID_EDIT_MODIFY
+	MENUITEM "Modify Binary Data",          ID_EDIT_MODIFY_BIN
+	MENUITEM SEPARATOR
+	MENUITEM "&Delete\tDel",                ID_EDIT_DELETE
+	MENUITEM "&Rename",                     ID_EDIT_RENAME
+  END
+  POPUP ""
+  BEGIN
+        POPUP "&New"
+        BEGIN
+            MENUITEM "&Key",                        ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "&String Value",               ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Binary Value",               ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&DWORD Value",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Multi String Value",         ID_EDIT_NEW_MULTI_STRINGVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Delete\tDel",                ID_EDIT_DELETE
+        MENUITEM "&Rename\tF2",                 ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Export...",                  ID_EDIT_EXPORT
+        MENUITEM "&Copy Key Name",              ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Find\tCtrl+F",               ID_EDIT_FIND, GRAYED
+  END
+END
+
+/*
+ * String Tables
+ */
+
+STRINGTABLE
+BEGIN
+    IDS_LIST_COLUMN_NAME    "Name"
+    IDS_LIST_COLUMN_TYPE    "Type"
+    IDS_LIST_COLUMN_DATA    "Data"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE           "Registry Editor"
+END
+
+STRINGTABLE
+BEGIN
+    ID_REGISTRY_MENU        "Contains commands for working with the whole registry"
+    ID_EDIT_MENU            "Contains commands for editing values or keys"
+    ID_VIEW_MENU            "Contains commands for customising the registry window"
+    ID_FAVORITES_MENU       "Contains commands for accessing frequently used keys"
+    ID_HELP_MENU            "Contains commands for displaying help and information about registry editor"
+    ID_EDIT_NEW_MENU        "Contains commands for creating new keys or values"
+END
+
+STRINGTABLE
+BEGIN
+    ID_EDIT_MODIFY          "Modifies the value's data"
+    ID_EDIT_NEW_KEY         "Adds a new key"
+    ID_EDIT_NEW_STRINGVALUE "Adds a new string value"
+    ID_EDIT_NEW_BINARYVALUE "Adds a new binary value"
+    ID_EDIT_NEW_DWORDVALUE  "Adds a new double word value"
+    ID_EDIT_NEW_MULTI_STRINGVALUE "Adds a new multi string value"
+    ID_REGISTRY_IMPORTREGISTRYFILE "Imports a text file into the registry"
+    ID_REGISTRY_EXPORTREGISTRYFILE
+                            "Exports all or part of the registry to a text file"
+    ID_REGISTRY_CONNECTNETWORKREGISTRY
+                            "Connects to a remote computer's registry"
+    ID_REGISTRY_DISCONNECTNETWORKREGISTRY
+                            "Disconnects from a remote computer's registry"
+    ID_REGISTRY_PRINT       "Prints all or part of the registry"
+/*    ID_HELP_HELPTOPICS      "Opens registry editor help" */
+    ID_HELP_ABOUT           "Displays program information, version number and copyright"
+END
+
+STRINGTABLE
+BEGIN
+    ID_REGISTRY_EXIT        "Quits the registry editor"
+    ID_FAVORITES_ADDTOFAVORITES "Adds keys to the favorites list"
+    ID_FAVORITES_REMOVEFAVORITE "Removes keys from the favorites list"
+    ID_VIEW_STATUSBAR       "Shows or hides the status bar"
+    ID_VIEW_SPLIT           "Change position of split between two panes"
+    ID_VIEW_REFRESH         "Refreshes the window"
+    ID_EDIT_DELETE          "Deletes the selection"
+    ID_EDIT_RENAME          "Renames the selection"
+    ID_EDIT_COPYKEYNAME     "Copies the name of the selected key to the clipboard"
+    ID_EDIT_FIND            "Finds a text string in a key, value or data"
+    ID_EDIT_FINDNEXT        "Finds next occurrence of text specified in previous search"
+    ID_EDIT_EXPORT          "Exports selected branch of the registry to a text file"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_ERROR		    "Error"
+    IDS_BAD_KEY		    "Can't query key '%s'"
+    IDS_BAD_VALUE           "Can't query value '%s'"
+    IDS_UNSUPPORTED_TYPE    "Can't edit keys of this type (%u)"
+    IDS_TOO_BIG_VALUE       "Value is too big (%u)"
+    IDS_DELETE_BOX_TITLE    "Confirm Value Delete"
+    IDS_DELETE_BOX_TEXT     "Are you sure you want to delete value '%s'?"
+    IDS_DELETE_BOX_TEXT_MULTIPLE "Are you sure you want to delete these values?"
+    IDS_NEWKEY              "New Key #%d"
+    IDS_NEWVALUE            "New Value #%d"
+    IDS_NOTFOUND            "Search string '%s' not found"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_FILEDIALOG_IMPORT_TITLE   "Import Registry File"
+    IDS_FILEDIALOG_EXPORT_TITLE   "Export Registry File"
+    IDS_FILEDIALOG_FILTER_REG     "Registry files (*.reg)"
+    IDS_FILEDIALOG_FILTER_REG4    "Win9x/NT4 Registry files (REGEDIT4)"
+    IDS_FILEDIALOG_FILTER_ALL     "All files (*.*)"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_REGISTRY_ROOT_NAME           "My Computer"
+    IDS_REGISTRY_DEFAULT_VALUE       "(Default)"
+    IDS_REGISTRY_VALUE_NOT_SET       "(value not set)"
+    IDS_REGISTRY_VALUE_CANT_DISPLAY  "(cannot display value)"
+    IDS_REGISTRY_UNKNOWN_TYPE        "(unknown %d)"
+END
+
+/* define language neutral resources */
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+/* @makedep: folderopen.ico */
+IDI_OPEN_FILE ICON folderopen.ico
+
+/* @makedep: folder.ico */
+IDI_CLOSED_FILE ICON folder.ico
+
+/* @makedep: computer.ico */
+IDI_ROOT ICON computer.ico
+
+/* @makedep: string.ico */
+IDI_STRING ICON string.ico
+
+/* @makedep: bin.ico */
+IDI_BIN  ICON bin.ico
+
+/* @makedep: regedit.ico */
+IDI_REGEDIT ICON regedit.ico
+
+#define WINE_FILEDESCRIPTION_STR "Wine Registry Editor"
+#define WINE_FILENAME "REGEDIT"
+#define WINE_FILENAME_STR "REGEDIT.EXE"
+#define WINE_FILETYPE VFT_APP
+#define WINE_FILEVERSION 5,2,3790,0
+#define WINE_FILEVERSION_STR "5.2.3790.0"
+
+#define WINE_PRODUCTVERSION 5,2,3790,0
+#define WINE_PRODUCTVERSION_STR "5.2"
+
+#include "wine/wine_common_ver.rc"

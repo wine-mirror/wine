@@ -46,7 +46,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Niet gespecificeerd"
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 winefile.rc:160
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:160
 msgid "Name"
 msgstr "Naam"
 
@@ -67,7 +67,7 @@ msgid "Programs (*.exe)"
 msgstr "Programma's (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
-#: oleview.rc:101 progman.rc:84 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:84 regedit.rc:201 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Alle bestanden (*.*)"
 
@@ -2900,7 +2900,7 @@ msgstr "&u&b&d"
 msgid "&File"
 msgstr "&Bestand"
 
-#: shdocvw.rc:27
+#: shdocvw.rc:27 regedit.rc:47 regedit.rc:98
 msgid "&New"
 msgstr "&Nieuw"
 
@@ -2946,14 +2946,9 @@ msgstr ""
 "&Afsluiten"
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
-#, fuzzy
+#: regedit.rc:65 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
 msgid "&View"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Bee&ld\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Bekijken"
+msgstr "Bee&ld"
 
 #: shdocvw.rc:44
 msgid "&Toolbars"
@@ -2967,16 +2962,21 @@ msgstr "&Standaardbalk"
 msgid "&Address bar"
 msgstr "&Adresbalk"
 
-#: shdocvw.rc:50
+#: shdocvw.rc:50 regedit.rc:73
 msgid "&Favorites"
 msgstr "&Favorieten"
 
-#: shdocvw.rc:52
+#: shdocvw.rc:52 regedit.rc:75
+#, fuzzy
 msgid "&Add to Favorites..."
-msgstr "&Toevoegen aan Favorieten..."
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"&Toevoegen aan Favorieten...\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"&Toevoegen aan favorieten..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
+#: regedit.rc:78 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
 msgid "&Help"
 msgstr "&Help"
 
@@ -3067,12 +3067,17 @@ msgstr "K&nippen"
 msgid "Create &Link"
 msgstr "Maak sne&lkoppeling"
 
-#: shell32.rc:91
+#: shell32.rc:91 regedit.rc:94
+#, fuzzy
 msgid "&Rename"
-msgstr "&Hernoemen"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"&Hernoemen\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"&Naam wijzigen"
 
-#: shell32.rc:102 notepad.rc:36 oleview.rc:35 view.rc:31 winhlp32.rc:34
-#: wordpad.rc:37
+#: shell32.rc:102 notepad.rc:36 oleview.rc:35 regedit.rc:41 view.rc:31
+#: winhlp32.rc:34 wordpad.rc:37
 msgid "E&xit"
 msgstr "&Afsluiten"
 
@@ -3084,7 +3089,7 @@ msgstr "&Over Configuratiescherm"
 msgid "Size"
 msgstr "Grootte"
 
-#: shell32.rc:124
+#: shell32.rc:124 regedit.rc:125
 msgid "Type"
 msgstr "Type"
 
@@ -3124,9 +3129,14 @@ msgstr "Datum verwijderd"
 msgid "Desktop"
 msgstr "Bureaublad"
 
-#: shell32.rc:142
+#: shell32.rc:142 regedit.rc:206
+#, fuzzy
 msgid "My Computer"
-msgstr "Mijn Computer"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Mijn Computer\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Deze Computer"
 
 #: shell32.rc:144
 msgid "Control Panel"
@@ -3549,7 +3559,7 @@ msgstr "&Sluiten\tAlt-F4"
 msgid "&About Wine..."
 msgstr "&Info over Wine..."
 
-#: user32.rc:55 winefile.rc:148
+#: user32.rc:55 regedit.rc:182 winefile.rc:148
 msgid "Error"
 msgstr "Fout"
 
@@ -5333,7 +5343,7 @@ msgstr "Pa&gina-instellingen..."
 msgid "P&rinter Setup..."
 msgstr "Printerins&tellingen..."
 
-#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
+#: notepad.rc:38 regedit.rc:43 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 #, fuzzy
 msgid "&Edit"
 msgstr ""
@@ -5358,7 +5368,7 @@ msgstr "&Kopiëren\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "&Plakken\tCtrl+V"
 
-#: notepad.rc:44 winefile.rc:30
+#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
 #, fuzzy
 msgid "&Delete\tDel"
 msgstr ""
@@ -5609,7 +5619,7 @@ msgstr ""
 "#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
 "&Statusbalk"
 
-#: oleview.rc:67 winefile.rc:127
+#: oleview.rc:67 regedit.rc:71 winefile.rc:127
 #, fuzzy
 msgid "&Refresh\tF5"
 msgstr ""
@@ -6029,6 +6039,314 @@ msgid ""
 msgstr ""
 "Fout: Het systeem kon de gespecificeerde registersleutel of waarde niet "
 "vinden\n"
+
+#: regedit.rc:31
+msgid "&Registry"
+msgstr "&Registerbestand"
+
+#: regedit.rc:33
+msgid "&Import Registry File..."
+msgstr "Registerbestand &importeren..."
+
+#: regedit.rc:34
+msgid "&Export Registry File..."
+msgstr "Registerbestand &exporteren..."
+
+#: regedit.rc:36
+msgid "&Connect Network Registry..."
+msgstr "Verbinding &maken met netwerkregister..."
+
+#: regedit.rc:37
+msgid "&Disconnect Network Registry..."
+msgstr "Verbinding &verbreken met netwerkregister..."
+
+#: regedit.rc:39
+msgid "&Print\tCtrl+P"
+msgstr "Af&drukken\tCtrl+P"
+
+#: regedit.rc:45 regedit.rc:90
+msgid "&Modify"
+msgstr "&Wijzigen"
+
+#: regedit.rc:49 regedit.rc:100
+msgid "&Key"
+msgstr "&Sleutel"
+
+#: regedit.rc:51 regedit.rc:102
+msgid "&String Value"
+msgstr "&Tekenreekswaarde"
+
+#: regedit.rc:52 regedit.rc:103
+msgid "&Binary Value"
+msgstr "&Binaire waarde"
+
+#: regedit.rc:53 regedit.rc:104
+msgid "&DWORD Value"
+msgstr "&DWORD-waarde"
+
+#: regedit.rc:54 regedit.rc:105
+msgid "&Multi String Value"
+msgstr "&Multi-Tekenreekswaarde"
+
+#: regedit.rc:58 regedit.rc:109
+msgid "&Rename\tF2"
+msgstr "N&aam wijzigen\tF2"
+
+#: regedit.rc:60 regedit.rc:112
+msgid "&Copy Key Name"
+msgstr "&Sleutelnaam kopiëren"
+
+#: regedit.rc:62 regedit.rc:114
+msgid "&Find\tCtrl+F"
+msgstr "&Zoeken\tCtrl+F"
+
+#: regedit.rc:63
+msgid "Find Ne&xt\tF3"
+msgstr "Volgende Zoeken\tF3"
+
+#: regedit.rc:67
+msgid "Status &Bar"
+msgstr "&Statusbalk"
+
+#: regedit.rc:69 winefile.rc:81
+#, fuzzy
+msgid "Sp&lit"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"Sp&litsen\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"S&plitsen"
+
+#: regedit.rc:76
+msgid "&Remove Favorite..."
+msgstr "&Verwijderen uit favorieten..."
+
+#: regedit.rc:80 winefile.rc:131
+#, fuzzy
+msgid "&Help Topics\tF1"
+msgstr ""
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"&Help-onderwerpen\tF1\n"
+"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
+"&Help-onderwerpen"
+
+#: regedit.rc:82
+msgid "&About Registry Editor"
+msgstr "&Info"
+
+#: regedit.rc:91
+msgid "Modify Binary Data"
+msgstr "&Binaire data wijzigen"
+
+#: regedit.rc:111
+msgid "&Export..."
+msgstr "&Exporteren..."
+
+#: regedit.rc:136
+msgid "Contains commands for working with the whole registry"
+msgstr "Opdrachten voor het werken met het gehele register"
+
+#: regedit.rc:137
+msgid "Contains commands for editing values or keys"
+msgstr "Opdrachten voor het bewerken van waarden of sleutels"
+
+#: regedit.rc:138
+msgid "Contains commands for customising the registry window"
+msgstr "Opdrachten voor het aanpassen van het registervenster"
+
+#: regedit.rc:139
+msgid "Contains commands for accessing frequently used keys"
+msgstr "Opdrachten voor toegang tot vaak gebruikte sleutels"
+
+#: regedit.rc:140
+msgid ""
+"Contains commands for displaying help and information about registry editor"
+msgstr ""
+"Opdrachten voor het weergeven van Help en informatie over de Register-editor"
+
+#: regedit.rc:141
+msgid "Contains commands for creating new keys or values"
+msgstr "Opdrachten voor het maken van nieuwe sleutels of waarden"
+
+#: regedit.rc:126
+msgid "Data"
+msgstr "Gegevens"
+
+#: regedit.rc:131
+msgid "Registry Editor"
+msgstr "Register-editor"
+
+#: regedit.rc:197
+msgid "Import Registry File"
+msgstr "Registerbestand importeren"
+
+#: regedit.rc:198
+msgid "Export Registry File"
+msgstr "Registerbestand exporteren"
+
+#: regedit.rc:199
+#, fuzzy
+msgid "Registry files (*.reg)"
+msgstr "Register Bestanden (*.reg)"
+
+#: regedit.rc:200
+#, fuzzy
+msgid "Win9x/NT4 Registry files (REGEDIT4)"
+msgstr "Win9x/NT4 Register Bestanden (REGEDIT4)"
+
+#: regedit.rc:207
+msgid "(Default)"
+msgstr "(Standaard)"
+
+#: regedit.rc:208
+msgid "(value not set)"
+msgstr "(Geen waarde ingesteld)"
+
+#: regedit.rc:209
+msgid "(cannot display value)"
+msgstr "(kan waarde niet weergeven)"
+
+#: regedit.rc:210
+msgid "(unknown %d)"
+msgstr "(onbekend %d)"
+
+#: regedit.rc:166
+msgid "Quits the registry editor"
+msgstr "De Register-editor afsluiten"
+
+#: regedit.rc:167
+msgid "Adds keys to the favorites list"
+msgstr "Sleutels toevoegen aan de lijst met favorieten"
+
+#: regedit.rc:168
+msgid "Removes keys from the favorites list"
+msgstr "Sleutels verwijderen uit de lijst met favorieten"
+
+#: regedit.rc:169
+msgid "Shows or hides the status bar"
+msgstr "De statusbalk weergeven of verbergen"
+
+#: regedit.rc:170
+msgid "Change position of split between two panes"
+msgstr "De positie van de splitsing tussen twee deelvensters wijzigen"
+
+#: regedit.rc:171
+msgid "Refreshes the window"
+msgstr "Het venster vernieuwen"
+
+#: regedit.rc:172
+msgid "Deletes the selection"
+msgstr "De selectie verwijderen"
+
+#: regedit.rc:173
+msgid "Renames the selection"
+msgstr "De naam van de selectie wijzigen"
+
+#: regedit.rc:174
+msgid "Copies the name of the selected key to the clipboard"
+msgstr "De naam van de geselecteerde sleutel naar het Klembord kopiëren"
+
+#: regedit.rc:175
+msgid "Finds a text string in a key, value or data"
+msgstr "Een tekenreeks zoeken in een sleutel, een waarde of gegevens"
+
+#: regedit.rc:176
+msgid "Finds next occurrence of text specified in previous search"
+msgstr "De opgegeven tekst nogmaals zoeken"
+
+#: regedit.rc:146
+msgid "Modifies the value's data"
+msgstr "De gegevens van de waarde wijzigen"
+
+#: regedit.rc:147
+msgid "Adds a new key"
+msgstr "Een nieuwe sleutel toevoegen"
+
+#: regedit.rc:148
+msgid "Adds a new string value"
+msgstr "Een nieuwe tekenreekswaarde toevoegen"
+
+#: regedit.rc:149
+msgid "Adds a new binary value"
+msgstr "Een nieuwe binaire waarde toevoegen"
+
+#: regedit.rc:150
+msgid "Adds a new double word value"
+msgstr "Een nieuwe DWORD-waarde toevoegen"
+
+#: regedit.rc:152
+msgid "Imports a text file into the registry"
+msgstr "Een tekstbestand in het register importeren"
+
+#: regedit.rc:154
+msgid "Exports all or part of the registry to a text file"
+msgstr "Het register of een gedeelte ervan naar een tekstbestand exporteren"
+
+#: regedit.rc:156
+msgid "Connects to a remote computer's registry"
+msgstr "Een verbinding maken met het register van een externe computer"
+
+#: regedit.rc:158
+msgid "Disconnects from a remote computer's registry"
+msgstr "De verbinding met het register van een externe computer verbreken"
+
+#: regedit.rc:159
+msgid "Prints all or part of the registry"
+msgstr "Het register of een gedeelte ervan afdrukken"
+
+#: regedit.rc:161
+msgid "Displays program information, version number and copyright"
+msgstr "Programmagegevens, versienummer en copyrightgegevens weergeven"
+
+#: regedit.rc:184
+msgid "Can't query value '%s'"
+msgstr "Kan waarde '%s' niet opvragen"
+
+#: regedit.rc:185
+msgid "Can't edit keys of this type (%u)"
+msgstr "Kan dit type sleutel (%u) niet bewerken"
+
+#: regedit.rc:186
+msgid "Value is too big (%u)"
+msgstr "Waarde te groot (%u)"
+
+#: regedit.rc:187
+msgid "Confirm Value Delete"
+msgstr "Waarde verwijderen bevestigen"
+
+#: regedit.rc:188
+msgid "Are you sure you want to delete value '%s'?"
+msgstr "Weet u zeker dat u de waarde '%s' wilt verwijderen?"
+
+#: regedit.rc:192
+msgid "Search string '%s' not found"
+msgstr "Tekenreeks '%s' niet gevonden"
+
+#: regedit.rc:189
+msgid "Are you sure you want to delete these values?"
+msgstr "Weet u zeker dat u deze waarden wilt verwijderen?"
+
+#: regedit.rc:190
+msgid "New Key #%d"
+msgstr "Nieuwe sleutel #%d"
+
+#: regedit.rc:191
+msgid "New Value #%d"
+msgstr "Nieuwe waarde #%d"
+
+#: regedit.rc:183
+msgid "Can't query key '%s'"
+msgstr "Kan sleutel '%s' niet opvragen"
+
+#: regedit.rc:151
+msgid "Adds a new multi string value"
+msgstr "Een nieuwe multi-tekenreekswaarde toevoegen"
+
+#: regedit.rc:177
+msgid "Exports selected branch of the registry to a text file"
+msgstr ""
+"Exporteert de geselecteerde subsleutel van het register naar een tekst "
+"bestand"
 
 #: start.rc:45
 msgid ""
@@ -7021,10 +7339,6 @@ msgstr "Alleen h&iërarchie"
 msgid "Directory &Only"
 msgstr "Alleen &mapinhoud"
 
-#: winefile.rc:81
-msgid "Sp&lit"
-msgstr "Sp&litsen"
-
 #: winefile.rc:83
 msgid "&Name"
 msgstr "&Naam"
@@ -7108,10 +7422,6 @@ msgstr "Automatisch schikken"
 #: winefile.rc:126
 msgid "Arrange &Symbols"
 msgstr "&Pictogrammen schikken"
-
-#: winefile.rc:131
-msgid "&Help Topics\tF1"
-msgstr "&Help-onderwerpen\tF1"
 
 #: winefile.rc:132
 msgid "Help &Search...\tF1"

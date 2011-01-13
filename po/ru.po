@@ -39,7 +39,7 @@ msgstr "Невозможно выполнить, '%s'. Вы хотите уда�
 msgid "Not specified"
 msgstr "Отсутствует"
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 winefile.rc:160
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:160
 #, fuzzy
 msgid "Name"
 msgstr ""
@@ -65,7 +65,7 @@ msgid "Programs (*.exe)"
 msgstr "Программы (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
-#: oleview.rc:101 progman.rc:84 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:84 regedit.rc:201 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Все файлы (*.*)"
 
@@ -2825,10 +2825,9 @@ msgstr "&u&b&d"
 msgid "&File"
 msgstr "&Файл"
 
-#: shdocvw.rc:27
-#, fuzzy
+#: shdocvw.rc:27 regedit.rc:47 regedit.rc:98
 msgid "&New"
-msgstr "&Создать"
+msgstr "Созд&ать"
 
 #: shdocvw.rc:29 winefile.rc:118
 msgid "&Window"
@@ -2875,7 +2874,7 @@ msgid "&Close"
 msgstr "&Закрыть"
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+#: regedit.rc:65 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
 #, fuzzy
 msgid "&View"
 msgstr ""
@@ -2902,18 +2901,18 @@ msgstr "&Строка состояния"
 msgid "&Address bar"
 msgstr ""
 
-#: shdocvw.rc:50
+#: shdocvw.rc:50 regedit.rc:73
 #, fuzzy
 msgid "&Favorites"
 msgstr "&Избранное"
 
-#: shdocvw.rc:52
+#: shdocvw.rc:52 regedit.rc:75
 #, fuzzy
 msgid "&Add to Favorites..."
 msgstr "Добавить в &избранное"
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
+#: regedit.rc:78 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
 #, fuzzy
 msgid "&Help"
 msgstr ""
@@ -3020,19 +3019,19 @@ msgstr "&Вырезать"
 msgid "Create &Link"
 msgstr "Создать &ярлык"
 
-#: shell32.rc:91
-msgid "&Rename"
-msgstr "Переи&меновать"
-
-#: shell32.rc:102 notepad.rc:36 oleview.rc:35 view.rc:31 winhlp32.rc:34
-#: wordpad.rc:37
+#: shell32.rc:91 regedit.rc:94
 #, fuzzy
-msgid "E&xit"
+msgid "&Rename"
 msgstr ""
 "#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
-"В&ыход\n"
+"Переи&меновать\n"
 "#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
-"&Выход"
+"&Переименовать"
+
+#: shell32.rc:102 notepad.rc:36 oleview.rc:35 regedit.rc:41 view.rc:31
+#: winhlp32.rc:34 wordpad.rc:37
+msgid "E&xit"
+msgstr "В&ыйти"
 
 #: shell32.rc:115
 msgid "&About Control Panel..."
@@ -3042,7 +3041,7 @@ msgstr "&О Панели Управления..."
 msgid "Size"
 msgstr "Размер"
 
-#: shell32.rc:124
+#: shell32.rc:124 regedit.rc:125
 msgid "Type"
 msgstr "Тип"
 
@@ -3082,9 +3081,14 @@ msgstr "Время удаления"
 msgid "Desktop"
 msgstr "Рабочий стол"
 
-#: shell32.rc:142
+#: shell32.rc:142 regedit.rc:206
+#, fuzzy
 msgid "My Computer"
-msgstr "Мой компьютер"
+msgstr ""
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"Мой компьютер\n"
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"Мой Компьютер"
 
 #: shell32.rc:144
 msgid "Control Panel"
@@ -3510,14 +3514,9 @@ msgstr "&Закрыть\tAlt-F4"
 msgid "&About Wine..."
 msgstr "&О проекте Wine..."
 
-#: user32.rc:55 winefile.rc:148
-#, fuzzy
+#: user32.rc:55 regedit.rc:182 winefile.rc:148
 msgid "Error"
-msgstr ""
-"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
-"Ошибка\n"
-"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
-"ОШИБКА"
+msgstr "Ошибка"
 
 #: user32.rc:56
 msgid "&More Windows..."
@@ -5274,7 +5273,7 @@ msgstr "Пара&метры страницы..."
 msgid "P&rinter Setup..."
 msgstr "&Настройка принтера..."
 
-#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
+#: notepad.rc:38 regedit.rc:43 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 msgid "&Edit"
 msgstr "&Правка"
 
@@ -5299,7 +5298,7 @@ msgstr ""
 "#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
 "&Вставить\tCtrl+V"
 
-#: notepad.rc:44 winefile.rc:30
+#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
 msgid "&Delete\tDel"
 msgstr "&Удалить\tDel"
 
@@ -5540,14 +5539,9 @@ msgstr ""
 msgid "&Status Bar"
 msgstr "&Строка состояния"
 
-#: oleview.rc:67 winefile.rc:127
-#, fuzzy
+#: oleview.rc:67 regedit.rc:71 winefile.rc:127
 msgid "&Refresh\tF5"
-msgstr ""
-"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
-"О&бновить\tF5\n"
-"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
-"&Обновить\tF5"
+msgstr "&Обновить\tF5"
 
 #: oleview.rc:71
 msgid "&About OleView"
@@ -5964,6 +5958,312 @@ msgstr "Ошибка: невозможно добавить ключи на уд
 msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
 msgstr "Ошибка: не удалось найти указанный ключ реестра или значение\n"
+
+#: regedit.rc:31
+msgid "&Registry"
+msgstr "&Реестр"
+
+#: regedit.rc:33
+msgid "&Import Registry File..."
+msgstr "&Импортировать файл реестра..."
+
+#: regedit.rc:34
+msgid "&Export Registry File..."
+msgstr "&Экспортировать файл реестра..."
+
+#: regedit.rc:36
+msgid "&Connect Network Registry..."
+msgstr "&Подключить сетевой реестр..."
+
+#: regedit.rc:37
+msgid "&Disconnect Network Registry..."
+msgstr "&Отключить сетевой реестр..."
+
+#: regedit.rc:39
+msgid "&Print\tCtrl+P"
+msgstr "&Напечатать\tCtrl+P"
+
+#: regedit.rc:45 regedit.rc:90
+msgid "&Modify"
+msgstr "&Изменить"
+
+#: regedit.rc:49 regedit.rc:100
+msgid "&Key"
+msgstr "Кл&юч"
+
+#: regedit.rc:51 regedit.rc:102
+msgid "&String Value"
+msgstr "&Строковое значение"
+
+#: regedit.rc:52 regedit.rc:103
+msgid "&Binary Value"
+msgstr "&Бинарное значение"
+
+#: regedit.rc:53 regedit.rc:104
+msgid "&DWORD Value"
+msgstr "&DWORD значение"
+
+#: regedit.rc:54 regedit.rc:105
+msgid "&Multi String Value"
+msgstr "&Многостроковое значение"
+
+#: regedit.rc:58 regedit.rc:109
+msgid "&Rename\tF2"
+msgstr "&Переименовать\tF2"
+
+#: regedit.rc:60 regedit.rc:112
+msgid "&Copy Key Name"
+msgstr "С&копировать имя ключа"
+
+#: regedit.rc:62 regedit.rc:114
+msgid "&Find\tCtrl+F"
+msgstr "&Найти\tCtrl+F"
+
+#: regedit.rc:63
+msgid "Find Ne&xt\tF3"
+msgstr "Найти &далее\tF3"
+
+#: regedit.rc:67
+msgid "Status &Bar"
+msgstr "Строка &состояния"
+
+#: regedit.rc:69 winefile.rc:81
+#, fuzzy
+msgid "Sp&lit"
+msgstr ""
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"Раз&бить\n"
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"&Разделить"
+
+#: regedit.rc:76
+msgid "&Remove Favorite..."
+msgstr "&Удалить из избранного..."
+
+#: regedit.rc:80 winefile.rc:131
+#, fuzzy
+msgid "&Help Topics\tF1"
+msgstr ""
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"&Содержание\tF1\n"
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"&Содержание"
+
+#: regedit.rc:82
+msgid "&About Registry Editor"
+msgstr "&О редакторе реестра"
+
+#: regedit.rc:91
+msgid "Modify Binary Data"
+msgstr "Изменить &бинарное значение"
+
+#: regedit.rc:111
+msgid "&Export..."
+msgstr "&Экспортировать..."
+
+#: regedit.rc:136
+msgid "Contains commands for working with the whole registry"
+msgstr "Содержит команды для работы с реестром в целом"
+
+#: regedit.rc:137
+msgid "Contains commands for editing values or keys"
+msgstr "Содержит команды для редактирования значений или ключей"
+
+#: regedit.rc:138
+msgid "Contains commands for customising the registry window"
+msgstr "Содержит команды для настройки окна реестра"
+
+#: regedit.rc:139
+msgid "Contains commands for accessing frequently used keys"
+msgstr "Содержит команды для доступа к часто используемым ключам"
+
+#: regedit.rc:140
+msgid ""
+"Contains commands for displaying help and information about registry editor"
+msgstr ""
+"Содержит команды для отображения справки и информации о редакторе реестра"
+
+#: regedit.rc:141
+msgid "Contains commands for creating new keys or values"
+msgstr "Содержит команды для создания новых ключей или значений"
+
+#: regedit.rc:126
+msgid "Data"
+msgstr "Данные"
+
+#: regedit.rc:131
+msgid "Registry Editor"
+msgstr "Редактор реестра"
+
+#: regedit.rc:197
+msgid "Import Registry File"
+msgstr "Импорт файла реестра"
+
+#: regedit.rc:198
+msgid "Export Registry File"
+msgstr "Экспорт файла реестра"
+
+#: regedit.rc:199
+#, fuzzy
+msgid "Registry files (*.reg)"
+msgstr "Все файлы реестра (*.reg)"
+
+#: regedit.rc:200
+#, fuzzy
+msgid "Win9x/NT4 Registry files (REGEDIT4)"
+msgstr "Файлы реестра для Win9x/NT4 (REGEDIT4)"
+
+#: regedit.rc:207
+msgid "(Default)"
+msgstr "(По умолчанию)"
+
+#: regedit.rc:208
+msgid "(value not set)"
+msgstr "(значение не задано)"
+
+#: regedit.rc:209
+msgid "(cannot display value)"
+msgstr "(невозможно отобразить)"
+
+#: regedit.rc:210
+msgid "(unknown %d)"
+msgstr "(неизвестно %d)"
+
+#: regedit.rc:166
+msgid "Quits the registry editor"
+msgstr "Выход из редактора реестра"
+
+#: regedit.rc:167
+msgid "Adds keys to the favorites list"
+msgstr "Добавить ключ в избранное"
+
+#: regedit.rc:168
+msgid "Removes keys from the favorites list"
+msgstr "Удалить ключ из избранного"
+
+#: regedit.rc:169
+msgid "Shows or hides the status bar"
+msgstr "Показать или скрыть строку состояния"
+
+#: regedit.rc:170
+msgid "Change position of split between two panes"
+msgstr "Изменить позицию разделителя между двумя панелями"
+
+#: regedit.rc:171
+msgid "Refreshes the window"
+msgstr "Обновляет окно"
+
+#: regedit.rc:172
+msgid "Deletes the selection"
+msgstr "Удаляет выделение"
+
+#: regedit.rc:173
+msgid "Renames the selection"
+msgstr "Переименовывает выделение"
+
+#: regedit.rc:174
+msgid "Copies the name of the selected key to the clipboard"
+msgstr "Копирует имя выделенного ключа в буфер обмена"
+
+#: regedit.rc:175
+msgid "Finds a text string in a key, value or data"
+msgstr "Ищет текстовую строку в ключе, значении или данных"
+
+#: regedit.rc:176
+msgid "Finds next occurrence of text specified in previous search"
+msgstr "Ищет следующее совпадение текста, заданного в предыдущем поиске"
+
+#: regedit.rc:146
+msgid "Modifies the value's data"
+msgstr "Изменяет значение параметра"
+
+#: regedit.rc:147
+msgid "Adds a new key"
+msgstr "Добавляет новый ключ"
+
+#: regedit.rc:148
+msgid "Adds a new string value"
+msgstr "Добавляет новое строковое значение"
+
+#: regedit.rc:149
+msgid "Adds a new binary value"
+msgstr "Добавляет новое бинарное значение"
+
+#: regedit.rc:150
+msgid "Adds a new double word value"
+msgstr "Добавляет новое DWORD-значение"
+
+#: regedit.rc:152
+msgid "Imports a text file into the registry"
+msgstr "Импортирует текстовой файл в реестр"
+
+#: regedit.rc:154
+msgid "Exports all or part of the registry to a text file"
+msgstr "Экспортирует весь реестр или его часть в текстовой файл"
+
+#: regedit.rc:156
+msgid "Connects to a remote computer's registry"
+msgstr "Подключается к реестру удалённого компьютера"
+
+#: regedit.rc:158
+msgid "Disconnects from a remote computer's registry"
+msgstr "Отключается от реестра удалённого компьютера"
+
+#: regedit.rc:159
+msgid "Prints all or part of the registry"
+msgstr "Печатает весь реестр или его часть"
+
+#: regedit.rc:161
+msgid "Displays program information, version number and copyright"
+msgstr "Отображает информацию о программе, номер версии и список авторов"
+
+#: regedit.rc:184
+msgid "Can't query value '%s'"
+msgstr "Невозможно запросить значение '%s'"
+
+#: regedit.rc:185
+msgid "Can't edit keys of this type (%u)"
+msgstr "Редактирование ключей типа (%u) не поддерживается"
+
+#: regedit.rc:186
+msgid "Value is too big (%u)"
+msgstr "Значение слишком велико (%u)"
+
+#: regedit.rc:187
+msgid "Confirm Value Delete"
+msgstr "Подтверждение"
+
+#: regedit.rc:188
+msgid "Are you sure you want to delete value '%s'?"
+msgstr "Удалить значение '%s'?"
+
+#: regedit.rc:192
+msgid "Search string '%s' not found"
+msgstr "Искомая строка '%s' не найдена"
+
+#: regedit.rc:189
+msgid "Are you sure you want to delete these values?"
+msgstr "Вы уверены что хотите удалить эти значения?"
+
+#: regedit.rc:190
+msgid "New Key #%d"
+msgstr "Новый ключ #%d"
+
+#: regedit.rc:191
+msgid "New Value #%d"
+msgstr "Новое значение #%d"
+
+#: regedit.rc:183
+msgid "Can't query key '%s'"
+msgstr "Невозможно запросить ключ '%s'"
+
+#: regedit.rc:151
+msgid "Adds a new multi string value"
+msgstr "Добавляет новое многостроковое значение"
+
+#: regedit.rc:177
+msgid "Exports selected branch of the registry to a text file"
+msgstr "Экспортирует выделенную ветку реестра в текстовый файл"
 
 #: start.rc:45
 msgid ""
@@ -6964,10 +7264,6 @@ msgstr "Только &дерево"
 msgid "Directory &Only"
 msgstr "Только &папка"
 
-#: winefile.rc:81
-msgid "Sp&lit"
-msgstr "Раз&бить"
-
 #: winefile.rc:83
 msgid "&Name"
 msgstr "И&мя"
@@ -7051,10 +7347,6 @@ msgstr "Расположить &автоматически"
 #: winefile.rc:126
 msgid "Arrange &Symbols"
 msgstr "&Расположить"
-
-#: winefile.rc:131
-msgid "&Help Topics\tF1"
-msgstr "&Содержание\tF1"
 
 #: winefile.rc:132
 msgid "Help &Search...\tF1"

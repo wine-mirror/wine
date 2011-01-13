@@ -41,7 +41,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Nie określone"
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 winefile.rc:160
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:160
 msgid "Name"
 msgstr "Nazwa"
 
@@ -62,7 +62,7 @@ msgid "Programs (*.exe)"
 msgstr "Programy (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
-#: oleview.rc:101 progman.rc:84 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:84 regedit.rc:201 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Wszystkie pliki (*.*)"
 
@@ -2864,9 +2864,14 @@ msgstr "&u&b&d"
 msgid "&File"
 msgstr "&Plik"
 
-#: shdocvw.rc:27
+#: shdocvw.rc:27 regedit.rc:47 regedit.rc:98
+#, fuzzy
 msgid "&New"
-msgstr "&Nowe"
+msgstr ""
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"&Nowe\n"
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"&Nowy"
 
 #: shdocvw.rc:29 winefile.rc:118
 msgid "&Window"
@@ -2920,7 +2925,7 @@ msgstr ""
 "&Zamknij..."
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+#: regedit.rc:65 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
 msgid "&View"
 msgstr "&Widok"
 
@@ -2936,16 +2941,16 @@ msgstr "Pasek &standardowy"
 msgid "&Address bar"
 msgstr "&Pasek adresu"
 
-#: shdocvw.rc:50
+#: shdocvw.rc:50 regedit.rc:73
 msgid "&Favorites"
 msgstr "&Ulubione"
 
-#: shdocvw.rc:52
+#: shdocvw.rc:52 regedit.rc:75
 msgid "&Add to Favorites..."
 msgstr "&Dodaj do ulubionych..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
+#: regedit.rc:78 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
 #, fuzzy
 msgid "&Help"
 msgstr ""
@@ -3051,12 +3056,12 @@ msgstr "&Wytnij"
 msgid "Create &Link"
 msgstr "Utwórz &skrót"
 
-#: shell32.rc:91
+#: shell32.rc:91 regedit.rc:94
 msgid "&Rename"
 msgstr "&Zmień nazwę"
 
-#: shell32.rc:102 notepad.rc:36 oleview.rc:35 view.rc:31 winhlp32.rc:34
-#: wordpad.rc:37
+#: shell32.rc:102 notepad.rc:36 oleview.rc:35 regedit.rc:41 view.rc:31
+#: winhlp32.rc:34 wordpad.rc:37
 #, fuzzy
 msgid "E&xit"
 msgstr ""
@@ -3073,7 +3078,7 @@ msgstr "&O panelu sterowania..."
 msgid "Size"
 msgstr "Wielkość"
 
-#: shell32.rc:124
+#: shell32.rc:124 regedit.rc:125
 msgid "Type"
 msgstr "Typ"
 
@@ -3113,7 +3118,7 @@ msgstr "Data usunięcia"
 msgid "Desktop"
 msgstr "Pulpit"
 
-#: shell32.rc:142
+#: shell32.rc:142 regedit.rc:206
 msgid "My Computer"
 msgstr "Mój komputer"
 
@@ -3531,7 +3536,7 @@ msgstr "&Zamknij\tAlt-F4"
 msgid "&About Wine..."
 msgstr "&O programie Wine..."
 
-#: user32.rc:55 winefile.rc:148
+#: user32.rc:55 regedit.rc:182 winefile.rc:148
 msgid "Error"
 msgstr "Błąd"
 
@@ -5282,7 +5287,7 @@ msgstr "&Ustawienia strony..."
 msgid "P&rinter Setup..."
 msgstr "Ustawienia &drukarki..."
 
-#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
+#: notepad.rc:38 regedit.rc:43 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 #, fuzzy
 msgid "&Edit"
 msgstr ""
@@ -5312,9 +5317,14 @@ msgstr "&Kopiuj\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "Wkl&ej\tCtrl+V"
 
-#: notepad.rc:44 winefile.rc:30
+#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
+#, fuzzy
 msgid "&Delete\tDel"
-msgstr "&Usuń\tDel"
+msgstr ""
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"&Usuń\tDel\n"
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"U&suń\tDel"
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
@@ -5551,7 +5561,7 @@ msgstr ""
 "#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
 "Pasek &stanu"
 
-#: oleview.rc:67 winefile.rc:127
+#: oleview.rc:67 regedit.rc:71 winefile.rc:127
 msgid "&Refresh\tF5"
 msgstr "&Odśwież\tF5"
 
@@ -5965,6 +5975,311 @@ msgstr "Błąd: Nie można dodać kluczy do zdalnej maszyny\n"
 msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
 msgstr "Błąd: System nie mógł znaleźć podanej wartości lub klucza rejestru\n"
+
+#: regedit.rc:31
+msgid "&Registry"
+msgstr "&Rejestr"
+
+#: regedit.rc:33
+msgid "&Import Registry File..."
+msgstr "&Importuj rejestr..."
+
+#: regedit.rc:34
+msgid "&Export Registry File..."
+msgstr "&Eksportuj rejestr..."
+
+#: regedit.rc:36
+msgid "&Connect Network Registry..."
+msgstr "&Podłącz rejestr sieciowy..."
+
+#: regedit.rc:37
+msgid "&Disconnect Network Registry..."
+msgstr "&Odłącz rejestr sieciowy..."
+
+#: regedit.rc:39
+msgid "&Print\tCtrl+P"
+msgstr "&Drukuj\tCtrl+P"
+
+#: regedit.rc:45 regedit.rc:90
+msgid "&Modify"
+msgstr "&Modyfikuj"
+
+#: regedit.rc:49 regedit.rc:100
+msgid "&Key"
+msgstr "&Klucz"
+
+#: regedit.rc:51 regedit.rc:102
+msgid "&String Value"
+msgstr "&Dana tekstowa"
+
+#: regedit.rc:52 regedit.rc:103
+msgid "&Binary Value"
+msgstr "&Dana binarna"
+
+#: regedit.rc:53 regedit.rc:104
+msgid "&DWORD Value"
+msgstr "&Dana liczbowa (DWORD)"
+
+#: regedit.rc:54 regedit.rc:105
+msgid "&Multi String Value"
+msgstr "&Dana wielotekstowa (MULTISZ)"
+
+#: regedit.rc:58 regedit.rc:109
+msgid "&Rename\tF2"
+msgstr "Z&mień nazwę\tF2"
+
+#: regedit.rc:60 regedit.rc:112
+msgid "&Copy Key Name"
+msgstr "&Kopiuj nazwę klucza"
+
+#: regedit.rc:62 regedit.rc:114
+msgid "&Find\tCtrl+F"
+msgstr "&Znajdź...\tCtrl+F"
+
+#: regedit.rc:63
+msgid "Find Ne&xt\tF3"
+msgstr "Zn&ajdź następny\tF3"
+
+#: regedit.rc:67
+msgid "Status &Bar"
+msgstr "&Pasek stanu"
+
+#: regedit.rc:69 winefile.rc:81
+#, fuzzy
+msgid "Sp&lit"
+msgstr ""
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"&Połącz\n"
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"Po&dziel"
+
+#: regedit.rc:76
+msgid "&Remove Favorite..."
+msgstr "&Usuń ulubiony..."
+
+#: regedit.rc:80 winefile.rc:131
+#, fuzzy
+msgid "&Help Topics\tF1"
+msgstr ""
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"&Tematu pomocy\tF1\n"
+"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
+"&Tematy Pomocy\tF1"
+
+#: regedit.rc:82
+msgid "&About Registry Editor"
+msgstr "Edytor rejestru - i&nformacje"
+
+#: regedit.rc:91
+msgid "Modify Binary Data"
+msgstr "Modyfikuj dane binarne"
+
+#: regedit.rc:111
+msgid "&Export..."
+msgstr "&Eksportuj..."
+
+#: regedit.rc:136
+msgid "Contains commands for working with the whole registry"
+msgstr "Zawiera polecenia operujące na całym rejestrze"
+
+#: regedit.rc:137
+msgid "Contains commands for editing values or keys"
+msgstr "Zawiera polecenia dotyczące edycji kluczy i danych"
+
+#: regedit.rc:138
+msgid "Contains commands for customising the registry window"
+msgstr "Zawiera polecenia dotyczące wyglądu programu"
+
+#: regedit.rc:139
+msgid "Contains commands for accessing frequently used keys"
+msgstr "Zawiera polecenia dotyczące skrótów do kluczy rejestru"
+
+#: regedit.rc:140
+msgid ""
+"Contains commands for displaying help and information about registry editor"
+msgstr "Zawiera polecenia wyświetlające informacje o programie"
+
+#: regedit.rc:141
+msgid "Contains commands for creating new keys or values"
+msgstr "Zawiera polecenia tworzące nowe klucze i dane"
+
+#: regedit.rc:126
+msgid "Data"
+msgstr "Wartość"
+
+#: regedit.rc:131
+msgid "Registry Editor"
+msgstr "Edytor rejestru"
+
+#: regedit.rc:197
+msgid "Import Registry File"
+msgstr "Importuj plik rejestrów"
+
+#: regedit.rc:198
+msgid "Export Registry File"
+msgstr "Eksportuj plik rejestrów"
+
+#: regedit.rc:199
+#, fuzzy
+msgid "Registry files (*.reg)"
+msgstr "Pliki rejestrów (*.reg)"
+
+#: regedit.rc:200
+#, fuzzy
+msgid "Win9x/NT4 Registry files (REGEDIT4)"
+msgstr "Pliki rejestrów Win9x/NT4 (REGEDIT4)"
+
+#: regedit.rc:207
+msgid "(Default)"
+msgstr "(Domyślna)"
+
+#: regedit.rc:208
+msgid "(value not set)"
+msgstr "(wartość nie ustalona)"
+
+#: regedit.rc:209
+msgid "(cannot display value)"
+msgstr "(nie mogę wyświetlić wartości)"
+
+#: regedit.rc:210
+msgid "(unknown %d)"
+msgstr "(nieznany: %d)"
+
+#: regedit.rc:166
+msgid "Quits the registry editor"
+msgstr "Kończy działanie edytora rejestru"
+
+#: regedit.rc:167
+msgid "Adds keys to the favorites list"
+msgstr "Dodaje klucze do listy ulubionych"
+
+#: regedit.rc:168
+msgid "Removes keys from the favorites list"
+msgstr "Usuwa klucze z listy ulubionych"
+
+#: regedit.rc:169
+msgid "Shows or hides the status bar"
+msgstr "Wyświetla lub ukrywa pasek stanu"
+
+#: regedit.rc:170
+msgid "Change position of split between two panes"
+msgstr "Zmienia proporcje szerokości paneli"
+
+#: regedit.rc:171
+msgid "Refreshes the window"
+msgstr "Odświeża zawartość okien"
+
+#: regedit.rc:172
+msgid "Deletes the selection"
+msgstr "Kasuje zaznaczony obiekt"
+
+#: regedit.rc:173
+msgid "Renames the selection"
+msgstr "Zmienia nazwę zaznaczonego obiektu"
+
+#: regedit.rc:174
+msgid "Copies the name of the selected key to the clipboard"
+msgstr "Kopiuje nazwę zaznaczonego klucza do schowka"
+
+#: regedit.rc:175
+msgid "Finds a text string in a key, value or data"
+msgstr "Znajduje ciąg znaków w kluczu lub danej"
+
+#: regedit.rc:176
+msgid "Finds next occurrence of text specified in previous search"
+msgstr "Znajduje następne wystąpienie ostatnio szukanego ciągu"
+
+#: regedit.rc:146
+msgid "Modifies the value's data"
+msgstr "Pozwala zmodyfikować wartość danej"
+
+#: regedit.rc:147
+msgid "Adds a new key"
+msgstr "Dodaje nowy klucz"
+
+#: regedit.rc:148
+msgid "Adds a new string value"
+msgstr "Dodaje nową daną tekstową"
+
+#: regedit.rc:149
+msgid "Adds a new binary value"
+msgstr "Dodaje nową daną binarną"
+
+#: regedit.rc:150
+msgid "Adds a new double word value"
+msgstr "Dodaje nową daną liczbową"
+
+#: regedit.rc:152
+msgid "Imports a text file into the registry"
+msgstr "Importuje plik tekstowy do rejestru"
+
+#: regedit.rc:154
+msgid "Exports all or part of the registry to a text file"
+msgstr "Eksportuje część lub całość rejestru do pliku tekstowego"
+
+#: regedit.rc:156
+msgid "Connects to a remote computer's registry"
+msgstr "Łączy się do rejestru innego komputera"
+
+#: regedit.rc:158
+msgid "Disconnects from a remote computer's registry"
+msgstr "Odłącza się od rejestru innego komputera"
+
+#: regedit.rc:159
+msgid "Prints all or part of the registry"
+msgstr "Drukuje całość lub część rejestru"
+
+#: regedit.rc:161
+msgid "Displays program information, version number and copyright"
+msgstr "Wyświetla informacje o programie, numerze wersji i prawach autorskich"
+
+#: regedit.rc:184
+msgid "Can't query value '%s'"
+msgstr "Nie udało się przeczytać danej '%s'"
+
+#: regedit.rc:185
+msgid "Can't edit keys of this type (%u)"
+msgstr "Nie da się modyfikować kluczy tego typu (%u)"
+
+#: regedit.rc:186
+msgid "Value is too big (%u)"
+msgstr "Wartość jest zbyt duża (%u)"
+
+#: regedit.rc:187
+msgid "Confirm Value Delete"
+msgstr "Potwierdzenie kasowania"
+
+#: regedit.rc:188
+msgid "Are you sure you want to delete value '%s'?"
+msgstr "Jesteś pewien, że chcesz usunąć daną '%s'?"
+
+#: regedit.rc:192
+msgid "Search string '%s' not found"
+msgstr "Nie udało się wyszukać ciągu '%s'"
+
+#: regedit.rc:189
+msgid "Are you sure you want to delete these values?"
+msgstr "Czy jesteś pewien, że chcesz usunąć te wartości?"
+
+#: regedit.rc:190
+msgid "New Key #%d"
+msgstr "Nowy klucz #%d"
+
+#: regedit.rc:191
+msgid "New Value #%d"
+msgstr "Nowa dana #%d"
+
+#: regedit.rc:183
+msgid "Can't query key '%s'"
+msgstr "Nie udało się przeczytać klucza '%s'"
+
+#: regedit.rc:151
+msgid "Adds a new multi string value"
+msgstr "Dodaj nową daną wielotekstową (MULTISZ)"
+
+#: regedit.rc:177
+msgid "Exports selected branch of the registry to a text file"
+msgstr "Eksportuje zaznaczoną gałąź rejestru do pliku tekstowego"
 
 #: start.rc:45
 msgid ""
@@ -6957,10 +7272,6 @@ msgstr "D&rzewo"
 msgid "Directory &Only"
 msgstr "&Katalogi"
 
-#: winefile.rc:81
-msgid "Sp&lit"
-msgstr "&Połącz"
-
 #: winefile.rc:83
 msgid "&Name"
 msgstr "&Nazwa"
@@ -7044,10 +7355,6 @@ msgstr "Rozmieść automatycznie"
 #: winefile.rc:126
 msgid "Arrange &Symbols"
 msgstr "Rozmieść &symbole"
-
-#: winefile.rc:131
-msgid "&Help Topics\tF1"
-msgstr "&Tematu pomocy\tF1"
 
 #: winefile.rc:132
 msgid "Help &Search...\tF1"

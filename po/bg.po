@@ -42,7 +42,7 @@ msgstr ""
 msgid "Not specified"
 msgstr ""
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 winefile.rc:160
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:160
 msgid "Name"
 msgstr "Име"
 
@@ -63,7 +63,7 @@ msgid "Programs (*.exe)"
 msgstr ""
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
-#: oleview.rc:101 progman.rc:84 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:84 regedit.rc:201 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Всички файлове (*.*)"
 
@@ -2745,9 +2745,9 @@ msgstr ""
 msgid "&File"
 msgstr "&Файл"
 
-#: shdocvw.rc:27
+#: shdocvw.rc:27 regedit.rc:47 regedit.rc:98
 msgid "&New"
-msgstr ""
+msgstr "&Нов"
 
 #: shdocvw.rc:29 winefile.rc:118
 msgid "&Window"
@@ -2791,7 +2791,7 @@ msgid "&Close"
 msgstr ""
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+#: regedit.rc:65 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
 msgid "&View"
 msgstr "&Изглед"
 
@@ -2807,18 +2807,16 @@ msgstr ""
 msgid "&Address bar"
 msgstr ""
 
-#: shdocvw.rc:50
-#, fuzzy
+#: shdocvw.rc:50 regedit.rc:73
 msgid "&Favorites"
-msgstr "Добави към &отметките"
+msgstr "&Отметки"
 
-#: shdocvw.rc:52
-#, fuzzy
+#: shdocvw.rc:52 regedit.rc:75
 msgid "&Add to Favorites..."
-msgstr "Добави към от&метките..."
+msgstr "&Добави към отметките"
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
+#: regedit.rc:78 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
 msgid "&Help"
 msgstr "&Помощ"
 
@@ -2910,14 +2908,19 @@ msgstr "&Изрежи"
 msgid "Create &Link"
 msgstr "Създай &връзка"
 
-#: shell32.rc:91
+#: shell32.rc:91 regedit.rc:94
 msgid "&Rename"
 msgstr "&Преименувай"
 
-#: shell32.rc:102 notepad.rc:36 oleview.rc:35 view.rc:31 winhlp32.rc:34
-#: wordpad.rc:37
+#: shell32.rc:102 notepad.rc:36 oleview.rc:35 regedit.rc:41 view.rc:31
+#: winhlp32.rc:34 wordpad.rc:37
+#, fuzzy
 msgid "E&xit"
-msgstr "&Изход"
+msgstr ""
+"#-#-#-#-#  bg.po (Wine)  #-#-#-#-#\n"
+"&Изход\n"
+"#-#-#-#-#  bg.po (Wine)  #-#-#-#-#\n"
+"Из&ход"
 
 #: shell32.rc:115
 msgid "&About Control Panel..."
@@ -2927,7 +2930,7 @@ msgstr "&About Control Panel..."
 msgid "Size"
 msgstr "Размер"
 
-#: shell32.rc:124
+#: shell32.rc:124 regedit.rc:125
 msgid "Type"
 msgstr "Тип"
 
@@ -2967,7 +2970,7 @@ msgstr "Date deleted"
 msgid "Desktop"
 msgstr "Работен плот"
 
-#: shell32.rc:142
+#: shell32.rc:142 regedit.rc:206
 msgid "My Computer"
 msgstr "Моят компютър"
 
@@ -3369,7 +3372,7 @@ msgstr "&Затвори\tAlt-F4"
 msgid "&About Wine..."
 msgstr "&Относно Wine..."
 
-#: user32.rc:55 winefile.rc:148
+#: user32.rc:55 regedit.rc:182 winefile.rc:148
 msgid "Error"
 msgstr "Грешка"
 
@@ -4822,7 +4825,7 @@ msgstr "Наст&ройки на страницата..."
 msgid "P&rinter Setup..."
 msgstr "Настро&йки на печатането..."
 
-#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
+#: notepad.rc:38 regedit.rc:43 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 msgid "&Edit"
 msgstr "&Редактиране"
 
@@ -4842,9 +4845,14 @@ msgstr "&Копирай\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "&Вмъкни\tCtrl+V"
 
-#: notepad.rc:44 winefile.rc:30
+#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
+#, fuzzy
 msgid "&Delete\tDel"
-msgstr "Из&трий\tDel"
+msgstr ""
+"#-#-#-#-#  bg.po (Wine)  #-#-#-#-#\n"
+"Из&трий\tDel\n"
+"#-#-#-#-#  bg.po (Wine)  #-#-#-#-#\n"
+"&Изтрий\tDel"
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
@@ -5076,10 +5084,9 @@ msgstr ""
 msgid "&Status Bar"
 msgstr ""
 
-#: oleview.rc:67 winefile.rc:127
-#, fuzzy
+#: oleview.rc:67 regedit.rc:71 winefile.rc:127
 msgid "&Refresh\tF5"
-msgstr "Опр&есни"
+msgstr "&Обнови\tF5"
 
 #: oleview.rc:71
 #, fuzzy
@@ -5478,6 +5485,310 @@ msgstr ""
 msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
 msgstr ""
+
+#: regedit.rc:31
+msgid "&Registry"
+msgstr "&Регистър"
+
+#: regedit.rc:33
+msgid "&Import Registry File..."
+msgstr "&Вмъкни файл в регистъра..."
+
+#: regedit.rc:34
+msgid "&Export Registry File..."
+msgstr "&Изнеси файл от регистъра..."
+
+#: regedit.rc:36
+msgid "&Connect Network Registry..."
+msgstr "&Свържи се с мрежов регистър..."
+
+#: regedit.rc:37
+msgid "&Disconnect Network Registry..."
+msgstr "Из&ключи мрежов регистър..."
+
+#: regedit.rc:39
+msgid "&Print\tCtrl+P"
+msgstr "&Печат\tCtrl+P"
+
+#: regedit.rc:45 regedit.rc:90
+msgid "&Modify"
+msgstr "&Промени"
+
+#: regedit.rc:49 regedit.rc:100
+msgid "&Key"
+msgstr "&Ключ"
+
+#: regedit.rc:51 regedit.rc:102
+msgid "&String Value"
+msgstr "&Текстова стойност"
+
+#: regedit.rc:52 regedit.rc:103
+msgid "&Binary Value"
+msgstr "&Двоична стойност"
+
+#: regedit.rc:53 regedit.rc:104
+msgid "&DWORD Value"
+msgstr "&DWORD стойност"
+
+#: regedit.rc:54 regedit.rc:105
+msgid "&Multi String Value"
+msgstr "&Multi String Value"
+
+#: regedit.rc:58 regedit.rc:109
+msgid "&Rename\tF2"
+msgstr "Преи&менувай\tF2"
+
+#: regedit.rc:60 regedit.rc:112
+msgid "&Copy Key Name"
+msgstr "&Копирай името на ключа"
+
+#: regedit.rc:62 regedit.rc:114
+msgid "&Find\tCtrl+F"
+msgstr "&Търси\tCtrl+F"
+
+#: regedit.rc:63
+msgid "Find Ne&xt\tF3"
+msgstr "Намери &следващ\tF3"
+
+#: regedit.rc:67
+msgid "Status &Bar"
+msgstr "Лента на &състоянието"
+
+#: regedit.rc:69 winefile.rc:81
+msgid "Sp&lit"
+msgstr "&Разделител"
+
+#: regedit.rc:76
+msgid "&Remove Favorite..."
+msgstr "&Премахни отметка"
+
+#: regedit.rc:80 winefile.rc:131
+msgid "&Help Topics\tF1"
+msgstr "&Помощни теми\tF1"
+
+#: regedit.rc:82
+msgid "&About Registry Editor"
+msgstr "&Относно редактора на системния регистър"
+
+#: regedit.rc:91
+msgid "Modify Binary Data"
+msgstr "Промени двоичните данни"
+
+#: regedit.rc:111
+msgid "&Export..."
+msgstr "&Export..."
+
+#: regedit.rc:136
+msgid "Contains commands for working with the whole registry"
+msgstr "Съдържа команди за управление на целия регистър"
+
+#: regedit.rc:137
+msgid "Contains commands for editing values or keys"
+msgstr "Съдържа команди за редактиране на стойности или ключове"
+
+#: regedit.rc:138
+msgid "Contains commands for customising the registry window"
+msgstr "Съдържа команди за персонализиране на външния вид на редактора"
+
+#: regedit.rc:139
+msgid "Contains commands for accessing frequently used keys"
+msgstr "Съдържа команди за достъп до често използвани ключове"
+
+#: regedit.rc:140
+msgid ""
+"Contains commands for displaying help and information about registry editor"
+msgstr "Съдържа команди за извикване на помощ за редактора на регистъра"
+
+#: regedit.rc:141
+msgid "Contains commands for creating new keys or values"
+msgstr "Съдържа команди за създаване на нови стойности или ключове"
+
+#: regedit.rc:126
+msgid "Data"
+msgstr "Данни"
+
+#: regedit.rc:131
+msgid "Registry Editor"
+msgstr "Редактор на системния регистър"
+
+#: regedit.rc:197
+#, fuzzy
+msgid "Import Registry File"
+msgstr "&Вмъкни файл в регистъра..."
+
+#: regedit.rc:198
+#, fuzzy
+msgid "Export Registry File"
+msgstr "&Изнеси файл от регистъра..."
+
+#: regedit.rc:199
+#, fuzzy
+msgid "Registry files (*.reg)"
+msgstr "&Вмъкни файл в регистъра..."
+
+#: regedit.rc:200
+msgid "Win9x/NT4 Registry files (REGEDIT4)"
+msgstr ""
+
+#: regedit.rc:207
+#, fuzzy
+msgid "(Default)"
+msgstr "Default"
+
+#: regedit.rc:208
+msgid "(value not set)"
+msgstr ""
+
+#: regedit.rc:209
+msgid "(cannot display value)"
+msgstr ""
+
+#: regedit.rc:210
+msgid "(unknown %d)"
+msgstr ""
+
+#: regedit.rc:166
+msgid "Quits the registry editor"
+msgstr "Излиза от редактора на системния регистър"
+
+#: regedit.rc:167
+msgid "Adds keys to the favorites list"
+msgstr "Добавя ключове към списъка с отметките..."
+
+#: regedit.rc:168
+msgid "Removes keys from the favorites list"
+msgstr "Премахва ключове от списъка с отметките..."
+
+#: regedit.rc:169
+msgid "Shows or hides the status bar"
+msgstr "Показва или скрива лентата на състоянието"
+
+#: regedit.rc:170
+msgid "Change position of split between two panes"
+msgstr ""
+"Променя местоположението на разделителя между двете половини на редактора"
+
+#: regedit.rc:171
+msgid "Refreshes the window"
+msgstr "Обновява съдържанието на прозореца"
+
+#: regedit.rc:172
+msgid "Deletes the selection"
+msgstr "Изтрива избраното"
+
+#: regedit.rc:173
+msgid "Renames the selection"
+msgstr "Преименува избраното"
+
+#: regedit.rc:174
+msgid "Copies the name of the selected key to the clipboard"
+msgstr "Копира името на избрания ключ в системния буфер"
+
+#: regedit.rc:175
+msgid "Finds a text string in a key, value or data"
+msgstr "Търси за текстов низ в ключовете, стойностите и данните"
+
+#: regedit.rc:176
+msgid "Finds next occurrence of text specified in previous search"
+msgstr "Търси следващото място, на което се среща текста от предишното търсене"
+
+#: regedit.rc:146
+msgid "Modifies the value's data"
+msgstr "Променя данните в стойността"
+
+#: regedit.rc:147
+msgid "Adds a new key"
+msgstr "Добавя нов ключ"
+
+#: regedit.rc:148
+msgid "Adds a new string value"
+msgstr "Добавя нова стойност от тип символен низ"
+
+#: regedit.rc:149
+msgid "Adds a new binary value"
+msgstr "Добавя нова двоична стойност"
+
+#: regedit.rc:150
+msgid "Adds a new double word value"
+msgstr "Добавя нова DWORD стойност"
+
+#: regedit.rc:152
+msgid "Imports a text file into the registry"
+msgstr "Вмъква текстов файл в системния регистър"
+
+#: regedit.rc:154
+msgid "Exports all or part of the registry to a text file"
+msgstr ""
+"Записва цялото или част от съдържанието на системния регистър във текстов "
+"файл"
+
+#: regedit.rc:156
+msgid "Connects to a remote computer's registry"
+msgstr "Свързва се със системния регистър на друг компютър"
+
+#: regedit.rc:158
+msgid "Disconnects from a remote computer's registry"
+msgstr "Прекратява връзката със системния регистър на друг компютър"
+
+#: regedit.rc:159
+msgid "Prints all or part of the registry"
+msgstr "Разпечатва целия или част от системния регистър"
+
+#: regedit.rc:161
+msgid "Displays program information, version number and copyright"
+msgstr "Показва информация за програма, версията и авторските права"
+
+#: regedit.rc:184
+msgid "Can't query value '%s'"
+msgstr "Заявката за стойност '%s' неуспешна"
+
+#: regedit.rc:185
+msgid "Can't edit keys of this type (%u)"
+msgstr "Не може да редактирате ключове от този тип (%u)"
+
+#: regedit.rc:186
+msgid "Value is too big (%u)"
+msgstr "Стойността е прекалено голяма (%u)"
+
+#: regedit.rc:187
+msgid "Confirm Value Delete"
+msgstr "Потвърдете изтриването на стойността"
+
+#: regedit.rc:188
+msgid "Are you sure you want to delete value '%s'?"
+msgstr "Наистина ли искате да изтриете стойността '%s'?"
+
+#: regedit.rc:192
+msgid "Search string '%s' not found"
+msgstr "Search string '%s' not found"
+
+#: regedit.rc:189
+msgid "Are you sure you want to delete these values?"
+msgstr "Are you sure you want to delete these values?"
+
+#: regedit.rc:190
+msgid "New Key #%d"
+msgstr "Нов ключ #%d"
+
+#: regedit.rc:191
+msgid "New Value #%d"
+msgstr "Нова стойност #%d"
+
+#: regedit.rc:183
+msgid "Can't query key '%s'"
+msgstr "Заявката за ключ '%s' неуспешна"
+
+#: regedit.rc:151
+#, fuzzy
+msgid "Adds a new multi string value"
+msgstr "Добавя нова стойност от тип символен низ"
+
+#: regedit.rc:177
+#, fuzzy
+msgid "Exports selected branch of the registry to a text file"
+msgstr ""
+"Записва цялото или част от съдържанието на системния регистър във текстов "
+"файл"
 
 #: start.rc:45
 msgid ""
@@ -6415,10 +6726,6 @@ msgstr ""
 msgid "Directory &Only"
 msgstr ""
 
-#: winefile.rc:81
-msgid "Sp&lit"
-msgstr ""
-
 #: winefile.rc:83
 msgid "&Name"
 msgstr ""
@@ -6504,10 +6811,6 @@ msgstr ""
 
 #: winefile.rc:126
 msgid "Arrange &Symbols"
-msgstr ""
-
-#: winefile.rc:131
-msgid "&Help Topics\tF1"
 msgstr ""
 
 #: winefile.rc:132

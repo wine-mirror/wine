@@ -42,9 +42,14 @@ msgstr ""
 msgid "Not specified"
 msgstr "Nebyl zadán žádný příkaz."
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 winefile.rc:160
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:160
+#, fuzzy
 msgid "Name"
-msgstr "Jméno"
+msgstr ""
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"Jméno\n"
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"Název"
 
 #: appwiz.rc:36
 msgid "Publisher"
@@ -67,7 +72,7 @@ msgid "Programs (*.exe)"
 msgstr "Programy"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
-#: oleview.rc:101 progman.rc:84 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:84 regedit.rc:201 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Všechny soubory (*.*)"
 
@@ -2769,10 +2774,9 @@ msgstr ""
 msgid "&File"
 msgstr "&Soubor"
 
-#: shdocvw.rc:27
-#, fuzzy
+#: shdocvw.rc:27 regedit.rc:47 regedit.rc:98
 msgid "&New"
-msgstr "&Nový..."
+msgstr "&Nový"
 
 #: shdocvw.rc:29 winefile.rc:118
 msgid "&Window"
@@ -2820,7 +2824,7 @@ msgid "&Close"
 msgstr ""
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+#: regedit.rc:65 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
 #, fuzzy
 msgid "&View"
 msgstr ""
@@ -2843,25 +2847,18 @@ msgstr "&Stavový řádek"
 msgid "&Address bar"
 msgstr ""
 
-#: shdocvw.rc:50
-#, fuzzy
+#: shdocvw.rc:50 regedit.rc:73
 msgid "&Favorites"
-msgstr "Oblí&bené"
+msgstr "&Oblíbené"
 
-#: shdocvw.rc:52
-#, fuzzy
+#: shdocvw.rc:52 regedit.rc:75
 msgid "&Add to Favorites..."
-msgstr "Oblí&bené"
+msgstr "Přid&at k oblíbeným..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
-#, fuzzy
+#: regedit.rc:78 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
 msgid "&Help"
-msgstr ""
-"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
-"&Nápověda\n"
-"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
-"&?"
+msgstr "&Nápověda"
 
 #: shdocvw.rc:57
 #, fuzzy
@@ -2951,12 +2948,12 @@ msgstr "Vyj&mout"
 msgid "Create &Link"
 msgstr "Vytvořit zástupc&e"
 
-#: shell32.rc:91
+#: shell32.rc:91 regedit.rc:94
 msgid "&Rename"
 msgstr "&Přejmenovat"
 
-#: shell32.rc:102 notepad.rc:36 oleview.rc:35 view.rc:31 winhlp32.rc:34
-#: wordpad.rc:37
+#: shell32.rc:102 notepad.rc:36 oleview.rc:35 regedit.rc:41 view.rc:31
+#: winhlp32.rc:34 wordpad.rc:37
 msgid "E&xit"
 msgstr "&Konec"
 
@@ -2968,7 +2965,7 @@ msgstr "&About Control Panel..."
 msgid "Size"
 msgstr "Velikost"
 
-#: shell32.rc:124
+#: shell32.rc:124 regedit.rc:125
 msgid "Type"
 msgstr "Typ"
 
@@ -3008,7 +3005,7 @@ msgstr "Date deleted"
 msgid "Desktop"
 msgstr "Plocha"
 
-#: shell32.rc:142
+#: shell32.rc:142 regedit.rc:206
 msgid "My Computer"
 msgstr "Tento počítač"
 
@@ -3436,7 +3433,7 @@ msgstr "&Zavři\tAlt-F4"
 msgid "&About Wine..."
 msgstr "&O programu Wine"
 
-#: user32.rc:55 winefile.rc:148
+#: user32.rc:55 regedit.rc:182 winefile.rc:148
 msgid "Error"
 msgstr "Chyba"
 
@@ -5149,7 +5146,7 @@ msgstr "Nas&tavení stránky..."
 msgid "P&rinter Setup..."
 msgstr "Nastavení tiská&rny..."
 
-#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
+#: notepad.rc:38 regedit.rc:43 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 #, fuzzy
 msgid "&Edit"
 msgstr ""
@@ -5174,7 +5171,7 @@ msgstr "&Kopírovat\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "&Vložit\tCtrl+V"
 
-#: notepad.rc:44 winefile.rc:30
+#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
 msgid "&Delete\tDel"
 msgstr "&Smazat\tDel"
 
@@ -5405,9 +5402,14 @@ msgstr "&Panel nástrojů"
 msgid "&Status Bar"
 msgstr "&Stavový řádek"
 
-#: oleview.rc:67 winefile.rc:127
+#: oleview.rc:67 regedit.rc:71 winefile.rc:127
+#, fuzzy
 msgid "&Refresh\tF5"
-msgstr "&Aktualizovat\tF5"
+msgstr ""
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"&Aktualizovat\tF5\n"
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"Přek&reslit\tF5"
 
 #: oleview.rc:71
 #, fuzzy
@@ -5830,6 +5832,315 @@ msgstr ""
 msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
 msgstr ""
+
+#: regedit.rc:31
+msgid "&Registry"
+msgstr "&Registr"
+
+#: regedit.rc:33
+msgid "&Import Registry File..."
+msgstr "&Importovat soubor registru..."
+
+#: regedit.rc:34
+msgid "&Export Registry File..."
+msgstr "&Exportovat soubor registru..."
+
+#: regedit.rc:36
+msgid "&Connect Network Registry..."
+msgstr "&Připojit registr v síti..."
+
+#: regedit.rc:37
+msgid "&Disconnect Network Registry..."
+msgstr "O&dpojit síťový registr..."
+
+#: regedit.rc:39
+msgid "&Print\tCtrl+P"
+msgstr "&Tisk\tCtrl+P"
+
+#: regedit.rc:45 regedit.rc:90
+msgid "&Modify"
+msgstr "Z&měnit"
+
+#: regedit.rc:49 regedit.rc:100
+msgid "&Key"
+msgstr "&Klíč"
+
+#: regedit.rc:51 regedit.rc:102
+msgid "&String Value"
+msgstr "Ř&etězcová položka"
+
+#: regedit.rc:52 regedit.rc:103
+msgid "&Binary Value"
+msgstr "&Binární položka"
+
+#: regedit.rc:53 regedit.rc:104
+msgid "&DWORD Value"
+msgstr "&DWORD položka"
+
+#: regedit.rc:54 regedit.rc:105
+msgid "&Multi String Value"
+msgstr "&Multi String Value"
+
+#: regedit.rc:58 regedit.rc:109
+msgid "&Rename\tF2"
+msgstr "Pře&jmenovat\tF2"
+
+#: regedit.rc:60 regedit.rc:112
+msgid "&Copy Key Name"
+msgstr "&Kopírovat název klíče"
+
+#: regedit.rc:62 regedit.rc:114
+msgid "&Find\tCtrl+F"
+msgstr "&Najít\tCtrl+F"
+
+#: regedit.rc:63
+msgid "Find Ne&xt\tF3"
+msgstr "Najít &další\tF3"
+
+#: regedit.rc:67
+msgid "Status &Bar"
+msgstr "P&anel Status"
+
+#: regedit.rc:69 winefile.rc:81
+#, fuzzy
+msgid "Sp&lit"
+msgstr ""
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"&Rozdělit\n"
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"Rozdě&lit"
+
+#: regedit.rc:76
+msgid "&Remove Favorite..."
+msgstr "Odeb&rat oblíbené..."
+
+#: regedit.rc:80 winefile.rc:131
+#, fuzzy
+msgid "&Help Topics\tF1"
+msgstr ""
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"&Témata nápovědy\tF1\n"
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"Obsa&h\tF1"
+
+#: regedit.rc:82
+msgid "&About Registry Editor"
+msgstr "&O aplikaci Registry Editor"
+
+#: regedit.rc:91
+msgid "Modify Binary Data"
+msgstr "Upravit binární data"
+
+#: regedit.rc:111
+msgid "&Export..."
+msgstr "&Export..."
+
+#: regedit.rc:136
+msgid "Contains commands for working with the whole registry"
+msgstr "Obsahuje příkazy pro práci se syrovým registrem"
+
+#: regedit.rc:137
+msgid "Contains commands for editing values or keys"
+msgstr "Obsahuje příkazy pro editaci klíčů a položek"
+
+#: regedit.rc:138
+msgid "Contains commands for customising the registry window"
+msgstr "Obsahuje příkazy pro úpravu vzhledu okna regeditu"
+
+#: regedit.rc:139
+msgid "Contains commands for accessing frequently used keys"
+msgstr "Obsahuje příkazy pro přístup k často užívaným klíčům"
+
+#: regedit.rc:140
+msgid ""
+"Contains commands for displaying help and information about registry editor"
+msgstr "Obsahuje příkazy pro zobrazení nápovědy a informacío editoru registru"
+
+#: regedit.rc:141
+msgid "Contains commands for creating new keys or values"
+msgstr "Obsahuje příkazy pro vytváření nových klíčů a položek"
+
+#: regedit.rc:126
+msgid "Data"
+msgstr "Obsah"
+
+#: regedit.rc:131
+msgid "Registry Editor"
+msgstr "Editor registru"
+
+#: regedit.rc:197
+#, fuzzy
+msgid "Import Registry File"
+msgstr "&Importovat soubor registru..."
+
+#: regedit.rc:198
+#, fuzzy
+msgid "Export Registry File"
+msgstr "&Exportovat soubor registru..."
+
+#: regedit.rc:199
+#, fuzzy
+msgid "Registry files (*.reg)"
+msgstr "&Importovat soubor registru..."
+
+#: regedit.rc:200
+msgid "Win9x/NT4 Registry files (REGEDIT4)"
+msgstr ""
+
+#: regedit.rc:207
+#, fuzzy
+msgid "(Default)"
+msgstr "Default"
+
+#: regedit.rc:208
+msgid "(value not set)"
+msgstr ""
+
+#: regedit.rc:209
+msgid "(cannot display value)"
+msgstr ""
+
+#: regedit.rc:210
+msgid "(unknown %d)"
+msgstr ""
+
+#: regedit.rc:166
+msgid "Quits the registry editor"
+msgstr "Ukončí regedit"
+
+#: regedit.rc:167
+msgid "Adds keys to the favorites list"
+msgstr "Přidá klíč k oblíbeným"
+
+#: regedit.rc:168
+msgid "Removes keys from the favorites list"
+msgstr "Odebere klíč z oblíbených"
+
+#: regedit.rc:169
+msgid "Shows or hides the status bar"
+msgstr "Ukáže nebo skryje status bar"
+
+#: regedit.rc:170
+msgid "Change position of split between two panes"
+msgstr "Change position of split between two panes"
+
+#: regedit.rc:171
+msgid "Refreshes the window"
+msgstr "Překreslí okno"
+
+#: regedit.rc:172
+msgid "Deletes the selection"
+msgstr "Smaže vybrané"
+
+#: regedit.rc:173
+msgid "Renames the selection"
+msgstr "Přejmenuje vybrané"
+
+#: regedit.rc:174
+msgid "Copies the name of the selected key to the clipboard"
+msgstr "Vloží název vybraného klíče do schránky"
+
+#: regedit.rc:175
+msgid "Finds a text string in a key, value or data"
+msgstr "Najde textový řetězec v klíči, položce nebo datech"
+
+#: regedit.rc:176
+msgid "Finds next occurrence of text specified in previous search"
+msgstr "Najde další výskyt textu"
+
+#: regedit.rc:146
+msgid "Modifies the value's data"
+msgstr "Změní data"
+
+#: regedit.rc:147
+msgid "Adds a new key"
+msgstr "Přidá nový klíč"
+
+#: regedit.rc:148
+msgid "Adds a new string value"
+msgstr "Přidá novou řetězcovou položku"
+
+#: regedit.rc:149
+msgid "Adds a new binary value"
+msgstr "Přidá novou binární položku"
+
+#: regedit.rc:150
+msgid "Adds a new double word value"
+msgstr "Přidá novou DWORD položku"
+
+#: regedit.rc:152
+msgid "Imports a text file into the registry"
+msgstr "Importuje textový soubor registru"
+
+#: regedit.rc:154
+msgid "Exports all or part of the registry to a text file"
+msgstr "Exportuje celý registr nebo jeho část do textového souboru"
+
+#: regedit.rc:156
+msgid "Connects to a remote computer's registry"
+msgstr "Připojí se k registru na jiném počítači"
+
+#: regedit.rc:158
+msgid "Disconnects from a remote computer's registry"
+msgstr "Odpojí se od vzdáleně připojeného registru"
+
+#: regedit.rc:159
+msgid "Prints all or part of the registry"
+msgstr "Vytiskne část nebo celý registr"
+
+#: regedit.rc:161
+msgid "Displays program information, version number and copyright"
+msgstr "Zobrazí informace o programu, jeho verzi a copyright"
+
+#: regedit.rc:184
+msgid "Can't query value '%s'"
+msgstr "Nelze najít položku '%s'"
+
+#: regedit.rc:185
+msgid "Can't edit keys of this type (%u)"
+msgstr "Nemohu upravit klíče tohoto typu (%u)"
+
+#: regedit.rc:186
+msgid "Value is too big (%u)"
+msgstr "Hodnota je příliš velká (%u)"
+
+#: regedit.rc:187
+msgid "Confirm Value Delete"
+msgstr "Potvrďte smazání položky"
+
+#: regedit.rc:188
+msgid "Are you sure you want to delete value '%s'?"
+msgstr "Opravdu chcete smazat položku '%s'?"
+
+#: regedit.rc:192
+msgid "Search string '%s' not found"
+msgstr "Search string '%s' not found"
+
+#: regedit.rc:189
+msgid "Are you sure you want to delete these values?"
+msgstr "Are you sure you want to delete these values?"
+
+#: regedit.rc:190
+msgid "New Key #%d"
+msgstr "Nový klíč #%d"
+
+#: regedit.rc:191
+msgid "New Value #%d"
+msgstr "Nová položka #%d"
+
+#: regedit.rc:183
+msgid "Can't query key '%s'"
+msgstr "Nelze najít klíč '%s'"
+
+#: regedit.rc:151
+#, fuzzy
+msgid "Adds a new multi string value"
+msgstr "Přidá novou řetězcovou položku"
+
+#: regedit.rc:177
+#, fuzzy
+msgid "Exports selected branch of the registry to a text file"
+msgstr "Exportuje celý registr nebo jeho část do textového souboru"
 
 #: start.rc:45
 msgid ""
@@ -6793,10 +7104,6 @@ msgstr "&Jen strom"
 msgid "Directory &Only"
 msgstr "Jen &adresáře"
 
-#: winefile.rc:81
-msgid "Sp&lit"
-msgstr "&Rozdělit"
-
 #: winefile.rc:83
 msgid "&Name"
 msgstr "&Jméno"
@@ -6880,10 +7187,6 @@ msgstr "Zarovnat automaticky"
 #: winefile.rc:126
 msgid "Arrange &Symbols"
 msgstr "Zarovnat &symboly"
-
-#: winefile.rc:131
-msgid "&Help Topics\tF1"
-msgstr "&Témata nápovědy\tF1"
 
 #: winefile.rc:132
 msgid "Help &Search...\tF1"

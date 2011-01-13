@@ -37,7 +37,7 @@ msgstr "不能运行卸载程序 '%s'. 你想把这个卸载程序从注册表�
 msgid "Not specified"
 msgstr "没指定"
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 winefile.rc:160
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:160
 msgid "Name"
 msgstr "名称"
 
@@ -58,7 +58,7 @@ msgid "Programs (*.exe)"
 msgstr "程序 (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
-#: oleview.rc:101 progman.rc:84 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:84 regedit.rc:201 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "所有文件 (*.*)"
 
@@ -2752,10 +2752,9 @@ msgstr "&u&b&d"
 msgid "&File"
 msgstr "文件(&F)"
 
-#: shdocvw.rc:27
-#, fuzzy
+#: shdocvw.rc:27 regedit.rc:47 regedit.rc:98
 msgid "&New"
-msgstr "新建(&N)..."
+msgstr "新建(&N)"
 
 #: shdocvw.rc:29 winefile.rc:118
 msgid "&Window"
@@ -2798,7 +2797,7 @@ msgid "&Close"
 msgstr "关闭(&C)"
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+#: regedit.rc:65 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
 #, fuzzy
 msgid "&View"
 msgstr ""
@@ -2825,18 +2824,16 @@ msgstr "状态栏(&S)"
 msgid "&Address bar"
 msgstr ""
 
-#: shdocvw.rc:50
-#, fuzzy
+#: shdocvw.rc:50 regedit.rc:73
 msgid "&Favorites"
-msgstr "最爱(&I)"
+msgstr "收藏夹(&F)"
 
-#: shdocvw.rc:52
-#, fuzzy
+#: shdocvw.rc:52 regedit.rc:75
 msgid "&Add to Favorites..."
-msgstr "添加到我的最爱(&F)"
+msgstr "添加到收藏夹(&A)..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
+#: regedit.rc:78 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
 msgid "&Help"
 msgstr "帮助(&H)"
 
@@ -2943,12 +2940,12 @@ msgstr "剪切(&U)"
 msgid "Create &Link"
 msgstr "创建快捷方式(&L)"
 
-#: shell32.rc:91
+#: shell32.rc:91 regedit.rc:94
 msgid "&Rename"
 msgstr "改名(&R)"
 
-#: shell32.rc:102 notepad.rc:36 oleview.rc:35 view.rc:31 winhlp32.rc:34
-#: wordpad.rc:37
+#: shell32.rc:102 notepad.rc:36 oleview.rc:35 regedit.rc:41 view.rc:31
+#: winhlp32.rc:34 wordpad.rc:37
 #, fuzzy
 msgid "E&xit"
 msgstr ""
@@ -2965,7 +2962,7 @@ msgstr "关于控制面板(&A)..."
 msgid "Size"
 msgstr "大小"
 
-#: shell32.rc:124
+#: shell32.rc:124 regedit.rc:125
 msgid "Type"
 msgstr "类型"
 
@@ -3005,7 +3002,7 @@ msgstr "删除日期"
 msgid "Desktop"
 msgstr "桌面"
 
-#: shell32.rc:142
+#: shell32.rc:142 regedit.rc:206
 msgid "My Computer"
 msgstr "我的电脑"
 
@@ -3406,7 +3403,7 @@ msgstr "关闭(&N)\tAlt-F4"
 msgid "&About Wine..."
 msgstr "关于Wine (&A)..."
 
-#: user32.rc:55 winefile.rc:148
+#: user32.rc:55 regedit.rc:182 winefile.rc:148
 msgid "Error"
 msgstr "错误"
 
@@ -4867,7 +4864,7 @@ msgstr "页面设置(&T)..."
 msgid "P&rinter Setup..."
 msgstr "打印设置(&R)..."
 
-#: notepad.rc:38 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
+#: notepad.rc:38 regedit.rc:43 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 msgid "&Edit"
 msgstr "编辑(&E)"
 
@@ -4892,9 +4889,14 @@ msgstr "复制(&C)\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "粘贴(&P)\tCtrl+V"
 
-#: notepad.rc:44 winefile.rc:30
+#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
+#, fuzzy
 msgid "&Delete\tDel"
-msgstr "删除(&D)\tDel"
+msgstr ""
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"删除(&D)\tDel\n"
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"删除(&D)\tDEL"
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
@@ -5126,7 +5128,7 @@ msgstr ""
 msgid "&Status Bar"
 msgstr "状态栏(&S)"
 
-#: oleview.rc:67 winefile.rc:127
+#: oleview.rc:67 regedit.rc:71 winefile.rc:127
 msgid "&Refresh\tF5"
 msgstr "刷新(&R)\tF5"
 
@@ -5528,6 +5530,311 @@ msgstr ""
 msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
 msgstr ""
+
+#: regedit.rc:31
+msgid "&Registry"
+msgstr "注册表(&R)"
+
+#: regedit.rc:33
+msgid "&Import Registry File..."
+msgstr "导入注册表文件(&I)..."
+
+#: regedit.rc:34
+msgid "&Export Registry File..."
+msgstr "导出注册表文件(&E)..."
+
+#: regedit.rc:36
+msgid "&Connect Network Registry..."
+msgstr "连接网络注册表(&C)..."
+
+#: regedit.rc:37
+msgid "&Disconnect Network Registry..."
+msgstr "断开网络注册表(&D)..."
+
+#: regedit.rc:39
+msgid "&Print\tCtrl+P"
+msgstr "打印(&P)\tCtrl+P"
+
+#: regedit.rc:45 regedit.rc:90
+msgid "&Modify"
+msgstr "修改(&M)"
+
+#: regedit.rc:49 regedit.rc:100
+msgid "&Key"
+msgstr "键(&K)"
+
+#: regedit.rc:51 regedit.rc:102
+msgid "&String Value"
+msgstr "字符串值(&S)"
+
+#: regedit.rc:52 regedit.rc:103
+msgid "&Binary Value"
+msgstr "二进制值(&B)"
+
+#: regedit.rc:53 regedit.rc:104
+msgid "&DWORD Value"
+msgstr "整数值(&D)"
+
+#: regedit.rc:54 regedit.rc:105
+msgid "&Multi String Value"
+msgstr "多字符串值(&M)"
+
+#: regedit.rc:58 regedit.rc:109
+msgid "&Rename\tF2"
+msgstr "改名(&R)\tF2"
+
+#: regedit.rc:60 regedit.rc:112
+msgid "&Copy Key Name"
+msgstr "复制键名(&C)"
+
+#: regedit.rc:62 regedit.rc:114
+msgid "&Find\tCtrl+F"
+msgstr "查找(&F)\tCtrl+F"
+
+#: regedit.rc:63
+msgid "Find Ne&xt\tF3"
+msgstr "查找下一个(&X)\tF3"
+
+#: regedit.rc:67
+msgid "Status &Bar"
+msgstr "状态栏(&B)"
+
+#: regedit.rc:69 winefile.rc:81
+#, fuzzy
+msgid "Sp&lit"
+msgstr ""
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"分割(&L)\n"
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"调整分隔线(&L)"
+
+#: regedit.rc:76
+msgid "&Remove Favorite..."
+msgstr "删除收藏(&R)..."
+
+#: regedit.rc:80 winefile.rc:131
+#, fuzzy
+msgid "&Help Topics\tF1"
+msgstr ""
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"帮助主题(&H)\tF1\n"
+"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
+"帮助内容(&H)\tF1"
+
+#: regedit.rc:82
+msgid "&About Registry Editor"
+msgstr "关于注册表编辑器(&A)"
+
+#: regedit.rc:91
+msgid "Modify Binary Data"
+msgstr "修改二进制数据"
+
+#: regedit.rc:111
+msgid "&Export..."
+msgstr "导出(&E)..."
+
+#: regedit.rc:136
+msgid "Contains commands for working with the whole registry"
+msgstr "操作整个注册表的命令"
+
+#: regedit.rc:137
+msgid "Contains commands for editing values or keys"
+msgstr "编辑键和值的命令"
+
+#: regedit.rc:138
+msgid "Contains commands for customising the registry window"
+msgstr "操作窗口显示的命令"
+
+#: regedit.rc:139
+msgid "Contains commands for accessing frequently used keys"
+msgstr "用于记录常用键的全部命令"
+
+#: regedit.rc:140
+msgid ""
+"Contains commands for displaying help and information about registry editor"
+msgstr "注册表编辑器的帮助及关于信息"
+
+#: regedit.rc:141
+msgid "Contains commands for creating new keys or values"
+msgstr "创建新键或值的命令"
+
+#: regedit.rc:126
+msgid "Data"
+msgstr "数据"
+
+#: regedit.rc:131
+msgid "Registry Editor"
+msgstr "注册表编辑器"
+
+#: regedit.rc:197
+msgid "Import Registry File"
+msgstr "导入注册表文件"
+
+#: regedit.rc:198
+msgid "Export Registry File"
+msgstr "导出注册表文件"
+
+#: regedit.rc:199
+#, fuzzy
+msgid "Registry files (*.reg)"
+msgstr "注册表文件 (*.reg)"
+
+#: regedit.rc:200
+#, fuzzy
+msgid "Win9x/NT4 Registry files (REGEDIT4)"
+msgstr "Win9x/NT4 注册表文件 (REGEDIT4)"
+
+#: regedit.rc:207
+msgid "(Default)"
+msgstr "(默认)"
+
+#: regedit.rc:208
+msgid "(value not set)"
+msgstr "(没有设值)"
+
+#: regedit.rc:209
+msgid "(cannot display value)"
+msgstr "(不能显示值)"
+
+#: regedit.rc:210
+msgid "(unknown %d)"
+msgstr "(未知 %d)"
+
+#: regedit.rc:166
+msgid "Quits the registry editor"
+msgstr "退出注册表编辑器"
+
+#: regedit.rc:167
+msgid "Adds keys to the favorites list"
+msgstr "把键添加到收藏夹"
+
+#: regedit.rc:168
+msgid "Removes keys from the favorites list"
+msgstr "从收藏夹中删除键"
+
+#: regedit.rc:169
+msgid "Shows or hides the status bar"
+msgstr "显示或隐藏状态栏"
+
+#: regedit.rc:170
+msgid "Change position of split between two panes"
+msgstr "改变两个窗格之间的分隔线位置"
+
+#: regedit.rc:171
+msgid "Refreshes the window"
+msgstr "刷新窗口"
+
+#: regedit.rc:172
+msgid "Deletes the selection"
+msgstr "删除选定项"
+
+#: regedit.rc:173
+msgid "Renames the selection"
+msgstr "选定项更名"
+
+#: regedit.rc:174
+msgid "Copies the name of the selected key to the clipboard"
+msgstr "把键的名称复制到剪贴板"
+
+#: regedit.rc:175
+msgid "Finds a text string in a key, value or data"
+msgstr "在键、值或数据中找字符串"
+
+#: regedit.rc:176
+msgid "Finds next occurrence of text specified in previous search"
+msgstr "查找下一个刚找过的字符串"
+
+#: regedit.rc:146
+msgid "Modifies the value's data"
+msgstr "修改值的数据"
+
+#: regedit.rc:147
+msgid "Adds a new key"
+msgstr "添加新键"
+
+#: regedit.rc:148
+msgid "Adds a new string value"
+msgstr "添加新字符串值"
+
+#: regedit.rc:149
+msgid "Adds a new binary value"
+msgstr "添加新二进制值"
+
+#: regedit.rc:150
+msgid "Adds a new double word value"
+msgstr "添加新整数值"
+
+#: regedit.rc:152
+msgid "Imports a text file into the registry"
+msgstr "将文本文件导入注册表"
+
+#: regedit.rc:154
+msgid "Exports all or part of the registry to a text file"
+msgstr "将注册表导出为文本文件"
+
+#: regedit.rc:156
+msgid "Connects to a remote computer's registry"
+msgstr "连接到远程计算机的注册表"
+
+#: regedit.rc:158
+msgid "Disconnects from a remote computer's registry"
+msgstr "断开远程计算机的注册表"
+
+#: regedit.rc:159
+msgid "Prints all or part of the registry"
+msgstr "打印注册表的全部或部分"
+
+#: regedit.rc:161
+msgid "Displays program information, version number and copyright"
+msgstr "显示程序信息、版本号及版权"
+
+#: regedit.rc:184
+msgid "Can't query value '%s'"
+msgstr "不能查询值'%s'"
+
+#: regedit.rc:185
+msgid "Can't edit keys of this type (%u)"
+msgstr "不能编辑这类型的键 (%u)"
+
+#: regedit.rc:186
+msgid "Value is too big (%u)"
+msgstr "值太大 (%u)"
+
+#: regedit.rc:187
+msgid "Confirm Value Delete"
+msgstr "确认删除值"
+
+#: regedit.rc:188
+msgid "Are you sure you want to delete value '%s'?"
+msgstr "你确认要删除值 '%s' 吗?"
+
+#: regedit.rc:192
+msgid "Search string '%s' not found"
+msgstr "未找到字符串 '%s'"
+
+#: regedit.rc:189
+msgid "Are you sure you want to delete these values?"
+msgstr "你确认要删除这些值吗?"
+
+#: regedit.rc:190
+msgid "New Key #%d"
+msgstr "新键 #%d"
+
+#: regedit.rc:191
+msgid "New Value #%d"
+msgstr "新值 #%d"
+
+#: regedit.rc:183
+msgid "Can't query key '%s'"
+msgstr "不能查询键'%s'"
+
+#: regedit.rc:151
+msgid "Adds a new multi string value"
+msgstr "添加新多字符串值"
+
+#: regedit.rc:177
+msgid "Exports selected branch of the registry to a text file"
+msgstr "把选定的注册表分支导出为文本文件"
 
 #: start.rc:45
 msgid ""
@@ -6468,10 +6775,6 @@ msgstr "仅显示目录树(&E)"
 msgid "Directory &Only"
 msgstr "仅显示目录内容(&O)"
 
-#: winefile.rc:81
-msgid "Sp&lit"
-msgstr "分割(&L)"
-
 #: winefile.rc:83
 msgid "&Name"
 msgstr "文件名称(&N)"
@@ -6555,10 +6858,6 @@ msgstr "自动排列"
 #: winefile.rc:126
 msgid "Arrange &Symbols"
 msgstr "自动排列图标(&S)"
-
-#: winefile.rc:131
-msgid "&Help Topics\tF1"
-msgstr "帮助主题(&H)\tF1"
 
 #: winefile.rc:132
 msgid "Help &Search...\tF1"

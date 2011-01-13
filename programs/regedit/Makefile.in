@@ -43,7 +43,9 @@ RC_SRCS = \
 	Tr.rc \
 	Uk.rc \
 	Zh.rc \
-	rsrc.rc
+	regedit.rc
+
+PO_SRCS = regedit.rc
 
 MANPAGE = regedit.man
 
