@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-01-07 18:22+0300\n"
+"PO-Revision-Date: 2011-01-13 20:37+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@gmail.com>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -132,13 +132,8 @@ msgid "Separator"
 msgstr "Skirtukas"
 
 #: comctl32.rc:44 crypt32.rc:198 progman.rc:83
-#, fuzzy
 msgid "None"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Nėra\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Joks"
+msgstr "Nėra"
 
 #: comctl32.rc:28 wordpad.rc:169
 msgid "Close"
@@ -727,13 +722,8 @@ msgid "IP security IKE intermediate"
 msgstr "IP saugumo IKE tarpininkas"
 
 #: crypt32.rc:161 cryptui.rc:129
-#, fuzzy
 msgid "File Recovery"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Failo atkūrimas\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Failų atkūrimas"
+msgstr "Failų atkūrimas"
 
 #: crypt32.rc:162 cryptui.rc:134
 msgid "Root List Signer"
@@ -1655,13 +1645,8 @@ msgid "Back"
 msgstr "Atgal"
 
 #: hhctrl.rc:40 shdocvw.rc:67
-#, fuzzy
 msgid "Home"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Į pradžią\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Pradžia"
+msgstr "Į pradžią"
 
 #: hhctrl.rc:41
 msgid "Sync"
@@ -1852,13 +1837,8 @@ msgid "Array object expected"
 msgstr "Tikėtasi masyvo objekto"
 
 #: localspl.rc:28 localui.rc:28 winspool.rc:27
-#, fuzzy
 msgid "Local Port"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Vietinis prievadas\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Lokalus prievadas"
+msgstr "Vietinis prievadas"
 
 #: localspl.rc:29
 msgid "Local Monitor"
@@ -2415,13 +2395,8 @@ msgid "Type the path where the file is located, and then click OK."
 msgstr "Įveskite kelią iki failo, o tada spauskite Gerai."
 
 #: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
-#, fuzzy
 msgid "Default"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Numatytasis\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Numatyta"
+msgstr "Numatyta"
 
 #: shdoclc.rc:38 winhlp32.rc:101
 msgid "&Back"
@@ -2448,13 +2423,8 @@ msgid "Set as &Desktop Item"
 msgstr "Nustatyti da&rbalaukio elementu"
 
 #: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:49
-#, fuzzy
 msgid "Select &All"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Pažymėti &viską\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"&Pažymėti viską"
+msgstr "Pažymėti &viską"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
 #: shdoclc.rc:189 user32.rc:46 wineconsole.rc:30 wordpad.rc:103
@@ -2486,13 +2456,8 @@ msgid "&Refresh"
 msgstr "Atsiųsti iš &naujo"
 
 #: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
-#, fuzzy
 msgid "&Properties"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Savy&bės\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"&Savybės"
+msgstr "&Savybės"
 
 #: shdoclc.rc:62
 msgid "Image"
@@ -2573,13 +2538,8 @@ msgid "&Undo"
 msgstr "&Atšaukti"
 
 #: shdoclc.rc:95 shell32.rc:90 user32.rc:47
-#, fuzzy
 msgid "&Delete"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"&Šalinti\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Iš&valyti"
+msgstr "&Šalinti"
 
 #: shdoclc.rc:101
 msgid "Table"
@@ -2623,13 +2583,8 @@ msgid "1DSite Select"
 msgstr "1DPuslapio žymėjimas"
 
 #: shdoclc.rc:120 shell32.rc:61
-#, fuzzy
 msgid "Paste"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Į&dėti\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Įdėti"
+msgstr "Į&dėti"
 
 #: shdoclc.rc:122 winhlp32.rc:31
 msgid "&Print"
@@ -2978,13 +2933,8 @@ msgid "&Rename"
 msgstr "&Pervadinti"
 
 #: shell32.rc:102 notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
-#, fuzzy
 msgid "E&xit"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Iš&eiti\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"&Išeiti"
+msgstr "Iš&eiti"
 
 #: shell32.rc:115
 msgid "&About Control Panel..."
@@ -3003,13 +2953,8 @@ msgid "Modified"
 msgstr "Modifikuotas"
 
 #: shell32.rc:126 winefile.rc:167
-#, fuzzy
 msgid "Attributes"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Požymiai\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Atributai"
+msgstr "Požymiai"
 
 #: shell32.rc:128
 msgid "Size available"
@@ -3188,13 +3133,8 @@ msgid "Contacts"
 msgstr "Kontaktai"
 
 #: shell32.rc:216 winefile.rc:166
-#, fuzzy
 msgid "Links"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Saitai\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Nuorodos"
+msgstr "Saitai"
 
 #: shell32.rc:217
 msgid "Pictures\\Slide Shows"
@@ -3423,13 +3363,8 @@ msgid " sec"
 msgstr " sek"
 
 #: user32.rc:27 taskmgr.rc:139
-#, fuzzy
 msgid "&Restore"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"&Atkurti\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"A&tkurti"
+msgstr "&Atkurti"
 
 #: user32.rc:28
 msgid "&Move"
@@ -3444,13 +3379,8 @@ msgid "Mi&nimize"
 msgstr "Su&skleisti"
 
 #: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
-#, fuzzy
 msgid "Ma&ximize"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"&Išskleisti\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Pa&didinti"
+msgstr "Pa&didinti"
 
 #: user32.rc:33
 msgid "&Close\tAlt-F4"
@@ -3458,7 +3388,7 @@ msgstr "&Užverti\tAlt-F4"
 
 #: user32.rc:35
 msgid "&About Wine..."
-msgstr "&Apie Wine..."
+msgstr "Apie &Wine..."
 
 #: user32.rc:55 winefile.rc:148
 msgid "Error"
@@ -4360,13 +4290,8 @@ msgid "Digi&tal"
 msgstr "Skai&tmeninis"
 
 #: clock.rc:32 notepad.rc:50 winefile.rc:97 wordpad.rc:81
-#, fuzzy
 msgid "&Font..."
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"&Šriftas...\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Š&riftas..."
+msgstr "Š&riftas..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -4487,8 +4412,7 @@ msgid ""
 "The requirement to double the % sign when using FOR in a batch file does\n"
 "not exist in wine's cmd.\n"
 msgstr ""
-"FOR komanda yra naudojama įvykdyti komandą kiekvienam failų aibės "
-"elementui.\n"
+"FOR komanda yra naudojama įvykdyti komandą kiekvienam failų aibės elementui.\n"
 "\n"
 "Sintaksė: FOR %kintamasis IN (aibė) DO komanda\n"
 "\n"
@@ -5391,13 +5315,8 @@ msgid "O&pen\tEnter"
 msgstr "&Atverti\tEnter"
 
 #: progman.rc:32 winefile.rc:27
-#, fuzzy
 msgid "&Move...\tF7"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"&Perkelti...\tF7\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Pe&rkelti...\tF7"
+msgstr "Pe&rkelti...\tF7"
 
 #: progman.rc:33 winefile.rc:28
 msgid "&Copy...\tF8"
@@ -5428,22 +5347,12 @@ msgid "&Arrange automatically"
 msgstr "Išdėstyti &automatiškai"
 
 #: progman.rc:43 winefile.rc:107
-#, fuzzy
 msgid "&Minimize on run"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"&Suskleisti paleidžiant\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"&Suskleisti vykdant"
+msgstr "&Suskleisti paleidžiant"
 
 #: progman.rc:44 winefile.rc:108
-#, fuzzy
 msgid "&Save settings on exit"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Išsaugoti &nuostatas išeinant\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"&Išeinant išsaugoti nuostatas"
+msgstr "Išsaugoti &nuostatas išeinant"
 
 #: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
 msgid "&Windows"
@@ -5471,7 +5380,7 @@ msgstr "&Mokymo programa"
 
 #: progman.rc:59
 msgid "&About Wine"
-msgstr "&Apie Wine"
+msgstr "Apie &Wine"
 
 #: progman.rc:65
 msgid "Program Manager"
