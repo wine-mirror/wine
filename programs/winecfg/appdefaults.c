@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include "wine/unicode.h"
 #include "winecfg.h"
 #include "resource.h"
 
@@ -311,9 +312,10 @@ static BOOL list_contains_file(HWND listview, WCHAR *filename)
 
 static void on_add_app_click(HWND dialog)
 {
+  static const WCHAR filterW[] = {'%','s','%','c','*','.','e','x','e',';','*','.','e','x','e','.','s','o','%','c',0};
   WCHAR filetitle[MAX_PATH];
   WCHAR file[MAX_PATH];
-  WCHAR programsFilter[100];
+  WCHAR programsFilter[100], filter[MAX_PATH];
   WCHAR selectExecutableStr[100];
   static const WCHAR pathC[] = { 'c',':','\\',0 };
 
@@ -327,9 +329,10 @@ static void on_add_app_click(HWND dialog)
       sizeof(selectExecutableStr)/sizeof(selectExecutableStr[0]));
   LoadStringW (GetModuleHandle (NULL), IDS_EXECUTABLE_FILTER, programsFilter,
       sizeof(programsFilter)/sizeof(programsFilter[0]));
+  snprintfW( filter, MAX_PATH, filterW, programsFilter, 0, 0 );
 
   ofn.lpstrTitle = selectExecutableStr;
-  ofn.lpstrFilter = programsFilter;
+  ofn.lpstrFilter = filter;
   ofn.lpstrFileTitle = filetitle;
   ofn.lpstrFileTitle[0] = '\0';
   ofn.nMaxFileTitle = sizeof(filetitle)/sizeof(filetitle[0]);

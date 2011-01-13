@@ -249,7 +249,7 @@ BEGIN
     IDS_DLL_BUILTIN_NATIVE  "builtin, native"
     IDS_DLL_DISABLED        "無効"
     IDS_DEFAULT_SETTINGS    "既定の設定"
-    IDS_EXECUTABLE_FILTER   "Wine プログラム (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
+    IDS_EXECUTABLE_FILTER   "Wine プログラム (*.exe,*.exe.so)"
     IDS_USE_GLOBAL_SETTINGS "全体設定を使う"
     IDS_SELECT_EXECUTABLE   "実行可能ファイルを選択"
 END

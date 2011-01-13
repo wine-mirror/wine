@@ -247,7 +247,7 @@ BEGIN
     IDS_DLL_BUILTIN_NATIVE  "įtaisyta, sava"
     IDS_DLL_DISABLED        "išjungta"
     IDS_DEFAULT_SETTINGS    "Numatytosios nuostatos"
-    IDS_EXECUTABLE_FILTER   "Wine programos (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
+    IDS_EXECUTABLE_FILTER   "Wine programos (*.exe,*.exe.so)"
     IDS_USE_GLOBAL_SETTINGS "Naudoti globalias nuostatas"
     IDS_SELECT_EXECUTABLE   "Pasirinkite vykdomąjį failą"
 END

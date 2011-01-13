@@ -247,7 +247,7 @@ BEGIN
     IDS_DLL_BUILTIN_NATIVE  "builtin, native"
     IDS_DLL_DISABLED        "isključen"
     IDS_DEFAULT_SETTINGS    "Osnovno podešavanje"
-    IDS_EXECUTABLE_FILTER   "Wine programi (*.exe,*.exe.so)\\0*.exe;*.exe.so\\0"
+    IDS_EXECUTABLE_FILTER   "Wine programi (*.exe,*.exe.so)"
     IDS_USE_GLOBAL_SETTINGS "Koristi globalna podešavanja"
     IDS_SELECT_EXECUTABLE   "Izaberi izvršni fajl"
 END

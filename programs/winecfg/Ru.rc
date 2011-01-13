@@ -251,7 +251,7 @@ BEGIN
     IDS_DLL_BUILTIN_NATIVE      "встроенная, сторонняя"
     IDS_DLL_DISABLED            "отключена"
     IDS_DEFAULT_SETTINGS        "Установки по умолчанию"
-    IDS_EXECUTABLE_FILTER       "Программы Wine (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
+    IDS_EXECUTABLE_FILTER       "Программы Wine (*.exe,*.exe.so)"
     IDS_USE_GLOBAL_SETTINGS     "Использовать по умолчанию"
     IDS_SELECT_EXECUTABLE       "Выберите исполняемый файл"
 END

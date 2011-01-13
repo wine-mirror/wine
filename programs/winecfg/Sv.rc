@@ -244,7 +244,7 @@ BEGIN
     IDS_DLL_BUILTIN_NATIVE  "inbyggd, ursprunglig"
     IDS_DLL_DISABLED        "inaktiverad"
     IDS_DEFAULT_SETTINGS    "Standardinställningar"
-    IDS_EXECUTABLE_FILTER   "Wine-program (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
+    IDS_EXECUTABLE_FILTER   "Wine-program (*.exe,*.exe.so)"
     IDS_USE_GLOBAL_SETTINGS "Använd globala inställningar"
     IDS_SELECT_EXECUTABLE   "Välj en körbar fil"
 END

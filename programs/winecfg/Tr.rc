@@ -234,7 +234,7 @@ BEGIN
     IDS_DLL_BUILTIN_NATIVE  "yerleþik, doðal"
     IDS_DLL_DISABLED        "devre dýþý"
     IDS_DEFAULT_SETTINGS    "Öntanýmlý Ayarlar"
-    IDS_EXECUTABLE_FILTER   "Wine Programlarý (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
+    IDS_EXECUTABLE_FILTER   "Wine Programlarý (*.exe,*.exe.so)"
     IDS_USE_GLOBAL_SETTINGS "Genel ayarlarý kullan"
     IDS_SELECT_EXECUTABLE   "Çalýþtýrýlabilir bir dosya seçin"
 END

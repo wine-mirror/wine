@@ -249,7 +249,7 @@ BEGIN
     IDS_DLL_BUILTIN_NATIVE  "内建先于原装"
     IDS_DLL_DISABLED        "停用"
     IDS_DEFAULT_SETTINGS    "默认设置"
-    IDS_EXECUTABLE_FILTER   "Wine 程序 (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
+    IDS_EXECUTABLE_FILTER   "Wine 程序 (*.exe,*.exe.so)"
     IDS_USE_GLOBAL_SETTINGS "使用全局设置"
     IDS_SELECT_EXECUTABLE   "选择可执行文件"
 END

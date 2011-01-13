@@ -240,7 +240,7 @@ BEGIN
     IDS_DLL_BUILTIN_NATIVE  "vestavìná, nativní"
     IDS_DLL_DISABLED        "zakázat"
     IDS_DEFAULT_SETTINGS    "Standardní nastavení"
-    IDS_EXECUTABLE_FILTER   "Programy Wine (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
+    IDS_EXECUTABLE_FILTER   "Programy Wine (*.exe,*.exe.so)"
     IDS_USE_GLOBAL_SETTINGS "Použít všeobecná nastavení"
     IDS_SELECT_EXECUTABLE   "Zvolte spustitelný soubor"
 END
