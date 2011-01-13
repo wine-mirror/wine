@@ -1995,6 +1995,266 @@ msgstr "MS-CRAM"
 msgid "Wine Video 1 video codec"
 msgstr "Wine Video 1 видео кодек"
 
+#: oleacc.rc:27
+msgid "unknown object"
+msgstr "unknown object"
+
+#: oleacc.rc:28
+msgid "title bar"
+msgstr "насловна линија"
+
+#: oleacc.rc:29
+msgid "menu bar"
+msgstr "линија менија"
+
+#: oleacc.rc:30
+msgid "scroll bar"
+msgstr "трака за померање"
+
+#: oleacc.rc:31
+msgid "grip"
+msgstr "ручка"
+
+#: oleacc.rc:32
+msgid "sound"
+msgstr "звук"
+
+#: oleacc.rc:33
+msgid "cursor"
+msgstr "курсор"
+
+#: oleacc.rc:34
+msgid "caret"
+msgstr "курсор"
+
+#: oleacc.rc:35
+msgid "alert"
+msgstr "упозорење"
+
+#: oleacc.rc:36
+msgid "window"
+msgstr "прозор"
+
+#: oleacc.rc:37
+msgid "client"
+msgstr "клијент"
+
+#: oleacc.rc:38
+msgid "popup menu"
+msgstr "искачући мени"
+
+#: oleacc.rc:39
+msgid "menu item"
+msgstr "ставка менија"
+
+#: oleacc.rc:40
+msgid "tool tip"
+msgstr "облачић"
+
+#: oleacc.rc:41
+msgid "application"
+msgstr "програм"
+
+#: oleacc.rc:42
+msgid "document"
+msgstr "документ"
+
+#: oleacc.rc:43
+msgid "pane"
+msgstr "оквир"
+
+#: oleacc.rc:44
+msgid "chart"
+msgstr "графикон"
+
+#: oleacc.rc:45
+msgid "dialog"
+msgstr "прозорче"
+
+#: oleacc.rc:46
+msgid "border"
+msgstr "граница"
+
+#: oleacc.rc:47
+msgid "grouping"
+msgstr "груписање"
+
+#: oleacc.rc:48
+msgid "separator"
+msgstr "раздвајач"
+
+#: oleacc.rc:49
+msgid "tool bar"
+msgstr "алатница"
+
+#: oleacc.rc:50
+msgid "status bar"
+msgstr "линија стања"
+
+#: oleacc.rc:51
+msgid "table"
+msgstr "табела"
+
+#: oleacc.rc:52
+msgid "column header"
+msgstr "заглавље колоне"
+
+#: oleacc.rc:53
+msgid "row header"
+msgstr "заглавље реда"
+
+#: oleacc.rc:54
+msgid "column"
+msgstr "колона"
+
+#: oleacc.rc:55
+msgid "row"
+msgstr "ред"
+
+#: oleacc.rc:56
+msgid "cell"
+msgstr "ћелија"
+
+#: oleacc.rc:57
+msgid "link"
+msgstr "веза"
+
+#: oleacc.rc:58
+msgid "help balloon"
+msgstr "помоћни облачић"
+
+#: oleacc.rc:59
+msgid "character"
+msgstr "знак"
+
+#: oleacc.rc:60
+msgid "list"
+msgstr "списак"
+
+#: oleacc.rc:61
+msgid "list item"
+msgstr "списак ставки"
+
+#: oleacc.rc:62
+msgid "outline"
+msgstr "контура"
+
+#: oleacc.rc:63
+msgid "outline item"
+msgstr "ставка контуре"
+
+#: oleacc.rc:64
+msgid "page tab"
+msgstr "језичак стране"
+
+#: oleacc.rc:65
+msgid "property page"
+msgstr "својства стране"
+
+#: oleacc.rc:66
+msgid "indicator"
+msgstr "показивач"
+
+#: oleacc.rc:67
+msgid "graphic"
+msgstr "графика"
+
+#: oleacc.rc:68
+msgid "static text"
+msgstr "статичан текст"
+
+#: oleacc.rc:69
+msgid "text"
+msgstr "текст"
+
+#: oleacc.rc:70
+msgid "push button"
+msgstr "прекидач дугме"
+
+#: oleacc.rc:71
+msgid "check button"
+msgstr "дугме за означавање"
+
+#: oleacc.rc:72
+msgid "radio button"
+msgstr "искључиво дугме"
+
+#: oleacc.rc:73
+msgid "combo box"
+msgstr "комбиновани списак"
+
+#: oleacc.rc:74
+msgid "drop down"
+msgstr "падајући мени"
+
+#: oleacc.rc:75
+msgid "progress bar"
+msgstr "линија тока"
+
+#: oleacc.rc:76
+msgid "dial"
+msgstr "позови"
+
+#: oleacc.rc:77
+msgid "hot key field"
+msgstr "поље за пречице"
+
+#: oleacc.rc:78
+msgid "slider"
+msgstr "клизач"
+
+#: oleacc.rc:79
+msgid "spin box"
+msgstr "вртеће дугме"
+
+#: oleacc.rc:80
+msgid "diagram"
+msgstr "дијаграм"
+
+#: oleacc.rc:81
+msgid "animation"
+msgstr "анимација"
+
+#: oleacc.rc:82
+msgid "equation"
+msgstr "једначина"
+
+#: oleacc.rc:83
+msgid "drop down button"
+msgstr "падајуће дугме"
+
+#: oleacc.rc:84
+msgid "menu button"
+msgstr "дугме менија"
+
+#: oleacc.rc:85
+msgid "grid drop down button"
+msgstr "умрежи падајуће дугме"
+
+#: oleacc.rc:86
+msgid "white space"
+msgstr "размак"
+
+#: oleacc.rc:87
+msgid "page tab list"
+msgstr "списак листова"
+
+#: oleacc.rc:88
+msgid "clock"
+msgstr "часовник"
+
+#: oleacc.rc:89
+msgid "split button"
+msgstr "дугме за дељење"
+
+#: oleacc.rc:90 ipconfig.rc:33
+msgid "IP address"
+msgstr "IP адреса"
+
+#: oleacc.rc:91
+msgid "outline button"
+msgstr "контура дугме"
+
 #: oleaut32.rc:27
 msgid "True"
 msgstr "Тачно"
@@ -3790,10 +4050,6 @@ msgstr "Етернет"
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
 msgstr "Веза одређена DNS суфиксом"
-
-#: ipconfig.rc:33
-msgid "IP address"
-msgstr "IP адреса"
 
 #: ipconfig.rc:34
 msgid "Hostname"

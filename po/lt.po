@@ -2030,6 +2030,266 @@ msgstr "MS-CRAM"
 msgid "Wine Video 1 video codec"
 msgstr "Wine Video 1 vaizdo kodekas"
 
+#: oleacc.rc:27
+msgid "unknown object"
+msgstr "nežinomas objektas"
+
+#: oleacc.rc:28
+msgid "title bar"
+msgstr "lango antraštės juosta"
+
+#: oleacc.rc:29
+msgid "menu bar"
+msgstr "meniu juosta"
+
+#: oleacc.rc:30
+msgid "scroll bar"
+msgstr "slankjuostė"
+
+#: oleacc.rc:31
+msgid "grip"
+msgstr "rankenėlė"
+
+#: oleacc.rc:32
+msgid "sound"
+msgstr "garsas"
+
+#: oleacc.rc:33
+msgid "cursor"
+msgstr "pelės žymeklis"
+
+#: oleacc.rc:34
+msgid "caret"
+msgstr "žymeklis"
+
+#: oleacc.rc:35
+msgid "alert"
+msgstr "įspėjimas"
+
+#: oleacc.rc:36
+msgid "window"
+msgstr "langas"
+
+#: oleacc.rc:37
+msgid "client"
+msgstr "klientas"
+
+#: oleacc.rc:38
+msgid "popup menu"
+msgstr "iškylantis meniu"
+
+#: oleacc.rc:39
+msgid "menu item"
+msgstr "meniu elementas"
+
+#: oleacc.rc:40
+msgid "tool tip"
+msgstr "paaiškinimas"
+
+#: oleacc.rc:41
+msgid "application"
+msgstr "programa"
+
+#: oleacc.rc:42
+msgid "document"
+msgstr "dokumentas"
+
+#: oleacc.rc:43
+msgid "pane"
+msgstr "polangis"
+
+#: oleacc.rc:44
+msgid "chart"
+msgstr "diagrama"
+
+#: oleacc.rc:45
+msgid "dialog"
+msgstr "dialogo langas"
+
+#: oleacc.rc:46
+msgid "border"
+msgstr "rėmelis"
+
+#: oleacc.rc:47
+msgid "grouping"
+msgstr "grupavimas"
+
+#: oleacc.rc:48
+msgid "separator"
+msgstr "skirtukas"
+
+#: oleacc.rc:49
+msgid "tool bar"
+msgstr "įrankių juosta"
+
+#: oleacc.rc:50
+msgid "status bar"
+msgstr "būsenos juosta"
+
+#: oleacc.rc:51
+msgid "table"
+msgstr "lentelė"
+
+#: oleacc.rc:52
+msgid "column header"
+msgstr "stulpelio antraštė"
+
+#: oleacc.rc:53
+msgid "row header"
+msgstr "eilutės antraštė"
+
+#: oleacc.rc:54
+msgid "column"
+msgstr "stulpelis"
+
+#: oleacc.rc:55
+msgid "row"
+msgstr "eilutė"
+
+#: oleacc.rc:56
+msgid "cell"
+msgstr "langelis"
+
+#: oleacc.rc:57
+msgid "link"
+msgstr "nuoroda"
+
+#: oleacc.rc:58
+msgid "help balloon"
+msgstr "pagalbos balionas"
+
+#: oleacc.rc:59
+msgid "character"
+msgstr "personažas"
+
+#: oleacc.rc:60
+msgid "list"
+msgstr "sąrašas"
+
+#: oleacc.rc:61
+msgid "list item"
+msgstr "sąrašo elementas"
+
+#: oleacc.rc:62
+msgid "outline"
+msgstr "planas"
+
+#: oleacc.rc:63
+msgid "outline item"
+msgstr "plano elementas"
+
+#: oleacc.rc:64
+msgid "page tab"
+msgstr "kortelė"
+
+#: oleacc.rc:65
+msgid "property page"
+msgstr "savybių lapas"
+
+#: oleacc.rc:66
+msgid "indicator"
+msgstr "indikatorius"
+
+#: oleacc.rc:67
+msgid "graphic"
+msgstr "grafika"
+
+#: oleacc.rc:68
+msgid "static text"
+msgstr "statinis tekstas"
+
+#: oleacc.rc:69
+msgid "text"
+msgstr "tekstas"
+
+#: oleacc.rc:70
+msgid "push button"
+msgstr "mygtukas"
+
+#: oleacc.rc:71
+msgid "check button"
+msgstr "žymimasis langelis"
+
+#: oleacc.rc:72
+msgid "radio button"
+msgstr "akutė"
+
+#: oleacc.rc:73
+msgid "combo box"
+msgstr "jungtinis langelis"
+
+#: oleacc.rc:74
+msgid "drop down"
+msgstr "išskleidžiamasis sąrašas"
+
+#: oleacc.rc:75
+msgid "progress bar"
+msgstr "eigos juosta"
+
+#: oleacc.rc:76
+msgid "dial"
+msgstr "sukiojama rankenėlė"
+
+#: oleacc.rc:77
+msgid "hot key field"
+msgstr "sparčiojo klavišo laukas"
+
+#: oleacc.rc:78
+msgid "slider"
+msgstr "šliaužiklis"
+
+#: oleacc.rc:79
+msgid "spin box"
+msgstr "suktukas"
+
+#: oleacc.rc:80
+msgid "diagram"
+msgstr "schema"
+
+#: oleacc.rc:81
+msgid "animation"
+msgstr "animacija"
+
+#: oleacc.rc:82
+msgid "equation"
+msgstr "lygtis"
+
+#: oleacc.rc:83
+msgid "drop down button"
+msgstr "išskleidžiamasis mygtukas"
+
+#: oleacc.rc:84
+msgid "menu button"
+msgstr "meniu mygtukas"
+
+#: oleacc.rc:85
+msgid "grid drop down button"
+msgstr "tinklelio išskleidžiamasis mygtukas"
+
+#: oleacc.rc:86
+msgid "white space"
+msgstr "matomas tarpas"
+
+#: oleacc.rc:87
+msgid "page tab list"
+msgstr "kortelių sąrašas"
+
+#: oleacc.rc:88
+msgid "clock"
+msgstr "laikrodis"
+
+#: oleacc.rc:89
+msgid "split button"
+msgstr "išskleidimo mygtukas"
+
+#: oleacc.rc:90 ipconfig.rc:33
+msgid "IP address"
+msgstr "IP adresas"
+
+#: oleacc.rc:91
+msgid "outline button"
+msgstr "plano mygtukas"
+
 #: oleaut32.rc:27
 msgid "True"
 msgstr "Tiesa"
@@ -4124,10 +4384,6 @@ msgstr "Eterneto"
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
 msgstr "Ryšiui būdingas DNS sufiksas"
-
-#: ipconfig.rc:33
-msgid "IP address"
-msgstr "IP adresas"
 
 #: ipconfig.rc:34
 msgid "Hostname"

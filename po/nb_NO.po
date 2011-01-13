@@ -2086,6 +2086,266 @@ msgstr "MS-CRAM"
 msgid "Wine Video 1 video codec"
 msgstr "Wine Video 1-videokodek"
 
+#: oleacc.rc:27
+msgid "unknown object"
+msgstr "unknown object"
+
+#: oleacc.rc:28
+msgid "title bar"
+msgstr "tittellinje"
+
+#: oleacc.rc:29
+msgid "menu bar"
+msgstr "menylinje"
+
+#: oleacc.rc:30
+msgid "scroll bar"
+msgstr "rullefelt"
+
+#: oleacc.rc:31
+msgid "grip"
+msgstr "grip"
+
+#: oleacc.rc:32
+msgid "sound"
+msgstr "lyd"
+
+#: oleacc.rc:33
+msgid "cursor"
+msgstr "peker"
+
+#: oleacc.rc:34
+msgid "caret"
+msgstr "markør"
+
+#: oleacc.rc:35
+msgid "alert"
+msgstr "varsel"
+
+#: oleacc.rc:36
+msgid "window"
+msgstr "vindu"
+
+#: oleacc.rc:37
+msgid "client"
+msgstr "klient"
+
+#: oleacc.rc:38
+msgid "popup menu"
+msgstr "sprettoppmeny"
+
+#: oleacc.rc:39
+msgid "menu item"
+msgstr "menyelement"
+
+#: oleacc.rc:40
+msgid "tool tip"
+msgstr "verktøytips"
+
+#: oleacc.rc:41
+msgid "application"
+msgstr "program"
+
+#: oleacc.rc:42
+msgid "document"
+msgstr "dokument"
+
+#: oleacc.rc:43
+msgid "pane"
+msgstr "panel"
+
+#: oleacc.rc:44
+msgid "chart"
+msgstr "diagram"
+
+#: oleacc.rc:45
+msgid "dialog"
+msgstr "meldingsvindu"
+
+#: oleacc.rc:46
+msgid "border"
+msgstr "kant"
+
+#: oleacc.rc:47
+msgid "grouping"
+msgstr "gruppering"
+
+#: oleacc.rc:48
+msgid "separator"
+msgstr "skille"
+
+#: oleacc.rc:49
+msgid "tool bar"
+msgstr "verktøylinje"
+
+#: oleacc.rc:50
+msgid "status bar"
+msgstr "status bar"
+
+#: oleacc.rc:51
+msgid "table"
+msgstr "tabell"
+
+#: oleacc.rc:52
+msgid "column header"
+msgstr "kolonneoverskrift"
+
+#: oleacc.rc:53
+msgid "row header"
+msgstr "radoverskrift"
+
+#: oleacc.rc:54
+msgid "column"
+msgstr "kolonne"
+
+#: oleacc.rc:55
+msgid "row"
+msgstr "rad"
+
+#: oleacc.rc:56
+msgid "cell"
+msgstr "celle"
+
+#: oleacc.rc:57
+msgid "link"
+msgstr "kobling"
+
+#: oleacc.rc:58
+msgid "help balloon"
+msgstr "hjelpetekst"
+
+#: oleacc.rc:59
+msgid "character"
+msgstr "tegn"
+
+#: oleacc.rc:60
+msgid "list"
+msgstr "liste"
+
+#: oleacc.rc:61
+msgid "list item"
+msgstr "listeelement"
+
+#: oleacc.rc:62
+msgid "outline"
+msgstr "utheving"
+
+#: oleacc.rc:63
+msgid "outline item"
+msgstr "uthevet element"
+
+#: oleacc.rc:64
+msgid "page tab"
+msgstr "sidefane"
+
+#: oleacc.rc:65
+msgid "property page"
+msgstr "fane"
+
+#: oleacc.rc:66
+msgid "indicator"
+msgstr "indikator"
+
+#: oleacc.rc:67
+msgid "graphic"
+msgstr "grafikk"
+
+#: oleacc.rc:68
+msgid "static text"
+msgstr "statisk tekst"
+
+#: oleacc.rc:69
+msgid "text"
+msgstr "tekst"
+
+#: oleacc.rc:70
+msgid "push button"
+msgstr "knapp"
+
+#: oleacc.rc:71
+msgid "check button"
+msgstr "avkrysningsboks"
+
+#: oleacc.rc:72
+msgid "radio button"
+msgstr "radioknapp"
+
+#: oleacc.rc:73
+msgid "combo box"
+msgstr "komboboks"
+
+#: oleacc.rc:74
+msgid "drop down"
+msgstr "rullemeny"
+
+#: oleacc.rc:75
+msgid "progress bar"
+msgstr "framgangsindikator"
+
+#: oleacc.rc:76
+msgid "dial"
+msgstr "hjul"
+
+#: oleacc.rc:77
+msgid "hot key field"
+msgstr "felt for hurtigtaster"
+
+#: oleacc.rc:78
+msgid "slider"
+msgstr "rullefelt"
+
+#: oleacc.rc:79
+msgid "spin box"
+msgstr "rullemeny"
+
+#: oleacc.rc:80
+msgid "diagram"
+msgstr "diagram"
+
+#: oleacc.rc:81
+msgid "animation"
+msgstr "animasjon"
+
+#: oleacc.rc:82
+msgid "equation"
+msgstr "likning"
+
+#: oleacc.rc:83
+msgid "drop down button"
+msgstr "knapp for rullemeny"
+
+#: oleacc.rc:84
+msgid "menu button"
+msgstr "menyknapp"
+
+#: oleacc.rc:85
+msgid "grid drop down button"
+msgstr "felt for rullemeny-knapp"
+
+#: oleacc.rc:86
+msgid "white space"
+msgstr "mellomrom"
+
+#: oleacc.rc:87
+msgid "page tab list"
+msgstr "faneliste"
+
+#: oleacc.rc:88
+msgid "clock"
+msgstr "klokke"
+
+#: oleacc.rc:89
+msgid "split button"
+msgstr "oppdelt knapp"
+
+#: oleacc.rc:90 ipconfig.rc:33
+msgid "IP address"
+msgstr "IP-adresse"
+
+#: oleacc.rc:91
+msgid "outline button"
+msgstr "utheving for knapp"
+
 #: oleaut32.rc:27
 msgid "True"
 msgstr "Sann"
@@ -4179,10 +4439,6 @@ msgstr ""
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
-msgstr ""
-
-#: ipconfig.rc:33
-msgid "IP address"
 msgstr ""
 
 #: ipconfig.rc:34

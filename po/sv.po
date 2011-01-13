@@ -2049,6 +2049,266 @@ msgstr "MS-CRAM"
 msgid "Wine Video 1 video codec"
 msgstr "Wine Video 1 videokodek"
 
+#: oleacc.rc:27
+msgid "unknown object"
+msgstr "okänt objekt"
+
+#: oleacc.rc:28
+msgid "title bar"
+msgstr "titelrad"
+
+#: oleacc.rc:29
+msgid "menu bar"
+msgstr "menyrad"
+
+#: oleacc.rc:30
+msgid "scroll bar"
+msgstr "rullningslist"
+
+#: oleacc.rc:31
+msgid "grip"
+msgstr "grepp"
+
+#: oleacc.rc:32
+msgid "sound"
+msgstr "ljud"
+
+#: oleacc.rc:33
+msgid "cursor"
+msgstr "muspekare"
+
+#: oleacc.rc:34
+msgid "caret"
+msgstr "markör"
+
+#: oleacc.rc:35
+msgid "alert"
+msgstr "varning"
+
+#: oleacc.rc:36
+msgid "window"
+msgstr "fönster"
+
+#: oleacc.rc:37
+msgid "client"
+msgstr "klient"
+
+#: oleacc.rc:38
+msgid "popup menu"
+msgstr "popupmeny"
+
+#: oleacc.rc:39
+msgid "menu item"
+msgstr "menypost"
+
+#: oleacc.rc:40
+msgid "tool tip"
+msgstr "tooltip"
+
+#: oleacc.rc:41
+msgid "application"
+msgstr "program"
+
+#: oleacc.rc:42
+msgid "document"
+msgstr "dokument"
+
+#: oleacc.rc:43
+msgid "pane"
+msgstr "ruta"
+
+#: oleacc.rc:44
+msgid "chart"
+msgstr "diagram"
+
+#: oleacc.rc:45
+msgid "dialog"
+msgstr "dialog"
+
+#: oleacc.rc:46
+msgid "border"
+msgstr "kant"
+
+#: oleacc.rc:47
+msgid "grouping"
+msgstr "gruppering"
+
+#: oleacc.rc:48
+msgid "separator"
+msgstr "avskiljare"
+
+#: oleacc.rc:49
+msgid "tool bar"
+msgstr "verktygsrad"
+
+#: oleacc.rc:50
+msgid "status bar"
+msgstr "statusrad"
+
+#: oleacc.rc:51
+msgid "table"
+msgstr "tabell"
+
+#: oleacc.rc:52
+msgid "column header"
+msgstr "kolumnhuvud"
+
+#: oleacc.rc:53
+msgid "row header"
+msgstr "radhuvud"
+
+#: oleacc.rc:54
+msgid "column"
+msgstr "kolumn"
+
+#: oleacc.rc:55
+msgid "row"
+msgstr "rad"
+
+#: oleacc.rc:56
+msgid "cell"
+msgstr "cell"
+
+#: oleacc.rc:57
+msgid "link"
+msgstr "länk"
+
+#: oleacc.rc:58
+msgid "help balloon"
+msgstr "hjälpballong"
+
+#: oleacc.rc:59
+msgid "character"
+msgstr "tecken"
+
+#: oleacc.rc:60
+msgid "list"
+msgstr "lista"
+
+#: oleacc.rc:61
+msgid "list item"
+msgstr "listelement"
+
+#: oleacc.rc:62
+msgid "outline"
+msgstr "disposition"
+
+#: oleacc.rc:63
+msgid "outline item"
+msgstr "dispositionspost"
+
+#: oleacc.rc:64
+msgid "page tab"
+msgstr "bladflik"
+
+#: oleacc.rc:65
+msgid "property page"
+msgstr "egenskapssida"
+
+#: oleacc.rc:66
+msgid "indicator"
+msgstr "indikator"
+
+#: oleacc.rc:67
+msgid "graphic"
+msgstr "grafik"
+
+#: oleacc.rc:68
+msgid "static text"
+msgstr "statisk text"
+
+#: oleacc.rc:69
+msgid "text"
+msgstr "text"
+
+#: oleacc.rc:70
+msgid "push button"
+msgstr "tryckknapp"
+
+#: oleacc.rc:71
+msgid "check button"
+msgstr "markeringsknapp"
+
+#: oleacc.rc:72
+msgid "radio button"
+msgstr "envalsknapp"
+
+#: oleacc.rc:73
+msgid "combo box"
+msgstr "kombinationsruta"
+
+#: oleacc.rc:74
+msgid "drop down"
+msgstr "listruta"
+
+#: oleacc.rc:75
+msgid "progress bar"
+msgstr "förloppsmätare"
+
+#: oleacc.rc:76
+msgid "dial"
+msgstr "mätare"
+
+#: oleacc.rc:77
+msgid "hot key field"
+msgstr "snabbknappsfält"
+
+#: oleacc.rc:78
+msgid "slider"
+msgstr "glidreglage"
+
+#: oleacc.rc:79
+msgid "spin box"
+msgstr "snurrknapp"
+
+#: oleacc.rc:80
+msgid "diagram"
+msgstr "diagram"
+
+#: oleacc.rc:81
+msgid "animation"
+msgstr "animation"
+
+#: oleacc.rc:82
+msgid "equation"
+msgstr "ekvation"
+
+#: oleacc.rc:83
+msgid "drop down button"
+msgstr "listruteknapp"
+
+#: oleacc.rc:84
+msgid "menu button"
+msgstr "menyknapp"
+
+#: oleacc.rc:85
+msgid "grid drop down button"
+msgstr "listruteknapp (rutnät)"
+
+#: oleacc.rc:86
+msgid "white space"
+msgstr "blanktecken"
+
+#: oleacc.rc:87
+msgid "page tab list"
+msgstr "bladflikslista"
+
+#: oleacc.rc:88
+msgid "clock"
+msgstr "klocka"
+
+#: oleacc.rc:89
+msgid "split button"
+msgstr "delad knapp"
+
+#: oleacc.rc:90 ipconfig.rc:33
+msgid "IP address"
+msgstr "IP-adress"
+
+#: oleacc.rc:91
+msgid "outline button"
+msgstr "dispositionsknapp"
+
 #: oleaut32.rc:27
 msgid "True"
 msgstr "Sant"
@@ -4160,10 +4420,6 @@ msgstr "Ethernet"
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
 msgstr "Anslutningsspecifikt DNS-suffix"
-
-#: ipconfig.rc:33
-msgid "IP address"
-msgstr "IP-adress"
 
 #: ipconfig.rc:34
 msgid "Hostname"

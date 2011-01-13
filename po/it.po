@@ -2098,6 +2098,271 @@ msgstr "MS-CRAM"
 msgid "Wine Video 1 video codec"
 msgstr "Wine Video 1 video codec"
 
+#: oleacc.rc:27
+msgid "unknown object"
+msgstr "oggetto sconosciuto"
+
+#: oleacc.rc:28
+msgid "title bar"
+msgstr "barra del titolo"
+
+#: oleacc.rc:29
+msgid "menu bar"
+msgstr "barra dei menù"
+
+#: oleacc.rc:30
+msgid "scroll bar"
+msgstr "barra dello scorrimento"
+
+#: oleacc.rc:31
+msgid "grip"
+msgstr "maniglia"
+
+#: oleacc.rc:32
+msgid "sound"
+msgstr "suono"
+
+#: oleacc.rc:33
+msgid "cursor"
+msgstr "cursore"
+
+#: oleacc.rc:34
+msgid "caret"
+msgstr "cursore di testo"
+
+#: oleacc.rc:35
+msgid "alert"
+msgstr "allarme"
+
+#: oleacc.rc:36
+msgid "window"
+msgstr "finestra"
+
+#: oleacc.rc:37
+msgid "client"
+msgstr "client"
+
+#: oleacc.rc:38
+msgid "popup menu"
+msgstr "menù a comparsa"
+
+#: oleacc.rc:39
+msgid "menu item"
+msgstr "elemento del menù"
+
+#: oleacc.rc:40
+msgid "tool tip"
+msgstr "tooltip"
+
+#: oleacc.rc:41
+msgid "application"
+msgstr "applicazione"
+
+#: oleacc.rc:42
+msgid "document"
+msgstr "documento"
+
+#: oleacc.rc:43
+msgid "pane"
+msgstr "pannello"
+
+#: oleacc.rc:44
+msgid "chart"
+msgstr "diagramma"
+
+#: oleacc.rc:45
+msgid "dialog"
+msgstr "dialogo"
+
+#: oleacc.rc:46
+msgid "border"
+msgstr "bordo"
+
+#: oleacc.rc:47
+msgid "grouping"
+msgstr "raggruppamento"
+
+#: oleacc.rc:48
+msgid "separator"
+msgstr "separatore"
+
+#: oleacc.rc:49
+msgid "tool bar"
+msgstr "barra degli strumenti"
+
+#: oleacc.rc:50
+msgid "status bar"
+msgstr "barra dello stato"
+
+#: oleacc.rc:51
+msgid "table"
+msgstr "tabella"
+
+#: oleacc.rc:52
+msgid "column header"
+msgstr "intestazione di colonna"
+
+#: oleacc.rc:53
+msgid "row header"
+msgstr "intestazione di riga"
+
+#: oleacc.rc:54
+msgid "column"
+msgstr "colonna"
+
+#: oleacc.rc:55
+msgid "row"
+msgstr "riga"
+
+#: oleacc.rc:56
+msgid "cell"
+msgstr "cella"
+
+#: oleacc.rc:57
+msgid "link"
+msgstr "collegamento"
+
+#: oleacc.rc:58
+msgid "help balloon"
+msgstr "balloon d'aiuto"
+
+#: oleacc.rc:59
+msgid "character"
+msgstr "carattere"
+
+#: oleacc.rc:60
+msgid "list"
+msgstr "lista"
+
+#: oleacc.rc:61
+msgid "list item"
+msgstr "elemento della lista"
+
+#: oleacc.rc:62
+msgid "outline"
+msgstr "schema"
+
+#: oleacc.rc:63
+msgid "outline item"
+msgstr "elemento dello schema"
+
+#: oleacc.rc:64
+msgid "page tab"
+msgstr "linguetta di pagina"
+
+#: oleacc.rc:65
+msgid "property page"
+msgstr "pagina delle proprietà"
+
+#: oleacc.rc:66
+msgid "indicator"
+msgstr "indicatore"
+
+#: oleacc.rc:67
+msgid "graphic"
+msgstr "immagine"
+
+#: oleacc.rc:68
+msgid "static text"
+msgstr "testo statico"
+
+#: oleacc.rc:69
+msgid "text"
+msgstr "testo"
+
+#: oleacc.rc:70
+msgid "push button"
+msgstr "pulsante"
+
+#: oleacc.rc:71
+msgid "check button"
+msgstr "pulsante di controllo"
+
+#: oleacc.rc:72
+msgid "radio button"
+msgstr "pulsante radio"
+
+#: oleacc.rc:73
+msgid "combo box"
+msgstr "casella combinata"
+
+#: oleacc.rc:74
+msgid "drop down"
+msgstr "lista a discesa"
+
+#: oleacc.rc:75
+msgid "progress bar"
+msgstr "barra del progresso"
+
+#: oleacc.rc:76
+msgid "dial"
+msgstr "quadrante"
+
+#: oleacc.rc:77
+msgid "hot key field"
+msgstr "campo con scorciatoia da tastiera"
+
+#: oleacc.rc:78
+msgid "slider"
+msgstr "diapositiva"
+
+#: oleacc.rc:79
+msgid "spin box"
+msgstr "casella di selezione"
+
+#: oleacc.rc:80
+msgid "diagram"
+msgstr "diagramma"
+
+#: oleacc.rc:81
+msgid "animation"
+msgstr "animazione"
+
+#: oleacc.rc:82
+msgid "equation"
+msgstr "equazione"
+
+#: oleacc.rc:83
+msgid "drop down button"
+msgstr "pulsante a discesa"
+
+#: oleacc.rc:84
+msgid "menu button"
+msgstr "bottone menù"
+
+#: oleacc.rc:85
+msgid "grid drop down button"
+msgstr "griglia con pulsante a discesa"
+
+#: oleacc.rc:86
+msgid "white space"
+msgstr "spazio bianco"
+
+#: oleacc.rc:87
+msgid "page tab list"
+msgstr "lista delle linguette di pagina"
+
+#: oleacc.rc:88
+msgid "clock"
+msgstr "orologio"
+
+#: oleacc.rc:89
+msgid "split button"
+msgstr "pulsante di menù combinato"
+
+#: oleacc.rc:90 ipconfig.rc:33
+#, fuzzy
+msgid "IP address"
+msgstr ""
+"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
+"Indirizzo IP\n"
+"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
+"indirizzo IP"
+
+#: oleacc.rc:91
+msgid "outline button"
+msgstr "pulsante dello schema"
+
 #: oleaut32.rc:27
 msgid "True"
 msgstr "Vero"
@@ -4250,10 +4515,6 @@ msgstr "Ethernet"
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
 msgstr "Suffisso DNS specifico per la connessione"
-
-#: ipconfig.rc:33
-msgid "IP address"
-msgstr "Indirizzo IP"
 
 #: ipconfig.rc:34
 msgid "Hostname"

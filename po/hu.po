@@ -2026,6 +2026,266 @@ msgstr "MS-CRAM"
 msgid "Wine Video 1 video codec"
 msgstr "Wine Video 1 video kodek"
 
+#: oleacc.rc:27
+msgid "unknown object"
+msgstr "ismeretlen objektum"
+
+#: oleacc.rc:28
+msgid "title bar"
+msgstr "címsor"
+
+#: oleacc.rc:29
+msgid "menu bar"
+msgstr "menüsor"
+
+#: oleacc.rc:30
+msgid "scroll bar"
+msgstr "görgetősáv"
+
+#: oleacc.rc:31
+msgid "grip"
+msgstr "markolat"
+
+#: oleacc.rc:32
+msgid "sound"
+msgstr "hang"
+
+#: oleacc.rc:33
+msgid "cursor"
+msgstr "kurzor"
+
+#: oleacc.rc:34
+msgid "caret"
+msgstr "kurzor (caret)"
+
+#: oleacc.rc:35
+msgid "alert"
+msgstr "figyelmeztetés"
+
+#: oleacc.rc:36
+msgid "window"
+msgstr "ablak"
+
+#: oleacc.rc:37
+msgid "client"
+msgstr "kliens"
+
+#: oleacc.rc:38
+msgid "popup menu"
+msgstr "felugró menü"
+
+#: oleacc.rc:39
+msgid "menu item"
+msgstr "menüelem"
+
+#: oleacc.rc:40
+msgid "tool tip"
+msgstr "eszköztipp"
+
+#: oleacc.rc:41
+msgid "application"
+msgstr "alkalmazás"
+
+#: oleacc.rc:42
+msgid "document"
+msgstr "dokumentum"
+
+#: oleacc.rc:43
+msgid "pane"
+msgstr "tábla"
+
+#: oleacc.rc:44
+msgid "chart"
+msgstr "diagram"
+
+#: oleacc.rc:45
+msgid "dialog"
+msgstr "dialógus"
+
+#: oleacc.rc:46
+msgid "border"
+msgstr "keret"
+
+#: oleacc.rc:47
+msgid "grouping"
+msgstr "csoportosító"
+
+#: oleacc.rc:48
+msgid "separator"
+msgstr "elválasztó"
+
+#: oleacc.rc:49
+msgid "tool bar"
+msgstr "eszköztár"
+
+#: oleacc.rc:50
+msgid "status bar"
+msgstr "állapotsor"
+
+#: oleacc.rc:51
+msgid "table"
+msgstr "táblázat"
+
+#: oleacc.rc:52
+msgid "column header"
+msgstr "oszlop fejléc"
+
+#: oleacc.rc:53
+msgid "row header"
+msgstr "sor fejléc"
+
+#: oleacc.rc:54
+msgid "column"
+msgstr "oszlop"
+
+#: oleacc.rc:55
+msgid "row"
+msgstr "sor"
+
+#: oleacc.rc:56
+msgid "cell"
+msgstr "cella"
+
+#: oleacc.rc:57
+msgid "link"
+msgstr "link"
+
+#: oleacc.rc:58
+msgid "help balloon"
+msgstr "súgó buborék"
+
+#: oleacc.rc:59
+msgid "character"
+msgstr "karakter"
+
+#: oleacc.rc:60
+msgid "list"
+msgstr "lista"
+
+#: oleacc.rc:61
+msgid "list item"
+msgstr "listaelem"
+
+#: oleacc.rc:62
+msgid "outline"
+msgstr "körvonal"
+
+#: oleacc.rc:63
+msgid "outline item"
+msgstr "körvonalas elem"
+
+#: oleacc.rc:64
+msgid "page tab"
+msgstr "táblafül"
+
+#: oleacc.rc:65
+msgid "property page"
+msgstr "tulajdonságlap"
+
+#: oleacc.rc:66
+msgid "indicator"
+msgstr "jelző"
+
+#: oleacc.rc:67
+msgid "graphic"
+msgstr "grafika"
+
+#: oleacc.rc:68
+msgid "static text"
+msgstr "statikus szöveg"
+
+#: oleacc.rc:69
+msgid "text"
+msgstr "szöveg"
+
+#: oleacc.rc:70
+msgid "push button"
+msgstr "nyomógomb"
+
+#: oleacc.rc:71
+msgid "check button"
+msgstr "jelölőnégyzet"
+
+#: oleacc.rc:72
+msgid "radio button"
+msgstr "rádiógomb"
+
+#: oleacc.rc:73
+msgid "combo box"
+msgstr "kombinált lista"
+
+#: oleacc.rc:74
+msgid "drop down"
+msgstr "legördülő lista"
+
+#: oleacc.rc:75
+msgid "progress bar"
+msgstr "folyamatjelző"
+
+#: oleacc.rc:76
+msgid "dial"
+msgstr "hívás"
+
+#: oleacc.rc:77
+msgid "hot key field"
+msgstr "gyorsbillentyű mező"
+
+#: oleacc.rc:78
+msgid "slider"
+msgstr "csúszka"
+
+#: oleacc.rc:79
+msgid "spin box"
+msgstr "görgethető mező"
+
+#: oleacc.rc:80
+msgid "diagram"
+msgstr "diagramm"
+
+#: oleacc.rc:81
+msgid "animation"
+msgstr "animáció"
+
+#: oleacc.rc:82
+msgid "equation"
+msgstr "egyenlet"
+
+#: oleacc.rc:83
+msgid "drop down button"
+msgstr "legördülő gomb"
+
+#: oleacc.rc:84
+msgid "menu button"
+msgstr "menügomb"
+
+#: oleacc.rc:85
+msgid "grid drop down button"
+msgstr "rácsos legördülő gomb"
+
+#: oleacc.rc:86
+msgid "white space"
+msgstr "üres terület"
+
+#: oleacc.rc:87
+msgid "page tab list"
+msgstr "oldal fül lista"
+
+#: oleacc.rc:88
+msgid "clock"
+msgstr "óra"
+
+#: oleacc.rc:89
+msgid "split button"
+msgstr "felosztott gomb"
+
+#: oleacc.rc:90 ipconfig.rc:33
+msgid "IP address"
+msgstr "IP cím"
+
+#: oleacc.rc:91
+msgid "outline button"
+msgstr "körvonalazott gomb"
+
 #: oleaut32.rc:27
 msgid "True"
 msgstr "Igaz"
@@ -3883,10 +4143,6 @@ msgstr ""
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
-msgstr ""
-
-#: ipconfig.rc:33
-msgid "IP address"
 msgstr ""
 
 #: ipconfig.rc:34

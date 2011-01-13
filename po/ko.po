@@ -2082,6 +2082,266 @@ msgstr "MS-CRAM"
 msgid "Wine Video 1 video codec"
 msgstr "Wine 비디오 1 비디오 코덱"
 
+#: oleacc.rc:27
+msgid "unknown object"
+msgstr "알 수 없는 객체"
+
+#: oleacc.rc:28
+msgid "title bar"
+msgstr "제목바"
+
+#: oleacc.rc:29
+msgid "menu bar"
+msgstr "메뉴바"
+
+#: oleacc.rc:30
+msgid "scroll bar"
+msgstr "스크롤바"
+
+#: oleacc.rc:31
+msgid "grip"
+msgstr "그립"
+
+#: oleacc.rc:32
+msgid "sound"
+msgstr "사운드"
+
+#: oleacc.rc:33
+msgid "cursor"
+msgstr "커서"
+
+#: oleacc.rc:34
+msgid "caret"
+msgstr "삽입기호"
+
+#: oleacc.rc:35
+msgid "alert"
+msgstr "경고"
+
+#: oleacc.rc:36
+msgid "window"
+msgstr "창"
+
+#: oleacc.rc:37
+msgid "client"
+msgstr "클라이언트"
+
+#: oleacc.rc:38
+msgid "popup menu"
+msgstr "팝업 메뉴"
+
+#: oleacc.rc:39
+msgid "menu item"
+msgstr "메뉴 아이템"
+
+#: oleacc.rc:40
+msgid "tool tip"
+msgstr "도구 팁"
+
+#: oleacc.rc:41
+msgid "application"
+msgstr "프로그램"
+
+#: oleacc.rc:42
+msgid "document"
+msgstr "문서"
+
+#: oleacc.rc:43
+msgid "pane"
+msgstr "틀(pane)"
+
+#: oleacc.rc:44
+msgid "chart"
+msgstr "차트"
+
+#: oleacc.rc:45
+msgid "dialog"
+msgstr "대화상자"
+
+#: oleacc.rc:46
+msgid "border"
+msgstr "가장자리"
+
+#: oleacc.rc:47
+msgid "grouping"
+msgstr "집단화"
+
+#: oleacc.rc:48
+msgid "separator"
+msgstr "분리자"
+
+#: oleacc.rc:49
+msgid "tool bar"
+msgstr "도구바"
+
+#: oleacc.rc:50
+msgid "status bar"
+msgstr "상태바"
+
+#: oleacc.rc:51
+msgid "table"
+msgstr "테이블"
+
+#: oleacc.rc:52
+msgid "column header"
+msgstr "세로줄 헤더"
+
+#: oleacc.rc:53
+msgid "row header"
+msgstr "가로줄 헤더"
+
+#: oleacc.rc:54
+msgid "column"
+msgstr "열"
+
+#: oleacc.rc:55
+msgid "row"
+msgstr "가로줄"
+
+#: oleacc.rc:56
+msgid "cell"
+msgstr "셀"
+
+#: oleacc.rc:57
+msgid "link"
+msgstr "링크"
+
+#: oleacc.rc:58
+msgid "help balloon"
+msgstr "풍선 도움말"
+
+#: oleacc.rc:59
+msgid "character"
+msgstr "문자"
+
+#: oleacc.rc:60
+msgid "list"
+msgstr "목록"
+
+#: oleacc.rc:61
+msgid "list item"
+msgstr "목록 아이템"
+
+#: oleacc.rc:62
+msgid "outline"
+msgstr "외곽선"
+
+#: oleacc.rc:63
+msgid "outline item"
+msgstr "외곽선 아이템"
+
+#: oleacc.rc:64
+msgid "page tab"
+msgstr "페이지 탭"
+
+#: oleacc.rc:65
+msgid "property page"
+msgstr "속성 페이지"
+
+#: oleacc.rc:66
+msgid "indicator"
+msgstr "지시자"
+
+#: oleacc.rc:67
+msgid "graphic"
+msgstr "그림"
+
+#: oleacc.rc:68
+msgid "static text"
+msgstr "정적 문자"
+
+#: oleacc.rc:69
+msgid "text"
+msgstr "문자"
+
+#: oleacc.rc:70
+msgid "push button"
+msgstr "누르기 버튼"
+
+#: oleacc.rc:71
+msgid "check button"
+msgstr "체크 버튼"
+
+#: oleacc.rc:72
+msgid "radio button"
+msgstr "라디오 버튼"
+
+#: oleacc.rc:73
+msgid "combo box"
+msgstr "콤보  상자"
+
+#: oleacc.rc:74
+msgid "drop down"
+msgstr "드룹 다운"
+
+#: oleacc.rc:75
+msgid "progress bar"
+msgstr "진행바"
+
+#: oleacc.rc:76
+msgid "dial"
+msgstr "다이얼"
+
+#: oleacc.rc:77
+msgid "hot key field"
+msgstr "단축키 모음"
+
+#: oleacc.rc:78
+msgid "slider"
+msgstr "슬라이더"
+
+#: oleacc.rc:79
+msgid "spin box"
+msgstr "스핀 상자"
+
+#: oleacc.rc:80
+msgid "diagram"
+msgstr "도형"
+
+#: oleacc.rc:81
+msgid "animation"
+msgstr "애니매이션"
+
+#: oleacc.rc:82
+msgid "equation"
+msgstr "수식"
+
+#: oleacc.rc:83
+msgid "drop down button"
+msgstr "드룹 다운 버튼"
+
+#: oleacc.rc:84
+msgid "menu button"
+msgstr "메뉴 버튼"
+
+#: oleacc.rc:85
+msgid "grid drop down button"
+msgstr "그립 드룹 다운 단추"
+
+#: oleacc.rc:86
+msgid "white space"
+msgstr "빈 공간"
+
+#: oleacc.rc:87
+msgid "page tab list"
+msgstr "페이지 탭 목록"
+
+#: oleacc.rc:88
+msgid "clock"
+msgstr "시계"
+
+#: oleacc.rc:89
+msgid "split button"
+msgstr "나누기 단추"
+
+#: oleacc.rc:90 ipconfig.rc:33
+msgid "IP address"
+msgstr "IP 주소"
+
+#: oleacc.rc:91
+msgid "outline button"
+msgstr "외곽선 단추"
+
 #: oleaut32.rc:27
 msgid "True"
 msgstr "진실"
@@ -4148,10 +4408,6 @@ msgstr "이더넷"
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
 msgstr "Connection-specific DNS suffix"
-
-#: ipconfig.rc:33
-msgid "IP address"
-msgstr "IP 주소"
 
 #: ipconfig.rc:34
 msgid "Hostname"

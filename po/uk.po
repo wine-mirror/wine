@@ -2028,6 +2028,271 @@ msgstr "MS-CRAM"
 msgid "Wine Video 1 video codec"
 msgstr "Відео кодек Wine Video 1"
 
+#: oleacc.rc:27
+msgid "unknown object"
+msgstr "unknown object"
+
+#: oleacc.rc:28
+msgid "title bar"
+msgstr "смуга назви"
+
+#: oleacc.rc:29
+msgid "menu bar"
+msgstr "смуга меню"
+
+#: oleacc.rc:30
+msgid "scroll bar"
+msgstr "смуга прокручування"
+
+#: oleacc.rc:31
+msgid "grip"
+msgstr "ручка"
+
+#: oleacc.rc:32
+msgid "sound"
+msgstr "звук"
+
+#: oleacc.rc:33
+msgid "cursor"
+msgstr "курсор"
+
+#: oleacc.rc:34
+msgid "caret"
+msgstr "знак вставки"
+
+#: oleacc.rc:35
+msgid "alert"
+msgstr "тривога"
+
+#: oleacc.rc:36
+msgid "window"
+msgstr "вікно"
+
+#: oleacc.rc:37
+msgid "client"
+msgstr "клієнт"
+
+#: oleacc.rc:38
+msgid "popup menu"
+msgstr "контекстне меню"
+
+#: oleacc.rc:39
+msgid "menu item"
+msgstr "елемент меню"
+
+#: oleacc.rc:40
+msgid "tool tip"
+msgstr "підказка"
+
+#: oleacc.rc:41
+msgid "application"
+msgstr "додаток"
+
+#: oleacc.rc:42
+msgid "document"
+msgstr "документ"
+
+#: oleacc.rc:43
+msgid "pane"
+msgstr "сектор"
+
+#: oleacc.rc:44
+msgid "chart"
+msgstr "графік"
+
+#: oleacc.rc:45
+msgid "dialog"
+msgstr "діалог"
+
+#: oleacc.rc:46
+msgid "border"
+msgstr "межа"
+
+#: oleacc.rc:47
+msgid "grouping"
+msgstr "групування"
+
+#: oleacc.rc:48
+msgid "separator"
+msgstr "розділювач"
+
+#: oleacc.rc:49
+msgid "tool bar"
+msgstr "панель інструментів"
+
+#: oleacc.rc:50
+msgid "status bar"
+msgstr "рядок стану"
+
+#: oleacc.rc:51
+msgid "table"
+msgstr "таблиця"
+
+#: oleacc.rc:52
+msgid "column header"
+msgstr "заголовок стовпчика"
+
+#: oleacc.rc:53
+msgid "row header"
+msgstr "заголовок рядка"
+
+#: oleacc.rc:54
+msgid "column"
+msgstr "стовпчик"
+
+#: oleacc.rc:55
+msgid "row"
+msgstr "рядок"
+
+#: oleacc.rc:56
+msgid "cell"
+msgstr "комірка"
+
+#: oleacc.rc:57
+msgid "link"
+msgstr "посилання"
+
+#: oleacc.rc:58
+msgid "help balloon"
+msgstr "помічна повітряна куля"
+
+#: oleacc.rc:59
+msgid "character"
+msgstr "знак"
+
+#: oleacc.rc:60
+msgid "list"
+msgstr "список"
+
+#: oleacc.rc:61
+msgid "list item"
+msgstr "елемент списку"
+
+#: oleacc.rc:62
+msgid "outline"
+msgstr "план"
+
+#: oleacc.rc:63
+msgid "outline item"
+msgstr "елемент плану"
+
+#: oleacc.rc:64
+msgid "page tab"
+msgstr "закладка сторінки"
+
+#: oleacc.rc:65
+msgid "property page"
+msgstr "сторінка властивостей"
+
+#: oleacc.rc:66
+msgid "indicator"
+msgstr "показник"
+
+#: oleacc.rc:67
+msgid "graphic"
+msgstr "графіка"
+
+#: oleacc.rc:68
+msgid "static text"
+msgstr "статичний текст"
+
+#: oleacc.rc:69
+msgid "text"
+msgstr "текст"
+
+#: oleacc.rc:70
+msgid "push button"
+msgstr "кнопка"
+
+#: oleacc.rc:71
+msgid "check button"
+msgstr "кнопка-позначка"
+
+#: oleacc.rc:72
+msgid "radio button"
+msgstr "перемикач"
+
+#: oleacc.rc:73
+msgid "combo box"
+msgstr "комбіноване поле"
+
+#: oleacc.rc:74
+msgid "drop down"
+msgstr "випадаючий"
+
+#: oleacc.rc:75
+msgid "progress bar"
+msgstr "смужка прогресу"
+
+#: oleacc.rc:76
+msgid "dial"
+msgstr "вибір"
+
+#: oleacc.rc:77
+msgid "hot key field"
+msgstr "поле гарячих клавіш"
+
+#: oleacc.rc:78
+msgid "slider"
+msgstr "повзунок"
+
+#: oleacc.rc:79
+msgid "spin box"
+msgstr "поле скролінгу"
+
+#: oleacc.rc:80
+msgid "diagram"
+msgstr "діаграма"
+
+#: oleacc.rc:81
+msgid "animation"
+msgstr "анімація"
+
+#: oleacc.rc:82
+msgid "equation"
+msgstr "рівняння"
+
+#: oleacc.rc:83
+msgid "drop down button"
+msgstr "випадаюча кнопка"
+
+#: oleacc.rc:84
+msgid "menu button"
+msgstr "кнопка меню"
+
+#: oleacc.rc:85
+msgid "grid drop down button"
+msgstr "випадаюча кнопка сітки"
+
+#: oleacc.rc:86
+msgid "white space"
+msgstr "білий простір"
+
+#: oleacc.rc:87
+msgid "page tab list"
+msgstr "список закладок сторінки"
+
+#: oleacc.rc:88
+msgid "clock"
+msgstr "годинник"
+
+#: oleacc.rc:89
+msgid "split button"
+msgstr "кнопка поділу"
+
+#: oleacc.rc:90 ipconfig.rc:33
+#, fuzzy
+msgid "IP address"
+msgstr ""
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"IP-адреса\n"
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"IP адреса"
+
+#: oleacc.rc:91
+msgid "outline button"
+msgstr "кпопка плану"
+
 #: oleaut32.rc:27
 msgid "True"
 msgstr "Істина"
@@ -4123,10 +4388,6 @@ msgstr "Ethernet"
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
 msgstr "DNS-суфікс підключення"
-
-#: ipconfig.rc:33
-msgid "IP address"
-msgstr "IP-адреса"
 
 #: ipconfig.rc:34
 msgid "Hostname"

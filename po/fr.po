@@ -2055,6 +2055,271 @@ msgstr "MS-CRAM"
 msgid "Wine Video 1 video codec"
 msgstr "Codec vidéo Wine Video 1"
 
+#: oleacc.rc:27
+msgid "unknown object"
+msgstr "objet inconnu"
+
+#: oleacc.rc:28
+msgid "title bar"
+msgstr "barre de titre"
+
+#: oleacc.rc:29
+msgid "menu bar"
+msgstr "barre de menus"
+
+#: oleacc.rc:30
+msgid "scroll bar"
+msgstr "barre de défilement"
+
+#: oleacc.rc:31
+msgid "grip"
+msgstr "poignée"
+
+#: oleacc.rc:32
+msgid "sound"
+msgstr "son"
+
+#: oleacc.rc:33
+msgid "cursor"
+msgstr "curseur"
+
+#: oleacc.rc:34
+msgid "caret"
+msgstr "curseur texte"
+
+#: oleacc.rc:35
+msgid "alert"
+msgstr "alerte"
+
+#: oleacc.rc:36
+msgid "window"
+msgstr "fenêtre"
+
+#: oleacc.rc:37
+msgid "client"
+msgstr "client"
+
+#: oleacc.rc:38
+msgid "popup menu"
+msgstr "menu contextuel"
+
+#: oleacc.rc:39
+msgid "menu item"
+msgstr "élément de menu"
+
+#: oleacc.rc:40
+msgid "tool tip"
+msgstr "infobulle"
+
+#: oleacc.rc:41
+msgid "application"
+msgstr "application"
+
+#: oleacc.rc:42
+msgid "document"
+msgstr "document"
+
+#: oleacc.rc:43
+msgid "pane"
+msgstr "panneau"
+
+#: oleacc.rc:44
+msgid "chart"
+msgstr "diagramme"
+
+#: oleacc.rc:45
+msgid "dialog"
+msgstr "boîte de dialogue"
+
+#: oleacc.rc:46
+msgid "border"
+msgstr "bordure"
+
+#: oleacc.rc:47
+msgid "grouping"
+msgstr "groupement"
+
+#: oleacc.rc:48
+msgid "separator"
+msgstr "séparateur"
+
+#: oleacc.rc:49
+msgid "tool bar"
+msgstr "barre d'outils"
+
+#: oleacc.rc:50
+msgid "status bar"
+msgstr "barre d'état"
+
+#: oleacc.rc:51
+msgid "table"
+msgstr "table"
+
+#: oleacc.rc:52
+msgid "column header"
+msgstr "en-tête de colonne"
+
+#: oleacc.rc:53
+msgid "row header"
+msgstr "en-tête de ligne"
+
+#: oleacc.rc:54
+msgid "column"
+msgstr "colonne"
+
+#: oleacc.rc:55
+msgid "row"
+msgstr "ligne"
+
+#: oleacc.rc:56
+msgid "cell"
+msgstr "cellule"
+
+#: oleacc.rc:57
+msgid "link"
+msgstr "lien"
+
+#: oleacc.rc:58
+msgid "help balloon"
+msgstr "bulle d'aide"
+
+#: oleacc.rc:59
+msgid "character"
+msgstr "caractère"
+
+#: oleacc.rc:60
+msgid "list"
+msgstr "liste"
+
+#: oleacc.rc:61
+msgid "list item"
+msgstr "élément de liste"
+
+#: oleacc.rc:62
+msgid "outline"
+msgstr "plan"
+
+#: oleacc.rc:63
+msgid "outline item"
+msgstr "élément du plan"
+
+#: oleacc.rc:64
+msgid "page tab"
+msgstr "onglet de page"
+
+#: oleacc.rc:65
+msgid "property page"
+msgstr "page de propriétés"
+
+#: oleacc.rc:66
+msgid "indicator"
+msgstr "indicateur"
+
+#: oleacc.rc:67
+msgid "graphic"
+msgstr "image"
+
+#: oleacc.rc:68
+msgid "static text"
+msgstr "texte statique"
+
+#: oleacc.rc:69
+msgid "text"
+msgstr "texte"
+
+#: oleacc.rc:70
+msgid "push button"
+msgstr "bouton pressoir"
+
+#: oleacc.rc:71
+msgid "check button"
+msgstr "case à cocher"
+
+#: oleacc.rc:72
+msgid "radio button"
+msgstr "bouton radio"
+
+#: oleacc.rc:73
+msgid "combo box"
+msgstr "boîte combinée"
+
+#: oleacc.rc:74
+msgid "drop down"
+msgstr "liste déroulante"
+
+#: oleacc.rc:75
+msgid "progress bar"
+msgstr "barre de progression"
+
+#: oleacc.rc:76
+msgid "dial"
+msgstr "cadran"
+
+#: oleacc.rc:77
+msgid "hot key field"
+msgstr "champ avec raccourci clavier"
+
+#: oleacc.rc:78
+msgid "slider"
+msgstr "glissière"
+
+#: oleacc.rc:79
+msgid "spin box"
+msgstr "bouton fléché"
+
+#: oleacc.rc:80
+msgid "diagram"
+msgstr "diagramme"
+
+#: oleacc.rc:81
+msgid "animation"
+msgstr "animation"
+
+#: oleacc.rc:82
+msgid "equation"
+msgstr "équation"
+
+#: oleacc.rc:83
+msgid "drop down button"
+msgstr "bouton avec liste déroulante"
+
+#: oleacc.rc:84
+msgid "menu button"
+msgstr "bouton de menu"
+
+#: oleacc.rc:85
+msgid "grid drop down button"
+msgstr "bouton avec grille déroulante"
+
+#: oleacc.rc:86
+msgid "white space"
+msgstr "blanc"
+
+#: oleacc.rc:87
+msgid "page tab list"
+msgstr "liste d'onglets de pages"
+
+#: oleacc.rc:88
+msgid "clock"
+msgstr "horloge"
+
+#: oleacc.rc:89
+msgid "split button"
+msgstr "bouton avec menu"
+
+#: oleacc.rc:90 ipconfig.rc:33
+#, fuzzy
+msgid "IP address"
+msgstr ""
+"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
+"Adresse IP\n"
+"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
+"adresse IP"
+
+#: oleacc.rc:91
+msgid "outline button"
+msgstr "bouton de résumé"
+
 #: oleaut32.rc:27
 msgid "True"
 msgstr "Vrai"
@@ -4223,10 +4488,6 @@ msgstr "Ethernet"
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
 msgstr "Suffixe DNS propre à la connexion"
-
-#: ipconfig.rc:33
-msgid "IP address"
-msgstr "Adresse IP"
 
 #: ipconfig.rc:34
 msgid "Hostname"

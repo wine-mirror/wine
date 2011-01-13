@@ -2008,6 +2008,266 @@ msgstr "MS-CRAM"
 msgid "Wine Video 1 video codec"
 msgstr "Wine Video 1 video codec"
 
+#: oleacc.rc:27
+msgid "unknown object"
+msgstr "unknown object"
+
+#: oleacc.rc:28
+msgid "title bar"
+msgstr "title bar"
+
+#: oleacc.rc:29
+msgid "menu bar"
+msgstr "menu bar"
+
+#: oleacc.rc:30
+msgid "scroll bar"
+msgstr "scroll bar"
+
+#: oleacc.rc:31
+msgid "grip"
+msgstr "grip"
+
+#: oleacc.rc:32
+msgid "sound"
+msgstr "sound"
+
+#: oleacc.rc:33
+msgid "cursor"
+msgstr "cursor"
+
+#: oleacc.rc:34
+msgid "caret"
+msgstr "caret"
+
+#: oleacc.rc:35
+msgid "alert"
+msgstr "alert"
+
+#: oleacc.rc:36
+msgid "window"
+msgstr "window"
+
+#: oleacc.rc:37
+msgid "client"
+msgstr "client"
+
+#: oleacc.rc:38
+msgid "popup menu"
+msgstr "popup menu"
+
+#: oleacc.rc:39
+msgid "menu item"
+msgstr "menu item"
+
+#: oleacc.rc:40
+msgid "tool tip"
+msgstr "tool tip"
+
+#: oleacc.rc:41
+msgid "application"
+msgstr "application"
+
+#: oleacc.rc:42
+msgid "document"
+msgstr "document"
+
+#: oleacc.rc:43
+msgid "pane"
+msgstr "pane"
+
+#: oleacc.rc:44
+msgid "chart"
+msgstr "chart"
+
+#: oleacc.rc:45
+msgid "dialog"
+msgstr "dialog"
+
+#: oleacc.rc:46
+msgid "border"
+msgstr "border"
+
+#: oleacc.rc:47
+msgid "grouping"
+msgstr "grouping"
+
+#: oleacc.rc:48
+msgid "separator"
+msgstr "separator"
+
+#: oleacc.rc:49
+msgid "tool bar"
+msgstr "tool bar"
+
+#: oleacc.rc:50
+msgid "status bar"
+msgstr "status bar"
+
+#: oleacc.rc:51
+msgid "table"
+msgstr "table"
+
+#: oleacc.rc:52
+msgid "column header"
+msgstr "column header"
+
+#: oleacc.rc:53
+msgid "row header"
+msgstr "row header"
+
+#: oleacc.rc:54
+msgid "column"
+msgstr "column"
+
+#: oleacc.rc:55
+msgid "row"
+msgstr "row"
+
+#: oleacc.rc:56
+msgid "cell"
+msgstr "cell"
+
+#: oleacc.rc:57
+msgid "link"
+msgstr "link"
+
+#: oleacc.rc:58
+msgid "help balloon"
+msgstr "help balloon"
+
+#: oleacc.rc:59
+msgid "character"
+msgstr "character"
+
+#: oleacc.rc:60
+msgid "list"
+msgstr "list"
+
+#: oleacc.rc:61
+msgid "list item"
+msgstr "list item"
+
+#: oleacc.rc:62
+msgid "outline"
+msgstr "outline"
+
+#: oleacc.rc:63
+msgid "outline item"
+msgstr "outline item"
+
+#: oleacc.rc:64
+msgid "page tab"
+msgstr "page tab"
+
+#: oleacc.rc:65
+msgid "property page"
+msgstr "property page"
+
+#: oleacc.rc:66
+msgid "indicator"
+msgstr "indicator"
+
+#: oleacc.rc:67
+msgid "graphic"
+msgstr "graphic"
+
+#: oleacc.rc:68
+msgid "static text"
+msgstr "static text"
+
+#: oleacc.rc:69
+msgid "text"
+msgstr "text"
+
+#: oleacc.rc:70
+msgid "push button"
+msgstr "push button"
+
+#: oleacc.rc:71
+msgid "check button"
+msgstr "check button"
+
+#: oleacc.rc:72
+msgid "radio button"
+msgstr "radio button"
+
+#: oleacc.rc:73
+msgid "combo box"
+msgstr "combo box"
+
+#: oleacc.rc:74
+msgid "drop down"
+msgstr "drop down"
+
+#: oleacc.rc:75
+msgid "progress bar"
+msgstr "progress bar"
+
+#: oleacc.rc:76
+msgid "dial"
+msgstr "dial"
+
+#: oleacc.rc:77
+msgid "hot key field"
+msgstr "hot key field"
+
+#: oleacc.rc:78
+msgid "slider"
+msgstr "slider"
+
+#: oleacc.rc:79
+msgid "spin box"
+msgstr "spin box"
+
+#: oleacc.rc:80
+msgid "diagram"
+msgstr "diagram"
+
+#: oleacc.rc:81
+msgid "animation"
+msgstr "animation"
+
+#: oleacc.rc:82
+msgid "equation"
+msgstr "equation"
+
+#: oleacc.rc:83
+msgid "drop down button"
+msgstr "drop down button"
+
+#: oleacc.rc:84
+msgid "menu button"
+msgstr "menu button"
+
+#: oleacc.rc:85
+msgid "grid drop down button"
+msgstr "grid drop down button"
+
+#: oleacc.rc:86
+msgid "white space"
+msgstr "white space"
+
+#: oleacc.rc:87
+msgid "page tab list"
+msgstr "page tab list"
+
+#: oleacc.rc:88
+msgid "clock"
+msgstr "clock"
+
+#: oleacc.rc:89
+msgid "split button"
+msgstr "split button"
+
+#: oleacc.rc:90 ipconfig.rc:33
+msgid "IP address"
+msgstr "IP address"
+
+#: oleacc.rc:91
+msgid "outline button"
+msgstr "outline button"
+
 #: oleaut32.rc:27
 msgid "True"
 msgstr "True"
@@ -4078,10 +4338,6 @@ msgstr "Ethernet"
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
 msgstr "Connection-specific DNS suffix"
-
-#: ipconfig.rc:33
-msgid "IP address"
-msgstr "IP address"
 
 #: ipconfig.rc:34
 msgid "Hostname"

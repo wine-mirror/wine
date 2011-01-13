@@ -1961,6 +1961,282 @@ msgstr ""
 msgid "Wine Video 1 video codec"
 msgstr "מקודד הווידאו Wine MS-RLE"
 
+#: oleacc.rc:27
+msgid "unknown object"
+msgstr ""
+
+#: oleacc.rc:28
+#, fuzzy
+msgid "title bar"
+msgstr "&ללא שורת כותרת"
+
+#: oleacc.rc:29
+msgid "menu bar"
+msgstr ""
+
+#: oleacc.rc:30
+#, fuzzy
+msgid "scroll bar"
+msgstr "גלילה לכאן"
+
+#: oleacc.rc:31
+msgid "grip"
+msgstr ""
+
+#: oleacc.rc:32
+msgid "sound"
+msgstr ""
+
+#: oleacc.rc:33
+msgid "cursor"
+msgstr ""
+
+#: oleacc.rc:34
+msgid "caret"
+msgstr ""
+
+#: oleacc.rc:35
+msgid "alert"
+msgstr ""
+
+#: oleacc.rc:36
+#, fuzzy
+msgid "window"
+msgstr "&חלון"
+
+#: oleacc.rc:37
+msgid "client"
+msgstr ""
+
+#: oleacc.rc:38
+msgid "popup menu"
+msgstr ""
+
+#: oleacc.rc:39
+msgid "menu item"
+msgstr ""
+
+#: oleacc.rc:40
+msgid "tool tip"
+msgstr ""
+
+#: oleacc.rc:41
+#, fuzzy
+msgid "application"
+msgstr "יישומים"
+
+#: oleacc.rc:42
+#, fuzzy
+msgid "document"
+msgstr "מסמך"
+
+#: oleacc.rc:43
+msgid "pane"
+msgstr ""
+
+#: oleacc.rc:44
+msgid "chart"
+msgstr ""
+
+#: oleacc.rc:45
+msgid "dialog"
+msgstr ""
+
+#: oleacc.rc:46
+msgid "border"
+msgstr ""
+
+#: oleacc.rc:47
+msgid "grouping"
+msgstr ""
+
+#: oleacc.rc:48
+#, fuzzy
+msgid "separator"
+msgstr "מפריד"
+
+#: oleacc.rc:49
+msgid "tool bar"
+msgstr ""
+
+#: oleacc.rc:50
+#, fuzzy
+msgid "status bar"
+msgstr "&שורת מצב"
+
+#: oleacc.rc:51
+#, fuzzy
+msgid "table"
+msgstr "Table"
+
+#: oleacc.rc:52
+msgid "column header"
+msgstr ""
+
+#: oleacc.rc:53
+msgid "row header"
+msgstr ""
+
+#: oleacc.rc:54
+#, fuzzy
+msgid "column"
+msgstr "&עמודה"
+
+#: oleacc.rc:55
+msgid "row"
+msgstr ""
+
+#: oleacc.rc:56
+msgid "cell"
+msgstr ""
+
+#: oleacc.rc:57
+msgid "link"
+msgstr ""
+
+#: oleacc.rc:58
+msgid "help balloon"
+msgstr ""
+
+#: oleacc.rc:59
+#, fuzzy
+msgid "character"
+msgstr "עיצוב ה&תווים"
+
+#: oleacc.rc:60
+msgid "list"
+msgstr ""
+
+#: oleacc.rc:61
+msgid "list item"
+msgstr ""
+
+#: oleacc.rc:62
+msgid "outline"
+msgstr ""
+
+#: oleacc.rc:63
+msgid "outline item"
+msgstr ""
+
+#: oleacc.rc:64
+msgid "page tab"
+msgstr ""
+
+#: oleacc.rc:65
+#, fuzzy
+msgid "property page"
+msgstr "העמוד הבא"
+
+#: oleacc.rc:66
+msgid "indicator"
+msgstr ""
+
+#: oleacc.rc:67
+msgid "graphic"
+msgstr ""
+
+#: oleacc.rc:68
+#, fuzzy
+msgid "static text"
+msgstr "טקסט עשיר"
+
+#: oleacc.rc:69
+#, fuzzy
+msgid "text"
+msgstr "&קבלת טקסט"
+
+#: oleacc.rc:70
+msgid "push button"
+msgstr ""
+
+#: oleacc.rc:71
+msgid "check button"
+msgstr ""
+
+#: oleacc.rc:72
+msgid "radio button"
+msgstr ""
+
+#: oleacc.rc:73
+msgid "combo box"
+msgstr ""
+
+#: oleacc.rc:74
+msgid "drop down"
+msgstr ""
+
+#: oleacc.rc:75
+#, fuzzy
+msgid "progress bar"
+msgstr "סרגל ה&כתובות"
+
+#: oleacc.rc:76
+msgid "dial"
+msgstr ""
+
+#: oleacc.rc:77
+msgid "hot key field"
+msgstr ""
+
+#: oleacc.rc:78
+msgid "slider"
+msgstr ""
+
+#: oleacc.rc:79
+msgid "spin box"
+msgstr ""
+
+#: oleacc.rc:80
+msgid "diagram"
+msgstr ""
+
+#: oleacc.rc:81
+#, fuzzy
+msgid "animation"
+msgstr "מידע"
+
+#: oleacc.rc:82
+msgid "equation"
+msgstr ""
+
+#: oleacc.rc:83
+msgid "drop down button"
+msgstr ""
+
+#: oleacc.rc:84
+msgid "menu button"
+msgstr ""
+
+#: oleacc.rc:85
+msgid "grid drop down button"
+msgstr ""
+
+#: oleacc.rc:86
+msgid "white space"
+msgstr ""
+
+#: oleacc.rc:87
+msgid "page tab list"
+msgstr ""
+
+#: oleacc.rc:88
+#, fuzzy
+msgid "clock"
+msgstr "שעון"
+
+#: oleacc.rc:89
+msgid "split button"
+msgstr ""
+
+#: oleacc.rc:90 ipconfig.rc:33
+msgid "IP address"
+msgstr ""
+
+#: oleacc.rc:91
+msgid "outline button"
+msgstr ""
+
 #: oleaut32.rc:27
 msgid "True"
 msgstr ""
@@ -3793,10 +4069,6 @@ msgstr ""
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
-msgstr ""
-
-#: ipconfig.rc:33
-msgid "IP address"
 msgstr ""
 
 #: ipconfig.rc:34
