@@ -26,6 +26,7 @@
 #include "objbase.h"
 #include "mapidefs.h"
 #include "mapi.h"
+#include "mapix.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winemapi);
@@ -99,8 +100,31 @@ ULONG WINAPI MAPIReadMail(LHANDLE session, ULONG_PTR uiparam, LPSTR msg_id,
 ULONG WINAPI MAPIResolveName(LHANDLE session, ULONG_PTR uiparam, LPSTR name,
     FLAGS flags, ULONG reserved, lpMapiRecipDesc *recip)
 {
-    FIXME("(stub)\n");
-    return MAPI_E_NOT_SUPPORTED;
+    static const char smtp[] = "SMTP:";
+
+    SCODE scode;
+    char *p;
+
+    TRACE("(0x%08lx 0x%08lx %s 0x%08x 0x%08x %p)\n", session, uiparam,
+          debugstr_a(name), flags, reserved, recip);
+
+    if (!name || !strlen(name))
+        return MAPI_E_FAILURE;
+
+    scode = MAPIAllocateBuffer(sizeof(**recip) + sizeof(smtp) + strlen(name),
+                               (LPVOID *)recip);
+    if (scode != S_OK)
+        return MAPI_E_INSUFFICIENT_MEMORY;
+
+    ZeroMemory(*recip, sizeof(**recip));
+    p = (char *)(*recip + 1);
+    strcpy(p, smtp);
+    strcpy(p + sizeof(smtp) - 1, name);
+
+    (*recip)->ulRecipClass = MAPI_TO;
+    (*recip)->lpszName = p + sizeof(smtp) - 1;
+    (*recip)->lpszAddress = p;
+    return SUCCESS_SUCCESS;
 }
 
 ULONG WINAPI MAPISaveMail(LHANDLE session, ULONG_PTR uiparam, lpMapiMessage msg,

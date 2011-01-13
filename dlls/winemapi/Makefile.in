@@ -1,5 +1,5 @@
 MODULE    = winemapi.dll
-IMPORTS   = shlwapi shell32
+IMPORTS   = shlwapi shell32 mapi32
 
 C_SRCS = \
 	main.c \
