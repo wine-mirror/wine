@@ -99,12 +99,17 @@ static VOID OBJSEL_IDsObjectPicker_Destroy(IDsObjectPickerImpl *This)
 }
 
 
+static inline IDsObjectPickerImpl *impl_from_IDsObjectPicker(IDsObjectPicker *iface)
+{
+    return CONTAINING_RECORD(iface, IDsObjectPickerImpl, IDsObjectPicker_iface);
+}
+
 /**********************************************************************
  * OBJSEL_IDsObjectPicker_AddRef (also IUnknown)
  */
 static ULONG WINAPI OBJSEL_IDsObjectPicker_AddRef(IDsObjectPicker * iface)
 {
-    IDsObjectPickerImpl *This = (IDsObjectPickerImpl *)iface;
+    IDsObjectPickerImpl *This = impl_from_IDsObjectPicker(iface);
     ULONG ref;
 
     TRACE("\n");
@@ -127,7 +132,7 @@ static ULONG WINAPI OBJSEL_IDsObjectPicker_AddRef(IDsObjectPicker * iface)
  */
 static ULONG WINAPI OBJSEL_IDsObjectPicker_Release(IDsObjectPicker * iface)
 {
-    IDsObjectPickerImpl *This = (IDsObjectPickerImpl *)iface;
+    IDsObjectPickerImpl *This = impl_from_IDsObjectPicker(iface);
     ULONG ref;
 
     TRACE("\n");
@@ -219,9 +224,9 @@ HRESULT WINAPI OBJSEL_IDsObjectPicker_Create(LPVOID *ppvObj)
                                               sizeof(IDsObjectPickerImpl));
     if (Instance != NULL)
     {
-        Instance->lpVtbl = &IDsObjectPicker_Vtbl;
-        OBJSEL_IDsObjectPicker_AddRef((IDsObjectPicker *)Instance);
-        
+        Instance->IDsObjectPicker_iface.lpVtbl = &IDsObjectPicker_Vtbl;
+        OBJSEL_IDsObjectPicker_AddRef(&Instance->IDsObjectPicker_iface);
+
         *ppvObj = Instance;
         return S_OK;
     }

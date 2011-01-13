@@ -55,7 +55,7 @@ typedef struct
 
 typedef struct
 {
-    IDsObjectPickerVtbl *lpVtbl;
+    IDsObjectPicker IDsObjectPicker_iface;
     LONG ref;
 } IDsObjectPickerImpl;
 
