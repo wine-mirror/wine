@@ -2036,9 +2036,14 @@ static void test_SHGetObjectCompatFlags(void)
 }
 
 typedef struct {
-    const IOleCommandTargetVtbl *lpVtbl;
+    IOleCommandTarget IOleCommandTarget_iface;
     LONG ref;
 } IOleCommandTargetImpl;
+
+static inline IOleCommandTargetImpl *impl_from_IOleCommandTarget(IOleCommandTarget *iface)
+{
+    return CONTAINING_RECORD(iface, IOleCommandTargetImpl, IOleCommandTarget_iface);
+}
 
 static const IOleCommandTargetVtbl IOleCommandTargetImpl_Vtbl;
 
@@ -2047,15 +2052,15 @@ static IOleCommandTarget* IOleCommandTargetImpl_Construct(void)
     IOleCommandTargetImpl *obj;
 
     obj = HeapAlloc(GetProcessHeap(), 0, sizeof(*obj));
-    obj->lpVtbl = &IOleCommandTargetImpl_Vtbl;
+    obj->IOleCommandTarget_iface.lpVtbl = &IOleCommandTargetImpl_Vtbl;
     obj->ref = 1;
 
-    return (IOleCommandTarget*)obj;
+    return &obj->IOleCommandTarget_iface;
 }
 
 static HRESULT WINAPI IOleCommandTargetImpl_QueryInterface(IOleCommandTarget *iface, REFIID riid, void **ppvObj)
 {
-    IOleCommandTargetImpl *This = (IOleCommandTargetImpl *)iface;
+    IOleCommandTargetImpl *This = impl_from_IOleCommandTarget(iface);
 
     if (IsEqualIID(riid, &IID_IUnknown) ||
         IsEqualIID(riid, &IID_IOleCommandTarget))
@@ -2074,13 +2079,13 @@ static HRESULT WINAPI IOleCommandTargetImpl_QueryInterface(IOleCommandTarget *if
 
 static ULONG WINAPI IOleCommandTargetImpl_AddRef(IOleCommandTarget *iface)
 {
-    IOleCommandTargetImpl *This = (IOleCommandTargetImpl *)iface;
+    IOleCommandTargetImpl *This = impl_from_IOleCommandTarget(iface);
     return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI IOleCommandTargetImpl_Release(IOleCommandTarget *iface)
 {
-    IOleCommandTargetImpl *This = (IOleCommandTargetImpl *)iface;
+    IOleCommandTargetImpl *This = impl_from_IOleCommandTarget(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     if (!ref)
@@ -2119,14 +2124,24 @@ static const IOleCommandTargetVtbl IOleCommandTargetImpl_Vtbl =
 };
 
 typedef struct {
-    const IServiceProviderVtbl *lpVtbl;
+    IServiceProvider IServiceProvider_iface;
     LONG ref;
 } IServiceProviderImpl;
 
+static inline IServiceProviderImpl *impl_from_IServiceProvider(IServiceProvider *iface)
+{
+    return CONTAINING_RECORD(iface, IServiceProviderImpl, IServiceProvider_iface);
+}
+
 typedef struct {
-    const IProfferServiceVtbl *lpVtbl;
+    IProfferService IProfferService_iface;
     LONG ref;
 } IProfferServiceImpl;
+
+static inline IProfferServiceImpl *impl_from_IProfferService(IProfferService *iface)
+{
+    return CONTAINING_RECORD(iface, IProfferServiceImpl, IProfferService_iface);
+}
 
 
 static const IServiceProviderVtbl IServiceProviderImpl_Vtbl;
@@ -2137,10 +2152,10 @@ static IServiceProvider* IServiceProviderImpl_Construct(void)
     IServiceProviderImpl *obj;
 
     obj = HeapAlloc(GetProcessHeap(), 0, sizeof(*obj));
-    obj->lpVtbl = &IServiceProviderImpl_Vtbl;
+    obj->IServiceProvider_iface.lpVtbl = &IServiceProviderImpl_Vtbl;
     obj->ref = 1;
 
-    return (IServiceProvider*)obj;
+    return &obj->IServiceProvider_iface;
 }
 
 static IProfferService* IProfferServiceImpl_Construct(void)
@@ -2148,15 +2163,15 @@ static IProfferService* IProfferServiceImpl_Construct(void)
     IProfferServiceImpl *obj;
 
     obj = HeapAlloc(GetProcessHeap(), 0, sizeof(*obj));
-    obj->lpVtbl = &IProfferServiceImpl_Vtbl;
+    obj->IProfferService_iface.lpVtbl = &IProfferServiceImpl_Vtbl;
     obj->ref = 1;
 
-    return (IProfferService*)obj;
+    return &obj->IProfferService_iface;
 }
 
 static HRESULT WINAPI IServiceProviderImpl_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppvObj)
 {
-    IServiceProviderImpl *This = (IServiceProviderImpl *)iface;
+    IServiceProviderImpl *This = impl_from_IServiceProvider(iface);
 
     if (IsEqualIID(riid, &IID_IUnknown) ||
         IsEqualIID(riid, &IID_IServiceProvider))
@@ -2178,13 +2193,13 @@ static HRESULT WINAPI IServiceProviderImpl_QueryInterface(IServiceProvider *ifac
 
 static ULONG WINAPI IServiceProviderImpl_AddRef(IServiceProvider *iface)
 {
-    IServiceProviderImpl *This = (IServiceProviderImpl *)iface;
+    IServiceProviderImpl *This = impl_from_IServiceProvider(iface);
     return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI IServiceProviderImpl_Release(IServiceProvider *iface)
 {
-    IServiceProviderImpl *This = (IServiceProviderImpl *)iface;
+    IServiceProviderImpl *This = impl_from_IServiceProvider(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     if (!ref)
@@ -2268,7 +2283,7 @@ static void test_IUnknown_QueryServiceExec(void)
 
 static HRESULT WINAPI IProfferServiceImpl_QueryInterface(IProfferService *iface, REFIID riid, void **ppvObj)
 {
-    IProfferServiceImpl *This = (IProfferServiceImpl *)iface;
+    IProfferServiceImpl *This = impl_from_IProfferService(iface);
 
     if (IsEqualIID(riid, &IID_IUnknown) ||
         IsEqualIID(riid, &IID_IProfferService))
@@ -2293,13 +2308,13 @@ static HRESULT WINAPI IProfferServiceImpl_QueryInterface(IProfferService *iface,
 
 static ULONG WINAPI IProfferServiceImpl_AddRef(IProfferService *iface)
 {
-    IProfferServiceImpl *This = (IProfferServiceImpl *)iface;
+    IProfferServiceImpl *This = impl_from_IProfferService(iface);
     return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI IProfferServiceImpl_Release(IProfferService *iface)
 {
-    IProfferServiceImpl *This = (IProfferServiceImpl *)iface;
+    IProfferServiceImpl *This = impl_from_IProfferService(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     if (!ref)
