@@ -38,6 +38,7 @@
 
 static LONG  (WINAPI *pGdiGetCharDimensions)(HDC hdc, LPTEXTMETRICW lptm, LONG *height);
 static BOOL  (WINAPI *pGetCharABCWidthsI)(HDC hdc, UINT first, UINT count, LPWORD glyphs, LPABC abc);
+static BOOL  (WINAPI *pGetCharABCWidthsA)(HDC hdc, UINT first, UINT last, LPABC abc);
 static BOOL  (WINAPI *pGetCharABCWidthsW)(HDC hdc, UINT first, UINT last, LPABC abc);
 static DWORD (WINAPI *pGetFontUnicodeRanges)(HDC hdc, LPGLYPHSET lpgs);
 static DWORD (WINAPI *pGetGlyphIndicesA)(HDC hdc, LPCSTR lpstr, INT count, LPWORD pgi, DWORD flags);
@@ -55,6 +56,7 @@ static void init(void)
 
     pGdiGetCharDimensions = (void *)GetProcAddress(hgdi32, "GdiGetCharDimensions");
     pGetCharABCWidthsI = (void *)GetProcAddress(hgdi32, "GetCharABCWidthsI");
+    pGetCharABCWidthsA = (void *)GetProcAddress(hgdi32, "GetCharABCWidthsA");
     pGetCharABCWidthsW = (void *)GetProcAddress(hgdi32, "GetCharABCWidthsW");
     pGetFontUnicodeRanges = (void *)GetProcAddress(hgdi32, "GetFontUnicodeRanges");
     pGetGlyphIndicesA = (void *)GetProcAddress(hgdi32, "GetGlyphIndicesA");
@@ -873,6 +875,25 @@ static void test_GdiGetCharDimensions(void)
     DeleteDC(hdc);
 }
 
+static int CALLBACK create_font_proc(const LOGFONT *lpelfe,
+                                     const TEXTMETRIC *lpntme,
+                                     DWORD FontType, LPARAM lParam)
+{
+    if (FontType & TRUETYPE_FONTTYPE)
+    {
+        HFONT hfont;
+
+        hfont = CreateFontIndirect(lpelfe);
+        if (hfont)
+        {
+            *(HFONT *)lParam = hfont;
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 static void test_GetCharABCWidths(void)
 {
     static const WCHAR str[] = {'a',0};
@@ -883,10 +904,24 @@ static void test_GetCharABCWidths(void)
     ABC abc[1];
     WORD glyphs[1];
     DWORD nb;
-
-    if (!pGetCharABCWidthsW || !pGetCharABCWidthsI)
+    static const struct
     {
-        win_skip("GetCharABCWidthsW/I not available on this platform\n");
+        UINT cs;
+        UINT a;
+        UINT w;
+    } c[] =
+    {
+        {SHIFTJIS_CHARSET, 0x82a0, 0x3042},
+        {HANGEUL_CHARSET, 0x8141, 0xac02},
+        {JOHAB_CHARSET, 0x8446, 0x3135},
+        {GB2312_CHARSET, 0x8141, 0x4e04},
+        {CHINESEBIG5_CHARSET, 0xa142, 0x3001}
+    };
+    UINT i;
+
+    if (!pGetCharABCWidthsA || !pGetCharABCWidthsW || !pGetCharABCWidthsI)
+    {
+        win_skip("GetCharABCWidthsA/W/I not available on this platform\n");
         return;
     }
 
@@ -921,6 +956,32 @@ static void test_GetCharABCWidths(void)
 
     hfont = SelectObject(hdc, hfont);
     DeleteObject(hfont);
+
+    for (i = 0; i < sizeof c / sizeof c[0]; ++i)
+    {
+        ABC a[2], w[2];
+
+        lf.lfFaceName[0] = '\0';
+        lf.lfCharSet = c[i].cs;
+        lf.lfPitchAndFamily = 0;
+        if (EnumFontFamiliesEx(hdc, &lf, create_font_proc, (LPARAM)&hfont, 0))
+        {
+            skip("TrueType font for charset %u is not installed\n", c[i].cs);
+            continue;
+        }
+
+        memset(a, 0, sizeof a);
+        memset(w, 0, sizeof w);
+        hfont = SelectObject(hdc, hfont);
+        todo_wine
+        ok(pGetCharABCWidthsA(hdc, c[i].a, c[i].a + 1, a) &&
+           pGetCharABCWidthsW(hdc, c[i].w, c[i].w + 1, w) &&
+           memcmp(a, w, sizeof a) == 0,
+           "GetCharABCWidthsA and GetCharABCWidthsW should return same widths. charset = %u\n", c[i].cs);
+        hfont = SelectObject(hdc, hfont);
+        DeleteObject(hfont);
+    }
+
     ReleaseDC(NULL, hdc);
 }
 
