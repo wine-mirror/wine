@@ -63,7 +63,7 @@ msgid "Programs (*.exe)"
 msgstr "Programos (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
-#: progman.rc:84 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:84 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Visi failai (*.*)"
 
@@ -2270,11 +2270,11 @@ msgstr "IP adresas"
 msgid "outline button"
 msgstr "plano mygtukas"
 
-#: oleaut32.rc:27
+#: oleaut32.rc:27 oleview.rc:144
 msgid "True"
 msgstr "Tiesa"
 
-#: oleaut32.rc:28
+#: oleaut32.rc:28 oleview.rc:145
 msgid "False"
 msgstr "Netiesa"
 
@@ -2766,8 +2766,9 @@ msgstr "&w&bPuslapis &p"
 msgid "&u&b&d"
 msgstr "&u&b&d"
 
-#: shdocvw.rc:25 shell32.rc:99 notepad.rc:26 progman.rc:29 taskmgr.rc:35
-#: view.rc:28 winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
+#: shdocvw.rc:25 shell32.rc:99 notepad.rc:26 oleview.rc:27 oleview.rc:77
+#: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
+#: wordpad.rc:26
 msgid "&File"
 msgstr "&Failas"
 
@@ -2807,14 +2808,19 @@ msgstr "Spaudinio pe&ržiūra..."
 msgid "&Properties..."
 msgstr "&Savybės..."
 
-#: shdocvw.rc:40 taskmgr.rc:140
+#: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:140
 msgid "&Close"
 msgstr "&Užverti"
 
-#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 taskmgr.rc:52 winefile.rc:76
-#: wordpad.rc:66
+#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
+#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+#, fuzzy
 msgid "&View"
-msgstr "&Rodymas"
+msgstr ""
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"&Rodymas\n"
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"&Rodinys"
 
 #: shdocvw.rc:44
 msgid "&Toolbars"
@@ -2836,8 +2842,8 @@ msgstr "&Adresynas"
 msgid "&Add to Favorites..."
 msgstr "Į&rašyti į adresyną..."
 
-#: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 progman.rc:52 taskmgr.rc:87
-#: winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
+#: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
+#: taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
 msgid "&Help"
 msgstr "&Žinynas"
 
@@ -2932,7 +2938,9 @@ msgstr "Sukurti &nuorodą"
 msgid "&Rename"
 msgstr "&Pervadinti"
 
-#: shell32.rc:102 notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
+#: shell32.rc:102 notepad.rc:36 oleview.rc:35 view.rc:31 winhlp32.rc:34
+#: wordpad.rc:37
+#, fuzzy
 msgid "E&xit"
 msgstr "Iš&eiti"
 
@@ -2996,9 +3004,14 @@ msgstr "Valdymo skydelis"
 msgid "Select"
 msgstr "Iš&rinkti"
 
-#: shell32.rc:152
+#: shell32.rc:152 oleview.rc:99
+#, fuzzy
 msgid "Open"
-msgstr "&Atverti"
+msgstr ""
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"&Atverti\n"
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"Atverti"
 
 #: shell32.rc:173
 msgid "Restart"
@@ -4412,7 +4425,8 @@ msgid ""
 "The requirement to double the % sign when using FOR in a batch file does\n"
 "not exist in wine's cmd.\n"
 msgstr ""
-"FOR komanda yra naudojama įvykdyti komandą kiekvienam failų aibės elementui.\n"
+"FOR komanda yra naudojama įvykdyti komandą kiekvienam failų aibės "
+"elementui.\n"
 "\n"
 "Sintaksė: FOR %kintamasis IN (aibė) DO komanda\n"
 "\n"
@@ -5305,6 +5319,297 @@ msgstr ""
 "Norėdami išsaugoti šiuos ženklus, spauskite „Atsisakyti“ ir pasirinkite "
 "vieną iš unikodo nuostatų koduotės išskleidžiamajame sąraše.\n"
 "Tęsti?"
+
+#: oleview.rc:29
+msgid "&Bind to file..."
+msgstr "Susieti su &failu..."
+
+#: oleview.rc:30
+msgid "&View TypeLib..."
+msgstr "&Peržiūrėti TypeLib..."
+
+#: oleview.rc:32
+msgid "&System Configuration..."
+msgstr "&Sistemos konfigūracija..."
+
+#: oleview.rc:33
+msgid "&Run the Registry Editor"
+msgstr "Paleisti &registro tvarkytuvę"
+
+#: oleview.rc:37
+msgid "&Object"
+msgstr "&Objektas"
+
+#: oleview.rc:39
+msgid "&CoCreateInstance Flag"
+msgstr "&CoCreateInstance žymos bitai"
+
+#: oleview.rc:41
+msgid "CLSCTX_&INPROC_SERVER"
+msgstr "CLSCTX_&INPROC_SERVER"
+
+#: oleview.rc:42
+msgid "CLSCTX_INPROC_&HANDLER"
+msgstr "CLSCTX_INPROC_&HANDLER"
+
+#: oleview.rc:43
+msgid "CLSCTX_&LOCAL_SERVER"
+msgstr "CLSCTX_&LOCAL_SERVER"
+
+#: oleview.rc:44
+msgid "CLSCTX_&REMOTE_SERVER"
+msgstr "CLSCTX_&REMOTE_SERVER"
+
+#: oleview.rc:47
+msgid "View &Type information"
+msgstr "Peržiūrėti &tipų informaciją"
+
+#: oleview.rc:49
+msgid "Create &Instance"
+msgstr "Sukurti &egzempliorių"
+
+#: oleview.rc:50
+msgid "Create Instance &On..."
+msgstr "Sukurti egzempliorių &kompiuteryje..."
+
+#: oleview.rc:51
+msgid "&Release Instance"
+msgstr "&Naikinti egzempliorių"
+
+#: oleview.rc:53
+msgid "Copy C&LSID to clipboard"
+msgstr "Kopijuoti C&LSID į iškarpinę"
+
+#: oleview.rc:54
+msgid "Copy &HTML object Tag to clipboard"
+msgstr "Kopijuoti &HTML objekto gairę į iškarpinę"
+
+#: oleview.rc:56
+msgid "&View..."
+msgstr "&Peržiūrėti..."
+
+#: oleview.rc:60
+msgid "&Expert mode"
+msgstr "&Eksperto režimas"
+
+#: oleview.rc:62
+msgid "&Hidden component categories"
+msgstr "&Paslėptų komponentų kategorijos"
+
+#: oleview.rc:64 oleview.rc:86 winefile.rc:100 wordpad.rc:68
+msgid "&Toolbar"
+msgstr "&Įrankių juosta"
+
+#: oleview.rc:65 oleview.rc:87 winefile.rc:102
+msgid "&Status Bar"
+msgstr "&Būsenos juosta"
+
+#: oleview.rc:67 winefile.rc:127
+#, fuzzy
+msgid "&Refresh\tF5"
+msgstr ""
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"At&naujinti\tF5\n"
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"&Atnaujinti\tF5"
+
+#: oleview.rc:71
+msgid "&About OleView"
+msgstr "&Apie OLE žiūrykę"
+
+#: oleview.rc:79
+msgid "&Save as..."
+msgstr "Išsaugoti &kaip..."
+
+#: oleview.rc:84
+msgid "&Group by type kind"
+msgstr "&Grupuoti pagal rūšį"
+
+#: oleview.rc:93 oleview.rc:94
+msgid "OleView"
+msgstr "OLE žiūryklė"
+
+#: oleview.rc:98
+msgid "ITypeLib viewer"
+msgstr "ITypeLib žiūryklė"
+
+#: oleview.rc:95
+msgid "Ready"
+msgstr "Parengta"
+
+#: oleview.rc:96
+msgid "OleView - OLE/COM Object Viewer"
+msgstr "OLE žiūryklė - OLE/COM objektų žiūryklė"
+
+#: oleview.rc:97
+msgid "version 1.0"
+msgstr "versija 1.0"
+
+#: oleview.rc:100
+#, fuzzy
+msgid "TypeLib files (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+msgstr "TypeLib failai (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+
+#: oleview.rc:103
+msgid "Bind to file via a File Moniker"
+msgstr "Susieti su failu per failo vardą"
+
+#: oleview.rc:104
+msgid "Open a TypeLib file and view the contents"
+msgstr "Atverti TypeLib failą ir peržiūrėti jo turinį"
+
+#: oleview.rc:105
+msgid "Change machine wide Distributed COM settings"
+msgstr "Keisti paskirstytojo COM kompiuterio nustatymus"
+
+#: oleview.rc:106
+msgid "Run the Wine registry editor"
+msgstr "Paleisti Wine registro tvarkytuvę"
+
+#: oleview.rc:107
+msgid "Quit the application. Prompts to save changes"
+msgstr "Išeiti iš programos. Paragina išsaugoti pakeitimus"
+
+#: oleview.rc:108
+msgid "Create an instance of the selected object"
+msgstr "Sukurti pažymėto objekto egzempliorių"
+
+#: oleview.rc:109
+msgid "Create an instance of the selected object on a specific machine"
+msgstr "Sukurti pažymėto objekto egzempliorių nurodytame kompiuteryje"
+
+#: oleview.rc:110
+msgid "Release the currently selected object instance"
+msgstr "Naikinti pažymėto objekto egzempliorių"
+
+#: oleview.rc:111
+msgid "Copy the GUID of the currently selected item to the clipboard"
+msgstr "Kopijuoti pažymėto elemento GUID į iškarpinę"
+
+#: oleview.rc:112
+msgid "Display the viewer for the selected item"
+msgstr "Rodyti žiūryklę pasirinktam elementui"
+
+#: oleview.rc:117
+msgid "Toggle between expert and novice display mode"
+msgstr "Perjungti tarp eksperto ir naujoko rodymo režimų"
+
+#: oleview.rc:118
+msgid ""
+"Toggle the display of component categories that are not meant to be visible"
+msgstr "Perjungti komponentų kategorijų, kurios turėjo būti nematomos, rodymą"
+
+#: oleview.rc:119
+msgid "Show or hide the toolbar"
+msgstr "Rodyti ar slėpti įrankių juostą"
+
+#: oleview.rc:120
+msgid "Show or hide the status bar"
+msgstr "Rodyti ar slėpti būsenos juostą"
+
+#: oleview.rc:121
+msgid "Refresh all lists"
+msgstr "Atnaujinti visus sąrašus"
+
+#: oleview.rc:122
+msgid "Display program information, version number and copyright"
+msgstr "Parodo programos informaciją, versijos numerį ir autoriaus teises"
+
+#: oleview.rc:113
+msgid "Use CLSCTX_INPROC_SERVER when calling CoGetClassObject"
+msgstr "Naudoti CLSCTX_INPROC_SERVER iškviečiant CoGetClassObject"
+
+#: oleview.rc:114
+msgid "Use CLSCTX_INPROC_HANDLER when calling CoGetClassObject"
+msgstr "Naudoti CLSCTX_INPROC_HANDLER iškviečiant CoGetClassObject"
+
+#: oleview.rc:115
+msgid "Use CLSCTX_LOCAL_SERVER when calling CoGetClassObject"
+msgstr "Naudoti CLSCTX_LOCAL_SERVER iškviečiant CoGetClassObject"
+
+#: oleview.rc:116
+msgid "Use CLSCTX_REMOTE_SERVER when calling CoGetClassObject"
+msgstr "Naudoti CLSCTX_REMOTE_SERVER iškviečiant CoGetClassObject"
+
+#: oleview.rc:128
+msgid "ObjectClasses"
+msgstr "Objektų klasės"
+
+#: oleview.rc:129
+msgid "Grouped by Component Category"
+msgstr "Sugrupuotos pagal komponento kategoriją"
+
+#: oleview.rc:130
+msgid "OLE 1.0 Objects"
+msgstr "OLE 1.0 objektai"
+
+#: oleview.rc:131
+msgid "COM Library Objects"
+msgstr "COM bibliotekos objektai"
+
+#: oleview.rc:132
+msgid "All Objects"
+msgstr "Visi objektai"
+
+#: oleview.rc:133
+msgid "Application IDs"
+msgstr "Programų identifikatoriai"
+
+#: oleview.rc:134
+msgid "Type Libraries"
+msgstr "Tipų bibliotekos"
+
+#: oleview.rc:135
+msgid "ver."
+msgstr "ver."
+
+#: oleview.rc:136
+msgid "Interfaces"
+msgstr "Sąsajos"
+
+#: oleview.rc:138
+msgid "Registry"
+msgstr "Registras"
+
+#: oleview.rc:139
+msgid "Implementation"
+msgstr "Realizacija"
+
+#: oleview.rc:140
+msgid "Activation"
+msgstr "Aktyvinimas"
+
+#: oleview.rc:142
+msgid "CoGetClassObject failed."
+msgstr "CoGetClassObject nepavyko."
+
+#: oleview.rc:143
+msgid "Unknown error"
+msgstr "Nežinoma klaida"
+
+#: oleview.rc:146
+msgid "bytes"
+msgstr "baitai"
+
+#: oleview.rc:148
+msgid "LoadTypeLib( %s ) failed ($%x)"
+msgstr "LoadTypeLib( %s ) nepavyko ($%x)"
+
+#: oleview.rc:149
+msgid "Inherited Interfaces"
+msgstr "Paveldėtos sąsajos"
+
+#: oleview.rc:124
+msgid "Save as an .IDL or .H file"
+msgstr "Išsaugoti kaip .IDL ar .H failą"
+
+#: oleview.rc:125
+msgid "Close window"
+msgstr "Užverti langą"
+
+#: oleview.rc:126
+msgid "Group typeinfos by kind"
+msgstr "Grupuoti tipų informaciją pagal rūšį"
 
 #: progman.rc:30
 msgid "&New..."
@@ -6535,17 +6840,9 @@ msgstr "&Patvirtinimas..."
 msgid "Customize Tool&bar..."
 msgstr "Adaptuoti įrankių &juostą..."
 
-#: winefile.rc:100 wordpad.rc:68
-msgid "&Toolbar"
-msgstr "&Įrankių juosta"
-
 #: winefile.rc:101
 msgid "&Drivebar"
 msgstr "&Diskų juosta"
-
-#: winefile.rc:102
-msgid "&Status Bar"
-msgstr "&Būsenos juosta"
 
 #: winefile.rc:104
 msgid "F&ull Screen\tCtrl+Shift+S"
@@ -6586,10 +6883,6 @@ msgstr "Išdėstyti &automatiškai"
 #: winefile.rc:126
 msgid "Arrange &Symbols"
 msgstr "Išdėstyti si&mbolius"
-
-#: winefile.rc:127
-msgid "&Refresh\tF5"
-msgstr "At&naujinti\tF5"
 
 #: winefile.rc:131
 msgid "&Help Topics\tF1"

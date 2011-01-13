@@ -30,6 +30,8 @@ RC_SRCS = \
 	Sv.rc \
 	Uk.rc \
 	Zh.rc \
-	rsrc.rc
+	oleview.rc
+
+PO_SRCS = oleview.rc
 
 @MAKE_PROG_RULES@

@@ -67,7 +67,7 @@ msgid "Programs (*.exe)"
 msgstr "Programmer (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
-#: progman.rc:84 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:84 winhlp32.rc:102
 #, fuzzy
 msgid "All files (*.*)"
 msgstr ""
@@ -2301,13 +2301,18 @@ msgstr ""
 msgid "outline button"
 msgstr ""
 
-#: oleaut32.rc:27
+#: oleaut32.rc:27 oleview.rc:144
 msgid "True"
 msgstr "Sand"
 
-#: oleaut32.rc:28
+#: oleaut32.rc:28 oleview.rc:145
+#, fuzzy
 msgid "False"
-msgstr "Falsk"
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Falsk\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Falst"
 
 #: oleaut32.rc:31
 msgid "On"
@@ -2831,8 +2836,9 @@ msgstr "&w&bSide &p"
 msgid "&u&b&d"
 msgstr "&u&b&d"
 
-#: shdocvw.rc:25 shell32.rc:99 notepad.rc:26 progman.rc:29 taskmgr.rc:35
-#: view.rc:28 winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
+#: shdocvw.rc:25 shell32.rc:99 notepad.rc:26 oleview.rc:27 oleview.rc:77
+#: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
+#: wordpad.rc:26
 #, fuzzy
 msgid "&File"
 msgstr ""
@@ -2895,12 +2901,17 @@ msgstr ""
 "#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
 "Egenska&per"
 
-#: shdocvw.rc:40 taskmgr.rc:140
+#: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:140
+#, fuzzy
 msgid "&Close"
-msgstr "Afslu&t"
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Afslu&t\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"&Luk"
 
-#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 taskmgr.rc:52 winefile.rc:76
-#: wordpad.rc:66
+#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
+#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
 msgid "&View"
 msgstr "&Vis"
 
@@ -2932,8 +2943,8 @@ msgstr "Favor&itter"
 msgid "&Add to Favorites..."
 msgstr "Tilføj til &favoritter..."
 
-#: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 progman.rc:52 taskmgr.rc:87
-#: winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
+#: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
+#: taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
 msgid "&Help"
 msgstr "&Hjælp"
 
@@ -3039,7 +3050,8 @@ msgstr "Opret &genvej"
 msgid "&Rename"
 msgstr "&Omdøb"
 
-#: shell32.rc:102 notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
+#: shell32.rc:102 notepad.rc:36 oleview.rc:35 view.rc:31 winhlp32.rc:34
+#: wordpad.rc:37
 msgid "E&xit"
 msgstr "&Afslut"
 
@@ -3108,7 +3120,7 @@ msgstr "Control Panel"
 msgid "Select"
 msgstr "Vælg"
 
-#: shell32.rc:152
+#: shell32.rc:152 oleview.rc:99
 msgid "Open"
 msgstr "Åben"
 
@@ -5454,6 +5466,297 @@ msgstr ""
 "en af Unicode mulighederne i Kodnings rullelisten.\n"
 "Fortsæt?"
 
+#: oleview.rc:29
+msgid "&Bind to file..."
+msgstr "&Knyt til fil..."
+
+#: oleview.rc:30
+msgid "&View TypeLib..."
+msgstr "&Vis TypeLib..."
+
+#: oleview.rc:32
+msgid "&System Configuration..."
+msgstr "&Systemopsætning..."
+
+#: oleview.rc:33
+msgid "&Run the Registry Editor"
+msgstr "Kø&r registrering database editoren"
+
+#: oleview.rc:37
+msgid "&Object"
+msgstr "&Objekt"
+
+#: oleview.rc:39
+msgid "&CoCreateInstance Flag"
+msgstr "&CoCreateInstance flag"
+
+#: oleview.rc:41
+msgid "CLSCTX_&INPROC_SERVER"
+msgstr "CLSCTX_&INPROC_SERVER"
+
+#: oleview.rc:42
+msgid "CLSCTX_INPROC_&HANDLER"
+msgstr "CLSCTX_INPROC_&HANDLER"
+
+#: oleview.rc:43
+msgid "CLSCTX_&LOCAL_SERVER"
+msgstr "CLSCTX_&LOCAL_SERVER"
+
+#: oleview.rc:44
+msgid "CLSCTX_&REMOTE_SERVER"
+msgstr "CLSCTX_&REMOTE_SERVER"
+
+#: oleview.rc:47
+msgid "View &Type information"
+msgstr "Vis &type-information"
+
+#: oleview.rc:49
+msgid "Create &Instance"
+msgstr "Opret &instans"
+
+#: oleview.rc:50
+msgid "Create Instance &On..."
+msgstr "&Opret instans på..."
+
+#: oleview.rc:51
+msgid "&Release Instance"
+msgstr "&Frigiv instans"
+
+#: oleview.rc:53
+msgid "Copy C&LSID to clipboard"
+msgstr "Kopier C&LSID til klippebordet"
+
+#: oleview.rc:54
+msgid "Copy &HTML object Tag to clipboard"
+msgstr "&Kopier &HTML objekt tag til klippebordet"
+
+#: oleview.rc:56
+msgid "&View..."
+msgstr "&Vis..."
+
+#: oleview.rc:60
+msgid "&Expert mode"
+msgstr "&Ekspert mode"
+
+#: oleview.rc:62
+msgid "&Hidden component categories"
+msgstr "Skjult&e komponent kategorier"
+
+#: oleview.rc:64 oleview.rc:86 winefile.rc:100 wordpad.rc:68
+#, fuzzy
+msgid "&Toolbar"
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Værk&tøjlinie\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Værk&tøjslinie"
+
+#: oleview.rc:65 oleview.rc:87 winefile.rc:102
+msgid "&Status Bar"
+msgstr "&Statuslinie"
+
+#: oleview.rc:67 winefile.rc:127
+msgid "&Refresh\tF5"
+msgstr "Opdate&r\tF5"
+
+#: oleview.rc:71
+msgid "&About OleView"
+msgstr "&Om OleView"
+
+#: oleview.rc:79
+msgid "&Save as..."
+msgstr "Gem &som..."
+
+#: oleview.rc:84
+msgid "&Group by type kind"
+msgstr "Sorte&r efter type"
+
+#: oleview.rc:93 oleview.rc:94
+msgid "OleView"
+msgstr "OleView"
+
+#: oleview.rc:98
+msgid "ITypeLib viewer"
+msgstr "ITypeLib viser"
+
+#: oleview.rc:95
+msgid "Ready"
+msgstr "Klar"
+
+#: oleview.rc:96
+msgid "OleView - OLE/COM Object Viewer"
+msgstr "OleView - objektviser for OLE/COM"
+
+#: oleview.rc:97
+msgid "version 1.0"
+msgstr "version 1.0"
+
+#: oleview.rc:100
+#, fuzzy
+msgid "TypeLib files (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+msgstr "TypeLib Filer (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+
+#: oleview.rc:103
+msgid "Bind to file via a File Moniker"
+msgstr "Knyt til fil via File Moniker"
+
+#: oleview.rc:104
+msgid "Open a TypeLib file and view the contents"
+msgstr "Åben en TypeLib fil og vis indholdet"
+
+#: oleview.rc:105
+msgid "Change machine wide Distributed COM settings"
+msgstr "Ændre indstillinger for distribueret COM for hele maskinen"
+
+#: oleview.rc:106
+msgid "Run the Wine registry editor"
+msgstr "Kør registeringsdatabase editor"
+
+#: oleview.rc:107
+msgid "Quit the application. Prompts to save changes"
+msgstr "Afslut programmet. Den spørger om at gemme ændringer"
+
+#: oleview.rc:108
+msgid "Create an instance of the selected object"
+msgstr "Opret en instans af det valgte objekt"
+
+#: oleview.rc:109
+msgid "Create an instance of the selected object on a specific machine"
+msgstr "Opret en instans av det valgte objekt på en bestemt maskine"
+
+#: oleview.rc:110
+msgid "Release the currently selected object instance"
+msgstr "Frigiv valgte objektinstans"
+
+#: oleview.rc:111
+msgid "Copy the GUID of the currently selected item to the clipboard"
+msgstr "Kopier det valgte elements GUID til klippebordet"
+
+#: oleview.rc:112
+msgid "Display the viewer for the selected item"
+msgstr "Åben viseren for det valgte element"
+
+#: oleview.rc:117
+msgid "Toggle between expert and novice display mode"
+msgstr "Skift mellem ekspert- og nybegynner mode"
+
+#: oleview.rc:118
+msgid ""
+"Toggle the display of component categories that are not meant to be visible"
+msgstr "Skift visningen af komponent kategorier som ikke er ment at synlige"
+
+#: oleview.rc:119
+msgid "Show or hide the toolbar"
+msgstr "Slå verktøjslinien af/på"
+
+#: oleview.rc:120
+msgid "Show or hide the status bar"
+msgstr "Vis eller skjul statuslinien"
+
+#: oleview.rc:121
+msgid "Refresh all lists"
+msgstr "Opdater alle lister"
+
+#: oleview.rc:122
+msgid "Display program information, version number and copyright"
+msgstr "Vis programinformation, versionsnummer og ophavsret"
+
+#: oleview.rc:113
+msgid "Use CLSCTX_INPROC_SERVER when calling CoGetClassObject"
+msgstr "Brug CLSCTX_INPROC_SERVER ved kald til CoGetClassObject"
+
+#: oleview.rc:114
+msgid "Use CLSCTX_INPROC_HANDLER when calling CoGetClassObject"
+msgstr "Brug CLSCTX_INPROC_HANDLER ved kald til CoGetClassObject"
+
+#: oleview.rc:115
+msgid "Use CLSCTX_LOCAL_SERVER when calling CoGetClassObject"
+msgstr "Brug CLSCTX_LOCAL_SERVER ved kald til CoGetClassObject"
+
+#: oleview.rc:116
+msgid "Use CLSCTX_REMOTE_SERVER when calling CoGetClassObject"
+msgstr "Brug CLSCTX_REMOTE_SERVER ved kald til CoGetClassObject"
+
+#: oleview.rc:128
+msgid "ObjectClasses"
+msgstr "Objektklasser"
+
+#: oleview.rc:129
+msgid "Grouped by Component Category"
+msgstr "Sorter efter komponent kategori"
+
+#: oleview.rc:130
+msgid "OLE 1.0 Objects"
+msgstr "OLE 1.0 objekter"
+
+#: oleview.rc:131
+msgid "COM Library Objects"
+msgstr "COM biblioteks objekter"
+
+#: oleview.rc:132
+msgid "All Objects"
+msgstr "Alle objekter"
+
+#: oleview.rc:133
+msgid "Application IDs"
+msgstr "Program ID'er"
+
+#: oleview.rc:134
+msgid "Type Libraries"
+msgstr "Typebibliotek"
+
+#: oleview.rc:135
+msgid "ver."
+msgstr "ver."
+
+#: oleview.rc:136
+msgid "Interfaces"
+msgstr "Grænseflade"
+
+#: oleview.rc:138
+msgid "Registry"
+msgstr "Registeringsdatabase"
+
+#: oleview.rc:139
+msgid "Implementation"
+msgstr "Implementering"
+
+#: oleview.rc:140
+msgid "Activation"
+msgstr "Aktivering"
+
+#: oleview.rc:142
+msgid "CoGetClassObject failed."
+msgstr "CoGetClassObject fejlede."
+
+#: oleview.rc:143
+msgid "Unknown error"
+msgstr "Ukendt fejl"
+
+#: oleview.rc:146
+msgid "bytes"
+msgstr "byte"
+
+#: oleview.rc:148
+msgid "LoadTypeLib( %s ) failed ($%x)"
+msgstr "LoadTypeLib( %s ) fejlede ($%x)"
+
+#: oleview.rc:149
+msgid "Inherited Interfaces"
+msgstr "Arvet grænseflade"
+
+#: oleview.rc:124
+msgid "Save as an .IDL or .H file"
+msgstr "Gem som en «.IDL»- eller «.H»-fil"
+
+#: oleview.rc:125
+msgid "Close window"
+msgstr "Luk vindue"
+
+#: oleview.rc:126
+msgid "Group typeinfos by kind"
+msgstr "Sorter typeinfo efter type"
+
 #: progman.rc:30
 msgid "&New..."
 msgstr "&Ny..."
@@ -6702,22 +7005,9 @@ msgstr "&Bekræftelse..."
 msgid "Customize Tool&bar..."
 msgstr "Tilpas &værktøjslinien..."
 
-#: winefile.rc:100 wordpad.rc:68
-#, fuzzy
-msgid "&Toolbar"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Værk&tøjlinie\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Værk&tøjslinie"
-
 #: winefile.rc:101
 msgid "&Drivebar"
 msgstr "&Enhedslinie"
-
-#: winefile.rc:102
-msgid "&Status Bar"
-msgstr "&Statuslinie"
 
 #: winefile.rc:104
 msgid "F&ull Screen\tCtrl+Shift+S"
@@ -6758,10 +7048,6 @@ msgstr "Ordne automatisk"
 #: winefile.rc:126
 msgid "Arrange &Symbols"
 msgstr "Ordne &symboler"
-
-#: winefile.rc:127
-msgid "&Refresh\tF5"
-msgstr "Opdate&r\tF5"
 
 #: winefile.rc:131
 msgid "&Help Topics\tF1"

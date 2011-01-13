@@ -15346,7 +15346,7 @@ wine_fn_config_program net enable_net po,install
 wine_fn_config_program netsh enable_netsh install
 wine_fn_config_program ngen enable_ngen install
 wine_fn_config_program notepad enable_notepad po,install,installbin
-wine_fn_config_program oleview enable_oleview install
+wine_fn_config_program oleview enable_oleview po,install
 wine_fn_config_program ping enable_ping install
 wine_fn_config_program progman enable_progman po,install
 wine_fn_config_program reg enable_reg po,install

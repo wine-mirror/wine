@@ -68,7 +68,7 @@ msgid "Programs (*.exe)"
 msgstr "Programlar"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
-#: progman.rc:84 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:84 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Tüm dosyalar (*.*)"
 
@@ -2286,11 +2286,11 @@ msgstr ""
 msgid "outline button"
 msgstr ""
 
-#: oleaut32.rc:27
+#: oleaut32.rc:27 oleview.rc:144
 msgid "True"
 msgstr "Doğru"
 
-#: oleaut32.rc:28
+#: oleaut32.rc:28 oleview.rc:145
 msgid "False"
 msgstr "Yanlış"
 
@@ -2806,8 +2806,9 @@ msgstr "Üstteki Sayfa"
 msgid "&u&b&d"
 msgstr ""
 
-#: shdocvw.rc:25 shell32.rc:99 notepad.rc:26 progman.rc:29 taskmgr.rc:35
-#: view.rc:28 winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
+#: shdocvw.rc:25 shell32.rc:99 notepad.rc:26 oleview.rc:27 oleview.rc:77
+#: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
+#: wordpad.rc:26
 msgid "&File"
 msgstr "&Dosya"
 
@@ -2856,12 +2857,12 @@ msgstr ""
 "#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
 "Ö&zellikler"
 
-#: shdocvw.rc:40 taskmgr.rc:140
+#: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:140
 msgid "&Close"
 msgstr "&Kapat"
 
-#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 taskmgr.rc:52 winefile.rc:76
-#: wordpad.rc:66
+#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
+#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
 msgid "&View"
 msgstr "&Görünüm"
 
@@ -2893,8 +2894,8 @@ msgstr "&Sık Kullanılanlar"
 msgid "&Add to Favorites..."
 msgstr "Sık Ku&llanılanlara Ekle..."
 
-#: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 progman.rc:52 taskmgr.rc:87
-#: winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
+#: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
+#: taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
 #, fuzzy
 msgid "&Help"
 msgstr ""
@@ -2995,7 +2996,8 @@ msgstr "Kısayol O&luştur"
 msgid "&Rename"
 msgstr "&Yeniden Adlandır"
 
-#: shell32.rc:102 notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
+#: shell32.rc:102 notepad.rc:36 oleview.rc:35 view.rc:31 winhlp32.rc:34
+#: wordpad.rc:37
 #, fuzzy
 msgid "E&xit"
 msgstr ""
@@ -3069,7 +3071,7 @@ msgstr "Control Panel"
 msgid "Select"
 msgstr "Seç"
 
-#: shell32.rc:152
+#: shell32.rc:152 oleview.rc:99
 msgid "Open"
 msgstr "Aç"
 
@@ -5381,6 +5383,319 @@ msgid ""
 "Continue?"
 msgstr ""
 
+#: oleview.rc:29
+#, fuzzy
+msgid "&Bind to file..."
+msgstr "Sık Ku&llanılanlara Ekle..."
+
+#: oleview.rc:30
+msgid "&View TypeLib..."
+msgstr ""
+
+#: oleview.rc:32
+#, fuzzy
+msgid "&System Configuration..."
+msgstr "&Onaylama..."
+
+#: oleview.rc:33
+msgid "&Run the Registry Editor"
+msgstr ""
+
+#: oleview.rc:37
+#, fuzzy
+msgid "&Object"
+msgstr "Böyle Bir Nesne Yok"
+
+#: oleview.rc:39
+msgid "&CoCreateInstance Flag"
+msgstr ""
+
+#: oleview.rc:41
+msgid "CLSCTX_&INPROC_SERVER"
+msgstr ""
+
+#: oleview.rc:42
+msgid "CLSCTX_INPROC_&HANDLER"
+msgstr ""
+
+#: oleview.rc:43
+msgid "CLSCTX_&LOCAL_SERVER"
+msgstr ""
+
+#: oleview.rc:44
+msgid "CLSCTX_&REMOTE_SERVER"
+msgstr ""
+
+#: oleview.rc:47
+#, fuzzy
+msgid "View &Type information"
+msgstr "Bilgi"
+
+#: oleview.rc:49
+#, fuzzy
+msgid "Create &Instance"
+msgstr "Kısayol O&luştur"
+
+#: oleview.rc:50
+msgid "Create Instance &On..."
+msgstr ""
+
+#: oleview.rc:51
+msgid "&Release Instance"
+msgstr ""
+
+#: oleview.rc:53
+msgid "Copy C&LSID to clipboard"
+msgstr ""
+
+#: oleview.rc:54
+msgid "Copy &HTML object Tag to clipboard"
+msgstr ""
+
+#: oleview.rc:56
+#, fuzzy
+msgid "&View..."
+msgstr "&Yeni..."
+
+#: oleview.rc:60
+#, fuzzy
+msgid "&Expert mode"
+msgstr "&Uzman"
+
+#: oleview.rc:62
+msgid "&Hidden component categories"
+msgstr ""
+
+#: oleview.rc:64 oleview.rc:86 winefile.rc:100 wordpad.rc:68
+#, fuzzy
+msgid "&Toolbar"
+msgstr ""
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&Araç Çubuğu\n"
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&Toolbar"
+
+#: oleview.rc:65 oleview.rc:87 winefile.rc:102
+msgid "&Status Bar"
+msgstr "&Durum Çubuğu"
+
+#: oleview.rc:67 winefile.rc:127
+msgid "&Refresh\tF5"
+msgstr "Ye&nile\tF5"
+
+#: oleview.rc:71
+#, fuzzy
+msgid "&About OleView"
+msgstr "&Wine Hakkında"
+
+#: oleview.rc:79
+#, fuzzy
+msgid "&Save as..."
+msgstr "&Farklı Kaydet..."
+
+#: oleview.rc:84
+msgid "&Group by type kind"
+msgstr ""
+
+#: oleview.rc:93 oleview.rc:94
+#, fuzzy
+msgid "OleView"
+msgstr "&Görünüm"
+
+#: oleview.rc:98
+msgid "ITypeLib viewer"
+msgstr ""
+
+#: oleview.rc:95
+#, fuzzy
+msgid "Ready"
+msgstr "Salt-&okunur"
+
+#: oleview.rc:96
+msgid "OleView - OLE/COM Object Viewer"
+msgstr ""
+
+#: oleview.rc:97
+#, fuzzy
+msgid "version 1.0"
+msgstr ""
+"CMD Version %s\n"
+"\n"
+
+#: oleview.rc:100
+msgid "TypeLib files (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+msgstr ""
+
+#: oleview.rc:103
+msgid "Bind to file via a File Moniker"
+msgstr ""
+
+#: oleview.rc:104
+msgid "Open a TypeLib file and view the contents"
+msgstr ""
+
+#: oleview.rc:105
+msgid "Change machine wide Distributed COM settings"
+msgstr ""
+
+#: oleview.rc:106
+msgid "Run the Wine registry editor"
+msgstr ""
+
+#: oleview.rc:107
+msgid "Quit the application. Prompts to save changes"
+msgstr ""
+
+#: oleview.rc:108
+msgid "Create an instance of the selected object"
+msgstr ""
+
+#: oleview.rc:109
+msgid "Create an instance of the selected object on a specific machine"
+msgstr ""
+
+#: oleview.rc:110
+msgid "Release the currently selected object instance"
+msgstr ""
+
+#: oleview.rc:111
+msgid "Copy the GUID of the currently selected item to the clipboard"
+msgstr ""
+
+#: oleview.rc:112
+msgid "Display the viewer for the selected item"
+msgstr ""
+
+#: oleview.rc:117
+msgid "Toggle between expert and novice display mode"
+msgstr ""
+
+#: oleview.rc:118
+msgid ""
+"Toggle the display of component categories that are not meant to be visible"
+msgstr ""
+
+#: oleview.rc:119
+msgid "Show or hide the toolbar"
+msgstr ""
+
+#: oleview.rc:120
+msgid "Show or hide the status bar"
+msgstr ""
+
+#: oleview.rc:121
+msgid "Refresh all lists"
+msgstr ""
+
+#: oleview.rc:122
+#, fuzzy
+msgid "Display program information, version number and copyright"
+msgstr "Program bilgisi, sürüm numarası ve telif hakkını gösterir"
+
+#: oleview.rc:113
+msgid "Use CLSCTX_INPROC_SERVER when calling CoGetClassObject"
+msgstr ""
+
+#: oleview.rc:114
+msgid "Use CLSCTX_INPROC_HANDLER when calling CoGetClassObject"
+msgstr ""
+
+#: oleview.rc:115
+msgid "Use CLSCTX_LOCAL_SERVER when calling CoGetClassObject"
+msgstr ""
+
+#: oleview.rc:116
+msgid "Use CLSCTX_REMOTE_SERVER when calling CoGetClassObject"
+msgstr ""
+
+#: oleview.rc:128
+#, fuzzy
+msgid "ObjectClasses"
+msgstr "Nesne Sınıfı Modülleri Yok"
+
+#: oleview.rc:129
+msgid "Grouped by Component Category"
+msgstr ""
+
+#: oleview.rc:130
+#, fuzzy
+msgid "OLE 1.0 Objects"
+msgstr "Böyle Bir Nesne Yok"
+
+#: oleview.rc:131
+msgid "COM Library Objects"
+msgstr ""
+
+#: oleview.rc:132
+#, fuzzy
+msgid "All Objects"
+msgstr "Böyle Bir Nesne Yok"
+
+#: oleview.rc:133
+#, fuzzy
+msgid "Application IDs"
+msgstr "Seçenekler"
+
+#: oleview.rc:134
+msgid "Type Libraries"
+msgstr ""
+
+#: oleview.rc:135
+msgid "ver."
+msgstr ""
+
+#: oleview.rc:136
+msgid "Interfaces"
+msgstr ""
+
+#: oleview.rc:138
+msgid "Registry"
+msgstr ""
+
+#: oleview.rc:139
+msgid "Implementation"
+msgstr ""
+
+#: oleview.rc:140
+#, fuzzy
+msgid "Activation"
+msgstr "LAN Bağlantısı"
+
+#: oleview.rc:142
+msgid "CoGetClassObject failed."
+msgstr ""
+
+#: oleview.rc:143
+#, fuzzy
+msgid "Unknown error"
+msgstr "%s içinde bilinmeyen özellik"
+
+#: oleview.rc:146
+#, fuzzy
+msgid "bytes"
+msgstr "%ld bytes"
+
+#: oleview.rc:148
+msgid "LoadTypeLib( %s ) failed ($%x)"
+msgstr ""
+
+#: oleview.rc:149
+msgid "Inherited Interfaces"
+msgstr ""
+
+#: oleview.rc:124
+msgid "Save as an .IDL or .H file"
+msgstr ""
+
+#: oleview.rc:125
+#, fuzzy
+msgid "Close window"
+msgstr "&Pencere"
+
+#: oleview.rc:126
+msgid "Group typeinfos by kind"
+msgstr ""
+
 #: progman.rc:30
 msgid "&New..."
 msgstr "&Yeni..."
@@ -6601,22 +6916,9 @@ msgstr "&Onaylama..."
 msgid "Customize Tool&bar..."
 msgstr "Araç Çubuğunu &Özelleştir..."
 
-#: winefile.rc:100 wordpad.rc:68
-#, fuzzy
-msgid "&Toolbar"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Araç Çubuğu\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Toolbar"
-
 #: winefile.rc:101
 msgid "&Drivebar"
 msgstr "&Sürücü Çubuğu"
-
-#: winefile.rc:102
-msgid "&Status Bar"
-msgstr "&Durum Çubuğu"
 
 #: winefile.rc:104
 msgid "F&ull Screen\tCtrl+Shift+S"
@@ -6657,10 +6959,6 @@ msgstr "Otomatik Düzenle"
 #: winefile.rc:126
 msgid "Arrange &Symbols"
 msgstr "Simgeleri D&üzenle"
-
-#: winefile.rc:127
-msgid "&Refresh\tF5"
-msgstr "Ye&nile\tF5"
 
 #: winefile.rc:131
 msgid "&Help Topics\tF1"

@@ -60,7 +60,7 @@ msgid "Programs (*.exe)"
 msgstr "Programme (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
-#: progman.rc:84 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:84 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Alle Dateien (*.*)"
 
@@ -2278,11 +2278,11 @@ msgstr ""
 msgid "outline button"
 msgstr "Gliederung Schaltfläche"
 
-#: oleaut32.rc:27
+#: oleaut32.rc:27 oleview.rc:144
 msgid "True"
 msgstr "Wahr"
 
-#: oleaut32.rc:28
+#: oleaut32.rc:28 oleview.rc:145
 msgid "False"
 msgstr "Falsch"
 
@@ -2801,8 +2801,9 @@ msgstr "&w&bSeite &p"
 msgid "&u&b&d"
 msgstr "&u&b&d"
 
-#: shdocvw.rc:25 shell32.rc:99 notepad.rc:26 progman.rc:29 taskmgr.rc:35
-#: view.rc:28 winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
+#: shdocvw.rc:25 shell32.rc:99 notepad.rc:26 oleview.rc:27 oleview.rc:77
+#: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
+#: wordpad.rc:26
 msgid "&File"
 msgstr "&Datei"
 
@@ -2842,12 +2843,17 @@ msgstr "Seitenansi&cht"
 msgid "&Properties..."
 msgstr "Ei&genschaften..."
 
-#: shdocvw.rc:40 taskmgr.rc:140
+#: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:140
+#, fuzzy
 msgid "&Close"
-msgstr "&Beenden"
+msgstr ""
+"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
+"&Beenden\n"
+"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
+"&Schliessen"
 
-#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 taskmgr.rc:52 winefile.rc:76
-#: wordpad.rc:66
+#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
+#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
 msgid "&View"
 msgstr "&Ansicht"
 
@@ -2871,8 +2877,8 @@ msgstr "&Favoriten"
 msgid "&Add to Favorites..."
 msgstr "&Zu den Favoriten hinzufügen..."
 
-#: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 progman.rc:52 taskmgr.rc:87
-#: winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
+#: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
+#: taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
 msgid "&Help"
 msgstr "&Hilfe"
 
@@ -2967,7 +2973,8 @@ msgstr "&Verknüpfung erzeugen"
 msgid "&Rename"
 msgstr "&Umbenennen"
 
-#: shell32.rc:102 notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
+#: shell32.rc:102 notepad.rc:36 oleview.rc:35 view.rc:31 winhlp32.rc:34
+#: wordpad.rc:37
 msgid "E&xit"
 msgstr "&Beenden"
 
@@ -3031,7 +3038,7 @@ msgstr "Systemsteuerung"
 msgid "Select"
 msgstr "Auswählen"
 
-#: shell32.rc:152
+#: shell32.rc:152 oleview.rc:99
 msgid "Open"
 msgstr "Öffnen"
 
@@ -5407,6 +5414,299 @@ msgstr ""
 "Sie eine der Unicode-Optionen in der Liste.\n"
 "Möchten Sie fortfahren?"
 
+#: oleview.rc:29
+msgid "&Bind to file..."
+msgstr "An Datei b&inden..."
+
+#: oleview.rc:30
+msgid "&View TypeLib..."
+msgstr "&TypeLib anzeigen..."
+
+#: oleview.rc:32
+msgid "&System Configuration..."
+msgstr "&Systemkonfiguration..."
+
+#: oleview.rc:33
+msgid "&Run the Registry Editor"
+msgstr "&Registry-Editor ausführen"
+
+#: oleview.rc:37
+msgid "&Object"
+msgstr "&Objekt"
+
+#: oleview.rc:39
+msgid "&CoCreateInstance Flag"
+msgstr "&CoCreateInstance Flag"
+
+#: oleview.rc:41
+msgid "CLSCTX_&INPROC_SERVER"
+msgstr "CLSCTX_&INPROC_SERVER"
+
+#: oleview.rc:42
+msgid "CLSCTX_INPROC_&HANDLER"
+msgstr "CLSCTX_INPROC_&HANDLER"
+
+#: oleview.rc:43
+msgid "CLSCTX_&LOCAL_SERVER"
+msgstr "CLSCTX_&LOCAL_SERVER"
+
+#: oleview.rc:44
+msgid "CLSCTX_&REMOTE_SERVER"
+msgstr "CLSCTX_&REMOTE_SERVER"
+
+#: oleview.rc:47
+msgid "View &Type information"
+msgstr "&Typ-Informationen anzeigen"
+
+#: oleview.rc:49
+msgid "Create &Instance"
+msgstr "&Instanz erstellen"
+
+#: oleview.rc:50
+msgid "Create Instance &On..."
+msgstr "Instanz erstellen &auf..."
+
+#: oleview.rc:51
+msgid "&Release Instance"
+msgstr "Instanz &freigeben"
+
+#: oleview.rc:53
+msgid "Copy C&LSID to clipboard"
+msgstr "C&LSID in Zwischenablage kopieren"
+
+#: oleview.rc:54
+msgid "Copy &HTML object Tag to clipboard"
+msgstr "&HTML-object-Tag in Zwischenablage kopieren"
+
+#: oleview.rc:56
+msgid "&View..."
+msgstr "&Anzeigen..."
+
+#: oleview.rc:60
+msgid "&Expert mode"
+msgstr "&Expertenmodus"
+
+#: oleview.rc:62
+msgid "&Hidden component categories"
+msgstr "&Versteckte Komponenten-Kategorien"
+
+#: oleview.rc:64 oleview.rc:86 winefile.rc:100 wordpad.rc:68
+msgid "&Toolbar"
+msgstr "&Symbolleiste"
+
+#: oleview.rc:65 oleview.rc:87 winefile.rc:102
+#, fuzzy
+msgid "&Status Bar"
+msgstr ""
+"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
+"&Statusleiste\n"
+"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
+"S&tatusleiste"
+
+#: oleview.rc:67 winefile.rc:127
+msgid "&Refresh\tF5"
+msgstr "&Aktualisieren\tF5"
+
+#: oleview.rc:71
+msgid "&About OleView"
+msgstr "Ü&ber OleView"
+
+#: oleview.rc:79
+msgid "&Save as..."
+msgstr "&Speichern unter..."
+
+#: oleview.rc:84
+msgid "&Group by type kind"
+msgstr "Nach Typ-Art &gruppieren"
+
+#: oleview.rc:93 oleview.rc:94
+msgid "OleView"
+msgstr "OleView"
+
+#: oleview.rc:98
+msgid "ITypeLib viewer"
+msgstr "ITypeLib-Betrachter"
+
+#: oleview.rc:95
+msgid "Ready"
+msgstr "Bereit"
+
+#: oleview.rc:96
+msgid "OleView - OLE/COM Object Viewer"
+msgstr "OleView - OLE/COM Objektbetrachter"
+
+#: oleview.rc:97
+msgid "version 1.0"
+msgstr "Version 1.0"
+
+#: oleview.rc:100
+#, fuzzy
+msgid "TypeLib files (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+msgstr "TypeLib Dateien (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+
+#: oleview.rc:103
+msgid "Bind to file via a File Moniker"
+msgstr "An Datei via Datei-Moniker binden"
+
+#: oleview.rc:104
+msgid "Open a TypeLib file and view the contents"
+msgstr "TypeLib-Datei öffnen und Inhalt betrachten"
+
+#: oleview.rc:105
+msgid "Change machine wide Distributed COM settings"
+msgstr "Maschinenweite Distributed-COM-Einstellungen ändern"
+
+#: oleview.rc:106
+msgid "Run the Wine registry editor"
+msgstr "Wine-Registry-Editor ausführen"
+
+#: oleview.rc:107
+msgid "Quit the application. Prompts to save changes"
+msgstr "Anwendung beenden. Frag ob Änderungen zu speichern sind"
+
+#: oleview.rc:108
+msgid "Create an instance of the selected object"
+msgstr "Eine Instanz des ausgewählten Objekts erstellen"
+
+#: oleview.rc:109
+msgid "Create an instance of the selected object on a specific machine"
+msgstr ""
+"Eine Instanz des ausgewählten Objekts auf einer bestimmten Maschine erstellen"
+
+#: oleview.rc:110
+msgid "Release the currently selected object instance"
+msgstr "Ausgewählte Objekt-Instanz freigeben"
+
+#: oleview.rc:111
+msgid "Copy the GUID of the currently selected item to the clipboard"
+msgstr "GUID des ausgewählten Objekts in die Zwischenablage kopieren"
+
+#: oleview.rc:112
+msgid "Display the viewer for the selected item"
+msgstr "Betrachter für ausgewähltes Element anzeigen"
+
+#: oleview.rc:117
+msgid "Toggle between expert and novice display mode"
+msgstr "Zwischen einfachem und Experten-Modus umschalten"
+
+#: oleview.rc:118
+msgid ""
+"Toggle the display of component categories that are not meant to be visible"
+msgstr ""
+"Anzeige von nicht als sichtbar angedachten Komponenten-Kategorien umschalten"
+
+#: oleview.rc:119
+msgid "Show or hide the toolbar"
+msgstr "Symbolleiste zeigen oder verstecken"
+
+#: oleview.rc:120
+msgid "Show or hide the status bar"
+msgstr "Statusleiste zeigen oder verstecken"
+
+#: oleview.rc:121
+msgid "Refresh all lists"
+msgstr "Alle Listen aktualisieren"
+
+#: oleview.rc:122
+msgid "Display program information, version number and copyright"
+msgstr "Programm-Information, -Version und -Copyright anzeigen"
+
+#: oleview.rc:113
+msgid "Use CLSCTX_INPROC_SERVER when calling CoGetClassObject"
+msgstr "CLSCTX_INPROC_SERVER für Aufruf von CoGetClassObject benutzen"
+
+#: oleview.rc:114
+msgid "Use CLSCTX_INPROC_HANDLER when calling CoGetClassObject"
+msgstr "CLSCTX_INPROC_HANDLER für Aufruf von CoGetClassObject benutzen"
+
+#: oleview.rc:115
+msgid "Use CLSCTX_LOCAL_SERVER when calling CoGetClassObject"
+msgstr "CLSCTX_LOCAL_SERVER für Aufruf von CoGetClassObject benutzen"
+
+#: oleview.rc:116
+msgid "Use CLSCTX_REMOTE_SERVER when calling CoGetClassObject"
+msgstr "CLSCTX_REMOTE_SERVER für Aufruf von CoGetClassObject benutzen"
+
+#: oleview.rc:128
+msgid "ObjectClasses"
+msgstr "Objektklassen"
+
+#: oleview.rc:129
+msgid "Grouped by Component Category"
+msgstr "Nach Komponenten-Kategorie gruppiert"
+
+#: oleview.rc:130
+msgid "OLE 1.0 Objects"
+msgstr "OLE-1.0-Objekte"
+
+#: oleview.rc:131
+msgid "COM Library Objects"
+msgstr "COM-Bibliotheks-Objekte"
+
+#: oleview.rc:132
+msgid "All Objects"
+msgstr "Alle Objekte"
+
+#: oleview.rc:133
+msgid "Application IDs"
+msgstr "Anwendungs-IDs"
+
+#: oleview.rc:134
+msgid "Type Libraries"
+msgstr "Typbibliotheken"
+
+#: oleview.rc:135
+msgid "ver."
+msgstr "Ver."
+
+#: oleview.rc:136
+msgid "Interfaces"
+msgstr "Schnittstellen"
+
+#: oleview.rc:138
+msgid "Registry"
+msgstr "Registrierung"
+
+#: oleview.rc:139
+msgid "Implementation"
+msgstr "Implementierung"
+
+#: oleview.rc:140
+msgid "Activation"
+msgstr "Aktivierung"
+
+#: oleview.rc:142
+msgid "CoGetClassObject failed."
+msgstr "CoGetClassObject fehlgeschlagen."
+
+#: oleview.rc:143
+msgid "Unknown error"
+msgstr "Unbekannter Fehler"
+
+#: oleview.rc:146
+msgid "bytes"
+msgstr "Bytes"
+
+#: oleview.rc:148
+msgid "LoadTypeLib( %s ) failed ($%x)"
+msgstr "LoadTypeLib( %s ) fehlgeschlagen ($%x)"
+
+#: oleview.rc:149
+msgid "Inherited Interfaces"
+msgstr "Ererbte Schnittstellen"
+
+#: oleview.rc:124
+msgid "Save as an .IDL or .H file"
+msgstr "Als eine .IDL- oder .H-Datei speichern"
+
+#: oleview.rc:125
+msgid "Close window"
+msgstr "Fenster schliessen"
+
+#: oleview.rc:126
+msgid "Group typeinfos by kind"
+msgstr "Typ-Informationen nach Art gruppieren"
+
 #: progman.rc:30
 msgid "&New..."
 msgstr "&Neu..."
@@ -6641,17 +6941,9 @@ msgstr "&Bestätigen..."
 msgid "Customize Tool&bar..."
 msgstr "Symbolleiste &definieren..."
 
-#: winefile.rc:100 wordpad.rc:68
-msgid "&Toolbar"
-msgstr "&Symbolleiste"
-
 #: winefile.rc:101
 msgid "&Drivebar"
 msgstr "Lauf&werkleiste"
-
-#: winefile.rc:102
-msgid "&Status Bar"
-msgstr "&Statusleiste"
 
 #: winefile.rc:104
 msgid "F&ull Screen\tCtrl+Shift+S"
@@ -6692,10 +6984,6 @@ msgstr "au&tomatisch anordnen"
 #: winefile.rc:126
 msgid "Arrange &Symbols"
 msgstr "&Symbole anordnen"
-
-#: winefile.rc:127
-msgid "&Refresh\tF5"
-msgstr "&Aktualisieren\tF5"
 
 #: winefile.rc:131
 msgid "&Help Topics\tF1"

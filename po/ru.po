@@ -65,7 +65,7 @@ msgid "Programs (*.exe)"
 msgstr "Программы (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
-#: progman.rc:84 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:84 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Все файлы (*.*)"
 
@@ -2293,11 +2293,11 @@ msgstr ""
 msgid "outline button"
 msgstr ""
 
-#: oleaut32.rc:27
+#: oleaut32.rc:27 oleview.rc:144
 msgid "True"
 msgstr "Правда"
 
-#: oleaut32.rc:28
+#: oleaut32.rc:28 oleview.rc:145
 msgid "False"
 msgstr "Ложь"
 
@@ -2819,8 +2819,9 @@ msgstr "&w&bСтраница &p"
 msgid "&u&b&d"
 msgstr "&u&b&d"
 
-#: shdocvw.rc:25 shell32.rc:99 notepad.rc:26 progman.rc:29 taskmgr.rc:35
-#: view.rc:28 winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
+#: shdocvw.rc:25 shell32.rc:99 notepad.rc:26 oleview.rc:27 oleview.rc:77
+#: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
+#: wordpad.rc:26
 msgid "&File"
 msgstr "&Файл"
 
@@ -2869,12 +2870,12 @@ msgstr ""
 "#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
 "Сво&йства"
 
-#: shdocvw.rc:40 taskmgr.rc:140
+#: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:140
 msgid "&Close"
 msgstr "&Закрыть"
 
-#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 taskmgr.rc:52 winefile.rc:76
-#: wordpad.rc:66
+#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
+#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
 #, fuzzy
 msgid "&View"
 msgstr ""
@@ -2911,10 +2912,15 @@ msgstr "&Избранное"
 msgid "&Add to Favorites..."
 msgstr "Добавить в &избранное"
 
-#: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 progman.rc:52 taskmgr.rc:87
-#: winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
+#: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
+#: taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
+#, fuzzy
 msgid "&Help"
-msgstr "&Справка"
+msgstr ""
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"&Справка\n"
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"&Помощь"
 
 #: shdocvw.rc:57
 #, fuzzy
@@ -3018,9 +3024,15 @@ msgstr "Создать &ярлык"
 msgid "&Rename"
 msgstr "Переи&меновать"
 
-#: shell32.rc:102 notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
+#: shell32.rc:102 notepad.rc:36 oleview.rc:35 view.rc:31 winhlp32.rc:34
+#: wordpad.rc:37
+#, fuzzy
 msgid "E&xit"
-msgstr "В&ыход"
+msgstr ""
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"В&ыход\n"
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"&Выход"
 
 #: shell32.rc:115
 msgid "&About Control Panel..."
@@ -3082,9 +3094,14 @@ msgstr "Панель Управления"
 msgid "Select"
 msgstr "&Выбрать"
 
-#: shell32.rc:152
+#: shell32.rc:152 oleview.rc:99
+#, fuzzy
 msgid "Open"
-msgstr "&Открыть"
+msgstr ""
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"&Открыть\n"
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"Открыть"
 
 #: shell32.rc:173
 msgid "Restart"
@@ -5434,6 +5451,303 @@ msgstr ""
 "один из вариантов сохранения в формате Юникод.\n"
 "Продолжить?"
 
+#: oleview.rc:29
+msgid "&Bind to file..."
+msgstr "П&ривязать к файлу..."
+
+#: oleview.rc:30
+msgid "&View TypeLib..."
+msgstr "&Просмотр TypeLib..."
+
+#: oleview.rc:32
+msgid "&System Configuration..."
+msgstr "&Конфигурация системы..."
+
+#: oleview.rc:33
+msgid "&Run the Registry Editor"
+msgstr "&Запустить Редактор реестра"
+
+#: oleview.rc:37
+msgid "&Object"
+msgstr "&Обьект"
+
+#: oleview.rc:39
+msgid "&CoCreateInstance Flag"
+msgstr "&CoCreateInstance Flag"
+
+#: oleview.rc:41
+msgid "CLSCTX_&INPROC_SERVER"
+msgstr "CLSCTX_&INPROC_SERVER"
+
+#: oleview.rc:42
+msgid "CLSCTX_INPROC_&HANDLER"
+msgstr "CLSCTX_INPROC_&HANDLER"
+
+#: oleview.rc:43
+msgid "CLSCTX_&LOCAL_SERVER"
+msgstr "CLSCTX_&LOCAL_SERVER"
+
+#: oleview.rc:44
+msgid "CLSCTX_&REMOTE_SERVER"
+msgstr "CLSCTX_&REMOTE_SERVER"
+
+#: oleview.rc:47
+msgid "View &Type information"
+msgstr "Просмотр &информации о типе"
+
+#: oleview.rc:49
+msgid "Create &Instance"
+msgstr "Создать &Экземпляр"
+
+#: oleview.rc:50
+msgid "Create Instance &On..."
+msgstr "Создать Экземпляр &на..."
+
+#: oleview.rc:51
+msgid "&Release Instance"
+msgstr "&Удалить Экземпляр"
+
+#: oleview.rc:53
+msgid "Copy C&LSID to clipboard"
+msgstr "Копировать C&LSID в буфер"
+
+#: oleview.rc:54
+msgid "Copy &HTML object Tag to clipboard"
+msgstr "Копировать &HTML object Tag в буфер"
+
+#: oleview.rc:56
+msgid "&View..."
+msgstr "&Вид..."
+
+#: oleview.rc:60
+msgid "&Expert mode"
+msgstr "&Режим эксперта"
+
+#: oleview.rc:62
+msgid "&Hidden component categories"
+msgstr "&Скрытые категории компонентов"
+
+#: oleview.rc:64 oleview.rc:86 winefile.rc:100 wordpad.rc:68
+#, fuzzy
+msgid "&Toolbar"
+msgstr ""
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"&Панель инструментов\n"
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"Панель &инструментов"
+
+#: oleview.rc:65 oleview.rc:87 winefile.rc:102
+msgid "&Status Bar"
+msgstr "&Строка состояния"
+
+#: oleview.rc:67 winefile.rc:127
+#, fuzzy
+msgid "&Refresh\tF5"
+msgstr ""
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"О&бновить\tF5\n"
+"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
+"&Обновить\tF5"
+
+#: oleview.rc:71
+msgid "&About OleView"
+msgstr "&О программе..."
+
+#: oleview.rc:79
+msgid "&Save as..."
+msgstr "&Сохранить как..."
+
+#: oleview.rc:84
+msgid "&Group by type kind"
+msgstr "&Группировать по типу"
+
+#: oleview.rc:93 oleview.rc:94
+msgid "OleView"
+msgstr "OleView"
+
+#: oleview.rc:98
+msgid "ITypeLib viewer"
+msgstr "ITypeLib viewer"
+
+#: oleview.rc:95
+msgid "Ready"
+msgstr "Готово"
+
+#: oleview.rc:96
+msgid "OleView - OLE/COM Object Viewer"
+msgstr "OleView - просмотрщик объектов OLE/COM"
+
+#: oleview.rc:97
+msgid "version 1.0"
+msgstr "версия 1.0"
+
+#: oleview.rc:100
+#, fuzzy
+msgid "TypeLib files (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+msgstr "Файлы TypeLib (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+
+#: oleview.rc:103
+msgid "Bind to file via a File Moniker"
+msgstr "Привязать к файлу через File Moniker"
+
+#: oleview.rc:104
+msgid "Open a TypeLib file and view the contents"
+msgstr "Открыть файл TypeLib и просмотреть содержимое"
+
+#: oleview.rc:105
+msgid "Change machine wide Distributed COM settings"
+msgstr "Изменить общесистемные настройки Distributed COM"
+
+#: oleview.rc:106
+msgid "Run the Wine registry editor"
+msgstr "Запустить Редактор реестра Wine"
+
+#: oleview.rc:107
+msgid "Quit the application. Prompts to save changes"
+msgstr "Выйти из приложения с предложением сохранить изменения"
+
+#: oleview.rc:108
+msgid "Create an instance of the selected object"
+msgstr "Создать экземпляр выбранного объекта"
+
+#: oleview.rc:109
+msgid "Create an instance of the selected object on a specific machine"
+msgstr "Создать экземпляр выбранного объекта на указанной машине"
+
+#: oleview.rc:110
+msgid "Release the currently selected object instance"
+msgstr "Удалить экземпляр выбранного объекта"
+
+#: oleview.rc:111
+msgid "Copy the GUID of the currently selected item to the clipboard"
+msgstr "Копировать GUID выделенного элемента в буфер"
+
+#: oleview.rc:112
+msgid "Display the viewer for the selected item"
+msgstr "Открыть просмотр для выбранного пункта"
+
+#: oleview.rc:117
+msgid "Toggle between expert and novice display mode"
+msgstr "Переключиться между режимом эксперт/новичок"
+
+#: oleview.rc:118
+msgid ""
+"Toggle the display of component categories that are not meant to be visible"
+msgstr ""
+"Переключить отображение категорий компонентов, которые не должны быть видимы"
+
+#: oleview.rc:119
+msgid "Show or hide the toolbar"
+msgstr "Показать/скрыть панель инструментов"
+
+#: oleview.rc:120
+msgid "Show or hide the status bar"
+msgstr "Показать/скрыть строку состояния"
+
+#: oleview.rc:121
+msgid "Refresh all lists"
+msgstr "Обновить все списки"
+
+#: oleview.rc:122
+msgid "Display program information, version number and copyright"
+msgstr "Отобразить информацию о программе, номер версии и копирайт"
+
+#: oleview.rc:113
+msgid "Use CLSCTX_INPROC_SERVER when calling CoGetClassObject"
+msgstr "Использовать CLSCTX_INPROC_SERVER при вызове CoGetClassObject"
+
+#: oleview.rc:114
+msgid "Use CLSCTX_INPROC_HANDLER when calling CoGetClassObject"
+msgstr "Использовать CLSCTX_INPROC_HANDLER при вызове CoGetClassObject"
+
+#: oleview.rc:115
+msgid "Use CLSCTX_LOCAL_SERVER when calling CoGetClassObject"
+msgstr "Использовать CLSCTX_LOCAL_SERVER при вызове CoGetClassObject"
+
+#: oleview.rc:116
+msgid "Use CLSCTX_REMOTE_SERVER when calling CoGetClassObject"
+msgstr "Использовать CLSCTX_REMOTE_SERVER при вызове CoGetClassObject"
+
+#: oleview.rc:128
+msgid "ObjectClasses"
+msgstr "ObjectClasses"
+
+#: oleview.rc:129
+msgid "Grouped by Component Category"
+msgstr "Grouped by Component Category"
+
+#: oleview.rc:130
+msgid "OLE 1.0 Objects"
+msgstr "Объекты OLE 1.0"
+
+#: oleview.rc:131
+msgid "COM Library Objects"
+msgstr "Объекты библиотеки COM"
+
+#: oleview.rc:132
+msgid "All Objects"
+msgstr "Все объекты"
+
+#: oleview.rc:133
+msgid "Application IDs"
+msgstr "ID приложения"
+
+#: oleview.rc:134
+msgid "Type Libraries"
+msgstr "Type Libraries"
+
+#: oleview.rc:135
+msgid "ver."
+msgstr "вер."
+
+#: oleview.rc:136
+msgid "Interfaces"
+msgstr "Интерфейсы"
+
+#: oleview.rc:138
+msgid "Registry"
+msgstr "Реестр"
+
+#: oleview.rc:139
+msgid "Implementation"
+msgstr "Implementation"
+
+#: oleview.rc:140
+msgid "Activation"
+msgstr "Activation"
+
+#: oleview.rc:142
+msgid "CoGetClassObject failed."
+msgstr "CoGetClassObject завершилась наудачно."
+
+#: oleview.rc:143
+msgid "Unknown error"
+msgstr "Неизвестная ошибка"
+
+#: oleview.rc:146
+msgid "bytes"
+msgstr "байт"
+
+#: oleview.rc:148
+msgid "LoadTypeLib( %s ) failed ($%x)"
+msgstr "LoadTypeLib( %s ) failed ($%x)"
+
+#: oleview.rc:149
+msgid "Inherited Interfaces"
+msgstr "Inherited Interfaces"
+
+#: oleview.rc:124
+msgid "Save as an .IDL or .H file"
+msgstr "Сохранить как .IDL или .H файл"
+
+#: oleview.rc:125
+msgid "Close window"
+msgstr "Закрыть окно"
+
+#: oleview.rc:126
+msgid "Group typeinfos by kind"
+msgstr "Group typeinfos by kind"
+
 #: progman.rc:30
 msgid "&New..."
 msgstr "&Создать"
@@ -6694,22 +7008,9 @@ msgstr "Под&тверждения..."
 msgid "Customize Tool&bar..."
 msgstr "&Настроить панель инструментов..."
 
-#: winefile.rc:100 wordpad.rc:68
-#, fuzzy
-msgid "&Toolbar"
-msgstr ""
-"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
-"&Панель инструментов\n"
-"#-#-#-#-#  ru.po (Wine)  #-#-#-#-#\n"
-"Панель &инструментов"
-
 #: winefile.rc:101
 msgid "&Drivebar"
 msgstr "Панель &дисков"
-
-#: winefile.rc:102
-msgid "&Status Bar"
-msgstr "&Строка состояния"
 
 #: winefile.rc:104
 msgid "F&ull Screen\tCtrl+Shift+S"
@@ -6750,10 +7051,6 @@ msgstr "Расположить &автоматически"
 #: winefile.rc:126
 msgid "Arrange &Symbols"
 msgstr "&Расположить"
-
-#: winefile.rc:127
-msgid "&Refresh\tF5"
-msgstr "О&бновить\tF5"
 
 #: winefile.rc:131
 msgid "&Help Topics\tF1"

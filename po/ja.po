@@ -62,7 +62,7 @@ msgid "Programs (*.exe)"
 msgstr "プログラム(*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
-#: progman.rc:84 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:84 winhlp32.rc:102
 #, fuzzy
 msgid "All files (*.*)"
 msgstr ""
@@ -2272,11 +2272,11 @@ msgstr ""
 msgid "outline button"
 msgstr ""
 
-#: oleaut32.rc:27
+#: oleaut32.rc:27 oleview.rc:144
 msgid "True"
 msgstr ""
 
-#: oleaut32.rc:28
+#: oleaut32.rc:28 oleview.rc:145
 msgid "False"
 msgstr ""
 
@@ -2766,8 +2766,9 @@ msgstr "&w&b&pページ"
 msgid "&u&b&d"
 msgstr "&u&b&d"
 
-#: shdocvw.rc:25 shell32.rc:99 notepad.rc:26 progman.rc:29 taskmgr.rc:35
-#: view.rc:28 winefile.rc:25 winhlp32.rc:28 wordpad.rc:26
+#: shdocvw.rc:25 shell32.rc:99 notepad.rc:26 oleview.rc:27 oleview.rc:77
+#: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
+#: wordpad.rc:26
 msgid "&File"
 msgstr "ファイル(&F)"
 
@@ -2812,12 +2813,12 @@ msgstr "印刷プレビュー(&W)..."
 msgid "&Properties..."
 msgstr "プロパティ(&P)"
 
-#: shdocvw.rc:40 taskmgr.rc:140
+#: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:140
 msgid "&Close"
 msgstr "閉じる(&C)"
 
-#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 taskmgr.rc:52 winefile.rc:76
-#: wordpad.rc:66
+#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
+#: taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
 msgid "&View"
 msgstr "表示(&V)"
 
@@ -2846,8 +2847,8 @@ msgstr "お気に入り(&I)"
 msgid "&Add to Favorites..."
 msgstr "お気に入りに追加(&F)..."
 
-#: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 progman.rc:52 taskmgr.rc:87
-#: winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
+#: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
+#: taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
 msgid "&Help"
 msgstr "ヘルプ(&H)"
 
@@ -2954,7 +2955,8 @@ msgstr "ショートカットの作成(&L)"
 msgid "&Rename"
 msgstr "名前の変更(&R)"
 
-#: shell32.rc:102 notepad.rc:36 view.rc:31 winhlp32.rc:34 wordpad.rc:37
+#: shell32.rc:102 notepad.rc:36 oleview.rc:35 view.rc:31 winhlp32.rc:34
+#: wordpad.rc:37
 msgid "E&xit"
 msgstr "終了(&X)"
 
@@ -3023,7 +3025,7 @@ msgstr "コントロール パネル"
 msgid "Select"
 msgstr "選択"
 
-#: shell32.rc:152
+#: shell32.rc:152 oleview.rc:99
 msgid "Open"
 msgstr "開く"
 
@@ -5343,6 +5345,302 @@ msgstr ""
 "Unicode のいずれかを選択してください。\n"
 "続行しますか?"
 
+#: oleview.rc:29
+msgid "&Bind to file..."
+msgstr "ファイルにバインド(&B)..."
+
+#: oleview.rc:30
+msgid "&View TypeLib..."
+msgstr "TypeLib の表示(&V)..."
+
+#: oleview.rc:32
+msgid "&System Configuration..."
+msgstr "システム設定(&S)..."
+
+#: oleview.rc:33
+msgid "&Run the Registry Editor"
+msgstr "レジストリ エディタの実行(&R)"
+
+#: oleview.rc:37
+msgid "&Object"
+msgstr "オブジェクト(&O)"
+
+#: oleview.rc:39
+msgid "&CoCreateInstance Flag"
+msgstr "&CoCreateInstance フラグ"
+
+#: oleview.rc:41
+msgid "CLSCTX_&INPROC_SERVER"
+msgstr "CLSCTX_&INPROC_SERVER"
+
+#: oleview.rc:42
+msgid "CLSCTX_INPROC_&HANDLER"
+msgstr "CLSCTX_INPROC_&HANDLER"
+
+#: oleview.rc:43
+msgid "CLSCTX_&LOCAL_SERVER"
+msgstr "CLSCTX_&LOCAL_SERVER"
+
+#: oleview.rc:44
+msgid "CLSCTX_&REMOTE_SERVER"
+msgstr "CLSCTX_&REMOTE_SERVER"
+
+#: oleview.rc:47
+msgid "View &Type information"
+msgstr "タイプ情報の表示(&T)"
+
+#: oleview.rc:49
+msgid "Create &Instance"
+msgstr "インスタンスの作成(&I)"
+
+#: oleview.rc:50
+msgid "Create Instance &On..."
+msgstr "Create Instance &On..."
+
+#: oleview.rc:51
+msgid "&Release Instance"
+msgstr "インスタンスの開放(&R)"
+
+#: oleview.rc:53
+msgid "Copy C&LSID to clipboard"
+msgstr "C&LSID をクリップボードにコピー"
+
+#: oleview.rc:54
+msgid "Copy &HTML object Tag to clipboard"
+msgstr "&HTML オブジェクト タグをクリップボードにコピー"
+
+#: oleview.rc:56
+msgid "&View..."
+msgstr "表示(&V)..."
+
+#: oleview.rc:60
+msgid "&Expert mode"
+msgstr "上級モード(&E)"
+
+#: oleview.rc:62
+msgid "&Hidden component categories"
+msgstr "隠されたコンポーネントのカテゴリ(&H)"
+
+#: oleview.rc:64 oleview.rc:86 winefile.rc:100 wordpad.rc:68
+#, fuzzy
+msgid "&Toolbar"
+msgstr ""
+"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
+"ツールバー(&T)\n"
+"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
+"ツール バー(&T)"
+
+#: oleview.rc:65 oleview.rc:87 winefile.rc:102
+#, fuzzy
+msgid "&Status Bar"
+msgstr ""
+"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
+"ステータスバー(&S)\n"
+"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
+"ステータス バー(&S)"
+
+#: oleview.rc:67 winefile.rc:127
+msgid "&Refresh\tF5"
+msgstr "更新(&R)\tF5"
+
+#: oleview.rc:71
+msgid "&About OleView"
+msgstr "OleView について(&A)"
+
+#: oleview.rc:79
+msgid "&Save as..."
+msgstr "名前を付けて保存(&S)..."
+
+#: oleview.rc:84
+msgid "&Group by type kind"
+msgstr "タイプの種類で分類(&G)"
+
+#: oleview.rc:93 oleview.rc:94
+msgid "OleView"
+msgstr "OleView"
+
+#: oleview.rc:98
+msgid "ITypeLib viewer"
+msgstr "ITypeLib ビュアー"
+
+#: oleview.rc:95
+msgid "Ready"
+msgstr "待機中"
+
+#: oleview.rc:96
+msgid "OleView - OLE/COM Object Viewer"
+msgstr "OleView - OLE/COM オブジェクト ビュアー"
+
+#: oleview.rc:97
+msgid "version 1.0"
+msgstr "バージョン 1.0"
+
+#: oleview.rc:100
+#, fuzzy
+msgid "TypeLib files (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+msgstr "TypeLib ファイル (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+
+#: oleview.rc:103
+msgid "Bind to file via a File Moniker"
+msgstr "File Moniker を通じてファイルにバインドします"
+
+#: oleview.rc:104
+msgid "Open a TypeLib file and view the contents"
+msgstr "TypeLib ファイルを開いて中身を表示します"
+
+#: oleview.rc:105
+msgid "Change machine wide Distributed COM settings"
+msgstr "マシン全体の分散 COM の設定を変更します"
+
+#: oleview.rc:106
+msgid "Run the Wine registry editor"
+msgstr "Wine レジストリ エディタを実行します"
+
+#: oleview.rc:107
+msgid "Quit the application. Prompts to save changes"
+msgstr "アプリケーションを終了します。変更を保存するように促します"
+
+#: oleview.rc:108
+msgid "Create an instance of the selected object"
+msgstr "選択されたオブジェクトのインスタンスを作成します"
+
+#: oleview.rc:109
+msgid "Create an instance of the selected object on a specific machine"
+msgstr "特定のマシン上の選択されたオブジェクトのインスタンスを作成します"
+
+#: oleview.rc:110
+msgid "Release the currently selected object instance"
+msgstr "現在選択されたオブジェクトのインスタンスを開放します"
+
+#: oleview.rc:111
+msgid "Copy the GUID of the currently selected item to the clipboard"
+msgstr "現在選択された項目の GUID をクリップボードにコピーします"
+
+#: oleview.rc:112
+msgid "Display the viewer for the selected item"
+msgstr "選択された項目のビュアーを表示します"
+
+#: oleview.rc:117
+msgid "Toggle between expert and novice display mode"
+msgstr "上級と初級表示モードを切り替えます"
+
+#: oleview.rc:118
+msgid ""
+"Toggle the display of component categories that are not meant to be visible"
+msgstr "表示するようになっていないコンポーネントのカテゴリの表示を切り替えます"
+
+#: oleview.rc:119
+msgid "Show or hide the toolbar"
+msgstr "ツール バーの表示/非表示を切り替えます"
+
+#: oleview.rc:120
+msgid "Show or hide the status bar"
+msgstr "ステータス バーの表示/非表示を切り替えます"
+
+#: oleview.rc:121
+msgid "Refresh all lists"
+msgstr "すべてのリストを更新します"
+
+#: oleview.rc:122
+msgid "Display program information, version number and copyright"
+msgstr "プログラム情報、バージョン番号と著作権を表示します"
+
+#: oleview.rc:113
+msgid "Use CLSCTX_INPROC_SERVER when calling CoGetClassObject"
+msgstr "CoGetClassObject を呼ぶときに CLSCTX_INPROC_SERVER を使います"
+
+#: oleview.rc:114
+msgid "Use CLSCTX_INPROC_HANDLER when calling CoGetClassObject"
+msgstr "CoGetClassObject を呼ぶときに CLSCTX_INPROC_HANDLER を使います"
+
+#: oleview.rc:115
+msgid "Use CLSCTX_LOCAL_SERVER when calling CoGetClassObject"
+msgstr "CoGetClassObject を呼ぶときに CLSCTX_LOCAL_SERVER を使います"
+
+#: oleview.rc:116
+msgid "Use CLSCTX_REMOTE_SERVER when calling CoGetClassObject"
+msgstr "CoGetClassObject を呼ぶときに CLSCTX_REMOTE_SERVER を使います"
+
+#: oleview.rc:128
+msgid "ObjectClasses"
+msgstr "ObjectClasses"
+
+#: oleview.rc:129
+msgid "Grouped by Component Category"
+msgstr "コンポーネントのカテゴリで分類"
+
+#: oleview.rc:130
+msgid "OLE 1.0 Objects"
+msgstr "OLE 1.0 オブジェクト"
+
+#: oleview.rc:131
+msgid "COM Library Objects"
+msgstr "COM ライブラリ オブジェクト"
+
+#: oleview.rc:132
+msgid "All Objects"
+msgstr "すべてのオブジェクト"
+
+#: oleview.rc:133
+msgid "Application IDs"
+msgstr "アプリケーション ID"
+
+#: oleview.rc:134
+msgid "Type Libraries"
+msgstr "タイプ ライブラリ"
+
+#: oleview.rc:135
+msgid "ver."
+msgstr "バージョン"
+
+#: oleview.rc:136
+msgid "Interfaces"
+msgstr "インターフェイス"
+
+#: oleview.rc:138
+msgid "Registry"
+msgstr "Registry"
+
+#: oleview.rc:139
+msgid "Implementation"
+msgstr "Implementation"
+
+#: oleview.rc:140
+msgid "Activation"
+msgstr "Activation"
+
+#: oleview.rc:142
+msgid "CoGetClassObject failed."
+msgstr "CoGetClassObject が失敗しました。"
+
+#: oleview.rc:143
+msgid "Unknown error"
+msgstr "不明なエラー"
+
+#: oleview.rc:146
+msgid "bytes"
+msgstr "バイト"
+
+#: oleview.rc:148
+msgid "LoadTypeLib( %s ) failed ($%x)"
+msgstr "LoadTypeLib( %s ) が失敗しました ($%x)"
+
+#: oleview.rc:149
+msgid "Inherited Interfaces"
+msgstr "継承されたインターフェイス"
+
+#: oleview.rc:124
+msgid "Save as an .IDL or .H file"
+msgstr ".IDL または .H ファイルとして保存します"
+
+#: oleview.rc:125
+msgid "Close window"
+msgstr "ウィンドウを閉じます"
+
+#: oleview.rc:126
+msgid "Group typeinfos by kind"
+msgstr "種類でタイプ情報を分類します"
+
 #: progman.rc:30
 msgid "&New..."
 msgstr ""
@@ -6561,17 +6859,9 @@ msgstr "確認(&C)..."
 msgid "Customize Tool&bar..."
 msgstr "ツールバーをカスタマイズ(&B)..."
 
-#: winefile.rc:100 wordpad.rc:68
-msgid "&Toolbar"
-msgstr "ツールバー(&T)"
-
 #: winefile.rc:101
 msgid "&Drivebar"
 msgstr "ドライブバー(&D)"
-
-#: winefile.rc:102
-msgid "&Status Bar"
-msgstr "ステータスバー(&S)"
 
 #: winefile.rc:104
 msgid "F&ull Screen\tCtrl+Shift+S"
@@ -6612,10 +6902,6 @@ msgstr "Arrange Automatically"
 #: winefile.rc:126
 msgid "Arrange &Symbols"
 msgstr "Arrange &Symbols"
-
-#: winefile.rc:127
-msgid "&Refresh\tF5"
-msgstr "更新(&R)\tF5"
 
 #: winefile.rc:131
 msgid "&Help Topics\tF1"
