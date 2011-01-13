@@ -102,7 +102,8 @@ STRINGTABLE
     IDS_ABOUTVER           "версія 1.0"
     IDS_TYPELIBTITLE       "ITypeLib viewer"
     IDS_OPEN               "Відкрити"
-    IDS_OPEN_TYPELIB_FILTER "Файли TypeLib (*.tlb;*.olb;*.dll;*.ocx;*.exe)\0*.tlb;*.olb;*.dll;*.ocx;*.exe\0Всі файли (*.*)\0*.*\0\0"
+    IDS_OPEN_FILTER_TYPELIB "Файли TypeLib (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+    IDS_OPEN_FILTER_ALL     "Всі файли (*.*)"
 
     IDM_BIND,              "Прив'язати до файлу через File Moniker"
     IDM_TYPELIB,           "Відкрити файл TypeLib і переглянути вміст"

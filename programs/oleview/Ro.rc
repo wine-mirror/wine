@@ -101,7 +101,8 @@ STRINGTABLE
     IDS_ABOUTVER           "versiunea 1.0"
     IDS_TYPELIBTITLE       "Vizualizator ITypeLib"
     IDS_OPEN               "Deschide"
-    IDS_OPEN_TYPELIB_FILTER "Fișiere TypeLib (*.tlb;*.olb;*.dll;*.ocx;*.exe)\\0*.tlb;*.olb;*.dll;*.ocx;*.exe\\0Toate fișierele (*.*)\\0*.*\\0\\0"
+    IDS_OPEN_FILTER_TYPELIB "Fișiere TypeLib (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+    IDS_OPEN_FILTER_ALL     "Toate fișierele (*.*)"
 
     IDM_BIND,              "Leagă la fișier printr-un File Moniker"
     IDM_TYPELIB,           "Deschide un fișier TypeLib și afișează conținutul"

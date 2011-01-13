@@ -19,6 +19,7 @@
  */
 
 #include "main.h"
+#include "wine/unicode.h"
 
 GLOBALS globals;
 static const WCHAR wszRegEdit[] = { '\\','r','e','g','e','d','i','t','.','e','x','e','\0' };
@@ -410,14 +411,17 @@ static int MenuCommand(WPARAM wParam, HWND hWnd)
             break;
         case IDM_TYPELIB:
             {
+            static const WCHAR filterW[] = {'%','s','%','c','*','.','t','l','b',';','*','.','o','l','b',';','*','.','d','l','l',';','*','.','o','c','x',';','*','.','e','x','e','%','c','%','s','%','c','*','.','*','%','c',0};
             OPENFILENAMEW ofn;
             static WCHAR wszTitle[MAX_LOAD_STRING];
             static WCHAR wszName[MAX_LOAD_STRING];
-            static WCHAR wszFilter[MAX_LOAD_STRING];
+            WCHAR filter_typelib[MAX_LOAD_STRING], filter_all[MAX_LOAD_STRING], filter[MAX_PATH];
 
             LoadStringW(globals.hMainInst, IDS_OPEN, wszTitle, sizeof(wszTitle)/sizeof(wszTitle[0]));
-            LoadStringW(globals.hMainInst, IDS_OPEN_TYPELIB_FILTER, wszFilter, sizeof(wszFilter)/sizeof(wszFilter[0]));
-            InitOpenFileName(hWnd, &ofn, wszFilter, wszTitle, wszName);
+            LoadStringW(globals.hMainInst, IDS_OPEN_FILTER_TYPELIB, filter_typelib, sizeof(filter_typelib)/sizeof(WCHAR));
+            LoadStringW(globals.hMainInst, IDS_OPEN_FILTER_ALL, filter_all, sizeof(filter_all)/sizeof(WCHAR));
+            snprintfW( filter, MAX_PATH, filterW, filter_typelib, 0, 0, filter_all, 0, 0 );
+            InitOpenFileName(hWnd, &ofn, filter, wszTitle, wszName);
             if(GetOpenFileNameW(&ofn)) CreateTypeLibWindow(globals.hMainInst, wszName);
             break;
             }

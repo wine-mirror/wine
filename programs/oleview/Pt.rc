@@ -176,7 +176,8 @@ STRINGTABLE
     IDS_ABOUTVER           "versão 1.0"
     IDS_TYPELIBTITLE       "Visualizador ITypeLib"
     IDS_OPEN               "Abrir"
-    IDS_OPEN_TYPELIB_FILTER "Arquivos TypeLib (*.tlb;*.olb;*.dll;*.ocx;*.exe)\0*.tlb;*.olb;*.dll;*.ocx;*.exe\0Todos os Ficheiros (*.*)\0*.*\0\0"
+    IDS_OPEN_FILTER_TYPELIB "Arquivos TypeLib (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+    IDS_OPEN_FILTER_ALL     "Todos os Ficheiros (*.*)"
 
     IDM_BIND,              "Juntar ao arquivo através de um File Moniker"
     IDM_TYPELIB,           "Abrir um arquivo TypeLib e ver o conteúdo"
@@ -238,7 +239,8 @@ STRINGTABLE
     IDS_ABOUTVER           "versão 1.0"
     IDS_TYPELIBTITLE       "Visualizador ITypeLib"
     IDS_OPEN               "Abrir"
-    IDS_OPEN_TYPELIB_FILTER "Ficheiros TypeLib (*.tlb;*.olb;*.dll;*.ocx;*.exe)\0*.tlb;*.olb;*.dll;*.ocx;*.exe\0Todos os Ficheiros (*.*)\0*.*\0\0"
+    IDS_OPEN_FILTER_TYPELIB "Ficheiros TypeLib (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+    IDS_OPEN_FILTER_ALL     "Todos os Ficheiros (*.*)"
 
     IDM_BIND,              "Juntar a ficheiro através de um File Moniker"
     IDM_TYPELIB,           "Abrir um ficheiro TypeLib e ver os conteúdos"

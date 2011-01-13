@@ -101,7 +101,8 @@ STRINGTABLE
     IDS_ABOUTVER           "版本 1.0"
     IDS_TYPELIBTITLE       "ITypeLib 查看器"
     IDS_OPEN               "打开"
-    IDS_OPEN_TYPELIB_FILTER "TypeLib 文件 (*.tlb;*.olb;*.dll;*.ocx;*.exe)\0*.tlb;*.olb;*.dll;*.ocx;*.exe\0All Files (*.*)\0*.*\0\0"
+    IDS_OPEN_FILTER_TYPELIB "TypeLib 文件 (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+    IDS_OPEN_FILTER_ALL     "All Files (*.*)"
 
     IDM_BIND,              "通过文件绰号绑定到文件"
     IDM_TYPELIB,           "打开 TypeLib 文件并查看内容"
@@ -294,7 +295,8 @@ STRINGTABLE
     IDS_ABOUTVER           "版本 1.0 "
     IDS_TYPELIBTITLE       "ITypeLib 查看器"
     IDS_OPEN               "開啟"
-    IDS_OPEN_TYPELIB_FILTER "TypeLib 檔案 (*.tlb;*.olb;*.dll;*.ocx;*.exe)\0*.tlb;*.olb;*.dll;*.ocx;*.exe\0All Files (*.*)\0*.*\0\0"
+    IDS_OPEN_FILTER_TYPELIB "TypeLib 檔案 (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+    IDS_OPEN_FILTER_ALL     "All Files (*.*)"
 
     IDM_BIND,              "通過檔案綽號綁定到檔案"
     IDM_TYPELIB,           "開啟 TypeLib 檔案並查看內容"

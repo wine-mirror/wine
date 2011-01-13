@@ -101,7 +101,8 @@ STRINGTABLE
     IDS_ABOUTVER           "גרסה 1.0"
     IDS_TYPELIBTITLE       "מציג ITypeLib"
     IDS_OPEN               "פתיחה"
-    IDS_OPEN_TYPELIB_FILTER "קובצי TypeLib (*.tlb;*.olb;*.dll;*.ocx;*.exe)‏\0*.tlb;*.olb;*.dll;*.ocx;*.exe\0כל הקבצים (*.*)‏\0*.*\0\0"
+    IDS_OPEN_FILTER_TYPELIB "קובצי TypeLib (*.tlb;*.olb;*.dll;*.ocx;*.exe)‏"
+    IDS_OPEN_FILTER_ALL     "כל הקבצים (*.*)‏"
 
     IDM_BIND,              "איגוד לקובץ באמצעות מכנה קבצים"
     IDM_TYPELIB,           "פתיחת קובץ TypeLib וצפייה בתכנים"

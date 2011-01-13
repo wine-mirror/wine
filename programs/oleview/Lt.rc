@@ -101,7 +101,8 @@ STRINGTABLE
     IDS_ABOUTVER           "versija 1.0"
     IDS_TYPELIBTITLE       "ITypeLib žiūryklė"
     IDS_OPEN               "Atverti"
-    IDS_OPEN_TYPELIB_FILTER "TypeLib failai (*.tlb;*.olb;*.dll;*.ocx;*.exe)\0*.tlb;*.olb;*.dll;*.ocx;*.exe\0Visi failai (*.*)\0*.*\0\0"
+    IDS_OPEN_FILTER_TYPELIB "TypeLib failai (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+    IDS_OPEN_FILTER_ALL     "Visi failai (*.*)"
 
     IDM_BIND,              "Susieti su failu per failo vardą"
     IDM_TYPELIB,           "Atverti TypeLib failą ir peržiūrėti jo turinį"

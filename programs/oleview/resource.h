@@ -33,7 +33,8 @@
 #define IDS_ABOUTVER               21
 
 #define IDS_OPEN                   30
-#define IDS_OPEN_TYPELIB_FILTER    31
+#define IDS_OPEN_FILTER_TYPELIB    31
+#define IDS_OPEN_FILTER_ALL        32
 
 #define IDM_BIND                   100
 #define IDM_TYPELIB                101
