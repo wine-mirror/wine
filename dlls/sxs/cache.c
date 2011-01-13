@@ -45,16 +45,21 @@ static inline WCHAR *strdupW( const WCHAR *s )
 
 struct cache
 {
-    const IAssemblyCacheVtbl *vtbl;
+    IAssemblyCache IAssemblyCache_iface;
     LONG refs;
 };
+
+static inline struct cache *impl_from_IAssemblyCache(IAssemblyCache *iface)
+{
+    return CONTAINING_RECORD(iface, struct cache, IAssemblyCache_iface);
+}
 
 static HRESULT WINAPI cache_QueryInterface(
     IAssemblyCache *iface,
     REFIID riid,
     void **obj )
 {
-    struct cache *cache = (struct cache *)iface;
+    struct cache *cache = impl_from_IAssemblyCache(iface);
 
     TRACE("%p, %s, %p\n", cache, debugstr_guid(riid), obj);
 
@@ -73,13 +78,13 @@ static HRESULT WINAPI cache_QueryInterface(
 
 static ULONG WINAPI cache_AddRef( IAssemblyCache *iface )
 {
-    struct cache *cache = (struct cache *)iface;
+    struct cache *cache = impl_from_IAssemblyCache(iface);
     return InterlockedIncrement( &cache->refs );
 }
 
 static ULONG WINAPI cache_Release( IAssemblyCache *iface )
 {
-    struct cache *cache = (struct cache *)iface;
+    struct cache *cache = impl_from_IAssemblyCache(iface);
     ULONG refs = InterlockedDecrement( &cache->refs );
 
     if (!refs)
@@ -605,9 +610,9 @@ HRESULT WINAPI CreateAssemblyCache( IAssemblyCache **obj, DWORD reserved )
     if (!cache)
         return E_OUTOFMEMORY;
 
-    cache->vtbl = &cache_vtbl;
+    cache->IAssemblyCache_iface.lpVtbl = &cache_vtbl;
     cache->refs = 1;
 
-    *obj = (IAssemblyCache *)cache;
+    *obj = &cache->IAssemblyCache_iface;
     return S_OK;
 }
