@@ -2592,6 +2592,15 @@ static void test_http_connection(void)
     CloseHandle(hThread);
 }
 
+static void release_cert_info(INTERNET_CERTIFICATE_INFOA *info)
+{
+    LocalFree(info->lpszSubjectInfo);
+    LocalFree(info->lpszIssuerInfo);
+    LocalFree(info->lpszProtocolName);
+    LocalFree(info->lpszSignatureAlgName);
+    LocalFree(info->lpszEncryptionAlgName);
+}
+
 static void test_secure_connection(void)
 {
     static const WCHAR gizmo5[] = {'G','i','z','m','o','5',0};
@@ -2627,6 +2636,7 @@ static void test_secure_connection(void)
     ret = InternetQueryOptionA(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,
                                NULL, &size);
     ok(ret || GetLastError() == ERROR_INSUFFICIENT_BUFFER, "InternetQueryOption failed: %d\n", GetLastError());
+    ok(size == sizeof(INTERNET_CERTIFICATE_INFOA), "size = %d\n", size);
     certificate_structA = HeapAlloc(GetProcessHeap(), 0, size);
     ret = InternetQueryOption(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,
                               certificate_structA, &size);
@@ -2646,6 +2656,7 @@ static void test_secure_connection(void)
         ok(!certificate_structA->lpszProtocolName,
            "unexpected protocol name\n");
         ok(certificate_structA->dwKeySize, "expected a non-zero key size\n");
+        release_cert_info(certificate_structA);
     }
     HeapFree(GetProcessHeap(), 0, certificate_structA);
 
@@ -2656,6 +2667,7 @@ static void test_secure_connection(void)
     ret = InternetQueryOptionW(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,
                                NULL, &size);
     ok(ret || GetLastError() == ERROR_INSUFFICIENT_BUFFER, "InternetQueryOption failed: %d\n", GetLastError());
+    ok(size == sizeof(INTERNET_CERTIFICATE_INFOW), "size = %d\n", size);
     certificate_structW = HeapAlloc(GetProcessHeap(), 0, size);
     ret = InternetQueryOption(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,
                               certificate_structW, &size);
@@ -2676,6 +2688,7 @@ static void test_secure_connection(void)
         ok(!certificate_structA->lpszProtocolName,
            "unexpected protocol name\n");
         ok(certificate_structA->dwKeySize, "expected a non-zero key size\n");
+        release_cert_info(certificate_structA);
     }
     HeapFree(GetProcessHeap(), 0, certificate_structW);
 
@@ -2707,6 +2720,7 @@ static void test_secure_connection(void)
     ret = InternetQueryOptionA(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,
                                NULL, &size);
     ok(ret || GetLastError() == ERROR_INSUFFICIENT_BUFFER, "InternetQueryOption failed: %d\n", GetLastError());
+    ok(size == sizeof(INTERNET_CERTIFICATE_INFOA), "size = %d\n", size);
     certificate_structA = HeapAlloc(GetProcessHeap(), 0, size);
     ret = InternetQueryOptionW(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,
                                certificate_structA, &size);
@@ -2726,6 +2740,7 @@ static void test_secure_connection(void)
         ok(!certificate_structA->lpszProtocolName,
            "unexpected protocol name\n");
         ok(certificate_structA->dwKeySize, "expected a non-zero key size\n");
+        release_cert_info(certificate_structA);
     }
     HeapFree(GetProcessHeap(), 0, certificate_structA);
 
@@ -2736,6 +2751,7 @@ static void test_secure_connection(void)
     ret = InternetQueryOptionW(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,
                                NULL, &size);
     ok(ret || GetLastError() == ERROR_INSUFFICIENT_BUFFER, "InternetQueryOption failed: %d\n", GetLastError());
+    ok(size == sizeof(INTERNET_CERTIFICATE_INFOW), "size = %d\n", size);
     certificate_structW = HeapAlloc(GetProcessHeap(), 0, size);
     ret = InternetQueryOptionW(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,
                                certificate_structW, &size);
@@ -2756,6 +2772,7 @@ static void test_secure_connection(void)
         ok(!certificate_structA->lpszProtocolName,
            "unexpected protocol name\n");
         ok(certificate_structA->dwKeySize, "expected a non-zero key size\n");
+        release_cert_info(certificate_structA);
     }
     HeapFree(GetProcessHeap(), 0, certificate_structW);
 
