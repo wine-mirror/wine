@@ -659,6 +659,9 @@
 /* Define to 1 if you have the `pwrite' function. */
 #undef HAVE_PWRITE
 
+/* Define to 1 if you have the <QuickTime/ImageCompression.h> header file. */
+#undef HAVE_QUICKTIME_IMAGECOMPRESSION_H
+
 /* Define to 1 if you have the `readdir' function. */
 #undef HAVE_READDIR
 

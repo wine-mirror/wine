@@ -379,6 +379,7 @@ AC_CHECK_HEADERS(\
 	IOKit/hid/IOHIDLib.h \
 	OpenAL/al.h \
 	OpenCL/opencl.h \
+	QuickTime/ImageCompression.h \
 	alias.h \
 	alsa/asoundlib.h \
 	arpa/inet.h \
@@ -700,7 +701,6 @@ case $host_os in
     AC_SUBST(SECURITYLIB,"-framework Security -framework CoreFoundation")
     AC_SUBST(COREFOUNDATIONLIB,"-framework CoreFoundation")
     AC_SUBST(IOKITLIB,"-framework IOKit -framework CoreFoundation")
-    AC_SUBST(QUICKTIMELIB,"-framework QuickTime -framework ApplicationServices -framework CoreVideo")
     AC_SUBST(APPLICATIONSERVICESLIB,"-framework ApplicationServices")
     AC_SUBST(LDEXECFLAGS,["-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00000000,-segaddr,WINE_SHAREDHEAP,0x7f000000"])
     if test "$ac_cv_header_DiskArbitration_DiskArbitration_h" = "yes"
@@ -731,12 +731,18 @@ case $host_os in
         AC_CHECK_FUNCS(IOHIDManagerCreate)
         LIBS="$ac_save_LIBS"
     fi
-    enable_wineqtdecoder=${enable_wineqtdecoder:-yes}
     case $host_cpu in
       *powerpc*)
         LDDLLFLAGS="$LDDLLFLAGS -read_only_relocs warning"  dnl FIXME
         ;;
     esac
+    if test "$ac_cv_header_QuickTime_ImageCompression_h" = "yes"
+    then
+        AC_SUBST(QUICKTIMELIB,"-framework QuickTime -framework ApplicationServices -framework CoreVideo")
+        enable_wineqtdecoder=${enable_wineqtdecoder:-yes}
+    else
+        WINE_NOTICE([QuickTime ${notice_platform}development files not found, video decoding won't be supported.])
+    fi
     dnl Enable quartz driver on Mac OS X
     if test "$ac_cv_header_Carbon_Carbon_h" = "yes"
     then
@@ -1471,7 +1477,7 @@ then
     fi
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
-WINE_NOTICE_WITH(gstreamer,[test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" != xyes],
+WINE_NOTICE_WITH(gstreamer,[test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" != xyes -a "x$ac_cv_header_QuickTime_ImageCompression_h" != xyes],
                  [gstreamer-0.10 base plugins ${notice_platform}development files not found, gstreamer support disabled])
 test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" = xyes || enable_winegstreamer=${enable_winegstreamer:-no}
 

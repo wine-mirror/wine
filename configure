@@ -653,13 +653,13 @@ CROSSCC
 CROSSTEST_DISABLE
 PRELINK
 CARBONLIB
+QUICKTIMELIB
 LIBOPENCL
 FRAMEWORK_OPENAL
 COREAUDIO
 DISKARBITRATIONLIB
 LDEXECFLAGS
 APPLICATIONSERVICESLIB
-QUICKTIMELIB
 IOKITLIB
 COREFOUNDATIONLIB
 SECURITYLIB
@@ -5772,6 +5772,7 @@ for ac_header in \
 	IOKit/hid/IOHIDLib.h \
 	OpenAL/al.h \
 	OpenCL/opencl.h \
+	QuickTime/ImageCompression.h \
 	alias.h \
 	alsa/asoundlib.h \
 	arpa/inet.h \
@@ -6513,8 +6514,6 @@ fi
 
     IOKITLIB="-framework IOKit -framework CoreFoundation"
 
-    QUICKTIMELIB="-framework QuickTime -framework ApplicationServices -framework CoreVideo"
-
     APPLICATIONSERVICESLIB="-framework ApplicationServices"
 
     LDEXECFLAGS="-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00000000,-segaddr,WINE_SHAREDHEAP,0x7f000000"
@@ -6563,11 +6562,18 @@ done
 
         LIBS="$ac_save_LIBS"
     fi
-    enable_wineqtdecoder=${enable_wineqtdecoder:-yes}
     case $host_cpu in
       *powerpc*)
         LDDLLFLAGS="$LDDLLFLAGS -read_only_relocs warning"          ;;
     esac
+    if test "$ac_cv_header_QuickTime_ImageCompression_h" = "yes"
+    then
+        QUICKTIMELIB="-framework QuickTime -framework ApplicationServices -framework CoreVideo"
+
+        enable_wineqtdecoder=${enable_wineqtdecoder:-yes}
+    else
+        as_fn_append wine_notices "|QuickTime ${notice_platform}development files not found, video decoding won't be supported."
+    fi
         if test "$ac_cv_header_Carbon_Carbon_h" = "yes"
     then
         CARBONLIB="-framework Carbon"
@@ -10865,7 +10871,7 @@ fi
     fi
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
-if test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" != xyes; then :
+if test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" != xyes -a "x$ac_cv_header_QuickTime_ImageCompression_h" != xyes; then :
   case "x$with_gstreamer" in
   x)   as_fn_append wine_notices "|gstreamer-0.10 base plugins ${notice_platform}development files not found, gstreamer support disabled" ;;
   xno) ;;
