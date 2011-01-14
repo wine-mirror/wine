@@ -708,16 +708,15 @@ typedef struct
 } tbsize_result_t;
 
 tbsize_result_t init_tbsize_result(int nButtonsAlloc, int cleft, int ctop, int cright, int cbottom, int minx, int miny) {
-    tbsize_result_t *temp;
+    tbsize_result_t ret;
 
-    temp = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(tbsize_result_t));
-    SetRect(&temp->rcClient, cleft, ctop, cright, cbottom);
-    temp->szMin.cx = minx;
-    temp->szMin.cy = miny;
-    temp->nButtons = 0;
-    temp->prcButtons = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nButtonsAlloc*sizeof(RECT));
+    SetRect(&ret.rcClient, cleft, ctop, cright, cbottom);
+    ret.szMin.cx = minx;
+    ret.szMin.cy = miny;
+    ret.nButtons = 0;
+    ret.prcButtons = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nButtonsAlloc*sizeof(RECT));
 
-    return *temp;
+    return ret;
 }
 
 void tbsize_addbutton(tbsize_result_t *tbsr, int left, int top, int right, int bottom) {
@@ -729,7 +728,7 @@ void tbsize_addbutton(tbsize_result_t *tbsr, int left, int top, int right, int b
 #define STRING1 "MMMMMMMMMMMMM"
 #define STRING2 "Tst"
 
-tbsize_result_t *tbsize_results = NULL;
+static tbsize_result_t *tbsize_results;
 
 #define tbsize_results_num 24
 
