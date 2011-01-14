@@ -301,6 +301,11 @@ static void po_xerror2( int severity, po_message_t message1,
 
 static const struct po_xerror_handler po_xerror_handler = { po_xerror, po_xerror2 };
 
+static int is_english( const language_t *lan )
+{
+    return lan->id == LANG_ENGLISH && lan->sub == SUBLANG_DEFAULT;
+}
+
 static char *convert_string_utf8( const string_t *str, int codepage )
 {
     string_t *newstr = convert_string( str, str_unicode, codepage );
@@ -371,7 +376,7 @@ static void add_po_string( po_file_t po, const string_t *msgid, const string_t *
     po_message_t msg;
     po_message_iterator_t iterator;
     int codepage;
-    char *id, *id_buffer, *context, *str_buffer = NULL;
+    char *id, *id_buffer, *context, *str = NULL, *str_buffer = NULL;
 
     if (!msgid->size) return;
 
@@ -383,13 +388,14 @@ static void add_po_string( po_file_t po, const string_t *msgid, const string_t *
         if (lang) codepage = get_language_codepage( lang->id, lang->sub );
         else codepage = get_language_codepage( 0, 0 );
         assert( codepage != -1 );
-        str_buffer = convert_string_utf8( msgstr, codepage );
+        str_buffer = str = convert_string_utf8( msgstr, codepage );
+        if (is_english( lang )) get_message_context( &str );
     }
     if (!(msg = find_message( po, id, context, &iterator )))
     {
         msg = po_message_create();
         po_message_set_msgid( msg, id );
-        po_message_set_msgstr( msg, str_buffer ? str_buffer : "" );
+        po_message_set_msgstr( msg, str ? str : "" );
         if (context) po_message_set_msgctxt( msg, context );
         po_message_insert( iterator, msg );
     }
@@ -629,11 +635,6 @@ static void add_po_menu( const resource_t *english, const resource_t *res )
     po_file_t po = get_po_file( res->res.men->lvc.language );
 
     add_po_menu_items( po, english_items, items, res->res.men->lvc.language );
-}
-
-static int is_english( const language_t *lan )
-{
-    return lan->id == LANG_ENGLISH && lan->sub == SUBLANG_DEFAULT;
 }
 
 static resource_t *find_english_resource( resource_t *res )
