@@ -42,17 +42,3 @@ FONT 8, "MS Sans Serif"
 BEGIN
     LTEXT   "A PESQUISAR... Por Favor Espere",IDC_STATIC,5,19,176,8, SS_CENTER
 END
-
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
-
-STRINGTABLE
-{
- 0 ""
- 1 "px"
- 2 "b"
- 3 "mm"
- 4 "dpi"
- 5 "%"
- 6 "µs"
-}

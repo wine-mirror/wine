@@ -2775,6 +2775,36 @@ msgstr "Непознат извор"
 msgid "the program which created it"
 msgstr "програм који га је направио"
 
+#: sane.rc:31
+msgctxt "unit: pixels"
+msgid "px"
+msgstr "px"
+
+#: sane.rc:32
+msgctxt "unit: bits"
+msgid "b"
+msgstr "b"
+
+#: sane.rc:33
+msgctxt "unit: millimeters"
+msgid "mm"
+msgstr "мм"
+
+#: sane.rc:34
+msgctxt "unit: dots/inch"
+msgid "dpi"
+msgstr "тпи"
+
+#: sane.rc:35
+msgctxt "unit: percent"
+msgid "%"
+msgstr "%"
+
+#: sane.rc:36
+msgctxt "unit: microseconds"
+msgid "us"
+msgstr "µс"
+
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
 msgstr "„%s“ датотека на %s је неопходна"

@@ -11,6 +11,7 @@ C_SRCS = \
 	ui.c
 
 RC_SRCS = \
+	sane.rc \
 	sane_Da.rc \
 	sane_De.rc \
 	sane_En.rc \
@@ -34,5 +35,7 @@ RC_SRCS = \
 	sane_Sv.rc \
 	sane_Uk.rc \
 	sane_Zh.rc
+
+PO_SRCS = sane.rc
 
 @MAKE_DLL_RULES@

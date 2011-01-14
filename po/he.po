@@ -2759,6 +2759,36 @@ msgstr "מקור לא ידוע"
 msgid "the program which created it"
 msgstr "התכנית שיצרה אותו"
 
+#: sane.rc:31
+msgctxt "unit: pixels"
+msgid "px"
+msgstr "פיקסלים"
+
+#: sane.rc:32
+msgctxt "unit: bits"
+msgid "b"
+msgstr "בתים"
+
+#: sane.rc:33
+msgctxt "unit: millimeters"
+msgid "mm"
+msgstr "מ״מ"
+
+#: sane.rc:34
+msgctxt "unit: dots/inch"
+msgid "dpi"
+msgstr "נק׳ לאינטש"
+
+#: sane.rc:35
+msgctxt "unit: percent"
+msgid "%"
+msgstr "%"
+
+#: sane.rc:36
+msgctxt "unit: microseconds"
+msgid "us"
+msgstr "מ״ש"
+
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
 msgstr "הקובץ '%s' שב־%s דרוש"

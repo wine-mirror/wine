@@ -2789,6 +2789,36 @@ msgstr "Nežinomas šaltinis"
 msgid "the program which created it"
 msgstr "programa, kuri jį sukūrė"
 
+#: sane.rc:31
+msgctxt "unit: pixels"
+msgid "px"
+msgstr "piks"
+
+#: sane.rc:32
+msgctxt "unit: bits"
+msgid "b"
+msgstr "b"
+
+#: sane.rc:33
+msgctxt "unit: millimeters"
+msgid "mm"
+msgstr "mm"
+
+#: sane.rc:34
+msgctxt "unit: dots/inch"
+msgid "dpi"
+msgstr "tašk./col."
+
+#: sane.rc:35
+msgctxt "unit: percent"
+msgid "%"
+msgstr "%"
+
+#: sane.rc:36
+msgctxt "unit: microseconds"
+msgid "us"
+msgstr "µs"
+
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
 msgstr "Reikalingas failas „%s“ esantis %s"

@@ -2761,6 +2761,36 @@ msgstr "不明来源"
 msgid "the program which created it"
 msgstr "不明应用程序"
 
+#: sane.rc:31
+msgctxt "unit: pixels"
+msgid "px"
+msgstr "px"
+
+#: sane.rc:32
+msgctxt "unit: bits"
+msgid "b"
+msgstr "b"
+
+#: sane.rc:33
+msgctxt "unit: millimeters"
+msgid "mm"
+msgstr "mm"
+
+#: sane.rc:34
+msgctxt "unit: dots/inch"
+msgid "dpi"
+msgstr "dpi"
+
+#: sane.rc:35
+msgctxt "unit: percent"
+msgid "%"
+msgstr "%"
+
+#: sane.rc:36
+msgctxt "unit: microseconds"
+msgid "us"
+msgstr "µs"
+
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
 msgstr ""

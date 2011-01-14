@@ -2659,6 +2659,36 @@ msgstr ""
 msgid "the program which created it"
 msgstr ""
 
+#: sane.rc:31
+msgctxt "unit: pixels"
+msgid "px"
+msgstr ""
+
+#: sane.rc:32
+msgctxt "unit: bits"
+msgid "b"
+msgstr ""
+
+#: sane.rc:33
+msgctxt "unit: millimeters"
+msgid "mm"
+msgstr ""
+
+#: sane.rc:34
+msgctxt "unit: dots/inch"
+msgid "dpi"
+msgstr ""
+
+#: sane.rc:35
+msgctxt "unit: percent"
+msgid "%"
+msgstr ""
+
+#: sane.rc:36
+msgctxt "unit: microseconds"
+msgid "us"
+msgstr ""
+
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
 msgstr ""
