@@ -104,7 +104,6 @@ typedef struct {
     CRITICAL_SECTION section;
 } Binding;
 
-#define STREAM(x) ((IStream*) &(x)->lpStreamVtbl)
 #define HTTPNEG2(x) ((IHttpNegotiate2*) &(x)->lpHttpNegotiate2Vtbl)
 
 static void fill_stgmed_buffer(stgmed_buf_t *buf)
@@ -434,35 +433,38 @@ static stgmed_buf_t *create_stgmed_buf(IInternetProtocolEx *protocol)
 
 typedef struct {
     stgmed_obj_t stgmed_obj;
-    const IStreamVtbl *lpStreamVtbl;
+    IStream IStream_iface;
 
     LONG ref;
 
     stgmed_buf_t *buf;
 } ProtocolStream;
 
-#define STREAM_THIS(iface) DEFINE_THIS(ProtocolStream, Stream, iface)
+static inline ProtocolStream *impl_from_IStream(IStream *iface)
+{
+    return CONTAINING_RECORD(iface, ProtocolStream, IStream_iface);
+}
 
 static HRESULT WINAPI ProtocolStream_QueryInterface(IStream *iface,
                                                           REFIID riid, void **ppv)
 {
-    ProtocolStream *This = STREAM_THIS(iface);
+    ProtocolStream *This = impl_from_IStream(iface);
 
     *ppv = NULL;
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = STREAM(This);
+        *ppv = &This->IStream_iface;
     }else if(IsEqualGUID(&IID_ISequentialStream, riid)) {
         TRACE("(%p)->(IID_ISequentialStream %p)\n", This, ppv);
-        *ppv = STREAM(This);
+        *ppv = &This->IStream_iface;
     }else if(IsEqualGUID(&IID_IStream, riid)) {
         TRACE("(%p)->(IID_IStream %p)\n", This, ppv);
-        *ppv = STREAM(This);
+        *ppv = &This->IStream_iface;
     }
 
     if(*ppv) {
-        IStream_AddRef(STREAM(This));
+        IStream_AddRef(&This->IStream_iface);
         return S_OK;
     }
 
@@ -472,7 +474,7 @@ static HRESULT WINAPI ProtocolStream_QueryInterface(IStream *iface,
 
 static ULONG WINAPI ProtocolStream_AddRef(IStream *iface)
 {
-    ProtocolStream *This = STREAM_THIS(iface);
+    ProtocolStream *This = impl_from_IStream(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -482,7 +484,7 @@ static ULONG WINAPI ProtocolStream_AddRef(IStream *iface)
 
 static ULONG WINAPI ProtocolStream_Release(IStream *iface)
 {
-    ProtocolStream *This = STREAM_THIS(iface);
+    ProtocolStream *This = impl_from_IStream(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -500,7 +502,7 @@ static ULONG WINAPI ProtocolStream_Release(IStream *iface)
 static HRESULT WINAPI ProtocolStream_Read(IStream *iface, void *pv,
                                           ULONG cb, ULONG *pcbRead)
 {
-    ProtocolStream *This = STREAM_THIS(iface);
+    ProtocolStream *This = impl_from_IStream(iface);
     DWORD read = 0, pread = 0;
     HRESULT hres;
 
@@ -549,7 +551,7 @@ static HRESULT WINAPI ProtocolStream_Read(IStream *iface, void *pv,
 static HRESULT WINAPI ProtocolStream_Write(IStream *iface, const void *pv,
                                           ULONG cb, ULONG *pcbWritten)
 {
-    ProtocolStream *This = STREAM_THIS(iface);
+    ProtocolStream *This = impl_from_IStream(iface);
 
     TRACE("(%p)->(%p %d %p)\n", This, pv, cb, pcbWritten);
 
@@ -559,14 +561,14 @@ static HRESULT WINAPI ProtocolStream_Write(IStream *iface, const void *pv,
 static HRESULT WINAPI ProtocolStream_Seek(IStream *iface, LARGE_INTEGER dlibMove,
                                          DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
 {
-    ProtocolStream *This = STREAM_THIS(iface);
+    ProtocolStream *This = impl_from_IStream(iface);
     FIXME("(%p)->(%d %08x %p)\n", This, dlibMove.u.LowPart, dwOrigin, plibNewPosition);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ProtocolStream_SetSize(IStream *iface, ULARGE_INTEGER libNewSize)
 {
-    ProtocolStream *This = STREAM_THIS(iface);
+    ProtocolStream *This = impl_from_IStream(iface);
     FIXME("(%p)->(%d)\n", This, libNewSize.u.LowPart);
     return E_NOTIMPL;
 }
@@ -574,14 +576,14 @@ static HRESULT WINAPI ProtocolStream_SetSize(IStream *iface, ULARGE_INTEGER libN
 static HRESULT WINAPI ProtocolStream_CopyTo(IStream *iface, IStream *pstm,
         ULARGE_INTEGER cb, ULARGE_INTEGER *pcbRead, ULARGE_INTEGER *pcbWritten)
 {
-    ProtocolStream *This = STREAM_THIS(iface);
+    ProtocolStream *This = impl_from_IStream(iface);
     FIXME("(%p)->(%p %d %p %p)\n", This, pstm, cb.u.LowPart, pcbRead, pcbWritten);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ProtocolStream_Commit(IStream *iface, DWORD grfCommitFlags)
 {
-    ProtocolStream *This = STREAM_THIS(iface);
+    ProtocolStream *This = impl_from_IStream(iface);
 
     TRACE("(%p)->(%08x)\n", This, grfCommitFlags);
 
@@ -590,7 +592,7 @@ static HRESULT WINAPI ProtocolStream_Commit(IStream *iface, DWORD grfCommitFlags
 
 static HRESULT WINAPI ProtocolStream_Revert(IStream *iface)
 {
-    ProtocolStream *This = STREAM_THIS(iface);
+    ProtocolStream *This = impl_from_IStream(iface);
 
     TRACE("(%p)\n", This);
 
@@ -600,7 +602,7 @@ static HRESULT WINAPI ProtocolStream_Revert(IStream *iface)
 static HRESULT WINAPI ProtocolStream_LockRegion(IStream *iface, ULARGE_INTEGER libOffset,
                                                ULARGE_INTEGER cb, DWORD dwLockType)
 {
-    ProtocolStream *This = STREAM_THIS(iface);
+    ProtocolStream *This = impl_from_IStream(iface);
     FIXME("(%p)->(%d %d %d)\n", This, libOffset.u.LowPart, cb.u.LowPart, dwLockType);
     return E_NOTIMPL;
 }
@@ -608,7 +610,7 @@ static HRESULT WINAPI ProtocolStream_LockRegion(IStream *iface, ULARGE_INTEGER l
 static HRESULT WINAPI ProtocolStream_UnlockRegion(IStream *iface,
         ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
 {
-    ProtocolStream *This = STREAM_THIS(iface);
+    ProtocolStream *This = impl_from_IStream(iface);
     FIXME("(%p)->(%d %d %d)\n", This, libOffset.u.LowPart, cb.u.LowPart, dwLockType);
     return E_NOTIMPL;
 }
@@ -616,7 +618,7 @@ static HRESULT WINAPI ProtocolStream_UnlockRegion(IStream *iface,
 static HRESULT WINAPI ProtocolStream_Stat(IStream *iface, STATSTG *pstatstg,
                                          DWORD dwStatFlag)
 {
-    ProtocolStream *This = STREAM_THIS(iface);
+    ProtocolStream *This = impl_from_IStream(iface);
     TRACE("(%p)->(%p %08x)\n", This, pstatstg, dwStatFlag);
 
     if(!pstatstg)
@@ -645,12 +647,10 @@ static HRESULT WINAPI ProtocolStream_Stat(IStream *iface, STATSTG *pstatstg,
 
 static HRESULT WINAPI ProtocolStream_Clone(IStream *iface, IStream **ppstm)
 {
-    ProtocolStream *This = STREAM_THIS(iface);
+    ProtocolStream *This = impl_from_IStream(iface);
     FIXME("(%p)->(%p)\n", This, ppstm);
     return E_NOTIMPL;
 }
-
-#undef STREAM_THIS
 
 static const IStreamVtbl ProtocolStreamVtbl = {
     ProtocolStream_QueryInterface,
@@ -672,7 +672,7 @@ static const IStreamVtbl ProtocolStreamVtbl = {
 static void stgmed_stream_release(stgmed_obj_t *obj)
 {
     ProtocolStream *stream = (ProtocolStream*)obj;
-    IStream_Release(STREAM(stream));
+    IStream_Release(&stream->IStream_iface);
 }
 
 static HRESULT stgmed_stream_fill_stgmed(stgmed_obj_t *obj, STGMEDIUM *stgmed)
@@ -680,7 +680,7 @@ static HRESULT stgmed_stream_fill_stgmed(stgmed_obj_t *obj, STGMEDIUM *stgmed)
     ProtocolStream *stream = (ProtocolStream*)obj;
 
     stgmed->tymed = TYMED_ISTREAM;
-    stgmed->u.pstm = STREAM(stream);
+    stgmed->u.pstm = &stream->IStream_iface;
     stgmed->pUnkForRelease = &stream->buf->IUnknown_iface;
 
     return S_OK;
@@ -694,8 +694,8 @@ static HRESULT stgmed_stream_get_result(stgmed_obj_t *obj, DWORD bindf, void **r
        && (stream->buf->hres != S_FALSE || stream->buf->size))
         return INET_E_DATA_NOT_AVAILABLE;
 
-    IStream_AddRef(STREAM(stream));
-    *result = STREAM(stream);
+    IStream_AddRef(&stream->IStream_iface);
+    *result = &stream->IStream_iface;
     return S_OK;
 }
 
@@ -715,7 +715,7 @@ static stgmed_obj_t *create_stgmed_stream(stgmed_buf_t *buf)
     ProtocolStream *ret = heap_alloc(sizeof(ProtocolStream));
 
     ret->stgmed_obj.vtbl = &stgmed_stream_vtbl;
-    ret->lpStreamVtbl = &ProtocolStreamVtbl;
+    ret->IStream_iface.lpVtbl = &ProtocolStreamVtbl;
     ret->ref = 1;
 
     IUnknown_AddRef(&buf->IUnknown_iface);

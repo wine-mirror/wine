@@ -62,8 +62,6 @@ extern LONG URLMON_refCount;
 static inline void URLMON_LockModule(void) { InterlockedIncrement( &URLMON_refCount ); }
 static inline void URLMON_UnlockModule(void) { InterlockedDecrement( &URLMON_refCount ); }
 
-#define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
-
 IInternetProtocolInfo *get_protocol_info(LPCWSTR);
 HRESULT get_protocol_handler(IUri*,CLSID*,BOOL*,IClassFactory**);
 IInternetProtocol *get_mime_filter(LPCWSTR);
