@@ -37,6 +37,7 @@
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
 
 static LONG  (WINAPI *pGdiGetCharDimensions)(HDC hdc, LPTEXTMETRICW lptm, LONG *height);
+static DWORD (WINAPI *pGdiGetCodePage)(HDC hdc);
 static BOOL  (WINAPI *pGetCharABCWidthsI)(HDC hdc, UINT first, UINT count, LPWORD glyphs, LPABC abc);
 static BOOL  (WINAPI *pGetCharABCWidthsA)(HDC hdc, UINT first, UINT last, LPABC abc);
 static BOOL  (WINAPI *pGetCharABCWidthsW)(HDC hdc, UINT first, UINT last, LPABC abc);
@@ -55,6 +56,7 @@ static void init(void)
     hgdi32 = GetModuleHandleA("gdi32.dll");
 
     pGdiGetCharDimensions = (void *)GetProcAddress(hgdi32, "GdiGetCharDimensions");
+    pGdiGetCodePage = (void *) GetProcAddress(hgdi32,"GdiGetCodePage");
     pGetCharABCWidthsI = (void *)GetProcAddress(hgdi32, "GetCharABCWidthsI");
     pGetCharABCWidthsA = (void *)GetProcAddress(hgdi32, "GetCharABCWidthsA");
     pGetCharABCWidthsW = (void *)GetProcAddress(hgdi32, "GetCharABCWidthsW");
@@ -1618,7 +1620,6 @@ static BOOL get_glyph_indices(INT charset, UINT code_page, WORD *idx, UINT count
     INT cs;
     DWORD i, ret;
     char name[64];
-    DWORD (WINAPI *pGdiGetCodePage)(HDC);
 
     assert(count <= 128);
 
@@ -1660,8 +1661,6 @@ static BOOL get_glyph_indices(INT charset, UINT code_page, WORD *idx, UINT count
     }
     ok(csi.ciACP == code_page, "expected %d, got %d\n", code_page, csi.ciACP);
 
-    pGdiGetCodePage = (void *) GetProcAddress(GetModuleHandleA("gdi32.dll"),
-                                              "GdiGetCodePage");
     if (pGdiGetCodePage != NULL && pGdiGetCodePage(hdc) != code_page)
     {
         skip("Font code page %d, looking for code page %d\n",
@@ -2558,9 +2557,12 @@ static void test_text_metrics(const LOGFONTA *lf)
             ok(tmA.tmFirstChar == expect_first_A ||
                tmA.tmFirstChar == expect_first_A + 1 /* win9x */,
                "A: tmFirstChar for %s got %02x expected %02x\n", font_name, tmA.tmFirstChar, expect_first_A);
-        ok(tmA.tmLastChar == expect_last_A ||
-           tmA.tmLastChar == 0xff /* win9x */,
-           "A: tmLastChar for %s got %02x expected %02x\n", font_name, tmA.tmLastChar, expect_last_A);
+        if (pGdiGetCodePage == NULL || ! IsDBCSLeadByteEx(pGdiGetCodePage(hdc), tmA.tmLastChar))
+            ok(tmA.tmLastChar == expect_last_A ||
+               tmA.tmLastChar == 0xff /* win9x */,
+               "A: tmLastChar for %s got %02x expected %02x\n", font_name, tmA.tmLastChar, expect_last_A);
+        else
+           skip("tmLastChar is DBCS lead byte\n");
         ok(tmA.tmBreakChar == expect_break_A, "A: tmBreakChar for %s got %02x expected %02x\n",
            font_name, tmA.tmBreakChar, expect_break_A);
         ok(tmA.tmDefaultChar == expect_default_A || broken(sys_lang_non_english),
