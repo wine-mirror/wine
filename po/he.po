@@ -4640,7 +4640,7 @@ msgstr "&שניות"
 msgid "&Date"
 msgstr "&תאריך"
 
-#: clock.rc:39
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
 msgid "&Always on Top"
 msgstr "תמיד &עליון"
 
@@ -5289,7 +5289,7 @@ msgstr "&שמירה\tCtrl+S"
 msgid "&Print...\tCtrl+P"
 msgstr "ה&דפסה...\tCtrl+P"
 
-#: notepad.rc:33
+#: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
 msgstr "ה&גדרות עמוד..."
 
@@ -5327,7 +5327,8 @@ msgstr "ה&עתקה\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "ה&דבקה\tCtrl+V"
 
-#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
+#: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
+#: winefile.rc:30
 msgid "&Delete\tDel"
 msgstr "&מחיקה\tDel"
 
@@ -5364,7 +5365,7 @@ msgstr ""
 msgid "&Search..."
 msgstr "&חיפוש..."
 
-#: notepad.rc:60
+#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "ע&זרה לעזרה"
 
@@ -5784,10 +5785,6 @@ msgstr "ה&עברה...\tF7"
 msgid "&Copy...\tF8"
 msgstr "הע&תקה...\tF8"
 
-#: progman.rc:34
-msgid "&Delete\tEntf"
-msgstr "&מחיקה\tEntf"
-
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
 msgstr "מא&פיינים...\tAlt+Enter"
@@ -5836,10 +5833,6 @@ msgstr "&זה לצד זה\tShift+F4"
 #: progman.rc:49
 msgid "&Arrange Icons"
 msgstr "&סידור סמלים"
-
-#: progman.rc:56
-msgid "&Help on Help"
-msgstr "&עזרה על העזרה"
 
 #: progman.rc:57
 msgid "&Tutorial"
@@ -6384,10 +6377,6 @@ msgstr "משימה &חדשה (הפעלה...)"
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
 msgstr "י&ציאה ממנהל המשימות"
-
-#: taskmgr.rc:43 taskmgr.rc:142
-msgid "&Always On Top"
-msgstr "&תמיד עליון"
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
@@ -7615,7 +7604,8 @@ msgid "Expand &Tree\t*"
 msgstr "הר&חבת העץ\t*"
 
 #: winefile.rc:70
-msgid "Expand &all\tStrg+*"
+#, fuzzy
+msgid "Expand &all\tCtrl+*"
 msgstr "הרחבת ה&כול\tStrg+*"
 
 #: winefile.rc:71
@@ -7894,10 +7884,6 @@ msgstr "גדולים"
 msgid "Use system colors"
 msgstr "שימוש בצבעי המערכת"
 
-#: winhlp32.rc:61
-msgid "Help &on help"
-msgstr "עזרה ע&ל העזרה"
-
 #: winhlp32.rc:62
 msgid "Always on &top"
 msgstr "תמיד &עליון"
@@ -7953,10 +7939,6 @@ msgstr "נושאי העזרה: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&חדש...\tCtrl+N"
-
-#: wordpad.rc:35
-msgid "Pag&e setup..."
-msgstr "ה&גדרת עמוד..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

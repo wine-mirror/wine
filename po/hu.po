@@ -4701,7 +4701,7 @@ msgstr "&Másodperc"
 msgid "&Date"
 msgstr "&Dátum"
 
-#: clock.rc:39
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
 msgid "&Always on Top"
 msgstr "&Mindig legfelül"
 
@@ -5365,7 +5365,7 @@ msgstr ""
 "#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
 "&Print...\tCtrl+P"
 
-#: notepad.rc:33
+#: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
 msgstr "&Oldalbeállítás..."
 
@@ -5403,7 +5403,8 @@ msgstr ""
 msgid "&Paste\tCtrl+V"
 msgstr "&Beillesztés\tCtrl+V"
 
-#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
+#: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
+#: winefile.rc:30
 #, fuzzy
 msgid "&Delete\tDel"
 msgstr ""
@@ -5445,7 +5446,7 @@ msgstr ""
 "#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
 "Téma&körök keresése..."
 
-#: notepad.rc:60
+#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "&Használat"
 
@@ -5884,10 +5885,6 @@ msgstr ""
 msgid "&Copy...\tF8"
 msgstr "&Másolás...\tF8"
 
-#: progman.rc:34
-msgid "&Delete\tEntf"
-msgstr "Törlé&s\tEntf"
-
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
 msgstr "T&ulajdonságok...\tAlt+Enter"
@@ -5941,10 +5938,6 @@ msgstr "&Mozaikszerű elrendezés\tShift+F4"
 #: progman.rc:49
 msgid "&Arrange Icons"
 msgstr "&Ikonok elrendezése"
-
-#: progman.rc:56
-msgid "&Help on Help"
-msgstr "&Használat"
 
 #: progman.rc:57
 msgid "&Tutorial"
@@ -6505,11 +6498,6 @@ msgstr ""
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
 msgstr ""
-
-#: taskmgr.rc:43 taskmgr.rc:142
-#, fuzzy
-msgid "&Always On Top"
-msgstr "&Mindig legfelül"
 
 #: taskmgr.rc:45
 #, fuzzy
@@ -7723,7 +7711,8 @@ msgid "Expand &Tree\t*"
 msgstr "&Fa kinyitása\t*"
 
 #: winefile.rc:70
-msgid "Expand &all\tStrg+*"
+#, fuzzy
+msgid "Expand &all\tCtrl+*"
 msgstr "&Minden kinyitása\tStrg+*"
 
 #: winefile.rc:71
@@ -8011,10 +8000,6 @@ msgstr "Large"
 msgid "Use system colors"
 msgstr "Use system colors"
 
-#: winhlp32.rc:61
-msgid "Help &on help"
-msgstr "&Használat"
-
 #: winhlp32.rc:62
 msgid "Always on &top"
 msgstr "Mindig &legfelül"
@@ -8073,10 +8058,6 @@ msgstr ""
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Új...\tCtrl+N"
-
-#: wordpad.rc:35
-msgid "Pag&e setup..."
-msgstr "Page setup..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

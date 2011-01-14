@@ -4819,7 +4819,7 @@ msgstr "&Секунди"
 msgid "&Date"
 msgstr "&Дата"
 
-#: clock.rc:39
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
 msgid "&Always on Top"
 msgstr "&Завжди зверху"
 
@@ -5650,7 +5650,7 @@ msgstr "&Зберегти\tCtrl+S"
 msgid "&Print...\tCtrl+P"
 msgstr "&Друк...\tCtrl+P"
 
-#: notepad.rc:33
+#: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
 msgstr "Параметри &сторінки..."
 
@@ -5683,7 +5683,8 @@ msgstr "&Копіювати\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "&Вставити\tCtrl+V"
 
-#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
+#: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
+#: winefile.rc:30
 #, fuzzy
 msgid "&Delete\tDel"
 msgstr ""
@@ -5720,7 +5721,7 @@ msgstr "За&мінити...\tCtrl+H"
 msgid "&Search..."
 msgstr "По&шук..."
 
-#: notepad.rc:60
+#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "&Використання Довідки"
 
@@ -6136,10 +6137,6 @@ msgstr "&Перемістити...\tF7"
 msgid "&Copy...\tF8"
 msgstr "&Копіювати...\tF8"
 
-#: progman.rc:34
-msgid "&Delete\tEntf"
-msgstr "Ви&далити\tEntf"
-
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
 msgstr "В&ластивості...\tAlt+Enter"
@@ -6198,10 +6195,6 @@ msgstr "&Поруч\tShift+F4"
 #: progman.rc:49
 msgid "&Arrange Icons"
 msgstr "&Впорядкувати значки"
-
-#: progman.rc:56
-msgid "&Help on Help"
-msgstr "&Використання Довідки"
 
 #: progman.rc:57
 msgid "&Tutorial"
@@ -6801,10 +6794,6 @@ msgstr "&Нове завдання (Виконати...)"
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
 msgstr "За&крити Диспетчер Завдань"
-
-#: taskmgr.rc:43 taskmgr.rc:142
-msgid "&Always On Top"
-msgstr "&Завжди зверху"
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
@@ -8019,7 +8008,8 @@ msgid "Expand &Tree\t*"
 msgstr "Розгорнути &дерево\t*"
 
 #: winefile.rc:70
-msgid "Expand &all\tStrg+*"
+#, fuzzy
+msgid "Expand &all\tCtrl+*"
 msgstr "Розгорнути &все\tStrg+*"
 
 #: winefile.rc:71
@@ -8298,10 +8288,6 @@ msgstr "Великий"
 msgid "Use system colors"
 msgstr "Використати системні кольори"
 
-#: winhlp32.rc:61
-msgid "Help &on help"
-msgstr "Довідка &про Довідку"
-
 #: winhlp32.rc:62
 msgid "Always on &top"
 msgstr "Завжди &зверху"
@@ -8358,11 +8344,6 @@ msgstr "Розділи Довідки: "
 #, fuzzy
 msgid "&New...\tCtrl+N"
 msgstr "&Новий\tCtrl+N"
-
-#: wordpad.rc:35
-#, fuzzy
-msgid "Pag&e setup..."
-msgstr "Параметри &сторінки..."
 
 #: wordpad.rc:42
 #, fuzzy

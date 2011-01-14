@@ -4804,7 +4804,7 @@ msgstr "&Saniyeler"
 msgid "&Date"
 msgstr "&Tarih"
 
-#: clock.rc:39
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
 msgid "&Always on Top"
 msgstr "&Her zaman üstte"
 
@@ -5617,7 +5617,7 @@ msgstr ""
 "#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
 "&Print...\tCtrl+P"
 
-#: notepad.rc:33
+#: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
 msgstr "Sa&yfa Ayarı..."
 
@@ -5655,7 +5655,8 @@ msgstr ""
 msgid "&Paste\tCtrl+V"
 msgstr "Ya&pıştır\tCtrl+V"
 
-#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
+#: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
+#: winefile.rc:30
 msgid "&Delete\tDel"
 msgstr "&Sil\tDel"
 
@@ -5687,7 +5688,7 @@ msgstr "&Replace...\tCtrl+H"
 msgid "&Search..."
 msgstr "&Ara..."
 
-#: notepad.rc:60
+#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "&Yardım kullanımı"
 
@@ -6130,10 +6131,6 @@ msgstr ""
 "#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
 "K&opyala...\tF8"
 
-#: progman.rc:34
-msgid "&Delete\tEntf"
-msgstr "&Sil\tEntf"
-
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
 msgstr "&Öznitelikler...\tAlt+Enter"
@@ -6187,10 +6184,6 @@ msgstr "&Yan yana diz\tShift+F4"
 #: progman.rc:49
 msgid "&Arrange Icons"
 msgstr "&Simgeleri düzenle"
-
-#: progman.rc:56
-msgid "&Help on Help"
-msgstr "&Yardım Kullanımı"
 
 #: progman.rc:57
 msgid "&Tutorial"
@@ -6778,10 +6771,6 @@ msgstr "&Yeni Görev (Çalıştır...)"
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
 msgstr "Görev Yöneticisinden &Çık"
-
-#: taskmgr.rc:43 taskmgr.rc:142
-msgid "&Always On Top"
-msgstr "&Her Zaman Üstte"
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
@@ -7991,7 +7980,8 @@ msgid "Expand &Tree\t*"
 msgstr "Ağacı &Genişlet\t*"
 
 #: winefile.rc:70
-msgid "Expand &all\tStrg+*"
+#, fuzzy
+msgid "Expand &all\tCtrl+*"
 msgstr "&Tümünü Genişlet\tStrg+*"
 
 #: winefile.rc:71
@@ -8270,10 +8260,6 @@ msgstr "Large"
 msgid "Use system colors"
 msgstr "Use system colors"
 
-#: winhlp32.rc:61
-msgid "Help &on help"
-msgstr "&Yardım Kullanımı"
-
 #: winhlp32.rc:62
 msgid "Always on &top"
 msgstr "&Her Zaman Üstte"
@@ -8332,10 +8318,6 @@ msgstr ""
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Yeni...\tCtrl+N"
-
-#: wordpad.rc:35
-msgid "Pag&e setup..."
-msgstr "Pag&e setup..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

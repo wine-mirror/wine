@@ -4518,7 +4518,7 @@ msgstr ""
 msgid "&Date"
 msgstr ""
 
-#: clock.rc:39
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
 msgid "&Always on Top"
 msgstr ""
 
@@ -5167,7 +5167,7 @@ msgstr "ا&حفظ\tCtrl+S"
 msgid "&Print...\tCtrl+P"
 msgstr "ا&طبع...\tCtrl+P"
 
-#: notepad.rc:33
+#: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
 msgstr "إ&عداد الصفحة..."
 
@@ -5195,7 +5195,8 @@ msgstr "ا&نسخ\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "ا&لصق\tCtrl+V"
 
-#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
+#: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
+#: winefile.rc:30
 msgid "&Delete\tDel"
 msgstr "اح&ذف\tDel"
 
@@ -5227,7 +5228,7 @@ msgstr "ا&ستبدل...\tCtrl+H"
 msgid "&Search..."
 msgstr "ا&بحث..."
 
-#: notepad.rc:60
+#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "&مساعدة المساعدة"
 
@@ -5643,11 +5644,6 @@ msgstr ""
 msgid "&Copy...\tF8"
 msgstr ""
 
-#: progman.rc:34
-#, fuzzy
-msgid "&Delete\tEntf"
-msgstr "اح&ذف\tDel"
-
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
 msgstr ""
@@ -5691,11 +5687,6 @@ msgstr ""
 #: progman.rc:49
 msgid "&Arrange Icons"
 msgstr ""
-
-#: progman.rc:56
-#, fuzzy
-msgid "&Help on Help"
-msgstr "&مساعدة المساعدة"
 
 #: progman.rc:57
 msgid "&Tutorial"
@@ -6231,10 +6222,6 @@ msgstr ""
 
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
-msgstr ""
-
-#: taskmgr.rc:43 taskmgr.rc:142
-msgid "&Always On Top"
 msgstr ""
 
 #: taskmgr.rc:45
@@ -7410,8 +7397,9 @@ msgid "Expand &Tree\t*"
 msgstr ""
 
 #: winefile.rc:70
-msgid "Expand &all\tStrg+*"
-msgstr ""
+#, fuzzy
+msgid "Expand &all\tCtrl+*"
+msgstr "اختر ال&كل\tCtrl+A"
 
 #: winefile.rc:71
 msgid "Collapse &Tree\t-"
@@ -7695,11 +7683,6 @@ msgstr ""
 msgid "Use system colors"
 msgstr ""
 
-#: winhlp32.rc:61
-#, fuzzy
-msgid "Help &on help"
-msgstr "&مساعدة المساعدة"
-
 #: winhlp32.rc:62
 msgid "Always on &top"
 msgstr ""
@@ -7759,11 +7742,6 @@ msgstr ""
 #, fuzzy
 msgid "&New...\tCtrl+N"
 msgstr "&جديد\tCtrl+N"
-
-#: wordpad.rc:35
-#, fuzzy
-msgid "Pag&e setup..."
-msgstr "إ&عداد الصفحة..."
 
 #: wordpad.rc:42
 #, fuzzy

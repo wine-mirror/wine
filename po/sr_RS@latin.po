@@ -4638,7 +4638,7 @@ msgstr "&Sekunde"
 msgid "&Date"
 msgstr "&Datum"
 
-#: clock.rc:39
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
 msgid "&Always on Top"
 msgstr "&Uvek na vrhu"
 
@@ -5288,7 +5288,7 @@ msgstr "&Sačuvaj\tCtrl+S"
 msgid "&Print...\tCtrl+P"
 msgstr "&Štampaj...\tCtrl+P"
 
-#: notepad.rc:33
+#: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
 msgstr "Postavke &strane..."
 
@@ -5321,7 +5321,8 @@ msgstr "&Umnoži\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "&Nalepi\tCtrl+V"
 
-#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
+#: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
+#: winefile.rc:30
 msgid "&Delete\tDel"
 msgstr "&Izbriši\tDel"
 
@@ -5353,7 +5354,7 @@ msgstr "&Zameni...\tCtrl+H"
 msgid "&Search..."
 msgstr "&Pretraži..."
 
-#: notepad.rc:60
+#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "&Pomoć za pomoć"
 
@@ -5805,11 +5806,6 @@ msgstr ""
 msgid "&Copy...\tF8"
 msgstr "&Umnoži"
 
-#: progman.rc:34
-#, fuzzy
-msgid "&Delete\tEntf"
-msgstr "&Izbriši"
-
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
 msgstr ""
@@ -5853,11 +5849,6 @@ msgstr ""
 #: progman.rc:49
 msgid "&Arrange Icons"
 msgstr ""
-
-#: progman.rc:56
-#, fuzzy
-msgid "&Help on Help"
-msgstr "&Pomoć za pomoć"
 
 #: progman.rc:57
 msgid "&Tutorial"
@@ -6419,11 +6410,6 @@ msgstr ""
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
 msgstr ""
-
-#: taskmgr.rc:43 taskmgr.rc:142
-#, fuzzy
-msgid "&Always On Top"
-msgstr "&Uvek na vrhu"
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
@@ -7629,8 +7615,9 @@ msgid "Expand &Tree\t*"
 msgstr ""
 
 #: winefile.rc:70
-msgid "Expand &all\tStrg+*"
-msgstr ""
+#, fuzzy
+msgid "Expand &all\tCtrl+*"
+msgstr "Izaberi &sve\tCtrl+A"
 
 #: winefile.rc:71
 msgid "Collapse &Tree\t-"
@@ -7926,10 +7913,6 @@ msgstr "Veliki"
 msgid "Use system colors"
 msgstr "Koristi sistenske boje"
 
-#: winhlp32.rc:61
-msgid "Help &on help"
-msgstr "Pomoć &na pomoći"
-
 #: winhlp32.rc:62
 msgid "Always on &top"
 msgstr "Uvek na &vrhu"
@@ -7986,11 +7969,6 @@ msgstr "Teme pomoći: "
 #, fuzzy
 msgid "&New...\tCtrl+N"
 msgstr "&Novo\tCtrl+N"
-
-#: wordpad.rc:35
-#, fuzzy
-msgid "Pag&e setup..."
-msgstr "Postavke &strane..."
 
 #: wordpad.rc:42
 #, fuzzy

@@ -4588,7 +4588,7 @@ msgstr ""
 msgid "&Date"
 msgstr ""
 
-#: clock.rc:39
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
 msgid "&Always on Top"
 msgstr ""
 
@@ -5237,7 +5237,7 @@ msgstr "&Съхрани\tCtrl+S"
 msgid "&Print...\tCtrl+P"
 msgstr "&Печат...\tCtrl+P"
 
-#: notepad.rc:33
+#: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
 msgstr "Наст&ройки на страницата..."
 
@@ -5265,7 +5265,8 @@ msgstr "&Копирай\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "&Вмъкни\tCtrl+V"
 
-#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
+#: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
+#: winefile.rc:30
 #, fuzzy
 msgid "&Delete\tDel"
 msgstr ""
@@ -5302,7 +5303,7 @@ msgstr "&Замяна...\tCtrl+H"
 msgid "&Search..."
 msgstr "&Търси..."
 
-#: notepad.rc:60
+#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "&Помощ за помощта"
 
@@ -5725,11 +5726,6 @@ msgstr ""
 msgid "&Copy...\tF8"
 msgstr "&Копирай"
 
-#: progman.rc:34
-#, fuzzy
-msgid "&Delete\tEntf"
-msgstr "Из&трий"
-
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
 msgstr ""
@@ -5773,11 +5769,6 @@ msgstr ""
 #: progman.rc:49
 msgid "&Arrange Icons"
 msgstr ""
-
-#: progman.rc:56
-#, fuzzy
-msgid "&Help on Help"
-msgstr "&Помощ за помощта"
 
 #: progman.rc:57
 msgid "&Tutorial"
@@ -6320,10 +6311,6 @@ msgstr ""
 
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
-msgstr ""
-
-#: taskmgr.rc:43 taskmgr.rc:142
-msgid "&Always On Top"
 msgstr ""
 
 #: taskmgr.rc:45
@@ -7536,8 +7523,9 @@ msgid "Expand &Tree\t*"
 msgstr ""
 
 #: winefile.rc:70
-msgid "Expand &all\tStrg+*"
-msgstr ""
+#, fuzzy
+msgid "Expand &all\tCtrl+*"
+msgstr "Маркирай &всичко\tCtrl+A"
 
 #: winefile.rc:71
 msgid "Collapse &Tree\t-"
@@ -7824,10 +7812,6 @@ msgstr "Large"
 msgid "Use system colors"
 msgstr "Use system colors"
 
-#: winhlp32.rc:61
-msgid "Help &on help"
-msgstr "Помощ &за помощта"
-
 #: winhlp32.rc:62
 msgid "Always on &top"
 msgstr "Винаги от&горе"
@@ -7887,11 +7871,6 @@ msgstr ""
 #, fuzzy
 msgid "&New...\tCtrl+N"
 msgstr "&Нов\tCtrl+N"
-
-#: wordpad.rc:35
-#, fuzzy
-msgid "Pag&e setup..."
-msgstr "Наст&ройки на страницата..."
 
 #: wordpad.rc:42
 #, fuzzy

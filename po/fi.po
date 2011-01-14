@@ -4646,7 +4646,7 @@ msgstr "&Sekunnit"
 msgid "&Date"
 msgstr "&Päivämäärä"
 
-#: clock.rc:39
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
 msgid "&Always on Top"
 msgstr "&Aina päällimmäisenä"
 
@@ -5295,7 +5295,7 @@ msgstr "Ta&lleta\tCtrl+S"
 msgid "&Print...\tCtrl+P"
 msgstr "T&ulosta...\tCtrl+P"
 
-#: notepad.rc:33
+#: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
 msgstr "&Sivun asetukset..."
 
@@ -5323,7 +5323,8 @@ msgstr "&Kopioi\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "L&iitä\tCtrl+V"
 
-#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
+#: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
+#: winefile.rc:30
 msgid "&Delete\tDel"
 msgstr "P&oista\tDel"
 
@@ -5355,7 +5356,7 @@ msgstr "&Korvaa...\tCtrl+H"
 msgid "&Search..."
 msgstr "&Etsi..."
 
-#: notepad.rc:60
+#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "Apua &Opastuksesta"
 
@@ -5790,11 +5791,6 @@ msgstr ""
 msgid "&Copy...\tF8"
 msgstr "Ko&pioi"
 
-#: progman.rc:34
-#, fuzzy
-msgid "&Delete\tEntf"
-msgstr "P&oista"
-
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
 msgstr ""
@@ -5843,11 +5839,6 @@ msgstr ""
 #: progman.rc:49
 msgid "&Arrange Icons"
 msgstr ""
-
-#: progman.rc:56
-#, fuzzy
-msgid "&Help on Help"
-msgstr "Apua &Opastuksesta"
 
 #: progman.rc:57
 msgid "&Tutorial"
@@ -6399,11 +6390,6 @@ msgstr ""
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
 msgstr ""
-
-#: taskmgr.rc:43 taskmgr.rc:142
-#, fuzzy
-msgid "&Always On Top"
-msgstr "&Aina päällimmäisenä"
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
@@ -7613,8 +7599,9 @@ msgid "Expand &Tree\t*"
 msgstr ""
 
 #: winefile.rc:70
-msgid "Expand &all\tStrg+*"
-msgstr ""
+#, fuzzy
+msgid "Expand &all\tCtrl+*"
+msgstr "&Valitse kaikki"
 
 #: winefile.rc:71
 msgid "Collapse &Tree\t-"
@@ -7908,10 +7895,6 @@ msgstr "Large"
 msgid "Use system colors"
 msgstr "Use system colors"
 
-#: winhlp32.rc:61
-msgid "Help &on help"
-msgstr "&Ohjeen käyttö"
-
 #: winhlp32.rc:62
 msgid "Always on &top"
 msgstr "&Aina päällimmäisenä"
@@ -7971,11 +7954,6 @@ msgstr ""
 #, fuzzy
 msgid "&New...\tCtrl+N"
 msgstr "&Uusi\tCtrl+N"
-
-#: wordpad.rc:35
-#, fuzzy
-msgid "Pag&e setup..."
-msgstr "&Sivun asetukset..."
 
 #: wordpad.rc:42
 #, fuzzy

@@ -32,7 +32,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Print...\tCtrl+P",     ID_PRINT
         MENUITEM "Print previe&w...",     ID_PREVIEW
-        MENUITEM "Pag&e setup...",        ID_PRINTSETUP
+        MENUITEM "Page Se&tup...",        ID_PRINTSETUP
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                 ID_FILE_EXIT
     END

@@ -31,7 +31,7 @@ MAIN_MENU MENU
    MENUITEM "O&pen\tEnter",             PM_OPEN
    MENUITEM "&Move...\tF7",             PM_MOVE,      GRAYED
    MENUITEM "&Copy...\tF8",             PM_COPY,      GRAYED
-   MENUITEM "&Delete\tEntf",           PM_DELETE
+   MENUITEM "&Delete\tDel",             PM_DELETE
    MENUITEM "&Attributes...\tAlt+Enter",       PM_ATTRIBUTES
    MENUITEM SEPARATOR
    MENUITEM "&Execute...",          PM_EXECUTE
@@ -53,7 +53,7 @@ POPUP "&Help" {
    MENUITEM "&Contents",         PM_CONTENTS
    MENUITEM "&Search...",           PM_SEARCH
    MENUITEM SEPARATOR
-   MENUITEM "&Help on Help",     PM_HELPONHELP
+   MENUITEM "&Help on help",     PM_HELPONHELP
    MENUITEM "&Tutorial",         PM_TUTORIAL
    MENUITEM SEPARATOR
    MENUITEM "&About Wine",     PM_ABOUT_WINE

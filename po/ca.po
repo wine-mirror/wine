@@ -4470,7 +4470,7 @@ msgstr ""
 msgid "&Date"
 msgstr ""
 
-#: clock.rc:39
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
 msgid "&Always on Top"
 msgstr ""
 
@@ -5121,7 +5121,7 @@ msgstr ""
 msgid "&Print...\tCtrl+P"
 msgstr ""
 
-#: notepad.rc:33
+#: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
 msgstr ""
 
@@ -5150,7 +5150,8 @@ msgstr ""
 msgid "&Paste\tCtrl+V"
 msgstr "&Enganxar"
 
-#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
+#: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
+#: winefile.rc:30
 #, fuzzy
 msgid "&Delete\tDel"
 msgstr "&Suprimir"
@@ -5184,7 +5185,7 @@ msgstr ""
 msgid "&Search..."
 msgstr ""
 
-#: notepad.rc:60
+#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
 msgid "&Help on help"
 msgstr ""
 
@@ -5578,11 +5579,6 @@ msgstr "&Desplaçament"
 msgid "&Copy...\tF8"
 msgstr "&Copiar"
 
-#: progman.rc:34
-#, fuzzy
-msgid "&Delete\tEntf"
-msgstr "&Suprimir"
-
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
 msgstr ""
@@ -5627,10 +5623,6 @@ msgstr ""
 
 #: progman.rc:49
 msgid "&Arrange Icons"
-msgstr ""
-
-#: progman.rc:56
-msgid "&Help on Help"
 msgstr ""
 
 #: progman.rc:57
@@ -6164,10 +6156,6 @@ msgstr ""
 
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
-msgstr ""
-
-#: taskmgr.rc:43 taskmgr.rc:142
-msgid "&Always On Top"
 msgstr ""
 
 #: taskmgr.rc:45
@@ -7329,8 +7317,9 @@ msgid "Expand &Tree\t*"
 msgstr ""
 
 #: winefile.rc:70
-msgid "Expand &all\tStrg+*"
-msgstr ""
+#, fuzzy
+msgid "Expand &all\tCtrl+*"
+msgstr "Seleccionar &tot el text"
 
 #: winefile.rc:71
 msgid "Collapse &Tree\t-"
@@ -7612,10 +7601,6 @@ msgstr ""
 msgid "Use system colors"
 msgstr ""
 
-#: winhlp32.rc:61
-msgid "Help &on help"
-msgstr ""
-
 #: winhlp32.rc:62
 msgid "Always on &top"
 msgstr ""
@@ -7672,10 +7657,6 @@ msgstr ""
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
-msgstr ""
-
-#: wordpad.rc:35
-msgid "Pag&e setup..."
 msgstr ""
 
 #: wordpad.rc:42

@@ -4865,7 +4865,7 @@ msgstr "Se&kunder"
 msgid "&Date"
 msgstr "Da&to"
 
-#: clock.rc:39
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
 msgid "&Always on Top"
 msgstr "&Altid øverst"
 
@@ -5698,7 +5698,7 @@ msgstr ""
 msgid "&Print...\tCtrl+P"
 msgstr "&Udskriv...\tCtrl+P"
 
-#: notepad.rc:33
+#: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
 msgstr "Side&opsætning..."
 
@@ -5731,7 +5731,8 @@ msgstr "K&opier\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "&Indsæt\tCtrl+V"
 
-#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
+#: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
+#: winefile.rc:30
 msgid "&Delete\tDel"
 msgstr "&Slet\tDel"
 
@@ -5773,7 +5774,7 @@ msgstr ""
 "#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
 "&Søg..."
 
-#: notepad.rc:60
+#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "&Brug af Hjælp"
 
@@ -6196,10 +6197,6 @@ msgstr "&Flyt...\tF7"
 msgid "&Copy...\tF8"
 msgstr "&Kopier...\tF8"
 
-#: progman.rc:34
-msgid "&Delete\tEntf"
-msgstr "&Slet\tEntf"
-
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
 msgstr "&Attributter...\tAlt+Enter"
@@ -6258,10 +6255,6 @@ msgstr "&Side ved side\tShift+F4"
 #: progman.rc:49
 msgid "&Arrange Icons"
 msgstr "Arrangér &ikoner"
-
-#: progman.rc:56
-msgid "&Help on Help"
-msgstr "&Hjælp til hjælp"
 
 #: progman.rc:57
 msgid "&Tutorial"
@@ -6854,10 +6847,6 @@ msgstr "&Ny opgave (Kør...)"
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
 msgstr "&Afslut opgavebehandleren"
-
-#: taskmgr.rc:43 taskmgr.rc:142
-msgid "&Always On Top"
-msgstr "&Altid øverst"
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
@@ -8068,7 +8057,8 @@ msgid "Expand &Tree\t*"
 msgstr "Udvid t&ræ\t*"
 
 #: winefile.rc:70
-msgid "Expand &all\tStrg+*"
+#, fuzzy
+msgid "Expand &all\tCtrl+*"
 msgstr "Udvid &alle\tStrg+*"
 
 #: winefile.rc:71
@@ -8347,10 +8337,6 @@ msgstr "Large"
 msgid "Use system colors"
 msgstr "Use system colors"
 
-#: winhlp32.rc:61
-msgid "Help &on help"
-msgstr "&Brug af Hjælp"
-
 #: winhlp32.rc:62
 msgid "Always on &top"
 msgstr "Altid &øverst"
@@ -8406,10 +8392,6 @@ msgstr ""
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Ny...\tCtrl+N"
-
-#: wordpad.rc:35
-msgid "Pag&e setup..."
-msgstr "&Side indstillinger..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

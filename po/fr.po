@@ -4897,7 +4897,7 @@ msgstr "&Secondes"
 msgid "&Date"
 msgstr "&Date"
 
-#: clock.rc:39
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
 msgid "&Always on Top"
 msgstr "&Toujours visible"
 
@@ -5748,7 +5748,7 @@ msgstr ""
 "#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
 "&Imprimer...\tCtrl+P"
 
-#: notepad.rc:33
+#: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
 msgstr "&Mise en page..."
 
@@ -5786,7 +5786,8 @@ msgstr ""
 msgid "&Paste\tCtrl+V"
 msgstr "C&oller\tCtrl+V"
 
-#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
+#: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
+#: winefile.rc:30
 #, fuzzy
 msgid "&Delete\tDel"
 msgstr ""
@@ -5823,7 +5824,7 @@ msgstr "&Remplacer...\tCtrl+H"
 msgid "&Search..."
 msgstr "&Rechercher..."
 
-#: notepad.rc:60
+#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "&Utiliser l'aide"
 
@@ -6256,10 +6257,6 @@ msgstr "&Déplacer...\tF7"
 msgid "&Copy...\tF8"
 msgstr "&Copier...\tF8"
 
-#: progman.rc:34
-msgid "&Delete\tEntf"
-msgstr "&Supprimer\tSuppr"
-
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
 msgstr "&Propriétés...\tAlt+Entrée"
@@ -6308,10 +6305,6 @@ msgstr "&Mosaïque\tMaj+F4"
 #: progman.rc:49
 msgid "&Arrange Icons"
 msgstr "&Réorganiser les icônes"
-
-#: progman.rc:56
-msgid "&Help on Help"
-msgstr "&Utiliser l'aide"
 
 #: progman.rc:57
 msgid "&Tutorial"
@@ -6919,10 +6912,6 @@ msgstr "&Nouvelle tâche (Exécuter...)"
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
 msgstr "&Quitter le gestionnaire des tâches"
-
-#: taskmgr.rc:43 taskmgr.rc:142
-msgid "&Always On Top"
-msgstr "Toujours &visible"
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
@@ -8142,7 +8131,8 @@ msgid "Expand &Tree\t*"
 msgstr "Développer une &branche\t*"
 
 #: winefile.rc:70
-msgid "Expand &all\tStrg+*"
+#, fuzzy
+msgid "Expand &all\tCtrl+*"
 msgstr "&Tout développer\tCtrl+*"
 
 #: winefile.rc:71
@@ -8421,10 +8411,6 @@ msgstr "Grande"
 msgid "Use system colors"
 msgstr "Utiliser les couleurs système"
 
-#: winhlp32.rc:61
-msgid "Help &on help"
-msgstr "&Utiliser l'aide"
-
 #: winhlp32.rc:62
 msgid "Always on &top"
 msgstr "&Toujours visible"
@@ -8482,10 +8468,6 @@ msgstr "Rubriques d'aide : "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Nouveau...\tCtrl+N"
-
-#: wordpad.rc:35
-msgid "Pag&e setup..."
-msgstr "&Mise en page..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

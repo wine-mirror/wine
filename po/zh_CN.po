@@ -4629,7 +4629,7 @@ msgstr "秒(&S)"
 msgid "&Date"
 msgstr "日期(&D)"
 
-#: clock.rc:39
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
 msgid "&Always on Top"
 msgstr "总是在最前面(&A)"
 
@@ -5278,7 +5278,7 @@ msgstr "保存(&S)\tCtrl+S"
 msgid "&Print...\tCtrl+P"
 msgstr "打印(&P)...\tCtrl+P"
 
-#: notepad.rc:33
+#: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
 msgstr "页面设置(&T)..."
 
@@ -5311,7 +5311,8 @@ msgstr "复制(&C)\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "粘贴(&P)\tCtrl+V"
 
-#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
+#: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
+#: winefile.rc:30
 #, fuzzy
 msgid "&Delete\tDel"
 msgstr ""
@@ -5353,7 +5354,7 @@ msgstr ""
 msgid "&Search..."
 msgstr "搜索(&S)..."
 
-#: notepad.rc:60
+#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "如何使用帮助(&H)"
 
@@ -5764,10 +5765,6 @@ msgstr "移动(&M)...\tF7"
 msgid "&Copy...\tF8"
 msgstr "复制(&C)...\tF8"
 
-#: progman.rc:34
-msgid "&Delete\tEntf"
-msgstr "删除(&D)\tEntf"
-
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
 msgstr "属性(&A)...\tAlt+Enter"
@@ -5816,10 +5813,6 @@ msgstr "并排(&S)\tShift+F4"
 #: progman.rc:49
 msgid "&Arrange Icons"
 msgstr "排列图标(&A)"
-
-#: progman.rc:56
-msgid "&Help on Help"
-msgstr "如何使用帮助(&H)"
 
 #: progman.rc:57
 msgid "&Tutorial"
@@ -6369,10 +6362,6 @@ msgstr "新任务(&N)..."
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
 msgstr "退出任务管理器(&X)"
-
-#: taskmgr.rc:43 taskmgr.rc:142
-msgid "&Always On Top"
-msgstr "总是在最上面(&A)"
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
@@ -7576,7 +7565,8 @@ msgid "Expand &Tree\t*"
 msgstr "展开(&T)\t*"
 
 #: winefile.rc:70
-msgid "Expand &all\tStrg+*"
+#, fuzzy
+msgid "Expand &all\tCtrl+*"
 msgstr "全部展开(&A)\tStrg+*"
 
 #: winefile.rc:71
@@ -7865,10 +7855,6 @@ msgstr "大号"
 msgid "Use system colors"
 msgstr "使用系统颜色"
 
-#: winhlp32.rc:61
-msgid "Help &on help"
-msgstr "如何使用帮助(&O)"
-
 #: winhlp32.rc:62
 msgid "Always on &top"
 msgstr "总是在最前面(&T)"
@@ -7924,10 +7910,6 @@ msgstr "帮助主题："
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "新建(&N)...\tCtrl+N"
-
-#: wordpad.rc:35
-msgid "Pag&e setup..."
-msgstr "页面设置(&E)..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

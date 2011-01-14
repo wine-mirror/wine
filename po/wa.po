@@ -4533,7 +4533,7 @@ msgstr "&Segondes"
 msgid "&Date"
 msgstr "&Date"
 
-#: clock.rc:39
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
 msgid "&Always on Top"
 msgstr "Todi &Visibe"
 
@@ -5182,7 +5182,7 @@ msgstr "&Schaper\tCtrl+S"
 msgid "&Print...\tCtrl+P"
 msgstr "&Rexhe...\tCtrl+P"
 
-#: notepad.rc:33
+#: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
 msgstr "Arrandjmint del &Pådje..."
 
@@ -5210,7 +5210,8 @@ msgstr "&Copyî\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "C&laper\tCtrl+V"
 
-#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
+#: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
+#: winefile.rc:30
 msgid "&Delete\tDel"
 msgstr "&Rafacer\tDel"
 
@@ -5242,7 +5243,7 @@ msgstr "&Replaecî...\tCtrl+H"
 msgid "&Search..."
 msgstr "C&werî..."
 
-#: notepad.rc:60
+#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "&Aide so l' Aide"
 
@@ -5653,11 +5654,6 @@ msgstr ""
 msgid "&Copy...\tF8"
 msgstr ""
 
-#: progman.rc:34
-#, fuzzy
-msgid "&Delete\tEntf"
-msgstr "&Rafacer\tDel"
-
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
 msgstr ""
@@ -5701,11 +5697,6 @@ msgstr ""
 #: progman.rc:49
 msgid "&Arrange Icons"
 msgstr ""
-
-#: progman.rc:56
-#, fuzzy
-msgid "&Help on Help"
-msgstr "&Aide so l' Aide"
 
 #: progman.rc:57
 msgid "&Tutorial"
@@ -6249,11 +6240,6 @@ msgstr ""
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
 msgstr ""
-
-#: taskmgr.rc:43 taskmgr.rc:142
-#, fuzzy
-msgid "&Always On Top"
-msgstr "Todi &Visibe"
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
@@ -7428,8 +7414,9 @@ msgid "Expand &Tree\t*"
 msgstr ""
 
 #: winefile.rc:70
-msgid "Expand &all\tStrg+*"
-msgstr ""
+#, fuzzy
+msgid "Expand &all\tCtrl+*"
+msgstr "&Tchwezi totafwait"
 
 #: winefile.rc:71
 msgid "Collapse &Tree\t-"
@@ -7718,10 +7705,6 @@ msgstr "Large"
 msgid "Use system colors"
 msgstr "Use system colors"
 
-#: winhlp32.rc:61
-msgid "Help &on help"
-msgstr "&Aide so l' Aide"
-
 #: winhlp32.rc:62
 msgid "Always on &top"
 msgstr "Todi &Visibe"
@@ -7781,11 +7764,6 @@ msgstr ""
 #, fuzzy
 msgid "&New...\tCtrl+N"
 msgstr "&Novea\tCtrl+N"
-
-#: wordpad.rc:35
-#, fuzzy
-msgid "Pag&e setup..."
-msgstr "Arrandjmint del &Pådje..."
 
 #: wordpad.rc:42
 #, fuzzy

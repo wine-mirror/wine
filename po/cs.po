@@ -4748,7 +4748,7 @@ msgstr "&Sekund"
 msgid "&Date"
 msgstr "&Datum"
 
-#: clock.rc:39
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
 msgid "&Always on Top"
 msgstr "Vždy n&a vrchu"
 
@@ -5559,7 +5559,7 @@ msgstr "&Uložit\tCtrl+S"
 msgid "&Print...\tCtrl+P"
 msgstr "&Tisk...\tCtrl+P"
 
-#: notepad.rc:33
+#: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
 msgstr "Nas&tavení stránky..."
 
@@ -5592,7 +5592,8 @@ msgstr "&Kopírovat\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "&Vložit\tCtrl+V"
 
-#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
+#: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
+#: winefile.rc:30
 msgid "&Delete\tDel"
 msgstr "&Smazat\tDel"
 
@@ -5624,7 +5625,7 @@ msgstr "Nah&radit...\tCtrl+H"
 msgid "&Search..."
 msgstr "&Najít..."
 
-#: notepad.rc:60
+#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "&Pomoc k nápovědě"
 
@@ -6060,10 +6061,6 @@ msgstr ""
 msgid "&Copy...\tF8"
 msgstr "&Kopírovat...\tF8"
 
-#: progman.rc:34
-msgid "&Delete\tEntf"
-msgstr "S&mazat\tEntf"
-
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
 msgstr "&Atributy...\tAlt+Enter"
@@ -6117,10 +6114,6 @@ msgstr "&Vedle sebe\tShift+F4"
 #: progman.rc:49
 msgid "&Arrange Icons"
 msgstr "&Zarovnat ikony"
-
-#: progman.rc:56
-msgid "&Help on Help"
-msgstr "&Pomoc s nápovědou"
 
 #: progman.rc:57
 msgid "&Tutorial"
@@ -6711,11 +6704,6 @@ msgstr ""
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
 msgstr ""
-
-#: taskmgr.rc:43 taskmgr.rc:142
-#, fuzzy
-msgid "&Always On Top"
-msgstr "Vždy n&a vrchu"
 
 #: taskmgr.rc:45
 #, fuzzy
@@ -7918,7 +7906,8 @@ msgid "Expand &Tree\t*"
 msgstr "Rozbalit &strom\t*"
 
 #: winefile.rc:70
-msgid "Expand &all\tStrg+*"
+#, fuzzy
+msgid "Expand &all\tCtrl+*"
 msgstr "Rozbalit &vše\tStrg+*"
 
 #: winefile.rc:71
@@ -8197,10 +8186,6 @@ msgstr "Large"
 msgid "Use system colors"
 msgstr "Use system colors"
 
-#: winhlp32.rc:61
-msgid "Help &on help"
-msgstr "Náp&ověda k nápovědě"
-
 #: winhlp32.rc:62
 msgid "Always on &top"
 msgstr "Vždy na &vrchu"
@@ -8260,11 +8245,6 @@ msgstr ""
 #, fuzzy
 msgid "&New...\tCtrl+N"
 msgstr "&Nový\tCtrl+N"
-
-#: wordpad.rc:35
-#, fuzzy
-msgid "Pag&e setup..."
-msgstr "Nas&tavení stránky..."
 
 #: wordpad.rc:42
 #, fuzzy

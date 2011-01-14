@@ -4923,7 +4923,7 @@ msgstr "&Secondi"
 msgid "&Date"
 msgstr "&Data"
 
-#: clock.rc:39
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
 msgid "&Always on Top"
 msgstr "&Sempre in primo piano"
 
@@ -5768,7 +5768,7 @@ msgstr "&Salva\tCtrl+S"
 msgid "&Print...\tCtrl+P"
 msgstr "&Stampa...\tCtrl+P"
 
-#: notepad.rc:33
+#: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
 msgstr "&Imposta pagina..."
 
@@ -5796,7 +5796,8 @@ msgstr "&Copia\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "&Incolla\tCtrl+V"
 
-#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
+#: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
+#: winefile.rc:30
 #, fuzzy
 msgid "&Delete\tDel"
 msgstr ""
@@ -5843,7 +5844,7 @@ msgstr ""
 "#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
 "&Ricerca..."
 
-#: notepad.rc:60
+#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "&Aiuto sulla Guida"
 
@@ -6272,10 +6273,6 @@ msgstr "&Sposta...\tF7"
 msgid "&Copy...\tF8"
 msgstr "&Copia...\tF8"
 
-#: progman.rc:34
-msgid "&Delete\tEntf"
-msgstr "&Elimina\tEntf"
-
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
 msgstr "&Proprietà...\tAlt+Invio"
@@ -6334,10 +6331,6 @@ msgstr "&A&ffianca\tShift+F4"
 #: progman.rc:49
 msgid "&Arrange Icons"
 msgstr "&Disponi icone"
-
-#: progman.rc:56
-msgid "&Help on Help"
-msgstr "&Aiuto sulla Guida"
 
 #: progman.rc:57
 msgid "&Tutorial"
@@ -6940,10 +6933,6 @@ msgstr "&Nuovo processo (Esegui...)"
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
 msgstr "&Esci dal gestore dei processi"
-
-#: taskmgr.rc:43 taskmgr.rc:142
-msgid "&Always On Top"
-msgstr "&Sempre davanti"
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
@@ -8157,7 +8146,8 @@ msgid "Expand &Tree\t*"
 msgstr "&Espandi albero\t*"
 
 #: winefile.rc:70
-msgid "Expand &all\tStrg+*"
+#, fuzzy
+msgid "Expand &all\tCtrl+*"
 msgstr "Espandi &tutto\tStrg+*"
 
 #: winefile.rc:71
@@ -8436,10 +8426,6 @@ msgstr "Grandi"
 msgid "Use system colors"
 msgstr "Usa i colori di sistema"
 
-#: winhlp32.rc:61
-msgid "Help &on help"
-msgstr "&Aiuto sulla guida"
-
 #: winhlp32.rc:62
 msgid "Always on &top"
 msgstr "Sempre in primo &piano"
@@ -8496,10 +8482,6 @@ msgstr "Argomenti di aiuto: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Nuovo...\tCtrl+N"
-
-#: wordpad.rc:35
-msgid "Pag&e setup..."
-msgstr "&Impostazioni di stampa..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

@@ -4909,7 +4909,7 @@ msgstr "&Seconden"
 msgid "&Date"
 msgstr "Da&tum"
 
-#: clock.rc:39
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
 msgid "&Always on Top"
 msgstr "&Altijd op de voorgrond"
 
@@ -5759,7 +5759,7 @@ msgstr ""
 msgid "&Print...\tCtrl+P"
 msgstr "Af&drukken...\tCtrl+P"
 
-#: notepad.rc:33
+#: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
 msgstr "Pa&gina-instellingen..."
 
@@ -5792,7 +5792,8 @@ msgstr "&Kopiëren\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "&Plakken\tCtrl+V"
 
-#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
+#: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
+#: winefile.rc:30
 #, fuzzy
 msgid "&Delete\tDel"
 msgstr ""
@@ -5834,7 +5835,7 @@ msgstr ""
 msgid "&Search..."
 msgstr "&Zoeken..."
 
-#: notepad.rc:60
+#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "H&ulp bij Help"
 
@@ -6270,10 +6271,6 @@ msgstr ""
 msgid "&Copy...\tF8"
 msgstr "&Kopiëren...\tF8"
 
-#: progman.rc:34
-msgid "&Delete\tEntf"
-msgstr "&Verwijderen\tEntf"
-
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
 msgstr "&Eigenschappen...\tAlt+Enter"
@@ -6322,10 +6319,6 @@ msgstr "&Naast elkaar\tShift+F4"
 #: progman.rc:49
 msgid "&Arrange Icons"
 msgstr "&Pictogrammen schikken"
-
-#: progman.rc:56
-msgid "&Help on Help"
-msgstr "&Hulp bij Help"
 
 #: progman.rc:57
 msgid "&Tutorial"
@@ -6930,10 +6923,6 @@ msgstr "&Nieuwe taak (uitvoeren...)"
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
 msgstr "B&eëindig Taakbeheer"
-
-#: taskmgr.rc:43 taskmgr.rc:142
-msgid "&Always On Top"
-msgstr "&Altijd op de voorgrond"
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
@@ -8146,7 +8135,8 @@ msgid "Expand &Tree\t*"
 msgstr "&Uitklappen\t*"
 
 #: winefile.rc:70
-msgid "Expand &all\tStrg+*"
+#, fuzzy
+msgid "Expand &all\tCtrl+*"
 msgstr "&Alles uitklappen\tCtrl+*"
 
 #: winefile.rc:71
@@ -8425,10 +8415,6 @@ msgstr "Groot"
 msgid "Use system colors"
 msgstr "Gebruik systeemkleuren"
 
-#: winhlp32.rc:61
-msgid "Help &on help"
-msgstr "Hulp &bij help"
-
 #: winhlp32.rc:62
 msgid "Always on &top"
 msgstr "Altijd &zichtbaar"
@@ -8484,10 +8470,6 @@ msgstr "Help-onderwerpen: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Nieuw...\tCtrl+N"
-
-#: wordpad.rc:35
-msgid "Pag&e setup..."
-msgstr "Pa&gina-instellingen..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

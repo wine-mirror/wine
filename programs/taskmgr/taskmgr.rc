@@ -39,7 +39,7 @@ BEGIN
     END
     POPUP "&Options"
     BEGIN
-        MENUITEM "&Always On Top",              ID_OPTIONS_ALWAYSONTOP
+        MENUITEM "&Always on Top",              ID_OPTIONS_ALWAYSONTOP
         , CHECKED
         MENUITEM "&Minimize On Use",            ID_OPTIONS_MINIMIZEONUSE
         , CHECKED
@@ -138,7 +138,7 @@ BEGIN
         MENUITEM "&Restore",                    ID_RESTORE
         MENUITEM "&Close",                      ID_FILE_EXIT
         MENUITEM SEPARATOR
-        MENUITEM "&Always On Top",              ID_OPTIONS_ALWAYSONTOP
+        MENUITEM "&Always on Top",              ID_OPTIONS_ALWAYSONTOP
     END
 END
 

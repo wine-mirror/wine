@@ -4837,7 +4837,7 @@ msgstr "&Sekunder"
 msgid "&Date"
 msgstr "&Datum"
 
-#: clock.rc:39
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
 msgid "&Always on Top"
 msgstr "&Alltid överst"
 
@@ -5681,7 +5681,7 @@ msgstr ""
 "#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
 "Skriv &ut...\tCtrl+P"
 
-#: notepad.rc:33
+#: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
 msgstr "Sidla&yout..."
 
@@ -5714,7 +5714,8 @@ msgstr "&Kopiera\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "Klistra &in\tCtrl+V"
 
-#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
+#: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
+#: winefile.rc:30
 msgid "&Delete\tDel"
 msgstr "&Ta bort\tDel"
 
@@ -5746,7 +5747,7 @@ msgstr "&Ersätt...\tCtrl+H"
 msgid "&Search..."
 msgstr "&Sök..."
 
-#: notepad.rc:60
+#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "Användning &av hjälp"
 
@@ -6170,10 +6171,6 @@ msgstr "&Flytta...\tF7"
 msgid "&Copy...\tF8"
 msgstr "&Kopiera...\tF8"
 
-#: progman.rc:34
-msgid "&Delete\tEntf"
-msgstr "&Ta bort\tEntf"
-
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
 msgstr "&Attribut...\tAlt+Enter"
@@ -6232,10 +6229,6 @@ msgstr "&Sida vid sida\tShift+F4"
 #: progman.rc:49
 msgid "&Arrange Icons"
 msgstr "Ordna &ikoner"
-
-#: progman.rc:56
-msgid "&Help on Help"
-msgstr "&Hjälp om hjälp"
 
 #: progman.rc:57
 msgid "&Tutorial"
@@ -6837,10 +6830,6 @@ msgstr "&Ny aktivitet (Kör...)"
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
 msgstr "&Avsluta Aktivitetshanteraren"
-
-#: taskmgr.rc:43 taskmgr.rc:142
-msgid "&Always On Top"
-msgstr "&Alltid överst"
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
@@ -8048,7 +8037,8 @@ msgid "Expand &Tree\t*"
 msgstr "Utöka &träd\t*"
 
 #: winefile.rc:70
-msgid "Expand &all\tStrg+*"
+#, fuzzy
+msgid "Expand &all\tCtrl+*"
 msgstr "Utöka &alla\tCtrl+*"
 
 #: winefile.rc:71
@@ -8327,10 +8317,6 @@ msgstr "Stort"
 msgid "Use system colors"
 msgstr "Använd systemfärger"
 
-#: winhlp32.rc:61
-msgid "Help &on help"
-msgstr "Hjälp &för hjälp"
-
 #: winhlp32.rc:62
 msgid "Always on &top"
 msgstr "Alltid &överst"
@@ -8386,10 +8372,6 @@ msgstr "Hjälprubriker: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Nytt...\tCtrl+N"
-
-#: wordpad.rc:35
-msgid "Pag&e setup..."
-msgstr "U&tskriftsformat..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

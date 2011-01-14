@@ -4967,7 +4967,7 @@ msgstr "&Secunde"
 msgid "&Date"
 msgstr "&Data"
 
-#: clock.rc:39
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
 msgid "&Always on Top"
 msgstr "T&otdeauna deasupra"
 
@@ -5798,7 +5798,7 @@ msgstr ""
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
 "Im&primă...\tCtrl+P"
 
-#: notepad.rc:33
+#: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
 msgstr "S&etare pagină..."
 
@@ -5836,7 +5836,8 @@ msgstr ""
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
 "Li&pește\tCtrl+V"
 
-#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
+#: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
+#: winefile.rc:30
 #, fuzzy
 msgid "&Delete\tDel"
 msgstr ""
@@ -5883,7 +5884,7 @@ msgstr ""
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
 "Că&utare..."
 
-#: notepad.rc:60
+#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "&Ajutor la ajutor"
 
@@ -6318,10 +6319,6 @@ msgstr "&Mutare...\tF7"
 msgid "&Copy...\tF8"
 msgstr "&Copiere...\tF8"
 
-#: progman.rc:34
-msgid "&Delete\tEntf"
-msgstr "&Șterge\tEntf"
-
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
 msgstr "&Atribute...\tAlt+Enter"
@@ -6370,10 +6367,6 @@ msgstr "&Una lângă alta\tShift+F4"
 #: progman.rc:49
 msgid "&Arrange Icons"
 msgstr "&Aranjează pictogramele"
-
-#: progman.rc:56
-msgid "&Help on Help"
-msgstr "A&jutor pentru Ajutor"
 
 #: progman.rc:57
 msgid "&Tutorial"
@@ -6975,10 +6968,6 @@ msgstr "Sarcină &nouă (executare...)"
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
 msgstr "Înc&hide administratorul de sarcini"
-
-#: taskmgr.rc:43 taskmgr.rc:142
-msgid "&Always On Top"
-msgstr "Mereu de&asupra"
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
@@ -8195,7 +8184,8 @@ msgid "Expand &Tree\t*"
 msgstr "Extinde ar&borele\t*"
 
 #: winefile.rc:70
-msgid "Expand &all\tStrg+*"
+#, fuzzy
+msgid "Expand &all\tCtrl+*"
 msgstr "Extinde t&ot\tStrg+*"
 
 #: winefile.rc:71
@@ -8474,10 +8464,6 @@ msgstr "Mare"
 msgid "Use system colors"
 msgstr "Utilizează culorile sistemului"
 
-#: winhlp32.rc:61
-msgid "Help &on help"
-msgstr "Ajut&or despre ajutor"
-
 #: winhlp32.rc:62
 msgid "Always on &top"
 msgstr "În&totdeauna deasupra"
@@ -8533,10 +8519,6 @@ msgstr "Subiecte de ajutor:"
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Nou...\tCtrl+N"
-
-#: wordpad.rc:35
-msgid "Pag&e setup..."
-msgstr "&Opțiuni pagină..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

@@ -4828,7 +4828,7 @@ msgstr "&Segundos"
 msgid "&Date"
 msgstr "Fe&cha"
 
-#: clock.rc:39
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
 msgid "&Always on Top"
 msgstr "Siempre &visible"
 
@@ -5653,7 +5653,7 @@ msgstr "&Guardar\tCtrl+S"
 msgid "&Print...\tCtrl+P"
 msgstr "&Imprimir...\tCtrl+P"
 
-#: notepad.rc:33
+#: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
 msgstr "Configurar &página..."
 
@@ -5681,7 +5681,8 @@ msgstr "&Copiar\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "&Pegar\tCtrl+V"
 
-#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
+#: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
+#: winefile.rc:30
 #, fuzzy
 msgid "&Delete\tDel"
 msgstr ""
@@ -5718,7 +5719,7 @@ msgstr "&Reemplazar...\tCtrl+H"
 msgid "&Search..."
 msgstr "&Buscar..."
 
-#: notepad.rc:60
+#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "A&yuda sobre la ayuda"
 
@@ -6159,10 +6160,6 @@ msgstr ""
 msgid "&Copy...\tF8"
 msgstr "&Copiar...\tF8"
 
-#: progman.rc:34
-msgid "&Delete\tEntf"
-msgstr "&Eliminar\tSupr"
-
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
 msgstr "&Atributos...\tAlt+Enter"
@@ -6216,10 +6213,6 @@ msgstr "&Mosaico\tShift+F4"
 #: progman.rc:49
 msgid "&Arrange Icons"
 msgstr "&Ordenar iconos"
-
-#: progman.rc:56
-msgid "&Help on Help"
-msgstr "&Ayuda sobre la ayuda"
 
 #: progman.rc:57
 msgid "&Tutorial"
@@ -6826,11 +6819,6 @@ msgstr ""
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
 msgstr ""
-
-#: taskmgr.rc:43 taskmgr.rc:142
-#, fuzzy
-msgid "&Always On Top"
-msgstr "Siempre &visible"
 
 #: taskmgr.rc:45
 #, fuzzy
@@ -8046,7 +8034,8 @@ msgid "Expand &Tree\t*"
 msgstr "&Expandir árbol\t*"
 
 #: winefile.rc:70
-msgid "Expand &all\tStrg+*"
+#, fuzzy
+msgid "Expand &all\tCtrl+*"
 msgstr "Expandir &todo\tStrg+*"
 
 #: winefile.rc:71
@@ -8325,10 +8314,6 @@ msgstr "Grande"
 msgid "Use system colors"
 msgstr "Usar colores del sistema"
 
-#: winhlp32.rc:61
-msgid "Help &on help"
-msgstr "&Ayuda sobre la ayuda"
-
 #: winhlp32.rc:62
 msgid "Always on &top"
 msgstr "&Siempre visible"
@@ -8388,11 +8373,6 @@ msgstr "Temas de ayuda: "
 #, fuzzy
 msgid "&New...\tCtrl+N"
 msgstr "&Nuevo\tCtrl+N"
-
-#: wordpad.rc:35
-#, fuzzy
-msgid "Pag&e setup..."
-msgstr "Configurar &página..."
 
 #: wordpad.rc:42
 #, fuzzy

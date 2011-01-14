@@ -4766,7 +4766,7 @@ msgstr "秒(&S)"
 msgid "&Date"
 msgstr "日付(&D)"
 
-#: clock.rc:39
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
 msgid "&Always on Top"
 msgstr "常に手前に表示(&A)"
 
@@ -5581,7 +5581,7 @@ msgstr ""
 msgid "&Print...\tCtrl+P"
 msgstr "印刷(&P)...\tCtrl+P"
 
-#: notepad.rc:33
+#: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
 msgstr "ページ設定(&T)..."
 
@@ -5609,7 +5609,8 @@ msgstr "コピー(&C)\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "貼り付け(&P)\tCtrl+V"
 
-#: notepad.rc:44 regedit.rc:57 regedit.rc:93 regedit.rc:108 winefile.rc:30
+#: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
+#: winefile.rc:30
 msgid "&Delete\tDel"
 msgstr "削除(&D)\tDel"
 
@@ -5646,7 +5647,7 @@ msgstr ""
 msgid "&Search..."
 msgstr "検索(&S)..."
 
-#: notepad.rc:60
+#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "ヘルプの使い方(&H)"
 
@@ -6075,11 +6076,6 @@ msgstr "移動(&M)...\tF7"
 msgid "&Copy...\tF8"
 msgstr "コピー(&C)...\tF8"
 
-#: progman.rc:34
-#, fuzzy
-msgid "&Delete\tEntf"
-msgstr "削除(&D)"
-
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
 msgstr ""
@@ -6123,11 +6119,6 @@ msgstr ""
 #: progman.rc:49
 msgid "&Arrange Icons"
 msgstr ""
-
-#: progman.rc:56
-#, fuzzy
-msgid "&Help on Help"
-msgstr "ヘルプの使い方(&H)"
 
 #: progman.rc:57
 msgid "&Tutorial"
@@ -6723,10 +6714,6 @@ msgstr "新しいタスクの実行(&N)..."
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
 msgstr "タスク マネージャの終了(&X)"
-
-#: taskmgr.rc:43 taskmgr.rc:142
-msgid "&Always On Top"
-msgstr "常に手前に表示(&A)"
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
@@ -7924,7 +7911,8 @@ msgid "Expand &Tree\t*"
 msgstr "ツリーを展開(&T)\t*"
 
 #: winefile.rc:70
-msgid "Expand &all\tStrg+*"
+#, fuzzy
+msgid "Expand &all\tCtrl+*"
 msgstr "すべてを展開(&A)\tStrg+*"
 
 #: winefile.rc:71
@@ -8203,10 +8191,6 @@ msgstr "大"
 msgid "Use system colors"
 msgstr "システム カラーを使う"
 
-#: winhlp32.rc:61
-msgid "Help &on help"
-msgstr "ヘルプについてのヘルプ(&O)"
-
 #: winhlp32.rc:62
 msgid "Always on &top"
 msgstr "常に手前に表示(&T)"
@@ -8262,10 +8246,6 @@ msgstr "ヘルプ トピック: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "新規作成(&N)...\tCtrl+N"
-
-#: wordpad.rc:35
-msgid "Pag&e setup..."
-msgstr "ページ設定(&E)..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"
