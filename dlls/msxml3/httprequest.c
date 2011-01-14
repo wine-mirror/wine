@@ -543,6 +543,7 @@ static ULONG WINAPI httprequest_Release(IXMLHTTPRequest *iface)
             list_remove(&header->entry);
             SysFreeString(header->header);
             SysFreeString(header->value);
+            heap_free(header);
         }
 
         /* detach callback object */
