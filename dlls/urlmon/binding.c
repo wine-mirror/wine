@@ -104,8 +104,6 @@ typedef struct {
     CRITICAL_SECTION section;
 } Binding;
 
-#define HTTPNEG2(x) ((IHttpNegotiate2*) &(x)->lpHttpNegotiate2Vtbl)
-
 static void fill_stgmed_buffer(stgmed_buf_t *buf)
 {
     DWORD read = 0;
@@ -1269,8 +1267,6 @@ static HRESULT WINAPI InternetBindInfo_GetBindString(IInternetBindInfo *iface,
     FIXME("not supported string type %d\n", ulStringType);
     return E_NOTIMPL;
 }
-
-#undef BINDF_THIS
 
 static const IInternetBindInfoVtbl InternetBindInfoVtbl = {
     InternetBindInfo_QueryInterface,

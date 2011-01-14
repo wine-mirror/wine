@@ -820,8 +820,6 @@ static HRESULT WINAPI BindInfo_GetBindString(IInternetBindInfo *iface,
     return IInternetBindInfo_GetBindString(This->bind_info, ulStringType, ppwzStr, cEl, pcElFetched);
 }
 
-#undef BINDFO_THIS
-
 static const IInternetBindInfoVtbl InternetBindInfoVtbl = {
     BindInfo_QueryInterface,
     BindInfo_AddRef,
