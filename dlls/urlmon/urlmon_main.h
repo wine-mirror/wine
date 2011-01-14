@@ -161,8 +161,6 @@ typedef struct {
     IInternetProtocol *protocol;
 } ProtocolProxy;
 
-#define PROTSINK(x)  ((IInternetProtocolSink*)   &(x)->lpIInternetProtocolSinkVtbl)
-
 HRESULT create_protocol_proxy(IInternetProtocol*,IInternetProtocolSink*,ProtocolProxy**);
 
 typedef struct _task_header_t task_header_t;

@@ -68,10 +68,10 @@ typedef enum {
 
 typedef struct {
     IBinding              IBinding_iface;
-    const IInternetProtocolSinkVtbl  *lpIInternetProtocolSinkVtbl;
-    const IInternetBindInfoVtbl      *lpInternetBindInfoVtbl;
-    const IWinInetHttpInfoVtbl       *lpWinInetHttpInfoVtbl;
-    const IServiceProviderVtbl       *lpServiceProviderVtbl;
+    IInternetProtocolSink IInternetProtocolSink_iface;
+    IInternetBindInfo     IInternetBindInfo_iface;
+    IWinInetHttpInfo      IWinInetHttpInfo_iface;
+    IServiceProvider      IServiceProvider_iface;
 
     LONG ref;
 
@@ -103,10 +103,6 @@ typedef struct {
 
     CRITICAL_SECTION section;
 } Binding;
-
-#define BINDINF(x)   ((IInternetBindInfo*)      &(x)->lpInternetBindInfoVtbl)
-#define INETINFO(x)  ((IWinInetHttpInfo*)       &(x)->lpWinInetHttpInfoVtbl)
-#define SERVPROV(x)  ((IServiceProvider*)       &(x)->lpServiceProviderVtbl)
 
 #define STREAM(x) ((IStream*) &(x)->lpStreamVtbl)
 #define HTTPNEG2(x) ((IHttpNegotiate2*) &(x)->lpHttpNegotiate2Vtbl)
@@ -798,13 +794,13 @@ static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void 
         *ppv = &This->IBinding_iface;
     }else if(IsEqualGUID(&IID_IInternetProtocolSink, riid)) {
         TRACE("(%p)->(IID_IInternetProtocolSink %p)\n", This, ppv);
-        *ppv = PROTSINK(This);
+        *ppv = &This->IInternetProtocolSink_iface;
     }else if(IsEqualGUID(&IID_IInternetBindInfo, riid)) {
         TRACE("(%p)->(IID_IInternetBindInfo %p)\n", This, ppv);
-        *ppv = BINDINF(This);
+        *ppv = &This->IInternetBindInfo_iface;
     }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
         TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
-        *ppv = SERVPROV(This);
+        *ppv = &This->IServiceProvider_iface;
     }else if(IsEqualGUID(&IID_IWinInetInfo, riid)) {
         TRACE("(%p)->(IID_IWinInetInfo %p)\n", This, ppv);
 
@@ -812,7 +808,7 @@ static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void 
         if(!This->protocol->wininet_info)
            return E_NOINTERFACE;
 
-        *ppv = INETINFO(This);
+        *ppv = &This->IWinInetHttpInfo_iface;
     }else if(IsEqualGUID(&IID_IWinInetHttpInfo, riid)) {
         IWinInetHttpInfo *http_info;
         HRESULT hres;
@@ -827,7 +823,7 @@ static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void 
             return E_NOINTERFACE;
 
         IWinInetHttpInfo_Release(http_info);
-        *ppv = INETINFO(This);
+        *ppv = &This->IWinInetHttpInfo_iface;
     }
 
     if(*ppv) {
@@ -977,31 +973,34 @@ static Binding *get_bctx_binding(IBindCtx *bctx)
     return impl_from_IBinding(binding);
 }
 
-#define PROTSINK_THIS(iface) DEFINE_THIS(Binding, IInternetProtocolSink, iface)
+static inline Binding *impl_from_IInternetProtocolSink(IInternetProtocolSink *iface)
+{
+    return CONTAINING_RECORD(iface, Binding, IInternetProtocolSink_iface);
+}
 
 static HRESULT WINAPI InternetProtocolSink_QueryInterface(IInternetProtocolSink *iface,
         REFIID riid, void **ppv)
 {
-    Binding *This = PROTSINK_THIS(iface);
+    Binding *This = impl_from_IInternetProtocolSink(iface);
     return IBinding_QueryInterface(&This->IBinding_iface, riid, ppv);
 }
 
 static ULONG WINAPI InternetProtocolSink_AddRef(IInternetProtocolSink *iface)
 {
-    Binding *This = PROTSINK_THIS(iface);
+    Binding *This = impl_from_IInternetProtocolSink(iface);
     return IBinding_AddRef(&This->IBinding_iface);
 }
 
 static ULONG WINAPI InternetProtocolSink_Release(IInternetProtocolSink *iface)
 {
-    Binding *This = PROTSINK_THIS(iface);
+    Binding *This = impl_from_IInternetProtocolSink(iface);
     return IBinding_Release(&This->IBinding_iface);
 }
 
 static HRESULT WINAPI InternetProtocolSink_Switch(IInternetProtocolSink *iface,
         PROTOCOLDATA *pProtocolData)
 {
-    Binding *This = PROTSINK_THIS(iface);
+    Binding *This = impl_from_IInternetProtocolSink(iface);
 
     WARN("(%p)->(%p)\n", This, pProtocolData);
 
@@ -1018,7 +1017,7 @@ static void on_progress(Binding *This, ULONG progress, ULONG progress_max,
 static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink *iface,
         ULONG ulStatusCode, LPCWSTR szStatusText)
 {
-    Binding *This = PROTSINK_THIS(iface);
+    Binding *This = impl_from_IInternetProtocolSink(iface);
 
     TRACE("(%p)->(%u %s)\n", This, ulStatusCode, debugstr_w(szStatusText));
 
@@ -1143,7 +1142,7 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
 static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *iface,
         DWORD grfBSCF, ULONG ulProgress, ULONG ulProgressMax)
 {
-    Binding *This = PROTSINK_THIS(iface);
+    Binding *This = impl_from_IInternetProtocolSink(iface);
 
     TRACE("(%p)->(%d %u %u)\n", This, grfBSCF, ulProgress, ulProgressMax);
 
@@ -1154,7 +1153,7 @@ static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *ifa
 static HRESULT WINAPI InternetProtocolSink_ReportResult(IInternetProtocolSink *iface,
         HRESULT hrResult, DWORD dwError, LPCWSTR szResult)
 {
-    Binding *This = PROTSINK_THIS(iface);
+    Binding *This = impl_from_IInternetProtocolSink(iface);
 
     TRACE("(%p)->(%08x %d %s)\n", This, hrResult, dwError, debugstr_w(szResult));
 
@@ -1162,8 +1161,6 @@ static HRESULT WINAPI InternetProtocolSink_ReportResult(IInternetProtocolSink *i
     IInternetProtocolEx_Terminate(&This->protocol->IInternetProtocolEx_iface, 0);
     return S_OK;
 }
-
-#undef PROTSINK_THIS
 
 static const IInternetProtocolSinkVtbl InternetProtocolSinkVtbl = {
     InternetProtocolSink_QueryInterface,
@@ -1175,31 +1172,34 @@ static const IInternetProtocolSinkVtbl InternetProtocolSinkVtbl = {
     InternetProtocolSink_ReportResult
 };
 
-#define BINDINF_THIS(iface) DEFINE_THIS(Binding, InternetBindInfo, iface)
+static inline Binding *impl_from_IInternetBindInfo(IInternetBindInfo *iface)
+{
+    return CONTAINING_RECORD(iface, Binding, IInternetBindInfo_iface);
+}
 
 static HRESULT WINAPI InternetBindInfo_QueryInterface(IInternetBindInfo *iface,
         REFIID riid, void **ppv)
 {
-    Binding *This = BINDINF_THIS(iface);
+    Binding *This = impl_from_IInternetBindInfo(iface);
     return IBinding_QueryInterface(&This->IBinding_iface, riid, ppv);
 }
 
 static ULONG WINAPI InternetBindInfo_AddRef(IInternetBindInfo *iface)
 {
-    Binding *This = BINDINF_THIS(iface);
+    Binding *This = impl_from_IInternetBindInfo(iface);
     return IBinding_AddRef(&This->IBinding_iface);
 }
 
 static ULONG WINAPI InternetBindInfo_Release(IInternetBindInfo *iface)
 {
-    Binding *This = BINDINF_THIS(iface);
+    Binding *This = impl_from_IInternetBindInfo(iface);
     return IBinding_Release(&This->IBinding_iface);
 }
 
 static HRESULT WINAPI InternetBindInfo_GetBindInfo(IInternetBindInfo *iface,
         DWORD *grfBINDF, BINDINFO *pbindinfo)
 {
-    Binding *This = BINDINF_THIS(iface);
+    Binding *This = impl_from_IInternetBindInfo(iface);
 
     TRACE("(%p)->(%p %p)\n", This, grfBINDF, pbindinfo);
 
@@ -1222,7 +1222,7 @@ static HRESULT WINAPI InternetBindInfo_GetBindInfo(IInternetBindInfo *iface,
 static HRESULT WINAPI InternetBindInfo_GetBindString(IInternetBindInfo *iface,
         ULONG ulStringType, LPOLESTR *ppwzStr, ULONG cEl, ULONG *pcElFetched)
 {
-    Binding *This = BINDINF_THIS(iface);
+    Binding *This = impl_from_IInternetBindInfo(iface);
 
     TRACE("(%p)->(%d %p %d %p)\n", This, ulStringType, ppwzStr, cEl, pcElFetched);
 
@@ -1280,30 +1280,33 @@ static const IInternetBindInfoVtbl InternetBindInfoVtbl = {
     InternetBindInfo_GetBindString
 };
 
-#define INETINFO_THIS(iface) DEFINE_THIS(Binding, WinInetHttpInfo, iface)
+static inline Binding *impl_from_IWinInetHttpInfo(IWinInetHttpInfo *iface)
+{
+    return CONTAINING_RECORD(iface, Binding, IWinInetHttpInfo_iface);
+}
 
 static HRESULT WINAPI WinInetHttpInfo_QueryInterface(IWinInetHttpInfo *iface, REFIID riid, void **ppv)
 {
-    Binding *This = INETINFO_THIS(iface);
+    Binding *This = impl_from_IWinInetHttpInfo(iface);
     return IBinding_QueryInterface(&This->IBinding_iface, riid, ppv);
 }
 
 static ULONG WINAPI WinInetHttpInfo_AddRef(IWinInetHttpInfo *iface)
 {
-    Binding *This = INETINFO_THIS(iface);
+    Binding *This = impl_from_IWinInetHttpInfo(iface);
     return IBinding_AddRef(&This->IBinding_iface);
 }
 
 static ULONG WINAPI WinInetHttpInfo_Release(IWinInetHttpInfo *iface)
 {
-    Binding *This = INETINFO_THIS(iface);
+    Binding *This = impl_from_IWinInetHttpInfo(iface);
     return IBinding_Release(&This->IBinding_iface);
 }
 
 static HRESULT WINAPI WinInetHttpInfo_QueryOption(IWinInetHttpInfo *iface, DWORD dwOption,
         void *pBuffer, DWORD *pcbBuffer)
 {
-    Binding *This = INETINFO_THIS(iface);
+    Binding *This = impl_from_IWinInetHttpInfo(iface);
     FIXME("(%p)->(%x %p %p)\n", This, dwOption, pBuffer, pcbBuffer);
     return E_NOTIMPL;
 }
@@ -1311,12 +1314,10 @@ static HRESULT WINAPI WinInetHttpInfo_QueryOption(IWinInetHttpInfo *iface, DWORD
 static HRESULT WINAPI WinInetHttpInfo_QueryInfo(IWinInetHttpInfo *iface, DWORD dwOption,
         void *pBuffer, DWORD *pcbBuffer, DWORD *pdwFlags, DWORD *pdwReserved)
 {
-    Binding *This = INETINFO_THIS(iface);
+    Binding *This = impl_from_IWinInetHttpInfo(iface);
     FIXME("(%p)->(%x %p %p %p %p)\n", This, dwOption, pBuffer, pcbBuffer, pdwFlags, pdwReserved);
     return E_NOTIMPL;
 }
-
-#undef INETINFO_THIS
 
 static const IWinInetHttpInfoVtbl WinInetHttpInfoVtbl = {
     WinInetHttpInfo_QueryInterface,
@@ -1326,31 +1327,34 @@ static const IWinInetHttpInfoVtbl WinInetHttpInfoVtbl = {
     WinInetHttpInfo_QueryInfo
 };
 
-#define SERVPROV_THIS(iface) DEFINE_THIS(Binding, ServiceProvider, iface)
+static inline Binding *impl_from_IServiceProvider(IServiceProvider *iface)
+{
+    return CONTAINING_RECORD(iface, Binding, IServiceProvider_iface);
+}
 
 static HRESULT WINAPI ServiceProvider_QueryInterface(IServiceProvider *iface,
         REFIID riid, void **ppv)
 {
-    Binding *This = SERVPROV_THIS(iface);
+    Binding *This = impl_from_IServiceProvider(iface);
     return IBinding_QueryInterface(&This->IBinding_iface, riid, ppv);
 }
 
 static ULONG WINAPI ServiceProvider_AddRef(IServiceProvider *iface)
 {
-    Binding *This = SERVPROV_THIS(iface);
+    Binding *This = impl_from_IServiceProvider(iface);
     return IBinding_AddRef(&This->IBinding_iface);
 }
 
 static ULONG WINAPI ServiceProvider_Release(IServiceProvider *iface)
 {
-    Binding *This = SERVPROV_THIS(iface);
+    Binding *This = impl_from_IServiceProvider(iface);
     return IBinding_Release(&This->IBinding_iface);
 }
 
 static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface,
         REFGUID guidService, REFIID riid, void **ppv)
 {
-    Binding *This = SERVPROV_THIS(iface);
+    Binding *This = impl_from_IServiceProvider(iface);
     HRESULT hres;
 
     TRACE("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
@@ -1365,8 +1369,6 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface,
     WARN("unknown service %s\n", debugstr_guid(guidService));
     return E_NOINTERFACE;
 }
-
-#undef SERVPROV_THIS
 
 static const IServiceProviderVtbl ServiceProviderVtbl = {
     ServiceProvider_QueryInterface,
@@ -1422,10 +1424,10 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, IUri *uri, IB
     ret = heap_alloc_zero(sizeof(Binding));
 
     ret->IBinding_iface.lpVtbl = &BindingVtbl;
-    ret->lpIInternetProtocolSinkVtbl = &InternetProtocolSinkVtbl;
-    ret->lpInternetBindInfoVtbl     = &InternetBindInfoVtbl;
-    ret->lpWinInetHttpInfoVtbl      = &WinInetHttpInfoVtbl;
-    ret->lpServiceProviderVtbl      = &ServiceProviderVtbl;
+    ret->IInternetProtocolSink_iface.lpVtbl = &InternetProtocolSinkVtbl;
+    ret->IInternetBindInfo_iface.lpVtbl = &InternetBindInfoVtbl;
+    ret->IWinInetHttpInfo_iface.lpVtbl = &WinInetHttpInfoVtbl;
+    ret->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
 
     ret->ref = 1;
 
@@ -1544,14 +1546,16 @@ static HRESULT start_binding(IMoniker *mon, Binding *binding_ctx, IUri *uri, IBi
     }
 
     if(binding_ctx) {
-        set_binding_sink(binding->protocol, PROTSINK(binding), BINDINF(binding));
+        set_binding_sink(binding->protocol, &binding->IInternetProtocolSink_iface,
+                &binding->IInternetBindInfo_iface);
         if(binding_ctx->redirect_url)
             IBindStatusCallback_OnProgress(binding->callback, 0, 0, BINDSTATUS_REDIRECTING, binding_ctx->redirect_url);
         report_data(binding, BSCF_FIRSTDATANOTIFICATION | (binding_ctx->download_state == END_DOWNLOAD ? BSCF_LASTDATANOTIFICATION : 0),
                 0, 0);
     }else {
         hres = IInternetProtocolEx_StartEx(&binding->protocol->IInternetProtocolEx_iface, uri,
-                PROTSINK(binding), BINDINF(binding), PI_APARTMENTTHREADED|PI_MIMEVERIFICATION, 0);
+                &binding->IInternetProtocolSink_iface, &binding->IInternetBindInfo_iface,
+                PI_APARTMENTTHREADED|PI_MIMEVERIFICATION, 0);
 
         TRACE("start ret %08x\n", hres);
 
