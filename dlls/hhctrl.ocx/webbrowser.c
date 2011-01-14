@@ -751,7 +751,12 @@ void DoPageAction(HHInfo *info, DWORD dwAction)
             break;
         case WB_REFRESH:
             IWebBrowser2_Refresh(pWebBrowser2);
+            break;
         case WB_STOP:
             IWebBrowser2_Stop(pWebBrowser2);
+            break;
+        case WB_PRINT:
+            IWebBrowser2_ExecWB(pWebBrowser2, OLECMDID_PRINT, OLECMDEXECOPT_DONTPROMPTUSER, 0, 0);
+            break;
     }
 }

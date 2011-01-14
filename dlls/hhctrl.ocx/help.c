@@ -641,10 +641,12 @@ static void TB_OnClick(HWND hWnd, DWORD dwID)
         case IDTB_FORWARD:
             DoPageAction(info, WB_GOFORWARD);
             break;
+        case IDTB_PRINT:
+            DoPageAction(info, WB_PRINT);
+            break;
         case IDTB_EXPAND:
         case IDTB_CONTRACT:
         case IDTB_SYNC:
-        case IDTB_PRINT:
         case IDTB_OPTIONS:
         case IDTB_BROWSE_FWD:
         case IDTB_BROWSE_BACK:
