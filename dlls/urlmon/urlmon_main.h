@@ -152,8 +152,8 @@ HRESULT protocol_abort(Protocol*,HRESULT);
 void protocol_close_connection(Protocol*);
 
 typedef struct {
-    const IInternetProtocolVtbl      *lpIInternetProtocolVtbl;
-    const IInternetProtocolSinkVtbl  *lpIInternetProtocolSinkVtbl;
+    IInternetProtocol     IInternetProtocol_iface;
+    IInternetProtocolSink IInternetProtocolSink_iface;
 
     LONG ref;
 
@@ -161,7 +161,6 @@ typedef struct {
     IInternetProtocol *protocol;
 } ProtocolProxy;
 
-#define PROTOCOL(x)  ((IInternetProtocol*)       &(x)->lpIInternetProtocolVtbl)
 #define PROTSINK(x)  ((IInternetProtocolSink*)   &(x)->lpIInternetProtocolSinkVtbl)
 
 HRESULT create_protocol_proxy(IInternetProtocol*,IInternetProtocolSink*,ProtocolProxy**);

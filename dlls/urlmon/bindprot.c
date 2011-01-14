@@ -194,8 +194,8 @@ static HRESULT handle_mime_filter(BindProtocol *This, IInternetProtocol *mime_fi
     IInternetProtocol_AddRef(mime_filter);
     This->protocol_handler = mime_filter;
 
-    filter_data.pProtocol = PROTOCOL(filter_proxy);
-    hres = IInternetProtocol_Start(mime_filter, mime, PROTSINK(filter_proxy),
+    filter_data.pProtocol = &filter_proxy->IInternetProtocol_iface;
+    hres = IInternetProtocol_Start(mime_filter, mime, &filter_proxy->IInternetProtocolSink_iface,
             &This->IInternetBindInfo_iface, PI_FILTER_MODE|PI_FORCE_ASYNC,
             (HANDLE_PTR)&filter_data);
     if(FAILED(hres)) {
@@ -336,7 +336,7 @@ static ULONG WINAPI BindProtocol_Release(IInternetProtocolEx *iface)
         if(This->protocol_handler && This->protocol_handler != &This->default_protocol_handler.IInternetProtocol_iface)
             IInternetProtocol_Release(This->protocol_handler);
         if(This->filter_proxy)
-            IInternetProtocol_Release(PROTOCOL(This->filter_proxy));
+            IInternetProtocol_Release(&This->filter_proxy->IInternetProtocol_iface);
         if(This->uri)
             IUri_Release(This->uri);
 
@@ -664,7 +664,7 @@ static HRESULT WINAPI ProtocolHandler_Terminate(IInternetProtocol *iface, DWORD 
     IInternetProtocol_Terminate(This->protocol, 0);
 
     if(This->filter_proxy) {
-        IInternetProtocol_Release(PROTOCOL(This->filter_proxy));
+        IInternetProtocol_Release(&This->filter_proxy->IInternetProtocol_iface);
         This->filter_proxy = NULL;
     }
 
