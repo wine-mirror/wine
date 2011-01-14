@@ -162,6 +162,420 @@ msgstr "Сьогодні:"
 msgid "Go to today"
 msgstr "Поточна дата"
 
+#: comdlg32.rc:29
+msgid "&About FolderPicker Test"
+msgstr "&Про тест ВибірТеки"
+
+#: comdlg32.rc:30
+msgid "Document Folders"
+msgstr "Теки документів"
+
+#: comdlg32.rc:31 shell32.rc:187
+msgid "My Documents"
+msgstr "Мої документи"
+
+#: comdlg32.rc:32
+msgid "My Favorites"
+msgstr "Закладки"
+
+#: comdlg32.rc:33
+msgid "System Path"
+msgstr "Системний шлях"
+
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
+msgid "Desktop"
+msgstr "Робочий стіл"
+
+#: comdlg32.rc:35 winhlp32.rc:52 winhlp32.rc:75
+msgid "Fonts"
+msgstr "Шрифти"
+
+#: comdlg32.rc:36 shell32.rc:142 regedit.rc:206
+#, fuzzy
+msgid "My Computer"
+msgstr ""
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Мій Комп'ютер\n"
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Мій комп'ютер"
+
+#: comdlg32.rc:41
+msgid "System Folders"
+msgstr "Системні теки"
+
+#: comdlg32.rc:42
+msgid "Local Hard Drives"
+msgstr "Локальні жорсткі диски"
+
+#: comdlg32.rc:43
+msgid "File not found"
+msgstr "Файл не знайдено"
+
+#: comdlg32.rc:44
+msgid "Please verify that the correct file name was given"
+msgstr "Перевірте, чи правильно вказано ім'я файлу"
+
+#: comdlg32.rc:45
+msgid ""
+"File does not exist.\n"
+"Do you want to create file?"
+msgstr ""
+"Файл не існує\n"
+"Чи хочете Ви його створити?"
+
+#: comdlg32.rc:46
+msgid ""
+"File already exists.\n"
+"Do you want to replace it?"
+msgstr ""
+"Файл уже існує.\n"
+"Замінити його?"
+
+#: comdlg32.rc:47
+msgid "Invalid character(s) in path"
+msgstr "Невірний символ в запису шляху"
+
+#: comdlg32.rc:48
+msgid ""
+"A filename cannot contain any of the following characters:\n"
+"                          / : < > |"
+msgstr ""
+"Ім'я файлу не може містити наступні символи:\n"
+"                          / : < > |"
+
+#: comdlg32.rc:49
+msgid "Path does not exist"
+msgstr "Шлях не існує"
+
+#: comdlg32.rc:50
+msgid "File does not exist"
+msgstr "Файл не існує"
+
+#: comdlg32.rc:55
+msgid "Up One Level"
+msgstr "Вгору на один рівень"
+
+#: comdlg32.rc:56
+msgid "Create New Folder"
+msgstr "Створити нову теку"
+
+#: comdlg32.rc:57
+msgid "List"
+msgstr "Список"
+
+#: comdlg32.rc:58
+msgid "Details"
+msgstr "Подробиці"
+
+#: comdlg32.rc:59
+msgid "Browse to Desktop"
+msgstr "Перехід на Робочий стіл"
+
+#: comdlg32.rc:123
+msgid "Regular"
+msgstr "Нормальний"
+
+#: comdlg32.rc:124
+msgid "Bold"
+msgstr "Жирний"
+
+#: comdlg32.rc:125
+msgid "Italic"
+msgstr "Курсив"
+
+#: comdlg32.rc:126
+msgid "Bold Italic"
+msgstr "Жирний курсив"
+
+#: comdlg32.rc:131 wordpad.rc:114
+msgid "Black"
+msgstr "Чорний"
+
+#: comdlg32.rc:132 wordpad.rc:115
+msgid "Maroon"
+msgstr "Коричневий"
+
+#: comdlg32.rc:133 wordpad.rc:116
+msgid "Green"
+msgstr "Зелений"
+
+#: comdlg32.rc:134 wordpad.rc:117
+msgid "Olive"
+msgstr "Оливковий"
+
+#: comdlg32.rc:135 wordpad.rc:118
+msgid "Navy"
+msgstr "Темно-синій"
+
+#: comdlg32.rc:136 wordpad.rc:119
+msgid "Purple"
+msgstr "Пурпуровий"
+
+#: comdlg32.rc:137 wordpad.rc:120
+msgid "Teal"
+msgstr "Синьо-зелений"
+
+#: comdlg32.rc:138 wordpad.rc:121
+msgid "Gray"
+msgstr "Сірий"
+
+#: comdlg32.rc:139 wordpad.rc:122
+msgid "Silver"
+msgstr "Сріблястий"
+
+#: comdlg32.rc:140 wordpad.rc:123
+msgid "Red"
+msgstr "Червоний"
+
+#: comdlg32.rc:141 wordpad.rc:124
+msgid "Lime"
+msgstr "Салатовий"
+
+#: comdlg32.rc:142 wordpad.rc:125
+msgid "Yellow"
+msgstr "Жовтий"
+
+#: comdlg32.rc:143 wordpad.rc:126
+msgid "Blue"
+msgstr "Синій"
+
+#: comdlg32.rc:144 wordpad.rc:127
+msgid "Fuchsia"
+msgstr "Малиновий"
+
+#: comdlg32.rc:145 wordpad.rc:128
+msgid "Aqua"
+msgstr "Блакитний"
+
+#: comdlg32.rc:146 wordpad.rc:129
+msgid "White"
+msgstr "Білий"
+
+#: comdlg32.rc:66
+msgid "Unreadable Entry"
+msgstr "Нечитаємий елемент"
+
+#: comdlg32.rc:68
+msgid ""
+"This value does not lie within the page range.\n"
+"Please enter a value between %d and %d."
+msgstr ""
+"Це значення не лежить у діапазоні сторінок\n"
+"Введіть значенне між %d та %d"
+
+#: comdlg32.rc:70
+msgid "The 'from' entry cannot exceed the 'to' entry."
+msgstr "Значення ВІД не повинно перевищувати ДО:"
+
+#: comdlg32.rc:72
+msgid ""
+"Margins overlap or fall outside Paper boundaries.\n"
+"Please reenter margins."
+msgstr ""
+"Межі перекривають чи перевищують розміри паперу.\n"
+"Введіть їх наново"
+
+#: comdlg32.rc:74
+msgid "The number of 'Number of copies' value cannot be empty."
+msgstr "Значення Числа Копій не може бути пустим"
+
+#: comdlg32.rc:76
+msgid ""
+"This large number of copies is not supported by your printer.\n"
+"Please enter a value between 1 and %d."
+msgstr ""
+"Така велика кількість копій не може бути надрукована Вашим принтером.\n"
+"Введіть значення між 1 та %d"
+
+#: comdlg32.rc:77
+msgid "A printer error occurred."
+msgstr "Виникла помилка принтера"
+
+#: comdlg32.rc:78
+msgid "No default printer defined."
+msgstr "Немає принтера, поставленого за обумовленням"
+
+#: comdlg32.rc:79
+msgid "Cannot find the printer."
+msgstr "Не вдалось знайти принтер"
+
+#: comdlg32.rc:80 progman.rc:78
+#, fuzzy
+msgid "Out of memory."
+msgstr ""
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Замало пам'яті.\n"
+"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
+"Мало пам'яті"
+
+#: comdlg32.rc:81
+msgid "An error occurred."
+msgstr "Виникла(и) помилка(и)"
+
+#: comdlg32.rc:82
+msgid "Unknown printer driver."
+msgstr "Невідомий драйвер принтера"
+
+#: comdlg32.rc:85
+msgid ""
+"Before you can perform printer-related tasks such as page setup or printing "
+"a document, you need to install a printer. Please install one and retry."
+msgstr ""
+"Перед запуском таких дій як налаштування сторінки чи друкування вам треба "
+"встановити принтер. Встановіть принтер та спробуйте знов."
+
+#: comdlg32.rc:151
+msgid "Select a font size between %d and %d points."
+msgstr "Биберіть шрифт розміром %d - %d пунктів."
+
+#: comdlg32.rc:152 shdocvw.rc:32
+msgid "&Save"
+msgstr "&Зберегти"
+
+#: comdlg32.rc:153
+msgid "Save &in:"
+msgstr "Зберегти &в:"
+
+#: comdlg32.rc:154
+msgid "Save"
+msgstr "Зберегти"
+
+#: comdlg32.rc:155
+msgid "Save as"
+msgstr "Зберегти як"
+
+#: comdlg32.rc:156
+msgid "Open File"
+msgstr "Відкрити файл"
+
+#: comdlg32.rc:93 oleview.rc:95
+msgid "Ready"
+msgstr "Готово"
+
+#: comdlg32.rc:94
+msgid "Paused; "
+msgstr "Призупинено; "
+
+#: comdlg32.rc:95
+msgid "Error; "
+msgstr "Помилка; "
+
+#: comdlg32.rc:96
+msgid "Pending deletion; "
+msgstr "Чекання видалення; "
+
+#: comdlg32.rc:97
+msgid "Paper jam; "
+msgstr "Папір застряг; "
+
+#: comdlg32.rc:98
+msgid "Out of paper; "
+msgstr "Не вистачає паперу; "
+
+#: comdlg32.rc:99
+msgid "Feed paper manual; "
+msgstr "Поставте папір вручну; "
+
+#: comdlg32.rc:100
+msgid "Paper problem; "
+msgstr "Проблема с папером; "
+
+#: comdlg32.rc:101
+msgid "Printer offline; "
+msgstr "Принтер в режимі offline; "
+
+#: comdlg32.rc:102
+msgid "I/O Active; "
+msgstr "Ввід/Вивід активний; "
+
+#: comdlg32.rc:103
+msgid "Busy; "
+msgstr "Зайнятий; "
+
+#: comdlg32.rc:104
+msgid "Printing; "
+msgstr "Йде друк; "
+
+#: comdlg32.rc:105
+msgid "Output tray is full; "
+msgstr "Лоток переповнений папером; "
+
+#: comdlg32.rc:106
+msgid "Not available; "
+msgstr "Не доступний; "
+
+#: comdlg32.rc:107
+msgid "Waiting; "
+msgstr "Очікування; "
+
+#: comdlg32.rc:108
+msgid "Processing; "
+msgstr "Обробка; "
+
+#: comdlg32.rc:109
+msgid "Initialising; "
+msgstr "Готування; "
+
+#: comdlg32.rc:110
+msgid "Warming up; "
+msgstr "Прогрів; "
+
+#: comdlg32.rc:111
+msgid "Toner low; "
+msgstr "Тонер при кінці; "
+
+#: comdlg32.rc:112
+msgid "No toner; "
+msgstr "Нема тонера; "
+
+#: comdlg32.rc:113
+msgid "Page punt; "
+msgstr "Page punt; "
+
+#: comdlg32.rc:114
+msgid "Interrupted by user; "
+msgstr "Перервано користувачем; "
+
+#: comdlg32.rc:115
+msgid "Out of memory; "
+msgstr "Мало пам'яті; "
+
+#: comdlg32.rc:116
+msgid "The printer door is open; "
+msgstr "Кришка принтера відкрита; "
+
+#: comdlg32.rc:117
+msgid "Print server unknown; "
+msgstr "Невідомий сервер принтера; "
+
+#: comdlg32.rc:118
+msgid "Power save mode; "
+msgstr "Живлення в безпечному режимі; "
+
+#: comdlg32.rc:87
+msgid "Default Printer; "
+msgstr "Принтер за обумовленням; "
+
+#: comdlg32.rc:88
+msgid "There are %d documents in the queue"
+msgstr "%d документів у черзі"
+
+#: comdlg32.rc:89
+msgid "Margins [inches]"
+msgstr "Межі  [дюйми]"
+
+#: comdlg32.rc:90
+msgid "Margins [mm]"
+msgstr "Межі [мм]"
+
+#: comdlg32.rc:91
+msgid "mm"
+msgstr "мм"
+
+#: comdlg32.rc:64 hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
+msgid "Print"
+msgstr "Друк"
+
 #: credui.rc:27
 msgid "Connect to %s"
 msgstr "Під'єднатись до %s"
@@ -1670,10 +2084,6 @@ msgstr "Додому"
 msgid "Sync"
 msgstr "Синхронізувати"
 
-#: hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
-msgid "Print"
-msgstr "Друк"
-
 #: hhctrl.rc:43 wordpad.rc:155
 msgid "Options"
 msgstr "Параметри"
@@ -2853,10 +3263,6 @@ msgstr ""
 msgid "&Open..."
 msgstr "&Відкрити..."
 
-#: shdocvw.rc:32
-msgid "&Save"
-msgstr "&Зберегти"
-
 #: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr "Зберегти &як..."
@@ -3071,14 +3477,6 @@ msgstr "Оригінальне розміщення"
 msgid "Date deleted"
 msgstr "Дата видалення"
 
-#: shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
-msgid "Desktop"
-msgstr "Робочий стіл"
-
-#: shell32.rc:142 regedit.rc:206
-msgid "My Computer"
-msgstr "Мій Комп'ютер"
-
 #: shell32.rc:144
 msgid "Control Panel"
 msgstr "Панель керування"
@@ -3115,10 +3513,6 @@ msgstr "Завершити сесію роботи Wine?"
 #: shell32.rc:186
 msgid "Start Menu\\Programs"
 msgstr "Головне меню\\Програми"
-
-#: shell32.rc:187
-msgid "My Documents"
-msgstr "Мої документи"
 
 #: shell32.rc:188
 msgid "Favorites"
@@ -5521,10 +5915,6 @@ msgstr "OleView"
 msgid "ITypeLib viewer"
 msgstr "ITypeLib viewer"
 
-#: oleview.rc:95
-msgid "Ready"
-msgstr "Готово"
-
 #: oleview.rc:96
 msgid "OleView - OLE/COM Object Viewer"
 msgstr "OleView - Переглядач об'єктів OLE/COM"
@@ -5831,10 +6221,6 @@ msgid ""
 msgstr ""
 "Файл групи `%s' неможливо відкрити.\n"
 "Спробувати знов наступного разу?"
-
-#: progman.rc:78
-msgid "Out of memory."
-msgstr "Замало пам'яті."
 
 #: progman.rc:79
 msgid "Help not available."
@@ -7866,10 +8252,6 @@ msgstr "Не зверху"
 msgid "History"
 msgstr "Історія"
 
-#: winhlp32.rc:52 winhlp32.rc:75
-msgid "Fonts"
-msgstr "Шрифти"
-
 #: winhlp32.rc:54 winhlp32.rc:77
 msgid "Small"
 msgstr "Малий"
@@ -8075,71 +8457,6 @@ msgstr ""
 #, fuzzy
 msgid "&About Wine Wordpad"
 msgstr "&Інформація..."
-
-#: wordpad.rc:114
-msgid "Black"
-msgstr ""
-
-#: wordpad.rc:115
-msgid "Maroon"
-msgstr ""
-
-#: wordpad.rc:116
-msgid "Green"
-msgstr ""
-
-#: wordpad.rc:117
-msgid "Olive"
-msgstr ""
-
-#: wordpad.rc:118
-msgid "Navy"
-msgstr ""
-
-#: wordpad.rc:119
-msgid "Purple"
-msgstr ""
-
-#: wordpad.rc:120
-msgid "Teal"
-msgstr ""
-
-#: wordpad.rc:121
-msgid "Gray"
-msgstr ""
-
-#: wordpad.rc:122
-msgid "Silver"
-msgstr ""
-
-#: wordpad.rc:123
-#, fuzzy
-msgid "Red"
-msgstr "Перемотати"
-
-#: wordpad.rc:124
-msgid "Lime"
-msgstr ""
-
-#: wordpad.rc:125
-msgid "Yellow"
-msgstr ""
-
-#: wordpad.rc:126
-msgid "Blue"
-msgstr ""
-
-#: wordpad.rc:127
-msgid "Fuchsia"
-msgstr ""
-
-#: wordpad.rc:128
-msgid "Aqua"
-msgstr ""
-
-#: wordpad.rc:129
-msgid "White"
-msgstr ""
 
 #: wordpad.rc:130
 #, fuzzy

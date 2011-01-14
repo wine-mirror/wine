@@ -162,6 +162,415 @@ msgstr "Danas:"
 msgid "Go to today"
 msgstr "Pređi na današnji dan"
 
+#: comdlg32.rc:29
+msgid "&About FolderPicker Test"
+msgstr "&O FolderPicker testu"
+
+#: comdlg32.rc:30
+msgid "Document Folders"
+msgstr "Fascikle za dokumenta"
+
+#: comdlg32.rc:31 shell32.rc:187
+msgid "My Documents"
+msgstr "Dokumenti"
+
+#: comdlg32.rc:32
+msgid "My Favorites"
+msgstr "Omiljeno"
+
+#: comdlg32.rc:33
+msgid "System Path"
+msgstr "Sistemska putanja"
+
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
+msgid "Desktop"
+msgstr "Radna površina"
+
+#: comdlg32.rc:35 winhlp32.rc:52 winhlp32.rc:75
+msgid "Fonts"
+msgstr "Fontovi"
+
+#: comdlg32.rc:36 shell32.rc:142 regedit.rc:206
+msgid "My Computer"
+msgstr "Računar"
+
+#: comdlg32.rc:41
+msgid "System Folders"
+msgstr "Sistemske fascikle"
+
+#: comdlg32.rc:42
+msgid "Local Hard Drives"
+msgstr "Tvrdi diskovi"
+
+#: comdlg32.rc:43
+msgid "File not found"
+msgstr "Datoteka nije pronađena"
+
+#: comdlg32.rc:44
+msgid "Please verify that the correct file name was given"
+msgstr "Proverite naziv datoteke"
+
+#: comdlg32.rc:45
+msgid ""
+"File does not exist.\n"
+"Do you want to create file?"
+msgstr ""
+"Datoteka ne postoji.\n"
+"Želite li da je napravite?"
+
+#: comdlg32.rc:46
+msgid ""
+"File already exists.\n"
+"Do you want to replace it?"
+msgstr ""
+"Datoteka već postoji.\n"
+"Želite li da je zamenite?"
+
+#: comdlg32.rc:47
+msgid "Invalid character(s) in path"
+msgstr "Neispravan znak u putanji"
+
+#: comdlg32.rc:48
+msgid ""
+"A filename cannot contain any of the following characters:\n"
+"                          / : < > |"
+msgstr ""
+"Naziv datoteke ne sme sadržati sledeće znakove:\n"
+"                          / : < > |"
+
+#: comdlg32.rc:49
+msgid "Path does not exist"
+msgstr "Putanja ne postoji"
+
+#: comdlg32.rc:50
+msgid "File does not exist"
+msgstr "Datoteka ne postoji"
+
+#: comdlg32.rc:55
+msgid "Up One Level"
+msgstr "Jedan nivo gore"
+
+#: comdlg32.rc:56
+msgid "Create New Folder"
+msgstr "Napravi novu fasciklu"
+
+#: comdlg32.rc:57
+msgid "List"
+msgstr "Spisak"
+
+#: comdlg32.rc:58
+msgid "Details"
+msgstr "Detalji"
+
+#: comdlg32.rc:59
+msgid "Browse to Desktop"
+msgstr "Potraži na radnoj površini"
+
+#: comdlg32.rc:123
+msgid "Regular"
+msgstr "Obično"
+
+#: comdlg32.rc:124
+msgid "Bold"
+msgstr "Podebljano"
+
+#: comdlg32.rc:125
+msgid "Italic"
+msgstr "Ukošeno"
+
+#: comdlg32.rc:126
+msgid "Bold Italic"
+msgstr "Podebljano ukošeno"
+
+#: comdlg32.rc:131 wordpad.rc:114
+msgid "Black"
+msgstr "Crna"
+
+#: comdlg32.rc:132 wordpad.rc:115
+msgid "Maroon"
+msgstr "Kestenjasta"
+
+#: comdlg32.rc:133 wordpad.rc:116
+msgid "Green"
+msgstr "Zelena"
+
+#: comdlg32.rc:134 wordpad.rc:117
+msgid "Olive"
+msgstr "Maslinasta"
+
+#: comdlg32.rc:135 wordpad.rc:118
+msgid "Navy"
+msgstr "Tamno plava"
+
+#: comdlg32.rc:136 wordpad.rc:119
+msgid "Purple"
+msgstr "Ljubičasta"
+
+#: comdlg32.rc:137 wordpad.rc:120
+msgid "Teal"
+msgstr "Zelenkasta"
+
+#: comdlg32.rc:138 wordpad.rc:121
+msgid "Gray"
+msgstr "Siva"
+
+#: comdlg32.rc:139 wordpad.rc:122
+msgid "Silver"
+msgstr "Srebrna"
+
+#: comdlg32.rc:140 wordpad.rc:123
+msgid "Red"
+msgstr "Crvena"
+
+#: comdlg32.rc:141 wordpad.rc:124
+msgid "Lime"
+msgstr "Limun zelena"
+
+#: comdlg32.rc:142 wordpad.rc:125
+msgid "Yellow"
+msgstr "Žuta"
+
+#: comdlg32.rc:143 wordpad.rc:126
+msgid "Blue"
+msgstr "Plava"
+
+#: comdlg32.rc:144 wordpad.rc:127
+msgid "Fuchsia"
+msgstr "Roze-ljubičasta"
+
+#: comdlg32.rc:145 wordpad.rc:128
+msgid "Aqua"
+msgstr "Svetlo plava"
+
+#: comdlg32.rc:146 wordpad.rc:129
+msgid "White"
+msgstr "Bela"
+
+#: comdlg32.rc:66
+msgid "Unreadable Entry"
+msgstr "Unos je nečitljiv"
+
+#: comdlg32.rc:68
+msgid ""
+"This value does not lie within the page range.\n"
+"Please enter a value between %d and %d."
+msgstr ""
+"Ova vrednost ne leži na opsegu strane.\n"
+"Unesite vrednost između %d i %d."
+
+#: comdlg32.rc:70
+msgid "The 'from' entry cannot exceed the 'to' entry."
+msgstr "Unos „od“ ne sme biti posle „do“ unosa."
+
+#: comdlg32.rc:72
+msgid ""
+"Margins overlap or fall outside Paper boundaries.\n"
+"Please reenter margins."
+msgstr ""
+"Margine se preklapaju ili prelaze van granica papira.\n"
+"Ponovo unesite margine."
+
+#: comdlg32.rc:74
+msgid "The number of 'Number of copies' value cannot be empty."
+msgstr "Vrednost za „Broj primeraka“ ne sme biti prazna."
+
+#: comdlg32.rc:76
+msgid ""
+"This large number of copies is not supported by your printer.\n"
+"Please enter a value between 1 and %d."
+msgstr ""
+"Ovoliki broj primeraka nije podržan od strane Vašeg štampača.\n"
+"Unesite vrednost između 1 i %d."
+
+#: comdlg32.rc:77
+msgid "A printer error occurred."
+msgstr "Došlo je do greške u štampaču."
+
+#: comdlg32.rc:78
+msgid "No default printer defined."
+msgstr "Podrazumevani štampač nije izabran."
+
+#: comdlg32.rc:79
+msgid "Cannot find the printer."
+msgstr "Štampač nije pronađen."
+
+#: comdlg32.rc:80 progman.rc:78
+msgid "Out of memory."
+msgstr "Nema više memorije."
+
+#: comdlg32.rc:81
+msgid "An error occurred."
+msgstr "Došlo je do greške."
+
+#: comdlg32.rc:82
+msgid "Unknown printer driver."
+msgstr "Veznik za štampač nije prepoznat."
+
+#: comdlg32.rc:85
+msgid ""
+"Before you can perform printer-related tasks such as page setup or printing "
+"a document, you need to install a printer. Please install one and retry."
+msgstr ""
+"Pre podešavanja strane i štampanja, morate da instalirate upravljački "
+"program. Instalirajte ga i pokušajte ponovo."
+
+#: comdlg32.rc:151
+msgid "Select a font size between %d and %d points."
+msgstr "Izaberite veličinu fonta između %d i %d tačaka."
+
+#: comdlg32.rc:152 shdocvw.rc:32
+msgid "&Save"
+msgstr "&Sačuvaj"
+
+#: comdlg32.rc:153
+msgid "Save &in:"
+msgstr "Sačuvaj &u:"
+
+#: comdlg32.rc:154
+msgid "Save"
+msgstr "Sačuvaj"
+
+#: comdlg32.rc:155
+msgid "Save as"
+msgstr "Sačuvaj kao"
+
+#: comdlg32.rc:156
+msgid "Open File"
+msgstr "Otvori datoteku"
+
+#: comdlg32.rc:93 oleview.rc:95
+msgid "Ready"
+msgstr "Spremno"
+
+#: comdlg32.rc:94
+msgid "Paused; "
+msgstr "Pauzirano; "
+
+#: comdlg32.rc:95
+msgid "Error; "
+msgstr "Greška; "
+
+#: comdlg32.rc:96
+msgid "Pending deletion; "
+msgstr "Čeka na brisanje; "
+
+#: comdlg32.rc:97
+msgid "Paper jam; "
+msgstr "Ulaz za papir; "
+
+#: comdlg32.rc:98
+msgid "Out of paper; "
+msgstr "Nema papira; "
+
+#: comdlg32.rc:99
+msgid "Feed paper manual; "
+msgstr "Dodajte papir; "
+
+#: comdlg32.rc:100
+msgid "Paper problem; "
+msgstr "Problem s papirom; "
+
+#: comdlg32.rc:101
+msgid "Printer offline; "
+msgstr "Štampač nije povezan; "
+
+#: comdlg32.rc:102
+msgid "I/O Active; "
+msgstr "I/O aktivan; "
+
+#: comdlg32.rc:103
+msgid "Busy; "
+msgstr "Zauzet; "
+
+#: comdlg32.rc:104
+msgid "Printing; "
+msgstr "Štampa; "
+
+#: comdlg32.rc:105
+msgid "Output tray is full; "
+msgstr "Izlaz je pun; "
+
+#: comdlg32.rc:106
+msgid "Not available; "
+msgstr "Nedostupno; "
+
+#: comdlg32.rc:107
+msgid "Waiting; "
+msgstr "Čekanje; "
+
+#: comdlg32.rc:108
+msgid "Processing; "
+msgstr "Obrađivanje; "
+
+#: comdlg32.rc:109
+msgid "Initialising; "
+msgstr "Pokretanje; "
+
+#: comdlg32.rc:110
+msgid "Warming up; "
+msgstr "Zagrevanje; "
+
+#: comdlg32.rc:111
+msgid "Toner low; "
+msgstr "Toner je pri kraju; "
+
+#: comdlg32.rc:112
+msgid "No toner; "
+msgstr "Nema tonera; "
+
+#: comdlg32.rc:113
+msgid "Page punt; "
+msgstr "Funta strane; "
+
+#: comdlg32.rc:114
+msgid "Interrupted by user; "
+msgstr "Prekinuto od strane korisnika; "
+
+#: comdlg32.rc:115
+msgid "Out of memory; "
+msgstr "Nema više memorije; "
+
+#: comdlg32.rc:116
+msgid "The printer door is open; "
+msgstr "Ulaz na štampaču je otvoren; "
+
+#: comdlg32.rc:117
+msgid "Print server unknown; "
+msgstr "Server za štampanje nije poznat; "
+
+#: comdlg32.rc:118
+msgid "Power save mode; "
+msgstr "Režim za uštedu struje; "
+
+#: comdlg32.rc:87
+msgid "Default Printer; "
+msgstr "Podrazumevani štampač; "
+
+#: comdlg32.rc:88
+msgid "There are %d documents in the queue"
+msgstr "%d dokumenata je u redu za čekanje"
+
+#: comdlg32.rc:89
+msgid "Margins [inches]"
+msgstr "Margine (u inčima)"
+
+#: comdlg32.rc:90
+msgid "Margins [mm]"
+msgstr "Margine (u milimetrima)"
+
+#: comdlg32.rc:91
+msgid "mm"
+msgstr "mm"
+
+#: comdlg32.rc:64 hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
+#, fuzzy
+msgid "Print"
+msgstr ""
+"#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
+"Štampaj\n"
+"#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
+"Štampanje"
+
 #: credui.rc:27
 msgid "Connect to %s"
 msgstr "Poveži se sa %s"
@@ -1660,10 +2069,6 @@ msgstr "Početna"
 msgid "Sync"
 msgstr "Uskladi"
 
-#: hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
-msgid "Print"
-msgstr "Štampaj"
-
 #: hhctrl.rc:43 wordpad.rc:155
 msgid "Options"
 msgstr "Opcije"
@@ -2811,10 +3216,6 @@ msgstr "&Prozor"
 msgid "&Open..."
 msgstr "&Otvori..."
 
-#: shdocvw.rc:32
-msgid "&Save"
-msgstr "&Sačuvaj"
-
 #: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr "Sačuvaj &kao..."
@@ -3014,19 +3415,6 @@ msgstr "Originalna lokacija"
 msgid "Date deleted"
 msgstr "Datum brisanja"
 
-#: shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
-#, fuzzy
-msgid "Desktop"
-msgstr ""
-"#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
-"Radna površina\n"
-"#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
-"Desktop"
-
-#: shell32.rc:142 regedit.rc:206
-msgid "My Computer"
-msgstr "Računar"
-
 #: shell32.rc:144
 msgid "Control Panel"
 msgstr "Upravljački panel"
@@ -3058,10 +3446,6 @@ msgstr "Želite li da izgasite Wine sesiju?"
 #: shell32.rc:186
 msgid "Start Menu\\Programs"
 msgstr "„Start“ meni\\Programi"
-
-#: shell32.rc:187
-msgid "My Documents"
-msgstr "Dokumenti"
 
 #: shell32.rc:188
 msgid "Favorites"
@@ -5192,10 +5576,6 @@ msgstr "&Prikaz"
 msgid "ITypeLib viewer"
 msgstr ""
 
-#: oleview.rc:95
-msgid "Ready"
-msgstr ""
-
 #: oleview.rc:96
 msgid "OleView - OLE/COM Object Viewer"
 msgstr ""
@@ -5492,11 +5872,6 @@ msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
 msgstr ""
-
-#: progman.rc:78
-#, fuzzy
-msgid "Out of memory."
-msgstr "Nema memorije"
 
 #: progman.rc:79
 #, fuzzy
@@ -7505,10 +7880,6 @@ msgstr "Nije vidljivo"
 msgid "History"
 msgstr "Istorija"
 
-#: winhlp32.rc:52 winhlp32.rc:75
-msgid "Fonts"
-msgstr "Fontovi"
-
 #: winhlp32.rc:54 winhlp32.rc:77
 msgid "Small"
 msgstr "Mali"
@@ -7709,71 +8080,6 @@ msgstr ""
 #, fuzzy
 msgid "&About Wine Wordpad"
 msgstr "&Info..."
-
-#: wordpad.rc:114
-msgid "Black"
-msgstr ""
-
-#: wordpad.rc:115
-msgid "Maroon"
-msgstr ""
-
-#: wordpad.rc:116
-msgid "Green"
-msgstr ""
-
-#: wordpad.rc:117
-msgid "Olive"
-msgstr ""
-
-#: wordpad.rc:118
-msgid "Navy"
-msgstr ""
-
-#: wordpad.rc:119
-msgid "Purple"
-msgstr ""
-
-#: wordpad.rc:120
-msgid "Teal"
-msgstr ""
-
-#: wordpad.rc:121
-msgid "Gray"
-msgstr ""
-
-#: wordpad.rc:122
-msgid "Silver"
-msgstr ""
-
-#: wordpad.rc:123
-#, fuzzy
-msgid "Red"
-msgstr "Premotaj"
-
-#: wordpad.rc:124
-msgid "Lime"
-msgstr ""
-
-#: wordpad.rc:125
-msgid "Yellow"
-msgstr ""
-
-#: wordpad.rc:126
-msgid "Blue"
-msgstr ""
-
-#: wordpad.rc:127
-msgid "Fuchsia"
-msgstr ""
-
-#: wordpad.rc:128
-msgid "Aqua"
-msgstr ""
-
-#: wordpad.rc:129
-msgid "White"
-msgstr ""
 
 #: wordpad.rc:130
 msgid "Automatic"

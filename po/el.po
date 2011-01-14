@@ -141,6 +141,411 @@ msgstr "Σήμερα:"
 msgid "Go to today"
 msgstr "Μετάβαση στα σημερινά"
 
+#: comdlg32.rc:29
+msgid "&About FolderPicker Test"
+msgstr "&About FolderPicker Test"
+
+#: comdlg32.rc:30
+msgid "Document Folders"
+msgstr "Document Folders"
+
+#: comdlg32.rc:31 shell32.rc:187
+msgid "My Documents"
+msgstr "Τα Έγγραφά μου"
+
+#: comdlg32.rc:32
+msgid "My Favorites"
+msgstr "Τα Αγαπημένα μου"
+
+#: comdlg32.rc:33
+msgid "System Path"
+msgstr "System Path"
+
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
+msgid "Desktop"
+msgstr "Επιφάνεια Εργασίας"
+
+#: comdlg32.rc:35 winhlp32.rc:52 winhlp32.rc:75
+msgid "Fonts"
+msgstr "Γραμματοσειρές"
+
+#: comdlg32.rc:36 shell32.rc:142 regedit.rc:206
+msgid "My Computer"
+msgstr "Ο Υπολογιστής μου"
+
+#: comdlg32.rc:41
+msgid "System Folders"
+msgstr "Κατάλογοι Συστήματος"
+
+#: comdlg32.rc:42
+msgid "Local Hard Drives"
+msgstr "Τοπικοί Σκληροί Δίσκοι"
+
+#: comdlg32.rc:43
+msgid "File not found"
+msgstr "Το αρχείο δε βρέθηκε"
+
+#: comdlg32.rc:44
+msgid "Please verify that the correct file name was given"
+msgstr "Παρακαλώ επιβεβαιώστε ότι δόθηκε το σωστό όνομα αρχείου"
+
+#: comdlg32.rc:45
+msgid ""
+"File does not exist.\n"
+"Do you want to create file?"
+msgstr ""
+"Το αρχείο δεν υπάρχει.\n"
+"Θέλετε να δημιουργήσετε το αρχείο;"
+
+#: comdlg32.rc:46
+msgid ""
+"File already exists.\n"
+"Do you want to replace it?"
+msgstr ""
+"Το αρχείο υπάρχει ήδη.\n"
+"Θέλετε να το αντικαταστήσετε;"
+
+#: comdlg32.rc:47
+msgid "Invalid character(s) in path"
+msgstr "Μη έγγυρος(οι) χαρακτήρας(ες) στο μονοπάτι"
+
+#: comdlg32.rc:48
+msgid ""
+"A filename cannot contain any of the following characters:\n"
+"                          / : < > |"
+msgstr ""
+"Ένα όνομα αρχείο δε μπορεί να περιέχει κάποιον από τους παρακάτω "
+"χαρακτήρες:\n"
+"                          / : < > |"
+
+#: comdlg32.rc:49
+msgid "Path does not exist"
+msgstr "Το μονοπάτι δεν υπάρχει"
+
+#: comdlg32.rc:50
+msgid "File does not exist"
+msgstr "Το αρχείο δεν υπάρχει"
+
+#: comdlg32.rc:55
+msgid "Up One Level"
+msgstr "Ένα επίπεδο πάνω"
+
+#: comdlg32.rc:56
+msgid "Create New Folder"
+msgstr "Δημιουργία νέου καταλόγου"
+
+#: comdlg32.rc:57
+msgid "List"
+msgstr "Λίστα"
+
+#: comdlg32.rc:58
+msgid "Details"
+msgstr "Λεπτομέρειες"
+
+#: comdlg32.rc:59
+msgid "Browse to Desktop"
+msgstr "Browse to Desktop"
+
+#: comdlg32.rc:123
+msgid "Regular"
+msgstr "Κανονικά"
+
+#: comdlg32.rc:124
+msgid "Bold"
+msgstr "Έντονα"
+
+#: comdlg32.rc:125
+msgid "Italic"
+msgstr "Πλάγια"
+
+#: comdlg32.rc:126
+msgid "Bold Italic"
+msgstr "Έντονα Πλάγια"
+
+#: comdlg32.rc:131 wordpad.rc:114
+msgid "Black"
+msgstr "Μαύρο"
+
+#: comdlg32.rc:132 wordpad.rc:115
+msgid "Maroon"
+msgstr "Maroon"
+
+#: comdlg32.rc:133 wordpad.rc:116
+msgid "Green"
+msgstr "Πράσινο"
+
+#: comdlg32.rc:134 wordpad.rc:117
+msgid "Olive"
+msgstr "Olive"
+
+#: comdlg32.rc:135 wordpad.rc:118
+msgid "Navy"
+msgstr "Navy"
+
+#: comdlg32.rc:136 wordpad.rc:119
+msgid "Purple"
+msgstr "Μωβ"
+
+#: comdlg32.rc:137 wordpad.rc:120
+msgid "Teal"
+msgstr "Teal"
+
+#: comdlg32.rc:138 wordpad.rc:121
+msgid "Gray"
+msgstr "Γκρι"
+
+#: comdlg32.rc:139 wordpad.rc:122
+msgid "Silver"
+msgstr "Ασημί"
+
+#: comdlg32.rc:140 wordpad.rc:123
+msgid "Red"
+msgstr "Κόκκινο"
+
+#: comdlg32.rc:141 wordpad.rc:124
+msgid "Lime"
+msgstr "Lime"
+
+#: comdlg32.rc:142 wordpad.rc:125
+msgid "Yellow"
+msgstr "Κίτρινο"
+
+#: comdlg32.rc:143 wordpad.rc:126
+msgid "Blue"
+msgstr "Μπλε"
+
+#: comdlg32.rc:144 wordpad.rc:127
+msgid "Fuchsia"
+msgstr "Fuchsia"
+
+#: comdlg32.rc:145 wordpad.rc:128
+msgid "Aqua"
+msgstr "Aqua"
+
+#: comdlg32.rc:146 wordpad.rc:129
+msgid "White"
+msgstr "Άσπρο"
+
+#: comdlg32.rc:66
+msgid "Unreadable Entry"
+msgstr "Μη αναγνώσιμη εγγραφή"
+
+#: comdlg32.rc:68
+msgid ""
+"This value does not lie within the page range.\n"
+"Please enter a value between %d and %d."
+msgstr ""
+"This value does not lie within the page range.\n"
+"Please enter a value between %d and %d."
+
+#: comdlg32.rc:70
+msgid "The 'from' entry cannot exceed the 'to' entry."
+msgstr "The 'from' entry cannot exceed the 'to' entry."
+
+#: comdlg32.rc:72
+msgid ""
+"Margins overlap or fall outside Paper boundaries.\n"
+"Please reenter margins."
+msgstr ""
+"Margins overlap or fall outside Paper boundaries.\n"
+"Please reenter margins."
+
+#: comdlg32.rc:74
+msgid "The number of 'Number of copies' value cannot be empty."
+msgstr "The number of 'Number of copies' value cannot be empty."
+
+#: comdlg32.rc:76
+msgid ""
+"This large number of copies is not supported by your printer.\n"
+"Please enter a value between 1 and %d."
+msgstr ""
+"This large number of copies is not supported by your printer.\n"
+"Please enter a value between 1 and %d."
+
+#: comdlg32.rc:77
+msgid "A printer error occurred."
+msgstr "Προκλήθηκε σφάλμα εκτυπωτή."
+
+#: comdlg32.rc:78
+msgid "No default printer defined."
+msgstr "Δεν έχει οριστεί προεπιλεγμένος εκτυπωτής."
+
+#: comdlg32.rc:79
+msgid "Cannot find the printer."
+msgstr "Δεν ήταν δυνατή η εύρεση του εκτυπωτή."
+
+#: comdlg32.rc:80 progman.rc:78
+msgid "Out of memory."
+msgstr "Out of memory."
+
+#: comdlg32.rc:81
+msgid "An error occurred."
+msgstr "Προκλήθηκε σφάλμα."
+
+#: comdlg32.rc:82
+msgid "Unknown printer driver."
+msgstr "Άγνωστος οδηγός εκτυπωτή."
+
+#: comdlg32.rc:85
+msgid ""
+"Before you can perform printer-related tasks such as page setup or printing "
+"a document, you need to install a printer. Please install one and retry."
+msgstr ""
+"Before you can perform printer-related tasks such as page setup or printing "
+"a document, you need to install a printer. Please install one and retry."
+
+#: comdlg32.rc:151
+msgid "Select a font size between %d and %d points."
+msgstr "Επιλέξτε μέγεθος γραμματοσειράς μεταξύ %d και %d πόντους."
+
+#: comdlg32.rc:152 shdocvw.rc:32
+msgid "&Save"
+msgstr "&Αποθήκευση"
+
+#: comdlg32.rc:153
+msgid "Save &in:"
+msgstr "Αποθήκευση &σε:"
+
+#: comdlg32.rc:154
+msgid "Save"
+msgstr "Αποθήκευση"
+
+#: comdlg32.rc:155
+msgid "Save as"
+msgstr "Αποθήκευση ως"
+
+#: comdlg32.rc:156
+msgid "Open File"
+msgstr "Άνοιγμα Αρχείου"
+
+#: comdlg32.rc:93 oleview.rc:95
+msgid "Ready"
+msgstr "Έτοιμο"
+
+#: comdlg32.rc:94
+msgid "Paused; "
+msgstr "Σταματημένος; "
+
+#: comdlg32.rc:95
+msgid "Error; "
+msgstr "Σφάλμα; "
+
+#: comdlg32.rc:96
+msgid "Pending deletion; "
+msgstr "Pending deletion; "
+
+#: comdlg32.rc:97
+msgid "Paper jam; "
+msgstr "Paper jam; "
+
+#: comdlg32.rc:98
+msgid "Out of paper; "
+msgstr "Τέλος χαρτιού; "
+
+#: comdlg32.rc:99
+msgid "Feed paper manual; "
+msgstr "Feed paper manual; "
+
+#: comdlg32.rc:100
+msgid "Paper problem; "
+msgstr "Πρόβλημα χαρτιού; "
+
+#: comdlg32.rc:101
+msgid "Printer offline; "
+msgstr "Εκτυπωτής αποσυνδεδεμένος; "
+
+#: comdlg32.rc:102
+msgid "I/O Active; "
+msgstr "I/O Active; "
+
+#: comdlg32.rc:103
+msgid "Busy; "
+msgstr "Απασχολημένος; "
+
+#: comdlg32.rc:104
+msgid "Printing; "
+msgstr "Γίνεται εκτύπωση; "
+
+#: comdlg32.rc:105
+msgid "Output tray is full; "
+msgstr "Output tray is full; "
+
+#: comdlg32.rc:106
+msgid "Not available; "
+msgstr "ΜΗ διαθέσιμος; "
+
+#: comdlg32.rc:107
+msgid "Waiting; "
+msgstr "Αναμονή; "
+
+#: comdlg32.rc:108
+msgid "Processing; "
+msgstr "Processing; "
+
+#: comdlg32.rc:109
+msgid "Initialising; "
+msgstr "Εκκίνηση; "
+
+#: comdlg32.rc:110
+msgid "Warming up; "
+msgstr "Γίνεται προθέρμανση; "
+
+#: comdlg32.rc:111
+msgid "Toner low; "
+msgstr "Τόνερ χαμηλό; "
+
+#: comdlg32.rc:112
+msgid "No toner; "
+msgstr "Δεν υπάρχει τόνερ; "
+
+#: comdlg32.rc:113
+msgid "Page punt; "
+msgstr "Page punt; "
+
+#: comdlg32.rc:114
+msgid "Interrupted by user; "
+msgstr "Interrupted by user; "
+
+#: comdlg32.rc:115
+msgid "Out of memory; "
+msgstr "Out of memory; "
+
+#: comdlg32.rc:116
+msgid "The printer door is open; "
+msgstr "The printer door is open; "
+
+#: comdlg32.rc:117
+msgid "Print server unknown; "
+msgstr "Print server unknown; "
+
+#: comdlg32.rc:118
+msgid "Power save mode; "
+msgstr "Power save mode; "
+
+#: comdlg32.rc:87
+msgid "Default Printer; "
+msgstr "Προεπιλεγμένος εκτυπωτής; "
+
+#: comdlg32.rc:88
+msgid "There are %d documents in the queue"
+msgstr "Υπάρχουν %d έγγραφα στην ουρά"
+
+#: comdlg32.rc:89
+msgid "Margins [inches]"
+msgstr "Margins [inches]"
+
+#: comdlg32.rc:90
+msgid "Margins [mm]"
+msgstr "Margins [mm]"
+
+#: comdlg32.rc:91
+msgid "mm"
+msgstr "mm"
+
+#: comdlg32.rc:64 hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
+msgid "Print"
+msgstr "Εκτύπωση"
+
 #: credui.rc:27
 msgid "Connect to %s"
 msgstr ""
@@ -1606,10 +2011,6 @@ msgstr "Home"
 msgid "Sync"
 msgstr "Sync"
 
-#: hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
-msgid "Print"
-msgstr "Εκτύπωση"
-
 #: hhctrl.rc:43 wordpad.rc:155
 msgid "Options"
 msgstr "Επιλογές"
@@ -2695,10 +3096,6 @@ msgstr ""
 msgid "&Open..."
 msgstr ""
 
-#: shdocvw.rc:32
-msgid "&Save"
-msgstr ""
-
 #: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr ""
@@ -2901,14 +3298,6 @@ msgstr ""
 msgid "Date deleted"
 msgstr ""
 
-#: shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
-msgid "Desktop"
-msgstr ""
-
-#: shell32.rc:142 regedit.rc:206
-msgid "My Computer"
-msgstr ""
-
 #: shell32.rc:144
 msgid "Control Panel"
 msgstr ""
@@ -2939,10 +3328,6 @@ msgstr ""
 
 #: shell32.rc:186
 msgid "Start Menu\\Programs"
-msgstr ""
-
-#: shell32.rc:187
-msgid "My Documents"
 msgstr ""
 
 #: shell32.rc:188
@@ -5004,10 +5389,6 @@ msgstr ""
 msgid "ITypeLib viewer"
 msgstr ""
 
-#: oleview.rc:95
-msgid "Ready"
-msgstr ""
-
 #: oleview.rc:96
 msgid "OleView - OLE/COM Object Viewer"
 msgstr ""
@@ -5293,10 +5674,6 @@ msgstr ""
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
-msgstr ""
-
-#: progman.rc:78
-msgid "Out of memory."
 msgstr ""
 
 #: progman.rc:79
@@ -7225,10 +7602,6 @@ msgstr ""
 msgid "History"
 msgstr ""
 
-#: winhlp32.rc:52 winhlp32.rc:75
-msgid "Fonts"
-msgstr ""
-
 #: winhlp32.rc:54 winhlp32.rc:77
 msgid "Small"
 msgstr ""
@@ -7420,70 +7793,6 @@ msgstr ""
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
-msgstr ""
-
-#: wordpad.rc:114
-msgid "Black"
-msgstr ""
-
-#: wordpad.rc:115
-msgid "Maroon"
-msgstr ""
-
-#: wordpad.rc:116
-msgid "Green"
-msgstr ""
-
-#: wordpad.rc:117
-msgid "Olive"
-msgstr ""
-
-#: wordpad.rc:118
-msgid "Navy"
-msgstr ""
-
-#: wordpad.rc:119
-msgid "Purple"
-msgstr ""
-
-#: wordpad.rc:120
-msgid "Teal"
-msgstr ""
-
-#: wordpad.rc:121
-msgid "Gray"
-msgstr ""
-
-#: wordpad.rc:122
-msgid "Silver"
-msgstr ""
-
-#: wordpad.rc:123
-msgid "Red"
-msgstr ""
-
-#: wordpad.rc:124
-msgid "Lime"
-msgstr ""
-
-#: wordpad.rc:125
-msgid "Yellow"
-msgstr ""
-
-#: wordpad.rc:126
-msgid "Blue"
-msgstr ""
-
-#: wordpad.rc:127
-msgid "Fuchsia"
-msgstr ""
-
-#: wordpad.rc:128
-msgid "Aqua"
-msgstr ""
-
-#: wordpad.rc:129
-msgid "White"
 msgstr ""
 
 #: wordpad.rc:130

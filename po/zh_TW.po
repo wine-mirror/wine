@@ -150,6 +150,420 @@ msgstr "今天:"
 msgid "Go to today"
 msgstr "轉到今天"
 
+#: comdlg32.rc:29
+msgid "&About FolderPicker Test"
+msgstr "关于資料夹选择器(&A)"
+
+#: comdlg32.rc:30
+msgid "Document Folders"
+msgstr "資料夾"
+
+#: comdlg32.rc:31 shell32.rc:187
+msgid "My Documents"
+msgstr "我的檔案"
+
+#: comdlg32.rc:32
+msgid "My Favorites"
+msgstr "我的最愛"
+
+#: comdlg32.rc:33
+msgid "System Path"
+msgstr "系統路徑"
+
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
+msgid "Desktop"
+msgstr "桌面"
+
+#: comdlg32.rc:35 winhlp32.rc:52 winhlp32.rc:75
+msgid "Fonts"
+msgstr "字型"
+
+#: comdlg32.rc:36 shell32.rc:142 regedit.rc:206
+msgid "My Computer"
+msgstr "我的電腦"
+
+#: comdlg32.rc:41
+msgid "System Folders"
+msgstr "系統資料夾"
+
+#: comdlg32.rc:42
+msgid "Local Hard Drives"
+msgstr "本地硬盤驅動器"
+
+#: comdlg32.rc:43
+msgid "File not found"
+msgstr "找不到檔案"
+
+#: comdlg32.rc:44
+msgid "Please verify that the correct file name was given"
+msgstr "請檢驗是否給予正確的檔案名稱。"
+
+#: comdlg32.rc:45
+msgid ""
+"File does not exist.\n"
+"Do you want to create file?"
+msgstr ""
+"找不到檔案\n"
+"是否創建新檔案?"
+
+#: comdlg32.rc:46
+msgid ""
+"File already exists.\n"
+"Do you want to replace it?"
+msgstr ""
+"檔案已經存在。\n"
+"要替換嗎?"
+
+#: comdlg32.rc:47
+msgid "Invalid character(s) in path"
+msgstr "檔案名中存在無效的字符"
+
+#: comdlg32.rc:48
+msgid ""
+"A filename cannot contain any of the following characters:\n"
+"                          / : < > |"
+msgstr ""
+"檔案名中不能包含任何一下字符::\n"
+"                          / : < > |"
+
+#: comdlg32.rc:49
+msgid "Path does not exist"
+msgstr "資料夾不存在"
+
+#: comdlg32.rc:50
+msgid "File does not exist"
+msgstr "檔案不存在"
+
+#: comdlg32.rc:55
+msgid "Up One Level"
+msgstr "向上一層"
+
+#: comdlg32.rc:56
+msgid "Create New Folder"
+msgstr "建立新資料夾"
+
+#: comdlg32.rc:57
+msgid "List"
+msgstr "清單"
+
+#: comdlg32.rc:58
+msgid "Details"
+msgstr "詳細資料"
+
+#: comdlg32.rc:59
+msgid "Browse to Desktop"
+msgstr "顯示桌面"
+
+#: comdlg32.rc:123
+msgid "Regular"
+msgstr ""
+
+#: comdlg32.rc:124
+msgid "Bold"
+msgstr ""
+
+#: comdlg32.rc:125
+msgid "Italic"
+msgstr ""
+
+#: comdlg32.rc:126
+msgid "Bold Italic"
+msgstr ""
+
+#: comdlg32.rc:131 wordpad.rc:114
+msgid "Black"
+msgstr ""
+
+#: comdlg32.rc:132 wordpad.rc:115
+msgid "Maroon"
+msgstr ""
+
+#: comdlg32.rc:133 wordpad.rc:116
+msgid "Green"
+msgstr ""
+
+#: comdlg32.rc:134 wordpad.rc:117
+msgid "Olive"
+msgstr ""
+
+#: comdlg32.rc:135 wordpad.rc:118
+msgid "Navy"
+msgstr ""
+
+#: comdlg32.rc:136 wordpad.rc:119
+msgid "Purple"
+msgstr ""
+
+#: comdlg32.rc:137 wordpad.rc:120
+msgid "Teal"
+msgstr ""
+
+#: comdlg32.rc:138 wordpad.rc:121
+msgid "Gray"
+msgstr ""
+
+#: comdlg32.rc:139 wordpad.rc:122
+msgid "Silver"
+msgstr ""
+
+#: comdlg32.rc:140 wordpad.rc:123
+#, fuzzy
+msgid "Red"
+msgstr "倒回"
+
+#: comdlg32.rc:141 wordpad.rc:124
+msgid "Lime"
+msgstr ""
+
+#: comdlg32.rc:142 wordpad.rc:125
+msgid "Yellow"
+msgstr ""
+
+#: comdlg32.rc:143 wordpad.rc:126
+msgid "Blue"
+msgstr ""
+
+#: comdlg32.rc:144 wordpad.rc:127
+msgid "Fuchsia"
+msgstr ""
+
+#: comdlg32.rc:145 wordpad.rc:128
+msgid "Aqua"
+msgstr ""
+
+#: comdlg32.rc:146 wordpad.rc:129
+msgid "White"
+msgstr ""
+
+#: comdlg32.rc:66
+msgid "Unreadable Entry"
+msgstr "數值不可讀"
+
+#: comdlg32.rc:68
+msgid ""
+"This value does not lie within the page range.\n"
+"Please enter a value between %d and %d."
+msgstr ""
+"這個值不在頁數範圍。\n"
+" 請輸入一個 %d 和 %d 之間的數。"
+
+#: comdlg32.rc:70
+msgid "The 'from' entry cannot exceed the 'to' entry."
+msgstr "'從'項的值不能大於'到'項的值。"
+
+#: comdlg32.rc:72
+msgid ""
+"Margins overlap or fall outside Paper boundaries.\n"
+"Please reenter margins."
+msgstr ""
+"邊緣空白重迭或落於紙外,\n"
+"請重新輸入邊緣空白。"
+
+#: comdlg32.rc:74
+msgid "The number of 'Number of copies' value cannot be empty."
+msgstr "'份數' 項不能空."
+
+#: comdlg32.rc:76
+msgid ""
+"This large number of copies is not supported by your printer.\n"
+"Please enter a value between 1 and %d."
+msgstr ""
+"你的印表機不支持這麼大的份數。\n"
+" 請輸入一個 1 和 %d 之間的數。"
+
+#: comdlg32.rc:77
+msgid "A printer error occurred."
+msgstr "印表機錯誤。"
+
+#: comdlg32.rc:78
+msgid "No default printer defined."
+msgstr "沒有默認印表機。"
+
+#: comdlg32.rc:79
+msgid "Cannot find the printer."
+msgstr "找不到印表機。"
+
+#: comdlg32.rc:80 progman.rc:78
+#, fuzzy
+msgid "Out of memory."
+msgstr ""
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"內存溢出。\n"
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"內存不夠。"
+
+#: comdlg32.rc:81
+msgid "An error occurred."
+msgstr "出現一些錯誤。"
+
+#: comdlg32.rc:82
+msgid "Unknown printer driver."
+msgstr "找不到印表機驅動器。"
+
+#: comdlg32.rc:85
+msgid ""
+"Before you can perform printer-related tasks such as page setup or printing "
+"a document, you need to install a printer. Please install one and retry."
+msgstr ""
+"在使用與印表機有關功能(版面設定, 列印檔案)之前, 你必須先裝印表機。請裝一個印"
+"表機再試。"
+
+#: comdlg32.rc:151
+msgid "Select a font size between %d and %d points."
+msgstr ""
+
+#: comdlg32.rc:152 shdocvw.rc:32
+msgid "&Save"
+msgstr ""
+
+#: comdlg32.rc:153
+#, fuzzy
+msgid "Save &in:"
+msgstr "另存為(&A)..."
+
+#: comdlg32.rc:154
+#, fuzzy
+msgid "Save"
+msgstr "儲存 HTML"
+
+#: comdlg32.rc:155
+#, fuzzy
+msgid "Save as"
+msgstr "另存為(&S)..."
+
+#: comdlg32.rc:156
+#, fuzzy
+msgid "Open File"
+msgstr "Wine地雷"
+
+#: comdlg32.rc:93 oleview.rc:95
+msgid "Ready"
+msgstr "待命"
+
+#: comdlg32.rc:94
+msgid "Paused; "
+msgstr "暫停; "
+
+#: comdlg32.rc:95
+msgid "Error; "
+msgstr "錯誤; "
+
+#: comdlg32.rc:96
+msgid "Pending deletion; "
+msgstr "等待刪除; "
+
+#: comdlg32.rc:97
+msgid "Paper jam; "
+msgstr "卡紙; "
+
+#: comdlg32.rc:98
+msgid "Out of paper; "
+msgstr "無紙; "
+
+#: comdlg32.rc:99
+msgid "Feed paper manual; "
+msgstr "手動進紙; "
+
+#: comdlg32.rc:100
+msgid "Paper problem; "
+msgstr "紙的問題; "
+
+#: comdlg32.rc:101
+msgid "Printer offline; "
+msgstr "印表機離線; "
+
+#: comdlg32.rc:102
+msgid "I/O Active; "
+msgstr "I/O 活動; "
+
+#: comdlg32.rc:103
+msgid "Busy; "
+msgstr "繁忙; "
+
+#: comdlg32.rc:104
+msgid "Printing; "
+msgstr "正在列印; "
+
+#: comdlg32.rc:105
+msgid "Output tray is full; "
+msgstr "出紙托盤已滿; "
+
+#: comdlg32.rc:106
+msgid "Not available; "
+msgstr "不可用; "
+
+#: comdlg32.rc:107
+msgid "Waiting; "
+msgstr "等待; "
+
+#: comdlg32.rc:108
+msgid "Processing; "
+msgstr "正在處理; "
+
+#: comdlg32.rc:109
+msgid "Initialising; "
+msgstr "正在啓動; "
+
+#: comdlg32.rc:110
+msgid "Warming up; "
+msgstr "預熱; "
+
+#: comdlg32.rc:111
+msgid "Toner low; "
+msgstr "墨低; "
+
+#: comdlg32.rc:112
+msgid "No toner; "
+msgstr "沒墨; "
+
+#: comdlg32.rc:113
+msgid "Page punt; "
+msgstr "頁處理內存超支; "
+
+#: comdlg32.rc:114
+msgid "Interrupted by user; "
+msgstr "用戶干預; "
+
+#: comdlg32.rc:115
+msgid "Out of memory; "
+msgstr "內存不夠; "
+
+#: comdlg32.rc:116
+msgid "The printer door is open; "
+msgstr "印表機蓋是打開的; "
+
+#: comdlg32.rc:117
+msgid "Print server unknown; "
+msgstr "找不到列印服務器; "
+
+#: comdlg32.rc:118
+msgid "Power save mode; "
+msgstr "省電狀態; "
+
+#: comdlg32.rc:87
+msgid "Default Printer; "
+msgstr "默認印表機; "
+
+#: comdlg32.rc:88
+msgid "There are %d documents in the queue"
+msgstr "有 %d 個文檔正在等待列印"
+
+#: comdlg32.rc:89
+msgid "Margins [inches]"
+msgstr "邊緣空白 [英寸]"
+
+#: comdlg32.rc:90
+msgid "Margins [mm]"
+msgstr "邊緣空白 [毫米]"
+
+#: comdlg32.rc:91
+msgid "mm"
+msgstr "毫米"
+
+#: comdlg32.rc:64 hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
+msgid "Print"
+msgstr "列印"
+
 #: credui.rc:27
 msgid "Connect to %s"
 msgstr "連接到 %s"
@@ -1628,10 +2042,6 @@ msgstr "首頁"
 msgid "Sync"
 msgstr "同步"
 
-#: hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
-msgid "Print"
-msgstr "列印"
-
 #: hhctrl.rc:43 wordpad.rc:155
 msgid "Options"
 msgstr "選項"
@@ -2778,10 +3188,6 @@ msgstr "窗口(&W)"
 msgid "&Open..."
 msgstr "開啟(&O)"
 
-#: shdocvw.rc:32
-msgid "&Save"
-msgstr ""
-
 #: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr "另存為(&A)..."
@@ -3023,14 +3429,6 @@ msgstr ""
 msgid "Date deleted"
 msgstr "刪除"
 
-#: shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
-msgid "Desktop"
-msgstr "桌面"
-
-#: shell32.rc:142 regedit.rc:206
-msgid "My Computer"
-msgstr "我的電腦"
-
 #: shell32.rc:144
 #, fuzzy
 msgid "Control Panel"
@@ -3065,11 +3463,6 @@ msgstr ""
 #: shell32.rc:186
 msgid "Start Menu\\Programs"
 msgstr ""
-
-#: shell32.rc:187
-#, fuzzy
-msgid "My Documents"
-msgstr "HTML 檔案"
 
 #: shell32.rc:188
 #, fuzzy
@@ -5205,10 +5598,6 @@ msgstr "OleView"
 msgid "ITypeLib viewer"
 msgstr "ITypeLib 查看器"
 
-#: oleview.rc:95
-msgid "Ready"
-msgstr "待命"
-
 #: oleview.rc:96
 msgid "OleView - OLE/COM Object Viewer"
 msgstr "OleView - OLE/COM 對象查看器"
@@ -5509,10 +5898,6 @@ msgid ""
 msgstr ""
 "不能開啟組檔案 `%s' 。\n"
 "是否繼續嘗試？"
-
-#: progman.rc:78
-msgid "Out of memory."
-msgstr "內存溢出。"
 
 #: progman.rc:79
 msgid "Help not available."
@@ -7496,10 +7881,6 @@ msgstr "不顯示"
 msgid "History"
 msgstr "歷史"
 
-#: winhlp32.rc:52 winhlp32.rc:75
-msgid "Fonts"
-msgstr "字型"
-
 #: winhlp32.rc:54 winhlp32.rc:77
 msgid "Small"
 msgstr "小號"
@@ -7690,71 +8071,6 @@ msgstr "淡黃色(&P)\tCtrl+2"
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
 msgstr "關於 &Wine 寫字板"
-
-#: wordpad.rc:114
-msgid "Black"
-msgstr ""
-
-#: wordpad.rc:115
-msgid "Maroon"
-msgstr ""
-
-#: wordpad.rc:116
-msgid "Green"
-msgstr ""
-
-#: wordpad.rc:117
-msgid "Olive"
-msgstr ""
-
-#: wordpad.rc:118
-msgid "Navy"
-msgstr ""
-
-#: wordpad.rc:119
-msgid "Purple"
-msgstr ""
-
-#: wordpad.rc:120
-msgid "Teal"
-msgstr ""
-
-#: wordpad.rc:121
-msgid "Gray"
-msgstr ""
-
-#: wordpad.rc:122
-msgid "Silver"
-msgstr ""
-
-#: wordpad.rc:123
-#, fuzzy
-msgid "Red"
-msgstr "倒回"
-
-#: wordpad.rc:124
-msgid "Lime"
-msgstr ""
-
-#: wordpad.rc:125
-msgid "Yellow"
-msgstr ""
-
-#: wordpad.rc:126
-msgid "Blue"
-msgstr ""
-
-#: wordpad.rc:127
-msgid "Fuchsia"
-msgstr ""
-
-#: wordpad.rc:128
-msgid "Aqua"
-msgstr ""
-
-#: wordpad.rc:129
-msgid "White"
-msgstr ""
 
 #: wordpad.rc:130
 #, fuzzy

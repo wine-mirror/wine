@@ -137,6 +137,396 @@ msgstr ""
 msgid "Go to today"
 msgstr ""
 
+#: comdlg32.rc:29
+msgid "&About FolderPicker Test"
+msgstr ""
+
+#: comdlg32.rc:30
+msgid "Document Folders"
+msgstr ""
+
+#: comdlg32.rc:31 shell32.rc:187
+msgid "My Documents"
+msgstr ""
+
+#: comdlg32.rc:32
+msgid "My Favorites"
+msgstr ""
+
+#: comdlg32.rc:33
+msgid "System Path"
+msgstr ""
+
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
+msgid "Desktop"
+msgstr ""
+
+#: comdlg32.rc:35 winhlp32.rc:52 winhlp32.rc:75
+msgid "Fonts"
+msgstr ""
+
+#: comdlg32.rc:36 shell32.rc:142 regedit.rc:206
+msgid "My Computer"
+msgstr ""
+
+#: comdlg32.rc:41
+msgid "System Folders"
+msgstr ""
+
+#: comdlg32.rc:42
+msgid "Local Hard Drives"
+msgstr ""
+
+#: comdlg32.rc:43
+msgid "File not found"
+msgstr ""
+
+#: comdlg32.rc:44
+msgid "Please verify that the correct file name was given"
+msgstr ""
+
+#: comdlg32.rc:45
+msgid ""
+"File does not exist.\n"
+"Do you want to create file?"
+msgstr ""
+
+#: comdlg32.rc:46
+msgid ""
+"File already exists.\n"
+"Do you want to replace it?"
+msgstr ""
+
+#: comdlg32.rc:47
+msgid "Invalid character(s) in path"
+msgstr ""
+
+#: comdlg32.rc:48
+msgid ""
+"A filename cannot contain any of the following characters:\n"
+"                          / : < > |"
+msgstr ""
+
+#: comdlg32.rc:49
+msgid "Path does not exist"
+msgstr ""
+
+#: comdlg32.rc:50
+msgid "File does not exist"
+msgstr ""
+
+#: comdlg32.rc:55
+msgid "Up One Level"
+msgstr ""
+
+#: comdlg32.rc:56
+msgid "Create New Folder"
+msgstr ""
+
+#: comdlg32.rc:57
+msgid "List"
+msgstr ""
+
+#: comdlg32.rc:58
+msgid "Details"
+msgstr ""
+
+#: comdlg32.rc:59
+msgid "Browse to Desktop"
+msgstr ""
+
+#: comdlg32.rc:123
+msgid "Regular"
+msgstr ""
+
+#: comdlg32.rc:124
+msgid "Bold"
+msgstr ""
+
+#: comdlg32.rc:125
+msgid "Italic"
+msgstr ""
+
+#: comdlg32.rc:126
+msgid "Bold Italic"
+msgstr ""
+
+#: comdlg32.rc:131 wordpad.rc:114
+msgid "Black"
+msgstr ""
+
+#: comdlg32.rc:132 wordpad.rc:115
+msgid "Maroon"
+msgstr ""
+
+#: comdlg32.rc:133 wordpad.rc:116
+msgid "Green"
+msgstr ""
+
+#: comdlg32.rc:134 wordpad.rc:117
+msgid "Olive"
+msgstr ""
+
+#: comdlg32.rc:135 wordpad.rc:118
+msgid "Navy"
+msgstr ""
+
+#: comdlg32.rc:136 wordpad.rc:119
+msgid "Purple"
+msgstr ""
+
+#: comdlg32.rc:137 wordpad.rc:120
+msgid "Teal"
+msgstr ""
+
+#: comdlg32.rc:138 wordpad.rc:121
+msgid "Gray"
+msgstr ""
+
+#: comdlg32.rc:139 wordpad.rc:122
+msgid "Silver"
+msgstr ""
+
+#: comdlg32.rc:140 wordpad.rc:123
+msgid "Red"
+msgstr ""
+
+#: comdlg32.rc:141 wordpad.rc:124
+msgid "Lime"
+msgstr ""
+
+#: comdlg32.rc:142 wordpad.rc:125
+msgid "Yellow"
+msgstr ""
+
+#: comdlg32.rc:143 wordpad.rc:126
+msgid "Blue"
+msgstr ""
+
+#: comdlg32.rc:144 wordpad.rc:127
+msgid "Fuchsia"
+msgstr ""
+
+#: comdlg32.rc:145 wordpad.rc:128
+msgid "Aqua"
+msgstr ""
+
+#: comdlg32.rc:146 wordpad.rc:129
+msgid "White"
+msgstr ""
+
+#: comdlg32.rc:66
+msgid "Unreadable Entry"
+msgstr ""
+
+#: comdlg32.rc:68
+msgid ""
+"This value does not lie within the page range.\n"
+"Please enter a value between %d and %d."
+msgstr ""
+
+#: comdlg32.rc:70
+msgid "The 'from' entry cannot exceed the 'to' entry."
+msgstr ""
+
+#: comdlg32.rc:72
+msgid ""
+"Margins overlap or fall outside Paper boundaries.\n"
+"Please reenter margins."
+msgstr ""
+
+#: comdlg32.rc:74
+msgid "The number of 'Number of copies' value cannot be empty."
+msgstr ""
+
+#: comdlg32.rc:76
+msgid ""
+"This large number of copies is not supported by your printer.\n"
+"Please enter a value between 1 and %d."
+msgstr ""
+
+#: comdlg32.rc:77
+msgid "A printer error occurred."
+msgstr ""
+
+#: comdlg32.rc:78
+msgid "No default printer defined."
+msgstr ""
+
+#: comdlg32.rc:79
+msgid "Cannot find the printer."
+msgstr ""
+
+#: comdlg32.rc:80 progman.rc:78
+msgid "Out of memory."
+msgstr ""
+
+#: comdlg32.rc:81
+msgid "An error occurred."
+msgstr ""
+
+#: comdlg32.rc:82
+msgid "Unknown printer driver."
+msgstr ""
+
+#: comdlg32.rc:85
+msgid ""
+"Before you can perform printer-related tasks such as page setup or printing "
+"a document, you need to install a printer. Please install one and retry."
+msgstr ""
+
+#: comdlg32.rc:151
+msgid "Select a font size between %d and %d points."
+msgstr ""
+
+#: comdlg32.rc:152 shdocvw.rc:32
+msgid "&Save"
+msgstr ""
+
+#: comdlg32.rc:153
+msgid "Save &in:"
+msgstr ""
+
+#: comdlg32.rc:154
+msgid "Save"
+msgstr ""
+
+#: comdlg32.rc:155
+msgid "Save as"
+msgstr ""
+
+#: comdlg32.rc:156
+msgid "Open File"
+msgstr ""
+
+#: comdlg32.rc:93 oleview.rc:95
+msgid "Ready"
+msgstr ""
+
+#: comdlg32.rc:94
+msgid "Paused; "
+msgstr ""
+
+#: comdlg32.rc:95
+msgid "Error; "
+msgstr ""
+
+#: comdlg32.rc:96
+msgid "Pending deletion; "
+msgstr ""
+
+#: comdlg32.rc:97
+msgid "Paper jam; "
+msgstr ""
+
+#: comdlg32.rc:98
+msgid "Out of paper; "
+msgstr ""
+
+#: comdlg32.rc:99
+msgid "Feed paper manual; "
+msgstr ""
+
+#: comdlg32.rc:100
+msgid "Paper problem; "
+msgstr ""
+
+#: comdlg32.rc:101
+msgid "Printer offline; "
+msgstr ""
+
+#: comdlg32.rc:102
+msgid "I/O Active; "
+msgstr ""
+
+#: comdlg32.rc:103
+msgid "Busy; "
+msgstr ""
+
+#: comdlg32.rc:104
+msgid "Printing; "
+msgstr ""
+
+#: comdlg32.rc:105
+msgid "Output tray is full; "
+msgstr ""
+
+#: comdlg32.rc:106
+msgid "Not available; "
+msgstr ""
+
+#: comdlg32.rc:107
+msgid "Waiting; "
+msgstr ""
+
+#: comdlg32.rc:108
+msgid "Processing; "
+msgstr ""
+
+#: comdlg32.rc:109
+msgid "Initialising; "
+msgstr ""
+
+#: comdlg32.rc:110
+msgid "Warming up; "
+msgstr ""
+
+#: comdlg32.rc:111
+msgid "Toner low; "
+msgstr ""
+
+#: comdlg32.rc:112
+msgid "No toner; "
+msgstr ""
+
+#: comdlg32.rc:113
+msgid "Page punt; "
+msgstr ""
+
+#: comdlg32.rc:114
+msgid "Interrupted by user; "
+msgstr ""
+
+#: comdlg32.rc:115
+msgid "Out of memory; "
+msgstr ""
+
+#: comdlg32.rc:116
+msgid "The printer door is open; "
+msgstr ""
+
+#: comdlg32.rc:117
+msgid "Print server unknown; "
+msgstr ""
+
+#: comdlg32.rc:118
+msgid "Power save mode; "
+msgstr ""
+
+#: comdlg32.rc:87
+msgid "Default Printer; "
+msgstr ""
+
+#: comdlg32.rc:88
+msgid "There are %d documents in the queue"
+msgstr ""
+
+#: comdlg32.rc:89
+msgid "Margins [inches]"
+msgstr ""
+
+#: comdlg32.rc:90
+msgid "Margins [mm]"
+msgstr ""
+
+#: comdlg32.rc:91
+msgid "mm"
+msgstr ""
+
+#: comdlg32.rc:64 hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
+msgid "Print"
+msgstr ""
+
 #: credui.rc:27
 msgid "Connect to %s"
 msgstr ""
@@ -1595,10 +1985,6 @@ msgstr ""
 msgid "Sync"
 msgstr ""
 
-#: hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
-msgid "Print"
-msgstr ""
-
 #: hhctrl.rc:43 wordpad.rc:155
 msgid "Options"
 msgstr ""
@@ -2674,10 +3060,6 @@ msgstr ""
 msgid "&Open..."
 msgstr ""
 
-#: shdocvw.rc:32
-msgid "&Save"
-msgstr ""
-
 #: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr ""
@@ -2872,14 +3254,6 @@ msgstr ""
 msgid "Date deleted"
 msgstr ""
 
-#: shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
-msgid "Desktop"
-msgstr ""
-
-#: shell32.rc:142 regedit.rc:206
-msgid "My Computer"
-msgstr ""
-
 #: shell32.rc:144
 msgid "Control Panel"
 msgstr ""
@@ -2910,10 +3284,6 @@ msgstr ""
 
 #: shell32.rc:186
 msgid "Start Menu\\Programs"
-msgstr ""
-
-#: shell32.rc:187
-msgid "My Documents"
 msgstr ""
 
 #: shell32.rc:188
@@ -4962,10 +5332,6 @@ msgstr ""
 msgid "ITypeLib viewer"
 msgstr ""
 
-#: oleview.rc:95
-msgid "Ready"
-msgstr ""
-
 #: oleview.rc:96
 msgid "OleView - OLE/COM Object Viewer"
 msgstr ""
@@ -5247,10 +5613,6 @@ msgstr ""
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
-msgstr ""
-
-#: progman.rc:78
-msgid "Out of memory."
 msgstr ""
 
 #: progman.rc:79
@@ -7159,10 +7521,6 @@ msgstr ""
 msgid "History"
 msgstr ""
 
-#: winhlp32.rc:52 winhlp32.rc:75
-msgid "Fonts"
-msgstr ""
-
 #: winhlp32.rc:54 winhlp32.rc:77
 msgid "Small"
 msgstr ""
@@ -7349,70 +7707,6 @@ msgstr ""
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
-msgstr ""
-
-#: wordpad.rc:114
-msgid "Black"
-msgstr ""
-
-#: wordpad.rc:115
-msgid "Maroon"
-msgstr ""
-
-#: wordpad.rc:116
-msgid "Green"
-msgstr ""
-
-#: wordpad.rc:117
-msgid "Olive"
-msgstr ""
-
-#: wordpad.rc:118
-msgid "Navy"
-msgstr ""
-
-#: wordpad.rc:119
-msgid "Purple"
-msgstr ""
-
-#: wordpad.rc:120
-msgid "Teal"
-msgstr ""
-
-#: wordpad.rc:121
-msgid "Gray"
-msgstr ""
-
-#: wordpad.rc:122
-msgid "Silver"
-msgstr ""
-
-#: wordpad.rc:123
-msgid "Red"
-msgstr ""
-
-#: wordpad.rc:124
-msgid "Lime"
-msgstr ""
-
-#: wordpad.rc:125
-msgid "Yellow"
-msgstr ""
-
-#: wordpad.rc:126
-msgid "Blue"
-msgstr ""
-
-#: wordpad.rc:127
-msgid "Fuchsia"
-msgstr ""
-
-#: wordpad.rc:128
-msgid "Aqua"
-msgstr ""
-
-#: wordpad.rc:129
-msgid "White"
 msgstr ""
 
 #: wordpad.rc:130

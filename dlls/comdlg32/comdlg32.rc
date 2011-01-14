@@ -1,0 +1,228 @@
+/*
+ * Resources for Common Dialogs
+ *
+ * Copyright 1999 Bertho Stultiens
+ * Copyright 1999 Klaas van Gend
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "cdlg.h"
+#include "filedlgbrowser.h"
+
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+    IDS_ABOUTBOX            "&About FolderPicker Test"
+    IDS_DOCUMENTFOLDERS     "Document Folders"
+    IDS_PERSONAL            "My Documents"
+    IDS_FAVORITES           "My Favorites"
+    IDS_PATH                "System Path"
+    IDS_DESKTOP             "Desktop"
+    IDS_FONTS               "Fonts"
+    IDS_MYCOMPUTER          "My Computer"
+}
+
+STRINGTABLE
+{
+    IDS_SYSTEMFOLDERS       "System Folders"
+    IDS_LOCALHARDRIVES      "Local Hard Drives"
+    IDS_FILENOTFOUND        "File not found"
+    IDS_VERIFYFILE          "Please verify that the correct file name was given"
+    IDS_CREATEFILE          "File does not exist.\nDo you want to create file?"
+    IDS_OVERWRITEFILE       "File already exists.\nDo you want to replace it?"
+    IDS_INVALID_FILENAME_TITLE "Invalid character(s) in path"
+    IDS_INVALID_FILENAME    "A filename cannot contain any of the following characters:\n                          / : < > |"
+    IDS_PATHNOTEXISTING     "Path does not exist"
+    IDS_FILENOTEXISTING     "File does not exist"
+}
+
+STRINGTABLE
+{
+    IDS_UPFOLDER         "Up One Level"
+    IDS_NEWFOLDER        "Create New Folder"
+    IDS_LISTVIEW         "List"
+    IDS_REPORTVIEW       "Details"
+    IDS_TODESKTOP        "Browse to Desktop"
+}
+
+STRINGTABLE
+{
+    PD32_PRINT_TITLE       "Print"
+
+    PD32_VALUE_UREADABLE                  "Unreadable Entry"
+    PD32_INVALID_PAGE_RANGE "This value does not lie within the page range.\n\
+Please enter a value between %d and %d."
+    PD32_FROM_NOT_ABOVE_TO                "The 'from' entry cannot exceed the \
+'to' entry."
+    PD32_MARGINS_OVERLAP                  "Margins overlap or fall outside \
+Paper boundaries.\nPlease reenter margins."
+    PD32_NR_OF_COPIES_EMPTY               "The number of 'Number of copies' \
+value cannot be empty."
+    PD32_TOO_LARGE_COPIES                 "This large number of copies is not \
+supported by your printer.\nPlease enter a value between 1 and %d."
+    PD32_PRINT_ERROR                      "A printer error occurred."
+    PD32_NO_DEFAULT_PRINTER               "No default printer defined."
+    PD32_CANT_FIND_PRINTER                "Cannot find the printer."
+    PD32_OUT_OF_MEMORY                    "Out of memory."
+    PD32_GENERIC_ERROR                    "An error occurred."
+    PD32_DRIVER_UNKNOWN                   "Unknown printer driver."
+    PD32_NO_DEVICES                       "Before you can perform printer-related tasks \
+such as page setup or printing a document, you need to install a printer. \
+Please install one and retry."
+
+    PD32_DEFAULT_PRINTER                  "Default Printer; "
+    PD32_NR_OF_DOCUMENTS_IN_QUEUE         "There are %d documents in the queue"
+    PD32_MARGINS_IN_INCHES                "Margins [inches]"
+    PD32_MARGINS_IN_MILLIMETERS           "Margins [mm]"
+    PD32_MILLIMETERS                      "mm"
+
+    PD32_PRINTER_STATUS_READY             "Ready"
+    PD32_PRINTER_STATUS_PAUSED            "Paused; "
+    PD32_PRINTER_STATUS_ERROR             "Error; "
+    PD32_PRINTER_STATUS_PENDING_DELETION  "Pending deletion; "
+    PD32_PRINTER_STATUS_PAPER_JAM         "Paper jam; "
+    PD32_PRINTER_STATUS_PAPER_OUT         "Out of paper; "
+    PD32_PRINTER_STATUS_MANUAL_FEED       "Feed paper manual; "
+    PD32_PRINTER_STATUS_PAPER_PROBLEM     "Paper problem; "
+    PD32_PRINTER_STATUS_OFFLINE           "Printer offline; "
+    PD32_PRINTER_STATUS_IO_ACTIVE         "I/O Active; "
+    PD32_PRINTER_STATUS_BUSY              "Busy; "
+    PD32_PRINTER_STATUS_PRINTING          "Printing; "
+    PD32_PRINTER_STATUS_OUTPUT_BIN_FULL   "Output tray is full; "
+    PD32_PRINTER_STATUS_NOT_AVAILABLE     "Not available; "
+    PD32_PRINTER_STATUS_WAITING           "Waiting; "
+    PD32_PRINTER_STATUS_PROCESSING        "Processing; "
+    PD32_PRINTER_STATUS_INITIALIZING      "Initialising; "
+    PD32_PRINTER_STATUS_WARMING_UP        "Warming up; "
+    PD32_PRINTER_STATUS_TONER_LOW         "Toner low; "
+    PD32_PRINTER_STATUS_NO_TONER          "No toner; "
+    PD32_PRINTER_STATUS_PAGE_PUNT         "Page punt; "
+    PD32_PRINTER_STATUS_USER_INTERVENTION "Interrupted by user; "
+    PD32_PRINTER_STATUS_OUT_OF_MEMORY     "Out of memory; "
+    PD32_PRINTER_STATUS_DOOR_OPEN         "The printer door is open; "
+    PD32_PRINTER_STATUS_SERVER_UNKNOWN    "Print server unknown; "
+    PD32_PRINTER_STATUS_POWER_SAVE        "Power save mode; "
+}
+
+STRINGTABLE /* Font styles */
+{
+    IDS_FONT_REGULAR       "Regular"
+    IDS_FONT_BOLD          "Bold"
+    IDS_FONT_ITALIC        "Italic"
+    IDS_FONT_BOLD_ITALIC   "Bold Italic"
+}
+
+STRINGTABLE /* Color names */
+{
+    IDS_COLOR_BLACK     "Black"
+    IDS_COLOR_MAROON    "Maroon"
+    IDS_COLOR_GREEN     "Green"
+    IDS_COLOR_OLIVE     "Olive"
+    IDS_COLOR_NAVY      "Navy"
+    IDS_COLOR_PURPLE    "Purple"
+    IDS_COLOR_TEAL      "Teal"
+    IDS_COLOR_GRAY      "Gray"
+    IDS_COLOR_SILVER    "Silver"
+    IDS_COLOR_RED       "Red"
+    IDS_COLOR_LIME      "Lime"
+    IDS_COLOR_YELLOW    "Yellow"
+    IDS_COLOR_BLUE      "Blue"
+    IDS_COLOR_FUCHSIA   "Fuchsia"
+    IDS_COLOR_AQUA      "Aqua"
+    IDS_COLOR_WHITE     "White"
+}
+
+STRINGTABLE
+{
+    IDS_FONT_SIZE   "Select a font size between %d and %d points."
+    IDS_SAVE_BUTTON "&Save"
+    IDS_SAVE_IN     "Save &in:"
+    IDS_SAVE        "Save"
+    IDS_SAVE_AS     "Save as"
+    IDS_OPEN_FILE   "Open File"
+}
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+#define WINE_FILEDESCRIPTION_STR "Common Dialog Boxes"
+#define WINE_FILENAME_STR "comdlg32.dll"
+#define WINE_FILEVERSION 4,0,0,950 /* Maybe 4.1.0.980 for win98?? */
+#define WINE_FILEVERSION_STR "4.0"
+
+#include "wine/wine_common_ver.rc"
+
+/* Translators do not need to translate this text, unless the language uses a
+ * different character set or if the distribution of characters looks wrong.
+ * It is rendered illegibly small and is used to make a mock-up of a document.
+ */
+STRINGTABLE
+{
+    IDS_FAKEDOCTEXT
+        "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. \
+        Nulla a tortor. Etiam aliquet libero venenatis nunc.\n\
+\n\
+        Sed augue ante, fermentum sit amet, imperdiet et, gravida eu, enim. \
+        Donec nibh quam, sodales in, commodo vel, facilisis id, neque.\n\
+\n\
+        Nunc eleifend bibendum nibh. Phasellus in lorem. Ut vel odio quis \
+        libero adipiscing consequat. Donec consectetuer laoreet mauris.\n\
+\n\
+        Maecenas tempor, ligula sed congue nonummy, arcu dolor ornare erat, \
+        egestas iaculis magna purus sed turpis.\n\
+\n\
+        Morbi ultricies est non ipsum. Cum sociis natoque penatibus et magnis \
+        dis parturient montes, nascetur ridiculus mus.\n\
+\n\
+        Duis sit amet nibh quis purus sollicitudin blandit. Curabitur justo. \
+        Phasellus varius, erat eu luctus pharetra, odio elit fringilla leo, \
+        non vulputate turpis elit id neque. Vestibulum sit amet tellus sed \
+        tortor fermentum consectetuer."
+}
+
+
+/* @makedep: pd32_collate.ico */
+PD32_COLLATE ICON pd32_collate.ico
+
+/* @makedep: pd32_nocollate.ico */
+PD32_NOCOLLATE ICON pd32_nocollate.ico
+
+/* @makedep: pd32_portrait.ico */
+PD32_PORTRAIT ICON pd32_portrait.ico
+
+/* @makedep: pd32_landscape.ico */
+PD32_LANDSCAPE ICON pd32_landscape.ico
+
+/* @makedep: folder.ico */
+FOLDER ICON folder.ico
+
+/* @makedep: folder2.ico */
+FOLDER2 ICON folder2.ico
+
+/* @makedep: floppy.ico */
+FLOPPY ICON floppy.ico
+
+/* @makedep: cdrom.ico */
+CDROM ICON cdrom.ico
+
+/* @makedep: hdisk.ico */
+HDISK ICON hdisk.ico
+
+/* @makedep: network.ico */
+NETWORK ICON network.ico
+
+/* @makedep: fontpics.bmp */
+38 BITMAP fontpics.bmp

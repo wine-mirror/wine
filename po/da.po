@@ -154,6 +154,426 @@ msgstr "Idag:"
 msgid "Go to today"
 msgstr "Gå til i dag"
 
+#: comdlg32.rc:29
+msgid "&About FolderPicker Test"
+msgstr "&Om FolderPicker Test"
+
+#: comdlg32.rc:30
+msgid "Document Folders"
+msgstr "Dokument foldere"
+
+#: comdlg32.rc:31 shell32.rc:187
+#, fuzzy
+msgid "My Documents"
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Mine Dokumenter\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Mine dokumenter"
+
+#: comdlg32.rc:32
+msgid "My Favorites"
+msgstr "Mine favoriter"
+
+#: comdlg32.rc:33
+msgid "System Path"
+msgstr "System sti"
+
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
+msgid "Desktop"
+msgstr "Skrivebord"
+
+#: comdlg32.rc:35 winhlp32.rc:52 winhlp32.rc:75
+msgid "Fonts"
+msgstr "Skrifttype"
+
+#: comdlg32.rc:36 shell32.rc:142 regedit.rc:206
+#, fuzzy
+msgid "My Computer"
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Min Computer\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Min computer"
+
+#: comdlg32.rc:41
+msgid "System Folders"
+msgstr "System mapper"
+
+#: comdlg32.rc:42
+msgid "Local Hard Drives"
+msgstr "Lokale harddiske"
+
+#: comdlg32.rc:43
+msgid "File not found"
+msgstr "Kunne ikke finde filen"
+
+#: comdlg32.rc:44
+msgid "Please verify that the correct file name was given"
+msgstr "Kontroller venligst, at der blev angivet et korrekt filnavn"
+
+#: comdlg32.rc:45
+msgid ""
+"File does not exist.\n"
+"Do you want to create file?"
+msgstr ""
+"Filen eksisterer ikke.\n"
+"Vil du oprette filen?"
+
+#: comdlg32.rc:46
+msgid ""
+"File already exists.\n"
+"Do you want to replace it?"
+msgstr ""
+"Filen findes allerede.\n"
+"Vil du erstatte den?"
+
+#: comdlg32.rc:47
+msgid "Invalid character(s) in path"
+msgstr "Der er et eller flere Ugyldige tegn i stien"
+
+#: comdlg32.rc:48
+msgid ""
+"A filename cannot contain any of the following characters:\n"
+"                          / : < > |"
+msgstr ""
+"Et filnavn må ikke indeholde følgende tegn:\n"
+"                          / : < > |"
+
+#: comdlg32.rc:49
+msgid "Path does not exist"
+msgstr "Stien eksisterer ikke."
+
+#: comdlg32.rc:50
+msgid "File does not exist"
+msgstr "Filen eksisterer ikke."
+
+#: comdlg32.rc:55
+msgid "Up One Level"
+msgstr "Et niveau op"
+
+#: comdlg32.rc:56
+msgid "Create New Folder"
+msgstr "Opret ny mappe"
+
+#: comdlg32.rc:57
+msgid "List"
+msgstr "Liste"
+
+#: comdlg32.rc:58
+msgid "Details"
+msgstr "Detaljer"
+
+#: comdlg32.rc:59
+msgid "Browse to Desktop"
+msgstr "Gennemse skrivebordet"
+
+#: comdlg32.rc:123
+msgid "Regular"
+msgstr "Normal"
+
+#: comdlg32.rc:124
+msgid "Bold"
+msgstr "Fed"
+
+#: comdlg32.rc:125
+msgid "Italic"
+msgstr "Kursiv"
+
+#: comdlg32.rc:126
+msgid "Bold Italic"
+msgstr "Fed Kursiv"
+
+#: comdlg32.rc:131 wordpad.rc:114
+msgid "Black"
+msgstr "Sort"
+
+#: comdlg32.rc:132 wordpad.rc:115
+msgid "Maroon"
+msgstr "Mørkerød"
+
+#: comdlg32.rc:133 wordpad.rc:116
+msgid "Green"
+msgstr "Grøn"
+
+#: comdlg32.rc:134 wordpad.rc:117
+msgid "Olive"
+msgstr "Oliven"
+
+#: comdlg32.rc:135 wordpad.rc:118
+msgid "Navy"
+msgstr "Navy"
+
+#: comdlg32.rc:136 wordpad.rc:119
+msgid "Purple"
+msgstr "Lilla"
+
+#: comdlg32.rc:137 wordpad.rc:120
+msgid "Teal"
+msgstr "Teal"
+
+#: comdlg32.rc:138 wordpad.rc:121
+msgid "Gray"
+msgstr "Grå"
+
+#: comdlg32.rc:139 wordpad.rc:122
+msgid "Silver"
+msgstr "Sølv"
+
+#: comdlg32.rc:140 wordpad.rc:123
+msgid "Red"
+msgstr "Rød"
+
+#: comdlg32.rc:141 wordpad.rc:124
+msgid "Lime"
+msgstr "Lime"
+
+#: comdlg32.rc:142 wordpad.rc:125
+msgid "Yellow"
+msgstr "Gul"
+
+#: comdlg32.rc:143 wordpad.rc:126
+msgid "Blue"
+msgstr "Blå"
+
+#: comdlg32.rc:144 wordpad.rc:127
+msgid "Fuchsia"
+msgstr "Violet"
+
+#: comdlg32.rc:145 wordpad.rc:128
+msgid "Aqua"
+msgstr "Cyan"
+
+#: comdlg32.rc:146 wordpad.rc:129
+msgid "White"
+msgstr "Hvid"
+
+#: comdlg32.rc:66
+msgid "Unreadable Entry"
+msgstr "Ulæselig Post"
+
+#: comdlg32.rc:68
+msgid ""
+"This value does not lie within the page range.\n"
+"Please enter a value between %d and %d."
+msgstr ""
+"Denne værdi ligger ikke indenfor sideområde.\n"
+"Indtast en værdi mellem %d og %d."
+
+#: comdlg32.rc:70
+msgid "The 'from' entry cannot exceed the 'to' entry."
+msgstr "'fra' kan ikke overstige 'til'."
+
+#: comdlg32.rc:72
+msgid ""
+"Margins overlap or fall outside Paper boundaries.\n"
+"Please reenter margins."
+msgstr ""
+"Margenen overlapper eller er uden for papirets kanter.\n"
+"Genindtast Margin."
+
+#: comdlg32.rc:74
+msgid "The number of 'Number of copies' value cannot be empty."
+msgstr "Værdien af 'Antal kopier' kan ikke være tomt."
+
+#: comdlg32.rc:76
+msgid ""
+"This large number of copies is not supported by your printer.\n"
+"Please enter a value between 1 and %d."
+msgstr ""
+"Det store antal af kopier er ikke understøttet af din printer.\n"
+"Angiv en værdi mellem 1 og %d."
+
+#: comdlg32.rc:77
+msgid "A printer error occurred."
+msgstr "Der opstod en printer fejl."
+
+#: comdlg32.rc:78
+msgid "No default printer defined."
+msgstr "Ingen standard printer defineret."
+
+#: comdlg32.rc:79
+msgid "Cannot find the printer."
+msgstr "Kan ikke finde printeren."
+
+#: comdlg32.rc:80 progman.rc:78
+#, fuzzy
+msgid "Out of memory."
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Ikke nok hukommelse.\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Ikke mere hukommelse."
+
+#: comdlg32.rc:81
+msgid "An error occurred."
+msgstr "Der opstod en fejl."
+
+#: comdlg32.rc:82
+msgid "Unknown printer driver."
+msgstr "Ukendt printer driver."
+
+#: comdlg32.rc:85
+msgid ""
+"Before you can perform printer-related tasks such as page setup or printing "
+"a document, you need to install a printer. Please install one and retry."
+msgstr ""
+"Før du kan udføre printer-relaterede opgaver, som f.eks sideopsætning eller "
+"udskrivning af dokumenter, skal du installere en printer. Installer venligst "
+"en og prøv igen."
+
+#: comdlg32.rc:151
+msgid "Select a font size between %d and %d points."
+msgstr "Vælg en skrift størrelse mellem %d og %d punkter."
+
+#: comdlg32.rc:152 shdocvw.rc:32
+msgid "&Save"
+msgstr "&Gem"
+
+#: comdlg32.rc:153
+msgid "Save &in:"
+msgstr "Gem &i:"
+
+#: comdlg32.rc:154
+msgid "Save"
+msgstr "Gem"
+
+#: comdlg32.rc:155
+msgid "Save as"
+msgstr "Gem som"
+
+#: comdlg32.rc:156
+msgid "Open File"
+msgstr "Åben fil"
+
+#: comdlg32.rc:93 oleview.rc:95
+msgid "Ready"
+msgstr "Klar"
+
+#: comdlg32.rc:94
+msgid "Paused; "
+msgstr "Pauset; "
+
+#: comdlg32.rc:95
+msgid "Error; "
+msgstr "Fejl; "
+
+#: comdlg32.rc:96
+msgid "Pending deletion; "
+msgstr "Venter på sletning; "
+
+#: comdlg32.rc:97
+msgid "Paper jam; "
+msgstr "Papir kludder; "
+
+#: comdlg32.rc:98
+msgid "Out of paper; "
+msgstr "Ikke mere papir; "
+
+#: comdlg32.rc:99
+msgid "Feed paper manual; "
+msgstr "Indsæt papir manuelt; "
+
+#: comdlg32.rc:100
+msgid "Paper problem; "
+msgstr "Papir problem; "
+
+#: comdlg32.rc:101
+msgid "Printer offline; "
+msgstr "Printer slukket; "
+
+#: comdlg32.rc:102
+msgid "I/O Active; "
+msgstr "I/O Aktiv; "
+
+#: comdlg32.rc:103
+msgid "Busy; "
+msgstr "Igang; "
+
+#: comdlg32.rc:104
+msgid "Printing; "
+msgstr "Udskriver; "
+
+#: comdlg32.rc:105
+msgid "Output tray is full; "
+msgstr "Udskrivningbakken er fuld; "
+
+#: comdlg32.rc:106
+msgid "Not available; "
+msgstr "Ikke tilgængelig; "
+
+#: comdlg32.rc:107
+msgid "Waiting; "
+msgstr "Venter; "
+
+#: comdlg32.rc:108
+msgid "Processing; "
+msgstr "Tænker; "
+
+#: comdlg32.rc:109
+msgid "Initialising; "
+msgstr "Klargører; "
+
+#: comdlg32.rc:110
+msgid "Warming up; "
+msgstr "Varmer op; "
+
+#: comdlg32.rc:111
+msgid "Toner low; "
+msgstr "Toner næsten slut; "
+
+#: comdlg32.rc:112
+msgid "No toner; "
+msgstr "Ikke mere toner; "
+
+#: comdlg32.rc:113
+msgid "Page punt; "
+msgstr "Page punt; "
+
+#: comdlg32.rc:114
+msgid "Interrupted by user; "
+msgstr "Stoppet af brugeren; "
+
+#: comdlg32.rc:115
+msgid "Out of memory; "
+msgstr "Ikke mere hukommelse; "
+
+#: comdlg32.rc:116
+msgid "The printer door is open; "
+msgstr "Printer låget er åben; "
+
+#: comdlg32.rc:117
+msgid "Print server unknown; "
+msgstr "Print server ukendt; "
+
+#: comdlg32.rc:118
+msgid "Power save mode; "
+msgstr "Energispare mode; "
+
+#: comdlg32.rc:87
+msgid "Default Printer; "
+msgstr "Standard printer; "
+
+#: comdlg32.rc:88
+msgid "There are %d documents in the queue"
+msgstr "Der er %d dokumenter in køen"
+
+#: comdlg32.rc:89
+msgid "Margins [inches]"
+msgstr "Margener [tommer]"
+
+#: comdlg32.rc:90
+msgid "Margins [mm]"
+msgstr "Margener [mm]"
+
+#: comdlg32.rc:91
+msgid "mm"
+msgstr "mm"
+
+#: comdlg32.rc:64 hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
+msgid "Print"
+msgstr "Udskriv"
+
 #: credui.rc:27
 msgid "Connect to %s"
 msgstr "Tilslut til %s"
@@ -1656,10 +2076,6 @@ msgstr "Hjem"
 msgid "Sync"
 msgstr "Synkroniser"
 
-#: hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
-msgid "Print"
-msgstr "Udskriv"
-
 #: hhctrl.rc:43 wordpad.rc:155
 #, fuzzy
 msgid "Options"
@@ -2864,10 +3280,6 @@ msgstr ""
 "#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
 "Å&ben..."
 
-#: shdocvw.rc:32
-msgid "&Save"
-msgstr ""
-
 #: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
 #, fuzzy
 msgid "Save &as..."
@@ -3101,19 +3513,6 @@ msgstr "Original sted"
 msgid "Date deleted"
 msgstr "Dato slettet"
 
-#: shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
-msgid "Desktop"
-msgstr "Skrivebord"
-
-#: shell32.rc:142 regedit.rc:206
-#, fuzzy
-msgid "My Computer"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Min Computer\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Min computer"
-
 #: shell32.rc:144
 msgid "Control Panel"
 msgstr "Control Panel"
@@ -3145,10 +3544,6 @@ msgstr "Vil du lukke din Wine session?"
 #: shell32.rc:186
 msgid "Start Menu\\Programs"
 msgstr "Start Menu\\Programmer"
-
-#: shell32.rc:187
-msgid "My Documents"
-msgstr "Mine Dokumenter"
 
 #: shell32.rc:188
 msgid "Favorites"
@@ -5581,10 +5976,6 @@ msgstr "OleView"
 msgid "ITypeLib viewer"
 msgstr "ITypeLib viser"
 
-#: oleview.rc:95
-msgid "Ready"
-msgstr "Klar"
-
 #: oleview.rc:96
 msgid "OleView - OLE/COM Object Viewer"
 msgstr "OleView - objektviser for OLE/COM"
@@ -5885,10 +6276,6 @@ msgid ""
 msgstr ""
 "Kunne ikke ?pne gruppefilen '%s'.\n"
 "Vil du pr?ve mer?"
-
-#: progman.rc:78
-msgid "Out of memory."
-msgstr "Ikke nok hukommelse."
 
 #: progman.rc:79
 msgid "Help not available."
@@ -7914,10 +8301,6 @@ msgstr "Non visible"
 msgid "History"
 msgstr "History"
 
-#: winhlp32.rc:52 winhlp32.rc:75
-msgid "Fonts"
-msgstr "Fonts"
-
 #: winhlp32.rc:54 winhlp32.rc:77
 msgid "Small"
 msgstr "Small"
@@ -8105,70 +8488,6 @@ msgstr "&Huskeseddel\tCtrl+2"
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
 msgstr "&Om Wine Wordpad"
-
-#: wordpad.rc:114
-msgid "Black"
-msgstr "Sort"
-
-#: wordpad.rc:115
-msgid "Maroon"
-msgstr "Mørkerød"
-
-#: wordpad.rc:116
-msgid "Green"
-msgstr "Grøn"
-
-#: wordpad.rc:117
-msgid "Olive"
-msgstr "Oliven"
-
-#: wordpad.rc:118
-msgid "Navy"
-msgstr "Navy"
-
-#: wordpad.rc:119
-msgid "Purple"
-msgstr "Lilla"
-
-#: wordpad.rc:120
-msgid "Teal"
-msgstr "Teal"
-
-#: wordpad.rc:121
-msgid "Gray"
-msgstr "Grå"
-
-#: wordpad.rc:122
-msgid "Silver"
-msgstr "Sølv"
-
-#: wordpad.rc:123
-msgid "Red"
-msgstr "Rød"
-
-#: wordpad.rc:124
-msgid "Lime"
-msgstr "Lime"
-
-#: wordpad.rc:125
-msgid "Yellow"
-msgstr "Gul"
-
-#: wordpad.rc:126
-msgid "Blue"
-msgstr "Blå"
-
-#: wordpad.rc:127
-msgid "Fuchsia"
-msgstr "Violet"
-
-#: wordpad.rc:128
-msgid "Aqua"
-msgstr "Cyan"
-
-#: wordpad.rc:129
-msgid "White"
-msgstr "Hvid"
 
 #: wordpad.rc:130
 msgid "Automatic"

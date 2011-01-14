@@ -146,6 +146,441 @@ msgstr "Oggi:"
 msgid "Go to today"
 msgstr "Vai a oggi"
 
+#: comdlg32.rc:29
+msgid "&About FolderPicker Test"
+msgstr "&Informazioni sul test FolderPicker"
+
+#: comdlg32.rc:30
+msgid "Document Folders"
+msgstr "Cartelle dei documenti"
+
+#: comdlg32.rc:31 shell32.rc:187
+#, fuzzy
+msgid "My Documents"
+msgstr ""
+"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
+"Miei documenti\n"
+"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
+"Documenti"
+
+#: comdlg32.rc:32
+msgid "My Favorites"
+msgstr "Preferiti"
+
+#: comdlg32.rc:33
+msgid "System Path"
+msgstr "Percorso di sistema"
+
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
+#, fuzzy
+msgid "Desktop"
+msgstr ""
+"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
+"Scrivania\n"
+"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
+"Desktop"
+
+#: comdlg32.rc:35 winhlp32.rc:52 winhlp32.rc:75
+#, fuzzy
+msgid "Fonts"
+msgstr ""
+"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
+"Caratteri\n"
+"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
+"Carattere"
+
+#: comdlg32.rc:36 shell32.rc:142 regedit.rc:206
+msgid "My Computer"
+msgstr "Risorse del computer"
+
+#: comdlg32.rc:41
+msgid "System Folders"
+msgstr "Cartelle di sistema"
+
+#: comdlg32.rc:42
+msgid "Local Hard Drives"
+msgstr "Dischi rigidi locali"
+
+#: comdlg32.rc:43
+msgid "File not found"
+msgstr "File non trovato"
+
+#: comdlg32.rc:44
+msgid "Please verify that the correct file name was given"
+msgstr "Controllare che il nome del file fornito sia corretto"
+
+#: comdlg32.rc:45
+msgid ""
+"File does not exist.\n"
+"Do you want to create file?"
+msgstr ""
+"Il file non esiste\n"
+"Creare il file"
+
+#: comdlg32.rc:46
+msgid ""
+"File already exists.\n"
+"Do you want to replace it?"
+msgstr ""
+"Il file esiste già.\n"
+"Sovrascriverlo?"
+
+#: comdlg32.rc:47
+msgid "Invalid character(s) in path"
+msgstr "Caratteri invalidi nel percorso"
+
+#: comdlg32.rc:48
+msgid ""
+"A filename cannot contain any of the following characters:\n"
+"                          / : < > |"
+msgstr ""
+"Il nome di un file non può contenere i seguenti caratteri:\n"
+"                          / : < > |"
+
+#: comdlg32.rc:49
+msgid "Path does not exist"
+msgstr "Il percorso specificato non esiste"
+
+#: comdlg32.rc:50
+msgid "File does not exist"
+msgstr "Il file non esiste"
+
+#: comdlg32.rc:55
+msgid "Up One Level"
+msgstr "Su di un livello"
+
+#: comdlg32.rc:56
+msgid "Create New Folder"
+msgstr "Crea nuova cartella"
+
+#: comdlg32.rc:57
+msgid "List"
+msgstr "Lista"
+
+#: comdlg32.rc:58
+msgid "Details"
+msgstr "Dettagli"
+
+#: comdlg32.rc:59
+msgid "Browse to Desktop"
+msgstr "Vai al desktop"
+
+#: comdlg32.rc:123
+msgid "Regular"
+msgstr "Regolare"
+
+#: comdlg32.rc:124
+msgid "Bold"
+msgstr "Grassetto"
+
+#: comdlg32.rc:125
+msgid "Italic"
+msgstr "Corsivo"
+
+#: comdlg32.rc:126
+msgid "Bold Italic"
+msgstr "Grassetto corsivo"
+
+#: comdlg32.rc:131 wordpad.rc:114
+msgid "Black"
+msgstr "Nero"
+
+#: comdlg32.rc:132 wordpad.rc:115
+msgid "Maroon"
+msgstr "Marrone rossiccio"
+
+#: comdlg32.rc:133 wordpad.rc:116
+msgid "Green"
+msgstr "Verde"
+
+#: comdlg32.rc:134 wordpad.rc:117
+msgid "Olive"
+msgstr "Verde oliva"
+
+#: comdlg32.rc:135 wordpad.rc:118
+msgid "Navy"
+msgstr "Blu oltremare"
+
+#: comdlg32.rc:136 wordpad.rc:119
+msgid "Purple"
+msgstr "Porpora"
+
+#: comdlg32.rc:137 wordpad.rc:120
+#, fuzzy
+msgid "Teal"
+msgstr ""
+"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
+"Foglia di Tè\n"
+"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
+"Tè blu"
+
+#: comdlg32.rc:138 wordpad.rc:121
+msgid "Gray"
+msgstr "Grigio"
+
+#: comdlg32.rc:139 wordpad.rc:122
+msgid "Silver"
+msgstr "Argento"
+
+#: comdlg32.rc:140 wordpad.rc:123
+msgid "Red"
+msgstr "Rosso"
+
+#: comdlg32.rc:141 wordpad.rc:124
+msgid "Lime"
+msgstr "Verde cedro"
+
+#: comdlg32.rc:142 wordpad.rc:125
+msgid "Yellow"
+msgstr "Giallo"
+
+#: comdlg32.rc:143 wordpad.rc:126
+msgid "Blue"
+msgstr "Blu"
+
+#: comdlg32.rc:144 wordpad.rc:127
+msgid "Fuchsia"
+msgstr "Fucsia"
+
+#: comdlg32.rc:145 wordpad.rc:128
+msgid "Aqua"
+msgstr "Acqua"
+
+#: comdlg32.rc:146 wordpad.rc:129
+msgid "White"
+msgstr "Bianco"
+
+#: comdlg32.rc:66
+msgid "Unreadable Entry"
+msgstr "Elemento non leggibile"
+
+#: comdlg32.rc:68
+msgid ""
+"This value does not lie within the page range.\n"
+"Please enter a value between %d and %d."
+msgstr ""
+"Questo valore non si trova all'interno della pagina.\n"
+"Usare un valore compreso tra %d e %d."
+
+#: comdlg32.rc:70
+msgid "The 'from' entry cannot exceed the 'to' entry."
+msgstr "La voce 'da' non può eccedere la voce 'a'."
+
+#: comdlg32.rc:72
+msgid ""
+"Margins overlap or fall outside Paper boundaries.\n"
+"Please reenter margins."
+msgstr ""
+"I margini si sovrappongono o si trovano oltre il limite della carta.\n"
+"Per favore ridefinire i margini."
+
+#: comdlg32.rc:74
+msgid "The number of 'Number of copies' value cannot be empty."
+msgstr "Il valore del numero 'Numero di copie' non può essere vuoto."
+
+#: comdlg32.rc:76
+msgid ""
+"This large number of copies is not supported by your printer.\n"
+"Please enter a value between 1 and %d."
+msgstr ""
+"Questo alto numero di copie non è supportato dalla stampante.\n"
+"Inserire un valore compreso tra 1 e %d"
+
+#: comdlg32.rc:77
+msgid "A printer error occurred."
+msgstr "Si è verificato un errore della stampante."
+
+#: comdlg32.rc:78
+msgid "No default printer defined."
+msgstr "Non è stata impostata una stampante predefinita."
+
+#: comdlg32.rc:79
+msgid "Cannot find the printer."
+msgstr "Stampante non trovata."
+
+#: comdlg32.rc:80 progman.rc:78
+#, fuzzy
+msgid "Out of memory."
+msgstr ""
+"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
+"Memoria esaurita\n"
+"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
+"Memoria esaurita."
+
+#: comdlg32.rc:81
+msgid "An error occurred."
+msgstr "Si è verificato un errore."
+
+#: comdlg32.rc:82
+msgid "Unknown printer driver."
+msgstr "Driver della stampante sconosciuto."
+
+#: comdlg32.rc:85
+msgid ""
+"Before you can perform printer-related tasks such as page setup or printing "
+"a document, you need to install a printer. Please install one and retry."
+msgstr ""
+"Prima di svolgere compiti relativi alla stampante come impostare una pagina "
+"o stampare un documento, bisogna installare una stampante. Si consiglia di "
+"installare la stampante e poi ritentare."
+
+#: comdlg32.rc:151
+msgid "Select a font size between %d and %d points."
+msgstr "Scegli la dimensione del carattere tra %d e %d punti."
+
+#: comdlg32.rc:152 shdocvw.rc:32
+#, fuzzy
+msgid "&Save"
+msgstr ""
+"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
+"&Salva\n"
+"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
+"Salva"
+
+#: comdlg32.rc:153
+msgid "Save &in:"
+msgstr "Salva &in:"
+
+#: comdlg32.rc:154
+msgid "Save"
+msgstr "Salva"
+
+#: comdlg32.rc:155
+msgid "Save as"
+msgstr "Salva come..."
+
+#: comdlg32.rc:156
+msgid "Open File"
+msgstr "Apri file"
+
+#: comdlg32.rc:93 oleview.rc:95
+msgid "Ready"
+msgstr "Pronto"
+
+#: comdlg32.rc:94
+msgid "Paused; "
+msgstr "In pausa; "
+
+#: comdlg32.rc:95
+msgid "Error; "
+msgstr "Errore; "
+
+#: comdlg32.rc:96
+msgid "Pending deletion; "
+msgstr "In attesa di annullamento; "
+
+#: comdlg32.rc:97
+msgid "Paper jam; "
+msgstr "Carta inceppata; "
+
+#: comdlg32.rc:98
+msgid "Out of paper; "
+msgstr "Carta esaurita; "
+
+#: comdlg32.rc:99
+msgid "Feed paper manual; "
+msgstr "Alimentazione manuale della carta; "
+
+#: comdlg32.rc:100
+msgid "Paper problem; "
+msgstr "Si è verificato un problema con la carta; "
+
+#: comdlg32.rc:101
+msgid "Printer offline; "
+msgstr "Stampante offline; "
+
+#: comdlg32.rc:102
+msgid "I/O Active; "
+msgstr "I/O Attivo; "
+
+#: comdlg32.rc:103
+msgid "Busy; "
+msgstr "Stampante occupata; "
+
+#: comdlg32.rc:104
+msgid "Printing; "
+msgstr "Stampa in corso; "
+
+#: comdlg32.rc:105
+msgid "Output tray is full; "
+msgstr "Il vassoio di uscita è pieno; "
+
+#: comdlg32.rc:106
+msgid "Not available; "
+msgstr "Non disponibile; "
+
+#: comdlg32.rc:107
+msgid "Waiting; "
+msgstr "Attesa; "
+
+#: comdlg32.rc:108
+msgid "Processing; "
+msgstr "Elaborazione; "
+
+#: comdlg32.rc:109
+msgid "Initialising; "
+msgstr "Inizializzazione; "
+
+#: comdlg32.rc:110
+msgid "Warming up; "
+msgstr "La stampante si sta riscaldando; "
+
+#: comdlg32.rc:111
+msgid "Toner low; "
+msgstr "Il livello del toner è basso; "
+
+#: comdlg32.rc:112
+msgid "No toner; "
+msgstr "Manca il toner; "
+
+#: comdlg32.rc:113
+msgid "Page punt; "
+msgstr "Punt della pagina; "
+
+#: comdlg32.rc:114
+msgid "Interrupted by user; "
+msgstr "Interrotto dall'utente; "
+
+#: comdlg32.rc:115
+msgid "Out of memory; "
+msgstr "Memoria esaurita; "
+
+#: comdlg32.rc:116
+msgid "The printer door is open; "
+msgstr "La porta stampante è aperta; "
+
+#: comdlg32.rc:117
+msgid "Print server unknown; "
+msgstr "Server di stampa sconosciuto; "
+
+#: comdlg32.rc:118
+msgid "Power save mode; "
+msgstr "Modalità risparmio energetico; "
+
+#: comdlg32.rc:87
+msgid "Default Printer; "
+msgstr "Stampante predefinita; "
+
+#: comdlg32.rc:88
+msgid "There are %d documents in the queue"
+msgstr "Ci sono %d documenti nella coda di stampa"
+
+#: comdlg32.rc:89
+msgid "Margins [inches]"
+msgstr "Margini [pollici]"
+
+#: comdlg32.rc:90
+msgid "Margins [mm]"
+msgstr "Margini [mm]"
+
+#: comdlg32.rc:91
+msgid "mm"
+msgstr "mm"
+
+#: comdlg32.rc:64 hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
+msgid "Print"
+msgstr "Stampa"
+
 #: credui.rc:27
 msgid "Connect to %s"
 msgstr "Connetti a %s"
@@ -1733,10 +2168,6 @@ msgstr "Inizio"
 msgid "Sync"
 msgstr "Sincronizza"
 
-#: hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
-msgid "Print"
-msgstr "Stampa"
-
 #: hhctrl.rc:43 wordpad.rc:155
 msgid "Options"
 msgstr "Opzioni"
@@ -2924,10 +3355,6 @@ msgstr ""
 msgid "&Open..."
 msgstr "&Apri..."
 
-#: shdocvw.rc:32
-msgid "&Save"
-msgstr "&Salva"
-
 #: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr "Sa&lva come..."
@@ -3132,19 +3559,6 @@ msgstr "Locazione originale"
 msgid "Date deleted"
 msgstr "Data di eliminazione"
 
-#: shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
-msgid "Desktop"
-msgstr "Scrivania"
-
-#: shell32.rc:142 regedit.rc:206
-#, fuzzy
-msgid "My Computer"
-msgstr ""
-"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
-"Risorse del Computer\n"
-"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
-"Il mio computer"
-
 #: shell32.rc:144
 msgid "Control Panel"
 msgstr "Pannello di Controllo"
@@ -3176,10 +3590,6 @@ msgstr "Vuoi terminare la sessione di Wine?"
 #: shell32.rc:186
 msgid "Start Menu\\Programs"
 msgstr "Menu Start\\Programmi"
-
-#: shell32.rc:187
-msgid "My Documents"
-msgstr "Miei documenti"
 
 #: shell32.rc:188
 msgid "Favorites"
@@ -5641,10 +6051,6 @@ msgstr "OleView"
 msgid "ITypeLib viewer"
 msgstr "Visore ITypeLib"
 
-#: oleview.rc:95
-msgid "Ready"
-msgstr "Pronto"
-
 #: oleview.rc:96
 msgid "OleView - OLE/COM Object Viewer"
 msgstr "OleView - Visualizzatore di oggetti OLE/COM"
@@ -5951,10 +6357,6 @@ msgid ""
 msgstr ""
 "Il file di gruppo `%s' non può essere aperto.\n"
 "Provare ad aprirlo in futuro?"
-
-#: progman.rc:78
-msgid "Out of memory."
-msgstr "Memoria esaurita"
 
 #: progman.rc:79
 msgid "Help not available."
@@ -7988,10 +8390,6 @@ msgstr "Non visibile"
 msgid "History"
 msgstr "Cronologia"
 
-#: winhlp32.rc:52 winhlp32.rc:75
-msgid "Fonts"
-msgstr "Caratteri"
-
 #: winhlp32.rc:54 winhlp32.rc:77
 msgid "Small"
 msgstr "Piccoli"
@@ -8180,70 +8578,6 @@ msgstr "&Giallo di PostThat\tCtrl+2"
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
 msgstr "&Riguardo a Wine Wordpad"
-
-#: wordpad.rc:114
-msgid "Black"
-msgstr "Nero"
-
-#: wordpad.rc:115
-msgid "Maroon"
-msgstr "Marrone rossiccio"
-
-#: wordpad.rc:116
-msgid "Green"
-msgstr "Verde"
-
-#: wordpad.rc:117
-msgid "Olive"
-msgstr "Verde oliva"
-
-#: wordpad.rc:118
-msgid "Navy"
-msgstr "Blu oltremare"
-
-#: wordpad.rc:119
-msgid "Purple"
-msgstr "Porpora"
-
-#: wordpad.rc:120
-msgid "Teal"
-msgstr "Foglia di Tè"
-
-#: wordpad.rc:121
-msgid "Gray"
-msgstr "Grigio"
-
-#: wordpad.rc:122
-msgid "Silver"
-msgstr "Argento"
-
-#: wordpad.rc:123
-msgid "Red"
-msgstr "Rosso"
-
-#: wordpad.rc:124
-msgid "Lime"
-msgstr "Verde cedro"
-
-#: wordpad.rc:125
-msgid "Yellow"
-msgstr "Giallo"
-
-#: wordpad.rc:126
-msgid "Blue"
-msgstr "Blu"
-
-#: wordpad.rc:127
-msgid "Fuchsia"
-msgstr "Fucsia"
-
-#: wordpad.rc:128
-msgid "Aqua"
-msgstr "Acqua"
-
-#: wordpad.rc:129
-msgid "White"
-msgstr "Bianco"
 
 #: wordpad.rc:130
 msgid "Automatic"

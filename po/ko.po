@@ -151,6 +151,415 @@ msgstr "오늘:"
 msgid "Go to today"
 msgstr "오늘로 가기"
 
+#: comdlg32.rc:29
+msgid "&About FolderPicker Test"
+msgstr "폴더-선택기-테스트 정보(&A)"
+
+#: comdlg32.rc:30
+msgid "Document Folders"
+msgstr "문서 폴더"
+
+#: comdlg32.rc:31 shell32.rc:187
+msgid "My Documents"
+msgstr "내 문서"
+
+#: comdlg32.rc:32
+msgid "My Favorites"
+msgstr "내 즐겨찾기"
+
+#: comdlg32.rc:33
+msgid "System Path"
+msgstr "시스템 경로"
+
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
+msgid "Desktop"
+msgstr "데스크탑"
+
+#: comdlg32.rc:35 winhlp32.rc:52 winhlp32.rc:75
+msgid "Fonts"
+msgstr "글꼴"
+
+#: comdlg32.rc:36 shell32.rc:142 regedit.rc:206
+msgid "My Computer"
+msgstr "내 컴퓨터"
+
+#: comdlg32.rc:41
+msgid "System Folders"
+msgstr "시스템 폴더"
+
+#: comdlg32.rc:42
+msgid "Local Hard Drives"
+msgstr "로컬 하드 드라이브"
+
+#: comdlg32.rc:43
+msgid "File not found"
+msgstr "파일을 찾을 수 없습니다"
+
+#: comdlg32.rc:44
+msgid "Please verify that the correct file name was given"
+msgstr "파일 이름이 올바른지 확인하십시오"
+
+#: comdlg32.rc:45
+msgid ""
+"File does not exist.\n"
+"Do you want to create file?"
+msgstr ""
+"파일은 존재하지 않습니다\n"
+"파일을 만들겠습니까?"
+
+#: comdlg32.rc:46
+msgid ""
+"File already exists.\n"
+"Do you want to replace it?"
+msgstr ""
+"파일은 이미 존재합니다.\n"
+"덮어쓰겠습니까?"
+
+#: comdlg32.rc:47
+msgid "Invalid character(s) in path"
+msgstr "경로에 올바르지 않은 문자가 있습니다h"
+
+#: comdlg32.rc:48
+msgid ""
+"A filename cannot contain any of the following characters:\n"
+"                          / : < > |"
+msgstr ""
+"파일이름에는 다음 문자만 포함될 수 있습니다:\n"
+"                          / : < > |"
+
+#: comdlg32.rc:49
+msgid "Path does not exist"
+msgstr "경로가 존재하지 않습니다."
+
+#: comdlg32.rc:50
+msgid "File does not exist"
+msgstr "파일이 존재하지 않습니다"
+
+#: comdlg32.rc:55
+msgid "Up One Level"
+msgstr "한 단계 위로"
+
+#: comdlg32.rc:56
+msgid "Create New Folder"
+msgstr "새 폴더 만들기"
+
+#: comdlg32.rc:57
+msgid "List"
+msgstr "목록"
+
+#: comdlg32.rc:58
+msgid "Details"
+msgstr "세부사항"
+
+#: comdlg32.rc:59
+msgid "Browse to Desktop"
+msgstr "데스크탑 열기"
+
+#: comdlg32.rc:123
+msgid "Regular"
+msgstr "보통"
+
+#: comdlg32.rc:124
+msgid "Bold"
+msgstr "굵게"
+
+#: comdlg32.rc:125
+msgid "Italic"
+msgstr "기울임꼴"
+
+#: comdlg32.rc:126
+msgid "Bold Italic"
+msgstr "굵은 기움임꼴"
+
+#: comdlg32.rc:131 wordpad.rc:114
+msgid "Black"
+msgstr "검정"
+
+#: comdlg32.rc:132 wordpad.rc:115
+msgid "Maroon"
+msgstr "밤색"
+
+#: comdlg32.rc:133 wordpad.rc:116
+msgid "Green"
+msgstr "녹색"
+
+#: comdlg32.rc:134 wordpad.rc:117
+msgid "Olive"
+msgstr "올리브색"
+
+#: comdlg32.rc:135 wordpad.rc:118
+msgid "Navy"
+msgstr "짙은 남색"
+
+#: comdlg32.rc:136 wordpad.rc:119
+msgid "Purple"
+msgstr "심홍색"
+
+#: comdlg32.rc:137 wordpad.rc:120
+msgid "Teal"
+msgstr "검은 물오리색"
+
+#: comdlg32.rc:138 wordpad.rc:121
+msgid "Gray"
+msgstr "회색"
+
+#: comdlg32.rc:139 wordpad.rc:122
+msgid "Silver"
+msgstr "은색"
+
+#: comdlg32.rc:140 wordpad.rc:123
+msgid "Red"
+msgstr "빨강"
+
+#: comdlg32.rc:141 wordpad.rc:124
+msgid "Lime"
+msgstr "라임색"
+
+#: comdlg32.rc:142 wordpad.rc:125
+msgid "Yellow"
+msgstr "노랑"
+
+#: comdlg32.rc:143 wordpad.rc:126
+msgid "Blue"
+msgstr "파랑"
+
+#: comdlg32.rc:144 wordpad.rc:127
+msgid "Fuchsia"
+msgstr "자홍색"
+
+#: comdlg32.rc:145 wordpad.rc:128
+msgid "Aqua"
+msgstr "물색"
+
+#: comdlg32.rc:146 wordpad.rc:129
+msgid "White"
+msgstr "하양"
+
+#: comdlg32.rc:66
+msgid "Unreadable Entry"
+msgstr "입력을 읽을 수 없습니다"
+
+#: comdlg32.rc:68
+msgid ""
+"This value does not lie within the page range.\n"
+"Please enter a value between %d and %d."
+msgstr ""
+"페이지 범위를 벗어나지 않아야 올바른 값입니다.\n"
+"%d 과 %d 사이의 값을 입력하시오 "
+
+#: comdlg32.rc:70
+msgid "The 'from' entry cannot exceed the 'to' entry."
+msgstr " '여기로부터'엔트리는  여기까지'엔트리에 도달 할 수 없습니다."
+
+#: comdlg32.rc:72
+msgid ""
+"Margins overlap or fall outside Paper boundaries.\n"
+"Please reenter margins."
+msgstr ""
+"이 여백은 겹치거나 종이 밖으로 나갈 것입니다.\n"
+"여백을 다시 입력하시오."
+
+#: comdlg32.rc:74
+msgid "The number of 'Number of copies' value cannot be empty."
+msgstr " '복사본 수'의 숫자값은 빈 값이 올 수 없습니다."
+
+#: comdlg32.rc:76
+msgid ""
+"This large number of copies is not supported by your printer.\n"
+"Please enter a value between 1 and %d."
+msgstr ""
+"이 복사본의 많은 수는 당신의  프린터에서 지원하지 않습니다.\n"
+"  1 과 %d사이의 값을 입력하십시오."
+
+#: comdlg32.rc:77
+msgid "A printer error occurred."
+msgstr "프린터 에러 발생."
+
+#: comdlg32.rc:78
+msgid "No default printer defined."
+msgstr "어떤 기본 프린터도 정의되지 않았습니다."
+
+#: comdlg32.rc:79
+msgid "Cannot find the printer."
+msgstr "프린터를 찾을 수 없습니다."
+
+#: comdlg32.rc:80 progman.rc:78
+#, fuzzy
+msgid "Out of memory."
+msgstr ""
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"메모리 부족.\n"
+"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
+"메모리 초과."
+
+#: comdlg32.rc:81
+msgid "An error occurred."
+msgstr "에러 발생."
+
+#: comdlg32.rc:82
+msgid "Unknown printer driver."
+msgstr "알 수 없는 프린터 드라이버."
+
+#: comdlg32.rc:85
+msgid ""
+"Before you can perform printer-related tasks such as page setup or printing "
+"a document, you need to install a printer. Please install one and retry."
+msgstr ""
+" 문서를 인쇄하거나 페이지 설정같은   프린터와 관련된  작업을 하기 전에, 당신"
+"은 먼저 프린터를 설치하시오. 설치하고 다시 시도하시오."
+
+#: comdlg32.rc:151
+msgid "Select a font size between %d and %d points."
+msgstr "%d 와 %d 포인트 사이에서 글꼴 크기 선택."
+
+#: comdlg32.rc:152 shdocvw.rc:32
+msgid "&Save"
+msgstr "저장(&S)"
+
+#: comdlg32.rc:153
+msgid "Save &in:"
+msgstr "저장(&I):"
+
+#: comdlg32.rc:154
+msgid "Save"
+msgstr "저장"
+
+#: comdlg32.rc:155
+msgid "Save as"
+msgstr "다른 이름으로 저장"
+
+#: comdlg32.rc:156
+msgid "Open File"
+msgstr "파일 열기"
+
+#: comdlg32.rc:93 oleview.rc:95
+msgid "Ready"
+msgstr "준비"
+
+#: comdlg32.rc:94
+msgid "Paused; "
+msgstr "정지; "
+
+#: comdlg32.rc:95
+msgid "Error; "
+msgstr "에러; "
+
+#: comdlg32.rc:96
+msgid "Pending deletion; "
+msgstr "삭제 중; "
+
+#: comdlg32.rc:97
+msgid "Paper jam; "
+msgstr "종이 걸림; "
+
+#: comdlg32.rc:98
+msgid "Out of paper; "
+msgstr "종이 초과; "
+
+#: comdlg32.rc:99
+msgid "Feed paper manual; "
+msgstr "수동 종이 공금; "
+
+#: comdlg32.rc:100
+msgid "Paper problem; "
+msgstr "종이 문제; "
+
+#: comdlg32.rc:101
+msgid "Printer offline; "
+msgstr "프린터 오프라인; "
+
+#: comdlg32.rc:102
+msgid "I/O Active; "
+msgstr "I/O 활성; "
+
+#: comdlg32.rc:103
+msgid "Busy; "
+msgstr "바쁨; "
+
+#: comdlg32.rc:104
+msgid "Printing; "
+msgstr "인쇄중; "
+
+#: comdlg32.rc:105
+msgid "Output tray is full; "
+msgstr "출력 트레이가 꽉 찼습니다; "
+
+#: comdlg32.rc:106
+msgid "Not available; "
+msgstr "불가능; "
+
+#: comdlg32.rc:107
+msgid "Waiting; "
+msgstr "대기중; "
+
+#: comdlg32.rc:108
+msgid "Processing; "
+msgstr "작업중; "
+
+#: comdlg32.rc:109
+msgid "Initialising; "
+msgstr "초기화중; "
+
+#: comdlg32.rc:110
+msgid "Warming up; "
+msgstr "가열중; "
+
+#: comdlg32.rc:111
+msgid "Toner low; "
+msgstr "토너 부족; "
+
+#: comdlg32.rc:112
+msgid "No toner; "
+msgstr "토너 없음; "
+
+#: comdlg32.rc:113
+msgid "Page punt; "
+msgstr "페이지 펀트; "
+
+#: comdlg32.rc:114
+msgid "Interrupted by user; "
+msgstr "사용자에 의한 취소; "
+
+#: comdlg32.rc:115
+msgid "Out of memory; "
+msgstr "메모리 초과; "
+
+#: comdlg32.rc:116
+msgid "The printer door is open; "
+msgstr "프린터 문이 열려있습니다; "
+
+#: comdlg32.rc:117
+msgid "Print server unknown; "
+msgstr "알수 없는 프린트 서버; "
+
+#: comdlg32.rc:118
+msgid "Power save mode; "
+msgstr "전원 절약 모드; "
+
+#: comdlg32.rc:87
+msgid "Default Printer; "
+msgstr "기본 프린터; "
+
+#: comdlg32.rc:88
+msgid "There are %d documents in the queue"
+msgstr "대기열에는  %d의 문서가 존재합니다"
+
+#: comdlg32.rc:89
+msgid "Margins [inches]"
+msgstr "여백 [인치]"
+
+#: comdlg32.rc:90
+msgid "Margins [mm]"
+msgstr "여백 [mm]"
+
+#: comdlg32.rc:91
+msgid "mm"
+msgstr "mm"
+
+#: comdlg32.rc:64 hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
+msgid "Print"
+msgstr "인쇄"
+
 #: credui.rc:27
 msgid "Connect to %s"
 msgstr " %s 연결"
@@ -1725,10 +2134,6 @@ msgstr "홈"
 msgid "Sync"
 msgstr "동기화"
 
-#: hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
-msgid "Print"
-msgstr "인쇄"
-
 #: hhctrl.rc:43 wordpad.rc:155
 msgid "Options"
 msgstr "옵션"
@@ -2884,10 +3289,6 @@ msgstr "창(&W)"
 msgid "&Open..."
 msgstr "열기(&O)..."
 
-#: shdocvw.rc:32
-msgid "&Save"
-msgstr "저장(&S)"
-
 #: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr "다른 이름으로 저장(&A)..."
@@ -3117,19 +3518,6 @@ msgstr "원래 위치"
 msgid "Date deleted"
 msgstr "지워진 날짜"
 
-#: shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
-#, fuzzy
-msgid "Desktop"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"데스크탑\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"바탕화면"
-
-#: shell32.rc:142 regedit.rc:206
-msgid "My Computer"
-msgstr "내 컴퓨터"
-
 #: shell32.rc:144
 msgid "Control Panel"
 msgstr "제어판"
@@ -3161,10 +3549,6 @@ msgstr "당신은  Wine 세션을 끄겠습니까?"
 #: shell32.rc:186
 msgid "Start Menu\\Programs"
 msgstr "시작 메뉴\\프로그램"
-
-#: shell32.rc:187
-msgid "My Documents"
-msgstr "내 문서"
 
 #: shell32.rc:188
 msgid "Favorites"
@@ -5561,10 +5945,6 @@ msgstr "OleView"
 msgid "ITypeLib viewer"
 msgstr "ITypeLib 뷰어"
 
-#: oleview.rc:95
-msgid "Ready"
-msgstr "준비"
-
 #: oleview.rc:96
 msgid "OleView - OLE/COM Object Viewer"
 msgstr "OleView - OLE/COM 객체 뷰어"
@@ -5865,10 +6245,6 @@ msgid ""
 msgstr ""
 "그룹 파일 `%s'을 열 수 없습니다.\n"
 "다시 시도하겠습니까?"
-
-#: progman.rc:78
-msgid "Out of memory."
-msgstr "메모리 부족."
 
 #: progman.rc:79
 msgid "Help not available."
@@ -7889,10 +8265,6 @@ msgstr "보여주지 않기"
 msgid "History"
 msgstr "기록"
 
-#: winhlp32.rc:52 winhlp32.rc:75
-msgid "Fonts"
-msgstr "글꼴"
-
 #: winhlp32.rc:54 winhlp32.rc:77
 msgid "Small"
 msgstr "작게"
@@ -8080,70 +8452,6 @@ msgstr "노랑색으로(&P)\tCtrl+2"
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
 msgstr "Wine 워드패드 정보(&A)"
-
-#: wordpad.rc:114
-msgid "Black"
-msgstr "검정"
-
-#: wordpad.rc:115
-msgid "Maroon"
-msgstr "밤색"
-
-#: wordpad.rc:116
-msgid "Green"
-msgstr "녹색"
-
-#: wordpad.rc:117
-msgid "Olive"
-msgstr "올리브색"
-
-#: wordpad.rc:118
-msgid "Navy"
-msgstr "짙은 남색"
-
-#: wordpad.rc:119
-msgid "Purple"
-msgstr "심홍색"
-
-#: wordpad.rc:120
-msgid "Teal"
-msgstr "검은 물오리색"
-
-#: wordpad.rc:121
-msgid "Gray"
-msgstr "회색"
-
-#: wordpad.rc:122
-msgid "Silver"
-msgstr "은색"
-
-#: wordpad.rc:123
-msgid "Red"
-msgstr "빨강"
-
-#: wordpad.rc:124
-msgid "Lime"
-msgstr "라임색"
-
-#: wordpad.rc:125
-msgid "Yellow"
-msgstr "노랑"
-
-#: wordpad.rc:126
-msgid "Blue"
-msgstr "파랑"
-
-#: wordpad.rc:127
-msgid "Fuchsia"
-msgstr "자홍색"
-
-#: wordpad.rc:128
-msgid "Aqua"
-msgstr "물색"
-
-#: wordpad.rc:129
-msgid "White"
-msgstr "하양"
 
 #: wordpad.rc:130
 msgid "Automatic"

@@ -148,6 +148,471 @@ msgstr "Azi:"
 msgid "Go to today"
 msgstr "Mergi la Azi"
 
+#: comdlg32.rc:29
+msgid "&About FolderPicker Test"
+msgstr "&Despre testul FolderPicker"
+
+#: comdlg32.rc:30
+msgid "Document Folders"
+msgstr "Dosarele de documente"
+
+#: comdlg32.rc:31 shell32.rc:187
+msgid "My Documents"
+msgstr "Documentele mele"
+
+#: comdlg32.rc:32
+msgid "My Favorites"
+msgstr "Favoritele mele"
+
+#: comdlg32.rc:33
+msgid "System Path"
+msgstr "Calea de sistem"
+
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
+#, fuzzy
+msgid "Desktop"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Desktop\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Birou"
+
+#: comdlg32.rc:35 winhlp32.rc:52 winhlp32.rc:75
+#, fuzzy
+msgid "Fonts"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"&Font\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Fonturi"
+
+#: comdlg32.rc:36 shell32.rc:142 regedit.rc:206
+#, fuzzy
+msgid "My Computer"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Computerul meu\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Calculatorul meu"
+
+#: comdlg32.rc:41
+msgid "System Folders"
+msgstr "Dosarele de sistem"
+
+#: comdlg32.rc:42
+msgid "Local Hard Drives"
+msgstr "Discurile locale"
+
+#: comdlg32.rc:43
+msgid "File not found"
+msgstr "Fișierul nu a fost găsit"
+
+#: comdlg32.rc:44
+msgid "Please verify that the correct file name was given"
+msgstr "Verificați vă rog că numele de fișier este corect"
+
+#: comdlg32.rc:45
+msgid ""
+"File does not exist.\n"
+"Do you want to create file?"
+msgstr ""
+"Fişierul nu există.\n"
+"Doriți să creați acest fișier?"
+
+#: comdlg32.rc:46
+msgid ""
+"File already exists.\n"
+"Do you want to replace it?"
+msgstr ""
+"Fișierul există deja.\n"
+"Doriți să îl înlocuiți?"
+
+#: comdlg32.rc:47
+msgid "Invalid character(s) in path"
+msgstr "Caracter(e) invalid(e) în cale"
+
+#: comdlg32.rc:48
+msgid ""
+"A filename cannot contain any of the following characters:\n"
+"                          / : < > |"
+msgstr ""
+"Numele de fișier nu poate conține caracterele următoare:\n"
+"                          / : < > |"
+
+#: comdlg32.rc:49
+msgid "Path does not exist"
+msgstr "Calea nu există"
+
+#: comdlg32.rc:50
+msgid "File does not exist"
+msgstr "Fişierul nu există"
+
+#: comdlg32.rc:55
+msgid "Up One Level"
+msgstr "Un nivel de dosare mai sus"
+
+#: comdlg32.rc:56
+msgid "Create New Folder"
+msgstr "Creează un dosar nou"
+
+#: comdlg32.rc:57
+msgid "List"
+msgstr "Listă"
+
+#: comdlg32.rc:58
+msgid "Details"
+msgstr "Detalii"
+
+#: comdlg32.rc:59
+msgid "Browse to Desktop"
+msgstr "Navigează la birou"
+
+#: comdlg32.rc:123
+msgid "Regular"
+msgstr "Normal"
+
+#: comdlg32.rc:124
+msgid "Bold"
+msgstr "Aldin"
+
+#: comdlg32.rc:125
+msgid "Italic"
+msgstr "Cursiv"
+
+#: comdlg32.rc:126
+msgid "Bold Italic"
+msgstr "Aldin cursiv"
+
+#: comdlg32.rc:131 wordpad.rc:114
+msgid "Black"
+msgstr "Negru"
+
+#: comdlg32.rc:132 wordpad.rc:115
+msgid "Maroon"
+msgstr "Maro"
+
+#: comdlg32.rc:133 wordpad.rc:116
+msgid "Green"
+msgstr "Verde"
+
+#: comdlg32.rc:134 wordpad.rc:117
+#, fuzzy
+msgid "Olive"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Oliv\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Oliviu"
+
+#: comdlg32.rc:135 wordpad.rc:118
+#, fuzzy
+msgid "Navy"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Bleumarin\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Ultramarin"
+
+#: comdlg32.rc:136 wordpad.rc:119
+msgid "Purple"
+msgstr "Violet"
+
+#: comdlg32.rc:137 wordpad.rc:120
+#, fuzzy
+msgid "Teal"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Verde-albăstrui\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Verde-albastru"
+
+#: comdlg32.rc:138 wordpad.rc:121
+#, fuzzy
+msgid "Gray"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Gri\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Griu"
+
+#: comdlg32.rc:139 wordpad.rc:122
+msgid "Silver"
+msgstr "Argintiu"
+
+#: comdlg32.rc:140 wordpad.rc:123
+msgid "Red"
+msgstr "Roșu"
+
+#: comdlg32.rc:141 wordpad.rc:124
+#, fuzzy
+msgid "Lime"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Lămâie verde\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Verde deschis"
+
+#: comdlg32.rc:142 wordpad.rc:125
+msgid "Yellow"
+msgstr "Galben"
+
+#: comdlg32.rc:143 wordpad.rc:126
+msgid "Blue"
+msgstr "Albastru"
+
+#: comdlg32.rc:144 wordpad.rc:127
+#, fuzzy
+msgid "Fuchsia"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Fuchsia\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Roz"
+
+#: comdlg32.rc:145 wordpad.rc:128
+#, fuzzy
+msgid "Aqua"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Culoarea apei\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Azur"
+
+#: comdlg32.rc:146 wordpad.rc:129
+msgid "White"
+msgstr "Alb"
+
+#: comdlg32.rc:66
+msgid "Unreadable Entry"
+msgstr "Înregistrare necitibilă"
+
+#: comdlg32.rc:68
+msgid ""
+"This value does not lie within the page range.\n"
+"Please enter a value between %d and %d."
+msgstr ""
+"Această valoare nu este inclusă în intervalul de tipărire.\n"
+" Introduceți vă rog un număr între %d și %d."
+
+#: comdlg32.rc:70
+msgid "The 'from' entry cannot exceed the 'to' entry."
+msgstr "Numărul 'de la' nu poate fi mai mare decât numărul 'la'."
+
+#: comdlg32.rc:72
+msgid ""
+"Margins overlap or fall outside Paper boundaries.\n"
+"Please reenter margins."
+msgstr ""
+"Marginile se suprapun sau sunt in afara hârtiei.\n"
+"Introduceți vă rog din nou marginile."
+
+#: comdlg32.rc:74
+msgid "The number of 'Number of copies' value cannot be empty."
+msgstr "Numărul de copii nu poate fi nul."
+
+#: comdlg32.rc:76
+msgid ""
+"This large number of copies is not supported by your printer.\n"
+"Please enter a value between 1 and %d."
+msgstr ""
+"Imprimanta nu suportă un număr așa de mare de copii.\n"
+"Introduceți vă rog un număr între 1 și %d."
+
+#: comdlg32.rc:77
+msgid "A printer error occurred."
+msgstr "S-a produs o eroare la tipărire."
+
+#: comdlg32.rc:78
+msgid "No default printer defined."
+msgstr "Imprimanta implicită n-a fost definită."
+
+#: comdlg32.rc:79
+msgid "Cannot find the printer."
+msgstr "Nu pot găsi imprimanta."
+
+#: comdlg32.rc:80 progman.rc:78
+msgid "Out of memory."
+msgstr "Memorie insuficientă."
+
+#: comdlg32.rc:81
+msgid "An error occurred."
+msgstr "S-a produs o eroare."
+
+#: comdlg32.rc:82
+msgid "Unknown printer driver."
+msgstr "Driver de imprimantă necunoscut."
+
+#: comdlg32.rc:85
+msgid ""
+"Before you can perform printer-related tasks such as page setup or printing "
+"a document, you need to install a printer. Please install one and retry."
+msgstr ""
+"Trebuie să instalați o imprimantă înainte de a executa activități în "
+"referință cu imprimanta ca spre exemplu setări pagină sau tipărirea unui "
+"document. Instalați va rog o imprimantă și reincercați."
+
+#: comdlg32.rc:151
+msgid "Select a font size between %d and %d points."
+msgstr "Alegeți o mărime de font între %d și %d puncte."
+
+#: comdlg32.rc:152 shdocvw.rc:32
+msgid "&Save"
+msgstr "&Salvează"
+
+#: comdlg32.rc:153
+msgid "Save &in:"
+msgstr "Salvează &în:"
+
+#: comdlg32.rc:154
+msgid "Save"
+msgstr "Salvează"
+
+#: comdlg32.rc:155
+msgid "Save as"
+msgstr "Salvează ca"
+
+#: comdlg32.rc:156
+msgid "Open File"
+msgstr "Deschide fișier"
+
+#: comdlg32.rc:93 oleview.rc:95
+#, fuzzy
+msgid "Ready"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Pregătit\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Gata"
+
+#: comdlg32.rc:94
+msgid "Paused; "
+msgstr "Pauză; "
+
+#: comdlg32.rc:95
+msgid "Error; "
+msgstr "Eroare; "
+
+#: comdlg32.rc:96
+msgid "Pending deletion; "
+msgstr "Aștept stergerea; "
+
+#: comdlg32.rc:97
+msgid "Paper jam; "
+msgstr "Hârtie blocată în imprimantă; "
+
+#: comdlg32.rc:98
+msgid "Out of paper; "
+msgstr "Fără hârtia; "
+
+#: comdlg32.rc:99
+msgid "Feed paper manual; "
+msgstr "Alimentați hârtia manual; "
+
+#: comdlg32.rc:100
+msgid "Paper problem; "
+msgstr "Problemă cu hârtia; "
+
+#: comdlg32.rc:101
+msgid "Printer offline; "
+msgstr "Imprimantă deconectată; "
+
+#: comdlg32.rc:102
+msgid "I/O Active; "
+msgstr "I/O activ; "
+
+#: comdlg32.rc:103
+msgid "Busy; "
+msgstr "Ocupat; "
+
+#: comdlg32.rc:104
+msgid "Printing; "
+msgstr "Tipăresc; "
+
+#: comdlg32.rc:105
+msgid "Output tray is full; "
+msgstr "Sertarul de ieșire este plin; "
+
+#: comdlg32.rc:106
+msgid "Not available; "
+msgstr "Indisponibil; "
+
+#: comdlg32.rc:107
+msgid "Waiting; "
+msgstr "Aștept; "
+
+#: comdlg32.rc:108
+msgid "Processing; "
+msgstr "Procesez; "
+
+#: comdlg32.rc:109
+msgid "Initialising; "
+msgstr "Initializez; "
+
+#: comdlg32.rc:110
+msgid "Warming up; "
+msgstr "Încălzesc; "
+
+#: comdlg32.rc:111
+msgid "Toner low; "
+msgstr "Toner puțin; "
+
+#: comdlg32.rc:112
+msgid "No toner; "
+msgstr "Fără toner; "
+
+#: comdlg32.rc:113
+msgid "Page punt; "
+msgstr "Page punt; "
+
+#: comdlg32.rc:114
+msgid "Interrupted by user; "
+msgstr "Întrerupere utilizator; "
+
+#: comdlg32.rc:115
+msgid "Out of memory; "
+msgstr "Memorie insuficientă; "
+
+#: comdlg32.rc:116
+msgid "The printer door is open; "
+msgstr "Carcasa imprimantei este deschisă; "
+
+#: comdlg32.rc:117
+msgid "Print server unknown; "
+msgstr "Server de tipărire necunoscut; "
+
+#: comdlg32.rc:118
+msgid "Power save mode; "
+msgstr "Economisire de energie; "
+
+#: comdlg32.rc:87
+msgid "Default Printer; "
+msgstr "Imprimantă implicită; "
+
+#: comdlg32.rc:88
+msgid "There are %d documents in the queue"
+msgstr "%d documente sunt în coadă"
+
+#: comdlg32.rc:89
+msgid "Margins [inches]"
+msgstr "Margini [țoli]"
+
+#: comdlg32.rc:90
+msgid "Margins [mm]"
+msgstr "Margini [mm]"
+
+#: comdlg32.rc:91
+msgid "mm"
+msgstr "mm"
+
+#: comdlg32.rc:64 hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
+#, fuzzy
+msgid "Print"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Imprimă\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Tipărire"
+
 #: credui.rc:27
 msgid "Connect to %s"
 msgstr "Conectare la %s"
@@ -1741,10 +2206,6 @@ msgstr "Acasă"
 msgid "Sync"
 msgstr "Sincronizează"
 
-#: hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
-msgid "Print"
-msgstr "Imprimă"
-
 #: hhctrl.rc:43 wordpad.rc:155
 msgid "Options"
 msgstr "Opțiuni"
@@ -2908,10 +3369,6 @@ msgstr "&Fereastră"
 msgid "&Open..."
 msgstr "&Deschidere..."
 
-#: shdocvw.rc:32
-msgid "&Save"
-msgstr "&Salvează"
-
 #: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr "S&alvare ca..."
@@ -3137,24 +3594,6 @@ msgstr "Locația originală"
 msgid "Date deleted"
 msgstr "Data ștergerii"
 
-#: shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
-#, fuzzy
-msgid "Desktop"
-msgstr ""
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"Desktop\n"
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"Birou"
-
-#: shell32.rc:142 regedit.rc:206
-#, fuzzy
-msgid "My Computer"
-msgstr ""
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"Computerul meu\n"
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"Calculatorul meu"
-
 #: shell32.rc:144
 msgid "Control Panel"
 msgstr "Panoul de control"
@@ -3186,10 +3625,6 @@ msgstr "Vreți să opriți sesiunea de Wine?"
 #: shell32.rc:186
 msgid "Start Menu\\Programs"
 msgstr "Meniu Start\\Programe"
-
-#: shell32.rc:187
-msgid "My Documents"
-msgstr "Documentele mele"
 
 #: shell32.rc:188
 msgid "Favorites"
@@ -5660,10 +6095,6 @@ msgstr "OleView"
 msgid "ITypeLib viewer"
 msgstr "Vizualizator ITypeLib"
 
-#: oleview.rc:95
-msgid "Ready"
-msgstr "Pregătit"
-
 #: oleview.rc:96
 msgid "OleView - OLE/COM Object Viewer"
 msgstr "OleView - Vizualizator de obiecte OLE/COM"
@@ -5957,10 +6388,6 @@ msgid ""
 msgstr ""
 "Fișierul grup „%s” nu se poate deschide.\n"
 "Doriți să se mai încerce deschiderea?"
-
-#: progman.rc:78
-msgid "Out of memory."
-msgstr "Memorie insuficientă."
 
 #: progman.rc:79
 msgid "Help not available."
@@ -8001,10 +8428,6 @@ msgstr "Invizibil"
 msgid "History"
 msgstr "Istorie"
 
-#: winhlp32.rc:52 winhlp32.rc:75
-msgid "Fonts"
-msgstr "&Font"
-
 #: winhlp32.rc:54 winhlp32.rc:77
 msgid "Small"
 msgstr "Mic"
@@ -8192,70 +8615,6 @@ msgstr "Gălbui de &post-it\tCtrl+2"
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
 msgstr "&Despre Wine Wordpad"
-
-#: wordpad.rc:114
-msgid "Black"
-msgstr "Negru"
-
-#: wordpad.rc:115
-msgid "Maroon"
-msgstr "Maro"
-
-#: wordpad.rc:116
-msgid "Green"
-msgstr "Verde"
-
-#: wordpad.rc:117
-msgid "Olive"
-msgstr "Oliv"
-
-#: wordpad.rc:118
-msgid "Navy"
-msgstr "Bleumarin"
-
-#: wordpad.rc:119
-msgid "Purple"
-msgstr "Violet"
-
-#: wordpad.rc:120
-msgid "Teal"
-msgstr "Verde-albăstrui"
-
-#: wordpad.rc:121
-msgid "Gray"
-msgstr "Gri"
-
-#: wordpad.rc:122
-msgid "Silver"
-msgstr "Argintiu"
-
-#: wordpad.rc:123
-msgid "Red"
-msgstr "Roșu"
-
-#: wordpad.rc:124
-msgid "Lime"
-msgstr "Lămâie verde"
-
-#: wordpad.rc:125
-msgid "Yellow"
-msgstr "Galben"
-
-#: wordpad.rc:126
-msgid "Blue"
-msgstr "Albastru"
-
-#: wordpad.rc:127
-msgid "Fuchsia"
-msgstr "Fuchsia"
-
-#: wordpad.rc:128
-msgid "Aqua"
-msgstr "Culoarea apei"
-
-#: wordpad.rc:129
-msgid "White"
-msgstr "Alb"
 
 #: wordpad.rc:130
 msgid "Automatic"

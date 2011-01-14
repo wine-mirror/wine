@@ -152,6 +152,415 @@ msgstr "Bugün:"
 msgid "Go to today"
 msgstr "Bugüne git"
 
+#: comdlg32.rc:29
+msgid "&About FolderPicker Test"
+msgstr "&Dizin Seçme Denemesi Hakkında"
+
+#: comdlg32.rc:30
+msgid "Document Folders"
+msgstr "Belge Dizinleri"
+
+#: comdlg32.rc:31 shell32.rc:187
+msgid "My Documents"
+msgstr "Belgelerim"
+
+#: comdlg32.rc:32
+msgid "My Favorites"
+msgstr "Sık Kullanılanlar"
+
+#: comdlg32.rc:33
+msgid "System Path"
+msgstr "Sistem Yolu"
+
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
+msgid "Desktop"
+msgstr "Masaüstü"
+
+#: comdlg32.rc:35 winhlp32.rc:52 winhlp32.rc:75
+#, fuzzy
+msgid "Fonts"
+msgstr ""
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"Fonts\n"
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"Yazı Tipleri"
+
+#: comdlg32.rc:36 shell32.rc:142 regedit.rc:206
+msgid "My Computer"
+msgstr "Bilgisayarım"
+
+#: comdlg32.rc:41
+msgid "System Folders"
+msgstr "Sistem Dizinleri"
+
+#: comdlg32.rc:42
+msgid "Local Hard Drives"
+msgstr "Yerel Diskler"
+
+#: comdlg32.rc:43
+msgid "File not found"
+msgstr "Dosya bulunamadı"
+
+#: comdlg32.rc:44
+msgid "Please verify that the correct file name was given"
+msgstr "Doğru dosya adı verildiğinden emin olun"
+
+#: comdlg32.rc:45
+msgid ""
+"File does not exist.\n"
+"Do you want to create file?"
+msgstr ""
+"Dosya mevcut değil\n"
+"Dosyayı oluşturmak ister misiniz?"
+
+#: comdlg32.rc:46
+msgid ""
+"File already exists.\n"
+"Do you want to replace it?"
+msgstr ""
+"Dosya zaten var.\n"
+"Değiştirmek ister misiniz?"
+
+#: comdlg32.rc:47
+msgid "Invalid character(s) in path"
+msgstr "Dosya yolunda geçersiz karakter(ler)"
+
+#: comdlg32.rc:48
+msgid ""
+"A filename cannot contain any of the following characters:\n"
+"                          / : < > |"
+msgstr ""
+"Bir dosya adı aşağıdaki karakterleri içeremez:\n"
+"                          / : < > |"
+
+#: comdlg32.rc:49
+msgid "Path does not exist"
+msgstr "Dosya yolu mevcut değil"
+
+#: comdlg32.rc:50
+msgid "File does not exist"
+msgstr "Dosya mevcut değil"
+
+#: comdlg32.rc:55
+msgid "Up One Level"
+msgstr "Bir Düzey Yukarı"
+
+#: comdlg32.rc:56
+msgid "Create New Folder"
+msgstr "Yeni Dizin Oluştur"
+
+#: comdlg32.rc:57
+msgid "List"
+msgstr "Liste"
+
+#: comdlg32.rc:58
+msgid "Details"
+msgstr "Ayrıntılar"
+
+#: comdlg32.rc:59
+msgid "Browse to Desktop"
+msgstr "Masaüstüne Git"
+
+#: comdlg32.rc:123
+msgid "Regular"
+msgstr ""
+
+#: comdlg32.rc:124
+msgid "Bold"
+msgstr ""
+
+#: comdlg32.rc:125
+msgid "Italic"
+msgstr ""
+
+#: comdlg32.rc:126
+msgid "Bold Italic"
+msgstr ""
+
+#: comdlg32.rc:131 wordpad.rc:114
+msgid "Black"
+msgstr "Siyah"
+
+#: comdlg32.rc:132 wordpad.rc:115
+msgid "Maroon"
+msgstr "Koyu Kırmızı"
+
+#: comdlg32.rc:133 wordpad.rc:116
+msgid "Green"
+msgstr "Yeşil"
+
+#: comdlg32.rc:134 wordpad.rc:117
+msgid "Olive"
+msgstr "Koyu Sarı"
+
+#: comdlg32.rc:135 wordpad.rc:118
+msgid "Navy"
+msgstr "Koyu Mavi"
+
+#: comdlg32.rc:136 wordpad.rc:119
+msgid "Purple"
+msgstr "Mor"
+
+#: comdlg32.rc:137 wordpad.rc:120
+msgid "Teal"
+msgstr "Deniz Mavisi"
+
+#: comdlg32.rc:138 wordpad.rc:121
+msgid "Gray"
+msgstr "Gri"
+
+#: comdlg32.rc:139 wordpad.rc:122
+msgid "Silver"
+msgstr "Gümüş"
+
+#: comdlg32.rc:140 wordpad.rc:123
+msgid "Red"
+msgstr "Kırmızı"
+
+#: comdlg32.rc:141 wordpad.rc:124
+msgid "Lime"
+msgstr "Parlak Yeşil"
+
+#: comdlg32.rc:142 wordpad.rc:125
+msgid "Yellow"
+msgstr "Sarı"
+
+#: comdlg32.rc:143 wordpad.rc:126
+msgid "Blue"
+msgstr "Mavi"
+
+#: comdlg32.rc:144 wordpad.rc:127
+msgid "Fuchsia"
+msgstr "Pembe"
+
+#: comdlg32.rc:145 wordpad.rc:128
+msgid "Aqua"
+msgstr "Turkuaz"
+
+#: comdlg32.rc:146 wordpad.rc:129
+msgid "White"
+msgstr "Beyaz"
+
+#: comdlg32.rc:66
+msgid "Unreadable Entry"
+msgstr "Okunamayan Giriş"
+
+#: comdlg32.rc:68
+msgid ""
+"This value does not lie within the page range.\n"
+"Please enter a value between %d and %d."
+msgstr ""
+"Bu değer sayfa aralığında değil.\n"
+"Lütfen %d ve %d değerleri arasında bir değer girin."
+
+#: comdlg32.rc:70
+msgid "The 'from' entry cannot exceed the 'to' entry."
+msgstr "'Başlangıç' değeri 'Bitiş' değerini geçemez."
+
+#: comdlg32.rc:72
+msgid ""
+"Margins overlap or fall outside Paper boundaries.\n"
+"Please reenter margins."
+msgstr ""
+"Kenarlıklar örtüşüyor ya da kağıt sınırlarının dışına çıkıyor.\n"
+"Lütfen kenarlıkları yeniden girin."
+
+#: comdlg32.rc:74
+msgid "The number of 'Number of copies' value cannot be empty."
+msgstr "'Kopya sayısı' değeri boş olamaz."
+
+#: comdlg32.rc:76
+msgid ""
+"This large number of copies is not supported by your printer.\n"
+"Please enter a value between 1 and %d."
+msgstr ""
+"Bu kadar büyük sayıda kopya yazınız tarafından desteklenmiyor.\n"
+"Lütffen 1 ile %d arasında bir değer girin."
+
+#: comdlg32.rc:77
+msgid "A printer error occurred."
+msgstr "Bir yazıcı hatası oluştu."
+
+#: comdlg32.rc:78
+msgid "No default printer defined."
+msgstr "Öntanımlı yazıcı tanımlanmamış."
+
+#: comdlg32.rc:79
+msgid "Cannot find the printer."
+msgstr "Yazıcı bulunamıyor."
+
+#: comdlg32.rc:80 progman.rc:78
+msgid "Out of memory."
+msgstr "Bellek dolu."
+
+#: comdlg32.rc:81
+msgid "An error occurred."
+msgstr "Bir hata oluştu."
+
+#: comdlg32.rc:82
+msgid "Unknown printer driver."
+msgstr "Bilinmeyen yazıcı sürücüsü."
+
+#: comdlg32.rc:85
+msgid ""
+"Before you can perform printer-related tasks such as page setup or printing "
+"a document, you need to install a printer. Please install one and retry."
+msgstr ""
+"Sayfa ayarı veya belge yazdırmak gibi yazıcıyla ilgili işlemlerden önce bir "
+"yazıcı sürücüsü kurmalısınız. Lütfen bir tane kurun ve yeniden deneyin."
+
+#: comdlg32.rc:151
+msgid "Select a font size between %d and %d points."
+msgstr "%d ile %d arasında bir yazı tipi boyutu seçin."
+
+#: comdlg32.rc:152 shdocvw.rc:32
+msgid "&Save"
+msgstr "&Kaydet"
+
+#: comdlg32.rc:153
+msgid "Save &in:"
+msgstr "Kayıt &Yeri:"
+
+#: comdlg32.rc:154
+msgid "Save"
+msgstr "Kaydet"
+
+#: comdlg32.rc:155
+msgid "Save as"
+msgstr "Farklı Kaydet"
+
+#: comdlg32.rc:156
+msgid "Open File"
+msgstr "Dosya Aç"
+
+#: comdlg32.rc:93 oleview.rc:95
+msgid "Ready"
+msgstr "Hazır"
+
+#: comdlg32.rc:94
+msgid "Paused; "
+msgstr "Durakladı; "
+
+#: comdlg32.rc:95
+msgid "Error; "
+msgstr "Hata; "
+
+#: comdlg32.rc:96
+msgid "Pending deletion; "
+msgstr "Silme bekleniyor; "
+
+#: comdlg32.rc:97
+msgid "Paper jam; "
+msgstr "Paper jam; "
+
+#: comdlg32.rc:98
+msgid "Out of paper; "
+msgstr "Kağıt yok; "
+
+#: comdlg32.rc:99
+msgid "Feed paper manual; "
+msgstr "Feed paper manual; "
+
+#: comdlg32.rc:100
+msgid "Paper problem; "
+msgstr "Kağıt sorunu; "
+
+#: comdlg32.rc:101
+msgid "Printer offline; "
+msgstr "Yazıcı çevrimdışı; "
+
+#: comdlg32.rc:102
+msgid "I/O Active; "
+msgstr "G/Ç Etkin; "
+
+#: comdlg32.rc:103
+msgid "Busy; "
+msgstr "Meşgul; "
+
+#: comdlg32.rc:104
+msgid "Printing; "
+msgstr "Yazıyor; "
+
+#: comdlg32.rc:105
+msgid "Output tray is full; "
+msgstr "Çıkış tepsisi doldu; "
+
+#: comdlg32.rc:106
+msgid "Not available; "
+msgstr "Kullanılabilir değil; "
+
+#: comdlg32.rc:107
+msgid "Waiting; "
+msgstr "Bekliyor; "
+
+#: comdlg32.rc:108
+msgid "Processing; "
+msgstr "İlerliyor; "
+
+#: comdlg32.rc:109
+msgid "Initialising; "
+msgstr "Hazırlanıyor; "
+
+#: comdlg32.rc:110
+msgid "Warming up; "
+msgstr "Warming up; "
+
+#: comdlg32.rc:111
+msgid "Toner low; "
+msgstr "Toner low; "
+
+#: comdlg32.rc:112
+msgid "No toner; "
+msgstr "No toner; "
+
+#: comdlg32.rc:113
+msgid "Page punt; "
+msgstr "Page punt; "
+
+#: comdlg32.rc:114
+msgid "Interrupted by user; "
+msgstr "Kullanıcı tarafından iptal edildi; "
+
+#: comdlg32.rc:115
+msgid "Out of memory; "
+msgstr "Bellek dolu; "
+
+#: comdlg32.rc:116
+msgid "The printer door is open; "
+msgstr "Yazıcı kapısı açık; "
+
+#: comdlg32.rc:117
+msgid "Print server unknown; "
+msgstr "Yazıcı sunucusu bilinmiyor; "
+
+#: comdlg32.rc:118
+msgid "Power save mode; "
+msgstr "Güç koruma modu; "
+
+#: comdlg32.rc:87
+msgid "Default Printer; "
+msgstr "Öntanımlı yazıcı; "
+
+#: comdlg32.rc:88
+msgid "There are %d documents in the queue"
+msgstr "Kuyrukta %d belge var"
+
+#: comdlg32.rc:89
+msgid "Margins [inches]"
+msgstr "Kenarlıklar [inç]"
+
+#: comdlg32.rc:90
+msgid "Margins [mm]"
+msgstr "Kenarlıklar [mm]"
+
+#: comdlg32.rc:91
+msgid "mm"
+msgstr "mm"
+
+#: comdlg32.rc:64 hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
+msgid "Print"
+msgstr "Yazdır"
+
 #: credui.rc:27
 #, fuzzy
 msgid "Connect to %s"
@@ -1652,10 +2061,6 @@ msgstr "Ev"
 msgid "Sync"
 msgstr "Eşitle"
 
-#: hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
-msgid "Print"
-msgstr "Yazdır"
-
 #: hhctrl.rc:43 wordpad.rc:155
 msgid "Options"
 msgstr "Seçenekler"
@@ -2825,10 +3230,6 @@ msgstr "&Pencere"
 msgid "&Open..."
 msgstr "&Aç"
 
-#: shdocvw.rc:32
-msgid "&Save"
-msgstr ""
-
 #: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr "&Farklı Kaydet..."
@@ -3047,14 +3448,6 @@ msgstr "Özgün konum"
 msgid "Date deleted"
 msgstr "Silinme tarihi"
 
-#: shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
-msgid "Desktop"
-msgstr "Masaüstü"
-
-#: shell32.rc:142 regedit.rc:206
-msgid "My Computer"
-msgstr "Bilgisayarım"
-
 #: shell32.rc:144
 msgid "Control Panel"
 msgstr "Control Panel"
@@ -3086,10 +3479,6 @@ msgstr "Wine oturumunuzu kapatmak istediğinizden emin misiniz?"
 #: shell32.rc:186
 msgid "Start Menu\\Programs"
 msgstr "Start Menu\\Programlar"
-
-#: shell32.rc:187
-msgid "My Documents"
-msgstr "Belgelerim"
 
 #: shell32.rc:188
 msgid "Favorites"
@@ -5503,11 +5892,6 @@ msgstr "&Görünüm"
 msgid "ITypeLib viewer"
 msgstr ""
 
-#: oleview.rc:95
-#, fuzzy
-msgid "Ready"
-msgstr "Salt-&okunur"
-
 #: oleview.rc:96
 msgid "OleView - OLE/COM Object Viewer"
 msgstr ""
@@ -5824,10 +6208,6 @@ msgid ""
 msgstr ""
 "'%s' grup dosyası açılamadı.\n"
 "Daha sonra denensin mi?"
-
-#: progman.rc:78
-msgid "Out of memory."
-msgstr "Bellek dolu."
 
 #: progman.rc:79
 msgid "Help not available."
@@ -7842,10 +8222,6 @@ msgstr "Non visible"
 msgid "History"
 msgstr "History"
 
-#: winhlp32.rc:52 winhlp32.rc:75
-msgid "Fonts"
-msgstr "Fonts"
-
 #: winhlp32.rc:54 winhlp32.rc:77
 msgid "Small"
 msgstr "Small"
@@ -8036,70 +8412,6 @@ msgstr "&Sarımtırak\tCtrl+2"
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
 msgstr "&About Wine Wordpad"
-
-#: wordpad.rc:114
-msgid "Black"
-msgstr "Siyah"
-
-#: wordpad.rc:115
-msgid "Maroon"
-msgstr "Koyu Kırmızı"
-
-#: wordpad.rc:116
-msgid "Green"
-msgstr "Yeşil"
-
-#: wordpad.rc:117
-msgid "Olive"
-msgstr "Koyu Sarı"
-
-#: wordpad.rc:118
-msgid "Navy"
-msgstr "Koyu Mavi"
-
-#: wordpad.rc:119
-msgid "Purple"
-msgstr "Mor"
-
-#: wordpad.rc:120
-msgid "Teal"
-msgstr "Deniz Mavisi"
-
-#: wordpad.rc:121
-msgid "Gray"
-msgstr "Gri"
-
-#: wordpad.rc:122
-msgid "Silver"
-msgstr "Gümüş"
-
-#: wordpad.rc:123
-msgid "Red"
-msgstr "Kırmızı"
-
-#: wordpad.rc:124
-msgid "Lime"
-msgstr "Parlak Yeşil"
-
-#: wordpad.rc:125
-msgid "Yellow"
-msgstr "Sarı"
-
-#: wordpad.rc:126
-msgid "Blue"
-msgstr "Mavi"
-
-#: wordpad.rc:127
-msgid "Fuchsia"
-msgstr "Pembe"
-
-#: wordpad.rc:128
-msgid "Aqua"
-msgstr "Turkuaz"
-
-#: wordpad.rc:129
-msgid "White"
-msgstr "Beyaz"
 
 #: wordpad.rc:130
 msgid "Automatic"

@@ -147,6 +147,421 @@ msgstr "Šiandien:"
 msgid "Go to today"
 msgstr "Eiti į šiandien"
 
+#: comdlg32.rc:29
+msgid "&About FolderPicker Test"
+msgstr "&Apie FolderPicker testą"
+
+#: comdlg32.rc:30
+msgid "Document Folders"
+msgstr "Dokumentų aplankai"
+
+#: comdlg32.rc:31 shell32.rc:187
+msgid "My Documents"
+msgstr "Dokumentai"
+
+#: comdlg32.rc:32
+msgid "My Favorites"
+msgstr "Adresynas"
+
+#: comdlg32.rc:33
+msgid "System Path"
+msgstr "Sistemos kelias"
+
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
+msgid "Desktop"
+msgstr "Darbalaukis"
+
+#: comdlg32.rc:35 winhlp32.rc:52 winhlp32.rc:75
+#, fuzzy
+msgid "Fonts"
+msgstr ""
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"Šriftas\n"
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"Šriftai"
+
+#: comdlg32.rc:36 shell32.rc:142 regedit.rc:206
+msgid "My Computer"
+msgstr "Kompiuteris"
+
+#: comdlg32.rc:41
+msgid "System Folders"
+msgstr "Sistemos aplankai"
+
+#: comdlg32.rc:42
+msgid "Local Hard Drives"
+msgstr "Vietiniai standieji diskai"
+
+#: comdlg32.rc:43
+msgid "File not found"
+msgstr "Failas nerastas"
+
+#: comdlg32.rc:44
+msgid "Please verify that the correct file name was given"
+msgstr "Prašome patikrinti ar buvo pateiktas korektiškas failo vardas"
+
+#: comdlg32.rc:45
+msgid ""
+"File does not exist.\n"
+"Do you want to create file?"
+msgstr ""
+"Failas neegzistuoja.\n"
+"Ar norite sukurti failą?"
+
+#: comdlg32.rc:46
+msgid ""
+"File already exists.\n"
+"Do you want to replace it?"
+msgstr ""
+"Failas jau egzistuoja.\n"
+"Ar norite jį pakeisti?"
+
+#: comdlg32.rc:47
+msgid "Invalid character(s) in path"
+msgstr "Kelyje yra netinkamų simbolių"
+
+#: comdlg32.rc:48
+msgid ""
+"A filename cannot contain any of the following characters:\n"
+"                          / : < > |"
+msgstr ""
+"Failo vardas negali turėti šių simbolių:\n"
+"                          / : < > |"
+
+#: comdlg32.rc:49
+msgid "Path does not exist"
+msgstr "Kelias neegzistuoja"
+
+#: comdlg32.rc:50
+msgid "File does not exist"
+msgstr "Failas neegzistuoja"
+
+#: comdlg32.rc:55
+msgid "Up One Level"
+msgstr "Aukštyn vienu lygiu"
+
+#: comdlg32.rc:56
+msgid "Create New Folder"
+msgstr "Sukurti naują aplanką"
+
+#: comdlg32.rc:57
+msgid "List"
+msgstr "Sąrašas"
+
+#: comdlg32.rc:58
+msgid "Details"
+msgstr "Išsamiai"
+
+#: comdlg32.rc:59
+msgid "Browse to Desktop"
+msgstr "Pereiti į darbalaukį"
+
+#: comdlg32.rc:123
+msgid "Regular"
+msgstr "Normalus"
+
+#: comdlg32.rc:124
+msgid "Bold"
+msgstr "Pusjuodis"
+
+#: comdlg32.rc:125
+msgid "Italic"
+msgstr "Kursyvas"
+
+#: comdlg32.rc:126
+msgid "Bold Italic"
+msgstr "Pusjuodis kursyvas"
+
+#: comdlg32.rc:131 wordpad.rc:114
+msgid "Black"
+msgstr "Juoda"
+
+#: comdlg32.rc:132 wordpad.rc:115
+msgid "Maroon"
+msgstr "Kaštoninė"
+
+#: comdlg32.rc:133 wordpad.rc:116
+msgid "Green"
+msgstr "Žalia"
+
+#: comdlg32.rc:134 wordpad.rc:117
+msgid "Olive"
+msgstr "Alyvinė"
+
+#: comdlg32.rc:135 wordpad.rc:118
+msgid "Navy"
+msgstr "Ultramarinas"
+
+#: comdlg32.rc:136 wordpad.rc:119
+msgid "Purple"
+msgstr "Purpurinė"
+
+#: comdlg32.rc:137 wordpad.rc:120
+msgid "Teal"
+msgstr "Neutrali ciano"
+
+#: comdlg32.rc:138 wordpad.rc:121
+msgid "Gray"
+msgstr "Pilka"
+
+#: comdlg32.rc:139 wordpad.rc:122
+msgid "Silver"
+msgstr "Sidabrinė"
+
+#: comdlg32.rc:140 wordpad.rc:123
+msgid "Red"
+msgstr "Raudona"
+
+#: comdlg32.rc:141 wordpad.rc:124
+msgid "Lime"
+msgstr "Gelsvai žalsva"
+
+#: comdlg32.rc:142 wordpad.rc:125
+msgid "Yellow"
+msgstr "Geltona"
+
+#: comdlg32.rc:143 wordpad.rc:126
+msgid "Blue"
+msgstr "Mėlyna"
+
+#: comdlg32.rc:144 wordpad.rc:127
+msgid "Fuchsia"
+msgstr "Fuksija"
+
+#: comdlg32.rc:145 wordpad.rc:128
+msgid "Aqua"
+msgstr "Žydra"
+
+#: comdlg32.rc:146 wordpad.rc:129
+msgid "White"
+msgstr "Balta"
+
+#: comdlg32.rc:66
+msgid "Unreadable Entry"
+msgstr "Neperskaitomas įrašas"
+
+#: comdlg32.rc:68
+msgid ""
+"This value does not lie within the page range.\n"
+"Please enter a value between %d and %d."
+msgstr ""
+"Ši reikšmė nepatenka į puslapių rėžį.\n"
+"Prašome įvesti reikšmę tarp %d ir %d."
+
+#: comdlg32.rc:70
+msgid "The 'from' entry cannot exceed the 'to' entry."
+msgstr "„Nuo“ reikšmė negali viršyti „iki“ reikšmės."
+
+#: comdlg32.rc:72
+msgid ""
+"Margins overlap or fall outside Paper boundaries.\n"
+"Please reenter margins."
+msgstr ""
+"Paraštės persidengia arba išeina už popieriaus ribų.\n"
+"Prašome įvesti paraštes iš naujo."
+
+#: comdlg32.rc:74
+msgid "The number of 'Number of copies' value cannot be empty."
+msgstr "Skaitinė „kopijų skaičius“ reikšmė negali būti tuščia."
+
+#: comdlg32.rc:76
+msgid ""
+"This large number of copies is not supported by your printer.\n"
+"Please enter a value between 1 and %d."
+msgstr ""
+"Toks didelis kopijų skaičius yra nepalaikomas jūsų spausdintuvo.\n"
+"Prašome įvesti reikšmę tarp 1 ir %d."
+
+#: comdlg32.rc:77
+msgid "A printer error occurred."
+msgstr "Įvyko spausdintuvo klaida."
+
+#: comdlg32.rc:78
+msgid "No default printer defined."
+msgstr "Nenurodytas pagrindinis spausdintuvas."
+
+#: comdlg32.rc:79
+msgid "Cannot find the printer."
+msgstr "Nepavyko rasti spausdintuvo."
+
+#: comdlg32.rc:80 progman.rc:78
+msgid "Out of memory."
+msgstr "Trūksta atminties."
+
+#: comdlg32.rc:81
+msgid "An error occurred."
+msgstr "Įvyko klaida."
+
+#: comdlg32.rc:82
+msgid "Unknown printer driver."
+msgstr "Nežinoma spausdintuvo tvarkyklė."
+
+#: comdlg32.rc:85
+msgid ""
+"Before you can perform printer-related tasks such as page setup or printing "
+"a document, you need to install a printer. Please install one and retry."
+msgstr ""
+"Prieš atlikdami su spausdintuvu susijusius veiksmus, tokius kaip puslapio "
+"nuostatų keitimas ar dokumento spausdinimas, turite įdiegti spausdintuvą. "
+"Prašome įdiegti spausdintuvą ir pakartoti."
+
+#: comdlg32.rc:151
+msgid "Select a font size between %d and %d points."
+msgstr "Pasirinkite šrifto dydį tarp %d ir %d taškų."
+
+#: comdlg32.rc:152 shdocvw.rc:32
+msgid "&Save"
+msgstr "&Išsaugoti"
+
+#: comdlg32.rc:153
+msgid "Save &in:"
+msgstr "&Kur išsaugoti:"
+
+#: comdlg32.rc:154
+msgid "Save"
+msgstr "Išsaugoti"
+
+#: comdlg32.rc:155
+msgid "Save as"
+msgstr "Išsaugoti kaip"
+
+#: comdlg32.rc:156
+msgid "Open File"
+msgstr "Atverti failą"
+
+#: comdlg32.rc:93 oleview.rc:95
+#, fuzzy
+msgid "Ready"
+msgstr ""
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"Parengta\n"
+"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
+"Parengtas"
+
+#: comdlg32.rc:94
+msgid "Paused; "
+msgstr "Pristabdytas; "
+
+#: comdlg32.rc:95
+msgid "Error; "
+msgstr "Klaida; "
+
+#: comdlg32.rc:96
+msgid "Pending deletion; "
+msgstr "Laukia pašalinimo; "
+
+#: comdlg32.rc:97
+msgid "Paper jam; "
+msgstr "Užstrigęs popierius; "
+
+#: comdlg32.rc:98
+msgid "Out of paper; "
+msgstr "Pasibaigęs popierius; "
+
+#: comdlg32.rc:99
+msgid "Feed paper manual; "
+msgstr "Rankinis popieriaus padavimas; "
+
+#: comdlg32.rc:100
+msgid "Paper problem; "
+msgstr "Problema su popieriumi; "
+
+#: comdlg32.rc:101
+msgid "Printer offline; "
+msgstr "Spausdintuvas atjungtas; "
+
+#: comdlg32.rc:102
+msgid "I/O Active; "
+msgstr "Aktyvus Į/I; "
+
+#: comdlg32.rc:103
+msgid "Busy; "
+msgstr "Spausdintuvas užimtas; "
+
+#: comdlg32.rc:104
+msgid "Printing; "
+msgstr "Spausdina; "
+
+#: comdlg32.rc:105
+msgid "Output tray is full; "
+msgstr "Išvedimo dėklas pilnas; "
+
+#: comdlg32.rc:106
+msgid "Not available; "
+msgstr "Nepasiekiama; "
+
+#: comdlg32.rc:107
+msgid "Waiting; "
+msgstr "Laukia; "
+
+#: comdlg32.rc:108
+msgid "Processing; "
+msgstr "Apdorojimas; "
+
+#: comdlg32.rc:109
+msgid "Initialising; "
+msgstr "Inicijuojama; "
+
+#: comdlg32.rc:110
+msgid "Warming up; "
+msgstr "Kaista; "
+
+#: comdlg32.rc:111
+msgid "Toner low; "
+msgstr "Baigiasi dažai; "
+
+#: comdlg32.rc:112
+msgid "No toner; "
+msgstr "Nėra dažų; "
+
+#: comdlg32.rc:113
+msgid "Page punt; "
+msgstr "Puslapis perkrautas; "
+
+#: comdlg32.rc:114
+msgid "Interrupted by user; "
+msgstr "Pertraukta naudotojo; "
+
+#: comdlg32.rc:115
+msgid "Out of memory; "
+msgstr "Trūksta atminties; "
+
+#: comdlg32.rc:116
+msgid "The printer door is open; "
+msgstr "Spausdintuvo durelės atidarytos; "
+
+#: comdlg32.rc:117
+msgid "Print server unknown; "
+msgstr "Spausdinimo serveris nežinomas; "
+
+#: comdlg32.rc:118
+msgid "Power save mode; "
+msgstr "Energijos taupymo režimas; "
+
+#: comdlg32.rc:87
+msgid "Default Printer; "
+msgstr "Pagrindinis spausdintuvas; "
+
+#: comdlg32.rc:88
+msgid "There are %d documents in the queue"
+msgstr "Eilėje yra %d dokumentų"
+
+#: comdlg32.rc:89
+msgid "Margins [inches]"
+msgstr "Paraštės [coliai]"
+
+#: comdlg32.rc:90
+msgid "Margins [mm]"
+msgstr "Paraštės [mm]"
+
+#: comdlg32.rc:91
+msgid "mm"
+msgstr "mm"
+
+#: comdlg32.rc:64 hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
+msgid "Print"
+msgstr "Spausdinti"
+
 #: credui.rc:27
 msgid "Connect to %s"
 msgstr "Užmegzti ryšį su %s"
@@ -1652,10 +2067,6 @@ msgstr "Į pradžią"
 msgid "Sync"
 msgstr "Sinchronizuoti"
 
-#: hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
-msgid "Print"
-msgstr "Spausdinti"
-
 #: hhctrl.rc:43 wordpad.rc:155
 msgid "Options"
 msgstr "Parinktys"
@@ -2784,10 +3195,6 @@ msgstr "&Langas"
 msgid "&Open..."
 msgstr "&Atverti..."
 
-#: shdocvw.rc:32
-msgid "&Save"
-msgstr "&Išsaugoti"
-
 #: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr "Išsaugoti &kaip..."
@@ -2993,14 +3400,6 @@ msgstr "Originali vieta"
 msgid "Date deleted"
 msgstr "Pašalinimo data"
 
-#: shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
-msgid "Desktop"
-msgstr "Darbalaukis"
-
-#: shell32.rc:142 regedit.rc:206
-msgid "My Computer"
-msgstr "Kompiuteris"
-
 #: shell32.rc:144
 msgid "Control Panel"
 msgstr "Valdymo skydelis"
@@ -3037,10 +3436,6 @@ msgstr "Ar norite sustabdyti šį Wine seansą?"
 #: shell32.rc:186
 msgid "Start Menu\\Programs"
 msgstr "Pradžios meniu\\Programos"
-
-#: shell32.rc:187
-msgid "My Documents"
-msgstr "Dokumentai"
 
 #: shell32.rc:188
 msgid "Favorites"
@@ -5438,10 +5833,6 @@ msgstr "OLE žiūryklė"
 msgid "ITypeLib viewer"
 msgstr "ITypeLib žiūryklė"
 
-#: oleview.rc:95
-msgid "Ready"
-msgstr "Parengta"
-
 #: oleview.rc:96
 msgid "OleView - OLE/COM Object Viewer"
 msgstr "OLE žiūryklė - OLE/COM objektų žiūryklė"
@@ -5727,10 +6118,6 @@ msgid ""
 msgstr ""
 "Nepavyko atidaryti grupės failo „%s“.\n"
 "Mėginti atidaryti toliau?"
-
-#: progman.rc:78
-msgid "Out of memory."
-msgstr "Trūksta atminties."
 
 #: progman.rc:79
 msgid "Help not available."
@@ -7758,10 +8145,6 @@ msgstr "Nematomas"
 msgid "History"
 msgstr "Istorija"
 
-#: winhlp32.rc:52 winhlp32.rc:75
-msgid "Fonts"
-msgstr "Šriftas"
-
 #: winhlp32.rc:54 winhlp32.rc:77
 msgid "Small"
 msgstr "&Mažas"
@@ -7949,70 +8332,6 @@ msgstr "&Gelsvas\tCtrl+2"
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
 msgstr "&Apie Wine Wordpad"
-
-#: wordpad.rc:114
-msgid "Black"
-msgstr "Juoda"
-
-#: wordpad.rc:115
-msgid "Maroon"
-msgstr "Kaštoninė"
-
-#: wordpad.rc:116
-msgid "Green"
-msgstr "Žalia"
-
-#: wordpad.rc:117
-msgid "Olive"
-msgstr "Alyvinė"
-
-#: wordpad.rc:118
-msgid "Navy"
-msgstr "Ultramarinas"
-
-#: wordpad.rc:119
-msgid "Purple"
-msgstr "Purpurinė"
-
-#: wordpad.rc:120
-msgid "Teal"
-msgstr "Neutrali ciano"
-
-#: wordpad.rc:121
-msgid "Gray"
-msgstr "Pilka"
-
-#: wordpad.rc:122
-msgid "Silver"
-msgstr "Sidabrinė"
-
-#: wordpad.rc:123
-msgid "Red"
-msgstr "Raudona"
-
-#: wordpad.rc:124
-msgid "Lime"
-msgstr "Gelsvai žalsva"
-
-#: wordpad.rc:125
-msgid "Yellow"
-msgstr "Geltona"
-
-#: wordpad.rc:126
-msgid "Blue"
-msgstr "Mėlyna"
-
-#: wordpad.rc:127
-msgid "Fuchsia"
-msgstr "Fuksija"
-
-#: wordpad.rc:128
-msgid "Aqua"
-msgstr "Žydra"
-
-#: wordpad.rc:129
-msgid "White"
-msgstr "Balta"
 
 #: wordpad.rc:130
 msgid "Automatic"

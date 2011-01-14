@@ -46,7 +46,9 @@ RC_SRCS = \
 	cdlg_Uk.rc \
 	cdlg_Wa.rc \
 	cdlg_Zh.rc \
-	cdlg_xx.rc
+	comdlg32.rc
+
+PO_SRCS = comdlg32.rc
 
 SVG_SRCS = \
 	pd32_collate.svg \

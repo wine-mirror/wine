@@ -145,6 +145,410 @@ msgstr ""
 msgid "Go to today"
 msgstr ""
 
+#: comdlg32.rc:29
+msgid "&About FolderPicker Test"
+msgstr "&Tietoja FolderPicker-testistä"
+
+#: comdlg32.rc:30
+msgid "Document Folders"
+msgstr "Dokumenttikansiot"
+
+#: comdlg32.rc:31 shell32.rc:187
+msgid "My Documents"
+msgstr "Omat tiedostot"
+
+#: comdlg32.rc:32
+msgid "My Favorites"
+msgstr "Suosikit"
+
+#: comdlg32.rc:33
+msgid "System Path"
+msgstr "Järjestelmäkansio"
+
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
+msgid "Desktop"
+msgstr "Työpöytä"
+
+#: comdlg32.rc:35 winhlp32.rc:52 winhlp32.rc:75
+msgid "Fonts"
+msgstr "Fontit"
+
+#: comdlg32.rc:36 shell32.rc:142 regedit.rc:206
+msgid "My Computer"
+msgstr "Oma tietokone"
+
+#: comdlg32.rc:41
+msgid "System Folders"
+msgstr "Järjestemäkansiot"
+
+#: comdlg32.rc:42
+msgid "Local Hard Drives"
+msgstr "Paikalliset kiintolevyt"
+
+#: comdlg32.rc:43
+msgid "File not found"
+msgstr "Tiedostoa ei löydy"
+
+#: comdlg32.rc:44
+msgid "Please verify that the correct file name was given"
+msgstr "Varmista, että tiedoston nimi on oikein"
+
+#: comdlg32.rc:45
+msgid ""
+"File does not exist.\n"
+"Do you want to create file?"
+msgstr ""
+"Tiedostoa ei ole olemassa.\n"
+"Haluatko luoda sen?"
+
+#: comdlg32.rc:46
+msgid ""
+"File already exists.\n"
+"Do you want to replace it?"
+msgstr ""
+"Tiedosto on jo olemassa.\n"
+"Haluatko ylikirjoitaa sen?"
+
+#: comdlg32.rc:47
+msgid "Invalid character(s) in path"
+msgstr "Kansio sisältää epäkelpoja merkkejä"
+
+#: comdlg32.rc:48
+msgid ""
+"A filename cannot contain any of the following characters:\n"
+"                          / : < > |"
+msgstr ""
+"Tiedoston nimi ei voi sisältää näitä merkkejä:\n"
+"                          / : < > |"
+
+#: comdlg32.rc:49
+msgid "Path does not exist"
+msgstr "Kansiota ei ole"
+
+#: comdlg32.rc:50
+msgid "File does not exist"
+msgstr "Tiedostoa ei ole"
+
+#: comdlg32.rc:55
+msgid "Up One Level"
+msgstr "Ylempi kansio"
+
+#: comdlg32.rc:56
+msgid "Create New Folder"
+msgstr "Luo uusi kansio"
+
+#: comdlg32.rc:57
+msgid "List"
+msgstr "Lista"
+
+#: comdlg32.rc:58
+msgid "Details"
+msgstr "Tiedot"
+
+#: comdlg32.rc:59
+msgid "Browse to Desktop"
+msgstr "Työpöytä"
+
+#: comdlg32.rc:123
+msgid "Regular"
+msgstr "Tavallinen"
+
+#: comdlg32.rc:124
+msgid "Bold"
+msgstr "Lihavoitu"
+
+#: comdlg32.rc:125
+msgid "Italic"
+msgstr "Kursivoitu"
+
+#: comdlg32.rc:126
+msgid "Bold Italic"
+msgstr "Lihavoitu kursivoitu"
+
+#: comdlg32.rc:131 wordpad.rc:114
+msgid "Black"
+msgstr "Musta"
+
+#: comdlg32.rc:132 wordpad.rc:115
+msgid "Maroon"
+msgstr "Kastanjanruskea"
+
+#: comdlg32.rc:133 wordpad.rc:116
+msgid "Green"
+msgstr "Vihreä"
+
+#: comdlg32.rc:134 wordpad.rc:117
+msgid "Olive"
+msgstr "Oliivinvihreä"
+
+#: comdlg32.rc:135 wordpad.rc:118
+msgid "Navy"
+msgstr "Laivastonsininen"
+
+#: comdlg32.rc:136 wordpad.rc:119
+msgid "Purple"
+msgstr "Purppura"
+
+#: comdlg32.rc:137 wordpad.rc:120
+msgid "Teal"
+msgstr "Turkoosi"
+
+#: comdlg32.rc:138 wordpad.rc:121
+msgid "Gray"
+msgstr "Harmaa"
+
+#: comdlg32.rc:139 wordpad.rc:122
+msgid "Silver"
+msgstr "Hopea"
+
+#: comdlg32.rc:140 wordpad.rc:123
+msgid "Red"
+msgstr "Punainen"
+
+#: comdlg32.rc:141 wordpad.rc:124
+msgid "Lime"
+msgstr "Vaaleanvihreä"
+
+#: comdlg32.rc:142 wordpad.rc:125
+msgid "Yellow"
+msgstr "Keltainen"
+
+#: comdlg32.rc:143 wordpad.rc:126
+msgid "Blue"
+msgstr "Sininen"
+
+#: comdlg32.rc:144 wordpad.rc:127
+msgid "Fuchsia"
+msgstr "Tummanpunainen"
+
+#: comdlg32.rc:145 wordpad.rc:128
+msgid "Aqua"
+msgstr "Vaaleanturkoosi"
+
+#: comdlg32.rc:146 wordpad.rc:129
+msgid "White"
+msgstr "Valkoinen"
+
+#: comdlg32.rc:66
+msgid "Unreadable Entry"
+msgstr "Lukukelvoton merkintä"
+
+#: comdlg32.rc:68
+msgid ""
+"This value does not lie within the page range.\n"
+"Please enter a value between %d and %d."
+msgstr ""
+"Arvo ei ole paperien määrän alueella.\n"
+"Anna arvo väliltä %d ja %d."
+
+#: comdlg32.rc:70
+msgid "The 'from' entry cannot exceed the 'to' entry."
+msgstr "Alukuarvo ei voi olla suurempi kuin loppuarvo."
+
+#: comdlg32.rc:72
+msgid ""
+"Margins overlap or fall outside Paper boundaries.\n"
+"Please reenter margins."
+msgstr ""
+"Marginaalit ovat päällekäin tai ulkona paperin alueelta.\n"
+"Määritä marginaalit uudestaan."
+
+#: comdlg32.rc:74
+msgid "The number of 'Number of copies' value cannot be empty."
+msgstr "Kopioiden määrä täytyy antaa."
+
+#: comdlg32.rc:76
+msgid ""
+"This large number of copies is not supported by your printer.\n"
+"Please enter a value between 1 and %d."
+msgstr ""
+"Tulostin ei tue näin montaa kopiota.\n"
+"Valitse arvo väliltä 1 ja %d."
+
+#: comdlg32.rc:77
+msgid "A printer error occurred."
+msgstr "Tulostinvirhe."
+
+#: comdlg32.rc:78
+msgid "No default printer defined."
+msgstr "Oletustulostinta ei ole määritetty."
+
+#: comdlg32.rc:79
+msgid "Cannot find the printer."
+msgstr "Tulostinta ei löydy."
+
+#: comdlg32.rc:80 progman.rc:78
+msgid "Out of memory."
+msgstr "Muisti loppu."
+
+#: comdlg32.rc:81
+msgid "An error occurred."
+msgstr "Virhe."
+
+#: comdlg32.rc:82
+msgid "Unknown printer driver."
+msgstr "Tuntematon tulostinajuri."
+
+#: comdlg32.rc:85
+msgid ""
+"Before you can perform printer-related tasks such as page setup or printing "
+"a document, you need to install a printer. Please install one and retry."
+msgstr ""
+"Jotta voisit käyttää tulostimia tai muokata niiden asetuksia, sinun täytyy "
+"ensin asentaa jokin tulostin."
+
+#: comdlg32.rc:151
+msgid "Select a font size between %d and %d points."
+msgstr "Valitse fontin koko väliltä %d ja %d pistettä."
+
+#: comdlg32.rc:152 shdocvw.rc:32
+msgid "&Save"
+msgstr "&Tallenna"
+
+#: comdlg32.rc:153
+msgid "Save &in:"
+msgstr "&Kansioon:"
+
+#: comdlg32.rc:154
+msgid "Save"
+msgstr "Tallenna"
+
+#: comdlg32.rc:155
+msgid "Save as"
+msgstr "Tallenna nimellä"
+
+#: comdlg32.rc:156
+msgid "Open File"
+msgstr "Avaa tiedosto"
+
+#: comdlg32.rc:93 oleview.rc:95
+msgid "Ready"
+msgstr "Valmis"
+
+#: comdlg32.rc:94
+msgid "Paused; "
+msgstr "Pysäytetty; "
+
+#: comdlg32.rc:95
+msgid "Error; "
+msgstr "Virhe; "
+
+#: comdlg32.rc:96
+msgid "Pending deletion; "
+msgstr "Tuhoutumassa; "
+
+#: comdlg32.rc:97
+msgid "Paper jam; "
+msgstr "Paperitukos; "
+
+#: comdlg32.rc:98
+msgid "Out of paper; "
+msgstr "Paperi loppu; "
+
+#: comdlg32.rc:99
+msgid "Feed paper manual; "
+msgstr "Syötä paperi käsin; "
+
+#: comdlg32.rc:100
+msgid "Paper problem; "
+msgstr "Ongelma paperin kanssa; "
+
+#: comdlg32.rc:101
+msgid "Printer offline; "
+msgstr "Ei yhteyttä tulostimeen; "
+
+#: comdlg32.rc:102
+msgid "I/O Active; "
+msgstr "Tiedonsiirto meneillään; "
+
+#: comdlg32.rc:103
+msgid "Busy; "
+msgstr "Varattu; "
+
+#: comdlg32.rc:104
+msgid "Printing; "
+msgstr "Tulostaa; "
+
+#: comdlg32.rc:105
+msgid "Output tray is full; "
+msgstr "Paperin luovutustaso on täynnä; "
+
+#: comdlg32.rc:106
+msgid "Not available; "
+msgstr "Ei saatavilla; "
+
+#: comdlg32.rc:107
+msgid "Waiting; "
+msgstr "Odottaa; "
+
+#: comdlg32.rc:108
+msgid "Processing; "
+msgstr "Käsitellään; "
+
+#: comdlg32.rc:109
+msgid "Initialising; "
+msgstr "Alustetaan; "
+
+#: comdlg32.rc:110
+msgid "Warming up; "
+msgstr "Lämmitetään; "
+
+#: comdlg32.rc:111
+msgid "Toner low; "
+msgstr "Väriaine vähissä; "
+
+#: comdlg32.rc:112
+msgid "No toner; "
+msgstr "Ei väriainetta; "
+
+#: comdlg32.rc:113
+msgid "Page punt; "
+msgstr "Page punt; "
+
+#: comdlg32.rc:114
+msgid "Interrupted by user; "
+msgstr "Käyttäjän keskeyttämä; "
+
+#: comdlg32.rc:115
+msgid "Out of memory; "
+msgstr "Muisti loppu; "
+
+#: comdlg32.rc:116
+msgid "The printer door is open; "
+msgstr "Tulostimen kansi on auki; "
+
+#: comdlg32.rc:117
+msgid "Print server unknown; "
+msgstr "Tulostinpalvelin tuntematon; "
+
+#: comdlg32.rc:118
+msgid "Power save mode; "
+msgstr "Virransäästötila; "
+
+#: comdlg32.rc:87
+msgid "Default Printer; "
+msgstr "Oletustulostin; "
+
+#: comdlg32.rc:88
+msgid "There are %d documents in the queue"
+msgstr "Jonossa on %d dokumenttia"
+
+#: comdlg32.rc:89
+msgid "Margins [inches]"
+msgstr "Marginaalit (tuumina)"
+
+#: comdlg32.rc:90
+msgid "Margins [mm]"
+msgstr "Marginaalit (mm)"
+
+#: comdlg32.rc:91
+msgid "mm"
+msgstr "mm"
+
+#: comdlg32.rc:64 hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
+msgid "Print"
+msgstr "Tulosta"
+
 #: credui.rc:27
 msgid "Connect to %s"
 msgstr ""
@@ -1633,10 +2037,6 @@ msgstr "Alkuun"
 msgid "Sync"
 msgstr "Synkronoi"
 
-#: hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
-msgid "Print"
-msgstr "Tulosta"
-
 #: hhctrl.rc:43 wordpad.rc:155
 msgid "Options"
 msgstr "Valinnat"
@@ -2800,10 +3200,6 @@ msgstr ""
 "#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
 "&Avaa..."
 
-#: shdocvw.rc:32
-msgid "&Save"
-msgstr ""
-
 #: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr "Talleta &nimellä..."
@@ -3019,14 +3415,6 @@ msgstr "Alkuperäinen sijainti"
 msgid "Date deleted"
 msgstr "Poistoaika"
 
-#: shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
-msgid "Desktop"
-msgstr "Työpöytä"
-
-#: shell32.rc:142 regedit.rc:206
-msgid "My Computer"
-msgstr "Oma tietokone"
-
 #: shell32.rc:144
 msgid "Control Panel"
 msgstr "Ohjauspaneeli"
@@ -3058,10 +3446,6 @@ msgstr "Haluatko lopettaa Wine-istunnon?"
 #: shell32.rc:186
 msgid "Start Menu\\Programs"
 msgstr "Käynnistä-valikko\\Ohjelmat"
-
-#: shell32.rc:187
-msgid "My Documents"
-msgstr "Omat tiedostot"
 
 #: shell32.rc:188
 msgid "Favorites"
@@ -5181,10 +5565,6 @@ msgstr "&Näkymä"
 msgid "ITypeLib viewer"
 msgstr ""
 
-#: oleview.rc:95
-msgid "Ready"
-msgstr ""
-
 #: oleview.rc:96
 msgid "OleView - OLE/COM Object Viewer"
 msgstr ""
@@ -5481,10 +5861,6 @@ msgstr ""
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
-msgstr ""
-
-#: progman.rc:78
-msgid "Out of memory."
 msgstr ""
 
 #: progman.rc:79
@@ -7486,10 +7862,6 @@ msgstr "Non visible"
 msgid "History"
 msgstr "History"
 
-#: winhlp32.rc:52 winhlp32.rc:75
-msgid "Fonts"
-msgstr "Fonts"
-
 #: winhlp32.rc:54 winhlp32.rc:77
 msgid "Small"
 msgstr "Small"
@@ -7697,71 +8069,6 @@ msgstr ""
 #, fuzzy
 msgid "&About Wine Wordpad"
 msgstr "T&ietoja..."
-
-#: wordpad.rc:114
-msgid "Black"
-msgstr ""
-
-#: wordpad.rc:115
-msgid "Maroon"
-msgstr ""
-
-#: wordpad.rc:116
-msgid "Green"
-msgstr ""
-
-#: wordpad.rc:117
-msgid "Olive"
-msgstr ""
-
-#: wordpad.rc:118
-msgid "Navy"
-msgstr ""
-
-#: wordpad.rc:119
-msgid "Purple"
-msgstr ""
-
-#: wordpad.rc:120
-msgid "Teal"
-msgstr ""
-
-#: wordpad.rc:121
-msgid "Gray"
-msgstr ""
-
-#: wordpad.rc:122
-msgid "Silver"
-msgstr ""
-
-#: wordpad.rc:123
-#, fuzzy
-msgid "Red"
-msgstr "Al&kuun"
-
-#: wordpad.rc:124
-msgid "Lime"
-msgstr ""
-
-#: wordpad.rc:125
-msgid "Yellow"
-msgstr ""
-
-#: wordpad.rc:126
-msgid "Blue"
-msgstr ""
-
-#: wordpad.rc:127
-msgid "Fuchsia"
-msgstr ""
-
-#: wordpad.rc:128
-msgid "Aqua"
-msgstr ""
-
-#: wordpad.rc:129
-msgid "White"
-msgstr ""
 
 #: wordpad.rc:130
 msgid "Automatic"

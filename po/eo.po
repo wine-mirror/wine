@@ -145,6 +145,421 @@ msgstr "Hodiaý:"
 msgid "Go to today"
 msgstr "Iru a la hodiaý"
 
+#: comdlg32.rc:29
+msgid "&About FolderPicker Test"
+msgstr "&Pri 'Test FolderPicker'"
+
+#: comdlg32.rc:30
+msgid "Document Folders"
+msgstr "Dokumentdosierujoj"
+
+#: comdlg32.rc:31 shell32.rc:187
+msgid "My Documents"
+msgstr "Miaj Dokumentoj"
+
+#: comdlg32.rc:32
+msgid "My Favorites"
+msgstr "Miaj Favoritaj"
+
+#: comdlg32.rc:33
+msgid "System Path"
+msgstr "Sistemvojo"
+
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
+msgid "Desktop"
+msgstr "Desktop"
+
+#: comdlg32.rc:35 winhlp32.rc:52 winhlp32.rc:75
+#, fuzzy
+msgid "Fonts"
+msgstr ""
+"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
+"Fonts\n"
+"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
+"Tiparoj"
+
+#: comdlg32.rc:36 shell32.rc:142 regedit.rc:206
+#, fuzzy
+msgid "My Computer"
+msgstr ""
+"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
+"Mea Komputero\n"
+"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
+"Mia Komputero"
+
+#: comdlg32.rc:41
+msgid "System Folders"
+msgstr "Sistemdosierujoj"
+
+#: comdlg32.rc:42
+msgid "Local Hard Drives"
+msgstr "Localaj Durdiskoj"
+
+#: comdlg32.rc:43
+msgid "File not found"
+msgstr "Dosiero ne estis trovita"
+
+#: comdlg32.rc:44
+msgid "Please verify that the correct file name was given"
+msgstr "Kontrolu la øustecon je havigita dosiernomo."
+
+#: comdlg32.rc:45
+msgid ""
+"File does not exist.\n"
+"Do you want to create file?"
+msgstr ""
+"Dosiero estas neekzistanta\n"
+"Æu vi volas krei dosieron?"
+
+#: comdlg32.rc:46
+msgid ""
+"File already exists.\n"
+"Do you want to replace it?"
+msgstr ""
+"Dosiero estas jam ekzistanta.\n"
+"Æu vi volas superskribi øin?"
+
+#: comdlg32.rc:47
+msgid "Invalid character(s) in path"
+msgstr "Nekorekta(j) tipo(j) en vojo"
+
+#: comdlg32.rc:48
+msgid ""
+"A filename cannot contain any of the following characters:\n"
+"                          / : < > |"
+msgstr ""
+"La dosiernomo ne povas enhavi la jenajn tipojn:\n"
+" / : < > |"
+
+#: comdlg32.rc:49
+msgid "Path does not exist"
+msgstr "Vojo estas neekzistanta"
+
+#: comdlg32.rc:50
+msgid "File does not exist"
+msgstr "Dosiero estas neekzistanta"
+
+#: comdlg32.rc:55
+msgid "Up One Level"
+msgstr "Suriru da unu nivelo"
+
+#: comdlg32.rc:56
+msgid "Create New Folder"
+msgstr "Kreu Novan Dosieujon"
+
+#: comdlg32.rc:57
+msgid "List"
+msgstr "Listo"
+
+#: comdlg32.rc:58
+msgid "Details"
+msgstr "Detale"
+
+#: comdlg32.rc:59
+msgid "Browse to Desktop"
+msgstr "Foliu Desktop"
+
+#: comdlg32.rc:123
+msgid "Regular"
+msgstr ""
+
+#: comdlg32.rc:124
+msgid "Bold"
+msgstr ""
+
+#: comdlg32.rc:125
+msgid "Italic"
+msgstr ""
+
+#: comdlg32.rc:126
+msgid "Bold Italic"
+msgstr ""
+
+#: comdlg32.rc:131 wordpad.rc:114
+msgid "Black"
+msgstr "Nigro"
+
+#: comdlg32.rc:132 wordpad.rc:115
+msgid "Maroon"
+msgstr "Duonruøbruna koloro"
+
+#: comdlg32.rc:133 wordpad.rc:116
+msgid "Green"
+msgstr "Verdo"
+
+#: comdlg32.rc:134 wordpad.rc:117
+msgid "Olive"
+msgstr "Olivverdo"
+
+#: comdlg32.rc:135 wordpad.rc:118
+msgid "Navy"
+msgstr "Ultramara bluo"
+
+#: comdlg32.rc:136 wordpad.rc:119
+msgid "Purple"
+msgstr "Purpurruøo"
+
+#: comdlg32.rc:137 wordpad.rc:120
+msgid "Teal"
+msgstr "Kreka koloro"
+
+#: comdlg32.rc:138 wordpad.rc:121
+msgid "Gray"
+msgstr "Grizo"
+
+#: comdlg32.rc:139 wordpad.rc:122
+msgid "Silver"
+msgstr "Arøento"
+
+#: comdlg32.rc:140 wordpad.rc:123
+msgid "Red"
+msgstr "Ruøo"
+
+#: comdlg32.rc:141 wordpad.rc:124
+msgid "Lime"
+msgstr "Limeta koloro"
+
+#: comdlg32.rc:142 wordpad.rc:125
+msgid "Yellow"
+msgstr "Flavo"
+
+#: comdlg32.rc:143 wordpad.rc:126
+msgid "Blue"
+msgstr "Bluo"
+
+#: comdlg32.rc:144 wordpad.rc:127
+msgid "Fuchsia"
+msgstr "Fuksia koloro"
+
+#: comdlg32.rc:145 wordpad.rc:128
+msgid "Aqua"
+msgstr "Akvo"
+
+#: comdlg32.rc:146 wordpad.rc:129
+msgid "White"
+msgstr "Blanko"
+
+#: comdlg32.rc:66
+msgid "Unreadable Entry"
+msgstr "Nelegebla Entry"
+
+#: comdlg32.rc:68
+msgid ""
+"This value does not lie within the page range.\n"
+"Please enter a value between %d and %d."
+msgstr ""
+"Æi tiu valoro ne estas en la paøo.\n"
+"Enigu valoron inter %d kaj %d."
+
+#: comdlg32.rc:70
+msgid "The 'from' entry cannot exceed the 'to' entry."
+msgstr "La 'de:' valoro ne povas superi la 'øis:' valoron."
+
+#: comdlg32.rc:72
+msgid ""
+"Margins overlap or fall outside Paper boundaries.\n"
+"Please reenter margins."
+msgstr ""
+"Marøenoj surmetiøas inter si aý estas ekster paperfolio.\n"
+"Difinu denove la marøenojn."
+
+#: comdlg32.rc:74
+msgid "The number of 'Number of copies' value cannot be empty."
+msgstr "La nombrvaloro je 'Nombro da &ekzempleroj' ne povas esti malplena."
+
+#: comdlg32.rc:76
+msgid ""
+"This large number of copies is not supported by your printer.\n"
+"Please enter a value between 1 and %d."
+msgstr ""
+"La via printilo ne povas presi tiel granda nombro da ekzempleroj\n"
+"Enigu valoron inter 1 kaj %d."
+
+#: comdlg32.rc:77
+msgid "A printer error occurred."
+msgstr "Okazis printila eroro."
+
+#: comdlg32.rc:78
+msgid "No default printer defined."
+msgstr "Ne estas defaýlta printilo."
+
+#: comdlg32.rc:79
+msgid "Cannot find the printer."
+msgstr "Mi ne povas trovi la printilon."
+
+#: comdlg32.rc:80 progman.rc:78
+msgid "Out of memory."
+msgstr "La memoro estas elæerpita."
+
+#: comdlg32.rc:81
+msgid "An error occurred."
+msgstr "Okazis eroro."
+
+#: comdlg32.rc:82
+msgid "Unknown printer driver."
+msgstr "Nekonata printilzorgilo."
+
+#: comdlg32.rc:85
+msgid ""
+"Before you can perform printer-related tasks such as page setup or printing "
+"a document, you need to install a printer. Please install one and retry."
+msgstr ""
+"Antaý ol vi povos plenumi printiltaskojn kvazaý impozi paøon aý presi "
+"dokumenton, estas necese ke vi instalu printilon. Oni konsilas instali øin "
+"kaj reprovi."
+
+#: comdlg32.rc:151
+msgid "Select a font size between %d and %d points."
+msgstr "Elektu tiparan grandecvaloron inter %d kaj %d punktoj."
+
+#: comdlg32.rc:152 shdocvw.rc:32
+msgid "&Save"
+msgstr "Kon&servu"
+
+#: comdlg32.rc:153
+msgid "Save &in:"
+msgstr "Konservu &en:"
+
+#: comdlg32.rc:154
+msgid "Save"
+msgstr "Konservu"
+
+#: comdlg32.rc:155
+msgid "Save as"
+msgstr "Konservu kiel"
+
+#: comdlg32.rc:156
+msgid "Open File"
+msgstr "Malfermu Dosieron"
+
+#: comdlg32.rc:93 oleview.rc:95
+msgid "Ready"
+msgstr "Preta"
+
+#: comdlg32.rc:94
+msgid "Paused; "
+msgstr "Paýse; "
+
+#: comdlg32.rc:95
+msgid "Error; "
+msgstr "Eroro; "
+
+#: comdlg32.rc:96
+msgid "Pending deletion; "
+msgstr "Nuliga atendado; "
+
+#: comdlg32.rc:97
+msgid "Paper jam; "
+msgstr "Blokita papero; "
+
+#: comdlg32.rc:98
+msgid "Out of paper; "
+msgstr "Elæerpita papero; "
+
+#: comdlg32.rc:99
+msgid "Feed paper manual; "
+msgstr "Mane enþovo de papero; "
+
+#: comdlg32.rc:100
+msgid "Paper problem; "
+msgstr "Papera problemo; "
+
+#: comdlg32.rc:101
+msgid "Printer offline; "
+msgstr "Nekonektita printilo; "
+
+#: comdlg32.rc:102
+msgid "I/O Active; "
+msgstr "I/O Aktiva; "
+
+#: comdlg32.rc:103
+msgid "Busy; "
+msgstr "Okupita printilo; "
+
+#: comdlg32.rc:104
+msgid "Printing; "
+msgstr "Nun presata; "
+
+#: comdlg32.rc:105
+msgid "Output tray is full; "
+msgstr "Eljreja pleto estas plena; "
+
+#: comdlg32.rc:106
+msgid "Not available; "
+msgstr "Ne disponebla; "
+
+#: comdlg32.rc:107
+msgid "Waiting; "
+msgstr "Atendando; "
+
+#: comdlg32.rc:108
+msgid "Processing; "
+msgstr "Procezo; "
+
+#: comdlg32.rc:109
+msgid "Initialising; "
+msgstr "Preparado; "
+
+#: comdlg32.rc:110
+msgid "Warming up; "
+msgstr "Varmigo de la printilo; "
+
+#: comdlg32.rc:111
+msgid "Toner low; "
+msgstr "Kseroprintila nivelo estas basa; "
+
+#: comdlg32.rc:112
+msgid "No toner; "
+msgstr "Neniu kseroprintilo; "
+
+#: comdlg32.rc:113
+msgid "Page punt; "
+msgstr "Paøa 'punt'; "
+
+#: comdlg32.rc:114
+msgid "Interrupted by user; "
+msgstr "Interrompita far uzanto; "
+
+#: comdlg32.rc:115
+msgid "Out of memory; "
+msgstr "Elæerpita memoro; "
+
+#: comdlg32.rc:116
+msgid "The printer door is open; "
+msgstr "La printila pordo estas malfermita; "
+
+#: comdlg32.rc:117
+msgid "Print server unknown; "
+msgstr "Nekonata pres-servanto; "
+
+#: comdlg32.rc:118
+msgid "Power save mode; "
+msgstr "Energiþpare; "
+
+#: comdlg32.rc:87
+msgid "Default Printer; "
+msgstr "Defaýlta Printilo; "
+
+#: comdlg32.rc:88
+msgid "There are %d documents in the queue"
+msgstr "%d dokumento(j) estas en presvico"
+
+#: comdlg32.rc:89
+msgid "Margins [inches]"
+msgstr "Marøenoj [inches]"
+
+#: comdlg32.rc:90
+msgid "Margins [mm]"
+msgstr "Marøenoj [mm]"
+
+#: comdlg32.rc:91
+msgid "mm"
+msgstr "mm"
+
+#: comdlg32.rc:64 hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
+msgid "Print"
+msgstr "Presu"
+
 #: credui.rc:27
 msgid "Connect to %s"
 msgstr ""
@@ -1616,10 +2031,6 @@ msgstr ""
 msgid "Sync"
 msgstr ""
 
-#: hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
-msgid "Print"
-msgstr ""
-
 #: hhctrl.rc:43 wordpad.rc:155
 msgid "Options"
 msgstr ""
@@ -2762,10 +3173,6 @@ msgstr "&Aløustigu la fenestron"
 msgid "&Open..."
 msgstr "&Malfermu"
 
-#: shdocvw.rc:32
-msgid "&Save"
-msgstr ""
-
 #: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr "Konservu &kiel"
@@ -2974,14 +3381,6 @@ msgstr "Original location"
 msgid "Date deleted"
 msgstr "Date deleted"
 
-#: shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
-msgid "Desktop"
-msgstr "Desktop"
-
-#: shell32.rc:142 regedit.rc:206
-msgid "My Computer"
-msgstr "Mea Komputero"
-
 #: shell32.rc:144
 msgid "Control Panel"
 msgstr "Control Panel"
@@ -3013,10 +3412,6 @@ msgstr "Æu vi volas adiaýi Wine?"
 #: shell32.rc:186
 msgid "Start Menu\\Programs"
 msgstr "Start Menu\\Programs"
-
-#: shell32.rc:187
-msgid "My Documents"
-msgstr "Miaj Dokumentoj"
 
 #: shell32.rc:188
 msgid "Favorites"
@@ -5120,10 +5515,6 @@ msgstr "&Vido"
 msgid "ITypeLib viewer"
 msgstr ""
 
-#: oleview.rc:95
-msgid "Ready"
-msgstr ""
-
 #: oleview.rc:96
 msgid "OleView - OLE/COM Object Viewer"
 msgstr ""
@@ -5413,10 +5804,6 @@ msgstr ""
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
-msgstr ""
-
-#: progman.rc:78
-msgid "Out of memory."
 msgstr ""
 
 #: progman.rc:79
@@ -7388,10 +7775,6 @@ msgstr "Non visible"
 msgid "History"
 msgstr "History"
 
-#: winhlp32.rc:52 winhlp32.rc:75
-msgid "Fonts"
-msgstr "Fonts"
-
 #: winhlp32.rc:54 winhlp32.rc:77
 msgid "Small"
 msgstr "Small"
@@ -7593,70 +7976,6 @@ msgstr ""
 #, fuzzy
 msgid "&About Wine Wordpad"
 msgstr "&Pri..."
-
-#: wordpad.rc:114
-msgid "Black"
-msgstr ""
-
-#: wordpad.rc:115
-msgid "Maroon"
-msgstr ""
-
-#: wordpad.rc:116
-msgid "Green"
-msgstr ""
-
-#: wordpad.rc:117
-msgid "Olive"
-msgstr ""
-
-#: wordpad.rc:118
-msgid "Navy"
-msgstr ""
-
-#: wordpad.rc:119
-msgid "Purple"
-msgstr ""
-
-#: wordpad.rc:120
-msgid "Teal"
-msgstr ""
-
-#: wordpad.rc:121
-msgid "Gray"
-msgstr ""
-
-#: wordpad.rc:122
-msgid "Silver"
-msgstr ""
-
-#: wordpad.rc:123
-msgid "Red"
-msgstr ""
-
-#: wordpad.rc:124
-msgid "Lime"
-msgstr ""
-
-#: wordpad.rc:125
-msgid "Yellow"
-msgstr ""
-
-#: wordpad.rc:126
-msgid "Blue"
-msgstr ""
-
-#: wordpad.rc:127
-msgid "Fuchsia"
-msgstr ""
-
-#: wordpad.rc:128
-msgid "Aqua"
-msgstr ""
-
-#: wordpad.rc:129
-msgid "White"
-msgstr ""
 
 #: wordpad.rc:130
 msgid "Automatic"
