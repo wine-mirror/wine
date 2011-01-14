@@ -67,7 +67,7 @@ typedef enum {
 #define BINDING_ABORTED   0x0008
 
 typedef struct {
-    const IBindingVtbl               *lpBindingVtbl;
+    IBinding              IBinding_iface;
     const IInternetProtocolSinkVtbl  *lpIInternetProtocolSinkVtbl;
     const IInternetBindInfoVtbl      *lpInternetBindInfoVtbl;
     const IWinInetHttpInfoVtbl       *lpWinInetHttpInfoVtbl;
@@ -104,7 +104,6 @@ typedef struct {
     CRITICAL_SECTION section;
 } Binding;
 
-#define BINDING(x)   ((IBinding*)               &(x)->lpBindingVtbl)
 #define BINDINF(x)   ((IInternetBindInfo*)      &(x)->lpInternetBindInfoVtbl)
 #define INETINFO(x)  ((IWinInetHttpInfo*)       &(x)->lpWinInetHttpInfoVtbl)
 #define SERVPROV(x)  ((IServiceProvider*)       &(x)->lpServiceProviderVtbl)
@@ -269,7 +268,7 @@ static void load_doc_mon(Binding *binding, IPersistMoniker *persist)
     }
 
     IBindCtx_RevokeObjectParam(bctx, bscb_holderW);
-    IBindCtx_RegisterObjectParam(bctx, cbinding_contextW, (IUnknown*)BINDING(binding));
+    IBindCtx_RegisterObjectParam(bctx, cbinding_contextW, (IUnknown*)&binding->IBinding_iface);
 
     hres = IPersistMoniker_Load(persist, binding->download_state == END_DOWNLOAD, binding->mon, bctx, 0x12);
     IBindCtx_RevokeObjectParam(bctx, cbinding_contextW);
@@ -780,20 +779,23 @@ static stgmed_obj_t *create_stgmed_file(stgmed_buf_t *buf)
     return &ret->stgmed_obj;
 }
 
-#define BINDING_THIS(iface) DEFINE_THIS(Binding, Binding, iface)
+static inline Binding *impl_from_IBinding(IBinding *iface)
+{
+    return CONTAINING_RECORD(iface, Binding, IBinding_iface);
+}
 
 static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void **ppv)
 {
-    Binding *This = BINDING_THIS(iface);
+    Binding *This = impl_from_IBinding(iface);
 
     *ppv = NULL;
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = BINDING(This);
+        *ppv = &This->IBinding_iface;
     }else if(IsEqualGUID(&IID_IBinding, riid)) {
         TRACE("(%p)->(IID_IBinding %p)\n", This, ppv);
-        *ppv = BINDING(This);
+        *ppv = &This->IBinding_iface;
     }else if(IsEqualGUID(&IID_IInternetProtocolSink, riid)) {
         TRACE("(%p)->(IID_IInternetProtocolSink %p)\n", This, ppv);
         *ppv = PROTSINK(This);
@@ -829,7 +831,7 @@ static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void 
     }
 
     if(*ppv) {
-        IBinding_AddRef(BINDING(This));
+        IBinding_AddRef(&This->IBinding_iface);
         return S_OK;
     }
 
@@ -839,7 +841,7 @@ static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void 
 
 static ULONG WINAPI Binding_AddRef(IBinding *iface)
 {
-    Binding *This = BINDING_THIS(iface);
+    Binding *This = impl_from_IBinding(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -849,7 +851,7 @@ static ULONG WINAPI Binding_AddRef(IBinding *iface)
 
 static ULONG WINAPI Binding_Release(IBinding *iface)
 {
-    Binding *This = BINDING_THIS(iface);
+    Binding *This = impl_from_IBinding(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -890,7 +892,7 @@ static ULONG WINAPI Binding_Release(IBinding *iface)
 
 static HRESULT WINAPI Binding_Abort(IBinding *iface)
 {
-    Binding *This = BINDING_THIS(iface);
+    Binding *This = impl_from_IBinding(iface);
     HRESULT hres;
 
     TRACE("(%p)\n", This);
@@ -909,28 +911,28 @@ static HRESULT WINAPI Binding_Abort(IBinding *iface)
 
 static HRESULT WINAPI Binding_Suspend(IBinding *iface)
 {
-    Binding *This = BINDING_THIS(iface);
+    Binding *This = impl_from_IBinding(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI Binding_Resume(IBinding *iface)
 {
-    Binding *This = BINDING_THIS(iface);
+    Binding *This = impl_from_IBinding(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI Binding_SetPriority(IBinding *iface, LONG nPriority)
 {
-    Binding *This = BINDING_THIS(iface);
+    Binding *This = impl_from_IBinding(iface);
     FIXME("(%p)->(%d)\n", This, nPriority);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI Binding_GetPriority(IBinding *iface, LONG *pnPriority)
 {
-    Binding *This = BINDING_THIS(iface);
+    Binding *This = impl_from_IBinding(iface);
     FIXME("(%p)->(%p)\n", This, pnPriority);
     return E_NOTIMPL;
 }
@@ -938,10 +940,22 @@ static HRESULT WINAPI Binding_GetPriority(IBinding *iface, LONG *pnPriority)
 static HRESULT WINAPI Binding_GetBindResult(IBinding *iface, CLSID *pclsidProtocol,
         DWORD *pdwResult, LPOLESTR *pszResult, DWORD *pdwReserved)
 {
-    Binding *This = BINDING_THIS(iface);
+    Binding *This = impl_from_IBinding(iface);
     FIXME("(%p)->(%p %p %p %p)\n", This, pclsidProtocol, pdwResult, pszResult, pdwReserved);
     return E_NOTIMPL;
 }
+
+static const IBindingVtbl BindingVtbl = {
+    Binding_QueryInterface,
+    Binding_AddRef,
+    Binding_Release,
+    Binding_Abort,
+    Binding_Suspend,
+    Binding_Resume,
+    Binding_SetPriority,
+    Binding_GetPriority,
+    Binding_GetBindResult
+};
 
 static Binding *get_bctx_binding(IBindCtx *bctx)
 {
@@ -958,23 +972,10 @@ static Binding *get_bctx_binding(IBindCtx *bctx)
     if(FAILED(hres))
         return NULL;
 
-    /* FIXME!!! */
-    return BINDING_THIS(binding);
+    if (binding->lpVtbl != &BindingVtbl)
+        return NULL;
+    return impl_from_IBinding(binding);
 }
-
-#undef BINDING_THIS
-
-static const IBindingVtbl BindingVtbl = {
-    Binding_QueryInterface,
-    Binding_AddRef,
-    Binding_Release,
-    Binding_Abort,
-    Binding_Suspend,
-    Binding_Resume,
-    Binding_SetPriority,
-    Binding_GetPriority,
-    Binding_GetBindResult
-};
 
 #define PROTSINK_THIS(iface) DEFINE_THIS(Binding, IInternetProtocolSink, iface)
 
@@ -982,19 +983,19 @@ static HRESULT WINAPI InternetProtocolSink_QueryInterface(IInternetProtocolSink 
         REFIID riid, void **ppv)
 {
     Binding *This = PROTSINK_THIS(iface);
-    return IBinding_QueryInterface(BINDING(This), riid, ppv);
+    return IBinding_QueryInterface(&This->IBinding_iface, riid, ppv);
 }
 
 static ULONG WINAPI InternetProtocolSink_AddRef(IInternetProtocolSink *iface)
 {
     Binding *This = PROTSINK_THIS(iface);
-    return IBinding_AddRef(BINDING(This));
+    return IBinding_AddRef(&This->IBinding_iface);
 }
 
 static ULONG WINAPI InternetProtocolSink_Release(IInternetProtocolSink *iface)
 {
     Binding *This = PROTSINK_THIS(iface);
-    return IBinding_Release(BINDING(This));
+    return IBinding_Release(&This->IBinding_iface);
 }
 
 static HRESULT WINAPI InternetProtocolSink_Switch(IInternetProtocolSink *iface,
@@ -1107,9 +1108,9 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
 
     if(This->to_object) {
         if(!(This->state & BINDING_OBJAVAIL)) {
-            IBinding_AddRef(BINDING(This));
+            IBinding_AddRef(&This->IBinding_iface);
             create_object(This);
-            IBinding_Release(BINDING(This));
+            IBinding_Release(&This->IBinding_iface);
         }
     }else {
         STGMEDIUM stgmed;
@@ -1180,19 +1181,19 @@ static HRESULT WINAPI InternetBindInfo_QueryInterface(IInternetBindInfo *iface,
         REFIID riid, void **ppv)
 {
     Binding *This = BINDINF_THIS(iface);
-    return IBinding_QueryInterface(BINDING(This), riid, ppv);
+    return IBinding_QueryInterface(&This->IBinding_iface, riid, ppv);
 }
 
 static ULONG WINAPI InternetBindInfo_AddRef(IInternetBindInfo *iface)
 {
     Binding *This = BINDINF_THIS(iface);
-    return IBinding_AddRef(BINDING(This));
+    return IBinding_AddRef(&This->IBinding_iface);
 }
 
 static ULONG WINAPI InternetBindInfo_Release(IInternetBindInfo *iface)
 {
     Binding *This = BINDINF_THIS(iface);
-    return IBinding_Release(BINDING(This));
+    return IBinding_Release(&This->IBinding_iface);
 }
 
 static HRESULT WINAPI InternetBindInfo_GetBindInfo(IInternetBindInfo *iface,
@@ -1284,19 +1285,19 @@ static const IInternetBindInfoVtbl InternetBindInfoVtbl = {
 static HRESULT WINAPI WinInetHttpInfo_QueryInterface(IWinInetHttpInfo *iface, REFIID riid, void **ppv)
 {
     Binding *This = INETINFO_THIS(iface);
-    return IBinding_QueryInterface(BINDING(This), riid, ppv);
+    return IBinding_QueryInterface(&This->IBinding_iface, riid, ppv);
 }
 
 static ULONG WINAPI WinInetHttpInfo_AddRef(IWinInetHttpInfo *iface)
 {
     Binding *This = INETINFO_THIS(iface);
-    return IBinding_AddRef(BINDING(This));
+    return IBinding_AddRef(&This->IBinding_iface);
 }
 
 static ULONG WINAPI WinInetHttpInfo_Release(IWinInetHttpInfo *iface)
 {
     Binding *This = INETINFO_THIS(iface);
-    return IBinding_Release(BINDING(This));
+    return IBinding_Release(&This->IBinding_iface);
 }
 
 static HRESULT WINAPI WinInetHttpInfo_QueryOption(IWinInetHttpInfo *iface, DWORD dwOption,
@@ -1331,19 +1332,19 @@ static HRESULT WINAPI ServiceProvider_QueryInterface(IServiceProvider *iface,
         REFIID riid, void **ppv)
 {
     Binding *This = SERVPROV_THIS(iface);
-    return IBinding_QueryInterface(BINDING(This), riid, ppv);
+    return IBinding_QueryInterface(&This->IBinding_iface, riid, ppv);
 }
 
 static ULONG WINAPI ServiceProvider_AddRef(IServiceProvider *iface)
 {
     Binding *This = SERVPROV_THIS(iface);
-    return IBinding_AddRef(BINDING(This));
+    return IBinding_AddRef(&This->IBinding_iface);
 }
 
 static ULONG WINAPI ServiceProvider_Release(IServiceProvider *iface)
 {
     Binding *This = SERVPROV_THIS(iface);
-    return IBinding_Release(BINDING(This));
+    return IBinding_Release(&This->IBinding_iface);
 }
 
 static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface,
@@ -1420,7 +1421,7 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, IUri *uri, IB
 
     ret = heap_alloc_zero(sizeof(Binding));
 
-    ret->lpBindingVtbl              = &BindingVtbl;
+    ret->IBinding_iface.lpVtbl = &BindingVtbl;
     ret->lpIInternetProtocolSinkVtbl = &InternetProtocolSinkVtbl;
     ret->lpInternetBindInfoVtbl     = &InternetBindInfoVtbl;
     ret->lpWinInetHttpInfoVtbl      = &WinInetHttpInfoVtbl;
@@ -1452,7 +1453,7 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, IUri *uri, IB
     hres = get_callback(pbc, &ret->callback);
     if(FAILED(hres)) {
         WARN("Could not get IBindStatusCallback\n");
-        IBinding_Release(BINDING(ret));
+        IBinding_Release(&ret->IBinding_iface);
         return hres;
     }
 
@@ -1466,7 +1467,7 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, IUri *uri, IB
         hres = create_binding_protocol(TRUE, &ret->protocol);
         if(FAILED(hres)) {
             WARN("Could not get protocol handler\n");
-            IBinding_Release(BINDING(ret));
+            IBinding_Release(&ret->IBinding_iface);
             return hres;
         }
     }
@@ -1474,7 +1475,7 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, IUri *uri, IB
     hres = IBindStatusCallback_GetBindInfo(ret->callback, &ret->bindf, &ret->bindinfo);
     if(FAILED(hres)) {
         WARN("GetBindInfo failed: %08x\n", hres);
-        IBinding_Release(BINDING(ret));
+        IBinding_Release(&ret->IBinding_iface);
         return hres;
     }
 
@@ -1494,7 +1495,7 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, IUri *uri, IB
 
     hres = IUri_GetDisplayUri(uri, &ret->url);
     if(FAILED(hres)) {
-        IBinding_Release(BINDING(ret));
+        IBinding_Release(&ret->IBinding_iface);
         return hres;
     }
 
@@ -1515,7 +1516,7 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, IUri *uri, IB
         ret->stgmed_obj = create_stgmed_file(ret->stgmed_buf);
     }else {
         FIXME("Unsupported riid %s\n", debugstr_guid(riid));
-        IBinding_Release(BINDING(ret));
+        IBinding_Release(&ret->IBinding_iface);
         return E_NOTIMPL;
     }
 
@@ -1534,11 +1535,11 @@ static HRESULT start_binding(IMoniker *mon, Binding *binding_ctx, IUri *uri, IBi
     if(FAILED(hres))
         return hres;
 
-    hres = IBindStatusCallback_OnStartBinding(binding->callback, 0, BINDING(binding));
+    hres = IBindStatusCallback_OnStartBinding(binding->callback, 0, &binding->IBinding_iface);
     if(FAILED(hres)) {
         WARN("OnStartBinding failed: %08x\n", hres);
         stop_binding(binding, INET_E_DOWNLOAD_FAILURE, NULL);
-        IBinding_Release(BINDING(binding));
+        IBinding_Release(&binding->IBinding_iface);
         return hres;
     }
 
@@ -1556,7 +1557,7 @@ static HRESULT start_binding(IMoniker *mon, Binding *binding_ctx, IUri *uri, IBi
 
         if(FAILED(hres) && hres != E_PENDING) {
             stop_binding(binding, hres, NULL);
-            IBinding_Release(BINDING(binding));
+            IBinding_Release(&binding->IBinding_iface);
 
             return hres;
         }
@@ -1586,7 +1587,7 @@ HRESULT bind_to_storage(IUri *uri, IBindCtx *pbc, REFIID riid, void **ppv)
 
     hres = start_binding(NULL, binding_ctx, uri, pbc, FALSE, riid, &binding);
     if(binding_ctx)
-        IBinding_Release(BINDING(binding_ctx));
+        IBinding_Release(&binding_ctx->IBinding_iface);
     if(FAILED(hres))
         return hres;
 
@@ -1601,7 +1602,7 @@ HRESULT bind_to_storage(IUri *uri, IBindCtx *pbc, REFIID riid, void **ppv)
         hres = FAILED(binding->hres) ? binding->hres : S_OK;
     }
 
-    IBinding_Release(BINDING(binding));
+    IBinding_Release(&binding->IBinding_iface);
 
     return hres;
 }
@@ -1627,7 +1628,7 @@ HRESULT bind_to_object(IMoniker *mon, IUri *uri, IBindCtx *pbc, REFIID riid, voi
         hres = S_OK;
     }
 
-    IBinding_Release(BINDING(binding));
+    IBinding_Release(&binding->IBinding_iface);
 
     return hres;
 }
