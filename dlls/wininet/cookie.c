@@ -302,11 +302,11 @@ BOOL WINAPI InternetGetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
         cookie_domain *cookiesDomain = LIST_ENTRY(cursor, cookie_domain, entry);
         if (COOKIE_matchDomain(hostName, path, cookiesDomain, TRUE))
         {
-            struct list * cursor;
+            struct list * cursor, * cursor2;
             domain_count++;
             TRACE("found domain %p\n", cookiesDomain);
     
-            LIST_FOR_EACH(cursor, &cookiesDomain->cookie_list)
+            LIST_FOR_EACH_SAFE(cursor, cursor2, &cookiesDomain->cookie_list)
             {
                 cookie *thisCookie = LIST_ENTRY(cursor, cookie, entry);
                 /* check for expiry */
