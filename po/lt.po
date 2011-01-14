@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-01-13 20:37+0300\n"
+"PO-Revision-Date: 2011-01-14 21:21+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@gmail.com>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -172,13 +172,8 @@ msgid "Desktop"
 msgstr "Darbalaukis"
 
 #: comdlg32.rc:35 winhlp32.rc:52 winhlp32.rc:75
-#, fuzzy
 msgid "Fonts"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Šriftas\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Šriftai"
+msgstr "Šriftai"
 
 #: comdlg32.rc:36 shell32.rc:142 regedit.rc:206
 msgid "My Computer"
@@ -430,13 +425,8 @@ msgid "Open File"
 msgstr "Atverti failą"
 
 #: comdlg32.rc:93 oleview.rc:95
-#, fuzzy
 msgid "Ready"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Parengta\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Parengtas"
+msgstr "Parengta"
 
 #: comdlg32.rc:94
 msgid "Paused; "
@@ -3251,13 +3241,8 @@ msgstr "&Užverti"
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
 #: regedit.rc:65 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
-#, fuzzy
 msgid "&View"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"&Rodymas\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"&Rodinys"
+msgstr "&Rodymas"
 
 #: shdocvw.rc:44
 msgid "&Toolbars"
@@ -3276,13 +3261,8 @@ msgid "&Favorites"
 msgstr "&Adresynas"
 
 #: shdocvw.rc:52 regedit.rc:75
-#, fuzzy
 msgid "&Add to Favorites..."
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Į&rašyti į adresyną...\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Pri&dėti į adresyną..."
+msgstr "Į&rašyti į adresyną..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
 #: regedit.rc:78 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
@@ -3382,7 +3362,6 @@ msgstr "&Pervadinti"
 
 #: shell32.rc:102 notepad.rc:36 oleview.rc:35 regedit.rc:41 view.rc:31
 #: winhlp32.rc:34 wordpad.rc:37
-#, fuzzy
 msgid "E&xit"
 msgstr "Iš&eiti"
 
@@ -3439,13 +3418,8 @@ msgid "Select"
 msgstr "Iš&rinkti"
 
 #: shell32.rc:152 oleview.rc:99
-#, fuzzy
 msgid "Open"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"&Atverti\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Atverti"
+msgstr "Atverti"
 
 #: shell32.rc:173
 msgid "Restart"
@@ -5562,19 +5536,19 @@ msgstr "%s      %S      %S      Atverti ištekliai: %lu\n"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
-msgstr "&Naujas\tCtrl+N"
+msgstr "&Naujas\tVald+N"
 
 #: notepad.rc:28 wordpad.rc:29
 msgid "&Open...\tCtrl+O"
-msgstr "&Atverti...\tCtrl+O"
+msgstr "&Atverti...\tVald+O"
 
 #: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
-msgstr "&Išsaugoti\tCtrl+S"
+msgstr "&Išsaugoti\tVald+S"
 
 #: notepad.rc:32 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
-msgstr "S&pausdinti...\tCtrl+P"
+msgstr "S&pausdinti...\tVald+P"
 
 #: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
@@ -5590,19 +5564,19 @@ msgstr "&Taisa"
 
 #: notepad.rc:39 wordpad.rc:41
 msgid "&Undo\tCtrl+Z"
-msgstr "&Atšaukti\tCtrl+Z"
+msgstr "&Atšaukti\tVald+Z"
 
 #: notepad.rc:41 wordpad.rc:44
 msgid "Cu&t\tCtrl+X"
-msgstr "&Iškirpti\tCtrl+X"
+msgstr "&Iškirpti\tVald+X"
 
 #: notepad.rc:42 wordpad.rc:45
 msgid "&Copy\tCtrl+C"
-msgstr "&Kopijuoti\tCtrl+C"
+msgstr "&Kopijuoti\tVald+C"
 
 #: notepad.rc:43 wordpad.rc:46
 msgid "&Paste\tCtrl+V"
-msgstr "Į&dėti\tCtrl+V"
+msgstr "Į&dėti\tVald+V"
 
 #: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
 #: winefile.rc:30
@@ -5611,7 +5585,7 @@ msgstr "&Šalinti\tDel"
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
-msgstr "&Pažymėti viską\tCtrl+A"
+msgstr "&Pažymėti viską\tVald+A"
 
 #: notepad.rc:47
 msgid "&Time/Date\tF5"
@@ -5623,7 +5597,7 @@ msgstr "Skaidyti ilgas &eilutes"
 
 #: notepad.rc:53
 msgid "&Search...\tCtrl+F"
-msgstr "&Ieškoti...\tCtrl+F"
+msgstr "&Ieškoti...\tVald+F"
 
 #: notepad.rc:54
 msgid "&Search next\tF3"
@@ -5631,7 +5605,7 @@ msgstr "Ieškoti ki&to\tF3"
 
 #: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
-msgstr "Pa&keisti...\tCtrl+H"
+msgstr "Pa&keisti...\tVald+H"
 
 #: notepad.rc:59 progman.rc:54
 msgid "&Search..."
@@ -5836,13 +5810,8 @@ msgid "&Status Bar"
 msgstr "&Būsenos juosta"
 
 #: oleview.rc:67 regedit.rc:71 winefile.rc:127
-#, fuzzy
 msgid "&Refresh\tF5"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"At&naujinti\tF5\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"&Atnaujinti\tF5"
+msgstr "At&naujinti\tF5"
 
 #: oleview.rc:71
 msgid "&About OleView"
@@ -5873,7 +5842,6 @@ msgid "version 1.0"
 msgstr "versija 1.0"
 
 #: oleview.rc:100
-#, fuzzy
 msgid "TypeLib files (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
 msgstr "TypeLib failai (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
 
@@ -6088,11 +6056,11 @@ msgstr "&Langai"
 
 #: progman.rc:47
 msgid "&Overlapped\tShift+F5"
-msgstr "&Persikloję\tShift+F5"
+msgstr "&Persikloję\tLyg2+F5"
 
 #: progman.rc:48
 msgid "&Side by side\tShift+F4"
-msgstr "&Greta vienas kito\tShift+F4"
+msgstr "&Greta vienas kito\tLyg2+F4"
 
 #: progman.rc:49
 msgid "&Arrange Icons"
@@ -6245,7 +6213,7 @@ msgstr "&Atjungti registrą tinkle..."
 
 #: regedit.rc:39
 msgid "&Print\tCtrl+P"
-msgstr "S&pausdinti\tCtrl+P"
+msgstr "S&pausdinti\tVald+P"
 
 #: regedit.rc:45 regedit.rc:90
 msgid "&Modify"
@@ -6281,7 +6249,7 @@ msgstr "Kopijuoti rakto &vardą"
 
 #: regedit.rc:62 regedit.rc:114
 msgid "&Find\tCtrl+F"
-msgstr "&Ieškoti\tCtrl+F"
+msgstr "&Ieškoti\tVald+F"
 
 #: regedit.rc:63
 msgid "Find Ne&xt\tF3"
@@ -6305,13 +6273,8 @@ msgid "&Remove Favorite..."
 msgstr "&Pašalinti iš adresyno..."
 
 #: regedit.rc:80 winefile.rc:131
-#, fuzzy
 msgid "&Help Topics\tF1"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Žinyno &temos\tF1\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"&Žinyno temos\tF1"
+msgstr "&Žinyno temos\tF1"
 
 #: regedit.rc:82
 msgid "&About Registry Editor"
@@ -6368,12 +6331,10 @@ msgid "Export Registry File"
 msgstr "Eksportuoti registro failą"
 
 #: regedit.rc:199
-#, fuzzy
 msgid "Registry files (*.reg)"
 msgstr "Registro failai (*.reg)"
 
 #: regedit.rc:200
-#, fuzzy
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x/NT4 registro failai (REGEDIT4)"
 
@@ -7901,9 +7862,8 @@ msgid "Expand &Tree\t*"
 msgstr "Išskleisti &medį\t*"
 
 #: winefile.rc:70
-#, fuzzy
 msgid "Expand &all\tCtrl+*"
-msgstr "Išskleisti &viską\tStrg+*"
+msgstr "Išskleisti &viską\tVald+*"
 
 #: winefile.rc:71
 msgid "Collapse &Tree\t-"
@@ -7971,7 +7931,7 @@ msgstr "&Diskų juosta"
 
 #: winefile.rc:104
 msgid "F&ull Screen\tCtrl+Shift+S"
-msgstr "&Visas ekranas\tCtrl+Shift+S"
+msgstr "&Visas ekranas\tVald+Lyg2+S"
 
 #: winefile.rc:112
 msgid "&Security"
@@ -7995,11 +7955,11 @@ msgstr "Naujas &langas"
 
 #: winefile.rc:120
 msgid "Cascading\tCtrl+F5"
-msgstr "Išdėstyti pa&kopomis\tCtrl+F5"
+msgstr "Išdėstyti pa&kopomis\tVald+F5"
 
 #: winefile.rc:122
 msgid "Tile &Vertically\tCtrl+F4"
-msgstr "Iškloti &stačiai\tCtrl+F4"
+msgstr "Iškloti &stačiai\tVald+F4"
 
 #: winefile.rc:124
 msgid "Arrange Automatically"
@@ -8235,11 +8195,11 @@ msgstr "Žinyno temos: "
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
-msgstr "&Naujas...\tCtrl+N"
+msgstr "&Naujas...\tVald+N"
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"
-msgstr "&Grąžinti\tCtrl+Y"
+msgstr "&Grąžinti\tVald+Y"
 
 #: wordpad.rc:47
 msgid "&Clear\tDEL"
@@ -8247,11 +8207,11 @@ msgstr "&Šalinti\tDEL"
 
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
-msgstr "&Pažymėti viską\tCtrl+A"
+msgstr "&Pažymėti viską\tVald+A"
 
 #: wordpad.rc:50
 msgid "&Find...\tCtrl+F"
-msgstr "I&eškoti...\tCtrl+F"
+msgstr "I&eškoti...\tVald+F"
 
 #: wordpad.rc:51
 msgid "Find &next\tF3"
@@ -8335,11 +8295,11 @@ msgstr "&Fonas"
 
 #: wordpad.rc:87
 msgid "&System\tCtrl+1"
-msgstr "&Sistemos\tCtrl+1"
+msgstr "&Sistemos\tVald+1"
 
 #: wordpad.rc:88
 msgid "&PostThat yellowish\tCtrl+2"
-msgstr "&Gelsvas\tCtrl+2"
+msgstr "&Gelsvas\tVald+2"
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
