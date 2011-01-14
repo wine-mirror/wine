@@ -766,16 +766,7 @@ static HRESULT WINAPI enumDevicesCallback(GUID *Guid,LPSTR DeviceDescription,LPS
     }
     else if(IsEqualGUID(&IID_IDirect3DHALDevice, Guid))
     {
-        /* pow2 is hardware dependent */
-
-        ok(hal->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE,
-           "HAL Device %d hal line caps does not have D3DPTEXTURECAPS_PERSPECTIVE set\n", ver);
-        ok(hal->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE,
-           "HAL Device %d hal tri caps does not have D3DPTEXTURECAPS_PERSPECTIVE set\n", ver);
-        ok((hel->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE) == 0,
-           "HAL Device %d hel line caps has D3DPTEXTURECAPS_PERSPECTIVE set\n", ver);
-        ok((hel->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE) == 0,
-           "HAL Device %d hel tri caps has D3DPTEXTURECAPS_PERSPECTIVE set\n", ver);
+        trace("HAL Device %d\n", ver);
     }
     else if(IsEqualGUID(&IID_IDirect3DRefDevice, Guid))
     {
@@ -3622,7 +3613,8 @@ static void FindDevice(void)
         /* Currently Wine only supports the creation of one Direct3D device
          * for a given DirectDraw instance. */
         todo_wine
-        ok(SUCCEEDED(hr), "Expected IDirectDrawSurface::QueryInterface to succeed, got 0x%08x\n", hr);
+        ok(SUCCEEDED(hr) || broken(hr == DDERR_INVALIDPIXELFORMAT) /* XP/Win2003 Wow64 on VMware */,
+           "Expected IDirectDrawSurface::QueryInterface to succeed, got 0x%08x\n", hr);
 
         if (SUCCEEDED(hr))
             IDirect3DDevice_Release(d3dhal);
