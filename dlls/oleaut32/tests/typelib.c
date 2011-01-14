@@ -1847,6 +1847,7 @@ static void test_CreateTypeLib(void) {
     V_BSTR(&paramdescex.varDefaultValue) = SysAllocString(defaultW);
     hres = ICreateTypeInfo_AddFuncDesc(createti, 3, &funcdesc);
     ok(hres == S_OK, "got %08x\n", hres);
+    SysFreeString(V_BSTR(&paramdescex.varDefaultValue));
 
     hres = ITypeInfo2_GetFuncDesc(ti2, 3, &pfuncdesc);
     ok(hres == S_OK, "got %08x\n", hres);
