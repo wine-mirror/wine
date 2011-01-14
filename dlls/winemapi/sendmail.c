@@ -66,6 +66,7 @@ ULONG WINAPI MAPISendMail(LHANDLE session, ULONG_PTR uiparam,
     const char *address, *subject, *body;
     static const char format[] =
         "mailto:\"%s\"?subject=\"%s\"&cc=\"%s\"&bcc=\"%s\"&body=\"%s\"";
+    static const char smtp[] = "smtp:";
     char *mailto = NULL, *escape = NULL;
     char empty_string[] = "";
     HRESULT res;
@@ -86,6 +87,8 @@ ULONG WINAPI MAPISendMail(LHANDLE session, ULONG_PTR uiparam,
         }
 
         address = message->lpRecips[i].lpszAddress;
+        if (!strncasecmp(address, smtp, sizeof(smtp) - 1))
+            address += sizeof(smtp) - 1;
 
         if (address)
         {
@@ -169,6 +172,8 @@ ULONG WINAPI MAPISendMail(LHANDLE session, ULONG_PTR uiparam,
     for (i = 0; i < message->nRecipCount; i++)
     {
         address = message->lpRecips[i].lpszAddress;
+        if (!strncasecmp(address, smtp, sizeof(smtp) - 1))
+            address += sizeof(smtp) - 1;
 
         if (address)
         {
