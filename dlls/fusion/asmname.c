@@ -111,6 +111,7 @@ static ULONG WINAPI IAssemblyNameImpl_Release(IAssemblyName *iface)
         HeapFree(GetProcessHeap(), 0, This->displayname);
         HeapFree(GetProcessHeap(), 0, This->name);
         HeapFree(GetProcessHeap(), 0, This->culture);
+        HeapFree(GetProcessHeap(), 0, This->procarch);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
