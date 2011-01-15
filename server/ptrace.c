@@ -219,7 +219,7 @@ static inline int tkill( int tgid, int pid, int sig )
     int ret = syscall( SYS_tgkill, tgid, pid, sig );
     if (ret < 0 && errno == ENOSYS) ret = syscall( SYS_tkill, pid, sig );
     return ret;
-#elif defined(__FreeBSD__) && defined(HAVE_THR_KILL2)
+#elif (defined(__FreeBSD__) || defined (__FreeBSD_kernel__)) && defined(HAVE_THR_KILL2)
     return thr_kill2( tgid, pid, sig );
 #else
     errno = ENOSYS;
