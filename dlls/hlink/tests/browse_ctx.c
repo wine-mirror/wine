@@ -124,6 +124,8 @@ static void test_BrowseWindowInfo(void)
     hres = IHlinkBrowseContext_GetBrowseWindowInfo(bc, &bwinfo_get);
     ok(hres == S_OK, "GetBrowseWindowInfo failed: 0x%08x\n", hres);
     ok(!memcmp(&bwinfo_set, &bwinfo_get, sizeof(HLBWINFO)), "Set and Get differ\n");
+
+    IHlinkBrowseContext_Release(bc);
 }
 
 START_TEST(browse_ctx)
