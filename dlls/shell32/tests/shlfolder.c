@@ -3977,6 +3977,7 @@ static void r_verify_pidl(unsigned l, LPCITEMIDLIST pidl, const WCHAR *path)
             ok_(__FILE__,l)(lstrcmpW(path, U(filename).pOleStr) == 0,
                     "didn't get expected path (%s), instead: %s\n",
                      wine_dbgstr_w(path), wine_dbgstr_w(U(filename).pOleStr));
+            SHFree(U(filename).pOleStr);
         }else if(filename.uType == STRRET_CSTR){
             ok_(__FILE__,l)(strcmp_wa(path, U(filename).cStr) == 0,
                     "didn't get expected path (%s), instead: %s\n",

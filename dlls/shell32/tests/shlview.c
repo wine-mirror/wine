@@ -1105,6 +1105,7 @@ static void test_GetSetCurrentViewMode(void)
         skip("No IFolderView for the desktop folder.\n");
     }
 
+    IShellBrowser_Release(browser);
     IShellView_DestroyViewWindow(sview);
     IShellView_Release(sview);
     IShellFolder_Release(desktop);

@@ -162,8 +162,11 @@ if (0)
     hr = IShellFolder2_GetDefaultColumnState(folder, 6, &state);
     ok(broken(hr == E_NOTIMPL) || hr == E_INVALIDARG /* Win7 */, "got 0x%08x\n", hr);
 
+    details.str.u.pOleStr = NULL;
     hr = IShellFolder2_GetDetailsOf(folder, NULL, 0, &details);
     ok(hr == S_OK || broken(E_NOTIMPL) /* W2K */, "got 0x%08x\n", hr);
+    if (SHELL_OsIsUnicode()) SHFree(details.str.u.pOleStr);
+
     /* test every column if method is implemented */
     if (hr == S_OK)
     {
