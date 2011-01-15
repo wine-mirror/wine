@@ -7248,6 +7248,7 @@ static void test_CreateUriWithFragment(void) {
 
         if(uri) IUri_Release(uri);
         heap_free(uriW);
+        heap_free(fragW);
     }
 }
 
