@@ -837,7 +837,7 @@ static void append_file_test(void)
         return;
     }
 
-    iosb.Status = STATUS_PENDING;
+    U(iosb).Status = STATUS_PENDING;
     iosb.Information = 0;
 
     status = NtWriteFile(handle, NULL, NULL, NULL, &iosb,
@@ -846,7 +846,7 @@ static void append_file_test(void)
     if (status == STATUS_PENDING)
     {
         WaitForSingleObject( handle, INFINITE );
-        status = iosb.Status;
+        status = U(iosb).Status;
     }
     written = iosb.Information;
 
