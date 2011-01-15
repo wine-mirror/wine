@@ -412,7 +412,7 @@ void wine_ldt_init_fs( unsigned short sel, const LDT_ENTRY *entry )
         ldt_info.entry_number = sel >> 3;
         fill_modify_ldt_struct( &ldt_info, entry );
         if ((ret = set_thread_area( &ldt_info ) < 0)) perror( "set_thread_area" );
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__)
         i386_set_fsbase( wine_ldt_get_base( entry ));
 #endif
     }
