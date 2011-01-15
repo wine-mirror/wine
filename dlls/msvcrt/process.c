@@ -1169,6 +1169,7 @@ int CDECL _wsystem(const MSVCRT_wchar_t* cmd)
         *MSVCRT__errno() = MSVCRT_ENOENT;
         return 0;
     }
+    HeapFree(GetProcessHeap(), 0, comspec);
     return 1;
   }
 
