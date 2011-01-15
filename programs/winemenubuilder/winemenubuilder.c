@@ -939,18 +939,34 @@ end:
     return hr;
 }
 #else
+static void refresh_icon_cache(const char *iconsDir)
+{
+    /* The icon theme spec only requires the mtime on the "toplevel"
+     * directory (whatever that is) to be changed for a refresh,
+     * but on Gnome you have to create a file in that directory
+     * instead. Creating a file also works on KDE, XFCE and LXDE.
+     */
+    char *filename = heap_printf("%s/.wine-refresh-XXXXXX", iconsDir);
+    if (filename != NULL)
+    {
+        int fd = mkstemps(filename, 0);
+        if (fd >= 0)
+        {
+            close(fd);
+            unlink(filename);
+        }
+        HeapFree(GetProcessHeap(), 0, filename);
+    }
+}
+
 static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR icoPathW,
                                    const char *destFilename, char **nativeIdentifier)
 {
     ICONDIRENTRY *iconDirEntries = NULL;
     int numEntries;
-    int bestIndex = -1;
-    int maxPixels = 0;
-    int maxBits = 0;
     int i;
     char *icoPathA = NULL;
     char *iconsDir = NULL;
-    char *pngPath = NULL;
     unsigned short crc;
     char *p, *q;
     HRESULT hr = S_OK;
@@ -959,19 +975,6 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR ico
     hr = read_ico_direntries(icoStream, &iconDirEntries, &numEntries);
     if (FAILED(hr))
         goto end;
-    for (i = 0; i < numEntries; i++)
-    {
-        WINE_TRACE("[%d]: %d x %d @ %d\n", i, iconDirEntries[i].bWidth,
-            iconDirEntries[i].bHeight, iconDirEntries[i].wBitCount);
-        if (iconDirEntries[i].wBitCount >= maxBits &&
-            (iconDirEntries[i].bHeight * iconDirEntries[i].bWidth) >= maxPixels)
-        {
-            bestIndex = i;
-            maxPixels = iconDirEntries[i].bHeight * iconDirEntries[i].bWidth;
-            maxBits = iconDirEntries[i].wBitCount;
-        }
-    }
-    WINE_TRACE("Selected: %d\n", bestIndex);
 
     icoPathA = wchars_to_utf8_chars(icoPathW);
     if (icoPathA == NULL)
@@ -1000,31 +1003,81 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR ico
         hr = E_OUTOFMEMORY;
         goto end;
     }
-    iconsDir = heap_printf("%s/icons", xdg_data_dir);
+    iconsDir = heap_printf("%s/icons/hicolor", xdg_data_dir);
     if (iconsDir == NULL)
     {
         hr = E_OUTOFMEMORY;
         goto end;
     }
-    create_directories(iconsDir);
-    pngPath = heap_printf("%s/%s.png", iconsDir, *nativeIdentifier);
-    if (pngPath == NULL)
+
+    for (i = 0; i < numEntries; i++)
     {
-        hr = E_OUTOFMEMORY;
-        goto end;
+        int bestIndex;
+        int maxBits = -1;
+        int j;
+        BOOLEAN duplicate = FALSE;
+        int w, h;
+        char *iconDir = NULL;
+        char *pngPath = NULL;
+
+        WINE_TRACE("[%d]: %d x %d @ %d\n", i, iconDirEntries[i].bWidth,
+            iconDirEntries[i].bHeight, iconDirEntries[i].wBitCount);
+
+        for (j = 0; j < i; j++)
+        {
+            if (iconDirEntries[j].bWidth == iconDirEntries[i].bWidth &&
+                iconDirEntries[j].bHeight == iconDirEntries[i].bHeight)
+            {
+                duplicate = TRUE;
+                break;
+            }
+        }
+        if (duplicate)
+            continue;
+        for (j = i; j < numEntries; j++)
+        {
+            if (iconDirEntries[j].bWidth == iconDirEntries[i].bWidth &&
+                iconDirEntries[j].bHeight == iconDirEntries[i].bHeight &&
+                iconDirEntries[j].wBitCount >= maxBits)
+            {
+                bestIndex = j;
+                maxBits = iconDirEntries[j].wBitCount;
+            }
+        }
+        WINE_TRACE("Selected: %d\n", bestIndex);
+
+        w = iconDirEntries[bestIndex].bWidth ? iconDirEntries[bestIndex].bWidth : 256;
+        h = iconDirEntries[bestIndex].bHeight ? iconDirEntries[bestIndex].bHeight : 256;
+        iconDir = heap_printf("%s/%dx%d/apps", iconsDir, w, h);
+        if (iconDir == NULL)
+        {
+            hr = E_OUTOFMEMORY;
+            goto endloop;
+        }
+        create_directories(iconDir);
+        pngPath = heap_printf("%s/%s.png", iconDir, *nativeIdentifier);
+        if (pngPath == NULL)
+        {
+            hr = E_OUTOFMEMORY;
+            goto endloop;
+        }
+        zero.QuadPart = 0;
+        hr = IStream_Seek(icoStream, zero, STREAM_SEEK_SET, NULL);
+        if (FAILED(hr))
+            goto endloop;
+        hr = convert_to_native_icon(icoStream, &bestIndex, 1, &CLSID_WICPngEncoder,
+                                    pngPath, icoPathW);
+
+    endloop:
+        HeapFree(GetProcessHeap(), 0, iconDir);
+        HeapFree(GetProcessHeap(), 0, pngPath);
     }
-    zero.QuadPart = 0;
-    hr = IStream_Seek(icoStream, zero, STREAM_SEEK_SET, NULL);
-    if (FAILED(hr))
-        goto end;
-    hr = convert_to_native_icon(icoStream, &bestIndex, 1, &CLSID_WICPngEncoder,
-                                pngPath, icoPathW);
+    refresh_icon_cache(iconsDir);
 
 end:
     HeapFree(GetProcessHeap(), 0, iconDirEntries);
     HeapFree(GetProcessHeap(), 0, icoPathA);
     HeapFree(GetProcessHeap(), 0, iconsDir);
-    HeapFree(GetProcessHeap(), 0, pngPath);
     return hr;
 }
 #endif /* defined(__APPLE__) */
