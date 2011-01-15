@@ -1100,7 +1100,7 @@ ULONG WINAPI GetAdaptersAddresses(ULONG family, ULONG flags, PVOID reserved,
         }
         if (!(flags & GAA_FLAG_SKIP_DNS_SERVER))
         {
-            firstDns = (PIP_ADAPTER_DNS_SERVER_ADDRESS)((BYTE *)aa + total_size - dns_server_size - dns_suffix_size);
+            firstDns = (PIP_ADAPTER_DNS_SERVER_ADDRESS)((BYTE *)first_aa + total_size - dns_server_size - dns_suffix_size);
             get_dns_server_addresses(firstDns, &dns_server_size);
             for (aa = first_aa; aa; aa = aa->Next)
             {
