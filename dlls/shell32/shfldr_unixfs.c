@@ -1022,7 +1022,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_CompareIDs(IShellFolder2* iface, 
 {
     BOOL isEmpty1, isEmpty2;
     HRESULT hr = E_FAIL;
-    LPITEMIDLIST firstpidl;
+    LPCITEMIDLIST firstpidl;
     IShellFolder2 *psf;
     int compare;
 
@@ -1055,7 +1055,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_CompareIDs(IShellFolder2* iface, 
     else if (pidl1->mkid.cb > pidl2->mkid.cb)
         return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (WORD)1);
 
-    firstpidl = ILCloneFirst(pidl1);
+    firstpidl = pidl1;
     pidl1 = ILGetNext(pidl1);
     pidl2 = ILGetNext(pidl2);
 
@@ -1073,7 +1073,6 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_CompareIDs(IShellFolder2* iface, 
         IShellFolder2_Release(psf);
     }
 
-    ILFree(firstpidl);
     return hr;
 }
 
