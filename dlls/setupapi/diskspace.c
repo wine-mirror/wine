@@ -177,7 +177,7 @@ BOOL WINAPI SetupQuerySpaceRequiredOnDriveW(HDSKSPC DiskSpace,
         return FALSE;
     }
 
-    driveW = HeapAlloc(GetProcessHeap(), 0, lstrlenW(DriveSpec) + 2);
+    driveW = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(DriveSpec) + 2) * sizeof(WCHAR));
     if (!driveW)
     {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
