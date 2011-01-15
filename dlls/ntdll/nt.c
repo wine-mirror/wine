@@ -1173,7 +1173,7 @@ void fill_cpu_info(void)
             fclose(f);
         }
     }
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__)
     {
         int ret, num;
         size_t len;

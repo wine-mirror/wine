@@ -136,7 +136,7 @@ extern int arch_prctl(int func, void *ptr);
 
 #define FPU_sig(context)     ((XMM_SAVE_AREA32 *)((context)->uc_mcontext.fpregs))
 
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__)
 #include <sys/ucontext.h>
 
 #define RAX_sig(context)     ((context)->uc_mcontext.mc_rax)
@@ -2335,7 +2335,7 @@ void signal_init_thread( TEB *teb )
 
 #if defined __linux__
     arch_prctl( ARCH_SET_GS, teb );
-#elif defined __FreeBSD__
+#elif defined (__FreeBSD__) || defined (__FreeBSD_kernel__)
     amd64_set_gsbase( teb );
 #else
 # error Please define setting %gs for your architecture
