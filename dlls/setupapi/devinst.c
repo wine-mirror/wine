@@ -3998,10 +3998,26 @@ BOOL WINAPI SetupDiGetINFClassA(PCSTR inf, LPGUID class_guid, PSTR class_name,
     PWSTR class_nameW = NULL;
     UNICODE_STRING infW;
 
-    if (inf) RtlCreateUnicodeStringFromAsciiz(&infW, inf);
-    else infW.Buffer = NULL;
+    if (inf)
+    {
+        if (!RtlCreateUnicodeStringFromAsciiz(&infW, inf))
+        {
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            return FALSE;
+        }
+    }
+    else
+        infW.Buffer = NULL;
+
     if (class_name && size)
-        class_nameW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+    {
+        if (!(class_nameW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR))))
+        {
+            RtlFreeUnicodeString(&infW);
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            return FALSE;
+        }
+    }
 
     retval = SetupDiGetINFClassW(infW.Buffer, class_guid, class_nameW, size, &required_sizeW);
 
@@ -4015,6 +4031,8 @@ BOOL WINAPI SetupDiGetINFClassA(PCSTR inf, LPGUID class_guid, PSTR class_name,
     else
         if(required_size) *required_size = required_sizeW;
 
+    HeapFree(GetProcessHeap(), 0, class_nameW);
+    RtlFreeUnicodeString(&infW);
     return retval;
 }
 
