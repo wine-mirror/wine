@@ -676,6 +676,7 @@ MSVCRT__locale_t MSVCRT__create_locale(int category, const char *locale)
                 lcid[i] = 0;
             else if(p) {
                 memcpy(buf, locale, p-locale);
+                buf[p-locale] = '\0';
                 lcid[i] = MSVCRT_locale_to_LCID(buf);
             } else
                 lcid[i] = MSVCRT_locale_to_LCID(locale);
