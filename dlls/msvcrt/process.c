@@ -1079,7 +1079,12 @@ MSVCRT_FILE* CDECL MSVCRT__wpopen(const MSVCRT_wchar_t* command, const MSVCRT_wc
   if (!(comspec = msvcrt_get_comspec())) goto error;
   len = strlenW(comspec) + strlenW(flag) + strlenW(command) + 1;
 
-  if (!(fullcmd = HeapAlloc(GetProcessHeap(), 0, len * sizeof(MSVCRT_wchar_t)))) goto error;
+  if (!(fullcmd = HeapAlloc(GetProcessHeap(), 0, len * sizeof(MSVCRT_wchar_t))))
+  {
+    HeapFree(GetProcessHeap(), 0, comspec);
+    goto error;
+  }
+
   strcpyW(fullcmd, comspec);
   strcatW(fullcmd, flag);
   strcatW(fullcmd, command);
