@@ -1326,3 +1326,12 @@ HRESULT WINAPI CoInternetGetSecurityUrl(LPCWSTR pwzUrl, LPWSTR *ppwzSecUrl, PSUA
     memcpy(*ppwzSecUrl, url, len*sizeof(WCHAR));
     return S_OK;
 }
+
+/********************************************************************
+ *      CoInternetGetSecurityUrlEx (URLMON.@)
+ */
+HRESULT WINAPI CoInternetGetSecurityUrlEx(IUri *pUri, IUri **ppSecUri, PSUACTION psuAction, DWORD_PTR dwReserved)
+{
+    FIXME("(%p,%p,%u,%u)\n", pUri, ppSecUri, psuAction, (DWORD)dwReserved);
+    return E_NOTIMPL;
+}
