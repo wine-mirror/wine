@@ -249,8 +249,8 @@ static void     doChild(const char* file, const char* option)
     STARTUPINFOA        siA;
     STARTUPINFOW        siW;
     int                 i;
-    char*               ptrA;
-    WCHAR*              ptrW;
+    char                *ptrA, *ptrA_save;
+    WCHAR               *ptrW, *ptrW_save;
     char                bufA[MAX_PATH];
     WCHAR               bufW[MAX_PATH];
     HANDLE              hFile = CreateFileA(file, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
@@ -311,7 +311,7 @@ static void     doChild(const char* file, const char* option)
     childPrintf(hFile, "CommandLineW=%s\n\n", encodeW(GetCommandLineW()));
 
     /* output of environment (Ansi) */
-    ptrA = GetEnvironmentStringsA();
+    ptrA_save = ptrA = GetEnvironmentStringsA();
     if (ptrA)
     {
         char    env_var[MAX_LISTED_ENV_VAR];
@@ -326,10 +326,11 @@ static void     doChild(const char* file, const char* option)
             ptrA += strlen(ptrA) + 1;
         }
         childPrintf(hFile, "len=%d\n\n", i);
+        FreeEnvironmentStringsA(ptrA_save);
     }
 
     /* output of environment (Unicode) */
-    ptrW = GetEnvironmentStringsW();
+    ptrW_save = ptrW = GetEnvironmentStringsW();
     if (ptrW)
     {
         WCHAR   env_var[MAX_LISTED_ENV_VAR];
@@ -345,6 +346,7 @@ static void     doChild(const char* file, const char* option)
             ptrW += lstrlenW(ptrW) + 1;
         }
         childPrintf(hFile, "len=%d\n\n", i);
+        FreeEnvironmentStringsW(ptrW_save);
     }
 
     childPrintf(hFile, "[Misc]\n");
