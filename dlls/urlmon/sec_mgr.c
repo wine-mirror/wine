@@ -1332,6 +1332,11 @@ HRESULT WINAPI CoInternetGetSecurityUrl(LPCWSTR pwzUrl, LPWSTR *ppwzSecUrl, PSUA
  */
 HRESULT WINAPI CoInternetGetSecurityUrlEx(IUri *pUri, IUri **ppSecUri, PSUACTION psuAction, DWORD_PTR dwReserved)
 {
+    TRACE("(%p,%p,%u,%u)\n", pUri, ppSecUri, psuAction, (DWORD)dwReserved);
+
+    if(!pUri || !ppSecUri)
+        return E_INVALIDARG;
+
     FIXME("(%p,%p,%u,%u)\n", pUri, ppSecUri, psuAction, (DWORD)dwReserved);
     return E_NOTIMPL;
 }

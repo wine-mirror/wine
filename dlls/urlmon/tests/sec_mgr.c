@@ -39,6 +39,8 @@
 static HRESULT (WINAPI *pCoInternetCreateSecurityManager)(IServiceProvider *, IInternetSecurityManager**, DWORD);
 static HRESULT (WINAPI *pCoInternetCreateZoneManager)(IServiceProvider *, IInternetZoneManager**, DWORD);
 static HRESULT (WINAPI *pCoInternetGetSecurityUrl)(LPCWSTR, LPWSTR*, PSUACTION, DWORD);
+static HRESULT (WINAPI *pCoInternetGetSecurityUrlEx)(IUri*, IUri**, PSUACTION, DWORD_PTR);
+static HRESULT (WINAPI *pCreateUri)(LPCWSTR, DWORD, DWORD_PTR, IUri**);
 
 static const WCHAR url1[] = {'r','e','s',':','/','/','m','s','h','t','m','l','.','d','l','l',
         '/','b','l','a','n','k','.','h','t','m',0};
@@ -102,6 +104,31 @@ static int strcmp_w(const WCHAR *str1, const WCHAR *str2)
 
     if(len1!=len2) return 1;
     return memcmp(str1, str2, len1*sizeof(WCHAR));
+}
+
+static inline void heap_free(void *mem)
+{
+    HeapFree(GetProcessHeap(), 0, mem);
+}
+
+static inline LPWSTR a2w(LPCSTR str)
+{
+    LPWSTR ret = NULL;
+
+    if(str) {
+        DWORD len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+        ret = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+    }
+
+    return ret;
+}
+
+static inline DWORD strcmp_aw(LPCSTR strA, LPCWSTR strB) {
+    LPWSTR strAW = a2w(strA);
+    DWORD ret = lstrcmpW(strAW, strB);
+    heap_free(strAW);
+    return ret;
 }
 
 static void test_SecurityManager(void)
@@ -683,6 +710,120 @@ static void test_InternetGetSecurityUrl(void)
     }
 }
 
+static const struct {
+    const char  *uri;
+    DWORD       create_flags;
+    const char  *security_uri;
+    HRESULT     security_hres;
+    const char  *default_uri;
+    HRESULT     default_hres;
+    BOOL        todo;
+} sec_url_ex_tests[] = {
+    {"index.htm",Uri_CREATE_ALLOW_RELATIVE,"*:index.html",S_OK,"*:index.htm",S_OK,TRUE},
+    {"file://c:\\Index.htm",Uri_CREATE_FILE_USE_DOS_PATH,"file:///c:/Index.htm",S_OK,"file:///c:/Index.htm",S_OK,TRUE},
+    {"file:some%20file%2ejpg",0,NULL,E_INVALIDARG,NULL,E_INVALIDARG,TRUE},
+    {"http://www.zone3.winetest/",0,"http://www.zone3.winetest/",S_OK,"http://www.zone3.winetest/",S_OK,TRUE},
+    {"about:blank",0,"about:blank",S_OK,"about:blank",S_OK,TRUE},
+    {"ftp://zone3.winetest/file.test",0,"ftp://zone3.winetest/file.test",S_OK,"ftp://zone3.winetest/file.test",S_OK,TRUE},
+    {"test:123abc",0,"test:123abc",S_OK,"test:123abc",S_OK,TRUE},
+    {"http:google.com/test.file",0,"http:google.com/test.file",S_OK,"http:google.com/test.file",S_OK,TRUE},
+    {"ftp://test@ftp.winehq.org/",0,"ftp://ftp.winehq.org/",S_OK,"ftp://ftp.winehq.org/",S_OK,TRUE},
+    {"test://google@ftp.winehq.org/",0,"test://google@ftp.winehq.org/",S_OK,"test://google@ftp.winehq.org/",S_OK,TRUE}
+};
+
+static void test_InternetGetSecurityUrlEx(void)
+{
+    HRESULT hr;
+    DWORD i;
+    IUri *uri = NULL, *result = NULL;
+
+    hr = pCoInternetGetSecurityUrlEx(NULL, NULL, PSU_DEFAULT, 0);
+    ok(hr == E_INVALIDARG, "CoInternetGetSecurityUrlEx returned 0x%08x, expected E_INVALIDARG\n", hr);
+
+    result = (void*) 0xdeadbeef;
+    hr = pCoInternetGetSecurityUrlEx(NULL, &result, PSU_DEFAULT, 0);
+    ok(hr == E_INVALIDARG, "CoInternetGetSecurityUrlEx returned 0x%08x, expected E_INVALIDARG\n", hr);
+    ok(result == (void*) 0xdeadbeef, "'result' was %p\n", result);
+
+    for(i = 0; i < sizeof(sec_url_ex_tests)/sizeof(sec_url_ex_tests[0]); ++i) {
+        LPWSTR uriW = a2w(sec_url_ex_tests[i].uri);
+        uri = NULL;
+
+        hr = pCreateUri(uriW, sec_url_ex_tests[i].create_flags, 0, &uri);
+        ok(hr == S_OK, "CreateUri returned 0x%08x on test %d\n", hr, i);
+        if(hr == S_OK) {
+            result = NULL;
+
+            hr = pCoInternetGetSecurityUrlEx(uri, &result, PSU_DEFAULT, 0);
+            if(sec_url_ex_tests[i].todo) {
+                todo_wine
+                    ok(hr == sec_url_ex_tests[i].default_hres,
+                        "CoInternetGetSecurityUrlEx returned 0x%08x, expected 0x%08x on test %d\n",
+                        hr, sec_url_ex_tests[i].default_hres, i);
+            } else {
+                ok(hr == sec_url_ex_tests[i].default_hres,
+                    "CoInternetGetSecurityUrlEx returned 0x%08x, expected 0x%08x on test %d\n",
+                    hr, sec_url_ex_tests[i].default_hres, i);
+            }
+            if(SUCCEEDED(hr)) {
+                BSTR received;
+
+                hr = IUri_GetDisplayUri(result, &received);
+                ok(hr == S_OK, "GetDisplayUri returned 0x%08x on test %d\n", hr, i);
+                if(hr == S_OK) {
+                    if(sec_url_ex_tests[i].todo) {
+                        todo_wine
+                            ok(!strcmp_aw(sec_url_ex_tests[i].default_uri, received),
+                                "Expected %s but got %s on test %d\n", sec_url_ex_tests[i].default_uri,
+                                wine_dbgstr_w(received), i);
+                    } else {
+                        ok(!strcmp_aw(sec_url_ex_tests[i].default_uri, received),
+                            "Expected %s but got %s on test %d\n", sec_url_ex_tests[i].default_uri,
+                            wine_dbgstr_w(received), i);
+                    }
+                }
+                SysFreeString(received);
+            }
+            if(result) IUri_Release(result);
+
+            result = NULL;
+            hr = pCoInternetGetSecurityUrlEx(uri, &result, PSU_SECURITY_URL_ONLY, 0);
+            if(sec_url_ex_tests[i].todo) {
+                todo_wine
+                    ok(hr == sec_url_ex_tests[i].default_hres,
+                        "CoInternetGetSecurityUrlEx returned 0x%08x, expected 0x%08x on test %d\n",
+                        hr, sec_url_ex_tests[i].default_hres, i);
+            } else {
+                ok(hr == sec_url_ex_tests[i].default_hres,
+                    "CoInternetGetSecurityUrlEx returned 0x%08x, expected 0x%08x on test %d\n",
+                    hr, sec_url_ex_tests[i].default_hres, i);
+            }
+            if(SUCCEEDED(hr)) {
+                BSTR received;
+
+                hr = IUri_GetDisplayUri(result, &received);
+                ok(hr == S_OK, "GetDisplayUri returned 0x%08x on test %d\n", hr, i);
+                if(hr == S_OK) {
+                    if(sec_url_ex_tests[i].todo) {
+                        todo_wine
+                            ok(!strcmp_aw(sec_url_ex_tests[i].default_uri, received),
+                                "Expected %s but got %s on test %d\n", sec_url_ex_tests[i].default_uri,
+                                wine_dbgstr_w(received), i);
+                    } else {
+                        ok(!strcmp_aw(sec_url_ex_tests[i].default_uri, received),
+                            "Expected %s but got %s on test %d\n", sec_url_ex_tests[i].default_uri,
+                            wine_dbgstr_w(received), i);
+                    }
+                }
+                SysFreeString(received);
+            }
+            if(result) IUri_Release(result);
+        }
+
+        if(uri) IUri_Release(uri);
+        heap_free(uriW);
+    }
+}
 
 START_TEST(sec_mgr)
 {
@@ -692,6 +833,8 @@ START_TEST(sec_mgr)
     pCoInternetCreateSecurityManager = (void*) GetProcAddress(hurlmon, "CoInternetCreateSecurityManager");
     pCoInternetCreateZoneManager = (void*) GetProcAddress(hurlmon, "CoInternetCreateZoneManager");
     pCoInternetGetSecurityUrl = (void*) GetProcAddress(hurlmon, "CoInternetGetSecurityUrl");
+    pCoInternetGetSecurityUrlEx = (void*) GetProcAddress(hurlmon, "CoInternetGetSecurityUrlEx");
+    pCreateUri = (void*) GetProcAddress(hurlmon, "CreateUri");
 
     if (!pCoInternetCreateSecurityManager || !pCoInternetCreateZoneManager ||
         !pCoInternetGetSecurityUrl) {
@@ -702,6 +845,12 @@ START_TEST(sec_mgr)
     OleInitialize(NULL);
 
     test_InternetGetSecurityUrl();
+
+    if(!pCoInternetGetSecurityUrlEx || !pCreateUri)
+        win_skip("Skipping CoInternetGetSecurityUrlEx tests, IE too old\n");
+    else
+        test_InternetGetSecurityUrlEx();
+
     test_SecurityManager();
     test_polices();
     test_CoInternetCreateZoneManager();
