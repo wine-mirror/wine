@@ -120,7 +120,7 @@ void resource_cleanup(struct IWineD3DResourceImpl *resource)
     resource->resource.heapMemory = 0;
 
     if (resource->resource.device)
-        device_resource_released(resource->resource.device, (IWineD3DResource *)resource);
+        device_resource_released(resource->resource.device, resource);
 }
 
 void resource_unload(IWineD3DResourceImpl *resource)

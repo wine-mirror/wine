@@ -1784,7 +1784,7 @@ void device_preload_textures(IWineD3DDeviceImpl *device) DECLSPEC_HIDDEN;
 LRESULT device_process_message(IWineD3DDeviceImpl *device, HWND window, BOOL unicode,
         UINT message, WPARAM wparam, LPARAM lparam, WNDPROC proc) DECLSPEC_HIDDEN;
 void device_resource_add(struct IWineD3DDeviceImpl *device, struct IWineD3DResourceImpl *resource) DECLSPEC_HIDDEN;
-void device_resource_released(IWineD3DDeviceImpl *This, IWineD3DResource *resource) DECLSPEC_HIDDEN;
+void device_resource_released(struct IWineD3DDeviceImpl *device, struct IWineD3DResourceImpl *resource) DECLSPEC_HIDDEN;
 void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
         BOOL use_vshader, struct wined3d_stream_info *stream_info, BOOL *fixup) DECLSPEC_HIDDEN;
 void device_switch_onscreen_ds(IWineD3DDeviceImpl *device, struct wined3d_context *context,
