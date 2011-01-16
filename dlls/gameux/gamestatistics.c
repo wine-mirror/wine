@@ -1086,7 +1086,8 @@ static HRESULT STDMETHODCALLTYPE GameStatisticsMgrImpl_GetGameStatistics(
 {
     HRESULT hr;
     WCHAR lpApplicationId[49];
-    GameStatisticsImpl *statisticsImpl;
+    GameStatisticsImpl *statisticsImpl = NULL;
+    IGameStatistics *output_iface;
 
     TRACE("(%p, %s, 0x%x, %p, %p)\n", iface, debugstr_w(GDFBinaryPath), openType, pOpenResult, ppiStats);
 
@@ -1097,12 +1098,20 @@ static HRESULT STDMETHODCALLTYPE GameStatisticsMgrImpl_GetGameStatistics(
 
     if(SUCCEEDED(hr))
     {
-        *ppiStats = IGameStatistics_from_impl(statisticsImpl);
+        output_iface = IGameStatistics_from_impl(statisticsImpl);
         hr = GAMEUX_buildStatisticsFilePath(lpApplicationId, statisticsImpl->stats.sStatsFile);
     }
 
     if(SUCCEEDED(hr))
         hr = GAMEUX_loadGameStatistics(&statisticsImpl->stats, lpApplicationId, openType, pOpenResult);
+
+    if(SUCCEEDED(hr))
+        *ppiStats = output_iface;
+    else
+    {
+        HeapFree(GetProcessHeap(), 0, statisticsImpl);
+        *ppiStats = NULL;
+    }
 
     return hr;
 }

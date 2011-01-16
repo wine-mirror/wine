@@ -225,7 +225,7 @@ static void test_gamestatisticsmgr( void )
     WORD wMaxStatsPerCategory = 0, wMaxCategories = 0;
 
     IGameStatisticsMgr* gsm = NULL;
-    IGameStatistics* gs = NULL;
+    IGameStatistics* gs;
 
     hr = CoCreateInstance( &CLSID_GameStatistics, NULL, CLSCTX_INPROC_SERVER, &IID_IGameStatisticsMgr, (LPVOID*)&gsm);
     ok(hr == S_OK, "IGameStatisticsMgr creating failed (result false)\n");
@@ -233,8 +233,10 @@ static void test_gamestatisticsmgr( void )
     /* test trying to create interface IGameStatistics using GetGameStatistics method */
 
     /* this should fail, cause statistics doesn't yet exists */
+    gs = (void *)0xdeadbeef;
     hr = IGameStatisticsMgr_GetGameStatistics(gsm, sExeName, GAMESTATS_OPEN_OPENONLY, &dwOpenResult, &gs);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "GetGameStatistics returned unexpected value: 0x%08x\n", hr);
+    ok(gs == NULL, "Expected output pointer to be NULL, got %p\n", gs);
 
     /* now, allow to create */
     hr = IGameStatisticsMgr_GetGameStatistics(gsm, sExeName, GAMESTATS_OPEN_OPENORCREATE, &dwOpenResult, &gs);
