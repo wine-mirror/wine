@@ -364,7 +364,7 @@ static HRESULT GAMEUX_getAppIdFromGDFPath(
     HRESULT hr;
     GAME_INSTALL_SCOPE installScope;
     GUID instanceId;
-    LPWSTR lpRegistryPath;
+    LPWSTR lpRegistryPath = NULL;
     HKEY hKey;
     DWORD dwLength = 49*sizeof(WCHAR);/* place for GUID */
 
