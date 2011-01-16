@@ -6604,11 +6604,11 @@ void device_resource_add(IWineD3DDeviceImpl *This, IWineD3DResource *resource)
     list_add_head(&This->resources, &((IWineD3DResourceImpl *) resource)->resource.resource_list_entry);
 }
 
-static void device_resource_remove(IWineD3DDeviceImpl *This, IWineD3DResource *resource)
+static void device_resource_remove(struct IWineD3DDeviceImpl *device, struct IWineD3DResourceImpl *resource)
 {
-    TRACE("(%p) : Removing resource %p\n", This, resource);
+    TRACE("device %p, resource %p.\n", device, resource);
 
-    list_remove(&((IWineD3DResourceImpl *) resource)->resource.resource_list_entry);
+    list_remove(&resource->resource.resource_list_entry);
 }
 
 void device_resource_released(IWineD3DDeviceImpl *device, IWineD3DResource *resource)
@@ -6705,7 +6705,7 @@ void device_resource_released(IWineD3DDeviceImpl *device, IWineD3DResource *reso
     }
 
     /* Remove the resource from the resourceStore */
-    device_resource_remove(device, resource);
+    device_resource_remove(device, (IWineD3DResourceImpl *)resource);
 
     TRACE("Resource released.\n");
 }
