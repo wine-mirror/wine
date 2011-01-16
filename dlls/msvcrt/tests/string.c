@@ -20,6 +20,7 @@
 
 #include "wine/test.h"
 #include "winbase.h"
+#include "winnls.h"
 #include <string.h>
 #include <mbstring.h>
 #include <stdlib.h>
@@ -194,6 +195,7 @@ static void test_mbcp(void)
     unsigned char *mbsonlylead = (unsigned char *)"\xb0\0\xb1\xb2 \xb3";
     unsigned char buf[16];
     int step;
+    CPINFO cp_info;
 
     /* _mbtype tests */
 
@@ -357,13 +359,14 @@ static void test_mbcp(void)
      * we hope the current locale to be SBCS because setlocale(LC_ALL, ".1252") seems not to work yet
      * (as of Wine 0.9.43)
      */
-    if (*p__mb_cur_max == 1)
+    GetCPInfo(GetACP(), &cp_info);
+    if (cp_info.MaxCharSize == 1)
     {
         expect_eq(mblen((char *)mbstring, 3), 1, int, "%x");
         expect_eq(_mbstrlen((char *)mbstring2), 7, int, "%d");
     }
     else
-        skip("Current locale has double-byte charset - could leave to false positives\n");
+        skip("Current locale has double-byte charset - could lead to false positives\n");
 
     _setmbcp(1361);
     expect_eq(_ismbblead(0x80), 0, int, "%d");
