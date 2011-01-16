@@ -1295,7 +1295,7 @@ static LRESULT WINAPI dde_server_wndprocA(HWND hwnd, UINT msg, WPARAM wparam, LP
                 if (!conv_unicode)
                     ok( !lstrcmpA(cmd, exec_cmdA), "server A got wrong command '%s'\n", cmd );
                 else  /* we get garbage as the A command was mapped W->A */
-                    ok( cmd[0] == '?', "server A got wrong command '%s'\n", cmd );
+                    ok( cmd[0] != exec_cmdA[0], "server A got wrong command '%s'\n", cmd );
                 break;
 
             case 2:  /* ANSI command in Unicode format */
@@ -1316,7 +1316,7 @@ static LRESULT WINAPI dde_server_wndprocA(HWND hwnd, UINT msg, WPARAM wparam, LP
                 if (!conv_unicode)
                     ok( !lstrcmpA(cmd, exec_cmdWA), "server A got wrong command '%s'\n", cmd );
                 else  /* we get garbage as the A command was mapped W->A */
-                    ok( cmd[0] == '?', "server A got wrong command '%s'\n", cmd );
+                    ok( cmd[0] != exec_cmdWA[0], "server A got wrong command '%s'\n", cmd );
                 break;
             }
             GlobalUnlock((HGLOBAL)hi);
@@ -1430,7 +1430,7 @@ static LRESULT WINAPI dde_server_wndprocW(HWND hwnd, UINT msg, WPARAM wparam, LP
 
             case 1:  /* ANSI command */
                 if (conv_unicode && !client_unicode) /* W->A mapping -> garbage */
-                    ok( cmd[0] == '?', "server W got wrong command '%s'\n", cmd );
+                    ok( cmd[0] != exec_cmdA[0], "server W got wrong command '%s'\n", cmd );
                 else if (!conv_unicode && client_unicode)  /* A->W mapping */
                     ok( !lstrcmpW((LPCWSTR)cmd, exec_cmdAW), "server W got wrong command '%s'\n", cmd );
                 else
@@ -1457,7 +1457,7 @@ static LRESULT WINAPI dde_server_wndprocW(HWND hwnd, UINT msg, WPARAM wparam, LP
 
             case 4:  /* Unicode command in ANSI format */
                 if (conv_unicode && !client_unicode) /* W->A mapping -> garbage */
-                    ok( cmd[0] == '?', "server W got wrong command '%s'\n", cmd );
+                    ok( cmd[0] != exec_cmdWA[0], "server W got wrong command '%s'\n", cmd );
                 else if (!conv_unicode && client_unicode)  /* A->W mapping */
                     ok( !lstrcmpW((LPCWSTR)cmd, exec_cmdW), "server W got wrong command '%s'\n", cmd );
                 else
@@ -2487,8 +2487,6 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
             else if (unicode_client)
             {
                 /* ASCII string mapped W->A -> garbage */
-                ok(size == size_a / sizeof(WCHAR) || size == size_a / sizeof(WCHAR) + 1,
-                   "Wrong size %d, msg_index=%d\n", size, msg_index);
             }
             else
             {
@@ -2530,7 +2528,8 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
                 DWORD nt_size = MultiByteToWideChar( CP_ACP, 0, (char *)cmd_w, size_w, test_cmd_a_to_w,
                                                      sizeof(test_cmd_a_to_w)/sizeof(WCHAR) ) * sizeof(WCHAR);
                 DWORD xp_size = MultiByteToWideChar( CP_ACP, 0, (char *)cmd_w, -1, NULL, 0 ) * sizeof(WCHAR);
-                ok(size == xp_size || broken(size == nt_size),
+                ok(size == xp_size || broken(size == nt_size) ||
+                   broken(str_index == 4 && IsDBCSLeadByte(cmd_w[0])) /* East Asian */,
                    "Wrong size %d/%d, msg_index=%d\n", size, size_a_to_w, msg_index);
                 ok(!lstrcmpW((WCHAR*)buffer, test_cmd_a_to_w),
                    "Expected %s, msg_index=%d\n", wine_dbgstr_w(test_cmd_a_to_w), msg_index);
