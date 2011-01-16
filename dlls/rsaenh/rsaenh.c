@@ -139,6 +139,7 @@ typedef struct tagKEYCONTAINER
 #define RSAENH_HMAC_DEF_IPAD_CHAR      0x36
 #define RSAENH_HMAC_DEF_OPAD_CHAR      0x5c
 #define RSAENH_HMAC_DEF_PAD_LEN          64
+#define RSAENH_HMAC_BLOCK_LEN            64
 #define RSAENH_DES_EFFECTIVE_KEYLEN      56
 #define RSAENH_DES_STORAGE_KEYLEN        64
 #define RSAENH_3DES112_EFFECTIVE_KEYLEN 112
@@ -2956,7 +2957,7 @@ static BOOL import_plaintext_key(HCRYPTPROV hProv, CONST BYTE *pbData,
         *phKey = new_key(hProv, CALG_HMAC, 0, &pCryptKey);
         if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE)
             return FALSE;
-        if (*pKeyLen <= sizeof(pCryptKey->abKeyValue))
+        if (*pKeyLen <= RSAENH_MIN(sizeof(pCryptKey->abKeyValue), RSAENH_HMAC_BLOCK_LEN))
         {
             memcpy(pCryptKey->abKeyValue, pbKeyStream, *pKeyLen);
             pCryptKey->dwKeyLen = *pKeyLen;
