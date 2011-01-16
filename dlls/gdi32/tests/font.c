@@ -962,6 +962,8 @@ static void test_GetCharABCWidths(void)
     for (i = 0; i < sizeof c / sizeof c[0]; ++i)
     {
         ABC a[2], w[2];
+        ABC full[256];
+        UINT code = 0x41;
 
         lf.lfFaceName[0] = '\0';
         lf.lfCharSet = c[i].cs;
@@ -979,6 +981,17 @@ static void test_GetCharABCWidths(void)
            pGetCharABCWidthsW(hdc, c[i].w, c[i].w + 1, w) &&
            memcmp(a, w, sizeof a) == 0,
            "GetCharABCWidthsA and GetCharABCWidthsW should return same widths. charset = %u\n", c[i].cs);
+
+        memset(a, 0xbb, sizeof a);
+        ret = pGetCharABCWidthsA(hdc, code, code, a);
+        ok(ret, "GetCharABCWidthsA should have succeeded\n");
+        memset(full, 0xcc, sizeof full);
+        ret = pGetCharABCWidthsA(hdc, 0x00, code, full);
+        ok(ret, "GetCharABCWidthsA should have succeeded\n");
+        todo_wine
+        ok(memcmp(&a[0], &full[code], sizeof(ABC)) == 0,
+           "GetCharABCWidthsA info should match. codepage = %u\n", c[i].cs);
+
         hfont = SelectObject(hdc, hfont);
         DeleteObject(hfont);
     }
