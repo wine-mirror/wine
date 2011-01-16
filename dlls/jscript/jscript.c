@@ -39,11 +39,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 #endif
 
 typedef struct {
-    const IActiveScriptVtbl                 *lpIActiveScriptVtbl;
-    const IActiveScriptParseVtbl            *lpIActiveScriptParseVtbl;
-    const IActiveScriptParseProcedure2Vtbl  *lpIActiveScriptParseProcedure2Vtbl;
-    const IActiveScriptPropertyVtbl         *lpIActiveScriptPropertyVtbl;
-    const IObjectSafetyVtbl                 *lpIObjectSafetyVtbl;
+    IActiveScript                IActiveScript_iface;
+    IActiveScriptParse           IActiveScriptParse_iface;
+    IActiveScriptParseProcedure2 IActiveScriptParseProcedure2_iface;
+    IActiveScriptProperty        IActiveScriptProperty_iface;
+    IObjectSafety                IObjectSafety_iface;
 
     LONG ref;
 
@@ -58,12 +58,6 @@ typedef struct {
     parser_ctx_t *queue_head;
     parser_ctx_t *queue_tail;
 } JScript;
-
-#define ACTSCRIPT(x)    ((IActiveScript*) &(x)->lpIActiveScriptVtbl)
-#define ASPARSE(x)      (&(x)->lpIActiveScriptParseVtbl)
-#define ASPARSEPROC(x)  (&(x)->lpIActiveScriptParseProcedure2Vtbl)
-#define ACTSCPPROP(x)   (&(x)->lpIActiveScriptPropertyVtbl)
-#define OBJSAFETY(x)    (&(x)->lpIObjectSafetyVtbl)
 
 void script_release(script_ctx_t *ctx)
 {
@@ -258,35 +252,38 @@ IUnknown *create_ax_site(script_ctx_t *ctx)
     return (IUnknown*)SERVPROV(ret);
 }
 
-#define ACTSCRIPT_THIS(iface) DEFINE_THIS(JScript, IActiveScript, iface)
+static inline JScript *impl_from_IActiveScript(IActiveScript *iface)
+{
+    return CONTAINING_RECORD(iface, JScript, IActiveScript_iface);
+}
 
 static HRESULT WINAPI JScript_QueryInterface(IActiveScript *iface, REFIID riid, void **ppv)
 {
-    JScript *This = ACTSCRIPT_THIS(iface);
+    JScript *This = impl_from_IActiveScript(iface);
 
     *ppv = NULL;
 
     if(IsEqualGUID(riid, &IID_IUnknown)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = ACTSCRIPT(This);
+        *ppv = &This->IActiveScript_iface;
     }else if(IsEqualGUID(riid, &IID_IActiveScript)) {
         TRACE("(%p)->(IID_IActiveScript %p)\n", This, ppv);
-        *ppv = ACTSCRIPT(This);
+        *ppv = &This->IActiveScript_iface;
     }else if(IsEqualGUID(riid, &IID_IActiveScriptParse)) {
         TRACE("(%p)->(IID_IActiveScriptParse %p)\n", This, ppv);
-        *ppv = ASPARSE(This);
+        *ppv = &This->IActiveScriptParse_iface;
     }else if(IsEqualGUID(riid, &IID_IActiveScriptParseProcedure)) {
         TRACE("(%p)->(IID_IActiveScriptParseProcedure %p)\n", This, ppv);
-        *ppv = ASPARSEPROC(This);
+        *ppv = &This->IActiveScriptParseProcedure2_iface;
     }else if(IsEqualGUID(riid, &IID_IActiveScriptParseProcedure2)) {
         TRACE("(%p)->(IID_IActiveScriptParseProcedure2 %p)\n", This, ppv);
-        *ppv = ASPARSEPROC(This);
+        *ppv = &This->IActiveScriptParseProcedure2_iface;
     }else if(IsEqualGUID(riid, &IID_IActiveScriptProperty)) {
         TRACE("(%p)->(IID_IActiveScriptProperty %p)\n", This, ppv);
-        *ppv = ACTSCPPROP(This);
+        *ppv = &This->IActiveScriptProperty_iface;
     }else if(IsEqualGUID(riid, &IID_IObjectSafety)) {
         TRACE("(%p)->(IID_IObjectSafety %p)\n", This, ppv);
-        *ppv = OBJSAFETY(This);
+        *ppv = &This->IObjectSafety_iface;
     }
 
     if(*ppv) {
@@ -300,7 +297,7 @@ static HRESULT WINAPI JScript_QueryInterface(IActiveScript *iface, REFIID riid, 
 
 static ULONG WINAPI JScript_AddRef(IActiveScript *iface)
 {
-    JScript *This = ACTSCRIPT_THIS(iface);
+    JScript *This = impl_from_IActiveScript(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -310,14 +307,14 @@ static ULONG WINAPI JScript_AddRef(IActiveScript *iface)
 
 static ULONG WINAPI JScript_Release(IActiveScript *iface)
 {
-    JScript *This = ACTSCRIPT_THIS(iface);
+    JScript *This = impl_from_IActiveScript(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", iface, ref);
 
     if(!ref) {
         if(This->ctx && This->ctx->state != SCRIPTSTATE_CLOSED)
-            IActiveScript_Close(ACTSCRIPT(This));
+            IActiveScript_Close(&This->IActiveScript_iface);
         if(This->ctx)
             script_release(This->ctx);
         heap_free(This);
@@ -330,7 +327,7 @@ static ULONG WINAPI JScript_Release(IActiveScript *iface)
 static HRESULT WINAPI JScript_SetScriptSite(IActiveScript *iface,
                                             IActiveScriptSite *pass)
 {
-    JScript *This = ACTSCRIPT_THIS(iface);
+    JScript *This = impl_from_IActiveScript(iface);
     LCID lcid;
     HRESULT hres;
 
@@ -358,14 +355,14 @@ static HRESULT WINAPI JScript_SetScriptSite(IActiveScript *iface,
 static HRESULT WINAPI JScript_GetScriptSite(IActiveScript *iface, REFIID riid,
                                             void **ppvObject)
 {
-    JScript *This = ACTSCRIPT_THIS(iface);
+    JScript *This = impl_from_IActiveScript(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI JScript_SetScriptState(IActiveScript *iface, SCRIPTSTATE ss)
 {
-    JScript *This = ACTSCRIPT_THIS(iface);
+    JScript *This = impl_from_IActiveScript(iface);
 
     TRACE("(%p)->(%d)\n", This, ss);
 
@@ -394,7 +391,7 @@ static HRESULT WINAPI JScript_SetScriptState(IActiveScript *iface, SCRIPTSTATE s
 
 static HRESULT WINAPI JScript_GetScriptState(IActiveScript *iface, SCRIPTSTATE *pssState)
 {
-    JScript *This = ACTSCRIPT_THIS(iface);
+    JScript *This = impl_from_IActiveScript(iface);
 
     TRACE("(%p)->(%p)\n", This, pssState);
 
@@ -415,7 +412,7 @@ static HRESULT WINAPI JScript_GetScriptState(IActiveScript *iface, SCRIPTSTATE *
 
 static HRESULT WINAPI JScript_Close(IActiveScript *iface)
 {
-    JScript *This = ACTSCRIPT_THIS(iface);
+    JScript *This = impl_from_IActiveScript(iface);
 
     TRACE("(%p)->()\n", This);
 
@@ -483,7 +480,7 @@ static HRESULT WINAPI JScript_Close(IActiveScript *iface)
 static HRESULT WINAPI JScript_AddNamedItem(IActiveScript *iface,
                                            LPCOLESTR pstrName, DWORD dwFlags)
 {
-    JScript *This = ACTSCRIPT_THIS(iface);
+    JScript *This = impl_from_IActiveScript(iface);
     named_item_t *item;
     IDispatch *disp = NULL;
     HRESULT hres;
@@ -540,7 +537,7 @@ static HRESULT WINAPI JScript_AddNamedItem(IActiveScript *iface,
 static HRESULT WINAPI JScript_AddTypeLib(IActiveScript *iface, REFGUID rguidTypeLib,
                                          DWORD dwMajor, DWORD dwMinor, DWORD dwFlags)
 {
-    JScript *This = ACTSCRIPT_THIS(iface);
+    JScript *This = impl_from_IActiveScript(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
@@ -548,7 +545,7 @@ static HRESULT WINAPI JScript_AddTypeLib(IActiveScript *iface, REFGUID rguidType
 static HRESULT WINAPI JScript_GetScriptDispatch(IActiveScript *iface, LPCOLESTR pstrItemName,
                                                 IDispatch **ppdisp)
 {
-    JScript *This = ACTSCRIPT_THIS(iface);
+    JScript *This = impl_from_IActiveScript(iface);
 
     TRACE("(%p)->(%p)\n", This, ppdisp);
 
@@ -568,7 +565,7 @@ static HRESULT WINAPI JScript_GetScriptDispatch(IActiveScript *iface, LPCOLESTR 
 static HRESULT WINAPI JScript_GetCurrentScriptThreadID(IActiveScript *iface,
                                                        SCRIPTTHREADID *pstridThread)
 {
-    JScript *This = ACTSCRIPT_THIS(iface);
+    JScript *This = impl_from_IActiveScript(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
@@ -576,7 +573,7 @@ static HRESULT WINAPI JScript_GetCurrentScriptThreadID(IActiveScript *iface,
 static HRESULT WINAPI JScript_GetScriptThreadID(IActiveScript *iface,
                                                 DWORD dwWin32ThreadId, SCRIPTTHREADID *pstidThread)
 {
-    JScript *This = ACTSCRIPT_THIS(iface);
+    JScript *This = impl_from_IActiveScript(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
@@ -584,7 +581,7 @@ static HRESULT WINAPI JScript_GetScriptThreadID(IActiveScript *iface,
 static HRESULT WINAPI JScript_GetScriptThreadState(IActiveScript *iface,
         SCRIPTTHREADID stidThread, SCRIPTTHREADSTATE *pstsState)
 {
-    JScript *This = ACTSCRIPT_THIS(iface);
+    JScript *This = impl_from_IActiveScript(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
@@ -592,19 +589,17 @@ static HRESULT WINAPI JScript_GetScriptThreadState(IActiveScript *iface,
 static HRESULT WINAPI JScript_InterruptScriptThread(IActiveScript *iface,
         SCRIPTTHREADID stidThread, const EXCEPINFO *pexcepinfo, DWORD dwFlags)
 {
-    JScript *This = ACTSCRIPT_THIS(iface);
+    JScript *This = impl_from_IActiveScript(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI JScript_Clone(IActiveScript *iface, IActiveScript **ppscript)
 {
-    JScript *This = ACTSCRIPT_THIS(iface);
+    JScript *This = impl_from_IActiveScript(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
-
-#undef ACTSCRIPT_THIS
 
 static const IActiveScriptVtbl JScriptVtbl = {
     JScript_QueryInterface,
@@ -625,29 +620,32 @@ static const IActiveScriptVtbl JScriptVtbl = {
     JScript_Clone
 };
 
-#define ASPARSE_THIS(iface) DEFINE_THIS(JScript, IActiveScriptParse, iface)
+static inline JScript *impl_from_IActiveScriptParse(IActiveScriptParse *iface)
+{
+    return CONTAINING_RECORD(iface, JScript, IActiveScriptParse_iface);
+}
 
 static HRESULT WINAPI JScriptParse_QueryInterface(IActiveScriptParse *iface, REFIID riid, void **ppv)
 {
-    JScript *This = ASPARSE_THIS(iface);
-    return IActiveScript_QueryInterface(ACTSCRIPT(This), riid, ppv);
+    JScript *This = impl_from_IActiveScriptParse(iface);
+    return IActiveScript_QueryInterface(&This->IActiveScript_iface, riid, ppv);
 }
 
 static ULONG WINAPI JScriptParse_AddRef(IActiveScriptParse *iface)
 {
-    JScript *This = ASPARSE_THIS(iface);
-    return IActiveScript_AddRef(ACTSCRIPT(This));
+    JScript *This = impl_from_IActiveScriptParse(iface);
+    return IActiveScript_AddRef(&This->IActiveScript_iface);
 }
 
 static ULONG WINAPI JScriptParse_Release(IActiveScriptParse *iface)
 {
-    JScript *This = ASPARSE_THIS(iface);
-    return IActiveScript_Release(ACTSCRIPT(This));
+    JScript *This = impl_from_IActiveScriptParse(iface);
+    return IActiveScript_Release(&This->IActiveScript_iface);
 }
 
 static HRESULT WINAPI JScriptParse_InitNew(IActiveScriptParse *iface)
 {
-    JScript *This = ASPARSE_THIS(iface);
+    JScript *This = impl_from_IActiveScriptParse(iface);
     script_ctx_t *ctx;
 
     TRACE("(%p)\n", This);
@@ -680,7 +678,7 @@ static HRESULT WINAPI JScriptParse_AddScriptlet(IActiveScriptParse *iface,
         CTXARG_T dwSourceContextCookie, ULONG ulStartingLineNumber, DWORD dwFlags,
         BSTR *pbstrName, EXCEPINFO *pexcepinfo)
 {
-    JScript *This = ASPARSE_THIS(iface);
+    JScript *This = impl_from_IActiveScriptParse(iface);
     FIXME("(%p)->(%s %s %s %s %s %s %s %u %x %p %p)\n", This, debugstr_w(pstrDefaultName),
           debugstr_w(pstrCode), debugstr_w(pstrItemName), debugstr_w(pstrSubItemName),
           debugstr_w(pstrEventName), debugstr_w(pstrDelimiter), wine_dbgstr_longlong(dwSourceContextCookie),
@@ -693,7 +691,7 @@ static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
         LPCOLESTR pstrDelimiter, CTXARG_T dwSourceContextCookie, ULONG ulStartingLine,
         DWORD dwFlags, VARIANT *pvarResult, EXCEPINFO *pexcepinfo)
 {
-    JScript *This = ASPARSE_THIS(iface);
+    JScript *This = impl_from_IActiveScriptParse(iface);
     parser_ctx_t *parser_ctx;
     HRESULT hres;
 
@@ -722,8 +720,6 @@ static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
     return hres;
 }
 
-#undef ASPARSE_THIS
-
 static const IActiveScriptParseVtbl JScriptParseVtbl = {
     JScriptParse_QueryInterface,
     JScriptParse_AddRef,
@@ -733,24 +729,27 @@ static const IActiveScriptParseVtbl JScriptParseVtbl = {
     JScriptParse_ParseScriptText
 };
 
-#define ASPARSEPROC_THIS(iface) DEFINE_THIS(JScript, IActiveScriptParseProcedure2, iface)
+static inline JScript *impl_from_IActiveScriptParseProcedure2(IActiveScriptParseProcedure2 *iface)
+{
+    return CONTAINING_RECORD(iface, JScript, IActiveScriptParseProcedure2_iface);
+}
 
 static HRESULT WINAPI JScriptParseProcedure_QueryInterface(IActiveScriptParseProcedure2 *iface, REFIID riid, void **ppv)
 {
-    JScript *This = ASPARSEPROC_THIS(iface);
-    return IActiveScript_QueryInterface(ACTSCRIPT(This), riid, ppv);
+    JScript *This = impl_from_IActiveScriptParseProcedure2(iface);
+    return IActiveScript_QueryInterface(&This->IActiveScript_iface, riid, ppv);
 }
 
 static ULONG WINAPI JScriptParseProcedure_AddRef(IActiveScriptParseProcedure2 *iface)
 {
-    JScript *This = ASPARSEPROC_THIS(iface);
-    return IActiveScript_AddRef(ACTSCRIPT(This));
+    JScript *This = impl_from_IActiveScriptParseProcedure2(iface);
+    return IActiveScript_AddRef(&This->IActiveScript_iface);
 }
 
 static ULONG WINAPI JScriptParseProcedure_Release(IActiveScriptParseProcedure2 *iface)
 {
-    JScript *This = ASPARSEPROC_THIS(iface);
-    return IActiveScript_Release(ACTSCRIPT(This));
+    JScript *This = impl_from_IActiveScriptParseProcedure2(iface);
+    return IActiveScript_Release(&This->IActiveScript_iface);
 }
 
 static HRESULT WINAPI JScriptParseProcedure_ParseProcedureText(IActiveScriptParseProcedure2 *iface,
@@ -758,7 +757,7 @@ static HRESULT WINAPI JScriptParseProcedure_ParseProcedureText(IActiveScriptPars
         LPCOLESTR pstrItemName, IUnknown *punkContext, LPCOLESTR pstrDelimiter,
         CTXARG_T dwSourceContextCookie, ULONG ulStartingLineNumber, DWORD dwFlags, IDispatch **ppdisp)
 {
-    JScript *This = ASPARSEPROC_THIS(iface);
+    JScript *This = impl_from_IActiveScriptParseProcedure2(iface);
     parser_ctx_t *parser_ctx;
     jsdisp_t *dispex;
     HRESULT hres;
@@ -785,8 +784,6 @@ static HRESULT WINAPI JScriptParseProcedure_ParseProcedureText(IActiveScriptPars
     return S_OK;
 }
 
-#undef ASPARSEPROC_THIS
-
 static const IActiveScriptParseProcedure2Vtbl JScriptParseProcedureVtbl = {
     JScriptParseProcedure_QueryInterface,
     JScriptParseProcedure_AddRef,
@@ -794,30 +791,33 @@ static const IActiveScriptParseProcedure2Vtbl JScriptParseProcedureVtbl = {
     JScriptParseProcedure_ParseProcedureText,
 };
 
-#define ACTSCPPROP_THIS(iface) DEFINE_THIS(JScript, IActiveScriptProperty, iface)
+static inline JScript *impl_from_IActiveScriptProperty(IActiveScriptProperty *iface)
+{
+    return CONTAINING_RECORD(iface, JScript, IActiveScriptProperty_iface);
+}
 
 static HRESULT WINAPI JScriptProperty_QueryInterface(IActiveScriptProperty *iface, REFIID riid, void **ppv)
 {
-    JScript *This = ACTSCPPROP_THIS(iface);
-    return IActiveScript_QueryInterface(ACTSCRIPT(This), riid, ppv);
+    JScript *This = impl_from_IActiveScriptProperty(iface);
+    return IActiveScript_QueryInterface(&This->IActiveScript_iface, riid, ppv);
 }
 
 static ULONG WINAPI JScriptProperty_AddRef(IActiveScriptProperty *iface)
 {
-    JScript *This = ACTSCPPROP_THIS(iface);
-    return IActiveScript_AddRef(ACTSCRIPT(This));
+    JScript *This = impl_from_IActiveScriptProperty(iface);
+    return IActiveScript_AddRef(&This->IActiveScript_iface);
 }
 
 static ULONG WINAPI JScriptProperty_Release(IActiveScriptProperty *iface)
 {
-    JScript *This = ACTSCPPROP_THIS(iface);
-    return IActiveScript_Release(ACTSCRIPT(This));
+    JScript *This = impl_from_IActiveScriptProperty(iface);
+    return IActiveScript_Release(&This->IActiveScript_iface);
 }
 
 static HRESULT WINAPI JScriptProperty_GetProperty(IActiveScriptProperty *iface, DWORD dwProperty,
         VARIANT *pvarIndex, VARIANT *pvarValue)
 {
-    JScript *This = ACTSCPPROP_THIS(iface);
+    JScript *This = impl_from_IActiveScriptProperty(iface);
     FIXME("(%p)->(%x %p %p)\n", This, dwProperty, pvarIndex, pvarValue);
     return E_NOTIMPL;
 }
@@ -825,7 +825,7 @@ static HRESULT WINAPI JScriptProperty_GetProperty(IActiveScriptProperty *iface, 
 static HRESULT WINAPI JScriptProperty_SetProperty(IActiveScriptProperty *iface, DWORD dwProperty,
         VARIANT *pvarIndex, VARIANT *pvarValue)
 {
-    JScript *This = ACTSCPPROP_THIS(iface);
+    JScript *This = impl_from_IActiveScriptProperty(iface);
 
     TRACE("(%p)->(%x %s %s)\n", This, dwProperty, debugstr_variant(pvarIndex), debugstr_variant(pvarValue));
 
@@ -849,8 +849,6 @@ static HRESULT WINAPI JScriptProperty_SetProperty(IActiveScriptProperty *iface, 
     return S_OK;
 }
 
-#undef ACTSCPPROP_THIS
-
 static const IActiveScriptPropertyVtbl JScriptPropertyVtbl = {
     JScriptProperty_QueryInterface,
     JScriptProperty_AddRef,
@@ -859,24 +857,27 @@ static const IActiveScriptPropertyVtbl JScriptPropertyVtbl = {
     JScriptProperty_SetProperty
 };
 
-#define OBJSAFETY_THIS(iface) DEFINE_THIS(JScript, IObjectSafety, iface)
+static inline JScript *impl_from_IObjectSafety(IObjectSafety *iface)
+{
+    return CONTAINING_RECORD(iface, JScript, IObjectSafety_iface);
+}
 
 static HRESULT WINAPI JScriptSafety_QueryInterface(IObjectSafety *iface, REFIID riid, void **ppv)
 {
-    JScript *This = OBJSAFETY_THIS(iface);
-    return IActiveScript_QueryInterface(ACTSCRIPT(This), riid, ppv);
+    JScript *This = impl_from_IObjectSafety(iface);
+    return IActiveScript_QueryInterface(&This->IActiveScript_iface, riid, ppv);
 }
 
 static ULONG WINAPI JScriptSafety_AddRef(IObjectSafety *iface)
 {
-    JScript *This = OBJSAFETY_THIS(iface);
-    return IActiveScript_AddRef(ACTSCRIPT(This));
+    JScript *This = impl_from_IObjectSafety(iface);
+    return IActiveScript_AddRef(&This->IActiveScript_iface);
 }
 
 static ULONG WINAPI JScriptSafety_Release(IObjectSafety *iface)
 {
-    JScript *This = OBJSAFETY_THIS(iface);
-    return IActiveScript_Release(ACTSCRIPT(This));
+    JScript *This = impl_from_IObjectSafety(iface);
+    return IActiveScript_Release(&This->IActiveScript_iface);
 }
 
 #define SUPPORTED_OPTIONS (INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER)
@@ -884,7 +885,7 @@ static ULONG WINAPI JScriptSafety_Release(IObjectSafety *iface)
 static HRESULT WINAPI JScriptSafety_GetInterfaceSafetyOptions(IObjectSafety *iface, REFIID riid,
         DWORD *pdwSupportedOptions, DWORD *pdwEnabledOptions)
 {
-    JScript *This = OBJSAFETY_THIS(iface);
+    JScript *This = impl_from_IObjectSafety(iface);
 
     TRACE("(%p)->(%s %p %p)\n", This, debugstr_guid(riid), pdwSupportedOptions, pdwEnabledOptions);
 
@@ -900,7 +901,7 @@ static HRESULT WINAPI JScriptSafety_GetInterfaceSafetyOptions(IObjectSafety *ifa
 static HRESULT WINAPI JScriptSafety_SetInterfaceSafetyOptions(IObjectSafety *iface, REFIID riid,
         DWORD dwOptionSetMask, DWORD dwEnabledOptions)
 {
-    JScript *This = OBJSAFETY_THIS(iface);
+    JScript *This = impl_from_IObjectSafety(iface);
 
     TRACE("(%p)->(%s %x %x)\n", This, debugstr_guid(riid), dwOptionSetMask, dwEnabledOptions);
 
@@ -910,8 +911,6 @@ static HRESULT WINAPI JScriptSafety_SetInterfaceSafetyOptions(IObjectSafety *ifa
     This->safeopt = dwEnabledOptions & dwEnabledOptions;
     return S_OK;
 }
-
-#undef OBJSAFETY_THIS
 
 static const IObjectSafetyVtbl JScriptSafetyVtbl = {
     JScriptSafety_QueryInterface,
@@ -935,15 +934,15 @@ HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUn
     if(!ret)
         return E_OUTOFMEMORY;
 
-    ret->lpIActiveScriptVtbl                 = &JScriptVtbl;
-    ret->lpIActiveScriptParseVtbl            = &JScriptParseVtbl;
-    ret->lpIActiveScriptParseProcedure2Vtbl  = &JScriptParseProcedureVtbl;
-    ret->lpIActiveScriptPropertyVtbl         = &JScriptPropertyVtbl;
-    ret->lpIObjectSafetyVtbl                 = &JScriptSafetyVtbl;
+    ret->IActiveScript_iface.lpVtbl = &JScriptVtbl;
+    ret->IActiveScriptParse_iface.lpVtbl = &JScriptParseVtbl;
+    ret->IActiveScriptParseProcedure2_iface.lpVtbl = &JScriptParseProcedureVtbl;
+    ret->IActiveScriptProperty_iface.lpVtbl = &JScriptPropertyVtbl;
+    ret->IObjectSafety_iface.lpVtbl = &JScriptSafetyVtbl;
     ret->ref = 1;
     ret->safeopt = INTERFACE_USES_DISPEX;
 
-    hres = IActiveScript_QueryInterface(ACTSCRIPT(ret), riid, ppv);
-    IActiveScript_Release(ACTSCRIPT(ret));
+    hres = IActiveScript_QueryInterface(&ret->IActiveScript_iface, riid, ppv);
+    IActiveScript_Release(&ret->IActiveScript_iface);
     return hres;
 }
