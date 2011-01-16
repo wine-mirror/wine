@@ -6609,7 +6609,7 @@ void device_resource_released(struct IWineD3DDeviceImpl *device, struct IWineD3D
 
     TRACE("device %p, resource %p, type %s.\n", device, resource, debug_d3dresourcetype(type));
 
-    context_resource_released(device, (IWineD3DResource *)resource, type);
+    context_resource_released(device, resource, type);
 
     switch (type)
     {
