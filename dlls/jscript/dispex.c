@@ -420,21 +420,24 @@ static HRESULT fill_protrefs(jsdisp_t *This)
     return S_OK;
 }
 
-#define DISPATCHEX_THIS(iface) DEFINE_THIS(jsdisp_t, IDispatchEx, iface)
+static inline jsdisp_t *impl_from_IDispatchEx(IDispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, jsdisp_t, IDispatchEx_iface);
+}
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
 {
-    jsdisp_t *This = DISPATCHEX_THIS(iface);
+    jsdisp_t *This = impl_from_IDispatchEx(iface);
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = _IDispatchEx_(This);
+        *ppv = &This->IDispatchEx_iface;
     }else if(IsEqualGUID(&IID_IDispatch, riid)) {
         TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = _IDispatchEx_(This);
+        *ppv = &This->IDispatchEx_iface;
     }else if(IsEqualGUID(&IID_IDispatchEx, riid)) {
         TRACE("(%p)->(IID_IDispatchEx %p)\n", This, ppv);
-        *ppv = _IDispatchEx_(This);
+        *ppv = &This->IDispatchEx_iface;
     }else if(IsEqualGUID(&IID_IDispatchJS, riid)) {
         TRACE("(%p)->(IID_IDispatchJS %p)\n", This, ppv);
         jsdisp_addref(This);
@@ -452,7 +455,7 @@ static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid,
 
 static ULONG WINAPI DispatchEx_AddRef(IDispatchEx *iface)
 {
-    jsdisp_t *This = DISPATCHEX_THIS(iface);
+    jsdisp_t *This = impl_from_IDispatchEx(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -462,7 +465,7 @@ static ULONG WINAPI DispatchEx_AddRef(IDispatchEx *iface)
 
 static ULONG WINAPI DispatchEx_Release(IDispatchEx *iface)
 {
-    jsdisp_t *This = DISPATCHEX_THIS(iface);
+    jsdisp_t *This = impl_from_IDispatchEx(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -491,7 +494,7 @@ static ULONG WINAPI DispatchEx_Release(IDispatchEx *iface)
 
 static HRESULT WINAPI DispatchEx_GetTypeInfoCount(IDispatchEx *iface, UINT *pctinfo)
 {
-    jsdisp_t *This = DISPATCHEX_THIS(iface);
+    jsdisp_t *This = impl_from_IDispatchEx(iface);
 
     TRACE("(%p)->(%p)\n", This, pctinfo);
 
@@ -502,7 +505,7 @@ static HRESULT WINAPI DispatchEx_GetTypeInfoCount(IDispatchEx *iface, UINT *pcti
 static HRESULT WINAPI DispatchEx_GetTypeInfo(IDispatchEx *iface, UINT iTInfo, LCID lcid,
                                               ITypeInfo **ppTInfo)
 {
-    jsdisp_t *This = DISPATCHEX_THIS(iface);
+    jsdisp_t *This = impl_from_IDispatchEx(iface);
     FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
     return E_NOTIMPL;
 }
@@ -511,7 +514,7 @@ static HRESULT WINAPI DispatchEx_GetIDsOfNames(IDispatchEx *iface, REFIID riid,
                                                 LPOLESTR *rgszNames, UINT cNames, LCID lcid,
                                                 DISPID *rgDispId)
 {
-    jsdisp_t *This = DISPATCHEX_THIS(iface);
+    jsdisp_t *This = impl_from_IDispatchEx(iface);
     UINT i;
     HRESULT hres;
 
@@ -519,7 +522,7 @@ static HRESULT WINAPI DispatchEx_GetIDsOfNames(IDispatchEx *iface, REFIID riid,
           lcid, rgDispId);
 
     for(i=0; i < cNames; i++) {
-        hres = IDispatchEx_GetDispID(_IDispatchEx_(This), rgszNames[i], 0, rgDispId+i);
+        hres = IDispatchEx_GetDispID(&This->IDispatchEx_iface, rgszNames[i], 0, rgDispId+i);
         if(FAILED(hres))
             return hres;
     }
@@ -531,18 +534,18 @@ static HRESULT WINAPI DispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMember,
                                         REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    jsdisp_t *This = DISPATCHEX_THIS(iface);
+    jsdisp_t *This = impl_from_IDispatchEx(iface);
 
     TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
-    return IDispatchEx_InvokeEx(_IDispatchEx_(This), dispIdMember, lcid, wFlags,
+    return IDispatchEx_InvokeEx(&This->IDispatchEx_iface, dispIdMember, lcid, wFlags,
             pDispParams, pVarResult, pExcepInfo, NULL);
 }
 
 static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
-    jsdisp_t *This = DISPATCHEX_THIS(iface);
+    jsdisp_t *This = impl_from_IDispatchEx(iface);
 
     TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
 
@@ -557,7 +560,7 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
 static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
-    jsdisp_t *This = DISPATCHEX_THIS(iface);
+    jsdisp_t *This = impl_from_IDispatchEx(iface);
     dispex_prop_t *prop;
     jsexcept_t jsexcept;
     HRESULT hres;
@@ -623,7 +626,7 @@ static HRESULT delete_prop(dispex_prop_t *prop)
 
 static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
 {
-    jsdisp_t *This = DISPATCHEX_THIS(iface);
+    jsdisp_t *This = impl_from_IDispatchEx(iface);
     dispex_prop_t *prop;
     HRESULT hres;
 
@@ -645,7 +648,7 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bst
 
 static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID id)
 {
-    jsdisp_t *This = DISPATCHEX_THIS(iface);
+    jsdisp_t *This = impl_from_IDispatchEx(iface);
     dispex_prop_t *prop;
 
     TRACE("(%p)->(%x)\n", This, id);
@@ -661,14 +664,14 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID
 
 static HRESULT WINAPI DispatchEx_GetMemberProperties(IDispatchEx *iface, DISPID id, DWORD grfdexFetch, DWORD *pgrfdex)
 {
-    jsdisp_t *This = DISPATCHEX_THIS(iface);
+    jsdisp_t *This = impl_from_IDispatchEx(iface);
     FIXME("(%p)->(%x %x %p)\n", This, id, grfdexFetch, pgrfdex);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI DispatchEx_GetMemberName(IDispatchEx *iface, DISPID id, BSTR *pbstrName)
 {
-    jsdisp_t *This = DISPATCHEX_THIS(iface);
+    jsdisp_t *This = impl_from_IDispatchEx(iface);
     dispex_prop_t *prop;
 
     TRACE("(%p)->(%x %p)\n", This, id, pbstrName);
@@ -686,7 +689,7 @@ static HRESULT WINAPI DispatchEx_GetMemberName(IDispatchEx *iface, DISPID id, BS
 
 static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex, DISPID id, DISPID *pid)
 {
-    jsdisp_t *This = DISPATCHEX_THIS(iface);
+    jsdisp_t *This = impl_from_IDispatchEx(iface);
     dispex_prop_t *iter;
     HRESULT hres;
 
@@ -718,12 +721,10 @@ static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex,
 
 static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown **ppunk)
 {
-    jsdisp_t *This = DISPATCHEX_THIS(iface);
+    jsdisp_t *This = impl_from_IDispatchEx(iface);
     FIXME("(%p)->(%p)\n", This, ppunk);
     return E_NOTIMPL;
 }
-
-#undef DISPATCHEX_THIS
 
 static IDispatchExVtbl DispatchExVtbl = {
     DispatchEx_QueryInterface,
@@ -747,7 +748,7 @@ HRESULT init_dispex(jsdisp_t *dispex, script_ctx_t *ctx, const builtin_info_t *b
 {
     TRACE("%p (%p)\n", dispex, prototype);
 
-    dispex->lpIDispatchExVtbl = &DispatchExVtbl;
+    dispex->IDispatchEx_iface.lpVtbl = &DispatchExVtbl;
     dispex->ref = 1;
     dispex->builtin_info = builtin_info;
 

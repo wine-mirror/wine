@@ -170,7 +170,7 @@ typedef struct {
 } builtin_info_t;
 
 struct jsdisp_t {
-    const IDispatchExVtbl  *lpIDispatchExVtbl;
+    IDispatchEx IDispatchEx_iface;
 
     LONG ref;
 
@@ -184,21 +184,19 @@ struct jsdisp_t {
     const builtin_info_t *builtin_info;
 };
 
-#define _IDispatchEx_(x) ((IDispatchEx*) &(x)->lpIDispatchExVtbl)
-
 static inline IDispatch *to_disp(jsdisp_t *jsdisp)
 {
-    return (IDispatch*)&jsdisp->lpIDispatchExVtbl;
+    return (IDispatch*)&jsdisp->IDispatchEx_iface;
 }
 
 static inline void jsdisp_addref(jsdisp_t *jsdisp)
 {
-    IDispatchEx_AddRef(_IDispatchEx_(jsdisp));
+    IDispatchEx_AddRef(&jsdisp->IDispatchEx_iface);
 }
 
 static inline void jsdisp_release(jsdisp_t *jsdisp)
 {
-    IDispatchEx_Release(_IDispatchEx_(jsdisp));
+    IDispatchEx_Release(&jsdisp->IDispatchEx_iface);
 }
 
 HRESULT create_dispex(script_ctx_t*,const builtin_info_t*,jsdisp_t*,jsdisp_t**);
