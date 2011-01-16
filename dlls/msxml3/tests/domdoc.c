@@ -1809,12 +1809,14 @@ todo_wine
         ok ( str != NULL, "str is null\n");
         ok( !lstrcmpW( str, szdl ), "incorrect node name\n");
         SysFreeString( str );
+        IXMLDOMNode_Release( node );
 
         /* test sequential access of attributes */
         node = NULL;
         r = IXMLDOMNamedNodeMap_nextNode( map, &node );
         ok ( r == S_OK, "nextNode (first time) wrong code\n");
         ok ( node != NULL, "nextNode, should be attribute\n");
+        IXMLDOMNode_Release( node );
 
         r = IXMLDOMNamedNodeMap_nextNode( map, &node );
         ok ( r != S_OK, "nextNode (second time) wrong code\n");
@@ -2977,6 +2979,7 @@ static void test_removeChild(void)
     r = IXMLDOMElement_removeChild( element, fo_node, &temp_node );
     ok( r == E_INVALIDARG, "ret %08x\n", r);
     ok( temp_node == NULL, "%p\n", temp_node );
+    IXMLDOMNode_Release( fo_node );
 
     /* the removed node has no parent anymore */
     r = IXMLDOMNode_get_parentNode( removed_node, &temp_node );
@@ -2996,6 +2999,7 @@ static void test_removeChild(void)
     /* MS quirk: passing wrong interface pointer works, too */
     r = IXMLDOMElement_removeChild( element, (IXMLDOMNode*)lc_element, NULL );
     ok( r == S_OK, "ret %08x\n", r);
+    IXMLDOMElement_Release( lc_element );
 
     r = IXMLDOMNode_get_parentNode( lc_node, &temp_node );
     ok( r == S_FALSE, "ret %08x\n", r);
@@ -3065,6 +3069,7 @@ static void test_replaceChild(void)
     r = IXMLDOMElement_replaceChild( element, lc_node, ba_node, &removed_node );
     ok( r == E_INVALIDARG, "ret %08x\n", r );
     ok( removed_node == NULL, "%p\n", removed_node );
+    IXMLDOMNode_Release( lc_node );
 
     /* invalid parameter: would create loop */
     removed_node = (void*)0xdeadbeef;
@@ -3100,6 +3105,7 @@ static void test_replaceChild(void)
 
     r = IXMLDOMElement_replaceChild( element, ba_node, (IXMLDOMNode*)ba_element, &removed_node );
     ok( r == S_OK, "ret %08x\n", r );
+    IXMLDOMElement_Release( ba_element );
 
     r = IXMLDOMNodeList_get_length( fo_list, &len);
     ok( r == S_OK, "ret %08x\n", r );
@@ -5622,6 +5628,7 @@ static void test_DocumentSaveToDocument(void)
             SysFreeString(sOrig);
             SysFreeString(sNew);
         }
+        IXMLDOMElement_Release(pRoot);
     }
 
     IXMLDOMDocument_Release(doc2);
@@ -6591,8 +6598,7 @@ static void test_XSLPattern(void)
     len = 0;
     ole_check(IXMLDOMNodeList_get_length(list, &len));
     ok(len == 0, "expected empty list\n");
-    if (len)
-        IXMLDOMNodeList_Release(list);
+    IXMLDOMNodeList_Release(list);
 
     ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//foo:c"), &list));
     len = 0;
@@ -6620,8 +6626,7 @@ static void test_XSLPattern(void)
     len = 0;
     ole_check(IXMLDOMNodeList_get_length(list, &len));
     ok(len == 0, "expected empty list\n");
-    if (len)
-        IXMLDOMNodeList_Release(list);
+    IXMLDOMNodeList_Release(list);
 
     IXMLDOMDocument2_Release(doc);
 
@@ -6637,29 +6642,25 @@ static void test_XSLPattern(void)
     len = 0;
     ole_check(IXMLDOMNodeList_get_length(list, &len));
     ok(len == 0, "expected empty list\n");
-    if (len)
-        IXMLDOMNodeList_Release(list);
+    IXMLDOMNodeList_Release(list);
 
     ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("attribute('depth')"), &list));
     len = 0;
     ole_check(IXMLDOMNodeList_get_length(list, &len));
     ok(len == 0, "expected empty list\n");
-    if (len)
-        IXMLDOMNodeList_Release(list);
+    IXMLDOMNodeList_Release(list);
 
     ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root/attribute('depth')"), &list));
     len = 0;
     ole_check(IXMLDOMNodeList_get_length(list, &len));
     ok(len != 0, "expected filled list\n");
-    if (len)
-        expect_list_and_release(list, "A'depth'.E3.D1");
+    expect_list_and_release(list, "A'depth'.E3.D1");
 
     ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//x/attribute()"), &list));
     len = 0;
     ole_check(IXMLDOMNodeList_get_length(list, &len));
     ok(len != 0, "expected filled list\n");
-    if (len)
-        expect_list_and_release(list, "A'id'.E3.E3.D1 A'depth'.E3.E3.D1");
+    expect_list_and_release(list, "A'id'.E3.E3.D1 A'depth'.E3.E3.D1");
 
     list = NULL;
     ole_expect(IXMLDOMDocument2_selectNodes(doc, _bstr_("//x//attribute(id)"), &list), E_FAIL);
@@ -7184,7 +7185,7 @@ static void test_get_ownerDocument(void)
     check_default_props(doc_owner);
     check_default_props(doc);
 
-
+    IXMLDOMSchemaCollection_Release(cache);
     IXMLDOMDocument_Release(doc1);
     IXMLDOMDocument_Release(doc2);
     IXMLDOMDocument_Release(doc3);
@@ -7608,6 +7609,7 @@ static void test_put_nodeTypedValue(void)
        "got %s, expected \"1\"\n", wine_dbgstr_w(V_BSTR(&type)));
     VariantClear(&type);
 
+    IXMLDOMElement_Release(elem);
     IXMLDOMDocument_Release(doc);
     free_bstrs();
 }
@@ -7655,6 +7657,7 @@ static void test_get_xml(void)
     SysFreeString(xml);
 
     IXMLDOMDocument_Release(doc);
+    free_bstrs();
 }
 
 START_TEST(domdoc)
