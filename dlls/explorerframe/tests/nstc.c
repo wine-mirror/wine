@@ -2381,6 +2381,9 @@ static void test_events(void)
         HeapFree(GetProcessHeap(), 0, pnstceimpl);
         HeapFree(GetProcessHeap(), 0, pnstceimpl2);
     }
+
+    IShellItem_Release(psi);
+    IShellItem_Release(psidesktop);
 }
 
 static void setup_window(void)
