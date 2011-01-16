@@ -3005,19 +3005,16 @@ GetCharacterPlacementW(
  */
 BOOL WINAPI GetCharABCWidthsFloatA( HDC hdc, UINT first, UINT last, LPABCFLOAT abcf )
 {
-    INT i, wlen, count = (INT)(last - first + 1);
+    INT i, wlen;
     LPSTR str;
     LPWSTR wstr;
     BOOL ret = TRUE;
 
-    if (count <= 0) return FALSE;
+    str = FONT_GetCharsByRangeA(first, last, &i);
+    if (str == NULL)
+        return FALSE;
 
-    str = HeapAlloc(GetProcessHeap(), 0, count);
-
-    for(i = 0; i < count; i++)
-        str[i] = (BYTE)(first + i);
-
-    wstr = FONT_mbtowc( hdc, str, count, &wlen, NULL );
+    wstr = FONT_mbtowc( hdc, str, i, &wlen, NULL );
 
     for (i = 0; i < wlen; i++)
     {
