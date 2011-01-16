@@ -4216,6 +4216,7 @@ BOOL WINAPI RSAENH_CPSetHashParam(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwPa
 
             if (pCryptKey->aiAlgid == CALG_HMAC && !pCryptKey->dwKeyLen) {
                 HCRYPTHASH hKeyHash;
+                DWORD keyLen;
 
                 if (!RSAENH_CPCreateHash(hProv, ((PHMAC_INFO)pbData)->HashAlgid, 0, 0,
                     &hKeyHash))
@@ -4226,13 +4227,14 @@ BOOL WINAPI RSAENH_CPSetHashParam(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwPa
                     RSAENH_CPDestroyHash(hProv, hKeyHash);
                     return FALSE;
                 }
-                pCryptKey->dwKeyLen = sizeof(pCryptKey->abKeyValue);
+                keyLen = sizeof(pCryptKey->abKeyValue);
                 if (!RSAENH_CPGetHashParam(hProv, hKeyHash, HP_HASHVAL, pCryptKey->abKeyValue,
-                    &pCryptKey->dwKeyLen, 0))
+                    &keyLen, 0))
                 {
                     RSAENH_CPDestroyHash(hProv, hKeyHash);
                     return FALSE;
                 }
+                pCryptKey->dwKeyLen = keyLen;
                 RSAENH_CPDestroyHash(hProv, hKeyHash);
             }
             for (i=0; i<RSAENH_MIN(pCryptKey->dwKeyLen,pCryptHash->pHMACInfo->cbInnerString); i++) {
