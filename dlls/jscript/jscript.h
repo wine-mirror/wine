@@ -525,5 +525,3 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
 
     return ret;
 }
-
-#define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))

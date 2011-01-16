@@ -154,27 +154,28 @@ static HRESULT set_ctx_site(JScript *This)
 }
 
 typedef struct {
-    const IServiceProviderVtbl *lpIServiceProviderVtbl;
+    IServiceProvider IServiceProvider_iface;
 
     LONG ref;
 
     IServiceProvider *sp;
 } AXSite;
 
-#define SERVPROV(x)  ((IServiceProvider*) &(x)->lpIServiceProviderVtbl)
-
-#define SERVPROV_THIS(iface) DEFINE_THIS(AXSite, IServiceProvider, iface)
+static inline AXSite *impl_from_IServiceProvider(IServiceProvider *iface)
+{
+    return CONTAINING_RECORD(iface, AXSite, IServiceProvider_iface);
+}
 
 static HRESULT WINAPI AXSite_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
 {
-    AXSite *This = SERVPROV_THIS(iface);
+    AXSite *This = impl_from_IServiceProvider(iface);
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = SERVPROV(This);
+        *ppv = &This->IServiceProvider_iface;
     }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
         TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
-        *ppv = SERVPROV(This);
+        *ppv = &This->IServiceProvider_iface;
     }else {
         TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
@@ -187,7 +188,7 @@ static HRESULT WINAPI AXSite_QueryInterface(IServiceProvider *iface, REFIID riid
 
 static ULONG WINAPI AXSite_AddRef(IServiceProvider *iface)
 {
-    AXSite *This = SERVPROV_THIS(iface);
+    AXSite *This = impl_from_IServiceProvider(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -197,7 +198,7 @@ static ULONG WINAPI AXSite_AddRef(IServiceProvider *iface)
 
 static ULONG WINAPI AXSite_Release(IServiceProvider *iface)
 {
-    AXSite *This = SERVPROV_THIS(iface);
+    AXSite *This = impl_from_IServiceProvider(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -211,14 +212,12 @@ static ULONG WINAPI AXSite_Release(IServiceProvider *iface)
 static HRESULT WINAPI AXSite_QueryService(IServiceProvider *iface,
         REFGUID guidService, REFIID riid, void **ppv)
 {
-    AXSite *This = SERVPROV_THIS(iface);
+    AXSite *This = impl_from_IServiceProvider(iface);
 
     TRACE("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
 
     return IServiceProvider_QueryService(This->sp, guidService, riid, ppv);
 }
-
-#undef SERVPROV_THIS
 
 static IServiceProviderVtbl AXSiteVtbl = {
     AXSite_QueryInterface,
@@ -245,11 +244,11 @@ IUnknown *create_ax_site(script_ctx_t *ctx)
         return NULL;
     }
 
-    ret->lpIServiceProviderVtbl = &AXSiteVtbl;
+    ret->IServiceProvider_iface.lpVtbl = &AXSiteVtbl;
     ret->ref = 1;
     ret->sp = sp;
 
-    return (IUnknown*)SERVPROV(ret);
+    return (IUnknown*)&ret->IServiceProvider_iface;
 }
 
 static inline JScript *impl_from_IActiveScript(IActiveScript *iface)
