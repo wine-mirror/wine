@@ -94,8 +94,11 @@ static HRESULT ebrowser_initialize(IExplorerBrowser *peb)
 static HRESULT ebrowser_browse_to_desktop(IExplorerBrowser *peb)
 {
     LPITEMIDLIST pidl_desktop;
+    HRESULT hr;
     SHGetSpecialFolderLocation (hwnd, CSIDL_DESKTOP, &pidl_desktop);
-    return IExplorerBrowser_BrowseToIDList(peb, pidl_desktop, 0);
+    hr = IExplorerBrowser_BrowseToIDList(peb, pidl_desktop, 0);
+    ILFree(pidl_desktop);
+    return hr;
 }
 
 /* Process some messages */
