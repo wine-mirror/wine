@@ -765,7 +765,7 @@ static LONG_PTR WINAPI template_hook_arrange(HWND dlgChild, UINT msg, WPARAM wPa
                 /* special case: there is a control with id stc32 */
                 /* expected height */
                 expecty = posz0[withhelp].cy;
-                if( rcStc32.bottom - rcStc32.top > clrcParent.bottom) {
+                if( rcStc32.bottom - rcStc32.top + (withhelp ? 0 : fixhelp) > clrcParent.bottom) {
                     expecty +=  clrcChild.bottom -  clrcParent.bottom;
                     if( !withhelp) expecty += fixhelp;
                 }
