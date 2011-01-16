@@ -662,6 +662,8 @@ static void test_hashes(void)
                    sizeof(signed_ssl3_shamd5_hash));
         printBytes("got", pbSigValue, len);
     }
+    result = CryptDestroyKey(hKeyExchangeKey);
+    ok(result, "CryptDestroyKey failed 0x%08x\n", GetLastError());
     result = CryptDestroyHash(hHash);
     ok(result, "CryptDestroyHash failed 0x%08x\n", GetLastError());
     result = CryptReleaseContext(prov, 0);
