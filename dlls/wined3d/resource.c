@@ -88,7 +88,7 @@ HRESULT resource_init(struct IWineD3DResourceImpl *resource, WINED3DRESOURCETYPE
         WineD3DAdapterChangeGLRam(device, size);
     }
 
-    device_resource_add(device, (IWineD3DResource *)resource);
+    device_resource_add(device, resource);
 
     return WINED3D_OK;
 }

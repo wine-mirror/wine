@@ -6588,20 +6588,11 @@ static void WINAPI IWineD3DDeviceImpl_GetGammaRamp(IWineD3DDevice *iface, UINT i
     }
 }
 
-
-/** ********************************************************
-*   Notification functions
-** ********************************************************/
-/** This function must be called in the release of a resource when ref == 0,
-* the contents of resource must still be correct,
-* any handles to other resource held by the caller must be closed
-* (e.g. a texture should release all held surfaces because telling the device that it's been released.)
- *****************************************************/
-void device_resource_add(IWineD3DDeviceImpl *This, IWineD3DResource *resource)
+void device_resource_add(struct IWineD3DDeviceImpl *device, struct IWineD3DResourceImpl *resource)
 {
-    TRACE("(%p) : Adding resource %p\n", This, resource);
+    TRACE("device %p, resource %p.\n", device, resource);
 
-    list_add_head(&This->resources, &((IWineD3DResourceImpl *) resource)->resource.resource_list_entry);
+    list_add_head(&device->resources, &resource->resource.resource_list_entry);
 }
 
 static void device_resource_remove(struct IWineD3DDeviceImpl *device, struct IWineD3DResourceImpl *resource)
