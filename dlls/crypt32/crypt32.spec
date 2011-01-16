@@ -77,6 +77,7 @@
 @ stdcall CertOpenSystemStoreW(long wstr)
 @ stdcall CertRDNValueToStrA(long ptr ptr long)
 @ stdcall CertRDNValueToStrW(long ptr ptr long)
+@ stdcall CertRegisterPhysicalStore(ptr long wstr ptr ptr)
 @ stdcall CertRemoveEnhancedKeyUsageIdentifier(ptr str)
 @ stdcall CertRemoveStoreFromCollection(ptr ptr)
 @ stdcall CertSaveStore(ptr long long long ptr long)
