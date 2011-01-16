@@ -2317,7 +2317,7 @@ BOOL WINAPI GetCharABCWidthsA(HDC hdc, UINT firstChar, UINT lastChar,
     }
     str[i] = '\0';
 
-    wstr = FONT_mbtowc(hdc, str, -1, &wlen, NULL);
+    wstr = FONT_mbtowc(hdc, str, i, &wlen, NULL);
     if (wstr == NULL)
     {
         HeapFree(GetProcessHeap(), 0, str);

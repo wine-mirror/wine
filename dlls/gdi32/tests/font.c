@@ -988,7 +988,6 @@ static void test_GetCharABCWidths(void)
         memset(full, 0xcc, sizeof full);
         ret = pGetCharABCWidthsA(hdc, 0x00, code, full);
         ok(ret, "GetCharABCWidthsA should have succeeded\n");
-        todo_wine
         ok(memcmp(&a[0], &full[code], sizeof(ABC)) == 0,
            "GetCharABCWidthsA info should match. codepage = %u\n", c[i].cs);
 
