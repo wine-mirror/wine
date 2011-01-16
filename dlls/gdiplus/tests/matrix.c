@@ -249,12 +249,12 @@ static void test_constructor3(void)
     stat = GdipGetMatrixElements(matrix, values);
     expect(Ok, stat);
 
-    todo_wine expectf(1.0, values[0]);
-    todo_wine expectf(0.0, values[1]);
-    todo_wine expectf(0.0, values[2]);
-    todo_wine expectf(1.0, values[3]);
-    todo_wine expectf(0.0, values[4]);
-    todo_wine expectf(0.0, values[5]);
+    expectf(1.0, values[0]);
+    expectf(0.0, values[1]);
+    expectf(0.0, values[2]);
+    expectf(1.0, values[3]);
+    expectf(0.0, values[4]);
+    expectf(0.0, values[5]);
 
     GdipDeleteMatrix(matrix);
 
@@ -271,12 +271,12 @@ static void test_constructor3(void)
     stat = GdipGetMatrixElements(matrix, values);
     expect(Ok, stat);
 
-    todo_wine expectf(2.0, values[0]);
-    todo_wine expectf(0.0, values[1]);
-    todo_wine expectf(0.0, values[2]);
-    todo_wine expectf(1.0, values[3]);
-    todo_wine expectf(0.0, values[4]);
-    todo_wine expectf(0.0, values[5]);
+    expectf(2.0, values[0]);
+    expectf(0.0, values[1]);
+    expectf(0.0, values[2]);
+    expectf(1.0, values[3]);
+    expectf(0.0, values[4]);
+    expectf(0.0, values[5]);
 
     GdipDeleteMatrix(matrix);
 
@@ -293,12 +293,12 @@ static void test_constructor3(void)
     stat = GdipGetMatrixElements(matrix, values);
     expect(Ok, stat);
 
-    todo_wine expectf(1.0, values[0]);
-    todo_wine expectf(1.0, values[1]);
-    todo_wine expectf(0.0, values[2]);
-    todo_wine expectf(1.0, values[3]);
-    todo_wine expectf(0.0, values[4]);
-    todo_wine expectf(0.0, values[5]);
+    expectf(1.0, values[0]);
+    expectf(1.0, values[1]);
+    expectf(0.0, values[2]);
+    expectf(1.0, values[3]);
+    expectf(0.0, values[4]);
+    expectf(0.0, values[5]);
 
     GdipDeleteMatrix(matrix);}
 

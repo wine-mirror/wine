@@ -85,20 +85,20 @@ GpStatus WINGDIPAPI GdipCreateMatrix2(REAL m11, REAL m12, REAL m21, REAL m22,
 GpStatus WINGDIPAPI GdipCreateMatrix3(GDIPCONST GpRectF *rect,
     GDIPCONST GpPointF *pt, GpMatrix **matrix)
 {
+    REAL m11, m12, m21, m22, dx, dy;
     TRACE("(%p, %p, %p)\n", rect, pt, matrix);
 
     if(!matrix || !pt)
         return InvalidParameter;
 
-    *matrix = GdipAlloc(sizeof(GpMatrix));
-    if(!*matrix)    return OutOfMemory;
+    m11 = (pt[1].X - pt[0].X) / rect->Width;
+    m21 = (pt[2].X - pt[0].X) / rect->Height;
+    dx = pt[0].X - m11 * rect->X - m21 * rect->Y;
+    m12 = (pt[1].Y - pt[0].Y) / rect->Width;
+    m22 = (pt[2].Y - pt[0].Y) / rect->Height;
+    dy = pt[0].Y - m12 * rect->X - m22 * rect->Y;
 
-    memcpy((*matrix)->matrix, rect, 4 * sizeof(REAL));
-
-    (*matrix)->matrix[4] = pt->X;
-    (*matrix)->matrix[5] = pt->Y;
-
-    return Ok;
+    return GdipCreateMatrix2(m11, m12, m21, m22, dx, dy, matrix);
 }
 
 GpStatus WINGDIPAPI GdipCreateMatrix3I(GDIPCONST GpRect *rect, GDIPCONST GpPoint *pt,
