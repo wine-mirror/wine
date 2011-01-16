@@ -1615,18 +1615,16 @@ BOOL WINAPI GetCharWidth32W( HDC hdc, UINT firstChar, UINT lastChar,
 BOOL WINAPI GetCharWidth32A( HDC hdc, UINT firstChar, UINT lastChar,
                                LPINT buffer )
 {
-    INT i, wlen, count = (INT)(lastChar - firstChar + 1);
+    INT i, wlen;
     LPSTR str;
     LPWSTR wstr;
     BOOL ret = TRUE;
 
-    if(count <= 0) return FALSE;
+    str = FONT_GetCharsByRangeA(firstChar, lastChar, &i);
+    if(str == NULL)
+        return FALSE;
 
-    str = HeapAlloc(GetProcessHeap(), 0, count);
-    for(i = 0; i < count; i++)
-	str[i] = (BYTE)(firstChar + i);
-
-    wstr = FONT_mbtowc(hdc, str, count, &wlen, NULL);
+    wstr = FONT_mbtowc(hdc, str, i, &wlen, NULL);
 
     for(i = 0; i < wlen; i++)
     {
