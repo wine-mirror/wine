@@ -35,12 +35,41 @@
 
 #include "initguid.h"
 
+#define DEFINE_EXPECT(func) \
+    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+
+#define SET_EXPECT(func) \
+    expect_ ## func = TRUE
+
+#define CHECK_EXPECT(func) \
+    do { \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
+        expect_ ## func = FALSE; \
+        called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_EXPECT2(func) \
+    do { \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
+        called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_CALLED(func) \
+    do { \
+        ok(called_ ## func, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
+DEFINE_EXPECT(ParseUrl_SECURITY_URL_input);
+DEFINE_EXPECT(ParseUrl_SECURITY_URL_expected);
+DEFINE_EXPECT(ParseUrl_SECURITY_DOMAIN_expected);
 
 static HRESULT (WINAPI *pCoInternetCreateSecurityManager)(IServiceProvider *, IInternetSecurityManager**, DWORD);
 static HRESULT (WINAPI *pCoInternetCreateZoneManager)(IServiceProvider *, IInternetZoneManager**, DWORD);
 static HRESULT (WINAPI *pCoInternetGetSecurityUrl)(LPCWSTR, LPWSTR*, PSUACTION, DWORD);
 static HRESULT (WINAPI *pCoInternetGetSecurityUrlEx)(IUri*, IUri**, PSUACTION, DWORD_PTR);
 static HRESULT (WINAPI *pCreateUri)(LPCWSTR, DWORD, DWORD_PTR, IUri**);
+static HRESULT (WINAPI *pCoInternetGetSession)(DWORD, IInternetSession**, DWORD);
 
 static const WCHAR url1[] = {'r','e','s',':','/','/','m','s','h','t','m','l','.','d','l','l',
         '/','b','l','a','n','k','.','h','t','m',0};
@@ -62,6 +91,9 @@ static const WCHAR url10[] = {'f','i','l','e',':','/','/','s','o','m','e','%','2
 static const WCHAR url4e[] = {'f','i','l','e',':','s','o','m','e',' ','f','i','l','e',
         '.','j','p','g',0};
 
+static const WCHAR winetestW[] = {'w','i','n','e','t','e','s','t',0};
+static const WCHAR security_urlW[] = {'w','i','n','e','t','e','s','t',':','t','e','s','t','i','n','g',0};
+static const WCHAR security_expectedW[] = {'w','i','n','e','t','e','s','t',':','z','i','p',0};
 
 static const BYTE secid1[] = {'f','i','l','e',':',0,0,0,0};
 static const BYTE secid5[] = {'h','t','t','p',':','w','w','w','.','z','o','n','e','3',
@@ -710,6 +742,174 @@ static void test_InternetGetSecurityUrl(void)
     }
 }
 
+static HRESULT WINAPI InternetProtocolInfo_QueryInterface(IInternetProtocolInfo *iface,
+                                                          REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI InternetProtocolInfo_AddRef(IInternetProtocolInfo *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI InternetProtocolInfo_Release(IInternetProtocolInfo *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI InternetProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, LPCWSTR pwzUrl,
+        PARSEACTION ParseAction, DWORD dwParseFlags, LPWSTR pwzResult, DWORD cchResult,
+        DWORD *pcchResult, DWORD dwReserved)
+{
+    switch(ParseAction) {
+    case PARSE_SECURITY_URL:
+        if(!strcmp_w(pwzUrl, security_urlW)) {
+            CHECK_EXPECT(ParseUrl_SECURITY_URL_input);
+
+            ok(cchResult == lstrlenW(security_urlW)+1, "Got %d\n", cchResult);
+            ok(!dwParseFlags, "Expected 0, but got 0x%08x\n", dwParseFlags);
+        } else if(!strcmp_w(pwzUrl, security_expectedW)) {
+            CHECK_EXPECT(ParseUrl_SECURITY_URL_expected);
+
+            ok(cchResult == lstrlenW(security_expectedW)+1, "Got %d\n", cchResult);
+            ok(!dwParseFlags, "Expected 0, but got 0x%08x\n", dwParseFlags);
+        } else
+            ok(0, "Unexpected call, pwzUrl=%s\n", wine_dbgstr_w(pwzUrl));
+
+        break;
+    case PARSE_SECURITY_DOMAIN:
+        CHECK_EXPECT(ParseUrl_SECURITY_DOMAIN_expected);
+
+        ok(!strcmp_w(pwzUrl, security_expectedW), "Expected %s but got %s\n",
+            wine_dbgstr_w(security_expectedW), wine_dbgstr_w(pwzUrl));
+        ok(!dwParseFlags, "Expected 0, but got 0x%08x\n", dwParseFlags);
+        ok(cchResult == lstrlenW(security_expectedW)+1, "Got %d\n", cchResult);
+
+        break;
+    default:
+        ok(0, "Unexpected call, ParseAction=%d pwzUrl=%s\n", ParseAction,
+            wine_dbgstr_w(pwzUrl));
+    }
+
+    memcpy(pwzResult, security_expectedW, sizeof(security_expectedW));
+    *pcchResult = lstrlenW(security_expectedW);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI InternetProtocolInfo_CombineUrl(IInternetProtocolInfo *iface,
+        LPCWSTR pwzBaseUrl, LPCWSTR pwzRelativeUrl, DWORD dwCombineFlags,
+        LPWSTR pwzResult, DWORD cchResult, DWORD *pcchResult, DWORD dwReserved)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InternetProtocolInfo_CompareUrl(IInternetProtocolInfo *iface,
+        LPCWSTR pwzUrl1, LPCWSTR pwzUrl2, DWORD dwCompareFlags)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InternetProtocolInfo_QueryInfo(IInternetProtocolInfo *iface,
+        LPCWSTR pwzUrl, QUERYOPTION OueryOption, DWORD dwQueryFlags, LPVOID pBuffer,
+        DWORD cbBuffer, DWORD *pcbBuf, DWORD dwReserved)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IInternetProtocolInfoVtbl InternetProtocolInfoVtbl = {
+    InternetProtocolInfo_QueryInterface,
+    InternetProtocolInfo_AddRef,
+    InternetProtocolInfo_Release,
+    InternetProtocolInfo_ParseUrl,
+    InternetProtocolInfo_CombineUrl,
+    InternetProtocolInfo_CompareUrl,
+    InternetProtocolInfo_QueryInfo
+};
+
+static IInternetProtocolInfo protocol_info = { &InternetProtocolInfoVtbl };
+
+static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IInternetProtocolInfo, riid)) {
+        *ppv = &protocol_info;
+        return S_OK;
+    }
+
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown *pOuter,
+                                        REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
+{
+    ok(0, "unexpected call\n");
+    return S_OK;
+}
+
+static const IClassFactoryVtbl ClassFactoryVtbl = {
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    ClassFactory_CreateInstance,
+    ClassFactory_LockServer
+};
+
+static IClassFactory protocol_cf = { &ClassFactoryVtbl };
+
+static void register_protocols(void)
+{
+    IInternetSession *session;
+    HRESULT hres;
+
+    hres = pCoInternetGetSession(0, &session, 0);
+    ok(hres == S_OK, "CoInternetGetSession failed: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IInternetSession_RegisterNameSpace(session, &protocol_cf, &IID_NULL,
+            winetestW, 0, NULL, 0);
+    ok(hres == S_OK, "RegisterNameSpace failed: %08x\n", hres);
+
+    IInternetSession_Release(session);
+}
+
+static void unregister_protocols(void) {
+    IInternetSession *session;
+    HRESULT hr;
+
+    hr = pCoInternetGetSession(0, &session, 0);
+    ok(hr == S_OK, "CoInternetGetSession failed: 0x%08x\n", hr);
+    if(FAILED(hr))
+        return;
+
+    hr = IInternetSession_UnregisterNameSpace(session, &protocol_cf, winetestW);
+    ok(hr == S_OK, "UnregisterNameSpace failed: 0x%08x\n", hr);
+
+    IInternetSession_Release(session);
+}
+
 static const struct {
     const char  *uri;
     DWORD       create_flags;
@@ -826,6 +1026,73 @@ static void test_InternetGetSecurityUrlEx(void)
     }
 }
 
+static void test_InternetGetSecurityUrlEx_Pluggable(void)
+{
+    HRESULT hr;
+    IUri *uri = NULL;
+
+    register_protocols();
+
+    hr = pCreateUri(security_urlW, 0, 0, &uri);
+    ok(hr == S_OK, "CreateUri returned 0x%08x\n", hr);
+    if(hr == S_OK) {
+        IUri *result = NULL;
+
+        SET_EXPECT(ParseUrl_SECURITY_URL_input);
+        SET_EXPECT(ParseUrl_SECURITY_URL_expected);
+        SET_EXPECT(ParseUrl_SECURITY_DOMAIN_expected);
+
+        hr = pCoInternetGetSecurityUrlEx(uri, &result, PSU_DEFAULT, 0);
+        ok(hr == S_OK, "CoInternetGetSecurityUrlEx returned 0x%08x, expected S_OK\n", hr);
+
+        todo_wine CHECK_CALLED(ParseUrl_SECURITY_URL_input);
+        todo_wine CHECK_CALLED(ParseUrl_SECURITY_URL_expected);
+        todo_wine CHECK_CALLED(ParseUrl_SECURITY_DOMAIN_expected);
+
+        if(hr == S_OK) {
+            BSTR received = NULL;
+
+            hr = IUri_GetAbsoluteUri(result, &received);
+            ok(hr == S_OK, "GetAbsoluteUri returned 0x%08x\n", hr);
+            if(hr == S_OK) {
+                todo_wine
+                    ok(!strcmp_w(security_expectedW, received), "Expected %s but got %s\n",
+                        wine_dbgstr_w(security_expectedW), wine_dbgstr_w(received));
+            }
+            SysFreeString(received);
+        }
+        if(result) IUri_Release(result);
+
+        result = NULL;
+
+        SET_EXPECT(ParseUrl_SECURITY_URL_input);
+        SET_EXPECT(ParseUrl_SECURITY_URL_expected);
+
+        hr = pCoInternetGetSecurityUrlEx(uri, &result, PSU_SECURITY_URL_ONLY, 0);
+        ok(hr == S_OK, "CoInternetGetSecurityUrlEx returned 0x%08x, expected S_OK\n", hr);
+
+        todo_wine CHECK_CALLED(ParseUrl_SECURITY_URL_input);
+        todo_wine CHECK_CALLED(ParseUrl_SECURITY_URL_expected);
+
+        if(hr == S_OK) {
+            BSTR received = NULL;
+
+            hr = IUri_GetAbsoluteUri(result, &received);
+            ok(hr == S_OK, "GetAbsoluteUri returned 0x%08x\n", hr);
+            if(hr == S_OK) {
+                todo_wine
+                    ok(!strcmp_w(security_expectedW, received), "Expected %s but got %s\n",
+                        wine_dbgstr_w(security_expectedW), wine_dbgstr_w(received));
+            }
+            SysFreeString(received);
+        }
+        if(result) IUri_Release(result);
+    }
+    if(uri) IUri_Release(uri);
+
+    unregister_protocols();
+}
+
 START_TEST(sec_mgr)
 {
     HMODULE hurlmon;
@@ -836,6 +1103,7 @@ START_TEST(sec_mgr)
     pCoInternetGetSecurityUrl = (void*) GetProcAddress(hurlmon, "CoInternetGetSecurityUrl");
     pCoInternetGetSecurityUrlEx = (void*) GetProcAddress(hurlmon, "CoInternetGetSecurityUrlEx");
     pCreateUri = (void*) GetProcAddress(hurlmon, "CreateUri");
+    pCoInternetGetSession = (void*) GetProcAddress(hurlmon, "CoInternetGetSession");
 
     if (!pCoInternetCreateSecurityManager || !pCoInternetCreateZoneManager ||
         !pCoInternetGetSecurityUrl) {
@@ -849,8 +1117,10 @@ START_TEST(sec_mgr)
 
     if(!pCoInternetGetSecurityUrlEx || !pCreateUri)
         win_skip("Skipping CoInternetGetSecurityUrlEx tests, IE too old\n");
-    else
+    else {
         test_InternetGetSecurityUrlEx();
+        test_InternetGetSecurityUrlEx_Pluggable();
+    }
 
     test_SecurityManager();
     test_polices();
