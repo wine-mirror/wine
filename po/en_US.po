@@ -5824,7 +5824,6 @@ msgid "version 1.0"
 msgstr "version 1.0"
 
 #: oleview.rc:100
-#, fuzzy
 msgid "TypeLib files (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
 msgstr "TypeLib Files (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
 
@@ -6311,12 +6310,10 @@ msgid "Export Registry File"
 msgstr "Export Registry File"
 
 #: regedit.rc:199
-#, fuzzy
 msgid "Registry files (*.reg)"
 msgstr "Registry Files (*.reg)"
 
 #: regedit.rc:200
-#, fuzzy
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x/NT4 Registry Files (REGEDIT4)"
 
@@ -7834,9 +7831,8 @@ msgid "Expand &Tree\t*"
 msgstr "Expand &Tree\t*"
 
 #: winefile.rc:70
-#, fuzzy
 msgid "Expand &all\tCtrl+*"
-msgstr "Expand &all\tStrg+*"
+msgstr "Expand &all\tCtrl+*"
 
 #: winefile.rc:71
 msgid "Collapse &Tree\t-"

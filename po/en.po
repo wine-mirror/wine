@@ -24,39 +24,32 @@ msgid ""
 msgstr ""
 
 #: appwiz.rc:30 taskmgr.rc:263 winecfg.rc:38
-#, fuzzy
 msgid "Applications"
-msgstr "Application Policies"
+msgstr "Applications"
 
 #: appwiz.rc:32
-#, fuzzy
 msgid ""
 "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
 "entry for this program from the registry?"
 msgstr ""
-"Execution of uninstall command '%s' failed, perhaps due to missing "
-"executable.\n"
-"Do you want to remove the uninstall entry from the registry ?"
+"Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
+"entry for this program from the registry?"
 
 #: appwiz.rc:33
-#, fuzzy
 msgid "Not specified"
-msgstr "No command was specified."
+msgstr "Not specified"
 
 #: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:160
-#, fuzzy
 msgid "Name"
-msgstr "Sur Name"
+msgstr "Name"
 
 #: appwiz.rc:36
-#, fuzzy
 msgid "Publisher"
-msgstr "Trusted Publishers"
+msgstr "Publisher"
 
 #: appwiz.rc:37 cryptui.rc:51
-#, fuzzy
 msgid "Version"
-msgstr "CA Version"
+msgstr "Version"
 
 #: appwiz.rc:38
 msgid "Installation programs"
@@ -72,9 +65,8 @@ msgid "All files (*.*)"
 msgstr ""
 
 #: appwiz.rc:42
-#, fuzzy
 msgid "&Remove..."
-msgstr "&Annotate..."
+msgstr "&Remove..."
 
 #: appwiz.rc:43
 msgid "&Modify/Remove..."
@@ -155,19 +147,16 @@ msgid "&About FolderPicker Test"
 msgstr ""
 
 #: comdlg32.rc:30
-#, fuzzy
 msgid "Document Folders"
-msgstr "Document Signing"
+msgstr "Document Folders"
 
 #: comdlg32.rc:31 shell32.rc:187
-#, fuzzy
 msgid "My Documents"
-msgstr "Document Signing"
+msgstr "My Documents"
 
 #: comdlg32.rc:32
-#, fuzzy
 msgid "My Favorites"
-msgstr "Favour&ites"
+msgstr "My Favourites"
 
 #: comdlg32.rc:33
 msgid "System Path"
@@ -186,18 +175,16 @@ msgid "My Computer"
 msgstr ""
 
 #: comdlg32.rc:41
-#, fuzzy
 msgid "System Folders"
-msgstr "Use system colours"
+msgstr "System Folders"
 
 #: comdlg32.rc:42
 msgid "Local Hard Drives"
 msgstr ""
 
 #: comdlg32.rc:43
-#, fuzzy
 msgid "File not found"
-msgstr "%s : File Not Found\n"
+msgstr "File not found"
 
 #: comdlg32.rc:44
 msgid "Please verify that the correct file name was given"
@@ -376,19 +363,16 @@ msgid "Cannot find the printer."
 msgstr ""
 
 #: comdlg32.rc:80 progman.rc:78
-#, fuzzy
 msgid "Out of memory."
-msgstr "No Memory"
+msgstr "Out of memory."
 
 #: comdlg32.rc:81
-#, fuzzy
 msgid "An error occurred."
-msgstr "An error occurred with the specified port."
+msgstr "An error occurred."
 
 #: comdlg32.rc:82
-#, fuzzy
 msgid "Unknown printer driver."
-msgstr "Unknown"
+msgstr "Unknown printer driver."
 
 #: comdlg32.rc:85
 msgid ""
@@ -405,24 +389,20 @@ msgid "&Save"
 msgstr ""
 
 #: comdlg32.rc:153
-#, fuzzy
 msgid "Save &in:"
-msgstr "Save Target &As..."
+msgstr "Save &in:"
 
 #: comdlg32.rc:154
-#, fuzzy
 msgid "Save"
-msgstr "Save HTML"
+msgstr "Save"
 
 #: comdlg32.rc:155
-#, fuzzy
 msgid "Save as"
-msgstr "Save Target &As..."
+msgstr "Save as"
 
 #: comdlg32.rc:156
-#, fuzzy
 msgid "Open File"
-msgstr "&About Wine Help"
+msgstr "Open File"
 
 #: comdlg32.rc:93 oleview.rc:95
 msgid "Ready"
@@ -433,9 +413,8 @@ msgid "Paused; "
 msgstr ""
 
 #: comdlg32.rc:95
-#, fuzzy
 msgid "Error; "
-msgstr "Local Error"
+msgstr "Error; "
 
 #: comdlg32.rc:96
 msgid "Pending deletion; "
@@ -446,9 +425,8 @@ msgid "Paper jam; "
 msgstr ""
 
 #: comdlg32.rc:98
-#, fuzzy
 msgid "Out of paper; "
-msgstr "No Memory"
+msgstr "Out of paper; "
 
 #: comdlg32.rc:99
 msgid "Feed paper manual; "
@@ -467,23 +445,20 @@ msgid "I/O Active; "
 msgstr ""
 
 #: comdlg32.rc:103
-#, fuzzy
 msgid "Busy; "
-msgstr "Busy"
+msgstr "Busy; "
 
 #: comdlg32.rc:104
-#, fuzzy
 msgid "Printing; "
-msgstr "Print"
+msgstr "Printing; "
 
 #: comdlg32.rc:105
 msgid "Output tray is full; "
 msgstr ""
 
 #: comdlg32.rc:106
-#, fuzzy
 msgid "Not available; "
-msgstr "Not Available"
+msgstr "Not available; "
 
 #: comdlg32.rc:107
 msgid "Waiting; "
@@ -494,9 +469,8 @@ msgid "Processing; "
 msgstr ""
 
 #: comdlg32.rc:109
-#, fuzzy
 msgid "Initialising; "
-msgstr "Initials"
+msgstr "Initialising; "
 
 #: comdlg32.rc:110
 msgid "Warming up; "
@@ -511,18 +485,16 @@ msgid "No toner; "
 msgstr ""
 
 #: comdlg32.rc:113
-#, fuzzy
 msgid "Page punt; "
-msgstr "Page Up"
+msgstr "Page punt; "
 
 #: comdlg32.rc:114
 msgid "Interrupted by user; "
 msgstr ""
 
 #: comdlg32.rc:115
-#, fuzzy
 msgid "Out of memory; "
-msgstr "No Memory"
+msgstr "Out of memory; "
 
 #: comdlg32.rc:116
 msgid "The printer door is open; "
@@ -537,14 +509,12 @@ msgid "Power save mode; "
 msgstr ""
 
 #: comdlg32.rc:87
-#, fuzzy
 msgid "Default Printer; "
-msgstr "Default gateway"
+msgstr "Default Printer; "
 
 #: comdlg32.rc:88
-#, fuzzy
 msgid "There are %d documents in the queue"
-msgstr "There are no entries in the list.\n"
+msgstr "There are %d documents in the queue"
 
 #: comdlg32.rc:89
 msgid "Margins [inches]"
@@ -1449,14 +1419,12 @@ msgid "Notice Text="
 msgstr "Notice Text="
 
 #: cryptui.rc:27 cryptui.rc:90
-#, fuzzy
 msgid "Certificate"
-msgstr "Get Certificate"
+msgstr "Certificate"
 
 #: cryptui.rc:28
-#, fuzzy
 msgid "Certificate Information"
-msgstr "Certificate Template Information"
+msgstr "Certificate Information"
 
 #: cryptui.rc:29
 msgid ""
@@ -1519,9 +1487,8 @@ msgid "This certificate was revoked by its issuer."
 msgstr ""
 
 #: cryptui.rc:43
-#, fuzzy
 msgid "This certificate is OK."
-msgstr "Certificate Policies"
+msgstr "This certificate is OK."
 
 #: cryptui.rc:44
 msgid "Field"
@@ -1540,43 +1507,36 @@ msgid "Version 1 Fields Only"
 msgstr ""
 
 #: cryptui.rc:48
-#, fuzzy
 msgid "Extensions Only"
-msgstr "CMC Extensions"
+msgstr "Extensions Only"
 
 #: cryptui.rc:49
-#, fuzzy
 msgid "Critical Extensions Only"
-msgstr "Certificate Extensions"
+msgstr "Critical Extensions Only"
 
 #: cryptui.rc:50
-#, fuzzy
 msgid "Properties Only"
-msgstr "&Properties"
+msgstr "Properties Only"
 
 #: cryptui.rc:52
-#, fuzzy
 msgid "Serial number"
-msgstr "Serial Number"
+msgstr "Serial number"
 
 #: cryptui.rc:53
-#, fuzzy
 msgid "Issuer"
-msgstr "CA Issuers"
+msgstr "Issuer"
 
 #: cryptui.rc:54
 msgid "Valid from"
 msgstr ""
 
 #: cryptui.rc:55
-#, fuzzy
 msgid "Valid to"
-msgstr "Invalid Syntax"
+msgstr "Valid to"
 
 #: cryptui.rc:56
-#, fuzzy
 msgid "Subject"
-msgstr "Subject Type="
+msgstr "Subject"
 
 #: cryptui.rc:57
 msgid "Public key"
@@ -1591,9 +1551,8 @@ msgid "SHA1 hash"
 msgstr ""
 
 #: cryptui.rc:60
-#, fuzzy
 msgid "Enhanced key usage (property)"
-msgstr "Enhanced Key Usage"
+msgstr "Enhanced key usage (property)"
 
 #: cryptui.rc:61
 msgid "Friendly name"
@@ -1604,9 +1563,8 @@ msgid "Description"
 msgstr "Description"
 
 #: cryptui.rc:63
-#, fuzzy
 msgid "Certificate Properties"
-msgstr "Certificate Policies"
+msgstr "Certificate Properties"
 
 #: cryptui.rc:64
 msgid "Please enter an OID in the form 1.2.3.4"
@@ -1617,18 +1575,16 @@ msgid "The OID you entered already exists."
 msgstr ""
 
 #: cryptui.rc:66
-#, fuzzy
 msgid "Select Certificate Store"
-msgstr "Get Certificate"
+msgstr "Select Certificate Store"
 
 #: cryptui.rc:67
 msgid "Please select a certificate store."
 msgstr ""
 
 #: cryptui.rc:68
-#, fuzzy
 msgid "Certificate Import Wizard"
-msgstr "Certificate Hold"
+msgstr "Certificate Import Wizard"
 
 #: cryptui.rc:69
 msgid ""
@@ -1645,9 +1601,8 @@ msgid "Specify the file you want to import."
 msgstr ""
 
 #: cryptui.rc:72 cryptui.rc:95
-#, fuzzy
 msgid "Certificate Store"
-msgstr "Certificate Type"
+msgstr "Certificate Store"
 
 #: cryptui.rc:73
 msgid ""
@@ -1664,14 +1619,12 @@ msgid "Personal Information Exchange (*.pfx; *.p12)"
 msgstr ""
 
 #: cryptui.rc:76 cryptui.rc:155
-#, fuzzy
 msgid "Certificate Revocation List (*.crl)"
-msgstr "Certificate Trust List"
+msgstr "Certificate Revocation List (*.crl)"
 
 #: cryptui.rc:77 cryptui.rc:156
-#, fuzzy
 msgid "Certificate Trust List (*.stl)"
-msgstr "Certificate Trust List"
+msgstr "Certificate Trust List (*.stl)"
 
 #: cryptui.rc:78
 msgid "Microsoft Serialized Certificate Store (*.sst)"
@@ -1690,9 +1643,8 @@ msgid "The file format is not recognized.  Please select another file."
 msgstr ""
 
 #: cryptui.rc:83
-#, fuzzy
 msgid "Could not open "
-msgstr "Could not stop service %s\n"
+msgstr "Could not open "
 
 #: cryptui.rc:84
 msgid "Determined by the program"
@@ -1703,28 +1655,24 @@ msgid "Please select a store"
 msgstr ""
 
 #: cryptui.rc:86
-#, fuzzy
 msgid "Certificate Store Selected"
-msgstr "Certificate Hold"
+msgstr "Certificate Store Selected"
 
 #: cryptui.rc:87
 msgid "Automatically determined by the program"
 msgstr ""
 
 #: cryptui.rc:88 shell32.rc:122
-#, fuzzy
 msgid "File"
-msgstr "&File"
+msgstr "File"
 
 #: cryptui.rc:89
-#, fuzzy
 msgid "Content"
-msgstr "&Contents"
+msgstr "Content"
 
 #: cryptui.rc:91
-#, fuzzy
 msgid "Certificate Revocation List"
-msgstr "Certificate Trust List"
+msgstr "Certificate Revocation List"
 
 #: cryptui.rc:93
 msgid "CMS/PKCS #7 Message"
@@ -1735,9 +1683,8 @@ msgid "Personal Information Exchange"
 msgstr ""
 
 #: cryptui.rc:96
-#, fuzzy
 msgid "The import was successful."
-msgstr "The %s service was started successfully.\n"
+msgstr "The import was successful."
 
 #: cryptui.rc:97
 msgid "The import failed."
@@ -1760,19 +1707,16 @@ msgid "Issued By"
 msgstr ""
 
 #: cryptui.rc:103
-#, fuzzy
 msgid "Expiration Date"
-msgstr "Operation Ceased"
+msgstr "Expiration Date"
 
 #: cryptui.rc:104
-#, fuzzy
 msgid "Friendly Name"
-msgstr "Given Name"
+msgstr "Friendly Name"
 
 #: cryptui.rc:106 cryptui.rc:120
-#, fuzzy
 msgid "<None>"
-msgstr "None"
+msgstr "<None>"
 
 #: cryptui.rc:107
 msgid ""
@@ -1851,9 +1795,8 @@ msgid "Are you sure you want to remove these certificates?"
 msgstr ""
 
 #: cryptui.rc:119
-#, fuzzy
 msgid "Certificates"
-msgstr "Get Certificate"
+msgstr "Certificates"
 
 #: cryptui.rc:121
 msgid "Ensures the identity of a remote computer"
@@ -1890,19 +1833,16 @@ msgid "Allows data on disk to be encrypted"
 msgstr ""
 
 #: cryptui.rc:144
-#, fuzzy
 msgid "Private Key Archival"
-msgstr "Private Key Usage Period"
+msgstr "Private Key Archival"
 
 #: cryptui.rc:147
-#, fuzzy
 msgid "Certificate Export Wizard"
-msgstr "Certificate Hold"
+msgstr "Certificate Export Wizard"
 
 #: cryptui.rc:148
-#, fuzzy
 msgid "Export Format"
-msgstr "F&orward"
+msgstr "Export Format"
 
 #: cryptui.rc:149
 msgid "Choose the format in which the content will be saved."
@@ -1941,9 +1881,8 @@ msgid "Serialized Certificate Store (*.sst)"
 msgstr ""
 
 #: cryptui.rc:160
-#, fuzzy
 msgid "File Format"
-msgstr "F&orward"
+msgstr "File Format"
 
 #: cryptui.rc:161
 msgid "Include all certificates in certificate path"
@@ -1954,18 +1893,16 @@ msgid "Export keys"
 msgstr ""
 
 #: cryptui.rc:165
-#, fuzzy
 msgid "The export was successful."
-msgstr "The %s service was started successfully.\n"
+msgstr "The export was successful."
 
 #: cryptui.rc:166
 msgid "The export failed."
 msgstr ""
 
 #: cryptui.rc:167
-#, fuzzy
 msgid "Export Private Key"
-msgstr "Encrypted Private Key"
+msgstr "Export Private Key"
 
 #: cryptui.rc:168
 msgid ""
@@ -1974,9 +1911,8 @@ msgid ""
 msgstr ""
 
 #: cryptui.rc:169
-#, fuzzy
 msgid "Enter Password"
-msgstr "Challenge Password"
+msgstr "Enter Password"
 
 #: cryptui.rc:170
 msgid "You may password-protect a private key."
@@ -2247,9 +2183,8 @@ msgid "'%s' is not a valid port name"
 msgstr ""
 
 #: localui.rc:30
-#, fuzzy
 msgid "Port %s already exists"
-msgstr "Already Exists"
+msgstr "Port %s already exists"
 
 #: localui.rc:31
 msgid "This port has no options to configure"
@@ -2272,9 +2207,8 @@ msgid "HTML rendering is currently disabled."
 msgstr ""
 
 #: mshtml.rc:32
-#, fuzzy
 msgid "HTML Document"
-msgstr "Document Signing"
+msgstr "HTML Document"
 
 #: mshtml.rc:26
 msgid "Downloading from %s..."
@@ -2415,18 +2349,16 @@ msgid "unknown object"
 msgstr ""
 
 #: oleacc.rc:28
-#, fuzzy
 msgid "title bar"
-msgstr "&Without Titlebar"
+msgstr "title bar"
 
 #: oleacc.rc:29
 msgid "menu bar"
 msgstr ""
 
 #: oleacc.rc:30
-#, fuzzy
 msgid "scroll bar"
-msgstr "Scroll Here"
+msgstr "scroll bar"
 
 #: oleacc.rc:31
 msgid "grip"
@@ -2449,9 +2381,8 @@ msgid "alert"
 msgstr ""
 
 #: oleacc.rc:36
-#, fuzzy
 msgid "window"
-msgstr "Open in &New Window"
+msgstr "window"
 
 #: oleacc.rc:37
 msgid "client"
@@ -2470,14 +2401,12 @@ msgid "tool tip"
 msgstr ""
 
 #: oleacc.rc:41
-#, fuzzy
 msgid "application"
-msgstr "Application Policies"
+msgstr "application"
 
 #: oleacc.rc:42
-#, fuzzy
 msgid "document"
-msgstr "Document Signing"
+msgstr "document"
 
 #: oleacc.rc:43
 msgid "pane"
@@ -2512,7 +2441,6 @@ msgid "status bar"
 msgstr ""
 
 #: oleacc.rc:51
-#, fuzzy
 msgid "table"
 msgstr "Table"
 
@@ -2525,9 +2453,8 @@ msgid "row header"
 msgstr ""
 
 #: oleacc.rc:54
-#, fuzzy
 msgid "column"
-msgstr "&Column"
+msgstr "column"
 
 #: oleacc.rc:55
 msgid "row"
@@ -2610,9 +2537,8 @@ msgid "drop down"
 msgstr ""
 
 #: oleacc.rc:75
-#, fuzzy
 msgid "progress bar"
-msgstr "IP Address="
+msgstr "progress bar"
 
 #: oleacc.rc:76
 msgid "dial"
@@ -2635,14 +2561,12 @@ msgid "diagram"
 msgstr ""
 
 #: oleacc.rc:81
-#, fuzzy
 msgid "animation"
-msgstr "Organization"
+msgstr "animation"
 
 #: oleacc.rc:82
-#, fuzzy
 msgid "equation"
-msgstr "Non-Repudiation"
+msgstr "equation"
 
 #: oleacc.rc:83
 msgid "drop down button"
@@ -2665,9 +2589,8 @@ msgid "page tab list"
 msgstr ""
 
 #: oleacc.rc:88
-#, fuzzy
 msgid "clock"
-msgstr "Clock"
+msgstr "clock"
 
 #: oleacc.rc:89
 msgid "split button"
@@ -2708,9 +2631,8 @@ msgid ""
 msgstr ""
 
 #: oledlg.rc:27 shell32.rc:181
-#, fuzzy
 msgid "Browse"
-msgstr "&Browse View"
+msgstr "Browse"
 
 #: oledlg.rc:28
 msgid ""
@@ -2719,9 +2641,8 @@ msgid ""
 msgstr ""
 
 #: oledlg.rc:29
-#, fuzzy
 msgid "Add Control"
-msgstr "Control"
+msgstr "Add Control"
 
 #: oledlg.rc:34
 msgid "Inserts the contents of the clipboard into your document as %s."
@@ -2765,14 +2686,12 @@ msgid "Inserts the contents of the clipboard into your document."
 msgstr ""
 
 #: oledlg.rc:41
-#, fuzzy
 msgid "Unknown Type"
-msgstr "Unknown"
+msgstr "Unknown Type"
 
 #: oledlg.rc:42
-#, fuzzy
 msgid "Unknown Source"
-msgstr "Unknown"
+msgstr "Unknown Source"
 
 #: oledlg.rc:43
 msgid "the program which created it"
@@ -2804,10 +2723,9 @@ msgid "%"
 msgstr ""
 
 #: sane.rc:36
-#, fuzzy
 msgctxt "unit: microseconds"
 msgid "us"
-msgstr "Busy"
+msgstr "µs"
 
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
@@ -3207,34 +3125,28 @@ msgid "&Window"
 msgstr ""
 
 #: shdocvw.rc:31
-#, fuzzy
 msgid "&Open..."
-msgstr "&Open"
+msgstr "&Open..."
 
 #: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
-#, fuzzy
 msgid "Save &as..."
-msgstr "Save Target &As..."
+msgstr "Save &as..."
 
 #: shdocvw.rc:35
-#, fuzzy
 msgid "Print &format..."
-msgstr "Print..."
+msgstr "Print &format..."
 
 #: shdocvw.rc:36
-#, fuzzy
 msgid "Pr&int..."
-msgstr "Print..."
+msgstr "Pr&int..."
 
 #: shdocvw.rc:37 wordpad.rc:34
-#, fuzzy
 msgid "Print previe&w..."
-msgstr "Pr&int Picture..."
+msgstr "Print previe&w..."
 
 #: shdocvw.rc:39
-#, fuzzy
 msgid "&Properties..."
-msgstr "&Properties"
+msgstr "&Properties..."
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:140
 msgid "&Close"
@@ -3254,9 +3166,8 @@ msgid "&Standard bar"
 msgstr ""
 
 #: shdocvw.rc:47
-#, fuzzy
 msgid "&Address bar"
-msgstr "IP Address="
+msgstr "&Address bar"
 
 #: shdocvw.rc:50 regedit.rc:73
 msgid "&Favorites"
@@ -3272,14 +3183,12 @@ msgid "&Help"
 msgstr "&Help"
 
 #: shdocvw.rc:57
-#, fuzzy
 msgid "&About Internet Explorer..."
-msgstr "Wine Internet Explorer"
+msgstr "&About Internet Explorer..."
 
 #: shdocvw.rc:73
-#, fuzzy
 msgid "Address"
-msgstr "IP Address="
+msgstr "Address"
 
 #: shell32.rc:27 shell32.rc:42 shell32.rc:107 shell32.rc:147 taskmgr.rc:65
 #: taskmgr.rc:111 taskmgr.rc:253
@@ -3305,9 +3214,8 @@ msgid "Arrange &Icons"
 msgstr ""
 
 #: shell32.rc:50
-#, fuzzy
 msgid "By &Name"
-msgstr "Sur Name"
+msgstr "By &Name"
 
 #: shell32.rc:51
 msgid "By &Type"
@@ -3318,9 +3226,8 @@ msgid "By &Size"
 msgstr ""
 
 #: shell32.rc:53
-#, fuzzy
 msgid "By &Date"
-msgstr "&Date"
+msgstr "By &Date"
 
 #: shell32.rc:55
 msgid "&Auto Arrange"
@@ -3343,14 +3250,12 @@ msgid "New &Folder"
 msgstr ""
 
 #: shell32.rc:67
-#, fuzzy
 msgid "New &Link"
-msgstr "Open in &New Window"
+msgstr "New &Link"
 
 #: shell32.rc:71
-#, fuzzy
 msgid "Properties"
-msgstr "&Properties"
+msgstr "Properties"
 
 #: shell32.rc:83
 msgid "E&xplore"
@@ -3365,9 +3270,8 @@ msgid "Create &Link"
 msgstr ""
 
 #: shell32.rc:91 regedit.rc:94
-#, fuzzy
 msgid "&Rename"
-msgstr "&Annotate..."
+msgstr "&Rename"
 
 #: shell32.rc:102 notepad.rc:36 oleview.rc:35 regedit.rc:41 view.rc:31
 #: winhlp32.rc:34 wordpad.rc:37
@@ -3375,9 +3279,8 @@ msgid "E&xit"
 msgstr "E&xit"
 
 #: shell32.rc:115
-#, fuzzy
 msgid "&About Control Panel..."
-msgstr "Wine Internet Explorer"
+msgstr "&About Control Panel..."
 
 #: shell32.rc:123 shell32.rc:127 winefile.rc:161
 msgid "Size"
@@ -3392,19 +3295,16 @@ msgid "Modified"
 msgstr ""
 
 #: shell32.rc:126 winefile.rc:167
-#, fuzzy
 msgid "Attributes"
-msgstr "Key Attributes"
+msgstr "Attributes"
 
 #: shell32.rc:128
-#, fuzzy
 msgid "Size available"
-msgstr "Unavailable"
+msgstr "Size available"
 
 #: shell32.rc:130
-#, fuzzy
 msgid "Comments"
-msgstr "&Contents"
+msgstr "Comments"
 
 #: shell32.rc:131
 msgid "Owner"
@@ -3415,29 +3315,24 @@ msgid "Group"
 msgstr ""
 
 #: shell32.rc:133
-#, fuzzy
 msgid "Original location"
-msgstr "Organization"
+msgstr "Original location"
 
 #: shell32.rc:134
-#, fuzzy
 msgid "Date deleted"
-msgstr "&Delete"
+msgstr "Date deleted"
 
 #: shell32.rc:144
-#, fuzzy
 msgid "Control Panel"
-msgstr "Control"
+msgstr "Control Panel"
 
 #: shell32.rc:151
-#, fuzzy
 msgid "Select"
-msgstr "&Select"
+msgstr "Select"
 
 #: shell32.rc:152 oleview.rc:99
-#, fuzzy
 msgid "Open"
-msgstr "&Open"
+msgstr "Open"
 
 #: shell32.rc:173
 msgid "Restart"
@@ -3460,9 +3355,8 @@ msgid "Start Menu\\Programs"
 msgstr ""
 
 #: shell32.rc:188
-#, fuzzy
 msgid "Favorites"
-msgstr "Favour&ites"
+msgstr "Favourites"
 
 #: shell32.rc:189
 msgid "Start Menu\\Programs\\StartUp"
@@ -3497,14 +3391,12 @@ msgid "Templates"
 msgstr ""
 
 #: shell32.rc:198
-#, fuzzy
 msgid "Application Data"
-msgstr "Application Policies"
+msgstr "Application Data"
 
 #: shell32.rc:199
-#, fuzzy
 msgid "PrintHood"
-msgstr "Print"
+msgstr "PrintHood"
 
 #: shell32.rc:200
 msgid "Local Settings\\Application Data"
@@ -3519,27 +3411,24 @@ msgid "Cookies"
 msgstr ""
 
 #: shell32.rc:203
-#, fuzzy
 msgid "Local Settings\\History"
-msgstr "Local Monitor"
+msgstr "Local Settings\\History"
 
 #: shell32.rc:204
 msgid "Program Files"
 msgstr ""
 
 #: shell32.rc:206
-#, fuzzy
 msgid "My Pictures"
-msgstr "&Go to My Pictures"
+msgstr "My Pictures"
 
 #: shell32.rc:207
 msgid "Program Files\\Common Files"
 msgstr ""
 
 #: shell32.rc:209 shell32.rc:135 shell32.rc:231
-#, fuzzy
 msgid "Documents"
-msgstr "Document Signing"
+msgstr "Documents"
 
 #: shell32.rc:210
 msgid "Start Menu\\Programs\\Administrative Tools"
@@ -3550,9 +3439,8 @@ msgid "Music"
 msgstr ""
 
 #: shell32.rc:212
-#, fuzzy
 msgid "Pictures"
-msgstr "S&how Picture"
+msgstr "Pictures"
 
 #: shell32.rc:213
 msgid "Videos"
@@ -3571,9 +3459,8 @@ msgid "Program Files (x86)\\Common Files"
 msgstr ""
 
 #: shell32.rc:215
-#, fuzzy
 msgid "Contacts"
-msgstr "&Contents"
+msgstr "Contacts"
 
 #: shell32.rc:216 winefile.rc:166
 msgid "Links"
@@ -3596,9 +3483,8 @@ msgid "Status"
 msgstr ""
 
 #: shell32.rc:137
-#, fuzzy
 msgid "Location"
-msgstr "Application Policies"
+msgstr "Location"
 
 #: shell32.rc:138
 msgid "Model"
@@ -3633,24 +3519,20 @@ msgid "Videos\\Sample Videos"
 msgstr ""
 
 #: shell32.rc:227
-#, fuzzy
 msgid "Saved Games"
-msgstr "Save Target &As..."
+msgstr "Saved Games"
 
 #: shell32.rc:228
-#, fuzzy
 msgid "Searches"
-msgstr "&Search"
+msgstr "Searches"
 
 #: shell32.rc:229
-#, fuzzy
 msgid "Users"
-msgstr "Hostname"
+msgstr "Users"
 
 #: shell32.rc:230
-#, fuzzy
 msgid "OEM Links"
-msgstr "&Open Link"
+msgstr "OEM Links"
 
 #: shell32.rc:233
 msgid "AppData\\LocalLow"
@@ -3746,7 +3628,6 @@ msgid "There is no Windows program configured to open this type of file."
 msgstr ""
 
 #: shell32.rc:258
-#, fuzzy
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -3762,27 +3643,15 @@ msgid ""
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
-"start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
-"This program is free software; you can redistribute it and/or\n"
-"modify it under the terms of the GNU Lesser Public License\n"
-"as published by the Free Software Foundation; either version 2.1\n"
-"of the License, or (at your option) any later version.\n"
+"Wine is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.\n"
 "\n"
-"This program is distributed in the hope that it will be useful,\n"
-"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-"GNU Lesser Public License for more details.\n"
+"Wine is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.\n"
 "\n"
-"You should have received a copy of the GNU Lesser Public License\n"
-"along with this program; if not, write to the Free Software\n"
-"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n"
-"\n"
-"See the COPYING.LIB file for license information.\n"
+"You should have received a copy of the GNU Lesser General Public License along with Wine; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
 #: shell32.rc:246
-#, fuzzy
 msgid "Wine License"
-msgstr "&About Wine Help"
+msgstr "Wine License"
 
 #: shell32.rc:143
 msgid "Trash"
@@ -3809,9 +3678,8 @@ msgid "&Restore"
 msgstr ""
 
 #: user32.rc:28
-#, fuzzy
 msgid "&Move"
-msgstr "More..."
+msgstr "&Move"
 
 #: user32.rc:29
 msgid "&Size"
@@ -3830,19 +3698,16 @@ msgid "&Close\tAlt-F4"
 msgstr ""
 
 #: user32.rc:35
-#, fuzzy
 msgid "&About Wine..."
-msgstr "&About Wine Help"
+msgstr "&About Wine..."
 
 #: user32.rc:55 regedit.rc:182 winefile.rc:148
-#, fuzzy
 msgid "Error"
-msgstr "Local Error"
+msgstr "Error"
 
 #: user32.rc:56
-#, fuzzy
 msgid "&More Windows..."
-msgstr "More..."
+msgstr "&More Windows..."
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -3853,9 +3718,8 @@ msgid "The certificate is issued by an unknown or untrusted publisher."
 msgstr ""
 
 #: wininet.rc:27
-#, fuzzy
 msgid "The date on the certificate is invalid."
-msgstr "The specified device handle is invalid."
+msgstr "The date on the certificate is invalid."
 
 #: wininet.rc:28
 msgid "The name on the certificate does not match the site."
@@ -5571,9 +5435,8 @@ msgid "&Print...\tCtrl+P"
 msgstr ""
 
 #: notepad.rc:33 wordpad.rc:35
-#, fuzzy
 msgid "Page Se&tup..."
-msgstr "Page Left"
+msgstr "Page Se&tup..."
 
 #: notepad.rc:34
 msgid "P&rinter Setup..."
@@ -5596,9 +5459,8 @@ msgid "&Copy\tCtrl+C"
 msgstr ""
 
 #: notepad.rc:43 wordpad.rc:46
-#, fuzzy
 msgid "&Paste\tCtrl+V"
-msgstr "&Paste"
+msgstr "&Paste\tCtrl+V"
 
 #: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
 #: winefile.rc:30
@@ -5606,9 +5468,8 @@ msgid "&Delete\tDel"
 msgstr "&Delete\tDel"
 
 #: notepad.rc:46
-#, fuzzy
 msgid "Select &all\tCtrl+A"
-msgstr "Select &All"
+msgstr "Select &all\tCtrl+A"
 
 #: notepad.rc:47
 msgid "&Time/Date\tF5"
@@ -5623,18 +5484,16 @@ msgid "&Search...\tCtrl+F"
 msgstr ""
 
 #: notepad.rc:54
-#, fuzzy
 msgid "&Search next\tF3"
-msgstr "&Search"
+msgstr "&Search next\tF3"
 
 #: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
 msgstr ""
 
 #: notepad.rc:59 progman.rc:54
-#, fuzzy
 msgid "&Search..."
-msgstr "&Search"
+msgstr "&Search..."
 
 #: notepad.rc:60 progman.rc:56 winhlp32.rc:61
 msgid "&Help on help"
@@ -5649,9 +5508,8 @@ msgid "&f"
 msgstr ""
 
 #: notepad.rc:69
-#, fuzzy
 msgid "Page &p"
-msgstr "Page Up"
+msgstr "Page &p"
 
 #: notepad.rc:71
 msgid "Notepad"
@@ -5666,14 +5524,12 @@ msgid "WARNING"
 msgstr ""
 
 #: notepad.rc:74 progman.rc:68 winhlp32.rc:96
-#, fuzzy
 msgid "Information"
-msgstr "Client Information"
+msgstr "Information"
 
 #: notepad.rc:76
-#, fuzzy
 msgid "Untitled"
-msgstr "Title"
+msgstr "Untitled"
 
 #: notepad.rc:79
 msgid "Text files (*.txt)"
@@ -5710,14 +5566,12 @@ msgid "'%s' could not be found."
 msgstr ""
 
 #: notepad.rc:91
-#, fuzzy
 msgid ""
 "Not enough memory to complete this task.\n"
 "Close one or more applications to increase the amount of free memory."
 msgstr ""
-"Not enough memory available for this task.\n"
-"Quit one or more applications to increase available memory, and then try "
-"again."
+"Not enough memory to complete this task.\n"
+"Close one or more applications to increase the amount of free memory."
 
 #: notepad.rc:93
 msgid "Unicode (UTF-16)"
@@ -5738,27 +5592,24 @@ msgid ""
 msgstr ""
 
 #: oleview.rc:29
-#, fuzzy
 msgid "&Bind to file..."
-msgstr "Add to &Favourites..."
+msgstr "&Bind to file..."
 
 #: oleview.rc:30
 msgid "&View TypeLib..."
 msgstr ""
 
 #: oleview.rc:32
-#, fuzzy
 msgid "&System Configuration..."
-msgstr "Client Information"
+msgstr "&System Configuration..."
 
 #: oleview.rc:33
 msgid "&Run the Registry Editor"
 msgstr ""
 
 #: oleview.rc:37
-#, fuzzy
 msgid "&Object"
-msgstr "Subject Type="
+msgstr "&Object"
 
 #: oleview.rc:39
 msgid "&CoCreateInstance Flag"
@@ -5781,14 +5632,12 @@ msgid "CLSCTX_&REMOTE_SERVER"
 msgstr ""
 
 #: oleview.rc:47
-#, fuzzy
 msgid "View &Type information"
-msgstr "Client Information"
+msgstr "View &Type information"
 
 #: oleview.rc:49
-#, fuzzy
 msgid "Create &Instance"
-msgstr "Create Shor&tcut"
+msgstr "Create &Instance"
 
 #: oleview.rc:50
 msgid "Create Instance &On..."
@@ -5807,9 +5656,8 @@ msgid "Copy &HTML object Tag to clipboard"
 msgstr ""
 
 #: oleview.rc:56
-#, fuzzy
 msgid "&View..."
-msgstr "&Edit View"
+msgstr "&View..."
 
 #: oleview.rc:60
 msgid "&Expert mode"
@@ -5832,23 +5680,20 @@ msgid "&Refresh\tF5"
 msgstr "&Refresh\tF5"
 
 #: oleview.rc:71
-#, fuzzy
 msgid "&About OleView"
-msgstr "&About Wine Help"
+msgstr "&About OleView"
 
 #: oleview.rc:79
-#, fuzzy
 msgid "&Save as..."
-msgstr "Save Target &As..."
+msgstr "&Save as..."
 
 #: oleview.rc:84
 msgid "&Group by type kind"
 msgstr ""
 
 #: oleview.rc:93 oleview.rc:94
-#, fuzzy
 msgid "OleView"
-msgstr "&Edit View"
+msgstr "OleView"
 
 #: oleview.rc:98
 msgid "ITypeLib viewer"
@@ -5859,9 +5704,8 @@ msgid "OleView - OLE/COM Object Viewer"
 msgstr ""
 
 #: oleview.rc:97
-#, fuzzy
 msgid "version 1.0"
-msgstr "CA Version"
+msgstr "version 1.0"
 
 #: oleview.rc:100
 msgid "TypeLib files (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
@@ -5949,32 +5793,28 @@ msgid "Use CLSCTX_REMOTE_SERVER when calling CoGetClassObject"
 msgstr ""
 
 #: oleview.rc:128
-#, fuzzy
 msgid "ObjectClasses"
-msgstr "No Object Class Mods"
+msgstr "ObjectClasses"
 
 #: oleview.rc:129
 msgid "Grouped by Component Category"
 msgstr ""
 
 #: oleview.rc:130
-#, fuzzy
 msgid "OLE 1.0 Objects"
-msgstr "No Such Object"
+msgstr "OLE 1.0 Objects"
 
 #: oleview.rc:131
 msgid "COM Library Objects"
 msgstr ""
 
 #: oleview.rc:132
-#, fuzzy
 msgid "All Objects"
-msgstr "No Such Object"
+msgstr "All Objects"
 
 #: oleview.rc:133
-#, fuzzy
 msgid "Application IDs"
-msgstr "Application Policies"
+msgstr "Application IDs"
 
 #: oleview.rc:134
 msgid "Type Libraries"
@@ -5989,27 +5829,24 @@ msgid "Interfaces"
 msgstr ""
 
 #: oleview.rc:138
-#, fuzzy
 msgid "Registry"
-msgstr "Registered ID="
+msgstr "Registry"
 
 #: oleview.rc:139
 msgid "Implementation"
 msgstr ""
 
 #: oleview.rc:140
-#, fuzzy
 msgid "Activation"
-msgstr "Application Policies"
+msgstr "Activation"
 
 #: oleview.rc:142
 msgid "CoGetClassObject failed."
 msgstr ""
 
 #: oleview.rc:143
-#, fuzzy
 msgid "Unknown error"
-msgstr "Unknown"
+msgstr "Unknown error"
 
 #: oleview.rc:146
 msgid "bytes"
@@ -6028,9 +5865,8 @@ msgid "Save as an .IDL or .H file"
 msgstr ""
 
 #: oleview.rc:125
-#, fuzzy
 msgid "Close window"
-msgstr "Open in &New Window"
+msgstr "Close window"
 
 #: oleview.rc:126
 msgid "Group typeinfos by kind"
@@ -6045,14 +5881,12 @@ msgid "O&pen\tEnter"
 msgstr ""
 
 #: progman.rc:32 winefile.rc:27
-#, fuzzy
 msgid "&Move...\tF7"
-msgstr "More..."
+msgstr "&Move...\tF7"
 
 #: progman.rc:33 winefile.rc:28
-#, fuzzy
 msgid "&Copy...\tF8"
-msgstr "&Copy"
+msgstr "&Copy...\tF8"
 
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
@@ -6111,9 +5945,8 @@ msgid "Program Manager"
 msgstr ""
 
 #: progman.rc:69
-#, fuzzy
 msgid "Delete"
-msgstr "&Delete"
+msgstr "Delete"
 
 #: progman.rc:70
 msgid "Delete group `%s' ?"
@@ -6124,11 +5957,8 @@ msgid "Delete program `%s' ?"
 msgstr ""
 
 #: progman.rc:72 winhlp32.rc:97
-#, fuzzy
 msgid "Not implemented"
-msgstr ""
-"Not Yet Implemented\n"
-"\n"
+msgstr "Not implemented"
 
 #: progman.rc:73
 msgid "Error reading `%s'."
@@ -6145,9 +5975,8 @@ msgid ""
 msgstr ""
 
 #: progman.rc:79
-#, fuzzy
 msgid "Help not available."
-msgstr "Not Available"
+msgstr "Help not available."
 
 #: progman.rc:80
 msgid "Unknown feature in %s"
@@ -6316,9 +6145,8 @@ msgid "Modify Binary Data"
 msgstr ""
 
 #: regedit.rc:111
-#, fuzzy
 msgid "&Export..."
-msgstr "&Font..."
+msgstr "&Export..."
 
 #: regedit.rc:136
 msgid "Contains commands for working with the whole registry"
@@ -6346,38 +6174,32 @@ msgid "Contains commands for creating new keys or values"
 msgstr ""
 
 #: regedit.rc:126
-#, fuzzy
 msgid "Data"
-msgstr "CMC Data"
+msgstr "Data"
 
 #: regedit.rc:131
-#, fuzzy
 msgid "Registry Editor"
-msgstr "&About Registry Editor"
+msgstr "Registry Editor"
 
 #: regedit.rc:197
-#, fuzzy
 msgid "Import Registry File"
-msgstr "&Import Registry File..."
+msgstr "Import Registry File"
 
 #: regedit.rc:198
-#, fuzzy
 msgid "Export Registry File"
-msgstr "&Export Registry File..."
+msgstr "Export Registry File"
 
 #: regedit.rc:199
-#, fuzzy
 msgid "Registry files (*.reg)"
-msgstr "&Import Registry File..."
+msgstr "Registry files (*.reg)"
 
 #: regedit.rc:200
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr ""
 
 #: regedit.rc:207
-#, fuzzy
 msgid "(Default)"
-msgstr "Default"
+msgstr "(Default)"
 
 #: regedit.rc:208
 msgid "(value not set)"
@@ -6388,9 +6210,8 @@ msgid "(cannot display value)"
 msgstr ""
 
 #: regedit.rc:210
-#, fuzzy
 msgid "(unknown %d)"
-msgstr "Unknown"
+msgstr "(unknown %d)"
 
 #: regedit.rc:166
 msgid "Quits the registry editor"
@@ -6469,9 +6290,8 @@ msgid "Connects to a remote computer's registry"
 msgstr ""
 
 #: regedit.rc:158
-#, fuzzy
 msgid "Disconnects from a remote computer's registry"
-msgstr "&Disconnect Network Registry..."
+msgstr "Disconnects from a remote computer's registry"
 
 #: regedit.rc:159
 msgid "Prints all or part of the registry"
@@ -6502,9 +6322,8 @@ msgid "Are you sure you want to delete value '%s'?"
 msgstr ""
 
 #: regedit.rc:192
-#, fuzzy
 msgid "Search string '%s' not found"
-msgstr "path %s not found"
+msgstr "Search string '%s' not found"
 
 #: regedit.rc:189
 msgid "Are you sure you want to delete these values?"
@@ -6523,9 +6342,8 @@ msgid "Can't query key '%s'"
 msgstr ""
 
 #: regedit.rc:151
-#, fuzzy
 msgid "Adds a new multi string value"
-msgstr "&Multi String Value"
+msgstr "Adds a new multi string value"
 
 #: regedit.rc:177
 msgid "Exports selected branch of the registry to a text file"
@@ -6704,9 +6522,8 @@ msgid "&Show 16-bit tasks"
 msgstr ""
 
 #: taskmgr.rc:54
-#, fuzzy
 msgid "&Refresh Now"
-msgstr "&Refresh"
+msgstr "&Refresh Now"
 
 #: taskmgr.rc:55
 msgid "&Update Speed"
@@ -6789,9 +6606,8 @@ msgid "&End Task"
 msgstr ""
 
 #: taskmgr.rc:131
-#, fuzzy
 msgid "&Go To Process"
-msgstr "&Go to My Pictures"
+msgstr "&Go To Process"
 
 #: taskmgr.rc:150
 msgid "&End Process"
@@ -6802,9 +6618,8 @@ msgid "End Process &Tree"
 msgstr ""
 
 #: taskmgr.rc:153 winedbg.rc:29
-#, fuzzy
 msgid "&Debug"
-msgstr "Debug"
+msgstr "&Debug"
 
 #: taskmgr.rc:155
 msgid "Set &Priority"
@@ -7007,9 +6822,8 @@ msgid "Processes"
 msgstr ""
 
 #: taskmgr.rc:265
-#, fuzzy
 msgid "Performance"
-msgstr "Performance Meters"
+msgstr "Performance"
 
 #: taskmgr.rc:266
 msgid "CPU Usage: %3d%%"
@@ -7024,46 +6838,40 @@ msgid "Mem Usage: %dK / %dK"
 msgstr ""
 
 #: taskmgr.rc:273
-#, fuzzy
 msgid "Image Name"
-msgstr "Image"
+msgstr "Image Name"
 
 #: taskmgr.rc:274
 msgid "PID"
 msgstr ""
 
 #: taskmgr.rc:275
-#, fuzzy
 msgid "CPU"
-msgstr "CPS"
+msgstr "CPU"
 
 #: taskmgr.rc:276
 msgid "CPU Time"
 msgstr ""
 
 #: taskmgr.rc:277
-#, fuzzy
 msgid "Mem Usage"
-msgstr "Key Usage"
+msgstr "Mem Usage"
 
 #: taskmgr.rc:278
 msgid "Mem Delta"
 msgstr ""
 
 #: taskmgr.rc:279
-#, fuzzy
 msgid "Peak Mem Usage"
-msgstr "Key Usage"
+msgstr "Peak Mem Usage"
 
 #: taskmgr.rc:280
-#, fuzzy
 msgid "Page Faults"
-msgstr "Page Left"
+msgstr "Page Faults"
 
 #: taskmgr.rc:281
-#, fuzzy
 msgid "USER Objects"
-msgstr "No Such Object"
+msgstr "USER Objects"
 
 #: taskmgr.rc:282
 msgid "I/O Reads"
@@ -7074,14 +6882,12 @@ msgid "I/O Read Bytes"
 msgstr ""
 
 #: taskmgr.rc:284
-#, fuzzy
 msgid "Session ID"
-msgstr "OS Version"
+msgstr "Session ID"
 
 #: taskmgr.rc:285
-#, fuzzy
 msgid "Username"
-msgstr "Hostname"
+msgstr "Username"
 
 #: taskmgr.rc:286
 msgid "PF Delta"
@@ -7092,9 +6898,8 @@ msgid "VM Size"
 msgstr ""
 
 #: taskmgr.rc:288
-#, fuzzy
 msgid "Paged Pool"
-msgstr "Page Down"
+msgstr "Paged Pool"
 
 #: taskmgr.rc:289
 msgid "NP Pool"
@@ -7125,9 +6930,8 @@ msgid "I/O Write Bytes"
 msgstr ""
 
 #: taskmgr.rc:296
-#, fuzzy
 msgid "I/O Other"
-msgstr "Other"
+msgstr "I/O Other"
 
 #: taskmgr.rc:297
 msgid "I/O Other Bytes"
@@ -7158,9 +6962,8 @@ msgid ""
 msgstr ""
 
 #: taskmgr.rc:312
-#, fuzzy
 msgid "Unable to Terminate Process"
-msgstr "Error: Unable to terminate process \"%s\".\n"
+msgstr "Unable to Terminate Process"
 
 #: taskmgr.rc:314
 msgid ""
@@ -7177,9 +6980,8 @@ msgid "The process must have affinity with at least one processor"
 msgstr ""
 
 #: taskmgr.rc:317
-#, fuzzy
 msgid "Invalid Option"
-msgstr "Invalid Syntax"
+msgstr "Invalid Option"
 
 #: taskmgr.rc:318
 msgid "Unable to Access or Set Process Affinity"
@@ -7218,9 +7020,8 @@ msgid "Warn"
 msgstr ""
 
 #: taskmgr.rc:332
-#, fuzzy
 msgid "Trace"
-msgstr "Trace Tags"
+msgstr "Trace"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"
@@ -7249,9 +7050,8 @@ msgid "&Left"
 msgstr ""
 
 #: view.rc:38
-#, fuzzy
 msgid "&Right"
-msgstr "Right Edge"
+msgstr "&Right"
 
 #: view.rc:39
 msgid "&Up"
@@ -7266,9 +7066,8 @@ msgid "Regular Metafile Viewer"
 msgstr ""
 
 #: winecfg.rc:32
-#, fuzzy
 msgid "Configure"
-msgstr "Operations Error"
+msgstr "Configure"
 
 #: winecfg.rc:39
 msgid "Libraries"
@@ -7311,18 +7110,16 @@ msgid "About"
 msgstr ""
 
 #: winecfg.rc:49
-#, fuzzy
 msgid "Wine configuration"
-msgstr "Client Information"
+msgstr "Wine configuration"
 
 #: winecfg.rc:51
 msgid "Theme files (*.msstyles; *.theme)"
 msgstr ""
 
 #: winecfg.rc:52
-#, fuzzy
 msgid "Select a theme file"
-msgstr "Could not get handle to service.\n"
+msgstr "Select a theme file"
 
 #: winecfg.rc:54
 msgid "Folder"
@@ -7333,9 +7130,8 @@ msgid "Links to"
 msgstr ""
 
 #: winecfg.rc:50
-#, fuzzy
 msgid "Wine configuration for %s"
-msgstr "Operations Error"
+msgstr "Wine configuration for %s"
 
 #: winecfg.rc:53
 msgid ""
@@ -7374,14 +7170,12 @@ msgid "builtin, native"
 msgstr ""
 
 #: winecfg.rc:66
-#, fuzzy
 msgid "disabled"
-msgstr "Table"
+msgstr "disabled"
 
 #: winecfg.rc:67
-#, fuzzy
 msgid "Default Settings"
-msgstr "Default DirectSound"
+msgstr "Default Settings"
 
 #: winecfg.rc:68
 msgid "Wine Programs (*.exe,*.exe.so)"
@@ -7443,9 +7237,8 @@ msgid "Letter"
 msgstr ""
 
 #: winecfg.rc:90
-#, fuzzy
 msgid "Drive Mapping"
-msgstr "Policy Mappings"
+msgstr "Drive Mapping"
 
 #: winecfg.rc:91
 msgid ""
@@ -7455,9 +7248,8 @@ msgid ""
 msgstr ""
 
 #: winecfg.rc:96
-#, fuzzy
 msgid "Full"
-msgstr "Full Name"
+msgstr "Full"
 
 #: winecfg.rc:97
 msgid "Standard"
@@ -7468,9 +7260,8 @@ msgid "Basic"
 msgstr ""
 
 #: winecfg.rc:99
-#, fuzzy
 msgid "Emulation"
-msgstr "Non-Repudiation"
+msgstr "Emulation"
 
 #: winecfg.rc:100
 msgid "ALSA Driver"
@@ -7497,27 +7288,24 @@ msgid "CoreAudio Driver"
 msgstr ""
 
 #: winecfg.rc:106
-#, fuzzy
 msgid "Couldn't open %s!"
-msgstr "Could not stop service %s\n"
+msgstr "Couldn't open %s!"
 
 #: winecfg.rc:107
 msgid "Sound Drivers"
 msgstr ""
 
 #: winecfg.rc:108
-#, fuzzy
 msgid "Wave Out Devices"
-msgstr "Default WaveOut Device"
+msgstr "Wave Out Devices"
 
 #: winecfg.rc:109
 msgid "Wave In Devices"
 msgstr ""
 
 #: winecfg.rc:110
-#, fuzzy
 msgid "MIDI Out Devices"
-msgstr "Default WaveOut Device"
+msgstr "MIDI Out Devices"
 
 #: winecfg.rc:111
 msgid "MIDI In Devices"
@@ -7667,28 +7455,24 @@ msgid "Menu Bar"
 msgstr "Menu Bar"
 
 #: wineconsole.rc:26
-#, fuzzy
 msgid "Set &Defaults"
-msgstr "Default"
+msgstr "Set &Defaults"
 
 #: wineconsole.rc:28
 msgid "&Mark"
 msgstr ""
 
 #: wineconsole.rc:31
-#, fuzzy
 msgid "&Select all"
-msgstr "Select &All"
+msgstr "&Select all"
 
 #: wineconsole.rc:32
-#, fuzzy
 msgid "Sc&roll"
-msgstr "Scroll Up"
+msgstr "Sc&roll"
 
 #: wineconsole.rc:33
-#, fuzzy
 msgid "S&earch"
-msgstr "&Search"
+msgstr "S&earch"
 
 #: wineconsole.rc:36
 msgid "Setup - Default settings"
@@ -7699,9 +7483,8 @@ msgid "Setup - Current settings"
 msgstr ""
 
 #: wineconsole.rc:38
-#, fuzzy
 msgid "Configuration error"
-msgstr "Operations Error"
+msgstr "Configuration error"
 
 #: wineconsole.rc:39
 msgid "Screen buffer size must be greater or equal to the window's one"
@@ -7780,18 +7563,16 @@ msgid "(unidentified)"
 msgstr ""
 
 #: winefile.rc:26
-#, fuzzy
 msgid "&Open\tEnter"
-msgstr "&Open"
+msgstr "&Open\tEnter"
 
 #: winefile.rc:29
 msgid "&In Clipboard...\tF9"
 msgstr ""
 
 #: winefile.rc:31
-#, fuzzy
 msgid "Re&name..."
-msgstr "&Annotate..."
+msgstr "Re&name..."
 
 #: winefile.rc:32
 msgid "Propert&ies...\tAlt+Enter"
@@ -7810,28 +7591,24 @@ msgid "&Run..."
 msgstr ""
 
 #: winefile.rc:38
-#, fuzzy
 msgid "&Print..."
-msgstr "Print..."
+msgstr "&Print..."
 
 #: winefile.rc:39
-#, fuzzy
 msgid "Associate..."
-msgstr "&Annotate..."
+msgstr "Associate..."
 
 #: winefile.rc:41
 msgid "Cr&eate Directory..."
 msgstr ""
 
 #: winefile.rc:42
-#, fuzzy
 msgid "Searc&h..."
-msgstr "&Search"
+msgstr "Searc&h..."
 
 #: winefile.rc:43
-#, fuzzy
 msgid "&Select Files..."
-msgstr "Select &All"
+msgstr "&Select Files..."
 
 #: winefile.rc:46 winemine.rc:44
 msgid "E&xit\tAlt+X"
@@ -7842,9 +7619,8 @@ msgid "&Disk"
 msgstr ""
 
 #: winefile.rc:53
-#, fuzzy
 msgid "&Copy Disk..."
-msgstr "&Copy..."
+msgstr "&Copy Disk..."
 
 #: winefile.rc:54
 msgid "&Label Disk..."
@@ -7863,23 +7639,20 @@ msgid "&Disconnect Network Drive"
 msgstr ""
 
 #: winefile.rc:61
-#, fuzzy
 msgid "Share as..."
-msgstr "Save Target &As..."
+msgstr "Share as..."
 
 #: winefile.rc:62
 msgid "&Remove Share..."
 msgstr ""
 
 #: winefile.rc:64
-#, fuzzy
 msgid "&Select Drive..."
-msgstr "&Select"
+msgstr "&Select Drive..."
 
 #: winefile.rc:67
-#, fuzzy
 msgid "Di&rectories"
-msgstr "Directory Address"
+msgstr "Di&rectories"
 
 #: winefile.rc:68
 msgid "&Next Level\t+"
@@ -7890,9 +7663,8 @@ msgid "Expand &Tree\t*"
 msgstr ""
 
 #: winefile.rc:70
-#, fuzzy
 msgid "Expand &all\tCtrl+*"
-msgstr "Select &All"
+msgstr "Expand &all\tCtrl+*"
 
 #: winefile.rc:71
 msgid "Collapse &Tree\t-"
@@ -7907,19 +7679,16 @@ msgid "T&ree and Directory"
 msgstr ""
 
 #: winefile.rc:78
-#, fuzzy
 msgid "Tr&ee Only"
-msgstr "Decipher Only"
+msgstr "Tr&ee Only"
 
 #: winefile.rc:79
-#, fuzzy
 msgid "Directory &Only"
-msgstr "Decipher Only"
+msgstr "Directory &Only"
 
 #: winefile.rc:83
-#, fuzzy
 msgid "&Name"
-msgstr "Sur Name"
+msgstr "&Name"
 
 #: winefile.rc:84
 msgid "&All File Details"
@@ -7930,9 +7699,8 @@ msgid "&Partial Details..."
 msgstr ""
 
 #: winefile.rc:87
-#, fuzzy
 msgid "&Sort by Name"
-msgstr "Sur Name"
+msgstr "&Sort by Name"
 
 #: winefile.rc:88
 msgid "Sort &by Type"
@@ -7951,14 +7719,12 @@ msgid "Filter by &..."
 msgstr ""
 
 #: winefile.rc:96
-#, fuzzy
 msgid "&Confirmation..."
-msgstr "Client Information"
+msgstr "&Confirmation..."
 
 #: winefile.rc:98
-#, fuzzy
 msgid "Customize Tool&bar..."
-msgstr "Customize"
+msgstr "Customize Tool&bar..."
 
 #: winefile.rc:101
 msgid "&Drivebar"
@@ -7985,18 +7751,16 @@ msgid "&Owner..."
 msgstr ""
 
 #: winefile.rc:119
-#, fuzzy
 msgid "New &Window"
-msgstr "Open in &New Window"
+msgstr "New &Window"
 
 #: winefile.rc:120
 msgid "Cascading\tCtrl+F5"
 msgstr ""
 
 #: winefile.rc:122
-#, fuzzy
 msgid "Tile &Vertically\tCtrl+F4"
-msgstr "Select &All"
+msgstr "Tile &Vertically\tCtrl+F4"
 
 #: winefile.rc:124
 msgid "Arrange Automatically"
@@ -8007,19 +7771,16 @@ msgid "Arrange &Symbols"
 msgstr ""
 
 #: winefile.rc:132
-#, fuzzy
 msgid "Help &Search...\tF1"
-msgstr "&Search"
+msgstr "Help &Search...\tF1"
 
 #: winefile.rc:133
-#, fuzzy
 msgid "&Using Help\tF1"
-msgstr "&About Wine Help"
+msgstr "&Using Help\tF1"
 
 #: winefile.rc:135
-#, fuzzy
 msgid "&About Winefile..."
-msgstr "&About Wine Help"
+msgstr "&About Winefile..."
 
 #: winefile.rc:141
 msgid "Applying font settings"
@@ -8050,40 +7811,32 @@ msgid "%s - %s"
 msgstr ""
 
 #: winefile.rc:154
-#, fuzzy
 msgid "Not yet implemented"
-msgstr ""
-"Not Yet Implemented\n"
-"\n"
+msgstr "Not yet implemented"
 
 #: winefile.rc:155
-#, fuzzy
 msgid "Wine File"
-msgstr "&About Wine Help"
+msgstr "Wine File"
 
 #: winefile.rc:162
-#, fuzzy
 msgid "CDate"
-msgstr "&Date"
+msgstr "CDate"
 
 #: winefile.rc:163
-#, fuzzy
 msgid "ADate"
-msgstr "&Date"
+msgstr "ADate"
 
 #: winefile.rc:164
-#, fuzzy
 msgid "MDate"
-msgstr "&Date"
+msgstr "MDate"
 
 #: winefile.rc:165
 msgid "Index/Inode"
 msgstr ""
 
 #: winefile.rc:168
-#, fuzzy
 msgid "Security"
-msgstr "Secure Email"
+msgstr "Security"
 
 #: winefile.rc:170
 msgid "%s of %s free"
@@ -8110,14 +7863,12 @@ msgid "&Expert"
 msgstr ""
 
 #: winemine.rc:42
-#, fuzzy
 msgid "&Custom..."
-msgstr "Customize"
+msgstr "&Custom..."
 
 #: winemine.rc:46
-#, fuzzy
 msgid "&Info"
-msgstr "Reg Info"
+msgstr "&Info"
 
 #: winemine.rc:47
 msgid "&Fastest Times..."
@@ -8212,9 +7963,8 @@ msgid "Print..."
 msgstr "Print..."
 
 #: winhlp32.rc:93
-#, fuzzy
 msgid "Wine Help"
-msgstr "&About Wine Help"
+msgstr "Wine Help"
 
 #: winhlp32.rc:98
 msgid "Error while reading the help file `%s'"
@@ -8225,9 +7975,8 @@ msgid "Summary"
 msgstr ""
 
 #: winhlp32.rc:99
-#, fuzzy
 msgid "&Index"
-msgstr "I&ndex"
+msgstr "&Index"
 
 #: winhlp32.rc:103
 msgid "Help files (*.hlp)"
@@ -8250,18 +7999,16 @@ msgid "&New...\tCtrl+N"
 msgstr ""
 
 #: wordpad.rc:42
-#, fuzzy
 msgid "R&edo\tCtrl+Y"
-msgstr "&Paste"
+msgstr "R&edo\tCtrl+Y"
 
 #: wordpad.rc:47
 msgid "&Clear\tDEL"
 msgstr ""
 
 #: wordpad.rc:48
-#, fuzzy
 msgid "&Select all\tCtrl+A"
-msgstr "Select &All"
+msgstr "&Select all\tCtrl+A"
 
 #: wordpad.rc:50
 msgid "&Find...\tCtrl+F"
@@ -8284,9 +8031,8 @@ msgid "E&xtras"
 msgstr ""
 
 #: wordpad.rc:59
-#, fuzzy
 msgid "Selection &info"
-msgstr "Select &All"
+msgstr "Selection &info"
 
 #: wordpad.rc:60
 msgid "Character &format"
@@ -8317,9 +8063,8 @@ msgid "&Statusbar"
 msgstr ""
 
 #: wordpad.rc:73
-#, fuzzy
 msgid "&Options..."
-msgstr "&Options"
+msgstr "&Options..."
 
 #: wordpad.rc:75
 msgid "&Insert"
@@ -8330,42 +8075,36 @@ msgid "&Date and time..."
 msgstr ""
 
 #: wordpad.rc:79
-#, fuzzy
 msgid "F&ormat"
-msgstr "F&orward"
+msgstr "F&ormat"
 
 #: wordpad.rc:82 wordpad.rc:105
 msgid "&Bullet points"
 msgstr ""
 
 #: wordpad.rc:83 wordpad.rc:106
-#, fuzzy
 msgid "&Paragraph..."
-msgstr "&Search"
+msgstr "&Paragraph..."
 
 #: wordpad.rc:84
-#, fuzzy
 msgid "&Tabs..."
-msgstr "Save Target &As..."
+msgstr "&Tabs..."
 
 #: wordpad.rc:85
-#, fuzzy
 msgid "Backgroun&d"
-msgstr "&Copy Background"
+msgstr "Backgroun&d"
 
 #: wordpad.rc:87
-#, fuzzy
 msgid "&System\tCtrl+1"
-msgstr "&Paste"
+msgstr "&System\tCtrl+1"
 
 #: wordpad.rc:88
 msgid "&PostThat yellowish\tCtrl+2"
 msgstr ""
 
 #: wordpad.rc:93
-#, fuzzy
 msgid "&About Wine Wordpad"
-msgstr "&About Wine Help"
+msgstr "&About Wine Wordpad"
 
 #: wordpad.rc:130
 msgid "Automatic"
@@ -8440,24 +8179,20 @@ msgid "One page"
 msgstr ""
 
 #: wordpad.rc:167
-#, fuzzy
 msgid "Zoom in"
-msgstr "Zoom"
+msgstr "Zoom in"
 
 #: wordpad.rc:168
-#, fuzzy
 msgid "Zoom out"
-msgstr "Zoom"
+msgstr "Zoom out"
 
 #: wordpad.rc:170
-#, fuzzy
 msgid "Page"
-msgstr "Page Up"
+msgstr "Page"
 
 #: wordpad.rc:171
-#, fuzzy
 msgid "Pages"
-msgstr "Page Up"
+msgstr "Pages"
 
 #: wordpad.rc:172
 msgid "cm"
@@ -8476,9 +8211,8 @@ msgid "pt"
 msgstr ""
 
 #: wordpad.rc:180
-#, fuzzy
 msgid "Document"
-msgstr "Document Signing"
+msgstr "Document"
 
 #: wordpad.rc:181
 msgid "Save changes to '%s'?"
@@ -8507,29 +8241,24 @@ msgid "OLE storage documents are not supported"
 msgstr ""
 
 #: wordpad.rc:189
-#, fuzzy
 msgid "Could not save the file."
-msgstr "Could not get handle to service.\n"
+msgstr "Could not save the file."
 
 #: wordpad.rc:190
 msgid "You do not have access to save the file."
 msgstr ""
 
 #: wordpad.rc:191
-#, fuzzy
 msgid "Could not open the file."
-msgstr "Could not stop service %s\n"
+msgstr "Could not open the file."
 
 #: wordpad.rc:192
 msgid "You do not have access to open the file."
 msgstr ""
 
 #: wordpad.rc:193
-#, fuzzy
 msgid "Printing not implemented"
-msgstr ""
-"Not Yet Implemented\n"
-"\n"
+msgstr "Printing not implemented"
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."
