@@ -28,7 +28,6 @@
 #define IDC_BROWSE_ADDRESSBAR          1004
 #define IDC_BROWSE_STATUSBAR           1005
 #define IDC_BROWSE_TOOLBAR             1006
-#define IDB_IETOOLBAR                  1007
 
 #define ID_BROWSE_NEW_WINDOW           275
 #define ID_BROWSE_OPEN                 256
