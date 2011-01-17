@@ -2790,6 +2790,11 @@ static BOOL pdb_process_file(const struct process* pcs,
         msc_dbg->module->module.SourceIndexed = TRUE;
         msc_dbg->module->module.Publics = TRUE;
     }
+    else
+    {
+        msc_dbg->module->format_info[DFI_PDB] = NULL;
+        HeapFree(GetProcessHeap(), 0, modfmt);
+    }
     return ret;
 }
 
