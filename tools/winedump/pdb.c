@@ -670,6 +670,35 @@ static void pdb_dump_fpo_ext(struct pdb_reader* reader, unsigned stream_idx)
     free(strbase);
 }
 
+static void pdb_dump_segments(struct pdb_reader* reader, unsigned stream_idx)
+{
+    const char* segs;
+    DWORD       size;
+    const char* ptr;
+
+    if (stream_idx == (WORD)-1) return;
+    segs = reader->read_file(reader, stream_idx);
+
+    if (segs)
+    {
+        size = pdb_get_file_size(reader, stream_idx);
+        for (ptr = segs; ptr < segs + size; )
+        {
+            printf("Segment %s\n", ptr);
+            ptr += (strlen(ptr) + 1 + 3) & ~3;
+            printf("\tdword[0]: %08x\n", *(DWORD*)ptr); ptr += 4;
+            printf("\tdword[1]: %08x\n", *(DWORD*)ptr); ptr += 4;
+            printf("\tdword[2]: %08x\n", *(DWORD*)ptr); ptr += 4;
+            printf("\tdword[3]: %08x\n", *(DWORD*)ptr); ptr += 4;
+            printf("\tdword[4]: %08x\n", *(DWORD*)ptr); ptr += 4;
+            printf("\tdword[5]: %08x\n", *(DWORD*)ptr); ptr += 4;
+            printf("\tdword[6]: %08x\n", *(DWORD*)ptr); ptr += 4;
+            printf("\tdword[7]: %08x\n", *(DWORD*)ptr); ptr += 4;
+        }
+        free((char*)segs);
+    } else printf("nosdfsdffd\n");
+}
+
 static const char       pdb2[] = "Microsoft C/C++ program database 2.00";
 
 static void pdb_jg_dump(void)
@@ -755,28 +784,7 @@ static void pdb_jg_dump(void)
         }
         pdb_dump_types(&reader);
         pdb_dump_symbols(&reader, &sidx);
-#if 0
-        /* segments info, index is unknown */
-        {
-            const void*     segs = pdb_read_file(pdb, toc, 8); /* FIXME which index ??? */
-            const void*     ptr = segs;
-
-            if (segs) while (ptr < segs + toc->file[8].size)
-            {
-                printf("Segment %s\n", (const char*)ptr);
-                ptr += (strlen(ptr) + 1 + 3) & ~3;
-                printf("\tdword[0]: %08lx\n", *(DWORD*)ptr); ptr += 4;
-                printf("\tdword[1]: %08lx\n", *(DWORD*)ptr); ptr += 4;
-                printf("\tdword[2]: %08lx\n", *(DWORD*)ptr); ptr += 4;
-                printf("\tdword[3]: %08lx\n", *(DWORD*)ptr); ptr += 4;
-                printf("\tdword[4]: %08lx\n", *(DWORD*)ptr); ptr += 4;
-                printf("\tdword[5]: %08lx\n", *(DWORD*)ptr); ptr += 4;
-                printf("\tdword[6]: %08lx\n", *(DWORD*)ptr); ptr += 4;
-                printf("\tdword[7]: %08lx\n", *(DWORD*)ptr); ptr += 4;
-            }
-            free(segs);
-        }
-#endif
+        pdb_dump_segments(&reader, sidx.segments);
     }
     else printf("-Unable to get root\n");
 
@@ -921,6 +929,7 @@ static void pdb_ds_dump(void)
         pdb_dump_symbols(&reader, &sidx);
         pdb_dump_fpo(&reader, sidx.FPO);
         pdb_dump_fpo_ext(&reader, sidx.FPO_EXT);
+        pdb_dump_segments(&reader, sidx.segments);
     }
     else printf("-Unable to get root\n");
 
