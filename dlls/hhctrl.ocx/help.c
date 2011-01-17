@@ -667,6 +667,52 @@ static void HH_RegisterChildWndClass(HHInfo *pHHInfo)
 
 #define ICON_SIZE   20
 
+static void DisplayPopupMenu(HHInfo *info)
+{
+    HMENU menu, submenu;
+    TBBUTTONINFOW button;
+    MENUITEMINFOW item;
+    POINT coords;
+    RECT rect;
+    DWORD index;
+
+    menu = LoadMenuW(hhctrl_hinstance, MAKEINTRESOURCEW(MENU_POPUP));
+
+    if (!menu)
+        return;
+
+    submenu = GetSubMenu(menu, 0);
+
+    /* Update the Show/Hide menu item */
+    item.cbSize = sizeof(MENUITEMINFOW);
+    item.fMask = MIIM_STRING;
+
+    if (info->WinType.fNotExpanded)
+        item.dwTypeData = HH_LoadString(IDS_SHOWTABS);
+    else
+        item.dwTypeData = HH_LoadString(IDS_HIDETABS);
+
+    SetMenuItemInfoW(submenu, IDTB_EXPAND, FALSE, &item);
+    heap_free(item.dwTypeData);
+
+    /* Find the index toolbar button */
+    button.cbSize = sizeof(TBBUTTONINFOW);
+    button.dwMask = TBIF_COMMAND;
+    index = SendMessageW(info->WinType.hwndToolBar, TB_GETBUTTONINFOW, IDTB_OPTIONS, (LPARAM) &button);
+
+    if (index == -1)
+       return;
+
+    /* Get position */
+    SendMessageW(info->WinType.hwndToolBar, TB_GETITEMRECT, index, (LPARAM) &rect);
+
+    coords.x = rect.left;
+    coords.y = rect.bottom;
+
+    ClientToScreen(info->WinType.hwndToolBar, &coords);
+    TrackPopupMenu(submenu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_LEFTBUTTON | TPM_NOANIMATION, coords.x, coords.y, 0, info->WinType.hwndHelp, NULL);
+}
+
 static void TB_OnClick(HWND hWnd, DWORD dwID)
 {
     HHInfo *info = (HHInfo *)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
@@ -699,6 +745,8 @@ static void TB_OnClick(HWND hWnd, DWORD dwID)
             DoSync(info);
             break;
         case IDTB_OPTIONS:
+            DisplayPopupMenu(info);
+            break;
         case IDTB_BROWSE_FWD:
         case IDTB_BROWSE_BACK:
         case IDTB_JUMP1:

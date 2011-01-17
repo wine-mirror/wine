@@ -572,7 +572,7 @@ msgstr "Межі [мм]"
 msgid "mm"
 msgstr "мм"
 
-#: comdlg32.rc:64 hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
+#: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
 msgid "Print"
 msgstr "Друк"
 
@@ -2040,111 +2040,150 @@ msgstr "Звуковий пристрій виводу по замовчуван
 msgid "Default MidiOut Device"
 msgstr "Пристрій виводу Midi по замовчуванні"
 
-#: hhctrl.rc:27 notepad.rc:58 progman.rc:53
-msgid "&Contents"
-msgstr "&Зміст"
-
-#: hhctrl.rc:28
-msgid "I&ndex"
-msgstr "&Вказівник"
-
-#: hhctrl.rc:29 notepad.rc:52
-msgid "&Search"
-msgstr "&Пошук"
-
-#: hhctrl.rc:30
-msgid "Favor&ites"
-msgstr "&Обране"
-
-#: hhctrl.rc:35
-msgid "Show"
-msgstr "Показувати"
-
-#: hhctrl.rc:36
-msgid "Hide"
-msgstr "Приховати"
-
-#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
-msgid "Stop"
-msgstr "Зупинити"
-
-#: hhctrl.rc:38 shdocvw.rc:66 shell32.rc:59
-msgid "Refresh"
-msgstr "Оновити"
-
-#: hhctrl.rc:39 shdocvw.rc:63
-msgid "Back"
-msgstr "Назад"
-
-#: hhctrl.rc:40 shdocvw.rc:67
-msgid "Home"
-msgstr "Додому"
-
-#: hhctrl.rc:41
-msgid "Sync"
-msgstr "Синхронізувати"
-
-#: hhctrl.rc:43 wordpad.rc:155
+#: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
 msgstr "Параметри"
 
-#: hhctrl.rc:44 shdocvw.rc:64
+#: hhctrl.rc:70
+msgid "S&ync"
+msgstr ""
+
+#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:101
+msgid "&Back"
+msgstr "&Назад"
+
+#: hhctrl.rc:72
+#, fuzzy
+msgid "&Forward"
+msgstr "Вперед"
+
+#: hhctrl.rc:73
+#, fuzzy
+msgid "&Home"
+msgstr "Додому"
+
+#: hhctrl.rc:74
+#, fuzzy
+msgid "&Stop"
+msgstr "Зупинити"
+
+#: hhctrl.rc:75 shdoclc.rc:56
+msgid "&Refresh"
+msgstr "О&новити"
+
+#: hhctrl.rc:76 winefile.rc:38
+msgid "&Print..."
+msgstr "&Друк..."
+
+#: hhctrl.rc:28 notepad.rc:58 progman.rc:53
+msgid "&Contents"
+msgstr "&Зміст"
+
+#: hhctrl.rc:29
+msgid "I&ndex"
+msgstr "&Вказівник"
+
+#: hhctrl.rc:30 notepad.rc:52
+msgid "&Search"
+msgstr "&Пошук"
+
+#: hhctrl.rc:31
+msgid "Favor&ites"
+msgstr "&Обране"
+
+#: hhctrl.rc:33
+msgid "Hide &Tabs"
+msgstr ""
+
+#: hhctrl.rc:34
+msgid "Show &Tabs"
+msgstr ""
+
+#: hhctrl.rc:39
+msgid "Show"
+msgstr "Показувати"
+
+#: hhctrl.rc:40
+msgid "Hide"
+msgstr "Приховати"
+
+#: hhctrl.rc:41 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
+msgid "Stop"
+msgstr "Зупинити"
+
+#: hhctrl.rc:42 shdocvw.rc:66 shell32.rc:59
+msgid "Refresh"
+msgstr "Оновити"
+
+#: hhctrl.rc:43 shdocvw.rc:63
+msgid "Back"
+msgstr "Назад"
+
+#: hhctrl.rc:44 shdocvw.rc:67
+msgid "Home"
+msgstr "Додому"
+
+#: hhctrl.rc:45
+msgid "Sync"
+msgstr "Синхронізувати"
+
+#: hhctrl.rc:48 shdocvw.rc:64
 msgid "Forward"
 msgstr "Вперед"
 
-#: hhctrl.rc:45
+#: hhctrl.rc:49
 msgid "IDTB_NOTES"
 msgstr "IDTB_NOTES"
 
-#: hhctrl.rc:46
+#: hhctrl.rc:50
 msgid "IDTB_BROWSE_FWD"
 msgstr "IDTB_BROWSE_FWD"
 
-#: hhctrl.rc:47
+#: hhctrl.rc:51
 msgid "IDT_BROWSE_BACK"
 msgstr "IDT_BROWSE_BACK"
 
-#: hhctrl.rc:48
+#: hhctrl.rc:52
 msgid "IDTB_CONTENTS"
 msgstr "IDTB_CONTENTS"
 
-#: hhctrl.rc:49
+#: hhctrl.rc:53
 msgid "IDTB_INDEX"
 msgstr "IDTB_INDEX"
 
-#: hhctrl.rc:50
+#: hhctrl.rc:54
 msgid "IDTB_SEARCH"
 msgstr "IDTB_SEARCH"
 
-#: hhctrl.rc:51
+#: hhctrl.rc:55
 msgid "IDTB_HISTORY"
 msgstr "IDTB_HISTORY"
 
-#: hhctrl.rc:52
+#: hhctrl.rc:56
 msgid "IDTB_FAVORITES"
 msgstr "IDTB_FAVORITES"
 
-#: hhctrl.rc:53
+#: hhctrl.rc:57
 msgid "Jump1"
 msgstr "Jump1"
 
-#: hhctrl.rc:54
+#: hhctrl.rc:58
 msgid "Jump2"
 msgstr "Jump2"
 
-#: hhctrl.rc:55
+#: hhctrl.rc:59
 msgid "Customize"
 msgstr "Налаштування"
 
-#: hhctrl.rc:56
+#: hhctrl.rc:60
 msgid "Zoom"
 msgstr "Збільшення"
 
-#: hhctrl.rc:57
+#: hhctrl.rc:61
 msgid "IDTB_TOC_NEXT"
 msgstr "IDTB_TOC_NEXT"
 
-#: hhctrl.rc:58
+#: hhctrl.rc:62
 msgid "IDTB_TOC_PREV"
 msgstr "IDTB_TOC_PREV"
 
@@ -2866,10 +2905,6 @@ msgstr ""
 "#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
 "За замовчуванням"
 
-#: shdoclc.rc:38 winhlp32.rc:101
-msgid "&Back"
-msgstr "&Назад"
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr "&Вперед"
@@ -2928,10 +2963,6 @@ msgstr "&Кодування"
 #: shdoclc.rc:55
 msgid "Pr&int"
 msgstr "&Друк"
-
-#: shdoclc.rc:56
-msgid "&Refresh"
-msgstr "О&новити"
 
 #: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 #, fuzzy
@@ -7929,10 +7960,6 @@ msgstr "Р&озпакувати..."
 #: winefile.rc:37
 msgid "&Run..."
 msgstr "&Запустити..."
-
-#: winefile.rc:38
-msgid "&Print..."
-msgstr "&Друк..."
 
 #: winefile.rc:39
 msgid "Associate..."

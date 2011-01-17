@@ -557,7 +557,7 @@ msgstr "Kenarlıklar [mm]"
 msgid "mm"
 msgstr "mm"
 
-#: comdlg32.rc:64 hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
+#: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
 msgid "Print"
 msgstr "Yazdır"
 
@@ -2007,15 +2007,54 @@ msgstr ""
 msgid "Default MidiOut Device"
 msgstr ""
 
-#: hhctrl.rc:27 notepad.rc:58 progman.rc:53
+#: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
+msgid "Options"
+msgstr "Seçenekler"
+
+#: hhctrl.rc:70
+msgid "S&ync"
+msgstr ""
+
+#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:101
+msgid "&Back"
+msgstr "&Geri"
+
+#: hhctrl.rc:72
+#, fuzzy
+msgid "&Forward"
+msgstr "İleri"
+
+#: hhctrl.rc:73
+#, fuzzy
+msgid "&Home"
+msgstr "Ev"
+
+#: hhctrl.rc:74
+#, fuzzy
+msgid "&Stop"
+msgstr ""
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"Dur\n"
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"Durdur"
+
+#: hhctrl.rc:75 shdoclc.rc:56
+msgid "&Refresh"
+msgstr "&Yenile"
+
+#: hhctrl.rc:76 winefile.rc:38
+msgid "&Print..."
+msgstr "Ya&zdır..."
+
+#: hhctrl.rc:28 notepad.rc:58 progman.rc:53
 msgid "&Contents"
 msgstr "&İçindekiler"
 
-#: hhctrl.rc:28
+#: hhctrl.rc:29
 msgid "I&ndex"
 msgstr "Di&zin"
 
-#: hhctrl.rc:29 notepad.rc:52
+#: hhctrl.rc:30 notepad.rc:52
 #, fuzzy
 msgid "&Search"
 msgstr ""
@@ -2024,19 +2063,27 @@ msgstr ""
 "#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
 "&Bul"
 
-#: hhctrl.rc:30
+#: hhctrl.rc:31
 msgid "Favor&ites"
 msgstr "&Sık Kullanılanlar"
 
-#: hhctrl.rc:35
+#: hhctrl.rc:33
+msgid "Hide &Tabs"
+msgstr ""
+
+#: hhctrl.rc:34
+msgid "Show &Tabs"
+msgstr ""
+
+#: hhctrl.rc:39
 msgid "Show"
 msgstr "Göster"
 
-#: hhctrl.rc:36
+#: hhctrl.rc:40
 msgid "Hide"
 msgstr "Gizle"
 
-#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
+#: hhctrl.rc:41 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
 #, fuzzy
 msgid "Stop"
 msgstr ""
@@ -2045,83 +2092,79 @@ msgstr ""
 "#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
 "Durdur"
 
-#: hhctrl.rc:38 shdocvw.rc:66 shell32.rc:59
+#: hhctrl.rc:42 shdocvw.rc:66 shell32.rc:59
 msgid "Refresh"
 msgstr "Yenile"
 
-#: hhctrl.rc:39 shdocvw.rc:63
+#: hhctrl.rc:43 shdocvw.rc:63
 msgid "Back"
 msgstr "Geri"
 
-#: hhctrl.rc:40 shdocvw.rc:67
+#: hhctrl.rc:44 shdocvw.rc:67
 msgid "Home"
 msgstr "Ev"
 
-#: hhctrl.rc:41
+#: hhctrl.rc:45
 msgid "Sync"
 msgstr "Eşitle"
 
-#: hhctrl.rc:43 wordpad.rc:155
-msgid "Options"
-msgstr "Seçenekler"
-
-#: hhctrl.rc:44 shdocvw.rc:64
+#: hhctrl.rc:48 shdocvw.rc:64
 msgid "Forward"
 msgstr "İleri"
 
-#: hhctrl.rc:45
+#: hhctrl.rc:49
 msgid "IDTB_NOTES"
 msgstr "IDTB_NOTES"
 
-#: hhctrl.rc:46
+#: hhctrl.rc:50
 msgid "IDTB_BROWSE_FWD"
 msgstr "IDTB_BROWSE_FWD"
 
-#: hhctrl.rc:47
+#: hhctrl.rc:51
 msgid "IDT_BROWSE_BACK"
 msgstr "IDT_BROWSE_BACK"
 
-#: hhctrl.rc:48
+#: hhctrl.rc:52
 msgid "IDTB_CONTENTS"
 msgstr "IDTB_CONTENTS"
 
-#: hhctrl.rc:49
+#: hhctrl.rc:53
 msgid "IDTB_INDEX"
 msgstr "IDTB_INDEX"
 
-#: hhctrl.rc:50
+#: hhctrl.rc:54
 msgid "IDTB_SEARCH"
 msgstr "IDTB_SEARCH"
 
-#: hhctrl.rc:51
+#: hhctrl.rc:55
 msgid "IDTB_HISTORY"
 msgstr "IDTB_HISTORY"
 
-#: hhctrl.rc:52
+#: hhctrl.rc:56
 msgid "IDTB_FAVORITES"
 msgstr "IDTB_FAVORITES"
 
-#: hhctrl.rc:53
+#: hhctrl.rc:57
 msgid "Jump1"
 msgstr "Jump1"
 
-#: hhctrl.rc:54
+#: hhctrl.rc:58
 msgid "Jump2"
 msgstr "Jump2"
 
-#: hhctrl.rc:55
+#: hhctrl.rc:59
 msgid "Customize"
 msgstr "Özelleştir"
 
-#: hhctrl.rc:56
+#: hhctrl.rc:60
 msgid "Zoom"
 msgstr "Yaklaştır"
 
-#: hhctrl.rc:57
+#: hhctrl.rc:61
 msgid "IDTB_TOC_NEXT"
 msgstr "IDTB_TOC_NEXT"
 
-#: hhctrl.rc:58
+#: hhctrl.rc:62
 msgid "IDTB_TOC_PREV"
 msgstr "IDTB_TOC_PREV"
 
@@ -2849,10 +2892,6 @@ msgstr ""
 msgid "Default"
 msgstr "Default"
 
-#: shdoclc.rc:38 winhlp32.rc:101
-msgid "&Back"
-msgstr "&Geri"
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr "İ&leri"
@@ -2906,10 +2945,6 @@ msgstr "&Kodlama"
 #: shdoclc.rc:55
 msgid "Pr&int"
 msgstr "Ya&zdır"
-
-#: shdoclc.rc:56
-msgid "&Refresh"
-msgstr "&Yenile"
 
 #: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 #, fuzzy
@@ -7906,10 +7941,6 @@ msgstr "Geni&şlet..."
 #: winefile.rc:37
 msgid "&Run..."
 msgstr "&Çalıştır..."
-
-#: winefile.rc:38
-msgid "&Print..."
-msgstr "Ya&zdır..."
 
 #: winefile.rc:39
 msgid "Associate..."

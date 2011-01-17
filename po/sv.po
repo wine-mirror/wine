@@ -565,7 +565,7 @@ msgstr "Marginaler [millimeter]"
 msgid "mm"
 msgstr "millimeter"
 
-#: comdlg32.rc:64 hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
+#: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
 msgid "Print"
 msgstr "Skriv ut"
 
@@ -2064,31 +2064,78 @@ msgstr "Förvald WaveOut-enhet"
 msgid "Default MidiOut Device"
 msgstr "Förvald MidiOut-enhet"
 
-#: hhctrl.rc:27 notepad.rc:58 progman.rc:53
+#: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
+msgid "Options"
+msgstr "Alternativ"
+
+#: hhctrl.rc:70
+msgid "S&ync"
+msgstr ""
+
+#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:101
+msgid "&Back"
+msgstr "&Bakåt"
+
+#: hhctrl.rc:72
+#, fuzzy
+msgid "&Forward"
+msgstr "Framåt"
+
+#: hhctrl.rc:73
+#, fuzzy
+msgid "&Home"
+msgstr "Hem"
+
+#: hhctrl.rc:74
+#, fuzzy
+msgid "&Stop"
+msgstr ""
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"Stoppa\n"
+"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
+"Stopp"
+
+#: hhctrl.rc:75 shdoclc.rc:56
+msgid "&Refresh"
+msgstr "Upp&datera"
+
+#: hhctrl.rc:76 winefile.rc:38
+msgid "&Print..."
+msgstr "&Skriv ut..."
+
+#: hhctrl.rc:28 notepad.rc:58 progman.rc:53
 msgid "&Contents"
 msgstr "&Innehåll"
 
-#: hhctrl.rc:28
+#: hhctrl.rc:29
 msgid "I&ndex"
 msgstr "I&ndex"
 
-#: hhctrl.rc:29 notepad.rc:52
+#: hhctrl.rc:30 notepad.rc:52
 msgid "&Search"
 msgstr "&Sök"
 
-#: hhctrl.rc:30
+#: hhctrl.rc:31
 msgid "Favor&ites"
 msgstr "Favor&iter"
 
-#: hhctrl.rc:35
+#: hhctrl.rc:33
+msgid "Hide &Tabs"
+msgstr ""
+
+#: hhctrl.rc:34
+msgid "Show &Tabs"
+msgstr ""
+
+#: hhctrl.rc:39
 msgid "Show"
 msgstr "Visa"
 
-#: hhctrl.rc:36
+#: hhctrl.rc:40
 msgid "Hide"
 msgstr "Dölj"
 
-#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
+#: hhctrl.rc:41 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
 #, fuzzy
 msgid "Stop"
 msgstr ""
@@ -2097,83 +2144,79 @@ msgstr ""
 "#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
 "Stopp"
 
-#: hhctrl.rc:38 shdocvw.rc:66 shell32.rc:59
+#: hhctrl.rc:42 shdocvw.rc:66 shell32.rc:59
 msgid "Refresh"
 msgstr "Uppdatera"
 
-#: hhctrl.rc:39 shdocvw.rc:63
+#: hhctrl.rc:43 shdocvw.rc:63
 msgid "Back"
 msgstr "Bakåt"
 
-#: hhctrl.rc:40 shdocvw.rc:67
+#: hhctrl.rc:44 shdocvw.rc:67
 msgid "Home"
 msgstr "Hem"
 
-#: hhctrl.rc:41
+#: hhctrl.rc:45
 msgid "Sync"
 msgstr "Synkronisera"
 
-#: hhctrl.rc:43 wordpad.rc:155
-msgid "Options"
-msgstr "Alternativ"
-
-#: hhctrl.rc:44 shdocvw.rc:64
+#: hhctrl.rc:48 shdocvw.rc:64
 msgid "Forward"
 msgstr "Framåt"
 
-#: hhctrl.rc:45
+#: hhctrl.rc:49
 msgid "IDTB_NOTES"
 msgstr "IDTB_NOTES"
 
-#: hhctrl.rc:46
+#: hhctrl.rc:50
 msgid "IDTB_BROWSE_FWD"
 msgstr "IDTB_BROWSE_FWD"
 
-#: hhctrl.rc:47
+#: hhctrl.rc:51
 msgid "IDT_BROWSE_BACK"
 msgstr "IDT_BROWSE_BACK"
 
-#: hhctrl.rc:48
+#: hhctrl.rc:52
 msgid "IDTB_CONTENTS"
 msgstr "IDTB_CONTENTS"
 
-#: hhctrl.rc:49
+#: hhctrl.rc:53
 msgid "IDTB_INDEX"
 msgstr "IDTB_INDEX"
 
-#: hhctrl.rc:50
+#: hhctrl.rc:54
 msgid "IDTB_SEARCH"
 msgstr "IDTB_SEARCH"
 
-#: hhctrl.rc:51
+#: hhctrl.rc:55
 msgid "IDTB_HISTORY"
 msgstr "IDTB_HISTORY"
 
-#: hhctrl.rc:52
+#: hhctrl.rc:56
 msgid "IDTB_FAVORITES"
 msgstr "IDTB_FAVORITES"
 
-#: hhctrl.rc:53
+#: hhctrl.rc:57
 msgid "Jump1"
 msgstr "Jump1"
 
-#: hhctrl.rc:54
+#: hhctrl.rc:58
 msgid "Jump2"
 msgstr "Jump2"
 
-#: hhctrl.rc:55
+#: hhctrl.rc:59
 msgid "Customize"
 msgstr "Anpassa"
 
-#: hhctrl.rc:56
+#: hhctrl.rc:60
 msgid "Zoom"
 msgstr "Zoom"
 
-#: hhctrl.rc:57
+#: hhctrl.rc:61
 msgid "IDTB_TOC_NEXT"
 msgstr "IDTB_TOC_NEXT"
 
-#: hhctrl.rc:58
+#: hhctrl.rc:62
 msgid "IDTB_TOC_PREV"
 msgstr "IDTB_TOC_PREV"
 
@@ -2889,10 +2932,6 @@ msgstr "Skriv sökvägen där filen finns och klicka sedan OK."
 msgid "Default"
 msgstr "Standard"
 
-#: shdoclc.rc:38 winhlp32.rc:101
-msgid "&Back"
-msgstr "&Bakåt"
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr "&Framåt"
@@ -2946,10 +2985,6 @@ msgstr "Tecken&kodning"
 #: shdoclc.rc:55
 msgid "Pr&int"
 msgstr "Skriv &ut"
-
-#: shdoclc.rc:56
-msgid "&Refresh"
-msgstr "Upp&datera"
 
 #: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 #, fuzzy
@@ -7958,10 +7993,6 @@ msgstr "Packa &upp..."
 #: winefile.rc:37
 msgid "&Run..."
 msgstr "&Kör..."
-
-#: winefile.rc:38
-msgid "&Print..."
-msgstr "&Skriv ut..."
 
 #: winefile.rc:39
 msgid "Associate..."

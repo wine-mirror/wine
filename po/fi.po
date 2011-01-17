@@ -545,7 +545,7 @@ msgstr "Marginaalit (mm)"
 msgid "mm"
 msgstr "mm"
 
-#: comdlg32.rc:64 hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
+#: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
 msgid "Print"
 msgstr "Tulosta"
 
@@ -1983,7 +1983,47 @@ msgstr ""
 msgid "Default MidiOut Device"
 msgstr ""
 
-#: hhctrl.rc:27 notepad.rc:58 progman.rc:53
+#: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
+msgid "Options"
+msgstr "Valinnat"
+
+#: hhctrl.rc:70
+msgid "S&ync"
+msgstr ""
+
+#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:101
+msgid "&Back"
+msgstr "&Takaisin"
+
+#: hhctrl.rc:72
+#, fuzzy
+msgid "&Forward"
+msgstr "Seuraava"
+
+#: hhctrl.rc:73
+#, fuzzy
+msgid "&Home"
+msgstr "Alkuun"
+
+#: hhctrl.rc:74
+#, fuzzy
+msgid "&Stop"
+msgstr ""
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"Pysäytä\n"
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"P&ysäytä"
+
+#: hhctrl.rc:75 shdoclc.rc:56
+msgid "&Refresh"
+msgstr "P&äivitä"
+
+#: hhctrl.rc:76 winefile.rc:38
+#, fuzzy
+msgid "&Print..."
+msgstr "Tulosta"
+
+#: hhctrl.rc:28 notepad.rc:58 progman.rc:53
 #, fuzzy
 msgid "&Contents"
 msgstr ""
@@ -1992,27 +2032,35 @@ msgstr ""
 "#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
 "&Sisältö"
 
-#: hhctrl.rc:28
+#: hhctrl.rc:29
 msgid "I&ndex"
 msgstr "&Hakemisto"
 
-#: hhctrl.rc:29 notepad.rc:52
+#: hhctrl.rc:30 notepad.rc:52
 msgid "&Search"
 msgstr "&Etsi"
 
-#: hhctrl.rc:30
+#: hhctrl.rc:31
 msgid "Favor&ites"
 msgstr "S&uosikit"
 
-#: hhctrl.rc:35
+#: hhctrl.rc:33
+msgid "Hide &Tabs"
+msgstr ""
+
+#: hhctrl.rc:34
+msgid "Show &Tabs"
+msgstr ""
+
+#: hhctrl.rc:39
 msgid "Show"
 msgstr "Näytä"
 
-#: hhctrl.rc:36
+#: hhctrl.rc:40
 msgid "Hide"
 msgstr "Piilota"
 
-#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
+#: hhctrl.rc:41 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
 #, fuzzy
 msgid "Stop"
 msgstr ""
@@ -2021,83 +2069,79 @@ msgstr ""
 "#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
 "P&ysäytä"
 
-#: hhctrl.rc:38 shdocvw.rc:66 shell32.rc:59
+#: hhctrl.rc:42 shdocvw.rc:66 shell32.rc:59
 msgid "Refresh"
 msgstr "Päivitä"
 
-#: hhctrl.rc:39 shdocvw.rc:63
+#: hhctrl.rc:43 shdocvw.rc:63
 msgid "Back"
 msgstr "Takaisin"
 
-#: hhctrl.rc:40 shdocvw.rc:67
+#: hhctrl.rc:44 shdocvw.rc:67
 msgid "Home"
 msgstr "Alkuun"
 
-#: hhctrl.rc:41
+#: hhctrl.rc:45
 msgid "Sync"
 msgstr "Synkronoi"
 
-#: hhctrl.rc:43 wordpad.rc:155
-msgid "Options"
-msgstr "Valinnat"
-
-#: hhctrl.rc:44 shdocvw.rc:64
+#: hhctrl.rc:48 shdocvw.rc:64
 msgid "Forward"
 msgstr "Seuraava"
 
-#: hhctrl.rc:45
+#: hhctrl.rc:49
 msgid "IDTB_NOTES"
 msgstr "IDTB_NOTES"
 
-#: hhctrl.rc:46
+#: hhctrl.rc:50
 msgid "IDTB_BROWSE_FWD"
 msgstr "IDTB_BROWSE_FWD"
 
-#: hhctrl.rc:47
+#: hhctrl.rc:51
 msgid "IDT_BROWSE_BACK"
 msgstr "IDT_BROWSE_BACK"
 
-#: hhctrl.rc:48
+#: hhctrl.rc:52
 msgid "IDTB_CONTENTS"
 msgstr "IDTB_CONTENTS"
 
-#: hhctrl.rc:49
+#: hhctrl.rc:53
 msgid "IDTB_INDEX"
 msgstr "IDTB_INDEX"
 
-#: hhctrl.rc:50
+#: hhctrl.rc:54
 msgid "IDTB_SEARCH"
 msgstr "IDTB_SEARCH"
 
-#: hhctrl.rc:51
+#: hhctrl.rc:55
 msgid "IDTB_HISTORY"
 msgstr "IDTB_HISTORY"
 
-#: hhctrl.rc:52
+#: hhctrl.rc:56
 msgid "IDTB_FAVORITES"
 msgstr "IDTB_FAVORITES"
 
-#: hhctrl.rc:53
+#: hhctrl.rc:57
 msgid "Jump1"
 msgstr "Hyppää1"
 
-#: hhctrl.rc:54
+#: hhctrl.rc:58
 msgid "Jump2"
 msgstr "Hyppää2"
 
-#: hhctrl.rc:55
+#: hhctrl.rc:59
 msgid "Customize"
 msgstr "Räätälöi"
 
-#: hhctrl.rc:56
+#: hhctrl.rc:60
 msgid "Zoom"
 msgstr "Suurenna"
 
-#: hhctrl.rc:57
+#: hhctrl.rc:61
 msgid "IDTB_TOC_NEXT"
 msgstr "IDTB_TOC_NEXT"
 
-#: hhctrl.rc:58
+#: hhctrl.rc:62
 msgid "IDTB_TOC_PREV"
 msgstr "IDTB_TOC_PREV"
 
@@ -2812,10 +2856,6 @@ msgstr ""
 "#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
 "Default"
 
-#: shdoclc.rc:38 winhlp32.rc:101
-msgid "&Back"
-msgstr "&Takaisin"
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr "&Eteenpäin"
@@ -2869,10 +2909,6 @@ msgstr "Koo&daus"
 #: shdoclc.rc:55
 msgid "Pr&int"
 msgstr "Tul&osta"
-
-#: shdoclc.rc:56
-msgid "&Refresh"
-msgstr "P&äivitä"
 
 #: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 #, fuzzy
@@ -7518,11 +7554,6 @@ msgstr ""
 #: winefile.rc:37
 msgid "&Run..."
 msgstr ""
-
-#: winefile.rc:38
-#, fuzzy
-msgid "&Print..."
-msgstr "Tulosta"
 
 #: winefile.rc:39
 #, fuzzy

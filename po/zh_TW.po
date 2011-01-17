@@ -560,7 +560,7 @@ msgstr "邊緣空白 [毫米]"
 msgid "mm"
 msgstr "毫米"
 
-#: comdlg32.rc:64 hhctrl.rc:42 shdocvw.rc:68 wordpad.rc:162
+#: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
 msgid "Print"
 msgstr "列印"
 
@@ -1998,111 +1998,155 @@ msgstr ""
 msgid "Default MidiOut Device"
 msgstr ""
 
-#: hhctrl.rc:27 notepad.rc:58 progman.rc:53
-msgid "&Contents"
-msgstr "內容(&C)"
-
-#: hhctrl.rc:28
-msgid "I&ndex"
-msgstr "目錄(&N)"
-
-#: hhctrl.rc:29 notepad.rc:52
-msgid "&Search"
-msgstr "搜尋(&S)"
-
-#: hhctrl.rc:30
-msgid "Favor&ites"
-msgstr "最愛(&I)"
-
-#: hhctrl.rc:35
-msgid "Show"
-msgstr "顯示"
-
-#: hhctrl.rc:36
-msgid "Hide"
-msgstr "隱藏"
-
-#: hhctrl.rc:37 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
-msgid "Stop"
-msgstr "停止"
-
-#: hhctrl.rc:38 shdocvw.rc:66 shell32.rc:59
-msgid "Refresh"
-msgstr "刷新"
-
-#: hhctrl.rc:39 shdocvw.rc:63
-msgid "Back"
-msgstr "向後"
-
-#: hhctrl.rc:40 shdocvw.rc:67
-msgid "Home"
-msgstr "首頁"
-
-#: hhctrl.rc:41
-msgid "Sync"
-msgstr "同步"
-
-#: hhctrl.rc:43 wordpad.rc:155
+#: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
 msgstr "選項"
 
-#: hhctrl.rc:44 shdocvw.rc:64
+#: hhctrl.rc:70
+msgid "S&ync"
+msgstr ""
+
+#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:101
+#, fuzzy
+msgid "&Back"
+msgstr ""
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"向後(&B)\n"
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"返回(&B)"
+
+#: hhctrl.rc:72
+#, fuzzy
+msgid "&Forward"
+msgstr "向前"
+
+#: hhctrl.rc:73
+#, fuzzy
+msgid "&Home"
+msgstr "首頁"
+
+#: hhctrl.rc:74
+#, fuzzy
+msgid "&Stop"
+msgstr "停止"
+
+#: hhctrl.rc:75 shdoclc.rc:56
+msgid "&Refresh"
+msgstr "刷新(&R)"
+
+#: hhctrl.rc:76 winefile.rc:38
+msgid "&Print..."
+msgstr "列印(&P)..."
+
+#: hhctrl.rc:28 notepad.rc:58 progman.rc:53
+msgid "&Contents"
+msgstr "內容(&C)"
+
+#: hhctrl.rc:29
+msgid "I&ndex"
+msgstr "目錄(&N)"
+
+#: hhctrl.rc:30 notepad.rc:52
+msgid "&Search"
+msgstr "搜尋(&S)"
+
+#: hhctrl.rc:31
+msgid "Favor&ites"
+msgstr "最愛(&I)"
+
+#: hhctrl.rc:33
+msgid "Hide &Tabs"
+msgstr ""
+
+#: hhctrl.rc:34
+msgid "Show &Tabs"
+msgstr ""
+
+#: hhctrl.rc:39
+msgid "Show"
+msgstr "顯示"
+
+#: hhctrl.rc:40
+msgid "Hide"
+msgstr "隱藏"
+
+#: hhctrl.rc:41 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
+msgid "Stop"
+msgstr "停止"
+
+#: hhctrl.rc:42 shdocvw.rc:66 shell32.rc:59
+msgid "Refresh"
+msgstr "刷新"
+
+#: hhctrl.rc:43 shdocvw.rc:63
+msgid "Back"
+msgstr "向後"
+
+#: hhctrl.rc:44 shdocvw.rc:67
+msgid "Home"
+msgstr "首頁"
+
+#: hhctrl.rc:45
+msgid "Sync"
+msgstr "同步"
+
+#: hhctrl.rc:48 shdocvw.rc:64
 msgid "Forward"
 msgstr "向前"
 
-#: hhctrl.rc:45
+#: hhctrl.rc:49
 msgid "IDTB_NOTES"
 msgstr "說明"
 
-#: hhctrl.rc:46
+#: hhctrl.rc:50
 msgid "IDTB_BROWSE_FWD"
 msgstr "向前"
 
-#: hhctrl.rc:47
+#: hhctrl.rc:51
 msgid "IDT_BROWSE_BACK"
 msgstr "向後"
 
-#: hhctrl.rc:48
+#: hhctrl.rc:52
 msgid "IDTB_CONTENTS"
 msgstr "內容"
 
-#: hhctrl.rc:49
+#: hhctrl.rc:53
 msgid "IDTB_INDEX"
 msgstr "目錄"
 
-#: hhctrl.rc:50
+#: hhctrl.rc:54
 msgid "IDTB_SEARCH"
 msgstr "搜尋"
 
-#: hhctrl.rc:51
+#: hhctrl.rc:55
 msgid "IDTB_HISTORY"
 msgstr "歷史"
 
-#: hhctrl.rc:52
+#: hhctrl.rc:56
 msgid "IDTB_FAVORITES"
 msgstr "最愛"
 
-#: hhctrl.rc:53
+#: hhctrl.rc:57
 msgid "Jump1"
 msgstr "Jump1"
 
-#: hhctrl.rc:54
+#: hhctrl.rc:58
 msgid "Jump2"
 msgstr "Jump2"
 
-#: hhctrl.rc:55
+#: hhctrl.rc:59
 msgid "Customize"
 msgstr "個性化"
 
-#: hhctrl.rc:56
+#: hhctrl.rc:60
 msgid "Zoom"
 msgstr "放大"
 
-#: hhctrl.rc:57
+#: hhctrl.rc:61
 msgid "IDTB_TOC_NEXT"
 msgstr "後一項"
 
-#: hhctrl.rc:58
+#: hhctrl.rc:62
 msgid "IDTB_TOC_PREV"
 msgstr "前一項"
 
@@ -2821,15 +2865,6 @@ msgstr "輸入檔案位置，並選擇確認。"
 msgid "Default"
 msgstr "默認"
 
-#: shdoclc.rc:38 winhlp32.rc:101
-#, fuzzy
-msgid "&Back"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"向後(&B)\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"返回(&B)"
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr "向前(&O)"
@@ -2878,10 +2913,6 @@ msgstr "語言編碼(&E)"
 #: shdoclc.rc:55
 msgid "Pr&int"
 msgstr "列印(&I)"
-
-#: shdoclc.rc:56
-msgid "&Refresh"
-msgstr "刷新(&R)"
 
 #: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 msgid "&Properties"
@@ -7553,10 +7584,6 @@ msgstr "解壓縮(&O)..."
 #: winefile.rc:37
 msgid "&Run..."
 msgstr "執行(&R)..."
-
-#: winefile.rc:38
-msgid "&Print..."
-msgstr "列印(&P)..."
 
 #: winefile.rc:39
 msgid "Associate..."

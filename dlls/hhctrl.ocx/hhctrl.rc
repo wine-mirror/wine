@@ -2,6 +2,7 @@
  * HTML Help resources
  *
  * Copyright 2005 James Hawkins
+ * Copyright 2011 Owen Rudge for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,6 +29,9 @@ BEGIN
     IDS_INDEX        "I&ndex"
     IDS_SEARCH       "&Search"
     IDS_FAVORITES    "Favor&ites"
+
+    IDS_HIDETABS     "Hide &Tabs"
+    IDS_SHOWTABS     "Show &Tabs"
 END
 
 STRINGTABLE
@@ -57,6 +61,21 @@ BEGIN
     IDTB_TOC_NEXT    "IDTB_TOC_NEXT"
     IDTB_TOC_PREV    "IDTB_TOC_PREV"
 END
+
+MENU_POPUP MENUEX
+{
+    POPUP "Options"
+    {
+        MENUITEM "", IDTB_EXPAND,
+        MENUITEM "S&ync", IDTB_SYNC
+        MENUITEM "&Back", IDTB_BACK
+        MENUITEM "&Forward", IDTB_FORWARD
+        MENUITEM "&Home", IDTB_HOME
+        MENUITEM "&Stop", IDTB_STOP
+        MENUITEM "&Refresh", IDTB_REFRESH
+        MENUITEM "&Print...", IDTB_PRINT
+    }
+}
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 

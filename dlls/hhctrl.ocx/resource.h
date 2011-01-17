@@ -27,3 +27,7 @@
 #define IDS_INDEX       2
 #define IDS_SEARCH      3
 #define IDS_FAVORITES   4
+#define IDS_HIDETABS    5
+#define IDS_SHOWTABS    6
+
+#define MENU_POPUP      1
