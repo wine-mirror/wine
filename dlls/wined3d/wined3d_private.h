@@ -2569,7 +2569,7 @@ struct wined3d_rendertarget_view
     const struct IWineD3DRendertargetViewVtbl *vtbl;
     LONG refcount;
 
-    IWineD3DResource *resource;
+    struct IWineD3DResourceImpl *resource;
     void *parent;
 };
 
