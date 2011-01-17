@@ -222,7 +222,7 @@ static void *read_string_table(struct pdb_reader* reader)
     return NULL;
 }
 
-static void pdb_dump_symbols(struct pdb_reader* reader)
+static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx)
 {
     PDB_SYMBOLS*    symbols;
     unsigned char*  modimage;
@@ -230,8 +230,10 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
     char*           filesimage;
     DWORD           filessize = 0;
 
-    symbols = reader->read_file(reader, 3);
+    sidx->FPO = sidx->unk0 = sidx->unk1 = sidx->unk2 = sidx->unk3 = sidx->segments =
+        sidx->unk4 = sidx->unk5 = sidx->unk6 = sidx->FPO_EXT = sidx->unk7 = -1;
 
+    symbols = reader->read_file(reader, 3);
     if (!symbols) return;
 
     switch (symbols->version)
@@ -377,32 +379,33 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
     }
     if (symbols->stream_index_size)
     {
-        const   PDB_STREAM_INDEXES_OLD* sidx_old;
-        const   PDB_STREAM_INDEXES* sidx;
-
         printf("\t------------stream indexes--------------\n");
         switch (symbols->stream_index_size)
         {
         case sizeof(PDB_STREAM_INDEXES_OLD):
-            sidx_old = (const PDB_STREAM_INDEXES_OLD*)((const char*)symbols + sizeof(PDB_SYMBOLS) +
-                                               symbols->module_size + symbols->offset_size +
-                                               symbols->hash_size + symbols->srcmodule_size +
-                                               symbols->pdbimport_size + symbols->unknown2_size);
+            /* PDB_STREAM_INDEXES is a superset of PDB_STREAM_INDEX_OLD
+             * FIXME: to be confirmed when all fields are fully understood
+             */
+            memcpy(sidx,
+                   (const char*)symbols + sizeof(PDB_SYMBOLS) + symbols->module_size +
+                   symbols->offset_size + symbols->hash_size + symbols->srcmodule_size +
+                   symbols->pdbimport_size + symbols->unknown2_size,
+                   sizeof(PDB_STREAM_INDEXES_OLD));
             printf("\tFPO:                  %04x\n"
                    "\t?:                    %04x\n"
                    "\t?:                    %04x\n"
                    "\t?:                    %04x\n"
                    "\t?:                    %04x\n"
                    "\tSegments:             %04x\n",
-                   sidx_old->FPO, sidx_old->unk0, sidx_old->unk1, sidx_old->unk2, sidx_old->unk3,
-                   sidx_old->segments);
+                   sidx->FPO, sidx->unk0, sidx->unk1, sidx->unk2, sidx->unk3,
+                   sidx->segments);
             break;
         case sizeof(PDB_STREAM_INDEXES):
-            sidx = (const PDB_STREAM_INDEXES*)((const char*)symbols + sizeof(PDB_SYMBOLS) +
-                                               symbols->module_size + symbols->offset_size +
-                                               symbols->hash_size + symbols->srcmodule_size +
-                                               symbols->pdbimport_size + symbols->unknown2_size);
-
+            memcpy(sidx,
+                   (const char*)symbols + sizeof(PDB_SYMBOLS) + symbols->module_size +
+                   symbols->offset_size + symbols->hash_size + symbols->srcmodule_size +
+                   symbols->pdbimport_size + symbols->unknown2_size,
+                   sizeof(*sidx));
             printf("\tFPO:                  %04x\n"
                    "\t?:                    %04x\n"
                    "\t?:                    %04x\n"
@@ -613,16 +616,15 @@ static void pdb_dump_types(struct pdb_reader* reader)
     free(types);
 }
 
-static void pdb_dump_fpo(struct pdb_reader* reader)
+static void pdb_dump_fpo(struct pdb_reader* reader, unsigned stream_idx)
 {
     FPO_DATA*           fpo;
-    PDB_FPO_DATA*       fpoext;
-    unsigned            i, size, strsize;
-    char*               strbase;
+    unsigned            i, size;
     const char*         frame_type[4] = {"Fpo", "Trap", "Tss", "NonFpo"};
 
-    fpo = reader->read_file(reader, 5);
-    size = pdb_get_file_size(reader, 5);
+    if (stream_idx == (WORD)-1) return;
+    fpo = reader->read_file(reader, stream_idx);
+    size = pdb_get_file_size(reader, stream_idx);
     if (fpo && (size % sizeof(*fpo)) == 0)
     {
         size /= sizeof(*fpo);
@@ -636,13 +638,21 @@ static void pdb_dump_fpo(struct pdb_reader* reader)
         }
     }
     free(fpo);
+}
 
+static void pdb_dump_fpo_ext(struct pdb_reader* reader, unsigned stream_idx)
+{
+    PDB_FPO_DATA*       fpoext;
+    unsigned            i, size, strsize;
+    char*               strbase;
+
+    if (stream_idx == (WORD)-1) return;
     strbase = read_string_table(reader);
     if (!strbase) return;
 
     strsize = *(const DWORD*)(strbase + 8);
-    fpoext = reader->read_file(reader, 10);
-    size = pdb_get_file_size(reader, 10);
+    fpoext = reader->read_file(reader, stream_idx);
+    size = pdb_get_file_size(reader, stream_idx);
     if (fpoext && (size % sizeof(*fpoext)) == 0)
     {
         size /= sizeof(*fpoext);
@@ -689,6 +699,7 @@ static void pdb_jg_dump(void)
         DWORD*          ok_bits;
         DWORD           numok, count;
         unsigned        i;
+        PDB_STREAM_INDEXES sidx;
 
         printf("Root:\n"
                "\tVersion:       %u\n"
@@ -743,6 +754,7 @@ static void pdb_jg_dump(void)
             printf("-Unknown root block version %d\n", reader.u.jg.root->Version);
         }
         pdb_dump_types(&reader);
+        pdb_dump_symbols(&reader, &sidx);
 #if 0
         /* segments info, index is unknown */
         {
@@ -765,7 +777,6 @@ static void pdb_jg_dump(void)
             free(segs);
         }
 #endif
-        pdb_dump_symbols(&reader);
     }
     else printf("-Unable to get root\n");
 
@@ -849,11 +860,11 @@ static void pdb_ds_dump(void)
      *  2: types
      *  3: modules
      * other known streams:
-     *  string table: it's index is in the stream table from ROOT object under "/names"
-     * those other streams are likely not to have a fixed stream number
-     *  5: FPO data
-     *  8: segments
-     * 10: extended FPO data
+     * - string table: it's index is in the stream table from ROOT object under "/names"
+     * those streams get their indexes out of the PDB_STREAM_INDEXES object
+     * - FPO data
+     * - segments
+     * - extended FPO data
      */
     reader.u.ds.root = reader.read_file(&reader, 1);
     if (reader.u.ds.root)
@@ -862,6 +873,7 @@ static void pdb_ds_dump(void)
         DWORD*          ok_bits;
         DWORD           numok, count;
         unsigned        i;
+        PDB_STREAM_INDEXES sidx;
 
         printf("Root:\n"
                "\tVersion:              %u\n"
@@ -906,8 +918,9 @@ static void pdb_ds_dump(void)
         if (numok) printf(">>> unmatched present field with found\n");
 
         pdb_dump_types(&reader);
-        pdb_dump_symbols(&reader);
-        pdb_dump_fpo(&reader);
+        pdb_dump_symbols(&reader, &sidx);
+        pdb_dump_fpo(&reader, sidx.FPO);
+        pdb_dump_fpo_ext(&reader, sidx.FPO_EXT);
     }
     else printf("-Unable to get root\n");
 
