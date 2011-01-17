@@ -54,11 +54,13 @@ struct pdb_reader
         {
             const struct PDB_JG_HEADER* header;
             const struct PDB_JG_TOC*    toc;
+            const struct PDB_JG_ROOT*   root;
         } jg;
         struct
         {
             const struct PDB_DS_HEADER* header;
             const struct PDB_DS_TOC*    toc;
+            const struct PDB_DS_ROOT*   root;
         } ds;
     } u;
     void*       (*read_file)(struct pdb_reader*, DWORD);
@@ -150,9 +152,15 @@ static void pdb_exit(struct pdb_reader* reader)
     }
 #endif
     if (reader->read_file == pdb_jg_read_file)
+    {
+        free((char*)reader->u.jg.root);
         free((char*)reader->u.jg.toc);
+    }
     else
+    {
+        free((char*)reader->u.ds.root);
         free((char*)reader->u.ds.toc);
+    }
 }
 
 static void *read_string_table(struct pdb_reader* reader)
@@ -571,7 +579,6 @@ static const char       pdb2[] = "Microsoft C/C++ program database 2.00";
 static void pdb_jg_dump(void)
 {
     struct pdb_reader   reader;
-    struct PDB_JG_ROOT* root = NULL;
 
     /*
      * Read in TOC and well-known files
@@ -589,23 +596,22 @@ static void pdb_jg_dump(void)
            reader.u.jg.header->free_list,
            reader.u.jg.header->total_alloc);
 
-    root = reader.read_file(&reader, 1);
-    
-    if (root)
+    reader.u.jg.root = reader.read_file(&reader, 1);
+    if (reader.u.jg.root)
     {
         printf("Root:\n"
                "\tVersion:       %u\n"
                "\tTimeDateStamp: %08x\n"
                "\tAge:           %08x\n"
                "\tnames:         %.*s\n",
-               root->Version,
-               root->TimeDateStamp,
-               root->Age,
-               (unsigned)root->cbNames,
-               root->names);
+               reader.u.jg.root->Version,
+               reader.u.jg.root->TimeDateStamp,
+               reader.u.jg.root->Age,
+               (unsigned)reader.u.jg.root->cbNames,
+               reader.u.jg.root->names);
 
         /* Check for unknown versions */
-        switch (root->Version)
+        switch (reader.u.jg.root->Version)
         {
         case 19950623:      /* VC 4.0 */
         case 19950814:
@@ -613,37 +619,36 @@ static void pdb_jg_dump(void)
         case 19970604:      /* VC 6.0 */
             break;
         default:
-            printf("-Unknown root block version %d\n", root->Version);
+            printf("-Unknown root block version %d\n", reader.u.jg.root->Version);
         }
-        free(root);
+        pdb_dump_types(&reader);
+#if 0
+        /* segments info, index is unknown */
+        {
+            const void*     segs = pdb_read_file(pdb, toc, 8); /* FIXME which index ??? */
+            const void*     ptr = segs;
+
+            if (segs) while (ptr < segs + toc->file[8].size)
+            {
+                printf("Segment %s\n", (const char*)ptr);
+                ptr += (strlen(ptr) + 1 + 3) & ~3;
+                printf("\tdword[0]: %08lx\n", *(DWORD*)ptr); ptr += 4;
+                printf("\tdword[1]: %08lx\n", *(DWORD*)ptr); ptr += 4;
+                printf("\tdword[2]: %08lx\n", *(DWORD*)ptr); ptr += 4;
+                printf("\tdword[3]: %08lx\n", *(DWORD*)ptr); ptr += 4;
+                printf("\tdword[4]: %08lx\n", *(DWORD*)ptr); ptr += 4;
+                printf("\tdword[5]: %08lx\n", *(DWORD*)ptr); ptr += 4;
+                printf("\tdword[6]: %08lx\n", *(DWORD*)ptr); ptr += 4;
+                printf("\tdword[7]: %08lx\n", *(DWORD*)ptr); ptr += 4;
+            }
+            free(segs);
+        }
+#endif
+
+        pdb_dump_symbols(&reader);
     }
     else printf("-Unable to get root\n");
 
-    pdb_dump_types(&reader);
-#if 0
-    /* segments info, index is unknown */
-    {
-        const void*     segs = pdb_read_file(pdb, toc, 8); /* FIXME which index ??? */
-        const void*     ptr = segs;
-
-        if (segs) while (ptr < segs + toc->file[8].size)
-        {
-            printf("Segment %s\n", (const char*)ptr);
-            ptr += (strlen(ptr) + 1 + 3) & ~3;
-            printf("\tdword[0]: %08lx\n", *(DWORD*)ptr); ptr += 4;
-            printf("\tdword[1]: %08lx\n", *(DWORD*)ptr); ptr += 4;
-            printf("\tdword[2]: %08lx\n", *(DWORD*)ptr); ptr += 4;
-            printf("\tdword[3]: %08lx\n", *(DWORD*)ptr); ptr += 4;
-            printf("\tdword[4]: %08lx\n", *(DWORD*)ptr); ptr += 4;
-            printf("\tdword[5]: %08lx\n", *(DWORD*)ptr); ptr += 4;
-            printf("\tdword[6]: %08lx\n", *(DWORD*)ptr); ptr += 4;
-            printf("\tdword[7]: %08lx\n", *(DWORD*)ptr); ptr += 4;
-        }
-        free(segs);
-    }
-#endif
-
-    pdb_dump_symbols(&reader);
     pdb_exit(&reader);
 }
 
@@ -700,7 +705,6 @@ static const char       pdb7[] = "Microsoft C/C++ MSF 7.00";
 static void pdb_ds_dump(void)
 {
     struct pdb_reader   reader;
-    struct PDB_DS_ROOT* root;
 
     pdb_ds_init(&reader);
     printf("Header (DS)\n"
@@ -730,8 +734,8 @@ static void pdb_ds_dump(void)
      * 10: extended FPO data
      * 12: string table (FPO unwinder, files for linetab2...)
      */
-    root = reader.read_file(&reader, 1);
-    if (root)
+    reader.u.ds.root = reader.read_file(&reader, 1);
+    if (reader.u.ds.root)
     {
         const char*     ptr;
 
@@ -741,21 +745,19 @@ static void pdb_ds_dump(void)
                "\tAge:                  %08x\n"
                "\tguid                  %s\n"
                "\tcbNames:              %08x\n",
-               root->Version,
-               root->TimeDateStamp,
-               root->Age,
-               get_guid_str(&root->guid),
-               root->cbNames);
-        for (ptr = &root->names[0]; ptr < &root->names[0] + root->cbNames; ptr += strlen(ptr) + 1)
+               reader.u.ds.root->Version,
+               reader.u.ds.root->TimeDateStamp,
+               reader.u.ds.root->Age,
+               get_guid_str(&reader.u.ds.root->guid),
+               reader.u.ds.root->cbNames);
+        for (ptr = &reader.u.ds.root->names[0]; ptr < &reader.u.ds.root->names[0] + reader.u.ds.root->cbNames; ptr += strlen(ptr) + 1)
             printf("\tString:               %s\n", ptr);
         /* follows an unknown list of DWORDs */
-        free(root);
+        pdb_dump_types(&reader);
+        pdb_dump_symbols(&reader);
+        pdb_dump_fpo(&reader);
     }
     else printf("-Unable to get root\n");
-
-    pdb_dump_types(&reader);
-    pdb_dump_symbols(&reader);
-    pdb_dump_fpo(&reader);
 
     pdb_exit(&reader);
 }
