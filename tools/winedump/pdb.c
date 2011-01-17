@@ -784,6 +784,7 @@ static void pdb_jg_dump(void)
         }
         pdb_dump_types(&reader);
         pdb_dump_symbols(&reader, &sidx);
+        pdb_dump_fpo(&reader, sidx.FPO);
         pdb_dump_segments(&reader, sidx.segments);
     }
     else printf("-Unable to get root\n");
