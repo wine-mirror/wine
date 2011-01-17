@@ -1914,11 +1914,38 @@ typedef struct _PDB_SYMBOLS
     DWORD       hash_size;
     DWORD       srcmodule_size;
     DWORD       pdbimport_size;
-    DWORD       resvd[3];
+    DWORD       resvd0;
+    DWORD       stream_index_size;
+    DWORD       unknown2_size;
     WORD        resvd3;
     WORD        machine;
     DWORD       resvd4;
 } PDB_SYMBOLS, *PPDB_SYMBOLS;
+
+typedef struct
+{
+    WORD        FPO;
+    WORD        unk0;
+    WORD        unk1;
+    WORD        unk2;
+    WORD        unk3;
+    WORD        segments;
+} PDB_STREAM_INDEXES_OLD;
+
+typedef struct
+{
+    WORD        FPO;
+    WORD        unk0;
+    WORD        unk1;
+    WORD        unk2;
+    WORD        unk3;
+    WORD        segments;
+    WORD        unk4;
+    WORD        unk5;
+    WORD        unk6;
+    WORD        FPO_EXT;
+    WORD        unk7;
+} PDB_STREAM_INDEXES;
 
 typedef struct _PDB_FPO_DATA
 {

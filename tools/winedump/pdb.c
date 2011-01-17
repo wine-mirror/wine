@@ -257,10 +257,10 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
            "\thash_size:       %08x\n"
            "\tsrc_module_size: %08x\n"
            "\tpdbimport_size:  %08x\n"
-           "\tresvd[0]         %08x\n"
-           "\tresvd[1]         %08x\n"
-           "\tresvd[2]         %08x\n"
-           "\tresvd[3]         %04x\n"
+           "\tresvd0:          %08x\n"
+           "\tstream_idx_size: %08x\n"
+           "\tunknown2_size:   %08x\n"
+           "\tresvd3:          %04x\n"
            "\tmachine:         %s\n"
            "\tresvd[4]         %08x\n",
            symbols->signature,
@@ -275,9 +275,9 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
            symbols->hash_size,
            symbols->srcmodule_size,
            symbols->pdbimport_size,
-           symbols->resvd[0],
-           symbols->resvd[1],
-           symbols->resvd[2],
+           symbols->resvd0,
+           symbols->stream_index_size,
+           symbols->unknown2_size,
            symbols->resvd3,
            get_machine_str( symbols->machine ),
            symbols->resvd4);
@@ -373,6 +373,54 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
                    imp->filename,
                    ptr);
             imp = (const PDB_SYMBOL_IMPORT*)(first + ((ptr - first + strlen(ptr) + 1 + 3) & ~3));
+        }
+    }
+    if (symbols->stream_index_size)
+    {
+        const   PDB_STREAM_INDEXES_OLD* sidx_old;
+        const   PDB_STREAM_INDEXES* sidx;
+
+        printf("\t------------stream indexes--------------\n");
+        switch (symbols->stream_index_size)
+        {
+        case sizeof(PDB_STREAM_INDEXES_OLD):
+            sidx_old = (const PDB_STREAM_INDEXES_OLD*)((const char*)symbols + sizeof(PDB_SYMBOLS) +
+                                               symbols->module_size + symbols->offset_size +
+                                               symbols->hash_size + symbols->srcmodule_size +
+                                               symbols->pdbimport_size + symbols->unknown2_size);
+            printf("\tFPO:                  %04x\n"
+                   "\t?:                    %04x\n"
+                   "\t?:                    %04x\n"
+                   "\t?:                    %04x\n"
+                   "\t?:                    %04x\n"
+                   "\tSegments:             %04x\n",
+                   sidx_old->FPO, sidx_old->unk0, sidx_old->unk1, sidx_old->unk2, sidx_old->unk3,
+                   sidx_old->segments);
+            break;
+        case sizeof(PDB_STREAM_INDEXES):
+            sidx = (const PDB_STREAM_INDEXES*)((const char*)symbols + sizeof(PDB_SYMBOLS) +
+                                               symbols->module_size + symbols->offset_size +
+                                               symbols->hash_size + symbols->srcmodule_size +
+                                               symbols->pdbimport_size + symbols->unknown2_size);
+
+            printf("\tFPO:                  %04x\n"
+                   "\t?:                    %04x\n"
+                   "\t?:                    %04x\n"
+                   "\t?:                    %04x\n"
+                   "\t?:                    %04x\n"
+                   "\tSegments:             %04x\n"
+                   "\t?:                    %04x\n"
+                   "\t?:                    %04x\n"
+                   "\t?:                    %04x\n"
+                   "\tFPO-ext:              %04x\n"
+                   "\t?:                    %04x\n",
+                   sidx->FPO, sidx->unk0, sidx->unk1, sidx->unk2, sidx->unk3,
+                   sidx->segments, sidx->unk4, sidx->unk5, sidx->unk6, sidx->FPO_EXT,
+                   sidx->unk7);
+            break;
+        default:
+            printf("unexpected size for stream index %d\n", symbols->stream_index_size);
+            break;
         }
     }
 
