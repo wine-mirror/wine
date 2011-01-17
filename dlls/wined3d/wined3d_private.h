@@ -2574,7 +2574,7 @@ struct wined3d_rendertarget_view
 };
 
 void wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *view,
-        IWineD3DResource *resource, void *parent) DECLSPEC_HIDDEN;
+        struct IWineD3DResourceImpl *resource, void *parent) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IWineD3DSwapChainImpl implementation structure (extends IUnknown)

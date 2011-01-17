@@ -107,11 +107,11 @@ static const struct IWineD3DRendertargetViewVtbl wined3d_rendertarget_view_vtbl 
 };
 
 void wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *view,
-        IWineD3DResource *resource, void *parent)
+        struct IWineD3DResourceImpl *resource, void *parent)
 {
     view->vtbl = &wined3d_rendertarget_view_vtbl;
     view->refcount = 1;
-    IWineD3DResource_AddRef(resource);
-    view->resource = resource;
+    IWineD3DResource_AddRef((IWineD3DResource *)resource);
+    view->resource = (IWineD3DResource *)resource;
     view->parent = parent;
 }

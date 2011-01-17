@@ -1088,7 +1088,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateRendertargetView(IWineD3DDevice *
         return E_OUTOFMEMORY;
     }
 
-    wined3d_rendertarget_view_init(object, resource, parent);
+    wined3d_rendertarget_view_init(object, (IWineD3DResourceImpl *)resource, parent);
 
     TRACE("Created render target view %p.\n", object);
     *rendertarget_view = (IWineD3DRendertargetView *)object;
