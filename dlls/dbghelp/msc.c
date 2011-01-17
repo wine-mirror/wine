@@ -75,6 +75,7 @@ struct pdb_file_info
     HANDLE                      hMap;
     const char*                 image;
     struct pdb_stream_name*     stream_dict;
+    unsigned                    fpoext_stream;
     union
     {
         struct
@@ -2207,6 +2208,7 @@ static BOOL pdb_load_stream_name_table(struct pdb_file_info* pdb_file, const cha
     }
     /* add sentinel */
     pdb_file->stream_dict[numok].name = NULL;
+    pdb_file->fpoext_stream = -1;
     return j == numok && i == count;
 }
 
@@ -2646,7 +2648,8 @@ static BOOL pdb_process_internal(const struct process* pcs,
         BYTE*       modimage;
         BYTE*       file;
         int         header_size = 0;
-        
+        PDB_STREAM_INDEXES* psi;
+
         pdb_convert_symbols_header(&symbols, &header_size, symbols_image);
         switch (symbols.version)
         {
@@ -2660,6 +2663,23 @@ static BOOL pdb_process_internal(const struct process* pcs,
                 symbols.version, symbols.version);
         }
 
+        switch (symbols.stream_index_size)
+        {
+        case 0:
+        case sizeof(PDB_STREAM_INDEXES_OLD):
+            /* no fpo ext stream in this case */
+            break;
+        case sizeof(PDB_STREAM_INDEXES):
+            psi = (PDB_STREAM_INDEXES*)((const char*)symbols_image + sizeof(PDB_SYMBOLS) +
+                                        symbols.module_size + symbols.offset_size +
+                                        symbols.hash_size + symbols.srcmodule_size +
+                                        symbols.pdbimport_size + symbols.unknown2_size);
+            pdb_file->fpoext_stream = psi->FPO_EXT;
+            break;
+        default:
+            FIXME("Unknown PDB_STREAM_INDEXES size (%d)\n", symbols.stream_index_size);
+            break;
+        }
         files_image = pdb_read_strings(pdb_file);
         if (files_image) files_size = *(const DWORD*)(files_image + 8);
 
@@ -3070,8 +3090,8 @@ BOOL         pdb_virtual_unwind(struct cpu_stack_walk* csw, DWORD_PTR ip,
     strbase = pdb_read_strings(&pdb_info->pdb_files[0]);
     if (!strbase) return FALSE;
     strsize = *(const DWORD*)(strbase + 8);
-    fpoext = pdb_read_file(&pdb_info->pdb_files[0], 10);
-    size = pdb_get_file_size(&pdb_info->pdb_files[0], 10);
+    fpoext = pdb_read_file(&pdb_info->pdb_files[0], pdb_info->pdb_files[0].fpoext_stream);
+    size = pdb_get_file_size(&pdb_info->pdb_files[0], pdb_info->pdb_files[0].fpoext_stream);
     if (fpoext && (size % sizeof(*fpoext)) == 0)
     {
         size /= sizeof(*fpoext);
