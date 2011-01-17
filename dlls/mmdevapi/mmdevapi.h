@@ -27,8 +27,8 @@ extern HRESULT MMDevice_GetPropValue(const GUID *devguid, DWORD flow, REFPROPERT
 extern HRESULT MMDevice_SetPropValue(const GUID *devguid, DWORD flow, REFPROPERTYKEY key, REFPROPVARIANT pv);
 
 typedef struct MMDevice {
-    const IMMDeviceVtbl *lpVtbl;
-    const IMMEndpointVtbl *lpEndpointVtbl;
+    IMMDevice IMMDevice_iface;
+    IMMEndpoint IMMEndpoint_iface;
     LONG ref;
 
     CRITICAL_SECTION crst;

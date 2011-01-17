@@ -171,8 +171,8 @@ static void MMDevice_Create(MMDevice **dev, WCHAR *name, GUID *id, EDataFlow flo
         return;
     }
     lstrcpyW(cur->alname, name);
-    cur->lpVtbl = &MMDeviceVtbl;
-    cur->lpEndpointVtbl = &MMEndpointVtbl;
+    cur->IMMDevice_iface.lpVtbl = &MMDeviceVtbl;
+    cur->IMMEndpoint_iface.lpVtbl = &MMEndpointVtbl;
     cur->ref = 0;
     InitializeCriticalSection(&cur->crst);
     cur->crst.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": MMDevice.crst");
@@ -246,9 +246,14 @@ static void MMDevice_Destroy(MMDevice *This)
     HeapFree(GetProcessHeap(), 0, This);
 }
 
+static inline MMDevice *impl_from_IMMDevice(IMMDevice *iface)
+{
+    return CONTAINING_RECORD(iface, MMDevice, IMMDevice_iface);
+}
+
 static HRESULT WINAPI MMDevice_QueryInterface(IMMDevice *iface, REFIID riid, void **ppv)
 {
-    MMDevice *This = (MMDevice *)iface;
+    MMDevice *This = impl_from_IMMDevice(iface);
     TRACE("(%p)->(%s,%p)\n", iface, debugstr_guid(riid), ppv);
 
     if (!ppv)
@@ -258,7 +263,7 @@ static HRESULT WINAPI MMDevice_QueryInterface(IMMDevice *iface, REFIID riid, voi
         || IsEqualIID(riid, &IID_IMMDevice))
         *ppv = This;
     else if (IsEqualIID(riid, &IID_IMMEndpoint))
-        *ppv = &This->lpEndpointVtbl;
+        *ppv = &This->IMMEndpoint_iface;
     if (*ppv)
     {
         IUnknown_AddRef((IUnknown*)*ppv);
@@ -270,7 +275,7 @@ static HRESULT WINAPI MMDevice_QueryInterface(IMMDevice *iface, REFIID riid, voi
 
 static ULONG WINAPI MMDevice_AddRef(IMMDevice *iface)
 {
-    MMDevice *This = (MMDevice *)iface;
+    MMDevice *This = impl_from_IMMDevice(iface);
     LONG ref;
 
     ref = InterlockedIncrement(&This->ref);
@@ -280,7 +285,7 @@ static ULONG WINAPI MMDevice_AddRef(IMMDevice *iface)
 
 static ULONG WINAPI MMDevice_Release(IMMDevice *iface)
 {
-    MMDevice *This = (MMDevice *)iface;
+    MMDevice *This = impl_from_IMMDevice(iface);
     LONG ref;
 
     ref = InterlockedDecrement(&This->ref);
@@ -293,7 +298,7 @@ static HRESULT WINAPI MMDevice_Activate(IMMDevice *iface, REFIID riid, DWORD cls
     HRESULT hr = E_NOINTERFACE;
 
 #ifdef HAVE_OPENAL
-    MMDevice *This = (MMDevice *)iface;
+    MMDevice *This = impl_from_IMMDevice(iface);
 
     TRACE("(%p)->(%p,%x,%p,%p)\n", iface, riid, clsctx, params, ppv);
 
@@ -385,7 +390,7 @@ static HRESULT WINAPI MMDevice_Activate(IMMDevice *iface, REFIID riid, DWORD cls
 
 static HRESULT WINAPI MMDevice_OpenPropertyStore(IMMDevice *iface, DWORD access, IPropertyStore **ppv)
 {
-    MMDevice *This = (MMDevice *)iface;
+    MMDevice *This = impl_from_IMMDevice(iface);
     TRACE("(%p)->(%x,%p)\n", This, access, ppv);
 
     if (!ppv)
@@ -395,7 +400,7 @@ static HRESULT WINAPI MMDevice_OpenPropertyStore(IMMDevice *iface, DWORD access,
 
 static HRESULT WINAPI MMDevice_GetId(IMMDevice *iface, WCHAR **itemid)
 {
-    MMDevice *This = (MMDevice *)iface;
+    MMDevice *This = impl_from_IMMDevice(iface);
     WCHAR *str;
     GUID *id = &This->devguid;
     static const WCHAR formatW[] = { '{','0','.','0','.','0','.','0','0','0','0','0','0','0','0','}','.',
@@ -418,7 +423,7 @@ static HRESULT WINAPI MMDevice_GetId(IMMDevice *iface, WCHAR **itemid)
 
 static HRESULT WINAPI MMDevice_GetState(IMMDevice *iface, DWORD *state)
 {
-    MMDevice *This = (MMDevice *)iface;
+    MMDevice *This = impl_from_IMMDevice(iface);
     TRACE("(%p)->(%p)\n", iface, state);
 
     if (!state)
@@ -438,32 +443,32 @@ static const IMMDeviceVtbl MMDeviceVtbl =
     MMDevice_GetState
 };
 
-static MMDevice *get_this_from_endpoint(IMMEndpoint *iface)
+static inline MMDevice *impl_from_IMMEndpoint(IMMEndpoint *iface)
 {
-    return (MMDevice*)((char*)iface - offsetof(MMDevice,lpEndpointVtbl));
+    return CONTAINING_RECORD(iface, MMDevice, IMMEndpoint_iface);
 }
 
 static HRESULT WINAPI MMEndpoint_QueryInterface(IMMEndpoint *iface, REFIID riid, void **ppv)
 {
-    MMDevice *This = get_this_from_endpoint(iface);
-    return IMMDevice_QueryInterface((IMMDevice*)This, riid, ppv);
+    MMDevice *This = impl_from_IMMEndpoint(iface);
+    return IMMDevice_QueryInterface(&This->IMMDevice_iface, riid, ppv);
 }
 
 static ULONG WINAPI MMEndpoint_AddRef(IMMEndpoint *iface)
 {
-    MMDevice *This = get_this_from_endpoint(iface);
-    return IMMDevice_AddRef((IMMDevice*)This);
+    MMDevice *This = impl_from_IMMEndpoint(iface);
+    return IMMDevice_AddRef(&This->IMMDevice_iface);
 }
 
 static ULONG WINAPI MMEndpoint_Release(IMMEndpoint *iface)
 {
-    MMDevice *This = get_this_from_endpoint(iface);
-    return IMMDevice_Release((IMMDevice*)This);
+    MMDevice *This = impl_from_IMMEndpoint(iface);
+    return IMMDevice_Release(&This->IMMDevice_iface);
 }
 
 static HRESULT WINAPI MMEndpoint_GetDataFlow(IMMEndpoint *iface, EDataFlow *flow)
 {
-    MMDevice *This = get_this_from_endpoint(iface);
+    MMDevice *This = impl_from_IMMEndpoint(iface);
     if (!flow)
         return E_POINTER;
     *flow = This->flow;
@@ -570,7 +575,7 @@ static HRESULT WINAPI MMDevCol_Item(IMMDeviceCollection *iface, UINT n, IMMDevic
             && (cur->state & This->state)
             && i++ == n)
         {
-            *dev = (IMMDevice *)cur;
+            *dev = &cur->IMMDevice_iface;
             IMMDevice_AddRef(*dev);
             return S_OK;
         }
@@ -1059,9 +1064,9 @@ static HRESULT WINAPI MMDevEnum_GetDefaultAudioEndpoint(IMMDeviceEnumerator *ifa
     *device = NULL;
 
     if (flow == eRender)
-        *device = (IMMDevice*)MMDevice_def_play;
+        *device = &MMDevice_def_play->IMMDevice_iface;
     else if (flow == eCapture)
-        *device = (IMMDevice*)MMDevice_def_rec;
+        *device = &MMDevice_def_rec->IMMDevice_iface;
     else
     {
         WARN("Unknown flow %u\n", flow);
@@ -1084,7 +1089,7 @@ static HRESULT WINAPI MMDevEnum_GetDevice(IMMDeviceEnumerator *iface, const WCHA
     for (i = 0; i < MMDevice_count; ++i)
     {
         WCHAR *str;
-        dev = (IMMDevice*)MMDevice_head[i];
+        dev = &MMDevice_head[i]->IMMDevice_iface;
         IMMDevice_GetId(dev, &str);
 
         if (str && !lstrcmpW(str, name))
