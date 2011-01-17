@@ -3507,16 +3507,16 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
             }
 
             /* Destination must be full surface or match the clipping rectangle */
-            if (dst_surface->clipper && ((IWineD3DClipperImpl *)dst_surface->clipper)->hWnd)
+            if (dst_surface->clipper && dst_surface->clipper->hWnd)
             {
                 RECT cliprect;
                 POINT pos[2];
-                GetClientRect(((IWineD3DClipperImpl *)dst_surface->clipper)->hWnd, &cliprect);
+                GetClientRect(dst_surface->clipper->hWnd, &cliprect);
                 pos[0].x = dst_rect.left;
                 pos[0].y = dst_rect.top;
                 pos[1].x = dst_rect.right;
                 pos[1].y = dst_rect.bottom;
-                MapWindowPoints(GetDesktopWindow(), ((IWineD3DClipperImpl *)dst_surface->clipper)->hWnd, pos, 2);
+                MapWindowPoints(GetDesktopWindow(), dst_surface->clipper->hWnd, pos, 2);
 
                 if(pos[0].x != cliprect.left  || pos[0].y != cliprect.top   ||
                    pos[1].x != cliprect.right || pos[1].y != cliprect.bottom)

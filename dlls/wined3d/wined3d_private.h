@@ -2140,7 +2140,7 @@ struct IWineD3DSurfaceImpl
     SIZE ds_current_size;
 
     /* DirectDraw clippers */
-    IWineD3DClipper           *clipper;
+    struct IWineD3DClipperImpl *clipper;
 
     /* DirectDraw Overlay handling */
     RECT                      overlay_srcrect;
