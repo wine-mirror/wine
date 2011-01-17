@@ -1230,8 +1230,8 @@ DWORD context_get_tls_idx(void) DECLSPEC_HIDDEN;
 void context_release(struct wined3d_context *context) DECLSPEC_HIDDEN;
 void context_resource_released(struct IWineD3DDeviceImpl *device,
         struct IWineD3DResourceImpl *resource, WINED3DRESOURCETYPE type) DECLSPEC_HIDDEN;
-void context_resource_unloaded(IWineD3DDeviceImpl *device,
-        IWineD3DResource *resource, WINED3DRESOURCETYPE type) DECLSPEC_HIDDEN;
+void context_resource_unloaded(struct IWineD3DDeviceImpl *device,
+        struct IWineD3DResourceImpl *resource, WINED3DRESOURCETYPE type) DECLSPEC_HIDDEN;
 BOOL context_set_current(struct wined3d_context *ctx) DECLSPEC_HIDDEN;
 void context_set_draw_buffer(struct wined3d_context *context, GLenum buffer) DECLSPEC_HIDDEN;
 void context_set_tls_idx(DWORD idx) DECLSPEC_HIDDEN;

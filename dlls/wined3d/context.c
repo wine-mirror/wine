@@ -711,7 +711,8 @@ static void context_detach_fbo_entry(struct wined3d_context *context, struct fbo
     entry->attached = FALSE;
 }
 
-void context_resource_unloaded(IWineD3DDeviceImpl *device, IWineD3DResource *resource, WINED3DRESOURCETYPE type)
+void context_resource_unloaded(struct IWineD3DDeviceImpl *device,
+        struct IWineD3DResourceImpl *resource, WINED3DRESOURCETYPE type)
 {
     switch (type)
     {

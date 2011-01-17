@@ -125,8 +125,8 @@ void resource_cleanup(struct IWineD3DResourceImpl *resource)
 
 void resource_unload(IWineD3DResourceImpl *resource)
 {
-    context_resource_unloaded(resource->resource.device, (IWineD3DResource *)resource,
-            resource->resource.resourceType);
+    context_resource_unloaded(resource->resource.device,
+            resource, resource->resource.resourceType);
 }
 
 static struct private_data *resource_find_private_data(IWineD3DResourceImpl *This, REFGUID tag)
