@@ -719,16 +719,17 @@ static const struct {
     HRESULT     default_hres;
     BOOL        todo;
 } sec_url_ex_tests[] = {
-    {"index.htm",Uri_CREATE_ALLOW_RELATIVE,"*:index.html",S_OK,"*:index.htm",S_OK,TRUE},
-    {"file://c:\\Index.htm",Uri_CREATE_FILE_USE_DOS_PATH,"file:///c:/Index.htm",S_OK,"file:///c:/Index.htm",S_OK,TRUE},
-    {"file:some%20file%2ejpg",0,NULL,E_INVALIDARG,NULL,E_INVALIDARG,TRUE},
-    {"http://www.zone3.winetest/",0,"http://www.zone3.winetest/",S_OK,"http://www.zone3.winetest/",S_OK,TRUE},
-    {"about:blank",0,"about:blank",S_OK,"about:blank",S_OK,TRUE},
-    {"ftp://zone3.winetest/file.test",0,"ftp://zone3.winetest/file.test",S_OK,"ftp://zone3.winetest/file.test",S_OK,TRUE},
-    {"test:123abc",0,"test:123abc",S_OK,"test:123abc",S_OK,TRUE},
-    {"http:google.com/test.file",0,"http:google.com/test.file",S_OK,"http:google.com/test.file",S_OK,TRUE},
-    {"ftp://test@ftp.winehq.org/",0,"ftp://ftp.winehq.org/",S_OK,"ftp://ftp.winehq.org/",S_OK,TRUE},
-    {"test://google@ftp.winehq.org/",0,"test://google@ftp.winehq.org/",S_OK,"test://google@ftp.winehq.org/",S_OK,TRUE}
+    {"index.htm",Uri_CREATE_ALLOW_RELATIVE,"*:index.html",S_OK,"*:index.htm",S_OK},
+    {"file://c:\\Index.htm",Uri_CREATE_FILE_USE_DOS_PATH,"file:///c:/Index.htm",S_OK,"file:///c:/Index.htm",S_OK},
+    {"file:some%20file%2ejpg",0,NULL,E_INVALIDARG,NULL,E_INVALIDARG},
+    {"file:some file.jpg",0,NULL,E_INVALIDARG,NULL,E_INVALIDARG},
+    {"http://www.zone3.winetest/",0,"http://www.zone3.winetest/",S_OK,"http://www.zone3.winetest/",S_OK},
+    {"about:blank",0,"about:blank",S_OK,"about:blank",S_OK},
+    {"ftp://zone3.winetest/file.test",0,"ftp://zone3.winetest/file.test",S_OK,"ftp://zone3.winetest/file.test",S_OK},
+    {"test:123abc",0,"test:123abc",S_OK,"test:123abc",S_OK},
+    {"http:google.com/test.file",0,"http:google.com/test.file",S_OK,"http:google.com/test.file",S_OK},
+    {"ftp://test@ftp.winehq.org/",0,"ftp://ftp.winehq.org/",S_OK,"ftp://ftp.winehq.org/",S_OK},
+    {"test://google@ftp.winehq.org/",0,"test://google@ftp.winehq.org/",S_OK,"test://google@ftp.winehq.org/",S_OK}
 };
 
 static void test_InternetGetSecurityUrlEx(void)

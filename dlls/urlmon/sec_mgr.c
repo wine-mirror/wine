@@ -26,6 +26,9 @@
 #include "winreg.h"
 #include "wininet.h"
 
+#define NO_SHLWAPI_REG
+#include "shlwapi.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
@@ -1332,11 +1335,37 @@ HRESULT WINAPI CoInternetGetSecurityUrl(LPCWSTR pwzUrl, LPWSTR *ppwzSecUrl, PSUA
  */
 HRESULT WINAPI CoInternetGetSecurityUrlEx(IUri *pUri, IUri **ppSecUri, PSUACTION psuAction, DWORD_PTR dwReserved)
 {
+    HRESULT hres;
+    BSTR secure_uri;
+    URL_SCHEME scheme_type;
+
     TRACE("(%p,%p,%u,%u)\n", pUri, ppSecUri, psuAction, (DWORD)dwReserved);
 
     if(!pUri || !ppSecUri)
         return E_INVALIDARG;
 
-    FIXME("(%p,%p,%u,%u)\n", pUri, ppSecUri, psuAction, (DWORD)dwReserved);
-    return E_NOTIMPL;
+    hres = IUri_GetScheme(pUri, (DWORD*)&scheme_type);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IUri_GetDisplayUri(pUri, &secure_uri);
+    if(FAILED(hres))
+        return hres;
+
+    /* File URIs have to hierarchical. */
+    if(scheme_type == URL_SCHEME_FILE) {
+        const WCHAR *tmp = secure_uri;
+
+        /* Check and see if a "//" is after the scheme name. */
+        tmp += sizeof(fileW)/sizeof(WCHAR);
+        if(*tmp != '/' || *(tmp+1) != '/') {
+            SysFreeString(secure_uri);
+            return E_INVALIDARG;
+        }
+    }
+
+    hres = CreateUri(secure_uri, Uri_CREATE_ALLOW_IMPLICIT_WILDCARD_SCHEME, 0, ppSecUri);
+    SysFreeString(secure_uri);
+
+    return hres;
 }
