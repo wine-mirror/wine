@@ -3,6 +3,7 @@
  *
  * Copyright 2005 James Hawkins
  * Copyright 2007 Jacek Caban for CodeWeavers
+ * Copyright 2011 Owen Rudge for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,6 +33,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(htmlhelp);
 
 static LRESULT Help_OnSize(HWND hWnd);
+static void ExpandContract(HHInfo *pHHInfo);
 
 /* Window type defaults */
 
@@ -264,9 +266,12 @@ static BOOL HH_AddSizeBar(HHInfo *pHHInfo)
 {
     HWND hWnd;
     HWND hwndParent = pHHInfo->WinType.hwndHelp;
-    DWORD dwStyles = WS_CHILDWINDOW | WS_VISIBLE | WS_OVERLAPPED;
+    DWORD dwStyles = WS_CHILDWINDOW | WS_OVERLAPPED;
     DWORD dwExStyles = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR;
     RECT rc;
+
+    if (!pHHInfo->WinType.fNotExpanded)
+        dwStyles |= WS_VISIBLE;
 
     SB_GetSizeBarRect(pHHInfo, &rc);
 
@@ -646,6 +651,8 @@ static void TB_OnClick(HWND hWnd, DWORD dwID)
             break;
         case IDTB_EXPAND:
         case IDTB_CONTRACT:
+            ExpandContract(info);
+            break;
         case IDTB_SYNC:
         case IDTB_OPTIONS:
         case IDTB_BROWSE_FWD:
@@ -671,12 +678,20 @@ static void TB_AddButton(TBBUTTON *pButtons, DWORD dwIndex, DWORD dwID)
     pButtons[dwIndex].iString = 0;
 }
 
-static void TB_AddButtonsFromFlags(TBBUTTON *pButtons, DWORD dwButtonFlags, LPDWORD pdwNumButtons)
+static void TB_AddButtonsFromFlags(HHInfo *pHHInfo, TBBUTTON *pButtons, DWORD dwButtonFlags, LPDWORD pdwNumButtons)
 {
     *pdwNumButtons = 0;
 
     if (dwButtonFlags & HHWIN_BUTTON_EXPAND)
+    {
         TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_EXPAND);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_CONTRACT);
+
+        if (pHHInfo->WinType.fNotExpanded)
+            pButtons[1].fsState |= TBSTATE_HIDDEN;
+        else
+            pButtons[0].fsState |= TBSTATE_HIDDEN;
+    }
 
     if (dwButtonFlags & HHWIN_BUTTON_BACK)
         TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_BACK);
@@ -733,7 +748,7 @@ static BOOL HH_AddToolbar(HHInfo *pHHInfo)
     else
         toolbarFlags = HHWIN_DEF_BUTTONS;
 
-    TB_AddButtonsFromFlags(buttons, toolbarFlags, &dwNumButtons);
+    TB_AddButtonsFromFlags(pHHInfo, buttons, toolbarFlags, &dwNumButtons);
 
     dwStyles = WS_CHILDWINDOW | WS_VISIBLE | TBSTYLE_FLAT |
                TBSTYLE_WRAPABLE | TBSTYLE_TOOLTIPS | CCS_NODIVIDER;
@@ -815,9 +830,12 @@ static BOOL HH_AddNavigationPane(HHInfo *info)
 {
     HWND hWnd, hwndTabCtrl;
     HWND hwndParent = info->WinType.hwndHelp;
-    DWORD dwStyles = WS_CHILDWINDOW | WS_VISIBLE;
+    DWORD dwStyles = WS_CHILDWINDOW;
     DWORD dwExStyles = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR;
     RECT rc;
+
+    if (!info->WinType.fNotExpanded)
+        dwStyles |= WS_VISIBLE;
 
     NP_GetNavigationRect(info, &rc);
 
@@ -829,7 +847,7 @@ static BOOL HH_AddNavigationPane(HHInfo *info)
 
     SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)info);
 
-    hwndTabCtrl = CreateWindowExW(dwExStyles, WC_TABCONTROLW, szEmpty, dwStyles,
+    hwndTabCtrl = CreateWindowExW(dwExStyles, WC_TABCONTROLW, szEmpty, dwStyles | WS_VISIBLE,
                                   0, TAB_TOP_PADDING,
                                   rc.right - TAB_RIGHT_PADDING,
                                   rc.bottom - TAB_TOP_PADDING,
@@ -864,10 +882,16 @@ static void HP_GetHTMLRect(HHInfo *info, RECT *rc)
 
     GetClientRect(info->WinType.hwndHelp, &rectWND);
     GetClientRect(info->WinType.hwndToolBar, &rectTB);
-    GetClientRect(info->WinType.hwndNavigation, &rectNP);
     GetClientRect(info->hwndSizeBar, &rectSB);
 
-    rc->left = rectNP.right + rectSB.right;
+    if (info->WinType.fNotExpanded)
+        rc->left = 0;
+    else
+    {
+        GetClientRect(info->WinType.hwndNavigation, &rectNP);
+        rc->left = rectNP.right + rectSB.right;
+    }
+
     rc->top = rectTB.bottom;
     rc->right = rectWND.right - rc->left;
     rc->bottom = rectWND.bottom - rectTB.bottom;
@@ -1203,6 +1227,37 @@ static BOOL AddIndexPopup(HHInfo *info)
 
 /* Viewer Window */
 
+static void ExpandContract(HHInfo *pHHInfo)
+{
+    RECT r, nav;
+
+    pHHInfo->WinType.fNotExpanded = !pHHInfo->WinType.fNotExpanded;
+    GetWindowRect(pHHInfo->WinType.hwndHelp, &r);
+    NP_GetNavigationRect(pHHInfo, &nav);
+
+    /* hide/show both the nav bar and the size bar */
+    if (pHHInfo->WinType.fNotExpanded)
+    {
+        ShowWindow(pHHInfo->WinType.hwndNavigation, SW_HIDE);
+        ShowWindow(pHHInfo->hwndSizeBar, SW_HIDE);
+        r.left = r.left + nav.right;
+
+        SendMessageW(pHHInfo->WinType.hwndToolBar, TB_HIDEBUTTON, IDTB_EXPAND, MAKELPARAM(FALSE, 0));
+        SendMessageW(pHHInfo->WinType.hwndToolBar, TB_HIDEBUTTON, IDTB_CONTRACT, MAKELPARAM(TRUE, 0));
+    }
+    else
+    {
+        ShowWindow(pHHInfo->WinType.hwndNavigation, SW_SHOW);
+        ShowWindow(pHHInfo->hwndSizeBar, SW_SHOW);
+        r.left = r.left - nav.right;
+
+        SendMessageW(pHHInfo->WinType.hwndToolBar, TB_HIDEBUTTON, IDTB_EXPAND, MAKELPARAM(TRUE, 0));
+        SendMessageW(pHHInfo->WinType.hwndToolBar, TB_HIDEBUTTON, IDTB_CONTRACT, MAKELPARAM(FALSE, 0));
+    }
+
+    MoveWindow(pHHInfo->WinType.hwndHelp, r.left, r.top, r.right-r.left, r.bottom-r.top, TRUE);
+}
+
 static LRESULT Help_OnSize(HWND hWnd)
 {
     HHInfo *pHHInfo = (HHInfo *)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
@@ -1212,13 +1267,17 @@ static LRESULT Help_OnSize(HWND hWnd)
     if (!pHHInfo)
         return 0;
 
-    NP_GetNavigationRect(pHHInfo, &rc);
-    SetWindowPos(pHHInfo->WinType.hwndNavigation, HWND_TOP, 0, 0,
-                 rc.right, rc.bottom, SWP_NOMOVE);
+    if (!pHHInfo->WinType.fNotExpanded)
+    {
+        NP_GetNavigationRect(pHHInfo, &rc);
+        SetWindowPos(pHHInfo->WinType.hwndNavigation, HWND_TOP, 0, 0,
+                     rc.right, rc.bottom, SWP_NOMOVE);
 
-    SB_GetSizeBarRect(pHHInfo, &rc);
-    SetWindowPos(pHHInfo->hwndSizeBar, HWND_TOP, rc.left, rc.top,
-                 rc.right, rc.bottom, SWP_SHOWWINDOW);
+        SB_GetSizeBarRect(pHHInfo, &rc);
+        SetWindowPos(pHHInfo->hwndSizeBar, HWND_TOP, rc.left, rc.top,
+                     rc.right, rc.bottom, SWP_SHOWWINDOW);
+
+    }
 
     HP_GetHTMLRect(pHHInfo, &rc);
     SetWindowPos(pHHInfo->WinType.hwndHTML, HWND_TOP, rc.left, rc.top,
@@ -1311,6 +1370,19 @@ static BOOL HH_CreateHelpWindow(HHInfo *info)
         width = WINTYPE_DEFAULT_WIDTH;
         height = WINTYPE_DEFAULT_HEIGHT;
     }
+
+    if (info->WinType.fNotExpanded)
+    {
+        if (!(info->WinType.fsValidMembers & HHWIN_PARAM_NAV_WIDTH) &&
+              info->WinType.iNavWidth == 0)
+        {
+            info->WinType.iNavWidth = WINTYPE_DEFAULT_NAVWIDTH;
+        }
+
+        x += info->WinType.iNavWidth;
+        width -= info->WinType.iNavWidth;
+    }
+
 
     caption = info->WinType.pszCaption;
     if (!*caption) caption = info->pCHMInfo->defTitle;
