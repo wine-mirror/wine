@@ -599,16 +599,51 @@ static void pdb_jg_dump(void)
     reader.u.jg.root = reader.read_file(&reader, 1);
     if (reader.u.jg.root)
     {
+        DWORD*          pdw;
+        DWORD*          ok_bits;
+        DWORD           numok, count;
+        unsigned        i;
+
         printf("Root:\n"
                "\tVersion:       %u\n"
                "\tTimeDateStamp: %08x\n"
                "\tAge:           %08x\n"
-               "\tnames:         %.*s\n",
+               "\tnames:         %d\n",
                reader.u.jg.root->Version,
                reader.u.jg.root->TimeDateStamp,
                reader.u.jg.root->Age,
-               (unsigned)reader.u.jg.root->cbNames,
-               reader.u.jg.root->names);
+               (unsigned)reader.u.jg.root->cbNames);
+
+        pdw = (DWORD*)(&reader.u.jg.root->names[0] + reader.u.jg.root->cbNames);
+        numok = *pdw++;
+        count = *pdw++;
+        printf("\tStreams directory:\n"
+               "\t\tok:        %08x\n"
+               "\t\tcount:     %08x\n"
+               "\t\ttable:\n",
+               numok, count);
+
+        /* bitfield: first dword is len (in dword), then data */
+        ok_bits = pdw;
+        pdw += *ok_bits++ + 1;
+        if (*pdw++ != 0)
+        {
+            printf("unexpected value\n");
+            return;
+        }
+
+        for (i = 0; i < count; i++)
+        {
+            if (ok_bits[i / 32] & (1 << (i % 32)))
+            {
+                DWORD string_idx, stream_idx;
+                string_idx = *pdw++;
+                stream_idx = *pdw++;
+                printf("\t\t\t%2d) %-20s => %x\n", i, &reader.u.jg.root->names[string_idx], stream_idx);
+                numok--;
+            }
+        }
+        if (numok) printf(">>> unmatched present field with found\n");
 
         /* Check for unknown versions */
         switch (reader.u.jg.root->Version)
@@ -644,7 +679,6 @@ static void pdb_jg_dump(void)
             free(segs);
         }
 #endif
-
         pdb_dump_symbols(&reader);
     }
     else printf("-Unable to get root\n");
@@ -737,7 +771,10 @@ static void pdb_ds_dump(void)
     reader.u.ds.root = reader.read_file(&reader, 1);
     if (reader.u.ds.root)
     {
-        const char*     ptr;
+        DWORD*          pdw;
+        DWORD*          ok_bits;
+        DWORD           numok, count;
+        unsigned        i;
 
         printf("Root:\n"
                "\tVersion:              %u\n"
@@ -750,9 +787,37 @@ static void pdb_ds_dump(void)
                reader.u.ds.root->Age,
                get_guid_str(&reader.u.ds.root->guid),
                reader.u.ds.root->cbNames);
-        for (ptr = &reader.u.ds.root->names[0]; ptr < &reader.u.ds.root->names[0] + reader.u.ds.root->cbNames; ptr += strlen(ptr) + 1)
-            printf("\tString:               %s\n", ptr);
-        /* follows an unknown list of DWORDs */
+        pdw = (DWORD*)(&reader.u.ds.root->names[0] + reader.u.ds.root->cbNames);
+        numok = *pdw++;
+        count = *pdw++;
+        printf("\tStreams directory:\n"
+               "\t\tok:        %08x\n"
+               "\t\tcount:     %08x\n"
+               "\t\ttable:\n",
+               numok, count);
+
+        /* bitfield: first dword is len (in dword), then data */
+        ok_bits = pdw;
+        pdw += *ok_bits++ + 1;
+        if (*pdw++ != 0)
+        {
+            printf("unexpected value\n");
+            return;
+        }
+
+        for (i = 0; i < count; i++)
+        {
+            if (ok_bits[i / 32] & (1 << (i % 32)))
+            {
+                DWORD string_idx, stream_idx;
+                string_idx = *pdw++;
+                stream_idx = *pdw++;
+                printf("\t\t\t%2d) %-20s => %x\n", i, &reader.u.ds.root->names[string_idx], stream_idx);
+                numok--;
+            }
+        }
+        if (numok) printf(">>> unmatched present field with found\n");
+
         pdb_dump_types(&reader);
         pdb_dump_symbols(&reader);
         pdb_dump_fpo(&reader);
