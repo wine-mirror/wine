@@ -62,12 +62,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_msc);
 
 #define MAX_PATHNAME_LEN 1024
 
+struct pdb_stream_name
+{
+    const char* name;
+    unsigned    index;
+};
+
 struct pdb_file_info
 {
     enum pdb_kind               kind;
     DWORD                       age;
     HANDLE                      hMap;
     const char*                 image;
+    struct pdb_stream_name*     stream_dict;
     union
     {
         struct
@@ -2159,21 +2166,73 @@ static void pdb_free_file(struct pdb_file_info* pdb_file)
         pdb_file->u.ds.toc = NULL;
         break;
     }
+    HeapFree(GetProcessHeap(), 0, pdb_file->stream_dict);
+}
+
+static BOOL pdb_load_stream_name_table(struct pdb_file_info* pdb_file, const char* str, unsigned cb)
+{
+    DWORD*      pdw;
+    DWORD*      ok_bits;
+    DWORD       count, numok;
+    unsigned    i, j;
+    char*       cpstr;
+
+    pdw = (DWORD*)(str + cb);
+    numok = *pdw++;
+    count = *pdw++;
+
+    pdb_file->stream_dict = HeapAlloc(GetProcessHeap(), 0, (numok + 1) * sizeof(struct pdb_stream_name) + cb);
+    if (!pdb_file->stream_dict) return FALSE;
+    cpstr = (char*)(pdb_file->stream_dict + numok + 1);
+    memcpy(cpstr, str, cb);
+
+    /* bitfield: first dword is len (in dword), then data */
+    ok_bits = pdw;
+    pdw += *ok_bits++ + 1;
+    if (*pdw++ != 0)
+    {
+        FIXME("unexpected value\n");
+        return -1;
+    }
+
+    for (i = j = 0; i < count; i++)
+    {
+        if (ok_bits[i / 32] & (1 << (i % 32)))
+        {
+            if (j >= numok) break;
+            pdb_file->stream_dict[j].name = &cpstr[*pdw++];
+            pdb_file->stream_dict[j].index = *pdw++;
+            j++;
+        }
+    }
+    /* add sentinel */
+    pdb_file->stream_dict[numok].name = NULL;
+    return j == numok && i == count;
+}
+
+static unsigned pdb_get_stream_by_name(const struct pdb_file_info* pdb_file, const char* name)
+{
+    struct pdb_stream_name*     psn;
+
+    for (psn = pdb_file->stream_dict; psn && psn->name; psn++)
+    {
+        if (!strcmp(psn->name, name)) return psn->index;
+    }
+    return -1;
 }
 
 static void* pdb_read_strings(const struct pdb_file_info* pdb_file)
 {
+    unsigned idx;
     void *ret;
 
-    /* FIXME: how to determine the correct file number? */
-    /* 4 and 12 have been observed, there may be others */
-
-    ret = pdb_read_file( pdb_file, 4 );
-    if (ret && *(const DWORD *)ret == 0xeffeeffe) return ret;
-    pdb_free( ret );
-    ret = pdb_read_file( pdb_file, 12 );
-    if (ret && *(const DWORD *)ret == 0xeffeeffe) return ret;
-    pdb_free( ret );
+    idx = pdb_get_stream_by_name(pdb_file, "/names");
+    if (idx != -1)
+    {
+        ret = pdb_read_file( pdb_file, idx );
+        if (ret && *(const DWORD *)ret == 0xeffeeffe) return ret;
+        pdb_free( ret );
+    }
     WARN("string table not found\n");
     return NULL;
 }
@@ -2411,6 +2470,8 @@ static BOOL pdb_init(const struct pdb_lookup* pdb_lookup, struct pdb_file_info* 
                   pdb_lookup->filename, root->Age, pdb_lookup->age);
         TRACE("found JG for %s: age=%x timestamp=%x\n",
               pdb_lookup->filename, root->Age, root->TimeDateStamp);
+        pdb_load_stream_name_table(pdb_file, &root->names[0], root->cbNames);
+
         pdb_free(root);
     }
     else if (!memcmp(image, PDB_DS_IDENT, sizeof(PDB_DS_IDENT)))
@@ -2447,6 +2508,8 @@ static BOOL pdb_init(const struct pdb_lookup* pdb_lookup, struct pdb_file_info* 
                   pdb_lookup->filename, root->Age, pdb_lookup->age);
         TRACE("found DS for %s: age=%x guid=%s\n",
               pdb_lookup->filename, root->Age, debugstr_guid(&root->guid));
+        pdb_load_stream_name_table(pdb_file, &root->names[0], root->cbNames);
+
         pdb_free(root);
     }
 
