@@ -163,17 +163,61 @@ static void pdb_exit(struct pdb_reader* reader)
     }
 }
 
+static unsigned get_stream_by_name(struct pdb_reader* reader, const char* name)
+{
+    DWORD*      pdw;
+    DWORD*      ok_bits;
+    DWORD       cbstr, count;
+    DWORD       string_idx, stream_idx;
+    unsigned    i;
+    const char* str;
+
+    if (reader->read_file == pdb_jg_read_file)
+    {
+        str = &reader->u.jg.root->names[0];
+        cbstr = reader->u.jg.root->cbNames;
+    }
+    else
+    {
+        str = &reader->u.ds.root->names[0];
+        cbstr = reader->u.ds.root->cbNames;
+    }
+
+    pdw = (DWORD*)(str + cbstr);
+    pdw++; /* number of ok entries */
+    count = *pdw++;
+
+    /* bitfield: first dword is len (in dword), then data */
+    ok_bits = pdw;
+    pdw += *ok_bits++ + 1;
+    if (*pdw++ != 0)
+    {
+        printf("unexpected value\n");
+        return -1;
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        if (ok_bits[i / 32] & (1 << (i % 32)))
+        {
+            string_idx = *pdw++;
+            stream_idx = *pdw++;
+            if (!strcmp(name, &str[string_idx])) return stream_idx;
+        }
+    }
+    return -1;
+}
+
 static void *read_string_table(struct pdb_reader* reader)
 {
-    void *ret;
+    unsigned    stream_idx;
+    void*       ret;
 
-    /* FIXME: how to determine the correct file number? */
-    /* 4 and 12 have been observed, there may be others */
-    ret = reader->read_file(reader, 4);
+    stream_idx = get_stream_by_name(reader, "/names");
+    if (stream_idx == -1) return NULL;
+    ret = reader->read_file(reader, stream_idx);
     if (ret && *(const DWORD*)ret == 0xeffeeffe) return ret;
-    free( ret );
-    ret = reader->read_file(reader, 12);
-    if (ret && *(const DWORD*)ret == 0xeffeeffe) return ret;
+    printf("wrong header %x expecting 0xeffeeffe\n", *(const DWORD*)ret);
     free( ret );
     return NULL;
 }
@@ -545,15 +589,9 @@ static void pdb_dump_fpo(struct pdb_reader* reader)
     }
     free(fpo);
 
-    strbase = reader->read_file(reader, 12);   /* FIXME: really fixed ??? */
+    strbase = read_string_table(reader);
     if (!strbase) return;
 
-    if (*(const DWORD*)strbase != 0xeffeeffe)
-    {
-        printf("wrong header %x expecting 0xeffeeffe\n", *(const DWORD*)strbase);
-        free(strbase);
-        return;
-    }
     strsize = *(const DWORD*)(strbase + 8);
     fpoext = reader->read_file(reader, 10);
     size = pdb_get_file_size(reader, 10);
@@ -762,11 +800,12 @@ static void pdb_ds_dump(void)
      *  1: root structure
      *  2: types
      *  3: modules
-     *  4: string table (FIXME: in which case?)
+     * other known streams:
+     *  string table: it's index is in the stream table from ROOT object under "/names"
+     * those other streams are likely not to have a fixed stream number
      *  5: FPO data
      *  8: segments
      * 10: extended FPO data
-     * 12: string table (FPO unwinder, files for linetab2...)
      */
     reader.u.ds.root = reader.read_file(&reader, 1);
     if (reader.u.ds.root)
