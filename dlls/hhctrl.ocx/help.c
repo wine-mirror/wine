@@ -111,21 +111,15 @@ BOOL NavigateToUrl(HHInfo *info, LPCWSTR surl)
     return ret;
 }
 
-BOOL NavigateToChm(HHInfo *info, LPCWSTR file, LPCWSTR index)
+BOOL AppendFullPathURL(LPCWSTR file, LPWSTR buf, LPCWSTR index)
 {
-    WCHAR buf[INTERNET_MAX_URL_LENGTH];
-    WCHAR full_path[MAX_PATH];
-    LPWSTR ptr;
-
     static const WCHAR url_format[] =
         {'m','k',':','@','M','S','I','T','S','t','o','r','e',':','%','s',':',':','%','s','%','s',0};
     static const WCHAR slash[] = {'/',0};
     static const WCHAR empty[] = {0};
+    WCHAR full_path[MAX_PATH];
 
-    TRACE("%p %s %s\n", info, debugstr_w(file), debugstr_w(index));
-
-    if (!info->web_browser)
-        return FALSE;
+    TRACE("%s %p %s\n", debugstr_w(file), buf, debugstr_w(index));
 
     if(!GetFullPathNameW(file, sizeof(full_path)/sizeof(full_path[0]), full_path, NULL)) {
         WARN("GetFullPathName failed: %u\n", GetLastError());
@@ -133,12 +127,60 @@ BOOL NavigateToChm(HHInfo *info, LPCWSTR file, LPCWSTR index)
     }
 
     wsprintfW(buf, url_format, full_path, (!index || index[0] == '/') ? empty : slash, index);
+    return TRUE;
+}
+
+BOOL NavigateToChm(HHInfo *info, LPCWSTR file, LPCWSTR index)
+{
+    WCHAR buf[INTERNET_MAX_URL_LENGTH];
+    LPWSTR ptr;
+
+    TRACE("%p %s %s\n", info, debugstr_w(file), debugstr_w(index));
+
+    if ((!info->web_browser) || !AppendFullPathURL(file, buf, index))
+        return FALSE;
 
     /* FIXME: HACK */
     if((ptr = strchrW(buf, '#')))
        *ptr = 0;
 
     return SUCCEEDED(navigate_url(info, buf));
+}
+
+static void DoSync(HHInfo *info)
+{
+    WCHAR buf[INTERNET_MAX_URL_LENGTH];
+    HRESULT hres;
+    DWORD len;
+    BSTR url;
+
+    hres = IWebBrowser2_get_LocationURL(info->web_browser, &url);
+
+    if (FAILED(hres))
+    {
+        WARN("get_LocationURL failed: %08x\n", hres);
+        return;
+    }
+
+    /* If we're not currently viewing a page in the active .chm file, abort */
+    if ((!AppendFullPathURL(info->pszFile, buf, NULL)) || (len = lstrlenW(buf) > lstrlenW(url)))
+    {
+        SysFreeString(url);
+        return;
+    }
+
+    if (lstrcmpiW(buf, url) > 0)
+    {
+        static const WCHAR delimW[] = {':',':','/',0};
+        const WCHAR *index;
+
+        index = strstrW(url, delimW);
+
+        if (index)
+            ActivateContentTopic(info->tabs[TAB_CONTENTS].hwnd, index + 3, info->content); /* skip over ::/ */
+    }
+
+    SysFreeString(url);
 }
 
 /* Size Bar */
@@ -654,6 +696,8 @@ static void TB_OnClick(HWND hWnd, DWORD dwID)
             ExpandContract(info);
             break;
         case IDTB_SYNC:
+            DoSync(info);
+            break;
         case IDTB_OPTIONS:
         case IDTB_BROWSE_FWD:
         case IDTB_BROWSE_BACK:

@@ -1,5 +1,6 @@
 /*
  * Copyright 2007 Jacek Caban for CodeWeavers
+ * Copyright 2011 Owen Rudge for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -311,4 +312,19 @@ void InitContent(HHInfo *info)
 void ReleaseContent(HHInfo *info)
 {
     free_content_item(info->content);
+}
+
+void ActivateContentTopic(HWND hWnd, LPCWSTR filename, ContentItem *item)
+{
+    if (lstrcmpiW(item->local, filename) == 0)
+    {
+        SendMessageW(hWnd, TVM_SELECTITEM, TVGN_CARET, (LPARAM) item->id);
+        return;
+    }
+
+    if (item->next)
+        ActivateContentTopic(hWnd, filename, item->next);
+
+    if (item->child)
+        ActivateContentTopic(hWnd, filename, item->child);
 }

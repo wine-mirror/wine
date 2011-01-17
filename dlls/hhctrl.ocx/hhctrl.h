@@ -169,6 +169,7 @@ void DoPageAction(HHInfo*,DWORD);
 
 void InitContent(HHInfo*);
 void ReleaseContent(HHInfo*);
+void ActivateContentTopic(HWND,LPCWSTR,ContentItem *);
 
 void InitIndex(HHInfo*);
 void ReleaseIndex(HHInfo*);
