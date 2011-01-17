@@ -664,6 +664,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
            "GetBindString(BINDSTRING_ACCEPT_MIMES) failed: %08x\n", hres);
         ok(fetched == 1, "fetched = %d, expected 1\n", fetched);
         ok(!lstrcmpW(wszMimes, accept_mimes[0]), "unexpected mimes\n");
+        CoTaskMemFree(accept_mimes[0]);
 
         hres = IInternetBindInfo_GetBindString(pOIBindInfo, BINDSTRING_ACCEPT_MIMES,
                                                NULL, 256, &fetched);
@@ -2921,6 +2922,7 @@ static void test_BindToObject(int protocol, DWORD flags)
     hres = IMoniker_GetDisplayName(mon, bctx, NULL, &display_name);
     ok(hres == S_OK, "GetDisplayName failed %08x\n", hres);
     ok(!lstrcmpW(display_name, urls[test_protocol]), "GetDisplayName got wrong name\n");
+    CoTaskMemFree(display_name);
 
     SET_EXPECT(QueryInterface_IBindStatusCallbackEx);
     SET_EXPECT(Obj_GetBindInfo);
