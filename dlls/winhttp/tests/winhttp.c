@@ -34,6 +34,25 @@ static const WCHAR test_useragent[] =
 static const WCHAR test_server[] = {'w','i','n','e','h','q','.','o','r','g',0};
 static const WCHAR localhostW[] = {'l','o','c','a','l','h','o','s','t',0};
 
+static BOOL proxy_active(void)
+{
+    WINHTTP_PROXY_INFO proxy_info;
+    BOOL active = FALSE;
+
+    if (WinHttpGetDefaultProxyConfiguration(&proxy_info))
+    {
+        active = (proxy_info.lpszProxy != NULL);
+        if (active)
+            GlobalFree((HGLOBAL) proxy_info.lpszProxy);
+        if (proxy_info.lpszProxyBypass != NULL)
+            GlobalFree((HGLOBAL) proxy_info.lpszProxyBypass);
+    }
+    else
+       active = FALSE;
+
+    return active;
+}
+
 static void test_QueryOption(void)
 {
     BOOL ret;
@@ -796,7 +815,7 @@ static void test_secure_connection(void)
     ok(ret, "failed to send request %u\n", GetLastError());
 
     ret = WinHttpReceiveResponse(req, NULL);
-    ok(!ret, "succeeded unexpectedly\n");
+    ok(!ret || proxy_active(), "succeeded unexpectedly\n");
 
     size = 0;
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_RAW_HEADERS_CRLF, NULL, NULL, &size, NULL);
@@ -1668,28 +1687,33 @@ static void test_resolve_timeout(void)
     DWORD timeout;
     BOOL ret;
 
-    ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
-    ok(ses != NULL, "failed to open session %u\n", GetLastError());
+    if (! proxy_active())
+    {
+        ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
+        ok(ses != NULL, "failed to open session %u\n", GetLastError());
 
-    timeout = 10000;
-    ret = WinHttpSetOption(ses, WINHTTP_OPTION_RESOLVE_TIMEOUT, &timeout, sizeof(timeout));
-    ok(ret, "failed to set resolve timeout %u\n", GetLastError());
+        timeout = 10000;
+        ret = WinHttpSetOption(ses, WINHTTP_OPTION_RESOLVE_TIMEOUT, &timeout, sizeof(timeout));
+        ok(ret, "failed to set resolve timeout %u\n", GetLastError());
 
-    con = WinHttpConnect(ses, nxdomain, 0, 0);
-    ok(con != NULL, "failed to open a connection %u\n", GetLastError());
+        con = WinHttpConnect(ses, nxdomain, 0, 0);
+        ok(con != NULL, "failed to open a connection %u\n", GetLastError());
 
-    req = WinHttpOpenRequest(con, NULL, NULL, NULL, NULL, NULL, 0);
-    ok(req != NULL, "failed to open a request %u\n", GetLastError());
+        req = WinHttpOpenRequest(con, NULL, NULL, NULL, NULL, NULL, 0);
+        ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
-    SetLastError(0xdeadbeef);
-    ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
-    ok(!ret, "sent request\n");
-    ok(GetLastError() == ERROR_WINHTTP_NAME_NOT_RESOLVED,
-       "expected ERROR_WINHTTP_NAME_NOT_RESOLVED got %u\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
+        ok(!ret, "sent request\n");
+        ok(GetLastError() == ERROR_WINHTTP_NAME_NOT_RESOLVED,
+           "expected ERROR_WINHTTP_NAME_NOT_RESOLVED got %u\n", GetLastError());
 
-    WinHttpCloseHandle(req);
-    WinHttpCloseHandle(con);
-    WinHttpCloseHandle(ses);
+        WinHttpCloseHandle(req);
+        WinHttpCloseHandle(con);
+        WinHttpCloseHandle(ses);
+    }
+    else
+       skip("Skipping host resolution tests, host resolution preformed by proxy\n");
 
     ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
     ok(ses != NULL, "failed to open session %u\n", GetLastError());
