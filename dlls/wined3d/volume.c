@@ -63,28 +63,26 @@ static void volume_bind_and_dirtify(IWineD3DVolume *iface) {
     container->baseTexture.texture_ops->texture_bind(container, FALSE);
 }
 
-void volume_add_dirty_box(IWineD3DVolume *iface, const WINED3DBOX *dirty_box)
+void volume_add_dirty_box(struct IWineD3DVolumeImpl *volume, const WINED3DBOX *dirty_box)
 {
-    IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
-
-    This->dirty = TRUE;
+    volume->dirty = TRUE;
     if (dirty_box)
     {
-        This->lockedBox.Left = min(This->lockedBox.Left, dirty_box->Left);
-        This->lockedBox.Top = min(This->lockedBox.Top, dirty_box->Top);
-        This->lockedBox.Front = min(This->lockedBox.Front, dirty_box->Front);
-        This->lockedBox.Right = max(This->lockedBox.Right, dirty_box->Right);
-        This->lockedBox.Bottom = max(This->lockedBox.Bottom, dirty_box->Bottom);
-        This->lockedBox.Back = max(This->lockedBox.Back, dirty_box->Back);
+        volume->lockedBox.Left = min(volume->lockedBox.Left, dirty_box->Left);
+        volume->lockedBox.Top = min(volume->lockedBox.Top, dirty_box->Top);
+        volume->lockedBox.Front = min(volume->lockedBox.Front, dirty_box->Front);
+        volume->lockedBox.Right = max(volume->lockedBox.Right, dirty_box->Right);
+        volume->lockedBox.Bottom = max(volume->lockedBox.Bottom, dirty_box->Bottom);
+        volume->lockedBox.Back = max(volume->lockedBox.Back, dirty_box->Back);
     }
     else
     {
-        This->lockedBox.Left = 0;
-        This->lockedBox.Top = 0;
-        This->lockedBox.Front = 0;
-        This->lockedBox.Right = This->currentDesc.Width;
-        This->lockedBox.Bottom = This->currentDesc.Height;
-        This->lockedBox.Back = This->currentDesc.Depth;
+        volume->lockedBox.Left = 0;
+        volume->lockedBox.Top = 0;
+        volume->lockedBox.Front = 0;
+        volume->lockedBox.Right = volume->currentDesc.Width;
+        volume->lockedBox.Bottom = volume->currentDesc.Height;
+        volume->lockedBox.Back = volume->currentDesc.Depth;
     }
 }
 
@@ -255,7 +253,7 @@ static HRESULT WINAPI IWineD3DVolumeImpl_Map(IWineD3DVolume *iface,
 
     if (!(flags & (WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY)))
     {
-        volume_add_dirty_box(iface, &This->lockedBox);
+        volume_add_dirty_box(This, &This->lockedBox);
         This->container->baseTexture.texture_rgb.dirty = TRUE;
         This->container->baseTexture.texture_srgb.dirty = TRUE;
     }
@@ -368,7 +366,7 @@ HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT
     memset(&volume->lockedBox, 0, sizeof(volume->lockedBox));
     volume->dirty = TRUE;
 
-    volume_add_dirty_box((IWineD3DVolume *)volume, NULL);
+    volume_add_dirty_box(volume, NULL);
 
     return WINED3D_OK;
 }

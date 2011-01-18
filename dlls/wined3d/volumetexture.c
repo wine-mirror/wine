@@ -70,9 +70,9 @@ static void volumetexture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3D
     {
         for (i = 0; i < texture->baseTexture.level_count; ++i)
         {
-            IWineD3DVolume *volume = (IWineD3DVolume *)texture->baseTexture.sub_resources[i];
+            IWineD3DVolumeImpl *volume = (IWineD3DVolumeImpl *)texture->baseTexture.sub_resources[i];
             volume_add_dirty_box(volume, NULL);
-            IWineD3DVolume_LoadTexture(volume, i, srgb_mode);
+            IWineD3DVolume_LoadTexture((IWineD3DVolume *)volume, i, srgb_mode);
         }
     }
     else
@@ -336,11 +336,11 @@ static HRESULT WINAPI IWineD3DVolumeTextureImpl_Unmap(IWineD3DVolumeTexture *ifa
 static HRESULT WINAPI IWineD3DVolumeTextureImpl_AddDirtyBox(IWineD3DVolumeTexture *iface, const WINED3DBOX *dirty_box)
 {
     IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
-    IWineD3DVolume *volume;
+    IWineD3DVolumeImpl *volume;
 
     TRACE("iface %p, dirty_box %p.\n", iface, dirty_box);
 
-    if (!(volume = (IWineD3DVolume *)basetexture_get_sub_resource(texture, 0)))
+    if (!(volume = (IWineD3DVolumeImpl *)basetexture_get_sub_resource(texture, 0)))
     {
         WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;
