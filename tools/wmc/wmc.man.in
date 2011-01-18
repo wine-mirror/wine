@@ -22,45 +22,49 @@ with \fI-o\fR, then \fBwmc\fR will write the output to \fBinputfile.{rc,h}\fR.
 The outputfile is named \fBwmc.tab.{rc,h}\fR if no inputfile was given.
 .SH OPTIONS
 .TP
-.I \-B x
+.BI \-B\  x
 Set output byte-order x={n[ative], l[ittle], b[ig]}. Default is n[ative].
 .TP
-.I \-c
+.B \-c
 Set 'custom-bit' in message-code values.
 .TP
-.I \-d
+.B \-d
 NON-FUNCTIONAL; Use decimal values in output
 .TP
-.I \-D
+.B \-D
 Set debug flag. This results is a parser trace and a lot of extra messages.
 .TP
-.I \-h
+.B \-h
 Print an informative usage message.
 .TP
-.I \-H file
+.BI \-H\  file
 Write headerfile to \fIfile\fR. Default is \fIinputfile.h\fR.
 .TP
-.I \-i
+.B \-i
 Inline messagetable(s). This option skips the generation of all \fI.bin\fR files
 and writes all output into the \fI.rc\fR file. This encoding is parsable with
 wrc(1).
 .TP
-.I \-o file
+.BI \-o\  file
 Output to \fIfile\fR. Default is \fIinputfile.rc\fR.
 .TP
-.I \-u
+.BI \-O\  format
+Set the output format. Supported formats are \fBrc\fR (the default)
+and \fBres\fR.
+.TP
+.B \-u
 Assume that the inputfile is in unicode.
 .TP
-.I \-U
+.B \-U
 Write resource output in unicode formatted messagetable(s).
 .TP
-.I \-v
+.B \-v
 Show all supported codepages and languages.
 .TP
-.I \-V
+.B \-V
 Print version end exit.
 .TP
-.I \-W
+.B \-W
 Enable pedantic warnings.
 .SH EXTENSIONS
 The original syntax is extended to support codepages more smoothly. Normally,
