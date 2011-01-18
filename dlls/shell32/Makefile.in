@@ -27,6 +27,7 @@ C_SRCS = \
 	recyclebin.c \
 	regsvr.c \
 	shell32_main.c \
+	shelldispatch.c \
 	shellitem.c \
 	shelllink.c \
 	shellole.c \

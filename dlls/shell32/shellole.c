@@ -35,6 +35,7 @@
 #include "winuser.h"
 #include "shlobj.h"
 #include "shlguid.h"
+#include "shldisp.h"
 #include "winreg.h"
 #include "winerror.h"
 
@@ -80,6 +81,7 @@ static const struct {
 	{&CLSID_UnixFolder,     UnixFolder_Constructor},
 	{&CLSID_ExplorerBrowser,ExplorerBrowser_Constructor},
 	{&CLSID_KnownFolderManager, KnownFolderManager_Constructor},
+	{&CLSID_Shell,          IShellDispatch_Constructor},
 	{NULL, NULL}
 };
 
