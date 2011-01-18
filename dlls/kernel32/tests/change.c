@@ -795,8 +795,9 @@ static void test_readdirectorychanges_cr(void)
     static const WCHAR szBoo[] = { '\\','b','o','o','\\',0 };
     static const WCHAR szDir[] = { 'd','i','r',0 };
     static const WCHAR szFile[] = { 'f','i','l','e',0 };
+    static const WCHAR szBackslash[] = { '\\',0 };
 
-    WCHAR path[MAX_PATH], file[MAX_PATH], dir[MAX_PATH];
+    WCHAR path[MAX_PATH], file[MAX_PATH], dir[MAX_PATH], sub_file[MAX_PATH];
     FILE_NOTIFY_INFORMATION fni[1024], *fni_next;
     OVERLAPPED ov;
     HANDLE hdir, hfile;
@@ -824,6 +825,9 @@ static void test_readdirectorychanges_cr(void)
     lstrcatW(dir, szDir);
     lstrcpyW(file, path);
     lstrcatW(file, szFile);
+    lstrcpyW(sub_file, dir);
+    lstrcatW(sub_file, szBackslash);
+    lstrcatW(sub_file, szFile);
 
     DeleteFileW(file);
     RemoveDirectoryW(dir);
@@ -864,6 +868,38 @@ static void test_readdirectorychanges_cr(void)
     r = CreateDirectoryW(dir, NULL);
     ok(r == TRUE, "failed to create directory\n");
 
+    r = MoveFileW(file, sub_file);
+    ok(r == TRUE, "failed to move file\n");
+
+    r = SleepEx(1000, TRUE);
+    ok(r != 0, "failed to receive file move event\n");
+    ok(fni->NextEntryOffset == 0, "there should be no more events in buffer\n");
+    ok(fni->Action == FILE_ACTION_REMOVED, "Action = %d\n", fni->Action);
+    ok(fni->FileNameLength == lstrlenW(szFile)*sizeof(WCHAR),
+            "FileNameLength = %d\n", fni->FileNameLength);
+    ok(!memcmp(fni->FileName, szFile, lstrlenW(szFile)*sizeof(WCHAR)),
+            "FileName = %s\n", wine_dbgstr_w(fni->FileName));
+
+    r = pReadDirectoryChangesW(hdir, fni, sizeof(fni), FALSE,
+            FILE_NOTIFY_CHANGE_FILE_NAME, NULL, &ov, readdirectorychanges_cr);
+    ok(r == TRUE, "pReadDirectoryChangesW failed\n");
+
+    r = MoveFileW(sub_file, file);
+    ok(r == TRUE, "failed to move file\n");
+
+    r = SleepEx(1000, TRUE);
+    ok(r != 0, "failed to receive file move event\n");
+    ok(fni->NextEntryOffset == 0, "there should be no more events in buffer\n");
+    ok(fni->Action == FILE_ACTION_ADDED, "Action = %d\n", fni->Action);
+    ok(fni->FileNameLength == lstrlenW(szFile)*sizeof(WCHAR),
+            "FileNameLength = %d\n", fni->FileNameLength);
+    ok(!memcmp(fni->FileName, szFile, lstrlenW(szFile)*sizeof(WCHAR)),
+            "FileName = %s\n", wine_dbgstr_w(fni->FileName));
+
+    r = pReadDirectoryChangesW(hdir, fni, sizeof(fni), FALSE,
+            FILE_NOTIFY_CHANGE_FILE_NAME, NULL, &ov, readdirectorychanges_cr);
+    ok(r == TRUE, "pReadDirectoryChangesW failed\n");
+
     r = DeleteFileW(file);
     ok(r == TRUE, "failed to delete file\n");
 
@@ -892,29 +928,36 @@ static void test_readdirectorychanges_cr(void)
 
     r = SleepEx(1000, TRUE);
     ok(r != 0, "failed to receive directory move event\n");
-    ok(fni->Action == FILE_ACTION_RENAMED_OLD_NAME, "Action = %d\n", fni->Action);
-    ok(fni->FileNameLength == lstrlenW(szDir)*sizeof(WCHAR),
-            "FileNameLength = %d\n", fni->FileNameLength);
-    ok(!memcmp(fni->FileName, szDir, lstrlenW(szDir)*sizeof(WCHAR)),
-            "FileName = %s\n", wine_dbgstr_w(fni->FileName));
-    if (fni->NextEntryOffset)
+    if (fni->Action == FILE_ACTION_RENAMED_OLD_NAME)
+    {
+        ok(fni->Action == FILE_ACTION_RENAMED_OLD_NAME, "Action = %d\n", fni->Action);
+        ok(fni->FileNameLength == lstrlenW(szDir)*sizeof(WCHAR),
+                "FileNameLength = %d\n", fni->FileNameLength);
+        ok(!memcmp(fni->FileName, szDir, lstrlenW(szDir)*sizeof(WCHAR)),
+                "FileName = %s\n", wine_dbgstr_w(fni->FileName));
+        ok(fni->NextEntryOffset != 0, "no next entry in movement event\n");
         fni_next = (FILE_NOTIFY_INFORMATION*)((char*)fni+fni->NextEntryOffset);
+        ok(fni_next->NextEntryOffset == 0, "there should be no more events in buffer\n");
+        ok(fni_next->Action == FILE_ACTION_RENAMED_NEW_NAME, "Action = %d\n", fni_next->Action);
+        ok(fni_next->FileNameLength == lstrlenW(szFile)*sizeof(WCHAR),
+                "FileNameLength = %d\n", fni_next->FileNameLength);
+        ok(!memcmp(fni_next->FileName, szFile, lstrlenW(szFile)*sizeof(WCHAR)),
+                "FileName = %s\n", wine_dbgstr_w(fni_next->FileName));
+    }
     else
     {
-        r = pReadDirectoryChangesW(hdir, fni, sizeof(fni), FALSE,
-                FILE_NOTIFY_CHANGE_DIR_NAME, NULL, &ov, readdirectorychanges_cr);
-        ok(r == TRUE, "pReadDirectoryChangesW failed\n");
+        todo_wine ok(0, "Expected rename event\n");
 
-        r = SleepEx(1000, TRUE);
-        ok(r != 0, "failed to receive directory move event\n");
-        fni_next = fni;
+        if (fni->NextEntryOffset == 0)
+        {
+            r = pReadDirectoryChangesW(hdir, fni, sizeof(fni), FALSE,
+                    FILE_NOTIFY_CHANGE_DIR_NAME, NULL, &ov, readdirectorychanges_cr);
+            ok(r == TRUE, "pReadDirectoryChangesW failed\n");
+
+            r = SleepEx(1000, TRUE);
+            ok(r != 0, "failed to receive directory move event\n");
+        }
     }
-    ok(fni_next->NextEntryOffset == 0, "there should be no more events in buffer\n");
-    ok(fni_next->Action == FILE_ACTION_RENAMED_NEW_NAME, "Action = %d\n", fni_next->Action);
-    ok(fni_next->FileNameLength == lstrlenW(szFile)*sizeof(WCHAR),
-            "FileNameLength = %d\n", fni_next->FileNameLength);
-    ok(!memcmp(fni_next->FileName, szFile, lstrlenW(szFile)*sizeof(WCHAR)),
-            "FileName = %s\n", wine_dbgstr_w(fni_next->FileName));
 
     r = CreateDirectoryW(dir, NULL);
     ok(r == TRUE, "failed to create directory\n");
