@@ -762,15 +762,14 @@ static HRESULT WINAPI ddraw1_SetCooperativeLevel(IDirectDraw *iface, HWND window
  * ddraw7_SetDisplayMode.
  *
  *****************************************************************************/
-static HRESULT ddraw_set_display_mode(IDirectDraw7 *iface, DWORD Width, DWORD Height,
+static HRESULT ddraw_set_display_mode(IDirectDrawImpl *ddraw, DWORD Width, DWORD Height,
         DWORD BPP, DWORD RefreshRate, DWORD Flags)
 {
-    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     WINED3DDISPLAYMODE Mode;
     HRESULT hr;
 
-    TRACE("iface %p, width %u, height %u, bpp %u, refresh_rate %u, flags %#x.\n",
-            iface, Width, Height, BPP, RefreshRate, Flags);
+    TRACE("ddraw %p, width %u, height %u, bpp %u, refresh_rate %u, flags %#x.\n", ddraw, Width,
+            Height, BPP, RefreshRate, Flags);
 
     EnterCriticalSection(&ddraw_cs);
     if( !Width || !Height )
@@ -782,7 +781,7 @@ static HRESULT ddraw_set_display_mode(IDirectDraw7 *iface, DWORD Width, DWORD He
     }
 
     /* Check the exclusive mode
-    if(!(This->cooperative_level & DDSCL_EXCLUSIVE))
+    if(!(ddraw->cooperative_level & DDSCL_EXCLUSIVE))
         return DDERR_NOEXCLUSIVEMODE;
      * This is WRONG. Don't know if the SDK is completely
      * wrong and if there are any conditions when DDERR_NOEXCLUSIVE
@@ -808,11 +807,9 @@ static HRESULT ddraw_set_display_mode(IDirectDraw7 *iface, DWORD Width, DWORD He
      */
 
     /* TODO: Lose the primary surface */
-    hr = IWineD3DDevice_SetDisplayMode(This->wineD3DDevice,
-                                       0, /* First swapchain */
-                                       &Mode);
-    IWineD3DDevice_RestoreFullscreenWindow(This->wineD3DDevice, This->dest_window);
-    IWineD3DDevice_SetupFullscreenWindow(This->wineD3DDevice, This->dest_window, Width, Height);
+    hr = IWineD3DDevice_SetDisplayMode(ddraw->wineD3DDevice, 0, &Mode);
+    IWineD3DDevice_RestoreFullscreenWindow(ddraw->wineD3DDevice, ddraw->dest_window);
+    IWineD3DDevice_SetupFullscreenWindow(ddraw->wineD3DDevice, ddraw->dest_window, Width, Height);
     LeaveCriticalSection(&ddraw_cs);
     switch(hr)
     {
@@ -846,6 +843,8 @@ static HRESULT ddraw_set_display_mode(IDirectDraw7 *iface, DWORD Width, DWORD He
 static HRESULT WINAPI ddraw7_SetDisplayMode(IDirectDraw7 *iface, DWORD Width, DWORD Height,
         DWORD BPP, DWORD RefreshRate, DWORD Flags)
 {
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
+
     TRACE("iface %p, width %u, height %u, bpp %u, refresh_rate %u, flags %#x.\n",
             iface, Width, Height, BPP, RefreshRate, Flags);
 
@@ -856,7 +855,7 @@ static HRESULT WINAPI ddraw7_SetDisplayMode(IDirectDraw7 *iface, DWORD Width, DW
         RefreshRate = force_refresh_rate;
     }
 
-    return ddraw_set_display_mode(iface, Width, Height, BPP, RefreshRate, Flags);
+    return ddraw_set_display_mode(This, Width, Height, BPP, RefreshRate, Flags);
 }
 
 static HRESULT WINAPI ddraw4_SetDisplayMode(IDirectDraw4 *iface,
@@ -923,7 +922,7 @@ static HRESULT WINAPI ddraw7_RestoreDisplayMode(IDirectDraw7 *iface)
 
     TRACE("iface %p.\n", iface);
 
-    return ddraw_set_display_mode(iface, This->orig_width, This->orig_height, This->orig_bpp, 0, 0);
+    return ddraw_set_display_mode(This, This->orig_width, This->orig_height, This->orig_bpp, 0, 0);
 }
 
 static HRESULT WINAPI ddraw4_RestoreDisplayMode(IDirectDraw4 *iface)
