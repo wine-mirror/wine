@@ -2866,10 +2866,9 @@ static HRESULT ddraw_create_gdi_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSur
  *  DDERR_* if an error occurs
  *
  *****************************************************************************/
-static HRESULT CreateSurface(IDirectDraw7 *iface,
-        DDSURFACEDESC2 *DDSD, IDirectDrawSurface7 **Surf, IUnknown *UnkOuter)
+static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
+        IDirectDrawSurface7 **Surf, IUnknown *UnkOuter)
 {
-    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     IDirectDrawSurfaceImpl *object = NULL;
     HRESULT hr;
     LONG extra_surfaces = 0;
@@ -2877,27 +2876,26 @@ static HRESULT CreateSurface(IDirectDraw7 *iface,
     WINED3DDISPLAYMODE Mode;
     const DWORD sysvidmem = DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY;
 
-    TRACE("iface %p, surface_desc %p, surface %p, outer_unknown %p.\n",
-            iface, DDSD, Surf, UnkOuter);
+    TRACE("ddraw %p, surface_desc %p, surface %p, outer_unknown %p.\n", ddraw, DDSD, Surf, UnkOuter);
 
     /* Some checks before we start */
     if (TRACE_ON(ddraw))
     {
-        TRACE(" (%p) Requesting surface desc :\n", This);
+        TRACE(" (%p) Requesting surface desc :\n", ddraw);
         DDRAW_dump_surface_desc(DDSD);
     }
     EnterCriticalSection(&ddraw_cs);
 
     if (UnkOuter != NULL)
     {
-        FIXME("(%p) : outer != NULL?\n", This);
+        FIXME("(%p) : outer != NULL?\n", ddraw);
         LeaveCriticalSection(&ddraw_cs);
         return CLASS_E_NOAGGREGATION; /* unchecked */
     }
 
     if (Surf == NULL)
     {
-        FIXME("(%p) You want to get back a surface? Don't give NULL ptrs!\n", This);
+        FIXME("(%p) You want to get back a surface? Don't give NULL ptrs!\n", ddraw);
         LeaveCriticalSection(&ddraw_cs);
         return E_POINTER; /* unchecked */
     }
@@ -2917,14 +2915,15 @@ static HRESULT CreateSurface(IDirectDraw7 *iface,
     if ((DDSD->dwFlags & DDSD_LPSURFACE) && (DDSD->lpSurface == NULL))
     {
         /* Frank Herbert's Dune specifies a null pointer for the surface, ignore the LPSURFACE field */
-        WARN("(%p) Null surface pointer specified, ignore it!\n", This);
+        WARN("(%p) Null surface pointer specified, ignore it!\n", ddraw);
         DDSD->dwFlags &= ~DDSD_LPSURFACE;
     }
 
     if((DDSD->ddsCaps.dwCaps & (DDSCAPS_FLIP | DDSCAPS_PRIMARYSURFACE)) == (DDSCAPS_FLIP | DDSCAPS_PRIMARYSURFACE) &&
-       !(This->cooperative_level & DDSCL_EXCLUSIVE))
+       !(ddraw->cooperative_level & DDSCL_EXCLUSIVE))
     {
-        TRACE("(%p): Attempt to create a flipable primary surface without DDSCL_EXCLUSIVE set\n", This);
+        TRACE("(%p): Attempt to create a flipable primary surface without DDSCL_EXCLUSIVE set\n",
+                ddraw);
         *Surf = NULL;
         LeaveCriticalSection(&ddraw_cs);
         return DDERR_NOEXCLUSIVEMODE;
@@ -2984,13 +2983,11 @@ static HRESULT CreateSurface(IDirectDraw7 *iface,
     desc2.u4.ddpfPixelFormat.dwSize=sizeof(DDPIXELFORMAT); /* Just to be sure */
 
     /* Get the video mode from WineD3D - we will need it */
-    hr = IWineD3DDevice_GetDisplayMode(This->wineD3DDevice,
-                                       0, /* Swapchain 0 */
-                                       &Mode);
+    hr = IWineD3DDevice_GetDisplayMode(ddraw->wineD3DDevice, 0, &Mode);
     if(FAILED(hr))
     {
         ERR("Failed to read display mode from wined3d\n");
-        switch(This->orig_bpp)
+        switch(ddraw->orig_bpp)
         {
             case 8:
                 Mode.Format = WINED3DFMT_P8_UINT;
@@ -3012,8 +3009,8 @@ static HRESULT CreateSurface(IDirectDraw7 *iface,
                 Mode.Format = WINED3DFMT_B8G8R8X8_UNORM;
                 break;
         }
-        Mode.Width = This->orig_width;
-        Mode.Height = This->orig_height;
+        Mode.Width = ddraw->orig_width;
+        Mode.Height = ddraw->orig_height;
     }
 
     /* No pixelformat given? Use the current screen format */
@@ -3129,7 +3126,7 @@ static HRESULT CreateSurface(IDirectDraw7 *iface,
     }
 
     /* Create the first surface */
-    hr = ddraw_create_surface(This, &desc2, &object, 0);
+    hr = ddraw_create_surface(ddraw, &desc2, &object, 0);
     if (FAILED(hr))
     {
         WARN("ddraw_create_surface failed, hr %#x.\n", hr);
@@ -3158,24 +3155,24 @@ static HRESULT CreateSurface(IDirectDraw7 *iface,
     {
         desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_ALLFACES;
         desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_NEGATIVEZ;
-        hr |= CreateAdditionalSurfaces(This, object, extra_surfaces + 1, desc2, TRUE);
+        hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces + 1, desc2, TRUE);
         desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_NEGATIVEZ;
         desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_POSITIVEZ;
-        hr |= CreateAdditionalSurfaces(This, object, extra_surfaces + 1, desc2, TRUE);
+        hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces + 1, desc2, TRUE);
         desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_POSITIVEZ;
         desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_NEGATIVEY;
-        hr |= CreateAdditionalSurfaces(This, object, extra_surfaces + 1, desc2, TRUE);
+        hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces + 1, desc2, TRUE);
         desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_NEGATIVEY;
         desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_POSITIVEY;
-        hr |= CreateAdditionalSurfaces(This, object, extra_surfaces + 1, desc2, TRUE);
+        hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces + 1, desc2, TRUE);
         desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_POSITIVEY;
         desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_NEGATIVEX;
-        hr |= CreateAdditionalSurfaces(This, object, extra_surfaces + 1, desc2, TRUE);
+        hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces + 1, desc2, TRUE);
         desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_NEGATIVEX;
         desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_POSITIVEX;
     }
 
-    hr |= CreateAdditionalSurfaces(This, object, extra_surfaces, desc2, FALSE);
+    hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces, desc2, FALSE);
     if(hr != DD_OK)
     {
         /* This destroys and possibly created surfaces too */
@@ -3192,14 +3189,14 @@ static HRESULT CreateSurface(IDirectDraw7 *iface,
      * the render target as first surface. In this case the render target creation
      * will cause the 3D init.
      */
-    if( (This->ImplType == SURFACE_OPENGL) && !(This->d3d_initialized) &&
+    if( (ddraw->ImplType == SURFACE_OPENGL) && !(ddraw->d3d_initialized) &&
         desc2.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE) )
     {
         IDirectDrawSurfaceImpl *target = object, *surface;
         struct list *entry;
 
         /* Search for the primary to use as render target */
-        LIST_FOR_EACH(entry, &This->surface_list)
+        LIST_FOR_EACH(entry, &ddraw->surface_list)
         {
             surface = LIST_ENTRY(entry, IDirectDrawSurfaceImpl, surface_list_entry);
             if((surface->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER)) ==
@@ -3212,8 +3209,8 @@ static HRESULT CreateSurface(IDirectDraw7 *iface,
             }
         }
 
-        TRACE("(%p) Attaching a D3DDevice, rendertarget = %p\n", This, target);
-        hr = ddraw_attach_d3d_device(This, target);
+        TRACE("(%p) Attaching a D3DDevice, rendertarget = %p\n", ddraw, target);
+        hr = ddraw_attach_d3d_device(ddraw, target);
         if (hr != D3D_OK)
         {
             IDirectDrawSurfaceImpl *release_surf;
@@ -3237,14 +3234,14 @@ static HRESULT CreateSurface(IDirectDraw7 *iface,
             return hr;
         }
     }
-    else if(!(This->d3d_initialized) && desc2.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+    else if(!(ddraw->d3d_initialized) && desc2.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
-        ddraw_create_gdi_swapchain(This, object);
+        ddraw_create_gdi_swapchain(ddraw, object);
     }
 
     /* Addref the ddraw interface to keep an reference for each surface */
-    IDirectDraw7_AddRef(iface);
-    object->ifaceToRelease = (IUnknown *) iface;
+    IDirectDraw7_AddRef((IDirectDraw7 *)ddraw);
+    object->ifaceToRelease = (IUnknown *)ddraw;
 
     /* Create a WineD3DTexture if a texture was requested */
     if(desc2.ddsCaps.dwCaps & DDSCAPS_TEXTURE)
@@ -3253,7 +3250,7 @@ static HRESULT CreateSurface(IDirectDraw7 *iface,
         UINT levels;
         WINED3DPOOL Pool = WINED3DPOOL_DEFAULT;
 
-        This->tex_root = object;
+        ddraw->tex_root = object;
 
         if(desc2.ddsCaps.dwCaps & DDSCAPS_MIPMAP)
         {
@@ -3281,17 +3278,17 @@ static HRESULT CreateSurface(IDirectDraw7 *iface,
          */
         if(desc2.ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
         {
-            hr = IWineD3DDevice_CreateCubeTexture(This->wineD3DDevice, DDSD->dwWidth /* Edgelength */, levels,
-                    0 /* usage */, Format, Pool, object, &ddraw_null_wined3d_parent_ops,
+            hr = IWineD3DDevice_CreateCubeTexture(ddraw->wineD3DDevice, DDSD->dwWidth, levels, 0,
+                    Format, Pool, object, &ddraw_null_wined3d_parent_ops,
                     (IWineD3DCubeTexture **)&object->wineD3DTexture);
         }
         else
         {
-            hr = IWineD3DDevice_CreateTexture(This->wineD3DDevice, DDSD->dwWidth, DDSD->dwHeight, levels,
-                    0 /* usage */, Format, Pool, object, &ddraw_null_wined3d_parent_ops,
+            hr = IWineD3DDevice_CreateTexture(ddraw->wineD3DDevice, DDSD->dwWidth, DDSD->dwHeight,
+                    levels, 0, Format, Pool, object, &ddraw_null_wined3d_parent_ops,
                     (IWineD3DTexture **)&object->wineD3DTexture);
         }
-        This->tex_root = NULL;
+        ddraw->tex_root = NULL;
     }
 
     LeaveCriticalSection(&ddraw_cs);
@@ -3301,6 +3298,8 @@ static HRESULT CreateSurface(IDirectDraw7 *iface,
 static HRESULT WINAPI ddraw7_CreateSurface(IDirectDraw7 *iface,
         DDSURFACEDESC2 *surface_desc, IDirectDrawSurface7 **surface, IUnknown *outer_unknown)
 {
+    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
+
     TRACE("iface %p, surface_desc %p, surface %p, outer_unknown %p.\n",
             iface, surface_desc, surface, outer_unknown);
 
@@ -3322,7 +3321,7 @@ static HRESULT WINAPI ddraw7_CreateSurface(IDirectDraw7 *iface,
         return DDERR_INVALIDCAPS;
     }
 
-    return CreateSurface(iface, surface_desc, surface, outer_unknown);
+    return CreateSurface(This, surface_desc, surface, outer_unknown);
 }
 
 static HRESULT WINAPI ddraw4_CreateSurface(IDirectDraw4 *iface,
@@ -3353,7 +3352,7 @@ static HRESULT WINAPI ddraw4_CreateSurface(IDirectDraw4 *iface,
         return DDERR_INVALIDCAPS;
     }
 
-    hr = CreateSurface((IDirectDraw7 *)ddraw, surface_desc, (IDirectDrawSurface7 **)surface, outer_unknown);
+    hr = CreateSurface(ddraw, surface_desc, (IDirectDrawSurface7 **)surface, outer_unknown);
     impl = (IDirectDrawSurfaceImpl *)*surface;
     if (SUCCEEDED(hr) && impl)
     {
@@ -3395,7 +3394,7 @@ static HRESULT WINAPI ddraw3_CreateSurface(IDirectDraw3 *iface,
         return DDERR_INVALIDCAPS;
     }
 
-    hr = CreateSurface((IDirectDraw7 *)ddraw, (DDSURFACEDESC2 *)surface_desc, &surface7, outer_unknown);
+    hr = CreateSurface(ddraw, (DDSURFACEDESC2 *)surface_desc, &surface7, outer_unknown);
     if (FAILED(hr))
     {
         *surface = NULL;
@@ -3441,7 +3440,7 @@ static HRESULT WINAPI ddraw2_CreateSurface(IDirectDraw2 *iface,
         return DDERR_INVALIDCAPS;
     }
 
-    hr = CreateSurface((IDirectDraw7 *)ddraw, (DDSURFACEDESC2 *)surface_desc, &surface7, outer_unknown);
+    hr = CreateSurface(ddraw, (DDSURFACEDESC2 *)surface_desc, &surface7, outer_unknown);
     if (FAILED(hr))
     {
         *surface = NULL;
@@ -3477,7 +3476,7 @@ static HRESULT WINAPI ddraw1_CreateSurface(IDirectDraw *iface,
     /* Remove front buffer flag, this causes failure in v7, and its added to normal
      * primaries anyway. */
     surface_desc->ddsCaps.dwCaps &= ~DDSCAPS_FRONTBUFFER;
-    hr = CreateSurface((IDirectDraw7 *)ddraw, (DDSURFACEDESC2 *)surface_desc, &surface7, outer_unknown);
+    hr = CreateSurface(ddraw, (DDSURFACEDESC2 *)surface_desc, &surface7, outer_unknown);
     if (FAILED(hr))
     {
         *surface = NULL;
