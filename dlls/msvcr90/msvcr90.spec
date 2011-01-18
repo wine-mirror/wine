@@ -336,8 +336,8 @@
 @ stub _atodbl
 @ stub _atodbl_l
 @ cdecl _atof_l(str ptr) msvcrt._atof_l
-@ stub _atoflt
-@ stub _atoflt_l
+@ cdecl _atoflt(ptr str)
+@ cdecl _atoflt_l(ptr str ptr) msvcrt._atoflt_l
 @ cdecl -ret64 _atoi64(str) msvcrt._atoi64
 @ stub _atoi64_l
 @ stub _atoi_l

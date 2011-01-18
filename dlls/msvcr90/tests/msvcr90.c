@@ -19,6 +19,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -67,11 +68,17 @@ static errno_t (__cdecl *p_itoa_s)(int,char*,size_t,int);
 static int (__cdecl *p_wcsncat_s)(wchar_t *dst, size_t elem, const wchar_t *src, size_t count);
 static void (__cdecl *p_qsort_s)(void *, size_t, size_t, int (__cdecl *)(void *, const void *, const void *), void *);
 static int (__cdecl *p_controlfp_s)(unsigned int *, unsigned int, unsigned int);
+static int (__cdecl *p_atoflt)(_CRT_FLOAT *, char *);
 
 static void* (WINAPI *pEncodePointer)(void *);
 
 static int cb_called[4];
 static int g_qsort_s_context_counter;
+
+static inline int almost_equal_f(float f1, float f2)
+{
+    return f1-f2 > -1e-30 && f1-f2 < 1e-30;
+}
 
 /* ########## */
 
@@ -617,6 +624,62 @@ static void test_controlfp_s(void)
     ok( cur != 0xdeadbeef, "value not set\n" );
 }
 
+typedef struct
+{
+    const char *str;
+    float flt;
+    int ret;
+} _atoflt_test;
+
+static const _atoflt_test _atoflt_testdata[] = {
+    { "12.1", 12.1, 0 },
+    { "-13.721", -13.721, 0 },
+    { "INF", 0.0, 0 },
+    { ".21e12", 0.21e12, 0 },
+    { "214353e-3", 214.353, 0 },
+    { "1d9999999999999999999", 0.0, _OVERFLOW },
+    { "  d10", 0.0, 0 },
+    /* more significant digits */
+    { "1.23456789", 1.23456789, 0 },
+    { "1.23456789e1", 12.3456789, 0 },
+    { "1e39", 0.0, _OVERFLOW },
+    { "1e-39", 0.0, _UNDERFLOW },
+    { NULL }
+};
+
+static void test__atoflt(void)
+{
+    _CRT_FLOAT flt;
+    int ret, i = 0;
+
+    if (!p_atoflt)
+    {
+        win_skip("_atoflt not found\n");
+        return;
+    }
+
+if (0)
+{
+    /* crashes on native */
+    ret = p_atoflt(NULL, NULL);
+    ret = p_atoflt(NULL, (char*)_atoflt_testdata[0].str);
+    ret = p_atoflt(&flt, NULL);
+}
+
+    while (_atoflt_testdata[i].str)
+    {
+        ret = p_atoflt(&flt, (char*)_atoflt_testdata[i].str);
+        ok(ret == _atoflt_testdata[i].ret, "got ret %d, expected ret %d, for %s\n", ret,
+            _atoflt_testdata[i].ret, _atoflt_testdata[i].str);
+
+        if (ret == 0)
+          ok(almost_equal_f(flt.f, _atoflt_testdata[i].flt), "got %f, expected %f, for %s\n", flt.f,
+              _atoflt_testdata[i].flt, _atoflt_testdata[i].str);
+
+        i++;
+    }
+}
+
 START_TEST(msvcr90)
 {
     HMODULE hcrt;
@@ -648,6 +711,7 @@ START_TEST(msvcr90)
     p_wcsncat_s = (void *)GetProcAddress( hcrt,"wcsncat_s" );
     p_qsort_s = (void *) GetProcAddress(hcrt, "qsort_s");
     p_controlfp_s = (void *) GetProcAddress(hcrt, "_controlfp_s");
+    p_atoflt = (void* )GetProcAddress(hcrt, "_atoflt");
 
     hkernel32 = GetModuleHandleA("kernel32.dll");
     pEncodePointer = (void *) GetProcAddress(hkernel32, "EncodePointer");
@@ -660,4 +724,5 @@ START_TEST(msvcr90)
     test_wcsncat_s();
     test_qsort_s();
     test_controlfp_s();
+    test__atoflt();
 }

@@ -18,6 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifndef __WINE_CRTDEFS_H
+#define __WINE_CRTDEFS_H
+
 #ifndef __WINE_USE_MSVCRT
 #define __WINE_USE_MSVCRT
 #endif
@@ -181,3 +184,54 @@ typedef unsigned short  wctype_t;
 typedef int errno_t;
 #define _ERRNO_T_DEFINED
 #endif
+
+struct threadlocaleinfostruct;
+struct threadmbcinfostruct;
+typedef struct threadlocaleinfostruct *pthreadlocinfo;
+typedef struct threadmbcinfostruct *pthreadmbcinfo;
+
+typedef struct localeinfo_struct
+{
+    pthreadlocinfo locinfo;
+    pthreadmbcinfo mbcinfo;
+} _locale_tstruct, *_locale_t;
+
+#ifndef _TAGLC_ID_DEFINED
+typedef struct tagLC_ID {
+    unsigned short wLanguage;
+    unsigned short wCountry;
+    unsigned short wCodePage;
+} LC_ID, *LPLC_ID;
+#define _TAGLC_ID_DEFINED
+#endif
+
+#ifndef _THREADLOCALEINFO
+typedef struct threadlocaleinfostruct {
+    int refcount;
+    unsigned int lc_codepage;
+    unsigned int lc_collate_cp;
+    unsigned long lc_handle[6];
+    LC_ID lc_id[6];
+    struct {
+        char *locale;
+        wchar_t *wlocale;
+        int *refcount;
+        int *wrefcount;
+    } lc_category[6];
+    int lc_clike;
+    int mb_cur_max;
+    int *lconv_intl_refcount;
+    int *lconv_num_refcount;
+    int *lconv_mon_refcount;
+    struct lconv *lconv;
+    int *ctype1_refcount;
+    unsigned short *ctype1;
+    const unsigned short *pctype;
+    const unsigned char *pclmap;
+    const unsigned char *pcumap;
+    struct __lc_time_data *lc_time_curr;
+} threadlocinfo;
+#define _THREADLOCALEINFO
+#endif
+
+#endif /* __WINE_CRTDEFS_H */

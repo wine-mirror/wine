@@ -303,7 +303,7 @@
 @ stub _atodbl #(ptr str)
 # stub _atodbl_l
 @ cdecl _atof_l(str ptr) MSVCRT__atof_l
-# stub _atoflt_l
+@ cdecl _atoflt_l(ptr str ptr) MSVCRT__atoflt_l
 @ cdecl -ret64 _atoi64(str) ntdll._atoi64
 # stub _atoi64_l
 # stub _atoi_l

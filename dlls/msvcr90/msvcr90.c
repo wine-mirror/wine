@@ -192,3 +192,11 @@ int CDECL _wstat64i32(const wchar_t *path, struct _stat64i32 *buf)
         msvcrt_stat64_to_stat64i32(&buf64, buf);
     return ret;
 }
+
+/*********************************************************************
+ *		_atoflt  (MSVCR90.@)
+ */
+int CDECL _atoflt( _CRT_FLOAT *value, char *str )
+{
+    return _atoflt_l( value, str, NULL );
+}

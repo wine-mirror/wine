@@ -260,6 +260,7 @@ static void test_structs(void)
     CHECK_FIELD(_stat64, st_atime);
     CHECK_FIELD(_stat64, st_mtime);
     CHECK_FIELD(_stat64, st_ctime);
+    CHECK_SIZE(_CRT_FLOAT);
 }
 
 /************* Checking defines ***************/
@@ -450,6 +451,8 @@ static void test_defines(void)
     CHECK_DEF(_DN_FLUSH_OPERANDS_SAVE_RESULTS);
     CHECK_DEF(_DN_SAVE_OPERANDS_FLUSH_RESULTS);
     CHECK_DEF(_EM_AMBIGUOUS);
+    CHECK_DEF(_OVERFLOW);
+    CHECK_DEF(_UNDERFLOW);
 }
 
 #endif /* __WINE_USE_MSVCRT */

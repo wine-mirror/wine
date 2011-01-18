@@ -333,6 +333,111 @@ double CDECL MSVCRT__atof_l( const char *str, MSVCRT__locale_t locale)
 }
 
 /*********************************************************************
+ *		_atoflt_l  (MSVCRT.@)
+ */
+int CDECL MSVCRT__atoflt_l( MSVCRT__CRT_FLOAT *value, char *str, MSVCRT__locale_t locale)
+{
+    unsigned __int64 d=0, hlp;
+    unsigned fpcontrol;
+    int exp=0, sign=1;
+    const char *p;
+    int ret=0;
+    BOOL found_digit = FALSE;
+
+    if(!locale)
+        locale = get_locale();
+
+    /* FIXME: use *_l functions */
+    p = str;
+    while(isspace(*p))
+        p++;
+
+    if(*p == '-') {
+        sign = -1;
+        p++;
+    } else if(*p == '+')
+        p++;
+
+    while(isdigit(*p)) {
+        found_digit = TRUE;
+        hlp = d*10+*(p++)-'0';
+        if(d>MSVCRT_UI64_MAX/10 || hlp<d) {
+            exp++;
+            break;
+        } else
+            d = hlp;
+    }
+    while(isdigit(*p)) {
+        exp++;
+        p++;
+    }
+
+    if(*p == *locale->locinfo->lconv->decimal_point)
+        p++;
+
+    while(isdigit(*p)) {
+        found_digit = TRUE;
+        hlp = d*10+*(p++)-'0';
+        if(d>MSVCRT_UI64_MAX/10 || hlp<d)
+            break;
+
+        d = hlp;
+        exp--;
+    }
+    while(isdigit(*p))
+        p++;
+
+    if(!found_digit) {
+        value->f = 0.0;
+        return 0;
+    }
+
+    if(*p=='e' || *p=='E' || *p=='d' || *p=='D') {
+        int e=0, s=1;
+
+        p++;
+        if(*p == '-') {
+            s = -1;
+            p++;
+        } else if(*p == '+')
+            p++;
+
+        if(isdigit(*p)) {
+            while(isdigit(*p)) {
+                if(e>INT_MAX/10 || (e=e*10+*p-'0')<0)
+                    e = INT_MAX;
+                p++;
+            }
+            e *= s;
+
+            if(exp<0 && e<0 && exp+e>=0) exp = INT_MIN;
+            else if(exp>0 && e>0 && exp+e<0) exp = INT_MAX;
+            else exp += e;
+        } else {
+            if(*p=='-' || *p=='+')
+                p--;
+            p--;
+        }
+    }
+
+    fpcontrol = _control87(0, 0);
+    _control87(MSVCRT__EM_DENORMAL|MSVCRT__EM_INVALID|MSVCRT__EM_ZERODIVIDE
+            |MSVCRT__EM_OVERFLOW|MSVCRT__EM_UNDERFLOW|MSVCRT__EM_INEXACT, 0xffffffff);
+
+    if(exp>0)
+        value->f = (float)sign*d*powf(10, exp);
+    else
+        value->f = (float)sign*d/powf(10, -exp);
+
+    _control87(fpcontrol, 0xffffffff);
+
+    if((d && value->f==0.0) || isinf(value->f))
+        ret = exp > 0 ? MSVCRT__OVERFLOW : MSVCRT__UNDERFLOW;
+
+    return ret;
+}
+
+/*********************************************************************
  *		strcoll (MSVCRT.@)
  */
 int CDECL MSVCRT_strcoll( const char* str1, const char* str2 )

@@ -890,4 +890,12 @@ typedef struct pf_output_t
 int pf_vsnprintf( pf_output *out, const WCHAR *format,
                   MSVCRT__locale_t locale, BOOL valid, __ms_va_list valist );
 
+#define MSVCRT__OVERFLOW  3
+#define MSVCRT__UNDERFLOW 4
+
+typedef struct
+{
+    float f;
+} MSVCRT__CRT_FLOAT;
+
 #endif /* __WINE_MSVCRT_H */
