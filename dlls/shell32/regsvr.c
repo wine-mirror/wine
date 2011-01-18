@@ -75,6 +75,8 @@ struct regsvr_coclass
     DWORD dwCallForAttributes;
     LPCSTR clsid_str;		/* can be NULL to omit */
     LPCSTR progid;		/* can be NULL to omit */
+    LPCSTR viprogid;		/* can be NULL to omit */
+    LPCSTR progid_extra;	/* can be NULL to omit */
     UINT idDefaultIcon;         /* can be 0 to omit */
 };
 
@@ -117,6 +119,8 @@ static WCHAR const ps_clsid32_keyname[17] = {
     'i', 'd', '3', '2', 0 };
 static WCHAR const clsid_keyname[6] = {
     'C', 'L', 'S', 'I', 'D', 0 };
+static WCHAR const curver_keyname[7] = {
+    'C', 'u', 'r', 'V', 'e', 'r', 0 };
 static WCHAR const ips_keyname[13] = {
     'I', 'n', 'P', 'r', 'o', 'c', 'S', 'e', 'r', 'v', 'e', 'r',
     0 };
@@ -125,6 +129,10 @@ static WCHAR const ips32_keyname[15] = {
     '3', '2', 0 };
 static WCHAR const progid_keyname[7] = {
     'P', 'r', 'o', 'g', 'I', 'D', 0 };
+static WCHAR const viprogid_keyname[25] = {
+    'V', 'e', 'r', 's', 'i', 'o', 'n', 'I', 'n', 'd', 'e', 'p',
+    'e', 'n', 'd', 'e', 'n', 't', 'P', 'r', 'o', 'g', 'I', 'D',
+    0 };
 static WCHAR const shellex_keyname[8] = {
     's', 'h', 'e', 'l', 'l', 'e', 'x', 0 };
 static WCHAR const shellfolder_keyname[12] = {
@@ -150,6 +158,9 @@ static LONG register_key_defvalueW(HKEY base, WCHAR const *name,
 				   WCHAR const *value);
 static LONG register_key_defvalueA(HKEY base, WCHAR const *name,
 				   char const *value);
+static LONG register_progid(WCHAR const *clsid,
+			    char const *progid, char const *curver_progid,
+			    char const *name, char const *extra);
 
 /***********************************************************************
  *		register_interfaces
@@ -385,6 +396,16 @@ static HRESULT register_coclasses(struct regsvr_coclass const *list)
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
 	}
 
+	if (list->viprogid) {
+	    res = register_key_defvalueA(clsid_key, viprogid_keyname,
+					 list->viprogid);
+	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+
+	    res = register_progid(buf, list->viprogid, list->progid,
+				  list->name, list->progid_extra);
+	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+	}
+
     error_close_clsid_key:
 	RegCloseKey(clsid_key);
     }
@@ -418,6 +439,12 @@ static HRESULT unregister_coclasses(struct regsvr_coclass const *list)
 
 	if (list->progid) {
 	    res = RegDeleteTreeA(HKEY_CLASSES_ROOT, list->progid);
+	    if (res == ERROR_FILE_NOT_FOUND) res = ERROR_SUCCESS;
+	    if (res != ERROR_SUCCESS) goto error_close_coclass_key;
+	}
+
+	if (list->viprogid) {
+	    res = RegDeleteTreeA(HKEY_CLASSES_ROOT, list->viprogid);
 	    if (res == ERROR_FILE_NOT_FOUND) res = ERROR_SUCCESS;
 	    if (res != ERROR_SUCCESS) goto error_close_coclass_key;
 	}
@@ -541,6 +568,55 @@ static LONG register_key_defvalueA(
 }
 
 /***********************************************************************
+ *		regsvr_progid
+ */
+static LONG register_progid(
+    WCHAR const *clsid,
+    char const *progid,
+    char const *curver_progid,
+    char const *name,
+    char const *extra) {
+    LONG res;
+    HKEY progid_key;
+
+    res = RegCreateKeyExA(HKEY_CLASSES_ROOT, progid, 0,
+			  NULL, 0, KEY_READ | KEY_WRITE, NULL,
+			  &progid_key, NULL);
+    if (res != ERROR_SUCCESS) return res;
+
+    if (name) {
+	res = RegSetValueExA(progid_key, NULL, 0, REG_SZ,
+			     (CONST BYTE*)name, strlen(name) + 1);
+	if (res != ERROR_SUCCESS) goto error_close_progid_key;
+    }
+
+    if (clsid) {
+	res = register_key_defvalueW(progid_key, clsid_keyname, clsid);
+	if (res != ERROR_SUCCESS) goto error_close_progid_key;
+    }
+
+    if (curver_progid) {
+	res = register_key_defvalueA(progid_key, curver_keyname,
+				     curver_progid);
+	if (res != ERROR_SUCCESS) goto error_close_progid_key;
+    }
+
+    if (extra) {
+	HKEY extra_key;
+
+	res = RegCreateKeyExA(progid_key, extra, 0,
+			      NULL, 0, KEY_READ | KEY_WRITE, NULL,
+			      &extra_key, NULL);
+	if (res == ERROR_SUCCESS)
+	    RegCloseKey(extra_key);
+    }
+
+error_close_progid_key:
+    RegCloseKey(progid_key);
+    return res;
+}
+
+/***********************************************************************
  *		coclass list
  */
 static GUID const CLSID_Desktop = {
@@ -642,6 +718,8 @@ static struct regsvr_coclass const coclass_list[] = {
 	0,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
 	IDI_SHELL_FULL_RECYCLE_BIN
     },
     {   &CLSID_ShellFSFolder,
@@ -694,6 +772,19 @@ static struct regsvr_coclass const coclass_list[] = {
         NULL,
         "shell32.dll",
         "Apartment"
+    },
+    {   &CLSID_Shell,
+        "Shell Automation Service",
+        0,
+        NULL,
+        "shell32.dll",
+        "Apartment",
+        0,
+        0,
+        0,
+        NULL,
+        "Shell.Application.1",
+        "Shell.Application"
     },
     { NULL }			/* list terminator */
 };
