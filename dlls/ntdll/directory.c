@@ -2902,49 +2902,72 @@ static void WINAPI read_changes_user_apc( void *arg, IO_STATUS_BLOCK *io, ULONG 
 static NTSTATUS read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, NTSTATUS status, void **apc )
 {
     struct read_changes_info *info = user;
-    char path[PATH_MAX];
-    NTSTATUS ret = STATUS_SUCCESS;
-    int len, action, i;
+    char data[PATH_MAX];
+    NTSTATUS ret;
+    int size;
 
     SERVER_START_REQ( read_change )
     {
         req->handle = wine_server_obj_handle( info->FileHandle );
-        wine_server_set_reply( req, path, PATH_MAX );
+        wine_server_set_reply( req, data, PATH_MAX );
         ret = wine_server_call( req );
-        action = reply->action;
-        len = wine_server_reply_size( reply );
+        size = wine_server_reply_size( reply );
     }
     SERVER_END_REQ;
 
-    if (ret == STATUS_SUCCESS && info->Buffer && 
-        (info->BufferSize > (sizeof (FILE_NOTIFY_INFORMATION) + len*sizeof(WCHAR))))
+    if (ret == STATUS_SUCCESS && info->Buffer)
     {
-        PFILE_NOTIFY_INFORMATION pfni;
+        PFILE_NOTIFY_INFORMATION pfni = info->Buffer;
+        int i, left = info->BufferSize;
+        DWORD *last_entry_offset = NULL;
+        struct filesystem_event *event = (struct filesystem_event*)data;
 
-        pfni = info->Buffer;
+        while (size && left >= sizeof(*pfni))
+        {
+            /* convert to an NT style path */
+            for (i=0; i<event->len; i++)
+                if (event->name[i] == '/')
+                    event->name[i] = '\\';
 
-        /* convert to an NT style path */
-        for (i=0; i<len; i++)
-            if (path[i] == '/')
-                path[i] = '\\';
+            pfni->Action = event->action;
+            pfni->FileNameLength = ntdll_umbstowcs( 0, event->name, event->len, pfni->FileName,
+                    (left - offsetof(FILE_NOTIFY_INFORMATION, FileName)) / sizeof(WCHAR));
+            last_entry_offset = &pfni->NextEntryOffset;
 
-        len = ntdll_umbstowcs( 0, path, len, pfni->FileName,
-                               info->BufferSize - sizeof (*pfni) );
+            if(pfni->FileNameLength == -1 || pfni->FileNameLength == -2)
+                break;
 
-        pfni->NextEntryOffset = 0;
-        pfni->Action = action;
-        pfni->FileNameLength = len * sizeof (WCHAR);
-        pfni->FileName[len] = 0;
-        len = sizeof (*pfni) - sizeof (DWORD) + pfni->FileNameLength;
+            i = offsetof(FILE_NOTIFY_INFORMATION, FileName[pfni->FileNameLength]);
+            pfni->FileNameLength *= sizeof(WCHAR);
+            pfni->NextEntryOffset = i;
+            pfni = (FILE_NOTIFY_INFORMATION*)((char*)pfni + i);
+            left -= i;
+
+            i = (offsetof(struct filesystem_event, name[event->len])
+                    + sizeof(int)-1) / sizeof(int) * sizeof(int);
+            event = (struct filesystem_event*)((char*)event + i);
+            size -= i;
+        }
+
+        if (size)
+        {
+            ret = STATUS_NOTIFY_ENUM_DIR;
+            size = 0;
+        }
+        else
+        {
+            *last_entry_offset = 0;
+            size = info->BufferSize - left;
+        }
     }
     else
     {
         ret = STATUS_NOTIFY_ENUM_DIR;
-        len = 0;
+        size = 0;
     }
 
     iosb->u.Status = ret;
-    iosb->Information = len;
+    iosb->Information = size;
     *apc = read_changes_user_apc;
     return ret;
 }

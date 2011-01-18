@@ -123,9 +123,7 @@ static struct fd *inotify_fd;
 
 struct change_record {
     struct list entry;
-    int action;
-    int len;
-    char name[1];
+    struct filesystem_event event;
 };
 
 struct dir
@@ -616,13 +614,13 @@ static void inotify_do_change_notify( struct dir *dir, unsigned int action,
     if (dir->want_data)
     {
         size_t len = strlen(relpath);
-        record = malloc( offsetof(struct change_record, name[len]) );
+        record = malloc( offsetof(struct change_record, event.name[len]) );
         if (!record)
             return;
 
-        record->action = action;
-        memcpy( record->name, relpath, len );
-        record->len = len;
+        record->event.action = action;
+        memcpy( record->event.name, relpath, len );
+        record->event.len = len;
 
         list_add_tail( &dir->change_records, &record->entry );
     }
@@ -1145,21 +1143,54 @@ end:
 
 DECL_HANDLER(read_change)
 {
-    struct change_record *record;
+    struct change_record *record, *next;
     struct dir *dir;
+    struct list events;
+    char *data, *event;
+    int size = 0;
 
     dir = get_dir_obj( current->process, req->handle, 0 );
     if (!dir)
         return;
 
-    if ((record = get_first_change_record( dir )) != NULL)
+    list_init( &events );
+    list_move_tail( &events, &dir->change_records );
+    release_object( dir );
+
+    if (list_empty( &events ))
     {
-        reply->action = record->action;
-        set_reply_data( record->name, record->len );
+        set_error( STATUS_NO_DATA_DETECTED );
+        return;
+    }
+
+    LIST_FOR_EACH_ENTRY( record, &events, struct change_record, entry )
+    {
+        size += (offsetof(struct filesystem_event, name[record->event.len])
+                + sizeof(int)-1) / sizeof(int) * sizeof(int);
+    }
+
+    if (size > get_reply_max_size())
+        set_error( STATUS_BUFFER_TOO_SMALL );
+    else if ((data = mem_alloc( size )) != NULL)
+    {
+        event = data;
+        LIST_FOR_EACH_ENTRY( record, &events, struct change_record, entry )
+        {
+            data_size_t len = offsetof( struct filesystem_event, name[record->event.len] );
+            memcpy( event, &record->event, len );
+            event += len;
+            if (len % sizeof(int))
+            {
+                memset( event, 0, sizeof(int) - len % sizeof(int) );
+                event += sizeof(int) - len % sizeof(int);
+            }
+        }
+        set_reply_data_ptr( data, size );
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE( record, next, &events, struct change_record, entry )
+    {
+        list_remove( &record->entry );
         free( record );
     }
-    else
-        set_error( STATUS_NO_DATA_DETECTED );
-
-    release_object( dir );
 }

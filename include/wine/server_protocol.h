@@ -316,6 +316,14 @@ typedef struct
     unsigned short attr;
 } char_info_t;
 
+
+struct filesystem_event
+{
+    int         action;
+    data_size_t len;
+    char        name[1];
+};
+
 typedef struct
 {
     unsigned int low_part;
@@ -1879,9 +1887,7 @@ struct read_change_request
 struct read_change_reply
 {
     struct reply_header __header;
-    int          action;
-    /* VARARG(name,string); */
-    char __pad_12[4];
+    /* VARARG(events,filesystem_event); */
 };
 
 
@@ -5519,6 +5525,6 @@ union generic_reply
     struct set_cursor_reply set_cursor_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 411
+#define SERVER_PROTOCOL_VERSION 412
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

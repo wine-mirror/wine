@@ -332,6 +332,14 @@ typedef struct
     unsigned short attr;
 } char_info_t;
 
+/* structure returned in filesystem events */
+struct filesystem_event
+{
+    int         action;
+    data_size_t len;
+    char        name[1];
+};
+
 typedef struct
 {
     unsigned int low_part;
@@ -1448,8 +1456,7 @@ enum char_info_mode
 @REQ(read_change)
     obj_handle_t handle;
 @REPLY
-    int          action;        /* type of change */
-    VARARG(name,string);        /* name of directory entry that changed */
+    VARARG(events,filesystem_event);  /* collected filesystem events */
 @END
 
 
