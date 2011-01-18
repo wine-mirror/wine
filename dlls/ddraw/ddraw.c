@@ -66,6 +66,11 @@ static inline IDirectDrawImpl *ddraw_from_ddraw4(IDirectDraw4 *iface)
     return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirectDraw4_vtbl));
 }
 
+static inline IDirectDrawImpl *impl_from_IDirect3D(IDirect3D *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectDrawImpl, IDirect3D_iface);
+}
+
 /*****************************************************************************
  * IUnknown Methods
  *****************************************************************************/
@@ -174,7 +179,7 @@ static HRESULT WINAPI ddraw7_QueryInterface(IDirectDraw7 *iface, REFIID refiid, 
         if ( IsEqualGUID( &IID_IDirect3D  , refiid ) )
         {
             This->d3dversion = 1;
-            *obj = &This->IDirect3D_vtbl;
+            *obj = &This->IDirect3D_iface;
             TRACE(" returning Direct3D interface at %p.\n", *obj);
         }
         else if ( IsEqualGUID( &IID_IDirect3D2  , refiid ) )
@@ -265,9 +270,11 @@ static HRESULT WINAPI d3d2_QueryInterface(IDirect3D2 *iface, REFIID riid, void *
 
 static HRESULT WINAPI d3d1_QueryInterface(IDirect3D *iface, REFIID riid, void **object)
 {
+    IDirectDrawImpl *This = impl_from_IDirect3D(iface);
+
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
-    return ddraw7_QueryInterface((IDirectDraw7 *)ddraw_from_d3d1(iface), riid, object);
+    return ddraw7_QueryInterface((IDirectDraw7 *)This, riid, object);
 }
 
 /*****************************************************************************
@@ -371,9 +378,11 @@ static ULONG WINAPI d3d2_AddRef(IDirect3D2 *iface)
 
 static ULONG WINAPI d3d1_AddRef(IDirect3D *iface)
 {
+    IDirectDrawImpl *This = impl_from_IDirect3D(iface);
+
     TRACE("iface %p.\n", iface);
 
-    return ddraw1_AddRef((IDirectDraw *)&ddraw_from_d3d1(iface)->IDirectDraw_vtbl);
+    return ddraw1_AddRef((IDirectDraw *)&This->IDirectDraw_vtbl);
 }
 
 /*****************************************************************************
@@ -506,9 +515,11 @@ static ULONG WINAPI d3d2_Release(IDirect3D2 *iface)
 
 static ULONG WINAPI d3d1_Release(IDirect3D *iface)
 {
+    IDirectDrawImpl *This = impl_from_IDirect3D(iface);
+
     TRACE("iface %p.\n", iface);
 
-    return ddraw1_Release((IDirectDraw *)&ddraw_from_d3d1(iface)->IDirectDraw_vtbl);
+    return ddraw1_Release((IDirectDraw *)&This->IDirectDraw_vtbl);
 }
 
 /*****************************************************************************
@@ -4257,9 +4268,11 @@ static HRESULT WINAPI d3d2_EnumDevices(IDirect3D2 *iface, LPD3DENUMDEVICESCALLBA
 
 static HRESULT WINAPI d3d1_EnumDevices(IDirect3D *iface, LPD3DENUMDEVICESCALLBACK callback, void *context)
 {
+    IDirectDrawImpl *This = impl_from_IDirect3D(iface);
+
     TRACE("iface %p, callback %p, context %p.\n", iface, callback, context);
 
-    return d3d3_EnumDevices((IDirect3D3 *)&ddraw_from_d3d1(iface)->IDirect3D3_vtbl, callback, context);
+    return d3d3_EnumDevices((IDirect3D3 *)&This->IDirect3D3_vtbl, callback, context);
 }
 
 /*****************************************************************************
@@ -4315,9 +4328,11 @@ static HRESULT WINAPI d3d2_CreateLight(IDirect3D2 *iface, IDirect3DLight **light
 
 static HRESULT WINAPI d3d1_CreateLight(IDirect3D *iface, IDirect3DLight **light, IUnknown *outer_unknown)
 {
+    IDirectDrawImpl *This = impl_from_IDirect3D(iface);
+
     TRACE("iface %p, light %p, outer_unknown %p.\n", iface, light, outer_unknown);
 
-    return d3d3_CreateLight((IDirect3D3 *)&ddraw_from_d3d1(iface)->IDirect3D3_vtbl, light, outer_unknown);
+    return d3d3_CreateLight((IDirect3D3 *)&This->IDirect3D3_vtbl, light, outer_unknown);
 }
 
 /*****************************************************************************
@@ -4383,9 +4398,11 @@ static HRESULT WINAPI d3d1_CreateMaterial(IDirect3D *iface, IDirect3DMaterial **
     IDirect3DMaterial3 *material3;
     HRESULT hr;
 
+    IDirectDrawImpl *This = impl_from_IDirect3D(iface);
+
     TRACE("iface %p, material %p, outer_unknown %p.\n", iface, material, outer_unknown);
 
-    hr = d3d3_CreateMaterial((IDirect3D3 *)&ddraw_from_d3d1(iface)->IDirect3D3_vtbl, &material3, outer_unknown);
+    hr = d3d3_CreateMaterial((IDirect3D3 *)&This->IDirect3D3_vtbl, &material3, outer_unknown);
     *material = material3 ? (IDirect3DMaterial *)&((IDirect3DMaterialImpl *)material3)->IDirect3DMaterial_vtbl : NULL;
 
     TRACE("Returning material %p.\n", *material);
@@ -4446,9 +4463,11 @@ static HRESULT WINAPI d3d2_CreateViewport(IDirect3D2 *iface, IDirect3DViewport2 
 
 static HRESULT WINAPI d3d1_CreateViewport(IDirect3D *iface, IDirect3DViewport **viewport, IUnknown *outer_unknown)
 {
+    IDirectDrawImpl *This = impl_from_IDirect3D(iface);
+
     TRACE("iface %p, viewport %p, outer_unknown %p.\n", iface, viewport, outer_unknown);
 
-    return d3d3_CreateViewport((IDirect3D3 *)&ddraw_from_d3d1(iface)->IDirect3D3_vtbl,
+    return d3d3_CreateViewport((IDirect3D3 *)&This->IDirect3D3_vtbl,
             (IDirect3DViewport3 **)viewport, outer_unknown);
 }
 
@@ -4525,9 +4544,11 @@ static HRESULT WINAPI d3d2_FindDevice(IDirect3D2 *iface, D3DFINDDEVICESEARCH *fd
 
 static HRESULT WINAPI d3d1_FindDevice(IDirect3D *iface, D3DFINDDEVICESEARCH *fds, D3DFINDDEVICERESULT *fdr)
 {
+    IDirectDrawImpl *This = impl_from_IDirect3D(iface);
+
     TRACE("iface %p, fds %p, fdr %p.\n", iface, fds, fdr);
 
-    return d3d3_FindDevice((IDirect3D3 *)&ddraw_from_d3d1(iface)->IDirect3D3_vtbl, fds, fdr);
+    return d3d3_FindDevice((IDirect3D3 *)&This->IDirect3D3_vtbl, fds, fdr);
 }
 
 /*****************************************************************************
@@ -5762,7 +5783,7 @@ HRESULT ddraw_init(IDirectDrawImpl *ddraw, WINED3DDEVTYPE device_type)
     ddraw->IDirectDraw2_vtbl = &ddraw2_vtbl;
     ddraw->IDirectDraw3_vtbl = &ddraw3_vtbl;
     ddraw->IDirectDraw4_vtbl = &ddraw4_vtbl;
-    ddraw->IDirect3D_vtbl = &d3d1_vtbl;
+    ddraw->IDirect3D_iface.lpVtbl = &d3d1_vtbl;
     ddraw->IDirect3D2_vtbl = &d3d2_vtbl;
     ddraw->IDirect3D3_vtbl = &d3d3_vtbl;
     ddraw->IDirect3D7_vtbl = &d3d7_vtbl;
