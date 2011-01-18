@@ -1727,56 +1727,50 @@ IDirect3DDeviceImpl_7_GetDirect3D(IDirect3DDevice7 *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_GetDirect3D(IDirect3DDevice3 *iface,
-                                        IDirect3D3 **Direct3D3)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_GetDirect3D(IDirect3DDevice3 *iface,
+        IDirect3D3 **Direct3D3)
 {
     IDirect3DDeviceImpl *This = device_from_device3(iface);
-    HRESULT ret;
-    IDirect3D7 *ret_ptr;
 
     TRACE("iface %p, d3d %p.\n", iface, Direct3D3);
 
-    ret = IDirect3DDevice7_GetDirect3D((IDirect3DDevice7 *)This, &ret_ptr);
-    if(ret != D3D_OK)
-        return ret;
-    *Direct3D3 = ret_ptr ? (IDirect3D3 *)&ddraw_from_d3d7(ret_ptr)->IDirect3D3_vtbl : NULL;
+    if(!Direct3D3)
+        return DDERR_INVALIDPARAMS;
+
+    IDirect3D3_AddRef((IDirect3D3 *)&This->ddraw->IDirect3D3_vtbl);
+    *Direct3D3 = (IDirect3D3 *)&This->ddraw->IDirect3D3_vtbl;
     TRACE(" returning interface %p\n", *Direct3D3);
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_GetDirect3D(IDirect3DDevice2 *iface,
-                                        IDirect3D2 **Direct3D2)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_GetDirect3D(IDirect3DDevice2 *iface,
+        IDirect3D2 **Direct3D2)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
-    HRESULT ret;
-    IDirect3D7 *ret_ptr;
 
     TRACE("iface %p, d3d %p.\n", iface, Direct3D2);
 
-    ret = IDirect3DDevice7_GetDirect3D((IDirect3DDevice7 *)This, &ret_ptr);
-    if(ret != D3D_OK)
-        return ret;
-    *Direct3D2 = ret_ptr ? (IDirect3D2 *)&ddraw_from_d3d7(ret_ptr)->IDirect3D2_vtbl : NULL;
+    if(!Direct3D2)
+        return DDERR_INVALIDPARAMS;
+
+    IDirect3D2_AddRef((IDirect3D2 *)&This->ddraw->IDirect3D2_vtbl);
+    *Direct3D2 = (IDirect3D2 *)&This->ddraw->IDirect3D2_vtbl;
     TRACE(" returning interface %p\n", *Direct3D2);
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_1_GetDirect3D(IDirect3DDevice *iface,
-                                        IDirect3D **Direct3D)
+static HRESULT WINAPI IDirect3DDeviceImpl_1_GetDirect3D(IDirect3DDevice *iface,
+        IDirect3D **Direct3D)
 {
     IDirect3DDeviceImpl *This = device_from_device1(iface);
-    HRESULT ret;
-    IDirect3D7 *ret_ptr;
 
     TRACE("iface %p, d3d %p.\n", iface, Direct3D);
 
-    ret = IDirect3DDevice7_GetDirect3D((IDirect3DDevice7 *)This, &ret_ptr);
-    if(ret != D3D_OK)
-        return ret;
-    *Direct3D = ret_ptr ? (IDirect3D *)&ddraw_from_d3d7(ret_ptr)->IDirect3D_vtbl : NULL;
+    if(!Direct3D)
+        return DDERR_INVALIDPARAMS;
+
+    IDirect3D_AddRef((IDirect3D *)&This->ddraw->IDirect3D_vtbl);
+    *Direct3D = (IDirect3D *)&This->ddraw->IDirect3D_vtbl;
     TRACE(" returning interface %p\n", *Direct3D);
     return D3D_OK;
 }
@@ -6806,7 +6800,7 @@ static const struct IDirect3DDevice3Vtbl d3d_device3_vtbl =
     Thunk_IDirect3DDeviceImpl_3_EnumTextureFormats,
     Thunk_IDirect3DDeviceImpl_3_BeginScene,
     Thunk_IDirect3DDeviceImpl_3_EndScene,
-    Thunk_IDirect3DDeviceImpl_3_GetDirect3D,
+    IDirect3DDeviceImpl_3_GetDirect3D,
     IDirect3DDeviceImpl_3_SetCurrentViewport,
     IDirect3DDeviceImpl_3_GetCurrentViewport,
     Thunk_IDirect3DDeviceImpl_3_SetRenderTarget,
@@ -6855,7 +6849,7 @@ static const struct IDirect3DDevice2Vtbl d3d_device2_vtbl =
     IDirect3DDeviceImpl_2_EnumTextureFormats,
     Thunk_IDirect3DDeviceImpl_2_BeginScene,
     Thunk_IDirect3DDeviceImpl_2_EndScene,
-    Thunk_IDirect3DDeviceImpl_2_GetDirect3D,
+    IDirect3DDeviceImpl_2_GetDirect3D,
     Thunk_IDirect3DDeviceImpl_2_SetCurrentViewport,
     Thunk_IDirect3DDeviceImpl_2_GetCurrentViewport,
     Thunk_IDirect3DDeviceImpl_2_SetRenderTarget,
@@ -6903,7 +6897,7 @@ static const struct IDirect3DDeviceVtbl d3d_device1_vtbl =
     IDirect3DDeviceImpl_1_DeleteMatrix,
     Thunk_IDirect3DDeviceImpl_1_BeginScene,
     Thunk_IDirect3DDeviceImpl_1_EndScene,
-    Thunk_IDirect3DDeviceImpl_1_GetDirect3D
+    IDirect3DDeviceImpl_1_GetDirect3D
 };
 
 /*****************************************************************************
