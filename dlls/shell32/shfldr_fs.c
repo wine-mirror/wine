@@ -314,8 +314,7 @@ LPITEMIDLIST SHELL32_CreatePidlFromBindCtx(IBindCtx *pbc, LPCWSTR path)
         'B','i','n','d',' ','D','a','t','a',0 };
     IFileSystemBindData *fsbd = NULL;
     LPITEMIDLIST pidl = NULL;
-    IUnknown *param = NULL;
-    WIN32_FIND_DATAW wfd;
+    IUnknown *unk = NULL;
     HRESULT r;
 
     TRACE("%p %s\n", pbc, debugstr_w(path));
@@ -324,14 +323,15 @@ LPITEMIDLIST SHELL32_CreatePidlFromBindCtx(IBindCtx *pbc, LPCWSTR path)
         return NULL;
 
     /* see if the caller bound File System Bind Data */
-    r = IBindCtx_GetObjectParam( pbc, szfsbc, &param );
+    r = IBindCtx_GetObjectParam( pbc, szfsbc, &unk );
     if (FAILED(r))
         return NULL;
 
-    r = IUnknown_QueryInterface( param, &IID_IFileSystemBindData,
-                                 (LPVOID*) &fsbd );
+    r = IUnknown_QueryInterface( unk, &IID_IFileSystemBindData, (void**)&fsbd );
     if (SUCCEEDED(r))
     {
+        WIN32_FIND_DATAW wfd;
+
         r = IFileSystemBindData_GetFindData( fsbd, &wfd );
         if (SUCCEEDED(r))
         {
@@ -340,6 +340,7 @@ LPITEMIDLIST SHELL32_CreatePidlFromBindCtx(IBindCtx *pbc, LPCWSTR path)
         }
         IFileSystemBindData_Release( fsbd );
     }
+    IUnknown_Release( unk );
     
     return pidl;
 }
