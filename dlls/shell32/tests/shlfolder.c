@@ -4434,6 +4434,9 @@ static void test_SHChangeNotify(void)
             SHChangeNotify(exp_data->signal, SHCNF_PATHW | SHCNF_FLUSH, path1, path2);
             do_events();
             ok(exp_data->missing_events == 0, "%s: Expected wndproc to be called\n", exp_data->id);
+
+            HeapFree(GetProcessHeap(), 0, path1);
+            HeapFree(GetProcessHeap(), 0, path2);
         }
     }
 
