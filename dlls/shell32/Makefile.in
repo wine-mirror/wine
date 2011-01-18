@@ -89,6 +89,8 @@ RC_SRCS = \
 
 PO_SRCS = shell32.rc
 
+IDL_TLB_SRCS = shell32_tlb.idl
+
 SVG_SRCS = \
 	cdrom.svg \
 	control.svg \

@@ -22,6 +22,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#define COBJMACROS
+
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -837,6 +839,8 @@ static struct regsvr_namespace const namespace_extensions_list[] = {
 HRESULT WINAPI DllRegisterServer(void)
 {
     HRESULT hr;
+    ITypeLib *tl;
+    static const WCHAR wszShell32[] = { 's','h','e','l','l','3','2','.','d','l','l', 0 };
 
     TRACE("\n");
 
@@ -847,6 +851,12 @@ HRESULT WINAPI DllRegisterServer(void)
 	hr = SHELL_RegisterShellFolders();
     if (SUCCEEDED(hr))
         hr = register_namespace_extensions(namespace_extensions_list);
+    if (SUCCEEDED(hr))
+    {
+        hr = LoadTypeLibEx(wszShell32, REGKIND_REGISTER, &tl);
+        if(SUCCEEDED(hr))
+            ITypeLib_Release(tl);
+    }
     return hr;
 }
 
@@ -864,5 +874,8 @@ HRESULT WINAPI DllUnregisterServer(void)
 	hr = unregister_interfaces(interface_list);
     if (SUCCEEDED(hr))
         hr = unregister_namespace_extensions(namespace_extensions_list);
+    if (SUCCEEDED(hr))
+        hr = UnRegisterTypeLib(&LIBID_Shell32, 1, 0, LOCALE_SYSTEM_DEFAULT,
+                               SYS_WIN32);
     return hr;
 }
