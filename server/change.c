@@ -123,6 +123,7 @@ static struct fd *inotify_fd;
 
 struct change_record {
     struct list entry;
+    unsigned int cookie;
     struct filesystem_event event;
 };
 
@@ -605,7 +606,7 @@ static int inotify_get_poll_events( struct fd *fd )
 }
 
 static void inotify_do_change_notify( struct dir *dir, unsigned int action,
-                                      const char *relpath )
+                                      unsigned int cookie, const char *relpath )
 {
     struct change_record *record;
 
@@ -618,6 +619,7 @@ static void inotify_do_change_notify( struct dir *dir, unsigned int action,
         if (!record)
             return;
 
+        record->cookie = cookie;
         record->event.action = action;
         memcpy( record->event.name, relpath, len );
         record->event.len = len;
@@ -809,7 +811,7 @@ static void inotify_notify_all( struct inotify_event *ie )
     {
         LIST_FOR_EACH_ENTRY( dir, &i->dirs, struct dir, in_entry )
             if ((filter & dir->filter) && (i==inode || dir->subtree))
-                inotify_do_change_notify( dir, action, path );
+                inotify_do_change_notify( dir, action, ie->cookie, path );
 
         if (!i->name || !prepend( &path, i->name ))
             break;
@@ -1177,6 +1179,22 @@ DECL_HANDLER(read_change)
         LIST_FOR_EACH_ENTRY( record, &events, struct change_record, entry )
         {
             data_size_t len = offsetof( struct filesystem_event, name[record->event.len] );
+
+            /* FIXME: rename events are sometimes reported as delete/create */
+            if (record->event.action == FILE_ACTION_RENAMED_OLD_NAME)
+            {
+                struct list *elem = list_next( &events, &record->entry );
+                if (elem)
+                    next = LIST_ENTRY(elem, struct change_record, entry);
+
+                if (elem && next->cookie == record->cookie)
+                    next->cookie = 0;
+                else
+                    record->event.action = FILE_ACTION_REMOVED;
+            }
+            else if (record->event.action == FILE_ACTION_RENAMED_NEW_NAME && record->cookie)
+                record->event.action = FILE_ACTION_ADDED;
+
             memcpy( event, &record->event, len );
             event += len;
             if (len % sizeof(int))
