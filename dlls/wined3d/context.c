@@ -1866,19 +1866,18 @@ static void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context *conte
  * If none can be found the swapchain is requested to create a new context
  *
  *****************************************************************************/
-static struct wined3d_context *findThreadContextForSwapChain(IWineD3DSwapChain *swapchain, DWORD tid)
+static struct wined3d_context *findThreadContextForSwapChain(struct IWineD3DSwapChainImpl *swapchain, DWORD tid)
 {
     unsigned int i;
 
-    for(i = 0; i < ((IWineD3DSwapChainImpl *) swapchain)->num_contexts; i++) {
-        if(((IWineD3DSwapChainImpl *) swapchain)->context[i]->tid == tid) {
-            return ((IWineD3DSwapChainImpl *) swapchain)->context[i];
-        }
-
+    for (i = 0; i < swapchain->num_contexts; ++i)
+    {
+        if (swapchain->context[i]->tid == tid)
+            return swapchain->context[i];
     }
 
     /* Create a new context for the thread */
-    return swapchain_create_context_for_thread((IWineD3DSwapChainImpl *)swapchain);
+    return swapchain_create_context_for_thread(swapchain);
 }
 
 /* Do not call while under the GL lock. */
@@ -1914,12 +1913,9 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
 
     if (target->container.type == WINED3D_CONTAINER_SWAPCHAIN)
     {
-        IWineD3DSwapChain *swapchain;
-
         TRACE("Rendering onscreen\n");
 
-        swapchain = (IWineD3DSwapChain *)target->container.u.swapchain;
-        context = findThreadContextForSwapChain(swapchain, tid);
+        context = findThreadContextForSwapChain(target->container.u.swapchain, tid);
     }
     else
     {
@@ -1938,7 +1934,7 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
              *
              * Can also happen on thread switches - in that case findThreadContextForSwapChain
              * is perfect to call. */
-            context = findThreadContextForSwapChain(This->swapchains[0], tid);
+            context = findThreadContextForSwapChain((IWineD3DSwapChainImpl *)This->swapchains[0], tid);
         }
     }
 
