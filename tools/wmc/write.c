@@ -521,7 +521,109 @@ void write_rc_file(const char *fname)
 	fclose(fp);
 }
 
+static void output_bin_data( lan_blk_t *lbp )
+{
+    unsigned int offs = 4 * (lbp->nblk * 3 + 1);
+    int i, j, k;
+
+    put_dword( lbp->nblk );  /* NBlocks */
+    for (i = 0; i < lbp->nblk; i++)
+    {
+        put_dword( lbp->blks[i].idlo );  /* Lo */
+        put_dword( lbp->blks[i].idhi );  /* Hi */
+        put_dword( offs );               /* Offs */
+        offs += lbp->blks[i].size;
+    }
+    for (i = 0; i < lbp->nblk; i++)
+    {
+        block_t *blk = &lbp->blks[i];
+        for (j = 0; j < blk->nmsg; j++)
+        {
+            int len = (2 * blk->msgs[j]->len + 3) & ~3;
+            put_word( len + 4 );
+            put_word( 1 );
+            for (k = 0; k < blk->msgs[j]->len; k++) put_word( blk->msgs[j]->msg[k] );
+            align_output( 4 );
+        }
+    }
+}
+
 void write_bin_files(void)
 {
-	assert(rcinline == 0);
+    lan_blk_t *lbp;
+    token_t *ttab;
+    int ntab;
+    int i;
+
+    get_tokentable(&ttab, &ntab);
+
+    for (lbp = lanblockhead; lbp; lbp = lbp->next)
+    {
+        char *cptr = NULL;
+
+        for (i = 0; i < ntab; i++)
+        {
+            if (ttab[i].type == tok_language && ttab[i].token == lbp->lan)
+            {
+                if (ttab[i].alias) cptr = dup_u2c(WMC_DEFAULT_CODEPAGE, ttab[i].alias);
+                break;
+            }
+        }
+        if(!cptr)
+            internal_error(__FILE__, __LINE__, "Filename vanished for language 0x%0x\n", lbp->lan);
+        init_output_buffer();
+        output_bin_data( lbp );
+        cptr = xrealloc( cptr, strlen(cptr) + 5 );
+        strcat( cptr, ".bin" );
+        flush_output_buffer( cptr );
+        free(cptr);
+    }
+}
+
+void write_res_file( const char *name )
+{
+    lan_blk_t *lbp;
+    int i, j;
+
+    init_output_buffer();
+
+    put_dword( 0 );      /* ResSize */
+    put_dword( 32 );     /* HeaderSize */
+    put_word( 0xffff );  /* ResType */
+    put_word( 0x0000 );
+    put_word( 0xffff );  /* ResName */
+    put_word( 0x0000 );
+    put_dword( 0 );      /* DataVersion */
+    put_word( 0 );       /* Memory options */
+    put_word( 0 );       /* Language */
+    put_dword( 0 );      /* Version */
+    put_dword( 0 );      /* Characteristics */
+
+    for (lbp = lanblockhead; lbp; lbp = lbp->next)
+    {
+        unsigned int data_size = 4 * (lbp->nblk * 3 + 1);
+        unsigned int header_size = 5 * sizeof(unsigned int) + 6 * sizeof(unsigned short);
+
+        for (i = 0; i < lbp->nblk; i++)
+        {
+            block_t *blk = &lbp->blks[i];
+            for (j = 0; j < blk->nmsg; j++) data_size += 4 + ((blk->msgs[j]->len * 2 + 3) & ~3);
+        }
+
+        put_dword( data_size );     /* ResSize */
+        put_dword( header_size );   /* HeaderSize */
+        put_word( 0xffff );         /* ResType */
+        put_word( 0x000b /*RT_MESSAGETABLE*/ );
+        put_word( 0xffff );         /* ResName */
+        put_word( 0x0001 );
+        align_output( 4 );
+        put_dword( 0 );             /* DataVersion */
+        put_word( 0x30 );           /* Memory options */
+        put_word( lbp->lan );       /* Language */
+        put_dword( 0 );             /* Version */
+        put_dword( 0 );             /* Characteristics */
+
+        output_bin_data( lbp );
+    }
+    flush_output_buffer( name );
 }

@@ -48,4 +48,19 @@ int unistrlen(const WCHAR *s);
 int unistricmp(const WCHAR *s1, const WCHAR *s2);
 int unistrcmp(const WCHAR *s1, const WCHAR *s2);
 
+/* buffer management */
+
+extern int byte_swapped;
+extern unsigned char *output_buffer;
+extern size_t output_buffer_pos;
+extern size_t output_buffer_size;
+
+extern void init_output_buffer(void);
+extern void flush_output_buffer( const char *name );
+extern void put_data( const void *data, size_t size );
+extern void put_byte( unsigned char val );
+extern void put_word( unsigned short val );
+extern void put_dword( unsigned int val );
+extern void align_output( unsigned int align );
+
 #endif

@@ -48,6 +48,7 @@ static const char usage[] =
 	"   -H file     Write headerfile to file (default is inputfile.h)\n"
 	"   -i          Inline messagetable(s)\n"
 	"   -o file     Output to file (default is inputfile.rc)\n"
+	"   -O fmt      Set output format (rc, res)\n"
 	"   -u          Inputfile is in unicode\n"
 	"   -U          Output unicode messagetable(s)\n"
 	"   -v          Show supported codepages and languages\n"
@@ -117,6 +118,12 @@ int mcy_debug;
 
 FILE *yyin;
 
+static enum
+{
+    FORMAT_RC,
+    FORMAT_RES
+} output_format;
+
 int getopt (int argc, char *const *argv, const char *optstring);
 static void segvhandler(int sig);
 
@@ -165,7 +172,7 @@ int main(int argc,char *argv[])
 			strcat(cmdline, " ");
 	}
 
-	while((optc = getopt(argc, argv, "B:cdDhH:io:p:uUvVW")) != EOF)
+	while((optc = getopt(argc, argv, "B:cdDhH:io:O:p:uUvVW")) != EOF)
 	{
 		switch(optc)
 		{
@@ -211,6 +218,15 @@ int main(int argc,char *argv[])
 		case 'o':
 			output_name = xstrdup(optarg);
 			break;
+		case 'O':
+			if (!strcmp( optarg, "rc" )) output_format = FORMAT_RC;
+			else if (!strcmp( optarg, "res" )) output_format = FORMAT_RES;
+			else
+                        {
+                            fprintf(stderr, "Output format must be rc or res\n" );
+                            lose++;
+                        }
+                        break;
 		case 'u':
 			unicodein = 1;
 			break;
@@ -286,10 +302,24 @@ int main(int argc,char *argv[])
 		exit(1);
 	}
 
-	write_h_file(header_name);
-	write_rc_file(output_name);
-	if(!rcinline)
+#ifdef WORDS_BIGENDIAN
+	byte_swapped = (byteorder == WMC_BO_LITTLE);
+#else
+	byte_swapped = (byteorder == WMC_BO_BIG);
+#endif
+
+        switch (output_format)
+        {
+        case FORMAT_RC:
+            write_h_file(header_name);
+            write_rc_file(output_name);
+            if(!rcinline)
 		write_bin_files();
+            break;
+        case FORMAT_RES:
+            write_res_file( output_name );
+            break;
+        }
 	output_name = NULL;
 	header_name = NULL;
 	return 0;
