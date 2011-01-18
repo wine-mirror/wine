@@ -127,9 +127,11 @@ static HRESULT CALLBACK IRecordInfoImpl_GetSize(IRecordInfo *iface, ULONG* size)
 {
   IRecordInfoImpl* This = impl_from_IRecordInfo(iface);
   This->sizeCalled++;
-  *size = 17;
   if (fail_GetSize)
+  {
+    *size = RECORD_SIZE_FAIL;
     return E_UNEXPECTED;
+  }
   *size = RECORD_SIZE;
   return S_OK;
 }
@@ -846,7 +848,10 @@ static void test_VectorCreateLockDestroy(void)
   int element;
 
   if (!pSafeArrayCreateVector)
+  {
+    win_skip("SafeArrayCreateVector not supported\n");
     return;
+  }
   sa = pSafeArrayCreateVector(VT_UI1, 0, 0);
   ok(sa != NULL, "SACV with 0 elements failed.\n");
 
@@ -1256,7 +1261,10 @@ static void test_SafeArrayCopyData(void)
   int dimension,size=1;
 
   if (!pSafeArrayCopyData)
+  {
+    win_skip("SafeArrayCopyData not supported\n");
     return;
+  }
 
   for (dimension = 0; dimension < NUM_DIMENSIONS; dimension++)
   {
@@ -1342,7 +1350,10 @@ static void test_SafeArrayCreateEx(void)
   int dimension;
 
   if (!pSafeArrayCreateEx)
+  {
+    win_skip("SafeArrayCreateEx not supported\n");
     return;
+  }
 
   for (dimension = 0; dimension < NUM_DIMENSIONS; dimension++)
   {
@@ -1467,6 +1478,8 @@ static void test_SafeArrayCreateEx(void)
     ok(iRec->clearCalled == sab[0].cElements, "Destroy->Clear called %d times\n", iRec->clearCalled);
     ok(iRec->ref == START_REF_COUNT, "Wrong iRec refcount %d\n", iRec->ref);
   }
+  else
+    SafeArrayDestroy(sa);
 }
 
 static void test_SafeArrayClear(void)
@@ -1672,7 +1685,6 @@ static void test_SafeArrayChangeTypeEx(void)
   hres = VariantChangeTypeEx(&v2, &v, 0, 0, VT_EMPTY);
   ok(hres == DISP_E_TYPEMISMATCH, "CTE VT_ARRAY|VT_UI1 returned %x\n", hres);
   VariantClear(&v);
-
 }
 
 static void test_SafeArrayDestroyData (void)
@@ -1724,6 +1736,7 @@ START_TEST(safearray)
     GETPTR(SafeArrayGetVartype);
     GETPTR(SafeArrayCreateEx);
     GETPTR(SafeArrayCreateVector);
+    GETPTR(SafeArrayGetRecordInfo);
 
     check_for_VT_INT_PTR();
     test_safearray();
