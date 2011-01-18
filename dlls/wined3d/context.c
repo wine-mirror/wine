@@ -1878,7 +1878,7 @@ static struct wined3d_context *findThreadContextForSwapChain(IWineD3DSwapChain *
     }
 
     /* Create a new context for the thread */
-    return swapchain_create_context_for_thread(swapchain);
+    return swapchain_create_context_for_thread((IWineD3DSwapChainImpl *)swapchain);
 }
 
 /* Do not call while under the GL lock. */

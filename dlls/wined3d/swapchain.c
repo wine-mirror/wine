@@ -783,32 +783,31 @@ err:
 }
 
 /* Do not call while under the GL lock. */
-struct wined3d_context *swapchain_create_context_for_thread(IWineD3DSwapChain *iface)
+struct wined3d_context *swapchain_create_context_for_thread(IWineD3DSwapChainImpl *swapchain)
 {
-    IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *) iface;
     struct wined3d_context **newArray;
     struct wined3d_context *ctx;
 
-    TRACE("Creating a new context for swapchain %p, thread %d\n", This, GetCurrentThreadId());
+    TRACE("Creating a new context for swapchain %p, thread %u.\n", swapchain, GetCurrentThreadId());
 
-    if (!(ctx = context_create(This, This->front_buffer, This->ds_format)))
+    if (!(ctx = context_create(swapchain, swapchain->front_buffer, swapchain->ds_format)))
     {
         ERR("Failed to create a new context for the swapchain\n");
         return NULL;
     }
     context_release(ctx);
 
-    newArray = HeapAlloc(GetProcessHeap(), 0, sizeof(*newArray) * (This->num_contexts + 1));
+    newArray = HeapAlloc(GetProcessHeap(), 0, sizeof(*newArray) * (swapchain->num_contexts + 1));
     if(!newArray) {
         ERR("Out of memory when trying to allocate a new context array\n");
-        context_destroy(This->device, ctx);
+        context_destroy(swapchain->device, ctx);
         return NULL;
     }
-    memcpy(newArray, This->context, sizeof(*newArray) * This->num_contexts);
-    HeapFree(GetProcessHeap(), 0, This->context);
-    newArray[This->num_contexts] = ctx;
-    This->context = newArray;
-    This->num_contexts++;
+    memcpy(newArray, swapchain->context, sizeof(*newArray) * swapchain->num_contexts);
+    HeapFree(GetProcessHeap(), 0, swapchain->context);
+    newArray[swapchain->num_contexts] = ctx;
+    swapchain->context = newArray;
+    swapchain->num_contexts++;
 
     TRACE("Returning context %p\n", ctx);
     return ctx;

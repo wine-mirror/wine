@@ -2634,7 +2634,7 @@ HRESULT WINAPI IWineD3DBaseSwapChainImpl_SetGammaRamp(IWineD3DSwapChain *iface,
 HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetGammaRamp(IWineD3DSwapChain *iface,
         WINED3DGAMMARAMP *pRamp) DECLSPEC_HIDDEN;
 
-struct wined3d_context *swapchain_create_context_for_thread(IWineD3DSwapChain *iface) DECLSPEC_HIDDEN;
+struct wined3d_context *swapchain_create_context_for_thread(struct IWineD3DSwapChainImpl *swapchain) DECLSPEC_HIDDEN;
 HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface_type,
         IWineD3DDeviceImpl *device, WINED3DPRESENT_PARAMETERS *present_parameters, void *parent) DECLSPEC_HIDDEN;
 
