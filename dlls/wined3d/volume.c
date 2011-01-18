@@ -27,10 +27,10 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 
 /* Context activation is done by the caller. */
-static void volume_bind_and_dirtify(IWineD3DVolume *iface) {
-    IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
-    const struct wined3d_gl_info *gl_info = &This->resource.device->adapter->gl_info;
-    IWineD3DBaseTextureImpl *container = (IWineD3DBaseTextureImpl *)This->container;
+static void volume_bind_and_dirtify(struct IWineD3DVolumeImpl *volume)
+{
+    const struct wined3d_gl_info *gl_info = &volume->resource.device->adapter->gl_info;
+    IWineD3DBaseTextureImpl *container = (IWineD3DBaseTextureImpl *)volume->container;
     DWORD active_sampler;
 
     /* We don't need a specific texture unit, but after binding the texture the current unit is dirty.
@@ -50,14 +50,14 @@ static void volume_bind_and_dirtify(IWineD3DVolume *iface) {
         ENTER_GL();
         glGetIntegerv(GL_ACTIVE_TEXTURE, &active_texture);
         LEAVE_GL();
-        active_sampler = This->resource.device->rev_tex_unit_map[active_texture - GL_TEXTURE0_ARB];
+        active_sampler = volume->resource.device->rev_tex_unit_map[active_texture - GL_TEXTURE0_ARB];
     } else {
         active_sampler = 0;
     }
 
     if (active_sampler != WINED3D_UNMAPPED_STAGE)
     {
-        IWineD3DDeviceImpl_MarkStateDirty(This->resource.device, STATE_SAMPLER(active_sampler));
+        IWineD3DDeviceImpl_MarkStateDirty(volume->resource.device, STATE_SAMPLER(active_sampler));
     }
 
     container->baseTexture.texture_ops->texture_bind(container, FALSE);
@@ -289,7 +289,7 @@ static HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, int 
     TRACE("iface %p, level %u, srgb %#x, format %s (%#x).\n",
             iface, gl_level, srgb_mode, debug_d3dformat(format->id), format->id);
 
-    volume_bind_and_dirtify(iface);
+    volume_bind_and_dirtify(This);
 
     TRACE("Calling glTexImage3D %x level=%d, intfmt=%x, w=%d, h=%d,d=%d, 0=%d, glFmt=%x, glType=%x, Mem=%p\n",
             GL_TEXTURE_3D, gl_level, format->glInternal, This->currentDesc.Width, This->currentDesc.Height,
