@@ -200,6 +200,9 @@
 /* Define to 1 if you have the `getaddrinfo' function. */
 #undef HAVE_GETADDRINFO
 
+/* Define to 1 if you have the `getattrlist' function. */
+#undef HAVE_GETATTRLIST
+
 /* Define to 1 if you have the `getdirentries' function. */
 #undef HAVE_GETDIRENTRIES
 
@@ -874,6 +877,9 @@
 
 /* Define to 1 if you have the <sys/asoundlib.h> header file. */
 #undef HAVE_SYS_ASOUNDLIB_H
+
+/* Define to 1 if you have the <sys/attr.h> header file. */
+#undef HAVE_SYS_ATTR_H
 
 /* Define to 1 if you have the <sys/cdio.h> header file. */
 #undef HAVE_SYS_CDIO_H

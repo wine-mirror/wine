@@ -44,6 +44,9 @@
 #ifdef HAVE_SYS_SYSCALL_H
 # include <sys/syscall.h>
 #endif
+#ifdef HAVE_SYS_ATTR_H
+#include <sys/attr.h>
+#endif
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
@@ -58,6 +61,9 @@
 #endif
 #ifdef HAVE_SYS_MOUNT_H
 #include <sys/mount.h>
+#endif
+#ifdef HAVE_SYS_STATFS_H
+#include <sys/statfs.h>
 #endif
 #include <time.h>
 #ifdef HAVE_UNISTD_H
@@ -771,6 +777,243 @@ static char *get_device_mount_point( dev_t dev )
     if (!warned++) FIXME( "unmounting devices not supported on this platform\n" );
 #endif
     return ret;
+}
+
+
+#if defined(HAVE_GETATTRLIST) && defined(ATTR_VOL_CAPABILITIES) && \
+    defined(VOL_CAPABILITIES_FORMAT) && defined(VOL_CAP_FMT_CASE_SENSITIVE)
+
+struct get_fsid
+{
+    ULONG size;
+    dev_t dev;
+    fsid_t fsid;
+};
+
+struct fs_cache
+{
+    dev_t dev;
+    fsid_t fsid;
+    BOOLEAN case_sensitive;
+} fs_cache[64];
+
+struct vol_caps
+{
+    ULONG size;
+    vol_capabilities_attr_t caps;
+};
+
+/***********************************************************************
+ *           look_up_fs_cache
+ *
+ * Checks if the specified file system is in the cache.
+ */
+static struct fs_cache *look_up_fs_cache( dev_t dev )
+{
+    int i;
+    for (i = 0; i < sizeof(fs_cache)/sizeof(fs_cache[0]); i++)
+        if (fs_cache[i].dev == dev)
+            return fs_cache+i;
+    return NULL;
+}
+
+/***********************************************************************
+ *           add_fs_cache
+ *
+ * Adds the specified file system to the cache.
+ */
+static void add_fs_cache( dev_t dev, fsid_t fsid, BOOLEAN case_sensitive )
+{
+    int i;
+    struct fs_cache *entry = look_up_fs_cache( dev );
+    static int once = 0;
+    if (entry)
+    {
+        /* Update the cache */
+        entry->fsid = fsid;
+        entry->case_sensitive = case_sensitive;
+        return;
+    }
+
+    /* Add a new entry */
+    for (i = 0; i < sizeof(fs_cache)/sizeof(fs_cache[0]); i++)
+        if (fs_cache[i].dev == 0)
+        {
+            /* This entry is empty, use it */
+            fs_cache[i].dev = dev;
+            fs_cache[i].fsid = fsid;
+            fs_cache[i].case_sensitive = case_sensitive;
+            return;
+        }
+
+    /* Cache is out of space, warn */
+    if (once++)
+        WARN( "FS cache is out of space, expect performance problems\n" );
+}
+
+/***********************************************************************
+ *           get_dir_case_sensitivity_attr
+ *
+ * Checks if the volume containing the specified directory is case
+ * sensitive or not. Uses getattrlist(2).
+ */
+static int get_dir_case_sensitivity_attr( const char *dir )
+{
+    char *mntpoint = NULL;
+    struct attrlist attr;
+    struct vol_caps caps;
+    struct get_fsid get_fsid;
+    struct fs_cache *entry;
+
+    /* First get the FS ID of the volume */
+    attr.bitmapcount = ATTR_BIT_MAP_COUNT;
+    attr.reserved = 0;
+    attr.commonattr = ATTR_CMN_DEVID|ATTR_CMN_FSID;
+    attr.volattr = attr.dirattr = attr.fileattr = attr.forkattr = 0;
+    get_fsid.size = 0;
+    if (getattrlist( dir, &attr, &get_fsid, sizeof(get_fsid), 0 ) != 0 ||
+        get_fsid.size != sizeof(get_fsid))
+        return -1;
+    /* Try to look it up in the cache */
+    entry = look_up_fs_cache( get_fsid.dev );
+    if (entry && !memcmp( &entry->fsid, &get_fsid.fsid, sizeof(fsid_t) ))
+        /* Cache lookup succeeded */
+        return entry->case_sensitive;
+    /* Cache is stale at this point, we have to update it */
+
+    mntpoint = get_device_mount_point( get_fsid.dev );
+    /* Now look up the case-sensitivity */
+    attr.commonattr = 0;
+    attr.volattr = ATTR_VOL_INFO|ATTR_VOL_CAPABILITIES;
+    if (getattrlist( mntpoint, &attr, &caps, sizeof(caps), 0 ) < 0)
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, mntpoint );
+        add_fs_cache( get_fsid.dev, get_fsid.fsid, TRUE );
+        return TRUE;
+    }
+    RtlFreeHeap( GetProcessHeap(), 0, mntpoint );
+    if (caps.size == sizeof(caps) &&
+        (caps.caps.valid[VOL_CAPABILITIES_FORMAT] &
+         (VOL_CAP_FMT_CASE_SENSITIVE | VOL_CAP_FMT_CASE_PRESERVING)) ==
+        (VOL_CAP_FMT_CASE_SENSITIVE | VOL_CAP_FMT_CASE_PRESERVING))
+    {
+        BOOLEAN ret;
+
+        if ((caps.caps.capabilities[VOL_CAPABILITIES_FORMAT] &
+            VOL_CAP_FMT_CASE_SENSITIVE) != VOL_CAP_FMT_CASE_SENSITIVE)
+            ret = FALSE;
+        else
+            ret = TRUE;
+        /* Update the cache */
+        add_fs_cache( get_fsid.dev, get_fsid.fsid, ret );
+        return ret;
+    }
+    return FALSE;
+}
+#endif
+
+/***********************************************************************
+ *           get_dir_case_sensitivity_stat
+ *
+ * Checks if the volume containing the specified directory is case
+ * sensitive or not. Uses statfs(2) or statvfs(2).
+ */
+static BOOLEAN get_dir_case_sensitivity_stat( const char *dir )
+{
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+    struct statfs stfs;
+
+    statfs( dir, &stfs );
+    /* Assume these file systems are always case insensitive on Mac OS.
+     * For FreeBSD, only assume CIOPFS is case insensitive (AFAIK, Mac OS
+     * is the only UNIX that supports case-insensitive lookup).
+     */
+    if (!strcmp( stfs.f_fstypename, "fusefs" ) &&
+        !strncmp( stfs.f_mntfromname, "ciopfs", 5 ))
+        return FALSE;
+#ifdef __APPLE__
+    if (!strcmp( stfs.f_fstypename, "msdos" ) ||
+        !strcmp( stfs.f_fstypename, "cd9660" ) ||
+        !strcmp( stfs.f_fstypename, "udf" ) ||
+        !strcmp( stfs.f_fstypename, "ntfs" ) ||
+        !strcmp( stfs.f_fstypename, "smbfs" ))
+        return FALSE;
+#ifdef _DARWIN_FEATURE_64_BIT_INODE
+     if (!strcmp( stfs.f_fstypename, "hfs" ) && (stfs.f_fssubtype == 0 ||
+                                                 stfs.f_fssubtype == 1 ||
+                                                 stfs.f_fssubtype == 128))
+        return FALSE;
+#else
+     /* The field says "reserved", but a quick look at the kernel source
+      * tells us that this "reserved" field is really the same as the
+      * "fssubtype" field from the inode64 structure (see munge_statfs()
+      * in <xnu-source>/bsd/vfs/vfs_syscalls.c).
+      */
+     if (!strcmp( stfs.f_fstypename, "hfs" ) && (stfs.f_reserved1 == 0 ||
+                                                 stfs.f_reserved1 == 1 ||
+                                                 stfs.f_reserved1 == 128))
+        return FALSE;
+#endif
+#endif
+    return TRUE;
+
+#elif defined(__NetBSD__)
+    struct statvfs stfs;
+
+    statvfs( dir, &stfs );
+    /* Only assume CIOPFS is case insensitive. */
+    if (strcmp( stfs.f_fstypename, "fusefs" ) ||
+        strncmp( stfs.f_mntfromname, "ciopfs", 5 ))
+        return TRUE;
+    return FALSE;
+
+#elif defined(__linux__)
+    struct statfs stfs;
+    struct stat st;
+    char *cifile;
+
+    /* Only assume CIOPFS is case insensitive. */
+    statfs( dir, &stfs );
+    if (stfs.f_type != 0x65735546 /* FUSE_SUPER_MAGIC */)
+        return TRUE;
+    /* Normally, we'd have to parse the mtab to find out exactly what
+     * kind of FUSE FS this is. But, someone on wine-devel suggested
+     * a shortcut. We'll stat a special file in the directory. If it's
+     * there, we'll assume it's a CIOPFS, else not.
+     * This will break if somebody puts a file named ".ciopfs" in a non-
+     * CIOPFS directory.
+     */
+    cifile = RtlAllocateHeap( GetProcessHeap(), 0, strlen( dir )+sizeof("/.ciopfs") );
+    if (!cifile) return TRUE;
+    strcpy( cifile, dir );
+    strcat( cifile, "/.ciopfs" );
+    if (stat( cifile, &st ) == 0)
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, cifile );
+        return FALSE;
+    }
+    RtlFreeHeap( GetProcessHeap(), 0, cifile );
+    return TRUE;
+#else
+    return TRUE;
+#endif
+}
+
+
+/***********************************************************************
+ *           get_dir_case_sensitivity
+ *
+ * Checks if the volume containing the specified directory is case
+ * sensitive or not. Uses statfs(2) or statvfs(2).
+ */
+static BOOLEAN get_dir_case_sensitivity( const char *dir )
+{
+#if defined(HAVE_GETATTRLIST) && defined(ATTR_VOL_CAPABILITIES) && \
+    defined(VOL_CAPABILITIES_FORMAT) && defined(VOL_CAP_FMT_CASE_SENSITIVE)
+    int case_sensitive = get_dir_case_sensitivity_attr( dir );
+    if (case_sensitive != -1) return case_sensitive;
+#endif
+    return get_dir_case_sensitivity_stat( dir );
 }
 
 
@@ -1836,6 +2079,8 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
     str.Length = length * sizeof(WCHAR);
     str.MaximumLength = str.Length;
     is_name_8_dot_3 = RtlIsNameLegalDOS8Dot3( &str, NULL, &spaces ) && !spaces;
+
+    if (!is_name_8_dot_3 && !get_dir_case_sensitivity( unix_name )) goto not_found;
 
     /* now look for it through the directory */
 

@@ -456,6 +456,7 @@ AC_CHECK_HEADERS(\
 	strings.h \
 	stropts.h \
 	sys/asoundlib.h \
+	sys/attr.h \
 	sys/cdio.h \
 	sys/elf32.h \
 	sys/epoll.h \
@@ -1909,6 +1910,7 @@ AC_CHECK_FUNCS(\
 	ftruncate \
 	futimes \
 	futimesat \
+	getattrlist \
 	getdirentries \
 	getopt_long \
 	getpagesize \

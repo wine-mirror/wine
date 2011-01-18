@@ -5849,6 +5849,7 @@ for ac_header in \
 	strings.h \
 	stropts.h \
 	sys/asoundlib.h \
+	sys/attr.h \
 	sys/cdio.h \
 	sys/elf32.h \
 	sys/epoll.h \
@@ -12755,6 +12756,7 @@ for ac_func in \
 	ftruncate \
 	futimes \
 	futimesat \
+	getattrlist \
 	getdirentries \
 	getopt_long \
 	getpagesize \
