@@ -2217,34 +2217,53 @@ static nsresult NSAPI nsURL_SetQuery(nsIURL *iface, const nsACString *aQuery)
 static nsresult NSAPI nsURL_GetRef(nsIURL *iface, nsACString *aRef)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
+    char *refa = NULL;
+    BSTR ref;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, aRef);
 
-    if(This->nsurl)
-        return nsIURL_GetRef(This->nsurl, aRef);
+    if(!ensure_uri(This))
+        return NS_ERROR_UNEXPECTED;
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    hres = IUri_GetFragment(This->uri, &ref);
+    if(FAILED(hres))
+        return NS_ERROR_UNEXPECTED;
+
+    refa = heap_strdupWtoA(ref);
+    SysFreeString(ref);
+    if(ref && !refa)
+        return NS_ERROR_OUT_OF_MEMORY;
+
+    nsACString_SetData(aRef, refa && *refa == '#' ? refa+1 : refa);
+    heap_free(refa);
+    return NS_OK;
 }
 
 static nsresult NSAPI nsURL_SetRef(nsIURL *iface, const nsACString *aRef)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
     const char *refa;
+    WCHAR *ref;
+    HRESULT hres;
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aRef));
 
-    if(This->nsurl) {
-        invalidate_uri(This);
-        return nsIURL_SetRef(This->nsurl, aRef);
-    }
+    if(!ensure_uri_builder(This))
+        return NS_ERROR_UNEXPECTED;
 
     nsACString_GetData(aRef, &refa);
-    if(!*refa)
-        return NS_OK;
+    ref = heap_strdupAtoW(refa);
+    if(!ref)
+        return NS_ERROR_OUT_OF_MEMORY;
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    hres = IUriBuilder_SetFragment(This->uri_builder, ref);
+    heap_free(ref);
+    if(FAILED(hres))
+        return NS_ERROR_UNEXPECTED;
+
+    sync_wine_url(This);
+    return NS_OK;
 }
 
 static nsresult NSAPI nsURL_GetDirectory(nsIURL *iface, nsACString *aDirectory)
