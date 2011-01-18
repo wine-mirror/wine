@@ -35,6 +35,7 @@ C_SRCS = \
 	string.c \
 	sync.c \
 	tape.c \
+	term.c \
 	thread.c \
 	time.c \
 	toolhelp.c \

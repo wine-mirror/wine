@@ -33,4 +33,8 @@ extern BOOL     CONSOLE_GetEditionMode(HANDLE, int*);
 /* editline.c */
 extern WCHAR*   CONSOLE_Readline(HANDLE, BOOL);
 
+/* term.c */
+extern BOOL     TERM_Init(void);
+extern BOOL     TERM_Exit(void);
+
 #endif  /* __WINE_CONSOLE_PRIVATE_H */

@@ -216,6 +216,7 @@ static BOOL restore_console_mode(HANDLE hin)
     if ((fd = get_console_bare_fd(hin)) == -1) return FALSE;
     ret = tcsetattr(fd, TCSANOW, &S_termios) >= 0;
     close(fd);
+    TERM_Exit();
     return ret;
 }
 
@@ -3086,6 +3087,7 @@ BOOL CONSOLE_Init(RTL_USER_PROCESS_PARAMETERS *params)
         /* This is wine specific: we have no parent (we're started from unix)
          * so, create a simple console with bare handles
          */
+        TERM_Init();
         wine_server_send_fd(0);
         SERVER_START_REQ( alloc_console )
         {
