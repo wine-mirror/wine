@@ -553,7 +553,6 @@ _xsize(const TYPEDESC *td, ITypeInfo *tinfo) {
 	return sizeof(DATE);
     case VT_CY:
         return sizeof(CY);
-    /* FIXME: VT_BOOL should return 2? */
     case VT_VARIANT:
 	return sizeof(VARIANT)+3; /* FIXME: why the +3? */
     case VT_CARRAY: {
@@ -570,6 +569,7 @@ _xsize(const TYPEDESC *td, ITypeInfo *tinfo) {
 	return 8;
     case VT_UI2:
     case VT_I2:
+    case VT_BOOL:
 	return 2;
     case VT_UI1:
     case VT_I1:
@@ -625,7 +625,6 @@ serialize_param(
 	if (writeit)
 	    hres = xbuf_add(buf,(LPBYTE)arg,8);
 	return hres;
-    case VT_BOOL:
     case VT_ERROR:
     case VT_INT:
     case VT_UINT:
@@ -639,6 +638,7 @@ serialize_param(
 	return hres;
     case VT_I2:
     case VT_UI2:
+    case VT_BOOL:
 	hres = S_OK;
 	if (debugout) TRACE_(olerelay)("%04x\n",*arg & 0xffff);
 	if (writeit)
@@ -924,7 +924,6 @@ deserialize_param(
 	    if (debugout) TRACE_(olerelay)("%x%x",arg[0],arg[1]);
 	    return hres;
         case VT_ERROR:
-	case VT_BOOL:
         case VT_I4:
         case VT_INT:
         case VT_UINT:
@@ -938,6 +937,7 @@ deserialize_param(
 	    return hres;
         case VT_I2:
         case VT_UI2:
+        case VT_BOOL:
 	    if (readit) {
 		DWORD x;
 		hres = xbuf_get(buf,(LPBYTE)&x,sizeof(DWORD));
