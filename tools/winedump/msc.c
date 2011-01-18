@@ -1101,16 +1101,15 @@ int codeview_dump_symbols(const void* root, unsigned long size)
             break;
 
         /* Additional function information */
-        case S_FUNCINFO_V2:
-            printf("\tFunction info V2 unk1:%x unk2:%x unk3:%x unk4:%x unk5:%x unk6:%x flags:%04x unk7:%x\n",
-                   sym->func_info_v2.unknown1,
-                   sym->func_info_v2.unknown2,
-                   sym->func_info_v2.unknown3,
-                   sym->func_info_v2.unknown4,
-                   sym->func_info_v2.unknown5,
-                   sym->func_info_v2.unknown6,
-                   sym->func_info_v2.flags,
-                   sym->func_info_v2.unknown7);
+        case S_FRAMEINFO_V2:
+            printf("\tS-Frame-Info V2: frame-size:%x unk2:%x unk3:%x saved-regs-sz:%x eh(%04x:%08x) flags:%08x\n",
+                   sym->frame_info_v2.sz_frame,
+                   sym->frame_info_v2.unknown2,
+                   sym->frame_info_v2.unknown3,
+                   sym->frame_info_v2.sz_saved_regs,
+                   sym->frame_info_v2.eh_sect,
+                   sym->frame_info_v2.eh_offset,
+                   sym->frame_info_v2.flags);
             break;
 
         case S_SECUCOOKIE_V3:

@@ -1568,15 +1568,14 @@ union codeview_symbol
     {
         short int               len;
         short int               id;
-        unsigned int            unknown1;       /* maybe size (of what ?) */
+        unsigned int            sz_frame;       /* size of frame */
         unsigned int            unknown2;
         unsigned int            unknown3;
-        unsigned int            unknown4;       /* maybe size (of what ?) */
-        unsigned int            unknown5;       /* maybe address <offset and segment> (of what ?) */
-        unsigned short          unknown6;
-        unsigned short          flags;
-        unsigned int            unknown7;
-    } func_info_v2;
+        unsigned int            sz_saved_regs;  /* size of saved registers from callee */
+        unsigned int            eh_offset;      /* offset for exception handler */
+        unsigned short          eh_sect;        /* section for exception handler */
+        unsigned int            flags;
+    } frame_info_v2;
 };
 
 #define S_COMPILAND_V1  0x0001
@@ -1630,7 +1629,7 @@ union codeview_symbol
 #define S_REGREL_V2     0x100d
 #define S_LTHREAD_V2    0x100e
 #define S_GTHREAD_V2    0x100f
-#define S_FUNCINFO_V2   0x1012
+#define S_FRAMEINFO_V2  0x1012
 #define S_COMPILAND_V2  0x1013
 
 #define S_COMPILAND_V3  0x1101
