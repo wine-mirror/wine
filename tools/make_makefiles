@@ -109,7 +109,6 @@ my @ignore_srcs = (
     [ 'BISON_SRCS',   '\.y',   '.tab.c' ],
     [ 'BISON_SRCS',   '\.y',   '.tab.h' ],
     [ 'LEX_SRCS',     '\.l',   '.yy.c' ],
-    [ 'MC_SRCS',      '\.mc',  '.mc.rc' ],
     [ 'IDL_TLB_SRCS', '\.idl', '.tlb' ],
     [ 'IDL_H_SRCS',   '\.idl', '.h' ],
     [ 'IDL_C_SRCS',   '\.idl', '.h' ],
