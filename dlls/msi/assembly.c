@@ -319,6 +319,9 @@ MSIASSEMBLY *load_assembly( MSIPACKAGE *package, MSICOMPONENT *comp )
     {
         WARN("can't get display name\n");
         msiobj_release( &rec->hdr );
+        msi_free( a->feature );
+        msi_free( a->manifest );
+        msi_free( a->application );
         msi_free( a );
         return NULL;
     }
