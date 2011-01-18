@@ -911,6 +911,7 @@ static void test_GetIconLocation(void)
     pidl = path_to_pidl(mypath);
     r = IShellLinkA_SetIDList(sl, pidl);
     ok(r == S_OK, "SetPath failed (0x%08x)\n", r);
+    pILFree(pidl);
 
     i = 0xdeadbeef;
     strcpy(buffer, "garbage");
