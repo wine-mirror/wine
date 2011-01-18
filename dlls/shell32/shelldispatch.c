@@ -24,10 +24,13 @@
 #include <stdarg.h>
 
 #define COBJMACROS
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 
 #include "windef.h"
 #include "winbase.h"
-
+#include "winreg.h"
+#include "shlwapi.h"
 #include "shlobj.h"
 #include "shldisp.h"
 #include "debughlp.h"
@@ -42,9 +45,21 @@ typedef struct {
     ITypeInfo *iTypeInfo;
 } ShellDispatch;
 
+typedef struct {
+    Folder3 Folder_iface;
+    LONG ref;
+    ITypeInfo *iTypeInfo;
+    VARIANT dir;
+} FolderImpl;
+
 static inline ShellDispatch *impl_from_IShellDispatch(IShellDispatch *iface)
 {
     return CONTAINING_RECORD(iface, ShellDispatch, IShellDispatch_iface);
+}
+
+static inline FolderImpl *impl_from_Folder(Folder3 *iface)
+{
+    return CONTAINING_RECORD(iface, FolderImpl, Folder_iface);
 }
 
 static HRESULT load_type_info(REFGUID guid, ITypeInfo **pptinfo)
@@ -64,6 +79,310 @@ static HRESULT load_type_info(REFGUID guid, ITypeInfo **pptinfo)
     if (FAILED(ret))
         ERR("failed to load ITypeInfo\n");
 
+    return ret;
+}
+
+static HRESULT WINAPI FolderImpl_QueryInterface(Folder3 *iface, REFIID riid,
+        LPVOID *ppv)
+{
+    FolderImpl *This = impl_from_Folder(iface);
+
+    TRACE("(%p,%p,%p)\n", iface, riid, ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, riid) ||
+        IsEqualIID(&IID_IDispatch, riid) ||
+        IsEqualIID(&IID_Folder, riid) ||
+        IsEqualIID(&IID_Folder2, riid) ||
+        IsEqualIID(&IID_Folder3, riid))
+        *ppv = This;
+    else
+    {
+        FIXME("not implemented for %s\n", shdebugstr_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI FolderImpl_AddRef(Folder3 *iface)
+{
+    FolderImpl *This = impl_from_Folder(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p), new refcount=%i\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI FolderImpl_Release(Folder3 *iface)
+{
+    FolderImpl *This = impl_from_Folder(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p), new refcount=%i\n", iface, ref);
+
+    if (!ref)
+    {
+        VariantClear(&This->dir);
+        ITypeInfo_Release(This->iTypeInfo);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI FolderImpl_GetTypeInfoCount(Folder3 *iface, UINT *pctinfo)
+{
+    TRACE("(%p,%p)\n", iface, pctinfo);
+
+    *pctinfo = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI FolderImpl_GetTypeInfo(Folder3 *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    FolderImpl *This = impl_from_Folder(iface);
+
+    TRACE("(%p,%u,%d,%p)\n", iface, iTInfo, lcid, ppTInfo);
+
+    ITypeInfo_AddRef(This->iTypeInfo);
+    *ppTInfo = This->iTypeInfo;
+    return S_OK;
+}
+
+static HRESULT WINAPI FolderImpl_GetIDsOfNames(Folder3 *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    FolderImpl *This = impl_from_Folder(iface);
+
+    TRACE("(%p,%p,%p,%u,%d,%p)\n", iface, riid, rgszNames, cNames, lcid,
+            rgDispId);
+
+    return ITypeInfo_GetIDsOfNames(This->iTypeInfo, rgszNames, cNames,
+            rgDispId);
+}
+
+static HRESULT WINAPI FolderImpl_Invoke(Folder3 *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+        VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    FolderImpl *This = impl_from_Folder(iface);
+
+    TRACE("(%p,%d,%p,%d,%u,%p,%p,%p,%p)\n", iface, dispIdMember, riid, lcid,
+            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    return ITypeInfo_Invoke(This->iTypeInfo, This, dispIdMember, wFlags,
+            pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI FolderImpl_get_Title(Folder3 *iface, BSTR *pbs)
+{
+    FIXME("(%p,%p)\n", iface, pbs);
+
+    *pbs = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FolderImpl_get_Application(Folder3 *iface,
+        IDispatch **ppid)
+{
+    FIXME("(%p,%p)\n", iface, ppid);
+
+    *ppid = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FolderImpl_get_Parent(Folder3 *iface, IDispatch **ppid)
+{
+    FIXME("(%p,%p)\n", iface, ppid);
+
+    *ppid = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FolderImpl_get_ParentFolder(Folder3 *iface, Folder **ppsf)
+{
+    FIXME("(%p,%p)\n", iface, ppsf);
+
+    *ppsf = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FolderImpl_Items(Folder3 *iface, FolderItems **ppid)
+{
+    FIXME("(%p,%p)\n", iface, ppid);
+
+    *ppid = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FolderImpl_ParseName(Folder3 *iface, BSTR bName,
+        FolderItem **ppid)
+{
+    FIXME("(%p,%s,%p)\n", iface, debugstr_w(bName), ppid);
+
+    *ppid = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FolderImpl_NewFolder(Folder3 *iface, BSTR bName,
+        VARIANT vOptions)
+{
+    FIXME("(%p,%s)\n", iface, debugstr_w(bName));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FolderImpl_MoveHere(Folder3 *iface, VARIANT vItem,
+        VARIANT vOptions)
+{
+    FIXME("(%p)\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FolderImpl_CopyHere(Folder3 *iface, VARIANT vItem,
+        VARIANT vOptions)
+{
+    FIXME("(%p)\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FolderImpl_GetDetailsOf(Folder3 *iface, VARIANT vItem,
+        int iColumn, BSTR *pbs)
+{
+    FIXME("(%p,%d,%p)\n", iface, iColumn, pbs);
+
+    *pbs = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FolderImpl_get_Self(Folder3 *iface, FolderItem **ppfi)
+{
+    FIXME("(%p,%p)\n", iface, ppfi);
+
+    *ppfi = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FolderImpl_get_OfflineStatus(Folder3 *iface, LONG *pul)
+{
+    FIXME("(%p,%p)\n", iface, pul);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FolderImpl_Synchronize(Folder3 *iface)
+{
+    FIXME("(%p)\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FolderImpl_get_HaveToShowWebViewBarricade(Folder3 *iface,
+        VARIANT_BOOL *pbHaveToShowWebViewBarricade)
+{
+    FIXME("(%p,%p)\n", iface, pbHaveToShowWebViewBarricade);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FolderImpl_DismissedWebViewBarricade(Folder3 *iface)
+{
+    FIXME("(%p)\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FolderImpl_get_ShowWebViewBarricade(Folder3 *iface,
+        VARIANT_BOOL *pbShowWebViewBarricade)
+{
+    FIXME("(%p,%p)\n", iface, pbShowWebViewBarricade);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FolderImpl_put_ShowWebViewBarricade(Folder3 *iface,
+        VARIANT_BOOL bShowWebViewBarricade)
+{
+    FIXME("(%p,%d)\n", iface, bShowWebViewBarricade);
+
+    return E_NOTIMPL;
+}
+
+static const Folder3Vtbl FolderImpl_Vtbl = {
+    FolderImpl_QueryInterface,
+    FolderImpl_AddRef,
+    FolderImpl_Release,
+    FolderImpl_GetTypeInfoCount,
+    FolderImpl_GetTypeInfo,
+    FolderImpl_GetIDsOfNames,
+    FolderImpl_Invoke,
+    FolderImpl_get_Title,
+    FolderImpl_get_Application,
+    FolderImpl_get_Parent,
+    FolderImpl_get_ParentFolder,
+    FolderImpl_Items,
+    FolderImpl_ParseName,
+    FolderImpl_NewFolder,
+    FolderImpl_MoveHere,
+    FolderImpl_CopyHere,
+    FolderImpl_GetDetailsOf,
+    FolderImpl_get_Self,
+    FolderImpl_get_OfflineStatus,
+    FolderImpl_Synchronize,
+    FolderImpl_get_HaveToShowWebViewBarricade,
+    FolderImpl_DismissedWebViewBarricade,
+    FolderImpl_get_ShowWebViewBarricade,
+    FolderImpl_put_ShowWebViewBarricade
+};
+
+static HRESULT Folder_Constructor(VARIANT *dir, Folder **ppsdf)
+{
+    FolderImpl *This;
+    HRESULT ret;
+
+    *ppsdf = NULL;
+
+    switch (V_VT(dir))
+    {
+        case VT_I4:
+            /* FIXME: add some checks */
+            break;
+        case VT_BSTR:
+            if (PathIsDirectoryW(V_BSTR(dir)) &&
+                !PathIsRelativeW(V_BSTR(dir)) &&
+                PathFileExistsW(V_BSTR(dir)))
+                break;
+        default:
+            return S_FALSE;
+    }
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(FolderImpl));
+    if (!This) return E_OUTOFMEMORY;
+    This->Folder_iface.lpVtbl = &FolderImpl_Vtbl;
+    This->ref = 1;
+
+    ret = load_type_info(&IID_Folder3, &This->iTypeInfo);
+    if (FAILED(ret))
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+        return ret;
+    }
+
+    VariantInit(&This->dir);
+    ret = VariantCopy(&This->dir, dir);
+    if (FAILED(ret))
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+        return E_OUTOFMEMORY;
+    }
+
+    *ppsdf = (Folder*)This;
     return ret;
 }
 
@@ -182,10 +501,9 @@ static HRESULT WINAPI ShellDispatch_get_Parent(IShellDispatch *iface,
 static HRESULT WINAPI ShellDispatch_NameSpace(IShellDispatch *iface,
         VARIANT vDir, Folder **ppsdf)
 {
-    FIXME("(%p,%p)\n", iface, ppsdf);
+    TRACE("(%p,%p)\n", iface, ppsdf);
 
-    *ppsdf = NULL;
-    return E_NOTIMPL;
+    return Folder_Constructor(&vDir, ppsdf);
 }
 
 static HRESULT WINAPI ShellDispatch_BrowseForFolder(IShellDispatch *iface,

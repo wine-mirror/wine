@@ -69,7 +69,6 @@ static void test_namespace(void)
     VariantInit(&var);
     folder = (void*)0xdeadbeef;
     r = IShellDispatch_NameSpace(sd, var, &folder);
-    todo_wine
     ok(r == S_FALSE, "expected S_FALSE, got %08x\n", r);
     ok(folder == NULL, "expected NULL, got %p\n", folder);
 
@@ -82,7 +81,6 @@ static void test_namespace(void)
     V_VT(&var) = VT_I4;
     V_I4(&var) = ssfPROGRAMFILES;
     r = IShellDispatch_NameSpace(sd, var, &folder);
-    todo_wine
     ok(r == S_OK ||
      broken(r == S_FALSE), /* NT4 */
      "IShellDispatch::NameSpace failed: %08x\n", r);
@@ -139,7 +137,6 @@ static void test_namespace(void)
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = SysAllocString(winetestW);
     r = IShellDispatch_NameSpace(sd, var, &folder);
-    todo_wine
     ok(r == S_FALSE, "expected S_FALSE, got %08x\n", r);
     SysFreeString(V_BSTR(&var));
 
@@ -147,7 +144,6 @@ static void test_namespace(void)
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = SysAllocString(tempW);
     r = IShellDispatch_NameSpace(sd, var, &folder);
-    todo_wine
     ok(r == S_OK, "IShellDispatch::NameSpace failed: %08x\n", r);
     if (r == S_OK)
     {
@@ -172,7 +168,6 @@ static void test_namespace(void)
         V_VT(&var) = VT_BSTR;
         V_BSTR(&var) = SysAllocString(tempW);
         r = IShellDispatch_NameSpace(sd, var, &folder);
-        todo_wine
         ok(r == S_OK, "IShellDispatch::NameSpace failed: %08x\n", r);
         if (r == S_OK)
         {
