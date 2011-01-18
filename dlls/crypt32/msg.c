@@ -1599,6 +1599,7 @@ static BOOL WINAPI CRYPT_ExportKeyTrans(
         CryptDestroyKey(expKey);
     }
 
+    CryptMemFree(keyInfo.PublicKey.pbData);
     CryptMemFree(keyInfo.Algorithm.pszObjId);
     CryptMemFree(keyInfo.Algorithm.Parameters.pbData);
     return ret;
