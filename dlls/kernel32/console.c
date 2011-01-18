@@ -5,7 +5,7 @@
  * Copyright 1997 Karl Garrison
  * Copyright 1998 John Richardson
  * Copyright 1998 Marcus Meissner
- * Copyright 2001,2002,2004,2005 Eric Pouech
+ * Copyright 2001,2002,2004,2005,2010 Eric Pouech
  * Copyright 2001 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
@@ -1099,39 +1099,84 @@ enum read_console_input_return {rci_error = 0, rci_timeout = 1, rci_gotone = 2};
 
 static enum read_console_input_return bare_console_fetch_input(HANDLE handle, int fd, DWORD timeout)
 {
-    struct pollfd pollfd;
-    char          ch;
-    enum read_console_input_return ret;
-    unsigned      numEvent;
-    INPUT_RECORD  ir[8];
-    DWORD         written;
+    enum read_console_input_return      ret;
+    char                                input[8];
+    int                                 i;
+    size_t                              idx = 0;
+    unsigned                            numEvent;
+    INPUT_RECORD                        ir[8];
+    DWORD                               written;
+    struct pollfd                       pollfd;
+    BOOL                                locked = FALSE, next_char;
 
-    pollfd.fd = fd;
-    pollfd.events = POLLIN;
-    pollfd.revents = 0;
-
-    switch (poll(&pollfd, 1, timeout))
+    do
     {
-    case 1:
-        RtlEnterCriticalSection(&CONSOLE_CritSect);
-        switch (read(fd, &ch, 1))
+        if (idx == sizeof(input))
+        {
+            FIXME("buffer too small (%s)\n", wine_dbgstr_an(input, idx));
+            ret = rci_error;
+            break;
+        }
+        pollfd.fd = fd;
+        pollfd.events = POLLIN;
+        pollfd.revents = 0;
+        next_char = FALSE;
+
+        switch (poll(&pollfd, 1, timeout))
         {
         case 1:
-            numEvent = TERM_FillSimpleChar(ch, ir);
-            ret = WriteConsoleInputW(handle, ir, numEvent, &written) ? rci_gotone : rci_error;
+            if (!locked)
+            {
+                RtlEnterCriticalSection(&CONSOLE_CritSect);
+                locked = TRUE;
+            }
+            i = read(fd, &input[idx], 1);
+            if (i < 0)
+            {
+                ret = rci_error;
+                break;
+            }
+            if (i == 0)
+            {
+                /* actually another thread likely beat us to reading the char
+                 * return rci_gotone, while not perfect, it should work in most of the cases (as the new event
+                 * should be now in the queue, fed from the other thread)
+                 */
+                ret = rci_gotone;
+                break;
+            }
+
+            idx++;
+            numEvent = TERM_FillInputRecord(input, idx, ir);
+            switch (numEvent)
+            {
+            case 0:
+                /* we need more char(s) to tell if it matches a key-db entry. wait 1/2s for next char */
+                timeout = 500;
+                next_char = TRUE;
+                break;
+            case -1:
+                /* we haven't found the string into key-db, push full input string into server */
+                for (i = 0; i < idx; i++)
+                {
+                    numEvent = TERM_FillSimpleChar(input[i], ir);
+                    WriteConsoleInputW(handle, ir, numEvent, &written);
+                }
+                ret = idx == 0 ? rci_timeout : rci_gotone;
+                break;
+            default:
+                /* we got a transformation from key-db... push this into server */
+                ret = WriteConsoleInputW(handle, ir, numEvent, &written) ? rci_gotone : rci_error;
+                break;
+            }
             break;
-        /* actually another thread likely beat us to reading the char
-         * return gotone, while not perfect, it should work in most of the cases (as the new event
-         * should be now in the queue)
-         */
-        case 0: ret = rci_gotone; break;
+        case 0: ret = rci_timeout; break;
         default: ret = rci_error; break;
         }
-        RtlLeaveCriticalSection(&CONSOLE_CritSect);
-        return ret;
-    case 0: return rci_timeout;
-    default: return rci_error;
-    }
+    } while (next_char);
+    if (locked) RtlLeaveCriticalSection(&CONSOLE_CritSect);
+
+    return ret;
 }
 
 static enum read_console_input_return read_console_input(HANDLE handle, PINPUT_RECORD ir, DWORD timeout)

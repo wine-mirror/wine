@@ -157,7 +157,10 @@ static void *nc_handle = NULL;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p_##f;
 
+MAKE_FUNCPTR(putp)
 MAKE_FUNCPTR(setupterm)
+MAKE_FUNCPTR(tigetstr)
+MAKE_FUNCPTR(tparm)
 
 #undef MAKE_FUNCPTR
 
@@ -185,7 +188,10 @@ static BOOL TERM_bind_libcurses(void)
         goto sym_not_found;                                  \
     }
 
+    LOAD_FUNCPTR(putp)
     LOAD_FUNCPTR(setupterm)
+    LOAD_FUNCPTR(tigetstr)
+    LOAD_FUNCPTR(tparm)
 
 #undef LOAD_FUNCPTR
 
@@ -201,20 +207,163 @@ sym_not_found:
     return FALSE;
 }
 
+#define putp      p_putp
 #define setupterm p_setupterm
+#define tigetstr  p_tigetstr
+#define tparm     p_tparm
+
+struct dbkey_descr
+{
+    enum dbkey_kind {dbk_simple, dbk_complex} kind;
+    DWORD_PTR   p1;
+    DWORD_PTR   p2;
+    DWORD_PTR   p3;
+};
+
+struct dbkey_pair
+{
+    const char*         string;
+    struct dbkey_descr  descr;
+};
+
+static struct dbkey_pair TERM_dbkey_init[] = {
+    {"kcud1", {dbk_complex, 0x50, 0x28, 0}},
+    {"kcuu1", {dbk_complex, 0x48, 0x26, 0}},
+    {"kcub1", {dbk_complex, 0x4b, 0x25, 0}},
+    {"kcuf1", {dbk_complex, 0x4d, 0x27, 0}},
+    {"khome", {dbk_complex, 0x47, 0x24, 0}},
+    {"kbs",   {dbk_simple,  0x7f, 0x00, 0}},
+    {"kf1",   {dbk_complex, 0x3b, 0x70, 0}},
+    {"kf2",   {dbk_complex, 0x3c, 0x71, 0}},
+    {"kf3",   {dbk_complex, 0x3d, 0x72, 0}},
+    {"kf4",   {dbk_complex, 0x3e, 0x73, 0}},
+    {"kf5",   {dbk_complex, 0x3f, 0x74, 0}},
+    {"kf6",   {dbk_complex, 0x40, 0x75, 0}},
+    {"kf7",   {dbk_complex, 0x41, 0x76, 0}},
+    {"kf8",   {dbk_complex, 0x42, 0x77, 0}},
+    {"kf9",   {dbk_complex, 0x43, 0x78, 0}},
+    {"kf10",  {dbk_complex, 0x44, 0x79, 0}},
+    {"kf11",  {dbk_complex, 0xd9, 0x7a, 0}},
+    {"kf12",  {dbk_complex, 0xda, 0x7b, 0}},
+    {"kdch1", {dbk_complex, 0x53, 0x2e, 0}},
+    {"kich1", {dbk_complex, 0x52, 0x2d, 0}},
+    {"knp",   {dbk_complex, 0x51, 0x22, 0}},
+    {"kpp",   {dbk_complex, 0x49, 0x21, 0}},
+    {"kcbt",  {dbk_simple,  0x09, 0x00, SHIFT_PRESSED}},
+
+    {"kend",  {dbk_complex, 0x4f, 0x23, 0}},
+    /* {"kmous", NULL, }, */
+    {"kDC",   {dbk_complex, 0x53, 0x2e, SHIFT_PRESSED}},
+    {"kEND",  {dbk_complex, 0x4f, 0x23, SHIFT_PRESSED}},
+    {"kHOM",  {dbk_complex, 0x47, 0x24, SHIFT_PRESSED}},
+    {"kIC",   {dbk_complex, 0x52, 0x2d, SHIFT_PRESSED}},
+    {"kLFT",  {dbk_complex, 0x4b, 0x25, SHIFT_PRESSED}},
+    {"kRIT",  {dbk_complex, 0x4d, 0x27, SHIFT_PRESSED}},
+
+    /* Still some keys to manage:
+       KEY_DL           KEY_IL          KEY_EIC         KEY_CLEAR               KEY_EOS
+       KEY_EOL          KEY_SF          KEY_SR          KEY_STAB                KEY_CTAB
+       KEY_CATAB        KEY_ENTER       KEY_SRESET      KEY_RESET               KEY_PRINT
+       KEY_LL           KEY_A1          KEY_A3          KEY_B2                  KEY_C1
+       KEY_C3           KEY_BEG         KEY_CANCEL      KEY_CLOSE               KEY_COMMAND
+       KEY_COPY         KEY_CREATE      KEY_EXIT        KEY_FIND                KEY_HELP
+       KEY_MARK         KEY_MESSAGE     KEY_MOVE        KEY_NEXT                KEY_OPEN
+       KEY_OPTIONS      KEY_PREVIOUS    KEY_REDO        KEY_REFERENCE           KEY_REFRESH
+       KEY_REPLACE      KEY_RESTART     KEY_RESUME      KEY_SAVE                KEY_SBEG
+       KEY_SCANCEL      KEY_SCOMMAND    KEY_SCOPY       KEY_SCREATE             KEY_RESIZE
+       KEY_SDL          KEY_SELECT      KEY_SEOL        KEY_SEXIT               KEY_SFIND
+       KEY_SHELP        KEY_SMESSAGE    KEY_SMOVE       KEY_SNEXT               KEY_SOPTIONS
+       KEY_SPREVIOUS    KEY_SPRINT      KEY_SREDO       KEY_SREPLACE            KEY_SRSUME
+       KEY_SSAVE        KEY_SSUSPEND    KEY_SUNDO       KEY_SUSPEND             KEY_UNDO
+    */
+};
+
+static struct dbkey_pair*       TERM_dbkey;
+static unsigned                 TERM_dbkey_size;
+static unsigned                 TERM_dbkey_index;
+
+static BOOL TERM_AddKeyDescr(const char* string, struct dbkey_descr* descr)
+{
+    if (!string) return FALSE;
+    if (!TERM_dbkey)
+    {
+        TERM_dbkey_size = 32;
+        TERM_dbkey = HeapAlloc(GetProcessHeap(), 0, TERM_dbkey_size * sizeof(struct dbkey_pair));
+        if (!TERM_dbkey) return FALSE;
+    }
+    if (TERM_dbkey_index == TERM_dbkey_size)
+    {
+        struct dbkey_pair*      new;
+
+        new = HeapReAlloc(GetProcessHeap(), 0, TERM_dbkey, (2 * TERM_dbkey_size) * sizeof(struct dbkey_pair));
+        if (!new) return FALSE;
+        TERM_dbkey = new;
+        TERM_dbkey_size *= 2;
+    }
+    TERM_dbkey[TERM_dbkey_index].string = string;
+    TERM_dbkey[TERM_dbkey_index].descr  = *descr;
+    TERM_dbkey_index++;
+    return TRUE;
+}
+
+static BOOL TERM_BuildKeyDB(void)
+{
+    unsigned i;
+    for (i = 0; i < sizeof(TERM_dbkey_init) / sizeof(TERM_dbkey_init[0]); i++)
+    {
+        if (!TERM_AddKeyDescr(tigetstr(TERM_dbkey_init[i].string), &TERM_dbkey_init[i].descr))
+            return FALSE;
+    }
+    return TRUE;
+}
 
 BOOL TERM_Init(void)
 {
     if (!TERM_bind_libcurses()) return FALSE;
     if (setupterm(NULL, 1 /* really ?? */, NULL) == -1) return FALSE;
+    TERM_BuildKeyDB();
+    /* set application key mode */
+    putp(tigetstr("smkx"));
     return TRUE;
 }
 
 BOOL TERM_Exit(void)
 {
+    /* put back the cursor key mode */
+    putp(tigetstr("rmkx"));
     return TRUE;
 }
+
+/* -1 not found, 0 cannot decide, > 0 found */
+int TERM_FillInputRecord(const char* in, size_t len, INPUT_RECORD* ir)
+{
+    unsigned            i;
+    struct dbkey_descr* found = NULL;
+
+    for (i = 0; i < TERM_dbkey_index; i++)
+    {
+        if (!memcmp(TERM_dbkey[i].string, in, len))
+        {
+            if (len < strlen(TERM_dbkey[i].string)) return 0;
+            if (found) return 0;
+            found = &TERM_dbkey[i].descr;
+        }
+    }
+    if (!found) return -1;
+    switch (found->kind)
+    {
+    case dbk_simple:
+        return TERM_FillSimpleChar(found->p1, ir);
+    case dbk_complex:
+        init_complex_char(&ir[0], 1, found->p1, found->p2, ENHANCED_KEY | found->p3);
+        init_complex_char(&ir[1], 0, found->p1, found->p2, ENHANCED_KEY | found->p3);
+        return 2;
+    }
+    return -1;
+}
+
 #else
 BOOL     TERM_Init(void) {return FALSE;}
 BOOL     TERM_Exit(void) {return FALSE;}
+int      TERM_FillInputRecord(const char* in, INPUT_RECORD* ir) {return -1;}
 #endif

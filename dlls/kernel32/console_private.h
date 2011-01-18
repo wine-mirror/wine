@@ -37,5 +37,6 @@ extern WCHAR*   CONSOLE_Readline(HANDLE, BOOL);
 extern BOOL     TERM_Init(void);
 extern BOOL     TERM_Exit(void);
 extern unsigned TERM_FillSimpleChar(unsigned real_inchar, INPUT_RECORD* ir);
+extern int      TERM_FillInputRecord(const char* in, size_t len, INPUT_RECORD* ir);
 
 #endif  /* __WINE_CONSOLE_PRIVATE_H */
