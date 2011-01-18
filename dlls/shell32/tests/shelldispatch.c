@@ -148,11 +148,9 @@ static void test_namespace(void)
     if (r == S_OK)
     {
         r = Folder_get_Title(folder, &title);
-        todo_wine
         ok(r == S_OK, "Folder::get_Title failed: %08x\n", r);
         if (r == S_OK)
         {
-            todo_wine
             ok(!lstrcmpW(title, winetestW), "bad title: %s\n",
              wine_dbgstr_w(title));
             SysFreeString(title);
@@ -172,11 +170,9 @@ static void test_namespace(void)
         if (r == S_OK)
         {
             r = Folder_get_Title(folder, &title);
-            todo_wine
             ok(r == S_OK, "Folder::get_Title failed: %08x\n", r);
             if (r == S_OK)
             {
-                todo_wine
                 ok(!lstrcmpW(title, winetestW), "bad title: %s\n",
                  wine_dbgstr_w(title));
                 SysFreeString(title);

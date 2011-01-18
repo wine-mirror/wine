@@ -180,10 +180,23 @@ static HRESULT WINAPI FolderImpl_Invoke(Folder3 *iface, DISPID dispIdMember,
 
 static HRESULT WINAPI FolderImpl_get_Title(Folder3 *iface, BSTR *pbs)
 {
-    FIXME("(%p,%p)\n", iface, pbs);
+    FolderImpl *This = impl_from_Folder(iface);
+    WCHAR *p;
+    int len;
+
+    TRACE("(%p,%p)\n", iface, pbs);
 
     *pbs = NULL;
-    return E_NOTIMPL;
+
+    if (V_VT(&This->dir) == VT_I4)
+    {
+        FIXME("special folder constants are not supported\n");
+        return E_NOTIMPL;
+    }
+    p = PathFindFileNameW(V_BSTR(&This->dir));
+    len = lstrlenW(p);
+    *pbs = SysAllocStringLen(p, p[len - 1] == '\\' ? len - 1 : len);
+    return *pbs ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI FolderImpl_get_Application(Folder3 *iface,
