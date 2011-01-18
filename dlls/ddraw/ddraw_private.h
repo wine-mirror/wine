@@ -103,7 +103,7 @@ struct IDirectDrawImpl
     const IDirectDrawVtbl *IDirectDraw_vtbl;
     const IDirect3D7Vtbl *IDirect3D7_vtbl;
     const IDirect3D3Vtbl *IDirect3D3_vtbl;
-    const IDirect3D2Vtbl *IDirect3D2_vtbl;
+    IDirect3D2 IDirect3D2_iface;
     IDirect3D IDirect3D_iface;
     const IWineD3DDeviceParentVtbl *device_parent_vtbl;
 
@@ -183,11 +183,6 @@ void DDRAW_Convert_DDDEVICEIDENTIFIER_2_To_1(const DDDEVICEIDENTIFIER2 *pIn, DDD
 HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf,
         DDSURFACEDESC2 *desc, void *Context) DECLSPEC_HIDDEN;
 IWineD3DVertexDeclaration *ddraw_find_decl(IDirectDrawImpl *This, DWORD fvf) DECLSPEC_HIDDEN;
-
-static inline IDirectDrawImpl *ddraw_from_d3d2(IDirect3D2 *iface)
-{
-    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirect3D2_vtbl));
-}
 
 static inline IDirectDrawImpl *ddraw_from_d3d3(IDirect3D3 *iface)
 {
