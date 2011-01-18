@@ -759,6 +759,8 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
                             ptr += itemDecoded;
                         }
                     }
+                    if (!ret && (dwFlags & CRYPT_DECODE_ALLOC_FLAG))
+                        CRYPT_FreeSpace(pDecodePara, pvStructInfo);
                 }
             }
             if (itemSizes != &itemSize)
@@ -1655,6 +1657,8 @@ static BOOL WINAPI CRYPT_AsnDecodeNameValue(DWORD dwCertEncodingType,
                 ret = CRYPT_AsnDecodeNameValueInternal( pbEncoded, cbEncoded,
                  dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, pvStructInfo,
                  pcbStructInfo, NULL);
+                if (!ret && (dwFlags & CRYPT_DECODE_ALLOC_FLAG))
+                    CRYPT_FreeSpace(pDecodePara, value);
             }
         }
     }
@@ -1836,6 +1840,8 @@ static BOOL WINAPI CRYPT_AsnDecodeUnicodeNameValue(DWORD dwCertEncodingType,
                 ret = CRYPT_AsnDecodeUnicodeNameValueInternal(pbEncoded,
                  cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, pvStructInfo,
                  pcbStructInfo, NULL);
+                if (!ret && (dwFlags & CRYPT_DECODE_ALLOC_FLAG))
+                    CRYPT_FreeSpace(pDecodePara, value);
             }
         }
     }
@@ -1930,6 +1936,8 @@ static BOOL WINAPI CRYPT_AsnDecodeName(DWORD dwCertEncodingType,
                 ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded,
                  dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, pvStructInfo,
                  &bytesNeeded, NULL);
+                if (!ret && (dwFlags & CRYPT_DECODE_ALLOC_FLAG))
+                    CRYPT_FreeSpace(pDecodePara, info);
             }
         }
     }
@@ -2025,6 +2033,8 @@ static BOOL WINAPI CRYPT_AsnDecodeUnicodeName(DWORD dwCertEncodingType,
                 ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded,
                  dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, pvStructInfo,
                  &bytesNeeded, NULL);
+                if (!ret && (dwFlags & CRYPT_DECODE_ALLOC_FLAG))
+                    CRYPT_FreeSpace(pDecodePara, info);
             }
         }
     }
@@ -2685,6 +2695,8 @@ static BOOL WINAPI CRYPT_AsnDecodePolicyQualifierUserNotice(
                 ret = CRYPT_AsnDecodePolicyQualifierUserNoticeInternal(
                  pbEncoded, cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG,
                  pvStructInfo, &bytesNeeded, NULL);
+                if (!ret && (dwFlags & CRYPT_DECODE_ALLOC_FLAG))
+                    CRYPT_FreeSpace(pDecodePara, notice);
             }
         }
     }
@@ -2774,6 +2786,8 @@ static BOOL WINAPI CRYPT_AsnDecodePKCSAttribute(DWORD dwCertEncodingType,
                 ret = CRYPT_AsnDecodePKCSAttributeInternal(pbEncoded, cbEncoded,
                  dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, pvStructInfo, &bytesNeeded,
                  NULL);
+                if (!ret && (dwFlags & CRYPT_DECODE_ALLOC_FLAG))
+                    CRYPT_FreeSpace(pDecodePara, attr);
             }
         }
     }
@@ -2909,6 +2923,8 @@ static BOOL WINAPI CRYPT_AsnDecodePubKeyInfo(DWORD dwCertEncodingType,
                 ret = CRYPT_AsnDecodePubKeyInfoInternal(pbEncoded, cbEncoded,
                  dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, pvStructInfo,
                  &bytesNeeded, NULL);
+                if (!ret && (dwFlags & CRYPT_DECODE_ALLOC_FLAG))
+                    CRYPT_FreeSpace(pDecodePara, info);
             }
         }
     }
@@ -3335,6 +3351,8 @@ static BOOL WINAPI CRYPT_AsnDecodePKCSContentInfo(DWORD dwCertEncodingType,
                 ret = CRYPT_AsnDecodePKCSContentInfoInternal(pbEncoded,
                  cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, pvStructInfo,
                  pcbStructInfo, NULL);
+                if (!ret && (dwFlags & CRYPT_DECODE_ALLOC_FLAG))
+                    CRYPT_FreeSpace(pDecodePara, info);
             }
         }
     }
@@ -3404,6 +3422,8 @@ static BOOL WINAPI CRYPT_AsnDecodeAltName(DWORD dwCertEncodingType,
                 ret = CRYPT_AsnDecodeAltNameInternal(pbEncoded, cbEncoded,
                  dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, pvStructInfo,
                  &bytesNeeded, NULL);
+                if (!ret && (dwFlags & CRYPT_DECODE_ALLOC_FLAG))
+                    CRYPT_FreeSpace(pDecodePara, name);
             }
         }
     }
@@ -3992,6 +4012,8 @@ static BOOL WINAPI CRYPT_AsnDecodeOctets(DWORD dwCertEncodingType,
                 ret = CRYPT_AsnDecodeOctetsInternal(pbEncoded, cbEncoded,
                  dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, pvStructInfo,
                  &bytesNeeded, NULL);
+                if (!ret && (dwFlags & CRYPT_DECODE_ALLOC_FLAG))
+                    CRYPT_FreeSpace(pDecodePara, blob);
             }
         }
     }
@@ -4099,6 +4121,8 @@ static BOOL WINAPI CRYPT_AsnDecodeBits(DWORD dwCertEncodingType,
                 ret = CRYPT_AsnDecodeBitsInternal(pbEncoded, cbEncoded,
                  dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, pvStructInfo,
                  &bytesNeeded, NULL);
+                if (!ret && (dwFlags & CRYPT_DECODE_ALLOC_FLAG))
+                    CRYPT_FreeSpace(pDecodePara, blob);
             }
         }
     }
@@ -4189,6 +4213,8 @@ static BOOL WINAPI CRYPT_AsnDecodeInt(DWORD dwCertEncodingType,
                 ret = CRYPT_AsnDecodeIntInternal(pbEncoded, cbEncoded,
                  dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, pvStructInfo,
                  &bytesNeeded, NULL);
+                if (!ret && (dwFlags & CRYPT_DECODE_ALLOC_FLAG))
+                    CRYPT_FreeSpace(pDecodePara, pvStructInfo);
             }
         }
     }
@@ -4280,6 +4306,8 @@ static BOOL WINAPI CRYPT_AsnDecodeInteger(DWORD dwCertEncodingType,
                 ret = CRYPT_AsnDecodeIntegerInternal(pbEncoded, cbEncoded,
                  dwFlags & ~CRYPT_ENCODE_ALLOC_FLAG, pvStructInfo,
                  &bytesNeeded, NULL);
+                if (!ret && (dwFlags & CRYPT_DECODE_ALLOC_FLAG))
+                    CRYPT_FreeSpace(pDecodePara, blob);
             }
         }
     }
@@ -4379,6 +4407,8 @@ static BOOL WINAPI CRYPT_AsnDecodeUnsignedInteger(DWORD dwCertEncodingType,
                 ret = CRYPT_AsnDecodeUnsignedIntegerInternal(pbEncoded,
                  cbEncoded, dwFlags & ~CRYPT_ENCODE_ALLOC_FLAG, pvStructInfo,
                  &bytesNeeded, NULL);
+                if (!ret && (dwFlags & CRYPT_DECODE_ALLOC_FLAG))
+                    CRYPT_FreeSpace(pDecodePara, blob);
             }
         }
     }
@@ -4629,6 +4659,8 @@ static BOOL WINAPI CRYPT_AsnDecodeUtcTime(DWORD dwCertEncodingType,
                 ret = CRYPT_AsnDecodeUtcTimeInternal(pbEncoded, cbEncoded,
                  dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, pvStructInfo,
                  &bytesNeeded, NULL);
+                if (!ret && (dwFlags & CRYPT_DECODE_ALLOC_FLAG))
+                    CRYPT_FreeSpace(pDecodePara, pvStructInfo);
             }
         }
     }
@@ -4758,6 +4790,8 @@ static BOOL WINAPI CRYPT_AsnDecodeChoiceOfTime(DWORD dwCertEncodingType,
                 ret = CRYPT_AsnDecodeChoiceOfTimeInternal(pbEncoded, cbEncoded,
                  dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, pvStructInfo,
                  &bytesNeeded, NULL);
+                if (!ret && (dwFlags & CRYPT_DECODE_ALLOC_FLAG))
+                    CRYPT_FreeSpace(pDecodePara, pvStructInfo);
             }
         }
     }
@@ -4856,6 +4890,8 @@ static BOOL WINAPI CRYPT_AsnDecodeSequenceOfAny(DWORD dwCertEncodingType,
                                 i++;
                             }
                         }
+                        if (!ret && (dwFlags & CRYPT_DECODE_ALLOC_FLAG))
+                            CRYPT_FreeSpace(pDecodePara, seq);
                     }
                 }
             }
@@ -5333,6 +5369,8 @@ static BOOL WINAPI CRYPT_AsnDecodePKCSSignerInfo(DWORD dwCertEncodingType,
                 ret = CRYPT_AsnDecodePKCSSignerInfoInternal(pbEncoded,
                  cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, pvStructInfo,
                  pcbStructInfo, NULL);
+                if (!ret && (dwFlags & CRYPT_DECODE_ALLOC_FLAG))
+                    CRYPT_FreeSpace(pDecodePara, info);
             }
         }
     }
@@ -5497,6 +5535,8 @@ static BOOL WINAPI CRYPT_AsnDecodeCMSSignerInfo(DWORD dwCertEncodingType,
                 ret = CRYPT_AsnDecodeCMSSignerInfoInternal(pbEncoded,
                  cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, pvStructInfo,
                  pcbStructInfo, NULL);
+                if (!ret && (dwFlags & CRYPT_DECODE_ALLOC_FLAG))
+                    CRYPT_FreeSpace(pDecodePara, info);
             }
         }
     }
@@ -6012,9 +6052,13 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
                  pbEncoded, cbEncoded, dwFlags, NULL, pcbStructInfo);
                 if (ret && (ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
                  pvStructInfo, pcbStructInfo, *pcbStructInfo)))
+                {
                     ret = pCryptDecodeObject(dwCertEncodingType,
                      lpszStructType, pbEncoded, cbEncoded, dwFlags,
                      *(BYTE **)pvStructInfo, pcbStructInfo);
+                    if (!ret)
+                        CRYPT_FreeSpace(pDecodePara, *(BYTE **)pvStructInfo);
+                }
             }
             else
                 ret = pCryptDecodeObject(dwCertEncodingType, lpszStructType,
