@@ -67,6 +67,7 @@ typedef struct WCEL_Context {
 	                        error : 1,	/* to 1 when an error occurred in the editing */
                                 can_wrap : 1,   /* to 1 when multi-line edition can take place */
                                 shall_echo : 1, /* to 1 when characters should be echo:ed when keyed-in */
+                                insert : 1,     /* to 1 when new characters are inserted (otherwise overwrite) */
                                 can_pos_cursor : 1; /* to 1 when console can (re)position cursor */
     unsigned			histSize;
     unsigned			histPos;
@@ -298,16 +299,29 @@ static void WCEL_DeleteString(WCEL_Context* ctx, int beg, int end)
 
 static void WCEL_InsertString(WCEL_Context* ctx, const WCHAR* str)
 {
-    size_t	len = lstrlenW(str);
+    size_t	len = lstrlenW(str), updtlen;
 
-    if (!len || !WCEL_Grow(ctx, len)) return;
-    if (ctx->len > ctx->ofs)
-	memmove(&ctx->line[ctx->ofs + len], &ctx->line[ctx->ofs], (ctx->len - ctx->ofs) * sizeof(WCHAR));
+    if (!len) return;
+    if (ctx->insert)
+    {
+        if (!WCEL_Grow(ctx, len)) return;
+        if (ctx->len > ctx->ofs)
+            memmove(&ctx->line[ctx->ofs + len], &ctx->line[ctx->ofs], (ctx->len - ctx->ofs) * sizeof(WCHAR));
+        ctx->len += len;
+        updtlen = ctx->len - ctx->ofs;
+    }
+    else
+    {
+        if (ctx->ofs + len > ctx->len)
+        {
+            if (!WCEL_Grow(ctx, (ctx->ofs + len) - ctx->len)) return;
+            ctx->len = ctx->ofs + len;
+        }
+        updtlen = len;
+    }
     memcpy(&ctx->line[ctx->ofs], str, len * sizeof(WCHAR));
-    ctx->len += len;
     ctx->line[ctx->len] = 0;
-    WCEL_Update(ctx, ctx->ofs, ctx->len - ctx->ofs);
-
+    WCEL_Update(ctx, ctx->ofs, updtlen);
     ctx->ofs += len;
 }
 
@@ -738,6 +752,30 @@ static void WCEL_RepeatCount(WCEL_Context* ctx)
 #endif
 }
 
+static void WCEL_ToggleInsert(WCEL_Context* ctx)
+{
+    DWORD               mode;
+    CONSOLE_CURSOR_INFO cinfo;
+
+    if (GetConsoleMode(ctx->hConIn, &mode) && GetConsoleCursorInfo(ctx->hConOut, &cinfo))
+    {
+        if ((mode & (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS)) == (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS))
+        {
+            mode &= ~ENABLE_INSERT_MODE;
+            cinfo.dwSize = 100;
+            ctx->insert = FALSE;
+        }
+        else
+        {
+            mode |= ENABLE_INSERT_MODE | ENABLE_EXTENDED_FLAGS;
+            cinfo.dwSize = 25;
+            ctx->insert = TRUE;
+        }
+        SetConsoleMode(ctx->hConIn, mode);
+        SetConsoleCursorInfo(ctx->hConOut, &cinfo);
+    }
+}
+
 /* ====================================================================
  *
  * 		Key Maps
@@ -750,6 +788,7 @@ static const KeyEntry StdKeyMap[] =
     {/*BACK*/0x08,	WCEL_DeletePrevChar 	},
     {/*RETURN*/0x0d,	WCEL_Done		},
     {/*DEL*/127,	WCEL_DeleteCurrChar 	},
+    {/*VK_INSERT*/0x2d, WCEL_ToggleInsert 	},
     {	0,		NULL			}
 };
 
@@ -834,6 +873,7 @@ static const KeyEntry Win32StdKeyMap[] =
     {/*VK_UP*/   0x26, 	WCEL_MoveToPrevHist 	},
     {/*VK_DOWN*/ 0x28,	WCEL_MoveToNextHist	},
     {/*VK_DEL*/  0x2e,	WCEL_DeleteCurrChar	},
+    {/*VK_INSERT*/0x2d, WCEL_ToggleInsert 	},
     {/*VK_F8*/   0x77,	WCEL_FindPrevInHist	},
     {	0,		NULL 			}
 };
@@ -870,7 +910,7 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn, BOOL can_pos_cursor)
     const KeyEntry*	ke;
     unsigned		ofs;
     void		(*func)(struct WCEL_Context* ctx);
-    DWORD               ks;
+    DWORD               mode, ks;
     int                 use_emacs;
 
     memset(&ctx, 0, sizeof(ctx));
@@ -884,8 +924,11 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn, BOOL can_pos_cursor)
 				    OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE ||
 	!GetConsoleScreenBufferInfo(ctx.hConOut, &ctx.csbi))
 	return NULL;
-    ctx.shall_echo = (GetConsoleMode(hConsoleIn, &ks) && (ks & ENABLE_ECHO_INPUT)) ? 1 : 0;
-    ctx.can_wrap = (GetConsoleMode(ctx.hConOut, &ks) && (ks & ENABLE_WRAP_AT_EOL_OUTPUT)) ? 1 : 0;
+    if (!GetConsoleMode(hConsoleIn, &mode)) mode = 0;
+    ctx.shall_echo = (mode & ENABLE_ECHO_INPUT) ? 1 : 0;
+    ctx.insert = (mode & (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS)) == (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS) ? 1 : 0;
+    if (!GetConsoleMode(ctx.hConOut, &mode)) mode = 0;
+    ctx.can_wrap = (mode & ENABLE_WRAP_AT_EOL_OUTPUT) ? 1 : 0;
     ctx.can_pos_cursor = can_pos_cursor;
 
     if (!WCEL_Grow(&ctx, 1))
