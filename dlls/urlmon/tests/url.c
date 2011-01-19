@@ -246,6 +246,25 @@ static const char *debugstr_guid(REFIID riid)
     return buf;
 }
 
+static BOOL proxy_active(void)
+{
+    HKEY internet_settings;
+    DWORD proxy_enable;
+    DWORD size;
+
+    if (RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
+                      0, KEY_QUERY_VALUE, &internet_settings) != ERROR_SUCCESS)
+        return FALSE;
+
+    size = sizeof(DWORD);
+    if (RegQueryValueExA(internet_settings, "ProxyEnable", NULL, NULL, (LPBYTE) &proxy_enable, &size) != ERROR_SUCCESS)
+        proxy_enable = 0;
+
+    RegCloseKey(internet_settings);
+
+    return proxy_enable != 0;
+}
+
 static BOOL is_urlmon_protocol(int prot)
 {
     return prot == FILE_TEST || prot == HTTP_TEST || prot == HTTPS_TEST || prot == FTP_TEST || prot == MK_TEST;
@@ -2799,8 +2818,16 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
                 CHECK_CALLED(GetRootSecurityId);
             }
             if(http_is_first || (test_protocol == HTTPS_TEST && !(flags & BINDTEST_INVALID_CN))) {
-                CHECK_CALLED(OnProgress_FINDINGRESOURCE);
-                CHECK_CALLED(OnProgress_CONNECTING);
+                if (! proxy_active())
+                {
+                    CHECK_CALLED(OnProgress_FINDINGRESOURCE);
+                    CHECK_CALLED(OnProgress_CONNECTING);
+                }
+                else
+                {
+                    CLEAR_CALLED(OnProgress_FINDINGRESOURCE);
+                    CLEAR_CALLED(OnProgress_CONNECTING);
+                }
             }else todo_wine {
                 CHECK_NOT_CALLED(OnProgress_FINDINGRESOURCE);
                 /* IE7 does call this */

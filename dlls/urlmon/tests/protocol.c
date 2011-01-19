@@ -221,6 +221,25 @@ static int strcmp_ww(LPCWSTR strw1, LPCWSTR strw2)
     return lstrcmpA(stra1, stra2);
 }
 
+static BOOL proxy_active(void)
+{
+    HKEY internet_settings;
+    DWORD proxy_enable;
+    DWORD size;
+
+    if (RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
+                      0, KEY_QUERY_VALUE, &internet_settings) != ERROR_SUCCESS)
+        return FALSE;
+
+    size = sizeof(DWORD);
+    if (RegQueryValueExA(internet_settings, "ProxyEnable", NULL, NULL, (LPBYTE) &proxy_enable, &size) != ERROR_SUCCESS)
+        proxy_enable = 0;
+
+    RegCloseKey(internet_settings);
+
+    return proxy_enable != 0;
+}
+
 static HRESULT WINAPI HttpSecurity_QueryInterface(IHttpSecurity *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IUnknown, riid)
@@ -581,7 +600,10 @@ static void call_continue(PROTOCOLDATA *protocol_data)
                 CLEAR_CALLED(ReportProgress_CONNECTING);
                 CLEAR_CALLED(ReportProgress_PROXYDETECTING);
             }else if(test_redirect) {
-                CHECK_CALLED(ReportProgress_FINDINGRESOURCE);
+                if (! proxy_active())
+                    CHECK_CALLED(ReportProgress_FINDINGRESOURCE);
+                else
+                    CLEAR_CALLED(ReportProgress_FINDINGRESOURCE);
             }else todo_wine {
                 CHECK_NOT_CALLED(ReportProgress_FINDINGRESOURCE);
                 /* IE7 does call this */
