@@ -1859,32 +1859,10 @@ static void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context *conte
     This->frag_pipe->enable_extension(FALSE);
 }
 
-/*****************************************************************************
- * findThreadContextForSwapChain
- *
- * Searches a swapchain for all contexts and picks one for the thread tid.
- * If none can be found the swapchain is requested to create a new context
- *
- *****************************************************************************/
-static struct wined3d_context *findThreadContextForSwapChain(struct IWineD3DSwapChainImpl *swapchain, DWORD tid)
-{
-    unsigned int i;
-
-    for (i = 0; i < swapchain->num_contexts; ++i)
-    {
-        if (swapchain->context[i]->tid == tid)
-            return swapchain->context[i];
-    }
-
-    /* Create a new context for the thread */
-    return swapchain_create_context_for_thread(swapchain);
-}
-
 /* Do not call while under the GL lock. */
 static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target)
 {
     struct wined3d_context *current_context = context_get_current();
-    DWORD tid = GetCurrentThreadId();
     struct wined3d_context *context;
 
     if (current_context && current_context->destroyed) current_context = NULL;
@@ -1915,27 +1893,18 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
     {
         TRACE("Rendering onscreen\n");
 
-        context = findThreadContextForSwapChain(target->container.u.swapchain, tid);
+        context = swapchain_get_context(target->container.u.swapchain);
     }
     else
     {
         TRACE("Rendering offscreen\n");
 
-        /* Stay with the currently active context. */
+        /* Stay with the current context if possible. Otherwise use the
+         * context for the primary swapchain. */
         if (current_context && current_context->swapchain->device == This)
-        {
             context = current_context;
-        }
         else
-        {
-            /* This may happen if the app jumps straight into offscreen rendering
-             * Start using the context of the primary swapchain. tid == 0 is no problem
-             * for findThreadContextForSwapChain.
-             *
-             * Can also happen on thread switches - in that case findThreadContextForSwapChain
-             * is perfect to call. */
-            context = findThreadContextForSwapChain((IWineD3DSwapChainImpl *)This->swapchains[0], tid);
-        }
+            context = swapchain_get_context((IWineD3DSwapChainImpl *)This->swapchains[0]);
     }
 
     context_validate(context);

@@ -783,7 +783,7 @@ err:
 }
 
 /* Do not call while under the GL lock. */
-struct wined3d_context *swapchain_create_context_for_thread(IWineD3DSwapChainImpl *swapchain)
+static struct wined3d_context *swapchain_create_context(struct IWineD3DSwapChainImpl *swapchain)
 {
     struct wined3d_context **newArray;
     struct wined3d_context *ctx;
@@ -811,6 +811,21 @@ struct wined3d_context *swapchain_create_context_for_thread(IWineD3DSwapChainImp
 
     TRACE("Returning context %p\n", ctx);
     return ctx;
+}
+
+struct wined3d_context *swapchain_get_context(struct IWineD3DSwapChainImpl *swapchain)
+{
+    DWORD tid = GetCurrentThreadId();
+    unsigned int i;
+
+    for (i = 0; i < swapchain->num_contexts; ++i)
+    {
+        if (swapchain->context[i]->tid == tid)
+            return swapchain->context[i];
+    }
+
+    /* Create a new context for the thread */
+    return swapchain_create_context(swapchain);
 }
 
 void get_drawable_size_swapchain(struct wined3d_context *context, UINT *width, UINT *height)
