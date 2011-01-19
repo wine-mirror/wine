@@ -576,8 +576,6 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   const statement_t *stmt;
   int first_func = 1;
 
-  /* FIXME: check for [oleautomation], shouldn't generate proxies/stubs if specified */
-
   STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface)) {
     var_t *func = stmt->u.var;
     if (first_func) {
@@ -701,7 +699,11 @@ static int does_any_iface(const statement_list_t *stmts, type_pred_t pred)
 
 int need_proxy(const type_t *iface)
 {
-  return is_object(iface) && !is_local(iface->attrs);
+    if (!is_object( iface )) return 0;
+    if (is_local( iface->attrs )) return 0;
+    if (is_attr( iface->attrs, ATTR_OLEAUTOMATION )) return 0;
+    if (is_attr( iface->attrs, ATTR_DISPINTERFACE )) return 0;
+    return 1;
 }
 
 int need_stub(const type_t *iface)
