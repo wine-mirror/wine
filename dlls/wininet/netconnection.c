@@ -368,7 +368,7 @@ static int netconn_secure_verify(int preverify_ok, X509_STORE_CTX *ctx)
 
 DWORD NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 {
-    connection->useSSL = FALSE;
+    connection->useSSL = useSSL;
     connection->socketFD = -1;
     if (useSSL)
     {
@@ -544,10 +544,7 @@ void NETCON_unload(void)
 
 BOOL NETCON_connected(WININET_NETCONNECTION *connection)
 {
-    if (connection->socketFD == -1)
-        return FALSE;
-    else
-        return TRUE;
+    return connection->socketFD != -1;
 }
 
 /* translate a unix error code into a winsock one */
@@ -625,7 +622,7 @@ DWORD NETCON_create(WININET_NETCONNECTION *connection, int domain,
 	      int type, int protocol)
 {
 #ifdef SONAME_LIBSSL
-    if (connection->useSSL)
+    if (connection->ssl_s)
         return ERROR_NOT_SUPPORTED;
 #endif
 
@@ -647,13 +644,11 @@ DWORD NETCON_close(WININET_NETCONNECTION *connection)
     if (!NETCON_connected(connection)) return ERROR_SUCCESS;
 
 #ifdef SONAME_LIBSSL
-    if (connection->useSSL)
+    if (connection->ssl_s)
     {
         pSSL_shutdown(connection->ssl_s);
         pSSL_free(connection->ssl_s);
         connection->ssl_s = NULL;
-
-        connection->useSSL = FALSE;
     }
 #endif
 
@@ -671,26 +666,26 @@ DWORD NETCON_close(WININET_NETCONNECTION *connection)
  */
 DWORD NETCON_secure_connect(WININET_NETCONNECTION *connection, LPWSTR hostname)
 {
+    void *ssl_s;
     DWORD res = ERROR_NOT_SUPPORTED;
 
 #ifdef SONAME_LIBSSL
     /* can't connect if we are already connected */
-    if (connection->useSSL)
+    if (connection->ssl_s)
     {
         ERR("already connected\n");
         return ERROR_INTERNET_CANNOT_CONNECT;
     }
 
-    connection->ssl_s = pSSL_new(ctx);
-    if (!connection->ssl_s)
+    ssl_s = pSSL_new(ctx);
+    if (!ssl_s)
     {
         ERR("SSL_new failed: %s\n",
             pERR_error_string(pERR_get_error(), 0));
-        res = ERROR_OUTOFMEMORY;
-        goto fail;
+        return ERROR_OUTOFMEMORY;
     }
 
-    if (!pSSL_set_fd(connection->ssl_s, connection->socketFD))
+    if (!pSSL_set_fd(ssl_s, connection->socketFD))
     {
         ERR("SSL_set_fd failed: %s\n",
             pERR_error_string(pERR_get_error(), 0));
@@ -698,38 +693,37 @@ DWORD NETCON_secure_connect(WININET_NETCONNECTION *connection, LPWSTR hostname)
         goto fail;
     }
 
-    if (!pSSL_set_ex_data(connection->ssl_s, hostname_idx, hostname))
+    if (!pSSL_set_ex_data(ssl_s, hostname_idx, hostname))
     {
         ERR("SSL_set_ex_data failed: %s\n",
             pERR_error_string(pERR_get_error(), 0));
         res = ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
         goto fail;
     }
-    if (!pSSL_set_ex_data(connection->ssl_s, conn_idx, connection))
+    if (!pSSL_set_ex_data(ssl_s, conn_idx, connection))
     {
         ERR("SSL_set_ex_data failed: %s\n",
             pERR_error_string(pERR_get_error(), 0));
         res = ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
         goto fail;
     }
-    if (pSSL_connect(connection->ssl_s) <= 0)
+    if (pSSL_connect(ssl_s) <= 0)
     {
-        res = (DWORD_PTR)pSSL_get_ex_data(connection->ssl_s, error_idx);
+        res = (DWORD_PTR)pSSL_get_ex_data(ssl_s, error_idx);
         if (!res)
             res = ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
         ERR("SSL_connect failed: %d\n", res);
         goto fail;
     }
 
-    connection->useSSL = TRUE;
+    connection->ssl_s = ssl_s;
     return ERROR_SUCCESS;
 
 fail:
-    if (connection->ssl_s)
+    if (ssl_s)
     {
-        pSSL_shutdown(connection->ssl_s);
-        pSSL_free(connection->ssl_s);
-        connection->ssl_s = NULL;
+        pSSL_shutdown(ssl_s);
+        pSSL_free(ssl_s);
     }
 #endif
     return res;
@@ -776,6 +770,10 @@ DWORD NETCON_send(WININET_NETCONNECTION *connection, const void *msg, size_t len
     else
     {
 #ifdef SONAME_LIBSSL
+        if(!connection->ssl_s) {
+            FIXME("not connected\n");
+            return ERROR_NOT_SUPPORTED;
+        }
 	if (flags)
             FIXME("SSL_write doesn't support any flags (%08x)\n", flags);
 	*sent = pSSL_write(connection->ssl_s, msg, len);
@@ -810,6 +808,10 @@ DWORD NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int 
     else
     {
 #ifdef SONAME_LIBSSL
+        if(!connection->ssl_s) {
+            FIXME("not connected\n");
+            return ERROR_NOT_SUPPORTED;
+        }
 	*recvd = pSSL_read(connection->ssl_s, buf, len);
 
         /* Check if EOF was received */
@@ -852,7 +854,7 @@ BOOL NETCON_query_data_available(WININET_NETCONNECTION *connection, DWORD *avail
     else
     {
 #ifdef SONAME_LIBSSL
-        *available = pSSL_pending(connection->ssl_s);
+        *available = connection->ssl_s ? pSSL_pending(connection->ssl_s) : 0;
 #endif
     }
     return TRUE;
@@ -864,7 +866,7 @@ LPCVOID NETCON_GetCert(WININET_NETCONNECTION *connection)
     X509* cert;
     LPCVOID r = NULL;
 
-    if (!connection->useSSL)
+    if (!connection->ssl_s)
         return NULL;
 
     cert = pSSL_get_peer_certificate(connection->ssl_s);
@@ -885,7 +887,7 @@ int NETCON_GetCipherStrength(WININET_NETCONNECTION *connection)
 #endif
     int bits = 0;
 
-    if (!connection->useSSL)
+    if (!connection->ssl_s)
         return 0;
     cipher = pSSL_get_current_cipher(connection->ssl_s);
     if (!cipher)
