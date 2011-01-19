@@ -156,7 +156,7 @@ IDirect3DDeviceImpl_7_QueryInterface(IDirect3DDevice7 *iface,
     }
     else if ( IsEqualGUID( &IID_IDirect3D7 , refiid ) )
     {
-        *obj = &This->ddraw->IDirect3D7_vtbl;
+        *obj = &This->ddraw->IDirect3D7_iface;
         TRACE("(%p) Returning IDirect3D7 interface at %p\n", This, *obj);
     }
 
@@ -1720,7 +1720,7 @@ IDirect3DDeviceImpl_7_GetDirect3D(IDirect3DDevice7 *iface,
     if(!Direct3D7)
         return DDERR_INVALIDPARAMS;
 
-    *Direct3D7 = (IDirect3D7 *)&This->ddraw->IDirect3D7_vtbl;
+    *Direct3D7 = &This->ddraw->IDirect3D7_iface;
     IDirect3D7_AddRef(*Direct3D7);
 
     TRACE(" returning interface %p\n", *Direct3D7);

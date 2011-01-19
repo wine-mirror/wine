@@ -102,7 +102,8 @@ static HRESULT WINAPI ddraw_surface7_QueryInterface(IDirectDrawSurface7 *iface, 
         IDirect3DDevice7 *d3d;
 
         /* Call into IDirect3D7 for creation */
-        IDirect3D7_CreateDevice((IDirect3D7 *)&This->ddraw->IDirect3D7_vtbl, riid, (IDirectDrawSurface7 *)This, &d3d);
+        IDirect3D7_CreateDevice(&This->ddraw->IDirect3D7_iface, riid, (IDirectDrawSurface7 *)This,
+                &d3d);
 
         if (d3d)
         {

@@ -81,6 +81,11 @@ static inline IDirectDrawImpl *impl_from_IDirect3D3(IDirect3D3 *iface)
     return CONTAINING_RECORD(iface, IDirectDrawImpl, IDirect3D3_iface);
 }
 
+static inline IDirectDrawImpl *impl_from_IDirect3D7(IDirect3D7 *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectDrawImpl, IDirect3D7_iface);
+}
+
 /*****************************************************************************
  * IUnknown Methods
  *****************************************************************************/
@@ -207,7 +212,7 @@ static HRESULT WINAPI ddraw7_QueryInterface(IDirectDraw7 *iface, REFIID refiid, 
         else if(IsEqualGUID( &IID_IDirect3D7  , refiid ))
         {
             This->d3dversion = 7;
-            *obj = &This->IDirect3D7_vtbl;
+            *obj = &This->IDirect3D7_iface;
             TRACE(" returning Direct3D7 interface at %p.\n", *obj);
         }
     }
@@ -259,9 +264,11 @@ static HRESULT WINAPI ddraw1_QueryInterface(IDirectDraw *iface, REFIID riid, voi
 
 static HRESULT WINAPI d3d7_QueryInterface(IDirect3D7 *iface, REFIID riid, void **object)
 {
+    IDirectDrawImpl *This = impl_from_IDirect3D7(iface);
+
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
-    return ddraw7_QueryInterface((IDirectDraw7 *)ddraw_from_d3d7(iface), riid, object);
+    return ddraw7_QueryInterface((IDirectDraw7 *)This, riid, object);
 }
 
 static HRESULT WINAPI d3d3_QueryInterface(IDirect3D3 *iface, REFIID riid, void **object)
@@ -371,9 +378,11 @@ static ULONG WINAPI ddraw1_AddRef(IDirectDraw *iface)
 
 static ULONG WINAPI d3d7_AddRef(IDirect3D7 *iface)
 {
+    IDirectDrawImpl *This = impl_from_IDirect3D7(iface);
+
     TRACE("iface %p.\n", iface);
 
-    return ddraw7_AddRef((IDirectDraw7 *)ddraw_from_d3d7(iface));
+    return ddraw7_AddRef((IDirectDraw7 *)This);
 }
 
 static ULONG WINAPI d3d3_AddRef(IDirect3D3 *iface)
@@ -512,9 +521,11 @@ static ULONG WINAPI ddraw1_Release(IDirectDraw *iface)
 
 static ULONG WINAPI d3d7_Release(IDirect3D7 *iface)
 {
+    IDirectDrawImpl *This = impl_from_IDirect3D7(iface);
+
     TRACE("iface %p.\n", iface);
 
-    return ddraw7_Release((IDirectDraw7 *)ddraw_from_d3d7(iface));
+    return ddraw7_Release((IDirectDraw7 *)This);
 }
 
 static ULONG WINAPI d3d3_Release(IDirect3D3 *iface)
@@ -4142,7 +4153,7 @@ static HRESULT WINAPI d3d7_EnumDevices(IDirect3D7 *iface, LPD3DENUMDEVICESCALLBA
     char interface_name_rgb[] = "WINE Direct3D7 RGB Software Emulation using WineD3D";
     char device_name_rgb[] = "Wine D3D7 RGB";
 
-    IDirectDrawImpl *ddraw = ddraw_from_d3d7(iface);
+    IDirectDrawImpl *This = impl_from_IDirect3D7(iface);
     D3DDEVICEDESC7 device_desc7;
     D3DDEVICEDESC device_desc1;
     HRESULT hr;
@@ -4151,7 +4162,7 @@ static HRESULT WINAPI d3d7_EnumDevices(IDirect3D7 *iface, LPD3DENUMDEVICESCALLBA
 
     EnterCriticalSection(&ddraw_cs);
 
-    hr = IDirect3DImpl_GetCaps(ddraw->wineD3D, &device_desc1, &device_desc7);
+    hr = IDirect3DImpl_GetCaps(This->wineD3D, &device_desc1, &device_desc7);
     if (hr != D3D_OK)
     {
         LeaveCriticalSection(&ddraw_cs);
@@ -4613,7 +4624,7 @@ static HRESULT WINAPI d3d7_CreateDevice(IDirect3D7 *iface, REFCLSID riid,
         IDirectDrawSurface7 *surface, IDirect3DDevice7 **device)
 {
     IDirectDrawSurfaceImpl *target = (IDirectDrawSurfaceImpl *)surface;
-    IDirectDrawImpl *ddraw = ddraw_from_d3d7(iface);
+    IDirectDrawImpl *This = impl_from_IDirect3D7(iface);
     IDirect3DDeviceImpl *object;
     HRESULT hr;
 
@@ -4623,7 +4634,7 @@ static HRESULT WINAPI d3d7_CreateDevice(IDirect3D7 *iface, REFCLSID riid,
     *device = NULL;
 
     /* Fail device creation if non-opengl surfaces are used. */
-    if (ddraw->ImplType != SURFACE_OPENGL)
+    if (This->ImplType != SURFACE_OPENGL)
     {
         ERR("The application wants to create a Direct3D device, but non-opengl surfaces are set in the registry.\n");
         ERR("Please set the surface implementation to opengl or autodetection to allow 3D rendering.\n");
@@ -4634,7 +4645,7 @@ static HRESULT WINAPI d3d7_CreateDevice(IDirect3D7 *iface, REFCLSID riid,
         return DDERR_NO3D;
     }
 
-    if (ddraw->d3ddevice)
+    if (This->d3ddevice)
     {
         FIXME("Only one Direct3D device per DirectDraw object supported.\n");
         LeaveCriticalSection(&ddraw_cs);
@@ -4649,7 +4660,7 @@ static HRESULT WINAPI d3d7_CreateDevice(IDirect3D7 *iface, REFCLSID riid,
         return DDERR_OUTOFMEMORY;
     }
 
-    hr = d3d_device_init(object, ddraw, target);
+    hr = d3d_device_init(object, This, target);
     if (FAILED(hr))
     {
         WARN("Failed to initialize device, hr %#x.\n", hr);
@@ -4676,8 +4687,8 @@ static HRESULT WINAPI d3d3_CreateDevice(IDirect3D3 *iface, REFCLSID riid,
 
     if (outer_unknown) return CLASS_E_NOAGGREGATION;
 
-    hr = d3d7_CreateDevice((IDirect3D7 *)&This->IDirect3D7_vtbl, riid,
-            (IDirectDrawSurface7 *)surface, (IDirect3DDevice7 **)device);
+    hr = d3d7_CreateDevice(&This->IDirect3D7_iface, riid, (IDirectDrawSurface7 *)surface,
+            (IDirect3DDevice7 **)device);
     if (*device) *device = (IDirect3DDevice3 *)&((IDirect3DDeviceImpl *)*device)->IDirect3DDevice3_vtbl;
 
     return hr;
@@ -4692,7 +4703,7 @@ static HRESULT WINAPI d3d2_CreateDevice(IDirect3D2 *iface, REFCLSID riid,
     TRACE("iface %p, riid %s, surface %p, device %p.\n",
             iface, debugstr_guid(riid), surface, device);
 
-    hr = d3d7_CreateDevice((IDirect3D7 *)&This->IDirect3D7_vtbl, riid,
+    hr = d3d7_CreateDevice(&This->IDirect3D7_iface, riid,
             surface ? (IDirectDrawSurface7 *)surface_from_surface3((IDirectDrawSurface3 *)surface) : NULL,
             (IDirect3DDevice7 **)device);
     if (*device) *device = (IDirect3DDevice2 *)&((IDirect3DDeviceImpl *)*device)->IDirect3DDevice2_vtbl;
@@ -4723,6 +4734,7 @@ static HRESULT WINAPI d3d2_CreateDevice(IDirect3D2 *iface, REFCLSID riid,
 static HRESULT WINAPI d3d7_CreateVertexBuffer(IDirect3D7 *iface, D3DVERTEXBUFFERDESC *desc,
         IDirect3DVertexBuffer7 **vertex_buffer, DWORD flags)
 {
+    IDirectDrawImpl *This = impl_from_IDirect3D7(iface);
     IDirect3DVertexBufferImpl *object;
     HRESULT hr;
 
@@ -4745,7 +4757,7 @@ static HRESULT WINAPI d3d7_CreateVertexBuffer(IDirect3D7 *iface, D3DVERTEXBUFFER
         return DDERR_OUTOFMEMORY;
     }
 
-    hr = d3d_vertex_buffer_init(object, ddraw_from_d3d7(iface), desc);
+    hr = d3d_vertex_buffer_init(object, This, desc);
     if (FAILED(hr))
     {
         WARN("Failed to initialize vertex buffer, hr %#x.\n", hr);
@@ -4770,8 +4782,8 @@ static HRESULT WINAPI d3d3_CreateVertexBuffer(IDirect3D3 *iface, D3DVERTEXBUFFER
 
     if (outer_unknown) return CLASS_E_NOAGGREGATION;
 
-    hr = d3d7_CreateVertexBuffer((IDirect3D7 *)&This->IDirect3D7_vtbl,
-            desc, (IDirect3DVertexBuffer7 **)vertex_buffer, flags);
+    hr = d3d7_CreateVertexBuffer(&This->IDirect3D7_iface, desc,
+            (IDirect3DVertexBuffer7 **)vertex_buffer, flags);
     if (*vertex_buffer)
         *vertex_buffer = (IDirect3DVertexBuffer *)&((IDirect3DVertexBufferImpl *)*vertex_buffer)->IDirect3DVertexBuffer_vtbl;
 
@@ -4799,7 +4811,7 @@ static HRESULT WINAPI d3d3_CreateVertexBuffer(IDirect3D3 *iface, D3DVERTEXBUFFER
 static HRESULT WINAPI d3d7_EnumZBufferFormats(IDirect3D7 *iface, REFCLSID device_iid,
         LPD3DENUMPIXELFORMATSCALLBACK callback, void *context)
 {
-    IDirectDrawImpl *ddraw = ddraw_from_d3d7(iface);
+    IDirectDrawImpl *This = impl_from_IDirect3D7(iface);
     WINED3DDISPLAYMODE d3ddm;
     WINED3DDEVTYPE type;
     unsigned int i;
@@ -4858,11 +4870,11 @@ static HRESULT WINAPI d3d7_EnumZBufferFormats(IDirect3D7 *iface, REFCLSID device
      * not like that we'll have to find some workaround, like iterating over
      * all imaginable formats and collecting all the depth stencil formats we
      * can get. */
-    hr = IWineD3DDevice_GetDisplayMode(ddraw->wineD3DDevice, 0, &d3ddm);
+    hr = IWineD3DDevice_GetDisplayMode(This->wineD3DDevice, 0, &d3ddm);
 
     for (i = 0; i < (sizeof(formats) / sizeof(*formats)); ++i)
     {
-        hr = IWineD3D_CheckDeviceFormat(ddraw->wineD3D, WINED3DADAPTER_DEFAULT, type, d3ddm.Format,
+        hr = IWineD3D_CheckDeviceFormat(This->wineD3D, WINED3DADAPTER_DEFAULT, type, d3ddm.Format,
                 WINED3DUSAGE_DEPTHSTENCIL, WINED3DRTYPE_SURFACE, formats[i], SURFACE_OPENGL);
         if (SUCCEEDED(hr))
         {
@@ -4896,8 +4908,7 @@ static HRESULT WINAPI d3d3_EnumZBufferFormats(IDirect3D3 *iface, REFCLSID device
     TRACE("iface %p, device_iid %s, callback %p, context %p.\n",
             iface, debugstr_guid(device_iid), callback, context);
 
-    return d3d7_EnumZBufferFormats((IDirect3D7 *)&This->IDirect3D7_vtbl, device_iid, callback,
-            context);
+    return d3d7_EnumZBufferFormats(&This->IDirect3D7_iface, device_iid, callback, context);
 }
 
 /*****************************************************************************
@@ -4928,7 +4939,7 @@ static HRESULT WINAPI d3d3_EvictManagedTextures(IDirect3D3 *iface)
 
     TRACE("iface %p.\n", iface);
 
-    return d3d7_EvictManagedTextures((IDirect3D7 *)&This->IDirect3D7_vtbl);
+    return d3d7_EvictManagedTextures(&This->IDirect3D7_iface);
 }
 
 /*****************************************************************************
@@ -5829,7 +5840,7 @@ HRESULT ddraw_init(IDirectDrawImpl *ddraw, WINED3DDEVTYPE device_type)
     ddraw->IDirect3D_iface.lpVtbl = &d3d1_vtbl;
     ddraw->IDirect3D2_iface.lpVtbl = &d3d2_vtbl;
     ddraw->IDirect3D3_iface.lpVtbl = &d3d3_vtbl;
-    ddraw->IDirect3D7_vtbl = &d3d7_vtbl;
+    ddraw->IDirect3D7_iface.lpVtbl = &d3d7_vtbl;
     ddraw->device_parent_vtbl = &ddraw_wined3d_device_parent_vtbl;
     ddraw->numIfaces = 1;
     ddraw->ref7 = 1;
