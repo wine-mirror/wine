@@ -2084,33 +2084,32 @@ static void test_ApplyStateBlock(void)
         goto cleanup;
     }
 
-    IDirect3DDevice8_CreateStateBlock(device, D3DSBT_ALL, &token);
-    ok(token !=0, "received null token\n");
-
     IDirect3DDevice8_BeginStateBlock(device);
     IDirect3DDevice8_SetRenderState(device, D3DRS_ZENABLE, TRUE);
     IDirect3DDevice8_EndStateBlock(device, &token);
+    ok(token, "Received zero stateblock handle.\n");
     IDirect3DDevice8_SetRenderState(device, D3DRS_ZENABLE, FALSE);
 
     hr = IDirect3DDevice8_GetRenderState(device, D3DRS_ZENABLE, &received);
-    ok(hr==D3D_OK, "Expected= D3D_OK, Got= %#x\n", hr);
-    ok(received==FALSE, "Expected = TRUE, received FALSE\n");
+    ok(hr == D3D_OK, "Expected D3D_OK, received %#x.\n", hr);
+    ok(!received, "Expected = FALSE, received TRUE.\n");
 
     IDirect3DDevice8_ApplyStateBlock(device, 0);
-    ok(hr == D3D_OK, "Expected= D3D_OK, Got= %#x\n", hr);
+    ok(hr == D3D_OK, "Expected D3D_OK, received %#x.\n", hr);
     hr = IDirect3DDevice8_GetRenderState(device, D3DRS_ZENABLE, &received);
-    ok(hr==D3D_OK, "Expected= D3D_OK, Got= %#x\n", hr);
-    ok(received==FALSE, "Expected = TRUE, received FALSE\n");
+    ok(hr == D3D_OK, "Expected D3D_OK, received %#x.\n", hr);
+    ok(!received, "Expected FALSE, received TRUE.\n");
 
     IDirect3DDevice8_ApplyStateBlock(device, token);
-    ok(hr == D3D_OK, "Expected= D3D_OK, Got= %#x\n", hr);
+    ok(hr == D3D_OK, "Expected D3D_OK, received %#x.\n", hr);
     hr = IDirect3DDevice8_GetRenderState(device, D3DRS_ZENABLE, &received);
-    ok(hr==D3D_OK, "Expected= D3D_OK, Got= %#x\n", hr);
-    ok(received==TRUE, "Expected = TRUE, received FALSE\n");
+    ok(hr == D3D_OK, "Expected D3D_OK, received %#x.\n", hr);
+    ok(received, "Expected TRUE, received FALSE.\n");
 
-    cleanup:
-    if(device) IDirect3DDevice8_Release(device);
-    if(d3d8) IDirect3D8_Release(d3d8);
+    IDirect3DDevice8_DeleteStateBlock(device, token);
+    IDirect3DDevice8_Release(device);
+cleanup:
+    if (d3d8) IDirect3D8_Release(d3d8);
 }
 
 START_TEST(device)
