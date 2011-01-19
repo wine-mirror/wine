@@ -1045,9 +1045,9 @@ static void test_InternetGetSecurityUrlEx_Pluggable(void)
         hr = pCoInternetGetSecurityUrlEx(uri, &result, PSU_DEFAULT, 0);
         ok(hr == S_OK, "CoInternetGetSecurityUrlEx returned 0x%08x, expected S_OK\n", hr);
 
-        todo_wine CHECK_CALLED(ParseUrl_SECURITY_URL_input);
-        todo_wine CHECK_CALLED(ParseUrl_SECURITY_URL_expected);
-        todo_wine CHECK_CALLED(ParseUrl_SECURITY_DOMAIN_expected);
+        CHECK_CALLED(ParseUrl_SECURITY_URL_input);
+        CHECK_CALLED(ParseUrl_SECURITY_URL_expected);
+        CHECK_CALLED(ParseUrl_SECURITY_DOMAIN_expected);
 
         if(hr == S_OK) {
             BSTR received = NULL;
@@ -1055,9 +1055,8 @@ static void test_InternetGetSecurityUrlEx_Pluggable(void)
             hr = IUri_GetAbsoluteUri(result, &received);
             ok(hr == S_OK, "GetAbsoluteUri returned 0x%08x\n", hr);
             if(hr == S_OK) {
-                todo_wine
-                    ok(!strcmp_w(security_expectedW, received), "Expected %s but got %s\n",
-                        wine_dbgstr_w(security_expectedW), wine_dbgstr_w(received));
+                ok(!strcmp_w(security_expectedW, received), "Expected %s but got %s\n",
+                    wine_dbgstr_w(security_expectedW), wine_dbgstr_w(received));
             }
             SysFreeString(received);
         }
@@ -1071,8 +1070,8 @@ static void test_InternetGetSecurityUrlEx_Pluggable(void)
         hr = pCoInternetGetSecurityUrlEx(uri, &result, PSU_SECURITY_URL_ONLY, 0);
         ok(hr == S_OK, "CoInternetGetSecurityUrlEx returned 0x%08x, expected S_OK\n", hr);
 
-        todo_wine CHECK_CALLED(ParseUrl_SECURITY_URL_input);
-        todo_wine CHECK_CALLED(ParseUrl_SECURITY_URL_expected);
+        CHECK_CALLED(ParseUrl_SECURITY_URL_input);
+        CHECK_CALLED(ParseUrl_SECURITY_URL_expected);
 
         if(hr == S_OK) {
             BSTR received = NULL;
@@ -1080,9 +1079,8 @@ static void test_InternetGetSecurityUrlEx_Pluggable(void)
             hr = IUri_GetAbsoluteUri(result, &received);
             ok(hr == S_OK, "GetAbsoluteUri returned 0x%08x\n", hr);
             if(hr == S_OK) {
-                todo_wine
-                    ok(!strcmp_w(security_expectedW, received), "Expected %s but got %s\n",
-                        wine_dbgstr_w(security_expectedW), wine_dbgstr_w(received));
+                ok(!strcmp_w(security_expectedW, received), "Expected %s but got %s\n",
+                    wine_dbgstr_w(security_expectedW), wine_dbgstr_w(received));
             }
             SysFreeString(received);
         }
