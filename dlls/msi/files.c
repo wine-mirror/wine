@@ -187,7 +187,7 @@ static BOOL installfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
         f = get_loaded_file(package, file);
         if (!f)
         {
-            WARN("unknown file in cabinet (%s)\n", debugstr_w(file));
+            TRACE("unknown file in cabinet (%s)\n", debugstr_w(file));
             return FALSE;
         }
 
