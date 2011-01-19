@@ -940,7 +940,7 @@ DllMain(HINSTANCE hInstDLL,
                 IDirectDraw_AddRef(&ddraw->IDirectDraw_iface);
                 IDirectDraw2_AddRef(&ddraw->IDirectDraw2_iface);
                 IDirectDraw3_AddRef(&ddraw->IDirectDraw3_iface);
-                IDirectDraw4_AddRef((IDirectDraw4 *)&ddraw->IDirectDraw4_vtbl);
+                IDirectDraw4_AddRef(&ddraw->IDirectDraw4_iface);
                 IDirectDraw7_AddRef((IDirectDraw7 *)ddraw);
 
                 /* Does a D3D device exist? Destroy it
@@ -976,7 +976,7 @@ DllMain(HINSTANCE hInstDLL,
                 while(IDirectDraw_Release(&ddraw->IDirectDraw_iface));
                 while(IDirectDraw2_Release(&ddraw->IDirectDraw2_iface));
                 while(IDirectDraw3_Release(&ddraw->IDirectDraw3_iface));
-                while(IDirectDraw4_Release((IDirectDraw4 *)&ddraw->IDirectDraw4_vtbl));
+                while(IDirectDraw4_Release(&ddraw->IDirectDraw4_iface));
                 while(IDirectDraw7_Release((IDirectDraw7 *)ddraw));
             }
         }

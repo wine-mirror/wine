@@ -97,7 +97,7 @@ struct IDirectDrawImpl
 {
     /* IUnknown fields */
     const IDirectDraw7Vtbl *lpVtbl;
-    const IDirectDraw4Vtbl *IDirectDraw4_vtbl;
+    IDirectDraw4 IDirectDraw4_iface;
     IDirectDraw3 IDirectDraw3_iface;
     IDirectDraw2 IDirectDraw2_iface;
     IDirectDraw IDirectDraw_iface;
