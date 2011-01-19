@@ -2305,7 +2305,7 @@ DWORD INET_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *
             if (*size < sizeof(ULONG))
                 return ERROR_INSUFFICIENT_BUFFER;
 
-            *(ULONG*)size = 4;
+            *(ULONG*)buffer = 4;
             *size = sizeof(ULONG);
 
             return ERROR_SUCCESS;

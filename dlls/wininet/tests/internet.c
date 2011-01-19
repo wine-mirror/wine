@@ -164,7 +164,7 @@ static void test_InternetCanonicalizeUrlA(void)
 static void test_InternetQueryOptionA(void)
 {
   HINTERNET hinet,hurl;
-  DWORD len;
+  DWORD len, val;
   DWORD err;
   static const char useragent[] = {"Wininet Test"};
   char *buffer;
@@ -248,6 +248,19 @@ static void test_InternetQueryOptionA(void)
   ok(err == ERROR_INSUFFICIENT_BUFFER, "Got wrong error code%d\n",err);
 
   InternetCloseHandle(hinet);
+
+  len = sizeof(val);
+  retval = InternetQueryOptionA(NULL, INTERNET_OPTION_MAX_CONNS_PER_SERVER, &val, &len);
+  ok(retval == TRUE,"Got wrong return value %d\n", retval);
+  ok(len == sizeof(val), "got %d\n", len);
+  ok(val == 2, "got %d\n", val);
+
+  len = sizeof(val);
+  retval = InternetQueryOptionA(NULL, INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER, &val, &len);
+  ok(retval == TRUE,"Got wrong return value %d\n", retval);
+  ok(len == sizeof(val), "got %d\n", len);
+  ok(val == 4, "got %d\n", val);
+
 }
 
 static void test_get_cookie(void)
