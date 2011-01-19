@@ -4822,6 +4822,7 @@ static void test_EM_FORMATRANGE(void)
   HDC hdc;
   HWND hwndRichEdit = new_richedit(NULL);
   FORMATRANGE fr;
+  BOOL skip_non_english;
   static const struct {
     const char *string; /* The string */
     int first;          /* First 'pagebreak', 0 for don't care */
@@ -4833,6 +4834,10 @@ static void test_EM_FORMATRANGE(void)
     {"WINE\r\nWINEwine\r\nWINEwine", 5, 14},
     {"WINE\r\n\r\nwine\r\nwine", 5, 6}
   };
+
+  skip_non_english = (PRIMARYLANGID(GetUserDefaultLangID()) != LANG_ENGLISH);
+  if (skip_non_english)
+    skip("Skipping some tests on non-English platform\n");
 
   hdc = GetDC(hwndRichEdit);
   ok(hdc != NULL, "Could not get HDC\n");
@@ -4895,7 +4900,8 @@ static void test_EM_FORMATRANGE(void)
     fr.chrg.cpMax = -1;
     r = SendMessage(hwndRichEdit, EM_FORMATRANGE, TRUE, (LPARAM) &fr);
     todo_wine {
-    ok(fr.rc.bottom == (stringsize.cy * tpp_y), "Expected bottom to be %d, got %d\n", (stringsize.cy * tpp_y), fr.rc.bottom);
+    if (! skip_non_english)
+      ok(fr.rc.bottom == (stringsize.cy * tpp_y), "Expected bottom to be %d, got %d\n", (stringsize.cy * tpp_y), fr.rc.bottom);
     }
     if (fmtstrings[i].first)
       todo_wine {
@@ -4911,7 +4917,7 @@ static void test_EM_FORMATRANGE(void)
       todo_wine {
       ok(r == fmtstrings[i].second, "Expected %d, got %d\n", fmtstrings[i].second, r);
       }
-    else
+    else if (! skip_non_english)
       ok (r < len, "Expected < %d, got %d\n", len, r);
 
     /* There is at least on more page, but we don't care */
