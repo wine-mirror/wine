@@ -993,6 +993,18 @@ static void dump_varargs_object_attributes( const char *prefix, data_size_t size
 
 static void dump_varargs_filesystem_event( const char *prefix, data_size_t size )
 {
+    static const char * const actions[] = {
+        NULL,
+        "ADDED",
+        "REMOVED",
+        "MODIFIED",
+        "RENAMED_OLD_NAME",
+        "RENAMED_NEW_NAME",
+        "ADDED_STREAM",
+        "REMOVED_STREAM",
+        "MODIFIED_STREAM"
+    };
+
     fprintf( stderr,"%s{", prefix );
     while (size)
     {
@@ -1000,8 +1012,11 @@ static void dump_varargs_filesystem_event( const char *prefix, data_size_t size 
         data_size_t len = (offsetof( struct filesystem_event, name[event->len] ) + sizeof(int)-1)
                            / sizeof(int) * sizeof(int);
         if (size < len) break;
-        fprintf( stderr, "{action=%x,len=%u,name=\"%.*s\"}",
-                 event->action, event->len, event->len, event->name );
+        if (event->action < sizeof(actions)/sizeof(actions[0]) && actions[event->action])
+            fprintf( stderr, "{action=%s", actions[event->action] );
+        else
+            fprintf( stderr, "{action=%u", event->action );
+        fprintf( stderr, ",name=\"%.*s\"}", event->len, event->name );
         size -= len;
         remove_data( len );
         if (size)fputc( ',', stderr );
