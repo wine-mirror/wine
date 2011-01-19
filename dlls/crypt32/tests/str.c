@@ -31,6 +31,7 @@ typedef struct _CertRDNAttrEncoding {
     DWORD  dwValueType;
     CERT_RDN_VALUE_BLOB Value;
     LPCSTR str;
+    BOOL todo;
 } CertRDNAttrEncoding, *PCertRDNAttrEncoding;
 
 typedef struct _CertRDNAttrEncodingW {
@@ -38,6 +39,7 @@ typedef struct _CertRDNAttrEncodingW {
     DWORD  dwValueType;
     CERT_RDN_VALUE_BLOB Value;
     LPCWSTR str;
+    BOOL todo;
 } CertRDNAttrEncodingW, *PCertRDNAttrEncodingW;
 
 static BYTE bin1[] = { 0x55, 0x53 };
@@ -59,6 +61,12 @@ static BYTE bin8[] = {
 0x66,0x00,0x69,0x00,0x63,0x00,0x61,0x00,0x74,0x00,0x69,0x00,0x6f,0x00,0x6e,
 0x00,0x20,0x00,0x41,0x00,0x75,0x00,0x74,0x00,0x68,0x00,0x6f,0x00,0x72,0x00,
 0x69,0x00,0x74,0x00,0x79,0x00 };
+static BYTE bin9[] = { 0x61, 0x62, 0x63, 0x22, 0x64, 0x65, 0x66 };
+static BYTE bin10[] = { 0x61, 0x62, 0x63, 0x27, 0x64, 0x65, 0x66 };
+static BYTE bin11[] = { 0x61, 0x62, 0x63, 0x2c, 0x20, 0x64, 0x65, 0x66 };
+static BYTE bin12[] = { 0x20, 0x61, 0x62, 0x63, 0x20 };
+static BYTE bin13[] = { 0x22, 0x64, 0x65, 0x66, 0x22 };
+static BYTE bin14[] = { 0x31, 0x3b, 0x33 };
 
 static const BYTE cert[] = 
 {0x30,0x82,0x2,0xbb,0x30,0x82,0x2,0x24,0x2,0x9,0x0,0xe3,0x5a,0x10,0xf1,0xfc,
@@ -205,19 +213,31 @@ static void test_CertRDNValueToStrA(void)
 {
     CertRDNAttrEncoding attrs[] = {
      { "2.5.4.6", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin1), bin1 }, "US" },
+       { sizeof(bin1), bin1 }, "US", FALSE },
      { "2.5.4.8", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin2), bin2 }, "Minnesota" },
+       { sizeof(bin2), bin2 }, "Minnesota", FALSE },
      { "2.5.4.7", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin3), bin3 }, "Minneapolis" },
+       { sizeof(bin3), bin3 }, "Minneapolis", FALSE },
      { "2.5.4.10", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin4), bin4 }, "CodeWeavers" },
+       { sizeof(bin4), bin4 }, "CodeWeavers", FALSE },
      { "2.5.4.11", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin5), bin5 }, "Wine Development" },
+       { sizeof(bin5), bin5 }, "Wine Development", FALSE },
      { "2.5.4.3", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin6), bin6 }, "localhost" },
+       { sizeof(bin6), bin6 }, "localhost", FALSE },
      { "1.2.840.113549.1.9.1", CERT_RDN_IA5_STRING,
-       { sizeof(bin7), bin7 }, "aric@codeweavers.com" },
+       { sizeof(bin7), bin7 }, "aric@codeweavers.com", FALSE },
+     { "0", CERT_RDN_PRINTABLE_STRING,
+       { sizeof(bin9), bin9 }, "abc\"def", TRUE },
+     { "0", CERT_RDN_PRINTABLE_STRING,
+       { sizeof(bin10), bin10 }, "abc'def", FALSE },
+     { "0", CERT_RDN_PRINTABLE_STRING,
+       { sizeof(bin11), bin11 }, "abc, def", TRUE },
+     { "0", CERT_RDN_PRINTABLE_STRING,
+       { sizeof(bin12), bin12 }, " abc ", TRUE },
+     { "0", CERT_RDN_PRINTABLE_STRING,
+       { sizeof(bin13), bin13 }, "\"def\"", TRUE },
+     { "0", CERT_RDN_PRINTABLE_STRING,
+       { sizeof(bin14), bin14 }, "1;3", TRUE },
     };
     DWORD i, ret;
     char buffer[2000];
@@ -241,10 +261,22 @@ static void test_CertRDNValueToStrA(void)
     {
         ret = pCertRDNValueToStrA(attrs[i].dwValueType, &attrs[i].Value,
          buffer, sizeof(buffer));
-        ok(ret == strlen(attrs[i].str) + 1, "Expected length %d, got %d\n",
-         lstrlenA(attrs[i].str) + 1, ret);
-        ok(!strcmp(buffer, attrs[i].str), "Expected %s, got %s\n", attrs[i].str,
-         buffer);
+        if (attrs[i].todo)
+        {
+            todo_wine
+            ok(ret == strlen(attrs[i].str) + 1, "Expected length %d, got %d\n",
+             lstrlenA(attrs[i].str) + 1, ret);
+            todo_wine
+            ok(!strcmp(buffer, attrs[i].str), "Expected %s, got %s\n",
+             attrs[i].str, buffer);
+        }
+        else
+        {
+            ok(ret == strlen(attrs[i].str) + 1, "Expected length %d, got %d\n",
+             lstrlenA(attrs[i].str) + 1, ret);
+            ok(!strcmp(buffer, attrs[i].str), "Expected %s, got %s\n",
+             attrs[i].str, buffer);
+        }
     }
     blob.pbData = bin8;
     blob.cbData = sizeof(bin8);
@@ -272,21 +304,41 @@ static void test_CertRDNValueToStrW(void)
     static const WCHAR ePKIW[] = { 'e','P','K','I',' ','R','o','o','t',' ',
      'C','e','r','t','i','f','i','c','a','t','i','o','n',' ','A','u','t','h',
      'o','r','i','t','y',0 };
+    static const WCHAR embeddedDoubleQuoteW[] = { 'a','b','c','"','d','e','f',
+     0 };
+    static const WCHAR embeddedSingleQuoteW[] = { 'a','b','c','\'','d','e','f',
+     0 };
+    static const WCHAR embeddedCommaW[] = { 'a','b','c',',',' ','d','e','f',0 };
+    static const WCHAR trailingAndEndingSpaceW[] = { ' ','a','b','c',' ',0 };
+    static const WCHAR enclosingQuotesW[] = { '"','d','e','f','"',0 };
+    static const WCHAR embeddedSemiW[] = { '1',';','3',0 };
     CertRDNAttrEncodingW attrs[] = {
      { "2.5.4.6", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin1), bin1 }, usW },
+       { sizeof(bin1), bin1 }, usW, FALSE },
      { "2.5.4.8", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin2), bin2 }, minnesotaW },
+       { sizeof(bin2), bin2 }, minnesotaW, FALSE },
      { "2.5.4.7", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin3), bin3 }, minneapolisW },
+       { sizeof(bin3), bin3 }, minneapolisW, FALSE },
      { "2.5.4.10", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin4), bin4 }, codeweaversW },
+       { sizeof(bin4), bin4 }, codeweaversW, FALSE },
      { "2.5.4.11", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin5), bin5 }, wineDevW },
+       { sizeof(bin5), bin5 }, wineDevW, FALSE },
      { "2.5.4.3", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin6), bin6 }, localhostW },
+       { sizeof(bin6), bin6 }, localhostW, FALSE },
      { "1.2.840.113549.1.9.1", CERT_RDN_IA5_STRING,
-       { sizeof(bin7), bin7 }, aricW },
+       { sizeof(bin7), bin7 }, aricW, FALSE },
+     { "0", CERT_RDN_PRINTABLE_STRING,
+       { sizeof(bin9), bin9 }, embeddedDoubleQuoteW, TRUE },
+     { "0", CERT_RDN_PRINTABLE_STRING,
+       { sizeof(bin10), bin10 }, embeddedSingleQuoteW, FALSE },
+     { "0", CERT_RDN_PRINTABLE_STRING,
+       { sizeof(bin11), bin11 }, embeddedCommaW, TRUE },
+     { "0", CERT_RDN_PRINTABLE_STRING,
+       { sizeof(bin12), bin12 }, trailingAndEndingSpaceW, TRUE },
+     { "0", CERT_RDN_PRINTABLE_STRING,
+       { sizeof(bin13), bin13 }, enclosingQuotesW, TRUE },
+     { "0", CERT_RDN_PRINTABLE_STRING,
+       { sizeof(bin14), bin14 }, embeddedSemiW, TRUE },
     };
     DWORD i, ret;
     WCHAR buffer[2000];
@@ -314,10 +366,22 @@ static void test_CertRDNValueToStrW(void)
     {
         ret = pCertRDNValueToStrW(attrs[i].dwValueType, &attrs[i].Value,
          buffer, sizeof(buffer) / sizeof(buffer[0]));
-        ok(ret == lstrlenW(attrs[i].str) + 1, "Expected length %d, got %d\n",
-         lstrlenW(attrs[i].str) + 1, ret);
-        ok(!lstrcmpW(buffer, attrs[i].str), "Expected %s, got %s\n",
-         wine_dbgstr_w(attrs[i].str), wine_dbgstr_w(buffer));
+        if (attrs[i].todo)
+        {
+            todo_wine
+            ok(ret == lstrlenW(attrs[i].str) + 1,
+             "Expected length %d, got %d\n", lstrlenW(attrs[i].str) + 1, ret);
+            todo_wine
+            ok(!lstrcmpW(buffer, attrs[i].str), "Expected %s, got %s\n",
+             wine_dbgstr_w(attrs[i].str), wine_dbgstr_w(buffer));
+        }
+        else
+        {
+            ok(ret == lstrlenW(attrs[i].str) + 1,
+             "Expected length %d, got %d\n", lstrlenW(attrs[i].str) + 1, ret);
+            ok(!lstrcmpW(buffer, attrs[i].str), "Expected %s, got %s\n",
+             wine_dbgstr_w(attrs[i].str), wine_dbgstr_w(buffer));
+        }
     }
     blob.pbData = bin8;
     blob.cbData = sizeof(bin8);
