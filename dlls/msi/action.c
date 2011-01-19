@@ -1841,8 +1841,7 @@ static void ACTION_GetComponentInstallStates(MSIPACKAGE *package)
 
     LIST_FOR_EACH_ENTRY(comp, &package->components, MSICOMPONENT, entry)
     {
-        if (!comp->Enabled || !comp->ComponentId)
-            continue;
+        if (!comp->ComponentId) continue;
 
         if (state != INSTALLSTATE_LOCAL && state != INSTALLSTATE_DEFAULT)
             comp->Installed = INSTALLSTATE_ABSENT;
@@ -2037,8 +2036,6 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         /* features with components that have compressed files are made local */
         LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )
         {
-            if (!cl->component->Enabled) continue;
-
             if (cl->component->ForceLocalState &&
                 feature->ActionRequest == INSTALLSTATE_SOURCE)
             {
@@ -2050,8 +2047,6 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )
         {
             component = cl->component;
-
-            if (!component->Enabled) continue;
 
             switch (feature->ActionRequest)
             {
@@ -2083,8 +2078,6 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
 
     LIST_FOR_EACH_ENTRY( component, &package->components, MSICOMPONENT, entry )
     {
-        if (!component->Enabled) continue;
-
         /* check if it's local or source */
         if (!(component->Attributes & msidbComponentAttributesOptional) &&
              (component->hasLocalFeature || component->hasSourceFeature))
@@ -2123,8 +2116,6 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
 
     LIST_FOR_EACH_ENTRY( component, &package->components, MSICOMPONENT, entry )
     {
-        if (!component->Enabled) continue;
-
         if (component->ActionRequest == INSTALLSTATE_DEFAULT)
         {
             TRACE("%s was default, setting to local\n", debugstr_w(component->Component));
