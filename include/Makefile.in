@@ -343,6 +343,7 @@ SRCDIR_INCLUDES = \
 	msiquery.h \
 	mssip.h \
 	mstcpip.h \
+	msvcrt/assert.h \
 	msvcrt/conio.h \
 	msvcrt/crtdbg.h \
 	msvcrt/crtdefs.h \
