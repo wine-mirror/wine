@@ -151,7 +151,7 @@ IDirect3DDeviceImpl_7_QueryInterface(IDirect3DDevice7 *iface,
     }
     else if ( IsEqualGUID( &IID_IDirect3D3 , refiid ) )
     {
-        *obj = &This->ddraw->IDirect3D3_vtbl;
+        *obj = &This->ddraw->IDirect3D3_iface;
         TRACE("(%p) Returning IDirect3D3 interface at %p\n", This, *obj);
     }
     else if ( IsEqualGUID( &IID_IDirect3D7 , refiid ) )
@@ -1737,8 +1737,8 @@ static HRESULT WINAPI IDirect3DDeviceImpl_3_GetDirect3D(IDirect3DDevice3 *iface,
     if(!Direct3D3)
         return DDERR_INVALIDPARAMS;
 
-    IDirect3D3_AddRef((IDirect3D3 *)&This->ddraw->IDirect3D3_vtbl);
-    *Direct3D3 = (IDirect3D3 *)&This->ddraw->IDirect3D3_vtbl;
+    IDirect3D3_AddRef(&This->ddraw->IDirect3D3_iface);
+    *Direct3D3 = &This->ddraw->IDirect3D3_iface;
     TRACE(" returning interface %p\n", *Direct3D3);
     return D3D_OK;
 }
