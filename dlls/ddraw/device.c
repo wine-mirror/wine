@@ -119,7 +119,7 @@ IDirect3DDeviceImpl_7_QueryInterface(IDirect3DDevice7 *iface,
     /* Check DirectDraw Interfacs */
     else if( IsEqualGUID( &IID_IDirectDraw7, refiid ) )
     {
-        *obj = This->ddraw;
+        *obj = &This->ddraw->IDirectDraw7_iface;
         TRACE("(%p) Returning IDirectDraw7 interface at %p\n", This, *obj);
     }
     else if ( IsEqualGUID( &IID_IDirectDraw4, refiid ) )

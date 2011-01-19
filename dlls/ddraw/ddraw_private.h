@@ -95,8 +95,8 @@ struct FvfToDecl
 
 struct IDirectDrawImpl
 {
-    /* IUnknown fields */
-    const IDirectDraw7Vtbl *lpVtbl;
+    /* Interfaces */
+    IDirectDraw7 IDirectDraw7_iface;
     IDirectDraw4 IDirectDraw4_iface;
     IDirectDraw3 IDirectDraw3_iface;
     IDirectDraw2 IDirectDraw2_iface;

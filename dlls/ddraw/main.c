@@ -273,8 +273,8 @@ DDRAW_Create(const GUID *guid,
         return hr;
     }
 
-    hr = IDirectDraw7_QueryInterface((IDirectDraw7 *)This, iid, DD);
-    IDirectDraw7_Release((IDirectDraw7 *)This);
+    hr = IDirectDraw7_QueryInterface(&This->IDirectDraw7_iface, iid, DD);
+    IDirectDraw7_Release(&This->IDirectDraw7_iface);
     if (SUCCEEDED(hr)) list_add_head(&global_ddraw_list, &This->ddraw_list_entry);
     else WARN("Failed to query interface %s from ddraw object %p.\n", debugstr_guid(iid), This);
 
@@ -941,7 +941,7 @@ DllMain(HINSTANCE hInstDLL,
                 IDirectDraw2_AddRef(&ddraw->IDirectDraw2_iface);
                 IDirectDraw3_AddRef(&ddraw->IDirectDraw3_iface);
                 IDirectDraw4_AddRef(&ddraw->IDirectDraw4_iface);
-                IDirectDraw7_AddRef((IDirectDraw7 *)ddraw);
+                IDirectDraw7_AddRef(&ddraw->IDirectDraw7_iface);
 
                 /* Does a D3D device exist? Destroy it
                     * TODO: Destroy all Vertex buffers, Lights, Materials
@@ -960,8 +960,8 @@ DllMain(HINSTANCE hInstDLL,
                 desc.dwSize = sizeof(desc);
                 for(i = 0; i <= 1; i++)
                 {
-                    hr = IDirectDraw7_EnumSurfaces((IDirectDraw7 *)ddraw,
-                            DDENUMSURFACES_ALL, &desc, ddraw, DestroyCallback);
+                    hr = IDirectDraw7_EnumSurfaces(&ddraw->IDirectDraw7_iface, DDENUMSURFACES_ALL,
+                            &desc, ddraw, DestroyCallback);
                     if(hr != D3D_OK)
                         ERR("(%p) EnumSurfaces failed, prepare for trouble\n", ddraw);
                 }
@@ -977,7 +977,7 @@ DllMain(HINSTANCE hInstDLL,
                 while(IDirectDraw2_Release(&ddraw->IDirectDraw2_iface));
                 while(IDirectDraw3_Release(&ddraw->IDirectDraw3_iface));
                 while(IDirectDraw4_Release(&ddraw->IDirectDraw4_iface));
-                while(IDirectDraw7_Release((IDirectDraw7 *)ddraw));
+                while(IDirectDraw7_Release(&ddraw->IDirectDraw7_iface));
             }
         }
 

@@ -274,7 +274,7 @@ HRESULT ddraw_palette_init(IDirectDrawPaletteImpl *palette,
         return hr;
     }
 
-    palette->ifaceToRelease = (IUnknown *)ddraw;
+    palette->ifaceToRelease = (IUnknown *)&ddraw->IDirectDraw7_iface;
     IUnknown_AddRef(palette->ifaceToRelease);
 
     return DD_OK;
