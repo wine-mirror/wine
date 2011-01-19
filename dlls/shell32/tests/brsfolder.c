@@ -56,6 +56,7 @@ static int get_number_of_folders(LPCSTR path)
     }
     while (FindNextFile(find_handle, &find_data) != 0);
 
+    FindClose(find_handle);
     return number_of_folders;
 }
 
