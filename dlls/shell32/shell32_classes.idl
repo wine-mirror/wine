@@ -1,0 +1,137 @@
+/*
+ * Coclasses for shell32
+ *
+ * Copyright 2011 Alexandre Julliard
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+[
+    helpstring("Shell Automation Service"),
+    progid("Shell.Application.1"),
+    vi_progid("Shell.Application"),
+    threading(apartment),
+    uuid(13709620-c279-11ce-a49e-444553540000)
+]
+coclass Shell { interface IShellDispatch; }
+
+[
+    helpstring("Printers and Faxes"),
+    threading(apartment),
+    uuid(2227a280-3aea-1069-a2de-08002b30309d)
+]
+coclass Printers { interface IShellFolder2; }
+
+[
+    helpstring("Explorer Browser"),
+    threading(apartment),
+    uuid(71f96385-ddd6-48d3-a0c1-ae06e8b055fb)
+]
+coclass ExplorerBrowser { interface IExplorerBrowser; }
+
+[
+    helpstring("Known Folder Manager"),
+    threading(apartment),
+    uuid(4df0c730-df9d-4ae3-9153-aa6b82e9795a)
+]
+coclass KnownFolderManager { interface IKnownFolderManager; }
+
+[
+    helpstring("Microsoft Shell Folder View Router"),
+    threading(apartment),
+    uuid(9ba05971-f6a8-11cf-a442-00a0c90a8f39)
+] coclass ShellFolderViewOC { }
+
+[
+    helpstring("Query file associations"),
+    threading(apartment),
+    uuid(a07034fd-6caa-4954-ac3f-97a27216f98a)
+] coclass QueryAssociations { interface IQueryAssociations; }
+
+[
+    helpstring("Shell Drag and Drop Helper"),
+    threading(apartment),
+    uuid(4657278a-411b-11d2-839a-00c04fd918d0)
+] coclass DragDropHelper { interface IDropTargetHelper; }
+
+[
+    threading(apartment),
+    uuid(00bb2763-6a77-11d0-a535-00c04fd7d062)
+] coclass AutoComplete { interface IAutoComplete2; }
+
+[
+    helpstring("Shell File System Folder"),
+    threading(apartment),
+    uuid(f3364ba0-65b9-11ce-a9ba-00aa004ae837)
+] coclass ShellFSFolder { interface IShellFolder2; }
+
+[
+    helpstring("My Network Places"),
+    threading(apartment),
+    uuid(208d2c60-3aea-1069-a2d7-08002b30309d)
+] coclass NetworkPlaces { interface IShellFolder2; }
+
+[
+    helpstring("Desktop"),
+    threading(apartment),
+    uuid(00021400-0000-0000-c000-000000000046)
+] coclass ShellDesktop { interface IShellFolder2; }
+
+[
+    helpstring("Shortcut"),
+    threading(apartment),
+    uuid(00021401-0000-0000-c000-000000000046)
+] coclass ShellLink { interface IShellLinkW; }
+
+[
+    helpstring("My Computer"),
+    threading(apartment),
+    uuid(20d04fe0-3aea-1069-a2d8-08002b30309d)
+] coclass MyComputer { interface IShellFolder2; }
+
+[
+    threading(apartment),
+    uuid(0afaced1-e828-11d1-9187-b532f1e9575d)
+] coclass FolderShortcut { interface IShellFolder2; }
+
+[
+    helpstring("/"),
+    threading(apartment),
+    uuid(cc702eb2-7dc5-11d9-c687-0004238a01cd)
+] coclass UnixFolder { interface IShellFolder2; }
+
+[
+    helpstring("/"),
+    threading(apartment),
+    uuid(9d20aae8-0625-44b0-9ca7-71889c2254d9)
+] coclass UnixDosFolder { interface IShellFolder2; }
+
+[
+    helpstring("My Documents"),
+    threading(apartment),
+    uuid(450d8fba-ad25-11d0-98a8-0800361b1103)
+] coclass MyDocuments { interface IShellFolder2; }
+
+[
+    helpstring("Trash"),
+    threading(apartment),
+    uuid(645ff040-5081-101b-9f08-00aa002f954e)
+] coclass RecycleBin { interface IShellFolder2; }
+
+[
+    helpstring("Control Panel"),
+    threading(apartment),
+    uuid(21ec2020-3aea-1069-a2dd-08002b30309d)
+] coclass ControlPanel { interface IShellFolder2; }

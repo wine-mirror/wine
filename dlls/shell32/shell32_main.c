@@ -37,6 +37,7 @@
 #include "winuser.h"
 #include "wingdi.h"
 #include "shlobj.h"
+#include "rpcproxy.h"
 #include "shlwapi.h"
 #include "propsys.h"
 
@@ -45,6 +46,8 @@
 #include "shell32_main.h"
 #include "version.h"
 #include "shresdef.h"
+#include "initguid.h"
+#include "shfldr.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -1228,6 +1231,24 @@ HRESULT WINAPI DllInstall(BOOL bInstall, LPCWSTR cmdline)
 HRESULT WINAPI DllCanUnloadNow(void)
 {
     return S_FALSE;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (SHELL32.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    HRESULT hr = __wine_register_resources( shell32_hInstance, NULL );
+    if (SUCCEEDED(hr)) hr = SHELL_RegisterShellFolders();
+    return hr;
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (SHELL32.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( shell32_hInstance, NULL );
 }
 
 /***********************************************************************

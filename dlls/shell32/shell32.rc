@@ -263,6 +263,9 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 /* @makedep: shell32_tlb.tlb */
 1 TYPELIB shell32_tlb.tlb
 
+/* @makedep: shell32.rgs */
+1 WINE_REGISTRY shell32.rgs
+
 shv_accel ACCELERATORS
 BEGIN
 	VK_F5, FCIDM_SHVIEW_REFRESH, VIRTKEY

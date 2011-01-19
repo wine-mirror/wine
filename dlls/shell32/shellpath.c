@@ -2726,6 +2726,77 @@ static HRESULT create_extra_folders(void)
 }
 
 
+/******************************************************************************
+ * set_folder_attributes
+ *
+ * Set the various folder attributes registry keys.
+ */
+static HRESULT set_folder_attributes(void)
+{
+    static const WCHAR clsidW[] = {'C','L','S','I','D','\\',0 };
+    static const WCHAR shellfolderW[] = {'\\','S','h','e','l','l','F','o','l','d','e','r', 0 };
+    static const WCHAR wfparsingW[] = {'W','a','n','t','s','F','O','R','P','A','R','S','I','N','G',0};
+    static const WCHAR wfdisplayW[] = {'W','a','n','t','s','F','O','R','D','I','S','P','L','A','Y',0};
+    static const WCHAR hideasdeleteW[] = {'H','i','d','e','A','s','D','e','l','e','t','e','P','e','r','U','s','e','r',0};
+    static const WCHAR attributesW[] = {'A','t','t','r','i','b','u','t','e','s',0};
+    static const WCHAR cfattributesW[] = {'C','a','l','l','F','o','r','A','t','t','r','i','b','u','t','e','s',0};
+    static const WCHAR emptyW[] = {0};
+
+    static const struct
+    {
+        const CLSID *clsid;
+        BOOL wfparsing : 1;
+        BOOL wfdisplay : 1;
+        BOOL hideasdel : 1;
+        DWORD attr;
+        DWORD call_for_attr;
+    } folders[] =
+    {
+        { &CLSID_UnixFolder, TRUE, FALSE, FALSE },
+        { &CLSID_UnixDosFolder, TRUE, FALSE, FALSE,
+          SFGAO_FILESYSANCESTOR|SFGAO_FOLDER|SFGAO_HASSUBFOLDER, SFGAO_FILESYSTEM },
+        { &CLSID_FolderShortcut, FALSE, FALSE, FALSE,
+          SFGAO_FILESYSTEM|SFGAO_FOLDER|SFGAO_LINK,
+          SFGAO_HASSUBFOLDER|SFGAO_FILESYSTEM|SFGAO_FOLDER|SFGAO_FILESYSANCESTOR },
+        { &CLSID_MyDocuments, TRUE, FALSE, FALSE,
+          SFGAO_FILESYSANCESTOR|SFGAO_FOLDER|SFGAO_HASSUBFOLDER, SFGAO_FILESYSTEM },
+        { &CLSID_RecycleBin, FALSE, FALSE, FALSE,
+          SFGAO_FOLDER|SFGAO_DROPTARGET|SFGAO_HASPROPSHEET },
+        { &CLSID_ControlPanel, FALSE, TRUE, TRUE,
+          SFGAO_FOLDER|SFGAO_HASSUBFOLDER }
+    };
+
+    unsigned int i;
+    WCHAR buffer[39 + (sizeof(clsidW) + sizeof(shellfolderW)) / sizeof(WCHAR)];
+    LONG res;
+    HKEY hkey;
+
+    for (i = 0; i < sizeof(folders)/sizeof(folders[0]); i++)
+    {
+        strcpyW( buffer, clsidW );
+        StringFromGUID2( folders[i].clsid, buffer + strlenW(buffer), 39 );
+        strcatW( buffer, shellfolderW );
+        res = RegCreateKeyExW( HKEY_CLASSES_ROOT, buffer, 0, NULL, 0,
+                               KEY_READ | KEY_WRITE, NULL, &hkey, NULL);
+        if (res) return HRESULT_FROM_WIN32( res );
+        if (folders[i].wfparsing)
+            res = RegSetValueExW( hkey, wfparsingW, 0, REG_SZ, (const BYTE *)emptyW, sizeof(emptyW) );
+        if (folders[i].wfdisplay)
+            res = RegSetValueExW( hkey, wfdisplayW, 0, REG_SZ, (const BYTE *)emptyW, sizeof(emptyW) );
+        if (folders[i].hideasdel)
+            res = RegSetValueExW( hkey, hideasdeleteW, 0, REG_SZ, (const BYTE *)emptyW, sizeof(emptyW) );
+        if (folders[i].attr)
+            res = RegSetValueExW( hkey, attributesW, 0, REG_DWORD,
+                                  (const BYTE *)&folders[i].attr, sizeof(DWORD));
+        if (folders[i].call_for_attr)
+            res = RegSetValueExW( hkey, cfattributesW, 0, REG_DWORD,
+                                 (const BYTE *)&folders[i].call_for_attr, sizeof(DWORD));
+        RegCloseKey( hkey );
+    }
+    return S_OK;
+}
+
+
 /* Register the default values in the registry, as some apps seem to depend
  * on their presence.  The set registered was taken from Windows XP.
  */
@@ -2746,6 +2817,8 @@ HRESULT SHELL_RegisterShellFolders(void)
         hr = _SHRegisterCommonShellFolders();
     if (SUCCEEDED(hr))
         hr = create_extra_folders();
+    if (SUCCEEDED(hr))
+        hr = set_folder_attributes();
     return hr;
 }
 
