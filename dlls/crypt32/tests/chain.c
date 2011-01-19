@@ -2664,7 +2664,9 @@ static PCCERT_CHAIN_CONTEXT getChain(HCERTCHAINENGINE engine,
             CERT_CHAIN_PARA chainPara = { sizeof(chainPara), { 0 } };
             FILETIME fileTime;
 
-            SystemTimeToFileTime(checkTime, &fileTime);
+            ok(SystemTimeToFileTime(checkTime, &fileTime),
+             "SystemTimeToFileTime failed for day %d, month %d, year %d\n",
+             checkTime->wDay, checkTime->wMonth, checkTime->wYear);
             ret = pCertGetCertificateChain(engine, endCert, &fileTime,
              includeStore ? store : NULL, &chainPara, flags, NULL, &chain);
             if (todo & TODO_CHAIN)
@@ -4340,6 +4342,8 @@ static void check_authenticode_policy(void)
     policyPara.dwFlags = CERT_CHAIN_POLICY_ALLOW_UNKNOWN_CA_FLAG;
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_AUTHENTICODE, NULL,
      ignoredUnknownCAPolicyCheck, &oct2007, &policyPara);
+    epochStart.wDay = epochStart.wMonth = 1;
+    epochStart.wYear = 1601;
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_AUTHENTICODE, NULL,
      ignoredUnknownCAPolicyCheck, &epochStart, &policyPara);
     policyPara.dwFlags = CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG;
