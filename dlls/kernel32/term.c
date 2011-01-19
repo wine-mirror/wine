@@ -365,5 +365,5 @@ int TERM_FillInputRecord(const char* in, size_t len, INPUT_RECORD* ir)
 #else
 BOOL     TERM_Init(void) {return FALSE;}
 BOOL     TERM_Exit(void) {return FALSE;}
-int      TERM_FillInputRecord(const char* in, INPUT_RECORD* ir) {return -1;}
+int      TERM_FillInputRecord(const char* in, size_t len, INPUT_RECORD* ir) {return -1;}
 #endif
