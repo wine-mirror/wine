@@ -2905,6 +2905,7 @@ static HRESULT ddraw_attach_d3d_device(IDirectDrawImpl *ddraw, IDirectDrawSurfac
     localParameters.Flags = 0;
     localParameters.FullScreen_RefreshRateInHz = WINED3DPRESENT_RATE_DEFAULT;
     localParameters.PresentationInterval = WINED3DPRESENT_INTERVAL_DEFAULT;
+    localParameters.AutoRestoreDisplayMode = FALSE;
 
     /* Set this NOW, otherwise creating the depth stencil surface will cause a
      * recursive loop until ram or emulated video memory is full. */
@@ -2959,6 +2960,7 @@ static HRESULT ddraw_create_gdi_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSur
     presentation_parameters.Flags = 0;
     presentation_parameters.FullScreen_RefreshRateInHz = WINED3DPRESENT_RATE_DEFAULT;
     presentation_parameters.PresentationInterval = WINED3DPRESENT_INTERVAL_DEFAULT;
+    presentation_parameters.AutoRestoreDisplayMode = FALSE;
 
     ddraw->d3d_target = primary;
     hr = IWineD3DDevice_InitGDI(ddraw->wineD3DDevice, &presentation_parameters);
