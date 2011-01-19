@@ -937,7 +937,7 @@ DllMain(HINSTANCE hInstDLL,
                 WARN("DDraw %p has a refcount of %d\n", ddraw, ddraw->ref7 + ddraw->ref4 + ddraw->ref3 + ddraw->ref2 + ddraw->ref1);
 
                 /* Add references to each interface to avoid freeing them unexpectedly */
-                IDirectDraw_AddRef((IDirectDraw *)&ddraw->IDirectDraw_vtbl);
+                IDirectDraw_AddRef(&ddraw->IDirectDraw_iface);
                 IDirectDraw2_AddRef((IDirectDraw2 *)&ddraw->IDirectDraw2_vtbl);
                 IDirectDraw3_AddRef((IDirectDraw3 *)&ddraw->IDirectDraw3_vtbl);
                 IDirectDraw4_AddRef((IDirectDraw4 *)&ddraw->IDirectDraw4_vtbl);
@@ -973,7 +973,7 @@ DllMain(HINSTANCE hInstDLL,
                 /* Release all hanging references to destroy the objects. This
                     * restores the screen mode too
                     */
-                while(IDirectDraw_Release((IDirectDraw *)&ddraw->IDirectDraw_vtbl));
+                while(IDirectDraw_Release(&ddraw->IDirectDraw_iface));
                 while(IDirectDraw2_Release((IDirectDraw2 *)&ddraw->IDirectDraw2_vtbl));
                 while(IDirectDraw3_Release((IDirectDraw3 *)&ddraw->IDirectDraw3_vtbl));
                 while(IDirectDraw4_Release((IDirectDraw4 *)&ddraw->IDirectDraw4_vtbl));

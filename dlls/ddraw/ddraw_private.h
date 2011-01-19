@@ -100,7 +100,7 @@ struct IDirectDrawImpl
     const IDirectDraw4Vtbl *IDirectDraw4_vtbl;
     const IDirectDraw3Vtbl *IDirectDraw3_vtbl;
     const IDirectDraw2Vtbl *IDirectDraw2_vtbl;
-    const IDirectDrawVtbl *IDirectDraw_vtbl;
+    IDirectDraw IDirectDraw_iface;
     IDirect3D7 IDirect3D7_iface;
     IDirect3D3 IDirect3D3_iface;
     IDirect3D2 IDirect3D2_iface;
