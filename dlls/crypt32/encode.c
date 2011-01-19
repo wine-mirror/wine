@@ -354,7 +354,6 @@ static BOOL WINAPI CRYPT_CopyEncodedBlob(DWORD dwCertEncodingType,
             if (blob->cbData)
                 memcpy(pbEncoded, blob->pbData, blob->cbData);
             *pcbEncoded = blob->cbData;
-            ret = TRUE;
         }
     }
     return ret;
@@ -1221,7 +1220,7 @@ static BOOL WINAPI CRYPT_DEREncodeSet(DWORD dwCertEncodingType,
         *pbEncoded++ = ASN_CONSTRUCTOR | ASN_SETOF;
         CRYPT_EncodeLen(bytesNeeded - lenBytes - 1, pbEncoded, &lenBytes);
         pbEncoded += lenBytes;
-        for (i = 0; ret && i < set->cBlob; i++)
+        for (i = 0; i < set->cBlob; i++)
         {
             memcpy(pbEncoded, set->rgBlob[i].pbData, set->rgBlob[i].cbData);
             pbEncoded += set->rgBlob[i].cbData;
