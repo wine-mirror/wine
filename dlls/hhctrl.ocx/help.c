@@ -685,7 +685,9 @@ static void DisplayPopupMenu(HHInfo *info)
 
     /* Update the Show/Hide menu item */
     item.cbSize = sizeof(MENUITEMINFOW);
-    item.fMask = MIIM_STRING;
+    item.fMask = MIIM_FTYPE | MIIM_STATE | MIIM_STRING;
+    item.fType = MFT_STRING;
+    item.fState = MF_ENABLED;
 
     if (info->WinType.fNotExpanded)
         item.dwTypeData = HH_LoadString(IDS_SHOWTABS);
