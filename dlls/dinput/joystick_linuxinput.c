@@ -525,6 +525,11 @@ static JoystickImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput, unsig
         newDevice->generic.devcaps.dwFlags |= DIDC_FORCEFEEDBACK;
 
     IDirectInput_AddRef(&newDevice->generic.base.dinput->IDirectInput7A_iface);
+
+    EnterCriticalSection(&dinput->crit);
+    list_add_tail(&dinput->devices_list, &newDevice->generic.base.entry);
+    LeaveCriticalSection(&dinput->crit);
+
     return newDevice;
 
 failed:
