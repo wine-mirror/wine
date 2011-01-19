@@ -2262,7 +2262,7 @@ static HRESULT WINAPI ddraw_surface7_GetDDInterface(IDirectDrawSurface7 *iface, 
             break;
 
         case 2:
-            *DD = &This->ddraw->IDirectDraw2_vtbl;
+            *DD = &This->ddraw->IDirectDraw2_iface;
             break;
 
         case 1:
