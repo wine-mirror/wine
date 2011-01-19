@@ -69,6 +69,7 @@ static int (__cdecl *p_wcsncat_s)(wchar_t *dst, size_t elem, const wchar_t *src,
 static void (__cdecl *p_qsort_s)(void *, size_t, size_t, int (__cdecl *)(void *, const void *, const void *), void *);
 static int (__cdecl *p_controlfp_s)(unsigned int *, unsigned int, unsigned int);
 static int (__cdecl *p_atoflt)(_CRT_FLOAT *, char *);
+static unsigned int (__cdecl *p_set_abort_behavior)(unsigned int, unsigned int);
 
 static void* (WINAPI *pEncodePointer)(void *);
 
@@ -680,6 +681,30 @@ if (0)
     }
 }
 
+static void test__set_abort_behavior(void)
+{
+    unsigned int res;
+
+    if (!p_set_abort_behavior)
+    {
+        win_skip("_set_abort_behavior not found\n");
+        return;
+    }
+
+    /* default is _WRITE_ABORT_MSG | _CALL_REPORTFAULT */
+    res = p_set_abort_behavior(0, 0);
+    ok (res == (_WRITE_ABORT_MSG | _CALL_REPORTFAULT),
+        "got 0x%x (expected 0x%x)\n", res, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
+
+    /* no internal mask */
+    p_set_abort_behavior(0xffffffff, 0xffffffff);
+    res = p_set_abort_behavior(0, 0);
+    ok (res == 0xffffffff, "got 0x%x (expected 0x%x)\n", res, 0xffffffff);
+
+    /* set to default value */
+    p_set_abort_behavior(_WRITE_ABORT_MSG | _CALL_REPORTFAULT, 0xffffffff);
+}
+
 START_TEST(msvcr90)
 {
     HMODULE hcrt;
@@ -712,6 +737,7 @@ START_TEST(msvcr90)
     p_qsort_s = (void *) GetProcAddress(hcrt, "qsort_s");
     p_controlfp_s = (void *) GetProcAddress(hcrt, "_controlfp_s");
     p_atoflt = (void* )GetProcAddress(hcrt, "_atoflt");
+    p_set_abort_behavior = (void *) GetProcAddress(hcrt, "_set_abort_behavior");
 
     hkernel32 = GetModuleHandleA("kernel32.dll");
     pEncodePointer = (void *) GetProcAddress(hkernel32, "EncodePointer");
@@ -725,4 +751,5 @@ START_TEST(msvcr90)
     test_qsort_s();
     test_controlfp_s();
     test__atoflt();
+    test__set_abort_behavior();
 }

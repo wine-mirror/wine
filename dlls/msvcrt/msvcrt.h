@@ -732,6 +732,10 @@ typedef void (__cdecl *MSVCRT___sighandler_t)(int);
 
 #define _MAX__TIME64_T    (((MSVCRT___time64_t)0x00000007 << 32) | 0x93406FFF)
 
+/* _set_abort_behavior codes */
+#define MSVCRT__WRITE_ABORT_MSG    1
+#define MSVCRT__CALL_REPORTFAULT   2
+
 void  __cdecl    MSVCRT_free(void*);
 void* __cdecl    MSVCRT_malloc(MSVCRT_size_t);
 void* __cdecl    MSVCRT_calloc(MSVCRT_size_t,MSVCRT_size_t);

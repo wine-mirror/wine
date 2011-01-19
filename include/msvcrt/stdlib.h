@@ -73,6 +73,9 @@ typedef struct _ldiv_t {
 #define _OUT_TO_MSGBOX       2
 #define _REPORT_ERRMODE      3
 
+/* _set_abort_behavior codes */
+#define _WRITE_ABORT_MSG     1
+#define _CALL_REPORTFAULT    2
 
 #ifdef __cplusplus
 extern "C" {

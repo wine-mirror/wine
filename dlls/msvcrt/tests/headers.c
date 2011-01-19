@@ -453,6 +453,8 @@ static void test_defines(void)
     CHECK_DEF(_EM_AMBIGUOUS);
     CHECK_DEF(_OVERFLOW);
     CHECK_DEF(_UNDERFLOW);
+    CHECK_DEF(_WRITE_ABORT_MSG);
+    CHECK_DEF(_CALL_REPORTFAULT);
 }
 
 #endif /* __WINE_USE_MSVCRT */

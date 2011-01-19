@@ -39,6 +39,8 @@ static const char szMsgBoxTitle[] = "Wine C++ Runtime Library";
 extern int MSVCRT_app_type;
 extern char *MSVCRT__pgmptr;
 
+static unsigned int MSVCRT_abort_behavior =  MSVCRT__WRITE_ABORT_MSG | MSVCRT__CALL_REPORTFAULT;
+
 void (*CDECL _aexit_rtn)(int) = MSVCRT__exit;
 
 /* INTERNAL: call atexit functions */
@@ -150,15 +152,36 @@ void CDECL _amsg_exit(int errnum)
 void CDECL MSVCRT_abort(void)
 {
   TRACE("()\n");
-  if (MSVCRT_app_type == 2)
+
+  if (MSVCRT_abort_behavior & MSVCRT__WRITE_ABORT_MSG)
   {
-    DoMessageBox("Runtime error!", "abnormal program termination");
+    if (MSVCRT_app_type == 2)
+    {
+      DoMessageBox("Runtime error!", "abnormal program termination");
+    }
+    else
+      _cputs("\nabnormal program termination\n");
   }
-  else
-    _cputs("\nabnormal program termination\n");
   MSVCRT_raise(MSVCRT_SIGABRT);
   /* in case raise() returns */
   MSVCRT__exit(3);
+}
+
+/*********************************************************************
+ *		_set_abort_behavior (MSVCRT.@)
+ *
+ * Not exported by native msvcrt, added in msvcr80
+ */
+unsigned int CDECL MSVCRT__set_abort_behavior(unsigned int flags, unsigned int mask)
+{
+  unsigned int old = MSVCRT_abort_behavior;
+
+  TRACE("%x, %x\n", flags, mask);
+  if (mask & MSVCRT__CALL_REPORTFAULT)
+    FIXME("_WRITE_CALL_REPORTFAULT unhandled\n");
+
+  MSVCRT_abort_behavior = (MSVCRT_abort_behavior & ~mask) | (flags & mask);
+  return old;
 }
 
 /*********************************************************************

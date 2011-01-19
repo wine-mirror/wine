@@ -1475,6 +1475,7 @@
 @ varargs wscanf_s(wstr) MSVCRT_wscanf_s
 
 # Functions not exported in native dll:
+@ cdecl _set_abort_behavior(long long) MSVCRT__set_abort_behavior
 @ cdecl _get_invalid_parameter_handler()
 @ cdecl _set_invalid_parameter_handler(ptr)
 @ cdecl _create_locale(long str) MSVCRT__create_locale
