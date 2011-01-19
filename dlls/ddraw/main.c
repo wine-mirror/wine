@@ -939,7 +939,7 @@ DllMain(HINSTANCE hInstDLL,
                 /* Add references to each interface to avoid freeing them unexpectedly */
                 IDirectDraw_AddRef(&ddraw->IDirectDraw_iface);
                 IDirectDraw2_AddRef(&ddraw->IDirectDraw2_iface);
-                IDirectDraw3_AddRef((IDirectDraw3 *)&ddraw->IDirectDraw3_vtbl);
+                IDirectDraw3_AddRef(&ddraw->IDirectDraw3_iface);
                 IDirectDraw4_AddRef((IDirectDraw4 *)&ddraw->IDirectDraw4_vtbl);
                 IDirectDraw7_AddRef((IDirectDraw7 *)ddraw);
 
@@ -975,7 +975,7 @@ DllMain(HINSTANCE hInstDLL,
                     */
                 while(IDirectDraw_Release(&ddraw->IDirectDraw_iface));
                 while(IDirectDraw2_Release(&ddraw->IDirectDraw2_iface));
-                while(IDirectDraw3_Release((IDirectDraw3 *)&ddraw->IDirectDraw3_vtbl));
+                while(IDirectDraw3_Release(&ddraw->IDirectDraw3_iface));
                 while(IDirectDraw4_Release((IDirectDraw4 *)&ddraw->IDirectDraw4_vtbl));
                 while(IDirectDraw7_Release((IDirectDraw7 *)ddraw));
             }
