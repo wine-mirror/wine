@@ -153,6 +153,7 @@ _unmarshal_interface(marshal_state *buf, REFIID riid, LPUNKNOWN *pUnk) {
     hres = IStream_Write(pStm,buf->base+buf->curoff,xsize,&res);
     if (hres) {
         ERR("stream write %x\n",hres);
+        IStream_Release(pStm);
         return hres;
     }
     
@@ -160,12 +161,14 @@ _unmarshal_interface(marshal_state *buf, REFIID riid, LPUNKNOWN *pUnk) {
     hres = IStream_Seek(pStm,seekto,SEEK_SET,&newpos);
     if (hres) {
         ERR("Failed Seek %x\n",hres);
+        IStream_Release(pStm);
         return hres;
     }
     
     hres = CoUnmarshalInterface(pStm,riid,(LPVOID*)pUnk);
     if (hres) {
 	ERR("Unmarshalling interface %s failed with %x\n",debugstr_guid(riid),hres);
+	IStream_Release(pStm);
 	return hres;
     }
     
