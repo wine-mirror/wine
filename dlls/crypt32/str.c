@@ -786,46 +786,41 @@ static BOOL CRYPT_EncodeValueWithType(DWORD dwCertEncodingType,
 
     if (value->end > value->start)
     {
+        LONG i;
+        LPWSTR ptr;
+
         nameValue.Value.pbData = CryptMemAlloc((value->end - value->start) *
          sizeof(WCHAR));
         if (!nameValue.Value.pbData)
         {
             SetLastError(ERROR_OUTOFMEMORY);
-            ret = FALSE;
+            return FALSE;
         }
+        ptr = (LPWSTR)nameValue.Value.pbData;
+        for (i = 0; i < value->end - value->start; i++)
+        {
+            *ptr++ = value->start[i];
+            if (value->start[i] == '"')
+                i++;
+        }
+        nameValue.Value.cbData = (LPBYTE)ptr - nameValue.Value.pbData;
     }
-    if (ret)
+    ret = CryptEncodeObjectEx(dwCertEncodingType, X509_UNICODE_NAME_VALUE,
+     &nameValue, CRYPT_ENCODE_ALLOC_FLAG, NULL, &output->pbData,
+     &output->cbData);
+    if (!ret && ppszError)
     {
-        if (value->end > value->start)
-        {
-            LONG i;
-            LPWSTR ptr = (LPWSTR)nameValue.Value.pbData;
-
-            for (i = 0; i < value->end - value->start; i++)
-            {
-                *ptr++ = value->start[i];
-                if (value->start[i] == '"')
-                    i++;
-            }
-            nameValue.Value.cbData = (LPBYTE)ptr - nameValue.Value.pbData;
-        }
-        ret = CryptEncodeObjectEx(dwCertEncodingType, X509_UNICODE_NAME_VALUE,
-         &nameValue, CRYPT_ENCODE_ALLOC_FLAG, NULL, &output->pbData,
-         &output->cbData);
-        if (!ret && ppszError)
-        {
-            if (type == CERT_RDN_NUMERIC_STRING &&
-             GetLastError() == CRYPT_E_INVALID_NUMERIC_STRING)
-                *ppszError = value->start + output->cbData;
-            else if (type == CERT_RDN_PRINTABLE_STRING &&
-             GetLastError() == CRYPT_E_INVALID_PRINTABLE_STRING)
-                *ppszError = value->start + output->cbData;
-            else if (type == CERT_RDN_IA5_STRING &&
-             GetLastError() == CRYPT_E_INVALID_IA5_STRING)
-                *ppszError = value->start + output->cbData;
-        }
-        CryptMemFree(nameValue.Value.pbData);
+        if (type == CERT_RDN_NUMERIC_STRING &&
+         GetLastError() == CRYPT_E_INVALID_NUMERIC_STRING)
+            *ppszError = value->start + output->cbData;
+        else if (type == CERT_RDN_PRINTABLE_STRING &&
+         GetLastError() == CRYPT_E_INVALID_PRINTABLE_STRING)
+            *ppszError = value->start + output->cbData;
+        else if (type == CERT_RDN_IA5_STRING &&
+         GetLastError() == CRYPT_E_INVALID_IA5_STRING)
+            *ppszError = value->start + output->cbData;
     }
+    CryptMemFree(nameValue.Value.pbData);
     return ret;
 }
 
