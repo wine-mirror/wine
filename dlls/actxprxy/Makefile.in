@@ -16,6 +16,7 @@ IDL_P_SRCS = \
 	actxprxy_objsafe.idl \
 	actxprxy_ocmm.idl \
 	actxprxy_servprov.idl \
+	actxprxy_shldisp.idl \
 	actxprxy_shobjidl.idl \
 	actxprxy_urlhist.idl
 
@@ -28,6 +29,7 @@ IDL_R_SRCS = \
 	actxprxy_objsafe.idl \
 	actxprxy_ocmm.idl \
 	actxprxy_servprov.idl \
+	actxprxy_shldisp.idl \
 	actxprxy_shobjidl.idl \
 	actxprxy_urlhist.idl
 

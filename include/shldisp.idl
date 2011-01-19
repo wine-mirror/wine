@@ -31,6 +31,7 @@ import "comcat.idl";
  * IAutoComplete interface
  */
 [
+    local,
     object,
     uuid(00bb2762-6a77-11d0-a535-00c04fd7d062),
     pointer_default(unique)
@@ -51,6 +52,7 @@ interface IAutoComplete : IUnknown
  * IAutoComplete2 interface
  */
 [
+    local,
     object,
     uuid(eac04bc0-3791-11d2-bb95-0060977b464c),
     pointer_default(unique)
@@ -87,6 +89,7 @@ importlib("stdole2.tlb");
 
 [
     object,
+    oleautomation,
     uuid(9ba05970-f6a8-11cf-a442-00a0c90a8f39),
     pointer_default(unique)
 ]

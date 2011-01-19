@@ -38,6 +38,8 @@ dlls/actxprxy/actxprxy_ocmm.h
 dlls/actxprxy/actxprxy_ocmm_p.c
 dlls/actxprxy/actxprxy_servprov.h
 dlls/actxprxy/actxprxy_servprov_p.c
+dlls/actxprxy/actxprxy_shldisp.h
+dlls/actxprxy/actxprxy_shldisp_p.c
 dlls/actxprxy/actxprxy_shobjidl.h
 dlls/actxprxy/actxprxy_shobjidl_p.c
 dlls/actxprxy/actxprxy_urlhist.h
