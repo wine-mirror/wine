@@ -66,6 +66,7 @@ HKLM,"Software\Microsoft\Internet Explorer\AboutURLs","PostNotCached",2,"res://m
 HKLM,"Software\Microsoft\Internet Explorer\AboutURLs","mozilla",2,"res://mshtml.dll/about.moz"
 HKLM,"Software\Microsoft\Internet Explorer\Default Behaviors","VML",,  "CLSID:10072CEC-8CC1-11D1-986E-00A0C955B42E"
 HKLM,"Software\Microsoft\Internet Explorer\Default Behaviors","TIME",, "CLSID:476C391C-3E0D-11D2-B948-00C04FA32195"
+HKLM,"Software\Microsoft\Internet Explorer\ActiveX Compatibility","Version",,"6.17"
 
 
 [WineGecko.Reg]

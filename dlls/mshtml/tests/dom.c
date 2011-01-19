@@ -32,6 +32,7 @@
 #include "docobj.h"
 #include "dispex.h"
 #include "mshtml_test.h"
+#include "objsafe.h"
 
 static const char doc_blank[] = "<html></html>";
 static const char doc_str1[] = "<html><body>test</body></html>";
@@ -126,6 +127,7 @@ static const IID * const doc_node_iids[] = {
     &IID_IConnectionPointContainer,
     &IID_IInternetHostSecurityManager,
     &IID_IOleContainer,
+    &IID_IObjectSafety,
     NULL
 };
 
@@ -139,6 +141,7 @@ static const IID * const doc_obj_iids[] = {
     &IID_IConnectionPointContainer,
     &IID_ICustomDoc,
     &IID_IOleContainer,
+    &IID_IObjectSafety,
     NULL
 };
 

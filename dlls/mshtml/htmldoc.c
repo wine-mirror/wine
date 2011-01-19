@@ -1827,6 +1827,9 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
     }else if(IsEqualGUID(&IID_IOleContainer, riid)) {
         TRACE("(%p)->(IID_IOleContainer %p)\n", This, ppv);
         *ppv = &This->IOleContainer_iface;
+    }else if(IsEqualGUID(&IID_IObjectSafety, riid)) {
+        TRACE("(%p)->(IID_IObjectSafety %p)\n", This, ppv);
+        *ppv = &This->IObjectSafety_iface;
     }else {
         return FALSE;
     }

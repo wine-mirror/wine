@@ -802,6 +802,10 @@ static const IObjectWithSiteVtbl ObjectWithSiteVtbl = {
     ObjectWithSite_GetSite
 };
 
+/**********************************************************
+ * IOleContainer implementation
+ */
+
 static inline HTMLDocument *impl_from_IOleContainer(IOleContainer *iface)
 {
     return CONTAINING_RECORD(iface, HTMLDocument, IOleContainer_iface);
@@ -856,6 +860,63 @@ static const IOleContainerVtbl OleContainerVtbl = {
     OleContainer_LockContainer
 };
 
+/**********************************************************
+ * IObjectSafety implementation
+ */
+
+static inline HTMLDocument *impl_from_IObjectSafety(IObjectSafety *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocument, IObjectSafety_iface);
+}
+
+static HRESULT WINAPI ObjectSafety_QueryInterface(IObjectSafety *iface, REFIID riid, void **ppv)
+{
+    HTMLDocument *This = impl_from_IObjectSafety(iface);
+    return htmldoc_query_interface(This, riid, ppv);
+}
+
+static ULONG WINAPI ObjectSafety_AddRef(IObjectSafety *iface)
+{
+    HTMLDocument *This = impl_from_IObjectSafety(iface);
+    return htmldoc_addref(This);
+}
+
+static ULONG WINAPI ObjectSafety_Release(IObjectSafety *iface)
+{
+    HTMLDocument *This = impl_from_IObjectSafety(iface);
+    return htmldoc_release(This);
+}
+
+static HRESULT WINAPI ObjectSafety_GetInterfaceSafetyOptions(IObjectSafety *iface,
+        REFIID riid, DWORD *pdwSupportedOptions, DWORD *pdwEnabledOptions)
+{
+    HTMLDocument *This = impl_from_IObjectSafety(iface);
+    FIXME("(%p)->(%s %p %p)\n", This, debugstr_guid(riid), pdwSupportedOptions, pdwEnabledOptions);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ObjectSafety_SetInterfaceSafetyOptions(IObjectSafety *iface,
+        REFIID riid, DWORD dwOptionSetMask, DWORD dwEnabledOptions)
+{
+    HTMLDocument *This = impl_from_IObjectSafety(iface);
+    FIXME("(%p)->(%s %x %x)\n", This, debugstr_guid(riid), dwOptionSetMask, dwEnabledOptions);
+
+    if(IsEqualGUID(&IID_IPersistMoniker, riid) &&
+            dwOptionSetMask==INTERFACESAFE_FOR_UNTRUSTED_DATA &&
+            dwEnabledOptions==INTERFACESAFE_FOR_UNTRUSTED_DATA)
+        return S_OK;
+
+    return E_NOTIMPL;
+}
+
+static const IObjectSafetyVtbl ObjectSafetyVtbl = {
+    ObjectSafety_QueryInterface,
+    ObjectSafety_AddRef,
+    ObjectSafety_Release,
+    ObjectSafety_GetInterfaceSafetyOptions,
+    ObjectSafety_SetInterfaceSafetyOptions
+};
+
 void HTMLDocument_LockContainer(HTMLDocumentObj *This, BOOL fLock)
 {
     IOleContainer *container;
@@ -879,4 +940,5 @@ void HTMLDocument_OleObj_Init(HTMLDocument *This)
     This->IOleControl_iface.lpVtbl = &OleControlVtbl;
     This->IObjectWithSite_iface.lpVtbl = &ObjectWithSiteVtbl;
     This->IOleContainer_iface.lpVtbl = &OleContainerVtbl;
+    This->IObjectSafety_iface.lpVtbl = &ObjectSafetyVtbl;
 }

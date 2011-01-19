@@ -24,6 +24,7 @@
 #include "hlink.h"
 #include "perhist.h"
 #include "dispex.h"
+#include "objsafe.h"
 
 #include "wine/list.h"
 #include "wine/unicode.h"
@@ -368,6 +369,7 @@ struct HTMLDocument {
     ISupportErrorInfo           ISupportErrorInfo_iface;
     IObjectWithSite             IObjectWithSite_iface;
     IOleContainer               IOleContainer_iface;
+    IObjectSafety               IObjectSafety_iface;
 
     IUnknown *unk_impl;
     IDispatchEx *dispex;
