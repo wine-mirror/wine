@@ -414,7 +414,7 @@ static void FillTreeView( browse_info *info, IShellFolder * lpsf,
 	SetCapture( hwnd );
 	SetCursor( LoadCursorA( 0, (LPSTR)IDC_WAIT ) );
 
-	while (NOERROR == IEnumIDList_Next(lpe,1,&pidlTemp,&ulFetched))
+	while (S_OK == IEnumIDList_Next(lpe,1,&pidlTemp,&ulFetched))
 	{
 	    ULONG ulAttrs = SFGAO_HASSUBFOLDER | SFGAO_FOLDER;
 	    IEnumIDList* pEnumIL = NULL;
@@ -521,14 +521,18 @@ static LRESULT BrsFolder_Treeview_Expand( browse_info *info, NMTREEVIEWW *pnmtv 
 
     if (!_ILIsEmpty(lptvid->lpi)) {
         r = IShellFolder_BindToObject( lptvid->lpsfParent, lptvid->lpi, 0,
-                                       &IID_IShellFolder, (LPVOID *)&lpsf2 );
+                                       &IID_IShellFolder, (void**)&lpsf2 );
     } else {
         lpsf2 = lptvid->lpsfParent;
-        r = IShellFolder_AddRef(lpsf2);
+        IShellFolder_AddRef(lpsf2);
+        r = S_OK;
     }
 
     if (SUCCEEDED(r))
+    {
         FillTreeView( info, lpsf2, lptvid->lpifq, pnmtv->itemNew.hItem, lptvid->pEnumIL);
+        IShellFolder_Release( lpsf2 );
+    }
 
     /* My Computer is already sorted and trying to do a simple text
      * sort will only mess things up */
