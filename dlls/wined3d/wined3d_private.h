@@ -1707,7 +1707,7 @@ struct IWineD3DDeviceImpl
     WINED3DDEVTYPE                  devType;
     HWND focus_window;
 
-    IWineD3DSwapChain     **swapchains;
+    IWineD3DSwapChainImpl **swapchains;
     UINT                    NumberOfSwapChains;
 
     struct list             resources; /* a linked list to track resources created by the device */

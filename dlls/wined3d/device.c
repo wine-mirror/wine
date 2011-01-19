@@ -1305,8 +1305,9 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetSwapChain(IWineD3DDevice *iface, U
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) : swapchain %d\n", This, iSwapChain);
 
-    if(iSwapChain < This->NumberOfSwapChains) {
-        *pSwapChain = This->swapchains[iSwapChain];
+    if (iSwapChain < This->NumberOfSwapChains)
+    {
+        *pSwapChain = (IWineD3DSwapChain *)This->swapchains[iSwapChain];
         IWineD3DSwapChain_AddRef(*pSwapChain);
         TRACE("(%p) returning %p\n", This, *pSwapChain);
         return WINED3D_OK;
@@ -1939,12 +1940,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
     }
 
     This->NumberOfSwapChains = 1;
-    This->swapchains = HeapAlloc(GetProcessHeap(), 0, This->NumberOfSwapChains * sizeof(IWineD3DSwapChain *));
-    if(!This->swapchains) {
+    This->swapchains = HeapAlloc(GetProcessHeap(), 0, This->NumberOfSwapChains * sizeof(*This->swapchains));
+    if (!This->swapchains)
+    {
         ERR("Out of memory!\n");
         goto err_out;
     }
-    This->swapchains[0] = (IWineD3DSwapChain *) swapchain;
+    This->swapchains[0] = swapchain;
 
     if (swapchain->back_buffers && swapchain->back_buffers[0])
     {
@@ -2079,12 +2081,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_InitGDI(IWineD3DDevice *iface,
     }
 
     This->NumberOfSwapChains = 1;
-    This->swapchains = HeapAlloc(GetProcessHeap(), 0, This->NumberOfSwapChains * sizeof(IWineD3DSwapChain *));
-    if(!This->swapchains) {
+    This->swapchains = HeapAlloc(GetProcessHeap(), 0, This->NumberOfSwapChains * sizeof(*This->swapchains));
+    if (!This->swapchains)
+    {
         ERR("Out of memory!\n");
         goto err_out;
     }
-    This->swapchains[0] = (IWineD3DSwapChain *) swapchain;
+    This->swapchains[0] = swapchain;
     return WINED3D_OK;
 
 err_out:
@@ -2227,9 +2230,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
 
     context_release(context);
 
-    for(i=0; i < This->NumberOfSwapChains; i++) {
-        TRACE("Releasing the implicit swapchain %d\n", i);
-        if (D3DCB_DestroySwapChain(This->swapchains[i])  > 0) {
+    for (i = 0; i < This->NumberOfSwapChains; ++i)
+    {
+        TRACE("Releasing the implicit swapchain %u.\n", i);
+        if (D3DCB_DestroySwapChain((IWineD3DSwapChain *)This->swapchains[i]) > 0)
+        {
             FIXME("(%p) Something's still holding the implicit swapchain\n", This);
         }
     }
@@ -2255,9 +2260,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UninitGDI(IWineD3DDevice *iface, D3DCB_
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     unsigned int i;
 
-    for(i=0; i < This->NumberOfSwapChains; i++) {
-        TRACE("Releasing the implicit swapchain %d\n", i);
-        if (D3DCB_DestroySwapChain(This->swapchains[i])  > 0) {
+    for (i = 0; i < This->NumberOfSwapChains; ++i)
+    {
+        TRACE("Releasing the implicit swapchain %u.\n", i);
+        if (D3DCB_DestroySwapChain((IWineD3DSwapChain *)This->swapchains[i]) > 0)
+        {
             FIXME("(%p) Something's still holding the implicit swapchain\n", This);
         }
     }
@@ -5820,7 +5827,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *
 
     if (This->depth_stencil)
     {
-        if (((IWineD3DSwapChainImpl *)This->swapchains[0])->presentParms.Flags & WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL
+        if (This->swapchains[0]->presentParms.Flags & WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL
                 || This->depth_stencil->flags & SFLAG_DISCARD)
         {
             surface_modify_ds_location(This->depth_stencil, SFLAG_DS_DISCARDED,

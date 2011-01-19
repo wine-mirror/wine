@@ -1877,7 +1877,7 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
         }
         else
         {
-            IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)This->swapchains[0];
+            IWineD3DSwapChainImpl *swapchain = This->swapchains[0];
             if (swapchain->back_buffers) target = swapchain->back_buffers[0];
             else target = swapchain->front_buffer;
         }
@@ -1904,7 +1904,7 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
         if (current_context && current_context->swapchain->device == This)
             context = current_context;
         else
-            context = swapchain_get_context((IWineD3DSwapChainImpl *)This->swapchains[0]);
+            context = swapchain_get_context(This->swapchains[0]);
     }
 
     context_validate(context);
