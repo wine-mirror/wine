@@ -789,7 +789,7 @@ static BOOL CRYPT_EncodeValueWithType(DWORD dwCertEncodingType,
         LONG i;
         LPWSTR ptr;
 
-        nameValue.Value.pbData = CryptMemAlloc((value->end - value->start) *
+        nameValue.Value.pbData = CryptMemAlloc((value->end - value->start + 1) *
          sizeof(WCHAR));
         if (!nameValue.Value.pbData)
         {
@@ -803,6 +803,11 @@ static BOOL CRYPT_EncodeValueWithType(DWORD dwCertEncodingType,
             if (value->start[i] == '"')
                 i++;
         }
+        /* The string is NULL terminated because of a quirk in encoding
+         * unicode names values:  if the length is given as 0, the value is
+         * assumed to be a NULL-terminated string.
+         */
+        *ptr = 0;
         nameValue.Value.cbData = (LPBYTE)ptr - nameValue.Value.pbData;
     }
     ret = CryptEncodeObjectEx(dwCertEncodingType, X509_UNICODE_NAME_VALUE,
