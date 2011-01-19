@@ -774,76 +774,39 @@ ULONG WINAPI IDirectInputDevice2AImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     return IDirectInputDevice2WImpl_Release(IDirectInputDevice8W_from_impl(This));
 }
 
-HRESULT WINAPI IDirectInputDevice2AImpl_QueryInterface(
-	LPDIRECTINPUTDEVICE8A iface,REFIID riid,LPVOID *ppobj
-)
-{
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
-    
-    TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
-    if (IsEqualGUID(&IID_IUnknown,riid)) {
-	IDirectInputDevice2_AddRef(iface);
-	*ppobj = This;
-	return DI_OK;
-    }
-    if (IsEqualGUID(&IID_IDirectInputDeviceA,riid)) {
-	IDirectInputDevice2_AddRef(iface);
-	*ppobj = This;
-	return DI_OK;
-    }
-    if (IsEqualGUID(&IID_IDirectInputDevice2A,riid)) {
-	IDirectInputDevice2_AddRef(iface);
-	*ppobj = This;
-	return DI_OK;
-    }
-    if (IsEqualGUID(&IID_IDirectInputDevice7A,riid)) {
-	IDirectInputDevice7_AddRef(iface);
-	*ppobj = This;
-	return DI_OK;
-    }
-    if (IsEqualGUID(&IID_IDirectInputDevice8A,riid)) {
-	IDirectInputDevice8_AddRef(iface);
-	*ppobj = This;
-	return DI_OK;
-    }
-    TRACE("Unsupported interface !\n");
-    return E_FAIL;
-}
-
-HRESULT WINAPI IDirectInputDevice2WImpl_QueryInterface(
-	LPDIRECTINPUTDEVICE8W iface,REFIID riid,LPVOID *ppobj
-)
+HRESULT WINAPI IDirectInputDevice2WImpl_QueryInterface(LPDIRECTINPUTDEVICE8W iface, REFIID riid, LPVOID *ppobj)
 {
     IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
 
-    TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
-    if (IsEqualGUID(&IID_IUnknown,riid)) {
-	IDirectInputDevice2_AddRef(iface);
-	*ppobj = This;
-	return DI_OK;
+    TRACE("(%p this=%p,%s,%p)\n", iface, This, debugstr_guid(riid), ppobj);
+    if (IsEqualGUID(&IID_IUnknown, riid) ||
+        IsEqualGUID(&IID_IDirectInputDeviceA,  riid) ||
+        IsEqualGUID(&IID_IDirectInputDevice2A, riid) ||
+        IsEqualGUID(&IID_IDirectInputDevice7A, riid) ||
+        IsEqualGUID(&IID_IDirectInputDevice8A, riid))
+    {
+        IDirectInputDevice2_AddRef(iface);
+        *ppobj = IDirectInputDevice8A_from_impl(This);
+        return DI_OK;
     }
-    if (IsEqualGUID(&IID_IDirectInputDeviceW,riid)) {
-	IDirectInputDevice2_AddRef(iface);
-	*ppobj = This;
-	return DI_OK;
+    if (IsEqualGUID(&IID_IDirectInputDeviceW,  riid) ||
+        IsEqualGUID(&IID_IDirectInputDevice2W, riid) ||
+        IsEqualGUID(&IID_IDirectInputDevice7W, riid) ||
+        IsEqualGUID(&IID_IDirectInputDevice8W, riid))
+    {
+        IDirectInputDevice2_AddRef(iface);
+        *ppobj = IDirectInputDevice8W_from_impl(This);
+        return DI_OK;
     }
-    if (IsEqualGUID(&IID_IDirectInputDevice2W,riid)) {
-	IDirectInputDevice2_AddRef(iface);
-	*ppobj = This;
-	return DI_OK;
-    }
-    if (IsEqualGUID(&IID_IDirectInputDevice7W,riid)) {
-	IDirectInputDevice7_AddRef(iface);
-	*ppobj = This;
-	return DI_OK;
-    }
-    if (IsEqualGUID(&IID_IDirectInputDevice8W,riid)) {
-	IDirectInputDevice8_AddRef(iface);
-	*ppobj = This;
-	return DI_OK;
-    }
-    TRACE("Unsupported interface !\n");
+
+    WARN("Unsupported interface!\n");
     return E_FAIL;
+}
+
+HRESULT WINAPI IDirectInputDevice2AImpl_QueryInterface(LPDIRECTINPUTDEVICE8A iface, REFIID riid, LPVOID *ppobj)
+{
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
+    return IDirectInputDevice2WImpl_QueryInterface(IDirectInputDevice8W_from_impl(This), riid, ppobj);
 }
 
 ULONG WINAPI IDirectInputDevice2WImpl_AddRef(LPDIRECTINPUTDEVICE8W iface)
