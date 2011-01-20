@@ -2490,10 +2490,6 @@ interface IWineD3DVolume : IWineD3DResource
     );
     HRESULT Unmap(
     );
-    HRESULT LoadTexture(
-        [in] int gl_level,
-        [in] BOOL srgb_mode
-    );
 }
 
 [

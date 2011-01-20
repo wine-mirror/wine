@@ -93,6 +93,31 @@ void volume_set_container(IWineD3DVolumeImpl *volume, struct IWineD3DVolumeTextu
     volume->container = container;
 }
 
+/* Context activation is done by the caller. */
+void volume_load(IWineD3DVolumeImpl *volume, UINT level, BOOL srgb_mode)
+{
+    const struct wined3d_gl_info *gl_info = &volume->resource.device->adapter->gl_info;
+    const struct wined3d_format *format = volume->resource.format;
+
+    TRACE("volume %p, level %u, srgb %#x, format %s (%#x).\n",
+            volume, level, srgb_mode, debug_d3dformat(format->id), format->id);
+
+    volume_bind_and_dirtify(volume);
+
+    ENTER_GL();
+    GL_EXTCALL(glTexImage3DEXT(GL_TEXTURE_3D, level, format->glInternal,
+            volume->currentDesc.Width, volume->currentDesc.Height, volume->currentDesc.Depth,
+            0, format->glFormat, format->glType, volume->resource.allocatedMemory));
+    checkGLcall("glTexImage3D");
+    LEAVE_GL();
+
+    /* When adding code releasing volume->resource.allocatedMemory to save
+     * data keep in mind that GL_UNPACK_CLIENT_STORAGE_APPLE is enabled by
+     * default if supported(GL_APPLE_client_storage). Thus do not release
+     * volume->resource.allocatedMemory if GL_APPLE_client_storage is
+     * supported. */
+}
+
 /* *******************************************
    IWineD3DVolume IUnknown parts follow
    ******************************************* */
@@ -277,39 +302,6 @@ static HRESULT WINAPI IWineD3DVolumeImpl_Unmap(IWineD3DVolume *iface)
     return WINED3D_OK;
 }
 
-/* Internal use functions follow : */
-
-/* Context activation is done by the caller. */
-static HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, int gl_level, BOOL srgb_mode)
-{
-    IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
-    const struct wined3d_gl_info *gl_info = &This->resource.device->adapter->gl_info;
-    const struct wined3d_format *format = This->resource.format;
-
-    TRACE("iface %p, level %u, srgb %#x, format %s (%#x).\n",
-            iface, gl_level, srgb_mode, debug_d3dformat(format->id), format->id);
-
-    volume_bind_and_dirtify(This);
-
-    TRACE("Calling glTexImage3D %x level=%d, intfmt=%x, w=%d, h=%d,d=%d, 0=%d, glFmt=%x, glType=%x, Mem=%p\n",
-            GL_TEXTURE_3D, gl_level, format->glInternal, This->currentDesc.Width, This->currentDesc.Height,
-            This->currentDesc.Depth, 0, format->glFormat, format->glType, This->resource.allocatedMemory);
-
-    ENTER_GL();
-    GL_EXTCALL(glTexImage3DEXT(GL_TEXTURE_3D, gl_level, format->glInternal,
-            This->currentDesc.Width, This->currentDesc.Height, This->currentDesc.Depth,
-            0, format->glFormat, format->glType, This->resource.allocatedMemory));
-    checkGLcall("glTexImage3D");
-    LEAVE_GL();
-
-    /* When adding code releasing This->resource.allocatedMemory to save data keep in mind that
-     * GL_UNPACK_CLIENT_STORAGE_APPLE is enabled by default if supported(GL_APPLE_client_storage).
-     * Thus do not release This->resource.allocatedMemory if GL_APPLE_client_storage is supported.
-     */
-    return WINED3D_OK;
-
-}
-
 static const IWineD3DVolumeVtbl IWineD3DVolume_Vtbl =
 {
     /* IUnknown */
@@ -330,8 +322,6 @@ static const IWineD3DVolumeVtbl IWineD3DVolume_Vtbl =
     IWineD3DVolumeImpl_GetDesc,
     IWineD3DVolumeImpl_Map,
     IWineD3DVolumeImpl_Unmap,
-    /* Internal interface */
-    IWineD3DVolumeImpl_LoadTexture,
 };
 
 HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT width,

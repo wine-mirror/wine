@@ -62,8 +62,7 @@ static void volumetexture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3D
     {
         for (i = 0; i < texture->baseTexture.level_count; ++i)
         {
-            IWineD3DVolume *volume = (IWineD3DVolume *)texture->baseTexture.sub_resources[i];
-            IWineD3DVolume_LoadTexture(volume, i, srgb_mode);
+            volume_load((IWineD3DVolumeImpl *)texture->baseTexture.sub_resources[i], i, srgb_mode);
         }
     }
     else if (srgb_was_toggled)
@@ -72,7 +71,7 @@ static void volumetexture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3D
         {
             IWineD3DVolumeImpl *volume = (IWineD3DVolumeImpl *)texture->baseTexture.sub_resources[i];
             volume_add_dirty_box(volume, NULL);
-            IWineD3DVolume_LoadTexture((IWineD3DVolume *)volume, i, srgb_mode);
+            volume_load(volume, i, srgb_mode);
         }
     }
     else

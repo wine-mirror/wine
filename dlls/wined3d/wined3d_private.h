@@ -2005,6 +2005,7 @@ void volume_add_dirty_box(struct IWineD3DVolumeImpl *volume, const WINED3DBOX *d
 HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT width,
         UINT height, UINT depth, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+void volume_load(IWineD3DVolumeImpl *volume, UINT level, BOOL srgb_mode) DECLSPEC_HIDDEN;
 void volume_set_container(IWineD3DVolumeImpl *volume, struct IWineD3DVolumeTextureImpl *container) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
