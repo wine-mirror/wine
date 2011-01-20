@@ -5,6 +5,7 @@
  * Copyright 2000-2002 TransGaming Technologies, Inc.
  * Copyright 2007 Peter Dons Tychsen
  * Copyright 2007 Maarten Lankhorst
+ * Copyright 2011 Owen Rudge for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -30,9 +31,13 @@
 #include "windef.h"
 #include "winbase.h"
 #include "mmsystem.h"
+#include "wingdi.h"
+#include "mmreg.h"
 #include "winternl.h"
 #include "wine/debug.h"
 #include "dsound.h"
+#include "ks.h"
+#include "ksmedia.h"
 #include "dsdriver.h"
 #include "dsound_private.h"
 
@@ -177,21 +182,32 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 {
 	BOOL needremix = TRUE, needresample = (dsb->freq != dsb->device->pwfx->nSamplesPerSec);
 	DWORD bAlign = dsb->pwfx->nBlockAlign, pAlign = dsb->device->pwfx->nBlockAlign;
+	WAVEFORMATEXTENSIBLE *pwfxe;
+	BOOL ieee = FALSE;
 
 	TRACE("(%p)\n",dsb);
+
+	pwfxe = (WAVEFORMATEXTENSIBLE *) dsb->pwfx;
+
+	if ((pwfxe->Format.wFormatTag == WAVE_FORMAT_IEEE_FLOAT) || ((pwfxe->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+	    && (IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))))
+		ieee = TRUE;
 
 	/* calculate the 10ms write lead */
 	dsb->writelead = (dsb->freq / 100) * dsb->pwfx->nBlockAlign;
 
 	if ((dsb->pwfx->wBitsPerSample == dsb->device->pwfx->wBitsPerSample) &&
-	    (dsb->pwfx->nChannels == dsb->device->pwfx->nChannels) && !needresample)
+	    (dsb->pwfx->nChannels == dsb->device->pwfx->nChannels) && !needresample && !ieee)
 		needremix = FALSE;
 	HeapFree(GetProcessHeap(), 0, dsb->tmp_buffer);
 	dsb->tmp_buffer = NULL;
 	dsb->max_buffer_len = dsb->freqAcc = dsb->freqAccNext = 0;
 	dsb->freqneeded = needresample;
 
-	dsb->convert = convertbpp[dsb->pwfx->wBitsPerSample/8 - 1][dsb->device->pwfx->wBitsPerSample/8 - 1];
+	if (ieee)
+		dsb->convert = convertbpp[4][dsb->device->pwfx->wBitsPerSample/8 - 1];
+	else
+		dsb->convert = convertbpp[dsb->pwfx->wBitsPerSample/8 - 1][dsb->device->pwfx->wBitsPerSample/8 - 1];
 
 	dsb->resampleinmixer = FALSE;
 

@@ -1,6 +1,7 @@
 /* DirectSound format conversion and mixing routines
  *
  * Copyright 2007 Maarten Lankhorst
+ * Copyright 2011 Owen Rudge for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -295,11 +296,121 @@ static void convert_32_to_32 (const void *src, void *dst, UINT src_stride,
     }
 }
 
-const bitsconvertfunc convertbpp[4][4] = {
+static void convert_ieee_32_to_8 (const void *src, void *dst, UINT src_stride,
+        UINT dst_stride, INT count, UINT freqAcc, UINT adj)
+{
+    while (count > 0)
+    {
+        DWORD src_le = le32(*(DWORD *) src);
+        float v = *((float *) &src_le);
+        INT8 d = 0;
+
+        if (v < -1.0f)
+            d = -128;
+        else if (v >  1.0f)
+            d = 127;
+        else
+            d = v * 127.5f - 0.5f;
+
+        *(BYTE *) dst = d ^ 0x80;
+
+        dst = (char *)dst + dst_stride;
+        src_advance(&src, src_stride, &count, &freqAcc, adj);
+    }
+}
+
+static void convert_ieee_32_to_16 (const void *src, void *dst, UINT src_stride,
+        UINT dst_stride, INT count, UINT freqAcc, UINT adj)
+{
+    while (count > 0)
+    {
+        DWORD src_le = le32(*(DWORD *) src);
+        float v = *((float *) &src_le);
+
+        INT16 *d = (INT16 *) dst;
+
+        if (v < -1.0f)
+            *d = -32768;
+        else if (v >  1.0f)
+            *d = 32767;
+        else
+            *d = v * 32767.5f - 0.5f;
+
+        *d = le16(*d);
+
+        dst = (char *)dst + dst_stride;
+        src_advance(&src, src_stride, &count, &freqAcc, adj);
+    }
+}
+
+static void convert_ieee_32_to_24 (const void *src, void *dst, UINT src_stride,
+        UINT dst_stride, INT count, UINT freqAcc, UINT adj)
+{
+    while (count > 0)
+    {
+        DWORD src_le = le32(*(DWORD *) src);
+        float v = *((float *) &src_le);
+        BYTE *dest24 = dst;
+
+        if (v < -1.0f)
+        {
+            dest24[0] = 0;
+            dest24[1] = 0;
+            dest24[2] = 0x80;
+        }
+        else if (v > 1.0f)
+        {
+            dest24[0] = 0xff;
+            dest24[1] = 0xff;
+            dest24[2] = 0x7f;
+        }
+        else if (v < 0.0f)
+        {
+            dest24[0] = v * 8388608.0f;
+            dest24[1] = v * 32768.0f;
+            dest24[2] = v * 128.0f;
+        }
+        else if (v >= 0.0f)
+        {
+            dest24[0] = v * 8388608.0f;
+            dest24[1] = v * 32768.0f;
+            dest24[2] = v * 127.0f;
+        }
+
+        dst = (char *)dst + dst_stride;
+        src_advance(&src, src_stride, &count, &freqAcc, adj);
+    }
+}
+
+static void convert_ieee_32_to_32 (const void *src, void *dst, UINT src_stride,
+        UINT dst_stride, INT count, UINT freqAcc, UINT adj)
+{
+    while (count > 0)
+    {
+        DWORD src_le = le32(*(DWORD *) src);
+        float v = *((float *) &src_le);
+        INT32 *d = (INT32 *) dst;
+
+        if (v < -1.0f)
+            *d = -2147483647 - 1; /* silence warning */
+        else if (v >  1.0f)
+            *d = 2147483647;
+        else
+            *d = v * 2147483647.5f - 0.5f;
+
+        *d = le32(*d);
+
+        dst = (char *)dst + dst_stride;
+        src_advance(&src, src_stride, &count, &freqAcc, adj);
+    }
+}
+
+const bitsconvertfunc convertbpp[5][4] = {
     { convert_8_to_8, convert_8_to_16, convert_8_to_24, convert_8_to_32 },
     { convert_16_to_8, convert_16_to_16, convert_16_to_24, convert_16_to_32 },
     { convert_24_to_8, convert_24_to_16, convert_24_to_24, convert_24_to_32 },
     { convert_32_to_8, convert_32_to_16, convert_32_to_24, convert_32_to_32 },
+    { convert_ieee_32_to_8, convert_ieee_32_to_16, convert_ieee_32_to_24, convert_ieee_32_to_32 },
 };
 
 static void mix8(signed char *src, INT *dst, unsigned len)

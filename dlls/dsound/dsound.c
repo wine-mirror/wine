@@ -1591,14 +1591,14 @@ HRESULT DirectSoundDevice_CreateSoundBuffer(
 
             /* cbSize should be 22 bytes, with one possible exception */
             if (pwfxe->Format.cbSize > (sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX)) &&
-                !(IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM) &&
+                !((IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM) || IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)) &&
                 pwfxe->Format.cbSize == sizeof(WAVEFORMATEXTENSIBLE)))
             {
                 WARN("Too big a cbSize %u\n", pwfxe->Format.cbSize);
                 return DSERR_CONTROLUNAVAIL;
             }
 
-            if (!IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))
+            if ((!IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)) && (!IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)))
             {
                 if (!IsEqualGUID(&pwfxe->SubFormat, &GUID_NULL))
                     FIXME("SubFormat %s not supported right now.\n", debugstr_guid(&pwfxe->SubFormat));
