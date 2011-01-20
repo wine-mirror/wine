@@ -2130,11 +2130,7 @@ static nsresult NSAPI nsURL_GetFilePath(nsIURL *iface, nsACString *aFilePath)
 
     TRACE("(%p)->(%p)\n", This, aFilePath);
 
-    if(This->nsurl)
-        return nsIURL_GetFilePath(This->nsurl, aFilePath);
-
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    return nsIURL_GetPath(&This->nsIURL_iface, aFilePath);
 }
 
 static nsresult NSAPI nsURL_SetFilePath(nsIURL *iface, const nsACString *aFilePath)
@@ -2143,13 +2139,7 @@ static nsresult NSAPI nsURL_SetFilePath(nsIURL *iface, const nsACString *aFilePa
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aFilePath));
 
-    if(This->nsurl) {
-        invalidate_uri(This);
-        return nsIURL_SetFilePath(This->nsurl, aFilePath);
-    }
-
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    return nsIURL_SetPath(&This->nsIURL_iface, aFilePath);
 }
 
 static nsresult NSAPI nsURL_GetParam(nsIURL *iface, nsACString *aParam)
