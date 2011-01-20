@@ -1834,10 +1834,8 @@ static UINT ACTION_FileCost(MSIPACKAGE *package)
 static void ACTION_GetComponentInstallStates(MSIPACKAGE *package)
 {
     MSICOMPONENT *comp;
-    INSTALLSTATE state;
+    INSTALLSTATE state = MsiQueryProductStateW( package->ProductCode );
     UINT r;
-
-    state = MsiQueryProductStateW(package->ProductCode);
 
     LIST_FOR_EACH_ENTRY(comp, &package->components, MSICOMPONENT, entry)
     {
@@ -1847,9 +1845,17 @@ static void ACTION_GetComponentInstallStates(MSIPACKAGE *package)
             comp->Installed = INSTALLSTATE_ABSENT;
         else
         {
-            r = MsiQueryComponentStateW(package->ProductCode, NULL,
-                                        package->Context, comp->ComponentId,
-                                        &comp->Installed);
+            r = MsiQueryComponentStateW( package->ProductCode, NULL,
+                                         MSIINSTALLCONTEXT_USERMANAGED, comp->ComponentId,
+                                         &comp->Installed );
+            if (r != ERROR_SUCCESS)
+                r = MsiQueryComponentStateW( package->ProductCode, NULL,
+                                             MSIINSTALLCONTEXT_USERUNMANAGED, comp->ComponentId,
+                                             &comp->Installed );
+            if (r != ERROR_SUCCESS)
+                r = MsiQueryComponentStateW( package->ProductCode, NULL,
+                                             MSIINSTALLCONTEXT_MACHINE, comp->ComponentId,
+                                             &comp->Installed );
             if (r != ERROR_SUCCESS)
                 comp->Installed = INSTALLSTATE_ABSENT;
         }
