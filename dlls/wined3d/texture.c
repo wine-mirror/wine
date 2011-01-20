@@ -146,7 +146,7 @@ static void texture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB s
     {
         for (i = 0; i < texture->baseTexture.level_count; ++i)
         {
-            IWineD3DSurface_LoadTexture((IWineD3DSurface *)texture->baseTexture.sub_resources[i], srgb_mode);
+            surface_load((IWineD3DSurfaceImpl *)texture->baseTexture.sub_resources[i], srgb_mode);
         }
     }
     else

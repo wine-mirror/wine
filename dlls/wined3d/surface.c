@@ -1087,6 +1087,59 @@ static BOOL surface_convert_color_to_float(IWineD3DSurfaceImpl *surface, DWORD c
     return TRUE;
 }
 
+HRESULT surface_load(IWineD3DSurfaceImpl *surface, BOOL srgb)
+{
+    DWORD flag = srgb ? SFLAG_INSRGBTEX : SFLAG_INTEXTURE;
+
+    TRACE("surface %p, srgb %#x.\n", surface, srgb);
+
+    if (surface->resource.pool == WINED3DPOOL_SCRATCH)
+    {
+        ERR("Not supported on scratch surfaces.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if (!(surface->flags & flag))
+    {
+        TRACE("Reloading because surface is dirty\n");
+    }
+    /* Reload if either the texture and sysmem have different ideas about the
+     * color key, or the actual key values changed. */
+    else if (!(surface->flags & SFLAG_GLCKEY) != !(surface->CKeyFlags & WINEDDSD_CKSRCBLT)
+            || ((surface->CKeyFlags & WINEDDSD_CKSRCBLT)
+            && (surface->glCKey.dwColorSpaceLowValue != surface->SrcBltCKey.dwColorSpaceLowValue
+            || surface->glCKey.dwColorSpaceHighValue != surface->SrcBltCKey.dwColorSpaceHighValue)))
+    {
+        TRACE("Reloading because of color keying\n");
+        /* To perform the color key conversion we need a sysmem copy of
+         * the surface. Make sure we have it. */
+
+        surface_load_location(surface, SFLAG_INSYSMEM, NULL);
+        /* Make sure the texture is reloaded because of the color key change,
+         * this kills performance though :( */
+        /* TODO: This is not necessarily needed with hw palettized texture support. */
+        surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
+    }
+    else
+    {
+        TRACE("surface is already in texture\n");
+        return WINED3D_OK;
+    }
+
+    /* No partial locking for textures yet. */
+    surface_load_location(surface, flag, NULL);
+
+    if (!(surface->flags & SFLAG_DONOTFREE))
+    {
+        HeapFree(GetProcessHeap(), 0, surface->resource.heapMemory);
+        surface->resource.allocatedMemory = NULL;
+        surface->resource.heapMemory = NULL;
+        surface_modify_location(surface, SFLAG_INSYSMEM, FALSE);
+    }
+
+    return WINED3D_OK;
+}
+
 /* Do not call while under the GL lock. */
 static ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface)
 {
@@ -1145,7 +1198,7 @@ void surface_internal_preload(IWineD3DSurfaceImpl *surface, enum WINED3DSRGB srg
             }
         }
 
-        IWineD3DSurface_LoadTexture((IWineD3DSurface *)surface, srgb == SRGB_SRGB ? TRUE : FALSE);
+        surface_load(surface, srgb == SRGB_SRGB ? TRUE : FALSE);
 
         if (surface->resource.pool == WINED3DPOOL_DEFAULT)
         {
@@ -2487,61 +2540,6 @@ BOOL palette9_changed(IWineD3DSurfaceImpl *This)
     }
     memcpy(This->palette9, device->palettes[device->currentPalette], sizeof(PALETTEENTRY) * 256);
     return TRUE;
-}
-
-static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BOOL srgb_mode) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    DWORD flag = srgb_mode ? SFLAG_INSRGBTEX : SFLAG_INTEXTURE;
-
-    TRACE("iface %p, srgb %#x.\n", iface, srgb_mode);
-
-    if (!(This->flags & flag))
-    {
-        TRACE("Reloading because surface is dirty\n");
-    }
-    /* Reload if either the texture and sysmem have different ideas about the
-     * color key, or the actual key values changed. */
-    else if (!(This->flags & SFLAG_GLCKEY) != !(This->CKeyFlags & WINEDDSD_CKSRCBLT)
-            || ((This->CKeyFlags & WINEDDSD_CKSRCBLT)
-            && (This->glCKey.dwColorSpaceLowValue != This->SrcBltCKey.dwColorSpaceLowValue
-            || This->glCKey.dwColorSpaceHighValue != This->SrcBltCKey.dwColorSpaceHighValue)))
-    {
-        TRACE("Reloading because of color keying\n");
-        /* To perform the color key conversion we need a sysmem copy of
-         * the surface. Make sure we have it
-         */
-
-        surface_load_location(This, SFLAG_INSYSMEM, NULL);
-        /* Make sure the texture is reloaded because of the color key change, this kills performance though :( */
-        /* TODO: This is not necessarily needed with hw palettized texture support */
-        surface_modify_location(This, SFLAG_INSYSMEM, TRUE);
-    } else {
-        TRACE("surface is already in texture\n");
-        return WINED3D_OK;
-    }
-
-    /* Resources are placed in system RAM and do not need to be recreated when a device is lost.
-     *  These resources are not bound by device size or format restrictions. Because of this,
-     *  these resources cannot be accessed by the Direct3D device nor set as textures or render targets.
-     *  However, these resources can always be created, locked, and copied.
-     */
-    if (This->resource.pool == WINED3DPOOL_SCRATCH )
-    {
-        FIXME("(%p) Operation not supported for scratch textures\n",This);
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    surface_load_location(This, flag, NULL /* no partial locking for textures yet */);
-
-    if (!(This->flags & SFLAG_DONOTFREE))
-    {
-        HeapFree(GetProcessHeap(), 0, This->resource.heapMemory);
-        This->resource.allocatedMemory = NULL;
-        This->resource.heapMemory = NULL;
-        surface_modify_location(This, SFLAG_INSYSMEM, FALSE);
-    }
-
-    return WINED3D_OK;
 }
 
 static HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, enum wined3d_format_id format)
@@ -4714,7 +4712,6 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DBaseSurfaceImpl_SetClipper,
     IWineD3DBaseSurfaceImpl_GetClipper,
     /* Internal use: */
-    IWineD3DSurfaceImpl_LoadTexture,
     IWineD3DBaseSurfaceImpl_GetData,
     IWineD3DSurfaceImpl_SetFormat,
     IWineD3DSurfaceImpl_PrivateSetup,

@@ -2462,9 +2462,6 @@ interface IWineD3DSurface : IWineD3DResource
     HRESULT GetClipper(
         [out] IWineD3DClipper **clipper
     );
-    HRESULT LoadTexture(
-        [in] BOOL srgb_mode
-    );
     const void *GetData(
     );
     HRESULT SetFormat(

@@ -193,22 +193,6 @@ static HRESULT WINAPI IWineGDISurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DS
     return hr;
 }
 
-/*****************************************************************************
- * IWineD3DSurface::LoadTexture, GDI version
- *
- * This is mutually unsupported by GDI surfaces
- *
- * Returns:
- *  D3DERR_INVALIDCALL
- *
- *****************************************************************************/
-static HRESULT WINAPI
-IWineGDISurfaceImpl_LoadTexture(IWineD3DSurface *iface, BOOL srgb_mode)
-{
-    ERR("Unsupported on X11 surfaces\n");
-    return WINED3DERR_INVALIDCALL;
-}
-
 static HRESULT WINAPI IWineGDISurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     WINED3DLOCKED_RECT lock;
@@ -496,7 +480,6 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineD3DBaseSurfaceImpl_SetClipper,
     IWineD3DBaseSurfaceImpl_GetClipper,
     /* Internal use: */
-    IWineGDISurfaceImpl_LoadTexture,
     IWineD3DBaseSurfaceImpl_GetData,
     IWineD3DBaseSurfaceImpl_SetFormat,
     IWineGDISurfaceImpl_PrivateSetup,

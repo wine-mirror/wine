@@ -2165,6 +2165,7 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
 BOOL surface_init_sysmem(IWineD3DSurfaceImpl *surface) DECLSPEC_HIDDEN;
 void surface_internal_preload(IWineD3DSurfaceImpl *surface, enum WINED3DSRGB srgb) DECLSPEC_HIDDEN;
 BOOL surface_is_offscreen(IWineD3DSurfaceImpl *iface) DECLSPEC_HIDDEN;
+HRESULT surface_load(IWineD3DSurfaceImpl *surface, BOOL srgb) DECLSPEC_HIDDEN;
 void surface_load_ds_location(IWineD3DSurfaceImpl *surface,
         struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
 HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RECT *rect) DECLSPEC_HIDDEN;

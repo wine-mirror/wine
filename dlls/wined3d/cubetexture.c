@@ -122,7 +122,7 @@ static void cubetexture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSR
     {
         for (i = 0; i < sub_count; ++i)
         {
-            IWineD3DSurface_LoadTexture((IWineD3DSurface *)texture->baseTexture.sub_resources[i], srgb_mode);
+            surface_load((IWineD3DSurfaceImpl *)texture->baseTexture.sub_resources[i], srgb_mode);
         }
     }
     else
