@@ -2007,6 +2007,7 @@ static nsresult NSAPI nsURI_SchemeIs(nsIURL *iface, const char *scheme, PRBool *
 
     MultiByteToWideChar(CP_ACP, 0, scheme, -1, buf, sizeof(buf)/sizeof(WCHAR));
     *_retval = !strcmpW(scheme_name, buf);
+    SysFreeString(scheme_name);
     return NS_OK;
 }
 

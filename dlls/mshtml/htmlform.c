@@ -228,17 +228,7 @@ static HRESULT WINAPI HTMLFormElement_get_encoding(IHTMLFormElement *iface, BSTR
 
     nsAString_Init(&encoding_str, NULL);
     nsres = nsIDOMHTMLFormElement_GetEnctype(This->nsform, &encoding_str);
-    if(NS_SUCCEEDED(nsres)) {
-        const PRUnichar *encoding;
-        nsAString_GetData(&encoding_str, &encoding);
-
-        *p = SysAllocString(encoding);
-        if(!*p)
-            return E_OUTOFMEMORY;
-    }else
-        return E_FAIL;
-
-    return S_OK;
+    return return_nsstr(nsres, &encoding_str, p);
 }
 
 static HRESULT WINAPI HTMLFormElement_put_method(IHTMLFormElement *iface, BSTR v)
@@ -276,17 +266,7 @@ static HRESULT WINAPI HTMLFormElement_get_method(IHTMLFormElement *iface, BSTR *
 
     nsAString_Init(&method_str, NULL);
     nsres = nsIDOMHTMLFormElement_GetMethod(This->nsform, &method_str);
-    if(NS_SUCCEEDED(nsres)) {
-        const PRUnichar *method;
-        nsAString_GetData(&method_str, &method);
-
-        *p = SysAllocString(method);
-        if(!*p)
-            return E_OUTOFMEMORY;
-    }else
-        return E_FAIL;
-
-    return S_OK;
+    return return_nsstr(nsres, &method_str, p);
 }
 
 static HRESULT WINAPI HTMLFormElement_get_elements(IHTMLFormElement *iface, IDispatch **p)
@@ -337,20 +317,7 @@ static HRESULT WINAPI HTMLFormElement_get_name(IHTMLFormElement *iface, BSTR *p)
 
     nsAString_Init(&name_str, NULL);
     nsres = nsIDOMHTMLFormElement_GetName(This->nsform, &name_str);
-    if(NS_SUCCEEDED(nsres)) {
-        const PRUnichar *name;
-        nsAString_GetData(&name_str, &name);
-
-        if(*name) {
-            *p = SysAllocString(name);
-            if(!*p)
-                return E_OUTOFMEMORY;
-        }else
-            *p = NULL;
-    }else
-        return E_FAIL;
-
-    return S_OK;
+    return return_nsstr(nsres, &name_str, p);
 }
 
 static HRESULT WINAPI HTMLFormElement_put_onsubmit(IHTMLFormElement *iface, VARIANT v)
