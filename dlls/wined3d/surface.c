@@ -510,6 +510,56 @@ void surface_set_texture_target(IWineD3DSurfaceImpl *surface, GLenum target)
 }
 
 /* Context activation is done by the caller. */
+void surface_bind(IWineD3DSurfaceImpl *surface, BOOL srgb)
+{
+    TRACE("surface %p, srgb %#x.\n", surface, srgb);
+
+    if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
+    {
+        IWineD3DBaseTextureImpl *texture = surface->container.u.texture;
+
+        TRACE("Passing to container (%p).\n", texture);
+        texture->baseTexture.texture_ops->texture_bind(texture, srgb);
+    }
+    else
+    {
+        GLuint *name = srgb ? &surface->texture_name_srgb : &surface->texture_name;
+
+        if (surface->texture_level)
+        {
+            ERR("Standalone surface %p is non-zero texture level %u.\n",
+                    surface, surface->texture_level);
+        }
+
+        ENTER_GL();
+
+        if (!*name)
+        {
+            glGenTextures(1, name);
+            checkGLcall("glGenTextures");
+
+            TRACE("Surface %p given name %u.\n", surface, *name);
+
+            glBindTexture(surface->texture_target, *name);
+            checkGLcall("glBindTexture");
+            glTexParameteri(surface->texture_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(surface->texture_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(surface->texture_target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+            glTexParameteri(surface->texture_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(surface->texture_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            checkGLcall("glTexParameteri");
+        }
+        else
+        {
+            glBindTexture(surface->texture_target, *name);
+            checkGLcall("glBindTexture");
+        }
+
+        LEAVE_GL();
+    }
+}
+
+/* Context activation is done by the caller. */
 static void surface_bind_and_dirtify(IWineD3DSurfaceImpl *This, BOOL srgb) {
     DWORD active_sampler;
 
@@ -534,7 +584,7 @@ static void surface_bind_and_dirtify(IWineD3DSurfaceImpl *This, BOOL srgb) {
     {
         IWineD3DDeviceImpl_MarkStateDirty(This->resource.device, STATE_SAMPLER(active_sampler));
     }
-    IWineD3DSurface_BindTexture((IWineD3DSurface *)This, srgb);
+    surface_bind(This, srgb);
 }
 
 /* This function checks if the primary render target uses the 8bit paletted format. */
@@ -2492,63 +2542,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BO
     }
 
     return WINED3D_OK;
-}
-
-/* Context activation is done by the caller. */
-static void WINAPI IWineD3DSurfaceImpl_BindTexture(IWineD3DSurface *iface, BOOL srgb)
-{
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-
-    TRACE("iface %p, srgb %#x.\n", iface, srgb);
-
-    if (This->container.type == WINED3D_CONTAINER_TEXTURE)
-    {
-        IWineD3DBaseTextureImpl *texture = This->container.u.texture;
-
-        TRACE("Passing to container (%p).\n", texture);
-        texture->baseTexture.texture_ops->texture_bind(texture, srgb);
-    }
-    else
-    {
-        GLuint *name;
-
-        TRACE("(%p) : Binding surface\n", This);
-
-        name = srgb ? &This->texture_name_srgb : &This->texture_name;
-
-        ENTER_GL();
-
-        if (!This->texture_level)
-        {
-            if (!*name) {
-                glGenTextures(1, name);
-                checkGLcall("glGenTextures");
-                TRACE("Surface %p given name %d\n", This, *name);
-
-                glBindTexture(This->texture_target, *name);
-                checkGLcall("glBindTexture");
-                glTexParameteri(This->texture_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                checkGLcall("glTexParameteri(dimension, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)");
-                glTexParameteri(This->texture_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-                checkGLcall("glTexParameteri(dimension, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)");
-                glTexParameteri(This->texture_target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-                checkGLcall("glTexParameteri(dimension, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE)");
-                glTexParameteri(This->texture_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-                checkGLcall("glTexParameteri(dimension, GL_TEXTURE_MIN_FILTER, GL_NEAREST)");
-                glTexParameteri(This->texture_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-                checkGLcall("glTexParameteri(dimension, GL_TEXTURE_MAG_FILTER, GL_NEAREST)");
-            }
-            /* This is where we should be reducing the amount of GLMemoryUsed */
-        } else if (*name) {
-            /* Mipmap surfaces should have a base texture container */
-            ERR("Mipmap surface has a glTexture bound to it!\n");
-        }
-
-        glBindTexture(This->texture_target, *name);
-        checkGLcall("glBindTexture");
-
-        LEAVE_GL();
-    }
 }
 
 static HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, enum wined3d_format_id format)
@@ -4722,7 +4715,6 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DBaseSurfaceImpl_GetClipper,
     /* Internal use: */
     IWineD3DSurfaceImpl_LoadTexture,
-    IWineD3DSurfaceImpl_BindTexture,
     IWineD3DBaseSurfaceImpl_GetData,
     IWineD3DSurfaceImpl_SetFormat,
     IWineD3DSurfaceImpl_PrivateSetup,

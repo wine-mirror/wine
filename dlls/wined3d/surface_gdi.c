@@ -209,11 +209,6 @@ IWineGDISurfaceImpl_LoadTexture(IWineD3DSurface *iface, BOOL srgb_mode)
     return WINED3DERR_INVALIDCALL;
 }
 
-static void WINAPI IWineGDISurfaceImpl_BindTexture(IWineD3DSurface *iface, BOOL srgb)
-{
-    ERR("Not supported.\n");
-}
-
 static HRESULT WINAPI IWineGDISurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     WINED3DLOCKED_RECT lock;
@@ -502,7 +497,6 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineD3DBaseSurfaceImpl_GetClipper,
     /* Internal use: */
     IWineGDISurfaceImpl_LoadTexture,
-    IWineGDISurfaceImpl_BindTexture,
     IWineD3DBaseSurfaceImpl_GetData,
     IWineD3DBaseSurfaceImpl_SetFormat,
     IWineGDISurfaceImpl_PrivateSetup,

@@ -2465,9 +2465,6 @@ interface IWineD3DSurface : IWineD3DResource
     HRESULT LoadTexture(
         [in] BOOL srgb_mode
     );
-    void BindTexture(
-        [in] BOOL srgb
-    );
     const void *GetData(
     );
     HRESULT SetFormat(
