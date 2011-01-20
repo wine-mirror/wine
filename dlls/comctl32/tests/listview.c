@@ -3309,7 +3309,7 @@ static void test_getitemrect(void)
     expect(0, rect.left);
     expect(0, rect.top);
     hdc = GetDC(hwnd);
-    todo_wine expect(GetDeviceCaps(hdc, LOGPIXELSX), rect.right);
+    todo_wine expect(((GetDeviceCaps(hdc, LOGPIXELSX) + 15) / 16) * 16, rect.right);
     ReleaseDC(hwnd, hdc);
     DestroyWindow(hwnd);
 
@@ -4163,7 +4163,7 @@ static void test_getcolumnwidth(void)
     SendMessage(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&itema);
     ret = SendMessage(hwnd, LVM_GETCOLUMNWIDTH, 0, 0);
     hdc = GetDC(hwnd);
-    todo_wine expect(GetDeviceCaps(hdc, LOGPIXELSX), ret);
+    todo_wine expect(((GetDeviceCaps(hdc, LOGPIXELSX) + 15) / 16) * 16, ret);
     ReleaseDC(hwnd, hdc);
     DestroyWindow(hwnd);
 }
