@@ -48,12 +48,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
  */
 struct HGLOBALLockBytesImpl16
 {
-  /*
-   * Needs to be the first item in the struct
-   * since we want to cast this in an ILockBytes pointer
-   */
-  const ILockBytes16Vtbl *lpVtbl;
-  LONG        ref;
+  ILockBytes16 ILockBytes16_iface;
+  LONG ref;
 
   /*
    * Support for the LockBytes object
@@ -78,6 +74,11 @@ typedef struct HGLOBALLockBytesImpl16 HGLOBALLockBytesImpl16;
  * HGLOBALLockBytesImpl16 implementation
  *
  */
+
+static inline HGLOBALLockBytesImpl16 *impl_from_ILockBytes16(ILockBytes16 *iface)
+{
+  return CONTAINING_RECORD(iface, HGLOBALLockBytesImpl16, ILockBytes16_iface);
+}
 
 /******************************************************************************
  * This is the constructor for the HGLOBALLockBytesImpl16 class.
@@ -122,8 +123,8 @@ HGLOBALLockBytesImpl16_Construct(HGLOBAL16 hGlobal,
 #undef VTENT
       msegvt16 = MapLS( &vt16 );
   }
-  newLockBytes->lpVtbl	= (const ILockBytes16Vtbl*)msegvt16;
-  newLockBytes->ref	= 0;
+  newLockBytes->ILockBytes16_iface.lpVtbl = (const ILockBytes16Vtbl*)msegvt16;
+  newLockBytes->ref = 0;
   /*
    * Initialize the support.
    */
@@ -177,7 +178,7 @@ static void HGLOBALLockBytesImpl16_Destroy(HGLOBALLockBytesImpl16* This)
  */
 ULONG CDECL HGLOBALLockBytesImpl16_AddRef(ILockBytes16* iface)
 {
-  HGLOBALLockBytesImpl16* const This=(HGLOBALLockBytesImpl16*)iface;
+  HGLOBALLockBytesImpl16* const This = impl_from_ILockBytes16(iface);
 
   TRACE("(%p)\n",This);
 
@@ -227,7 +228,7 @@ HRESULT CDECL HGLOBALLockBytesImpl16_QueryInterface(
    * Query Interface always increases the reference count by one when it is
    * successful
    */
-  HGLOBALLockBytesImpl16_AddRef((ILockBytes16*)This);
+  HGLOBALLockBytesImpl16_AddRef(&This->ILockBytes16_iface);
 
   return S_OK;
 }
@@ -238,7 +239,7 @@ HRESULT CDECL HGLOBALLockBytesImpl16_QueryInterface(
  */
 ULONG CDECL HGLOBALLockBytesImpl16_Release(ILockBytes16* iface)
 {
-  HGLOBALLockBytesImpl16* const This=(HGLOBALLockBytesImpl16*)iface;
+  HGLOBALLockBytesImpl16* const This = impl_from_ILockBytes16(iface);
   ULONG ref;
 
   TRACE("(%p)\n",This);
@@ -268,7 +269,7 @@ HRESULT CDECL HGLOBALLockBytesImpl16_ReadAt(
       ULONG          cb,        /* [in] */
       ULONG*         pcbRead)   /* [out] */
 {
-  HGLOBALLockBytesImpl16* const This=(HGLOBALLockBytesImpl16*)iface;
+  HGLOBALLockBytesImpl16* const This = impl_from_ILockBytes16(iface);
 
   void* supportBuffer;
   ULONG bytesReadBuffer = 0;
@@ -337,7 +338,7 @@ HRESULT CDECL HGLOBALLockBytesImpl16_SetSize(
       ILockBytes16*   iface,
       ULARGE_INTEGER  libNewSize)   /* [in] */
 {
-  HGLOBALLockBytesImpl16* const This=(HGLOBALLockBytesImpl16*)iface;
+  HGLOBALLockBytesImpl16* const This = impl_from_ILockBytes16(iface);
   HGLOBAL16 supportHandle;
 
   TRACE("(%p,%d)\n",This,libNewSize.u.LowPart);
@@ -379,7 +380,7 @@ HRESULT CDECL HGLOBALLockBytesImpl16_WriteAt(
       ULONG          cb,          /* [in] */
       ULONG*         pcbWritten)  /* [out] */
 {
-  HGLOBALLockBytesImpl16* const This=(HGLOBALLockBytesImpl16*)iface;
+  HGLOBALLockBytesImpl16* const This = impl_from_ILockBytes16(iface);
 
   void*          supportBuffer;
   ULARGE_INTEGER newSize;
@@ -485,7 +486,7 @@ HRESULT CDECL HGLOBALLockBytesImpl16_Stat(
       STATSTG16*   pstatstg,     /* [out] */
       DWORD        grfStatFlag)  /* [in] */
 {
-  HGLOBALLockBytesImpl16* const This=(HGLOBALLockBytesImpl16*)iface;
+  HGLOBALLockBytesImpl16* const This = impl_from_ILockBytes16(iface);
 
   memset(pstatstg, 0, sizeof(STATSTG16));
 
@@ -520,8 +521,7 @@ HRESULT WINAPI CreateILockBytesOnHGlobal16(
   newLockBytes = HGLOBALLockBytesImpl16_Construct(hGlobal, fDeleteOnRelease);
 
   if (newLockBytes != NULL)
-    return HGLOBALLockBytesImpl16_QueryInterface((ILockBytes16*)newLockBytes,
-                                   &IID_ILockBytes,
-                                   (void**)ppLkbyt);
+    return HGLOBALLockBytesImpl16_QueryInterface(&newLockBytes->ILockBytes16_iface,
+            &IID_ILockBytes, (void**)ppLkbyt);
   return E_OUTOFMEMORY;
 }
