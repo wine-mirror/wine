@@ -523,7 +523,7 @@ static HRESULT test_primary_secondary(LPGUID lpGuid)
     DSBUFFERDESC bufdesc;
     DSCAPS dscaps;
     WAVEFORMATEX wfx, wfx2;
-    int f,ref;
+    int f,ref,tag;
 
     /* Create the DirectSound object */
     rc=pDirectSoundCreate(lpGuid,&dso,NULL);
@@ -556,6 +556,11 @@ static HRESULT test_primary_secondary(LPGUID lpGuid)
 
     if (rc==DS_OK && primary!=NULL) {
         for (f=0;f<NB_FORMATS;f++) {
+          for (tag=0;tag<NB_TAGS;tag++) {
+            /* if float, we only want to test 32-bit */
+            if ((format_tags[tag] == WAVE_FORMAT_IEEE_FLOAT) && (formats[f][1] != 32))
+                continue;
+
             /* We must call SetCooperativeLevel to be allowed to call
              * SetFormat */
             /* DSOUND: Setting DirectSound cooperative level to
@@ -565,7 +570,7 @@ static HRESULT test_primary_secondary(LPGUID lpGuid)
             if (rc!=DS_OK)
                 goto EXIT;
 
-            init_format(&wfx,WAVE_FORMAT_PCM,formats[f][0],formats[f][1],
+            init_format(&wfx,format_tags[tag],formats[f][0],formats[f][1],
                         formats[f][2]);
             wfx2=wfx;
             rc=IDirectSoundBuffer_SetFormat(primary,&wfx);
@@ -612,9 +617,9 @@ static HRESULT test_primary_secondary(LPGUID lpGuid)
                                         wfx.nBlockAlign);
             bufdesc.lpwfxFormat=&wfx2;
             if (winetest_interactive) {
-                trace("  Testing a primary buffer at %dx%dx%d with a "
+                trace("  Testing a primary buffer at %dx%dx%d (fmt=%d) with a "
                       "secondary buffer at %dx%dx%d\n",
-                      wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,
+                      wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,format_tags[tag],
                       wfx2.nSamplesPerSec,wfx2.wBitsPerSample,wfx2.nChannels);
             }
             rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
@@ -629,6 +634,7 @@ static HRESULT test_primary_secondary(LPGUID lpGuid)
                 ok(ref==0,"IDirectSoundBuffer_Release() has %d references, "
                    "should have 0\n",ref);
             }
+          }
         }
 
         ref=IDirectSoundBuffer_Release(primary);
@@ -658,7 +664,7 @@ static HRESULT test_secondary(LPGUID lpGuid)
     DSBUFFERDESC bufdesc;
     DSCAPS dscaps;
     WAVEFORMATEX wfx, wfx1;
-    DWORD f;
+    DWORD f, tag;
     int ref;
 
     /* Create the DirectSound object */
@@ -697,8 +703,14 @@ static HRESULT test_secondary(LPGUID lpGuid)
             goto EXIT1;
 
         for (f=0;f<NB_FORMATS;f++) {
+          for (tag=0;tag<NB_TAGS;tag++) {
             WAVEFORMATEXTENSIBLE wfxe;
-            init_format(&wfx,WAVE_FORMAT_PCM,formats[f][0],formats[f][1],
+
+            /* if float, we only want to test 32-bit */
+            if ((format_tags[tag] == WAVE_FORMAT_IEEE_FLOAT) && (formats[f][1] != 32))
+                continue;
+
+            init_format(&wfx,format_tags[tag],formats[f][0],formats[f][1],
                         formats[f][2]);
             secondary=NULL;
             ZeroMemory(&bufdesc, sizeof(bufdesc));
@@ -720,7 +732,7 @@ static HRESULT test_secondary(LPGUID lpGuid)
                                         wfx.nBlockAlign);
             bufdesc.lpwfxFormat=&wfx;
             rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
-            if (gotdx8 || wfx.wBitsPerSample <= 16)
+            if (gotdx8 || wfx.wBitsPerSample <= 16 || wfx.wFormatTag == WAVE_FORMAT_IEEE_FLOAT)
             {
                 if (wfx.wBitsPerSample > 16)
                     ok(((rc == DSERR_CONTROLUNAVAIL || rc == DSERR_INVALIDCALL || rc == DSERR_INVALIDPARAM /* 2003 */) && !secondary)
@@ -752,7 +764,7 @@ static HRESULT test_secondary(LPGUID lpGuid)
             bufdesc.lpwfxFormat=(WAVEFORMATEX*)&wfxe;
             wfxe.Format = wfx;
             wfxe.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
-            wfxe.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+            wfxe.SubFormat = (format_tags[tag] == WAVE_FORMAT_PCM ? KSDATAFORMAT_SUBTYPE_PCM : KSDATAFORMAT_SUBTYPE_IEEE_FLOAT);
             wfxe.Format.cbSize = 1;
             wfxe.Samples.wValidBitsPerSample = wfx.wBitsPerSample;
             wfxe.dwChannelMask = (wfx.nChannels == 1 ? KSAUDIO_SPEAKER_MONO : KSAUDIO_SPEAKER_STEREO);
@@ -792,7 +804,7 @@ static HRESULT test_secondary(LPGUID lpGuid)
                 IDirectSoundBuffer_Release(secondary);
                 secondary=NULL;
             }
-            wfxe.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+            wfxe.SubFormat = (format_tags[tag] == WAVE_FORMAT_PCM ? KSDATAFORMAT_SUBTYPE_PCM : KSDATAFORMAT_SUBTYPE_IEEE_FLOAT);
 
             ++wfxe.Samples.wValidBitsPerSample;
             rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
@@ -825,9 +837,9 @@ static HRESULT test_secondary(LPGUID lpGuid)
 no_wfe:
             if (rc==DS_OK && secondary!=NULL) {
                 if (winetest_interactive) {
-                    trace("  Testing a secondary buffer at %dx%dx%d "
+                    trace("  Testing a secondary buffer at %dx%dx%d (fmt=%d) "
                         "with a primary buffer at %dx%dx%d\n",
-                        wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,
+                        wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,format_tags[tag],
                         wfx1.nSamplesPerSec,wfx1.wBitsPerSample,wfx1.nChannels);
                 }
                 test_buffer(dso,&secondary,0,FALSE,0,FALSE,0,
@@ -837,6 +849,7 @@ no_wfe:
                 ok(ref==0,"IDirectSoundBuffer_Release() has %d references, "
                    "should have 0\n",ref);
             }
+          }
         }
 EXIT1:
         ref=IDirectSoundBuffer_Release(primary);

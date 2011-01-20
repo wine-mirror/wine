@@ -447,7 +447,7 @@ void test_buffer8(LPDIRECTSOUND8 dso, LPDIRECTSOUNDBUFFER * dsbo,
         ok(rc==DSERR_INVALIDPARAM, "IDirectSoundBuffer_Lock() should have "
            "returned DSERR_INVALIDPARAM, returned %08x\n", rc);
 
-        state.wave=wave_generate_la(&wfx,duration,&state.wave_len);
+        state.wave=wave_generate_la(&wfx,duration,&state.wave_len,FALSE);
 
         state.dsbo=*dsbo;
         state.wfx=&wfx;

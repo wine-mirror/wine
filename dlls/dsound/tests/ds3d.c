@@ -30,6 +30,8 @@
 #include "wine/test.h"
 #include "dsound.h"
 #include "mmreg.h"
+#include "ks.h"
+#include "ksmedia.h"
 #include "dsound_test.h"
 
 #define PI 3.14159265358979323846
@@ -39,7 +41,7 @@ static HRESULT (WINAPI *pDirectSoundEnumerateA)(LPDSENUMCALLBACKA,LPVOID)=NULL;
 static HRESULT (WINAPI *pDirectSoundCreate)(LPCGUID,LPDIRECTSOUND*,
     LPUNKNOWN)=NULL;
 
-char* wave_generate_la(WAVEFORMATEX* wfx, double duration, DWORD* size)
+char* wave_generate_la(WAVEFORMATEX* wfx, double duration, DWORD* size, BOOL ieee)
 {
     int i;
     int nb_samples;
@@ -79,18 +81,31 @@ char* wave_generate_la(WAVEFORMATEX* wfx, double duration, DWORD* size)
                 b+=3;
             }
         } else if (wfx->wBitsPerSample == 32) {
-            signed int sample=(signed int)((double)2147483647.5*y-0.5);
-            b[0]=sample & 0xff;
-            b[1]=(sample >> 8)&0xff;
-            b[2]=(sample >> 16)&0xff;
-            b[3]=sample >> 24;
-            b+=4;
-            if (wfx->nChannels==2) {
+            if (ieee) {
+                float *ptr = (float *) b;
+                *ptr = y;
+
+                ptr++;
+                b+=4;
+
+                if (wfx->nChannels==2) {
+                    *ptr = y;
+                    b+=4;
+                }
+            } else {
+                signed int sample=(signed int)((double)2147483647.5*y-0.5);
                 b[0]=sample & 0xff;
                 b[1]=(sample >> 8)&0xff;
                 b[2]=(sample >> 16)&0xff;
                 b[3]=sample >> 24;
                 b+=4;
+                if (wfx->nChannels==2) {
+                    b[0]=sample & 0xff;
+                    b[1]=(sample >> 8)&0xff;
+                    b[2]=(sample >> 16)&0xff;
+                    b[3]=sample >> 24;
+                    b+=4;
+                }
             }
         }
     }
@@ -317,6 +332,7 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER *dsbo,
     DSBCAPS dsbcaps;
     WAVEFORMATEX wfx,wfx2;
     DWORD size,status,freq;
+    BOOL ieee = FALSE;
     int ref;
 
     if (set_frequency) {
@@ -358,11 +374,13 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER *dsbo,
 
     if (size == sizeof(WAVEFORMATEX)) {
         rc=IDirectSoundBuffer_GetFormat(*dsbo,&wfx,size,NULL);
+        ieee = (wfx.wFormatTag == WAVE_FORMAT_IEEE_FLOAT);
     }
     else if (size == sizeof(WAVEFORMATEXTENSIBLE)) {
         WAVEFORMATEXTENSIBLE wfxe;
         rc=IDirectSoundBuffer_GetFormat(*dsbo,(WAVEFORMATEX*)&wfxe,size,NULL);
         wfx = wfxe.Format;
+        ieee = IsEqualGUID(&wfxe.SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT);
     }
     ok(rc==DS_OK,
         "IDirectSoundBuffer_GetFormat() failed: %08x\n", rc);
@@ -600,9 +618,9 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER *dsbo,
            "returned DSERR_INVALIDPARAM, returned %08x\n", rc);
 
         if (set_frequency)
-            state.wave=wave_generate_la(&wfx,(duration*frequency)/wfx.nSamplesPerSec,&state.wave_len);
+            state.wave=wave_generate_la(&wfx,(duration*frequency)/wfx.nSamplesPerSec,&state.wave_len,ieee);
         else
-            state.wave=wave_generate_la(&wfx,duration,&state.wave_len);
+            state.wave=wave_generate_la(&wfx,duration,&state.wave_len,ieee);
 
         state.dsbo=*dsbo;
         state.wfx=&wfx;
