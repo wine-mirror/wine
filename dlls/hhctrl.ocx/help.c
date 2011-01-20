@@ -773,15 +773,20 @@ static void TB_AddButton(TBBUTTON *pButtons, DWORD dwIndex, DWORD dwID, DWORD dw
 
 static void TB_AddButtonsFromFlags(HHInfo *pHHInfo, TBBUTTON *pButtons, DWORD dwButtonFlags, LPDWORD pdwNumButtons)
 {
+    int nHistBitmaps = 0, nStdBitmaps = 0, nHHBitmaps = 0;
     HWND hToolbar = pHHInfo->WinType.hwndToolBar;
-    int nHistBitmaps = 0, nStdBitmaps = 0;
     TBADDBITMAP tbAB;
 
+    /* Common bitmaps */
     tbAB.hInst = HINST_COMMCTRL;
     tbAB.nID = IDB_HIST_LARGE_COLOR;
     nHistBitmaps = SendMessageW(hToolbar, TB_ADDBITMAP, 0, (LPARAM)&tbAB);
     tbAB.nID = IDB_STD_LARGE_COLOR;
     nStdBitmaps = SendMessageW(hToolbar, TB_ADDBITMAP, 0, (LPARAM)&tbAB);
+    /* hhctrl.ocx bitmaps */
+    tbAB.hInst = hhctrl_hinstance;
+    tbAB.nID = IDB_HHTOOLBAR;
+    nHHBitmaps = SendMessageW(hToolbar, TB_ADDBITMAP, 0, (LPARAM)&tbAB);
 
     *pdwNumButtons = 0;
 
@@ -802,16 +807,16 @@ static void TB_AddButtonsFromFlags(HHInfo *pHHInfo, TBBUTTON *pButtons, DWORD dw
     if (dwButtonFlags & HHWIN_BUTTON_FORWARD)
         TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_FORWARD, nHistBitmaps + HIST_FORWARD);
 
-    /* FIXME: Load the correct button bitmaps */
     if (dwButtonFlags & HHWIN_BUTTON_STOP)
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_STOP, nStdBitmaps + STD_PRINT);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_STOP, nHHBitmaps + HH_STOP);
 
     if (dwButtonFlags & HHWIN_BUTTON_REFRESH)
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_REFRESH, nStdBitmaps + STD_PRINT);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_REFRESH, nHHBitmaps + HH_REFRESH);
 
     if (dwButtonFlags & HHWIN_BUTTON_HOME)
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_HOME, nStdBitmaps + STD_PRINT);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_HOME, nHHBitmaps + HH_HOME);
 
+    /* FIXME: Load the correct button bitmaps */
     if (dwButtonFlags & HHWIN_BUTTON_SYNC)
         TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_SYNC, nStdBitmaps + STD_PRINT);
 

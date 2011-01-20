@@ -17,4 +17,6 @@ IDL_R_SRCS   = hhctrl_tlb.idl
 RC_SRCS = hhctrl.rc
 PO_SRCS = hhctrl.rc
 
+SVG_SRCS = hhtoolbar.svg
+
 @MAKE_DLL_RULES@
